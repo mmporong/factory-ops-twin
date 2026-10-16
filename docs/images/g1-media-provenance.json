@@ -1,41 +1,41 @@
 {
   "source_kind": "actual Isaac Sim RGB; no generated-image content",
-  "run_label": "g1-009",
-  "run_id": "30554994014633d9626b2dc7ee2cdc09",
-  "source_commit": "1ded05b00f68a2161c2d1c35b1d10cec45a0f9a0",
+  "run_label": "g1-010",
+  "run_id": "4e2ea29fbfac32f780d23324230d859f",
+  "source_commit": "ec06754c62854c9b6358f67007c23a3fef7ede81",
   "isaac_image": "nvcr.io/nvidia/isaac-sim@sha256:a025b65a7442d56806a1cc3f5eed081caf736c24b72d62dccf68ef66945d8690",
   "layout_sha256": "c589ce746954e9dba5b2ff5802f29c4cd0d29ce0d732d24a2b936f4060d67586",
   "strict_validation": {
     "passed": true,
-    "path": "results/g1-009/g1-validation.json",
-    "sha256": "c654658838709fa0b081dda7e4be18915058d3ba79d705cddbc594d3ecc913b8"
+    "path": "results/g1-010/g1-validation.json",
+    "sha256": "1ed5d4d50bdfba8607d6809061dcb73f30fd92d67390a6f2bc606b515a31044c"
   },
   "media_index": {
-    "path": "results/g1-009/media/frames.json",
-    "sha256": "c94d0a136465fda0a43f3b349a273f76be0630b212aa77209c9e3ce0bd80bb05"
+    "path": "results/g1-010/media/frames.json",
+    "sha256": "f3be1999b8a64a4544d94b691467f8d7afe20b8cf6df90d1e6a0b28d7b5823e2"
   },
   "unmodified_png_copies": [
     {
       "file": "g1-factory-overview.png",
-      "source": "results/g1-009/factory-overview.png",
-      "sha256": "024ee30899d7a561a14033f773aef50ca3e30e5146c115cdecaf0396e569a26a",
-      "bytes": 138572,
+      "source": "results/g1-010/factory-overview.png",
+      "sha256": "3b4939c1496bc18366484bc03c8c09485e724b79256a5220631586662ffc26eb",
+      "bytes": 138605,
       "altered": false
     },
     {
       "file": "g1-amr-out.png",
-      "source": "results/g1-009/media/frame-00190.png",
-      "sha256": "1568a70eda5878c2c5002002cc56bb02901f623b04b8fc196d1a9481aa83848b",
-      "bytes": 280234,
+      "source": "results/g1-010/media/frame-00194.png",
+      "sha256": "0966e9d0b66f6de0c1d256cc165b99ef6c0f0169f2a813d18559f2824b27c6f0",
+      "bytes": 287317,
       "altered": false
     }
   ],
   "timelapse": {
     "file": "g1-amr-mission.gif",
-    "sha256": "5d93f9f6bbc0490b9c5bee4617e495f267026fa27266e0d745b4878180e74089",
-    "bytes": 5287782,
-    "source_pattern": "results/g1-009/media/frame-%05d.png",
-    "source_frame_count": 191,
+    "sha256": "d390fab703ce8ec48dd2f723998e49fc12383f2146f8f4a1b89b8c9fa7562847",
+    "bytes": 5316605,
+    "source_pattern": "results/g1-010/media/frame-%05d.png",
+    "source_frame_count": 195,
     "selected_source_indices": [
       0,
       2,
@@ -132,38 +132,40 @@
       184,
       186,
       188,
-      190
+      190,
+      192,
+      194
     ],
     "source_sim_time_s": [
       2.05,
-      191.25
+      195.31666666666666
     ],
     "input_sequence_fps": 10,
     "output_fps": 5,
     "description": "every second real render plus final frame; approximately 2 sim seconds per selected frame",
     "encoding": "ffmpeg version 8.1-full_build-www.gyan.dev Copyright (c) 2000-2026 the FFmpeg developers",
-    "filters": "select='not(mod(n,2))+eq(n,190)',setpts=N/(5*TB),scale=480:270:flags=lanczos,split[a][b];[a]palettegen=max_colors=128:stats_mode=diff[p];[b][p]paletteuse=dither=bayer:bayer_scale=3",
+    "filters": "select='not(mod(n,2))+eq(n,194)',setpts=N/(5*TB),scale=480:270:flags=lanczos,split[a][b];[a]palettegen=max_colors=128:stats_mode=diff[p];[b][p]paletteuse=dither=bayer:bayer_scale=3",
     "decoded_probe": {
       "width": 480,
       "height": 270,
       "r_frame_rate": "5/1",
-      "duration": "19.200000",
-      "nb_read_frames": "96"
+      "duration": "19.600000",
+      "nb_read_frames": "98"
     }
   },
   "mp4": {
     "file": "g1-amr-mission.mp4",
-    "sha256": "5b12c378056e51b4f9cc4d587c0b0e242384d20e56e978e519a8c03c2f1850a4",
-    "bytes": 1456724,
-    "source_frame_count": 191,
+    "sha256": "4207c0a048f1be890efbbb172ae18f817e848e2610a6d192a1f4ded4239cfb57",
+    "bytes": 1471809,
+    "source_frame_count": 195,
     "output_fps": 10,
     "encoding": "libx264 preset medium, CRF21, yuv420p, faststart",
     "decoded_probe": {
       "width": 1280,
       "height": 720,
       "r_frame_rate": "10/1",
-      "duration": "19.100000",
-      "nb_read_frames": "191"
+      "duration": "19.500000",
+      "nb_read_frames": "195"
     }
   },
   "scope": "navigation evidence preview; not a training-approved sensor dataset"
