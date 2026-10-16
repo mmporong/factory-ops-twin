@@ -1,0 +1,155 @@
+from pathlib import Path
+from copy import deepcopy
+import json
+import math
+import tempfile
+import unittest
+from typing import Any
+
+from factory_ops.layout import Layout
+from factory_ops.traffic import TrafficController
+from scripts.ros.g2_evidence import (
+    _nearest, _validate_dispatch, qualify_authored_routes, validate_g2_evidence,
+    validate_scan_pairs, validate_f3_cycle,
+    unique_sequence_index,
+)
+
+ROOT = Path(__file__).resolve().parents[1]
+
+
+def scan(ranges) -> dict[str, Any]:
+    return {"frame_id": "front_scan", "angle_min": -math.pi, "angle_max": math.pi,
+            "angle_increment": math.pi, "time_increment": 0.01, "scan_time": 0.1,
+            "range_min": .1, "range_max": 30, "intensities": [], "ranges": ranges}
+
+
+def cycle_fixture():
+    events = [
+        {"event_type": "reservation_granted", "robot_id": "carter1", "sim_time_s": 0,
+         "reservation_id": 1, "resources": ["Z_UPPER"], "exit_id": "Z_UPPER:east"},
+        {"event_type": "request_denied", "robot_id": "carter2", "sim_time_s": 0, "blockers": ["carter1"]},
+    ]
+    for index in range(11):
+        stamp = index / 2
+        events.append({"event_type": "wait", "robot_id": "carter1", "reason": "observed_exit_blocked",
+                       "blockers": ["carter2"], "reservation_id": 1, "exit_id": "Z_UPPER:east",
+                       "sim_time_s": stamp, "waiter_pose_time_s": stamp, "blocker_pose_time_s": stamp,
+                       "planning_radius_m": 1.14, "waiter_pose_xy": [26.8, 4], "blocker_pose_xy": [30, 4]})
+    events.extend([
+        {"event_type": "recovery_decision", "robot_id": "carter2", "priority_robot": "carter1", "sim_time_s": 5,
+         "target": "P2", "command": "cancel_and_yield", "recovery_id": 1},
+        {"event_type": "release_ack", "robot_id": "carter1", "sim_time_s": 6, "reservation_id": 1},
+        {"event_type": "resume_requested", "robot_id": "carter2", "sim_time_s": 6.1, "reservation_id": 1},
+    ])
+    transforms = {}
+    for robot, x in (("carter1", 26.8), ("carter2", 30)):
+        transforms[robot] = {"map->odom": [], "odom->base_link": []}
+        for index in range(13):
+            stamp = index / 2
+            for edge, xy in (("map->odom", [0, 0, 0]), ("odom->base_link", [x, 4, 0])):
+                transforms[robot][edge].append({"stamp_s": stamp, "translation": xy, "wxyz": [1, 0, 0, 0]})
+    return events, transforms
+
+
+class G2EvidenceTests(unittest.TestCase):
+    def test_current_broad_aisle_routes_cover_full_planning_envelope(self):
+        layout = Layout.from_file(ROOT / "configs/factory-v3/layout.json")
+        traffic = TrafficController.from_file(ROOT / "configs/factory-v3/traffic.json")
+        scenarios = json.loads((ROOT / "configs/factory-v3/g2-scenarios.json").read_text())["scenarios"]
+        # Probe radius is a test input; runtime uses the freshly measured asset envelope.
+        for scenario_id, scenario in scenarios.items():
+            with self.subTest(scenario=scenario_id):
+                report = qualify_authored_routes(layout, traffic, scenario, 1.14)
+                self.assertTrue(report["passed"], report["errors"])
+        self.assertEqual(qualify_authored_routes(layout, traffic, scenarios["F3"], 1.14)["routes"]["carter2_yield"]["distance_m"], 36.5)
+
+    def test_bad_shortcut_and_forbidden_yield_are_rejected(self):
+        layout = Layout.from_file(ROOT / "configs/factory-v3/layout.json")
+        traffic = TrafficController.from_file(ROOT / "configs/factory-v3/traffic.json")
+        narrow = {"routes": {"shortcut": {"start_pose": [20, 4, 0], "poses": [[20, 20, 0]]}}}
+        self.assertFalse(qualify_authored_routes(layout, traffic, narrow, 1.14)["passed"])
+        forbidden = {"routes": {"yield": {"start_pose": [22, 4, 0], "poses": [[30, 4, 0]], "forbidden_resources": ["Z_UPPER"]}}}
+        self.assertFalse(qualify_authored_routes(layout, traffic, forbidden, 1.14)["passed"])
+
+    def test_nearest_time_join_does_not_extrapolate(self):
+        samples = [{"id": 0}, {"id": 1}]
+        self.assertEqual(_nearest(samples, [1, 2], 1.97), samples[1])
+        self.assertIsNone(_nearest(samples, [1, 2], 2.2))
+        self.assertIsNone(_nearest([], [], 2))
+
+    def test_missing_or_failed_worker_pair_cannot_pass_without_ros(self):
+        with tempfile.TemporaryDirectory() as directory:
+            report = validate_g2_evidence(Path(directory), "run", "P0")
+            self.assertFalse(report["passed"])
+            self.assertTrue(report["errors"])
+            self.assertEqual(report["bag"], {})
+
+    def test_every_filtered_scan_is_joined_after_any_recording_order(self):
+        topic = "/carter1/scan_front"
+        raw = {(topic, float(i)): [scan([2, 3, 4])] for i in range(6)}
+        filtered = {(topic, float(i)): [scan([math.inf, 3, math.inf])] for i in reversed(range(6))}
+        self.assertTrue(validate_scan_pairs(raw, filtered)["passed"])
+        filtered[(topic, 5)][0]["ranges"][1] = 99
+        self.assertFalse(validate_scan_pairs(raw, filtered)["passed"])
+        filtered[(topic, 5)][0]["ranges"][1] = 3
+        filtered[(topic, 5)][0]["range_max"] = 300
+        self.assertFalse(validate_scan_pairs(raw, filtered)["passed"])
+        filtered[(topic, 5)][0]["range_max"] = 30
+        del raw[(topic, 5)]
+        self.assertFalse(validate_scan_pairs(raw, filtered)["passed"])
+        raw[(topic, 5)] = [scan([2, 3, 4])]
+        del filtered[(topic, 5)]
+        self.assertFalse(validate_scan_pairs(raw, filtered)["passed"])
+        self.assertTrue(validate_scan_pairs(raw, filtered, coverage_window=(0, 4))["passed"])
+
+    def test_duplicate_scan_timestamps_and_nan_masking(self):
+        key: tuple[str, float] = ("/carter1/scan_front", 1.0)
+        raw: dict[tuple[str, float], list[dict[str, Any]]] = {key: [scan([math.nan, math.nan, 2])]}
+        derived: dict[tuple[str, float], list[dict[str, Any]]] = {key: [scan([math.inf, math.nan, math.inf])]}
+        self.assertTrue(validate_scan_pairs(raw, derived)["passed"])
+        derived[key].append(deepcopy(derived[key][0]))
+        self.assertFalse(validate_scan_pairs(raw, derived)["passed"])
+        derived[key].pop()
+        raw[key].append(deepcopy(raw[key][0]))
+        self.assertFalse(validate_scan_pairs(raw, derived)["passed"])
+
+    def test_f3_continuity_requires_decoded_tf_and_original_generation(self):
+        traffic = TrafficController.from_file(ROOT / "configs/factory-v3/traffic.json")
+        events, transforms = cycle_fixture()
+        report = validate_f3_cycle(events, traffic, transforms, planning_radius_m=1.14)
+        self.assertTrue(report["passed"], report["errors"])
+        transforms["carter2"]["odom->base_link"][4]["translation"] = [32, 8, 0]
+        self.assertFalse(validate_f3_cycle(events, traffic, transforms, planning_radius_m=1.14)["passed"])
+        events, transforms = cycle_fixture()
+        events[-1]["reservation_id"] = 2
+        self.assertFalse(validate_f3_cycle(events, traffic, transforms, planning_radius_m=1.14)["passed"])
+        events, transforms = cycle_fixture()
+        events[3]["waiter_pose_time_s"] = -10
+        self.assertFalse(validate_f3_cycle(events, traffic, transforms, planning_radius_m=1.14)["passed"])
+
+    def test_consistent_action_uuid_status_cannot_override_authored_robot(self):
+        scenarios = json.loads((ROOT / "configs/factory-v3/g2-scenarios.json").read_text())["scenarios"]
+        traffic = TrafficController.from_file(ROOT / "configs/factory-v3/traffic.json")
+        actions = [{"route_id": "carter1_cross", "robot_id": "carter2", "goal_uuid": "1c4cf21c362e43df901ae945dc48e663",
+                    "action_type": "navigate_to_pose", "accepted_sim_time_s": 1, "terminal_sim_time_s": 2, "terminal_status": 4}]
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory)
+            (output / "traffic-events.jsonl").write_text("")
+            errors = []
+            _validate_dispatch(output, "run", "F1", {"actions": actions}, {}, traffic, {}, errors, scenarios["F1"])
+            self.assertTrue(any("authored robot" in error for error in errors), errors)
+
+    def test_duplicate_and_conflicting_ros_sequences_cannot_be_overwritten(self):
+        for records in ([{"seq": 1}, {"seq": 1}], [{"seq": 1, "mode": "forged"}, {"seq": 1, "mode": "valid"}],
+                        [{"seq": 2}, {"seq": 1}], [{"seq": True}], [{"seq": 1}, {"seq": 3}], [{"seq": 4}, {"seq": 5}]):
+            with self.subTest(records=records):
+                errors = []
+                unique_sequence_index(records, "seq", errors, "test")
+                self.assertTrue(errors)
+        errors = []
+        self.assertEqual(set(unique_sequence_index([{"seq": 1}, {"seq": 2}], "seq", errors, "test")), {1, 2})
+        self.assertFalse(errors)
+
+
+if __name__ == "__main__":
+    unittest.main()

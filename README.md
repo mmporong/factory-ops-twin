@@ -2,7 +2,7 @@
 
 두 AMR이 공장에 자재를 공급하고 완료품을 출하하는 과정을 검증하는 프로젝트입니다. 가상 산업용 센서 모듈 공장을 대상으로 주문·버퍼·공정·운반 상태를 연결하고, 배차와 공유 통로 복구를 비교합니다.
 
-현재 **Isaac Sim 6.2·ROS 2 Jazzy·Nav2로 AMR 한 대의 주문 운송을 검증**했습니다. AWS L40S에서 Nova Carter가 S1→CI로 자재를 운반하고, 설정된 공정 처리 20초 뒤 CO→OUT으로 완료품을 운반했습니다. 네 navigation goal, 운영 원장, 실제 ROS bag, 전체 휠 궤적과 촬영 파일을 대조했습니다. 두 AMR의 교통 제어와 정책별 생산성 비교는 후속 단계입니다.
+현재 **Isaac Sim 6.2·ROS 2 Jazzy·Nav2로 AMR 한 대의 주문 운송을 검증**했습니다. AWS L40S에서 Nova Carter가 S1→CI로 자재를 운반하고, 설정된 공정 처리 20초 뒤 CO→OUT으로 완료품을 운반했습니다. 네 navigation goal, 운영 원장, 실제 ROS bag, 전체 휠 궤적과 촬영 파일을 대조했습니다. 두 AMR의 독립 센서·위치추정과 교통 제어 코드를 추가했으며, 실제 두 대 실행은 GPU 검증 전입니다. 정책별 생산성 비교도 후속 단계입니다.
 
 ![Isaac Sim 6.2에서 렌더한 G1 공장 배치](docs/images/g1-factory-overview.png)
 
@@ -41,6 +41,7 @@ S1~S3은 동일한 키트 토트를 준비하는 위치입니다. 하나의 주�
 | 운영 원장 | 주문·운반·버퍼·공정·완료 상태, 버전 검사, 중복 이벤트 억제, 로그 재생 |
 | 배차 | 공통 버퍼·가용성 조건을 통과한 작업에 FIFO 또는 이동 ETA 적용 |
 | 통로 예약 | 지정된 3개 자원과 출구의 원자 예약, stale 점유 유지, release ACK 검사 |
+| 두 AMR 실행 코드 | 로봇별 namespace·전후방 RTX LiDAR·TF·Nav2, 짧은 주행 허가와 통로 소유권 분리, 같은 물리 프레임의 RGB 3장 수집. 실제 GPU 검증 전 |
 | 복구 결정 | 5초 지속 wait cycle의 양보 결정과 ACK 이후 재개. 60초 stall과 구분 |
 | 로컬 데모 | 동일한 6개 주문·2개 논리 AMR의 두 정책 실행, CSV·JSON·HTML·SHA256 명세 생성 |
 
@@ -130,15 +131,17 @@ factory_ops/
   motion.py           휠 각도 적분과 명령 watchdog
   drive_profile.py    정상 가감속·회전 전환·곡선·휠 제한, 별도 고장 정지
   motion_validation.py 기록한 명령 경계와 물리 응답의 독립 검사
+  motion_authorization.py  시뮬레이션 시각으로 만료되는 주행 허가 검사
   navigation.py       goal 결과와 CI·CO 인계·공정 연결
   usda.py             USD 텍스트 출력
   operations/         상태 모델, 원장, 배차
   traffic.py          예약·복구 결정
+  traffic_observation.py 추정 위치와 로봇 외곽의 자원·출구 투영
   traffic_fixtures.py 작성된 관측에 따른 결정 검사
   smoke.py            CPU 이벤트 실행
   report.py, cli.py   결과 보고와 명령
 tests/                표준 unittest 회귀시험
-scripts/isaac/        정적 장면·단일 AMR·RTX LiDAR·실제 RGB 수집
+scripts/isaac/        정적 장면·단일/두 AMR·RTX LiDAR·실제 RGB 수집
 scripts/ros/          Jazzy Nav2 실행, mission action client, CDR·원본 증거 검사
 scripts/brev/         코드 SHA를 고정한 두 컨테이너 실행·종료 supervisor
 docs/                 설계 경계와 GPU 연동 순서
@@ -146,7 +149,7 @@ docs/                 설계 경계와 GPU 연동 순서
 
 ## 다음 실행 순서
 
-1. G2: 두 Carter의 namespace·센서·TF를 분리하고, 예약·양보·stale 점유 유지와 복구 절차를 주행에 연결합니다.
+1. G2: 두 Carter의 정지 상태 센서·위치추정을 먼저 검증한 뒤, 통로 경합·이동 중 통신 허가 만료·교착 후 P2 양보와 재개를 실제 Nav2 action으로 검사합니다. 기존 2 m 지름길 대신 3 m 주통로와 동쪽 연결로를 사용합니다.
 2. G3: 같은 주문·장애 입력으로 FIFO/ETA를 정상·폐쇄·급증 조건에서 비교합니다. 부하 보정 후 10개 seed로 총 60회를 평가할 계획입니다.
 3. G4: 수집 범위를 다양한 장면으로 늘리고 ROS bag·센서 정렬·라벨 품질을 검사합니다. 현재의 한 장면·인접 프레임을 독립 장면으로 세지 않으며, G0b·G1 자료는 학습용으로 승인하지 않았습니다.
 

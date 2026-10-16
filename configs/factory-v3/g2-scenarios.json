@@ -1,0 +1,305 @@
+{
+  "schema_version": 1,
+  "revision": "g2-physical-v1",
+  "frame": "map",
+  "units": "m",
+  "scope": "two-robot traffic qualification; authored factory, not surveyed CAD; not a production fleet scheduler",
+  "scenarios": {
+    "P0": {
+      "purpose": "stationary two-namespace, localization, four RTX scanners and peer-observation qualification",
+      "spawns": {
+        "carter1": [
+          22,
+          4,
+          0
+        ],
+        "carter2": [
+          26,
+          4,
+          3.141592653589793
+        ]
+      },
+      "max_sim_time_s": 150,
+      "stationary_observation_s": 10
+    },
+    "F1": {
+      "purpose": "capacity-one crossing with a waiting peer and observed release",
+      "spawns": {
+        "carter1": [
+          22,
+          4,
+          0
+        ],
+        "carter2": [
+          32,
+          8,
+          -1.5707963267948966
+        ]
+      },
+      "max_sim_time_s": 300,
+      "routes": {
+        "carter1_cross": {
+          "robot_id": "carter1",
+          "resources": [
+            "Z_UPPER"
+          ],
+          "exit_id": "Z_UPPER:east",
+          "poses": [
+            [
+              36,
+              4,
+              0
+            ]
+          ],
+          "start_pose": [
+            22,
+            4,
+            0
+          ]
+        },
+        "carter2_cross": {
+          "robot_id": "carter2",
+          "resources": [
+            "Z_UPPER"
+          ],
+          "exit_id": "Z_UPPER:west",
+          "poses": [
+            [
+              32,
+              4,
+              3.141592653589793
+            ],
+            [
+              20,
+              4,
+              3.141592653589793
+            ]
+          ],
+          "start_pose": [
+            32,
+            8,
+            -1.5707963267948966
+          ]
+        }
+      }
+    },
+    "F2": {
+      "purpose": "moving-owner heartbeat/authorization outage, lease-expiry stop and retained reservation",
+      "spawns": {
+        "carter1": [
+          22,
+          4,
+          0
+        ],
+        "carter2": [
+          26,
+          4,
+          0
+        ]
+      },
+      "max_sim_time_s": 360,
+      "fault": {
+        "robot_id": "carter2",
+        "duration_sim_s": 30,
+        "trigger_encoder_speed_m_s": 0.08,
+        "trigger_resource": "Z_UPPER",
+        "scope": "traffic pose/heartbeat and authorization channel only; ROS sensors and action cancellation remain connected"
+      },
+      "routes": {
+        "carter2_exit": {
+          "robot_id": "carter2",
+          "resources": [
+            "Z_UPPER"
+          ],
+          "exit_id": "Z_UPPER:east",
+          "poses": [
+            [
+              32,
+              4,
+              1.5707963267948966
+            ],
+            [
+              32,
+              8,
+              1.5707963267948966
+            ]
+          ],
+          "start_pose": [
+            26,
+            4,
+            0
+          ]
+        },
+        "carter1_cross": {
+          "robot_id": "carter1",
+          "resources": [
+            "Z_UPPER"
+          ],
+          "exit_id": "Z_UPPER:east",
+          "poses": [
+            [
+              32,
+              4,
+              0
+            ]
+          ],
+          "start_pose": [
+            22,
+            4,
+            0
+          ]
+        }
+      }
+    },
+    "F3": {
+      "purpose": "estimated exit blockage and resource wait form a persistent cycle; cancel, yield to P2, release ACK, resume",
+      "spawns": {
+        "carter1": [
+          22,
+          4,
+          0
+        ],
+        "carter2": [
+          30,
+          4,
+          3.141592653589793
+        ]
+      },
+      "max_sim_time_s": 900,
+      "routes": {
+        "carter1_inside": {
+          "robot_id": "carter1",
+          "resources": [
+            "Z_UPPER"
+          ],
+          "exit_id": "Z_UPPER:east",
+          "poses": [
+            [
+              26.8,
+              4,
+              0
+            ]
+          ],
+          "start_pose": [
+            22,
+            4,
+            0
+          ]
+        },
+        "carter2_blocked": {
+          "robot_id": "carter2",
+          "resources": [
+            "Z_UPPER"
+          ],
+          "exit_id": "Z_UPPER:west",
+          "poses": [
+            [
+              20,
+              4,
+              3.141592653589793
+            ]
+          ],
+          "start_pose": [
+            30,
+            4,
+            3.141592653589793
+          ]
+        },
+        "carter2_yield": {
+          "robot_id": "carter2",
+          "resources": [
+            "J_SHIP",
+            "Z_LOWER"
+          ],
+          "exit_id": "Z_LOWER:west",
+          "forbidden_resources": [
+            "Z_UPPER"
+          ],
+          "destination": "P2",
+          "poses": [
+            [
+              32,
+              4,
+              1.5707963267948966
+            ],
+            [
+              32,
+              20,
+              3.141592653589793
+            ],
+            [
+              16,
+              20,
+              1.5707963267948966
+            ],
+            [
+              16,
+              22.5,
+              1.5707963267948966
+            ]
+          ],
+          "start_pose": [
+            30,
+            4,
+            3.141592653589793
+          ]
+        },
+        "carter1_exit": {
+          "robot_id": "carter1",
+          "resources": [
+            "Z_UPPER"
+          ],
+          "exit_id": "Z_UPPER:east",
+          "poses": [
+            [
+              36,
+              4,
+              0
+            ]
+          ],
+          "start_pose": [
+            26.8,
+            4,
+            0
+          ]
+        },
+        "carter2_resume": {
+          "robot_id": "carter2",
+          "resources": [
+            "Z_LOWER",
+            "J_SHIP",
+            "Z_UPPER"
+          ],
+          "exit_id": "Z_UPPER:west",
+          "poses": [
+            [
+              16,
+              20,
+              -1.5707963267948966
+            ],
+            [
+              32,
+              20,
+              -1.5707963267948966
+            ],
+            [
+              32,
+              4,
+              3.141592653589793
+            ],
+            [
+              20,
+              4,
+              3.141592653589793
+            ]
+          ],
+          "start_pose": [
+            16,
+            22.5,
+            1.5707963267948966
+          ]
+        }
+      }
+    }
+  }
+}

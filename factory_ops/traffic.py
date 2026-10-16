@@ -44,6 +44,11 @@ class EventDetails(TypedDict, total=False):
     reservation_id: int | None
     predecessor_reservation_id: int
     recovery_id: int
+    waiter_pose_time_s: float
+    blocker_pose_time_s: float
+    planning_radius_m: float
+    waiter_pose_xy: tuple[float, float]
+    blocker_pose_xy: tuple[float, float]
 
 
 class EventRecord(EventDetails):
@@ -215,6 +220,7 @@ class TrafficController:
         self._observations: dict[str, Observation] = {}
         self._pending: list[_Pending] = []
         self._wait_edges: dict[tuple[str, str], float] = {}
+        self._observed_exit_waits: dict[tuple[str, str], tuple[int, float]] = {}
         self._last_progress: dict[str, tuple[float, str]] = {}
         self._release_acks: dict[int, _ReleaseAck] = {}
         self._ack_expected_waiter: dict[int, str] = {}
@@ -290,6 +296,7 @@ class TrafficController:
         self._observations[robot_id] = Observation(
             pose, pose_time, heartbeat_time, occupied, clear, status, motion_allowed
         )
+        self._refresh_exit_waits(event_time)
         self._event(
             event_time, "observation", robot_id, status=status,
             motion_allowed=motion_allowed,
@@ -312,6 +319,7 @@ class TrafficController:
             obs.pose_xy, obs.pose_time, heartbeat_time, obs.occupied_resources,
             obs.clear_exits, obs.status, obs.motion_allowed
         )
+        self._refresh_exit_waits(event_time)
         self._event(event_time, "heartbeat", robot_id)
 
     def request(
@@ -502,6 +510,7 @@ class TrafficController:
 
     def detect_cycle(self, *, now: float) -> tuple[str, ...] | None:
         now = self._validate_time(now, "now")
+        self._refresh_exit_waits(now)
         graph: dict[str, set[str]] = {}
         for (waiter, blocker), since in self._wait_edges.items():
             if now - since >= self.cycle_persistence_s:
@@ -516,6 +525,68 @@ class TrafficController:
                     if nxt not in path:
                         stack.append((nxt, path + (nxt,)))
         return None
+
+    def observe_exit_wait(
+        self, robot_id: str, blocker_id: str, *, now: float, planning_radius_m: float
+    ) -> bool:
+        """Record a wait only for fresh estimated blockage of an owner's exit.
+
+        The owner must already intersect its reserved resource.  A peer's
+        circle blocks the destination circle when centre distance <= 2r.
+        The edge is revalidated on every cycle query and cannot survive a
+        stale pose, resource generation change, or cleared exit.
+        """
+        from factory_ops.traffic_observation import _radius
+
+        now = self._validate_time(now, "now")
+        radius = _radius(planning_radius_m)
+        active = self._active_reservations.get(robot_id)
+        edge = (robot_id, blocker_id)
+        if active is None or not self._exit_blocked(robot_id, blocker_id, radius, now):
+            if edge in self._observed_exit_waits:
+                self._observed_exit_waits.pop(edge)
+                self._wait_edges.pop(edge, None)
+            return False
+        previous = self._observed_exit_waits.get(edge)
+        if previous != (active.reservation_id, radius):
+            self._wait_edges.pop(edge, None)
+        self._observed_exit_waits[edge] = (active.reservation_id, radius)
+        self._wait_edges.setdefault(edge, now)
+        self._event(
+            now, "wait", robot_id, blockers=(blocker_id,), reason="observed_exit_blocked",
+            exit_id=active.exit_id, reservation_id=active.reservation_id,
+            waiter_pose_time_s=self._observations[robot_id].pose_time,
+            blocker_pose_time_s=self._observations[blocker_id].pose_time,
+            planning_radius_m=radius,
+            waiter_pose_xy=self._observations[robot_id].pose_xy,
+            blocker_pose_xy=self._observations[blocker_id].pose_xy,
+        )
+        return True
+
+    def refresh_exit_waits(self, *, now: float) -> None:
+        self._refresh_exit_waits(self._validate_time(now, "now"))
+
+    def _refresh_exit_waits(self, now: float) -> None:
+        for edge, (generation, radius) in list(self._observed_exit_waits.items()):
+            active = self._active_reservations.get(edge[0])
+            if (active is None or active.reservation_id != generation
+                    or not self._exit_blocked(*edge, radius, now)):
+                self._observed_exit_waits.pop(edge)
+                self._wait_edges.pop(edge, None)
+
+    def _exit_blocked(self, robot_id: str, blocker_id: str, radius: float, now: float) -> bool:
+        from factory_ops.traffic_observation import exit_xy, project_observation
+
+        if robot_id == blocker_id or any(self._freshness_reason(robot, now) for robot in (robot_id, blocker_id)):
+            return False
+        active = self._active_reservations.get(robot_id)
+        if active is None:
+            return False
+        owner = self._observations[robot_id]
+        peer = self._observations[blocker_id]
+        occupied = project_observation(self, owner.pose_xy, radius)["occupied_resources"]
+        return (bool(set(occupied).intersection(active.resources))
+                and math.dist(peer.pose_xy, exit_xy(self, active.exit_id)) <= 2.0 * radius + 1e-9)
 
     def recovery_decision(
         self,
@@ -721,6 +792,11 @@ class TrafficController:
     def events(self) -> tuple[EventRecord, ...]:
         return tuple(event.copy() for event in self._events)
 
+    @property
+    def event_sequence(self) -> int:
+        """Current event cursor without copying the accumulated journal."""
+        return self._event_seq
+
     def events_since(self, cursor: int) -> EventsPage:
         """Read in-memory events after a validated monotonic sequence cursor."""
         if not isinstance(cursor, int) or isinstance(cursor, bool) or cursor < 0:
@@ -902,6 +978,10 @@ class TrafficController:
     def _clear_waits_for(self, robot_id: str) -> None:
         self._wait_edges = {
             edge: since for edge, since in self._wait_edges.items()
+            if robot_id not in edge
+        }
+        self._observed_exit_waits = {
+            edge: evidence for edge, evidence in self._observed_exit_waits.items()
             if robot_id not in edge
         }
 

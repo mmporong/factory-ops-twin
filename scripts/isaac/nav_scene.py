@@ -301,13 +301,15 @@ def _joint_positions(robot: Any) -> list[float]:
     return [float(value) for value in array]
 
 
-def _drive_geometry_from_colliders(colliders: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
+def _drive_geometry_from_colliders(
+    colliders: Sequence[Mapping[str, Any]], *, robot_path: str = ROBOT_PATH,
+) -> dict[str, Any]:
     """Measure Carter's differential-drive geometry in the robot root frame."""
     wheel_records: dict[str, list[Mapping[str, Any]]] = {"left": [], "right": []}
     for record in colliders:
         path = str(record.get("path", ""))
         for side in wheel_records:
-            if path.startswith(f"{ROBOT_PATH}/wheel_{side}/"):
+            if path.startswith(f"{robot_path}/wheel_{side}/"):
                 wheel_records[side].append(record)
                 break
     if any(len(records) != 3 for records in wheel_records.values()):
@@ -369,8 +371,10 @@ def _drive_geometry_from_colliders(colliders: Sequence[Mapping[str, Any]]) -> di
     }
 
 
-def _apply_measured_drive_geometry(config: dict[str, Any], colliders: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
-    measured = _drive_geometry_from_colliders(colliders)
+def _apply_measured_drive_geometry(
+    config: dict[str, Any], colliders: Sequence[Mapping[str, Any]], *, robot_path: str = ROBOT_PATH,
+) -> dict[str, Any]:
+    measured = _drive_geometry_from_colliders(colliders, robot_path=robot_path)
     expected = config["drive_geometry"]
     for field in ("wheel_radius_m", "wheel_separation_m"):
         if abs(float(expected[field]) - float(measured[field])) > 1e-4:

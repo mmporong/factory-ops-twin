@@ -253,9 +253,11 @@ def _capture_factory_overview(output: Path, session: CaptureSession) -> dict[str
     return session.capture_factory_overview()
 
 
-def _collision_bounds(stage: Any, Usd: Any, UsdGeom: Any, UsdPhysics: Any) -> tuple[list[list[float]], list[dict[str, Any]]]:
+def _collision_bounds(
+    stage: Any, Usd: Any, UsdGeom: Any, UsdPhysics: Any, *, robot_path: str = ROBOT_PATH,
+) -> tuple[list[list[float]], list[dict[str, Any]]]:
     from pxr import Gf
-    root = stage.GetPrimAtPath(ROBOT_PATH)
+    root = stage.GetPrimAtPath(robot_path)
     if not root.IsValid():
         raise base.SmokeError("Nova Carter reference did not produce a valid prim")
     cache = UsdGeom.XformCache(Usd.TimeCode.Default())
