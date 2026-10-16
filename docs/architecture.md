@@ -27,8 +27,8 @@ flowchart LR
 
 ## 현재 실행 계약
 
-- 배치의 단일 입력은 `configs/factory-v3/layout.json`이다. 물리 장애물과 AMR 허용 영역을 분리하며 나머지 바닥은 정책 keepout으로 취급한다.
-- 경로 검사는 50 mm 격자의 4방향 BFS다. 29×29 셀 probe는 계획 여유를 확인하는 도구이며 Carter footprint나 Nav2 costmap이 아니다.
+- 기본 배치의 입력은 `configs/factory-v3/layout.json`이다. 물리 장애물과 AMR 허용 영역을 분리하며 나머지 바닥은 정책 keepout으로 취급한다. G3a는 `g3-routing.json`의 정책 영역 보정을 적용한 파생 배치를 사용한다.
+- CPU 데모의 경로 검사는 50 mm 격자의 4방향 BFS다. 29×29 셀 probe는 계획 여유를 확인하는 도구이며 Carter footprint나 Nav2 costmap이 아니다. G3a의 경로 후보는 측정한 회전 외곽과 설정 여유를 사용해 별도로 검사한다.
 - `Ledger`가 payload 소유권과 공정 상태를 관리한다. inbound 배정 시 CI 슬롯을 예약하고, CI drop에서 점유로 전환하며 처리 시작 시 슬롯을 반환한다. 처리 시작 시에는 CO 슬롯을 예약한다.
 - pickup/drop은 task·order·payload·stage·robot·attempt 결속과 인계 station을 검사한다. station이 누락되거나 일치하지 않으면 상태를 바꾸지 않고 거부한다.
 - 배차 두 정책은 `Ledger.can_assign` 조건을 공통으로 사용한다. FIFO는 오래된 실행 가능 작업에 가까운 로봇을 고른다. ETA는 현재 알려진 빈 이동·적재 이동 거리와 설정 속도·인계 대기로 후보 쌍을 비교한다.
@@ -36,7 +36,7 @@ flowchart LR
 - 교통 모듈은 자원·출구를 함께 예약한다. heartbeat TTL 만료만으로 점유를 반환하지 않는다. 신선한 추정 footprint 이탈과 출구 clearance가 확인되어야 release ACK를 낸다.
 - grant·release ACK·resume은 기다리는 선행 예약 번호를 사용한다. 등록한 대기자는 해당 ACK를 한 번 소비하며, 다른 예약을 기다릴 때 과거 ACK를 재사용할 수 없다. 같은 대기자에 대한 자동 grant와 ACK 소비의 관계를 기록한다. stale 활성 소유자는 점유를 유지하지만 진행 명령을 받지 않는다. 미승인 stale 요청은 실제 점유와 구분한다.
 - fresh 관측에 점유가 있으면 이동 금지 로봇도 점유자로 기록한다. 점유 기록과 이동 허가는 별개이며, 이동 금지 상태에는 정지를 요청한다.
-- 교통은 `Z_UPPER`, `Z_LOWER`, `J_SHIP`에 한정한다. 전체 공장에 대한 deadlock-free나 안전 인증을 주장하지 않는다.
+- G2 교통은 `Z_UPPER`, `Z_LOWER`, `J_SHIP`에 한정한다. G3a의 전체 경로 후보·타일 예약은 별도의 로컬 계약이다. 전체 공장에 대한 deadlock-free나 안전 인증을 주장하지 않는다.
 - 재배정은 pickup 전 실패에만 허용한다. pickup 후 다른 로봇으로 화물을 옮기는 동작은 구현하지 않았다.
 
 ## CPU 결과 해석
@@ -66,6 +66,24 @@ Nav2의 planner·controller·BT lifecycle이 모두 ACTIVE가 되고 시계·센
 교통 이벤트의 run ID·sequence·예약 번호와 `events_since(cursor)`는 같은 프로세스 실행 안의 결정 소비를 위한 계약이다. 어댑터는 이벤트 수신 후 현재 freshness·예약 번호를 재확인하고 이동 명령을 내려야 한다. `status` 문자열은 진단용이고, 동작 허용 여부는 `motion_allowed`로 구분한다. 이 모듈에는 DB·브로커·프로세스 재시작 복구나 무제한 운용을 위한 큐 제한이 없다. ROS 장기 운용 전에는 저장소와 bounded queue, overload·재시작·재전송 정책을 정해야 한다. 원장의 business no-op receipt도 프로세스 내부 캐시이므로 영속 수신 기록을 대신하지 않는다.
 
 이벤트 해시 체인과 artifact SHA256은 저장된 파일의 일관성을 검사한다. 발행자 인증이나 악의적인 전체 이력 재작성 방지를 보장하는 서명은 아니다.
+
+## G3a 연속 주문·경로 예약 계약
+
+G3a는 로컬 준비 단계다. `FleetMission`, `RouteBook`, `RouteReservationManager`, 실험 입력과 패키지 생성기는 구현했지만, 이를 연결한 G3 ROS action 어댑터·장벽 제어·물리 실행 검증기는 아직 구현하지 않았다. G0a·G0b·G1·G2의 4/6 완료 상태는 유지한다.
+
+`FleetMission`은 두 로봇이 공유하는 원장 하나를 사용한다. release 시각에만 주문을 공개하며, 시간 진행과 유효한 action 결과 수신 모두 새 주문·공정·활성 goal의 기한을 처리한다. goal UUID·task·station·attempt, 성공 상태·error code·도착 pose를 검사한 뒤 pickup/drop을 확정한다. 잘못된 배차 인자는 시간·원장·journal을 바꾸기 전에 거부한다. 배차 callback 예외는 이미 발생한 배정과 활성 intent를 실패 기록에 남기고 임무를 정지한다. 합성 성공 결과를 사용하는 단위시험은 물리 주행 증거가 아니다.
+
+`RouteBook`은 6개 station·2개 포켓을 연결하는 21개 구간을 사용한다. G2의 충돌 외곽 측정 provenance에 설정 평가 여유·계획 여유를 더한다. 서쪽·S2·중앙의 정책 영역을 보정하며 station과 19개 설비 충돌 형상은 유지한다. 50 mm 격자와 선분 외곽의 연속 여유 검사로 112개 정상/폐쇄 경로 후보를 확인하고, 경로 외곽과 접촉하는 1 m 타일을 모두 포함한다. 타일은 예약의 보수적 공간 단위이며 실제 Nav2 경로를 대신하지 않는다.
+
+G2의 자원 예약은 이전 자원에서 완전히 이탈해야 반환된다. 모든 dock·주차 영역까지 덮는 타일 경로에는 이 반환 조건을 그대로 적용할 수 없다. `RouteReservationManager`는 신선한 자기 점유가 이전·다음 예약의 교집합 안에 있고 추가 타일이 비었을 때 원자 전환한다. 공통 점유는 보존하고 이전 예약의 차집합만 반환한다. 거절·stale·잘못된 선행 세대는 이전 소유권을 유지한다. 주차 상태에서도 점유를 빈 집합으로 만들지 않는다.
+
+주행 허가는 수락된 goal UUID·현재 예약 세대·모든 로봇의 신선한 추정 점유를 요구한다. 5초 wait cycle은 요청 내용·선행 세대·현재 blocker와 각 로봇의 freshness가 유지될 때만 보고한다. 이 보고는 자동 점유 해제나 복구 주행을 수행하지 않는다. 예약 축소의 `stopped=True`는 현재 호출자의 주장으로 받으며, G3b 어댑터에서 실제 휠 정지를 확인해야 한다. CI/CO의 논리 2슬롯과 한 대가 차지하는 물리 dock은 분리하고, dock 이후 다음 구간이나 P1/P2 이탈 경로까지 연결해야 한다.
+
+`g3-experiment.json`은 3조건 × 2정책 × 10 seed의 60개 입력을 고정한다. 같은 조건·seed의 정책 쌍은 주문·초기 상태 hash가 같고 실행 순서를 교대한다. 폐쇄 제거 시각은 장면 이벤트에만 두며 배차에는 현재 폐쇄 상태만 노출한다. 최종 부하는 아직 보정하지 않았다. `assert_execution_ready`는 보정 자료가 없는 현 설정의 물리 평가 집계를 거부한다. 완료 주문 수는 실패·미완료를 포함한 모든 쌍에서 비교하고, makespan은 양쪽 완수 쌍만 사용하며 제외된 수를 함께 표시한다. 서로 다른 코드 commit의 결과를 같은 비교로 합치지 않는다.
+
+`prepare-g3`는 새 폴더에 경로 검사·60개 미실행 계획·정상/폐쇄 지도·USD·대화형 HTML의 16개 파일과 manifest를 생성한다. USD는 기본 설비 장면이며 장벽 활성화는 G3b 실행 기능으로 남긴다. `verify-g3`는 manifest 범위·원본 SHA·실제 파일 집합을 검사한 뒤 현재 입력으로 경로와 계획을 재계산하고 16개 파일을 임시 폴더에서 재생성해 바이트를 대조한다. custom config를 쓰면 실제 해당 폴더의 layout·routing·G2·traffic 바인딩을 검사하며 검증 대상 파일은 수정하지 않는다.
+
+G3b는 실제 수락된 goal UUID·예약 세대·신선한 map footprint·Nav2 경로를 연결해야 한다. S1/S2/S3·CI/CO/OUT과 dock→P1/P2 경로의 실제 주행, 구간 전환과 정지 유지, 장벽 collider·지도·경로 폐쇄의 시각 일치를 먼저 검사한다. 이후 물리 부하 보정과 6개 조건/정책 파일럿에서 RTF·기록 데이터량·실패를 측정해 최종 도착 간격과 60회 예산을 고정한다. 원본 수집·대표 촬영·C/E 백업과 GPU Stop은 실제 실행 단계에도 유지한다.
 
 ## GPU 단계의 검증 순서
 

@@ -51,6 +51,39 @@ def _angle_error(left: float, right: float) -> float:
     return abs(math.atan2(math.sin(left - right), math.cos(left - right)))
 
 
+def validate_goal_pose(
+    intent: "NavigationIntent",
+    result: "NavigationResult",
+    *,
+    xy_tolerance: float = 0.25,
+    yaw_tolerance: float = 0.25,
+    max_pose_age: float = 0.5,
+) -> str | None:
+    """Return a validation error for localization evidence, or ``None``.
+
+    The defaults preserve the G1 contract.  Fleet callers may tighten or relax
+    the numeric tolerances explicitly without weakening the frame, timestamp,
+    or finite-value validation performed by the navigation dataclasses.
+    """
+    xy_limit = _finite(xy_tolerance, "xy_tolerance")
+    yaw_limit = _finite(yaw_tolerance, "yaw_tolerance")
+    age_limit = _finite(max_pose_age, "max_pose_age")
+    if xy_limit < 0 or yaw_limit < 0 or age_limit < 0:
+        raise NavigationError("pose tolerances must be nonnegative")
+    pose = result.pose
+    if pose.frame_id != "map":
+        return "localization pose is not in map frame"
+    if pose.stamp > result.received_sim_time:
+        return "localization pose stamp is in the future"
+    if result.received_sim_time - pose.stamp > age_limit:
+        return "localization pose is stale"
+    if math.hypot(pose.x - intent.goal.x, pose.y - intent.goal.y) > xy_limit:
+        return "localization pose is outside goal xy tolerance"
+    if _angle_error(pose.yaw, intent.goal.yaw) > yaw_limit:
+        return "localization pose is outside goal yaw tolerance"
+    return None
+
+
 @dataclass(frozen=True, slots=True)
 class GoalPose:
     frame_id: str
@@ -280,7 +313,7 @@ class SingleOrderMission:
             self.sim_time = result.received_sim_time
             self._fail("navigation timeout", result)
             raise NavigationError("navigation result arrived after deadline")
-        pose_error = self._pose_error(intent, result)
+        pose_error = validate_goal_pose(intent, result)
         if pose_error is not None:
             self._fail(pose_error, result)
             raise NavigationError(pose_error)
@@ -375,20 +408,6 @@ class SingleOrderMission:
             )
         )
 
-    def _pose_error(self, intent: NavigationIntent, result: NavigationResult) -> str | None:
-        pose = result.pose
-        if pose.frame_id != "map":
-            return "localization pose is not in map frame"
-        if pose.stamp > result.received_sim_time:
-            return "localization pose stamp is in the future"
-        if result.received_sim_time - pose.stamp > 0.5:
-            return "localization pose is stale"
-        if math.hypot(pose.x - intent.goal.x, pose.y - intent.goal.y) > 0.25:
-            return "localization pose is outside goal xy tolerance"
-        if _angle_error(pose.yaw, intent.goal.yaw) > 0.25:
-            return "localization pose is outside goal yaw tolerance"
-        return None
-
     def _reject(self, result: NavigationResult, reason: str) -> None:
         self._record("result_rejected", {"reason": reason, "result": result.to_dict()})
         raise NavigationError(reason)
@@ -423,4 +442,5 @@ __all__ = [
     "NavigationReceipt",
     "NavigationResult",
     "SingleOrderMission",
+    "validate_goal_pose",
 ]

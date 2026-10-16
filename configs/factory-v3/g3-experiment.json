@@ -1,0 +1,129 @@
+{
+  "schema_version": 1,
+  "revision": "g3-authored-pilot-v1",
+  "status": "authored_pilot_only_not_executed",
+  "scope": "g3a_pending_inputs_not_physical_evidence",
+  "matrix": {
+    "conditions": [
+      "normal",
+      "closure",
+      "burst"
+    ],
+    "policies": [
+      "fifo",
+      "eta"
+    ],
+    "seeds": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "expected_trials": 60
+  },
+  "load": {
+    "initial_robots": {
+      "carter1": "P1",
+      "carter2": "P2"
+    },
+    "service_time_s": 20.0,
+    "workers": 1,
+    "ci_capacity": 2,
+    "co_capacity": 2,
+    "nominal_speed_m_s": 0.6,
+    "dwell_s": 5.0
+  },
+  "workloads": {
+    "qualification": {
+      "order_count": 2,
+      "sources": [
+        "S1",
+        "S3"
+      ],
+      "horizon_s": 480.0
+    },
+    "pilot": {
+      "order_count_min": 4,
+      "order_count_max": 6,
+      "sources": [
+        "S1",
+        "S2",
+        "S3"
+      ],
+      "horizon_s": 900.0,
+      "normal_interval_s": 35.0,
+      "release_jitter_s": 8.0,
+      "burst_window_s": 12.0,
+      "first_release_s": 10.0
+    }
+  },
+  "conditions": {
+    "normal": {
+      "model": "authored_release_jitter",
+      "status": "planned_not_executed"
+    },
+    "closure": {
+      "model": "physical_barrier_plus_route_disable",
+      "status": "planned_not_executed",
+      "route_edge_id": "C_LOW-E_LOW",
+      "route_graph_effect": "disable_C_LOW-E_LOW",
+      "planner_visibility": "current_state_only",
+      "scheduled_end_exposed": false,
+      "barrier_provenance": {
+        "source": "configs/factory-v3/layout.json",
+        "layout_object_id": "blocked_aisle",
+        "rect_xyxy_m": [
+          25.5,
+          2.5,
+          26.5,
+          5.5
+        ],
+        "height_m": 1.5,
+        "scene_active_interval_s": [
+          0.0,
+          600.0
+        ]
+      }
+    },
+    "burst": {
+      "model": "concentrated_release_window",
+      "status": "planned_not_executed"
+    }
+  },
+  "calibration": {
+    "status": "required_not_supplied",
+    "required_before_full_matrix": true,
+    "required_backend": "isaac_sim_ros2_nav2",
+    "artifact": null
+  },
+  "source_bindings": [
+    {
+      "path": "configs/factory-v3/layout.json",
+      "sha256": "c589ce746954e9dba5b2ff5802f29c4cd0d29ce0d732d24a2b936f4060d67586"
+    },
+    {
+      "path": "configs/factory-v3/traffic.json",
+      "sha256": "9a408eabe55268fe2c9ed0e352b61bbf5da9e4b0507b6dc5d170e1c7144afb1f"
+    },
+    {
+      "path": "configs/factory-v3/g2.json",
+      "sha256": "2b376278e61398461abddcf6c5106a7afd0c970b99f8f3d3490176eee1c2263d"
+    },
+    {
+      "path": "configs/factory-v3/g3-routing.json",
+      "sha256": "d7b159651ea63844fdfb0c03f20baf1eb6177123b0447162a640138ba4e61ff7"
+    }
+  ],
+  "evidence_contract": {
+    "backend": "isaac_sim_ros2_nav2",
+    "requires_trial_input_binding": true,
+    "requires_source_binding": true,
+    "cpu_smoke_is_evidence": false
+  }
+}

@@ -140,12 +140,24 @@ def main(argv: list[str] | None = None) -> int:
     replay_parser.add_argument("--expected", type=Path)
     verify_parser = subparsers.add_parser("verify", help="Check every generated artifact against the saved SHA256 manifest")
     verify_parser.add_argument("output", type=Path)
+    g3_parser = subparsers.add_parser("prepare-g3", help="Compile G3a authored routes and the unexecuted 60-trial input matrix")
+    g3_parser.add_argument("--config-dir", type=Path, default=DEFAULT_CONFIG)
+    g3_parser.add_argument("--output", type=Path, default=Path("runs/g3a"))
+    g3_verify = subparsers.add_parser("verify-g3", help="Verify the source-bound, explicitly nonphysical G3a package")
+    g3_verify.add_argument("output", type=Path)
+    g3_verify.add_argument("--config-dir", type=Path, default=DEFAULT_CONFIG)
     args = parser.parse_args(argv)
     try:
         if args.command == "prepare":
             result = prepare(args.config_dir, args.output)
         elif args.command == "verify":
             result = verify_manifest(args.output)
+        elif args.command == "prepare-g3":
+            from .g3_prepare import prepare_g3
+            result = prepare_g3(args.config_dir, args.output)
+        elif args.command == "verify-g3":
+            from .g3_prepare import verify_g3
+            result = verify_g3(args.output, config_dir=args.config_dir)
         else:
             events = [json.loads(line) for line in args.events.read_text(encoding="utf-8").splitlines() if line.strip()]
             ledger = Ledger.replay(events)

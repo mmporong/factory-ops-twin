@@ -17,6 +17,7 @@ from factory_ops.navigation import (
     NavigationIntent,
     NavigationResult,
     SingleOrderMission,
+    validate_goal_pose,
 )
 from factory_ops.operations import OrderState, Transition
 
@@ -196,6 +197,15 @@ class SingleOrderMissionTest(unittest.TestCase):
         intent = mission.start()
         receipt = mission.submit_result(self.result(intent, 1.0, yaw=-math.pi + 0.1))
         self.assertTrue(receipt.accepted)
+
+    def test_pose_validator_preserves_defaults_and_allows_explicit_tolerances(self) -> None:
+        mission = SingleOrderMission("g1-pose-validator")
+        intent = mission.start()
+        result = self.result(intent, 1.0, x=intent.goal.x + 0.3, stamp=0.4)
+        self.assertEqual("localization pose is stale", validate_goal_pose(intent, result))
+        self.assertIsNone(
+            validate_goal_pose(intent, result, xy_tolerance=0.31, max_pose_age=0.6)
+        )
 
     def test_logical_clock_may_advance_before_result_but_cannot_go_back(self) -> None:
         mission = SingleOrderMission("g1-clock")

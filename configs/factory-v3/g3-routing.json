@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "scope": "G3a authored route preflight; not an actual Nav2 path, traffic clearance or GPU qualification",
+  "base_layout": "configs/factory-v3/layout.json",
+  "policy_region_overrides": {
+    "WEST_LINK": [10.5, 4, 13.5, 20],
+    "S2_APPROACH": [4, 10.5, 12, 13.5],
+    "CENTER_LINK": [18.7, 4, 21.3, 20]
+  },
+  "override_scope": "Single-robot clearance only; stations and the 19 physical obstacle footprints are preserved. These corridors do not permit two planning envelopes to pass side by side.",
+  "collision_radius": {
+    "value": 0.6371090915442774,
+    "unit": "m",
+    "measured_at": "2026-10-16T12:12:28.178006+00:00",
+    "valid_for": "G2 Nova Carter enabled collider union in the robot root frame; G3 GPU startup must remeasure the loaded asset",
+    "source_commit": "81befc881466f0e612465ba3987165eec2c9ca4f",
+    "source_run": "g2-f1-004",
+    "source_run_id": "a37e070db5e98c935dc982deb0b5f564",
+    "source_file": "results/g2-f1-004/sim-ready.json#/robots/carter1/footprint/collision_radius_m",
+    "source_archive_sha256": "03ab2e89e8530c88fdfb998e961313a2c304fa629b6ecb8d48f830e39f89aca1"
+  },
+  "authored_allowances": {
+    "evaluation_clearance_m": 0.2,
+    "localization_planning_margin_m": 0.3,
+    "tile_size_m": 1.0,
+    "scope": "Conservative preflight assumptions; neither motor calibration nor a safety certification"
+  },
+  "nodes": {
+    "S1": [4, 4], "S2": [4, 12], "S3": [4, 20],
+    "CI": [28, 8], "CO": [28, 16], "OUT": [36, 12],
+    "P1": [16, 1.5], "P2": [16, 22.5],
+    "W_LOW": [12, 4], "W_MID": [12, 12], "W_HIGH": [12, 20],
+    "M_LOW": [16, 4], "M_HIGH": [16, 20],
+    "C_LOW": [20, 4], "C_HIGH": [20, 20],
+    "E_LOW": [32, 4], "E_CI": [32, 8], "E_MID": [32, 12],
+    "E_CO": [32, 16], "E_HIGH": [32, 20]
+  },
+  "edges": [
+    ["S1", "W_LOW"], ["W_LOW", "M_LOW"], ["M_LOW", "C_LOW"], ["C_LOW", "E_LOW"],
+    ["E_LOW", "E_CI"], ["E_CI", "E_MID"], ["E_MID", "E_CO"], ["E_CO", "E_HIGH"],
+    ["E_HIGH", "C_HIGH"], ["C_HIGH", "M_HIGH"], ["M_HIGH", "W_HIGH"], ["W_HIGH", "S3"],
+    ["W_LOW", "W_MID"], ["W_MID", "W_HIGH"], ["W_MID", "S2"],
+    ["C_LOW", "C_HIGH"], ["M_LOW", "P1"], ["M_HIGH", "P2"],
+    ["E_CI", "CI"], ["E_CO", "CO"], ["E_MID", "OUT"]
+  ],
+  "closure": {
+    "edge": ["C_LOW", "E_LOW"],
+    "barrier_source": "configs/factory-v3/layout.json#/blocked_aisle",
+    "policy_input": "current closed boolean only; no removal time",
+    "scope": "G3a checks the closed-state detour and barrier clearance; collider activation and observation require G3b"
+  },
+  "parking": {"carter1": "P1", "carter2": "P2"},
+  "handover_contract": "Retain occupied tiles. Replace a reservation atomically only after fresh estimated occupancy is contained in both predecessor and successor bundles. Denial preserves the predecessor. Parking occupancy is retained at run end."
+}
