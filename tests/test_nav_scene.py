@@ -1,18 +1,22 @@
 from __future__ import annotations
 
 import json
+import math
 from pathlib import Path
 import tempfile
 import unittest
 
 from scripts.isaac.nav_scene import (
     _atomic_json,
+    _apply_measured_drive_geometry,
+    _drive_geometry_from_colliders,
     _close_app,
     _joint_positions,
     _load_config,
     _read_control,
     _ready_payload,
     _scene_owned_artifacts,
+    _tilt_evaluation,
     _wheel_angles,
 )
 from scripts.isaac.stage_smoke import SmokeError
@@ -100,6 +104,9 @@ class NavSceneTests(unittest.TestCase):
         config = {
             "ros_domain_id": 71,
             "command_timeout_s": 0.5,
+            "max_linear_accel_m_s2": 0.25,
+            "max_angular_accel_rad_s2": 0.5,
+            "control_limit_provenance": {"kind": "test"},
             "drive_geometry": {"wheel_radius_m": 0.04, "wheel_separation_m": 0.4,
                                "provenance": {"kind": "test"}},
         }
@@ -131,6 +138,47 @@ class NavSceneTests(unittest.TestCase):
             (output / "rosbag2" / "data.db3").write_bytes(b"changing")
             relative = [path.relative_to(output).as_posix() for path in _scene_owned_artifacts(output)]
             self.assertEqual(relative, ["media/frame-00000.png", "sim-ready.json", "trajectory.jsonl"])
+
+    @staticmethod
+    def _wheel_colliders(*, right_z_offset: float = 0.0) -> list[dict[str, object]]:
+        records: list[dict[str, object]] = []
+        for side, center_y in (("left", 0.2066), ("right", -0.2066)):
+            for index, (radius, thickness) in enumerate(((0.125, 0.06), (0.1, 0.08), (0.14, 0.02))):
+                center_z = 0.14 + (right_z_offset if side == "right" else 0.0)
+                suffix = "Cylinder" if index == 0 else f"Cylinder_{index:02d}"
+                records.append({
+                    "path": f"/World/Carter/wheel_{side}/Colliders/{suffix}",
+                    "min": [-radius, center_y - thickness / 2.0, center_z - radius],
+                    "max": [radius, center_y + thickness / 2.0, center_z + radius],
+                })
+        return records
+
+    def test_drive_geometry_is_measured_from_three_colliders_per_wheel(self) -> None:
+        measured = _drive_geometry_from_colliders(self._wheel_colliders())
+        expected = _load_config(Path(__file__).resolve().parents[1] / "configs" / "factory-v3" / "g1.json")
+        self.assertAlmostEqual(measured["wheel_radius_m"], expected["drive_geometry"]["wheel_radius_m"])
+        self.assertAlmostEqual(measured["wheel_separation_m"], expected["drive_geometry"]["wheel_separation_m"])
+        provenance = measured["provenance"]
+        self.assertEqual(provenance["kind"], "fresh_asset_collision_geometry_measurement")
+        self.assertEqual(len(provenance["wheel_paths"]["left"]), 3)
+        self.assertEqual(len(provenance["wheel_paths"]["right"]), 3)
+
+    def test_measured_drive_geometry_replaces_expected_config_and_rejects_asset_drift(self) -> None:
+        config = _load_config(Path(__file__).resolve().parents[1] / "configs" / "factory-v3" / "g1.json")
+        measured = _apply_measured_drive_geometry(config, self._wheel_colliders())
+        self.assertIs(config["drive_geometry"], measured)
+        self.assertEqual(config["drive_geometry"]["provenance"]["kind"],
+                         "fresh_asset_collision_geometry_measurement")
+        with self.assertRaisesRegex(SmokeError, "root-frame symmetric"):
+            _drive_geometry_from_colliders(self._wheel_colliders(right_z_offset=0.01))
+
+    def test_tilt_evaluation_is_ground_truth_only_and_rejects_excess_roll(self) -> None:
+        level = _tilt_evaluation([1.0, 0.0, 0.0, 0.0])
+        self.assertTrue(level["passed"])
+        angle = 0.36
+        tipped = _tilt_evaluation([math.cos(angle / 2.0), math.sin(angle / 2.0), 0.0, 0.0])
+        self.assertFalse(tipped["passed"])
+        self.assertIn("never navigation", tipped["use"])
 
 
 if __name__ == "__main__":

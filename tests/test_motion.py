@@ -1,7 +1,7 @@
 from math import nan, pi
 import unittest
 
-from factory_ops.motion import DriveGeometry, VelocityWatchdog, WheelOdometry
+from factory_ops.motion import DriveGeometry, VelocitySlewLimiter, VelocityWatchdog, WheelOdometry
 
 
 class MotionTests(unittest.TestCase):
@@ -95,6 +95,27 @@ class MotionTests(unittest.TestCase):
             self.geometry.wheel_targets(nan, 0)
         with self.assertRaises(ValueError):
             VelocityWatchdog(max_age_s=0, max_linear_m_s=1, max_angular_rad_s=1)
+
+    def test_acceleration_limits_ramp_reverse_and_force_stop(self) -> None:
+        limiter = VelocitySlewLimiter(max_linear_accel_m_s2=0.5, max_angular_accel_rad_s2=1.0)
+        self.assertEqual(limiter.step(0.5, -1, 0.1), (0.05, -0.1))
+        for _ in range(20):
+            limiter.step(0.5, -1, 0.1)
+        self.assertEqual((limiter.linear_m_s, limiter.angular_rad_s), (0.5, -1.0))
+        self.assertEqual(limiter.step(-0.5, 1, 0.1), (0.45, -0.9))
+        self.assertEqual(limiter.step(0.5, 1, 0.1, force_stop=True), (0, 0))
+        self.assertEqual(limiter.step(0.5, 1, 0.1), (0.05, 0.1))
+
+    def test_invalid_acceleration_input_clears_prior_output(self) -> None:
+        limiter = VelocitySlewLimiter(max_linear_accel_m_s2=1, max_angular_accel_rad_s2=1)
+        limiter.step(1, 1, 0.5)
+        with self.assertRaises(ValueError):
+            limiter.step(nan, 0, 0.1)
+        self.assertEqual((limiter.linear_m_s, limiter.angular_rad_s), (0, 0))
+        with self.assertRaises(ValueError):
+            limiter.step(1, 1, 0)
+        with self.assertRaises(ValueError):
+            VelocitySlewLimiter(max_linear_accel_m_s2=0, max_angular_accel_rad_s2=1)
 
 
 if __name__ == "__main__":

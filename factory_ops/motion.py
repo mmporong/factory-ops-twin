@@ -101,6 +101,10 @@ class VelocityWatchdog:
         self.max_angular_rad_s = max_angular_rad_s
         self._command: tuple[float, float, float] | None = None
 
+    @property
+    def active(self) -> bool:
+        return self._command is not None
+
     def receive(self, stamp_s: float, linear_m_s: float, angular_rad_s: float) -> None:
         self._command = None
         if not all(isfinite(v) for v in (stamp_s, linear_m_s, angular_rad_s)) or stamp_s < 0:
@@ -120,3 +124,28 @@ class VelocityWatchdog:
             self._command = None
             return 0.0, 0.0
         return linear_m_s, angular_rad_s
+
+
+class VelocitySlewLimiter:
+    """Limit commanded body acceleration at the simulation physics cadence."""
+
+    def __init__(self, *, max_linear_accel_m_s2: float, max_angular_accel_rad_s2: float) -> None:
+        if not all(isfinite(value) and value > 0 for value in (max_linear_accel_m_s2, max_angular_accel_rad_s2)):
+            raise ValueError("acceleration limits must be positive and finite")
+        self.max_linear_accel_m_s2 = max_linear_accel_m_s2
+        self.max_angular_accel_rad_s2 = max_angular_accel_rad_s2
+        self.linear_m_s = 0.0
+        self.angular_rad_s = 0.0
+
+    def step(self, linear_m_s: float, angular_rad_s: float, dt_s: float, *, force_stop: bool = False) -> tuple[float, float]:
+        if force_stop:
+            self.linear_m_s = self.angular_rad_s = 0.0
+            return 0.0, 0.0
+        if not all(isfinite(value) for value in (linear_m_s, angular_rad_s, dt_s)) or dt_s <= 0:
+            self.linear_m_s = self.angular_rad_s = 0.0
+            raise ValueError("slew input must be finite with positive dt")
+        max_linear_step_m_s = self.max_linear_accel_m_s2 * dt_s
+        max_angular_step_rad_s = self.max_angular_accel_rad_s2 * dt_s
+        self.linear_m_s += max(-max_linear_step_m_s, min(max_linear_step_m_s, linear_m_s - self.linear_m_s))
+        self.angular_rad_s += max(-max_angular_step_rad_s, min(max_angular_step_rad_s, angular_rad_s - self.angular_rad_s))
+        return self.linear_m_s, self.angular_rad_s

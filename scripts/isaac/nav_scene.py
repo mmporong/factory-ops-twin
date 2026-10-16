@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+from datetime import datetime, timezone
 import json
 import math
 import os
@@ -12,12 +13,12 @@ import re
 import sys
 import time
 import traceback
-from typing import Any, Mapping
+from typing import Any, Mapping, Sequence
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from factory_ops.footprint import qualify_footprint
 from factory_ops.layout import Layout
-from factory_ops.motion import DriveGeometry, VelocityWatchdog, WheelOdometry
+from factory_ops.motion import DriveGeometry, VelocitySlewLimiter, VelocityWatchdog, WheelOdometry
 from scripts.isaac import stage_smoke as base
 from scripts.isaac.robot_qualification import (
     CaptureSession,
@@ -81,7 +82,7 @@ def _load_config(path: Path) -> dict[str, Any]:
     required_positive = (
         "physics_dt_s", "encoder_publish_every_steps", "camera_capture_every_steps",
         "max_sim_time_s", "max_wall_time_s", "command_timeout_s",
-        "max_linear_m_s", "max_angular_rad_s",
+        "max_linear_m_s", "max_angular_rad_s", "max_linear_accel_m_s2", "max_angular_accel_rad_s2",
     )
     for name in required_positive:
         value = raw.get(name)
@@ -91,6 +92,8 @@ def _load_config(path: Path) -> dict[str, Any]:
     lidar = raw.get("lidar")
     if not isinstance(geometry, dict) or not isinstance(geometry.get("provenance"), dict):
         raise base.SmokeError("G1 drive geometry provenance is missing")
+    if not isinstance(raw.get("control_limit_provenance"), dict):
+        raise base.SmokeError("G1 control limit provenance is missing")
     if not isinstance(lidar, dict) or lidar.get("topic") != "/scan" or lidar.get("frame_id") != "base_scan":
         raise base.SmokeError("G1 lidar contract must publish /scan in base_scan")
     DriveGeometry(float(geometry["wheel_radius_m"]), float(geometry["wheel_separation_m"]))
@@ -139,6 +142,9 @@ def _ready_payload(
         "control_boundary": {
             "input": "ROS 2 geometry_msgs/Twist on /cmd_vel",
             "watchdog_sim_seconds": float(config["command_timeout_s"]),
+            "max_linear_accel_m_s2": float(config["max_linear_accel_m_s2"]),
+            "max_angular_accel_rad_s2": float(config["max_angular_accel_rad_s2"]),
+            "limit_provenance": dict(config["control_limit_provenance"]),
             "output": "Nova Carter wheel velocity targets",
             "completion": "external mission-control.json after Nav2 action results and ledger commits",
         },
@@ -169,6 +175,106 @@ def _joint_positions(robot: Any) -> list[float]:
     if getattr(array, "ndim", 1) == 2:
         array = array[0]
     return [float(value) for value in array]
+
+
+def _drive_geometry_from_colliders(colliders: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
+    """Measure Carter's differential-drive geometry in the robot root frame."""
+    wheel_records: dict[str, list[Mapping[str, Any]]] = {"left": [], "right": []}
+    for record in colliders:
+        path = str(record.get("path", ""))
+        for side in wheel_records:
+            if path.startswith(f"{ROBOT_PATH}/wheel_{side}/"):
+                wheel_records[side].append(record)
+                break
+    if any(len(records) != 3 for records in wheel_records.values()):
+        raise base.SmokeError(
+            "expected exactly three enabled collision geometries for each Nova Carter drive wheel"
+        )
+
+    unions: dict[str, list[list[float]]] = {}
+    dimensions: dict[str, list[float]] = {}
+    centers: dict[str, list[float]] = {}
+    radii: dict[str, float] = {}
+    for side, records in wheel_records.items():
+        try:
+            minimum = [min(float(record["min"][axis]) for record in records) for axis in range(3)]
+            maximum = [max(float(record["max"][axis]) for record in records) for axis in range(3)]
+        except (KeyError, TypeError, ValueError, IndexError) as error:
+            raise base.SmokeError(f"invalid {side} wheel collider bounds") from error
+        if not all(math.isfinite(value) for point in (minimum, maximum) for value in point):
+            raise base.SmokeError(f"non-finite {side} wheel collider bounds")
+        size = [maximum[axis] - minimum[axis] for axis in range(3)]
+        if any(value <= 0 for value in size):
+            raise base.SmokeError(f"non-positive {side} wheel collider union")
+        if abs(size[0] - size[2]) > 1e-5 or size[1] >= min(size[0], size[2]):
+            raise base.SmokeError(f"{side} wheel collider union is not a Y-axis radial wheel")
+        unions[side] = [minimum, maximum]
+        dimensions[side] = size
+        centers[side] = [(minimum[axis] + maximum[axis]) / 2.0 for axis in range(3)]
+        radii[side] = max(size[0], size[2]) / 2.0
+
+    if any(abs(left - right) > 1e-5 for left, right in zip(dimensions["left"], dimensions["right"])):
+        raise base.SmokeError("left and right wheel collider unions have different dimensions")
+    if abs(radii["left"] - radii["right"]) > 1e-5:
+        raise base.SmokeError("left and right wheel radii differ")
+    if abs(centers["left"][0] - centers["right"][0]) > 1e-5 or abs(
+        centers["left"][2] - centers["right"][2]
+    ) > 1e-5 or abs(centers["left"][1] + centers["right"][1]) > 1e-5:
+        raise base.SmokeError("left and right wheel collider unions are not root-frame symmetric")
+    separation = abs(centers["left"][1] - centers["right"][1])
+    geometry = DriveGeometry((radii["left"] + radii["right"]) / 2.0, separation)
+    return {
+        "wheel_radius_m": geometry.wheel_radius_m,
+        "wheel_separation_m": geometry.wheel_separation_m,
+        "provenance": {
+            "kind": "fresh_asset_collision_geometry_measurement",
+            "method": (
+                "union enabled wheel collision geometry in the Carter root frame; wheel axis is root Y; "
+                "radius is max(root-X diameter, root-Z diameter)/2; separation is absolute Y-center distance"
+            ),
+            "extent_source": "ComputeExtentFromPlugins and root-relative XformCache transform",
+            "wheel_paths": {
+                side: sorted(str(record["path"]) for record in records)
+                for side, records in wheel_records.items()
+            },
+            "wheel_union_bounds_xyz": unions,
+            "wheel_union_dimensions_xyz_m": dimensions,
+            "wheel_centers_xyz_m": centers,
+            "side_radii_m": radii,
+        },
+    }
+
+
+def _apply_measured_drive_geometry(config: dict[str, Any], colliders: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
+    measured = _drive_geometry_from_colliders(colliders)
+    expected = config["drive_geometry"]
+    for field in ("wheel_radius_m", "wheel_separation_m"):
+        if abs(float(expected[field]) - float(measured[field])) > 1e-4:
+            raise base.SmokeError(
+                f"configured expected {field} differs from fresh asset collision geometry: "
+                f"{expected[field]} != {measured[field]}"
+            )
+    config["drive_geometry"] = measured
+    return measured
+
+
+def _roll_pitch_from_wxyz(orientation_wxyz: Sequence[float]) -> tuple[float, float]:
+    if len(orientation_wxyz) != 4 or not all(math.isfinite(float(value)) for value in orientation_wxyz):
+        raise base.SmokeError("ground-truth orientation is not a finite quaternion")
+    w, x, y, z = (float(value) for value in orientation_wxyz)
+    norm = math.sqrt(w * w + x * x + y * y + z * z)
+    if abs(norm - 1.0) > 1e-3:
+        raise base.SmokeError("ground-truth orientation quaternion is not unit length")
+    roll = math.atan2(2.0 * (w * x + y * z), 1.0 - 2.0 * (x * x + y * y))
+    pitch_term = max(-1.0, min(1.0, 2.0 * (w * y - z * x)))
+    return roll, math.asin(pitch_term)
+
+
+def _tilt_evaluation(orientation_wxyz: Sequence[float], *, threshold_rad: float = 0.35) -> dict[str, Any]:
+    roll, pitch = _roll_pitch_from_wxyz(orientation_wxyz)
+    return {"roll_rad": roll, "pitch_rad": pitch, "threshold_rad": threshold_rad,
+            "passed": abs(roll) <= threshold_rad and abs(pitch) <= threshold_rad,
+            "use": "simulator-truth run validity evaluation only; never navigation or steering"}
 
 
 def _pose(robot: Any) -> tuple[list[float], list[float]]:
@@ -460,8 +566,17 @@ def _run(args: argparse.Namespace) -> int:
         footprint = qualify_footprint(layout, bounds)
         if not footprint["passed"]:
             raise base.SmokeError("Nova Carter collision footprint does not fit factory anchors")
+        measured_drive_geometry = _apply_measured_drive_geometry(config, colliders)
+        measured_drive_geometry["provenance"].update({
+            "measured_at": datetime.now(timezone.utc).isoformat(),
+            "unit": "m",
+            "measurement_context": (
+                f"{ROBOT_PATH} root frame after asset load and before SimulationManager.setup_simulation"
+            ),
+        })
         result["robot"] = {"asset_url": asset, "prim_path": ROBOT_PATH, "wheel_dof_names": WHEEL_JOINTS,
-                           "collider_count": len(colliders), "collision_bounds_xyz": bounds, "footprint": footprint}
+                           "collider_count": len(colliders), "collision_bounds_xyz": bounds, "footprint": footprint,
+                           "drive_geometry": measured_drive_geometry}
 
         checkpoint("ros_and_lidar")
         rclpy, node, clock_stamps = _clock_graph(stage, app)
@@ -474,6 +589,8 @@ def _run(args: argparse.Namespace) -> int:
         watchdog = VelocityWatchdog(max_age_s=float(config["command_timeout_s"]),
                                     max_linear_m_s=float(config["max_linear_m_s"]),
                                     max_angular_rad_s=float(config["max_angular_rad_s"]))
+        limiter = VelocitySlewLimiter(max_linear_accel_m_s2=float(config["max_linear_accel_m_s2"]),
+                                      max_angular_accel_rad_s2=float(config["max_angular_accel_rad_s2"]))
         ros = _setup_ros(node, config, geometry, watchdog)
         odometry = WheelOdometry(geometry)
         timeline = omni.timeline.get_timeline_interface()
@@ -496,6 +613,16 @@ def _run(args: argparse.Namespace) -> int:
         left, right = _wheel_angles(robot)
         initial_odom = odometry.update(initial_time, left, right)
         ros["publish_odom"](initial_odom)
+        initial_position, initial_orientation = _pose(robot)
+        initial_tilt = _tilt_evaluation(initial_orientation)
+        result["initial_tilt_evaluation"] = initial_tilt
+        if not initial_tilt["passed"]:
+            robot.apply_wheel_actions(np.zeros(2, dtype=np.float32))
+            failure = {"run_id": args.run_id, "status": "failed", "reason": "excessive_initial_tilt",
+                       "sim_time_s": initial_time, "position_xyz_m": initial_position,
+                       "orientation_wxyz": initial_orientation, "tilt_evaluation": initial_tilt}
+            _atomic_json(output / "evaluation-failure.json", failure)
+            raise base.SmokeError("Nova Carter exceeded the evaluation tilt limit during warmup")
         _atomic_json(output / READY_FILE, _ready_payload(
             run_id=args.run_id, asset=asset, footprint=footprint, config=config,
             lidar_metadata=lidar_metadata, source_sha256=result["inputs"]["source"]["sha256"],
@@ -526,7 +653,11 @@ def _run(args: argparse.Namespace) -> int:
                 if control["status"] != "passed":
                     raise base.SmokeError(f"mission controller ended with {control['status']}")
                 settle_remaining = SETTLE_STEPS
-            linear, angular = (0.0, 0.0) if settle_remaining is not None else watchdog.command(now)
+            requested_linear, requested_angular = watchdog.command(now)
+            force_stop = settle_remaining is not None or not watchdog.active
+            linear, angular = limiter.step(
+                requested_linear, requested_angular, float(config["physics_dt_s"]), force_stop=force_stop,
+            )
             targets = geometry.wheel_targets(linear, angular)
             robot.apply_wheel_actions(np.asarray(targets, dtype=np.float32))
             camera_position, _ = _pose(robot)
@@ -544,13 +675,37 @@ def _run(args: argparse.Namespace) -> int:
                 "physics_frame": int(SimulationManager.get_num_physics_steps()), "sim_time_s": stamp,
                 "wheel_angles_rad": [left, right], "wheel_target_rad_s": list(targets),
                 "joint_positions_rad": _joint_positions(robot), "joint_names": list(robot.dof_names),
+                "requested_command": {"linear_m_s": requested_linear, "angular_rad_s": requested_angular,
+                                      "watchdog_active": watchdog.active},
                 "command": {"linear_m_s": linear, "angular_rad_s": angular},
                 "odometry": {"x_m": odom.x_m, "y_m": odom.y_m, "yaw_rad": odom.yaw_rad,
                                "linear_m_s": odom.linear_m_s, "angular_rad_s": odom.angular_rad_s},
                 "ground_truth": {"position_xyz_m": gt_position, "orientation_wxyz": gt_orientation,
                                  "use": "evaluation and media only"},
             }
+            tilt = _tilt_evaluation(gt_orientation)
+            sample["ground_truth"]["tilt_evaluation"] = tilt
             _append_jsonl(trajectory_path, sample)
+            if not tilt["passed"]:
+                robot.apply_wheel_actions(np.zeros(2, dtype=np.float32))
+                limiter.step(0.0, 0.0, float(config["physics_dt_s"]), force_stop=True)
+                failure = {"run_id": args.run_id, "status": "failed", "reason": "excessive_tilt",
+                           "sim_time_s": stamp, "physics_frame": sample["physics_frame"],
+                           "position_xyz_m": gt_position, "orientation_wxyz": gt_orientation,
+                           "tilt_evaluation": tilt, "ground_truth_use": "run validity evaluation only"}
+                _atomic_json(output / "evaluation-failure.json", failure)
+                timeline.pause()
+                try:
+                    frame = _capture_frame(output=output, session=session, rep=rep, np=np, Gf=Gf,
+                                           UsdGeom=UsdGeom, SimulationManager=SimulationManager,
+                                           robot=robot, sample=sample, index=len(frames))
+                    frame["evaluation_failure"] = "excessive_tilt"
+                    frames.append(frame)
+                    _atomic_json(output / MEDIA_INDEX_FILE, {"schema_version": 1, "frames": frames})
+                except BaseException as capture_error:
+                    failure["capture_error"] = f"{type(capture_error).__name__}: {capture_error}"
+                    _atomic_json(output / "evaluation-failure.json", failure)
+                raise base.SmokeError("Nova Carter exceeded the evaluation tilt limit")
             capture_due = step == 1 or step % capture_period == 0
             if settle_remaining is not None:
                 settle_remaining -= 1
