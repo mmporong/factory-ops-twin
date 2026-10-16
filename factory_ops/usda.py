@@ -78,11 +78,12 @@ def _cube(name: str, rect: Rect, height: float, z: float, marker_id: str, *, col
     x = (rect.xmin + rect.xmax) / 2
     y = (rect.ymin + rect.ymax) / 2
     pad = " " * indent
-    schemas = '["PhysicsCollisionAPI"]' if collision else "[]"
+    header = [f'{pad}def Cube "{name}"']
+    if collision:
+        header = [f'{pad}def Cube "{name}" (',
+                  f'{pad}    prepend apiSchemas = ["PhysicsCollisionAPI"]', f"{pad})"]
     return [
-        f'{pad}def Cube "{name}" (',
-        f"{pad}    prepend apiSchemas = {schemas}",
-        f"{pad})",
+        *header,
         f"{pad}{{",
         f"{pad}    custom string markerId = {_quote(marker_id)}",
         f"{pad}    bool physics:collisionEnabled = {'true' if collision else 'false'}",
