@@ -7,10 +7,15 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 from pathlib import Path
+import re
+import secrets
 import shutil
 import signal
+import stat
 import struct
+import subprocess
 import sys
 import time
 import traceback
@@ -42,6 +47,9 @@ def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--scene", required=True, type=Path, help="Absolute USDA/USD scene path")
     parser.add_argument("--output", required=True, type=Path, help="Absolute new or empty output directory")
+    parser.add_argument("--timeout-seconds", type=float, default=800.0, help="Supervisor timeout, at most 800 seconds")
+    parser.add_argument("--worker", action="store_true", help=argparse.SUPPRESS)
+    parser.add_argument("--run-id", help=argparse.SUPPRESS)
     return parser.parse_args()
 
 
@@ -67,6 +75,18 @@ def _prepare_paths(scene_arg: Path, output_arg: Path) -> tuple[Path, Path]:
             raise SmokeError(f"output directory must be empty: {output}")
     else:
         output.mkdir(parents=True)
+    return scene, output
+
+
+def _prepare_worker_paths(scene_arg: Path, output_arg: Path) -> tuple[Path, Path]:
+    if not scene_arg.is_absolute() or not output_arg.is_absolute():
+        raise SmokeError("worker scene and output paths must be absolute")
+    scene = scene_arg.resolve(strict=True)
+    output = output_arg.resolve(strict=True)
+    if not scene.is_file() or scene.suffix.lower() not in {".usd", ".usda", ".usdc"}:
+        raise SmokeError(f"worker scene is not a supported USD file: {scene}")
+    if not output.is_dir() or any(output.iterdir()):
+        raise SmokeError(f"worker output directory must already exist and be empty: {output}")
     return scene, output
 
 
@@ -239,7 +259,7 @@ def _capture_overview(output: Path, simulation_app: Any, rep: Any) -> dict[str, 
     try:
         rep.orchestrator.set_capture_on_play(False)
         camera = rep.functional.create.camera(
-            position=(20.0, -18.0, 38.0),
+            position=(20.0, -24.0, 52.0),
             look_at=(20.0, 12.0, 0.0),
             parent="/World",
             name="FactoryOverviewCamera",
@@ -297,7 +317,7 @@ def _capture_overview(output: Path, simulation_app: Any, rep: Any) -> dict[str, 
         "width": width,
         "height": height,
         "bytes": image_path.stat().st_size,
-        "camera_position": [20.0, -18.0, 38.0],
+        "camera_position": [20.0, -24.0, 52.0],
         "camera_look_at": [20.0, 12.0, 0.0],
         "format_validation": "signature, chunks, CRC, IDAT zlib stream, scanline framing, and IEND",
         "visual_quality": "requires_review",
@@ -323,48 +343,27 @@ def _checkpoint(output: Path, result: dict[str, Any], started: float, stage: str
     print(f"FACTORY_OPS_ISAAC_SMOKE_PHASE={stage}", flush=True)
 
 
-def _close_simulation_app(simulation_app: Any, result: dict[str, Any]) -> bool:
-    try:
-        simulation_app.close(wait_for_replicator=False)
-    except BaseException as error:
-        result.update(
-            {
-                "status": "failed",
-                "stage": "close_simulation_app",
-                "failure_stage": "close_simulation_app",
-                "cleanup": "failed",
-                "close_error": {
-                    "type": type(error).__name__,
-                    "message": str(error),
-                    "traceback": traceback.format_exc(limit=20),
-                },
-            }
-        )
-        return False
-    result["cleanup"] = "complete"
-    return True
-
-
-def main() -> int:
-    args = _parse_args()
+def _worker_main(args: argparse.Namespace) -> int:
     started = time.monotonic()
     stage_name = "preflight"
     output: Path | None = None
     scene: Path | None = None
     simulation_app = None
     result: dict[str, Any] = {
-        "schema_version": 1,
+        "schema_version": 2,
+        "run_id": args.run_id,
         "status": "running",
         "stage": stage_name,
         "cleanup": "pending",
         "primary_evaluation": False,
         "measurements": {"physics": "unmeasured", "nav2": "unmeasured"},
     }
-    exit_code = 1
     validation_completed = False
 
     try:
-        scene, output = _prepare_paths(args.scene, args.output)
+        if not isinstance(args.run_id, str) or not re.fullmatch(r"[0-9a-f]{32}", args.run_id):
+            raise SmokeError("worker requires a valid supervisor run ID")
+        scene, output = _prepare_worker_paths(args.scene, args.output)
         result.update({"scene_path": str(scene), "scene_sha256": _sha256(scene)})
 
         stage_name = "simulation_app"
@@ -376,7 +375,7 @@ def main() -> int:
                 "headless": True,
                 "renderer": "RealTimePathTracing",
                 "sync_loads": True,
-                "fast_shutdown": False,
+                "fast_shutdown": True,
                 "width": RENDER_RESOLUTION[0],
                 "height": RENDER_RESOLUTION[1],
             }
@@ -410,8 +409,9 @@ def main() -> int:
 
         stage_name = "validation_complete"
         validation_completed = True
-        result.update({"status": "validated", "cleanup": "pending"})
+        result.update({"status": "validated", "cleanup": "worker_exit_requested"})
         _checkpoint(output, result, started, stage_name)
+        print("FACTORY_OPS_ISAAC_SMOKE_WORKER_VALIDATED=1", flush=True)
     except BaseException as error:
         result.update(
             {
@@ -429,33 +429,254 @@ def main() -> int:
             result["elapsed_seconds"] = round(time.monotonic() - started, 3)
             _write_result(output, result)
         print(f"FACTORY_OPS_ISAAC_SMOKE_ERROR_PHASE={stage_name}", flush=True)
-        print("FACTORY_OPS_ISAAC_SMOKE_STATUS=FAIL", flush=True)
-    finally:
-        if simulation_app is not None:
-            if output is not None:
-                _checkpoint(output, result, started, "close_simulation_app")
-            close_completed = _close_simulation_app(simulation_app, result)
-            if close_completed and validation_completed and result["status"] == "validated":
-                result.update({"status": "passed", "stage": "complete", "cleanup": "complete"})
-                exit_code = 0
-            else:
-                result["status"] = "failed"
-                exit_code = 1
-        else:
-            result["cleanup"] = "not_started"
-            result["status"] = "failed"
+        print("FACTORY_OPS_ISAAC_SMOKE_WORKER_STATUS=FAIL", flush=True)
 
-        result["elapsed_seconds"] = round(time.monotonic() - started, 3)
+    worker_exit_code = 0 if validation_completed and result["status"] == "validated" else 1
+    if simulation_app is None:
+        result["cleanup"] = "not_started"
         if output is not None:
-            result_path = _write_result(output, result)
-            print(f"FACTORY_OPS_ISAAC_SMOKE_JSON={result_path}", flush=True)
-        else:
-            print("FACTORY_OPS_ISAAC_SMOKE_JSON=null", flush=True)
-            print(json.dumps(result, ensure_ascii=False, sort_keys=True), flush=True)
-        sentinel = "PASS" if result["status"] == "passed" else "FAIL"
-        print(f"FACTORY_OPS_ISAAC_SMOKE_STATUS={sentinel}", flush=True)
+            _write_result(output, result)
+        return worker_exit_code
 
+    result["cleanup"] = "worker_exit_requested"
+    if output is not None:
+        _checkpoint(output, result, started, "worker_exit_requested")
+    simulation_app.close(wait_for_replicator=False, exit_code=worker_exit_code)
+    result.update(
+        {
+            "status": "failed",
+            "stage": "unexpected_close_return",
+            "failure_stage": "unexpected_close_return",
+            "cleanup": "worker_close_returned",
+            "worker_error": "SimulationApp.close returned instead of terminating the worker process",
+        }
+    )
+    if output is not None:
+        _write_result(output, result)
+    print("FACTORY_OPS_ISAAC_SMOKE_WORKER_STATUS=FAIL", flush=True)
+    return 1
+
+
+def _load_result(output: Path) -> dict[str, Any]:
+    result_path = output / RESULT_FILENAME
+    if not _is_regular_nonsymlink(result_path):
+        raise SmokeError("worker did not write stage-smoke.json")
+    value = json.loads(result_path.read_text(encoding="utf-8"))
+    if not isinstance(value, dict):
+        raise SmokeError("worker result is not a JSON object")
+    return value
+
+
+def _is_regular_nonsymlink(path: Path) -> bool:
+    try:
+        return not path.is_symlink() and stat.S_ISREG(path.stat(follow_symlinks=False).st_mode)
+    except OSError:
+        return False
+
+
+def _validate_worker_evidence(
+    scene: Path,
+    output: Path,
+    result: dict[str, Any],
+    run_id: str,
+    scene_sha_before: str,
+) -> tuple[list[str], str]:
+    errors: list[str] = []
+    scene_sha_after = _sha256(scene)
+    expected_observed = {
+        "default_prim": "World",
+        "up_axis": "Z",
+        "meters_per_unit": 1.0,
+        "collision_api_count": EXPECTED_COLLIDERS,
+        "obstacle_count": EXPECTED_OBSTACLES,
+        "marker_count": EXPECTED_MARKERS,
+        "disabled_collision_prim_paths": [],
+        "marker_collision_prim_paths": [],
+    }
+    if result.get("schema_version") != 2:
+        errors.append("worker schema version is not 2")
+    if result.get("run_id") != run_id:
+        errors.append("worker run ID does not match supervisor run")
+    if result.get("status") != "validated":
+        errors.append("worker status is not validated")
+    if result.get("cleanup") != "worker_exit_requested":
+        errors.append("worker cleanup state is not worker_exit_requested")
+    if result.get("stage") != "worker_exit_requested":
+        errors.append("worker did not reach worker_exit_requested")
+    if result.get("scene_path") != str(scene):
+        errors.append("worker scene path does not match supervisor input")
+    if result.get("scene_sha256") != scene_sha_before or scene_sha_after != scene_sha_before:
+        errors.append("scene SHA does not match before, worker, and after values")
+    if result.get("primary_evaluation") is not False:
+        errors.append("primary_evaluation must remain false")
+    if result.get("mismatches"):
+        errors.append("worker reported stage mismatches")
+
+    observed = result.get("observed")
+    if not isinstance(observed, dict):
+        errors.append("worker observed stage evidence is missing")
+    else:
+        for key, expected in expected_observed.items():
+            if observed.get(key) != expected:
+                errors.append(f"worker observed {key} does not match expected value")
+        collision_paths = observed.get("collision_prim_paths")
+        expected_paths = observed.get("expected_collision_prim_paths")
+        if collision_paths != expected_paths or not isinstance(collision_paths, list) or len(collision_paths) != EXPECTED_COLLIDERS:
+            errors.append("worker collider membership evidence is incomplete")
+
+    image_path = output / IMAGE_FILENAME
+    rgb = result.get("rgb")
+    if not isinstance(rgb, dict):
+        errors.append("worker RGB evidence is missing")
+    elif not _is_regular_nonsymlink(image_path):
+        errors.append("worker RGB PNG is missing")
+    else:
+        try:
+            dimensions = _png_dimensions(image_path)
+        except BaseException as error:
+            errors.append(f"worker RGB PNG validation failed: {error}")
+        else:
+            if dimensions != RENDER_RESOLUTION:
+                errors.append("worker RGB PNG dimensions do not match")
+        if rgb.get("path") != str(image_path):
+            errors.append("worker RGB path does not match supervisor output")
+        rgb_sha = rgb.get("sha256")
+        if not isinstance(rgb_sha, str) or not re.fullmatch(r"[0-9a-f]{64}", rgb_sha):
+            errors.append("worker RGB SHA is not a lowercase SHA-256 value")
+        elif rgb_sha != _sha256(image_path):
+            errors.append("worker RGB SHA does not match current PNG")
+        if rgb.get("bytes") != image_path.stat().st_size:
+            errors.append("worker RGB byte count does not match current PNG")
+        if [rgb.get("width"), rgb.get("height")] != list(RENDER_RESOLUTION):
+            errors.append("worker RGB metadata dimensions do not match")
+    return errors, scene_sha_after
+
+
+def _supervisor_main(args: argparse.Namespace, worker_command: list[str] | None = None) -> int:
+    started = time.monotonic()
+    scene, output = _prepare_paths(args.scene, args.output)
+    timeout_seconds = float(args.timeout_seconds)
+    if not 0 < timeout_seconds <= 800:
+        raise SmokeError("--timeout-seconds must be greater than zero and at most 800")
+    run_id = args.run_id or secrets.token_hex(16)
+    if not isinstance(run_id, str) or not re.fullmatch(r"[0-9a-f]{32}", run_id):
+        raise SmokeError("supervisor run ID must be 32 lowercase hexadecimal characters")
+    scene_sha_before = _sha256(scene)
+    command = worker_command or [
+        sys.executable,
+        str(Path(__file__).resolve()),
+        "--worker",
+        "--scene",
+        str(scene),
+        "--output",
+        str(output),
+        "--run-id",
+        run_id,
+    ]
+    print("FACTORY_OPS_ISAAC_SMOKE_SUPERVISOR=worker_started", flush=True)
+    child_exit_code: int | None = None
+    supervisor_error: str | None = None
+    scene_sha_after = scene_sha_before
+    process: subprocess.Popen[bytes] | None = None
+    try:
+        process = subprocess.Popen(command, start_new_session=True)
+        child_exit_code = process.wait(timeout=timeout_seconds)
+    except subprocess.TimeoutExpired:
+        supervisor_error = f"worker exceeded supervisor timeout of {timeout_seconds:g}s"
+        if process is None:
+            raise SmokeError("worker timeout was reported without a running process")
+        if os.name == "posix":
+            os.killpg(process.pid, getattr(signal, "SIGKILL"))
+        else:
+            process.kill()
+        child_exit_code = process.wait()
+    except OSError as error:
+        supervisor_error = f"worker process could not start: {error}"
+
+    try:
+        result = _load_result(output)
+    except BaseException as error:
+        result = {
+            "schema_version": 2,
+            "run_id": run_id,
+            "primary_evaluation": False,
+            "measurements": {"physics": "unmeasured", "nav2": "unmeasured"},
+        }
+        evidence_errors = [str(error)]
+    else:
+        evidence_errors, scene_sha_after = _validate_worker_evidence(
+            scene, output, result, run_id, scene_sha_before
+        )
+    scene_sha_after = _sha256(scene)
+    if scene_sha_after != scene_sha_before:
+        evidence_errors.append("scene SHA changed after worker evidence validation")
+
+    if child_exit_code != 0:
+        evidence_errors.append(f"worker exit code was {child_exit_code}")
+    if supervisor_error is not None:
+        evidence_errors.append(supervisor_error)
+    worker_checkpoint_stage = result.get("stage")
+    worker_schema_version = result.get("schema_version")
+    worker_run_id = result.get("run_id")
+    if not evidence_errors:
+        result.update(
+            {
+                "status": "passed",
+                "stage": "complete",
+                "cleanup": "worker_process_exited",
+                "supervisor": {
+                    "run_id": run_id,
+                    "worker_exit_code": child_exit_code,
+                    "checkpoint_stage": worker_checkpoint_stage,
+                    "worker_schema_version": worker_schema_version,
+                    "worker_run_id": worker_run_id,
+                    "scene_sha_before": scene_sha_before,
+                    "scene_sha_after": scene_sha_after,
+                },
+                "elapsed_seconds": round(time.monotonic() - started, 3),
+            }
+        )
+        exit_code = 0
+    else:
+        result.update(
+            {
+                "status": "failed",
+                "stage": "supervisor_validation",
+                "cleanup": "worker_process_failed",
+                "supervisor": {
+                    "run_id": run_id,
+                    "worker_exit_code": child_exit_code,
+                    "checkpoint_stage": worker_checkpoint_stage,
+                    "worker_schema_version": worker_schema_version,
+                    "worker_run_id": worker_run_id,
+                    "scene_sha_before": scene_sha_before,
+                    "scene_sha_after": scene_sha_after,
+                    "errors": evidence_errors,
+                },
+                "elapsed_seconds": round(time.monotonic() - started, 3),
+            }
+        )
+        result.setdefault("failure_stage", "supervisor_validation")
+        exit_code = 1
+    result["schema_version"] = 2
+    result["run_id"] = run_id
+    result_path = _write_result(output, result)
+    print(f"FACTORY_OPS_ISAAC_SMOKE_JSON={result_path}", flush=True)
+    sentinel = "PASS" if exit_code == 0 else "FAIL"
+    print(f"FACTORY_OPS_ISAAC_SMOKE_STATUS={sentinel}", flush=True)
     return exit_code
+
+
+def main() -> int:
+    args = _parse_args()
+    if args.worker:
+        return _worker_main(args)
+    try:
+        return _supervisor_main(args)
+    except BaseException as error:
+        print(f"FACTORY_OPS_ISAAC_SMOKE_SUPERVISOR_ERROR={type(error).__name__}: {error}", flush=True)
+        print("FACTORY_OPS_ISAAC_SMOKE_STATUS=FAIL", flush=True)
+        return 1
 
 
 if __name__ == "__main__":

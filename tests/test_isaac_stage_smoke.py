@@ -1,13 +1,18 @@
 from __future__ import annotations
 
+import argparse
+import hashlib
+import json
 from pathlib import Path
 import struct
+import sys
 import tempfile
-from typing import Any
 import unittest
+from unittest.mock import patch
 import zlib
 
-from scripts.isaac.stage_smoke import SmokeError, _close_simulation_app, _inspect_stage, _png_dimensions
+import scripts.isaac.stage_smoke as stage_smoke
+from scripts.isaac.stage_smoke import SmokeError, _inspect_stage, _png_dimensions, _supervisor_main
 
 
 class _Attribute:
@@ -96,9 +101,10 @@ def _chunk(chunk_type: bytes, data: bytes) -> bytes:
     return struct.pack(">I", len(data)) + chunk_type + data + struct.pack(">I", crc)
 
 
-def _png_bytes(*, include_iend: bool = True) -> bytes:
-    ihdr = struct.pack(">IIBBBBB", 1, 1, 8, 2, 0, 0, 0)
-    content = b"\x89PNG\r\n\x1a\n" + _chunk(b"IHDR", ihdr) + _chunk(b"IDAT", zlib.compress(b"\x00\x00\x00\x00"))
+def _png_bytes(*, width: int = 1, height: int = 1, include_iend: bool = True) -> bytes:
+    ihdr = struct.pack(">IIBBBBB", width, height, 8, 2, 0, 0, 0)
+    scanlines = (b"\x00" + b"\x00" * (width * 3)) * height
+    content = b"\x89PNG\r\n\x1a\n" + _chunk(b"IHDR", ihdr) + _chunk(b"IDAT", zlib.compress(scanlines))
     return content + (_chunk(b"IEND", b"") if include_iend else b"")
 
 
@@ -153,38 +159,126 @@ class PngValidationTests(unittest.TestCase):
             _png_dimensions(self._write(content))
 
 
-class CloseHandlingTests(unittest.TestCase):
-    def test_successful_close_does_not_mark_passed_by_itself(self) -> None:
-        class App:
-            def close(self, *, wait_for_replicator: bool) -> None:
-                self.wait_for_replicator = wait_for_replicator
+class SupervisorTests(unittest.TestCase):
+    RUN_ID = "0123456789abcdef0123456789abcdef"
+    CHILD_CODE = (
+        "from pathlib import Path; import sys; "
+        "output=Path(sys.argv[1]); "
+        "(output/'factory-overview.png').write_bytes(bytes.fromhex(sys.argv[2])) if sys.argv[2] else None; "
+        "(output/'stage-smoke.json').write_text(sys.argv[3],encoding='utf-8'); "
+        "raise SystemExit(int(sys.argv[4]))"
+    )
 
-        app = App()
-        result: dict[str, Any] = {
+    def _case(self) -> tuple[tempfile.TemporaryDirectory[str], Path, Path]:
+        directory = tempfile.TemporaryDirectory()
+        self.addCleanup(directory.cleanup)
+        root = Path(directory.name)
+        scene = root / "factory.usda"
+        scene.write_text("#usda 1.0\n", encoding="utf-8")
+        return directory, scene, root / "output"
+
+    def _args(self, scene: Path, output: Path) -> argparse.Namespace:
+        return argparse.Namespace(
+            scene=scene,
+            output=output,
+            timeout_seconds=10.0,
+            worker=False,
+            run_id=self.RUN_ID,
+        )
+
+    def _valid_payload(self, scene: Path, output: Path, png: bytes) -> dict[str, object]:
+        obstacle_paths = [f"/World/Obstacles/O{index:02d}" for index in range(19)]
+        collision_paths = sorted(["/World/Floor", *obstacle_paths])
+        image_path = output / "factory-overview.png"
+        return {
+            "schema_version": 2,
+            "run_id": self.RUN_ID,
             "status": "validated",
-            "stage": "validation_complete",
-            "cleanup": "pending",
+            "stage": "worker_exit_requested",
+            "cleanup": "worker_exit_requested",
+            "primary_evaluation": False,
+            "measurements": {"physics": "unmeasured", "nav2": "unmeasured"},
+            "scene_path": str(scene),
+            "scene_sha256": hashlib.sha256(scene.read_bytes()).hexdigest(),
+            "observed": {
+                "default_prim": "World",
+                "up_axis": "Z",
+                "meters_per_unit": 1.0,
+                "collision_api_count": 20,
+                "obstacle_count": 19,
+                "marker_count": 8,
+                "disabled_collision_prim_paths": [],
+                "marker_collision_prim_paths": [],
+                "collision_prim_paths": collision_paths,
+                "expected_collision_prim_paths": collision_paths,
+            },
+            "rgb": {
+                "path": str(image_path),
+                "sha256": hashlib.sha256(png).hexdigest(),
+                "width": 1280,
+                "height": 720,
+                "bytes": len(png),
+            },
         }
-        self.assertTrue(_close_simulation_app(app, result))
-        self.assertEqual(result["status"], "validated")
-        self.assertEqual(result["cleanup"], "complete")
-        self.assertFalse(app.wait_for_replicator)
 
-    def test_system_exit_during_close_cannot_be_reported_as_passed(self) -> None:
-        class App:
-            def close(self, *, wait_for_replicator: bool) -> None:
-                raise SystemExit(17)
+    def _command(self, output: Path, payload: dict[str, object], png: bytes, exit_code: int) -> list[str]:
+        return [
+            sys.executable,
+            "-c",
+            self.CHILD_CODE,
+            str(output),
+            png.hex(),
+            json.dumps(payload),
+            str(exit_code),
+        ]
 
-        result: dict[str, Any] = {
-            "status": "validated",
-            "stage": "validation_complete",
-            "cleanup": "pending",
-        }
-        self.assertFalse(_close_simulation_app(App(), result))
+    def test_exit_zero_with_incomplete_evidence_is_failed(self) -> None:
+        _directory, scene, output = self._case()
+        command = self._command(output, {"status": "running"}, b"", 0)
+        self.assertEqual(_supervisor_main(self._args(scene, output), command), 1)
+        result = json.loads((output / "stage-smoke.json").read_text(encoding="utf-8"))
         self.assertEqual(result["status"], "failed")
-        self.assertEqual(result["cleanup"], "failed")
-        self.assertEqual(result["failure_stage"], "close_simulation_app")
-        self.assertEqual(result["close_error"]["type"], "SystemExit")
+        self.assertIn("worker status is not validated", result["supervisor"]["errors"])
+
+    def test_nonzero_exit_with_valid_checkpoint_is_failed(self) -> None:
+        _directory, scene, output = self._case()
+        png = _png_bytes(width=1280, height=720)
+        payload = self._valid_payload(scene, output, png)
+        command = self._command(output, payload, png, 7)
+        self.assertEqual(_supervisor_main(self._args(scene, output), command), 1)
+        result = json.loads((output / "stage-smoke.json").read_text(encoding="utf-8"))
+        self.assertEqual(result["status"], "failed")
+        self.assertEqual(result["supervisor"]["worker_exit_code"], 7)
+
+    def test_exit_zero_with_complete_evidence_is_promoted_after_child_exit(self) -> None:
+        _directory, scene, output = self._case()
+        png = _png_bytes(width=1280, height=720)
+        payload = self._valid_payload(scene, output, png)
+        command = self._command(output, payload, png, 0)
+        self.assertEqual(_supervisor_main(self._args(scene, output), command), 0)
+        result = json.loads((output / "stage-smoke.json").read_text(encoding="utf-8"))
+        self.assertEqual(result["status"], "passed")
+        self.assertEqual(result["cleanup"], "worker_process_exited")
+
+    def test_scene_change_after_evidence_validation_is_failed(self) -> None:
+        _directory, scene, output = self._case()
+        png = _png_bytes(width=1280, height=720)
+        payload = self._valid_payload(scene, output, png)
+        command = self._command(output, payload, png, 0)
+        original_sha = hashlib.sha256(scene.read_bytes()).hexdigest()
+
+        def mutate_scene(*_args: object, **_kwargs: object) -> tuple[list[str], str]:
+            scene.write_text("#usda 1.0\n# changed after validation\n", encoding="utf-8")
+            return [], original_sha
+
+        with patch.object(stage_smoke, "_validate_worker_evidence", side_effect=mutate_scene):
+            self.assertEqual(_supervisor_main(self._args(scene, output), command), 1)
+        result = json.loads((output / "stage-smoke.json").read_text(encoding="utf-8"))
+        self.assertEqual(result["status"], "failed")
+        self.assertIn(
+            "scene SHA changed after worker evidence validation",
+            result["supervisor"]["errors"],
+        )
 
 
 if __name__ == "__main__":

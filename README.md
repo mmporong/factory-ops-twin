@@ -95,7 +95,7 @@ docs/                 설계 경계와 GPU 연동 순서
 2. 한 Carter의 S→CI 운반, 공정 처리, CO→OUT 흐름을 ROS 2/Nav2에 연결합니다.
 3. 두 Carter에 예약·양보·stale 점유 유지와 복구 절차를 연결합니다.
 4. 같은 주문·장애 입력으로 FIFO/ETA를 정상·폐쇄·급증 조건에서 비교합니다. 부하 보정 후 10개 seed로 총 60회를 평가할 계획입니다.
-5. 운영 검증 뒤 RGB·Depth·Segmentation·bbox 생성과 라벨 품질 검사를 추가합니다. 이 데이터 생성은 선택 범위입니다.
+5. 실행마다 이미지·영상·환경·이벤트를 보존하고, AMR 주행에 RGB·Depth·Segmentation·bbox와 ROS bag 수집을 연결합니다. 학습용 데이터는 센서 정렬과 라벨 품질을 검사한 뒤 사용합니다. 현재 GPU 도구는 조감 RGB와 장면·카메라·종료 기록을 생성하며, 환경 기록은 Brev 실행 절차에서 별도로 연결합니다. 주행 영상과 센서 라벨은 후속 구현입니다.
 
 환경 선정과 데이터 보존 순서는 [GPU 연동 안내](docs/gpu-handoff.md), 구현 경계는 [설계 설명](docs/architecture.md)에 적었습니다.
 

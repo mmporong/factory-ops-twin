@@ -36,6 +36,8 @@ Isaac Sim 6.2 공식 문서는 Python 3.12를 사용하고 Ubuntu 24.04에서는
 
 `scripts/isaac/stage_smoke.py`는 신규 또는 빈 결과 폴더만 허용한다. 장면 SHA256, 기본 prim·좌표축·단위, 20개 충돌 API prim·19개 설비·8개 마커를 검사하고 1280×720 RGB PNG와 `stage-smoke.json`을 저장한다. 충돌 API 개수는 USD 구성 검사이며, 물리 충돌이나 AMR 주행 성공을 증명하지 않는다.
 
+기본 CLI는 표준 라이브러리 supervisor로 실행하고 Isaac SDK는 별도 worker 프로세스에서 사용한다. worker는 종료 요청 전에 검증 checkpoint를 쓰고, SDK의 fast shutdown으로 종료한다. supervisor가 worker 종료 코드, 실행 ID, 장면 SHA, 고정 경로의 PNG 구조·SHA를 대조한 뒤에만 최종 `passed`로 승격한다. worker가 남긴 `validated`와 종료 코드 0 중 하나만으로 성공 처리하지 않는다.
+
 아래 경로는 프로젝트를 `/workspace/project`에 마운트한 Isaac Sim 컨테이너 안의 경로다. 로컬 `prepare` 결과의 `runs/local/scene/factory-v3.usda`도 함께 전달해야 한다.
 
 ```bash
