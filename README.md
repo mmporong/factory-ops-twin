@@ -29,6 +29,7 @@ S1~S3은 동일한 키트 토트를 준비하는 위치입니다. 하나의 주�
 | USD 생성 | 바닥·설비·마커 USDA 생성과 Isaac Sim 파싱 통과. 실제 물리 충돌 동작은 미검증 |
 | GPU 장면 검사 | Z-up·m 단위, 활성 충돌 API 20개·설비 19개·비충돌 마커 8개 검사, 1280×720 RGB와 SHA 저장 |
 | GPU 종료 판정 | 별도 worker 종료 뒤 supervisor가 실행 ID·장면·PNG·종료 코드를 대조. L40S 실행에서 최종 PASS 확인 |
+| 단일 AMR 검증 도구 | Nova Carter 충돌 형상·지도 여유, 개방 루프 휠 명령, RGB/Depth/semantic/bbox·GIF·ROS clock 증거 검사. 실제 GPU 검증 진행 중 |
 | 운영 원장 | 주문·운반·버퍼·공정·완료 상태, 버전 검사, 중복 이벤트 억제, 로그 재생 |
 | 배차 | 공통 버퍼·가용성 조건을 통과한 작업에 FIFO 또는 이동 ETA 적용 |
 | 통로 예약 | 지정된 3개 자원과 출구의 원자 예약, stale 점유 유지, release ACK 검사 |

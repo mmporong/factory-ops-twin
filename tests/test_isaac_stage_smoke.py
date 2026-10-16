@@ -275,10 +275,65 @@ class SupervisorTests(unittest.TestCase):
             self.assertEqual(_supervisor_main(self._args(scene, output), command), 1)
         result = json.loads((output / "stage-smoke.json").read_text(encoding="utf-8"))
         self.assertEqual(result["status"], "failed")
-        self.assertIn(
-            "scene SHA changed after worker evidence validation",
-            result["supervisor"]["errors"],
+        self.assertIn("scene SHA changed after worker evidence validation", result["supervisor"]["errors"])
+
+    def test_additional_validation_cannot_bypass_base_evidence(self) -> None:
+        _directory, scene, output = self._case()
+        command = self._command(output, {"status": "running"}, b"", 0)
+        self.assertEqual(
+            _supervisor_main(self._args(scene, output), command, additional_evidence_validator=lambda *_: []),
+            1,
         )
+        result = json.loads((output / "stage-smoke.json").read_text())
+        self.assertIn("worker status is not validated", result["supervisor"]["errors"])
+
+    def test_additional_validator_exception_is_saved_as_failure(self) -> None:
+        _directory, scene, output = self._case()
+        png = _png_bytes(width=1280, height=720)
+        command = self._command(output, self._valid_payload(scene, output, png), png, 0)
+
+        def reject(*_args: object) -> list[str]:
+            raise ValueError("corrupted sensor record")
+
+        self.assertEqual(
+            _supervisor_main(self._args(scene, output), command, additional_evidence_validator=reject), 1,
+        )
+        result = json.loads((output / "stage-smoke.json").read_text())
+        self.assertTrue(any("corrupted sensor record" in error for error in result["supervisor"]["errors"]))
+
+    def test_command_factory_receives_generated_run_id(self) -> None:
+        _directory, scene, output = self._case()
+        png = _png_bytes(width=1280, height=720)
+        args = self._args(scene, output)
+        args.run_id = None
+        seen: list[str] = []
+
+        def make_command(actual_scene: Path, actual_output: Path, run_id: str) -> list[str]:
+            self.assertEqual((actual_scene, actual_output), (scene.resolve(), output.resolve()))
+            seen.append(run_id)
+            payload = self._valid_payload(scene, output, png)
+            payload["run_id"] = run_id
+            return self._command(output, payload, png, 0)
+
+        self.assertEqual(_supervisor_main(args, command_factory=make_command), 0)
+        result = json.loads((output / "stage-smoke.json").read_text())
+        self.assertEqual(seen, [result["run_id"]])
+        self.assertRegex(seen[0], r"^[0-9a-f]{32}$")
+
+    def test_scene_change_inside_additional_validator_is_failed(self) -> None:
+        _directory, scene, output = self._case()
+        png = _png_bytes(width=1280, height=720)
+        command = self._command(output, self._valid_payload(scene, output, png), png, 0)
+
+        def mutate(*_args: object) -> list[str]:
+            scene.write_text("#usda 1.0\n# sensor callback changed input\n")
+            return []
+
+        self.assertEqual(
+            _supervisor_main(self._args(scene, output), command, additional_evidence_validator=mutate), 1,
+        )
+        result = json.loads((output / "stage-smoke.json").read_text())
+        self.assertIn("scene SHA changed after worker evidence validation", result["supervisor"]["errors"])
 
 
 if __name__ == "__main__":

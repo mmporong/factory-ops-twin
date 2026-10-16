@@ -88,6 +88,23 @@ timeout --signal=TERM --kill-after=30s 900s \
 
 공식 컨테이너 `nvcr.io/nvidia/isaac-sim:6.2.0`을 사용하고 pull 이후 digest를 기록한다. `ACCEPT_EULA=Y`가 필요하다. 기본 익명 원격측정은 컨테이너 환경변수 `OMNI_TELEMETRY_DISABLE_ANONYMOUS_DATA=1`로 차단하며, 선택 항목인 `PRIVACY_CONSENT=Y`는 설정하지 않는다. 첫 검사에는 WebRTC·Jupyter 포트를 공개할 필요가 없다.
 
+## G0b 단일 AMR 검사
+
+`scripts/isaac/robot_qualification.py`는 같은 supervisor를 사용하며, 기존 공장 장면 증거와 추가 로봇 증거를 모두 통과해야 한다. Nova Carter의 활성 충돌 형상에서 geometry extent를 다시 계산하고, root 기준 변환으로 합친다. vendor USD의 저장된 `extent`나 기존 29×29 계획 probe를 실제 로봇 크기로 간주하지 않는다. 접촉 offset·동적 충돌·안전 인증은 이 계산의 검증 범위에 포함하지 않는다.
+
+로봇은 S1에서 짧은 개방 루프 휠 명령으로 움직인다. 120회 정지 warm-up 뒤 600회 측정 루프에서 조감 프레임과 RGB·optical-axis depth·semantic ID·bbox·카메라 파라미터를 수집하고, 같은 물리 프레임·시각·pose를 대조한다. GIF는 원본 PNG의 파생물이며, 원본과 frame manifest를 함께 보존한다. ROS 2 Jazzy의 `/clock` 수신은 센서 토픽·TF·Nav2 연동 완료를 뜻하지 않는다.
+
+```bash
+cd /isaac-sim
+timeout --signal=TERM --kill-after=30s 900s \
+  ./python.sh /workspace/project/scripts/isaac/robot_qualification.py \
+  --scene /workspace/project/runs/local/scene/factory-v3.usda \
+  --layout /workspace/project/configs/factory-v3/layout.json \
+  --output /workspace/results/g0b-001
+```
+
+최종 GPU 실행은 진행 중이다. `FACTORY_OPS_G0B_STATUS=PASS`, supervisor·worker exit 0, `stage-smoke.json`, 원본 프레임·센서 파일과 manifest를 함께 확인해야 G0b 통과로 기록한다.
+
 ## 공식 근거
 
 - [Isaac Sim 호환성](https://docs.isaacsim.omniverse.nvidia.com/latest/installation/compatibility.html)

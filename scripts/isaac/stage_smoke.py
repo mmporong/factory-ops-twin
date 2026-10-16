@@ -552,7 +552,13 @@ def _validate_worker_evidence(
     return errors, scene_sha_after
 
 
-def _supervisor_main(args: argparse.Namespace, worker_command: list[str] | None = None) -> int:
+def _supervisor_main(
+    args: argparse.Namespace,
+    worker_command: list[str] | None = None,
+    *,
+    command_factory: Callable[[Path, Path, str], list[str]] | None = None,
+    additional_evidence_validator: Callable[[Path, Path, dict[str, Any], str, str], list[str]] | None = None,
+) -> int:
     started = time.monotonic()
     scene, output = _prepare_paths(args.scene, args.output)
     timeout_seconds = float(args.timeout_seconds)
@@ -562,7 +568,9 @@ def _supervisor_main(args: argparse.Namespace, worker_command: list[str] | None 
     if not isinstance(run_id, str) or not re.fullmatch(r"[0-9a-f]{32}", run_id):
         raise SmokeError("supervisor run ID must be 32 lowercase hexadecimal characters")
     scene_sha_before = _sha256(scene)
-    command = worker_command or [
+    if worker_command is not None and command_factory is not None:
+        raise SmokeError("worker_command and command_factory are mutually exclusive")
+    command = worker_command or (command_factory(scene, output, run_id) if command_factory else None) or [
         sys.executable,
         str(Path(__file__).resolve()),
         "--worker",
@@ -607,6 +615,13 @@ def _supervisor_main(args: argparse.Namespace, worker_command: list[str] | None 
         evidence_errors, scene_sha_after = _validate_worker_evidence(
             scene, output, result, run_id, scene_sha_before
         )
+        if additional_evidence_validator is not None:
+            try:
+                evidence_errors.extend(
+                    additional_evidence_validator(scene, output, result, run_id, scene_sha_before)
+                )
+            except Exception as error:
+                evidence_errors.append(f"additional evidence validation failed: {type(error).__name__}: {error}")
     scene_sha_after = _sha256(scene)
     if scene_sha_after != scene_sha_before:
         evidence_errors.append("scene SHA changed after worker evidence validation")
