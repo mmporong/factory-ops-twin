@@ -1,6 +1,22 @@
 # GPU 연동과 작업 보존
 
-로컬 준비 명령은 GPU나 Brev 계정을 사용하지 않는다. 별도 장면 검사 스크립트는 Isaac Sim 6.2 환경에서 실행한다. 이 스크립트의 실제 GPU 실행과 원격 Stop은 아직 검증하지 않았으며, 자동 Sleep 기능을 제공하지 않는다.
+로컬 준비 명령은 GPU나 Brev 계정을 사용하지 않는다. 별도 장면 검사 스크립트는 Isaac Sim 6.2 환경에서 실행한다. AWS L40S에서 G0a 정적 장면 검사를 통과했으며, 원격 Stop·재시작 보존 시험은 아직 완료하지 않았다. 자동 Sleep 기능은 제공하지 않는다.
+
+## 검증한 실행 환경
+
+| 항목 | 확인 결과 |
+|---|---|
+| Brev VM | AWS Seoul `g6e.2xlarge`, L40S 48 GB, 8 vCPU, RAM 64 GiB, 디스크 256 GiB |
+| 컨테이너 OS | Ubuntu 24.04.3 |
+| 드라이버 | NVIDIA 595.91.07 |
+| Isaac Sim | 6.2.0, 공식 컨테이너 compatibility checker PASSED |
+| 정적 장면 | 20개 활성 충돌 API·19개 설비·8개 비충돌 마커, Z-up, 1 m 단위 |
+| 실행 결과 | supervisor·worker exit 0, `passed`, 1280×720 RGB 및 SHA 대조 |
+| 실행 코드 | `55e67b5c034ba91376c7f62fa0fb23aaadac73c1` |
+| 실행 ID | `507d19acee99990fc495903ec0e82124` |
+| 이미지 digest | `sha256:a025b65a7442d56806a1cc3f5eed081caf736c24b72d62dccf68ef66945d8690` |
+
+원본 이미지·JSON·로그·GPU 사용 관측과 환경 기록 29개는 같은 manifest에 묶었다. Windows와 E 드라이브의 압축본 SHA256을 원격 원본과 대조했고, 압축 내부 29개 파일도 검증했다. 실제 주행·센서·물리 충돌·RTF는 이 결과의 검증 범위에 포함하지 않는다.
 
 ## GPU가 필요한 시점
 
@@ -26,7 +42,7 @@ Isaac Sim 6.2 공식 문서는 Python 3.12를 사용하고 Ubuntu 24.04에서는
         → 파일 SHA256 대조 → 인스턴스 Stop → 콘솔 상태·과금 상태 재확인
 ```
 
-코드는 GitHub에, 실행 결과·영상·제공 에셋은 별도 지속 저장소에 둔다. 로컬 Windows의 결과 보존 위치는 `E:\FactoryOpsArtifacts`다. 이 폴더를 유일한 백업으로 사용하지 않는다. 폴더와 코드 묶음의 로컬 복사본은 준비했으며, GPU 결과 전송은 아직 수행하지 않았다.
+코드는 GitHub에, 실행 결과·영상·제공 에셋은 별도 지속 저장소에 둔다. 로컬 Windows의 결과 보존 위치는 `E:\FactoryOpsArtifacts`다. 이 폴더를 유일한 백업으로 사용하지 않는다. GPU 결과와 압축본을 로컬 및 E 드라이브로 전송하고 SHA256 대조를 완료했다.
 
 외부 복사에는 실행 ID, 코드 SHA, 입력·출력 SHA256, 이미지 digest, 로봇·센서 설정, 시뮬레이션 시간과 wall time, GPU·드라이버, VRAM·RTF 기록을 함께 남긴다. 인증 정보는 추적하지 않는 설정이나 SSH 인증 도구로 전달하며 저장소·로그에 기록하지 않는다.
 
