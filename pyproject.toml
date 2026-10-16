@@ -10,4 +10,4 @@ package = false
 
 [tool.pyright]
 pythonVersion = "3.12"
-include = ["factory_ops", "tests"]
+include = ["factory_ops", "tests", "scripts/isaac"]

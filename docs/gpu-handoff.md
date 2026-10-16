@@ -1,6 +1,6 @@
 # GPU 연동과 작업 보존
 
-현재 저장소의 명령은 GPU나 Brev 계정을 사용하지 않는다. 이 문서는 다음 GPU 실행에 필요한 준비 순서이며, 아직 검증하지 않은 설치 스크립트나 자동 Sleep 기능을 제공하지 않는다.
+로컬 준비 명령은 GPU나 Brev 계정을 사용하지 않는다. 별도 장면 검사 스크립트는 Isaac Sim 6.2 환경에서 실행한다. 이 스크립트의 실제 GPU 실행과 원격 Stop은 아직 검증하지 않았으며, 자동 Sleep 기능을 제공하지 않는다.
 
 ## GPU가 필요한 시점
 
@@ -26,11 +26,29 @@ Isaac Sim 6.2 공식 문서는 Python 3.12를 사용하고 Ubuntu 24.04에서는
         → 파일 SHA256 대조 → 인스턴스 Stop → 콘솔 상태·과금 상태 재확인
 ```
 
-코드는 GitHub에, 실행 결과·영상·제공 에셋은 별도 지속 저장소에 둔다. 로컬 Windows의 예정 결과 저장 위치는 `E:\FactoryOpsArtifacts`다. 이 폴더를 유일한 백업으로 사용하지 않으며, 폴더 생성과 GPU 간 전송은 아직 수행하지 않았다.
+코드는 GitHub에, 실행 결과·영상·제공 에셋은 별도 지속 저장소에 둔다. 로컬 Windows의 결과 보존 위치는 `E:\FactoryOpsArtifacts`다. 이 폴더를 유일한 백업으로 사용하지 않는다. 폴더와 코드 묶음의 로컬 복사본은 준비했으며, GPU 결과 전송은 아직 수행하지 않았다.
 
 외부 복사에는 실행 ID, 코드 SHA, 입력·출력 SHA256, 이미지 digest, 로봇·센서 설정, 시뮬레이션 시간과 wall time, GPU·드라이버, VRAM·RTF 기록을 함께 남긴다. 인증 정보는 추적하지 않는 설정이나 SSH 인증 도구로 전달하며 저장소·로그에 기록하지 않는다.
 
-에이전트가 종료 후 Stop까지 처리하려면 해당 세션에 Brev 제어 경로와 유효한 인증, 종료 대상 인스턴스 식별자가 있어야 한다. 현재는 인스턴스를 만들지 않았고 원격 Stop 실행도 검증하지 않았다. 중지 성공이나 남은 비용을 확인하기 전에는 비용 차단 완료로 보고하지 않는다.
+에이전트가 종료 후 Stop까지 처리하려면 해당 세션에 Brev 제어 경로와 유효한 인증, 종료 대상 인스턴스 식별자가 있어야 한다. AWS L40S 환경 생성과 Brev 기본 SSH 프록시 접속을 확인했다. 원격 Stop 실행은 아직 검증하지 않았다. 중지 성공이나 남은 비용을 확인하기 전에는 비용 차단 완료로 보고하지 않는다.
+
+## Isaac Sim 6.2 장면 검사
+
+`scripts/isaac/stage_smoke.py`는 신규 또는 빈 결과 폴더만 허용한다. 장면 SHA256, 기본 prim·좌표축·단위, 20개 충돌 API prim·19개 설비·8개 마커를 검사하고 1280×720 RGB PNG와 `stage-smoke.json`을 저장한다. 충돌 API 개수는 USD 구성 검사이며, 물리 충돌이나 AMR 주행 성공을 증명하지 않는다.
+
+아래 경로는 프로젝트를 `/workspace/project`에 마운트한 Isaac Sim 컨테이너 안의 경로다. 로컬 `prepare` 결과의 `runs/local/scene/factory-v3.usda`도 함께 전달해야 한다.
+
+```bash
+cd /isaac-sim
+timeout --signal=TERM --kill-after=30s 900s \
+  ./python.sh /workspace/project/scripts/isaac/stage_smoke.py \
+  --scene /workspace/project/runs/local/scene/factory-v3.usda \
+  --output /workspace/results/g0-stage-001
+```
+
+스크립트는 Isaac Sim 설치나 Brev 생성·중지를 수행하지 않는다. 위 명령은 전체 Python 프로세스에 900초 제한을 두고, TERM 뒤 30초 안에 종료되지 않으면 강제 종료한다. timeout 종료 코드 124·137, JSON 부재, PASS sentinel 부재는 실패로 처리한다. Docker 실행도 명명한 컨테이너만 대상으로 외부 제한과 종료 확인을 적용한다. JSON의 `status=passed`, 종료 코드 0, `FACTORY_OPS_ISAAC_SMOKE_STATUS=PASS`, 실제 PNG를 함께 확인한다. 로컬 compile과 정적 검사는 GPU 실행 검증을 대신하지 않는다.
+
+공식 컨테이너 `nvcr.io/nvidia/isaac-sim:6.2.0`을 사용하고 pull 이후 digest를 기록한다. `ACCEPT_EULA=Y`가 필요하며 선택 항목인 `PRIVACY_CONSENT=Y`는 설정하지 않는다. 첫 검사에는 WebRTC·Jupyter 포트를 공개할 필요가 없다.
 
 ## 공식 근거
 
@@ -38,3 +56,6 @@ Isaac Sim 6.2 공식 문서는 Python 3.12를 사용하고 Ubuntu 24.04에서는
 - [Python 설치 요구사항](https://docs.isaacsim.omniverse.nvidia.com/latest/installation/install_python.html)
 - [ROS 2 지원 조합](https://docs.isaacsim.omniverse.nvidia.com/latest/installation/install_ros.html)
 - [Brev 인스턴스 개념](https://docs.nvidia.com/brev/concepts/gpu-instances)
+- [Isaac Sim 6.2 컨테이너 설치](https://docs.isaacsim.omniverse.nvidia.com/6.2.0/installation/install_container.html)
+- [Isaac Sim 6.2 stage API](https://docs.isaacsim.omniverse.nvidia.com/6.2.0/py/source/extensions/isaacsim.core.experimental.utils/docs/index.html)
+- [Replicator 조감 이미지 저장](https://docs.isaacsim.omniverse.nvidia.com/6.2.0/replicator_tutorials/tutorial_replicator_getting_started.html)

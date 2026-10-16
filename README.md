@@ -27,6 +27,7 @@ S1~S3은 동일한 키트 토트를 준비하는 위치입니다. 하나의 주�
 | 공장 배치 | 40×24 m, 6개 인계 위치, 2개 대피 포켓, 19개 설비 장애물 |
 | 지도 생성 | 50 mm 격자, 물리 장애물 지도와 정책 keepout 지도 분리, ROS PGM·YAML 출력 |
 | USD 생성 | 바닥·설비 충돌체와 인계 마커를 USDA 텍스트로 생성. pxr·Isaac 파싱과 충돌 동작은 미검증 |
+| GPU 장면 검사 도구 | Isaac Sim 6.2에서 USD 메타·prim 수를 검사하고 조감 RGB를 저장하는 스크립트 작성. 실제 GPU 실행은 미검증 |
 | 운영 원장 | 주문·운반·버퍼·공정·완료 상태, 버전 검사, 중복 이벤트 억제, 로그 재생 |
 | 배차 | 공통 버퍼·가용성 조건을 통과한 작업에 FIFO 또는 이동 ETA 적용 |
 | 통로 예약 | 지정된 3개 자원과 출구의 원자 예약, stale 점유 유지, release ACK 검사 |
@@ -44,7 +45,7 @@ PowerShell:
 ```powershell
 cd "$HOME/factory-ops-twin"
 uv sync --locked
-uvx --from pyright==1.1.414 pyright factory_ops tests
+uvx --from pyright==1.1.414 pyright factory_ops tests scripts/isaac
 uv run python -m unittest discover -s tests -v
 uv run python -m factory_ops prepare --output runs/local
 uv run python -m factory_ops verify runs/local
@@ -84,6 +85,7 @@ factory_ops/
   smoke.py            CPU 이벤트 실행
   report.py, cli.py   결과 보고와 명령
 tests/                표준 unittest 회귀시험
+scripts/isaac/        Isaac Sim 6.2 장면 검사·렌더 스크립트
 docs/                 설계 경계와 GPU 연동 순서
 ```
 
