@@ -10,7 +10,7 @@ from factory_ops.layout import Layout
 from factory_ops.traffic import TrafficController
 from scripts.ros.g2_evidence import (
     _nearest, _validate_dispatch, qualify_authored_routes, validate_g2_evidence,
-    validate_scan_pairs, validate_f3_cycle,
+    validate_amcl_scan_fan_in, validate_scan_pairs, validate_f3_cycle,
     unique_sequence_index,
 )
 from scripts.ros.g2_mission import mask_scan_ranges
@@ -22,6 +22,20 @@ def scan(ranges) -> dict[str, Any]:
     return {"frame_id": "front_scan", "angle_min": -math.pi, "angle_max": math.pi,
             "angle_increment": math.pi, "time_increment": 0.01, "scan_time": 0.1,
             "range_min": .1, "range_max": 30, "intensities": [], "ranges": ranges}
+
+
+def fan_in_fixture():
+    filtered = {}
+    localization = {}
+    for robot_index, robot in enumerate(("carter1", "carter2")):
+        for frame_id in ("front_scan", "rear_scan"):
+            for index in range(5):
+                record = scan([math.nan, 2.0 + robot_index, math.inf])
+                record["frame_id"] = frame_id
+                key = (robot, frame_id, float(index))
+                filtered[key] = [record]
+                localization[key] = [deepcopy(record)]
+    return filtered, localization
 
 
 def cycle_fixture():
@@ -155,6 +169,69 @@ class G2EvidenceTests(unittest.TestCase):
                 else:
                     with self.assertRaises(ValueError):
                         mask_scan_ranges(amin, amax, increment, raw["ranges"])
+
+    def test_amcl_scan_fan_in_requires_exact_two_frame_copies(self):
+        filtered, localization = fan_in_fixture()
+        report = validate_amcl_scan_fan_in(filtered, localization, coverage_window=(0, 4))
+        self.assertTrue(report["passed"], report["errors"])
+        self.assertEqual(report["copy_counts"], {
+            "carter1/front_scan": 5, "carter1/rear_scan": 5,
+            "carter2/front_scan": 5, "carter2/rear_scan": 5,
+        })
+        self.assertTrue(all(count == 5 for count in report["valid_point_counts"].values()))
+
+    def test_amcl_scan_fan_in_fails_closed_on_copy_faults(self):
+        mutations = {}
+
+        def missing(filtered, localization):
+            del localization[("carter1", "front_scan", 2.0)]
+
+        mutations["missing"] = missing
+
+        def duplicate(filtered, localization):
+            key = ("carter1", "front_scan", 2.0)
+            localization[key].append(deepcopy(localization[key][0]))
+
+        mutations["duplicate"] = duplicate
+
+        def unknown_frame(filtered, localization):
+            localization[("carter1", "side_scan", 2.0)] = [deepcopy(localization[("carter1", "front_scan", 2.0)][0])]
+
+        mutations["unknown_frame"] = unknown_frame
+
+        def changed_metadata(filtered, localization):
+            localization[("carter1", "front_scan", 2.0)][0]["range_max"] = 31
+
+        mutations["changed_metadata"] = changed_metadata
+
+        def changed_ray(filtered, localization):
+            localization[("carter1", "front_scan", 2.0)][0]["ranges"][1] = 9
+
+        mutations["changed_ray"] = changed_ray
+
+        def cross_robot(filtered, localization):
+            key = ("carter1", "front_scan", 2.0)
+            localization[key] = [deepcopy(localization[("carter2", "front_scan", 2.0)][0])]
+
+        mutations["cross_robot"] = cross_robot
+
+        def unpaired_recording(filtered, localization):
+            localization[("carter1", "front_scan", 99.0)] = [deepcopy(localization[("carter1", "front_scan", 2.0)][0])]
+
+        mutations["unpaired_recording"] = unpaired_recording
+
+        def duplicate_source(filtered, localization):
+            key = ("carter1", "front_scan", 2.0)
+            filtered[key].append(deepcopy(filtered[key][0]))
+
+        mutations["duplicate_source"] = duplicate_source
+
+        for name, mutate in mutations.items():
+            with self.subTest(fault=name):
+                filtered, localization = fan_in_fixture()
+                mutate(filtered, localization)
+                report = validate_amcl_scan_fan_in(filtered, localization, coverage_window=(0, 4))
+                self.assertFalse(report["passed"], report)
 
     def test_f3_continuity_requires_decoded_tf_and_original_generation(self):
         traffic = TrafficController.from_file(ROOT / "configs/factory-v3/traffic.json")

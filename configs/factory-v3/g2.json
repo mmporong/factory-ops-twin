@@ -103,6 +103,14 @@
   "scope": {
     "simulator_truth": "evaluation and media only; never localization, routing, reservations or steering",
     "scan_filter": "static sensor-frame forward half-plane; no truth-based self/peer filtering",
+    "localization_scan_fan_in": {
+      "topic": "per-robot scan_localization",
+      "inputs": ["front_scan", "rear_scan"],
+      "message_contract": "filtered LaserScan frame_id, timestamp, angles, ranges and intensities are preserved; AMCL resolves each sensor extrinsic through TF",
+      "implementation": "nav2_amcl 1.3.13 multi-laser subscription behavior",
+      "primary_reference": "https://github.com/ros-navigation/navigation2/blob/1.3.13/nav2_amcl/src/amcl_node.cpp#L585-L810",
+      "source_commit": "f4108e5b1c2bce804a1aa0c7be6673a8eb4a1501"
+    },
     "authorization": "short-lived dispatcher permission for the accepted goal and reservation; Twist has no goal UUID",
     "training_eligible": false,
     "fault": "F2 isolates traffic observation/authorization only, not the full DDS graph"

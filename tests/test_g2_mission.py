@@ -21,6 +21,8 @@ from scripts.ros.g2_mission import (
     make_authorization,
     mask_scan_ranges,
     named_subscriber_topics_ready,
+    publish_scan_fanout,
+    scan_recording_topics,
 )
 
 
@@ -78,6 +80,27 @@ class G2MissionTests(unittest.TestCase):
         self.assertFalse(filtered_scan_is_recordable(True, 2_400_000_000, 2_300_000_000))
         self.assertFalse(filtered_scan_is_recordable(True, 2_400_000_000, 2_400_000_000))
         self.assertTrue(filtered_scan_is_recordable(True, 2_400_000_000, 2_500_000_000))
+
+    def test_filtered_scan_fanout_preserves_one_message_for_costmap_and_amcl(self) -> None:
+        class Publisher:
+            def __init__(self) -> None:
+                self.messages: list[object] = []
+
+            def publish(self, message: object) -> None:
+                self.messages.append(message)
+
+        message = object()
+        costmap = Publisher()
+        localization = Publisher()
+        publish_scan_fanout(message, (costmap, localization))
+        self.assertIs(costmap.messages[0], message)
+        self.assertIs(localization.messages[0], message)
+        with self.assertRaisesRegex(ValueError, "costmap and localization"):
+            publish_scan_fanout(message, (costmap,))
+        self.assertEqual(scan_recording_topics(("carter1",)), (
+            "/carter1/scan_front_raw", "/carter1/scan_rear_raw",
+            "/carter1/scan_front", "/carter1/scan_rear", "/carter1/scan_localization",
+        ))
         self.assertFalse(filtered_scan_is_recordable(True, None, 2_500_000_000))
         for sec, nano in ((1, 1), (123, 999_999_999), (26, 772_713_542), (374, 663_036_237)):
             total_ns = sec * 1_000_000_000 + nano
@@ -117,7 +140,7 @@ class G2MissionTests(unittest.TestCase):
 
     def test_nav2_template_is_relative_namespaced_and_declares_jazzy_through_poses(self) -> None:
         text = (ROOT / "configs/factory-v3/nav2-g2.yaml").read_text(encoding="utf-8")
-        self.assertIn("scan_topic: scan_front", text)
+        self.assertIn("scan_topic: scan_localization", text)
         self.assertIn("odom_topic: odom", text)
         self.assertIn("navigators: [navigate_to_pose, navigate_through_poses]", text)
         self.assertIn("plugin: nav2_bt_navigator::NavigateThroughPosesNavigator", text)

@@ -79,6 +79,18 @@ def filtered_scan_is_recordable(recording_ready: bool, epoch_ns: int | None, sta
             and epoch_ns >= 0 and stamp_ns > epoch_ns)
 
 
+def publish_scan_fanout(message: Any, publishers: Sequence[Any]) -> None:
+    if len(publishers) != 2:
+        raise ValueError("filtered scan fan-in requires costmap and localization publishers")
+    for publisher in publishers:
+        publisher.publish(message)
+
+
+def scan_recording_topics(robot_ids: Sequence[str] = ROBOT_IDS) -> tuple[str, ...]:
+    suffixes = ("scan_front_raw", "scan_rear_raw", "scan_front", "scan_rear", "scan_localization")
+    return tuple(f"/{robot_id}/{suffix}" for robot_id in robot_ids for suffix in suffixes)
+
+
 class PoseFreshnessGate:
     """Track only TF samples whose own timestamp is fresh in simulation time."""
 
@@ -499,7 +511,9 @@ def main() -> int:  # noqa: C901 - the explicit scenario phases are evidence bou
         tf_listeners: dict[str, Any] = {}
         clients: dict[str, dict[str, Any]] = {}
         lifecycle: dict[str, dict[str, Any]] = {}
-        scan_counts = {robot: {name: 0 for name in ("front_raw", "rear_raw", "front", "rear")} for robot in ROBOT_IDS}
+        scan_counts = {robot: {name: 0 for name in (
+            "front_raw", "rear_raw", "front", "rear", "localization_front", "localization_rear",
+        )} for robot in ROBOT_IDS}
         scan_pre_record_drops = {robot: {side: 0 for side in ("front", "rear")} for robot in ROBOT_IDS}
         filters_ready = False
         scan_epoch_ns: int | None = None
@@ -527,8 +541,12 @@ def main() -> int:  # noqa: C901 - the explicit scenario phases are evidence bou
             }
             front_pub = node.create_publisher(LaserScan, "scan_front", qos_profile_sensor_data)
             rear_pub = node.create_publisher(LaserScan, "scan_rear", qos_profile_sensor_data)
+            localization_pub = node.create_publisher(LaserScan, "scan_localization", qos_profile_sensor_data)
 
-            def scan_callback(message: Any, *, robot: str, side: str, publisher: Any) -> None:
+            def scan_callback(
+                message: Any, *, robot: str, side: str,
+                filtered_publisher: Any, localization_publisher: Any,
+            ) -> None:
                 nonlocal raw_stamp_peak_ns
                 stamp_ns = message.header.stamp.sec * 1_000_000_000 + message.header.stamp.nanosec
                 raw_stamp_peak_ns = max(raw_stamp_peak_ns, stamp_ns)
@@ -540,15 +558,20 @@ def main() -> int:  # noqa: C901 - the explicit scenario phases are evidence bou
                 filtered.ranges = mask_scan_ranges(
                     float(message.angle_min), float(message.angle_max), float(message.angle_increment), message.ranges,
                 )
-                publisher.publish(filtered)
+                publish_scan_fanout(filtered, (filtered_publisher, localization_publisher))
                 scan_counts[robot][side] += 1
+                scan_counts[robot][f"localization_{side}"] += 1
 
             subscriptions.extend([
                 node.create_subscription(LaserScan, "scan_front_raw",
-                    lambda msg, r=robot_id, p=front_pub: scan_callback(msg, robot=r, side="front", publisher=p),
+                    lambda msg, r=robot_id, p=front_pub, lp=localization_pub: scan_callback(
+                        msg, robot=r, side="front", filtered_publisher=p, localization_publisher=lp,
+                    ),
                     qos_profile_sensor_data),
                 node.create_subscription(LaserScan, "scan_rear_raw",
-                    lambda msg, r=robot_id, p=rear_pub: scan_callback(msg, robot=r, side="rear", publisher=p),
+                    lambda msg, r=robot_id, p=rear_pub, lp=localization_pub: scan_callback(
+                        msg, robot=r, side="rear", filtered_publisher=p, localization_publisher=lp,
+                    ),
                     qos_profile_sensor_data),
             ])
 
@@ -569,12 +592,11 @@ def main() -> int:  # noqa: C901 - the explicit scenario phases are evidence bou
                 qos_lines.append(f"/{robot_id}/{topic}:\n  durability: transient_local\n  reliability: reliable\n  history: keep_last\n  depth: 1\n")
         qos_path.write_text("".join(qos_lines), encoding="utf-8")
         bag_topics = ["/clock", "/factory/g2/events", "/factory/g2/authorizations"]
-        raw_topics = []
+        recorder_scan_topics = scan_recording_topics()
         for robot_id in ROBOT_IDS:
             prefix = f"/{robot_id}"
-            raw_topics.extend((prefix + "/scan_front_raw", prefix + "/scan_rear_raw"))
             bag_topics.extend(prefix + suffix for suffix in (
-                "/scan_front_raw", "/scan_rear_raw", "/scan_front", "/scan_rear", "/odom",
+                "/scan_front_raw", "/scan_rear_raw", "/scan_front", "/scan_rear", "/scan_localization", "/odom",
                 "/tf", "/tf_static", "/map", "/navigation_map", "/amcl_pose", "/plan", "/cmd_vel",
                 "/navigate_to_pose/_action/status", "/navigate_to_pose/_action/feedback",
                 "/navigate_through_poses/_action/status", "/navigate_through_poses/_action/feedback",
@@ -592,7 +614,7 @@ def main() -> int:  # noqa: C901 - the explicit scenario phases are evidence bou
         subscriber_deadline = min(deadline, time.monotonic() + 300.0)
         while True:
             if time.monotonic() >= subscriber_deadline:
-                raise TimeoutError("rosbag did not discover G2 evidence and raw scan topics with live simulation time")
+                raise TimeoutError("rosbag did not discover G2 evidence and scan topics with live simulation time")
             if launch.poll() is not None or bag.poll() is not None:
                 raise RuntimeError("G2 Nav2 launch or rosbag exited during evidence discovery")
             scene_path = output / "g2-scene.json"
@@ -601,7 +623,7 @@ def main() -> int:  # noqa: C901 - the explicit scenario phases are evidence bou
             for node in nodes:
                 ros.spin_once(node, timeout_sec=0.01)
             if (evidence_subscribers_ready(evidence_publishers)
-                    and named_subscriber_topics_ready(event_node, raw_topics, "rosbag2_recorder")
+                    and named_subscriber_topics_ready(event_node, recorder_scan_topics, "rosbag2_recorder")
                     and now() > 0):
                 break
         scan_epoch_ns = max(event_node.get_clock().now().nanoseconds, raw_stamp_peak_ns)
@@ -756,8 +778,8 @@ def main() -> int:  # noqa: C901 - the explicit scenario phases are evidence bou
                 ros.spin_once(node, timeout_sec=0.002)
             if not evidence_subscribers_ready(evidence_publishers):
                 raise RuntimeError("rosbag evidence subscriptions were lost before lease publication")
-            if not named_subscriber_topics_ready(event_node, raw_topics, "rosbag2_recorder"):
-                raise RuntimeError("rosbag raw scan subscriptions were lost during scan filtering")
+            if not named_subscriber_topics_ready(event_node, recorder_scan_topics, "rosbag2_recorder"):
+                raise RuntimeError("rosbag scan subscriptions were lost during scan filtering")
             sim_time = now()
             poll_goals(sim_time)
             if sim_time - last_observation >= 0.1:
@@ -1006,7 +1028,13 @@ def main() -> int:  # noqa: C901 - the explicit scenario phases are evidence bou
             "scan_pre_record_drops": scan_pre_record_drops,
             "bag_topics_requested": bag_topics, "planning_radius_m": planning_radius,
             "traffic_snapshot": traffic.snapshot(now=now()),
-            "localization_source": "per-namespace TF map->base_link from wheel odometry plus front RTX scan AMCL",
+            "localization_source": "per-namespace TF map->base_link from wheel odometry plus front/rear filtered RTX scan AMCL",
+            "localization_scan": {
+                "topic": "per-robot scan_localization",
+                "inputs": ["front_scan", "rear_scan"],
+                "method": "unchanged filtered LaserScan fan-in; AMCL applies each frame extrinsic from TF",
+                "ground_truth_input": False,
+            },
             "fault_scope": scenario.get("fault"),
         })
         atomic_json(output / "mission-control.json", {

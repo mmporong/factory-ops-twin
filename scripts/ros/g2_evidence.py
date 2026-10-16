@@ -149,6 +149,80 @@ def validate_scan_pairs(
             "raw_timestamp_count": len(raw_scans), "filtered_timestamp_count": len(filtered_scans)}
 
 
+def _scan_values_equal(left: object, right: object) -> bool:
+    if isinstance(left, float) and isinstance(right, float) and math.isnan(left) and math.isnan(right):
+        return True
+    if (isinstance(left, Sequence) and not isinstance(left, (str, bytes))
+            and isinstance(right, Sequence) and not isinstance(right, (str, bytes))):
+        return len(left) == len(right) and all(_scan_values_equal(a, b) for a, b in zip(left, right))
+    return left == right
+
+
+def validate_amcl_scan_fan_in(
+    filtered_scans: Mapping[tuple[str, str, float], Sequence[Mapping[str, Any]]],
+    localization_scans: Mapping[tuple[str, str, float], Sequence[Mapping[str, Any]]],
+    *, coverage_window: tuple[float, float] | None = None,
+) -> dict[str, Any]:
+    """Require an unchanged AMCL fan-in copy for each qualified filtered scan."""
+    errors: list[str] = []
+    copied: Counter[str] = Counter()
+    covered: Counter[str] = Counter()
+    valid_points: Counter[str] = Counter()
+    allowed_frames = {"front_scan", "rear_scan"}
+    metadata = ("frame_id", "angle_min", "angle_max", "angle_increment", "time_increment",
+                "scan_time", "range_min", "range_max", "intensities", "ranges")
+
+    for (robot, frame_id, stamp), records in filtered_scans.items():
+        label = f"{robot}/{frame_id}"
+        if robot not in ROBOTS or frame_id not in allowed_frames:
+            errors.append(f"{label}@{stamp}: filtered source has an unknown robot or frame")
+        if len(records) != 1:
+            errors.append(f"{label}@{stamp}: filtered source timestamp is not unique")
+        if coverage_window is None or coverage_window[0] <= stamp <= coverage_window[1]:
+            covered[label] += 1
+            if len(localization_scans.get((robot, frame_id, stamp), [])) != 1:
+                errors.append(f"{label}@{stamp}: qualified filtered scan lacks exactly one AMCL fan-in copy")
+
+    for (robot, frame_id, stamp), records in localization_scans.items():
+        label = f"{robot}/{frame_id}"
+        if robot not in ROBOTS or frame_id not in allowed_frames:
+            errors.append(f"{label}@{stamp}: AMCL fan-in has an unknown robot or frame")
+            continue
+        source = filtered_scans.get((robot, frame_id, stamp), [])
+        if len(records) != 1 or len(source) != 1:
+            errors.append(f"{label}@{stamp}: AMCL fan-in must have one unique filtered peer")
+            continue
+        original, copy = source[0], records[0]
+        if any(not _scan_values_equal(original.get(key), copy.get(key)) for key in metadata):
+            errors.append(f"{label}@{stamp}: AMCL fan-in changed filtered scan metadata or rays")
+            continue
+        if coverage_window is None or coverage_window[0] <= stamp <= coverage_window[1]:
+            copied[label] += 1
+            ranges = copy.get("ranges", [])
+            minimum, maximum = copy.get("range_min"), copy.get("range_max")
+            if isinstance(minimum, (int, float)) and isinstance(maximum, (int, float)):
+                valid_points[label] += sum(
+                    isinstance(value, (int, float)) and math.isfinite(value) and minimum <= value <= maximum
+                    for value in ranges if not isinstance(value, bool)
+                )
+
+    for robot in ROBOTS:
+        for frame_id in allowed_frames:
+            label = f"{robot}/{frame_id}"
+            if covered[label] < 5 or copied[label] < 5:
+                errors.append(f"{label}: fewer than five qualified AMCL fan-in copies")
+            if valid_points[label] <= 0:
+                errors.append(f"{label}: AMCL fan-in has no valid scan points")
+    return {
+        "passed": not errors, "errors": errors,
+        "coverage_window_sim_s": coverage_window,
+        "filtered_source_counts": dict(covered), "copy_counts": dict(copied),
+        "valid_point_counts": dict(valid_points),
+        "filtered_timestamp_count": len(filtered_scans),
+        "localization_timestamp_count": len(localization_scans),
+    }
+
+
 def decoded_map_pose(edges: Mapping[str, Sequence[Mapping[str, Any]]], stamp: float) -> tuple[float, float]:
     """Reconstruct planar map->base_link from actual recorded TF messages."""
     poses = []
@@ -383,6 +457,7 @@ def inspect_rosbag(output: Path, traces: Mapping[str, list[dict[str, Any]]], rea
     events: list[dict[str, Any]] = []
     raw_scans: dict[tuple[str, float], list[Mapping[str, Any]]] = defaultdict(list)
     filtered_scans: dict[tuple[str, float], list[Mapping[str, Any]]] = defaultdict(list)
+    localization_scans: dict[tuple[str, str, float], list[Mapping[str, Any]]] = defaultdict(list)
     filtered_count: Counter[str] = Counter()
     times = {robot: [row["sim_time_s"] for row in trace] for robot, trace in traces.items()}
     databases = sorted((output / "rosbag").glob("*.db3"))
@@ -455,7 +530,9 @@ def inspect_rosbag(output: Path, traces: Mapping[str, list[dict[str, Any]]], rea
                     scan_points[topic] += sum(math.isfinite(v) and message.range_min <= v <= message.range_max for v in ranges)
                     scan_geometry[topic] = {"range_count": len(ranges), **{key: scan_record[key] for key in
                                            ("angle_min", "angle_max", "angle_increment", "range_min", "range_max", "scan_time")}}
-                    if topic.endswith("_raw"):
+                    if topic.endswith("/scan_localization"):
+                        localization_scans[(robot, message.header.frame_id, stamp)].append(scan_record)
+                    elif topic.endswith("_raw"):
                         raw_scans[(topic.removesuffix("_raw"), stamp)].append(scan_record)
                         if ready["scenario_id"] == "P0":
                             own = _nearest(traces[robot], times[robot], stamp)
@@ -493,6 +570,13 @@ def inspect_rosbag(output: Path, traces: Mapping[str, list[dict[str, Any]]], rea
     scan_pairs = validate_scan_pairs(raw_scans, filtered_scans, coverage_window=window)
     errors.extend(scan_pairs["errors"])
     filtered_count.update(scan_pairs["paired_counts"])
+    filtered_by_frame: dict[tuple[str, str, float], list[Mapping[str, Any]]] = defaultdict(list)
+    for (topic, stamp), records in filtered_scans.items():
+        robot = topic.split("/")[1]
+        for record in records:
+            filtered_by_frame[(robot, str(record.get("frame_id")), stamp)].append(record)
+    fan_in = validate_amcl_scan_fan_in(filtered_by_frame, localization_scans, coverage_window=window)
+    errors.extend(fan_in["errors"])
     authorizations = {robot: unique_sequence_index(rows, "authorization_seq", errors, robot + " authorizations")
                       for robot, rows in authorization_rows.items()}
     for lane, rows in (("traffic", [row for row in events if "event_type" in row]),
@@ -502,7 +586,7 @@ def inspect_rosbag(output: Path, traces: Mapping[str, list[dict[str, Any]]], rea
         errors.append("rosbag SQLite integrity check failed")
     for robot in ROBOTS:
         prefix = f"/{robot}"
-        for suffix in ("odom", "tf", "tf_static", "amcl_pose", "map", "navigation_map", "scan_front_raw", "scan_rear_raw", "scan_front", "scan_rear"):
+        for suffix in ("odom", "tf", "tf_static", "amcl_pose", "map", "navigation_map", "scan_front_raw", "scan_rear_raw", "scan_front", "scan_rear", "scan_localization"):
             if counts[prefix + "/" + suffix] <= 0:
                 errors.append(f"missing actual ROS messages {prefix}/{suffix}")
         for side in ("front", "rear"):
@@ -520,9 +604,12 @@ def inspect_rosbag(output: Path, traces: Mapping[str, list[dict[str, Any]]], rea
                 errors.append(f"{robot}: {side} scanner TF is inconsistent with its authored local mount")
         if "odom->base_link" not in transforms[f"{prefix}/tf"] or "map->odom" not in transforms[f"{prefix}/tf"]:
             errors.append(f"{robot}: isolated TF localization chain is incomplete")
+        localization_topic = f"{prefix}/scan_localization"
+        if frames[localization_topic] != {"front_scan", "rear_scan"} or scan_points[localization_topic] <= 0:
+            errors.append(f"{localization_topic}: two-frame AMCL fan-in qualification failed")
         if ready["scenario_id"] == "P0" and sum(count for topic, count in peer_hits.items() if topic.startswith(prefix + "/")) <= 0:
             errors.append(f"{robot}: no raw RTX returns join the peer's evaluated collision envelope")
-    for forbidden in ("/tf", "/tf_static", "/odom", "/cmd_vel", "/scan_front", "/scan_rear"):
+    for forbidden in ("/tf", "/tf_static", "/odom", "/cmd_vel", "/scan_front", "/scan_rear", "/scan_localization"):
         if counts[forbidden]:
             errors.append(f"unexpected unnamespaced robot topic: {forbidden}")
     if not counts["/clock"] or not authorizations:
@@ -531,6 +618,7 @@ def inspect_rosbag(output: Path, traces: Mapping[str, list[dict[str, Any]]], rea
             "topic_counts": dict(counts), "positive_scan_points": dict(scan_points), "peer_envelope_ray_hits": dict(peer_hits),
             "filtered_scan_pairs": dict(filtered_count), "scan_frame_ids": {k: sorted(v) for k, v in frames.items()},
             "scan_pair_coverage": {key: value for key, value in scan_pairs.items() if key != "errors"},
+            "amcl_scan_fan_in": {key: value for key, value in fan_in.items() if key != "errors"},
             "scan_geometry": scan_geometry,
             "transforms": dict(transforms), "goal_statuses": dict(statuses), "authorizations": dict(authorizations), "events": events,
             "amcl_poses": dict(amcl_poses),

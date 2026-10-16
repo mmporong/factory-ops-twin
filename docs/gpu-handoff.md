@@ -255,6 +255,40 @@ README의 전체 MP4는 10 Hz 원본의 촬영 간격으로 재생한다. GIF는
 
 bag DB SHA256은 `bce0ec2f1b9398ddf6cccc906ce529cebf4b4dfaee4a9f74ce4f196e1d6fd432`, strict 보고서 SHA256은 `1ed5d4d50bdfba8607d6809061dcb73f30fd92d67390a6f2bc606b515a31044c`다. 이전 실행과의 시간·오차 차이는 반복 실험으로 평가하지 않았으므로 개선율로 해석하지 않는다. 별도 주행 시험과 이 운송을 포함한 1,207개 파일을 원본 manifest로 대조했고, 521,303,235 byte 압축본의 SHA256 `f44725ca922b5853313726bfb0882edca369ea3868d28e5cc884300fdb4eb9be`를 로컬·외장 저장소에서 확인했다.
 
+## 두 AMR 교통 검증
+
+G2는 동일한 40×24 m 공장에 두 Nova Carter를 배치한다. `/carter1`, `/carter2`마다 odometry·TF·Nav2·AMCL을 분리하고 `/clock` 하나로 시각을 맞춘다. 같은 `map`, `odom`, `base_link` frame 이름도 각 namespace의 TF 토픽 안에서만 사용한다. 기존 2 m 지름길 대신 3 m 주통로·동쪽 연결로·P2 대피 경로를 검증한다.
+
+각 AMR은 전후방 RTX 회전 라이다를 하나씩 사용한다. 센서는 10 Hz, 물리는 60 Hz이며 Motion BVH를 켠 뒤 센서를 생성한다. 실행 결과에는 설정 요청과 renderer readback, 라이다 tick rate·누적 출력, 관련 경고 수를 남긴다. raw scan과 센서 좌표계의 전방 반구만 남긴 scan을 모두 기록한다. 뒤쪽 반구는 `inf`로 표시하고 취득 시각·frame ID·각도·range 메타데이터를 보존한다.
+
+AMCL의 `scan_localization`에는 같은 로봇의 `front_scan`, `rear_scan` 메시지를 함께 보낸다. 두 스캔을 하나의 가상 원점으로 합치지 않는다. AMCL은 frame마다 장착 TF와 센서 갱신 상태를 보관해 관측을 순차 반영한다. 실제 ROS 이미지의 AMCL은 `1.3.13`이며 [해당 공식 소스](https://github.com/ros-navigation/navigation2/blob/1.3.13/nav2_amcl/src/amcl_node.cpp#L585-L810)에서 이 동작을 확인했다. costmap은 전후방 scan을 별도 입력으로 받는다. 시뮬레이터 GT는 지도·위치추정·예약·조향에 넣지 않는다.
+
+주행 허가는 실행 ID·로봇·실제 accepted goal UUID·예약 세대에 결속하고 0.5 sim 초 뒤 만료한다. 정상 HOLD는 기존 가감속 프로파일로 정지하고, 허가 만료·손상·명령 timeout은 고장 정지를 적용한다. 허가 만료는 통로 소유권을 해제하지 않는다. 소유 AMR의 신선한 추정 위치로 전체 외곽의 이탈을 확인해야 release ACK를 낸다. `Twist`에는 UUID가 없으므로 이 결속은 dispatcher의 주행 범위 검사이며 메시지 자체의 인증을 뜻하지 않는다.
+
+```bash
+set -euo pipefail
+cd "$HOME/workspace/factory-ops-g0/project"
+source_commit=$(git rev-parse HEAD)
+bash scripts/brev/run-g2.sh "$HOME/workspace/factory-ops-g0" g2-p0-101 "$source_commit" P0
+# 위 실행의 최종 validator PASS를 확인한 뒤 새 이름으로 순서대로 실행한다.
+bash scripts/brev/run-g2.sh "$HOME/workspace/factory-ops-g0" g2-f1-101 "$source_commit" F1
+bash scripts/brev/run-g2.sh "$HOME/workspace/factory-ops-g0" g2-f2-101 "$source_commit" F2
+bash scripts/brev/run-g2.sh "$HOME/workspace/factory-ops-g0" g2-f3-101 "$source_commit" F3
+```
+
+| 시나리오 | 검증할 동작 |
+|---|---|
+| P0 | 두 정지 로봇의 독립 센서·TF·위치추정, 상대 AMR의 raw 라이다 반사, 세 카메라의 같은 물리 프레임 |
+| F1 | 공유 통로 예약 거절·대기, 첫 AMR 이탈·ACK, 대기 AMR의 진입과 종료 |
+| F2 | 이동 중 소유 AMR의 교통 관측·주행 허가 채널 30 sim 초 차단, 실제 action 취소, 만료 후 0 휠 목표와 점유 유지, 복구 후 새 goal·이탈·ACK |
+| F3 | 신선한 추정 위치에서 5초 지속 wait cycle 확인, 실제 goal 취소 완료, P2 양보, 원래 예약 세대의 release ACK를 한 번 소비한 뒤 재개 |
+
+F2는 센서와 action 취소 연결을 유지하는 채널 장애 시험이다. 전체 DDS 단절이나 허가 만료만의 제동 효과를 분리한 시험은 아니다. F3도 작성한 위치·경로에서 수행하는 복구 검증이며 공장 전체의 교착 방지를 보장하지 않는다. 주문 원장과 두 AMR의 연속 생산성 비교는 G3에서 다룬다.
+
+supervisor는 두 worker가 정상 종료한 뒤 실제 CDR·action UUID/status·TF·scan 사본·주행 허가·예약 원장·전체 60 Hz 궤적·RGB SHA를 대조한다. 전후방 scan의 각 `(robot, frame_id, stamp)`에 대응하는 AMCL 입력 사본도 검사한다. 실제 차체의 목표 XY/yaw 평가는 0.35 m/0.35 rad, 충돌 외곽 여유는 0.2 m로 유지한다. Nav2의 추정 위치 XY 허용값 0.05 m는 별도의 명령 설정이며 도킹 정확도 측정값이 아니다.
+
+기록 중인 `.db3`는 읽기 전용 모드로도 조회하지 않는다. `g2-f1-002`에서 동시 조회 중 recorder의 `database is locked` 중단을 확인했다. bag 분석은 두 worker와 recorder가 끝난 뒤 수행하고, 실행 중 상태는 별도 JSONL·로그에서 확인한다. 실패 실행도 새 실행으로 덮어쓰지 않고 백업에 포함한다.
+
 ## 공식 근거
 
 - [Isaac Sim 호환성](https://docs.isaacsim.omniverse.nvidia.com/latest/installation/compatibility.html)
