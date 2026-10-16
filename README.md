@@ -2,15 +2,15 @@
 
 두 AMR이 공장에 자재를 공급하고 완료품을 출하하는 과정을 검증하는 프로젝트입니다. 가상 산업용 센서 모듈 공장을 대상으로 주문·버퍼·공정·운반 상태를 연결하고, 배차와 공유 통로 복구를 비교합니다.
 
-현재 구현 범위는 **CPU 운영 모델과 Isaac Sim 6.2의 단일 AMR 기초 검증**입니다. AWS L40S에서 공장 USD 검사, Nova Carter의 짧은 개방 루프 주행, 카메라·라벨·영상 저장과 ROS 2 시계 수신을 통과했습니다. Nav2 운반과 생산성 비교는 후속 단계입니다.
+현재 **Isaac Sim 6.2·ROS 2 Jazzy·Nav2로 AMR 한 대의 주문 운송을 검증**했습니다. AWS L40S에서 Nova Carter가 S1→CI로 자재를 운반하고, 설정된 공정 처리 20초 뒤 CO→OUT으로 완료품을 운반했습니다. 네 navigation goal, 운영 원장, 실제 ROS bag, 전체 휠 궤적과 촬영 파일을 대조했습니다. 두 AMR의 교통 제어와 정책별 생산성 비교는 후속 단계입니다.
 
-![Isaac Sim 6.2에서 렌더한 공장 배치](docs/images/g0-factory-overview.png)
+![Isaac Sim 6.2에서 렌더한 G1 공장 배치](docs/images/g1-factory-overview.png)
 
-위 이미지는 생성한 USD를 Isaac Sim에서 연 실제 정적 렌더입니다. 설비와 통로 크기를 확인하는 박스 배치 단계이며, 로봇·물리 주행 장면은 포함하지 않습니다. [초기 구상도](docs/images/concept-v3.png)는 계획을 설명하기 위해 생성한 이미지입니다. 로컬 `runs/local/report.html`은 CPU 논리 실행 결과를 보여 줍니다.
+위 이미지는 G1 실행의 실제 공장 렌더입니다. 40×24 m 가상 센서 모듈 공장을 설비 박스와 인계 위치로 표현한 배치 검증 단계입니다. 현장 CAD와 생산 데이터를 동기화한 실공장 복제는 아닙니다. [초기 구상도](docs/images/concept-v3.png)는 계획을 설명하기 위해 생성한 이미지이며, 실행 증거와 구분합니다.
 
-![Nova Carter 개방 루프 주행의 실제 종료 프레임](docs/images/g0b-amr-motion.png)
+![Nova Carter의 S1·CI·CO·OUT 주문 운송 타임랩스](docs/images/g1-amr-mission.gif)
 
-위 장면은 G0b GPU 실행의 실제 종료 프레임입니다. 시뮬레이션 10초 동안 순변위 0.627 m를 기록하고, 주행 PNG 100장과 센서 데이터 3세트를 저장했습니다. 목표 위치로 이동하는 자율 주행은 아직 연결하지 않았습니다.
+위 영상은 같은 G1 실행의 실제 주행 RGB를 묶은 타임랩스입니다. GIF는 약 2초 간격의 프레임을 5 fps로 재생합니다. 전체 원본 191프레임을 10 fps로 묶은 [1280×720 MP4](docs/images/g1-amr-mission.mp4), [출하 종료 원본 PNG](docs/images/g1-amr-out.png), [미디어 출처·해시](docs/images/g1-media-provenance.json)도 제공합니다. 원본의 sim time은 별도 명세에 보존합니다. 조향에는 휠 엔코더·RTX LiDAR·AMCL을 사용하고, 시뮬레이터 GT는 평가와 이미지 대응에만 사용합니다.
 
 ## 공장에서 AMR이 하는 일
 
@@ -30,12 +30,13 @@ S1~S3은 동일한 키트 토트를 준비하는 위치입니다. 하나의 주�
 |---|---|
 | 공장 배치 | 40×24 m, 6개 인계 위치, 2개 대피 포켓, 19개 설비 장애물 |
 | 지도 생성 | 50 mm 격자, 물리 장애물 지도와 정책 keepout 지도 분리, ROS PGM·YAML 출력 |
-| USD 생성 | 바닥·설비·마커 USDA 생성과 Isaac Sim 파싱 통과. 실제 물리 충돌 동작은 미검증 |
+| USD 생성 | 비충돌 시각용 바닥과 물리 Plane 분리, 바닥·설비·마커 USDA 생성과 Isaac Sim 파싱 통과 |
 | GPU 장면 검사 | Z-up·m 단위, 활성 충돌 API 20개·설비 19개·비충돌 마커 8개 검사, 1280×720 RGB와 SHA 저장 |
 | GPU 종료 판정 | 별도 worker 종료 뒤 supervisor가 실행 ID·장면·PNG·종료 코드를 대조. L40S 실행에서 최종 PASS 확인 |
-| 단일 AMR 검증 | Nova Carter 충돌 형상 외곽 약 0.727×0.493 m, 여유 0.2 m를 더한 원형 범위로 정차 위치 8곳과 실제 궤적의 지도 여유 검사 통과 |
-| 주행·센서 수집 | 601개 pose·시각 기록, 1280×720 PNG 100장·100프레임 GIF, 가상 카메라의 RGB/Depth/semantic/bbox·내부/외부 파라미터 3세트 저장·대조 |
-| ROS 2 연결 | Jazzy `/clock` 358개 수신·시간 진행 확인. 센서 토픽·TF·LiDAR·Nav2는 후속 단계 |
+| 단일 AMR 운송 | S1 pickup→CI drop→공정 20초→CO pickup→OUT drop, 실제 goal UUID·성공 결과·신선한 map pose를 확인한 뒤 인계 확정 |
+| 주행 평가 | 실제 충돌 형상의 회전 외곽 약 0.637 m + 여유 0.2 m로 전체 60 Hz 궤적 검사. 계획에는 위치 추정 여유 0.3 m를 추가하고 CI·CO·OUT 접근 정책 폭을 2.6 m로 설정 |
+| 주행·센서 수집 | G1의 60 Hz 휠·GT 궤적, 주행·조감 RGB 쌍, ROS bag 보존. G0b에서 RGB/Depth/semantic/bbox·카메라 파라미터 3세트의 정렬도 별도 검사 |
+| ROS 2 연결 | RTX `/scan`, 엔코더 `/odom`, `/clock`, `map→odom→base_link→base_scan` TF, AMCL·Nav2·action 결과를 연결 |
 | 운영 원장 | 주문·운반·버퍼·공정·완료 상태, 버전 검사, 중복 이벤트 억제, 로그 재생 |
 | 배차 | 공통 버퍼·가용성 조건을 통과한 작업에 FIFO 또는 이동 ETA 적용 |
 | 통로 예약 | 지정된 3개 자원과 출구의 원자 예약, stale 점유 유지, release ACK 검사 |
@@ -43,6 +44,21 @@ S1~S3은 동일한 키트 토트를 준비하는 위치입니다. 하나의 주�
 | 로컬 데모 | 동일한 6개 주문·2개 논리 AMR의 두 정책 실행, CSV·JSON·HTML·SHA256 명세 생성 |
 
 통로 로직은 호출자가 준 추정 위치·점유·출구 상태를 입력으로 받습니다. 로컬 교통 trace는 작성된 관측을 넣어 결정 규칙을 검사합니다. CPU 운반 데모는 격자 거리와 설정 속도로 시간을 계산하며 로봇 간 간섭과 예약 대기를 반영하지 않습니다. 두 결과를 합쳐 물리 주행 성능으로 해석할 수 없습니다.
+
+## G1 실행 결과
+
+검증 실행은 `g1-009`, 코드 SHA는 `1ded05b00f68a2161c2d1c35b1d10cec45a0f9a0`입니다. 두 worker의 정상 종료 후 ROS 이미지에서 CDR 메시지와 원본 파일을 검사해 `FACTORY_OPS_G1_VALIDATION=PASS`를 확인했습니다.
+
+| 항목 | 실제 기록과 범위 |
+|---|---|
+| 운송 | 주문 1건, navigation goal 4개 성공, OUT 인계 시각 190.717 sim s |
+| 궤적 | 60 Hz 원본 11,353개, 이름이 결속된 휠 각도 재적분·프레임 연속성·자세·지도 여유 검사 통과 |
+| 촬영 | 1280×720 주행·조감 RGB 191쌍, 원본 PNG 382장과 시각·pose·SHA 보존 |
+| 종착 위치 | 정지 후 GT 기준 OUT 중심까지 0.0334 m. 반복 도킹 정확도는 미평가 |
+| 위치 추정 | AMCL 대 GT 최대 XY 오차 0.2686 m, RMS 0.1360 m, 시각이 대응된 1,671개 표본 |
+| ROS bag | SQLite integrity OK, `/scan` 1,880개·`/cmd_vel` 2,947개·`/clock` 11,284개, 네 goal UUID의 성공 상태와 원장 이벤트 대조 |
+
+평가 여유는 앞선 실패 때와 같은 0.2 m입니다. 초기 G1에서는 바닥 충돌 표현과 저속 제자리 회전 문제를 대조 시험으로 분리했고, 2 m 접근 정책 통로가 위치 추정 오차를 수용하지 못한 실행도 실패로 보존했습니다. 현재 통로 설계와 제어 설정의 근거는 [GPU 연동 안내](docs/gpu-handoff.md)에 적었습니다. 위 결과는 한 주문의 검증이며 반복 성공률·물리 접촉 수·생산성 개선율을 뜻하지 않습니다.
 
 ## 로컬 실행
 
@@ -53,7 +69,7 @@ PowerShell:
 ```powershell
 cd "$HOME/factory-ops-twin"
 uv sync --locked
-uvx --from pyright==1.1.414 pyright factory_ops tests scripts/isaac
+uvx --from pyright==1.1.414 pyright
 uv run python -m unittest discover -s tests -v
 uv run python -m factory_ops prepare --output runs/local
 uv run python -m factory_ops verify runs/local
@@ -74,7 +90,7 @@ runs/local/
                            orders.csv, assignments.csv
 ```
 
-CPU 운영 데모의 `physical_collisions`, `nav2_success_rate`, `rtf`, `peak_vram_gb`는 `null`로 저장하고 `primary_evaluation=false`를 붙입니다. G0b에는 별도 촬영 부하 관측이 있습니다. 시뮬레이션 10초에 wall time 44.273초, RTF 0.226으로, 렌더링과 PNG·센서 파일 저장을 포함하고 warmup·GIF 인코딩은 제외한 값입니다. Nav2 성능이나 60회 정책 비교 결과를 뜻하지 않습니다. 물리 접촉 수는 측정하지 않았습니다.
+CPU 운영 데모의 `physical_collisions`, `nav2_success_rate`, `rtf`, `peak_vram_gb`는 `null`로 저장하고 `primary_evaluation=false`를 붙입니다. G1의 한 주문 실행과 CPU 논리 데모, G0b의 촬영 부하 관측은 별도 기록입니다. G0b의 기존 Cube 바닥은 후속 대조 시험에서 주행 불안정을 보였으므로 당시 이동 거리와 RTF를 안정된 Nav2 성능의 근거로 사용하지 않습니다. 물리 접촉 수는 측정하지 않았습니다.
 
 `verify`는 저장된 파일의 SHA256 일치를 확인하고, `replay`는 입력 이벤트 본문·순서·버전을 재생 결과와 대조합니다. 명세 자체의 서명이나 발행자 인증을 제공하는 기능은 아닙니다. 출력 폴더에 무관한 파일이 있으면 준비 명령이 덮어쓰기를 거절합니다.
 
@@ -87,6 +103,8 @@ configs/factory-v3/    배치·교통 자원·로컬 주문과 설정
 factory_ops/
   layout.py           배치 검증, 격자 경로, 지도 출력
   footprint.py        실제 로봇 충돌 외곽과 지도 여유 검사
+  motion.py           휠 각도 적분, 명령 watchdog·가속도 제한
+  navigation.py       goal 결과와 CI·CO 인계·공정 연결
   usda.py             USD 텍스트 출력
   operations/         상태 모델, 원장, 배차
   traffic.py          예약·복구 결정
@@ -94,16 +112,17 @@ factory_ops/
   smoke.py            CPU 이벤트 실행
   report.py, cli.py   결과 보고와 명령
 tests/                표준 unittest 회귀시험
-scripts/isaac/        정적 장면·단일 AMR 검사, 센서·GIF 증거 검증
+scripts/isaac/        정적 장면·단일 AMR·RTX LiDAR·실제 RGB 수집
+scripts/ros/          Jazzy Nav2 실행, mission action client, CDR·원본 증거 검사
+scripts/brev/         코드 SHA를 고정한 두 컨테이너 실행·종료 supervisor
 docs/                 설계 경계와 GPU 연동 순서
 ```
 
 ## 다음 실행 순서
 
-1. G1: 센서 토픽·TF·LiDAR를 준비하고, 한 Carter의 S→CI 운반, 공정 처리, CO→OUT 흐름을 ROS 2/Nav2에 연결합니다.
-2. G2: 두 Carter에 예약·양보·stale 점유 유지와 복구 절차를 연결합니다.
-3. G3: 같은 주문·장애 입력으로 FIFO/ETA를 정상·폐쇄·급증 조건에서 비교합니다. 부하 보정 후 10개 seed로 총 60회를 평가할 계획입니다.
-4. G4: 수집 범위를 다양한 장면으로 늘리고 ROS bag·센서 정렬·라벨 품질을 검사합니다. 현재의 한 장면·인접 프레임을 독립 장면으로 세지 않으며, G0b 자료는 학습용으로 승인하지 않았습니다.
+1. G2: 두 Carter의 namespace·센서·TF를 분리하고, 예약·양보·stale 점유 유지와 복구 절차를 주행에 연결합니다.
+2. G3: 같은 주문·장애 입력으로 FIFO/ETA를 정상·폐쇄·급증 조건에서 비교합니다. 부하 보정 후 10개 seed로 총 60회를 평가할 계획입니다.
+3. G4: 수집 범위를 다양한 장면으로 늘리고 ROS bag·센서 정렬·라벨 품질을 검사합니다. 현재의 한 장면·인접 프레임을 독립 장면으로 세지 않으며, G0b·G1 자료는 학습용으로 승인하지 않았습니다.
 
 환경 선정과 데이터 보존 순서는 [GPU 연동 안내](docs/gpu-handoff.md), 구현 경계는 [설계 설명](docs/architecture.md)에 적었습니다.
 
@@ -111,7 +130,7 @@ docs/                 설계 경계와 GPU 연동 순서
 
 공장 설비와 마커는 자체 작성한 박스 형상이며, 로봇은 NVIDIA 제공 Nova Carter를 참조합니다. 원본 로봇 에셋은 Git에 넣지 않습니다. 제공 에셋과 향후 도입할 에셋은 각각의 이용 조건을 따릅니다. 생성한 구상도는 시뮬레이션 실측 증거로 사용하지 않습니다.
 
-코드·설정·문서는 Git에서 관리합니다. `runs/`, 대형 USD·영상·데이터, 인증 파일은 Git에서 제외합니다. GPU 환경을 중지하거나 삭제하기 전에는 결과를 별도 저장소로 복사하고 SHA256을 대조해야 합니다.
+코드·설정·문서와 README용 미디어만 Git에서 관리합니다. `runs/`, 대형 USD·원본 영상·데이터, 인증 파일은 Git에서 제외합니다. GPU 환경을 중지하기 전에는 결과를 별도 저장소로 복사하고 SHA256을 대조해야 합니다.
 
 AWS L40S 환경에서는 Stop→Start 1회 후 결과 파일 29개·코드·캐시 이미지가 보존되고 컨테이너가 GPU를 다시 인식하는 것을 확인했습니다. 이 검사는 재시작 후 주행이나 렌더 성능 검증을 뜻하지 않습니다.
 

@@ -126,9 +126,81 @@ G0b `g0b-008` 실행에서 `FACTORY_OPS_G0B_STATUS=PASS`, supervisor·worker exi
 
 Depth의 `+inf`는 같은 프레임의 semantic ID 0 `BACKGROUND` 픽셀에서만 허용한다. NaN·`-inf`·0·음수, foreground의 무한대는 거부한다. semantic과 bbox annotator는 ID 공간이 달라 두 `idToLabels`를 분리해 보존·검사한다. 첫 실행에서 관측한 semantic ID 0과 bbox ID 0의 의미가 달랐으므로 두 map을 합치지 않는다.
 
-센서 원본·궤적은 시뮬레이터 GT를 평가와 라벨 대응 확인에만 사용한다. 센서 ROS 토픽·TF·LiDAR·Nav2 goal, 물리 접촉 수, 생산성 비교와 학습용 데이터 승인은 아직 완료하지 않았다. 생성 USD는 root layer를 export해 로봇 reference를 유지한다. 실패한 `g0b-003`의 flattened 진단 USD는 비공개 실행 자료로 보존한다.
+센서 원본·궤적은 시뮬레이터 GT를 평가와 라벨 대응 확인에만 사용한다. G0b의 검증 범위에는 센서 ROS 토픽·TF·LiDAR·Nav2 goal, 물리 접촉 수, 생산성 비교와 학습용 데이터 승인이 포함되지 않는다. 생성 USD는 root layer를 export해 로봇 reference를 유지한다. 실패한 `g0b-003`의 flattened 진단 USD는 비공개 실행 자료로 보존한다.
+
+G1 대조 시험에서 기존의 얇은 scaled Cube 바닥 충돌체가 초기 무명령 이동과 caster 불안정을 유발하는 것을 확인했다. 따라서 위 G0b의 이동 거리와 RTF는 당시 촬영 파이프라인의 실행 기록으로만 해석한다. 안정된 구름 주행이나 Nav2 운반 성능의 근거로 사용하지 않는다. 새 생성기는 시각용 `FloorVisual`과 물리 접촉용 Z=0 `Floor` Plane을 분리한다.
 
 성공·실패 실행과 진단·환경·GPU 관측을 묶은 최종 manifest는 899개 파일이다. 원격 압축본 SHA256은 `c07e2ed0a9237127dd56527a28d0b73126ada383e2b50101a3cbf2885315dbfd`, manifest SHA256은 `afa15612dae3dae0d2aac9e939722c3136eb34184cedbe29aa5829c30d68f8ea`다. 외부 복사 대조 결과는 별도 `g0b-backup-verification.json`에 기록한다.
+
+## G1 물리 기준과 실행 방법
+
+같은 L40S·Isaac Sim 6.2 이미지에서 30초 단위 대조 시험을 수행했다. 앞 8초는 무명령, 이후 15초는 휠 속도 명령, 나머지는 정지 구간이며 선속도 가속도 한계는 0.25 m/s²다. 아래 수치는 이 통제 시험의 결과로, Nav2 성능 평가와 구분한다.
+
+| 바닥·배치·촬영 조건 | 휠 명령 | 최대 roll/pitch 절댓값 | 마지막 XY 위치 | 실행 폴더 |
+|---|---:|---:|---|---|
+| 빈 장면·공식 GroundPlane·원점 배치 | 2 rad/s | 0.001582 rad | (4.2311, −0.0655) m | `g1-physics-vanilla-001` |
+| 공장 Cube 바닥·API (4,4) 배치·촬영 없음 | 2 rad/s | 0.512334 rad | (4.0939, 1.8898) m | `g1-physics-factory-api-001` |
+| 같은 공장·API 배치에서 바닥 충돌만 Plane으로 교체 | 2 rad/s | 0.001582 rad | (8.2311, 3.9337) m | `g1-physics-factory-api-plane-001` |
+| 새 USD의 Plane·로봇 전체 배치·섀시 추적 카메라 | 2.857143 rad/s | 0.001582 rad | (10.0312, 3.8883) m | `g1-physics-factory-authored-manual-001` |
+
+Cube 조건은 구동 명령을 주기 전부터 약 0.49 m 이동했다. Plane 조건은 빈 장면의 안정된 결과를 재현했다. 이 대조는 바닥 충돌 표현의 영향을 분리한 것이며 PhysX 내부의 접촉 계산 원인까지 확정한 결과는 아니다. 측정한 휠 충돌 반경 약 0.14 m는 안정된 직선 시험의 이동량과도 일치했다.
+
+`g1-physics-turn-baseline-001`에서는 같은 장면에서 정지·직진·제자리 회전을 60초 동안 수행했다. 600개 관측에서 target 쓰기 전·후와 물리 step 후의 articulation은 모두 awake였다. 0.08 rad/s 회전 요청은 휠 target readback과 일치했지만 14.9초 동안 yaw가 0.00362 rad만 변했다. 이어진 0.2 rad/s 구간에서는 7.9초 동안 1.221 rad 회전했고 캐스터가 재정렬됐다. 이 시험은 낮은 명령의 접촉·캐스터 재정렬 문제를 재현했으며, 마찰과 기구의 기여를 각각 분리한 시험은 아니다.
+
+Nav2 RPP는 현재 odom 각속도에서 `max_angular_accel / controller_frequency` 범위로 회전 요청을 제한한다. 기존 0.8 rad/s²·10 Hz 설정은 정지 시 0.08 rad/s를 반복하는 조건이었다. 후속 설정은 RPP 제한만 2.0 rad/s²로 바꿔 첫 요청이 0.2 rad/s에 도달하게 한다. 실제 휠 명령의 가속도 제한은 bridge의 0.5 rad/s²를 유지하고, 회전 상한 0.5 rad/s와 goal 허용치도 유지한다. 에셋의 sleep·마찰·solver 설정은 바꾸지 않는다. [Nav2 Jazzy RPP 구현](https://github.com/ros-navigation/navigation2/blob/jazzy/nav2_regulated_pure_pursuit_controller/src/regulated_pure_pursuit_controller.cpp)
+
+로봇은 물리 시작 전에 전체 USD root를 이동한다. 초기화 전에 `WheeledRobot(... positions=...)`로 차체만 옮기면 sibling 링크의 USD 좌표가 아직 원점에 남아 사전 형상 검사를 왜곡하므로 이 경로를 사용하지 않는다. 런타임에는 관절 속도 명령을 사용하며 root 이동이나 GT pose 보정은 하지 않는다.
+
+실행은 Isaac 이미지와 ROS Jazzy/Nav2 이미지의 두 컨테이너를 사용한다. 기존 이미지와 결과·캐시는 보존하고, 실행마다 새 `g1-NNN` 폴더와 run ID를 만든다. 아래 supervisor는 고정한 코드 SHA와 깨끗한 작업 트리를 요구한다.
+
+시작 상태 조회는 monotonic wall time 기준 client별 최대 2 Hz로 제한하며, 미완료 요청을 중복 발행하지 않는다. 앞선 `g1-007`에서는 controller 프로세스가 살아 있었지만 lifecycle 상태 조회에 실패해 준비 시간 초과로 종료했다. Nav2의 해당 오류 문자열은 요청을 보낸 뒤 응답 future가 성공으로 완료되지 않았을 때 발생하며, 기본 상태 조회 대기시간은 2초다. 당시 로그도 약 2초 간격과 일치한다. 요청 과다·DDS 전달 지연·server 처리 지연 중 어느 것이 원인인지는 그 로그만으로 확정하지 않는다. [Nav2 service client 소스](https://github.com/ros-navigation/navigation2/blob/645abd95f2be02a13ca539b29c2ddc065db34f89/nav2_util/include/nav2_util/service_client.hpp#L79-L86), [lifecycle 대기시간 정의](https://github.com/ros-navigation/navigation2/blob/645abd95f2be02a13ca539b29c2ddc065db34f89/nav2_util/include/nav2_util/lifecycle_service_client.hpp#L56-L60)
+
+```bash
+cd "$HOME/workspace/factory-ops-g0/project"
+source_commit=$(git rev-parse HEAD)
+bash scripts/brev/run-g1.sh "$HOME/workspace/factory-ops-g0" g1-101 "$source_commit"
+```
+
+실행 파일은 `scripts/isaac/nav_scene.py`, `scripts/ros/g1_mission.py`, `scripts/ros/g1.launch.py`이고, 설정은 `configs/factory-v3/g1.json`과 `nav2-g1.yaml`이다. Nav2 이미지 생성 정의는 `scripts/ros/Dockerfile`에 둔다. CPU Python 환경에는 ROS·Isaac 런타임을 설치하지 않는다.
+
+pair 종료 코드 0만으로 완료 처리하지 않는다. 두 worker가 끝난 뒤 ROS 이미지 안에서 `/opt/ros/jazzy/setup.bash`를 source하고 다음 검사를 수행한다. `run_id`에는 해당 `pair-exit.json`의 값을 넣는다.
+
+```bash
+python3 /workspace/project/scripts/ros/g1_evidence.py \
+  --output /workspace/results/g1-101 \
+  --layout /workspace/project/configs/factory-v3/layout.json \
+  --run-id "$run_id"
+```
+
+`g1-validation.json`의 `passed=true`, 실제 ROS bag의 action·원장 이벤트, 60 Hz 원본 궤적, RGB 초·중·끝의 차체 가시성을 함께 확인한다. 성공·실패 trial과 물리 진단 원본은 삭제하지 않는다. 압축본과 내부 manifest를 로컬 및 외장 저장소에서 대조한 뒤 GPU를 Stop한다.
+
+`g1-008`은 네 Nav2 goal과 주문 출하를 완료했지만 최종 여유 검사에서 실패했다. 전체 20,041개 샘플 중 748개가 CI·CO 접근 정책 영역을 벗어났다. 물리 장애물 셀 침범은 아니었으며, 가장 큰 여유 부족은 약 0.134 m였다. 이 실행의 AMCL 대 GT 위치 오차는 최대 약 0.240 m였다. 원래 2 m 정책 통로에서는 평가 반경에 0.3 m를 더하면 경로가 끊기므로, 후속 배치는 CI·CO·OUT 접근 정책 폭을 2.6 m로 재작성하고 계획 여유 0.3 m를 추가한다. 설비와 인계 위치, 평가 여유 0.2 m는 유지한다. `g1-008`은 실패 기준선으로 보존하며 통로 설계를 바꾼 실행의 성공 근거로 사용하지 않는다.
+
+## G1 검증 실행
+
+`g1-009`는 두 worker의 종료 코드 0, 실행 ID·장면 결과 일치와 `FACTORY_OPS_G1_VALIDATION=PASS`를 확인했다. 실제 ROS Jazzy 컨테이너에서 SQLite bag의 CDR을 해석했고, 네 goal UUID의 성공 상태와 원장 이벤트를 대조했다.
+
+| 항목 | 기록 |
+|---|---|
+| 소스 | `1ded05b00f68a2161c2d1c35b1d10cec45a0f9a0` |
+| 실행 ID | `30554994014633d9626b2dc7ee2cdc09` |
+| goal 결과 시각 | S1 5.550, CI 92.833, CO 156.867, OUT 190.717 sim s. 모두 status 4, Nav2 error code 0 |
+| 공정 | CI drop 후 설정된 논리 처리 20초, CO goal 발행 112.833 sim s |
+| 평가·계획 반경 | 충돌 회전 외곽 약 0.637109 m + 평가 여유 0.2 m = 0.837109 m. Nav2는 위치 추정 여유 0.3 m를 더해 1.137109 m, inflation radius 1.337109 m |
+| 전체 궤적 | 11,353개, 인접 physics frame 차이 1·시각 차이 1/60초, raw 휠 이름 결속과 독립 재적분 통과 |
+| 지도 여유·자세 | 전체 표본에서 평가 반경의 raw-map 침범 없음. 최대 roll/pitch 절댓값 0.0017014 rad, 한계 0.35 rad |
+| 종착 위치 | 정지 후 GT 기준 OUT 중심까지 0.033370 m |
+| 위치 추정 오차 | AMCL 대 GT 최대 XY 0.268595 m·RMS 0.135960 m, 시각이 대응된 1,671개 표본 |
+| 휠 odometry 오차 | GT 대비 최대 XY 0.843988 m·RMS 0.375875 m, 11,353개 표본. 엔코더 적분값을 GT로 보정하지 않음 |
+| 실제 bag | SQLite integrity `ok`, `/scan` 1,880·`/odom` 3,760·`/cmd_vel` 2,947·`/clock` 11,284, 양수·유한 scan point 3,916,361개 |
+| 원본 촬영 | 1280×720 주행·조감 RGB 191쌍, 382 PNG. 최초·중간·마지막 frame/time/GT와 원본 SHA 대조 |
+| 처리 시간 | 기록한 mission sim 구간 189.217초, worker 시작부터 캡처 세션 정리까지 wall time 405.333초. SDK·에셋·센서 준비와 warmup을 포함하며 정상 주행만의 RTF가 아님 |
+| GPU 관측 | 전체 컨테이너 수명에 걸쳐 1초 간격 408개 표본, 관측 최대 3,769 MiB. 한 로봇·LiDAR 1개·RGB 촬영 조건의 기록 |
+| 진행 실패 | Nav2 `Failed to make progress` 0건, 실행 로그의 spin/backup/wait 동작 시작 기록 없음 |
+
+bag DB의 SHA256은 `d5690e07a8b0124abf3272dee7b24762b202ecece010f06bd868aea99ba9d0e8`, strict 보고서 SHA256은 `c654658838709fa0b081dda7e4be18915058d3ba79d705cddbc594d3ecc913b8`이다. README의 PNG는 실제 원본 복사본이고, GIF·MP4는 촬영 프레임에서 만든 파생물이다. 선택한 frame index·배속·인코더·원본과 출력의 해시는 `docs/images/g1-media-provenance.json`에 기록한다.
+
+이 결과는 주문 1건의 검증이며 반복 성공률·도킹 정확도·물리 접촉 수·두 AMR의 교통 성능을 측정한 결과는 아니다. G0b·G1의 한 장면과 인접 프레임은 독립 장면 데이터셋으로 세지 않으며 학습용으로 승인하지 않았다.
 
 ## 공식 근거
 
