@@ -210,14 +210,8 @@ def _capture_frame(
 ) -> dict[str, Any]:
     from PIL import Image
 
-    _set_follow_camera(session, Gf, UsdGeom, list(sample["ground_truth"]["position_xyz_m"]))
     before_time = float(SimulationManager.get_simulation_time())
     before_pose = _pose(robot)
-    for _ in range(5):
-        session.app.update()
-    base._with_alarm(120, "G1 frozen camera capture", lambda: rep.orchestrator.step(delta_time=0.0))
-    if abs(float(SimulationManager.get_simulation_time()) - before_time) > 1e-8 or _pose(robot) != before_pose:
-        raise base.SmokeError("G1 camera capture advanced simulation state")
     relative = f"media/frame-{index:05d}.png"
     path = output / relative
     image = Image.fromarray(np.asarray(session.medium_rgb.get_data())[:, :, :3].astype(np.uint8))
@@ -233,6 +227,8 @@ def _capture_frame(
         overview.save(overview_path)
     finally:
         overview.close()
+    if abs(float(SimulationManager.get_simulation_time()) - before_time) > 1e-8 or _pose(robot) != before_pose:
+        raise base.SmokeError("G1 camera capture advanced simulation state")
     overview_width, overview_height = base._png_dimensions(overview_path)
     return {
         "index": index, "path": relative, "sha256": base._sha256(path), "bytes": path.stat().st_size,
@@ -382,6 +378,7 @@ def _verify_lidar_transform(stage: Any, Usd: Any, UsdGeom: Any, configured_xyz: 
 def _run(args: argparse.Namespace) -> int:
     started = time.monotonic()
     app = rclpy = node = session = lidar_sensor = None
+    rep: Any = None
     output: Path | None = None
     phase = "preflight"
     valid = False
@@ -480,11 +477,21 @@ def _run(args: argparse.Namespace) -> int:
         ros = _setup_ros(node, config, geometry, watchdog)
         odometry = WheelOdometry(geometry)
         timeline = omni.timeline.get_timeline_interface()
+        # RTX ROS writers need the continuous dispatch gate used by the official example.
+        rep.orchestrator.set_capture_on_play(True)
         timeline.play()
         for _ in range(WARMUP_STEPS):
             app.update()
             ros["latest_sim_time"] = float(SimulationManager.get_simulation_time())
             rclpy.spin_once(node, timeout_sec=0.0)
+        for _ in range(180):
+            if ros["scan"] > 0:
+                break
+            app.update()
+            ros["latest_sim_time"] = float(SimulationManager.get_simulation_time())
+            rclpy.spin_once(node, timeout_sec=0.0)
+        if ros["scan"] == 0:
+            raise base.SmokeError("RTX LaserScan writer produced no scan during continuous warmup")
         initial_time = float(SimulationManager.get_simulation_time())
         left, right = _wheel_angles(robot)
         initial_odom = odometry.update(initial_time, left, right)
@@ -522,6 +529,8 @@ def _run(args: argparse.Namespace) -> int:
             linear, angular = (0.0, 0.0) if settle_remaining is not None else watchdog.command(now)
             targets = geometry.wheel_targets(linear, angular)
             robot.apply_wheel_actions(np.asarray(targets, dtype=np.float32))
+            camera_position, _ = _pose(robot)
+            _set_follow_camera(session, Gf, UsdGeom, camera_position)
             app.update()
             rclpy.spin_once(node, timeout_sec=0.0)
             step += 1
@@ -566,6 +575,7 @@ def _run(args: argparse.Namespace) -> int:
 
         robot.apply_wheel_actions(np.zeros(2, dtype=np.float32))
         timeline.pause()
+        rep.orchestrator.set_capture_on_play(False)
         session.close()
         session = None
         result["mission_control"] = mission
@@ -598,7 +608,7 @@ def _run(args: argparse.Namespace) -> int:
         print(f"FACTORY_OPS_G1_ERROR={phase}: {type(error).__name__}: {error}", flush=True)
     finally:
         cleanup_errors: list[str] = []
-        actions = ([session.close] if session is not None else [])
+        actions = ([lambda: rep.orchestrator.set_capture_on_play(False), session.close] if session is not None else [])
         actions += ([lambda: lidar_sensor.detach_writer("RtxLidarROS2PublishLaserScan")] if lidar_sensor is not None else [])
         actions += ([node.destroy_node] if node is not None else [])
         actions += ([rclpy.shutdown] if rclpy is not None else [])

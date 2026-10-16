@@ -71,7 +71,7 @@ set +e
 docker start -ai "$nav" 2>&1 | tee "$root/logs/$run-nav.log"
 nav_status=${PIPESTATUS[0]}
 if [ "$nav_status" -ne 0 ] && [ ! -f "$root/results/$run/mission-control.json" ]; then
-  sudo -n -u '#1234' python3 - "$root/results/$run/mission-control.json" "$run_id" <<'PY'
+  sudo -n python3 - "$root/results/$run/mission-control.json" "$run_id" <<'PY'
 from pathlib import Path
 import json,sys
 path=Path(sys.argv[1]); temporary=path.with_suffix('.tmp')
@@ -83,7 +83,7 @@ sim_status=$(docker wait "$sim")
 set -e
 docker logs "$sim" > "$root/logs/$run-sim.log" 2>&1
 docker inspect "$sim" "$nav" --format '{{.Name}} {{json .State}}' > "$root/logs/$run-container-exits.jsonl"
-python3 - "$root/results/$run" "$nav_status" "$sim_status" "$run_id" <<'PY'
+sudo -n python3 - "$root/results/$run" "$nav_status" "$sim_status" "$run_id" <<'PY'
 from pathlib import Path
 import json,sys
 out=Path(sys.argv[1]); nav_status,sim_status=map(int,sys.argv[2:4])
