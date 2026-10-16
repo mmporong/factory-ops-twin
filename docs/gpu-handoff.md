@@ -263,6 +263,8 @@ G2는 동일한 40×24 m 공장에 두 Nova Carter를 배치한다. `/carter1`, 
 
 AMCL의 `scan_localization`에는 같은 로봇의 `front_scan`, `rear_scan` 메시지를 함께 보낸다. 두 스캔을 하나의 가상 원점으로 합치지 않는다. AMCL은 frame마다 장착 TF와 센서 갱신 상태를 보관해 관측을 순차 반영한다. 실제 ROS 이미지의 AMCL은 `1.3.13`이며 [해당 공식 소스](https://github.com/ros-navigation/navigation2/blob/1.3.13/nav2_amcl/src/amcl_node.cpp#L585-L810)에서 이 동작을 확인했다. costmap은 전후방 scan을 별도 입력으로 받는다. 시뮬레이터 GT는 지도·위치추정·예약·조향에 넣지 않는다.
 
+local/global costmap의 네 scan 입력은 `clearing: true`, `inf_is_valid: false`를 사용한다. 마스크가 만든 `+inf`를 빈 공간의 거리 관측으로 해석하지 않도록 한다. Nav2 1.3.13에서 `inf_is_valid: true`는 [양의 무한대를 유효한 최대 거리로 바꿔 clearing ray를 만든다](https://github.com/ros-navigation/navigation2/blob/1.3.13/nav2_costmap_2d/plugins/obstacle_layer.cpp#L338-L374). 현재 설정에서는 유효한 유한 거리 ray만 clearing에 사용하며, 미관측 영역의 장애물이 사라졌다고 추정하지 않는다.
+
 주행 허가는 실행 ID·로봇·실제 accepted goal UUID·예약 세대에 결속하고 0.5 sim 초 뒤 만료한다. 정상 HOLD는 기존 가감속 프로파일로 정지하고, 허가 만료·손상·명령 timeout은 고장 정지를 적용한다. 허가 만료는 통로 소유권을 해제하지 않는다. 소유 AMR의 신선한 추정 위치로 전체 외곽의 이탈을 확인해야 release ACK를 낸다. `Twist`에는 UUID가 없으므로 이 결속은 dispatcher의 주행 범위 검사이며 메시지 자체의 인증을 뜻하지 않는다.
 
 ```bash

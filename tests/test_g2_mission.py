@@ -150,6 +150,8 @@ class G2MissionTests(unittest.TestCase):
         self.assertIn("observation_sources: front rear", text)
         self.assertIn("topic: scan_front", text)
         self.assertIn("topic: scan_rear", text)
+        self.assertEqual(text.count("inf_is_valid: false"), 4)
+        self.assertNotIn("inf_is_valid: true", text)
 
     def test_prepared_params_duplicate_two_namespaces_and_qualified_radius(self) -> None:
         scenario = json.loads(SCENARIOS.read_text(encoding="utf-8"))["scenarios"]["F1"]

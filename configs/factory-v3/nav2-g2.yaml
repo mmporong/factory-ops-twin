@@ -156,8 +156,8 @@ local_costmap:
       obstacle_layer:
         plugin: nav2_costmap_2d::ObstacleLayer
         observation_sources: front rear
-        front: {topic: scan_front, data_type: LaserScan, marking: true, clearing: true, inf_is_valid: true, obstacle_min_range: 0.1, obstacle_max_range: 12.0, raytrace_min_range: 0.1, raytrace_max_range: 15.0}
-        rear: {topic: scan_rear, data_type: LaserScan, marking: true, clearing: true, inf_is_valid: true, obstacle_min_range: 0.1, obstacle_max_range: 12.0, raytrace_min_range: 0.1, raytrace_max_range: 15.0}
+        front: {topic: scan_front, data_type: LaserScan, marking: true, clearing: true, inf_is_valid: false, obstacle_min_range: 0.1, obstacle_max_range: 12.0, raytrace_min_range: 0.1, raytrace_max_range: 15.0}
+        rear: {topic: scan_rear, data_type: LaserScan, marking: true, clearing: true, inf_is_valid: false, obstacle_min_range: 0.1, obstacle_max_range: 12.0, raytrace_min_range: 0.1, raytrace_max_range: 15.0}
       inflation_layer:
         plugin: nav2_costmap_2d::InflationLayer
         inflation_radius: 1.34
@@ -181,8 +181,8 @@ global_costmap:
       obstacle_layer:
         plugin: nav2_costmap_2d::ObstacleLayer
         observation_sources: front rear
-        front: {topic: scan_front, data_type: LaserScan, marking: true, clearing: true, inf_is_valid: true, obstacle_min_range: 0.1, obstacle_max_range: 12.0, raytrace_min_range: 0.1, raytrace_max_range: 15.0}
-        rear: {topic: scan_rear, data_type: LaserScan, marking: true, clearing: true, inf_is_valid: true, obstacle_min_range: 0.1, obstacle_max_range: 12.0, raytrace_min_range: 0.1, raytrace_max_range: 15.0}
+        front: {topic: scan_front, data_type: LaserScan, marking: true, clearing: true, inf_is_valid: false, obstacle_min_range: 0.1, obstacle_max_range: 12.0, raytrace_min_range: 0.1, raytrace_max_range: 15.0}
+        rear: {topic: scan_rear, data_type: LaserScan, marking: true, clearing: true, inf_is_valid: false, obstacle_min_range: 0.1, obstacle_max_range: 12.0, raytrace_min_range: 0.1, raytrace_max_range: 15.0}
       inflation_layer:
         plugin: nav2_costmap_2d::InflationLayer
         inflation_radius: 1.34

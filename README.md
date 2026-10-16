@@ -41,7 +41,7 @@ S1~S3은 동일한 키트 토트를 준비하는 위치입니다. 하나의 주�
 | 운영 원장 | 주문·운반·버퍼·공정·완료 상태, 버전 검사, 중복 이벤트 억제, 로그 재생 |
 | 배차 | 공통 버퍼·가용성 조건을 통과한 작업에 FIFO 또는 이동 ETA 적용 |
 | 통로 예약 | 지정된 3개 자원과 출구의 원자 예약, stale 점유 유지, release ACK 검사 |
-| 두 AMR 실행 코드 | 로봇별 namespace·전후방 RTX LiDAR·TF·Nav2, 두 센서 frame을 보존한 AMCL 입력, 짧은 주행 허가와 통로 소유권 분리, 같은 물리 프레임의 RGB 3장 수집. 실제 GPU 검증 전 |
+| 두 AMR 실행 코드 | 로봇별 namespace·전후방 RTX LiDAR·TF·Nav2, 두 센서 frame을 보존한 AMCL 입력과 미관측 영역을 clear하지 않는 costmap, 짧은 주행 허가와 통로 소유권 분리, 같은 물리 프레임의 RGB 3장 수집. 최종 GPU 검증 진행 중 |
 | 복구 결정 | 5초 지속 wait cycle의 양보 결정과 ACK 이후 재개. 60초 stall과 구분 |
 | 로컬 데모 | 동일한 6개 주문·2개 논리 AMR의 두 정책 실행, CSV·JSON·HTML·SHA256 명세 생성 |
 
