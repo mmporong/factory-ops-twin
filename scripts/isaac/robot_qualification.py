@@ -262,9 +262,10 @@ def _capture_motion(output: Path, app: Any, stage: Any, robot: Any, rep: Any, np
         base._with_alarm(120, "G0b writer drain", rep.orchestrator.wait_until_complete)
         gif_images[0].save(output / "media/amr-motion.gif", save_all=True, append_images=gif_images[1:], duration=100, loop=0)
         with Image.open(output / "media/amr-motion.gif") as animation:
-            if animation.n_frames != len(frames) or animation.size != (640, 360) or animation.info.get("loop") != 0:
+            animation_frames = getattr(animation, "n_frames", 1)
+            if animation_frames != len(frames) or animation.size != (640, 360) or animation.info.get("loop") != 0:
                 raise base.SmokeError("GIF encoder did not retain every captured frame")
-            for frame in range(animation.n_frames):
+            for frame in range(animation_frames):
                 animation.seek(frame)
                 animation.load()
                 if animation.info.get("duration") != 100:
