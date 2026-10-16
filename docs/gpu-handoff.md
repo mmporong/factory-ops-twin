@@ -1,6 +1,6 @@
 # GPU 연동과 작업 보존
 
-로컬 준비 명령은 GPU나 Brev 계정을 사용하지 않는다. 별도 장면 검사 스크립트는 Isaac Sim 6.2 환경에서 실행한다. AWS L40S에서 G0a 정적 장면 검사를 통과했으며, 원격 Stop·재시작 보존 시험은 아직 완료하지 않았다. 자동 Sleep 기능은 제공하지 않는다.
+로컬 준비 명령은 GPU나 Brev 계정을 사용하지 않는다. 별도 장면 검사 스크립트는 Isaac Sim 6.2 환경에서 실행한다. AWS L40S에서 G0a 정적 장면 검사와 Stop·재시작 보존 시험을 통과했다. 자동 Sleep 기능은 제공하지 않는다.
 
 ## 검증한 실행 환경
 
@@ -15,8 +15,12 @@
 | 실행 코드 | `55e67b5c034ba91376c7f62fa0fb23aaadac73c1` |
 | 실행 ID | `507d19acee99990fc495903ec0e82124` |
 | 이미지 digest | `sha256:a025b65a7442d56806a1cc3f5eed081caf736c24b72d62dccf68ef66945d8690` |
+| Stop·재시작 | 같은 인스턴스에서 1회 수행, 29개 파일·보존 마커·코드·캐시 이미지 digest 일치, 컨테이너 GPU 재인식 |
+| 콘솔 표시 요금 | 실행 중 $3.36/시간, Stopped 상태 $0.05/시간. 2026-10-16 관측값이며 최종 청구서 검증은 아님 |
 
 원본 이미지·JSON·로그·GPU 사용 관측과 환경 기록 29개는 같은 manifest에 묶었다. Windows와 E 드라이브의 압축본 SHA256을 원격 원본과 대조했고, 압축 내부 29개 파일도 검증했다. 실제 주행·센서·물리 충돌·RTF는 이 결과의 검증 범위에 포함하지 않는다.
+
+Stop·재시작 이후 검증 기록은 기존 압축본과 구분해 `persistence-after-restart.json`으로 보존했다. 원격 보존 마커 SHA256, 29개 파일의 크기·SHA, 실행 코드와 캐시 이미지 digest를 다시 확인하고 같은 이미지의 컨테이너에서 `nvidia-smi`를 실행했다. 로컬 및 `E:\FactoryOpsArtifacts\g0` 복사본 SHA256은 `17c47c99fd48e6942c55cdd594745cd17ebab64c875bd770da6a00e704556ff3`로 일치한다. 재시작 후 Isaac Sim 렌더를 다시 실행한 결과는 아니다.
 
 ## GPU가 필요한 시점
 
@@ -46,7 +50,23 @@ Isaac Sim 6.2 공식 문서는 Python 3.12를 사용하고 Ubuntu 24.04에서는
 
 외부 복사에는 실행 ID, 코드 SHA, 입력·출력 SHA256, 이미지 digest, 로봇·센서 설정, 시뮬레이션 시간과 wall time, GPU·드라이버, VRAM·RTF 기록을 함께 남긴다. 인증 정보는 추적하지 않는 설정이나 SSH 인증 도구로 전달하며 저장소·로그에 기록하지 않는다.
 
-에이전트가 종료 후 Stop까지 처리하려면 해당 세션에 Brev 제어 경로와 유효한 인증, 종료 대상 인스턴스 식별자가 있어야 한다. AWS L40S 환경 생성과 Brev 기본 SSH 프록시 접속을 확인했다. 원격 Stop 실행은 아직 검증하지 않았다. 중지 성공이나 남은 비용을 확인하기 전에는 비용 차단 완료로 보고하지 않는다.
+에이전트가 종료 후 Stop까지 처리하려면 해당 세션에 Brev 제어 경로와 유효한 인증, 종료 대상 인스턴스 식별자가 있어야 한다. 이 환경에서 에이전트의 CLI Stop, 콘솔 Stopped 전환, Start 이후 보존 검증을 완료했다. Stop 이후에도 콘솔에는 시간당 요금이 남는다. 중지 성공이나 남은 비용을 확인하기 전에는 비용 차단 완료로 보고하지 않는다.
+
+현재 인스턴스 이름은 `factory-ops-twin-g0`다. Windows PowerShell에서 기존 WSL Ubuntu의 인증된 Brev CLI를 사용한다. `Stop`은 VM과 디스크를 보존하고, `Delete`는 사용하지 않는다.
+
+```powershell
+wsl -d Ubuntu -- sh -lc 'brev start factory-ops-twin-g0'
+wsl -d Ubuntu -- sh -lc 'brev refresh'
+wsl -d Ubuntu -- sh -lc 'brev ls'
+wsl -d Ubuntu -- sh -lc 'brev shell factory-ops-twin-g0'
+```
+
+원격 셸의 프로젝트 위치는 `$HOME/workspace/factory-ops-g0/project`, 결과·로그·SDK 캐시는 그 상위 폴더에 있다. 작업을 마치고 백업을 대조한 뒤 원격 셸에서 `exit`하고 PowerShell에서 아래 명령을 실행한다. `brev ls`의 최종 상태와 콘솔 요금을 확인한다.
+
+```powershell
+wsl -d Ubuntu -- sh -lc 'brev stop factory-ops-twin-g0'
+wsl -d Ubuntu -- sh -lc 'brev ls'
+```
 
 ## Isaac Sim 6.2 장면 검사
 
@@ -74,6 +94,7 @@ timeout --signal=TERM --kill-after=30s 900s \
 - [Python 설치 요구사항](https://docs.isaacsim.omniverse.nvidia.com/latest/installation/install_python.html)
 - [ROS 2 지원 조합](https://docs.isaacsim.omniverse.nvidia.com/latest/installation/install_ros.html)
 - [Brev 인스턴스 개념](https://docs.nvidia.com/brev/concepts/gpu-instances)
+- [Brev Stop·Start와 workspace 보존](https://docs.nvidia.com/brev/cli/instance-management)
 - [Isaac Sim 6.2 컨테이너 설치](https://docs.isaacsim.omniverse.nvidia.com/6.2.0/installation/install_container.html)
 - [Isaac Sim 6.2 stage API](https://docs.isaacsim.omniverse.nvidia.com/6.2.0/py/source/extensions/isaacsim.core.experimental.utils/docs/index.html)
 - [Replicator 조감 이미지 저장](https://docs.isaacsim.omniverse.nvidia.com/6.2.0/replicator_tutorials/tutorial_replicator_getting_started.html)

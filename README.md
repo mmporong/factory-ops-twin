@@ -106,6 +106,8 @@ docs/                 설계 경계와 GPU 연동 순서
 
 코드·설정·문서는 Git에서 관리합니다. `runs/`, 대형 USD·영상·데이터, 인증 파일은 Git에서 제외합니다. GPU 환경을 중지하거나 삭제하기 전에는 결과를 별도 저장소로 복사하고 SHA256을 대조해야 합니다.
 
+AWS L40S 환경에서는 Stop→Start 1회 후 결과 파일 29개·코드·캐시 이미지가 보존되고 컨테이너가 GPU를 다시 인식하는 것을 확인했습니다. 이 검사는 재시작 후 주행이나 렌더 성능 검증을 뜻하지 않습니다.
+
 ## 참고
 
 - [Isaac Sim 호환성](https://docs.isaacsim.omniverse.nvidia.com/latest/installation/compatibility.html)
