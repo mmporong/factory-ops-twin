@@ -127,9 +127,12 @@ def validate_scan_pairs(
         if any(raw.get(key) != derived.get(key) for key in metadata) or len(raw["ranges"]) != len(derived["ranges"]):
             errors.append(f"{topic}@{stamp}: filter changed scan metadata")
             continue
-        if (not all(math.isfinite(raw[key]) for key in ("angle_min", "angle_max", "angle_increment"))
-                or raw["angle_increment"] <= 0
-                or abs(raw["angle_min"] + (len(raw["ranges"]) - 1) * raw["angle_increment"] - raw["angle_max"]) > raw["angle_increment"] / 2):
+        angular = (raw["angle_min"], raw["angle_max"], raw["angle_increment"])
+        count = len(raw["ranges"])
+        float32_tolerance = 8 * 2 ** -23 * max(1.0, abs(angular[0]), abs(angular[1]), count * abs(angular[2]))
+        end_errors = [abs(angular[0] + intervals * angular[2] - angular[1]) for intervals in (count - 1, count)]
+        if (not all(math.isfinite(value) for value in angular) or angular[2] <= 0
+                or angular[1] < angular[0] or count == 0 or min(end_errors) > float32_tolerance):
             errors.append(f"{topic}@{stamp}: invalid raw angular metadata")
             continue
         for index, (before, after) in enumerate(zip(raw["ranges"], derived["ranges"])):
@@ -369,6 +372,7 @@ def inspect_rosbag(output: Path, traces: Mapping[str, list[dict[str, Any]]], rea
     counts: Counter[str] = Counter()
     errors: list[str] = []
     scan_points: Counter[str] = Counter()
+    scan_geometry: dict[str, dict[str, Any]] = {}
     peer_hits: Counter[str] = Counter()
     frames: dict[str, set[str]] = defaultdict(set)
     transforms: dict[str, dict[str, Any]] = defaultdict(dict)
@@ -448,7 +452,9 @@ def inspect_rosbag(output: Path, traces: Mapping[str, list[dict[str, Any]]], rea
                                    "intensities": list(message.intensities),
                                    **{key: float(getattr(message, key)) for key in
                                       ("angle_min", "angle_max", "angle_increment", "time_increment", "scan_time", "range_min", "range_max")}}
-                    scan_points[topic] += sum(math.isfinite(v) and v > 0 for v in ranges)
+                    scan_points[topic] += sum(math.isfinite(v) and message.range_min <= v <= message.range_max for v in ranges)
+                    scan_geometry[topic] = {"range_count": len(ranges), **{key: scan_record[key] for key in
+                                           ("angle_min", "angle_max", "angle_increment", "range_min", "range_max", "scan_time")}}
                     if topic.endswith("_raw"):
                         raw_scans[(topic.removesuffix("_raw"), stamp)].append(scan_record)
                         if ready["scenario_id"] == "P0":
@@ -525,6 +531,7 @@ def inspect_rosbag(output: Path, traces: Mapping[str, list[dict[str, Any]]], rea
             "topic_counts": dict(counts), "positive_scan_points": dict(scan_points), "peer_envelope_ray_hits": dict(peer_hits),
             "filtered_scan_pairs": dict(filtered_count), "scan_frame_ids": {k: sorted(v) for k, v in frames.items()},
             "scan_pair_coverage": {key: value for key, value in scan_pairs.items() if key != "errors"},
+            "scan_geometry": scan_geometry,
             "transforms": dict(transforms), "goal_statuses": dict(statuses), "authorizations": dict(authorizations), "events": events,
             "amcl_poses": dict(amcl_poses),
             "tf_samples": {robot: dict(edges) for robot, edges in tf_samples.items()},

@@ -42,9 +42,13 @@ def mask_scan_ranges(
     if (not all(not isinstance(value, bool) and isinstance(value, (int, float)) and math.isfinite(value)
                 for value in values) or angle_increment <= 0 or angle_max < angle_min):
         raise ValueError("LaserScan angular metadata must be finite, increasing and positive-step")
-    expected = round((angle_max - angle_min) / angle_increment) + 1
-    if expected != len(ranges) or abs(angle_min + (len(ranges) - 1) * angle_increment - angle_max) > angle_increment / 2:
-        raise ValueError("LaserScan ranges length disagrees with angular metadata")
+    # ROS producers use both inclusive [min, max] and upper-exclusive [min, max)
+    # angular topology. Bound float32 metadata drift without accepting arbitrary lengths.
+    tolerance = 8 * 2 ** -23 * max(1.0, abs(angle_min), abs(angle_max), len(ranges) * abs(angle_increment))
+    inclusive_error = abs(angle_min + (len(ranges) - 1) * angle_increment - angle_max)
+    exclusive_error = abs(angle_min + len(ranges) * angle_increment - angle_max)
+    if not ranges or min(inclusive_error, exclusive_error) > tolerance:
+        raise ValueError("LaserScan ranges length disagrees with inclusive/exclusive angular metadata")
     result: list[float] = []
     for index, raw in enumerate(ranges):
         value = float(raw)

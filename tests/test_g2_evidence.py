@@ -13,6 +13,7 @@ from scripts.ros.g2_evidence import (
     validate_scan_pairs, validate_f3_cycle,
     unique_sequence_index,
 )
+from scripts.ros.g2_mission import mask_scan_ranges
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -112,6 +113,48 @@ class G2EvidenceTests(unittest.TestCase):
         derived[key].pop()
         raw[key].append(deepcopy(raw[key][0]))
         self.assertFalse(validate_scan_pairs(raw, derived)["passed"])
+
+    def test_actual_rtx_upper_exclusive_float32_scan_preserves_geometry(self):
+        topic = "/carter1/scan_front"
+        key: tuple[str, float] = (topic, 3.1)
+        raw = scan([2.0] * 3600)
+        raw.update(angle_min=-3.1415927410125732, angle_max=3.1415927410125732,
+                   angle_increment=0.001745329238474369)
+        filtered = deepcopy(raw)
+        for index in range(3600):
+            angle = raw["angle_min"] + index * raw["angle_increment"]
+            if abs(math.atan2(math.sin(angle), math.cos(angle))) > math.pi / 2 + 1e-12:
+                filtered["ranges"][index] = math.inf
+        sources: dict[tuple[str, float], list[dict[str, Any]]] = {key: [raw]}
+        outputs: dict[tuple[str, float], list[dict[str, Any]]] = {key: [filtered]}
+        result = validate_scan_pairs(sources, outputs)
+        self.assertTrue(result["passed"], result["errors"])
+        raw["ranges"] = raw["ranges"][:-2]
+        filtered["ranges"] = filtered["ranges"][:-2]
+        self.assertFalse(validate_scan_pairs(sources, outputs)["passed"])
+
+    def test_runtime_and_independent_float32_topology_boundaries_agree(self):
+        key: tuple[str, float] = ("/carter1/scan_front", 1.0)
+        cases = [(-.5, .5 + 5e-7, .001, 1000, True), (-.5, .5 + 2e-6, .001, 1000, False),
+                 (-math.pi, math.pi + 3e-6, math.pi / 1800, 3600, True),
+                 (-math.pi, math.pi + 12e-6, math.pi / 1800, 3600, False), (0, 0, .1, 0, False)]
+        for amin, amax, increment, count, accepted in cases:
+            with self.subTest(amin=amin, amax=amax, count=count):
+                raw = scan([2.0] * count)
+                raw.update(angle_min=amin, angle_max=amax, angle_increment=increment)
+                filtered = deepcopy(raw)
+                for index in range(count):
+                    angle = math.atan2(math.sin(amin + index * increment), math.cos(amin + index * increment))
+                    if abs(angle) > math.pi / 2 + 1e-12:
+                        filtered["ranges"][index] = math.inf
+                sources: dict[tuple[str, float], list[dict[str, Any]]] = {key: [raw]}
+                outputs: dict[tuple[str, float], list[dict[str, Any]]] = {key: [filtered]}
+                self.assertEqual(validate_scan_pairs(sources, outputs)["passed"], accepted)
+                if accepted:
+                    self.assertEqual(len(mask_scan_ranges(amin, amax, increment, raw["ranges"])), count)
+                else:
+                    with self.assertRaises(ValueError):
+                        mask_scan_ranges(amin, amax, increment, raw["ranges"])
 
     def test_f3_continuity_requires_decoded_tf_and_original_generation(self):
         traffic = TrafficController.from_file(ROOT / "configs/factory-v3/traffic.json")

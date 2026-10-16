@@ -64,9 +64,23 @@ class G2MissionTests(unittest.TestCase):
         self.assertTrue(math.isnan(nan_masked[4]))
         self.assertTrue(math.isinf(nan_masked[0]))
         with self.assertRaisesRegex(ValueError, "length"):
-            mask_scan_ranges(-math.pi, math.pi, math.pi / 4, ranges[:-1])
+            mask_scan_ranges(-math.pi, math.pi, math.pi / 4, ranges[:-2])
         with self.assertRaisesRegex(ValueError, "metadata"):
             mask_scan_ranges(-math.pi, math.pi, 0.0, ranges)
+
+    def test_scan_mask_accepts_rtx_upper_exclusive_float32_topology(self) -> None:
+        angle_min = -3.1415927410125732
+        angle_max = 3.1415927410125732
+        angle_increment = 0.001745329238474369
+        ranges = [-1.0] * 3600
+        masked = mask_scan_ranges(angle_min, angle_max, angle_increment, ranges)
+        self.assertEqual(len(masked), 3600)
+        self.assertEqual(masked[1800], -1.0)
+        self.assertTrue(math.isinf(masked[0]))
+        self.assertEqual(mask_scan_ranges(-1.0, 1.0, 1.0, [1.0, 2.0, 3.0]), [1.0, 2.0, 3.0])
+        for wrong_length in (3500, 3602):
+            with self.assertRaisesRegex(ValueError, "inclusive/exclusive"):
+                mask_scan_ranges(angle_min, angle_max, angle_increment, [-1.0] * wrong_length)
 
     def test_nav2_template_is_relative_namespaced_and_declares_jazzy_through_poses(self) -> None:
         text = (ROOT / "configs/factory-v3/nav2-g2.yaml").read_text(encoding="utf-8")
