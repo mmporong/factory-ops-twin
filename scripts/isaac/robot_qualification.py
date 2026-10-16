@@ -191,9 +191,7 @@ def _capture_motion(output: Path, app: Any, stage: Any, robot: Any, rep: Any, np
         return sample
 
     try:
-        # Keep camera render products alive from before the first physics step.
-        # A separate post-warmup render-product creation lost instance visuals
-        # in the pinned SDK; same-product diagnostic captures retained them.
+        # Prepare one render pipeline before warmup and retain it through capture.
         timeline.play()
         for _ in range(WARMUP_STEPS):
             app.update()
@@ -212,6 +210,9 @@ def _capture_motion(output: Path, app: Any, stage: Any, robot: Any, rep: Any, np
                 continue
             timeline.pause()
             before = float(SimulationManager.get_simulation_time())
+            # Flush pending render transforms while the physics frame is frozen.
+            for _ in range(5):
+                app.update()
             base._with_alarm(120, "G0b sensor capture", lambda: rep.orchestrator.step(delta_time=0.0))
             after = float(SimulationManager.get_simulation_time())
             after_position, _ = pose()
@@ -288,6 +289,7 @@ def _capture_motion(output: Path, app: Any, stage: Any, robot: Any, rep: Any, np
                            "nav2": "unmeasured", "physical_contact_count": None, "scope": "bounded forward wheel command; no Nav2 goal or safety claim"},
                 "performance": {"sim_seconds": sim, "wall_seconds": wall, "rtf": sim/wall, "warmup_steps": WARMUP_STEPS,
                                 "measurement_loop_iterations": MEASUREMENT_STEPS, "capture_included": True,
+                                "paused_render_updates_per_capture": 5,
                                 "gif_encoding_included": False, "gpu_observation": gpu}}
     finally:
         active_error = sys.exception()
