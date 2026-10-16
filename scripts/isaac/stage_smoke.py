@@ -316,6 +316,35 @@ def _write_result(output: Path, result: dict[str, Any]) -> Path:
     return result_path
 
 
+def _checkpoint(output: Path, result: dict[str, Any], started: float, stage: str) -> None:
+    result["stage"] = stage
+    result["elapsed_seconds"] = round(time.monotonic() - started, 3)
+    _write_result(output, result)
+    print(f"FACTORY_OPS_ISAAC_SMOKE_PHASE={stage}", flush=True)
+
+
+def _close_simulation_app(simulation_app: Any, result: dict[str, Any]) -> bool:
+    try:
+        simulation_app.close(wait_for_replicator=False)
+    except BaseException as error:
+        result.update(
+            {
+                "status": "failed",
+                "stage": "close_simulation_app",
+                "failure_stage": "close_simulation_app",
+                "cleanup": "failed",
+                "close_error": {
+                    "type": type(error).__name__,
+                    "message": str(error),
+                    "traceback": traceback.format_exc(limit=20),
+                },
+            }
+        )
+        return False
+    result["cleanup"] = "complete"
+    return True
+
+
 def main() -> int:
     args = _parse_args()
     started = time.monotonic()
@@ -325,19 +354,21 @@ def main() -> int:
     simulation_app = None
     result: dict[str, Any] = {
         "schema_version": 1,
-        "status": "failed",
+        "status": "running",
         "stage": stage_name,
+        "cleanup": "pending",
         "primary_evaluation": False,
         "measurements": {"physics": "unmeasured", "nav2": "unmeasured"},
     }
     exit_code = 1
+    validation_completed = False
 
     try:
         scene, output = _prepare_paths(args.scene, args.output)
         result.update({"scene_path": str(scene), "scene_sha256": _sha256(scene)})
 
         stage_name = "simulation_app"
-        result["stage"] = stage_name
+        _checkpoint(output, result, started, stage_name)
         from isaacsim import SimulationApp
 
         simulation_app = SimulationApp(
@@ -345,19 +376,20 @@ def main() -> int:
                 "headless": True,
                 "renderer": "RealTimePathTracing",
                 "sync_loads": True,
+                "fast_shutdown": False,
                 "width": RENDER_RESOLUTION[0],
                 "height": RENDER_RESOLUTION[1],
             }
         )
 
         stage_name = "imports"
-        result["stage"] = stage_name
+        _checkpoint(output, result, started, stage_name)
         import isaacsim.core.experimental.utils.stage as stage_utils
         import omni.replicator.core as rep
         from pxr import UsdGeom, UsdPhysics
 
         stage_name = "open_stage"
-        result["stage"] = stage_name
+        _checkpoint(output, result, started, stage_name)
         opened, stage = stage_utils.open_stage(str(scene))
         if not opened or stage is None:
             raise SmokeError(f"Isaac Sim could not open scene: {scene}")
@@ -365,7 +397,7 @@ def main() -> int:
         result["stage_update_count"] = _wait_for_stage(simulation_app, stage_utils)
 
         stage_name = "inspect_stage"
-        result["stage"] = stage_name
+        _checkpoint(output, result, started, stage_name)
         observed, mismatches = _inspect_stage(stage, UsdGeom, UsdPhysics)
         result["observed"] = observed
         if mismatches:
@@ -373,17 +405,19 @@ def main() -> int:
             raise SmokeError(f"stage invariants failed: {json.dumps(mismatches, sort_keys=True)}")
 
         stage_name = "capture_rgb"
-        result["stage"] = stage_name
+        _checkpoint(output, result, started, stage_name)
         result["rgb"] = _capture_overview(output, simulation_app, rep)
 
-        stage_name = "complete"
-        result.update({"status": "passed", "stage": stage_name})
-        exit_code = 0
+        stage_name = "validation_complete"
+        validation_completed = True
+        result.update({"status": "validated", "cleanup": "pending"})
+        _checkpoint(output, result, started, stage_name)
     except BaseException as error:
         result.update(
             {
                 "status": "failed",
                 "stage": stage_name,
+                "failure_stage": stage_name,
                 "error": {
                     "type": type(error).__name__,
                     "message": str(error),
@@ -391,28 +425,35 @@ def main() -> int:
                 },
             }
         )
+        if output is not None:
+            result["elapsed_seconds"] = round(time.monotonic() - started, 3)
+            _write_result(output, result)
+        print(f"FACTORY_OPS_ISAAC_SMOKE_ERROR_PHASE={stage_name}", flush=True)
+        print("FACTORY_OPS_ISAAC_SMOKE_STATUS=FAIL", flush=True)
     finally:
         if simulation_app is not None:
-            try:
-                simulation_app.close(wait_for_replicator=False)
-            except BaseException as close_error:
-                result["close_error"] = {
-                    "type": type(close_error).__name__,
-                    "message": str(close_error),
-                }
+            if output is not None:
+                _checkpoint(output, result, started, "close_simulation_app")
+            close_completed = _close_simulation_app(simulation_app, result)
+            if close_completed and validation_completed and result["status"] == "validated":
+                result.update({"status": "passed", "stage": "complete", "cleanup": "complete"})
+                exit_code = 0
+            else:
                 result["status"] = "failed"
-                result["stage"] = "close_simulation_app"
                 exit_code = 1
+        else:
+            result["cleanup"] = "not_started"
+            result["status"] = "failed"
 
         result["elapsed_seconds"] = round(time.monotonic() - started, 3)
         if output is not None:
             result_path = _write_result(output, result)
-            print(f"FACTORY_OPS_ISAAC_SMOKE_JSON={result_path}")
+            print(f"FACTORY_OPS_ISAAC_SMOKE_JSON={result_path}", flush=True)
         else:
-            print("FACTORY_OPS_ISAAC_SMOKE_JSON=null")
-            print(json.dumps(result, ensure_ascii=False, sort_keys=True))
+            print("FACTORY_OPS_ISAAC_SMOKE_JSON=null", flush=True)
+            print(json.dumps(result, ensure_ascii=False, sort_keys=True), flush=True)
         sentinel = "PASS" if result["status"] == "passed" else "FAIL"
-        print(f"FACTORY_OPS_ISAAC_SMOKE_STATUS={sentinel}")
+        print(f"FACTORY_OPS_ISAAC_SMOKE_STATUS={sentinel}", flush=True)
 
     return exit_code
 

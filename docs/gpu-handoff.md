@@ -48,7 +48,7 @@ timeout --signal=TERM --kill-after=30s 900s \
 
 스크립트는 Isaac Sim 설치나 Brev 생성·중지를 수행하지 않는다. 위 명령은 전체 Python 프로세스에 900초 제한을 두고, TERM 뒤 30초 안에 종료되지 않으면 강제 종료한다. timeout 종료 코드 124·137, JSON 부재, PASS sentinel 부재는 실패로 처리한다. Docker 실행도 명명한 컨테이너만 대상으로 외부 제한과 종료 확인을 적용한다. JSON의 `status=passed`, 종료 코드 0, `FACTORY_OPS_ISAAC_SMOKE_STATUS=PASS`, 실제 PNG를 함께 확인한다. 로컬 compile과 정적 검사는 GPU 실행 검증을 대신하지 않는다.
 
-공식 컨테이너 `nvcr.io/nvidia/isaac-sim:6.2.0`을 사용하고 pull 이후 digest를 기록한다. `ACCEPT_EULA=Y`가 필요하며 선택 항목인 `PRIVACY_CONSENT=Y`는 설정하지 않는다. 첫 검사에는 WebRTC·Jupyter 포트를 공개할 필요가 없다.
+공식 컨테이너 `nvcr.io/nvidia/isaac-sim:6.2.0`을 사용하고 pull 이후 digest를 기록한다. `ACCEPT_EULA=Y`가 필요하다. 기본 익명 원격측정은 컨테이너 환경변수 `OMNI_TELEMETRY_DISABLE_ANONYMOUS_DATA=1`로 차단하며, 선택 항목인 `PRIVACY_CONSENT=Y`는 설정하지 않는다. 첫 검사에는 WebRTC·Jupyter 포트를 공개할 필요가 없다.
 
 ## 공식 근거
 
@@ -59,3 +59,4 @@ timeout --signal=TERM --kill-after=30s 900s \
 - [Isaac Sim 6.2 컨테이너 설치](https://docs.isaacsim.omniverse.nvidia.com/6.2.0/installation/install_container.html)
 - [Isaac Sim 6.2 stage API](https://docs.isaacsim.omniverse.nvidia.com/6.2.0/py/source/extensions/isaacsim.core.experimental.utils/docs/index.html)
 - [Replicator 조감 이미지 저장](https://docs.isaacsim.omniverse.nvidia.com/6.2.0/replicator_tutorials/tutorial_replicator_getting_started.html)
+- [Isaac Sim 6.2 데이터 수집과 opt-out](https://docs.isaacsim.omniverse.nvidia.com/6.2.0/common/data-collection.html)

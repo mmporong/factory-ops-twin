@@ -3,10 +3,11 @@ from __future__ import annotations
 from pathlib import Path
 import struct
 import tempfile
+from typing import Any
 import unittest
 import zlib
 
-from scripts.isaac.stage_smoke import SmokeError, _inspect_stage, _png_dimensions
+from scripts.isaac.stage_smoke import SmokeError, _close_simulation_app, _inspect_stage, _png_dimensions
 
 
 class _Attribute:
@@ -150,6 +151,40 @@ class PngValidationTests(unittest.TestCase):
         content = b"\x89PNG\r\n\x1a\n" + _chunk(b"IHDR", ihdr) + _chunk(b"IDAT", b"not-zlib") + _chunk(b"IEND", b"")
         with self.assertRaisesRegex(SmokeError, "compressed data"):
             _png_dimensions(self._write(content))
+
+
+class CloseHandlingTests(unittest.TestCase):
+    def test_successful_close_does_not_mark_passed_by_itself(self) -> None:
+        class App:
+            def close(self, *, wait_for_replicator: bool) -> None:
+                self.wait_for_replicator = wait_for_replicator
+
+        app = App()
+        result: dict[str, Any] = {
+            "status": "validated",
+            "stage": "validation_complete",
+            "cleanup": "pending",
+        }
+        self.assertTrue(_close_simulation_app(app, result))
+        self.assertEqual(result["status"], "validated")
+        self.assertEqual(result["cleanup"], "complete")
+        self.assertFalse(app.wait_for_replicator)
+
+    def test_system_exit_during_close_cannot_be_reported_as_passed(self) -> None:
+        class App:
+            def close(self, *, wait_for_replicator: bool) -> None:
+                raise SystemExit(17)
+
+        result: dict[str, Any] = {
+            "status": "validated",
+            "stage": "validation_complete",
+            "cleanup": "pending",
+        }
+        self.assertFalse(_close_simulation_app(App(), result))
+        self.assertEqual(result["status"], "failed")
+        self.assertEqual(result["cleanup"], "failed")
+        self.assertEqual(result["failure_stage"], "close_simulation_app")
+        self.assertEqual(result["close_error"]["type"], "SystemExit")
 
 
 if __name__ == "__main__":
