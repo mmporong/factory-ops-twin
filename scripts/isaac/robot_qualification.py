@@ -163,7 +163,7 @@ def _capture_motion(output: Path, app: Any, stage: Any, robot: Any, rep: Any, np
     timeline = omni.timeline.get_timeline_interface()
     (output / "media").mkdir()
     (output / "sensors").mkdir()
-    medium = _camera(stage, Gf, UsdGeom, "/World/RobotMotionCamera", (8, -5, 8), (8, 4, 0.2), base.RENDER_RESOLUTION)
+    medium = _camera(stage, Gf, UsdGeom, "/World/RobotMotionCamera", (6, 1, 2.5), (4.5, 4, 0.25), base.RENDER_RESOLUTION)
     camera = _camera(stage, Gf, UsdGeom, ROBOT_PATH + "/chassis_link/QualificationCamera", (0.35, 0, 0.65), (4, 0, 0.5), SENSOR_SIZE)
     products = [rep.create.render_product(str(medium.GetPath()), base.RENDER_RESOLUTION),
                 rep.create.render_product(str(camera.GetPath()), SENSOR_SIZE)]
@@ -236,12 +236,13 @@ def _capture_motion(output: Path, app: Any, stage: Any, robot: Any, rep: Any, np
                 Image.fromarray(rgb.astype(np.uint8)).save(output / paths["rgb"])
                 np.save(output / paths["depth"], depth, allow_pickle=False)
                 np.save(output / paths["semantic"], np.asarray(segmentation["data"]).astype("<u4").reshape(360, 640), allow_pickle=False)
-                labels = {str(k): v for k,v in segmentation["info"]["idToLabels"].items()}
-                labels.update({str(k): v for k,v in boxes["info"]["idToLabels"].items()})
+                semantic_labels = {str(k): v for k,v in segmentation["info"]["idToLabels"].items()}
+                bbox_labels = {str(k): v for k,v in boxes["info"]["idToLabels"].items()}
                 box_records = [{"semantic_id": int(box["semanticId"]), "x_min": int(box["x_min"]),
                                 "y_min": int(box["y_min"]), "x_max": int(box["x_max"]), "y_max": int(box["y_max"])}
                                for box in boxes["data"]]
-                _json(output / paths["boxes"], {"boxes": box_records, "id_to_labels": labels})
+                _json(output / paths["boxes"], {"boxes": box_records,
+                      "semantic_id_to_labels": semantic_labels, "bbox_id_to_labels": bbox_labels})
                 view = np.asarray(params["cameraViewTransform"]).reshape(4, 4)
                 optical_to_world = np.diag([1.0, -1.0, -1.0, 1.0]) @ np.linalg.inv(view)
                 optical_quaternion = Gf.Matrix4d(*optical_to_world.flatten().tolist()).ExtractRotationQuat()
@@ -397,7 +398,7 @@ def _worker(args: argparse.Namespace) -> int:
                           "clock_messages": len(stamps), "clock_advanced": len(stamps) >= 2 and stamps[-1] > stamps[0] and all(b >= a for a,b in zip(stamps, stamps[1:])),
                           "clock_samples": stamps, "subscriber_qos": "BEST_EFFORT depth 10",
                           "sensor_topics": "not yet published; G1 integration"}
-        stage.Export(str(output / "robot-scene.usda"))
+        stage.GetRootLayer().Export(str(output / "robot-scene.usda"))
         result["artifact_manifest"] = [{"path": str(path.relative_to(output)).replace("\\", "/"), "bytes": path.stat().st_size,
                                         "sha256": base._sha256(path)} for path in sorted(output.rglob("*"))
                                        if path.is_file() and path.name != base.RESULT_FILENAME]

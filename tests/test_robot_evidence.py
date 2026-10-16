@@ -103,9 +103,57 @@ class RobotEvidenceTests(unittest.TestCase):
 
         errors = validate_robot_evidence(self.output, self.result, LAYOUT_PATH, self.layout_sha)
 
-        self.assertTrue(any("depth contains NaN" in error for error in errors))
+        self.assertTrue(any("depth pixel 0 is NaN" in error for error in errors))
         self.assertTrue(any("depth has less than 5 percent" in error for error in errors))
         self.assertTrue(any("box 0 is outside image bounds" in error for error in errors))
+
+    def test_positive_infinity_depth_is_allowed_only_for_semantic_background(self) -> None:
+        depth_path = self.output / "sensor/frame-000-depth.npy"
+        background_pixels = PIXELS // 10
+        payload = (
+            struct.pack("<f", float("inf")) * background_pixels
+            + struct.pack("<f", float("inf"))
+            + struct.pack("<f", 2.0) * (PIXELS - background_pixels - 1)
+        )
+        depth_path.write_bytes(_npy("<f4", payload))
+        self._refresh_manifest()
+
+        errors = validate_robot_evidence(self.output, self.result, LAYOUT_PATH, self.layout_sha)
+
+        self.assertTrue(any("positive-infinity depth is not semantic BACKGROUND" in error for error in errors))
+
+    def test_nan_depth_is_rejected_even_on_semantic_background(self) -> None:
+        depth_path = self.output / "sensor/frame-000-depth.npy"
+        background_pixels = PIXELS // 10
+        payload = (
+            struct.pack("<f", float("nan"))
+            + struct.pack("<f", float("inf")) * (background_pixels - 1)
+            + struct.pack("<f", 2.0) * (PIXELS - background_pixels)
+        )
+        depth_path.write_bytes(_npy("<f4", payload))
+        self._refresh_manifest()
+
+        errors = validate_robot_evidence(self.output, self.result, LAYOUT_PATH, self.layout_sha)
+
+        self.assertTrue(any("depth pixel 0 is NaN" in error for error in errors))
+
+    def test_merged_or_mixed_label_namespaces_are_rejected(self) -> None:
+        boxes_path = self.output / "sensor/frame-000-boxes.json"
+        boxes = json.loads(boxes_path.read_text(encoding="utf-8"))
+        boxes["id_to_labels"] = boxes.pop("semantic_id_to_labels")
+        boxes.pop("bbox_id_to_labels")
+        boxes_path.write_text(json.dumps(boxes), encoding="utf-8")
+        second_path = self.output / "sensor/frame-001-boxes.json"
+        second = json.loads(second_path.read_text(encoding="utf-8"))
+        second["semantic_id_to_labels"] = second["bbox_id_to_labels"]
+        second_path.write_text(json.dumps(second), encoding="utf-8")
+        self._refresh_manifest()
+
+        errors = validate_robot_evidence(self.output, self.result, LAYOUT_PATH, self.layout_sha)
+
+        self.assertIn("sensor frame 0 boxes document is invalid", errors)
+        self.assertTrue(any("semantic ID 0 is not BACKGROUND" in error for error in errors))
+        self.assertTrue(any("semantic IDs are absent from semantic label map" in error for error in errors))
 
     def test_media_frame_must_match_trajectory_time_and_pose(self) -> None:
         frames_path = self.output / "media/frames.json"
@@ -181,7 +229,8 @@ class RobotEvidenceTests(unittest.TestCase):
         camera_path.write_text(json.dumps(camera), encoding="utf-8")
         boxes_path = self.output / sensor_document["frames"][0]["paths"]["boxes"]
         boxes = json.loads(boxes_path.read_text(encoding="utf-8"))
-        boxes["id_to_labels"]["2"]["class"] = "background"
+        boxes["semantic_id_to_labels"]["3"]["class"] = "background"
+        boxes["bbox_id_to_labels"]["1"]["class"] = "background"
         boxes_path.write_text(json.dumps(boxes), encoding="utf-8")
         self._refresh_manifest()
 
@@ -237,7 +286,17 @@ class RobotEvidenceTests(unittest.TestCase):
         sensor_dir.mkdir()
         sensor_frames = []
         sensor_png = _png(640, 360)
-        semantic_payload = struct.pack("<I", 1) * (PIXELS // 2) + struct.pack("<I", 2) * (PIXELS - PIXELS // 2)
+        background_pixels = PIXELS // 10
+        floor_pixels = (PIXELS - background_pixels) // 2
+        semantic_payload = (
+            struct.pack("<I", 0) * background_pixels
+            + struct.pack("<I", 2) * floor_pixels
+            + struct.pack("<I", 3) * (PIXELS - background_pixels - floor_pixels)
+        )
+        depth_payload = (
+            struct.pack("<f", float("inf")) * background_pixels
+            + struct.pack("<f", 2.0) * (PIXELS - background_pixels)
+        )
         for index, sample_index in enumerate((6, 300, 600)):
             stem = f"frame-{index:03d}"
             paths = {
@@ -248,16 +307,24 @@ class RobotEvidenceTests(unittest.TestCase):
                 "camera": f"sensor/{stem}-camera.json",
             }
             (self.output / paths["rgb"]).write_bytes(sensor_png)
-            (self.output / paths["depth"]).write_bytes(_npy("<f4", struct.pack("<f", 2.0) * PIXELS))
+            (self.output / paths["depth"]).write_bytes(_npy("<f4", depth_payload))
             (self.output / paths["semantic"]).write_bytes(_npy("<u4", semantic_payload))
             (self.output / paths["boxes"]).write_text(
                 json.dumps(
                     {
                         "boxes": [
-                            {"semantic_id": 1, "x_min": 0, "y_min": 180, "x_max": 640, "y_max": 360},
-                            {"semantic_id": 2, "x_min": 10, "y_min": 20, "x_max": 30, "y_max": 40},
+                            {"semantic_id": 0, "x_min": 0, "y_min": 180, "x_max": 640, "y_max": 360},
+                            {"semantic_id": 1, "x_min": 10, "y_min": 20, "x_max": 30, "y_max": 40},
                         ],
-                        "id_to_labels": {"1": {"class": "floor"}, "2": {"class": "equipment"}},
+                        "semantic_id_to_labels": {
+                            "0": {"class": "BACKGROUND"},
+                            "2": {"class": "floor"},
+                            "3": {"class": "equipment"},
+                        },
+                        "bbox_id_to_labels": {
+                            "0": {"class": "floor"},
+                            "1": {"class": "equipment"},
+                        },
                     }
                 ),
                 encoding="utf-8",

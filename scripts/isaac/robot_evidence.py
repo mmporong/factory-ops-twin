@@ -381,16 +381,11 @@ def _validate_sensor_frames(
         if "rgb" in resolved:
             _validate_png(resolved["rgb"], (640, 360), f"sensor frame {index} rgb", errors)
         depth_values = _validate_npy(resolved.get("depth"), "<f4", f"sensor frame {index} depth", errors)
-        if depth_values is not None:
-            finite_positive = sum(math.isfinite(value) and value > 0 for value in depth_values)
-            if any(not math.isfinite(value) or value < 0 for value in depth_values):
-                errors.append(f"sensor frame {index} depth contains NaN, infinity, or negative values")
-            if finite_positive < math.ceil(len(depth_values) * 0.05):
-                errors.append(f"sensor frame {index} depth has less than 5 percent positive finite pixels")
         semantic_values = _validate_npy(resolved.get("semantic"), "<u4", f"sensor frame {index} semantic", errors)
         boxes = _load_json(resolved.get("boxes"), f"sensor frame {index} boxes", errors)
         camera = _load_json(resolved.get("camera"), f"sensor frame {index} camera", errors)
-        _validate_boxes(boxes, semantic_values, index, errors)
+        semantic_classes = _validate_boxes(boxes, semantic_values, index, errors)
+        _validate_depth(depth_values, semantic_values, semantic_classes, index, errors)
         if not isinstance(camera, dict):
             continue
         intrinsics = _finite_vector(camera.get("camera_intrinsics"), 9)
@@ -432,30 +427,28 @@ def _validate_boxes(
     semantic_values: list[int | float] | None,
     frame_index: int,
     errors: list[str],
-) -> None:
-    if not isinstance(document, dict) or not isinstance(document.get("boxes"), list) or not isinstance(document.get("id_to_labels"), dict):
+) -> dict[int, str] | None:
+    if (
+        not isinstance(document, dict)
+        or not isinstance(document.get("boxes"), list)
+        or not isinstance(document.get("semantic_id_to_labels"), dict)
+        or not isinstance(document.get("bbox_id_to_labels"), dict)
+    ):
         errors.append(f"sensor frame {frame_index} boxes document is invalid")
-        return
-    labels = document["id_to_labels"]
-    label_ids: set[int] = set()
-    classes_by_id: dict[int, str] = {}
-    for key, value in labels.items():
-        try:
-            semantic_id = int(key)
-        except (TypeError, ValueError):
-            errors.append(f"sensor frame {frame_index} label ID is not an integer string")
-            continue
-        if str(semantic_id) != key or not isinstance(value, dict) or not isinstance(value.get("class"), str) or not value["class"]:
-            errors.append(f"sensor frame {frame_index} label map entry {key!r} is invalid")
-        else:
-            classes_by_id[semantic_id] = value["class"]
-        label_ids.add(semantic_id)
+        return None
+    semantic_classes = _label_classes(document["semantic_id_to_labels"], frame_index, "semantic", errors)
+    bbox_classes = _label_classes(document["bbox_id_to_labels"], frame_index, "bbox", errors)
+    if semantic_classes is None or bbox_classes is None:
+        return semantic_classes
+    background_class = semantic_classes.get(0)
+    if background_class is None or background_class.casefold() != "background":
+        errors.append(f"sensor frame {frame_index} semantic ID 0 is not BACKGROUND")
     if semantic_values is not None:
         observed_ids = {int(value) for value in semantic_values}
-        if not observed_ids <= label_ids:
-            errors.append(f"sensor frame {frame_index} semantic IDs are absent from label map")
+        if not observed_ids <= set(semantic_classes):
+            errors.append(f"sensor frame {frame_index} semantic IDs are absent from semantic label map")
         for required_class in ("floor", "equipment"):
-            class_ids = {semantic_id for semantic_id, label in classes_by_id.items() if label == required_class}
+            class_ids = {semantic_id for semantic_id, label in semantic_classes.items() if label.casefold() == required_class}
             if not class_ids or not any(int(value) in class_ids for value in semantic_values):
                 errors.append(f"sensor frame {frame_index} has no non-background {required_class} mask pixels")
     box_classes: set[str] = set()
@@ -465,10 +458,10 @@ def _validate_boxes(
             continue
         semantic_id = box.get("semantic_id")
         coordinates = [box.get(key) for key in ("x_min", "y_min", "x_max", "y_max")]
-        if isinstance(semantic_id, bool) or not isinstance(semantic_id, int) or semantic_id not in label_ids:
-            errors.append(f"sensor frame {frame_index} box {box_index} semantic_id is invalid")
-        elif semantic_id in classes_by_id:
-            box_classes.add(classes_by_id[semantic_id])
+        if isinstance(semantic_id, bool) or not isinstance(semantic_id, int) or semantic_id not in bbox_classes:
+            errors.append(f"sensor frame {frame_index} box {box_index} semantic_id is absent from bbox label map")
+        else:
+            box_classes.add(bbox_classes[semantic_id].casefold())
         if not all(isinstance(value, int) and not isinstance(value, bool) for value in coordinates):
             errors.append(f"sensor frame {frame_index} box {box_index} coordinates are not integers")
             continue
@@ -478,6 +471,68 @@ def _validate_boxes(
     for required_class in ("floor", "equipment"):
         if required_class not in box_classes:
             errors.append(f"sensor frame {frame_index} has no {required_class} bounding box")
+    return semantic_classes
+
+
+def _label_classes(
+    labels: dict[object, object],
+    frame_index: int,
+    namespace: str,
+    errors: list[str],
+) -> dict[int, str] | None:
+    classes: dict[int, str] = {}
+    valid = True
+    for key, value in labels.items():
+        if not isinstance(key, str):
+            errors.append(f"sensor frame {frame_index} {namespace} label ID is not an integer string")
+            valid = False
+            continue
+        try:
+            semantic_id = int(key)
+        except (TypeError, ValueError):
+            errors.append(f"sensor frame {frame_index} {namespace} label ID is not an integer string")
+            valid = False
+            continue
+        if str(semantic_id) != key or not isinstance(value, dict) or not isinstance(value.get("class"), str) or not value["class"]:
+            errors.append(f"sensor frame {frame_index} {namespace} label map entry {key!r} is invalid")
+            valid = False
+        else:
+            classes[semantic_id] = value["class"]
+    return classes if valid else None
+
+
+def _validate_depth(
+    depth_values: list[int | float] | None,
+    semantic_values: list[int | float] | None,
+    semantic_classes: dict[int, str] | None,
+    frame_index: int,
+    errors: list[str],
+) -> None:
+    if depth_values is None or semantic_values is None or semantic_classes is None:
+        return
+    if len(depth_values) != len(semantic_values):
+        errors.append(f"sensor frame {frame_index} depth and semantic pixel counts differ")
+        return
+    finite_positive = 0
+    for pixel_index, (depth, semantic) in enumerate(zip(depth_values, semantic_values)):
+        semantic_id = int(semantic)
+        value = float(depth)
+        if math.isnan(value) or value == -math.inf or value <= 0:
+            errors.append(f"sensor frame {frame_index} depth pixel {pixel_index} is NaN, -infinity, zero, or negative")
+            break
+        if value == math.inf:
+            label = semantic_classes.get(semantic_id, "")
+            if semantic_id != 0 or label.casefold() != "background":
+                errors.append(f"sensor frame {frame_index} positive-infinity depth is not semantic BACKGROUND")
+                break
+        else:
+            finite_positive += 1
+    if finite_positive < math.ceil(len(depth_values) * 0.05):
+        errors.append(f"sensor frame {frame_index} depth has less than 5 percent positive finite pixels")
+    foreground_ids = {semantic_id for semantic_id, label in semantic_classes.items() if label.casefold() != "background"}
+    if not any(int(semantic) in foreground_ids and math.isfinite(float(depth)) and float(depth) > 0
+               for depth, semantic in zip(depth_values, semantic_values)):
+        errors.append(f"sensor frame {frame_index} has no positive finite foreground depth")
 
 
 def _validate_media(
