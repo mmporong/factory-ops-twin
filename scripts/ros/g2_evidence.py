@@ -577,10 +577,16 @@ def _validate_dispatch(
                 times = [row["sim_time_s"] for row in trace]
                 final = _nearest(trace, times, action["terminal_sim_time_s"])
                 goal = route["poses"][-1]
-                if (final is None or math.dist(final["ground_truth"]["position_xyz_m"][:2], goal[:2]) > .35
-                        or abs(math.atan2(math.sin(_yaw(final["ground_truth"]["orientation_wxyz"]) - goal[2]),
-                                          math.cos(_yaw(final["ground_truth"]["orientation_wxyz"]) - goal[2]))) > .35):
-                    raise ValueError("successful action does not reach its authored goal in independent physics evaluation")
+                if final is None:
+                    raise ValueError(f"{robot}/{action['route_id']}: no physics sample at successful action terminal time")
+                xy_error = math.dist(final["ground_truth"]["position_xyz_m"][:2], goal[:2])
+                yaw_error = abs(math.atan2(math.sin(_yaw(final["ground_truth"]["orientation_wxyz"]) - goal[2]),
+                                          math.cos(_yaw(final["ground_truth"]["orientation_wxyz"]) - goal[2])))
+                if xy_error > .35 or yaw_error > .35:
+                    raise ValueError(
+                        f"{robot}/{action['route_id']}: successful action does not reach its authored goal "
+                        f"in independent physics evaluation (XY {xy_error:.6f} m, yaw {yaw_error:.6f} rad)"
+                    )
         except (KeyError, TypeError, ValueError) as error:
             errors.append(f"action evidence invalid: {error}")
     if any(a.get("terminal_sim_time_s", math.inf) > b.get("accepted_sim_time_s", -math.inf) for a, b in zip(actions, actions[1:])):
