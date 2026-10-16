@@ -21,20 +21,42 @@ class MotionTests(unittest.TestCase):
         odom = WheelOdometry(self.geometry)
         odom.update(0, 0, 0)
         # Opposing wheel distances rotate about the axle center.
-        sample = odom.update(1, -pi, pi)
+        sample = odom.update(1, -pi / 2, pi / 2)
+        sample = odom.update(2, -pi, pi)
         self.assertAlmostEqual(sample.yaw_rad, pi / 2)
         self.assertAlmostEqual(sample.x_m, 0)
-        sample = odom.update(2, -pi + 2, pi + 2)
+        sample = odom.update(3, -pi + 2, pi + 2)
         self.assertAlmostEqual(sample.x_m, 0)
         self.assertAlmostEqual(sample.y_m, 0.2)
 
     def test_curved_arc_matches_circle(self) -> None:
         odom = WheelOdometry(self.geometry)
-        odom.update(0, 0, 0)
-        sample = odom.update(1, 0, 2 * pi)
+        sample = odom.update(0, 0, 0)
+        for index in range(1, 5):
+            sample = odom.update(index / 4, 0, index * pi / 2)
         self.assertAlmostEqual(sample.yaw_rad, pi / 2)
         self.assertAlmostEqual(sample.x_m, 0.2)
         self.assertAlmostEqual(sample.y_m, 0.2)
+
+    def test_joint_representation_wrap_does_not_reverse_odometry(self) -> None:
+        odom = WheelOdometry(self.geometry)
+        odom.update(0, 3.0, 3.0)
+        forward = odom.update(0.1, -3.0, -3.0)
+        self.assertAlmostEqual(forward.x_m, (2 * pi - 6.0) * 0.1)
+        self.assertAlmostEqual(forward.yaw_rad, 0)
+        backward = odom.update(0.2, 3.0, 3.0)
+        self.assertAlmostEqual(backward.x_m, 0)
+        self.assertAlmostEqual(backward.yaw_rad, 0)
+        four_pi = WheelOdometry(self.geometry)
+        four_pi.update(0, 6.0, 6.0)
+        wrapped = four_pi.update(0.1, -6.0, -6.0)
+        self.assertAlmostEqual(wrapped.x_m, (4 * pi - 12.0) * 0.1)
+
+    def test_asymmetric_wrap_keeps_small_turn_instead_of_full_revolution(self) -> None:
+        odom = WheelOdometry(self.geometry)
+        odom.update(0, 3.1, 1.0)
+        sample = odom.update(0.1, 3.1 + 0.1 - 2 * pi, 1.2)
+        self.assertAlmostEqual(sample.yaw_rad, 0.1 * 0.1 / 0.4)
 
     def test_invalid_encoder_does_not_mutate(self) -> None:
         odom = WheelOdometry(self.geometry)

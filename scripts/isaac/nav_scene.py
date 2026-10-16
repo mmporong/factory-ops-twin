@@ -550,8 +550,7 @@ def _run(args: argparse.Namespace) -> int:
                 "ground_truth": {"position_xyz_m": gt_position, "orientation_wxyz": gt_orientation,
                                  "use": "evaluation and media only"},
             }
-            if step % encoder_period == 0:
-                _append_jsonl(trajectory_path, sample)
+            _append_jsonl(trajectory_path, sample)
             capture_due = step == 1 or step % capture_period == 0
             if settle_remaining is not None:
                 settle_remaining -= 1

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from math import cos, isfinite, sin
+from math import atan2, cos, isfinite, sin
 
 
 @dataclass(frozen=True, slots=True)
@@ -37,11 +37,15 @@ class EncoderSample:
 
 
 class WheelOdometry:
-    """Integrate measured continuous joint angles in a local odom frame.
+    """Integrate measured revolute joint angles in a local odom frame.
 
     The origin is zero at initialization. The authored map spawn and simulator
     world pose are deliberately absent from this interface. Wheel slip remains
     an estimation error for a sensor-based localizer to correct.
+
+    Successive encoder samples must rotate less than pi radians. Modulo-2*pi
+    articulation angles are unwrapped at each physics step, rather than treating
+    a joint's representation wrap as reverse travel.
     """
 
     def __init__(self, geometry: DriveGeometry) -> None:
@@ -60,8 +64,10 @@ class WheelOdometry:
         dt_s = stamp_s - before_s
         if dt_s <= 0:
             raise ValueError("encoder stamps must strictly increase")
-        left_m = (left_rad - before_left_rad) * self.geometry.wheel_radius_m
-        right_m = (right_rad - before_right_rad) * self.geometry.wheel_radius_m
+        left_delta_rad = atan2(sin(left_rad - before_left_rad), cos(left_rad - before_left_rad))
+        right_delta_rad = atan2(sin(right_rad - before_right_rad), cos(right_rad - before_right_rad))
+        left_m = left_delta_rad * self.geometry.wheel_radius_m
+        right_m = right_delta_rad * self.geometry.wheel_radius_m
         distance_m = (left_m + right_m) / 2.0
         rotation_rad = (right_m - left_m) / self.geometry.wheel_separation_m
         # Exact planar arc integration, including the straight-line limit.
