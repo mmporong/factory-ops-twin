@@ -13,7 +13,7 @@ import zlib
 from factory_ops.footprint import qualify_footprint
 from factory_ops.layout import Layout
 from factory_ops.navigation import GoalPose, LocalizationPose, NavigationResult, SingleOrderMission
-from scripts.ros.g1_evidence import REQUIRED_TOPICS, validate_g1_evidence
+from scripts.ros.g1_evidence import REQUIRED_TOPICS, _result_path, validate_g1_evidence
 
 
 PROJECT = Path(__file__).resolve().parents[1]
@@ -80,28 +80,38 @@ class G1EvidenceTest(unittest.TestCase):
         })
         (self.output / "actions.jsonl").write_text("".join(json.dumps(item) + "\n" for item in actions), encoding="utf-8")
 
-        stamps = (0.0, 1.0, 2.0, 22.0, 23.0, 24.0)
-        stations = ("S1", "S1", "CI", "CI", "CO", "OUT")
         trajectory: list[dict] = []
-        for index, (stamp, station) in enumerate(zip(stamps, stations)):
+        for index in range(24 * 60 + 1):
+            stamp = index / 60
+            station = "S1" if index < 120 else "CI" if index < 1380 else "CO" if index < 1440 else "OUT"
             x, y = layout.stations[station]
             trajectory.append({
-                "physics_frame": int(stamp * 60), "sim_time_s": stamp,
+                "physics_frame": index, "sim_time_s": stamp,
+                "wheel_angles_rad": [0.0, 0.0],
+                "joint_names": ["caster", "joint_wheel_left", "joint_wheel_right"],
+                "joint_positions_rad": [0.0, 0.0, 0.0],
                 "ground_truth": {"position_xyz_m": [x, y, 0.1], "orientation_wxyz": [1, 0, 0, 0],
                                  "use": "evaluation and media only"},
-                "odometry": {"x_m": x - 4.0, "y_m": y - 4.0, "yaw_rad": 0.0},
+                "odometry": {"x_m": 0.0, "y_m": 0.0, "yaw_rad": 0.0,
+                             "linear_m_s": 0.0, "angular_rad_s": 0.0},
             })
         (self.output / "trajectory.jsonl").write_text("".join(json.dumps(item) + "\n" for item in trajectory), encoding="utf-8")
+        media_sample_indices = (0, 60, 120, 1320, 1380, 1440)
         (self.output / "localization.jsonl").write_text("".join(json.dumps({
-            "frame_id": "map", "x": item["ground_truth"]["position_xyz_m"][0],
-            "y": item["ground_truth"]["position_xyz_m"][1], "yaw": 0.0, "stamp": item["sim_time_s"],
-        }) + "\n" for item in trajectory), encoding="utf-8")
-        (self.output / "sim-ready.json").write_text("{}\n", encoding="utf-8")
+            "frame_id": "map", "x": trajectory[index]["ground_truth"]["position_xyz_m"][0],
+            "y": trajectory[index]["ground_truth"]["position_xyz_m"][1], "yaw": 0.0,
+            "stamp": trajectory[index]["sim_time_s"],
+        }) + "\n" for index in media_sample_indices), encoding="utf-8")
+        self._write_json("sim-ready.json", {"drive_geometry": {
+            "wheel_radius_m": 0.04295, "wheel_separation_m": 0.4132,
+            "provenance": {"kind": "test fixture"},
+        }})
         (self.output / "factory-overview.png").write_bytes(_png())
         (self.output / "diagnostic-load").mkdir()
         (self.output / "diagnostic-load/factory-overview.png").write_bytes(_png())
         media: list[dict] = []
-        for index, sample in enumerate(trajectory):
+        for index, trajectory_index in enumerate(media_sample_indices):
+            sample = trajectory[trajectory_index]
             path = self.output / f"media/frame-{index:05d}.png"
             overview = self.output / f"media/overview-{index:05d}.png"
             path.parent.mkdir(exist_ok=True)
@@ -214,6 +224,50 @@ class G1EvidenceTest(unittest.TestCase):
                                       bag_observation=dict(self.bag, topic_counts=counts))
         self.assertTrue(any("worker pair" in error for error in report["errors"]))
         self.assertTrue(any("/scan" in error for error in report["errors"]))
+
+    def test_encoder_joint_and_odometry_tampering_is_rejected(self) -> None:
+        samples = [json.loads(line) for line in (self.output / "trajectory.jsonl").read_text().splitlines()]
+        samples[1]["joint_positions_rad"][1] = 0.2
+        samples[2]["odometry"]["x_m"] = 0.1
+        (self.output / "trajectory.jsonl").write_text("".join(json.dumps(item) + "\n" for item in samples), encoding="utf-8")
+        report = validate_g1_evidence(self.output, LAYOUT_PATH, RUN_ID, bag_observation=self.bag)
+        self.assertTrue(any("wheel angles do not match" in error for error in report["errors"]))
+        self.assertTrue(any("odometry does not recompute" in error for error in report["errors"]))
+
+    def test_decimated_trajectory_and_malformed_joint_name_are_rejected(self) -> None:
+        samples = [json.loads(line) for line in (self.output / "trajectory.jsonl").read_text().splitlines()]
+        del samples[700]
+        samples[10]["joint_names"][0] = {"not": "hashable"}
+        (self.output / "trajectory.jsonl").write_text("".join(json.dumps(item) + "\n" for item in samples), encoding="utf-8")
+        report = validate_g1_evidence(self.output, LAYOUT_PATH, RUN_ID, bag_observation=self.bag)
+        self.assertTrue(any("every adjacent physics frame" in error for error in report["errors"]))
+        self.assertTrue(any("invalid joint/encoder fields" in error for error in report["errors"]))
+
+    def test_action_pose_must_be_fresh_in_map_and_within_goal_tolerance(self) -> None:
+        actions = list(self.actions)
+        changed = json.loads(json.dumps(actions[2]))
+        changed["result"]["pose"]["x"] += 0.251
+        changed["result"]["pose"]["stamp"] = changed["result"]["received_sim_time"] - 0.501
+        actions[2] = changed
+        (self.output / "actions.jsonl").write_text("".join(json.dumps(item) + "\n" for item in actions), encoding="utf-8")
+        report = validate_g1_evidence(
+            self.output, LAYOUT_PATH, RUN_ID, bag_observation=dict(self.bag, mission_events=actions)
+        )
+        self.assertTrue(any("future or stale" in error for error in report["errors"]))
+        self.assertTrue(any("outside goal tolerance" in error for error in report["errors"]))
+
+    def test_result_path_rejects_parent_absolute_and_symlink_escape(self) -> None:
+        outside = self.output.parent / "escape.json"
+        for value in ("../escape.json", str(outside)):
+            with self.subTest(value=value), self.assertRaises(ValueError):
+                _result_path(self.output.resolve(), value)
+        link = self.output / "outside-link"
+        try:
+            link.symlink_to(self.output.parent, target_is_directory=True)
+        except OSError:
+            return
+        with self.assertRaises(ValueError):
+            _result_path(self.output.resolve(), "outside-link/escape.json")
 
 
 if __name__ == "__main__":

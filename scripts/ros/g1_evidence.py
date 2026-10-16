@@ -18,6 +18,7 @@ from uuid import UUID
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from factory_ops.footprint import _bad_touched_cells, qualify_footprint
 from factory_ops.layout import Layout
+from factory_ops.motion import DriveGeometry, WheelOdometry
 from factory_ops.operations import Ledger
 from scripts.isaac.stage_smoke import _png_dimensions
 
@@ -29,6 +30,7 @@ REQUIRED_TOPICS = {
 }
 EXPECTED_STATIONS = ("S1", "CI", "CO", "OUT")
 EXPECTED_TRANSITIONS = ("pickup", "drop", "pickup", "drop")
+WHEEL_JOINTS = ("joint_wheel_left", "joint_wheel_right")
 
 
 def _sha256(path: Path) -> str:
@@ -140,7 +142,21 @@ def _validate_trajectory(
     times: list[float] = []
     frames: list[int] = []
     wheel_errors: list[float] = []
+    encoder_samples: list[tuple[float, float, float, dict[str, float]]] = []
     first_gt: tuple[float, float] | None = None
+    ready = _load_json(output / "sim-ready.json", errors)
+    ready_geometry = ready.get("drive_geometry") if isinstance(ready, dict) else None
+    geometry: DriveGeometry | None = None
+    if isinstance(ready_geometry, dict) and isinstance(ready_geometry.get("provenance"), dict):
+        radius_m = _number(ready_geometry.get("wheel_radius_m"))
+        separation_m = _number(ready_geometry.get("wheel_separation_m"))
+        if radius_m is not None and separation_m is not None:
+            try:
+                geometry = DriveGeometry(radius_m, separation_m)
+            except ValueError:
+                pass
+    if geometry is None:
+        errors.append("sim-ready drive geometry/provenance is invalid")
     robot = scene.get("robot")
     footprint = robot.get("footprint", {}) if isinstance(robot, dict) else {}
     radius = _number(footprint.get("inflated_radius_m")) if isinstance(footprint, dict) else None
@@ -173,6 +189,38 @@ def _validate_trajectory(
         if first_gt is None:
             first_gt = (x, y)
         ox, oy = _number(odom.get("x_m")), _number(odom.get("y_m"))
+        odometry_values = {
+            name: _number(odom.get(name))
+            for name in ("x_m", "y_m", "yaw_rad", "linear_m_s", "angular_rad_s")
+        }
+        if any(value is None for value in odometry_values.values()):
+            errors.append(f"trajectory sample {index} has nonfinite odometry")
+        joint_names = sample.get("joint_names")
+        joint_positions = sample.get("joint_positions_rad")
+        wheel_angles = sample.get("wheel_angles_rad")
+        typed_joint_names: list[str] | None = None
+        if isinstance(joint_names, list) and all(isinstance(name, str) and bool(name) for name in joint_names):
+            typed_joint_names = [str(name) for name in joint_names]
+        unique_joint_names = (
+            typed_joint_names is not None
+            and len(set(typed_joint_names)) == len(typed_joint_names)
+        )
+        if (not unique_joint_names or typed_joint_names is None or not isinstance(joint_positions, list)
+                or len(typed_joint_names) != len(joint_positions)
+                or not isinstance(wheel_angles, list) or len(wheel_angles) != 2
+                or any(_number(value) is None for value in [*joint_positions, *wheel_angles])):
+            errors.append(f"trajectory sample {index} has invalid joint/encoder fields")
+        else:
+            try:
+                observed_angles = tuple(float(joint_positions[typed_joint_names.index(name)]) for name in WHEEL_JOINTS)
+            except ValueError:
+                errors.append(f"trajectory sample {index} is missing named wheel joints")
+            else:
+                if any(abs(observed - float(recorded)) > 1e-6 for observed, recorded in zip(observed_angles, wheel_angles)):
+                    errors.append(f"trajectory sample {index} wheel angles do not match named joint positions")
+                if all(value is not None for value in odometry_values.values()):
+                    encoder_samples.append((stamp, float(wheel_angles[0]), float(wheel_angles[1]),
+                                            {name: float(value) for name, value in odometry_values.items() if value is not None}))
         if ox is not None and oy is not None and first_gt is not None:
             wheel_errors.append(math.hypot(first_gt[0] + ox - x, first_gt[1] + oy - y))
         times.append(stamp)
@@ -191,10 +239,29 @@ def _validate_trajectory(
         dt = None
     frame_deltas = [frames[i] - frames[i - 1] for i in range(1, len(frames))]
     time_deltas = [times[i] - times[i - 1] for i in range(1, len(times))]
-    if dt is None or not frame_deltas or any(abs(actual - frame_delta * dt) > 1e-4 for actual, frame_delta in zip(time_deltas, frame_deltas)):
-        errors.append("trajectory delta time does not match physics frame delta")
+    if not frame_deltas or any(frame_delta != 1 for frame_delta in frame_deltas):
+        errors.append("trajectory must contain every adjacent physics frame without decimation")
+    if dt is None or any(abs(actual - dt) > 1e-4 for actual in time_deltas):
+        errors.append("trajectory delta time does not match one physics_dt interval")
     if not isinstance(trajectory_meta, dict) or trajectory_meta.get("sample_count") != len(samples):
         errors.append("scene trajectory sample_count does not match JSONL")
+    if geometry is not None and len(encoder_samples) == len(samples):
+        integrator = WheelOdometry(geometry)
+        first_stamp, first_left, first_right, first_odom = encoder_samples[0]
+        integrator.update(first_stamp, first_left, first_right)
+        origin_x, origin_y, origin_yaw = first_odom["x_m"], first_odom["y_m"], first_odom["yaw_rad"]
+        for index, (stamp, left, right, observed) in enumerate(encoder_samples[1:], 1):
+            relative = integrator.update(stamp, left, right)
+            expected = {
+                "x_m": origin_x + math.cos(origin_yaw) * relative.x_m - math.sin(origin_yaw) * relative.y_m,
+                "y_m": origin_y + math.sin(origin_yaw) * relative.x_m + math.cos(origin_yaw) * relative.y_m,
+                "yaw_rad": origin_yaw + relative.yaw_rad,
+                "linear_m_s": relative.linear_m_s,
+                "angular_rad_s": relative.angular_rad_s,
+            }
+            if any(abs(observed[name] - expected[name]) > 1e-5 for name in expected):
+                errors.append(f"trajectory sample {index} odometry does not recompute from wheel encoders")
+                break
     if wheel_errors:
         evaluation["wheel_odometry_vs_ground_truth"] = {
             "sample_count": len(wheel_errors), "maximum_xy_error_m": max(wheel_errors),
@@ -341,6 +408,28 @@ def _validate_actions(
             errors.append(f"action acceptance {index} does not bind to its UUID")
         if result.get("status") != 4 or action.get("nav2_error_code") != 0:
             errors.append(f"action result {index} is not Nav2 SUCCEEDED/error_code 0")
+        goal = intent.get("goal")
+        pose = result.get("pose")
+        received_time = _number(result.get("received_sim_time"))
+        if not isinstance(goal, dict) or not isinstance(pose, dict):
+            errors.append(f"action result {index} has no independent goal/localization pose")
+        else:
+            goal_values = [_number(goal.get(name)) for name in ("x", "y", "yaw")]
+            pose_values = [_number(pose.get(name)) for name in ("x", "y", "yaw")]
+            pose_stamp = _number(pose.get("stamp"))
+            if (goal.get("frame_id") != "map" or pose.get("frame_id") != "map"
+                    or received_time is None or received_time <= 0 or pose_stamp is None
+                    or any(value is None for value in [*goal_values, *pose_values])):
+                errors.append(f"action result {index} goal/localization pose is invalid")
+            else:
+                gx, gy, gyaw = (float(value) for value in goal_values if value is not None)
+                px, py, pyaw = (float(value) for value in pose_values if value is not None)
+                pose_age = received_time - pose_stamp
+                yaw_error = abs(math.atan2(math.sin(pyaw - gyaw), math.cos(pyaw - gyaw)))
+                if not 0 <= pose_age <= 0.5:
+                    errors.append(f"action result {index} localization pose is future or stale")
+                if math.hypot(px - gx, py - gy) > 0.25 or yaw_error > 0.25:
+                    errors.append(f"action result {index} localization pose is outside goal tolerance")
         if receipt.get("accepted") is not True or receipt.get("goal_id") != goal_id or receipt.get("committed_transition") != EXPECTED_TRANSITIONS[index]:
             errors.append(f"handoff receipt {index} is invalid")
         handoff_snapshot = handoff.get("snapshot")
@@ -588,6 +677,16 @@ def inspect_rosbag(bag_directory: Path) -> dict[str, Any]:
     }
 
 
+def _result_path(output: Path, value: str) -> tuple[str, Path]:
+    safe = _safe_relative(value)
+    if safe is None:
+        raise ValueError("--write-result must be a safe relative path")
+    path = (output / PurePosixPath(safe)).resolve(strict=False)
+    if not path.is_relative_to(output):
+        raise ValueError("--write-result must remain inside --output")
+    return safe, path
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", required=True, type=Path)
@@ -598,8 +697,11 @@ def main() -> int:
     if not args.output.is_absolute():
         parser.error("--output must be absolute")
     output = args.output.resolve(strict=True)
-    report_path = output / args.write_result
-    report = validate_g1_evidence(output, args.layout, args.run_id, result_name=args.write_result)
+    try:
+        result_name, report_path = _result_path(output, args.write_result)
+    except ValueError as exc:
+        parser.error(str(exc))
+    report = validate_g1_evidence(output, args.layout, args.run_id, result_name=result_name)
     report_path.write_text(json.dumps(report, indent=2, sort_keys=True, allow_nan=False) + "\n", encoding="utf-8")
     print("FACTORY_OPS_G1_VALIDATION=" + ("PASS" if report["passed"] else "FAIL"), flush=True)
     return 0 if report["passed"] else 1
