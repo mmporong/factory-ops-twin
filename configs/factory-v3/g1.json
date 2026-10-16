@@ -16,6 +16,23 @@
   "max_angular_rad_s": 1.2,
   "max_linear_accel_m_s2": 0.25,
   "max_angular_accel_rad_s2": 0.5,
+  "drive_profile": {
+    "max_linear_m_s": 0.6,
+    "max_angular_rad_s": 1.2,
+    "linear_accel_m_s2": 0.25,
+    "linear_decel_m_s2": 0.35,
+    "angular_accel_rad_s2": 0.5,
+    "angular_decel_rad_s2": 0.7,
+    "lateral_accel_m_s2": 0.2,
+    "max_wheel_rad_s": 6.0,
+    "wheel_accel_rad_s2": 4.0,
+    "provenance": {
+      "kind": "authored-not-motor-calibrated",
+      "description": "simulation command envelope; not measured motor dynamics",
+      "application": "single normal-motion profile owner in the 60 Hz Isaac physics loop",
+      "validation": "requested and applied body commands, wheel targets, limiting flags, and stop phase are recorded per physics step"
+    }
+  },
   "localization_planning_margin_m": 0.3,
   "localization_planning_margin_provenance": {
     "kind": "authored planning-only localization uncertainty allowance",

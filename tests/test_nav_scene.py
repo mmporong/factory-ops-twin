@@ -7,17 +7,23 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
+from factory_ops.drive_profile import DriveCommand
 from scripts.isaac.nav_scene import (
+    _apply_cleanup_fault_stop,
     _atomic_json,
     _apply_measured_drive_geometry,
     _create_robot,
     _drive_geometry_from_colliders,
+    _drive_limits,
     _close_app,
     _joint_positions,
     _load_config,
+    _motion_profile_payload,
     _read_control,
     _ready_payload,
     _scene_owned_artifacts,
+    _settle_step_limit,
+    _stop_mode,
     _tilt_evaluation,
     _wheel_angles,
 )
@@ -102,6 +108,111 @@ class NavSceneTests(unittest.TestCase):
             with self.assertRaisesRegex(SmokeError, "lidar contract"):
                 _load_config(path)
 
+    def test_config_requires_complete_drive_profile_and_legacy_limit_equality(self) -> None:
+        source = Path(__file__).resolve().parents[1] / "configs" / "factory-v3" / "g1.json"
+        config = _load_config(source)
+        limits = _drive_limits(config)
+        self.assertEqual(limits.linear_decel_m_s2, 0.35)
+        self.assertEqual(limits.angular_decel_rad_s2, 0.7)
+        self.assertEqual(limits.lateral_accel_m_s2, 0.2)
+        self.assertEqual(limits.max_wheel_rad_s, 6.0)
+        self.assertEqual(limits.wheel_accel_rad_s2, 4.0)
+        self.assertEqual(_settle_step_limit(config), 135)
+        with tempfile.TemporaryDirectory() as folder:
+            mismatched = json.loads(json.dumps(config))
+            mismatched["max_linear_accel_m_s2"] = 0.3
+            path = Path(folder) / "mismatch.json"
+            path.write_text(json.dumps(mismatched), encoding="utf-8")
+            with self.assertRaisesRegex(SmokeError, "must equal drive_profile.linear_accel_m_s2"):
+                _load_config(path)
+            incomplete = json.loads(json.dumps(config))
+            del incomplete["drive_profile"]["wheel_accel_rad_s2"]
+            path.write_text(json.dumps(incomplete), encoding="utf-8")
+            with self.assertRaisesRegex(SmokeError, "wheel_accel_rad_s2"):
+                _load_config(path)
+            invalid_provenance = json.loads(json.dumps(config))
+            invalid_provenance["drive_profile"]["provenance"]["kind"] = "motor-calibrated"
+            path.write_text(json.dumps(invalid_provenance), encoding="utf-8")
+            with self.assertRaisesRegex(SmokeError, "authored-not-motor-calibrated"):
+                _load_config(path)
+            wrong_cadence = json.loads(json.dumps(config))
+            wrong_cadence["physics_dt_s"] = 0.02
+            path.write_text(json.dumps(wrong_cadence), encoding="utf-8")
+            with self.assertRaisesRegex(SmokeError, "fixed at 1/60"):
+                _load_config(path)
+
+    def test_stop_mode_separates_normal_profile_stop_from_fault_stop(self) -> None:
+        self.assertEqual(
+            _stop_mode(mission_settling=True, watchdog_active=False, mission_failed=False),
+            ("normal_mission_complete", False),
+        )
+        self.assertEqual(
+            _stop_mode(mission_settling=False, watchdog_active=False, mission_failed=False),
+            ("watchdog_stale", True),
+        )
+        self.assertEqual(
+            _stop_mode(mission_settling=True, watchdog_active=True, mission_failed=True),
+            ("mission_failed", True),
+        )
+
+    def test_motion_profile_payload_exposes_profile_input_and_stop_reason(self) -> None:
+        command = DriveCommand(0.1, 0.2, (0.4, 0.6), "curve", True, False, False)
+        payload = _motion_profile_payload(
+            command, input_linear_m_s=0.3, input_angular_rad_s=0.4,
+            stop_reason="normal_mission_complete",
+        )
+        self.assertEqual(payload, {
+            "phase": "curve", "curvature_limited": True, "wheel_speed_limited": False,
+            "emergency_stop": False,
+            "input_command": {"linear_m_s": 0.3, "angular_rad_s": 0.4},
+            "stop_reason": "normal_mission_complete",
+        })
+
+    def test_exception_cleanup_resets_profile_and_applies_zero_wheel_targets(self) -> None:
+        class Profile:
+            calls: list[tuple[float, float, float, bool]] = []
+
+            def step(
+                self, linear_m_s: float, angular_rad_s: float, dt_s: float, *, emergency_stop: bool,
+            ) -> DriveCommand:
+                self.calls.append((linear_m_s, angular_rad_s, dt_s, emergency_stop))
+                return DriveCommand(0.0, 0.0, (0.0, 0.0), "fault_stop", False, False, True)
+
+        class Robot:
+            targets: object = None
+
+            def apply_wheel_actions(self, targets: object) -> None:
+                self.targets = targets
+
+        profile, robot = Profile(), Robot()
+        failure = TimeoutError("mission timeout")
+        response, errors = _apply_cleanup_fault_stop(
+            profile=profile, robot=robot, physics_dt_s=1.0 / 60.0, array_module=None,
+            failure_phase="mission", failure_error=failure,
+        )
+        self.assertEqual(errors, [])
+        self.assertEqual(profile.calls, [(0.0, 0.0, 1.0 / 60.0, True)])
+        self.assertEqual(robot.targets, (0.0, 0.0))
+        self.assertEqual(response["stop_reason"], "exception_cleanup")
+        self.assertEqual(response["failure_phase"], "mission")
+        self.assertEqual(response["error"], {"type": "TimeoutError", "message": "mission timeout"})
+        self.assertTrue(response["profile_emergency_stop"])
+        self.assertTrue(response["applied_zero"])
+
+    def test_exception_cleanup_preserves_zero_application_error(self) -> None:
+        class BrokenRobot:
+            @staticmethod
+            def apply_wheel_actions(_targets: object) -> None:
+                raise RuntimeError("actuator unavailable")
+
+        response, errors = _apply_cleanup_fault_stop(
+            profile=None, robot=BrokenRobot(), physics_dt_s=None, array_module=None,
+            failure_phase="ros_and_lidar", failure_error=ValueError("setup failed"),
+        )
+        self.assertFalse(response["applied_zero"])
+        self.assertEqual(response["error"]["message"], "setup failed")
+        self.assertEqual(errors, ["cleanup zero wheel targets: RuntimeError: actuator unavailable"])
+
     def test_ready_payload_marks_truth_as_non_control_evidence(self) -> None:
         config = {
             "ros_domain_id": 71,
@@ -109,6 +220,14 @@ class NavSceneTests(unittest.TestCase):
             "max_linear_accel_m_s2": 0.25,
             "max_angular_accel_rad_s2": 0.5,
             "control_limit_provenance": {"kind": "test"},
+            "drive_profile": {
+                "max_linear_m_s": 0.6, "max_angular_rad_s": 1.2,
+                "linear_accel_m_s2": 0.25, "linear_decel_m_s2": 0.35,
+                "angular_accel_rad_s2": 0.5, "angular_decel_rad_s2": 0.7,
+                "lateral_accel_m_s2": 0.2, "max_wheel_rad_s": 6.0,
+                "wheel_accel_rad_s2": 4.0,
+                "provenance": {"kind": "authored-not-motor-calibrated"},
+            },
             "drive_geometry": {"wheel_radius_m": 0.04, "wheel_separation_m": 0.4,
                                "provenance": {"kind": "test"}},
         }
@@ -122,6 +241,10 @@ class NavSceneTests(unittest.TestCase):
         self.assertEqual(ready["readers"]["simulator_truth"],
                          "JSONL evaluation and media only; unavailable to the ROS control boundary")
         self.assertEqual(ready["control_boundary"]["input"], "ROS 2 geometry_msgs/Twist on /cmd_vel")
+        profile = ready["control_boundary"]["drive_profile"]
+        self.assertEqual(profile["limits"]["max_wheel_rad_s"], 6.0)
+        self.assertEqual(profile["provenance"]["kind"], "authored-not-motor-calibrated")
+        self.assertIn("no second normal-motion limiter", profile["owner"])
 
     def test_experimental_articulation_dof_api_supplies_encoder_and_raw_joint_evidence(self) -> None:
         robot = self._ExperimentalRobot()

@@ -19,6 +19,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from factory_ops.footprint import _bad_touched_cells, qualify_footprint
 from factory_ops.layout import Layout
 from factory_ops.motion import DriveGeometry, WheelOdometry
+from factory_ops.drive_profile import DriveLimits
+from factory_ops.motion_validation import validate_drive_trace
 from factory_ops.operations import Ledger
 from scripts.isaac.stage_smoke import _png_dimensions
 
@@ -580,6 +582,20 @@ def validate_g1_evidence(
     _validate_scene_manifest(output, scene, errors)
     _validate_scene_images(output, scene, errors)
     trajectory, evaluation = _validate_trajectory(output, scene, layout, errors)
+    ready = _load_json(output / "sim-ready.json", errors)
+    profile_metadata = ready.get("control_boundary", {}).get("drive_profile") if isinstance(ready, dict) else None
+    if profile_metadata is not None or any("motion_profile" in item for item in trajectory):
+        try:
+            if not isinstance(profile_metadata, dict) or not isinstance(ready, dict):
+                raise ValueError("drive profile metadata is missing")
+            limits = DriveLimits(**profile_metadata["limits"])
+            dimensions = ready["drive_geometry"]
+            drive = DriveGeometry(dimensions["wheel_radius_m"], dimensions["wheel_separation_m"])
+            profile_report = validate_drive_trace(trajectory, drive, limits, scene["timing"]["physics_dt_s"])
+            evaluation["drive_profile"] = profile_report
+            errors.extend(profile_report["errors"])
+        except (KeyError, TypeError, ValueError) as error:
+            errors.append(f"recorded drive profile is invalid: {error}")
     _validate_media(output, scene, trajectory, errors)
     if bag_observation is not None:
         bag = dict(bag_observation)

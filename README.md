@@ -35,6 +35,7 @@ S1~S3은 동일한 키트 토트를 준비하는 위치입니다. 하나의 주�
 | GPU 종료 판정 | 별도 worker 종료 뒤 supervisor가 실행 ID·장면·PNG·종료 코드를 대조. L40S 실행에서 최종 PASS 확인 |
 | 단일 AMR 운송 | S1 pickup→CI drop→공정 20초→CO pickup→OUT drop, 실제 goal UUID·성공 결과·신선한 map pose를 확인한 뒤 인계 확정 |
 | 주행 평가 | 실제 충돌 형상의 회전 외곽 약 0.637 m + 여유 0.2 m로 전체 60 Hz 궤적 검사. 계획에는 위치 추정 여유 0.3 m를 추가하고 CI·CO·OUT 접근 정책 폭을 2.6 m로 설정 |
+| 주행 명령 프로파일 | 정상 가감속·곡선 감속·회전 전 제동·회전 후 출발·후진 전환과 휠 속도/가속도 제한을 60 Hz 물리 루프에 적용. CPU 경계·전환 검사를 통과했으며 새 프로파일의 GPU 물리 응답은 재검증 예정 |
 | 주행·센서 수집 | G1의 60 Hz 휠·GT 궤적, 주행·조감 RGB 쌍, ROS bag 보존. G0b에서 RGB/Depth/semantic/bbox·카메라 파라미터 3세트의 정렬도 별도 검사 |
 | ROS 2 연결 | RTX `/scan`, 엔코더 `/odom`, `/clock`, `map→odom→base_link→base_scan` TF, AMCL·Nav2·action 결과를 연결 |
 | 운영 원장 | 주문·운반·버퍼·공정·완료 상태, 버전 검사, 중복 이벤트 억제, 로그 재생 |
@@ -103,7 +104,9 @@ configs/factory-v3/    배치·교통 자원·로컬 주문과 설정
 factory_ops/
   layout.py           배치 검증, 격자 경로, 지도 출력
   footprint.py        실제 로봇 충돌 외곽과 지도 여유 검사
-  motion.py           휠 각도 적분, 명령 watchdog·가속도 제한
+  motion.py           휠 각도 적분과 명령 watchdog
+  drive_profile.py    정상 가감속·회전 전환·곡선·휠 제한, 별도 고장 정지
+  motion_validation.py 기록한 명령 경계와 물리 응답의 독립 검사
   navigation.py       goal 결과와 CI·CO 인계·공정 연결
   usda.py             USD 텍스트 출력
   operations/         상태 모델, 원장, 배차

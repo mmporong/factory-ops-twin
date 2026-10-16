@@ -1,0 +1,80 @@
+{
+  "schema_version": 1,
+  "qualification": "nova_carter_motion_physics",
+  "physics_dt_s": 0.016666666666666666,
+  "warmup_steps": 120,
+  "capture_every_steps": 6,
+  "max_sim_time_s": 80.0,
+  "max_wall_time_s": 2400.0,
+  "tilt_threshold_rad": 0.35,
+  "spawn_xyz_m": [-20.0, 0.0, 0.1],
+  "asset": {
+    "relative_path": "/Isaac/Robots/NVIDIA/NovaCarter/nova_carter.usd",
+    "root_prim": "/World/Carter",
+    "wheel_dof_names": ["joint_wheel_left", "joint_wheel_right"]
+  },
+  "testbench": {
+    "kind": "independent unobstructed motion test pad; not a factory transport run",
+    "visual_floor_size_xyz_m": [80.0, 80.0, 0.1],
+    "visual_floor_top_z_m": 0.0,
+    "collision_floor": "invisible static Z-axis Plane at z=0",
+    "visual_material": "authored displayColor [0.18, 0.20, 0.22]; no UsdShade material",
+    "physics_material": "no authored physics material; simulator and asset defaults apply",
+    "lighting": "CaptureSession dome light, intensity 800",
+    "visual_reference_grid": {
+      "scope": "render-only measurement reference; not physical factory geometry or a collision obstacle",
+      "spacing_m": 1.0,
+      "major_interval_m": 5.0,
+      "range_xy_m": [-40.0, 40.0],
+      "collision": false,
+      "line_top_z_m": 0.012,
+      "world_axes": {"x": "red", "y": "green"}
+    }
+  },
+  "drive_geometry": {
+    "wheel_radius_m": 0.14,
+    "wheel_separation_m": 0.4132,
+    "provenance": {
+      "kind": "expected asset collision geometry; remeasured and enforced before physics",
+      "source": "Isaac/Robots/NVIDIA/NovaCarter/nova_carter.usd"
+    }
+  },
+  "drive_limits": {
+    "max_linear_m_s": 0.6,
+    "max_angular_rad_s": 1.2,
+    "linear_accel_m_s2": 0.25,
+    "linear_decel_m_s2": 0.35,
+    "angular_accel_rad_s2": 0.5,
+    "angular_decel_rad_s2": 0.7,
+    "lateral_accel_m_s2": 0.2,
+    "max_wheel_rad_s": 6.0,
+    "wheel_accel_rad_s2": 4.0,
+    "provenance": "authored simulation command envelope; not measured motor calibration"
+  },
+  "transient_measurement": {
+    "smoothing_window_s": 0.1,
+    "stop_speed_m_s": 0.02,
+    "stop_hold_s": 0.5,
+    "reverse_confirm_s": 0.2,
+    "provenance": "authored measurement definitions for reporting observed simulation response; not pass thresholds or motor calibration"
+  },
+  "schedule": [
+    {"name": "straight_accel_cruise", "start_s": 0.0, "end_s": 10.0, "linear_m_s": 0.6, "angular_rad_s": 0.0, "emergency_stop": false},
+    {"name": "normal_brake", "start_s": 10.0, "end_s": 15.0, "linear_m_s": 0.0, "angular_rad_s": 0.0, "emergency_stop": false},
+    {"name": "turn_approach", "start_s": 15.0, "end_s": 19.0, "linear_m_s": 0.45, "angular_rad_s": 0.0, "emergency_stop": false},
+    {"name": "translate_to_inplace_turn", "start_s": 19.0, "end_s": 27.0, "linear_m_s": 0.0, "angular_rad_s": 0.8, "emergency_stop": false},
+    {"name": "turn_settle_departure", "start_s": 27.0, "end_s": 34.0, "linear_m_s": 0.45, "angular_rad_s": 0.0, "emergency_stop": false},
+    {"name": "curved_turn", "start_s": 34.0, "end_s": 44.0, "linear_m_s": 0.6, "angular_rad_s": 1.2, "emergency_stop": false},
+    {"name": "opposite_curvature", "start_s": 44.0, "end_s": 54.0, "linear_m_s": 0.6, "angular_rad_s": -1.2, "emergency_stop": false},
+    {"name": "normal_stop", "start_s": 54.0, "end_s": 59.0, "linear_m_s": 0.0, "angular_rad_s": 0.0, "emergency_stop": false},
+    {"name": "reverse_setup", "start_s": 59.0, "end_s": 65.0, "linear_m_s": 0.4, "angular_rad_s": 0.0, "emergency_stop": false},
+    {"name": "reverse_through_zero", "start_s": 65.0, "end_s": 73.0, "linear_m_s": -0.4, "angular_rad_s": 0.0, "emergency_stop": false},
+    {"name": "fault_stop", "start_s": 73.0, "end_s": 76.0, "linear_m_s": 0.4, "angular_rad_s": 0.0, "emergency_stop": true}
+  ],
+  "steady_evaluation_windows": [
+    {"name": "straight", "schedule_segment": "straight_accel_cruise", "last_s": 1.0, "expected_encoder_linear_m_s": [0.45, 0.75], "max_abs_encoder_angular_rad_s": 0.15},
+    {"name": "in_place_turn", "schedule_segment": "translate_to_inplace_turn", "last_s": 1.0, "max_abs_encoder_linear_m_s": 0.15, "expected_encoder_angular_rad_s": [0.2, 1.3]},
+    {"name": "curve", "schedule_segment": "curved_turn", "last_s": 1.0, "expected_encoder_linear_m_s": [0.15, 0.65], "expected_encoder_angular_rad_s": [0.1, 1.3]},
+    {"name": "opposite_curve", "schedule_segment": "opposite_curvature", "last_s": 1.0, "expected_encoder_linear_m_s": [0.15, 0.65], "expected_encoder_angular_rad_s": [-1.3, -0.1]}
+  ]
+}

@@ -32,7 +32,8 @@ from pathlib import Path
 import hashlib,json,subprocess,sys
 root,run=Path(sys.argv[1]),sys.argv[2]
 paths=['configs/factory-v3/layout.json','configs/factory-v3/g1.json','configs/factory-v3/nav2-g1.yaml',
-       'factory_ops/motion.py','factory_ops/navigation.py','scripts/isaac/nav_scene.py',
+       'factory_ops/motion.py','factory_ops/drive_profile.py','factory_ops/motion_validation.py',
+       'factory_ops/navigation.py','scripts/isaac/nav_scene.py',
        'scripts/ros/g1_mission.py','scripts/ros/g1.launch.py','runs/local/scene/factory-v3.usda',
        'runs/local/maps/map.pgm','runs/local/maps/keepout.pgm']
 record={'run_label':run,'run_id':sys.argv[3],'source_commit':sys.argv[4],
