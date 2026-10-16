@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "qualification": "g1_single_order",
+  "robot_id": "carter1",
+  "order_id": "G1-ORDER-001",
+  "payload_id": "G1-TOTE-001",
+  "source_station": "S1",
+  "ros_domain_id": 71,
+  "physics_dt_s": 0.016666666666666666,
+  "encoder_publish_every_steps": 3,
+  "camera_capture_every_steps": 60,
+  "max_sim_time_s": 600,
+  "max_wall_time_s": 2400,
+  "command_timeout_s": 0.5,
+  "max_linear_m_s": 0.6,
+  "max_angular_rad_s": 1.2,
+  "station_yaw_rad": {"S1": 0.0, "CI": 3.141592653589793, "CO": 3.141592653589793, "OUT": 0.0},
+  "drive_geometry": {
+    "wheel_radius_m": 0.04295,
+    "wheel_separation_m": 0.4132,
+    "provenance": {
+      "kind": "upstream_example_configuration; not a site measurement",
+      "source": "https://github.com/isaac-sim/IsaacSim/blob/74a9356b20250dd60337d90b4b4d913c9454d32b/standalone_examples/api/isaacsim.sensors.experimental.rtx/lidar_robot_integration.py",
+      "asset": "Isaac/Robots/NVIDIA/NovaCarter/nova_carter.usd"
+    }
+  },
+  "lidar": {"profile": "Example_Rotary_2D", "translation_xyz_m": [0.0, 0.0, 0.65], "frame_id": "base_scan", "topic": "/scan"},
+  "scope": {
+    "payload_handoff": "logical commit after a matching successful Nav2 action and fresh localized arrival",
+    "process": "logical single-cell service time from layout; no robot arm",
+    "localization_inputs": ["wheel encoder odometry", "RTX LaserScan", "authored physical map", "authored initial station pose"],
+    "simulator_truth": "evaluation and media only; never a navigation input",
+    "training_eligible": false
+  }
+}
