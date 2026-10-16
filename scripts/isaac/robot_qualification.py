@@ -52,12 +52,25 @@ def _collision_bounds(stage: Any, Usd: Any, UsdGeom: Any, UsdPhysics: Any) -> tu
     if not root.IsValid():
         raise base.SmokeError("Nova Carter reference did not produce a valid prim")
     cache = UsdGeom.XformCache(Usd.TimeCode.Default())
+    geometry_sources: dict[str, tuple[Any, Any]] = {}
+    for collider in Usd.PrimRange(root, Usd.TraverseInstanceProxies()):
+        if not collider.HasAPI(UsdPhysics.CollisionAPI) or collider.GetAttribute("physics:collisionEnabled").Get() is False:
+            continue
+        candidates = [prim for prim in Usd.PrimRange(collider, Usd.TraverseInstanceProxies()) if prim.IsA(UsdGeom.Boundable)]
+        if not candidates:
+            raise base.SmokeError(f"enabled collision prim contains no boundable geometry: {collider.GetPath()}")
+        for prim in candidates:
+            cursor = prim
+            disabled = False
+            while cursor.IsValid() and cursor != collider:
+                if cursor.HasAPI(UsdPhysics.CollisionAPI) and cursor.GetAttribute("physics:collisionEnabled").Get() is False:
+                    disabled = True
+                    break
+                cursor = cursor.GetParent()
+            if not disabled:
+                geometry_sources[str(prim.GetPath())] = (prim, collider)
     records = []
-    for prim in Usd.PrimRange(root, Usd.TraverseInstanceProxies()):
-        if not prim.HasAPI(UsdPhysics.CollisionAPI):
-            continue
-        if prim.GetAttribute("physics:collisionEnabled").Get() is False:
-            continue
+    for prim, collider in geometry_sources.values():
         geometry = UsdGeom.Boundable(prim)
         extent = UsdGeom.Boundable.ComputeExtentFromPlugins(geometry, Usd.TimeCode.Default())
         if extent is None or len(extent) != 2:
@@ -70,6 +83,7 @@ def _collision_bounds(stage: Any, Usd: Any, UsdGeom: Any, UsdPhysics: Any) -> tu
             raise base.SmokeError(f"empty robot collider bound: {prim.GetPath()}")
         authored = geometry.GetExtentAttr().Get()
         records.append({"path": str(prim.GetPath()), "min": list(bound.GetMin()), "max": list(bound.GetMax()),
+                        "collision_api_path": str(collider.GetPath()),
                         "extent_method": "ComputeExtentFromPlugins and root-relative XformCache transform",
                         "geometry_extent": [list(point) for point in extent],
                         "authored_extent": [list(point) for point in authored] if authored is not None else None})
@@ -105,7 +119,8 @@ def _clock_graph(stage: Any, app: Any) -> tuple[Any, Any, list[float]]:
                 ("Time.outputs:simulationTime", "Clock.inputs:timeStamp"),
                 ("Context.outputs:context", "Clock.inputs:context"),
             ],
-            og.Controller.Keys.SET_VALUES: [("Clock.inputs:topicName", "/clock")],
+            og.Controller.Keys.SET_VALUES: [("Clock.inputs:topicName", "/clock"),
+                                           ("Context.inputs:domain_id", int(os.environ["ROS_DOMAIN_ID"]))],
         },
     )
     rclpy.init()
@@ -167,6 +182,7 @@ def _capture_motion(output: Path, app: Any, stage: Any, robot: Any, rep: Any, np
 
     start_sim = float(SimulationManager.get_simulation_time())
     started = time.monotonic()
+    robot.apply_wheel_actions(np.zeros(2, dtype=np.float32))
     observe([0.0, 0.0])
     try:
         for step in range(MEASUREMENT_STEPS):
@@ -218,12 +234,16 @@ def _capture_motion(output: Path, app: Any, stage: Any, robot: Any, rep: Any, np
                 _json(output / paths["boxes"], {"boxes": box_records, "id_to_labels": labels})
                 view = np.asarray(params["cameraViewTransform"]).reshape(4, 4)
                 optical_to_world = np.diag([1.0, -1.0, -1.0, 1.0]) @ np.linalg.inv(view)
+                optical_quaternion = Gf.Matrix4d(*optical_to_world.flatten().tolist()).ExtractRotationQuat()
+                optical_wxyz = [float(optical_quaternion.GetReal()), *[float(value) for value in optical_quaternion.GetImaginary()]]
                 fx = 18.0 / 24.0 * SENSOR_SIZE[0]
                 _json(output / paths["camera"], {"camera_intrinsics": [fx, 0, 320, 0, fx, 180, 0, 0, 1],
                       "camera_to_world": optical_to_world.flatten().tolist(), "sim_time": sample["sim_time"],
+                      "pose_xyz": optical_to_world[3, :3].tolist(), "pose_wxyz": optical_wxyz,
                       "optical_frame": OPTICAL_FRAME, "matrix_convention": "row-vector optical +X right, +Y down, +Z forward",
                       "depth_semantics": "distance_to_image_plane in metres", "pixel_origin": "top-left"})
-                sensor_frames.append({"physics_frame": sample["physics_frame"], "sim_time": sample["sim_time"], "paths": paths})
+                sensor_frames.append({"physics_frame": sample["physics_frame"], "sim_time": sample["sim_time"],
+                                      "pose_xyz": sample["position"], "pose_wxyz": sample["orientation_wxyz"], "paths": paths})
             timeline.play()
         wall = time.monotonic() - started
         sim = float(SimulationManager.get_simulation_time()) - start_sim
@@ -231,8 +251,13 @@ def _capture_motion(output: Path, app: Any, stage: Any, robot: Any, rep: Any, np
         base._with_alarm(120, "G0b writer drain", rep.orchestrator.wait_until_complete)
         gif_images[0].save(output / "media/amr-motion.gif", save_all=True, append_images=gif_images[1:], duration=100, loop=0)
         with Image.open(output / "media/amr-motion.gif") as animation:
-            if animation.n_frames != len(frames):
+            if animation.n_frames != len(frames) or animation.size != (640, 360) or animation.info.get("loop") != 0:
                 raise base.SmokeError("GIF encoder did not retain every captured frame")
+            for frame in range(animation.n_frames):
+                animation.seek(frame)
+                animation.load()
+                if animation.info.get("duration") != 100:
+                    raise base.SmokeError("GIF frame duration differs from the raw frame cadence")
         shutil.copyfile(output / frames[0]["path"], output / "carter-closeup.png")
         _json(output / "media/frames.json", {"fps": 10, "frames": frames, "source": "actual Isaac Sim render products; no interpolation",
               "gif_derivation": "640x360 resize and measured sim-time/frame-index overlay; original PNGs retained"})
@@ -246,13 +271,21 @@ def _capture_motion(output: Path, app: Any, stage: Any, robot: Any, rep: Any, np
                                 "measurement_loop_iterations": MEASUREMENT_STEPS, "capture_included": True,
                                 "gif_encoding_included": False, "gpu_observation": gpu}}
     finally:
-        for image in gif_images:
-            image.close()
-        medium_rgb.detach()
-        for annotator in annotators.values():
-            annotator.detach()
-        for product in products:
-            product.destroy()
+        active_error = sys.exception()
+        cleanup_errors = []
+        actions = [*[image.close for image in gif_images], medium_rgb.detach,
+                   *[annotator.detach for annotator in annotators.values()], *[product.destroy for product in products]]
+        for action in actions:
+            try:
+                action()
+            except BaseException as error:
+                cleanup_errors.append(f"{type(error).__name__}: {error}")
+        if cleanup_errors:
+            message = "sensor cleanup failed: " + "; ".join(cleanup_errors)
+            if active_error is not None:
+                active_error.add_note(message)
+            else:
+                raise base.SmokeError(message)
 
 
 def _worker(args: argparse.Namespace) -> int:
@@ -312,10 +345,19 @@ def _worker(args: argparse.Namespace) -> int:
         spawn_x, spawn_y = layout.stations["S1"]
         UsdGeom.Xformable(stage.GetPrimAtPath(ROBOT_PATH)).AddTranslateOp(opSuffix="qualificationSpawn").Set(Gf.Vec3d(spawn_x, spawn_y, 0.1))
         robot = WheeledRobot(ROBOT_PATH, wheel_dof_names=WHEEL_JOINTS)
+        checkpoint("capture_load_preview")
+        diagnostic = output / "diagnostic-load"
+        diagnostic.mkdir()
+        result["load_preview"] = base._capture_overview(
+            diagnostic, app, rep, camera_position=(spawn_x + 3.0, spawn_y - 3.2, 2.8),
+            camera_look_at=(spawn_x, spawn_y, 0.5),
+        )
+        checkpoint("inspect_robot_collision_geometry")
         bounds, colliders = _collision_bounds(stage, Usd, UsdGeom, UsdPhysics)
         footprint = qualify_footprint(layout, bounds)
         result["robot"] = {"prim_path": ROBOT_PATH, "asset_url": asset, "wheel_dof_names": WHEEL_JOINTS,
                            "enabled_collision_count": len(colliders), "colliders": colliders,
+                           "collision_scope": "geometry descendants of enabled CollisionAPI prims; not cooked PhysX contact shapes",
                            "collision_bounds_xyz": bounds, "footprint": footprint}
         if not footprint["passed"]:
             raise base.SmokeError("actual collision envelope does not fit one or more authored anchors")
@@ -337,7 +379,7 @@ def _worker(args: argparse.Namespace) -> int:
         result["robot"]["dof_names"] = robot.dof_names
         checkpoint("capture_overview")
         timeline.pause()
-        result["rgb"] = base._capture_overview(output, app, rep)
+        result["rgb"] = base._capture_overview(output, app, rep, create_light=False)
         timeline.play()
         checkpoint("physics_motion_and_sensors")
         result.update(_capture_motion(output, app, stage, robot, rep, np, UsdGeom, Gf, SimulationManager, rclpy, node))
@@ -345,9 +387,6 @@ def _worker(args: argparse.Namespace) -> int:
                           "clock_messages": len(stamps), "clock_advanced": len(stamps) >= 2 and stamps[-1] > stamps[0] and all(b >= a for a,b in zip(stamps, stamps[1:])),
                           "clock_samples": stamps, "subscriber_qos": "BEST_EFFORT depth 10",
                           "sensor_topics": "not yet published; G1 integration"}
-        node.destroy_node()
-        rclpy.shutdown()
-        node = rclpy = None
         stage.Export(str(output / "robot-scene.usda"))
         result["artifact_manifest"] = [{"path": str(path.relative_to(output)).replace("\\", "/"), "bytes": path.stat().st_size,
                                         "sha256": base._sha256(path)} for path in sorted(output.rglob("*"))
@@ -356,23 +395,40 @@ def _worker(args: argparse.Namespace) -> int:
         if errors:
             raise base.SmokeError("; ".join(errors))
         valid = True
-        result.update({"status": "validated", "cleanup": "worker_exit_requested"})
-        checkpoint("worker_exit_requested")
     except BaseException as error:
+        valid = False
         result.update({"status": "failed", "stage": phase, "failure_stage": phase,
                        "error": {"type": type(error).__name__, "message": str(error), "traceback": traceback.format_exc(limit=20)}})
         if output is not None:
             base._write_result(output, result)
         print(f"FACTORY_OPS_G0B_ERROR={phase}: {type(error).__name__}: {error}", flush=True)
     finally:
-        if node is not None:
-            node.destroy_node()
-        if rclpy is not None:
-            rclpy.shutdown()
-    code = 0 if valid else 1
-    if app is not None:
-        app.close(wait_for_replicator=False, exit_code=code)
-        return 1
+        cleanup_errors = []
+        for action in ([node.destroy_node] if node is not None else []) + ([rclpy.shutdown] if rclpy is not None else []):
+            try:
+                action()
+            except BaseException as error:
+                cleanup_errors.append(f"{type(error).__name__}: {error}")
+        if cleanup_errors:
+            valid = False
+            result["cleanup_errors"] = cleanup_errors
+            result["status"] = "failed"
+            result.setdefault("failure_stage", "ros_cleanup")
+        code = 0 if valid else 1
+        try:
+            if output is not None:
+                if valid:
+                    result.update({"status": "validated", "cleanup": "worker_exit_requested"})
+                    base._checkpoint(output, result, started, "worker_exit_requested")
+                else:
+                    base._write_result(output, result)
+        except BaseException as error:
+            code = 1
+            print(f"FACTORY_OPS_G0B_FINAL_CHECKPOINT_ERROR={type(error).__name__}: {error}", flush=True)
+        finally:
+            if app is not None:
+                app.close(wait_for_replicator=False, exit_code=code)
+                code = 1
     return code
 
 

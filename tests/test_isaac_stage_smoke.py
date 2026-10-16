@@ -320,6 +320,23 @@ class SupervisorTests(unittest.TestCase):
         self.assertEqual(seen, [result["run_id"]])
         self.assertRegex(seen[0], r"^[0-9a-f]{32}$")
 
+    def test_additional_validator_control_exceptions_are_recorded_as_failure(self) -> None:
+        for error_type in [SystemExit, KeyboardInterrupt]:
+            with self.subTest(error=error_type.__name__):
+                _directory, scene, output = self._case()
+                png = _png_bytes(width=1280, height=720)
+                command = self._command(output, self._valid_payload(scene, output, png), png, 0)
+
+                def stop(*_args: object) -> list[str]:
+                    raise error_type("validation interrupted")
+
+                self.assertEqual(
+                    _supervisor_main(self._args(scene, output), command, additional_evidence_validator=stop), 1,
+                )
+                result = json.loads((output / "stage-smoke.json").read_text())
+                self.assertEqual(result["status"], "failed")
+                self.assertTrue(any(error_type.__name__ in error for error in result["supervisor"]["errors"]))
+
     def test_scene_change_inside_additional_validator_is_failed(self) -> None:
         _directory, scene, output = self._case()
         png = _png_bytes(width=1280, height=720)

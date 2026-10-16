@@ -253,18 +253,27 @@ def _png_dimensions(path: Path) -> tuple[int, int]:
     return width, height
 
 
-def _capture_overview(output: Path, simulation_app: Any, rep: Any) -> dict[str, Any]:
+def _capture_overview(
+    output: Path,
+    simulation_app: Any,
+    rep: Any,
+    *,
+    camera_position: tuple[float, float, float] = (20.0, -24.0, 52.0),
+    camera_look_at: tuple[float, float, float] = (20.0, 12.0, 0.0),
+    create_light: bool = True,
+) -> dict[str, Any]:
     writer = None
     render_product = None
     try:
         rep.orchestrator.set_capture_on_play(False)
         camera = rep.functional.create.camera(
-            position=(20.0, -24.0, 52.0),
-            look_at=(20.0, 12.0, 0.0),
+            position=camera_position,
+            look_at=camera_look_at,
             parent="/World",
             name="FactoryOverviewCamera",
         )
-        rep.functional.create.dome_light(intensity=800.0, parent="/World", name="FactorySmokeDomeLight")
+        if create_light:
+            rep.functional.create.dome_light(intensity=800.0, parent="/World", name="FactorySmokeDomeLight")
         render_product = rep.create.render_product(camera, RENDER_RESOLUTION, name="FactoryOverviewRender")
         writer = rep.writers.get("BasicWriter")
         backend = rep.backends.get("DiskBackend")
@@ -317,8 +326,8 @@ def _capture_overview(output: Path, simulation_app: Any, rep: Any) -> dict[str, 
         "width": width,
         "height": height,
         "bytes": image_path.stat().st_size,
-        "camera_position": [20.0, -24.0, 52.0],
-        "camera_look_at": [20.0, 12.0, 0.0],
+        "camera_position": list(camera_position),
+        "camera_look_at": list(camera_look_at),
         "format_validation": "signature, chunks, CRC, IDAT zlib stream, scanline framing, and IEND",
         "visual_quality": "requires_review",
     }
@@ -620,7 +629,7 @@ def _supervisor_main(
                 evidence_errors.extend(
                     additional_evidence_validator(scene, output, result, run_id, scene_sha_before)
                 )
-            except Exception as error:
+            except BaseException as error:
                 evidence_errors.append(f"additional evidence validation failed: {type(error).__name__}: {error}")
     scene_sha_after = _sha256(scene)
     if scene_sha_after != scene_sha_before:
