@@ -192,8 +192,8 @@ def _validate_motion(
             errors.append(f"trajectory sample {index} position is invalid")
         if orientation is None:
             errors.append(f"trajectory sample {index} orientation_wxyz is invalid")
-        elif math.isclose(sum(value * value for value in orientation), 0.0, abs_tol=1e-12):
-            errors.append(f"trajectory sample {index} orientation_wxyz has zero norm")
+        elif not _unit_quaternion(orientation):
+            errors.append(f"trajectory sample {index} orientation_wxyz is not a unit quaternion")
         if wheel_target is None:
             errors.append(f"trajectory sample {index} wheel_target_rad_s is invalid")
         else:
@@ -405,6 +405,18 @@ def _validate_sensor_frames(
         if camera_position is None or camera_orientation is None or not _unit_quaternion(camera_orientation):
             errors.append(f"sensor frame {index} camera pose is invalid")
         elif matrix is not None:
+            expected_rotation = _row_rotation_from_quaternion(camera_orientation)
+            matrix_rotation = (
+                (matrix[0], matrix[1], matrix[2]),
+                (matrix[4], matrix[5], matrix[6]),
+                (matrix[8], matrix[9], matrix[10]),
+            )
+            if any(
+                not math.isclose(matrix_rotation[row][column], expected_rotation[row][column], abs_tol=1e-5)
+                for row in range(3)
+                for column in range(3)
+            ):
+                errors.append(f"sensor frame {index} camera pose_wxyz does not match camera_to_world rotation")
             matrix_position = matrix[12:15]
             if any(not math.isclose(left, right, abs_tol=1e-6) for left, right in zip(camera_position, matrix_position)):
                 errors.append(f"sensor frame {index} camera pose does not match camera_to_world translation")
@@ -638,6 +650,18 @@ def _sample_identity_matches(frame: dict[str, Any], sample: dict[str, Any], *, i
 
 def _unit_quaternion(value: list[float]) -> bool:
     return math.isclose(sum(component * component for component in value), 1.0, rel_tol=0.0, abs_tol=1e-4)
+
+
+def _row_rotation_from_quaternion(value: list[float]) -> tuple[tuple[float, float, float], ...]:
+    w, x, y, z = value
+    # Gf matrices transform row vectors, so this is the transpose of the
+    # conventional column-vector quaternion rotation matrix.  q and -q
+    # produce the same matrix without special casing.
+    return (
+        (1 - 2 * (y * y + z * z), 2 * (x * y + w * z), 2 * (x * z - w * y)),
+        (2 * (x * y - w * z), 1 - 2 * (x * x + z * z), 2 * (y * z + w * x)),
+        (2 * (x * z + w * y), 2 * (y * z - w * x), 1 - 2 * (x * x + y * y)),
+    )
 
 
 def _rigid_row_matrix(matrix: list[float]) -> bool:

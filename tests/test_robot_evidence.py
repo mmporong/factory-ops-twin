@@ -141,6 +141,17 @@ class RobotEvidenceTests(unittest.TestCase):
         self.assertIn("ros2 clock_samples length does not match clock_messages", errors)
         self.assertIn("ros2 clock_samples is decreasing", errors)
 
+    def test_every_trajectory_orientation_must_be_a_unit_quaternion(self) -> None:
+        trajectory_path = self.output / "trajectory.json"
+        trajectory = json.loads(trajectory_path.read_text(encoding="utf-8"))
+        trajectory["samples"][317]["orientation_wxyz"] = [2.0, 0.0, 0.0, 0.0]
+        trajectory_path.write_text(json.dumps(trajectory), encoding="utf-8")
+        self._refresh_manifest()
+
+        errors = validate_robot_evidence(self.output, self.result, LAYOUT_PATH, self.layout_sha)
+
+        self.assertIn("trajectory sample 317 orientation_wxyz is not a unit quaternion", errors)
+
     def test_robot_asset_dofs_and_collider_union_are_enforced(self) -> None:
         robot = self.result["robot"]
         robot["asset_url"] = "omniverse://test/wrong.usd"
@@ -182,6 +193,29 @@ class RobotEvidenceTests(unittest.TestCase):
         self.assertTrue(any("more than 1.5 m" in error for error in errors))
         self.assertTrue(any("no non-background equipment mask pixels" in error for error in errors))
         self.assertTrue(any("no equipment bounding box" in error for error in errors))
+
+    def test_camera_quaternion_must_match_extrinsic_rotation(self) -> None:
+        sensor_document = json.loads((self.output / "sensor-frames.json").read_text(encoding="utf-8"))
+        camera_path = self.output / sensor_document["frames"][1]["paths"]["camera"]
+        camera = json.loads(camera_path.read_text(encoding="utf-8"))
+        camera["pose_wxyz"] = [0.0, 1.0, 0.0, 0.0]
+        camera_path.write_text(json.dumps(camera), encoding="utf-8")
+        self._refresh_manifest()
+
+        errors = validate_robot_evidence(self.output, self.result, LAYOUT_PATH, self.layout_sha)
+
+        self.assertIn("sensor frame 1 camera pose_wxyz does not match camera_to_world rotation", errors)
+
+    def test_negated_camera_quaternion_represents_the_same_rotation(self) -> None:
+        sensor_document = json.loads((self.output / "sensor-frames.json").read_text(encoding="utf-8"))
+        for frame in sensor_document["frames"]:
+            camera_path = self.output / frame["paths"]["camera"]
+            camera = json.loads(camera_path.read_text(encoding="utf-8"))
+            camera["pose_wxyz"] = [-value for value in camera["pose_wxyz"]]
+            camera_path.write_text(json.dumps(camera), encoding="utf-8")
+        self._refresh_manifest()
+
+        self.assertEqual(validate_robot_evidence(self.output, self.result, LAYOUT_PATH, self.layout_sha), [])
 
     def _write_valid_evidence(self) -> dict[str, Any]:
         bounds = [[-0.1, -0.1, 0.0], [0.1, 0.1, 0.5]]
