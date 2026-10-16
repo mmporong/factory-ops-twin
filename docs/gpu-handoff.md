@@ -1,8 +1,8 @@
 # GPU 연동과 작업 보존
 
-로컬 준비 명령은 GPU나 Brev 계정을 사용하지 않는다. 별도 장면 검사 스크립트는 Isaac Sim 6.2 환경에서 실행한다. AWS L40S에서 G0a 정적 장면, G0b 단일 AMR 기초 검증과 Stop·재시작 보존 시험을 통과했다. 자동 Sleep 기능은 제공하지 않는다.
+로컬 준비 명령은 GPU나 Brev 계정을 사용하지 않는다. 별도 장면 검사 스크립트는 Isaac Sim 6.2 환경에서 실행한다. AWS L40S에서 G0a 정적 장면, G0b 기초 센서·물리, G1 주문 운송과 G2 두 AMR 교통·복구 검증을 통과했다. Stop·재시작 보존 시험도 수행했다. 자동 Sleep 기능은 제공하지 않는다.
 
-## 검증한 실행 환경
+## G0a 정적 장면의 실행 환경
 
 | 항목 | 확인 결과 |
 |---|---|
@@ -263,7 +263,7 @@ G2는 동일한 40×24 m 공장에 두 Nova Carter를 배치한다. `/carter1`, 
 
 AMCL의 `scan_localization`에는 같은 로봇의 `front_scan`, `rear_scan` 메시지를 함께 보낸다. 두 스캔을 하나의 가상 원점으로 합치지 않는다. AMCL은 frame마다 장착 TF와 센서 갱신 상태를 보관해 관측을 순차 반영한다. 실제 ROS 이미지의 AMCL은 `1.3.13`이며 [해당 공식 소스](https://github.com/ros-navigation/navigation2/blob/1.3.13/nav2_amcl/src/amcl_node.cpp#L585-L810)에서 이 동작을 확인했다. costmap은 전후방 scan을 별도 입력으로 받는다. 시뮬레이터 GT는 지도·위치추정·예약·조향에 넣지 않는다.
 
-local/global costmap의 네 scan 입력은 `clearing: true`, `inf_is_valid: false`를 사용한다. 마스크가 만든 `+inf`를 빈 공간의 거리 관측으로 해석하지 않도록 한다. Nav2 1.3.13에서 `inf_is_valid: true`는 [양의 무한대를 유효한 최대 거리로 바꿔 clearing ray를 만든다](https://github.com/ros-navigation/navigation2/blob/1.3.13/nav2_costmap_2d/plugins/obstacle_layer.cpp#L338-L374). 현재 설정에서는 유효한 유한 거리 ray만 clearing에 사용하며, 미관측 영역의 장애물이 사라졌다고 추정하지 않는다.
+두 로봇의 local/global costmap, 전후방 총 여덟 scan 입력은 `clearing: true`, `inf_is_valid: false`를 사용한다. 마스크가 만든 `+inf`를 빈 공간의 거리 관측으로 해석하지 않도록 한다. Nav2 1.3.13에서 `inf_is_valid: true`는 [양의 무한대를 유효한 최대 거리로 바꿔 clearing ray를 만든다](https://github.com/ros-navigation/navigation2/blob/1.3.13/nav2_costmap_2d/plugins/obstacle_layer.cpp#L338-L374). 현재 설정에서는 유효한 유한 거리 ray만 clearing에 사용하며, 미관측 영역의 장애물이 사라졌다고 추정하지 않는다.
 
 주행 허가는 실행 ID·로봇·실제 accepted goal UUID·예약 세대에 결속하고 0.5 sim 초 뒤 만료한다. 정상 HOLD는 기존 가감속 프로파일로 정지하고, 허가 만료·손상·명령 timeout은 고장 정지를 적용한다. 허가 만료는 통로 소유권을 해제하지 않는다. 소유 AMR의 신선한 추정 위치로 전체 외곽의 이탈을 확인해야 release ACK를 낸다. `Twist`에는 UUID가 없으므로 이 결속은 dispatcher의 주행 범위 검사이며 메시지 자체의 인증을 뜻하지 않는다.
 
@@ -290,6 +290,35 @@ F2는 센서와 action 취소 연결을 유지하는 채널 장애 시험이다.
 supervisor는 두 worker가 정상 종료한 뒤 실제 CDR·action UUID/status·TF·scan 사본·주행 허가·예약 원장·전체 60 Hz 궤적·RGB SHA를 대조한다. 전후방 scan의 각 `(robot, frame_id, stamp)`에 대응하는 AMCL 입력 사본도 검사한다. 실제 차체의 목표 XY/yaw 평가는 0.35 m/0.35 rad, 충돌 외곽 여유는 0.2 m로 유지한다. Nav2의 추정 위치 XY 허용값 0.05 m는 별도의 명령 설정이며 도킹 정확도 측정값이 아니다.
 
 기록 중인 `.db3`는 읽기 전용 모드로도 조회하지 않는다. `g2-f1-002`에서 동시 조회 중 recorder의 `database is locked` 중단을 확인했다. bag 분석은 두 worker와 recorder가 끝난 뒤 수행하고, 실행 중 상태는 별도 JSONL·로그에서 확인한다. 실패 실행도 새 실행으로 덮어쓰지 않고 백업에 포함한다.
+
+`g2-f2-002`는 Carter 2의 첫 `map_server` 구성 응답 전송 실패 뒤 AMCL이 활성화되지 않아 시작 단계에서 종료됐다. 300 wall 초의 준비 제한 동안 이동 goal은 0개였고, 두 로봇 각각 4,476개 물리 표본의 휠 목표가 모두 0이었다. Nav2 1.3.13의 [기본 lifecycle 전이 호출은 응답 완료를 제한 시간 없이 기다린다](https://github.com/ros-navigation/navigation2/blob/1.3.13/nav2_util/src/lifecycle_service_client.cpp#L70-L81). 현재 실행기는 바깥 준비 제한으로 실패를 판정하고 두 worker·컨테이너를 정리한다. 응답 전송 실패의 하위 원인은 확정하지 않았다.
+
+실패 자료를 보존한 뒤 같은 소스 `81befc881466f0e612465ba3987165eec2c9ca4f`의 새 컨테이너에서 실행한 `g2-f2-003`은 최종 검증을 통과했다. 실행 중인 노드에 초기 위치나 이동 명령을 추가하지 않았다. 이 결과는 시작 단계의 실패 처리와 한 번의 재실행 기록이며 반복 기동 성공률이나 생산용 자동 복구 성능을 뜻하지 않는다.
+
+### G2 검증 실행과 미디어
+
+최종 네 실행은 모두 소스 `81befc881466f0e612465ba3987165eec2c9ca4f`에서 worker·supervisor·CDR 검증을 통과했다. 아래 시간은 각 `g2-scene.json`의 기록이며 별도 원본 검증 시간과 구분한다.
+
+| 실행 | 실행 ID | sim s | wall s |
+|---|---|---:|---:|
+| `g2-p0-005` | `552983a4283bb4f4b5d2192570fd2d15` | 13.017 | 125.266 |
+| `g2-f1-004` | `a37e070db5e98c935dc982deb0b5f564` | 89.667 | 452.802 |
+| `g2-f2-003` | `c25cbc2e7ec88beb0563de96a6aaea79` | 95.317 | 473.522 |
+| `g2-f3-002` | `82845fd66af457f1d20505596f89142f` | 301.650 | 1,396.746 |
+
+두 AMR의 물리 표본은 총 59,958개, RGB는 같은 시각의 세 카메라 1,006세트·3,018장이다. 주행 중 예약 소유권 위반은 0프레임이며, 0.2 m 여유를 포함한 보수적 원형 외곽 기준 거리 1.6742 m에 대해 최소 중심 거리는 3.1988 m다. F3의 지속 cycle 관측은 5.0 sim 초다. 네 실행은 별도 시나리오 검증이며 연속 주문 운송이나 FIFO/ETA 생산성 비교와 구분한다.
+
+`g2-f1-004`의 3.683333333 sim 초에 read-only DDS와 `GetParameters`로 두 로봇의 local/global costmap, 전후방 총 여덟 입력을 조회했다. 모든 `inf_is_valid`가 false, `clearing`이 true였고 scan 토픽은 해당 로봇 namespace를 사용했다. 같은 조회에서 `/clock` 발행자 하나와 전역 로봇 토픽 발행자 부재를 확인했다. 이 기록은 한 시각의 조회이며 전체 실행에 걸친 graph 감사를 뜻하지 않는다.
+
+README 미디어는 실제 RGB 세 화면과 사후 GT 지도·엔코더 속도 패널로 구성한다. 캡처와 같은 `physics_frame`의 궤적만 사용하며 시각 차이를 한 물리 step 이하로 검사한다. 보간하거나 미래 경로를 앞당겨 표시하지 않는다. 입력은 백업 manifest와 strict validator의 `artifact_manifest` 양쪽에서 크기·SHA를 대조한다. 지도 배치는 검증 소스의 Git blob으로 고정한다. [실행 수치](images/g2-results.json)와 [미디어 명세](images/g2-media-provenance.json)에 판정 보고서·원본·생성물·생성 스크립트의 SHA를 둔다.
+
+원본 백업 `g2-all-evidence-20261016T130522Z.tar.gz`는 14회 실행의 실패·교체 자료, 환경 기록, 전체 소스 Git bundle과 당시 helper snapshot을 포함한다. 원본 8,120개·7,086,409,232 byte를 복원해 전 파일 크기·SHA를 대조했고, 2,532,190,056 byte 압축본의 SHA256 `03ab2e89e8530c88fdfb998e961313a2c304fa629b6ecb8d48f830e39f89aca1`를 C·E 드라이브에서 확인했다. 원본 manifest SHA256은 `7cb2dcbdc2f834b03586f739d9b32f5d687c213ddf9db905a01771fd50bcf9b1`이다.
+
+사후 분석에서 trajectory 행에 없는 `run_id`를 요구하던 분석기 오류를 확인했다. 원본 행이나 판정을 고치지 않고, scene의 로봇별 궤적 경로·양쪽 manifest·상위 실행 문서로 귀속을 검사하도록 분석기를 수정했다. 교통 소유권 문구를 두 줄로 바꾼 미디어 생성기도 함께 `g2-postprocess-supplement-v1`에 보존한다. 이 별도 패키지는 수정한 생성기, 원래 오류 로그, 입력 결속 정보, 생성 로그와 최종 파생물을 담는다. 원본 아카이브와 당시 snapshot·검증 기록은 변경하지 않는다. 파생 분석은 원본 strict validator 밖에서 수행하며, 해시는 파일 일치를 확인하는 수단이다.
+
+별도 패키지는 22개 파일·8,816,498 byte이며 SHA256은 `122db54b780664654d590972b7329250a448d3ba527c45c2d9c9926b2aaa02e7`다. 최종 파생물 13개, 생성기·검증기·입력 결속·로그 9개의 정확한 파일 집합과 내부 SHA를 대조했고 C·E 압축본 일치를 확인했다. 미디어 명세의 각 지도 표본도 원본 궤적의 같은 물리 프레임에서 위치·yaw·엔코더 속도를 다시 계산해 대조했다.
+
+GPU 작업 종료 후 컨테이너·작업 프로세스·GPU compute process가 모두 없는 것과 VM 소스의 clean 상태를 검사했다. Brev Stop 요청 후 인증된 CLI에서 `2026-10-16 13:34:46 UTC`에 인스턴스 `evica0x9l`의 실제 `STOPPED`를 확인했고, 중지 근거도 C·E 드라이브에 보존했다. 이 상태 확인은 요금·잔여 크레딧 검증과 구분한다.
 
 ## 공식 근거
 

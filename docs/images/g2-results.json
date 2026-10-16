@@ -1,0 +1,867 @@
+{
+  "schema_version": 1,
+  "scope": "Separate, single-run P0/F1/F2/F3 qualifications; not repeatability, throughput comparison or production safety certification",
+  "backup": {
+    "archive_sha256": "03ab2e89e8530c88fdfb998e961313a2c304fa629b6ecb8d48f830e39f89aca1",
+    "manifest_sha256": "7cb2dcbdc2f834b03586f739d9b32f5d687c213ddf9db905a01771fd50bcf9b1"
+  },
+  "runs": [
+    {
+      "scenario_id": "P0",
+      "run_label": "g2-p0-005",
+      "run_id": "552983a4283bb4f4b5d2192570fd2d15",
+      "source_commit": "81befc881466f0e612465ba3987165eec2c9ca4f",
+      "validation": {
+        "path": "results/g2-p0-005/g2-validation.json",
+        "sha256": "f7cc17b710152e76bf72fd5469caa638c1146f094a3bd6b484b1c704728ca68e",
+        "passed": true
+      },
+      "timing": {
+        "mission_steps": 781,
+        "physics_dt_s": 0.016666666666666666,
+        "required_zero_settle_steps": 30,
+        "settle_step_limit": 135,
+        "settle_steps": 30,
+        "sim_seconds": 13.016666666666667,
+        "wall_seconds": 125.26607361900005
+      },
+      "gpu_observation": {
+        "sample_count": 135,
+        "peak_memory_mib": 5466.0,
+        "peak_utilization_percent": 99.0,
+        "scope": "1 Hz samples over container lifetime, including setup; not a steady-state benchmark"
+      },
+      "runtime_scan_configuration": null,
+      "media": {
+        "frame_count": 28,
+        "image_count": 84
+      },
+      "separation": {
+        "minimum_centre_distance_m": 3.966175079347774,
+        "required_circle_separation_m": 1.6742181830885547,
+        "scope": "conservative collision-envelope plus clearance evaluation; contact sensor count not measured"
+      },
+      "renderer": {
+        "motion_bvh": {
+          "enabled_hydra_engines": "0",
+          "enabled_readback": true,
+          "hydra_engine_masking": true,
+          "requested": true,
+          "source": "Isaac Sim 6.2 SimulationApp enable_motion_bvh launch option"
+        },
+        "motion_bvh_warning_counts": {
+          "MotionBVH for lidar model not enabled": 0,
+          "Multi-tick is enabled but motion BVH is not active": 0
+        }
+      },
+      "dispatch": {
+        "action_count": 0,
+        "moving_ownership_violation_frames": 0,
+        "release_ack_count": 0,
+        "reservation_count": 0,
+        "traffic_event_count": 194
+      },
+      "actions": [],
+      "robots": {
+        "carter1": {
+          "sample_count": 781,
+          "localization_vs_ground_truth": {
+            "maximum_xy_error_m": 0.003707886363356934,
+            "rms_xy_error_m": 0.003707886363356934,
+            "sample_count": 2,
+            "source": "actual decoded /carter1/amcl_pose CDR, not the localization JSON journal"
+          },
+          "raw_map_violation_frames": 0,
+          "encoder_mismatch_frames": 0
+        },
+        "carter2": {
+          "sample_count": 781,
+          "localization_vs_ground_truth": {
+            "maximum_xy_error_m": 0.003707885741416561,
+            "rms_xy_error_m": 0.003707885741416561,
+            "sample_count": 2,
+            "source": "actual decoded /carter2/amcl_pose CDR, not the localization JSON journal"
+          },
+          "raw_map_violation_frames": 0,
+          "encoder_mismatch_frames": 0
+        }
+      },
+      "bag": {
+        "integrity_check": "ok",
+        "topic_counts": {
+          "/carter1/amcl_pose": 2,
+          "/carter1/map": 1,
+          "/carter1/navigation_map": 1,
+          "/carter1/odom": 241,
+          "/carter1/scan_front": 113,
+          "/carter1/scan_front_raw": 121,
+          "/carter1/scan_localization": 226,
+          "/carter1/scan_rear": 113,
+          "/carter1/scan_rear_raw": 121,
+          "/carter1/tf": 467,
+          "/carter1/tf_static": 1,
+          "/carter2/amcl_pose": 2,
+          "/carter2/map": 1,
+          "/carter2/navigation_map": 1,
+          "/carter2/odom": 241,
+          "/carter2/scan_front": 113,
+          "/carter2/scan_front_raw": 121,
+          "/carter2/scan_localization": 226,
+          "/carter2/scan_rear": 113,
+          "/carter2/scan_rear_raw": 121,
+          "/carter2/tf": 467,
+          "/carter2/tf_static": 1,
+          "/clock": 728,
+          "/factory/g2/authorizations": 206,
+          "/factory/g2/events": 196
+        },
+        "amcl_scan_fan_in": {
+          "copy_counts": {
+            "carter1/front_scan": 100,
+            "carter1/rear_scan": 100,
+            "carter2/front_scan": 100,
+            "carter2/rear_scan": 100
+          },
+          "coverage_window_sim_s": [
+            4.45,
+            14.45
+          ],
+          "filtered_source_counts": {
+            "carter1/front_scan": 100,
+            "carter1/rear_scan": 100,
+            "carter2/front_scan": 100,
+            "carter2/rear_scan": 100
+          },
+          "filtered_timestamp_count": 452,
+          "localization_timestamp_count": 452,
+          "passed": true,
+          "valid_point_counts": {
+            "carter1/front_scan": 83920,
+            "carter1/rear_scan": 79500,
+            "carter2/front_scan": 95633,
+            "carter2/rear_scan": 74900
+          }
+        },
+        "databases": [
+          {
+            "bytes": 42893312,
+            "path": "rosbag_0.db3",
+            "sha256": "4c794832fb9f8a4d4a4d6306225c5af70d3bb2529681d2bb087b3eed31c3fcb1"
+          }
+        ]
+      }
+    },
+    {
+      "scenario_id": "F1",
+      "run_label": "g2-f1-004",
+      "run_id": "a37e070db5e98c935dc982deb0b5f564",
+      "source_commit": "81befc881466f0e612465ba3987165eec2c9ca4f",
+      "validation": {
+        "path": "results/g2-f1-004/g2-validation.json",
+        "sha256": "5576e27869b827d56e078e2685162ecd46b9160c164e4df7b4980ece2d420ba8",
+        "passed": true
+      },
+      "timing": {
+        "mission_steps": 5380,
+        "physics_dt_s": 0.016666666666666666,
+        "required_zero_settle_steps": 30,
+        "settle_step_limit": 135,
+        "settle_steps": 30,
+        "sim_seconds": 89.66666666666667,
+        "wall_seconds": 452.8015089239998
+      },
+      "gpu_observation": {
+        "sample_count": 494,
+        "peak_memory_mib": 5466.0,
+        "peak_utilization_percent": 99.0,
+        "scope": "1 Hz samples over container lifetime, including setup; not a steady-state benchmark"
+      },
+      "runtime_scan_configuration": {
+        "path": "results/g2-f1-004/runtime-scan-parameters.json",
+        "sha256": "d1b099205d228543d5843a9f5519ff55a388d02cc13bc9e625f074742d3686bf",
+        "sim_time_s": 3.683333333,
+        "scope": "Single live DDS publisher inventory and read-only GetParameters responses; no motion commands and no active bag access",
+        "costmap_nodes": 4,
+        "masked_scan_sources": 8
+      },
+      "media": {
+        "frame_count": 181,
+        "image_count": 543
+      },
+      "separation": {
+        "minimum_centre_distance_m": 4.033696927676947,
+        "required_circle_separation_m": 1.6742181830885547,
+        "scope": "conservative collision-envelope plus clearance evaluation; contact sensor count not measured"
+      },
+      "renderer": {
+        "motion_bvh": {
+          "enabled_hydra_engines": "0",
+          "enabled_readback": true,
+          "hydra_engine_masking": true,
+          "requested": true,
+          "source": "Isaac Sim 6.2 SimulationApp enable_motion_bvh launch option"
+        },
+        "motion_bvh_warning_counts": {
+          "MotionBVH for lidar model not enabled": 0,
+          "Multi-tick is enabled but motion BVH is not active": 0
+        }
+      },
+      "dispatch": {
+        "action_count": 2,
+        "moving_ownership_violation_frames": 0,
+        "release_ack_count": 2,
+        "reservation_count": 2,
+        "traffic_event_count": 1616
+      },
+      "actions": [
+        {
+          "accepted_sim_time_s": 4.05,
+          "action_type": "navigate_to_pose",
+          "cancel_requested_sim_time_s": null,
+          "error_code": 0,
+          "goal_uuid": "42ed9dbb-0ef3-4e2b-bbad-f19eeffb3fb6",
+          "robot_id": "carter1",
+          "route_id": "carter1_cross",
+          "state": "succeeded",
+          "terminal_sim_time_s": 42.35,
+          "terminal_status": 4
+        },
+        {
+          "accepted_sim_time_s": 42.983333333,
+          "action_type": "navigate_through_poses",
+          "cancel_requested_sim_time_s": null,
+          "error_code": 0,
+          "goal_uuid": "57c2d5a8-ed31-4b86-8980-771cbd4b74c1",
+          "robot_id": "carter2",
+          "route_id": "carter2_cross",
+          "state": "succeeded",
+          "terminal_sim_time_s": 90.166666666,
+          "terminal_status": 4
+        }
+      ],
+      "robots": {
+        "carter1": {
+          "sample_count": 5380,
+          "localization_vs_ground_truth": {
+            "maximum_xy_error_m": 0.15733761156086282,
+            "rms_xy_error_m": 0.08017968263552946,
+            "sample_count": 360,
+            "source": "actual decoded /carter1/amcl_pose CDR, not the localization JSON journal"
+          },
+          "raw_map_violation_frames": 0,
+          "encoder_mismatch_frames": 0
+        },
+        "carter2": {
+          "sample_count": 5380,
+          "localization_vs_ground_truth": {
+            "maximum_xy_error_m": 0.1654591958270078,
+            "rms_xy_error_m": 0.09948890523214508,
+            "sample_count": 428,
+            "source": "actual decoded /carter2/amcl_pose CDR, not the localization JSON journal"
+          },
+          "raw_map_violation_frames": 0,
+          "encoder_mismatch_frames": 0
+        }
+      },
+      "bag": {
+        "integrity_check": "ok",
+        "topic_counts": {
+          "/carter1/amcl_pose": 360,
+          "/carter1/cmd_vel": 1634,
+          "/carter1/map": 1,
+          "/carter1/navigate_to_pose/_action/feedback": 16335,
+          "/carter1/navigate_to_pose/_action/status": 2,
+          "/carter1/navigation_map": 1,
+          "/carter1/odom": 1773,
+          "/carter1/plan": 160,
+          "/carter1/scan_front": 886,
+          "/carter1/scan_front_raw": 886,
+          "/carter1/scan_localization": 1772,
+          "/carter1/scan_rear": 886,
+          "/carter1/scan_rear_raw": 886,
+          "/carter1/tf": 3537,
+          "/carter1/tf_static": 1,
+          "/carter2/amcl_pose": 428,
+          "/carter2/cmd_vel": 2030,
+          "/carter2/map": 1,
+          "/carter2/navigate_through_poses/_action/feedback": 20295,
+          "/carter2/navigate_through_poses/_action/status": 2,
+          "/carter2/navigation_map": 1,
+          "/carter2/odom": 1773,
+          "/carter2/plan": 68,
+          "/carter2/scan_front": 886,
+          "/carter2/scan_front_raw": 886,
+          "/carter2/scan_localization": 1772,
+          "/carter2/scan_rear": 886,
+          "/carter2/scan_rear_raw": 886,
+          "/carter2/tf": 3537,
+          "/carter2/tf_static": 1,
+          "/clock": 5323,
+          "/factory/g2/authorizations": 1630,
+          "/factory/g2/events": 38254
+        },
+        "amcl_scan_fan_in": {
+          "copy_counts": {
+            "carter1/front_scan": 870,
+            "carter1/rear_scan": 870,
+            "carter2/front_scan": 870,
+            "carter2/rear_scan": 870
+          },
+          "coverage_window_sim_s": [
+            4.05,
+            91.083333333
+          ],
+          "filtered_source_counts": {
+            "carter1/front_scan": 870,
+            "carter1/rear_scan": 870,
+            "carter2/front_scan": 870,
+            "carter2/rear_scan": 870
+          },
+          "filtered_timestamp_count": 3544,
+          "localization_timestamp_count": 3544,
+          "passed": true,
+          "valid_point_counts": {
+            "carter1/front_scan": 518604,
+            "carter1/rear_scan": 755621,
+            "carter2/front_scan": 562257,
+            "carter2/rear_scan": 1029811
+          }
+        },
+        "databases": [
+          {
+            "bytes": 341295104,
+            "path": "rosbag_0.db3",
+            "sha256": "469bab6d7267e2518defedf9c3ba1983b7ce055d71f2ecfdadcde2cd28c691a4"
+          }
+        ]
+      }
+    },
+    {
+      "scenario_id": "F2",
+      "run_label": "g2-f2-003",
+      "run_id": "c25cbc2e7ec88beb0563de96a6aaea79",
+      "source_commit": "81befc881466f0e612465ba3987165eec2c9ca4f",
+      "validation": {
+        "path": "results/g2-f2-003/g2-validation.json",
+        "sha256": "02713ca790b5c7d4dd3a1d33b02bb4217c97622ffb7eebc7e1ebfef78e1a85b1",
+        "passed": true
+      },
+      "timing": {
+        "mission_steps": 5719,
+        "physics_dt_s": 0.016666666666666666,
+        "required_zero_settle_steps": 30,
+        "settle_step_limit": 135,
+        "settle_steps": 30,
+        "sim_seconds": 95.31666666666666,
+        "wall_seconds": 473.5222201960005
+      },
+      "gpu_observation": {
+        "sample_count": 516,
+        "peak_memory_mib": 5466.0,
+        "peak_utilization_percent": 99.0,
+        "scope": "1 Hz samples over container lifetime, including setup; not a steady-state benchmark"
+      },
+      "runtime_scan_configuration": null,
+      "media": {
+        "frame_count": 192,
+        "image_count": 576
+      },
+      "separation": {
+        "minimum_centre_distance_m": 3.9456146492877493,
+        "required_circle_separation_m": 1.6742181830885547,
+        "scope": "conservative collision-envelope plus clearance evaluation; contact sensor count not measured"
+      },
+      "renderer": {
+        "motion_bvh": {
+          "enabled_hydra_engines": "0",
+          "enabled_readback": true,
+          "hydra_engine_masking": true,
+          "requested": true,
+          "source": "Isaac Sim 6.2 SimulationApp enable_motion_bvh launch option"
+        },
+        "motion_bvh_warning_counts": {
+          "MotionBVH for lidar model not enabled": 0,
+          "Multi-tick is enabled but motion BVH is not active": 0
+        }
+      },
+      "dispatch": {
+        "action_count": 3,
+        "fault": {
+          "authorization_stop": {
+            "first_expiry_sim_time_s": 5.116666666666666,
+            "fresh_issuance_count_during_fault": 0,
+            "last_expiry_sim_time_s": 34.61666666666667,
+            "maximum_final_second_encoder_speed_m_s": 0.0014686167302669641,
+            "required_end_sim_time_s": 34.433333333,
+            "required_sample_count": 1757,
+            "required_start_sim_time_s": 5.149999999666667,
+            "trigger_encoder_speed_m_s": 0.08495108521389602,
+            "trigger_pose_scope": "resource membership is supported by the retained observed occupancy claim; the supplied inputs do not include the mission's live estimated-pose projection. Ground truth is not used to infer ownership."
+          },
+          "fault_interval": {
+            "actual_duration_sim_s": 30.000000000000004,
+            "configured_duration_sim_s": 30.0,
+            "duration_tolerance_s": 0.2,
+            "end_sim_time_s": 34.633333333,
+            "robot_id": "carter2",
+            "start_sim_time_s": 4.633333333
+          },
+          "ownership": {
+            "fault_generation_change_count": 0,
+            "owner_at_end": [
+              "carter2",
+              1
+            ],
+            "owner_at_start": [
+              "carter2",
+              1
+            ],
+            "owner_robot_id": "carter2",
+            "post_recovery_release_sim_time_s": 68.433333333,
+            "reservation_id": 1,
+            "resource": "Z_UPPER",
+            "stale_denial_count": 14528
+          },
+          "scope": "decoded fault journal, traffic ownership generations and carter2 full-rate trace; action cancellation status is validated by the parent action validator"
+        },
+        "moving_ownership_violation_frames": 0,
+        "release_ack_count": 2,
+        "reservation_count": 2,
+        "traffic_event_count": 16475
+      },
+      "actions": [
+        {
+          "accepted_sim_time_s": 4.216666666,
+          "action_type": "navigate_through_poses",
+          "cancel_requested_sim_time_s": 4.633333333,
+          "error_code": 0,
+          "goal_uuid": "deb2a836-1051-40b5-882d-b8106b208cc7",
+          "robot_id": "carter2",
+          "route_id": "carter2_exit",
+          "state": "canceled",
+          "terminal_sim_time_s": 4.65,
+          "terminal_status": 5
+        },
+        {
+          "accepted_sim_time_s": 34.7,
+          "action_type": "navigate_through_poses",
+          "cancel_requested_sim_time_s": null,
+          "error_code": 0,
+          "goal_uuid": "61e3a545-b5cb-47c0-90fb-fb8bbc56db1e",
+          "robot_id": "carter2",
+          "route_id": "carter2_exit",
+          "state": "succeeded",
+          "terminal_sim_time_s": 67.316666666,
+          "terminal_status": 4
+        },
+        {
+          "accepted_sim_time_s": 68.433333333,
+          "action_type": "navigate_to_pose",
+          "cancel_requested_sim_time_s": null,
+          "error_code": 0,
+          "goal_uuid": "87b2c841-9210-4832-961c-c9034d1589ee",
+          "robot_id": "carter1",
+          "route_id": "carter1_cross",
+          "state": "succeeded",
+          "terminal_sim_time_s": 96.15,
+          "terminal_status": 4
+        }
+      ],
+      "robots": {
+        "carter1": {
+          "sample_count": 5719,
+          "localization_vs_ground_truth": {
+            "maximum_xy_error_m": 0.09496706082047901,
+            "rms_xy_error_m": 0.06243258755096166,
+            "sample_count": 258,
+            "source": "actual decoded /carter1/amcl_pose CDR, not the localization JSON journal"
+          },
+          "raw_map_violation_frames": 0,
+          "encoder_mismatch_frames": 0
+        },
+        "carter2": {
+          "sample_count": 5719,
+          "localization_vs_ground_truth": {
+            "maximum_xy_error_m": 0.1041964384259085,
+            "rms_xy_error_m": 0.06276691339851595,
+            "sample_count": 284,
+            "source": "actual decoded /carter2/amcl_pose CDR, not the localization JSON journal"
+          },
+          "raw_map_violation_frames": 0,
+          "encoder_mismatch_frames": 0
+        }
+      },
+      "bag": {
+        "integrity_check": "ok",
+        "topic_counts": {
+          "/carter1/amcl_pose": 258,
+          "/carter1/cmd_vel": 1227,
+          "/carter1/map": 1,
+          "/carter1/navigate_to_pose/_action/feedback": 12264,
+          "/carter1/navigate_to_pose/_action/status": 2,
+          "/carter1/navigation_map": 1,
+          "/carter1/odom": 1882,
+          "/carter1/plan": 120,
+          "/carter1/scan_front": 938,
+          "/carter1/scan_front_raw": 938,
+          "/carter1/scan_localization": 1876,
+          "/carter1/scan_rear": 938,
+          "/carter1/scan_rear_raw": 938,
+          "/carter1/tf": 3758,
+          "/carter1/tf_static": 1,
+          "/carter2/amcl_pose": 284,
+          "/carter2/cmd_vel": 1408,
+          "/carter2/map": 1,
+          "/carter2/navigate_through_poses/_action/feedback": 14066,
+          "/carter2/navigate_through_poses/_action/status": 5,
+          "/carter2/navigation_map": 1,
+          "/carter2/odom": 1882,
+          "/carter2/plan": 47,
+          "/carter2/scan_front": 938,
+          "/carter2/scan_front_raw": 938,
+          "/carter2/scan_localization": 1876,
+          "/carter2/scan_rear": 938,
+          "/carter2/scan_rear_raw": 938,
+          "/carter2/tf": 3758,
+          "/carter2/tf_static": 1,
+          "/clock": 5645,
+          "/factory/g2/authorizations": 1448,
+          "/factory/g2/events": 42819
+        },
+        "amcl_scan_fan_in": {
+          "copy_counts": {
+            "carter1/front_scan": 925,
+            "carter1/rear_scan": 925,
+            "carter2/front_scan": 925,
+            "carter2/rear_scan": 925
+          },
+          "coverage_window_sim_s": [
+            4.216666666,
+            96.733333333
+          ],
+          "filtered_source_counts": {
+            "carter1/front_scan": 925,
+            "carter1/rear_scan": 925,
+            "carter2/front_scan": 925,
+            "carter2/rear_scan": 925
+          },
+          "filtered_timestamp_count": 3752,
+          "localization_timestamp_count": 3752,
+          "passed": true,
+          "valid_point_counts": {
+            "carter1/front_scan": 728302,
+            "carter1/rear_scan": 760774,
+            "carter2/front_scan": 1022638,
+            "carter2/rear_scan": 625574
+          }
+        },
+        "databases": [
+          {
+            "bytes": 356052992,
+            "path": "rosbag_0.db3",
+            "sha256": "b016a649e6d705850dad904992d15d64eba0567d44303d861d682d5307e0a1df"
+          }
+        ]
+      }
+    },
+    {
+      "scenario_id": "F3",
+      "run_label": "g2-f3-002",
+      "run_id": "82845fd66af457f1d20505596f89142f",
+      "source_commit": "81befc881466f0e612465ba3987165eec2c9ca4f",
+      "validation": {
+        "path": "results/g2-f3-002/g2-validation.json",
+        "sha256": "856d76827271bdde0be3c62a625b6c69381569328f41c00e9b67efcd56dcdf70",
+        "passed": true
+      },
+      "timing": {
+        "mission_steps": 18099,
+        "physics_dt_s": 0.016666666666666666,
+        "required_zero_settle_steps": 30,
+        "settle_step_limit": 135,
+        "settle_steps": 30,
+        "sim_seconds": 301.65,
+        "wall_seconds": 1396.746131627
+      },
+      "gpu_observation": {
+        "sample_count": 1537,
+        "peak_memory_mib": 5466.0,
+        "peak_utilization_percent": 99.0,
+        "scope": "1 Hz samples over container lifetime, including setup; not a steady-state benchmark"
+      },
+      "runtime_scan_configuration": null,
+      "media": {
+        "frame_count": 605,
+        "image_count": 1815
+      },
+      "separation": {
+        "minimum_centre_distance_m": 3.198840895290193,
+        "required_circle_separation_m": 1.6742181830885547,
+        "scope": "conservative collision-envelope plus clearance evaluation; contact sensor count not measured"
+      },
+      "renderer": {
+        "motion_bvh": {
+          "enabled_hydra_engines": "0",
+          "enabled_readback": true,
+          "hydra_engine_masking": true,
+          "requested": true,
+          "source": "Isaac Sim 6.2 SimulationApp enable_motion_bvh launch option"
+        },
+        "motion_bvh_warning_counts": {
+          "MotionBVH for lidar model not enabled": 0,
+          "Multi-tick is enabled but motion BVH is not active": 0
+        }
+      },
+      "dispatch": {
+        "action_count": 5,
+        "cycle": {
+          "errors": [],
+          "observed_interval_s": 5.0,
+          "observed_wait_rows": 3150,
+          "passed": true,
+          "recovery_id": 1,
+          "reservation_id": 1
+        },
+        "moving_ownership_violation_frames": 0,
+        "release_ack_count": 3,
+        "reservation_count": 3,
+        "traffic_event_count": 8573
+      },
+      "actions": [
+        {
+          "accepted_sim_time_s": 4.116666666,
+          "action_type": "navigate_to_pose",
+          "cancel_requested_sim_time_s": null,
+          "error_code": 0,
+          "goal_uuid": "d924e8ab-5120-4fbf-8260-c945363b3b4c",
+          "robot_id": "carter1",
+          "route_id": "carter1_inside",
+          "state": "succeeded",
+          "terminal_sim_time_s": 18.816666666,
+          "terminal_status": 4
+        },
+        {
+          "accepted_sim_time_s": 19.383333333,
+          "action_type": "navigate_to_pose",
+          "cancel_requested_sim_time_s": 24.383333333,
+          "error_code": 0,
+          "goal_uuid": "de847be8-17a7-4f00-89da-2b21e06e25bf",
+          "robot_id": "carter2",
+          "route_id": "carter2_blocked",
+          "state": "canceled",
+          "terminal_sim_time_s": 24.383333333,
+          "terminal_status": 5
+        },
+        {
+          "accepted_sim_time_s": 24.383333333,
+          "action_type": "navigate_through_poses",
+          "cancel_requested_sim_time_s": null,
+          "error_code": 0,
+          "goal_uuid": "cdccdeb4-a6f2-42f6-9ba6-e10cc053a3c9",
+          "robot_id": "carter2",
+          "route_id": "carter2_yield",
+          "state": "succeeded",
+          "terminal_sim_time_s": 137.199999999,
+          "terminal_status": 4
+        },
+        {
+          "accepted_sim_time_s": 138.033333333,
+          "action_type": "navigate_to_pose",
+          "cancel_requested_sim_time_s": null,
+          "error_code": 0,
+          "goal_uuid": "faef9fe2-2b5d-4dfa-a5e9-a8941727e6a4",
+          "robot_id": "carter1",
+          "route_id": "carter1_exit",
+          "state": "succeeded",
+          "terminal_sim_time_s": 164.033333333,
+          "terminal_status": 4
+        },
+        {
+          "accepted_sim_time_s": 164.583333333,
+          "action_type": "navigate_through_poses",
+          "cancel_requested_sim_time_s": null,
+          "error_code": 0,
+          "goal_uuid": "22401cb9-07ae-48b6-9de8-f20dad31b53a",
+          "robot_id": "carter2",
+          "route_id": "carter2_resume",
+          "state": "succeeded",
+          "terminal_sim_time_s": 302.033333333,
+          "terminal_status": 4
+        }
+      ],
+      "robots": {
+        "carter1": {
+          "sample_count": 18099,
+          "localization_vs_ground_truth": {
+            "maximum_xy_error_m": 0.1658380567690146,
+            "rms_xy_error_m": 0.101281863238033,
+            "sample_count": 374,
+            "source": "actual decoded /carter1/amcl_pose CDR, not the localization JSON journal"
+          },
+          "raw_map_violation_frames": 0,
+          "encoder_mismatch_frames": 0
+        },
+        "carter2": {
+          "sample_count": 18099,
+          "localization_vs_ground_truth": {
+            "maximum_xy_error_m": 0.2637609213535845,
+            "rms_xy_error_m": 0.1278337336318747,
+            "sample_count": 2338,
+            "source": "actual decoded /carter2/amcl_pose CDR, not the localization JSON journal"
+          },
+          "raw_map_violation_frames": 0,
+          "encoder_mismatch_frames": 0
+        }
+      },
+      "bag": {
+        "integrity_check": "ok",
+        "topic_counts": {
+          "/carter1/amcl_pose": 374,
+          "/carter1/cmd_vel": 1767,
+          "/carter1/map": 1,
+          "/carter1/navigate_to_pose/_action/feedback": 17659,
+          "/carter1/navigate_to_pose/_action/status": 4,
+          "/carter1/navigation_map": 1,
+          "/carter1/odom": 6009,
+          "/carter1/plan": 173,
+          "/carter1/scan_front": 3004,
+          "/carter1/scan_front_raw": 3004,
+          "/carter1/scan_localization": 6008,
+          "/carter1/scan_rear": 3004,
+          "/carter1/scan_rear_raw": 3004,
+          "/carter1/tf": 12015,
+          "/carter1/tf_static": 1,
+          "/carter2/amcl_pose": 2338,
+          "/carter2/cmd_vel": 11265,
+          "/carter2/map": 1,
+          "/carter2/navigate_through_poses/_action/feedback": 110428,
+          "/carter2/navigate_through_poses/_action/status": 4,
+          "/carter2/navigate_to_pose/_action/feedback": 2198,
+          "/carter2/navigate_to_pose/_action/status": 3,
+          "/carter2/navigation_map": 1,
+          "/carter2/odom": 6008,
+          "/carter2/plan": 387,
+          "/carter2/scan_front": 3004,
+          "/carter2/scan_front_raw": 3004,
+          "/carter2/scan_localization": 6008,
+          "/carter2/scan_rear": 3004,
+          "/carter2/scan_rear_raw": 3004,
+          "/carter2/tf": 12011,
+          "/carter2/tf_static": 1,
+          "/clock": 18028,
+          "/factory/g2/authorizations": 5422,
+          "/factory/g2/events": 138877
+        },
+        "amcl_scan_fan_in": {
+          "copy_counts": {
+            "carter1/front_scan": 2989,
+            "carter1/rear_scan": 2989,
+            "carter2/front_scan": 2989,
+            "carter2/rear_scan": 2989
+          },
+          "coverage_window_sim_s": [
+            4.116666666,
+            303.083333333
+          ],
+          "filtered_source_counts": {
+            "carter1/front_scan": 2989,
+            "carter1/rear_scan": 2989,
+            "carter2/front_scan": 2989,
+            "carter2/rear_scan": 2989
+          },
+          "filtered_timestamp_count": 12016,
+          "localization_timestamp_count": 12016,
+          "passed": true,
+          "valid_point_counts": {
+            "carter1/front_scan": 1911201,
+            "carter1/rear_scan": 2616083,
+            "carter2/front_scan": 2604591,
+            "carter2/rear_scan": 2937992
+          }
+        },
+        "databases": [
+          {
+            "bytes": 1168777216,
+            "path": "rosbag_0.db3",
+            "sha256": "a1b2b88caab7cb3693c720fa1e1f48db7ba0fe682bc2b3b2d374deca44b73ec7"
+          }
+        ]
+      }
+    }
+  ],
+  "charts": [
+    {
+      "file": "g2-f2-fault-timeline.png",
+      "sha256": "f4f0c3db66f32cec2e4ebb9ef1f63ad515ac5fa262458da08b6281074ac43dea",
+      "bytes": 117265,
+      "scope": "Actual encoder/command/lease trace and traffic journal; no isolated causal claim for lease-only braking"
+    },
+    {
+      "file": "g2-f3-recovery-path.png",
+      "sha256": "42e1934d12e4d756135f3583aa238d79a076b42d53ec91504c1b2486e08d9622",
+      "bytes": 157814,
+      "scope": "Physics GT paths plus authored resource polygons and observed ownership events; not a rendered photograph"
+    }
+  ],
+  "generator": {
+    "file": "prepare-g2-analysis.py",
+    "sha256": "fc8306650328a6cbc45dc0e57a4bc64feb3a9bb039152f3b59092b39b99d9994"
+  },
+  "matplotlib_version": "3.11.2",
+  "input_sha256": {
+    "logs/g2-helper-snapshots/prepare-g2-analysis.py": "7a4d3ad151da9e88cdf5fd9c2c6cb0355a2537e1be5c06ec381a5a6cc7d18b9e",
+    "results/g2-p0-005/g2-validation.json": "f7cc17b710152e76bf72fd5469caa638c1146f094a3bd6b484b1c704728ca68e",
+    "results/g2-p0-005/g2-scene.json": "e78c1d27a8c73de6177c83e198cf10a25d1b8dcf12a6bb948279ad71fd4d08e2",
+    "results/g2-p0-005/mission-result.json": "598e58228df925447af815e45c0e29aaf25b9e3badfb756995ce51279ab0e032",
+    "logs/g2-p0-005-environment.json": "5495a9de7a260074bc6e7107878f945a289069790d23c2856c994d70ce97d318",
+    "results/g2-p0-005/robots/carter1/trajectory.jsonl": "892f13220e824d4355495b5093f59cb12154a8e0df9c199714b4193c40f25fdc",
+    "results/g2-p0-005/robots/carter2/trajectory.jsonl": "5f74583563d8b6168cc41a8169510f3e8700586c9e48de8afd53970b1372dd96",
+    "results/g2-p0-005/actions.jsonl": "3ae755ac7c54d895b0a64bc852092f2f2f5ae9924aca604819623c0f3f38ce9a",
+    "results/g2-p0-005/traffic-events.jsonl": "aab8919c668894b6d5e9247ee20b8584758a031adcc552b9682d78a3f6a97975",
+    "logs/g2-p0-005-gpu.csv": "6fa446e13d0542dfe2e324b8a4e4c2d3eeb1c404f6a39d956c612b45be31d325",
+    "results/g2-f1-004/g2-validation.json": "5576e27869b827d56e078e2685162ecd46b9160c164e4df7b4980ece2d420ba8",
+    "results/g2-f1-004/g2-scene.json": "bfc06b52b26ffe288e1816a310f008502fdee86044a58411d8a2ae323d68c556",
+    "results/g2-f1-004/mission-result.json": "862318fe3662ffb2ce0c8d964fbd7bb9a6fa65ffd4dfe7180fb1d23b70549ce9",
+    "logs/g2-f1-004-environment.json": "5f42aa6e1aace75339d302257d31f5acc7e4f6a21b0478a5b038f1c3404c93d3",
+    "results/g2-f1-004/robots/carter1/trajectory.jsonl": "1effdcaee740544326e2806ec5615f95403487fe07df4b1ec280de7ed21d5010",
+    "results/g2-f1-004/robots/carter2/trajectory.jsonl": "f6ac330b906282d6c8c803976994a748e489685afaea2ea302f7b42e4d1ac518",
+    "results/g2-f1-004/actions.jsonl": "08a0e3c04fdfaadfa0d7fa42eedea29656eb00bb9cb20d3ec82215e039e2af5e",
+    "results/g2-f1-004/traffic-events.jsonl": "9995cf150ffe48ecec13dfe57d1b91bbeedbb56c8d6f2b18e56e6e60699b2c35",
+    "logs/g2-f1-004-gpu.csv": "aa947a4ba68d0ae8b4a642fd4c26f1a86027ae6959201f4ef5966a53484eabcf",
+    "results/g2-f1-004/runtime-scan-parameters.json": "d1b099205d228543d5843a9f5519ff55a388d02cc13bc9e625f074742d3686bf",
+    "logs/g2-helper-snapshots/probe-g2-final-runtime.sh": "3c1cd81a647ace4c0e6202d2dc87585ae7f18921b2082ea60f59bddfe87ffb48",
+    "results/g2-f2-003/g2-validation.json": "02713ca790b5c7d4dd3a1d33b02bb4217c97622ffb7eebc7e1ebfef78e1a85b1",
+    "results/g2-f2-003/g2-scene.json": "193c86646034e896354840ea686baf0075f092b0545407b785e582c1eb98171c",
+    "results/g2-f2-003/mission-result.json": "61e631361b403aaac8ddd9195fa5c96bbe8f081aa178ab433fdb1fae516fee40",
+    "logs/g2-f2-003-environment.json": "c857545540d8f9c3525d86660cbc1f6d52cdb3884b0682055db78f7500f49910",
+    "results/g2-f2-003/robots/carter1/trajectory.jsonl": "f511444764ceb8f3cb98b8b870c7728fc30f735dafff359ef27195e96667f2f4",
+    "results/g2-f2-003/robots/carter2/trajectory.jsonl": "e0a7044f4fb66dc41db8c27545812206956a7e00ae0b4f4c3678a01549da74e4",
+    "results/g2-f2-003/actions.jsonl": "cfff42b087bf6983be894bbf3379563364967429c9c74b8102536bc57ff2bef1",
+    "results/g2-f2-003/traffic-events.jsonl": "30222f96917954d517f48870488cd48b4e82d90a60c08bd8fb3ea1e50b45dbaf",
+    "logs/g2-f2-003-gpu.csv": "dfcbcea94d6ae796c49a5ab4800505210271a0c454cc7af9c22d1b6cb5339088",
+    "results/g2-f3-002/g2-validation.json": "856d76827271bdde0be3c62a625b6c69381569328f41c00e9b67efcd56dcdf70",
+    "results/g2-f3-002/g2-scene.json": "abc369dbd69949bdbfaa4b50ce8c1e3629bff1eb9b3a41dbba474a2f64ec948b",
+    "results/g2-f3-002/mission-result.json": "0e2d6a711e4c6b66a8d3eb07418ba20f9db583fb4ef4f6e4a52eb221c6fa7cd1",
+    "logs/g2-f3-002-environment.json": "261adfd12da8466bf1623ff09a5db0ba092f1b3b754ebbc7b878d3db4aa67c14",
+    "results/g2-f3-002/robots/carter1/trajectory.jsonl": "97ac1ea27746deba2924d98f0dca8c01706a95d6c061a71ad1d11478fb5007ba",
+    "results/g2-f3-002/robots/carter2/trajectory.jsonl": "d06db57f29e0bd7a6e4eb5ae7bdb1cef731c2292f71a2f0b8d19f46c39d867ea",
+    "results/g2-f3-002/actions.jsonl": "c2845c49fb807ccdde035a90032762da87986d77ad7d0faf83f029245c451420",
+    "results/g2-f3-002/traffic-events.jsonl": "9256d2f990cb210e83129810bfacc82bdbac0f409a97a4e3fca8c6b9f5c24416",
+    "logs/g2-f3-002-gpu.csv": "2a810e99f2aa1a8c49cdfd009e809591d4f3d44d1358443129dd58f3242c7c66"
+  },
+  "postprocess_supplement": {
+    "supplement_id": "g2-postprocess-supplement-v1",
+    "inputs": {
+      "file": "g2-postprocess-supplement-v1-inputs.json",
+      "sha256": "0770c196606bf14b5cb8807552b227305b95d0ba8f2628375888de559127a033",
+      "bytes": 695
+    },
+    "base": {
+      "archive_sha256": "03ab2e89e8530c88fdfb998e961313a2c304fa629b6ecb8d48f830e39f89aca1",
+      "manifest_sha256": "7cb2dcbdc2f834b03586f739d9b32f5d687c213ddf9db905a01771fd50bcf9b1",
+      "source_commit": "81befc881466f0e612465ba3987165eec2c9ca4f",
+      "verification_sha256": "016facefdeaefa9ab8e04a216b26937ea707d54850976bf7ea577eb276e3e790",
+      "original_analysis_sha256": "7a4d3ad151da9e88cdf5fd9c2c6cb0355a2537e1be5c06ec381a5a6cc7d18b9e"
+    }
+  }
+}
