@@ -190,11 +190,18 @@ def _capture_motion(output: Path, app: Any, stage: Any, robot: Any, rep: Any, np
         trajectory.append(sample)
         return sample
 
-    start_sim = float(SimulationManager.get_simulation_time())
-    started = time.monotonic()
-    robot.apply_wheel_actions(np.zeros(2, dtype=np.float32))
-    observe([0.0, 0.0])
     try:
+        # Keep camera render products alive from before the first physics step.
+        # A separate post-warmup render-product creation lost instance visuals
+        # in the pinned SDK; same-product diagnostic captures retained them.
+        timeline.play()
+        for _ in range(WARMUP_STEPS):
+            app.update()
+            rclpy.spin_once(node, timeout_sec=0.0)
+        start_sim = float(SimulationManager.get_simulation_time())
+        started = time.monotonic()
+        robot.apply_wheel_actions(np.zeros(2, dtype=np.float32))
+        observe([0.0, 0.0])
         for step in range(MEASUREMENT_STEPS):
             targets = [2.0, 2.0] if step < 480 else [0.0, 0.0]
             robot.apply_wheel_actions(np.array(targets, dtype=np.float32))
@@ -383,18 +390,14 @@ def _worker(args: argparse.Namespace) -> int:
         rclpy, node, stamps = _clock_graph(stage, app)
         SimulationManager.setup_simulation(dt=1.0/60.0)
         timeline = omni.timeline.get_timeline_interface()
-        timeline.play()
-        checkpoint("stationary_warmup")
-        for _ in range(WARMUP_STEPS):
-            app.update()
-            rclpy.spin_once(node, timeout_sec=0.0)
-        result["robot"]["dof_names"] = robot.dof_names
         checkpoint("capture_overview")
         timeline.pause()
         result["rgb"] = _capture_factory_overview(output, app, rep)
-        timeline.play()
-        checkpoint("physics_motion_and_sensors")
+        result["rgb"]["capture_scope"] = "static factory and robot placement before physics warmup"
+        checkpoint("stationary_warmup_motion_and_sensors")
         result.update(_capture_motion(output, app, stage, robot, rep, np, UsdGeom, Gf, SimulationManager, rclpy, node))
+        result["robot"]["dof_names"] = robot.dof_names
+        result["render_lifecycle"] = "motion and onboard render products created before physics warmup and retained through capture"
         result["ros2"] = {"distro": "jazzy", "domain_id": os.environ["ROS_DOMAIN_ID"], "clock_topic": "/clock",
                           "clock_messages": len(stamps), "clock_advanced": len(stamps) >= 2 and stamps[-1] > stamps[0] and all(b >= a for a,b in zip(stamps, stamps[1:])),
                           "clock_samples": stamps, "subscriber_qos": "BEST_EFFORT depth 10",
