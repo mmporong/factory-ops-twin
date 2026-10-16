@@ -1,6 +1,6 @@
 # GPU 연동과 작업 보존
 
-로컬 준비 명령은 GPU나 Brev 계정을 사용하지 않는다. 별도 장면 검사 스크립트는 Isaac Sim 6.2 환경에서 실행한다. AWS L40S에서 G0a 정적 장면 검사와 Stop·재시작 보존 시험을 통과했다. 자동 Sleep 기능은 제공하지 않는다.
+로컬 준비 명령은 GPU나 Brev 계정을 사용하지 않는다. 별도 장면 검사 스크립트는 Isaac Sim 6.2 환경에서 실행한다. AWS L40S에서 G0a 정적 장면, G0b 단일 AMR 기초 검증과 Stop·재시작 보존 시험을 통과했다. 자동 Sleep 기능은 제공하지 않는다.
 
 ## 검증한 실행 환경
 
@@ -103,7 +103,32 @@ timeout --signal=TERM --kill-after=30s 900s \
   --output /workspace/results/g0b-001
 ```
 
-최종 GPU 실행은 진행 중이다. `FACTORY_OPS_G0B_STATUS=PASS`, supervisor·worker exit 0, `stage-smoke.json`, 원본 프레임·센서 파일과 manifest를 함께 확인해야 G0b 통과로 기록한다.
+G0b `g0b-008` 실행에서 `FACTORY_OPS_G0B_STATUS=PASS`, supervisor·worker exit 0, `status=passed`, `cleanup=worker_process_exited`를 확인했다. 실행 코드와 원본 증거는 다음과 같다.
+
+| 항목 | 실제 기록 |
+|---|---|
+| 코드 SHA | `8a620fb5948ba43bbd970d1194027a98bb89a5a0` |
+| 실행 ID | `f72a0221fb2bff2271ca9fe4629bd14f` |
+| 로봇 충돌 형상 | Boundable geometry 13개, root 기준 외곽 약 0.727×0.493×0.480 m |
+| 지도 여유 | 회전 범위를 포함한 원의 반지름 0.637 m + 설정 여유 0.2 m. 위치 8곳과 601개 궤적 샘플 검사 통과 |
+| 주행 | 120회 warmup 후 600회 측정, 10 sim s, 순변위 0.626686 m |
+| 촬영 | 1280×720 원본 PNG 100장, 640×360 GIF 100프레임·100 ms 간격 |
+| 센서 | chassis에 결속한 평가용 가상 카메라 640×360, RGB·float32 depth·uint32 semantic·bbox·카메라 파라미터 3세트 |
+| ROS | Jazzy `/clock` 358개 수신, 비감소·시간 진행·주행 구간 포함 검사 |
+| RTF | 10 sim s / 44.272667 wall s = 0.225873. 렌더·PNG·센서 저장 포함, warmup·초기 prime·GIF 인코딩 제외 |
+| GPU 메모리 | 컨테이너 전체 수명 동안 1초 간격 114회 관측, 최대 4757 MiB. Nav2 또는 2대 부하 측정은 아님 |
+| 원본 manifest | 실행 폴더 129개 파일의 크기·SHA256, 원본 PNG와 GIF·센서·궤적 연결 검사 |
+| 시각 검수 | 단계별 checkpoint 4장, 출발 전·첫·중간·마지막 PNG에서 차체와 바퀴가 유지됨을 확인 |
+
+`CaptureSession`이 로드 직후 medium RGB render product를 만들고 주행 종료까지 유지한다. overview는 첫 overview 촬영 때 생성해 유지하며, onboard annotator는 warmup 뒤 하나씩 연결하고 정지된 물리 시각·pose를 대조하며 prime한다. 측정 루프에는 이 초기화 시간을 넣지 않는다. `render_graph_primed_before_warmup`은 medium·overview에 대한 기록이며, onboard 초기화는 warmup 이후다.
+
+초기 실행에서는 자동 증거 검사는 통과했지만 차체가 보이지 않는 영상이 남았다. 실패 영상은 보존하고 시각 검수를 추가했다. 지속형 캡처 수명주기로 바꾼 실행에서 회복을 확인했으며, SDK 내부 원인을 확정한 결과로 해석하지 않는다. vendor geometry·joint·material, instanceable 설정과 Fabric 설정은 바꾸지 않았다.
+
+Depth의 `+inf`는 같은 프레임의 semantic ID 0 `BACKGROUND` 픽셀에서만 허용한다. NaN·`-inf`·0·음수, foreground의 무한대는 거부한다. semantic과 bbox annotator는 ID 공간이 달라 두 `idToLabels`를 분리해 보존·검사한다. 첫 실행에서 관측한 semantic ID 0과 bbox ID 0의 의미가 달랐으므로 두 map을 합치지 않는다.
+
+센서 원본·궤적은 시뮬레이터 GT를 평가와 라벨 대응 확인에만 사용한다. 센서 ROS 토픽·TF·LiDAR·Nav2 goal, 물리 접촉 수, 생산성 비교와 학습용 데이터 승인은 아직 완료하지 않았다. 생성 USD는 root layer를 export해 로봇 reference를 유지한다. 실패한 `g0b-003`의 flattened 진단 USD는 비공개 실행 자료로 보존한다.
+
+성공·실패 실행과 진단·환경·GPU 관측을 묶은 최종 manifest는 899개 파일이다. 원격 압축본 SHA256은 `c07e2ed0a9237127dd56527a28d0b73126ada383e2b50101a3cbf2885315dbfd`, manifest SHA256은 `afa15612dae3dae0d2aac9e939722c3136eb34184cedbe29aa5829c30d68f8ea`다. 외부 복사 대조 결과는 별도 `g0b-backup-verification.json`에 기록한다.
 
 ## 공식 근거
 
@@ -116,3 +141,5 @@ timeout --signal=TERM --kill-after=30s 900s \
 - [Isaac Sim 6.2 stage API](https://docs.isaacsim.omniverse.nvidia.com/6.2.0/py/source/extensions/isaacsim.core.experimental.utils/docs/index.html)
 - [Replicator 조감 이미지 저장](https://docs.isaacsim.omniverse.nvidia.com/6.2.0/replicator_tutorials/tutorial_replicator_getting_started.html)
 - [Isaac Sim 6.2 데이터 수집과 opt-out](https://docs.isaacsim.omniverse.nvidia.com/6.2.0/common/data-collection.html)
+- [Isaac Sim 6.2 depth 센서](https://docs.isaacsim.omniverse.nvidia.com/6.2.0/sensors/isaacsim_sensors_camera_depth.html)
+- [Isaac Sim 6.2 ROS clock](https://docs.isaacsim.omniverse.nvidia.com/6.2.0/ros2_tutorials/tutorial_series/tutorial_ros2_clock.html)
