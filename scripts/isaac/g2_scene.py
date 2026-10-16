@@ -71,6 +71,16 @@ def _positive(value: object, name: str) -> float:
     return float(value)
 
 
+def _json_safe_setting(value: Any) -> Any:
+    if value is None or isinstance(value, (bool, int, float, str)):
+        return value
+    if isinstance(value, (list, tuple)):
+        return [_json_safe_setting(item) for item in value]
+    if isinstance(value, Mapping):
+        return {str(key): _json_safe_setting(item) for key, item in value.items()}
+    return str(value)
+
+
 def _load_inputs(config_path: Path, scenarios_path: Path, scenario_id: str) -> tuple[dict[str, Any], dict[str, Any]]:
     config = json.loads(config_path.read_text(encoding="utf-8"))
     document = json.loads(scenarios_path.read_text(encoding="utf-8"))
@@ -293,6 +303,17 @@ def _setup_lidars(
     for lidar, definition, lidar_config, lidar_path in handles:
         sensor = LidarSensor(lidar, annotators=[])
         prim = prim_utils.get_prim_at_path(lidar.paths[0])
+        tick_rate_attribute = prim.GetAttribute("omni:sensor:tickRate")
+        accumulate_attribute = prim.GetAttribute("omni:sensor:Core:accumulateOutputs")
+        if not tick_rate_attribute.IsValid() or not accumulate_attribute.IsValid():
+            raise base.SmokeError("G2 RTX lidar tickRate or accumulateOutputs attribute is missing")
+        tick_rate = tick_rate_attribute.Get()
+        accumulate_outputs = accumulate_attribute.Get()
+        if (isinstance(tick_rate, bool) or not isinstance(tick_rate, (int, float))
+                or not math.isfinite(tick_rate) or tick_rate <= 0):
+            raise base.SmokeError("G2 RTX lidar tickRate attribute is not finite and positive")
+        if not isinstance(accumulate_outputs, bool):
+            raise base.SmokeError("G2 RTX lidar accumulateOutputs attribute is not boolean")
         rotation_frequency = float(prim.GetAttribute("omni:sensor:Core:scanRateBaseHz").Get() or 0)
         firing_frequency = float(prim.GetAttribute("omni:sensor:Core:patternFiringRateHz").Get() or 0)
         near_range = float(prim.GetAttribute("omni:sensor:Core:nearRangeM").Get() or 0)
@@ -322,6 +343,7 @@ def _setup_lidars(
             "rotation_frequency_hz": rotation_frequency, "firing_frequency_hz": firing_frequency,
             "near_range_m": near_range, "far_range_m": far_range,
             "horizontal_resolution_deg": resolution,
+            "tick_rate_hz": float(tick_rate), "accumulate_outputs": accumulate_outputs,
         })
     return sensors, metadata
 
@@ -553,7 +575,28 @@ def _run(args: argparse.Namespace) -> int:
 
         checkpoint("simulation_app")
         from isaacsim import SimulationApp
-        app = SimulationApp({"headless": True, "renderer": "RealTimePathTracing", "sync_loads": True, "fast_shutdown": True})
+        app = SimulationApp({
+            "headless": True, "renderer": "RealTimePathTracing", "sync_loads": True,
+            "fast_shutdown": True, "enable_motion_bvh": True,
+        })
+        import carb
+        renderer_settings = carb.settings.get_settings()
+        motion_bvh_enabled = renderer_settings.get("/renderer/raytracingMotion/enabled") is True
+        result["renderer"] = {
+            "motion_bvh": {
+                "requested": True,
+                "enabled_readback": motion_bvh_enabled,
+                "hydra_engine_masking": _json_safe_setting(
+                    renderer_settings.get("/renderer/raytracingMotion/enableHydraEngineMasking")
+                ),
+                "enabled_hydra_engines": _json_safe_setting(
+                    renderer_settings.get("/renderer/raytracingMotion/enabledForHydraEngines")
+                ),
+                "source": "Isaac Sim 6.2 SimulationApp enable_motion_bvh launch option",
+            }
+        }
+        if not motion_bvh_enabled:
+            raise base.SmokeError("G2 renderer Motion BVH enablement readback is not true")
         import numpy as np
         from PIL import Image
         import omni.replicator.core as rep

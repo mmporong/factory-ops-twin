@@ -86,6 +86,7 @@ fi
 sim_status=$(docker wait "$sim")
 set -e
 docker logs "$sim" > "$root/logs/$run-sim.log" 2>&1
+sudo -n install -m 0644 -o 1234 -g 1234 "$root/logs/$run-sim.log" "$root/results/$run/isaac.log"
 docker inspect "$sim" "$nav" --format '{{.Name}} {{json .State}}' > "$root/logs/$run-container-exits.jsonl"
 sudo -n python3 - "$root/results/$run" "$nav_status" "$sim_status" "$run_id" <<'PY'
 from pathlib import Path

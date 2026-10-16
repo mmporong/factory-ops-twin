@@ -63,6 +63,22 @@ def evidence_subscribers_ready(publishers: Sequence[Any]) -> bool:
     return bool(publishers) and all(publisher.get_subscription_count() >= 1 for publisher in publishers)
 
 
+def named_subscriber_topics_ready(
+    node: Any, topics: Sequence[str], subscriber_node_name: str,
+) -> bool:
+    expected = subscriber_node_name.lstrip("/")
+    return bool(topics) and all(
+        any(str(info.node_name).lstrip("/") == expected
+            for info in node.get_subscriptions_info_by_topic(topic))
+        for topic in topics
+    )
+
+
+def filtered_scan_is_recordable(recording_ready: bool, epoch_ns: int | None, stamp_ns: int) -> bool:
+    return (recording_ready and type(epoch_ns) is int and type(stamp_ns) is int
+            and epoch_ns >= 0 and stamp_ns > epoch_ns)
+
+
 class PoseFreshnessGate:
     """Track only TF samples whose own timestamp is fresh in simulation time."""
 
@@ -484,6 +500,10 @@ def main() -> int:  # noqa: C901 - the explicit scenario phases are evidence bou
         clients: dict[str, dict[str, Any]] = {}
         lifecycle: dict[str, dict[str, Any]] = {}
         scan_counts = {robot: {name: 0 for name in ("front_raw", "rear_raw", "front", "rear")} for robot in ROBOT_IDS}
+        scan_pre_record_drops = {robot: {side: 0 for side in ("front", "rear")} for robot in ROBOT_IDS}
+        filters_ready = False
+        scan_epoch_ns: int | None = None
+        raw_stamp_peak_ns = -1
         odom_counts = {robot: 0 for robot in ROBOT_IDS}
         odom_speed = {robot: 0.0 for robot in ROBOT_IDS}
         last_moving = {robot: 0.0 for robot in ROBOT_IDS}
@@ -509,6 +529,12 @@ def main() -> int:  # noqa: C901 - the explicit scenario phases are evidence bou
             rear_pub = node.create_publisher(LaserScan, "scan_rear", qos_profile_sensor_data)
 
             def scan_callback(message: Any, *, robot: str, side: str, publisher: Any) -> None:
+                nonlocal raw_stamp_peak_ns
+                stamp_ns = message.header.stamp.sec * 1_000_000_000 + message.header.stamp.nanosec
+                raw_stamp_peak_ns = max(raw_stamp_peak_ns, stamp_ns)
+                if not filtered_scan_is_recordable(filters_ready, scan_epoch_ns, stamp_ns):
+                    scan_pre_record_drops[robot][side] += 1
+                    return
                 scan_counts[robot][f"{side}_raw"] += 1
                 filtered = copy.deepcopy(message)
                 filtered.ranges = mask_scan_ranges(
@@ -543,8 +569,10 @@ def main() -> int:  # noqa: C901 - the explicit scenario phases are evidence bou
                 qos_lines.append(f"/{robot_id}/{topic}:\n  durability: transient_local\n  reliability: reliable\n  history: keep_last\n  depth: 1\n")
         qos_path.write_text("".join(qos_lines), encoding="utf-8")
         bag_topics = ["/clock", "/factory/g2/events", "/factory/g2/authorizations"]
+        raw_topics = []
         for robot_id in ROBOT_IDS:
             prefix = f"/{robot_id}"
+            raw_topics.extend((prefix + "/scan_front_raw", prefix + "/scan_rear_raw"))
             bag_topics.extend(prefix + suffix for suffix in (
                 "/scan_front_raw", "/scan_rear_raw", "/scan_front", "/scan_rear", "/odom",
                 "/tf", "/tf_static", "/map", "/navigation_map", "/amcl_pose", "/plan", "/cmd_vel",
@@ -562,15 +590,23 @@ def main() -> int:  # noqa: C901 - the explicit scenario phases are evidence bou
         )
         evidence_publishers = (event_pub, authorization_pub)
         subscriber_deadline = min(deadline, time.monotonic() + 300.0)
-        while not evidence_subscribers_ready(evidence_publishers):
+        while True:
             if time.monotonic() >= subscriber_deadline:
-                raise TimeoutError("rosbag did not discover both G2 evidence publishers")
+                raise TimeoutError("rosbag did not discover G2 evidence and raw scan topics with live simulation time")
             if launch.poll() is not None or bag.poll() is not None:
                 raise RuntimeError("G2 Nav2 launch or rosbag exited during evidence discovery")
             scene_path = output / "g2-scene.json"
             if scene_path.is_file() and json.loads(scene_path.read_text()).get("status") == "failed":
                 raise RuntimeError("G2 Isaac scene failed during evidence discovery")
-            ros.spin_once(event_node, timeout_sec=0.05)
+            for node in nodes:
+                ros.spin_once(node, timeout_sec=0.01)
+            if (evidence_subscribers_ready(evidence_publishers)
+                    and named_subscriber_topics_ready(event_node, raw_topics, "rosbag2_recorder")
+                    and now() > 0):
+                break
+        scan_epoch_ns = max(event_node.get_clock().now().nanoseconds, raw_stamp_peak_ns)
+        scan_epoch_s = scan_epoch_ns / 1e9
+        filters_ready = True
         traffic = TrafficController.from_file(project / config["traffic_config"], run_id=args.run_id)
         traffic_cursor = 0
         poses: dict[str, dict[str, float]] = {}
@@ -720,6 +756,8 @@ def main() -> int:  # noqa: C901 - the explicit scenario phases are evidence bou
                 ros.spin_once(node, timeout_sec=0.002)
             if not evidence_subscribers_ready(evidence_publishers):
                 raise RuntimeError("rosbag evidence subscriptions were lost before lease publication")
+            if not named_subscriber_topics_ready(event_node, raw_topics, "rosbag2_recorder"):
+                raise RuntimeError("rosbag raw scan subscriptions were lost during scan filtering")
             sim_time = now()
             poll_goals(sim_time)
             if sim_time - last_observation >= 0.1:
@@ -831,7 +869,10 @@ def main() -> int:  # noqa: C901 - the explicit scenario phases are evidence bou
                 raise TimeoutError("two Nav2 stacks, TF, odom and four scan streams did not become ready")
         navigation_ready = True
         journal("navigation_ready", {"scan_counts": scan_counts, "odom_counts": odom_counts,
-                                      "planning_radius_m": planning_radius})
+                                      "planning_radius_m": planning_radius,
+                                      "scan_epoch_s": scan_epoch_s,
+                                      "scan_epoch_ns": scan_epoch_ns,
+                                      "scan_pre_record_drops": scan_pre_record_drops})
 
         result["stage"] = "scenario"
         if args.scenario == "P0":
@@ -961,6 +1002,8 @@ def main() -> int:  # noqa: C901 - the explicit scenario phases are evidence bou
             "status": "passed", "stage": "complete", "scenario_phases": machine.history,
             "actions": [asdict(runtime.evidence) for runtime in action_history],
             "scan_counts": scan_counts, "odom_counts": odom_counts,
+            "scan_epoch_s": scan_epoch_s, "scan_epoch_ns": scan_epoch_ns,
+            "scan_pre_record_drops": scan_pre_record_drops,
             "bag_topics_requested": bag_topics, "planning_radius_m": planning_radius,
             "traffic_snapshot": traffic.snapshot(now=now()),
             "localization_source": "per-namespace TF map->base_link from wheel odometry plus front RTX scan AMCL",

@@ -17,8 +17,10 @@ from scripts.ros.g2_mission import (
     authored_route_length,
     build_namespaced_params,
     evidence_subscribers_ready,
+    filtered_scan_is_recordable,
     make_authorization,
     mask_scan_ranges,
+    named_subscriber_topics_ready,
 )
 
 
@@ -51,6 +53,37 @@ class G2MissionTests(unittest.TestCase):
         self.assertFalse(evidence_subscribers_ready((first, second)))
         second.count = 1
         self.assertTrue(evidence_subscribers_ready((first, second)))
+
+    def test_raw_topic_barrier_and_scan_epoch_reject_pre_recorder_queue(self) -> None:
+        class Info:
+            def __init__(self, name: str) -> None:
+                self.node_name = name
+
+        class Node:
+            def __init__(self) -> None:
+                self.subscriptions = {
+                    "/carter1/scan_front_raw": [Info("g2_adapter_carter1"), Info("rosbag2_recorder")],
+                    "/carter1/scan_rear_raw": [Info("g2_adapter_carter1")],
+                }
+
+            def get_subscriptions_info_by_topic(self, topic: str) -> list[Info]:
+                return self.subscriptions.get(topic, [])
+
+        node = Node()
+        topics = ("/carter1/scan_front_raw", "/carter1/scan_rear_raw")
+        self.assertFalse(named_subscriber_topics_ready(node, topics, "rosbag2_recorder"))
+        node.subscriptions[topics[1]].append(Info("rosbag2_recorder"))
+        self.assertTrue(named_subscriber_topics_ready(node, topics, "/rosbag2_recorder"))
+        self.assertFalse(filtered_scan_is_recordable(False, 2_400_000_000, 2_500_000_000))
+        self.assertFalse(filtered_scan_is_recordable(True, 2_400_000_000, 2_300_000_000))
+        self.assertFalse(filtered_scan_is_recordable(True, 2_400_000_000, 2_400_000_000))
+        self.assertTrue(filtered_scan_is_recordable(True, 2_400_000_000, 2_500_000_000))
+        self.assertFalse(filtered_scan_is_recordable(True, None, 2_500_000_000))
+        for sec, nano in ((1, 1), (123, 999_999_999), (26, 772_713_542), (374, 663_036_237)):
+            total_ns = sec * 1_000_000_000 + nano
+            self.assertFalse(filtered_scan_is_recordable(True, total_ns, sec * 1_000_000_000 + nano))
+        self.assertNotEqual(26_772_713_542 / 1e9, 26 + 772_713_542 / 1e9)
+        self.assertGreater(374 + 663_036_237 / 1e9, 374_663_036_237 / 1e9)
 
     def test_scan_mask_keeps_only_sensor_frame_forward_half_plane(self) -> None:
         ranges = list(range(1, 10))

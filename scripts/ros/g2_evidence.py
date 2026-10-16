@@ -731,6 +731,19 @@ def validate_g2_evidence(
             scenarios = json.loads((PROJECT / "configs/factory-v3/g2-scenarios.json").read_text())
             layout = Layout.from_file(PROJECT / "configs/factory-v3/layout.json")
             traffic = TrafficController.from_file(PROJECT / "configs/factory-v3/traffic.json", run_id=run_id)
+            motion_bvh = scene.get("renderer", {}).get("motion_bvh", {})
+            if motion_bvh.get("requested") is not True or motion_bvh.get("enabled_readback") is not True:
+                errors.append("moving RTX sensors require an enabled Motion BVH runtime readback")
+            sim_log = (output / "isaac.log").read_text(encoding="utf-8", errors="replace")
+            bvh_warnings = ("Multi-tick is enabled but motion BVH is not active", "MotionBVH for lidar model not enabled")
+            warning_counts = {warning: sim_log.count(warning) for warning in bvh_warnings}
+            if any(warning_counts.values()):
+                errors.append("Isaac reported unsupported multi-tick/missing Motion BVH sensor rendering")
+            evaluation["renderer"] = {"motion_bvh": motion_bvh, "motion_bvh_warning_counts": warning_counts}
+            for robot in ROBOTS:
+                for lidar in ready["robots"][robot]["lidars"]:
+                    if lidar.get("tick_rate_hz") != 10 or lidar.get("rotation_frequency_hz") != 10 or lidar.get("accumulate_outputs") is not True:
+                        errors.append(f"{robot}: rotary RTX scan accumulation/tick configuration is invalid")
             for robot in ROBOTS:
                 traces[robot], evaluation[robot] = _validate_robot(output, robot, ready, scene, layout, config, errors)
             first, second = traces[ROBOTS[0]], traces[ROBOTS[1]]
