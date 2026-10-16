@@ -192,10 +192,29 @@ def _capture_motion(output: Path, app: Any, stage: Any, robot: Any, rep: Any, np
 
     try:
         # Prepare one render pipeline before warmup and retain it through capture.
+        timeline.pause()
+        for _ in range(5):
+            app.update()
+        before_priming = float(SimulationManager.get_simulation_time())
+        base._with_alarm(120, "G0b render graph priming", lambda: rep.orchestrator.step(delta_time=0.0))
+        if abs(float(SimulationManager.get_simulation_time()) - before_priming) > 1e-8:
+            raise base.SmokeError("render graph priming advanced simulation time")
+        Image.fromarray(np.asarray(medium_rgb.get_data())[:, :, :3].astype(np.uint8)).save(output / "carter-render-priming.png")
         timeline.play()
         for _ in range(WARMUP_STEPS):
             app.update()
             rclpy.spin_once(node, timeout_sec=0.0)
+        timeline.pause()
+        before_drive = float(SimulationManager.get_simulation_time())
+        before_position, _ = pose()
+        for _ in range(5):
+            app.update()
+        base._with_alarm(120, "G0b predrive capture", lambda: rep.orchestrator.step(delta_time=0.0))
+        after_position, _ = pose()
+        if abs(float(SimulationManager.get_simulation_time()) - before_drive) > 1e-8 or any(abs(a-b) > 1e-5 for a,b in zip(after_position, before_position)):
+            raise base.SmokeError("predrive capture advanced physics while the frame was frozen")
+        Image.fromarray(np.asarray(medium_rgb.get_data())[:, :, :3].astype(np.uint8)).save(output / "carter-predrive.png")
+        timeline.play()
         start_sim = float(SimulationManager.get_simulation_time())
         started = time.monotonic()
         robot.apply_wheel_actions(np.zeros(2, dtype=np.float32))
@@ -210,9 +229,6 @@ def _capture_motion(output: Path, app: Any, stage: Any, robot: Any, rep: Any, np
                 continue
             timeline.pause()
             before = float(SimulationManager.get_simulation_time())
-            # Flush pending render transforms while the physics frame is frozen.
-            for _ in range(5):
-                app.update()
             base._with_alarm(120, "G0b sensor capture", lambda: rep.orchestrator.step(delta_time=0.0))
             after = float(SimulationManager.get_simulation_time())
             after_position, _ = pose()
@@ -289,7 +305,7 @@ def _capture_motion(output: Path, app: Any, stage: Any, robot: Any, rep: Any, np
                            "nav2": "unmeasured", "physical_contact_count": None, "scope": "bounded forward wheel command; no Nav2 goal or safety claim"},
                 "performance": {"sim_seconds": sim, "wall_seconds": wall, "rtf": sim/wall, "warmup_steps": WARMUP_STEPS,
                                 "measurement_loop_iterations": MEASUREMENT_STEPS, "capture_included": True,
-                                "paused_render_updates_per_capture": 5,
+                                "render_graph_primed_before_warmup": True, "predrive_capture": True,
                                 "gif_encoding_included": False, "gpu_observation": gpu}}
     finally:
         active_error = sys.exception()
