@@ -117,6 +117,7 @@ def main() -> int:
         os.environ["FACTORY_OPS_NAV2_PARAMS"] = str(params_path)
         import rclpy as ros
         from geometry_msgs.msg import Twist
+        from lifecycle_msgs.srv import GetState
         from nav2_msgs.action import NavigateToPose
         from nav_msgs.msg import Odometry
         from rclpy.action import ActionClient
@@ -132,6 +133,10 @@ def main() -> int:
         ros.init()
         node = ros.create_node("factory_g1_mission", parameter_overrides=[Parameter("use_sim_time", value=True)])
         client = ActionClient(node, NavigateToPose, "navigate_to_pose")
+        lifecycle_clients = {name: node.create_client(GetState, f"/{name}/get_state")
+                             for name in ("planner_server", "controller_server", "bt_navigator")}
+        lifecycle_states: dict[str, int | None] = {name: None for name in lifecycle_clients}
+        lifecycle_futures: dict[str, Any] = {}
         tf_buffer = Buffer(node=node)
         tf_listener = TransformListener(tf_buffer, node)
         control_publisher = node.create_publisher(Twist, "/cmd_vel", 10)
@@ -194,15 +199,25 @@ def main() -> int:
         startup_deadline = time.monotonic() + 240
         while True:
             spin()
+            for name, state_client in lifecycle_clients.items():
+                future = lifecycle_futures.get(name)
+                if future is not None and future.done():
+                    response = future.result()
+                    lifecycle_states[name] = response.current_state.id if response is not None else None
+                    del lifecycle_futures[name]
+                if lifecycle_states[name] != 3 and name not in lifecycle_futures and state_client.service_is_ready():
+                    lifecycle_futures[name] = state_client.call_async(GetState.Request())
             try:
                 pose = localization()
             except Exception:
                 pose = None
             if (pose is not None and now() > 0 and counts["scan"] >= 5 and counts["odom"] >= 5
-                    and client.server_is_ready() and 0 <= now() - pose.stamp <= 0.5):
+                    and client.server_is_ready() and all(state == 3 for state in lifecycle_states.values())
+                    and 0 <= now() - pose.stamp <= 0.5):
                 break
             if time.monotonic() > startup_deadline:
                 raise TimeoutError("Nav2/TF/sensor graph did not become ready")
+        journal("navigation_ready", {"lifecycle_states": lifecycle_states, "sensor_messages": dict(counts)})
         goals = {name: GoalPose("map", *layout.stations[name], yaw) for name, yaw in config["station_yaw_rad"].items()}
         mission = SingleOrderMission(args.run_id, robot_id=config["robot_id"], order_id=config["order_id"],
                                      payload_id=config["payload_id"], goal_timeout_s=240, station_goals=goals)
