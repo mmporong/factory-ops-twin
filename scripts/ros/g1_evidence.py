@@ -76,6 +76,26 @@ def _number(value: object) -> float | None:
     return result if math.isfinite(result) else None
 
 
+def _tilt_evaluation(value: object) -> dict[str, Any] | None:
+    if not isinstance(value, list) or len(value) != 4:
+        return None
+    numbers = [_number(item) for item in value]
+    if any(item is None for item in numbers):
+        return None
+    w, x, y, z = (float(item) for item in numbers if item is not None)
+    norm = math.sqrt(w * w + x * x + y * y + z * z)
+    if abs(norm - 1.0) > 1e-3:
+        return None
+    roll = math.atan2(2.0 * (w * x + y * z), 1.0 - 2.0 * (x * x + y * y))
+    pitch_term = max(-1.0, min(1.0, 2.0 * (w * y - z * x)))
+    pitch = math.asin(pitch_term)
+    return {
+        "roll_rad": roll, "pitch_rad": pitch, "threshold_rad": 0.35,
+        "passed": abs(roll) <= 0.35 and abs(pitch) <= 0.35,
+        "use": "simulator-truth run validity evaluation only; never navigation or steering",
+    }
+
+
 def _safe_relative(value: object) -> str | None:
     if not isinstance(value, str) or not value or "\\" in value:
         return None
@@ -186,6 +206,11 @@ def _validate_trajectory(
             errors.append(f"trajectory sample {index} violates the qualified raw-map footprint")
         if gt.get("use") != "evaluation and media only":
             errors.append(f"trajectory sample {index} does not constrain ground truth to evaluation")
+        tilt = _tilt_evaluation(gt.get("orientation_wxyz"))
+        if tilt is None or tilt["passed"] is not True:
+            errors.append(f"trajectory sample {index} has invalid or excessive ground-truth tilt")
+        elif gt.get("tilt_evaluation") != tilt:
+            errors.append(f"trajectory sample {index} tilt evidence does not match its quaternion")
         if first_gt is None:
             first_gt = (x, y)
         ox, oy = _number(odom.get("x_m")), _number(odom.get("y_m"))
@@ -280,26 +305,27 @@ def _validate_media(
     frames = document["frames"]
     if len(frames) < 5:
         errors.append("media must contain at least 5 actual RGB frame pairs")
-    trajectory_pairs: list[tuple[float, int]] = []
+    trajectory_by_frame: dict[int, Mapping[str, Any]] = {}
     for item in trajectory:
         trajectory_time = _number(item.get("sim_time_s"))
         trajectory_frame = item.get("physics_frame")
         if trajectory_time is not None and type(trajectory_frame) is int:
-            trajectory_pairs.append((trajectory_time, trajectory_frame))
+            trajectory_by_frame[trajectory_frame] = item
     for index, frame in enumerate(frames):
         if not isinstance(frame, dict) or frame.get("index") != index:
             errors.append(f"media frame {index} has invalid index")
             continue
         stamp = _number(frame.get("sim_time_s"))
         physics_frame = frame.get("physics_frame")
-        if stamp is None or type(physics_frame) is not int or not trajectory_pairs:
+        if stamp is None or type(physics_frame) is not int or not trajectory_by_frame:
             errors.append(f"media frame {index} has invalid join fields")
         else:
-            validated_stamp = stamp
-            nearest = min(trajectory_pairs, key=lambda item: abs(item[0] - validated_stamp), default=None)
-            if (nearest is None or abs(nearest[0] - validated_stamp) > 0.06
-                    or abs(nearest[1] - physics_frame) > 4):
-                errors.append(f"media frame {index} is not within 0.06 s of trajectory")
+            joined = trajectory_by_frame.get(physics_frame)
+            joined_time = _number(joined.get("sim_time_s")) if joined is not None else None
+            if joined is None or joined_time != stamp:
+                errors.append(f"media frame {index} does not exactly match a trajectory frame/time key")
+            elif frame.get("ground_truth") != joined.get("ground_truth"):
+                errors.append(f"media frame {index} ground truth differs from its trajectory row")
         for prefix in ("", "overview_"):
             relative = _safe_relative(frame.get(prefix + "path"))
             path = output / PurePosixPath(relative) if relative else None
@@ -318,10 +344,13 @@ def _validate_media(
         if frame.get("source") != "actual persistent Isaac Sim RGB render product; no interpolation":
             errors.append(f"media frame {index} lacks actual-render provenance")
     if frames and trajectory:
-        final_stamp = _number(frames[-1].get("sim_time_s"))
-        trajectory_final = _number(trajectory[-1].get("sim_time_s"))
-        if final_stamp is None or trajectory_final is None or abs(final_stamp - trajectory_final) > 0.06:
-            errors.append("final media frame is not joined to final trajectory sample")
+        final = frames[-1]
+        trajectory_final = trajectory[-1]
+        if not isinstance(final, dict) or any(
+            final.get(key) != trajectory_final.get(key)
+            for key in ("physics_frame", "sim_time_s", "ground_truth")
+        ):
+            errors.append("final media frame does not exactly match the final trajectory row")
     meta = scene.get("media")
     if not isinstance(meta, dict) or meta.get("frame_count") != len(frames) or meta.get("initial_and_final") is not True:
         errors.append("scene media metadata does not match frames.json")

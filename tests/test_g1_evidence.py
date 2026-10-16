@@ -85,13 +85,15 @@ class G1EvidenceTest(unittest.TestCase):
             stamp = index / 60
             station = "S1" if index < 120 else "CI" if index < 1380 else "CO" if index < 1440 else "OUT"
             x, y = layout.stations[station]
+            tilt = {"roll_rad": 0.0, "pitch_rad": 0.0, "threshold_rad": 0.35, "passed": True,
+                    "use": "simulator-truth run validity evaluation only; never navigation or steering"}
             trajectory.append({
                 "physics_frame": index, "sim_time_s": stamp,
                 "wheel_angles_rad": [0.0, 0.0],
                 "joint_names": ["caster", "joint_wheel_left", "joint_wheel_right"],
                 "joint_positions_rad": [0.0, 0.0, 0.0],
                 "ground_truth": {"position_xyz_m": [x, y, 0.1], "orientation_wxyz": [1, 0, 0, 0],
-                                 "use": "evaluation and media only"},
+                                 "use": "evaluation and media only", "tilt_evaluation": tilt},
                 "odometry": {"x_m": 0.0, "y_m": 0.0, "yaw_rad": 0.0,
                              "linear_m_s": 0.0, "angular_rad_s": 0.0},
             })
@@ -242,6 +244,23 @@ class G1EvidenceTest(unittest.TestCase):
         report = validate_g1_evidence(self.output, LAYOUT_PATH, RUN_ID, bag_observation=self.bag)
         self.assertTrue(any("every adjacent physics frame" in error for error in report["errors"]))
         self.assertTrue(any("invalid joint/encoder fields" in error for error in report["errors"]))
+
+    def test_media_requires_exact_trajectory_key_and_ground_truth(self) -> None:
+        document = json.loads((self.output / "media/frames.json").read_text())
+        document["frames"][1]["physics_frame"] += 1
+        document["frames"][2]["ground_truth"]["position_xyz_m"][0] += 0.01
+        self._write_json("media/frames.json", document)
+        report = validate_g1_evidence(self.output, LAYOUT_PATH, RUN_ID, bag_observation=self.bag)
+        self.assertTrue(any("trajectory frame/time key" in error for error in report["errors"]))
+        self.assertTrue(any("ground truth differs" in error for error in report["errors"]))
+
+    def test_excessive_ground_truth_tilt_is_rejected_independently(self) -> None:
+        samples = [json.loads(line) for line in (self.output / "trajectory.jsonl").read_text().splitlines()]
+        angle = 0.36
+        samples[10]["ground_truth"]["orientation_wxyz"] = [math.cos(angle / 2), math.sin(angle / 2), 0.0, 0.0]
+        (self.output / "trajectory.jsonl").write_text("".join(json.dumps(item) + "\n" for item in samples), encoding="utf-8")
+        report = validate_g1_evidence(self.output, LAYOUT_PATH, RUN_ID, bag_observation=self.bag)
+        self.assertTrue(any("excessive ground-truth tilt" in error for error in report["errors"]))
 
     def test_action_pose_must_be_fresh_in_map_and_within_goal_tolerance(self) -> None:
         actions = list(self.actions)
