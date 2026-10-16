@@ -14,7 +14,7 @@ import subprocess
 import sys
 import time
 import traceback
-from typing import Any
+from typing import Any, Callable
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from factory_ops.footprint import qualify_footprint
@@ -46,14 +46,187 @@ def _json(path: Path, value: Any) -> None:
     path.write_text(json.dumps(value, indent=2, allow_nan=False) + "\n", encoding="utf-8")
 
 
-def _capture_factory_overview(output: Path, app: Any, rep: Any) -> dict[str, Any]:
-    capture = output / "final-overview"
-    capture.mkdir()
-    rgb = base._capture_overview(capture, app, rep, create_light=False)
-    destination = output / base.IMAGE_FILENAME
-    shutil.move(str(capture / base.IMAGE_FILENAME), destination)
-    rgb["path"] = str(destination)
-    return rgb
+class CaptureSession:
+    """Own persistent Replicator products from Carter load through motion."""
+
+    def __init__(
+        self,
+        output: Path,
+        app: Any,
+        stage: Any,
+        rep: Any,
+        UsdGeom: Any,
+        Gf: Any,
+        SimulationManager: Any,
+        save_rgb: Callable[[Any, Path], None],
+    ) -> None:
+        self.output = output
+        self.app = app
+        self.stage = stage
+        self.rep = rep
+        self.UsdGeom = UsdGeom
+        self.Gf = Gf
+        self.SimulationManager = SimulationManager
+        self.save_rgb = save_rgb
+        self.products: list[Any] = []
+        self.annotators: list[Any] = []
+        self.onboard: dict[str, Any] = {}
+        self.closed = False
+        try:
+            self.rep.orchestrator.set_capture_on_play(False)
+            self.rep.functional.create.dome_light(intensity=800.0, parent="/World", name="G0bPersistentDomeLight")
+            medium = _camera(
+                stage, Gf, UsdGeom, "/World/RobotMotionCamera",
+                (6.0, 1.0, 2.5), (4.5, 4.0, 0.25), base.RENDER_RESOLUTION,
+            )
+            self.medium_product = self._product(str(medium.GetPath()), base.RENDER_RESOLUTION)
+            self.medium_rgb = self._annotator("rgb", self.medium_product)
+        except BaseException as error:
+            try:
+                self.close()
+            except BaseException as cleanup_error:
+                error.add_note(f"capture session setup cleanup failed: {cleanup_error}")
+            raise
+
+    def _product(self, camera_path: str, size: tuple[int, int]) -> Any:
+        product = self.rep.create.render_product(camera_path, size)
+        self.products.append(product)
+        return product
+
+    def _annotator(self, name: str, product: Any) -> Any:
+        annotator = self.rep.annotators.get(name)
+        self.annotators.append(annotator)
+        annotator.attach(product)
+        return annotator
+
+    def _frozen_step(self, label: str, pose_reader: Callable[[], tuple[list[float], list[float]]] | None = None) -> None:
+        before_time = float(self.SimulationManager.get_simulation_time())
+        before_pose = pose_reader() if pose_reader is not None else None
+        for _ in range(5):
+            self.app.update()
+        base._with_alarm(120, label, lambda: self.rep.orchestrator.step(delta_time=0.0))
+        after_time = float(self.SimulationManager.get_simulation_time())
+        after_pose = pose_reader() if pose_reader is not None else None
+        if abs(after_time - before_time) > 1e-8:
+            raise base.SmokeError(f"{label} advanced simulation time")
+        if before_pose is not None and after_pose is not None:
+            if any(abs(left - right) > 1e-5 for left, right in zip(before_pose[0], after_pose[0])):
+                raise base.SmokeError(f"{label} moved the robot while physics was paused")
+            same_orientation = all(abs(left - right) <= 1e-5 for left, right in zip(before_pose[1], after_pose[1]))
+            opposite_orientation = all(abs(left + right) <= 1e-5 for left, right in zip(before_pose[1], after_pose[1]))
+            if not same_orientation and not opposite_orientation:
+                raise base.SmokeError(f"{label} rotated the robot while physics was paused")
+
+    def capture_load_preview(self) -> dict[str, Any]:
+        self._frozen_step("G0b persistent load preview")
+        path = self.output / "diagnostic-load" / base.IMAGE_FILENAME
+        path.parent.mkdir()
+        return self._save(self.medium_rgb, path, base.RENDER_RESOLUTION, [6.0, 1.0, 2.5], [4.5, 4.0, 0.25])
+
+    def capture_factory_overview(self) -> dict[str, Any]:
+        try:
+            if not hasattr(self, "overview_rgb"):
+                overview = _camera(
+                    self.stage, self.Gf, self.UsdGeom, "/World/FactoryOverviewCamera",
+                    (20.0, -24.0, 52.0), (20.0, 12.0, 0.0), base.RENDER_RESOLUTION,
+                )
+                self.overview_product = self._product(str(overview.GetPath()), base.RENDER_RESOLUTION)
+                self.overview_rgb = self._annotator("rgb", self.overview_product)
+            self._frozen_step("G0b persistent factory overview")
+            path = self.output / base.IMAGE_FILENAME
+            return self._save(
+                self.overview_rgb, path, base.RENDER_RESOLUTION,
+                [20.0, -24.0, 52.0], [20.0, 12.0, 0.0],
+            )
+        except BaseException as error:
+            try:
+                self.close()
+            except BaseException as cleanup_error:
+                error.add_note(f"factory overview setup cleanup failed: {cleanup_error}")
+            raise
+
+    def capture_checkpoint(self, name: str) -> dict[str, Any]:
+        if not re.fullmatch(r"[0-9]{2}-[a-z0-9-]+", name):
+            raise base.SmokeError("capture checkpoint name is not safe")
+        self._frozen_step(f"G0b persistent pipeline checkpoint: {name}")
+        path = self.output / "diagnostic-pipeline" / f"{name}.png"
+        path.parent.mkdir(exist_ok=True)
+        evidence = self._save(
+            self.medium_rgb, path, base.RENDER_RESOLUTION,
+            [6.0, 1.0, 2.5], [4.5, 4.0, 0.25],
+        )
+        evidence["checkpoint"] = name
+        return evidence
+
+    def _save(
+        self,
+        annotator: Any,
+        path: Path,
+        size: tuple[int, int],
+        camera_position: list[float],
+        camera_look_at: list[float],
+    ) -> dict[str, Any]:
+        self.save_rgb(annotator.get_data(), path)
+        width, height = base._png_dimensions(path)
+        if (width, height) != size:
+            raise base.SmokeError(f"persistent RGB capture has wrong resolution: {(width, height)} != {size}")
+        return {
+            "path": str(path),
+            "sha256": base._sha256(path),
+            "width": width,
+            "height": height,
+            "bytes": path.stat().st_size,
+            "camera_position": camera_position,
+            "camera_look_at": camera_look_at,
+            "source": "persistent Replicator RGB annotator; no interpolation",
+        }
+
+    def prime_onboard(self, pose_reader: Callable[[], tuple[list[float], list[float]]]) -> dict[str, Any]:
+        try:
+            camera = _camera(
+                self.stage, self.Gf, self.UsdGeom,
+                ROBOT_PATH + "/chassis_link/QualificationCamera",
+                (0.35, 0.0, 0.65), (4.0, 0.0, 0.5), SENSOR_SIZE,
+            )
+            product = self._product(str(camera.GetPath()), SENSOR_SIZE)
+            for name in ["rgb", "distance_to_image_plane", "semantic_segmentation", "bounding_box_2d_tight", "camera_params"]:
+                self.onboard[name] = self._annotator(name, product)
+                self._frozen_step(f"G0b onboard annotator priming: {name}", pose_reader)
+            return self.onboard
+        except BaseException as error:
+            try:
+                self.close()
+            except BaseException as cleanup_error:
+                error.add_note(f"onboard setup cleanup failed: {cleanup_error}")
+            raise
+
+    def close(self) -> None:
+        if self.closed:
+            return
+        self.closed = True
+        errors: list[str] = []
+        try:
+            base._with_alarm(120, "G0b capture session drain", self.rep.orchestrator.wait_until_complete)
+        except BaseException as error:
+            errors.append(f"writer drain: {type(error).__name__}: {error}")
+        for annotator in reversed(self.annotators):
+            try:
+                annotator.detach()
+            except BaseException as error:
+                errors.append(f"annotator detach: {type(error).__name__}: {error}")
+        for product in reversed(self.products):
+            try:
+                product.destroy()
+            except BaseException as error:
+                errors.append(f"render product destroy: {type(error).__name__}: {error}")
+        if errors:
+            raise base.SmokeError("capture session cleanup failed: " + "; ".join(errors))
+
+
+def _capture_factory_overview(output: Path, session: CaptureSession) -> dict[str, Any]:
+    if output != session.output:
+        raise base.SmokeError("factory overview output does not match capture session root")
+    return session.capture_factory_overview()
 
 
 def _collision_bounds(stage: Any, Usd: Any, UsdGeom: Any, UsdPhysics: Any) -> tuple[list[list[float]], list[dict[str, Any]]]:
@@ -156,22 +329,25 @@ def _camera(stage: Any, Gf: Any, UsdGeom: Any, path: str, eye: tuple[float, ...]
     return cam
 
 
-def _capture_motion(output: Path, app: Any, stage: Any, robot: Any, rep: Any, np: Any, UsdGeom: Any, Gf: Any, SimulationManager: Any, rclpy: Any, node: Any) -> dict[str, Any]:
+def _capture_motion(
+    output: Path,
+    app: Any,
+    robot: Any,
+    rep: Any,
+    np: Any,
+    Gf: Any,
+    SimulationManager: Any,
+    rclpy: Any,
+    node: Any,
+    capture_session: CaptureSession,
+) -> dict[str, Any]:
     from PIL import Image, ImageDraw
     import omni.timeline
 
     timeline = omni.timeline.get_timeline_interface()
     (output / "media").mkdir()
     (output / "sensors").mkdir()
-    medium = _camera(stage, Gf, UsdGeom, "/World/RobotMotionCamera", (6, 1, 2.5), (4.5, 4, 0.25), base.RENDER_RESOLUTION)
-    camera = _camera(stage, Gf, UsdGeom, ROBOT_PATH + "/chassis_link/QualificationCamera", (0.35, 0, 0.65), (4, 0, 0.5), SENSOR_SIZE)
-    products = [rep.create.render_product(str(medium.GetPath()), base.RENDER_RESOLUTION),
-                rep.create.render_product(str(camera.GetPath()), SENSOR_SIZE)]
-    medium_rgb = rep.annotators.get("rgb")
-    medium_rgb.attach(products[0])
-    annotators = {name: rep.annotators.get(name) for name in ["rgb", "distance_to_image_plane", "semantic_segmentation", "bounding_box_2d_tight", "camera_params"]}
-    for annotator in annotators.values():
-        annotator.attach(products[1])
+    medium_rgb = capture_session.medium_rgb
     trajectory: list[dict[str, Any]] = []
     frames: list[dict[str, Any]] = []
     sensor_frames: list[dict[str, Any]] = []
@@ -191,29 +367,23 @@ def _capture_motion(output: Path, app: Any, stage: Any, robot: Any, rep: Any, np
         return sample
 
     try:
-        # Prepare one render pipeline before warmup and retain it through capture.
-        timeline.pause()
-        for _ in range(5):
-            app.update()
-        before_priming = float(SimulationManager.get_simulation_time())
-        base._with_alarm(120, "G0b render graph priming", lambda: rep.orchestrator.step(delta_time=0.0))
-        if abs(float(SimulationManager.get_simulation_time()) - before_priming) > 1e-8:
-            raise base.SmokeError("render graph priming advanced simulation time")
-        Image.fromarray(np.asarray(medium_rgb.get_data())[:, :, :3].astype(np.uint8)).save(output / "carter-render-priming.png")
         timeline.play()
         for _ in range(WARMUP_STEPS):
             app.update()
             rclpy.spin_once(node, timeout_sec=0.0)
         timeline.pause()
+        annotators = capture_session.prime_onboard(pose)
         before_drive = float(SimulationManager.get_simulation_time())
         before_position, _ = pose()
-        for _ in range(5):
-            app.update()
-        base._with_alarm(120, "G0b predrive capture", lambda: rep.orchestrator.step(delta_time=0.0))
+        primed = Image.fromarray(np.asarray(medium_rgb.get_data())[:, :, :3].astype(np.uint8))
+        primed.save(output / "carter-render-priming.png")
+        primed.save(output / "carter-predrive.png")
+        primed.close()
+        if abs(float(SimulationManager.get_simulation_time()) - before_drive) > 1e-8:
+            raise base.SmokeError("onboard priming advanced physics before drive")
         after_position, _ = pose()
-        if abs(float(SimulationManager.get_simulation_time()) - before_drive) > 1e-8 or any(abs(a-b) > 1e-5 for a,b in zip(after_position, before_position)):
-            raise base.SmokeError("predrive capture advanced physics while the frame was frozen")
-        Image.fromarray(np.asarray(medium_rgb.get_data())[:, :, :3].astype(np.uint8)).save(output / "carter-predrive.png")
+        if any(abs(a-b) > 1e-5 for a,b in zip(after_position, before_position)):
+            raise base.SmokeError("onboard priming moved the robot before drive")
         timeline.play()
         start_sim = float(SimulationManager.get_simulation_time())
         started = time.monotonic()
@@ -308,21 +478,8 @@ def _capture_motion(output: Path, app: Any, stage: Any, robot: Any, rep: Any, np
                                 "render_graph_primed_before_warmup": True, "predrive_capture": True,
                                 "gif_encoding_included": False, "gpu_observation": gpu}}
     finally:
-        active_error = sys.exception()
-        cleanup_errors = []
-        actions = [*[image.close for image in gif_images], medium_rgb.detach,
-                   *[annotator.detach for annotator in annotators.values()], *[product.destroy for product in products]]
-        for action in actions:
-            try:
-                action()
-            except BaseException as error:
-                cleanup_errors.append(f"{type(error).__name__}: {error}")
-        if cleanup_errors:
-            message = "sensor cleanup failed: " + "; ".join(cleanup_errors)
-            if active_error is not None:
-                active_error.add_note(message)
-            else:
-                raise base.SmokeError(message)
+        for image in gif_images:
+            image.close()
 
 
 def _worker(args: argparse.Namespace) -> int:
@@ -333,6 +490,7 @@ def _worker(args: argparse.Namespace) -> int:
     result: dict[str, Any] = {"schema_version": 2, "run_id": args.run_id, "qualification": "g0b",
                              "primary_evaluation": False, "status": "running", "cleanup": "pending"}
     rclpy = node = None
+    capture_session: CaptureSession | None = None
     valid = False
     try:
         if not re.fullmatch(r"[0-9a-f]{32}", args.run_id or ""):
@@ -354,7 +512,7 @@ def _worker(args: argparse.Namespace) -> int:
         from isaacsim import SimulationApp
         app = SimulationApp({"headless": True, "renderer": "RealTimePathTracing", "sync_loads": True, "fast_shutdown": True})
         import numpy as np
-        import omni.timeline
+        from PIL import Image
         import omni.replicator.core as rep
         from pxr import Gf, Semantics, Usd, UsdGeom, UsdPhysics
         import isaacsim.core.experimental.utils.stage as stage_utils
@@ -382,15 +540,23 @@ def _worker(args: argparse.Namespace) -> int:
         spawn_x, spawn_y = layout.stations["S1"]
         UsdGeom.Xformable(stage.GetPrimAtPath(ROBOT_PATH)).AddTranslateOp(opSuffix="qualificationSpawn").Set(Gf.Vec3d(spawn_x, spawn_y, 0.1))
         robot = WheeledRobot(ROBOT_PATH, wheel_dof_names=WHEEL_JOINTS)
+
+        def save_rgb(data: Any, path: Path) -> None:
+            image = Image.fromarray(np.asarray(data)[:, :, :3].astype(np.uint8))
+            try:
+                image.save(path)
+            finally:
+                image.close()
+
+        capture_session = CaptureSession(output, app, stage, rep, UsdGeom, Gf, SimulationManager, save_rgb)
         checkpoint("capture_load_preview")
-        diagnostic = output / "diagnostic-load"
-        diagnostic.mkdir()
-        result["load_preview"] = base._capture_overview(
-            diagnostic, app, rep, camera_position=(spawn_x + 3.0, spawn_y - 3.2, 2.8),
-            camera_look_at=(spawn_x, spawn_y, 0.5),
-        )
+        result["load_preview"] = capture_session.capture_load_preview()
+        result["rgb"] = _capture_factory_overview(output, capture_session)
+        result["rgb"]["capture_scope"] = "static factory and robot placement immediately after Carter load"
+        result["pipeline_checkpoints"] = [capture_session.capture_checkpoint("01-after-overview")]
         checkpoint("inspect_robot_collision_geometry")
         bounds, colliders = _collision_bounds(stage, Usd, UsdGeom, UsdPhysics)
+        result["pipeline_checkpoints"].append(capture_session.capture_checkpoint("02-after-collision-query"))
         footprint = qualify_footprint(layout, bounds)
         result["robot"] = {"prim_path": ROBOT_PATH, "asset_url": asset, "wheel_dof_names": WHEEL_JOINTS,
                            "enabled_collision_count": len(colliders), "colliders": colliders,
@@ -404,22 +570,24 @@ def _worker(args: argparse.Namespace) -> int:
             semantic = Semantics.SemanticsAPI.Apply(prim, "Semantics")
             semantic.CreateSemanticTypeAttr("class")
             semantic.CreateSemanticDataAttr(label)
+        result["pipeline_checkpoints"].append(capture_session.capture_checkpoint("03-after-semantics"))
         checkpoint("ros_clock_setup")
         rclpy, node, stamps = _clock_graph(stage, app)
+        result["pipeline_checkpoints"].append(capture_session.capture_checkpoint("04-after-ros"))
         SimulationManager.setup_simulation(dt=1.0/60.0)
-        timeline = omni.timeline.get_timeline_interface()
-        checkpoint("capture_overview")
-        timeline.pause()
-        result["rgb"] = _capture_factory_overview(output, app, rep)
-        result["rgb"]["capture_scope"] = "static factory and robot placement before physics warmup"
         checkpoint("stationary_warmup_motion_and_sensors")
-        result.update(_capture_motion(output, app, stage, robot, rep, np, UsdGeom, Gf, SimulationManager, rclpy, node))
+        result.update(_capture_motion(output, app, robot, rep, np, Gf, SimulationManager, rclpy, node, capture_session))
         result["robot"]["dof_names"] = robot.dof_names
-        result["render_lifecycle"] = "motion and onboard render products created before physics warmup and retained through capture"
+        result["render_lifecycle"] = (
+            "medium and overview RGB products retained from Carter load through motion; "
+            "onboard annotators attached sequentially after warmup and retained through motion"
+        )
         result["ros2"] = {"distro": "jazzy", "domain_id": os.environ["ROS_DOMAIN_ID"], "clock_topic": "/clock",
                           "clock_messages": len(stamps), "clock_advanced": len(stamps) >= 2 and stamps[-1] > stamps[0] and all(b >= a for a,b in zip(stamps, stamps[1:])),
                           "clock_samples": stamps, "subscriber_qos": "BEST_EFFORT depth 10",
                           "sensor_topics": "not yet published; G1 integration"}
+        capture_session.close()
+        capture_session = None
         stage.GetRootLayer().Export(str(output / "robot-scene.usda"))
         result["artifact_manifest"] = [{"path": str(path.relative_to(output)).replace("\\", "/"), "bytes": path.stat().st_size,
                                         "sha256": base._sha256(path)} for path in sorted(output.rglob("*"))
@@ -437,7 +605,10 @@ def _worker(args: argparse.Namespace) -> int:
         print(f"FACTORY_OPS_G0B_ERROR={phase}: {type(error).__name__}: {error}", flush=True)
     finally:
         cleanup_errors = []
-        for action in ([node.destroy_node] if node is not None else []) + ([rclpy.shutdown] if rclpy is not None else []):
+        actions = ([capture_session.close] if capture_session is not None else [])
+        actions += ([node.destroy_node] if node is not None else [])
+        actions += ([rclpy.shutdown] if rclpy is not None else [])
+        for action in actions:
             try:
                 action()
             except BaseException as error:
