@@ -15,7 +15,7 @@ import subprocess
 import sys
 import time
 import traceback
-from typing import Any
+from typing import Any, Callable
 from uuid import UUID, uuid4
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
@@ -27,6 +27,45 @@ def atomic_json(path: Path, value: Any) -> None:
     temporary = path.with_suffix(path.suffix + ".tmp")
     temporary.write_text(json.dumps(value, indent=2, allow_nan=False) + "\n", encoding="utf-8")
     temporary.replace(path)
+
+
+class LifecycleStatePoller:
+    """Bound lifecycle GetState requests while retaining pending and ACTIVE state."""
+
+    def __init__(self, names: list[str], *, minimum_interval_s: float = 0.5) -> None:
+        if minimum_interval_s <= 0 or not math.isfinite(minimum_interval_s):
+            raise ValueError("lifecycle request interval must be finite and positive")
+        self.minimum_interval_s = minimum_interval_s
+        self.states: dict[str, int | None] = {name: None for name in names}
+        self._futures: dict[str, Any] = {}
+        self._last_request_s: dict[str, float] = {name: -math.inf for name in names}
+
+    def poll(
+        self,
+        wall_time_s: float,
+        clients: dict[str, Any],
+        request_factory: Callable[[], Any],
+    ) -> dict[str, int | None]:
+        if not math.isfinite(wall_time_s):
+            raise ValueError("lifecycle polling wall time must be finite")
+        if set(clients) != set(self.states):
+            raise ValueError("lifecycle clients differ from configured nodes")
+        for name, state_client in clients.items():
+            future = self._futures.get(name)
+            if future is not None:
+                if not future.done():
+                    continue
+                response = future.result()
+                self.states[name] = response.current_state.id if response is not None else None
+                del self._futures[name]
+            if self.states[name] == 3:
+                continue
+            if wall_time_s - self._last_request_s[name] < self.minimum_interval_s:
+                continue
+            if state_client.service_is_ready():
+                self._futures[name] = state_client.call_async(request_factory())
+                self._last_request_s[name] = wall_time_s
+        return dict(self.states)
 
 
 def prepare_params(project: Path, output: Path, ready: dict[str, Any], layout: Layout) -> Path:
@@ -135,8 +174,8 @@ def main() -> int:
         client = ActionClient(node, NavigateToPose, "navigate_to_pose")
         lifecycle_clients = {name: node.create_client(GetState, f"/{name}/get_state")
                              for name in ("planner_server", "controller_server", "bt_navigator")}
-        lifecycle_states: dict[str, int | None] = {name: None for name in lifecycle_clients}
-        lifecycle_futures: dict[str, Any] = {}
+        lifecycle_poller = LifecycleStatePoller(list(lifecycle_clients))
+        lifecycle_states = dict(lifecycle_poller.states)
         tf_buffer = Buffer(node=node)
         tf_listener = TransformListener(tf_buffer, node)
         control_publisher = node.create_publisher(Twist, "/cmd_vel", 10)
@@ -199,14 +238,9 @@ def main() -> int:
         startup_deadline = time.monotonic() + 240
         while True:
             spin()
-            for name, state_client in lifecycle_clients.items():
-                future = lifecycle_futures.get(name)
-                if future is not None and future.done():
-                    response = future.result()
-                    lifecycle_states[name] = response.current_state.id if response is not None else None
-                    del lifecycle_futures[name]
-                if lifecycle_states[name] != 3 and name not in lifecycle_futures and state_client.service_is_ready():
-                    lifecycle_futures[name] = state_client.call_async(GetState.Request())
+            lifecycle_states = lifecycle_poller.poll(
+                time.monotonic(), lifecycle_clients, GetState.Request,
+            )
             try:
                 pose = localization()
             except Exception:
