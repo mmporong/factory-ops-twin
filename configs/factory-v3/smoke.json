@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "backend": "cpu_event_model",
+  "primary_evaluation": false,
+  "description": "Explicit small workload for software integration only; not the calibrated 60-trial evaluation",
+  "assumptions": {
+    "speed_m_s": 0.6,
+    "handoff_dwell_s": 5.0,
+    "input_capacity": 2,
+    "output_capacity": 2,
+    "workers": 1,
+    "service_time_s": 20.0,
+    "provenance": "Authored smoke-test assumptions; not robot or factory measurements"
+  },
+  "robots": [
+    {"robot_id": "carter1", "location": "P1"},
+    {"robot_id": "carter2", "location": "P2"}
+  ],
+  "orders": [
+    {"order_id": "O001", "payload_id": "T001", "source_station": "S1", "ready_time": 0.0},
+    {"order_id": "O002", "payload_id": "T002", "source_station": "S2", "ready_time": 0.0},
+    {"order_id": "O003", "payload_id": "T003", "source_station": "S3", "ready_time": 0.0},
+    {"order_id": "O004", "payload_id": "T004", "source_station": "S1", "ready_time": 40.0},
+    {"order_id": "O005", "payload_id": "T005", "source_station": "S2", "ready_time": 40.0},
+    {"order_id": "O006", "payload_id": "T006", "source_station": "S3", "ready_time": 40.0}
+  ]
+}

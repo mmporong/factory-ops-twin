@@ -1,0 +1,603 @@
+{
+  "schema_version": 1,
+  "revision": "amr-focus-v3",
+  "status": "planning geometry; authored dimensions, not surveyed factory CAD or validated Carter clearances",
+  "units": "m",
+  "frame": "map",
+  "rect_convention": "xmin,ymin,xmax,ymax; grid uses cell centers",
+  "bounds_xy": [
+    0,
+    0,
+    40,
+    24
+  ],
+  "map_resolution_m": 0.05,
+  "grid_rules": {
+    "origin_xy_m": [
+      0,
+      0
+    ],
+    "row_direction": "+y from south; column +x from west",
+    "coordinate_unit": "exact integer millimeters; authored edges are multiples of 50mm",
+    "cell_center_mm": "(50*column+25, 50*row+25)",
+    "coordinate_to_cell": "floor(x_mm/50), floor(y_mm/50); at a boundary choose the +x/+y cell",
+    "rect_rasterization": "half-open [min,max) evaluated at cell centers",
+    "planning_probe": "nominal 0.7m half-extent axis-aligned square; k=ceil(700mm/50mm)=14; all 29x29 cells including boundary must be free; whole-cell cover is 1.45m",
+    "distance": "4-neighbor unit edges; distance_mm=edge_count*50; divide by 1000 only for report",
+    "not_a_carter_footprint": true
+  },
+  "geometry_authority": "Union of amr_allowed_regions minus physical_obstacles. Other floor is AMR keepout, not necessarily solid equipment. Physical walls and policy keepout are recorded separately.",
+  "width_status": "3m mains and bays / 2m branches are candidate authored widths; require actual footprint, costmap and docking qualification",
+  "amr_allowed_regions": [
+    {
+      "id": "MAIN_LOW",
+      "rect": [
+        2.5,
+        2.5,
+        37.5,
+        5.5
+      ],
+      "purpose": "main transport, Z_UPPER"
+    },
+    {
+      "id": "MAIN_HIGH",
+      "rect": [
+        2.5,
+        18.5,
+        37.5,
+        21.5
+      ],
+      "purpose": "alternate main transport, Z_LOWER"
+    },
+    {
+      "id": "WEST_LINK",
+      "rect": [
+        11,
+        4,
+        13,
+        20
+      ],
+      "purpose": "single-robot source access"
+    },
+    {
+      "id": "CENTER_LINK",
+      "rect": [
+        19,
+        4,
+        21,
+        20
+      ],
+      "purpose": "single-robot cross-link"
+    },
+    {
+      "id": "EAST_SPINE",
+      "rect": [
+        30.5,
+        4,
+        33.5,
+        20
+      ],
+      "purpose": "main transport, J_SHIP"
+    },
+    {
+      "id": "S2_APPROACH",
+      "rect": [
+        4,
+        11,
+        12,
+        13
+      ],
+      "purpose": "single-robot kitting access"
+    },
+    {
+      "id": "S2_BAY",
+      "rect": [
+        2.5,
+        10.5,
+        5.5,
+        13.5
+      ],
+      "purpose": "logical pickup bay"
+    },
+    {
+      "id": "CI_APPROACH",
+      "rect": [
+        28,
+        7,
+        32,
+        9
+      ],
+      "purpose": "single-robot input access"
+    },
+    {
+      "id": "CI_BAY",
+      "rect": [
+        26.5,
+        6.5,
+        29.5,
+        9.5
+      ],
+      "purpose": "logical input handoff bay"
+    },
+    {
+      "id": "CO_APPROACH",
+      "rect": [
+        28,
+        15,
+        32,
+        17
+      ],
+      "purpose": "single-robot output access"
+    },
+    {
+      "id": "CO_BAY",
+      "rect": [
+        26.5,
+        14.5,
+        29.5,
+        17.5
+      ],
+      "purpose": "logical output handoff bay"
+    },
+    {
+      "id": "OUT_APPROACH",
+      "rect": [
+        32,
+        11,
+        36,
+        13
+      ],
+      "purpose": "single-robot shipping access"
+    },
+    {
+      "id": "OUT_BAY",
+      "rect": [
+        34.5,
+        10.5,
+        37.5,
+        13.5
+      ],
+      "purpose": "finished goods handoff bay"
+    },
+    {
+      "id": "P1_POCKET",
+      "rect": [
+        14.5,
+        0.25,
+        17.5,
+        4
+      ],
+      "purpose": "off-main yielding and parking"
+    },
+    {
+      "id": "P2_POCKET",
+      "rect": [
+        14.5,
+        20,
+        17.5,
+        23.75
+      ],
+      "purpose": "off-main yielding and parking"
+    }
+  ],
+  "stations": [
+    {
+      "id": "S1",
+      "xy": [
+        4,
+        4
+      ],
+      "role": "prepared material source A",
+      "physical_payload": false
+    },
+    {
+      "id": "S2",
+      "xy": [
+        4,
+        12
+      ],
+      "role": "prepared material source B",
+      "physical_payload": false
+    },
+    {
+      "id": "S3",
+      "xy": [
+        4,
+        20
+      ],
+      "role": "prepared material source C",
+      "physical_payload": false
+    },
+    {
+      "id": "CI",
+      "xy": [
+        28,
+        8
+      ],
+      "role": "one workcell input buffer",
+      "capacity": 2,
+      "physical_payload": false
+    },
+    {
+      "id": "CO",
+      "xy": [
+        28,
+        16
+      ],
+      "role": "same workcell output buffer",
+      "capacity": 2,
+      "physical_payload": false
+    },
+    {
+      "id": "OUT",
+      "xy": [
+        36,
+        12
+      ],
+      "role": "finished goods staging handoff",
+      "physical_payload": false
+    }
+  ],
+  "pockets": {
+    "P1": [
+      16,
+      1.5
+    ],
+    "P2": [
+      16,
+      22.5
+    ]
+  },
+  "workcell": {
+    "id": "CELL_1",
+    "workers": 1,
+    "input_capacity": 2,
+    "output_capacity": 2,
+    "service_sim_s": 20,
+    "all_visual_equipment_blocks_are_one_logical_cell": true
+  },
+  "reserved_work_areas": [
+    {
+      "id": "KITTING_EDGE",
+      "rect": [
+        2.5,
+        0.5,
+        10.5,
+        2.25
+      ],
+      "purpose": "preparation benches; no AMR passage"
+    },
+    {
+      "id": "MARKET_A",
+      "rect": [
+        2.5,
+        5.75,
+        10.5,
+        10.5
+      ],
+      "purpose": "source racks and staff access; not solid floor fill"
+    },
+    {
+      "id": "MARKET_B",
+      "rect": [
+        2.5,
+        13.5,
+        10.5,
+        18.25
+      ],
+      "purpose": "source racks and staff access; not solid floor fill"
+    },
+    {
+      "id": "BENCH_A",
+      "rect": [
+        13.25,
+        5.75,
+        18.75,
+        11.5
+      ],
+      "purpose": "grouped assembly/inspection benches; same logical cell"
+    },
+    {
+      "id": "BENCH_B",
+      "rect": [
+        13.25,
+        12.5,
+        18.75,
+        18.25
+      ],
+      "purpose": "grouped inspection/packing benches; same logical cell"
+    },
+    {
+      "id": "CELL_EQUIPMENT",
+      "rect": [
+        21.25,
+        5.75,
+        26.25,
+        18.25
+      ],
+      "purpose": "one logical production cell equipment and maintenance clearances"
+    },
+    {
+      "id": "STAGING_LOW",
+      "rect": [
+        33.75,
+        5.75,
+        39.5,
+        10.25
+      ],
+      "purpose": "finished goods staging; no AMR shortcut"
+    },
+    {
+      "id": "STAGING_HIGH",
+      "rect": [
+        33.75,
+        13.75,
+        39.5,
+        18.25
+      ],
+      "purpose": "finished goods staging; no AMR shortcut"
+    },
+    {
+      "id": "STAFF_WEST",
+      "rect": [
+        0.25,
+        0.25,
+        2,
+        23.75
+      ],
+      "purpose": "separate staff strip; human actor and certified safe crossings not modeled"
+    },
+    {
+      "id": "SERVICE_EDGE",
+      "rect": [
+        22,
+        21.75,
+        30,
+        23.5
+      ],
+      "purpose": "maintenance cabinets; not charging physics"
+    }
+  ],
+  "physical_obstacles": [
+    {
+      "id": "KIT_BENCH_1",
+      "rect": [
+        3,
+        0.75,
+        6,
+        1.75
+      ],
+      "height_m": 0.9,
+      "type": "workbench"
+    },
+    {
+      "id": "KIT_BENCH_2",
+      "rect": [
+        7,
+        0.75,
+        10,
+        1.75
+      ],
+      "height_m": 0.9,
+      "type": "workbench"
+    },
+    {
+      "id": "RACK_A1",
+      "rect": [
+        3,
+        6.25,
+        10,
+        7.25
+      ],
+      "height_m": 2.1,
+      "type": "tote rack"
+    },
+    {
+      "id": "RACK_A2",
+      "rect": [
+        3,
+        8.75,
+        10,
+        9.75
+      ],
+      "height_m": 2.1,
+      "type": "tote rack"
+    },
+    {
+      "id": "RACK_B1",
+      "rect": [
+        3,
+        14,
+        10,
+        15
+      ],
+      "height_m": 2.1,
+      "type": "tote rack"
+    },
+    {
+      "id": "RACK_B2",
+      "rect": [
+        3,
+        16.5,
+        10,
+        17.5
+      ],
+      "height_m": 2.1,
+      "type": "tote rack"
+    },
+    {
+      "id": "BENCH_A1",
+      "rect": [
+        13.75,
+        6.25,
+        15.75,
+        10.75
+      ],
+      "height_m": 1.1,
+      "type": "assembly bench group"
+    },
+    {
+      "id": "BENCH_A2",
+      "rect": [
+        17,
+        6.25,
+        18.25,
+        10.75
+      ],
+      "height_m": 1.6,
+      "type": "inspection cabinet group"
+    },
+    {
+      "id": "BENCH_B1",
+      "rect": [
+        13.75,
+        13,
+        15.75,
+        17.75
+      ],
+      "height_m": 1.1,
+      "type": "packing bench group"
+    },
+    {
+      "id": "BENCH_B2",
+      "rect": [
+        17,
+        13,
+        18.25,
+        17.75
+      ],
+      "height_m": 1.6,
+      "type": "inspection cabinet group"
+    },
+    {
+      "id": "PROCESS_1",
+      "rect": [
+        21.5,
+        6,
+        25.75,
+        10
+      ],
+      "height_m": 2.2,
+      "type": "process equipment group"
+    },
+    {
+      "id": "PROCESS_2",
+      "rect": [
+        21.5,
+        10.5,
+        25.75,
+        14
+      ],
+      "height_m": 2.2,
+      "type": "process equipment group"
+    },
+    {
+      "id": "PROCESS_3",
+      "rect": [
+        21.5,
+        14.5,
+        25.75,
+        18
+      ],
+      "height_m": 2.2,
+      "type": "process equipment group"
+    },
+    {
+      "id": "CELL_CABINET",
+      "rect": [
+        27,
+        10.25,
+        29.75,
+        13.75
+      ],
+      "height_m": 1.8,
+      "type": "cell control cabinet"
+    },
+    {
+      "id": "CI_BUFFER",
+      "rect": [
+        26.25,
+        6.75,
+        26.45,
+        9.25
+      ],
+      "height_m": 1.1,
+      "type": "input buffer fixture"
+    },
+    {
+      "id": "CO_BUFFER",
+      "rect": [
+        26.25,
+        14.75,
+        26.45,
+        17.25
+      ],
+      "height_m": 1.1,
+      "type": "output buffer fixture"
+    },
+    {
+      "id": "FG_LOW",
+      "rect": [
+        34.25,
+        6.25,
+        39,
+        9.75
+      ],
+      "height_m": 1.4,
+      "type": "finished goods staging"
+    },
+    {
+      "id": "FG_HIGH",
+      "rect": [
+        34.25,
+        14.25,
+        39,
+        17.75
+      ],
+      "height_m": 1.4,
+      "type": "finished goods staging"
+    },
+    {
+      "id": "SERVICE_CABINET",
+      "rect": [
+        22.5,
+        22.25,
+        29.5,
+        23.25
+      ],
+      "height_m": 1.8,
+      "type": "service cabinets"
+    }
+  ],
+  "blocked_aisle": {
+    "rect": [
+      25.5,
+      2.5,
+      26.5,
+      5.5
+    ],
+    "height_m": 1.5,
+    "active_sim_s": [
+      0,
+      600
+    ],
+    "observed_by": "LiDAR/costmap; future removal time evaluator only"
+  },
+  "traffic_reference": "traffic.json",
+  "unchanged_contracts": [
+    "6 station coordinates",
+    "2 Nova Carter",
+    "1 logical workcell",
+    "F1/F2/F3 goals and resource polygons",
+    "FIFO/ETA x 3 conditions x 10 seeds = 60 trials",
+    "payload handoff is logical",
+    "no required empty-container task or human actors"
+  ],
+  "unperformed_validation": [
+    "USD/collider export",
+    "actual Carter footprint and yaw envelopes",
+    "Nav2/global/local costmap keepout behavior",
+    "docking precision or load rating",
+    "GPU/RTF/VRAM"
+  ]
+}

@@ -1,0 +1,12 @@
+.venv/
+__pycache__/
+*.py[cod]
+runs/
+artifacts/
+assets/vendor/
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+.DS_Store

@@ -1,0 +1,13 @@
+[project]
+name = "factory-ops-twin"
+version = "0.1.0"
+description = "Reproducible AMR manufacturing logistics validation"
+requires-python = ">=3.12,<3.13"
+dependencies = []
+
+[tool.uv]
+package = false
+
+[tool.pyright]
+pythonVersion = "3.12"
+include = ["factory_ops", "tests"]
