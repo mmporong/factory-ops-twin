@@ -31,6 +31,19 @@ STAGE_LOAD_TIMEOUT_SECONDS = 120.0
 WRITER_TIMEOUT_SECONDS = 120.0
 RESULT_FILENAME = "stage-smoke.json"
 IMAGE_FILENAME = "factory-overview.png"
+EXPECTED_FLOOR_COLLISION = {
+    "path": "/World/Floor", "type_name": "Plane", "collision_api": True,
+    "collision_enabled": True, "axis": "Z", "extent": [[-1.0, -1.0, 0.0], [1.0, 1.0, 0.0]],
+    "visibility": "invisible", "translation_xyz": [0.0, 0.0, 0.0],
+    "orientation_wxyz": [1.0, 0.0, 0.0, 0.0], "scale_xyz": [1.0, 1.0, 1.0],
+    "xform_order": ["xformOp:translate", "xformOp:orient", "xformOp:scale"],
+    "physics_scope": "infinite plane; bounded operation is enforced by the 40x24 m occupancy map",
+}
+EXPECTED_FLOOR_VISUAL = {
+    "path": "/World/FloorVisual", "type_name": "Cube", "collision_api": False,
+    "collision_enabled": False, "size": 2.0, "scale_xyz": [20.0, 12.0, 0.05],
+    "translation_xyz": [20.0, 12.0, -0.05],
+}
 
 _T = TypeVar("_T")
 
@@ -158,6 +171,57 @@ def _inspect_stage(stage: Any, UsdGeom: Any, UsdPhysics: Any) -> tuple[dict[str,
         for path in marker_paths
         if stage.GetPrimAtPath(path).HasAPI(UsdPhysics.CollisionAPI)
     ]
+    floor = stage.GetPrimAtPath("/World/Floor")
+    floor_visual = stage.GetPrimAtPath("/World/FloorVisual")
+
+    def vector_attribute(prim: Any, name: str) -> list[float] | None:
+        value = prim.GetAttribute(name).Get() if prim.IsValid() else None
+        if value is None:
+            return None
+        try:
+            return [float(component) for component in value]
+        except (TypeError, ValueError):
+            return None
+
+    def quaternion_attribute(prim: Any, name: str) -> list[float] | None:
+        value = prim.GetAttribute(name).Get() if prim.IsValid() else None
+        if value is None or not hasattr(value, "GetReal") or not hasattr(value, "GetImaginary"):
+            return None
+        imaginary = value.GetImaginary()
+        return [float(value.GetReal()), *(float(component) for component in imaginary)]
+
+    extent_value = floor.GetAttribute("extent").Get() if floor.IsValid() else None
+    if extent_value is None:
+        floor_extent = None
+    else:
+        try:
+            floor_extent = [[float(component) for component in point] for point in extent_value]
+        except (TypeError, ValueError):
+            floor_extent = None
+    floor_collision = {
+        "path": "/World/Floor",
+        "type_name": str(floor.GetTypeName()) if floor.IsValid() else None,
+        "collision_api": floor.HasAPI(UsdPhysics.CollisionAPI) if floor.IsValid() else False,
+        "collision_enabled": floor.GetAttribute("physics:collisionEnabled").Get() if floor.IsValid() else None,
+        "axis": str(floor.GetAttribute("axis").Get()) if floor.IsValid() else None,
+        "extent": floor_extent,
+        "visibility": str(floor.GetAttribute("visibility").Get()) if floor.IsValid() else None,
+        "translation_xyz": vector_attribute(floor, "xformOp:translate"),
+        "orientation_wxyz": quaternion_attribute(floor, "xformOp:orient"),
+        "scale_xyz": vector_attribute(floor, "xformOp:scale"),
+        "xform_order": [str(value) for value in floor.GetAttribute("xformOpOrder").Get()]
+        if floor.IsValid() and floor.GetAttribute("xformOpOrder").Get() is not None else None,
+        "physics_scope": str(floor.GetAttribute("physicsScope").Get()) if floor.IsValid() else None,
+    }
+    floor_visual_record = {
+        "path": "/World/FloorVisual",
+        "type_name": str(floor_visual.GetTypeName()) if floor_visual.IsValid() else None,
+        "collision_api": floor_visual.HasAPI(UsdPhysics.CollisionAPI) if floor_visual.IsValid() else False,
+        "collision_enabled": floor_visual.GetAttribute("physics:collisionEnabled").Get() if floor_visual.IsValid() else None,
+        "size": float(floor_visual.GetAttribute("size").Get()) if floor_visual.IsValid() else None,
+        "scale_xyz": vector_attribute(floor_visual, "xformOp:scale"),
+        "translation_xyz": vector_attribute(floor_visual, "xformOp:translate"),
+    }
 
     observed = {
         "default_prim": default_prim_name,
@@ -172,6 +236,8 @@ def _inspect_stage(stage: Any, UsdGeom: Any, UsdPhysics: Any) -> tuple[dict[str,
         "expected_collision_prim_paths": expected_collider_paths,
         "disabled_collision_prim_paths": disabled_collider_paths,
         "marker_collision_prim_paths": marker_collider_paths,
+        "floor_collision": floor_collision,
+        "floor_visual": floor_visual_record,
     }
     expected = {
         "default_prim": "World",
@@ -183,6 +249,8 @@ def _inspect_stage(stage: Any, UsdGeom: Any, UsdPhysics: Any) -> tuple[dict[str,
         "collision_prim_paths": expected_collider_paths,
         "disabled_collision_prim_paths": [],
         "marker_collision_prim_paths": [],
+        "floor_collision": EXPECTED_FLOOR_COLLISION,
+        "floor_visual": EXPECTED_FLOOR_VISUAL,
     }
     mismatches = {
         key: {"expected": expected_value, "observed": observed[key]}
@@ -501,6 +569,8 @@ def _validate_worker_evidence(
         "marker_count": EXPECTED_MARKERS,
         "disabled_collision_prim_paths": [],
         "marker_collision_prim_paths": [],
+        "floor_collision": EXPECTED_FLOOR_COLLISION,
+        "floor_visual": EXPECTED_FLOOR_VISUAL,
     }
     if result.get("schema_version") != 2:
         errors.append("worker schema version is not 2")

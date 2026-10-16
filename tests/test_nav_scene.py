@@ -9,6 +9,7 @@ import unittest
 from scripts.isaac.nav_scene import (
     _atomic_json,
     _apply_measured_drive_geometry,
+    _create_robot,
     _drive_geometry_from_colliders,
     _close_app,
     _joint_positions,
@@ -179,6 +180,25 @@ class NavSceneTests(unittest.TestCase):
         tipped = _tilt_evaluation([math.cos(angle / 2.0), math.sin(angle / 2.0), 0.0, 0.0])
         self.assertFalse(tipped["passed"])
         self.assertIn("never navigation", tipped["use"])
+
+    def test_robot_constructor_owns_asset_and_initial_position(self) -> None:
+        calls: list[tuple[tuple[object, ...], dict[str, object]]] = []
+
+        class _Np:
+            float32 = "float32"
+
+            @staticmethod
+            def asarray(value: object, *, dtype: object) -> object:
+                return {"value": value, "dtype": dtype}
+
+        def constructor(*args: object, **kwargs: object) -> object:
+            calls.append((args, kwargs))
+            return object()
+
+        _create_robot(constructor, _Np, "omniverse://nova_carter.usd", (4.0, 4.0))
+        self.assertEqual(calls[0][0], ("/World/Carter",))
+        self.assertEqual(calls[0][1]["usd_path"], "omniverse://nova_carter.usd")
+        self.assertEqual(calls[0][1]["positions"], {"value": [[4.0, 4.0, 0.0]], "dtype": "float32"})
 
 
 if __name__ == "__main__":

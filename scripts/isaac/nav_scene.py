@@ -21,6 +21,7 @@ from factory_ops.layout import Layout
 from factory_ops.motion import DriveGeometry, VelocitySlewLimiter, VelocityWatchdog, WheelOdometry
 from scripts.isaac import stage_smoke as base
 from scripts.isaac.robot_qualification import (
+    CameraSpec,
     CaptureSession,
     ROBOT_PATH,
     WHEEL_JOINTS,
@@ -284,6 +285,15 @@ def _pose(robot: Any) -> tuple[list[float], list[float]]:
     return [float(v) for v in p[0]], [float(v) for v in q[0]]
 
 
+def _create_robot(WheeledRobot: Any, np: Any, asset: str, spawn_xy: tuple[float, float]) -> Any:
+    return WheeledRobot(
+        ROBOT_PATH,
+        usd_path=asset,
+        positions=np.asarray([[spawn_xy[0], spawn_xy[1], 0.0]], dtype=np.float32),
+        wheel_dof_names=WHEEL_JOINTS,
+    )
+
+
 def _append_jsonl(path: Path, value: Any) -> None:
     with path.open("a", encoding="utf-8", newline="\n") as stream:
         stream.write(_canonical_bytes(value).decode())
@@ -297,17 +307,6 @@ def _scene_owned_artifacts(output: Path) -> list[Path]:
         for path in root.rglob("*") if path.is_file()
     ]
     return sorted(path for path in [*fixed, *nested] if path.is_file())
-
-
-def _set_follow_camera(session: CaptureSession, Gf: Any, UsdGeom: Any, position: list[float]) -> None:
-    eye = Gf.Vec3d(position[0] - 5.5, position[1] - 7.0, position[2] + 5.0)
-    target = Gf.Vec3d(position[0], position[1], position[2] + 0.25)
-    matrix = Gf.Matrix4d().SetLookAt(eye, target, Gf.Vec3d(0, 0, 1)).GetInverse()
-    camera = UsdGeom.Xformable(session.stage.GetPrimAtPath("/World/RobotMotionCamera"))
-    ops = camera.GetOrderedXformOps()
-    if len(ops) != 1:
-        raise base.SmokeError("follow camera does not have exactly one authored transform")
-    ops[0].Set(matrix)
 
 
 def _capture_frame(
@@ -343,6 +342,13 @@ def _capture_frame(
         "overview_path": overview_relative, "overview_sha256": base._sha256(overview_path),
         "overview_bytes": overview_path.stat().st_size,
         "overview_width": overview_width, "overview_height": overview_height,
+        "camera": {
+            "prim_path": session.medium_camera.path,
+            "parent_frame": session.medium_camera.frame,
+            "local_eye_xyz_m": list(session.medium_camera.eye_xyz),
+            "local_target_xyz_m": list(session.medium_camera.target_xyz),
+            "extrinsic_source": "authored relative to Carter chassis before physics start",
+        },
         "source": "actual persistent Isaac Sim RGB render product; no interpolation",
     }
 
@@ -546,11 +552,9 @@ def _run(args: argparse.Namespace) -> int:
 
         checkpoint("load_robot")
         asset = get_assets_root_path() + "/Isaac/Robots/NVIDIA/NovaCarter/nova_carter.usd"
-        stage_utils.add_reference_to_stage(usd_path=asset, path=ROBOT_PATH)
-        base._wait_for_stage(app, stage_utils)
         spawn_x, spawn_y = layout.stations[str(config["source_station"])]
-        UsdGeom.Xformable(stage.GetPrimAtPath(ROBOT_PATH)).AddTranslateOp(opSuffix="g1Spawn").Set(Gf.Vec3d(spawn_x, spawn_y, 0.1))
-        robot = WheeledRobot(ROBOT_PATH, wheel_dof_names=WHEEL_JOINTS)
+        robot = _create_robot(WheeledRobot, np, asset, (spawn_x, spawn_y))
+        base._wait_for_stage(app, stage_utils)
 
         def save_rgb(data: Any, path: Path) -> None:
             image = Image.fromarray(np.asarray(data)[:, :, :3].astype(np.uint8))
@@ -559,7 +563,13 @@ def _run(args: argparse.Namespace) -> int:
             finally:
                 image.close()
 
-        session = CaptureSession(output, app, stage, rep, UsdGeom, Gf, SimulationManager, save_rgb)
+        session = CaptureSession(
+            output, app, stage, rep, UsdGeom, Gf, SimulationManager, save_rgb,
+            medium_camera=CameraSpec(
+                ROBOT_PATH + "/chassis_link/G1EvidenceCamera",
+                (-3.0, -4.0, 3.0), (0.0, 0.0, 0.25), "base_link",
+            ),
+        )
         result["load_preview"] = session.capture_load_preview()
         result["factory_overview"] = _capture_factory_overview(output, session)
         bounds, colliders = _collision_bounds(stage, Usd, UsdGeom, UsdPhysics)
@@ -660,8 +670,6 @@ def _run(args: argparse.Namespace) -> int:
             )
             targets = geometry.wheel_targets(linear, angular)
             robot.apply_wheel_actions(np.asarray(targets, dtype=np.float32))
-            camera_position, _ = _pose(robot)
-            _set_follow_camera(session, Gf, UsdGeom, camera_position)
             app.update()
             rclpy.spin_once(node, timeout_sec=0.0)
             step += 1

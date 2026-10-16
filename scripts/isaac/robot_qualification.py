@@ -14,7 +14,7 @@ import subprocess
 import sys
 import time
 import traceback
-from typing import Any, Callable
+from typing import Any, Callable, NamedTuple
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from factory_ops.footprint import qualify_footprint
@@ -29,6 +29,18 @@ MEASUREMENT_STEPS = 600
 CAPTURE_PERIOD = 6
 SENSOR_SIZE = (640, 360)
 OPTICAL_FRAME = "carter/camera_optical"
+
+
+class CameraSpec(NamedTuple):
+    path: str
+    eye_xyz: tuple[float, float, float]
+    target_xyz: tuple[float, float, float]
+    frame: str
+
+
+DEFAULT_MEDIUM_CAMERA = CameraSpec(
+    "/World/RobotMotionCamera", (6.0, 1.0, 2.5), (4.5, 4.0, 0.25), "world",
+)
 
 
 def _args() -> argparse.Namespace:
@@ -59,6 +71,7 @@ class CaptureSession:
         Gf: Any,
         SimulationManager: Any,
         save_rgb: Callable[[Any, Path], None],
+        medium_camera: CameraSpec = DEFAULT_MEDIUM_CAMERA,
     ) -> None:
         self.output = output
         self.app = app
@@ -68,6 +81,7 @@ class CaptureSession:
         self.Gf = Gf
         self.SimulationManager = SimulationManager
         self.save_rgb = save_rgb
+        self.medium_camera = medium_camera
         self.products: list[Any] = []
         self.annotators: list[Any] = []
         self.onboard: dict[str, Any] = {}
@@ -76,8 +90,8 @@ class CaptureSession:
             self.rep.orchestrator.set_capture_on_play(False)
             self.rep.functional.create.dome_light(intensity=800.0, parent="/World", name="G0bPersistentDomeLight")
             medium = _camera(
-                stage, Gf, UsdGeom, "/World/RobotMotionCamera",
-                (6.0, 1.0, 2.5), (4.5, 4.0, 0.25), base.RENDER_RESOLUTION,
+                stage, Gf, UsdGeom, medium_camera.path,
+                medium_camera.eye_xyz, medium_camera.target_xyz, base.RENDER_RESOLUTION,
             )
             self.medium_product = self._product(str(medium.GetPath()), base.RENDER_RESOLUTION)
             self.medium_rgb = self._annotator("rgb", self.medium_product)
@@ -121,7 +135,7 @@ class CaptureSession:
         self._frozen_step("G0b persistent load preview")
         path = self.output / "diagnostic-load" / base.IMAGE_FILENAME
         path.parent.mkdir()
-        return self._save(self.medium_rgb, path, base.RENDER_RESOLUTION, [6.0, 1.0, 2.5], [4.5, 4.0, 0.25])
+        return self._save(self.medium_rgb, path, base.RENDER_RESOLUTION, self.medium_camera)
 
     def capture_factory_overview(self) -> dict[str, Any]:
         try:
@@ -136,7 +150,10 @@ class CaptureSession:
             path = self.output / base.IMAGE_FILENAME
             return self._save(
                 self.overview_rgb, path, base.RENDER_RESOLUTION,
-                [20.0, -24.0, 52.0], [20.0, 12.0, 0.0],
+                CameraSpec(
+                    "/World/FactoryOverviewCamera", (20.0, -24.0, 52.0),
+                    (20.0, 12.0, 0.0), "world",
+                ),
             )
         except BaseException as error:
             try:
@@ -153,7 +170,7 @@ class CaptureSession:
         path.parent.mkdir(exist_ok=True)
         evidence = self._save(
             self.medium_rgb, path, base.RENDER_RESOLUTION,
-            [6.0, 1.0, 2.5], [4.5, 4.0, 0.25],
+            self.medium_camera,
         )
         evidence["checkpoint"] = name
         return evidence
@@ -163,8 +180,7 @@ class CaptureSession:
         annotator: Any,
         path: Path,
         size: tuple[int, int],
-        camera_position: list[float],
-        camera_look_at: list[float],
+        camera: CameraSpec,
     ) -> dict[str, Any]:
         self.save_rgb(annotator.get_data(), path)
         width, height = base._png_dimensions(path)
@@ -176,8 +192,16 @@ class CaptureSession:
             "width": width,
             "height": height,
             "bytes": path.stat().st_size,
-            "camera_position": camera_position,
-            "camera_look_at": camera_look_at,
+            "camera_position": list(camera.eye_xyz),
+            "camera_look_at": list(camera.target_xyz),
+            "camera_prim_path": camera.path,
+            "camera_frame": camera.frame,
+            "camera_extrinsic": {
+                "eye_xyz": list(camera.eye_xyz),
+                "target_xyz": list(camera.target_xyz),
+                "frame": camera.frame,
+                "source": "authored USD camera transform before physics start",
+            },
             "source": "persistent Replicator RGB annotator; no interpolation",
         }
 
@@ -564,7 +588,7 @@ def _worker(args: argparse.Namespace) -> int:
                            "collision_bounds_xyz": bounds, "footprint": footprint}
         if not footprint["passed"]:
             raise base.SmokeError("actual collision envelope does not fit one or more authored anchors")
-        for prim, label in [(stage.GetPrimAtPath("/World/Floor"), "floor"),
+        for prim, label in [(stage.GetPrimAtPath("/World/FloorVisual"), "floor"),
                             *[(p, "equipment") for p in stage.GetPrimAtPath("/World/Obstacles").GetChildren()],
                             (stage.GetPrimAtPath(ROBOT_PATH), "amr")]:
             semantic = Semantics.SemanticsAPI.Apply(prim, "Semantics")

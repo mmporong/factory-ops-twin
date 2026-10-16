@@ -6,7 +6,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from scripts.isaac.robot_qualification import CaptureSession, _capture_factory_overview
+from scripts.isaac.robot_qualification import CameraSpec, CaptureSession, _capture_factory_overview
 from scripts.isaac.stage_smoke import SmokeError, _png_dimensions
 from tests.test_isaac_stage_smoke import _png_bytes
 
@@ -92,7 +92,9 @@ def _camera(_stage: object, _gf: object, _usd_geom: object, path: str, *_args: o
 
 
 class RobotCaptureTests(unittest.TestCase):
-    def _session(self, output: Path, rep: _Rep, updates: list[int]) -> CaptureSession:
+    def _session(
+        self, output: Path, rep: _Rep, updates: list[int], medium_camera: CameraSpec | None = None,
+    ) -> CaptureSession:
         def save_rgb(_data: object, path: Path) -> None:
             path.write_bytes(_png_bytes(width=1280, height=720))
 
@@ -106,6 +108,7 @@ class RobotCaptureTests(unittest.TestCase):
                 object(),
                 _SimulationManager,
                 save_rgb,
+                **({"medium_camera": medium_camera} if medium_camera is not None else {}),
             )
 
     def test_medium_and_overview_products_persist_until_explicit_close(self) -> None:
@@ -129,6 +132,8 @@ class RobotCaptureTests(unittest.TestCase):
             self.assertEqual(_png_dimensions(Path(load["path"])), (1280, 720))
             self.assertEqual(_png_dimensions(Path(overview["path"])), (1280, 720))
             self.assertEqual(load["source"], "persistent Replicator RGB annotator; no interpolation")
+            self.assertEqual(load["camera_prim_path"], "/World/RobotMotionCamera")
+            self.assertEqual(load["camera_frame"], "world")
             self.assertEqual(checkpoint["checkpoint"], "01-after-overview")
             self.assertEqual(_png_dimensions(Path(checkpoint["path"])), (1280, 720))
             self.assertEqual(rep.steps, 3)
@@ -139,6 +144,23 @@ class RobotCaptureTests(unittest.TestCase):
             self.assertEqual(rep.drains, 1)
             self.assertTrue(all(product.destroyed for product in rep.products))
             self.assertTrue(all(annotator.detached for annotator in rep.annotators_created))
+
+    def test_chassis_camera_spec_is_used_for_product_and_evidence(self) -> None:
+        with tempfile.TemporaryDirectory() as folder:
+            rep = _Rep()
+            camera = CameraSpec(
+                "/World/Carter/chassis_link/G1EvidenceCamera",
+                (-3.0, -4.0, 3.0), (0.0, 0.0, 0.25), "base_link",
+            )
+            session = self._session(Path(folder), rep, [], camera)
+            self.addCleanup(session.close)
+
+            evidence = session.capture_load_preview()
+
+            self.assertEqual(rep.products[0].path, camera.path)
+            self.assertEqual(evidence["camera_prim_path"], camera.path)
+            self.assertEqual(evidence["camera_frame"], "base_link")
+            self.assertEqual(evidence["camera_extrinsic"]["eye_xyz"], [-3.0, -4.0, 3.0])
 
     def test_onboard_annotators_prime_sequentially_while_pose_and_time_stay_fixed(self) -> None:
         with tempfile.TemporaryDirectory() as folder:

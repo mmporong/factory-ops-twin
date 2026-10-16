@@ -27,6 +27,8 @@ class UsdaTests(unittest.TestCase):
         self.assertEqual(text.count('prepend apiSchemas = ["PhysicsCollisionAPI"]'), 20)
         self.assertEqual(text.count("physics:collisionEnabled = true"), 20)
         self.assertEqual(manifest["obstacle_collider_count"], 19)
+        self.assertIn("infinite physics surface", str(manifest["floor_collision_geometry"]))
+        self.assertIn("40x24", str(manifest["bounded_operations_scope"]))
         self.assertEqual(manifest["non_colliding_marker_count"], 8)
         self.assertNotIn("Nova_Carter", text)
 
@@ -36,11 +38,18 @@ class UsdaTests(unittest.TestCase):
             target = Path(temporary) / "factory.usda"
             export_usda(layout, target)
             text = target.read_text(encoding="utf-8")
-        floor = re.search(r'def Cube "Floor".*?xformOp:scale = \(([^)]+)\).*?xformOp:translate = \(([^)]+)\)', text, re.S)
-        if floor is None:
-            self.fail("exported floor transform is missing")
-        self.assertEqual(floor.group(1), "20, 12, 0.05")
-        self.assertEqual(floor.group(2), "20, 12, -0.05")
+        visual = re.search(r'def Cube "FloorVisual".*?xformOp:scale = \(([^)]+)\).*?xformOp:translate = \(([^)]+)\)', text, re.S)
+        if visual is None:
+            self.fail("exported visual floor transform is missing")
+        self.assertEqual(visual.group(1), "20, 12, 0.05")
+        self.assertEqual(visual.group(2), "20, 12, -0.05")
+        plane = re.search(r'def Plane "Floor".*?uniform token axis = "([^"]+)".*?float3\[\] extent = (\[[^\n]+\]).*?xformOp:translate = \(([^)]+)\)', text, re.S)
+        if plane is None:
+            self.fail("exported collision plane is missing")
+        self.assertEqual(plane.group(1), "Z")
+        self.assertEqual(plane.group(2), "[(-1, -1, 0), (1, 1, 0)]")
+        self.assertEqual(plane.group(3), "0, 0, 0")
+        self.assertIn('token visibility = "invisible"', text)
         rack = re.search(r'def Cube "RACK_A1".*?xformOp:scale = \(([^)]+)\).*?xformOp:translate = \(([^)]+)\)', text, re.S)
         if rack is None:
             self.fail("exported rack transform is missing")

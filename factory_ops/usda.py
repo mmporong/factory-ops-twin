@@ -15,7 +15,7 @@ def export_usda(layout: Layout, output_path: str | Path) -> dict[str, object]:
     """Write a dependency-free OpenUSD text layer for later Isaac validation."""
     output = Path(output_path)
     output.parent.mkdir(parents=True, exist_ok=True)
-    authored_ids = ["Floor"] + [item["id"] for item in layout.data["physical_obstacles"]] + list(layout.stations) + list(layout.pockets)
+    authored_ids = ["Floor", "FloorVisual"] + [item["id"] for item in layout.data["physical_obstacles"]] + list(layout.stations) + list(layout.pockets)
     prim_names = [_prim_name(identifier) for identifier in authored_ids]
     if len(prim_names) != len(set(prim_names)):
         raise LayoutError("authored IDs collide after conversion to safe USD prim names")
@@ -34,7 +34,9 @@ def export_usda(layout: Layout, output_path: str | Path) -> dict[str, object]:
         '    custom string validationStatus = "authored text only; pxr and Isaac Sim validation not performed"',
         "",
     ]
-    lines.extend(_cube("Floor", Rect(0.0, 0.0, 40.0, 24.0), 0.1, -0.05, "floor", collision=True, indent=4))
+    lines.extend(_cube("FloorVisual", Rect(0.0, 0.0, 40.0, 24.0), 0.1, -0.05, "floor_visual", collision=False, indent=4))
+    lines.append("")
+    lines.extend(_collision_plane("Floor", indent=4))
     lines.append("")
     lines.extend(_scope_open("Obstacles", 4))
     for obstacle in layout.data["physical_obstacles"]:
@@ -61,6 +63,9 @@ def export_usda(layout: Layout, output_path: str | Path) -> dict[str, object]:
         "meters_per_unit": 1,
         "static_collider_count": 20,
         "obstacle_collider_count": 19,
+        "floor_collision_geometry": "invisible static Z-axis Plane at z=0; infinite physics surface",
+        "floor_visual_geometry": "non-colliding 40x24x0.1 m Cube slab ending at z=0",
+        "bounded_operations_scope": "40x24 m authored occupancy map; the physics plane is intentionally infinite",
         "non_colliding_marker_count": len(layout.stations) + len(layout.pockets),
         "robot_assets": 0,
         "validation": "OpenUSD text authored; pxr/Isaac Sim parsing and collision behavior not validated",
@@ -85,6 +90,27 @@ def _cube(name: str, rect: Rect, height: float, z: float, marker_id: str, *, col
         f"{pad}    double3 xformOp:scale = ({_num(width / 2)}, {_num(depth / 2)}, {_num(height / 2)})",
         f"{pad}    double3 xformOp:translate = ({_num(x)}, {_num(y)}, {_num(z)})",
         f'{pad}    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]',
+        f"{pad}}}",
+    ]
+
+
+def _collision_plane(name: str, *, indent: int) -> list[str]:
+    pad = " " * indent
+    return [
+        f'{pad}def Plane "{name}" (',
+        f'{pad}    prepend apiSchemas = ["PhysicsCollisionAPI"]',
+        f"{pad})",
+        f"{pad}{{",
+        f'{pad}    uniform token axis = "Z"',
+        f"{pad}    float3[] extent = [(-1, -1, 0), (1, 1, 0)]",
+        f'{pad}    custom string markerId = "floor"',
+        f'{pad}    custom string physicsScope = "infinite plane; bounded operation is enforced by the 40x24 m occupancy map"',
+        f"{pad}    bool physics:collisionEnabled = true",
+        f'{pad}    token visibility = "invisible"',
+        f"{pad}    quatd xformOp:orient = (1, 0, 0, 0)",
+        f"{pad}    double3 xformOp:scale = (1, 1, 1)",
+        f"{pad}    double3 xformOp:translate = (0, 0, 0)",
+        f'{pad}    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]',
         f"{pad}}}",
     ]
 

@@ -12,7 +12,14 @@ from unittest.mock import patch
 import zlib
 
 import scripts.isaac.stage_smoke as stage_smoke
-from scripts.isaac.stage_smoke import SmokeError, _inspect_stage, _png_dimensions, _supervisor_main
+from scripts.isaac.stage_smoke import (
+    EXPECTED_FLOOR_COLLISION,
+    EXPECTED_FLOOR_VISUAL,
+    SmokeError,
+    _inspect_stage,
+    _png_dimensions,
+    _supervisor_main,
+)
 
 
 class _Attribute:
@@ -23,11 +30,22 @@ class _Attribute:
         return self._value
 
 
+class _Quaternion:
+    def GetReal(self) -> float:
+        return 1.0
+
+    def GetImaginary(self) -> tuple[float, float, float]:
+        return (0.0, 0.0, 0.0)
+
+
 class _Prim:
-    def __init__(self, path: str, *, collision: bool = False, enabled: object = None) -> None:
+    def __init__(self, path: str, *, type_name: str = "Xform", collision: bool = False,
+                 enabled: object = None, attributes: dict[str, object] | None = None) -> None:
         self.path = path
+        self.type_name = type_name
         self.collision = collision
         self.enabled = enabled
+        self.attributes = attributes or {}
         self.children: list[_Prim] = []
 
     def GetPath(self) -> str:
@@ -39,11 +57,14 @@ class _Prim:
     def IsValid(self) -> bool:
         return True
 
+    def GetTypeName(self) -> str:
+        return self.type_name
+
     def HasAPI(self, _api: object) -> bool:
         return self.collision
 
-    def GetAttribute(self, _name: str) -> _Attribute:
-        return _Attribute(self.enabled)
+    def GetAttribute(self, name: str) -> _Attribute:
+        return _Attribute(self.enabled if name == "physics:collisionEnabled" else self.attributes.get(name))
 
     def GetChildren(self) -> list[_Prim]:
         return self.children
@@ -60,7 +81,18 @@ class _InvalidPrim(_Prim):
 class _Stage:
     def __init__(self) -> None:
         self.world = _Prim("/World")
-        self.floor = _Prim("/World/Floor", collision=True, enabled=True)
+        self.floor = _Prim(
+            "/World/Floor", type_name="Plane", collision=True, enabled=True,
+            attributes={"axis": "Z", "extent": [(-1, -1, 0), (1, 1, 0)], "visibility": "invisible",
+                        "xformOp:translate": (0, 0, 0), "xformOp:orient": _Quaternion(),
+                        "xformOp:scale": (1, 1, 1),
+                        "xformOpOrder": ["xformOp:translate", "xformOp:orient", "xformOp:scale"],
+                        "physicsScope": "infinite plane; bounded operation is enforced by the 40x24 m occupancy map"},
+        )
+        self.floor_visual = _Prim(
+            "/World/FloorVisual", type_name="Cube", collision=False, enabled=False,
+            attributes={"size": 2, "xformOp:scale": (20, 12, 0.05), "xformOp:translate": (20, 12, -0.05)},
+        )
         self.obstacles = _Prim("/World/Obstacles")
         self.markers = _Prim("/World/Markers")
         self.obstacles.children = [
@@ -75,7 +107,8 @@ class _Stage:
         return self.world
 
     def Traverse(self) -> list[_Prim]:
-        return [self.world, self.floor, self.obstacles, *self.obstacles.children, self.markers, *self.markers.children]
+        return [self.world, self.floor_visual, self.floor, self.obstacles, *self.obstacles.children,
+                self.markers, *self.markers.children]
 
     def GetPrimAtPath(self, path: str) -> _Prim:
         return next((prim for prim in self.Traverse() if prim.path == path), _InvalidPrim())
@@ -115,6 +148,8 @@ class StageInspectionTests(unittest.TestCase):
         self.assertEqual(observed["collision_api_count"], 20)
         self.assertEqual(observed["disabled_collision_prim_paths"], [])
         self.assertEqual(observed["marker_collision_prim_paths"], [])
+        self.assertEqual(observed["floor_collision"]["type_name"], "Plane")
+        self.assertEqual(observed["floor_visual"]["scale_xyz"], [20.0, 12.0, 0.05])
 
     def test_rejects_count_preserving_wrong_collider_membership(self) -> None:
         stage = _Stage()
@@ -129,6 +164,21 @@ class StageInspectionTests(unittest.TestCase):
         stage.obstacles.children[3].enabled = False
         _observed, mismatches = _inspect_stage(stage, _UsdGeom, _UsdPhysics)
         self.assertIn("disabled_collision_prim_paths", mismatches)
+
+    def test_rejects_scaled_cube_floor_or_colliding_visual_slab(self) -> None:
+        stage = _Stage()
+        stage.floor.type_name = "Cube"
+        stage.floor_visual.collision = True
+        _observed, mismatches = _inspect_stage(stage, _UsdGeom, _UsdPhysics)
+        self.assertIn("floor_collision", mismatches)
+        self.assertIn("floor_visual", mismatches)
+
+    def test_rejects_transformed_collision_plane_contract(self) -> None:
+        stage = _Stage()
+        stage.floor.attributes["xformOp:scale"] = (1, 2, 1)
+        stage.floor.attributes["xformOpOrder"] = ["xformOp:scale", "xformOp:translate", "xformOp:orient"]
+        _observed, mismatches = _inspect_stage(stage, _UsdGeom, _UsdPhysics)
+        self.assertIn("floor_collision", mismatches)
 
 
 class PngValidationTests(unittest.TestCase):
@@ -211,6 +261,8 @@ class SupervisorTests(unittest.TestCase):
                 "marker_collision_prim_paths": [],
                 "collision_prim_paths": collision_paths,
                 "expected_collision_prim_paths": collision_paths,
+                "floor_collision": EXPECTED_FLOOR_COLLISION,
+                "floor_visual": EXPECTED_FLOOR_VISUAL,
             },
             "rgb": {
                 "path": str(image_path),
