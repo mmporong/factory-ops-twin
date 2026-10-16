@@ -285,13 +285,19 @@ def _pose(robot: Any) -> tuple[list[float], list[float]]:
     return [float(v) for v in p[0]], [float(v) for v in q[0]]
 
 
-def _create_robot(WheeledRobot: Any, np: Any, asset: str, spawn_xy: tuple[float, float]) -> Any:
-    return WheeledRobot(
-        ROBOT_PATH,
-        usd_path=asset,
-        positions=np.asarray([[spawn_xy[0], spawn_xy[1], 0.0]], dtype=np.float32),
-        wheel_dof_names=WHEEL_JOINTS,
+def _create_robot(
+    stage_utils: Any, stage: Any, app: Any, WheeledRobot: Any, UsdGeom: Any, Gf: Any,
+    asset: str, spawn_xy: tuple[float, float],
+) -> Any:
+    stage_utils.add_reference_to_stage(usd_path=asset, path=ROBOT_PATH)
+    base._wait_for_stage(app, stage_utils)
+    root = stage.GetPrimAtPath(ROBOT_PATH)
+    if not root.IsValid():
+        raise base.SmokeError("Nova Carter reference did not produce a valid root prim")
+    UsdGeom.Xformable(root).AddTranslateOp(opSuffix="g1Spawn").Set(
+        Gf.Vec3d(spawn_xy[0], spawn_xy[1], 0.1)
     )
+    return WheeledRobot(ROBOT_PATH, wheel_dof_names=WHEEL_JOINTS)
 
 
 def _append_jsonl(path: Path, value: Any) -> None:
@@ -553,8 +559,9 @@ def _run(args: argparse.Namespace) -> int:
         checkpoint("load_robot")
         asset = get_assets_root_path() + "/Isaac/Robots/NVIDIA/NovaCarter/nova_carter.usd"
         spawn_x, spawn_y = layout.stations[str(config["source_station"])]
-        robot = _create_robot(WheeledRobot, np, asset, (spawn_x, spawn_y))
-        base._wait_for_stage(app, stage_utils)
+        robot = _create_robot(
+            stage_utils, stage, app, WheeledRobot, UsdGeom, Gf, asset, (spawn_x, spawn_y),
+        )
 
         def save_rgb(data: Any, path: Path) -> None:
             image = Image.fromarray(np.asarray(data)[:, :, :3].astype(np.uint8))
@@ -574,6 +581,11 @@ def _run(args: argparse.Namespace) -> int:
         result["factory_overview"] = _capture_factory_overview(output, session)
         bounds, colliders = _collision_bounds(stage, Usd, UsdGeom, UsdPhysics)
         footprint = qualify_footprint(layout, bounds)
+        result["robot"] = {
+            "asset_url": asset, "prim_path": ROBOT_PATH, "wheel_dof_names": WHEEL_JOINTS,
+            "collider_count": len(colliders), "collision_bounds_xyz": bounds,
+            "collision_geometry_records": colliders, "footprint": footprint,
+        }
         if not footprint["passed"]:
             raise base.SmokeError("Nova Carter collision footprint does not fit factory anchors")
         measured_drive_geometry = _apply_measured_drive_geometry(config, colliders)
@@ -584,9 +596,7 @@ def _run(args: argparse.Namespace) -> int:
                 f"{ROBOT_PATH} root frame after asset load and before SimulationManager.setup_simulation"
             ),
         })
-        result["robot"] = {"asset_url": asset, "prim_path": ROBOT_PATH, "wheel_dof_names": WHEEL_JOINTS,
-                           "collider_count": len(colliders), "collision_bounds_xyz": bounds, "footprint": footprint,
-                           "drive_geometry": measured_drive_geometry}
+        result["robot"]["drive_geometry"] = measured_drive_geometry
 
         checkpoint("ros_and_lidar")
         rclpy, node, clock_stamps = _clock_graph(stage, app)

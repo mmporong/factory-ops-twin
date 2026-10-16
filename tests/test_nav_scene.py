@@ -5,6 +5,7 @@ import math
 from pathlib import Path
 import tempfile
 import unittest
+from unittest.mock import patch
 
 from scripts.isaac.nav_scene import (
     _atomic_json,
@@ -181,24 +182,64 @@ class NavSceneTests(unittest.TestCase):
         self.assertFalse(tipped["passed"])
         self.assertIn("never navigation", tipped["use"])
 
-    def test_robot_constructor_owns_asset_and_initial_position(self) -> None:
-        calls: list[tuple[tuple[object, ...], dict[str, object]]] = []
+    def test_robot_reference_moves_whole_asset_root_before_constructor(self) -> None:
+        events: list[object] = []
 
-        class _Np:
-            float32 = "float32"
+        class _Root:
+            @staticmethod
+            def IsValid() -> bool:
+                return True
+
+        class _Stage:
+            @staticmethod
+            def GetPrimAtPath(path: str) -> object:
+                events.append(("root", path))
+                return _Root()
+
+        class _StageUtils:
+            @staticmethod
+            def add_reference_to_stage(*, usd_path: str, path: str) -> None:
+                events.append(("reference", usd_path, path))
+
+        class _Translate:
+            def Set(self, value: object) -> None:
+                events.append(("translate", value))
+
+        class _Xformable:
+            def __init__(self, _root: object) -> None:
+                pass
 
             @staticmethod
-            def asarray(value: object, *, dtype: object) -> object:
-                return {"value": value, "dtype": dtype}
+            def AddTranslateOp(*, opSuffix: str) -> _Translate:
+                events.append(("translate_op", opSuffix))
+                return _Translate()
+
+        class _UsdGeom:
+            Xformable = _Xformable
+
+        class _Gf:
+            @staticmethod
+            def Vec3d(x: float, y: float, z: float) -> tuple[float, float, float]:
+                return (x, y, z)
 
         def constructor(*args: object, **kwargs: object) -> object:
-            calls.append((args, kwargs))
+            events.append(("constructor", args, kwargs))
             return object()
 
-        _create_robot(constructor, _Np, "omniverse://nova_carter.usd", (4.0, 4.0))
-        self.assertEqual(calls[0][0], ("/World/Carter",))
-        self.assertEqual(calls[0][1]["usd_path"], "omniverse://nova_carter.usd")
-        self.assertEqual(calls[0][1]["positions"], {"value": [[4.0, 4.0, 0.0]], "dtype": "float32"})
+        with patch("scripts.isaac.nav_scene.base._wait_for_stage", side_effect=lambda *_args: events.append("wait")):
+            _create_robot(
+                _StageUtils, _Stage(), object(), constructor, _UsdGeom, _Gf,
+                "omniverse://nova_carter.usd", (4.0, 4.0),
+            )
+
+        self.assertEqual(events[0], ("reference", "omniverse://nova_carter.usd", "/World/Carter"))
+        self.assertEqual(events[1], "wait")
+        self.assertEqual(events[2], ("root", "/World/Carter"))
+        self.assertEqual(events[3], ("translate_op", "g1Spawn"))
+        self.assertEqual(events[4], ("translate", (4.0, 4.0, 0.1)))
+        self.assertEqual(events[5], (
+            "constructor", ("/World/Carter",), {"wheel_dof_names": ["joint_wheel_left", "joint_wheel_right"]},
+        ))
 
 
 if __name__ == "__main__":
