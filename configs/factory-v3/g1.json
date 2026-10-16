@@ -16,6 +16,18 @@
   "max_angular_rad_s": 1.2,
   "max_linear_accel_m_s2": 0.25,
   "max_angular_accel_rad_s2": 0.5,
+  "localization_planning_margin_m": 0.3,
+  "localization_planning_margin_provenance": {
+    "kind": "authored planning-only localization uncertainty allowance",
+    "application": "added to the qualified evaluation radius only for Nav2 robot_radius",
+    "evaluation_contract": "the 0.2 m footprint clearance remains unchanged"
+  },
+  "nav2_rotation_command_provenance": {
+    "kind": "authored controller request-profile calibration; not motor calibration",
+    "max_angular_accel_rad_s2": 2.0,
+    "basis": "10 Hz RPP heading rotation begins at 0.2 rad/s to clear the observed caster reorientation threshold",
+    "unchanged_limits": "RPP target 0.5 rad/s, bridge acceleration 0.5 rad/s2 and goal tolerances"
+  },
   "control_limit_provenance": {
     "kind": "authored qualification limits; not motor calibration",
     "purpose": "bound the G1 navigation experiment command and acceleration envelope"

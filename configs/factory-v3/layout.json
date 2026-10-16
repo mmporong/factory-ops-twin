@@ -27,7 +27,7 @@
     "not_a_carter_footprint": true
   },
   "geometry_authority": "Union of amr_allowed_regions minus physical_obstacles. Other floor is AMR keepout, not necessarily solid equipment. Physical walls and policy keepout are recorded separately.",
-  "width_status": "3m mains and bays / 2m branches are candidate authored widths; require actual footprint, costmap and docking qualification",
+  "width_status": "3m mains and bays; G1 CI, CO and OUT approaches are 2.6m for the qualified planning envelope; remaining 2m branches require later qualification",
   "amr_allowed_regions": [
     {
       "id": "MAIN_LOW",
@@ -103,9 +103,9 @@
       "id": "CI_APPROACH",
       "rect": [
         28,
-        7,
+        6.7,
         32,
-        9
+        9.3
       ],
       "purpose": "single-robot input access"
     },
@@ -123,9 +123,9 @@
       "id": "CO_APPROACH",
       "rect": [
         28,
-        15,
+        14.7,
         32,
-        17
+        17.3
       ],
       "purpose": "single-robot output access"
     },
@@ -143,9 +143,9 @@
       "id": "OUT_APPROACH",
       "rect": [
         32,
-        11,
+        10.7,
         36,
-        13
+        13.3
       ],
       "purpose": "single-robot shipping access"
     },

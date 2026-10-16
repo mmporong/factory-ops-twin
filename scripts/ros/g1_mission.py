@@ -68,11 +68,30 @@ class LifecycleStatePoller:
         return dict(self.states)
 
 
-def prepare_params(project: Path, output: Path, ready: dict[str, Any], layout: Layout) -> Path:
-    import yaml
-
+def prepare_params(
+    project: Path, output: Path, ready: dict[str, Any], layout: Layout, config: dict[str, Any],
+) -> Path:
     if not ready["footprint"]["passed"]:
         raise ValueError("scene collision footprint is not qualified")
+    margin_value = config.get("localization_planning_margin_m")
+    if (isinstance(margin_value, bool) or not isinstance(margin_value, (int, float))
+            or not math.isfinite(float(margin_value)) or float(margin_value) <= 0):
+        raise ValueError("localization_planning_margin_m must be finite and positive")
+    footprint = ready["footprint"]
+    collision_radius_m = float(footprint["collision_radius_m"])
+    evaluation_clearance_m = float(footprint["clearance_m"])
+    evaluation_radius_m = float(footprint["inflated_radius_m"])
+    if (not all(math.isfinite(value) for value in (
+            collision_radius_m, evaluation_clearance_m, evaluation_radius_m))
+            or collision_radius_m <= 0 or evaluation_clearance_m != 0.2
+            or not math.isclose(evaluation_radius_m, collision_radius_m + evaluation_clearance_m,
+                                rel_tol=0.0, abs_tol=1e-9)):
+        raise ValueError("scene footprint does not preserve the 0.2 m evaluation clearance contract")
+    localization_margin_m = float(margin_value)
+    planning_radius_m = evaluation_radius_m + localization_margin_m
+    inflation_radius_m = planning_radius_m + 0.2
+    import yaml
+
     maps = output / "maps"
     maps.mkdir()
     # Authored physical geometry + policy keepout. AMCL retains the physical-only map.
@@ -80,22 +99,29 @@ def prepare_params(project: Path, output: Path, ready: dict[str, Any], layout: L
     pgm = maps / "navigation.pgm"
     pgm.write_bytes(layout._pgm_bytes(occupied))
     (maps / "navigation.yaml").write_text(layout._yaml(pgm.name), encoding="utf-8")
-    config = yaml.safe_load((project / "configs/factory-v3/nav2-g1.yaml").read_text(encoding="utf-8"))
-    config["navigation_map_server"]["ros__parameters"]["yaml_filename"] = str(maps / "navigation.yaml")
-    config["map_server"]["ros__parameters"]["yaml_filename"] = str(project / "runs/local/maps/map.yaml")
-    radius_m = float(ready["footprint"]["inflated_radius_m"])
+    nav2_config = yaml.safe_load((project / "configs/factory-v3/nav2-g1.yaml").read_text(encoding="utf-8"))
+    nav2_config["navigation_map_server"]["ros__parameters"]["yaml_filename"] = str(maps / "navigation.yaml")
+    nav2_config["map_server"]["ros__parameters"]["yaml_filename"] = str(project / "runs/local/maps/map.yaml")
     for name in ("local_costmap", "global_costmap"):
-        params = config[name][name]["ros__parameters"]
-        params["robot_radius"] = radius_m
-        params["inflation_layer"]["inflation_radius"] = radius_m + 0.2
+        params = nav2_config[name][name]["ros__parameters"]
+        params["robot_radius"] = planning_radius_m
+        params["inflation_layer"]["inflation_radius"] = inflation_radius_m
     params_path = output / "nav2-params.yaml"
-    params_path.write_text(yaml.safe_dump(config, sort_keys=False), encoding="utf-8")
+    params_path.write_text(yaml.safe_dump(nav2_config, sort_keys=False), encoding="utf-8")
     atomic_json(maps / "provenance.json", {
         "source_layout_sha256": layout.source_sha256,
         "navigation_map": "authored physical obstacles OR policy keepout; no online simulator truth",
         "amcl_map": "physical obstacles only",
-        "robot_radius_m": radius_m,
-        "radius_basis": "this run's collision envelope plus authored clearance",
+        "collision_radius_m": collision_radius_m,
+        "evaluation_clearance_m": evaluation_clearance_m,
+        "evaluation_radius_m": evaluation_radius_m,
+        "localization_planning_margin_m": localization_margin_m,
+        "nav2_planning_radius_m": planning_radius_m,
+        "inflation_radius_m": inflation_radius_m,
+        "radius_basis": (
+            "evaluation radius = measured collision radius + unchanged 0.2 m evaluator clearance; "
+            "Nav2 planning radius adds the authored localization margin"
+        ),
         "files": {p.name: hashlib.sha256(p.read_bytes()).hexdigest() for p in maps.iterdir() if p.is_file()},
     })
     return params_path
@@ -152,7 +178,7 @@ def main() -> int:
         ready = json.loads(ready_path.read_text())
         if ready.get("run_id") != args.run_id or ready.get("status") != "ready":
             raise ValueError("scene ready/run identity mismatch")
-        params_path = prepare_params(project, output, ready, layout)
+        params_path = prepare_params(project, output, ready, layout, config)
         os.environ["FACTORY_OPS_NAV2_PARAMS"] = str(params_path)
         import rclpy as ros
         from geometry_msgs.msg import Twist

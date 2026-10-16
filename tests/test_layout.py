@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import copy
+from collections import deque
 import json
+import math
 from pathlib import Path
 import tempfile
 import unittest
@@ -35,6 +37,59 @@ class LayoutTests(unittest.TestCase):
         blocked_y = {row for _, row in blocked.cells}
         self.assertLess(max(normal_y) * 0.05, 18.5)
         self.assertGreaterEqual(max(blocked_y) * 0.05 + 0.025, 18.5)
+
+    def test_g1_order_route_is_connected_for_evaluation_radius_plus_localization_margin(self) -> None:
+        approaches = {
+            item["id"]: item["rect"] for item in self.layout.data["amr_allowed_regions"]
+            if item["id"] in {"CI_APPROACH", "CO_APPROACH", "OUT_APPROACH"}
+        }
+        self.assertEqual(approaches, {
+            "CI_APPROACH": [28, 6.7, 32, 9.3],
+            "CO_APPROACH": [28, 14.7, 32, 17.3],
+            "OUT_APPROACH": [32, 10.7, 36, 13.3],
+        })
+
+        planning_radius_m = 0.637109 + 0.2 + 0.3
+        radius_cells = math.ceil(planning_radius_m / self.layout.resolution_m)
+        raw = self.layout._make_raw_mask()
+        width, height = self.layout.width, self.layout.height
+        stride = width + 1
+        integral = [0] * ((width + 1) * (height + 1))
+        for row in range(height):
+            running = 0
+            for col in range(width):
+                running += raw[row * width + col]
+                integral[(row + 1) * stride + col + 1] = integral[row * stride + col + 1] + running
+        traversable = bytearray(width * height)
+        required_cells = (radius_cells * 2 + 1) ** 2
+        for row in range(radius_cells, height - radius_cells):
+            y0, y1 = row - radius_cells, row + radius_cells + 1
+            for col in range(radius_cells, width - radius_cells):
+                x0, x1 = col - radius_cells, col + radius_cells + 1
+                raw_count = (
+                    integral[y1 * stride + x1] - integral[y0 * stride + x1]
+                    - integral[y1 * stride + x0] + integral[y0 * stride + x0]
+                )
+                traversable[row * width + col] = raw_count == required_cells
+
+        for start_name, goal_name in (("S1", "CI"), ("CI", "CO"), ("CO", "OUT")):
+            start = self.layout.coordinate_to_cell(self.layout.stations[start_name])
+            goal = self.layout.coordinate_to_cell(self.layout.stations[goal_name])
+            frontier = deque([start])
+            parents: dict[tuple[int, int], tuple[int, int] | None] = {start: None}
+            while frontier and goal not in parents:
+                col, row = frontier.popleft()
+                for neighbor in ((col + 1, row), (col - 1, row), (col, row + 1), (col, row - 1)):
+                    ncol, nrow = neighbor
+                    if (0 <= ncol < width and 0 <= nrow < height and neighbor not in parents
+                            and traversable[nrow * width + ncol]):
+                        parents[neighbor] = (col, row)
+                        frontier.append(neighbor)
+            self.assertIn(goal, parents, f"{start_name}->{goal_name} disconnected")
+            cursor: tuple[int, int] | None = goal
+            while cursor is not None:
+                self.assertTrue(traversable[cursor[1] * width + cursor[0]])
+                cursor = parents[cursor]
 
     def test_coordinate_floor_rule_selects_positive_side_of_boundary(self) -> None:
         self.assertEqual(self.layout.coordinate_to_cell((4.0, 4.0)), (80, 80))
