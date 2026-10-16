@@ -46,6 +46,16 @@ def _json(path: Path, value: Any) -> None:
     path.write_text(json.dumps(value, indent=2, allow_nan=False) + "\n", encoding="utf-8")
 
 
+def _capture_factory_overview(output: Path, app: Any, rep: Any) -> dict[str, Any]:
+    capture = output / "final-overview"
+    capture.mkdir()
+    rgb = base._capture_overview(capture, app, rep, create_light=False)
+    destination = output / base.IMAGE_FILENAME
+    shutil.move(str(capture / base.IMAGE_FILENAME), destination)
+    rgb["path"] = str(destination)
+    return rgb
+
+
 def _collision_bounds(stage: Any, Usd: Any, UsdGeom: Any, UsdPhysics: Any) -> tuple[list[list[float]], list[dict[str, Any]]]:
     from pxr import Gf
     root = stage.GetPrimAtPath(ROBOT_PATH)
@@ -379,7 +389,7 @@ def _worker(args: argparse.Namespace) -> int:
         result["robot"]["dof_names"] = robot.dof_names
         checkpoint("capture_overview")
         timeline.pause()
-        result["rgb"] = base._capture_overview(output, app, rep, create_light=False)
+        result["rgb"] = _capture_factory_overview(output, app, rep)
         timeline.play()
         checkpoint("physics_motion_and_sensors")
         result.update(_capture_motion(output, app, stage, robot, rep, np, UsdGeom, Gf, SimulationManager, rclpy, node))
