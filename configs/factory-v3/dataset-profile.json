@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "profile_id": "factory-v3-portfolio-render-v1",
+  "scope": "independent visual configurations of one synthetic layout",
+  "scene_count": 12,
+  "captures_per_scene": 30,
+  "cameras": ["overhead", "aisle", "amr_follow"],
+  "minimum_rgb_images": 1080,
+  "minimum_width": 640,
+  "minimum_height": 360,
+  "required_classes": [
+    "floor",
+    "floor_marking",
+    "rack",
+    "workbench",
+    "process_equipment",
+    "control_cabinet",
+    "buffer_fixture",
+    "pallet",
+    "tote",
+    "payload_tote",
+    "amr",
+    "station_marker",
+    "barrier"
+  ],
+  "quality_bounds": {
+    "occlusion_ratio_min": 0.0,
+    "occlusion_ratio_max": 1.0,
+    "bbox_tolerance_px": 1,
+    "minimum_class_pixels": 1
+  },
+  "splits": {
+    "train": 8,
+    "val": 2,
+    "test": 2
+  },
+  "visual_review": {
+    "required_per_scene_camera": 1,
+    "allowed_verdict": "pass"
+  }
+}

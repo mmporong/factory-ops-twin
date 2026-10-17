@@ -693,6 +693,11 @@ def _run(
                 "drive_geometry": measured,
             }
 
+        robot_visual_hook = getattr(scene_extension, "after_robots_loaded", None)
+        if callable(robot_visual_hook):
+            result["scene_extension"]["robot_visuals"] = robot_visual_hook(
+                stage, {robot_id: runtime["definition"] for robot_id, runtime in robots.items()})
+
         def save_rgb(data: Any, path: Path) -> None:
             image = Image.fromarray(np.asarray(data)[:, :, :3].astype(np.uint8))
             try:
@@ -721,6 +726,9 @@ def _run(
         )
         second_product = session._product(str(second_camera.GetPath()), base.RENDER_RESOLUTION)
         second_rgb = session._annotator("rgb", second_product)
+        camera_hook = getattr(scene_extension, "configure_cameras", None)
+        if callable(camera_hook):
+            result["scene_extension"]["camera_overrides"] = camera_hook(stage, session, second_spec, UsdGeom, Gf)
 
         checkpoint("ros_and_lidars")
         rclpy, clock_node, clock_stamps = _clock_graph(stage, app)
@@ -924,10 +932,20 @@ def _run(
             capture_due = step == 1 or step % int(config["camera_capture_every_steps"]) == 0 or settle_remaining == 0
             if capture_due:
                 timeline.pause()
-                frames.append(_capture_frame(
+                before_capture_hook = getattr(scene_extension, "before_capture", None)
+                if callable(before_capture_hook):
+                    before_capture_hook(rep)
+                    if (int(SimulationManager.get_num_physics_steps()) != physics_frame
+                            or abs(float(SimulationManager.get_simulation_time()) - stamp) > 1e-8):
+                        raise base.SmokeError("industrial render flush advanced the frozen physics frame")
+                captured = _capture_frame(
                     output=output, session=session, second_rgb=second_rgb, robots=robots,
                     SimulationManager=SimulationManager, np=np, Image=Image, index=len(frames),
-                ))
+                )
+                capture_metadata_hook = getattr(scene_extension, "capture_metadata", None)
+                if callable(capture_metadata_hook):
+                    captured["visual_state"] = capture_metadata_hook()
+                frames.append(captured)
                 _atomic_json(output / MEDIA_INDEX_FILE, {"schema_version": 1, "frames": frames})
                 timeline.play()
             if terminal_error is not None:

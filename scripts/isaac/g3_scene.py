@@ -14,6 +14,7 @@ from typing import Any
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from factory_ops.g3_session import verify_session
 from scripts.isaac import g2_scene
+from scripts.isaac.factory_visuals import FactoryVisualRuntime
 
 
 class BarrierLifecycle:
@@ -21,7 +22,7 @@ class BarrierLifecycle:
 
     align_terminal_encoder = True
 
-    def __init__(self, session: dict[str, Any], run_id: str) -> None:
+    def __init__(self, session: dict[str, Any], run_id: str, session_root: Path) -> None:
         self.session = session
         self.run_id = run_id
         self.collision = self.visible = None
@@ -29,9 +30,16 @@ class BarrierLifecycle:
         self.last_state: bool | None = None
         self.origin: float | None = None
         self.control_sequences: dict[str, int | None] = {}
+        self.session_root = session_root
+        self.visuals: FactoryVisualRuntime | None = None
 
     def setup(self, stage: Any, UsdGeom: Any, UsdPhysics: Any, Gf: Any, output: Path) -> dict[str, Any]:
         self.output = output
+        self.visuals = FactoryVisualRuntime(
+            layout_path=self.session_root / "layout.json",
+            base_scene_path=self.session_root / "scene/factory-v3.usda", output=output,
+            variant_seed=0, run_id=self.run_id, scenario_id=self.session["scenario_id"])
+        industrial_visuals = self.visuals.setup(stage, UsdGeom, UsdPhysics, Gf)
         specification = self.session["scene_closure"]
         if specification is not None:
             x0, y0, x1, y1 = specification["rect_xyxy_m"]
@@ -45,10 +53,49 @@ class BarrierLifecycle:
             self.visible = UsdGeom.Imageable(cube.GetPrim()).CreateVisibilityAttr("inherited")
         self.step(0.0, 0)
         return {"kind": "g3_scheduled_physical_barrier", "prim_path": "/World/G3Barrier" if specification else None,
-                "schedule": specification, "ground_truth_control_input": False}
+                "schedule": specification, "ground_truth_control_input": False,
+                "industrial_visuals": industrial_visuals}
+
+    def after_robots_loaded(self, stage: Any, definitions: dict[str, Any]) -> dict[str, Any]:
+        assert self.visuals is not None
+        return self.visuals.after_robots_loaded(stage, definitions)
+
+    def configure_cameras(self, stage: Any, capture: Any, second: Any, UsdGeom: Any, Gf: Any) -> dict[str, Any]:
+        profile_path = Path(__file__).resolve().parents[2] / "configs/factory-v3/render-profile.json"
+        profile = json.loads(profile_path.read_text(encoding="utf-8"))
+        overview = next(row for row in profile["cameras"] if row["id"] == "portfolio_overview")
+        specifications = [
+            ("/World/FactoryOverviewCamera", overview["eye_xyz_m"], overview["target_xyz_m"], overview["focal_length_mm"]),
+            (capture.medium_camera.path, [-2.6, -2.2, 3.6], [0.4, 0.0, 0.4], 22.0),
+            (second.path, [-2.6, 2.2, 3.6], [0.4, 0.0, 0.4], 22.0),
+        ]
+        records = []
+        for path, eye, target, focal_length in specifications:
+            camera = UsdGeom.Camera(stage.GetPrimAtPath(path))
+            if not camera or not camera.GetPrim().IsValid():
+                raise ValueError("industrial camera prim is missing")
+            transform = Gf.Matrix4d().SetLookAt(Gf.Vec3d(*eye), Gf.Vec3d(*target), Gf.Vec3d(0, 0, 1)).GetInverse()
+            operations = UsdGeom.Xformable(camera.GetPrim()).GetOrderedXformOps()
+            if len(operations) != 1:
+                raise ValueError("industrial camera transform stack differs")
+            operations[0].Set(transform)
+            camera.GetFocalLengthAttr().Set(float(focal_length))
+            records.append({"prim_path": path, "eye_xyz_m": eye, "target_xyz_m": target,
+                            "focal_length_mm": float(camera.GetFocalLengthAttr().Get()),
+                            "coordinate_frame": "world" if path.startswith("/World/Factory") else "robot chassis_link"})
+        return {"source": str(profile_path.name), "source_sha256": g2_scene.base._sha256(profile_path), "cameras": records}
+
+    def before_capture(self, rep: Any) -> None:
+        rep.orchestrator.step(delta_time=0.0, rt_subframes=4)
+
+    def capture_metadata(self) -> dict[str, Any]:
+        assert self.visuals is not None
+        return self.visuals.capture_metadata()
 
     def step(self, sim_time_s: float, physics_frame: int) -> None:
         assert self.output is not None
+        if self.visuals is not None:
+            self.visuals.step(sim_time_s, physics_frame)
         origin_path = self.output / "mission-start.json"
         if self.origin is None and origin_path.is_file():
             start = json.loads(origin_path.read_text(encoding="utf-8"))
@@ -112,8 +159,13 @@ def main() -> int:
                                 config=root / "config.json", scenarios=root / "scenarios.json",
                                 scenario=session["scenario_id"], output=args.output, run_id=args.run_id)
     code = g2_scene._run(shared, qualification="g3_two_robot_orders", scenario_ids={session["scenario_id"]},
-                         result_file="g3-scene.json", scene_extension=BarrierLifecycle(session, args.run_id),
-                         extra_inputs={"g3_scene_source": Path(__file__).resolve(), "session": root / "session.json"})
+                         result_file="g3-scene.json", scene_extension=BarrierLifecycle(session, args.run_id, root),
+                         extra_inputs={"g3_scene_source": Path(__file__).resolve(), "session": root / "session.json",
+                                       "factory_visuals_source": Path(__file__).with_name("factory_visuals.py"),
+                                       "visual_scene_source": root.parents[1] / "factory_ops/visual_scene.py",
+                                       "visual_state_source": root.parents[1] / "factory_ops/visual_state.py",
+                                       "render_profile": root.parents[1] / "configs/factory-v3/render-profile.json",
+                                       "visual_assets": root.parents[1] / "configs/factory-v3/visual-assets.json"})
     print(f"FACTORY_OPS_G3_SCENE_STATUS={'PASS' if code == 0 else 'FAIL'}", flush=True)
     return code
 

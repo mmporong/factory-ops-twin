@@ -90,6 +90,7 @@ paths=[
     'configs/factory-v3/layout.json','configs/factory-v3/traffic.json',
     'configs/factory-v3/g2.json','configs/factory-v3/g3-routing.json',
     'configs/factory-v3/g3-experiment.json','configs/factory-v3/g3-runtime.json',
+    'configs/factory-v3/visual-assets.json','configs/factory-v3/render-profile.json',
     'configs/factory-v3/nav2-g2.yaml','factory_ops/drive_profile.py',
     'factory_ops/experiments.py','factory_ops/fleet.py','factory_ops/fleet_execution.py',
     'factory_ops/fleet_routing.py','factory_ops/footprint.py','factory_ops/g3_prepare.py',
@@ -97,8 +98,10 @@ paths=[
     'factory_ops/motion_authorization.py','factory_ops/motion_validation.py',
     'factory_ops/navigation.py','factory_ops/route_reservation.py',
     'factory_ops/traffic.py','factory_ops/traffic_observation.py','factory_ops/usda.py',
+    'factory_ops/visual_scene.py','factory_ops/visual_state.py','factory_ops/visual_evidence.py',
     'scripts/brev/run-g3.sh',
     'scripts/isaac/nav_scene.py','scripts/isaac/g2_scene.py','scripts/isaac/g3_scene.py',
+    'scripts/isaac/factory_visuals.py',
     'scripts/ros/g2.launch.py','scripts/ros/g3_mission.py','scripts/ros/g3_evidence.py',
     'scripts/ros/action_services.py',
 ]

@@ -24,6 +24,7 @@ from factory_ops.layout import Layout
 from factory_ops.motion_authorization import AuthorizationError, LeaseGuard
 from factory_ops.navigation import GoalPose
 from factory_ops.operations import Ledger
+from factory_ops.visual_evidence import validate_visual_evidence
 from scripts.ros.g1_evidence import _load_json, _load_jsonl, _manifest, _safe_relative
 from scripts.ros.g2_evidence import (
     ROBOTS, _nearest, _validate_media, _validate_robot, decoded_map_pose, inspect_rosbag,
@@ -1086,6 +1087,9 @@ def validate_g3_evidence(
                    for pair_rows in zip(left, right)):
                 errors.append(f"physical dock overlap exceeds one robot at {station}")
         evaluation["media"] = _validate_media(output, scene, traces, errors)
+        evaluation["industrial_visuals"] = validate_visual_evidence(
+            output, session_root, scene, mission, run_id, scenario_id, errors,
+        )
         actions = mission.get("actions", [])
         if not isinstance(actions, list) or not actions:
             errors.append("mission action history is empty")

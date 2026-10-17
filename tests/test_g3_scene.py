@@ -8,6 +8,7 @@ from pathlib import Path
 import tempfile
 from types import SimpleNamespace
 import unittest
+from unittest.mock import Mock, patch
 
 from scripts.isaac.g3_scene import BarrierLifecycle
 
@@ -111,17 +112,46 @@ class BarrierLifecycleTests(unittest.TestCase):
         self.temporary = tempfile.TemporaryDirectory()
         self.output = Path(self.temporary.name)
         self.usd = FakeUSD()
+        self.visual_patch = patch("scripts.isaac.g3_scene.FactoryVisualRuntime", autospec=True)
+        self.visual_factory = self.visual_patch.start()
+        self.addCleanup(self.visual_patch.stop)
+        self.visual = self.visual_factory.return_value
+        self.visual.setup.return_value = {"runtime_manifest": "visual-runtime-manifest.json"}
+        self.visual.capture_metadata.return_value = {"applied_sequence": 3}
 
     def tearDown(self) -> None:
         self.temporary.cleanup()
 
     def lifecycle(self) -> BarrierLifecycle:
-        lifecycle = BarrierLifecycle(closure_session(), RUN_ID)
+        lifecycle = BarrierLifecycle(closure_session(), RUN_ID, self.output)
         metadata = lifecycle.setup(
             object(), self.usd.UsdGeom, self.usd.UsdPhysics, self.usd.Gf, self.output
         )
         self.assertFalse(metadata["ground_truth_control_input"])
+        self.assertEqual(metadata["industrial_visuals"], self.visual.setup.return_value)
         return lifecycle
+
+    def test_visual_extension_receives_session_and_clock_without_control_feedback(self) -> None:
+        lifecycle = self.lifecycle()
+        self.visual_factory.assert_called_once_with(
+            layout_path=self.output / "layout.json",
+            base_scene_path=self.output / "scene/factory-v3.usda",
+            output=self.output, variant_seed=0, run_id=RUN_ID, scenario_id=SCENARIO_ID,
+        )
+        self.visual.step.assert_called_once_with(0.0, 0)
+        lifecycle.step(2.0, 120)
+        self.visual.step.assert_called_with(2.0, 120)
+        definitions = {"carter1": {"robot_id": "carter1"}, "carter2": {"robot_id": "carter2"}}
+        stage = object()
+        lifecycle.after_robots_loaded(stage, definitions)
+        self.visual.after_robots_loaded.assert_called_once_with(stage, definitions)
+        self.assertEqual(lifecycle.capture_metadata(), {"applied_sequence": 3})
+
+    def test_render_flush_uses_zero_physics_delta(self) -> None:
+        lifecycle = self.lifecycle()
+        rep = SimpleNamespace(orchestrator=SimpleNamespace(step=Mock()))
+        lifecycle.before_capture(rep)
+        rep.orchestrator.step.assert_called_once_with(delta_time=0.0, rt_subframes=4)
 
     def write_start(self, **changes) -> None:
         value = {"run_id": RUN_ID, "scenario_id": SCENARIO_ID, "sim_time_s": 10.0}
@@ -171,7 +201,7 @@ class BarrierLifecycleTests(unittest.TestCase):
         ):
             with self.subTest(changes=changes):
                 folder = Path(tempfile.mkdtemp(dir=self.output))
-                lifecycle = BarrierLifecycle(closure_session(), RUN_ID)
+                lifecycle = BarrierLifecycle(closure_session(), RUN_ID, folder)
                 lifecycle.setup(object(), self.usd.UsdGeom, self.usd.UsdPhysics, self.usd.Gf, folder)
                 value = {"run_id": RUN_ID, "scenario_id": SCENARIO_ID, "sim_time_s": 10.0}
                 value.update(changes)

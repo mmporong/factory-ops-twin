@@ -21,6 +21,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from factory_ops.fleet import FleetMission, FleetOrder
 from factory_ops.fleet_execution import StoppedGate, make_chunk, qualify_computed_path, path_content_sha256, path_clock_ready, path_header_stamp_ns
 from factory_ops.fleet_routing import RouteBook, assess_dispatch_route_compatibility, swept_tiles
+from factory_ops.visual_state import canonical_sha256, make_visual_state, project_ledger_state
 from factory_ops.g3_session import save, sha, verify_session
 from factory_ops.navigation import GoalPose, LocalizationPose, NavigationResult
 from factory_ops.operations import LedgerConfig, Transition
@@ -280,6 +281,7 @@ def main() -> int:
         params_path, maps = prepare_params(project, output, session_root, session, ready, book, config)
         result["inputs"] = {name: {"path": str(path), "sha256": sha(path)} for name, path in {
             "mission_source": Path(__file__).resolve(), "session": session_root / "session.json",
+            "visual_state_source": project / "factory_ops/visual_state.py",
             "generated_params": params_path, "config": session_root / "config.json",
             "nav2_template": project / "configs/factory-v3/nav2-g2.yaml"}.items()}
         result["navigation_map_files"] = verify_navigation_maps(output, book)
@@ -554,6 +556,8 @@ def main() -> int:
         last_update = last_progress = -math.inf
         completed_at: float | None = None
         dispatch_pair_fingerprints: dict[tuple[str, str], str] = {}
+        visual_projection: dict[str, Any] | None = None
+        visual_sequence = 0
 
         def new_leg(robot: str, target: str, intent: Any = None) -> None:
             rt = robots[robot]
@@ -804,6 +808,17 @@ def main() -> int:
                 intent = mission.active_intents.get(robot)
                 if intent is not None:
                     new_leg(robot, intent.station, intent)
+            visual_snapshot = mission.ledger.snapshot()
+            projected = project_ledger_state(visual_snapshot, visual_projection)
+            if visual_projection is None or canonical_sha256(projected) != canonical_sha256(visual_projection):
+                visual_state = make_visual_state(
+                    visual_snapshot, projected, sequence=visual_sequence, scenario_id=scenario_id,
+                    emitted_sim_time_ns=tick_clock_ns, last_event=mission.ledger.events[-1])
+                atomic_json(output / "visual-state.json", visual_state)
+                journal("visual_state_published", {key: visual_state[key] for key in
+                    ("sequence", "ledger_seq", "event_hash", "emitted_sim_time_ns", "projection_sha256")})
+                visual_projection = projected
+                visual_sequence += 1
             if manager.detect_wait_cycle(now_s=stamp):
                 raise RuntimeError("persistent full-leg wait cycle; preserve reservations and fail-stop")
             if mission.completed and completed_at is None:

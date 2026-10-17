@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "provider": "factory-ops-twin",
+  "author": "factory-ops-twin project",
+  "license": "CC0-1.0",
+  "source": "procedural native OpenUSD geometry authored for this project",
+  "variant_count": 12,
+  "required_semantic_taxonomy": [
+    "floor",
+    "floor_marking",
+    "rack",
+    "workbench",
+    "process_equipment",
+    "control_cabinet",
+    "buffer_fixture",
+    "pallet",
+    "tote",
+    "payload_tote",
+    "amr",
+    "station_marker",
+    "barrier"
+  ],
+  "runtime_semantics": {
+    "amr": "dynamic Nova Carter roots supplied by the Isaac runtime",
+    "payload_tote": "dynamic payload root bound to the mission ledger by the runtime"
+  },
+  "obstacle_assets": {
+    "KIT_BENCH_1": {"recipe": "kitting_bench", "semantic_class": "workbench", "state_role": "source_a_support"},
+    "KIT_BENCH_2": {"recipe": "kitting_bench", "semantic_class": "workbench", "state_role": "source_a_support"},
+    "RACK_A1": {"recipe": "flow_rack", "semantic_class": "rack", "state_role": "source_a_inventory"},
+    "RACK_A2": {"recipe": "flow_rack", "semantic_class": "rack", "state_role": "source_a_inventory"},
+    "RACK_B1": {"recipe": "flow_rack", "semantic_class": "rack", "state_role": "source_b_inventory"},
+    "RACK_B2": {"recipe": "flow_rack", "semantic_class": "rack", "state_role": "source_b_inventory"},
+    "BENCH_A1": {"recipe": "assembly_bench", "semantic_class": "workbench", "state_role": "pcb_assembly"},
+    "BENCH_A2": {"recipe": "inspection_station", "semantic_class": "process_equipment", "state_role": "optical_inspection"},
+    "BENCH_B1": {"recipe": "packing_bench", "semantic_class": "workbench", "state_role": "packing"},
+    "BENCH_B2": {"recipe": "inspection_station", "semantic_class": "process_equipment", "state_role": "calibration"},
+    "PROCESS_1": {"recipe": "process_cell", "semantic_class": "process_equipment", "state_role": "logical_cell_process_1"},
+    "PROCESS_2": {"recipe": "process_cell", "semantic_class": "process_equipment", "state_role": "logical_cell_process_2"},
+    "PROCESS_3": {"recipe": "process_cell", "semantic_class": "process_equipment", "state_role": "logical_cell_process_3"},
+    "CELL_CABINET": {"recipe": "control_cabinet", "semantic_class": "control_cabinet", "state_role": "logical_cell_control"},
+    "CI_BUFFER": {"recipe": "buffer_fixture", "semantic_class": "buffer_fixture", "state_role": "cell_input_two_slot"},
+    "CO_BUFFER": {"recipe": "buffer_fixture", "semantic_class": "buffer_fixture", "state_role": "cell_output_two_slot"},
+    "FG_LOW": {"recipe": "finished_goods", "semantic_class": "pallet", "state_role": "finished_goods_low"},
+    "FG_HIGH": {"recipe": "finished_goods", "semantic_class": "pallet", "state_role": "finished_goods_high"},
+    "SERVICE_CABINET": {"recipe": "service_cabinet", "semantic_class": "control_cabinet", "state_role": "utilities_and_safety"}
+  }
+}
