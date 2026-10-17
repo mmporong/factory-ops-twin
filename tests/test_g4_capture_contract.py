@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import inspect
 import json
 import math
 import os
@@ -18,6 +19,7 @@ from scripts.isaac.g4_capture import (
     ROOT,
     _assert_frozen_capture,
     _capture_plan,
+    _capture_variant,
     _depth_value_is_valid,
     _jsonable,
     _normalize_annotations,
@@ -527,6 +529,84 @@ class G4CaptureContractTests(unittest.TestCase):
             ],
         )
 
+    def test_hierarchical_sdk_class_tokens_normalize_to_authoritative_leaf(self) -> None:
+        class HierarchicalStage:
+            def GetPrimAtPath(self, path):
+                classes = {"/World/Rack": "rack", "/World/Rack/Tote": "tote"}
+                return _Prim(path in classes, classes.get(path))
+
+        result = _normalize_annotations(
+            scene_id="scene-000", scene_variant_id="industrial-v00", capture_id="capture-000",
+            camera_id="overhead", physics_frame=120, sim_time_ns=2_000_000,
+            semantic_payload={
+                "data": _Array([[9, 9]]),
+                "info": {"idToLabels": {"9": {"class": "tote,rack"}}},
+            },
+            instance_payload={
+                "data": _Array([[27, 27]]),
+                "info": {
+                    "idToLabels": {"27": "/World/Rack/Tote/Mesh"},
+                    "idToSemantics": {"27": {"class": "rack,tote"}},
+                },
+            },
+            bbox_raw={
+                "data": [{"semanticId": 4, "x_min": 0, "y_min": 0, "x_max": 1, "y_max": 0, "occlusionRatio": -1.0}],
+                "info": {"idToLabels": {"4": {"class": "rack,tote"}}, "primPaths": ["/World/Rack/Tote"]},
+            },
+            bbox_sha256="d" * 64, semantic_info_sha256="a" * 64, instance_info_sha256="b" * 64,
+            stage=HierarchicalStage(),
+            asset_source_by_root={"/World/Rack": "e" * 64, "/World/Rack/Tote": "f" * 64},
+            source_class_by_root={"/World/Rack": "rack", "/World/Rack/Tote": "tote"},
+            np=_FakeNP(),
+        )
+
+        self.assertEqual(result["raw_info"]["semantic_id_to_labels_raw"]["9"]["class"], "tote,rack")
+        self.assertEqual(result["raw_info"]["semantic_id_to_labels"]["9"], {"class": "tote"})
+        self.assertEqual(result["raw_info"]["bbox_semantic_id_to_labels"]["4"], {"class": "tote"})
+        self.assertEqual(result["instances"][0]["class"], "tote")
+
+        with self.assertRaisesRegex(CaptureError, "absent from raw idToSemantics"):
+            _normalize_annotations(
+                scene_id="scene-000", scene_variant_id="industrial-v00", capture_id="capture-000",
+                camera_id="overhead", physics_frame=120, sim_time_ns=2_000_000,
+                semantic_payload={
+                    "data": _Array([[9, 9]]),
+                    "info": {"idToLabels": {"9": {"class": "rack,tote"}}},
+                },
+                instance_payload={
+                    "data": _Array([[27, 27]]),
+                    "info": {"idToLabels": {"27": "/World/Rack/Tote/Mesh"}, "idToSemantics": {}},
+                },
+                bbox_raw={
+                    "data": [{"semanticId": 4, "x_min": 0, "y_min": 0, "x_max": 1, "y_max": 0, "occlusionRatio": -1.0}],
+                    "info": {"idToLabels": {"4": {"class": "rack,tote"}}, "primPaths": ["/World/Rack/Tote"]},
+                },
+                bbox_sha256="d" * 64, semantic_info_sha256="a" * 64, instance_info_sha256="b" * 64,
+                stage=HierarchicalStage(),
+                asset_source_by_root={"/World/Rack": "e" * 64, "/World/Rack/Tote": "f" * 64},
+                source_class_by_root={"/World/Rack": "rack", "/World/Rack/Tote": "tote"},
+                np=_FakeNP(),
+            )
+
+        forged = {"class": "rack,tote,workbench"}
+        with self.assertRaisesRegex(CaptureError, "tokens differ"):
+            _normalize_annotations(
+                scene_id="scene-000", scene_variant_id="industrial-v00", capture_id="capture-000",
+                camera_id="overhead", physics_frame=120, sim_time_ns=2_000_000,
+                semantic_payload={"data": _Array([[9]]), "info": {"idToLabels": {"9": forged}}},
+                instance_payload={
+                    "data": _Array([[27]]),
+                    "info": {"idToLabels": {"27": "/World/Rack/Tote/Mesh"}, "idToSemantics": {"27": forged}},
+                },
+                bbox_raw={
+                    "data": [{"semanticId": 4, "x_min": 0, "y_min": 0, "x_max": 0, "y_max": 0, "occlusionRatio": -1.0}],
+                    "info": {"idToLabels": {"4": forged}, "primPaths": ["/World/Rack/Tote"]},
+                },
+                bbox_sha256="d" * 64, semantic_info_sha256="a" * 64, instance_info_sha256="b" * 64,
+                stage=HierarchicalStage(), asset_source_by_root={"/World/Rack/Tote": "f" * 64},
+                source_class_by_root={"/World/Rack": "rack", "/World/Rack/Tote": "tote"}, np=_FakeNP(),
+            )
+
     def test_unique_parent_aggregate_row_is_preserved_as_excluded_gpu_metadata(self) -> None:
         class NestedStage:
             def GetPrimAtPath(self, path):
@@ -690,7 +770,7 @@ class G4CaptureContractTests(unittest.TestCase):
                     "get_uri_from_instance_segmentation_id": lambda self, value: "/World/Rack/Mesh"
                 })(),
             )
-            with self.assertRaisesRegex(CaptureError, "class differs"):
+            with self.assertRaisesRegex(CaptureError, "tokens differ"):
                 _normalize_annotations(
                     scene_id="scene-000",
                     scene_variant_id="industrial-v00",
@@ -752,6 +832,11 @@ class G4CaptureContractTests(unittest.TestCase):
         for frame, sim_time, after in mutations:
             with self.subTest(frame=frame, sim_time=sim_time), self.assertRaises(CaptureError):
                 _assert_frozen_capture(120, 2.0, poses, frame, sim_time, after)
+
+    def test_capture_does_not_teleport_live_articulations_between_frames(self) -> None:
+        source = inspect.getsource(_capture_variant)
+        self.assertNotIn("set_world_poses", source)
+        self.assertIn("settled_stationary_articulations", source)
 
     def test_leaf_occlusion_keeps_renderer_ids_separate_and_compound_unknown(self) -> None:
         context = {

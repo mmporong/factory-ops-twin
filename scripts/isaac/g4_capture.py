@@ -271,6 +271,41 @@ def _reserved_label_identity(value: object) -> str | None:
     return None
 
 
+def _class_tokens(value: object) -> tuple[str, ...]:
+    raw = _label_class(value)
+    if not isinstance(raw, str):
+        raise CaptureError("SDK semantic label has no class string")
+    tokens = tuple(part.strip() for part in raw.split(","))
+    if any(not token for token in tokens) or len(tokens) != len(set(tokens)):
+        raise CaptureError(f"SDK semantic class tokens are empty or duplicated: {raw!r}")
+    return tokens
+
+
+def _source_semantic_chain(prim_path: str, source_class_by_root: Mapping[str, str]) -> tuple[str, str, frozenset[str]]:
+    candidates = [
+        (root, class_name)
+        for root, class_name in source_class_by_root.items()
+        if prim_path == root or prim_path.startswith(root + "/")
+    ]
+    if not candidates:
+        raise CaptureError(f"prim has no authoritative semantic source root: {prim_path}")
+    root_path, leaf_class = max(candidates, key=lambda item: len(item[0]))
+    return root_path, leaf_class, frozenset(class_name for _root, class_name in candidates)
+
+
+def _validate_sdk_tokens(value: object, expected: frozenset[str], label: str) -> None:
+    actual = _class_tokens(value)
+    if frozenset(actual) != expected:
+        raise CaptureError(f"{label} SDK semantic tokens differ from authoritative ancestor classes: {actual!r} != {sorted(expected)!r}")
+
+
+def _matrix_rows(value: Any) -> list[list[Any]]:
+    rows = value.tolist() if hasattr(value, "tolist") else getattr(value, "rows", None)
+    if not isinstance(rows, list) or not rows or not all(isinstance(row, list) for row in rows):
+        raise CaptureError("segmentation data is not a nonempty 2D matrix")
+    return rows
+
+
 def _canonical_class(stage: Any, prim_path: str) -> tuple[str, str]:
     """Return the nearest labelled USD root and its class without mutating raw info."""
 
@@ -530,16 +565,23 @@ def _normalize_annotations(
     stage: Any,
     asset_source_by_root: Mapping[str, str],
     np: Any,
+    source_class_by_root: Mapping[str, str] | None = None,
 ) -> dict[str, Any]:
     semantic_raw = _raw_label_map(semantic_payload, "semantic")
     instance_raw = _raw_label_map(instance_payload, "instance")
-    semantic_classes: dict[str, dict[str, str]] = {}
-    for semantic_id, raw_value in semantic_raw.items():
-        class_name = _label_class(raw_value)
-        if class_name is None:
-            raise CaptureError(f"semantic ID {semantic_id} has no class label")
-        semantic_classes[str(semantic_id)] = {"class": class_name}
+    instance_info = instance_payload.get("info")
+    instance_semantics = instance_info.get("idToSemantics") if isinstance(instance_info, Mapping) else None
+    if source_class_by_root is not None and not isinstance(instance_semantics, Mapping):
+        raise CaptureError("instance raw info has no idToSemantics mapping")
+    if not isinstance(instance_semantics, Mapping):
+        instance_semantics = {}
+    for key in instance_semantics:
+        if not isinstance(key, str) or not key.isdecimal() or key != str(int(key)):
+            raise CaptureError("instance idToSemantics contains a noncanonical numeric ID")
     instance_array = np.asarray(instance_payload["data"])
+    semantic_array = np.asarray(semantic_payload["data"])
+    if getattr(instance_array, "shape", None) != getattr(semantic_array, "shape", None):
+        raise CaptureError("semantic and instance segmentation shapes differ")
     bounds = _mask_bounds(instance_array, np)
     instance_classes: dict[str, dict[str, str]] = {}
     instance_paths: dict[str, str] = {}
@@ -555,7 +597,19 @@ def _normalize_annotations(
                 reserved_instance_ids[str(instance_id)] = reserved_identity
                 continue
             raise CaptureError(f"instance ID {instance_id} has no original prim path")
-        root_path, class_name = _canonical_class(stage, raw_path)
+        if source_class_by_root is None:
+            root_path, class_name = _canonical_class(stage, raw_path)
+            expected_tokens = frozenset({class_name})
+        else:
+            root_path, class_name, expected_tokens = _source_semantic_chain(raw_path, source_class_by_root)
+            stage_root, stage_class = _canonical_class(stage, raw_path)
+            if (stage_root, stage_class) != (root_path, class_name):
+                raise CaptureError(f"instance ID {instance_id} stage semantics differ from authoritative source")
+        semantics_value = _map_lookup(instance_semantics, instance_id)
+        if source_class_by_root is not None and semantics_value is None:
+            raise CaptureError(f"visible foreground instance ID {instance_id} is absent from raw idToSemantics")
+        if semantics_value is not None:
+            _validate_sdk_tokens(semantics_value, expected_tokens, f"instance ID {instance_id}")
         labelled_roots[instance_id] = (root_path, class_name)
         instance_classes[str(instance_id)] = {"class": class_name}
         instance_paths[str(instance_id)] = raw_path
@@ -569,6 +623,39 @@ def _normalize_annotations(
             raise CaptureError(f"instance labelled root has no source provenance binding: {root_path}")
         instance_asset_shas[str(instance_id)] = asset_sha
 
+    semantic_classes: dict[str, dict[str, str]] = {}
+    semantic_leaf_candidates: dict[int, set[str]] = {}
+    semantic_rows = _matrix_rows(semantic_array)
+    instance_rows = _matrix_rows(instance_array)
+    if len(semantic_rows) != len(instance_rows) or any(len(a) != len(b) for a, b in zip(semantic_rows, instance_rows)):
+        raise CaptureError("semantic and instance segmentation matrices differ")
+    for semantic_row, instance_row in zip(semantic_rows, instance_rows):
+        for raw_semantic_id, raw_instance_id in zip(semantic_row, instance_row):
+            semantic_id = int(raw_semantic_id)
+            instance_id = int(raw_instance_id)
+            semantic_value = _map_lookup(semantic_raw, semantic_id)
+            reserved = _reserved_label_identity(semantic_value)
+            if instance_id in labelled_roots:
+                root_path, leaf_class = labelled_roots[instance_id]
+                raw_path = instance_paths[str(instance_id)]
+                expected_tokens = (
+                    _source_semantic_chain(raw_path, source_class_by_root)[2]
+                    if source_class_by_root is not None else frozenset({leaf_class})
+                )
+                _validate_sdk_tokens(semantic_value, expected_tokens, f"semantic ID {semantic_id}")
+                semantic_leaf_candidates.setdefault(semantic_id, set()).add(leaf_class)
+            elif reserved is not None:
+                semantic_leaf_candidates.setdefault(semantic_id, set()).add(reserved)
+            else:
+                raise CaptureError(f"semantic ID {semantic_id} cannot join instance ID {instance_id}")
+    for semantic_id, candidates in semantic_leaf_candidates.items():
+        if len(candidates) != 1:
+            raise CaptureError(f"semantic ID {semantic_id} maps to ambiguous canonical leaf classes: {sorted(candidates)}")
+        semantic_classes[str(semantic_id)] = {"class": next(iter(candidates))}
+    for semantic_id, raw_value in semantic_raw.items():
+        if _reserved_label_identity(raw_value) == "BACKGROUND":
+            semantic_classes[str(semantic_id)] = {"class": "BACKGROUND"}
+
     raw_data = bbox_raw.get("data")
     raw_info = bbox_raw.get("info")
     if not isinstance(raw_data, list) or not isinstance(raw_info, Mapping):
@@ -577,23 +664,36 @@ def _normalize_annotations(
     if not isinstance(bbox_labels, Mapping):
         raise CaptureError("bbox raw info has no idToLabels")
     instances: list[dict[str, Any]] = []
+    bbox_classes: dict[str, dict[str, str]] = {}
     excluded_bbox_rows: list[dict[str, Any]] = []
     used_ids: set[int] = set()
     for raw_index, row in enumerate(raw_data):
         if not isinstance(row, Mapping):
             raise CaptureError(f"bbox row {raw_index} is not an object")
         bbox_semantic_id = int(row["semanticId"])
-        bbox_class = _label_class(_map_lookup(bbox_labels, bbox_semantic_id))
+        bbox_raw_label = _map_lookup(bbox_labels, bbox_semantic_id)
         paths = _bbox_row_paths(raw_info, raw_index)
         bbox_roots: set[str] = set()
+        bbox_leaf_classes: set[str] = set()
         for path in paths:
-            bbox_root, canonical_bbox_class = _canonical_class(stage, path)
-            if canonical_bbox_class != bbox_class:
-                raise CaptureError(
-                    f"bbox row {raw_index} class differs from its nearest labelled USD root: "
-                    f"{bbox_class!r} != {canonical_bbox_class!r}"
-                )
+            if source_class_by_root is None:
+                bbox_root, canonical_bbox_class = _canonical_class(stage, path)
+                expected_tokens = frozenset({canonical_bbox_class})
+            else:
+                bbox_root, canonical_bbox_class, expected_tokens = _source_semantic_chain(path, source_class_by_root)
+                stage_root, stage_class = _canonical_class(stage, path)
+                if (stage_root, stage_class) != (bbox_root, canonical_bbox_class):
+                    raise CaptureError(f"bbox row {raw_index} stage semantics differ from authoritative source")
+            _validate_sdk_tokens(bbox_raw_label, expected_tokens, f"bbox row {raw_index}")
             bbox_roots.add(bbox_root)
+            bbox_leaf_classes.add(canonical_bbox_class)
+        if len(bbox_leaf_classes) != 1:
+            raise CaptureError(f"bbox row {raw_index} maps to ambiguous canonical leaf classes")
+        bbox_class = next(iter(bbox_leaf_classes))
+        previous_bbox_class = bbox_classes.get(str(bbox_semantic_id))
+        if previous_bbox_class is not None and previous_bbox_class.get("class") != bbox_class:
+            raise CaptureError(f"bbox semantic ID {bbox_semantic_id} maps to ambiguous canonical leaf classes")
+        bbox_classes[str(bbox_semantic_id)] = {"class": bbox_class}
         matches = [
             instance_id
             for instance_id, (root_path, class_name) in labelled_roots.items()
@@ -653,6 +753,11 @@ def _normalize_annotations(
     expected_ids = set(bounds) - {int(value) for value in reserved_instance_ids}
     if used_ids != expected_ids:
         raise CaptureError("instance mask IDs and bbox rows are not a one-to-one join")
+    if set(instance_classes) != {str(value) for value in expected_ids}:
+        raise CaptureError("normalized instance class map does not exactly match visible foreground IDs")
+    expected_bbox_semantic_ids = {str(int(row["semanticId"])) for row in raw_data}
+    if set(bbox_classes) != expected_bbox_semantic_ids:
+        raise CaptureError("normalized bbox class map does not exactly match raw bbox semantic IDs")
     return {
         "scene_id": scene_id,
         "capture_id": capture_id,
@@ -663,6 +768,7 @@ def _normalize_annotations(
         "raw_info": {
             "semantic_id_to_labels_raw": semantic_raw,
             "semantic_id_to_labels": semantic_classes,
+            "bbox_semantic_id_to_labels": bbox_classes,
             "instance_id_to_labels_raw": instance_raw,
             "instance_id_to_labels": instance_classes,
             "instance_id_to_prim_paths": instance_paths,
@@ -1416,11 +1522,11 @@ def _capture_variant(
     asset_source_by_root: Mapping[str, str],
     np: Any,
     Image: Any,
-    staging_anchors: Sequence[tuple[float, float]],
     rt_subframes: int,
     sd_interface: Any,
     semantic_roots: Mapping[str, Any],
     semantic_roots_path: Path,
+    source_class_by_root: Mapping[str, str],
 ) -> tuple[dict[str, Any], list[dict[str, Any]]]:
     scene_id = f"scene-{seed:03d}"
     variant_id = f"industrial-v{seed:02d}"
@@ -1432,12 +1538,6 @@ def _capture_variant(
     try:
         rep.orchestrator.set_capture_on_play(False)
         for capture_index in range(count):
-            for robot_offset, robot_name in enumerate(("carter1", "carter2")):
-                anchor = staging_anchors[(capture_index * 2 + robot_offset + seed) % len(staging_anchors)]
-                robots[robot_name].set_world_poses(
-                    positions=np.asarray([[anchor[0], anchor[1], 0.1]], dtype=np.float32),
-                    orientations=np.asarray([[1.0, 0.0, 0.0, 0.0]], dtype=np.float32),
-                )
             timeline.play()
             for robot in robots.values():
                 robot.apply_wheel_actions(np.zeros(2, dtype=np.float32))
@@ -1534,6 +1634,7 @@ def _capture_variant(
                     stage=stage,
                     asset_source_by_root=asset_source_by_root,
                     np=np,
+                    source_class_by_root=source_class_by_root,
                 )
                 leaf = raw["leaf"]
                 if not isinstance(leaf, Mapping):
@@ -1611,6 +1712,7 @@ def _capture_variant(
                         "occlusion_raw_path": _relative(leaf["occlusion_path"], output),
                         "occlusion_raw_sha256": _sha256(leaf["occlusion_path"]),
                         "reviewed": False, "verdict": "unreviewed", "reviewer": "pending",
+                        "robot_ground_contact_verified": False,
                     })
                 for item in leaf_evidence["roots"]:
                     key = (camera_id, "compound_unknown")
@@ -1625,6 +1727,7 @@ def _capture_variant(
                         "occlusion_raw_path": _relative(leaf["occlusion_path"], output),
                         "occlusion_raw_sha256": _sha256(leaf["occlusion_path"]),
                         "reviewed": False, "verdict": "unreviewed", "reviewer": "pending",
+                        "robot_ground_contact_verified": False,
                     })
                 if capture_index == count // 2:
                     review_entries.append(
@@ -1637,6 +1740,7 @@ def _capture_variant(
                             "reviewed": False,
                             "verdict": "unreviewed",
                             "reviewer": "pending",
+                            "robot_ground_contact_verified": False,
                         }
                     )
             record_path = capture_root / "capture.json"
@@ -1651,6 +1755,7 @@ def _capture_variant(
                 "all_robot_poses": {name: _pose_document(pose) for name, pose in robot_poses.items()},
                 "cameras": camera_paths,
                 "capture_scope": "paused simulator ground truth for camera, labels, and evaluation only",
+                "robot_pose_sampling": "settled_stationary_articulations; no per-capture articulation teleport",
             }
             _atomic_json(record_path, record)
             captures.append(
@@ -1829,7 +1934,8 @@ def _worker(args: argparse.Namespace, plan: CapturePlan, layout_path: Path, outp
                 _sha256(_render_scene),
                 robot_asset,
             )
-            semantic_roots = _semantic_roots_document(stage, _source_class_bindings(visual_manifest))
+            source_class_by_root = _source_class_bindings(visual_manifest)
+            semantic_roots = _semantic_roots_document(stage, source_class_by_root)
             semantic_roots_path = runtime_output / "semantic-roots.raw.json"
             _atomic_json(semantic_roots_path, semantic_roots)
             physics_dt_s = 1.0 / 60.0
@@ -1868,11 +1974,11 @@ def _worker(args: argparse.Namespace, plan: CapturePlan, layout_path: Path, outp
                 asset_source_by_root=asset_source_by_root,
                 np=np,
                 Image=Image,
-                staging_anchors=tuple(layout.stations.values()) + tuple(layout.pockets.values()),
                 rt_subframes=int(render_contract["rt_subframes"]),
                 sd_interface=sd_interface,
                 semantic_roots=semantic_roots,
                 semantic_roots_path=semantic_roots_path,
+                source_class_by_root=source_class_by_root,
             )
             scene["visual_runtime"] = _jsonable(runtime.capture_metadata(), path="visual_runtime.capture_metadata")
             scene["staged_payload"] = staged_payload
@@ -1900,7 +2006,7 @@ def _worker(args: argparse.Namespace, plan: CapturePlan, layout_path: Path, outp
             {
                 "dataset_id": args.run_id,
                 "status": "unreviewed",
-                "instructions": "A reviewer must inspect the bound RGB and replace reviewed/verdict/reviewer before final QA.",
+                "instructions": "Inspect the bound RGB, including AMR chassis/wheel/caster ground contact, then set reviewed/verdict/reviewer and robot_ground_contact_verified before final QA.",
                 "entries": reviews,
             },
         )

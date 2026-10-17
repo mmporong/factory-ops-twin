@@ -161,8 +161,12 @@ semantic, instance, bbox label map의 키는 `0`, `9`, `27` 같은 비음수 can
 
 scene의 `semantic-roots.raw.json`은 visual manifest, Nova Carter URI, staged payload/barrier source에서 정한 labelled root와 class를 보존한다. leaf는 가장 가까운 ancestor root에만 결합한다. root가 없는 조명 같은 geometry는 `no_taxonomy_root`로 모두 기록하고 coverage에서 제외한다. raw ratio가 `[0,1]`이면 `measured_leaf`, `-1`이면 `unavailable_raw_sentinel`이다. 그 밖의 값은 실패다.
 
+Isaac Sim은 부모와 자식의 semantic class를 `rack,tote`, `floor,floor_marking`처럼 합쳐 반환할 수 있다. 이 원형 문자열의 마지막 token이나 token 순서로 class를 고르지 않는다. visible instance path의 권위 있는 labelled ancestor class 집합이 SDK token 집합과 정확히 같은지 확인하고, nearest labelled root의 class를 normalized leaf class로 쓴다. 모든 visible foreground instance ID는 원본 `idToSemantics`에 있어야 하며 그 token 집합도 같은 source ancestry에 정확히 결합되어야 한다. semantic mask ID는 동일 픽셀의 instance ID들과 결합했을 때 하나의 leaf class만 가져야 한다. bbox ID공간은 별개이므로 각 bbox row의 `primPaths`에서 같은 검사를 다시 수행한다. raw label map과 보이지 않는 raw ID는 그대로 보존한다. normalized instance map의 키는 visible foreground instance ID 집합, normalized bbox map의 키는 원본 bbox row의 semantic ID 집합과 각각 정확히 같아야 하며 관측되지 않은 ID를 추가할 수 없다. normalized semantic map은 실제 visible ID와 reserved background/unlabelled ID만 담는다.
+
 여러 renderer leaf로 구성된 labelled root는 `compound_root_unknown`이며 `true_compound_occlusion_ratio`는 항상 null이다. leaf 비율의 평균·합이나 bbox 비율을 compound object의 실제 가림률로 바꾸지 않는다. 한 leaf로만 구성되고 유효 측정이 있는 root만 `single_leaf_measured`가 될 수 있다.
 
 production profile은 `reason: verifiedSDKleaf-onlymapping`을 고정하고 scene-camera마다 taxonomy에 결합된 유효 leaf 1개 이상, 카메라별 clear/partial/heavy bin, 지정 class의 전역 leaf 측정, join failure 0을 요구한다. 시각 검수에는 카메라별 세 bin과 compound unknown 대표가 필요하며 RGB SHA, raw occlusion SHA, renderer ID, leaf path, labelled root를 같은 frame에 결속한다. 검수 전 상태나 미측정 coverage는 승인되지 않는다.
 
-`visual-review.json`은 장면·카메라별 대표 샘플을 포함한다. 각 항목은 `scene_id`, `camera_id`, `capture_id`, `rgb_path`, `rgb_sha256`, `reviewed`, `verdict`, `reviewer`를 가진다. 모든 장면과 카메라 조합이 `reviewed: true`, `verdict: "pass"`가 되기 전에는 프로덕션 데이터셋을 승인하지 않는다.
+캡처 사이에 live articulation root를 순간 이동시키지 않는다. 초기 spawn에서 physics warmup을 마친 AMR을 zero-wheel 상태로 유지하고 카메라·조명·시각 variant로 구성을 바꾼다. 각 visual-review entry는 `robot_ground_contact_verified: true`를 포함해야 하며, 차체·휠·caster가 분리되거나 지면에서 부유한 프레임은 승인할 수 없다.
+
+`visual-review.json`은 장면·카메라별 대표 샘플을 포함한다. 각 항목은 `scene_id`, `camera_id`, `capture_id`, `rgb_path`, `rgb_sha256`, `reviewed`, `verdict`, `reviewer`를 가진다. `reviewer`는 RGB를 확인한 사람의 수동 검수 식별자이며 `pending`, `unreviewed`, `unknown` 같은 placeholder는 승인으로 인정하지 않는다. 이 attestation은 이미지에서 지면 정합을 확인했다는 기록이며 물리 접촉 센서 증거를 뜻하지 않는다. 모든 장면과 카메라 조합이 `reviewed: true`, `verdict: "pass"`가 되기 전에는 프로덕션 데이터셋을 승인하지 않는다.

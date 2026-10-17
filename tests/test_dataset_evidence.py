@@ -530,6 +530,45 @@ class DatasetEvidenceTests(unittest.TestCase):
 
         self.assertTrue(any("unrelated to the raw bbox" in error for error in report["errors"]), report["errors"])
 
+    def test_visible_foreground_instance_requires_preserved_source_bound_semantics(self) -> None:
+        normalized_path = next(self.root.rglob("normalized.json"))
+        instance_info_path = normalized_path.with_name("instance.raw-info.json")
+        instance_info = json.loads(instance_info_path.read_text(encoding="utf-8"))
+        instance_info["idToSemantics"].pop("27")
+        instance_info_path.write_text(json.dumps(instance_info), encoding="utf-8")
+        normalized = json.loads(normalized_path.read_text(encoding="utf-8"))
+        normalized["raw_info"]["source_artifacts"]["instance"]["sha256"] = hashlib.sha256(
+            instance_info_path.read_bytes()
+        ).hexdigest()
+        normalized_path.write_text(json.dumps(normalized), encoding="utf-8")
+        self._refresh_manifest()
+
+        report = validate_dataset(self.root, self.profile_path)
+
+        self.assertTrue(any("absent from exact source-bound idToSemantics" in error for error in report["errors"]), report["errors"])
+
+    def test_normalized_instance_class_map_rejects_nonvisible_id(self) -> None:
+        normalized_path = next(self.root.rglob("normalized.json"))
+        normalized = json.loads(normalized_path.read_text(encoding="utf-8"))
+        normalized["raw_info"]["instance_id_to_labels"]["999"] = {"class": "rack"}
+        normalized_path.write_text(json.dumps(normalized), encoding="utf-8")
+        self._refresh_manifest()
+
+        report = validate_dataset(self.root, self.profile_path)
+
+        self.assertTrue(any("instance class map does not exactly match" in error for error in report["errors"]), report["errors"])
+
+    def test_normalized_bbox_class_map_rejects_id_absent_from_raw_rows(self) -> None:
+        normalized_path = next(self.root.rglob("normalized.json"))
+        normalized = json.loads(normalized_path.read_text(encoding="utf-8"))
+        normalized["raw_info"]["bbox_semantic_id_to_labels"]["999"] = {"class": "rack"}
+        normalized_path.write_text(json.dumps(normalized), encoding="utf-8")
+        self._refresh_manifest()
+
+        report = validate_dataset(self.root, self.profile_path)
+
+        self.assertTrue(any("bbox class map does not exactly match" in error for error in report["errors"]), report["errors"])
+
     def test_hierarchical_aggregate_exclusion_requires_one_exact_descendant(self) -> None:
         record = {
             "raw_bbox_index": 1,
@@ -548,11 +587,14 @@ class DatasetEvidenceTests(unittest.TestCase):
             ],
             ["/World/Visuals/FloorGraphics/FloorFinish", "/World/Visuals/FloorGraphics"],
             {1: "floor"},
+            {"1": {"class": "floor"}},
             {120: item},
             {120: [0, 0, 1, 0]},
             {
                 "/World/Visuals/FloorGraphics": "e" * 64,
                 "/World/Visuals/FloorGraphics/FloorFinish": "e" * 64,
+                "@class:/World/Visuals/FloorGraphics": "floor",
+                "@class:/World/Visuals/FloorGraphics/FloorFinish": "floor",
             },
             {120: ("/World/Visuals/FloorGraphics/FloorFinish", "floor")},
             {0},
@@ -567,8 +609,8 @@ class DatasetEvidenceTests(unittest.TestCase):
             "fixture", [record],
             [{}, {"semanticId": 1, "x_min": 0, "y_min": 0, "x_max": 1, "y_max": 0}],
             ["/World/Visuals/FloorGraphics/FloorFinish", "/World/Visuals/FloorGraphics"],
-            {1: "floor"}, {120: item}, {120: [0, 0, 1, 0]},
-            {"/World/Visuals/FloorGraphics": "e" * 64},
+            {1: "floor"}, {"1": {"class": "floor"}}, {120: item}, {120: [0, 0, 1, 0]},
+            {"/World/Visuals/FloorGraphics": "e" * 64, "@class:/World/Visuals/FloorGraphics": "floor"},
             {120: ("/World/Visuals/FloorGraphics/FloorFinish", "floor")},
             {0}, errors,
         ), set())
@@ -697,6 +739,27 @@ class DatasetEvidenceTests(unittest.TestCase):
 
         self.assertTrue(any("unknown class" in error for error in report["errors"]))
 
+    def test_parent_class_cannot_claim_child_sdk_tokens(self) -> None:
+        normalized_path = next(self.root.rglob("normalized.json"))
+        normalized = json.loads(normalized_path.read_text(encoding="utf-8"))
+        semantic_path = normalized_path.with_name("semantic.raw-info.json")
+        instance_path = normalized_path.with_name("instance.raw-info.json")
+        semantic = json.loads(semantic_path.read_text(encoding="utf-8"))
+        instance = json.loads(instance_path.read_text(encoding="utf-8"))
+        semantic["idToLabels"]["9"]["class"] = "rack,tote"
+        instance["idToSemantics"]["27"]["class"] = "rack,tote"
+        semantic_path.write_text(json.dumps(semantic), encoding="utf-8")
+        instance_path.write_text(json.dumps(instance), encoding="utf-8")
+        normalized["raw_info"]["semantic_id_to_labels_raw"] = semantic["idToLabels"]
+        normalized["raw_info"]["source_artifacts"]["semantic"]["sha256"] = hashlib.sha256(semantic_path.read_bytes()).hexdigest()
+        normalized["raw_info"]["source_artifacts"]["instance"]["sha256"] = hashlib.sha256(instance_path.read_bytes()).hexdigest()
+        normalized_path.write_text(json.dumps(normalized), encoding="utf-8")
+        self._refresh_manifest()
+
+        report = validate_dataset(self.root, self.profile_path)
+
+        self.assertTrue(any("tokens differ from source ancestry" in error for error in report["errors"]), report["errors"])
+
     def test_path_traversal_is_rejected(self) -> None:
         self.dataset["scenes"][0]["captures"][0]["record_path"] = "../capture.json"
         self._write_dataset_index()
@@ -716,6 +779,22 @@ class DatasetEvidenceTests(unittest.TestCase):
         report = validate_dataset(self.root, self.profile_path)
 
         self.assertTrue(any("unreviewed or not approved" in error for error in report["errors"]))
+
+    def test_placeholder_reviewer_cannot_approve_visual_samples(self) -> None:
+        path = self.root / "visual-review.json"
+        document = json.loads(path.read_text(encoding="utf-8"))
+        for entry in document["entries"]:
+            entry["reviewed"] = True
+            entry["verdict"] = "pass"
+            entry["reviewer"] = "pending"
+            entry["robot_ground_contact_verified"] = True
+        path.write_text(json.dumps(document), encoding="utf-8")
+        self._refresh_manifest()
+
+        report = validate_dataset(self.root, self.profile_path)
+
+        self.assertFalse(report["passed"])
+        self.assertTrue(any("unreviewed or not approved" in error for error in report["errors"]), report["errors"])
 
     def test_source_verification_end_rehash_is_required(self) -> None:
         self.dataset["source"]["verification"]["end_verification"]["status"] = "pending"
@@ -891,6 +970,12 @@ class DatasetEvidenceTests(unittest.TestCase):
                     "27": "/World/Visuals/Rack/Mesh",
                     "35": "/World/Carter1/chassis_link",
                 },
+                "idToSemantics": {
+                    "0": {"class": "BACKGROUND"},
+                    "21": {"class": "floor"},
+                    "27": {"class": "rack"},
+                    "35": {"class": "amr"},
+                },
                 "annotator": "instance_segmentation",
             }
             raw_camera_params = {"cameraAperture": [20.0, 15.0], "renderProductResolution": [WIDTH, HEIGHT]}
@@ -948,6 +1033,9 @@ class DatasetEvidenceTests(unittest.TestCase):
                         "2": {"class": "floor"},
                         "9": {"class": "rack"},
                         "10": {"class": "amr"},
+                    },
+                    "bbox_semantic_id_to_labels": {
+                        "4": {"class": "rack"}, "5": {"class": "amr"}, "6": {"class": "floor"},
                     },
                     "instance_id_to_labels_raw": instance_raw_info["idToLabels"],
                     "instance_id_to_labels": {"21": {"class": "floor"}, "27": {"class": "rack"}, "35": {"class": "amr"}},
@@ -1037,6 +1125,7 @@ class DatasetEvidenceTests(unittest.TestCase):
                 "physics_frame": frame,
                 "sim_time_ns": sim_time_ns,
                 "robot_pose": pose,
+                "robot_pose_sampling": "settled_stationary_articulations; no per-capture articulation teleport",
                 "cameras": {
                     "overhead": {
                         "rgb": rgb_path,
@@ -1095,6 +1184,7 @@ class DatasetEvidenceTests(unittest.TestCase):
                     "reviewed": True,
                     "verdict": "pass",
                     "reviewer": "test-reviewer",
+                    "robot_ground_contact_verified": True,
                 }
             )
             if scene_index == 0:
@@ -1109,6 +1199,7 @@ class DatasetEvidenceTests(unittest.TestCase):
                         "occlusion_raw_path": occlusion_path,
                         "occlusion_raw_sha256": hashlib.sha256((self.root / occlusion_path).read_bytes()).hexdigest(),
                         "reviewed": True, "verdict": "pass", "reviewer": "test-reviewer",
+                        "robot_ground_contact_verified": True,
                     })
                 reviews.append({
                     "scene_id": scene_id, "camera_id": "overhead", "capture_id": capture_id,
@@ -1117,6 +1208,7 @@ class DatasetEvidenceTests(unittest.TestCase):
                     "occlusion_raw_path": occlusion_path,
                     "occlusion_raw_sha256": hashlib.sha256((self.root / occlusion_path).read_bytes()).hexdigest(),
                     "reviewed": True, "verdict": "pass", "reviewer": "test-reviewer",
+                    "robot_ground_contact_verified": True,
                 })
         source_files["scene_path"].write_text(
             json.dumps({"schema_version": 1, "variants": source_variants}), encoding="utf-8"

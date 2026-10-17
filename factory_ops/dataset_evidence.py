@@ -19,6 +19,9 @@ from typing import Any, Iterable, TypeGuard, cast
 DEFAULT_PROFILE = Path(__file__).resolve().parents[1] / "configs" / "factory-v3" / "dataset-profile.json"
 DATASET_SCOPE = "independent visual configurations of one synthetic layout"
 HEX = set("0123456789abcdef")
+REVIEWER_PLACEHOLDER_SENTINELS = frozenset({
+    "pending", "unreviewed", "unknown", "unset", "tbd", "todo", "none", "null", "na", "n-a",
+})
 REQUIRED_CAMERA_PATHS = {
     "rgb",
     "depth",
@@ -302,6 +305,8 @@ def _validate_capture(
     ):
         if record.get(field) != expected:
             errors.append(f"capture record {record_path} {field} does not match the dataset index")
+    if record.get("robot_pose_sampling") != "settled_stationary_articulations; no per-capture articulation teleport":
+        errors.append(f"capture record {record_path} does not prove the settled robot pose policy")
     camera_records = record.get("cameras")
     expected_camera_names = {value for value in cameras if isinstance(value, str)}
     if not isinstance(camera_records, dict) or set(camera_records) != expected_camera_names:
@@ -658,6 +663,7 @@ def _validate_camera_sample(
     bbox_labels = raw_info.get("idToLabels")
     bbox_prim_paths = raw_info.get("primPaths")
     semantic_labels = normalized_raw_info.get("semantic_id_to_labels") if isinstance(normalized_raw_info, dict) else None
+    bbox_normalized_labels = normalized_raw_info.get("bbox_semantic_id_to_labels") if isinstance(normalized_raw_info, dict) else None
     instance_labels = normalized_raw_info.get("instance_id_to_labels") if isinstance(normalized_raw_info, dict) else None
     instance_prim_paths = normalized_raw_info.get("instance_id_to_prim_paths") if isinstance(normalized_raw_info, dict) else None
     instance_labelled_roots = normalized_raw_info.get("instance_id_to_labelled_roots") if isinstance(normalized_raw_info, dict) else None
@@ -673,7 +679,7 @@ def _validate_camera_sample(
         errors,
     )
     if (not all(isinstance(value, dict) for value in (
-            bbox_labels, semantic_labels, instance_labels, instance_prim_paths,
+            bbox_labels, bbox_normalized_labels, semantic_labels, instance_labels, instance_prim_paths,
             instance_labelled_roots, instance_asset_shas, reserved_instance_ids,
         )) or not isinstance(excluded_bbox_rows, list) or not isinstance(bbox_prim_paths, list) or raw_metadata is None):
         errors.append(f"{prefix} raw bbox/instance/semantic label maps are invalid")
@@ -692,6 +698,7 @@ def _validate_camera_sample(
     normalized_raw_info = cast(dict[str, Any], normalized_raw_info)
     instance_labels = cast(dict[str, Any], instance_labels)
     bbox_labels = cast(dict[str, Any], bbox_labels)
+    bbox_normalized_labels = cast(dict[str, Any], bbox_normalized_labels)
     instance_prim_paths = cast(dict[str, Any], instance_prim_paths)
     instance_labelled_roots = cast(dict[str, Any], instance_labelled_roots)
     instance_asset_shas = cast(dict[str, Any], instance_asset_shas)
@@ -712,13 +719,24 @@ def _validate_camera_sample(
     exact_instance_labelled_roots: dict[int, tuple[str, str]] = {}
     raw_instance_semantics = raw_instance_info.get("idToSemantics")
     raw_instance_labels = raw_instance_info.get("idToLabels")
+    if not isinstance(raw_instance_semantics, dict) or not isinstance(raw_instance_labels, dict):
+        errors.append(f"{prefix} preserved instance idToSemantics/idToLabels maps are invalid")
+        return
+    if any(
+        not isinstance(key, str) or not key.isdecimal() or key != str(int(key))
+        for key in raw_instance_semantics
+    ):
+        errors.append(f"{prefix} preserved instance idToSemantics contains a noncanonical numeric ID")
+        return
     if isinstance(raw_instance_semantics, dict) and isinstance(raw_instance_labels, dict):
         for key, semantics in raw_instance_semantics.items():
             raw_path = raw_instance_labels.get(key)
-            class_name = _raw_label_class(semantics)
-            if (isinstance(key, str) and key.isdecimal() and _usd_path(raw_path)
-                    and isinstance(class_name, str) and class_name not in {"BACKGROUND", "UNLABELLED"}):
-                exact_instance_labelled_roots[int(key)] = (cast(str, raw_path), class_name)
+            if isinstance(key, str) and key.isdecimal() and _usd_path(raw_path):
+                chain = _source_semantic_chain(cast(str, raw_path), source_bindings)
+                if chain is None or _raw_class_tokens(semantics) != chain[2]:
+                    errors.append(f"{prefix} instance ID {key} SDK semantic tokens differ from source ancestry")
+                else:
+                    exact_instance_labelled_roots[int(key)] = (chain[0], chain[1])
     semantic_map = _class_map(
         semantic_labels,
         allowed_classes,
@@ -729,14 +747,12 @@ def _validate_camera_sample(
         prefix=prefix,
     )
     instance_map = _class_map(instance_labels, allowed_classes, allow_background=True, errors=errors, prefix=prefix)
-    bbox_map = _class_map(bbox_labels, allowed_classes, allow_background=False, errors=errors, prefix=prefix)
+    bbox_map = _class_map(bbox_normalized_labels, allowed_classes, allow_background=False, errors=errors, prefix=prefix)
     if semantic_map is None or instance_map is None or bbox_map is None:
         return
     raw_semantic_labels = raw_semantic_info.get("idToLabels")
-    if (not isinstance(raw_semantic_labels, dict)
-            or any(_raw_label_class(raw_semantic_labels.get(key)) != value.get("class")
-                   for key, value in semantic_labels.items() if isinstance(value, dict))):
-        errors.append(f"{prefix} normalized semantic classes differ from preserved raw labels")
+    if not isinstance(raw_semantic_labels, dict):
+        errors.append(f"{prefix} preserved semantic raw labels are invalid")
         return
     if depth[0] not in {"<f4", "<f8"}:
         errors.append(f"{prefix} depth dtype is not little-endian float32/float64")
@@ -746,6 +762,7 @@ def _validate_camera_sample(
         return
     instance_bounds: dict[int, list[int]] = {}
     observed_reserved_ids: set[int] = set()
+    expected_semantic_classes: dict[int, set[str]] = defaultdict(set)
     values = zip(_array_values(depth), _array_values(semantic), _array_values(instance))
     for pixel_index, (depth_value, semantic_id, instance_id) in enumerate(values):
         semantic_id = int(semantic_id)
@@ -755,6 +772,9 @@ def _validate_camera_sample(
             errors.append(f"{prefix} semantic ID {semantic_id} is absent from the raw label map")
             continue
         if class_name == "BACKGROUND":
+            expected_semantic_classes[semantic_id].add("BACKGROUND")
+            if _raw_class_tokens(raw_semantic_labels.get(str(semantic_id))) != frozenset({"BACKGROUND"}):
+                errors.append(f"{prefix} background semantic ID {semantic_id} raw tokens are invalid")
             if not (isinstance(depth_value, float) and math.isinf(depth_value) and depth_value > 0):
                 errors.append(f"{prefix} background depth pixel {pixel_index} is not positive infinity")
             if instance_id in reserved_map:
@@ -762,6 +782,9 @@ def _validate_camera_sample(
             else:
                 errors.append(f"{prefix} background pixel {pixel_index} has an unrecognized instance ID")
         elif class_name == "UNLABELLED":
+            expected_semantic_classes[semantic_id].add("UNLABELLED")
+            if _raw_class_tokens(raw_semantic_labels.get(str(semantic_id))) != frozenset({"UNLABELLED"}):
+                errors.append(f"{prefix} unlabelled semantic ID {semantic_id} raw tokens are invalid")
             if not isinstance(depth_value, float) or not math.isfinite(depth_value) or depth_value <= 0:
                 errors.append(f"{prefix} unlabelled geometry depth pixel {pixel_index} is not finite and positive")
             elif camera_valid:
@@ -773,6 +796,14 @@ def _validate_camera_sample(
             else:
                 observed_reserved_ids.add(instance_id)
         else:
+            raw_instance_path = instance_prim_paths.get(str(instance_id))
+            chain = _source_semantic_chain(raw_instance_path, source_bindings) if isinstance(raw_instance_path, str) else None
+            if chain is None:
+                errors.append(f"{prefix} foreground instance ID {instance_id} has no authoritative semantic ancestry")
+            else:
+                expected_semantic_classes[semantic_id].add(chain[1])
+                if class_name != chain[1] or _raw_class_tokens(raw_semantic_labels.get(str(semantic_id))) != chain[2]:
+                    errors.append(f"{prefix} semantic ID {semantic_id} canonical class/tokens differ from source ancestry")
             class_pixels[class_name] += 1
             if not isinstance(depth_value, float) or not math.isfinite(depth_value) or depth_value <= 0:
                 errors.append(f"{prefix} foreground depth pixel {pixel_index} is not finite and positive")
@@ -801,6 +832,36 @@ def _validate_camera_sample(
                 bounds[3] = max(bounds[3], y)
     if observed_reserved_ids != set(reserved_map):
         errors.append(f"{prefix} reserved instance IDs do not exactly match reserved identities present in the mask")
+    expected_semantic_map = {
+        semantic_id: next(iter(classes))
+        for semantic_id, classes in expected_semantic_classes.items()
+        if len(classes) == 1
+    }
+    for key, value in raw_semantic_labels.items():
+        if _raw_reserved_identity(value) == "BACKGROUND" and isinstance(key, str) and key.isdecimal():
+            expected_semantic_map[int(key)] = "BACKGROUND"
+    if any(len(classes) != 1 for classes in expected_semantic_classes.values()):
+        errors.append(f"{prefix} visible semantic ID maps to multiple canonical leaf classes")
+    if semantic_map != expected_semantic_map:
+        errors.append(f"{prefix} normalized semantic map does not exactly match visible mask/source joins")
+    expected_instance_ids = set(instance_bounds)
+    if set(instance_map) != expected_instance_ids:
+        errors.append(f"{prefix} normalized instance class map does not exactly match visible foreground instance IDs")
+    missing_instance_semantics = expected_instance_ids - set(exact_instance_labelled_roots)
+    if missing_instance_semantics:
+        errors.append(
+            f"{prefix} visible foreground instance IDs are absent from exact source-bound idToSemantics: "
+            f"{sorted(missing_instance_semantics)}"
+        )
+    expected_bbox_ids: set[int] = set()
+    for raw_index, row in enumerate(raw_data):
+        semantic_id = row.get("semanticId") if isinstance(row, dict) else None
+        if not _nonnegative_int(semantic_id):
+            errors.append(f"{prefix} raw bbox row {raw_index} has an invalid semantic ID")
+            continue
+        expected_bbox_ids.add(int(semantic_id))
+    if set(bbox_map) != expected_bbox_ids:
+        errors.append(f"{prefix} normalized bbox class map does not exactly match raw bbox semantic IDs")
     _validate_instances(
         prefix,
         variant_id,
@@ -809,6 +870,7 @@ def _validate_camera_sample(
         instance_bounds,
         instance_map,
         bbox_map,
+        bbox_labels,
         bbox_prim_paths,
         instance_prim_paths,
         instance_labelled_roots,
@@ -1080,6 +1142,7 @@ def _validate_instances(
     instance_bounds: dict[int, list[int]],
     instance_map: dict[int, str],
     bbox_map: dict[int, str],
+    bbox_raw_labels: dict[str, Any],
     bbox_prim_paths: list[Any],
     instance_prim_paths: dict[str, Any],
     instance_labelled_roots: dict[str, Any],
@@ -1178,6 +1241,16 @@ def _validate_instances(
         raw_paths = bbox_prim_paths[raw_index] if raw_index < len(bbox_prim_paths) else None
         if isinstance(raw_paths, str):
             raw_paths = [raw_paths]
+        raw_bbox_tokens = _raw_class_tokens(bbox_raw_labels.get(str(bbox_semantic_id)))
+        bbox_chains = [
+            _source_semantic_chain(path, source_bindings)
+            for path in raw_paths
+            if isinstance(path, str)
+        ] if isinstance(raw_paths, list) else []
+        if (not bbox_chains or any(chain is None for chain in bbox_chains)
+                or any(cast(tuple[str, str, frozenset[str]], chain)[1] != class_name for chain in bbox_chains)
+                or any(cast(tuple[str, str, frozenset[str]], chain)[2] != raw_bbox_tokens for chain in bbox_chains)):
+            errors.append(f"{prefix} instance {instance_id} bbox SDK tokens/path differ from source ancestry")
         canonical_bbox_roots = _canonical_bbox_roots(
             raw_paths,
             class_name,
@@ -1222,6 +1295,7 @@ def _validate_instances(
         raw_data,
         bbox_prim_paths,
         bbox_map,
+        bbox_raw_labels,
         normalized_by_id,
         instance_bounds,
         source_bindings,
@@ -1269,6 +1343,7 @@ def _validate_excluded_bbox_rows(
     raw_data: list[Any],
     bbox_prim_paths: list[Any],
     bbox_map: dict[int, str],
+    bbox_raw_labels: dict[str, Any],
     normalized_by_id: dict[int, dict[str, Any]],
     instance_bounds: dict[int, list[int]],
     source_bindings: dict[str, str],
@@ -1302,6 +1377,12 @@ def _validate_excluded_bbox_rows(
         descendant_root = item.get("usd_root_path")
         semantic_id = raw_box.get("semanticId") if isinstance(raw_box, dict) else None
         bbox_class = bbox_map.get(int(semantic_id)) if _nonnegative_int(semantic_id) else None
+        raw_tokens = bbox_raw_labels.get(str(semantic_id)) if _nonnegative_int(semantic_id) else None
+        chains = [
+            _source_semantic_chain(path, source_bindings)
+            for path in raw_paths
+            if isinstance(path, str)
+        ] if isinstance(raw_paths, list) else []
         canonical_roots = _canonical_bbox_roots(
             raw_paths,
             bbox_class,
@@ -1317,7 +1398,10 @@ def _validate_excluded_bbox_rows(
             and candidate["usd_root_path"].startswith(cast(str, aggregate_root) + "/")
             and raw_bbox == instance_bounds.get(candidate_id)
         ]
-        if (canonical_roots != {aggregate_root} or not isinstance(descendant_root, str)
+        if (canonical_roots != {aggregate_root} or not chains or any(chain is None for chain in chains)
+                or any(cast(tuple[str, str, frozenset[str]], chain)[1] != bbox_class for chain in chains)
+                or any(cast(tuple[str, str, frozenset[str]], chain)[2] != _raw_class_tokens(raw_tokens) for chain in chains)
+                or not isinstance(descendant_root, str)
                 or not descendant_root.startswith(cast(str, aggregate_root) + "/")
                 or candidates != [instance_id]):
             errors.append(f"{prefix} excluded bbox row is not a unique hierarchical semantic aggregate")
@@ -1453,7 +1537,11 @@ def _validate_visual_review(
         ):
             errors.append("visual-review entry does not bind a manifested RGB artifact")
             continue
-        if entry.get("reviewed") is not True or entry.get("verdict") != allowed_verdict or not _identifier(entry.get("reviewer")):
+        reviewer = entry.get("reviewer")
+        if (entry.get("reviewed") is not True or entry.get("verdict") != allowed_verdict
+                or not _identifier(reviewer)
+                or cast(str, reviewer).casefold() in REVIEWER_PLACEHOLDER_SENTINELS
+                or entry.get("robot_ground_contact_verified") is not True):
             errors.append(f"visual-review entry for {key[0]}/{key[1]} is unreviewed or not approved")
             continue
         counts[key] += 1
@@ -1689,6 +1777,28 @@ def _raw_label_class(value: object) -> str | None:
         if isinstance(candidate, str) and candidate.strip():
             return candidate.strip()
     return None
+
+
+def _raw_class_tokens(value: object) -> frozenset[str] | None:
+    raw = _raw_label_class(value)
+    if not isinstance(raw, str):
+        return None
+    tokens = tuple(part.strip() for part in raw.split(","))
+    if any(not token for token in tokens) or len(tokens) != len(set(tokens)):
+        return None
+    return frozenset(tokens)
+
+
+def _source_semantic_chain(path: str, source_bindings: dict[str, str]) -> tuple[str, str, frozenset[str]] | None:
+    candidates = [
+        (key[7:], value)
+        for key, value in source_bindings.items()
+        if key.startswith("@class:") and (path == key[7:] or path.startswith(key[7:] + "/"))
+    ]
+    if not candidates:
+        return None
+    root, leaf_class = max(candidates, key=lambda item: len(item[0]))
+    return root, leaf_class, frozenset(value for _candidate, value in candidates)
 
 
 def _raw_reserved_identity(value: object) -> str | None:
