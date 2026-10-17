@@ -320,6 +320,23 @@ README 미디어는 실제 RGB 세 화면과 사후 GT 지도·엔코더 속도 
 
 GPU 작업 종료 후 컨테이너·작업 프로세스·GPU compute process가 모두 없는 것과 VM 소스의 clean 상태를 검사했다. Brev Stop 요청 후 인증된 CLI에서 `2026-10-16 13:34:46 UTC`에 인스턴스 `evica0x9l`의 실제 `STOPPED`를 확인했고, 중지 근거도 C·E 드라이브에 보존했다. 이 상태 확인은 요금·잔여 크레딧 검증과 구분한다.
 
+## G3b qualification 실행기
+
+G3b 실행기는 두 주문의 실제 주행 연결을 위한 준비 코드다. 현재 완료된 물리 단계는 G0a·G0b·G1·G2이며 G3b 성공 기록은 아직 없다. 첫 실행은 전체 station 간 경로 예약과 edge별 action을 사용한다. qualification의 1200 sim 초·chunk별 180초는 작성한 한계이고 생산성 목표가 아니다. 파일럿과 60회 비교에는 부하 보정이 먼저 필요하다.
+
+```bash
+set -euo pipefail
+cd "$HOME/workspace/factory-ops-g0/project"
+source_commit=$(git rev-parse HEAD)
+bash scripts/brev/run-g3.sh "$HOME/workspace/factory-ops-g0" g3-q-normal-fifo-001 "$source_commit" qualification normal fifo 0
+```
+
+마지막 세 자리 숫자는 실행 attempt이며 seed와 구분한다. 실패해도 같은 폴더를 덮어쓰지 않고 새 attempt로 같은 입력을 재시도한다. supervisor는 code commit·clean checkout·인스턴스의 기존 작업 컨테이너 부재를 확인하고 세션을 새로 만든다. 요청한 profile·condition·policy·seed와 세션 SHA를 고정해 두 worker와 실행 후 검증기에 전달한다.
+
+주행 전에는 저장된 Jazzy 이미지에서 일반 Client introspection과 생성된 FollowPath 서비스 타입을 확인한다. 실제 SendGoal/GetResult/CancelGoal 이벤트, action 상태·센서·TF·지도·구동 허가·예약 결정·휠 궤적과 3개 RGB 시점을 수집한다. recorder 종료 뒤에만 SQLite CDR를 읽는다. 두 worker의 성공만으로 완료하지 않으며 `g3_evidence.py`의 최종 검증과 C/E 백업까지 확인한 뒤 Brev를 Stop한다.
+
+`scripts/ros/g3_sdk_smoke.py --output <새 JSON 경로>`는 같은 ROS 이미지에서 먼저 실행한다. 격리된 namespace의 synthetic action server에 표준 서비스 요청을 보내고, 실제 middleware의 request/response transaction·UUID·Path CDR를 대조한다. 로봇·시뮬레이터를 사용하지 않는 SDK 연결 검사이며 물리 주행 성공으로 집계하지 않는다. Jazzy의 일반 Client가 제공하는 [service introspection API](https://github.com/ros2/rclpy/blob/4e607c09d624debc39a4ae5405680c06d87fac35/rclpy/rclpy/client.py#L193-L208)를 사용한다.
+
 ## 공식 근거
 
 - [Isaac Sim 호환성](https://docs.isaacsim.omniverse.nvidia.com/latest/installation/compatibility.html)

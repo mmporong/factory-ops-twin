@@ -112,6 +112,12 @@ class RouteReservationManager:
     def events(self) -> list[dict[str, Any]]:
         return deepcopy(self._events)
 
+    def events_since(self, cursor: int) -> list[dict[str, Any]]:
+        """Read only the suffix after an in-process event sequence cursor."""
+        if type(cursor) is not int or not 0 <= cursor <= self._event_sequence:
+            raise RouteReservationError("event cursor must be an existing nonnegative sequence")
+        return deepcopy(self._events[cursor:])
+
     def observe(
         self,
         robot_id: str,
@@ -505,6 +511,9 @@ class RouteReservationManager:
             route_id=route_id,
             goal_uuid=goal_uuid,
             tile_hash=self._tile_hash(tiles),
+            tiles=self._tile_list(tiles),
+            parked=parked,
+            accepted_goal_uuid=accepted_goal_uuid,
         )
         return hold
 

@@ -2,7 +2,7 @@
 
 두 AMR이 공장에 자재를 공급하고 완료품을 출하하는 과정을 검증하는 프로젝트입니다. 가상 산업용 센서 모듈 공장을 대상으로 주문·버퍼·공정·운반 상태를 연결하고, 배차와 공유 통로 복구를 비교합니다.
 
-현재 **AMR 한 대의 주문 운송(G1)과 두 대의 교통·복구 시험(G2)을 Isaac Sim 6.2·ROS 2 Jazzy·Nav2에서 검증**했습니다. AWS L40S에서 독립 센서·TF, 공유 통로 대기, 30초 채널 차단, 교착 후 P2 양보와 재개를 실행하고 실제 ROS bag·휠 궤적·목표 결과·촬영 파일을 대조했습니다. G3a에서는 두 대의 연속 주문 원장, 경로 예약, 전체 배치의 경로 후보와 비교 실험 입력을 로컬에서 준비했습니다. 실제 두 대의 연속 주문 주행과 생산성 비교는 G3b에 남아 있습니다.
+현재 **AMR 한 대의 주문 운송(G1)과 두 대의 교통·복구 시험(G2)을 Isaac Sim 6.2·ROS 2 Jazzy·Nav2에서 검증**했습니다. AWS L40S에서 독립 센서·TF, 공유 통로 대기, 30초 채널 차단, 교착 후 P2 양보와 재개를 실행하고 실제 ROS bag·휠 궤적·목표 결과·촬영 파일을 대조했습니다. G3a에서는 연속 주문 원장·전체 배치 경로·실험 입력을 준비했습니다. G3b의 ROS 어댑터와 실행기는 구현했으며, 두 대의 연속 주문 주행 검증과 생산성 비교는 아직 진행 전입니다.
 
 ![G2의 실제 RGB 세 화면과 기록된 위치·통로 소유권 지도](docs/images/g2-f3-representative.png)
 
@@ -49,6 +49,7 @@ S1~S3은 동일한 키트 토트를 준비하는 위치입니다. 하나의 주�
 | 구간 예약 · G3a | 신선한 추정 점유·goal UUID·예약 세대 검사, 이전·다음 구간의 원자 전환, 거절·stale 시 기존 점유 유지. 작성된 관측으로 검사 |
 | 비교 입력 · G3a | 정상·폐쇄·주문 급증 × FIFO/ETA × 10 seed의 60개 미실행 입력. 부하 보정 자료가 없으면 물리 결과 집계를 차단 |
 | 준비 패키지 · G3a | 대화형 경로 보고서·정상/폐쇄 지도·USD·입력 명세 생성. 검증 시 현재 소스로 16개 파일을 재생성해 내용 대조 |
+| 실제 실행 연결 · G3b | ComputePathToPose 결과의 경로를 검사한 뒤 같은 Path를 FollowPath에 전달. 요청 UUID·수락 응답·결과, 경로 SHA, 예약 세대와 짧은 주행 허가를 연결한 실행기 구현. 물리 검증은 별도 진행 |
 
 통로 로직은 호출자가 준 추정 위치·점유·출구 상태를 입력으로 받습니다. 로컬 교통 trace는 작성된 관측을 넣어 결정 규칙을 검사합니다. CPU 운반 데모는 격자 거리와 설정 속도로 시간을 계산하며 로봇 간 간섭과 예약 대기를 반영하지 않습니다. 두 결과를 합쳐 물리 주행 성능으로 해석할 수 없습니다.
 
@@ -61,6 +62,8 @@ G2에서 사용한 Carter의 측정 회전 외곽 약 0.637 m에 평가 여유 0
 구간을 바꿀 때는 로봇이 점유한 타일을 이전·다음 예약에 모두 남기고, 다음 구간을 확보한 뒤 이전 예약의 나머지를 반환합니다. 거절되거나 관측이 오래되면 기존 예약을 유지합니다. CI·CO의 논리 버퍼 2슬롯과 물리 dock의 한 대 점유는 별개입니다. 작업 후에는 dock을 비우는 경로와 P1·P2의 주차 점유도 보호해야 합니다.
 
 60개 입력은 아직 실행하지 않았습니다. 같은 조건·seed의 FIFO/ETA에는 동일한 주문·초기 상태를 주고 선실행 정책을 교대합니다. 실패·미완료도 완료 주문 수 비교에 포함하며, 완료 시간은 두 정책이 모두 완수한 쌍에서만 별도로 집계합니다. 실제 주행 연결·경로/도킹 검사·부하 보정·6개 조건/정책 파일럿을 통과한 뒤 도착 간격과 전체 실행 예산을 확정합니다.
+
+G3b의 첫 qualification은 S1·S3에서 시작하는 두 주문을 사용합니다. 주행 액션은 연결 구간 하나씩 보내고, 예약은 station 사이의 전체 경로를 유지해 역방향 진입을 막습니다. 이는 상태·교통 연결을 확인하는 보수적 설정이며 정책별 생산성의 근거로 사용하지 않습니다. 각 액션 종료 뒤 물리 루프의 HOLD 적용 ACK와 그 이후의 새로운 휠 odometry 표본으로 0.5초 정지를 확인하고 다음 구간으로 바꿉니다. 마지막 주문 이후에도 두 AMR이 dock을 비우고 P1·P2에 정지해야 성공으로 끝납니다.
 
 ## G2 실행 결과
 
@@ -141,6 +144,8 @@ uv run python -m factory_ops verify runs/local
 uv run python -m factory_ops replay runs/local/fifo/events.jsonl --expected runs/local/fifo/snapshot.json
 uv run python -m factory_ops prepare-g3 --output runs/g3a
 uv run python -m factory_ops verify-g3 runs/g3a
+uv run python -m factory_ops.g3_session --output runs/g3-qualification --profile qualification --condition normal --policy fifo --seed 0
+uv run python -m factory_ops.g3_session --output runs/g3-qualification --verify --profile qualification --condition normal --policy fifo --seed 0
 ```
 
 `runs/local/report.html`을 브라우저에서 열면 배치도, 정책별 완료 기록과 이벤트 원장을 볼 수 있습니다. 준비 명령은 클라우드 인스턴스를 만들거나 실물 로봇에 명령하지 않습니다.
@@ -182,6 +187,8 @@ factory_ops/
   route_reservation.py 점유 타일 보존과 원자 예약 전환
   experiments.py      고정 입력·paired seed·부하 보정 게이트·실패 포함 집계
   g3_prepare.py       G3a 지도·USD·보고서 생성과 소스 재계산 검증
+  fleet_execution.py  실제 계산 경로의 외곽 검사와 연속 odometry 정지 판정
+  g3_session.py       qualification/pilot 입력·정상/폐쇄 지도·장면 생성과 재계산 검증
   usda.py             USD 텍스트 출력
   operations/         상태 모델, 원장, 배차
   traffic.py          예약·복구 결정
@@ -200,7 +207,7 @@ docs/                 설계 경계와 GPU 연동 순서
 
 G0a·G0b·G1·G2의 네 단계가 완료됐으며, 전체 여섯 단계 중 다음 두 단계가 남았습니다.
 
-1. G3a 로컬 준비는 완료했습니다. G3b에서는 두 AMR의 실제 연속 주문 주행을 연결하고, 전 구간·dock 이탈·예약 전환·장벽의 실제 관측을 검사합니다. 부하 보정과 6개 파일럿에서 RTF·데이터량을 측정한 뒤 정상·폐쇄·급증 × FIFO/ETA × 10 seed의 60회 평가 예산을 정합니다. G3 전체는 아직 완료하지 않았습니다.
+1. G3a 로컬 준비는 완료했습니다. G3b 실행기 검사를 마친 뒤 두 AMR의 연속 주문 주행, 전 구간·dock 이탈·예약 전환·장벽 관측을 물리 실행에서 확인합니다. 부하 보정과 6개 파일럿에서 RTF·데이터량을 측정한 뒤 정상·폐쇄·급증 × FIFO/ETA × 10 seed의 60회 평가 예산을 정합니다. G3 전체는 아직 완료하지 않았습니다.
 2. G4: 수집 범위를 다양한 장면으로 늘리고 ROS bag·센서 정렬·라벨 품질을 검사합니다. 현재의 한 장면·인접 프레임을 독립 장면으로 세지 않으며, G0b·G1·G2 자료는 학습용으로 승인하지 않았습니다.
 
 환경 선정과 데이터 보존 순서는 [GPU 연동 안내](docs/gpu-handoff.md), 구현 경계는 [설계 설명](docs/architecture.md)에 적었습니다.

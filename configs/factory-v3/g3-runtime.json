@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "qualification": "g3_two_robot_orders",
+  "scope": "qualification_and_pilot_only_not_primary_comparison",
+  "max_wall_time_s": 5400,
+  "startup_sim_allowance_s": 300,
+  "chunk_timeout_s": 180,
+  "pose_ttl_s": 0.5,
+  "path_ttl_s": 0.5,
+  "reservation_tracking_margin_m": 0.3,
+  "station_xy_tolerance_m": 0.25,
+  "station_yaw_tolerance_rad": 0.25,
+  "stopped_window_s": 0.5,
+  "stopped_linear_m_s": 0.02,
+  "stopped_angular_rad_s": 0.02,
+  "odom_ttl_s": 0.3,
+  "camera_capture_every_steps": 60,
+  "reservation_strategy": "full_leg_qualification_with_one_edge_actions_and_retained_stationary_footprints",
+  "anchor_yaw_rad": {
+    "S1": 0.0, "S2": 0.0, "S3": 0.0,
+    "CI": 3.141592653589793, "CO": 3.141592653589793,
+    "OUT": 0.0, "P1": 1.5707963267948966, "P2": -1.5707963267948966
+  },
+  "anchor_yaw_provenance": "S1/CI/CO/OUT follow G1 authored goals; S2/S3 and pocket departure orientations are G3 authored values, not measured docking poses",
+  "provenance": "Authored qualification limits; loaded collision geometry, path admission, wheel stop and physical evidence require runtime validation"
+}

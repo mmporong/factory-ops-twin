@@ -81,10 +81,13 @@ def _json_safe_setting(value: Any) -> Any:
     return str(value)
 
 
-def _load_inputs(config_path: Path, scenarios_path: Path, scenario_id: str) -> tuple[dict[str, Any], dict[str, Any]]:
+def _load_inputs(
+    config_path: Path, scenarios_path: Path, scenario_id: str, *,
+    qualification: str = "g2_multi_robot_traffic", scenario_ids: set[str] = SCENARIOS,
+) -> tuple[dict[str, Any], dict[str, Any]]:
     config = json.loads(config_path.read_text(encoding="utf-8"))
     document = json.loads(scenarios_path.read_text(encoding="utf-8"))
-    if not isinstance(config, dict) or config.get("qualification") != "g2_multi_robot_traffic":
+    if not isinstance(config, dict) or config.get("qualification") != qualification:
         raise base.SmokeError("G2 config has the wrong qualification")
     for name in (
         "physics_dt_s", "encoder_publish_every_steps", "camera_capture_every_steps", "warmup_steps",
@@ -138,7 +141,7 @@ def _load_inputs(config_path: Path, scenarios_path: Path, scenario_id: str) -> t
             raise base.SmokeError("G2 lidar yaw is invalid")
     scenarios = document.get("scenarios") if isinstance(document, dict) else None
     scenario = scenarios.get(scenario_id) if isinstance(scenarios, dict) else None
-    if scenario_id not in SCENARIOS or not isinstance(scenario, dict):
+    if scenario_id not in scenario_ids or not isinstance(scenario, dict):
         raise base.SmokeError("G2 scenario is missing")
     spawns = scenario.get("spawns")
     if not isinstance(spawns, dict) or set(spawns) != {value[0] for value in identities}:
@@ -532,7 +535,11 @@ def _ready_payload(
     }
 
 
-def _run(args: argparse.Namespace) -> int:
+def _run(
+    args: argparse.Namespace, *, qualification: str = "g2_multi_robot_traffic",
+    scenario_ids: set[str] = SCENARIOS, result_file: str = RESULT_FILE,
+    scene_extension: Any = None, extra_inputs: Mapping[str, Path] | None = None,
+) -> int:
     started = time.monotonic()
     app = rclpy = clock_node = session = timeline = np = rep = None
     output: Path | None = None
@@ -544,7 +551,7 @@ def _run(args: argparse.Namespace) -> int:
     phase = "preflight"
     result: dict[str, Any] = {
         "schema_version": 1, "run_id": args.run_id, "scenario_id": args.scenario,
-        "qualification": "g2_multi_robot_traffic", "status": "running", "stage": phase,
+        "qualification": qualification, "status": "running", "stage": phase,
     }
     try:
         if not re.fullmatch(r"[0-9a-f]{32}", args.run_id):
@@ -554,7 +561,8 @@ def _run(args: argparse.Namespace) -> int:
         config_path = args.config.resolve(strict=True)
         scenarios_path = args.scenarios.resolve(strict=True)
         layout = Layout.from_file(layout_path)
-        config, scenario = _load_inputs(config_path, scenarios_path, args.scenario)
+        config, scenario = _load_inputs(config_path, scenarios_path, args.scenario,
+                                        qualification=qualification, scenario_ids=scenario_ids)
         os.environ["ROS_DOMAIN_ID"] = str(int(config["ros_domain_id"]))
         os.environ.setdefault("ROS_DISTRO", "jazzy")
         source_path = Path(__file__).resolve()
@@ -565,13 +573,16 @@ def _run(args: argparse.Namespace) -> int:
             "scenarios": {"path": str(scenarios_path), "sha256": base._sha256(scenarios_path)},
             "source": {"path": str(source_path), "sha256": base._sha256(source_path)},
         }
+        for name, path in (extra_inputs or {}).items():
+            source = path.resolve(strict=True)
+            result["inputs"][name] = {"path": str(source), "sha256": base._sha256(source)}
 
         def checkpoint(name: str) -> None:
             nonlocal phase
             phase = name
             result["stage"] = name
             result["elapsed_wall_s"] = time.monotonic() - started
-            _atomic_json(output / RESULT_FILE, result)
+            _atomic_json(output / result_file, result)
 
         checkpoint("simulation_app")
         from isaacsim import SimulationApp
@@ -620,6 +631,8 @@ def _run(args: argparse.Namespace) -> int:
         result["observed_factory"] = observed
         if mismatches:
             raise base.SmokeError(f"factory invariants failed: {mismatches}")
+        if scene_extension is not None:
+            result["scene_extension"] = scene_extension.setup(stage, UsdGeom, UsdPhysics, Gf, output)
 
         checkpoint("load_robots")
         asset = get_assets_root_path() + "/Isaac/Robots/NVIDIA/NovaCarter/nova_carter.usd"
@@ -761,6 +774,8 @@ def _run(args: argparse.Namespace) -> int:
         max_sim = min(float(config["max_sim_time_s"]), float(scenario["max_sim_time_s"]))
         while True:
             now = float(SimulationManager.get_simulation_time())
+            if scene_extension is not None:
+                scene_extension.step(now, int(SimulationManager.get_num_physics_steps()))
             if now - start_sim > max_sim:
                 raise base.OperationTimeout("G2 scenario exceeded configured simulation time")
             if time.monotonic() - started > float(config["max_wall_time_s"]):
@@ -873,6 +888,8 @@ def _run(args: argparse.Namespace) -> int:
                     },
                 }
                 _append_jsonl(runtime["trajectory_path"], sample)
+                if scene_extension is not None:
+                    scene_extension.after_control(robot_id, sample)
             if settle_remaining is not None:
                 settle_elapsed += 1
                 settle_remaining = settle_remaining - 1 if all_zero else SETTLE_STEPS
@@ -972,7 +989,7 @@ def _run(args: argparse.Namespace) -> int:
         if output is not None:
             result["status"] = "validated" if valid else "failed"
             result["cleanup"] = "worker_exit_requested" if valid else "cleanup_failed"
-            _atomic_json(output / RESULT_FILE, result)
+            _atomic_json(output / result_file, result)
         if app is not None:
             try:
                 app.close(wait_for_replicator=False, exit_code=code)
@@ -981,7 +998,7 @@ def _run(args: argparse.Namespace) -> int:
                 result["status"] = "failed"
                 result["close_error"] = f"{type(error).__name__}: {error}"
                 if output is not None:
-                    _atomic_json(output / RESULT_FILE, result)
+                    _atomic_json(output / result_file, result)
     return code
 
 

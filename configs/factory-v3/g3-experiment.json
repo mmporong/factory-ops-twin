@@ -46,7 +46,7 @@
         "S1",
         "S3"
       ],
-      "horizon_s": 480.0
+      "horizon_s": 1200.0
     },
     "pilot": {
       "order_count_min": 4,

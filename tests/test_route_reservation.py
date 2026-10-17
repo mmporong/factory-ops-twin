@@ -49,6 +49,19 @@ class RouteReservationManagerTest(unittest.TestCase):
         self.assertEqual("route_tiles_occupied", denied.reason)
         self.assertEqual((self.R2,), denied.blockers)
 
+    def test_event_cursor_returns_only_new_immutable_rows(self) -> None:
+        manager = self.manager()
+        first = manager.events_since(0)
+        self.assertEqual([1, 2], [row["event_sequence"] for row in first])
+        first[0]["run_id"] = "changed-copy"
+        self.assertNotEqual("changed-copy", manager.events_since(0)[0]["run_id"])
+        self.assertEqual([], manager.events_since(2))
+        manager.reserve(self.R1, "route", self.goal(), ((0, 0),), now_s=0)
+        self.assertEqual([3], [row["event_sequence"] for row in manager.events_since(2)])
+        for cursor in (-1, True, 999):
+            with self.subTest(cursor=cursor), self.assertRaises(RouteReservationError):
+                manager.events_since(cursor)
+
     def test_stale_global_observation_holds_ownership_and_blocks_permission(self) -> None:
         manager = self.manager()
         goal = self.goal()

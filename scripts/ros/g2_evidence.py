@@ -438,7 +438,13 @@ def _validate_media(output: Path, scene: Mapping[str, Any], traces: Mapping[str,
     return {"frame_count": len(frames), "image_count": len(frames) * 3}
 
 
-def inspect_rosbag(output: Path, traces: Mapping[str, list[dict[str, Any]]], ready: Mapping[str, Any]) -> dict[str, Any]:
+def inspect_rosbag(
+    output: Path,
+    traces: Mapping[str, list[dict[str, Any]]],
+    ready: Mapping[str, Any],
+    *,
+    event_prefix: str = "/factory/g2",
+) -> dict[str, Any]:
     """Decode actual CDR messages; JSON summaries cannot substitute for this pass."""
     from rclpy.serialization import deserialize_message
     from rosidl_runtime_py.utilities import get_message
@@ -473,14 +479,15 @@ def inspect_rosbag(output: Path, traces: Mapping[str, list[dict[str, Any]]], rea
                 counts[topics[int(tid)][0]] += count
             for tid, data in connection.execute("SELECT topic_id,data FROM messages ORDER BY timestamp"):
                 topic, type_name = topics[int(tid)]
+                event_topics = (f"{event_prefix}/events", f"{event_prefix}/authorizations")
                 selected = ("/scan_" in topic or topic.endswith(("/tf", "/tf_static", "/_action/status", "/amcl_pose"))
-                            or topic in ("/factory/g2/events", "/factory/g2/authorizations"))
+                            or topic in event_topics)
                 if not selected:
                     continue
                 if type_name not in types:
                     types[type_name] = get_message(type_name)
                 message = deserialize_message(bytes(data), types[type_name])
-                if topic in ("/factory/g2/events", "/factory/g2/authorizations"):
+                if topic in event_topics:
                     value = json.loads(message.data)
                     if (not isinstance(value, dict) or value.get("run_id") != ready["run_id"]
                             or (value.get("scope", {}).get("scenario_id") if topic.endswith("authorizations") else value.get("scenario_id")) != ready["scenario_id"]):
