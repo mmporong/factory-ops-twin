@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "classification": "static_media_visual_review",
+  "run_id": "g4-probe-007",
+  "render_source_commit": "d3f67b02f65b30152f62a8ea85141f54d3d94aaf",
+  "camera_id": "aisle",
+  "source_rgb_sha256": "a7e8dbfbfd0dac34a70e30e0eeb1d91f7577475577f0f345ab6a575736530b08",
+  "reviewer": "factory_v3_media_review",
+  "verdict": "limited_preview_pass",
+  "score_out_of_10": 7.2,
+  "scope": "static factory appearance only",
+  "required_caption": "현재 공장 외형 진단 렌더 · 라벨·운영 검증 진행 중",
+  "dataset_approved": false,
+  "operational_evidence": false,
+  "observations": [
+    "조립·검사 셀, 트레이, 롤러 설비와 안전선이 구분된다.",
+    "회색 패널의 가림과 평평한 조명은 최종 포트폴리오 품질 보완 항목이다.",
+    "같은 실행의 AMR 근접 이미지는 부품 분리·부유가 관찰되어 사용을 보류했다."
+  ]
+}
