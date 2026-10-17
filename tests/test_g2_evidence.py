@@ -9,7 +9,8 @@ from typing import Any
 from factory_ops.layout import Layout
 from factory_ops.traffic import TrafficController
 from scripts.ros.g2_evidence import (
-    _nearest, _validate_dispatch, qualify_authored_routes, validate_g2_evidence,
+    _nearest, _validate_dispatch, decoded_map_pose, decoded_map_pose_indexed,
+    index_decoded_tf, qualify_authored_routes, validate_g2_evidence,
     validate_amcl_scan_fan_in, validate_scan_pairs, validate_f3_cycle,
     unique_sequence_index,
 )
@@ -66,7 +67,61 @@ def cycle_fixture():
     return events, transforms
 
 
+def tf_row(stamp: float, x: float, y: float, yaw: float = 0.0):
+    return {"stamp_s": stamp, "translation": [x, y, 0.0],
+            "wxyz": [math.cos(yaw / 2), 0.0, 0.0, math.sin(yaw / 2)]}
+
+
 class G2EvidenceTests(unittest.TestCase):
+    def test_indexed_tf_matches_wrapper_for_exact_interpolated_and_duplicate_stamps(self):
+        edges = {
+            "map->odom": [tf_row(0.0, 1.0, 2.0), tf_row(0.1, 99.0, 99.0),
+                          tf_row(0.1, 2.0, 3.0), tf_row(0.2, 3.0, 4.0)],
+            "odom->base_link": [tf_row(0.0, 1.0, 0.0), tf_row(0.2, 3.0, 0.0)],
+        }
+        index = index_decoded_tf(edges)
+        self.assertEqual(decoded_map_pose_indexed(index, 0.1), (4.0, 3.0))
+        for stamp in (0.0, 0.05, 0.1, 0.1 - 5e-9, 0.15, 0.2):
+            with self.subTest(stamp=stamp):
+                self.assertEqual(decoded_map_pose(edges, stamp), decoded_map_pose_indexed(index, stamp))
+
+    def test_indexed_tf_uses_shortest_yaw_interpolation_across_pi(self):
+        edges = {
+            "map->odom": [tf_row(0.0, 0.0, 0.0, math.radians(179)),
+                          tf_row(0.2, 0.0, 0.0, math.radians(-179))],
+            "odom->base_link": [tf_row(0.0, 1.0, 0.0), tf_row(0.2, 1.0, 0.0)],
+        }
+        wrapper = decoded_map_pose(edges, 0.1)
+        indexed = decoded_map_pose_indexed(index_decoded_tf(edges), 0.1)
+        self.assertEqual(wrapper, indexed)
+        self.assertAlmostEqual(indexed[0], -1.0, places=12)
+        self.assertAlmostEqual(indexed[1], 0.0, places=12)
+
+    def test_indexed_tf_preserves_unobserved_bracket_and_stale_errors(self):
+        freshness = TrafficController.pose_freshness_s
+        cases = (
+            ({"map->odom": [], "odom->base_link": []}, 0.0),
+            ({"map->odom": [tf_row(1.0, 0.0, 0.0)],
+              "odom->base_link": [tf_row(1.0, 0.0, 0.0)]}, 0.5),
+            ({"map->odom": [tf_row(0.0, 0.0, 0.0), tf_row(freshness + .01, 0.0, 0.0)],
+              "odom->base_link": [tf_row(0.0, 0.0, 0.0), tf_row(freshness + .01, 0.0, 0.0)]},
+             freshness / 2),
+        )
+        for edges, stamp in cases:
+            with self.subTest(stamp=stamp, samples=len(edges["map->odom"])):
+                failures = []
+                for query in (
+                    lambda: decoded_map_pose(edges, stamp),
+                    lambda: decoded_map_pose_indexed(index_decoded_tf(edges), stamp),
+                ):
+                    try:
+                        query()
+                    except ValueError as error:
+                        failures.append((type(error), str(error)))
+                    else:
+                        self.fail("invalid TF evidence unexpectedly produced a pose")
+                self.assertEqual(failures[0], failures[1])
+
     def test_current_broad_aisle_routes_cover_full_planning_envelope(self):
         layout = Layout.from_file(ROOT / "configs/factory-v3/layout.json")
         traffic = TrafficController.from_file(ROOT / "configs/factory-v3/traffic.json")

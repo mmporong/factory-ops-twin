@@ -27,6 +27,7 @@ from factory_ops.operations import Ledger
 from scripts.ros.g1_evidence import _load_json, _load_jsonl, _manifest, _safe_relative
 from scripts.ros.g2_evidence import (
     ROBOTS, _nearest, _validate_media, _validate_robot, decoded_map_pose, inspect_rosbag,
+    index_decoded_tf, decoded_map_pose_indexed,
 )
 from scripts.isaac.nav_scene import _tilt_evaluation
 
@@ -649,7 +650,8 @@ def validate_initial_hold_barrier(
     if origin is None or origin <= max(latched, latest_sample):
         errors.append("navigation origin is not strictly after the post-step HOLD barrier")
     return {"passed_robot_count": passed, "origin_sim_time_s": origin,
-            "latched_sim_time_s": latched, "latest_ack_sample_sim_time_s": latest_sample}
+            "latched_sim_time_s": latched,
+            "latest_ack_sample_sim_time_s": latest_sample if passed else None}
 
 
 def validate_authorization_order(
@@ -852,6 +854,11 @@ def _validate_localization_reservations(
     occupied_by_frame: dict[int, dict[str, frozenset[tuple[int, int]]]] = defaultdict(dict)
     for robot in ROBOTS:
         edges = bag.get("tf_samples", {}).get(robot, {})
+        try:
+            pose_index = index_decoded_tf(edges)
+        except (KeyError, TypeError, ValueError) as exc:
+            errors.append(f"{robot}: actual TF cannot build its trajectory pose index: {exc}")
+            continue
         for sample in traces[robot]:
             stamp = float(sample["sim_time_s"])
             payload = sample.get("authorization", {}).get("payload") or {}
@@ -870,7 +877,7 @@ def _validate_localization_reservations(
                 continue
             held = by_generation.get((robot, generation))
             try:
-                pose_xy = decoded_map_pose(edges, stamp)
+                pose_xy = decoded_map_pose_indexed(pose_index, stamp)
             except (KeyError, TypeError, ValueError) as exc:
                 errors.append(f"{robot}: actual TF cannot reconstruct the trajectory reservation pose: {exc}")
                 continue

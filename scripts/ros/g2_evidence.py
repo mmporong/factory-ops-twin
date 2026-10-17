@@ -11,7 +11,7 @@ import math
 from pathlib import Path
 import sqlite3
 import sys
-from typing import Any, Mapping, Sequence
+from typing import Any, Mapping, Sequence, TypeAlias
 from uuid import UUID
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
@@ -223,12 +223,26 @@ def validate_amcl_scan_fan_in(
     }
 
 
-def decoded_map_pose(edges: Mapping[str, Sequence[Mapping[str, Any]]], stamp: float) -> tuple[float, float]:
-    """Reconstruct planar map->base_link from actual recorded TF messages."""
+DecodedTFEdgeIndex: TypeAlias = tuple[tuple[float, ...], Mapping[float, Mapping[str, Any]]]
+DecodedTFIndex: TypeAlias = Mapping[str, DecodedTFEdgeIndex]
+
+
+def index_decoded_tf(
+    edges: Mapping[str, Sequence[Mapping[str, Any]]],
+) -> dict[str, DecodedTFEdgeIndex]:
+    """Index the two decoded TF edges once, preserving last-record-wins stamps."""
+    result: dict[str, DecodedTFEdgeIndex] = {}
+    for edge in ("map->odom", "odom->base_link"):
+        unique: dict[float, Mapping[str, Any]] = {row["stamp_s"]: row for row in edges.get(edge, [])}
+        result[edge] = (tuple(sorted(unique)), unique)
+    return result
+
+
+def decoded_map_pose_indexed(index: DecodedTFIndex, stamp: float) -> tuple[float, float]:
+    """Reconstruct planar map->base_link from a reusable decoded TF index."""
     poses = []
     for edge in ("map->odom", "odom->base_link"):
-        unique = {row["stamp_s"]: row for row in edges.get(edge, [])}
-        times = sorted(unique)
+        times, unique = index.get(edge, ((), {}))
         at = bisect_left(times, stamp)
         if at < len(times) and abs(times[at] - stamp) < 1e-8:
             a = b = unique[times[at]]
@@ -247,6 +261,11 @@ def decoded_map_pose(edges: Mapping[str, Sequence[Mapping[str, Any]]], stamp: fl
     map_odom, odom_base = poses
     return (map_odom[0] + math.cos(map_odom[2]) * odom_base[0] - math.sin(map_odom[2]) * odom_base[1],
             map_odom[1] + math.sin(map_odom[2]) * odom_base[0] + math.cos(map_odom[2]) * odom_base[1])
+
+
+def decoded_map_pose(edges: Mapping[str, Sequence[Mapping[str, Any]]], stamp: float) -> tuple[float, float]:
+    """Reconstruct planar map->base_link from actual recorded TF messages."""
+    return decoded_map_pose_indexed(index_decoded_tf(edges), stamp)
 
 
 def validate_f3_cycle(

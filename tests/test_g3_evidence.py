@@ -118,6 +118,16 @@ class G3EvidenceHelperTests(unittest.TestCase):
             )
             self.assertTrue(failures, attack)
 
+    def test_missing_failed_run_origin_keeps_the_diagnostic_report_json_serializable(self):
+        mission, traces, authorizations, events = self.initial_hold_fixture()
+        del mission["origin_sim_time_s"]
+        errors = []
+        report = validate_initial_hold_barrier(mission, traces, authorizations, events, errors)
+        self.assertTrue(errors)
+        self.assertEqual(0, report["passed_robot_count"])
+        self.assertIsNone(report["latest_ack_sample_sim_time_s"])
+        json.dumps(report, allow_nan=False)
+
     def action_fixture(self):
         goal_xy = self.book.nodes["W_LOW"]
         final_goal = GoalPose("map", *goal_xy, 0.0)
