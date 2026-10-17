@@ -1,0 +1,140 @@
+# 렌더 데이터 계약
+
+`dataset.json`은 데이터셋의 권위 있는 진입점이다. `sim_time_ns` 정수가 시간 결합의 기준이며, 부동소수점 시각은 저장하지 않는다. 데이터 범위는 한 합성 공장 배치에서 만든 독립 시각 구성(`scene_id`)이다. 캡처 프레임 수를 독립 장면 수로 해석하거나 모델 성능을 주장하지 않는다.
+
+## 최소 구조
+
+```text
+dataset.json
+visual-review.json
+scenes/scene-000/captures/f000000120-t000000002000000/
+  capture.json
+  overhead/{rgb.png,depth.npy,semantic.npy,instance.npy,bbox2d.raw.json,camera_params.json,normalized.json}
+  aisle/{...}
+  amr_follow/{...}
+```
+
+`dataset.json`의 최소 완성 예시는 다음과 같다. `artifact_manifest`는 `dataset.json` 자신을 제외한 모든 정규 파일과 정확히 일치해야 한다.
+
+```json
+{
+  "schema_version": 1,
+  "dataset_id": "factory-v3-render-001",
+  "run_id": "g4-render-001",
+  "scope": "independent visual configurations of one synthetic layout",
+  "source": {
+    "commit": "40자리 Git SHA",
+    "scene_path": "provenance/scene-sources.json",
+    "scene_sha256": "64자리 SHA-256",
+    "asset_manifest_path": "provenance/asset-manifest.json",
+    "asset_manifest_sha256": "64자리 SHA-256",
+    "render_profile_path": "provenance/render-profile.json",
+    "render_profile_sha256": "64자리 SHA-256"
+  },
+  "profile_sha256": "dataset-profile.json의 SHA-256",
+  "split_assignments": {"scene-000": "train"},
+  "scenes": [
+    {
+      "scene_id": "scene-000",
+      "scene_variant_id": "lighting-a-material-a-clutter-a",
+      "run_id": "g4-render-001",
+      "captures": [
+        {
+          "capture_id": "scene-000--f000000120--t000000002000000",
+          "physics_frame": 120,
+          "sim_time_ns": 2000000,
+          "robot_pose": {"position_xyz": [1.0, 2.0, 0.0], "orientation_wxyz": [1.0, 0.0, 0.0, 0.0]},
+          "record_path": "scenes/scene-000/captures/f000000120-t000000002000000/capture.json"
+        }
+      ]
+    }
+  ],
+  "artifact_manifest": [
+    {"path": "visual-review.json", "bytes": 123, "sha256": "64자리 SHA-256"}
+  ]
+}
+```
+
+`capture.json`은 장면 항목과 동일한 ID·프레임·시각·로봇 자세를 반복해 파일 경계에서 결합을 검증하고, 프로필에 고정된 카메라 이름을 모두 포함한다.
+
+```json
+{
+  "scene_id": "scene-000",
+  "scene_variant_id": "lighting-a-material-a-clutter-a",
+  "capture_id": "scene-000--f000000120--t000000002000000",
+  "physics_frame": 120,
+  "sim_time_ns": 2000000,
+  "robot_pose": {"position_xyz": [1.0, 2.0, 0.0], "orientation_wxyz": [1.0, 0.0, 0.0, 0.0]},
+  "cameras": {
+    "overhead": {
+      "rgb": ".../overhead/rgb.png",
+      "depth": ".../overhead/depth.npy",
+      "semantic": ".../overhead/semantic.npy",
+      "instance": ".../overhead/instance.npy",
+      "bbox2d_raw": ".../overhead/bbox2d.raw.json",
+      "camera_params": ".../overhead/camera_params.json",
+      "normalized": ".../overhead/normalized.json"
+    }
+  }
+}
+```
+
+`source.scene_path`가 가리키는 `scene-sources.json`은 모든 `scene_id`와 `scene_variant_id`를 정확히 한 번씩 포함한다. 각 variant는 서로 겹치지 않는 `render_scene_path`·`visual_manifest_path`와 각각의 SHA-256, 실제 Nova Carter USD URI, 런타임 prop의 `prim_path`·`source`·`asset_source_sha256`을 기록한다. visual manifest의 asset provenance SHA는 데이터셋의 asset manifest SHA와 같아야 한다. 시각 asset root는 이 manifest, Carter root는 실제 USD URI의 SHA-256, payload와 safety barrier root는 선언된 source 문자열의 SHA-256에서 허용 source SHA를 다시 계산한다. annotation에 들어 있는 SHA만으로 asset 출처를 인정하지 않는다. 서로 다른 split의 장면이 RGB·depth·semantic·instance 전체를 그대로 공유하면 누출로 판정한다.
+
+컨테이너에 Git 실행 파일이 없으면 `/workspace/g4-environment.json`을 source proof로 사용한다. supervisor는 파일 전체 SHA-256을 `FACTORY_OPS_G4_PROVENANCE_SHA256`에 전달하며, 문서는 `source_commit`과 `{상대경로: SHA-256}` 형식의 `source_files`를 가진다. capture producer는 manifest 바이트 SHA, 요청 commit, layout을 포함한 필수 runtime/import source pin의 존재, 모든 선언 파일의 현재 바이트 SHA를 검사한 뒤에만 Isaac을 시작한다.
+
+`camera_params.json`은 `scene_id`, `capture_id`, `camera_id`, `physics_frame`, `sim_time_ns`, `width`, `height`, `pose_xyz`, `orientation_wxyz`, `focal_length`, `horizontal_aperture`, `vertical_aperture`, `clipping_range`, `world_to_camera`(16개), `projection`(16개)을 가진다. 행렬과 렌즈 값은 모두 유한해야 하고 해상도는 RGB 및 배열과 같아야 한다. `world_to_camera`는 USD row-vector convention에서 pose translation과 unit quaternion으로 역산한 extrinsic과 같아야 한다. `projection`은 focal length, 두 aperture, near/far clipping으로 다시 계산한 perspective matrix와 같아야 한다. foreground `distance_to_image_plane` 값은 유한한 양수이면서 `[near, far]` 안에 있어야 하고 background는 양의 무한대다.
+
+`bbox2d.raw.json`은 Replicator가 반환한 원형 정보를 JSON 표현으로 보존한다.
+
+```json
+{
+  "data": [{"semanticId": 4, "x_min": 10, "y_min": 20, "x_max": 40, "y_max": 60, "occlusionRatio": 0.25}],
+  "info": {
+    "idToLabels": {"4": {"class": "rack"}},
+    "primPaths": [["/World/Factory/Rack_01"]]
+  }
+}
+```
+
+이 계약에서 bbox `semanticId`, semantic segmentation ID, instance segmentation ID는 서로 독립된 수치 공간이다. bbox 원형의 `info.idToLabels`와 행 인덱스에 대응하는 `info.primPaths`를 가공하지 않고 보존한다. semantic·instance annotator의 원형 label map과 instance ID별 prim path는 `normalized.json`의 `raw_info`에 따로 보존한다.
+
+```json
+{
+  "scene_id": "scene-000",
+  "capture_id": "scene-000--f000000120--t000000002000000",
+  "camera_id": "overhead",
+  "physics_frame": 120,
+  "sim_time_ns": 2000000,
+  "raw_annotations_sha256": "bbox2d.raw.json의 SHA-256",
+  "raw_info": {
+    "semantic_id_to_labels": {"0": {"class": "BACKGROUND"}, "9": {"class": "rack"}},
+    "instance_id_to_labels": {"27": {"class": "rack"}},
+    "instance_id_to_prim_paths": {"27": "/World/Factory/Rack_01/Mesh"},
+    "instance_id_to_labelled_roots": {"27": "/World/Factory/Rack_01"},
+    "instance_id_to_asset_source_sha256": {"27": "64자리 SHA-256"}
+  },
+  "instances": [
+    {
+      "instance_id": 27,
+      "bbox_semantic_id": 4,
+      "class": "rack",
+      "usd_root_path": "/World/Factory/Rack_01",
+      "asset_source_sha256": "64자리 SHA-256",
+      "stable_instance_key": "64자리 SHA-256",
+      "bbox_xyxy": [10, 20, 40, 60],
+      "raw_bbox_index": 0,
+      "occlusion_ratio": 0.25,
+      "edge_truncated": false
+    }
+  ]
+}
+```
+
+안정 ID는 UTF-8 바이트열 `scene_variant_id + "\\0" + usd_root_path + "\\0" + asset_source_sha256`의 SHA-256이다. `instance_id_to_prim_paths`는 annotator가 반환한 원본 child prim path를 보존하고, `instance_id_to_labelled_roots`는 semantic class가 붙은 조상 root를 보존한다. child path는 labelled root와 같거나 그 하위여야 한다. bbox 행의 각 prim path는 labelled root와 조상·자손 관계여야 한다. `bbox2d.raw.json`의 `data`와 `info.primPaths`는 길이가 같고 행별로 일대일 대응한다. 모든 USD path는 `/World`에서 시작하는 canonical path여야 한다.
+
+semantic, instance, bbox label map의 키는 `0`, `9`, `27` 같은 비음수 canonical 10진 문자열만 허용한다. `09`와 `9`, 음수, 비수치 키는 거부한다. 프로필의 `minimum_class_pixels`는 양의 정수여야 하며 문자열이나 0으로 production gate를 낮출 수 없다.
+
+`bbox_semantic_id`는 선택한 원본 bbox 행의 `semanticId`와 같아야 하며 bbox label map의 class, instance label map의 class, semantic mask class가 모두 같아야 한다. `bbox_xyxy`는 instance mask에서 얻은 양끝 포함 tight bbox다. 원본 bbox 수치와 각 좌표 차이가 1픽셀 이내여야 한다. `occlusionRatio` 원형 값은 `occlusion_ratio`와 같아야 하고 `[0, 1]` 범위여야 한다. `edge_truncated`는 tight bbox가 이미지 가장자리에 닿는지와 일치해야 한다.
+
+`visual-review.json`은 장면·카메라별 대표 샘플을 포함한다. 각 항목은 `scene_id`, `camera_id`, `capture_id`, `rgb_path`, `rgb_sha256`, `reviewed`, `verdict`, `reviewer`를 가진다. 모든 장면과 카메라 조합이 `reviewed: true`, `verdict: "pass"`가 되기 전에는 프로덕션 데이터셋을 승인하지 않는다.

@@ -1,0 +1,1215 @@
+"""Strict, dependency-free validation for the portfolio render dataset."""
+
+from __future__ import annotations
+
+import argparse
+import ast
+import binascii
+from collections import Counter, defaultdict
+import hashlib
+import json
+import math
+from pathlib import Path, PurePosixPath
+import stat
+import struct
+import zlib
+from typing import Any, Iterable, TypeGuard, cast
+
+
+DEFAULT_PROFILE = Path(__file__).resolve().parents[1] / "configs" / "factory-v3" / "dataset-profile.json"
+DATASET_SCOPE = "independent visual configurations of one synthetic layout"
+HEX = set("0123456789abcdef")
+REQUIRED_CAMERA_PATHS = {
+    "rgb",
+    "depth",
+    "semantic",
+    "instance",
+    "bbox2d_raw",
+    "camera_params",
+    "normalized",
+}
+
+
+def validate_dataset(root: Path, profile_path: Path = DEFAULT_PROFILE) -> dict[str, Any]:
+    """Validate a closed render dataset and return a serializable report."""
+
+    root = Path(root)
+    profile_path = Path(profile_path)
+    errors: list[str] = []
+    stats: dict[str, Any] = {
+        "scene_count": 0,
+        "capture_count": 0,
+        "rgb_image_count": 0,
+        "class_pixel_counts": {},
+        "class_instance_counts": {},
+        "occlusion_distribution": {"clear_0_0.1": 0, "partial_0.1_0.5": 0, "heavy_0.5_1": 0},
+        "edge_truncated_instances": 0,
+        "visual_reviewed_scene_cameras": 0,
+    }
+    profile = _load_json(profile_path, "profile", errors)
+    dataset_path = root / "dataset.json"
+    if not _regular_file(dataset_path) or _has_symlink_ancestor(dataset_path, root):
+        errors.append("dataset.json is missing, non-regular, or linked")
+    dataset = _load_json(dataset_path, "dataset.json", errors)
+    artifact_summary: dict[str, Any] = {"declared_files": 0, "validated_files": 0, "bytes": 0}
+    if not isinstance(profile, dict) or not isinstance(dataset, dict):
+        return _report(errors, stats, artifact_summary)
+
+    profile_errors: list[str] = []
+    _validate_profile(profile, profile_errors)
+    errors.extend(profile_errors)
+    if profile_errors:
+        return _report(errors, stats, artifact_summary)
+    profile_sha = _sha256(profile_path) if _regular_file(profile_path) else None
+    if dataset.get("profile_sha256") != profile_sha:
+        errors.append("dataset profile_sha256 does not match the selected profile")
+    if dataset.get("schema_version") != 1:
+        errors.append("dataset schema_version is not 1")
+    if dataset.get("scope") != DATASET_SCOPE or profile.get("scope") != DATASET_SCOPE:
+        errors.append("dataset/profile scope is not the single-layout visual-configuration scope")
+    for field in ("dataset_id", "run_id"):
+        if not _identifier(dataset.get(field)):
+            errors.append(f"dataset {field} is invalid")
+    source = dataset.get("source")
+    if not isinstance(source, dict):
+        errors.append("dataset source is not an object")
+    else:
+        if not _git_sha(source.get("commit")):
+            errors.append("source commit is not a 40-character lowercase Git SHA")
+        for field in ("scene_sha256", "asset_manifest_sha256", "render_profile_sha256"):
+            if not _sha(source.get(field)):
+                errors.append(f"source {field} is not a lowercase SHA-256")
+
+    manifest_paths = _validate_manifest(root, dataset.get("artifact_manifest"), errors, artifact_summary)
+    if isinstance(source, dict):
+        for path_field, sha_field in (
+            ("scene_path", "scene_sha256"),
+            ("asset_manifest_path", "asset_manifest_sha256"),
+            ("render_profile_path", "render_profile_sha256"),
+        ):
+            safe = _safe_relative(source.get(path_field))
+            if safe is None or safe not in manifest_paths:
+                errors.append(f"source {path_field} is unsafe or absent from the artifact manifest")
+            elif source.get(sha_field) != _sha256(root / PurePosixPath(safe)):
+                errors.append(f"source {sha_field} does not match {path_field}")
+    declared_scenes = dataset.get("scenes")
+    source_bindings = _validate_source_provenance(root, source, declared_scenes, manifest_paths, errors)
+    cameras: list[Any] = cast(list[Any], profile.get("cameras")) if isinstance(profile.get("cameras"), list) else []
+    allowed_classes = set(profile.get("required_classes", []))
+    required_classes = set(allowed_classes)
+    class_pixels: Counter[str] = Counter()
+    class_instances: Counter[str] = Counter()
+    occlusion: Counter[str] = Counter()
+    seen_scene_ids: set[str] = set()
+    seen_variant_ids: dict[str, str] = {}
+    seen_capture_ids: set[str] = set()
+    scene_camera_captures: dict[tuple[str, str], dict[str, str]] = defaultdict(dict)
+    scene_modality_hashes: dict[str, list[tuple[str, str, str, str]]] = defaultdict(list)
+    scene_splits: dict[str, str] = {}
+    scenes = declared_scenes
+    if not isinstance(scenes, list):
+        errors.append("dataset scenes is not a list")
+        scenes = []
+    expected_scenes = _positive_int(profile.get("scene_count"))
+    if expected_scenes is not None and len(scenes) != expected_scenes:
+        errors.append(f"scene count {len(scenes)} does not equal profile scene_count {expected_scenes}")
+    stats["scene_count"] = len(scenes)
+    split_assignments = dataset.get("split_assignments")
+    if not isinstance(split_assignments, dict):
+        errors.append("split_assignments is not an object")
+        split_assignments = {}
+
+    for scene_index, scene in enumerate(scenes):
+        if not isinstance(scene, dict):
+            errors.append(f"scene[{scene_index}] is not an object")
+            continue
+        scene_id = scene.get("scene_id")
+        variant_id = scene.get("scene_variant_id")
+        if not _identifier(scene_id) or scene_id in seen_scene_ids:
+            errors.append(f"scene[{scene_index}] scene_id is invalid or duplicated")
+            continue
+        seen_scene_ids.add(scene_id)
+        if not _identifier(variant_id):
+            errors.append(f"scene {scene_id} scene_variant_id is invalid")
+            continue
+        previous_scene = seen_variant_ids.get(variant_id)
+        if previous_scene is not None:
+            errors.append(f"scene_variant_id {variant_id} is reused by {previous_scene} and {scene_id}")
+        seen_variant_ids[variant_id] = scene_id
+        if scene.get("run_id") != dataset.get("run_id"):
+            errors.append(f"scene {scene_id} run_id does not match dataset run_id")
+        split = split_assignments.get(scene_id)
+        if split not in profile.get("splits", {}):
+            errors.append(f"scene {scene_id} has an invalid or missing split assignment")
+        else:
+            scene_splits[scene_id] = cast(str, split)
+        captures = scene.get("captures")
+        if not isinstance(captures, list):
+            errors.append(f"scene {scene_id} captures is not a list")
+            continue
+        expected_captures = _positive_int(profile.get("captures_per_scene"))
+        if expected_captures is not None and len(captures) != expected_captures:
+            errors.append(
+                f"scene {scene_id} capture count {len(captures)} does not equal profile captures_per_scene {expected_captures}"
+            )
+        for capture in captures:
+            _validate_capture(
+                root,
+                scene_id,
+                variant_id,
+                capture,
+                cameras,
+                allowed_classes,
+                profile,
+                manifest_paths,
+                seen_capture_ids,
+                scene_camera_captures,
+                class_pixels,
+                class_instances,
+                occlusion,
+                errors,
+                stats,
+                source_bindings.get(scene_id, {}),
+                scene_modality_hashes,
+            )
+
+    if set(split_assignments) != seen_scene_ids:
+        errors.append("split_assignments keys do not exactly match scene IDs")
+    _validate_split_counts(scene_splits, profile.get("splits"), errors)
+    _validate_cross_split_duplicates(scene_modality_hashes, scene_splits, errors)
+    minimum_rgb = _positive_int(profile.get("minimum_rgb_images"))
+    if minimum_rgb is not None and stats["rgb_image_count"] < minimum_rgb:
+        errors.append(f"RGB image count {stats['rgb_image_count']} is below profile minimum {minimum_rgb}")
+    quality = profile.get("quality_bounds", {})
+    minimum_pixels = _positive_int(quality.get("minimum_class_pixels")) if isinstance(quality, dict) else None
+    for class_name in sorted(required_classes):
+        if class_pixels[class_name] < (minimum_pixels or 1):
+            errors.append(f"required class {class_name} has insufficient pixel coverage")
+        if class_instances[class_name] == 0:
+            errors.append(f"required class {class_name} has no normalized instances")
+    stats["capture_count"] = len(seen_capture_ids)
+    stats["class_pixel_counts"] = dict(sorted(class_pixels.items()))
+    stats["class_instance_counts"] = dict(sorted(class_instances.items()))
+    stats["occlusion_distribution"] = {
+        "clear_0_0.1": occlusion["clear"],
+        "partial_0.1_0.5": occlusion["partial"],
+        "heavy_0.5_1": occlusion["heavy"],
+    }
+    _validate_visual_review(root, dataset, profile, scene_camera_captures, manifest_paths, errors, stats)
+    return _report(errors, stats, artifact_summary)
+
+
+def _validate_capture(
+    root: Path,
+    scene_id: str,
+    variant_id: str,
+    capture: object,
+    cameras: list[Any],
+    allowed_classes: set[str],
+    profile: dict[str, Any],
+    manifest_paths: set[str],
+    seen_capture_ids: set[str],
+    scene_camera_captures: dict[tuple[str, str], dict[str, str]],
+    class_pixels: Counter[str],
+    class_instances: Counter[str],
+    occlusion: Counter[str],
+    errors: list[str],
+    stats: dict[str, Any],
+    source_bindings: dict[str, str],
+    scene_modality_hashes: dict[str, list[tuple[str, str, str, str]]],
+) -> None:
+    if not isinstance(capture, dict):
+        errors.append(f"scene {scene_id} contains a non-object capture")
+        return
+    frame = capture.get("physics_frame")
+    sim_time_ns = capture.get("sim_time_ns")
+    capture_id = capture.get("capture_id")
+    expected_id = None
+    if _nonnegative_int(frame) and _nonnegative_int(sim_time_ns):
+        expected_id = f"{scene_id}--f{frame:09d}--t{sim_time_ns:015d}"
+    if capture_id != expected_id or not _identifier(capture_id) or capture_id in seen_capture_ids:
+        errors.append(f"scene {scene_id} capture_id is invalid, duplicated, or not derived from frame/time")
+        return
+    frame = cast(int, frame)
+    sim_time_ns = cast(int, sim_time_ns)
+    seen_capture_ids.add(capture_id)
+    if not _pose(capture.get("robot_pose")):
+        errors.append(f"capture {capture_id} robot_pose is invalid")
+    record_path = _safe_relative(capture.get("record_path"))
+    if record_path is None or record_path not in manifest_paths:
+        errors.append(f"capture {capture_id} record_path is unsafe or absent from the artifact manifest")
+        return
+    record = _load_json(root / PurePosixPath(record_path), record_path, errors)
+    if not isinstance(record, dict):
+        return
+    for field, expected in (
+        ("scene_id", scene_id),
+        ("scene_variant_id", variant_id),
+        ("capture_id", capture_id),
+        ("physics_frame", frame),
+        ("sim_time_ns", sim_time_ns),
+        ("robot_pose", capture.get("robot_pose")),
+    ):
+        if record.get(field) != expected:
+            errors.append(f"capture record {record_path} {field} does not match the dataset index")
+    camera_records = record.get("cameras")
+    expected_camera_names = {value for value in cameras if isinstance(value, str)}
+    if not isinstance(camera_records, dict) or set(camera_records) != expected_camera_names:
+        errors.append(f"capture {capture_id} camera set does not match the profile")
+        return
+    for camera_id in sorted(expected_camera_names):
+        camera_paths = camera_records.get(camera_id)
+        if not isinstance(camera_paths, dict) or set(camera_paths) != REQUIRED_CAMERA_PATHS:
+            errors.append(f"capture {capture_id} camera {camera_id} paths are incomplete")
+            continue
+        safe_paths: dict[str, str] = {}
+        for key, value in camera_paths.items():
+            safe = _safe_relative(value)
+            if safe is None or safe not in manifest_paths:
+                errors.append(f"capture {capture_id} camera {camera_id} {key} path is unsafe or unmanifested")
+            else:
+                safe_paths[key] = safe
+        if set(safe_paths) != REQUIRED_CAMERA_PATHS:
+            continue
+        _validate_camera_sample(
+            root,
+            scene_id,
+            variant_id,
+            capture_id,
+            frame,
+            sim_time_ns,
+            camera_id,
+            safe_paths,
+            allowed_classes,
+            profile,
+            class_pixels,
+            class_instances,
+            occlusion,
+            errors,
+            stats,
+            source_bindings,
+        )
+        scene_modality_hashes[scene_id].append((
+            cast(str, _sha256(root / PurePosixPath(safe_paths["rgb"]))),
+            cast(str, _sha256(root / PurePosixPath(safe_paths["depth"]))),
+            cast(str, _sha256(root / PurePosixPath(safe_paths["semantic"]))),
+            cast(str, _sha256(root / PurePosixPath(safe_paths["instance"]))),
+        ))
+        scene_camera_captures[(scene_id, camera_id)][capture_id] = safe_paths["rgb"]
+
+
+def _validate_source_provenance(
+    root: Path,
+    source: object,
+    scenes: object,
+    manifest_paths: set[str],
+    errors: list[str],
+) -> dict[str, dict[str, str]]:
+    if not isinstance(source, dict) or not isinstance(scenes, list):
+        return {}
+    scene_source_path = _safe_relative(source.get("scene_path"))
+    asset_path = _safe_relative(source.get("asset_manifest_path"))
+    if scene_source_path not in manifest_paths or asset_path not in manifest_paths:
+        return {}
+    scene_document = _load_json(root / PurePosixPath(scene_source_path), "scene source manifest", errors)
+    asset_document = _load_json(root / PurePosixPath(asset_path), "asset manifest", errors)
+    if not isinstance(scene_document, dict) or not isinstance(asset_document, dict):
+        return {}
+    variants = scene_document.get("variants")
+    if not isinstance(variants, list):
+        errors.append("scene source manifest variants is not a list")
+        return {}
+    expected = {
+        (scene.get("scene_id"), scene.get("scene_variant_id"))
+        for scene in scenes
+        if isinstance(scene, dict) and _identifier(scene.get("scene_id")) and _identifier(scene.get("scene_variant_id"))
+    }
+    asset_manifest_sha = _sha256(root / PurePosixPath(asset_path))
+    bindings: dict[str, dict[str, str]] = {}
+    observed: set[tuple[str, str]] = set()
+    source_paths: set[str] = set()
+    source_fingerprints: dict[tuple[str, str], str] = {}
+    for index, variant in enumerate(variants):
+        if not isinstance(variant, dict):
+            errors.append(f"scene source variant[{index}] is not an object")
+            continue
+        scene_id = variant.get("scene_id")
+        variant_id = variant.get("scene_variant_id")
+        identity = (scene_id, variant_id)
+        if identity not in expected or identity in observed:
+            errors.append(f"scene source variant[{index}] is unbound or duplicated")
+            continue
+        observed.add(cast(tuple[str, str], identity))
+        per_scene: dict[str, str] = {}
+        hashes: list[str] = []
+        documents: dict[str, dict[str, Any]] = {}
+        for label, path_field, sha_field in (
+            ("render scene", "render_scene_path", "render_scene_sha256"),
+            ("visual manifest", "visual_manifest_path", "visual_manifest_sha256"),
+        ):
+            safe = _safe_relative(variant.get(path_field))
+            if safe is None or safe not in manifest_paths or safe in source_paths:
+                errors.append(f"scene source {scene_id} {label} path is unsafe, unmanifested, or reused")
+                continue
+            source_paths.add(safe)
+            actual_sha = _sha256(root / PurePosixPath(safe))
+            if variant.get(sha_field) != actual_sha or not _sha(actual_sha):
+                errors.append(f"scene source {scene_id} {label} SHA does not match")
+                continue
+            hashes.append(cast(str, actual_sha))
+            if label == "visual manifest":
+                document = _load_json(root / PurePosixPath(safe), f"scene {scene_id} visual manifest", errors)
+                if isinstance(document, dict):
+                    documents[label] = document
+        if len(hashes) == 2:
+            fingerprint = (hashes[0], hashes[1])
+            prior = source_fingerprints.get(fingerprint)
+            if prior is not None:
+                errors.append(f"scene sources {prior} and {scene_id} duplicate the same visual configuration")
+            source_fingerprints[fingerprint] = cast(str, scene_id)
+        visual = documents.get("visual manifest")
+        if visual is not None:
+            visual_variant = visual.get("variant")
+            provenance = visual.get("asset_provenance")
+            if not isinstance(visual_variant, dict) or visual_variant.get("id") != variant_id:
+                errors.append(f"scene {scene_id} visual manifest variant identity differs")
+            config_sha = provenance.get("asset_source_sha256") if isinstance(provenance, dict) else None
+            if config_sha != asset_manifest_sha or not _sha(config_sha):
+                errors.append(f"scene {scene_id} visual manifest is not bound to the dataset asset manifest")
+            else:
+                per_scene["/World/Visuals/FloorGraphics"] = config_sha
+            instances = visual.get("instances")
+            if not isinstance(instances, list):
+                errors.append(f"scene {scene_id} visual manifest instances is not a list")
+            else:
+                for item in instances:
+                    path = item.get("prim_path") if isinstance(item, dict) else None
+                    if not _usd_path(path) or path in per_scene:
+                        errors.append(f"scene {scene_id} visual manifest contains an invalid or duplicate prim path")
+                    else:
+                        per_scene[cast(str, path)] = cast(str, config_sha)
+        robot_uri = variant.get("robot_asset_uri")
+        if not isinstance(robot_uri, str) or not robot_uri.endswith("/Isaac/Robots/NVIDIA/NovaCarter/nova_carter.usd"):
+            errors.append(f"scene source {scene_id} robot asset URI is invalid")
+        else:
+            robot_sha = hashlib.sha256(robot_uri.encode("utf-8")).hexdigest()
+            per_scene["/World/Carter1"] = robot_sha
+            per_scene["/World/Carter2"] = robot_sha
+        runtime_props = variant.get("runtime_props")
+        if not isinstance(runtime_props, dict):
+            errors.append(f"scene source {scene_id} runtime_props is not an object")
+        else:
+            for prop_name, prop in runtime_props.items():
+                path = prop.get("prim_path") if isinstance(prop, dict) else None
+                source_name = prop.get("source") if isinstance(prop, dict) else None
+                claimed_sha = prop.get("asset_source_sha256") if isinstance(prop, dict) else None
+                derived_sha = hashlib.sha256(source_name.encode("utf-8")).hexdigest() if isinstance(source_name, str) and source_name else None
+                if not _identifier(prop_name) or not _usd_path(path) or claimed_sha != derived_sha:
+                    errors.append(f"scene source {scene_id} runtime prop {prop_name!r} identity is invalid")
+                elif path in per_scene:
+                    errors.append(f"scene source {scene_id} runtime prop path is duplicated: {path}")
+                else:
+                    per_scene[cast(str, path)] = cast(str, derived_sha)
+        if hashes:
+            per_scene["/World/FloorVisual"] = hashes[0]
+            per_scene["/World/Markers"] = hashes[0]
+        if isinstance(scene_id, str):
+            bindings[scene_id] = per_scene
+    if observed != expected:
+        errors.append("scene source variants do not bind every dataset scene exactly once")
+    return bindings
+
+
+def _validate_cross_split_duplicates(
+    hashes: dict[str, list[tuple[str, str, str, str]]],
+    splits: dict[str, str],
+    errors: list[str],
+) -> None:
+    fingerprints: dict[tuple[tuple[str, str, str, str], ...], tuple[str, str]] = {}
+    for scene_id, values in sorted(hashes.items()):
+        fingerprint = tuple(values)
+        split = splits.get(scene_id)
+        prior = fingerprints.get(fingerprint)
+        if fingerprint and prior is not None and split != prior[1]:
+            errors.append(f"scenes {prior[0]} and {scene_id} duplicate all core modalities across splits")
+        elif fingerprint and isinstance(split, str):
+            fingerprints[fingerprint] = (scene_id, split)
+
+
+def _validate_camera_sample(
+    root: Path,
+    scene_id: str,
+    variant_id: str,
+    capture_id: str,
+    frame: int,
+    sim_time_ns: int,
+    camera_id: str,
+    paths: dict[str, str],
+    allowed_classes: set[str],
+    profile: dict[str, Any],
+    class_pixels: Counter[str],
+    class_instances: Counter[str],
+    occlusion: Counter[str],
+    errors: list[str],
+    stats: dict[str, Any],
+    source_bindings: dict[str, str],
+) -> None:
+    prefix = f"{capture_id}/{camera_id}"
+    rgb_dimensions = _png_dimensions(root / PurePosixPath(paths["rgb"]), errors, prefix)
+    depth = _read_npy(root / PurePosixPath(paths["depth"]), errors, f"{prefix} depth")
+    semantic = _read_npy(root / PurePosixPath(paths["semantic"]), errors, f"{prefix} semantic")
+    instance = _read_npy(root / PurePosixPath(paths["instance"]), errors, f"{prefix} instance")
+    raw = _load_json(root / PurePosixPath(paths["bbox2d_raw"]), f"{prefix} raw bbox", errors)
+    camera = _load_json(root / PurePosixPath(paths["camera_params"]), f"{prefix} camera params", errors)
+    normalized = _load_json(root / PurePosixPath(paths["normalized"]), f"{prefix} normalized", errors)
+    if rgb_dimensions is None or depth is None or semantic is None or instance is None:
+        return
+    width, height = rgb_dimensions
+    stats["rgb_image_count"] += 1
+    if width < int(profile.get("minimum_width", 1)) or height < int(profile.get("minimum_height", 1)):
+        errors.append(f"{prefix} RGB resolution is below the profile minimum")
+    for name, array in (("depth", depth), ("semantic", semantic), ("instance", instance)):
+        if array[1] != (height, width):
+            errors.append(f"{prefix} {name} array shape does not match RGB height/width")
+    camera_valid = isinstance(camera, dict) and _validate_camera(camera, scene_id, capture_id, camera_id, frame, sim_time_ns, width, height)
+    if not camera_valid:
+        errors.append(f"{prefix} camera parameters are invalid or unsynchronized")
+    if not isinstance(raw, dict) or not isinstance(normalized, dict):
+        return
+    if normalized.get("raw_annotations_sha256") != _sha256(root / PurePosixPath(paths["bbox2d_raw"])):
+        errors.append(f"{prefix} normalized raw_annotations_sha256 does not bind the raw bbox file")
+    for field, expected in (
+        ("scene_id", scene_id),
+        ("capture_id", capture_id),
+        ("camera_id", camera_id),
+        ("physics_frame", frame),
+        ("sim_time_ns", sim_time_ns),
+    ):
+        if normalized.get(field) != expected:
+            errors.append(f"{prefix} normalized {field} is unsynchronized")
+    raw_data = raw.get("data")
+    raw_info = raw.get("info")
+    normalized_raw_info = normalized.get("raw_info")
+    if not isinstance(raw_data, list) or not isinstance(raw_info, dict):
+        errors.append(f"{prefix} raw bbox data/info is invalid")
+        return
+    bbox_labels = raw_info.get("idToLabels")
+    bbox_prim_paths = raw_info.get("primPaths")
+    semantic_labels = normalized_raw_info.get("semantic_id_to_labels") if isinstance(normalized_raw_info, dict) else None
+    instance_labels = normalized_raw_info.get("instance_id_to_labels") if isinstance(normalized_raw_info, dict) else None
+    instance_prim_paths = normalized_raw_info.get("instance_id_to_prim_paths") if isinstance(normalized_raw_info, dict) else None
+    instance_labelled_roots = normalized_raw_info.get("instance_id_to_labelled_roots") if isinstance(normalized_raw_info, dict) else None
+    instance_asset_shas = normalized_raw_info.get("instance_id_to_asset_source_sha256") if isinstance(normalized_raw_info, dict) else None
+    if not all(isinstance(value, dict) for value in (bbox_labels, semantic_labels, instance_labels, instance_prim_paths, instance_labelled_roots, instance_asset_shas)) or not isinstance(bbox_prim_paths, list):
+        errors.append(f"{prefix} raw bbox/instance/semantic label maps are invalid")
+        return
+    if len(bbox_prim_paths) != len(raw_data):
+        errors.append(f"{prefix} raw bbox data and primPaths lengths differ")
+        return
+    for raw_index, raw_paths in enumerate(bbox_prim_paths):
+        paths_for_row = [raw_paths] if isinstance(raw_paths, str) else raw_paths
+        if (not isinstance(paths_for_row, list) or not paths_for_row
+                or not all(_usd_path(path) for path in paths_for_row)
+                or len(paths_for_row) != len(set(paths_for_row))):
+            errors.append(f"{prefix} raw bbox primPaths row {raw_index} is not a nonempty canonical USD path list")
+            return
+    semantic_labels = cast(dict[str, Any], semantic_labels)
+    instance_labels = cast(dict[str, Any], instance_labels)
+    bbox_labels = cast(dict[str, Any], bbox_labels)
+    instance_prim_paths = cast(dict[str, Any], instance_prim_paths)
+    instance_labelled_roots = cast(dict[str, Any], instance_labelled_roots)
+    instance_asset_shas = cast(dict[str, Any], instance_asset_shas)
+    semantic_map = _class_map(
+        semantic_labels,
+        allowed_classes,
+        allow_background=True,
+        require_background=True,
+        errors=errors,
+        prefix=prefix,
+    )
+    instance_map = _class_map(instance_labels, allowed_classes, allow_background=True, errors=errors, prefix=prefix)
+    bbox_map = _class_map(bbox_labels, allowed_classes, allow_background=False, errors=errors, prefix=prefix)
+    if semantic_map is None or instance_map is None or bbox_map is None:
+        return
+    if depth[0] not in {"<f4", "<f8"}:
+        errors.append(f"{prefix} depth dtype is not little-endian float32/float64")
+        return
+    if semantic[0] not in {"<u4", "<u8", "<i4", "<i8"} or instance[0] not in {"<u4", "<u8", "<i4", "<i8"}:
+        errors.append(f"{prefix} semantic/instance dtype is not a supported little-endian integer")
+        return
+    instance_bounds: dict[int, list[int]] = {}
+    values = zip(_array_values(depth), _array_values(semantic), _array_values(instance))
+    for pixel_index, (depth_value, semantic_id, instance_id) in enumerate(values):
+        semantic_id = int(semantic_id)
+        instance_id = int(instance_id)
+        class_name = semantic_map.get(semantic_id)
+        if class_name is None:
+            errors.append(f"{prefix} semantic ID {semantic_id} is absent from the raw label map")
+            continue
+        if class_name == "BACKGROUND":
+            if not (isinstance(depth_value, float) and math.isinf(depth_value) and depth_value > 0):
+                errors.append(f"{prefix} background depth pixel {pixel_index} is not positive infinity")
+            if instance_id != 0:
+                errors.append(f"{prefix} background pixel {pixel_index} has a nonzero instance ID")
+        else:
+            class_pixels[class_name] += 1
+            if not isinstance(depth_value, float) or not math.isfinite(depth_value) or depth_value <= 0:
+                errors.append(f"{prefix} foreground depth pixel {pixel_index} is not finite and positive")
+            elif camera_valid:
+                clipping = cast(dict[str, Any], camera)["clipping_range"]
+                near, far = clipping[0], clipping[1]
+                if not float(near) <= depth_value <= float(far):
+                    errors.append(f"{prefix} foreground depth pixel {pixel_index} is outside the camera clipping range")
+            mapped_class = instance_map.get(instance_id)
+            if mapped_class is None:
+                errors.append(f"{prefix} foreground instance ID {instance_id} is absent from idToLabels")
+            elif mapped_class != class_name:
+                errors.append(f"{prefix} instance ID {instance_id} class does not match semantic mask class {class_name}")
+            x = pixel_index % width
+            y = pixel_index // width
+            bounds = instance_bounds.get(instance_id)
+            if bounds is None:
+                instance_bounds[instance_id] = [x, y, x, y]
+            else:
+                bounds[0] = min(bounds[0], x)
+                bounds[1] = min(bounds[1], y)
+                bounds[2] = max(bounds[2], x)
+                bounds[3] = max(bounds[3], y)
+    _validate_instances(
+        prefix,
+        variant_id,
+        width,
+        height,
+        instance_bounds,
+        instance_map,
+        bbox_map,
+        bbox_prim_paths,
+        instance_prim_paths,
+        instance_labelled_roots,
+        instance_asset_shas,
+        raw_data,
+        normalized.get("instances"),
+        profile,
+        class_instances,
+        occlusion,
+        errors,
+        stats,
+        source_bindings,
+    )
+
+
+def _validate_instances(
+    prefix: str,
+    variant_id: str,
+    width: int,
+    height: int,
+    instance_bounds: dict[int, list[int]],
+    instance_map: dict[int, str],
+    bbox_map: dict[int, str],
+    bbox_prim_paths: list[Any],
+    instance_prim_paths: dict[str, Any],
+    instance_labelled_roots: dict[str, Any],
+    instance_asset_shas: dict[str, Any],
+    raw_data: list[Any],
+    normalized_instances: object,
+    profile: dict[str, Any],
+    class_instances: Counter[str],
+    occlusion: Counter[str],
+    errors: list[str],
+    stats: dict[str, Any],
+    source_bindings: dict[str, str],
+) -> None:
+    if not isinstance(normalized_instances, list):
+        errors.append(f"{prefix} normalized instances is not a list")
+        return
+    normalized_by_id: dict[int, dict[str, Any]] = {}
+    for item in normalized_instances:
+        if not isinstance(item, dict) or not _nonnegative_int(item.get("instance_id")) or item.get("instance_id") == 0:
+            errors.append(f"{prefix} has an invalid normalized instance")
+            continue
+        instance_id = int(item["instance_id"])
+        if instance_id in normalized_by_id:
+            errors.append(f"{prefix} normalized instance ID {instance_id} is duplicated")
+            continue
+        normalized_by_id[instance_id] = item
+    if set(normalized_by_id) != set(instance_bounds):
+        errors.append(f"{prefix} normalized instance IDs do not exactly match the instance mask")
+    expected_raw_keys = {str(value) for value in instance_bounds}
+    for label, mapping in (
+        ("instance prim paths", instance_prim_paths),
+        ("instance labelled roots", instance_labelled_roots),
+        ("instance asset sources", instance_asset_shas),
+    ):
+        if set(mapping) != expected_raw_keys or any(
+            not isinstance(key, str) or not key.isdecimal() or key != str(int(key))
+            for key in mapping
+        ):
+            errors.append(f"{prefix} {label} keys do not exactly match canonical foreground instance IDs")
+    tolerance = int(profile.get("quality_bounds", {}).get("bbox_tolerance_px", 1))
+    minimum_occ = float(profile.get("quality_bounds", {}).get("occlusion_ratio_min", 0.0))
+    maximum_occ = float(profile.get("quality_bounds", {}).get("occlusion_ratio_max", 1.0))
+    used_raw_indices: set[int] = set()
+    for instance_id, bounds in instance_bounds.items():
+        item = normalized_by_id.get(instance_id)
+        if item is None:
+            continue
+        label_key = str(instance_id)
+        class_name = instance_map.get(instance_id)
+        raw_instance_path = instance_prim_paths.get(label_key)
+        usd_path = instance_labelled_roots.get(label_key)
+        asset_sha = instance_asset_shas.get(label_key)
+        if item.get("class") != class_name or not _usd_path(usd_path) or not _usd_path(raw_instance_path):
+            errors.append(f"{prefix} instance {instance_id} class or USD root path is invalid")
+            continue
+        usd_path = cast(str, usd_path)
+        raw_instance_path = cast(str, raw_instance_path)
+        if not _same_or_descendant(raw_instance_path, usd_path):
+            errors.append(f"{prefix} instance {instance_id} raw prim path is outside its labelled USD root")
+        if item.get("usd_root_path") != usd_path or item.get("asset_source_sha256") != asset_sha or not _sha(asset_sha):
+            errors.append(f"{prefix} instance {instance_id} source identity does not match raw info")
+        candidates = [
+            (source_root, source_sha)
+            for source_root, source_sha in source_bindings.items()
+            if usd_path == source_root or usd_path.startswith(source_root + "/")
+        ]
+        expected_asset_sha = max(candidates, key=lambda value: len(value[0]))[1] if candidates else None
+        if expected_asset_sha is None or asset_sha != expected_asset_sha:
+            errors.append(f"{prefix} instance {instance_id} asset source is not bound to source provenance")
+        stable = hashlib.sha256(f"{variant_id}\0{usd_path}\0{asset_sha}".encode("utf-8")).hexdigest()
+        if item.get("stable_instance_key") != stable:
+            errors.append(f"{prefix} instance {instance_id} stable_instance_key is invalid")
+        mask_bbox = tuple(bounds)
+        bbox = item.get("bbox_xyxy")
+        if not _int_bbox(bbox, width, height) or bbox != list(mask_bbox):
+            errors.append(f"{prefix} instance {instance_id} bbox is not the exact mask tight bbox")
+            continue
+        raw_index = item.get("raw_bbox_index")
+        if not _nonnegative_int(raw_index) or int(raw_index) >= len(raw_data) or not isinstance(raw_data[int(raw_index)], dict):
+            errors.append(f"{prefix} instance {instance_id} raw_bbox_index is invalid")
+            continue
+        if raw_index in used_raw_indices:
+            errors.append(f"{prefix} raw bbox row {raw_index} is assigned to multiple instances")
+        used_raw_indices.add(raw_index)
+        raw_box = cast(dict[str, Any], raw_data[raw_index])
+        bbox_semantic_id = raw_box.get("semanticId")
+        if not _nonnegative_int(bbox_semantic_id) or item.get("bbox_semantic_id") != bbox_semantic_id:
+            errors.append(f"{prefix} instance {instance_id} bbox semantic ID does not preserve the raw value")
+        elif bbox_map.get(int(bbox_semantic_id)) != class_name:
+            errors.append(f"{prefix} instance {instance_id} bbox label class does not match the instance class")
+        raw_paths = bbox_prim_paths[raw_index] if raw_index < len(bbox_prim_paths) else None
+        if isinstance(raw_paths, str):
+            raw_paths = [raw_paths]
+        if not isinstance(raw_paths, list) or not any(
+            _same_or_descendant(cast(str, raw_path), usd_path) or _same_or_descendant(usd_path, cast(str, raw_path))
+            for raw_path in raw_paths
+            if _usd_path(raw_path)
+        ):
+            errors.append(f"{prefix} instance {instance_id} labelled USD root is unrelated to the raw bbox row primPaths")
+        raw_bbox = [raw_box.get(key) for key in ("x_min", "y_min", "x_max", "y_max")]
+        if not all(_finite_number(value) for value in raw_bbox):
+            errors.append(f"{prefix} instance {instance_id} raw bbox differs from the mask bbox by more than {tolerance}px")
+        else:
+            raw_bbox_numbers = cast(list[int | float], raw_bbox)
+            if any(abs(float(a) - float(b)) > tolerance for a, b in zip(raw_bbox_numbers, mask_bbox)):
+                errors.append(f"{prefix} instance {instance_id} raw bbox differs from the mask bbox by more than {tolerance}px")
+        raw_occ = raw_box.get("occlusionRatio")
+        normalized_occ = item.get("occlusion_ratio")
+        if not _finite_number(raw_occ) or not _finite_number(normalized_occ) or float(raw_occ) != float(normalized_occ):
+            errors.append(f"{prefix} instance {instance_id} occlusion ratio does not preserve the raw value")
+        elif not minimum_occ <= float(normalized_occ) <= maximum_occ:
+            errors.append(f"{prefix} instance {instance_id} occlusion ratio is outside the profile bounds")
+        else:
+            occlusion["clear" if float(normalized_occ) <= 0.1 else "partial" if float(normalized_occ) <= 0.5 else "heavy"] += 1
+        edge = mask_bbox[0] == 0 or mask_bbox[1] == 0 or mask_bbox[2] == width - 1 or mask_bbox[3] == height - 1
+        if item.get("edge_truncated") is not edge:
+            errors.append(f"{prefix} instance {instance_id} edge_truncated does not match the mask bbox")
+        if edge:
+            stats["edge_truncated_instances"] += 1
+        if class_name is not None:
+            class_instances[class_name] += 1
+    if used_raw_indices != set(range(len(raw_data))):
+        errors.append(f"{prefix} normalized instances do not bind every raw bbox row exactly once")
+
+
+def _validate_camera(
+    camera: dict[str, Any],
+    scene_id: str,
+    capture_id: str,
+    camera_id: str,
+    frame: int,
+    sim_time_ns: int,
+    width: int,
+    height: int,
+) -> bool:
+    if any(
+        camera.get(field) != expected
+        for field, expected in (
+            ("scene_id", scene_id),
+            ("capture_id", capture_id),
+            ("camera_id", camera_id),
+            ("physics_frame", frame),
+            ("sim_time_ns", sim_time_ns),
+            ("width", width),
+            ("height", height),
+        )
+    ):
+        return False
+    if not _vector(camera.get("pose_xyz"), 3) or not _unit_quaternion(camera.get("orientation_wxyz")):
+        return False
+    if not all(_finite_number(camera.get(name)) and float(camera[name]) > 0 for name in ("focal_length", "horizontal_aperture", "vertical_aperture")):
+        return False
+    clipping = camera.get("clipping_range")
+    if not _vector(clipping, 2) or float(clipping[0]) <= 0 or float(clipping[0]) >= float(clipping[1]):
+        return False
+    world_to_camera = camera.get("world_to_camera")
+    projection = camera.get("projection")
+    if not _vector(world_to_camera, 16) or not _vector(projection, 16):
+        return False
+    expected_extrinsic = _world_to_camera_from_pose(camera["pose_xyz"], camera["orientation_wxyz"])
+    expected_projection = _perspective_projection(
+        float(camera["focal_length"]),
+        float(camera["horizontal_aperture"]),
+        float(camera["vertical_aperture"]),
+        float(clipping[0]),
+        float(clipping[1]),
+    )
+    return _matrix_close(world_to_camera, expected_extrinsic) and _matrix_close(projection, expected_projection)
+
+
+def _world_to_camera_from_pose(position: list[int | float], orientation: list[int | float]) -> list[float]:
+    w, x, y, z = (float(value) for value in orientation)
+    rotation_column = [
+        [1 - 2 * (y * y + z * z), 2 * (x * y - z * w), 2 * (x * z + y * w)],
+        [2 * (x * y + z * w), 1 - 2 * (x * x + z * z), 2 * (y * z - x * w)],
+        [2 * (x * z - y * w), 2 * (y * z + x * w), 1 - 2 * (x * x + y * y)],
+    ]
+    translation = [
+        -sum(float(position[row]) * rotation_column[row][column] for row in range(3))
+        for column in range(3)
+    ]
+    return [
+        rotation_column[0][0], rotation_column[0][1], rotation_column[0][2], 0.0,
+        rotation_column[1][0], rotation_column[1][1], rotation_column[1][2], 0.0,
+        rotation_column[2][0], rotation_column[2][1], rotation_column[2][2], 0.0,
+        translation[0], translation[1], translation[2], 1.0,
+    ]
+
+
+def _perspective_projection(focal: float, horizontal: float, vertical: float, near: float, far: float) -> list[float]:
+    depth = far - near
+    return [
+        2.0 * focal / horizontal, 0.0, 0.0, 0.0,
+        0.0, 2.0 * focal / vertical, 0.0, 0.0,
+        0.0, 0.0, -(far + near) / depth, -1.0,
+        0.0, 0.0, -(2.0 * far * near) / depth, 0.0,
+    ]
+
+
+def _matrix_close(actual: list[int | float], expected: list[float]) -> bool:
+    return all(math.isclose(float(a), b, rel_tol=1e-6, abs_tol=1e-6) for a, b in zip(actual, expected))
+
+
+def _validate_visual_review(
+    root: Path,
+    dataset: dict[str, Any],
+    profile: dict[str, Any],
+    available: dict[tuple[str, str], dict[str, str]],
+    manifest_paths: set[str],
+    errors: list[str],
+    stats: dict[str, Any],
+) -> None:
+    review_path = "visual-review.json"
+    if review_path not in manifest_paths:
+        errors.append("visual-review.json is absent from the artifact manifest")
+        return
+    document = _load_json(root / review_path, review_path, errors)
+    if not isinstance(document, dict) or document.get("dataset_id") != dataset.get("dataset_id"):
+        errors.append("visual-review.json is invalid or targets another dataset")
+        return
+    entries = document.get("entries")
+    if not isinstance(entries, list):
+        errors.append("visual-review entries is not a list")
+        return
+    required = int(profile.get("visual_review", {}).get("required_per_scene_camera", 1))
+    allowed_verdict = profile.get("visual_review", {}).get("allowed_verdict", "pass")
+    counts: Counter[tuple[str, str]] = Counter()
+    for entry in entries:
+        if not isinstance(entry, dict):
+            errors.append("visual-review contains a non-object entry")
+            continue
+        review_scene = entry.get("scene_id")
+        review_camera = entry.get("camera_id")
+        capture_id = entry.get("capture_id")
+        rgb_path = _safe_relative(entry.get("rgb_path"))
+        if not _identifier(review_scene) or not _identifier(review_camera) or not _identifier(capture_id):
+            errors.append("visual-review entry has invalid scene/camera/capture identifiers")
+            continue
+        key = (review_scene, review_camera)
+        if key not in available or capture_id not in available.get(key, {}):
+            errors.append("visual-review entry does not bind an indexed scene/camera/capture")
+            continue
+        if (
+            rgb_path is None
+            or rgb_path != available[key][capture_id]
+            or rgb_path not in manifest_paths
+            or entry.get("rgb_sha256") != _sha256(root / PurePosixPath(rgb_path))
+        ):
+            errors.append("visual-review entry does not bind a manifested RGB artifact")
+            continue
+        if entry.get("reviewed") is not True or entry.get("verdict") != allowed_verdict or not _identifier(entry.get("reviewer")):
+            errors.append(f"visual-review entry for {key[0]}/{key[1]} is unreviewed or not approved")
+            continue
+        counts[key] += 1
+    for key in sorted(available):
+        if counts[key] < required:
+            errors.append(f"visual review coverage for {key[0]}/{key[1]} is below {required}")
+    stats["visual_reviewed_scene_cameras"] = sum(1 for key in available if counts[key] >= required)
+
+
+def _validate_manifest(root: Path, manifest: object, errors: list[str], summary: dict[str, Any]) -> set[str]:
+    if not isinstance(manifest, list):
+        errors.append("artifact_manifest is not a list")
+        return set()
+    declared: dict[str, dict[str, Any]] = {}
+    validated: set[str] = set()
+    for index, entry in enumerate(manifest):
+        if not isinstance(entry, dict):
+            errors.append(f"artifact_manifest[{index}] is not an object")
+            continue
+        safe = _safe_relative(entry.get("path"))
+        if safe is None or safe == "dataset.json" or safe in declared:
+            errors.append(f"artifact_manifest[{index}] path is unsafe, reserved, or duplicated")
+            continue
+        declared[safe] = entry
+        path = root / PurePosixPath(safe)
+        if not _regular_file(path) or _has_symlink_ancestor(path, root):
+            errors.append(f"manifest artifact is missing, non-regular, or linked: {safe}")
+            continue
+        size = path.stat().st_size
+        if entry.get("bytes") != size:
+            errors.append(f"manifest byte count mismatch: {safe}")
+        if entry.get("sha256") != _sha256(path):
+            errors.append(f"manifest SHA mismatch: {safe}")
+        else:
+            validated.add(safe)
+            summary["bytes"] += size
+    actual: set[str] = set()
+    if root.is_dir():
+        for path in root.rglob("*"):
+            relative = path.relative_to(root).as_posix()
+            if path.is_dir() and not path.is_symlink():
+                continue
+            if relative == "dataset.json":
+                continue
+            actual.add(relative)
+            if not _regular_file(path) or _has_symlink_ancestor(path, root):
+                errors.append(f"dataset artifact is not a regular nonsymlink file: {relative}")
+    if set(declared) != actual:
+        errors.append(
+            f"artifact_manifest does not exactly match dataset files: missing={sorted(actual - set(declared))}, extra={sorted(set(declared) - actual)}"
+        )
+    summary["declared_files"] = len(declared)
+    summary["validated_files"] = len(validated)
+    return validated
+
+
+def _validate_profile(profile: dict[str, Any], errors: list[str]) -> None:
+    if profile.get("schema_version") != 1 or not _identifier(profile.get("profile_id")):
+        errors.append("profile identity/schema is invalid")
+    for field in ("scene_count", "captures_per_scene", "minimum_rgb_images", "minimum_width", "minimum_height"):
+        if _positive_int(profile.get(field)) is None:
+            errors.append(f"profile {field} is not a positive integer")
+    cameras = profile.get("cameras")
+    if not isinstance(cameras, list) or not cameras or len(cameras) != len(set(cameras)) or not all(_identifier(value) for value in cameras):
+        errors.append("profile cameras is not a unique non-empty identifier list")
+    classes = profile.get("required_classes")
+    if not isinstance(classes, list) or not classes or len(classes) != len(set(classes)) or not all(_identifier(value) for value in classes):
+        errors.append("profile required_classes is invalid")
+    splits = profile.get("splits")
+    if not isinstance(splits, dict) or set(splits) != {"train", "val", "test"} or any(_nonnegative_int(v) is False for v in splits.values()):
+        errors.append("profile splits must define nonnegative train/val/test scene counts")
+    elif _positive_int(profile.get("scene_count")) is not None and sum(splits.values()) != profile["scene_count"]:
+        errors.append("profile split counts do not sum to scene_count")
+    quality = profile.get("quality_bounds")
+    if not isinstance(quality, dict):
+        errors.append("profile quality_bounds is not an object")
+    else:
+        minimum = quality.get("occlusion_ratio_min")
+        maximum = quality.get("occlusion_ratio_max")
+        tolerance = quality.get("bbox_tolerance_px")
+        minimum_pixels = quality.get("minimum_class_pixels")
+        if not _finite_number(minimum) or not _finite_number(maximum) or not 0 <= float(minimum) <= float(maximum) <= 1:
+            errors.append("profile occlusion bounds are invalid")
+        if not _nonnegative_int(tolerance):
+            errors.append("profile bbox_tolerance_px is not a nonnegative integer")
+        if _positive_int(minimum_pixels) is None:
+            errors.append("profile minimum_class_pixels is not a positive integer")
+    visual = profile.get("visual_review")
+    if not isinstance(visual, dict) or _positive_int(visual.get("required_per_scene_camera")) is None or not _identifier(visual.get("allowed_verdict")):
+        errors.append("profile visual_review gate is invalid")
+
+
+def _validate_split_counts(assignments: dict[str, str], expected: object, errors: list[str]) -> None:
+    if not isinstance(expected, dict):
+        return
+    actual = Counter(assignments.values())
+    for split, count in expected.items():
+        if actual[split] != count:
+            errors.append(f"split {split} has {actual[split]} scenes, expected {count}")
+
+
+def _class_map(
+    mapping: dict[str, Any],
+    allowed: set[str],
+    *,
+    allow_background: bool,
+    require_background: bool = False,
+    errors: list[str],
+    prefix: str,
+) -> dict[int, str] | None:
+    result: dict[int, str] = {}
+    keys_by_numeric: dict[int, str] = {}
+    for key, value in mapping.items():
+        try:
+            numeric = int(key)
+        except (TypeError, ValueError):
+            errors.append(f"{prefix} label map contains a non-integer ID")
+            return None
+        if numeric < 0 or not isinstance(key, str) or key != str(numeric) or numeric in keys_by_numeric:
+            errors.append(f"{prefix} label map contains a noncanonical or duplicated numeric ID")
+            return None
+        keys_by_numeric[numeric] = key
+        class_name = value.get("class") if isinstance(value, dict) else None
+        valid = class_name in allowed or (allow_background and class_name == "BACKGROUND")
+        if not valid or not isinstance(class_name, str):
+            errors.append(f"{prefix} label map contains unknown class {class_name!r}")
+            return None
+        result[numeric] = class_name
+    if require_background and result.get(0) != "BACKGROUND":
+        errors.append(f"{prefix} semantic label map ID 0 is not BACKGROUND")
+        return None
+    return result
+
+
+def _read_npy(path: Path, errors: list[str], label: str) -> tuple[str, tuple[int, int], bytes] | None:
+    try:
+        with path.open("rb") as stream:
+            if stream.read(6) != b"\x93NUMPY":
+                raise ValueError("missing NPY magic")
+            major, minor = stream.read(2)
+            if (major, minor) not in {(1, 0), (2, 0), (3, 0)}:
+                raise ValueError("unsupported NPY version")
+            header_size_bytes = stream.read(2 if major == 1 else 4)
+            header_size = int.from_bytes(header_size_bytes, "little")
+            header = ast.literal_eval(stream.read(header_size).decode("latin1" if major < 3 else "utf-8").strip())
+            if not isinstance(header, dict) or header.get("fortran_order") is not False:
+                raise ValueError("invalid or Fortran-ordered NPY header")
+            dtype = header.get("descr")
+            shape = header.get("shape")
+            formats = {"<f4": "f", "<f8": "d", "<u4": "I", "<u8": "Q", "<i4": "i", "<i8": "q"}
+            if dtype not in formats or not isinstance(shape, tuple) or len(shape) != 2 or not all(_positive_int(v) for v in shape):
+                raise ValueError("unsupported dtype or shape")
+            dtype = cast(str, dtype)
+            shape = cast(tuple[int, int], shape)
+            payload = stream.read()
+            item_size = int(dtype[-1])
+            count = int(shape[0]) * int(shape[1])
+            if len(payload) != count * item_size:
+                raise ValueError("payload byte count does not match shape")
+            return dtype, (int(shape[0]), int(shape[1])), payload
+    except (OSError, SyntaxError, ValueError, struct.error) as error:
+        errors.append(f"{label} could not be read: {type(error).__name__}: {error}")
+        return None
+
+
+def _png_dimensions(path: Path, errors: list[str], label: str) -> tuple[int, int] | None:
+    try:
+        payload = path.read_bytes()
+        if payload[:8] != b"\x89PNG\r\n\x1a\n":
+            raise ValueError("invalid PNG signature")
+        offset = 8
+        width = height = channels = None
+        idat = bytearray()
+        saw_iend = False
+        while offset < len(payload):
+            if offset + 12 > len(payload):
+                raise ValueError("truncated PNG chunk")
+            length = struct.unpack(">I", payload[offset : offset + 4])[0]
+            chunk_type = payload[offset + 4 : offset + 8]
+            chunk_end = offset + 12 + length
+            if chunk_end > len(payload):
+                raise ValueError("PNG chunk exceeds the file")
+            chunk_data = payload[offset + 8 : offset + 8 + length]
+            expected_crc = struct.unpack(">I", payload[offset + 8 + length : chunk_end])[0]
+            if binascii.crc32(chunk_type + chunk_data) & 0xFFFFFFFF != expected_crc:
+                raise ValueError("PNG chunk CRC mismatch")
+            if chunk_type == b"IHDR":
+                if offset != 8 or length != 13 or width is not None:
+                    raise ValueError("invalid PNG IHDR placement")
+                width, height, bit_depth, color_type, compression, filtering, interlace = struct.unpack(">IIBBBBB", chunk_data)
+                channels_by_color = {0: 1, 2: 3, 4: 2, 6: 4}
+                channels = channels_by_color.get(color_type)
+                if width <= 0 or height <= 0 or bit_depth != 8 or channels is None:
+                    raise ValueError("unsupported PNG dimensions, bit depth, or color type")
+                if compression != 0 or filtering != 0 or interlace != 0:
+                    raise ValueError("unsupported PNG compression/filter/interlace mode")
+            elif chunk_type == b"IDAT":
+                idat.extend(chunk_data)
+            elif chunk_type == b"IEND":
+                if length != 0 or chunk_end != len(payload):
+                    raise ValueError("invalid PNG IEND or trailing bytes")
+                saw_iend = True
+                break
+            offset = chunk_end
+        if width is None or height is None or channels is None or not idat or not saw_iend:
+            raise ValueError("PNG is missing IHDR, IDAT, or IEND")
+        decoded = zlib.decompress(bytes(idat))
+        row_size = width * channels
+        if len(decoded) != height * (row_size + 1):
+            raise ValueError("PNG decoded byte count does not match its dimensions")
+        if any(decoded[row * (row_size + 1)] > 4 for row in range(height)):
+            raise ValueError("PNG contains an invalid scanline filter")
+        return width, height
+    except (OSError, ValueError, struct.error, zlib.error) as error:
+        errors.append(f"{label} RGB PNG could not be read: {type(error).__name__}: {error}")
+        return None
+
+
+def _array_values(array: tuple[str, tuple[int, int], bytes]) -> Iterable[int | float]:
+    formats = {"<f4": "f", "<f8": "d", "<u4": "I", "<u8": "Q", "<i4": "i", "<i8": "q"}
+    return (value[0] for value in struct.iter_unpack("<" + formats[array[0]], array[2]))
+
+
+def _int_bbox(value: object, width: int, height: int) -> TypeGuard[list[int]]:
+    return (
+        isinstance(value, list)
+        and len(value) == 4
+        and all(_nonnegative_int(item) for item in value)
+        and value[0] <= value[2] < width
+        and value[1] <= value[3] < height
+    )
+
+
+def _pose(value: object) -> TypeGuard[dict[str, Any]]:
+    return isinstance(value, dict) and _vector(value.get("position_xyz"), 3) and _unit_quaternion(value.get("orientation_wxyz"))
+
+
+def _unit_quaternion(value: object) -> TypeGuard[list[int | float]]:
+    if not _vector(value, 4):
+        return False
+    return math.isclose(sum(float(item) ** 2 for item in value), 1.0, rel_tol=0.0, abs_tol=1e-6)
+
+
+def _vector(value: object, length: int) -> TypeGuard[list[int | float]]:
+    return isinstance(value, list) and len(value) == length and all(_finite_number(item) for item in value)
+
+
+def _finite_number(value: object) -> TypeGuard[int | float]:
+    return not isinstance(value, bool) and isinstance(value, (int, float)) and math.isfinite(float(value))
+
+
+def _nonnegative_int(value: object) -> TypeGuard[int]:
+    return not isinstance(value, bool) and isinstance(value, int) and value >= 0
+
+
+def _positive_int(value: object) -> int | None:
+    return int(value) if _nonnegative_int(value) and value > 0 else None
+
+
+def _identifier(value: object) -> TypeGuard[str]:
+    return isinstance(value, str) and value != "" and all(character.isalnum() or character in "._-" for character in value)
+
+
+def _sha(value: object) -> TypeGuard[str]:
+    return isinstance(value, str) and len(value) == 64 and set(value) <= HEX
+
+
+def _git_sha(value: object) -> TypeGuard[str]:
+    return isinstance(value, str) and len(value) == 40 and set(value) <= HEX
+
+
+def _safe_relative(value: object) -> str | None:
+    if not isinstance(value, str) or not value or "\\" in value:
+        return None
+    path = PurePosixPath(value)
+    if path.is_absolute() or value != path.as_posix() or any(part in {"", ".", ".."} for part in path.parts):
+        return None
+    return value
+
+
+def _usd_path(value: object) -> TypeGuard[str]:
+    if not isinstance(value, str) or not value.startswith("/World") or "//" in value or value.endswith("/"):
+        return False
+    parts = value.split("/")[1:]
+    return bool(parts) and parts[0] == "World" and all(
+        part and all(character.isalnum() or character == "_" for character in part)
+        for part in parts
+    )
+
+
+def _same_or_descendant(path: str, root: str) -> bool:
+    return path == root or path.startswith(root + "/")
+
+
+def _regular_file(path: Path) -> bool:
+    try:
+        return stat.S_ISREG(path.lstat().st_mode) and not path.is_symlink()
+    except OSError:
+        return False
+
+
+def _has_symlink_ancestor(path: Path, root: Path) -> bool:
+    try:
+        relative = path.relative_to(root)
+    except ValueError:
+        return True
+    current = root
+    for part in relative.parts[:-1]:
+        current /= part
+        if current.is_symlink():
+            return True
+    return False
+
+
+def _sha256(path: Path) -> str | None:
+    if not _regular_file(path):
+        return None
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _load_json(path: Path, label: str, errors: list[str]) -> object:
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as error:
+        errors.append(f"{label} could not be loaded: {type(error).__name__}: {error}")
+        return None
+
+
+def _report(errors: list[str], stats: dict[str, Any], artifact_manifest: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "passed": not errors,
+        "errors": errors,
+        "stats": stats,
+        "artifact_manifest": artifact_manifest,
+        "scope": DATASET_SCOPE,
+    }
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--dataset", type=Path, required=True)
+    parser.add_argument("--profile", type=Path, default=DEFAULT_PROFILE)
+    parser.add_argument("--output", type=Path, required=True)
+    args = parser.parse_args()
+    report = validate_dataset(args.dataset, args.profile)
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+    args.output.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    return 0 if report["passed"] else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

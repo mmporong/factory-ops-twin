@@ -10,6 +10,7 @@ from dataclasses import dataclass
 import hashlib
 import json
 import math
+import os
 from pathlib import Path, PurePosixPath
 import re
 import shutil
@@ -42,6 +43,29 @@ WHEEL_JOINTS = ("joint_wheel_left", "joint_wheel_right")
 ASSET_SUFFIX = "/Isaac/Robots/NVIDIA/NovaCarter/nova_carter.usd"
 STAGED_PAYLOAD_SOURCE = "factory-ops-twin:g4-portfolio-payload-v1"
 STAGED_BARRIER_SOURCE = "factory-ops-twin:g4-safety-barrier-v1"
+SUPERVISOR_PROVENANCE = Path("/workspace/g4-environment.json")
+REQUIRED_SOURCE_PINS = {
+    "scripts/isaac/g4_capture.py",
+    "scripts/isaac/g2_scene.py",
+    "scripts/isaac/stage_smoke.py",
+    "scripts/isaac/factory_visuals.py",
+    "scripts/isaac/nav_scene.py",
+    "scripts/isaac/robot_qualification.py",
+    "scripts/isaac/robot_evidence.py",
+    "factory_ops/drive_profile.py",
+    "factory_ops/footprint.py",
+    "factory_ops/layout.py",
+    "factory_ops/motion.py",
+    "factory_ops/motion_authorization.py",
+    "factory_ops/usda.py",
+    "factory_ops/visual_scene.py",
+    "factory_ops/visual_state.py",
+    "configs/factory-v3/g2.json",
+    "configs/factory-v3/g2-scenarios.json",
+    "configs/factory-v3/visual-assets.json",
+    "configs/factory-v3/render-profile.json",
+    "configs/factory-v3/dataset-profile.json",
+}
 
 
 class CaptureError(RuntimeError):
@@ -255,11 +279,27 @@ def _bbox_row_paths(info: Mapping[str, Any], index: int) -> list[str]:
     return row
 
 
-def _asset_source_sha(prim_path: str, visual_asset_sha: str, robot_asset: str) -> str:
-    if prim_path.endswith("/G4PortfolioPayload"):
-        return hashlib.sha256(STAGED_PAYLOAD_SOURCE.encode("utf-8")).hexdigest()
-    source = robot_asset if prim_path.startswith("/World/Carter") else visual_asset_sha
-    return hashlib.sha256(source.encode("utf-8")).hexdigest() if source == robot_asset else source
+def _asset_source_bindings(visual_manifest: Mapping[str, Any], render_scene_sha: str, robot_asset: str) -> dict[str, str]:
+    provenance = visual_manifest.get("asset_provenance")
+    visual_sha = provenance.get("asset_source_sha256") if isinstance(provenance, Mapping) else None
+    instances = visual_manifest.get("instances")
+    if not isinstance(visual_sha, str) or re.fullmatch(r"[0-9a-f]{64}", visual_sha) is None or not isinstance(instances, list):
+        raise CaptureError("visual manifest has no usable asset provenance or instances")
+    bindings = {
+        "/World/FloorVisual": render_scene_sha,
+        "/World/Markers": render_scene_sha,
+        "/World/Carter1": hashlib.sha256(robot_asset.encode("utf-8")).hexdigest(),
+        "/World/Carter2": hashlib.sha256(robot_asset.encode("utf-8")).hexdigest(),
+        "/World/Carter1/chassis_link/G4PortfolioPayload": hashlib.sha256(STAGED_PAYLOAD_SOURCE.encode("utf-8")).hexdigest(),
+        "/World/G4PortfolioProps/SafetyBarrier": hashlib.sha256(STAGED_BARRIER_SOURCE.encode("utf-8")).hexdigest(),
+        "/World/Visuals/FloorGraphics": visual_sha,
+    }
+    for item in instances:
+        path = item.get("prim_path") if isinstance(item, Mapping) else None
+        if not isinstance(path, str) or not path.startswith("/World/") or path in bindings:
+            raise CaptureError("visual manifest contains an invalid or duplicate source prim path")
+        bindings[path] = visual_sha
+    return bindings
 
 
 def _mask_bounds(mask: Any, np: Any) -> dict[int, list[int]]:
@@ -291,8 +331,7 @@ def _normalize_annotations(
     bbox_raw: Mapping[str, Any],
     bbox_sha256: str,
     stage: Any,
-    visual_asset_sha: str,
-    robot_asset: str,
+    asset_source_by_root: Mapping[str, str],
     np: Any,
 ) -> dict[str, Any]:
     semantic_raw = _raw_label_map(semantic_payload, "semantic")
@@ -318,7 +357,15 @@ def _normalize_annotations(
         labelled_roots[instance_id] = (root_path, class_name)
         instance_classes[str(instance_id)] = {"class": class_name}
         instance_paths[str(instance_id)] = raw_path
-        instance_asset_shas[str(instance_id)] = _asset_source_sha(root_path, visual_asset_sha, robot_asset)
+        candidates = [
+            (source_root, sha)
+            for source_root, sha in asset_source_by_root.items()
+            if root_path == source_root or root_path.startswith(source_root + "/")
+        ]
+        asset_sha = max(candidates, key=lambda item: len(item[0]))[1] if candidates else None
+        if not isinstance(asset_sha, str) or re.fullmatch(r"[0-9a-f]{64}", asset_sha) is None:
+            raise CaptureError(f"instance labelled root has no source provenance binding: {root_path}")
+        instance_asset_shas[str(instance_id)] = asset_sha
 
     raw_data = bbox_raw.get("data")
     raw_info = bbox_raw.get("info")
@@ -542,18 +589,63 @@ def _gpu_audit() -> dict[str, Any]:
     return {"command": command, "gpus": rows}
 
 
-def _verify_source_commit(expected: str) -> None:
-    completed = subprocess.run(
-        ["git", "rev-parse", "HEAD"],
-        cwd=ROOT,
-        capture_output=True,
-        text=True,
-        timeout=20,
-        check=False,
-    )
+def _verify_source_commit(expected: str, layout_path: Path, provenance_path: Path = SUPERVISOR_PROVENANCE) -> dict[str, Any]:
+    try:
+        completed = subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            cwd=ROOT,
+            capture_output=True,
+            text=True,
+            timeout=20,
+            check=False,
+        )
+    except FileNotFoundError:
+        return _verify_supervisor_provenance(expected, layout_path, provenance_path)
     observed = completed.stdout.strip()
     if completed.returncode != 0 or observed != expected:
         raise CaptureError(f"source commit differs: expected {expected}, observed {observed or 'unavailable'}")
+    return {"mode": "git-head", "source_commit": observed}
+
+
+def _verify_supervisor_provenance(expected: str, layout_path: Path, provenance_path: Path) -> dict[str, Any]:
+    expected_manifest_sha = os.environ.get("FACTORY_OPS_G4_PROVENANCE_SHA256")
+    if not isinstance(expected_manifest_sha, str) or re.fullmatch(r"[0-9a-f]{64}", expected_manifest_sha) is None:
+        raise CaptureError("supervisor provenance SHA environment value is missing or invalid")
+    if not provenance_path.is_file() or provenance_path.is_symlink() or _sha256(provenance_path) != expected_manifest_sha:
+        raise CaptureError("supervisor provenance file is missing, linked, or has a different SHA")
+    try:
+        document = json.loads(provenance_path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as error:
+        raise CaptureError(f"supervisor provenance could not be loaded: {error}") from error
+    if not isinstance(document, dict) or document.get("source_commit") != expected:
+        raise CaptureError("supervisor provenance source_commit differs")
+    source_files = document.get("source_files")
+    if not isinstance(source_files, dict):
+        raise CaptureError("supervisor provenance source_files is not an object")
+    try:
+        layout_relative = layout_path.resolve(strict=True).relative_to(ROOT.resolve(strict=True)).as_posix()
+    except (OSError, ValueError) as error:
+        raise CaptureError("layout is outside the pinned project source root") from error
+    required = set(REQUIRED_SOURCE_PINS)
+    required.add(layout_relative)
+    missing = sorted(required - set(source_files))
+    if missing:
+        raise CaptureError(f"supervisor provenance omits required source pins: {missing}")
+    for relative, claimed_sha in source_files.items():
+        pure = PurePosixPath(relative) if isinstance(relative, str) else None
+        if (pure is None or pure.is_absolute() or relative != pure.as_posix()
+                or any(part in {"", ".", ".."} for part in pure.parts)):
+            raise CaptureError("supervisor provenance contains an unsafe source path")
+        path = ROOT / pure
+        if not path.is_file() or path.is_symlink() or not isinstance(claimed_sha, str) or _sha256(path) != claimed_sha:
+            raise CaptureError(f"supervisor provenance source file differs: {relative}")
+    return {
+        "mode": "supervisor-manifest",
+        "source_commit": expected,
+        "manifest_sha256": expected_manifest_sha,
+        "source_file_count": len(source_files),
+        "required_source_pins": sorted(required),
+    }
 
 
 def _validate_pinned_profile() -> dict[str, Any]:
@@ -782,8 +874,7 @@ def _capture_variant(
     timeline: Any,
     robots: Mapping[str, Any],
     visual_runtime: Any,
-    visual_manifest: Mapping[str, Any],
-    robot_asset: str,
+    asset_source_by_root: Mapping[str, str],
     np: Any,
     Image: Any,
     staging_anchors: Sequence[tuple[float, float]],
@@ -794,7 +885,6 @@ def _capture_variant(
     annotators, products = _attach_annotators(rep, cameras, resolution)
     captures: list[dict[str, Any]] = []
     review_entries: list[dict[str, Any]] = []
-    asset_sha = str(visual_manifest["asset_provenance"]["asset_source_sha256"])
     try:
         rep.orchestrator.set_capture_on_play(False)
         for capture_index in range(count):
@@ -878,8 +968,7 @@ def _capture_variant(
                     bbox_raw=bbox_raw,
                     bbox_sha256=_sha256(bbox_path),
                     stage=stage,
-                    visual_asset_sha=asset_sha,
-                    robot_asset=robot_asset,
+                    asset_source_by_root=asset_source_by_root,
                     np=np,
                 )
                 normalized_path = camera_root / "normalized.json"
@@ -980,7 +1069,7 @@ def _worker(args: argparse.Namespace, plan: CapturePlan, layout_path: Path, outp
         from factory_ops.visual_scene import export_visual_scene
 
         layout = Layout.from_file(layout_path)
-        _verify_source_commit(args.source_commit)
+        source_verification = _verify_source_commit(args.source_commit, layout_path)
         _validate_pinned_profile()
         authored: dict[int, tuple[Path, dict[str, Any]]] = {}
         for seed in plan.variant_seeds:
@@ -1001,6 +1090,7 @@ def _worker(args: argparse.Namespace, plan: CapturePlan, layout_path: Path, outp
                     "runtime_props": {
                         "safety_barrier": _safety_barrier_plan(layout),
                         "payload": {
+                            "prim_path": "/World/Carter1/chassis_link/G4PortfolioPayload",
                             "source": STAGED_PAYLOAD_SOURCE,
                             "asset_source_sha256": hashlib.sha256(STAGED_PAYLOAD_SOURCE.encode("utf-8")).hexdigest(),
                         },
@@ -1040,6 +1130,11 @@ def _worker(args: argparse.Namespace, plan: CapturePlan, layout_path: Path, outp
         if not isinstance(asset_root, str) or not asset_root:
             raise CaptureError("Isaac asset root is unavailable")
         robot_asset = asset_root + ASSET_SUFFIX
+        for variant_source in scene_sources["variants"]:
+            variant_source["robot_asset_uri"] = robot_asset
+        scene_provenance_path = output / source["scene_path"]
+        _atomic_json(scene_provenance_path, scene_sources)
+        source["scene_sha256"] = _sha256(scene_provenance_path)
         scenarios = json.loads(G2_SCENARIOS.read_text(encoding="utf-8"))
         first_scenario = scenarios["scenarios"]["P0"]
         for seed in plan.variant_seeds:
@@ -1079,6 +1174,11 @@ def _worker(args: argparse.Namespace, plan: CapturePlan, layout_path: Path, outp
                 _apply_class_semantics(stage.GetPrimAtPath(definition["prim_path"]), "amr", Semantics)
             staged_payload = _stage_portfolio_payload(stage, UsdGeom, Gf, Semantics, "/World/Carter1/chassis_link")
             staged_barrier = _stage_safety_barrier(stage, UsdGeom, Gf, Semantics, layout)
+            asset_source_by_root = _asset_source_bindings(
+                visual_manifest,
+                _sha256(_render_scene),
+                robot_asset,
+            )
             timeline.play()
             for _ in range(120):
                 for robot in robots.values():
@@ -1105,8 +1205,7 @@ def _worker(args: argparse.Namespace, plan: CapturePlan, layout_path: Path, outp
                 timeline=timeline,
                 robots=robots,
                 visual_runtime=runtime,
-                visual_manifest=visual_manifest,
-                robot_asset=robot_asset,
+                asset_source_by_root=asset_source_by_root,
                 np=np,
                 Image=Image,
                 staging_anchors=tuple(layout.stations.values()) + tuple(layout.pockets.values()),
@@ -1123,6 +1222,7 @@ def _worker(args: argparse.Namespace, plan: CapturePlan, layout_path: Path, outp
                 "renderer_readback": "six persistent Legacy Replicator annotators per camera; paused physics",
                 "container": {key: value for key, value in sorted(__import__("os").environ.items()) if key in {"NVIDIA_VISIBLE_DEVICES", "CUDA_VISIBLE_DEVICES", "ISAAC_PATH"}},
                 "gpu": _gpu_audit(),
+                "source_verification": source_verification,
             }
         )
         _atomic_json(output / "gpu-resource-audit.json", resource_audit)
@@ -1149,7 +1249,7 @@ def _worker(args: argparse.Namespace, plan: CapturePlan, layout_path: Path, outp
             "training_eligible": False,
             "scope": DATASET_SCOPE,
             "scope_note": "frames are captures within a scene; they are not independent synthetic layouts",
-            "source": {"commit": args.source_commit, **source},
+            "source": {"commit": args.source_commit, "verification": source_verification, **source},
             "profile_sha256": _sha256(DEFAULT_PROFILE),
             "split_assignments": assignments,
             "scenes": scenes,

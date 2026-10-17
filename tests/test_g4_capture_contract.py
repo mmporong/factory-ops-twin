@@ -1,13 +1,19 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import math
+import os
 from pathlib import Path
+import tempfile
 from typing import cast
 import unittest
+from unittest.mock import patch
 
 from scripts.isaac.g4_capture import (
     CaptureError,
+    REQUIRED_SOURCE_PINS,
+    ROOT,
     _assert_frozen_capture,
     _capture_plan,
     _depth_value_is_valid,
@@ -18,6 +24,7 @@ from scripts.isaac.g4_capture import (
     _parse_variant_seeds,
     _raw_bbox_document,
     _safety_barrier_plan,
+    _verify_source_commit,
 )
 
 
@@ -123,6 +130,50 @@ class _Stage:
 
 
 class G4CaptureContractTests(unittest.TestCase):
+    def test_gitless_supervisor_provenance_pins_commit_and_required_sources(self) -> None:
+        layout = ROOT / "configs" / "factory-v3" / "layout.json"
+        required = set(REQUIRED_SOURCE_PINS) | {layout.relative_to(ROOT).as_posix()}
+        source_files = {
+            relative: hashlib.sha256((ROOT / relative).read_bytes()).hexdigest()
+            for relative in sorted(required)
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            proof = Path(directory) / "g4-environment.json"
+
+            def write(document):
+                proof.write_text(json.dumps(document, sort_keys=True), encoding="utf-8")
+                return hashlib.sha256(proof.read_bytes()).hexdigest()
+
+            valid = {"source_commit": "a" * 40, "source_files": source_files}
+            proof_sha = write(valid)
+            with patch("scripts.isaac.g4_capture.subprocess.run", side_effect=FileNotFoundError), patch.dict(
+                os.environ, {"FACTORY_OPS_G4_PROVENANCE_SHA256": proof_sha}, clear=False
+            ):
+                _verify_source_commit("a" * 40, layout, proof)
+
+            cases = []
+            missing = {"source_commit": "a" * 40, "source_files": dict(source_files)}
+            missing["source_files"].pop("scripts/isaac/g4_capture.py")
+            cases.append((missing, "a" * 40))
+            wrong_commit = {"source_commit": "b" * 40, "source_files": source_files}
+            cases.append((wrong_commit, "a" * 40))
+            tampered = {"source_commit": "a" * 40, "source_files": dict(source_files)}
+            tampered["source_files"]["factory_ops/layout.py"] = "f" * 64
+            cases.append((tampered, "a" * 40))
+            for document, expected in cases:
+                with self.subTest(document=document):
+                    proof_sha = write(document)
+                    with patch("scripts.isaac.g4_capture.subprocess.run", side_effect=FileNotFoundError), patch.dict(
+                        os.environ, {"FACTORY_OPS_G4_PROVENANCE_SHA256": proof_sha}, clear=False
+                    ), self.assertRaises(CaptureError):
+                        _verify_source_commit(expected, layout, proof)
+
+            write(valid)
+            with patch("scripts.isaac.g4_capture.subprocess.run", side_effect=FileNotFoundError), patch.dict(
+                os.environ, {"FACTORY_OPS_G4_PROVENANCE_SHA256": "0" * 64}, clear=False
+            ), self.assertRaises(CaptureError):
+                _verify_source_commit("a" * 40, layout, proof)
+
     def test_gpu_preflight_uses_p0_base_semantics_and_real_barrier_prop(self) -> None:
         source = (Path(__file__).parents[1] / "scripts" / "isaac" / "g4_capture.py").read_text(encoding="utf-8")
         self.assertIn('sys.path.insert(0, str(ROOT))', source)
@@ -250,8 +301,7 @@ class G4CaptureContractTests(unittest.TestCase):
             bbox_raw=bbox_raw,
             bbox_sha256="d" * 64,
             stage=_Stage(),
-            visual_asset_sha="e" * 64,
-            robot_asset="omniverse://asset/nova_carter.usd",
+            asset_source_by_root={"/World/Rack": "e" * 64},
             np=_FakeNP(),
         )
 

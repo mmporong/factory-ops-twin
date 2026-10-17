@@ -47,8 +47,16 @@ paths=[
     'configs/factory-v3/dataset-profile.json','configs/factory-v3/render-profile.json',
     'configs/factory-v3/visual-assets.json',
 ]
+paths=sorted(set(paths) | {
+    p.relative_to(project).as_posix()
+    for directory,pattern in (('factory_ops','*.py'),('scripts/isaac','*.py'),('configs/factory-v3','*.json'),('configs/factory-v3','*.yaml'))
+    for p in (project/directory).rglob(pattern)
+    if p.is_file() and not p.is_symlink()
+})
 record={
     'run_id':run,'source_commit':sys.argv[3],'isaac_image':sys.argv[4],
+    'checkout_head':subprocess.check_output(['git','-C',str(project),'rev-parse','HEAD'],text=True).strip(),
+    'checkout_clean':not subprocess.check_output(['git','-C',str(project),'status','--porcelain'],text=True).strip(),
     'started_at_utc':datetime.now(timezone.utc).isoformat(),
     'scope':'diagnostic_unreviewed' if run.startswith('g4-probe-') else 'capture_pending_validation',
     'source_files':{p:hashlib.sha256((project/p).read_bytes()).hexdigest() for p in paths},
@@ -58,9 +66,16 @@ record={
 }
 (root/'logs'/f'{run}-environment.json').write_text(json.dumps(record,indent=2)+'\n')
 PY
+provenance_sha=$(python3 - "$root/logs/$run-environment.json" <<'PY'
+from pathlib import Path
+import hashlib,sys
+print(hashlib.sha256(Path(sys.argv[1]).read_bytes()).hexdigest())
+PY
+)
 docker create --name "$name" --gpus all --network host --ipc host --user 1234:1234 \
   --entrypoint /bin/bash --workdir /isaac-sim \
   -e ACCEPT_EULA=Y -e OMNI_TELEMETRY_DISABLE_ANONYMOUS_DATA=1 \
+  -e FACTORY_OPS_G4_PROVENANCE_SHA256="$provenance_sha" \
   -v "$cache/cache/main:/isaac-sim/.cache:rw" \
   -v "$cache/cache/computecache:/isaac-sim/.nv/ComputeCache:rw" \
   -v "$cache/cache/kit:/isaac-sim/kit/cache:rw" \
@@ -69,6 +84,7 @@ docker create --name "$name" --gpus all --network host --ipc host --user 1234:12
   -v "$cache/data:/isaac-sim/.local/share/ov/data:rw" \
   -v "$cache/pkg:/isaac-sim/.local/share/ov/pkg:rw" \
   -v "$cache/hub:/var/cache/hub:rw" \
+  -v "$root/logs/$run-environment.json:/workspace/g4-environment.json:ro" \
   -v "$project:/workspace/project:ro" -v "$root/results:/workspace/results:rw" \
   "$image" -lc 'exec timeout --signal=TERM --kill-after=30s 7200s ./python.sh /workspace/project/scripts/isaac/g4_capture.py "$@"' \
   factory-ops-g4 --output "/workspace/results/$run" --run-id "$run" \
