@@ -44,9 +44,13 @@ ASSET_SUFFIX = "/Isaac/Robots/NVIDIA/NovaCarter/nova_carter.usd"
 STAGED_PAYLOAD_SOURCE = "factory-ops-twin:g4-portfolio-payload-v1"
 STAGED_BARRIER_SOURCE = "factory-ops-twin:g4-safety-barrier-v1"
 SUPERVISOR_PROVENANCE = Path("/workspace/g4-environment.json")
+SOURCE_ARCHIVE = Path("/workspace/g4-source.tar")
+SOURCE_COMMIT_OBJECT = Path("/workspace/g4-commit.raw")
 REQUIRED_SOURCE_PINS = {
+    "factory_ops/source_provenance.py",
     "scripts/isaac/g4_capture.py",
     "scripts/isaac/g2_scene.py",
+    "scripts/isaac/gif_evidence.py",
     "scripts/isaac/stage_smoke.py",
     "scripts/isaac/factory_visuals.py",
     "scripts/isaac/nav_scene.py",
@@ -465,6 +469,29 @@ def _assert_frozen_capture(
         raise CaptureError("camera readback advanced physics or changed robot poses")
 
 
+def _physics_scene_readback(stage: Any, requested_dt_s: float) -> dict[str, Any]:
+    scenes = [prim for prim in stage.Traverse() if str(prim.GetTypeName()) == "PhysicsScene"]
+    if len(scenes) != 1:
+        raise CaptureError(f"SimulationManager initialized {len(scenes)} PhysicsScene prims, expected exactly one")
+    prim = scenes[0]
+    attribute = prim.GetAttribute("physxScene:timeStepsPerSecond")
+    steps_per_second = attribute.Get() if attribute.IsValid() else None
+    if (isinstance(steps_per_second, bool) or not isinstance(steps_per_second, (int, float))
+            or not math.isfinite(float(steps_per_second)) or float(steps_per_second) <= 0):
+        raise CaptureError("PhysicsScene timeStepsPerSecond readback is invalid")
+    observed_dt = 1.0 / float(steps_per_second)
+    if not math.isclose(observed_dt, requested_dt_s, rel_tol=0.0, abs_tol=1e-12):
+        raise CaptureError("PhysicsScene timestep differs from the requested 1/60 second")
+    return {
+        "initialization_api": "isaacsim.core.simulation_manager.SimulationManager.setup_simulation",
+        "device": "cpu",
+        "requested_dt_s": requested_dt_s,
+        "physics_scene_path": str(prim.GetPath()),
+        "time_steps_per_second": float(steps_per_second),
+        "observed_dt_s": observed_dt,
+    }
+
+
 def _pose(robot: Any) -> tuple[list[float], list[float]]:
     positions, orientations = robot.get_world_poses()
     return positions.numpy()[0].tolist(), orientations.numpy()[0].tolist()
@@ -589,7 +616,14 @@ def _gpu_audit() -> dict[str, Any]:
     return {"command": command, "gpus": rows}
 
 
-def _verify_source_commit(expected: str, layout_path: Path, provenance_path: Path = SUPERVISOR_PROVENANCE) -> dict[str, Any]:
+def _verify_source_commit(
+    expected: str,
+    layout_path: Path,
+    provenance_path: Path = SUPERVISOR_PROVENANCE,
+    workspace_root: Path = Path("/workspace"),
+    source_archive_path: Path = SOURCE_ARCHIVE,
+    commit_object_path: Path = SOURCE_COMMIT_OBJECT,
+) -> dict[str, Any]:
     try:
         completed = subprocess.run(
             ["git", "rev-parse", "HEAD"],
@@ -600,14 +634,44 @@ def _verify_source_commit(expected: str, layout_path: Path, provenance_path: Pat
             check=False,
         )
     except FileNotFoundError:
-        return _verify_supervisor_provenance(expected, layout_path, provenance_path)
+        return _verify_supervisor_provenance(
+            expected,
+            layout_path,
+            provenance_path,
+            workspace_root,
+            source_archive_path,
+            commit_object_path,
+        )
     observed = completed.stdout.strip()
-    if completed.returncode != 0 or observed != expected:
+    if completed.returncode != 0:
+        return _verify_supervisor_provenance(
+            expected,
+            layout_path,
+            provenance_path,
+            workspace_root,
+            source_archive_path,
+            commit_object_path,
+        )
+    if observed != expected:
         raise CaptureError(f"source commit differs: expected {expected}, observed {observed or 'unavailable'}")
-    return {"mode": "git-head", "source_commit": observed}
+    return _verify_supervisor_provenance(
+        expected,
+        layout_path,
+        provenance_path,
+        workspace_root,
+        source_archive_path,
+        commit_object_path,
+    )
 
 
-def _verify_supervisor_provenance(expected: str, layout_path: Path, provenance_path: Path) -> dict[str, Any]:
+def _verify_supervisor_provenance(
+    expected: str,
+    layout_path: Path,
+    provenance_path: Path,
+    workspace_root: Path,
+    source_archive_path: Path = SOURCE_ARCHIVE,
+    commit_object_path: Path = SOURCE_COMMIT_OBJECT,
+) -> dict[str, Any]:
     expected_manifest_sha = os.environ.get("FACTORY_OPS_G4_PROVENANCE_SHA256")
     if not isinstance(expected_manifest_sha, str) or re.fullmatch(r"[0-9a-f]{64}", expected_manifest_sha) is None:
         raise CaptureError("supervisor provenance SHA environment value is missing or invalid")
@@ -617,8 +681,25 @@ def _verify_supervisor_provenance(expected: str, layout_path: Path, provenance_p
         document = json.loads(provenance_path.read_text(encoding="utf-8"))
     except (OSError, UnicodeDecodeError, json.JSONDecodeError) as error:
         raise CaptureError(f"supervisor provenance could not be loaded: {error}") from error
-    if not isinstance(document, dict) or document.get("source_commit") != expected:
-        raise CaptureError("supervisor provenance source_commit differs")
+    if (not isinstance(document, dict) or document.get("schema_version") != 1
+            or document.get("source_commit") != expected
+            or document.get("checkout_head") != expected
+            or document.get("checkout_clean") is not True
+            or document.get("source_git_object_verification") is not True
+            or not isinstance(document.get("source_archive_sha256"), str)
+            or re.fullmatch(r"[0-9a-f]{64}", document["source_archive_sha256"]) is None
+            or not isinstance(document.get("source_commit_object_sha256"), str)
+            or re.fullmatch(r"[0-9a-f]{64}", document["source_commit_object_sha256"]) is None):
+        raise CaptureError("supervisor provenance Git object or archive proof differs")
+    snapshot_relative = _safe_source_relative(document.get("source_snapshot_relative"))
+    if snapshot_relative is None:
+        raise CaptureError("supervisor provenance source_snapshot_relative is unsafe")
+    try:
+        snapshot_path = (workspace_root / PurePosixPath(snapshot_relative)).resolve(strict=True)
+        if snapshot_path != ROOT.resolve(strict=True):
+            raise CaptureError("supervisor provenance snapshot path does not resolve to producer ROOT")
+    except OSError as error:
+        raise CaptureError("supervisor provenance snapshot path is unavailable") from error
     source_files = document.get("source_files")
     if not isinstance(source_files, dict):
         raise CaptureError("supervisor provenance source_files is not an object")
@@ -632,19 +713,87 @@ def _verify_supervisor_provenance(expected: str, layout_path: Path, provenance_p
     if missing:
         raise CaptureError(f"supervisor provenance omits required source pins: {missing}")
     for relative, claimed_sha in source_files.items():
-        pure = PurePosixPath(relative) if isinstance(relative, str) else None
-        if (pure is None or pure.is_absolute() or relative != pure.as_posix()
-                or any(part in {"", ".", ".."} for part in pure.parts)):
+        safe = _safe_source_relative(relative)
+        if safe is None:
             raise CaptureError("supervisor provenance contains an unsafe source path")
-        path = ROOT / pure
+        path = ROOT / PurePosixPath(safe)
         if not path.is_file() or path.is_symlink() or not isinstance(claimed_sha, str) or _sha256(path) != claimed_sha:
             raise CaptureError(f"supervisor provenance source file differs: {relative}")
+    from factory_ops.source_provenance import verify_source_archive
+
+    archive_proof = verify_source_archive(
+        source_archive_path,
+        commit_object_path,
+        expected,
+        source_files,
+        ROOT,
+    )
+    if archive_proof.get("passed") is not True:
+        raise CaptureError(f"source archive proof failed: {archive_proof.get('errors')}")
+    if (archive_proof.get("source_archive_sha256") != document["source_archive_sha256"]
+            or archive_proof.get("commit_object_sha256") != document["source_commit_object_sha256"]
+            or archive_proof.get("commit_sha1") != expected
+            or archive_proof.get("source_pin_count") != len(source_files)):
+        raise CaptureError("source archive proof fields differ from supervisor provenance")
     return {
+        "schema_version": 1,
         "mode": "supervisor-manifest",
         "source_commit": expected,
         "manifest_sha256": expected_manifest_sha,
+        "source_archive_sha256": document["source_archive_sha256"],
+        "source_commit_object_sha256": document["source_commit_object_sha256"],
+        "source_archive_tree_sha1": archive_proof["archive_tree_sha1"],
+        "source_pin_set_sha256": archive_proof["source_pin_set_sha256"],
+        "source_snapshot_relative": snapshot_relative,
         "source_file_count": len(source_files),
         "required_source_pins": sorted(required),
+    }
+
+
+def _safe_source_relative(value: object) -> str | None:
+    if not isinstance(value, str) or not value or "\\" in value:
+        return None
+    pure = PurePosixPath(value)
+    if pure.is_absolute() or value != pure.as_posix() or any(part in {"", ".", ".."} for part in pure.parts):
+        return None
+    return value
+
+
+def _end_verify_supervisor_sources(verification: Mapping[str, Any], provenance_path: Path = SUPERVISOR_PROVENANCE) -> dict[str, Any]:
+    if verification.get("mode") != "supervisor-manifest":
+        raise CaptureError("production capture requires supervisor-manifest source verification")
+    manifest_sha = verification.get("manifest_sha256")
+    if _sha256(provenance_path) != manifest_sha:
+        raise CaptureError("supervisor provenance changed during capture")
+    document = json.loads(provenance_path.read_text(encoding="utf-8"))
+    source_files = document.get("source_files") if isinstance(document, dict) else None
+    if not isinstance(source_files, dict):
+        raise CaptureError("supervisor provenance source_files disappeared during capture")
+    for relative, expected_sha in source_files.items():
+        safe = _safe_source_relative(relative)
+        if safe is None or _sha256(ROOT / PurePosixPath(safe)) != expected_sha:
+            raise CaptureError(f"source snapshot changed during capture: {relative}")
+    from factory_ops.source_provenance import verify_source_archive
+
+    archive_proof = verify_source_archive(
+        SOURCE_ARCHIVE,
+        SOURCE_COMMIT_OBJECT,
+        str(verification.get("source_commit", "")),
+        source_files,
+        ROOT,
+    )
+    if (archive_proof.get("passed") is not True
+            or archive_proof.get("source_archive_sha256") != verification.get("source_archive_sha256")
+            or archive_proof.get("commit_object_sha256") != verification.get("source_commit_object_sha256")
+            or archive_proof.get("source_pin_set_sha256") != verification.get("source_pin_set_sha256")):
+        raise CaptureError("source archive proof changed during capture")
+    return {
+        "status": "passed",
+        "manifest_sha256": manifest_sha,
+        "source_file_count": len(source_files),
+        "source_archive_sha256": archive_proof["source_archive_sha256"],
+        "source_commit_object_sha256": archive_proof["commit_object_sha256"],
+        "source_pin_set_sha256": archive_proof["source_pin_set_sha256"],
     }
 
 
@@ -660,12 +809,27 @@ def _validate_pinned_profile() -> dict[str, Any]:
     return profile
 
 
+def _renderer_contract() -> dict[str, Any]:
+    try:
+        profile = json.loads(RENDER_PROFILE.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as error:
+        raise CaptureError(f"render profile could not be loaded: {error}") from error
+    display_renderer = profile.get("renderer") if isinstance(profile, dict) else None
+    settings = profile.get("render_settings") if isinstance(profile, dict) else None
+    expected = {"sdk_renderer": "RealTimePathTracing", "dlss_exec_mode": 2, "rt_subframes": 4}
+    if display_renderer != "RTX Real-Time 2.0" or settings != expected:
+        raise CaptureError("render profile renderer or render_settings differ from the G4 capture contract")
+    return {"display_renderer": display_renderer, **expected}
+
+
 def _copy_provenance(
     output: Path,
     scene_sources: Mapping[str, Any],
     *,
     resolution: tuple[int, int],
     probe: bool,
+    render_contract: Mapping[str, Any],
+    source_verification: Mapping[str, Any],
 ) -> dict[str, Any]:
     provenance = output / "provenance"
     provenance.mkdir()
@@ -675,6 +839,9 @@ def _copy_provenance(
     render_path = provenance / "render-profile.json"
     render_source_path = provenance / "render-profile-source.json"
     dataset_profile = provenance / "dataset-profile.json"
+    source_environment = provenance / "source-environment.json"
+    source_archive = provenance / "source.tar"
+    source_commit_object = provenance / "source-commit.raw"
     shutil.copyfile(VISUAL_ASSETS, asset_path)
     shutil.copyfile(RENDER_PROFILE, render_source_path)
     _atomic_json(
@@ -683,15 +850,27 @@ def _copy_provenance(
             "schema_version": 1,
             "source_profile_path": _relative(render_source_path, output),
             "source_profile_sha256": _sha256(render_source_path),
-            "renderer": "RayTracedLighting (RTX Real-Time 2.0)",
+            "renderer": render_contract["display_renderer"],
+            "sdk_renderer": render_contract["sdk_renderer"],
+            "dlss_exec_mode": render_contract["dlss_exec_mode"],
             "resolution": list(resolution),
-            "rt_subframes": 4,
+            "rt_subframes": render_contract["rt_subframes"],
             "timeline_during_readback": "paused",
             "probe": probe,
             "annotators": list(ANNOTATORS),
         },
     )
     shutil.copyfile(DEFAULT_PROFILE, dataset_profile)
+    if source_verification.get("mode") != "supervisor-manifest":
+        raise CaptureError("dataset provenance requires supervisor-manifest source verification")
+    shutil.copyfile(SUPERVISOR_PROVENANCE, source_environment)
+    if _sha256(source_environment) != source_verification.get("manifest_sha256"):
+        raise CaptureError("copied supervisor provenance SHA differs")
+    shutil.copyfile(SOURCE_ARCHIVE, source_archive)
+    shutil.copyfile(SOURCE_COMMIT_OBJECT, source_commit_object)
+    if (_sha256(source_archive) != source_verification.get("source_archive_sha256")
+            or _sha256(source_commit_object) != source_verification.get("source_commit_object_sha256")):
+        raise CaptureError("copied source archive or commit object SHA differs")
     return {
         "scene_path": _relative(scene_path, output),
         "scene_sha256": _sha256(scene_path),
@@ -701,6 +880,12 @@ def _copy_provenance(
         "render_profile_sha256": _sha256(render_path),
         "dataset_profile_path": _relative(dataset_profile, output),
         "dataset_profile_sha256": _sha256(dataset_profile),
+        "source_environment_path": _relative(source_environment, output),
+        "source_environment_sha256": _sha256(source_environment),
+        "source_archive_path": _relative(source_archive, output),
+        "source_archive_sha256": _sha256(source_archive),
+        "source_commit_object_path": _relative(source_commit_object, output),
+        "source_commit_object_sha256": _sha256(source_commit_object),
     }
 
 
@@ -796,6 +981,7 @@ def _safety_barrier_plan(layout: Any) -> dict[str, Any]:
         "class": "barrier",
         "source": STAGED_BARRIER_SOURCE,
         "asset_source_sha256": hashlib.sha256(STAGED_BARRIER_SOURCE.encode("utf-8")).hexdigest(),
+        "hash_basis": "utf8-source-descriptor",
         "source_obstacle_id": "SERVICE_CABINET",
         "source_envelope_xyz_m": envelope,
         "components": components,
@@ -878,6 +1064,7 @@ def _capture_variant(
     np: Any,
     Image: Any,
     staging_anchors: Sequence[tuple[float, float]],
+    rt_subframes: int,
 ) -> tuple[dict[str, Any], list[dict[str, Any]]]:
     scene_id = f"scene-{seed:03d}"
     variant_id = f"industrial-v{seed:02d}"
@@ -916,7 +1103,7 @@ def _capture_variant(
             frozen_time = float(SimulationManager.get_simulation_time())
             if frozen_frame != frame or abs(frozen_time - sim_time) > 1e-9:
                 raise CaptureError("camera transform update advanced paused physics")
-            rep.orchestrator.step(delta_time=0.0, rt_subframes=4)
+            rep.orchestrator.step(delta_time=0.0, rt_subframes=rt_subframes)
             rep.orchestrator.wait_until_complete()
             _assert_frozen_capture(
                 frame,
@@ -1053,13 +1240,14 @@ def _worker(args: argparse.Namespace, plan: CapturePlan, layout_path: Path, outp
     started = time.monotonic()
     scenes: list[dict[str, Any]] = []
     reviews: list[dict[str, Any]] = []
+    simulation_readbacks: list[dict[str, Any]] = []
     scene_sources: dict[str, Any] = {"schema_version": 1, "variants": []}
     resource_audit: dict[str, Any] = {
         "schema_version": 1,
         "run_id": args.run_id,
         "status": "running",
         "probe": plan.probe,
-        "renderer": "RTX Real-Time",
+        "renderer": "pending render-profile validation",
         "resolution": list(plan.resolution),
         "started_unix_s": time.time(),
     }
@@ -1071,6 +1259,8 @@ def _worker(args: argparse.Namespace, plan: CapturePlan, layout_path: Path, outp
         layout = Layout.from_file(layout_path)
         source_verification = _verify_source_commit(args.source_commit, layout_path)
         _validate_pinned_profile()
+        render_contract = _renderer_contract()
+        resource_audit["renderer"] = render_contract
         authored: dict[int, tuple[Path, dict[str, Any]]] = {}
         for seed in plan.variant_seeds:
             variant = output / "authored-scenes" / f"scene-{seed:03d}"
@@ -1093,18 +1283,34 @@ def _worker(args: argparse.Namespace, plan: CapturePlan, layout_path: Path, outp
                             "prim_path": "/World/Carter1/chassis_link/G4PortfolioPayload",
                             "source": STAGED_PAYLOAD_SOURCE,
                             "asset_source_sha256": hashlib.sha256(STAGED_PAYLOAD_SOURCE.encode("utf-8")).hexdigest(),
+                            "hash_basis": "utf8-source-descriptor",
                         },
                     },
                 }
             )
-        source = _copy_provenance(output, scene_sources, resolution=plan.resolution, probe=plan.probe)
+        source = _copy_provenance(
+            output,
+            scene_sources,
+            resolution=plan.resolution,
+            probe=plan.probe,
+            render_contract=render_contract,
+            source_verification=source_verification,
+        )
+        source_verification.update(
+            {
+                "manifest_path": source["source_environment_path"],
+                "manifest_sha256": source["source_environment_sha256"],
+                "source_archive_path": source["source_archive_path"],
+                "source_commit_object_path": source["source_commit_object_path"],
+            }
+        )
 
         from isaacsim import SimulationApp
 
         app = SimulationApp(
             {
                 "headless": True,
-                "renderer": "RayTracedLighting",
+                "renderer": render_contract["sdk_renderer"],
                 "sync_loads": True,
                 "fast_shutdown": True,
                 "width": plan.resolution[0],
@@ -1115,8 +1321,7 @@ def _worker(args: argparse.Namespace, plan: CapturePlan, layout_path: Path, outp
         from PIL import Image
         import omni.replicator.core as rep
         import omni.timeline
-        from isaacsim.core.utils import stage as stage_utils
-        from isaacsim.core.utils.stage import open_stage
+        import isaacsim.core.experimental.utils.stage as stage_utils
         from isaacsim.storage.native import get_assets_root_path
         from isaacsim.core.simulation_manager import SimulationManager
         from isaacsim.robot.experimental.wheeled_robots.robots import WheeledRobot
@@ -1132,6 +1337,8 @@ def _worker(args: argparse.Namespace, plan: CapturePlan, layout_path: Path, outp
         robot_asset = asset_root + ASSET_SUFFIX
         for variant_source in scene_sources["variants"]:
             variant_source["robot_asset_uri"] = robot_asset
+            variant_source["robot_asset_identity_sha256"] = hashlib.sha256(robot_asset.encode("utf-8")).hexdigest()
+            variant_source["robot_asset_hash_basis"] = "utf8-uri"
         scene_provenance_path = output / source["scene_path"]
         _atomic_json(scene_provenance_path, scene_sources)
         source["scene_sha256"] = _sha256(scene_provenance_path)
@@ -1140,9 +1347,10 @@ def _worker(args: argparse.Namespace, plan: CapturePlan, layout_path: Path, outp
         for seed in plan.variant_seeds:
             _render_scene, visual_manifest = authored[seed]
             base_scene = output / "authored-scenes" / f"scene-{seed:03d}" / "factory-v3.usda"
-            open_stage(str(base_scene))
+            opened, stage = stage_utils.open_stage(str(base_scene))
+            if not opened or stage is None:
+                raise CaptureError("could not open authored factory with the experimental stage API")
             _wait_for_stage(app, stage_utils)
-            stage = stage_utils.get_current_stage()
             runtime_output = output / "runtime-scenes" / f"scene-{seed:03d}"
             runtime = FactoryVisualRuntime(
                 layout_path=layout_path,
@@ -1179,6 +1387,13 @@ def _worker(args: argparse.Namespace, plan: CapturePlan, layout_path: Path, outp
                 _sha256(_render_scene),
                 robot_asset,
             )
+            physics_dt_s = 1.0 / 60.0
+            SimulationManager.setup_simulation(dt=physics_dt_s, device="cpu")
+            app.update()
+            simulation_readback = _physics_scene_readback(stage, physics_dt_s)
+            simulation_readback["scene_id"] = f"scene-{seed:03d}"
+            simulation_readbacks.append(simulation_readback)
+            scene_sources["variants"][plan.variant_seeds.index(seed)]["simulation"] = simulation_readback
             timeline.play()
             for _ in range(120):
                 for robot in robots.values():
@@ -1209,12 +1424,17 @@ def _worker(args: argparse.Namespace, plan: CapturePlan, layout_path: Path, outp
                 np=np,
                 Image=Image,
                 staging_anchors=tuple(layout.stations.values()) + tuple(layout.pockets.values()),
+                rt_subframes=int(render_contract["rt_subframes"]),
             )
             scene["visual_runtime"] = _jsonable(runtime.capture_metadata(), path="visual_runtime.capture_metadata")
             scene["staged_payload"] = staged_payload
             scene["staged_barrier"] = staged_barrier
+            scene["simulation"] = simulation_readback
             scenes.append(scene)
             reviews.extend(scene_reviews)
+        _atomic_json(scene_provenance_path, scene_sources)
+        source["scene_sha256"] = _sha256(scene_provenance_path)
+        source_verification["end_verification"] = _end_verify_supervisor_sources(source_verification)
         resource_audit.update(
             {
                 "status": "captured_unreviewed",
@@ -1223,6 +1443,7 @@ def _worker(args: argparse.Namespace, plan: CapturePlan, layout_path: Path, outp
                 "container": {key: value for key, value in sorted(__import__("os").environ.items()) if key in {"NVIDIA_VISIBLE_DEVICES", "CUDA_VISIBLE_DEVICES", "ISAAC_PATH"}},
                 "gpu": _gpu_audit(),
                 "source_verification": source_verification,
+                "simulation": simulation_readbacks,
             }
         )
         _atomic_json(output / "gpu-resource-audit.json", resource_audit)

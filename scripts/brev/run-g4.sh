@@ -6,7 +6,8 @@ run=${2:?new g4-probe/render-NNN run label required}
 expected_commit=${3:?verified source commit required}
 [[ "$run" =~ ^g4-(probe|render)-[0-9]{3}$ ]]
 [[ "$expected_commit" =~ ^[0-9a-f]{40}$ ]]
-project="$root/project"
+repository="$root/project"
+project="$repository"
 output="$root/results/$run"
 name="factory-ops-$run"
 cache="$root/sdk-cache"
@@ -15,6 +16,20 @@ test -z "$(git -C "$project" status --porcelain)"
 test ! -e "$output"
 test ! -e "$root/logs/$run-environment.json"
 test -z "$(docker ps -aq --filter name=^/factory-ops-)"
+snapshot="$root/source-snapshots/$run"
+archive="$root/source-snapshots/$run.tar"
+commit_object="$root/source-snapshots/$run.commit"
+test ! -e "$snapshot"
+test ! -e "$archive"
+test ! -e "$commit_object"
+mkdir -p "$root/source-snapshots"
+mkdir "$snapshot"
+git -C "$repository" archive --format=tar --output="$archive" "$expected_commit"
+git -C "$repository" cat-file commit "$expected_commit" > "$commit_object"
+tar --no-same-owner -xf "$archive" -C "$snapshot"
+chmod -R a-w "$snapshot"
+chmod a-w "$archive" "$commit_object"
+project="$snapshot"
 image=$(docker image inspect nvcr.io/nvidia/isaac-sim:6.2.0 --format '{{index .RepoDigests 0}}')
 args=(--variant-seeds 0..11 --captures-per-scene 30)
 if [[ "$run" == g4-probe-* ]]; then
@@ -32,12 +47,12 @@ cleanup() {
   fi
 }
 trap cleanup EXIT
-python3 - "$root" "$run" "$expected_commit" "$image" <<'PY'
+python3 - "$root" "$run" "$expected_commit" "$image" "$repository" "$project" "$archive" "$commit_object" <<'PY'
 from datetime import datetime,timezone
 from pathlib import Path
 import hashlib,json,subprocess,sys
 root,run=Path(sys.argv[1]),sys.argv[2]
-project=root/'project'
+repository,project,archive,commit_object=map(Path,sys.argv[5:9])
 paths=[
     'scripts/brev/run-g4.sh','scripts/isaac/g4_capture.py',
     'scripts/isaac/factory_visuals.py','scripts/isaac/g2_scene.py',
@@ -46,6 +61,7 @@ paths=[
     'configs/factory-v3/layout.json','configs/factory-v3/g2-scenarios.json',
     'configs/factory-v3/dataset-profile.json','configs/factory-v3/render-profile.json',
     'configs/factory-v3/visual-assets.json',
+    'factory_ops/source_provenance.py',
 ]
 paths=sorted(set(paths) | {
     p.relative_to(project).as_posix()
@@ -53,13 +69,27 @@ paths=sorted(set(paths) | {
     for p in (project/directory).rglob(pattern)
     if p.is_file() and not p.is_symlink()
 })
+source_files={p:hashlib.sha256((project/p).read_bytes()).hexdigest() for p in paths}
+for relative,actual_sha in source_files.items():
+    committed=subprocess.check_output(['git','-C',str(repository),'show',f'{sys.argv[3]}:{relative}'])
+    if hashlib.sha256(committed).hexdigest()!=actual_sha:
+        raise ValueError(f'archive source differs from committed blob: {relative}')
+checkout_head=subprocess.check_output(['git','-C',str(repository),'rev-parse','HEAD'],text=True).strip()
+checkout_clean=not subprocess.check_output(['git','-C',str(repository),'status','--porcelain'],text=True).strip()
+if checkout_head!=sys.argv[3] or not checkout_clean:
+    raise ValueError('repository changed during source snapshot creation')
 record={
+    'schema_version':1,
     'run_id':run,'source_commit':sys.argv[3],'isaac_image':sys.argv[4],
-    'checkout_head':subprocess.check_output(['git','-C',str(project),'rev-parse','HEAD'],text=True).strip(),
-    'checkout_clean':not subprocess.check_output(['git','-C',str(project),'status','--porcelain'],text=True).strip(),
+    'checkout_head':checkout_head,'checkout_clean':checkout_clean,
+    'source_git_object_verification':True,
+    'source_archive_sha256':hashlib.sha256(archive.read_bytes()).hexdigest(),
+    'source_commit_object_sha256':hashlib.sha256(commit_object.read_bytes()).hexdigest(),
+    'source_snapshot_relative':'project',
+    'source_snapshot_host_relative':project.relative_to(root).as_posix(),
     'started_at_utc':datetime.now(timezone.utc).isoformat(),
     'scope':'diagnostic_unreviewed' if run.startswith('g4-probe-') else 'capture_pending_validation',
-    'source_files':{p:hashlib.sha256((project/p).read_bytes()).hexdigest() for p in paths},
+    'source_files':source_files,
     'free_disk_bytes':__import__('shutil').disk_usage(root).free,
     'gpu':subprocess.check_output(['nvidia-smi','--query-gpu=name,driver_version,memory.total',
                                  '--format=csv,noheader,nounits'],text=True).strip(),
@@ -85,6 +115,7 @@ docker create --name "$name" --gpus all --network host --ipc host --user 1234:12
   -v "$cache/pkg:/isaac-sim/.local/share/ov/pkg:rw" \
   -v "$cache/hub:/var/cache/hub:rw" \
   -v "$root/logs/$run-environment.json:/workspace/g4-environment.json:ro" \
+  -v "$archive:/workspace/g4-source.tar:ro" -v "$commit_object:/workspace/g4-commit.raw:ro" \
   -v "$project:/workspace/project:ro" -v "$root/results:/workspace/results:rw" \
   "$image" -lc 'exec timeout --signal=TERM --kill-after=30s 7200s ./python.sh /workspace/project/scripts/isaac/g4_capture.py "$@"' \
   factory-ops-g4 --output "/workspace/results/$run" --run-id "$run" \
@@ -117,5 +148,6 @@ print(json.dumps(record,indent=2))
 PY
 test "$attach_exit" = 0
 test "$worker_exit" = 0
+test ! -e "$output/failed.json"
 test -f "$output/dataset.json"
 printf '%s\n' 'FACTORY_OPS_G4_CAPTURE_EXIT=SUCCESS_UNREVIEWED'

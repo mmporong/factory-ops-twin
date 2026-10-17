@@ -2,18 +2,18 @@
   "schema_version": 1,
   "renderer": "RTX Real-Time 2.0",
   "resolution": [1280, 720],
-  "samples_per_pixel_per_frame": 32,
-  "denoiser": true,
-  "anti_aliasing": "TAA",
-  "tone_mapping": "ACES",
-  "exposure_compensation": 0.4,
+  "render_settings": {
+    "sdk_renderer": "RealTimePathTracing",
+    "dlss_exec_mode": 2,
+    "rt_subframes": 4
+  },
   "roof_mode": "cutaway",
   "cameras": [
     {
       "id": "portfolio_overview",
       "eye_xyz_m": [20.0, -21.0, 34.0],
       "target_xyz_m": [20.0, 12.0, 0.5],
-      "focal_length_mm": 30.0,
+      "focal_length_mm": 22.0,
       "purpose": "full factory flow overview"
     },
     {
@@ -36,6 +36,20 @@
       "target_xyz_m": [33.0, 12.0, 0.8],
       "focal_length_mm": 32.0,
       "purpose": "finished goods, output handoff and AMR aisle"
+    },
+    {
+      "id": "carter1_follow",
+      "eye_xyz_m": [-2.6, -2.2, 3.6],
+      "target_xyz_m": [0.4, 0.0, 0.4],
+      "focal_length_mm": 22.0,
+      "purpose": "mission follow camera in carter1 chassis_link frame"
+    },
+    {
+      "id": "carter2_follow",
+      "eye_xyz_m": [-2.6, 2.2, 3.6],
+      "target_xyz_m": [0.4, 0.0, 0.4],
+      "focal_length_mm": 22.0,
+      "purpose": "mission follow camera in carter2 chassis_link frame"
     }
   ],
   "capture_contract": {

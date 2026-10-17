@@ -2,16 +2,27 @@ from __future__ import annotations
 
 import binascii
 import hashlib
+from io import BytesIO
 import json
 from pathlib import Path
 import struct
+import tarfile
 import tempfile
 from typing import Any, Sequence
 import unittest
 from unittest.mock import patch
 import zlib
 
-from factory_ops.dataset_evidence import DATASET_SCOPE, DEFAULT_PROFILE, main, validate_dataset
+from factory_ops.dataset_evidence import (
+    DATASET_SCOPE,
+    DEFAULT_PROFILE,
+    _array_content_sha,
+    _read_npy,
+    _validate_cross_split_duplicates,
+    main,
+    validate_dataset,
+)
+from factory_ops.source_provenance import verify_source_archive
 
 
 WIDTH = 4
@@ -25,9 +36,9 @@ def _chunk(name: bytes, payload: bytes) -> bytes:
     return struct.pack(">I", len(payload)) + name + payload + struct.pack(">I", binascii.crc32(name + payload) & 0xFFFFFFFF)
 
 
-def _png() -> bytes:
+def _png(compression_level: int = -1) -> bytes:
     rows = b"".join(b"\0" + bytes([30, 60, 90]) * WIDTH for _ in range(HEIGHT))
-    return b"\x89PNG\r\n\x1a\n" + _chunk(b"IHDR", struct.pack(">IIBBBBB", WIDTH, HEIGHT, 8, 2, 0, 0, 0)) + _chunk(b"IDAT", zlib.compress(rows)) + _chunk(b"IEND", b"")
+    return b"\x89PNG\r\n\x1a\n" + _chunk(b"IHDR", struct.pack(">IIBBBBB", WIDTH, HEIGHT, 8, 2, 0, 0, 0)) + _chunk(b"IDAT", zlib.compress(rows, compression_level)) + _chunk(b"IEND", b"")
 
 
 def _npy(dtype: str, values: Sequence[int | float]) -> bytes:
@@ -37,6 +48,57 @@ def _npy(dtype: str, values: Sequence[int | float]) -> bytes:
     padding = 16 - ((10 + len(header) + 1) % 16)
     encoded = (header + " " * padding + "\n").encode("latin1")
     return b"\x93NUMPY\x01\x00" + struct.pack("<H", len(encoded)) + encoded + payload
+
+
+def _npy_v2(dtype: str, values: Sequence[int | float]) -> bytes:
+    formats = {"<f4": "f", "<u4": "I"}
+    payload = b"".join(struct.pack("<" + formats[dtype], value) for value in values)
+    header = repr({"descr": dtype, "fortran_order": False, "shape": (HEIGHT, WIDTH)})
+    padding = 16 - ((12 + len(header) + 1) % 16)
+    encoded = (header + " " * padding + "\n").encode("latin1")
+    return b"\x93NUMPY\x02\x00" + struct.pack("<I", len(encoded)) + encoded + payload
+
+
+def _git_sha1(kind: bytes, payload: bytes) -> str:
+    return hashlib.sha1(kind + b" " + str(len(payload)).encode("ascii") + b"\0" + payload).hexdigest()
+
+
+def _write_source_proof(provenance: Path) -> tuple[dict[str, Any], str, Path, Path]:
+    relative = "fixture/source.py"
+    payload = b"VALUE = 1\n"
+    blob = _git_sha1(b"blob", payload)
+    fixture_tree_body = b"100644 source.py\0" + bytes.fromhex(blob)
+    fixture_tree = _git_sha1(b"tree", fixture_tree_body)
+    root_tree_body = b"40000 fixture\0" + bytes.fromhex(fixture_tree)
+    root_tree = _git_sha1(b"tree", root_tree_body)
+    commit_bytes = f"tree {root_tree}\n\nfixture\n".encode("ascii")
+    commit = _git_sha1(b"commit", commit_bytes)
+    archive = provenance / "source.tar"
+    with tarfile.open(archive, "w:") as output:
+        member = tarfile.TarInfo(relative)
+        member.mode = 0o644
+        member.size = len(payload)
+        output.addfile(member, BytesIO(payload))
+    commit_object = provenance / "source-commit.raw"
+    commit_object.write_bytes(commit_bytes)
+    source_pins = {relative: hashlib.sha256(payload).hexdigest()}
+    proof = {
+        "schema_version": 1,
+        "source_commit": commit,
+        "checkout_head": commit,
+        "checkout_clean": True,
+        "source_git_object_verification": True,
+        "source_archive_sha256": hashlib.sha256(archive.read_bytes()).hexdigest(),
+        "source_commit_object_sha256": hashlib.sha256(commit_object.read_bytes()).hexdigest(),
+        "source_snapshot_relative": "fixture-snapshot",
+        "source_files": source_pins,
+    }
+    archive_proof = verify_source_archive(archive, commit_object, commit, source_pins)
+    if archive_proof["passed"] is not True:
+        raise AssertionError(archive_proof["errors"])
+    proof["source_archive_tree_sha1"] = archive_proof["archive_tree_sha1"]
+    proof["source_pin_set_sha256"] = archive_proof["source_pin_set_sha256"]
+    return proof, commit, archive, commit_object
 
 
 class DatasetEvidenceTests(unittest.TestCase):
@@ -79,6 +141,9 @@ class DatasetEvidenceTests(unittest.TestCase):
         self.assertEqual(report["stats"]["scene_count"], 3)
         self.assertEqual(report["stats"]["rgb_image_count"], 3)
         self.assertEqual(report["stats"]["class_instance_counts"], {"amr": 3, "floor": 3, "rack": 3})
+        self.assertEqual(report["validation_gate"], "diagnostic_fixture")
+        self.assertFalse(report["production_passed"])
+        self.assertEqual(report["profile"]["id"], "test-only-three-scenes")
 
     def test_cli_writes_the_same_passing_report(self) -> None:
         output = self.base / "report.json"
@@ -254,11 +319,42 @@ class DatasetEvidenceTests(unittest.TestCase):
         first = next((self.root / "scenes" / "scene-000").rglob("depth.npy")).read_bytes()
         for scene_id in ("scene-001", "scene-002"):
             next((self.root / "scenes" / scene_id).rglob("depth.npy")).write_bytes(first)
+        next((self.root / "scenes" / "scene-001").rglob("rgb.png")).write_bytes(_png(1))
+        next((self.root / "scenes" / "scene-002").rglob("rgb.png")).write_bytes(_png(9))
         self._refresh_manifest()
 
         report = validate_dataset(self.root, self.profile_path)
 
         self.assertTrue(any("duplicate all core modalities across splits" in error for error in report["errors"]))
+
+    def test_cross_split_fingerprint_is_a_canonical_capture_camera_multiset(self) -> None:
+        first = ("a", "b", "c", "d")
+        second = ("e", "f", "0", "1")
+        errors: list[str] = []
+
+        _validate_cross_split_duplicates(
+            {"scene-a": [first, second], "scene-b": [second, first]},
+            {"scene-a": "train", "scene-b": "test"},
+            errors,
+        )
+
+        self.assertTrue(any("duplicate all core modalities across splits" in error for error in errors))
+
+    def test_npy_content_digest_ignores_header_version_and_padding(self) -> None:
+        values = [float("inf")] * 4 + [2.0] * 8
+        first = self.base / "depth-v1.npy"
+        second = self.base / "depth-v2.npy"
+        first.write_bytes(_npy("<f4", values))
+        second.write_bytes(_npy_v2("<f4", values))
+        errors: list[str] = []
+
+        first_array = _read_npy(first, errors, "first")
+        second_array = _read_npy(second, errors, "second")
+
+        self.assertEqual(errors, [])
+        if first_array is None or second_array is None:
+            self.fail("valid NPY fixtures were rejected")
+        self.assertEqual(_array_content_sha(first_array), _array_content_sha(second_array))
 
     def test_minimum_class_pixels_must_be_a_positive_integer(self) -> None:
         self.profile["quality_bounds"]["minimum_class_pixels"] = "999999"
@@ -331,6 +427,53 @@ class DatasetEvidenceTests(unittest.TestCase):
 
         self.assertTrue(any("unreviewed or not approved" in error for error in report["errors"]))
 
+    def test_source_verification_end_rehash_is_required(self) -> None:
+        self.dataset["source"]["verification"]["end_verification"]["status"] = "pending"
+        self._write_dataset_index()
+
+        report = validate_dataset(self.root, self.profile_path)
+
+        self.assertTrue(any("end-of-worker rehash" in error for error in report["errors"]))
+
+    def test_rehashed_source_archive_content_cannot_forge_the_commit_binding(self) -> None:
+        archive = self.root / self.dataset["source"]["verification"]["source_archive_path"]
+        payload = bytearray(archive.read_bytes())
+        offset = payload.find(b"VALUE = 1\n")
+        self.assertGreaterEqual(offset, 0)
+        payload[offset:offset + len(b"VALUE = 1\n")] = b"VALUE = 2\n"
+        archive.write_bytes(payload)
+        changed_sha = hashlib.sha256(payload).hexdigest()
+        environment = self.root / self.dataset["source"]["source_environment_path"]
+        proof = json.loads(environment.read_text(encoding="utf-8"))
+        proof["source_archive_sha256"] = changed_sha
+        environment.write_text(json.dumps(proof), encoding="utf-8")
+        environment_sha = hashlib.sha256(environment.read_bytes()).hexdigest()
+        source = self.dataset["source"]
+        source["source_archive_sha256"] = changed_sha
+        source["source_environment_sha256"] = environment_sha
+        verification = source["verification"]
+        verification["source_archive_sha256"] = changed_sha
+        verification["manifest_sha256"] = environment_sha
+        verification["end_verification"]["source_archive_sha256"] = changed_sha
+        verification["end_verification"]["manifest_sha256"] = environment_sha
+        self._refresh_manifest()
+
+        report = validate_dataset(self.root, self.profile_path)
+
+        self.assertTrue(any("cryptographically bind" in error for error in report["errors"]))
+
+    def test_dataset_profile_copy_must_match_the_selected_profile(self) -> None:
+        path = self.root / self.dataset["source"]["dataset_profile_path"]
+        changed = json.loads(path.read_text(encoding="utf-8"))
+        changed["profile_id"] = "forged-profile"
+        path.write_text(json.dumps(changed), encoding="utf-8")
+        self.dataset["source"]["dataset_profile_sha256"] = hashlib.sha256(path.read_bytes()).hexdigest()
+        self._refresh_manifest()
+
+        report = validate_dataset(self.root, self.profile_path)
+
+        self.assertTrue(any("provenance copy differs" in error for error in report["errors"]))
+
     def test_production_profile_keeps_the_12_by_30_by_3_portfolio_gate(self) -> None:
         profile = json.loads(DEFAULT_PROFILE.read_text(encoding="utf-8"))
 
@@ -347,10 +490,15 @@ class DatasetEvidenceTests(unittest.TestCase):
             "scene_path": provenance / "scene-sources.json",
             "asset_manifest_path": provenance / "asset-manifest.json",
             "render_profile_path": provenance / "render-profile.json",
+            "dataset_profile_path": provenance / "dataset-profile.json",
+            "source_environment_path": provenance / "source-environment.json",
         }
         asset_manifest = {"provider": "test", "source": "procedural fixture"}
         source_files["asset_manifest_path"].write_text(json.dumps(asset_manifest), encoding="utf-8")
         source_files["render_profile_path"].write_text(json.dumps({"renderer": "test"}), encoding="utf-8")
+        source_files["dataset_profile_path"].write_bytes(self.profile_path.read_bytes())
+        proof, source_commit, source_archive, source_commit_object = _write_source_proof(provenance)
+        source_files["source_environment_path"].write_text(json.dumps(proof), encoding="utf-8")
         asset_manifest_sha = hashlib.sha256(source_files["asset_manifest_path"].read_bytes()).hexdigest()
         source_variants = []
         scenes = []
@@ -521,6 +669,8 @@ class DatasetEvidenceTests(unittest.TestCase):
                     "visual_manifest_path": visual_manifest.relative_to(self.root).as_posix(),
                     "visual_manifest_sha256": hashlib.sha256(visual_manifest.read_bytes()).hexdigest(),
                     "robot_asset_uri": ROBOT_URI,
+                    "robot_asset_identity_sha256": ROBOT_SHA,
+                    "robot_asset_hash_basis": "utf8-uri",
                     "runtime_props": {},
                 }
             )
@@ -546,13 +696,45 @@ class DatasetEvidenceTests(unittest.TestCase):
             "run_id": "test-run",
             "scope": DATASET_SCOPE,
             "source": {
-                "commit": "1" * 40,
+                "commit": source_commit,
                 "scene_path": source_files["scene_path"].relative_to(self.root).as_posix(),
                 "scene_sha256": hashlib.sha256(source_files["scene_path"].read_bytes()).hexdigest(),
                 "asset_manifest_path": source_files["asset_manifest_path"].relative_to(self.root).as_posix(),
                 "asset_manifest_sha256": hashlib.sha256(source_files["asset_manifest_path"].read_bytes()).hexdigest(),
                 "render_profile_path": source_files["render_profile_path"].relative_to(self.root).as_posix(),
                 "render_profile_sha256": hashlib.sha256(source_files["render_profile_path"].read_bytes()).hexdigest(),
+                "dataset_profile_path": source_files["dataset_profile_path"].relative_to(self.root).as_posix(),
+                "dataset_profile_sha256": hashlib.sha256(source_files["dataset_profile_path"].read_bytes()).hexdigest(),
+                "source_environment_path": source_files["source_environment_path"].relative_to(self.root).as_posix(),
+                "source_environment_sha256": hashlib.sha256(source_files["source_environment_path"].read_bytes()).hexdigest(),
+                "source_archive_path": source_archive.relative_to(self.root).as_posix(),
+                "source_archive_sha256": hashlib.sha256(source_archive.read_bytes()).hexdigest(),
+                "source_commit_object_path": source_commit_object.relative_to(self.root).as_posix(),
+                "source_commit_object_sha256": hashlib.sha256(source_commit_object.read_bytes()).hexdigest(),
+                "verification": {
+                    "schema_version": 1,
+                    "mode": "supervisor-manifest",
+                    "source_commit": source_commit,
+                    "manifest_path": source_files["source_environment_path"].relative_to(self.root).as_posix(),
+                    "manifest_sha256": hashlib.sha256(source_files["source_environment_path"].read_bytes()).hexdigest(),
+                    "source_archive_path": source_archive.relative_to(self.root).as_posix(),
+                    "source_commit_object_path": source_commit_object.relative_to(self.root).as_posix(),
+                    "source_archive_sha256": proof["source_archive_sha256"],
+                    "source_commit_object_sha256": proof["source_commit_object_sha256"],
+                    "source_archive_tree_sha1": proof["source_archive_tree_sha1"],
+                    "source_pin_set_sha256": proof["source_pin_set_sha256"],
+                    "source_snapshot_relative": "fixture-snapshot",
+                    "source_file_count": 1,
+                    "required_source_pins": ["fixture/source.py"],
+                    "end_verification": {
+                        "status": "passed",
+                        "manifest_sha256": hashlib.sha256(source_files["source_environment_path"].read_bytes()).hexdigest(),
+                        "source_file_count": 1,
+                        "source_archive_sha256": proof["source_archive_sha256"],
+                        "source_commit_object_sha256": proof["source_commit_object_sha256"],
+                        "source_pin_set_sha256": proof["source_pin_set_sha256"],
+                    },
+                },
             },
             "profile_sha256": hashlib.sha256(self.profile_path.read_bytes()).hexdigest(),
             "split_assignments": assignments,

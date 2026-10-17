@@ -28,6 +28,25 @@ REQUIRED_CAMERA_PATHS = {
     "camera_params",
     "normalized",
 }
+PRODUCTION_SOURCE_PINS = {
+    "factory_ops/source_provenance.py",
+    "scripts/isaac/g4_capture.py",
+    "scripts/isaac/g2_scene.py",
+    "scripts/isaac/gif_evidence.py",
+    "scripts/isaac/stage_smoke.py",
+    "scripts/isaac/factory_visuals.py",
+    "scripts/isaac/nav_scene.py",
+    "scripts/isaac/robot_qualification.py",
+    "scripts/isaac/robot_evidence.py",
+    "factory_ops/layout.py",
+    "factory_ops/usda.py",
+    "factory_ops/visual_scene.py",
+    "factory_ops/visual_state.py",
+    "configs/factory-v3/layout.json",
+    "configs/factory-v3/dataset-profile.json",
+    "configs/factory-v3/render-profile.json",
+    "configs/factory-v3/visual-assets.json",
+}
 
 
 def validate_dataset(root: Path, profile_path: Path = DEFAULT_PROFILE) -> dict[str, Any]:
@@ -45,6 +64,9 @@ def validate_dataset(root: Path, profile_path: Path = DEFAULT_PROFILE) -> dict[s
         "occlusion_distribution": {"clear_0_0.1": 0, "partial_0.1_0.5": 0, "heavy_0.5_1": 0},
         "edge_truncated_instances": 0,
         "visual_reviewed_scene_cameras": 0,
+        "profile_id": None,
+        "profile_sha256": None,
+        "validation_gate": "unresolved",
     }
     profile = _load_json(profile_path, "profile", errors)
     dataset_path = root / "dataset.json"
@@ -61,6 +83,9 @@ def validate_dataset(root: Path, profile_path: Path = DEFAULT_PROFILE) -> dict[s
     if profile_errors:
         return _report(errors, stats, artifact_summary)
     profile_sha = _sha256(profile_path) if _regular_file(profile_path) else None
+    stats["profile_id"] = profile.get("profile_id")
+    stats["profile_sha256"] = profile_sha
+    stats["validation_gate"] = "production" if _is_production_profile(profile, profile_sha) else "diagnostic_fixture"
     if dataset.get("profile_sha256") != profile_sha:
         errors.append("dataset profile_sha256 does not match the selected profile")
     if dataset.get("schema_version") != 1:
@@ -86,12 +111,25 @@ def validate_dataset(root: Path, profile_path: Path = DEFAULT_PROFILE) -> dict[s
             ("scene_path", "scene_sha256"),
             ("asset_manifest_path", "asset_manifest_sha256"),
             ("render_profile_path", "render_profile_sha256"),
+            ("dataset_profile_path", "dataset_profile_sha256"),
         ):
             safe = _safe_relative(source.get(path_field))
             if safe is None or safe not in manifest_paths:
                 errors.append(f"source {path_field} is unsafe or absent from the artifact manifest")
             elif source.get(sha_field) != _sha256(root / PurePosixPath(safe)):
                 errors.append(f"source {sha_field} does not match {path_field}")
+        dataset_profile_path = _safe_relative(source.get("dataset_profile_path"))
+        if (dataset_profile_path is not None and dataset_profile_path in manifest_paths
+                and _sha256(root / PurePosixPath(dataset_profile_path)) != profile_sha):
+            errors.append("dataset profile provenance copy differs from the selected profile")
+        _validate_source_verification(
+            root,
+            source,
+            source.get("commit"),
+            manifest_paths,
+            stats["validation_gate"] == "production",
+            errors,
+        )
     declared_scenes = dataset.get("scenes")
     source_bindings = _validate_source_provenance(root, source, declared_scenes, manifest_paths, errors)
     cameras: list[Any] = cast(list[Any], profile.get("cameras")) if isinstance(profile.get("cameras"), list) else []
@@ -271,7 +309,7 @@ def _validate_capture(
                 safe_paths[key] = safe
         if set(safe_paths) != REQUIRED_CAMERA_PATHS:
             continue
-        _validate_camera_sample(
+        modality_hashes = _validate_camera_sample(
             root,
             scene_id,
             variant_id,
@@ -289,12 +327,8 @@ def _validate_capture(
             stats,
             source_bindings,
         )
-        scene_modality_hashes[scene_id].append((
-            cast(str, _sha256(root / PurePosixPath(safe_paths["rgb"]))),
-            cast(str, _sha256(root / PurePosixPath(safe_paths["depth"]))),
-            cast(str, _sha256(root / PurePosixPath(safe_paths["semantic"]))),
-            cast(str, _sha256(root / PurePosixPath(safe_paths["instance"]))),
-        ))
+        if modality_hashes is not None:
+            scene_modality_hashes[scene_id].append(modality_hashes)
         scene_camera_captures[(scene_id, camera_id)][capture_id] = safe_paths["rgb"]
 
 
@@ -393,6 +427,8 @@ def _validate_source_provenance(
             errors.append(f"scene source {scene_id} robot asset URI is invalid")
         else:
             robot_sha = hashlib.sha256(robot_uri.encode("utf-8")).hexdigest()
+            if variant.get("robot_asset_identity_sha256") != robot_sha or variant.get("robot_asset_hash_basis") != "utf8-uri":
+                errors.append(f"scene source {scene_id} robot URI identity digest is invalid")
             per_scene["/World/Carter1"] = robot_sha
             per_scene["/World/Carter2"] = robot_sha
         runtime_props = variant.get("runtime_props")
@@ -404,7 +440,8 @@ def _validate_source_provenance(
                 source_name = prop.get("source") if isinstance(prop, dict) else None
                 claimed_sha = prop.get("asset_source_sha256") if isinstance(prop, dict) else None
                 derived_sha = hashlib.sha256(source_name.encode("utf-8")).hexdigest() if isinstance(source_name, str) and source_name else None
-                if not _identifier(prop_name) or not _usd_path(path) or claimed_sha != derived_sha:
+                if (not _identifier(prop_name) or not _usd_path(path) or claimed_sha != derived_sha
+                        or prop.get("hash_basis") != "utf8-source-descriptor"):
                     errors.append(f"scene source {scene_id} runtime prop {prop_name!r} identity is invalid")
                 elif path in per_scene:
                     errors.append(f"scene source {scene_id} runtime prop path is duplicated: {path}")
@@ -420,6 +457,101 @@ def _validate_source_provenance(
     return bindings
 
 
+def _validate_source_verification(
+    root: Path,
+    source: dict[str, Any],
+    source_commit: object,
+    manifest_paths: set[str],
+    production_gate: bool,
+    errors: list[str],
+) -> None:
+    verification = source.get("verification")
+    if (not isinstance(verification, dict) or verification.get("schema_version") != 1
+            or verification.get("mode") != "supervisor-manifest"):
+        errors.append("source verification is not a supervisor-manifest proof")
+        return
+    proof_path = _safe_relative(verification.get("manifest_path"))
+    proof_sha = verification.get("manifest_sha256")
+    if proof_path is None or proof_path not in manifest_paths or not _sha(proof_sha):
+        errors.append("source verification manifest path or SHA is invalid")
+        return
+    proof_file = root / PurePosixPath(proof_path)
+    if _sha256(proof_file) != proof_sha:
+        errors.append("source verification manifest SHA differs")
+        return
+    proof = _load_json(proof_file, "source verification manifest", errors)
+    if not isinstance(proof, dict):
+        return
+    source_files = proof.get("source_files")
+    pins = verification.get("required_source_pins")
+    archive_sha = verification.get("source_archive_sha256")
+    commit_object_sha = verification.get("source_commit_object_sha256")
+    if (proof.get("schema_version") != 1 or proof.get("source_commit") != source_commit
+            or verification.get("source_commit") != source_commit
+            or proof.get("checkout_clean") is not True or proof.get("source_git_object_verification") is not True
+            or proof.get("source_archive_sha256") != archive_sha or not _sha(archive_sha)
+            or proof.get("source_commit_object_sha256") != commit_object_sha or not _sha(commit_object_sha)
+            or not isinstance(source_files, dict) or not isinstance(pins, list) or not pins):
+        errors.append("source verification Git object/archive proof is invalid")
+        return
+    if any(_safe_relative(path) is None or not _sha(value) for path, value in source_files.items()):
+        errors.append("source verification source_files contains an unsafe path or SHA")
+    if (any(_safe_relative(path) is None for path in pins) or not set(pins).issubset(source_files)
+            or verification.get("source_file_count") != len(source_files)):
+        errors.append("source verification required pins or source file count differ")
+    snapshot = verification.get("source_snapshot_relative")
+    if (_safe_relative(snapshot) is None or proof.get("source_snapshot_relative") != snapshot
+            or (production_gate and snapshot != "project")):
+        errors.append("source verification snapshot path binding is invalid")
+    if production_gate and not PRODUCTION_SOURCE_PINS.issubset(set(pins)):
+        errors.append("production source verification omits required runtime/import pins")
+    archive_path = _safe_relative(verification.get("source_archive_path"))
+    commit_object_path = _safe_relative(verification.get("source_commit_object_path"))
+    if (archive_path is None or commit_object_path is None
+            or archive_path not in manifest_paths or commit_object_path not in manifest_paths
+            or source.get("source_archive_path") != archive_path
+            or source.get("source_commit_object_path") != commit_object_path
+            or source.get("source_archive_sha256") != archive_sha
+            or source.get("source_commit_object_sha256") != commit_object_sha):
+        errors.append("source archive or commit object path is invalid")
+    else:
+        from factory_ops.source_provenance import verify_source_archive
+
+        archive_proof = verify_source_archive(
+            root / PurePosixPath(archive_path),
+            root / PurePosixPath(commit_object_path),
+            str(source_commit),
+            source_files,
+        )
+        if (archive_proof.get("passed") is not True
+                or archive_proof.get("source_archive_sha256") != archive_sha
+                or archive_proof.get("commit_object_sha256") != commit_object_sha
+                or archive_proof.get("source_pin_set_sha256") != verification.get("source_pin_set_sha256")
+                or archive_proof.get("archive_tree_sha1") != verification.get("source_archive_tree_sha1")):
+            errors.append("source archive does not cryptographically bind the declared commit and source pins")
+    end = verification.get("end_verification")
+    if (not isinstance(end, dict) or end.get("status") != "passed"
+            or end.get("manifest_sha256") != proof_sha or end.get("source_file_count") != len(source_files)
+            or end.get("source_archive_sha256") != archive_sha
+            or end.get("source_commit_object_sha256") != commit_object_sha
+            or end.get("source_pin_set_sha256") != verification.get("source_pin_set_sha256")):
+        errors.append("source verification has no valid end-of-worker rehash")
+
+
+def _is_production_profile(profile: dict[str, Any], selected_sha: str | None) -> bool:
+    pinned_sha = _sha256(DEFAULT_PROFILE)
+    return (
+        selected_sha is not None
+        and selected_sha == pinned_sha
+        and profile.get("profile_id") == "factory-v3-portfolio-render-v1"
+        and profile.get("scene_count") == 12
+        and profile.get("captures_per_scene") == 30
+        and profile.get("cameras") == ["overhead", "aisle", "amr_follow"]
+        and profile.get("minimum_rgb_images") == 1080
+        and profile.get("splits") == {"train": 8, "val": 2, "test": 2}
+    )
+
+
 def _validate_cross_split_duplicates(
     hashes: dict[str, list[tuple[str, str, str, str]]],
     splits: dict[str, str],
@@ -427,7 +559,7 @@ def _validate_cross_split_duplicates(
 ) -> None:
     fingerprints: dict[tuple[tuple[str, str, str, str], ...], tuple[str, str]] = {}
     for scene_id, values in sorted(hashes.items()):
-        fingerprint = tuple(values)
+        fingerprint = tuple(sorted(values))
         split = splits.get(scene_id)
         prior = fingerprints.get(fingerprint)
         if fingerprint and prior is not None and split != prior[1]:
@@ -453,7 +585,7 @@ def _validate_camera_sample(
     errors: list[str],
     stats: dict[str, Any],
     source_bindings: dict[str, str],
-) -> None:
+) -> tuple[str, str, str, str] | None:
     prefix = f"{capture_id}/{camera_id}"
     rgb_dimensions = _png_dimensions(root / PurePosixPath(paths["rgb"]), errors, prefix)
     depth = _read_npy(root / PurePosixPath(paths["depth"]), errors, f"{prefix} depth")
@@ -463,8 +595,8 @@ def _validate_camera_sample(
     camera = _load_json(root / PurePosixPath(paths["camera_params"]), f"{prefix} camera params", errors)
     normalized = _load_json(root / PurePosixPath(paths["normalized"]), f"{prefix} normalized", errors)
     if rgb_dimensions is None or depth is None or semantic is None or instance is None:
-        return
-    width, height = rgb_dimensions
+        return None
+    width, height, rgb_content_sha = rgb_dimensions
     stats["rgb_image_count"] += 1
     if width < int(profile.get("minimum_width", 1)) or height < int(profile.get("minimum_height", 1)):
         errors.append(f"{prefix} RGB resolution is below the profile minimum")
@@ -595,6 +727,12 @@ def _validate_camera_sample(
         errors,
         stats,
         source_bindings,
+    )
+    return (
+        rgb_content_sha,
+        _array_content_sha(depth),
+        _array_content_sha(semantic),
+        _array_content_sha(instance),
     )
 
 
@@ -1022,7 +1160,7 @@ def _read_npy(path: Path, errors: list[str], label: str) -> tuple[str, tuple[int
         return None
 
 
-def _png_dimensions(path: Path, errors: list[str], label: str) -> tuple[int, int] | None:
+def _png_dimensions(path: Path, errors: list[str], label: str) -> tuple[int, int, str] | None:
     try:
         payload = path.read_bytes()
         if payload[:8] != b"\x89PNG\r\n\x1a\n":
@@ -1067,9 +1205,19 @@ def _png_dimensions(path: Path, errors: list[str], label: str) -> tuple[int, int
         row_size = width * channels
         if len(decoded) != height * (row_size + 1):
             raise ValueError("PNG decoded byte count does not match its dimensions")
-        if any(decoded[row * (row_size + 1)] > 4 for row in range(height)):
-            raise ValueError("PNG contains an invalid scanline filter")
-        return width, height
+        digest = hashlib.sha256()
+        digest.update(struct.pack(">III", width, height, channels))
+        previous = bytearray(row_size)
+        for row_index in range(height):
+            offset = row_index * (row_size + 1)
+            filter_type = decoded[offset]
+            if filter_type > 4:
+                raise ValueError("PNG contains an invalid scanline filter")
+            raw_row = decoded[offset + 1 : offset + 1 + row_size]
+            reconstructed = _png_unfilter_row(filter_type, raw_row, previous, channels)
+            digest.update(reconstructed)
+            previous = reconstructed
+        return width, height, digest.hexdigest()
     except (OSError, ValueError, struct.error, zlib.error) as error:
         errors.append(f"{label} RGB PNG could not be read: {type(error).__name__}: {error}")
         return None
@@ -1078,6 +1226,36 @@ def _png_dimensions(path: Path, errors: list[str], label: str) -> tuple[int, int
 def _array_values(array: tuple[str, tuple[int, int], bytes]) -> Iterable[int | float]:
     formats = {"<f4": "f", "<f8": "d", "<u4": "I", "<u8": "Q", "<i4": "i", "<i8": "q"}
     return (value[0] for value in struct.iter_unpack("<" + formats[array[0]], array[2]))
+
+
+def _array_content_sha(array: tuple[str, tuple[int, int], bytes]) -> str:
+    digest = hashlib.sha256()
+    digest.update(array[0].encode("ascii"))
+    digest.update(struct.pack(">II", array[1][0], array[1][1]))
+    digest.update(array[2])
+    return digest.hexdigest()
+
+
+def _png_unfilter_row(filter_type: int, raw: bytes, previous: bytearray, bytes_per_pixel: int) -> bytearray:
+    result = bytearray(len(raw))
+    for index, value in enumerate(raw):
+        left = result[index - bytes_per_pixel] if index >= bytes_per_pixel else 0
+        up = previous[index]
+        upper_left = previous[index - bytes_per_pixel] if index >= bytes_per_pixel else 0
+        if filter_type == 0:
+            predictor = 0
+        elif filter_type == 1:
+            predictor = left
+        elif filter_type == 2:
+            predictor = up
+        elif filter_type == 3:
+            predictor = (left + up) // 2
+        else:
+            base = left + up - upper_left
+            distances = (abs(base - left), abs(base - up), abs(base - upper_left))
+            predictor = (left, up, upper_left)[distances.index(min(distances))]
+        result[index] = (value + predictor) & 0xFF
+    return result
 
 
 def _int_bbox(value: object, width: int, height: int) -> TypeGuard[list[int]]:
@@ -1190,8 +1368,12 @@ def _load_json(path: Path, label: str, errors: list[str]) -> object:
 
 
 def _report(errors: list[str], stats: dict[str, Any], artifact_manifest: dict[str, Any]) -> dict[str, Any]:
+    passed = not errors
     return {
-        "passed": not errors,
+        "passed": passed,
+        "production_passed": passed and stats.get("validation_gate") == "production",
+        "validation_gate": stats.get("validation_gate", "unresolved"),
+        "profile": {"id": stats.get("profile_id"), "sha256": stats.get("profile_sha256")},
         "errors": errors,
         "stats": stats,
         "artifact_manifest": artifact_manifest,

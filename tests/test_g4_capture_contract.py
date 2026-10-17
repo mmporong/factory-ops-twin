@@ -5,6 +5,8 @@ import json
 import math
 import os
 from pathlib import Path
+import shutil
+import subprocess
 import tempfile
 from typing import cast
 import unittest
@@ -22,7 +24,9 @@ from scripts.isaac.g4_capture import (
     _parse_args,
     _parse_resolution,
     _parse_variant_seeds,
+    _physics_scene_readback,
     _raw_bbox_document,
+    _renderer_contract,
     _safety_barrier_plan,
     _verify_source_commit,
 )
@@ -129,8 +133,39 @@ class _Stage:
         return _Prim(False)
 
 
+class _PhysicsAttribute:
+    def __init__(self, value):
+        self.value = value
+
+    def IsValid(self):
+        return True
+
+    def Get(self):
+        return self.value
+
+
+class _PhysicsPrim:
+    def GetTypeName(self):
+        return "PhysicsScene"
+
+    def GetAttribute(self, name):
+        if name == "physxScene:timeStepsPerSecond":
+            return _PhysicsAttribute(60.0)
+        return _PhysicsAttribute(None)
+
+    def GetPath(self):
+        return "/physicsScene"
+
+
+class _PhysicsStage:
+    def Traverse(self):
+        return [_PhysicsPrim()]
+
+
 class G4CaptureContractTests(unittest.TestCase):
     def test_gitless_supervisor_provenance_pins_commit_and_required_sources(self) -> None:
+        if shutil.which("git") is None:
+            self.skipTest("git is required for the source proof fixture")
         layout = ROOT / "configs" / "factory-v3" / "layout.json"
         required = set(REQUIRED_SOURCE_PINS) | {layout.relative_to(ROOT).as_posix()}
         source_files = {
@@ -138,41 +173,77 @@ class G4CaptureContractTests(unittest.TestCase):
             for relative in sorted(required)
         }
         with tempfile.TemporaryDirectory() as directory:
-            proof = Path(directory) / "g4-environment.json"
+            fixture_root = Path(directory)
+            repo = fixture_root / "repo"
+            repo.mkdir()
+            for relative in sorted(required):
+                target = repo / relative
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_bytes((ROOT / relative).read_bytes())
+            subprocess.run(["git", "init", "--initial-branch=main"], cwd=repo, check=True, capture_output=True)
+            subprocess.run(["git", "config", "user.name", "G4 Test"], cwd=repo, check=True)
+            subprocess.run(["git", "config", "user.email", "g4@example.invalid"], cwd=repo, check=True)
+            subprocess.run(["git", "config", "core.autocrlf", "false"], cwd=repo, check=True)
+            subprocess.run(["git", "add", "--all"], cwd=repo, check=True)
+            subprocess.run(["git", "commit", "-m", "fixture"], cwd=repo, check=True, capture_output=True)
+            commit = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=repo, text=True).strip()
+            archive = fixture_root / "g4-source.tar"
+            commit_object = fixture_root / "g4-commit.raw"
+            subprocess.run(["git", "archive", "--format=tar", f"--output={archive}", commit], cwd=repo, check=True)
+            commit_object.write_bytes(subprocess.check_output(["git", "cat-file", "commit", commit], cwd=repo))
+            proof = fixture_root / "g4-environment.json"
 
             def write(document):
                 proof.write_text(json.dumps(document, sort_keys=True), encoding="utf-8")
                 return hashlib.sha256(proof.read_bytes()).hexdigest()
 
-            valid = {"source_commit": "a" * 40, "source_files": source_files}
+            valid = {
+                "schema_version": 1,
+                "source_commit": commit,
+                "checkout_head": commit,
+                "checkout_clean": True,
+                "source_git_object_verification": True,
+                "source_archive_sha256": hashlib.sha256(archive.read_bytes()).hexdigest(),
+                "source_commit_object_sha256": hashlib.sha256(commit_object.read_bytes()).hexdigest(),
+                "source_snapshot_relative": ROOT.name,
+                "source_files": source_files,
+            }
             proof_sha = write(valid)
             with patch("scripts.isaac.g4_capture.subprocess.run", side_effect=FileNotFoundError), patch.dict(
                 os.environ, {"FACTORY_OPS_G4_PROVENANCE_SHA256": proof_sha}, clear=False
             ):
-                _verify_source_commit("a" * 40, layout, proof)
+                _verify_source_commit(commit, layout, proof, ROOT.parent, archive, commit_object)
 
             cases = []
-            missing = {"source_commit": "a" * 40, "source_files": dict(source_files)}
+            missing = {**valid, "source_files": dict(source_files)}
             missing["source_files"].pop("scripts/isaac/g4_capture.py")
-            cases.append((missing, "a" * 40))
-            wrong_commit = {"source_commit": "b" * 40, "source_files": source_files}
-            cases.append((wrong_commit, "a" * 40))
-            tampered = {"source_commit": "a" * 40, "source_files": dict(source_files)}
+            cases.append((missing, commit))
+            wrong_commit = {**valid, "source_commit": "b" * 40}
+            cases.append((wrong_commit, commit))
+            tampered = {**valid, "source_files": dict(source_files)}
             tampered["source_files"]["factory_ops/layout.py"] = "f" * 64
-            cases.append((tampered, "a" * 40))
+            cases.append((tampered, commit))
             for document, expected in cases:
                 with self.subTest(document=document):
                     proof_sha = write(document)
                     with patch("scripts.isaac.g4_capture.subprocess.run", side_effect=FileNotFoundError), patch.dict(
                         os.environ, {"FACTORY_OPS_G4_PROVENANCE_SHA256": proof_sha}, clear=False
                     ), self.assertRaises(CaptureError):
-                        _verify_source_commit(expected, layout, proof)
+                        _verify_source_commit(expected, layout, proof, ROOT.parent, archive, commit_object)
 
             write(valid)
             with patch("scripts.isaac.g4_capture.subprocess.run", side_effect=FileNotFoundError), patch.dict(
                 os.environ, {"FACTORY_OPS_G4_PROVENANCE_SHA256": "0" * 64}, clear=False
             ), self.assertRaises(CaptureError):
-                _verify_source_commit("a" * 40, layout, proof)
+                _verify_source_commit(commit, layout, proof, ROOT.parent, archive, commit_object)
+
+            changed_commit_object = fixture_root / "changed-commit.raw"
+            changed_commit_object.write_bytes(commit_object.read_bytes() + b"tamper")
+            proof_sha = write(valid)
+            with patch("scripts.isaac.g4_capture.subprocess.run", side_effect=FileNotFoundError), patch.dict(
+                os.environ, {"FACTORY_OPS_G4_PROVENANCE_SHA256": proof_sha}, clear=False
+            ), self.assertRaises(CaptureError):
+                _verify_source_commit(commit, layout, proof, ROOT.parent, archive, changed_commit_object)
 
     def test_gpu_preflight_uses_p0_base_semantics_and_real_barrier_prop(self) -> None:
         source = (Path(__file__).parents[1] / "scripts" / "isaac" / "g4_capture.py").read_text(encoding="utf-8")
@@ -202,6 +273,34 @@ class G4CaptureContractTests(unittest.TestCase):
             self.assertLessEqual(bounds[3], envelope[3])
             self.assertLessEqual(bounds[4], envelope[4])
             self.assertLessEqual(bounds[5], envelope[5])
+
+    def test_isaac_stage_api_family_and_renderer_contract_are_not_mixed(self) -> None:
+        source = (ROOT / "scripts" / "isaac" / "g4_capture.py").read_text(encoding="utf-8")
+
+        self.assertIn("import isaacsim.core.experimental.utils.stage as stage_utils", source)
+        self.assertIn("opened, stage = stage_utils.open_stage(str(base_scene))", source)
+        self.assertIn("if not opened or stage is None:", source)
+        self.assertNotIn("from isaacsim.core.utils import stage as stage_utils", source)
+        self.assertNotIn("stage_utils.get_current_stage()", source)
+        self.assertIn('"renderer": render_contract["sdk_renderer"]', source)
+        self.assertNotIn('"renderer": renderer', source)
+
+        contract = _renderer_contract()
+        self.assertEqual(contract["display_renderer"], "RTX Real-Time 2.0")
+        self.assertEqual(contract["sdk_renderer"], "RealTimePathTracing")
+        self.assertEqual(contract["dlss_exec_mode"], 2)
+        self.assertEqual(contract["rt_subframes"], 4)
+
+        robot_load = source.index("robots = {")
+        simulation_setup = source.index('SimulationManager.setup_simulation(dt=physics_dt_s, device="cpu")')
+        timeline_play = source.index("timeline.play()", simulation_setup)
+        self.assertLess(robot_load, simulation_setup)
+        self.assertLess(simulation_setup, timeline_play)
+
+        readback = _physics_scene_readback(_PhysicsStage(), 1.0 / 60.0)
+        self.assertEqual(readback["physics_scene_path"], "/physicsScene")
+        self.assertEqual(readback["time_steps_per_second"], 60.0)
+        self.assertAlmostEqual(readback["observed_dt_s"], 1.0 / 60.0)
 
     def test_production_and_probe_budgets_are_separate(self) -> None:
         production = _capture_plan(

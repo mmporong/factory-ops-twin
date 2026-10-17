@@ -228,11 +228,13 @@ def _validate_config(config: Mapping[str, Any], layout: Layout) -> None:
 
 
 def _validate_render_profile(profile: Mapping[str, Any]) -> None:
-    required = {"schema_version", "renderer", "resolution", "samples_per_pixel_per_frame", "denoiser", "anti_aliasing", "tone_mapping", "exposure_compensation", "roof_mode", "cameras", "capture_contract"}
+    required = {"schema_version", "renderer", "resolution", "render_settings", "roof_mode", "cameras", "capture_contract"}
     if set(profile) != required or profile["schema_version"] != 1:
         raise LayoutError("render profile keys or schema are invalid")
     if profile["roof_mode"] != "cutaway":
         raise LayoutError("render profile must preserve the roof cutaway")
+    if profile["render_settings"] != {"sdk_renderer": "RealTimePathTracing", "dlss_exec_mode": 2, "rt_subframes": 4}:
+        raise LayoutError("render profile must bind the applied SDK renderer, DLSS quality and frozen subframes")
     cameras = profile["cameras"]
     if not isinstance(cameras, list) or len(cameras) < 4:
         raise LayoutError("render profile must contain the portfolio camera set")
