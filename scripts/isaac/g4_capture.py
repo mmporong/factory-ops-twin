@@ -36,6 +36,8 @@ ANNOTATORS = (
     "distance_to_image_plane",
     "semantic_segmentation",
     "instance_segmentation",
+    "instance_id_segmentation",
+    "occlusion",
     "bounding_box_2d_tight",
     "camera_params",
 )
@@ -324,6 +326,171 @@ def _asset_source_bindings(visual_manifest: Mapping[str, Any], render_scene_sha:
             raise CaptureError("visual manifest contains an invalid or duplicate source prim path")
         bindings[path] = visual_sha
     return bindings
+
+
+def _source_class_bindings(visual_manifest: Mapping[str, Any]) -> dict[str, str]:
+    """Build the authoritative labelled-root taxonomy from authored inputs."""
+
+    bindings = {
+        "/World/FloorVisual": "floor",
+        "/World/Markers": "station_marker",
+        "/World/Carter1": "amr",
+        "/World/Carter2": "amr",
+        "/World/Carter1/chassis_link/G4PortfolioPayload": "payload_tote",
+        "/World/G4PortfolioProps/SafetyBarrier": "barrier",
+        "/World/Visuals/FloorGraphics": "floor_marking",
+    }
+    instances = visual_manifest.get("instances")
+    if not isinstance(instances, list):
+        raise CaptureError("visual manifest has no instances for semantic source binding")
+    for item in instances:
+        path = item.get("prim_path") if isinstance(item, Mapping) else None
+        class_name = item.get("semantic_class") if isinstance(item, Mapping) else None
+        if not isinstance(path, str) or not path.startswith("/World/") or not isinstance(class_name, str) or not class_name:
+            raise CaptureError("visual manifest contains an invalid semantic source binding")
+        if path in bindings and bindings[path] != class_name:
+            raise CaptureError(f"conflicting semantic source class for {path}")
+        bindings[path] = class_name
+    return bindings
+
+
+def _semantic_roots_document(stage: Any, source_class_by_root: Mapping[str, str]) -> dict[str, Any]:
+    roots: list[dict[str, str]] = []
+    for prim in stage.Traverse():
+        path = str(prim.GetPath())
+        if path not in source_class_by_root:
+            continue
+        _root, actual_class = _canonical_class(stage, path)
+        expected_class = source_class_by_root[path]
+        if actual_class != expected_class:
+            raise CaptureError(f"semantic root {path} differs from authoritative source class")
+        roots.append({"usd_root_path": path, "class": actual_class, "source": "authored_source_manifest"})
+    if set(item["usd_root_path"] for item in roots) != set(source_class_by_root):
+        missing = sorted(set(source_class_by_root) - {item["usd_root_path"] for item in roots})
+        raise CaptureError(f"authoritative semantic roots are absent from the stage: {missing}")
+    return {"schema_version": 1, "roots": sorted(roots, key=lambda item: item["usd_root_path"])}
+
+
+def _frame_raw_document(context: Mapping[str, Any], *, data: Any = None, info: Any = None) -> dict[str, Any]:
+    document = {key: context[key] for key in ("scene_id", "capture_id", "camera_id", "physics_frame", "sim_time_ns")}
+    if data is not None:
+        document["data"] = _jsonable(data, path="raw.data")
+    if info is not None:
+        document["info"] = _jsonable(info, path="raw.info")
+    return document
+
+
+def _occlusion_rows(occlusion_payload: Any) -> Any:
+    return occlusion_payload.get("data") if isinstance(occlusion_payload, Mapping) and "data" in occlusion_payload else occlusion_payload
+
+
+def _renderer_uri_document(context: Mapping[str, Any], occlusion_payload: Any, sd_interface: Any) -> dict[str, Any]:
+    rows = _jsonable(_occlusion_rows(occlusion_payload), path="occlusion.data")
+    if not isinstance(rows, list):
+        raise CaptureError("occlusion annotator data is not a row list")
+    ids: list[int] = []
+    mapping: dict[str, str] = {}
+    for row in rows:
+        if (not isinstance(row, Mapping) or isinstance(row.get("instanceId"), bool)
+                or not isinstance(row.get("instanceId"), int)):
+            raise CaptureError("occlusion row has no numeric instanceId")
+        instance_id = int(row["instanceId"])
+        if instance_id < 0 or str(instance_id) in mapping:
+            raise CaptureError("occlusion renderer instance IDs are invalid or duplicated")
+        uri = str(sd_interface.get_uri_from_instance_segmentation_id(instance_id))
+        if not uri.startswith("/World/"):
+            raise CaptureError(f"renderer instance ID {instance_id} has no canonical USD URI")
+        ids.append(instance_id)
+        mapping[str(instance_id)] = uri
+    if len(set(mapping.values())) != len(mapping):
+        raise CaptureError("renderer instance SDK URI map is not one-to-one")
+    return {**{key: context[key] for key in context}, "renderer_instance_id_to_uri": mapping, "renderer_instance_ids": ids}
+
+
+def _normalize_leaf_occlusion(
+    *, context: Mapping[str, Any], instance_id_payload: Mapping[str, Any], occlusion_payload: Any,
+    renderer_uri_document: Mapping[str, Any], semantic_roots: Mapping[str, Any], raw_artifacts: Mapping[str, Mapping[str, str]], np: Any,
+) -> dict[str, Any]:
+    visible_raw = _raw_label_map(instance_id_payload, "instance_id")
+    uri_map = renderer_uri_document.get("renderer_instance_id_to_uri")
+    roots_raw = semantic_roots.get("roots")
+    if not isinstance(uri_map, Mapping) or not isinstance(roots_raw, list):
+        raise CaptureError("leaf occlusion URI or semantic-root evidence is malformed")
+    roots = {item["usd_root_path"]: item["class"] for item in roots_raw if isinstance(item, Mapping)}
+    if len(roots) != len(roots_raw) or any(not isinstance(k, str) or not isinstance(v, str) for k, v in roots.items()):
+        raise CaptureError("semantic-root evidence is invalid or duplicated")
+    visible_ids = {int(value) for value in np.unique(np.asarray(instance_id_payload["data"])) if int(value) != 0}
+    raw_uri_ids: set[int] = set()
+    for key, raw_value in visible_raw.items():
+        try:
+            instance_id = int(key)
+        except (TypeError, ValueError) as exc:
+            raise CaptureError("renderer raw-info ID is not canonical") from exc
+        if not isinstance(key, str) or key != str(instance_id) or instance_id < 0:
+            raise CaptureError("renderer raw-info ID is not canonical")
+        if instance_id == 0 and _reserved_label_identity(raw_value) == "BACKGROUND" and key not in uri_map:
+            continue
+        raw_uri_ids.add(instance_id)
+        raw_uri = _label_path(raw_value)
+        if raw_uri is None or raw_uri != uri_map.get(key):
+            raise CaptureError(f"renderer instance ID {instance_id} differs between raw info and SDK URI")
+    for key, path in uri_map.items():
+        if any(path == root or path.startswith(root + "/") for root in roots) and int(key) not in raw_uri_ids:
+            raise CaptureError(f"labelled renderer instance ID {key} is absent from raw info")
+    if not visible_ids.issubset(raw_uri_ids):
+        raise CaptureError("visible renderer instance IDs are absent from raw info")
+    rows = _jsonable(_occlusion_rows(occlusion_payload), path="occlusion.data")
+    if not isinstance(rows, list) or set(uri_map) != {str(int(row["instanceId"])) for row in rows if isinstance(row, Mapping)}:
+        raise CaptureError("occlusion rows and SDK URI map do not have identical renderer IDs")
+    leaves: list[dict[str, Any]] = []
+    root_members: dict[str, list[dict[str, Any]]] = {}
+    for row in rows:
+        renderer_id = int(row["instanceId"])
+        raw_ratio = float(row["occlusionRatio"])
+        if not math.isfinite(raw_ratio) or (raw_ratio != -1.0 and not 0.0 <= raw_ratio <= 1.0):
+            raise CaptureError(f"renderer instance ID {renderer_id} has invalid occlusion ratio")
+        leaf_path = uri_map[str(renderer_id)]
+        candidates = [root for root in roots if leaf_path == root or leaf_path.startswith(root + "/")]
+        root_path = max(candidates, key=len) if candidates else None
+        if root_path is None:
+            status, class_name, ratio = "no_taxonomy_root", None, None
+        elif raw_ratio == -1.0:
+            status, class_name, ratio = "unavailable_raw_sentinel", roots[root_path], None
+        else:
+            status, class_name, ratio = "measured_leaf", roots[root_path], raw_ratio
+        leaf = {
+            "renderer_instance_id": renderer_id,
+            "render_tile_id_raw": int(row.get("semanticId", 0)),
+            "leaf_prim_path": leaf_path,
+            "labelled_root_path": root_path,
+            "class": class_name,
+            "occlusion_ratio": ratio,
+            "occlusion_raw_value": raw_ratio,
+            "occlusion_status": status,
+            "visible_in_instance_id_mask": renderer_id in visible_ids,
+        }
+        leaves.append(leaf)
+        if root_path is not None:
+            root_members.setdefault(root_path, []).append(leaf)
+    root_evidence = []
+    for root_path, members in sorted(root_members.items()):
+        measured = [item for item in members if item["occlusion_status"] == "measured_leaf"]
+        single = len(members) == 1 and len(measured) == 1
+        root_evidence.append({
+            "labelled_root_path": root_path,
+            "class": roots[root_path],
+            "renderer_leaf_count": len(members),
+            "true_compound_occlusion_ratio": measured[0]["occlusion_ratio"] if single else None,
+            "occlusion_status": "single_leaf_measured" if single else "compound_root_unknown",
+        })
+    return {
+        "measurement_basis": "verified_sdk_leaf_only_mapping",
+        "reason": "verifiedSDKleaf-onlymapping",
+        "frame_binding": dict(context),
+        "raw_artifacts": dict(raw_artifacts),
+        "leaves": sorted(leaves, key=lambda item: item["renderer_instance_id"]),
+        "roots": root_evidence,
+    }
 
 
 def _mask_bounds(mask: Any, np: Any) -> dict[int, list[int]]:
@@ -1127,6 +1294,8 @@ def _persist_raw_camera_payloads(
     camera_payloads: Mapping[str, Mapping[str, Any]],
     np: Any,
     Image: Any,
+    frame_context: Mapping[str, Any] | None = None,
+    sd_interface: Any = None,
 ) -> dict[str, dict[str, Any]]:
     artifacts: dict[str, dict[str, Any]] = {}
     for camera_id in CAMERA_IDS:
@@ -1137,6 +1306,10 @@ def _persist_raw_camera_payloads(
         instance_payload = data["instance_segmentation"]
         semantic_info_path = camera_root / "semantic.raw-info.json"
         instance_info_path = camera_root / "instance.raw-info.json"
+        instance_id_path = camera_root / "instance-id.npy"
+        instance_id_info_path = camera_root / "instance-id.raw-info.json"
+        occlusion_path = camera_root / "occlusion.raw.json"
+        renderer_uri_path = camera_root / "renderer-instance-uri.raw.json"
         camera_raw_path = camera_root / "camera.raw-params.json"
         rgb_path = camera_root / "rgb.png"
         depth_path = camera_root / "depth.npy"
@@ -1161,6 +1334,33 @@ def _persist_raw_camera_payloads(
         np.save(instance_path, instance, allow_pickle=False)
         bbox_raw = _raw_bbox_document(data["bounding_box_2d_tight"])
         _atomic_json(bbox_path, bbox_raw)
+        leaf_values = None
+        if frame_context is not None:
+            if sd_interface is None:
+                raise CaptureError("synthetic-data interface is required for leaf occlusion capture")
+            context = {**frame_context, "camera_id": camera_id}
+            instance_id_payload = data["instance_id_segmentation"]
+            instance_id = np.asarray(instance_id_payload["data"], dtype="<u4")
+            np.save(instance_id_path, instance_id, allow_pickle=False)
+            _atomic_json(
+                instance_id_info_path,
+                _frame_raw_document(context, info=_raw_annotator_info(instance_id_payload, "instance_id")),
+            )
+            occlusion_document = _frame_raw_document(
+                context,
+                data=_occlusion_rows(data["occlusion"]),
+            )
+            _atomic_json(occlusion_path, occlusion_document)
+            leaf_values = {
+                "instance_id": instance_id,
+                "instance_id_payload": instance_id_payload,
+                "occlusion_payload": data["occlusion"],
+                "context": context,
+                "instance_id_path": instance_id_path,
+                "instance_id_info_path": instance_id_info_path,
+                "occlusion_path": occlusion_path,
+                "renderer_uri_path": renderer_uri_path,
+            }
         artifacts[camera_id] = {
             "semantic_info_path": semantic_info_path,
             "instance_info_path": instance_info_path,
@@ -1175,7 +1375,18 @@ def _persist_raw_camera_payloads(
             "semantic": semantic,
             "instance": instance,
             "bbox_raw": bbox_raw,
+            "leaf": leaf_values,
         }
+    if frame_context is not None:
+        for camera_id in CAMERA_IDS:
+            leaf_values = artifacts[camera_id]["leaf"]
+            if not isinstance(leaf_values, dict):
+                raise CaptureError("leaf raw persistence state is invalid")
+            renderer_uri = _renderer_uri_document(
+                leaf_values["context"], leaf_values["occlusion_payload"], sd_interface,
+            )
+            _atomic_json(leaf_values["renderer_uri_path"], renderer_uri)
+            leaf_values["renderer_uri_document"] = renderer_uri
     return artifacts
 
 
@@ -1201,6 +1412,9 @@ def _capture_variant(
     Image: Any,
     staging_anchors: Sequence[tuple[float, float]],
     rt_subframes: int,
+    sd_interface: Any,
+    semantic_roots: Mapping[str, Any],
+    semantic_roots_path: Path,
 ) -> tuple[dict[str, Any], list[dict[str, Any]]]:
     scene_id = f"scene-{seed:03d}"
     variant_id = f"industrial-v{seed:02d}"
@@ -1208,6 +1422,7 @@ def _capture_variant(
     annotators, products = _attach_annotators(rep, cameras, resolution)
     captures: list[dict[str, Any]] = []
     review_entries: list[dict[str, Any]] = []
+    review_evidence_keys: set[tuple[str, str]] = set()
     try:
         rep.orchestrator.set_capture_on_play(False)
         for capture_index in range(count):
@@ -1262,6 +1477,13 @@ def _capture_variant(
                 camera_payloads=camera_payloads,
                 np=np,
                 Image=Image,
+                frame_context={
+                    "scene_id": scene_id,
+                    "capture_id": capture_id,
+                    "physics_frame": frame,
+                    "sim_time_ns": sim_ns,
+                },
+                sd_interface=sd_interface,
             )
             for camera_id in CAMERA_IDS:
                 camera_root = capture_root / camera_id
@@ -1307,6 +1529,28 @@ def _capture_variant(
                     asset_source_by_root=asset_source_by_root,
                     np=np,
                 )
+                leaf = raw["leaf"]
+                if not isinstance(leaf, Mapping):
+                    raise CaptureError("leaf occlusion raw artifacts were not persisted")
+                leaf_raw_artifacts = {
+                    "instance_id": {"filename": "instance-id.npy", "sha256": _sha256(leaf["instance_id_path"])},
+                    "instance_id_info": {"filename": "instance-id.raw-info.json", "sha256": _sha256(leaf["instance_id_info_path"])},
+                    "occlusion": {"filename": "occlusion.raw.json", "sha256": _sha256(leaf["occlusion_path"])},
+                    "renderer_uri": {"filename": "renderer-instance-uri.raw.json", "sha256": _sha256(leaf["renderer_uri_path"])},
+                    "semantic_roots": {"path": _relative(semantic_roots_path, output), "sha256": _sha256(semantic_roots_path)},
+                }
+                normalized["leaf_occlusion"] = _normalize_leaf_occlusion(
+                    context={
+                        "scene_id": scene_id, "capture_id": capture_id, "camera_id": camera_id,
+                        "physics_frame": frame, "sim_time_ns": sim_ns,
+                    },
+                    instance_id_payload=leaf["instance_id_payload"],
+                    occlusion_payload=leaf["occlusion_payload"],
+                    renderer_uri_document=leaf["renderer_uri_document"],
+                    semantic_roots=semantic_roots,
+                    raw_artifacts=leaf_raw_artifacts,
+                    np=np,
+                )
                 normalized_path = camera_root / "normalized.json"
                 _atomic_json(normalized_path, normalized)
                 camera_path = camera_root / "camera_params.json"
@@ -1332,11 +1576,50 @@ def _capture_variant(
                     "depth": depth_path,
                     "semantic": semantic_path,
                     "instance": instance_path,
+                    "instance_id": leaf["instance_id_path"],
+                    "instance_id_info": leaf["instance_id_info_path"],
+                    "occlusion_raw": leaf["occlusion_path"],
+                    "renderer_uri_raw": leaf["renderer_uri_path"],
                     "bbox2d_raw": bbox_path,
                     "camera_params": camera_path,
                     "normalized": normalized_path,
                 }
                 camera_paths[camera_id] = {name: _relative(path, output) for name, path in paths.items()}
+                leaf_evidence = normalized["leaf_occlusion"]
+                for item in leaf_evidence["leaves"]:
+                    ratio = item.get("occlusion_ratio")
+                    if item.get("occlusion_status") != "measured_leaf" or not isinstance(ratio, (int, float)):
+                        continue
+                    bin_name = "clear" if ratio <= 0.1 else "partial" if ratio <= 0.5 else "heavy"
+                    key = (camera_id, bin_name)
+                    if key in review_evidence_keys:
+                        continue
+                    review_evidence_keys.add(key)
+                    review_entries.append({
+                        "scene_id": scene_id, "camera_id": camera_id, "capture_id": capture_id,
+                        "rgb_path": _relative(rgb_path, output), "rgb_sha256": _sha256(rgb_path),
+                        "evidence_kind": "leaf_occlusion_bin", "occlusion_bin": bin_name,
+                        "renderer_instance_id": item["renderer_instance_id"],
+                        "leaf_prim_path": item["leaf_prim_path"],
+                        "labelled_root_path": item["labelled_root_path"],
+                        "occlusion_raw_path": _relative(leaf["occlusion_path"], output),
+                        "occlusion_raw_sha256": _sha256(leaf["occlusion_path"]),
+                        "reviewed": False, "verdict": "unreviewed", "reviewer": "pending",
+                    })
+                for item in leaf_evidence["roots"]:
+                    key = (camera_id, "compound_unknown")
+                    if item.get("occlusion_status") != "compound_root_unknown" or key in review_evidence_keys:
+                        continue
+                    review_evidence_keys.add(key)
+                    review_entries.append({
+                        "scene_id": scene_id, "camera_id": camera_id, "capture_id": capture_id,
+                        "rgb_path": _relative(rgb_path, output), "rgb_sha256": _sha256(rgb_path),
+                        "evidence_kind": "compound_root_unknown",
+                        "labelled_root_path": item["labelled_root_path"],
+                        "occlusion_raw_path": _relative(leaf["occlusion_path"], output),
+                        "occlusion_raw_sha256": _sha256(leaf["occlusion_path"]),
+                        "reviewed": False, "verdict": "unreviewed", "reviewer": "pending",
+                    })
                 if capture_index == count // 2:
                     review_entries.append(
                         {
@@ -1431,6 +1714,7 @@ def _worker(args: argparse.Namespace, plan: CapturePlan, layout_path: Path, outp
                         "safety_barrier": _safety_barrier_plan(layout),
                         "payload": {
                             "prim_path": "/World/Carter1/chassis_link/G4PortfolioPayload",
+                            "class": "payload_tote",
                             "source": STAGED_PAYLOAD_SOURCE,
                             "asset_source_sha256": hashlib.sha256(STAGED_PAYLOAD_SOURCE.encode("utf-8")).hexdigest(),
                             "hash_basis": "utf8-source-descriptor",
@@ -1471,6 +1755,7 @@ def _worker(args: argparse.Namespace, plan: CapturePlan, layout_path: Path, outp
         from PIL import Image
         import omni.replicator.core as rep
         import omni.timeline
+        from omni.syntheticdata._syntheticdata import acquire_syntheticdata_interface
         import isaacsim.core.experimental.utils.stage as stage_utils
         from isaacsim.storage.native import get_assets_root_path
         from isaacsim.core.simulation_manager import SimulationManager
@@ -1481,6 +1766,7 @@ def _worker(args: argparse.Namespace, plan: CapturePlan, layout_path: Path, outp
         from scripts.isaac.factory_visuals import FactoryVisualRuntime
 
         timeline = omni.timeline.get_timeline_interface()
+        sd_interface = acquire_syntheticdata_interface()
         asset_root = get_assets_root_path()
         if not isinstance(asset_root, str) or not asset_root:
             raise CaptureError("Isaac asset root is unavailable")
@@ -1537,6 +1823,9 @@ def _worker(args: argparse.Namespace, plan: CapturePlan, layout_path: Path, outp
                 _sha256(_render_scene),
                 robot_asset,
             )
+            semantic_roots = _semantic_roots_document(stage, _source_class_bindings(visual_manifest))
+            semantic_roots_path = runtime_output / "semantic-roots.raw.json"
+            _atomic_json(semantic_roots_path, semantic_roots)
             physics_dt_s = 1.0 / 60.0
             SimulationManager.setup_simulation(dt=physics_dt_s, device="cpu")
             app.update()
@@ -1575,6 +1864,9 @@ def _worker(args: argparse.Namespace, plan: CapturePlan, layout_path: Path, outp
                 Image=Image,
                 staging_anchors=tuple(layout.stations.values()) + tuple(layout.pockets.values()),
                 rt_subframes=int(render_contract["rt_subframes"]),
+                sd_interface=sd_interface,
+                semantic_roots=semantic_roots,
+                semantic_roots_path=semantic_roots_path,
             )
             scene["visual_runtime"] = _jsonable(runtime.capture_metadata(), path="visual_runtime.capture_metadata")
             scene["staged_payload"] = staged_payload
@@ -1589,7 +1881,7 @@ def _worker(args: argparse.Namespace, plan: CapturePlan, layout_path: Path, outp
             {
                 "status": "captured_unreviewed",
                 "elapsed_seconds": round(time.monotonic() - started, 3),
-                "renderer_readback": "six persistent Legacy Replicator annotators per camera; paused physics",
+                "renderer_readback": "eight persistent Legacy Replicator annotators per camera; paused physics",
                 "container": {key: value for key, value in sorted(__import__("os").environ.items()) if key in {"NVIDIA_VISIBLE_DEVICES", "CUDA_VISIBLE_DEVICES", "ISAAC_PATH"}},
                 "gpu": _gpu_audit(),
                 "source_verification": source_verification,

@@ -29,6 +29,15 @@
     "bbox_tolerance_px": 1,
     "minimum_class_pixels": 1
   },
+  "occlusion_evidence": {
+    "measurement_basis": "verified_sdk_leaf_only_mapping",
+    "reason": "verifiedSDKleaf-onlymapping",
+    "maximum_join_failures": 0,
+    "minimum_measured_useful_leaves_per_scene_camera": 1,
+    "required_bins_per_camera": ["clear", "partial", "heavy"],
+    "minimum_per_required_bin": 1,
+    "required_global_classes": ["amr", "rack", "tote", "process_equipment", "payload_tote", "barrier"]
+  },
   "splits": {
     "train": 8,
     "val": 2,
@@ -36,6 +45,8 @@
   },
   "visual_review": {
     "required_per_scene_camera": 1,
-    "allowed_verdict": "pass"
+    "allowed_verdict": "pass",
+    "required_leaf_occlusion_bins_per_camera": ["clear", "partial", "heavy"],
+    "require_compound_unknown_per_camera": true
   }
 }

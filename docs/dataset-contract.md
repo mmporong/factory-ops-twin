@@ -145,6 +145,24 @@ bbox와 instance는 가장 가까운 semantic-labelled root가 정확히 같을 
 
 semantic, instance, bbox label map의 키는 `0`, `9`, `27` 같은 비음수 canonical 10진 문자열만 허용한다. `09`와 `9`, 음수, 비수치 키는 거부한다. 프로필의 `minimum_class_pixels`는 양의 정수여야 하며 문자열이나 0으로 production gate를 낮출 수 없다.
 
-`bbox_semantic_id`는 선택한 원본 bbox 행의 `semanticId`와 같아야 하며 bbox label map의 class, instance label map의 class, semantic mask class가 모두 같아야 한다. `bbox_xyxy`는 instance mask에서 얻은 양끝 포함 tight bbox다. 원본 bbox 수치와 각 좌표 차이가 1픽셀 이내여야 한다. `[0, 1]`의 원형 `occlusionRatio`만 `occlusion_status: "measured_raw"`와 같은 `occlusion_ratio`로 집계한다. Isaac Sim이 `-1.0`을 반환하면 원형 값을 바꾸지 않고 `occlusion_raw_value: -1.0`, `occlusion_ratio: null`, `occlusion_status: "unavailable_raw_sentinel"`로 기록한다. 이 unknown 항목은 가림 분포에 넣지 않으며 production 승인 조건을 충족하지 못한다. `edge_truncated`는 tight bbox가 이미지 가장자리에 닿는지와 일치해야 한다.
+`bbox_semantic_id`는 선택한 원본 bbox 행의 `semanticId`와 같아야 하며 bbox label map의 class, instance label map의 class, semantic mask class가 모두 같아야 한다. `bbox_xyxy`는 instance mask에서 얻은 양끝 포함 tight bbox다. 원본 bbox 수치와 각 좌표 차이가 1픽셀 이내여야 한다. bbox annotator의 `occlusionRatio`는 원형 메타데이터로만 보존한다. Isaac Sim 6.2가 `-1.0`을 반환하면 `occlusion_raw_value: -1.0`, `occlusion_ratio: null`, `occlusion_status: "unavailable_raw_sentinel"`로 기록하며 leaf 가림 coverage로 세지 않는다. `edge_truncated`는 tight bbox가 이미지 가장자리에 닿는지와 일치해야 한다.
+
+## Leaf 가림 증거
+
+가림 검증은 `instance_id_segmentation`의 renderer leaf ID와 `OcclusionSD`를 같은 paused physics frame에서 수집한다. 각 카메라는 기존 산출물에 더해 다음 네 파일을 갖는다.
+
+- `instance-id.npy`와 `instance-id.raw-info.json`
+- `occlusion.raw.json`
+- `renderer-instance-uri.raw.json`
+
+세 JSON은 `scene_id`, `capture_id`, `camera_id`, `physics_frame`, `sim_time_ns`가 같아야 한다. `renderer-instance-uri.raw.json`은 `occlusion.raw.json`의 모든 `instanceId`를 SDK `get_uri_from_instance_segmentation_id()`로 조회한 전체 표다. 화면에 보이는 `instance-id.npy`의 0 이외 ID는 raw `idToLabels`와 SDK URI가 정확히 같아야 한다. 키 누락, ID 재번호화, 경로 치환은 허용하지 않는다.
+
+한 timestamp의 overhead, aisle, amr_follow 원형 파일을 순차 저장한 다음 SDK URI 결속과 정규화를 시작한다. 첫 카메라의 URI 조회나 join이 실패해도 저장을 마친 세 카메라의 원형 SDK 응답을 재검사할 수 있다. 저장 중 중단에 대한 디렉터리 단위 원자성은 보장하지 않는다.
+
+scene의 `semantic-roots.raw.json`은 visual manifest, Nova Carter URI, staged payload/barrier source에서 정한 labelled root와 class를 보존한다. leaf는 가장 가까운 ancestor root에만 결합한다. root가 없는 조명 같은 geometry는 `no_taxonomy_root`로 모두 기록하고 coverage에서 제외한다. raw ratio가 `[0,1]`이면 `measured_leaf`, `-1`이면 `unavailable_raw_sentinel`이다. 그 밖의 값은 실패다.
+
+여러 renderer leaf로 구성된 labelled root는 `compound_root_unknown`이며 `true_compound_occlusion_ratio`는 항상 null이다. leaf 비율의 평균·합이나 bbox 비율을 compound object의 실제 가림률로 바꾸지 않는다. 한 leaf로만 구성되고 유효 측정이 있는 root만 `single_leaf_measured`가 될 수 있다.
+
+production profile은 `reason: verifiedSDKleaf-onlymapping`을 고정하고 scene-camera마다 taxonomy에 결합된 유효 leaf 1개 이상, 카메라별 clear/partial/heavy bin, 지정 class의 전역 leaf 측정, join failure 0을 요구한다. 시각 검수에는 카메라별 세 bin과 compound unknown 대표가 필요하며 RGB SHA, raw occlusion SHA, renderer ID, leaf path, labelled root를 같은 frame에 결속한다. 검수 전 상태나 미측정 coverage는 승인되지 않는다.
 
 `visual-review.json`은 장면·카메라별 대표 샘플을 포함한다. 각 항목은 `scene_id`, `camera_id`, `capture_id`, `rgb_path`, `rgb_sha256`, `reviewed`, `verdict`, `reviewer`를 가진다. 모든 장면과 카메라 조합이 `reviewed: true`, `verdict: "pass"`가 되기 전에는 프로덕션 데이터셋을 승인하지 않는다.

@@ -24,6 +24,10 @@ REQUIRED_CAMERA_PATHS = {
     "depth",
     "semantic",
     "instance",
+    "instance_id",
+    "instance_id_info",
+    "occlusion_raw",
+    "renderer_uri_raw",
     "bbox2d_raw",
     "camera_params",
     "normalized",
@@ -65,6 +69,11 @@ def validate_dataset(root: Path, profile_path: Path = DEFAULT_PROFILE) -> dict[s
         "edge_truncated_instances": 0,
         "occlusion_measured_instances": 0,
         "occlusion_unknown_instances": 0,
+        "leaf_occlusion": {
+            "measured_useful": 0, "unknown": 0, "no_taxonomy_root": 0,
+            "join_failures": 0, "by_camera_bins": {}, "by_class": {}, "scene_camera_useful": {},
+            "by_camera_status": {}, "by_class_status": {}, "compound_root_unknown": 0,
+        },
         "visual_reviewed_scene_cameras": 0,
         "profile_id": None,
         "profile_sha256": None,
@@ -235,6 +244,7 @@ def validate_dataset(root: Path, profile_path: Path = DEFAULT_PROFILE) -> dict[s
         "partial_0.1_0.5": occlusion["partial"],
         "heavy_0.5_1": occlusion["heavy"],
     }
+    _validate_leaf_coverage(profile, stats, seen_scene_ids, {str(value) for value in cameras}, errors)
     _validate_visual_review(root, dataset, profile, scene_camera_captures, manifest_paths, errors, stats)
     return _report(errors, stats, artifact_summary)
 
@@ -420,10 +430,12 @@ def _validate_source_provenance(
             else:
                 for item in instances:
                     path = item.get("prim_path") if isinstance(item, dict) else None
-                    if not _usd_path(path) or path in per_scene:
+                    class_name = item.get("semantic_class") if isinstance(item, dict) else None
+                    if not _usd_path(path) or path in per_scene or not isinstance(class_name, str) or not class_name:
                         errors.append(f"scene {scene_id} visual manifest contains an invalid or duplicate prim path")
                     else:
                         per_scene[cast(str, path)] = cast(str, config_sha)
+                        per_scene[f"@class:{path}"] = class_name
         robot_uri = variant.get("robot_asset_uri")
         if not isinstance(robot_uri, str) or not robot_uri.endswith("/Isaac/Robots/NVIDIA/NovaCarter/nova_carter.usd"):
             errors.append(f"scene source {scene_id} robot asset URI is invalid")
@@ -433,6 +445,8 @@ def _validate_source_provenance(
                 errors.append(f"scene source {scene_id} robot URI identity digest is invalid")
             per_scene["/World/Carter1"] = robot_sha
             per_scene["/World/Carter2"] = robot_sha
+            per_scene["@class:/World/Carter1"] = "amr"
+            per_scene["@class:/World/Carter2"] = "amr"
         runtime_props = variant.get("runtime_props")
         if not isinstance(runtime_props, dict):
             errors.append(f"scene source {scene_id} runtime_props is not an object")
@@ -449,9 +463,15 @@ def _validate_source_provenance(
                     errors.append(f"scene source {scene_id} runtime prop path is duplicated: {path}")
                 else:
                     per_scene[cast(str, path)] = cast(str, derived_sha)
+                    class_name = prop.get("class")
+                    if isinstance(class_name, str) and class_name:
+                        per_scene[f"@class:{path}"] = class_name
         if hashes:
             per_scene["/World/FloorVisual"] = hashes[0]
             per_scene["/World/Markers"] = hashes[0]
+            per_scene["@class:/World/FloorVisual"] = "floor"
+            per_scene["@class:/World/Markers"] = "station_marker"
+            per_scene["@class:/World/Visuals/FloorGraphics"] = "floor_marking"
         if isinstance(scene_id, str):
             bindings[scene_id] = per_scene
     if observed != expected:
@@ -796,12 +816,252 @@ def _validate_camera_sample(
         source_bindings,
         exact_instance_labelled_roots,
     )
+    _validate_leaf_occlusion(
+        root, paths, prefix, scene_id, capture_id, camera_id, frame, sim_time_ns,
+        normalized, source_bindings, errors, stats,
+    )
     return (
         rgb_content_sha,
         _array_content_sha(depth),
         _array_content_sha(semantic),
         _array_content_sha(instance),
     )
+
+
+def _validate_leaf_occlusion(
+    root: Path, paths: dict[str, str], prefix: str, scene_id: str, capture_id: str, camera_id: str,
+    frame: int, sim_time_ns: int, normalized: dict[str, Any], source_bindings: dict[str, str],
+    errors: list[str], stats: dict[str, Any],
+) -> None:
+    instance_id = _read_npy(root / PurePosixPath(paths["instance_id"]), errors, f"{prefix} instance-id")
+    info_doc = _load_json(root / PurePosixPath(paths["instance_id_info"]), f"{prefix} instance-id info", errors)
+    occlusion_doc = _load_json(root / PurePosixPath(paths["occlusion_raw"]), f"{prefix} occlusion raw", errors)
+    uri_doc = _load_json(root / PurePosixPath(paths["renderer_uri_raw"]), f"{prefix} renderer URI raw", errors)
+    leaf = normalized.get("leaf_occlusion")
+    if instance_id is None or not all(isinstance(value, dict) for value in (info_doc, occlusion_doc, uri_doc, leaf)):
+        errors.append(f"{prefix} leaf occlusion evidence is missing or malformed")
+        return
+    info_doc = cast(dict[str, Any], info_doc)
+    occlusion_doc = cast(dict[str, Any], occlusion_doc)
+    uri_doc = cast(dict[str, Any], uri_doc)
+    leaf = cast(dict[str, Any], leaf)
+    context = {"scene_id": scene_id, "capture_id": capture_id, "camera_id": camera_id, "physics_frame": frame, "sim_time_ns": sim_time_ns}
+    for document_name, document in (("instance-id", info_doc), ("occlusion", occlusion_doc), ("renderer URI", uri_doc)):
+        if any(document.get(key) != value for key, value in context.items()):
+            errors.append(f"{prefix} {document_name} raw evidence is not same-frame bound")
+    if leaf.get("frame_binding") != context or leaf.get("measurement_basis") != "verified_sdk_leaf_only_mapping" or leaf.get("reason") != "verifiedSDKleaf-onlymapping":
+        errors.append(f"{prefix} leaf occlusion normalized frame or measurement basis is invalid")
+    artifacts = leaf.get("raw_artifacts")
+    expected_artifacts = {
+        "instance_id": paths["instance_id"], "instance_id_info": paths["instance_id_info"],
+        "occlusion": paths["occlusion_raw"], "renderer_uri": paths["renderer_uri_raw"],
+    }
+    if not isinstance(artifacts, dict):
+        errors.append(f"{prefix} leaf raw artifact bindings are absent")
+        return
+    for name, path in expected_artifacts.items():
+        binding = artifacts.get(name)
+        if (not isinstance(binding, dict) or binding.get("filename") != PurePosixPath(path).name
+                or binding.get("sha256") != _sha256(root / PurePosixPath(path))):
+            errors.append(f"{prefix} leaf raw artifact {name} is not SHA-bound")
+    semantic_binding = artifacts.get("semantic_roots")
+    semantic_path = _safe_relative(semantic_binding.get("path")) if isinstance(semantic_binding, dict) else None
+    semantic_roots = None
+    if (semantic_path is None or not isinstance(semantic_binding, dict)
+            or semantic_binding.get("sha256") != _sha256(root / PurePosixPath(semantic_path))):
+        errors.append(f"{prefix} semantic-root source artifact is not SHA-bound")
+    else:
+        semantic_roots = _load_json(root / PurePosixPath(semantic_path), f"{prefix} semantic roots", errors)
+    expected_source_classes = {key[7:]: value for key, value in source_bindings.items() if key.startswith("@class:")}
+    preserved_roots = semantic_roots.get("roots") if isinstance(semantic_roots, dict) else None
+    preserved_classes = {
+        item.get("usd_root_path"): item.get("class")
+        for item in preserved_roots
+        if isinstance(item, dict)
+    } if isinstance(preserved_roots, list) else {}
+    if preserved_classes != expected_source_classes:
+        errors.append(f"{prefix} semantic-root classes differ from authoritative source provenance")
+    raw_labels = info_doc.get("info", {}).get("idToLabels") if isinstance(info_doc.get("info"), dict) else None
+    uri_map = uri_doc.get("renderer_instance_id_to_uri")
+    rows = occlusion_doc.get("data")
+    leaves = leaf.get("leaves")
+    if not isinstance(raw_labels, dict) or not isinstance(uri_map, dict) or not isinstance(rows, list) or not isinstance(leaves, list):
+        errors.append(f"{prefix} leaf raw maps or normalized leaves are invalid")
+        return
+    row_by_id: dict[int, dict[str, Any]] = {}
+    for row in rows:
+        rid = row.get("instanceId") if isinstance(row, dict) else None
+        if not _nonnegative_int(rid) or rid in row_by_id:
+            errors.append(f"{prefix} occlusion renderer IDs are invalid or duplicated")
+            return
+        row_by_id[int(rid)] = row
+    try:
+        uri_ids = {int(key) for key in uri_map if isinstance(key, str) and key == str(int(key))}
+    except (TypeError, ValueError):
+        uri_ids = set()
+    if uri_ids != set(row_by_id) or len(uri_ids) != len(uri_map):
+        errors.append(f"{prefix} occlusion rows and SDK URI map differ")
+    if uri_doc.get("renderer_instance_ids") != list(row_by_id):
+        errors.append(f"{prefix} SDK URI renderer ID sequence differs from raw occlusion rows")
+    if len(set(uri_map.values())) != len(uri_map):
+        errors.append(f"{prefix} SDK URI map is not one-to-one")
+    visible_ids = {int(value) for value in _array_values(instance_id) if int(value) != 0}
+    raw_uri_ids: set[int] = set()
+    for key, raw_uri in raw_labels.items():
+        try:
+            rid = int(key)
+        except (TypeError, ValueError):
+            errors.append(f"{prefix} renderer raw-info ID is not canonical")
+            continue
+        if not isinstance(key, str) or key != str(rid) or rid < 0:
+            errors.append(f"{prefix} renderer raw-info ID is not canonical")
+            continue
+        if isinstance(raw_uri, dict):
+            raw_uri = raw_uri.get("primPath") or raw_uri.get("path")
+        if rid == 0 and _raw_reserved_identity(raw_labels[key]) == "BACKGROUND" and str(rid) not in uri_map:
+            continue
+        raw_uri_ids.add(rid)
+        if not _usd_path(raw_uri) or rid not in row_by_id or raw_uri != uri_map.get(str(rid)):
+            errors.append(f"{prefix} renderer ID {rid} differs between raw info and SDK URI")
+    for rid, raw_uri in uri_map.items():
+        if rid not in {str(value) for value in uri_ids}:
+            continue
+        labelled = _usd_path(raw_uri) and any(_same_or_descendant(raw_uri, root_path) for root_path in expected_source_classes)
+        if labelled and int(rid) not in raw_uri_ids:
+            errors.append(f"{prefix} labelled renderer ID {rid} is absent from raw info")
+    if not visible_ids.issubset(raw_uri_ids):
+        errors.append(f"{prefix} visible renderer IDs are absent from raw info")
+    normalized_ids: set[int] = set()
+    expected_root_members: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    leaf_stats = stats["leaf_occlusion"]
+    for item in leaves:
+        if not isinstance(item, dict) or not _nonnegative_int(item.get("renderer_instance_id")):
+            errors.append(f"{prefix} normalized leaf entry is invalid")
+            continue
+        rid = int(item["renderer_instance_id"])
+        if rid in normalized_ids or rid not in row_by_id:
+            errors.append(f"{prefix} normalized leaf ID {rid} is duplicated or absent from raw rows")
+            continue
+        normalized_ids.add(rid)
+        row = row_by_id[rid]
+        raw_ratio = row.get("occlusionRatio")
+        if (not _finite_number(raw_ratio) or item.get("occlusion_raw_value") != raw_ratio
+                or item.get("render_tile_id_raw") != row.get("semanticId")):
+            errors.append(f"{prefix} leaf {rid} does not preserve raw occlusion")
+            continue
+        ratio = float(raw_ratio)
+        if ratio != -1.0 and not 0.0 <= ratio <= 1.0:
+            errors.append(f"{prefix} leaf {rid} occlusion is outside [-1 sentinel, 0..1]")
+            continue
+        path = uri_map.get(str(rid))
+        if item.get("leaf_prim_path") != path or not _usd_path(path):
+            errors.append(f"{prefix} leaf {rid} path does not match the SDK URI map")
+            continue
+        candidates = [key[7:] for key, value in source_bindings.items() if key.startswith("@class:") and (path == key[7:] or path.startswith(key[7:] + "/"))]
+        expected_root = max(candidates, key=len) if candidates else None
+        expected_class = source_bindings.get(f"@class:{expected_root}") if expected_root else None
+        status = item.get("occlusion_status")
+        if item.get("visible_in_instance_id_mask") is not (rid in visible_ids):
+            errors.append(f"{prefix} leaf {rid} visible-mask flag is invalid")
+        if expected_root is None:
+            if status != "no_taxonomy_root" or item.get("labelled_root_path") is not None or item.get("class") is not None or item.get("occlusion_ratio") is not None:
+                errors.append(f"{prefix} leaf {rid} no-taxonomy status is forged")
+            leaf_stats["no_taxonomy_root"] += 1
+            camera_status = leaf_stats["by_camera_status"].setdefault(camera_id, {})
+            camera_status["no_taxonomy_root"] = camera_status.get("no_taxonomy_root", 0) + 1
+        elif item.get("labelled_root_path") != expected_root or item.get("class") != expected_class:
+            errors.append(f"{prefix} leaf {rid} class/root differs from authoritative source provenance")
+            leaf_stats["join_failures"] += 1
+        elif ratio == -1.0:
+            expected_root_members[expected_root].append(item)
+            if status != "unavailable_raw_sentinel" or item.get("occlusion_ratio") is not None:
+                errors.append(f"{prefix} leaf {rid} sentinel normalization is invalid")
+            leaf_stats["unknown"] += 1
+            camera_status = leaf_stats["by_camera_status"].setdefault(camera_id, {})
+            camera_status["unavailable_raw_sentinel"] = camera_status.get("unavailable_raw_sentinel", 0) + 1
+            class_status = leaf_stats["by_class_status"].setdefault(expected_class, {})
+            class_status["unavailable_raw_sentinel"] = class_status.get("unavailable_raw_sentinel", 0) + 1
+        else:
+            expected_root_members[expected_root].append(item)
+            if status != "measured_leaf" or item.get("occlusion_ratio") != raw_ratio:
+                errors.append(f"{prefix} leaf {rid} measured ratio is not preserved")
+            leaf_stats["measured_useful"] += 1
+            leaf_stats["scene_camera_useful"][f"{scene_id}/{camera_id}"] = leaf_stats["scene_camera_useful"].get(f"{scene_id}/{camera_id}", 0) + 1
+            leaf_stats["by_class"][expected_class] = leaf_stats["by_class"].get(expected_class, 0) + 1
+            camera_status = leaf_stats["by_camera_status"].setdefault(camera_id, {})
+            camera_status["measured_leaf"] = camera_status.get("measured_leaf", 0) + 1
+            class_status = leaf_stats["by_class_status"].setdefault(expected_class, {})
+            class_status["measured_leaf"] = class_status.get("measured_leaf", 0) + 1
+            bin_name = "clear" if ratio <= 0.1 else "partial" if ratio <= 0.5 else "heavy"
+            camera_bins = leaf_stats["by_camera_bins"].setdefault(camera_id, {"clear": 0, "partial": 0, "heavy": 0})
+            camera_bins[bin_name] += 1
+    if normalized_ids != set(row_by_id):
+        errors.append(f"{prefix} normalized leaf rows do not preserve every raw occlusion ID")
+    roots = leaf.get("roots")
+    if not isinstance(roots, list):
+        errors.append(f"{prefix} leaf root summaries are invalid")
+    else:
+        roots_by_path = {
+            item.get("labelled_root_path"): item
+            for item in roots
+            if isinstance(item, dict) and _usd_path(item.get("labelled_root_path"))
+        }
+        if len(roots_by_path) != len(roots) or set(roots_by_path) != set(expected_root_members):
+            errors.append(f"{prefix} leaf root summaries do not exactly match joined taxonomy roots")
+        for root_item in roots:
+            if not isinstance(root_item, dict):
+                continue
+            root_path = root_item.get("labelled_root_path")
+            members = expected_root_members.get(str(root_path), [])
+            source_class = source_bindings.get(f"@class:{root_path}")
+            measured = [item for item in members if item.get("occlusion_status") == "measured_leaf"]
+            single_measured = len(members) == 1 and len(measured) == 1
+            expected_status = "single_leaf_measured" if single_measured else "compound_root_unknown"
+            expected_ratio = measured[0].get("occlusion_ratio") if single_measured else None
+            if (root_item.get("class") != source_class
+                    or root_item.get("renderer_leaf_count") != len(members)
+                    or root_item.get("occlusion_status") != expected_status
+                    or root_item.get("true_compound_occlusion_ratio") != expected_ratio):
+                errors.append(f"{prefix} leaf root summary {root_path!r} is inconsistent with leaf evidence")
+            if expected_status == "compound_root_unknown":
+                if root_item.get("true_compound_occlusion_ratio") is not None:
+                    errors.append(f"{prefix} compound root occlusion must remain unknown")
+                leaf_stats["compound_root_unknown"] += 1
+
+
+def _validate_leaf_coverage(profile: dict[str, Any], stats: dict[str, Any], scene_ids: set[str], camera_ids: set[str], errors: list[str]) -> None:
+    contract = profile.get("occlusion_evidence")
+    if not isinstance(contract, dict) or contract.get("reason") != "verifiedSDKleaf-onlymapping":
+        errors.append("profile leaf occlusion evidence contract is missing or unverified")
+        return
+    leaf = stats["leaf_occlusion"]
+    minimum = _positive_int(contract.get("minimum_measured_useful_leaves_per_scene_camera"))
+    if minimum is None:
+        errors.append("profile leaf occlusion minimum is not a positive integer")
+        return
+    for scene_id in scene_ids:
+        for camera_id in camera_ids:
+            if leaf["scene_camera_useful"].get(f"{scene_id}/{camera_id}", 0) < minimum:
+                errors.append(f"{scene_id}/{camera_id} has insufficient measured useful leaf occlusion")
+    required_bins = contract.get("required_bins_per_camera")
+    minimum_bin = _positive_int(contract.get("minimum_per_required_bin"))
+    if not isinstance(required_bins, list) or set(required_bins) != {"clear", "partial", "heavy"}:
+        errors.append("profile required leaf occlusion bins are invalid")
+    else:
+        for camera_id in camera_ids:
+            bins = leaf["by_camera_bins"].get(camera_id, {})
+            for bin_name in required_bins:
+                if bins.get(bin_name, 0) < (minimum_bin or 1):
+                    errors.append(f"camera {camera_id} has no measured {bin_name} leaf occlusion")
+    required_classes = contract.get("required_global_classes")
+    if not isinstance(required_classes, list) or any(not isinstance(value, str) for value in required_classes):
+        errors.append("profile required leaf occlusion classes are invalid")
+    else:
+        for class_name in required_classes:
+            if leaf["by_class"].get(class_name, 0) < 1:
+                errors.append(f"required class {class_name} has no measured leaf occlusion")
+    if leaf["join_failures"] != 0:
+        errors.append("leaf occlusion evidence contains source join failures")
 
 
 def _validate_instances(
@@ -881,7 +1141,7 @@ def _validate_instances(
         candidates = [
             (source_root, source_sha)
             for source_root, source_sha in source_bindings.items()
-            if usd_path == source_root or usd_path.startswith(source_root + "/")
+            if not source_root.startswith("@class:") and (usd_path == source_root or usd_path.startswith(source_root + "/"))
         ]
         expected_asset_sha = max(candidates, key=lambda value: len(value[0]))[1] if candidates else None
         if expected_asset_sha is None or asset_sha != expected_asset_sha:
@@ -934,8 +1194,6 @@ def _validate_instances(
                 errors.append(f"{prefix} instance {instance_id} unavailable occlusion sentinel is normalized incorrectly")
             else:
                 stats["occlusion_unknown_instances"] += 1
-                if stats.get("validation_gate") == "production":
-                    errors.append(f"{prefix} instance {instance_id} has unavailable occlusion in a production dataset")
         elif not _finite_number(normalized_occ) or float(raw_occ) != float(normalized_occ) or item.get("occlusion_status") != "measured_raw":
             errors.append(f"{prefix} instance {instance_id} occlusion ratio does not preserve the measured raw value")
         elif not minimum_occ <= float(normalized_occ) <= maximum_occ:
@@ -1162,6 +1420,8 @@ def _validate_visual_review(
     required = int(profile.get("visual_review", {}).get("required_per_scene_camera", 1))
     allowed_verdict = profile.get("visual_review", {}).get("allowed_verdict", "pass")
     counts: Counter[tuple[str, str]] = Counter()
+    reviewed_leaf_bins: set[tuple[str, str]] = set()
+    reviewed_compound: set[str] = set()
     for entry in entries:
         if not isinstance(entry, dict):
             errors.append("visual-review contains a non-object entry")
@@ -1189,10 +1449,66 @@ def _validate_visual_review(
             errors.append(f"visual-review entry for {key[0]}/{key[1]} is unreviewed or not approved")
             continue
         counts[key] += 1
+        evidence_kind = entry.get("evidence_kind")
+        if evidence_kind in {"leaf_occlusion_bin", "compound_root_unknown"}:
+            raw_path = _safe_relative(entry.get("occlusion_raw_path"))
+            normalized_path = str(PurePosixPath(rgb_path).parent / "normalized.json")
+            normalized = _load_json(root / PurePosixPath(normalized_path), "visual review normalized evidence", errors)
+            expected_raw_path = str(PurePosixPath(rgb_path).parent / "occlusion.raw.json")
+            if (raw_path != expected_raw_path or raw_path not in manifest_paths
+                    or entry.get("occlusion_raw_sha256") != _sha256(root / PurePosixPath(raw_path))
+                    or not isinstance(normalized, dict)):
+                errors.append("visual-review leaf evidence does not bind raw/normalized artifacts")
+                continue
+            leaf_evidence = normalized.get("leaf_occlusion")
+            if not isinstance(leaf_evidence, dict):
+                errors.append("visual-review leaf evidence has no normalized leaf block")
+                continue
+            raw_document = _load_json(root / PurePosixPath(raw_path), "visual review occlusion evidence", errors)
+            binding = leaf_evidence.get("frame_binding")
+            if (not isinstance(binding, dict) or not isinstance(raw_document, dict)
+                    or any(binding.get(name) != value for name, value in
+                           (("scene_id", review_scene), ("camera_id", review_camera), ("capture_id", capture_id)))
+                    or any(raw_document.get(name) != binding.get(name) for name in
+                           ("scene_id", "capture_id", "camera_id", "physics_frame", "sim_time_ns"))):
+                errors.append("visual-review occlusion evidence is not same-frame bound")
+                continue
+            if evidence_kind == "leaf_occlusion_bin":
+                bin_name = entry.get("occlusion_bin")
+                matched = [item for item in leaf_evidence.get("leaves", []) if isinstance(item, dict)
+                           and item.get("renderer_instance_id") == entry.get("renderer_instance_id")
+                           and item.get("leaf_prim_path") == entry.get("leaf_prim_path")
+                           and item.get("labelled_root_path") == entry.get("labelled_root_path")]
+                ratio = matched[0].get("occlusion_ratio") if len(matched) == 1 else None
+                actual_bin = "clear" if isinstance(ratio, (int, float)) and ratio <= 0.1 else "partial" if isinstance(ratio, (int, float)) and ratio <= 0.5 else "heavy" if isinstance(ratio, (int, float)) else None
+                if actual_bin != bin_name:
+                    errors.append("visual-review leaf bin evidence is not supported by normalized data")
+                else:
+                    reviewed_leaf_bins.add((str(review_camera), str(bin_name)))
+            else:
+                matched = [item for item in leaf_evidence.get("roots", []) if isinstance(item, dict)
+                           and item.get("labelled_root_path") == entry.get("labelled_root_path")
+                           and item.get("occlusion_status") == "compound_root_unknown"
+                           and item.get("true_compound_occlusion_ratio") is None]
+                if len(matched) != 1:
+                    errors.append("visual-review compound unknown evidence is not supported by normalized data")
+                else:
+                    reviewed_compound.add(str(review_camera))
     for key in sorted(available):
         if counts[key] < required:
             errors.append(f"visual review coverage for {key[0]}/{key[1]} is below {required}")
     stats["visual_reviewed_scene_cameras"] = sum(1 for key in available if counts[key] >= required)
+    visual_contract = profile.get("visual_review", {})
+    required_bins = visual_contract.get("required_leaf_occlusion_bins_per_camera", [])
+    camera_ids = {camera for _scene, camera in available}
+    if isinstance(required_bins, list):
+        for camera_id in camera_ids:
+            for bin_name in required_bins:
+                if (camera_id, bin_name) not in reviewed_leaf_bins:
+                    errors.append(f"visual review has no approved {bin_name} leaf representative for camera {camera_id}")
+    if visual_contract.get("require_compound_unknown_per_camera") is True:
+        for camera_id in camera_ids - reviewed_compound:
+            errors.append(f"visual review has no approved compound-unknown representative for camera {camera_id}")
 
 
 def _validate_manifest(root: Path, manifest: object, errors: list[str], summary: dict[str, Any]) -> set[str]:
@@ -1276,6 +1592,20 @@ def _validate_profile(profile: dict[str, Any], errors: list[str]) -> None:
     visual = profile.get("visual_review")
     if not isinstance(visual, dict) or _positive_int(visual.get("required_per_scene_camera")) is None or not _identifier(visual.get("allowed_verdict")):
         errors.append("profile visual_review gate is invalid")
+    elif (visual.get("required_leaf_occlusion_bins_per_camera") != ["clear", "partial", "heavy"]
+          or visual.get("require_compound_unknown_per_camera") is not True):
+        errors.append("profile visual_review leaf evidence gate is invalid")
+    leaf = profile.get("occlusion_evidence")
+    if (not isinstance(leaf, dict)
+            or leaf.get("measurement_basis") != "verified_sdk_leaf_only_mapping"
+            or leaf.get("reason") != "verifiedSDKleaf-onlymapping"
+            or leaf.get("maximum_join_failures") != 0
+            or _positive_int(leaf.get("minimum_measured_useful_leaves_per_scene_camera")) is None
+            or leaf.get("required_bins_per_camera") != ["clear", "partial", "heavy"]
+            or _positive_int(leaf.get("minimum_per_required_bin")) is None
+            or not isinstance(leaf.get("required_global_classes"), list)
+            or not leaf.get("required_global_classes")):
+        errors.append("profile occlusion_evidence leaf-only contract is invalid")
 
 
 def _validate_split_counts(assignments: dict[str, str], expected: object, errors: list[str]) -> None:

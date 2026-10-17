@@ -126,8 +126,21 @@ class DatasetEvidenceTests(unittest.TestCase):
                 "bbox_tolerance_px": 1,
                 "minimum_class_pixels": 1,
             },
+            "occlusion_evidence": {
+                "measurement_basis": "verified_sdk_leaf_only_mapping",
+                "reason": "verifiedSDKleaf-onlymapping",
+                "maximum_join_failures": 0,
+                "minimum_measured_useful_leaves_per_scene_camera": 1,
+                "required_bins_per_camera": ["clear", "partial", "heavy"],
+                "minimum_per_required_bin": 1,
+                "required_global_classes": ["rack"],
+            },
             "splits": {"train": 1, "val": 1, "test": 1},
-            "visual_review": {"required_per_scene_camera": 1, "allowed_verdict": "pass"},
+            "visual_review": {
+                "required_per_scene_camera": 1, "allowed_verdict": "pass",
+                "required_leaf_occlusion_bins_per_camera": ["clear", "partial", "heavy"],
+                "require_compound_unknown_per_camera": True,
+            },
         }
         self.profile_path.write_text(json.dumps(self.profile), encoding="utf-8")
         self.dataset: dict[str, Any] = self._write_dataset()
@@ -306,7 +319,112 @@ class DatasetEvidenceTests(unittest.TestCase):
         self.assertEqual(report["stats"]["occlusion_measured_instances"], 6)
         self.assertEqual(sum(report["stats"]["occlusion_distribution"].values()), 6)
 
-    def test_production_gate_rejects_unavailable_occlusion(self) -> None:
+    def test_leaf_sdk_uri_key_drop_is_rejected(self) -> None:
+        path = next(self.root.rglob("renderer-instance-uri.raw.json"))
+        document = json.loads(path.read_text(encoding="utf-8"))
+        document["renderer_instance_id_to_uri"].pop("103")
+        document["renderer_instance_ids"].remove(103)
+        path.write_text(json.dumps(document), encoding="utf-8")
+        normalized_path = path.with_name("normalized.json")
+        normalized = json.loads(normalized_path.read_text(encoding="utf-8"))
+        normalized["leaf_occlusion"]["raw_artifacts"]["renderer_uri"]["sha256"] = hashlib.sha256(path.read_bytes()).hexdigest()
+        normalized_path.write_text(json.dumps(normalized), encoding="utf-8")
+        self._refresh_manifest()
+
+        report = validate_dataset(self.root, self.profile_path)
+
+        self.assertTrue(any("occlusion rows and SDK URI map differ" in error for error in report["errors"]), report["errors"])
+
+    def test_leaf_source_class_forgery_is_rejected(self) -> None:
+        normalized_path = next(self.root.glob("scenes/scene-000/**/normalized.json"))
+        normalized = json.loads(normalized_path.read_text(encoding="utf-8"))
+        semantic_binding = normalized["leaf_occlusion"]["raw_artifacts"]["semantic_roots"]
+        semantic_path = self.root / semantic_binding["path"]
+        semantic = json.loads(semantic_path.read_text(encoding="utf-8"))
+        next(item for item in semantic["roots"] if item["usd_root_path"] == "/World/Visuals/Rack")["class"] = "tote"
+        semantic_path.write_text(json.dumps(semantic), encoding="utf-8")
+        semantic_binding["sha256"] = hashlib.sha256(semantic_path.read_bytes()).hexdigest()
+        for item in normalized["leaf_occlusion"]["leaves"]:
+            item["class"] = "tote"
+        normalized_path.write_text(json.dumps(normalized), encoding="utf-8")
+        self._refresh_manifest()
+
+        report = validate_dataset(self.root, self.profile_path)
+
+        self.assertTrue(any("semantic-root classes differ" in error for error in report["errors"]), report["errors"])
+
+    def test_invisible_leaf_raw_info_uri_and_missing_key_are_rejected(self) -> None:
+        for mutation in ("uri", "missing"):
+            with self.subTest(mutation=mutation):
+                path = next(self.root.glob("scenes/scene-000/**/instance-id.raw-info.json"))
+                original_info = path.read_bytes()
+                mask_path = path.with_name("instance-id.npy")
+                original_mask = mask_path.read_bytes()
+                normalized_path = path.with_name("normalized.json")
+                original_normalized = normalized_path.read_bytes()
+                info = json.loads(original_info)
+                if mutation == "uri":
+                    info["info"]["idToLabels"]["103"] = "/World/Visuals/Rack/ForgedInvisible"
+                else:
+                    info["info"]["idToLabels"].pop("103")
+                path.write_text(json.dumps(info), encoding="utf-8")
+                mask_path.write_bytes(_npy("<u4", [0] * 4 + [101] * 4 + [102] * 2 + [0] * 2))
+                normalized = json.loads(original_normalized)
+                leaf = normalized["leaf_occlusion"]
+                next(item for item in leaf["leaves"] if item["renderer_instance_id"] == 103)["visible_in_instance_id_mask"] = False
+                for name, artifact_path in (("instance_id", mask_path), ("instance_id_info", path)):
+                    leaf["raw_artifacts"][name]["sha256"] = hashlib.sha256(artifact_path.read_bytes()).hexdigest()
+                normalized_path.write_text(json.dumps(normalized), encoding="utf-8")
+                self._refresh_manifest()
+
+                report = validate_dataset(self.root, self.profile_path)
+
+                self.assertFalse(report["passed"])
+                self.assertTrue(any("raw info" in error and "103" in error for error in report["errors"]), report["errors"])
+                path.write_bytes(original_info)
+                mask_path.write_bytes(original_mask)
+                normalized_path.write_bytes(original_normalized)
+                self._refresh_manifest()
+
+    def test_leaf_render_tile_raw_value_must_match_original(self) -> None:
+        path = next(self.root.rglob("normalized.json"))
+        normalized = json.loads(path.read_text(encoding="utf-8"))
+        normalized["leaf_occlusion"]["leaves"][0]["render_tile_id_raw"] = 99
+        path.write_text(json.dumps(normalized), encoding="utf-8")
+        self._refresh_manifest()
+
+        report = validate_dataset(self.root, self.profile_path)
+
+        self.assertFalse(report["passed"])
+        self.assertTrue(any("does not preserve raw occlusion" in error for error in report["errors"]), report["errors"])
+
+    def test_visual_review_cannot_bind_another_capture_raw_file(self) -> None:
+        path = self.root / "visual-review.json"
+        document = json.loads(path.read_text(encoding="utf-8"))
+        entry = next(item for item in document["entries"] if item.get("evidence_kind") == "leaf_occlusion_bin")
+        raw_path = next(self.root.glob("scenes/scene-002/**/occlusion.raw.json"))
+        entry["occlusion_raw_path"] = raw_path.relative_to(self.root).as_posix()
+        entry["occlusion_raw_sha256"] = hashlib.sha256(raw_path.read_bytes()).hexdigest()
+        path.write_text(json.dumps(document), encoding="utf-8")
+        self._refresh_manifest()
+
+        report = validate_dataset(self.root, self.profile_path)
+
+        self.assertFalse(report["passed"])
+        self.assertTrue(any("visual-review leaf evidence does not bind" in error for error in report["errors"]), report["errors"])
+
+    def test_compound_root_ratio_forgery_is_rejected(self) -> None:
+        path = next(self.root.rglob("normalized.json"))
+        normalized = json.loads(path.read_text(encoding="utf-8"))
+        normalized["leaf_occlusion"]["roots"][0]["true_compound_occlusion_ratio"] = 0.0
+        path.write_text(json.dumps(normalized), encoding="utf-8")
+        self._refresh_manifest()
+
+        report = validate_dataset(self.root, self.profile_path)
+
+        self.assertTrue(any("compound root occlusion must remain unknown" in error for error in report["errors"]), report["errors"])
+
+    def test_production_gate_does_not_treat_bbox_sentinel_as_leaf_occlusion(self) -> None:
         self._set_occlusion_sentinel(next(self.root.rglob("normalized.json")))
         self._refresh_manifest()
 
@@ -314,8 +432,8 @@ class DatasetEvidenceTests(unittest.TestCase):
             report = validate_dataset(self.root, self.profile_path)
 
         self.assertEqual(report["validation_gate"], "production")
-        self.assertFalse(report["production_passed"])
-        self.assertTrue(any("unavailable occlusion in a production dataset" in error for error in report["errors"]))
+        self.assertEqual(report["stats"]["occlusion_unknown_instances"], 3)
+        self.assertFalse(any("unavailable occlusion in a production dataset" in error for error in report["errors"]))
 
     def test_camera_matrix_tamper_is_rejected(self) -> None:
         path = next(self.root.rglob("camera_params.json"))
@@ -380,7 +498,7 @@ class DatasetEvidenceTests(unittest.TestCase):
     def test_parent_instance_claim_cannot_absorb_nested_labelled_bbox_root(self) -> None:
         visual_path = self.root / "authored-scenes/scene-000/visual-scene-manifest.json"
         visual = json.loads(visual_path.read_text(encoding="utf-8"))
-        visual["instances"].append({"prim_path": "/World/Visuals/Rack/Child"})
+        visual["instances"].append({"prim_path": "/World/Visuals/Rack/Child", "semantic_class": "rack"})
         visual_path.write_text(json.dumps(visual), encoding="utf-8")
 
         scene_sources_path = self.root / self.dataset["source"]["scene_path"]
@@ -694,11 +812,23 @@ class DatasetEvidenceTests(unittest.TestCase):
                     {
                         "variant": {"id": variant_id},
                         "asset_provenance": {"asset_source_sha256": asset_manifest_sha},
-                        "instances": [{"prim_path": "/World/Visuals/Rack"}],
+                        "instances": [{"prim_path": "/World/Visuals/Rack", "semantic_class": "rack"}],
                     }
                 ),
                 encoding="utf-8",
             )
+            semantic_roots_path = authored / "semantic-roots.raw.json"
+            semantic_roots_path.write_text(json.dumps({
+                "schema_version": 1,
+                "roots": [
+                    {"usd_root_path": "/World/FloorVisual", "class": "floor", "source": "authored_source_manifest"},
+                    {"usd_root_path": "/World/Markers", "class": "station_marker", "source": "authored_source_manifest"},
+                    {"usd_root_path": "/World/Visuals/FloorGraphics", "class": "floor_marking", "source": "authored_source_manifest"},
+                    {"usd_root_path": "/World/Visuals/Rack", "class": "rack", "source": "authored_source_manifest"},
+                    {"usd_root_path": "/World/Carter1", "class": "amr", "source": "authored_source_manifest"},
+                    {"usd_root_path": "/World/Carter2", "class": "amr", "source": "authored_source_manifest"},
+                ],
+            }), encoding="utf-8")
             relative_dir = f"scenes/{scene_id}/captures/f{frame:09d}-t{sim_time_ns:015d}/overhead"
             output = self.root / relative_dir
             output.mkdir(parents=True)
@@ -706,6 +836,10 @@ class DatasetEvidenceTests(unittest.TestCase):
             depth_path = f"{relative_dir}/depth.npy"
             semantic_path = f"{relative_dir}/semantic.npy"
             instance_path = f"{relative_dir}/instance.npy"
+            instance_id_path = f"{relative_dir}/instance-id.npy"
+            instance_id_info_path = f"{relative_dir}/instance-id.raw-info.json"
+            occlusion_path = f"{relative_dir}/occlusion.raw.json"
+            renderer_uri_path = f"{relative_dir}/renderer-instance-uri.raw.json"
             raw_path = f"{relative_dir}/bbox2d.raw.json"
             camera_path = f"{relative_dir}/camera_params.json"
             normalized_path = f"{relative_dir}/normalized.json"
@@ -716,6 +850,30 @@ class DatasetEvidenceTests(unittest.TestCase):
             (self.root / depth_path).write_bytes(_npy("<f4", [float("inf")] * 4 + [2.0 + scene_index] * 8))
             (self.root / semantic_path).write_bytes(_npy("<u4", [0] * 4 + [2] * 4 + [9] * 2 + [10] * 2))
             (self.root / instance_path).write_bytes(_npy("<u4", [0] * 4 + [21] * 4 + [27] * 2 + [35] * 2))
+            renderer_values = [0] * 4 + [101] * 4 + [102] * 2 + [103] * 2
+            (self.root / instance_id_path).write_bytes(_npy("<u4", renderer_values))
+            frame_binding = {
+                "scene_id": scene_id, "capture_id": capture_id, "camera_id": "overhead",
+                "physics_frame": frame, "sim_time_ns": sim_time_ns,
+            }
+            renderer_map = {
+                "101": "/World/Visuals/Rack/MeshA",
+                "102": "/World/Visuals/Rack/MeshB",
+                "103": "/World/Visuals/Rack/MeshC",
+            }
+            (self.root / instance_id_info_path).write_text(json.dumps({
+                **frame_binding, "info": {"idToLabels": renderer_map, "annotator": "instance_id_segmentation"},
+            }), encoding="utf-8")
+            occlusion_rows = [
+                {"instanceId": 101, "semanticId": 0, "occlusionRatio": 0.0},
+                {"instanceId": 102, "semanticId": 0, "occlusionRatio": 0.25},
+                {"instanceId": 103, "semanticId": 0, "occlusionRatio": 0.75},
+            ]
+            (self.root / occlusion_path).write_text(json.dumps({**frame_binding, "data": occlusion_rows, "info": {}}), encoding="utf-8")
+            (self.root / renderer_uri_path).write_text(json.dumps({
+                **frame_binding, "renderer_instance_id_to_uri": renderer_map,
+                "renderer_instance_ids": [101, 102, 103],
+            }), encoding="utf-8")
             semantic_raw_info = {
                 "idToLabels": {
                     "0": {"class": "BACKGROUND"},
@@ -810,6 +968,36 @@ class DatasetEvidenceTests(unittest.TestCase):
                 },
                 "instances": instances,
             }
+            raw_artifacts = {
+                "instance_id": {"filename": "instance-id.npy", "sha256": hashlib.sha256((self.root / instance_id_path).read_bytes()).hexdigest()},
+                "instance_id_info": {"filename": "instance-id.raw-info.json", "sha256": hashlib.sha256((self.root / instance_id_info_path).read_bytes()).hexdigest()},
+                "occlusion": {"filename": "occlusion.raw.json", "sha256": hashlib.sha256((self.root / occlusion_path).read_bytes()).hexdigest()},
+                "renderer_uri": {"filename": "renderer-instance-uri.raw.json", "sha256": hashlib.sha256((self.root / renderer_uri_path).read_bytes()).hexdigest()},
+                "semantic_roots": {
+                    "path": semantic_roots_path.relative_to(self.root).as_posix(),
+                    "sha256": hashlib.sha256(semantic_roots_path.read_bytes()).hexdigest(),
+                },
+            }
+            normalized["leaf_occlusion"] = {
+                "measurement_basis": "verified_sdk_leaf_only_mapping",
+                "reason": "verifiedSDKleaf-onlymapping",
+                "frame_binding": frame_binding,
+                "raw_artifacts": raw_artifacts,
+                "leaves": [
+                    {
+                        "renderer_instance_id": row["instanceId"], "render_tile_id_raw": 0,
+                        "leaf_prim_path": renderer_map[str(row["instanceId"])],
+                        "labelled_root_path": "/World/Visuals/Rack", "class": "rack",
+                        "occlusion_ratio": row["occlusionRatio"], "occlusion_raw_value": row["occlusionRatio"],
+                        "occlusion_status": "measured_leaf", "visible_in_instance_id_mask": True,
+                    }
+                    for row in occlusion_rows
+                ],
+                "roots": [{
+                    "labelled_root_path": "/World/Visuals/Rack", "class": "rack", "renderer_leaf_count": 3,
+                    "true_compound_occlusion_ratio": None, "occlusion_status": "compound_root_unknown",
+                }],
+            }
             (self.root / normalized_path).write_text(json.dumps(normalized), encoding="utf-8")
             camera = {
                 "scene_id": scene_id,
@@ -854,6 +1042,10 @@ class DatasetEvidenceTests(unittest.TestCase):
                         "depth": depth_path,
                         "semantic": semantic_path,
                         "instance": instance_path,
+                        "instance_id": instance_id_path,
+                        "instance_id_info": instance_id_info_path,
+                        "occlusion_raw": occlusion_path,
+                        "renderer_uri_raw": renderer_uri_path,
                         "bbox2d_raw": raw_path,
                         "camera_params": camera_path,
                         "normalized": normalized_path,
@@ -904,6 +1096,27 @@ class DatasetEvidenceTests(unittest.TestCase):
                     "reviewer": "test-reviewer",
                 }
             )
+            if scene_index == 0:
+                for renderer_id, bin_name in ((101, "clear"), (102, "partial"), (103, "heavy")):
+                    reviews.append({
+                        "scene_id": scene_id, "camera_id": "overhead", "capture_id": capture_id,
+                        "rgb_path": rgb_path, "rgb_sha256": hashlib.sha256((self.root / rgb_path).read_bytes()).hexdigest(),
+                        "evidence_kind": "leaf_occlusion_bin", "occlusion_bin": bin_name,
+                        "renderer_instance_id": renderer_id,
+                        "leaf_prim_path": renderer_map[str(renderer_id)],
+                        "labelled_root_path": "/World/Visuals/Rack",
+                        "occlusion_raw_path": occlusion_path,
+                        "occlusion_raw_sha256": hashlib.sha256((self.root / occlusion_path).read_bytes()).hexdigest(),
+                        "reviewed": True, "verdict": "pass", "reviewer": "test-reviewer",
+                    })
+                reviews.append({
+                    "scene_id": scene_id, "camera_id": "overhead", "capture_id": capture_id,
+                    "rgb_path": rgb_path, "rgb_sha256": hashlib.sha256((self.root / rgb_path).read_bytes()).hexdigest(),
+                    "evidence_kind": "compound_root_unknown", "labelled_root_path": "/World/Visuals/Rack",
+                    "occlusion_raw_path": occlusion_path,
+                    "occlusion_raw_sha256": hashlib.sha256((self.root / occlusion_path).read_bytes()).hexdigest(),
+                    "reviewed": True, "verdict": "pass", "reviewer": "test-reviewer",
+                })
         source_files["scene_path"].write_text(
             json.dumps({"schema_version": 1, "variants": source_variants}), encoding="utf-8"
         )

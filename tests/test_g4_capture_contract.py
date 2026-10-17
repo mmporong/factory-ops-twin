@@ -21,6 +21,7 @@ from scripts.isaac.g4_capture import (
     _depth_value_is_valid,
     _jsonable,
     _normalize_annotations,
+    _normalize_leaf_occlusion,
     _parse_args,
     _parse_resolution,
     _parse_variant_seeds,
@@ -663,6 +664,11 @@ class G4CaptureContractTests(unittest.TestCase):
                 "distance_to_image_plane": _PersistArray((1, 1)),
                 "semantic_segmentation": semantic,
                 "instance_segmentation": instance,
+                "instance_id_segmentation": {
+                    "data": _PersistArray((1, 1)),
+                    "info": {"idToLabels": {"101": "/World/Rack/Mesh"}},
+                },
+                "occlusion": [{"instanceId": 101, "semanticId": 0, "occlusionRatio": 0.25}],
                 "bounding_box_2d_tight": bbox,
                 "camera_params": {"camera": camera_id},
             }
@@ -675,6 +681,13 @@ class G4CaptureContractTests(unittest.TestCase):
                 camera_payloads=payloads,
                 np=_PersistNP(),
                 Image=_PersistImage,
+                frame_context={
+                    "scene_id": "scene-000", "capture_id": "capture-000",
+                    "physics_frame": 124, "sim_time_ns": 2_066_666_667,
+                },
+                sd_interface=type("SD", (), {
+                    "get_uri_from_instance_segmentation_id": lambda self, value: "/World/Rack/Mesh"
+                })(),
             )
             with self.assertRaisesRegex(CaptureError, "class differs"):
                 _normalize_annotations(
@@ -699,6 +712,8 @@ class G4CaptureContractTests(unittest.TestCase):
                 "rgb.png", "depth.npy", "semantic.npy", "instance.npy",
                 "bbox2d.raw.json", "semantic.raw-info.json",
                 "instance.raw-info.json", "camera.raw-params.json",
+                "instance-id.npy", "instance-id.raw-info.json", "occlusion.raw.json",
+                "renderer-instance-uri.raw.json",
             }
             for camera_id, camera_artifacts in artifacts.items():
                 with self.subTest(camera_id=camera_id):
@@ -707,6 +722,23 @@ class G4CaptureContractTests(unittest.TestCase):
                         expected,
                     )
                     self.assertEqual(camera_artifacts["bbox_raw"], bbox)
+
+        with tempfile.TemporaryDirectory() as directory:
+            with self.assertRaises(RuntimeError):
+                _persist_raw_camera_payloads(
+                    capture_root=Path(directory), camera_payloads=payloads,
+                    np=_PersistNP(), Image=_PersistImage,
+                    frame_context={
+                        "scene_id": "scene-000", "capture_id": "capture-000",
+                        "physics_frame": 124, "sim_time_ns": 2_066_666_667,
+                    },
+                    sd_interface=type("FailingSD", (), {
+                        "get_uri_from_instance_segmentation_id": lambda self, value: (_ for _ in ()).throw(RuntimeError("lookup failed"))
+                    })(),
+                )
+            for camera_id in ("overhead", "aisle", "amr_follow"):
+                self.assertTrue((Path(directory) / camera_id / "occlusion.raw.json").is_file())
+                self.assertTrue((Path(directory) / camera_id / "instance-id.raw-info.json").is_file())
 
     def test_frozen_capture_contract_rejects_frame_time_or_pose_change(self) -> None:
         poses = {"carter1": ([1.0, 2.0, 0.1], [1.0, 0.0, 0.0, 0.0])}
@@ -719,6 +751,63 @@ class G4CaptureContractTests(unittest.TestCase):
         for frame, sim_time, after in mutations:
             with self.subTest(frame=frame, sim_time=sim_time), self.assertRaises(CaptureError):
                 _assert_frozen_capture(120, 2.0, poses, frame, sim_time, after)
+
+    def test_leaf_occlusion_keeps_renderer_ids_separate_and_compound_unknown(self) -> None:
+        context = {
+            "scene_id": "scene-000", "capture_id": "capture-000", "camera_id": "overhead",
+            "physics_frame": 120, "sim_time_ns": 2_000_000,
+        }
+        result = _normalize_leaf_occlusion(
+            context=context,
+            instance_id_payload={
+                "data": _Array([[101, 102]]),
+                "info": {"idToLabels": {"101": "/World/Rack/MeshA", "102": "/World/Rack/MeshB"}},
+            },
+            occlusion_payload={"data": [
+                {"instanceId": 101, "semanticId": 0, "occlusionRatio": 0.25},
+                {"instanceId": 102, "semanticId": 0, "occlusionRatio": -1.0},
+                {"instanceId": 103, "semanticId": 0, "occlusionRatio": 0.75},
+            ]},
+            renderer_uri_document={"renderer_instance_id_to_uri": {
+                "101": "/World/Rack/MeshA", "102": "/World/Rack/MeshB", "103": "/World/Lights/Panel",
+            }},
+            semantic_roots={"roots": [{"usd_root_path": "/World/Rack", "class": "rack"}]},
+            raw_artifacts={},
+            np=_FakeNP(),
+        )
+
+        self.assertEqual([item["occlusion_status"] for item in result["leaves"]], [
+            "measured_leaf", "unavailable_raw_sentinel", "no_taxonomy_root",
+        ])
+        self.assertEqual(result["roots"][0]["occlusion_status"], "compound_root_unknown")
+        self.assertIsNone(result["roots"][0]["true_compound_occlusion_ratio"])
+
+    def test_leaf_occlusion_rejects_invalid_ratio_and_visible_uri_mismatch(self) -> None:
+        base = {
+            "context": {"scene_id": "s", "capture_id": "c", "camera_id": "v", "physics_frame": 1, "sim_time_ns": 1},
+            "instance_id_payload": {"data": _Array([[101]]), "info": {"idToLabels": {"101": "/World/Rack/Mesh"}}},
+            "renderer_uri_document": {"renderer_instance_id_to_uri": {"101": "/World/Rack/Mesh"}},
+            "semantic_roots": {"roots": [{"usd_root_path": "/World/Rack", "class": "rack"}]},
+            "raw_artifacts": {}, "np": _FakeNP(),
+        }
+        with self.assertRaisesRegex(CaptureError, "invalid occlusion ratio"):
+            _normalize_leaf_occlusion(**base, occlusion_payload={"data": [
+                {"instanceId": 101, "semanticId": 0, "occlusionRatio": 1.1},
+            ]})
+        changed = dict(base)
+        changed["renderer_uri_document"] = {"renderer_instance_id_to_uri": {"101": "/World/Other/Mesh"}}
+        with self.assertRaisesRegex(CaptureError, "differs between raw info and SDK URI"):
+            _normalize_leaf_occlusion(**changed, occlusion_payload={"data": [
+                {"instanceId": 101, "semanticId": 0, "occlusionRatio": 0.2},
+            ]})
+        for labels in ({"101": "/World/Rack/ForgedInvisible"}, {}):
+            with self.subTest(labels=labels), self.assertRaises(CaptureError):
+                changed = {**base, "instance_id_payload": {
+                    "data": _Array([[0]]), "info": {"idToLabels": labels},
+                }}
+                _normalize_leaf_occlusion(**changed, occlusion_payload={"data": [
+                    {"instanceId": 101, "semanticId": 0, "occlusionRatio": 1.0},
+                ]})
 
     def test_positive_infinity_depth_is_preserved_but_nan_and_negative_are_rejected(self) -> None:
         self.assertTrue(_depth_value_is_valid(float("inf")))

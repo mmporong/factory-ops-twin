@@ -537,35 +537,58 @@ def _recipe_boxes(recipe: str, rect: Rect, height: float, seed: int, obstacle_id
         if obstacle_id == "PROCESS_1":
             return common + [
                 b("WorkBed", .12, .16, height * .30, .88, .88, height * .39, "Steel"),
-                b("GuardLeft", .06, .08, height * .22, .13, .94, height * .92, "MachinePanel"),
-                b("GuardRight", .87, .08, height * .22, .94, .94, height * .92, "MachinePanel"),
-                b("GuardRoof", .06, .08, height * .86, .94, .94, height * .96, "MachinePanel"),
-                b("ProcessWindow", .13, .045, height * .42, .72, .09, height * .85, "Glass", "process_equipment", "guarded_load_cell"),
+                b("AssemblyNest", .30, .24, height * .40, .70, .58, height * .45, "Accent", "process_equipment", "guarded_load_cell"),
+                b("LocatorLeft", .34, .28, height * .45, .39, .52, height * .53, "SafetyYellow"),
+                b("LocatorRight", .61, .28, height * .45, .66, .52, height * .53, "SafetyYellow"),
+                b("ClampBridge", .42, .42, height * .46, .58, .50, height * .61, "Dark"),
+                b("GuardPostFL", .06, .08, height * .22, .11, .14, height * .91, "MachinePaint"),
+                b("GuardPostFR", .89, .08, height * .22, .94, .14, height * .91, "MachinePaint"),
+                b("GuardPostBL", .06, .88, height * .22, .11, .94, height * .91, "MachinePaint"),
+                b("GuardPostBR", .89, .88, height * .22, .94, .94, height * .91, "MachinePaint"),
+                b("GuardCrossbeamFront", .06, .08, height * .84, .94, .14, height * .91, "MachinePaint"),
+                b("GuardCrossbeamRear", .06, .88, height * .84, .94, .94, height * .91, "MachinePaint"),
+                b("SafetyScanner", .10, .045, height * .25, .18, .10, height * .38, "SafetyYellow"),
                 b("HMI", .75, .025, height * .52, .91, .08, height * .72, "Dark", "process_equipment", "hmi"),
-                b("BeaconGreen", .80, .24, height * .96, .86, .32, height, "Green"),
+                b("BeaconGreen", .885, .08, height * .91, .945, .15, height, "Green"),
             ]
         if obstacle_id == "PROCESS_2":
             return common + [
-                b("CabinetRear", .06, .30, height * .22, .94, .94, height * .92, "MachinePanel"),
-                b("DoorLeft", .08, .055, height * .24, .47, .12, height * .88, "MachinePaint"),
-                b("DoorRight", .53, .055, height * .24, .92, .12, height * .88, "MachinePaint"),
-                b("ProcessWindow", .18, .025, height * .48, .70, .06, height * .78, "Glass", "process_equipment", "enclosed_inspection"),
+                b("RearShell", .06, .88, height * .22, .94, .94, height * .91, "MachinePanel"),
+                b("LeftShell", .06, .12, height * .22, .12, .88, height * .91, "MachinePanel"),
+                b("RightShell", .88, .12, height * .22, .94, .88, height * .91, "MachinePanel"),
+                b("RoofFrontRail", .06, .12, height * .86, .94, .20, height * .92, "MachinePaint"),
+                b("RoofRearRail", .06, .80, height * .86, .94, .88, height * .92, "MachinePaint"),
+                b("DoorFrameLeft", .08, .055, height * .24, .16, .12, height * .88, "MachinePaint"),
+                b("DoorFrameRight", .84, .055, height * .24, .92, .12, height * .88, "MachinePaint"),
+                b("DoorFrameTop", .08, .055, height * .82, .92, .12, height * .88, "MachinePaint"),
+                b("DoorFrameBottom", .08, .055, height * .24, .92, .12, height * .32, "MachinePaint"),
+                b("ProcessWindow", .16, .06, height * .32, .72, .095, height * .82, "Glass", "process_equipment", "enclosed_inspection"),
+                b("InspectionStage", .25, .30, height * .34, .75, .72, height * .42, "Steel"),
+                b("CameraMast", .46, .67, height * .42, .54, .74, height * .76, "Dark"),
+                b("CameraHead", .40, .54, height * .68, .60, .70, height * .79, "Accent"),
+                b("CameraLens", .46, .49, height * .70, .54, .56, height * .77, "Glass"),
                 b("DoorHandle", .48, .015, height * .48, .52, .07, height * .70, "SafetyYellow"),
                 b("HMI", .72, .015, height * .30, .91, .07, height * .45, "Dark", "process_equipment", "hmi"),
                 b("Vent", .10, .01, height * .27, .34, .06, height * .34, "Dark"),
-                b("BeaconRed", .80, .34, height * .92, .86, .42, height, "SafetyRed"),
+                b("BeaconRed", .88, .34, height * .91, .94, .42, height, "SafetyRed"),
             ]
-        return common + [
-            b("ConveyorBed", .08, .12, height * .30, .92, .90, height * .42, "Steel"),
-            b("TunnelLeft", .08, .28, height * .42, .18, .88, height * .88, "MachinePanel"),
-            b("TunnelRight", .82, .28, height * .42, .92, .88, height * .88, "MachinePanel"),
-            b("TunnelRoof", .08, .28, height * .82, .92, .88, height * .92, "MachinePanel"),
-            b("ProcessWindow", .18, .04, height * .48, .68, .09, height * .78, "Glass", "process_equipment", "discharge_pack"),
+        discharge = common + [
+            b("ConveyorBase", .10, .10, height * .28, .90, .92, height * .36, "MachinePaint"),
+            b("ConveyorRailLeft", .08, .08, height * .35, .14, .94, height * .48, "Steel"),
+            b("ConveyorRailRight", .86, .08, height * .35, .92, .94, height * .48, "Steel"),
+            b("DischargeFixture", .18, .75, height * .37, .82, .91, height * .45, "Accent", "process_equipment", "discharge_pack"),
+            b("PackStop", .22, .86, height * .45, .78, .92, height * .58, "SafetyYellow"),
+            b("LabelerPostLeft", .10, .50, height * .43, .17, .58, height * .82, "MachinePaint"),
+            b("LabelerPostRight", .83, .50, height * .43, .90, .58, height * .82, "MachinePaint"),
+            b("LabelerCrossbeam", .10, .50, height * .76, .90, .58, height * .83, "MachinePaint"),
+            b("LabelHead", .42, .45, height * .65, .58, .56, height * .76, "Dark"),
             b("HMI", .72, .02, height * .48, .91, .08, height * .68, "Dark", "process_equipment", "hmi"),
-            b("ExitGuideL", .17, .03, height * .25, .22, .23, height * .44, "SafetyYellow"),
-            b("ExitGuideR", .78, .03, height * .25, .83, .23, height * .44, "SafetyYellow"),
-            b("BeaconGreen", .80, .34, height * .92, .86, .42, height, "Green"),
+            b("BeaconGreen", .835, .50, height * .83, .895, .58, height, "Green"),
         ]
+        for roller in range(8):
+            fy = .13 + roller * .085
+            discharge.append(b(f"Roller_{roller}", .15, fy, height * .37, .85, fy + .025, height * .43, "Steel"))
+        return discharge
     if recipe in {"control_cabinet", "service_cabinet"}:
         body_front = .10 if obstacle_id == "SERVICE_CABINET" else .05
         facade_front = .05 if obstacle_id == "SERVICE_CABINET" else .01

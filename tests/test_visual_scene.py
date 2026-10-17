@@ -180,6 +180,53 @@ class VisualSceneTests(unittest.TestCase):
         minimum_front = float(service_rect[1]) + (float(service_rect[3]) - float(service_rect[1])) * 0.05
         self.assertTrue(all(box.bounds[1] >= minimum_front for box in boxes))
 
+    def test_process_cells_have_distinct_open_roof_operational_silhouettes(self) -> None:
+        obstacles = {
+            item["id"]: item
+            for item in self.layout.data["physical_obstacles"]
+            if item["id"] in {"PROCESS_1", "PROCESS_2", "PROCESS_3"}
+        }
+        recipes = {
+            obstacle_id: _recipe_boxes(
+                "process_cell",
+                Rect.from_value(item["rect"], obstacle_id),
+                float(item["height_m"]),
+                0,
+                obstacle_id,
+            )
+            for obstacle_id, item in obstacles.items()
+        }
+        names = {
+            obstacle_id: {box.name for box in boxes}
+            for obstacle_id, boxes in recipes.items()
+        }
+
+        self.assertTrue({"AssemblyNest", "ClampBridge", "SafetyScanner"} <= names["PROCESS_1"])
+        self.assertTrue({"InspectionStage", "CameraMast", "CameraHead", "ProcessWindow"} <= names["PROCESS_2"])
+        self.assertTrue({"DischargeFixture", "LabelerCrossbeam", "PackStop", "Roller_7"} <= names["PROCESS_3"])
+        self.assertNotIn("GuardRoof", names["PROCESS_1"])
+        self.assertNotIn("CabinetRear", names["PROCESS_2"])
+        self.assertNotIn("TunnelRoof", names["PROCESS_3"])
+        self.assertEqual(len({frozenset(value) for value in names.values()}), 3)
+
+        expected_roles = {
+            "PROCESS_1": "guarded_load_cell",
+            "PROCESS_2": "enclosed_inspection",
+            "PROCESS_3": "discharge_pack",
+        }
+        for obstacle_id, boxes in recipes.items():
+            with self.subTest(obstacle_id=obstacle_id):
+                role_boxes = [box for box in boxes if box.state_role == expected_roles[obstacle_id]]
+                self.assertEqual(len(role_boxes), 1)
+                source = obstacles[obstacle_id]
+                source_rect = source["rect"]
+                self.assertTrue(all(
+                    float(source_rect[0]) <= box.bounds[0] < box.bounds[3] <= float(source_rect[2])
+                    and float(source_rect[1]) <= box.bounds[1] < box.bounds[4] <= float(source_rect[3])
+                    and 0.0 <= box.bounds[2] < box.bounds[5] <= float(source["height_m"])
+                    for box in boxes
+                ))
+
 
 if __name__ == "__main__":
     unittest.main()
