@@ -9,7 +9,7 @@ from types import SimpleNamespace as NS
 import unittest
 
 from factory_ops.fleet_routing import RouteBook
-from factory_ops.fleet_execution import StoppedGate
+from factory_ops.fleet_execution import StoppedGate, path_content_sha256
 from factory_ops.navigation import GoalPose
 from scripts.ros.g3_mission import angle_error, localization_payload, path_final_yaw, path_payload, valid_hold_ack, validate_arrival, verify_navigation_maps, stopped_odometry_record
 
@@ -58,6 +58,22 @@ class G3MissionAdmissionTests(unittest.TestCase):
         self.assertLess(angle_error(path_final_yaw(payload), math.pi), 1e-9)
         path.poses[-1].pose.position.x = 999.
         self.assertEqual(12., payload["poses"][-1]["position_xyz_m"][0])
+
+    def test_path_identity_uses_all_decoded_fields_with_stable_key_order(self):
+        original = path_payload(self.path())
+        digest = path_content_sha256(original)
+        reordered = dict(reversed(list(original.items())))
+        self.assertEqual(digest, path_content_sha256(reordered))
+        for mutate in (lambda p: p["header"].update(sec=11),
+                       lambda p: p["header"].update(frame_id="odom"),
+                       lambda p: p["poses"][0]["header"].update(nanosec=51),
+                       lambda p: p["poses"][0]["position_xyz_m"].__setitem__(2, .01),
+                       lambda p: p["poses"][-1]["orientation_xyzw"].__setitem__(0, .01)):
+            changed = deepcopy(original); mutate(changed)
+            self.assertNotEqual(digest, path_content_sha256(changed))
+        invalid = deepcopy(original); invalid["poses"][0]["position_xyz_m"][0] = math.nan
+        with self.assertRaises(ValueError):
+            path_content_sha256(invalid)
 
     def test_path_payload_rejects_non_map_invalid_quaternion_or_nonfinite_pose(self):
         for mutate in (lambda p: setattr(p.poses[0].header, "frame_id", "odom"),

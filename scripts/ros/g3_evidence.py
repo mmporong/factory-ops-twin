@@ -17,7 +17,7 @@ from typing import Any, Mapping, Sequence
 from uuid import UUID
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
-from factory_ops.fleet_execution import make_chunk, qualify_computed_path
+from factory_ops.fleet_execution import make_chunk, path_content_sha256, qualify_computed_path
 from factory_ops.fleet_routing import RouteBook, swept_tiles
 from factory_ops.g3_session import SCOPE, sha, verify_session
 from factory_ops.layout import Layout
@@ -72,7 +72,7 @@ def _path_payload(path: Any) -> dict[str, Any]:
 
 def _decode_g3_topics(output: Path, run_id: str, scenario_id: str) -> dict[str, Any]:
     """Decode G3 JSON streams, Path CDR and action statuses from immutable bag DBs."""
-    from rclpy.serialization import deserialize_message, serialize_message
+    from rclpy.serialization import deserialize_message
     from rosidl_runtime_py.utilities import get_message
 
     databases = sorted((output / "rosbag").glob("*.db3"))
@@ -108,10 +108,10 @@ def _decode_g3_topics(output: Path, run_id: str, scenario_id: str) -> dict[str, 
                         if type_name not in types:
                             types[type_name] = get_message(type_name)
                         path = deserialize_message(raw, types[type_name])
-                        plan_records[robot].append({
-                            "cdr_sha256": hashlib.sha256(raw).hexdigest(),
-                            "payload": _path_payload(path),
-                        })
+                        payload = _path_payload(path)
+                        plan_records[robot].append({"cdr_sha256": hashlib.sha256(raw).hexdigest(),
+                                                    "content_sha256": path_content_sha256(payload),
+                                                    "payload": payload})
                     continue
                 if type_name not in types:
                     types[type_name] = get_message(type_name)
@@ -132,8 +132,8 @@ def _decode_g3_topics(output: Path, run_id: str, scenario_id: str) -> dict[str, 
                         request_goal_id = request.goal_info.goal_id if operation == "cancel_goal" else request.goal_id
                         record["goal_uuid"] = bytes(request_goal_id.uuid).hex()
                         if operation == "send_goal":
-                            record.update({"path_cdr_sha256": hashlib.sha256(bytes(serialize_message(request.goal.path))).hexdigest(),
-                                           "path": _path_payload(request.goal.path),
+                            payload = _path_payload(request.goal.path)
+                            record.update({"path_content_sha256": path_content_sha256(payload), "path": payload,
                                            "controller_id": str(request.goal.controller_id),
                                            "goal_checker_id": str(request.goal.goal_checker_id),
                                            "progress_checker_id": str(request.goal.progress_checker_id)})
@@ -283,7 +283,7 @@ def validate_actions(
     actions: Sequence[Mapping[str, Any]], book: RouteBook, bag: Mapping[str, Any],
     errors: list[str],
 ) -> dict[str, Any]:
-    """Recompile chunks and bind planner/follower UUIDs, Path CDR and reservations."""
+    """Recompile chunks and bind planner/follower UUIDs, complete Path content and reservations."""
     expected_plans: dict[str, list[dict[str, Any]]] = defaultdict(list)
     payload_hashes: list[str] = []
     action_uuids: set[tuple[str, str, str]] = set()
@@ -326,22 +326,29 @@ def validate_actions(
                     raise ValueError(f"{name} UUID lacks decoded SUCCEEDED status")
             if action.get("planner_status") != 4 or action.get("planner_error_code") != 0 or action.get("status") != 4 or action.get("error_code") != 0:
                 raise ValueError("journaled action terminal status is not successful")
-            if action.get("follow_goal_path_cdr_sha256") != action.get("path_cdr_sha256"):
-                raise ValueError("FollowPath goal does not contain the admitted ComputePath result bytes")
+            content_hash = path_content_sha256(path)
+            if (action.get("path_content_sha256") != content_hash
+                    or action.get("follow_goal_path_content_sha256") != content_hash):
+                raise ValueError("FollowPath goal does not contain the admitted complete Path content")
             if chunk["final"] and action.get("leg_kind") == "business" and action.get("mission_goal_uuid") != action["follow_action_uuid"]:
                 raise ValueError("final station FollowPath UUID differs from mission intent UUID")
-            expected_plans[robot].append({"cdr_sha256": str(action["path_cdr_sha256"]), "payload": path})
-            payload_hashes.append(_hash_json(path))
+            expected_plans[robot].append({"content_sha256": content_hash, "payload": path})
+            payload_hashes.append(content_hash)
         except (KeyError, TypeError, ValueError, IndexError) as exc:
             errors.append(f"action {index} binding: {exc}")
     for robot in ROBOTS:
-        if bag.get("plan_records", {}).get(robot, []) != expected_plans[robot]:
-            errors.append(f"{robot}: decoded /plan CDR/payload differs from ComputePath results")
+        observed = bag.get("plan_records", {}).get(robot, [])
+        observed_content = [{"content_sha256": row.get("content_sha256"), "payload": row.get("payload")}
+                            for row in observed]
+        if observed_content != expected_plans[robot]:
+            errors.append(f"{robot}: decoded /plan complete content differs from ComputePath results")
+        if any(not re.fullmatch(r"[0-9a-f]{64}", str(row.get("cdr_sha256"))) for row in observed):
+            errors.append(f"{robot}: decoded /plan raw CDR integrity hash is malformed")
         if bag.get("topic_counts", {}).get(f"/{robot}/received_global_plan", 0) <= 0:
             errors.append(f"{robot}: transformed/pruned received_global_plan evidence is absent")
     return {"action_count": len(actions), "path_payload_sha256": payload_hashes,
-            "expected_plan_cdr_sha256": {robot: [row["cdr_sha256"] for row in records]
-                                           for robot, records in expected_plans.items()}}
+            "observed_plan_cdr_sha256": {robot: [row["cdr_sha256"] for row in bag.get("plan_records", {}).get(robot, [])]
+                                          for robot in ROBOTS}}
 
 
 def validate_follow_rpc(
@@ -387,7 +394,7 @@ def validate_follow_rpc(
             request, response = send["request"], send["response"]
             result_response = result["response"]
             if (request.get("path") != action.get("path")
-                    or request.get("path_cdr_sha256") != action.get("path_cdr_sha256")
+                    or request.get("path_content_sha256") != action.get("path_content_sha256")
                     or request.get("controller_id") != "FollowPath"
                     or request.get("goal_checker_id") != "goal_checker"
                     or request.get("progress_checker_id") != "progress_checker"
@@ -611,7 +618,7 @@ def validate_authorization_order(
         ordered = (issued_number is not None and accepted_number is not None and decision_number is not None
                    and accepted_number <= decision_number <= issued_number)
         if (not journal_valid or action is None or not ordered or not exact_decision
-                or scope.get("tile_hash") != expected_hash or scope.get("path_cdr_sha256") != action.get("path_cdr_sha256")
+                or scope.get("tile_hash") != expected_hash or scope.get("path_content_sha256") != action.get("path_content_sha256")
                 or scope.get("route_id") != action.get("chunk", {}).get("route_id")
                 or scope.get("leg_id") != action.get("leg_id")
                 or scope.get("reservation_generation") != action.get("generation")

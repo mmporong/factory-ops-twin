@@ -9,7 +9,7 @@ import tempfile
 import unittest
 from uuid import uuid4
 
-from factory_ops.fleet_execution import make_chunk, qualify_computed_path
+from factory_ops.fleet_execution import make_chunk, path_content_sha256, qualify_computed_path
 from factory_ops.fleet_routing import RouteBook
 from factory_ops.fleet_routing import swept_tiles
 from factory_ops.g3_session import sha
@@ -64,14 +64,15 @@ class G3EvidenceHelperTests(unittest.TestCase):
                 for point in points
             ],
         }
+        content_hash = path_content_sha256(path)
         action = {
             "robot_id": "carter1", "chunk": chunk.to_dict(), "leg_kind": "business",
             "leg_id": "synthetic-leg",
             "generation": 4, "reservation_tiles": [list(tile) for tile in sorted(chunk.tiles)],
             "planner_action_uuid": planner, "follow_action_uuid": follow,
             "mission_goal_uuid": follow, "path": path, "path_geometry": geometry,
-            "path_cdr_sha256": "1" * 64, "planner_status": 4, "planner_error_code": 0,
-            "follow_goal_path_cdr_sha256": "1" * 64,
+            "path_content_sha256": content_hash, "planner_status": 4, "planner_error_code": 0,
+            "follow_goal_path_content_sha256": content_hash,
             "server_accepted_stamp": {"sec": 1, "nanosec": 200000000},
             "error_msg": "",
             "status": 4, "error_code": 0, "requested_sim_time_s": 0.9,
@@ -87,7 +88,8 @@ class G3EvidenceHelperTests(unittest.TestCase):
                 "/carter1/compute_path_to_pose/_action/status": {planner.replace("-", ""): 4},
                 "/carter1/follow_path/_action/status": {follow.replace("-", ""): 4},
             },
-            "plan_records": {"carter1": [{"cdr_sha256": "1" * 64, "payload": deepcopy(path)}], "carter2": []},
+            "plan_records": {"carter1": [{"cdr_sha256": "1" * 64, "content_sha256": content_hash,
+                                             "payload": deepcopy(path)}], "carter2": []},
             "tf_samples": {"carter1": edges},
             "topic_counts": {"/carter1/received_global_plan": 1, "/carter2/received_global_plan": 1},
         }
@@ -97,7 +99,7 @@ class G3EvidenceHelperTests(unittest.TestCase):
         action, _ = self.action_fixture()
         uid = action["follow_action_uuid"].replace("-", "")
         send_request = {"transaction": "client:1", "event_type": 0, "goal_uuid": uid,
-                        "path_cdr_sha256": action["path_cdr_sha256"], "path": deepcopy(action["path"]),
+                        "path_content_sha256": action["path_content_sha256"], "path": deepcopy(action["path"]),
                         "controller_id": "FollowPath", "goal_checker_id": "goal_checker",
                         "progress_checker_id": "progress_checker"}
         send_response = {"transaction": "client:1", "event_type": 3, "accepted": True,
@@ -136,9 +138,6 @@ class G3EvidenceHelperTests(unittest.TestCase):
         forged["mission_goal_uuid"] = str(uuid4())
         attacks.append((forged, deepcopy(bag)))
         forged_bag = deepcopy(bag)
-        forged_bag["plan_records"]["carter1"][0]["cdr_sha256"] = "2" * 64
-        attacks.append((deepcopy(action), forged_bag))
-        forged_bag = deepcopy(bag)
         forged_bag["plan_records"]["carter1"][0]["payload"]["poses"][-1]["position_xyz_m"][0] += .01
         attacks.append((deepcopy(action), forged_bag))
         forged = deepcopy(action)
@@ -148,13 +147,18 @@ class G3EvidenceHelperTests(unittest.TestCase):
         forged_bag["tf_samples"]["carter1"]["odom->base_link"][0]["translation"][0] += .2
         attacks.append((deepcopy(action), forged_bag))
         forged = deepcopy(action)
-        forged["follow_goal_path_cdr_sha256"] = "2" * 64
+        forged["follow_goal_path_content_sha256"] = "2" * 64
         attacks.append((forged, deepcopy(bag)))
         for forged_action, forged_status in attacks:
             with self.subTest(keys=forged_action.keys()):
                 failures: list[str] = []
                 validate_actions([forged_action], self.book, forged_status, failures)
                 self.assertTrue(failures)
+        different_cdr = deepcopy(bag)
+        different_cdr["plan_records"]["carter1"][0]["cdr_sha256"] = "2" * 64
+        cdr_errors: list[str] = []
+        validate_actions([action], self.book, different_cdr, cdr_errors)
+        self.assertEqual(cdr_errors, [])
 
     def test_stop_window_requires_applied_hold_fresh_odom_and_dwell(self) -> None:
         action, _ = self.action_fixture()
@@ -328,7 +332,7 @@ class G3EvidenceHelperTests(unittest.TestCase):
         tile_hash = _hash_json(sorted(action["reservation_tiles"]))
         scope = {
             "reservation_id": action["generation"], "goal_uuid": action["follow_action_uuid"],
-            "tile_hash": tile_hash, "path_cdr_sha256": action["path_cdr_sha256"], "decision_event_seq": 2,
+            "tile_hash": tile_hash, "path_content_sha256": action["path_content_sha256"], "decision_event_seq": 2,
             "route_id": action["chunk"]["route_id"], "leg_id": action["leg_id"],
             "reservation_generation": action["generation"], "scenario_id": SCENARIO,
             "resources": ["G3_FULL_LEG"], "exit_id": "G3_FULL_LEG:end",

@@ -19,7 +19,7 @@ from uuid import UUID, uuid4
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from factory_ops.fleet import FleetMission, FleetOrder
-from factory_ops.fleet_execution import StoppedGate, make_chunk, qualify_computed_path
+from factory_ops.fleet_execution import StoppedGate, make_chunk, qualify_computed_path, path_content_sha256
 from factory_ops.fleet_routing import RouteBook, swept_tiles
 from factory_ops.g3_session import save, sha, verify_session
 from factory_ops.navigation import GoalPose, LocalizationPose, NavigationResult
@@ -214,7 +214,6 @@ def main() -> int:
         from rclpy.parameter import Parameter
         from rclpy.qos import qos_profile_sensor_data, qos_profile_services_default
         from rclpy.service_introspection import ServiceIntrospectionState
-        from rclpy.serialization import serialize_message
         from rclpy.time import Time
         from sensor_msgs.msg import LaserScan
         from std_msgs.msg import String
@@ -349,7 +348,7 @@ def main() -> int:
                     route_id=chunk.route_id if chunk is not None else None,
                     goal_uuid=rt.get("follow_uuid"), reservation_id=rt["generation"], resources=("G3_FULL_LEG",), exit_id="G3_FULL_LEG:end")
             payload["scope"].update({"reservation_generation": rt["generation"], "leg_id": rt["leg"]["plan"].route_id if rt["leg"] else None,
-                "path_cdr_sha256": rt.get("path_hash"), "tile_hash": hashlib.sha256(json.dumps(sorted(rt["held_tiles"]), separators=(",", ":")).encode()).hexdigest()})
+                "path_content_sha256": rt.get("path_hash"), "tile_hash": hashlib.sha256(json.dumps(sorted(rt["held_tiles"]), separators=(",", ":")).encode()).hexdigest()})
             atomic_json(output / "robots" / robot / "authorization.json", payload)
             line = json.dumps(payload, allow_nan=False)
             logs["authorizations"].write(line + "\n"); logs["authorizations"].flush()
@@ -539,14 +538,14 @@ def main() -> int:
                         raise RuntimeError("computed Path terminal yaw differs from the authored goal")
                     if not {tuple(tile) for tile in geometry["swept_tiles"]}.issubset(rt["held_tiles"]):
                         raise RuntimeError("computed Path leaves full-leg reservation")
-                    rt["path_hash"] = hashlib.sha256(bytes(serialize_message(path))).hexdigest()
-                    rt["record"].update({"path": payload, "path_geometry": geometry, "path_cdr_sha256": rt["path_hash"], "planner_status": 4, "planner_error_code": 0})
+                    rt["path_hash"] = path_content_sha256(payload)
+                    rt["record"].update({"path": payload, "path_geometry": geometry, "path_content_sha256": rt["path_hash"], "planner_status": 4, "planner_error_code": 0})
                     request = FollowPath.Goal(); request.path = path
                     request.controller_id = "FollowPath"; request.goal_checker_id = "goal_checker"; request.progress_checker_id = "progress_checker"
-                    follow_path_hash = hashlib.sha256(bytes(serialize_message(request.path))).hexdigest()
+                    follow_path_hash = path_content_sha256(path_payload(request.path))
                     if follow_path_hash != rt["path_hash"]:
                         raise RuntimeError("FollowPath goal mutated the admitted planner Path")
-                    rt["record"]["follow_goal_path_cdr_sha256"] = follow_path_hash
+                    rt["record"]["follow_goal_path_content_sha256"] = follow_path_hash
                     rt["send_future"] = rt["follow"].send_goal_async(request, goal_uuid=GoalUUID(uuid=list(UUID(rt["follow_uuid"]).bytes)))
                     rt["phase"] = "follow_sent"
                     journal("follow_goal_sent", rt["record"])

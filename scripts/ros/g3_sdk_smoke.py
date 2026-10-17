@@ -14,6 +14,8 @@ from uuid import uuid4
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from scripts.ros.action_services import IntrospectedActionClient
+from scripts.ros.g3_mission import path_payload
+from factory_ops.fleet_execution import path_content_sha256
 
 
 def main() -> int:
@@ -46,12 +48,14 @@ def main() -> int:
         nodes.extend((server, client_node))
         received: list[dict[str, Any]] = []
         received_paths: list[Any] = []
+        received_serializations: list[str] = []
         def hash_path(path: Any) -> str:
-            return hashlib.sha256(bytes(serialize_message(path))).hexdigest()
+            return path_content_sha256(path_payload(path))
         def accepted(goal: Any) -> Any:
-            received.append({"path_cdr_sha256": hash_path(goal.path), "controller_id": goal.controller_id,
+            received.append({"path_content_sha256": hash_path(goal.path), "controller_id": goal.controller_id,
                 "goal_checker_id": goal.goal_checker_id, "progress_checker_id": goal.progress_checker_id})
             received_paths.append(message_to_ordereddict(goal.path))
+            received_serializations.append(hashlib.sha256(bytes(serialize_message(goal.path))).hexdigest())
             return GoalResponse.ACCEPT
         def execute(handle: Any) -> Any:
             handle.succeed()
@@ -116,12 +120,17 @@ def main() -> int:
             summaries[operation] = {"request_count": 1, "response_count": 1,
                 "client_gid": bytes(request.info.client_gid).hex(), "sequence_number": int(request.info.sequence_number)}
         actual = next(row.request[0].goal for row in events["send_goal"] if int(row.info.event_type) == 0)
-        expected = {"path_cdr_sha256": hash_path(goal.path), "controller_id": "FollowPath",
+        expected = {"path_content_sha256": hash_path(goal.path), "controller_id": "FollowPath",
                     "goal_checker_id": "goal_checker", "progress_checker_id": "progress_checker"}
         report["path_diagnostics"] = {"expected": expected, "server_received": received,
-            "request_event_sha256": hash_path(actual.path), "expected_payload": message_to_ordereddict(goal.path),
+            "request_event_content_sha256": hash_path(actual.path), "expected_payload": message_to_ordereddict(goal.path),
+            "expected_serialization_sha256": hashlib.sha256(bytes(serialize_message(goal.path))).hexdigest(),
+            "request_event_serialization_sha256": hashlib.sha256(bytes(serialize_message(actual.path))).hexdigest(),
+            "server_serialization_sha256s": received_serializations,
             "server_payloads": received_paths, "request_event_payload": message_to_ordereddict(actual.path)}
-        if received != [expected] or hash_path(actual.path) != expected["path_cdr_sha256"]:
+        if (received != [expected] or hash_path(actual.path) != expected["path_content_sha256"]
+                or actual.controller_id != expected["controller_id"] or actual.goal_checker_id != expected["goal_checker_id"]
+                or actual.progress_checker_id != expected["progress_checker_id"]):
             raise RuntimeError("server, real request event and planned Path differ")
         report.update({"status": "passed", "goal_uuid": identity, "path": expected,
                        "service_transactions": summaries, "cancel_return_code": int(cancel.result().return_code)})

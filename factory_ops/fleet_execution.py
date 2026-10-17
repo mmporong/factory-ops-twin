@@ -6,7 +6,7 @@ from dataclasses import asdict, dataclass
 from hashlib import sha256
 import json
 import math
-from typing import Any, Sequence
+from typing import Any, Mapping, Sequence
 
 from .fleet_routing import Point, RouteBook, Tile, swept_tiles
 from .navigation import GoalPose
@@ -34,6 +34,11 @@ def _point(value: Sequence[float], label: str) -> Point:
 def _hash(value: Any) -> str:
     payload = json.dumps(value, sort_keys=True, separators=(",", ":"), allow_nan=False)
     return sha256(payload.encode("utf-8")).hexdigest()
+
+
+def path_content_sha256(payload: Mapping[str, Any]) -> str:
+    """Hash all decoded Path fields independently of transport serialization."""
+    return _hash(payload)
 
 
 def _tile_list(tiles: frozenset[Tile]) -> list[list[int]]:
