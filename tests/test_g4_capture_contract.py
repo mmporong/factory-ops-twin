@@ -460,9 +460,15 @@ class G4CaptureContractTests(unittest.TestCase):
         self.assertEqual(instance["class"], "rack")
         self.assertEqual(instance["usd_root_path"], "/World/Rack")
         self.assertEqual(instance["bbox_xyxy"], [1, 0, 2, 1])
-        self.assertEqual(instance["occlusion_ratio"], 0.25)
-        self.assertEqual(instance["occlusion_status"], "measured_raw")
-        self.assertEqual(instance["occlusion_raw_value"], 0.25)
+        self.assertEqual(instance["raw_bbox_binding"], {
+            "kind": "instance_mask",
+            "bbox_xyxy": [1, 0, 2, 1],
+            "instance_ids": [27],
+            "edge_truncated": True,
+            "occlusion_ratio": 0.25,
+            "occlusion_status": "measured_raw",
+            "occlusion_raw_value": 0.25,
+        })
         self.assertEqual(result["raw_info"]["semantic_id_to_labels"]["9"]["class"], "rack")
         self.assertEqual(result["raw_info"]["semantic_id_to_labels_raw"]["9"]["class"], "rack")
         self.assertEqual(result["raw_info"]["instance_id_to_labels_raw"]["27"], "/World/Rack/Mesh")
@@ -736,6 +742,56 @@ class G4CaptureContractTests(unittest.TestCase):
         self.assertEqual([item["instance_id"] for item in result["instances"]], [110, 124])
         self.assertEqual(source_classes.items_calls, 5)
 
+    def test_visible_parent_raw_bbox_is_bound_to_exact_semantic_subtree_union(self) -> None:
+        class SubtreeStage:
+            def GetPrimAtPath(self, path):
+                classes = {"/World/FG": "pallet", "/World/FG/Tote": "tote"}
+                return _Prim(path in classes, classes.get(path))
+
+        arguments = {
+            "scene_id": "scene-000", "scene_variant_id": "industrial-v00", "capture_id": "capture-009",
+            "camera_id": "aisle", "physics_frame": 124, "sim_time_ns": 2_066_666_667,
+            "semantic_payload": {
+                "data": _Array([[2, 2, 9, 9]]),
+                "info": {"idToLabels": {"2": {"class": "pallet"}, "9": {"class": "pallet,tote"}}},
+            },
+            "instance_payload": {
+                "data": _Array([[43, 43, 143, 143]]),
+                "info": {
+                    "idToLabels": {"43": "/World/FG", "143": "/World/FG/Tote"},
+                    "idToSemantics": {"43": {"class": "pallet"}, "143": {"class": "pallet,tote"}},
+                },
+            },
+            "bbox_raw": {
+                "data": [
+                    {"semanticId": 6, "x_min": 0, "y_min": 0, "x_max": 3, "y_max": 0, "occlusionRatio": -1.0},
+                    {"semanticId": 9, "x_min": 2, "y_min": 0, "x_max": 3, "y_max": 0, "occlusionRatio": -1.0},
+                ],
+                "info": {
+                    "idToLabels": {"6": {"class": "pallet"}, "9": {"class": "pallet,tote"}},
+                    "primPaths": ["/World/FG", "/World/FG/Tote"],
+                },
+            },
+            "bbox_sha256": "d" * 64, "semantic_info_sha256": "a" * 64, "instance_info_sha256": "b" * 64,
+            "stage": SubtreeStage(),
+            "asset_source_by_root": {"/World/FG": "e" * 64, "/World/FG/Tote": "f" * 64},
+            "source_class_by_root": {"/World/FG": "pallet", "/World/FG/Tote": "tote"},
+            "np": _FakeNP(),
+        }
+        result = _normalize_annotations(**arguments)
+
+        parent = next(item for item in result["instances"] if item["instance_id"] == 43)
+        self.assertEqual(parent["bbox_xyxy"], [0, 0, 1, 0])
+        self.assertEqual(parent["raw_bbox_binding"]["kind"], "semantic_subtree_union")
+        self.assertEqual(parent["raw_bbox_binding"]["bbox_xyxy"], [0, 0, 3, 0])
+        self.assertEqual(parent["raw_bbox_binding"]["instance_ids"], [43, 143])
+        self.assertNotIn("occlusion_status", parent)
+
+        invalid = json.loads(json.dumps(arguments["bbox_raw"]))
+        invalid["data"][0]["x_max"] = 4
+        with self.assertRaisesRegex(CaptureError, "not an exact visible semantic subtree union"):
+            _normalize_annotations(**{**arguments, "bbox_raw": invalid})
+
     def test_explicit_unlabelled_instance_identity_is_preserved_and_excluded(self) -> None:
         bbox_raw = {
             "data": [{"semanticId": 4, "x_min": 1, "y_min": 0, "x_max": 2, "y_max": 1, "occlusionRatio": -1.0}],
@@ -770,9 +826,10 @@ class G4CaptureContractTests(unittest.TestCase):
 
         self.assertEqual(result["raw_info"]["reserved_instance_ids"], {"1": "UNLABELLED"})
         self.assertEqual([item["instance_id"] for item in result["instances"]], [27])
-        self.assertIsNone(result["instances"][0]["occlusion_ratio"])
-        self.assertEqual(result["instances"][0]["occlusion_status"], "unavailable_raw_sentinel")
-        self.assertEqual(result["instances"][0]["occlusion_raw_value"], -1.0)
+        raw_binding = result["instances"][0]["raw_bbox_binding"]
+        self.assertIsNone(raw_binding["occlusion_ratio"])
+        self.assertEqual(raw_binding["occlusion_status"], "unavailable_raw_sentinel")
+        self.assertEqual(raw_binding["occlusion_raw_value"], -1.0)
 
         instance_payload["info"]["idToLabels"] = {"27": "/World/Rack/Mesh"}
         with self.assertRaisesRegex(CaptureError, "instance ID 1 has no original prim path"):

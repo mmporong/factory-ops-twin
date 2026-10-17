@@ -18,7 +18,7 @@ import subprocess
 import sys
 import time
 import traceback
-from typing import Any, Iterable, Mapping, Sequence
+from typing import Any, Iterable, Mapping, Sequence, cast
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -548,6 +548,17 @@ def _mask_bounds(mask: Any, np: Any) -> dict[int, list[int]]:
     return result
 
 
+def _bounds_union(bounds: Mapping[int, list[int]], instance_ids: Sequence[int]) -> list[int] | None:
+    if not instance_ids or any(value not in bounds for value in instance_ids):
+        return None
+    return [
+        min(bounds[value][0] for value in instance_ids),
+        min(bounds[value][1] for value in instance_ids),
+        max(bounds[value][2] for value in instance_ids),
+        max(bounds[value][3] for value in instance_ids),
+    ]
+
+
 def _normalize_annotations(
     *,
     scene_id: str,
@@ -566,7 +577,10 @@ def _normalize_annotations(
     asset_source_by_root: Mapping[str, str],
     np: Any,
     source_class_by_root: Mapping[str, str] | None = None,
+    bbox_tolerance_px: int = 1,
 ) -> dict[str, Any]:
+    if isinstance(bbox_tolerance_px, bool) or not isinstance(bbox_tolerance_px, int) or bbox_tolerance_px < 0:
+        raise CaptureError("bbox_tolerance_px must be a nonnegative integer")
     semantic_raw = _raw_label_map(semantic_payload, "semantic")
     instance_raw = _raw_label_map(instance_payload, "instance")
     instance_info = instance_payload.get("info")
@@ -710,15 +724,7 @@ def _normalize_annotations(
                 if root_path.startswith(aggregate_root + "/")
             )
             raw_bbox = [row.get(key) for key in ("x_min", "y_min", "x_max", "y_max")]
-            descendant_union = (
-                [
-                    min(bounds[value][0] for value in descendants),
-                    min(bounds[value][1] for value in descendants),
-                    max(bounds[value][2] for value in descendants),
-                    max(bounds[value][3] for value in descendants),
-                ]
-                if descendants else None
-            )
+            descendant_union = _bounds_union(bounds, descendants)
             if descendants and raw_bbox == descendant_union:
                 excluded_bbox_rows.append({
                     "raw_bbox_index": raw_index,
@@ -735,6 +741,24 @@ def _normalize_annotations(
         used_ids.add(instance_id)
         root_path, class_name = labelled_roots[instance_id]
         bbox = bounds[instance_id]
+        raw_bbox = [row.get(key) for key in ("x_min", "y_min", "x_max", "y_max")]
+        if not all(isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value) for value in raw_bbox):
+            raise CaptureError(f"bbox row {raw_index} has invalid coordinates")
+        raw_bbox_numbers = [float(cast(int | float, value)) for value in raw_bbox]
+        binding_kind = "instance_mask"
+        binding_instance_ids = [instance_id]
+        if any(abs(raw_bbox_numbers[index] - bbox[index]) > bbox_tolerance_px for index in range(4)):
+            binding_instance_ids = sorted(
+                candidate_id
+                for candidate_id, (candidate_root, _candidate_class) in labelled_roots.items()
+                if candidate_root == root_path or candidate_root.startswith(root_path + "/")
+            )
+            subtree_union = _bounds_union(bounds, binding_instance_ids)
+            if len(binding_instance_ids) <= 1 or raw_bbox != subtree_union:
+                raise CaptureError(
+                    f"bbox row {raw_index} differs from instance {instance_id} and is not an exact visible semantic subtree union"
+                )
+            binding_kind = "semantic_subtree_union"
         if "occlusionRatio" not in row:
             raise CaptureError(f"bbox row {raw_index} does not preserve occlusionRatio")
         raw_occlusion = float(row["occlusionRatio"])
@@ -744,6 +768,10 @@ def _normalize_annotations(
         occlusion_status = "unavailable_raw_sentinel" if occlusion is None else "measured_raw"
         height, width = instance_array.shape
         edge = bbox[0] == 0 or bbox[1] == 0 or bbox[2] == width - 1 or bbox[3] == height - 1
+        raw_edge = (
+            raw_bbox[0] == 0 or raw_bbox[1] == 0
+            or raw_bbox[2] == width - 1 or raw_bbox[3] == height - 1
+        )
         asset_sha = instance_asset_shas[str(instance_id)]
         stable = hashlib.sha256(f"{scene_variant_id}\0{root_path}\0{asset_sha}".encode("utf-8")).hexdigest()
         instances.append(
@@ -756,10 +784,16 @@ def _normalize_annotations(
                 "stable_instance_key": stable,
                 "bbox_xyxy": bbox,
                 "raw_bbox_index": raw_index,
-                "occlusion_ratio": occlusion,
-                "occlusion_status": occlusion_status,
-                "occlusion_raw_value": raw_occlusion,
                 "edge_truncated": edge,
+                "raw_bbox_binding": {
+                    "kind": binding_kind,
+                    "bbox_xyxy": raw_bbox,
+                    "instance_ids": binding_instance_ids,
+                    "edge_truncated": raw_edge,
+                    "occlusion_ratio": occlusion,
+                    "occlusion_status": occlusion_status,
+                    "occlusion_raw_value": raw_occlusion,
+                },
             }
         )
     expected_ids = set(bounds) - {int(value) for value in reserved_instance_ids}
@@ -1539,6 +1573,7 @@ def _capture_variant(
     semantic_roots: Mapping[str, Any],
     semantic_roots_path: Path,
     source_class_by_root: Mapping[str, str],
+    bbox_tolerance_px: int,
 ) -> tuple[dict[str, Any], list[dict[str, Any]]]:
     scene_id = f"scene-{seed:03d}"
     variant_id = f"industrial-v{seed:02d}"
@@ -1647,6 +1682,7 @@ def _capture_variant(
                     asset_source_by_root=asset_source_by_root,
                     np=np,
                     source_class_by_root=source_class_by_root,
+                    bbox_tolerance_px=bbox_tolerance_px,
                 )
                 leaf = raw["leaf"]
                 if not isinstance(leaf, Mapping):
@@ -1814,7 +1850,10 @@ def _worker(args: argparse.Namespace, plan: CapturePlan, layout_path: Path, outp
 
         layout = Layout.from_file(layout_path)
         source_verification = _verify_source_commit(args.source_commit, layout_path)
-        _validate_pinned_profile()
+        dataset_profile = _validate_pinned_profile()
+        bbox_tolerance_px = dataset_profile.get("quality_bounds", {}).get("bbox_tolerance_px")
+        if isinstance(bbox_tolerance_px, bool) or not isinstance(bbox_tolerance_px, int) or bbox_tolerance_px < 0:
+            raise CaptureError("dataset profile bbox_tolerance_px is invalid")
         render_contract = _renderer_contract()
         resource_audit["renderer"] = render_contract
         authored: dict[int, tuple[Path, dict[str, Any]]] = {}
@@ -1991,6 +2030,7 @@ def _worker(args: argparse.Namespace, plan: CapturePlan, layout_path: Path, outp
                 semantic_roots=semantic_roots,
                 semantic_roots_path=semantic_roots_path,
                 source_class_by_root=source_class_by_root,
+                bbox_tolerance_px=bbox_tolerance_px,
             )
             scene["visual_runtime"] = _jsonable(runtime.capture_metadata(), path="visual_runtime.capture_metadata")
             scene["staged_payload"] = staged_payload

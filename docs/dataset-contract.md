@@ -132,8 +132,16 @@ split 누출 fingerprint는 capture와 camera 순서에 무관한 multiset이다
       "stable_instance_key": "64자리 SHA-256",
       "bbox_xyxy": [10, 20, 40, 60],
       "raw_bbox_index": 0,
-      "occlusion_ratio": 0.25,
-      "edge_truncated": false
+      "edge_truncated": false,
+      "raw_bbox_binding": {
+        "kind": "instance_mask",
+        "bbox_xyxy": [10, 20, 40, 60],
+        "instance_ids": [27],
+        "edge_truncated": false,
+        "occlusion_ratio": 0.25,
+        "occlusion_status": "measured_raw",
+        "occlusion_raw_value": 0.25
+      }
     }
   ]
 }
@@ -145,7 +153,7 @@ bbox와 instance는 가장 가까운 semantic-labelled root가 정확히 같을 
 
 semantic, instance, bbox label map의 키는 `0`, `9`, `27` 같은 비음수 canonical 10진 문자열만 허용한다. `09`와 `9`, 음수, 비수치 키는 거부한다. 프로필의 `minimum_class_pixels`는 양의 정수여야 하며 문자열이나 0으로 production gate를 낮출 수 없다.
 
-`bbox_semantic_id`는 선택한 원본 bbox 행의 `semanticId`와 같아야 하며 bbox label map의 class, instance label map의 class, semantic mask class가 모두 같아야 한다. `bbox_xyxy`는 instance mask에서 얻은 양끝 포함 tight bbox다. 원본 bbox 수치와 각 좌표 차이가 1픽셀 이내여야 한다. bbox annotator의 `occlusionRatio`는 원형 메타데이터로만 보존한다. Isaac Sim 6.2가 `-1.0`을 반환하면 `occlusion_raw_value: -1.0`, `occlusion_ratio: null`, `occlusion_status: "unavailable_raw_sentinel"`로 기록하며 leaf 가림 coverage로 세지 않는다. `edge_truncated`는 tight bbox가 이미지 가장자리에 닿는지와 일치해야 한다.
+`bbox_semantic_id`는 선택한 원본 bbox 행의 `semanticId`와 같아야 하며 bbox label map의 class, instance label map의 class, semantic mask class가 모두 같아야 한다. `bbox_xyxy`와 `edge_truncated`는 parent instance mask에서 얻은 양끝 포함 tight bbox와 가장자리 접촉 여부다. `raw_bbox_binding.kind: "instance_mask"`이면 원본 bbox와 parent mask 좌표 차이가 프로필의 1픽셀 허용 범위 안이어야 한다. 이 범위를 벗어나면 parent와 source-bound visible descendant 전체의 정렬된 ID 집합 및 mask bbox 합집합이 원본과 0픽셀로 일치할 때만 `kind: "semantic_subtree_union"`을 허용한다. `raw_bbox_binding`은 원본 bbox 좌표·edge·occlusion을 별도로 보존하며 subtree의 edge나 occlusion을 parent instance 속성으로 사용하지 않는다. Isaac Sim 6.2가 `occlusionRatio: -1.0`을 반환하면 binding 안에 `occlusion_raw_value: -1.0`, `occlusion_ratio: null`, `occlusion_status: "unavailable_raw_sentinel"`로 기록하며 leaf 가림 coverage로 세지 않는다.
 
 ## Leaf 가림 증거
 

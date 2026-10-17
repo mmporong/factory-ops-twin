@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import binascii
+from collections import Counter
 import hashlib
 from io import BytesIO
 import json
@@ -20,6 +21,7 @@ from factory_ops.dataset_evidence import (
     _read_npy,
     _validate_cross_split_duplicates,
     _validate_excluded_bbox_rows,
+    _validate_instances,
     main,
     validate_dataset,
 )
@@ -680,6 +682,78 @@ class DatasetEvidenceTests(unittest.TestCase):
         ), set())
         self.assertTrue(any("not an exact hierarchical" in error for error in errors), errors)
 
+    def test_semantic_subtree_binding_requires_exact_full_visible_union(self) -> None:
+        parent_sha = "e" * 64
+        child_sha = "f" * 64
+        parent = {
+            "instance_id": 43, "bbox_semantic_id": 6, "class": "pallet", "usd_root_path": "/World/FG",
+            "asset_source_sha256": parent_sha,
+            "stable_instance_key": hashlib.sha256(f"variant-000\0/World/FG\0{parent_sha}".encode()).hexdigest(),
+            "bbox_xyxy": [0, 0, 1, 0], "raw_bbox_index": 0, "edge_truncated": True,
+            "raw_bbox_binding": {
+                "kind": "semantic_subtree_union", "bbox_xyxy": [0, 0, 3, 0],
+                "instance_ids": [43, 143], "edge_truncated": True,
+                "occlusion_ratio": None, "occlusion_status": "unavailable_raw_sentinel", "occlusion_raw_value": -1.0,
+            },
+        }
+        child = {
+            "instance_id": 143, "bbox_semantic_id": 9, "class": "tote", "usd_root_path": "/World/FG/Tote",
+            "asset_source_sha256": child_sha,
+            "stable_instance_key": hashlib.sha256(f"variant-000\0/World/FG/Tote\0{child_sha}".encode()).hexdigest(),
+            "bbox_xyxy": [2, 0, 3, 0], "raw_bbox_index": 1, "edge_truncated": True,
+            "raw_bbox_binding": {
+                "kind": "instance_mask", "bbox_xyxy": [2, 0, 3, 0],
+                "instance_ids": [143], "edge_truncated": True,
+                "occlusion_ratio": None, "occlusion_status": "unavailable_raw_sentinel", "occlusion_raw_value": -1.0,
+            },
+        }
+        raw_data = [
+            {"semanticId": 6, "x_min": 0, "y_min": 0, "x_max": 3, "y_max": 0, "occlusionRatio": -1.0},
+            {"semanticId": 9, "x_min": 2, "y_min": 0, "x_max": 3, "y_max": 0, "occlusionRatio": -1.0},
+        ]
+        common = {
+            "prefix": "fixture", "variant_id": "variant-000", "width": 4, "height": 1,
+            "instance_bounds": {43: [0, 0, 1, 0], 143: [2, 0, 3, 0]},
+            "instance_map": {43: "pallet", 143: "tote"}, "bbox_map": {6: "pallet", 9: "tote"},
+            "bbox_raw_labels": {"6": {"class": "pallet"}, "9": {"class": "pallet,tote"}},
+            "bbox_prim_paths": ["/World/FG", "/World/FG/Tote"],
+            "instance_prim_paths": {"43": "/World/FG", "143": "/World/FG/Tote"},
+            "instance_labelled_roots": {"43": "/World/FG", "143": "/World/FG/Tote"},
+            "instance_asset_shas": {"43": parent_sha, "143": child_sha},
+            "raw_data": raw_data, "excluded_bbox_rows": [],
+            "profile": {"quality_bounds": {"bbox_tolerance_px": 1, "occlusion_ratio_min": 0.0, "occlusion_ratio_max": 1.0}},
+            "class_instances": Counter(), "occlusion": Counter(), "stats": Counter(),
+            "source_bindings": {
+                "/World/FG": parent_sha, "/World/FG/Tote": child_sha,
+                "@class:/World/FG": "pallet", "@class:/World/FG/Tote": "tote",
+            },
+            "exact_instance_labelled_roots": {43: ("/World/FG", "pallet"), 143: ("/World/FG/Tote", "tote")},
+        }
+
+        errors: list[str] = []
+        _validate_instances(**common, normalized_instances=[parent, child], errors=errors)
+        self.assertEqual(errors, [])
+
+        for binding_ids, raw_x_max in (([43], 3), ([43, 143], 2), ([43, 143, 999], 3)):
+            forged_parent = json.loads(json.dumps(parent))
+            forged_child = json.loads(json.dumps(child))
+            forged_raw = json.loads(json.dumps(raw_data))
+            forged_parent["raw_bbox_binding"]["instance_ids"] = binding_ids
+            forged_parent["raw_bbox_binding"]["bbox_xyxy"][2] = raw_x_max
+            forged_raw[0]["x_max"] = raw_x_max
+            errors = []
+            _validate_instances(
+                **{**common, "raw_data": forged_raw},
+                normalized_instances=[forged_parent, forged_child], errors=errors,
+            )
+            self.assertTrue(any("semantic subtree bbox binding" in error or "binding IDs" in error for error in errors), errors)
+
+        forged_child = json.loads(json.dumps(child))
+        forged_child["class"] = "pallet"
+        errors = []
+        _validate_instances(**common, normalized_instances=[parent, forged_child], errors=errors)
+        self.assertTrue(any("class or USD root path" in error for error in errors), errors)
+
     def test_self_attested_asset_sha_and_recomputed_stable_key_are_rejected(self) -> None:
         path = next(self.root.rglob("normalized.json"))
         document = json.loads(path.read_text(encoding="utf-8"))
@@ -1077,10 +1151,16 @@ class DatasetEvidenceTests(unittest.TestCase):
                         "stable_instance_key": stable,
                         "bbox_xyxy": bbox,
                         "raw_bbox_index": raw_index,
-                        "occlusion_ratio": occ,
-                        "occlusion_status": "measured_raw",
-                        "occlusion_raw_value": occ,
                         "edge_truncated": True,
+                        "raw_bbox_binding": {
+                            "kind": "instance_mask",
+                            "bbox_xyxy": bbox,
+                            "instance_ids": [instance_id],
+                            "edge_truncated": True,
+                            "occlusion_ratio": occ,
+                            "occlusion_status": "measured_raw",
+                            "occlusion_raw_value": occ,
+                        },
                     }
                 )
             normalized = {
@@ -1354,9 +1434,9 @@ class DatasetEvidenceTests(unittest.TestCase):
         normalized = json.loads(normalized_path.read_text(encoding="utf-8"))
         normalized["raw_annotations_sha256"] = hashlib.sha256(raw_path.read_bytes()).hexdigest()
         for item in normalized["instances"]:
-            item["occlusion_ratio"] = None
-            item["occlusion_status"] = "unavailable_raw_sentinel"
-            item["occlusion_raw_value"] = -1.0
+            item["raw_bbox_binding"]["occlusion_ratio"] = None
+            item["raw_bbox_binding"]["occlusion_status"] = "unavailable_raw_sentinel"
+            item["raw_bbox_binding"]["occlusion_raw_value"] = -1.0
         normalized_path.write_text(json.dumps(normalized), encoding="utf-8")
 
     def _refresh_source_sha(self) -> None:

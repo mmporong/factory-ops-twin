@@ -13,7 +13,7 @@ from pathlib import Path, PurePosixPath
 import stat
 import struct
 import zlib
-from typing import Any, Iterable, TypeGuard, cast
+from typing import Any, Iterable, Mapping, TypeGuard, cast
 
 
 DEFAULT_PROFILE = Path(__file__).resolve().parents[1] / "configs" / "factory-v3" / "dataset-profile.json"
@@ -1160,6 +1160,20 @@ def _validate_leaf_coverage(profile: dict[str, Any], stats: dict[str, Any], scen
         errors.append("leaf occlusion evidence contains source join failures")
 
 
+def _instance_bounds_union(
+    instance_bounds: Mapping[int, list[int]],
+    instance_ids: list[int],
+) -> list[int] | None:
+    if not instance_ids or any(value not in instance_bounds for value in instance_ids):
+        return None
+    return [
+        min(instance_bounds[value][0] for value in instance_ids),
+        min(instance_bounds[value][1] for value in instance_ids),
+        max(instance_bounds[value][2] for value in instance_ids),
+        max(instance_bounds[value][3] for value in instance_ids),
+    ]
+
+
 def _validate_instances(
     prefix: str,
     variant_id: str,
@@ -1286,26 +1300,70 @@ def _validate_instances(
         if canonical_bbox_roots != {usd_path}:
             errors.append(f"{prefix} instance {instance_id} labelled USD root is unrelated to the raw bbox row primPaths")
         raw_bbox = [raw_box.get(key) for key in ("x_min", "y_min", "x_max", "y_max")]
+        raw_bbox_binding = item.get("raw_bbox_binding")
+        if any(field in item for field in ("occlusion_ratio", "occlusion_status", "occlusion_raw_value")):
+            errors.append(f"{prefix} instance {instance_id} promotes raw bbox occlusion to an instance property")
+        expected_binding_fields = {
+            "kind", "bbox_xyxy", "instance_ids", "edge_truncated",
+            "occlusion_ratio", "occlusion_status", "occlusion_raw_value",
+        }
+        if not isinstance(raw_bbox_binding, dict) or set(raw_bbox_binding) != expected_binding_fields:
+            errors.append(f"{prefix} instance {instance_id} raw bbox binding is invalid")
+            raw_bbox_binding = {}
         if not all(_finite_number(value) for value in raw_bbox):
             errors.append(f"{prefix} instance {instance_id} raw bbox differs from the mask bbox by more than {tolerance}px")
         else:
             raw_bbox_numbers = cast(list[int | float], raw_bbox)
-            if any(abs(float(a) - float(b)) > tolerance for a, b in zip(raw_bbox_numbers, mask_bbox)):
-                errors.append(f"{prefix} instance {instance_id} raw bbox differs from the mask bbox by more than {tolerance}px")
+            binding_kind = raw_bbox_binding.get("kind")
+            binding_ids = raw_bbox_binding.get("instance_ids")
+            if (raw_bbox_binding.get("bbox_xyxy") != raw_bbox
+                    or not isinstance(binding_ids, list) or not binding_ids
+                    or any(not _nonnegative_int(value) or value not in instance_bounds for value in binding_ids)
+                    or binding_ids != sorted(set(binding_ids))):
+                errors.append(f"{prefix} instance {instance_id} raw bbox binding IDs or coordinates are invalid")
+            elif binding_kind == "instance_mask":
+                if binding_ids != [instance_id] or any(
+                    abs(float(a) - float(b)) > tolerance for a, b in zip(raw_bbox_numbers, mask_bbox)
+                ):
+                    errors.append(
+                        f"{prefix} instance {instance_id} ordinary raw bbox differs from the mask bbox by more than {tolerance}px"
+                    )
+            elif binding_kind == "semantic_subtree_union":
+                subtree_ids = sorted(
+                    candidate_id
+                    for candidate_id, candidate in normalized_by_id.items()
+                    if isinstance(candidate.get("usd_root_path"), str)
+                    and (candidate["usd_root_path"] == usd_path
+                         or candidate["usd_root_path"].startswith(usd_path + "/"))
+                )
+                subtree_union = _instance_bounds_union(instance_bounds, subtree_ids)
+                source_exact = all(
+                    exact_instance_labelled_roots.get(candidate_id)
+                    == (normalized_by_id[candidate_id].get("usd_root_path"), instance_map.get(candidate_id))
+                    for candidate_id in subtree_ids
+                )
+                if (len(subtree_ids) <= 1 or binding_ids != subtree_ids or raw_bbox != subtree_union
+                        or not source_exact or not any(
+                            abs(float(a) - float(b)) > tolerance for a, b in zip(raw_bbox_numbers, mask_bbox)
+                        )):
+                    errors.append(f"{prefix} instance {instance_id} semantic subtree bbox binding is not an exact source-bound union")
+            else:
+                errors.append(f"{prefix} instance {instance_id} raw bbox binding kind is invalid")
         raw_occ = raw_box.get("occlusionRatio")
-        normalized_occ = item.get("occlusion_ratio")
-        if not _finite_number(raw_occ) or item.get("occlusion_raw_value") != raw_occ:
+        normalized_occ = raw_bbox_binding.get("occlusion_ratio")
+        if not _finite_number(raw_occ) or raw_bbox_binding.get("occlusion_raw_value") != raw_occ:
             errors.append(f"{prefix} instance {instance_id} occlusion raw value is not preserved")
         elif float(raw_occ) == -1.0:
-            if normalized_occ is not None or item.get("occlusion_status") != "unavailable_raw_sentinel":
+            if normalized_occ is not None or raw_bbox_binding.get("occlusion_status") != "unavailable_raw_sentinel":
                 errors.append(f"{prefix} instance {instance_id} unavailable occlusion sentinel is normalized incorrectly")
-            else:
+            elif raw_bbox_binding.get("kind") == "instance_mask":
                 stats["occlusion_unknown_instances"] += 1
-        elif not _finite_number(normalized_occ) or float(raw_occ) != float(normalized_occ) or item.get("occlusion_status") != "measured_raw":
+        elif (not _finite_number(normalized_occ) or float(raw_occ) != float(normalized_occ)
+                or raw_bbox_binding.get("occlusion_status") != "measured_raw"):
             errors.append(f"{prefix} instance {instance_id} occlusion ratio does not preserve the measured raw value")
         elif not minimum_occ <= float(normalized_occ) <= maximum_occ:
             errors.append(f"{prefix} instance {instance_id} occlusion ratio is outside the profile bounds")
-        else:
+        elif raw_bbox_binding.get("kind") == "instance_mask":
             stats["occlusion_measured_instances"] += 1
             occlusion["clear" if float(normalized_occ) <= 0.1 else "partial" if float(normalized_occ) <= 0.5 else "heavy"] += 1
         edge = mask_bbox[0] == 0 or mask_bbox[1] == 0 or mask_bbox[2] == width - 1 or mask_bbox[3] == height - 1
@@ -1313,6 +1371,12 @@ def _validate_instances(
             errors.append(f"{prefix} instance {instance_id} edge_truncated does not match the mask bbox")
         if edge:
             stats["edge_truncated_instances"] += 1
+        raw_edge = (
+            raw_bbox[0] == 0 or raw_bbox[1] == 0
+            or raw_bbox[2] == width - 1 or raw_bbox[3] == height - 1
+        ) if all(_finite_number(value) for value in raw_bbox) else None
+        if raw_bbox_binding.get("edge_truncated") is not raw_edge:
+            errors.append(f"{prefix} instance {instance_id} raw bbox edge flag does not match the raw row")
         if class_name is not None:
             class_instances[class_name] += 1
     excluded_indices = _validate_excluded_bbox_rows(
@@ -1422,15 +1486,7 @@ def _validate_excluded_bbox_rows(
             if isinstance(candidate.get("usd_root_path"), str)
             and candidate["usd_root_path"].startswith(cast(str, aggregate_root) + "/")
         )
-        descendant_union = (
-            [
-                min(instance_bounds[value][0] for value in candidates),
-                min(instance_bounds[value][1] for value in candidates),
-                max(instance_bounds[value][2] for value in candidates),
-                max(instance_bounds[value][3] for value in candidates),
-            ]
-            if candidates and all(value in instance_bounds for value in candidates) else None
-        )
+        descendant_union = _instance_bounds_union(instance_bounds, candidates)
         if (canonical_roots != {aggregate_root} or not chains or any(chain is None for chain in chains)
                 or any(cast(tuple[str, str, frozenset[str]], chain)[1] != bbox_class for chain in chains)
                 or any(cast(tuple[str, str, frozenset[str]], chain)[2] != _raw_class_tokens(raw_tokens) for chain in chains)
