@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import binascii
 from collections import Counter
+import copy
 import hashlib
 from io import BytesIO
 import json
@@ -815,6 +816,137 @@ class DatasetEvidenceTests(unittest.TestCase):
         errors = []
         _validate_instances(**common, normalized_instances=[parent, forged_child], errors=errors)
         self.assertTrue(any("class or USD root path" in error for error in errors), errors)
+
+    def test_individual_sdk_bbox_absence_requires_one_pixel_and_exact_aggregate_coverage(self) -> None:
+        floor_sha = "f" * 64
+        mark_sha = "1" * 64
+        floor = {
+            "instance_id": 43, "bbox_semantic_id": 6, "class": "floor", "usd_root_path": "/World/FG/Floor",
+            "asset_source_sha256": floor_sha,
+            "stable_instance_key": hashlib.sha256(f"variant-000\0/World/FG/Floor\0{floor_sha}".encode()).hexdigest(),
+            "bbox_xyxy": [0, 0, 1, 0], "raw_bbox_index": 0, "edge_truncated": True,
+            "raw_bbox_binding": {
+                "kind": "instance_mask", "bbox_xyxy": [0, 0, 1, 0], "instance_ids": [43],
+                "edge_truncated": True, "occlusion_ratio": None,
+                "occlusion_status": "unavailable_raw_sentinel", "occlusion_raw_value": -1.0,
+            },
+        }
+        missing = {
+            "instance_id": 27, "bbox_semantic_id": None, "class": "floor_marking",
+            "usd_root_path": "/World/FG/Mark", "asset_source_sha256": mark_sha,
+            "stable_instance_key": hashlib.sha256(f"variant-000\0/World/FG/Mark\0{mark_sha}".encode()).hexdigest(),
+            "bbox_xyxy": [2, 0, 2, 0], "raw_bbox_index": None, "edge_truncated": True,
+            "raw_bbox_binding": {
+                "kind": "individual_sdk_bbox_absent", "bbox_xyxy": None, "instance_ids": [27],
+                "edge_truncated": None, "occlusion_ratio": None,
+                "occlusion_status": "individual_sdk_bbox_absent", "occlusion_raw_value": None,
+                "bbox_source": "instance_segmentation_mask", "mask_pixel_count": 1,
+                "mask_semantic_id": 3, "covering_aggregate_raw_bbox_index": 1,
+            },
+        }
+        raw_data = [
+            {"semanticId": 6, "x_min": 0, "y_min": 0, "x_max": 1, "y_max": 0, "occlusionRatio": -1.0},
+            {"semanticId": 7, "x_min": 0, "y_min": 0, "x_max": 2, "y_max": 0, "occlusionRatio": -1.0},
+        ]
+        excluded = [{
+            "raw_bbox_index": 1, "canonical_root": "/World/FG",
+            "descendant_instance_ids": [27, 43], "reason": "hierarchical_semantic_aggregate",
+        }]
+        common = {
+            "prefix": "fixture", "variant_id": "variant-000", "width": 3, "height": 1,
+            "instance_bounds": {43: [0, 0, 1, 0], 27: [2, 0, 2, 0]},
+            "instance_map": {43: "floor", 27: "floor_marking"}, "bbox_map": {6: "floor", 7: "floor"},
+            "bbox_raw_labels": {"6": {"class": "floor"}, "7": {"class": "floor"}},
+            "bbox_prim_paths": ["/World/FG/Floor", "/World/FG"],
+            "instance_prim_paths": {"43": "/World/FG/Floor", "27": "/World/FG/Mark"},
+            "instance_labelled_roots": {"43": "/World/FG/Floor", "27": "/World/FG/Mark"},
+            "instance_asset_shas": {"43": floor_sha, "27": mark_sha},
+            "raw_data": raw_data, "excluded_bbox_rows": excluded,
+            "profile": {"quality_bounds": {"bbox_tolerance_px": 1, "occlusion_ratio_min": 0.0, "occlusion_ratio_max": 1.0}},
+            "class_instances": Counter(), "occlusion": Counter(), "stats": Counter(),
+            "source_bindings": {
+                "/World/FG": "e" * 64, "/World/FG/Floor": floor_sha, "/World/FG/Mark": mark_sha,
+                "@class:/World/FG": "floor", "@class:/World/FG/Floor": "floor",
+                "@class:/World/FG/Mark": "floor_marking",
+            },
+            "exact_instance_labelled_roots": {
+                43: ("/World/FG/Floor", "floor"), 27: ("/World/FG/Mark", "floor_marking"),
+            },
+            "instance_pixel_counts": {43: 2, 27: 1},
+            "instance_semantic_ids": {43: {2}, 27: {3}},
+        }
+
+        errors: list[str] = []
+        _validate_instances(**common, normalized_instances=[floor, missing], errors=errors)
+        self.assertEqual(errors, [])
+        self.assertEqual(common["stats"]["individual_sdk_bbox_absent_instances"], 1)
+
+        mutations = {
+            "pixel count": lambda item: item["raw_bbox_binding"].__setitem__("mask_pixel_count", 2),
+            "boolean pixel count": lambda item: item["raw_bbox_binding"].__setitem__("mask_pixel_count", True),
+            "float pixel count": lambda item: item["raw_bbox_binding"].__setitem__("mask_pixel_count", 1.0),
+            "semantic ID": lambda item: item["raw_bbox_binding"].__setitem__("mask_semantic_id", 2),
+            "boolean semantic ID": lambda item: item["raw_bbox_binding"].__setitem__("mask_semantic_id", True),
+            "float semantic ID": lambda item: item["raw_bbox_binding"].__setitem__("mask_semantic_id", 3.0),
+            "aggregate index": lambda item: item["raw_bbox_binding"].__setitem__("covering_aggregate_raw_bbox_index", 0),
+            "instance ID": lambda item: item["raw_bbox_binding"].__setitem__("instance_ids", [43]),
+            "float instance ID": lambda item: item["raw_bbox_binding"].__setitem__("instance_ids", [27.0]),
+            "bbox source": lambda item: item["raw_bbox_binding"].__setitem__("bbox_source", "sdk_bbox"),
+            "raw coordinates": lambda item: item["raw_bbox_binding"].__setitem__("bbox_xyxy", [2, 0, 2, 0]),
+            "missing nullable semantic ID": lambda item: item.pop("bbox_semantic_id"),
+            "missing nullable raw index": lambda item: item.pop("raw_bbox_index"),
+        }
+        for label, mutate in mutations.items():
+            forged = copy.deepcopy(missing)
+            mutate(forged)
+            errors = []
+            _validate_instances(**{**common, "stats": Counter()}, normalized_instances=[floor, forged], errors=errors)
+            self.assertTrue(any(
+                "individual SDK bbox absence" in error or "absent SDK bbox" in error
+                for error in errors
+            ), (label, errors))
+
+        for field, value in (
+            ("class", "floor"),
+            ("usd_root_path", "/World/FG/Forged"),
+            ("asset_source_sha256", "a" * 64),
+            ("stable_instance_key", "b" * 64),
+        ):
+            forged = copy.deepcopy(missing)
+            forged[field] = value
+            errors = []
+            _validate_instances(**{**common, "stats": Counter()}, normalized_instances=[floor, forged], errors=errors)
+            self.assertTrue(errors, (field, errors))
+
+        forged_excluded = copy.deepcopy(excluded)
+        forged_excluded[0]["descendant_instance_ids"] = [43]
+        errors = []
+        _validate_instances(
+            **{**common, "stats": Counter(), "excluded_bbox_rows": forged_excluded},
+            normalized_instances=[floor, missing], errors=errors,
+        )
+        self.assertTrue(any("aggregate" in error or "hierarchical" in error for error in errors), errors)
+
+        child_raw = copy.deepcopy(raw_data)
+        child_raw.append({
+            "semanticId": 8, "x_min": 2, "y_min": 0, "x_max": 2, "y_max": 0, "occlusionRatio": -1.0,
+        })
+        errors = []
+        _validate_instances(
+            **{
+                **common,
+                "stats": Counter(),
+                "raw_data": child_raw,
+                "bbox_map": {6: "floor", 7: "floor", 8: "floor_marking"},
+                "bbox_raw_labels": {
+                    "6": {"class": "floor"}, "7": {"class": "floor"},
+                    "8": {"class": "floor,floor_marking"},
+                },
+                "bbox_prim_paths": ["/World/FG/Floor", "/World/FG", "/World/FG/Mark"],
+            },
+            normalized_instances=[floor, missing], errors=errors,
+        )
+        self.assertTrue(any("individual SDK bbox absence" in error for error in errors), errors)
 
     def test_self_attested_asset_sha_and_recomputed_stable_key_are_rejected(self) -> None:
         path = next(self.root.rglob("normalized.json"))

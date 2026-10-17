@@ -81,6 +81,7 @@ def validate_dataset(
         "class_instance_counts": {},
         "occlusion_distribution": {"clear_0_0.1": 0, "partial_0.1_0.5": 0, "heavy_0.5_1": 0},
         "edge_truncated_instances": 0,
+        "individual_sdk_bbox_absent_instances": 0,
         "occlusion_measured_instances": 0,
         "occlusion_unknown_instances": 0,
         "leaf_occlusion": {
@@ -806,6 +807,8 @@ def _validate_camera_sample(
         errors.append(f"{prefix} semantic/instance dtype is not a supported little-endian integer")
         return
     instance_bounds: dict[int, list[int]] = {}
+    instance_pixel_counts: Counter[int] = Counter()
+    instance_semantic_ids: dict[int, set[int]] = defaultdict(set)
     instance_source_chains: dict[int, tuple[str, str, frozenset[str]] | None] = {}
     observed_reserved_ids: set[int] = set()
     expected_semantic_classes: dict[int, set[str]] = defaultdict(set)
@@ -885,6 +888,8 @@ def _validate_camera_sample(
                 bounds[1] = min(bounds[1], y)
                 bounds[2] = max(bounds[2], x)
                 bounds[3] = max(bounds[3], y)
+            instance_pixel_counts[instance_id] += 1
+            instance_semantic_ids[instance_id].add(semantic_id)
     if observed_reserved_ids != set(reserved_map):
         errors.append(f"{prefix} reserved instance IDs do not exactly match reserved identities present in the mask")
     expected_semantic_map = {
@@ -940,6 +945,8 @@ def _validate_camera_sample(
         stats,
         source_bindings,
         exact_instance_labelled_roots,
+        instance_pixel_counts=instance_pixel_counts,
+        instance_semantic_ids=instance_semantic_ids,
     )
     _validate_leaf_occlusion(
         root, paths, prefix, scene_id, capture_id, camera_id, frame, sim_time_ns,
@@ -1226,6 +1233,9 @@ def _validate_instances(
     stats: dict[str, Any],
     source_bindings: dict[str, str],
     exact_instance_labelled_roots: dict[int, tuple[str, str]],
+    *,
+    instance_pixel_counts: Mapping[int, int] | None = None,
+    instance_semantic_ids: Mapping[int, set[int]] | None = None,
 ) -> None:
     if not isinstance(normalized_instances, list):
         errors.append(f"{prefix} normalized instances is not a list")
@@ -1257,6 +1267,7 @@ def _validate_instances(
     minimum_occ = float(profile.get("quality_bounds", {}).get("occlusion_ratio_min", 0.0))
     maximum_occ = float(profile.get("quality_bounds", {}).get("occlusion_ratio_max", 1.0))
     used_raw_indices: set[int] = set()
+    absent_candidates: dict[int, tuple[dict[str, Any], tuple[int, ...], str | None, str]] = {}
     for instance_id, bounds in instance_bounds.items():
         item = normalized_by_id.get(instance_id)
         if item is None:
@@ -1294,7 +1305,14 @@ def _validate_instances(
         if not _int_bbox(bbox, width, height) or bbox != list(mask_bbox):
             errors.append(f"{prefix} instance {instance_id} bbox is not the exact mask tight bbox")
             continue
+        if any(field in item for field in ("occlusion_ratio", "occlusion_status", "occlusion_raw_value")):
+            errors.append(f"{prefix} instance {instance_id} promotes raw bbox occlusion to an instance property")
         raw_index = item.get("raw_bbox_index")
+        raw_bbox_binding = item.get("raw_bbox_binding")
+        binding_kind = raw_bbox_binding.get("kind") if isinstance(raw_bbox_binding, dict) else None
+        if binding_kind == "individual_sdk_bbox_absent":
+            absent_candidates[instance_id] = (item, mask_bbox, class_name, usd_path)
+            continue
         if not _nonnegative_int(raw_index) or int(raw_index) >= len(raw_data) or not isinstance(raw_data[int(raw_index)], dict):
             errors.append(f"{prefix} instance {instance_id} raw_bbox_index is invalid")
             continue
@@ -1329,9 +1347,6 @@ def _validate_instances(
         if canonical_bbox_roots != {usd_path}:
             errors.append(f"{prefix} instance {instance_id} labelled USD root is unrelated to the raw bbox row primPaths")
         raw_bbox = [raw_box.get(key) for key in ("x_min", "y_min", "x_max", "y_max")]
-        raw_bbox_binding = item.get("raw_bbox_binding")
-        if any(field in item for field in ("occlusion_ratio", "occlusion_status", "occlusion_raw_value")):
-            errors.append(f"{prefix} instance {instance_id} promotes raw bbox occlusion to an instance property")
         expected_binding_fields = {
             "kind", "bbox_xyxy", "instance_ids", "edge_truncated",
             "occlusion_ratio", "occlusion_status", "occlusion_raw_value",
@@ -1422,6 +1437,81 @@ def _validate_instances(
         used_raw_indices,
         errors,
     )
+    expected_absent_fields = {
+        "kind", "bbox_xyxy", "instance_ids", "edge_truncated",
+        "occlusion_ratio", "occlusion_status", "occlusion_raw_value",
+        "bbox_source", "mask_pixel_count", "mask_semantic_id",
+        "covering_aggregate_raw_bbox_index",
+    }
+    for instance_id, (item, mask_bbox, class_name, usd_path) in absent_candidates.items():
+        raw_bbox_binding = item.get("raw_bbox_binding")
+        if not isinstance(raw_bbox_binding, dict):
+            errors.append(f"{prefix} instance {instance_id} individual SDK bbox absence is not exact and source-bound")
+            continue
+        semantic_ids = instance_semantic_ids.get(instance_id, set()) if instance_semantic_ids is not None else set()
+        aggregate_index = raw_bbox_binding.get("covering_aggregate_raw_bbox_index")
+        aggregate_index_int = int(aggregate_index) if _nonnegative_int(aggregate_index) else None
+        individual_rows = []
+        for candidate_index, raw_paths in enumerate(bbox_prim_paths):
+            semantic_id = raw_data[candidate_index].get("semanticId") if isinstance(raw_data[candidate_index], dict) else None
+            candidate_class = bbox_map.get(int(semantic_id)) if _nonnegative_int(semantic_id) else None
+            candidate_roots = _canonical_bbox_roots(
+                raw_paths,
+                candidate_class,
+                exact_instance_labelled_roots,
+                source_bindings,
+            )
+            if candidate_class == class_name and usd_path in candidate_roots:
+                individual_rows.append(candidate_index)
+        valid_absent = (
+            set(raw_bbox_binding) == expected_absent_fields
+            and "bbox_semantic_id" in item and "raw_bbox_index" in item
+            and item.get("bbox_semantic_id") is None
+            and item.get("raw_bbox_index") is None
+            and raw_bbox_binding.get("bbox_xyxy") is None
+            and raw_bbox_binding.get("instance_ids") == [instance_id]
+            and all(_nonnegative_int(value) for value in raw_bbox_binding["instance_ids"])
+            and raw_bbox_binding.get("edge_truncated") is None
+            and raw_bbox_binding.get("occlusion_ratio") is None
+            and raw_bbox_binding.get("occlusion_status") == "individual_sdk_bbox_absent"
+            and raw_bbox_binding.get("occlusion_raw_value") is None
+            and raw_bbox_binding.get("bbox_source") == "instance_segmentation_mask"
+            and _nonnegative_int(raw_bbox_binding.get("mask_pixel_count"))
+            and raw_bbox_binding.get("mask_pixel_count") == 1
+            and instance_pixel_counts is not None
+            and instance_pixel_counts.get(instance_id) == 1
+            and mask_bbox[0] == mask_bbox[2] and mask_bbox[1] == mask_bbox[3]
+            and len(semantic_ids) == 1
+            and _nonnegative_int(raw_bbox_binding.get("mask_semantic_id"))
+            and raw_bbox_binding.get("mask_semantic_id") == next(iter(semantic_ids), None)
+            and aggregate_index_int is not None
+            and aggregate_index_int < len(raw_data)
+            and not individual_rows
+        )
+        record_matches = [
+            record for record in excluded_bbox_rows
+            if isinstance(record, dict)
+            and record.get("raw_bbox_index") == aggregate_index_int
+            and instance_id in record.get("descendant_instance_ids", [])
+            and isinstance(record.get("canonical_root"), str)
+            and isinstance(normalized_by_id[instance_id].get("usd_root_path"), str)
+            and normalized_by_id[instance_id]["usd_root_path"].startswith(record["canonical_root"] + "/")
+        ]
+        if not valid_absent:
+            errors.append(f"{prefix} instance {instance_id} individual SDK bbox absence is not exact and source-bound")
+        elif aggregate_index_int not in excluded_indices or len(record_matches) != 1:
+            errors.append(f"{prefix} instance {instance_id} absent SDK bbox is not covered by one exact aggregate row")
+        else:
+            stats["individual_sdk_bbox_absent_instances"] = stats.get(
+                "individual_sdk_bbox_absent_instances", 0
+            ) + 1
+        edge = mask_bbox[0] == 0 or mask_bbox[1] == 0 or mask_bbox[2] == width - 1 or mask_bbox[3] == height - 1
+        if item.get("edge_truncated") is not edge:
+            errors.append(f"{prefix} instance {instance_id} edge_truncated does not match the mask bbox")
+        if edge:
+            stats["edge_truncated_instances"] += 1
+        if class_name is not None:
+            class_instances[class_name] += 1
     if used_raw_indices | excluded_indices != set(range(len(raw_data))):
         errors.append(f"{prefix} normalized instances do not bind every raw bbox row exactly once")
 

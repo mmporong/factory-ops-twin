@@ -642,6 +642,8 @@ def _normalize_annotations(
     semantic_classes: dict[str, dict[str, str]] = {}
     semantic_leaf_candidates: dict[int, set[str]] = {}
     validated_semantic_instance_pairs: set[tuple[int, int]] = set()
+    instance_pixel_counts: dict[int, int] = {}
+    instance_semantic_ids: dict[int, set[int]] = {}
     semantic_rows = _matrix_rows(semantic_array)
     instance_rows = _matrix_rows(instance_array)
     if len(semantic_rows) != len(instance_rows) or any(len(a) != len(b) for a, b in zip(semantic_rows, instance_rows)):
@@ -650,6 +652,9 @@ def _normalize_annotations(
         for raw_semantic_id, raw_instance_id in zip(semantic_row, instance_row):
             semantic_id = int(raw_semantic_id)
             instance_id = int(raw_instance_id)
+            if instance_id in labelled_roots:
+                instance_pixel_counts[instance_id] = instance_pixel_counts.get(instance_id, 0) + 1
+                instance_semantic_ids.setdefault(instance_id, set()).add(semantic_id)
             pair = (semantic_id, instance_id)
             if pair in validated_semantic_instance_pairs:
                 continue
@@ -683,6 +688,7 @@ def _normalize_annotations(
     instances: list[dict[str, Any]] = []
     bbox_classes: dict[str, dict[str, str]] = {}
     excluded_bbox_rows: list[dict[str, Any]] = []
+    bbox_row_identities: list[tuple[set[str], str]] = []
     used_ids: set[int] = set()
     for raw_index, row in enumerate(raw_data):
         if not isinstance(row, Mapping):
@@ -707,6 +713,7 @@ def _normalize_annotations(
         if len(bbox_leaf_classes) != 1:
             raise CaptureError(f"bbox row {raw_index} maps to ambiguous canonical leaf classes")
         bbox_class = next(iter(bbox_leaf_classes))
+        bbox_row_identities.append((bbox_roots, bbox_class))
         previous_bbox_class = bbox_classes.get(str(bbox_semantic_id))
         if previous_bbox_class is not None and previous_bbox_class.get("class") != bbox_class:
             raise CaptureError(f"bbox semantic ID {bbox_semantic_id} maps to ambiguous canonical leaf classes")
@@ -797,6 +804,56 @@ def _normalize_annotations(
             }
         )
     expected_ids = set(bounds) - {int(value) for value in reserved_instance_ids}
+    for instance_id in sorted(expected_ids - used_ids):
+        root_path, class_name = labelled_roots[instance_id]
+        bbox = bounds[instance_id]
+        semantic_ids = instance_semantic_ids.get(instance_id, set())
+        covering_aggregates = [
+            record for record in excluded_bbox_rows
+            if instance_id in record["descendant_instance_ids"]
+            and root_path.startswith(record["canonical_root"] + "/")
+        ]
+        has_individual_bbox = any(
+            row_class == class_name and root_path in row_roots
+            for row_roots, row_class in bbox_row_identities
+        )
+        if (instance_pixel_counts.get(instance_id) != 1
+                or bbox[0] != bbox[2] or bbox[1] != bbox[3]
+                or len(semantic_ids) != 1
+                or semantic_classes.get(str(next(iter(semantic_ids), -1)), {}).get("class") != class_name
+                or has_individual_bbox
+                or len(covering_aggregates) != 1):
+            continue
+        aggregate_index = covering_aggregates[0]["raw_bbox_index"]
+        height, width = instance_array.shape
+        edge = bbox[0] == 0 or bbox[1] == 0 or bbox[2] == width - 1 or bbox[3] == height - 1
+        asset_sha = instance_asset_shas[str(instance_id)]
+        stable = hashlib.sha256(f"{scene_variant_id}\0{root_path}\0{asset_sha}".encode("utf-8")).hexdigest()
+        instances.append({
+            "instance_id": instance_id,
+            "bbox_semantic_id": None,
+            "class": class_name,
+            "usd_root_path": root_path,
+            "asset_source_sha256": asset_sha,
+            "stable_instance_key": stable,
+            "bbox_xyxy": bbox,
+            "raw_bbox_index": None,
+            "edge_truncated": edge,
+            "raw_bbox_binding": {
+                "kind": "individual_sdk_bbox_absent",
+                "bbox_xyxy": None,
+                "instance_ids": [instance_id],
+                "edge_truncated": None,
+                "occlusion_ratio": None,
+                "occlusion_status": "individual_sdk_bbox_absent",
+                "occlusion_raw_value": None,
+                "bbox_source": "instance_segmentation_mask",
+                "mask_pixel_count": 1,
+                "mask_semantic_id": next(iter(semantic_ids)),
+                "covering_aggregate_raw_bbox_index": aggregate_index,
+            },
+        })
+        used_ids.add(instance_id)
     if used_ids != expected_ids:
         raise CaptureError("instance mask IDs and bbox rows are not a one-to-one join")
     if set(instance_classes) != {str(value) for value in expected_ids}:

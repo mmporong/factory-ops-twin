@@ -742,6 +742,89 @@ class G4CaptureContractTests(unittest.TestCase):
         self.assertEqual([item["instance_id"] for item in result["instances"]], [110, 124])
         self.assertEqual(source_classes.items_calls, 5)
 
+    def test_one_pixel_instance_without_individual_sdk_bbox_is_preserved_only_under_exact_aggregate(self) -> None:
+        class AggregateStage:
+            def GetPrimAtPath(self, path):
+                classes = {
+                    "/World/FG": "floor",
+                    "/World/FG/Floor": "floor",
+                    "/World/FG/Mark": "floor_marking",
+                }
+                return _Prim(path in classes, classes.get(path))
+
+        arguments = {
+            "scene_id": "scene-000", "scene_variant_id": "industrial-v00", "capture_id": "capture-003",
+            "camera_id": "aisle", "physics_frame": 151, "sim_time_ns": 2_516_666_667,
+            "semantic_payload": {
+                "data": _Array([[2, 2, 3]]),
+                "info": {"idToLabels": {
+                    "2": {"class": "floor"}, "3": {"class": "floor,floor_marking"},
+                }},
+            },
+            "instance_payload": {
+                "data": _Array([[43, 43, 27]]),
+                "info": {
+                    "idToLabels": {"43": "/World/FG/Floor", "27": "/World/FG/Mark"},
+                    "idToSemantics": {
+                        "43": {"class": "floor"}, "27": {"class": "floor,floor_marking"},
+                    },
+                },
+            },
+            "bbox_raw": {
+                "data": [
+                    {"semanticId": 6, "x_min": 0, "y_min": 0, "x_max": 1, "y_max": 0, "occlusionRatio": -1.0},
+                    {"semanticId": 7, "x_min": 0, "y_min": 0, "x_max": 2, "y_max": 0, "occlusionRatio": -1.0},
+                ],
+                "info": {
+                    "idToLabels": {"6": {"class": "floor"}, "7": {"class": "floor"}},
+                    "primPaths": ["/World/FG/Floor", "/World/FG"],
+                },
+            },
+            "bbox_sha256": "d" * 64, "semantic_info_sha256": "a" * 64, "instance_info_sha256": "b" * 64,
+            "stage": AggregateStage(),
+            "asset_source_by_root": {
+                "/World/FG": "e" * 64, "/World/FG/Floor": "f" * 64, "/World/FG/Mark": "1" * 64,
+            },
+            "source_class_by_root": {
+                "/World/FG": "floor", "/World/FG/Floor": "floor", "/World/FG/Mark": "floor_marking",
+            },
+            "np": _FakeNP(),
+        }
+        result = _normalize_annotations(**arguments)
+
+        missing = next(item for item in result["instances"] if item["instance_id"] == 27)
+        self.assertIsNone(missing["bbox_semantic_id"])
+        self.assertIsNone(missing["raw_bbox_index"])
+        self.assertEqual(missing["bbox_xyxy"], [2, 0, 2, 0])
+        self.assertEqual(missing["raw_bbox_binding"], {
+            "kind": "individual_sdk_bbox_absent",
+            "bbox_xyxy": None,
+            "instance_ids": [27],
+            "edge_truncated": None,
+            "occlusion_ratio": None,
+            "occlusion_status": "individual_sdk_bbox_absent",
+            "occlusion_raw_value": None,
+            "bbox_source": "instance_segmentation_mask",
+            "mask_pixel_count": 1,
+            "mask_semantic_id": 3,
+            "covering_aggregate_raw_bbox_index": 1,
+        })
+        self.assertEqual(result["raw_info"]["excluded_bbox_rows"][0]["descendant_instance_ids"], [27, 43])
+
+        two_pixel = {**arguments, "semantic_payload": {
+            **arguments["semantic_payload"], "data": _Array([[2, 3, 3]]),
+        }, "instance_payload": {
+            **arguments["instance_payload"], "data": _Array([[43, 27, 27]]),
+        }}
+        with self.assertRaisesRegex(CaptureError, "not a one-to-one join"):
+            _normalize_annotations(**two_pixel)
+
+        no_aggregate = json.loads(json.dumps(arguments["bbox_raw"]))
+        no_aggregate["data"] = no_aggregate["data"][:1]
+        no_aggregate["info"]["primPaths"] = no_aggregate["info"]["primPaths"][:1]
+        with self.assertRaisesRegex(CaptureError, "not a one-to-one join"):
+            _normalize_annotations(**{**arguments, "bbox_raw": no_aggregate})
+
     def test_visible_parent_raw_bbox_is_bound_to_exact_semantic_subtree_union(self) -> None:
         class SubtreeStage:
             def GetPrimAtPath(self, path):
