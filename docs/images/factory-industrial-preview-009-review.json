@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "run_id": "g4-probe-009",
+  "render_source_commit": "3d731dfbf73b940b1ace083120adfcbb8fdf061a",
+  "reviewer": "factory_v3_media_review",
+  "recorded_by": "root_from_native_vision_review",
+  "recorded_at_utc": "2026-10-17T19:14:54.7002171+00:00",
+  "dataset_approved": false,
+  "operational_evidence": false,
+  "ground_contact_verified": false,
+  "observations": [
+    "부품 트레이, 조립·검사 셀, 롤러 설비와 안전선이 구분되어 공정 외형을 설명할 수 있다.",
+    "GPU008보다 접촉 그림자와 설비 명암 분리가 강해졌지만 전체 노출이 낮아 일부 내부 디테일이 묻힌다.",
+    "RGB에서 명백한 AMR 부품 분리·부유·바닥 관통은 관찰되지 않았으나 실제 지면 접촉과 물리 상태는 검증하지 않았다.",
+    "데이터셋 품질, 라벨 정확도와 운영 성공은 이 정적 시각 검수의 승인 범위에 포함하지 않는다."
+  ],
+  "classification": "static_media_visual_review",
+  "camera_id": "aisle",
+  "source_rgb_sha256": "6afebb4c4af128b3c436a0bf942400a46afe7429567263c80d05e324434517fa",
+  "verdict": "limited_preview_pass",
+  "score_out_of_10": 7.5,
+  "scope": "static factory appearance only",
+  "required_caption": "현재 공장 외형 진단 렌더 · 라벨·운영 검증 진행 중",
+  "selected_relative_rgb_path": "scenes/scene-000/captures/f000000127-t000002116666667/aisle/rgb.png",
+  "selected_frame": "f000000127-t000002116666667"
+}

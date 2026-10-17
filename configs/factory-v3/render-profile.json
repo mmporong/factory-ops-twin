@@ -12,8 +12,8 @@
     {
       "id": "portfolio_overview",
       "eye_xyz_m": [20.0, -18.0, 30.0],
-      "target_xyz_m": [20.0, 12.0, 0.7],
-      "focal_length_mm": 26.0,
+      "target_xyz_m": [20.0, 10.5, 0.5],
+      "focal_length_mm": 22.0,
       "purpose": "full factory flow overview"
     },
     {
@@ -40,15 +40,15 @@
     {
       "id": "carter1_follow",
       "eye_xyz_m": [-2.2, -1.6, 1.8],
-      "target_xyz_m": [0.25, 0.0, 0.55],
-      "focal_length_mm": 32.0,
+      "target_xyz_m": [0.25, 0.0, 0.35],
+      "focal_length_mm": 26.0,
       "purpose": "mission follow camera in carter1 chassis_link frame"
     },
     {
       "id": "carter2_follow",
       "eye_xyz_m": [-2.2, 1.6, 1.8],
-      "target_xyz_m": [0.25, 0.0, 0.55],
-      "focal_length_mm": 32.0,
+      "target_xyz_m": [0.25, 0.0, 0.35],
+      "focal_length_mm": 26.0,
       "purpose": "mission follow camera in carter2 chassis_link frame"
     }
   ],
