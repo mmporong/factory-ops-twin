@@ -83,7 +83,14 @@ scenes/scene-000/captures/f000000120-t000000002000000/
 
 컨테이너는 `/workspace/g4-environment.json`을 source proof로 사용한다. supervisor는 파일 전체 SHA-256을 `FACTORY_OPS_G4_PROVENANCE_SHA256`에 전달한다. manifest와 `source.verification`은 `schema_version: 1`을 가지며, manifest는 같은 `source_commit`·`checkout_head`, clean checkout, Git object 검증 결과, `source_archive_sha256`·`source_commit_object_sha256`, `source_snapshot_relative: "project"`, `{상대경로: SHA-256}` 형식의 `source_files`를 가진다. capture producer는 raw commit object의 Git SHA-1, archive 전체의 blob·mode·tree, readonly snapshot의 source pin을 다시 계산해 서로 같은 commit인지 검사한 뒤에만 Isaac을 시작한다. 원본 manifest와 source archive/commit object를 데이터셋 provenance에 복사하고 종료 직전에 manifest·archive·commit object·전체 source map을 다시 검증한다. QA도 보존된 archive와 raw commit으로 같은 계산을 반복한다.
 
-QA report는 선택 profile의 ID·SHA와 `validation_gate`를 기록한다. 프로젝트에 고정된 `factory-v3-portfolio-render-v1`의 SHA, 12 scene, scene당 30 capture, 3 camera, 8/2/2 scene split과 정확히 같을 때만 `production_passed` 자격이 생긴다. 작은 test profile은 검증 자체가 통과해도 `diagnostic_fixture`이며 생산 데이터 승인으로 해석하지 않는다.
+QA report는 선택 profile의 ID·SHA와 `validation_gate`를 기록하고 다음 상태를 분리한다.
+
+- `deterministic_data_passed`: manifest, source, 12 scene·30 capture·3 camera, 1,080 RGB, modality, 좌표, mask, depth, class, split 누출, leaf join과 가림 coverage를 포함한 결정적 데이터 검사가 모두 통과했다.
+- `portfolio_qa_passed`: 결정적 데이터 검사가 통과했고, 닫힌 데이터셋 밖의 AI 포트폴리오 검수 sidecar가 모든 scene-camera와 카메라별 clear·partial·heavy·compound 대표를 실제 RGB와 원형 가림 자료에 결속했다. sidecar를 제공하지 않으면 `false`다.
+- `human_release_approved`: 원본 `visual-review.json`의 모든 필수 항목이 명시적 `reviewer_type: "human"` attestation을 충족했다. reviewer type이 없는 과거 문서는 `legacy_unspecified`로 해석하며 자동 승인하지 않는다.
+- `production_passed`: `deterministic_data_passed`, 고정 production profile, `human_release_approved`가 모두 참이다. AI 검수는 이 상태를 참으로 만들 수 없다.
+
+기존 `passed`는 호출에서 요청한 전체 검증에 오류가 없다는 호환 의미를 유지한다. 보고서는 `data_errors`, `human_review_errors`, `portfolio_qa_errors`를 따로 기록하고 세 목록을 합친 `errors`도 유지한다. 프로젝트에 고정된 `factory-v3-portfolio-render-v1`의 SHA, 12 scene, scene당 30 capture, 3 camera, 8/2/2 scene split과 정확히 같을 때만 production profile 자격이 생긴다. 작은 test profile은 검증 자체가 통과해도 `diagnostic_fixture`이며 생산 데이터 승인으로 해석하지 않는다.
 
 split 누출 fingerprint는 capture와 camera 순서에 무관한 multiset이다. RGB는 PNG 압축 수준과 scanline filter를 제거한 실제 pixel bytes로, NPY는 header 버전과 padding을 제외한 dtype·shape·payload로 digest를 만든다. 파일 인코딩만 바꾼 같은 이미지·배열이 서로 다른 split에 들어가면 같은 내용으로 판정한다.
 
@@ -177,4 +184,40 @@ production profile은 `reason: verifiedSDKleaf-onlymapping`을 고정하고 scen
 
 캡처 사이에 live articulation root를 순간 이동시키지 않는다. 초기 spawn에서 physics warmup을 마친 AMR을 zero-wheel 상태로 유지하고 카메라·조명·시각 variant로 구성을 바꾼다. 각 visual-review entry는 `robot_ground_contact_verified: true`를 포함해야 하며, 차체·휠·caster가 분리되거나 지면에서 부유한 프레임은 승인할 수 없다.
 
-`visual-review.json`은 장면·카메라별 대표 샘플을 포함한다. 각 항목은 `scene_id`, `camera_id`, `capture_id`, `rgb_path`, `rgb_sha256`, `reviewed`, `verdict`, `reviewer`를 가진다. `reviewer`는 RGB를 확인한 사람의 수동 검수 식별자이며 `pending`, `unreviewed`, `unknown` 같은 placeholder는 승인으로 인정하지 않는다. 이 attestation은 이미지에서 지면 정합을 확인했다는 기록이며 물리 접촉 센서 증거를 뜻하지 않는다. 모든 장면과 카메라 조합이 `reviewed: true`, `verdict: "pass"`가 되기 전에는 프로덕션 데이터셋을 승인하지 않는다.
+`visual-review.json`은 장면·카메라별 대표 샘플을 포함한다. 각 항목은 `scene_id`, `camera_id`, `capture_id`, `rgb_path`, `rgb_sha256`, `reviewed`, `verdict`, `reviewer`, `reviewer_type`을 가진다. 인간 릴리스 attestation의 `reviewer_type`은 `human`이어야 한다. `reviewer`는 RGB를 확인한 사람의 수동 검수 식별자이며 `pending`, `unreviewed`, `unknown` 같은 placeholder는 승인으로 인정하지 않는다. 이 attestation은 이미지에서 지면 정합을 확인했다는 기록이며 물리 접촉 센서 증거를 뜻하지 않는다. 모든 장면과 카메라 조합이 `reviewed: true`, `verdict: "pass"`가 되기 전에는 프로덕션 데이터셋을 승인하지 않는다. 테스트 fixture의 `reviewer_type: "human"`은 분기 검증용 입력이며 실제 사람의 승인을 주장하지 않는다.
+
+## AI 포트폴리오 시각 검수 sidecar
+
+AI 검수 결과는 원본 manifest에 넣거나 `visual-review.json`을 바꾸지 않고 닫힌 데이터셋 디렉터리 밖의 새 JSON 파일에 저장한다. 검증 API의 선택 인자 `portfolio_review_path` 또는 CLI의 `--portfolio-review`로 전달한다. 정규 파일만 허용하며 symlink, junction, 데이터셋 내부 경로, 다른 dataset·run·profile·`dataset.json` SHA 결속은 거부한다. 검증이 끝나면 원본 manifest의 모든 파일에 대해 root 결속, resolve 결과, 정규 파일, 크기, symlink/junction 조상, SHA를 다시 검사한다. `dataset.json`도 다시 해시한다. sidecar는 최초 resolve 결과·크기·파일 identity·SHA를 보존하고 종료 시 같은 조건과 link/junction 부재를 다시 검사한다. 같은 바이트를 다른 파일이나 연결된 부모 경로로 바꾸는 것도 실패한다.
+
+최소 상위 구조는 다음과 같다.
+
+```json
+{
+  "schema_version": 1,
+  "review_scope": "portfolio_qa_only",
+  "reviewer_type": "ai",
+  "reviewer": "검수 실행 식별자",
+  "declared_model": "설정에서 읽은 모델 식별자",
+  "model_identity_source": "installed_role_catalog",
+  "review_protocol": "factory-dataset-portfolio-visual-review",
+  "review_protocol_version": "1",
+  "review_protocol_sha256": "64자리 SHA-256",
+  "dataset_contract_sha256": "docs/dataset-contract.md의 SHA-256",
+  "physical_contact_evidence": false,
+  "limitations": ["RGB 관찰은 물리 접촉력 또는 충돌 센서 증거가 아님"],
+  "dataset": {
+    "dataset_id": "dataset.json과 같은 값",
+    "run_id": "dataset.json과 같은 값",
+    "dataset_json_sha256": "검수 대상 dataset.json의 SHA-256",
+    "profile_sha256": "선택 profile의 SHA-256"
+  },
+  "entries": []
+}
+```
+
+`model_identity_source`는 설치된 역할 catalog의 `installed_role_catalog` 또는 실행 설정의 `runtime_configuration`만 허용한다. 실행 호스트가 증명하지 않은 모델을 `host_attested`로 기록하지 않는다. reviewer·model 값은 비어 있거나 placeholder일 수 없다. 검수 protocol은 이름 `factory-dataset-portfolio-visual-review`, version `1`로 고정한다. `review_protocol_sha256`은 UTF-8 바이트열 `review_protocol + "\0" + review_protocol_version`의 SHA-256이어야 한다. 형식만 맞는 다른 SHA는 인정하지 않는다. AI sidecar 또는 개별 entry가 `human_release_approved`, `production_passed`, 인간 reviewer type을 주장하면 실패한다.
+
+각 entry는 `scene_id`, `camera_id`, `capture_id`, `rgb_path`, `rgb_sha256`, `evidence_source: "dataset_rgb"`, `verdict: "pass"`, `observations`, `visible_defects`, `visual_contact_assessment`를 가진다. `visual_contact_assessment`는 화면에서 부품 분리·부유·지면 관통이 관찰되지 않은 `visible_consistent` 또는 가림·화면 밖으로 판단할 수 없는 `not_observable`이다. AI entry에서 `physical_contact_verified`나 `robot_ground_contact_verified`를 참으로 기록하면 실패한다. 정상적이고 라벨이 사실인 가림과 edge truncation은 결함이 아니며, 보이지 않는 AMR이나 부품의 접촉 상태를 추정해 참으로 바꾸지 않는다. `visible_defects`에 관찰된 분리·부유·관통이 하나라도 있으면 포트폴리오 QA를 통과하지 않는다. 생성 이미지나 구상 이미지는 `dataset_rgb` 증거가 될 수 없다.
+
+모든 scene-camera 조합에는 `evidence_kind: "scene_camera_review"` 항목이 필요하다. 카메라별 clear·partial·heavy 대표는 `evidence_kind: "leaf_occlusion_bin"`으로 원형 `occlusion.raw.json` 경로와 SHA, renderer instance ID, leaf prim path, labelled root path를 기록한다. compound 대표는 `evidence_kind: "compound_root_unknown"`으로 같은 frame의 원형 SHA와 labelled root를 기록한다. 검증기는 RGB·capture·camera 결속, 원형 가림 SHA, normalized frame binding, leaf ID·path·root, 실제 ratio bin과 compound unknown 상태를 다시 계산한다.

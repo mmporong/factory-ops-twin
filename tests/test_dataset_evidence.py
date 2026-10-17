@@ -5,8 +5,10 @@ from collections import Counter
 import hashlib
 from io import BytesIO
 import json
+import os
 from pathlib import Path
 import struct
+import subprocess
 import tarfile
 import tempfile
 from typing import Any, Sequence
@@ -25,6 +27,7 @@ from factory_ops.dataset_evidence import (
     main,
     validate_dataset,
 )
+from factory_ops.dataset_review import REVIEW_PROTOCOL, REVIEW_PROTOCOL_VERSION
 from factory_ops.source_provenance import verify_source_archive
 
 
@@ -159,6 +162,9 @@ class DatasetEvidenceTests(unittest.TestCase):
         self.assertEqual(report["stats"]["class_instance_counts"], {"amr": 3, "floor": 3, "rack": 3})
         self.assertEqual(report["validation_gate"], "diagnostic_fixture")
         self.assertFalse(report["production_passed"])
+        self.assertTrue(report["deterministic_data_passed"])
+        self.assertTrue(report["human_release_approved"])
+        self.assertFalse(report["portfolio_qa_passed"])
         self.assertEqual(report["profile"]["id"], "test-only-three-scenes")
 
     def test_cli_writes_the_same_passing_report(self) -> None:
@@ -171,6 +177,22 @@ class DatasetEvidenceTests(unittest.TestCase):
 
         self.assertEqual(exit_code, 0)
         self.assertTrue(json.loads(output.read_text(encoding="utf-8"))["passed"])
+
+    def test_cli_accepts_external_portfolio_review_sidecar(self) -> None:
+        output = self.base / "portfolio-report.json"
+        sidecar = self._write_portfolio_review()
+        with patch(
+            "sys.argv",
+            [
+                "dataset_evidence", "--dataset", str(self.root), "--profile", str(self.profile_path),
+                "--portfolio-review", str(sidecar), "--output", str(output),
+            ],
+        ):
+            exit_code = main()
+
+        report = json.loads(output.read_text(encoding="utf-8"))
+        self.assertEqual(exit_code, 0)
+        self.assertTrue(report["portfolio_qa_passed"], report["portfolio_qa_errors"])
 
     def test_report_binds_the_exact_dataset_and_validator_bytes(self) -> None:
         path = self.root / "dataset.json"
@@ -202,6 +224,46 @@ class DatasetEvidenceTests(unittest.TestCase):
             report = validate_dataset(self.root, self.profile_path)
         self.assertFalse(report["passed"])
         self.assertIn("dataset.json changed during validation", report["errors"])
+
+    def test_manifest_artifact_change_during_validation_cannot_pass(self) -> None:
+        from factory_ops import dataset_evidence
+        original = dataset_evidence._validate_visual_review
+        target = next(self.root.rglob("rgb.png"))
+
+        def change_after_review(*args: Any, **kwargs: Any) -> None:
+            original(*args, **kwargs)
+            target.write_bytes(target.read_bytes() + b"tamper")
+
+        with patch.object(dataset_evidence, "_validate_visual_review", side_effect=change_after_review):
+            report = validate_dataset(self.root, self.profile_path)
+
+        self.assertFalse(report["deterministic_data_passed"])
+        self.assertTrue(any("changed during validation" in error for error in report["data_errors"]))
+
+    def test_manifest_camera_directory_link_swap_cannot_pass_final_validation(self) -> None:
+        from factory_ops import dataset_evidence
+        original = dataset_evidence._validate_visual_review
+        camera_dir = next(self.root.glob("scenes/*/captures/*/overhead"))
+        backup = self.base / "external-camera-original"
+        swapped = False
+
+        def swap_after_review(*args: Any, **kwargs: Any) -> None:
+            nonlocal swapped
+            original(*args, **kwargs)
+            camera_dir.rename(backup)
+            self._make_directory_link(camera_dir, backup)
+            swapped = True
+
+        try:
+            with patch.object(dataset_evidence, "_validate_visual_review", side_effect=swap_after_review):
+                report = validate_dataset(self.root, self.profile_path)
+        finally:
+            if swapped:
+                os.rmdir(camera_dir)
+                backup.rename(camera_dir)
+
+        self.assertFalse(report["deterministic_data_passed"])
+        self.assertTrue(any("changed during validation" in error for error in report["data_errors"]))
 
     def test_cli_rejects_output_inside_dataset_and_preserves_existing_report(self) -> None:
         dataset_path = self.root / "dataset.json"
@@ -934,6 +996,312 @@ class DatasetEvidenceTests(unittest.TestCase):
         self.assertFalse(report["passed"])
         self.assertTrue(any("unreviewed or not approved" in error for error in report["errors"]), report["errors"])
 
+    def test_legacy_reviewer_type_is_not_promoted_to_human_release(self) -> None:
+        path = self.root / "visual-review.json"
+        document = json.loads(path.read_text(encoding="utf-8"))
+        for entry in document["entries"]:
+            entry.pop("reviewer_type")
+        path.write_text(json.dumps(document), encoding="utf-8")
+        self._refresh_manifest()
+
+        report = validate_dataset(self.root, self.profile_path)
+
+        self.assertTrue(report["deterministic_data_passed"], report["data_errors"])
+        self.assertFalse(report["human_release_approved"])
+        self.assertFalse(report["production_passed"])
+        self.assertTrue(report["human_review_errors"])
+
+    def test_ai_portfolio_review_passes_without_granting_release_authority(self) -> None:
+        sidecar = self._write_portfolio_review()
+
+        report = validate_dataset(self.root, self.profile_path, sidecar)
+
+        self.assertTrue(report["passed"], report["errors"])
+        self.assertTrue(report["deterministic_data_passed"])
+        self.assertTrue(report["portfolio_qa_passed"])
+        self.assertTrue(report["human_release_approved"])
+        self.assertFalse(report["production_passed"])
+        review_validator = report["stats"]["portfolio_review"]["validator"]
+        validator_path = Path(__file__).resolve().parents[1] / review_validator["path"]
+        self.assertEqual(review_validator["sha256"], hashlib.sha256(validator_path.read_bytes()).hexdigest())
+
+    def test_explicit_human_fixture_can_only_pass_production_with_production_data_gate(self) -> None:
+        with patch("factory_ops.dataset_evidence._is_production_profile", return_value=True), patch(
+            "factory_ops.dataset_evidence._validate_source_verification"
+        ):
+            report = validate_dataset(self.root, self.profile_path)
+
+        self.assertTrue(report["deterministic_data_passed"], report["data_errors"])
+        self.assertTrue(report["human_release_approved"], report["human_review_errors"])
+        self.assertTrue(report["production_passed"])
+
+    def test_ai_reviewer_cannot_replace_human_release(self) -> None:
+        review_path = self.root / "visual-review.json"
+        document = json.loads(review_path.read_text(encoding="utf-8"))
+        for entry in document["entries"]:
+            entry["reviewer_type"] = "ai"
+        review_path.write_text(json.dumps(document), encoding="utf-8")
+        self._refresh_manifest()
+        sidecar = self._write_portfolio_review()
+
+        with patch("factory_ops.dataset_evidence._is_production_profile", return_value=True), patch(
+            "factory_ops.dataset_evidence._validate_source_verification"
+        ):
+            report = validate_dataset(self.root, self.profile_path, sidecar)
+
+        self.assertTrue(report["deterministic_data_passed"], report["data_errors"])
+        self.assertTrue(report["portfolio_qa_passed"], report["portfolio_qa_errors"])
+        self.assertFalse(report["human_release_approved"])
+        self.assertFalse(report["production_passed"])
+
+    def test_portfolio_review_rejects_host_attested_model_identity(self) -> None:
+        sidecar = self._write_portfolio_review()
+        document = json.loads(sidecar.read_text(encoding="utf-8"))
+        document["model_identity_source"] = "host_attested"
+        sidecar.write_text(json.dumps(document), encoding="utf-8")
+
+        report = validate_dataset(self.root, self.profile_path, sidecar)
+
+        self.assertFalse(report["portfolio_qa_passed"])
+        self.assertTrue(any("model_identity_source" in error for error in report["portfolio_qa_errors"]))
+
+    def test_portfolio_review_cannot_claim_human_or_production_approval(self) -> None:
+        sidecar = self._write_portfolio_review()
+        document = json.loads(sidecar.read_text(encoding="utf-8"))
+        document["human_release_approved"] = True
+        document["production_passed"] = True
+        sidecar.write_text(json.dumps(document), encoding="utf-8")
+
+        report = validate_dataset(self.root, self.profile_path, sidecar)
+
+        self.assertFalse(report["portfolio_qa_passed"])
+        self.assertTrue(any("human release or production" in error for error in report["portfolio_qa_errors"]))
+
+    def test_portfolio_review_entries_cannot_claim_release_or_production_approval(self) -> None:
+        for field, value in (
+            ("human_release_approved", True),
+            ("production_passed", True),
+            ("reviewer_type", "human"),
+        ):
+            with self.subTest(field=field):
+                sidecar = self._write_portfolio_review()
+                document = json.loads(sidecar.read_text(encoding="utf-8"))
+                document["entries"][0][field] = value
+                sidecar.write_text(json.dumps(document), encoding="utf-8")
+
+                report = validate_dataset(self.root, self.profile_path, sidecar)
+
+                self.assertFalse(report["portfolio_qa_passed"])
+                self.assertTrue(any("human review authority" in error for error in report["portfolio_qa_errors"]))
+
+    def test_portfolio_review_rejects_wrong_well_formed_protocol_sha(self) -> None:
+        sidecar = self._write_portfolio_review()
+        document = json.loads(sidecar.read_text(encoding="utf-8"))
+        document["review_protocol_sha256"] = "0" * 64
+        sidecar.write_text(json.dumps(document), encoding="utf-8")
+
+        report = validate_dataset(self.root, self.profile_path, sidecar)
+
+        self.assertFalse(report["portfolio_qa_passed"])
+        self.assertTrue(any("protocol name/version/SHA binding" in error for error in report["portfolio_qa_errors"]))
+
+    def test_portfolio_review_rejects_placeholder_model_and_unknown_reviewer_type(self) -> None:
+        sidecar = self._write_portfolio_review()
+        document = json.loads(sidecar.read_text(encoding="utf-8"))
+        document["declared_model"] = "unknown"
+        document["reviewer_type"] = "machine"
+        sidecar.write_text(json.dumps(document), encoding="utf-8")
+
+        report = validate_dataset(self.root, self.profile_path, sidecar)
+
+        self.assertFalse(report["portfolio_qa_passed"])
+        self.assertTrue(any("declared_model" in error for error in report["portfolio_qa_errors"]))
+        self.assertTrue(any("reviewer_type" in error for error in report["portfolio_qa_errors"]))
+
+    def test_portfolio_review_must_be_outside_closed_dataset(self) -> None:
+        sidecar = self._write_portfolio_review()
+        inside = self.root / "portfolio-review.json"
+        inside.write_bytes(sidecar.read_bytes())
+
+        report = validate_dataset(self.root, self.profile_path, inside)
+
+        self.assertFalse(report["portfolio_qa_passed"])
+        self.assertIn("portfolio review sidecar must be outside the closed dataset directory", report["portfolio_qa_errors"])
+
+    def test_portfolio_review_rejects_wrong_dataset_and_raw_sha(self) -> None:
+        sidecar = self._write_portfolio_review()
+        document = json.loads(sidecar.read_text(encoding="utf-8"))
+        document["dataset"]["dataset_id"] = "another-dataset"
+        leaf = next(entry for entry in document["entries"] if entry.get("evidence_kind") == "leaf_occlusion_bin")
+        leaf["occlusion_raw_sha256"] = "0" * 64
+        sidecar.write_text(json.dumps(document), encoding="utf-8")
+
+        report = validate_dataset(self.root, self.profile_path, sidecar)
+
+        self.assertFalse(report["portfolio_qa_passed"])
+        self.assertTrue(any("selected dataset/profile" in error for error in report["portfolio_qa_errors"]))
+        self.assertTrue(any("raw/normalized" in error for error in report["portfolio_qa_errors"]))
+
+    def test_portfolio_review_rejects_generated_evidence_and_contact_claim(self) -> None:
+        sidecar = self._write_portfolio_review()
+        document = json.loads(sidecar.read_text(encoding="utf-8"))
+        document["entries"][0]["evidence_source"] = "generated_concept"
+        document["entries"][1]["physical_contact_verified"] = True
+        sidecar.write_text(json.dumps(document), encoding="utf-8")
+
+        report = validate_dataset(self.root, self.profile_path, sidecar)
+
+        self.assertFalse(report["portfolio_qa_passed"])
+        self.assertTrue(any("evidence_source" in error for error in report["portfolio_qa_errors"]))
+        self.assertTrue(any("contact verification" in error for error in report["portfolio_qa_errors"]))
+
+    def test_portfolio_review_accepts_not_observable_without_contact_inference(self) -> None:
+        sidecar = self._write_portfolio_review()
+        document = json.loads(sidecar.read_text(encoding="utf-8"))
+        document["entries"][0]["visual_contact_assessment"] = "not_observable"
+        document["entries"][0]["observations"] = ["AMR 하부가 화면 밖이라 접촉 상태를 관찰할 수 없음"]
+        sidecar.write_text(json.dumps(document), encoding="utf-8")
+
+        report = validate_dataset(self.root, self.profile_path, sidecar)
+
+        self.assertTrue(report["portfolio_qa_passed"], report["portfolio_qa_errors"])
+
+    def test_portfolio_review_rejects_observed_visible_defect(self) -> None:
+        sidecar = self._write_portfolio_review()
+        document = json.loads(sidecar.read_text(encoding="utf-8"))
+        document["entries"][0]["visible_defects"] = ["AMR 휠이 차체에서 분리되어 보임"]
+        sidecar.write_text(json.dumps(document), encoding="utf-8")
+
+        report = validate_dataset(self.root, self.profile_path, sidecar)
+
+        self.assertFalse(report["portfolio_qa_passed"])
+        self.assertTrue(any("visible defects" in error for error in report["portfolio_qa_errors"]))
+
+    def test_portfolio_review_requires_every_scene_camera(self) -> None:
+        sidecar = self._write_portfolio_review()
+        document = json.loads(sidecar.read_text(encoding="utf-8"))
+        document["entries"] = [
+            entry for entry in document["entries"]
+            if not (entry["scene_id"] == "scene-002" and entry["evidence_kind"] == "scene_camera_review")
+        ]
+        sidecar.write_text(json.dumps(document), encoding="utf-8")
+
+        report = validate_dataset(self.root, self.profile_path, sidecar)
+
+        self.assertFalse(report["portfolio_qa_passed"])
+        self.assertIn("portfolio review coverage for scene-002/overhead is below 1", report["portfolio_qa_errors"])
+
+    def test_portfolio_review_rejects_capture_and_leaf_mismatch(self) -> None:
+        sidecar = self._write_portfolio_review()
+        document = json.loads(sidecar.read_text(encoding="utf-8"))
+        document["entries"][0]["capture_id"] = "wrong-capture"
+        leaf = next(entry for entry in document["entries"] if entry.get("evidence_kind") == "leaf_occlusion_bin")
+        leaf["leaf_prim_path"] = "/World/Wrong"
+        sidecar.write_text(json.dumps(document), encoding="utf-8")
+
+        report = validate_dataset(self.root, self.profile_path, sidecar)
+
+        self.assertFalse(report["portfolio_qa_passed"])
+        self.assertTrue(any("indexed scene/camera/capture" in error for error in report["portfolio_qa_errors"]))
+        self.assertTrue(any("leaf bin evidence" in error for error in report["portfolio_qa_errors"]))
+
+    def test_portfolio_review_change_during_validation_cannot_pass(self) -> None:
+        from factory_ops import dataset_review
+        sidecar = self._write_portfolio_review()
+        original = dataset_review._validate_entry
+        changed = False
+
+        def change_after_entry(*args: Any, **kwargs: Any) -> None:
+            nonlocal changed
+            original(*args, **kwargs)
+            if not changed:
+                sidecar.write_bytes(sidecar.read_bytes() + b"\n")
+                changed = True
+
+        with patch.object(dataset_review, "_validate_entry", side_effect=change_after_entry):
+            report = validate_dataset(self.root, self.profile_path, sidecar)
+
+        self.assertFalse(report["portfolio_qa_passed"])
+        self.assertIn("portfolio review sidecar changed during validation", report["portfolio_qa_errors"])
+
+    def test_portfolio_review_same_bytes_file_replacement_cannot_pass(self) -> None:
+        from factory_ops import dataset_review
+        sidecar = self._write_portfolio_review()
+        original = dataset_review._validate_entry
+        changed = False
+
+        def replace_after_entry(*args: Any, **kwargs: Any) -> None:
+            nonlocal changed
+            original(*args, **kwargs)
+            if not changed:
+                replacement = sidecar.with_suffix(".replacement.json")
+                replacement.write_bytes(sidecar.read_bytes())
+                replacement.replace(sidecar)
+                changed = True
+
+        with patch.object(dataset_review, "_validate_entry", side_effect=replace_after_entry):
+            report = validate_dataset(self.root, self.profile_path, sidecar)
+
+        self.assertFalse(report["portfolio_qa_passed"])
+        self.assertIn("portfolio review sidecar changed during validation", report["portfolio_qa_errors"])
+
+    def test_portfolio_review_parent_link_swap_cannot_pass(self) -> None:
+        from factory_ops import dataset_review
+        parent = self.base / "review-parent"
+        parent.mkdir()
+        sidecar = self._write_portfolio_review(parent)
+        backup = self.base / "review-parent-original"
+        original = dataset_review._validate_entry
+        swapped = False
+
+        def swap_after_entry(*args: Any, **kwargs: Any) -> None:
+            nonlocal swapped
+            original(*args, **kwargs)
+            if not swapped:
+                parent.rename(backup)
+                self._make_directory_link(parent, backup)
+                swapped = True
+
+        try:
+            with patch.object(dataset_review, "_validate_entry", side_effect=swap_after_entry):
+                report = validate_dataset(self.root, self.profile_path, sidecar)
+        finally:
+            if swapped:
+                os.rmdir(parent)
+                backup.rename(parent)
+
+        self.assertFalse(report["portfolio_qa_passed"])
+        self.assertIn("portfolio review sidecar changed during validation", report["portfolio_qa_errors"])
+
+    def test_portfolio_review_symlink_is_rejected(self) -> None:
+        sidecar = self._write_portfolio_review()
+        if os.name == "nt":
+            target = self.base / "review-target"
+            target.mkdir()
+            (target / sidecar.name).write_bytes(sidecar.read_bytes())
+            junction = self.base / "review-junction"
+            subprocess.run(
+                [
+                    "powershell", "-NoProfile", "-Command",
+                    "& { param($junctionPath, $targetPath) "
+                    "New-Item -ItemType Junction -Path $junctionPath -Target $targetPath | Out-Null }",
+                    str(junction), str(target),
+                ],
+                check=True,
+            )
+            linked = junction / sidecar.name
+            try:
+                report = validate_dataset(self.root, self.profile_path, linked)
+            finally:
+                os.rmdir(junction)
+        else:
+            linked = self.base / "linked-review.json"
+            linked.symlink_to(sidecar)
+            report = validate_dataset(self.root, self.profile_path, linked)
+
+        self.assertFalse(report["portfolio_qa_passed"])
+        self.assertTrue(any("linked" in error for error in report["portfolio_qa_errors"]))
+
     def test_source_verification_end_rehash_is_required(self) -> None:
         self.dataset["source"]["verification"]["end_verification"]["status"] = "pending"
         self._write_dataset_index()
@@ -1328,6 +1696,7 @@ class DatasetEvidenceTests(unittest.TestCase):
                     "reviewed": True,
                     "verdict": "pass",
                     "reviewer": "test-reviewer",
+                    "reviewer_type": "human",
                     "robot_ground_contact_verified": True,
                 }
             )
@@ -1343,6 +1712,7 @@ class DatasetEvidenceTests(unittest.TestCase):
                         "occlusion_raw_path": occlusion_path,
                         "occlusion_raw_sha256": hashlib.sha256((self.root / occlusion_path).read_bytes()).hexdigest(),
                         "reviewed": True, "verdict": "pass", "reviewer": "test-reviewer",
+                        "reviewer_type": "human",
                         "robot_ground_contact_verified": True,
                     })
                 reviews.append({
@@ -1352,6 +1722,7 @@ class DatasetEvidenceTests(unittest.TestCase):
                     "occlusion_raw_path": occlusion_path,
                     "occlusion_raw_sha256": hashlib.sha256((self.root / occlusion_path).read_bytes()).hexdigest(),
                     "reviewed": True, "verdict": "pass", "reviewer": "test-reviewer",
+                    "reviewer_type": "human",
                     "robot_ground_contact_verified": True,
                 })
         source_files["scene_path"].write_text(
@@ -1424,6 +1795,66 @@ class DatasetEvidenceTests(unittest.TestCase):
             if path.is_file() and path.name != "dataset.json"
         ]
         self._write_dataset_index()
+
+    def _write_portfolio_review(self, parent: Path | None = None) -> Path:
+        source = json.loads((self.root / "visual-review.json").read_text(encoding="utf-8"))
+        entries = []
+        for original in source["entries"]:
+            entry = {
+                key: value for key, value in original.items()
+                if key not in {"reviewed", "reviewer", "reviewer_type", "robot_ground_contact_verified"}
+            }
+            entry.update({
+                "evidence_source": "dataset_rgb",
+                "visual_contact_assessment": "visible_consistent",
+                "observations": ["RGB 프레임에서 부품 분리, 부유, 지면 관통이 관찰되지 않음"],
+                "visible_defects": [],
+            })
+            if "evidence_kind" not in entry:
+                entry["evidence_kind"] = "scene_camera_review"
+            entries.append(entry)
+        document = {
+            "schema_version": 1,
+            "review_scope": "portfolio_qa_only",
+            "reviewer_type": "ai",
+            "reviewer": "dataset-portfolio-review-agent",
+            "declared_model": "configured-codex-model",
+            "model_identity_source": "installed_role_catalog",
+            "review_protocol": REVIEW_PROTOCOL,
+            "review_protocol_version": REVIEW_PROTOCOL_VERSION,
+            "review_protocol_sha256": hashlib.sha256(
+                f"{REVIEW_PROTOCOL}\0{REVIEW_PROTOCOL_VERSION}".encode("utf-8")
+            ).hexdigest(),
+            "dataset_contract_sha256": hashlib.sha256(
+                (Path(__file__).resolve().parents[1] / "docs" / "dataset-contract.md").read_bytes()
+            ).hexdigest(),
+            "physical_contact_evidence": False,
+            "limitations": ["RGB 관찰은 물리 접촉력 또는 충돌 센서 증거가 아님"],
+            "dataset": {
+                "dataset_id": self.dataset["dataset_id"],
+                "run_id": self.dataset["run_id"],
+                "dataset_json_sha256": hashlib.sha256((self.root / "dataset.json").read_bytes()).hexdigest(),
+                "profile_sha256": hashlib.sha256(self.profile_path.read_bytes()).hexdigest(),
+            },
+            "entries": entries,
+        }
+        path = (parent or self.base) / "portfolio-review.json"
+        path.write_text(json.dumps(document), encoding="utf-8")
+        return path
+
+    def _make_directory_link(self, link: Path, target: Path) -> None:
+        if os.name == "nt":
+            subprocess.run(
+                [
+                    "powershell", "-NoProfile", "-Command",
+                    "& { param($junctionPath, $targetPath) "
+                    "New-Item -ItemType Junction -Path $junctionPath -Target $targetPath | Out-Null }",
+                    str(link), str(target),
+                ],
+                check=True,
+            )
+        else:
+            link.symlink_to(target, target_is_directory=True)
 
     def _set_occlusion_sentinel(self, normalized_path: Path) -> None:
         raw_path = normalized_path.with_name("bbox2d.raw.json")

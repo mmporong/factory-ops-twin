@@ -56,12 +56,23 @@ PRODUCTION_SOURCE_PINS = {
 }
 
 
-def validate_dataset(root: Path, profile_path: Path = DEFAULT_PROFILE) -> dict[str, Any]:
+def validate_dataset(
+    root: Path,
+    profile_path: Path = DEFAULT_PROFILE,
+    portfolio_review_path: Path | None = None,
+) -> dict[str, Any]:
     """Validate a closed render dataset and return a serializable report."""
 
     root = Path(root)
     profile_path = Path(profile_path)
-    errors: list[str] = []
+    try:
+        root_binding = root.resolve(strict=True)
+    except OSError:
+        root_binding = root.resolve()
+    data_errors: list[str] = []
+    human_review_errors: list[str] = []
+    portfolio_qa_errors: list[str] = []
+    errors = data_errors
     stats: dict[str, Any] = {
         "scene_count": 0,
         "capture_count": 0,
@@ -78,6 +89,7 @@ def validate_dataset(root: Path, profile_path: Path = DEFAULT_PROFILE) -> dict[s
             "by_camera_status": {}, "by_class_status": {}, "compound_root_unknown": 0,
         },
         "visual_reviewed_scene_cameras": 0,
+        "human_release_approved": False,
         "profile_id": None,
         "profile_sha256": None,
         "validation_gate": "unresolved",
@@ -103,13 +115,13 @@ def validate_dataset(root: Path, profile_path: Path = DEFAULT_PROFILE) -> dict[s
     }
     artifact_summary: dict[str, Any] = {"declared_files": 0, "validated_files": 0, "bytes": 0}
     if not isinstance(profile, dict) or not isinstance(dataset, dict):
-        return _report(errors, stats, artifact_summary, dataset_binding)
+        return _report(data_errors, human_review_errors, portfolio_qa_errors, stats, artifact_summary, dataset_binding)
 
     profile_errors: list[str] = []
     _validate_profile(profile, profile_errors)
     errors.extend(profile_errors)
     if profile_errors:
-        return _report(errors, stats, artifact_summary, dataset_binding)
+        return _report(data_errors, human_review_errors, portfolio_qa_errors, stats, artifact_summary, dataset_binding)
     profile_sha = _sha256(profile_path) if _regular_file(profile_path) else None
     stats["profile_id"] = profile.get("profile_id")
     stats["profile_sha256"] = profile_sha
@@ -262,10 +274,27 @@ def validate_dataset(root: Path, profile_path: Path = DEFAULT_PROFILE) -> dict[s
         "heavy_0.5_1": occlusion["heavy"],
     }
     _validate_leaf_coverage(profile, stats, seen_scene_ids, {str(value) for value in cameras}, errors)
-    _validate_visual_review(root, dataset, profile, scene_camera_captures, manifest_paths, errors, stats)
+    _validate_visual_review(root, dataset, profile, scene_camera_captures, manifest_paths, human_review_errors, stats)
+    portfolio_stats: dict[str, Any] | None = None
+    if portfolio_review_path is not None:
+        from factory_ops.dataset_review import validate_portfolio_review
+
+        portfolio_qa_errors, portfolio_stats = validate_portfolio_review(
+            portfolio_review_path,
+            root,
+            dataset,
+            profile,
+            scene_camera_captures,
+            manifest_paths,
+            cast(str | None, dataset_binding["sha256"]),
+            profile_sha,
+        )
+        stats["portfolio_review"] = portfolio_stats
+    _rehash_manifest(root, root_binding, dataset.get("artifact_manifest"), data_errors)
     if _sha256(dataset_path) != dataset_binding["sha256"]:
         errors.append("dataset.json changed during validation")
-    return _report(errors, stats, artifact_summary, dataset_binding)
+    return _report(data_errors, human_review_errors, portfolio_qa_errors, stats, artifact_summary, dataset_binding,
+                   portfolio_review_requested=portfolio_review_path is not None)
 
 
 def _validate_capture(
@@ -1585,6 +1614,7 @@ def _validate_visual_review(
     errors: list[str],
     stats: dict[str, Any],
 ) -> None:
+    stats["human_release_approved"] = False
     review_path = "visual-review.json"
     if review_path not in manifest_paths:
         errors.append("visual-review.json is absent from the artifact manifest")
@@ -1626,9 +1656,11 @@ def _validate_visual_review(
             errors.append("visual-review entry does not bind a manifested RGB artifact")
             continue
         reviewer = entry.get("reviewer")
+        reviewer_type = entry.get("reviewer_type", "legacy_unspecified")
         if (entry.get("reviewed") is not True or entry.get("verdict") != allowed_verdict
                 or not _identifier(reviewer)
                 or cast(str, reviewer).casefold() in REVIEWER_PLACEHOLDER_SENTINELS
+                or reviewer_type != "human"
                 or entry.get("robot_ground_contact_verified") is not True):
             errors.append(f"visual-review entry for {key[0]}/{key[1]} is unreviewed or not approved")
             continue
@@ -1693,6 +1725,7 @@ def _validate_visual_review(
     if visual_contract.get("require_compound_unknown_per_camera") is True:
         for camera_id in camera_ids - reviewed_compound:
             errors.append(f"visual review has no approved compound-unknown representative for camera {camera_id}")
+    stats["human_release_approved"] = not errors
 
 
 def _validate_manifest(root: Path, manifest: object, errors: list[str], summary: dict[str, Any]) -> set[str]:
@@ -1740,6 +1773,38 @@ def _validate_manifest(root: Path, manifest: object, errors: list[str], summary:
     summary["declared_files"] = len(declared)
     summary["validated_files"] = len(validated)
     return validated
+
+
+def _rehash_manifest(root: Path, root_binding: Path, manifest: object, errors: list[str]) -> None:
+    """Recheck every declared artifact after all validation reads have completed."""
+
+    if not isinstance(manifest, list):
+        return
+    try:
+        if root.resolve(strict=True) != root_binding:
+            errors.append("dataset root changed during validation")
+    except OSError:
+        errors.append("dataset root could not be resolved during final validation")
+    for entry in manifest:
+        if not isinstance(entry, dict):
+            continue
+        safe = _safe_relative(entry.get("path"))
+        if safe is None:
+            continue
+        path = root / PurePosixPath(safe)
+        try:
+            resolved = path.resolve(strict=True)
+            size = path.lstat().st_size
+        except OSError:
+            resolved = None
+            size = None
+        expected_resolved = root_binding / PurePosixPath(safe)
+        if (not _regular_file(path)
+                or _has_symlink_ancestor(path, root)
+                or resolved != expected_resolved
+                or size != entry.get("bytes")
+                or _sha256(path) != entry.get("sha256")):
+            errors.append(f"artifact {safe} changed during validation")
 
 
 def _validate_profile(profile: dict[str, Any], errors: list[str]) -> None:
@@ -2173,9 +2238,11 @@ def _has_symlink_ancestor(path: Path, root: Path) -> bool:
     except ValueError:
         return True
     current = root
+    if current.is_symlink() or current.is_junction():
+        return True
     for part in relative.parts[:-1]:
         current /= part
-        if current.is_symlink():
+        if current.is_symlink() or current.is_junction():
             return True
     return False
 
@@ -2198,18 +2265,29 @@ def _load_json(path: Path, label: str, errors: list[str]) -> object:
         return None
 
 
-def _report(errors: list[str], stats: dict[str, Any], artifact_manifest: dict[str, Any],
-            dataset_binding: dict[str, Any]) -> dict[str, Any]:
+def _report(data_errors: list[str], human_review_errors: list[str], portfolio_qa_errors: list[str],
+            stats: dict[str, Any], artifact_manifest: dict[str, Any], dataset_binding: dict[str, Any],
+            *, portfolio_review_requested: bool = False) -> dict[str, Any]:
+    errors = [*data_errors, *human_review_errors, *portfolio_qa_errors]
     passed = not errors
+    deterministic_data_passed = not data_errors
+    portfolio_qa_passed = portfolio_review_requested and deterministic_data_passed and not portfolio_qa_errors
+    human_release_approved = deterministic_data_passed and not human_review_errors and bool(stats.get("human_release_approved"))
     return {
         "schema_version": 1,
         "dataset": dataset_binding,
         "validator": {"path": "factory_ops/dataset_evidence.py", "sha256": _sha256(Path(__file__))},
         "passed": passed,
-        "production_passed": passed and stats.get("validation_gate") == "production",
+        "deterministic_data_passed": deterministic_data_passed,
+        "portfolio_qa_passed": portfolio_qa_passed,
+        "human_release_approved": human_release_approved,
+        "production_passed": deterministic_data_passed and stats.get("validation_gate") == "production" and human_release_approved,
         "validation_gate": stats.get("validation_gate", "unresolved"),
         "profile": {"id": stats.get("profile_id"), "sha256": stats.get("profile_sha256")},
         "errors": errors,
+        "data_errors": data_errors,
+        "human_review_errors": human_review_errors,
+        "portfolio_qa_errors": portfolio_qa_errors,
         "stats": stats,
         "artifact_manifest": artifact_manifest,
         "scope": DATASET_SCOPE,
@@ -2221,12 +2299,13 @@ def main() -> int:
     parser.add_argument("--dataset", type=Path, required=True)
     parser.add_argument("--profile", type=Path, default=DEFAULT_PROFILE)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--portfolio-review", type=Path)
     args = parser.parse_args()
     if args.output.resolve().is_relative_to(args.dataset.resolve()):
         parser.error("QA output must be outside the closed dataset directory")
     if args.output.exists() or args.output.is_symlink():
         parser.error("QA output must use a new path")
-    report = validate_dataset(args.dataset, args.profile)
+    report = validate_dataset(args.dataset, args.profile, args.portfolio_review)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     with args.output.open("x", encoding="utf-8", newline="\n") as stream:
         stream.write(json.dumps(report, indent=2, sort_keys=True) + "\n")
