@@ -17,7 +17,7 @@ from typing import Any, Mapping, Sequence
 from uuid import UUID
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
-from factory_ops.fleet_execution import make_chunk, path_content_sha256, qualify_computed_path
+from factory_ops.fleet_execution import make_chunk, path_content_sha256, qualify_computed_path, path_header_stamp_ns
 from factory_ops.fleet_routing import RouteBook, swept_tiles
 from factory_ops.g3_session import SCOPE, sha, verify_session
 from factory_ops.layout import Layout
@@ -297,7 +297,7 @@ def validate_actions(
                 raise ValueError("chunk differs from current source compilation")
             path = action["path"]
             points = [[pose["position_xyz_m"][0], pose["position_xyz_m"][1]] for pose in path["poses"]]
-            stamp = float(path["header"]["sec"]) + float(path["header"]["nanosec"]) / 1e9
+            stamp = path_header_stamp_ns(path["header"]) / 1e9
             requested = float(action["requested_sim_time_s"])
             admission = float(action["path_geometry"]["now_s"])
             accepted = float(action["accepted_sim_time_s"])

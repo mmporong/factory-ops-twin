@@ -14,6 +14,8 @@ from factory_ops.fleet_execution import (
     PATH_SCOPE,
     StoppedGate,
     make_chunk,
+    path_clock_ready,
+    path_header_stamp_ns,
     qualify_computed_path,
 )
 from factory_ops.fleet_routing import RouteBook, swept_tiles
@@ -22,6 +24,33 @@ from factory_ops.navigation import GoalPose
 
 
 ROOT = Path(__file__).resolve().parents[1]
+
+
+class PathClockTests(unittest.TestCase):
+    def test_separate_clock_defers_one_frame_then_admits_exact_integer_boundary(self):
+        header = {"sec": 243, "nanosec": 950_000_000}
+        self.assertEqual(243_950_000_000, path_header_stamp_ns(header))
+        self.assertFalse(path_clock_ready(header, clock_ns=243_933_333_333,
+                                         elapsed_wall_s=0., max_wait_wall_s=5.))
+        self.assertFalse(path_clock_ready(header, clock_ns=243_949_999_999,
+                                         elapsed_wall_s=.1, max_wait_wall_s=5.))
+        self.assertTrue(path_clock_ready(header, clock_ns=243_950_000_000,
+                                        elapsed_wall_s=.2, max_wait_wall_s=5.))
+        self.assertTrue(path_clock_ready(header, clock_ns=243_950_000_000,
+                                        elapsed_wall_s=5., max_wait_wall_s=5.))
+        with self.assertRaises(TimeoutError):
+            path_clock_ready(header, clock_ns=243_933_333_333, elapsed_wall_s=5., max_wait_wall_s=5.)
+
+    def test_clock_gate_rejects_malformed_units_and_limits(self):
+        for header in ({"sec": -1, "nanosec": 0}, {"sec": True, "nanosec": 0},
+                       {"sec": 1, "nanosec": -1}, {"sec": 1, "nanosec": 1_000_000_000},
+                       {"sec": 1, "nanosec": 1.}):
+            with self.subTest(header=header), self.assertRaises(ValueError): path_header_stamp_ns(header)
+        header = {"sec": 0, "nanosec": 1}
+        for changes in ({"clock_ns": True}, {"clock_ns": -1}, {"elapsed_wall_s": -1},
+                        {"max_wait_wall_s": 0}, {"elapsed_wall_s": math.nan}):
+            values = {"clock_ns": 1, "elapsed_wall_s": 0., "max_wait_wall_s": 5.}; values.update(changes)
+            with self.subTest(changes=changes), self.assertRaises(ValueError): path_clock_ready(header, **values)
 
 
 class RouteChunkTests(unittest.TestCase):
@@ -147,6 +176,13 @@ class ComputedPathQualificationTests(unittest.TestCase):
         self.assertEqual(len(result["swept_tiles_sha256"]), 64)
         self.assertEqual(result, self.qualify(self.chunk.points))
         json.dumps(result, allow_nan=False)
+
+    def test_clock_catchup_does_not_bypass_the_existing_stale_path_limit(self):
+        header = {"sec": 10, "nanosec": 0}
+        self.assertTrue(path_clock_ready(header, clock_ns=10_600_000_000,
+                                        elapsed_wall_s=.1, max_wait_wall_s=5.))
+        with self.assertRaisesRegex(ValueError, "stale"):
+            self.qualify(self.chunk.points, stamp_s=path_header_stamp_ns(header)/1e9, now_s=10.6)
 
     def test_continuous_swept_cover_rejects_detour_between_valid_endpoints(self) -> None:
         start, goal = self.chunk.points

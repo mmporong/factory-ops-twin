@@ -19,7 +19,7 @@ from uuid import UUID, uuid4
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from factory_ops.fleet import FleetMission, FleetOrder
-from factory_ops.fleet_execution import StoppedGate, make_chunk, qualify_computed_path, path_content_sha256
+from factory_ops.fleet_execution import StoppedGate, make_chunk, qualify_computed_path, path_content_sha256, path_clock_ready, path_header_stamp_ns
 from factory_ops.fleet_routing import RouteBook, swept_tiles
 from factory_ops.g3_session import save, sha, verify_session
 from factory_ops.navigation import GoalPose, LocalizationPose, NavigationResult
@@ -396,7 +396,10 @@ def main() -> int:
 
         lease_sender = lease
 
+        tick_clock_ns = 0
+
         def tick(*, require_fresh: bool, refresh_leases: bool = True) -> float:
+            nonlocal tick_clock_ns
             if time.monotonic() > deadline or launch.poll() is not None or bag.poll() is not None:
                 raise RuntimeError("G3 worker wall bound or dependent process failed")
             scene_path = output / "g3-scene.json"
@@ -406,7 +409,8 @@ def main() -> int:
                 ros.spin_once(node, timeout_sec=.002)
             if not evidence_subscribers_ready((event_pub, auth_pub, route_pub)) or not named_subscriber_topics_ready(event_node, (*scan_recording_topics(), *service_event_topics), "rosbag2_recorder"):
                 raise RuntimeError("G3 evidence/scan recording subscriptions were lost")
-            stamp = now()
+            tick_clock_ns = event_node.get_clock().now().nanoseconds
+            stamp = tick_clock_ns / 1e9
             for robot, rt in robots.items():
                 try:
                     transform = rt["tf"].lookup_transform("map", "base_link", Time())
@@ -568,6 +572,8 @@ def main() -> int:
                     rt["compute_uuid"] = str(uuid4())
                     rt["send_future"] = rt["compute"].send_goal_async(request, goal_uuid=GoalUUID(uuid=list(UUID(rt["compute_uuid"]).bytes)))
                     rt["phase"], rt["phase_started"] = "compute_sent", stamp
+                    rt["path_clock_first_seen_wall"] = None
+                    rt["pending_path"] = None
                     rt["record"] = {"robot_id": robot, "chunk": chunk.to_dict(), "leg_id": leg["plan"].route_id,
                          "leg_target": leg["target"], "leg_kind": leg["kind"], "reservation_tiles": sorted(leg["tiles"]),
                          "generation": rt["generation"], "planner_action_uuid": rt["compute_uuid"], "follow_action_uuid": rt["follow_uuid"],
@@ -594,10 +600,29 @@ def main() -> int:
                     terminal = rt["result_future"].result()
                     if terminal is None or terminal.status != 4 or terminal.result.error_code != 0:
                         raise RuntimeError(f"ComputePathToPose failed for {robot}: {terminal}")
-                    path = terminal.result.path
-                    payload = path_payload(path)
+                    wall_now = time.monotonic()
+                    if rt["path_clock_first_seen_wall"] is None:
+                        rt["pending_path"] = copy.deepcopy(terminal.result.path)
+                        rt["pending_path_payload"] = path_payload(rt["pending_path"])
+                        rt["path_clock_first_seen_wall"] = wall_now
+                        rt["record"]["path_clock"] = {
+                            "path_stamp_ns": path_header_stamp_ns(rt["pending_path_payload"]["header"]),
+                            "first_observed_clock_ns": tick_clock_ns}
+                    path, payload = rt["pending_path"], rt["pending_path_payload"]
+                    clock_wait_wall_s = wall_now-rt["path_clock_first_seen_wall"]
+                    if not path_clock_ready(payload["header"], clock_ns=tick_clock_ns,
+                            elapsed_wall_s=clock_wait_wall_s,
+                            max_wait_wall_s=runtime_config["path_clock_wait_wall_s"]):
+                        if "path_clock_wait" not in rt["record"]:
+                            observation = {"path_stamp_ns": path_header_stamp_ns(payload["header"]),
+                                           "observed_clock_ns": tick_clock_ns, "mode": "hold"}
+                            rt["record"]["path_clock_wait"] = observation
+                            journal("planner_clock_wait", {"robot_id": robot, **observation})
+                        continue
+                    rt["record"]["path_clock"].update({"admitted_clock_ns": tick_clock_ns,
+                                                      "waited_wall_s": clock_wait_wall_s})
                     geometry = qualify_computed_path(book, rt["chunk"], [[item["position_xyz_m"][0], item["position_xyz_m"][1]] for item in payload["poses"]],
-                        frame_id=payload["header"]["frame_id"], stamp_s=payload["header"]["sec"]+payload["header"]["nanosec"]/1e9,
+                        frame_id=payload["header"]["frame_id"], stamp_s=path_header_stamp_ns(payload["header"])/1e9,
                         now_s=stamp, start_xy=(rt["pose"]["x_m"], rt["pose"]["y_m"]), max_age_s=runtime_config["path_ttl_s"])
                     if angle_error(path_final_yaw(payload), rt["chunk"].goal_pose.yaw) > .05:
                         raise RuntimeError("computed Path terminal yaw differs from the authored goal")

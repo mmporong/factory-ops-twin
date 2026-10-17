@@ -41,6 +41,29 @@ def path_content_sha256(payload: Mapping[str, Any]) -> str:
     return _hash(payload)
 
 
+def path_header_stamp_ns(header: Mapping[str, Any]) -> int:
+    """Preserve the ROS timestamp's integer boundary before converting seconds."""
+    seconds, nanoseconds = header.get("sec"), header.get("nanosec")
+    if (type(seconds) is not int or seconds < 0 or type(nanoseconds) is not int
+            or not 0 <= nanoseconds < 1_000_000_000):
+        raise ValueError("Path header requires nonnegative sec and canonical nanosec integers")
+    return seconds * 1_000_000_000 + nanoseconds
+
+
+def path_clock_ready(header: Mapping[str, Any], *, clock_ns: int,
+                     elapsed_wall_s: float, max_wait_wall_s: float) -> bool:
+    """Keep HOLD while a separate ROS clock callback catches up to a Path."""
+    stamp = path_header_stamp_ns(header)
+    elapsed, limit = _number(elapsed_wall_s, "elapsed_wall_s"), _number(max_wait_wall_s, "max_wait_wall_s")
+    if type(clock_ns) is not int or clock_ns < 0 or elapsed < 0 or limit <= 0:
+        raise ValueError("Path clock admission requires a nonnegative clock/wait and positive wall bound")
+    if stamp <= clock_ns:
+        return True
+    if elapsed >= limit:
+        raise TimeoutError(f"Path clock synchronization exceeded wall bound: path_ns={stamp}, clock_ns={clock_ns}")
+    return False
+
+
 def _tile_list(tiles: frozenset[Tile]) -> list[list[int]]:
     return [[x, y] for x, y in sorted(tiles)]
 
