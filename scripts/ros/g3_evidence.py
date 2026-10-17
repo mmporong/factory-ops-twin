@@ -559,6 +559,99 @@ def validate_route_event_binding(
     return {"route_event_count": len(local)}
 
 
+def validate_initial_hold_barrier(
+    mission_result: Mapping[str, Any], traces: Mapping[str, Sequence[Mapping[str, Any]]],
+    authorizations: Sequence[Mapping[str, Any]], bag_events: Sequence[Mapping[str, Any]],
+    errors: list[str],
+) -> dict[str, Any]:
+    """Bind the startup HOLD barrier to journaled leases and applied control samples."""
+    run_id, scenario_id = mission_result.get("run_id"), mission_result.get("scenario_id")
+    origin = _finite_number(mission_result.get("origin_sim_time_s"))
+    barrier = mission_result.get("initial_hold_barrier")
+    if (not isinstance(barrier, Mapping)
+            or set(barrier) != {"expected_authorizations", "acknowledgments", "latched_sim_time_s"}):
+        errors.append("initial HOLD barrier is missing or malformed")
+        return {"passed_robot_count": 0, "origin_sim_time_s": origin}
+    expected = barrier.get("expected_authorizations")
+    acknowledgments = barrier.get("acknowledgments")
+    latched = _finite_number(barrier.get("latched_sim_time_s"))
+    if (not isinstance(expected, Mapping) or set(expected) != set(ROBOTS)
+            or not isinstance(acknowledgments, Mapping) or set(acknowledgments) != set(ROBOTS)
+            or latched is None or latched < 0):
+        errors.append("initial HOLD barrier robot set or latch time is invalid")
+        return {"passed_robot_count": 0, "origin_sim_time_s": origin}
+
+    journal: dict[tuple[object, object], list[Mapping[str, Any]]] = defaultdict(list)
+    for row in authorizations:
+        journal[(row.get("robot_id"), row.get("authorization_seq"))].append(row)
+    latest_sample = -math.inf
+    passed = 0
+    for robot in ROBOTS:
+        payload, ack = expected[robot], acknowledgments[robot]
+        if not isinstance(payload, Mapping) or not isinstance(ack, Mapping):
+            errors.append(f"{robot}: initial HOLD payload or acknowledgment is malformed")
+            continue
+        scope = payload.get("scope")
+        sequence = payload.get("authorization_seq")
+        issued = _finite_number(payload.get("issued_sim_time_s"))
+        until = _finite_number(payload.get("valid_until_sim_time_s"))
+        evaluation = _finite_number(ack.get("evaluation_sim_time_s"))
+        sample_time = _finite_number(ack.get("sample_sim_time_s"))
+        frame = ack.get("physics_frame")
+        command = ack.get("input_command")
+        matching_frames = [row for row in traces.get(robot, ()) if row.get("physics_frame") == frame]
+        sample = matching_frames[0] if len(matching_frames) == 1 else {}
+        observed = sample.get("authorization", {}) if isinstance(sample, Mapping) else {}
+        observed_command = sample.get("motion_profile", {}).get("input_command") if isinstance(sample, Mapping) else None
+        lease_valid = False
+        if issued is not None and until is not None and evaluation is not None and sample_time is not None:
+            lease_valid = (0 <= issued <= evaluation < sample_time <= latched
+                           and origin is not None and latched < origin < until
+                           and 0 < until - issued <= .5 + 1e-9)
+        identity_valid = (
+            payload.get("schema_version") == 1 and payload.get("run_id") == run_id
+            and payload.get("robot_id") == robot and payload.get("mode") == "hold"
+            and type(sequence) is int and sequence > 0 and isinstance(scope, Mapping)
+            and scope.get("scenario_id") == scenario_id
+            and type(scope.get("reservation_id")) is int and scope["reservation_id"] > 0
+            and ack.get("run_id") == run_id and ack.get("scenario_id") == scenario_id
+            and ack.get("robot_id") == robot and ack.get("authorization_seq") == sequence
+            and ack.get("scope") == scope and ack.get("mode") == "hold" and ack.get("valid") is True
+            and type(frame) is int and frame > 0
+        )
+        command_valid = (
+            isinstance(command, Mapping) and set(command) == {"linear_m_s", "angular_rad_s"}
+            and all(_finite_number(value) == 0.0 for value in command.values())
+            and observed_command == command
+        )
+        trace_valid = (
+            len(matching_frames) == 1 and _finite_number(sample.get("sim_time_s")) == sample_time
+            and isinstance(observed, Mapping) and observed.get("payload") == payload
+            and observed.get("sequence") == sequence and observed.get("mode") == "hold"
+            and observed.get("valid") is True and observed.get("reason") == "authorization_hold"
+            and _finite_number(observed.get("evaluation_sim_time_s")) == evaluation
+        )
+        exact_journal = journal.get((robot, sequence), [])
+        if (not identity_valid or not lease_valid or not command_valid or not trace_valid
+                or len(exact_journal) != 1 or exact_journal[0] != payload):
+            errors.append(f"{robot}: initial HOLD barrier is not bound to one fresh applied authorization")
+            continue
+        assert sample_time is not None
+        latest_sample = max(latest_sample, sample_time)
+        passed += 1
+
+    ready = [row for row in bag_events if row.get("kind") == "navigation_ready"]
+    if (len(ready) != 1 or ready[0].get("run_id") != run_id or ready[0].get("scenario_id") != scenario_id
+            or _finite_number(ready[0].get("sim_time_s")) != origin
+            or _finite_number(ready[0].get("origin_sim_time_s")) != origin
+            or ready[0].get("initial_hold_barrier") != barrier):
+        errors.append("navigation_ready does not exactly bind the initial HOLD barrier and origin")
+    if origin is None or origin <= max(latched, latest_sample):
+        errors.append("navigation origin is not strictly after the post-step HOLD barrier")
+    return {"passed_robot_count": passed, "origin_sim_time_s": origin,
+            "latched_sim_time_s": latched, "latest_ack_sample_sim_time_s": latest_sample}
+
+
 def validate_authorization_order(
     authorizations: Sequence[Mapping[str, Any]], route_events: Sequence[Mapping[str, Any]],
     traces: Mapping[str, Sequence[Mapping[str, Any]]], actions: Sequence[Mapping[str, Any]], errors: list[str],
@@ -955,6 +1048,9 @@ def validate_g3_evidence(
         evaluation["actions"] = validate_actions(actions, book, bag, errors)
         evaluation["follow_rpc"] = validate_follow_rpc(actions, supplemental, errors)
         evaluation["stops"] = validate_stop_evidence(actions, traces, config["g3_runtime"], errors, bag)
+        evaluation["initial_hold_barrier"] = validate_initial_hold_barrier(
+            mission, traces, local_auth, local_events, errors,
+        )
         evaluation["authorization_order"] = validate_authorization_order(
             local_auth, route_events, traces, actions, errors, scenario_id=scenario_id,
         )

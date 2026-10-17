@@ -184,6 +184,7 @@ class BarrierLifecycleTests(unittest.TestCase):
         (self.output / "robots/carter1").mkdir(parents=True)
         sample = {
             "physics_frame": 40,
+            "sim_time_s": 12.516666666666667,
             "authorization": {
                 "sequence": 7,
                 "mode": "navigate",
@@ -205,6 +206,7 @@ class BarrierLifecycleTests(unittest.TestCase):
             (7, "navigate", {"linear_m_s": 0.4, "angular_rad_s": 0.1}),
         )
         self.assertNotIn("ground_truth", started)
+        self.assertEqual(sample["sim_time_s"], started["sample_sim_time_s"])
         original = path.read_bytes()
         sample["motion_profile"]["input_command"] = {"linear_m_s": 0.2, "angular_rad_s": 0.0}
         lifecycle.after_control("carter1", sample)

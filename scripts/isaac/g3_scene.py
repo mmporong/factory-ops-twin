@@ -85,6 +85,7 @@ class BarrierLifecycle:
                           "robot_id": robot_id, "authorization_seq": sequence,
                           "mode": authorization["mode"], "valid": authorization["valid"],
                           "evaluation_sim_time_s": authorization["evaluation_sim_time_s"],
+                          "sample_sim_time_s": sample["sim_time_s"],
                           "physics_frame": sample["physics_frame"],
                           "input_command": sample["motion_profile"]["input_command"],
                           "scope": authorization["payload"]["scope"],

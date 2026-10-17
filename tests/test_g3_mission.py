@@ -11,10 +11,47 @@ import unittest
 from factory_ops.fleet_routing import RouteBook
 from factory_ops.fleet_execution import StoppedGate, path_content_sha256
 from factory_ops.navigation import GoalPose
-from scripts.ros.g3_mission import angle_error, localization_payload, path_final_yaw, path_payload, valid_hold_ack, validate_arrival, verify_navigation_maps, stopped_odometry_record
+from scripts.ros.g3_mission import angle_error, failure_reason, localization_payload, path_final_yaw, path_payload, valid_hold_ack, validate_arrival, verify_navigation_maps, stopped_odometry_record, valid_initial_hold_ack, initial_hold_boundary_ready
 
 
 class G3MissionAdmissionTests(unittest.TestCase):
+    def test_signal_failures_keep_nonempty_reasons_for_fault_stop(self):
+        self.assertEqual("KeyboardInterrupt", failure_reason(KeyboardInterrupt()))
+        self.assertEqual("TimeoutError", failure_reason(TimeoutError("   ")))
+        self.assertEqual("expired lease", failure_reason(RuntimeError("expired lease")))
+
+    @staticmethod
+    def initial():
+        expected, acks = {}, {}
+        for index, robot in enumerate(("carter1", "carter2"), 1):
+            scope = {"scenario_id": "QUALIFICATION_NORMAL", "reservation_id": index,
+                     "reservation_generation": index, "decision_event_seq": 12,
+                     "goal_uuid": None, "route_id": None, "tile_hash": str(index)*64}
+            expected[robot] = {"run_id": "run", "robot_id": robot, "authorization_seq": 10,
+                "mode": "hold", "scope": scope, "issued_sim_time_s": 12., "valid_until_sim_time_s": 12.5}
+            acks[robot] = {"run_id": "run", "scenario_id": "QUALIFICATION_NORMAL", "robot_id": robot,
+                "authorization_seq": 10, "mode": "hold", "valid": True, "scope": deepcopy(scope),
+                "physics_frame": 730, "evaluation_sim_time_s": 12.1, "sample_sim_time_s": 12.116666666666667,
+                "input_command": {"linear_m_s": 0., "angular_rad_s": 0.}}
+        return expected, acks
+
+    def test_initial_hold_requires_both_exact_applied_scopes_before_clock_boundary(self):
+        expected, acks = self.initial()
+        self.assertFalse(initial_hold_boundary_ready({"carter1": acks["carter1"]}, expected, now_s=12.2))
+        self.assertFalse(initial_hold_boundary_ready(acks, expected, now_s=acks["carter1"]["sample_sim_time_s"]))
+        self.assertTrue(initial_hold_boundary_ready(acks, expected, now_s=12.2))
+        self.assertFalse(initial_hold_boundary_ready(acks, expected, now_s=12.5))
+        for changes in ({"authorization_seq": 9}, {"authorization_seq": 11}, {"run_id": "old"},
+                        {"mode": "navigate"}, {"mode": "emergency", "valid": False},
+                        {"sample_sim_time_s": 12.1}, {"sample_sim_time_s": math.nan},
+                        {"input_command": {"linear_m_s": .01, "angular_rad_s": 0.}}):
+            with self.subTest(changes=changes):
+                ack = deepcopy(acks["carter1"]); ack.update(changes)
+                self.assertFalse(valid_initial_hold_ack(ack, expected["carter1"], now_s=12.2))
+        for key, value in (("reservation_id", 3), ("decision_event_seq", 11), ("tile_hash", "f"*64)):
+            ack = deepcopy(acks["carter1"]); ack["scope"][key] = value
+            self.assertFalse(valid_initial_hold_ack(ack, expected["carter1"], now_s=12.2))
+
     @staticmethod
     def ack():
         return {"run_id": "run", "scenario_id": "QUALIFICATION_NORMAL", "robot_id": "carter1",

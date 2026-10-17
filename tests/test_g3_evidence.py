@@ -23,6 +23,7 @@ from scripts.ros.g3_evidence import (
     validate_final_parking,
     validate_follow_rpc,
     validate_handoff_bindings,
+    validate_initial_hold_barrier,
     validate_navigation_maps,
     validate_route_event_binding,
     validate_scene_closure,
@@ -42,6 +43,80 @@ class G3EvidenceHelperTests(unittest.TestCase):
             ROOT / "configs/factory-v3/layout.json",
             ROOT / "configs/factory-v3/g3-routing.json",
         )
+
+    @staticmethod
+    def initial_hold_fixture():
+        expected = {}
+        acknowledgments = {}
+        traces = {}
+        authorizations = []
+        for index, robot in enumerate(("carter1", "carter2"), 1):
+            issued = 1.0 + index / 100
+            scope = {"scenario_id": SCENARIO, "reservation_id": index,
+                     "goal_uuid": f"initial-{robot}"}
+            payload = {"schema_version": 1, "run_id": RUN_ID, "robot_id": robot,
+                       "authorization_seq": index, "issued_sim_time_s": issued,
+                       "valid_until_sim_time_s": issued + .5, "mode": "hold", "scope": scope}
+            evaluation, sample_time, frame = issued + .1, issued + .11, 70 + index
+            command = {"linear_m_s": 0.0, "angular_rad_s": 0.0}
+            ack = {"run_id": RUN_ID, "scenario_id": SCENARIO, "robot_id": robot,
+                   "authorization_seq": index, "mode": "hold", "valid": True,
+                   "evaluation_sim_time_s": evaluation, "sample_sim_time_s": sample_time,
+                   "physics_frame": frame, "input_command": deepcopy(command), "scope": deepcopy(scope)}
+            expected[robot] = payload
+            acknowledgments[robot] = ack
+            authorizations.append(deepcopy(payload))
+            traces[robot] = [{"physics_frame": frame, "sim_time_s": sample_time,
+                              "authorization": {"payload": deepcopy(payload), "sequence": index,
+                                                "mode": "hold", "valid": True,
+                                                "reason": "authorization_hold",
+                                                "evaluation_sim_time_s": evaluation},
+                              "motion_profile": {"input_command": deepcopy(command)}}]
+        barrier = {"expected_authorizations": expected, "acknowledgments": acknowledgments,
+                   "latched_sim_time_s": 1.2}
+        mission = {"run_id": RUN_ID, "scenario_id": SCENARIO, "origin_sim_time_s": 1.3,
+                   "initial_hold_barrier": barrier}
+        events = [{"run_id": RUN_ID, "scenario_id": SCENARIO, "event_seq": 1,
+                   "kind": "navigation_ready", "sim_time_s": 1.3, "origin_sim_time_s": 1.3,
+                   "initial_hold_barrier": deepcopy(barrier)}]
+        return mission, traces, authorizations, events
+
+    def test_initial_hold_barrier_binds_fresh_applied_samples_before_origin(self) -> None:
+        mission, traces, authorizations, events = self.initial_hold_fixture()
+        errors: list[str] = []
+        report = validate_initial_hold_barrier(mission, traces, authorizations, events, errors)
+        self.assertEqual(report["passed_robot_count"], 2)
+        self.assertEqual(errors, [])
+
+        for attack in ("missing", "stale_seq", "scope", "expired", "boundary", "frame"):
+            forged_mission, forged_traces, forged_auth, forged_events = deepcopy(
+                (mission, traces, authorizations, events),
+            )
+            barrier = forged_mission["initial_hold_barrier"]
+            ack = barrier["acknowledgments"]["carter1"]
+            if attack == "missing":
+                del barrier["acknowledgments"]["carter1"]
+            elif attack == "stale_seq":
+                ack["authorization_seq"] = 0
+            elif attack == "scope":
+                ack["scope"]["scenario_id"] = "FORGED"
+            elif attack == "expired":
+                payload = barrier["expected_authorizations"]["carter1"]
+                payload["valid_until_sim_time_s"] = ack["evaluation_sim_time_s"]
+                forged_auth[0] = deepcopy(payload)
+                forged_traces["carter1"][0]["authorization"]["payload"] = deepcopy(payload)
+            elif attack == "boundary":
+                forged_mission["origin_sim_time_s"] = barrier["latched_sim_time_s"]
+            else:
+                ack["physics_frame"] += 100
+            forged_events[0]["origin_sim_time_s"] = forged_mission["origin_sim_time_s"]
+            forged_events[0]["sim_time_s"] = forged_mission["origin_sim_time_s"]
+            forged_events[0]["initial_hold_barrier"] = deepcopy(barrier)
+            failures: list[str] = []
+            validate_initial_hold_barrier(
+                forged_mission, forged_traces, forged_auth, forged_events, failures,
+            )
+            self.assertTrue(failures, attack)
 
     def action_fixture(self):
         goal_xy = self.book.nodes["W_LOW"]

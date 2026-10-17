@@ -39,6 +39,11 @@ def angle_error(left: float, right: float) -> float:
     return abs(math.atan2(math.sin(left - right), math.cos(left - right)))
 
 
+def failure_reason(error: BaseException) -> str:
+    """Keep signal-driven failures usable by the mission fault-stop contract."""
+    return str(error).strip() or type(error).__name__
+
+
 def path_payload(path: Any) -> dict[str, Any]:
     """Preserve the complete Path value independently of the CDR byte hash."""
     def header(value: Any) -> dict[str, Any]:
@@ -59,7 +64,7 @@ def path_final_yaw(payload: Mapping[str, Any]) -> float:
 
 
 def valid_hold_ack(ack: Mapping[str, Any], *, run_id: str, scenario_id: str, robot_id: str,
-                   minimum_sequence: int, generation: int, goal_uuid: str,
+                   minimum_sequence: int, generation: int, goal_uuid: str | None,
                    terminal_time_s: float, now_s: float) -> bool:
     """Admit a post-terminal applied hold, separate from measured wheel stop."""
     scope = ack.get("scope")
@@ -76,6 +81,37 @@ def valid_hold_ack(ack: Mapping[str, Any], *, run_id: str, scenario_id: str, rob
         and math.isfinite(stamp) and terminal_time_s <= stamp <= now_s
         and isinstance(command, Mapping) and set(command) == {"linear_m_s", "angular_rad_s"}
         and all(type(v) in (int, float) and v == 0 for v in command.values()))
+
+
+def valid_initial_hold_ack(ack: Mapping[str, Any], expected: Mapping[str, Any], *, now_s: float) -> bool:
+    scope = expected.get("scope")
+    issued, until, sample = (expected.get("issued_sim_time_s"), expected.get("valid_until_sim_time_s"),
+                            ack.get("sample_sim_time_s"))
+    if (expected.get("mode") != "hold" or not isinstance(scope, Mapping)
+            or type(scope.get("reservation_id")) is not int or scope["reservation_id"] <= 0
+            or type(expected.get("authorization_seq")) is not int or expected["authorization_seq"] <= 0):
+        return False
+    numeric = []
+    for value in (issued, until, sample, now_s):
+        if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value):
+            return False
+        numeric.append(float(value))
+    issued_time, until_time, sample_time, current_time = numeric
+    if not valid_hold_ack(ack, run_id=expected["run_id"], scenario_id=scope["scenario_id"],
+            robot_id=expected["robot_id"], minimum_sequence=expected["authorization_seq"],
+            generation=scope["reservation_id"], goal_uuid=scope.get("goal_uuid"),
+            terminal_time_s=issued_time, now_s=current_time):
+        return False
+    return bool(ack["authorization_seq"] == expected["authorization_seq"] and ack.get("scope") == scope
+                and issued_time <= ack["evaluation_sim_time_s"] < sample_time <= current_time < until_time
+                and 0 < until_time-issued_time <= .5+1e-9)
+
+
+def initial_hold_boundary_ready(acks: Mapping[str, Mapping[str, Any]], expected: Mapping[str, Mapping[str, Any]],
+                                *, now_s: float) -> bool:
+    return bool(set(acks) == set(expected) == set(ROBOT_IDS)
+                and all(valid_initial_hold_ack(acks[robot], expected[robot], now_s=now_s)
+                        and now_s > acks[robot]["sample_sim_time_s"] for robot in ROBOT_IDS))
 
 
 class PoseNotFreshError(ValueError):
@@ -355,11 +391,12 @@ def main() -> int:
             logs["authorizations"].write(line + "\n"); logs["authorizations"].flush()
             message = String(); message.data = line; auth_pub.publish(message)
             rt["last_lease"] = now()
+            rt["last_authorization"] = payload
             return rt["sequence"]
 
         lease_sender = lease
 
-        def tick(*, require_fresh: bool) -> float:
+        def tick(*, require_fresh: bool, refresh_leases: bool = True) -> float:
             if time.monotonic() > deadline or launch.poll() is not None or bag.poll() is not None:
                 raise RuntimeError("G3 worker wall bound or dependent process failed")
             scene_path = output / "g3-scene.json"
@@ -397,7 +434,7 @@ def main() -> int:
                         manager.observe(robot, occupied, pose_stamp_s=pose["stamp_s"], now_s=stamp)
                         logs["localization"].write(json.dumps({"run_id": args.run_id, "scenario_id": scenario_id, "robot_id": robot, "sim_time_s": stamp, **pose}, allow_nan=False) + "\n")
                         rt["last_observation"] = stamp
-                if stamp-rt["last_lease"] >= .1:
+                if refresh_leases and stamp-rt["last_lease"] >= .1:
                     lease(robot)
             logs["localization"].flush()
             drain_routes()
@@ -421,8 +458,35 @@ def main() -> int:
             if not decision.granted:
                 raise RuntimeError("initial stationary footprint hold failed")
             rt["generation"], rt["held_tiles"] = decision.generation, held
-        origin = now()
-        journal("navigation_ready", {"lifecycle_states": states, "origin_sim_time_s": origin})
+        drain_routes()
+        expected_initial: dict[str, dict[str, Any]] = {}
+        for robot, rt in robots.items():
+            lease(robot, forced_mode="hold")
+            expected_initial[robot] = copy.deepcopy(rt["last_authorization"])
+        result["stage"] = "initial_hold_barrier"
+        initial_acks: dict[str, dict[str, Any]] = {}
+        latched_at: float | None = None
+        initial_deadline = min(deadline, time.monotonic()+30)
+        while True:
+            stamp = tick(require_fresh=True, refresh_leases=False)
+            if time.monotonic() > initial_deadline or any(stamp >= payload["valid_until_sim_time_s"] for payload in expected_initial.values()):
+                raise TimeoutError("initial reservation HOLD application did not qualify before lease expiry")
+            for robot in ROBOT_IDS:
+                path = output / "robots" / robot / "control-ack.json"
+                if robot not in initial_acks and path.is_file():
+                    ack = json.loads(path.read_text(encoding="utf-8"))
+                    if valid_initial_hold_ack(ack, expected_initial[robot], now_s=stamp):
+                        initial_acks[robot] = ack
+            if latched_at is not None and stamp > latched_at and initial_hold_boundary_ready(initial_acks, expected_initial, now_s=stamp):
+                break
+            if latched_at is None and set(initial_acks) == set(ROBOT_IDS):
+                latched_at = stamp
+        initial_barrier = {"expected_authorizations": expected_initial, "acknowledgments": initial_acks,
+                           "latched_sim_time_s": latched_at}
+        result["initial_hold_barrier"] = initial_barrier
+        origin = stamp
+        journal("navigation_ready", {"lifecycle_states": states, "origin_sim_time_s": origin,
+                                      "initial_hold_barrier": initial_barrier})
         atomic_json(output / "mission-start.json", {"run_id": args.run_id, "scenario_id": scenario_id, "sim_time_s": origin})
         load = session["workload"]["load"]
         goals = {name: GoalPose("map", *xy, runtime_config["anchor_yaw_rad"][name]) for name, xy in {**book.layout.stations, **book.layout.pockets}.items()}
@@ -650,10 +714,11 @@ def main() -> int:
         atomic_json(output / "mission-control.json", {"run_id": args.run_id, "scenario_id": scenario_id, "status": "passed"})
         print("FACTORY_OPS_G3_MISSION=PASS", flush=True)
     except BaseException as error:
-        result.update({"status": "failed", "error": {"type": type(error).__name__, "message": str(error), "traceback": traceback.format_exc(limit=30)}, "actions": history})
+        reason = failure_reason(error)
+        result.update({"status": "failed", "error": {"type": type(error).__name__, "message": reason, "traceback": traceback.format_exc(limit=30)}, "actions": history})
         if mission is not None:
             if not (mission.completed or mission.failed or mission.censored):
-                mission.fail(str(error), sim_time=mission.sim_time)
+                mission.fail(reason, sim_time=mission.sim_time)
             result["mission"] = mission.export()
         for robot, rt in robots.items():
             try:
@@ -663,8 +728,8 @@ def main() -> int:
                     rt["handle"].cancel_goal_async()
             except Exception as cleanup_error:
                 cleanup.append({"label": f"{robot}_fault_stop", "error": str(cleanup_error)})
-        atomic_json(output / "mission-control.json", {"run_id": args.run_id, "scenario_id": scenario_id, "status": "failed", "reason": str(error)})
-        print(f"FACTORY_OPS_G3_MISSION=FAIL {type(error).__name__}: {error}", flush=True)
+        atomic_json(output / "mission-control.json", {"run_id": args.run_id, "scenario_id": scenario_id, "status": "failed", "reason": reason})
+        print(f"FACTORY_OPS_G3_MISSION=FAIL {type(error).__name__}: {reason}", flush=True)
     finally:
         for process, label in ((bag, "rosbag"), (launch, "nav2")):
             try:
