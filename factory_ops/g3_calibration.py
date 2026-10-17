@@ -446,7 +446,7 @@ def _resource_forecast_actual(
     if not isinstance(rows, list) or len(rows) != len(run_ids):
         raise ValueError("supervisor record must cover all pilot runs")
     required_row = {"run_id", "started_at_utc", "finished_at_utc", "attempt_receipt", "gpu_csv",
-                    "scene_summary", "output_manifest", "archive", "disk"}
+                    "gpu_raw", "gpu_sampler_status", "scene_summary", "output_manifest", "archive", "disk"}
     measurements: list[dict[str, Any]] = []
     seen: set[str] = set()
     used_resource_paths: dict[str, set[str]] = {name: set() for name in required_row - {"run_id", "started_at_utc", "finished_at_utc"}}
@@ -479,7 +479,7 @@ def _resource_forecast_actual(
             expected_policy=str(pilot["policy"]), expected_seed=int(pilot["seed"]),
         )
         if (receipt["run_id"] != run_id or receipt["timestamps"]["started_at_utc"] != row["started_at_utc"]
-                or receipt["timestamps"]["validation_finished_at_utc"] != row["finished_at_utc"]
+                or receipt["timestamps"]["archive_finished_at_utc"] != row["finished_at_utc"]
                 or receipt.get("attempt_status") != "collected"):
             raise ValueError("resource row identity/timestamps differ from its attempt receipt")
         if (receipt["bindings"].get("session_sha256") != pilot["session_sha256"]
@@ -490,7 +490,8 @@ def _resource_forecast_actual(
                 or receipt["references"]["mission"].get("sha256") != pilot["mission_sha256"]):
             raise ValueError("attempt receipt differs from the validated pilot evidence")
         if any(receipt["references"][name] != row[name]
-               for name in ("gpu_csv", "scene_summary", "output_manifest", "archive", "disk")):
+               for name in ("gpu_csv", "gpu_raw", "gpu_sampler_status", "scene_summary",
+                            "output_manifest", "archive", "disk")):
             raise ValueError("resource row references differ from its attempt receipt")
         gpu_path = _referenced_file(root, row["gpu_csv"], "GPU CSV")
         with gpu_path.open("r", encoding="utf-8", newline="") as stream:
@@ -509,11 +510,13 @@ def _resource_forecast_actual(
                 utilization_value = float(utilization)
             except ValueError as exc:
                 raise ValueError("GPU memory/utilization values are invalid") from exc
-            _positive(memory_value, "GPU memory MiB", integer=True)
+            if memory_value < 0:
+                raise ValueError("GPU memory MiB must be a nonnegative integer")
             if not isfinite(utilization_value) or not 0 <= utilization_value <= 100:
                 raise ValueError("GPU utilization must be in [0, 100]")
             parsed_gpu.append((_utc(stamp, "GPU timestamp"), memory_value * 1024 * 1024))
         peak = max(memory_bytes for _, memory_bytes in parsed_gpu)
+        _positive(peak, "peak GPU memory bytes", integer=True)
         gpu_times = [stamp for stamp, _ in parsed_gpu]
         if any(stamp < started or stamp > finished for stamp in gpu_times):
             raise ValueError("GPU samples fall outside the supervisor run interval")
@@ -526,8 +529,12 @@ def _resource_forecast_actual(
             raise ValueError("scene timing object is absent")
         simulated = float(_positive(timing.get("final_sim_time_s"), "final simulated time"))
         scene_wall = float(_positive(timing.get("wall_seconds"), "scene wall time"))
-        if abs(scene_wall - wall) > max(5.0, wall * .05):
-            raise ValueError("supervisor and scene wall times differ")
+        worker_wall = (_utc(receipt["timestamps"]["workers_finished_at_utc"], "workers finished") - started).total_seconds()
+        validation_end = _utc(receipt["timestamps"]["validation_finished_at_utc"], "validation finished")
+        validation_wall = (validation_end - started).total_seconds() - worker_wall
+        archive_wall = (finished - validation_end).total_seconds()
+        if scene_wall > worker_wall + max(5.0, worker_wall * .05):
+            raise ValueError("scene wall time exceeds the supervisor worker phase")
         before = int(_positive(disk.get("free_disk_bytes_before"), "free disk before", integer=True))
         after = int(_positive(disk.get("free_disk_bytes_after"), "free disk after", integer=True))
         if after > before:
@@ -553,6 +560,8 @@ def _resource_forecast_actual(
             raise ValueError("resource archive manifest differs from the exact validator artifact set and report")
         raw, compressed = _archive_measurement(archive, output_manifest_path)
         measurements.append({"run_id": run_id, "wall_time_s": wall, "simulated_time_s": simulated,
+                             "scene_wall_time_s": scene_wall, "worker_phase_wall_time_s": worker_wall,
+                             "validation_phase_wall_time_s": validation_wall, "archive_phase_wall_time_s": archive_wall,
                              "peak_vram_bytes": peak, "raw_bytes": raw, "compressed_bytes": compressed,
                              "free_disk_bytes_before": before, "free_disk_bytes_after": after,
                              "gpu_memory_source_unit": "MiB", "gpu_memory_output_unit": "bytes"})

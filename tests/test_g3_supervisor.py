@@ -82,13 +82,32 @@ class SupervisorReceiptTests(unittest.TestCase):
         with tarfile.open(self.archive, "w:gz") as bundle:
             bundle.add(self.payload, arcname="payload.bin")
         self.gpu = self.root / "resources/gpu.csv"
-        self.gpu.write_text("2026-10-18T00:00:01Z, NVIDIA L40S, 20000, 50\n", encoding="utf-8")
+        self.gpu.write_text("2026-10-18T00:00:01.000Z,NVIDIA L40S,20000,50\n", encoding="utf-8")
+        self.gpu_raw = self.root / "resources/gpu.raw.jsonl"
+        self.gpu_raw.write_text(json.dumps({
+            "observed_at_utc": "2026-10-18T00:00:01Z",
+            "query": ["nvidia-smi", "--query-gpu=name,memory.used,utilization.gpu",
+                      "--format=csv,noheader,nounits"],
+            "returncode": 0, "stdout": "NVIDIA L40S, 20000, 50\n", "stderr": "",
+        }) + "\n", encoding="utf-8")
+        self.gpu_status = self.root / "resources/gpu-sampler-status.json"
+        self.write_gpu_status(self.run_id)
         self.scene = self.root / "resources/scene.json"
         save(self.scene, {"run_id": self.run_id, "timing": {"final_sim_time_s": 10.0, "wall_seconds": 5.0}})
         self.disk = self.root / "resources/disk.json"
         save(self.disk, {"run_id": self.run_id, "free_disk_bytes_before": 1_000_000,
                          "free_disk_bytes_after": 900_000})
         self.receipt = self.root / "resources/attempt-receipt.json"
+
+    def write_gpu_status(self, run_id: str, **changes) -> None:
+        status = {"schema_version": 1, "run_id": run_id, "sampler_alive_before_stop": True,
+                  "intentional_stop_requested": True, "exit_code": 0,
+                  "csv_sha256": sha(self.gpu), "raw_jsonl_sha256": sha(self.gpu_raw),
+                  "sampling_started_at_utc": "2026-10-18T00:00:00Z",
+                  "stop_requested_at_utc": "2026-10-18T00:01:01Z",
+                  "stopped_at_utc": "2026-10-18T00:01:02Z"}
+        status.update(changes)
+        save(self.gpu_status, status)
 
     def tearDown(self) -> None:
         self.temporary.cleanup()
@@ -98,7 +117,9 @@ class SupervisorReceiptTests(unittest.TestCase):
             self.start_path, self.receipt, self.root,
             workers_finished_at_utc="2026-10-18T00:01:00Z",
             validation_finished_at_utc="2026-10-18T00:01:10Z",
-            gpu_csv_path=self.gpu, scene_summary_path=self.scene,
+            archive_finished_at_utc="2026-10-18T00:01:20Z",
+            gpu_csv_path=self.gpu, gpu_raw_path=self.gpu_raw,
+            gpu_sampler_status_path=self.gpu_status, scene_summary_path=self.scene,
             output_manifest_path=self.manifest, archive_path=self.archive, disk_path=self.disk,
             collection_failure_reason="validator report missing after worker exit",
         )
@@ -160,15 +181,132 @@ class SupervisorReceiptTests(unittest.TestCase):
             self.start_path, receipt_path, self.root,
             workers_finished_at_utc="2026-10-18T00:00:10Z",
             validation_finished_at_utc="2026-10-18T00:00:11Z",
-            gpu_csv_path=None, scene_summary_path=None, output_manifest_path=self.manifest,
+            archive_finished_at_utc="2026-10-18T00:00:12Z",
+            gpu_csv_path=None, gpu_raw_path=None, gpu_sampler_status_path=None,
+            scene_summary_path=None, output_manifest_path=self.manifest,
             archive_path=self.archive, disk_path=self.disk,
             collection_failure_reason="session validation failed before workers started",
         )
         self.assertEqual("collection_failed", receipt["attempt_status"])
         self.assertIsNone(receipt["references"]["gpu_csv"])
+        self.assertIsNone(receipt["references"]["gpu_raw"])
+        self.assertIsNone(receipt["references"]["gpu_sampler_status"])
         self.assertIsNone(receipt["references"]["scene_summary"])
         self.assertIsNone(receipt["references"]["report"])
         self.assertIsNone(receipt["references"]["mission"])
+
+    def test_prefix_csv_with_failed_native_query_cannot_be_collected(self) -> None:
+        with self.gpu_raw.open("a", encoding="utf-8", newline="\n") as stream:
+            stream.write(json.dumps({
+                "observed_at_utc": "2026-10-18T00:00:02Z",
+                "query": ["nvidia-smi", "--query-gpu=name,memory.used,utilization.gpu",
+                          "--format=csv,noheader,nounits"],
+                "returncode": 1, "stdout": "", "stderr": "query failed",
+            }) + "\n")
+        self.write_gpu_status(self.run_id, sampler_alive_before_stop=False,
+                              intentional_stop_requested=False, exit_code=1)
+        with self.assertRaisesRegex(ValueError, "did not finish"):
+            finalize_attempt(
+                self.start_path, self.root / "resources/rejected-collected.json", self.root,
+                workers_finished_at_utc="2026-10-18T00:01:00Z",
+                validation_finished_at_utc="2026-10-18T00:01:10Z",
+                archive_finished_at_utc="2026-10-18T00:01:20Z",
+                gpu_csv_path=self.gpu, gpu_raw_path=self.gpu_raw,
+                gpu_sampler_status_path=self.gpu_status, scene_summary_path=self.scene,
+                output_manifest_path=self.manifest, archive_path=self.archive, disk_path=self.disk,
+                report_path=self.payload, mission_path=self.payload,
+            )
+        receipt = finalize_attempt(
+            self.start_path, self.root / "resources/sampler-failure-receipt.json", self.root,
+            workers_finished_at_utc="2026-10-18T00:01:00Z",
+            validation_finished_at_utc="2026-10-18T00:01:10Z",
+            archive_finished_at_utc="2026-10-18T00:01:20Z",
+            gpu_csv_path=self.gpu, gpu_raw_path=self.gpu_raw,
+            gpu_sampler_status_path=self.gpu_status, scene_summary_path=self.scene,
+            output_manifest_path=self.manifest, archive_path=self.archive, disk_path=self.disk,
+            collection_failure_reason="GPU sampler exited after a native query failure",
+        )
+        self.assertEqual("collection_failed", receipt["attempt_status"])
+
+    def test_malformed_returncode_zero_response_is_preserved_as_collection_failure(self) -> None:
+        with self.gpu_raw.open("a", encoding="utf-8", newline="\n") as stream:
+            stream.write(json.dumps({
+                "observed_at_utc": "2026-10-18T00:00:02Z",
+                "query": ["nvidia-smi", "--query-gpu=name,memory.used,utilization.gpu",
+                          "--format=csv,noheader,nounits"],
+                "returncode": 0, "stdout": "NVIDIA L40S, N/A, N/A\n", "stderr": "",
+            }) + "\n")
+        self.write_gpu_status(self.run_id, sampler_alive_before_stop=False,
+                              intentional_stop_requested=False, exit_code=1)
+        receipt = finalize_attempt(
+            self.start_path, self.root / "resources/malformed-native-receipt.json", self.root,
+            workers_finished_at_utc="2026-10-18T00:01:00Z",
+            validation_finished_at_utc="2026-10-18T00:01:10Z",
+            archive_finished_at_utc="2026-10-18T00:01:20Z",
+            gpu_csv_path=self.gpu, gpu_raw_path=self.gpu_raw,
+            gpu_sampler_status_path=self.gpu_status, scene_summary_path=self.scene,
+            output_manifest_path=self.manifest, archive_path=self.archive, disk_path=self.disk,
+            collection_failure_reason="GPU sampler rejected a malformed successful native response",
+        )
+        self.assertEqual("collection_failed", receipt["attempt_status"])
+        with self.assertRaisesRegex(ValueError, "did not finish"):
+            finalize_attempt(
+                self.start_path, self.root / "resources/malformed-native-collected.json", self.root,
+                workers_finished_at_utc="2026-10-18T00:01:00Z",
+                validation_finished_at_utc="2026-10-18T00:01:10Z",
+                archive_finished_at_utc="2026-10-18T00:01:20Z",
+                gpu_csv_path=self.gpu, gpu_raw_path=self.gpu_raw,
+                gpu_sampler_status_path=self.gpu_status, scene_summary_path=self.scene,
+                output_manifest_path=self.manifest, archive_path=self.archive, disk_path=self.disk,
+                report_path=self.payload, mission_path=self.payload,
+            )
+
+    def test_sampler_liveness_race_is_preserved_only_as_collection_failure(self) -> None:
+        self.write_gpu_status(self.run_id, sampler_alive_before_stop=True,
+                              intentional_stop_requested=False, exit_code=1)
+        receipt = finalize_attempt(
+            self.start_path, self.root / "resources/liveness-race-receipt.json", self.root,
+            workers_finished_at_utc="2026-10-18T00:01:00Z",
+            validation_finished_at_utc="2026-10-18T00:01:10Z",
+            archive_finished_at_utc="2026-10-18T00:01:20Z",
+            gpu_csv_path=self.gpu, gpu_raw_path=self.gpu_raw,
+            gpu_sampler_status_path=self.gpu_status, scene_summary_path=self.scene,
+            output_manifest_path=self.manifest, archive_path=self.archive, disk_path=self.disk,
+            collection_failure_reason="sampler exited between liveness check and stop request",
+        )
+        self.assertEqual("collection_failed", receipt["attempt_status"])
+        with self.assertRaisesRegex(ValueError, "did not finish"):
+            finalize_attempt(
+                self.start_path, self.root / "resources/liveness-race-collected.json", self.root,
+                workers_finished_at_utc="2026-10-18T00:01:00Z",
+                validation_finished_at_utc="2026-10-18T00:01:10Z",
+                archive_finished_at_utc="2026-10-18T00:01:20Z",
+                gpu_csv_path=self.gpu, gpu_raw_path=self.gpu_raw,
+                gpu_sampler_status_path=self.gpu_status, scene_summary_path=self.scene,
+                output_manifest_path=self.manifest, archive_path=self.archive, disk_path=self.disk,
+                report_path=self.payload, mission_path=self.payload,
+            )
+
+    def test_gpu_status_hash_forgery_and_partial_signature_are_rejected(self) -> None:
+        self.write_gpu_status(self.run_id, csv_sha256="0" * 64)
+        with self.assertRaisesRegex(ValueError, "does not bind"):
+            self.finalize_failed()
+        self.write_gpu_status(self.run_id, sampler_alive_before_stop=False,
+                              intentional_stop_requested=True, exit_code=1)
+        with self.assertRaisesRegex(ValueError, "cannot record"):
+            self.finalize_failed()
+        self.write_gpu_status(self.run_id)
+        with self.assertRaisesRegex(ValueError, "supplied together"):
+            finalize_attempt(
+                self.start_path, self.root / "resources/partial-gpu-receipt.json", self.root,
+                workers_finished_at_utc="2026-10-18T00:01:00Z",
+                validation_finished_at_utc="2026-10-18T00:01:10Z",
+                archive_finished_at_utc="2026-10-18T00:01:20Z",
+                gpu_csv_path=self.gpu, gpu_raw_path=None, gpu_sampler_status_path=None,
+                scene_summary_path=self.scene, output_manifest_path=self.manifest,
+                archive_path=self.archive, disk_path=self.disk,
+                collection_failure_reason="partial GPU signature",
+            )
 
     def test_self_declared_primary_gate_cannot_open_a_physical_receipt(self) -> None:
         with self.assertRaises(ValueError):
@@ -208,11 +346,14 @@ class SupervisorReceiptTests(unittest.TestCase):
                          "free_disk_bytes_after": 900_000})
         save(self.scene, {"run_id": pilot_run,
                           "timing": {"final_sim_time_s": 10.0, "wall_seconds": 5.0}})
+        self.write_gpu_status(pilot_run)
         pilot_receipt = self.root / "resources/pilot-receipt.json"
         finalize_attempt(
             pilot_start, pilot_receipt, self.root,
             workers_finished_at_utc="2026-10-18T00:01:00Z",
-            validation_finished_at_utc="2026-10-18T00:01:10Z", gpu_csv_path=self.gpu,
+            validation_finished_at_utc="2026-10-18T00:01:10Z", archive_finished_at_utc="2026-10-18T00:01:20Z",
+            gpu_csv_path=self.gpu, gpu_raw_path=self.gpu_raw,
+            gpu_sampler_status_path=self.gpu_status,
             scene_summary_path=self.scene, output_manifest_path=self.manifest,
             archive_path=self.archive, disk_path=self.disk,
             collection_failure_reason="pilot validator unavailable",

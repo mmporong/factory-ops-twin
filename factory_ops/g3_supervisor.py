@@ -7,7 +7,9 @@ from __future__ import annotations
 
 import argparse
 from collections.abc import Mapping, Sequence
+import csv
 from datetime import datetime, timezone
+import io
 import json
 from math import isfinite
 import os
@@ -23,6 +25,8 @@ from .g3_session import _load_primary_input_manifest, verify_session
 _SHA256 = re.compile(r"^[0-9a-f]{64}$")
 _COMMIT = re.compile(r"^[0-9a-f]{40}$")
 _RUN_ID = re.compile(r"^[0-9a-f]{32}$")
+_GPU_QUERY = ["nvidia-smi", "--query-gpu=name,memory.used,utilization.gpu",
+              "--format=csv,noheader,nounits"]
 
 
 def _relative_reference(root: Path, path: Path) -> dict[str, str]:
@@ -107,6 +111,88 @@ def _validate_actual_gate(gate: Mapping[str, Any], trial: Mapping[str, Any], sou
     unsigned.pop("calibration_sha256", None)
     if not _SHA256.fullmatch(str(digest)) or digest != canonical_hash(unsigned):
         raise ValueError("actual calibration execution gate hash differs")
+
+
+def _validate_gpu_sampler(
+    *, run_id: str, csv_path: Path, raw_path: Path, status_path: Path,
+    attempt_started_at_utc: str, workers_finished_at_utc: str,
+    validation_finished_at_utc: str, require_success: bool,
+) -> dict[str, Any]:
+    status = _load(status_path)
+    expected = {"schema_version", "run_id", "sampler_alive_before_stop", "intentional_stop_requested",
+                "exit_code", "csv_sha256", "raw_jsonl_sha256", "sampling_started_at_utc",
+                "stop_requested_at_utc", "stopped_at_utc"}
+    if set(status) != expected or status.get("schema_version") != 1 or status.get("run_id") != run_id:
+        raise ValueError("GPU sampler status shape/run ID differs")
+    alive, intentional, exit_code = (status.get("sampler_alive_before_stop"),
+                                      status.get("intentional_stop_requested"), status.get("exit_code"))
+    if type(alive) is not bool or type(intentional) is not bool or type(exit_code) is not int:
+        raise ValueError("GPU sampler status flags/exit code are invalid")
+    if not alive and intentional:
+        raise ValueError("GPU sampler cannot record an intentional stop when it was already not alive")
+    if status.get("csv_sha256") != _sha256(csv_path) or status.get("raw_jsonl_sha256") != _sha256(raw_path):
+        raise ValueError("GPU sampler status does not bind the preserved CSV/raw bytes")
+    attempt_started = _utc(attempt_started_at_utc, "attempt started")
+    sampling_started = _utc(status.get("sampling_started_at_utc"), "GPU sampling started")
+    stop_requested = _utc(status.get("stop_requested_at_utc"), "GPU stop requested")
+    stopped = _utc(status.get("stopped_at_utc"), "GPU stopped")
+    workers_finished = _utc(workers_finished_at_utc, "workers finished")
+    validation_finished = _utc(validation_finished_at_utc, "validation finished")
+    if not attempt_started <= sampling_started <= workers_finished <= stop_requested <= stopped <= validation_finished:
+        raise ValueError("GPU sampler timestamps fall outside the observed worker/validation phases")
+    with csv_path.open("r", encoding="utf-8", newline="") as stream:
+        csv_rows = list(csv.reader(stream))
+    expected_rows: list[list[str]] = []
+    raw_count = 0
+    nonzero_returncodes = 0
+    malformed_success_responses = 0
+    with raw_path.open("r", encoding="utf-8") as stream:
+        for line_number, line in enumerate(stream, 1):
+            if not line.endswith("\n") or not line.strip():
+                raise ValueError(f"GPU raw JSONL line {line_number} is incomplete")
+            try:
+                raw = json.loads(line)
+            except json.JSONDecodeError as exc:
+                raise ValueError(f"GPU raw JSONL line {line_number} is invalid") from exc
+            if (not isinstance(raw, Mapping)
+                    or set(raw) != {"observed_at_utc", "query", "returncode", "stdout", "stderr"}
+                    or raw.get("query") != _GPU_QUERY or type(raw.get("returncode")) is not int
+                    or not isinstance(raw.get("stdout"), str) or not isinstance(raw.get("stderr"), str)):
+                raise ValueError("GPU raw query record shape differs")
+            observed = _utc(raw["observed_at_utc"], "GPU raw observed_at_utc")
+            if not sampling_started <= observed <= stopped:
+                raise ValueError("GPU raw sample timestamp falls outside the sampling interval")
+            raw_count += 1
+            if raw["returncode"] != 0:
+                nonzero_returncodes += 1
+                continue
+            native = list(csv.reader(io.StringIO(raw["stdout"])))
+            if len(native) != 1 or len(native[0]) != 3:
+                malformed_success_responses += 1
+                continue
+            name, memory, utilization = (value.strip() for value in native[0])
+            try:
+                memory_value, utilization_value = int(memory), float(utilization)
+            except ValueError:
+                malformed_success_responses += 1
+                continue
+            if not name or memory_value < 0 or not isfinite(utilization_value) or not 0 <= utilization_value <= 100:
+                malformed_success_responses += 1
+                continue
+            stamp = observed.astimezone(timezone.utc).isoformat(timespec="milliseconds").replace("+00:00", "Z")
+            expected_rows.append([stamp, name, str(memory_value), utilization])
+    if csv_rows != expected_rows:
+        raise ValueError("GPU CSV cannot be exactly rederived from native raw samples")
+    success = bool(raw_count and nonzero_returncodes == 0 and malformed_success_responses == 0
+                   and alive and intentional and exit_code == 0)
+    if require_success and not success:
+        raise ValueError("GPU sampler did not finish an intentional successful collection")
+    if (nonzero_returncodes or malformed_success_responses) and exit_code == 0:
+        raise ValueError("GPU sampler exit code contradicts failed or malformed native responses")
+    return {"valid_sample_count": len(expected_rows), "raw_record_count": raw_count,
+            "nonzero_returncode_count": nonzero_returncodes,
+            "malformed_success_response_count": malformed_success_responses,
+            "successful_collection": success}
 
 
 def _verify_primary_inputs(
@@ -236,11 +322,14 @@ def finalize_attempt(
     *,
     workers_finished_at_utc: str,
     validation_finished_at_utc: str,
+    archive_finished_at_utc: str,
     gpu_csv_path: Path | None,
     scene_summary_path: Path | None,
     output_manifest_path: Path,
     archive_path: Path,
     disk_path: Path,
+    gpu_raw_path: Path | None = None,
+    gpu_sampler_status_path: Path | None = None,
     report_path: Path | None = None,
     mission_path: Path | None = None,
     collection_failure_reason: str | None = None,
@@ -252,11 +341,15 @@ def finalize_attempt(
     started = _utc(start.get("started_at_utc"), "started_at_utc")
     workers_finished = _utc(workers_finished_at_utc, "workers_finished_at_utc")
     validation_finished = _utc(validation_finished_at_utc, "validation_finished_at_utc")
-    if not started <= workers_finished <= validation_finished:
+    archive_finished = _utc(archive_finished_at_utc, "archive_finished_at_utc")
+    if not started <= workers_finished <= validation_finished <= archive_finished:
         raise ValueError("attempt timestamps are out of order")
     references: dict[str, object] = {
         "start": _relative_reference(evidence_root, start_path),
         "gpu_csv": _relative_reference(evidence_root, gpu_csv_path) if gpu_csv_path is not None else None,
+        "gpu_raw": _relative_reference(evidence_root, gpu_raw_path) if gpu_raw_path is not None else None,
+        "gpu_sampler_status": (_relative_reference(evidence_root, gpu_sampler_status_path)
+                               if gpu_sampler_status_path is not None else None),
         "scene_summary": (_relative_reference(evidence_root, scene_summary_path)
                           if scene_summary_path is not None else None),
         "output_manifest": _relative_reference(evidence_root, output_manifest_path),
@@ -276,8 +369,21 @@ def finalize_attempt(
         raise ValueError("attempt disk measurement differs")
     if collection_failure_reason is not None and not collection_failure_reason.strip():
         raise ValueError("collection failure reason must be non-empty")
+    gpu_artifacts = (gpu_csv_path, gpu_raw_path, gpu_sampler_status_path)
+    if any(value is None for value in gpu_artifacts) and any(value is not None for value in gpu_artifacts):
+        raise ValueError("GPU CSV/raw/status artifacts must be supplied together or all omitted")
+    if all(value is not None for value in gpu_artifacts):
+        assert gpu_csv_path is not None and gpu_raw_path is not None and gpu_sampler_status_path is not None
+        _validate_gpu_sampler(
+            run_id=str(start["run_id"]), csv_path=gpu_csv_path.resolve(strict=True),
+            raw_path=gpu_raw_path.resolve(strict=True), status_path=gpu_sampler_status_path.resolve(strict=True),
+            attempt_started_at_utc=str(start["started_at_utc"]),
+            workers_finished_at_utc=workers_finished_at_utc,
+            validation_finished_at_utc=validation_finished_at_utc,
+            require_success=collection_failure_reason is None,
+        )
     if collection_failure_reason is None and any(
-            value is None for value in (gpu_csv_path, scene_summary_path, report_path, mission_path)
+            value is None for value in (*gpu_artifacts, scene_summary_path, report_path, mission_path)
     ):
         raise ValueError("collected attempt requires GPU, scene, report and mission artifacts")
     record: dict[str, Any] = {
@@ -290,6 +396,7 @@ def finalize_attempt(
             "started_at_utc": start["started_at_utc"],
             "workers_finished_at_utc": workers_finished_at_utc,
             "validation_finished_at_utc": validation_finished_at_utc,
+            "archive_finished_at_utc": archive_finished_at_utc,
         },
         "attempt_status": "collection_failed" if collection_failure_reason is not None else "collected",
         "collection_failure_reason": collection_failure_reason,
@@ -344,7 +451,8 @@ def validate_attempt_receipt(
             ("trial_input_sha256", "trial_input_sha256"), ("workload_sha256", "workload_sha256"))):
         raise ValueError("attempt receipt source/input bindings differ")
     references = receipt.get("references")
-    expected_reference_names = {"start", "gpu_csv", "scene_summary", "output_manifest", "archive", "disk", "report", "mission"}
+    expected_reference_names = {"start", "gpu_csv", "gpu_raw", "gpu_sampler_status", "scene_summary",
+                                "output_manifest", "archive", "disk", "report", "mission"}
     if not isinstance(references, Mapping) or set(references) != expected_reference_names:
         raise ValueError("attempt receipt references differ")
     resolved = {name: (_resolve_reference(evidence_root, reference, name) if reference is not None else None)
@@ -416,12 +524,13 @@ def validate_attempt_receipt(
         raise ValueError("attempt scene summary run ID differs")
     _archive_measurement(archive_path, manifest_path)
     timestamps = receipt.get("timestamps")
-    if not isinstance(timestamps, Mapping) or set(timestamps) != {"started_at_utc", "workers_finished_at_utc", "validation_finished_at_utc"}:
+    if not isinstance(timestamps, Mapping) or set(timestamps) != {"started_at_utc", "workers_finished_at_utc", "validation_finished_at_utc", "archive_finished_at_utc"}:
         raise ValueError("attempt receipt timestamps differ")
     started = _utc(timestamps["started_at_utc"], "started_at_utc")
     workers = _utc(timestamps["workers_finished_at_utc"], "workers_finished_at_utc")
     validated = _utc(timestamps["validation_finished_at_utc"], "validation_finished_at_utc")
-    if not started <= workers <= validated or started != _utc(start["started_at_utc"], "start.started_at_utc"):
+    archived = _utc(timestamps["archive_finished_at_utc"], "archive_finished_at_utc")
+    if not started <= workers <= validated <= archived or started != _utc(start["started_at_utc"], "start.started_at_utc"):
         raise ValueError("attempt receipt timestamps are out of order")
     if receipt.get("attempt_status") not in {"collected", "collection_failed"}:
         raise ValueError("attempt receipt status is invalid")
@@ -429,9 +538,23 @@ def validate_attempt_receipt(
     if (receipt["attempt_status"] == "collection_failed") != (isinstance(reason, str) and bool(reason.strip())):
         raise ValueError("attempt receipt failure reason differs from status")
     if receipt["attempt_status"] == "collected" and any(
-            resolved[name] is None for name in ("gpu_csv", "scene_summary", "report", "mission")
+            resolved[name] is None for name in ("gpu_csv", "gpu_raw", "gpu_sampler_status",
+                                                "scene_summary", "report", "mission")
     ):
         raise ValueError("collected attempt requires stable GPU, scene, report and mission references")
+    gpu_paths = (resolved["gpu_csv"], resolved["gpu_raw"], resolved["gpu_sampler_status"])
+    if any(path is None for path in gpu_paths) and any(path is not None for path in gpu_paths):
+        raise ValueError("attempt receipt contains a partial GPU evidence set")
+    if all(isinstance(path, Path) for path in gpu_paths):
+        csv_path, raw_path, status_path = gpu_paths
+        assert isinstance(csv_path, Path) and isinstance(raw_path, Path) and isinstance(status_path, Path)
+        _validate_gpu_sampler(
+            run_id=str(receipt["run_id"]), csv_path=csv_path, raw_path=raw_path, status_path=status_path,
+            attempt_started_at_utc=str(timestamps["started_at_utc"]),
+            workers_finished_at_utc=str(timestamps["workers_finished_at_utc"]),
+            validation_finished_at_utc=str(timestamps["validation_finished_at_utc"]),
+            require_success=receipt["attempt_status"] == "collected",
+        )
     return {**receipt, "resolved_references": resolved}
 
 
@@ -511,10 +634,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     start.add_argument("--free-disk-bytes-before", required=True, type=int)
     start.add_argument("--started-at-utc")
     finish = subparsers.add_parser("finalize")
-    for name in ("start", "output", "evidence_root", "workers_finished_at_utc", "validation_finished_at_utc",
+    for name in ("start", "output", "evidence_root", "workers_finished_at_utc", "validation_finished_at_utc", "archive_finished_at_utc",
                  "output_manifest", "archive", "disk"):
         finish.add_argument(f"--{name.replace('_', '-')}", required=True)
     finish.add_argument("--gpu-csv")
+    finish.add_argument("--gpu-raw")
+    finish.add_argument("--gpu-sampler-status")
     finish.add_argument("--scene-summary")
     finish.add_argument("--report")
     finish.add_argument("--mission")
@@ -536,7 +661,11 @@ def main(argv: Sequence[str] | None = None) -> int:
         finalize_attempt(Path(args.start), Path(args.output), Path(args.evidence_root),
                          workers_finished_at_utc=args.workers_finished_at_utc,
                          validation_finished_at_utc=args.validation_finished_at_utc,
+                         archive_finished_at_utc=args.archive_finished_at_utc,
                          gpu_csv_path=Path(args.gpu_csv) if args.gpu_csv else None,
+                         gpu_raw_path=Path(args.gpu_raw) if args.gpu_raw else None,
+                         gpu_sampler_status_path=(Path(args.gpu_sampler_status)
+                                                  if args.gpu_sampler_status else None),
                          scene_summary_path=Path(args.scene_summary) if args.scene_summary else None,
                          output_manifest_path=Path(args.output_manifest), archive_path=Path(args.archive),
                          disk_path=Path(args.disk), report_path=Path(args.report) if args.report else None,

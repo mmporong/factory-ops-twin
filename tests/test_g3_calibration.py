@@ -268,8 +268,33 @@ class CalibrationTests(unittest.TestCase):
                            "workload_sha256": json.loads(session_path.read_text())["workload_sha256"],
                            "report_sha256": sha(report_path), "mission_sha256": sha(mission_path),
                            "artifact_manifest_sha256": report["artifact_manifest_sha256"]})
+            memory_mib = 0 if index == 0 else 20_000 + index
             gpu = evidence / f"gpu-{index}.csv"
-            gpu.write_text(f"2026-10-18T00:00:01Z, NVIDIA L40S {index}, {20000 + index}, 50\n", encoding="utf-8")
+            gpu.write_text(f"2026-10-18T00:00:01.000Z,NVIDIA L40S {index},{memory_mib},50\n", encoding="utf-8")
+            if index == 0:
+                with gpu.open("a", encoding="utf-8", newline="\n") as stream:
+                    stream.write("2026-10-18T00:00:02.000Z,NVIDIA L40S 0,20000,75\n")
+            gpu_raw = evidence / f"gpu-{index}.raw.jsonl"
+            gpu_raw.write_text(json.dumps({"observed_at_utc": "2026-10-18T00:00:01Z",
+                                           "query": ["nvidia-smi", "--query-gpu=name,memory.used,utilization.gpu",
+                                                     "--format=csv,noheader,nounits"],
+                                           "returncode": 0,
+                                           "stdout": f"NVIDIA L40S {index}, {memory_mib}, 50\n",
+                                           "stderr": ""}) + "\n", encoding="utf-8")
+            if index == 0:
+                with gpu_raw.open("a", encoding="utf-8", newline="\n") as stream:
+                    stream.write(json.dumps({"observed_at_utc": "2026-10-18T00:00:02Z",
+                                             "query": ["nvidia-smi", "--query-gpu=name,memory.used,utilization.gpu",
+                                                       "--format=csv,noheader,nounits"],
+                                             "returncode": 0, "stdout": "NVIDIA L40S 0, 20000, 75\n",
+                                             "stderr": ""}) + "\n")
+            gpu_status = evidence / f"gpu-{index}.status.json"
+            save(gpu_status, {"schema_version": 1, "run_id": run_id,
+                              "sampler_alive_before_stop": True, "intentional_stop_requested": True,
+                              "exit_code": 0, "csv_sha256": sha(gpu), "raw_jsonl_sha256": sha(gpu_raw),
+                              "sampling_started_at_utc": "2026-10-18T00:00:00Z",
+                              "stop_requested_at_utc": "2026-10-18T00:01:30Z",
+                              "stopped_at_utc": "2026-10-18T00:01:35Z"})
             scene = evidence / f"scene-{index}.json"
             save(scene, {"run_id": run_id, "timing": {"final_sim_time_s": 200.0, "wall_seconds": 100.0}})
             disk = evidence / f"disk-{index}.json"
@@ -288,7 +313,8 @@ class CalibrationTests(unittest.TestCase):
                     bundle.add(report_path if entry["path"] == report_path.name else slot_root / entry["path"],
                                arcname=entry["path"])
             reference = lambda path: {"path": path.relative_to(evidence).as_posix(), "sha256": sha(path)}
-            references = {"gpu_csv": reference(gpu), "scene_summary": reference(scene),
+            references = {"gpu_csv": reference(gpu), "gpu_raw": reference(gpu_raw),
+                          "gpu_sampler_status": reference(gpu_status), "scene_summary": reference(scene),
                           "output_manifest": reference(output_manifest), "archive": reference(archive),
                           "disk": reference(disk)}
             receipt_path = evidence / f"receipt-{index}.json"
@@ -296,13 +322,15 @@ class CalibrationTests(unittest.TestCase):
                        "bindings": {"session_sha256": pilots[-1]["session_sha256"],
                                     "workload_sha256": pilots[-1]["workload_sha256"]},
                        "timestamps": {"started_at_utc": "2026-10-18T00:00:00Z",
-                       "validation_finished_at_utc": "2026-10-18T00:01:40Z"},
+                                      "workers_finished_at_utc": "2026-10-18T00:01:40Z",
+                                      "validation_finished_at_utc": "2026-10-18T00:02:00Z",
+                                      "archive_finished_at_utc": "2026-10-18T00:02:20Z"},
                        "references": {**references,
                                       "report": {"path": f"report-{index}.json", "sha256": sha(report_path)},
                                       "mission": {"path": f"mission-{index}.json", "sha256": sha(mission_path)}}}
             save(receipt_path, receipt)
             rows.append({"run_id": run_id, "started_at_utc": "2026-10-18T00:00:00Z",
-                         "finished_at_utc": "2026-10-18T00:01:40Z",
+                         "finished_at_utc": "2026-10-18T00:02:20Z",
                          "attempt_receipt": reference(receipt_path), **references})
         supervisor = evidence / "supervisor.json"
         save(supervisor, {"schema_version": 1, "classification": "actual_g3_supervisor_resource_measurements",
@@ -314,9 +342,12 @@ class CalibrationTests(unittest.TestCase):
         with patch("factory_ops.g3_supervisor.validate_attempt_receipt", side_effect=receipt_replay):
             result = _resource_forecast_actual(inputs, pilots, self.slots, self.commit, 60)
         self.assertEqual("actual_supervisor_measurements_rederived", result["provenance_status"])
+        self.assertEqual(140.0, result["worst_pilot"]["wall_time_s"])
+        self.assertEqual(140.0 * 60 * 1.2, result["batch_forecast"]["wall_time_s"])
         self.assertEqual(20_005 * 1024 * 1024, result["worst_pilot"]["peak_vram_bytes"])
         self.assertEqual("MiB", result["worst_pilot"]["peak_vram_source_unit"])
         self.assertEqual("bytes", result["worst_pilot"]["peak_vram_output_unit"])
+        baseline_rows = deepcopy(rows)
         original_archive = deepcopy(rows[0]["archive"])
         rows[0]["archive"]["sha256"] = "0" * 64
         save(supervisor, {"schema_version": 1, "classification": "actual_g3_supervisor_resource_measurements",
@@ -337,6 +368,22 @@ class CalibrationTests(unittest.TestCase):
                           "runs": rows, "billing": {"path": "billing.json", "sha256": sha(billing)}})
         inputs["supervisor_sha256"] = sha(supervisor)
         with self.assertRaisesRegex(ValueError, "cross-run archive resource reuse"):
+            with patch("factory_ops.g3_supervisor.validate_attempt_receipt", side_effect=receipt_replay):
+                _resource_forecast_actual(inputs, pilots, self.slots, self.commit, 60)
+
+        rows = deepcopy(baseline_rows)
+        rows[1]["gpu_raw"] = deepcopy(rows[0]["gpu_raw"])
+        receipt_one = evidence / rows[1]["attempt_receipt"]["path"]
+        receipt_document = json.loads(receipt_one.read_text())
+        for name in ("gpu_csv", "gpu_raw", "gpu_sampler_status", "scene_summary",
+                     "output_manifest", "archive", "disk"):
+            receipt_document["references"][name] = deepcopy(rows[1][name])
+        save(receipt_one, receipt_document)
+        rows[1]["attempt_receipt"]["sha256"] = sha(receipt_one)
+        save(supervisor, {"schema_version": 1, "classification": "actual_g3_supervisor_resource_measurements",
+                          "runs": rows, "billing": {"path": "billing.json", "sha256": sha(billing)}})
+        inputs["supervisor_sha256"] = sha(supervisor)
+        with self.assertRaisesRegex(ValueError, "cross-run gpu_raw resource reuse"):
             with patch("factory_ops.g3_supervisor.validate_attempt_receipt", side_effect=receipt_replay):
                 _resource_forecast_actual(inputs, pilots, self.slots, self.commit, 60)
 

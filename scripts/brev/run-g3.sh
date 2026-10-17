@@ -2,19 +2,41 @@
 set -euo pipefail
 
 root=${1:?persisted workspace root required}
-run=${2:?new g3-q/p-condition-policy-NNN run label required}
+run=${2:?new g3-q/p/m-condition-policy-NNN run label required}
 expected_commit=${3:?verified source commit required}
-profile=${4:?qualification or pilot profile required}
+profile=${4:?qualification, pilot, or primary profile required}
 condition=${5:?normal, closure, or burst condition required}
 policy=${6:?fifo or eta policy required}
-seed=${7:?seed from 0 through 9 required}
+seed=${7:?qualification/primary seed 0..9 or pilot seed 100 required}
+primary_inputs=${8:-}
+primary_inputs_sha=${9:-}
+billing=${10:-}
 
-[[ "$profile" =~ ^(qualification|pilot)$ ]]
+[[ "$profile" =~ ^(qualification|pilot|primary)$ ]]
 [[ "$condition" =~ ^(normal|closure|burst)$ ]]
 [[ "$policy" =~ ^(fifo|eta)$ ]]
-[[ "$seed" =~ ^[0-9]$ ]]
-profile_code=${profile:0:1}
-[[ "$run" =~ ^g3-(q|p)-(normal|closure|burst)-(fifo|eta)-[0-9]{3}$ ]]
+case "$profile" in
+  qualification) profile_code=q; [[ "$seed" =~ ^[0-9]$ ]] ;;
+  pilot) profile_code=p; [[ "$seed" = 100 ]] ;;
+  primary)
+    profile_code=m
+    [[ "$seed" =~ ^[0-9]$ ]]
+    [[ "$primary_inputs" = /* && "$primary_inputs_sha" =~ ^[0-9a-f]{64}$ ]]
+    test -f "$primary_inputs"
+    test ! -L "$primary_inputs"
+    test "$(sha256sum "$primary_inputs" | cut -d ' ' -f 1)" = "$primary_inputs_sha"
+    ;;
+esac
+if [ "$profile" != primary ]; then
+  test -z "$primary_inputs"
+  test -z "$primary_inputs_sha"
+fi
+if [ "$profile" != qualification ]; then
+  [[ "$billing" = /* ]]
+  test -f "$billing"
+  test ! -L "$billing"
+fi
+[[ "$run" =~ ^g3-(q|p|m)-(normal|closure|burst)-(fifo|eta)-[0-9]{3}$ ]]
 [[ "$run" == "g3-$profile_code-$condition-$policy-"* ]]
 [[ "$expected_commit" =~ ^[0-9a-f]{40}$ ]]
 
@@ -44,12 +66,64 @@ cache="$root/sdk-cache"
 sim="factory-ops-$run-sim"
 nav="factory-ops-$run-nav"
 evidence="factory-ops-$run-evidence"
+resources="$root/resources/$run"
+pack_program="$project/scripts/brev/g3_resource_pack.py"
 sampler_pid=
 sim_log_pid=
 created=()
+resources_started=false
+resources_sealed=false
+evidence_status=not_started
+
+finalize_resources() {
+  if [ "$resources_started" != true ] || [ ! -d "$output" ]; then return; fi
+  for phase in workers-finished validation-finished; do
+    if [ ! -e "$resources/$phase.json" ]; then
+      sudo -n python3 "$pack_program" "$phase" --root "$root" --run-label "$run" --run-id "$run_id"
+    fi
+  done
+  sudo -n python3 "$pack_program" archive --root "$root" --run-label "$run" --run-id "$run_id"
+  if [ -f "$resources/attempt-start.json" ]; then
+    mapfile -t times < <(python3 - "$resources/archive-record.json" <<'PY'
+from pathlib import Path
+import json,sys
+value=json.loads(Path(sys.argv[1]).read_text(encoding='utf-8'))
+for key in ('workers_finished_at_utc','validation_finished_at_utc','archive_finished_at_utc'):
+    print(value[key])
+PY
+)
+    test "${#times[@]}" = 3
+    finalize_args=(finalize --start "$resources/attempt-start.json" --output "$resources/attempt-receipt.json"
+      --evidence-root "$root" --workers-finished-at-utc "${times[0]}"
+      --validation-finished-at-utc "${times[1]}" --archive-finished-at-utc "${times[2]}"
+      --output-manifest "$resources/output-manifest.json" --archive "$resources/output.tar.gz" --disk "$resources/disk.json")
+    if [ -s "$root/logs/$run-gpu.csv" ] && [ -s "$root/logs/$run-gpu-raw.jsonl" ] && [ -s "$resources/gpu-sampler-status.json" ]; then
+      finalize_args+=(--gpu-csv "$root/logs/$run-gpu.csv" --gpu-raw "$root/logs/$run-gpu-raw.jsonl"
+        --gpu-sampler-status "$resources/gpu-sampler-status.json")
+    else
+      # Partial sampler originals remain in logs; they cannot become collected measurements.
+      evidence_status=gpu_resource_collection_incomplete
+    fi
+    for specification in "scene-summary:$output/g3-scene.json" \
+                         "report:$output/g3-evidence.json" "mission:$output/mission-result.json"; do
+      flag=${specification%%:*}; path=${specification#*:}
+      if [ -s "$path" ]; then finalize_args+=("--$flag" "$path"); fi
+    done
+    if [ "$evidence_status" != 0 ]; then
+      finalize_args+=(--collection-failure-reason "closed physical evidence validation or resource collection did not complete successfully")
+    fi
+    sudo -n env PYTHONPATH="$project" python3 -m factory_ops.g3_supervisor "${finalize_args[@]}"
+  fi
+  resources_sealed=true
+}
 
 cleanup() {
+  original_status=$?
+  trap - EXIT
   for container in "${created[@]}"; do
+    # Preserve remaining container stdout outside the frozen output artifact set.
+    cleanup_log="$root/logs/$container-cleanup.log"
+    if [ ! -e "$cleanup_log" ]; then docker logs "$container" > "$cleanup_log" 2>&1 || true; fi
     docker rm -f "$container" >/dev/null 2>&1 || true
   done
   for process_id in "$sampler_pid" "$sim_log_pid"; do
@@ -58,10 +132,29 @@ cleanup() {
       wait "$process_id" >/dev/null 2>&1 || true
     fi
   done
+  if [ "$resources_sealed" != true ]; then
+    if ! finalize_resources > "$root/logs/$run-resource-finalize.log" 2>&1; then
+      printf '%s\n' 'Resource finalization failed; preserve this attempt for diagnosis' >&2
+      original_status=1
+    fi
+  fi
+  exit "$original_status"
 }
 trap cleanup EXIT
+sudo -n python3 "$pack_program" start --root "$root" --run-label "$run" --run-id "$run_id"
+resources_started=true
 
-(
+if [ "$profile" = primary ]; then
+  # ROS/CDR gate verification runs before GPU physics starts.
+  sudo -n install -d -m 0755 -o 1234 -g 1234 "$project/runs"
+  docker run --rm --name "factory-ops-$run-session" --network none --user 1234:1234 \
+    --entrypoint /bin/bash --workdir /workspace/project -e HOME=/tmp \
+    -v "$root:$root:ro" -v "$project:/workspace/project:rw" \
+    "$nav_image" -lc 'source /opt/ros/jazzy/setup.bash; python3 -m factory_ops.g3_session "$@"' \
+    factory-ops-g3-session --output "runs/${run}-session" --profile "$profile" \
+    --condition "$condition" --policy "$policy" --seed "$seed" \
+    --primary-inputs "$primary_inputs" --primary-inputs-sha256 "$primary_inputs_sha"
+else (
   cd "$project"
   python3 -m factory_ops.g3_session \
     --output "runs/${run}-session" --profile "$profile" --condition "$condition" \
@@ -69,6 +162,7 @@ trap cleanup EXIT
   python3 -m factory_ops.g3_session --output "runs/${run}-session" --verify \
     --profile "$profile" --condition "$condition" --policy "$policy" --seed "$seed"
 )
+fi
 session_sha=$(python3 - "$session/session.json" <<'PY'
 from pathlib import Path
 import hashlib,sys
@@ -88,7 +182,7 @@ PY
 
 sudo -n install -d -m 0755 -o 1234 -g 1234 "$output"
 python3 - "$root" "$run" "$run_id" "$expected_commit" "$isaac_image" "$nav_image" \
-  "$profile" "$condition" "$policy" "$seed" "$scenario" <<'PY'
+  "$profile" "$condition" "$policy" "$seed" "$scenario" "$primary_inputs" "$primary_inputs_sha" <<'PY'
 from datetime import datetime, timezone
 from pathlib import Path
 import hashlib,json,subprocess,sys
@@ -110,6 +204,8 @@ paths=[
     'factory_ops/traffic.py','factory_ops/traffic_observation.py','factory_ops/usda.py',
     'factory_ops/visual_scene.py','factory_ops/visual_state.py','factory_ops/visual_evidence.py',
     'scripts/brev/run-g3.sh',
+    'scripts/brev/g3_resource_pack.py',
+    'scripts/brev/g3_gpu_sampler.py',
     'scripts/isaac/nav_scene.py','scripts/isaac/g2_scene.py','scripts/isaac/g3_scene.py',
     'scripts/isaac/factory_visuals.py',
     'scripts/ros/g2.launch.py','scripts/ros/g3_mission.py','scripts/ros/g3_evidence.py',
@@ -145,6 +241,8 @@ record={
     'isaac_image':sys.argv[5],'nav_image':sys.argv[6],
     'profile':sys.argv[7],'condition':sys.argv[8],'policy':sys.argv[9],
     'seed':int(sys.argv[10]),'scenario_id':sys.argv[11],
+    'primary_inputs_path':sys.argv[12] or None,
+    'primary_inputs_sha256':sys.argv[13] or None,
     'session':session_value,
     'session_json_sha256':hashlib.sha256((session/'session.json').read_bytes()).hexdigest(),
     'files':source_files,
@@ -175,11 +273,46 @@ sudo -n install -m 0444 -o 1234 -g 1234 "$root/logs/$run-environment.json" "$out
 chmod -R a-w "$project"
 chmod a-w "$archive" "$commit_object"
 
+if [ -n "$billing" ]; then
+  sudo -n chown 1234:1234 "$resources"
+  mapfile -t start_values < <(python3 - "$resources/start.json" <<'PY'
+from pathlib import Path
+import json,sys
+value=json.loads(Path(sys.argv[1]).read_text(encoding='utf-8'))
+print(value['observed_at_utc']); print(value['free_disk_bytes'])
+PY
+)
+  test "${#start_values[@]}" = 2
+  start_args=(start --output "$resources/attempt-start.json" --evidence-root "$root"
+    --run-id "$run_id" --profile "$profile" --condition "$condition" --policy "$policy" --seed "$seed"
+    --source-commit "$expected_commit" --config "$project/configs/factory-v3/g3-experiment.json"
+    --session-root "$session" --billing "$billing" --started-at-utc "${start_values[0]}"
+    --free-disk-bytes-before "${start_values[1]}")
+  if [ "$profile" = primary ]; then
+    mapfile -t primary_paths < <(python3 - "$primary_inputs" <<'PY'
+from pathlib import Path
+import json,sys
+value=json.loads(Path(sys.argv[1]).read_text(encoding='utf-8'))
+print(value['trial_path']); print(value['calibration_path'])
+PY
+)
+    test "${#primary_paths[@]}" = 2
+    start_args+=(--trial-json "${primary_paths[0]}" --gate "${primary_paths[1]}"
+      --primary-inputs "$primary_inputs" --primary-inputs-sha256 "$primary_inputs_sha")
+  fi
+  docker run --rm --name "factory-ops-$run-start" --network none --user 1234:1234 \
+    --entrypoint /bin/bash -e HOME=/tmp -v "$root:$root:ro" -v "$resources:$resources:rw" \
+    -v "$project:/workspace/project:ro" "$nav_image" \
+    -lc 'source /opt/ros/jazzy/setup.bash; cd /workspace/project; python3 -m factory_ops.g3_supervisor "$@"' \
+    factory-ops-g3-supervisor "${start_args[@]}"
+fi
+
 docker create --name "$sim" --gpus all --network host --ipc host --user 1234:1234 \
   --entrypoint /bin/bash --workdir /isaac-sim \
   -e ACCEPT_EULA=Y -e OMNI_TELEMETRY_DISABLE_ANONYMOUS_DATA=1 -e ROS_DOMAIN_ID=72 \
   -e FACTORY_OPS_G3_SESSION_SHA256="$session_sha" \
   -e FACTORY_OPS_G3_SOURCE_COMMIT="$expected_commit" -e FACTORY_OPS_G3_PROVENANCE_SHA256="$provenance_sha" \
+  -e FACTORY_OPS_G3_PRIMARY_INPUTS_PATH="$primary_inputs" -e FACTORY_OPS_G3_PRIMARY_INPUTS_SHA256="$primary_inputs_sha" \
   -e RMW_IMPLEMENTATION=rmw_fastrtps_cpp \
   -v "$cache/cache/main:/isaac-sim/.cache:rw" \
   -v "$cache/cache/computecache:/isaac-sim/.nv/ComputeCache:rw" \
@@ -189,7 +322,7 @@ docker create --name "$sim" --gpus all --network host --ipc host --user 1234:123
   -v "$cache/data:/isaac-sim/.local/share/ov/data:rw" \
   -v "$cache/pkg:/isaac-sim/.local/share/ov/pkg:rw" \
   -v "$cache/hub:/var/cache/hub:rw" \
-  -v "$project:/workspace/project:ro" -v "$root/results:/workspace/results:rw" \
+  -v "$root:$root:ro" -v "$project:/workspace/project:ro" -v "$root/results:/workspace/results:rw" \
   "$isaac_image" -lc "timeout --signal=TERM --kill-after=30s 5500s ./python.sh /workspace/project/scripts/isaac/g3_scene.py --session /workspace/project/runs/${run}-session --output /workspace/results/$run --run-id $run_id" >/dev/null
 created+=("$sim")
 
@@ -197,20 +330,39 @@ docker create --name "$nav" --network host --ipc host --user 1234:1234 \
   --entrypoint /bin/bash -e HOME=/tmp -e ROS_DOMAIN_ID=72 -e RMW_IMPLEMENTATION=rmw_fastrtps_cpp \
   -e FACTORY_OPS_G3_SESSION_SHA256="$session_sha" \
   -e FACTORY_OPS_G3_SOURCE_COMMIT="$expected_commit" -e FACTORY_OPS_G3_PROVENANCE_SHA256="$provenance_sha" \
-  -v "$project:/workspace/project:ro" -v "$root/results:/workspace/results:rw" \
+  -e FACTORY_OPS_G3_PRIMARY_INPUTS_PATH="$primary_inputs" -e FACTORY_OPS_G3_PRIMARY_INPUTS_SHA256="$primary_inputs_sha" \
+  -v "$root:$root:ro" -v "$project:/workspace/project:ro" -v "$root/results:/workspace/results:rw" \
   "$nav_image" -lc "source /opt/ros/jazzy/setup.bash; timeout --signal=TERM --kill-after=30s 5500s python3 /workspace/project/scripts/ros/g3_mission.py --session /workspace/project/runs/${run}-session --output /workspace/results/$run --run-id $run_id" >/dev/null
 created+=("$nav")
 
 docker inspect "$sim" "$nav" > "$root/logs/$run-containers.json"
-nvidia-smi --query-gpu=timestamp,name,memory.used,utilization.gpu --format=csv,noheader,nounits -l 1 > "$root/logs/$run-gpu.csv" &
+sampler_started_at=$(date -u +%Y-%m-%dT%H:%M:%S.%NZ)
+python3 "$project/scripts/brev/g3_gpu_sampler.py" --raw-path "$root/logs/$run-gpu-raw.jsonl" > "$root/logs/$run-gpu.csv" &
 sampler_pid=$!
+# The ROS worker seals session verification before the simulator is started.
+docker start "$nav" >/dev/null
+session_verified_deadline=$((SECONDS + 1800))
+while [ ! -f "$output/session-verified.json" ]; do
+  test "$(docker inspect "$nav" --format '{{.State.Running}}')" = true
+  test "$SECONDS" -lt "$session_verified_deadline"
+  sleep 1
+done
+python3 - "$output/session-verified.json" "$run_id" "$session_sha" "$primary_inputs_sha" "$expected_commit" <<'PY'
+from pathlib import Path
+import json,sys
+value=json.loads(Path(sys.argv[1]).read_text(encoding='utf-8'))
+assert value['run_id']==sys.argv[2]
+assert value['session_sha256']==sys.argv[3]
+assert value.get('primary_inputs_sha256')==(sys.argv[4] or None)
+assert value.get('source_commit')==sys.argv[5]
+PY
 docker start "$sim" >/dev/null
 docker logs -f "$sim" > "$root/logs/$run-sim.log" 2>&1 &
 sim_log_pid=$!
 
 set +e
-docker start -ai "$nav" 2>&1 | tee "$root/logs/$run-nav.log"
-nav_status=${PIPESTATUS[0]}
+docker logs -f "$nav" 2>&1 | tee "$root/logs/$run-nav.log"
+nav_status=$(docker wait "$nav")
 if [ "$nav_status" -ne 0 ] && [ ! -f "$output/mission-control.json" ]; then
   sudo -n python3 - "$output/mission-control.json" "$run_id" "$scenario" <<'PY'
 from pathlib import Path
@@ -232,6 +384,8 @@ printf '%s\n' "$sim_log_status" > "$root/logs/$run-sim-log-exit.txt"
 
 docker logs "$sim" > "$root/logs/$run-sim.log" 2>&1
 sudo -n install -m 0644 -o 1234 -g 1234 "$root/logs/$run-sim.log" "$output/isaac.log"
+docker logs "$nav" > "$root/logs/$run-nav-complete.log" 2>&1
+sudo -n install -m 0644 -o 1234 -g 1234 "$root/logs/$run-nav-complete.log" "$output/mission-worker.log"
 docker inspect "$sim" "$nav" --format '{{.Name}} {{json .State}}' > "$root/logs/$run-container-exits.jsonl"
 sudo -n python3 - "$output" "$nav_status" "$sim_status" "$run_id" "$session/session.json" <<'PY'
 from pathlib import Path
@@ -248,19 +402,39 @@ record={
 for file in ('mission-result.json','g3-scene.json'):
     record[file]=json.loads((out/file).read_text(encoding='utf-8')) if (out/file).is_file() else None
 (out/'pair-exit.json').write_text(json.dumps(record,indent=2,sort_keys=True)+'\n',encoding='utf-8')
-assert nav_status==sim_status==0, f'worker failure nav={nav_status},sim={sim_status}'
-assert record['mission-result.json']['run_id']==record['g3-scene.json']['run_id']==sys.argv[4]
-assert record['mission-result.json']['scenario_id']==record['g3-scene.json']['scenario_id']==session['scenario_id']
-assert record['mission-result.json']['status']=='passed'
-assert record['g3-scene.json']['status']=='validated'
-print('FACTORY_OPS_G3_PAIR_EXIT=PASS')
+print('FACTORY_OPS_G3_PAIR_EXIT_RECORDED')
 PY
+sudo -n python3 "$pack_program" workers-finished --root "$root" --run-label "$run" --run-id "$run_id"
+sampler_alive=false
+if kill -0 "$sampler_pid" >/dev/null 2>&1; then sampler_alive=true; fi
+sampler_stop_requested_at=$(date -u +%Y-%m-%dT%H:%M:%S.%NZ)
+sampler_intentional_stop=false
+if [ "$sampler_alive" = true ] && kill "$sampler_pid" >/dev/null 2>&1; then sampler_intentional_stop=true; fi
+set +e
+wait "$sampler_pid"
+sampler_exit=$?
+set -e
+sampler_pid=
+sudo -n python3 "$project/scripts/brev/g3_gpu_sampler.py" --seal-status "$resources/gpu-sampler-status.json" \
+  --run-id "$run_id" --csv-path "$root/logs/$run-gpu.csv" --raw-path "$root/logs/$run-gpu-raw.jsonl" \
+  --sampling-started-at-utc "$sampler_started_at" --stop-requested-at-utc "$sampler_stop_requested_at" \
+  --sampler-alive-before-stop "$sampler_alive" --intentional-stop-requested "$sampler_intentional_stop" --exit-code "$sampler_exit"
 
 docker create --name "$evidence" --network none --user 1234:1234 \
   --entrypoint /bin/bash -e HOME=/tmp \
   -e FACTORY_OPS_G3_SESSION_SHA256="$session_sha" \
   -e FACTORY_OPS_G3_SOURCE_COMMIT="$expected_commit" -e FACTORY_OPS_G3_PROVENANCE_SHA256="$provenance_sha" \
-  -v "$project:/workspace/project:ro" -v "$root/results:/workspace/results:rw" \
+  -e FACTORY_OPS_G3_PRIMARY_INPUTS_PATH="$primary_inputs" -e FACTORY_OPS_G3_PRIMARY_INPUTS_SHA256="$primary_inputs_sha" \
+  -v "$root:$root:ro" -v "$project:/workspace/project:ro" -v "$root/results:/workspace/results:rw" \
   "$nav_image" -lc "source /opt/ros/jazzy/setup.bash; timeout --signal=TERM --kill-after=10s 600s python3 /workspace/project/scripts/ros/g3_evidence.py --session /workspace/project/runs/${run}-session --output /workspace/results/$run --run-id $run_id" >/dev/null
 created+=("$evidence")
+set +e
 docker start -ai "$evidence" 2>&1 | tee "$root/logs/$run-validation.log"
+evidence_status=${PIPESTATUS[0]}
+set -e
+if [ "$sampler_alive" != true ] || [ "$sampler_intentional_stop" != true ] || [ "$sampler_exit" != 0 ]; then
+  evidence_status=gpu_resource_collection_failed
+fi
+sudo -n python3 "$pack_program" validation-finished --root "$root" --run-label "$run" --run-id "$run_id"
+finalize_resources
+test "$evidence_status" = 0
