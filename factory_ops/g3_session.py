@@ -61,6 +61,10 @@ def _validate_runtime(runtime: dict[str, Any]) -> None:
     if (isinstance(wall_budget, bool) or not isinstance(wall_budget, (int, float))
             or not math.isfinite(wall_budget) or not 0 < wall_budget <= .1):
         raise ValueError("G3 callback drain wall_budget_s must be finite and in (0, 0.1]")
+    nav2 = runtime.get("g3_nav2")
+    if (not isinstance(nav2, dict) or set(nav2) != {"follow_path_stateful"}
+            or nav2["follow_path_stateful"] is not False):
+        raise ValueError("G3 Nav2 override must be exactly FollowPath stateful false")
     if (runtime["station_xy_tolerance_m"] > .25
             or runtime["station_yaw_tolerance_rad"] > .25 or runtime["pose_ttl_s"] > .5):
         raise ValueError("G3 runtime cannot relax FleetMission pose limits")

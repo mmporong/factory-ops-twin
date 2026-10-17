@@ -15,10 +15,79 @@ from factory_ops.fleet_routing import RouteBook
 from factory_ops.fleet_execution import StoppedGate, path_content_sha256
 from factory_ops.fleet import FleetMission, FleetOrder
 from factory_ops.navigation import GoalPose
-from scripts.ros.g3_mission import angle_error, build_cutoff_record, cutoff_phase_classification, failure_reason, localization_payload, path_final_yaw, path_payload, primary_trial_identity, valid_hold_ack, validate_arrival, verify_navigation_maps, stopped_odometry_record, valid_initial_hold_ack, initial_hold_boundary_ready, terminal_recording_boundary, wait_for_terminal_recording, session_verification_record
+from scripts.ros.g2_mission import build_namespaced_params
+from scripts.ros.g3_mission import angle_error, build_cutoff_record, build_g3_namespaced_params, cutoff_phase_classification, failure_reason, localization_payload, path_final_yaw, path_payload, primary_trial_identity, valid_hold_ack, validate_arrival, validate_rpp_runtime_observation, verify_navigation_maps, stopped_odometry_record, valid_initial_hold_ack, initial_hold_boundary_ready, terminal_recording_boundary, wait_for_terminal_recording, session_verification_record
 
 
 class G3MissionAdmissionTests(unittest.TestCase):
+    def test_g3_params_add_only_two_rpp_stateful_false_values(self):
+        node = lambda: {"ros__parameters": {}}
+        def costmap(name):
+            return {name: {"ros__parameters": {"inflation_layer": {}, "static_layer": {},
+                "obstacle_layer": {"front": {}, "rear": {}}}}}
+        controller = {"ros__parameters": {
+            "controller_frequency": 10.0,
+            "goal_checker": {"stateful": True, "xy_goal_tolerance": .05, "yaw_goal_tolerance": .15},
+            "progress_checker": {"required_movement_radius": .1, "movement_time_allowance": 30.},
+            "FollowPath": {"plugin": "nav2_regulated_pure_pursuit_controller::RegulatedPurePursuitController"},
+        }}
+        template = {"/**": node(), "map_server": node(), "navigation_map_server": node(),
+                    "amcl": node(), "local_costmap": costmap("local_costmap"),
+                    "global_costmap": costmap("global_costmap"), "controller_server": controller}
+        scenario = {"spawns": {"carter1": [1., 2., 0.], "carter2": [3., 4., 1.]}}
+        radii = {"carter1": 1.1371090915442774, "carter2": 1.1371090915442774}
+        baseline = build_namespaced_params(
+            template, scenario, radii, physical_map="physical.yaml", navigation_map="navigation.yaml",
+        )
+        generated, contract = build_g3_namespaced_params(
+            template, scenario, radii, {"g3_nav2": {"follow_path_stateful": False}},
+            physical_map="physical.yaml", navigation_map="navigation.yaml",
+        )
+        self.assertNotIn("stateful", baseline["carter1"]["controller_server"]["ros__parameters"]["FollowPath"])
+        expected = deepcopy(baseline)
+        for robot in ("carter1", "carter2"):
+            expected[robot]["controller_server"]["ros__parameters"]["FollowPath"]["stateful"] = False
+        self.assertEqual(expected, generated)
+        self.assertEqual(2, len(contract["only_semantic_changes"]))
+        self.assertEqual(True, template["controller_server"]["ros__parameters"]["goal_checker"]["stateful"])
+        self.assertEqual(.05, template["controller_server"]["ros__parameters"]["goal_checker"]["xy_goal_tolerance"])
+        self.assertEqual(.15, template["controller_server"]["ros__parameters"]["goal_checker"]["yaw_goal_tolerance"])
+        self.assertEqual(.1, template["controller_server"]["ros__parameters"]["progress_checker"]["required_movement_radius"])
+        self.assertEqual(30., template["controller_server"]["ros__parameters"]["progress_checker"]["movement_time_allowance"])
+        changed = deepcopy(template)
+        changed["controller_server"]["ros__parameters"]["controller_frequency"] = 9.0
+        with self.assertRaisesRegex(ValueError, "10 Hz"):
+            build_g3_namespaced_params(
+                changed, scenario, radii, {"g3_nav2": {"follow_path_stateful": False}},
+                physical_map="physical.yaml", navigation_map="navigation.yaml",
+            )
+
+    def test_rpp_runtime_observation_fails_closed_on_parameter_topic_or_source_change(self):
+        source = "a" * 40
+        params_sha = "b" * 64
+        packages = {name: {"name": name, "version": "1.3.13", "package_xml_sha256": "c" * 64,
+                           "shared_libraries": [{"name": f"lib{name}.so", "bytes": 1,
+                                                  "sha256": "e" * 64}]}
+                    for name in ("nav2_controller", "nav2_regulated_pure_pursuit_controller")}
+        observation = {"schema_version": 1, "source_commit": source,
+            "generated_params_sha256": params_sha,
+            "controllers": {robot: {"lifecycle_state": 3, "parameter_name": "FollowPath.stateful",
+                                      "parameter_type": "bool", "parameter_value": False}
+                            for robot in ("carter1", "carter2")},
+            "observation_topics": {f"/{robot}/{name}": type_name
+                for robot in ("carter1", "carter2") for name, type_name in {
+                    "lookahead_point": "geometry_msgs/msg/PointStamped",
+                    "is_rotating_to_heading": "std_msgs/msg/Bool"}.items()},
+            "packages": packages}
+        validate_rpp_runtime_observation(observation, generated_params_sha256=params_sha, source_commit=source)
+        mutations = []
+        changed = deepcopy(observation); changed["controllers"]["carter1"]["parameter_value"] = True; mutations.append(changed)
+        changed = deepcopy(observation); changed["observation_topics"].pop("/carter2/lookahead_point"); mutations.append(changed)
+        changed = deepcopy(observation); changed["generated_params_sha256"] = "d" * 64; mutations.append(changed)
+        for changed in mutations:
+            with self.assertRaises(ValueError):
+                validate_rpp_runtime_observation(changed, generated_params_sha256=params_sha, source_commit=source)
+
     def test_primary_trial_identity_preserves_verified_input_and_nonprimary_shape(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)

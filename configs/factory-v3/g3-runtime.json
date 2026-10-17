@@ -20,6 +20,9 @@
     "max_rounds": 64,
     "wall_budget_s": 0.05
   },
+  "g3_nav2": {
+    "follow_path_stateful": false
+  },
   "camera_capture_every_steps": 60,
   "real_time_media": {
     "profiles": ["qualification"],

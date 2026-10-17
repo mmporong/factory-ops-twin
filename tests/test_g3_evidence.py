@@ -4,8 +4,10 @@ from __future__ import annotations
 
 from copy import deepcopy
 import json
+import math
 from pathlib import Path
 import tempfile
+from types import SimpleNamespace as NS
 import unittest
 from uuid import uuid4
 
@@ -17,8 +19,10 @@ from factory_ops.g3_session import sha
 from factory_ops.navigation import GoalPose
 from factory_ops.route_reservation import RouteReservationManager
 from scripts.ros.g3_evidence import (
+    RPP_PAIR_MAX_DB_GAP_NS,
     _hash_json,
     _validate_localization_reservations,
+    decode_rpp_observation,
     validate_actions,
     validate_authorization_order,
     validate_final_parking,
@@ -29,6 +33,8 @@ from scripts.ros.g3_evidence import (
     validate_navigation_maps,
     validate_mission_primary_identity,
     validate_route_event_binding,
+    validate_rpp_bag_observations,
+    validate_rpp_action_observations,
     validate_scene_closure,
     validate_stop_evidence,
     validate_terminal_recording,
@@ -42,6 +48,176 @@ SCENARIO = "QUALIFICATION_NORMAL"
 
 
 class G3EvidenceHelperTests(unittest.TestCase):
+    @staticmethod
+    def rpp_fixture():
+        action = {"robot_id": "carter1", "follow_action_uuid": str(uuid4()),
+                  "accepted_sim_time_s": 1.0, "terminal_sim_time_s": 2.0}
+        points = [
+            {"db_timestamp_ns": 100, "cdr_sha256": "a" * 64,
+             "header": {"frame_id": "base_link", "stamp_ns": 1_200_000_000},
+             "position_xyz_m": [.8, 0., 0.]},
+            {"db_timestamp_ns": 200, "cdr_sha256": "b" * 64,
+             "header": {"frame_id": "base_link", "stamp_ns": 1_900_000_000},
+             "position_xyz_m": [.2, .1, 0.]},
+        ]
+        rotations = [
+            {"db_timestamp_ns": 101, "cdr_sha256": "c" * 64, "value": True},
+            {"db_timestamp_ns": 199, "cdr_sha256": "d" * 64, "value": False},
+        ]
+        bag = {"rpp_observations": {
+            "carter1": {"lookahead_point": points, "is_rotating_to_heading": rotations},
+            "carter2": {"lookahead_point": [], "is_rotating_to_heading": []},
+        }, "rpp_observation_clock_domains": {
+            "db_timestamp_ns": "rosbag storage ordering only",
+            "lookahead_point.header.stamp_ns": "ROS simulation time used for FollowPath episode bounds",
+            "cross_domain_arithmetic": False,
+        }}
+        return action, bag
+
+    def test_rpp_cdr_decoder_preserves_separate_database_and_ros_clocks(self):
+        point = NS(header=NS(frame_id="base_link", stamp=NS(sec=1, nanosec=20)),
+                   point=NS(x=.8, y=.1, z=0.))
+        robot, name, row = decode_rpp_observation(
+            "/carter1/lookahead_point", "geometry_msgs/msg/PointStamped", b"point", 99,
+            get_message=lambda _: object, deserialize_message=lambda raw, _: point,
+        )
+        self.assertEqual((robot, name), ("carter1", "lookahead_point"))
+        self.assertEqual(99, row["db_timestamp_ns"])
+        self.assertEqual(1_000_000_020, row["header"]["stamp_ns"])
+        self.assertNotIn("stamp_s", row)
+        rotation = NS(data=True)
+        self.assertTrue(decode_rpp_observation(
+            "/carter1/is_rotating_to_heading", "std_msgs/msg/Bool", b"bool", 100,
+            get_message=lambda _: object, deserialize_message=lambda raw, _: rotation,
+        )[2]["value"])
+        with self.assertRaises(RuntimeError):
+            decode_rpp_observation(
+                "/carter1/lookahead_point", "geometry_msgs/msg/PointStamped", b"broken", 101,
+                get_message=lambda _: object,
+                deserialize_message=lambda raw, _: (_ for _ in ()).throw(RuntimeError("bad CDR")),
+            )
+        for changed in (
+            NS(header=NS(frame_id="", stamp=NS(sec=1, nanosec=0)), point=NS(x=.1, y=0., z=0.)),
+            NS(header=NS(frame_id="base_link", stamp=NS(sec=0, nanosec=0)), point=NS(x=.1, y=0., z=0.)),
+            NS(header=NS(frame_id="base_link", stamp=NS(sec=1, nanosec=0)), point=NS(x=math.nan, y=0., z=0.)),
+        ):
+            with self.assertRaisesRegex(ValueError, "payload"):
+                decode_rpp_observation(
+                    "/carter1/lookahead_point", "geometry_msgs/msg/PointStamped", b"point", 102,
+                    get_message=lambda _: object, deserialize_message=lambda raw, _, value=changed: value,
+                )
+
+    def test_rpp_action_observations_bind_terminal_samples_to_one_robot_episode(self):
+        action, bag = self.rpp_fixture()
+        errors: list[str] = []
+        report = validate_rpp_action_observations([action], bag, errors)
+        self.assertEqual([], errors)
+        self.assertEqual(1, report["episode_count"])
+        self.assertEqual(action["follow_action_uuid"].replace("-", ""), report["episodes"][0]["goal_uuid"])
+        self.assertEqual([False, True], report["episodes"][0]["observed_rotation_values"])
+        self.assertFalse(report["episodes"][0]["rotation_reentry_observed"])
+        self.assertFalse(report["causal_claim"])
+        reentry = deepcopy(bag)
+        reentry["rpp_observations"]["carter1"]["lookahead_point"].append(
+            {"db_timestamp_ns": 300, "cdr_sha256": "e" * 64,
+             "header": {"frame_id": "base_link", "stamp_ns": 1_950_000_000},
+             "position_xyz_m": [.1, .1, 0.]})
+        reentry["rpp_observations"]["carter1"]["is_rotating_to_heading"].append(
+            {"db_timestamp_ns": 299, "cdr_sha256": "f" * 64, "value": True})
+        reentry_errors: list[str] = []
+        reentry_report = validate_rpp_action_observations([action], reentry, reentry_errors)
+        self.assertEqual([], reentry_errors)
+        self.assertTrue(reentry_report["episodes"][0]["rotation_reentry_observed"])
+        self.assertFalse(reentry_report["causal_claim"])
+        attacks = []
+        changed = deepcopy(bag); changed["rpp_observations"]["carter1"]["lookahead_point"][-1]["header"]["stamp_ns"] = 1_400_000_000; attacks.append(changed)
+        changed = deepcopy(bag); changed["rpp_observations"]["carter1"]["lookahead_point"][0]["header"]["stamp_ns"] = 2_100_000_000; changed["rpp_observations"]["carter1"]["lookahead_point"][1]["header"]["stamp_ns"] = 2_200_000_000; attacks.append(changed)
+        changed = deepcopy(bag); changed["rpp_observations"]["carter2"] = changed["rpp_observations"]["carter1"]; changed["rpp_observations"]["carter1"] = {"lookahead_point": [], "is_rotating_to_heading": []}; attacks.append(changed)
+        changed = deepcopy(bag); changed["rpp_observations"]["carter1"]["is_rotating_to_heading"] = []; attacks.append(changed)
+        changed = deepcopy(bag); changed["rpp_observations"]["carter1"]["lookahead_point"][0]["db_timestamp_ns"] = 10**12; changed["rpp_observations"]["carter1"]["is_rotating_to_heading"][0]["db_timestamp_ns"] = 1; attacks.append(changed)
+        changed = deepcopy(bag); changed["rpp_observations"]["carter1"]["is_rotating_to_heading"].append(
+            {"db_timestamp_ns": 250, "cdr_sha256": "e" * 64, "value": False}); attacks.append(changed)
+        changed = deepcopy(bag); changed["rpp_observations"]["carter1"]["lookahead_point"][0]["db_timestamp_ns"] = 300; attacks.append(changed)
+        changed = deepcopy(bag); changed["rpp_observations"]["carter1"]["is_rotating_to_heading"][0]["db_timestamp_ns"] = 250; attacks.append(changed)
+        for changed in attacks:
+            failures: list[str] = []
+            self.assertEqual({}, validate_rpp_action_observations([action], changed, failures))
+            self.assertTrue(failures)
+        second = {**action, "follow_action_uuid": str(uuid4()),
+                  "accepted_sim_time_s": 2.1, "terminal_sim_time_s": 3.0}
+        failures = []
+        self.assertEqual({}, validate_rpp_action_observations([action, second], bag, failures))
+        self.assertTrue(any("no ROS-clock lookahead" in error for error in failures))
+        invalid_uuid = {**action, "follow_action_uuid": second["follow_action_uuid"][:-1] + "z"}
+        failures = []
+        self.assertEqual({}, validate_rpp_action_observations([invalid_uuid], bag, failures))
+        self.assertTrue(any("valid accepted FollowPath episode" in error for error in failures))
+
+    def test_rpp_database_pair_gap_accepts_boundary_and_rejects_one_nanosecond_over(self):
+        action, bag = self.rpp_fixture()
+        points = bag["rpp_observations"]["carter1"]["lookahead_point"]
+        rotations = bag["rpp_observations"]["carter1"]["is_rotating_to_heading"]
+        points[0]["db_timestamp_ns"] = 1_000_000_000
+        rotations[0]["db_timestamp_ns"] = 1_000_000_000 + RPP_PAIR_MAX_DB_GAP_NS
+        points[1]["db_timestamp_ns"] = 2_000_000_000
+        rotations[1]["db_timestamp_ns"] = 2_000_000_001
+        errors: list[str] = []
+        self.assertEqual(1, validate_rpp_action_observations([action], bag, errors)["episode_count"])
+        self.assertEqual([], errors)
+        rotations[0]["db_timestamp_ns"] += 1
+        failures: list[str] = []
+        self.assertEqual({}, validate_rpp_action_observations([action], bag, failures))
+        self.assertTrue(any("database-clock gap" in error for error in failures))
+        action, stale = self.rpp_fixture()
+        stale_points = stale["rpp_observations"]["carter1"]["lookahead_point"]
+        stale_rotations = stale["rpp_observations"]["carter1"]["is_rotating_to_heading"]
+        stale_points[0]["db_timestamp_ns"], stale_points[1]["db_timestamp_ns"] = 10**12, 2 * 10**12
+        stale_rotations[0]["db_timestamp_ns"], stale_rotations[1]["db_timestamp_ns"] = 1, 2
+        failures = []
+        self.assertEqual({}, validate_rpp_action_observations([action], stale, failures))
+        self.assertTrue(any("database-clock gap" in error for error in failures))
+
+    def test_rpp_reentry_state_machine_handles_repeated_prefix_and_trailing_values(self):
+        action, bag = self.rpp_fixture()
+        def set_values(values):
+            points, rotations = [], []
+            for index, value in enumerate(values):
+                points.append({"db_timestamp_ns": 1000 + index * 100, "cdr_sha256": f"{index + 1:064x}",
+                    "header": {"frame_id": "base_link", "stamp_ns": 1_100_000_000 + index * 150_000_000},
+                    "position_xyz_m": [.8, 0., 0.]})
+                rotations.append({"db_timestamp_ns": 1001 + index * 100,
+                                  "cdr_sha256": f"{index + 101:064x}", "value": value})
+            bag["rpp_observations"]["carter1"] = {
+                "lookahead_point": points, "is_rotating_to_heading": rotations}
+        set_values([False, False, False, True, False, True])
+        errors: list[str] = []
+        report = validate_rpp_action_observations([action], bag, errors)
+        self.assertEqual([], errors)
+        self.assertTrue(report["episodes"][0]["rotation_reentry_observed"])
+        self.assertEqual([3, 4, 5], [row["episode_sample_index"]
+                                    for row in report["episodes"][0]["observed_rotation_transitions"]])
+        set_values([False, False, True, False, False])
+        errors = []
+        report = validate_rpp_action_observations([action], bag, errors)
+        self.assertEqual([], errors)
+        self.assertFalse(report["episodes"][0]["rotation_reentry_observed"])
+
+    def test_rpp_observation_topics_require_exact_type_positive_count_and_request(self):
+        topic_types = {f"/{robot}/{name}": type_name
+            for robot in ("carter1", "carter2") for name, type_name in {
+                "lookahead_point": "geometry_msgs/msg/PointStamped",
+                "is_rotating_to_heading": "std_msgs/msg/Bool"}.items()}
+        bag = {"topic_types": topic_types, "topic_counts": {name: 2 for name in topic_types}}
+        requested = list(topic_types)
+        self.assertEqual({name: 2 for name in topic_types}, validate_rpp_bag_observations(bag, requested))
+        mutations = []
+        changed = deepcopy(bag); changed["topic_counts"]["/carter1/lookahead_point"] = 0; mutations.append((changed, requested))
+        changed = deepcopy(bag); changed["topic_types"]["/carter2/is_rotating_to_heading"] = "std_msgs/msg/String"; mutations.append((changed, requested))
+        mutations.append((bag, requested[:-1]))
+        for changed_bag, changed_requested in mutations:
+            with self.assertRaisesRegex(ValueError, "RPP observation"):
+                validate_rpp_bag_observations(changed_bag, changed_requested)
+
     def test_primary_report_identity_requires_mission_to_match_verified_trial(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)

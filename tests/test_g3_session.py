@@ -140,6 +140,17 @@ class G3SessionTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "callback drain"):
                     _validate_runtime(candidate)
 
+    def test_g3_nav2_override_is_exactly_stateful_false(self) -> None:
+        runtime = load(CONFIG / "g3-runtime.json")
+        self.assertEqual(runtime["g3_nav2"], {"follow_path_stateful": False})
+        for value in ({}, {"follow_path_stateful": True},
+                      {"follow_path_stateful": False, "xy_goal_tolerance": 0.06}):
+            with self.subTest(value=value):
+                candidate = deepcopy(runtime)
+                candidate["g3_nav2"] = value
+                with self.assertRaisesRegex(ValueError, "G3 Nav2 override"):
+                    _validate_runtime(candidate)
+
     def test_expected_run_context_rejects_policy_relabel_before_derivation(self) -> None:
         session_path = self.copy_session()
         value = load(session_path / "session.json")

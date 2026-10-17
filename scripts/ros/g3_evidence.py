@@ -34,9 +34,21 @@ from scripts.ros.g2_evidence import (
 )
 from scripts.isaac.nav_scene import _tilt_evaluation
 from scripts.isaac.g2_scene import _ros_stamp_parts
-from scripts.ros.g3_mission import cutoff_ledger_payload, primary_trial_identity, terminal_recording_boundary
+from scripts.ros.g3_mission import (
+    RPP_OBSERVATION_TYPES,
+    build_g3_namespaced_params,
+    cutoff_ledger_payload,
+    nav2_package_provenance,
+    primary_trial_identity,
+    terminal_recording_boundary,
+    validate_rpp_runtime_observation,
+)
+from scripts.ros.g2_mission import _planning_radius
 
 PROJECT = Path(__file__).resolve().parents[2]
+_SHA256 = re.compile(r"^[0-9a-f]{64}$")
+RPP_TERMINAL_OBSERVATION_MAX_AGE_S = 0.5
+RPP_PAIR_MAX_DB_GAP_NS = 100_000_000
 
 
 def primary_inputs_sha_from_environment() -> str | None:
@@ -139,6 +151,40 @@ def _path_payload(path: Any) -> dict[str, Any]:
     }
 
 
+def decode_rpp_observation(
+    topic: str, type_name: str, raw: bytes, db_timestamp_ns: int,
+    *, get_message: Any, deserialize_message: Any,
+) -> tuple[str, str, dict[str, Any]]:
+    """Decode one RPP diagnostic CDR while preserving ROS and database clock domains."""
+    parts = topic.split("/")
+    if len(parts) != 3 or parts[1] not in ROBOTS or parts[2] not in RPP_OBSERVATION_TYPES:
+        raise ValueError("unknown RPP observation topic")
+    robot, name = parts[1], parts[2]
+    expected_type = RPP_OBSERVATION_TYPES[name]
+    if type_name != expected_type or type(db_timestamp_ns) is not int or db_timestamp_ns < 0:
+        raise ValueError("RPP observation type or database timestamp differs")
+    message = deserialize_message(raw, get_message(type_name))
+    row: dict[str, Any] = {
+        "db_timestamp_ns": db_timestamp_ns,
+        "cdr_sha256": hashlib.sha256(raw).hexdigest(),
+    }
+    if name == "lookahead_point":
+        stamp_ns = path_header_stamp_ns({
+            "sec": int(message.header.stamp.sec),
+            "nanosec": int(message.header.stamp.nanosec),
+        })
+        xyz = [float(message.point.x), float(message.point.y), float(message.point.z)]
+        if str(message.header.frame_id) != "base_link" or stamp_ns <= 0 or not all(math.isfinite(v) for v in xyz):
+            raise ValueError("RPP lookahead payload frame, ROS stamp, or point is invalid")
+        row.update({"header": {"frame_id": "base_link", "stamp_ns": stamp_ns},
+                    "position_xyz_m": xyz})
+    else:
+        if type(message.data) is not bool:
+            raise ValueError("RPP rotation-state payload is not a bool")
+        row["value"] = message.data
+    return robot, name, row
+
+
 def _decode_g3_topics(output: Path, run_id: str, scenario_id: str) -> dict[str, Any]:
     """Decode G3 JSON streams, Path CDR and action statuses from immutable bag DBs."""
     from rclpy.serialization import deserialize_message
@@ -156,21 +202,44 @@ def _decode_g3_topics(output: Path, run_id: str, scenario_id: str) -> dict[str, 
     odometry: dict[str, list[dict[str, Any]]] = defaultdict(list)
     statuses: dict[str, dict[str, int]] = defaultdict(dict)
     follow_rpc: dict[str, dict[str, list[dict[str, Any]]]] = defaultdict(lambda: defaultdict(list))
+    rpp_observations: dict[str, dict[str, list[dict[str, Any]]]] = {
+        robot: {name: [] for name in RPP_OBSERVATION_TYPES} for robot in ROBOTS
+    }
+    rpp_topics = {f"/{robot}/{name}" for robot in ROBOTS for name in RPP_OBSERVATION_TYPES}
     errors: list[str] = []
     types: dict[str, Any] = {}
+    observed_types: dict[str, str] = {}
     for database in databases:
         with sqlite3.connect(f"file:{database}?mode=ro", uri=True) as connection:
             integrity.extend(str(row[0]) for row in connection.execute("PRAGMA integrity_check"))
             topics = {int(row[0]): (str(row[1]), str(row[2])) for row in connection.execute("SELECT id,name,type FROM topics")}
+            for topic, type_name in topics.values():
+                previous = observed_types.setdefault(topic, type_name)
+                if previous != type_name:
+                    errors.append(f"{topic}: ROS type differs across bag databases")
             for topic_id, count in connection.execute("SELECT topic_id,COUNT(*) FROM messages GROUP BY topic_id"):
                 counts[topics[int(topic_id)][0]] += int(count)
-            for topic_id, data in connection.execute("SELECT topic_id,data FROM messages ORDER BY timestamp"):
+            for topic_id, db_timestamp_ns, data in connection.execute(
+                    "SELECT topic_id,timestamp,data FROM messages ORDER BY timestamp"):
                 topic, type_name = topics[int(topic_id)]
                 selected = (topic in {"/factory/g3/events", "/factory/g3/authorizations", "/factory/g3/reservations"}
-                            or topic.endswith(("/plan", "/odom", "/_action/status", "/_service_event")))
+                            or topic.endswith(("/plan", "/odom", "/_action/status", "/_service_event"))
+                            or topic in rpp_topics)
                 if not selected:
                     continue
                 raw = bytes(data)
+                if topic in rpp_topics:
+                    try:
+                        if type_name not in types:
+                            types[type_name] = get_message(type_name)
+                        robot, name, row = decode_rpp_observation(
+                            topic, type_name, raw, int(db_timestamp_ns),
+                            get_message=lambda _: types[type_name], deserialize_message=deserialize_message,
+                        )
+                        rpp_observations[robot][name].append(row)
+                    except (ValueError, TypeError, AttributeError, RuntimeError) as exc:
+                        errors.append(f"{topic}: invalid RPP observation CDR: {exc}")
+                    continue
                 if topic.endswith("/plan"):
                     robot = topic.split("/")[1]
                     if robot in ROBOTS:
@@ -251,6 +320,7 @@ def _decode_g3_topics(output: Path, run_id: str, scenario_id: str) -> dict[str, 
         "decoded_cdr": True,
         "integrity_check": "ok" if not any(value != "ok" for value in integrity) else integrity,
         "topic_counts": dict(counts),
+        "topic_types": observed_types,
         "events": events,
         "authorizations": authorizations,
         "reservations": reservations,
@@ -258,9 +328,232 @@ def _decode_g3_topics(output: Path, run_id: str, scenario_id: str) -> dict[str, 
         "odometry": dict(odometry),
         "goal_statuses": dict(statuses),
         "follow_rpc": {robot: dict(value) for robot, value in follow_rpc.items()},
+        "rpp_observations": rpp_observations,
+        "rpp_observation_clock_domains": {
+            "db_timestamp_ns": "rosbag storage ordering only",
+            "lookahead_point.header.stamp_ns": "ROS simulation time used for FollowPath episode bounds",
+            "cross_domain_arithmetic": False,
+        },
         "errors": errors,
         "databases": [{"path": path.name, "bytes": path.stat().st_size, "sha256": sha(path)} for path in databases],
     }
+
+
+def validate_nav2_runtime_contract(
+    session_root: Path, output: Path, session: Mapping[str, Any], ready: Mapping[str, Any],
+    book: RouteBook, mission: Mapping[str, Any], bag: Mapping[str, Any], errors: list[str],
+) -> dict[str, Any]:
+    """Rebuild G3 params and bind runtime RPP state plus observation topics to the closed bag."""
+    try:
+        import yaml
+
+        config = json.loads((session_root / "config.json").read_text(encoding="utf-8"))
+        scenario = json.loads((session_root / "scenarios.json").read_text(encoding="utf-8"))["scenarios"][session["scenario_id"]]
+        radii = {robot: _planning_radius(
+            ready["robots"][robot], config["localization_planning_margin_m"],
+        )[0] for robot in ROBOTS}
+        template = yaml.safe_load((PROJECT / "configs/factory-v3/nav2-g2.yaml").read_text(encoding="utf-8"))
+        expected, contract = build_g3_namespaced_params(
+            template, scenario, radii, config["g3_runtime"],
+            physical_map=str(session_root / "maps/open/map.yaml"),
+            navigation_map=str(output / "maps" / ("closed" if session["condition"] == "closure" else "open") / "navigation.yaml"),
+        )
+        params_path = output / "nav2-g3-params.yaml"
+        if params_path.is_symlink() or yaml.safe_load(params_path.read_text(encoding="utf-8")) != expected:
+            raise ValueError("generated G3 Nav2 YAML semantics differ from the exact override contract")
+        params_sha = sha(params_path)
+        if mission.get("inputs", {}).get("generated_params", {}).get("sha256") != params_sha:
+            raise ValueError("mission generated parameter SHA differs")
+        map_provenance = json.loads((output / "maps/provenance.json").read_text(encoding="utf-8"))
+        if map_provenance.get("g3_nav2_semantic_contract") != contract:
+            raise ValueError("recorded G3 Nav2 semantic delta differs")
+        provenance_path = output / "nav2-runtime-provenance.json"
+        if (provenance_path.is_symlink()
+                or mission.get("inputs", {}).get("nav2_runtime_provenance", {}).get("sha256") != sha(provenance_path)):
+            raise ValueError("mission runtime Nav2 provenance SHA differs")
+        provenance = json.loads(provenance_path.read_text(encoding="utf-8"))
+        validate_rpp_runtime_observation(
+            provenance, generated_params_sha256=params_sha,
+            source_commit=os.environ.get("FACTORY_OPS_G3_SOURCE_COMMIT"),
+        )
+        if provenance.get("packages") != nav2_package_provenance():
+            raise ValueError("installed Nav2 package bytes differ from the startup provenance")
+        observation_counts = validate_rpp_bag_observations(
+            bag, mission.get("bag_topics_requested", []),
+        )
+        ready_events = [row for row in bag.get("events", []) if row.get("kind") == "navigation_ready"]
+        if (len(ready_events) != 1
+                or ready_events[0].get("nav2_runtime_provenance_sha256") != sha(provenance_path)):
+            raise ValueError("navigation_ready does not bind the RPP runtime provenance")
+        return {"generated_params_sha256": params_sha,
+                "runtime_provenance_sha256": sha(provenance_path),
+                "observation_counts": observation_counts,
+                "packages": provenance["packages"]}
+    except (OSError, ValueError, TypeError, KeyError, ImportError, json.JSONDecodeError) as exc:
+        errors.append(f"G3 Nav2 runtime evidence: {exc}")
+        return {}
+
+
+def validate_rpp_bag_observations(
+    bag: Mapping[str, Any], requested_topics: object,
+) -> dict[str, int]:
+    """Require both RPP diagnostic topics per robot in the immutable closed bag."""
+    expected = {f"/{robot}/{name}": type_name for robot in ROBOTS
+                for name, type_name in RPP_OBSERVATION_TYPES.items()}
+    if not isinstance(requested_topics, list):
+        raise ValueError("mission RPP bag topic request list is missing")
+    result: dict[str, int] = {}
+    for topic, type_name in expected.items():
+        count = bag.get("topic_counts", {}).get(topic)
+        if (bag.get("topic_types", {}).get(topic) != type_name
+                or type(count) is not int or count <= 0 or topic not in requested_topics):
+            raise ValueError(f"RPP observation is absent, mistyped, or unbound: {topic}")
+        result[topic] = count
+    return result
+
+
+def validate_rpp_action_observations(
+    actions: Sequence[Mapping[str, Any]], bag: Mapping[str, Any], errors: list[str],
+) -> dict[str, Any]:
+    """Bind decoded RPP diagnostics to each robot's accepted FollowPath episode."""
+    episodes: dict[str, list[dict[str, Any]]] = {robot: [] for robot in ROBOTS}
+    try:
+        for index, action in enumerate(actions):
+            if action.get("cutoff_classification") == "planner_only_cleanup":
+                continue
+            robot = action.get("robot_id")
+            accepted = _finite_number(action.get("accepted_sim_time_s"))
+            terminal = _finite_number(action.get("terminal_sim_time_s"))
+            uuid = _uuid_hex(action.get("follow_action_uuid"))
+            if robot not in ROBOTS or accepted is None or terminal is None or terminal < accepted or uuid is None:
+                raise ValueError(f"action {index} lacks a valid accepted FollowPath episode")
+            episodes[str(robot)].append({"action_index": index, "goal_uuid": uuid,
+                                         "accepted_sim_time_s": accepted,
+                                         "terminal_sim_time_s": terminal})
+        observations = bag.get("rpp_observations")
+        if bag.get("rpp_observation_clock_domains") != {
+                "db_timestamp_ns": "rosbag storage ordering only",
+                "lookahead_point.header.stamp_ns": "ROS simulation time used for FollowPath episode bounds",
+                "cross_domain_arithmetic": False}:
+            raise ValueError("RPP observation clock-domain contract differs")
+        if not isinstance(observations, Mapping) or set(observations) != set(ROBOTS):
+            raise ValueError("decoded RPP observation robot set differs")
+        reports: list[dict[str, Any]] = []
+        for robot in ROBOTS:
+            robot_episodes = sorted(episodes[robot], key=lambda row: row["accepted_sim_time_s"])
+            if any(left["terminal_sim_time_s"] >= right["accepted_sim_time_s"]
+                   for left, right in zip(robot_episodes, robot_episodes[1:])):
+                raise ValueError(f"{robot} FollowPath observation episodes overlap")
+            robot_rows = observations[robot]
+            if not isinstance(robot_rows, Mapping) or set(robot_rows) != set(RPP_OBSERVATION_TYPES):
+                raise ValueError(f"{robot} RPP observation streams differ")
+            points = robot_rows["lookahead_point"]
+            rotations = robot_rows["is_rotating_to_heading"]
+            if not isinstance(points, list) or not isinstance(rotations, list):
+                raise ValueError(f"{robot} RPP observation streams are not lists")
+            point_episode: dict[int, int] = {}
+            for point_index, point in enumerate(points):
+                if (not isinstance(point, Mapping) or not _SHA256.fullmatch(str(point.get("cdr_sha256", "")))
+                        or type(point.get("db_timestamp_ns")) is not int
+                        or point["db_timestamp_ns"] < 0 or point.get("header", {}).get("frame_id") != "base_link"
+                        or type(point.get("header", {}).get("stamp_ns")) is not int
+                        or point["header"]["stamp_ns"] <= 0
+                        or not isinstance(point.get("position_xyz_m"), list)
+                        or len(point["position_xyz_m"]) != 3
+                        or any(_finite_number(value) is None for value in point["position_xyz_m"])):
+                    raise ValueError(f"{robot} decoded lookahead payload is invalid")
+                stamp_s = point["header"]["stamp_ns"] / 1e9
+                matched = [episode_index for episode_index, episode in enumerate(robot_episodes)
+                           if episode["accepted_sim_time_s"] <= stamp_s <= episode["terminal_sim_time_s"]]
+                if len(matched) > 1:
+                    raise ValueError(f"{robot} lookahead sample matches multiple FollowPath episodes")
+                if matched:
+                    point_episode[point_index] = matched[0]
+            point_db_stamps = [int(point["db_timestamp_ns"]) for point in points]
+            if any(current <= previous for previous, current in zip(point_db_stamps, point_db_stamps[1:])):
+                raise ValueError(f"{robot} lookahead database timestamps are not strictly monotonic")
+            rotation_episode: dict[int, int] = {}
+            rotation_point: dict[int, int] = {}
+            for rotation_index, rotation in enumerate(rotations):
+                if (not isinstance(rotation, Mapping)
+                        or not _SHA256.fullmatch(str(rotation.get("cdr_sha256", "")))
+                        or type(rotation.get("db_timestamp_ns")) is not int
+                        or rotation["db_timestamp_ns"] < 0 or type(rotation.get("value")) is not bool):
+                    raise ValueError(f"{robot} decoded rotation-state payload is invalid")
+            rotation_db_stamps = [int(rotation["db_timestamp_ns"]) for rotation in rotations]
+            if any(current <= previous for previous, current in zip(rotation_db_stamps, rotation_db_stamps[1:])):
+                raise ValueError(f"{robot} rotation-state database timestamps are not strictly monotonic")
+            if len(points) != len(rotations):
+                raise ValueError(f"{robot} RPP observation streams are not one-to-one")
+            for pair_index, (point, rotation) in enumerate(zip(points, rotations)):
+                # Both values are rosbag database timestamps. This limits collection skew
+                # within one 10 Hz publish cycle and never compares DB time with ROS sim time.
+                gap = abs(int(point["db_timestamp_ns"]) - int(rotation["db_timestamp_ns"]))
+                if gap > RPP_PAIR_MAX_DB_GAP_NS:
+                    raise ValueError(f"{robot} RPP observation pair exceeds the database-clock gap")
+                if pair_index in point_episode:
+                    rotation_episode[pair_index] = point_episode[pair_index]
+                    rotation_point[pair_index] = pair_index
+            for episode_index, episode in enumerate(robot_episodes):
+                episode_points = [(index, row) for index, row in enumerate(points)
+                                  if point_episode.get(index) == episode_index]
+                if not episode_points:
+                    raise ValueError(f"{robot} FollowPath episode has no ROS-clock lookahead sample")
+                last_point_index, last_point = max(
+                    episode_points, key=lambda item: item[1]["header"]["stamp_ns"],
+                )
+                last_stamp_s = last_point["header"]["stamp_ns"] / 1e9
+                age = episode["terminal_sim_time_s"] - last_stamp_s
+                if not 0 <= age <= RPP_TERMINAL_OBSERVATION_MAX_AGE_S:
+                    raise ValueError(f"{robot} FollowPath terminal has no adjacent lookahead sample")
+                episode_rotations = [(index, row) for index, row in enumerate(rotations)
+                                     if rotation_episode.get(index) == episode_index]
+                terminal_rotations = [(index, row) for index, row in episode_rotations
+                                      if rotation_point.get(index) == last_point_index]
+                if not episode_rotations or not terminal_rotations:
+                    raise ValueError(f"{robot} FollowPath episode has no paired rotation-state sample")
+                values = [bool(row["value"]) for _, row in episode_rotations]
+                transitions = []
+                for value_index in range(1, len(values)):
+                    if values[value_index] == values[value_index - 1]:
+                        continue
+                    rotation_index, rotation = episode_rotations[value_index]
+                    paired = points[rotation_point[rotation_index]]
+                    transitions.append({
+                        "from": values[value_index - 1], "to": values[value_index],
+                        "episode_sample_index": value_index,
+                        "rotation_db_timestamp_ns": rotation["db_timestamp_ns"],
+                        "paired_lookahead_ros_stamp_ns": paired["header"]["stamp_ns"],
+                    })
+                seen_rotating = False
+                left_rotation_after_true = False
+                reentry_observed = False
+                for value in values:
+                    if value:
+                        if left_rotation_after_true:
+                            reentry_observed = True
+                        seen_rotating = True
+                    elif seen_rotating:
+                        left_rotation_after_true = True
+                reports.append({**episode,
+                    "lookahead_sample_count": len(episode_points),
+                    "rotation_sample_count": len(episode_rotations),
+                    "terminal_lookahead_ros_stamp_ns": last_point["header"]["stamp_ns"],
+                    "terminal_lookahead_cdr_sha256": last_point["cdr_sha256"],
+                    "terminal_rotation_value": terminal_rotations[-1][1]["value"],
+                    "terminal_rotation_cdr_sha256": terminal_rotations[-1][1]["cdr_sha256"],
+                    "observed_rotation_values": sorted(set(values)),
+                    "observed_rotation_transitions": transitions,
+                    "rotation_reentry_observed": reentry_observed,
+                    "interpretation": "observed controller diagnostics only; no causal conclusion",
+                })
+        if len(reports) != sum(len(value) for value in episodes.values()):
+            raise ValueError("RPP FollowPath episode report cardinality differs")
+        return {"episode_count": len(reports), "episodes": reports,
+                "causal_claim": False, "control_input": False}
+    except (ValueError, TypeError, KeyError, IndexError) as exc:
+        errors.append(f"RPP action observation evidence: {exc}")
+        return {}
 
 
 def validate_stop_evidence(
@@ -1300,6 +1593,9 @@ def validate_g3_evidence(
         supplemental = _decode_g3_topics(output, run_id, scenario_id) if bag_observation is None else dict(bag_observation)
         bag = {**sensor_bag, **supplemental}
         errors.extend(supplemental.get("errors", []))
+        evaluation["nav2_runtime"] = validate_nav2_runtime_contract(
+            session_root, output, session, ready, book, mission, bag, errors,
+        )
         local_events = _load_jsonl(output / "actions.jsonl", errors)
         local_auth = _load_jsonl(output / "authorizations.jsonl", errors)
         if supplemental.get("events") != local_events or supplemental.get("authorizations") != local_auth:
@@ -1322,6 +1618,7 @@ def validate_g3_evidence(
         outcome = "completed" if exported.get("completed") is True else "incomplete" if exported.get("censored") is True else "failed"
         evaluation["actions"] = validate_actions(actions, book, bag, errors)
         evaluation["follow_rpc"] = validate_follow_rpc(actions, supplemental, errors)
+        evaluation["rpp_action_observations"] = validate_rpp_action_observations(actions, bag, errors)
         physical_actions = [row for row in actions if row.get("cutoff_classification") != "planner_only_cleanup"]
         evaluation["stops"] = validate_stop_evidence(physical_actions, traces, config["g3_runtime"], errors, bag)
         evaluation["initial_hold_barrier"] = validate_initial_hold_barrier(

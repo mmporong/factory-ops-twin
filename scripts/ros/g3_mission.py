@@ -39,6 +39,146 @@ from scripts.ros.g2_mission import (
 
 
 _SHA256 = re.compile(r"^[0-9a-f]{64}$")
+RPP_OBSERVATION_TYPES = {
+    "lookahead_point": "geometry_msgs/msg/PointStamped",
+    "is_rotating_to_heading": "std_msgs/msg/Bool",
+}
+
+
+def build_g3_namespaced_params(
+    template: Mapping[str, Any], scenario: Mapping[str, Any], radii: Mapping[str, float],
+    runtime: Mapping[str, Any], *, physical_map: str, navigation_map: str,
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Apply the one G3-only RPP override after the shared G2 materializer."""
+    baseline = build_namespaced_params(
+        template, scenario, radii, physical_map=physical_map, navigation_map=navigation_map,
+    )
+    result = copy.deepcopy(baseline)
+    if runtime.get("g3_nav2") != {"follow_path_stateful": False}:
+        raise ValueError("G3 Nav2 override contract differs")
+    changed: list[dict[str, Any]] = []
+    for robot in ROBOT_IDS:
+        controller = result[robot]["controller_server"]["ros__parameters"]
+        if controller.get("controller_frequency") != 10.0:
+            raise ValueError("G3 RPP observation pairing requires the source-bound 10 Hz controller")
+        follow = controller["FollowPath"]
+        before = follow.get("stateful", None)
+        follow["stateful"] = False
+        changed.append({"path": f"{robot}.controller_server.ros__parameters.FollowPath.stateful",
+                        "before": before, "after": False})
+    if result["/**"] != baseline["/**"]:
+        raise ValueError("G3 Nav2 override changed shared parameters")
+    expected = copy.deepcopy(baseline)
+    for robot in ROBOT_IDS:
+        expected[robot]["controller_server"]["ros__parameters"]["FollowPath"]["stateful"] = False
+    if result != expected:
+        raise ValueError("G3 Nav2 parameters differ beyond the stateful override")
+    return result, {"schema_version": 1, "only_semantic_changes": changed}
+
+
+def validate_rpp_runtime_observation(
+    observation: Mapping[str, Any], *, generated_params_sha256: str, source_commit: str | None,
+) -> None:
+    """Fail closed unless both controllers and diagnostic topics prove the requested runtime."""
+    if (not isinstance(source_commit, str) or not re.fullmatch(r"[0-9a-f]{40}", source_commit)
+            or observation.get("schema_version") != 1
+            or observation.get("source_commit") != source_commit
+            or observation.get("generated_params_sha256") != generated_params_sha256):
+        raise ValueError("RPP runtime observation source/parameter identity differs")
+    controllers = observation.get("controllers")
+    if not isinstance(controllers, Mapping) or set(controllers) != set(ROBOT_IDS):
+        raise ValueError("RPP runtime observation controller set differs")
+    for robot in ROBOT_IDS:
+        row = controllers[robot]
+        if (not isinstance(row, Mapping) or row.get("lifecycle_state") != 3
+                or row.get("parameter_name") != "FollowPath.stateful"
+                or row.get("parameter_type") != "bool" or row.get("parameter_value") is not False):
+            raise ValueError(f"{robot} RPP stateful runtime parameter did not qualify")
+    topics = observation.get("observation_topics")
+    expected = {f"/{robot}/{name}": type_name for robot in ROBOT_IDS
+                for name, type_name in RPP_OBSERVATION_TYPES.items()}
+    if topics != expected:
+        raise ValueError("RPP observation topic graph names/types differ")
+    packages = observation.get("packages")
+    if (not isinstance(packages, Mapping)
+            or set(packages) != {"nav2_controller", "nav2_regulated_pure_pursuit_controller"}):
+        raise ValueError("Nav2 runtime package provenance is incomplete")
+    for name, row in packages.items():
+        libraries = row.get("shared_libraries") if isinstance(row, Mapping) else None
+        if (not isinstance(row, Mapping) or row.get("name") != name
+                or not isinstance(row.get("version"), str) or not row["version"]
+                or not _SHA256.fullmatch(str(row.get("package_xml_sha256", "")))
+                or not isinstance(libraries, list) or not libraries
+                or any(not isinstance(item, Mapping) or not isinstance(item.get("name"), str)
+                       or type(item.get("bytes")) is not int or item["bytes"] <= 0
+                       or not _SHA256.fullmatch(str(item.get("sha256", ""))) for item in libraries)):
+            raise ValueError(f"Nav2 package provenance is invalid: {name}")
+
+
+def nav2_package_provenance() -> dict[str, Any]:
+    """Record installed Nav2 package manifests and controller shared-library bytes."""
+    from ament_index_python.packages import get_package_prefix, get_package_share_directory
+    import xml.etree.ElementTree as ET
+
+    result: dict[str, Any] = {}
+    for name in ("nav2_controller", "nav2_regulated_pure_pursuit_controller"):
+        package_xml = Path(get_package_share_directory(name)) / "package.xml"
+        root = ET.fromstring(package_xml.read_bytes())
+        version = root.findtext("version")
+        prefix = Path(get_package_prefix(name))
+        libraries = []
+        for path in sorted((prefix / "lib").glob(f"*{name.removeprefix('nav2_')}*.so*")):
+            if path.is_file():
+                libraries.append({"name": path.name, "bytes": path.stat().st_size, "sha256": sha(path)})
+        result[name] = {"name": name, "version": version, "package_xml_sha256": sha(package_xml),
+                        "shared_libraries": libraries}
+    return result
+
+
+def collect_rpp_runtime_observation(
+    robots: Mapping[str, Mapping[str, Any]], event_node: Any, callback_drain: CallbackDrain,
+    states: Mapping[str, int | None], startup_end: float, params_path: Path,
+    *, get_parameters_type: Any, bool_parameter_type: int, source_commit: str | None,
+) -> dict[str, Any]:
+    """Probe active controller parameters and graph types before any initial HOLD is sent."""
+    graph_types = {name: types for name, types in event_node.get_topic_names_and_types()}
+    observation_topics = {f"/{robot}/{name}": type_name for robot in ROBOT_IDS
+                          for name, type_name in RPP_OBSERVATION_TYPES.items()}
+    if any(graph_types.get(name) != [type_name] for name, type_name in observation_topics.items()):
+        raise RuntimeError("installed RPP observation topics are missing or have unexpected ROS types")
+    if not named_subscriber_topics_ready(event_node, tuple(observation_topics), "rosbag2_recorder"):
+        raise RuntimeError("rosbag recorder is not subscribed to every RPP observation topic")
+    controller_parameters: dict[str, dict[str, Any]] = {}
+    for robot, rt in robots.items():
+        request = get_parameters_type.Request()
+        request.names = ["FollowPath.stateful"]
+        future = rt["controller_parameters"].call_async(request)
+        while not future.done():
+            callback_drain.drain()
+            if time.monotonic() > startup_end:
+                raise TimeoutError("RPP runtime parameter query timed out")
+        response = future.result()
+        if response is None or len(response.values) != 1:
+            raise RuntimeError(f"{robot} RPP runtime parameter response is missing")
+        value = response.values[0]
+        controller_parameters[robot] = {
+            "lifecycle_state": states[f"{robot}/controller_server"],
+            "parameter_name": "FollowPath.stateful",
+            "parameter_type": "bool" if value.type == bool_parameter_type else str(value.type),
+            "parameter_value": bool(value.bool_value),
+        }
+    observation = {
+        "schema_version": 1,
+        "source_commit": source_commit,
+        "generated_params_sha256": sha(params_path),
+        "controllers": controller_parameters,
+        "observation_topics": observation_topics,
+        "packages": nav2_package_provenance(),
+    }
+    validate_rpp_runtime_observation(
+        observation, generated_params_sha256=sha(params_path), source_commit=source_commit,
+    )
+    return observation
 
 
 def primary_trial_identity(session_root: Path, session: Mapping[str, Any]) -> dict[str, str]:
@@ -459,13 +599,16 @@ def prepare_params(project: Path, output: Path, session_root: Path, session: Map
         maps[closed] = path
     scenario = json.loads((session_root / "scenarios.json").read_text(encoding="utf-8"))["scenarios"][session["scenario_id"]]
     template = yaml.safe_load((project / "configs/factory-v3/nav2-g2.yaml").read_text(encoding="utf-8"))
-    params = build_namespaced_params(template, scenario, radii,
-                                    physical_map=str(session_root / "maps/open/map.yaml"),
-                                    navigation_map=str(maps[session["condition"] == "closure"]))
+    params, contract = build_g3_namespaced_params(
+        template, scenario, radii, config["g3_runtime"],
+        physical_map=str(session_root / "maps/open/map.yaml"),
+        navigation_map=str(maps[session["condition"] == "closure"]),
+    )
     path = output / "nav2-g3-params.yaml"
     path.write_text(yaml.safe_dump(params, sort_keys=False), encoding="utf-8")
     save(output / "maps/provenance.json", {"planning_radius_m": radii, "source_layout_sha256": book.layout.source_sha256,
          "loaded_radius_rechecked": True, "files": verify_navigation_maps(output, book),
+         "g3_nav2_semantic_contract": contract,
          "scope": "authored navigation maps, current closure only; no simulator truth"})
     return path, maps
 
@@ -545,6 +688,8 @@ def main() -> int:
         from nav2_msgs.action import ComputePathToPose, FollowPath
         from nav2_msgs.srv import LoadMap
         from nav_msgs.msg import Odometry
+        from rcl_interfaces.msg import ParameterType
+        from rcl_interfaces.srv import GetParameters
         from rclpy.action import ActionClient
         from rclpy.parameter import Parameter
         from rclpy.executors import SingleThreadedExecutor
@@ -603,6 +748,7 @@ def main() -> int:
                 "follow": IntrospectedActionClient(node, FollowPath, "follow_path", cancel_type=CancelGoal,
                     event_qos=qos_profile_services_default, introspection_state=ServiceIntrospectionState.CONTENTS),
                 "load_map": node.create_client(LoadMap, "navigation_map_server/load_map"),
+                "controller_parameters": node.create_client(GetParameters, "controller_server/get_parameters"),
                 "lifecycle": {name: node.create_client(GetState, f"{name}/get_state") for name in ("planner_server", "controller_server", "bt_navigator")},
                 "pose": None, "last_observation": -math.inf, "phase": "idle", "anchor": session["workload"]["initial_robots"][robot_id],
                 "park": session["workload"]["initial_robots"][robot_id], "leg": None, "generation": None,
@@ -659,6 +805,7 @@ def main() -> int:
         bag_topics = ["/clock", "/factory/g3/events", "/factory/g3/authorizations", "/factory/g3/reservations"]
         for robot in ROBOT_IDS:
             bag_topics += [f"/{robot}/{name}" for name in ("scan_front_raw", "scan_rear_raw", "scan_front", "scan_rear", "scan_localization", "odom", "tf", "tf_static", "map", "navigation_map", "amcl_pose", "plan", "received_global_plan", "cmd_vel", "compute_path_to_pose/_action/status", "follow_path/_action/status", "follow_path/_action/feedback")]
+            bag_topics += [f"/{robot}/{name}" for name in RPP_OBSERVATION_TYPES]
             bag_topics.extend(robots[robot]["follow"].service_event_topics)
         service_event_topics = tuple(topic for rt in robots.values() for topic in rt["follow"].service_event_topics)
         service_names = [topic.removesuffix("/_service_event") for topic in service_event_topics]
@@ -775,10 +922,24 @@ def main() -> int:
         while True:
             tick(require_fresh=False)
             states = poller.poll(time.monotonic(), lifecycle_clients, GetState.Request)
-            if (all(value == 3 for value in states.values()) and all(rt["pose"] and rt["odom_count"] >= 5 and min(rt["scan_counts"].values()) >= 5 and rt["compute"].server_is_ready() and rt["follow"].server_is_ready() for rt in robots.values())):
+            if (all(value == 3 for value in states.values()) and all(
+                    rt["pose"] and rt["odom_count"] >= 5 and min(rt["scan_counts"].values()) >= 5
+                    and rt["compute"].server_is_ready() and rt["follow"].server_is_ready()
+                    and rt["controller_parameters"].service_is_ready() for rt in robots.values())):
                 break
             if time.monotonic() > startup_end:
                 raise TimeoutError("G3 planner/controller/TF/odometry/scan startup did not qualify")
+        runtime_observation = collect_rpp_runtime_observation(
+            robots, event_node, callback_drain, states, startup_end, params_path,
+            get_parameters_type=GetParameters,
+            bool_parameter_type=ParameterType.PARAMETER_BOOL,
+            source_commit=os.environ.get("FACTORY_OPS_G3_SOURCE_COMMIT"),
+        )
+        runtime_observation_path = output / "nav2-runtime-provenance.json"
+        atomic_json(runtime_observation_path, runtime_observation)
+        result["inputs"]["nav2_runtime_provenance"] = {
+            "path": str(runtime_observation_path), "sha256": sha(runtime_observation_path),
+        }
         tick(require_fresh=True)
         for robot, rt in robots.items():
             held = tiles_at(book.nodes[rt["anchor"]], reservation_radius)
@@ -816,6 +977,7 @@ def main() -> int:
         origin = stamp
         result["origin_sim_time_s"] = origin
         journal("navigation_ready", {"lifecycle_states": states, "origin_sim_time_s": origin,
+                                      "nav2_runtime_provenance_sha256": sha(runtime_observation_path),
                                       "initial_hold_barrier": initial_barrier})
         atomic_json(output / "mission-start.json", {"run_id": args.run_id, "scenario_id": scenario_id, "sim_time_s": origin})
         load = session["workload"]["load"]
