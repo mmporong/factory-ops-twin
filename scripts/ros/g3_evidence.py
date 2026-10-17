@@ -19,11 +19,13 @@ from uuid import UUID
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from factory_ops.fleet_execution import make_chunk, path_content_sha256, qualify_computed_path, path_header_stamp_ns
 from factory_ops.fleet_routing import RouteBook, swept_tiles
+from factory_ops.experiments import canonical_hash
 from factory_ops.g3_session import SCOPE, sha, verify_session
 from factory_ops.layout import Layout
 from factory_ops.motion_authorization import AuthorizationError, LeaseGuard
 from factory_ops.navigation import GoalPose
 from factory_ops.operations import Ledger
+from factory_ops.source_provenance import verify_source_archive
 from factory_ops.visual_evidence import validate_visual_evidence
 from scripts.ros.g1_evidence import _load_json, _load_jsonl, _manifest, _safe_relative
 from scripts.ros.g2_evidence import (
@@ -36,6 +38,50 @@ from scripts.ros.g3_mission import terminal_recording_boundary
 
 PROJECT = Path(__file__).resolve().parents[2]
 RESULT = "g3-evidence.json"
+
+
+def validate_fixed_source(
+    output: Path, run_id: str, expected_commit: str | None, expected_environment_sha256: str | None,
+    errors: list[str], *, snapshot_root: Path = PROJECT,
+) -> dict[str, Any]:
+    """Bind the immutable runtime snapshot to the supervisor's exact Git object."""
+    try:
+        if (not isinstance(expected_commit, str) or not re.fullmatch(r"[0-9a-f]{40}", expected_commit)
+                or not isinstance(expected_environment_sha256, str)
+                or not re.fullmatch(r"[0-9a-f]{64}", expected_environment_sha256)):
+            raise ValueError("supervisor source commit/environment SHA is required")
+        provenance = output / "provenance"
+        environment_path = provenance / "source-environment.json"
+        if environment_path.is_symlink() or sha(environment_path) != expected_environment_sha256:
+            raise ValueError("source environment bytes differ from the supervisor pin")
+        environment = json.loads(environment_path.read_text(encoding="utf-8"))
+        source_files = environment.get("source_files")
+        if (environment.get("schema_version") != 1 or environment.get("run_id") != run_id
+                or environment.get("source_commit") != expected_commit
+                or environment.get("checkout_head") != expected_commit
+                or environment.get("checkout_clean") is not True
+                or environment.get("source_git_object_verification") is not True
+                or environment.get("source_snapshot_relative") != "project"
+                or not isinstance(source_files, Mapping) or environment.get("files") != source_files):
+            raise ValueError("source environment identity or file map differs")
+        proof = verify_source_archive(
+            provenance / "source.tar", provenance / "source-commit.raw", expected_commit,
+            source_files, snapshot_root=snapshot_root,
+        )
+        if (proof.get("passed") is not True
+                or proof.get("source_archive_sha256") != environment.get("source_archive_sha256")
+                or proof.get("commit_object_sha256") != environment.get("source_commit_object_sha256")):
+            raise ValueError(f"source Git objects or runtime snapshot differ: {proof.get('errors')}")
+        original = environment.get("source_verification")
+        for key in ("expected_commit", "commit_sha1", "commit_tree_sha1", "commit_object_sha256",
+                    "archive_tree_sha1", "source_archive_sha256", "source_pin_count", "source_pin_set_sha256"):
+            if not isinstance(original, Mapping) or original.get(key) != proof.get(key):
+                raise ValueError("supervisor source proof differs from recomputation")
+        return {"commit": expected_commit, "archive_sha256": proof["source_archive_sha256"],
+                "environment_sha256": expected_environment_sha256, "verification": proof}
+    except (OSError, ValueError, TypeError, KeyError, json.JSONDecodeError) as exc:
+        errors.append(f"fixed runtime source proof: {exc}")
+        return {}
 
 
 def _hash_json(value: Any) -> str:
@@ -1003,6 +1049,10 @@ def validate_g3_evidence(
                 "passed": False, "primary_evaluation": False, "scope": SCOPE,
                 "errors": [*errors, f"session verification failed: {exc}"], "artifact_manifest": []}
     scenario_id = session["scenario_id"]
+    source_record = validate_fixed_source(
+        output, run_id, os.environ.get("FACTORY_OPS_G3_SOURCE_COMMIT"),
+        os.environ.get("FACTORY_OPS_G3_PROVENANCE_SHA256"), errors,
+    )
     ready = _load_json(output / "sim-ready.json", errors)
     scene = _load_json(output / "g3-scene.json", errors)
     mission = _load_json(output / "mission-result.json", errors)
@@ -1147,13 +1197,21 @@ def validate_g3_evidence(
         "odometry", "plan_records", "follow_rpc",
     }}
     manifest = _manifest(output, {safe}, errors)
+    exported = mission.get("mission", {})
+    outcome = "completed" if exported.get("completed") is True else "incomplete" if exported.get("censored") is True else "failed"
     return {"schema_version": 1, "qualification": "g3_two_robot_orders", "run_id": run_id,
             "scenario_id": scenario_id, "profile": session["profile"], "policy": session["policy"],
             "condition": session["condition"], "seed": session["seed"],
             "primary_evaluation": False, "scope": SCOPE, "passed": not errors, "status": "validated" if not errors else "failed",
             "errors": errors, "evaluation": evaluation, "bag": bounded_bag,
+            "source": source_record, "session_sha256": expected_session_sha,
+            "experiment_config_sha256": canonical_hash(json.loads((PROJECT / "configs/factory-v3/g3-experiment.json").read_text(encoding="utf-8"))),
+            "mission_sha256": sha(output / "mission-result.json"), "trial_outcome": outcome,
+            "ground_truth_input": mission.get("ground_truth_input"),
+            "closed_bag": not errors, "actual_validator_passed": not errors,
+            "collection_qa_passed": not errors, "safety_qa_passed": not errors, "terminal_qa_passed": not errors,
             "artifact_manifest_scope": "all stable post-worker files; this report excluded",
-            "artifact_manifest": manifest,
+            "artifact_manifest": manifest, "artifact_manifest_sha256": canonical_hash(manifest),
             "claims": {"navigation_inputs": "decoded ROS CDR, estimated localization and authorization journals",
                        "ground_truth_use": "post-run clearance, docking, media and localization evaluation only",
                        "scope": "one qualification/pilot run; not primary comparison, repeatability, or production safety"}}

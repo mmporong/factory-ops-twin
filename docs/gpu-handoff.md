@@ -2,6 +2,16 @@
 
 로컬 준비 명령은 GPU나 Brev 계정을 사용하지 않는다. 별도 장면 검사 스크립트는 Isaac Sim 6.2 환경에서 실행한다. AWS L40S에서 G0a 정적 장면, G0b 기초 센서·물리, G1 주문 운송과 G2 두 AMR 교통·복구 검증을 통과했다. Stop·재시작 보존 시험도 수행했다. 자동 Sleep 기능은 제공하지 않는다.
 
+## 산업 장면·데이터 중간 진단 보존
+
+`g4-probe-001`~`005`는 최종 승인 데이터가 아니다. Git 도구, Isaac stage API, 미라벨 ID, USD BBoxCache 호출, semantic root 결속 오류로 종료한 원본과 로그를 각 attempt에 보존했다. `005`에서 개선된 공장 화면을 얻었으며, 공정 설비 외형 보강과 새 수집기의 실제 검증이 남아 있다.
+
+SDK 진단에서는 renderer leaf ID 1,117개의 경로가 `instance_id_segmentation` 원형 metadata와 SDK URI 조회에서 모두 일치했다. semantic root와 renderer leaf는 서로 다른 ID 공간이다. compound 설비 전체의 실제 가림률은 미측정으로 남기고, leaf 측정값과 시각 검수를 별도로 연결한다. `occlusion-probe-003`은 한 번의 실행 ID 재사용과 종료 전 보고서 누락이 있었으므로 진단 전용으로 보존한다. 첫 실행의 helper는 실행 당시 업로드 SHA와 일치하는 바이트로 복구했으며, 복구 경위와 실패 원본을 함께 남겼다.
+
+중간 보존 묶음은 `industrial-diagnostics-20261017T171450Z`다. 파일 776개·원본 632,162,058 byte와 전체 Git bundle·helper·실행 환경을 포함한다. 압축본 458,549,423 byte의 SHA256은 `9d7f55f82bc55a2970a177305668945ac98901fb071dfb1c2e6d322fde52e4a2`, 원본 manifest SHA256은 `1685918faddaabc8deda7f1e213ce41e233ad71987de80c5ec34e871cc5407f5`다. C·E의 압축본 일치, E의 정확한 파일 집합·크기·SHA 복원, Git bundle 복원·fsck와 실행 소스 핀 257개 대조를 통과했다. 당시 VM 소스는 `0bd0475ea471876b9d438d9067bffe5b5d875b0c`다.
+
+컨테이너·작업 프로세스·GPU compute process가 없는 것을 확인한 뒤 Stop했다. 인증된 Brev CLI는 `2026-10-17 17:27:39 UTC`에 `evica0x9l`의 `STOPPED`를 반환했으며 기록을 C·E에 보관했다. 이 묶음은 닫힌 진단 자료의 보존 결과이며, 최종 1,080개 이미지 데이터셋이나 60회 정책 비교의 완료 근거로 사용하지 않는다.
+
 ## G0a 정적 장면의 실행 환경
 
 | 항목 | 확인 결과 |

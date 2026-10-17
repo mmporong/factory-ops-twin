@@ -18,14 +18,24 @@ profile_code=${profile:0:1}
 [[ "$run" == "g3-$profile_code-$condition-$policy-"* ]]
 [[ "$expected_commit" =~ ^[0-9a-f]{40}$ ]]
 
-project="$root/project"
+repository="$root/project"
+project="$root/source-snapshots/$run"
+archive="$root/source-snapshots/$run.tar"
+commit_object="$root/source-snapshots/$run.commit"
 session="$project/runs/${run}-session"
 output="$root/results/$run"
-test "$(git -C "$project" rev-parse HEAD)" = "$expected_commit"
-test -z "$(git -C "$project" status --porcelain)"
-test ! -e "$session"
+test "$(git -C "$repository" rev-parse HEAD)" = "$expected_commit"
+test -z "$(git -C "$repository" status --porcelain)"
+test ! -e "$project"
+test ! -e "$archive"
+test ! -e "$commit_object"
 test ! -e "$output"
 test -z "$(docker ps -aq --filter name=^/factory-ops-)"
+mkdir -p "$root/source-snapshots"
+git -C "$repository" archive --format=tar --output="$archive" "$expected_commit"
+git -C "$repository" cat-file commit "$expected_commit" > "$commit_object"
+mkdir "$project"
+tar --no-same-owner -xf "$archive" -C "$project"
 
 isaac_image=$(docker image inspect nvcr.io/nvidia/isaac-sim:6.2.0 --format '{{index .RepoDigests 0}}')
 nav_image=$(docker image inspect factory-ops-nav2:jazzy-g1 --format '{{.Id}}')
@@ -84,7 +94,7 @@ from pathlib import Path
 import hashlib,json,subprocess,sys
 
 root,run=Path(sys.argv[1]),sys.argv[2]
-project=root/'project'
+project=root/'source-snapshots'/run
 session=project/'runs'/f'{run}-session'
 paths=[
     'configs/factory-v3/layout.json','configs/factory-v3/traffic.json',
@@ -106,16 +116,38 @@ paths=[
     'scripts/ros/action_services.py',
 ]
 paths.extend(p.relative_to(project).as_posix() for p in sorted((project/'factory_ops/operations').glob('*.py')))
+paths=sorted(set(paths) | {
+    p.relative_to(project).as_posix()
+    for directory,patterns in (
+        ('factory_ops',('*.py',)),('scripts/isaac',('*.py',)),('scripts/ros',('*.py',)),
+        ('configs/factory-v3',('*.json','*.yaml')))
+    for pattern in patterns for p in (project/directory).rglob(pattern)
+    if p.is_file() and not p.is_symlink()
+})
+source_files={p:hashlib.sha256((project/p).read_bytes()).hexdigest() for p in paths}
+sys.path.insert(0,str(project))
+from factory_ops.source_provenance import verify_source_archive
+proof=verify_source_archive(root/'source-snapshots'/f'{run}.tar',
+    root/'source-snapshots'/f'{run}.commit',sys.argv[4],source_files,snapshot_root=project)
+if proof.get('passed') is not True:
+    raise ValueError(f'fixed Git source proof failed: {proof}')
 session_value=json.loads((session/'session.json').read_text(encoding='utf-8'))
 record={
+    'schema_version':1,
     'run_label':run,'run_id':sys.argv[3],'source_commit':sys.argv[4],
+    'checkout_head':sys.argv[4],'checkout_clean':True,'source_git_object_verification':True,
+    'source_archive_sha256':proof['source_archive_sha256'],
+    'source_commit_object_sha256':proof['commit_object_sha256'],
+    'source_snapshot_relative':'project',
+    'source_snapshot_host_relative':project.relative_to(root).as_posix(),
+    'source_files':source_files,'source_verification':proof,
     'started_at_utc':datetime.now(timezone.utc).isoformat(),
     'isaac_image':sys.argv[5],'nav_image':sys.argv[6],
     'profile':sys.argv[7],'condition':sys.argv[8],'policy':sys.argv[9],
     'seed':int(sys.argv[10]),'scenario_id':sys.argv[11],
     'session':session_value,
     'session_json_sha256':hashlib.sha256((session/'session.json').read_bytes()).hexdigest(),
-    'files':{p:hashlib.sha256((project/p).read_bytes()).hexdigest() for p in paths},
+    'files':source_files,
     'gpu':subprocess.check_output(
         ['nvidia-smi','--query-gpu=name,driver_version,memory.total',
          '--format=csv,noheader,nounits'],text=True
@@ -130,10 +162,24 @@ if (record['profile'],record['condition'],record['policy'],record['seed'],record
 )
 PY
 
+provenance_sha=$(python3 - "$root/logs/$run-environment.json" <<'PY'
+from pathlib import Path
+import hashlib,sys
+print(hashlib.sha256(Path(sys.argv[1]).read_bytes()).hexdigest())
+PY
+)
+sudo -n install -d -m 0755 -o 1234 -g 1234 "$output/provenance"
+sudo -n install -m 0444 -o 1234 -g 1234 "$archive" "$output/provenance/source.tar"
+sudo -n install -m 0444 -o 1234 -g 1234 "$commit_object" "$output/provenance/source-commit.raw"
+sudo -n install -m 0444 -o 1234 -g 1234 "$root/logs/$run-environment.json" "$output/provenance/source-environment.json"
+chmod -R a-w "$project"
+chmod a-w "$archive" "$commit_object"
+
 docker create --name "$sim" --gpus all --network host --ipc host --user 1234:1234 \
   --entrypoint /bin/bash --workdir /isaac-sim \
   -e ACCEPT_EULA=Y -e OMNI_TELEMETRY_DISABLE_ANONYMOUS_DATA=1 -e ROS_DOMAIN_ID=72 \
   -e FACTORY_OPS_G3_SESSION_SHA256="$session_sha" \
+  -e FACTORY_OPS_G3_SOURCE_COMMIT="$expected_commit" -e FACTORY_OPS_G3_PROVENANCE_SHA256="$provenance_sha" \
   -e RMW_IMPLEMENTATION=rmw_fastrtps_cpp \
   -v "$cache/cache/main:/isaac-sim/.cache:rw" \
   -v "$cache/cache/computecache:/isaac-sim/.nv/ComputeCache:rw" \
@@ -150,6 +196,7 @@ created+=("$sim")
 docker create --name "$nav" --network host --ipc host --user 1234:1234 \
   --entrypoint /bin/bash -e HOME=/tmp -e ROS_DOMAIN_ID=72 -e RMW_IMPLEMENTATION=rmw_fastrtps_cpp \
   -e FACTORY_OPS_G3_SESSION_SHA256="$session_sha" \
+  -e FACTORY_OPS_G3_SOURCE_COMMIT="$expected_commit" -e FACTORY_OPS_G3_PROVENANCE_SHA256="$provenance_sha" \
   -v "$project:/workspace/project:ro" -v "$root/results:/workspace/results:rw" \
   "$nav_image" -lc "source /opt/ros/jazzy/setup.bash; timeout --signal=TERM --kill-after=30s 5500s python3 /workspace/project/scripts/ros/g3_mission.py --session /workspace/project/runs/${run}-session --output /workspace/results/$run --run-id $run_id" >/dev/null
 created+=("$nav")
@@ -212,6 +259,7 @@ PY
 docker create --name "$evidence" --network none --user 1234:1234 \
   --entrypoint /bin/bash -e HOME=/tmp \
   -e FACTORY_OPS_G3_SESSION_SHA256="$session_sha" \
+  -e FACTORY_OPS_G3_SOURCE_COMMIT="$expected_commit" -e FACTORY_OPS_G3_PROVENANCE_SHA256="$provenance_sha" \
   -v "$project:/workspace/project:ro" -v "$root/results:/workspace/results:rw" \
   "$nav_image" -lc "source /opt/ros/jazzy/setup.bash; timeout --signal=TERM --kill-after=10s 600s python3 /workspace/project/scripts/ros/g3_evidence.py --session /workspace/project/runs/${run}-session --output /workspace/results/$run --run-id $run_id" >/dev/null
 created+=("$evidence")
