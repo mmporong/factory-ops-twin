@@ -12,7 +12,14 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from factory_ops.g3_session import SCOPE, prepare_session, verify_session
+from factory_ops.experiments import build_matrix, load_experiment_config
+from factory_ops.g3_session import (
+    PRIMARY_SCOPE,
+    SCOPE,
+    prepare_primary_session,
+    prepare_session,
+    verify_session,
+)
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -54,7 +61,7 @@ class G3SessionTests(unittest.TestCase):
             profile="pilot",
             condition="closure",
             policy="eta",
-            seed=3,
+            seed=100,
         )
 
     @classmethod
@@ -75,7 +82,7 @@ class G3SessionTests(unittest.TestCase):
         )
         self.assertEqual(
             (pilot["scope"], pilot["profile"], pilot["condition"], pilot["policy"], pilot["seed"]),
-            (SCOPE, "pilot", "closure", "eta", 3),
+            (SCOPE, "pilot", "closure", "eta", 100),
         )
         self.assertIsNone(qualification["scene_closure"])
         self.assertEqual(
@@ -205,6 +212,107 @@ class G3SessionTests(unittest.TestCase):
         save(closure / "session.json", manifest)
         with self.assertRaisesRegex(ValueError, "metadata differs"):
             verify_session(closure)
+
+    def test_primary_session_preserves_and_revalidates_exact_external_inputs(self) -> None:
+        settings = load_experiment_config(CONFIG / "g3-experiment.json")
+        trial = build_matrix(settings)[0]
+        trial_path = self.workspace / "primary-trial.json"
+        trial_path.write_text(json.dumps(trial, indent=1) + "\n", encoding="utf-8")
+        calibration = {
+            "classification": "g3_actual_six_pilot_calibration",
+            "status": "primary_execution_eligible",
+            "execution_eligible": True,
+            "calibration_sha256": "a" * 64,
+        }
+        calibration_path = self.workspace / "primary-calibration.json"
+        calibration_path.write_text(json.dumps(calibration, indent=3) + "\n", encoding="utf-8")
+        output = self.workspace / "primary-session"
+        external = {
+            "trial_path": trial_path,
+            "calibration_path": calibration_path,
+            "pilot_slots": {"external": {"paths": "are revalidated by calibration"}},
+            "resource_input": {"external": "resource evidence"},
+            "expected_source_commit": "b" * 40,
+        }
+        with patch("factory_ops.g3_calibration.validate_calibration") as validate:
+            session = prepare_primary_session(output, **external)
+            self.assertGreaterEqual(validate.call_count, 2)
+            verified = verify_session(output, **external)
+        self.assertEqual((session["scope"], session["primary_evaluation"]), (PRIMARY_SCOPE, True))
+        self.assertEqual(verified, session)
+        self.assertEqual((output / "trial-input.json").read_bytes(), trial_path.read_bytes())
+        self.assertEqual((output / "calibration-gate.json").read_bytes(), calibration_path.read_bytes())
+        self.assertEqual(
+            (output / "base-experiment-config.json").read_bytes(),
+            (CONFIG / "g3-experiment.json").read_bytes(),
+        )
+        self.assertEqual((output / "fixed-source-commit.txt").read_text(), "b" * 40 + "\n")
+
+        calibration_path.write_bytes(calibration_path.read_bytes() + b" ")
+        with patch("factory_ops.g3_calibration.validate_calibration"):
+            with self.assertRaisesRegex(ValueError, "exact input bytes"):
+                verify_session(output, **external)
+
+    def test_primary_session_rejects_fixture_calibration_even_after_callback(self) -> None:
+        settings = load_experiment_config(CONFIG / "g3-experiment.json")
+        trial_path = self.workspace / "fixture-trial.json"
+        save(trial_path, build_matrix(settings)[1])
+        calibration_path = self.workspace / "fixture-calibration.json"
+        save(calibration_path, {
+            "classification": "explicit_non_evidence_test_fixture",
+            "status": "primary_execution_eligible",
+            "execution_eligible": True,
+            "calibration_sha256": "c" * 64,
+        })
+        with patch("factory_ops.g3_calibration.validate_calibration"):
+            with self.assertRaisesRegex(ValueError, "eligible actual calibration"):
+                prepare_primary_session(
+                    self.workspace / "fixture-primary-session",
+                    trial_path=trial_path,
+                    calibration_path=calibration_path,
+                    pilot_slots={}, resource_input={}, expected_source_commit="d" * 40,
+                )
+
+    def test_primary_worker_verification_uses_only_sha_pinned_environment_manifest(self) -> None:
+        settings = load_experiment_config(CONFIG / "g3-experiment.json")
+        trial_path = self.workspace / "env-primary-trial.json"
+        save(trial_path, build_matrix(settings)[2])
+        calibration_path = self.workspace / "env-primary-calibration.json"
+        save(calibration_path, {
+            "classification": "g3_actual_six_pilot_calibration",
+            "status": "primary_execution_eligible", "execution_eligible": True,
+            "calibration_sha256": "e" * 64,
+        })
+        external = {
+            "trial_path": trial_path, "calibration_path": calibration_path,
+            "pilot_slots": {"external": {}}, "resource_input": {"external": True},
+            "expected_source_commit": "f" * 40,
+        }
+        output = self.workspace / "env-primary-session"
+        with patch("factory_ops.g3_calibration.validate_calibration"):
+            prepare_primary_session(output, **external)
+        manifest_path = self.workspace / "primary-inputs.json"
+        save(manifest_path, {
+            "trial_path": str(trial_path.resolve()),
+            "calibration_path": str(calibration_path.resolve()),
+            "pilot_slots": external["pilot_slots"],
+            "resource_input": external["resource_input"],
+            "expected_source_commit": external["expected_source_commit"],
+        })
+        environment = {
+            "FACTORY_OPS_G3_PRIMARY_INPUTS_PATH": str(manifest_path.resolve()),
+            "FACTORY_OPS_G3_PRIMARY_INPUTS_SHA256": digest(manifest_path),
+        }
+        with patch.dict(os.environ, environment, clear=False), \
+                patch("factory_ops.g3_calibration.validate_calibration") as validate:
+            verified = verify_session(output, expected_sha256=digest(output / "session.json"))
+        self.assertEqual(verified["scope"], PRIMARY_SCOPE)
+        self.assertGreaterEqual(validate.call_count, 1)
+
+        environment["FACTORY_OPS_G3_PRIMARY_INPUTS_SHA256"] = "0" * 64
+        with patch.dict(os.environ, environment, clear=False):
+            with self.assertRaisesRegex(ValueError, "SHA differs"):
+                verify_session(output)
 
 
 if __name__ == "__main__":

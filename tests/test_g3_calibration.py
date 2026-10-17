@@ -11,9 +11,11 @@ import subprocess
 import tarfile
 import tempfile
 import unittest
+from unittest.mock import patch
 
 from factory_ops.experiments import canonical_hash, load_experiment_config
-from factory_ops.g3_calibration import _resource_forecast_actual, build_calibration, validate_calibration
+from factory_ops.g3_calibration import (_resource_forecast_actual, build_calibration,
+                                        revalidate_physical_report, validate_calibration)
 from factory_ops.source_provenance import verify_source_archive
 
 
@@ -253,43 +255,124 @@ class CalibrationTests(unittest.TestCase):
                        "confirmation_method": "supervisor capture", "currency": "USD",
                        "confirmed_hourly_rate_usd": 3.35, "budget_remaining_usd": 400.0})
         rows = []
-        run_ids = {f"{index + 1:032x}" for index in range(6)}
-        for index, run_id in enumerate(sorted(run_ids)):
+        pilots = []
+        for index, (slot_name, slot) in enumerate(sorted(self.slots.items())):
+            condition, policy = slot_name.split(":")
+            report_path = Path(slot["report_path"])
+            report = json.loads(report_path.read_text())
+            run_id = report["run_id"]
+            mission_path = Path(slot["mission_path"])
+            session_path = Path(slot["session_root"]) / "session.json"
+            pilots.append({"run_id": run_id, "slot": slot_name, "condition": condition,
+                           "policy": policy, "seed": 100, "session_sha256": sha(session_path),
+                           "workload_sha256": json.loads(session_path.read_text())["workload_sha256"],
+                           "report_sha256": sha(report_path), "mission_sha256": sha(mission_path),
+                           "artifact_manifest_sha256": report["artifact_manifest_sha256"]})
             gpu = evidence / f"gpu-{index}.csv"
-            gpu.write_text("timestamp_utc,memory_used_bytes\n2026-10-18T00:00:01Z,20000000000\n", encoding="utf-8")
+            gpu.write_text(f"2026-10-18T00:00:01Z, NVIDIA L40S {index}, {20000 + index}, 50\n", encoding="utf-8")
             scene = evidence / f"scene-{index}.json"
-            save(scene, {"run_id": run_id, "final_sim_time_s": 200.0, "wall_time_s": 100.0})
+            save(scene, {"run_id": run_id, "timing": {"final_sim_time_s": 200.0, "wall_seconds": 100.0}})
             disk = evidence / f"disk-{index}.json"
             save(disk, {"run_id": run_id, "free_disk_bytes_before": 1_000_000,
                         "free_disk_bytes_after": 900_000})
-            payload = evidence / f"payload-{index}.bin"
-            payload.write_bytes(b"actual output bytes")
+            entries = list(report["artifact_manifest"])
+            entries.append({"path": report_path.name, "bytes": report_path.stat().st_size,
+                            "sha256": sha(report_path)})
+            entries.sort(key=lambda entry: entry["path"])
             output_manifest = evidence / f"manifest-{index}.json"
-            save(output_manifest, {"schema_version": 1, "files": [
-                {"path": "payload.bin", "bytes": payload.stat().st_size, "sha256": sha(payload)}]})
+            save(output_manifest, {"schema_version": 1, "files": entries})
             archive = evidence / f"run-{index}.tar.gz"
             with tarfile.open(archive, "w:gz") as bundle:
-                bundle.add(payload, arcname="payload.bin")
+                slot_root = Path(slot["artifact_root"])
+                for entry in entries:
+                    bundle.add(report_path if entry["path"] == report_path.name else slot_root / entry["path"],
+                               arcname=entry["path"])
             reference = lambda path: {"path": path.relative_to(evidence).as_posix(), "sha256": sha(path)}
+            references = {"gpu_csv": reference(gpu), "scene_summary": reference(scene),
+                          "output_manifest": reference(output_manifest), "archive": reference(archive),
+                          "disk": reference(disk)}
+            receipt_path = evidence / f"receipt-{index}.json"
+            receipt = {"run_id": run_id, "attempt_status": "collected",
+                       "bindings": {"session_sha256": pilots[-1]["session_sha256"],
+                                    "workload_sha256": pilots[-1]["workload_sha256"]},
+                       "timestamps": {"started_at_utc": "2026-10-18T00:00:00Z",
+                       "validation_finished_at_utc": "2026-10-18T00:01:40Z"},
+                       "references": {**references,
+                                      "report": {"path": f"report-{index}.json", "sha256": sha(report_path)},
+                                      "mission": {"path": f"mission-{index}.json", "sha256": sha(mission_path)}}}
+            save(receipt_path, receipt)
             rows.append({"run_id": run_id, "started_at_utc": "2026-10-18T00:00:00Z",
-                         "finished_at_utc": "2026-10-18T00:01:40Z", "gpu_csv": reference(gpu),
-                         "scene_summary": reference(scene), "output_manifest": reference(output_manifest),
-                         "archive": reference(archive), "disk": reference(disk)})
+                         "finished_at_utc": "2026-10-18T00:01:40Z",
+                         "attempt_receipt": reference(receipt_path), **references})
         supervisor = evidence / "supervisor.json"
         save(supervisor, {"schema_version": 1, "classification": "actual_g3_supervisor_resource_measurements",
                           "runs": rows, "billing": {"path": "billing.json", "sha256": sha(billing)}})
         inputs = {"evidence_root": evidence, "supervisor_path": "supervisor.json",
                   "supervisor_sha256": sha(supervisor), "requested_primary_runs": 60,
                   "reserve_fraction": .2}
-        result = _resource_forecast_actual(inputs, run_ids)
+        receipt_replay = lambda path, *_args, **_kwargs: json.loads(Path(path).read_text())
+        with patch("factory_ops.g3_supervisor.validate_attempt_receipt", side_effect=receipt_replay):
+            result = _resource_forecast_actual(inputs, pilots, self.slots, self.commit, 60)
         self.assertEqual("actual_supervisor_measurements_rederived", result["provenance_status"])
-        self.assertEqual(20_000_000_000, result["worst_pilot"]["peak_vram_bytes"])
+        self.assertEqual(20_005 * 1024 * 1024, result["worst_pilot"]["peak_vram_bytes"])
+        self.assertEqual("MiB", result["worst_pilot"]["peak_vram_source_unit"])
+        self.assertEqual("bytes", result["worst_pilot"]["peak_vram_output_unit"])
+        original_archive = deepcopy(rows[0]["archive"])
         rows[0]["archive"]["sha256"] = "0" * 64
         save(supervisor, {"schema_version": 1, "classification": "actual_g3_supervisor_resource_measurements",
                           "runs": rows, "billing": {"path": "billing.json", "sha256": sha(billing)}})
         inputs["supervisor_sha256"] = sha(supervisor)
-        with self.assertRaisesRegex(ValueError, "archive referenced bytes"):
-            _resource_forecast_actual(inputs, run_ids)
+        with self.assertRaisesRegex(ValueError, "references differ|referenced bytes"):
+            with patch("factory_ops.g3_supervisor.validate_attempt_receipt", side_effect=receipt_replay):
+                _resource_forecast_actual(inputs, pilots, self.slots, self.commit, 60)
+
+        rows[0]["archive"] = original_archive
+        rows[1]["archive"] = original_archive
+        receipt_one = evidence / rows[1]["attempt_receipt"]["path"]
+        receipt_document = json.loads(receipt_one.read_text())
+        receipt_document["references"]["archive"] = original_archive
+        save(receipt_one, receipt_document)
+        rows[1]["attempt_receipt"]["sha256"] = sha(receipt_one)
+        save(supervisor, {"schema_version": 1, "classification": "actual_g3_supervisor_resource_measurements",
+                          "runs": rows, "billing": {"path": "billing.json", "sha256": sha(billing)}})
+        inputs["supervisor_sha256"] = sha(supervisor)
+        with self.assertRaisesRegex(ValueError, "cross-run archive resource reuse"):
+            with patch("factory_ops.g3_supervisor.validate_attempt_receipt", side_effect=receipt_replay):
+                _resource_forecast_actual(inputs, pilots, self.slots, self.commit, 60)
+
+    def test_requested_primary_run_count_must_equal_matrix_denominator(self) -> None:
+        for count in (1, 59, 61, True):
+            resource = deepcopy(self.resource)
+            resource["requested_primary_runs"] = count
+            with self.assertRaisesRegex(ValueError, "expected_trials|positive integer|finite positive"):
+                build_calibration(
+                    self.slots, resource, expected_source_commit=self.commit,
+                    expected_config_sha256=self.config_hash, experiment_config_path=CONFIG,
+                    allow_explicit_non_evidence=True,
+                )
+
+    def test_invalid_report_can_be_replayed_without_opening_a_pass_gate(self) -> None:
+        output = self.root / "invalid-output"
+        session = self.root / "invalid-session"
+        output.mkdir()
+        session.mkdir()
+        save(session / "session.json", {"run_id": "a" * 32})
+        report = {"schema_version": 1, "run_id": "a" * 32, "passed": False,
+                  "status": "failed", "errors": ["closed bag validation failed"]}
+        report_path = output / "g3-evidence.json"
+        save(report_path, report)
+        with patch("scripts.ros.g3_evidence.validate_g3_evidence", return_value=deepcopy(report)):
+            replayed = revalidate_physical_report(
+                report_path, session, output, "a" * 32, source_commit="b" * 40,
+                environment_sha256="c" * 64, require_passed=False,
+            )
+            self.assertFalse(replayed["passed"])
+        with patch("scripts.ros.g3_evidence.validate_g3_evidence", return_value=deepcopy(report)):
+            with self.assertRaisesRegex(ValueError, "did not pass"):
+                revalidate_physical_report(
+                    report_path, session, output, "a" * 32, source_commit="b" * 40,
+                    environment_sha256="c" * 64,
+                )
 
 
 if __name__ == "__main__":

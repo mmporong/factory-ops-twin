@@ -149,6 +149,7 @@ def validate_source_origin(
 def revalidate_physical_report(
     report_path: Path, session_root: Path, artifact_root: Path, run_id: str, *,
     source_commit: str, environment_sha256: str,
+    require_passed: bool = True,
 ) -> dict[str, Any]:
     """Re-run closed-bag validation without writing or replacing the preserved report."""
     if report_path.parent != artifact_root or report_path.name != "g3-evidence.json":
@@ -166,8 +167,10 @@ def revalidate_physical_report(
                 os.environ.pop(name, None)
             else:
                 os.environ[name] = value
-    if fresh != _load(report_path) or fresh.get("passed") is not True:
+    if fresh != _load(report_path):
         raise ValueError("preserved G3 report differs from closed-bag semantic revalidation")
+    if require_passed and fresh.get("passed") is not True:
+        raise ValueError("closed-bag semantic revalidation did not pass")
     return fresh
 
 
@@ -273,7 +276,9 @@ def _validate_pilot_slot(
     }
 
 
-def _resource_forecast_non_evidence(resource_input: Mapping[str, Any], run_ids: set[str]) -> dict[str, Any]:
+def _resource_forecast_non_evidence(
+    resource_input: Mapping[str, Any], run_ids: set[str], expected_primary_runs: int,
+) -> dict[str, Any]:
     if set(resource_input) != {"measurement_path", "measurement_sha256", "requested_primary_runs", "reserve_fraction"}:
         raise ValueError("resource input fields differ")
     path = Path(resource_input["measurement_path"]).resolve(strict=True)
@@ -308,6 +313,8 @@ def _resource_forecast_non_evidence(resource_input: Mapping[str, Any], run_ids: 
     if not isinstance(billing["observed_at"], str) or not billing["observed_at"].strip():
         raise ValueError("billing observation timestamp is required")
     count = _positive(resource_input["requested_primary_runs"], "requested primary runs", integer=True)
+    if count != expected_primary_runs:
+        raise ValueError("requested primary runs must equal the experiment matrix expected_trials")
     reserve = resource_input["reserve_fraction"]
     if isinstance(reserve, bool) or not isinstance(reserve, (int, float)) or not isfinite(float(reserve)) or not 0 <= reserve < 1:
         raise ValueError("reserve fraction must be in [0, 1)")
@@ -415,7 +422,15 @@ def _archive_measurement(archive: Path, manifest_path: Path) -> tuple[int, int]:
     return sum(size for size, _ in observed.values()), archive.stat().st_size
 
 
-def _resource_forecast_actual(resource_input: Mapping[str, Any], run_ids: set[str]) -> dict[str, Any]:
+def _resource_forecast_actual(
+    resource_input: Mapping[str, Any],
+    pilots: Sequence[Mapping[str, Any]],
+    pilot_slots: Mapping[str, Mapping[str, Any]],
+    expected_source_commit: str,
+    expected_primary_runs: int,
+) -> dict[str, Any]:
+    run_ids = {str(row["run_id"]) for row in pilots}
+    pilot_by_run = {str(row["run_id"]): row for row in pilots}
     required_input = {"evidence_root", "supervisor_path", "supervisor_sha256", "requested_primary_runs", "reserve_fraction"}
     if set(resource_input) != required_input:
         raise ValueError("actual resource input fields differ")
@@ -430,36 +445,87 @@ def _resource_forecast_actual(resource_input: Mapping[str, Any], run_ids: set[st
     rows = document["runs"]
     if not isinstance(rows, list) or len(rows) != len(run_ids):
         raise ValueError("supervisor record must cover all pilot runs")
-    required_row = {"run_id", "started_at_utc", "finished_at_utc", "gpu_csv", "scene_summary",
-                    "output_manifest", "archive", "disk"}
+    required_row = {"run_id", "started_at_utc", "finished_at_utc", "attempt_receipt", "gpu_csv",
+                    "scene_summary", "output_manifest", "archive", "disk"}
     measurements: list[dict[str, Any]] = []
     seen: set[str] = set()
+    used_resource_paths: dict[str, set[str]] = {name: set() for name in required_row - {"run_id", "started_at_utc", "finished_at_utc"}}
+    used_resource_hashes: dict[str, set[str]] = {name: set() for name in used_resource_paths}
     for row in rows:
         if not isinstance(row, Mapping) or set(row) != required_row or row.get("run_id") in seen:
             raise ValueError("supervisor run row is invalid or duplicated")
         run_id = str(row["run_id"])
         seen.add(run_id)
+        if run_id not in pilot_by_run:
+            raise ValueError("supervisor resource row is not a validated pilot")
+        pilot = pilot_by_run[run_id]
         started, finished = _utc(row["started_at_utc"], "started_at_utc"), _utc(row["finished_at_utc"], "finished_at_utc")
         wall = (finished - started).total_seconds()
         _positive(wall, "supervisor wall time")
+        for name in used_resource_paths:
+            reference = row[name]
+            if not isinstance(reference, Mapping):
+                raise ValueError(f"{name} reference is invalid")
+            path_value, hash_value = str(reference.get("path")), str(reference.get("sha256"))
+            if path_value in used_resource_paths[name] or hash_value in used_resource_hashes[name]:
+                raise ValueError(f"cross-run {name} resource reuse is forbidden")
+            used_resource_paths[name].add(path_value)
+            used_resource_hashes[name].add(hash_value)
+        receipt_path = _referenced_file(root, row["attempt_receipt"], "attempt receipt")
+        from .g3_supervisor import validate_attempt_receipt
+        receipt = validate_attempt_receipt(
+            receipt_path, root, None, expected_source_commit=expected_source_commit,
+            expected_profile="pilot", expected_condition=str(pilot["condition"]),
+            expected_policy=str(pilot["policy"]), expected_seed=int(pilot["seed"]),
+        )
+        if (receipt["run_id"] != run_id or receipt["timestamps"]["started_at_utc"] != row["started_at_utc"]
+                or receipt["timestamps"]["validation_finished_at_utc"] != row["finished_at_utc"]
+                or receipt.get("attempt_status") != "collected"):
+            raise ValueError("resource row identity/timestamps differ from its attempt receipt")
+        if (receipt["bindings"].get("session_sha256") != pilot["session_sha256"]
+                or receipt["bindings"].get("workload_sha256") != pilot["workload_sha256"]
+                or not isinstance(receipt["references"].get("report"), Mapping)
+                or receipt["references"]["report"].get("sha256") != pilot["report_sha256"]
+                or not isinstance(receipt["references"].get("mission"), Mapping)
+                or receipt["references"]["mission"].get("sha256") != pilot["mission_sha256"]):
+            raise ValueError("attempt receipt differs from the validated pilot evidence")
+        if any(receipt["references"][name] != row[name]
+               for name in ("gpu_csv", "scene_summary", "output_manifest", "archive", "disk")):
+            raise ValueError("resource row references differ from its attempt receipt")
         gpu_path = _referenced_file(root, row["gpu_csv"], "GPU CSV")
         with gpu_path.open("r", encoding="utf-8", newline="") as stream:
-            reader = csv.DictReader(stream)
-            if reader.fieldnames != ["timestamp_utc", "memory_used_bytes"]:
-                raise ValueError("GPU CSV columns differ")
-            gpu_rows = list(reader)
+            gpu_rows = list(csv.reader(stream))
         if not gpu_rows:
             raise ValueError("GPU CSV is empty")
-        peak = max(int(_positive(int(item["memory_used_bytes"]), "GPU memory", integer=True)) for item in gpu_rows)
-        gpu_times = [_utc(item["timestamp_utc"], "GPU timestamp") for item in gpu_rows]
+        if any(len(item) != 4 for item in gpu_rows):
+            raise ValueError("GPU CSV must be headerless timestamp,name,memory.used,utilization.gpu rows")
+        parsed_gpu: list[tuple[datetime, int]] = []
+        for item in gpu_rows:
+            stamp, name, memory_mib, utilization = (value.strip() for value in item)
+            if not name:
+                raise ValueError("GPU name is empty")
+            try:
+                memory_value = int(memory_mib)
+                utilization_value = float(utilization)
+            except ValueError as exc:
+                raise ValueError("GPU memory/utilization values are invalid") from exc
+            _positive(memory_value, "GPU memory MiB", integer=True)
+            if not isfinite(utilization_value) or not 0 <= utilization_value <= 100:
+                raise ValueError("GPU utilization must be in [0, 100]")
+            parsed_gpu.append((_utc(stamp, "GPU timestamp"), memory_value * 1024 * 1024))
+        peak = max(memory_bytes for _, memory_bytes in parsed_gpu)
+        gpu_times = [stamp for stamp, _ in parsed_gpu]
         if any(stamp < started or stamp > finished for stamp in gpu_times):
             raise ValueError("GPU samples fall outside the supervisor run interval")
         scene = _load(_referenced_file(root, row["scene_summary"], "scene summary"))
         disk = _load(_referenced_file(root, row["disk"], "disk measurement"))
         if scene.get("run_id") != run_id or disk.get("run_id") != run_id:
             raise ValueError("resource evidence run ID differs")
-        simulated = float(_positive(scene.get("final_sim_time_s"), "final simulated time"))
-        scene_wall = float(_positive(scene.get("wall_time_s"), "scene wall time"))
+        timing = scene.get("timing")
+        if not isinstance(timing, Mapping):
+            raise ValueError("scene timing object is absent")
+        simulated = float(_positive(timing.get("final_sim_time_s"), "final simulated time"))
+        scene_wall = float(_positive(timing.get("wall_seconds"), "scene wall time"))
         if abs(scene_wall - wall) > max(5.0, wall * .05):
             raise ValueError("supervisor and scene wall times differ")
         before = int(_positive(disk.get("free_disk_bytes_before"), "free disk before", integer=True))
@@ -467,10 +533,29 @@ def _resource_forecast_actual(resource_input: Mapping[str, Any], run_ids: set[st
         if after > before:
             raise ValueError("free disk measurement is inconsistent")
         archive = _referenced_file(root, row["archive"], "run archive")
-        raw, compressed = _archive_measurement(archive, _referenced_file(root, row["output_manifest"], "output manifest"))
+        output_manifest_path = _referenced_file(root, row["output_manifest"], "output manifest")
+        output_manifest = _load(output_manifest_path)
+        slot = pilot_slots.get(str(pilot["slot"]))
+        if not isinstance(slot, Mapping):
+            raise ValueError("validated pilot slot is absent from resource derivation")
+        report_path = Path(slot["report_path"]).resolve(strict=True)
+        report = _load(report_path)
+        if (_sha256(report_path) != pilot["report_sha256"]
+                or report.get("artifact_manifest_sha256") != pilot["artifact_manifest_sha256"]):
+            raise ValueError("validated pilot report changed before resource derivation")
+        expected_entries = list(report.get("artifact_manifest", []))
+        expected_entries.append({"path": report_path.name, "bytes": report_path.stat().st_size,
+                                 "sha256": _sha256(report_path)})
+        expected_entries.sort(key=lambda entry: str(entry["path"]))
+        observed_entries = output_manifest.get("files")
+        if (output_manifest.get("schema_version") != 1 or not isinstance(observed_entries, list)
+                or sorted(observed_entries, key=lambda entry: str(entry.get("path"))) != expected_entries):
+            raise ValueError("resource archive manifest differs from the exact validator artifact set and report")
+        raw, compressed = _archive_measurement(archive, output_manifest_path)
         measurements.append({"run_id": run_id, "wall_time_s": wall, "simulated_time_s": simulated,
                              "peak_vram_bytes": peak, "raw_bytes": raw, "compressed_bytes": compressed,
-                             "free_disk_bytes_before": before, "free_disk_bytes_after": after})
+                             "free_disk_bytes_before": before, "free_disk_bytes_after": after,
+                             "gpu_memory_source_unit": "MiB", "gpu_memory_output_unit": "bytes"})
     if seen != run_ids:
         raise ValueError("resource run IDs differ from actual pilots")
     billing_path = _referenced_file(root, document["billing"], "billing observation")
@@ -486,6 +571,8 @@ def _resource_forecast_actual(resource_input: Mapping[str, Any], run_ids: set[st
     hourly = float(_positive(billing["confirmed_hourly_rate_usd"], "confirmed hourly rate"))
     budget = float(_positive(billing["budget_remaining_usd"], "budget remaining"))
     _positive(count, "requested primary runs", integer=True)
+    if count != expected_primary_runs:
+        raise ValueError("requested primary runs must equal the experiment matrix expected_trials")
     if isinstance(reserve, bool) or not isinstance(reserve, (int, float)) or not 0 <= float(reserve) < 1:
         raise ValueError("reserve fraction must be in [0, 1)")
     multiplier = 1 + float(reserve)
@@ -502,6 +589,8 @@ def _resource_forecast_actual(resource_input: Mapping[str, Any], run_ids: set[st
             "worst_pilot": {"wall_time_s": worst_wall, "raw_bytes": worst_raw,
                             "compressed_bytes": worst_compressed,
                             "peak_vram_bytes": max(row["peak_vram_bytes"] for row in measurements),
+                            "peak_vram_source_unit": "MiB",
+                            "peak_vram_output_unit": "bytes",
                             "minimum_rtf": min(row["simulated_time_s"] / row["wall_time_s"] for row in measurements)},
             "batch_forecast": {"wall_time_s": forecast_wall, "raw_bytes": forecast_raw,
                                "compressed_bytes": forecast_compressed, "cost_usd": forecast_cost,
@@ -523,6 +612,11 @@ def build_calibration(
     """Build a calibration only from six closed, source-bound actual pilot artifacts."""
     if not _COMMIT.fullmatch(expected_source_commit) or not _SHA256.fullmatch(expected_config_sha256):
         raise ValueError("expected source/config hashes are invalid")
+    settings = _load(experiment_config_path.resolve(strict=True))
+    matrix = settings.get("matrix")
+    expected_primary_runs = matrix.get("expected_trials") if isinstance(matrix, Mapping) else None
+    if type(expected_primary_runs) is not int or expected_primary_runs <= 0:
+        raise ValueError("experiment matrix expected_trials must be a positive integer")
     expected_slots = {f"{condition}:{policy}" for condition in CONDITIONS for policy in POLICIES}
     if set(pilot_slots) != expected_slots:
         raise ValueError("all six condition/policy pilot slots are required exactly once")
@@ -536,8 +630,10 @@ def build_calibration(
     run_ids = {row["run_id"] for row in pilots}
     if len(run_ids) != 6:
         raise ValueError("pilot run IDs must be unique")
-    resources = (_resource_forecast_non_evidence(resource_input, run_ids) if allow_explicit_non_evidence
-                 else _resource_forecast_actual(resource_input, run_ids))
+    resources = (_resource_forecast_non_evidence(resource_input, run_ids, expected_primary_runs)
+                 if allow_explicit_non_evidence else _resource_forecast_actual(
+                     resource_input, pilots, pilot_slots, expected_source_commit, expected_primary_runs
+                 ))
     eligible = bool(all(row["calibration_eligible"] for row in pilots)
                     and resources["batch_forecast"]["disk_sufficient"]
                     and resources["batch_forecast"]["budget_sufficient"])

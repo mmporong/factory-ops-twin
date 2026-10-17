@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
+from unittest.mock import patch
 
 from factory_ops.experiments import (
     FIXTURE_BACKEND,
@@ -36,11 +37,15 @@ def fixture_result(
     status: str = "completed",
     completed_delta: int = 0,
     policy_speedup_s: float = 0.0,
+    failure_kind: str | None = None,
 ) -> dict:
     """Build an explicitly labeled non-evidence row for aggregation regression tests."""
     total = len(trial["workload"]["orders"])
-    completed = total if status == "completed" else max(0, total - 1 + completed_delta)
-    mean_cycle = None if completed == 0 else 100.0 - policy_speedup_s
+    if status == "failed" and failure_kind is None:
+        failure_kind = "operational"
+    unknown = failure_kind == "collection"
+    completed = None if unknown else (total if status == "completed" else max(0, total - 1 + completed_delta))
+    mean_cycle = None if unknown or completed == 0 else 100.0 - policy_speedup_s
     makespan = 300.0 - policy_speedup_s if status == "completed" else None
     return {
         "schema_version": 1,
@@ -48,7 +53,10 @@ def fixture_result(
         "condition": trial["condition"],
         "policy": trial["policy"],
         "seed": trial["seed"],
-        "status": status,
+        "trial_outcome": status,
+        "failure_kind": failure_kind,
+        "validation_status": "invalid" if unknown else "validated",
+        "metrics_state": "unknown" if unknown else "known",
         "backend": FIXTURE_BACKEND,
         "source": {
             "commit": NON_EVIDENCE_COMMIT,
@@ -67,6 +75,7 @@ def fixture_result(
         "metrics": {
             "orders_total": total,
             "orders_completed": completed,
+            "orders_completed_bounds": [0, total] if unknown else [completed, completed],
             "horizon_s": trial["workload"]["horizon_s"],
             "mean_completed_cycle_time_s": mean_cycle,
             "makespan_s": makespan,
@@ -103,7 +112,7 @@ class G3ExperimentPlanTests(unittest.TestCase):
                 self.assertNotIn("policy", fifo["workload"])
 
     def test_seed_changes_sources_and_release_jitter_without_future_dispatch_input(self) -> None:
-        normal = [build_workload(seed, "normal", self.settings) for seed in range(10)]
+        normal = [build_workload(seed, "normal", self.settings, profile="primary") for seed in range(10)]
         signatures = {
             (
                 tuple(order["source_station"] for order in workload["orders"]),
@@ -129,20 +138,30 @@ class G3ExperimentPlanTests(unittest.TestCase):
         self.assertNotIn("ground_truth", json.dumps(visible, sort_keys=True))
 
     def test_burst_concentrates_releases_and_closure_exposes_only_current_boolean(self) -> None:
-        burst = build_workload(4, "burst", self.settings)
+        burst = build_workload(4, "burst", self.settings, profile="primary")
         times = [order["ready_time"] for order in burst["orders"]]
         self.assertLessEqual(max(times) - min(times), self.settings["workloads"]["pilot"]["burst_window_s"])
-        closure = build_workload(4, "closure", self.settings)
+        closure = build_workload(4, "closure", self.settings, profile="primary")
         self.assertEqual(closure["condition_data"], {"current_closed": True})
         serialized = json.dumps(closure["condition_data"], sort_keys=True)
         self.assertNotIn("600", serialized)
         self.assertNotIn("end", serialized)
-        self.assertEqual(build_workload(4, "normal", self.settings)["condition_data"], {"current_closed": False})
+        self.assertEqual(build_workload(4, "normal", self.settings, profile="primary")["condition_data"], {"current_closed": False})
 
     def test_qualification_is_two_orders_from_s1_and_s3(self) -> None:
         workload = build_workload(0, "normal", self.settings, profile="qualification")
         self.assertEqual(len(workload["orders"]), 2)
         self.assertEqual([order["source_station"] for order in workload["orders"]], ["S1", "S3"])
+
+    def test_calibration_pilot_uses_seed_100_and_primary_uses_only_zero_to_nine(self) -> None:
+        pilot = build_workload(100, "normal", self.settings, profile="pilot")
+        self.assertEqual((pilot["profile"], pilot["seed"]), ("pilot", 100))
+        with self.assertRaisesRegex(ValueError, "seed must be 100"):
+            build_workload(0, "normal", self.settings, profile="pilot")
+        primary = build_workload(0, "normal", self.settings, profile="primary")
+        self.assertEqual((primary["profile"], primary["seed"]), ("primary", 0))
+        with self.assertRaisesRegex(ValueError, "0..9"):
+            build_workload(100, "normal", self.settings, profile="primary")
 
     def test_source_bindings_match_authored_files(self) -> None:
         for binding in self.settings["source_bindings"]:
@@ -164,11 +183,11 @@ class G3ExperimentPlanTests(unittest.TestCase):
         invalid_scope["scope"] = "actual physical improvement proven"
         with self.assertRaisesRegex(ValueError, "G3a pending inputs"):
             validate_settings(invalid_scope)
-        workload = build_workload(0, "normal", self.settings)
+        workload = build_workload(0, "normal", self.settings, profile="primary")
         workload["orders"][0]["ready_time"] = float("inf")
         with self.assertRaises(ValueError):
             validate_workload(workload, self.settings)
-        duplicate = build_workload(0, "normal", self.settings)
+        duplicate = build_workload(0, "normal", self.settings, profile="primary")
         duplicate["orders"][1]["order_id"] = duplicate["orders"][0]["order_id"]
         with self.assertRaises(ValueError):
             validate_workload(duplicate, self.settings)
@@ -231,6 +250,52 @@ class G3ExperimentSummaryTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             summarize(cpu, self.settings, allow_explicit_non_evidence=True)
 
+    def test_physical_relabel_is_rejected_even_after_calibration_validation(self) -> None:
+        physical = deepcopy(self.results)
+        for row in physical:
+            row["backend"] = "isaac_sim_ros2_nav2"
+            row["evidence"]["classification"] = "g3_physical_trial"
+        calibration = {
+            "classification": "g3_actual_six_pilot_calibration",
+            "status": "primary_execution_eligible", "execution_eligible": True,
+            "calibration_sha256": "4" * 64,
+        }
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "calibration.json"
+            path.write_text(json.dumps(calibration), encoding="utf-8")
+            slots = {
+                trial["trial_id"]: {
+                    "kind": "validated_trial", "report_path": "report.json",
+                    "mission_path": "mission.json", "artifact_root": "artifacts",
+                    "session_root": "session",
+                }
+                for trial in self.matrix
+            }
+            with patch("factory_ops.g3_calibration.validate_calibration") as validate, \
+                    patch("factory_ops.g3_trial_result.build_trial_result",
+                          side_effect=lambda trial, *_args, **_kwargs: fixture_result(trial)):
+                with self.assertRaisesRegex(ValueError, "differs from raw artifact replay"):
+                    summarize(
+                        physical, self.settings, calibration_path=path,
+                        pilot_slots={"external": {}}, resource_input={"external": True},
+                        expected_source_commit=NON_EVIDENCE_COMMIT,
+                        experiment_config_path=CONFIG, primary_result_slots=slots,
+                    )
+            validate.assert_called_once()
+
+        calibration["classification"] = "explicit_non_evidence_test_fixture"
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "calibration.json"
+            path.write_text(json.dumps(calibration), encoding="utf-8")
+            with patch("factory_ops.g3_calibration.validate_calibration"):
+                with self.assertRaisesRegex(ValueError, "eligible actual calibration"):
+                    summarize(
+                        physical, self.settings, calibration_path=path,
+                        pilot_slots={}, resource_input={},
+                        expected_source_commit=NON_EVIDENCE_COMMIT,
+                        experiment_config_path=CONFIG, primary_result_slots={},
+                    )
+
     def test_missing_failed_result_deletion_and_duplicate_are_rejected(self) -> None:
         failed = deepcopy(self.results)
         failed[0] = fixture_result(self.matrix[0], status="failed")
@@ -283,7 +348,11 @@ class G3ExperimentSummaryTests(unittest.TestCase):
         self.assertIsNone(normal["pairs"][1]["eta_minus_fifo_makespan_s"])
         group = summary["groups"]["normal"]["eta"]
         self.assertEqual(group["trial_counts"]["incomplete_at_horizon"], 1)
-        self.assertGreater(group["horizon_order_counts"]["censored"], 0)
+        self.assertGreater(
+            group["horizon_order_counts"]["total"]
+            - group["horizon_order_counts"]["known_completed"],
+            0,
+        )
         self.assertEqual(group["completed_orders_only_label"], "censoring_biased_not_a_full_workload_lead")
 
     def test_failed_eta_remains_in_primary_denominator_instead_of_biasing_survivors(self) -> None:
@@ -302,6 +371,31 @@ class G3ExperimentSummaryTests(unittest.TestCase):
         self.assertEqual(normal["primary_pairs_with_failure"], 1)
         self.assertLess(normal["primary_mean_delta"], 0.0)
         self.assertEqual(normal["restricted_full_completion_pair_count"], 9)
+
+    def test_collection_failure_keeps_unknown_count_and_propagates_bounds(self) -> None:
+        results = deepcopy(self.results)
+        index = {(trial["condition"], trial["policy"], trial["seed"]): position
+                 for position, trial in enumerate(self.matrix)}
+        position = index[("normal", "eta", 0)]
+        results[position] = fixture_result(
+            self.matrix[position], status="failed", failure_kind="collection"
+        )
+        summary = summarize(results, self.settings, allow_explicit_non_evidence=True)
+        pair = summary["paired_comparison"]["normal"]["pairs"][0]
+        total = len(self.matrix[position]["workload"]["orders"])
+        self.assertIsNone(pair["eta_minus_fifo_completed_orders_by_horizon"])
+        self.assertEqual(pair["eta_minus_fifo_completed_orders_bounds"], [-total, 0])
+        comparison = summary["paired_comparison"]["normal"]
+        self.assertIsNone(comparison["primary_mean_delta"])
+        self.assertEqual(comparison["observed_only_pair_count"], 9)
+        self.assertEqual(comparison["primary_mean_delta_bounds"], [-total / 10, 0.0])
+
+    def test_collection_failure_cannot_encode_fake_zero(self) -> None:
+        results = deepcopy(self.results)
+        results[0] = fixture_result(self.matrix[0], status="failed", failure_kind="collection")
+        results[0]["metrics"]["orders_completed"] = 0
+        with self.assertRaisesRegex(ValueError, "unknown metrics"):
+            summarize(results, self.settings, allow_explicit_non_evidence=True)
 
 
 if __name__ == "__main__":

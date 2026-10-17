@@ -30,6 +30,7 @@ def _ledger_metrics(exported: Mapping[str, Any], trial: Mapping[str, Any], outco
     if not isinstance(workload, Mapping) or not isinstance(workload.get("orders"), list):
         raise ValueError("trial workload is absent")
     ready = {row["order_id"]: float(row["ready_time"]) for row in workload["orders"]}
+    horizon = float(workload["horizon_s"])
     completed: dict[str, float] = {}
     for event in events:
         if isinstance(event, Mapping) and event.get("transition") == "order_complete":
@@ -39,6 +40,8 @@ def _ledger_metrics(exported: Mapping[str, Any], trial: Mapping[str, Any], outco
                 raise ValueError("order completion ledger event is foreign or duplicated")
             if float(stamp) < ready[order_id]:
                 raise ValueError("order completion precedes release")
+            if float(stamp) > horizon:
+                raise ValueError("order completion after the metric horizon cannot enter primary metrics")
             completed[str(order_id)] = float(stamp)
     total = len(ready)
     exported_count = exported.get("completed_order_count")
@@ -59,7 +62,7 @@ def _ledger_metrics(exported: Mapping[str, Any], trial: Mapping[str, Any], outco
     return {
         "orders_total": total,
         "orders_completed": len(completed),
-        "horizon_s": float(workload["horizon_s"]),
+        "horizon_s": horizon,
         "mean_completed_cycle_time_s": sum(cycles) / len(cycles) if cycles else None,
         "makespan_s": max(completed.values()) if outcome == "completed" else None,
     }
@@ -76,7 +79,11 @@ def build_trial_result(
     experiment_config_path: Path,
     allow_explicit_non_evidence: bool = False,
 ) -> dict[str, Any]:
-    """Translate one closed actual primary run into the experiments strict result shape."""
+    """Translate one validated primary run into the strict experiment result shape.
+
+    Collection failures do not enter this path because their ledger metrics cannot be
+    trusted.  They are represented from an immutable supervisor receipt instead.
+    """
     if not _COMMIT.fullmatch(source_commit):
         raise ValueError("source commit must be a full lowercase Git commit")
     report_path = report_path.resolve(strict=True)
@@ -134,13 +141,17 @@ def build_trial_result(
         if not isinstance(terminal, Mapping) or not isinstance(terminal.get("reason"), str) or not terminal["reason"].strip():
             raise ValueError("non-completed trial requires the ledger terminal reason")
         failure_reason = terminal["reason"]
+    failure_kind = "operational" if outcome == "failed" else None
     result = {
         "schema_version": 1,
         "trial_id": trial["trial_id"],
         "condition": trial["condition"],
         "policy": trial["policy"],
         "seed": trial["seed"],
-        "status": outcome,
+        "trial_outcome": outcome,
+        "failure_kind": failure_kind,
+        "validation_status": "validated",
+        "metrics_state": "known",
         "backend": FIXTURE_BACKEND if allow_explicit_non_evidence else PHYSICAL_BACKEND,
         "source": {"commit": source_commit, "experiment_config_sha256": trial["source_config_sha256"]},
         "input": {"trial_input_sha256": trial["trial_input_sha256"], "workload_sha256": trial["workload_sha256"]},
@@ -151,7 +162,10 @@ def build_trial_result(
             "manifest_sha256": manifest_sha,
             "artifact_sha256": _sha256(report_path),
         },
-        "metrics": metrics,
+        "metrics": {
+            **metrics,
+            "orders_completed_bounds": [metrics["orders_completed"], metrics["orders_completed"]],
+        },
         "failure_reason": failure_reason,
     }
     validate_trial_result(result, trial, settings, allow_explicit_non_evidence=allow_explicit_non_evidence)

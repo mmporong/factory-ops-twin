@@ -14,6 +14,7 @@ from typing import Any
 
 CONDITIONS = ("normal", "closure", "burst")
 POLICIES = ("fifo", "eta")
+PILOT_SEED = 100
 PHYSICAL_BACKEND = "isaac_sim_ros2_nav2"
 FIXTURE_BACKEND = "explicit_non_evidence"
 _SHA256 = re.compile(r"^[0-9a-f]{64}$")
@@ -290,15 +291,18 @@ def build_workload(
     profile: str = "pilot",
 ) -> dict[str, Any]:
     validate_settings(settings)
-    if seed not in settings["matrix"]["seeds"]:
-        raise ValueError("seed is outside the authored 0..9 matrix")
     if condition not in CONDITIONS:
         raise ValueError("unknown condition")
-    if profile not in {"pilot", "qualification"}:
-        raise ValueError("profile must be pilot or qualification")
+    if profile not in {"qualification", "pilot", "primary"}:
+        raise ValueError("profile must be qualification, pilot or primary")
+    if profile == "pilot":
+        if seed != PILOT_SEED:
+            raise ValueError("pilot workload seed must be 100")
+    elif seed not in settings["matrix"]["seeds"]:
+        raise ValueError("qualification/primary seed is outside the authored 0..9 matrix")
 
     rng = _rng(settings, seed)
-    specification = settings["workloads"][profile]
+    specification = settings["workloads"]["pilot" if profile == "primary" else profile]
     first_release = float(settings["workloads"]["pilot"]["first_release_s"])
     if profile == "qualification":
         count = 2
@@ -325,7 +329,7 @@ def build_workload(
     horizon = float(specification["horizon_s"])
     if any(stamp < 0 or stamp >= horizon for stamp in ready_times):
         raise ValueError("authored release schedule must remain inside the horizon")
-    prefix = "Q" if profile == "qualification" else "P"
+    prefix = {"qualification": "Q", "pilot": "C", "primary": "P"}[profile]
     orders = [
         {
             "order_id": f"G3-{prefix}-{seed:02d}-{index + 1:02d}",
@@ -358,7 +362,11 @@ def build_workload(
             "ground_truth_exposed": False,
         },
         "provenance": {
-            "kind": "authored_pilot_input",
+            "kind": {
+                "qualification": "authored_qualification_input",
+                "pilot": "authored_calibration_pilot_input",
+                "primary": "authored_primary_input",
+            }[profile],
             "revision": settings["revision"],
             "source_bindings": deepcopy(settings["source_bindings"]),
             "execution_status": "planned_not_executed",
@@ -387,11 +395,14 @@ def validate_workload(workload: Mapping[str, Any], settings: Mapping[str, Any]) 
     if workload.get("schema_version") != 1:
         raise ValueError("workload schema_version must be 1")
     profile = workload.get("profile")
-    if profile not in {"pilot", "qualification"}:
+    if profile not in {"qualification", "pilot", "primary"}:
         raise ValueError("invalid workload profile")
     seed = _integer(workload.get("seed"), "workload.seed")
-    if seed not in settings["matrix"]["seeds"]:
-        raise ValueError("workload seed is foreign to the matrix")
+    if profile == "pilot":
+        if seed != PILOT_SEED:
+            raise ValueError("pilot workload seed must be 100")
+    elif seed not in settings["matrix"]["seeds"]:
+        raise ValueError("qualification/primary workload seed is foreign to the matrix")
     condition = workload.get("condition")
     if condition not in CONDITIONS:
         raise ValueError("workload condition is foreign to the matrix")
@@ -420,7 +431,11 @@ def validate_workload(workload: Mapping[str, Any], settings: Mapping[str, Any]) 
         raise ValueError("dispatch visibility cannot expose future inputs or ground truth")
     provenance = _mapping(workload.get("provenance"), "workload.provenance")
     if provenance != {
-        "kind": "authored_pilot_input",
+        "kind": {
+            "qualification": "authored_qualification_input",
+            "pilot": "authored_calibration_pilot_input",
+            "primary": "authored_primary_input",
+        }[profile],
         "revision": settings["revision"],
         "source_bindings": settings["source_bindings"],
         "execution_status": "planned_not_executed",
@@ -428,14 +443,15 @@ def validate_workload(workload: Mapping[str, Any], settings: Mapping[str, Any]) 
         raise ValueError("workload provenance does not bind the authored sources")
 
     orders = _sequence(workload.get("orders"), "workload.orders")
+    specification_profile = "pilot" if profile == "primary" else profile
     expected = 2 if profile == "qualification" else None
     if expected is not None and len(orders) != expected:
         raise ValueError("qualification workload must contain exactly two orders")
-    if profile == "pilot" and not 4 <= len(orders) <= 6:
-        raise ValueError("pilot workload must contain four to six orders")
+    if profile in {"pilot", "primary"} and not 4 <= len(orders) <= 6:
+        raise ValueError("pilot/primary workload must contain four to six orders")
     order_ids: set[str] = set()
     payload_ids: set[str] = set()
-    allowed_sources = set(settings["workloads"][profile]["sources"])
+    allowed_sources = set(settings["workloads"][specification_profile]["sources"])
     for index, raw in enumerate(orders):
         order = _mapping(raw, f"orders[{index}]")
         _require_keys(order, {"order_id", "payload_id", "source_station", "ready_time"}, f"orders[{index}]")
@@ -462,7 +478,7 @@ def build_matrix(settings: Mapping[str, Any]) -> list[dict[str, Any]]:
     matrix: list[dict[str, Any]] = []
     for condition in CONDITIONS:
         for seed in settings["matrix"]["seeds"]:
-            workload = build_workload(seed, condition, settings)
+            workload = build_workload(seed, condition, settings, profile="primary")
             workload_hash = canonical_hash(workload)
             # Alternate which policy runs first within each paired seed to reduce a systematic
             # warm-cache/order effect without changing either member's workload.
@@ -526,8 +542,9 @@ def validate_trial_result(
     _require_keys(
         result,
         {
-            "schema_version", "trial_id", "condition", "policy", "seed", "status", "backend",
-            "source", "input", "evidence", "metrics", "failure_reason",
+            "schema_version", "trial_id", "condition", "policy", "seed", "trial_outcome",
+            "failure_kind", "validation_status", "metrics_state", "backend", "source", "input",
+            "evidence", "metrics", "failure_reason",
         },
         "trial result",
     )
@@ -567,23 +584,56 @@ def validate_trial_result(
             or inputs.get("workload_sha256") != trial["workload_sha256"]):
         raise ValueError("result input hashes do not match the trial")
 
-    status = result.get("status")
-    if status not in {"completed", "incomplete", "failed"}:
-        raise ValueError("result status must be completed, incomplete or failed")
+    outcome = result.get("trial_outcome")
+    failure_kind = result.get("failure_kind")
+    validation_status = result.get("validation_status")
+    metrics_state = result.get("metrics_state")
+    if outcome not in {"completed", "incomplete", "failed"}:
+        raise ValueError("trial_outcome must be completed, incomplete or failed")
+    if failure_kind not in {None, "operational", "collection"}:
+        raise ValueError("failure_kind must be null, operational or collection")
+    if validation_status not in {"validated", "invalid"}:
+        raise ValueError("validation_status must be validated or invalid")
+    if metrics_state not in {"known", "unknown"}:
+        raise ValueError("metrics_state must be known or unknown")
     metrics = _mapping(result.get("metrics"), "result.metrics")
     _require_keys(
         metrics,
-        {"orders_total", "orders_completed", "horizon_s", "mean_completed_cycle_time_s", "makespan_s"},
+        {"orders_total", "orders_completed", "orders_completed_bounds", "horizon_s", "mean_completed_cycle_time_s", "makespan_s"},
         "result.metrics",
     )
     total = _integer(metrics.get("orders_total"), "metrics.orders_total", minimum=1)
-    completed = _integer(metrics.get("orders_completed"), "metrics.orders_completed")
     expected_total = len(trial["workload"]["orders"])
-    if total != expected_total or completed > total:
+    bounds = _sequence(metrics.get("orders_completed_bounds"), "metrics.orders_completed_bounds")
+    if len(bounds) != 2:
+        raise ValueError("orders_completed_bounds must contain lower and upper bounds")
+    lower = _integer(bounds[0], "metrics.orders_completed_bounds[0]")
+    upper = _integer(bounds[1], "metrics.orders_completed_bounds[1]")
+    if total != expected_total or lower > upper or upper > total:
         raise ValueError("result order counts do not match the trial workload")
     horizon = _number(metrics.get("horizon_s"), "metrics.horizon_s", positive=True)
     if horizon != float(trial["workload"]["horizon_s"]):
         raise ValueError("result horizon does not match the trial workload")
+    completed_value = metrics.get("orders_completed")
+    if metrics_state == "unknown":
+        if not (outcome == "failed" and failure_kind == "collection"
+                and validation_status == "invalid" and completed_value is None
+                and [lower, upper] == [0, total]):
+            raise ValueError("unknown metrics are reserved for invalid collection failures")
+        if metrics.get("mean_completed_cycle_time_s") is not None or metrics.get("makespan_s") is not None:
+            raise ValueError("unknown collection metrics cannot contain derived measurements")
+        _text(result.get("failure_reason"), "failure_reason")
+        _validate_json(result)
+        return
+    completed = _integer(completed_value, "metrics.orders_completed")
+    if [lower, upper] != [completed, completed]:
+        raise ValueError("known metrics bounds must equal the observed completed count")
+    if validation_status != "validated" or failure_kind == "collection":
+        raise ValueError("known metrics require validated non-collection evidence")
+    if outcome in {"completed", "incomplete"} and failure_kind is not None:
+        raise ValueError("completed/incomplete outcomes cannot declare a failure kind")
+    if outcome == "failed" and failure_kind != "operational":
+        raise ValueError("known failed outcomes must be operational failures")
     mean_cycle = metrics.get("mean_completed_cycle_time_s")
     if completed == 0:
         if mean_cycle is not None:
@@ -591,7 +641,7 @@ def validate_trial_result(
     else:
         _number(mean_cycle, "metrics.mean_completed_cycle_time_s", nonnegative=True)
     makespan = metrics.get("makespan_s")
-    if status == "completed":
+    if outcome == "completed":
         if completed != total:
             raise ValueError("completed result must complete every order")
         if _number(makespan, "metrics.makespan_s", positive=True) > horizon:
@@ -610,15 +660,91 @@ def summarize(
     settings: Mapping[str, Any],
     *,
     allow_explicit_non_evidence: bool = False,
+    calibration_path: Path | None = None,
+    pilot_slots: Mapping[str, Mapping[str, Any]] | None = None,
+    resource_input: Mapping[str, Any] | None = None,
+    expected_source_commit: str | None = None,
+    experiment_config_path: Path | None = None,
+    primary_result_slots: Mapping[str, Mapping[str, Any]] | None = None,
 ) -> dict[str, Any]:
-    if not allow_explicit_non_evidence:
-        # G3a intentionally has no artifact reader or closed-bag validator. A caller cannot
-        # promote schema-shaped JSON into physical evidence while calibration is unbound.
-        assert_execution_ready(settings)
+    physical_inputs = (calibration_path, pilot_slots, resource_input,
+                       expected_source_commit, experiment_config_path, primary_result_slots)
+    if allow_explicit_non_evidence:
+        if any(value is not None for value in physical_inputs):
+            raise ValueError("explicit non-evidence aggregation cannot accept physical gate inputs")
+    else:
+        if any(value is None for value in physical_inputs):
+            raise ValueError("physical aggregation requires raw-revalidated calibration artifact inputs")
+        assert calibration_path is not None and pilot_slots is not None
+        assert resource_input is not None and expected_source_commit is not None
+        assert experiment_config_path is not None and primary_result_slots is not None
+        if calibration_path.is_symlink() or not calibration_path.is_file():
+            raise ValueError("physical calibration gate must be a regular file")
+        calibration = json.loads(calibration_path.read_text(encoding="utf-8"))
+        if not isinstance(calibration, Mapping):
+            raise ValueError("physical calibration gate must be an object")
+        from .g3_calibration import validate_calibration
+        validate_calibration(
+            calibration, pilot_slots, resource_input,
+            expected_source_commit=expected_source_commit,
+            expected_config_sha256=canonical_hash(settings),
+            experiment_config_path=experiment_config_path,
+        )
+        if (calibration.get("classification") != "g3_actual_six_pilot_calibration"
+                or calibration.get("status") != "primary_execution_eligible"
+                or calibration.get("execution_eligible") is not True
+                or not _SHA256.fullmatch(str(calibration.get("calibration_sha256", "")))):
+            raise ValueError("physical aggregation requires an eligible actual calibration")
     matrix = build_matrix(settings)
     trials = {(trial["condition"], trial["policy"], trial["seed"]): trial for trial in matrix}
     if len(results) != len(trials):
         raise ValueError("all 60 matrix results are required; failures and incomplete trials cannot be deleted")
+    if not allow_explicit_non_evidence:
+        assert primary_result_slots is not None and experiment_config_path is not None
+        assert expected_source_commit is not None
+        expected_trial_ids = {str(trial["trial_id"]) for trial in matrix}
+        if set(primary_result_slots) != expected_trial_ids:
+            raise ValueError("physical result slots must cover the exact canonical 60 trial IDs")
+        supplied: dict[str, Mapping[str, Any]] = {}
+        for result in results:
+            trial_id = result.get("trial_id")
+            if not isinstance(trial_id, str) or trial_id in supplied:
+                raise ValueError("physical results require unique canonical trial IDs")
+            supplied[trial_id] = result
+        if set(supplied) != expected_trial_ids:
+            raise ValueError("physical results do not cover the exact canonical 60 trial IDs")
+        from .g3_supervisor import build_collection_failure_result
+        from .g3_trial_result import build_trial_result
+        for trial in matrix:
+            trial_id = str(trial["trial_id"])
+            slot = _mapping(primary_result_slots[trial_id], f"primary_result_slots.{trial_id}")
+            kind = slot.get("kind")
+            if kind == "validated_trial":
+                _require_keys(
+                    slot,
+                    {"kind", "report_path", "mission_path", "artifact_root", "session_root"},
+                    f"primary_result_slots.{trial_id}",
+                )
+                rebuilt = build_trial_result(
+                    trial, Path(str(slot["report_path"])), Path(str(slot["mission_path"])),
+                    Path(str(slot["artifact_root"])), session_root=Path(str(slot["session_root"])),
+                    source_commit=expected_source_commit,
+                    experiment_config_path=experiment_config_path,
+                )
+            elif kind == "collection_failure":
+                _require_keys(
+                    slot, {"kind", "receipt_path", "evidence_root"},
+                    f"primary_result_slots.{trial_id}",
+                )
+                rebuilt = build_collection_failure_result(
+                    trial, Path(str(slot["receipt_path"])), Path(str(slot["evidence_root"])),
+                    source_commit=expected_source_commit,
+                    experiment_config_path=experiment_config_path,
+                )
+            else:
+                raise ValueError(f"primary result slot kind is invalid: {trial_id}")
+            if supplied[trial_id] != rebuilt:
+                raise ValueError(f"physical result differs from raw artifact replay: {trial_id}")
     indexed: dict[tuple[str, str, int], Mapping[str, Any]] = {}
     evidence_ids: set[str] = set()
     source_commits: set[str] = set()
@@ -642,17 +768,22 @@ def summarize(
     if len(source_commits) != 1:
         raise ValueError("all matrix results must bind one measurement source commit")
     measurement_source_commit = next(iter(source_commits))
+    if not allow_explicit_non_evidence and measurement_source_commit != expected_source_commit:
+        raise ValueError("matrix result source commit differs from the calibration source commit")
 
     groups: dict[str, Any] = {}
     for condition in CONDITIONS:
         groups[condition] = {}
         for policy in POLICIES:
             rows = [indexed[(condition, policy, seed)] for seed in range(10)]
-            completed_trials = [row for row in rows if row["status"] == "completed"]
-            failed = sum(row["status"] == "failed" for row in rows)
-            incomplete = sum(row["status"] == "incomplete" for row in rows)
+            completed_trials = [row for row in rows if row["trial_outcome"] == "completed"]
+            failed = sum(row["trial_outcome"] == "failed" for row in rows)
+            incomplete = sum(row["trial_outcome"] == "incomplete" for row in rows)
             orders_total = sum(int(row["metrics"]["orders_total"]) for row in rows)
-            orders_completed = sum(int(row["metrics"]["orders_completed"]) for row in rows)
+            known_rows = [row for row in rows if row["metrics_state"] == "known"]
+            orders_completed = sum(int(row["metrics"]["orders_completed"]) for row in known_rows)
+            lower_completed = sum(int(row["metrics"]["orders_completed_bounds"][0]) for row in rows)
+            upper_completed = sum(int(row["metrics"]["orders_completed_bounds"][1]) for row in rows)
             cycles = [
                 float(row["metrics"]["mean_completed_cycle_time_s"])
                 for row in rows if row["metrics"]["mean_completed_cycle_time_s"] is not None
@@ -667,8 +798,9 @@ def summarize(
                 },
                 "horizon_order_counts": {
                     "total": orders_total,
-                    "completed": orders_completed,
-                    "censored": orders_total - orders_completed,
+                    "known_completed": orders_completed,
+                    "completed_bounds": [lower_completed, upper_completed],
+                    "unknown_trial_count": len(rows) - len(known_rows),
                 },
                 "completed_orders_only_mean_cycle_time_s": (
                     sum(cycles) / len(cycles) if cycles else None
@@ -696,22 +828,27 @@ def summarize(
                 "seed": seed,
                 "workload_sha256": fifo["input"]["workload_sha256"],
                 "primary_denominator_included": True,
-                "fifo_status": fifo["status"],
-                "eta_status": eta["status"],
-                "failure_present": fifo["status"] == "failed" or eta["status"] == "failed",
+                "fifo_outcome": fifo["trial_outcome"],
+                "eta_outcome": eta["trial_outcome"],
+                "failure_present": fifo["trial_outcome"] == "failed" or eta["trial_outcome"] == "failed",
                 "incomplete_present": (
-                    fifo["status"] == "incomplete" or eta["status"] == "incomplete"
+                    fifo["trial_outcome"] == "incomplete" or eta["trial_outcome"] == "incomplete"
                 ),
-                "eta_minus_fifo_completed_orders_by_horizon": (
-                    int(eta["metrics"]["orders_completed"])
-                    - int(fifo["metrics"]["orders_completed"])
-                ),
+                "eta_minus_fifo_completed_orders_by_horizon": None,
+                "eta_minus_fifo_completed_orders_bounds": [
+                    int(eta["metrics"]["orders_completed_bounds"][0]) - int(fifo["metrics"]["orders_completed_bounds"][1]),
+                    int(eta["metrics"]["orders_completed_bounds"][1]) - int(fifo["metrics"]["orders_completed_bounds"][0]),
+                ],
                 "both_full_workloads_completed": (
-                    fifo["status"] == "completed" and eta["status"] == "completed"
+                    fifo["trial_outcome"] == "completed" and eta["trial_outcome"] == "completed"
                 ),
                 "eta_minus_fifo_makespan_s": None,
                 "eta_minus_fifo_completed_only_mean_cycle_time_s": None,
             }
+            if fifo["metrics_state"] == "known" and eta["metrics_state"] == "known":
+                pair["eta_minus_fifo_completed_orders_by_horizon"] = (
+                    int(eta["metrics"]["orders_completed"]) - int(fifo["metrics"]["orders_completed"])
+                )
             if pair["both_full_workloads_completed"]:
                 pair["eta_minus_fifo_makespan_s"] = (
                     float(eta["metrics"]["makespan_s"])
@@ -722,21 +859,25 @@ def summarize(
                     - float(fifo["metrics"]["mean_completed_cycle_time_s"])
                 )
             pairs.append(pair)
-        primary_deltas = [
-            int(pair["eta_minus_fifo_completed_orders_by_horizon"])
-            for pair in pairs
-        ]
+        observed_deltas = [int(pair["eta_minus_fifo_completed_orders_by_horizon"])
+                           for pair in pairs if pair["eta_minus_fifo_completed_orders_by_horizon"] is not None]
+        mean_bounds = [sum(int(pair["eta_minus_fifo_completed_orders_bounds"][index]) for pair in pairs) / 10
+                       for index in (0, 1)]
         makespan_deltas = [
             float(pair["eta_minus_fifo_makespan_s"])
             for pair in pairs if pair["eta_minus_fifo_makespan_s"] is not None
         ]
         paired[condition] = {
             "primary_metric": "eta_minus_fifo_completed_orders_by_horizon",
-            "primary_pair_count": len(primary_deltas),
+            "primary_pair_count": len(pairs),
             "primary_excluded_pair_count": 0,
             "primary_pairs_with_failure": sum(bool(pair["failure_present"]) for pair in pairs),
             "primary_pairs_with_incomplete": sum(bool(pair["incomplete_present"]) for pair in pairs),
-            "primary_mean_delta": sum(primary_deltas) / len(primary_deltas) if primary_deltas else None,
+            "primary_mean_delta": (sum(observed_deltas) / 10 if len(observed_deltas) == 10 else None),
+            "primary_mean_delta_bounds": mean_bounds,
+            "observed_only_pair_count": len(observed_deltas),
+            "observed_only_mean_delta": (sum(observed_deltas) / len(observed_deltas) if observed_deltas else None),
+            "observed_only_label": "known_pairs_only_selection_biased_when_below_ten",
             "restricted_full_completion_pair_count": len(makespan_deltas),
             "restricted_mean_eta_minus_fifo_makespan_s": (
                 sum(makespan_deltas) / len(makespan_deltas) if makespan_deltas else None

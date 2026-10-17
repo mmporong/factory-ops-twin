@@ -12,7 +12,7 @@ import tempfile
 import unittest
 
 from factory_ops.experiments import build_matrix, canonical_hash, load_experiment_config
-from factory_ops.g3_trial_result import build_trial_result
+from factory_ops.g3_trial_result import _ledger_metrics, build_trial_result
 from factory_ops.operations import Command, EventId, Ledger, Stage, Transition
 from factory_ops.source_provenance import verify_source_archive
 
@@ -184,9 +184,14 @@ class TrialResultTests(unittest.TestCase):
 
     def test_explicit_non_evidence_ledger_times_build_strict_fixture_result(self) -> None:
         result = self.build()
-        self.assertEqual("completed", result["status"])
+        self.assertEqual("completed", result["trial_outcome"])
+        self.assertIsNone(result["failure_kind"])
+        self.assertEqual("validated", result["validation_status"])
+        self.assertEqual("known", result["metrics_state"])
         self.assertEqual("explicit_non_evidence", result["backend"])
         self.assertEqual(len(self.trial["workload"]["orders"]), result["metrics"]["orders_completed"])
+        self.assertEqual([result["metrics"]["orders_completed"]] * 2,
+                         result["metrics"]["orders_completed_bounds"])
         self.assertGreater(result["metrics"]["mean_completed_cycle_time_s"], 0)
         self.assertEqual(self.run_id, result["evidence"]["g3_evidence_id"])
 
@@ -226,6 +231,13 @@ class TrialResultTests(unittest.TestCase):
         save(self.config_path, changed)
         with self.assertRaisesRegex(ValueError, "config bytes"):
             self.build()
+
+    def test_order_completion_after_metric_horizon_is_rejected(self) -> None:
+        mission = json.loads(self.mission_path.read_text())
+        shortened = deepcopy(self.trial)
+        shortened["workload"]["horizon_s"] = 1.0
+        with self.assertRaisesRegex(ValueError, "after the metric horizon"):
+            _ledger_metrics(mission["mission"], shortened, "completed")
 
 
 if __name__ == "__main__":
