@@ -245,6 +245,40 @@ class RouteReservationManagerTest(unittest.TestCase):
         granted = manager.reserve(self.R1, "r1-wait", first_goal, ((0, 0), (1, 0)), now_s=0)
         self.assertTrue(granted.granted)
 
+    def test_persistent_one_way_wait_is_not_a_self_cycle(self) -> None:
+        manager = self.manager(r1=((0, 0),), r2=((2, 0),))
+        manager.reserve(self.R1, "moving", self.goal(), ((0, 0), (1, 0)), now_s=0)
+        second = manager.reserve(self.R2, "waiting-hold", self.goal(), ((2, 0),), now_s=0)
+        assert second.generation is not None
+        blocked = manager.transfer(self.R2, second.generation, "next", self.goal(), ((2, 0), (1, 0)), now_s=0)
+        self.assertFalse(blocked.granted)
+        before = manager.snapshot(now_s=0)["holds"]
+        for step in range(1, 13):
+            stamp = step / 2
+            manager.observe(self.R1, ((0, 0),), pose_stamp_s=stamp, now_s=stamp)
+            manager.observe(self.R2, ((2, 0),), pose_stamp_s=stamp, now_s=stamp)
+            self.assertIsNone(manager.detect_wait_cycle(now_s=stamp))
+        self.assertEqual(before, manager.snapshot(now_s=6)["holds"])
+        self.assertFalse(any(event["event_type"] == "persistent_wait_cycle_reported" for event in manager.events))
+
+    def test_persistent_wait_chain_ending_at_non_waiting_peer_is_acyclic(self) -> None:
+        robots = ("r1", "r2", "r3")
+        manager = RouteReservationManager("chain", robots)
+        grants = {}
+        for robot, x in zip(robots, (0, 2, 4)):
+            manager.observe(robot, ((x, 0),), pose_stamp_s=0, now_s=0)
+        for robot, x in zip(robots, (0, 2, 4)):
+            grants[robot] = manager.reserve(robot, "current", self.goal(), ((x, 0),), now_s=0)
+        for robot, own, peer in (("r1", 0, 2), ("r2", 2, 4)):
+            generation = grants[robot].generation
+            assert generation is not None
+            self.assertFalse(manager.transfer(robot, generation, "next", self.goal(), ((own, 0), (peer, 0)), now_s=0).granted)
+        for step in range(1, 13):
+            stamp = step / 2
+            for robot, x in zip(robots, (0, 2, 4)):
+                manager.observe(robot, ((x, 0),), pose_stamp_s=stamp, now_s=stamp)
+            self.assertIsNone(manager.detect_wait_cycle(now_s=stamp))
+
     def test_persistent_wait_cycle_is_reported_without_releasing_holds(self) -> None:
         manager = self.manager(r1=((0, 0),), r2=((2, 0),))
         first = manager.reserve(self.R1, "r1", self.goal(), ((0, 0), (1, 0)), now_s=0)

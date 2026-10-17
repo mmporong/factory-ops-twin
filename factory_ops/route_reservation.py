@@ -402,10 +402,11 @@ class RouteReservationManager:
                 if not candidates:
                     break
                 cursor = min(candidates)
-            if cursor in path:
-                raw = path[path.index(cursor) :]
-                rotations = [tuple(raw[index:] + raw[:index]) for index in range(len(raw))]
-                cycles.add(min(rotations))
+            else:
+                if cursor in path:
+                    raw = path[path.index(cursor) :]
+                    rotations = [tuple(raw[index:] + raw[:index]) for index in range(len(raw))]
+                    cycles.add(min(rotations))
         for cycle in sorted(cycles):
             if not all(self._fresh(robot, now) for robot in cycle):
                 for robot in cycle:
