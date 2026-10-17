@@ -84,18 +84,32 @@ def validate_dataset(root: Path, profile_path: Path = DEFAULT_PROFILE) -> dict[s
     }
     profile = _load_json(profile_path, "profile", errors)
     dataset_path = root / "dataset.json"
+    dataset: object = None
+    dataset_bytes: bytes | None = None
     if not _regular_file(dataset_path) or _has_symlink_ancestor(dataset_path, root):
         errors.append("dataset.json is missing, non-regular, or linked")
-    dataset = _load_json(dataset_path, "dataset.json", errors)
+    else:
+        try:
+            dataset_bytes = dataset_path.read_bytes()
+            dataset = json.loads(dataset_bytes.decode("utf-8"))
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError) as error:
+            errors.append(f"dataset.json could not be loaded: {type(error).__name__}: {error}")
+    dataset_binding = {
+        "path": "dataset.json",
+        "bytes": len(dataset_bytes) if dataset_bytes is not None else None,
+        "sha256": hashlib.sha256(dataset_bytes).hexdigest() if dataset_bytes is not None else None,
+        "dataset_id": dataset.get("dataset_id") if isinstance(dataset, dict) else None,
+        "run_id": dataset.get("run_id") if isinstance(dataset, dict) else None,
+    }
     artifact_summary: dict[str, Any] = {"declared_files": 0, "validated_files": 0, "bytes": 0}
     if not isinstance(profile, dict) or not isinstance(dataset, dict):
-        return _report(errors, stats, artifact_summary)
+        return _report(errors, stats, artifact_summary, dataset_binding)
 
     profile_errors: list[str] = []
     _validate_profile(profile, profile_errors)
     errors.extend(profile_errors)
     if profile_errors:
-        return _report(errors, stats, artifact_summary)
+        return _report(errors, stats, artifact_summary, dataset_binding)
     profile_sha = _sha256(profile_path) if _regular_file(profile_path) else None
     stats["profile_id"] = profile.get("profile_id")
     stats["profile_sha256"] = profile_sha
@@ -249,7 +263,9 @@ def validate_dataset(root: Path, profile_path: Path = DEFAULT_PROFILE) -> dict[s
     }
     _validate_leaf_coverage(profile, stats, seen_scene_ids, {str(value) for value in cameras}, errors)
     _validate_visual_review(root, dataset, profile, scene_camera_captures, manifest_paths, errors, stats)
-    return _report(errors, stats, artifact_summary)
+    if _sha256(dataset_path) != dataset_binding["sha256"]:
+        errors.append("dataset.json changed during validation")
+    return _report(errors, stats, artifact_summary, dataset_binding)
 
 
 def _validate_capture(
@@ -2126,9 +2142,13 @@ def _load_json(path: Path, label: str, errors: list[str]) -> object:
         return None
 
 
-def _report(errors: list[str], stats: dict[str, Any], artifact_manifest: dict[str, Any]) -> dict[str, Any]:
+def _report(errors: list[str], stats: dict[str, Any], artifact_manifest: dict[str, Any],
+            dataset_binding: dict[str, Any]) -> dict[str, Any]:
     passed = not errors
     return {
+        "schema_version": 1,
+        "dataset": dataset_binding,
+        "validator": {"path": "factory_ops/dataset_evidence.py", "sha256": _sha256(Path(__file__))},
         "passed": passed,
         "production_passed": passed and stats.get("validation_gate") == "production",
         "validation_gate": stats.get("validation_gate", "unresolved"),
@@ -2146,9 +2166,14 @@ def main() -> int:
     parser.add_argument("--profile", type=Path, default=DEFAULT_PROFILE)
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
+    if args.output.resolve().is_relative_to(args.dataset.resolve()):
+        parser.error("QA output must be outside the closed dataset directory")
+    if args.output.exists() or args.output.is_symlink():
+        parser.error("QA output must use a new path")
     report = validate_dataset(args.dataset, args.profile)
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    with args.output.open("x", encoding="utf-8", newline="\n") as stream:
+        stream.write(json.dumps(report, indent=2, sort_keys=True) + "\n")
     return 0 if report["passed"] else 1
 
 

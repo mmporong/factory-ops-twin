@@ -170,6 +170,53 @@ class DatasetEvidenceTests(unittest.TestCase):
         self.assertEqual(exit_code, 0)
         self.assertTrue(json.loads(output.read_text(encoding="utf-8"))["passed"])
 
+    def test_report_binds_the_exact_dataset_and_validator_bytes(self) -> None:
+        path = self.root / "dataset.json"
+        original_bytes = path.read_bytes()
+        report = validate_dataset(self.root, self.profile_path)
+        self.assertTrue(report["passed"], report["errors"])
+        self.assertEqual(report["dataset"], {
+            "path": "dataset.json", "bytes": len(original_bytes),
+            "sha256": hashlib.sha256(original_bytes).hexdigest(),
+            "dataset_id": self.dataset["dataset_id"], "run_id": self.dataset["run_id"],
+        })
+        validator = Path(__file__).resolve().parents[1] / report["validator"]["path"]
+        self.assertEqual(report["validator"]["sha256"], hashlib.sha256(validator.read_bytes()).hexdigest())
+        path.write_bytes(original_bytes + b"\n")
+        second = validate_dataset(self.root, self.profile_path)
+        self.assertTrue(second["passed"], second["errors"])
+        self.assertNotEqual(report["dataset"]["sha256"], second["dataset"]["sha256"])
+
+    def test_dataset_change_during_validation_cannot_pass(self) -> None:
+        from factory_ops import dataset_evidence
+        original = dataset_evidence._validate_visual_review
+
+        def change_after_review(*args: Any, **kwargs: Any) -> None:
+            original(*args, **kwargs)
+            path = self.root / "dataset.json"
+            path.write_bytes(path.read_bytes() + b"\n")
+
+        with patch.object(dataset_evidence, "_validate_visual_review", side_effect=change_after_review):
+            report = validate_dataset(self.root, self.profile_path)
+        self.assertFalse(report["passed"])
+        self.assertIn("dataset.json changed during validation", report["errors"])
+
+    def test_cli_rejects_output_inside_dataset_and_preserves_existing_report(self) -> None:
+        dataset_path = self.root / "dataset.json"
+        before = dataset_path.read_bytes()
+        existing = self.base / "existing-report.json"
+        existing.write_text("prior report", encoding="utf-8")
+        for output in (self.root, self.root / "qa.json", dataset_path, existing):
+            with self.subTest(output=output), patch("sys.stderr"), patch(
+                "sys.argv", ["dataset_evidence", "--dataset", str(self.root),
+                             "--profile", str(self.profile_path), "--output", str(output)],
+            ), self.assertRaises(SystemExit) as raised:
+                main()
+            self.assertEqual(raised.exception.code, 2)
+        self.assertEqual(dataset_path.read_bytes(), before)
+        self.assertFalse((self.root / "qa.json").exists())
+        self.assertEqual(existing.read_text(encoding="utf-8"), "prior report")
+
     def test_file_hash_tamper_is_rejected(self) -> None:
         target = next(self.root.rglob("rgb.png"))
         target.write_bytes(target.read_bytes() + b"tamper")
