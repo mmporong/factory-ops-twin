@@ -51,6 +51,16 @@ def _validate_runtime(runtime: dict[str, Any]) -> None:
         value = runtime[name]
         if type(value) not in (int, float) or not math.isfinite(value) or value <= 0:
             raise ValueError(f"G3 runtime limit must be finite and positive: {name}")
+    callback_drain = runtime.get("callback_drain")
+    if not isinstance(callback_drain, dict) or set(callback_drain) != {"max_rounds", "wall_budget_s"}:
+        raise ValueError("G3 callback drain fields differ")
+    rounds = callback_drain["max_rounds"]
+    if type(rounds) is not int or not 1 <= rounds <= 256:
+        raise ValueError("G3 callback drain max_rounds must be an integer from 1 through 256")
+    wall_budget = callback_drain["wall_budget_s"]
+    if (isinstance(wall_budget, bool) or not isinstance(wall_budget, (int, float))
+            or not math.isfinite(wall_budget) or not 0 < wall_budget <= .1):
+        raise ValueError("G3 callback drain wall_budget_s must be finite and in (0, 0.1]")
     if (runtime["station_xy_tolerance_m"] > .25
             or runtime["station_yaw_tolerance_rad"] > .25 or runtime["pose_ttl_s"] > .5):
         raise ValueError("G3 runtime cannot relax FleetMission pose limits")

@@ -121,6 +121,25 @@ class G3SessionTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "real-time media"):
                     _validate_runtime(candidate)
 
+    def test_callback_drain_bound_is_source_bound_and_strictly_validated(self) -> None:
+        runtime = load(CONFIG / "g3-runtime.json")
+        self.assertEqual(runtime["callback_drain"], {"max_rounds": 64, "wall_budget_s": 0.05})
+        mutations = (
+            lambda value: value["callback_drain"].update({"extra": True}),
+            lambda value: value["callback_drain"].__setitem__("max_rounds", True),
+            lambda value: value["callback_drain"].__setitem__("max_rounds", 0),
+            lambda value: value["callback_drain"].__setitem__("max_rounds", 257),
+            lambda value: value["callback_drain"].__setitem__("wall_budget_s", 0),
+            lambda value: value["callback_drain"].__setitem__("wall_budget_s", 0.100001),
+            lambda value: value["callback_drain"].__setitem__("wall_budget_s", float("nan")),
+        )
+        for index, mutate in enumerate(mutations):
+            with self.subTest(index=index):
+                candidate = deepcopy(runtime)
+                mutate(candidate)
+                with self.assertRaisesRegex(ValueError, "callback drain"):
+                    _validate_runtime(candidate)
+
     def test_expected_run_context_rejects_policy_relabel_before_derivation(self) -> None:
         session_path = self.copy_session()
         value = load(session_path / "session.json")

@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "classification": "source-bound failed-run callback backlog regression fixture",
+  "run_label": "g3-q-normal-fifo-009",
+  "run_id": "aaa53b1a178ab90fefa8b58fcef91553",
+  "source_commit": "2854f6700a9a785ee9853cf4d5ed15654fb71f68",
+  "robot_id": "carter2",
+  "freshness_ttl_ns": 500000000,
+  "failure_event_clock_ns": 204016666666,
+  "cached_composed_tf_ns": 203483333333,
+  "queued_non_tf_callbacks": [
+    "scan",
+    "clock",
+    "odom"
+  ],
+  "queued_raw_odom_base_tf": [
+    {"message_id": 120370, "recorded_ns": 203533333333, "header_ns": 203533333333},
+    {"message_id": 120400, "recorded_ns": 203583333333, "header_ns": 203583333333},
+    {"message_id": 120420, "recorded_ns": 203633333333, "header_ns": 203633333333},
+    {"message_id": 120439, "recorded_ns": 203683333333, "header_ns": 203683333333},
+    {"message_id": 120456, "recorded_ns": 203733333333, "header_ns": 203733333333},
+    {"message_id": 120480, "recorded_ns": 203783333333, "header_ns": 203783333333},
+    {"message_id": 120504, "recorded_ns": 203833333333, "header_ns": 203833333333},
+    {"message_id": 120519, "recorded_ns": 203883333333, "header_ns": 203883333333},
+    {"message_id": 120548, "recorded_ns": 203933333333, "header_ns": 203933333333},
+    {"message_id": 120567, "recorded_ns": 203983333333, "header_ns": 203983333333}
+  ],
+  "provenance": {
+    "bag_sha256": "94698de42d210f53b31b0e75b048f6e2090ddd1fbb339abbec789e81476b9136",
+    "tf_diagnostic_sha256": "b05e08fbfd26d31eab8139895b0f7ec6951d7e89b0e48b80647beadd91f86810",
+    "localization_sha256": "e711086c240190602add9cd6f1d4c89f42001880cb98db7f62c2d355521b0479",
+    "failure_observation_sha256": "700d4548c1760f2169c59f4fd946d638c6c748e676e877853718a85e84b66768",
+    "source_files": [
+      "artifacts/brev/g3-q009-failure-001/tf-timing-001.json",
+      "artifacts/brev/g3-q009-failure-001/localization.jsonl",
+      "artifacts/brev/g3-q009-failure-observation-001.json"
+    ],
+    "scope": "callback scheduling regression only; not successful mission evidence"
+  }
+}

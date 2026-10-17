@@ -16,6 +16,10 @@
   "stopped_linear_m_s": 0.02,
   "stopped_angular_rad_s": 0.02,
   "odom_ttl_s": 0.3,
+  "callback_drain": {
+    "max_rounds": 64,
+    "wall_budget_s": 0.05
+  },
   "camera_capture_every_steps": 60,
   "real_time_media": {
     "profiles": ["qualification"],
