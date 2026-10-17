@@ -34,7 +34,7 @@ from scripts.ros.g2_evidence import (
 )
 from scripts.isaac.nav_scene import _tilt_evaluation
 from scripts.isaac.g2_scene import _ros_stamp_parts
-from scripts.ros.g3_mission import terminal_recording_boundary
+from scripts.ros.g3_mission import cutoff_ledger_payload, terminal_recording_boundary
 
 PROJECT = Path(__file__).resolve().parents[2]
 RESULT = "g3-evidence.json"
@@ -338,6 +338,7 @@ def validate_actions(
 ) -> dict[str, Any]:
     """Recompile chunks and bind planner/follower UUIDs, complete Path content and reservations."""
     expected_plans: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    expected_follow_counts: Counter[str] = Counter()
     payload_hashes: list[str] = []
     action_uuids: set[tuple[str, str, str]] = set()
     for index, action in enumerate(actions):
@@ -353,7 +354,8 @@ def validate_actions(
             stamp = path_header_stamp_ns(path["header"]) / 1e9
             requested = float(action["requested_sim_time_s"])
             admission = float(action["path_geometry"]["now_s"])
-            accepted = float(action["accepted_sim_time_s"])
+            planner_only = action.get("cutoff_classification") == "planner_only_cleanup"
+            accepted = admission if planner_only else float(action["accepted_sim_time_s"])
             if not requested <= admission <= accepted:
                 raise ValueError("computed path admission time is outside request/acceptance order")
             start_xy = decoded_map_pose(bag.get("tf_samples", {}).get(robot, {}), admission)
@@ -369,7 +371,31 @@ def validate_actions(
             compute, follow = _uuid_hex(action["planner_action_uuid"]), _uuid_hex(action["follow_action_uuid"])
             if compute is None or follow is None:
                 raise ValueError("action UUID is malformed")
-            for name, uid in (("compute_path_to_pose", compute), ("follow_path", follow)):
+            identity = (robot, "compute_path_to_pose", compute)
+            if identity in action_uuids:
+                raise ValueError("duplicate compute_path_to_pose UUID in action records")
+            action_uuids.add(identity)
+            if bag.get("goal_statuses", {}).get(f"/{robot}/compute_path_to_pose/_action/status", {}).get(compute) != 4:
+                raise ValueError("compute_path_to_pose UUID lacks decoded SUCCEEDED status")
+            if action.get("planner_status") != 4 or action.get("planner_error_code") != 0:
+                raise ValueError("journaled planner terminal status is not successful")
+            content_hash = path_content_sha256(path)
+            if action.get("path_content_sha256") != content_hash:
+                raise ValueError("planner Path content hash differs")
+            if planner_only:
+                forbidden = {"follow_goal_path_content_sha256", "accepted_sim_time_s", "server_accepted_stamp",
+                             "status", "error_code", "error_msg", "terminal_sim_time_s", "receipt",
+                             "navigation_result", "handoff_sim_time_s"}
+                if forbidden.intersection(action):
+                    raise ValueError("planner-only cutoff action contains follower or handoff evidence")
+                if (_finite_number(action.get("planner_terminal_sim_time_s")) is None
+                        or _finite_number(action.get("cutoff_horizon_sim_time_s")) is None
+                        or float(action["planner_terminal_sim_time_s"]) + 1e-9 < float(action["cutoff_horizon_sim_time_s"])):
+                    raise ValueError("planner-only result is not a post-cutoff cleanup")
+                expected_plans[robot].append({"content_sha256": content_hash, "payload": path})
+                payload_hashes.append(content_hash)
+                continue
+            for name, uid in (("follow_path", follow),):
                 identity = (robot, name, uid)
                 if identity in action_uuids:
                     raise ValueError(f"duplicate {name} UUID in action records")
@@ -377,14 +403,14 @@ def validate_actions(
                 topic = f"/{robot}/{name}/_action/status"
                 if bag.get("goal_statuses", {}).get(topic, {}).get(uid) != 4:
                     raise ValueError(f"{name} UUID lacks decoded SUCCEEDED status")
-            if action.get("planner_status") != 4 or action.get("planner_error_code") != 0 or action.get("status") != 4 or action.get("error_code") != 0:
+            if action.get("status") != 4 or action.get("error_code") != 0:
                 raise ValueError("journaled action terminal status is not successful")
-            content_hash = path_content_sha256(path)
             if (action.get("path_content_sha256") != content_hash
                     or action.get("follow_goal_path_content_sha256") != content_hash):
                 raise ValueError("FollowPath goal does not contain the admitted complete Path content")
             if chunk["final"] and action.get("leg_kind") == "business" and action.get("mission_goal_uuid") != action["follow_action_uuid"]:
                 raise ValueError("final station FollowPath UUID differs from mission intent UUID")
+            expected_follow_counts[robot] += 1
             expected_plans[robot].append({"content_sha256": content_hash, "payload": path})
             payload_hashes.append(content_hash)
         except (KeyError, TypeError, ValueError, IndexError) as exc:
@@ -397,7 +423,8 @@ def validate_actions(
             errors.append(f"{robot}: decoded /plan complete content differs from ComputePath results")
         if any(not re.fullmatch(r"[0-9a-f]{64}", str(row.get("cdr_sha256"))) for row in observed):
             errors.append(f"{robot}: decoded /plan raw CDR integrity hash is malformed")
-        if bag.get("topic_counts", {}).get(f"/{robot}/received_global_plan", 0) <= 0:
+        if (expected_follow_counts[robot] > 0
+                and bag.get("topic_counts", {}).get(f"/{robot}/received_global_plan", 0) <= 0):
             errors.append(f"{robot}: transformed/pruned received_global_plan evidence is absent")
     return {"action_count": len(actions), "path_payload_sha256": payload_hashes,
             "observed_plan_cdr_sha256": {robot: [row["cdr_sha256"] for row in bag.get("plan_records", {}).get(robot, [])]
@@ -411,7 +438,8 @@ def validate_follow_rpc(
     passed = 0
     seen_goals: set[tuple[str, str]] = set()
     for robot in ROBOTS:
-        expected = [row for row in actions if row.get("robot_id") == robot]
+        expected = [row for row in actions if row.get("robot_id") == robot
+                    and row.get("cutoff_classification") != "planner_only_cleanup"]
         operations = bag.get("follow_rpc", {}).get(robot, {})
         paired: dict[str, dict[str, dict[str, Any]]] = {}
         for operation in ("send_goal", "get_result"):
@@ -498,15 +526,104 @@ def validate_final_state(
     return {"expected_orders": expected, "completed_orders": mission.get("completed_order_count"), "parked_holds": holds}
 
 
+def validate_incomplete_cutoff(
+    mission_result: Mapping[str, Any], session: Mapping[str, Any], actions: Sequence[Mapping[str, Any]],
+    events: Sequence[Mapping[str, Any]], errors: list[str],
+) -> dict[str, Any]:
+    """Recompute the frozen exact-horizon ledger and reject post-cutoff work."""
+    mission = mission_result.get("mission")
+    cutoff = mission_result.get("cutoff")
+    if not isinstance(mission, Mapping) or not isinstance(cutoff, Mapping):
+        errors.append("incomplete run lacks a mission/cutoff record")
+        return {}
+    horizon = float(session["workload"]["horizon_s"])
+    origin = _finite_number(mission_result.get("origin_sim_time_s"))
+    absolute = None if origin is None else origin + horizon
+    frozen = cutoff_ledger_payload(mission)
+    if (mission.get("completed") is not False or mission.get("failed") is not False
+            or mission.get("censored") is not True or mission.get("replay_matches") is not True
+            or not math.isclose(float(mission.get("sim_time", math.nan)), horizon, abs_tol=1e-9)
+            or mission.get("censor", {}).get("horizon") != horizon
+            or cutoff.get("horizon_elapsed_s") != horizon
+            or absolute is None or not math.isclose(float(cutoff.get("horizon_sim_time_s", math.nan)), absolute, abs_tol=1e-9)
+            or cutoff.get("mission_state") != frozen
+            or cutoff.get("mission_ledger_sha256") != canonical_hash(frozen)
+            or cutoff.get("mission_state_sha256") != canonical_hash(mission)):
+        errors.append("incomplete mission cutoff is not an exact immutable horizon freeze")
+    try:
+        replay = Ledger.replay(list(mission["events"]))
+        if replay.snapshot() != mission.get("snapshot") or replay.events != mission.get("events"):
+            errors.append("incomplete mission independent ledger replay differs")
+    except (KeyError, TypeError, ValueError) as exc:
+        errors.append(f"incomplete mission independent ledger replay failed: {exc}")
+    cutoff_events = [row for row in events if row.get("kind") == "evaluation_cutoff"]
+    cutoff_seq = cutoff.get("event_seq")
+    expected_event_fields = {key: value for key, value in cutoff.items()
+                             if key not in {"mission_state", "terminal_stops"}}
+    if (type(cutoff_seq) is not int or cutoff_seq <= 0 or len(cutoff_events) != 1
+            or cutoff_events[0].get("event_seq") != cutoff_seq
+            or _finite_number(cutoff_events[0].get("sim_time_s")) != cutoff.get("observed_sim_time_s")
+            or any(cutoff_events[0].get(key) != value for key, value in expected_event_fields.items())):
+        errors.append("evaluation cutoff record is not bound to exactly one journal sequence")
+    forbidden = {"planner_goal_sent", "follow_goal_sent", "handoff_commit", "leg_requested",
+                 "dispatch_pair_selected", "parked"}
+    late = [row for row in events if row.get("kind") in forbidden
+            and type(row.get("event_seq")) is int and type(cutoff_seq) is int
+            and row["event_seq"] > cutoff_seq]
+    if late:
+        errors.append("cutoff journal contains post-horizon dispatch, leg, follower, handoff, or parking work")
+    for index, action in enumerate(actions):
+        handoff = _finite_number(action.get("handoff_sim_time_s"))
+        if handoff is not None and absolute is not None and handoff > absolute + 1e-9:
+            errors.append(f"action {index} commits a business handoff after the evaluation horizon")
+        classification = action.get("cutoff_classification")
+        if classification is not None and classification not in {
+                "retained_follow_cleanup", "planner_only_cleanup", "hold_only_cleanup"}:
+            errors.append(f"action {index} has an unknown cutoff classification")
+        if classification == "retained_follow_cleanup":
+            sent = _finite_number(action.get("follow_goal_sent_sim_time_s"))
+            if sent is None or absolute is None or sent > absolute + 1e-9:
+                errors.append(f"action {index} retained FollowPath was not sent before cutoff")
+    terminal = cutoff.get("terminal_stops")
+    holds = mission_result.get("route_snapshot", {}).get("holds", {})
+    if not isinstance(terminal, Mapping) or set(terminal) != set(ROBOTS) or set(holds) != set(ROBOTS):
+        errors.append("incomplete cutoff does not retain both robot holds and terminal stops")
+    else:
+        for robot in ROBOTS:
+            stop = terminal.get(robot, {})
+            hold = holds.get(robot, {})
+            phase = cutoff.get("robots", {}).get(robot, {})
+            retained = phase.get("retained_hold", {}) if isinstance(phase, Mapping) else {}
+            stable_hold = ("route_id", "goal_uuid", "generation", "tiles", "tile_hash")
+            if (not isinstance(stop, Mapping) or not isinstance(hold, Mapping) or not hold.get("tiles")
+                    or not isinstance(retained, Mapping)
+                    or any(hold.get(key) != retained.get(key) for key in stable_hold)
+                    or stop.get("generation") != hold.get("generation")
+                    or stop.get("follow_action_uuid") != hold.get("goal_uuid")):
+                errors.append(f"{robot}: incomplete terminal stop differs from retained hold")
+    return {"horizon_elapsed_s": horizon, "horizon_sim_time_s": absolute,
+            "completed_orders": mission.get("completed_order_count"),
+            "expected_orders": mission.get("expected_order_count"), "late_work_count": len(late),
+            "retained_holds": holds, "terminal_stops": terminal}
+
+
 def validate_handoff_bindings(
     mission_result: Mapping[str, Any], actions: Sequence[Mapping[str, Any]], book: RouteBook,
-    runtime: Mapping[str, Any], errors: list[str],
+    runtime: Mapping[str, Any], errors: list[str], *, incomplete: bool = False,
 ) -> dict[str, Any]:
     """Bind each physical business handoff to one navigation and ledger commit."""
     mission = mission_result.get("mission", {})
     ledger_events = [row for row in mission.get("events", []) if row.get("transition") in {"pickup", "drop"}]
     journal_rows = [row for row in mission.get("navigation_journal", []) if row.get("kind") == "result_accepted"]
-    business = [row for row in actions if row.get("leg_kind") == "business" and row.get("chunk", {}).get("final") is True]
+    candidates = [row for row in actions if row.get("leg_kind") == "business" and row.get("chunk", {}).get("final") is True]
+    planner_only = [row for row in candidates if row.get("cutoff_classification") == "planner_only_cleanup"]
+    unresolved = [row for row in candidates if "receipt" not in row and row not in planner_only]
+    business = [row for row in candidates if "receipt" in row]
+    if planner_only and not incomplete:
+        errors.append("planner-only final business suffix is only valid for an incomplete cutoff")
+    if unresolved and (not incomplete or any(row.get("cutoff_classification") not in {
+            "retained_follow_cleanup", "hold_only_cleanup"} for row in unresolved)):
+        errors.append("uncommitted final business action is not an admitted incomplete cutoff suffix")
     seen: set[tuple[object, object]] = set()
     journal_bindings: set[tuple[object, object]] = set()
     for row in journal_rows:
@@ -565,7 +682,8 @@ def validate_handoff_bindings(
     if len(business) != len(ledger_events) or len(journal_rows) != len(business) or passed != len(ledger_events):
         errors.append("PICKUP/DROP ledger commits and final business actions are not exact one-to-one sets")
     return {"business_action_count": len(business), "ledger_handoff_count": len(ledger_events),
-            "passed_binding_count": passed}
+            "passed_binding_count": passed, "uncommitted_cutoff_action_count": len(unresolved),
+            "planner_only_cutoff_action_count": len(planner_only)}
 
 
 def validate_final_parking(
@@ -951,7 +1069,8 @@ def _validate_localization_reservations(
     checked = 0
     startup_failsafe = 0
     ready_times = [float(row["sim_time_s"]) for row in bag.get("events", []) if row.get("kind") == "navigation_ready"]
-    complete_times = [float(row["sim_time_s"]) for row in bag.get("events", []) if row.get("kind") == "scenario_complete"]
+    complete_times = [float(row["sim_time_s"]) for row in bag.get("events", [])
+                      if row.get("kind") in {"scenario_complete", "scenario_incomplete"}]
     ready_time = ready_times[0] if len(ready_times) == 1 else -math.inf
     complete_time = complete_times[0] if len(complete_times) == 1 else math.inf
     occupied_by_frame: dict[int, dict[str, frozenset[tuple[int, int]]]] = defaultdict(dict)
@@ -1057,6 +1176,7 @@ def validate_g3_evidence(
     scene = _load_json(output / "g3-scene.json", errors)
     mission = _load_json(output / "mission-result.json", errors)
     control = _load_json(output / "mission-control.json", errors)
+    session_marker = _load_json(output / "session-verified.json", errors)
     documents = ((ready, "ready"), (scene, "validated"), (mission, "passed"), (control, "passed"))
     for document, status in documents:
         if (not isinstance(document, Mapping) or document.get("run_id") != run_id
@@ -1071,12 +1191,23 @@ def validate_g3_evidence(
         errors.append("scene qualification/cleanup is invalid")
     if scene.get("mission_control") != control:
         errors.append("scene terminal control differs from the paired mission control")
+    expected_primary_inputs_sha = os.environ.get("FACTORY_OPS_G3_PRIMARY_INPUTS_SHA256")
+    if (session_marker.get("schema_version") != 1 or session_marker.get("status") != "verified"
+            or session_marker.get("run_id") != run_id or session_marker.get("scenario_id") != scenario_id
+            or session_marker.get("source_commit") != os.environ.get("FACTORY_OPS_G3_SOURCE_COMMIT")
+            or session_marker.get("session_sha256") != expected_session_sha
+            or session_marker.get("primary_evaluation") is not session.get("primary_evaluation")
+            or session_marker.get("scope") != session.get("scope")
+            or session_marker.get("primary_inputs_sha256") != expected_primary_inputs_sha):
+        errors.append("session verification startup marker differs from supervisor/session inputs")
     if scene.get("scene_extension", {}).get("ground_truth_control_input") is not False:
         errors.append("scene extension does not preserve the zero-ground-truth control boundary")
-    if mission.get("primary_evaluation") is not False or mission.get("scope") != SCOPE or mission.get("ground_truth_input") is not False:
-        errors.append("mission scope exceeds qualification/pilot evidence")
+    if (mission.get("primary_evaluation") is not session.get("primary_evaluation")
+            or mission.get("scope") != session.get("scope") or mission.get("ground_truth_input") is not False):
+        errors.append("mission scope differs from the verified session")
     if (mission.get("workload_sha256") != session.get("workload_sha256")
             or mission.get("session_sha256") != expected_session_sha
+            or mission.get("inputs", {}).get("session_verification", {}).get("sha256") != sha(output / "session-verified.json")
             or scene.get("inputs", {}).get("session", {}).get("sha256") != expected_session_sha
             or mission.get("inputs", {}).get("session", {}).get("sha256") != expected_session_sha):
         errors.append("scene/mission session SHA or workload binding differs")
@@ -1167,9 +1298,12 @@ def validate_g3_evidence(
         evaluation["route_event_binding"] = validate_route_event_binding(
             route_events, supplemental.get("reservations"), mission, errors,
         )
+        exported = mission.get("mission", {})
+        outcome = "completed" if exported.get("completed") is True else "incomplete" if exported.get("censored") is True else "failed"
         evaluation["actions"] = validate_actions(actions, book, bag, errors)
         evaluation["follow_rpc"] = validate_follow_rpc(actions, supplemental, errors)
-        evaluation["stops"] = validate_stop_evidence(actions, traces, config["g3_runtime"], errors, bag)
+        physical_actions = [row for row in actions if row.get("cutoff_classification") != "planner_only_cleanup"]
+        evaluation["stops"] = validate_stop_evidence(physical_actions, traces, config["g3_runtime"], errors, bag)
         evaluation["initial_hold_barrier"] = validate_initial_hold_barrier(
             mission, traces, local_auth, local_events, errors,
         )
@@ -1177,9 +1311,21 @@ def validate_g3_evidence(
         evaluation["authorization_order"] = validate_authorization_order(
             local_auth, route_events, traces, actions, errors, scenario_id=scenario_id,
         )
-        evaluation["final"] = validate_final_state(mission, session, errors)
-        evaluation["handoffs"] = validate_handoff_bindings(mission, actions, book, config["g3_runtime"], errors)
-        evaluation["parking"] = validate_final_parking(mission, route_events, book, config["g3_runtime"], errors)
+        if outcome == "completed":
+            evaluation["final"] = validate_final_state(mission, session, errors)
+            evaluation["parking"] = validate_final_parking(mission, route_events, book, config["g3_runtime"], errors)
+        elif outcome == "incomplete":
+            evaluation["final"] = validate_incomplete_cutoff(mission, session, actions, local_events, errors)
+            terminal_stops = mission.get("cutoff", {}).get("terminal_stops", {})
+            if isinstance(terminal_stops, Mapping):
+                evaluation["cutoff_terminal_stops"] = validate_stop_evidence(
+                    list(terminal_stops.values()), traces, config["g3_runtime"], errors, bag,
+                )
+        else:
+            errors.append("mission is neither completed nor a censored incomplete outcome")
+        evaluation["handoffs"] = validate_handoff_bindings(
+            mission, actions, book, config["g3_runtime"], errors, incomplete=outcome == "incomplete",
+        )
         evaluation["closure"] = validate_scene_closure(output, session, run_id, scenario_id, errors)
         evaluation["localization_reservations"] = _validate_localization_reservations(
             bag, traces, book, actions, route_events, errors,
@@ -1202,7 +1348,8 @@ def validate_g3_evidence(
     return {"schema_version": 1, "qualification": "g3_two_robot_orders", "run_id": run_id,
             "scenario_id": scenario_id, "profile": session["profile"], "policy": session["policy"],
             "condition": session["condition"], "seed": session["seed"],
-            "primary_evaluation": False, "scope": SCOPE, "passed": not errors, "status": "validated" if not errors else "failed",
+            "primary_evaluation": session.get("primary_evaluation"), "scope": session.get("scope"),
+            "passed": not errors, "status": "validated" if not errors else "failed",
             "errors": errors, "evaluation": evaluation, "bag": bounded_bag,
             "source": source_record, "session_sha256": expected_session_sha,
             "experiment_config_sha256": canonical_hash(json.loads((PROJECT / "configs/factory-v3/g3-experiment.json").read_text(encoding="utf-8"))),
@@ -1214,7 +1361,7 @@ def validate_g3_evidence(
             "artifact_manifest": manifest, "artifact_manifest_sha256": canonical_hash(manifest),
             "claims": {"navigation_inputs": "decoded ROS CDR, estimated localization and authorization journals",
                        "ground_truth_use": "post-run clearance, docking, media and localization evaluation only",
-                       "scope": "one qualification/pilot run; not primary comparison, repeatability, or production safety"}}
+                       "scope": session.get("scope")}}
 
 
 def main() -> int:

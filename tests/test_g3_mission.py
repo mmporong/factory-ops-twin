@@ -10,11 +10,65 @@ import unittest
 
 from factory_ops.fleet_routing import RouteBook
 from factory_ops.fleet_execution import StoppedGate, path_content_sha256
+from factory_ops.fleet import FleetMission, FleetOrder
 from factory_ops.navigation import GoalPose
-from scripts.ros.g3_mission import angle_error, failure_reason, localization_payload, path_final_yaw, path_payload, valid_hold_ack, validate_arrival, verify_navigation_maps, stopped_odometry_record, valid_initial_hold_ack, initial_hold_boundary_ready, terminal_recording_boundary, wait_for_terminal_recording
+from scripts.ros.g3_mission import angle_error, build_cutoff_record, cutoff_phase_classification, failure_reason, localization_payload, path_final_yaw, path_payload, valid_hold_ack, validate_arrival, verify_navigation_maps, stopped_odometry_record, valid_initial_hold_ack, initial_hold_boundary_ready, terminal_recording_boundary, wait_for_terminal_recording
 
 
 class G3MissionAdmissionTests(unittest.TestCase):
+    def test_cutoff_freezes_exact_horizon_and_classifies_every_runtime_phase(self):
+        mission = FleetMission("run", [FleetOrder("O1", "P1", "S1", 0.0)],
+            robot_stations={"carter1": "P1", "carter2": "P2"}, horizon=10.0)
+        mission.finish_incomplete(horizon=10.0)
+        robots = {
+            "carter1": {"phase": "following", "generation": 7, "compute_uuid": "compute-1",
+                        "follow_uuid": "follow-1", "leg": None},
+            "carter2": {"phase": "computing", "generation": 8, "compute_uuid": "compute-2",
+                        "follow_uuid": "follow-2", "leg": None},
+        }
+        retained = {robot: {"route_id": f"held-{index}", "goal_uuid": f"held-goal-{index}",
+                            "accepted_goal_uuid": None, "generation": index,
+                            "predecessor_generation": None, "tiles": [[index, 0]],
+                            "tile_hash": str(index) * 64, "parked": False}
+                    for index, robot in enumerate(("carter1", "carter2"), 1)}
+        record = build_cutoff_record(mission_export=mission.export(), horizon_s=10.0,
+            origin_sim_time_s=100.0, observed_sim_time_s=110.05, robots=robots,
+            retained_holds=retained)
+        self.assertEqual(110.0, record["horizon_sim_time_s"])
+        self.assertEqual("retained_follow_cleanup", record["robots"]["carter1"]["classification"])
+        self.assertEqual("planner_only_cleanup", record["robots"]["carter2"]["classification"])
+        for phase in ("request", "idle", "dwell"):
+            self.assertEqual("hold_only_cleanup", cutoff_phase_classification(phase))
+        with self.assertRaises(ValueError):
+            cutoff_phase_classification("cutoff_stationary")
+        with self.assertRaises(ValueError):
+            build_cutoff_record(mission_export=mission.export(), horizon_s=10.0,
+                origin_sim_time_s=100.0, observed_sim_time_s=109.9, robots=robots,
+                retained_holds=retained)
+
+    def test_cutoff_keeps_denied_transfer_candidate_separate_from_actual_hold(self):
+        mission = FleetMission("run", [FleetOrder("O1", "P1", "S1", 0.0)],
+            robot_stations={"carter1": "P1", "carter2": "P2"}, horizon=10.0)
+        mission.finish_incomplete(horizon=10.0)
+        robots = {
+            "carter1": {"phase": "request", "generation": 3, "compute_uuid": None,
+                        "follow_uuid": "denied-candidate", "leg": None},
+            "carter2": {"phase": "idle", "generation": 4, "compute_uuid": None,
+                        "follow_uuid": "held-goal-2", "leg": None},
+        }
+        retained = {
+            "carter1": {"route_id": "old", "goal_uuid": "actual-held", "generation": 3,
+                        "tiles": [[1, 1]], "tile_hash": "1" * 64},
+            "carter2": {"route_id": "old2", "goal_uuid": "held-goal-2", "generation": 4,
+                        "tiles": [[2, 2]], "tile_hash": "2" * 64},
+        }
+        record = build_cutoff_record(mission_export=mission.export(), horizon_s=10.0,
+            origin_sim_time_s=0.0, observed_sim_time_s=10.0, robots=robots,
+            retained_holds=retained)
+        first = record["robots"]["carter1"]
+        self.assertEqual("denied-candidate", first["candidate_follow_action_uuid"])
+        self.assertEqual("actual-held", first["retained_hold"]["goal_uuid"])
+
     @staticmethod
     def terminal_scene():
         return {"run_id": "run", "scenario_id": "normal", "status": "validated",

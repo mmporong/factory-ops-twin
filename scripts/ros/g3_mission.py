@@ -23,7 +23,7 @@ from factory_ops.fleet_execution import StoppedGate, make_chunk, qualify_compute
 from factory_ops.fleet_routing import RouteBook, assess_dispatch_route_compatibility, swept_tiles
 from factory_ops.visual_state import canonical_sha256, make_visual_state, project_ledger_state
 from factory_ops.g3_session import save, sha, verify_session
-from factory_ops.navigation import GoalPose, LocalizationPose, NavigationResult
+from factory_ops.navigation import GoalPose, LocalizationPose, NavigationError, NavigationResult
 from factory_ops.operations import LedgerConfig, Transition
 from factory_ops.route_reservation import RouteReservationManager
 from scripts.ros.g1_mission import LifecycleStatePoller
@@ -194,6 +194,78 @@ def stopped_odometry_record(gate: StoppedGate, *, now_s: float) -> dict[str, Any
             "stop_measurement_start_stamp_s": samples[0]["stamp_s"]}
 
 
+def cutoff_phase_classification(phase: str) -> str:
+    """Classify the only work that may remain after the evaluation horizon."""
+    if phase in {"follow_sent", "following", "stopping"}:
+        return "retained_follow_cleanup"
+    if phase in {"compute_sent", "computing"}:
+        return "planner_only_cleanup"
+    if phase in {"request", "idle", "dwell"}:
+        return "hold_only_cleanup"
+    raise ValueError(f"unsupported cutoff phase: {phase}")
+
+
+def cutoff_ledger_payload(mission_export: Mapping[str, Any]) -> dict[str, Any]:
+    """Select the logical state that must remain byte-equivalent through cleanup."""
+    return {
+        "sim_time": mission_export.get("sim_time"),
+        "completed": mission_export.get("completed"),
+        "failed": mission_export.get("failed"),
+        "censored": mission_export.get("censored"),
+        "censor": mission_export.get("censor"),
+        "completed_order_count": mission_export.get("completed_order_count"),
+        "expected_order_count": mission_export.get("expected_order_count"),
+        "active_intents": mission_export.get("active_intents"),
+        "events": mission_export.get("events"),
+        "snapshot": mission_export.get("snapshot"),
+        "navigation_journal": mission_export.get("navigation_journal"),
+    }
+
+
+def build_cutoff_record(*, mission_export: Mapping[str, Any], horizon_s: float,
+                        origin_sim_time_s: float, observed_sim_time_s: float,
+                        robots: Mapping[str, Mapping[str, Any]],
+                        retained_holds: Mapping[str, Mapping[str, Any]]) -> dict[str, Any]:
+    """Seal exact-horizon metrics before any retained physical cleanup runs."""
+    if not math.isfinite(horizon_s) or horizon_s < 0 or not math.isfinite(origin_sim_time_s):
+        raise ValueError("cutoff horizon/origin must be finite and nonnegative")
+    if observed_sim_time_s + 1e-9 < origin_sim_time_s + horizon_s:
+        raise ValueError("cutoff cannot be observed before the authored horizon")
+    if (mission_export.get("censored") is not True or mission_export.get("failed") is not False
+            or not math.isclose(float(mission_export.get("sim_time", math.nan)), horizon_s, abs_tol=1e-9)):
+        raise ValueError("cutoff requires an exact-horizon censored mission export")
+    phases: dict[str, dict[str, Any]] = {}
+    for robot in ROBOT_IDS:
+        state = robots.get(robot)
+        hold = retained_holds.get(robot)
+        if (not isinstance(state, Mapping) or not isinstance(hold, Mapping)
+                or type(hold.get("generation")) is not int or not hold.get("goal_uuid")
+                or not hold.get("tiles") or not hold.get("tile_hash")):
+            raise ValueError("cutoff robot state set differs")
+        phase = str(state.get("phase"))
+        phases[robot] = {
+            "phase_at_cutoff": phase,
+            "classification": cutoff_phase_classification(phase),
+            "candidate_generation": state.get("generation"),
+            "planner_action_uuid": state.get("compute_uuid"),
+            "candidate_follow_action_uuid": state.get("follow_uuid"),
+            "leg_id": state.get("leg", {}).get("plan").route_id if state.get("leg") else None,
+            "retained_hold": copy.deepcopy(dict(hold)),
+        }
+    frozen = cutoff_ledger_payload(mission_export)
+    return {
+        "schema_version": 1,
+        "horizon_elapsed_s": horizon_s,
+        "horizon_sim_time_s": origin_sim_time_s + horizon_s,
+        "observed_sim_time_s": observed_sim_time_s,
+        "mission_ledger_sha256": canonical_sha256(frozen),
+        "mission_state_sha256": canonical_sha256(mission_export),
+        "mission_state": copy.deepcopy(frozen),
+        "robots": phases,
+        "terminal_stops": {},
+    }
+
+
 def verify_navigation_maps(output: Path, book: RouteBook) -> dict[str, str]:
     """Recompute every PGM/YAML byte that a navigation map server can read."""
     files: dict[str, str] = {}
@@ -258,7 +330,7 @@ def main() -> int:
     book = RouteBook.from_files(project / "configs/factory-v3/layout.json", project / "configs/factory-v3/g3-routing.json")
     deadline = time.monotonic() + config["max_wall_time_s"]
     result: dict[str, Any] = {"run_id": args.run_id, "scenario_id": scenario_id, "status": "running", "stage": "wait_scene",
-                              "primary_evaluation": False, "scope": session["scope"], "ground_truth_input": False,
+                              "primary_evaluation": session["primary_evaluation"], "scope": session["scope"], "ground_truth_input": False,
                               "workload_sha256": session["workload_sha256"], "session_sha256": sha(session_root / "session.json")}
     launch = bag = ros = mission = None
     nodes: list[Any] = []
@@ -270,6 +342,16 @@ def main() -> int:
     lease_sender: Any = None
     manager = RouteReservationManager(args.run_id, ROBOT_IDS, pose_ttl_s=runtime_config["pose_ttl_s"])
     try:
+        marker_path = output / "session-verified.json"
+        if marker_path.exists() or marker_path.is_symlink():
+            raise RuntimeError("session verification marker already exists; output must be new")
+        atomic_json(marker_path, {
+            "schema_version": 1, "status": "verified", "run_id": args.run_id,
+            "scenario_id": scenario_id, "source_commit": os.environ.get("FACTORY_OPS_G3_SOURCE_COMMIT"),
+            "session_sha256": sha(session_root / "session.json"),
+            "primary_evaluation": session["primary_evaluation"], "scope": session["scope"],
+            "primary_inputs_sha256": os.environ.get("FACTORY_OPS_G3_PRIMARY_INPUTS_SHA256"),
+        })
         while not (output / "sim-ready.json").is_file():
             if time.monotonic() >= deadline:
                 raise TimeoutError("G3 scene did not become ready")
@@ -281,6 +363,7 @@ def main() -> int:
         params_path, maps = prepare_params(project, output, session_root, session, ready, book, config)
         result["inputs"] = {name: {"path": str(path), "sha256": sha(path)} for name, path in {
             "mission_source": Path(__file__).resolve(), "session": session_root / "session.json",
+            "session_verification": output / "session-verified.json",
             "visual_state_source": project / "factory_ops/visual_state.py",
             "generated_params": params_path, "config": session_root / "config.json",
             "nav2_template": project / "configs/factory-v3/nav2-g2.yaml"}.items()}
@@ -424,19 +507,27 @@ def main() -> int:
                 route_cursor = row["event_sequence"]
             logs["route-events"].flush()
 
-        def lease(robot: str, *, forced_mode: str | None = None) -> int:
+        def lease(robot: str, *, forced_mode: str | None = None,
+                  hold_binding: Mapping[str, Any] | None = None) -> int:
             rt = robots[robot]
             navigate = forced_mode is None and rt["phase"] == "following" and manager.permission(robot, rt["generation"], rt["follow_uuid"], now_s=now())
             drain_routes()
             mode = forced_mode or ("navigate" if navigate else "hold")
             rt["sequence"] += 1
             chunk = rt.get("chunk")
+            generation = hold_binding.get("generation") if hold_binding is not None else rt["generation"]
+            goal_uuid = hold_binding.get("goal_uuid") if hold_binding is not None else rt.get("follow_uuid")
+            route_id = hold_binding.get("route_id") if hold_binding is not None else (chunk.route_id if chunk is not None else None)
+            tile_hash = (hold_binding.get("tile_hash") if hold_binding is not None else
+                         hashlib.sha256(json.dumps(sorted(rt["held_tiles"]), separators=(",", ":")).encode()).hexdigest())
             payload = make_authorization(run_id=args.run_id, scenario_id=scenario_id, robot_id=robot,
                     sequence=rt["sequence"], now_s=now(), ttl_s=config["authorization_ttl_s"], mode=mode, decision_event_seq=route_cursor,
-                    route_id=chunk.route_id if chunk is not None else None,
-                    goal_uuid=rt.get("follow_uuid"), reservation_id=rt["generation"], resources=("G3_FULL_LEG",), exit_id="G3_FULL_LEG:end")
-            payload["scope"].update({"reservation_generation": rt["generation"], "leg_id": rt["leg"]["plan"].route_id if rt["leg"] else None,
-                "path_content_sha256": rt.get("path_hash"), "tile_hash": hashlib.sha256(json.dumps(sorted(rt["held_tiles"]), separators=(",", ":")).encode()).hexdigest()})
+                    route_id=route_id, goal_uuid=goal_uuid, reservation_id=generation,
+                    resources=("G3_FULL_LEG",), exit_id="G3_FULL_LEG:end")
+            payload["scope"].update({"reservation_generation": generation,
+                "leg_id": route_id if hold_binding is not None else (rt["leg"]["plan"].route_id if rt["leg"] else None),
+                "path_content_sha256": None if hold_binding is not None else rt.get("path_hash"),
+                "tile_hash": tile_hash})
             atomic_json(output / "robots" / robot / "authorization.json", payload)
             line = json.dumps(payload, allow_nan=False)
             logs["authorizations"].write(line + "\n"); logs["authorizations"].flush()
@@ -513,6 +604,7 @@ def main() -> int:
             if not decision.granted:
                 raise RuntimeError("initial stationary footprint hold failed")
             rt["generation"], rt["held_tiles"] = decision.generation, held
+            rt["follow_uuid"] = decision.goal_uuid
         drain_routes()
         expected_initial: dict[str, dict[str, Any]] = {}
         for robot, rt in robots.items():
@@ -558,8 +650,11 @@ def main() -> int:
         dispatch_pair_fingerprints: dict[tuple[str, str], str] = {}
         visual_projection: dict[str, Any] | None = None
         visual_sequence = 0
+        cutoff: dict[str, Any] | None = None
 
         def new_leg(robot: str, target: str, intent: Any = None) -> None:
+            if cutoff is not None:
+                raise RuntimeError("new navigation legs are forbidden after evaluation cutoff")
             rt = robots[robot]
             plan = book.plan(rt["anchor"], target, closed=current_closed)
             full_tiles = swept_tiles(plan.points, reservation_radius, tile_size_m=book.tile_size_m, bounds_xy=bounds)
@@ -571,15 +666,69 @@ def main() -> int:
             journal("leg_requested", {"robot_id": robot, "leg_id": plan.route_id, "kind_of_leg": rt["leg"]["kind"], "start": rt["anchor"], "target": target,
                     "nodes": plan.nodes, "tiles": sorted(full_tiles), "mission_goal_uuid": intent.goal_id if intent else None})
 
+        def begin_cutoff_stop(robot: str, stamp: float, classification: str) -> None:
+            rt = robots[robot]
+            assert cutoff is not None
+            binding = cutoff["robots"][robot]["retained_hold"]
+            rt["phase"] = "cutoff_stopping"
+            rt["stop_after"] = None
+            rt["stop_gate"].reset()
+            rt["stop_samples"] = []
+            rt["hold_sequence"] = lease(robot, forced_mode="hold", hold_binding=binding)
+            rt["stop_wait_started"] = stamp
+            rt["cutoff_classification"] = classification
+            rt["cutoff_hold_binding"] = binding
+            journal("cutoff_hold_requested", {"robot_id": robot, "classification": classification,
+                    "generation": binding["generation"], "goal_uuid": binding["goal_uuid"],
+                    "candidate_goal_uuid": rt.get("follow_uuid")})
+
         result["stage"] = "orders"
         while True:
             stamp = tick(require_fresh=True)
             elapsed = stamp-origin
+            horizon = float(session["workload"]["horizon_s"])
+            if cutoff is None and elapsed >= horizon and not mission.completed:
+                try:
+                    mission.finish_incomplete(horizon=horizon)
+                except NavigationError as error:
+                    if not mission.completed or str(error) != "completed mission cannot be censored":
+                        raise
+                    completed_at = horizon
+                    journal("orders_completed", {"completed_orders": mission.completed_order_count,
+                            "elapsed_sim_s": completed_at, "at_horizon_boundary": True})
+                else:
+                    frozen = mission.export()
+                    retained_holds = manager.snapshot(now_s=stamp).get("holds", {})
+                    cutoff = build_cutoff_record(mission_export=frozen, horizon_s=horizon,
+                        origin_sim_time_s=origin, observed_sim_time_s=stamp, robots=robots,
+                        retained_holds=retained_holds)
+                    cutoff["event_seq"] = event_seq + 1
+                    result["cutoff"] = cutoff
+                    journal("evaluation_cutoff", {key: value for key, value in cutoff.items()
+                            if key not in {"mission_state", "terminal_stops"}})
+                    for robot, rt in robots.items():
+                        classification = cutoff["robots"][robot]["classification"]
+                        record = rt.get("record")
+                        if (isinstance(record, dict)
+                                and (classification != "hold_only_cleanup" or rt["phase"] == "dwell")):
+                            record["cutoff_classification"] = classification
+                            record["cutoff_horizon_sim_time_s"] = cutoff["horizon_sim_time_s"]
+                            record["cutoff_ledger_sha256"] = cutoff["mission_ledger_sha256"]
+                        if classification == "hold_only_cleanup":
+                            begin_cutoff_stop(robot, stamp, classification)
+                        elif rt["phase"] == "stopping":
+                            binding = cutoff["robots"][robot]["retained_hold"]
+                            rt["stop_after"] = None
+                            rt["stop_gate"].reset()
+                            rt["stop_samples"] = []
+                            rt["hold_sequence"] = lease(robot, forced_mode="hold", hold_binding=binding)
+                            rt["stop_wait_started"] = stamp
+                            rt["cutoff_hold_binding"] = binding
             scene_state = json.loads((output / "scene-state.json").read_text(encoding="utf-8"))
             if scene_state.get("run_id") != args.run_id or scene_state.get("scenario_id") != scenario_id or type(scene_state.get("current_closed")) is not bool:
                 raise RuntimeError("G3 current scene-state identity differs")
             observed_closed = scene_state["current_closed"]
-            if observed_closed != current_closed:
+            if observed_closed != current_closed and cutoff is None:
                 if verify_navigation_maps(output, book) != result["navigation_map_files"]:
                     raise RuntimeError("navigation maps changed before LoadMap")
                 current_closed = observed_closed
@@ -598,12 +747,8 @@ def main() -> int:
                         rt["map_future"] = None
                     else:
                         maps_ready = False
-            if elapsed > session["workload"]["horizon_s"]:
-                if not mission.completed:
-                    mission.finish_incomplete()
-                raise TimeoutError("G3 qualification/pilot horizon reached; incomplete work retained")
             if elapsed-last_update >= .1:
-                if not mission.completed:
+                if cutoff is None and not mission.completed:
                     mission.advance(elapsed)
                 last_update = elapsed
             for robot, rt in robots.items():
@@ -685,12 +830,24 @@ def main() -> int:
                         raise RuntimeError("computed Path leaves full-leg reservation")
                     rt["path_hash"] = path_content_sha256(payload)
                     rt["record"].update({"path": payload, "path_geometry": geometry, "path_content_sha256": rt["path_hash"], "planner_status": 4, "planner_error_code": 0})
+                    if cutoff is not None:
+                        rt["record"].update({"cutoff_classification": "planner_only_cleanup",
+                            "planner_terminal_sim_time_s": stamp,
+                            "cutoff_horizon_sim_time_s": cutoff["horizon_sim_time_s"],
+                            "cutoff_ledger_sha256": cutoff["mission_ledger_sha256"]})
+                        journal("planner_only_cutoff_result", {"robot_id": robot,
+                                "planner_action_uuid": rt["compute_uuid"],
+                                "path_content_sha256": rt["path_hash"],
+                                "cutoff_horizon_sim_time_s": cutoff["horizon_sim_time_s"]})
+                        begin_cutoff_stop(robot, stamp, "planner_only_cleanup")
+                        continue
                     request = FollowPath.Goal(); request.path = path
                     request.controller_id = "FollowPath"; request.goal_checker_id = "goal_checker"; request.progress_checker_id = "progress_checker"
                     follow_path_hash = path_content_sha256(path_payload(request.path))
                     if follow_path_hash != rt["path_hash"]:
                         raise RuntimeError("FollowPath goal mutated the admitted planner Path")
                     rt["record"]["follow_goal_path_content_sha256"] = follow_path_hash
+                    rt["record"]["follow_goal_sent_sim_time_s"] = stamp
                     rt["send_future"] = rt["follow"].send_goal_async(request, goal_uuid=GoalUUID(uuid=list(UUID(rt["follow_uuid"]).bytes)))
                     rt["phase"] = "follow_sent"
                     journal("follow_goal_sent", rt["record"])
@@ -726,7 +883,21 @@ def main() -> int:
                         rt["record"]["arrival_pose"] = dict(pose)
                         rt["stop_after"] = None
                         rt["anchor"] = rt["chunk"].goal
-                        if not rt["chunk"].final:
+                        if cutoff is not None:
+                            binding = cutoff["robots"][robot]["retained_hold"]
+                            rt["record"]["cutoff_cleanup_finished_sim_time_s"] = stamp
+                            cutoff["terminal_stops"][robot] = {
+                                "classification": "retained_follow_cleanup",
+                                "robot_id": robot, "generation": binding["generation"],
+                                "follow_action_uuid": binding["goal_uuid"],
+                                "candidate_follow_action_uuid": rt["follow_uuid"],
+                                "hold_ack": copy.deepcopy(rt["record"]["hold_ack"]),
+                                "stopped_sim_time_s": rt["record"]["stopped_sim_time_s"],
+                                "stop_measurement_start_stamp_s": rt["record"]["stop_measurement_start_stamp_s"],
+                                "stopped_odometry": copy.deepcopy(rt["record"]["stopped_odometry"]),
+                            }
+                            rt["phase"] = "cutoff_stationary"
+                        elif not rt["chunk"].final:
                             rt["chunk"] = None; rt["phase"] = "request"; rt["last_request"] = -math.inf
                         elif rt["leg"]["kind"] == "clearing":
                             held = tiles_at(book.nodes[rt["anchor"]], reservation_radius)
@@ -739,6 +910,32 @@ def main() -> int:
                         else:
                             rt["phase"] = "dwell"; rt["dwell_until"] = stamp + load["dwell_s"]
                         journal("edge_stopped", rt["record"])
+                elif phase == "cutoff_stopping":
+                    assert cutoff is not None
+                    binding = rt["cutoff_hold_binding"]
+                    ack_path = output / "robots" / robot / "control-ack.json"
+                    if ack_path.is_file():
+                        ack = json.loads(ack_path.read_text(encoding="utf-8"))
+                        if valid_hold_ack(ack, run_id=args.run_id, scenario_id=scenario_id, robot_id=robot,
+                                          minimum_sequence=rt["hold_sequence"], generation=binding["generation"],
+                                          goal_uuid=binding["goal_uuid"], terminal_time_s=cutoff["observed_sim_time_s"], now_s=stamp):
+                            if rt["stop_after"] is None:
+                                rt["stop_after"] = ack["evaluation_sim_time_s"]
+                                rt["cutoff_hold_ack"] = ack
+                    if stamp-rt["stop_wait_started"] > 30:
+                        raise TimeoutError("cutoff hold acknowledgment / fresh odometry stop failed")
+                    if rt["stop_after"] is not None and rt["stop_gate"].is_stopped(now_s=stamp):
+                        stopped = stopped_odometry_record(rt["stop_gate"], now_s=stamp)
+                        cutoff["terminal_stops"][robot] = {
+                            "classification": rt["cutoff_classification"], "robot_id": robot,
+                            "generation": binding["generation"], "follow_action_uuid": binding["goal_uuid"],
+                            "candidate_follow_action_uuid": rt.get("follow_uuid"),
+                            "hold_ack": copy.deepcopy(rt["cutoff_hold_ack"]), **stopped,
+                        }
+                        rt["phase"] = "cutoff_stationary"
+                        journal("cutoff_stationary", {"robot_id": robot,
+                                "classification": rt["cutoff_classification"],
+                                "stopped_sim_time_s": stopped["stopped_sim_time_s"]})
                 elif phase == "dwell" and stamp >= rt["dwell_until"]:
                     intent = rt["leg"]["intent"]
                     pose = rt["pose"]
@@ -753,7 +950,7 @@ def main() -> int:
                 if rt["phase"] in {"compute_sent", "computing", "follow_sent", "following"} and stamp-rt["phase_started"] > runtime_config["chunk_timeout_s"]:
                     raise TimeoutError(f"G3 chunk action deadline: {robot}")
             eligible = [robot for robot, rt in robots.items() if rt["phase"] == "idle" and rt["leg"] is None]
-            if not mission.completed:
+            if cutoff is None and not mission.completed:
                 route_snapshot = manager.snapshot(now_s=stamp)
                 assessments = {}
                 for task in mission.ledger.ready_tasks:
@@ -804,7 +1001,7 @@ def main() -> int:
                         "policy": session["policy"],
                         "mission_goal_uuid": intent.goal_id,
                     })
-            for robot in eligible:
+            for robot in eligible if cutoff is None else ():
                 intent = mission.active_intents.get(robot)
                 if intent is not None:
                     new_leg(robot, intent.station, intent)
@@ -819,8 +1016,10 @@ def main() -> int:
                     ("sequence", "ledger_seq", "event_hash", "emitted_sim_time_ns", "projection_sha256")})
                 visual_projection = projected
                 visual_sequence += 1
-            if manager.detect_wait_cycle(now_s=stamp):
+            if cutoff is None and manager.detect_wait_cycle(now_s=stamp):
                 raise RuntimeError("persistent full-leg wait cycle; preserve reservations and fail-stop")
+            if cutoff is not None and all(rt["phase"] == "cutoff_stationary" for rt in robots.values()):
+                break
             if mission.completed and completed_at is None:
                 completed_at = elapsed
                 journal("orders_completed", {"completed_orders": mission.completed_order_count, "elapsed_sim_s": completed_at})
@@ -831,9 +1030,12 @@ def main() -> int:
                      "completed_orders": mission.completed_order_count, "released_orders": mission.released_order_count,
                      "robots": {robot: {"phase": rt["phase"], "anchor": rt["anchor"], "target": rt["leg"]["target"] if rt["leg"] else None, "generation": rt["generation"]} for robot, rt in robots.items()}})
                 last_progress = elapsed
-        for robot in ROBOT_IDS:
-            lease(robot, forced_mode="hold")
-        journal("scenario_complete", {"completed_orders": mission.completed_order_count})
+        if cutoff is None:
+            for robot in ROBOT_IDS:
+                lease(robot, forced_mode="hold")
+        terminal_kind = "scenario_complete" if mission.completed else "scenario_incomplete"
+        journal(terminal_kind, {"completed_orders": mission.completed_order_count,
+                "cutoff_ledger_sha256": cutoff.get("mission_ledger_sha256") if cutoff else None})
         flush_started = now()
         while now()-flush_started < .2:
             tick(require_fresh=True)
@@ -854,6 +1056,7 @@ def main() -> int:
         result.update({"status": "passed", "stage": "complete", "origin_sim_time_s": origin,
             "terminal_recording": terminal_boundary,
             "completed_orders_sim_s": completed_at, "mission": mission.export(), "actions": history,
+            "trial_outcome": "completed" if mission.completed else "incomplete",
             "route_snapshot": manager.snapshot(now_s=now()), "physical_anchor_by_robot": {robot: rt["anchor"] for robot, rt in robots.items()},
             "scan_counts": {robot: rt["scan_counts"] for robot, rt in robots.items()}, "scan_epoch_ns": scan_epoch_ns,
             "odom_counts": {robot: rt["odom_count"] for robot, rt in robots.items()}, "bag_topics_requested": bag_topics,

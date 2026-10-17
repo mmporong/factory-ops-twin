@@ -9,6 +9,7 @@ import tempfile
 import unittest
 from uuid import uuid4
 
+from factory_ops.fleet import FleetMission, FleetOrder
 from factory_ops.fleet_execution import make_chunk, path_content_sha256, qualify_computed_path
 from factory_ops.fleet_routing import RouteBook
 from factory_ops.fleet_routing import swept_tiles
@@ -24,12 +25,14 @@ from scripts.ros.g3_evidence import (
     validate_follow_rpc,
     validate_handoff_bindings,
     validate_initial_hold_barrier,
+    validate_incomplete_cutoff,
     validate_navigation_maps,
     validate_route_event_binding,
     validate_scene_closure,
     validate_stop_evidence,
     validate_terminal_recording,
 )
+from scripts.ros.g3_mission import build_cutoff_record
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -38,6 +41,45 @@ SCENARIO = "QUALIFICATION_NORMAL"
 
 
 class G3EvidenceHelperTests(unittest.TestCase):
+    def test_incomplete_cutoff_replays_frozen_ledger_and_rejects_post_horizon_work(self):
+        fleet = FleetMission("run", [FleetOrder("O1", "P1", "S1", 0.0)],
+            robot_stations={"carter1": "P1", "carter2": "P2"}, horizon=10.0)
+        fleet.finish_incomplete(horizon=10.0)
+        robots = {robot: {"phase": "idle", "generation": index, "compute_uuid": None,
+                          "follow_uuid": f"goal-{index}", "leg": None}
+                  for index, robot in enumerate(("carter1", "carter2"), 1)}
+        retained = {robot: {"route_id": f"held-{index}", "goal_uuid": f"goal-{index}",
+                            "generation": index, "tiles": [[index, 0]], "tile_hash": str(index) * 64}
+                    for index, robot in enumerate(("carter1", "carter2"), 1)}
+        cutoff = build_cutoff_record(mission_export=fleet.export(), horizon_s=10.0,
+            origin_sim_time_s=100.0, observed_sim_time_s=110.01, robots=robots,
+            retained_holds=retained)
+        cutoff["event_seq"] = 1
+        cutoff["terminal_stops"] = {robot: {"generation": index, "follow_action_uuid": f"goal-{index}"}
+                                     for index, robot in enumerate(("carter1", "carter2"), 1)}
+        result = {"origin_sim_time_s": 100.0, "mission": fleet.export(), "cutoff": cutoff,
+                  "route_snapshot": {"holds": {robot: {"route_id": f"held-{index}",
+                                                          "generation": index, "goal_uuid": f"goal-{index}",
+                                                          "tiles": [[index, 0]], "tile_hash": str(index) * 64}
+                                      for index, robot in enumerate(("carter1", "carter2"), 1)}}}
+        session = {"workload": {"horizon_s": 10.0}}
+        errors: list[str] = []
+        cutoff_event = {"event_seq": 1, "kind": "evaluation_cutoff", "sim_time_s": 110.01,
+                        **{key: value for key, value in cutoff.items()
+                           if key not in {"mission_state", "terminal_stops"}}}
+        report = validate_incomplete_cutoff(result, session, [], [cutoff_event], errors)
+        self.assertEqual([], errors)
+        self.assertEqual(0, report["late_work_count"])
+        failures: list[str] = []
+        validate_incomplete_cutoff(result, session, [], [cutoff_event,
+            {"event_seq": 2, "kind": "follow_goal_sent", "sim_time_s": 110.01}], failures)
+        self.assertTrue(failures)
+        forged = deepcopy(result)
+        forged["mission"]["snapshot"]["orders"]["O1"]["state"] = "complete"
+        failures = []
+        validate_incomplete_cutoff(forged, session, [], [cutoff_event], failures)
+        self.assertTrue(failures)
+
     @staticmethod
     def terminal_recording_fixture():
         stamp = {"sec": 5, "nanosec": 500_000_000}
@@ -289,6 +331,28 @@ class G3EvidenceHelperTests(unittest.TestCase):
         cdr_errors: list[str] = []
         validate_actions([action], self.book, different_cdr, cdr_errors)
         self.assertEqual(cdr_errors, [])
+
+    def test_planner_only_cutoff_keeps_path_but_has_no_follow_or_handoff(self) -> None:
+        action, bag = self.action_fixture()
+        action["cutoff_classification"] = "planner_only_cleanup"
+        action["cutoff_horizon_sim_time_s"] = 1.15
+        action["planner_terminal_sim_time_s"] = 1.2
+        for key in ("follow_goal_path_content_sha256", "server_accepted_stamp", "error_msg",
+                    "status", "error_code", "accepted_sim_time_s"):
+            action.pop(key)
+        bag["goal_statuses"]["/carter1/follow_path/_action/status"] = {}
+        bag["topic_counts"]["/carter1/received_global_plan"] = 0
+        errors: list[str] = []
+        self.assertEqual(validate_actions([action], self.book, bag, errors)["action_count"], 1)
+        self.assertEqual([], errors)
+        rpc_errors: list[str] = []
+        self.assertEqual(validate_follow_rpc([action], {"follow_rpc": {}}, rpc_errors)["action_count"], 1)
+        self.assertEqual([], rpc_errors)
+        forged = deepcopy(action)
+        forged["receipt"] = {"accepted": True}
+        failures: list[str] = []
+        validate_actions([forged], self.book, bag, failures)
+        self.assertTrue(failures)
 
     def test_stop_window_requires_applied_hold_fresh_odom_and_dwell(self) -> None:
         action, _ = self.action_fixture()
@@ -634,6 +698,35 @@ class G3EvidenceHelperTests(unittest.TestCase):
         validate_handoff_bindings(forged, [action], self.book, runtime, failures)
         self.assertTrue(failures)
 
+    def test_incomplete_cutoff_allows_only_explicit_uncommitted_final_business_suffix(self) -> None:
+        action = {"robot_id": "carter1", "leg_kind": "business", "chunk": {"final": True},
+                  "cutoff_classification": "retained_follow_cleanup"}
+        mission = {"mission": {"events": [], "navigation_journal": []}}
+        runtime = {"pose_ttl_s": .5, "station_xy_tolerance_m": .25,
+                   "station_yaw_tolerance_rad": .25, "anchor_yaw_rad": {}}
+        errors: list[str] = []
+        report = validate_handoff_bindings(mission, [action], self.book, runtime, errors, incomplete=True)
+        self.assertEqual([], errors)
+        self.assertEqual(1, report["uncommitted_cutoff_action_count"])
+        for incomplete, classification in ((False, "retained_follow_cleanup"), (True, None)):
+            forged = deepcopy(action)
+            if classification is None:
+                forged.pop("cutoff_classification")
+            else:
+                forged["cutoff_classification"] = classification
+            failures: list[str] = []
+            validate_handoff_bindings(mission, [forged], self.book, runtime, failures, incomplete=incomplete)
+            self.assertTrue(failures)
+        planner = deepcopy(action)
+        planner["cutoff_classification"] = "planner_only_cleanup"
+        planner_report = validate_handoff_bindings(
+            mission, [planner], self.book, runtime, errors := [], incomplete=True,
+        )
+        self.assertEqual([], errors)
+        self.assertEqual(1, planner_report["planner_only_cutoff_action_count"])
+        failures = []
+        validate_handoff_bindings(mission, [planner], self.book, runtime, failures, incomplete=False)
+        self.assertTrue(failures)
     def test_final_parking_rederives_private_pocket_tiles_and_last_shrink(self) -> None:
         manager = RouteReservationManager(RUN_ID, ("carter1", "carter2"))
         radius = self.book.planning_radius_m + .3
