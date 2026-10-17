@@ -11,7 +11,7 @@ import os
 from pathlib import Path
 import re
 import sys
-from typing import Any
+from typing import Any, Mapping
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from factory_ops.g3_session import verify_session
@@ -44,6 +44,8 @@ class BarrierLifecycle:
         self.last_media_due_frame: int | None = None
         self.pending_media_sample: dict[str, Any] | None = None
         self.media_journal_opened = False
+        self.rgb_render_products: tuple[Any, Any, Any] | None = None
+        self.rgb_render_state = "unregistered"
 
     def _load_real_time_media_profile(self) -> dict[str, Any] | None:
         config_path = self.session_root / "config.json"
@@ -251,8 +253,83 @@ class BarrierLifecycle:
                             "coordinate_frame": "world" if path.startswith("/World/Factory") else "robot chassis_link"})
         return {"source": str(profile_path.name), "source_sha256": g2_scene.base._sha256(profile_path), "cameras": records}
 
+    def _set_rgb_updates(self, enabled: bool) -> None:
+        if self.rgb_render_products is None:
+            raise RuntimeError("G3 RGB render products are not registered")
+        errors: list[BaseException] = []
+        for product in self.rgb_render_products:
+            try:
+                product.hydra_texture.set_updates_enabled(enabled)
+            except BaseException as error:
+                errors.append(error)
+        if errors:
+            primary = errors[0]
+            for error in errors[1:]:
+                primary.add_note(f"additional RGB update failure: {type(error).__name__}: {error}")
+            raise primary
+
+    def register_rgb_render_products(self, products_by_role: Mapping[str, Any]) -> dict[str, Any]:
+        if self.rgb_render_state != "unregistered":
+            raise RuntimeError("G3 RGB render products were already registered")
+        roles = ("portfolio_overview", "carter1_follow", "carter2_follow")
+        if set(products_by_role) != set(roles):
+            raise ValueError("G3 requires exactly the three named RGB render product roles")
+        products = tuple(products_by_role[role] for role in roles)
+        if len({id(product) for product in products}) != 3:
+            raise ValueError("G3 requires three unique RGB render products")
+        for product in products:
+            setter = getattr(getattr(product, "hydra_texture", None), "set_updates_enabled", None)
+            if not callable(setter):
+                raise ValueError("G3 RGB render product update control is unavailable")
+        self.rgb_render_products = (products[0], products[1], products[2])
+        try:
+            self._set_rgb_updates(False)
+        except BaseException:
+            self.rgb_render_state = "failed"
+            raise
+        self.rgb_render_state = "disabled"
+        return {
+            "roles": list(roles),
+            "requested_state_between_captures": "disabled",
+            "state_readback": "SDK setter has no readback",
+        }
+
     def before_capture(self, rep: Any) -> None:
-        rep.orchestrator.step(delta_time=0.0, rt_subframes=4)
+        if self.rgb_render_state != "disabled":
+            raise RuntimeError("G3 RGB render products are not disabled before capture")
+        try:
+            self._set_rgb_updates(True)
+            self.rgb_render_state = "enabled"
+            rep.orchestrator.step(delta_time=0.0, rt_subframes=4)
+        except BaseException as error:
+            self.rgb_render_state = "failed"
+            try:
+                self._set_rgb_updates(False)
+            except BaseException as cleanup_error:
+                error.add_note(
+                    f"RGB update rollback failed: {type(cleanup_error).__name__}: {cleanup_error}"
+                )
+            raise
+
+    def after_capture(self) -> None:
+        if self.rgb_render_products is None:
+            raise RuntimeError("G3 RGB render products are not registered")
+        try:
+            self._set_rgb_updates(False)
+        except BaseException:
+            self.rgb_render_state = "failed"
+            raise
+        self.rgb_render_state = "disabled"
+
+    def cleanup_render_products(self) -> None:
+        if self.rgb_render_products is None:
+            return
+        try:
+            self._set_rgb_updates(False)
+        except BaseException:
+            self.rgb_render_state = "failed"
+            raise
+        self.rgb_render_state = "closed"
 
     def capture_metadata(self) -> dict[str, Any]:
         assert self.visuals is not None

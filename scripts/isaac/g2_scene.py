@@ -511,6 +511,58 @@ def _capture_frame(
     }
 
 
+def _capture_frame_with_extension(
+    *, output: Path, session: CaptureSession, second_rgb: Any, robots: Mapping[str, dict[str, Any]],
+    SimulationManager: Any, np: Any, Image: Any, index: int, rep: Any, scene_extension: Any,
+) -> dict[str, Any]:
+    before_hook = getattr(scene_extension, "before_capture", None)
+    after_hook = getattr(scene_extension, "after_capture", None)
+    if not callable(before_hook) and not callable(after_hook):
+        return _capture_frame(
+            output=output, session=session, second_rgb=second_rgb, robots=robots,
+            SimulationManager=SimulationManager, np=np, Image=Image, index=index,
+        )
+    if not callable(before_hook) or not callable(after_hook):
+        raise base.SmokeError("industrial render update hooks must provide a before/after pair")
+
+    before_time = float(SimulationManager.get_simulation_time())
+    before_frame = int(SimulationManager.get_num_physics_steps())
+    before_poses = {robot_id: _pose(runtime["robot"]) for robot_id, runtime in robots.items()}
+    primary_error: BaseException | None = None
+    captured: dict[str, Any] | None = None
+    try:
+        before_hook(rep)
+        captured = _capture_frame(
+            output=output, session=session, second_rgb=second_rgb, robots=robots,
+            SimulationManager=SimulationManager, np=np, Image=Image, index=index,
+        )
+    except BaseException as error:
+        primary_error = error
+    finally:
+        try:
+            after_hook()
+        except BaseException as error:
+            if primary_error is None:
+                primary_error = error
+            else:
+                primary_error.add_note(f"render product disable failed: {type(error).__name__}: {error}")
+        try:
+            after_poses = {robot_id: _pose(runtime["robot"]) for robot_id, runtime in robots.items()}
+            if (abs(float(SimulationManager.get_simulation_time()) - before_time) > 1e-8
+                    or int(SimulationManager.get_num_physics_steps()) != before_frame
+                    or after_poses != before_poses):
+                raise base.SmokeError("industrial capture hooks advanced the frozen simulation state")
+        except BaseException as error:
+            if primary_error is None:
+                primary_error = error
+            else:
+                primary_error.add_note(f"frozen-state validation failed: {type(error).__name__}: {error}")
+    if primary_error is not None:
+        raise primary_error
+    assert captured is not None
+    return captured
+
+
 def _ready_payload(
     *, run_id: str, scenario_id: str, sim_time_s: float, config: Mapping[str, Any],
     scenario: Mapping[str, Any], robots: Mapping[str, dict[str, Any]], lidar_metadata: Sequence[Mapping[str, Any]],
@@ -563,6 +615,8 @@ def _run(
     lidar_sensors: list[Any] = []
     robots: dict[str, dict[str, Any]] = {}
     robot_handles: dict[str, Any] = {}
+    render_products_registered = False
+    render_products_cleaned = False
     valid = False
     phase = "preflight"
     result: dict[str, Any] = {
@@ -733,6 +787,14 @@ def _run(
         camera_hook = getattr(scene_extension, "configure_cameras", None)
         if callable(camera_hook):
             result["scene_extension"]["camera_overrides"] = camera_hook(stage, session, second_spec, UsdGeom, Gf)
+        render_products_hook = getattr(scene_extension, "register_rgb_render_products", None)
+        if callable(render_products_hook):
+            render_products_registered = True
+            result["scene_extension"]["rgb_render_updates"] = render_products_hook({
+                "portfolio_overview": session.overview_product,
+                "carter1_follow": session.medium_product,
+                "carter2_follow": second_product,
+            })
 
         checkpoint("ros_and_lidars")
         rclpy, clock_node, clock_stamps = _clock_graph(stage, app)
@@ -939,15 +1001,10 @@ def _run(
                 capture_due = True
             if capture_due:
                 timeline.pause()
-                before_capture_hook = getattr(scene_extension, "before_capture", None)
-                if callable(before_capture_hook):
-                    before_capture_hook(rep)
-                    if (int(SimulationManager.get_num_physics_steps()) != physics_frame
-                            or abs(float(SimulationManager.get_simulation_time()) - stamp) > 1e-8):
-                        raise base.SmokeError("industrial render flush advanced the frozen physics frame")
-                captured = _capture_frame(
+                captured = _capture_frame_with_extension(
                     output=output, session=session, second_rgb=second_rgb, robots=robots,
                     SimulationManager=SimulationManager, np=np, Image=Image, index=len(frames),
+                    rep=rep, scene_extension=scene_extension,
                 )
                 capture_metadata_hook = getattr(scene_extension, "capture_metadata", None)
                 if callable(capture_metadata_hook):
@@ -966,6 +1023,10 @@ def _run(
             runtime["robot"].apply_wheel_actions(np.zeros(2, dtype=np.float32))
         timeline.pause()
         rep.orchestrator.set_capture_on_play(False)
+        render_products_cleanup = getattr(scene_extension, "cleanup_render_products", None)
+        if render_products_registered and callable(render_products_cleanup):
+            render_products_cleanup()
+            render_products_cleaned = True
         session.close()
         session = None
         result["mission_control"] = mission
@@ -1030,7 +1091,12 @@ def _run(
             result["cleanup_fault_response"] = cleanup_fault_response
         actions = []
         if session is not None and rep is not None:
-            actions.extend([lambda: rep.orchestrator.set_capture_on_play(False), session.close])
+            actions.append(lambda: rep.orchestrator.set_capture_on_play(False))
+        render_products_cleanup = getattr(scene_extension, "cleanup_render_products", None)
+        if render_products_registered and not render_products_cleaned and callable(render_products_cleanup):
+            actions.append(render_products_cleanup)
+        if session is not None:
+            actions.append(session.close)
         for sensor in lidar_sensors:
             actions.append(lambda active=sensor: active.detach_writer("RtxLidarROS2PublishLaserScan"))
         actions.extend(node.destroy_node for node in robot_nodes)

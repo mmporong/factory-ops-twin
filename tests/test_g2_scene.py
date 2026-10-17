@@ -6,7 +6,7 @@ from pathlib import Path
 import tempfile
 from types import SimpleNamespace
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 from factory_ops.motion_authorization import AuthorizationState
 from scripts.isaac.g2_scene import (
@@ -14,6 +14,7 @@ from scripts.isaac.g2_scene import (
     _authorization_record,
     _command_audit_snapshot,
     _control_decision,
+    _capture_frame_with_extension,
     _create_robot,
     _load_inputs,
     _read_mission,
@@ -26,6 +27,122 @@ from scripts.isaac.stage_smoke import SmokeError
 
 
 class G2SceneTests(unittest.TestCase):
+    @staticmethod
+    def _capture_fixture():
+        class SimulationManager:
+            simulation_time = 12.5
+            physics_frame = 750
+
+            @classmethod
+            def get_simulation_time(cls) -> float:
+                return cls.simulation_time
+
+            @classmethod
+            def get_num_physics_steps(cls) -> int:
+                return cls.physics_frame
+
+        robot = object()
+        return SimulationManager, {"carter1": {"robot": robot}}, robot
+
+    def test_capture_extension_wraps_rgb_read_and_preserves_default_without_hooks(self) -> None:
+        manager, robots, robot = self._capture_fixture()
+        captured = {"index": 4}
+        events: list[str] = []
+
+        class Extension:
+            @staticmethod
+            def before_capture(_rep: object) -> None:
+                events.append("enable_and_step")
+
+            @staticmethod
+            def after_capture() -> None:
+                events.append("disable")
+
+        with patch("scripts.isaac.g2_scene._pose", return_value=([1.0, 2.0, 0.0], [1.0, 0.0, 0.0, 0.0])), \
+                patch("scripts.isaac.g2_scene._capture_frame", side_effect=lambda **_kwargs: (
+                    events.append("read_rgb_and_ground_truth") or captured
+                )) as capture:
+            result = _capture_frame_with_extension(
+                output=Path("unused"), session=Mock(), second_rgb=object(), robots=robots,
+                SimulationManager=manager, np=object(), Image=object(), index=4,
+                rep=object(), scene_extension=Extension(),
+            )
+            self.assertIs(result, captured)
+            self.assertEqual(events, ["enable_and_step", "read_rgb_and_ground_truth", "disable"])
+
+            events.clear()
+            result = _capture_frame_with_extension(
+                output=Path("unused"), session=Mock(), second_rgb=object(), robots=robots,
+                SimulationManager=manager, np=object(), Image=object(), index=5,
+                rep=object(), scene_extension=None,
+            )
+            self.assertIs(result, captured)
+            self.assertEqual(events, ["read_rgb_and_ground_truth"])
+            self.assertEqual(capture.call_count, 2)
+        self.assertIsNotNone(robot)
+
+    def test_capture_extension_disables_after_read_failure_and_rejects_state_change(self) -> None:
+        manager, robots, _robot = self._capture_fixture()
+        extension = SimpleNamespace(before_capture=Mock(), after_capture=Mock())
+        with patch("scripts.isaac.g2_scene._pose", return_value=([0.0, 0.0, 0.0], [1.0, 0.0, 0.0, 0.0])), \
+                patch("scripts.isaac.g2_scene._capture_frame", side_effect=RuntimeError("RGB read failed")):
+            with self.assertRaisesRegex(RuntimeError, "RGB read failed"):
+                _capture_frame_with_extension(
+                    output=Path("unused"), session=Mock(), second_rgb=object(), robots=robots,
+                    SimulationManager=manager, np=object(), Image=object(), index=0,
+                    rep=object(), scene_extension=extension,
+                )
+        extension.after_capture.assert_called_once_with()
+
+        cleanup_failure = SimpleNamespace(
+            before_capture=Mock(), after_capture=Mock(side_effect=RuntimeError("disable failed")),
+        )
+        with patch("scripts.isaac.g2_scene._pose", return_value=([0.0, 0.0, 0.0], [1.0, 0.0, 0.0, 0.0])), \
+                patch("scripts.isaac.g2_scene._capture_frame", side_effect=RuntimeError("RGB read failed")):
+            with self.assertRaisesRegex(RuntimeError, "RGB read failed") as raised:
+                _capture_frame_with_extension(
+                    output=Path("unused"), session=Mock(), second_rgb=object(), robots=robots,
+                    SimulationManager=manager, np=object(), Image=object(), index=0,
+                    rep=object(), scene_extension=cleanup_failure,
+                )
+        self.assertTrue(any("render product disable failed" in note
+                            for note in getattr(raised.exception, "__notes__", ())))
+
+        pose_reads = iter((
+            ([0.0, 0.0, 0.0], [1.0, 0.0, 0.0, 0.0]),
+            ([0.1, 0.0, 0.0], [1.0, 0.0, 0.0, 0.0]),
+        ))
+        with patch("scripts.isaac.g2_scene._pose", side_effect=lambda _robot: next(pose_reads)), \
+                patch("scripts.isaac.g2_scene._capture_frame", return_value={"index": 0}):
+            with self.assertRaisesRegex(SmokeError, "advanced the frozen simulation state"):
+                _capture_frame_with_extension(
+                    output=Path("unused"), session=Mock(), second_rgb=object(), robots=robots,
+                    SimulationManager=manager, np=object(), Image=object(), index=0,
+                    rep=object(), scene_extension=SimpleNamespace(
+                        before_capture=Mock(), after_capture=Mock(),
+                    ),
+                )
+
+        for field, changed in (("simulation_time", 12.6), ("physics_frame", 751)):
+            manager, robots, _robot = self._capture_fixture()
+            extension = SimpleNamespace(
+                before_capture=Mock(side_effect=lambda _rep, field=field, changed=changed: (
+                    setattr(manager, field, changed)
+                )),
+                after_capture=Mock(),
+            )
+            with self.subTest(field=field), \
+                    patch("scripts.isaac.g2_scene._pose", return_value=(
+                        [0.0, 0.0, 0.0], [1.0, 0.0, 0.0, 0.0],
+                    )), patch("scripts.isaac.g2_scene._capture_frame", return_value={"index": 0}):
+                with self.assertRaisesRegex(SmokeError, "advanced the frozen simulation state"):
+                    _capture_frame_with_extension(
+                        output=Path("unused"), session=Mock(), second_rgb=object(), robots=robots,
+                        SimulationManager=manager, np=object(), Image=object(), index=0,
+                        rep=object(), scene_extension=extension,
+                    )
+            extension.after_capture.assert_called_once_with()
+
     @staticmethod
     def _paths() -> tuple[Path, Path]:
         root = Path(__file__).resolve().parents[1] / "configs" / "factory-v3"
