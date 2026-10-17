@@ -53,6 +53,25 @@ MEDIA_INDEX_FILE = "media/frames.json"
 SCENARIOS = {"P0", "F1", "F2", "F3"}
 
 
+def _ros_stamp_parts(stamp_s: float) -> tuple[int, int]:
+    sec = int(stamp_s)
+    nanosec = int(round((stamp_s - sec) * 1_000_000_000))
+    if nanosec == 1_000_000_000:
+        sec, nanosec = sec + 1, 0
+    return sec, nanosec
+
+
+def _advance_terminal_settle(
+    remaining: int, *, all_zero: bool, step: int, encoder_period: int,
+    align_encoder: bool,
+) -> int:
+    if not all_zero:
+        return SETTLE_STEPS
+    if align_encoder and remaining == 1 and step % encoder_period != 0:
+        return 1
+    return remaining - 1
+
+
 def _args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--scene", required=True, type=Path)
@@ -416,10 +435,7 @@ def _setup_robot_ros(
     state["tf_static"] = len(statics)
 
     def publish_odom(sample: Any) -> None:
-        sec = int(sample.stamp_s)
-        nanosec = int(round((sample.stamp_s - sec) * 1_000_000_000))
-        if nanosec == 1_000_000_000:
-            sec, nanosec = sec + 1, 0
+        sec, nanosec = _ros_stamp_parts(sample.stamp_s)
         message = Odometry()
         message.header.stamp.sec, message.header.stamp.nanosec = sec, nanosec
         message.header.frame_id, message.child_frame_id = "odom", "base_link"
@@ -770,6 +786,13 @@ def _run(
         settle_remaining: int | None = None
         settle_elapsed = 0
         settle_limit = _settle_step_limit(config)
+        encoder_period = int(config["encoder_publish_every_steps"])
+        align_terminal_encoder = (
+            scene_extension is not None
+            and getattr(scene_extension, "align_terminal_encoder", False) is True
+        )
+        final_sim_time_s: float | None = None
+        final_physics_frame: int | None = None
         start_sim = initial_time
         max_sim = min(float(config["max_sim_time_s"]), float(scenario["max_sim_time_s"]))
         while True:
@@ -847,7 +870,7 @@ def _run(
             for robot_id, runtime in robots.items():
                 left, right = _wheel_angles(runtime["robot"])
                 odom = runtime["odometry"].update(stamp, left, right)
-                if step % int(config["encoder_publish_every_steps"]) == 0:
+                if step % encoder_period == 0:
                     runtime["ros"]["publish_odom"](odom)
                 position, orientation = _pose(runtime["robot"])
                 tilt = _tilt_evaluation(orientation)
@@ -892,7 +915,10 @@ def _run(
                     scene_extension.after_control(robot_id, sample)
             if settle_remaining is not None:
                 settle_elapsed += 1
-                settle_remaining = settle_remaining - 1 if all_zero else SETTLE_STEPS
+                settle_remaining = _advance_terminal_settle(
+                    settle_remaining, all_zero=all_zero, step=step,
+                    encoder_period=encoder_period, align_encoder=align_terminal_encoder,
+                )
                 if settle_elapsed > settle_limit:
                     raise base.SmokeError("G2 normal mission stop did not settle within the drive envelope")
             capture_due = step == 1 or step % int(config["camera_capture_every_steps"]) == 0 or settle_remaining == 0
@@ -907,6 +933,8 @@ def _run(
             if terminal_error is not None:
                 raise base.SmokeError(terminal_error)
             if settle_remaining == 0:
+                final_sim_time_s = stamp
+                final_physics_frame = physics_frame
                 break
 
         for runtime in robots.values():
@@ -932,6 +960,14 @@ def _run(
             "sim_seconds": float(SimulationManager.get_simulation_time()) - start_sim,
             "wall_seconds": time.monotonic() - started,
         }
+        if align_terminal_encoder:
+            assert final_sim_time_s is not None and final_physics_frame is not None
+            final_sec, final_nanosec = _ros_stamp_parts(final_sim_time_s)
+            result["timing"].update({
+                "final_sim_time_s": final_sim_time_s,
+                "final_stamp": {"sec": final_sec, "nanosec": final_nanosec},
+                "final_physics_frame": final_physics_frame,
+            })
         for robot_id, runtime in robots.items():
             if any(runtime["ros"][name] <= 0 for name in ("odom", "tf", "scan_front_raw", "scan_rear_raw")):
                 raise base.SmokeError(f"G2 ROS evidence is incomplete: {robot_id}")

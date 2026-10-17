@@ -11,10 +11,55 @@ import unittest
 from factory_ops.fleet_routing import RouteBook
 from factory_ops.fleet_execution import StoppedGate, path_content_sha256
 from factory_ops.navigation import GoalPose
-from scripts.ros.g3_mission import angle_error, failure_reason, localization_payload, path_final_yaw, path_payload, valid_hold_ack, validate_arrival, verify_navigation_maps, stopped_odometry_record, valid_initial_hold_ack, initial_hold_boundary_ready
+from scripts.ros.g3_mission import angle_error, failure_reason, localization_payload, path_final_yaw, path_payload, valid_hold_ack, validate_arrival, verify_navigation_maps, stopped_odometry_record, valid_initial_hold_ack, initial_hold_boundary_ready, terminal_recording_boundary, wait_for_terminal_recording
 
 
 class G3MissionAdmissionTests(unittest.TestCase):
+    @staticmethod
+    def terminal_scene():
+        return {"run_id": "run", "scenario_id": "normal", "status": "validated",
+                "cleanup": "worker_exit_requested", "timing": {"final_sim_time_s": 5.5,
+                    "final_stamp": {"sec": 5, "nanosec": 500_000_000}, "final_physics_frame": 330}}
+
+    def test_terminal_boundary_requires_validated_scene_and_both_exact_final_odom_stamps(self):
+        scene = self.terminal_scene()
+        values = {"run_id": "run", "scenario_id": "normal", "minimum_sim_time_ns": 5_000_000_000}
+        self.assertIsNone(terminal_recording_boundary(scene, {"carter1": 5_500_000_000}, **values))
+        self.assertIsNone(terminal_recording_boundary(scene, {"carter1": 5_500_000_000, "carter2": 5_499_999_999}, **values))
+        odom = {"carter1": 5_500_000_000, "carter2": 5_500_000_000}
+        boundary = terminal_recording_boundary(scene, odom, **values)
+        self.assertIsNotNone(boundary)
+        assert boundary is not None
+        self.assertEqual(5_500_000_000, boundary["final_sim_time_ns"])
+        for changes in ({"run_id": "old"}, {"scenario_id": "other"}, {"status": "failed"},
+                        {"timing": {}}, {"cleanup": "cleanup_failed"}):
+            invalid = deepcopy(scene); invalid.update(changes)
+            with self.subTest(changes=changes), self.assertRaises(ValueError):
+                terminal_recording_boundary(invalid, odom, **values)
+        with self.assertRaisesRegex(ValueError, "backward"):
+            terminal_recording_boundary(scene, odom, run_id="run", scenario_id="normal", minimum_sim_time_ns=5_500_000_001)
+
+    def test_terminal_wait_spins_until_both_final_callbacks_and_uses_wall_timeout(self):
+        events = []
+        scene = self.terminal_scene()
+        def tick(): events.append("tick")
+        def read_scene():
+            self.assertEqual("tick", events[-1]); events.append("scene")
+            return scene if events.count("tick") >= 2 else {**scene, "status": "running"}
+        def read_odom():
+            events.append("odom")
+            return {"carter1": 5_500_000_000, "carter2": 5_500_000_000 if events.count("tick") >= 3 else 5_499_999_999}
+        boundary = wait_for_terminal_recording(tick=tick, read_scene=read_scene, read_odometry_ns=read_odom,
+            run_id="run", scenario_id="normal", minimum_sim_time_ns=5_000_000_000,
+            wait_wall_s=60., now_wall=lambda: 0.)
+        self.assertEqual(3, events.count("tick"))
+        self.assertEqual(330, boundary["final_physics_frame"])
+        times = iter((0., 60.))
+        with self.assertRaises(TimeoutError):
+            wait_for_terminal_recording(tick=lambda: None, read_scene=lambda: {**scene, "status": "running"},
+                read_odometry_ns=lambda: {}, run_id="run", scenario_id="normal",
+                minimum_sim_time_ns=5_000_000_000, wait_wall_s=60., now_wall=lambda: next(times))
+
     def test_signal_failures_keep_nonempty_reasons_for_fault_stop(self):
         self.assertEqual("KeyboardInterrupt", failure_reason(KeyboardInterrupt()))
         self.assertEqual("TimeoutError", failure_reason(TimeoutError("   ")))

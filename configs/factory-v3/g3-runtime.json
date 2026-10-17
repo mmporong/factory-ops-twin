@@ -8,6 +8,7 @@
   "pose_ttl_s": 0.5,
   "path_ttl_s": 0.5,
   "path_clock_wait_wall_s": 5,
+  "terminal_recording_wait_wall_s": 60,
   "reservation_tracking_margin_m": 0.3,
   "station_xy_tolerance_m": 0.25,
   "station_yaw_tolerance_rad": 0.25,

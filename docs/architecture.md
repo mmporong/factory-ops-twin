@@ -101,6 +101,8 @@ Jazzy의 `ActionClient`는 서비스 본문 introspection을 노출하지 않는
 
 전환 순서는 terminal 성공 → HOLD 발행 → 물리 step의 해당 세대·goal·sequence ACK → 그 이후 odometry 표본의 0.5초 연속 정지 → goal finished → 다음 세대의 원자 전환이다. 정지 기준은 선속도·각속도 절댓값 0.02 이하이며 표본 간 공백은 0.3초를 넘을 수 없다. 이동·stale 이후에도 전역 관측 시각은 보존해 지연 표본이 정지 창에 끼어들지 못하게 한다. 중간 node에서는 hold를 줄이지 않으며 P1/P2에서만 정지 후 축소한다. 논리 원장의 station과 실제 도착 anchor를 분리해 dock 이탈 이후 배차 거리에도 실제 anchor를 사용한다.
 
+두 주문·최종 주차가 끝나면 운영기는 완료 제어 파일을 쓰고 HOLD·ROS callback·scan 전달·녹화를 유지한다. 장면은 정상 감속·연속 0 명령 정지를 마친 뒤 기존 20 Hz 엔코더 발행 step에 종료를 맞춘다. 정렬에 필요한 추가 물리 step은 최대 2개이며 같은 마지막 프레임의 궤적·RGB·odometry/TF를 남긴다. 장면 결과의 검증 상태·실행 ID·정수 nanosecond 종료 시각과 양쪽 odometry 수신을 최대 60 wall 초 동안 확인한 뒤 recorder와 Nav2를 정리한다. 사후 검증기는 양쪽 최종 궤적 프레임·시각과 닫힌 bag의 정확한 odometry 시각을 대조한다. 원본 궤적의 끝부분을 잘라 종료 공백을 숨기지 않는다.
+
 장벽은 준비 시 collider와 시각 형상을 함께 생성한다. 폐쇄 제거 시각은 장면 producer만 읽고, 운영 어댑터에는 현재 폐쇄 bool·상태 변경 시각·충돌 속성 readback만 전달한다. 지도 변경은 해당 현재 상태의 navigation map으로 수행한다. collision 속성 readback만으로 RTX LiDAR나 실제 costmap 관측을 검증했다고 판단하지 않는다. 두 worker와 recorder 종료 후 원본 궤적·CDR·실제 scan·RGB를 대조해야 한다.
 
 API 근거는 [Nav2 1.3.13 planner](https://github.com/ros-navigation/navigation2/blob/f4108e5b1c2bce804a1aa0c7be6673a8eb4a1501/nav2_planner/src/planner_server.cpp), [controller](https://github.com/ros-navigation/navigation2/blob/f4108e5b1c2bce804a1aa0c7be6673a8eb4a1501/nav2_controller/src/controller_server.cpp), [RPP 경로 변환](https://github.com/ros-navigation/navigation2/blob/f4108e5b1c2bce804a1aa0c7be6673a8eb4a1501/nav2_regulated_pure_pursuit_controller/src/path_handler.cpp)에 고정한다.

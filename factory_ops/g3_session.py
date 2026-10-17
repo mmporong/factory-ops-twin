@@ -47,7 +47,7 @@ def _write_session(output: Path, *, config_dir: Path = CONFIG, profile: str = "q
     runtime = json.loads((config_dir / "g3-runtime.json").read_text(encoding="utf-8"))
     if runtime.get("qualification") != "g3_two_robot_orders" or runtime.get("scope") != SCOPE:
         raise ValueError("G3 runtime scope differs")
-    for name in ("max_wall_time_s", "startup_sim_allowance_s", "chunk_timeout_s", "pose_ttl_s", "path_ttl_s", "path_clock_wait_wall_s",
+    for name in ("max_wall_time_s", "startup_sim_allowance_s", "chunk_timeout_s", "pose_ttl_s", "path_ttl_s", "path_clock_wait_wall_s", "terminal_recording_wait_wall_s",
                  "reservation_tracking_margin_m", "station_xy_tolerance_m", "station_yaw_tolerance_rad",
                  "stopped_window_s", "stopped_linear_m_s", "stopped_angular_rad_s", "odom_ttl_s"):
         value = runtime[name]

@@ -30,6 +30,8 @@ from scripts.ros.g2_evidence import (
     index_decoded_tf, decoded_map_pose_indexed,
 )
 from scripts.isaac.nav_scene import _tilt_evaluation
+from scripts.isaac.g2_scene import _ros_stamp_parts
+from scripts.ros.g3_mission import terminal_recording_boundary
 
 PROJECT = Path(__file__).resolve().parents[2]
 RESULT = "g3-evidence.json"
@@ -85,7 +87,7 @@ def _decode_g3_topics(output: Path, run_id: str, scenario_id: str) -> dict[str, 
     authorizations: list[dict[str, Any]] = []
     reservations: list[dict[str, Any]] = []
     plan_records: dict[str, list[dict[str, Any]]] = defaultdict(list)
-    odometry: dict[str, list[dict[str, float]]] = defaultdict(list)
+    odometry: dict[str, list[dict[str, Any]]] = defaultdict(list)
     statuses: dict[str, dict[str, int]] = defaultdict(dict)
     follow_rpc: dict[str, dict[str, list[dict[str, Any]]]] = defaultdict(lambda: defaultdict(list))
     errors: list[str] = []
@@ -155,7 +157,10 @@ def _decode_g3_topics(output: Path, run_id: str, scenario_id: str) -> dict[str, 
                     robot = topic.split("/")[1]
                     if robot in ROBOTS:
                         stamp = message.header.stamp.sec + message.header.stamp.nanosec / 1e9
-                        odometry[robot].append({"stamp_s": stamp, "linear_m_s": float(message.twist.twist.linear.x),
+                        stamp_ns = path_header_stamp_ns({"sec": int(message.header.stamp.sec),
+                                                        "nanosec": int(message.header.stamp.nanosec)})
+                        odometry[robot].append({"stamp_s": stamp, "stamp_ns": stamp_ns,
+                                                "linear_m_s": float(message.twist.twist.linear.x),
                                                 "angular_rad_s": float(message.twist.twist.angular.z)})
                     continue
                 if topic.endswith("/_action/status"):
@@ -558,6 +563,57 @@ def validate_route_event_binding(
     if mission_result.get("route_snapshot", {}).get("events") != local:
         errors.append("terminal route snapshot events differ from the local route journal")
     return {"route_event_count": len(local)}
+
+
+def validate_terminal_recording(
+    mission_result: Mapping[str, Any], scene: Mapping[str, Any],
+    traces: Mapping[str, Sequence[Mapping[str, Any]]], bag: Mapping[str, Any],
+    errors: list[str],
+) -> dict[str, Any]:
+    """Bind recorder shutdown to the final physics frame and actual bag odometry."""
+    sealed = mission_result.get("terminal_recording")
+    if not isinstance(sealed, Mapping):
+        errors.append("terminal recording boundary is missing")
+        return {"passed_robot_count": 0}
+    received = sealed.get("received_odometry_ns")
+    if not isinstance(received, Mapping) or set(received) != set(ROBOTS):
+        errors.append("terminal recording odometry acknowledgment robot set is invalid")
+        return {"passed_robot_count": 0}
+    try:
+        minimum = sealed.get("minimum_sim_time_ns")
+        if type(minimum) is not int:
+            raise ValueError("minimum terminal time must be integer nanoseconds")
+        boundary = terminal_recording_boundary(
+            scene, received, run_id=mission_result["run_id"], scenario_id=mission_result["scenario_id"],
+            minimum_sim_time_ns=minimum,
+        )
+    except (ValueError, TypeError, KeyError) as error:
+        errors.append(f"terminal recording boundary is invalid: {error}")
+        return {"passed_robot_count": 0}
+    if boundary is None or dict(sealed) != boundary:
+        errors.append("terminal recording acknowledgment differs from the validated final scene")
+        return {"passed_robot_count": 0}
+    passed = 0
+    odometry = bag.get("odometry", {})
+    for robot in ROBOTS:
+        rows = traces.get(robot, ())
+        final_row = rows[-1] if rows else {}
+        final_time = _finite_number(final_row.get("sim_time_s"))
+        final_stamp = None
+        if final_time is not None and final_time >= 0:
+            sec, nanosec = _ros_stamp_parts(final_time)
+            final_stamp = {"sec": sec, "nanosec": nanosec}
+        samples = odometry.get(robot, ()) if isinstance(odometry, Mapping) else ()
+        bag_stamps = {row.get("stamp_ns") for row in samples
+                      if isinstance(row, Mapping) and type(row.get("stamp_ns")) is int}
+        if (final_row.get("physics_frame") != boundary["final_physics_frame"]
+                or final_stamp != boundary["final_stamp"]
+                or boundary["final_sim_time_ns"] not in bag_stamps
+                or received[robot] not in bag_stamps):
+            errors.append(f"{robot}: terminal trajectory / acknowledged odometry is not bound to the closed bag")
+            continue
+        passed += 1
+    return {"passed_robot_count": passed, **boundary}
 
 
 def validate_initial_hold_barrier(
@@ -1058,6 +1114,7 @@ def validate_g3_evidence(
         evaluation["initial_hold_barrier"] = validate_initial_hold_barrier(
             mission, traces, local_auth, local_events, errors,
         )
+        evaluation["terminal_recording"] = validate_terminal_recording(mission, scene, traces, bag, errors)
         evaluation["authorization_order"] = validate_authorization_order(
             local_auth, route_events, traces, actions, errors, scenario_id=scenario_id,
         )

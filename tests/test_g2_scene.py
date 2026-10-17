@@ -10,6 +10,7 @@ from unittest.mock import patch
 
 from factory_ops.motion_authorization import AuthorizationState
 from scripts.isaac.g2_scene import (
+    _advance_terminal_settle,
     _authorization_record,
     _command_audit_snapshot,
     _control_decision,
@@ -17,9 +18,10 @@ from scripts.isaac.g2_scene import (
     _load_inputs,
     _read_mission,
     _require_scenario_scope,
+    _ros_stamp_parts,
     _scope_identity,
 )
-from scripts.isaac.nav_scene import _drive_geometry_from_colliders
+from scripts.isaac.nav_scene import SETTLE_STEPS, _drive_geometry_from_colliders
 from scripts.isaac.stage_smoke import SmokeError
 
 
@@ -43,6 +45,42 @@ class G2SceneTests(unittest.TestCase):
             invalid.write_text(json.dumps(config), encoding="utf-8")
             with self.assertRaisesRegex(SmokeError, "1/60"):
                 _load_inputs(invalid, scenarios_path, "P0")
+
+    def test_terminal_settle_alignment_preserves_default_and_waits_for_encoder_step(self) -> None:
+        def finish(start_step: int, *, align: bool) -> tuple[int, int]:
+            remaining = SETTLE_STEPS
+            step = start_step
+            elapsed = 0
+            while remaining:
+                remaining = _advance_terminal_settle(
+                    remaining, all_zero=True, step=step, encoder_period=3,
+                    align_encoder=align,
+                )
+                elapsed += 1
+                if remaining:
+                    step += 1
+            return step, elapsed
+
+        for start_modulo in range(3):
+            with self.subTest(start_modulo=start_modulo):
+                default_step, default_elapsed = finish(start_modulo, align=False)
+                aligned_step, aligned_elapsed = finish(start_modulo, align=True)
+                self.assertEqual(default_step, start_modulo + SETTLE_STEPS - 1)
+                self.assertEqual(default_elapsed, SETTLE_STEPS)
+                self.assertEqual(aligned_step % 3, 0)
+                self.assertEqual(aligned_elapsed - default_elapsed, (-default_step) % 3)
+
+    def test_terminal_settle_movement_resets_zero_window(self) -> None:
+        self.assertEqual(
+            _advance_terminal_settle(
+                1, all_zero=False, step=5, encoder_period=3, align_encoder=True,
+            ),
+            SETTLE_STEPS,
+        )
+
+    def test_ros_stamp_parts_uses_canonical_nanosecond_rounding_and_carry(self) -> None:
+        self.assertEqual(_ros_stamp_parts(12.25), (12, 250_000_000))
+        self.assertEqual(_ros_stamp_parts(1.9999999996), (2, 0))
 
     @staticmethod
     def _navigate_state(*, valid: bool = True) -> AuthorizationState:

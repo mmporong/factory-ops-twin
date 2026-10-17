@@ -28,6 +28,7 @@ from scripts.ros.g3_evidence import (
     validate_route_event_binding,
     validate_scene_closure,
     validate_stop_evidence,
+    validate_terminal_recording,
 )
 
 
@@ -37,6 +38,50 @@ SCENARIO = "QUALIFICATION_NORMAL"
 
 
 class G3EvidenceHelperTests(unittest.TestCase):
+    @staticmethod
+    def terminal_recording_fixture():
+        stamp = {"sec": 5, "nanosec": 500_000_000}
+        final_ns = 5_500_000_000
+        mission = {"run_id": RUN_ID, "scenario_id": SCENARIO, "terminal_recording": {
+            "final_stamp": stamp, "final_sim_time_ns": final_ns, "final_physics_frame": 330,
+            "minimum_sim_time_ns": 5_000_000_000,
+            "received_odometry_ns": {robot: final_ns for robot in ("carter1", "carter2")}}}
+        scene = {"run_id": RUN_ID, "scenario_id": SCENARIO, "status": "validated",
+                 "cleanup": "worker_exit_requested", "timing": {"final_stamp": stamp,
+                     "final_sim_time_s": 5.5, "final_physics_frame": 330}}
+        traces = {robot: [{"sim_time_s": 5.5, "physics_frame": 330}] for robot in ("carter1", "carter2")}
+        bag = {"odometry": {robot: [{"stamp_s": 5.5, "stamp_ns": final_ns}]
+                             for robot in ("carter1", "carter2")}}
+        return mission, scene, traces, bag
+
+    def test_terminal_recording_binds_final_physics_frame_to_both_closed_bag_streams(self):
+        mission, scene, traces, bag = self.terminal_recording_fixture()
+        errors = []
+        report = validate_terminal_recording(mission, scene, traces, bag, errors)
+        self.assertEqual([], errors)
+        self.assertEqual(2, report["passed_robot_count"])
+        self.assertEqual(5_500_000_000, report["final_sim_time_ns"])
+
+    def test_terminal_recording_rejects_missing_or_mismatched_final_evidence(self):
+        for fault in ("missing", "robot", "identity", "running", "backward", "frame", "time", "bag", "ack", "changed"):
+            with self.subTest(fault=fault):
+                mission, scene, traces, bag = self.terminal_recording_fixture()
+                boundary = mission["terminal_recording"]
+                if fault == "missing": del mission["terminal_recording"]
+                elif fault == "robot": del boundary["received_odometry_ns"]["carter2"]
+                elif fault == "identity": scene["run_id"] = "old"
+                elif fault == "running": scene["status"] = "running"
+                elif fault == "backward": boundary["minimum_sim_time_ns"] = 5_500_000_001
+                elif fault == "frame": traces["carter2"][-1]["physics_frame"] = 329
+                elif fault == "time": traces["carter2"][-1]["sim_time_s"] = 5.499999999
+                elif fault == "bag": bag["odometry"]["carter2"] = [{"stamp_s": 5.45, "stamp_ns": 5_450_000_000}]
+                elif fault == "ack": boundary["received_odometry_ns"]["carter2"] = 5_500_000_001
+                elif fault == "changed": boundary["final_physics_frame"] = 331
+                errors = []
+                report = validate_terminal_recording(mission, scene, traces, bag, errors)
+                self.assertTrue(errors)
+                self.assertLess(report["passed_robot_count"], 2)
+
     @classmethod
     def setUpClass(cls) -> None:
         cls.book = RouteBook.from_files(

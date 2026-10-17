@@ -19,6 +19,8 @@ from scripts.isaac import g2_scene
 class BarrierLifecycle:
     """Exogenous collider schedule; no truth is supplied to the dispatcher."""
 
+    align_terminal_encoder = True
+
     def __init__(self, session: dict[str, Any], run_id: str) -> None:
         self.session = session
         self.run_id = run_id

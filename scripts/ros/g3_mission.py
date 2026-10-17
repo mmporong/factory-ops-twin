@@ -14,7 +14,7 @@ import subprocess
 import sys
 import time
 import traceback
-from typing import Any, Mapping
+from typing import Any, Callable, Mapping
 from uuid import UUID, uuid4
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
@@ -112,6 +112,53 @@ def initial_hold_boundary_ready(acks: Mapping[str, Mapping[str, Any]], expected:
     return bool(set(acks) == set(expected) == set(ROBOT_IDS)
                 and all(valid_initial_hold_ack(acks[robot], expected[robot], now_s=now_s)
                         and now_s > acks[robot]["sample_sim_time_s"] for robot in ROBOT_IDS))
+
+
+def terminal_recording_boundary(scene: Mapping[str, Any] | None, odometry_ns: Mapping[str, Any], *,
+                                run_id: str, scenario_id: str, minimum_sim_time_ns: int) -> dict[str, Any] | None:
+    """Keep recording until the scene seals a final ROS-aligned physics frame."""
+    if scene is None:
+        return None
+    if scene.get("run_id") != run_id or scene.get("scenario_id") != scenario_id:
+        raise ValueError("terminal scene identity differs")
+    status = scene.get("status")
+    if status == "running":
+        return None
+    if status != "validated" or scene.get("cleanup") != "worker_exit_requested":
+        raise ValueError("terminal scene did not validate its cleanup")
+    timing = scene.get("timing")
+    if not isinstance(timing, Mapping) or not isinstance(timing.get("final_stamp"), Mapping):
+        raise ValueError("terminal scene has no canonical final stamp")
+    final_ns = path_header_stamp_ns(timing["final_stamp"])
+    frame = timing.get("final_physics_frame")
+    final_seconds = timing.get("final_sim_time_s")
+    if (type(minimum_sim_time_ns) is not int or minimum_sim_time_ns < 0
+            or final_ns < minimum_sim_time_ns or type(frame) is not int or frame <= 0
+            or isinstance(final_seconds, bool) or not isinstance(final_seconds, (int, float)) or not math.isfinite(final_seconds)
+            or abs(final_seconds-final_ns/1e9) > 1e-9):
+        raise ValueError("terminal scene final frame/time is missing, invalid or backward")
+    if any(type(odometry_ns.get(robot)) is not int or odometry_ns[robot] < final_ns for robot in ROBOT_IDS):
+        return None
+    return {"final_stamp": dict(timing["final_stamp"]), "final_sim_time_ns": final_ns,
+            "final_physics_frame": frame, "minimum_sim_time_ns": minimum_sim_time_ns,
+            "received_odometry_ns": {robot: odometry_ns[robot] for robot in ROBOT_IDS}}
+
+
+def wait_for_terminal_recording(*, tick: Callable[[], Any], read_scene: Callable[[], Mapping[str, Any] | None],
+                                read_odometry_ns: Callable[[], Mapping[str, Any]], run_id: str, scenario_id: str,
+                                minimum_sim_time_ns: int, wait_wall_s: float,
+                                now_wall: Callable[[], float] = time.monotonic) -> dict[str, Any]:
+    if type(wait_wall_s) not in (int, float) or not math.isfinite(wait_wall_s) or wait_wall_s <= 0:
+        raise ValueError("terminal recording wait must have a finite positive wall bound")
+    deadline = now_wall()+wait_wall_s
+    while True:
+        tick()
+        boundary = terminal_recording_boundary(read_scene(), read_odometry_ns(), run_id=run_id,
+            scenario_id=scenario_id, minimum_sim_time_ns=minimum_sim_time_ns)
+        if boundary is not None:
+            return boundary
+        if now_wall() >= deadline:
+            raise TimeoutError("terminal scene / final odometry recording boundary did not qualify")
 
 
 class PoseNotFreshError(ValueError):
@@ -328,6 +375,8 @@ def main() -> int:
             def odometry(message: Any, robot: str) -> None:
                 state = robots[robot]
                 state["odom_count"] += 1
+                state["last_odom_stamp_ns"] = path_header_stamp_ns({
+                    "sec": message.header.stamp.sec, "nanosec": message.header.stamp.nanosec})
                 stamp = message.header.stamp.sec + message.header.stamp.nanosec / 1e9
                 state["last_odom"] = {"stamp_s": stamp, "linear_m_s": float(message.twist.twist.linear.x),
                                       "angular_rad_s": float(message.twist.twist.angular.z)}
@@ -489,6 +538,7 @@ def main() -> int:
                            "latched_sim_time_s": latched_at}
         result["initial_hold_barrier"] = initial_barrier
         origin = stamp
+        result["origin_sim_time_s"] = origin
         journal("navigation_ready", {"lifecycle_states": states, "origin_sim_time_s": origin,
                                       "initial_hold_barrier": initial_barrier})
         atomic_json(output / "mission-start.json", {"run_id": args.run_id, "scenario_id": scenario_id, "sim_time_s": origin})
@@ -729,14 +779,26 @@ def main() -> int:
             tick(require_fresh=True)
         if verify_navigation_maps(output, book) != result["navigation_map_files"]:
             raise RuntimeError("navigation map bytes changed before terminal verification")
+        result["stage"] = "terminal_recording"
+        for rt in robots.values():
+            rt["stop_after"] = None
+        atomic_json(output / "mission-control.json", {"run_id": args.run_id, "scenario_id": scenario_id, "status": "passed"})
+        def read_terminal_scene() -> Mapping[str, Any] | None:
+            path = output / "g3-scene.json"
+            return json.loads(path.read_text(encoding="utf-8")) if path.is_file() else None
+        terminal_boundary = wait_for_terminal_recording(
+            tick=lambda: tick(require_fresh=False), read_scene=read_terminal_scene,
+            read_odometry_ns=lambda: {robot: rt.get("last_odom_stamp_ns") for robot, rt in robots.items()},
+            run_id=args.run_id, scenario_id=scenario_id, minimum_sim_time_ns=tick_clock_ns,
+            wait_wall_s=runtime_config["terminal_recording_wait_wall_s"])
         result.update({"status": "passed", "stage": "complete", "origin_sim_time_s": origin,
+            "terminal_recording": terminal_boundary,
             "completed_orders_sim_s": completed_at, "mission": mission.export(), "actions": history,
             "route_snapshot": manager.snapshot(now_s=now()), "physical_anchor_by_robot": {robot: rt["anchor"] for robot, rt in robots.items()},
             "scan_counts": {robot: rt["scan_counts"] for robot, rt in robots.items()}, "scan_epoch_ns": scan_epoch_ns,
             "odom_counts": {robot: rt["odom_count"] for robot, rt in robots.items()}, "bag_topics_requested": bag_topics,
             "planning_radius_m": book.planning_radius_m, "reservation_radius_m": reservation_radius})
         drain_routes()
-        atomic_json(output / "mission-control.json", {"run_id": args.run_id, "scenario_id": scenario_id, "status": "passed"})
         print("FACTORY_OPS_G3_MISSION=PASS", flush=True)
     except BaseException as error:
         reason = failure_reason(error)
