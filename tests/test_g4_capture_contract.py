@@ -655,9 +655,86 @@ class G4CaptureContractTests(unittest.TestCase):
         self.assertEqual(result["raw_info"]["excluded_bbox_rows"], [{
             "raw_bbox_index": 1,
             "canonical_root": "/World/Visuals/FloorGraphics",
-            "descendant_instance_id": 120,
+            "descendant_instance_ids": [120],
             "reason": "hierarchical_semantic_aggregate",
         }])
+
+    def test_parent_aggregate_bbox_can_bind_exact_union_of_different_class_descendants(self) -> None:
+        class CountingClasses(dict[str, str]):
+            items_calls = 0
+
+            def items(self):
+                self.items_calls += 1
+                return super().items()
+
+        class AggregateStage:
+            def GetPrimAtPath(self, path):
+                classes = {
+                    "/World/Visuals/FG_HIGH": "pallet",
+                    "/World/Visuals/FG_HIGH/FinishedTote_2": "tote",
+                    "/World/Visuals/FG_HIGH/FinishedTote_5": "tote",
+                }
+                return _Prim(path in classes, classes.get(path))
+
+        source_classes = CountingClasses({
+            "/World/Visuals/FG_HIGH": "pallet",
+            "/World/Visuals/FG_HIGH/FinishedTote_2": "tote",
+            "/World/Visuals/FG_HIGH/FinishedTote_5": "tote",
+        })
+        result = _normalize_annotations(
+            scene_id="scene-000", scene_variant_id="industrial-v00", capture_id="capture-002",
+            camera_id="aisle", physics_frame=127, sim_time_ns=2_116_666_667,
+            semantic_payload={
+                "data": _Array([[11, 11, 11, 11]]),
+                "info": {"idToLabels": {"11": {"class": "pallet,tote"}}},
+            },
+            instance_payload={
+                "data": _Array([[124, 124, 110, 110]]),
+                "info": {
+                    "idToLabels": {
+                        "110": "/World/Visuals/FG_HIGH/FinishedTote_2",
+                        "124": "/World/Visuals/FG_HIGH/FinishedTote_5",
+                    },
+                    "idToSemantics": {
+                        "110": {"class": "pallet,tote"},
+                        "124": {"class": "pallet,tote"},
+                    },
+                },
+            },
+            bbox_raw={
+                "data": [
+                    {"semanticId": 9, "x_min": 2, "y_min": 0, "x_max": 3, "y_max": 0, "occlusionRatio": -1.0},
+                    {"semanticId": 9, "x_min": 0, "y_min": 0, "x_max": 1, "y_max": 0, "occlusionRatio": -1.0},
+                    {"semanticId": 2, "x_min": 0, "y_min": 0, "x_max": 3, "y_max": 0, "occlusionRatio": -1.0},
+                ],
+                "info": {
+                    "idToLabels": {"9": {"class": "pallet,tote"}, "2": {"class": "pallet"}},
+                    "primPaths": [
+                        "/World/Visuals/FG_HIGH/FinishedTote_2",
+                        "/World/Visuals/FG_HIGH/FinishedTote_5",
+                        "/World/Visuals/FG_HIGH",
+                    ],
+                },
+            },
+            bbox_sha256="d" * 64, semantic_info_sha256="a" * 64, instance_info_sha256="b" * 64,
+            stage=AggregateStage(),
+            asset_source_by_root={
+                "/World/Visuals/FG_HIGH": "e" * 64,
+                "/World/Visuals/FG_HIGH/FinishedTote_2": "f" * 64,
+                "/World/Visuals/FG_HIGH/FinishedTote_5": "1" * 64,
+            },
+            source_class_by_root=source_classes,
+            np=_FakeNP(),
+        )
+
+        self.assertEqual(result["raw_info"]["excluded_bbox_rows"], [{
+            "raw_bbox_index": 2,
+            "canonical_root": "/World/Visuals/FG_HIGH",
+            "descendant_instance_ids": [110, 124],
+            "reason": "hierarchical_semantic_aggregate",
+        }])
+        self.assertEqual([item["instance_id"] for item in result["instances"]], [110, 124])
+        self.assertEqual(source_classes.items_calls, 5)
 
     def test_explicit_unlabelled_instance_identity_is_preserved_and_excluded(self) -> None:
         bbox_raw = {

@@ -141,7 +141,7 @@ split 누출 fingerprint는 capture와 camera 순서에 무관한 multiset이다
 
 안정 ID는 UTF-8 바이트열 `scene_variant_id + "\\0" + usd_root_path + "\\0" + asset_source_sha256`의 SHA-256이다. `instance_id_to_prim_paths`는 annotator가 반환한 원본 child prim path를 보존하고, `instance_id_to_labelled_roots`는 semantic class가 붙은 조상 root를 보존한다. child path는 labelled root와 같거나 그 하위여야 한다. bbox 행의 각 prim path는 labelled root와 조상·자손 관계여야 한다. `bbox2d.raw.json`의 `data`와 `info.primPaths`는 길이가 같고 행별로 일대일 대응한다. 모든 USD path는 `/World`에서 시작하는 canonical path여야 한다.
 
-bbox와 instance는 가장 가까운 semantic-labelled root가 정확히 같을 때 연결한다. 같은 클래스의 부모와 자식이라는 이유로 합치지 않는다. SDK가 상위 semantic aggregate bbox를 함께 반환한 경우, 해당 상위 root 아래 동일 클래스의 유일한 instance mask bounds와 bbox가 정확히 같을 때만 `raw_info.excluded_bbox_rows`에 `hierarchical_semantic_aggregate`로 기록한다. 원형 행은 유지하며 QA가 상위 root·유일한 하위 instance·bounds를 재검증한다.
+bbox와 instance는 가장 가까운 semantic-labelled root가 정확히 같을 때 연결한다. 같은 클래스의 부모와 자식이라는 이유로 합치지 않는다. SDK가 상위 semantic aggregate bbox를 함께 반환한 경우, 해당 상위 root 아래 보이는 모든 하위 instance의 mask bounds 합집합과 원본 bbox가 정확히 같을 때만 `raw_info.excluded_bbox_rows`에 `hierarchical_semantic_aggregate`로 기록한다. 부모와 자식의 class가 달라도 source ancestry로 입증된 계층이면 가능하다. 기록에는 정렬된 전체 `descendant_instance_ids`를 넣고 원형 행을 유지한다. QA는 상위 root, 전체 하위 ID 집합, 각 mask bounds의 합집합을 독립적으로 재검증하며 하위 ID 누락이나 bbox 확대·축소를 거부한다.
 
 semantic, instance, bbox label map의 키는 `0`, `9`, `27` 같은 비음수 canonical 10진 문자열만 허용한다. `09`와 `9`, 음수, 비수치 키는 거부한다. 프로필의 `minimum_class_pixels`는 양의 정수여야 하며 문자열이나 0으로 production gate를 낮출 수 없다.
 

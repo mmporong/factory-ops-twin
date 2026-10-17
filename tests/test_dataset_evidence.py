@@ -569,52 +569,69 @@ class DatasetEvidenceTests(unittest.TestCase):
 
         self.assertTrue(any("bbox class map does not exactly match" in error for error in report["errors"]), report["errors"])
 
-    def test_hierarchical_aggregate_exclusion_requires_one_exact_descendant(self) -> None:
+    def test_hierarchical_aggregate_exclusion_requires_exact_descendant_union(self) -> None:
         record = {
-            "raw_bbox_index": 1,
-            "canonical_root": "/World/Visuals/FloorGraphics",
-            "descendant_instance_id": 120,
+            "raw_bbox_index": 2,
+            "canonical_root": "/World/Visuals/FG_HIGH",
+            "descendant_instance_ids": [110, 124],
             "reason": "hierarchical_semantic_aggregate",
         }
-        item = {"instance_id": 120, "class": "floor", "usd_root_path": "/World/Visuals/FloorGraphics/FloorFinish"}
+        items = {
+            110: {"instance_id": 110, "class": "tote", "usd_root_path": "/World/Visuals/FG_HIGH/FinishedTote_2"},
+            124: {"instance_id": 124, "class": "tote", "usd_root_path": "/World/Visuals/FG_HIGH/FinishedTote_5"},
+        }
+        raw_rows = [
+            {"semanticId": 9, "x_min": 2, "y_min": 0, "x_max": 3, "y_max": 0},
+            {"semanticId": 9, "x_min": 0, "y_min": 0, "x_max": 1, "y_max": 0},
+            {"semanticId": 2, "x_min": 0, "y_min": 0, "x_max": 3, "y_max": 0},
+        ]
+        raw_paths = [
+            "/World/Visuals/FG_HIGH/FinishedTote_2",
+            "/World/Visuals/FG_HIGH/FinishedTote_5",
+            "/World/Visuals/FG_HIGH",
+        ]
+        source_bindings = {
+            "/World/Visuals/FG_HIGH": "e" * 64,
+            "/World/Visuals/FG_HIGH/FinishedTote_2": "f" * 64,
+            "/World/Visuals/FG_HIGH/FinishedTote_5": "1" * 64,
+            "@class:/World/Visuals/FG_HIGH": "pallet",
+            "@class:/World/Visuals/FG_HIGH/FinishedTote_2": "tote",
+            "@class:/World/Visuals/FG_HIGH/FinishedTote_5": "tote",
+        }
+        exact_roots = {
+            110: ("/World/Visuals/FG_HIGH/FinishedTote_2", "tote"),
+            124: ("/World/Visuals/FG_HIGH/FinishedTote_5", "tote"),
+        }
         errors: list[str] = []
         excluded = _validate_excluded_bbox_rows(
             "fixture",
             [record],
-            [
-                {"semanticId": 1, "x_min": 0, "y_min": 0, "x_max": 1, "y_max": 0},
-                {"semanticId": 1, "x_min": 0, "y_min": 0, "x_max": 1, "y_max": 0},
-            ],
-            ["/World/Visuals/FloorGraphics/FloorFinish", "/World/Visuals/FloorGraphics"],
-            {1: "floor"},
-            {"1": {"class": "floor"}},
-            {120: item},
-            {120: [0, 0, 1, 0]},
-            {
-                "/World/Visuals/FloorGraphics": "e" * 64,
-                "/World/Visuals/FloorGraphics/FloorFinish": "e" * 64,
-                "@class:/World/Visuals/FloorGraphics": "floor",
-                "@class:/World/Visuals/FloorGraphics/FloorFinish": "floor",
-            },
-            {120: ("/World/Visuals/FloorGraphics/FloorFinish", "floor")},
-            {0},
+            raw_rows, raw_paths, {2: "pallet", 9: "tote"},
+            {"2": {"class": "pallet"}, "9": {"class": "pallet,tote"}},
+            items, {110: [2, 0, 3, 0], 124: [0, 0, 1, 0]}, source_bindings, exact_roots, {0, 1},
             errors,
         )
         self.assertEqual(errors, [])
-        self.assertEqual(excluded, {1})
+        self.assertEqual(excluded, {2})
 
-        item["usd_root_path"] = "/World/Visuals/FloorGraphics"
+        record["descendant_instance_ids"] = [110]
         errors = []
         self.assertEqual(_validate_excluded_bbox_rows(
-            "fixture", [record],
-            [{}, {"semanticId": 1, "x_min": 0, "y_min": 0, "x_max": 1, "y_max": 0}],
-            ["/World/Visuals/FloorGraphics/FloorFinish", "/World/Visuals/FloorGraphics"],
-            {1: "floor"}, {"1": {"class": "floor"}}, {120: item}, {120: [0, 0, 1, 0]},
-            {"/World/Visuals/FloorGraphics": "e" * 64, "@class:/World/Visuals/FloorGraphics": "floor"},
-            {120: ("/World/Visuals/FloorGraphics/FloorFinish", "floor")},
-            {0}, errors,
+            "fixture", [record], raw_rows, raw_paths, {2: "pallet", 9: "tote"},
+            {"2": {"class": "pallet"}, "9": {"class": "pallet,tote"}},
+            items, {110: [2, 0, 3, 0], 124: [0, 0, 1, 0]}, source_bindings, exact_roots, {0, 1}, errors,
         ), set())
-        self.assertTrue(any("not a unique hierarchical" in error for error in errors), errors)
+        self.assertTrue(any("not an exact hierarchical" in error for error in errors), errors)
+
+        record["descendant_instance_ids"] = [110, 124]
+        raw_rows[2]["x_max"] = 2
+        errors = []
+        self.assertEqual(_validate_excluded_bbox_rows(
+            "fixture", [record], raw_rows, raw_paths, {2: "pallet", 9: "tote"},
+            {"2": {"class": "pallet"}, "9": {"class": "pallet,tote"}},
+            items, {110: [2, 0, 3, 0], 124: [0, 0, 1, 0]}, source_bindings, exact_roots, {0, 1}, errors,
+        ), set())
+        self.assertTrue(any("not an exact hierarchical" in error for error in errors), errors)
 
     def test_self_attested_asset_sha_and_recomputed_stable_key_are_rejected(self) -> None:
         path = next(self.root.rglob("normalized.json"))

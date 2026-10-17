@@ -761,8 +761,10 @@ def _validate_camera_sample(
         errors.append(f"{prefix} semantic/instance dtype is not a supported little-endian integer")
         return
     instance_bounds: dict[int, list[int]] = {}
+    instance_source_chains: dict[int, tuple[str, str, frozenset[str]] | None] = {}
     observed_reserved_ids: set[int] = set()
     expected_semantic_classes: dict[int, set[str]] = defaultdict(set)
+    validated_semantic_instance_pairs: set[tuple[int, int]] = set()
     values = zip(_array_values(depth), _array_values(semantic), _array_values(instance))
     for pixel_index, (depth_value, semantic_id, instance_id) in enumerate(values):
         semantic_id = int(semantic_id)
@@ -797,13 +799,21 @@ def _validate_camera_sample(
                 observed_reserved_ids.add(instance_id)
         else:
             raw_instance_path = instance_prim_paths.get(str(instance_id))
-            chain = _source_semantic_chain(raw_instance_path, source_bindings) if isinstance(raw_instance_path, str) else None
-            if chain is None:
-                errors.append(f"{prefix} foreground instance ID {instance_id} has no authoritative semantic ancestry")
-            else:
-                expected_semantic_classes[semantic_id].add(chain[1])
-                if class_name != chain[1] or _raw_class_tokens(raw_semantic_labels.get(str(semantic_id))) != chain[2]:
-                    errors.append(f"{prefix} semantic ID {semantic_id} canonical class/tokens differ from source ancestry")
+            if instance_id not in instance_source_chains:
+                instance_source_chains[instance_id] = (
+                    _source_semantic_chain(raw_instance_path, source_bindings)
+                    if isinstance(raw_instance_path, str) else None
+                )
+            chain = instance_source_chains[instance_id]
+            pair = (semantic_id, instance_id)
+            if pair not in validated_semantic_instance_pairs:
+                validated_semantic_instance_pairs.add(pair)
+                if chain is None:
+                    errors.append(f"{prefix} foreground instance ID {instance_id} has no authoritative semantic ancestry")
+                else:
+                    expected_semantic_classes[semantic_id].add(chain[1])
+                    if class_name != chain[1] or _raw_class_tokens(raw_semantic_labels.get(str(semantic_id))) != chain[2]:
+                        errors.append(f"{prefix} semantic ID {semantic_id} canonical class/tokens differ from source ancestry")
             class_pixels[class_name] += 1
             if not isinstance(depth_value, float) or not math.isfinite(depth_value) or depth_value <= 0:
                 errors.append(f"{prefix} foreground depth pixel {pixel_index} is not finite and positive")
@@ -1354,27 +1364,27 @@ def _validate_excluded_bbox_rows(
     excluded: set[int] = set()
     for record in records:
         if not isinstance(record, dict) or set(record) != {
-            "raw_bbox_index", "canonical_root", "descendant_instance_id", "reason",
+            "raw_bbox_index", "canonical_root", "descendant_instance_ids", "reason",
         }:
             errors.append(f"{prefix} excluded bbox row record is invalid")
             continue
         raw_index = record.get("raw_bbox_index")
-        instance_id = record.get("descendant_instance_id")
+        descendant_ids = record.get("descendant_instance_ids")
         aggregate_root = record.get("canonical_root")
         if (not _nonnegative_int(raw_index) or int(raw_index) >= len(raw_data)
                 or int(raw_index) in excluded or int(raw_index) in used_raw_indices
-                or not _nonnegative_int(instance_id) or instance_id not in normalized_by_id
+                or not isinstance(descendant_ids, list) or not descendant_ids
+                or any(not _nonnegative_int(value) or value not in normalized_by_id for value in descendant_ids)
+                or descendant_ids != sorted(set(descendant_ids))
                 or not _usd_path(aggregate_root)
                 or record.get("reason") != "hierarchical_semantic_aggregate"):
             errors.append(f"{prefix} excluded bbox row identity is invalid")
             continue
         raw_index = int(raw_index)
-        instance_id = int(instance_id)
+        descendant_ids = cast(list[int], descendant_ids)
         raw_box = raw_data[raw_index]
         raw_paths = bbox_prim_paths[raw_index]
         raw_paths = [raw_paths] if isinstance(raw_paths, str) else raw_paths
-        item = normalized_by_id[instance_id]
-        descendant_root = item.get("usd_root_path")
         semantic_id = raw_box.get("semanticId") if isinstance(raw_box, dict) else None
         bbox_class = bbox_map.get(int(semantic_id)) if _nonnegative_int(semantic_id) else None
         raw_tokens = bbox_raw_labels.get(str(semantic_id)) if _nonnegative_int(semantic_id) else None
@@ -1390,21 +1400,27 @@ def _validate_excluded_bbox_rows(
             source_bindings,
         )
         raw_bbox = [raw_box.get(key) for key in ("x_min", "y_min", "x_max", "y_max")] if isinstance(raw_box, dict) else None
-        candidates = [
+        candidates = sorted(
             candidate_id
             for candidate_id, candidate in normalized_by_id.items()
-            if candidate.get("class") == bbox_class
-            and isinstance(candidate.get("usd_root_path"), str)
+            if isinstance(candidate.get("usd_root_path"), str)
             and candidate["usd_root_path"].startswith(cast(str, aggregate_root) + "/")
-            and raw_bbox == instance_bounds.get(candidate_id)
-        ]
+        )
+        descendant_union = (
+            [
+                min(instance_bounds[value][0] for value in candidates),
+                min(instance_bounds[value][1] for value in candidates),
+                max(instance_bounds[value][2] for value in candidates),
+                max(instance_bounds[value][3] for value in candidates),
+            ]
+            if candidates and all(value in instance_bounds for value in candidates) else None
+        )
         if (canonical_roots != {aggregate_root} or not chains or any(chain is None for chain in chains)
                 or any(cast(tuple[str, str, frozenset[str]], chain)[1] != bbox_class for chain in chains)
                 or any(cast(tuple[str, str, frozenset[str]], chain)[2] != _raw_class_tokens(raw_tokens) for chain in chains)
-                or not isinstance(descendant_root, str)
-                or not descendant_root.startswith(cast(str, aggregate_root) + "/")
-                or candidates != [instance_id]):
-            errors.append(f"{prefix} excluded bbox row is not a unique hierarchical semantic aggregate")
+                or descendant_ids != candidates
+                or raw_bbox != descendant_union):
+            errors.append(f"{prefix} excluded bbox row is not an exact hierarchical descendant union")
             continue
         excluded.add(raw_index)
     return excluded

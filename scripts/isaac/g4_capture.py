@@ -587,6 +587,7 @@ def _normalize_annotations(
     instance_paths: dict[str, str] = {}
     instance_asset_shas: dict[str, str] = {}
     labelled_roots: dict[int, tuple[str, str]] = {}
+    instance_expected_tokens: dict[int, frozenset[str]] = {}
     reserved_instance_ids: dict[str, str] = {}
     for instance_id in bounds:
         raw_value = _map_lookup(instance_raw, instance_id)
@@ -611,6 +612,7 @@ def _normalize_annotations(
         if semantics_value is not None:
             _validate_sdk_tokens(semantics_value, expected_tokens, f"instance ID {instance_id}")
         labelled_roots[instance_id] = (root_path, class_name)
+        instance_expected_tokens[instance_id] = expected_tokens
         instance_classes[str(instance_id)] = {"class": class_name}
         instance_paths[str(instance_id)] = raw_path
         candidates = [
@@ -625,6 +627,7 @@ def _normalize_annotations(
 
     semantic_classes: dict[str, dict[str, str]] = {}
     semantic_leaf_candidates: dict[int, set[str]] = {}
+    validated_semantic_instance_pairs: set[tuple[int, int]] = set()
     semantic_rows = _matrix_rows(semantic_array)
     instance_rows = _matrix_rows(instance_array)
     if len(semantic_rows) != len(instance_rows) or any(len(a) != len(b) for a, b in zip(semantic_rows, instance_rows)):
@@ -633,15 +636,15 @@ def _normalize_annotations(
         for raw_semantic_id, raw_instance_id in zip(semantic_row, instance_row):
             semantic_id = int(raw_semantic_id)
             instance_id = int(raw_instance_id)
+            pair = (semantic_id, instance_id)
+            if pair in validated_semantic_instance_pairs:
+                continue
+            validated_semantic_instance_pairs.add(pair)
             semantic_value = _map_lookup(semantic_raw, semantic_id)
             reserved = _reserved_label_identity(semantic_value)
             if instance_id in labelled_roots:
                 root_path, leaf_class = labelled_roots[instance_id]
-                raw_path = instance_paths[str(instance_id)]
-                expected_tokens = (
-                    _source_semantic_chain(raw_path, source_class_by_root)[2]
-                    if source_class_by_root is not None else frozenset({leaf_class})
-                )
+                expected_tokens = instance_expected_tokens[instance_id]
                 _validate_sdk_tokens(semantic_value, expected_tokens, f"semantic ID {semantic_id}")
                 semantic_leaf_candidates.setdefault(semantic_id, set()).add(leaf_class)
             elif reserved is not None:
@@ -701,17 +704,26 @@ def _normalize_annotations(
         ]
         if not matches and len(bbox_roots) == 1:
             aggregate_root = next(iter(bbox_roots))
-            descendants = [
+            descendants = sorted(
                 instance_id
-                for instance_id, (root_path, class_name) in labelled_roots.items()
-                if class_name == bbox_class and root_path.startswith(aggregate_root + "/")
-            ]
+                for instance_id, (root_path, _class_name) in labelled_roots.items()
+                if root_path.startswith(aggregate_root + "/")
+            )
             raw_bbox = [row.get(key) for key in ("x_min", "y_min", "x_max", "y_max")]
-            if len(descendants) == 1 and raw_bbox == bounds[descendants[0]]:
+            descendant_union = (
+                [
+                    min(bounds[value][0] for value in descendants),
+                    min(bounds[value][1] for value in descendants),
+                    max(bounds[value][2] for value in descendants),
+                    max(bounds[value][3] for value in descendants),
+                ]
+                if descendants else None
+            )
+            if descendants and raw_bbox == descendant_union:
                 excluded_bbox_rows.append({
                     "raw_bbox_index": raw_index,
                     "canonical_root": aggregate_root,
-                    "descendant_instance_id": descendants[0],
+                    "descendant_instance_ids": descendants,
                     "reason": "hierarchical_semantic_aggregate",
                 })
                 continue
