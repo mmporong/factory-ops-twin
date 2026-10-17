@@ -32,6 +32,7 @@ def main() -> int:
     from rclpy.serialization import serialize_message
     from rclpy.service_introspection import ServiceIntrospectionState
     from rosidl_runtime_py.utilities import get_message
+    from rosidl_runtime_py.convert import message_to_ordereddict
     from unique_identifier_msgs.msg import UUID
 
     report: dict[str, Any] = {"status": "running", "scope": "synthetic_action_server_no_physics",
@@ -44,11 +45,13 @@ def main() -> int:
         client_node = rclpy.create_node("client", namespace="/factory_g3_sdk_smoke")
         nodes.extend((server, client_node))
         received: list[dict[str, Any]] = []
+        received_paths: list[Any] = []
         def hash_path(path: Any) -> str:
             return hashlib.sha256(bytes(serialize_message(path))).hexdigest()
         def accepted(goal: Any) -> Any:
             received.append({"path_cdr_sha256": hash_path(goal.path), "controller_id": goal.controller_id,
                 "goal_checker_id": goal.goal_checker_id, "progress_checker_id": goal.progress_checker_id})
+            received_paths.append(message_to_ordereddict(goal.path))
             return GoalResponse.ACCEPT
         def execute(handle: Any) -> Any:
             handle.succeed()
@@ -115,6 +118,9 @@ def main() -> int:
         actual = next(row.request[0].goal for row in events["send_goal"] if int(row.info.event_type) == 0)
         expected = {"path_cdr_sha256": hash_path(goal.path), "controller_id": "FollowPath",
                     "goal_checker_id": "goal_checker", "progress_checker_id": "progress_checker"}
+        report["path_diagnostics"] = {"expected": expected, "server_received": received,
+            "request_event_sha256": hash_path(actual.path), "expected_payload": message_to_ordereddict(goal.path),
+            "server_payloads": received_paths, "request_event_payload": message_to_ordereddict(actual.path)}
         if received != [expected] or hash_path(actual.path) != expected["path_cdr_sha256"]:
             raise RuntimeError("server, real request event and planned Path differ")
         report.update({"status": "passed", "goal_uuid": identity, "path": expected,
