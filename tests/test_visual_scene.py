@@ -6,9 +6,9 @@ from pathlib import Path
 import tempfile
 import unittest
 
-from factory_ops.layout import Layout, LayoutError
+from factory_ops.layout import Layout, LayoutError, Rect
 from factory_ops.usda import export_usda
-from factory_ops.visual_scene import export_visual_scene
+from factory_ops.visual_scene import _recipe_boxes, export_visual_scene
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -139,8 +139,10 @@ class VisualSceneTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             document, output = self._export(Path(temporary), 3)
             text = (output / "factory-v3.visual.usda").read_text(encoding="utf-8")
-        for expected in ("UsdPreviewSurface", "ESDMat", "OpticalWindow", "ProcessWindow", "EStop", "FinishedTote", "LED_", "Chevron_", "Slot0", "Slot1"):
+        for expected in ("UsdPreviewSurface", "ESDMat", "OpticalWindow", "ProcessWindow", "EStop", "FinishedTote", "Chevron_", "Slot0", "Slot1"):
             self.assertIn(expected, text)
+        self.assertNotIn('def Cube "LED_', text)
+        self.assertIn('custom string lightingGeometry = "omitted; runtime UsdLux only"', text)
         instances = document["instances"]
         assert isinstance(instances, list)
         for station_id, (x, y) in {**self.layout.stations, **self.layout.pockets}.items():
@@ -148,6 +150,35 @@ class VisualSceneTests(unittest.TestCase):
                 x0, y0, _z0, x1, y1, z1 = instance["bounds_xyz_m"]
                 if z1 > 0.05:
                     self.assertFalse(x0 <= x <= x1 and y0 <= y <= y1, f"{instance['stable_id']} blocks {station_id}")
+
+    def test_factory_details_avoid_flat_totes_full_zone_slabs_and_identical_process_cells(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            _document, output = self._export(Path(temporary), 0)
+            text = (output / "factory-v3.visual.usda").read_text(encoding="utf-8")
+
+        self.assertNotIn("displayOpacity", text)
+        for zone in ("WestZone", "CellZone", "ShippingZone"):
+            self.assertNotIn(f'def Cube "{zone}"', text)
+            for side in ("South", "North", "West", "East"):
+                self.assertIn(f'def Cube "{zone}_{side}"', text)
+        for process_role in ("guarded_load_cell", "enclosed_inspection", "discharge_pack"):
+            self.assertIn(f'custom string stateRole = "{process_role}"', text)
+        for detail in ("RearBraceLow", "ShelfDeck_3", "UnderShelf", "ToolRail", "DoorSeam", "VentLow"):
+            self.assertIn(detail, text)
+
+        first_tote = text.index('def Xform "Tote_00"')
+        next_tote = text.index('def Xform "Tote_01"', first_tote)
+        tote = text[first_tote:next_tote]
+        self.assertEqual(tote.count('custom string semanticClass = "tote"'), 1)
+        for detail in ("Base", "InnerRecess", "WallWest", "RimNorth", "HandleSouth"):
+            self.assertIn(f'def Cube "{detail}"', tote)
+        self.assertNotIn('def Cube "Tote_00"', text)
+
+        service = next(item for item in self.layout.data["physical_obstacles"] if item["id"] == "SERVICE_CABINET")
+        service_rect = service["rect"]
+        boxes = _recipe_boxes("service_cabinet", Rect.from_value(service_rect, "service"), float(service["height_m"]), 0, "SERVICE_CABINET")
+        minimum_front = float(service_rect[1]) + (float(service_rect[3]) - float(service_rect[1])) * 0.05
+        self.assertTrue(all(box.bounds[1] >= minimum_front for box in boxes))
 
 
 if __name__ == "__main__":

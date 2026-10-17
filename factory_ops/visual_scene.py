@@ -283,25 +283,29 @@ def _visual_header(seed: int, palette: Mapping[str, tuple[float, float, float]])
 
 def _materials(palette: Mapping[str, tuple[float, float, float]]) -> list[str]:
     definitions = {
-        "Floor": ((0.62, 0.66, 0.70), 0.0, 0.72),
-        "Steel": (palette["steel"], 0.72, 0.32),
-        "LightSteel": ((0.72, 0.76, 0.79), 0.56, 0.30),
-        "Dark": ((0.035, 0.045, 0.06), 0.18, 0.46),
-        "Accent": (palette["accent"], 0.25, 0.28),
-        "Accent2": (palette["accent2"], 0.18, 0.30),
-        "SafetyYellow": ((0.98, 0.68, 0.02), 0.05, 0.42),
-        "SafetyRed": ((0.78, 0.035, 0.025), 0.05, 0.35),
-        "Green": ((0.04, 0.72, 0.23), 0.0, 0.34),
-        "White": ((0.92, 0.94, 0.96), 0.05, 0.55),
-        "ToteBlue": ((0.04, 0.28, 0.56), 0.05, 0.40),
-        "ToteOrange": ((0.92, 0.31, 0.035), 0.05, 0.40),
-        "Glass": ((0.10, 0.25, 0.34), 0.12, 0.12),
-        "ESD": ((0.08, 0.14, 0.18), 0.0, 0.78),
-        "Wood": ((0.47, 0.25, 0.08), 0.0, 0.72),
-        "Light": (palette["light"], 0.0, 0.18),
+        "Floor": ((0.49, 0.52, 0.54), 0.0, 0.78, 1.0),
+        "Steel": (palette["steel"], 0.72, 0.32, 1.0),
+        "LightSteel": ((0.60, 0.64, 0.67), 0.50, 0.34, 1.0),
+        "MachinePaint": ((0.31, 0.36, 0.39), 0.22, 0.42, 1.0),
+        "MachinePanel": ((0.69, 0.72, 0.73), 0.30, 0.38, 1.0),
+        "Dark": ((0.035, 0.045, 0.06), 0.18, 0.46, 1.0),
+        "Accent": (palette["accent"], 0.25, 0.32, 1.0),
+        "Accent2": (palette["accent2"], 0.18, 0.34, 1.0),
+        "ZoneBlue": ((0.17, 0.31, 0.39), 0.0, 0.66, 1.0),
+        "ZoneAmber": ((0.43, 0.34, 0.19), 0.0, 0.66, 1.0),
+        "ZoneGreen": ((0.19, 0.35, 0.29), 0.0, 0.66, 1.0),
+        "SafetyYellow": ((0.88, 0.60, 0.03), 0.05, 0.46, 1.0),
+        "SafetyRed": ((0.66, 0.025, 0.02), 0.05, 0.38, 1.0),
+        "Green": ((0.03, 0.52, 0.17), 0.0, 0.38, 1.0),
+        "White": ((0.79, 0.81, 0.82), 0.05, 0.62, 1.0),
+        "ToteBlue": ((0.035, 0.22, 0.43), 0.05, 0.46, 1.0),
+        "ToteOrange": ((0.68, 0.25, 0.035), 0.05, 0.46, 1.0),
+        "Glass": ((0.08, 0.21, 0.28), 0.12, 0.16, 0.28),
+        "ESD": ((0.08, 0.14, 0.18), 0.0, 0.78, 1.0),
+        "Wood": ((0.39, 0.22, 0.09), 0.0, 0.74, 1.0),
     }
     lines = ['        def Scope "Looks"', "        {"]
-    for name, (color, metallic, roughness) in definitions.items():
+    for name, (color, metallic, roughness, opacity) in definitions.items():
         lines.extend([
             f'            def Material "{name}"',
             "            {",
@@ -312,6 +316,8 @@ def _materials(palette: Mapping[str, tuple[float, float, float]]) -> list[str]:
             f"                    color3f inputs:diffuseColor = {_vec(color)}",
             f"                    float inputs:metallic = {_num(metallic)}",
             f"                    float inputs:roughness = {_num(roughness)}",
+            f"                    float inputs:opacity = {_num(opacity)}",
+            "                    float inputs:opacityThreshold = 0.01",
             "                    token outputs:surface",
             "                }",
             "            }",
@@ -329,11 +335,9 @@ def _factory_shell(palette: Mapping[str, tuple[float, float, float]]) -> list[st
         ("NorthWall", (0.0, 24.0, 0.0, 40.0, 24.12, 3.2)),
     ):
         lines.extend(_box_usda(_Box(name, bounds, "White"), 12))
-    for index, x in enumerate((5.0, 15.0, 25.0, 35.0)):
-        for row, y in enumerate((4.0, 12.0, 20.0)):
-            lines.extend(_box_usda(_Box(f"LED_{index}_{row}", (x - 1.7, y - 0.08, 5.4, x + 1.7, y + 0.08, 5.46), "Light"), 12))
     lines.extend([
         f"            custom color3f authoredLightColor = {_vec(light)}",
+        '            custom string lightingGeometry = "omitted; runtime UsdLux only"',
         '            custom string roofMode = "cutaway"',
         "        }",
     ])
@@ -351,12 +355,20 @@ def _floor_graphics(layout: Layout, palette: Mapping[str, tuple[float, float, fl
     ]
     lines.extend(_box_usda(_Box("FloorFinish", (0.0, 0.0, 0.001, 40.0, 24.0, 0.006), "Floor", "floor", "factory_floor"), 12))
     zones = (
-        ("WestZone", (0.2, 0.2, 0.007, 11.0, 23.8, 0.010), "Accent"),
-        ("CellZone", (12.0, 5.2, 0.007, 30.5, 18.8, 0.010), "Accent2"),
-        ("ShippingZone", (32.5, 5.2, 0.007, 39.8, 18.8, 0.010), "Green"),
+        ("WestZone", (0.2, 0.2, 0.007, 11.0, 23.8, 0.014), "ZoneBlue"),
+        ("CellZone", (12.0, 5.2, 0.007, 30.5, 18.8, 0.014), "ZoneAmber"),
+        ("ShippingZone", (32.5, 5.2, 0.007, 39.8, 18.8, 0.014), "ZoneGreen"),
     )
     for name, bounds, material in zones:
-        lines.extend(_box_usda(_Box(name, bounds, material, "floor_marking", "zone_color"), 12, opacity=0.12))
+        x0, y0, z0, x1, y1, z1 = bounds
+        thickness = 0.10
+        for suffix, border in (
+            ("South", (x0, y0, z0, x1, y0 + thickness, z1)),
+            ("North", (x0, y1 - thickness, z0, x1, y1, z1)),
+            ("West", (x0, y0 + thickness, z0, x0 + thickness, y1 - thickness, z1)),
+            ("East", (x1 - thickness, y0 + thickness, z0, x1, y1 - thickness, z1)),
+        ):
+            lines.extend(_box_usda(_Box(f"{name}_{suffix}", border, material, "floor_marking", "zone_boundary"), 12))
     for index, y in enumerate((2.3, 5.7, 10.2, 13.8, 18.3, 21.7)):
         lines.extend(_box_usda(_Box(f"AisleLine_{index}", (0.4, y - 0.025, 0.011, 39.6, y + 0.025, 0.016), "SafetyYellow", "floor_marking", "safety_line"), 12))
     for marker_id, xy in sorted({**layout.stations, **layout.pockets}.items()):
@@ -389,17 +401,68 @@ def _equipment_root(obstacle_id: str, semantic_class: str, state_role: str, reci
         f"{pad}    custom string assetRecipe = {_quote(recipe)}",
     ]
     for box in boxes:
+        stable_id = f"{obstacle_id}:{box.name}"
+        if box.semantic_class == "tote":
+            lines.extend(_tote_usda(box, indent + 4, stable_id, obstacle_id))
+        else:
+            lines.extend(_box_usda(
+                box,
+                indent + 4,
+                stable_id=stable_id,
+                source_obstacle_id=obstacle_id,
+            ))
+    return lines + [f"{pad}}}"]
+
+
+def _tote_usda(box: _Box, indent: int, stable_id: str, source_obstacle_id: str) -> list[str]:
+    pad = " " * indent
+    parts = _tote_parts(box)
+    _validate_boxes(stable_id, parts, box.bounds)
+    lines = [
+        f'{pad}def Xform "{_prim_name(box.name)}"',
+        f"{pad}{{",
+        f"{pad}    custom string stableId = {_quote(stable_id)}",
+        f"{pad}    custom string semanticClass = {_quote(box.semantic_class or 'tote')}",
+        f"{pad}    custom string stateRole = {_quote(box.state_role or 'material_tote')}",
+        f"{pad}    custom string sourceObstacleId = {_quote(source_obstacle_id)}",
+        f'{pad}    custom string geometryStyle = "open-rim industrial tote"',
+    ]
+    for part in parts:
         lines.extend(_box_usda(
-            box,
+            part,
             indent + 4,
-            stable_id=f"{obstacle_id}:{box.name}",
-            source_obstacle_id=obstacle_id,
+            stable_id=f"{stable_id}:{part.name}",
+            source_obstacle_id=source_obstacle_id,
         ))
     return lines + [f"{pad}}}"]
 
 
+def _tote_parts(box: _Box) -> list[_Box]:
+    x0, y0, z0, x1, y1, z1 = box.bounds
+    width, depth, height = x1 - x0, y1 - y0, z1 - z0
+    wall_x = min(width * 0.10, 0.075)
+    wall_y = min(depth * 0.12, 0.075)
+    base_top = z0 + height * 0.18
+    wall_top = z0 + height * 0.82
+    rim_bottom = z0 + height * 0.78
+    handle_x0, handle_x1 = x0 + width * 0.34, x0 + width * 0.66
+    return [
+        _Box("Base", (x0 + wall_x, y0 + wall_y, z0, x1 - wall_x, y1 - wall_y, base_top), box.material),
+        _Box("InnerRecess", (x0 + wall_x * 1.4, y0 + wall_y * 1.4, base_top, x1 - wall_x * 1.4, y1 - wall_y * 1.4, base_top + height * 0.035), "Dark"),
+        _Box("WallWest", (x0, y0 + wall_y, z0 + height * 0.08, x0 + wall_x, y1 - wall_y, wall_top), box.material),
+        _Box("WallEast", (x1 - wall_x, y0 + wall_y, z0 + height * 0.08, x1, y1 - wall_y, wall_top), box.material),
+        _Box("WallSouth", (x0 + wall_x, y0, z0 + height * 0.08, x1 - wall_x, y0 + wall_y, wall_top), box.material),
+        _Box("WallNorth", (x0 + wall_x, y1 - wall_y, z0 + height * 0.08, x1 - wall_x, y1, wall_top), box.material),
+        _Box("RimWest", (x0, y0, rim_bottom, x0 + wall_x * 1.35, y1, z1), box.material),
+        _Box("RimEast", (x1 - wall_x * 1.35, y0, rim_bottom, x1, y1, z1), box.material),
+        _Box("RimSouth", (x0 + wall_x, y0, rim_bottom, x1 - wall_x, y0 + wall_y * 1.35, z1), box.material),
+        _Box("RimNorth", (x0 + wall_x, y1 - wall_y * 1.35, rim_bottom, x1 - wall_x, y1, z1), box.material),
+        _Box("HandleSouth", (handle_x0, y0, z0 + height * 0.57, handle_x1, y0 + wall_y * 1.5, z0 + height * 0.69), "Dark"),
+        _Box("HandleNorth", (handle_x0, y1 - wall_y * 1.5, z0 + height * 0.57, handle_x1, y1, z0 + height * 0.69), "Dark"),
+    ]
+
+
 def _recipe_boxes(recipe: str, rect: Rect, height: float, seed: int, obstacle_id: str) -> list[_Box]:
-    del obstacle_id
     x0, y0, x1, y1 = rect.xmin, rect.ymin, rect.xmax, rect.ymax
     w, d = x1 - x0, y1 - y0
     def b(name: str, fx0: float, fy0: float, z0: float, fx1: float, fy1: float, z1: float, material: str, semantic: str | None = None, role: str | None = None) -> _Box:
@@ -409,16 +472,23 @@ def _recipe_boxes(recipe: str, rect: Rect, height: float, seed: int, obstacle_id
         boxes = [
             b("Post_FL", .02, .05, 0, .055, .14, height, "Steel"), b("Post_FR", .945, .05, 0, .98, .14, height, "Steel"),
             b("Post_BL", .02, .86, 0, .055, .95, height, "Steel"), b("Post_BR", .945, .86, 0, .98, .95, height, "Steel"),
+            b("RearBraceLow", .03, .89, .38, .97, .94, .44, "Steel"),
+            b("RearBraceHigh", .03, .89, 1.42, .97, .94, 1.48, "Steel"),
         ]
-        for level, z in enumerate((.18, .72, 1.26, 1.82)):
-            boxes.append(b(f"Shelf_{level}", .02, .04, z, .98, .96, z + .07, "LightSteel"))
-        order = list(range(8))
+        for level, z in enumerate((.14, .68, 1.22, 1.82)):
+            boxes.extend([
+                b(f"FrontBeam_{level}", .02, .04, z, .98, .12, z + .075, "MachinePaint"),
+                b(f"RearBeam_{level}", .02, .88, z, .98, .96, z + .075, "MachinePaint"),
+                b(f"ShelfDeck_{level}", .04, .12, z + .01, .96, .88, z + .04, "Steel"),
+            ])
+        order = list(range(12))
         shift = seed % len(order)
         order = order[shift:] + order[:shift]
         for index, value in enumerate(order):
-            column, row = index % 4, index // 4
+            column, level = index % 4, index // 4
             material = "ToteBlue" if value % 2 == 0 else "ToteOrange"
-            boxes.append(b(f"Tote_{index:02d}", .08 + .225 * column, .12 + .46 * row, .27 + .55 * row, .25 + .225 * column, .42 + .46 * row, .62 + .55 * row, material, "tote", "inventory_tote"))
+            z0 = .23 + .54 * level
+            boxes.append(b(f"Tote_{index:02d}", .075 + .225 * column, .16, z0, .255 + .225 * column, .82, z0 + .36, material, "tote", "inventory_tote"))
         return boxes
     if recipe in {"kitting_bench", "assembly_bench", "packing_bench"}:
         role = {"kitting_bench": "kitting", "assembly_bench": "pcb_assembly", "packing_bench": "packing"}[recipe]
@@ -426,26 +496,102 @@ def _recipe_boxes(recipe: str, rect: Rect, height: float, seed: int, obstacle_id
         top_top = height * .78
         mat_bottom = height * .79
         mat_top = height * .81
-        boxes = [b("Worktop", .03, .05, top_bottom, .97, .95, top_top, "LightSteel"), b("LegL", .06, .10, 0, .12, .90, top_bottom, "Steel"), b("LegR", .88, .10, 0, .94, .90, top_bottom, "Steel"), b("ESDMat", .22, .18, mat_bottom, .78, .78, mat_top, "ESD", "workbench", role)]
+        boxes = [
+            b("Worktop", .03, .05, top_bottom, .97, .95, top_top, "MachinePanel"),
+            b("LegL", .06, .10, 0, .12, .90, top_bottom, "Steel"),
+            b("LegR", .88, .10, 0, .94, .90, top_bottom, "Steel"),
+            b("UnderShelf", .10, .13, height * .18, .90, .87, height * .24, "MachinePaint"),
+            b("RearRiser", .04, .88, top_top, .96, .94, height * .97, "Steel"),
+            b("ToolRail", .12, .84, height * .86, .88, .90, height * .91, "Accent"),
+            b("ESDMat", .22, .18, mat_bottom, .78, .78, mat_top, "ESD", "workbench", role),
+            b("JigBase", .38, .30, height * .82, .62, .52, height * .86, "MachinePaint"),
+        ]
         if recipe != "packing_bench":
             boxes.extend([b("Monitor", .38, .55, height * .82, .62, .63, height * .98, "Dark"), b("Terminal", .43, .43, height * .82, .57, .58, height * .90, "Accent", "process_equipment", "operator_terminal")])
         for index in range(3):
             fx = .16 + .25 * ((index + seed) % 3)
             boxes.append(b(f"Bin_{index}", fx, .12, height * .82, fx + .15, .34, height * .96, "ToteBlue" if index % 2 == 0 else "ToteOrange", "tote", "work_in_process_bin"))
+        if recipe == "packing_bench":
+            boxes.extend([
+                b("TapeStand", .69, .48, height * .82, .76, .62, height * .94, "SafetyYellow"),
+                b("ScaleBed", .28, .42, height * .82, .58, .72, height * .85, "Dark"),
+            ])
         return boxes
     if recipe == "inspection_station":
-        return [b("Cabinet", .04, .05, 0, .96, .95, height, "LightSteel"), b("OpticalWindow", .10, .02, .72, .90, .07, min(1.36, height), "Glass", "process_equipment", "inspection_window"), b("ControlPanel", .18, .01, .25, .82, .055, .58, "Dark"), b("StatusGreen", .18, .005, min(1.42, height - .12), .34, .04, min(1.55, height), "Green")]
+        return [
+            b("Plinth", .04, .05, 0, .96, .95, height * .24, "MachinePaint"),
+            b("LeftTower", .04, .05, height * .24, .17, .95, height, "MachinePanel"),
+            b("RightTower", .83, .05, height * .24, .96, .95, height, "MachinePanel"),
+            b("Roof", .04, .05, height * .88, .96, .95, height, "MachinePanel"),
+            b("ChamberBed", .17, .18, height * .34, .83, .90, height * .43, "Steel"),
+            b("OpticalWindow", .17, .03, height * .43, .83, .08, height * .88, "Glass", "process_equipment", "inspection_window"),
+            b("ControlPanel", .22, .01, height * .27, .78, .055, height * .40, "Dark"),
+            b("DoorHandle", .74, .0, height * .55, .79, .05, height * .75, "SafetyYellow"),
+            b("StatusGreen", .18, .005, height * .90, .34, .04, height * .97, "Green"),
+        ]
     if recipe == "process_cell":
-        return [b("MachineBody", .05, .05, 0, .95, .95, height * .78, "LightSteel"), b("AccessDoor", .18, .01, .18, .82, .06, height * .66, "Steel"), b("ProcessWindow", .26, .005, height * .38, .74, .04, height * .65, "Glass", "process_equipment", "process_view"), b("HMI", .72, .0, height * .52, .93, .045, height * .70, "Dark", "process_equipment", "hmi"), b("BeaconRed", .78, .20, height * .78, .84, .28, height * .96, "SafetyRed"), b("BeaconGreen", .78, .20, height * .96, .84, .28, height, "Green")]
+        common = [
+            b("Plinth", .04, .05, 0, .96, .95, height * .22, "MachinePaint"),
+            b("FrontStep", .14, .0, height * .08, .86, .06, height * .18, "Dark"),
+        ]
+        if obstacle_id == "PROCESS_1":
+            return common + [
+                b("WorkBed", .12, .16, height * .30, .88, .88, height * .39, "Steel"),
+                b("GuardLeft", .06, .08, height * .22, .13, .94, height * .92, "MachinePanel"),
+                b("GuardRight", .87, .08, height * .22, .94, .94, height * .92, "MachinePanel"),
+                b("GuardRoof", .06, .08, height * .86, .94, .94, height * .96, "MachinePanel"),
+                b("ProcessWindow", .13, .045, height * .42, .72, .09, height * .85, "Glass", "process_equipment", "guarded_load_cell"),
+                b("HMI", .75, .025, height * .52, .91, .08, height * .72, "Dark", "process_equipment", "hmi"),
+                b("BeaconGreen", .80, .24, height * .96, .86, .32, height, "Green"),
+            ]
+        if obstacle_id == "PROCESS_2":
+            return common + [
+                b("CabinetRear", .06, .30, height * .22, .94, .94, height * .92, "MachinePanel"),
+                b("DoorLeft", .08, .055, height * .24, .47, .12, height * .88, "MachinePaint"),
+                b("DoorRight", .53, .055, height * .24, .92, .12, height * .88, "MachinePaint"),
+                b("ProcessWindow", .18, .025, height * .48, .70, .06, height * .78, "Glass", "process_equipment", "enclosed_inspection"),
+                b("DoorHandle", .48, .015, height * .48, .52, .07, height * .70, "SafetyYellow"),
+                b("HMI", .72, .015, height * .30, .91, .07, height * .45, "Dark", "process_equipment", "hmi"),
+                b("Vent", .10, .01, height * .27, .34, .06, height * .34, "Dark"),
+                b("BeaconRed", .80, .34, height * .92, .86, .42, height, "SafetyRed"),
+            ]
+        return common + [
+            b("ConveyorBed", .08, .12, height * .30, .92, .90, height * .42, "Steel"),
+            b("TunnelLeft", .08, .28, height * .42, .18, .88, height * .88, "MachinePanel"),
+            b("TunnelRight", .82, .28, height * .42, .92, .88, height * .88, "MachinePanel"),
+            b("TunnelRoof", .08, .28, height * .82, .92, .88, height * .92, "MachinePanel"),
+            b("ProcessWindow", .18, .04, height * .48, .68, .09, height * .78, "Glass", "process_equipment", "discharge_pack"),
+            b("HMI", .72, .02, height * .48, .91, .08, height * .68, "Dark", "process_equipment", "hmi"),
+            b("ExitGuideL", .17, .03, height * .25, .22, .23, height * .44, "SafetyYellow"),
+            b("ExitGuideR", .78, .03, height * .25, .83, .23, height * .44, "SafetyYellow"),
+            b("BeaconGreen", .80, .34, height * .92, .86, .42, height, "Green"),
+        ]
     if recipe in {"control_cabinet", "service_cabinet"}:
-        boxes = [b("CabinetBody", .03, .05, 0, .97, .95, height, "LightSteel"), b("DoorInset", .08, .01, .12, .92, .07, height * .88, "Steel"), b("EStop", .75, .0, height * .54, .84, .05, min(height * .64, height), "SafetyRed", "control_cabinet", "emergency_stop")]
+        body_front = .10 if obstacle_id == "SERVICE_CABINET" else .05
+        facade_front = .05 if obstacle_id == "SERVICE_CABINET" else .01
+        facade_back = .11 if obstacle_id == "SERVICE_CABINET" else .07
+        boxes = [
+            b("Plinth", .03, .05, 0, .97, .95, height * .12, "MachinePaint"),
+            b("CabinetBody", .03, body_front, height * .12, .97, .95, height, "MachinePanel"),
+            b("DoorInset", .08, facade_front, height * .18, .92, facade_back, height * .88, "MachinePaint"),
+            b("DoorSeam", .49, facade_front, height * .18, .51, facade_back, height * .88, "Dark"),
+            b("DoorHandle", .68, facade_front, height * .38, .72, facade_back, height * .62, "Dark"),
+            b("VentLow", .17, facade_front, height * .20, .42, facade_back, height * .27, "Dark"),
+            b("VentHigh", .17, facade_front, height * .82, .42, facade_back, height * .87, "Dark"),
+            b("EStop", .75, facade_front, height * .54, .84, facade_back, min(height * .64, height), "SafetyRed", "control_cabinet", "emergency_stop"),
+        ]
         for index in range(3):
-            boxes.append(b(f"Status_{index}", .18 + .16 * index, .0, height * .72, .27 + .16 * index, .045, height * .79, "Green" if index == 0 else "SafetyYellow"))
+            boxes.append(b(f"Status_{index}", .18 + .16 * index, facade_front, height * .72, .27 + .16 * index, facade_back, height * .79, "Green" if index == 0 else "SafetyYellow"))
         return boxes
     if recipe == "buffer_fixture":
         return [b("Rail", .10, .02, 0, .90, .98, .18, "Steel"), b("Slot0", .15, .08, .19, .85, .45, .24, "Accent", "buffer_fixture", "slot_0"), b("Slot1", .15, .55, .19, .85, .92, .24, "Accent2", "buffer_fixture", "slot_1"), b("Lamp0", .20, .15, .25, .80, .28, min(.65, height), "Green"), b("Lamp1", .20, .68, .25, .80, .81, min(.65, height), "SafetyYellow")]
     if recipe == "finished_goods":
-        boxes = [b("Pallet", .04, .08, 0, .96, .92, .16, "Wood", "pallet", "finished_goods_pallet")]
+        boxes = [
+            b("Pallet", .04, .08, 0, .96, .92, .10, "Wood", "pallet", "finished_goods_pallet"),
+            b("PalletRunnerL", .08, .12, .10, .16, .88, .16, "Wood"),
+            b("PalletRunnerC", .46, .12, .10, .54, .88, .16, "Wood"),
+            b("PalletRunnerR", .84, .12, .10, .92, .88, .16, "Wood"),
+        ]
         for index in range(6):
             col, row = index % 3, index // 3
             boxes.append(b(f"FinishedTote_{index}", .10 + .30 * col, .13 + .42 * row, .17, .34 + .30 * col, .45 + .42 * row, min(.70, height), "ToteBlue" if (index + seed) % 2 == 0 else "ToteOrange", "tote", "finished_goods_tote"))
