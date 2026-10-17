@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import math
 import os
@@ -35,6 +36,88 @@ class BarrierLifecycle:
         self.session_root = session_root
         self.visuals: FactoryVisualRuntime | None = None
         self.last_captured_visual_sequence: int | None = None
+        self.real_time_media = self._load_real_time_media_profile()
+        self.media_window: dict[str, Any] | None = None
+        self.media_window_ended = False
+        self.current_media_frame: int | None = None
+        self.current_media_time_ns: int | None = None
+        self.last_media_due_frame: int | None = None
+        self.pending_media_sample: dict[str, Any] | None = None
+        self.media_journal_opened = False
+
+    def _load_real_time_media_profile(self) -> dict[str, Any] | None:
+        config_path = self.session_root / "config.json"
+        if (self.session.get("profile") != "qualification"
+                or self.session.get("primary_evaluation") is not False
+                or not config_path.is_file() or config_path.is_symlink()):
+            return None
+        config = json.loads(config_path.read_text(encoding="utf-8"))
+        profile = config.get("g3_runtime", {}).get("real_time_media")
+        if not isinstance(profile, dict) or profile.get("profiles") != ["qualification"]:
+            return None
+        return {**profile, "source_profile_sha256": hashlib.sha256(
+            json.dumps(profile, sort_keys=True, separators=(",", ":"), allow_nan=False).encode("utf-8")
+        ).hexdigest()}
+
+    def _append_media_event(self, event: dict[str, Any]) -> None:
+        assert self.output is not None
+        path = self.output / "real-time-media-events.jsonl"
+        if not self.media_journal_opened:
+            if path.exists() or path.is_symlink():
+                raise ValueError("G3 real-time media journal must be new")
+            self.media_journal_opened = True
+        g2_scene._append_jsonl(path, event)
+
+    def _observe_real_time_media(self, robot_id: str, sample: dict[str, Any]) -> None:
+        profile = self.real_time_media
+        if profile is None:
+            return
+        frame = sample.get("physics_frame")
+        sim_time = sample.get("sim_time_s")
+        if (isinstance(frame, bool) or not isinstance(frame, int) or frame < 0
+                or isinstance(sim_time, bool) or not isinstance(sim_time, (int, float))
+                or not math.isfinite(sim_time) or sim_time < 0):
+            return
+        sim_time_ns = round(float(sim_time) * 1_000_000_000)
+        self.current_media_frame = frame
+        self.current_media_time_ns = sim_time_ns
+        if self.media_window is None:
+            authorization = sample.get("authorization")
+            motion_profile = sample.get("motion_profile")
+            if not isinstance(authorization, dict) or not isinstance(motion_profile, dict):
+                return
+            command = motion_profile.get("input_command")
+            if (authorization.get("mode") != "navigate" or authorization.get("valid") is not True
+                    or not isinstance(command, dict)):
+                return
+            linear, angular = command.get("linear_m_s"), command.get("angular_rad_s")
+            if (isinstance(linear, bool) or not isinstance(linear, (int, float))
+                    or isinstance(angular, bool) or not isinstance(angular, (int, float))
+                    or not math.isfinite(linear) or not math.isfinite(angular)
+                    or (abs(linear) < profile["minimum_abs_linear_m_s"]
+                        and abs(angular) < profile["minimum_abs_angular_rad_s"])):
+                return
+            duration_ns = round(float(profile["window_s"]) * 1_000_000_000)
+            self.media_window = {
+                "window_id": "qualification-motion-001",
+                "source_profile_sha256": profile["source_profile_sha256"],
+                "trigger_robot_id": robot_id,
+                "trigger_command": {"linear_m_s": float(linear), "angular_rad_s": float(angular)},
+                "trigger_frame": frame,
+                "start_sim_time_ns": sim_time_ns,
+                "end_sim_time_ns": sim_time_ns + duration_ns,
+                "sample_every_physics_steps": profile["sample_every_physics_steps"],
+            }
+            self._append_media_event({"schema_version": 1, "event": "window_started",
+                                      "run_id": self.run_id, "scenario_id": self.session["scenario_id"],
+                                      **self.media_window})
+        if (not self.media_window_ended and self.media_window is not None
+                and sim_time_ns >= self.media_window["end_sim_time_ns"]):
+            self.media_window_ended = True
+            self._append_media_event({"schema_version": 1, "event": "window_ended",
+                                      "run_id": self.run_id, "scenario_id": self.session["scenario_id"],
+                                      "window_id": self.media_window["window_id"],
+                                      "physics_frame": frame, "sim_time_ns": sim_time_ns})
 
     def prepare_worker_paths(self, scene_arg: Path, output_arg: Path) -> tuple[Path, Path]:
         if (not scene_arg.is_absolute() or not output_arg.is_absolute()
@@ -173,13 +256,38 @@ class BarrierLifecycle:
 
     def capture_metadata(self) -> dict[str, Any]:
         assert self.visuals is not None
-        metadata = self.visuals.capture_metadata()
+        metadata = dict(self.visuals.capture_metadata())
         self.last_captured_visual_sequence = self.visuals.applied_sequence
+        if self.pending_media_sample is not None:
+            metadata["real_time_media"] = self.pending_media_sample
+            self.pending_media_sample = None
         return metadata
 
     def capture_due(self) -> bool:
         assert self.visuals is not None
-        return self.visuals.applied_sequence != self.last_captured_visual_sequence
+        visual_due = self.visuals.applied_sequence != self.last_captured_visual_sequence
+        window = self.media_window
+        if (window is None or self.current_media_frame is None or self.current_media_time_ns is None
+                or self.current_media_time_ns >= window["end_sim_time_ns"]):
+            return visual_due
+        offset = self.current_media_frame - window["trigger_frame"]
+        media_due = (offset >= 0 and offset % window["sample_every_physics_steps"] == 0
+                     and self.last_media_due_frame != self.current_media_frame)
+        if media_due:
+            self.last_media_due_frame = self.current_media_frame
+            self.pending_media_sample = {
+                "window_id": window["window_id"],
+                "source_profile_sha256": window["source_profile_sha256"],
+                "trigger_robot_id": window["trigger_robot_id"],
+                "trigger_command": window["trigger_command"],
+                "physics_frame": self.current_media_frame,
+                "sim_time_ns": self.current_media_time_ns,
+                "window_start_sim_time_ns": window["start_sim_time_ns"],
+                "window_end_sim_time_ns": window["end_sim_time_ns"],
+                "sample_index": offset // window["sample_every_physics_steps"],
+                "sample_every_physics_steps": window["sample_every_physics_steps"],
+            }
+        return visual_due or media_due
 
     def step(self, sim_time_s: float, physics_frame: int) -> None:
         assert self.output is not None
@@ -215,6 +323,7 @@ class BarrierLifecycle:
 
     def after_control(self, robot_id: str, sample: dict[str, Any]) -> None:
         assert self.output is not None
+        self._observe_real_time_media(robot_id, sample)
         authorization = sample["authorization"]
         sequence = authorization["sequence"]
         if sequence is None or self.control_sequences.get(robot_id) == sequence:

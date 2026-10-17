@@ -110,6 +110,11 @@ def closure_session():
     }
 
 
+class PoisonGroundTruth:
+    def __getattribute__(self, name):
+        raise AssertionError(f"ground truth was read: {name}")
+
+
 class BarrierLifecycleTests(unittest.TestCase):
     def setUp(self) -> None:
         self.temporary = tempfile.TemporaryDirectory()
@@ -134,6 +139,37 @@ class BarrierLifecycleTests(unittest.TestCase):
         self.assertFalse(metadata["ground_truth_control_input"])
         self.assertEqual(metadata["industrial_visuals"], self.visual.setup.return_value)
         return lifecycle
+
+    def media_lifecycle(self, *, profile: str = "qualification", primary: bool = False) -> BarrierLifecycle:
+        folder = Path(tempfile.mkdtemp(dir=self.output))
+        runtime_profile = {
+            "profiles": ["qualification"],
+            "window_s": 24.0,
+            "sample_every_physics_steps": 6,
+            "minimum_abs_linear_m_s": 0.15,
+            "minimum_abs_angular_rad_s": 0.15,
+        }
+        (folder / "config.json").write_text(
+            json.dumps({"g3_runtime": {"real_time_media": runtime_profile}}), encoding="utf-8"
+        )
+        session = {**closure_session(), "profile": profile, "primary_evaluation": primary}
+        lifecycle = BarrierLifecycle(session, RUN_ID, folder)
+        lifecycle.output = folder
+        lifecycle.visuals = self.visual
+        return lifecycle
+
+    @staticmethod
+    def media_sample(*, frame: int, sim_time_s: float, mode: str = "navigate",
+                     valid: bool = True, linear: float = 0.2, angular: float = 0.0):
+        return {
+            "physics_frame": frame,
+            "sim_time_s": sim_time_s,
+            "authorization": {"sequence": None, "mode": mode, "valid": valid},
+            "motion_profile": {"input_command": {
+                "linear_m_s": linear, "angular_rad_s": angular,
+            }},
+            "ground_truth": PoisonGroundTruth(),
+        }
 
     def test_visual_extension_receives_session_and_clock_without_control_feedback(self) -> None:
         lifecycle = self.lifecycle()
@@ -162,6 +198,63 @@ class BarrierLifecycleTests(unittest.TestCase):
         rep = SimpleNamespace(orchestrator=SimpleNamespace(step=Mock()))
         lifecycle.before_capture(rep)
         rep.orchestrator.step.assert_called_once_with(delta_time=0.0, rt_subframes=4)
+
+    def test_real_time_media_requires_valid_navigate_command_over_threshold(self) -> None:
+        samples = (
+            self.media_sample(frame=100, sim_time_s=5.0, linear=0.149, angular=-0.149),
+            self.media_sample(frame=100, sim_time_s=5.0, valid=False, linear=0.4),
+            self.media_sample(frame=100, sim_time_s=5.0, mode="hold", linear=0.4),
+        )
+        for index, sample in enumerate(samples):
+            with self.subTest(index=index):
+                lifecycle = self.media_lifecycle()
+                lifecycle.after_control("carter1", sample)
+                self.assertIsNone(lifecycle.media_window)
+                self.assertFalse(lifecycle.capture_due())
+                assert lifecycle.output is not None
+                self.assertFalse((lifecycle.output / "real-time-media-events.jsonl").exists())
+
+    def test_real_time_media_uses_one_24_second_grid_without_ground_truth_feedback(self) -> None:
+        lifecycle = self.media_lifecycle()
+        lifecycle.after_control("carter1", self.media_sample(
+            frame=100, sim_time_s=5.0, linear=0.0, angular=-0.2,
+        ))
+        self.assertTrue(lifecycle.capture_due())
+        self.assertFalse(lifecycle.capture_due())
+        first = lifecycle.capture_metadata()
+        media = first["real_time_media"]
+        self.assertEqual(
+            (media["trigger_robot_id"], media["trigger_command"], media["physics_frame"],
+             media["sample_index"], media["sample_every_physics_steps"]),
+            ("carter1", {"linear_m_s": 0.0, "angular_rad_s": -0.2}, 100, 0, 6),
+        )
+        self.assertEqual(media["window_end_sim_time_ns"] - media["window_start_sim_time_ns"], 24_000_000_000)
+
+        lifecycle.after_control("carter2", self.media_sample(frame=101, sim_time_s=5.0 + 1 / 60))
+        self.assertFalse(lifecycle.capture_due())
+        off_grid = lifecycle.capture_metadata()
+        self.assertNotIn("real_time_media", off_grid)
+        lifecycle.after_control("carter2", self.media_sample(frame=106, sim_time_s=5.1))
+        self.assertTrue(lifecycle.capture_due())
+        self.assertEqual(lifecycle.capture_metadata()["real_time_media"]["sample_index"], 1)
+
+        lifecycle.after_control("carter1", self.media_sample(frame=1540, sim_time_s=29.0))
+        self.assertFalse(lifecycle.capture_due())
+        lifecycle.after_control("carter1", self.media_sample(frame=1546, sim_time_s=29.1, linear=0.8))
+        self.assertFalse(lifecycle.capture_due())
+        assert lifecycle.output is not None
+        events = [json.loads(line) for line in
+                  (lifecycle.output / "real-time-media-events.jsonl").read_text().splitlines()]
+        self.assertEqual([event["event"] for event in events], ["window_started", "window_ended"])
+        self.assertEqual(events[0]["window_id"], events[1]["window_id"])
+
+    def test_real_time_media_is_disabled_for_pilot_and_primary_sessions(self) -> None:
+        for profile, primary in (("pilot", False), ("primary", True)):
+            with self.subTest(profile=profile):
+                lifecycle = self.media_lifecycle(profile=profile, primary=primary)
+                lifecycle.after_control("carter1", self.media_sample(frame=100, sim_time_s=5.0, linear=0.5))
+                self.assertIsNone(lifecycle.real_time_media)
+                self.assertFalse(lifecycle.capture_due())
 
     def write_start(self, **changes) -> None:
         value = {"run_id": RUN_ID, "scenario_id": SCENARIO_ID, "sim_time_s": 10.0}

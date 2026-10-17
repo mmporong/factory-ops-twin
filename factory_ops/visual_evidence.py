@@ -89,10 +89,159 @@ def validate_visual_evidence(
         result["ledger_bound_events"] = len(validated_events)
         capture = _validate_capture_frames(output, validated_events, run_id, scenario_id, scene, errors)
         result.update(capture)
+        result["real_time_media"] = _validate_real_time_media(
+            output, session_root, run_id, scenario_id, errors,
+        )
     except (OSError, ValueError, KeyError, TypeError, json.JSONDecodeError) as exc:
         errors.append(f"visual evidence audit failed: {exc}")
     result["passed"] = len(errors) == start_errors
     return result
+
+
+def _validate_real_time_media(
+    output: Path,
+    session_root: Path,
+    run_id: str,
+    scenario_id: str,
+    errors: list[str],
+) -> dict[str, Any]:
+    """Consume the qualification motion-window media contract without using it for control."""
+    disabled = {"required": False, "passed": True, "sample_count": 0}
+    session_path, config_path = session_root / "session.json", session_root / "config.json"
+    if not session_path.is_file() or not config_path.is_file():
+        return disabled
+    try:
+        session, config = _load_json(session_path), _load_json(config_path)
+        runtime = config.get("g3_runtime")
+        profile = runtime.get("real_time_media") if isinstance(runtime, Mapping) else None
+        if session.get("profile") != "qualification" or session.get("primary_evaluation") is not False:
+            return disabled
+        if profile is None:
+            return disabled
+        if not isinstance(profile, Mapping):
+            raise ValueError("source profile is not an object")
+        media_profile = cast(Mapping[str, Any], profile)
+        expected_profile_keys = {
+            "profiles", "window_s", "sample_every_physics_steps",
+            "minimum_abs_linear_m_s", "minimum_abs_angular_rad_s",
+        }
+        if set(media_profile) != expected_profile_keys or media_profile.get("profiles") != ["qualification"]:
+            raise ValueError("source profile fields differ")
+        if (media_profile.get("window_s") != 24.0
+                or media_profile.get("sample_every_physics_steps") != 6
+                or config.get("physics_dt_s") != 1 / 60):
+            raise ValueError("source profile 24 second/10 Hz timing differs")
+        source_profile_sha = hashlib.sha256(json.dumps(
+            dict(media_profile), sort_keys=True, separators=(",", ":"), allow_nan=False,
+        ).encode("utf-8")).hexdigest()
+
+        journal_path = output / "real-time-media-events.jsonl"
+        events = _load_jsonl(journal_path)
+        if len(events) != 2 or [row.get("event") for row in events] != ["window_started", "window_ended"]:
+            raise ValueError("journal must contain exactly one start and one end")
+        start, end = events
+        start_keys = {
+            "schema_version", "event", "run_id", "scenario_id", "window_id",
+            "source_profile_sha256", "trigger_robot_id", "trigger_command", "trigger_frame",
+            "start_sim_time_ns", "end_sim_time_ns", "sample_every_physics_steps",
+        }
+        end_keys = {"schema_version", "event", "run_id", "scenario_id", "window_id", "physics_frame", "sim_time_ns"}
+        if set(start) != start_keys or set(end) != end_keys:
+            raise ValueError("journal event fields differ")
+        if (start.get("schema_version") != 1 or end.get("schema_version") != 1
+                or any(row.get("run_id") != run_id or row.get("scenario_id") != scenario_id for row in events)
+                or start.get("window_id") != end.get("window_id")
+                or start.get("source_profile_sha256") != source_profile_sha):
+            raise ValueError("journal identity or source profile SHA differs")
+        trigger_frame, start_ns, end_ns = (
+            start.get("trigger_frame"), start.get("start_sim_time_ns"), start.get("end_sim_time_ns")
+        )
+        if (type(trigger_frame) is not int or type(start_ns) is not int or type(end_ns) is not int
+                or trigger_frame < 0 or start_ns < 0 or end_ns - start_ns != 24_000_000_000
+                or start.get("sample_every_physics_steps") != 6
+                or end.get("physics_frame") != trigger_frame + 1440 or end.get("sim_time_ns") != end_ns):
+            raise ValueError("journal window clock or duration differs")
+
+        frame_index = _load_json(output / "media/frames.json")
+        frames = frame_index.get("frames")
+        if not isinstance(frames, list):
+            raise ValueError("media frame index is missing")
+        tagged: list[tuple[Mapping[str, Any], Mapping[str, Any]]] = []
+        for frame in frames:
+            metadata = frame.get("visual_state") if isinstance(frame, Mapping) else None
+            media = metadata.get("real_time_media") if isinstance(metadata, Mapping) else None
+            if media is not None:
+                if not isinstance(media, Mapping):
+                    raise ValueError("tagged media metadata is not an object")
+                tagged.append((frame, media))
+        if len(tagged) != 240:
+            raise ValueError(f"qualification media requires 240 grid samples, observed {len(tagged)}")
+        media_keys = {
+            "window_id", "source_profile_sha256", "trigger_robot_id", "trigger_command",
+            "physics_frame", "sim_time_ns", "window_start_sim_time_ns", "window_end_sim_time_ns",
+            "sample_index", "sample_every_physics_steps",
+        }
+        trigger_robot, trigger_command = start.get("trigger_robot_id"), start.get("trigger_command")
+        for sample_index, (frame, media) in enumerate(tagged):
+            expected_frame = trigger_frame + 6 * sample_index
+            expected_ns = start_ns + 100_000_000 * sample_index
+            raw_frame_time = frame.get("sim_time_s")
+            frame_ns = (int(round(float(raw_frame_time) * 1_000_000_000))
+                        if isinstance(raw_frame_time, (int, float)) and not isinstance(raw_frame_time, bool)
+                        and math.isfinite(float(raw_frame_time)) else -1)
+            if (set(media) != media_keys or frame.get("physics_frame") != expected_frame or frame_ns != expected_ns
+                    or media.get("physics_frame") != expected_frame or media.get("sim_time_ns") != expected_ns
+                    or media.get("sample_index") != sample_index or media.get("sample_every_physics_steps") != 6
+                    or media.get("window_id") != start["window_id"]
+                    or media.get("source_profile_sha256") != source_profile_sha
+                    or media.get("trigger_robot_id") != trigger_robot or media.get("trigger_command") != trigger_command
+                    or media.get("window_start_sim_time_ns") != start_ns
+                    or media.get("window_end_sim_time_ns") != end_ns):
+                raise ValueError(f"grid sample {sample_index} clock, identity or profile binding differs")
+
+        if (not isinstance(start.get("window_id"), str) or not start["window_id"]
+                or trigger_robot not in {"carter1", "carter2"} or not isinstance(trigger_command, Mapping)
+                or set(trigger_command) != {"linear_m_s", "angular_rad_s"}):
+            raise ValueError("trigger robot or command is invalid")
+        trajectory = _load_jsonl(output / "robots" / str(trigger_robot) / "trajectory.jsonl")
+        trigger_rows = []
+        for row in trajectory:
+            raw_time = row.get("sim_time_s")
+            if (row.get("physics_frame") == trigger_frame
+                    and isinstance(raw_time, (int, float)) and not isinstance(raw_time, bool)
+                    and math.isfinite(float(raw_time))
+                    and int(round(float(raw_time) * 1_000_000_000)) == start_ns):
+                trigger_rows.append(row)
+        if len(trigger_rows) != 1:
+            raise ValueError("trigger does not join exactly one trajectory sample")
+        trigger = trigger_rows[0]
+        authorization, motion = trigger.get("authorization"), trigger.get("motion_profile")
+        command = motion.get("input_command") if isinstance(motion, Mapping) else None
+        linear = command.get("linear_m_s") if isinstance(command, Mapping) else None
+        angular = command.get("angular_rad_s") if isinstance(command, Mapping) else None
+        linear_threshold = media_profile.get("minimum_abs_linear_m_s")
+        angular_threshold = media_profile.get("minimum_abs_angular_rad_s")
+        if (not isinstance(authorization, Mapping) or authorization.get("valid") is not True
+                or authorization.get("mode") != "navigate" or command != trigger_command
+                or not isinstance(linear, (int, float)) or isinstance(linear, bool) or not math.isfinite(float(linear))
+                or not isinstance(angular, (int, float)) or isinstance(angular, bool) or not math.isfinite(float(angular))
+                or not isinstance(linear_threshold, (int, float)) or isinstance(linear_threshold, bool)
+                or not isinstance(angular_threshold, (int, float)) or isinstance(angular_threshold, bool)
+                or not math.isfinite(float(linear_threshold)) or not math.isfinite(float(angular_threshold))
+                or not 0 < float(linear_threshold) <= 5 or not 0 < float(angular_threshold) <= 5
+                or (abs(float(linear)) < float(linear_threshold)
+                    and abs(float(angular)) < float(angular_threshold))):
+            raise ValueError("trigger is not bound to a valid moving navigate authorization")
+        return {
+            "required": True, "passed": True, "sample_count": len(tagged),
+            "journal_sha256": _sha_file(journal_path), "journal_event_count": len(events),
+            "physics_frame_range": [tagged[0][0]["physics_frame"], tagged[-1][0]["physics_frame"]],
+            "sim_time_ns_range": [tagged[0][1]["sim_time_ns"], tagged[-1][1]["sim_time_ns"]],
+            "window_id": start["window_id"], "source_profile_sha256": source_profile_sha,
+        }
+    except (OSError, ValueError, KeyError, TypeError, json.JSONDecodeError) as exc:
+        errors.append(f"real-time media evidence invalid: {exc}")
+        return {"required": True, "passed": False, "sample_count": 0}
 
 
 def _validate_identity(document: Mapping[str, Any], run_id: str, scenario_id: str) -> None:

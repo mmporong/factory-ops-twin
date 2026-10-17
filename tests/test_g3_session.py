@@ -16,6 +16,7 @@ from factory_ops.experiments import build_matrix, load_experiment_config
 from factory_ops.g3_session import (
     PRIMARY_SCOPE,
     SCOPE,
+    _validate_runtime,
     prepare_primary_session,
     prepare_session,
     verify_session,
@@ -90,6 +91,35 @@ class G3SessionTests(unittest.TestCase):
             [0.0, 600.0],
         )
         self.assertEqual(set(qualification["files"]), set(pilot["files"]))
+        qualification_config = load(self.qualification / "config.json")
+        pilot_config = load(self.pilot_closure / "config.json")
+        self.assertEqual(qualification_config["g3_runtime"]["real_time_media"],
+                         pilot_config["g3_runtime"]["real_time_media"])
+        self.assertEqual(
+            qualification_config["g3_runtime"]["real_time_media"],
+            {
+                "profiles": ["qualification"], "window_s": 24.0,
+                "sample_every_physics_steps": 6,
+                "minimum_abs_linear_m_s": 0.15,
+                "minimum_abs_angular_rad_s": 0.15,
+            },
+        )
+
+    def test_real_time_media_profile_rejects_malformed_or_broadened_values(self) -> None:
+        runtime = load(CONFIG / "g3-runtime.json")
+        mutations = (
+            lambda media: media.update({"extra": True}),
+            lambda media: media.__setitem__("profiles", ["qualification", "pilot"]),
+            lambda media: media.__setitem__("window_s", 30.1),
+            lambda media: media.__setitem__("sample_every_physics_steps", True),
+            lambda media: media.__setitem__("minimum_abs_linear_m_s", float("nan")),
+        )
+        for index, mutate in enumerate(mutations):
+            with self.subTest(index=index):
+                candidate = deepcopy(runtime)
+                mutate(candidate["real_time_media"])
+                with self.assertRaisesRegex(ValueError, "real-time media"):
+                    _validate_runtime(candidate)
 
     def test_expected_run_context_rejects_policy_relabel_before_derivation(self) -> None:
         session_path = self.copy_session()
@@ -130,12 +160,12 @@ class G3SessionTests(unittest.TestCase):
         config_dir = self.workspace / "alternate-config"
         shutil.copytree(CONFIG, config_dir)
         runtime = load(config_dir / "g3-runtime.json")
-        runtime["camera_capture_every_steps"] = 61
+        runtime["real_time_media"]["minimum_abs_linear_m_s"] = 0.16
         save(config_dir / "g3-runtime.json", runtime)
         session_path = self.workspace / "alternate-session"
         prepared = prepare_session(session_path, config_dir=config_dir)
         self.assertEqual(prepared["source_config"]["g3-runtime.json"], digest(config_dir / "g3-runtime.json"))
-        runtime["camera_capture_every_steps"] = 62
+        runtime["real_time_media"]["minimum_abs_linear_m_s"] = 0.17
         save(config_dir / "g3-runtime.json", runtime)
         with self.assertRaisesRegex(ValueError, "source config differs"):
             verify_session(session_path, config_dir=config_dir)

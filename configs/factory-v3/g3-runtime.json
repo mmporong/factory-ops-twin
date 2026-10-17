@@ -17,6 +17,13 @@
   "stopped_angular_rad_s": 0.02,
   "odom_ttl_s": 0.3,
   "camera_capture_every_steps": 60,
+  "real_time_media": {
+    "profiles": ["qualification"],
+    "window_s": 24.0,
+    "sample_every_physics_steps": 6,
+    "minimum_abs_linear_m_s": 0.15,
+    "minimum_abs_angular_rad_s": 0.15
+  },
   "reservation_strategy": "full_leg_qualification_with_one_edge_actions_and_retained_stationary_footprints",
   "anchor_yaw_rad": {
     "S1": 0.0, "S2": 0.0, "S3": 0.0,

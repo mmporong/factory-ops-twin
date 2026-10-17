@@ -56,6 +56,25 @@ def _validate_runtime(runtime: dict[str, Any]) -> None:
         raise ValueError("G3 runtime cannot relax FleetMission pose limits")
     if type(runtime["camera_capture_every_steps"]) is not int or runtime["camera_capture_every_steps"] < 1:
         raise ValueError("G3 capture cadence must be a positive step count")
+    media = runtime.get("real_time_media")
+    media_fields = {
+        "profiles", "window_s", "sample_every_physics_steps",
+        "minimum_abs_linear_m_s", "minimum_abs_angular_rad_s",
+    }
+    if not isinstance(media, dict) or set(media) != media_fields:
+        raise ValueError("G3 real-time media profile fields differ")
+    if media["profiles"] != ["qualification"]:
+        raise ValueError("G3 real-time media is qualification-only")
+    window = media["window_s"]
+    if type(window) not in (int, float) or not math.isfinite(window) or not 0 < window <= 30:
+        raise ValueError("G3 real-time media window must be finite and at most 30 seconds")
+    period = media["sample_every_physics_steps"]
+    if type(period) is not int or not 1 <= period <= 60:
+        raise ValueError("G3 real-time media cadence must be between 1 and 60 physics steps")
+    for name in ("minimum_abs_linear_m_s", "minimum_abs_angular_rad_s"):
+        value = media[name]
+        if type(value) not in (int, float) or not math.isfinite(value) or not 0 < value <= 5:
+            raise ValueError(f"G3 real-time media threshold is invalid: {name}")
     anchors = runtime["anchor_yaw_rad"]
     if (set(anchors) != {"S1", "S2", "S3", "CI", "CO", "OUT", "P1", "P2"}
             or any(type(value) not in (int, float) or not math.isfinite(value)
