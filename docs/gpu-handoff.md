@@ -322,13 +322,13 @@ GPU 작업 종료 후 컨테이너·작업 프로세스·GPU compute process가 
 
 ## G3b qualification 실행기
 
-G3b 실행기는 두 주문의 실제 주행 연결을 위한 준비 코드다. 현재 완료된 물리 단계는 G0a·G0b·G1·G2이며 G3b 성공 기록은 아직 없다. 첫 실행은 전체 station 간 경로 예약과 edge별 action을 사용한다. qualification의 1200 sim 초·chunk별 180초는 작성한 한계이고 생산성 목표가 아니다. 파일럿과 60회 비교에는 부하 보정이 먼저 필요하다.
+G3b는 `g3-q-normal-fifo-005`에서 두 주문의 자재 투입·완제품 출하·최종 주차와 동일 원본의 사후 검증을 통과했다. 전체 station 간 경로 예약과 edge별 action을 사용한다. qualification의 1200 sim 초·chunk별 180초는 작성한 한계이고 생산성 목표가 아니다. G0a·G0b·G1·G2의 네 단계 완료 상태를 유지하며, G3 전체 완료에는 부하 보정·파일럿·60회 비교가 남아 있다.
 
 ```bash
 set -euo pipefail
 cd "$HOME/workspace/factory-ops-g0/project"
 source_commit=$(git rev-parse HEAD)
-bash scripts/brev/run-g3.sh "$HOME/workspace/factory-ops-g0" g3-q-normal-fifo-001 "$source_commit" qualification normal fifo 0
+bash scripts/brev/run-g3.sh "$HOME/workspace/factory-ops-g0" g3-q-normal-fifo-006 "$source_commit" qualification normal fifo 0
 ```
 
 마지막 세 자리 숫자는 실행 attempt이며 seed와 구분한다. 실패해도 같은 폴더를 덮어쓰지 않고 새 attempt로 같은 입력을 재시도한다. supervisor는 code commit·clean checkout·인스턴스의 기존 작업 컨테이너 부재를 확인하고 세션을 새로 만든다. 요청한 profile·condition·policy·seed와 세션 SHA를 고정해 두 worker와 실행 후 검증기에 전달한다.
@@ -336,6 +336,42 @@ bash scripts/brev/run-g3.sh "$HOME/workspace/factory-ops-g0" g3-q-normal-fifo-00
 주행 전에는 저장된 Jazzy 이미지에서 일반 Client introspection과 생성된 FollowPath 서비스 타입을 확인한다. 실제 SendGoal/GetResult/CancelGoal 이벤트, action 상태·센서·TF·지도·구동 허가·예약 결정·휠 궤적과 3개 RGB 시점을 수집한다. recorder 종료 뒤에만 SQLite CDR를 읽는다. 두 worker의 성공만으로 완료하지 않으며 `g3_evidence.py`의 최종 검증과 C/E 백업까지 확인한 뒤 Brev를 Stop한다.
 
 `scripts/ros/g3_sdk_smoke.py --output <새 JSON 경로>`는 같은 ROS 이미지에서 먼저 실행한다. 격리된 namespace의 synthetic action server에 표준 서비스 요청을 보내고, 실제 middleware의 request/response transaction·UUID·전체 Path 내용을 대조한다. 정규 JSON SHA를 메시지 identity로 사용하며 원본 CDR와 재직렬화 SHA는 보존·진단 자료로 구분한다. 로봇·시뮬레이터를 사용하지 않는 SDK 연결 검사이며 물리 주행 성공으로 집계하지 않는다. Jazzy의 일반 Client가 제공하는 [service introspection API](https://github.com/ros2/rclpy/blob/4e607c09d624debc39a4ae5405680c06d87fac35/rclpy/rclpy/client.py#L193-L208)를 사용한다.
+
+### 두 주문 qualification의 검증 근거
+
+`g3-q-normal-fifo-005`의 run ID는 `bd21d998bddccb0603ea94cc598747ee`, 조건은 정상·FIFO·seed 0이다. 물리 실행 commit은 `1e50a704bcb0f0d921ec8640ac93d7dc141c748a`, 수정된 사후 검사기 commit은 `e9cd44eba373ec7def0c38d2b06d92de9a55a835`다. 두 commit 사이의 source diff는 `g3_evidence.py`와 해당 회귀 테스트뿐이다.
+
+| 실제 원본의 대조 항목 | 결과 |
+|---|---|
+| 주문·인계 | 주문 2개 출하, pickup/drop 인계 8회 |
+| 주행·정지 | FollowPath·실제 service RPC·정지 확인 각각 62개 |
+| 주차 | dock 이탈 후 주차 전환 4회, 마지막 보유 점유는 P1·P2 |
+| 전체 위치·예약 검사 | 134,152개 표본, 추정 점유 중첩 0프레임 |
+| 로봇 간 거리 | GT 중심 거리 관측 최소 13.6119 m, 보수적 외곽 기준 1.6742 m |
+| 마지막 기록 | 물리 프레임 67,325, simulation time 1122.0833333333333 s |
+| ROS 종료 시각 | 1122 s + 83,333,333 ns, 양쪽 odometry 수신 일치 |
+| RGB | 같은 시각의 3시점 1,122세트·3,366장 |
+| 종료·bag | 두 worker 종료 코드 0, SQLite integrity `ok`, 최종 오류 0개 |
+
+운영 중 한 번의 실제 경로 시계 대기를 기록했다. 경로 시각 `166350000000 ns`가 운영 시각 `166333333333 ns`보다 앞서 도착했을 때 HOLD를 유지했고, 운영 시각이 `166350000000 ns`에 도달한 뒤 같은 Path를 승인했다. 기록된 대기는 약 0.01482 wall 초다. 이는 q005에서 관측한 한 번의 callback 순서 차이이며 다른 부하의 지연 한계가 아니다.
+
+첫 사후 보고서는 마지막 두 TF 조회에서 실패했다. 닫힌 bag에는 양쪽 `odom→base_link` TF와 odometry가 정확히 `1122083333333 ns`까지 있었다. 물리 float `1122.0833333333333`과 ROS 표현 `1122.083333333`의 약 `3.3333e-10 s` 차이 때문에 끝 경계에서 bracket을 찾지 못했다. G3 조회 시각을 encoder publisher와 같은 sec/nanosec 변환으로 정규화했다. 기존 TF 허용 오차·외삽·궤적 범위는 바꾸지 않았고, 1 μs·50 ms의 실제 TF 결손은 계속 실패한다.
+
+원 실패 보고서는 `g3-evidence-v1.json`으로 바이트를 보존했다. 그 SHA256은 `15e81319cafbf5e6e6c2747608c19c3f3ddb86417e2b41c88330f460258a0c3d`다. 원 보고서가 묶은 3,400개 파일의 경로·크기·SHA를 재검증 전후 대조했다. 새 `g3-evidence.json`은 기존 3,400개와 원 보고서·재검증 binding의 2개만 추가한 manifest를 담으며 SHA256은 `bc0966c987da9dc1131f0266dbf76e4fc1e22b263ea796081a77f8a5d80da201`다. `post-worker-revalidation.json`에는 물리/검사기 source commit, helper·launcher·진단·Git bundle SHA를 기록했다. 이것은 같은 물리 실행 원본의 검사기 수정 후 재검증이다.
+
+전체 백업 `g3b-all-evidence-20261017T033604Z.tar.gz`는 앞선 실패 실행과 SDK 검사·도구 snapshot·source Git bundle을 포함한다. 원본은 5,349개·8,378,969,671 byte, 압축본은 2,054,555,541 byte다. 압축본 SHA256은 `9013a34d1d608ba1b52c60cbac995166a3b1ea90df69424f53c455a43aec33a8`, manifest SHA256은 `cfcf1d5b1ca6e7152f287adbff0fa825baf8d690f247b478342bc7f4b3007722`다.
+
+C·E의 압축본 SHA가 같고, E 복원본의 전 파일 크기·SHA와 정확한 파일 집합을 대조했다. Git bundle은 빈 저장소에서 검증하고 mirror 복원·fsck·런타임 source blob 대조를 통과했다. 두 드라이브의 서로 다른 물리 디스크 번호도 확인했다. 별도 검증 패스에서는 압축본·manifest, 핵심 파일 9개, 런타임 소스 36개와 session 산출물 16개를 다시 대조해 불일치 0개를 확인했다. 원본 압축본을 고정해 두고 README 미디어와 종료 상태 기록은 사후 패키지로 보관한다.
+
+README용 [대표 화면](images/g3-g3-q-normal-fifo-005-representative.png), [GIF](images/g3-g3-q-normal-fifo-005-dashboard.gif), [MP4](images/g3-g3-q-normal-fifo-005-dashboard.mp4)는 복원한 세 카메라 원본과 같은 물리 프레임의 양쪽 궤적을 합성한다. 지도에는 촬영 시각까지의 예약 원장 점유를 표시하며, 실제 적용된 주행 허가의 결정 시점 점유와 구분해 기록한다. HOLD의 goal·route는 아직 승인되지 않은 후보일 수 있고, 같은 timestamp의 촬영·원장 이벤트 순서는 확정하지 않는다. [미디어 색인](images/g3-media-provenance.json)은 모든 촬영 시각·원본 RGB·생성기·파생물 SHA와 전체 명세의 해시를 담는다. 상세 annotation을 포함한 전체 명세 40,902,548 byte는 수정하지 않고 사후 패키지에 보존한다. MP4 1,122프레임·112.2초, GIF 120프레임·12초의 크기·프레임 수와 전체 FFmpeg decode 검사를 통과했다.
+
+백업 복원 검증 뒤 Brev Stop을 요청했고, 인증된 CLI가 `2026-10-17 03:52:47 UTC`에 인스턴스 `evica0x9l`을 `STOPPED`로 보고했다. 이 기록을 C·E에 보존한다. 인스턴스는 삭제하지 않았으며, 상태 확인은 잔여 크레딧·청구 금액 검증과 구분한다.
+
+### 다음 파일럿의 선행 조건
+
+q005의 정상·FIFO 두 주문 배정만 물리 검증했다. 별도의 정적 16사례 재생에서는 P2 주차 hold와 S3→CI 경로, P1 hold와 S1→CI 경로가 각각 4개 타일에서 겹쳤다. 현재 예약기는 이를 거절하며, parked peer가 계속 점유하면 진행 대기가 지속될 수 있다. q005에서 사용한 반대편 주차 조합은 이 교집합이 0개였다. 교차 배정의 진행성을 보완·검증한 뒤 부하 보정과 6개 조건/정책 파일럿으로 확장한다.
+
+재검증 중 CPU 메모리 사용량은 순간 관측에서 약 38.65 GiB였다. 최대치나 평균으로 사용하지 않는다. 후속 파일럿에서는 시뮬레이션뿐 아니라 CDR 검증의 wall time·메모리·데이터량도 실행 예산에 포함한다.
 
 ## 공식 근거
 
