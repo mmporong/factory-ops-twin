@@ -19,6 +19,7 @@ from factory_ops.dataset_evidence import (
     _array_content_sha,
     _read_npy,
     _validate_cross_split_duplicates,
+    _validate_excluded_bbox_rows,
     main,
     validate_dataset,
 )
@@ -376,6 +377,85 @@ class DatasetEvidenceTests(unittest.TestCase):
 
         self.assertTrue(any("unrelated to the raw bbox" in error for error in report["errors"]))
 
+    def test_parent_instance_claim_cannot_absorb_nested_labelled_bbox_root(self) -> None:
+        visual_path = self.root / "authored-scenes/scene-000/visual-scene-manifest.json"
+        visual = json.loads(visual_path.read_text(encoding="utf-8"))
+        visual["instances"].append({"prim_path": "/World/Visuals/Rack/Child"})
+        visual_path.write_text(json.dumps(visual), encoding="utf-8")
+
+        scene_sources_path = self.root / self.dataset["source"]["scene_path"]
+        scene_sources = json.loads(scene_sources_path.read_text(encoding="utf-8"))
+        scene_sources["variants"][0]["visual_manifest_sha256"] = hashlib.sha256(visual_path.read_bytes()).hexdigest()
+        scene_sources_path.write_text(json.dumps(scene_sources), encoding="utf-8")
+        self._refresh_source_sha()
+
+        raw_path = next(self.root.glob("scenes/scene-000/**/bbox2d.raw.json"))
+        raw = json.loads(raw_path.read_text(encoding="utf-8"))
+        raw["info"]["primPaths"][1] = ["/World/Visuals/Rack/Child/Mesh"]
+        raw_path.write_text(json.dumps(raw), encoding="utf-8")
+
+        instance_info_path = raw_path.with_name("instance.raw-info.json")
+        instance_info = json.loads(instance_info_path.read_text(encoding="utf-8"))
+        instance_info["idToLabels"]["27"] = "/World/Visuals/Rack/Child/Mesh"
+        instance_info_path.write_text(json.dumps(instance_info), encoding="utf-8")
+
+        normalized_path = raw_path.with_name("normalized.json")
+        normalized = json.loads(normalized_path.read_text(encoding="utf-8"))
+        normalized["raw_annotations_sha256"] = hashlib.sha256(raw_path.read_bytes()).hexdigest()
+        normalized["raw_info"]["instance_id_to_labels_raw"]["27"] = "/World/Visuals/Rack/Child/Mesh"
+        normalized["raw_info"]["instance_id_to_prim_paths"]["27"] = "/World/Visuals/Rack/Child/Mesh"
+        normalized["raw_info"]["source_artifacts"]["instance"]["sha256"] = hashlib.sha256(instance_info_path.read_bytes()).hexdigest()
+        normalized_path.write_text(json.dumps(normalized), encoding="utf-8")
+        self._refresh_manifest()
+
+        report = validate_dataset(self.root, self.profile_path)
+
+        self.assertTrue(any("unrelated to the raw bbox" in error for error in report["errors"]), report["errors"])
+
+    def test_hierarchical_aggregate_exclusion_requires_one_exact_descendant(self) -> None:
+        record = {
+            "raw_bbox_index": 1,
+            "canonical_root": "/World/Visuals/FloorGraphics",
+            "descendant_instance_id": 120,
+            "reason": "hierarchical_semantic_aggregate",
+        }
+        item = {"instance_id": 120, "class": "floor", "usd_root_path": "/World/Visuals/FloorGraphics/FloorFinish"}
+        errors: list[str] = []
+        excluded = _validate_excluded_bbox_rows(
+            "fixture",
+            [record],
+            [
+                {"semanticId": 1, "x_min": 0, "y_min": 0, "x_max": 1, "y_max": 0},
+                {"semanticId": 1, "x_min": 0, "y_min": 0, "x_max": 1, "y_max": 0},
+            ],
+            ["/World/Visuals/FloorGraphics/FloorFinish", "/World/Visuals/FloorGraphics"],
+            {1: "floor"},
+            {120: item},
+            {120: [0, 0, 1, 0]},
+            {
+                "/World/Visuals/FloorGraphics": "e" * 64,
+                "/World/Visuals/FloorGraphics/FloorFinish": "e" * 64,
+            },
+            {120: ("/World/Visuals/FloorGraphics/FloorFinish", "floor")},
+            {0},
+            errors,
+        )
+        self.assertEqual(errors, [])
+        self.assertEqual(excluded, {1})
+
+        item["usd_root_path"] = "/World/Visuals/FloorGraphics"
+        errors = []
+        self.assertEqual(_validate_excluded_bbox_rows(
+            "fixture", [record],
+            [{}, {"semanticId": 1, "x_min": 0, "y_min": 0, "x_max": 1, "y_max": 0}],
+            ["/World/Visuals/FloorGraphics/FloorFinish", "/World/Visuals/FloorGraphics"],
+            {1: "floor"}, {120: item}, {120: [0, 0, 1, 0]},
+            {"/World/Visuals/FloorGraphics": "e" * 64},
+            {120: ("/World/Visuals/FloorGraphics/FloorFinish", "floor")},
+            {0}, errors,
+        ), set())
+        self.assertTrue(any("not a unique hierarchical" in error for error in errors), errors)
+
     def test_self_attested_asset_sha_and_recomputed_stable_key_are_rejected(self) -> None:
         path = next(self.root.rglob("normalized.json"))
         document = json.loads(path.read_text(encoding="utf-8"))
@@ -716,6 +796,7 @@ class DatasetEvidenceTests(unittest.TestCase):
                     "instance_id_to_labelled_roots": {"21": "/World/FloorVisual", "27": "/World/Visuals/Rack", "35": "/World/Carter1"},
                     "instance_id_to_asset_source_sha256": {"21": render_sha, "27": asset_manifest_sha, "35": ROBOT_SHA},
                     "reserved_instance_ids": {"0": "BACKGROUND"},
+                    "excluded_bbox_rows": [],
                     "source_artifacts": {
                         "semantic": {
                             "filename": "semantic.raw-info.json",

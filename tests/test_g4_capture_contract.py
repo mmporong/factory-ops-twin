@@ -24,6 +24,7 @@ from scripts.isaac.g4_capture import (
     _parse_args,
     _parse_resolution,
     _parse_variant_seeds,
+    _persist_raw_camera_payloads,
     _physics_scene_readback,
     _raw_bbox_document,
     _raw_annotator_info,
@@ -97,6 +98,41 @@ class _FakeNP:
                     ys.append(y)
                     xs.append(x)
         return _Indices(ys), _Indices(xs)
+
+
+class _PersistArray:
+    def __init__(self, shape):
+        self.shape = shape
+
+    def __getitem__(self, key):
+        return self
+
+    def astype(self, dtype):
+        return self
+
+
+class _PersistNP:
+    uint8 = "uint8"
+
+    @staticmethod
+    def asarray(value, dtype=None):
+        return value
+
+    @staticmethod
+    def save(path, value, allow_pickle=False):
+        Path(path).write_bytes(repr((value.shape, allow_pickle)).encode("ascii"))
+
+
+class _PersistImage:
+    @staticmethod
+    def fromarray(value):
+        return _PersistImage()
+
+    def save(self, path):
+        Path(path).write_bytes(b"png")
+
+    def close(self):
+        pass
 
 
 class _Attribute:
@@ -430,6 +466,117 @@ class G4CaptureContractTests(unittest.TestCase):
         expected = hashlib.sha256(f"industrial-v00\0/World/Rack\0{'e' * 64}".encode()).hexdigest()
         self.assertEqual(instance["stable_instance_key"], expected)
 
+    def test_nearest_labelled_root_disambiguates_nested_same_class_gpu_metadata(self) -> None:
+        class NestedStage:
+            def GetPrimAtPath(self, path):
+                if path in {"/World/Visuals/FloorGraphics", "/World/Visuals/FloorGraphics/FloorFinish"}:
+                    return _Prim(True, "floor")
+                return _Prim(False)
+
+        bbox_raw = {
+            "data": [
+                {"semanticId": 1, "x_min": 0, "y_min": 0, "x_max": 0, "y_max": 0, "occlusionRatio": -1.0},
+                {"semanticId": 1, "x_min": 1, "y_min": 0, "x_max": 1, "y_max": 0, "occlusionRatio": -1.0},
+            ],
+            "info": {
+                "idToLabels": {"1": {"class": "floor"}},
+                # Isaac Sim 6.2 probe 005 emits a bare string for each row here.
+                "primPaths": [
+                    "/World/Visuals/FloorGraphics",
+                    "/World/Visuals/FloorGraphics/FloorFinish",
+                ],
+            },
+        }
+        result = _normalize_annotations(
+            scene_id="scene-000",
+            scene_variant_id="industrial-v00",
+            capture_id="scene-000--f000000124--t000002066666667",
+            camera_id="overhead",
+            physics_frame=124,
+            sim_time_ns=2_066_666_667,
+            semantic_payload={
+                "data": _Array([[9, 9]]),
+                "info": {"idToLabels": {"9": {"class": "floor"}}},
+            },
+            instance_payload={
+                "data": _Array([[2, 120]]),
+                "info": {"idToLabels": {
+                    "2": "/World/Visuals/FloorGraphics",
+                    "120": "/World/Visuals/FloorGraphics/FloorFinish",
+                }},
+            },
+            bbox_raw=bbox_raw,
+            bbox_sha256="d" * 64,
+            semantic_info_sha256="a" * 64,
+            instance_info_sha256="b" * 64,
+            stage=NestedStage(),
+            asset_source_by_root={
+                "/World/Visuals/FloorGraphics": "e" * 64,
+                "/World/Visuals/FloorGraphics/FloorFinish": "e" * 64,
+            },
+            np=_FakeNP(),
+        )
+
+        self.assertEqual(
+            [(item["instance_id"], item["usd_root_path"], item["raw_bbox_index"]) for item in result["instances"]],
+            [
+                (2, "/World/Visuals/FloorGraphics", 0),
+                (120, "/World/Visuals/FloorGraphics/FloorFinish", 1),
+            ],
+        )
+
+    def test_unique_parent_aggregate_row_is_preserved_as_excluded_gpu_metadata(self) -> None:
+        class NestedStage:
+            def GetPrimAtPath(self, path):
+                if path in {"/World/Visuals/FloorGraphics", "/World/Visuals/FloorGraphics/FloorFinish"}:
+                    return _Prim(True, "floor")
+                return _Prim(False)
+
+        bbox_raw = {
+            "data": [
+                {"semanticId": 1, "x_min": 0, "y_min": 0, "x_max": 1, "y_max": 0, "occlusionRatio": -1.0},
+                {"semanticId": 1, "x_min": 0, "y_min": 0, "x_max": 1, "y_max": 0, "occlusionRatio": -1.0},
+            ],
+            "info": {
+                "idToLabels": {"1": {"class": "floor"}},
+                "primPaths": [
+                    "/World/Visuals/FloorGraphics/FloorFinish",
+                    "/World/Visuals/FloorGraphics",
+                ],
+            },
+        }
+        result = _normalize_annotations(
+            scene_id="scene-000",
+            scene_variant_id="industrial-v00",
+            capture_id="scene-000--f000000124--t000002066666667",
+            camera_id="overhead",
+            physics_frame=124,
+            sim_time_ns=2_066_666_667,
+            semantic_payload={"data": _Array([[9, 9]]), "info": {"idToLabels": {"9": {"class": "floor"}}}},
+            instance_payload={
+                "data": _Array([[120, 120]]),
+                "info": {"idToLabels": {"120": "/World/Visuals/FloorGraphics/FloorFinish"}},
+            },
+            bbox_raw=bbox_raw,
+            bbox_sha256="d" * 64,
+            semantic_info_sha256="a" * 64,
+            instance_info_sha256="b" * 64,
+            stage=NestedStage(),
+            asset_source_by_root={
+                "/World/Visuals/FloorGraphics": "e" * 64,
+                "/World/Visuals/FloorGraphics/FloorFinish": "e" * 64,
+            },
+            np=_FakeNP(),
+        )
+
+        self.assertEqual(result["instances"][0]["raw_bbox_index"], 0)
+        self.assertEqual(result["raw_info"]["excluded_bbox_rows"], [{
+            "raw_bbox_index": 1,
+            "canonical_root": "/World/Visuals/FloorGraphics",
+            "descendant_instance_id": 120,
+            "reason": "hierarchical_semantic_aggregate",
+        }])
+
     def test_explicit_unlabelled_instance_identity_is_preserved_and_excluded(self) -> None:
         bbox_raw = {
             "data": [{"semanticId": 4, "x_min": 1, "y_min": 0, "x_max": 2, "y_max": 1, "occlusionRatio": -1.0}],
@@ -497,17 +644,69 @@ class G4CaptureContractTests(unittest.TestCase):
 
         self.assertEqual(_raw_annotator_info({"data": object(), "info": info}, "instance"), info)
 
-    def test_all_camera_raw_metadata_is_persisted_before_normalization(self) -> None:
-        source = (ROOT / "scripts" / "isaac" / "g4_capture.py").read_text(encoding="utf-8")
-        first_pass = source.index("camera_payloads: dict[str, dict[str, Any]]")
-        raw_camera_write = source.index("_atomic_json(camera_raw_path, data[\"camera_params\"])", first_pass)
-        second_pass = source.index("for camera_id in CAMERA_IDS:", raw_camera_write)
-        normalization = source.index("normalized = _normalize_annotations(", second_pass)
+    def test_all_camera_raw_artifacts_survive_first_normalization_failure(self) -> None:
+        semantic = {
+            "data": _Array([[27]]),
+            "info": {"idToLabels": {"27": {"class": "rack"}}},
+        }
+        instance = {
+            "data": _Array([[27]]),
+            "info": {"idToLabels": {"27": "/World/Rack/Mesh"}},
+        }
+        bbox = {
+            "data": [{"semanticId": 4, "x_min": 0, "y_min": 0, "x_max": 0, "y_max": 0}],
+            "info": {"idToLabels": {"4": {"class": "wrong"}}, "primPaths": ["/World/Rack/Mesh"]},
+        }
+        payloads = {
+            camera_id: {
+                "rgb": _PersistArray((1, 1, 4)),
+                "distance_to_image_plane": _PersistArray((1, 1)),
+                "semantic_segmentation": semantic,
+                "instance_segmentation": instance,
+                "bounding_box_2d_tight": bbox,
+                "camera_params": {"camera": camera_id},
+            }
+            for camera_id in ("overhead", "aisle", "amr_follow")
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            capture_root = Path(directory)
+            artifacts = _persist_raw_camera_payloads(
+                capture_root=capture_root,
+                camera_payloads=payloads,
+                np=_PersistNP(),
+                Image=_PersistImage,
+            )
+            with self.assertRaisesRegex(CaptureError, "class differs"):
+                _normalize_annotations(
+                    scene_id="scene-000",
+                    scene_variant_id="industrial-v00",
+                    capture_id="scene-000--f000000124--t000002066666667",
+                    camera_id="overhead",
+                    physics_frame=124,
+                    sim_time_ns=2_066_666_667,
+                    semantic_payload=semantic,
+                    instance_payload=instance,
+                    bbox_raw=bbox,
+                    bbox_sha256="d" * 64,
+                    semantic_info_sha256="a" * 64,
+                    instance_info_sha256="b" * 64,
+                    stage=_Stage(),
+                    asset_source_by_root={"/World/Rack": "e" * 64},
+                    np=_FakeNP(),
+                )
 
-        self.assertLess(raw_camera_write, second_pass)
-        self.assertLess(second_pass, normalization)
-        self.assertIn("semantic.raw-info.json", source[first_pass:second_pass])
-        self.assertIn("instance.raw-info.json", source[first_pass:second_pass])
+            expected = {
+                "rgb.png", "depth.npy", "semantic.npy", "instance.npy",
+                "bbox2d.raw.json", "semantic.raw-info.json",
+                "instance.raw-info.json", "camera.raw-params.json",
+            }
+            for camera_id, camera_artifacts in artifacts.items():
+                with self.subTest(camera_id=camera_id):
+                    self.assertEqual(
+                        {path.name for path in (capture_root / camera_id).iterdir()},
+                        expected,
+                    )
+                    self.assertEqual(camera_artifacts["bbox_raw"], bbox)
 
     def test_frozen_capture_contract_rejects_frame_time_or_pose_change(self) -> None:
         poses = {"carter1": ([1.0, 2.0, 0.1], [1.0, 0.0, 0.0, 0.0])}

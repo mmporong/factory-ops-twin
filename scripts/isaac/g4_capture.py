@@ -404,6 +404,7 @@ def _normalize_annotations(
     if not isinstance(bbox_labels, Mapping):
         raise CaptureError("bbox raw info has no idToLabels")
     instances: list[dict[str, Any]] = []
+    excluded_bbox_rows: list[dict[str, Any]] = []
     used_ids: set[int] = set()
     for raw_index, row in enumerate(raw_data):
         if not isinstance(row, Mapping):
@@ -411,11 +412,36 @@ def _normalize_annotations(
         bbox_semantic_id = int(row["semanticId"])
         bbox_class = _label_class(_map_lookup(bbox_labels, bbox_semantic_id))
         paths = _bbox_row_paths(raw_info, raw_index)
+        bbox_roots: set[str] = set()
+        for path in paths:
+            bbox_root, canonical_bbox_class = _canonical_class(stage, path)
+            if canonical_bbox_class != bbox_class:
+                raise CaptureError(
+                    f"bbox row {raw_index} class differs from its nearest labelled USD root: "
+                    f"{bbox_class!r} != {canonical_bbox_class!r}"
+                )
+            bbox_roots.add(bbox_root)
         matches = [
             instance_id
             for instance_id, (root_path, class_name) in labelled_roots.items()
-            if class_name == bbox_class and any(path == root_path or path.startswith(root_path + "/") or root_path.startswith(path + "/") for path in paths)
+            if class_name == bbox_class and root_path in bbox_roots
         ]
+        if not matches and len(bbox_roots) == 1:
+            aggregate_root = next(iter(bbox_roots))
+            descendants = [
+                instance_id
+                for instance_id, (root_path, class_name) in labelled_roots.items()
+                if class_name == bbox_class and root_path.startswith(aggregate_root + "/")
+            ]
+            raw_bbox = [row.get(key) for key in ("x_min", "y_min", "x_max", "y_max")]
+            if len(descendants) == 1 and raw_bbox == bounds[descendants[0]]:
+                excluded_bbox_rows.append({
+                    "raw_bbox_index": raw_index,
+                    "canonical_root": aggregate_root,
+                    "descendant_instance_id": descendants[0],
+                    "reason": "hierarchical_semantic_aggregate",
+                })
+                continue
         if len(matches) != 1:
             raise CaptureError(f"bbox row {raw_index} does not join exactly one instance ID: {matches}")
         instance_id = matches[0]
@@ -470,6 +496,7 @@ def _normalize_annotations(
             "instance_id_to_labelled_roots": {str(key): value[0] for key, value in labelled_roots.items()},
             "instance_id_to_asset_source_sha256": instance_asset_shas,
             "reserved_instance_ids": reserved_instance_ids,
+            "excluded_bbox_rows": excluded_bbox_rows,
             "source_artifacts": {
                 "semantic": {"filename": "semantic.raw-info.json", "sha256": semantic_info_sha256},
                 "instance": {"filename": "instance.raw-info.json", "sha256": instance_info_sha256},
@@ -1094,6 +1121,64 @@ def _detach(annotators: Mapping[str, Mapping[str, Any]], products: Iterable[Any]
     return errors
 
 
+def _persist_raw_camera_payloads(
+    *,
+    capture_root: Path,
+    camera_payloads: Mapping[str, Mapping[str, Any]],
+    np: Any,
+    Image: Any,
+) -> dict[str, dict[str, Any]]:
+    artifacts: dict[str, dict[str, Any]] = {}
+    for camera_id in CAMERA_IDS:
+        camera_root = capture_root / camera_id
+        camera_root.mkdir(parents=True)
+        data = camera_payloads[camera_id]
+        semantic_payload = data["semantic_segmentation"]
+        instance_payload = data["instance_segmentation"]
+        semantic_info_path = camera_root / "semantic.raw-info.json"
+        instance_info_path = camera_root / "instance.raw-info.json"
+        camera_raw_path = camera_root / "camera.raw-params.json"
+        rgb_path = camera_root / "rgb.png"
+        depth_path = camera_root / "depth.npy"
+        semantic_path = camera_root / "semantic.npy"
+        instance_path = camera_root / "instance.npy"
+        bbox_path = camera_root / "bbox2d.raw.json"
+
+        _atomic_json(semantic_info_path, _raw_annotator_info(semantic_payload, "semantic"))
+        _atomic_json(instance_info_path, _raw_annotator_info(instance_payload, "instance"))
+        _atomic_json(camera_raw_path, data["camera_params"])
+        rgb = np.asarray(data["rgb"])
+        image = Image.fromarray(rgb[:, :, :3].astype(np.uint8))
+        try:
+            image.save(rgb_path)
+        finally:
+            image.close()
+        depth = np.asarray(data["distance_to_image_plane"], dtype="<f4")
+        semantic = np.asarray(semantic_payload["data"], dtype="<u4")
+        instance = np.asarray(instance_payload["data"], dtype="<u4")
+        np.save(depth_path, depth, allow_pickle=False)
+        np.save(semantic_path, semantic, allow_pickle=False)
+        np.save(instance_path, instance, allow_pickle=False)
+        bbox_raw = _raw_bbox_document(data["bounding_box_2d_tight"])
+        _atomic_json(bbox_path, bbox_raw)
+        artifacts[camera_id] = {
+            "semantic_info_path": semantic_info_path,
+            "instance_info_path": instance_info_path,
+            "camera_raw_path": camera_raw_path,
+            "rgb_path": rgb_path,
+            "depth_path": depth_path,
+            "semantic_path": semantic_path,
+            "instance_path": instance_path,
+            "bbox_path": bbox_path,
+            "rgb": rgb,
+            "depth": depth,
+            "semantic": semantic,
+            "instance": instance,
+            "bbox_raw": bbox_raw,
+        }
+    return artifacts
+
+
 def _capture_variant(
     *,
     output: Path,
@@ -1168,46 +1253,43 @@ def _capture_variant(
             capture_root = output / "scenes" / scene_id / "captures" / f"f{frame:09d}-t{sim_ns:015d}"
             camera_paths: dict[str, dict[str, str]] = {}
             camera_payloads: dict[str, dict[str, Any]] = {}
-            raw_metadata_paths: dict[str, tuple[Path, Path, Path]] = {}
             for camera_id in CAMERA_IDS:
-                camera_root = capture_root / camera_id
-                camera_root.mkdir(parents=True)
-                data = {name: annotators[camera_id][name].get_data() for name in ANNOTATORS}
-                semantic_info_path = camera_root / "semantic.raw-info.json"
-                instance_info_path = camera_root / "instance.raw-info.json"
-                camera_raw_path = camera_root / "camera.raw-params.json"
-                _atomic_json(semantic_info_path, _raw_annotator_info(data["semantic_segmentation"], "semantic"))
-                _atomic_json(instance_info_path, _raw_annotator_info(data["instance_segmentation"], "instance"))
-                _atomic_json(camera_raw_path, data["camera_params"])
-                camera_payloads[camera_id] = data
-                raw_metadata_paths[camera_id] = (semantic_info_path, instance_info_path, camera_raw_path)
+                camera_payloads[camera_id] = {
+                    name: annotators[camera_id][name].get_data() for name in ANNOTATORS
+                }
+            raw_artifacts = _persist_raw_camera_payloads(
+                capture_root=capture_root,
+                camera_payloads=camera_payloads,
+                np=np,
+                Image=Image,
+            )
             for camera_id in CAMERA_IDS:
                 camera_root = capture_root / camera_id
                 data = camera_payloads[camera_id]
-                semantic_info_path, instance_info_path, camera_raw_path = raw_metadata_paths[camera_id]
-                rgb = np.asarray(data["rgb"])
+                raw = raw_artifacts[camera_id]
+                semantic_info_path = raw["semantic_info_path"]
+                instance_info_path = raw["instance_info_path"]
+                camera_raw_path = raw["camera_raw_path"]
+                rgb = raw["rgb"]
                 if rgb.shape[:2] != (resolution[1], resolution[0]):
                     raise CaptureError(f"{camera_id} RGB shape does not match requested resolution")
-                rgb_path = camera_root / "rgb.png"
-                image = Image.fromarray(rgb[:, :, :3].astype(np.uint8))
-                try:
-                    image.save(rgb_path)
-                finally:
-                    image.close()
-                depth = np.asarray(data["distance_to_image_plane"], dtype="<f4").reshape(resolution[1], resolution[0])
+                rgb_path = raw["rgb_path"]
+                depth = raw["depth"]
+                if depth.shape != (resolution[1], resolution[0]):
+                    raise CaptureError(f"{camera_id} depth shape does not match requested resolution")
                 if np.isnan(depth).any() or np.isneginf(depth).any() or np.any(np.isfinite(depth) & (depth <= 0)):
                     raise CaptureError(f"{camera_id} depth contains NaN or nonpositive finite values")
                 semantic_payload = data["semantic_segmentation"]
                 instance_payload = data["instance_segmentation"]
-                semantic = np.asarray(semantic_payload["data"], dtype="<u4").reshape(resolution[1], resolution[0])
-                instance = np.asarray(instance_payload["data"], dtype="<u4").reshape(resolution[1], resolution[0])
-                depth_path, semantic_path, instance_path = camera_root / "depth.npy", camera_root / "semantic.npy", camera_root / "instance.npy"
-                np.save(depth_path, depth, allow_pickle=False)
-                np.save(semantic_path, semantic, allow_pickle=False)
-                np.save(instance_path, instance, allow_pickle=False)
-                bbox_raw = _raw_bbox_document(data["bounding_box_2d_tight"])
-                bbox_path = camera_root / "bbox2d.raw.json"
-                _atomic_json(bbox_path, bbox_raw)
+                semantic = raw["semantic"]
+                instance = raw["instance"]
+                if semantic.shape != (resolution[1], resolution[0]) or instance.shape != (resolution[1], resolution[0]):
+                    raise CaptureError(f"{camera_id} segmentation shape does not match requested resolution")
+                depth_path = raw["depth_path"]
+                semantic_path = raw["semantic_path"]
+                instance_path = raw["instance_path"]
+                bbox_raw = raw["bbox_raw"]
+                bbox_path = raw["bbox_path"]
                 normalized = _normalize_annotations(
                     scene_id=scene_id,
                     scene_variant_id=variant_id,

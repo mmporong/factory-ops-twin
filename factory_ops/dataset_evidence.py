@@ -635,6 +635,7 @@ def _validate_camera_sample(
     instance_labelled_roots = normalized_raw_info.get("instance_id_to_labelled_roots") if isinstance(normalized_raw_info, dict) else None
     instance_asset_shas = normalized_raw_info.get("instance_id_to_asset_source_sha256") if isinstance(normalized_raw_info, dict) else None
     reserved_instance_ids = normalized_raw_info.get("reserved_instance_ids") if isinstance(normalized_raw_info, dict) else None
+    excluded_bbox_rows = normalized_raw_info.get("excluded_bbox_rows") if isinstance(normalized_raw_info, dict) else None
     raw_metadata = _validate_raw_metadata_artifacts(
         root,
         paths,
@@ -646,7 +647,7 @@ def _validate_camera_sample(
     if (not all(isinstance(value, dict) for value in (
             bbox_labels, semantic_labels, instance_labels, instance_prim_paths,
             instance_labelled_roots, instance_asset_shas, reserved_instance_ids,
-        )) or not isinstance(bbox_prim_paths, list) or raw_metadata is None):
+        )) or not isinstance(excluded_bbox_rows, list) or not isinstance(bbox_prim_paths, list) or raw_metadata is None):
         errors.append(f"{prefix} raw bbox/instance/semantic label maps are invalid")
         return
     if len(bbox_prim_paths) != len(raw_data):
@@ -680,6 +681,16 @@ def _validate_camera_sample(
     )
     if reserved_map is None:
         return
+    exact_instance_labelled_roots: dict[int, tuple[str, str]] = {}
+    raw_instance_semantics = raw_instance_info.get("idToSemantics")
+    raw_instance_labels = raw_instance_info.get("idToLabels")
+    if isinstance(raw_instance_semantics, dict) and isinstance(raw_instance_labels, dict):
+        for key, semantics in raw_instance_semantics.items():
+            raw_path = raw_instance_labels.get(key)
+            class_name = _raw_label_class(semantics)
+            if (isinstance(key, str) and key.isdecimal() and _usd_path(raw_path)
+                    and isinstance(class_name, str) and class_name not in {"BACKGROUND", "UNLABELLED"}):
+                exact_instance_labelled_roots[int(key)] = (cast(str, raw_path), class_name)
     semantic_map = _class_map(
         semantic_labels,
         allowed_classes,
@@ -775,6 +786,7 @@ def _validate_camera_sample(
         instance_labelled_roots,
         instance_asset_shas,
         raw_data,
+        excluded_bbox_rows,
         normalized.get("instances"),
         profile,
         class_instances,
@@ -782,6 +794,7 @@ def _validate_camera_sample(
         errors,
         stats,
         source_bindings,
+        exact_instance_labelled_roots,
     )
     return (
         rgb_content_sha,
@@ -804,6 +817,7 @@ def _validate_instances(
     instance_labelled_roots: dict[str, Any],
     instance_asset_shas: dict[str, Any],
     raw_data: list[Any],
+    excluded_bbox_rows: list[Any],
     normalized_instances: object,
     profile: dict[str, Any],
     class_instances: Counter[str],
@@ -811,6 +825,7 @@ def _validate_instances(
     errors: list[str],
     stats: dict[str, Any],
     source_bindings: dict[str, str],
+    exact_instance_labelled_roots: dict[int, tuple[str, str]],
 ) -> None:
     if not isinstance(normalized_instances, list):
         errors.append(f"{prefix} normalized instances is not a list")
@@ -860,6 +875,9 @@ def _validate_instances(
             errors.append(f"{prefix} instance {instance_id} raw prim path is outside its labelled USD root")
         if item.get("usd_root_path") != usd_path or item.get("asset_source_sha256") != asset_sha or not _sha(asset_sha):
             errors.append(f"{prefix} instance {instance_id} source identity does not match raw info")
+        exact_identity = exact_instance_labelled_roots.get(instance_id)
+        if exact_identity is not None and exact_identity != (usd_path, class_name):
+            errors.append(f"{prefix} instance {instance_id} labelled USD root differs from preserved SDK metadata")
         candidates = [
             (source_root, source_sha)
             for source_root, source_sha in source_bindings.items()
@@ -892,11 +910,13 @@ def _validate_instances(
         raw_paths = bbox_prim_paths[raw_index] if raw_index < len(bbox_prim_paths) else None
         if isinstance(raw_paths, str):
             raw_paths = [raw_paths]
-        if not isinstance(raw_paths, list) or not any(
-            _same_or_descendant(cast(str, raw_path), usd_path) or _same_or_descendant(usd_path, cast(str, raw_path))
-            for raw_path in raw_paths
-            if _usd_path(raw_path)
-        ):
+        canonical_bbox_roots = _canonical_bbox_roots(
+            raw_paths,
+            class_name,
+            exact_instance_labelled_roots,
+            source_bindings,
+        )
+        if canonical_bbox_roots != {usd_path}:
             errors.append(f"{prefix} instance {instance_id} labelled USD root is unrelated to the raw bbox row primPaths")
         raw_bbox = [raw_box.get(key) for key in ("x_min", "y_min", "x_max", "y_max")]
         if not all(_finite_number(value) for value in raw_bbox):
@@ -930,8 +950,114 @@ def _validate_instances(
             stats["edge_truncated_instances"] += 1
         if class_name is not None:
             class_instances[class_name] += 1
-    if used_raw_indices != set(range(len(raw_data))):
+    excluded_indices = _validate_excluded_bbox_rows(
+        prefix,
+        excluded_bbox_rows,
+        raw_data,
+        bbox_prim_paths,
+        bbox_map,
+        normalized_by_id,
+        instance_bounds,
+        source_bindings,
+        exact_instance_labelled_roots,
+        used_raw_indices,
+        errors,
+    )
+    if used_raw_indices | excluded_indices != set(range(len(raw_data))):
         errors.append(f"{prefix} normalized instances do not bind every raw bbox row exactly once")
+
+
+def _canonical_bbox_roots(
+    raw_paths: object,
+    bbox_class: str | None,
+    exact_instance_labelled_roots: dict[int, tuple[str, str]],
+    source_bindings: dict[str, str],
+) -> set[str]:
+    if isinstance(raw_paths, str):
+        raw_paths = [raw_paths]
+    result: set[str] = set()
+    if not isinstance(raw_paths, list):
+        return result
+    for raw_path in raw_paths:
+        if not _usd_path(raw_path):
+            continue
+        labelled_candidates = [
+            root for root, class_name in exact_instance_labelled_roots.values()
+            if class_name == bbox_class and _same_or_descendant(cast(str, raw_path), root)
+        ]
+        if labelled_candidates:
+            result.add(max(labelled_candidates, key=len))
+            continue
+        source_candidates = [
+            root for root in source_bindings
+            if _same_or_descendant(cast(str, raw_path), root)
+        ]
+        if source_candidates:
+            result.add(max(source_candidates, key=len))
+    return result
+
+
+def _validate_excluded_bbox_rows(
+    prefix: str,
+    records: list[Any],
+    raw_data: list[Any],
+    bbox_prim_paths: list[Any],
+    bbox_map: dict[int, str],
+    normalized_by_id: dict[int, dict[str, Any]],
+    instance_bounds: dict[int, list[int]],
+    source_bindings: dict[str, str],
+    exact_instance_labelled_roots: dict[int, tuple[str, str]],
+    used_raw_indices: set[int],
+    errors: list[str],
+) -> set[int]:
+    excluded: set[int] = set()
+    for record in records:
+        if not isinstance(record, dict) or set(record) != {
+            "raw_bbox_index", "canonical_root", "descendant_instance_id", "reason",
+        }:
+            errors.append(f"{prefix} excluded bbox row record is invalid")
+            continue
+        raw_index = record.get("raw_bbox_index")
+        instance_id = record.get("descendant_instance_id")
+        aggregate_root = record.get("canonical_root")
+        if (not _nonnegative_int(raw_index) or int(raw_index) >= len(raw_data)
+                or int(raw_index) in excluded or int(raw_index) in used_raw_indices
+                or not _nonnegative_int(instance_id) or instance_id not in normalized_by_id
+                or not _usd_path(aggregate_root)
+                or record.get("reason") != "hierarchical_semantic_aggregate"):
+            errors.append(f"{prefix} excluded bbox row identity is invalid")
+            continue
+        raw_index = int(raw_index)
+        instance_id = int(instance_id)
+        raw_box = raw_data[raw_index]
+        raw_paths = bbox_prim_paths[raw_index]
+        raw_paths = [raw_paths] if isinstance(raw_paths, str) else raw_paths
+        item = normalized_by_id[instance_id]
+        descendant_root = item.get("usd_root_path")
+        semantic_id = raw_box.get("semanticId") if isinstance(raw_box, dict) else None
+        bbox_class = bbox_map.get(int(semantic_id)) if _nonnegative_int(semantic_id) else None
+        canonical_roots = _canonical_bbox_roots(
+            raw_paths,
+            bbox_class,
+            exact_instance_labelled_roots,
+            source_bindings,
+        )
+        raw_bbox = [raw_box.get(key) for key in ("x_min", "y_min", "x_max", "y_max")] if isinstance(raw_box, dict) else None
+        candidates = [
+            candidate_id
+            for candidate_id, candidate in normalized_by_id.items()
+            if candidate.get("class") == bbox_class
+            and isinstance(candidate.get("usd_root_path"), str)
+            and candidate["usd_root_path"].startswith(cast(str, aggregate_root) + "/")
+            and raw_bbox == instance_bounds.get(candidate_id)
+        ]
+        if (canonical_roots != {aggregate_root} or not isinstance(descendant_root, str)
+                or not descendant_root.startswith(cast(str, aggregate_root) + "/")
+                or candidates != [instance_id]):
+            errors.append(f"{prefix} excluded bbox row is not a unique hierarchical semantic aggregate")
+            continue
+        excluded.add(raw_index)
+    return excluded
 
 
 def _validate_camera(
