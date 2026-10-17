@@ -63,6 +63,8 @@ def validate_dataset(root: Path, profile_path: Path = DEFAULT_PROFILE) -> dict[s
         "class_instance_counts": {},
         "occlusion_distribution": {"clear_0_0.1": 0, "partial_0.1_0.5": 0, "heavy_0.5_1": 0},
         "edge_truncated_instances": 0,
+        "occlusion_measured_instances": 0,
+        "occlusion_unknown_instances": 0,
         "visual_reviewed_scene_cameras": 0,
         "profile_id": None,
         "profile_sha256": None,
@@ -632,7 +634,19 @@ def _validate_camera_sample(
     instance_prim_paths = normalized_raw_info.get("instance_id_to_prim_paths") if isinstance(normalized_raw_info, dict) else None
     instance_labelled_roots = normalized_raw_info.get("instance_id_to_labelled_roots") if isinstance(normalized_raw_info, dict) else None
     instance_asset_shas = normalized_raw_info.get("instance_id_to_asset_source_sha256") if isinstance(normalized_raw_info, dict) else None
-    if not all(isinstance(value, dict) for value in (bbox_labels, semantic_labels, instance_labels, instance_prim_paths, instance_labelled_roots, instance_asset_shas)) or not isinstance(bbox_prim_paths, list):
+    reserved_instance_ids = normalized_raw_info.get("reserved_instance_ids") if isinstance(normalized_raw_info, dict) else None
+    raw_metadata = _validate_raw_metadata_artifacts(
+        root,
+        paths,
+        prefix,
+        normalized_raw_info,
+        camera,
+        errors,
+    )
+    if (not all(isinstance(value, dict) for value in (
+            bbox_labels, semantic_labels, instance_labels, instance_prim_paths,
+            instance_labelled_roots, instance_asset_shas, reserved_instance_ids,
+        )) or not isinstance(bbox_prim_paths, list) or raw_metadata is None):
         errors.append(f"{prefix} raw bbox/instance/semantic label maps are invalid")
         return
     if len(bbox_prim_paths) != len(raw_data):
@@ -646,15 +660,31 @@ def _validate_camera_sample(
             errors.append(f"{prefix} raw bbox primPaths row {raw_index} is not a nonempty canonical USD path list")
             return
     semantic_labels = cast(dict[str, Any], semantic_labels)
+    normalized_raw_info = cast(dict[str, Any], normalized_raw_info)
     instance_labels = cast(dict[str, Any], instance_labels)
     bbox_labels = cast(dict[str, Any], bbox_labels)
     instance_prim_paths = cast(dict[str, Any], instance_prim_paths)
     instance_labelled_roots = cast(dict[str, Any], instance_labelled_roots)
     instance_asset_shas = cast(dict[str, Any], instance_asset_shas)
+    reserved_instance_ids = cast(dict[str, Any], reserved_instance_ids)
+    raw_semantic_info, raw_instance_info = raw_metadata
+    if (raw_semantic_info.get("idToLabels") != normalized_raw_info.get("semantic_id_to_labels_raw")
+            or raw_instance_info.get("idToLabels") != normalized_raw_info.get("instance_id_to_labels_raw")):
+        errors.append(f"{prefix} normalized raw label maps differ from the preserved annotator info")
+        return
+    reserved_map = _validate_reserved_instance_ids(
+        reserved_instance_ids,
+        raw_instance_info.get("idToLabels"),
+        errors,
+        prefix,
+    )
+    if reserved_map is None:
+        return
     semantic_map = _class_map(
         semantic_labels,
         allowed_classes,
         allow_background=True,
+        allow_unlabelled=True,
         require_background=True,
         errors=errors,
         prefix=prefix,
@@ -663,6 +693,12 @@ def _validate_camera_sample(
     bbox_map = _class_map(bbox_labels, allowed_classes, allow_background=False, errors=errors, prefix=prefix)
     if semantic_map is None or instance_map is None or bbox_map is None:
         return
+    raw_semantic_labels = raw_semantic_info.get("idToLabels")
+    if (not isinstance(raw_semantic_labels, dict)
+            or any(_raw_label_class(raw_semantic_labels.get(key)) != value.get("class")
+                   for key, value in semantic_labels.items() if isinstance(value, dict))):
+        errors.append(f"{prefix} normalized semantic classes differ from preserved raw labels")
+        return
     if depth[0] not in {"<f4", "<f8"}:
         errors.append(f"{prefix} depth dtype is not little-endian float32/float64")
         return
@@ -670,6 +706,7 @@ def _validate_camera_sample(
         errors.append(f"{prefix} semantic/instance dtype is not a supported little-endian integer")
         return
     instance_bounds: dict[int, list[int]] = {}
+    observed_reserved_ids: set[int] = set()
     values = zip(_array_values(depth), _array_values(semantic), _array_values(instance))
     for pixel_index, (depth_value, semantic_id, instance_id) in enumerate(values):
         semantic_id = int(semantic_id)
@@ -681,8 +718,21 @@ def _validate_camera_sample(
         if class_name == "BACKGROUND":
             if not (isinstance(depth_value, float) and math.isinf(depth_value) and depth_value > 0):
                 errors.append(f"{prefix} background depth pixel {pixel_index} is not positive infinity")
-            if instance_id != 0:
-                errors.append(f"{prefix} background pixel {pixel_index} has a nonzero instance ID")
+            if instance_id in reserved_map:
+                observed_reserved_ids.add(instance_id)
+            else:
+                errors.append(f"{prefix} background pixel {pixel_index} has an unrecognized instance ID")
+        elif class_name == "UNLABELLED":
+            if not isinstance(depth_value, float) or not math.isfinite(depth_value) or depth_value <= 0:
+                errors.append(f"{prefix} unlabelled geometry depth pixel {pixel_index} is not finite and positive")
+            elif camera_valid:
+                clipping = cast(dict[str, Any], camera)["clipping_range"]
+                if not float(clipping[0]) <= depth_value <= float(clipping[1]):
+                    errors.append(f"{prefix} unlabelled geometry depth pixel {pixel_index} is outside the camera clipping range")
+            if reserved_map.get(instance_id) != "UNLABELLED":
+                errors.append(f"{prefix} unlabelled semantic pixel {pixel_index} lacks an UNLABELLED instance identity")
+            else:
+                observed_reserved_ids.add(instance_id)
         else:
             class_pixels[class_name] += 1
             if not isinstance(depth_value, float) or not math.isfinite(depth_value) or depth_value <= 0:
@@ -693,7 +743,10 @@ def _validate_camera_sample(
                 if not float(near) <= depth_value <= float(far):
                     errors.append(f"{prefix} foreground depth pixel {pixel_index} is outside the camera clipping range")
             mapped_class = instance_map.get(instance_id)
-            if mapped_class is None:
+            if instance_id in reserved_map:
+                observed_reserved_ids.add(instance_id)
+                errors.append(f"{prefix} foreground instance ID {instance_id} is improperly hidden as reserved")
+            elif mapped_class is None:
                 errors.append(f"{prefix} foreground instance ID {instance_id} is absent from idToLabels")
             elif mapped_class != class_name:
                 errors.append(f"{prefix} instance ID {instance_id} class does not match semantic mask class {class_name}")
@@ -707,6 +760,8 @@ def _validate_camera_sample(
                 bounds[1] = min(bounds[1], y)
                 bounds[2] = max(bounds[2], x)
                 bounds[3] = max(bounds[3], y)
+    if observed_reserved_ids != set(reserved_map):
+        errors.append(f"{prefix} reserved instance IDs do not exactly match reserved identities present in the mask")
     _validate_instances(
         prefix,
         variant_id,
@@ -852,11 +907,21 @@ def _validate_instances(
                 errors.append(f"{prefix} instance {instance_id} raw bbox differs from the mask bbox by more than {tolerance}px")
         raw_occ = raw_box.get("occlusionRatio")
         normalized_occ = item.get("occlusion_ratio")
-        if not _finite_number(raw_occ) or not _finite_number(normalized_occ) or float(raw_occ) != float(normalized_occ):
-            errors.append(f"{prefix} instance {instance_id} occlusion ratio does not preserve the raw value")
+        if not _finite_number(raw_occ) or item.get("occlusion_raw_value") != raw_occ:
+            errors.append(f"{prefix} instance {instance_id} occlusion raw value is not preserved")
+        elif float(raw_occ) == -1.0:
+            if normalized_occ is not None or item.get("occlusion_status") != "unavailable_raw_sentinel":
+                errors.append(f"{prefix} instance {instance_id} unavailable occlusion sentinel is normalized incorrectly")
+            else:
+                stats["occlusion_unknown_instances"] += 1
+                if stats.get("validation_gate") == "production":
+                    errors.append(f"{prefix} instance {instance_id} has unavailable occlusion in a production dataset")
+        elif not _finite_number(normalized_occ) or float(raw_occ) != float(normalized_occ) or item.get("occlusion_status") != "measured_raw":
+            errors.append(f"{prefix} instance {instance_id} occlusion ratio does not preserve the measured raw value")
         elif not minimum_occ <= float(normalized_occ) <= maximum_occ:
             errors.append(f"{prefix} instance {instance_id} occlusion ratio is outside the profile bounds")
         else:
+            stats["occlusion_measured_instances"] += 1
             occlusion["clear" if float(normalized_occ) <= 0.1 else "partial" if float(normalized_occ) <= 0.5 else "heavy"] += 1
         edge = mask_bbox[0] == 0 or mask_bbox[1] == 0 or mask_bbox[2] == width - 1 or mask_bbox[3] == height - 1
         if item.get("edge_truncated") is not edge:
@@ -1096,11 +1161,111 @@ def _validate_split_counts(assignments: dict[str, str], expected: object, errors
             errors.append(f"split {split} has {actual[split]} scenes, expected {count}")
 
 
+def _validate_raw_metadata_artifacts(
+    root: Path,
+    paths: dict[str, str],
+    prefix: str,
+    normalized_raw_info: object,
+    camera: object,
+    errors: list[str],
+) -> tuple[dict[str, Any], dict[str, Any]] | None:
+    if not isinstance(normalized_raw_info, dict) or not isinstance(camera, dict):
+        errors.append(f"{prefix} normalized raw info or camera document is invalid")
+        return None
+    directory = (root / PurePosixPath(paths["normalized"])).parent
+    sources = normalized_raw_info.get("source_artifacts")
+    if not isinstance(sources, dict):
+        errors.append(f"{prefix} normalized raw info has no source artifact bindings")
+        return None
+    loaded: dict[str, dict[str, Any]] = {}
+    for label, filename in (("semantic", "semantic.raw-info.json"), ("instance", "instance.raw-info.json")):
+        binding = sources.get(label)
+        path = directory / filename
+        if (not isinstance(binding, dict) or binding.get("filename") != filename
+                or not _sha(binding.get("sha256")) or not _regular_file(path)
+                or _has_symlink_ancestor(path, root) or _sha256(path) != binding.get("sha256")):
+            errors.append(f"{prefix} {label} raw annotator info artifact binding is invalid")
+            return None
+        document = _load_json(path, f"{prefix} {label} raw annotator info", errors)
+        if not isinstance(document, dict):
+            return None
+        loaded[label] = document
+    camera_binding = camera.get("raw_camera_params_artifact")
+    camera_path = directory / "camera.raw-params.json"
+    if (not isinstance(camera_binding, dict) or camera_binding.get("filename") != "camera.raw-params.json"
+            or not _sha(camera_binding.get("sha256")) or not _regular_file(camera_path)
+            or _has_symlink_ancestor(camera_path, root) or _sha256(camera_path) != camera_binding.get("sha256")):
+        errors.append(f"{prefix} raw camera params artifact binding is invalid")
+        return None
+    raw_camera = _load_json(camera_path, f"{prefix} raw camera params", errors)
+    if raw_camera != camera.get("raw_camera_params"):
+        errors.append(f"{prefix} normalized camera raw params differ from the preserved artifact")
+        return None
+    return loaded["semantic"], loaded["instance"]
+
+
+def _raw_label_class(value: object) -> str | None:
+    parsed = value
+    if isinstance(value, str):
+        stripped = value.strip()
+        for parser in (json.loads, ast.literal_eval):
+            try:
+                candidate = parser(stripped)
+            except (ValueError, SyntaxError, json.JSONDecodeError):
+                continue
+            if isinstance(candidate, dict):
+                parsed = candidate
+                break
+        else:
+            parsed = {"class": stripped}
+    if not isinstance(parsed, dict):
+        return None
+    for key in ("class", "semanticClass", "label"):
+        candidate = parsed.get(key)
+        if isinstance(candidate, str) and candidate.strip():
+            return candidate.strip()
+    return None
+
+
+def _raw_reserved_identity(value: object) -> str | None:
+    identity = _raw_label_class(value)
+    normalized = identity.upper() if isinstance(identity, str) else None
+    return normalized if normalized in {"BACKGROUND", "UNLABELLED"} else None
+
+
+def _validate_reserved_instance_ids(
+    declared: dict[str, Any],
+    raw_labels: object,
+    errors: list[str],
+    prefix: str,
+) -> dict[int, str] | None:
+    if not isinstance(raw_labels, dict):
+        errors.append(f"{prefix} preserved instance idToLabels is invalid")
+        return None
+    result: dict[int, str] = {}
+    for key, identity in declared.items():
+        try:
+            numeric = int(key)
+        except (TypeError, ValueError):
+            errors.append(f"{prefix} reserved instance ID is not an integer")
+            return None
+        if numeric < 0 or not isinstance(key, str) or key != str(numeric) or numeric in result:
+            errors.append(f"{prefix} reserved instance ID is noncanonical or duplicated")
+            return None
+        actual = _raw_reserved_identity(raw_labels.get(key))
+        if identity not in {"BACKGROUND", "UNLABELLED"} or actual != identity:
+            errors.append(f"{prefix} reserved instance ID does not match its preserved raw identity")
+            return None
+        result[numeric] = identity
+    return result
+
+
 def _class_map(
     mapping: dict[str, Any],
     allowed: set[str],
     *,
     allow_background: bool,
+    allow_unlabelled: bool = False,
     require_background: bool = False,
     errors: list[str],
     prefix: str,
@@ -1118,7 +1283,11 @@ def _class_map(
             return None
         keys_by_numeric[numeric] = key
         class_name = value.get("class") if isinstance(value, dict) else None
-        valid = class_name in allowed or (allow_background and class_name == "BACKGROUND")
+        valid = (
+            class_name in allowed
+            or (allow_background and class_name == "BACKGROUND")
+            or (allow_unlabelled and class_name == "UNLABELLED")
+        )
         if not valid or not isinstance(class_name, str):
             errors.append(f"{prefix} label map contains unknown class {class_name!r}")
             return None

@@ -26,6 +26,7 @@ from scripts.isaac.g4_capture import (
     _parse_variant_seeds,
     _physics_scene_readback,
     _raw_bbox_document,
+    _raw_annotator_info,
     _renderer_contract,
     _safety_barrier_plan,
     _verify_source_commit,
@@ -265,6 +266,13 @@ class G4CaptureContractTests(unittest.TestCase):
         self.assertEqual(plan["class"], "barrier")
         self.assertEqual(plan["source_obstacle_id"], "SERVICE_CABINET")
         self.assertRegex(plan["asset_source_sha256"], r"^[0-9a-f]{64}$")
+        clearance = plan["facade_clearance"]
+        self.assertLess(clearance["guard_front_offset_m"], clearance["cabinet_door_front_offset_m"])
+        self.assertLess(clearance["guard_back_offset_m"], clearance["cabinet_body_front_offset_m"])
+        self.assertEqual(
+            {component["name"] for component in plan["components"]},
+            {"LeftPost", "RightPost", "MidGuardRail", "GuardRail"},
+        )
         for component in plan["components"]:
             bounds = component["bounds_xyz_m"]
             self.assertGreaterEqual(bounds[0], envelope[0])
@@ -399,6 +407,8 @@ class G4CaptureContractTests(unittest.TestCase):
             instance_payload=instance_payload,
             bbox_raw=bbox_raw,
             bbox_sha256="d" * 64,
+            semantic_info_sha256="a" * 64,
+            instance_info_sha256="b" * 64,
             stage=_Stage(),
             asset_source_by_root={"/World/Rack": "e" * 64},
             np=_FakeNP(),
@@ -410,11 +420,94 @@ class G4CaptureContractTests(unittest.TestCase):
         self.assertEqual(instance["class"], "rack")
         self.assertEqual(instance["usd_root_path"], "/World/Rack")
         self.assertEqual(instance["bbox_xyxy"], [1, 0, 2, 1])
+        self.assertEqual(instance["occlusion_ratio"], 0.25)
+        self.assertEqual(instance["occlusion_status"], "measured_raw")
+        self.assertEqual(instance["occlusion_raw_value"], 0.25)
         self.assertEqual(result["raw_info"]["semantic_id_to_labels"]["9"]["class"], "rack")
         self.assertEqual(result["raw_info"]["semantic_id_to_labels_raw"]["9"]["class"], "rack")
         self.assertEqual(result["raw_info"]["instance_id_to_labels_raw"]["27"], "/World/Rack/Mesh")
+        self.assertEqual(result["raw_info"]["source_artifacts"]["semantic"]["sha256"], "a" * 64)
         expected = hashlib.sha256(f"industrial-v00\0/World/Rack\0{'e' * 64}".encode()).hexdigest()
         self.assertEqual(instance["stable_instance_key"], expected)
+
+    def test_explicit_unlabelled_instance_identity_is_preserved_and_excluded(self) -> None:
+        bbox_raw = {
+            "data": [{"semanticId": 4, "x_min": 1, "y_min": 0, "x_max": 2, "y_max": 1, "occlusionRatio": -1.0}],
+            "info": {"idToLabels": {"4": {"class": "rack"}}, "primPaths": [["/World/Rack"]]},
+        }
+        semantic_payload = {
+            "data": _Array([[0, 9, 9], [0, 9, 9]]),
+            "info": {"idToLabels": {"0": {"class": "BACKGROUND"}, "9": {"class": "rack"}}},
+        }
+        instance_payload = {
+            "data": _Array([[1, 27, 27], [1, 27, 27]]),
+            "info": {"idToLabels": {"1": "UNLABELLED", "27": "/World/Rack/Mesh"}},
+        }
+
+        result = _normalize_annotations(
+            scene_id="scene-000",
+            scene_variant_id="industrial-v00",
+            capture_id="scene-000--f000000120--t000000002000000",
+            camera_id="overhead",
+            physics_frame=120,
+            sim_time_ns=2_000_000,
+            semantic_payload=semantic_payload,
+            instance_payload=instance_payload,
+            bbox_raw=bbox_raw,
+            bbox_sha256="d" * 64,
+            semantic_info_sha256="a" * 64,
+            instance_info_sha256="b" * 64,
+            stage=_Stage(),
+            asset_source_by_root={"/World/Rack": "e" * 64},
+            np=_FakeNP(),
+        )
+
+        self.assertEqual(result["raw_info"]["reserved_instance_ids"], {"1": "UNLABELLED"})
+        self.assertEqual([item["instance_id"] for item in result["instances"]], [27])
+        self.assertIsNone(result["instances"][0]["occlusion_ratio"])
+        self.assertEqual(result["instances"][0]["occlusion_status"], "unavailable_raw_sentinel")
+        self.assertEqual(result["instances"][0]["occlusion_raw_value"], -1.0)
+
+        instance_payload["info"]["idToLabels"] = {"27": "/World/Rack/Mesh"}
+        with self.assertRaisesRegex(CaptureError, "instance ID 1 has no original prim path"):
+            _normalize_annotations(
+                scene_id="scene-000",
+                scene_variant_id="industrial-v00",
+                capture_id="scene-000--f000000120--t000000002000000",
+                camera_id="overhead",
+                physics_frame=120,
+                sim_time_ns=2_000_000,
+                semantic_payload=semantic_payload,
+                instance_payload=instance_payload,
+                bbox_raw=bbox_raw,
+                bbox_sha256="d" * 64,
+                semantic_info_sha256="a" * 64,
+                instance_info_sha256="b" * 64,
+                stage=_Stage(),
+                asset_source_by_root={"/World/Rack": "e" * 64},
+                np=_FakeNP(),
+            )
+
+    def test_raw_annotator_info_preserves_all_sdk_metadata_fields(self) -> None:
+        info = {
+            "idToLabels": {"1": "UNLABELLED", "27": "/World/Rack/Mesh"},
+            "primPaths": ["/World/Rack/Mesh"],
+            "extra": {"annotator": "instance_segmentation", "version": 2},
+        }
+
+        self.assertEqual(_raw_annotator_info({"data": object(), "info": info}, "instance"), info)
+
+    def test_all_camera_raw_metadata_is_persisted_before_normalization(self) -> None:
+        source = (ROOT / "scripts" / "isaac" / "g4_capture.py").read_text(encoding="utf-8")
+        first_pass = source.index("camera_payloads: dict[str, dict[str, Any]]")
+        raw_camera_write = source.index("_atomic_json(camera_raw_path, data[\"camera_params\"])", first_pass)
+        second_pass = source.index("for camera_id in CAMERA_IDS:", raw_camera_write)
+        normalization = source.index("normalized = _normalize_annotations(", second_pass)
+
+        self.assertLess(raw_camera_write, second_pass)
+        self.assertLess(second_pass, normalization)
+        self.assertIn("semantic.raw-info.json", source[first_pass:second_pass])
+        self.assertIn("instance.raw-info.json", source[first_pass:second_pass])
 
     def test_frozen_capture_contract_rejects_frame_time_or_pose_change(self) -> None:
         poses = {"carter1": ([1.0, 2.0, 0.1], [1.0, 0.0, 0.0, 0.0])}

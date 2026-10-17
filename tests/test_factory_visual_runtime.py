@@ -15,6 +15,7 @@ from scripts.isaac.factory_visuals import (
     TOTE_SIZE_M,
     WORLD_LOCATION_OBSTACLE,
     _export_immutable_session_layer,
+    _session_edit_target,
     build_payload_visibility_plan,
     validate_visual_state_document,
     world_slot_placement,
@@ -93,6 +94,141 @@ class FactoryVisualRuntimeTests(unittest.TestCase):
             self.assertEqual(first_path.read_bytes(), first_bytes)
             self.assertEqual((output / str(second["path"])).read_text(encoding="utf-8"), session.content)
             self.assertEqual((output / "visual-scene/session-layer.usda").read_text(encoding="utf-8"), session.content)
+
+    def test_session_edit_target_is_forced_and_restored_on_failure(self) -> None:
+        class Stage:
+            current = "root"
+            session = "session"
+
+            def GetSessionLayer(self) -> str:
+                return self.session
+
+            def GetEditTarget(self) -> str:
+                return self.current
+
+            def SetEditTarget(self, target: str) -> None:
+                self.current = target
+
+        stage = Stage()
+        with self.assertRaisesRegex(RuntimeError, "stop"):
+            with _session_edit_target(stage):
+                self.assertEqual(stage.current, "session")
+                raise RuntimeError("stop")
+        self.assertEqual(stage.current, "root")
+
+    def test_stage_contract_reads_invisible_collider_authored_bounds(self) -> None:
+        class Attribute:
+            def IsValid(self) -> bool:
+                return True
+
+            def Get(self) -> bool:
+                return True
+
+        class Prim:
+            visibility = "invisible"
+
+            def HasAPI(self, _api: object) -> bool:
+                return True
+
+            def GetPath(self) -> str:
+                return "/World/Floor"
+
+            def GetAttribute(self, _name: str) -> Attribute:
+                return Attribute()
+
+        class Root:
+            def __init__(self, count: int) -> None:
+                self.count = count
+
+            def IsValid(self) -> bool:
+                return True
+
+            def GetChildren(self) -> list[object]:
+                return [object() for _ in range(self.count)]
+
+        class Stage:
+            prim = Prim()
+
+            def Traverse(self) -> list[Prim]:
+                return [self.prim]
+
+            def GetPrimAtPath(self, path: str) -> Root:
+                return Root(19 if path == "/World/Obstacles" else 8)
+
+        class Matrix:
+            values = (
+                (1.0, 0.0, 0.0, 0.0),
+                (0.0, 1.0, 0.0, 0.0),
+                (0.0, 0.0, 1.0, 0.0),
+                (0.0, 0.0, 0.0, 1.0),
+            )
+
+            def __getitem__(self, row: int) -> tuple[float, float, float, float]:
+                return self.values[row]
+
+        class FakeXformable:
+            def ComputeLocalToWorldTransform(self, _time: float) -> Matrix:
+                return Matrix()
+
+        class Box:
+            def GetMin(self) -> tuple[float, float, float]:
+                return (-20.0, -12.0, -0.1)
+
+            def GetMax(self) -> tuple[float, float, float]:
+                return (20.0, 12.0, 0.0)
+
+        class Bound:
+            def ComputeAlignedBox(self) -> Box:
+                return Box()
+
+        class Cache:
+            def __init__(self, ignore_visibility: bool) -> None:
+                self.ignore_visibility = ignore_visibility
+
+            def ComputeWorldBound(self, prim: Prim) -> Bound:
+                if prim.visibility == "invisible" and not self.ignore_visibility:
+                    raise AssertionError("invisible collider bounds were visibility-filtered")
+                return Bound()
+
+        class UsdTokens:
+            default_ = "default"
+            render = "render"
+            proxy = "proxy"
+
+        class Geom:
+            ignore_visibility: bool | None = None
+
+            def BBoxCache(self, _time: float, _purposes: list[str], *, ignoreVisibility: bool = False) -> Cache:
+                self.ignore_visibility = ignoreVisibility
+                return Cache(ignoreVisibility)
+
+            def Xformable(self, _prim: Prim) -> FakeXformable:
+                return FakeXformable()
+
+        Geom.Tokens = UsdTokens  # type: ignore[attr-defined]
+
+        class Physics:
+            CollisionAPI = object()
+
+        with tempfile.TemporaryDirectory() as temporary:
+            runtime = FactoryVisualRuntime(LAYOUT_PATH, ROOT / "README.md", temporary, 0, "run-1", "normal")
+            geometry = Geom()
+            runtime.stage = Stage()
+            runtime.UsdGeom = geometry
+            runtime.UsdPhysics = Physics()
+            contract = runtime._stage_contract()
+
+        self.assertIs(geometry.ignore_visibility, True)
+        readbacks = contract["collider_geometry_readbacks"]
+        self.assertIsInstance(readbacks, dict)
+        assert isinstance(readbacks, dict)
+        floor = readbacks["/World/Floor"]
+        self.assertIsInstance(floor, dict)
+        assert isinstance(floor, dict)
+        self.assertEqual(
+            floor["world_bounds_xyz_m"],
+            [-20.0, -12.0, -0.1, 20.0, 12.0, 0.0],
+        )
 
     def test_world_slots_stay_inside_bound_obstacles_and_fail_on_overflow(self) -> None:
         obstacles = {item["id"]: item for item in self.layout.data["physical_obstacles"]}

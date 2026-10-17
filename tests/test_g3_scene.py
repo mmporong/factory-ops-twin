@@ -118,6 +118,7 @@ class BarrierLifecycleTests(unittest.TestCase):
         self.visual = self.visual_factory.return_value
         self.visual.setup.return_value = {"runtime_manifest": "visual-runtime-manifest.json"}
         self.visual.capture_metadata.return_value = {"applied_sequence": 3}
+        self.visual.applied_sequence = None
 
     def tearDown(self) -> None:
         self.temporary.cleanup()
@@ -145,7 +146,13 @@ class BarrierLifecycleTests(unittest.TestCase):
         stage = object()
         lifecycle.after_robots_loaded(stage, definitions)
         self.visual.after_robots_loaded.assert_called_once_with(stage, definitions)
+        self.assertFalse(lifecycle.capture_due())
+        self.visual.applied_sequence = 3
+        self.assertTrue(lifecycle.capture_due())
         self.assertEqual(lifecycle.capture_metadata(), {"applied_sequence": 3})
+        self.assertFalse(lifecycle.capture_due())
+        self.visual.applied_sequence = 4
+        self.assertTrue(lifecycle.capture_due())
 
     def test_render_flush_uses_zero_physics_delta(self) -> None:
         lifecycle = self.lifecycle()

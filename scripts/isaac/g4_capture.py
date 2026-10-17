@@ -207,6 +207,15 @@ def _raw_label_map(payload: object, label: str) -> dict[str, Any]:
     return converted
 
 
+def _raw_annotator_info(payload: object, label: str) -> dict[str, Any]:
+    if not isinstance(payload, Mapping) or not isinstance(payload.get("info"), Mapping):
+        raise CaptureError(f"{label} payload has no info object")
+    converted = _jsonable(payload["info"], path=f"{label}.info")
+    if not isinstance(converted, dict):
+        raise CaptureError(f"{label} info is not a JSON object")
+    return converted
+
+
 def _map_lookup(mapping: Mapping[str, Any], numeric_id: int) -> object:
     return mapping.get(str(numeric_id))
 
@@ -246,6 +255,17 @@ def _label_path(value: object) -> str | None:
             return candidate
     if isinstance(value, str) and value.startswith("/World/"):
         return value
+    return None
+
+
+def _reserved_label_identity(value: object) -> str | None:
+    document = _label_document(value)
+    for key in ("class", "semanticClass", "label"):
+        candidate = document.get(key)
+        if isinstance(candidate, str):
+            identity = candidate.strip().upper()
+            if identity in {"BACKGROUND", "UNLABELLED"}:
+                return identity
     return None
 
 
@@ -313,8 +333,6 @@ def _mask_bounds(mask: Any, np: Any) -> dict[int, list[int]]:
         raise CaptureError("instance segmentation array is not HxW")
     for raw_id in np.unique(array):
         instance_id = int(raw_id)
-        if instance_id == 0:
-            continue
         ys, xs = np.where(array == raw_id)
         if len(xs) == 0:
             continue
@@ -334,6 +352,8 @@ def _normalize_annotations(
     instance_payload: Mapping[str, Any],
     bbox_raw: Mapping[str, Any],
     bbox_sha256: str,
+    semantic_info_sha256: str,
+    instance_info_sha256: str,
     stage: Any,
     asset_source_by_root: Mapping[str, str],
     np: Any,
@@ -352,10 +372,15 @@ def _normalize_annotations(
     instance_paths: dict[str, str] = {}
     instance_asset_shas: dict[str, str] = {}
     labelled_roots: dict[int, tuple[str, str]] = {}
+    reserved_instance_ids: dict[str, str] = {}
     for instance_id in bounds:
         raw_value = _map_lookup(instance_raw, instance_id)
         raw_path = _label_path(raw_value)
         if raw_path is None:
+            reserved_identity = _reserved_label_identity(raw_value)
+            if reserved_identity is not None:
+                reserved_instance_ids[str(instance_id)] = reserved_identity
+                continue
             raise CaptureError(f"instance ID {instance_id} has no original prim path")
         root_path, class_name = _canonical_class(stage, raw_path)
         labelled_roots[instance_id] = (root_path, class_name)
@@ -401,9 +426,11 @@ def _normalize_annotations(
         bbox = bounds[instance_id]
         if "occlusionRatio" not in row:
             raise CaptureError(f"bbox row {raw_index} does not preserve occlusionRatio")
-        occlusion = float(row["occlusionRatio"])
-        if not math.isfinite(occlusion) or not 0.0 <= occlusion <= 1.0:
+        raw_occlusion = float(row["occlusionRatio"])
+        if not math.isfinite(raw_occlusion) or (raw_occlusion != -1.0 and not 0.0 <= raw_occlusion <= 1.0):
             raise CaptureError(f"bbox row {raw_index} has invalid occlusionRatio")
+        occlusion = None if raw_occlusion == -1.0 else raw_occlusion
+        occlusion_status = "unavailable_raw_sentinel" if occlusion is None else "measured_raw"
         height, width = instance_array.shape
         edge = bbox[0] == 0 or bbox[1] == 0 or bbox[2] == width - 1 or bbox[3] == height - 1
         asset_sha = instance_asset_shas[str(instance_id)]
@@ -419,10 +446,13 @@ def _normalize_annotations(
                 "bbox_xyxy": bbox,
                 "raw_bbox_index": raw_index,
                 "occlusion_ratio": occlusion,
+                "occlusion_status": occlusion_status,
+                "occlusion_raw_value": raw_occlusion,
                 "edge_truncated": edge,
             }
         )
-    if used_ids != set(bounds):
+    expected_ids = set(bounds) - {int(value) for value in reserved_instance_ids}
+    if used_ids != expected_ids:
         raise CaptureError("instance mask IDs and bbox rows are not a one-to-one join")
     return {
         "scene_id": scene_id,
@@ -439,6 +469,11 @@ def _normalize_annotations(
             "instance_id_to_prim_paths": instance_paths,
             "instance_id_to_labelled_roots": {str(key): value[0] for key, value in labelled_roots.items()},
             "instance_id_to_asset_source_sha256": instance_asset_shas,
+            "reserved_instance_ids": reserved_instance_ids,
+            "source_artifacts": {
+                "semantic": {"filename": "semantic.raw-info.json", "sha256": semantic_info_sha256},
+                "instance": {"filename": "instance.raw-info.json", "sha256": instance_info_sha256},
+            },
         },
         "instances": sorted(instances, key=lambda item: int(item["instance_id"])),
     }
@@ -521,6 +556,7 @@ def _camera_document(
     sim_time_ns: int,
     resolution: tuple[int, int],
     raw_params: object,
+    raw_params_sha256: str,
 ) -> dict[str, Any]:
     prim = stage.GetPrimAtPath(camera_path)
     if not prim.IsValid():
@@ -550,6 +586,10 @@ def _camera_document(
         "world_to_camera": _matrix_values(inverse),
         "projection": _matrix_values(projection),
         "raw_camera_params": _jsonable(raw_params, path="camera_params"),
+        "raw_camera_params_artifact": {
+            "filename": "camera.raw-params.json",
+            "sha256": raw_params_sha256,
+        },
         "matrix_convention": "USD row-vector world transform; projection from GfCamera frustum",
     }
     _jsonable(document, path="camera_document")
@@ -962,11 +1002,16 @@ def _safety_barrier_plan(layout: Any) -> dict[str, Any]:
     if xmax - xmin < 1.0 or ymax - ymin < 0.4 or float(height) < 1.1:
         raise CaptureError("SERVICE_CABINET closure is too small for the safety barrier")
     x0, x1 = xmin + 0.18, xmax - 0.18
-    y0, y1 = ymin + 0.08, ymin + 0.20
+    # The cabinet facade starts 10 mm behind the envelope front and its body
+    # starts 50 mm behind it.  Keep the guard's front face 5 mm from the
+    # envelope front so the orange structure remains visible without changing
+    # the existing physical closure or entering the aisle.
+    y0, y1 = ymin + 0.005, ymin + 0.04
     top = min(float(height) - 0.08, 1.1)
     components = [
         {"name": "LeftPost", "bounds_xyz_m": [x0, y0, 0.0, x0 + 0.10, y1, top]},
         {"name": "RightPost", "bounds_xyz_m": [x1 - 0.10, y0, 0.0, x1, y1, top]},
+        {"name": "MidGuardRail", "bounds_xyz_m": [x0, y0, 0.48, x1, y1, 0.60]},
         {"name": "GuardRail", "bounds_xyz_m": [x0, y0, top - 0.14, x1, y1, top]},
     ]
     envelope = [xmin, ymin, 0.0, xmax, ymax, float(height)]
@@ -984,8 +1029,14 @@ def _safety_barrier_plan(layout: Any) -> dict[str, Any]:
         "hash_basis": "utf8-source-descriptor",
         "source_obstacle_id": "SERVICE_CABINET",
         "source_envelope_xyz_m": envelope,
+        "facade_clearance": {
+            "guard_front_offset_m": y0 - ymin,
+            "guard_back_offset_m": y1 - ymin,
+            "cabinet_door_front_offset_m": 0.01,
+            "cabinet_body_front_offset_m": 0.05,
+        },
         "components": components,
-        "role": "visual safety barrier contained by an existing physical obstacle closure",
+        "role": "visible front-mounted cabinet protection guard contained by an existing physical obstacle closure",
     }
 
 
@@ -1116,10 +1167,24 @@ def _capture_variant(
             capture_id = f"{scene_id}--f{frame:09d}--t{sim_ns:015d}"
             capture_root = output / "scenes" / scene_id / "captures" / f"f{frame:09d}-t{sim_ns:015d}"
             camera_paths: dict[str, dict[str, str]] = {}
+            camera_payloads: dict[str, dict[str, Any]] = {}
+            raw_metadata_paths: dict[str, tuple[Path, Path, Path]] = {}
             for camera_id in CAMERA_IDS:
                 camera_root = capture_root / camera_id
                 camera_root.mkdir(parents=True)
                 data = {name: annotators[camera_id][name].get_data() for name in ANNOTATORS}
+                semantic_info_path = camera_root / "semantic.raw-info.json"
+                instance_info_path = camera_root / "instance.raw-info.json"
+                camera_raw_path = camera_root / "camera.raw-params.json"
+                _atomic_json(semantic_info_path, _raw_annotator_info(data["semantic_segmentation"], "semantic"))
+                _atomic_json(instance_info_path, _raw_annotator_info(data["instance_segmentation"], "instance"))
+                _atomic_json(camera_raw_path, data["camera_params"])
+                camera_payloads[camera_id] = data
+                raw_metadata_paths[camera_id] = (semantic_info_path, instance_info_path, camera_raw_path)
+            for camera_id in CAMERA_IDS:
+                camera_root = capture_root / camera_id
+                data = camera_payloads[camera_id]
+                semantic_info_path, instance_info_path, camera_raw_path = raw_metadata_paths[camera_id]
                 rgb = np.asarray(data["rgb"])
                 if rgb.shape[:2] != (resolution[1], resolution[0]):
                     raise CaptureError(f"{camera_id} RGB shape does not match requested resolution")
@@ -1154,6 +1219,8 @@ def _capture_variant(
                     instance_payload=instance_payload,
                     bbox_raw=bbox_raw,
                     bbox_sha256=_sha256(bbox_path),
+                    semantic_info_sha256=_sha256(semantic_info_path),
+                    instance_info_sha256=_sha256(instance_info_path),
                     stage=stage,
                     asset_source_by_root=asset_source_by_root,
                     np=np,
@@ -1175,6 +1242,7 @@ def _capture_variant(
                         sim_time_ns=sim_ns,
                         resolution=resolution,
                         raw_params=data["camera_params"],
+                        raw_params_sha256=_sha256(camera_raw_path),
                     ),
                 )
                 paths = {

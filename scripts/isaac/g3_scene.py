@@ -32,6 +32,7 @@ class BarrierLifecycle:
         self.control_sequences: dict[str, int | None] = {}
         self.session_root = session_root
         self.visuals: FactoryVisualRuntime | None = None
+        self.last_captured_visual_sequence: int | None = None
 
     def setup(self, stage: Any, UsdGeom: Any, UsdPhysics: Any, Gf: Any, output: Path) -> dict[str, Any]:
         self.output = output
@@ -63,14 +64,16 @@ class BarrierLifecycle:
     def configure_cameras(self, stage: Any, capture: Any, second: Any, UsdGeom: Any, Gf: Any) -> dict[str, Any]:
         profile_path = Path(__file__).resolve().parents[2] / "configs/factory-v3/render-profile.json"
         profile = json.loads(profile_path.read_text(encoding="utf-8"))
-        overview = next(row for row in profile["cameras"] if row["id"] == "portfolio_overview")
+        cameras_by_id = {row["id"]: row for row in profile["cameras"]}
         specifications = [
-            ("/World/FactoryOverviewCamera", overview["eye_xyz_m"], overview["target_xyz_m"], overview["focal_length_mm"]),
-            (capture.medium_camera.path, [-2.6, -2.2, 3.6], [0.4, 0.0, 0.4], 22.0),
-            (second.path, [-2.6, 2.2, 3.6], [0.4, 0.0, 0.4], 22.0),
+            ("portfolio_overview", "/World/FactoryOverviewCamera"),
+            ("carter1_follow", capture.medium_camera.path),
+            ("carter2_follow", second.path),
         ]
         records = []
-        for path, eye, target, focal_length in specifications:
+        for camera_id, path in specifications:
+            specification = cameras_by_id[camera_id]
+            eye, target, focal_length = (specification["eye_xyz_m"], specification["target_xyz_m"], specification["focal_length_mm"])
             camera = UsdGeom.Camera(stage.GetPrimAtPath(path))
             if not camera or not camera.GetPrim().IsValid():
                 raise ValueError("industrial camera prim is missing")
@@ -80,8 +83,18 @@ class BarrierLifecycle:
                 raise ValueError("industrial camera transform stack differs")
             operations[0].Set(transform)
             camera.GetFocalLengthAttr().Set(float(focal_length))
-            records.append({"prim_path": path, "eye_xyz_m": eye, "target_xyz_m": target,
+            actual_transform = operations[0].Get()
+            if any(abs(float(actual_transform[row][column]) - float(transform[row][column])) > 1e-9
+                   for row in range(4) for column in range(4)):
+                raise ValueError("industrial camera transform readback differs")
+            if not math.isclose(float(camera.GetFocalLengthAttr().Get()), float(focal_length), abs_tol=1e-6):
+                raise ValueError("industrial camera focal length readback differs")
+            records.append({"profile_camera_id": camera_id, "prim_path": path, "eye_xyz_m": eye, "target_xyz_m": target,
                             "focal_length_mm": float(camera.GetFocalLengthAttr().Get()),
+                            "local_transform_row_major": [float(actual_transform[row][column]) for row in range(4) for column in range(4)],
+                            "horizontal_aperture_mm": float(camera.GetHorizontalApertureAttr().Get()),
+                            "vertical_aperture_mm": float(camera.GetVerticalApertureAttr().Get()),
+                            "readback_status": "verified",
                             "coordinate_frame": "world" if path.startswith("/World/Factory") else "robot chassis_link"})
         return {"source": str(profile_path.name), "source_sha256": g2_scene.base._sha256(profile_path), "cameras": records}
 
@@ -90,7 +103,13 @@ class BarrierLifecycle:
 
     def capture_metadata(self) -> dict[str, Any]:
         assert self.visuals is not None
-        return self.visuals.capture_metadata()
+        metadata = self.visuals.capture_metadata()
+        self.last_captured_visual_sequence = self.visuals.applied_sequence
+        return metadata
+
+    def capture_due(self) -> bool:
+        assert self.visuals is not None
+        return self.visuals.applied_sequence != self.last_captured_visual_sequence
 
     def step(self, sim_time_s: float, physics_frame: int) -> None:
         assert self.output is not None

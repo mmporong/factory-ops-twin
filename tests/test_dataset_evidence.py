@@ -224,6 +224,98 @@ class DatasetEvidenceTests(unittest.TestCase):
 
         self.assertTrue(any("background depth pixel" in error for error in report["errors"]))
 
+    def test_unlabelled_geometry_allows_finite_depth_with_explicit_raw_identity(self) -> None:
+        normalized_path = next(self.root.rglob("normalized.json"))
+        camera_dir = normalized_path.parent
+        semantic_path = camera_dir / "semantic.npy"
+        instance_path = camera_dir / "instance.npy"
+        depth_path = camera_dir / "depth.npy"
+        semantic_path.write_bytes(_npy("<u4", [11, 0, 0, 0] + [2] * 4 + [9] * 2 + [10] * 2))
+        instance_path.write_bytes(_npy("<u4", [1, 0, 0, 0] + [21] * 4 + [27] * 2 + [35] * 2))
+        depth_path.write_bytes(_npy("<f4", [1.5] + [float("inf")] * 3 + [2.0] * 8))
+        semantic_info_path = camera_dir / "semantic.raw-info.json"
+        semantic_info = json.loads(semantic_info_path.read_text(encoding="utf-8"))
+        semantic_info["idToLabels"]["11"] = {"class": "UNLABELLED"}
+        semantic_info_path.write_text(json.dumps(semantic_info), encoding="utf-8")
+        instance_info_path = camera_dir / "instance.raw-info.json"
+        instance_info = json.loads(instance_info_path.read_text(encoding="utf-8"))
+        instance_info["idToLabels"]["1"] = "UNLABELLED"
+        instance_info_path.write_text(json.dumps(instance_info), encoding="utf-8")
+        normalized = json.loads(normalized_path.read_text(encoding="utf-8"))
+        normalized["raw_info"]["semantic_id_to_labels_raw"] = semantic_info["idToLabels"]
+        normalized["raw_info"]["semantic_id_to_labels"]["11"] = {"class": "UNLABELLED"}
+        normalized["raw_info"]["instance_id_to_labels_raw"] = instance_info["idToLabels"]
+        normalized["raw_info"]["reserved_instance_ids"]["1"] = "UNLABELLED"
+        normalized["raw_info"]["source_artifacts"]["semantic"]["sha256"] = hashlib.sha256(semantic_info_path.read_bytes()).hexdigest()
+        normalized["raw_info"]["source_artifacts"]["instance"]["sha256"] = hashlib.sha256(instance_info_path.read_bytes()).hexdigest()
+        normalized_path.write_text(json.dumps(normalized), encoding="utf-8")
+        self._refresh_manifest()
+
+        report = validate_dataset(self.root, self.profile_path)
+
+        self.assertTrue(report["passed"], report["errors"])
+
+    def test_foreground_instance_cannot_be_hidden_as_reserved(self) -> None:
+        normalized_path = next(self.root.rglob("normalized.json"))
+        instance_info_path = normalized_path.with_name("instance.raw-info.json")
+        instance_info = json.loads(instance_info_path.read_text(encoding="utf-8"))
+        instance_info["idToLabels"]["27"] = "UNLABELLED"
+        instance_info_path.write_text(json.dumps(instance_info), encoding="utf-8")
+        normalized = json.loads(normalized_path.read_text(encoding="utf-8"))
+        normalized["raw_info"]["instance_id_to_labels_raw"] = instance_info["idToLabels"]
+        normalized["raw_info"]["reserved_instance_ids"]["27"] = "UNLABELLED"
+        normalized["raw_info"]["source_artifacts"]["instance"]["sha256"] = hashlib.sha256(instance_info_path.read_bytes()).hexdigest()
+        normalized_path.write_text(json.dumps(normalized), encoding="utf-8")
+        self._refresh_manifest()
+
+        report = validate_dataset(self.root, self.profile_path)
+
+        self.assertTrue(any("improperly hidden as reserved" in error for error in report["errors"]))
+
+    def test_raw_annotator_info_and_camera_params_must_match_preserved_files(self) -> None:
+        normalized_path = next(self.root.rglob("normalized.json"))
+        semantic_info_path = normalized_path.with_name("semantic.raw-info.json")
+        semantic_info = json.loads(semantic_info_path.read_text(encoding="utf-8"))
+        semantic_info["idToLabels"]["9"] = {"class": "amr"}
+        semantic_info_path.write_text(json.dumps(semantic_info), encoding="utf-8")
+        normalized = json.loads(normalized_path.read_text(encoding="utf-8"))
+        normalized["raw_info"]["source_artifacts"]["semantic"]["sha256"] = hashlib.sha256(semantic_info_path.read_bytes()).hexdigest()
+        normalized_path.write_text(json.dumps(normalized), encoding="utf-8")
+        self._refresh_manifest()
+        report = validate_dataset(self.root, self.profile_path)
+        self.assertTrue(any("differ from the preserved annotator info" in error for error in report["errors"]))
+
+    def test_camera_raw_params_must_match_preserved_file(self) -> None:
+        camera_path = next(self.root.rglob("camera_params.json"))
+        camera = json.loads(camera_path.read_text(encoding="utf-8"))
+        camera["raw_camera_params"]["cameraAperture"] = [99.0, 99.0]
+        camera_path.write_text(json.dumps(camera), encoding="utf-8")
+        self._refresh_manifest()
+        report = validate_dataset(self.root, self.profile_path)
+        self.assertTrue(any("raw params differ" in error for error in report["errors"]))
+
+    def test_unavailable_occlusion_sentinel_is_preserved_but_not_measured(self) -> None:
+        self._set_occlusion_sentinel(next(self.root.rglob("normalized.json")))
+        self._refresh_manifest()
+
+        report = validate_dataset(self.root, self.profile_path)
+
+        self.assertTrue(report["passed"], report["errors"])
+        self.assertEqual(report["stats"]["occlusion_unknown_instances"], 3)
+        self.assertEqual(report["stats"]["occlusion_measured_instances"], 6)
+        self.assertEqual(sum(report["stats"]["occlusion_distribution"].values()), 6)
+
+    def test_production_gate_rejects_unavailable_occlusion(self) -> None:
+        self._set_occlusion_sentinel(next(self.root.rglob("normalized.json")))
+        self._refresh_manifest()
+
+        with patch("factory_ops.dataset_evidence._is_production_profile", return_value=True):
+            report = validate_dataset(self.root, self.profile_path)
+
+        self.assertEqual(report["validation_gate"], "production")
+        self.assertFalse(report["production_passed"])
+        self.assertTrue(any("unavailable occlusion in a production dataset" in error for error in report["errors"]))
+
     def test_camera_matrix_tamper_is_rejected(self) -> None:
         path = next(self.root.rglob("camera_params.json"))
         document = json.loads(path.read_text(encoding="utf-8"))
@@ -537,10 +629,35 @@ class DatasetEvidenceTests(unittest.TestCase):
             raw_path = f"{relative_dir}/bbox2d.raw.json"
             camera_path = f"{relative_dir}/camera_params.json"
             normalized_path = f"{relative_dir}/normalized.json"
+            semantic_info_path = f"{relative_dir}/semantic.raw-info.json"
+            instance_info_path = f"{relative_dir}/instance.raw-info.json"
+            camera_raw_path = f"{relative_dir}/camera.raw-params.json"
             (self.root / rgb_path).write_bytes(_png())
             (self.root / depth_path).write_bytes(_npy("<f4", [float("inf")] * 4 + [2.0 + scene_index] * 8))
             (self.root / semantic_path).write_bytes(_npy("<u4", [0] * 4 + [2] * 4 + [9] * 2 + [10] * 2))
             (self.root / instance_path).write_bytes(_npy("<u4", [0] * 4 + [21] * 4 + [27] * 2 + [35] * 2))
+            semantic_raw_info = {
+                "idToLabels": {
+                    "0": {"class": "BACKGROUND"},
+                    "2": {"class": "floor"},
+                    "9": {"class": "rack"},
+                    "10": {"class": "amr"},
+                },
+                "annotator": "semantic_segmentation",
+            }
+            instance_raw_info = {
+                "idToLabels": {
+                    "0": "BACKGROUND",
+                    "21": "/World/FloorVisual/Mesh",
+                    "27": "/World/Visuals/Rack/Mesh",
+                    "35": "/World/Carter1/chassis_link",
+                },
+                "annotator": "instance_segmentation",
+            }
+            raw_camera_params = {"cameraAperture": [20.0, 15.0], "renderProductResolution": [WIDTH, HEIGHT]}
+            (self.root / semantic_info_path).write_text(json.dumps(semantic_raw_info), encoding="utf-8")
+            (self.root / instance_info_path).write_text(json.dumps(instance_raw_info), encoding="utf-8")
+            (self.root / camera_raw_path).write_text(json.dumps(raw_camera_params), encoding="utf-8")
             raw = {
                 "data": [
                     {"semanticId": 6, "x_min": 0, "y_min": 1, "x_max": 3, "y_max": 1, "occlusionRatio": 0.0},
@@ -573,6 +690,8 @@ class DatasetEvidenceTests(unittest.TestCase):
                         "bbox_xyxy": bbox,
                         "raw_bbox_index": raw_index,
                         "occlusion_ratio": occ,
+                        "occlusion_status": "measured_raw",
+                        "occlusion_raw_value": occ,
                         "edge_truncated": True,
                     }
                 )
@@ -584,16 +703,29 @@ class DatasetEvidenceTests(unittest.TestCase):
                 "sim_time_ns": sim_time_ns,
                 "raw_annotations_sha256": raw_sha,
                 "raw_info": {
+                    "semantic_id_to_labels_raw": semantic_raw_info["idToLabels"],
                     "semantic_id_to_labels": {
                         "0": {"class": "BACKGROUND"},
                         "2": {"class": "floor"},
                         "9": {"class": "rack"},
                         "10": {"class": "amr"},
                     },
+                    "instance_id_to_labels_raw": instance_raw_info["idToLabels"],
                     "instance_id_to_labels": {"21": {"class": "floor"}, "27": {"class": "rack"}, "35": {"class": "amr"}},
                     "instance_id_to_prim_paths": {"21": "/World/FloorVisual/Mesh", "27": "/World/Visuals/Rack/Mesh", "35": "/World/Carter1/chassis_link"},
                     "instance_id_to_labelled_roots": {"21": "/World/FloorVisual", "27": "/World/Visuals/Rack", "35": "/World/Carter1"},
                     "instance_id_to_asset_source_sha256": {"21": render_sha, "27": asset_manifest_sha, "35": ROBOT_SHA},
+                    "reserved_instance_ids": {"0": "BACKGROUND"},
+                    "source_artifacts": {
+                        "semantic": {
+                            "filename": "semantic.raw-info.json",
+                            "sha256": hashlib.sha256((self.root / semantic_info_path).read_bytes()).hexdigest(),
+                        },
+                        "instance": {
+                            "filename": "instance.raw-info.json",
+                            "sha256": hashlib.sha256((self.root / instance_info_path).read_bytes()).hexdigest(),
+                        },
+                    },
                 },
                 "instances": instances,
             }
@@ -619,6 +751,11 @@ class DatasetEvidenceTests(unittest.TestCase):
                     0.0, 0.0, -(100.0 + 0.1) / (100.0 - 0.1), -1.0,
                     0.0, 0.0, -(2.0 * 100.0 * 0.1) / (100.0 - 0.1), 0.0,
                 ],
+                "raw_camera_params": raw_camera_params,
+                "raw_camera_params_artifact": {
+                    "filename": "camera.raw-params.json",
+                    "sha256": hashlib.sha256((self.root / camera_raw_path).read_bytes()).hexdigest(),
+                },
             }
             (self.root / camera_path).write_text(json.dumps(camera), encoding="utf-8")
             record_path = f"scenes/{scene_id}/captures/f{frame:09d}-t{sim_time_ns:015d}/capture.json"
@@ -756,6 +893,20 @@ class DatasetEvidenceTests(unittest.TestCase):
             if path.is_file() and path.name != "dataset.json"
         ]
         self._write_dataset_index()
+
+    def _set_occlusion_sentinel(self, normalized_path: Path) -> None:
+        raw_path = normalized_path.with_name("bbox2d.raw.json")
+        raw = json.loads(raw_path.read_text(encoding="utf-8"))
+        for row in raw["data"]:
+            row["occlusionRatio"] = -1.0
+        raw_path.write_text(json.dumps(raw), encoding="utf-8")
+        normalized = json.loads(normalized_path.read_text(encoding="utf-8"))
+        normalized["raw_annotations_sha256"] = hashlib.sha256(raw_path.read_bytes()).hexdigest()
+        for item in normalized["instances"]:
+            item["occlusion_ratio"] = None
+            item["occlusion_status"] = "unavailable_raw_sentinel"
+            item["occlusion_raw_value"] = -1.0
+        normalized_path.write_text(json.dumps(normalized), encoding="utf-8")
 
     def _refresh_source_sha(self) -> None:
         path = self.root / self.dataset["source"]["scene_path"]

@@ -930,6 +930,9 @@ def _run(
                 if settle_elapsed > settle_limit:
                     raise base.SmokeError("G2 normal mission stop did not settle within the drive envelope")
             capture_due = step == 1 or step % int(config["camera_capture_every_steps"]) == 0 or settle_remaining == 0
+            extension_capture_due = getattr(scene_extension, "capture_due", None)
+            if callable(extension_capture_due) and extension_capture_due():
+                capture_due = True
             if capture_due:
                 timeline.pause()
                 before_capture_hook = getattr(scene_extension, "before_capture", None)

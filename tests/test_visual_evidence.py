@@ -4,6 +4,7 @@ from copy import deepcopy
 import hashlib
 import json
 from pathlib import Path
+import re
 import tempfile
 import unittest
 from typing import Any, Callable
@@ -11,10 +12,10 @@ from typing import Any, Callable
 from factory_ops.layout import Layout
 from factory_ops.operations.ledger import Ledger
 from factory_ops.usda import export_usda
-from factory_ops.visual_evidence import SOURCE_PINS, validate_visual_evidence
+from factory_ops.visual_evidence import SOURCE_PINS, _look_at_camera_to_world, validate_visual_evidence
 from factory_ops.visual_scene import export_visual_scene
 from factory_ops.visual_state import canonical_sha256, make_visual_state, project_ledger_state
-from scripts.isaac.factory_visuals import build_payload_visibility_plan
+from scripts.isaac.factory_visuals import SIGNAL_PLACEMENTS, SIGNAL_SIZE_M, build_payload_visibility_plan
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -37,6 +38,105 @@ def _jsonl(path: Path, rows: list[dict[str, Any]]) -> None:
     path.write_text("".join(json.dumps(row, sort_keys=True, separators=(",", ":")) + "\n" for row in rows), encoding="utf-8")
 
 
+def _session_usda(
+    visual_path: Path,
+    layout: Layout,
+    visual_manifest: dict[str, Any],
+    plan: list[dict[str, Any]],
+    signals: dict[str, Any],
+) -> str:
+    tree: dict[str, Any] = {}
+
+    def add(path: str, attributes: list[str], *, kind: str = "over", metadata: list[str] | None = None) -> None:
+        node = tree
+        record: dict[str, Any] | None = None
+        for part in path.strip("/").split("/"):
+            current = node.setdefault(part, {"children": {}, "attributes": [], "kind": "over"})
+            assert isinstance(current, dict)
+            record = current
+            node = record["children"]
+        assert record is not None
+        record["attributes"] = attributes
+        record["kind"] = kind
+        record["metadata"] = metadata or []
+
+    for item in layout.data["physical_obstacles"]:
+        add(f'/World/Obstacles/{item["id"]}', ['token visibility = "invisible"'])
+    for item in visual_manifest["instances"]:
+        add(str(item["prim_path"]), [
+            'uniform token semantics:Semantics:semanticType = "class"',
+            f'uniform string semantics:Semantics:semanticData = "{item["semantic_class"]}"',
+        ], metadata=['prepend apiSchemas = ["SemanticsAPI:Semantics"]'])
+    for item in plan:
+        placement = item["placement"]
+        translate = ", ".join(str(value) for value in placement["translate_xyz_m"])
+        scale = ", ".join(str(value) for value in placement["size_xyz_m"])
+        add(str(item["prim_path"]), [
+            'double size = 1',
+            'color3f[] primvars:displayColor = [(0.04, 0.42, 0.78)]',
+            f'custom string stableId = "payload:{item["row"]["payload_id"]}:{item["row"]["location"]}_{int(item["row"]["slot"])}"',
+            'custom string semanticClass = "payload_tote"',
+            f'custom string logicalPayloadId = "{item["row"]["payload_id"]}"',
+            f'custom string stateRole = "{item["row"]["state"]}"',
+            'custom string assetProvenance = "factory-ops-twin procedural payload tote CC0-1.0"',
+            'token visibility = "inherited"',
+            'uniform token semantics:Semantics:semanticType = "class"',
+            'uniform string semantics:Semantics:semanticData = "payload_tote"',
+            f'double3 xformOp:translate = ({translate})',
+            f'double3 xformOp:scale = ({scale})',
+            'uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]',
+        ], kind="def Cube", metadata=['prepend apiSchemas = ["SemanticsAPI:Semantics"]'])
+    counts = {
+        "CI_0": signals["ci_slots_used"], "CI_1": signals["ci_slots_used"],
+        "CO_0": signals["co_slots_used"], "CO_1": signals["co_slots_used"],
+        "Cell": int(signals["cell_processing"]), "Complete": signals["orders_completed"],
+    }
+    for name, count in counts.items():
+        translate = ", ".join(str(value) for value in SIGNAL_PLACEMENTS[name])
+        add(f"/World/Visuals/OperationalSignals/{name}", [
+            "double size = 1",
+            f"color3f[] primvars:displayColor = [{'(0.02, 0.85, 0.18)' if count > 0 else '(0.22, 0.24, 0.27)'}]",
+            'custom string semanticClass = "process_equipment"',
+            f'custom string stateRole = "{name.lower()}_status"',
+            f"custom int signalCount = {count}",
+            f"double3 xformOp:translate = ({translate})",
+            f"double3 xformOp:scale = ({SIGNAL_SIZE_M}, {SIGNAL_SIZE_M}, {SIGNAL_SIZE_M})",
+            'uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]',
+        ], kind="def Cube")
+    temperature = 5200.0
+    for index, (x, y) in enumerate(((8.0, 5.0), (20.0, 5.0), (32.0, 5.0), (8.0, 19.0), (20.0, 19.0), (32.0, 19.0))):
+        add(f"/World/Visuals/Lights/Panel_{index}", [
+            "float inputs:width = 6",
+            "float inputs:height = 1.2",
+            "float inputs:intensity = 3500",
+            f"float inputs:colorTemperature = {temperature}",
+            "bool inputs:enableColorTemperature = true",
+            f"double3 xformOp:translate = ({x}, {y}, 5.35)",
+            'uniform token[] xformOpOrder = ["xformOp:translate"]',
+        ], kind="def RectLight")
+    add("/World/Visuals/Lights/Ambient", ["float inputs:intensity = 600"], kind="def DomeLight")
+
+    def render(nodes: dict[str, Any], depth: int = 0) -> str:
+        rows: list[str] = []
+        indent = "    " * depth
+        for name, record in nodes.items():
+            metadata = record.get("metadata", [])
+            suffix = f' ( {" ".join(metadata)} )' if metadata else ""
+            rows.append(f'{indent}{record["kind"]} "{name}"{suffix} {{')
+            rows.extend(f'{indent}    {attribute}' for attribute in record["attributes"])
+            if record["children"]:
+                rows.append(render(record["children"], depth + 1))
+            rows.append(f"{indent}}}")
+        return "\n".join(rows)
+
+    return f'''#usda 1.0
+(
+    subLayers = [@{visual_path.as_posix()}@]
+)
+{render(tree)}
+'''
+
+
 class Fixture:
     def __init__(self, root: Path) -> None:
         self.session = root / "session"
@@ -51,7 +151,9 @@ class Fixture:
         exported = export_visual_scene(self.layout, visual_dir, 0)
         self.visual_manifest = json.loads((visual_dir / "visual-scene-manifest.json").read_text(encoding="utf-8"))
         session_layer = visual_dir / "session-layer.usda"
-        session_layer.write_text("#usda 1.0\n", encoding="utf-8")
+        session_layer.write_text(_session_usda(visual_dir / "factory-v3.visual.usda", self.layout, self.visual_manifest, [], {
+            "ci_slots_used": 0, "co_slots_used": 0, "cell_processing": False, "orders_completed": 0,
+        }), encoding="utf-8")
         session_sha = _sha(session_layer)
         immutable_session_layer = visual_dir / "session-layer-snapshots" / f"{session_sha}.usda"
         immutable_session_layer.parent.mkdir()
@@ -68,6 +170,13 @@ class Fixture:
             "collider_count": 20,
             "collider_paths": sorted(collider_paths),
             "collision_enabled_readbacks": {path: True for path in collider_paths},
+            "collider_geometry_readbacks": {
+                path: {
+                    "world_transform_row_major": [1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0],
+                    "world_bounds_xyz_m": [0.0, 0.0, 0.0, 1.0, 1.0, 1.0],
+                }
+                for path in collider_paths
+            },
             "obstacle_count": 19,
             "marker_count": 8,
         }
@@ -100,6 +209,14 @@ class Fixture:
                 "status": "passed",
                 "checked": len(self.visual_manifest["instances"]),
                 "method": "UsdGeom.BBoxCache aligned world bounds",
+                "instances": [{
+                    "stable_id": item["stable_id"],
+                    "prim_path": item["prim_path"],
+                    "actual_bounds_xyz_m": item["bounds_xyz_m"],
+                    "declared_bounds_xyz_m": item["bounds_xyz_m"],
+                    "source_bounds_xy_m": item["source_bounds_xy_m"],
+                    "collision_api_applied": False,
+                } for item in self.visual_manifest["instances"]],
             },
             "semantics": {"api": "pxr.Semantics.SemanticsAPI", "applied_count": semantic_count, "failures": [], "status": "applied"},
             "lights": {
@@ -107,11 +224,20 @@ class Fixture:
                 "created": [f"/World/Visuals/Lights/Panel_{index}" for index in range(6)] + ["/World/Visuals/Lights/Ambient"],
                 "rect_light_count": 6,
                 "dome_light_count": 1,
+                "readbacks": [
+                    *[{
+                        "prim_path": f"/World/Visuals/Lights/Panel_{index}",
+                        "type": "RectLight", "width_m": 6.0, "height_m": 1.2,
+                        "intensity": 3500.0, "color_temperature_k": 5200.0,
+                        "enable_color_temperature": True,
+                    } for index in range(6)],
+                    {"prim_path": "/World/Visuals/Lights/Ambient", "type": "DomeLight", "intensity": 600.0},
+                ],
             },
             "renderer": {
                 "status": "readback_verified",
-                "requested": {"renderer": "RTX Real-Time 2.0", "dlss_mode": "Quality", "dlss_exec_mode": 2},
-                "readback": {"renderer_before": "RayTracedLighting", "renderer_after": "RayTracedLighting", "dlss_before": 1, "dlss_after": 2},
+                "requested": {"renderer": "RTX Real-Time 2.0", "launch_renderer": "RealTimePathTracing", "allowed_readbacks": ["RayTracedLighting", "RealTimePathTracing"], "dlss_mode": "Quality", "dlss_exec_mode": 2},
+                "readback": {"renderer_before": "RealTimePathTracing", "renderer_after": "RealTimePathTracing", "dlss_before": 1, "dlss_after": 2},
                 "renderer_unchanged": True,
             },
             "operational_cargo": {"physical_loading_validated": False, "ground_truth_control_input": False, "tote_size_xyz_m": [.44, .34, .18]},
@@ -138,6 +264,15 @@ class Fixture:
         _save(snapshot_path, {"schema_version": 1, "state_hash": state_hash, "visual_state": state})
         source_snapshot = {"path": snapshot_path.relative_to(self.output).as_posix(), "sha256": _sha(snapshot_path), "bytes": snapshot_path.stat().st_size}
         plan = build_payload_visibility_plan(self.layout, projection, self.runtime["robot_binding"]["robot_chassis_paths"])
+        session_layer.write_text(_session_usda(visual_dir / "factory-v3.visual.usda", self.layout, self.visual_manifest, plan, projection["signals"]), encoding="utf-8")
+        event_session_sha = _sha(session_layer)
+        event_session_path = visual_dir / "session-layer-snapshots" / f"{event_session_sha}.usda"
+        event_session_path.write_bytes(session_layer.read_bytes())
+        event_session_record = {
+            "status": "exported", "path": event_session_path.relative_to(self.output).as_posix(),
+            "sha256": event_session_sha, "bytes": event_session_path.stat().st_size,
+            "latest_path": "visual-scene/session-layer.usda",
+        }
         displayed = [{
             "payload_id": item["row"]["payload_id"], "order_id": item["row"]["order_id"],
             "state": item["row"]["state"], "location": item["row"]["location"], "slot": item["row"]["slot"],
@@ -159,7 +294,7 @@ class Fixture:
             "displayed_payloads": displayed,
             "hidden_payload_prim_paths": [],
             "signals": projection["signals"],
-            "session_layer_snapshot": snapshot_record,
+            "session_layer_snapshot": event_session_record,
             "source_state_snapshot": source_snapshot,
             "physical_loading_validated": False,
             "ground_truth_control_input": False,
@@ -172,10 +307,18 @@ class Fixture:
             "projection_sha256": state["projection_sha256"],
         }
         _jsonl(self.output / "actions.jsonl", [publication])
+        pinned_paths = [
+            "visual-runtime-manifest.json", "visual-events.jsonl", "visual-scene/visual-scene-manifest.json",
+            source_snapshot["path"], event_session_record["path"],
+        ]
+        capture_files = {
+            relative: {"sha256": _sha(self.output / relative), "bytes": (self.output / relative).stat().st_size}
+            for relative in pinned_paths
+        }
         capture = {
             "schema_version": 1, "run_id": RUN_ID, "scenario_id": SCENARIO_ID, "variant_seed": 0,
             "applied_sequence": 0, "applied_state_hash": state_hash, "latest_event": self.event,
-            "applied_snapshot": source_snapshot, "files": {},
+            "applied_snapshot": source_snapshot, "files": capture_files,
             "physical_loading_validated": False, "ground_truth_control_input": False,
         }
         _save(self.output / "media/frames.json", {"schema_version": 1, "frames": [{
@@ -184,8 +327,36 @@ class Fixture:
         }]})
         self.mission = {"mission": {"events": self.ledger_events}}
         setup_claim = {key: deepcopy(value) for key, value in self.runtime.items() if key != "robot_binding"}
+        render_profile = json.loads(SOURCE_PINS["render_profile"].read_text(encoding="utf-8"))
+        cameras = {row["id"]: row for row in render_profile["cameras"]}
+        camera_paths = {
+            "portfolio_overview": "/World/FactoryOverviewCamera",
+            "carter1_follow": "/World/Carter1/chassis_link/G2EvidenceCamera",
+            "carter2_follow": "/World/Carter2/chassis_link/G2EvidenceCamera",
+        }
+        camera_records = [{
+            "profile_camera_id": camera_id,
+            "prim_path": camera_paths[camera_id],
+            "eye_xyz_m": cameras[camera_id]["eye_xyz_m"],
+            "target_xyz_m": cameras[camera_id]["target_xyz_m"],
+            "focal_length_mm": float(cameras[camera_id]["focal_length_mm"]),
+            "local_transform_row_major": _look_at_camera_to_world(cameras[camera_id]["eye_xyz_m"], cameras[camera_id]["target_xyz_m"]),
+            "horizontal_aperture_mm": 20.955,
+            "vertical_aperture_mm": 15.2908,
+            "readback_status": "verified",
+            "coordinate_frame": "world" if camera_id == "portfolio_overview" else "robot chassis_link",
+        } for camera_id in ("portfolio_overview", "carter1_follow", "carter2_follow")]
         self.scene = {
-            "scene_extension": {"industrial_visuals": setup_claim},
+            "scene_extension": {
+                "industrial_visuals": setup_claim,
+                "robot_visuals": deepcopy(self.runtime["robot_binding"]),
+                "camera_overrides": {"source": "render-profile.json", "source_sha256": _sha(SOURCE_PINS["render_profile"]), "cameras": camera_records},
+            },
+            "robots": {
+                "carter1": {"prim_path": "/World/Carter1"},
+                "carter2": {"prim_path": "/World/Carter2"},
+            },
+            "timing": {"final_physics_frame": 180, "final_sim_time_s": 3.0},
             "inputs": {key: {"path": str(path), "sha256": _sha(path)} for key, path in SOURCE_PINS.items()},
         }
 
@@ -211,6 +382,30 @@ class VisualEvidenceTests(unittest.TestCase):
         self.assertEqual(report["capture_frames"], 1)
 
     def test_adversarial_mutations_are_rejected(self) -> None:
+        def rewrite_session(fixture: Fixture, transform: Callable[[str], str]) -> None:
+            record = fixture.event["session_layer_snapshot"]
+            old_path = fixture.output / record["path"]
+            content = transform(old_path.read_text(encoding="utf-8"))
+            digest = hashlib.sha256(content.encode()).hexdigest()
+            path = old_path.parent / f"{digest}.usda"
+            path.write_bytes(content.encode())
+            record.update({"path": path.relative_to(fixture.output).as_posix(), "sha256": digest, "bytes": path.stat().st_size})
+            fixture.persist_event()
+
+        def repin_consistent_claims(fixture: Fixture) -> None:
+            fixture.persist_runtime()
+            fixture.scene["scene_extension"]["industrial_visuals"] = {
+                key: deepcopy(value) for key, value in fixture.runtime.items() if key != "robot_binding"
+            }
+            fixture.persist_event()
+            frames_path = fixture.output / "media/frames.json"
+            frames = json.loads(frames_path.read_text(encoding="utf-8"))
+            files = frames["frames"][0]["visual_state"]["files"]
+            for relative, record in files.items():
+                artifact = fixture.output / relative
+                record.update({"sha256": _sha(artifact), "bytes": artifact.stat().st_size})
+            _save(frames_path, frames)
+
         def collider(fixture: Fixture) -> None:
             fixture.runtime["stage_contract_after"]["collision_enabled_readbacks"]["/World/Floor"] = False
             fixture.persist_runtime()
@@ -248,30 +443,221 @@ class VisualEvidenceTests(unittest.TestCase):
             path = fixture.output / "visual-scene/factory-v3.visual.usda"
             path.write_text(path.read_text(encoding="utf-8") + "# mutation\n", encoding="utf-8")
 
-        def session_layer(fixture: Fixture) -> None:
-            record = fixture.event["session_layer_snapshot"]
-            path = fixture.output / record["path"]
-            path.write_text(path.read_text(encoding="utf-8") + "# mutation\n", encoding="utf-8")
+        def bbox(fixture: Fixture) -> None:
+            fixture.runtime["visual_bounds"]["instances"][0]["actual_bounds_xyz_m"][3] += 1.0
+            fixture.persist_runtime()
 
-        mutations: dict[str, Callable[[Fixture], None]] = {
-            "collider drift": collider,
-            "ledger prefix mutation": ledger,
-            "future capture frame": future_frame,
-            "wrong payload parent": wrong_parent,
-            "missing visual event": missing_event,
-            "duplicate visible payload": duplicate_visible,
-            "state snapshot mutation": state_hash,
-            "visual layer mutation": visual_layer,
-            "session layer mutation": session_layer,
+        def session_layer(fixture: Fixture) -> None:
+            rewrite_session(fixture, lambda content: content + '\ndef PhysicsScene "Injected" {}\n')
+
+        def wrong_usd_parent(fixture: Fixture) -> None:
+            rewrite_session(fixture, lambda content: content.replace('over "CargoSlots"', 'over "WrongParent"', 1))
+
+        def huge_translate(fixture: Fixture) -> None:
+            rewrite_session(fixture, lambda content: re.sub(
+                r'xformOp:translate = \([^)]*\)', 'xformOp:translate = (1000000, 1000000, 1000000)', content, count=1,
+            ))
+
+        def huge_scale(fixture: Fixture) -> None:
+            rewrite_session(fixture, lambda content: re.sub(
+                r'xformOp:scale = \([^)]*\)', 'xformOp:scale = (1000000, 1000000, 1000000)', content, count=1,
+            ))
+
+        def unknown_xform(fixture: Fixture) -> None:
+            rewrite_session(fixture, lambda content: content.replace(
+                'uniform token[] xformOpOrder', 'double3 xformOp:rotateXYZ = (1, 2, 3)\n            uniform token[] xformOpOrder', 1,
+            ))
+
+        def duplicate_visibility(fixture: Fixture) -> None:
+            rewrite_session(fixture, lambda content: content.replace(
+                'token visibility = "inherited"', 'token visibility = "inherited"\n            token visibility = "invisible"', 1,
+            ))
+
+        def signal_position(fixture: Fixture) -> None:
+            original = ", ".join(str(value) for value in SIGNAL_PLACEMENTS["CI_0"])
+            rewrite_session(fixture, lambda content: content.replace(
+                f'xformOp:translate = ({original})', 'xformOp:translate = (1000000, 1000000, 1000000)', 1,
+            ))
+
+        def fake_visibility_comment(fixture: Fixture) -> None:
+            rewrite_session(fixture, lambda content: content.replace(
+                'token visibility = "inherited"', '# token visibility = "inherited"', 1,
+            ))
+
+        def fake_signal_string(fixture: Fixture) -> None:
+            rewrite_session(fixture, lambda content: content.replace(
+                'custom int signalCount = 0', 'custom string decoy = "signalCount = 0"', 1,
+            ))
+
+        def fake_sublayer_comment(fixture: Fixture) -> None:
+            rewrite_session(fixture, lambda content: content.replace(
+                'subLayers =', 'notSubLayers =', 1,
+            ) + '\n# subLayers = [@fake@]\n')
+
+        def world_move(fixture: Fixture) -> None:
+            rewrite_session(fixture, lambda content: content.replace(
+                'over "World" {', 'over "World" {\n    double3 xformOp:translate = (100, 0, 0)', 1,
+            ))
+
+        def hidden_parent(fixture: Fixture) -> None:
+            rewrite_session(fixture, lambda content: content.replace(
+                'over "CargoSlots" {', 'over "CargoSlots" {\n            token visibility = "invisible"', 1,
+            ))
+
+        def hidden_signal(fixture: Fixture) -> None:
+            rewrite_session(fixture, lambda content: content.replace(
+                'def Cube "CI_0" {', 'def Cube "CI_0" {\n                token visibility = "invisible"', 1,
+            ))
+
+        def wrong_signal_color(fixture: Fixture) -> None:
+            rewrite_session(fixture, lambda content: content.replace(
+                'color3f[] primvars:displayColor = [(0.22, 0.24, 0.27)]',
+                'color3f[] primvars:displayColor = [(1.0, 0.0, 1.0)]', 1,
+            ))
+
+        def collider_geometry(fixture: Fixture) -> None:
+            fixture.runtime["stage_contract_after"]["collider_geometry_readbacks"]["/World/Floor"]["world_transform_row_major"][12] = 100.0
+            fixture.persist_runtime()
+
+        def alternate_visual_layer(fixture: Fixture) -> None:
+            visual_dir = fixture.output / "visual-scene"
+            canonical = visual_dir / "factory-v3.visual.usda"
+            alternate = visual_dir / "alternate-visual.usda"
+            alternate.write_text(re.sub(
+                r'xformOp:translate = \([^)]*\)',
+                'xformOp:translate = (999, 999, 999)',
+                canonical.read_text(encoding="utf-8"),
+                count=1,
+            ), encoding="utf-8")
+            manifest_path = visual_dir / "visual-scene-manifest.json"
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            del manifest["outputs"]["factory-v3.visual.usda"]
+            manifest["outputs"][alternate.name] = _sha(alternate)
+            _save(manifest_path, manifest)
+            fixture.runtime["visual_export"]["outputs"] = deepcopy(manifest["outputs"])
+            fixture.runtime["visual_export"]["manifest_sha256"] = _sha(manifest_path)
+            fixture.runtime["session_layer"]["visual_sublayer"] = str(alternate.resolve())
+            rewrite_session(fixture, lambda content: content.replace(str(canonical.resolve()).replace("\\", "/"), str(alternate.resolve()).replace("\\", "/")))
+            repin_consistent_claims(fixture)
+
+        def forged_canonical_visual_layer(fixture: Fixture) -> None:
+            visual_dir = fixture.output / "visual-scene"
+            canonical = visual_dir / "factory-v3.visual.usda"
+            canonical.write_text(re.sub(
+                r'xformOp:translate = \([^)]*\)',
+                'xformOp:translate = (999, 999, 999)',
+                canonical.read_text(encoding="utf-8"),
+                count=1,
+            ), encoding="utf-8")
+            manifest_path = visual_dir / "visual-scene-manifest.json"
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            manifest["outputs"][canonical.name] = _sha(canonical)
+            _save(manifest_path, manifest)
+            fixture.runtime["visual_export"]["outputs"] = deepcopy(manifest["outputs"])
+            fixture.runtime["visual_export"]["manifest_sha256"] = _sha(manifest_path)
+            repin_consistent_claims(fixture)
+
+        def forged_static_semantic(fixture: Fixture) -> None:
+            rewrite_session(fixture, lambda content: re.sub(
+                r'(semantics:Semantics:semanticData\s*=\s*)"[^"]+"',
+                r'\1"forged_class"',
+                content,
+                count=1,
+            ))
+
+        def future_event(fixture: Fixture) -> None:
+            fixture.event.update({"applied_physics_frame": 999999, "applied_sim_time_s": 999.0, "applied_sim_time_ns": 999_000_000_000})
+            fixture.persist_event()
+
+        def no_applied_capture(fixture: Fixture) -> None:
+            frames = json.loads((fixture.output / "media/frames.json").read_text(encoding="utf-8"))
+            metadata = frames["frames"][0]["visual_state"]
+            for key in ("applied_sequence", "applied_state_hash", "latest_event", "applied_snapshot"):
+                metadata[key] = None
+            _save(fixture.output / "media/frames.json", frames)
+
+        def robot_binding(fixture: Fixture) -> None:
+            fixture.runtime["robot_binding"]["robot_chassis_paths"] = {
+                "carter1": "/World/Fake1/chassis_link", "carter2": "/World/Fake2/chassis_link",
+            }
+            fixture.scene["scene_extension"]["robot_visuals"] = deepcopy(fixture.runtime["robot_binding"])
+            fixture.persist_runtime()
+
+        def empty_files(fixture: Fixture) -> None:
+            frames = json.loads((fixture.output / "media/frames.json").read_text(encoding="utf-8"))
+            frames["frames"][0]["visual_state"]["files"] = {}
+            _save(fixture.output / "media/frames.json", frames)
+
+        def bogus_renderer(fixture: Fixture) -> None:
+            fixture.runtime["renderer"]["readback"]["renderer_before"] = "Bogus"
+            fixture.runtime["renderer"]["readback"]["renderer_after"] = "Bogus"
+            fixture.persist_runtime()
+
+        def asset_sha(fixture: Fixture) -> None:
+            manifest_path = fixture.output / "visual-scene/visual-scene-manifest.json"
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            manifest["visual_asset_config"]["sha256"] = "b" * 64
+            manifest["asset_provenance"]["asset_source_sha256"] = "b" * 64
+            _save(manifest_path, manifest)
+            fixture.runtime["visual_export"]["manifest_sha256"] = _sha(manifest_path)
+            fixture.persist_runtime()
+
+        def state_filename(fixture: Fixture) -> None:
+            record = fixture.event["source_state_snapshot"]
+            old_path = fixture.output / record["path"]
+            new_path = old_path.with_name("arbitrary.json")
+            new_path.write_bytes(old_path.read_bytes())
+            record["path"] = new_path.relative_to(fixture.output).as_posix()
+            fixture.persist_event()
+
+        def camera_transform(fixture: Fixture) -> None:
+            fixture.scene["scene_extension"]["camera_overrides"]["cameras"][0]["local_transform_row_major"][0] += 0.1
+
+        mutations: dict[str, tuple[Callable[[Fixture], None], str]] = {
+            "collider drift": (collider, "stage contract"),
+            "ledger prefix mutation": (ledger, "visual event"),
+            "future capture frame": (future_frame, "state from the future"),
+            "wrong payload parent": (wrong_parent, "payload prim"),
+            "missing visual event": (missing_event, "journal counts"),
+            "duplicate visible payload": (duplicate_visible, "payload count"),
+            "state snapshot mutation": (state_hash, "projection hash differs"),
+            "visual layer mutation": (visual_layer, "output SHA"),
+            "actual BBox overflow": (bbox, "BBox record differs"),
+            "session layer mutation": (session_layer, "unexpected prims"),
+            "same payload leaf under wrong parent": (wrong_usd_parent, "unexpected prims"),
+            "payload translation overflow": (huge_translate, "snapshot authoring differs"),
+            "payload scale overflow": (huge_scale, "snapshot authoring differs"),
+            "unknown payload xform op": (unknown_xform, "snapshot authoring differs"),
+            "multiple payload visibility values": (duplicate_visibility, "one attribute per name"),
+            "signal translation overflow": (signal_position, "snapshot authoring differs"),
+            "comment cannot fake payload visibility": (fake_visibility_comment, "snapshot authoring differs"),
+            "string cannot fake signal count": (fake_signal_string, "snapshot authoring differs"),
+            "comment cannot fake sublayer": (fake_sublayer_comment, "sublayer binding differs"),
+            "world transform authoring": (world_move, "authoring differs"),
+            "hidden cargo parent": (hidden_parent, "snapshot authoring differs"),
+            "hidden signal": (hidden_signal, "snapshot authoring differs"),
+            "wrong signal display color": (wrong_signal_color, "snapshot authoring differs"),
+            "collider world transform drift": (collider_geometry, "changed collider paths"),
+            "alternate visual layer with consistent echoes": (alternate_visual_layer, "canonical layer"),
+            "forged canonical visual bytes with consistent SHAs": (forged_canonical_visual_layer, "deterministic source regeneration differs"),
+            "forged static semantic class": (forged_static_semantic, "static semantic authoring differs"),
+            "future event beyond final scene": (future_event, "final scene clock"),
+            "no applied capture": (no_applied_capture, "no capture of an applied state"),
+            "fake robot chassis binding": (robot_binding, "chassis paths differ"),
+            "empty capture file pins": (empty_files, "file pin set differs"),
+            "bogus renderer readback": (bogus_renderer, "renderer or DLSS"),
+            "arbitrary visual asset SHA": (asset_sha, "asset provenance"),
+            "noncanonical state snapshot filename": (state_filename, "canonical name differs"),
+            "camera transform echo without geometry": (camera_transform, "LookAt geometry"),
         }
-        for label, mutate in mutations.items():
+        for label, (mutate, expected_error) in mutations.items():
             with self.subTest(label=label), tempfile.TemporaryDirectory() as temporary:
                 fixture = Fixture(Path(temporary))
                 mutate(fixture)
                 errors: list[str] = []
                 report = validate_visual_evidence(fixture.output, fixture.session, fixture.scene, fixture.mission, RUN_ID, SCENARIO_ID, errors)
                 self.assertFalse(report["passed"])
-                self.assertTrue(errors)
+                self.assertTrue(any(expected_error in error for error in errors), errors)
 
 
 if __name__ == "__main__":

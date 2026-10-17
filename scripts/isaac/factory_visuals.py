@@ -11,6 +11,7 @@ import os
 from pathlib import Path
 import re
 import shutil
+from contextlib import contextmanager
 from typing import Any, Mapping, Sequence
 
 from factory_ops.layout import Layout, LayoutError, Rect
@@ -33,6 +34,17 @@ WORLD_LOCATION_OBSTACLE = {
     "out": "FG_HIGH",
 }
 ROBOT_LOCATIONS = {"robot_carter1": "carter1", "robot_carter2": "carter2"}
+LAUNCH_RENDERER = "RealTimePathTracing"
+ALLOWED_RENDERER_READBACKS = {"RealTimePathTracing", "RayTracedLighting"}
+SIGNAL_SIZE_M = 0.08
+SIGNAL_PLACEMENTS = {
+    "CI_0": (25.55, 6.18, 1.55),
+    "CI_1": (25.55, 6.44, 1.55),
+    "CO_0": (25.55, 14.68, 1.55),
+    "CO_1": (25.55, 14.94, 1.55),
+    "Cell": (25.55, 10.68, 1.75),
+    "Complete": (38.72, 14.50, 1.08),
+}
 
 
 def validate_visual_state_document(document: object, *, run_id: str, scenario_id: str) -> dict[str, Any]:
@@ -215,8 +227,9 @@ class FactoryVisualRuntime:
         after = self._stage_contract()
         if (before["collider_paths"] != after["collider_paths"]
                 or before["collision_enabled_readbacks"] != after["collision_enabled_readbacks"]
+                or before["collider_geometry_readbacks"] != after["collider_geometry_readbacks"]
                 or after["collider_count"] != 20):
-            raise ValueError("visual setup changed the 20 source collider contract")
+            raise ValueError("visual setup changed the 20 source collider paths, transforms, bounds or enabled values")
         if before["obstacle_count"] != 19 or after["obstacle_count"] != 19 or before["marker_count"] != 8 or after["marker_count"] != 8:
             raise ValueError("visual setup changed source obstacle or marker counts")
         bbox = self._validate_visual_bounds()
@@ -307,11 +320,17 @@ class FactoryVisualRuntime:
 
     def capture_metadata(self) -> dict[str, object]:
         files: dict[str, dict[str, object]] = {}
-        for name in (RUNTIME_FILE, EVENTS_FILE, STATE_FILE, f"{VISUAL_DIR}/visual-scene-manifest.json", f"{VISUAL_DIR}/session-layer.usda"):
+        for name in (RUNTIME_FILE, EVENTS_FILE, f"{VISUAL_DIR}/visual-scene-manifest.json"):
             path = self.output / name
             if path.is_file() and not path.is_symlink():
                 files[name] = {"sha256": _sha_file(path), "bytes": path.stat().st_size}
         applied_snapshot = self.last_event.get("source_state_snapshot") if self.last_event is not None else None
+        session_snapshot = self.last_event.get("session_layer_snapshot") if self.last_event is not None else None
+        for record in (applied_snapshot, session_snapshot):
+            if isinstance(record, Mapping) and isinstance(record.get("path"), str):
+                path = self.output / str(record["path"])
+                _require_regular(path, "visual capture immutable snapshot")
+                files[str(record["path"])] = {"sha256": _sha_file(path), "bytes": path.stat().st_size}
         return {
             "schema_version": 1,
             "run_id": self.run_id,
@@ -360,34 +379,35 @@ class FactoryVisualRuntime:
         visible_paths: set[str] = set()
         assert self.layout is not None
         plan = build_payload_visibility_plan(self.layout, projection, self.robot_paths)
-        for item in plan:
-            row = item["row"]
-            assert isinstance(row, dict)
-            payload_id = str(row["payload_id"])
-            placement = item["placement"]
-            assert isinstance(placement, dict)
-            prim_path = self._ensure_payload_copy(row, placement)
-            if prim_path != item["prim_path"]:
-                raise ValueError("visual payload prim path differs from validated plan")
-            visible_paths.add(prim_path)
-            changes.append({
-                "payload_id": payload_id,
-                "order_id": row["order_id"],
-                "state": row["state"],
-                "location": row["location"],
-                "slot": row["slot"],
-                "prim_path": prim_path,
-                "parent_path": placement["parent_path"],
-                "visibility": "inherited",
-            })
         hidden_paths: list[str] = []
-        for copies in self.payload_copies.values():
-            for path, imageable in copies.items():
-                desired = "inherited" if path in visible_paths else "invisible"
-                imageable.CreateVisibilityAttr().Set(desired)
-                if desired == "invisible":
-                    hidden_paths.append(path)
-        self._update_signals(projection["signals"])
+        with _session_edit_target(self.stage):
+            for item in plan:
+                row = item["row"]
+                assert isinstance(row, dict)
+                payload_id = str(row["payload_id"])
+                placement = item["placement"]
+                assert isinstance(placement, dict)
+                prim_path = self._ensure_payload_copy(row, placement)
+                if prim_path != item["prim_path"]:
+                    raise ValueError("visual payload prim path differs from validated plan")
+                visible_paths.add(prim_path)
+                changes.append({
+                    "payload_id": payload_id,
+                    "order_id": row["order_id"],
+                    "state": row["state"],
+                    "location": row["location"],
+                    "slot": row["slot"],
+                    "prim_path": prim_path,
+                    "parent_path": placement["parent_path"],
+                    "visibility": "inherited",
+                })
+            for copies in self.payload_copies.values():
+                for path, imageable in copies.items():
+                    desired = "inherited" if path in visible_paths else "invisible"
+                    imageable.CreateVisibilityAttr().Set(desired)
+                    if desired == "invisible":
+                        hidden_paths.append(path)
+            self._update_signals(projection["signals"])
         session_snapshot = _export_immutable_session_layer(self.stage.GetSessionLayer(), self.output)
         state_snapshot_path = self.output / "visual-state-snapshots" / f"{int(document['sequence']):08d}-{state_hash}.json"
         state_snapshot = {"schema_version": 1, "state_hash": state_hash, "visual_state": document}
@@ -466,17 +486,37 @@ class FactoryVisualRuntime:
     def _stage_contract(self) -> dict[str, object]:
         colliders: list[str] = []
         enabled: dict[str, object] = {}
+        geometry: dict[str, object] = {}
+        bbox_cache = self.UsdGeom.BBoxCache(
+            0.0,
+            [self.UsdGeom.Tokens.default_, self.UsdGeom.Tokens.render, self.UsdGeom.Tokens.proxy],
+            ignoreVisibility=True,
+        )
         for prim in self.stage.Traverse():
             if prim.HasAPI(self.UsdPhysics.CollisionAPI):
                 path = str(prim.GetPath())
                 colliders.append(path)
                 attribute = prim.GetAttribute("physics:collisionEnabled")
                 enabled[path] = attribute.Get() if attribute and attribute.IsValid() else None
+                matrix = self.UsdGeom.Xformable(prim).ComputeLocalToWorldTransform(0.0)
+                aligned = bbox_cache.ComputeWorldBound(prim).ComputeAlignedBox()
+                minimum, maximum = aligned.GetMin(), aligned.GetMax()
+                geometry[path] = {
+                    "world_transform_row_major": [float(matrix[row][column]) for row in range(4) for column in range(4)],
+                    "world_bounds_xyz_m": [float(minimum[index]) for index in range(3)] + [float(maximum[index]) for index in range(3)],
+                }
         obstacle_root = self.stage.GetPrimAtPath("/World/Obstacles")
         marker_root = self.stage.GetPrimAtPath("/World/Markers")
         obstacles = list(obstacle_root.GetChildren()) if obstacle_root.IsValid() else []
         markers = list(marker_root.GetChildren()) if marker_root.IsValid() else []
-        return {"collider_count": len(colliders), "collider_paths": sorted(colliders), "collision_enabled_readbacks": enabled, "obstacle_count": len(obstacles), "marker_count": len(markers)}
+        return {
+            "collider_count": len(colliders),
+            "collider_paths": sorted(colliders),
+            "collision_enabled_readbacks": enabled,
+            "collider_geometry_readbacks": geometry,
+            "obstacle_count": len(obstacles),
+            "marker_count": len(markers),
+        }
 
     def _hide_source_obstacles(self) -> int:
         assert self.layout is not None
@@ -526,26 +566,49 @@ class FactoryVisualRuntime:
         except ImportError:
             return {"status": "pxr.UsdLux unavailable", "created": []}
         created: list[str] = []
+        readbacks: list[dict[str, object]] = []
+        color_temperature = 5200.0 + 100.0 * (self.variant_seed % 4)
         for index, (x, y) in enumerate(((8.0, 5.0), (20.0, 5.0), (32.0, 5.0), (8.0, 19.0), (20.0, 19.0), (32.0, 19.0))):
             path = f"/World/Visuals/Lights/Panel_{index}"
             light = UsdLux.RectLight.Define(self.stage, path)
-            light.CreateWidthAttr(5.0)
-            light.CreateHeightAttr(0.24)
-            light.CreateIntensityAttr(1350.0)
-            light.CreateColorTemperatureAttr(4650.0 + 50.0 * (self.variant_seed % 4))
+            light.CreateWidthAttr(6.0)
+            light.CreateHeightAttr(1.2)
+            light.CreateIntensityAttr(3500.0)
+            light.CreateColorTemperatureAttr(color_temperature)
             light.CreateEnableColorTemperatureAttr(True)
             self.UsdGeom.Xformable(light.GetPrim()).AddTranslateOp().Set(self.Gf.Vec3d(x, y, 5.35))
             created.append(path)
+            readbacks.append({
+                "prim_path": path,
+                "type": "RectLight",
+                "width_m": float(light.GetWidthAttr().Get()),
+                "height_m": float(light.GetHeightAttr().Get()),
+                "intensity": float(light.GetIntensityAttr().Get()),
+                "color_temperature_k": float(light.GetColorTemperatureAttr().Get()),
+                "enable_color_temperature": bool(light.GetEnableColorTemperatureAttr().Get()),
+            })
         dome_path = "/World/Visuals/Lights/Ambient"
         dome = UsdLux.DomeLight.Define(self.stage, dome_path)
-        dome.CreateIntensityAttr(180.0)
+        dome.CreateIntensityAttr(600.0)
         created.append(dome_path)
-        return {"status": "created", "created": created, "rect_light_count": 6, "dome_light_count": 1}
+        readbacks.append({
+            "prim_path": dome_path,
+            "type": "DomeLight",
+            "intensity": float(dome.GetIntensityAttr().Get()),
+        })
+        return {
+            "status": "created",
+            "created": created,
+            "rect_light_count": 6,
+            "dome_light_count": 1,
+            "readbacks": readbacks,
+        }
 
     def _validate_visual_bounds(self) -> dict[str, object]:
         if self.manifest is None:
             raise RuntimeError("visual manifest is unavailable")
         checked = 0
+        evidence: list[dict[str, object]] = []
         try:
             cache = self.UsdGeom.BBoxCache(0.0, [self.UsdGeom.Tokens.default_, self.UsdGeom.Tokens.render, self.UsdGeom.Tokens.proxy])
         except Exception as exc:
@@ -565,28 +628,36 @@ class FactoryVisualRuntime:
             expected = instance["bounds_xyz_m"]
             if any(bounds[index] < expected[index] - 1e-6 for index in range(3)) or any(bounds[index] > expected[index] + 1e-6 for index in range(3, 6)):
                 raise ValueError(f"visual instance exceeds declared bounds: {instance['stable_id']}")
+            evidence.append({
+                "stable_id": instance["stable_id"],
+                "prim_path": instance["prim_path"],
+                "actual_bounds_xyz_m": bounds,
+                "declared_bounds_xyz_m": expected,
+                "source_bounds_xy_m": source,
+                "collision_api_applied": False,
+            })
             checked += 1
-        return {"status": "passed", "checked": checked, "method": "UsdGeom.BBoxCache aligned world bounds"}
+        return {"status": "passed", "checked": checked, "method": "UsdGeom.BBoxCache aligned world bounds", "instances": evidence}
 
     def _update_signals(self, signals: Mapping[str, Any]) -> None:
         assert self.UsdGeom is not None and self.Gf is not None
         ci_count, co_count, complete_count = int(signals["ci_slots_used"]), int(signals["co_slots_used"]), int(signals["orders_completed"])
         values = {
-            "CI_0": (ci_count >= 1, ci_count, (25.55, 6.18, 1.55)),
-            "CI_1": (ci_count >= 2, ci_count, (25.55, 6.44, 1.55)),
-            "CO_0": (co_count >= 1, co_count, (25.55, 14.68, 1.55)),
-            "CO_1": (co_count >= 2, co_count, (25.55, 14.94, 1.55)),
-            "Cell": (bool(signals["cell_processing"]), int(bool(signals["cell_processing"])), (25.55, 10.68, 1.75)),
-            "Complete": (complete_count > 0, complete_count, (38.72, 14.50, 1.08)),
+            "CI_0": (ci_count >= 1, ci_count),
+            "CI_1": (ci_count >= 2, ci_count),
+            "CO_0": (co_count >= 1, co_count),
+            "CO_1": (co_count >= 2, co_count),
+            "Cell": (bool(signals["cell_processing"]), int(bool(signals["cell_processing"]))),
+            "Complete": (complete_count > 0, complete_count),
         }
-        for name, (active, count, xyz) in values.items():
+        for name, (active, count) in values.items():
             path = f"/World/Visuals/OperationalSignals/{name}"
             existed = self.stage.GetPrimAtPath(path).IsValid()
             cube = self.UsdGeom.Cube.Define(self.stage, path)
             cube.CreateSizeAttr(1.0)
             if not existed:
-                cube.AddTranslateOp().Set(self.Gf.Vec3d(*xyz))
-                cube.AddScaleOp().Set(self.Gf.Vec3d(.08, .08, .08))
+                cube.AddTranslateOp().Set(self.Gf.Vec3d(*SIGNAL_PLACEMENTS[name]))
+                cube.AddScaleOp().Set(self.Gf.Vec3d(SIGNAL_SIZE_M, SIGNAL_SIZE_M, SIGNAL_SIZE_M))
             color = (0.02, .85, .18) if active else (.22, .24, .27)
             cube.CreateDisplayColorAttr([self.Gf.Vec3f(*color)])
             prim = cube.GetPrim()
@@ -654,7 +725,7 @@ def _configure_renderer_readback() -> dict[str, object]:
     try:
         import carb.settings  # type: ignore[import-not-found]
     except ImportError:
-        return {"status": "carb.settings unavailable", "requested": {"renderer": "RTX Real-Time 2.0", "dlss_mode": "Quality"}, "readback": None}
+        return {"status": "carb.settings unavailable", "requested": {"renderer": "RTX Real-Time 2.0", "launch_renderer": LAUNCH_RENDERER, "allowed_readbacks": sorted(ALLOWED_RENDERER_READBACKS), "dlss_mode": "Quality", "dlss_exec_mode": 2}, "readback": None}
     settings = carb.settings.get_settings()
     dlss_path = "/rtx/post/dlss/execMode"
     renderer_path = "/rtx/rendermode"
@@ -664,13 +735,26 @@ def _configure_renderer_readback() -> dict[str, object]:
         settings.set(dlss_path, 2)
     after_dlss = settings.get(dlss_path)
     after_renderer = settings.get(renderer_path)
-    verified = before_dlss is not None and after_dlss == 2
+    verified = (before_dlss is not None and after_dlss == 2 and before_renderer == after_renderer
+                and before_renderer in ALLOWED_RENDERER_READBACKS)
     return {
         "status": "readback_verified" if verified else "requested_but_sdk_setting_unavailable_or_unverified",
-        "requested": {"renderer": "RTX Real-Time 2.0", "dlss_mode": "Quality", "dlss_exec_mode": 2},
+        "requested": {"renderer": "RTX Real-Time 2.0", "launch_renderer": LAUNCH_RENDERER, "allowed_readbacks": sorted(ALLOWED_RENDERER_READBACKS), "dlss_mode": "Quality", "dlss_exec_mode": 2},
         "readback": {"renderer_before": before_renderer, "renderer_after": after_renderer, "dlss_before": before_dlss, "dlss_after": after_dlss},
         "renderer_unchanged": before_renderer == after_renderer,
     }
+
+
+@contextmanager
+def _session_edit_target(stage: Any) -> Any:
+    session = stage.GetSessionLayer()
+    previous = stage.GetEditTarget() if hasattr(stage, "GetEditTarget") else None
+    stage.SetEditTarget(session)
+    try:
+        yield session
+    finally:
+        if previous is not None:
+            stage.SetEditTarget(previous)
 
 
 def _export_session_layer(session: Any, path: Path) -> dict[str, object]:

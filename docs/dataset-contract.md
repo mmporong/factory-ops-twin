@@ -87,7 +87,9 @@ QA report는 선택 profile의 ID·SHA와 `validation_gate`를 기록한다. 프
 
 split 누출 fingerprint는 capture와 camera 순서에 무관한 multiset이다. RGB는 PNG 압축 수준과 scanline filter를 제거한 실제 pixel bytes로, NPY는 header 버전과 padding을 제외한 dtype·shape·payload로 digest를 만든다. 파일 인코딩만 바꾼 같은 이미지·배열이 서로 다른 split에 들어가면 같은 내용으로 판정한다.
 
-`camera_params.json`은 `scene_id`, `capture_id`, `camera_id`, `physics_frame`, `sim_time_ns`, `width`, `height`, `pose_xyz`, `orientation_wxyz`, `focal_length`, `horizontal_aperture`, `vertical_aperture`, `clipping_range`, `world_to_camera`(16개), `projection`(16개)을 가진다. 행렬과 렌즈 값은 모두 유한해야 하고 해상도는 RGB 및 배열과 같아야 한다. `world_to_camera`는 USD row-vector convention에서 pose translation과 unit quaternion으로 역산한 extrinsic과 같아야 한다. `projection`은 focal length, 두 aperture, near/far clipping으로 다시 계산한 perspective matrix와 같아야 한다. foreground `distance_to_image_plane` 값은 유한한 양수이면서 `[near, far]` 안에 있어야 하고 background는 양의 무한대다.
+`camera_params.json`은 `scene_id`, `capture_id`, `camera_id`, `physics_frame`, `sim_time_ns`, `width`, `height`, `pose_xyz`, `orientation_wxyz`, `focal_length`, `horizontal_aperture`, `vertical_aperture`, `clipping_range`, `world_to_camera`(16개), `projection`(16개)을 가진다. 행렬과 렌즈 값은 모두 유한해야 하고 해상도는 RGB 및 배열과 같아야 한다. `world_to_camera`는 USD row-vector convention에서 pose translation과 unit quaternion으로 역산한 extrinsic과 같아야 한다. `projection`은 focal length, 두 aperture, near/far clipping으로 다시 계산한 perspective matrix와 같아야 한다. `BACKGROUND`의 `distance_to_image_plane`은 양의 무한대이고, semantic과 instance 원형 label map에서 `UNLABELLED`로 확인된 렌더 geometry는 `[near, far]` 안의 유한한 양수 depth를 가진다.
+
+각 camera 디렉터리의 `semantic.raw-info.json`, `instance.raw-info.json`, `camera.raw-params.json`은 정규화 전에 저장한 annotator metadata다. `normalized.json.raw_info.source_artifacts`는 앞의 두 파일명과 SHA-256을, `camera_params.json.raw_camera_params_artifact`는 camera 원형 파일명과 SHA-256을 기록한다. 정규화 문서에 복제된 raw label map과 camera params는 보존 파일의 JSON 값과 같아야 한다.
 
 `bbox2d.raw.json`은 Replicator가 반환한 원형 정보를 JSON 표현으로 보존한다.
 
@@ -101,7 +103,7 @@ split 누출 fingerprint는 capture와 camera 순서에 무관한 multiset이다
 }
 ```
 
-이 계약에서 bbox `semanticId`, semantic segmentation ID, instance segmentation ID는 서로 독립된 수치 공간이다. bbox 원형의 `info.idToLabels`와 행 인덱스에 대응하는 `info.primPaths`를 가공하지 않고 보존한다. semantic·instance annotator의 원형 label map과 instance ID별 prim path는 `normalized.json`의 `raw_info`에 따로 보존한다.
+이 계약에서 bbox `semanticId`, semantic segmentation ID, instance segmentation ID는 서로 독립된 수치 공간이다. bbox 원형의 `info.idToLabels`와 행 인덱스에 대응하는 `info.primPaths`를 가공하지 않고 보존한다. semantic·instance annotator의 원형 label map과 instance ID별 prim path는 `normalized.json`의 `raw_info`에 따로 보존한다. `reserved_instance_ids`는 숫자 자체로 정하지 않고, 보존된 instance `idToLabels`가 해당 ID를 `BACKGROUND` 또는 `UNLABELLED`로 명시할 때만 허용한다. 일반 class pixel의 instance ID를 reserved로 선언해 정규 instance와 bbox 검증에서 숨길 수 없다.
 
 ```json
 {
@@ -139,6 +141,6 @@ split 누출 fingerprint는 capture와 camera 순서에 무관한 multiset이다
 
 semantic, instance, bbox label map의 키는 `0`, `9`, `27` 같은 비음수 canonical 10진 문자열만 허용한다. `09`와 `9`, 음수, 비수치 키는 거부한다. 프로필의 `minimum_class_pixels`는 양의 정수여야 하며 문자열이나 0으로 production gate를 낮출 수 없다.
 
-`bbox_semantic_id`는 선택한 원본 bbox 행의 `semanticId`와 같아야 하며 bbox label map의 class, instance label map의 class, semantic mask class가 모두 같아야 한다. `bbox_xyxy`는 instance mask에서 얻은 양끝 포함 tight bbox다. 원본 bbox 수치와 각 좌표 차이가 1픽셀 이내여야 한다. `occlusionRatio` 원형 값은 `occlusion_ratio`와 같아야 하고 `[0, 1]` 범위여야 한다. `edge_truncated`는 tight bbox가 이미지 가장자리에 닿는지와 일치해야 한다.
+`bbox_semantic_id`는 선택한 원본 bbox 행의 `semanticId`와 같아야 하며 bbox label map의 class, instance label map의 class, semantic mask class가 모두 같아야 한다. `bbox_xyxy`는 instance mask에서 얻은 양끝 포함 tight bbox다. 원본 bbox 수치와 각 좌표 차이가 1픽셀 이내여야 한다. `[0, 1]`의 원형 `occlusionRatio`만 `occlusion_status: "measured_raw"`와 같은 `occlusion_ratio`로 집계한다. Isaac Sim이 `-1.0`을 반환하면 원형 값을 바꾸지 않고 `occlusion_raw_value: -1.0`, `occlusion_ratio: null`, `occlusion_status: "unavailable_raw_sentinel"`로 기록한다. 이 unknown 항목은 가림 분포에 넣지 않으며 production 승인 조건을 충족하지 못한다. `edge_truncated`는 tight bbox가 이미지 가장자리에 닿는지와 일치해야 한다.
 
 `visual-review.json`은 장면·카메라별 대표 샘플을 포함한다. 각 항목은 `scene_id`, `camera_id`, `capture_id`, `rgb_path`, `rgb_sha256`, `reviewed`, `verdict`, `reviewer`를 가진다. 모든 장면과 카메라 조합이 `reviewed: true`, `verdict: "pass"`가 되기 전에는 프로덕션 데이터셋을 승인하지 않는다.
