@@ -421,6 +421,116 @@ class CalibrationTests(unittest.TestCase):
                     environment_sha256="c" * 64,
                 )
 
+    def test_primary_revalidation_binds_five_environment_values_and_restores_them(self) -> None:
+        output = self.root / "primary-output"
+        session = self.root / "primary-session"
+        output.mkdir()
+        session.mkdir()
+        save(session / "session.json", {"primary_evaluation": True})
+        primary_inputs = self.root / "primary-inputs.json"
+        save(primary_inputs, {"schema_version": 1})
+        primary_sha = sha(primary_inputs)
+        environment = output / "provenance/source-environment.json"
+        save(environment, {"primary_inputs_path": str(primary_inputs),
+                           "primary_inputs_sha256": primary_sha})
+        save(output / "session-verified.json", {"primary_inputs_sha256": primary_sha})
+        report = {"schema_version": 1, "run_id": "a" * 32, "passed": True,
+                  "status": "validated", "errors": []}
+        report_path = output / "g3-evidence.json"
+        save(report_path, report)
+        names = ("FACTORY_OPS_G3_SESSION_SHA256", "FACTORY_OPS_G3_SOURCE_COMMIT",
+                 "FACTORY_OPS_G3_PROVENANCE_SHA256", "FACTORY_OPS_G3_PRIMARY_INPUTS_PATH",
+                 "FACTORY_OPS_G3_PRIMARY_INPUTS_SHA256")
+        previous = {name: f"old-{index}" for index, name in enumerate(names)}
+
+        def validate(*_args, **_kwargs):
+            self.assertEqual(str(primary_inputs), os.environ[names[3]])
+            self.assertEqual(primary_sha, os.environ[names[4]])
+            return deepcopy(report)
+
+        with patch.dict(os.environ, previous, clear=False), \
+                patch("scripts.ros.g3_evidence.validate_g3_evidence", side_effect=validate):
+            self.assertEqual(report, revalidate_physical_report(
+                report_path, session, output, "a" * 32, source_commit="b" * 40,
+                environment_sha256=sha(environment), primary_inputs_path=primary_inputs,
+                primary_inputs_sha256=primary_sha,
+            ))
+            self.assertEqual(previous, {name: os.environ.get(name) for name in names})
+        with patch.dict(os.environ, previous, clear=False):
+            with patch("scripts.ros.g3_evidence.validate_g3_evidence",
+                       side_effect=RuntimeError("primary replay failure")), \
+                    self.assertRaisesRegex(RuntimeError, "primary replay failure"):
+                revalidate_physical_report(
+                    report_path, session, output, "a" * 32, source_commit="b" * 40,
+                    environment_sha256=sha(environment), primary_inputs_path=primary_inputs,
+                    primary_inputs_sha256=primary_sha,
+                )
+            self.assertEqual(previous, {name: os.environ.get(name) for name in names})
+
+        for path, digest, message in (
+            (None, None, "requires explicit"),
+            (primary_inputs, None, "supplied together"),
+            (primary_inputs, "f" * 64, "artifact or SHA"),
+        ):
+            with self.subTest(message=message), self.assertRaisesRegex(ValueError, message):
+                revalidate_physical_report(
+                    report_path, session, output, "a" * 32, source_commit="b" * 40,
+                    environment_sha256=sha(environment), primary_inputs_path=path,
+                    primary_inputs_sha256=digest,
+                )
+        foreign = self.root / "foreign-primary-inputs.json"
+        foreign.write_bytes(primary_inputs.read_bytes())
+        with self.assertRaisesRegex(ValueError, "preserved supervisor/session bindings"):
+            revalidate_physical_report(
+                report_path, session, output, "a" * 32, source_commit="b" * 40,
+                environment_sha256=sha(environment), primary_inputs_path=foreign,
+                primary_inputs_sha256=primary_sha,
+            )
+        with patch.dict(os.environ, {
+            "FACTORY_OPS_G3_PRIMARY_INPUTS_PATH": str(primary_inputs),
+            "FACTORY_OPS_G3_PRIMARY_INPUTS_SHA256": primary_sha,
+        }, clear=False), self.assertRaisesRegex(ValueError, "requires explicit"):
+            revalidate_physical_report(
+                report_path, session, output, "a" * 32, source_commit="b" * 40,
+                environment_sha256=sha(environment),
+            )
+        with self.assertRaisesRegex(ValueError, "source environment bytes"):
+            revalidate_physical_report(
+                report_path, session, output, "a" * 32, source_commit="b" * 40,
+                environment_sha256="0" * 64, primary_inputs_path=primary_inputs,
+                primary_inputs_sha256=primary_sha,
+            )
+
+    def test_nonprimary_revalidation_removes_ambient_primary_inputs_and_restores_on_failure(self) -> None:
+        output = self.root / "pilot-output"
+        session = self.root / "pilot-session"
+        output.mkdir()
+        session.mkdir()
+        save(session / "session.json", {"primary_evaluation": False})
+        report = {"schema_version": 1, "run_id": "a" * 32, "passed": True,
+                  "status": "validated", "errors": []}
+        report_path = output / "g3-evidence.json"
+        save(report_path, report)
+        ambient = {"FACTORY_OPS_G3_PRIMARY_INPUTS_PATH": "foreign.json",
+                   "FACTORY_OPS_G3_PRIMARY_INPUTS_SHA256": "f" * 64}
+
+        def fail(*_args, **_kwargs):
+            self.assertNotIn("FACTORY_OPS_G3_PRIMARY_INPUTS_PATH", os.environ)
+            self.assertNotIn("FACTORY_OPS_G3_PRIMARY_INPUTS_SHA256", os.environ)
+            raise RuntimeError("nested pilot failure")
+
+        with patch.dict(os.environ, ambient, clear=False):
+            with patch("scripts.ros.g3_evidence.validate_g3_evidence", side_effect=fail), \
+                    self.assertRaisesRegex(RuntimeError, "nested pilot failure"):
+                revalidate_physical_report(
+                    report_path, session, output, "a" * 32, source_commit="b" * 40,
+                    environment_sha256="c" * 64,
+                )
+            self.assertEqual(ambient["FACTORY_OPS_G3_PRIMARY_INPUTS_PATH"],
+                             os.environ.get("FACTORY_OPS_G3_PRIMARY_INPUTS_PATH"))
+            self.assertEqual(ambient["FACTORY_OPS_G3_PRIMARY_INPUTS_SHA256"],
+                             os.environ.get("FACTORY_OPS_G3_PRIMARY_INPUTS_SHA256"))
+
 
 if __name__ == "__main__":
     unittest.main()

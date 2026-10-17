@@ -722,7 +722,8 @@ def summarize(
             if kind == "validated_trial":
                 _require_keys(
                     slot,
-                    {"kind", "report_path", "mission_path", "artifact_root", "session_root"},
+                    {"kind", "report_path", "mission_path", "artifact_root", "session_root",
+                     "primary_inputs_path", "primary_inputs_sha256"},
                     f"primary_result_slots.{trial_id}",
                 )
                 rebuilt = build_trial_result(
@@ -730,6 +731,8 @@ def summarize(
                     Path(str(slot["artifact_root"])), session_root=Path(str(slot["session_root"])),
                     source_commit=expected_source_commit,
                     experiment_config_path=experiment_config_path,
+                    primary_inputs_path=Path(str(slot["primary_inputs_path"])),
+                    primary_inputs_sha256=str(slot["primary_inputs_sha256"]),
                 )
             elif kind == "collection_failure":
                 _require_keys(

@@ -149,15 +149,49 @@ def validate_source_origin(
 def revalidate_physical_report(
     report_path: Path, session_root: Path, artifact_root: Path, run_id: str, *,
     source_commit: str, environment_sha256: str,
+    primary_inputs_path: Path | None = None,
+    primary_inputs_sha256: str | None = None,
     require_passed: bool = True,
 ) -> dict[str, Any]:
     """Re-run closed-bag validation without writing or replacing the preserved report."""
     if report_path.parent != artifact_root or report_path.name != "g3-evidence.json":
         raise ValueError("physical report must be output-root g3-evidence.json")
+    session = _load(session_root / "session.json")
+    is_primary = session.get("primary_evaluation") is True
+    if (primary_inputs_path is None) != (primary_inputs_sha256 is None):
+        raise ValueError("primary inputs path and SHA must be supplied together")
+    if is_primary:
+        if primary_inputs_path is None or primary_inputs_sha256 is None:
+            raise ValueError("actual primary revalidation requires explicit primary inputs")
+        if (not primary_inputs_path.is_absolute() or primary_inputs_path.is_symlink()
+                or not primary_inputs_path.is_file()
+                or not _SHA256.fullmatch(primary_inputs_sha256)
+                or _sha256(primary_inputs_path) != primary_inputs_sha256):
+            raise ValueError("primary inputs artifact or SHA differs")
+        environment_path = artifact_root / "provenance/source-environment.json"
+        if _sha256(environment_path) != environment_sha256:
+            raise ValueError("source environment bytes differ from the report binding")
+        environment = _load(environment_path)
+        marker = _load(artifact_root / "session-verified.json")
+        if (environment.get("primary_inputs_path") != str(primary_inputs_path)
+                or environment.get("primary_inputs_sha256") != primary_inputs_sha256
+                or marker.get("primary_inputs_sha256") != primary_inputs_sha256):
+            raise ValueError("primary inputs differ from preserved supervisor/session bindings")
+    elif primary_inputs_path is not None:
+        raise ValueError("non-primary revalidation cannot accept primary inputs")
     session_sha = _sha256(session_root / "session.json")
-    names = ("FACTORY_OPS_G3_SESSION_SHA256", "FACTORY_OPS_G3_SOURCE_COMMIT", "FACTORY_OPS_G3_PROVENANCE_SHA256")
+    names = (
+        "FACTORY_OPS_G3_SESSION_SHA256", "FACTORY_OPS_G3_SOURCE_COMMIT",
+        "FACTORY_OPS_G3_PROVENANCE_SHA256", "FACTORY_OPS_G3_PRIMARY_INPUTS_PATH",
+        "FACTORY_OPS_G3_PRIMARY_INPUTS_SHA256",
+    )
     previous = {name: os.environ.get(name) for name in names}
     os.environ.update({names[0]: session_sha, names[1]: source_commit, names[2]: environment_sha256})
+    if is_primary:
+        os.environ.update({names[3]: str(primary_inputs_path), names[4]: str(primary_inputs_sha256)})
+    else:
+        os.environ.pop(names[3], None)
+        os.environ.pop(names[4], None)
     try:
         from scripts.ros.g3_evidence import validate_g3_evidence
         fresh = validate_g3_evidence(session_root, artifact_root, run_id, result_name=report_path.name)

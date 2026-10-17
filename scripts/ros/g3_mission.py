@@ -10,6 +10,7 @@ import json
 import math
 import os
 from pathlib import Path
+import re
 import subprocess
 import sys
 import time
@@ -35,6 +36,31 @@ from scripts.ros.g2_mission import (
     mask_scan_ranges, named_subscriber_topics_ready, publish_scan_fanout,
     scan_recording_topics, stop_process,
 )
+
+
+_SHA256 = re.compile(r"^[0-9a-f]{64}$")
+
+
+def primary_trial_identity(session_root: Path, session: Mapping[str, Any]) -> dict[str, str]:
+    """Recover the verified primary trial identity without changing non-primary output."""
+    if session.get("primary_evaluation") is not True:
+        return {}
+    trial_path = session_root / "trial-input.json"
+    if trial_path.is_symlink() or not trial_path.is_file():
+        raise ValueError("verified primary trial input is not a regular file")
+    trial = json.loads(trial_path.read_text(encoding="utf-8"))
+    if not isinstance(trial, Mapping):
+        raise ValueError("verified primary trial input must be an object")
+    identity = {name: trial.get(name) for name in ("trial_id", "trial_input_sha256", "workload_sha256")}
+    if (not isinstance(identity["trial_id"], str) or not identity["trial_id"]
+            or not isinstance(identity["trial_input_sha256"], str)
+            or not _SHA256.fullmatch(identity["trial_input_sha256"])
+            or not isinstance(identity["workload_sha256"], str)
+            or not _SHA256.fullmatch(identity["workload_sha256"])
+            or identity["trial_input_sha256"] != session.get("trial_input_sha256")
+            or identity["workload_sha256"] != session.get("workload_sha256")):
+        raise ValueError("verified primary trial identity differs from the session")
+    return {name: str(value) for name, value in identity.items()}
 
 
 def angle_error(left: float, right: float) -> float:
@@ -473,6 +499,7 @@ def main() -> int:
     result: dict[str, Any] = {"run_id": args.run_id, "scenario_id": scenario_id, "status": "running", "stage": "wait_scene",
                               "primary_evaluation": session["primary_evaluation"], "scope": session["scope"], "ground_truth_input": False,
                               "workload_sha256": session["workload_sha256"], "session_sha256": sha(session_root / "session.json")}
+    result.update(primary_trial_identity(session_root, session))
     launch = bag = ros = mission = callback_drain = None
     nodes: list[Any] = []
     node_executors: list[tuple[Any, Any]] = []

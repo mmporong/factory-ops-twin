@@ -267,7 +267,8 @@ class G3ExperimentSummaryTests(unittest.TestCase):
                 trial["trial_id"]: {
                     "kind": "validated_trial", "report_path": "report.json",
                     "mission_path": "mission.json", "artifact_root": "artifacts",
-                    "session_root": "session",
+                    "session_root": "session", "primary_inputs_path": "primary-inputs.json",
+                    "primary_inputs_sha256": "5" * 64,
                 }
                 for trial in self.matrix
             }
@@ -295,6 +296,40 @@ class G3ExperimentSummaryTests(unittest.TestCase):
                         expected_source_commit=NON_EVIDENCE_COMMIT,
                         experiment_config_path=CONFIG, primary_result_slots={},
                     )
+
+    def test_all_physical_slots_forward_their_primary_input_pair(self) -> None:
+        physical = deepcopy(self.results)
+        by_id = {row["trial_id"]: row for row in physical}
+        for row in physical:
+            row["backend"] = "isaac_sim_ros2_nav2"
+            row["evidence"]["classification"] = "g3_physical_trial"
+        calibration = {"classification": "g3_actual_six_pilot_calibration",
+                       "status": "primary_execution_eligible", "execution_eligible": True,
+                       "calibration_sha256": "4" * 64}
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "calibration.json"
+            path.write_text(json.dumps(calibration), encoding="utf-8")
+            slots = {trial["trial_id"]: {
+                "kind": "validated_trial", "report_path": f"{trial['trial_id']}-report.json",
+                "mission_path": f"{trial['trial_id']}-mission.json", "artifact_root": "artifacts",
+                "session_root": "session", "primary_inputs_path": f"{trial['trial_id']}-inputs.json",
+                "primary_inputs_sha256": trial["trial_input_sha256"],
+            } for trial in self.matrix}
+            with patch("factory_ops.g3_calibration.validate_calibration"), \
+                    patch("factory_ops.experiments.validate_trial_result"), \
+                    patch("factory_ops.g3_trial_result.build_trial_result",
+                          side_effect=lambda trial, *_args, **_kwargs: by_id[trial["trial_id"]]) as builder:
+                summarize(
+                    physical, self.settings, calibration_path=path,
+                    pilot_slots={"external": {}}, resource_input={"external": True},
+                    expected_source_commit=NON_EVIDENCE_COMMIT,
+                    experiment_config_path=CONFIG, primary_result_slots=slots,
+                )
+            self.assertEqual(60, builder.call_count)
+            for call, trial in zip(builder.call_args_list, self.matrix):
+                self.assertEqual(Path(slots[trial["trial_id"]]["primary_inputs_path"]),
+                                 call.kwargs["primary_inputs_path"])
+                self.assertEqual(trial["trial_input_sha256"], call.kwargs["primary_inputs_sha256"])
 
     def test_missing_failed_result_deletion_and_duplicate_are_rejected(self) -> None:
         failed = deepcopy(self.results)

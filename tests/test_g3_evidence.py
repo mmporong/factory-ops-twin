@@ -27,6 +27,7 @@ from scripts.ros.g3_evidence import (
     validate_initial_hold_barrier,
     validate_incomplete_cutoff,
     validate_navigation_maps,
+    validate_mission_primary_identity,
     validate_route_event_binding,
     validate_scene_closure,
     validate_stop_evidence,
@@ -41,6 +42,35 @@ SCENARIO = "QUALIFICATION_NORMAL"
 
 
 class G3EvidenceHelperTests(unittest.TestCase):
+    def test_primary_report_identity_requires_mission_to_match_verified_trial(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            identity = {"trial_id": "g3-normal-fifo-00", "trial_input_sha256": "a" * 64,
+                        "workload_sha256": "b" * 64}
+            (root / "trial-input.json").write_text(json.dumps(identity), encoding="utf-8")
+            session = {"primary_evaluation": True, "trial_input_sha256": "a" * 64,
+                       "workload_sha256": "b" * 64}
+            errors: list[str] = []
+            self.assertEqual(identity, validate_mission_primary_identity(root, session, identity, errors))
+            self.assertEqual([], errors)
+            mutations = {
+                "trial_id": "g3-normal-eta-00",
+                "trial_input_sha256": identity["workload_sha256"],
+                "workload_sha256": identity["trial_input_sha256"],
+            }
+            for name, value in mutations.items():
+                with self.subTest(name=name):
+                    errors = []
+                    validate_mission_primary_identity(root, session, {**identity, name: value}, errors)
+                    self.assertEqual(
+                        ["mission primary trial identity differs from the verified session"], errors,
+                    )
+            nonprimary_errors: list[str] = []
+            self.assertEqual({}, validate_mission_primary_identity(
+                root, {"primary_evaluation": False}, {}, nonprimary_errors,
+            ))
+            self.assertEqual([], nonprimary_errors)
+
     def test_incomplete_cutoff_replays_frozen_ledger_and_rejects_post_horizon_work(self):
         fleet = FleetMission("run", [FleetOrder("O1", "P1", "S1", 0.0)],
             robot_stations={"carter1": "P1", "carter2": "P2"}, horizon=10.0)

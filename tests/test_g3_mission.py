@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
+import json
 import math
 import os
 from pathlib import Path
@@ -14,10 +15,24 @@ from factory_ops.fleet_routing import RouteBook
 from factory_ops.fleet_execution import StoppedGate, path_content_sha256
 from factory_ops.fleet import FleetMission, FleetOrder
 from factory_ops.navigation import GoalPose
-from scripts.ros.g3_mission import angle_error, build_cutoff_record, cutoff_phase_classification, failure_reason, localization_payload, path_final_yaw, path_payload, valid_hold_ack, validate_arrival, verify_navigation_maps, stopped_odometry_record, valid_initial_hold_ack, initial_hold_boundary_ready, terminal_recording_boundary, wait_for_terminal_recording, session_verification_record
+from scripts.ros.g3_mission import angle_error, build_cutoff_record, cutoff_phase_classification, failure_reason, localization_payload, path_final_yaw, path_payload, primary_trial_identity, valid_hold_ack, validate_arrival, verify_navigation_maps, stopped_odometry_record, valid_initial_hold_ack, initial_hold_boundary_ready, terminal_recording_boundary, wait_for_terminal_recording, session_verification_record
 
 
 class G3MissionAdmissionTests(unittest.TestCase):
+    def test_primary_trial_identity_preserves_verified_input_and_nonprimary_shape(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            identity = {"trial_id": "g3-normal-fifo-00", "trial_input_sha256": "a" * 64,
+                        "workload_sha256": "b" * 64}
+            (root / "trial-input.json").write_text(json.dumps(identity), encoding="utf-8")
+            session = {"primary_evaluation": True, **{key: identity[key]
+                       for key in ("trial_input_sha256", "workload_sha256")}}
+            self.assertEqual(identity, primary_trial_identity(root, session))
+            self.assertEqual({}, primary_trial_identity(root, {"primary_evaluation": False}))
+            session["workload_sha256"] = "c" * 64
+            with self.assertRaisesRegex(ValueError, "differs from the session"):
+                primary_trial_identity(root, session)
+
     def test_docker_empty_primary_input_digest_uses_null_for_non_primary_marker(self):
         for value in (None, "", "c" * 64):
             with self.subTest(value=value), patch.dict(os.environ, {}, clear=True):

@@ -10,6 +10,7 @@ import stat
 import subprocess
 import tempfile
 import unittest
+from unittest.mock import patch
 
 from factory_ops.experiments import build_matrix, canonical_hash, load_experiment_config
 from factory_ops.g3_trial_result import _ledger_metrics, build_trial_result
@@ -181,6 +182,27 @@ class TrialResultTests(unittest.TestCase):
             build_trial_result(self.trial, self.report_path, self.mission_path, self.root,
                                session_root=self.session_root, source_commit=self.commit,
                                experiment_config_path=self.config_path)
+
+    def test_physical_replay_forwards_explicit_primary_inputs_pair(self) -> None:
+        primary_inputs = self.session_root / "primary-inputs.json"
+        save(primary_inputs, {"schema_version": 1})
+        with patch("factory_ops.g3_trial_result.revalidate_physical_report") as replay:
+            result = build_trial_result(
+                self.trial, self.report_path, self.mission_path, self.root,
+                session_root=self.session_root, source_commit=self.commit,
+                experiment_config_path=self.config_path, primary_inputs_path=primary_inputs,
+                primary_inputs_sha256=sha(primary_inputs),
+            )
+        self.assertEqual("isaac_sim_ros2_nav2", result["backend"])
+        self.assertEqual(primary_inputs, replay.call_args.kwargs["primary_inputs_path"])
+        self.assertEqual(sha(primary_inputs), replay.call_args.kwargs["primary_inputs_sha256"])
+        with self.assertRaisesRegex(ValueError, "fixtures cannot accept"):
+            build_trial_result(
+                self.trial, self.report_path, self.mission_path, self.root,
+                session_root=self.session_root, source_commit=self.commit,
+                experiment_config_path=self.config_path, primary_inputs_path=primary_inputs,
+                primary_inputs_sha256=sha(primary_inputs), allow_explicit_non_evidence=True,
+            )
 
     def test_explicit_non_evidence_ledger_times_build_strict_fixture_result(self) -> None:
         result = self.build()

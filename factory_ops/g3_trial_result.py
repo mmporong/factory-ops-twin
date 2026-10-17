@@ -77,6 +77,8 @@ def build_trial_result(
     session_root: Path,
     source_commit: str,
     experiment_config_path: Path,
+    primary_inputs_path: Path | None = None,
+    primary_inputs_sha256: str | None = None,
     allow_explicit_non_evidence: bool = False,
 ) -> dict[str, Any]:
     """Translate one validated primary run into the strict experiment result shape.
@@ -86,6 +88,14 @@ def build_trial_result(
     """
     if not _COMMIT.fullmatch(source_commit):
         raise ValueError("source commit must be a full lowercase Git commit")
+    if allow_explicit_non_evidence and (primary_inputs_path is not None or primary_inputs_sha256 is not None):
+        raise ValueError("explicit non-evidence fixtures cannot accept primary inputs")
+    if not allow_explicit_non_evidence:
+        if (primary_inputs_path is None) != (primary_inputs_sha256 is None):
+            raise ValueError("primary inputs path and SHA must be supplied together")
+        if primary_inputs_path is None:
+            raise ValueError("actual primary result requires explicit primary inputs")
+        primary_inputs_path = primary_inputs_path.resolve(strict=True)
     report_path = report_path.resolve(strict=True)
     mission_path = mission_path.resolve(strict=True)
     artifact_root = artifact_root.resolve(strict=True)
@@ -119,6 +129,8 @@ def build_trial_result(
         revalidate_physical_report(
             report_path, session_root, artifact_root, run_id, source_commit=source_commit,
             environment_sha256=str(report["source"]["environment_sha256"]),
+            primary_inputs_path=primary_inputs_path,
+            primary_inputs_sha256=primary_inputs_sha256,
         )
     if report.get("experiment_config_sha256") != trial.get("source_config_sha256"):
         raise ValueError("actual report config hash differs")

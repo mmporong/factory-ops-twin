@@ -34,7 +34,7 @@ from scripts.ros.g2_evidence import (
 )
 from scripts.isaac.nav_scene import _tilt_evaluation
 from scripts.isaac.g2_scene import _ros_stamp_parts
-from scripts.ros.g3_mission import cutoff_ledger_payload, terminal_recording_boundary
+from scripts.ros.g3_mission import cutoff_ledger_payload, primary_trial_identity, terminal_recording_boundary
 
 PROJECT = Path(__file__).resolve().parents[2]
 
@@ -44,6 +44,19 @@ def primary_inputs_sha_from_environment() -> str | None:
 
 
 RESULT = "g3-evidence.json"
+
+
+def validate_mission_primary_identity(
+    session_root: Path, session: Mapping[str, Any], mission: Mapping[str, Any], errors: list[str],
+) -> dict[str, str]:
+    try:
+        identity = primary_trial_identity(session_root, session)
+    except (OSError, ValueError, TypeError, json.JSONDecodeError) as exc:
+        errors.append(f"primary trial identity validation failed: {exc}")
+        return {}
+    if identity and any(mission.get(name) != value for name, value in identity.items()):
+        errors.append("mission primary trial identity differs from the verified session")
+    return identity
 
 
 def validate_fixed_source(
@@ -1183,6 +1196,7 @@ def validate_g3_evidence(
     mission = _load_json(output / "mission-result.json", errors)
     control = _load_json(output / "mission-control.json", errors)
     session_marker = _load_json(output / "session-verified.json", errors)
+    primary_identity = validate_mission_primary_identity(session_root, session, mission, errors)
     documents = ((ready, "ready"), (scene, "validated"), (mission, "passed"), (control, "passed"))
     for document, status in documents:
         if (not isinstance(document, Mapping) or document.get("run_id") != run_id
@@ -1352,6 +1366,7 @@ def validate_g3_evidence(
     exported = mission.get("mission", {})
     outcome = "completed" if exported.get("completed") is True else "incomplete" if exported.get("censored") is True else "failed"
     return {"schema_version": 1, "qualification": "g3_two_robot_orders", "run_id": run_id,
+            **primary_identity,
             "scenario_id": scenario_id, "profile": session["profile"], "policy": session["policy"],
             "condition": session["condition"], "seed": session["seed"],
             "primary_evaluation": session.get("primary_evaluation"), "scope": session.get("scope"),
