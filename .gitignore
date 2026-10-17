@@ -10,3 +10,4 @@ assets/vendor/
 *.pem
 *.key
 .DS_Store
+.omx/

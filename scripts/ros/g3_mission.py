@@ -20,7 +20,7 @@ from uuid import UUID, uuid4
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from factory_ops.fleet import FleetMission, FleetOrder
 from factory_ops.fleet_execution import StoppedGate, make_chunk, qualify_computed_path, path_content_sha256, path_clock_ready, path_header_stamp_ns
-from factory_ops.fleet_routing import RouteBook, swept_tiles
+from factory_ops.fleet_routing import RouteBook, assess_dispatch_route_compatibility, swept_tiles
 from factory_ops.g3_session import save, sha, verify_session
 from factory_ops.navigation import GoalPose, LocalizationPose, NavigationResult
 from factory_ops.operations import LedgerConfig, Transition
@@ -553,6 +553,7 @@ def main() -> int:
         current_closed = session["condition"] == "closure"
         last_update = last_progress = -math.inf
         completed_at: float | None = None
+        dispatch_pair_fingerprints: dict[tuple[str, str], str] = {}
 
         def new_leg(robot: str, target: str, intent: Any = None) -> None:
             rt = robots[robot]
@@ -749,12 +750,56 @@ def main() -> int:
                     raise TimeoutError(f"G3 chunk action deadline: {robot}")
             eligible = [robot for robot, rt in robots.items() if rt["phase"] == "idle" and rt["leg"] is None]
             if not mission.completed:
-                def cost(robot: Any, task: Any) -> float:
-                    distance = book.plan(robots[robot.robot_id]["anchor"], task.pickup_station, closed=current_closed).distance_m
+                route_snapshot = manager.snapshot(now_s=stamp)
+                assessments = {}
+                for task in mission.ledger.ready_tasks:
+                    if not mission.ledger.can_assign(task):
+                        continue
+                    for robot in eligible:
+                        assessment = assess_dispatch_route_compatibility(
+                            book,
+                            robot_id=robot,
+                            task_id=task.task_id,
+                            current_anchor=robots[robot]["anchor"],
+                            pickup_station=task.pickup_station,
+                            drop_station=task.drop_station,
+                            closed=current_closed,
+                            reservation_radius_m=reservation_radius,
+                            reservation_snapshot=route_snapshot,
+                        )
+                        assessments[(robot, task.task_id)] = assessment
+                        audit = assessment.to_dict()
+                        audit["decision"] = "candidate" if assessment.compatible else "excluded"
+                        audit["policy"] = session["policy"]
+                        audit["policy_cost_input"] = (
+                            assessment.pickup_distance_m
+                            + (assessment.loaded_distance_m if session["policy"] == "eta" else 0.0)
+                            if assessment.compatible else None
+                        )
+                        fingerprint = hashlib.sha256(json.dumps(audit, sort_keys=True).encode("utf-8")).hexdigest()
+                        key = (robot, task.task_id)
+                        if dispatch_pair_fingerprints.get(key) != fingerprint:
+                            journal("dispatch_pair_evaluated", audit)
+                            dispatch_pair_fingerprints[key] = fingerprint
+
+                def cost(robot: Any, task: Any) -> float | None:
+                    assessment = assessments.get((robot.robot_id, task.task_id))
+                    if assessment is None or not assessment.compatible:
+                        return None
+                    distance = assessment.pickup_distance_m
                     if session["policy"] == "eta":
-                        distance += book.plan(task.pickup_station, task.drop_station, closed=current_closed).distance_m
+                        distance += assessment.loaded_distance_m
                     return distance
-                mission.dispatch(elapsed, cost, eligible_robot_ids=eligible)
+                issued = mission.dispatch(elapsed, cost, eligible_robot_ids=eligible)
+                for intent in issued:
+                    assessment = assessments[(intent.robot_id, intent.task_id)]
+                    journal("dispatch_pair_selected", {
+                        **assessment.to_dict(),
+                        "decision": "selected",
+                        "reason": "policy_selected_compatible_pair",
+                        "policy": session["policy"],
+                        "mission_goal_uuid": intent.goal_id,
+                    })
             for robot in eligible:
                 intent = mission.active_intents.get(robot)
                 if intent is not None:

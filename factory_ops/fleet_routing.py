@@ -127,6 +127,141 @@ class RoutePlan:
         return value
 
 
+@dataclass(frozen=True, slots=True)
+class DispatchRouteCompatibility:
+    """Static full-task route compatibility with peer parked holds.
+
+    This is a dispatch filter only. It does not grant movement, replace the
+    reservation manager, or predict a peer's future state.
+    """
+
+    robot_id: str
+    task_id: str
+    current_anchor: str
+    pickup_station: str
+    drop_station: str
+    closed: bool
+    pickup_route_id: str
+    loaded_route_id: str
+    pickup_distance_m: float
+    loaded_distance_m: float
+    tile_count: int
+    blockers: tuple[tuple[str, str, bool, tuple[Tile, ...]], ...]
+
+    @property
+    def compatible(self) -> bool:
+        return not self.blockers
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "robot_id": self.robot_id,
+            "task_id": self.task_id,
+            "current_anchor": self.current_anchor,
+            "pickup_station": self.pickup_station,
+            "drop_station": self.drop_station,
+            "closed": self.closed,
+            "pickup_route_id": self.pickup_route_id,
+            "loaded_route_id": self.loaded_route_id,
+            "pickup_distance_m": self.pickup_distance_m,
+            "loaded_distance_m": self.loaded_distance_m,
+            "full_task_distance_m": self.pickup_distance_m + self.loaded_distance_m,
+            "tile_count": self.tile_count,
+            "compatible": self.compatible,
+            "reason": None if self.compatible else "peer_parked_hold_overlap",
+            "blockers": [
+                {
+                    "robot_id": robot_id,
+                    "tile_hash": tile_hash,
+                    "observation_fresh": observation_fresh,
+                    "intersection_tiles": [list(tile) for tile in intersection],
+                }
+                for robot_id, tile_hash, observation_fresh, intersection in self.blockers
+            ],
+        }
+
+
+def assess_dispatch_route_compatibility(
+    book: "RouteBook",
+    *,
+    robot_id: str,
+    task_id: str,
+    current_anchor: str,
+    pickup_station: str,
+    drop_station: str,
+    closed: bool,
+    reservation_radius_m: float,
+    reservation_snapshot: Mapping[str, Any],
+) -> DispatchRouteCompatibility:
+    """Compare one full task route with current peer parked reservations.
+
+    Parked holds remain blockers even if their latest pose observation is
+    stale. The caller still has to obtain the normal reservation transfer and
+    Nav2 path authorization before movement.
+    """
+    if not robot_id or not task_id:
+        raise ValueError("robot_id and task_id are required")
+    if type(closed) is not bool:
+        raise ValueError("closed must be a boolean")
+    if not isinstance(reservation_snapshot, Mapping):
+        raise ValueError("reservation_snapshot must be a mapping")
+    holds = reservation_snapshot.get("holds")
+    observations = reservation_snapshot.get("observations")
+    if not isinstance(holds, Mapping) or not isinstance(observations, Mapping):
+        raise ValueError("reservation snapshot requires holds and observations")
+
+    pickup = book.plan(current_anchor, pickup_station, closed=closed)
+    loaded = book.plan(pickup_station, drop_station, closed=closed)
+    bounds = (book.layout.bounds.xmin, book.layout.bounds.ymin,
+              book.layout.bounds.xmax, book.layout.bounds.ymax)
+    route_tiles = swept_tiles(
+        (*pickup.points, *loaded.points[1:]),
+        reservation_radius_m,
+        tile_size_m=book.tile_size_m,
+        bounds_xy=bounds,
+    )
+    blockers: list[tuple[str, str, bool, tuple[Tile, ...]]] = []
+    for peer_id, raw_hold in sorted(holds.items()):
+        if peer_id == robot_id:
+            continue
+        if not isinstance(peer_id, str) or not isinstance(raw_hold, Mapping):
+            raise ValueError("reservation snapshot contains an invalid hold")
+        if raw_hold.get("parked") is not True:
+            continue
+        raw_tiles = raw_hold.get("tiles")
+        tile_hash = raw_hold.get("tile_hash")
+        if (not isinstance(raw_tiles, list) or not isinstance(tile_hash, str)
+                or not tile_hash):
+            raise ValueError("parked hold requires tiles and tile_hash")
+        peer_tiles = frozenset(
+            (tile[0], tile[1])
+            for tile in raw_tiles
+            if isinstance(tile, list) and len(tile) == 2
+            and type(tile[0]) is int and type(tile[1]) is int
+        )
+        if len(peer_tiles) != len(raw_tiles):
+            raise ValueError("parked hold contains invalid or duplicate tiles")
+        intersection = tuple(sorted(route_tiles & peer_tiles))
+        if not intersection:
+            continue
+        observation = observations.get(peer_id)
+        fresh = bool(isinstance(observation, Mapping) and observation.get("fresh") is True)
+        blockers.append((peer_id, tile_hash, fresh, intersection))
+    return DispatchRouteCompatibility(
+        robot_id=robot_id,
+        task_id=task_id,
+        current_anchor=current_anchor,
+        pickup_station=pickup_station,
+        drop_station=drop_station,
+        closed=closed,
+        pickup_route_id=pickup.route_id,
+        loaded_route_id=loaded.route_id,
+        pickup_distance_m=pickup.distance_m,
+        loaded_distance_m=loaded.distance_m,
+        tile_count=len(route_tiles),
+        blockers=tuple(blockers),
+    )
+
+
 class RouteBook:
     """Planning-only routes over a source-pinned authored centerline graph."""
 
@@ -279,4 +414,12 @@ class RouteBook:
                 "scope": "Authored geometric route/tile compilation only. No Nav2 path, action, reservation grant, drive performance or GPU execution is asserted."}
 
 
-__all__ = ["RouteBook", "RoutePlan", "Tile", "segment_rectangle_distance", "swept_tiles"]
+__all__ = [
+    "DispatchRouteCompatibility",
+    "RouteBook",
+    "RoutePlan",
+    "Tile",
+    "assess_dispatch_route_compatibility",
+    "segment_rectangle_distance",
+    "swept_tiles",
+]
