@@ -308,9 +308,10 @@ def main() -> int:
             bag_topics.extend(robots[robot]["follow"].service_event_topics)
         service_event_topics = tuple(topic for rt in robots.values() for topic in rt["follow"].service_event_topics)
         service_names = [topic.removesuffix("/_service_event") for topic in service_event_topics]
-        ordinary_topics = [topic for topic in bag_topics if topic not in service_event_topics]
-        bag = subprocess.Popen(["ros2", "bag", "record", "--use-sim-time", "--include-hidden-topics", "--storage", "sqlite3", "--output", str(output / "rosbag"), "--qos-profile-overrides-path", str(qos), "--topics", *ordinary_topics, "--services", *service_names], stdout=logs["rosbag"], stderr=subprocess.STDOUT, start_new_session=True)
+        # Generated action events use /action/ types; list them explicitly as topics too.
+        bag = subprocess.Popen(["ros2", "bag", "record", "--use-sim-time", "--include-hidden-topics", "--storage", "sqlite3", "--output", str(output / "rosbag"), "--qos-profile-overrides-path", str(qos), "--topics", *bag_topics, "--services", *service_names], stdout=logs["rosbag"], stderr=subprocess.STDOUT, start_new_session=True)
         launch = subprocess.Popen(["ros2", "launch", str(project / "scripts/ros/g2.launch.py")], stdout=logs["nav2"], stderr=subprocess.STDOUT, start_new_session=True)
+        result["stage"] = "evidence_discovery"
         discovery_end = min(deadline, time.monotonic() + 300)
         while True:
             for node in nodes:

@@ -103,6 +103,8 @@ API 근거는 [Nav2 1.3.13 planner](https://github.com/ros-navigation/navigation
 
 서비스 기록은 [Jazzy rclpy Client introspection](https://github.com/ros2/rclpy/blob/4e607c09d624debc39a4ae5405680c06d87fac35/rclpy/rclpy/client.py#L193-L208)과 [표준 ServiceEventInfo](https://github.com/ros2/rcl_interfaces/blob/jazzy/service_msgs/msg/ServiceEventInfo.msg)를 따른다. 수락 응답은 UUID를 되돌려주지 않으므로 실제 SendGoal 요청 UUID·수락 응답·GetResult 요청 UUID·action status를 함께 대조한다.
 
+Jazzy rosbag2의 [service event 판별](https://github.com/ros2/rosbag2/blob/12b5e8ba4eb5665501a16f0d9e050552a1149f56/rosbag2_cpp/src/rosbag2_cpp/service_utils.cpp#L25-L56)은 `/srv/` 타입만 인식한다. `/action/` 타입인 SendGoal·GetResult 이벤트는 `--topics`에도 명시하고 `--include-hidden-topics`를 사용한다. 표준 CancelGoal을 위한 `--services` 목록도 유지한다. 원본 구독이 확인되기 전에는 센서 전달·주행을 시작하지 않는다.
+
 ## GPU 단계의 검증 순서
 
 | 단계 | 확인할 증거 | 다음 단계 조건 |
