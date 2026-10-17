@@ -198,7 +198,7 @@ class FactoryVisualRuntimeTests(unittest.TestCase):
         class Geom:
             ignore_visibility: bool | None = None
 
-            def BBoxCache(self, _time: float, _purposes: list[str], *, ignoreVisibility: bool = False) -> Cache:
+            def BBoxCache(self, _time: float, _purposes: list[str], useExtentsHint: bool, ignoreVisibility: bool) -> Cache:
                 self.ignore_visibility = ignoreVisibility
                 return Cache(ignoreVisibility)
 

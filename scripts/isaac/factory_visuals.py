@@ -490,7 +490,7 @@ class FactoryVisualRuntime:
         bbox_cache = self.UsdGeom.BBoxCache(
             0.0,
             [self.UsdGeom.Tokens.default_, self.UsdGeom.Tokens.render, self.UsdGeom.Tokens.proxy],
-            ignoreVisibility=True,
+            False, True,
         )
         for prim in self.stage.Traverse():
             if prim.HasAPI(self.UsdPhysics.CollisionAPI):
