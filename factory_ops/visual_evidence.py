@@ -35,6 +35,14 @@ SOURCE_PINS = {
     "visual_assets": PROJECT / "configs/factory-v3/visual-assets.json",
 }
 
+POLISHED_MATERIALS = {
+    "Floor": ((0.32, 0.35, 0.37), 0.0, 0.86),
+    "MachinePaint": ((0.12, 0.17, 0.21), 0.18, 0.55),
+    "MachinePanel": ((0.55, 0.59, 0.61), 0.12, 0.58),
+    "LightSteel": ((0.42, 0.46, 0.50), 0.65, 0.28),
+    "White": ((0.68, 0.72, 0.74), 0.02, 0.72),
+}
+
 
 def validate_visual_evidence(
     output: Path,
@@ -227,6 +235,12 @@ def _validate_deterministic_visual_export(
         errors.append(f"visual canonical layer binding differs: {exc}")
         return
 
+    try:
+        _audit_visual_materials(canonical_visual)
+    except (OSError, ValueError, TypeError) as exc:
+        errors.append(f"visual material source truth differs: {exc}")
+        return
+
     session = runtime.get("session_layer")
     claimed_sublayer = session.get("visual_sublayer") if isinstance(session, Mapping) else None
     outputs = manifest.get("outputs")
@@ -381,12 +395,12 @@ def _validate_render_claims(output: Path, runtime: Mapping[str, Any], manifest: 
         for prim_path in expected_paths:
             row = indexed.get(prim_path, {})
             if prim_path.endswith("Ambient"):
-                valid = row.get("type") == "DomeLight" and _number_close(row.get("intensity"), 600.0)
+                valid = row.get("type") == "DomeLight" and _number_close(row.get("intensity"), 300.0)
             else:
                 valid = (row.get("type") == "RectLight"
-                         and _number_close(row.get("width_m"), 6.0)
-                         and _number_close(row.get("height_m"), 1.2)
-                         and _number_close(row.get("intensity"), 3500.0)
+                         and _number_close(row.get("width_m"), 5.0)
+                         and _number_close(row.get("height_m"), 0.8)
+                         and _number_close(row.get("intensity"), 4000.0)
                          and _number_close(row.get("color_temperature_k"), expected_temperature)
                          and row.get("enable_color_temperature") is True)
             if not valid:
@@ -879,7 +893,19 @@ def _audit_hidden_payload(
 
 
 def _audit_signal(record: Mapping[str, Any], prim_path: str, name: str, count: int) -> None:
-    color = [(0.02, 0.85, 0.18)] if count > 0 else [(0.22, 0.24, 0.27)]
+    if name.startswith(("CI_", "CO_")):
+        slot_index = int(name.rsplit("_", 1)[1])
+        active = count >= slot_index + 1
+    else:
+        active = count > 0
+    if not active:
+        color = [(0.22, 0.24, 0.27)]
+    elif name.startswith(("CI_", "CO_")):
+        color = [(0.02, 0.55, 0.95)]
+    elif name == "Cell":
+        color = [(1.0, 0.55, 0.02)]
+    else:
+        color = [(0.02, 0.85, 0.18)]
     expected = {
         "size": 1.0,
         "primvars:displayColor": color,
@@ -898,9 +924,9 @@ def _audit_light(record: Mapping[str, Any], prim_path: str, readback: Mapping[st
         index = int(prim_path.rsplit("_", 1)[1])
         positions = ((8.0, 5.0), (20.0, 5.0), (32.0, 5.0), (8.0, 19.0), (20.0, 19.0), (32.0, 19.0))
         expected = {
-            "inputs:width": 6.0,
-            "inputs:height": 1.2,
-            "inputs:intensity": 3500.0,
+            "inputs:width": 5.0,
+            "inputs:height": 0.8,
+            "inputs:intensity": 4000.0,
             "inputs:colorTemperature": 5200.0 + 100.0 * (int(runtime["variant_seed"]) % 4),
             "inputs:enableColorTemperature": True,
             "xformOp:translate": (*positions[index], 5.35),
@@ -908,9 +934,27 @@ def _audit_light(record: Mapping[str, Any], prim_path: str, readback: Mapping[st
         }
         _require_prim(record, prim_path, "RectLight", expected, {})
     elif readback.get("type") == "DomeLight":
-        _require_prim(record, prim_path, "DomeLight", {"inputs:intensity": 600.0}, {})
+        _require_prim(record, prim_path, "DomeLight", {"inputs:intensity": 300.0}, {})
     else:
         raise ValueError(f"visual session snapshot light type differs: {prim_path}")
+
+
+def _audit_visual_materials(path: Path) -> None:
+    prims = _parse_controlled_usda(path.read_text(encoding="utf-8"))["prims"]
+    for name, (color, metallic, roughness) in POLISHED_MATERIALS.items():
+        prim_path = f"/World/Visuals/Looks/{name}/Shader"
+        record = prims.get(prim_path)
+        if not isinstance(record, Mapping):
+            raise ValueError(f"material shader is missing: {prim_path}")
+        expected = {
+            "info:id": "UsdPreviewSurface",
+            "inputs:diffuseColor": color,
+            "inputs:metallic": metallic,
+            "inputs:roughness": roughness,
+            "inputs:opacity": 1.0,
+            "inputs:opacityThreshold": 0.01,
+        }
+        _require_prim(record, prim_path, "Shader", expected, {})
 
 
 def _audit_static_visual_override(

@@ -285,11 +285,11 @@ def _visual_header(seed: int, palette: Mapping[str, tuple[float, float, float]])
 
 def _materials(palette: Mapping[str, tuple[float, float, float]]) -> list[str]:
     definitions = {
-        "Floor": ((0.49, 0.52, 0.54), 0.0, 0.78, 1.0),
+        "Floor": ((0.32, 0.35, 0.37), 0.0, 0.86, 1.0),
         "Steel": (palette["steel"], 0.72, 0.32, 1.0),
-        "LightSteel": ((0.60, 0.64, 0.67), 0.50, 0.34, 1.0),
-        "MachinePaint": ((0.31, 0.36, 0.39), 0.22, 0.42, 1.0),
-        "MachinePanel": ((0.69, 0.72, 0.73), 0.30, 0.38, 1.0),
+        "LightSteel": ((0.42, 0.46, 0.50), 0.65, 0.28, 1.0),
+        "MachinePaint": ((0.12, 0.17, 0.21), 0.18, 0.55, 1.0),
+        "MachinePanel": ((0.55, 0.59, 0.61), 0.12, 0.58, 1.0),
         "Dark": ((0.035, 0.045, 0.06), 0.18, 0.46, 1.0),
         "Accent": (palette["accent"], 0.25, 0.32, 1.0),
         "Accent2": (palette["accent2"], 0.18, 0.34, 1.0),
@@ -299,7 +299,7 @@ def _materials(palette: Mapping[str, tuple[float, float, float]]) -> list[str]:
         "SafetyYellow": ((0.88, 0.60, 0.03), 0.05, 0.46, 1.0),
         "SafetyRed": ((0.66, 0.025, 0.02), 0.05, 0.38, 1.0),
         "Green": ((0.03, 0.52, 0.17), 0.0, 0.38, 1.0),
-        "White": ((0.79, 0.81, 0.82), 0.05, 0.62, 1.0),
+        "White": ((0.68, 0.72, 0.74), 0.02, 0.72, 1.0),
         "ToteBlue": ((0.035, 0.22, 0.43), 0.05, 0.46, 1.0),
         "ToteOrange": ((0.68, 0.25, 0.035), 0.05, 0.46, 1.0),
         "Glass": ((0.08, 0.21, 0.28), 0.12, 0.16, 0.28),

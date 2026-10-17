@@ -10,12 +10,12 @@ import unittest
 from typing import Any, Callable
 
 from factory_ops.layout import Layout
-from factory_ops.operations.ledger import Ledger
+from factory_ops.operations import Command, EventId, Ledger, Stage, Transition
 from factory_ops.usda import export_usda
 from factory_ops.visual_evidence import SOURCE_PINS, _look_at_camera_to_world, validate_visual_evidence
 from factory_ops.visual_scene import export_visual_scene
 from factory_ops.visual_state import canonical_sha256, make_visual_state, project_ledger_state
-from scripts.isaac.factory_visuals import SIGNAL_PLACEMENTS, SIGNAL_SIZE_M, build_payload_visibility_plan
+from scripts.isaac.factory_visuals import SIGNAL_PLACEMENTS, SIGNAL_SIZE_M, _signal_color, build_payload_visibility_plan
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -93,9 +93,22 @@ def _session_usda(
     }
     for name, count in counts.items():
         translate = ", ".join(str(value) for value in SIGNAL_PLACEMENTS[name])
+        if name.startswith(("CI_", "CO_")):
+            slot_index = int(name.rsplit("_", 1)[1])
+            active = count >= slot_index + 1
+        else:
+            active = count > 0
+        if not active:
+            color = "(0.22, 0.24, 0.27)"
+        elif name.startswith(("CI_", "CO_")):
+            color = "(0.02, 0.55, 0.95)"
+        elif name == "Cell":
+            color = "(1.0, 0.55, 0.02)"
+        else:
+            color = "(0.02, 0.85, 0.18)"
         add(f"/World/Visuals/OperationalSignals/{name}", [
             "double size = 1",
-            f"color3f[] primvars:displayColor = [{'(0.02, 0.85, 0.18)' if count > 0 else '(0.22, 0.24, 0.27)'}]",
+            f"color3f[] primvars:displayColor = [{color}]",
             'custom string semanticClass = "process_equipment"',
             f'custom string stateRole = "{name.lower()}_status"',
             f"custom int signalCount = {count}",
@@ -106,15 +119,15 @@ def _session_usda(
     temperature = 5200.0
     for index, (x, y) in enumerate(((8.0, 5.0), (20.0, 5.0), (32.0, 5.0), (8.0, 19.0), (20.0, 19.0), (32.0, 19.0))):
         add(f"/World/Visuals/Lights/Panel_{index}", [
-            "float inputs:width = 6",
-            "float inputs:height = 1.2",
-            "float inputs:intensity = 3500",
+            "float inputs:width = 5",
+            "float inputs:height = 0.8",
+            "float inputs:intensity = 4000",
             f"float inputs:colorTemperature = {temperature}",
             "bool inputs:enableColorTemperature = true",
             f"double3 xformOp:translate = ({x}, {y}, 5.35)",
             'uniform token[] xformOpOrder = ["xformOp:translate"]',
         ], kind="def RectLight")
-    add("/World/Visuals/Lights/Ambient", ["float inputs:intensity = 600"], kind="def DomeLight")
+    add("/World/Visuals/Lights/Ambient", ["float inputs:intensity = 300"], kind="def DomeLight")
 
     def render(nodes: dict[str, Any], depth: int = 0) -> str:
         rows: list[str] = []
@@ -138,7 +151,9 @@ def _session_usda(
 
 
 class Fixture:
-    def __init__(self, root: Path) -> None:
+    def __init__(self, root: Path, *, buffer: str | None = None, count: int = 0) -> None:
+        if buffer not in {None, "ci", "co"} or type(count) is not int or not 0 <= count <= 2:
+            raise ValueError("fixture buffer/count is invalid")
         self.session = root / "session"
         self.output = root / "output"
         self.session.mkdir(); self.output.mkdir()
@@ -227,11 +242,11 @@ class Fixture:
                 "readbacks": [
                     *[{
                         "prim_path": f"/World/Visuals/Lights/Panel_{index}",
-                        "type": "RectLight", "width_m": 6.0, "height_m": 1.2,
-                        "intensity": 3500.0, "color_temperature_k": 5200.0,
+                        "type": "RectLight", "width_m": 5.0, "height_m": 0.8,
+                        "intensity": 4000.0, "color_temperature_k": 5200.0,
                         "enable_color_temperature": True,
                     } for index in range(6)],
-                    {"prim_path": "/World/Visuals/Lights/Ambient", "type": "DomeLight", "intensity": 600.0},
+                    {"prim_path": "/World/Visuals/Lights/Ambient", "type": "DomeLight", "intensity": 300.0},
                 ],
             },
             "renderer": {
@@ -252,7 +267,41 @@ class Fixture:
         ledger = Ledger(RUN_ID)
         ledger.add_robot("carter1", "P1")
         ledger.add_robot("carter2", "P2")
-        ledger.add_order("order-1", "payload-1", "S1", ready_time=0.0)
+        order_count = count if buffer is not None and count > 0 else 1
+        for index in range(order_count):
+            ledger.add_order(f"order-{index + 1}", f"payload-{index + 1}", "S1", ready_time=0.0)
+        sequence = 0
+        now = 0.0
+        if buffer is not None:
+            for index in range(count):
+                order_id = f"order-{index + 1}"
+                payload_id = f"payload-{index + 1}"
+                robot_id = f"carter{index + 1}"
+                task_id = f"{order_id}:in"
+                for transition in (Transition.ASSIGN, Transition.PICKUP, Transition.DROP):
+                    sequence += 1
+                    now += 1.0
+                    ledger.apply(Command(
+                        EventId(RUN_ID, "fixture", sequence), now, order_id, payload_id,
+                        Stage.INBOUND, transition, ledger.orders[order_id].state_version,
+                        task_id=task_id, robot_id=robot_id,
+                        station_id="S1" if transition is Transition.PICKUP else "CI" if transition is Transition.DROP else None,
+                    ))
+                if buffer == "co":
+                    sequence += 1
+                    now += 1.0
+                    ledger.apply(Command(
+                        EventId(RUN_ID, "fixture", sequence), now, order_id, payload_id,
+                        Stage.PROCESS, Transition.PROCESS_START, ledger.orders[order_id].state_version,
+                        station_id="CELL1",
+                    ))
+                    sequence += 1
+                    now += ledger.config.service_time
+                    ledger.apply(Command(
+                        EventId(RUN_ID, "fixture", sequence), now, order_id, payload_id,
+                        Stage.PROCESS, Transition.PROCESS_COMPLETE, ledger.orders[order_id].state_version,
+                        station_id="CELL1",
+                    ))
         self.ledger_events = ledger.events
         projection = project_ledger_state(ledger.snapshot())
         state = make_visual_state(
@@ -371,6 +420,14 @@ class Fixture:
 
 
 class VisualEvidenceTests(unittest.TestCase):
+    def test_operational_signal_colors_encode_role_and_state(self) -> None:
+        self.assertEqual(_signal_color("CI_0", True), (0.02, 0.55, 0.95))
+        self.assertEqual(_signal_color("CO_1", True), (0.02, 0.55, 0.95))
+        self.assertEqual(_signal_color("Cell", True), (1.0, 0.55, 0.02))
+        self.assertEqual(_signal_color("Complete", True), (0.02, 0.85, 0.18))
+        for name in SIGNAL_PLACEMENTS:
+            self.assertEqual(_signal_color(name, False), (0.22, 0.24, 0.27))
+
     def test_valid_fixture_passes_full_visual_chain(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             fixture = Fixture(Path(temporary))
@@ -380,6 +437,34 @@ class VisualEvidenceTests(unittest.TestCase):
         self.assertTrue(report["passed"])
         self.assertEqual(report["ledger_bound_events"], 1)
         self.assertEqual(report["capture_frames"], 1)
+
+    def test_ci_and_co_slot_signal_states_pass_full_visual_chain(self) -> None:
+        expected_colors = {
+            0: (False, False),
+            1: (True, False),
+            2: (True, True),
+        }
+        for buffer in ("ci", "co"):
+            prefix = buffer.upper()
+            for count, expected in expected_colors.items():
+                with self.subTest(buffer=buffer, count=count), tempfile.TemporaryDirectory() as temporary:
+                    fixture = Fixture(Path(temporary), buffer=buffer, count=count)
+                    errors: list[str] = []
+                    report = validate_visual_evidence(
+                        fixture.output, fixture.session, fixture.scene, fixture.mission,
+                        RUN_ID, SCENARIO_ID, errors,
+                    )
+                    snapshot_path = fixture.output / fixture.event["session_layer_snapshot"]["path"]
+                    snapshot = snapshot_path.read_text(encoding="utf-8")
+                    for index, active in enumerate(expected):
+                        marker = f'/World/Visuals/OperationalSignals/{prefix}_{index}'
+                        self.assertIn(marker.rsplit("/", 1)[1], snapshot)
+                        color = "(0.02, 0.55, 0.95)" if active else "(0.22, 0.24, 0.27)"
+                        signal_start = snapshot.index(f'def Cube "{prefix}_{index}"')
+                        signal_end = snapshot.index("}", signal_start)
+                        self.assertIn(color, snapshot[signal_start:signal_end])
+                    self.assertEqual(errors, [])
+                    self.assertTrue(report["passed"])
 
     def test_adversarial_mutations_are_rejected(self) -> None:
         def rewrite_session(fixture: Fixture, transform: Callable[[str], str]) -> None:
@@ -557,6 +642,22 @@ class VisualEvidenceTests(unittest.TestCase):
             fixture.runtime["visual_export"]["manifest_sha256"] = _sha(manifest_path)
             repin_consistent_claims(fixture)
 
+        def forged_material_source_truth(fixture: Fixture) -> None:
+            visual_dir = fixture.output / "visual-scene"
+            canonical = visual_dir / "factory-v3.visual.usda"
+            canonical.write_text(canonical.read_text(encoding="utf-8").replace(
+                "color3f inputs:diffuseColor = (0.32, 0.35, 0.37)",
+                "color3f inputs:diffuseColor = (0.9, 0.1, 0.9)",
+                1,
+            ), encoding="utf-8")
+            manifest_path = visual_dir / "visual-scene-manifest.json"
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            manifest["outputs"][canonical.name] = _sha(canonical)
+            _save(manifest_path, manifest)
+            fixture.runtime["visual_export"]["outputs"] = deepcopy(manifest["outputs"])
+            fixture.runtime["visual_export"]["manifest_sha256"] = _sha(manifest_path)
+            repin_consistent_claims(fixture)
+
         def forged_static_semantic(fixture: Fixture) -> None:
             rewrite_session(fixture, lambda content: re.sub(
                 r'(semantics:Semantics:semanticData\s*=\s*)"[^"]+"',
@@ -640,6 +741,7 @@ class VisualEvidenceTests(unittest.TestCase):
             "collider world transform drift": (collider_geometry, "changed collider paths"),
             "alternate visual layer with consistent echoes": (alternate_visual_layer, "canonical layer"),
             "forged canonical visual bytes with consistent SHAs": (forged_canonical_visual_layer, "deterministic source regeneration differs"),
+            "forged polished material with consistent SHAs": (forged_material_source_truth, "material source truth differs"),
             "forged static semantic class": (forged_static_semantic, "static semantic authoring differs"),
             "future event beyond final scene": (future_event, "final scene clock"),
             "no applied capture": (no_applied_capture, "no capture of an applied state"),

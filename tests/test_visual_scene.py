@@ -106,6 +106,17 @@ class VisualSceneTests(unittest.TestCase):
         self.assertIn("uint32 NPY raw ID map", profile["capture_contract"]["instance"])
         self.assertEqual(persisted["physical_invariants"]["visual_collision_api_count"], 0)
 
+        cameras = {camera["id"]: camera for camera in profile["cameras"]}
+        self.assertEqual(cameras["portfolio_overview"]["eye_xyz_m"], [20.0, -18.0, 30.0])
+        self.assertEqual(cameras["portfolio_overview"]["target_xyz_m"], [20.0, 12.0, 0.7])
+        self.assertEqual(cameras["portfolio_overview"]["focal_length_mm"], 26.0)
+        self.assertEqual(cameras["carter1_follow"]["eye_xyz_m"], [-2.2, -1.6, 1.8])
+        self.assertEqual(cameras["carter2_follow"]["eye_xyz_m"], [-2.2, 1.6, 1.8])
+        self.assertEqual(cameras["carter1_follow"]["target_xyz_m"], [0.25, 0.0, 0.55])
+        self.assertEqual(cameras["carter2_follow"]["target_xyz_m"], [0.25, 0.0, 0.55])
+        self.assertEqual(cameras["carter1_follow"]["focal_length_mm"], 32.0)
+        self.assertEqual(cameras["carter2_follow"]["focal_length_mm"], 32.0)
+
     def test_output_hashes_and_manifest_hash_match_written_bytes(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             document, output = self._export(Path(temporary), 7)
@@ -143,6 +154,20 @@ class VisualSceneTests(unittest.TestCase):
             self.assertIn(expected, text)
         self.assertNotIn('def Cube "LED_', text)
         self.assertIn('custom string lightingGeometry = "omitted; runtime UsdLux only"', text)
+        expected_materials = {
+            "Floor": ((0.32, 0.35, 0.37), 0.0, 0.86),
+            "MachinePaint": ((0.12, 0.17, 0.21), 0.18, 0.55),
+            "MachinePanel": ((0.55, 0.59, 0.61), 0.12, 0.58),
+            "LightSteel": ((0.42, 0.46, 0.50), 0.65, 0.28),
+            "White": ((0.68, 0.72, 0.74), 0.02, 0.72),
+        }
+        for name, (color, metallic, roughness) in expected_materials.items():
+            start = text.index(f'def Material "{name}"')
+            end = text.index("            }", start) + len("            }")
+            material = text[start:end]
+            self.assertIn(f"color3f inputs:diffuseColor = ({', '.join(format(value, 'g') for value in color)})", material)
+            self.assertIn(f"float inputs:metallic = {format(metallic, 'g')}", material)
+            self.assertIn(f"float inputs:roughness = {format(roughness, 'g')}", material)
         instances = document["instances"]
         assert isinstance(instances, list)
         for station_id, (x, y) in {**self.layout.stations, **self.layout.pockets}.items():

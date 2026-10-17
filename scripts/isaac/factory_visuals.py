@@ -47,6 +47,16 @@ SIGNAL_PLACEMENTS = {
 }
 
 
+def _signal_color(name: str, active: bool) -> tuple[float, float, float]:
+    if not active:
+        return (.22, .24, .27)
+    if name.startswith(("CI_", "CO_")):
+        return (.02, .55, .95)
+    if name == "Cell":
+        return (1.0, .55, .02)
+    return (.02, .85, .18)
+
+
 def validate_visual_state_document(document: object, *, run_id: str, scenario_id: str) -> dict[str, Any]:
     """Validate the complete runtime handoff before it can affect presentation."""
     if not isinstance(document, dict):
@@ -571,9 +581,9 @@ class FactoryVisualRuntime:
         for index, (x, y) in enumerate(((8.0, 5.0), (20.0, 5.0), (32.0, 5.0), (8.0, 19.0), (20.0, 19.0), (32.0, 19.0))):
             path = f"/World/Visuals/Lights/Panel_{index}"
             light = UsdLux.RectLight.Define(self.stage, path)
-            light.CreateWidthAttr(6.0)
-            light.CreateHeightAttr(1.2)
-            light.CreateIntensityAttr(3500.0)
+            light.CreateWidthAttr(5.0)
+            light.CreateHeightAttr(0.8)
+            light.CreateIntensityAttr(4000.0)
             light.CreateColorTemperatureAttr(color_temperature)
             light.CreateEnableColorTemperatureAttr(True)
             self.UsdGeom.Xformable(light.GetPrim()).AddTranslateOp().Set(self.Gf.Vec3d(x, y, 5.35))
@@ -589,7 +599,7 @@ class FactoryVisualRuntime:
             })
         dome_path = "/World/Visuals/Lights/Ambient"
         dome = UsdLux.DomeLight.Define(self.stage, dome_path)
-        dome.CreateIntensityAttr(600.0)
+        dome.CreateIntensityAttr(300.0)
         created.append(dome_path)
         readbacks.append({
             "prim_path": dome_path,
@@ -658,7 +668,7 @@ class FactoryVisualRuntime:
             if not existed:
                 cube.AddTranslateOp().Set(self.Gf.Vec3d(*SIGNAL_PLACEMENTS[name]))
                 cube.AddScaleOp().Set(self.Gf.Vec3d(SIGNAL_SIZE_M, SIGNAL_SIZE_M, SIGNAL_SIZE_M))
-            color = (0.02, .85, .18) if active else (.22, .24, .27)
+            color = _signal_color(name, active)
             cube.CreateDisplayColorAttr([self.Gf.Vec3f(*color)])
             prim = cube.GetPrim()
             _set_custom_string(prim, "semanticClass", "process_equipment")
