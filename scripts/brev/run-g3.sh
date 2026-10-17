@@ -70,6 +70,7 @@ resources="$root/resources/$run"
 pack_program="$project/scripts/brev/g3_resource_pack.py"
 sampler_pid=
 sim_log_pid=
+nav_log_pid=
 created=()
 resources_started=false
 resources_sealed=false
@@ -126,7 +127,7 @@ cleanup() {
     if [ ! -e "$cleanup_log" ]; then docker logs "$container" > "$cleanup_log" 2>&1 || true; fi
     docker rm -f "$container" >/dev/null 2>&1 || true
   done
-  for process_id in "$sampler_pid" "$sim_log_pid"; do
+  for process_id in "$sampler_pid" "$sim_log_pid" "$nav_log_pid"; do
     if [ -n "$process_id" ]; then
       kill "$process_id" >/dev/null 2>&1 || true
       wait "$process_id" >/dev/null 2>&1 || true
@@ -206,6 +207,7 @@ paths=[
     'scripts/brev/run-g3.sh',
     'scripts/brev/g3_resource_pack.py',
     'scripts/brev/g3_gpu_sampler.py',
+    'scripts/brev/g3_pair_wait.py',
     'scripts/isaac/nav_scene.py','scripts/isaac/g2_scene.py','scripts/isaac/g3_scene.py',
     'scripts/isaac/factory_visuals.py',
     'scripts/ros/g2.launch.py','scripts/ros/g3_mission.py','scripts/ros/g3_evidence.py',
@@ -360,9 +362,15 @@ docker start "$sim" >/dev/null
 docker logs -f "$sim" > "$root/logs/$run-sim.log" 2>&1 &
 sim_log_pid=$!
 
+docker logs -f "$nav" > "$root/logs/$run-nav.log" 2>&1 &
+nav_log_pid=$!
+python3 "$project/scripts/brev/g3_pair_wait.py" --nav "$nav" --sim "$sim" \
+  --record "$root/logs/$run-pair-lifecycle.json"
 set +e
-docker logs -f "$nav" 2>&1 | tee "$root/logs/$run-nav.log"
 nav_status=$(docker wait "$nav")
+wait "$nav_log_pid"
+nav_log_status=$?
+nav_log_pid=
 if [ "$nav_status" -ne 0 ] && [ ! -f "$output/mission-control.json" ]; then
   sudo -n python3 - "$output/mission-control.json" "$run_id" "$scenario" <<'PY'
 from pathlib import Path
@@ -381,6 +389,7 @@ sim_log_status=$?
 sim_log_pid=
 set -e
 printf '%s\n' "$sim_log_status" > "$root/logs/$run-sim-log-exit.txt"
+printf '%s\n' "$nav_log_status" > "$root/logs/$run-nav-log-exit.txt"
 
 docker logs "$sim" > "$root/logs/$run-sim.log" 2>&1
 sudo -n install -m 0644 -o 1234 -g 1234 "$root/logs/$run-sim.log" "$output/isaac.log"

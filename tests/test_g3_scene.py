@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import math
+import os
 from pathlib import Path
 import tempfile
 from types import SimpleNamespace
@@ -11,6 +12,8 @@ import unittest
 from unittest.mock import Mock, patch
 
 from scripts.isaac.g3_scene import BarrierLifecycle
+from scripts.isaac import g2_scene
+from scripts.ros.g3_mission import session_verification_record
 
 
 RUN_ID = "a" * 32
@@ -257,6 +260,102 @@ class BarrierLifecycleTests(unittest.TestCase):
             (8, "hold", {"linear_m_s": 0.0, "angular_rad_s": 0.0}),
         )
         self.assertNotIn("ground_truth", stopped)
+
+
+class G3BootstrapPathTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self.temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temporary.cleanup)
+        self.root = Path(self.temporary.name).resolve()
+        self.project = self.root / "project"
+        self.session_root = self.project / "runs" / "session"
+        self.scene = self.session_root / "scene/factory-v3.usda"
+        self.scene.parent.mkdir(parents=True)
+        self.scene.write_text("#usda 1.0\n", encoding="utf-8")
+        self.session = {"scenario_id": "QUALIFICATION_NORMAL", "primary_evaluation": False,
+                        "scope": "qualification_and_pilot_only_not_primary_comparison"}
+        (self.session_root / "session.json").write_text(json.dumps(self.session), encoding="utf-8")
+        self.output = self.root / "output"
+        provenance = self.output / "provenance"
+        provenance.mkdir(parents=True)
+        (provenance / "source.tar").write_bytes(b"explicit_non_evidence_archive_fixture")
+        (provenance / "source-commit.raw").write_bytes(b"explicit_non_evidence_commit_fixture")
+        self.session_sha = g2_scene.base._sha256(self.session_root / "session.json")
+        self.archive_sha = g2_scene.base._sha256(provenance / "source.tar")
+        self.commit_sha = g2_scene.base._sha256(provenance / "source-commit.raw")
+        self.environment = {
+            "schema_version": 1, "run_id": RUN_ID, "source_commit": "b" * 40, "checkout_head": "b" * 40,
+            "checkout_clean": True, "source_git_object_verification": True,
+            "session_json_sha256": self.session_sha, "scenario_id": self.session["scenario_id"],
+            "source_archive_sha256": self.archive_sha, "source_commit_object_sha256": self.commit_sha,
+            "source_files": {key: "c" * 64 for key in (
+                "scripts/isaac/g3_scene.py", "scripts/isaac/g2_scene.py", "factory_ops/source_provenance.py")},
+        }
+        self.environment_path = provenance / "source-environment.json"
+        self.environment_path.write_text(json.dumps(self.environment), encoding="utf-8")
+        environment_patch = patch.dict(os.environ, {
+            "FACTORY_OPS_G3_SOURCE_COMMIT": "b" * 40, "FACTORY_OPS_G3_SESSION_SHA256": self.session_sha,
+            "FACTORY_OPS_G3_PROVENANCE_SHA256": g2_scene.base._sha256(self.environment_path),
+            "FACTORY_OPS_G3_PRIMARY_INPUTS_SHA256": "",
+        })
+        environment_patch.start()
+        self.addCleanup(environment_patch.stop)
+        self.marker = session_verification_record(run_id=RUN_ID, scenario_id=self.session["scenario_id"],
+                                                  session_sha256=self.session_sha, session=self.session)
+        self.marker_path = self.output / "session-verified.json"
+        self.marker_path.write_text(json.dumps(self.marker), encoding="utf-8")
+        proof_patch = patch("scripts.isaac.g3_scene.verify_source_archive", return_value={
+            "passed": True, "source_archive_sha256": self.archive_sha, "commit_object_sha256": self.commit_sha,
+        })
+        self.proof = proof_patch.start()
+        self.addCleanup(proof_patch.stop)
+        self.lifecycle = BarrierLifecycle(self.session, RUN_ID, self.session_root)
+
+    def test_exact_verified_bootstrap_is_allowed_and_preserved(self) -> None:
+        before = {p.relative_to(self.output): p.read_bytes() for p in self.output.rglob("*") if p.is_file()}
+        self.assertEqual((self.scene, self.output), self.lifecycle.prepare_worker_paths(self.scene, self.output))
+        self.assertEqual(before, {p.relative_to(self.output): p.read_bytes()
+                                  for p in self.output.rglob("*") if p.is_file()})
+        self.proof.assert_called_once_with(self.output / "provenance/source.tar",
+            self.output / "provenance/source-commit.raw", "b" * 40, self.environment["source_files"],
+            snapshot_root=self.project)
+
+    def test_extra_file_empty_directory_and_missing_bootstrap_are_rejected(self) -> None:
+        extra = self.output / "old-result.json"
+        extra.write_text("{}", encoding="utf-8")
+        with self.assertRaisesRegex(g2_scene.base.SmokeError, "exact file set"):
+            self.lifecycle.prepare_worker_paths(self.scene, self.output)
+        extra.unlink()
+        extra.mkdir()
+        with self.assertRaisesRegex(g2_scene.base.SmokeError, "exact file set"):
+            self.lifecycle.prepare_worker_paths(self.scene, self.output)
+        extra.rmdir()
+        self.marker_path.unlink()
+        with self.assertRaisesRegex(g2_scene.base.SmokeError, "exact file set"):
+            self.lifecycle.prepare_worker_paths(self.scene, self.output)
+
+    def test_marker_identity_and_empty_primary_digest_cannot_bypass_binding(self) -> None:
+        for key, value in (("run_id", "d" * 32), ("scenario_id", "OTHER"),
+                           ("session_sha256", "e" * 64), ("primary_inputs_sha256", "")):
+            with self.subTest(key=key):
+                marker = {**self.marker, key: value}
+                self.marker_path.write_text(json.dumps(marker), encoding="utf-8")
+                with self.assertRaisesRegex(g2_scene.base.SmokeError, "marker differs"):
+                    self.lifecycle.prepare_worker_paths(self.scene, self.output)
+
+    def test_provenance_mutation_or_failed_archive_proof_is_rejected(self) -> None:
+        original = self.environment_path.read_bytes()
+        self.environment_path.write_bytes(original + b" ")
+        with self.assertRaisesRegex(g2_scene.base.SmokeError, "provenance bytes"):
+            self.lifecycle.prepare_worker_paths(self.scene, self.output)
+        self.environment_path.write_bytes(original)
+        self.proof.return_value = {"passed": False}
+        with self.assertRaisesRegex(g2_scene.base.SmokeError, "archive proof"):
+            self.lifecycle.prepare_worker_paths(self.scene, self.output)
+
+    def test_ordinary_g2_worker_still_requires_empty_output(self) -> None:
+        with self.assertRaisesRegex(g2_scene.base.SmokeError, "empty"):
+            g2_scene.base._prepare_worker_paths(self.scene, self.output)
 
 
 if __name__ == "__main__":

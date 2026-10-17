@@ -13,7 +13,7 @@ import re
 import sys
 import time
 import traceback
-from typing import Any, Mapping, Sequence
+from typing import Any, Callable, Mapping, Sequence, cast
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from factory_ops.drive_profile import DriveProfile
@@ -572,7 +572,11 @@ def _run(
     try:
         if not re.fullmatch(r"[0-9a-f]{32}", args.run_id):
             raise base.SmokeError("--run-id must be 32 lowercase hexadecimal characters")
-        scene, output = base._prepare_worker_paths(args.scene, args.output)
+        path_guard = getattr(scene_extension, "prepare_worker_paths", None)
+        if callable(path_guard):
+            scene, output = cast(Callable[[Path, Path], tuple[Path, Path]], path_guard)(args.scene, args.output)
+        else:
+            scene, output = base._prepare_worker_paths(args.scene, args.output)
         layout_path = args.layout.resolve(strict=True)
         config_path = args.config.resolve(strict=True)
         scenarios_path = args.scenarios.resolve(strict=True)

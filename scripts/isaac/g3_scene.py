@@ -8,11 +8,13 @@ import json
 import math
 import os
 from pathlib import Path
+import re
 import sys
 from typing import Any
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from factory_ops.g3_session import verify_session
+from factory_ops.source_provenance import verify_source_archive
 from scripts.isaac import g2_scene
 from scripts.isaac.factory_visuals import FactoryVisualRuntime
 
@@ -33,6 +35,74 @@ class BarrierLifecycle:
         self.session_root = session_root
         self.visuals: FactoryVisualRuntime | None = None
         self.last_captured_visual_sequence: int | None = None
+
+    def prepare_worker_paths(self, scene_arg: Path, output_arg: Path) -> tuple[Path, Path]:
+        if (not scene_arg.is_absolute() or not output_arg.is_absolute()
+                or scene_arg.is_symlink() or output_arg.is_symlink()):
+            raise g2_scene.base.SmokeError("G3 bootstrap paths must be absolute and nonsymlink")
+        scene, output = scene_arg.resolve(strict=True), output_arg.resolve(strict=True)
+        if (scene != (self.session_root / "scene/factory-v3.usda").resolve(strict=True)
+                or not scene.is_file() or not output.is_dir()):
+            raise g2_scene.base.SmokeError("G3 bootstrap scene/output differs from the verified session")
+        required_files = {"session-verified.json", "provenance/source.tar",
+                          "provenance/source-commit.raw", "provenance/source-environment.json"}
+        files, directories = set(), set()
+        for path in output.rglob("*"):
+            if path.is_symlink():
+                raise g2_scene.base.SmokeError("G3 bootstrap contains a symlink")
+            relative = path.relative_to(output).as_posix()
+            if path.is_file():
+                files.add(relative)
+            elif path.is_dir():
+                directories.add(relative)
+            else:
+                raise g2_scene.base.SmokeError("G3 bootstrap contains a special file")
+        if files != required_files or directories != {"provenance"}:
+            raise g2_scene.base.SmokeError("G3 bootstrap exact file set differs; output must be a new attempt")
+        source_commit = os.environ.get("FACTORY_OPS_G3_SOURCE_COMMIT", "")
+        expected_session_sha = os.environ.get("FACTORY_OPS_G3_SESSION_SHA256", "")
+        expected_environment_sha = os.environ.get("FACTORY_OPS_G3_PROVENANCE_SHA256", "")
+        primary_sha = os.environ.get("FACTORY_OPS_G3_PRIMARY_INPUTS_SHA256") or None
+        if (re.fullmatch(r"[0-9a-f]{40}", source_commit) is None
+                or re.fullmatch(r"[0-9a-f]{64}", expected_session_sha) is None
+                or re.fullmatch(r"[0-9a-f]{64}", expected_environment_sha) is None
+                or expected_session_sha != g2_scene.base._sha256(self.session_root / "session.json")
+                or (self.session["primary_evaluation"] and re.fullmatch(r"[0-9a-f]{64}", primary_sha or "") is None)
+                or (not self.session["primary_evaluation"] and primary_sha is not None)):
+            raise g2_scene.base.SmokeError("G3 bootstrap supervisor source/session/input binding differs")
+        marker = json.loads((output / "session-verified.json").read_text(encoding="utf-8"))
+        expected_marker = {
+            "schema_version": 1, "status": "verified", "run_id": self.run_id,
+            "scenario_id": self.session["scenario_id"], "source_commit": source_commit,
+            "session_sha256": expected_session_sha, "primary_evaluation": self.session["primary_evaluation"],
+            "scope": self.session["scope"], "primary_inputs_sha256": primary_sha,
+        }
+        if marker != expected_marker:
+            raise g2_scene.base.SmokeError("G3 bootstrap session verification marker differs")
+        provenance = output / "provenance"
+        environment_path = provenance / "source-environment.json"
+        if g2_scene.base._sha256(environment_path) != expected_environment_sha:
+            raise g2_scene.base.SmokeError("G3 bootstrap provenance bytes differ from the supervisor binding")
+        environment = json.loads(environment_path.read_text(encoding="utf-8"))
+        if (not isinstance(environment, dict) or environment.get("schema_version") != 1
+                or environment.get("run_id") != self.run_id or environment.get("source_commit") != source_commit
+                or environment.get("checkout_head") != source_commit or environment.get("checkout_clean") is not True
+                or environment.get("source_git_object_verification") is not True
+                or environment.get("session_json_sha256") != expected_session_sha
+                or environment.get("scenario_id") != self.session["scenario_id"]):
+            raise g2_scene.base.SmokeError("G3 bootstrap source environment identity differs")
+        source_files = environment.get("source_files")
+        if not isinstance(source_files, dict) or not {
+            "scripts/isaac/g3_scene.py", "scripts/isaac/g2_scene.py", "factory_ops/source_provenance.py"
+        }.issubset(source_files):
+            raise g2_scene.base.SmokeError("G3 bootstrap required source pins are absent")
+        proof = verify_source_archive(provenance / "source.tar", provenance / "source-commit.raw",
+                                      source_commit, source_files, snapshot_root=self.session_root.parents[1])
+        if (proof.get("passed") is not True
+                or proof.get("source_archive_sha256") != environment.get("source_archive_sha256")
+                or proof.get("commit_object_sha256") != environment.get("source_commit_object_sha256")):
+            raise g2_scene.base.SmokeError("G3 bootstrap source archive proof differs")
+        return scene, output
 
     def setup(self, stage: Any, UsdGeom: Any, UsdPhysics: Any, Gf: Any, output: Path) -> dict[str, Any]:
         self.output = output
