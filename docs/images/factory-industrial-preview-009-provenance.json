@@ -579,7 +579,7 @@
     "reviewer": "factory_v3_media_review",
     "scope": "static factory appearance only",
     "score_out_of_10": 7.5,
-    "sha256": "69ffb5ed00bccb63eead0999e4b07b14f5437109526ef472bdf8fce9c5c25ca6",
+    "sha256": "80ede254ae6436ff76459e963c60f6c5abec321166529c778653e11cc599d00d",
     "verdict": "limited_preview_pass"
   },
   "width": 1280
