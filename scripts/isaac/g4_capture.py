@@ -338,11 +338,17 @@ def _source_class_bindings(visual_manifest: Mapping[str, Any]) -> dict[str, str]
         "/World/Carter2": "amr",
         "/World/Carter1/chassis_link/G4PortfolioPayload": "payload_tote",
         "/World/G4PortfolioProps/SafetyBarrier": "barrier",
-        "/World/Visuals/FloorGraphics": "floor_marking",
+        "/World/Visuals/FloorGraphics": "floor",
     }
     instances = visual_manifest.get("instances")
     if not isinstance(instances, list):
         raise CaptureError("visual manifest has no instances for semantic source binding")
+    floor_roots = visual_manifest.get("floor_semantic_roots")
+    if (not isinstance(floor_roots, Mapping) or floor_roots.get("/World/Visuals/FloorGraphics") != "floor"
+            or any(not isinstance(path, str) or not (path == "/World/Visuals/FloorGraphics" or path.startswith("/World/Visuals/FloorGraphics/"))
+                   or class_name not in {"floor", "floor_marking", "station_marker"} for path, class_name in floor_roots.items())):
+        raise CaptureError("visual manifest floor semantic roots are invalid")
+    bindings.update(floor_roots)
     for item in instances:
         path = item.get("prim_path") if isinstance(item, Mapping) else None
         class_name = item.get("semantic_class") if isinstance(item, Mapping) else None

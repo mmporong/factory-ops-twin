@@ -70,7 +70,8 @@ def export_visual_scene(
     lines = _visual_header(variant_seed, palette)
     lines.extend(_materials(palette))
     lines.extend(_factory_shell(palette))
-    lines.extend(_floor_graphics(layout, palette))
+    floor_semantic_roots: dict[str, str] = {}
+    lines.extend(_floor_graphics(layout, palette, semantic_roots=floor_semantic_roots))
     assignments = config["obstacle_assets"]
     assert isinstance(assignments, dict)
     for obstacle_id in sorted(obstacle_by_id):
@@ -151,6 +152,7 @@ def export_visual_scene(
         },
         "semantic_taxonomy": config["required_semantic_taxonomy"],
         "runtime_semantics": config["runtime_semantics"],
+        "floor_semantic_roots": dict(sorted(floor_semantic_roots.items())),
         "instances": [_instance_document(instance) for instance in instances],
         "physical_invariants": {
             "source_obstacle_count": 19,
@@ -344,8 +346,12 @@ def _factory_shell(palette: Mapping[str, tuple[float, float, float]]) -> list[st
     return lines
 
 
-def _floor_graphics(layout: Layout, palette: Mapping[str, tuple[float, float, float]]) -> list[str]:
+def _floor_graphics(layout: Layout, palette: Mapping[str, tuple[float, float, float]], *,
+                    semantic_roots: dict[str, str] | None = None) -> list[str]:
     del palette
+    semantic_roots = {} if semantic_roots is None else semantic_roots
+    root_path = "/World/Visuals/FloorGraphics"
+    semantic_roots[root_path] = "floor"
     lines = [
         '        def Xform "FloorGraphics"',
         "        {",
@@ -353,7 +359,12 @@ def _floor_graphics(layout: Layout, palette: Mapping[str, tuple[float, float, fl
         '            custom string semanticClass = "floor"',
         '            custom string stateRole = "floor_and_markings"',
     ]
-    lines.extend(_box_usda(_Box("FloorFinish", (0.0, 0.0, 0.001, 40.0, 24.0, 0.006), "Floor", "floor", "factory_floor"), 12))
+    def add_box(box: _Box) -> None:
+        lines.extend(_box_usda(box, 12))
+        if box.semantic_class is not None:
+            semantic_roots[f"{root_path}/{_prim_name(box.name)}"] = box.semantic_class
+
+    add_box(_Box("FloorFinish", (0.0, 0.0, 0.001, 40.0, 24.0, 0.006), "Floor", "floor", "factory_floor"))
     zones = (
         ("WestZone", (0.2, 0.2, 0.007, 11.0, 23.8, 0.014), "ZoneBlue"),
         ("CellZone", (12.0, 5.2, 0.007, 30.5, 18.8, 0.014), "ZoneAmber"),
@@ -368,12 +379,13 @@ def _floor_graphics(layout: Layout, palette: Mapping[str, tuple[float, float, fl
             ("West", (x0, y0 + thickness, z0, x0 + thickness, y1 - thickness, z1)),
             ("East", (x1 - thickness, y0 + thickness, z0, x1, y1 - thickness, z1)),
         ):
-            lines.extend(_box_usda(_Box(f"{name}_{suffix}", border, material, "floor_marking", "zone_boundary"), 12))
+            add_box(_Box(f"{name}_{suffix}", border, material, "floor_marking", "zone_boundary"))
     for index, y in enumerate((2.3, 5.7, 10.2, 13.8, 18.3, 21.7)):
-        lines.extend(_box_usda(_Box(f"AisleLine_{index}", (0.4, y - 0.025, 0.011, 39.6, y + 0.025, 0.016), "SafetyYellow", "floor_marking", "safety_line"), 12))
+        add_box(_Box(f"AisleLine_{index}", (0.4, y - 0.025, 0.011, 39.6, y + 0.025, 0.016), "SafetyYellow", "floor_marking", "safety_line"))
     for marker_id, xy in sorted({**layout.stations, **layout.pockets}.items()):
         x, y = xy
         root = _prim_name(marker_id)
+        semantic_roots[f"{root_path}/Station_{root}"] = "station_marker"
         lines.extend([
             f'            def Xform "Station_{root}"',
             "            {",

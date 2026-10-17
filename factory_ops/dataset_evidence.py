@@ -424,6 +424,14 @@ def _validate_source_provenance(
                 errors.append(f"scene {scene_id} visual manifest is not bound to the dataset asset manifest")
             else:
                 per_scene["/World/Visuals/FloorGraphics"] = config_sha
+            floor_roots = visual.get("floor_semantic_roots")
+            if (not isinstance(floor_roots, dict) or floor_roots.get("/World/Visuals/FloorGraphics") != "floor"
+                    or any(not _usd_path(path) or not _same_or_descendant(path, "/World/Visuals/FloorGraphics")
+                           or class_name not in {"floor", "floor_marking", "station_marker"} for path, class_name in floor_roots.items())):
+                errors.append(f"scene {scene_id} visual manifest floor semantic roots are invalid")
+            else:
+                for path, class_name in floor_roots.items():
+                    per_scene[f"@class:{path}"] = class_name
             instances = visual.get("instances")
             if not isinstance(instances, list):
                 errors.append(f"scene {scene_id} visual manifest instances is not a list")
@@ -471,7 +479,7 @@ def _validate_source_provenance(
             per_scene["/World/Markers"] = hashes[0]
             per_scene["@class:/World/FloorVisual"] = "floor"
             per_scene["@class:/World/Markers"] = "station_marker"
-            per_scene["@class:/World/Visuals/FloorGraphics"] = "floor_marking"
+            per_scene["@class:/World/Visuals/FloorGraphics"] = "floor"
         if isinstance(scene_id, str):
             bindings[scene_id] = per_scene
     if observed != expected:

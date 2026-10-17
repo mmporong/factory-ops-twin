@@ -31,6 +31,7 @@ from scripts.isaac.g4_capture import (
     _raw_annotator_info,
     _renderer_contract,
     _safety_barrier_plan,
+    _source_class_bindings,
     _verify_source_commit,
 )
 
@@ -781,6 +782,33 @@ class G4CaptureContractTests(unittest.TestCase):
         ])
         self.assertEqual(result["roots"][0]["occlusion_status"], "compound_root_unknown")
         self.assertIsNone(result["roots"][0]["true_compound_occlusion_ratio"])
+
+    def test_authoritative_visual_classes_match_generated_usd(self) -> None:
+        from factory_ops.layout import Layout
+        from factory_ops.usda import export_usda
+        from factory_ops.visual_scene import export_visual_scene
+        from factory_ops.visual_evidence import _parse_controlled_usda, _parse_usd_value
+
+        with tempfile.TemporaryDirectory() as temporary:
+            output = Path(temporary)
+            layout = Layout.from_file(ROOT / "configs/factory-v3/layout.json")
+            export_usda(layout, output / "factory-v3.usda")
+            manifest = export_visual_scene(layout, output, 0)
+            prims = _parse_controlled_usda((output / "factory-v3.visual.usda").read_text(encoding="utf-8"))["prims"]
+            expected = {path: class_name for path, class_name in _source_class_bindings(manifest).items()
+                        if path.startswith("/World/Visuals/")}
+            actual_classes = {}
+            for path, prim in prims.items():
+                if not path.startswith("/World/Visuals/"):
+                    continue
+                tokens = prim["body_tokens"]
+                actual = [_parse_usd_value(tokens, index + 2)[0]
+                          for index, token in enumerate(tokens[:-2])
+                          if token == ("word", "semanticClass") and tokens[index + 1] == ("symbol", "=")]
+                if actual:
+                    self.assertEqual(1, len(actual), path)
+                    actual_classes[path] = actual[0]
+            self.assertEqual(expected, actual_classes)
 
     def test_leaf_occlusion_rejects_invalid_ratio_and_visible_uri_mismatch(self) -> None:
         base = {

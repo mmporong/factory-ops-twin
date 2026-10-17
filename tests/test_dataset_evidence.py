@@ -813,6 +813,7 @@ class DatasetEvidenceTests(unittest.TestCase):
                         "variant": {"id": variant_id},
                         "asset_provenance": {"asset_source_sha256": asset_manifest_sha},
                         "instances": [{"prim_path": "/World/Visuals/Rack", "semantic_class": "rack"}],
+                        "floor_semantic_roots": {"/World/Visuals/FloorGraphics": "floor"},
                     }
                 ),
                 encoding="utf-8",
@@ -823,7 +824,7 @@ class DatasetEvidenceTests(unittest.TestCase):
                 "roots": [
                     {"usd_root_path": "/World/FloorVisual", "class": "floor", "source": "authored_source_manifest"},
                     {"usd_root_path": "/World/Markers", "class": "station_marker", "source": "authored_source_manifest"},
-                    {"usd_root_path": "/World/Visuals/FloorGraphics", "class": "floor_marking", "source": "authored_source_manifest"},
+                    {"usd_root_path": "/World/Visuals/FloorGraphics", "class": "floor", "source": "authored_source_manifest"},
                     {"usd_root_path": "/World/Visuals/Rack", "class": "rack", "source": "authored_source_manifest"},
                     {"usd_root_path": "/World/Carter1", "class": "amr", "source": "authored_source_manifest"},
                     {"usd_root_path": "/World/Carter2", "class": "amr", "source": "authored_source_manifest"},
