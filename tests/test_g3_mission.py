@@ -3,19 +3,35 @@ from __future__ import annotations
 
 from copy import deepcopy
 import math
+import os
 from pathlib import Path
 import tempfile
 from types import SimpleNamespace as NS
 import unittest
+from unittest.mock import patch
 
 from factory_ops.fleet_routing import RouteBook
 from factory_ops.fleet_execution import StoppedGate, path_content_sha256
 from factory_ops.fleet import FleetMission, FleetOrder
 from factory_ops.navigation import GoalPose
-from scripts.ros.g3_mission import angle_error, build_cutoff_record, cutoff_phase_classification, failure_reason, localization_payload, path_final_yaw, path_payload, valid_hold_ack, validate_arrival, verify_navigation_maps, stopped_odometry_record, valid_initial_hold_ack, initial_hold_boundary_ready, terminal_recording_boundary, wait_for_terminal_recording
+from scripts.ros.g3_mission import angle_error, build_cutoff_record, cutoff_phase_classification, failure_reason, localization_payload, path_final_yaw, path_payload, valid_hold_ack, validate_arrival, verify_navigation_maps, stopped_odometry_record, valid_initial_hold_ack, initial_hold_boundary_ready, terminal_recording_boundary, wait_for_terminal_recording, session_verification_record
 
 
 class G3MissionAdmissionTests(unittest.TestCase):
+    def test_docker_empty_primary_input_digest_uses_null_for_non_primary_marker(self):
+        for value in (None, "", "c" * 64):
+            with self.subTest(value=value), patch.dict(os.environ, {}, clear=True):
+                os.environ["FACTORY_OPS_G3_SOURCE_COMMIT"] = "b" * 40
+                if value is not None:
+                    os.environ["FACTORY_OPS_G3_PRIMARY_INPUTS_SHA256"] = value
+                record = session_verification_record(
+                    run_id="a" * 32, scenario_id="QUALIFICATION_NORMAL", session_sha256="d" * 64,
+                    session={"primary_evaluation": bool(value), "scope": "explicit_non_evidence_fixture"},
+                )
+                self.assertEqual(value or None, record["primary_inputs_sha256"])
+                self.assertEqual("b" * 40, record["source_commit"])
+                self.assertEqual("d" * 64, record["session_sha256"])
+
     def test_cutoff_freezes_exact_horizon_and_classifies_every_runtime_phase(self):
         mission = FleetMission("run", [FleetOrder("O1", "P1", "S1", 0.0)],
             robot_stations={"carter1": "P1", "carter2": "P2"}, horizon=10.0)

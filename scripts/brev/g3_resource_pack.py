@@ -108,7 +108,8 @@ def archive_output(root: Path, run: str, run_id: str) -> dict[str, Any]:
         if record.get("run_id") != run_id or record.get("run_label") != run or record.get("phase") != phase:
             raise ValueError("resource checkpoint identity differs")
         times[phase] = record
-    observed = [datetime.fromisoformat(times[phase]["observed_at_utc"])
+    # The Brev host's Python 3.10 requires an explicit UTC offset for ISO-Z input.
+    observed = [datetime.fromisoformat(times[phase]["observed_at_utc"].replace("Z", "+00:00"))
                 for phase in ("start", "workers-finished", "validation-finished")]
     if any(value.utcoffset() is None for value in observed) or observed != sorted(observed):
         raise ValueError("resource checkpoint times are naive or backward")

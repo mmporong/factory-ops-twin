@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime
 import json
 from pathlib import Path
 import tarfile
@@ -28,6 +29,20 @@ class G3ResourcePackTests(unittest.TestCase):
     def record(self):
         for phase in ("start", "workers-finished", "validation-finished"):
             checkpoint(self.root, self.run_label, self.run_id, phase)
+
+    def test_iso_z_checkpoints_also_archive_with_python310_datetime_parser(self):
+        self.record()
+
+        def python310_fromisoformat(value):
+            if value.endswith("Z"):
+                raise ValueError("Python 3.10 does not parse the UTC Z suffix")
+            return datetime.fromisoformat(value)
+
+        with patch("scripts.brev.g3_resource_pack.datetime", wraps=datetime) as clock:
+            clock.fromisoformat.side_effect = python310_fromisoformat
+            record = archive_output(self.root, self.run_label, self.run_id)
+        self.assertEqual(2, record["file_count"])
+        self.assertTrue(record["archive_finished_at_utc"].endswith("Z"))
 
     def test_closed_failed_output_can_be_restored_exactly_without_becoming_qa(self):
         self.record()

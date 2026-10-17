@@ -314,6 +314,17 @@ def prepare_params(project: Path, output: Path, session_root: Path, session: Map
     return path, maps
 
 
+def session_verification_record(*, run_id: str, scenario_id: str, session_sha256: str,
+                                session: Mapping[str, Any]) -> dict[str, Any]:
+    return {
+        "schema_version": 1, "status": "verified", "run_id": run_id,
+        "scenario_id": scenario_id, "source_commit": os.environ.get("FACTORY_OPS_G3_SOURCE_COMMIT"),
+        "session_sha256": session_sha256,
+        "primary_evaluation": session["primary_evaluation"], "scope": session["scope"],
+        "primary_inputs_sha256": os.environ.get("FACTORY_OPS_G3_PRIMARY_INPUTS_SHA256") or None,
+    }
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--session", required=True, type=Path)
@@ -345,13 +356,10 @@ def main() -> int:
         marker_path = output / "session-verified.json"
         if marker_path.exists() or marker_path.is_symlink():
             raise RuntimeError("session verification marker already exists; output must be new")
-        atomic_json(marker_path, {
-            "schema_version": 1, "status": "verified", "run_id": args.run_id,
-            "scenario_id": scenario_id, "source_commit": os.environ.get("FACTORY_OPS_G3_SOURCE_COMMIT"),
-            "session_sha256": sha(session_root / "session.json"),
-            "primary_evaluation": session["primary_evaluation"], "scope": session["scope"],
-            "primary_inputs_sha256": os.environ.get("FACTORY_OPS_G3_PRIMARY_INPUTS_SHA256"),
-        })
+        atomic_json(marker_path, session_verification_record(
+            run_id=args.run_id, scenario_id=scenario_id,
+            session_sha256=sha(session_root / "session.json"), session=session,
+        ))
         while not (output / "sim-ready.json").is_file():
             if time.monotonic() >= deadline:
                 raise TimeoutError("G3 scene did not become ready")
