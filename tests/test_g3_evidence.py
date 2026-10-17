@@ -426,6 +426,48 @@ class G3EvidenceHelperTests(unittest.TestCase):
         _validate_localization_reservations(bag, traces, self.book, [], duplicated, failures)
         self.assertTrue(failures)
 
+    def test_localization_queries_exact_publisher_nanoseconds_at_final_physics_frame(self) -> None:
+        physics_time = 1122.0833333333333
+        ros_time = 1122 + 83_333_333 / 1e9
+        self.assertGreater(physics_time, ros_time)
+        bounds = (self.book.layout.bounds.xmin, self.book.layout.bounds.ymin,
+                  self.book.layout.bounds.xmax, self.book.layout.bounds.ymax)
+        traces, tf_samples, route_events = {}, {}, []
+        for generation, (robot, park) in enumerate((("carter1", "P1"), ("carter2", "P2")), 1):
+            xy = self.book.nodes[park]
+            tf_samples[robot] = self.tf_edges([(ros_time, xy)])
+            traces[robot] = [{"sim_time_s": physics_time, "physics_frame": 67325,
+                              "authorization": {"payload": {"scope": {"reservation_id": generation}}}}]
+            tiles = sorted(swept_tiles([xy], self.book.planning_radius_m,
+                                       tile_size_m=self.book.tile_size_m, bounds_xy=bounds))
+            route_events.append({"robot_id": robot, "predecessor_generation": None,
+                                 "successor_generation": generation, "tiles": tiles})
+        bag = {"tf_samples": tf_samples, "events": []}
+        errors = []
+        report = _validate_localization_reservations(bag, traces, self.book, [], route_events, errors)
+        self.assertEqual([], errors)
+        self.assertEqual(2, report["localized_reservation_checks"])
+        for missing_interval in (0.05, 0.000001):
+            with self.subTest(missing_interval=missing_interval):
+                missing = deepcopy(bag)
+                for edges in missing["tf_samples"].values():
+                    edges["odom->base_link"][-1]["stamp_s"] = ros_time - missing_interval
+                failures = []
+                result = _validate_localization_reservations(missing, traces, self.book, [], route_events, failures)
+                self.assertEqual(0, result["localized_reservation_checks"])
+                self.assertEqual(2, len(failures))
+                self.assertTrue(all("does not bracket" in error for error in failures))
+        for malformed_time in (float("nan"), float("inf"), -float("inf"), -1.0, True, "1122"):
+            with self.subTest(malformed_time=malformed_time):
+                malformed = deepcopy(traces)
+                for rows in malformed.values():
+                    rows[-1]["sim_time_s"] = malformed_time
+                failures = []
+                result = _validate_localization_reservations(bag, malformed, self.book, [], route_events, failures)
+                self.assertEqual(0, result["localized_reservation_checks"])
+                self.assertEqual(2, len(failures))
+                self.assertTrue(all("invalid simulation time" in error for error in failures))
+
     def test_navigation_map_bytes_hashes_and_raw_provenance_are_bound(self) -> None:
         with tempfile.TemporaryDirectory() as folder:
             output = Path(folder)

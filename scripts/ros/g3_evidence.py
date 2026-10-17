@@ -916,7 +916,10 @@ def _validate_localization_reservations(
             errors.append(f"{robot}: actual TF cannot build its trajectory pose index: {exc}")
             continue
         for sample in traces[robot]:
-            stamp = float(sample["sim_time_s"])
+            stamp = _finite_number(sample.get("sim_time_s"))
+            if stamp is None or stamp < 0:
+                errors.append(f"{robot}: trajectory reservation pose has an invalid simulation time")
+                continue
             payload = sample.get("authorization", {}).get("payload") or {}
             scope = payload.get("scope", {}) if isinstance(payload, Mapping) else {}
             generation = scope.get("reservation_id")
@@ -933,7 +936,9 @@ def _validate_localization_reservations(
                 continue
             held = by_generation.get((robot, generation))
             try:
-                pose_xy = decoded_map_pose_indexed(pose_index, stamp)
+                sec, nanosec = _ros_stamp_parts(stamp)
+                # TF headers encode the publisher's rounded nanoseconds, not the physics float.
+                pose_xy = decoded_map_pose_indexed(pose_index, sec + nanosec / 1e9)
             except (KeyError, TypeError, ValueError) as exc:
                 errors.append(f"{robot}: actual TF cannot reconstruct the trajectory reservation pose: {exc}")
                 continue
