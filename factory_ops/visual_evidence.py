@@ -457,8 +457,8 @@ def _validate_stage_contract(layout: Layout, runtime: Mapping[str, Any], errors:
                 or set(geometry) != expected_paths
                 or any(not isinstance(row, Mapping)
                        or not _finite_sequence(row.get("world_transform_row_major"), 16)
-                       or not _bounds(row.get("world_bounds_xyz_m"))
-                       for row in geometry.values())):
+                       or not _stage_collider_bounds(path, row.get("world_bounds_xyz_m"))
+                       for path, row in geometry.items())):
             errors.append(f"visual runtime {label} stage contract differs")
             passed = False
     if before != after:
@@ -1421,6 +1421,17 @@ def _number_close(value: object, expected: float) -> bool:
 
 def _bounds(value: object) -> bool:
     return isinstance(value, list) and len(value) == 6 and all(_finite(item) for item in value) and all(value[index] < value[index + 3] for index in range(3))
+
+
+def _stage_collider_bounds(path: object, value: object) -> bool:
+    if path != "/World/Floor":
+        return _bounds(value)
+    if not _finite_sequence(value, 6):
+        return False
+    bounds = cast(list[float], value)
+    return (bounds[0] < bounds[3]
+            and bounds[1] < bounds[4]
+            and bounds[2] == bounds[5] == 0)
 
 
 def _prim_name(value: str) -> str:

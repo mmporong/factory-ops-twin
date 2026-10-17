@@ -12,7 +12,12 @@ from typing import Any, Callable
 from factory_ops.layout import Layout
 from factory_ops.operations import Command, EventId, Ledger, Stage, Transition
 from factory_ops.usda import export_usda
-from factory_ops.visual_evidence import SOURCE_PINS, _look_at_camera_to_world, validate_visual_evidence
+from factory_ops.visual_evidence import (
+    SOURCE_PINS,
+    _look_at_camera_to_world,
+    _stage_collider_bounds,
+    validate_visual_evidence,
+)
 from factory_ops.visual_scene import export_visual_scene
 from factory_ops.visual_state import canonical_sha256, make_visual_state, project_ledger_state
 from scripts.isaac.factory_visuals import SIGNAL_PLACEMENTS, SIGNAL_SIZE_M, _signal_color, build_payload_visibility_plan
@@ -195,6 +200,9 @@ class Fixture:
             "obstacle_count": 19,
             "marker_count": 8,
         }
+        stage_contract["collider_geometry_readbacks"]["/World/Floor"]["world_bounds_xyz_m"] = [
+            -1.0, -1.0, 0.0, 1.0, 1.0, 0.0,
+        ]
         semantic_count = (visual_dir / "factory-v3.visual.usda").read_text(encoding="utf-8").count("custom string semanticClass")
         self.runtime = {
             "schema_version": 1,
@@ -420,6 +428,29 @@ class Fixture:
 
 
 class VisualEvidenceTests(unittest.TestCase):
+    def test_stage_collider_bounds_only_allow_the_floor_to_be_planar_at_z_zero(self) -> None:
+        planar_floor = [-1.0, -1.0, 0.0, 1.0, 1.0, 0.0]
+        self.assertTrue(_stage_collider_bounds("/World/Floor", planar_floor))
+        self.assertTrue(_stage_collider_bounds("/World/Obstacles/Station_1", [-1, -1, 0, 1, 1, 1]))
+        self.assertFalse(_stage_collider_bounds("/World/Obstacles/Station_1", planar_floor))
+        self.assertFalse(_stage_collider_bounds("/World/Floor/Child", planar_floor))
+
+        invalid_floor_bounds = {
+            "zero x extent": [0, -1, 0, 0, 1, 0],
+            "zero y extent": [-1, 0, 0, 1, 0, 0],
+            "reversed x": [1, -1, 0, -1, 1, 0],
+            "reversed y": [-1, 1, 0, 1, -1, 0],
+            "nan": [-1, -1, 0, 1, float("nan"), 0],
+            "infinity": [-1, -1, 0, 1, float("inf"), 0],
+            "wrong length": [-1, -1, 0, 1, 1],
+            "nonzero planar z": [-1, -1, 1, 1, 1, 1],
+            "positive z thickness": [-1, -1, 0, 1, 1, 0.1],
+            "negative z thickness": [-1, -1, -0.1, 1, 1, 0],
+        }
+        for label, bounds in invalid_floor_bounds.items():
+            with self.subTest(label=label):
+                self.assertFalse(_stage_collider_bounds("/World/Floor", bounds))
+
     def test_operational_signal_colors_encode_role_and_state(self) -> None:
         self.assertEqual(_signal_color("CI_0", True), (0.02, 0.55, 0.95))
         self.assertEqual(_signal_color("CO_1", True), (0.02, 0.55, 0.95))
@@ -493,6 +524,16 @@ class VisualEvidenceTests(unittest.TestCase):
 
         def collider(fixture: Fixture) -> None:
             fixture.runtime["stage_contract_after"]["collision_enabled_readbacks"]["/World/Floor"] = False
+            fixture.persist_runtime()
+
+        def collider_path(fixture: Fixture) -> None:
+            fixture.runtime["stage_contract_after"]["collider_paths"][0] = "/World/Unexpected"
+            fixture.persist_runtime()
+
+        def nonfloor_planar(fixture: Fixture) -> None:
+            geometry = fixture.runtime["stage_contract_after"]["collider_geometry_readbacks"]
+            obstacle_path = next(path for path in geometry if path != "/World/Floor")
+            geometry[obstacle_path]["world_bounds_xyz_m"] = [-1, -1, 0, 1, 1, 0]
             fixture.persist_runtime()
 
         def ledger(fixture: Fixture) -> None:
@@ -716,6 +757,8 @@ class VisualEvidenceTests(unittest.TestCase):
 
         mutations: dict[str, tuple[Callable[[Fixture], None], str]] = {
             "collider drift": (collider, "stage contract"),
+            "collider path drift": (collider_path, "stage contract"),
+            "non-floor planar collider": (nonfloor_planar, "stage contract"),
             "ledger prefix mutation": (ledger, "visual event"),
             "future capture frame": (future_frame, "state from the future"),
             "wrong payload parent": (wrong_parent, "payload prim"),

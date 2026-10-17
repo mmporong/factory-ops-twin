@@ -172,7 +172,7 @@ class FactoryVisualRuntimeTests(unittest.TestCase):
 
         class Box:
             def GetMin(self) -> tuple[float, float, float]:
-                return (-20.0, -12.0, -0.1)
+                return (-20.0, -12.0, 0.0)
 
             def GetMax(self) -> tuple[float, float, float]:
                 return (20.0, 12.0, 0.0)
@@ -227,7 +227,7 @@ class FactoryVisualRuntimeTests(unittest.TestCase):
         assert isinstance(floor, dict)
         self.assertEqual(
             floor["world_bounds_xyz_m"],
-            [-20.0, -12.0, -0.1, 20.0, 12.0, 0.0],
+            [-20.0, -12.0, 0.0, 20.0, 12.0, 0.0],
         )
 
     def test_world_slots_stay_inside_bound_obstacles_and_fail_on_overflow(self) -> None:

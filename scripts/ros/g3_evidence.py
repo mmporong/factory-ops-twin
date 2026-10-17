@@ -37,6 +37,12 @@ from scripts.isaac.g2_scene import _ros_stamp_parts
 from scripts.ros.g3_mission import cutoff_ledger_payload, terminal_recording_boundary
 
 PROJECT = Path(__file__).resolve().parents[2]
+
+
+def primary_inputs_sha_from_environment() -> str | None:
+    return os.environ.get("FACTORY_OPS_G3_PRIMARY_INPUTS_SHA256") or None
+
+
 RESULT = "g3-evidence.json"
 
 
@@ -1191,7 +1197,7 @@ def validate_g3_evidence(
         errors.append("scene qualification/cleanup is invalid")
     if scene.get("mission_control") != control:
         errors.append("scene terminal control differs from the paired mission control")
-    expected_primary_inputs_sha = os.environ.get("FACTORY_OPS_G3_PRIMARY_INPUTS_SHA256")
+    expected_primary_inputs_sha = primary_inputs_sha_from_environment()
     if (session_marker.get("schema_version") != 1 or session_marker.get("status") != "verified"
             or session_marker.get("run_id") != run_id or session_marker.get("scenario_id") != scenario_id
             or session_marker.get("source_commit") != os.environ.get("FACTORY_OPS_G3_SOURCE_COMMIT")

@@ -185,12 +185,141 @@ def validate_arrival(pose: Mapping[str, float], target: GoalPose, *, xy_limit: f
         raise ValueError("FollowPath success failed configured estimated arrival pose/yaw limits")
 
 
+class StopOdometryReceiver:
+    """FIFO boundary between odometry delivery and one robot node's ROS clock."""
+
+    def __init__(self, gate: StoppedGate) -> None:
+        self.gate = gate
+        self._pending: list[dict[str, float]] = []
+        self._last_received_stamp: float | None = None
+        self._last_received_velocity: tuple[float, float] | None = None
+        self._last_now = 0.0
+        self._last_event_now: float | None = None
+
+    @staticmethod
+    def _number(value: Any, name: str) -> float:
+        if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value):
+            raise ValueError(f"{name} must be a finite number")
+        return float(value)
+
+    def observe(self, linear_m_s: Any, angular_rad_s: Any, *, stamp_s: Any,
+                stop_after_s: Any, now_s: Any) -> bool:
+        try:
+            stamp = self._number(stamp_s, "stamp_s")
+            now = self._number(now_s, "now_s")
+        except ValueError:
+            self.reset()
+            raise
+        if stamp < 0 or now < self._last_now:
+            self.reset()
+            raise ValueError("odometry receiver timestamps must be nonnegative and monotonic")
+        self._last_now = now
+        if stop_after_s is None:
+            return False
+        try:
+            stop_after = self._number(stop_after_s, "stop_after_s")
+        except ValueError:
+            self.reset()
+            raise
+        if stamp <= stop_after:
+            return False
+        try:
+            linear = self._number(linear_m_s, "linear_m_s")
+            angular = self._number(angular_rad_s, "angular_rad_s")
+        except ValueError:
+            self.reset()
+            raise
+        velocity = (linear, angular)
+        if ((self._last_received_stamp is not None and stamp < self._last_received_stamp)
+                or (stamp == self._last_received_stamp and velocity != self._last_received_velocity)):
+            self.reset()
+            raise ValueError("odometry receiver input stamps must be FIFO and unambiguous")
+        if stamp != self._last_received_stamp:
+            self._pending.append({"stamp_s": stamp, "linear_m_s": linear, "angular_rad_s": angular})
+            self._last_received_stamp = stamp
+            self._last_received_velocity = velocity
+        self.advance(now_s=now)
+        return True
+
+    def advance(self, *, now_s: Any) -> None:
+        try:
+            now = self._number(now_s, "now_s")
+        except ValueError:
+            self.reset()
+            raise
+        if now < self._last_now:
+            self.reset()
+            raise ValueError("odometry receiver clock must be monotonic")
+        self._last_now = now
+        while self._pending and self._pending[0]["stamp_s"] <= now:
+            sample = self._pending.pop(0)
+            self.gate.update(sample["linear_m_s"], sample["angular_rad_s"],
+                             stamp_s=sample["stamp_s"], now_s=now)
+
+    def is_stopped(self, *, now_s: Any) -> bool:
+        self.advance(now_s=now_s)
+        return not self._pending and self.gate.is_stopped(now_s=float(now_s))
+
+    def observe_event_clock(self, *, now_s: Any) -> float:
+        try:
+            now = self._number(now_s, "event_now_s")
+        except ValueError:
+            self.reset()
+            raise
+        if now < 0 or (self._last_event_now is not None and now < self._last_event_now):
+            self.reset()
+            raise ValueError("odometry receiver event clock must be nonnegative and monotonic")
+        self._last_event_now = now
+        return now
+
+    @property
+    def pending(self) -> list[dict[str, float]]:
+        return [dict(sample) for sample in self._pending]
+
+    @property
+    def samples(self) -> list[dict[str, float]]:
+        return self.gate.samples
+
+    def reset(self) -> None:
+        self.gate.reset()
+        self._pending = []
+        self._last_received_stamp = None
+        self._last_received_velocity = None
+        self._last_now = 0.0
+        self._last_event_now = None
+
+
+def reset_stop_observation(runtime: dict[str, Any]) -> None:
+    runtime["stop_after"] = None
+    runtime["stop_receiver"].reset()
+    runtime["stop_samples"] = []
+
+
 def stopped_odometry_record(gate: StoppedGate, *, now_s: float) -> dict[str, Any]:
     """Seal the actual continuous stationary window and its measurement boundary."""
     samples = gate.samples
     if not gate.is_stopped(now_s=now_s) or not samples:
         raise ValueError("cannot seal an incomplete or stale stop window")
     return {"stopped_sim_time_s": now_s, "stopped_odometry": samples,
+            "stop_measurement_start_stamp_s": samples[0]["stamp_s"]}
+
+
+def committed_stopped_odometry_record(
+    receiver: StopOdometryReceiver, *, local_now_s: Any, event_now_s: Any,
+) -> dict[str, Any] | None:
+    """Seal on the event clock only after both clocks admit the unchanged sample suffix."""
+    event_now = receiver.observe_event_clock(now_s=event_now_s)
+    if not receiver.is_stopped(now_s=local_now_s):
+        return None
+    samples = receiver.samples
+    if not samples:
+        return None
+    newest = samples[-1]["stamp_s"]
+    age = event_now - newest
+    if age < 0 or (age > receiver.gate.ttl_s
+            and not math.isclose(age, receiver.gate.ttl_s, rel_tol=1e-12, abs_tol=1e-12)):
+        return None
+    return {"stopped_sim_time_s": event_now, "stopped_odometry": samples,
             "stop_measurement_start_stamp_s": samples[0]["stamp_s"]}
 
 
@@ -441,7 +570,8 @@ def main() -> int:
                 "pose": None, "last_observation": -math.inf, "phase": "idle", "anchor": session["workload"]["initial_robots"][robot_id],
                 "park": session["workload"]["initial_robots"][robot_id], "leg": None, "generation": None,
                 "held_tiles": frozenset(), "sequence": 0, "last_lease": -math.inf, "last_request": -math.inf,
-                "stop_gate": stop_gate, "stop_after": None, "stop_samples": [], "odom_count": 0,
+                "stop_gate": stop_gate, "stop_receiver": StopOdometryReceiver(stop_gate),
+                "stop_after": None, "stop_samples": [], "odom_count": 0,
                 "scan_counts": {key: 0 for key in ("front_raw", "rear_raw", "front", "rear", "localization_front", "localization_rear")},
                 "subscriptions": [], "map_future": None}
             rt = robots[robot_id]
@@ -473,9 +603,12 @@ def main() -> int:
                 stamp = message.header.stamp.sec + message.header.stamp.nanosec / 1e9
                 state["last_odom"] = {"stamp_s": stamp, "linear_m_s": float(message.twist.twist.linear.x),
                                       "angular_rad_s": float(message.twist.twist.angular.z)}
-                if state["stop_after"] is not None and stamp > state["stop_after"]:
-                    state["stop_gate"].update(state["last_odom"]["linear_m_s"], state["last_odom"]["angular_rad_s"], stamp_s=stamp, now_s=now())
-                    state["stop_samples"] = state["stop_gate"].samples
+                robot_now = state["node"].get_clock().now().nanoseconds / 1e9
+                state["stop_receiver"].observe(
+                    state["last_odom"]["linear_m_s"], state["last_odom"]["angular_rad_s"],
+                    stamp_s=stamp, stop_after_s=state["stop_after"], now_s=robot_now,
+                )
+                state["stop_samples"] = state["stop_receiver"].samples
             rt["subscriptions"].append(node.create_subscription(Odometry, "odom", lambda message, r=robot_id: odometry(message, r), qos_profile_sensor_data))
 
         qos = output / "bag-qos.yaml"
@@ -664,6 +797,7 @@ def main() -> int:
             if cutoff is not None:
                 raise RuntimeError("new navigation legs are forbidden after evaluation cutoff")
             rt = robots[robot]
+            reset_stop_observation(rt)
             plan = book.plan(rt["anchor"], target, closed=current_closed)
             full_tiles = swept_tiles(plan.points, reservation_radius, tile_size_m=book.tile_size_m, bounds_xy=bounds)
             rt["leg"] = {"plan": plan, "target": target, "intent": intent, "closed": current_closed, "index": 0,
@@ -679,9 +813,7 @@ def main() -> int:
             assert cutoff is not None
             binding = cutoff["robots"][robot]["retained_hold"]
             rt["phase"] = "cutoff_stopping"
-            rt["stop_after"] = None
-            rt["stop_gate"].reset()
-            rt["stop_samples"] = []
+            reset_stop_observation(rt)
             rt["hold_sequence"] = lease(robot, forced_mode="hold", hold_binding=binding)
             rt["stop_wait_started"] = stamp
             rt["cutoff_classification"] = classification
@@ -726,9 +858,7 @@ def main() -> int:
                             begin_cutoff_stop(robot, stamp, classification)
                         elif rt["phase"] == "stopping":
                             binding = cutoff["robots"][robot]["retained_hold"]
-                            rt["stop_after"] = None
-                            rt["stop_gate"].reset()
-                            rt["stop_samples"] = []
+                            reset_stop_observation(rt)
                             rt["hold_sequence"] = lease(robot, forced_mode="hold", hold_binding=binding)
                             rt["stop_wait_started"] = stamp
                             rt["cutoff_hold_binding"] = binding
@@ -865,31 +995,35 @@ def main() -> int:
                     if terminal.status != 4 or terminal.result.error_code != 0:
                         raise RuntimeError(f"FollowPath failed: {rt['record']}")
                     rt["phase"] = "stopping"
-                    rt["stop_after"] = None; rt["stop_gate"].reset(); rt["stop_samples"] = []
+                    reset_stop_observation(rt)
                     rt["hold_sequence"] = lease(robot, forced_mode="hold")
                     rt["stop_wait_started"] = stamp
                     journal("action_terminal", rt["record"])
                 elif phase == "stopping":
+                    stop_now = rt["node"].get_clock().now().nanoseconds / 1e9
                     ack_path = output / "robots" / robot / "control-ack.json"
                     if ack_path.is_file():
                         ack = json.loads(ack_path.read_text(encoding="utf-8"))
                         if valid_hold_ack(ack, run_id=args.run_id, scenario_id=scenario_id, robot_id=robot,
                                           minimum_sequence=rt["hold_sequence"], generation=rt["generation"],
-                                          goal_uuid=rt["follow_uuid"], terminal_time_s=rt["record"]["terminal_sim_time_s"], now_s=stamp):
+                                          goal_uuid=rt["follow_uuid"], terminal_time_s=rt["record"]["terminal_sim_time_s"], now_s=stop_now):
                             if rt["stop_after"] is None:
                                 rt["stop_after"] = ack["evaluation_sim_time_s"]
                                 rt["record"]["hold_ack"] = ack
                     if stamp-rt["stop_wait_started"] > 30:
                         raise TimeoutError("post-terminal hold acknowledgment / fresh odometry stop failed")
-                    if rt["stop_after"] is not None and rt["stop_gate"].is_stopped(now_s=stamp):
+                    stopped = (committed_stopped_odometry_record(
+                        rt["stop_receiver"], local_now_s=stop_now, event_now_s=stamp,
+                    ) if rt["stop_after"] is not None else None)
+                    if stopped is not None:
                         pose = rt["pose"]; target = rt["chunk"].goal_pose
                         validate_arrival(pose, target, xy_limit=runtime_config["station_xy_tolerance_m"], yaw_limit=runtime_config["station_yaw_tolerance_rad"])
                         finished = manager.mark_goal_finished(robot, rt["generation"], rt["follow_uuid"], now_s=stamp)
                         if not finished.granted:
                             raise RuntimeError("finished goal reservation binding differs")
-                        rt["record"].update(stopped_odometry_record(rt["stop_gate"], now_s=stamp))
+                        rt["record"].update(stopped)
                         rt["record"]["arrival_pose"] = dict(pose)
-                        rt["stop_after"] = None
+                        reset_stop_observation(rt)
                         rt["anchor"] = rt["chunk"].goal
                         if cutoff is not None:
                             binding = cutoff["robots"][robot]["retained_hold"]
@@ -920,20 +1054,23 @@ def main() -> int:
                         journal("edge_stopped", rt["record"])
                 elif phase == "cutoff_stopping":
                     assert cutoff is not None
+                    stop_now = rt["node"].get_clock().now().nanoseconds / 1e9
                     binding = rt["cutoff_hold_binding"]
                     ack_path = output / "robots" / robot / "control-ack.json"
                     if ack_path.is_file():
                         ack = json.loads(ack_path.read_text(encoding="utf-8"))
                         if valid_hold_ack(ack, run_id=args.run_id, scenario_id=scenario_id, robot_id=robot,
                                           minimum_sequence=rt["hold_sequence"], generation=binding["generation"],
-                                          goal_uuid=binding["goal_uuid"], terminal_time_s=cutoff["observed_sim_time_s"], now_s=stamp):
+                                          goal_uuid=binding["goal_uuid"], terminal_time_s=cutoff["observed_sim_time_s"], now_s=stop_now):
                             if rt["stop_after"] is None:
                                 rt["stop_after"] = ack["evaluation_sim_time_s"]
                                 rt["cutoff_hold_ack"] = ack
                     if stamp-rt["stop_wait_started"] > 30:
                         raise TimeoutError("cutoff hold acknowledgment / fresh odometry stop failed")
-                    if rt["stop_after"] is not None and rt["stop_gate"].is_stopped(now_s=stamp):
-                        stopped = stopped_odometry_record(rt["stop_gate"], now_s=stamp)
+                    stopped = (committed_stopped_odometry_record(
+                        rt["stop_receiver"], local_now_s=stop_now, event_now_s=stamp,
+                    ) if rt["stop_after"] is not None else None)
+                    if stopped is not None:
                         cutoff["terminal_stops"][robot] = {
                             "classification": rt["cutoff_classification"], "robot_id": robot,
                             "generation": binding["generation"], "follow_action_uuid": binding["goal_uuid"],
@@ -941,6 +1078,7 @@ def main() -> int:
                             "hold_ack": copy.deepcopy(rt["cutoff_hold_ack"]), **stopped,
                         }
                         rt["phase"] = "cutoff_stationary"
+                        reset_stop_observation(rt)
                         journal("cutoff_stationary", {"robot_id": robot,
                                 "classification": rt["cutoff_classification"],
                                 "stopped_sim_time_s": stopped["stopped_sim_time_s"]})
@@ -1051,7 +1189,7 @@ def main() -> int:
             raise RuntimeError("navigation map bytes changed before terminal verification")
         result["stage"] = "terminal_recording"
         for rt in robots.values():
-            rt["stop_after"] = None
+            reset_stop_observation(rt)
         atomic_json(output / "mission-control.json", {"run_id": args.run_id, "scenario_id": scenario_id, "status": "passed"})
         def read_terminal_scene() -> Mapping[str, Any] | None:
             path = output / "g3-scene.json"

@@ -108,14 +108,14 @@ class VisualSceneTests(unittest.TestCase):
 
         cameras = {camera["id"]: camera for camera in profile["cameras"]}
         self.assertEqual(cameras["portfolio_overview"]["eye_xyz_m"], [20.0, -18.0, 30.0])
-        self.assertEqual(cameras["portfolio_overview"]["target_xyz_m"], [20.0, 12.0, 0.7])
-        self.assertEqual(cameras["portfolio_overview"]["focal_length_mm"], 26.0)
+        self.assertEqual(cameras["portfolio_overview"]["target_xyz_m"], [20.0, 10.5, 0.5])
+        self.assertEqual(cameras["portfolio_overview"]["focal_length_mm"], 22.0)
         self.assertEqual(cameras["carter1_follow"]["eye_xyz_m"], [-2.2, -1.6, 1.8])
         self.assertEqual(cameras["carter2_follow"]["eye_xyz_m"], [-2.2, 1.6, 1.8])
-        self.assertEqual(cameras["carter1_follow"]["target_xyz_m"], [0.25, 0.0, 0.55])
-        self.assertEqual(cameras["carter2_follow"]["target_xyz_m"], [0.25, 0.0, 0.55])
-        self.assertEqual(cameras["carter1_follow"]["focal_length_mm"], 32.0)
-        self.assertEqual(cameras["carter2_follow"]["focal_length_mm"], 32.0)
+        self.assertEqual(cameras["carter1_follow"]["target_xyz_m"], [0.25, 0.0, 0.35])
+        self.assertEqual(cameras["carter2_follow"]["target_xyz_m"], [0.25, 0.0, 0.35])
+        self.assertEqual(cameras["carter1_follow"]["focal_length_mm"], 26.0)
+        self.assertEqual(cameras["carter2_follow"]["focal_length_mm"], 26.0)
 
     def test_output_hashes_and_manifest_hash_match_written_bytes(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
