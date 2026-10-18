@@ -673,8 +673,11 @@ def validate_controller_trace_observations(
         if set(rpp_groups) != set(range(1, len(rpp_groups) + 1)):
             raise ValueError(f"{robot} RPP compute call sequence differs")
         rpp_ends: list[Mapping[str, Any]] = []
+        stock_rpp_ends: list[Mapping[str, Any]] = []
+        terminal_stop_confirmations: dict[int, Mapping[str, Any]] = {}
         goal_tolerance_sequences = {row["event_sequence"] for row in goal_rows
                                     if row["event"] == "get_tolerances"}
+        goal_checks = [row for row in goal_rows if row["event"] == "is_goal_reached"]
         for call_sequence, pair in sorted(rpp_groups.items()):
             phases = {row.get("compute", {}).get("phase"): row for row in pair}
             if len(pair) != 2 or set(phases) != {"begin", "end"}:
@@ -684,8 +687,34 @@ def validate_controller_trace_observations(
                 raise ValueError(f"{robot} RPP compute begin/end ordering differs")
             nested = [sequence for sequence in goal_tolerance_sequences
                       if begin["event_sequence"] < sequence < end["event_sequence"]]
-            if len(nested) != 1:
-                raise ValueError(f"{robot} RPP compute does not enclose one goal tolerance query")
+            compute = end.get("compute", {})
+            reason = compute.get("command_reason")
+            if reason == "regulated_pure_pursuit":
+                if len(nested) != 1:
+                    raise ValueError(f"{robot} stock RPP compute does not enclose one goal tolerance query")
+                stock_rpp_ends.append(end)
+            elif reason == "terminal_stop_candidate":
+                if nested:
+                    raise ValueError(f"{robot} terminal stop compute unexpectedly entered stock RPP")
+                prior_checks = [row for row in goal_checks
+                                if row["event_sequence"] < begin["event_sequence"]]
+                if not prior_checks:
+                    raise ValueError(f"{robot} terminal stop compute lacks a preceding goal confirmation")
+                confirmation = max(prior_checks, key=lambda row: row["event_sequence"])
+                check = confirmation.get("check", {})
+                if (confirmation["event_sequence"] + 1 != begin["event_sequence"]
+                        or check.get("terminal_stop_enabled") is not True
+                        or check.get("pose_within_tolerance") is not True
+                        or check.get("velocity_stopped") is not False
+                        or check.get("terminal_candidate") is not True
+                        or check.get("effective_result") is not False
+                        or any(compute.get(name) != 0.0 for name in (
+                            "output_linear_x_m_s", "output_linear_y_m_s",
+                            "output_angular_z_rad_s"))):
+                    raise ValueError(f"{robot} terminal stop command or goal confirmation differs")
+                terminal_stop_confirmations[call_sequence] = confirmation
+            else:
+                raise ValueError(f"{robot} RPP command reason differs")
             rpp_ends.append(end)
         if goal_rows[0].get("event") != "initialize":
             raise ValueError(f"{robot} goal checker initialization trace is missing")
@@ -737,6 +766,12 @@ def validate_controller_trace_observations(
                 raise ValueError(f"{robot} RPP compute trace does not bind exactly one FollowPath episode")
             if not 0 <= row["stamp_ns"] - row["incoming_pose_stamp_ns"] <= 500_000_000:
                 raise ValueError(f"{robot} RPP incoming pose stamp is future-dated or stale")
+            confirmation = terminal_stop_confirmations.get(row["plugin_call_sequence"])
+            if confirmation is not None:
+                confirmation_matches = [index for index, accepted, terminal in episodes[robot]
+                                        if accepted <= confirmation["stamp_ns"] <= terminal]
+                if confirmation_matches != matches or confirmation["reset_epoch"] != row["plan_epoch"]:
+                    raise ValueError(f"{robot} terminal stop confirmation binds a different goal")
             rpp_bound.add(matches[0])
         expected_actions = {index for index, _, _ in episodes[robot]}
         if bound_actions != expected_actions or rpp_bound != expected_actions:
@@ -744,13 +779,15 @@ def validate_controller_trace_observations(
         robot_rpp = observations.get(robot, {}) if isinstance(observations, Mapping) else {}
         points, rotations = robot_rpp.get("lookahead_point"), robot_rpp.get("is_rotating_to_heading")
         if not isinstance(points, list) or not isinstance(rotations, list) or not (
-                len(rpp_ends) == len(points) == len(rotations)):
-            raise ValueError(f"{robot} RPP compute/diagnostic counts are not one-to-one")
-        for row, point, rotation in zip(rpp_ends, points, rotations, strict=True):
+                len(stock_rpp_ends) == len(points) == len(rotations)):
+            raise ValueError(f"{robot} stock RPP compute/diagnostic counts are not one-to-one")
+        for row, point, rotation in zip(stock_rpp_ends, points, rotations, strict=True):
             if (abs(row["db_timestamp_ns"] - point["db_timestamp_ns"]) > RPP_PAIR_MAX_DB_GAP_NS
                     or abs(row["db_timestamp_ns"] - rotation["db_timestamp_ns"]) > RPP_PAIR_MAX_DB_GAP_NS):
                 raise ValueError(f"{robot} RPP compute/diagnostic database pairing is stale")
         reports[robot] = {"goal_checker_events": len(goal_rows), "rpp_compute_calls": len(rpp_ends),
+                          "stock_rpp_compute_calls": len(stock_rpp_ends),
+                          "terminal_stop_compute_calls": len(terminal_stop_confirmations),
                           "follow_path_episode_count": len(expected_actions),
                           "shared_event_sequence_closed": True,
                           "goal_checker_pose_stamp_available": False}

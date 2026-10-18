@@ -74,12 +74,13 @@ class G3EvidenceHelperTests(unittest.TestCase):
             "event": "compute_velocity_commands", "event_sequence": 3, "plugin_call_sequence": 1,
             "reset_epoch": 0, "plan_epoch": 1, "incoming_pose_stamp_ns": 1_500_000_000,
             "incoming_pose_frame_id": "map", "parameters": {"goal_dist_tol_m": .06},
-            "compute": {"phase": "begin", "outcome": "pending"}},
+            "compute": {"phase": "begin", "outcome": "pending", "command_reason": ""}},
             {"db_timestamp_ns": 5, "cdr_sha256": "5" * 64, "stamp_ns": 1_500_000_000,
              "event": "compute_velocity_commands", "event_sequence": 5, "plugin_call_sequence": 1,
              "reset_epoch": 0, "plan_epoch": 1, "incoming_pose_stamp_ns": 1_500_000_000,
              "incoming_pose_frame_id": "map", "parameters": {"goal_dist_tol_m": .06},
-             "compute": {"phase": "end", "outcome": "returned"}}]
+             "compute": {"phase": "end", "outcome": "returned",
+                         "command_reason": "regulated_pure_pursuit"}}]
         topics = {f"/{robot}/controller_cycle_trace": "diagnostic_msgs/msg/DiagnosticArray"
                   for robot in ("carter1", "carter2")}
         for row in [*goal, *rpp]:
@@ -95,6 +96,38 @@ class G3EvidenceHelperTests(unittest.TestCase):
                    for robot in ("carter1", "carter2")]
         return actions, bag, list(topics)
 
+    @staticmethod
+    def add_terminal_stop_cycle(bag):
+        for robot in ("carter1", "carter2"):
+            streams = bag["controller_traces"][robot]
+            confirmation = streams["goal_checker"][-1]
+            confirmation["check"] = {
+                "base_result": True, "terminal_stop_enabled": True,
+                "pose_within_tolerance": True, "velocity_stopped": False,
+                "terminal_candidate": True, "effective_result": False,
+            }
+            streams["rpp"].extend([
+                {"db_timestamp_ns": 7, "cdr_sha256": "7" * 64, "stamp_ns": 1_600_000_000,
+                 "event": "compute_velocity_commands", "event_sequence": 7,
+                 "plugin_call_sequence": 2, "reset_epoch": 0, "plan_epoch": 1,
+                 "incoming_pose_stamp_ns": 1_600_000_000, "incoming_pose_frame_id": "map",
+                 "parameters": {"goal_dist_tol_m": .06},
+                 "compute": {"phase": "begin", "outcome": "pending", "command_reason": ""},
+                 "db_file_index": 0, "db_message_id": 7},
+                {"db_timestamp_ns": 8, "cdr_sha256": "8" * 64, "stamp_ns": 1_600_000_000,
+                 "event": "compute_velocity_commands", "event_sequence": 8,
+                 "plugin_call_sequence": 2, "reset_epoch": 0, "plan_epoch": 1,
+                 "incoming_pose_stamp_ns": 1_600_000_000, "incoming_pose_frame_id": "map",
+                 "parameters": {"goal_dist_tol_m": .06},
+                 "compute": {"phase": "end", "outcome": "returned",
+                             "command_reason": "terminal_stop_candidate",
+                             "output_linear_x_m_s": 0.0, "output_linear_y_m_s": 0.0,
+                             "output_angular_z_rad_s": 0.0},
+                 "db_file_index": 0, "db_message_id": 8},
+            ])
+            bag["topic_counts"][f"/{robot}/controller_cycle_trace"] = 8
+        return bag
+
     def test_controller_trace_requires_closed_sequence_parameters_and_episode_binding(self):
         actions, bag, requested = self.controller_trace_fixture()
         report = validate_controller_trace_observations(actions, bag, requested)
@@ -105,6 +138,37 @@ class G3EvidenceHelperTests(unittest.TestCase):
         changed = deepcopy(bag); changed["controller_traces"]["carter1"]["goal_checker"][-1]["parameters"]["action_xy_tolerance_m"] = .05; mutations.append(changed)
         changed = deepcopy(bag); changed["controller_traces"]["carter1"]["rpp"][1]["compute"]["outcome"] = "threw"; mutations.append(changed)
         for changed in mutations:
+            with self.assertRaises(ValueError):
+                validate_controller_trace_observations(actions, changed, requested)
+
+    def test_controller_trace_validates_mixed_stock_and_terminal_stop_cycles(self):
+        actions, bag, requested = self.controller_trace_fixture()
+        bag = self.add_terminal_stop_cycle(bag)
+        report = validate_controller_trace_observations(actions, bag, requested)
+        self.assertEqual(2, report["robots"]["carter1"]["rpp_compute_calls"])
+        self.assertEqual(1, report["robots"]["carter1"]["stock_rpp_compute_calls"])
+        self.assertEqual(1, report["robots"]["carter1"]["terminal_stop_compute_calls"])
+
+        attacks = []
+        nonzero = deepcopy(bag)
+        nonzero["controller_traces"]["carter1"]["rpp"][-1]["compute"][
+            "output_angular_z_rad_s"
+        ] = 0.01
+        attacks.append(nonzero)
+        no_confirmation = deepcopy(bag)
+        no_confirmation["controller_traces"]["carter1"]["goal_checker"][-1]["check"][
+            "terminal_candidate"
+        ] = False
+        attacks.append(no_confirmation)
+        gate_tamper = deepcopy(bag)
+        gate_tamper["controller_traces"]["carter1"]["goal_checker"][-1]["check"][
+            "terminal_stop_enabled"
+        ] = False
+        attacks.append(gate_tamper)
+        missing_normal_diagnostic = deepcopy(bag)
+        missing_normal_diagnostic["rpp_observations"]["carter1"]["lookahead_point"].clear()
+        attacks.append(missing_normal_diagnostic)
+        for changed in attacks:
             with self.assertRaises(ValueError):
                 validate_controller_trace_observations(actions, changed, requested)
 
