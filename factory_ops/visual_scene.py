@@ -17,6 +17,28 @@ SCHEMA_VERSION = 1
 DEFAULT_CONFIG = Path(__file__).resolve().parents[1] / "configs" / "factory-v3" / "visual-assets.json"
 DEFAULT_RENDER_PROFILE = Path(__file__).resolve().parents[1] / "configs" / "factory-v3" / "render-profile.json"
 PRODUCTION_BAY_GEOMETRY = "production_bay_v4"
+_STENCIL_GLYPHS = {
+    "1": ("01100", "11100", "01100", "01100", "01100", "01100", "11111"),
+    "2": ("11110", "00001", "00001", "11110", "10000", "10000", "11111"),
+    "3": ("11110", "00001", "00001", "01110", "00001", "00001", "11110"),
+    "A": ("01110", "10001", "10001", "11111", "10001", "10001", "10001"),
+    "B": ("11110", "10001", "10001", "11110", "10001", "10001", "11110"),
+    "C": ("01111", "10000", "10000", "10000", "10000", "10000", "01111"),
+    "E": ("11111", "10000", "10000", "11110", "10000", "10000", "11111"),
+    "H": ("10001", "10001", "10001", "11111", "10001", "10001", "10001"),
+    "I": ("11111", "00100", "00100", "00100", "00100", "00100", "11111"),
+    "K": ("10001", "10010", "10100", "11000", "10100", "10010", "10001"),
+    "L": ("10000", "10000", "10000", "10000", "10000", "10000", "11111"),
+    "M": ("10001", "11011", "10101", "10101", "10001", "10001", "10001"),
+    "N": ("10001", "11001", "10101", "10011", "10001", "10001", "10001"),
+    "O": ("01110", "10001", "10001", "10001", "10001", "10001", "01110"),
+    "P": ("11110", "10001", "10001", "11110", "10000", "10000", "10000"),
+    "R": ("11110", "10001", "10001", "11110", "10100", "10010", "10001"),
+    "S": ("01111", "10000", "10000", "01110", "00001", "00001", "11110"),
+    "T": ("11111", "00100", "00100", "00100", "00100", "00100", "00100"),
+    "U": ("10001", "10001", "10001", "10001", "10001", "10001", "01110"),
+    "Y": ("10001", "10001", "01010", "00100", "00100", "00100", "00100"),
+}
 
 
 @dataclass(frozen=True)
@@ -433,8 +455,76 @@ def _floor_graphics(layout: Layout, palette: Mapping[str, tuple[float, float, fl
             offset = (chevron - 1) * 0.34
             lines.extend(_box_usda(_Box(f"Chevron_{chevron}", (x - 0.56 + offset, y - 0.035, 0.017, x - 0.34 + offset, y + 0.035, 0.022), "White"), 16))
         lines.append("            }")
+    if layout.data.get("revision") == V4_REVISION:
+        stencil_specs = (
+            ("S1", (3.75, 3.55), "station_identifier"),
+            ("S2", (3.75, 9.55), "station_identifier"),
+            ("S3", (3.75, 15.55), "station_identifier"),
+            ("CI", (21.25, 6.55), "station_identifier"),
+            ("CO", (21.25, 12.55), "station_identifier"),
+            ("OUT", (28.75, 9.55), "station_identifier"),
+            ("P1", (11.75, 1.05), "station_identifier"),
+            ("P2", (11.75, 18.05), "station_identifier"),
+            ("MATERIAL", (5.0, 6.85), "process_identifier"),
+            ("ASSEMBLY", (16.7, 4.9), "process_identifier"),
+            ("INSPECT", (14.0, 9.8), "process_identifier"),
+            ("PACK", (16.7, 14.6), "process_identifier"),
+            ("SHIP", (27.2, 8.8), "process_identifier"),
+        )
+        for label, origin, role in stencil_specs:
+            lines.extend(_floor_stencil_usda(label, origin, role, indent=12))
+            semantic_roots[f"{root_path}/Stencil_{_prim_name(label)}"] = "floor_marking"
     lines.extend(["        }"])
     return lines
+
+
+def _floor_stencil_geometry(
+    label: str, origin_xy: tuple[float, float], pixel_m: float = .05,
+) -> tuple[list[tuple[float, float, float]], list[int], list[int], tuple[float, float, float, float]]:
+    if not label or any(character not in _STENCIL_GLYPHS for character in label):
+        raise LayoutError(f"unsupported floor stencil label: {label!r}")
+    x0, y0 = origin_xy
+    points: list[tuple[float, float, float]] = []
+    indices: list[int] = []
+    advance = 6 * pixel_m
+    for character_index, character in enumerate(label):
+        for row, pixels in enumerate(_STENCIL_GLYPHS[character]):
+            for column, enabled in enumerate(pixels):
+                if enabled != "1":
+                    continue
+                left = x0 + character_index * advance + column * pixel_m
+                bottom = y0 + (6 - row) * pixel_m
+                start = len(points)
+                points.extend([
+                    (left, bottom, .021), (left + pixel_m, bottom, .021),
+                    (left + pixel_m, bottom + pixel_m, .021), (left, bottom + pixel_m, .021),
+                ])
+                indices.extend((start, start + 1, start + 2, start + 3))
+    width = (len(label) * 6 - 1) * pixel_m
+    return points, [4] * (len(indices) // 4), indices, (x0, y0, x0 + width, y0 + 7 * pixel_m)
+
+
+def _floor_stencil_usda(
+    label: str, origin_xy: tuple[float, float], role: str, *, indent: int,
+) -> list[str]:
+    points, counts, indices, bounds = _floor_stencil_geometry(label, origin_xy)
+    pad = " " * indent
+    point_values = ", ".join(f"({_num(x)}, {_num(y)}, {_num(z)})" for x, y, z in points)
+    return [
+        f'{pad}def Mesh "Stencil_{_prim_name(label)}"',
+        f"{pad}{{",
+        f"{pad}    custom string stableId = {_quote(f'floor_stencil:{label}')}",
+        f'{pad}    custom string semanticClass = "floor_marking"',
+        f"{pad}    custom string stateRole = {_quote(role)}",
+        f"{pad}    custom double4 boundsXY = ({', '.join(_num(value) for value in bounds)})",
+        f"{pad}    float3[] extent = [({_num(bounds[0])}, {_num(bounds[1])}, 0.021), ({_num(bounds[2])}, {_num(bounds[3])}, 0.021)]",
+        f"{pad}    int[] faceVertexCounts = [{', '.join(str(value) for value in counts)}]",
+        f"{pad}    int[] faceVertexIndices = [{', '.join(str(value) for value in indices)}]",
+        f"{pad}    point3f[] points = [{point_values}]",
+        f"{pad}    rel material:binding = </World/Visuals/Looks/White>",
+        f'{pad}    uniform token subdivisionScheme = "none"',
+        f"{pad}}}",
+    ]
 
 
 def _equipment_root(obstacle_id: str, semantic_class: str, state_role: str, recipe: str, boxes: Sequence[_Box], *, indent: int) -> list[str]:

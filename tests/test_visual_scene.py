@@ -8,7 +8,7 @@ import unittest
 
 from factory_ops.layout import Layout, LayoutError, Rect
 from factory_ops.usda import export_usda
-from factory_ops.visual_scene import PRODUCTION_BAY_GEOMETRY, _factory_shell, _recipe_boxes, _validate_boxes, export_visual_scene
+from factory_ops.visual_scene import PRODUCTION_BAY_GEOMETRY, _factory_shell, _floor_stencil_geometry, _recipe_boxes, _validate_boxes, export_visual_scene
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -39,6 +39,8 @@ class VisualSceneTests(unittest.TestCase):
             second_composition = (second_dir / "factory-v3.render.usda").read_bytes()
         self.assertEqual(first_visual, second_visual)
         self.assertEqual(first_composition, second_composition)
+        self.assertEqual("ef824e601c246da33e638373f6cc6cb2c8363b2480fb3f828dcbe7a06d5cd0ad", hashlib.sha256(first_visual).hexdigest())
+        self.assertEqual("9b9113b6d2ec37d38f4a737d080a66a686fa863a8d3619614d89763207359ef0", hashlib.sha256(first_composition).hexdigest())
         self.assertEqual(first["outputs"], second["outputs"])
         self.assertNotIn(b"PhysicsCollisionAPI", first_visual)
         self.assertNotIn(b"physics:collisionEnabled", first_visual)
@@ -305,6 +307,60 @@ class VisualSceneTests(unittest.TestCase):
 
         self.assertIn("double3 xformOp:scale = (20, 0.06, 0.6)", south_wall_block(v3))
         self.assertIn("double3 xformOp:scale = (16, 0.06, 0.125)", south_wall_block(v4))
+
+    def test_v4_floor_stencils_are_single_mesh_words_with_floor_semantics(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            output = Path(temporary)
+            layout = Layout.from_file(V4_LAYOUT_PATH)
+            export_usda(layout, output / "factory-v3.usda")
+            document = export_visual_scene(layout, output, 0, V4_CONFIG_PATH, V4_RENDER_PATH)
+            text = (output / "factory-v3.visual.usda").read_text(encoding="utf-8")
+        labels = {"S1", "S2", "S3", "CI", "CO", "OUT", "P1", "P2", "ASSEMBLY", "INSPECT", "PACK", "SHIP", "MATERIAL"}
+        self.assertEqual(len(labels), text.count('def Mesh "Stencil_'))
+        self.assertNotIn('def Cube "Glyph_', text)
+        roots = document["floor_semantic_roots"]
+        assert isinstance(roots, dict)
+        for label in labels:
+            self.assertIn(f'def Mesh "Stencil_{label}"', text)
+            self.assertIn(f'custom string stableId = "floor_stencil:{label}"', text)
+            self.assertEqual("floor_marking", roots[f"/World/Visuals/FloorGraphics/Stencil_{label}"])
+
+    def test_v4_stencil_geometry_stays_on_floor_inside_bounds_and_clear_of_equipment_and_lines(self) -> None:
+        layout = Layout.from_file(V4_LAYOUT_PATH)
+        specs = {
+            "S1": (3.75, 3.55), "S2": (3.75, 9.55), "S3": (3.75, 15.55),
+            "CI": (21.25, 6.55), "CO": (21.25, 12.55), "OUT": (28.75, 9.55),
+            "P1": (11.75, 1.05), "P2": (11.75, 18.05), "MATERIAL": (5.0, 6.85),
+            "ASSEMBLY": (16.7, 4.9), "INSPECT": (14.0, 9.8),
+            "PACK": (16.7, 14.6), "SHIP": (27.2, 8.8),
+        }
+        obstacle_rects = [Rect.from_value(item["rect"], str(item["id"])) for item in layout.data["physical_obstacles"]]
+        aisle_lines = (
+            Rect(0.4, 2.475, 31.6, 2.525), Rect(0.4, 5.475, 31.6, 5.525),
+            Rect(2.0, 8.475, 9.0, 8.525), Rect(2.0, 11.475, 9.0, 11.525),
+            Rect(0.4, 14.475, 31.6, 14.525), Rect(0.4, 17.475, 31.6, 17.525),
+        )
+        for label, origin in specs.items():
+            points, counts, indices, bounds = _floor_stencil_geometry(label, origin)
+            x0, y0, x1, y1 = bounds
+            stencil = Rect(x0, y0, x1, y1)
+            self.assertGreater(len(points), 0)
+            self.assertEqual(len(points), len(indices))
+            self.assertEqual([4] * (len(points) // 4), counts)
+            self.assertTrue(all(point[2] == .021 for point in points))
+            self.assertAlmostEqual(.35, y1 - y0)
+            self.assertGreaterEqual(x0, layout.bounds.xmin)
+            self.assertGreaterEqual(y0, layout.bounds.ymin)
+            self.assertLessEqual(x1, layout.bounds.xmax)
+            self.assertLessEqual(y1, layout.bounds.ymax)
+            self.assertFalse(any(stencil.overlaps(rect) for rect in obstacle_rects), label)
+            self.assertFalse(any(stencil.overlaps(rect) for rect in aisle_lines), label)
+
+    def test_v3_export_does_not_author_v4_stencil_meshes(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            _document, output = self._export(Path(temporary), 0)
+            text = (output / "factory-v3.visual.usda").read_text(encoding="utf-8")
+        self.assertNotIn('def Mesh "Stencil_', text)
 
     def test_process_cells_have_distinct_open_roof_operational_silhouettes(self) -> None:
         obstacles = {
