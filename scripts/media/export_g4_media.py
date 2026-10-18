@@ -23,6 +23,7 @@ def main() -> None:
     parser.add_argument("--run-label", required=True)
     parser.add_argument("--producer-commit", required=True)
     parser.add_argument("--postprocessor-commit", required=True)
+    parser.add_argument("--factory-profile", choices=("factory-v3", "factory-v4"), default="factory-v3")
     parser.add_argument("--storage-inventory", required=True, type=Path)
     parser.add_argument("--storage-supplement-manifest", required=True, type=Path)
     parser.add_argument("--storage-supplement-manifest-sha256", required=True)
@@ -36,7 +37,7 @@ def main() -> None:
         postprocessor_commit=args.postprocessor_commit, storage_inventory=args.storage_inventory,
         storage_supplement_manifest=args.storage_supplement_manifest,
         storage_supplement_manifest_sha256=args.storage_supplement_manifest_sha256,
-        destination=args.output, project_root=ROOT,
+        destination=args.output, project_root=ROOT, factory_profile=args.factory_profile,
     )
     print(json.dumps({"destination": result["destination"],
                       "provenance_sha256": result["provenance_sha256"]}, indent=2))

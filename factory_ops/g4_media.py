@@ -14,7 +14,7 @@ import subprocess
 import tempfile
 from typing import Any, Mapping, Sequence, cast
 
-from .dataset_evidence import DEFAULT_PROFILE, _read_npy, validate_dataset
+from .dataset_evidence import DEFAULT_PROFILE, V4_PROFILE, _read_npy, validate_dataset
 from .g3_media import (
     capture_postprocessor_source,
     index_manifest,
@@ -33,6 +33,10 @@ EXPECTED_SCENES = 12
 EXPECTED_CAPTURES = 360
 EXPECTED_RGB = 1080
 RGB_SIZE = (1280, 720)
+PRODUCTION_PROFILES = {
+    "factory-v3": (DEFAULT_PROFILE, "factory-v3-portfolio-render-v1"),
+    "factory-v4": (V4_PROFILE, "factory-v4-portfolio-render-v1"),
+}
 PALETTE = {
     "BACKGROUND": (20, 24, 31), "floor": (91, 99, 112), "floor_marking": (255, 210, 63),
     "rack": (41, 121, 255), "workbench": (34, 197, 94), "process_equipment": (161, 88, 255),
@@ -165,9 +169,11 @@ def _rehash_archives(source_proof: Mapping[str, Any]) -> None:
 
 def verify_g4_backup_archives_and_source(
     backup: Mapping[str, Any], run_label: str, source_commit: str,
-    dataset_root: Path, dataset: Mapping[str, Any],
+    dataset_root: Path, dataset: Mapping[str, Any], factory_profile: str = "factory-v3",
 ) -> dict[str, Any]:
     """Bind a closed G4 run, its source bundle, and its manifested producer proof."""
+    if factory_profile not in PRODUCTION_PROFILES:
+        raise ValueError("unsupported G4 factory profile")
     if not re.fullmatch(r"g4-render-[0-9]{3}", run_label):
         raise ValueError("portfolio media requires a closed G4 render run")
     root = cast(Path, backup["root"])
@@ -197,6 +203,19 @@ def verify_g4_backup_archives_and_source(
         "source_snapshot_relative", "source_snapshot_host_relative", "started_at_utc", "scope",
         "source_files", "free_disk_bytes", "gpu",
     }
+    if "factory_profile" in environment:
+        environment_keys.add("factory_profile")
+    dataset_factory_profile = dataset.get("factory_profile")
+    if factory_profile == "factory-v4":
+        profile_binding_valid = (
+            dataset_factory_profile == factory_profile
+            and environment.get("factory_profile") == factory_profile
+        )
+    else:
+        profile_binding_valid = (
+            dataset_factory_profile in {None, factory_profile}
+            and environment.get("factory_profile") in {None, factory_profile}
+        )
     source_files = environment.get("source_files")
     if (set(environment) != environment_keys or environment.get("schema_version") != 1
             or environment.get("run_id") != run_label or environment.get("source_commit") != source_commit
@@ -204,6 +223,7 @@ def verify_g4_backup_archives_and_source(
             or environment.get("source_git_object_verification") is not True
             or environment.get("source_snapshot_relative") != "project"
             or environment.get("scope") != "capture_pending_validation"
+            or not profile_binding_valid
             or not isinstance(source_files, Mapping) or not source_files
             or not all(isinstance(path, str) and path == PurePosixPath(path).as_posix()
                        and not PurePosixPath(path).is_absolute() and ".." not in PurePosixPath(path).parts
@@ -364,19 +384,70 @@ def _publish_directory(package: Path, destination: Path) -> None:
     package.rename(destination)
 
 
-def _require_publication_gate(report: Mapping[str, Any]) -> None:
+def _require_publication_gate(report: Mapping[str, Any], factory_profile: str = "factory-v3") -> None:
+    selected = PRODUCTION_PROFILES.get(factory_profile)
+    if selected is None:
+        raise ValueError("unsupported G4 factory profile")
+    expected_profile_id = selected[1]
     stats = report.get("stats")
     if (report.get("deterministic_data_passed") is not True
             or report.get("portfolio_qa_passed") is not True
             or report.get("validation_gate") != "production"
             or not isinstance(stats, Mapping)
-            or stats.get("profile_id") != "factory-v3-portfolio-render-v1"
+            or stats.get("profile_id") != expected_profile_id
             or stats.get("scene_count") != EXPECTED_SCENES
             or stats.get("capture_count") != EXPECTED_CAPTURES
             or stats.get("rgb_image_count") != EXPECTED_RGB):
         raise ValueError(
             "dataset has not passed fixed-profile deterministic and external-AI portfolio publication gates"
         )
+
+
+def _capture_config_binding(
+    dataset_root: Path,
+    dataset: Mapping[str, Any],
+    environment: Mapping[str, Any],
+    factory_profile: str,
+) -> dict[str, Any]:
+    if factory_profile not in PRODUCTION_PROFILES:
+        raise ValueError("unsupported G4 factory profile")
+    source = dataset.get("source")
+    if not isinstance(source, Mapping):
+        raise ValueError("dataset source is missing")
+    if factory_profile == "factory-v3" and source.get("scene_path") is None:
+        return {"factory_profile": "factory-v3", "legacy_scene_sources": None}
+    manifest = _dataset_manifest(dataset)
+    path, record = _verify_dataset_file(dataset_root, source.get("scene_path"), manifest)
+    document = load_json(path)
+    if factory_profile == "factory-v3" and document.get("factory_profile") is None:
+        return {"factory_profile": "factory-v3", "legacy_scene_sources": record}
+    config_sources = document.get("config_sources")
+    expected_paths = {
+        "layout": f"configs/{factory_profile}/layout.json",
+        "dataset_profile": f"configs/{factory_profile}/dataset-profile.json",
+        "visual_assets": f"configs/{factory_profile}/visual-assets.json",
+        "render_profile": f"configs/{factory_profile}/render-profile.json",
+        "g2_config": f"configs/{factory_profile}/g2.json",
+    }
+    source_files = environment.get("source_files")
+    if (document.get("factory_profile") != factory_profile
+            or not isinstance(config_sources, Mapping) or set(config_sources) != set(expected_paths)
+            or not isinstance(source_files, Mapping)):
+        raise ValueError("dataset scene sources do not bind the selected factory profile")
+    normalized: dict[str, dict[str, str]] = {}
+    for name, expected_path in expected_paths.items():
+        binding = config_sources.get(name)
+        if (not isinstance(binding, Mapping)
+                or binding.get("path") != expected_path
+                or binding.get("sha256") != source_files.get(expected_path)
+                or not re.fullmatch(r"[0-9a-f]{64}", str(binding.get("sha256", "")))):
+            raise ValueError("dataset scene source config hash differs from the runtime source pins")
+        normalized[name] = {"path": expected_path, "sha256": cast(str, binding["sha256"])}
+    return {
+        "factory_profile": factory_profile,
+        "scene_sources": record,
+        "config_sources": normalized,
+    }
 
 
 def _dataset_manifest(dataset: Mapping[str, Any]) -> dict[str, dict[str, Any]]:
@@ -748,11 +819,16 @@ def export_media(
     verification_receipt: Path, portfolio_review: Path, run_label: str, producer_commit: str,
     postprocessor_commit: str, storage_inventory: Path, storage_supplement_manifest: Path,
     storage_supplement_manifest_sha256: str, destination: Path, project_root: Path,
+    factory_profile: str = "factory-v3",
 ) -> dict[str, Any]:
     """Validate, render, and atomically publish one portfolio media package."""
+    selected_profile = PRODUCTION_PROFILES.get(factory_profile)
+    if selected_profile is None:
+        raise ValueError("unsupported G4 factory profile")
+    profile_path, _profile_id = selected_profile
     closure = capture_postprocessor_source(project_root, postprocessor_commit, require_clean_git=True)
     _rehash_postprocessor_closure(closure)
-    profile_record = _snapshot_file(DEFAULT_PROFILE, "production profile")
+    profile_record = _snapshot_file(profile_path, "production profile")
     review_record = _snapshot_file(portfolio_review, "external AI review")
     backup = verify_backup_restore(
         restore_payload, raw_manifest, backup_record, verification_receipt, source_commit=producer_commit,
@@ -768,14 +844,14 @@ def export_media(
         raise ValueError("dataset path does not bind the selected G4 run label")
     dataset_root = _safe_directory(root, dataset_relative)
     dataset_record = _snapshot_file(dataset_root / "dataset.json", "dataset index")
-    report = validate_dataset(dataset_root, DEFAULT_PROFILE, portfolio_review)
-    _require_publication_gate(report)
+    report = validate_dataset(dataset_root, profile_path, portfolio_review)
+    _require_publication_gate(report, factory_profile)
     dataset = load_json(dataset_root / "dataset.json")
     source = dataset.get("source")
     if not isinstance(source, Mapping) or source.get("commit") != producer_commit:
         raise ValueError("dataset producer commit differs from the verified backup source")
     source_proof = verify_g4_backup_archives_and_source(
-        backup, run_label, producer_commit, dataset_root, dataset,
+        backup, run_label, producer_commit, dataset_root, dataset, factory_profile,
     )
     _rehash_archives(source_proof)
     storage_proof = verify_storage_separation(
@@ -787,6 +863,9 @@ def export_media(
     environment = load_json(safe_file(root, environment_path))
     if environment.get("run_id") != dataset.get("run_id"):
         raise ValueError("dataset run identity differs from the verified runtime environment")
+    capture_config = _capture_config_binding(
+        dataset_root, dataset, environment, factory_profile,
+    )
     selection = _select_capture(dataset_root, dataset)
     source_records = _source_records(selection)
     frozen = (dataset_record, profile_record, review_record)
@@ -816,7 +895,7 @@ def export_media(
         destination,
         protected_directories=(root, dataset_root, project_root),
         protected_files=(raw_manifest, backup_record, verification_receipt, portfolio_review,
-                         storage_inventory, storage_supplement_manifest, DEFAULT_PROFILE),
+                         storage_inventory, storage_supplement_manifest, profile_path),
     )
     destination.parent.mkdir(parents=True, exist_ok=True)
     if destination.parent.resolve(strict=True) != destination.parent or _has_link_ancestor(destination.parent):
@@ -902,8 +981,10 @@ def export_media(
         provenance = {
             "schema_version": 1, "classification": "validated_g4_portfolio_dataset_media",
             "dataset_id": dataset.get("dataset_id"), "run_id": dataset.get("run_id"),
+            "factory_profile": factory_profile,
             "producer_commit": producer_commit, "postprocessor_commit": postprocessor_commit,
             "dataset": dataset_record, "production_profile": profile_record,
+            "capture_configuration": capture_config,
             "external_ai_review": review_record, "validation_report": report_output,
             "quality_gates": {
                 "deterministic_data_passed": report["deterministic_data_passed"],

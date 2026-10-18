@@ -24,11 +24,13 @@ from typing import Any, Iterable, Mapping, Sequence, cast
 ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
-DEFAULT_PROFILE = ROOT / "configs" / "factory-v3" / "dataset-profile.json"
-VISUAL_ASSETS = ROOT / "configs" / "factory-v3" / "visual-assets.json"
-RENDER_PROFILE = ROOT / "configs" / "factory-v3" / "render-profile.json"
-G2_CONFIG = ROOT / "configs" / "factory-v3" / "g2.json"
-G2_SCENARIOS = ROOT / "configs" / "factory-v3" / "g2-scenarios.json"
+DEFAULT_FACTORY_PROFILE = "factory-v3"
+SUPPORTED_FACTORY_PROFILES = ("factory-v3", "factory-v4")
+DEFAULT_PROFILE = ROOT / "configs" / DEFAULT_FACTORY_PROFILE / "dataset-profile.json"
+VISUAL_ASSETS = ROOT / "configs" / DEFAULT_FACTORY_PROFILE / "visual-assets.json"
+RENDER_PROFILE = ROOT / "configs" / DEFAULT_FACTORY_PROFILE / "render-profile.json"
+G2_CONFIG = ROOT / "configs" / DEFAULT_FACTORY_PROFILE / "g2.json"
+G2_SCENARIOS = ROOT / "configs" / DEFAULT_FACTORY_PROFILE / "g2-scenarios.json"
 DATASET_SCOPE = "independent visual configurations of one synthetic layout"
 CAMERA_IDS = ("overhead", "aisle", "amr_follow")
 ANNOTATORS = (
@@ -72,6 +74,13 @@ REQUIRED_SOURCE_PINS = {
     "configs/factory-v3/render-profile.json",
     "configs/factory-v3/dataset-profile.json",
 }
+PROFILE_SOURCE_PINS = {
+    "configs/factory-v3/g2.json",
+    "configs/factory-v3/g2-scenarios.json",
+    "configs/factory-v3/visual-assets.json",
+    "configs/factory-v3/render-profile.json",
+    "configs/factory-v3/dataset-profile.json",
+}
 
 
 class CaptureError(RuntimeError):
@@ -86,17 +95,65 @@ class CapturePlan:
     probe: bool
 
 
+@dataclass(frozen=True)
+class CaptureInputs:
+    factory_profile: str
+    config_dir: Path
+    layout: Path
+    dataset_profile: Path
+    visual_assets: Path
+    render_profile: Path
+    g2_config: Path
+    g2_scenarios: Path | None
+
+    @property
+    def required_source_pins(self) -> frozenset[str]:
+        paths = {
+            self.layout,
+            self.dataset_profile,
+            self.visual_assets,
+            self.render_profile,
+            self.g2_config,
+        }
+        if self.g2_scenarios is not None:
+            paths.add(self.g2_scenarios)
+        return frozenset(path.relative_to(ROOT).as_posix() for path in paths)
+
+
 def _parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", required=True, type=Path, help="Absolute new dataset directory")
     parser.add_argument("--run-id", required=True, help="Safe run identifier")
     parser.add_argument("--source-commit", required=True, help="Exact 40-character source Git SHA")
     parser.add_argument("--layout", required=True, type=Path, help="Absolute factory layout JSON")
+    parser.add_argument(
+        "--factory-profile",
+        choices=SUPPORTED_FACTORY_PROFILES,
+        default=DEFAULT_FACTORY_PROFILE,
+        help="Pinned factory configuration family, default factory-v3",
+    )
     parser.add_argument("--variant-seeds", default="0..11", help="Comma/range list, default 0..11")
     parser.add_argument("--captures-per-scene", type=int, default=30)
     parser.add_argument("--resolution", default="1280x720", help="WIDTHxHEIGHT, default 1280x720")
     parser.add_argument("--probe", action="store_true", help="Diagnostic 1-variant/2-frame run; never training eligible")
     return parser.parse_args(argv)
+
+
+def _capture_inputs(factory_profile: str) -> CaptureInputs:
+    if factory_profile not in SUPPORTED_FACTORY_PROFILES:
+        raise CaptureError(f"unsupported factory profile: {factory_profile!r}")
+    config_dir = ROOT / "configs" / factory_profile
+    scenarios = config_dir / "g2-scenarios.json"
+    return CaptureInputs(
+        factory_profile=factory_profile,
+        config_dir=config_dir,
+        layout=config_dir / "layout.json",
+        dataset_profile=config_dir / "dataset-profile.json",
+        visual_assets=config_dir / "visual-assets.json",
+        render_profile=config_dir / "render-profile.json",
+        g2_config=config_dir / "g2.json",
+        g2_scenarios=scenarios if scenarios.is_file() else None,
+    )
 
 
 def _capture_plan(args: argparse.Namespace) -> CapturePlan:
@@ -141,6 +198,21 @@ def _parse_resolution(value: object) -> tuple[int, int]:
     if width < 640 or height < 360:
         raise CaptureError("capture resolution must be at least 640x360")
     return width, height
+
+
+def _profile_xyz(mapping: Mapping[str, Any], key: str) -> tuple[float, float, float]:
+    value = mapping.get(key)
+    if (not isinstance(value, list) or len(value) != 3
+            or any(isinstance(item, bool) or not isinstance(item, (int, float)) or not math.isfinite(float(item)) for item in value)):
+        raise CaptureError(f"dataset profile {key} must be three finite numbers")
+    return float(value[0]), float(value[1]), float(value[2])
+
+
+def _profile_number(mapping: Mapping[str, Any], key: str) -> float:
+    value = mapping.get(key)
+    if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(float(value)):
+        raise CaptureError(f"dataset profile {key} must be a finite number")
+    return float(value)
 
 
 def _prepare_paths(args: argparse.Namespace) -> tuple[Path, Path]:
@@ -1074,6 +1146,7 @@ def _verify_source_commit(
     workspace_root: Path = Path("/workspace"),
     source_archive_path: Path = SOURCE_ARCHIVE,
     commit_object_path: Path = SOURCE_COMMIT_OBJECT,
+    required_source_pins: Iterable[str] = REQUIRED_SOURCE_PINS,
 ) -> dict[str, Any]:
     try:
         completed = subprocess.run(
@@ -1092,6 +1165,7 @@ def _verify_source_commit(
             workspace_root,
             source_archive_path,
             commit_object_path,
+            required_source_pins,
         )
     observed = completed.stdout.strip()
     if completed.returncode != 0:
@@ -1102,6 +1176,7 @@ def _verify_source_commit(
             workspace_root,
             source_archive_path,
             commit_object_path,
+            required_source_pins,
         )
     if observed != expected:
         raise CaptureError(f"source commit differs: expected {expected}, observed {observed or 'unavailable'}")
@@ -1112,6 +1187,7 @@ def _verify_source_commit(
         workspace_root,
         source_archive_path,
         commit_object_path,
+        required_source_pins,
     )
 
 
@@ -1122,6 +1198,7 @@ def _verify_supervisor_provenance(
     workspace_root: Path,
     source_archive_path: Path = SOURCE_ARCHIVE,
     commit_object_path: Path = SOURCE_COMMIT_OBJECT,
+    required_source_pins: Iterable[str] = REQUIRED_SOURCE_PINS,
 ) -> dict[str, Any]:
     expected_manifest_sha = os.environ.get("FACTORY_OPS_G4_PROVENANCE_SHA256")
     if not isinstance(expected_manifest_sha, str) or re.fullmatch(r"[0-9a-f]{64}", expected_manifest_sha) is None:
@@ -1158,7 +1235,7 @@ def _verify_supervisor_provenance(
         layout_relative = layout_path.resolve(strict=True).relative_to(ROOT.resolve(strict=True)).as_posix()
     except (OSError, ValueError) as error:
         raise CaptureError("layout is outside the pinned project source root") from error
-    required = set(REQUIRED_SOURCE_PINS)
+    required = set(required_source_pins)
     required.add(layout_relative)
     missing = sorted(required - set(source_files))
     if missing:
@@ -1248,21 +1325,40 @@ def _end_verify_supervisor_sources(verification: Mapping[str, Any], provenance_p
     }
 
 
-def _validate_pinned_profile() -> dict[str, Any]:
+def _validate_pinned_profile(inputs: CaptureInputs | None = None) -> dict[str, Any]:
+    selected = inputs or _capture_inputs(DEFAULT_FACTORY_PROFILE)
     try:
-        profile = json.loads(DEFAULT_PROFILE.read_text(encoding="utf-8"))
+        profile = json.loads(selected.dataset_profile.read_text(encoding="utf-8"))
     except (OSError, UnicodeDecodeError, json.JSONDecodeError) as error:
         raise CaptureError(f"dataset profile could not be loaded: {error}") from error
     if not isinstance(profile, dict):
         raise CaptureError("dataset profile is not an object")
     if profile.get("scene_count") != 12 or profile.get("captures_per_scene") != 30 or profile.get("cameras") != list(CAMERA_IDS):
         raise CaptureError("dataset profile no longer matches the 12x30x3 production contract")
+    if selected.factory_profile == "factory-v4":
+        if (profile.get("factory_profile") != "factory-v4"
+                or profile.get("layout_revision") != "amr-production-bay-v4"
+                or profile.get("layout_bounds_xy_m") != [0, 0, 32, 20]):
+            raise CaptureError("factory-v4 dataset profile does not bind the compact 32x20 m layout")
+        spawns = profile.get("robot_spawns")
+        camera_sampling = profile.get("camera_sampling")
+        if (not isinstance(spawns, dict) or set(spawns) != {"carter1", "carter2"}
+                or any(not isinstance(value, list) or len(value) != 3 for value in spawns.values())
+                or not isinstance(camera_sampling, dict)
+                or set(camera_sampling) != set(CAMERA_IDS)
+                or any(not isinstance(value, dict) for value in camera_sampling.values())):
+            raise CaptureError("factory-v4 dataset profile has invalid robot or camera sampling geometry")
+        for robot_id in ("carter1", "carter2"):
+            _profile_xyz(spawns, robot_id)
+        carter1_spawn = _profile_xyz(spawns, "carter1")
+        _camera_specs(0, 0, (carter1_spawn[0], carter1_spawn[1], 0.0), profile)
     return profile
 
 
-def _renderer_contract() -> dict[str, Any]:
+def _renderer_contract(inputs: CaptureInputs | None = None) -> dict[str, Any]:
+    selected = inputs or _capture_inputs(DEFAULT_FACTORY_PROFILE)
     try:
-        profile = json.loads(RENDER_PROFILE.read_text(encoding="utf-8"))
+        profile = json.loads(selected.render_profile.read_text(encoding="utf-8"))
     except (OSError, UnicodeDecodeError, json.JSONDecodeError) as error:
         raise CaptureError(f"render profile could not be loaded: {error}") from error
     display_renderer = profile.get("renderer") if isinstance(profile, dict) else None
@@ -1277,6 +1373,7 @@ def _copy_provenance(
     output: Path,
     scene_sources: Mapping[str, Any],
     *,
+    inputs: CaptureInputs,
     resolution: tuple[int, int],
     probe: bool,
     render_contract: Mapping[str, Any],
@@ -1293,8 +1390,8 @@ def _copy_provenance(
     source_environment = provenance / "source-environment.json"
     source_archive = provenance / "source.tar"
     source_commit_object = provenance / "source-commit.raw"
-    shutil.copyfile(VISUAL_ASSETS, asset_path)
-    shutil.copyfile(RENDER_PROFILE, render_source_path)
+    shutil.copyfile(inputs.visual_assets, asset_path)
+    shutil.copyfile(inputs.render_profile, render_source_path)
     _atomic_json(
         render_path,
         {
@@ -1311,7 +1408,7 @@ def _copy_provenance(
             "annotators": list(ANNOTATORS),
         },
     )
-    shutil.copyfile(DEFAULT_PROFILE, dataset_profile)
+    shutil.copyfile(inputs.dataset_profile, dataset_profile)
     if source_verification.get("mode") != "supervisor-manifest":
         raise CaptureError("dataset provenance requires supervisor-manifest source verification")
     shutil.copyfile(SUPERVISOR_PROVENANCE, source_environment)
@@ -1340,12 +1437,93 @@ def _copy_provenance(
     }
 
 
-def _camera_specs(seed: int, capture_index: int, robot_pose: Sequence[float]) -> dict[str, tuple[tuple[float, float, float], tuple[float, float, float], float]]:
+def _camera_specs(
+    seed: int,
+    capture_index: int,
+    robot_pose: Sequence[float],
+    profile: Mapping[str, Any] | None = None,
+    robot_orientation_wxyz: Sequence[float] | None = None,
+) -> dict[str, tuple[tuple[float, float, float], tuple[float, float, float], float]]:
     phase = 2.0 * math.pi * (capture_index / 30.0 + seed / 12.0)
+    sampling = profile.get("camera_sampling") if isinstance(profile, Mapping) else None
+    if sampling is not None and not isinstance(sampling, Mapping):
+        raise CaptureError("dataset profile camera_sampling is invalid")
+    if sampling is None:
+        return {
+            "overhead": ((20.0 + 2.0 * math.sin(phase), -20.0, 32.0), (20.0, 12.0, 0.7), 28.0 + seed % 3),
+            "aisle": ((5.0 + 30.0 * ((capture_index % 10) / 9.0), 2.0 + 0.4 * math.sin(phase), 4.5), (20.0, 12.0, 0.8), 26.0 + seed % 5),
+            "amr_follow": ((float(robot_pose[0]) - 3.5, float(robot_pose[1]) - 2.5, 2.8), (float(robot_pose[0]), float(robot_pose[1]), 0.45), 30.0),
+        }
+    overhead = sampling.get("overhead")
+    aisle = sampling.get("aisle")
+    follow = sampling.get("amr_follow")
+    if not all(isinstance(value, Mapping) for value in (overhead, aisle, follow)):
+        raise CaptureError("dataset profile camera sampling entries are invalid")
+    overhead = cast(Mapping[str, Any], overhead)
+    aisle = cast(Mapping[str, Any], aisle)
+    follow = cast(Mapping[str, Any], follow)
+    center = _profile_xyz(overhead, "target_xyz_m")
+    base_eye = _profile_xyz(overhead, "eye_xyz_m")
+    aisle_start = _profile_xyz(aisle, "eye_start_xyz_m")
+    aisle_end = _profile_xyz(aisle, "eye_end_xyz_m")
+    aisle_target_offset = _profile_xyz(aisle, "target_offset_xyz_m")
+    fraction = (capture_index % 10) / 9.0
+    aisle_eye = tuple(
+        aisle_start[index] + (aisle_end[index] - aisle_start[index]) * fraction
+        for index in range(3)
+    )
+    follow_offset = _profile_xyz(follow, "eye_offset_xyz_m")
+    follow_target = _profile_xyz(follow, "target_offset_xyz_m")
+    if follow.get("coordinate_frame") != "carter1_chassis":
+        raise CaptureError("dataset profile amr_follow coordinate_frame is invalid")
+    orientation = robot_orientation_wxyz or (1.0, 0.0, 0.0, 0.0)
+    if (len(orientation) != 4
+            or any(isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(float(value)) for value in orientation)):
+        raise CaptureError("AMR follow camera orientation_wxyz is invalid")
+    w, x, y, z = (float(value) for value in orientation)
+    norm = math.sqrt(w * w + x * x + y * y + z * z)
+    if not math.isclose(norm, 1.0, rel_tol=0.0, abs_tol=1e-3):
+        raise CaptureError("AMR follow camera orientation_wxyz is not unit length")
+    yaw = math.atan2(2.0 * (w * z + x * y), 1.0 - 2.0 * (y * y + z * z))
+    cosine, sine = math.cos(yaw), math.sin(yaw)
+    follow_eye_world = (
+        cosine * follow_offset[0] - sine * follow_offset[1],
+        sine * follow_offset[0] + cosine * follow_offset[1],
+        follow_offset[2],
+    )
+    follow_target_world = (
+        cosine * follow_target[0] - sine * follow_target[1],
+        sine * follow_target[0] + cosine * follow_target[1],
+        follow_target[2],
+    )
     return {
-        "overhead": ((20.0 + 2.0 * math.sin(phase), -20.0, 32.0), (20.0, 12.0, 0.7), 28.0 + seed % 3),
-        "aisle": ((5.0 + 30.0 * ((capture_index % 10) / 9.0), 2.0 + 0.4 * math.sin(phase), 4.5), (20.0, 12.0, 0.8), 26.0 + seed % 5),
-        "amr_follow": ((float(robot_pose[0]) - 3.5, float(robot_pose[1]) - 2.5, 2.8), (float(robot_pose[0]), float(robot_pose[1]), 0.45), 30.0),
+        "overhead": (
+            (base_eye[0] + _profile_number(overhead, "x_orbit_m") * math.sin(phase), base_eye[1], base_eye[2]),
+            center,
+            _profile_number(overhead, "focal_length_mm") + seed % 3,
+        ),
+        "aisle": (
+            (aisle_eye[0], aisle_eye[1], aisle_eye[2]),
+            (
+                aisle_eye[0] + aisle_target_offset[0],
+                aisle_eye[1] + aisle_target_offset[1],
+                aisle_eye[2] + aisle_target_offset[2],
+            ),
+            _profile_number(aisle, "focal_length_mm") + seed % 3,
+        ),
+        "amr_follow": (
+            (
+                float(robot_pose[0]) + follow_eye_world[0],
+                float(robot_pose[1]) + follow_eye_world[1],
+                float(robot_pose[2]) + follow_eye_world[2],
+            ),
+            (
+                float(robot_pose[0]) + follow_target_world[0],
+                float(robot_pose[1]) + follow_target_world[1],
+                float(robot_pose[2]) + follow_target_world[2],
+            ),
+            _profile_number(follow, "focal_length_mm"),
+        ),
     }
 
 
@@ -1633,6 +1811,7 @@ def _capture_variant(
     semantic_roots_path: Path,
     source_class_by_root: Mapping[str, str],
     bbox_tolerance_px: int,
+    dataset_profile: Mapping[str, Any] | None = None,
 ) -> tuple[dict[str, Any], list[dict[str, Any]]]:
     scene_id = f"scene-{seed:03d}"
     variant_id = f"industrial-v{seed:02d}"
@@ -1658,8 +1837,10 @@ def _capture_variant(
             sim_time = float(SimulationManager.get_simulation_time())
             sim_ns = _sim_time_ns(sim_time)
             robot_poses = {name: _pose(robot) for name, robot in robots.items()}
-            primary_pose = robot_poses["carter1"][0]
-            for camera_id, (eye, target, focal) in _camera_specs(seed, capture_index, primary_pose).items():
+            primary_pose, primary_orientation = robot_poses["carter1"]
+            for camera_id, (eye, target, focal) in _camera_specs(
+                seed, capture_index, primary_pose, dataset_profile, primary_orientation,
+            ).items():
                 _set_camera(cameras[camera_id], Gf, UsdGeom, eye, target, focal, resolution)
             app.update()
             frozen_frame = int(SimulationManager.get_num_physics_steps())
@@ -1886,13 +2067,24 @@ def _capture_variant(
     }, review_entries
 
 
-def _worker(args: argparse.Namespace, plan: CapturePlan, layout_path: Path, output: Path) -> int:
+def _worker(
+    args: argparse.Namespace,
+    plan: CapturePlan,
+    inputs: CaptureInputs,
+    layout_path: Path,
+    output: Path,
+) -> int:
     app = None
     started = time.monotonic()
     scenes: list[dict[str, Any]] = []
     reviews: list[dict[str, Any]] = []
     simulation_readbacks: list[dict[str, Any]] = []
-    scene_sources: dict[str, Any] = {"schema_version": 1, "variants": []}
+    scene_sources: dict[str, Any] = {
+        "schema_version": 1,
+        "factory_profile": inputs.factory_profile,
+        "config_sources": {},
+        "variants": [],
+    }
     resource_audit: dict[str, Any] = {
         "schema_version": 1,
         "run_id": args.run_id,
@@ -1908,19 +2100,56 @@ def _worker(args: argparse.Namespace, plan: CapturePlan, layout_path: Path, outp
         from factory_ops.visual_scene import export_visual_scene
 
         layout = Layout.from_file(layout_path)
-        source_verification = _verify_source_commit(args.source_commit, layout_path)
-        dataset_profile = _validate_pinned_profile()
+        if layout_path != inputs.layout.resolve(strict=True):
+            raise CaptureError("--layout does not match the selected factory profile")
+        required_pins = (set(REQUIRED_SOURCE_PINS) - PROFILE_SOURCE_PINS) | set(inputs.required_source_pins)
+        source_verification = _verify_source_commit(
+            args.source_commit,
+            layout_path,
+            required_source_pins=required_pins,
+        )
+        dataset_profile = _validate_pinned_profile(inputs)
+        if (inputs.factory_profile == "factory-v4"
+                and (layout.data.get("revision") != dataset_profile.get("layout_revision")
+                     or layout.data.get("bounds_xy") != dataset_profile.get("layout_bounds_xy_m"))):
+            raise CaptureError("selected dataset profile geometry differs from the layout")
+        if inputs.factory_profile == "factory-v4":
+            spawns = cast(Mapping[str, Any], dataset_profile["robot_spawns"])
+            pockets = layout.data.get("pockets")
+            if (not isinstance(pockets, dict)
+                    or list(_profile_xyz(spawns, "carter1")[:2]) != pockets.get("P1")
+                    or list(_profile_xyz(spawns, "carter2")[:2]) != pockets.get("P2")):
+                raise CaptureError("factory-v4 robot spawns do not match the two off-main parking pockets")
+        scene_sources["config_sources"] = {
+            name: {
+                "path": path.relative_to(ROOT).as_posix(),
+                "sha256": _sha256(path),
+            }
+            for name, path in {
+                "layout": inputs.layout,
+                "dataset_profile": inputs.dataset_profile,
+                "visual_assets": inputs.visual_assets,
+                "render_profile": inputs.render_profile,
+                "g2_config": inputs.g2_config,
+            }.items()
+        }
         bbox_tolerance_px = dataset_profile.get("quality_bounds", {}).get("bbox_tolerance_px")
         if isinstance(bbox_tolerance_px, bool) or not isinstance(bbox_tolerance_px, int) or bbox_tolerance_px < 0:
             raise CaptureError("dataset profile bbox_tolerance_px is invalid")
-        render_contract = _renderer_contract()
+        render_contract = _renderer_contract(inputs)
         resource_audit["renderer"] = render_contract
         authored: dict[int, tuple[Path, dict[str, Any]]] = {}
         for seed in plan.variant_seeds:
             variant = output / "authored-scenes" / f"scene-{seed:03d}"
             variant.mkdir(parents=True)
             export_usda(layout, variant / "factory-v3.usda")
-            visual_manifest = export_visual_scene(layout, variant, seed)
+            visual_manifest = export_visual_scene(
+                layout,
+                variant,
+                seed,
+                inputs.visual_assets,
+                inputs.render_profile,
+            )
             render_scene = variant / "factory-v3.render.usda"
             authored[seed] = render_scene, visual_manifest
             scene_sources["variants"].append(
@@ -1946,6 +2175,7 @@ def _worker(args: argparse.Namespace, plan: CapturePlan, layout_path: Path, outp
         source = _copy_provenance(
             output,
             scene_sources,
+            inputs=inputs,
             resolution=plan.resolution,
             probe=plan.probe,
             render_contract=render_contract,
@@ -1999,8 +2229,12 @@ def _worker(args: argparse.Namespace, plan: CapturePlan, layout_path: Path, outp
         scene_provenance_path = output / source["scene_path"]
         _atomic_json(scene_provenance_path, scene_sources)
         source["scene_sha256"] = _sha256(scene_provenance_path)
-        scenarios = json.loads(G2_SCENARIOS.read_text(encoding="utf-8"))
-        first_scenario = scenarios["scenarios"]["P0"]
+        robot_spawns = dataset_profile.get("robot_spawns")
+        if not isinstance(robot_spawns, dict):
+            if inputs.g2_scenarios is None:
+                raise CaptureError("selected factory profile provides no robot spawn geometry")
+            scenarios = json.loads(inputs.g2_scenarios.read_text(encoding="utf-8"))
+            robot_spawns = scenarios["scenarios"]["P0"]["spawns"]
         for seed in plan.variant_seeds:
             _render_scene, visual_manifest = authored[seed]
             base_scene = output / "authored-scenes" / f"scene-{seed:03d}" / "factory-v3.usda"
@@ -2021,7 +2255,17 @@ def _worker(args: argparse.Namespace, plan: CapturePlan, layout_path: Path, outp
             if runtime_manifest["visual_export"]["outputs"] != visual_manifest["outputs"]:
                 raise CaptureError("CPU-authored and runtime visual scene hashes differ")
             robots = {
-                name: _create_robot(stage_utils, stage, app, WheeledRobot, UsdGeom, Gf, robot_asset, f"/World/{name.title()}", first_scenario["spawns"][name])
+                name: _create_robot(
+                    stage_utils,
+                    stage,
+                    app,
+                    WheeledRobot,
+                    UsdGeom,
+                    Gf,
+                    robot_asset,
+                    f"/World/{name.title()}",
+                    robot_spawns[name],
+                )
                 for name in ("carter1", "carter2")
             }
             robot_definitions = [
@@ -2090,6 +2334,7 @@ def _worker(args: argparse.Namespace, plan: CapturePlan, layout_path: Path, outp
                 semantic_roots_path=semantic_roots_path,
                 source_class_by_root=source_class_by_root,
                 bbox_tolerance_px=bbox_tolerance_px,
+                dataset_profile=dataset_profile,
             )
             scene["visual_runtime"] = _jsonable(runtime.capture_metadata(), path="visual_runtime.capture_metadata")
             scene["staged_payload"] = staged_payload
@@ -2135,8 +2380,9 @@ def _worker(args: argparse.Namespace, plan: CapturePlan, layout_path: Path, outp
             "training_eligible": False,
             "scope": DATASET_SCOPE,
             "scope_note": "frames are captures within a scene; they are not independent synthetic layouts",
+            "factory_profile": inputs.factory_profile,
             "source": {"commit": args.source_commit, "verification": source_verification, **source},
-            "profile_sha256": _sha256(DEFAULT_PROFILE),
+            "profile_sha256": _sha256(inputs.dataset_profile),
             "split_assignments": assignments,
             "scenes": scenes,
             "artifact_manifest": [],
@@ -2174,11 +2420,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     try:
         _validate_identity(args)
         plan = _capture_plan(args)
+        inputs = _capture_inputs(args.factory_profile)
         layout, output = _prepare_paths(args)
     except (CaptureError, OSError) as error:
         print(f"G4 capture preflight failed: {error}", file=sys.stderr)
         return 2
-    return _worker(args, plan, layout, output)
+    return _worker(args, plan, inputs, layout, output)
 
 
 if __name__ == "__main__":

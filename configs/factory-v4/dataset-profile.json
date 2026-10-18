@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "profile_id": "factory-v4-portfolio-render-v1",
+  "factory_profile": "factory-v4",
+  "layout_revision": "amr-production-bay-v4",
+  "layout_bounds_xy_m": [0, 0, 32, 20],
+  "scope": "independent visual configurations of one synthetic layout",
+  "scene_count": 12,
+  "captures_per_scene": 30,
+  "cameras": ["overhead", "aisle", "amr_follow"],
+  "minimum_rgb_images": 1080,
+  "minimum_width": 640,
+  "minimum_height": 360,
+  "robot_spawns": {
+    "carter1": [12.0, 1.5, 1.5707963267948966],
+    "carter2": [12.0, 18.5, -1.5707963267948966]
+  },
+  "camera_sampling": {
+    "overhead": {
+      "eye_xyz_m": [16.0, -12.0, 25.0],
+      "target_xyz_m": [16.0, 10.0, 0.7],
+      "x_orbit_m": 1.6,
+      "focal_length_mm": 26.0
+    },
+    "aisle": {
+      "eye_start_xyz_m": [2.0, 1.0, 4.5],
+      "eye_end_xyz_m": [30.0, 1.0, 4.5],
+      "target_offset_xyz_m": [0.0, 8.5, -3.7],
+      "focal_length_mm": 28.0
+    },
+    "amr_follow": {
+      "coordinate_frame": "carter1_chassis",
+      "eye_offset_xyz_m": [-0.6, -0.3, 2.4],
+      "target_offset_xyz_m": [0.0, 0.0, 0.35],
+      "focal_length_mm": 20.0
+    }
+  },
+  "required_classes": [
+    "floor",
+    "floor_marking",
+    "rack",
+    "workbench",
+    "process_equipment",
+    "control_cabinet",
+    "buffer_fixture",
+    "pallet",
+    "tote",
+    "payload_tote",
+    "amr",
+    "station_marker",
+    "barrier"
+  ],
+  "quality_bounds": {
+    "occlusion_ratio_min": 0.0,
+    "occlusion_ratio_max": 1.0,
+    "bbox_tolerance_px": 1,
+    "minimum_class_pixels": 1
+  },
+  "occlusion_evidence": {
+    "measurement_basis": "verified_sdk_leaf_only_mapping",
+    "reason": "verifiedSDKleaf-onlymapping",
+    "maximum_join_failures": 0,
+    "minimum_measured_useful_leaves_per_scene_camera": 1,
+    "required_bins_per_camera": ["clear", "partial", "heavy"],
+    "minimum_per_required_bin": 1,
+    "required_global_classes": ["amr", "rack", "tote", "process_equipment", "payload_tote", "barrier"]
+  },
+  "splits": {
+    "train": 8,
+    "val": 2,
+    "test": 2
+  },
+  "visual_review": {
+    "required_per_scene_camera": 1,
+    "allowed_verdict": "pass",
+    "required_leaf_occlusion_bins_per_camera": ["clear", "partial", "heavy"],
+    "require_compound_unknown_per_camera": true
+  }
+}

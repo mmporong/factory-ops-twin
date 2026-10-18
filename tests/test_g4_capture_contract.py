@@ -15,11 +15,14 @@ from unittest.mock import patch
 
 from scripts.isaac.g4_capture import (
     CaptureError,
+    PROFILE_SOURCE_PINS,
     REQUIRED_SOURCE_PINS,
     ROOT,
     _assert_frozen_capture,
     _capture_plan,
+    _capture_inputs,
     _capture_variant,
+    _camera_specs,
     _depth_value_is_valid,
     _jsonable,
     _normalize_annotations,
@@ -35,6 +38,12 @@ from scripts.isaac.g4_capture import (
     _safety_barrier_plan,
     _source_class_bindings,
     _verify_source_commit,
+    _validate_pinned_profile,
+)
+from factory_ops.dataset_evidence import (
+    V4_PRODUCTION_SOURCE_PINS,
+    _is_production_profile,
+    _production_source_pins,
 )
 
 
@@ -204,6 +213,79 @@ class _PhysicsStage:
 
 
 class G4CaptureContractTests(unittest.TestCase):
+    def test_compact_profile_supervisor_provenance_requires_v4_config_pins(self) -> None:
+        if shutil.which("git") is None:
+            self.skipTest("git is required for the source proof fixture")
+        inputs = _capture_inputs("factory-v4")
+        required = (set(REQUIRED_SOURCE_PINS) - PROFILE_SOURCE_PINS) | set(inputs.required_source_pins)
+        source_files = {
+            relative: hashlib.sha256((ROOT / relative).read_bytes()).hexdigest()
+            for relative in sorted(required)
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            fixture_root = Path(directory)
+            repo = fixture_root / "repo"
+            repo.mkdir()
+            for relative in sorted(required):
+                target = repo / relative
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_bytes((ROOT / relative).read_bytes())
+            subprocess.run(["git", "init", "--initial-branch=main"], cwd=repo, check=True, capture_output=True)
+            subprocess.run(["git", "config", "user.name", "G4 V4 Test"], cwd=repo, check=True)
+            subprocess.run(["git", "config", "user.email", "g4-v4@example.invalid"], cwd=repo, check=True)
+            subprocess.run(["git", "config", "core.autocrlf", "false"], cwd=repo, check=True)
+            subprocess.run(["git", "add", "--all"], cwd=repo, check=True)
+            subprocess.run(["git", "commit", "-m", "fixture"], cwd=repo, check=True, capture_output=True)
+            commit = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=repo, text=True).strip()
+            archive = fixture_root / "g4-v4-source.tar"
+            commit_object = fixture_root / "g4-v4-commit.raw"
+            subprocess.run(["git", "archive", "--format=tar", f"--output={archive}", commit], cwd=repo, check=True)
+            commit_object.write_bytes(subprocess.check_output(["git", "cat-file", "commit", commit], cwd=repo))
+            proof = fixture_root / "g4-v4-environment.json"
+            document = {
+                "schema_version": 1,
+                "source_commit": commit,
+                "checkout_head": commit,
+                "checkout_clean": True,
+                "source_git_object_verification": True,
+                "source_archive_sha256": hashlib.sha256(archive.read_bytes()).hexdigest(),
+                "source_commit_object_sha256": hashlib.sha256(commit_object.read_bytes()).hexdigest(),
+                "source_snapshot_relative": ROOT.name,
+                "source_files": source_files,
+            }
+            proof.write_text(json.dumps(document, sort_keys=True), encoding="utf-8")
+            proof_sha = hashlib.sha256(proof.read_bytes()).hexdigest()
+            with patch("scripts.isaac.g4_capture.subprocess.run", side_effect=FileNotFoundError), patch.dict(
+                os.environ, {"FACTORY_OPS_G4_PROVENANCE_SHA256": proof_sha}, clear=False
+            ):
+                verification = _verify_source_commit(
+                    commit,
+                    inputs.layout,
+                    proof,
+                    ROOT.parent,
+                    archive,
+                    commit_object,
+                    required,
+                )
+            self.assertIn("configs/factory-v4/dataset-profile.json", verification["required_source_pins"])
+            self.assertNotIn("configs/factory-v3/dataset-profile.json", verification["required_source_pins"])
+
+            document["source_files"].pop("configs/factory-v4/dataset-profile.json")
+            proof.write_text(json.dumps(document, sort_keys=True), encoding="utf-8")
+            proof_sha = hashlib.sha256(proof.read_bytes()).hexdigest()
+            with patch("scripts.isaac.g4_capture.subprocess.run", side_effect=FileNotFoundError), patch.dict(
+                os.environ, {"FACTORY_OPS_G4_PROVENANCE_SHA256": proof_sha}, clear=False
+            ), self.assertRaises(CaptureError):
+                _verify_source_commit(
+                    commit,
+                    inputs.layout,
+                    proof,
+                    ROOT.parent,
+                    archive,
+                    commit_object,
+                    required,
+                )
+
     def test_gitless_supervisor_provenance_pins_commit_and_required_sources(self) -> None:
         if shutil.which("git") is None:
             self.skipTest("git is required for the source proof fixture")
@@ -382,6 +464,85 @@ class G4CaptureContractTests(unittest.TestCase):
         self.assertEqual(probe.variant_seeds, (7,))
         self.assertEqual(probe.captures_per_scene, 2)
         self.assertTrue(probe.probe)
+
+    def test_compact_factory_profile_binds_v4_geometry_and_preserves_v3_defaults(self) -> None:
+        v3 = _capture_inputs("factory-v3")
+        v4 = _capture_inputs("factory-v4")
+        self.assertEqual(v3.dataset_profile, ROOT / "configs/factory-v3/dataset-profile.json")
+        self.assertEqual(v4.layout, ROOT / "configs/factory-v4/layout.json")
+        self.assertIsNone(v4.g2_scenarios)
+        self.assertIn("configs/factory-v4/dataset-profile.json", v4.required_source_pins)
+        self.assertNotIn("configs/factory-v3/dataset-profile.json", v4.required_source_pins)
+
+        profile = _validate_pinned_profile(v4)
+        self.assertEqual(profile["layout_revision"], "amr-production-bay-v4")
+        self.assertEqual(profile["layout_bounds_xy_m"], [0, 0, 32, 20])
+        self.assertEqual(profile["robot_spawns"]["carter1"][:2], [12.0, 1.5])
+        self.assertEqual(profile["robot_spawns"]["carter2"][:2], [12.0, 18.5])
+
+        half_sqrt = math.sqrt(0.5)
+        compact = _camera_specs(
+            0,
+            0,
+            (12.0, 1.5, 0.0),
+            profile,
+            (half_sqrt, 0.0, 0.0, half_sqrt),
+        )
+        self.assertEqual(compact["overhead"], ((16.0, -12.0, 25.0), (16.0, 10.0, 0.7), 26.0))
+        aisle_eye, aisle_target, aisle_focal = compact["aisle"]
+        self.assertEqual(aisle_eye, (2.0, 1.0, 4.5))
+        self.assertEqual(aisle_target[:2], (2.0, 9.5))
+        self.assertAlmostEqual(aisle_target[2], 0.8)
+        self.assertEqual(aisle_focal, 28.0)
+        follow_eye, follow_target, follow_focal = compact["amr_follow"]
+        self.assertAlmostEqual(follow_eye[0], 12.3)
+        self.assertAlmostEqual(follow_eye[1], 0.9)
+        self.assertEqual(follow_eye[2], 2.4)
+        self.assertAlmostEqual(follow_target[0], 12.0)
+        self.assertAlmostEqual(follow_target[1], 1.5)
+        self.assertEqual(follow_target[2], 0.35)
+        self.assertEqual(follow_focal, 20.0)
+
+        legacy = _camera_specs(0, 0, (22.0, 4.0, 0.0))
+        self.assertEqual(legacy["overhead"], ((20.0, -20.0, 32.0), (20.0, 12.0, 0.7), 28.0))
+        self.assertEqual(legacy["aisle"], ((5.0, 2.0, 4.5), (20.0, 12.0, 0.8), 26.0))
+
+        selected_sha = hashlib.sha256(v4.dataset_profile.read_bytes()).hexdigest()
+        self.assertTrue(_is_production_profile(profile, selected_sha))
+        self.assertEqual(_production_source_pins(profile, selected_sha), set(V4_PRODUCTION_SOURCE_PINS))
+
+    def test_brev_g4_runner_selects_compact_profile_explicitly(self) -> None:
+        source = (ROOT / "scripts/brev/run-g4.sh").read_text(encoding="utf-8")
+        self.assertIn('factory_profile=${4:-factory-v4}', source)
+        self.assertIn('--factory-profile "$factory_profile"', source)
+        self.assertIn('--layout "/workspace/project/configs/$factory_profile/layout.json"', source)
+        self.assertNotIn('--layout /workspace/project/configs/factory-v3/layout.json', source)
+
+    def test_compact_factory_cpu_scene_uses_v4_visual_and_render_sources(self) -> None:
+        from factory_ops.layout import Layout
+        from factory_ops.usda import export_usda
+        from factory_ops.visual_scene import export_visual_scene
+
+        inputs = _capture_inputs("factory-v4")
+        layout = Layout.from_file(inputs.layout)
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory)
+            export_usda(layout, output / "factory-v3.usda")
+            manifest = export_visual_scene(
+                layout,
+                output,
+                0,
+                inputs.visual_assets,
+                inputs.render_profile,
+            )
+
+        physical = cast(dict[str, object], manifest["physical_invariants"])
+        visual_config = cast(dict[str, object], manifest["visual_asset_config"])
+        render_profile = cast(dict[str, object], manifest["render_profile"])
+        self.assertEqual(physical["layout_bounds_xy_m"], [0.0, 0.0, 32.0, 20.0])
+        self.assertTrue(physical["visual_equipment_contained_by_source_xyz_envelopes"])
+        self.assertEqual(Path(cast(str, visual_config["path"])), inputs.visual_assets)
+        self.assertEqual(Path(cast(str, render_profile["path"])), inputs.render_profile)
 
     def test_production_cannot_relax_scene_or_capture_count(self) -> None:
         for seeds, captures in (("0..10", 30), ("0..11", 29), ("0..11", 31)):

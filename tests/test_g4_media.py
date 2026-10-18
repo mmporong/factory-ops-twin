@@ -416,6 +416,65 @@ class G4MediaTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "portfolio publication gates"):
             g4_media._require_publication_gate(report)
 
+    def test_publication_gate_selects_v4_profile_without_accepting_v3_identity(self) -> None:
+        report = self._qa_report()
+        report["stats"]["profile_id"] = "factory-v4-portfolio-render-v1"
+        g4_media._require_publication_gate(report, "factory-v4")
+        with self.assertRaisesRegex(ValueError, "portfolio publication gates"):
+            g4_media._require_publication_gate(self._qa_report(), "factory-v4")
+        with self.assertRaisesRegex(ValueError, "unsupported G4 factory profile"):
+            g4_media._require_publication_gate(report, "factory-v5")
+
+        cli_source = (Path(__file__).resolve().parents[1] / "scripts/media/export_g4_media.py").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn('choices=("factory-v3", "factory-v4")', cli_source)
+        self.assertIn("factory_profile=args.factory_profile", cli_source)
+
+    def test_v4_capture_config_binding_requires_profile_paths_and_runtime_hashes(self) -> None:
+        scene_sources = self.dataset_root / "provenance" / "scene-sources.json"
+        scene_sources.parent.mkdir(exist_ok=True)
+        config_sources = {
+            name: {"path": relative, "sha256": hashlib.sha256(relative.encode("utf-8")).hexdigest()}
+            for name, relative in {
+                "layout": "configs/factory-v4/layout.json",
+                "dataset_profile": "configs/factory-v4/dataset-profile.json",
+                "visual_assets": "configs/factory-v4/visual-assets.json",
+                "render_profile": "configs/factory-v4/render-profile.json",
+                "g2_config": "configs/factory-v4/g2.json",
+            }.items()
+        }
+        scene_sources.write_text(json.dumps({
+            "schema_version": 1,
+            "factory_profile": "factory-v4",
+            "config_sources": config_sources,
+            "variants": [],
+        }), encoding="utf-8")
+        dataset = json.loads((self.dataset_root / "dataset.json").read_text(encoding="utf-8"))
+        relative = scene_sources.relative_to(self.dataset_root).as_posix()
+        dataset["factory_profile"] = "factory-v4"
+        dataset["source"]["scene_path"] = relative
+        dataset["artifact_manifest"].append({
+            "path": relative,
+            "bytes": scene_sources.stat().st_size,
+            "sha256": _sha(scene_sources),
+        })
+        environment = {"source_files": {
+            binding["path"]: binding["sha256"] for binding in config_sources.values()
+        }}
+
+        binding = g4_media._capture_config_binding(
+            self.dataset_root, dataset, environment, "factory-v4",
+        )
+        self.assertEqual(binding["factory_profile"], "factory-v4")
+        self.assertEqual(binding["config_sources"], config_sources)
+
+        environment["source_files"]["configs/factory-v4/layout.json"] = "0" * 64
+        with self.assertRaisesRegex(ValueError, "config hash differs"):
+            g4_media._capture_config_binding(
+                self.dataset_root, dataset, environment, "factory-v4",
+            )
+
     def test_backup_record_with_diagnostics_schema_extension_is_rejected(self) -> None:
         record = json.loads(self.record.read_text(encoding="utf-8"))
         record["closed_run_proof"] = {"required_runs": ["g4-render-002"]}

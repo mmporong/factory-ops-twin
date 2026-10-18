@@ -17,6 +17,7 @@ from typing import Any, Iterable, Mapping, TypeGuard, cast
 
 
 DEFAULT_PROFILE = Path(__file__).resolve().parents[1] / "configs" / "factory-v3" / "dataset-profile.json"
+V4_PROFILE = Path(__file__).resolve().parents[1] / "configs" / "factory-v4" / "dataset-profile.json"
 DATASET_SCOPE = "independent visual configurations of one synthetic layout"
 HEX = set("0123456789abcdef")
 REVIEWER_PLACEHOLDER_SENTINELS = frozenset({
@@ -53,6 +54,18 @@ PRODUCTION_SOURCE_PINS = {
     "configs/factory-v3/dataset-profile.json",
     "configs/factory-v3/render-profile.json",
     "configs/factory-v3/visual-assets.json",
+}
+V4_PRODUCTION_SOURCE_PINS = (PRODUCTION_SOURCE_PINS - {
+    "configs/factory-v3/layout.json",
+    "configs/factory-v3/dataset-profile.json",
+    "configs/factory-v3/render-profile.json",
+    "configs/factory-v3/visual-assets.json",
+}) | {
+    "configs/factory-v4/layout.json",
+    "configs/factory-v4/g2.json",
+    "configs/factory-v4/dataset-profile.json",
+    "configs/factory-v4/render-profile.json",
+    "configs/factory-v4/visual-assets.json",
 }
 
 
@@ -165,12 +178,13 @@ def validate_dataset(
         if (dataset_profile_path is not None and dataset_profile_path in manifest_paths
                 and _sha256(root / PurePosixPath(dataset_profile_path)) != profile_sha):
             errors.append("dataset profile provenance copy differs from the selected profile")
+        production_pins = _production_source_pins(profile, profile_sha)
         _validate_source_verification(
             root,
             source,
             source.get("commit"),
             manifest_paths,
-            stats["validation_gate"] == "production",
+            production_pins,
             errors,
         )
     declared_scenes = dataset.get("scenes")
@@ -545,7 +559,7 @@ def _validate_source_verification(
     source: dict[str, Any],
     source_commit: object,
     manifest_paths: set[str],
-    production_gate: bool,
+    production_pins: set[str],
     errors: list[str],
 ) -> None:
     verification = source.get("verification")
@@ -584,9 +598,9 @@ def _validate_source_verification(
         errors.append("source verification required pins or source file count differ")
     snapshot = verification.get("source_snapshot_relative")
     if (_safe_relative(snapshot) is None or proof.get("source_snapshot_relative") != snapshot
-            or (production_gate and snapshot != "project")):
+            or (production_pins and snapshot != "project")):
         errors.append("source verification snapshot path binding is invalid")
-    if production_gate and not PRODUCTION_SOURCE_PINS.issubset(set(pins)):
+    if production_pins and not production_pins.issubset(set(pins)):
         errors.append("production source verification omits required runtime/import pins")
     archive_path = _safe_relative(verification.get("source_archive_path"))
     commit_object_path = _safe_relative(verification.get("source_commit_object_path"))
@@ -622,17 +636,27 @@ def _validate_source_verification(
 
 
 def _is_production_profile(profile: dict[str, Any], selected_sha: str | None) -> bool:
-    pinned_sha = _sha256(DEFAULT_PROFILE)
+    identity = (profile.get("profile_id"), selected_sha)
+    pinned = {
+        ("factory-v3-portfolio-render-v1", _sha256(DEFAULT_PROFILE)),
+        ("factory-v4-portfolio-render-v1", _sha256(V4_PROFILE)),
+    }
     return (
-        selected_sha is not None
-        and selected_sha == pinned_sha
-        and profile.get("profile_id") == "factory-v3-portfolio-render-v1"
+        identity in pinned
         and profile.get("scene_count") == 12
         and profile.get("captures_per_scene") == 30
         and profile.get("cameras") == ["overhead", "aisle", "amr_follow"]
         and profile.get("minimum_rgb_images") == 1080
         and profile.get("splits") == {"train": 8, "val": 2, "test": 2}
     )
+
+
+def _production_source_pins(profile: dict[str, Any], selected_sha: str | None) -> set[str]:
+    if not _is_production_profile(profile, selected_sha):
+        return set()
+    if profile.get("profile_id") == "factory-v4-portfolio-render-v1":
+        return set(V4_PRODUCTION_SOURCE_PINS)
+    return set(PRODUCTION_SOURCE_PINS)
 
 
 def _validate_cross_split_duplicates(

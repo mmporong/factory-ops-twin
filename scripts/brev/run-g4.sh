@@ -4,8 +4,10 @@ set -euo pipefail
 root=${1:?persisted workspace root required}
 run=${2:?new g4-probe/render-NNN run label required}
 expected_commit=${3:?verified source commit required}
+factory_profile=${4:-factory-v4}
 [[ "$run" =~ ^g4-(probe|render)-[0-9]{3}$ ]]
 [[ "$expected_commit" =~ ^[0-9a-f]{40}$ ]]
+[[ "$factory_profile" == factory-v3 || "$factory_profile" == factory-v4 ]]
 repository="$root/project"
 project="$repository"
 output="$root/results/$run"
@@ -47,25 +49,24 @@ cleanup() {
   fi
 }
 trap cleanup EXIT
-python3 - "$root" "$run" "$expected_commit" "$image" "$repository" "$project" "$archive" "$commit_object" <<'PY'
+python3 - "$root" "$run" "$expected_commit" "$image" "$repository" "$project" "$archive" "$commit_object" "$factory_profile" <<'PY'
 from datetime import datetime,timezone
 from pathlib import Path
 import hashlib,json,subprocess,sys
 root,run=Path(sys.argv[1]),sys.argv[2]
 repository,project,archive,commit_object=map(Path,sys.argv[5:9])
+factory_profile=sys.argv[9]
+config_dir=f'configs/{factory_profile}'
 paths=[
     'scripts/brev/run-g4.sh','scripts/isaac/g4_capture.py',
     'scripts/isaac/factory_visuals.py','scripts/isaac/g2_scene.py',
     'scripts/isaac/stage_smoke.py','factory_ops/visual_scene.py',
     'factory_ops/visual_state.py','factory_ops/usda.py','factory_ops/layout.py',
-    'configs/factory-v3/layout.json','configs/factory-v3/g2-scenarios.json',
-    'configs/factory-v3/dataset-profile.json','configs/factory-v3/render-profile.json',
-    'configs/factory-v3/visual-assets.json',
     'factory_ops/source_provenance.py',
 ]
 paths=sorted(set(paths) | {
     p.relative_to(project).as_posix()
-    for directory,pattern in (('factory_ops','*.py'),('scripts/isaac','*.py'),('configs/factory-v3','*.json'),('configs/factory-v3','*.yaml'))
+    for directory,pattern in (('factory_ops','*.py'),('scripts/isaac','*.py'),(config_dir,'*.json'),(config_dir,'*.yaml'))
     for p in (project/directory).rglob(pattern)
     if p.is_file() and not p.is_symlink()
 })
@@ -81,6 +82,7 @@ if checkout_head!=sys.argv[3] or not checkout_clean:
 record={
     'schema_version':1,
     'run_id':run,'source_commit':sys.argv[3],'isaac_image':sys.argv[4],
+    'factory_profile':factory_profile,
     'checkout_head':checkout_head,'checkout_clean':checkout_clean,
     'source_git_object_verification':True,
     'source_archive_sha256':hashlib.sha256(archive.read_bytes()).hexdigest(),
@@ -119,7 +121,8 @@ docker create --name "$name" --gpus all --network host --ipc host --user 1234:12
   -v "$project:/workspace/project:ro" -v "$root/results:/workspace/results:rw" \
   "$image" -lc 'exec timeout --signal=TERM --kill-after=30s 7200s ./python.sh /workspace/project/scripts/isaac/g4_capture.py "$@"' \
   factory-ops-g4 --output "/workspace/results/$run" --run-id "$run" \
-  --source-commit "$expected_commit" --layout /workspace/project/configs/factory-v3/layout.json \
+  --source-commit "$expected_commit" --factory-profile "$factory_profile" \
+  --layout "/workspace/project/configs/$factory_profile/layout.json" \
   --resolution 1280x720 "${args[@]}" >/dev/null
 created=true
 docker inspect "$name" > "$root/logs/$run-container.json"
