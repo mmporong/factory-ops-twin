@@ -91,6 +91,8 @@ QA 보고서는 데이터셋 ID·실행 ID·검사한 명세의 크기와 SHA256
 
 `scripts/brev/g3_storage_probe.py`는 소스 Git bundle을 비공개 draft Release로 나눠 전송하고 다시 받아 전체 바이트·SHA를 대조합니다. Linux/WSL에서 prepare·upload·readback·verify를 분리하고, 저장소의 비공개 상태와 ID, Release와 asset의 정확한 집합을 각 단계에서 확인합니다. 코드 리뷰·로컬 회귀검사와 함께 48,012,125B 소스 bundle의 3개 조각 업로드·재다운로드·재조립·Git 복원 및 fsck를 통과했습니다. 이 도구의 범위는 소스 전송이며 대형 원본 자료의 보관·의미 검증이나 최종 백업 승인을 대신하지 않습니다. Draft는 변경 가능하므로 후속 사용 시 원격 상태와 바이트를 다시 확인해야 합니다.
 
+`scripts/brev/g3_raw_storage_probe.py`는 Linux/WSL에서 G3 원본 압축본·명세·실행 기록·세션·소스 bundle을 별도 묶음으로 준비하는 로컬 PREPARE 도구입니다. 원본 압축본을 그대로 담고, 묶음 내부와 외부의 식별자·파일 집합·크기·SHA를 대조합니다. 준비 중 파일 교체나 세션 변경이 생기면 결과 확정을 거부하고 실패 기록을 남깁니다. `python scripts/brev/g3_raw_storage_probe.py --help`에서 입력 경로를 확인할 수 있습니다. 이 도구로 준비한 묶음의 원격 업로드·재다운로드와 물리·의미 재검증은 아직 수행하지 않았습니다.
+
 `scripts/media/export_g3_media.py`는 검증된 qualification의 복원본에서 24초 원속도 영상, 전체 운영 영상, GIF와 대표 이미지를 생성합니다. 세 카메라의 화면을 보존하고, 해당 시각까지 기록된 주문·운반물·버퍼·주행 허가·예약 이유를 별도 패널에 표시합니다. 기록에 없는 원인이나 같은 시각 이벤트의 선후 관계는 추정해 넣지 않습니다. 실행에는 기존 Pillow·FFmpeg·FFprobe 환경, 깨끗한 고정 커밋, 원본 manifest·백업·복원 검증서와 물리 디스크 색인이 필요합니다. `python scripts/media/export_g3_media.py --help`에서 필수 경로를 확인할 수 있습니다. 후처리 소스와 원본을 생성 전후에 다시 해시하고 MP4·GIF 전체를 디코딩하며, 검증을 통과한 출력만 새 폴더로 확정합니다.
 
 `scripts/media/export_g4_media.py`는 최종 프로필의 자동 데이터 검사와 AI 포트폴리오 검수를 통과한 복원본에서 세 카메라의 원본 RGB와 RGB·깊이·semantic·instance/bbox 비교 이미지를 만듭니다. 전체 원본 복원, 두 물리 디스크의 백업, 촬영·라벨·검수·후처리 소스를 대조하고 게시 전후 출력의 파일 집합·크기·해시를 검사합니다. 사람의 릴리스 승인과 생산용 승인 상태는 별도로 기록합니다. `python scripts/media/export_g4_media.py --help`에서 필수 경로를 확인할 수 있습니다. 최종 1,080장과 이 경로의 실제 포트폴리오 미디어는 아직 생성·승인 전입니다.
