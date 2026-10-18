@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "revision": "amr-production-bay-v4",
+  "name": "g3-source-binding-traffic-reference",
+  "status": "G3 source-bound compatibility geometry only; no V4 G2 traffic qualification is claimed",
+  "frame": "map",
+  "units": "m",
+  "coverage": "Three named conflict regions retained for source compatibility; G3 execution uses g3-routing reservations",
+  "default_capacity": 1,
+  "footprint_clearance_m": 0.2,
+  "resources": [
+    {"id": "Z_UPPER", "polygon_xy": [[17.5, 2.5], [22.5, 2.5], [22.5, 5.5], [17.5, 5.5]], "capacity": 1,
+     "ports": {"west": {"xy": [16, 4], "yaw": 0}, "east": {"xy": [25, 4], "yaw": 3.141592653589793}}, "adjacent_resources": ["Z_LOWER", "J_SHIP"]},
+    {"id": "Z_LOWER", "polygon_xy": [[17.5, 14.5], [22.5, 14.5], [22.5, 17.5], [17.5, 17.5]], "capacity": 1,
+     "ports": {"west": {"xy": [16, 16], "yaw": 0}, "east": {"xy": [25, 16], "yaw": 3.141592653589793}}, "adjacent_resources": ["Z_UPPER", "J_SHIP"]},
+    {"id": "J_SHIP", "polygon_xy": [[23.5, 8.5], [26.5, 8.5], [26.5, 11.5], [23.5, 11.5]], "capacity": 1,
+     "ports": {"low_y": {"xy": [25, 7], "yaw": 1.5707963267948966}, "high_y": {"xy": [25, 13], "yaw": -1.5707963267948966}, "east": {"xy": [29, 10], "yaw": 3.141592653589793}}, "adjacent_resources": ["Z_UPPER", "Z_LOWER"]}
+  ],
+  "pockets": {"P1": [12, 1.5], "P2": [12, 18.5]},
+  "fixture_routes": {
+    "F1_carter1": {"waypoints_xy": [[16, 4], [25, 4], [25, 7], [25, 10], [29, 10]], "resources": ["Z_UPPER", "J_SHIP"]},
+    "F1_carter2": {"waypoints_xy": [[25, 7], [25, 4], [16, 4], [15, 4]], "resources": ["Z_UPPER"]},
+    "F2_carter2": {"start_inside_owned_resource": "Z_UPPER", "waypoints_xy": [[19, 4], [25, 4], [25, 7]], "resources": ["Z_UPPER"], "fault_sim_time_s": [0, 30]},
+    "F2_carter1": {"waypoints_xy": [[16, 4], [25, 4]], "resources": ["Z_UPPER"], "request_sim_time_s": 5, "required_denial_reason": "stale_occupancy", "minimum_denials": 1, "minimum_wait_events": 1},
+    "F3_carter2_yield": {"waypoints_xy": [[25, 4], [25, 7], [25, 13], [25, 16], [16, 16], [12, 16], [12, 18.5]], "resources": ["J_SHIP", "Z_LOWER"], "forbidden_resources": ["Z_UPPER"], "destination": "P2"},
+    "F3_cycle": {"carter1_xy": [16, 4], "carter2_xy": [25, 4], "goals_xy": [[25, 7], [15, 4]], "requested_resource": "Z_UPPER", "cycle_detection_after_s": 5,
+     "recovery_event_order": ["carter2_yield_P2", "carter1_goal_E_CI", "carter1_footprint_clear_upper", "upper_release_ack", "carter2_replan_resume_C_LOW", "both_goals_complete"]},
+    "F3_carter1_exit": {"waypoints_xy": [[16, 4], [25, 4], [25, 7]], "resources": ["Z_UPPER"]},
+    "F3_carter2_resume": {"after": "upper_release_ack", "waypoints_xy": [[12, 18.5], [12, 16], [15, 16], [15, 4]], "resources": []}
+  },
+  "materialization": "Compatibility reference only. G3 route admission is compiled from g3-routing.json and no V4 G2 result is inferred.",
+  "required_runtime_checks": ["V4 G2 traffic behavior remains unqualified", "G3 current path and reservations require runtime evidence"],
+  "layout_reference": "layout.json"
+}

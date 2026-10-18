@@ -16,10 +16,12 @@ from typing import Any
 from .experiments import build_matrix, build_workload, canonical_hash, load_experiment_config
 from .g3_prepare import _bindings
 from .fleet_routing import RouteBook
+from .layout import V4_REVISION
 from .usda import export_usda
 
 ROOT = Path(__file__).resolve().parents[1]
 CONFIG = ROOT / "configs/factory-v3"
+CONFIG_V4 = ROOT / "configs/factory-v4"
 SCOPE = "qualification_and_pilot_only_not_primary_comparison"
 PRIMARY_SCOPE = "primary_comparison_fixed_inputs"
 _COMMIT = re.compile(r"^[0-9a-f]{40}$")
@@ -33,6 +35,35 @@ def sha(path: Path) -> str:
 def save(path: Path, value: Any) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(value, sort_keys=True, ensure_ascii=False, indent=2, allow_nan=False) + "\n", encoding="utf-8", newline="\n")
+
+
+def config_dir_from_session(session_root: Path) -> Path:
+    """Resolve the canonical repository config profile bound to a session."""
+    root = session_root.resolve(strict=True)
+    if not root.is_dir() or session_root.is_symlink():
+        raise ValueError("session root must be a regular directory")
+    session_path = root / "session.json"
+    layout_path = root / "layout.json"
+    if session_path.is_symlink() or layout_path.is_symlink() or not session_path.is_file() or not layout_path.is_file():
+        raise ValueError("session profile requires regular session.json and layout.json files")
+    session = json.loads(session_path.read_text(encoding="utf-8"))
+    layout = json.loads(layout_path.read_text(encoding="utf-8"))
+    if not isinstance(session, dict) or not isinstance(layout, dict):
+        raise ValueError("session profile inputs must be JSON objects")
+    revision = layout.get("revision")
+    profile = session.get("config_profile")
+    if revision == V4_REVISION:
+        expected = {
+            "name": "factory-v4",
+            "layout_revision": V4_REVISION,
+            "repository_relative": "configs/factory-v4",
+        }
+        if profile is not None and profile != expected:
+            raise ValueError("session config profile differs from the V4 layout revision")
+        return CONFIG_V4.resolve(strict=True)
+    if profile is not None:
+        raise ValueError("only the V4 layout may declare a nondefault session config profile")
+    return CONFIG.resolve(strict=True)
 
 
 def source_hashes(config_dir: Path) -> dict[str, str]:
@@ -102,8 +133,8 @@ def _validate_runtime(runtime: dict[str, Any]) -> None:
     }
     if not isinstance(media, dict) or set(media) != media_fields:
         raise ValueError("G3 real-time media profile fields differ")
-    if media["profiles"] != ["qualification"]:
-        raise ValueError("G3 real-time media is qualification-only")
+    if media["profiles"] not in ([], ["qualification"]):
+        raise ValueError("G3 real-time media profiles must be disabled or qualification-only")
     window = media["window_s"]
     if type(window) not in (int, float) or not math.isfinite(window) or not 0 < window <= 30:
         raise ValueError("G3 real-time media window must be finite and at most 30 seconds")
@@ -163,6 +194,12 @@ def _write_session(output: Path, *, config_dir: Path = CONFIG, profile: str = "q
                "source_config": source_hashes(config_dir), "files": files,
                "scene_closure": deepcopy(settings["conditions"]["closure"]["barrier_provenance"])
                    if condition == "closure" else None}
+    if book.base_layout.data.get("revision") == V4_REVISION:
+        session["config_profile"] = {
+            "name": "factory-v4",
+            "layout_revision": V4_REVISION,
+            "repository_relative": "configs/factory-v4",
+        }
     save(output / "session.json", session)
     return session
 
@@ -401,7 +438,7 @@ def prepare_primary_session(
     )
 
 
-def verify_session(output: Path, *, config_dir: Path = CONFIG, expected_context: dict[str, Any] | None = None,
+def verify_session(output: Path, *, config_dir: Path | None = None, expected_context: dict[str, Any] | None = None,
                    expected_sha256: str | None = None, trial_path: Path | None = None,
                    calibration_path: Path | None = None,
                    pilot_slots: dict[str, dict[str, Any]] | None = None,
@@ -412,6 +449,11 @@ def verify_session(output: Path, *, config_dir: Path = CONFIG, expected_context:
     if expected_sha256 is not None and sha(output / "session.json") != expected_sha256:
         raise ValueError("session SHA differs from supervisor-bound input")
     session = json.loads((output / "session.json").read_text(encoding="utf-8"))
+    config_dir = (
+        config_dir_from_session(output)
+        if config_dir is None
+        else config_dir.resolve(strict=True)
+    )
     if session.get("primary_evaluation") is True or session.get("scope") == PRIMARY_SCOPE:
         primary_values = (trial_path, calibration_path, pilot_slots, resource_input,
                           expected_source_commit)
@@ -519,7 +561,7 @@ def main() -> int:
     parser.add_argument("--seed", type=int)
     parser.add_argument("--primary-inputs", type=Path)
     parser.add_argument("--primary-inputs-sha256")
-    parser.add_argument("--config-dir", type=Path, default=CONFIG)
+    parser.add_argument("--config-dir", type=Path)
     parser.add_argument("--verify", action="store_true")
     args = parser.parse_args()
     context = {"profile": args.profile, "condition": args.condition, "policy": args.policy, "seed": args.seed}
@@ -528,7 +570,7 @@ def main() -> int:
         if args.profile != "primary" or any(value is None for value in primary_values):
             parser.error("primary requires --profile primary, --primary-inputs and --primary-inputs-sha256")
         primary_args = _load_primary_input_manifest(args.primary_inputs, args.primary_inputs_sha256)
-        primary_args["config_dir"] = args.config_dir
+        primary_args["config_dir"] = args.config_dir or CONFIG
         session = (verify_session(args.output, **primary_args) if args.verify
                    else prepare_primary_session(args.output, **primary_args))
     elif args.verify:
@@ -539,7 +581,7 @@ def main() -> int:
     else:
         profile = args.profile or "qualification"
         default_seed = 100 if profile == "pilot" else 0
-        session = prepare_session(args.output, config_dir=args.config_dir, profile=profile,
+        session = prepare_session(args.output, config_dir=args.config_dir or CONFIG, profile=profile,
                                   condition=args.condition or "normal", policy=args.policy or "fifo",
                                   seed=args.seed if args.seed is not None else default_seed)
     print(json.dumps({"verified": True, "scenario_id": session["scenario_id"], "scope": session["scope"], "orders": len(session["workload"]["orders"]), "workload_sha256": session["workload_sha256"]}))

@@ -60,8 +60,8 @@ def _bindings(settings: dict[str, Any], config_dir: Path) -> None:
         raise ValueError("experiment source_bindings must be a list")
     config_root = config_dir.resolve(strict=True)
     repo_root = ROOT.resolve(strict=True)
-    local_prefix = ("configs", "factory-v3")
     local_bindings: dict[str, str] = {}
+    local_prefixes: set[tuple[str, str]] = set()
     seen: set[str] = set()
     for entry in entries:
         if (not isinstance(entry, dict) or set(entry) != {"path", "sha256"}
@@ -72,7 +72,8 @@ def _bindings(settings: dict[str, Any], config_dir: Path) -> None:
         if source.is_absolute() or ".." in source.parts or source_name in seen:
             raise ValueError(f"experiment source binding path is unsafe or duplicated: {source_name}")
         seen.add(source_name)
-        if source.parts[:2] == local_prefix:
+        if len(source.parts) >= 3 and source.parts[0] == "configs" and source.parts[1] in {"factory-v3", "factory-v4"}:
+            local_prefixes.add((source.parts[0], source.parts[1]))
             relative = Path(*source.parts[2:])
             if not relative.parts:
                 raise ValueError(f"experiment source binding path is incomplete: {source_name}")
@@ -91,6 +92,8 @@ def _bindings(settings: dict[str, Any], config_dir: Path) -> None:
     required = {"layout.json", "g3-routing.json", "g2.json", "traffic.json"}
     if not required.issubset(local_bindings):
         raise ValueError("experiment source bindings must cover layout, routing, G2, and traffic inputs")
+    if len(local_prefixes) != 1:
+        raise ValueError("experiment local source bindings must use one canonical config profile")
     actual_inputs = _inputs(config_root)
     for name in ("layout.json", "g3-routing.json"):
         if local_bindings[name] != actual_inputs[name]:
@@ -114,6 +117,7 @@ def _derive(config_dir: Path) -> tuple[RouteBook, dict[str, Any], dict[str, Any]
 
 def _report(path: Path, book: RouteBook, preflight: dict[str, Any], trials: dict[str, Any]) -> None:
     payload = json.dumps({"routes": preflight["routes"], "barrier": list(book.layout.data["blocked_aisle"]["rect"]),
+                          "bounds_ymax": book.layout.bounds.ymax,
                           "radius": book.planning_radius_m, "tile_size": book.tile_size_m}, allow_nan=False).replace("</", "<\\/")
     options = "".join(f'<option value="{escape(name, quote=True)}">{escape(name)}</option>'
                       for name in sorted({**book.layout.stations, **book.layout.pockets}))
@@ -137,7 +141,7 @@ def _report(path: Path, book: RouteBook, preflight: dict[str, Any], trials: dict
 <details><summary>G3b GPU 진입 전 남은 조건</summary><ol>GATES</ol></details>
 <footer>원본·생성기 SHA와 파일 집합은 manifest.json에서 대조합니다. 파일 hash는 발행자 인증을 제공하지 않습니다.</footer>
 <script id="data" type="application/json">DATA</script><script>
-'use strict';const data=JSON.parse(document.getElementById('data').textContent);const start=document.getElementById('start'),goal=document.getElementById('goal'),closed=document.getElementById('closed'),show=document.getElementById('showtiles');start.value='S1';goal.value='CI';const ns='http://www.w3.org/2000/svg';function shape(tag,attrs){const el=document.createElementNS(ns,tag);for(const[k,v]of Object.entries(attrs))el.setAttribute(k,String(v));return el}function update(){const r=data.routes.find(r=>r.start===start.value&&r.goal===goal.value&&r.closed===closed.checked);const tiles=document.getElementById('tiles'),envelopes=document.getElementById('envelopes');tiles.replaceChildren();envelopes.replaceChildren();const line=document.getElementById('route'),barrier=document.getElementById('barrier');if(!r){line.setAttribute('points','');barrier.setAttribute('visibility','hidden');document.getElementById('routeinfo').textContent='출발과 도착이 같습니다. 다른 도착 위치를 선택하세요.';return}line.setAttribute('points',r.points.map(([x,y])=>[x,24-y].join(',')).join(' '));barrier.setAttribute('visibility',closed.checked?'visible':'hidden');const[x0,y0,x1,y1]=data.barrier;for(const[k,v]of Object.entries({x:x0,y:24-y1,width:x1-x0,height:y1-y0}))barrier.setAttribute(k,String(v));if(show.checked)for(const[x,y]of r.tiles)tiles.appendChild(shape('rect',{x:x*data.tile_size,y:24-(y+1)*data.tile_size,width:data.tile_size,height:data.tile_size,fill:'#60a5fa','fill-opacity':'.12',stroke:'#60a5fa','stroke-width':'.025'}));for(const[x,y]of [r.points[0],r.points[r.points.length-1]])envelopes.appendChild(shape('circle',{cx:x,cy:24-y,r:data.radius,fill:'none',stroke:'#1d4ed8','stroke-width':'.07','stroke-dasharray':'.2 .12'}));document.getElementById('routeinfo').textContent=`계획 경로 ${r.distance_m.toFixed(1)} m · 예약 후보 ${r.tiles.length}타일 · ${r.nodes.join(' → ')}`;}for(const el of[start,goal,closed,show])el.addEventListener('change',update);update();
+'use strict';const data=JSON.parse(document.getElementById('data').textContent);const start=document.getElementById('start'),goal=document.getElementById('goal'),closed=document.getElementById('closed'),show=document.getElementById('showtiles'),fy=data.bounds_ymax;start.value='S1';goal.value='CI';const ns='http://www.w3.org/2000/svg';function shape(tag,attrs){const el=document.createElementNS(ns,tag);for(const[k,v]of Object.entries(attrs))el.setAttribute(k,String(v));return el}function update(){const r=data.routes.find(r=>r.start===start.value&&r.goal===goal.value&&r.closed===closed.checked);const tiles=document.getElementById('tiles'),envelopes=document.getElementById('envelopes');tiles.replaceChildren();envelopes.replaceChildren();const line=document.getElementById('route'),barrier=document.getElementById('barrier');if(!r){line.setAttribute('points','');barrier.setAttribute('visibility','hidden');document.getElementById('routeinfo').textContent='출발과 도착이 같습니다. 다른 도착 위치를 선택하세요.';return}line.setAttribute('points',r.points.map(([x,y])=>[x,fy-y].join(',')).join(' '));barrier.setAttribute('visibility',closed.checked?'visible':'hidden');const[x0,y0,x1,y1]=data.barrier;for(const[k,v]of Object.entries({x:x0,y:fy-y1,width:x1-x0,height:y1-y0}))barrier.setAttribute(k,String(v));if(show.checked)for(const[x,y]of r.tiles)tiles.appendChild(shape('rect',{x:x*data.tile_size,y:fy-(y+1)*data.tile_size,width:data.tile_size,height:data.tile_size,fill:'#60a5fa','fill-opacity':'.12',stroke:'#60a5fa','stroke-width':'.025'}));for(const[x,y]of [r.points[0],r.points[r.points.length-1]])envelopes.appendChild(shape('circle',{cx:x,cy:fy-y,r:data.radius,fill:'none',stroke:'#1d4ed8','stroke-width':'.07','stroke-dasharray':'.2 .12'}));document.getElementById('routeinfo').textContent=`계획 경로 ${r.distance_m.toFixed(1)} m · 예약 후보 ${r.tiles.length}타일 · ${r.nodes.join(' → ')}`;}for(const el of[start,goal,closed,show])el.addEventListener('change',update);update();
 </script></html>'''
     for key, replacement in (("OPTIONS", options), ("MAP", svg), ("EDGES", edge_rows),
                              ("TRIALS", trial_rows), ("GATES", gates), ("DATA", payload)):

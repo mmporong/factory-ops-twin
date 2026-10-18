@@ -210,9 +210,16 @@ def validate_settings(settings: Mapping[str, Any]) -> None:
         {"source", "layout_object_id", "rect_xyxy_m", "height_m", "scene_active_interval_s"},
         "conditions.closure.barrier_provenance",
     )
-    if (barrier.get("source") != "configs/factory-v3/layout.json"
+    barrier_rect = barrier.get("rect_xyxy_m")
+    barrier_identity = (
+        barrier.get("source"),
+        tuple(barrier_rect) if isinstance(barrier_rect, list) else barrier_rect,
+    )
+    if (barrier_identity not in {
+                ("configs/factory-v3/layout.json", (25.5, 2.5, 26.5, 5.5)),
+                ("configs/factory-v4/layout.json", (18.5, 2.5, 19.5, 5.5)),
+            }
             or barrier.get("layout_object_id") != "blocked_aisle"
-            or barrier.get("rect_xyxy_m") != [25.5, 2.5, 26.5, 5.5]
             or _number(barrier.get("height_m"), "barrier.height_m", positive=True) != 1.5
             or barrier.get("scene_active_interval_s") != [0.0, 600.0]):
         raise ValueError("closure barrier provenance must match the authored blocked_aisle object")
