@@ -210,8 +210,12 @@ class G4MediaTests(unittest.TestCase):
                         "0": {"class": "BACKGROUND"}, "2": {"class": "floor"}, "9": {"class": "rack"},
                     },
                     "instance_id_to_labels": {
-                        "0": {"class": "BACKGROUND"}, "21": {"class": "floor"}, "27": {"class": "rack"},
+                        "21": {"class": "floor"}, "27": {"class": "rack"},
                     },
+                    "instance_id_to_labels_raw": {
+                        "0": "BACKGROUND", "21": "/World/floor", "27": "/World/rack",
+                    },
+                    "reserved_instance_ids": {"0": "BACKGROUND"},
                 },
                 "instances": [
                     {"instance_id": 21, "class": "floor", "bbox_xyxy": [0, 1, 3, 1],
@@ -479,7 +483,108 @@ class G4MediaTests(unittest.TestCase):
         self.assertEqual(bbox_records[1]["mask_pixel_count"], 4)
         self.assertEqual(bbox_records[1]["mask_semantic_id"], 9)
         self.assertEqual(bbox_records[1]["occlusion_status"], "individual_sdk_bbox_absent")
+        visible_ids = provenance["cameras"]["overhead"]["instance_visualization"]["visible_mask_ids"]
+        self.assertEqual([record["instance_id"] for record in visible_ids], [0, 21, 27])
+        self.assertEqual(visible_ids[0]["identity_source"], "original_renderer_reserved_identity")
+        self.assertEqual(visible_ids[0]["pixel_count"], 4)
         self.assertEqual(len(provenance["render_time_integrity_checks"]), 3)
+
+    def test_instance_panel_rejects_false_or_mismatched_reserved_identity(self) -> None:
+        camera_root = (
+            self.dataset_root / "scenes" / "scene-000" / "captures"
+            / "f000000120-t000000002000000" / "overhead"
+        )
+        normalized = json.loads((camera_root / "normalized.json").read_text(encoding="utf-8"))
+        mutations = {
+            "false declaration": lambda candidate: candidate["raw_info"]["reserved_instance_ids"].update(
+                {"0": "UNLABELLED"}
+            ),
+            "renderer mismatch": lambda candidate: candidate["raw_info"]["instance_id_to_labels_raw"].update(
+                {"0": "UNLABELLED"}
+            ),
+            "semantic mismatch": lambda candidate: (
+                candidate["raw_info"]["reserved_instance_ids"].update({"0": "UNLABELLED"}),
+                candidate["raw_info"]["instance_id_to_labels_raw"].update({"0": "UNLABELLED"}),
+            ),
+            "unknown reserved ID": lambda candidate: candidate["raw_info"]["reserved_instance_ids"].update(
+                {"99": "BACKGROUND"}
+            ),
+        }
+        for label, mutate in mutations.items():
+            with self.subTest(label=label):
+                candidate = json.loads(json.dumps(normalized))
+                mutate(candidate)
+                pillow = _fake_pillow()
+                with self.assertRaisesRegex(ValueError, "reserved|renderer|semantic|taxonom"):
+                    g4_media._instance_panel(
+                        camera_root / "instance.npy",
+                        camera_root / "semantic.npy",
+                        candidate,
+                        pillow.Image,
+                        pillow.ImageDraw,
+                    )
+
+    @unittest.skipUnless(os.environ.get("FACTORY_OPS_G4_ACTUAL_DATASET"), "actual G4 dataset not configured")
+    def test_actual_selected_capture_instance_panels_preserve_all_visible_pixels(self) -> None:
+        from PIL import Image, ImageDraw
+
+        root = Path(os.environ["FACTORY_OPS_G4_ACTUAL_DATASET"])
+        capture_root = (
+            root / "scenes" / "scene-000" / "captures"
+            / "f000000151-t000002516666667"
+        )
+        for camera_id in g4_media.CAMERAS:
+            with self.subTest(camera_id=camera_id):
+                camera_root = capture_root / camera_id
+                normalized = json.loads((camera_root / "normalized.json").read_text(encoding="utf-8"))
+                image, legend = g4_media._instance_panel(
+                    camera_root / "instance.npy",
+                    camera_root / "semantic.npy",
+                    normalized,
+                    Image,
+                    ImageDraw,
+                )
+                self.assertEqual(image.size, g4_media.RGB_SIZE)
+                _dtype, shape, raw_values = g4_media._unpack_array(camera_root / "instance.npy", "instance")
+                self.assertEqual(shape, (g4_media.RGB_SIZE[1], g4_media.RGB_SIZE[0]))
+                actual_counts: dict[int, int] = {}
+                for raw_value in raw_values:
+                    instance_id = int(raw_value)
+                    actual_counts[instance_id] = actual_counts.get(instance_id, 0) + 1
+                visible = {record["instance_id"]: record for record in legend["visible_mask_ids"]}
+                self.assertEqual(set(visible), set(actual_counts))
+                self.assertEqual(
+                    {instance_id: record["pixel_count"] for instance_id, record in visible.items()},
+                    actual_counts,
+                )
+                source_colored_pixels = 0
+                labelled_source_colored_pixels = 0
+                for instance_id, record in visible.items():
+                    source_pixels = [index for index, value in enumerate(raw_values) if int(value) == instance_id]
+                    if record["identity_source"] == "original_renderer_reserved_identity":
+                        expected_color = g4_media.PALETTE[record["class"]]
+                    else:
+                        digest = hashlib.sha256(str(instance_id).encode("ascii")).digest()
+                        expected_color = (
+                            55 + digest[0] % 181,
+                            55 + digest[1] % 181,
+                            55 + digest[2] % 181,
+                        )
+                    matches = sum(
+                        image.getpixel((index % shape[1], index // shape[1])) == expected_color
+                        for index in source_pixels
+                    )
+                    source_colored_pixels += matches
+                    if record["identity_source"] == "original_renderer_reserved_identity":
+                        self.assertGreater(
+                            matches,
+                            0,
+                            f"{camera_id} reserved ID {instance_id} has no source-colored output pixel",
+                        )
+                    else:
+                        labelled_source_colored_pixels += matches
+                self.assertGreater(source_colored_pixels, 0)
+                self.assertGreater(labelled_source_colored_pixels, 0)
 
     def test_instance_panel_rejects_tampered_visible_mask_provenance(self) -> None:
         camera_root = (

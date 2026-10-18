@@ -1,6 +1,7 @@
 """Export portfolio media after fixed-profile deterministic and external-AI publication gates."""
 from __future__ import annotations
 
+import ast
 import hashlib
 import json
 import math
@@ -530,6 +531,71 @@ def _class_map(normalized: Mapping[str, Any], key: str) -> dict[int, str]:
     return result
 
 
+def _raw_reserved_identity(value: object) -> str | None:
+    parsed = value
+    if isinstance(value, str):
+        stripped = value.strip()
+        for parser in (json.loads, ast.literal_eval):
+            try:
+                candidate = parser(stripped)
+            except (ValueError, SyntaxError, json.JSONDecodeError):
+                continue
+            if isinstance(candidate, dict):
+                parsed = candidate
+                break
+        else:
+            parsed = {"class": stripped}
+    if not isinstance(parsed, Mapping):
+        return None
+    for key in ("class", "semanticClass", "label"):
+        candidate = parsed.get(key)
+        if isinstance(candidate, str):
+            identity = candidate.strip().upper()
+            if identity in {"BACKGROUND", "UNLABELLED"}:
+                return identity
+    return None
+
+
+def _instance_display_taxonomy(
+    normalized: Mapping[str, Any],
+    visible_ids: set[int],
+    mask_records: Mapping[int, Mapping[str, Any]],
+) -> tuple[dict[int, str], set[int]]:
+    taxonomy = _class_map(normalized, "instance_id_to_labels")
+    semantic_taxonomy = _class_map(normalized, "semantic_id_to_labels")
+    raw_info = normalized.get("raw_info")
+    raw_labels = raw_info.get("instance_id_to_labels_raw") if isinstance(raw_info, Mapping) else None
+    declared = raw_info.get("reserved_instance_ids") if isinstance(raw_info, Mapping) else None
+    if not isinstance(raw_labels, Mapping) or not isinstance(declared, Mapping):
+        raise ValueError("normalized taxonomy is missing renderer reserved instance identities")
+    reserved: dict[int, str] = {}
+    for raw_id, identity in declared.items():
+        try:
+            instance_id = int(raw_id)
+        except (TypeError, ValueError) as error:
+            raise ValueError("reserved instance ID is not an integer") from error
+        if (not isinstance(raw_id, str) or raw_id != str(instance_id) or instance_id < 0
+                or instance_id in reserved or instance_id in taxonomy):
+            raise ValueError("reserved instance ID is noncanonical, duplicated, or overlaps labelled taxonomy")
+        if identity not in {"BACKGROUND", "UNLABELLED"}:
+            raise ValueError("reserved instance ID has an unsupported identity")
+        if _raw_reserved_identity(raw_labels.get(raw_id)) != identity:
+            raise ValueError("reserved instance ID differs from the original renderer identity")
+        reserved[instance_id] = identity
+    if visible_ids != set(taxonomy) | set(reserved):
+        raise ValueError("instance mask IDs do not exactly match labelled and renderer-reserved taxonomies")
+    display_taxonomy = {**taxonomy, **reserved}
+    for instance_id, class_name in display_taxonomy.items():
+        record = mask_records.get(instance_id)
+        semantic_ids = record.get("semantic_ids") if isinstance(record, Mapping) else None
+        if not isinstance(semantic_ids, set) or not semantic_ids:
+            raise ValueError("visible instance ID has no semantic mask binding")
+        semantic_classes = {semantic_taxonomy.get(semantic_id) for semantic_id in semantic_ids}
+        if semantic_classes != {class_name}:
+            raise ValueError("instance mask class differs from its semantic mask binding")
+    return display_taxonomy, set(reserved)
+
+
 def _semantic_panel(path: Path, normalized: Mapping[str, Any], image_module: Any) -> tuple[Any, dict[str, Any]]:
     _dtype, (height, width), values = _unpack_array(path, "semantic")
     taxonomy = _class_map(normalized, "semantic_id_to_labels")
@@ -553,10 +619,7 @@ def _instance_panel(
     _semantic_dtype, semantic_shape, semantic_values = _unpack_array(semantic_path, "semantic")
     if semantic_shape != (height, width):
         raise ValueError("semantic and instance masks differ in shape")
-    taxonomy = _class_map(normalized, "instance_id_to_labels")
     ids = {int(value) for value in values}
-    if not ids.issubset(taxonomy):
-        raise ValueError("instance mask contains an ID absent from normalized taxonomy")
     mask_records: dict[int, dict[str, Any]] = {}
     for index, (raw_instance_id, raw_semantic_id) in enumerate(zip(values, semantic_values)):
         instance_id = int(raw_instance_id)
@@ -573,9 +636,11 @@ def _instance_panel(
             record["bbox"][3] = max(record["bbox"][3], y)
             record["count"] += 1
             record["semantic_ids"].add(int(raw_semantic_id))
+    taxonomy, reserved_ids = _instance_display_taxonomy(normalized, ids, mask_records)
+
     def color(instance_id: int) -> tuple[int, int, int]:
-        if instance_id == 0:
-            return PALETTE["BACKGROUND"]
+        if instance_id in reserved_ids:
+            return PALETTE[taxonomy[instance_id]]
         digest = hashlib.sha256(str(instance_id).encode("ascii")).digest()
         return (55 + digest[0] % 181, 55 + digest[1] % 181, 55 + digest[2] % 181)
     image = image_module.new("RGB", (width, height))
@@ -642,7 +707,24 @@ def _instance_panel(
             "occlusion_status": binding.get("occlusion_status"),
             "bbox_semantic_id": item.get("bbox_semantic_id"), "raw_bbox_index": item.get("raw_bbox_index"),
         })
-    return image, {"instance_count": len(instances), "normalized_bboxes": bbox_records}
+    visible_mask_ids = [
+        {
+            "instance_id": instance_id,
+            "class": taxonomy[instance_id],
+            "identity_source": (
+                "original_renderer_reserved_identity"
+                if instance_id in reserved_ids else "normalized_leaf_taxonomy"
+            ),
+            "pixel_count": mask_records[instance_id]["count"],
+            "semantic_ids": sorted(mask_records[instance_id]["semantic_ids"]),
+        }
+        for instance_id in sorted(ids)
+    ]
+    return image, {
+        "instance_count": len(instances),
+        "normalized_bboxes": bbox_records,
+        "visible_mask_ids": visible_mask_ids,
+    }
 
 
 def _source_records(selection: Mapping[str, Any]) -> list[dict[str, Any]]:
