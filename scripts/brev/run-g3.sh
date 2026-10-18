@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Keep the extracted Git source unchanged while creating and verifying sessions.
+export PYTHONDONTWRITEBYTECODE=1
+
 root=${1:?persisted workspace root required}
 run=${2:?new g3-q/p/m-condition-policy-NNN run label required}
 expected_commit=${3:?verified source commit required}
@@ -113,7 +116,7 @@ PY
     if [ "$evidence_status" != 0 ]; then
       finalize_args+=(--collection-failure-reason "closed physical evidence validation or resource collection did not complete successfully")
     fi
-    sudo -n env PYTHONPATH="$project" python3 -m factory_ops.g3_supervisor "${finalize_args[@]}"
+    sudo -n env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$project" python3 -m factory_ops.g3_supervisor "${finalize_args[@]}"
   fi
   resources_sealed=true
 }
@@ -149,7 +152,7 @@ if [ "$profile" = primary ]; then
   # ROS/CDR gate verification runs before GPU physics starts.
   sudo -n install -d -m 0755 -o 1234 -g 1234 "$project/runs"
   docker run --rm --name "factory-ops-$run-session" --network none --user 1234:1234 \
-    --entrypoint /bin/bash --workdir /workspace/project -e HOME=/tmp \
+    --entrypoint /bin/bash --workdir /workspace/project -e HOME=/tmp -e PYTHONDONTWRITEBYTECODE=1 \
     -v "$root:$root:ro" -v "$project:/workspace/project:rw" \
     "$nav_image" -lc 'source /opt/ros/jazzy/setup.bash; python3 -m factory_ops.g3_session "$@"' \
     factory-ops-g3-session --output "runs/${run}-session" --profile "$profile" \
