@@ -141,16 +141,45 @@ class G3SessionTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "callback drain"):
                     _validate_runtime(candidate)
 
-    def test_g3_nav2_override_is_exactly_stateful_false(self) -> None:
+    def test_g3_nav2_goal_acceptance_candidate_is_exact(self) -> None:
         runtime = load(CONFIG / "g3-runtime.json")
-        self.assertEqual(runtime["g3_nav2"], {"follow_path_stateful": False})
-        for value in ({}, {"follow_path_stateful": True},
-                      {"follow_path_stateful": False, "xy_goal_tolerance": 0.06}):
+        expected = {
+            "follow_path_stateful": True,
+            "goal_checker_stateful": True,
+            "xy_goal_tolerance": 0.06,
+            "yaw_goal_tolerance": 0.15,
+        }
+        self.assertEqual(runtime["g3_nav2"], expected)
+        mutations = (
+            {},
+            {**expected, "follow_path_stateful": False},
+            {**expected, "follow_path_stateful": 1},
+            {**expected, "goal_checker_stateful": False},
+            {**expected, "goal_checker_stateful": 1},
+            {**expected, "xy_goal_tolerance": 0.05},
+            {**expected, "xy_goal_tolerance": True},
+            {**expected, "yaw_goal_tolerance": 0.16},
+            {**expected, "extra": True},
+        )
+        for value in mutations:
             with self.subTest(value=value):
                 candidate = deepcopy(runtime)
                 candidate["g3_nav2"] = value
-                with self.assertRaisesRegex(ValueError, "G3 Nav2 override"):
+                with self.assertRaisesRegex(ValueError, "goal-acceptance candidate"):
                     _validate_runtime(candidate)
+
+    def test_goal_acceptance_provenance_is_source_bound_without_runtime_claim(self) -> None:
+        provenance_path = CONFIG / "g3-goal-acceptance-provenance.json"
+        provenance = load(provenance_path)
+        self.assertEqual("candidate", provenance["status"])
+        self.assertTrue(provenance["gpu_not_validated"])
+        self.assertTrue(provenance["primary_not_frozen"])
+        self.assertEqual(3, provenance["comparison"]["existing"]["qualifying_samples"])
+        self.assertEqual(241, provenance["comparison"]["candidate"]["qualifying_samples"])
+        self.assertEqual(
+            digest(provenance_path),
+            verify_session(self.qualification)["source_config"][provenance_path.name],
+        )
 
     def test_expected_run_context_rejects_policy_relabel_before_derivation(self) -> None:
         session_path = self.copy_session()

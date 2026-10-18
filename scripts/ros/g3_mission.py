@@ -43,18 +43,37 @@ RPP_OBSERVATION_TYPES = {
     "lookahead_point": "geometry_msgs/msg/PointStamped",
     "is_rotating_to_heading": "std_msgs/msg/Bool",
 }
+G3_NAV2_GOAL_ACCEPTANCE = {
+    "follow_path_stateful": True,
+    "goal_checker_stateful": True,
+    "xy_goal_tolerance": .06,
+    "yaw_goal_tolerance": .15,
+}
+G3_NAV2_RUNTIME_PARAMETERS = {
+    "FollowPath.stateful": ("bool", True),
+    "goal_checker.stateful": ("bool", True),
+    "goal_checker.xy_goal_tolerance": ("double", .06),
+    "goal_checker.yaw_goal_tolerance": ("double", .15),
+}
 
 
 def build_g3_namespaced_params(
     template: Mapping[str, Any], scenario: Mapping[str, Any], radii: Mapping[str, float],
     runtime: Mapping[str, Any], *, physical_map: str, navigation_map: str,
 ) -> tuple[dict[str, Any], dict[str, Any]]:
-    """Apply the one G3-only RPP override after the shared G2 materializer."""
+    """Apply the two G3-only goal-acceptance changes after the shared G2 materializer."""
     baseline = build_namespaced_params(
         template, scenario, radii, physical_map=physical_map, navigation_map=navigation_map,
     )
     result = copy.deepcopy(baseline)
-    if runtime.get("g3_nav2") != {"follow_path_stateful": False}:
+    nav2 = runtime.get("g3_nav2")
+    if (not isinstance(nav2, Mapping) or set(nav2) != set(G3_NAV2_GOAL_ACCEPTANCE)
+            or nav2.get("follow_path_stateful") is not True
+            or nav2.get("goal_checker_stateful") is not True
+            or type(nav2.get("xy_goal_tolerance")) is not float
+            or nav2.get("xy_goal_tolerance") != .06
+            or type(nav2.get("yaw_goal_tolerance")) is not float
+            or nav2.get("yaw_goal_tolerance") != .15):
         raise ValueError("G3 Nav2 override contract differs")
     changed: list[dict[str, Any]] = []
     for robot in ROBOT_IDS:
@@ -62,17 +81,28 @@ def build_g3_namespaced_params(
         if controller.get("controller_frequency") != 10.0:
             raise ValueError("G3 RPP observation pairing requires the source-bound 10 Hz controller")
         follow = controller["FollowPath"]
+        goal_checker = controller["goal_checker"]
+        if (goal_checker.get("stateful") is not True
+                or goal_checker.get("yaw_goal_tolerance") != .15
+                or goal_checker.get("xy_goal_tolerance") != .05):
+            raise ValueError("G3 goal checker baseline differs")
         before = follow.get("stateful", None)
-        follow["stateful"] = False
+        follow["stateful"] = True
         changed.append({"path": f"{robot}.controller_server.ros__parameters.FollowPath.stateful",
-                        "before": before, "after": False})
+                        "before": before, "after": True})
+        before_xy = goal_checker["xy_goal_tolerance"]
+        goal_checker["xy_goal_tolerance"] = .06
+        changed.append({"path": f"{robot}.controller_server.ros__parameters.goal_checker.xy_goal_tolerance",
+                        "before": before_xy, "after": .06})
     if result["/**"] != baseline["/**"]:
         raise ValueError("G3 Nav2 override changed shared parameters")
     expected = copy.deepcopy(baseline)
     for robot in ROBOT_IDS:
-        expected[robot]["controller_server"]["ros__parameters"]["FollowPath"]["stateful"] = False
+        controller = expected[robot]["controller_server"]["ros__parameters"]
+        controller["FollowPath"]["stateful"] = True
+        controller["goal_checker"]["xy_goal_tolerance"] = .06
     if result != expected:
-        raise ValueError("G3 Nav2 parameters differ beyond the stateful override")
+        raise ValueError("G3 Nav2 parameters differ beyond the goal-acceptance candidate")
     return result, {"schema_version": 1, "only_semantic_changes": changed}
 
 
@@ -80,8 +110,15 @@ def validate_rpp_runtime_observation(
     observation: Mapping[str, Any], *, generated_params_sha256: str, source_commit: str | None,
 ) -> None:
     """Fail closed unless both controllers and diagnostic topics prove the requested runtime."""
-    if (not isinstance(source_commit, str) or not re.fullmatch(r"[0-9a-f]{40}", source_commit)
-            or observation.get("schema_version") != 1
+    expected_fields = {
+        "schema_version", "source_commit", "generated_params_sha256", "controllers",
+        "observation_topics", "packages",
+    }
+    if (set(observation) != expected_fields
+            or not isinstance(source_commit, str)
+            or not re.fullmatch(r"[0-9a-f]{40}", source_commit)
+            or not _SHA256.fullmatch(generated_params_sha256)
+            or observation.get("schema_version") != 2
             or observation.get("source_commit") != source_commit
             or observation.get("generated_params_sha256") != generated_params_sha256):
         raise ValueError("RPP runtime observation source/parameter identity differs")
@@ -90,10 +127,22 @@ def validate_rpp_runtime_observation(
         raise ValueError("RPP runtime observation controller set differs")
     for robot in ROBOT_IDS:
         row = controllers[robot]
-        if (not isinstance(row, Mapping) or row.get("lifecycle_state") != 3
-                or row.get("parameter_name") != "FollowPath.stateful"
-                or row.get("parameter_type") != "bool" or row.get("parameter_value") is not False):
-            raise ValueError(f"{robot} RPP stateful runtime parameter did not qualify")
+        parameters = row.get("parameters") if isinstance(row, Mapping) else None
+        if (not isinstance(row, Mapping) or set(row) != {"lifecycle_state", "parameters"}
+                or row.get("lifecycle_state") != 3 or not isinstance(parameters, Mapping)
+                or set(parameters) != set(G3_NAV2_RUNTIME_PARAMETERS)):
+            raise ValueError(f"{robot} goal-acceptance runtime parameter set differs")
+        for name, (expected_type, expected_value) in G3_NAV2_RUNTIME_PARAMETERS.items():
+            parameter = parameters[name]
+            if (not isinstance(parameter, Mapping)
+                    or set(parameter) != {"parameter_type", "parameter_value"}
+                    or parameter.get("parameter_type") != expected_type):
+                raise ValueError(f"{robot} runtime parameter type differs: {name}")
+            actual = parameter.get("parameter_value")
+            if ((expected_type == "bool" and (type(actual) is not bool or actual is not expected_value))
+                    or (expected_type == "double"
+                        and (type(actual) is not float or actual != expected_value))):
+                raise ValueError(f"{robot} runtime parameter value differs: {name}")
     topics = observation.get("observation_topics")
     expected = {f"/{robot}/{name}": type_name for robot in ROBOT_IDS
                 for name, type_name in RPP_OBSERVATION_TYPES.items()}
@@ -138,7 +187,8 @@ def nav2_package_provenance() -> dict[str, Any]:
 def collect_rpp_runtime_observation(
     robots: Mapping[str, Mapping[str, Any]], event_node: Any, callback_drain: CallbackDrain,
     states: Mapping[str, int | None], startup_end: float, params_path: Path,
-    *, get_parameters_type: Any, bool_parameter_type: int, source_commit: str | None,
+    *, get_parameters_type: Any, bool_parameter_type: int, double_parameter_type: int,
+    source_commit: str | None,
 ) -> dict[str, Any]:
     """Probe active controller parameters and graph types before any initial HOLD is sent."""
     graph_types = {name: types for name, types in event_node.get_topic_names_and_types()}
@@ -151,24 +201,32 @@ def collect_rpp_runtime_observation(
     controller_parameters: dict[str, dict[str, Any]] = {}
     for robot, rt in robots.items():
         request = get_parameters_type.Request()
-        request.names = ["FollowPath.stateful"]
+        request.names = list(G3_NAV2_RUNTIME_PARAMETERS)
         future = rt["controller_parameters"].call_async(request)
         while not future.done():
             callback_drain.drain()
             if time.monotonic() > startup_end:
                 raise TimeoutError("RPP runtime parameter query timed out")
         response = future.result()
-        if response is None or len(response.values) != 1:
+        if response is None or len(response.values) != len(G3_NAV2_RUNTIME_PARAMETERS):
             raise RuntimeError(f"{robot} RPP runtime parameter response is missing")
-        value = response.values[0]
+        parameters: dict[str, dict[str, Any]] = {}
+        for name, value in zip(request.names, response.values, strict=True):
+            expected_type = G3_NAV2_RUNTIME_PARAMETERS[name][0]
+            type_name = ({bool_parameter_type: "bool", double_parameter_type: "double"}
+                         .get(value.type, str(value.type)))
+            parameter_value = (bool(value.bool_value) if expected_type == "bool"
+                               else float(value.double_value))
+            parameters[name] = {
+                "parameter_type": type_name,
+                "parameter_value": parameter_value,
+            }
         controller_parameters[robot] = {
             "lifecycle_state": states[f"{robot}/controller_server"],
-            "parameter_name": "FollowPath.stateful",
-            "parameter_type": "bool" if value.type == bool_parameter_type else str(value.type),
-            "parameter_value": bool(value.bool_value),
+            "parameters": parameters,
         }
     observation = {
-        "schema_version": 1,
+        "schema_version": 2,
         "source_commit": source_commit,
         "generated_params_sha256": sha(params_path),
         "controllers": controller_parameters,
@@ -933,6 +991,7 @@ def main() -> int:
             robots, event_node, callback_drain, states, startup_end, params_path,
             get_parameters_type=GetParameters,
             bool_parameter_type=ParameterType.PARAMETER_BOOL,
+            double_parameter_type=ParameterType.PARAMETER_DOUBLE,
             source_commit=os.environ.get("FACTORY_OPS_G3_SOURCE_COMMIT"),
         )
         runtime_observation_path = output / "nav2-runtime-provenance.json"

@@ -36,7 +36,10 @@ def save(path: Path, value: Any) -> None:
 
 
 def source_hashes(config_dir: Path) -> dict[str, str]:
-    paths = ("layout.json", "traffic.json", "g2.json", "g3-routing.json", "g3-experiment.json", "g3-runtime.json", "nav2-g2.yaml")
+    paths = (
+        "layout.json", "traffic.json", "g2.json", "g3-routing.json", "g3-experiment.json",
+        "g3-runtime.json", "g3-goal-acceptance-provenance.json", "nav2-g2.yaml",
+    )
     return {name: sha(config_dir / name) for name in paths}
 
 
@@ -63,9 +66,20 @@ def _validate_runtime(runtime: dict[str, Any]) -> None:
             or not math.isfinite(wall_budget) or not 0 < wall_budget <= .1):
         raise ValueError("G3 callback drain wall_budget_s must be finite and in (0, 0.1]")
     nav2 = runtime.get("g3_nav2")
-    if (not isinstance(nav2, dict) or set(nav2) != {"follow_path_stateful"}
-            or nav2["follow_path_stateful"] is not False):
-        raise ValueError("G3 Nav2 override must be exactly FollowPath stateful false")
+    expected_nav2 = {
+        "follow_path_stateful": True,
+        "goal_checker_stateful": True,
+        "xy_goal_tolerance": .06,
+        "yaw_goal_tolerance": .15,
+    }
+    if (not isinstance(nav2, dict) or set(nav2) != set(expected_nav2)
+            or nav2.get("follow_path_stateful") is not True
+            or nav2.get("goal_checker_stateful") is not True
+            or type(nav2.get("xy_goal_tolerance")) is not float
+            or nav2.get("xy_goal_tolerance") != .06
+            or type(nav2.get("yaw_goal_tolerance")) is not float
+            or nav2.get("yaw_goal_tolerance") != .15):
+        raise ValueError("G3 Nav2 goal-acceptance candidate differs")
     if (runtime["station_xy_tolerance_m"] > .25
             or runtime["station_yaw_tolerance_rad"] > .25 or runtime["pose_ttl_s"] > .5):
         raise ValueError("G3 runtime cannot relax FleetMission pose limits")

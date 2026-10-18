@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "status": "candidate",
+  "evidence": {
+    "json": {
+      "path": "artifacts/brev/q012-mission-diagnosis-001/goal-xy-latch-followup-001.json",
+      "sha256": "568c891ce53501307f1191c983fbe2854c33f9867dd4c05564eb22911cfbed83"
+    },
+    "markdown": {
+      "path": "artifacts/brev/q012-mission-diagnosis-001/goal-xy-latch-followup-001.md",
+      "sha256": "ddae21808ecc9213a94b9a0d49cae342191f6a43cf4b62df655b24d5c78a12ac"
+    }
+  },
+  "source_runs": {
+    "q010": {
+      "run_id": "4fcf4d885f99f026a6e1c7002a1a61fc",
+      "source_commit": "9d316426d84bb71b0ed7a9e90222634c67042a91",
+      "leg": "E_MID -> CO",
+      "terminal_xy_error_m": 0.053668830829425154,
+      "terminal_yaw_error_rad": 0.00014473140680770769
+    },
+    "q012": {
+      "run_id": "3a95e1d78396270440ac6c75f6402320",
+      "source_commit": "63d8027e4ec544fb16063857df8d24e04d98b12f",
+      "leg": "W_HIGH -> S3"
+    }
+  },
+  "comparison": {
+    "existing": {
+      "xy_goal_tolerance_m": 0.05,
+      "qualifying_samples": 3,
+      "longest_contiguous_window_s": 0.2
+    },
+    "candidate": {
+      "follow_path_stateful": true,
+      "goal_checker_stateful": true,
+      "xy_goal_tolerance_m": 0.06,
+      "yaw_goal_tolerance_rad": 0.15,
+      "qualifying_samples": 241,
+      "longest_contiguous_window_s": 29.833333333,
+      "first_gt_xy_error_m": 0.207481538964435
+    },
+    "rejected": {
+      "xy_goal_tolerance_m": 0.25,
+      "first_gt_xy_error_m": 0.4189554718610878,
+      "independent_physics_xy_limit_m": 0.35
+    }
+  },
+  "gpu_not_validated": true,
+  "primary_not_frozen": true,
+  "required_future_gpu_gates": [
+    "q010 E_MID -> CO status 4/error 0",
+    "q012 W_HIGH -> S3 status 4/error 0",
+    "full qualification passes map and independent simulator-truth arrival checks"
+  ]
+}

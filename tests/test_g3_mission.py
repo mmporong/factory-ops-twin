@@ -8,6 +8,7 @@ import os
 from pathlib import Path
 import tempfile
 from types import SimpleNamespace as NS
+from typing import Any, cast
 import unittest
 from unittest.mock import patch
 
@@ -16,11 +17,11 @@ from factory_ops.fleet_execution import StoppedGate, path_content_sha256
 from factory_ops.fleet import FleetMission, FleetOrder
 from factory_ops.navigation import GoalPose
 from scripts.ros.g2_mission import build_namespaced_params
-from scripts.ros.g3_mission import angle_error, build_cutoff_record, build_g3_namespaced_params, cutoff_phase_classification, failure_reason, localization_payload, path_final_yaw, path_payload, primary_trial_identity, valid_hold_ack, validate_arrival, validate_rpp_runtime_observation, verify_navigation_maps, stopped_odometry_record, valid_initial_hold_ack, initial_hold_boundary_ready, terminal_recording_boundary, wait_for_terminal_recording, session_verification_record
+from scripts.ros.g3_mission import angle_error, build_cutoff_record, build_g3_namespaced_params, collect_rpp_runtime_observation, cutoff_phase_classification, failure_reason, localization_payload, path_final_yaw, path_payload, primary_trial_identity, valid_hold_ack, validate_arrival, validate_rpp_runtime_observation, verify_navigation_maps, stopped_odometry_record, valid_initial_hold_ack, initial_hold_boundary_ready, terminal_recording_boundary, wait_for_terminal_recording, session_verification_record
 
 
 class G3MissionAdmissionTests(unittest.TestCase):
-    def test_g3_params_add_only_two_rpp_stateful_false_values(self):
+    def test_g3_params_change_only_stateful_and_xy_per_robot(self):
         node = lambda: {"ros__parameters": {}}
         def costmap(name):
             return {name: {"ros__parameters": {"inflation_layer": {}, "static_layer": {},
@@ -39,16 +40,35 @@ class G3MissionAdmissionTests(unittest.TestCase):
         baseline = build_namespaced_params(
             template, scenario, radii, physical_map="physical.yaml", navigation_map="navigation.yaml",
         )
+        runtime = {"g3_nav2": {
+            "follow_path_stateful": True,
+            "goal_checker_stateful": True,
+            "xy_goal_tolerance": .06,
+            "yaw_goal_tolerance": .15,
+        }}
         generated, contract = build_g3_namespaced_params(
-            template, scenario, radii, {"g3_nav2": {"follow_path_stateful": False}},
+            template, scenario, radii, runtime,
             physical_map="physical.yaml", navigation_map="navigation.yaml",
         )
         self.assertNotIn("stateful", baseline["carter1"]["controller_server"]["ros__parameters"]["FollowPath"])
         expected = deepcopy(baseline)
         for robot in ("carter1", "carter2"):
-            expected[robot]["controller_server"]["ros__parameters"]["FollowPath"]["stateful"] = False
+            controller = expected[robot]["controller_server"]["ros__parameters"]
+            controller["FollowPath"]["stateful"] = True
+            controller["goal_checker"]["xy_goal_tolerance"] = .06
         self.assertEqual(expected, generated)
-        self.assertEqual(2, len(contract["only_semantic_changes"]))
+        self.assertEqual(4, len(contract["only_semantic_changes"]))
+        self.assertEqual(
+            {
+                f"{robot}.controller_server.ros__parameters.{name}"
+                for robot in ("carter1", "carter2")
+                for name in ("FollowPath.stateful", "goal_checker.xy_goal_tolerance")
+            },
+            {row["path"] for row in contract["only_semantic_changes"]},
+        )
+        self.assertEqual(baseline, build_namespaced_params(
+            template, scenario, radii, physical_map="physical.yaml", navigation_map="navigation.yaml",
+        ))
         self.assertEqual(True, template["controller_server"]["ros__parameters"]["goal_checker"]["stateful"])
         self.assertEqual(.05, template["controller_server"]["ros__parameters"]["goal_checker"]["xy_goal_tolerance"])
         self.assertEqual(.15, template["controller_server"]["ros__parameters"]["goal_checker"]["yaw_goal_tolerance"])
@@ -58,21 +78,26 @@ class G3MissionAdmissionTests(unittest.TestCase):
         changed["controller_server"]["ros__parameters"]["controller_frequency"] = 9.0
         with self.assertRaisesRegex(ValueError, "10 Hz"):
             build_g3_namespaced_params(
-                changed, scenario, radii, {"g3_nav2": {"follow_path_stateful": False}},
+                changed, scenario, radii, runtime,
                 physical_map="physical.yaml", navigation_map="navigation.yaml",
             )
 
-    def test_rpp_runtime_observation_fails_closed_on_parameter_topic_or_source_change(self):
+    def test_rpp_runtime_observation_fails_closed_on_identity_parameter_and_type_changes(self):
         source = "a" * 40
         params_sha = "b" * 64
         packages = {name: {"name": name, "version": "1.3.13", "package_xml_sha256": "c" * 64,
                            "shared_libraries": [{"name": f"lib{name}.so", "bytes": 1,
                                                   "sha256": "e" * 64}]}
                     for name in ("nav2_controller", "nav2_regulated_pure_pursuit_controller")}
-        observation = {"schema_version": 1, "source_commit": source,
+        parameters = {
+            "FollowPath.stateful": {"parameter_type": "bool", "parameter_value": True},
+            "goal_checker.stateful": {"parameter_type": "bool", "parameter_value": True},
+            "goal_checker.xy_goal_tolerance": {"parameter_type": "double", "parameter_value": .06},
+            "goal_checker.yaw_goal_tolerance": {"parameter_type": "double", "parameter_value": .15},
+        }
+        observation = {"schema_version": 2, "source_commit": source,
             "generated_params_sha256": params_sha,
-            "controllers": {robot: {"lifecycle_state": 3, "parameter_name": "FollowPath.stateful",
-                                      "parameter_type": "bool", "parameter_value": False}
+            "controllers": {robot: {"lifecycle_state": 3, "parameters": deepcopy(parameters)}
                             for robot in ("carter1", "carter2")},
             "observation_topics": {f"/{robot}/{name}": type_name
                 for robot in ("carter1", "carter2") for name, type_name in {
@@ -81,12 +106,87 @@ class G3MissionAdmissionTests(unittest.TestCase):
             "packages": packages}
         validate_rpp_runtime_observation(observation, generated_params_sha256=params_sha, source_commit=source)
         mutations = []
-        changed = deepcopy(observation); changed["controllers"]["carter1"]["parameter_value"] = True; mutations.append(changed)
+        changed = deepcopy(observation); changed["schema_version"] = 1; mutations.append(changed)
+        changed = deepcopy(observation); changed["extra"] = True; mutations.append(changed)
+        changed = deepcopy(observation); changed["source_commit"] = "f" * 40; mutations.append(changed)
+        changed = deepcopy(observation); changed["controllers"]["carter1"]["lifecycle_state"] = 2; mutations.append(changed)
+        changed = deepcopy(observation); changed["controllers"]["carter1"]["parameters"].pop("FollowPath.stateful"); mutations.append(changed)
+        changed = deepcopy(observation); changed["controllers"]["carter1"]["parameters"]["extra"] = {}; mutations.append(changed)
+        changed = deepcopy(observation); changed["controllers"]["carter1"]["parameters"]["FollowPath.stateful"]["parameter_value"] = 1; mutations.append(changed)
+        changed = deepcopy(observation); changed["controllers"]["carter1"]["parameters"]["goal_checker.xy_goal_tolerance"]["parameter_value"] = True; mutations.append(changed)
+        changed = deepcopy(observation); changed["controllers"]["carter1"]["parameters"]["goal_checker.xy_goal_tolerance"]["parameter_type"] = "bool"; mutations.append(changed)
+        changed = deepcopy(observation); changed["controllers"]["carter2"]["parameters"]["goal_checker.yaw_goal_tolerance"]["parameter_value"] = .16; mutations.append(changed)
         changed = deepcopy(observation); changed["observation_topics"].pop("/carter2/lookahead_point"); mutations.append(changed)
         changed = deepcopy(observation); changed["generated_params_sha256"] = "d" * 64; mutations.append(changed)
         for changed in mutations:
             with self.assertRaises(ValueError):
                 validate_rpp_runtime_observation(changed, generated_params_sha256=params_sha, source_commit=source)
+
+    def test_runtime_probe_reads_all_four_parameters_from_one_typed_response(self):
+        source = "a" * 40
+        parameter_names = [
+            "FollowPath.stateful",
+            "goal_checker.stateful",
+            "goal_checker.xy_goal_tolerance",
+            "goal_checker.yaw_goal_tolerance",
+        ]
+        packages = {name: {"name": name, "version": "1.3.13", "package_xml_sha256": "c" * 64,
+                           "shared_libraries": [{"name": f"lib{name}.so", "bytes": 1,
+                                                  "sha256": "e" * 64}]}
+                    for name in ("nav2_controller", "nav2_regulated_pure_pursuit_controller")}
+
+        class Request:
+            def __init__(self):
+                self.names = []
+
+        class Future:
+            def done(self):
+                return True
+
+            def result(self):
+                return NS(values=[
+                    NS(type=1, bool_value=True, double_value=0.0),
+                    NS(type=1, bool_value=True, double_value=0.0),
+                    NS(type=3, bool_value=False, double_value=.06),
+                    NS(type=3, bool_value=False, double_value=.15),
+                ])
+
+        class Client:
+            def __init__(self):
+                self.requests = []
+
+            def call_async(self, request):
+                self.requests.append(list(request.names))
+                return Future()
+
+        clients = {robot: Client() for robot in ("carter1", "carter2")}
+        robots = {robot: {"controller_parameters": client} for robot, client in clients.items()}
+        topic_types = [(f"/{robot}/{name}", [type_name])
+            for robot in ("carter1", "carter2") for name, type_name in {
+                "lookahead_point": "geometry_msgs/msg/PointStamped",
+                "is_rotating_to_heading": "std_msgs/msg/Bool",
+            }.items()]
+        states = {f"{robot}/controller_server": 3 for robot in robots}
+        with tempfile.TemporaryDirectory() as temporary:
+            params_path = Path(temporary) / "nav2-g3-params.yaml"
+            params_path.write_text("parameters\n", encoding="utf-8")
+            with patch("scripts.ros.g3_mission.named_subscriber_topics_ready", return_value=True), patch(
+                "scripts.ros.g3_mission.nav2_package_provenance", return_value=packages,
+            ):
+                observation = collect_rpp_runtime_observation(
+                    robots, NS(get_topic_names_and_types=lambda: topic_types),
+                    cast(Any, NS(drain=lambda: None)),
+                    states, math.inf, params_path,
+                    get_parameters_type=NS(Request=Request), bool_parameter_type=1,
+                    double_parameter_type=3, source_commit=source,
+                )
+        self.assertEqual(2, observation["schema_version"])
+        self.assertEqual({robot: [parameter_names] for robot in robots},
+                         {robot: client.requests for robot, client in clients.items()})
+        self.assertIs(True, observation["controllers"]["carter1"]["parameters"]
+                      ["FollowPath.stateful"]["parameter_value"])
+        self.assertEqual(.06, observation["controllers"]["carter1"]["parameters"]
+                         ["goal_checker.xy_goal_tolerance"]["parameter_value"])
 
     def test_primary_trial_identity_preserves_verified_input_and_nonprimary_shape(self):
         with tempfile.TemporaryDirectory() as temporary:

@@ -21,7 +21,10 @@
     "wall_budget_s": 0.05
   },
   "g3_nav2": {
-    "follow_path_stateful": false
+    "follow_path_stateful": true,
+    "goal_checker_stateful": true,
+    "xy_goal_tolerance": 0.06,
+    "yaw_goal_tolerance": 0.15
   },
   "camera_capture_every_steps": 60,
   "real_time_media": {

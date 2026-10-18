@@ -17,7 +17,7 @@ from unittest.mock import patch
 
 from factory_ops.experiments import canonical_hash, load_experiment_config
 from factory_ops.g3_calibration import (_resource_forecast_actual, _validate_sequential_capacity_plan,
-                                        build_calibration,
+                                        build_calibration, build_sequential_capacity_plan,
                                         revalidate_physical_report, validate_calibration)
 from factory_ops.source_provenance import verify_source_archive
 from factory_ops.g3_raw_storage import (ENVELOPE_NAME, PACKAGE_NAME, SCHEMA, SUPPORT_SCHEMA,
@@ -641,6 +641,16 @@ class CalibrationTests(unittest.TestCase):
         self.assertFalse(result["disk_sufficient"])
         self.assertFalse(result["capacity"]["stores"]["D"]["sufficient"])
         self.assertFalse(result["cleanup_authorized"])
+
+        built = build_sequential_capacity_plan(
+            output=root / "built-plan.json", evidence_root=root,
+            coordinator_receipts=receipt_paths, measurements=measurements,
+            billing=billing_value, source_commit=self.commit,
+            experiment_config_sha256=self.config_hash, supervisor_sha256="a" * 64,
+            requested_primary_runs=60, reserve_fraction=reserve,
+            stopped_storage_hourly_rate_usd=.05, planned_stopped_hours=2.0,
+        )
+        self.assertEqual(plan_value, json.loads(built.read_text(encoding="utf-8")))
 
         first_package = raw_packages[0][0].parent / PACKAGE_NAME
         missing_package = first_package.with_suffix(".missing")
