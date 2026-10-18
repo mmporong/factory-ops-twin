@@ -16,6 +16,7 @@ from factory_ops.experiments import build_matrix, load_experiment_config
 from factory_ops.g3_session import (
     PRIMARY_SCOPE,
     SCOPE,
+    _sequential_input_bytes,
     _validate_runtime,
     prepare_primary_session,
     prepare_session,
@@ -272,6 +273,46 @@ class G3SessionTests(unittest.TestCase):
         save(closure / "session.json", manifest)
         with self.assertRaisesRegex(ValueError, "metadata differs"):
             verify_session(closure)
+
+    def test_sequential_primary_inputs_freeze_plan_receipts_and_support(self) -> None:
+        root = self.workspace / self.id().rsplit(".", 1)[-1]
+        root.mkdir()
+        closure = root / "closure.json"
+        save(closure, {"portable": "source-support-metadata"})
+        envelope = root / "raw-envelope.json"
+        save(envelope, {"portable": "raw-envelope-metadata"})
+        manifest = root / "package-manifest.json"
+        save(manifest, {"portable": True})
+        package = root / "package-record.json"
+        save(package, {"package_manifest": {"path": manifest.name, "sha256": digest(manifest)}})
+        preservation = root / "preservation.json"
+        restore = root / "restore.json"
+        semantic = root / "semantic.json"
+        for path in (preservation, restore, semantic):
+            save(path, {"portable": path.stem})
+        run = {"package_record": {"path": package.name, "sha256": digest(package)},
+               "preservation_receipt": {"path": preservation.name, "sha256": digest(preservation)},
+               "full_restore_receipt": {"path": restore.name, "sha256": digest(restore)},
+               "semantic_replay_report": {"path": semantic.name, "sha256": digest(semantic)},
+               "source_support_closure": {"path": closure.name, "sha256": digest(closure)},
+               "raw_envelope": {"path": envelope.name, "sha256": digest(envelope)}}
+        receipts = []
+        for store in ("D", "E"):
+            receipt = root / f"receipt-{store}.json"
+            save(receipt, {"store_id": store, "runs": [run]})
+            receipts.append({"path": receipt.name, "sha256": digest(receipt)})
+        plan = root / "plan.json"
+        save(plan, {"coordinator_receipts": receipts})
+        resource = {"evidence_root": str(root), "supervisor_path": "supervisor.json",
+                    "supervisor_sha256": "a" * 64, "requested_primary_runs": 60,
+                    "reserve_fraction": .2, "schema_version": 2,
+                    "sequential_plan_path": plan.name, "sequential_plan_sha256": digest(plan)}
+        frozen = _sequential_input_bytes(resource)
+        self.assertEqual(plan.read_bytes(), frozen["sequential-capacity/plan.json"])
+        self.assertEqual(envelope.read_bytes(), frozen["sequential-capacity/coordinator-0-run-0-raw_envelope.json"])
+        envelope.write_bytes(b"changed")
+        with self.assertRaisesRegex(ValueError, "bytes differ"):
+            _sequential_input_bytes(resource)
 
     def test_primary_session_preserves_and_revalidates_exact_external_inputs(self) -> None:
         settings = load_experiment_config(CONFIG / "g3-experiment.json")

@@ -8,6 +8,7 @@ import json
 import math
 import os
 from pathlib import Path
+from pathlib import PurePosixPath
 import re
 import tempfile
 from typing import Any
@@ -185,6 +186,59 @@ def _load_primary_input_manifest(path: Path, expected_sha256: str) -> dict[str, 
     }
 
 
+def _sequential_input_bytes(resource_input: dict[str, Any]) -> dict[str, bytes]:
+    v1 = {"evidence_root", "supervisor_path", "supervisor_sha256", "requested_primary_runs", "reserve_fraction"}
+    if "schema_version" not in resource_input:
+        return {}
+    if set(resource_input) != v1 | {"schema_version", "sequential_plan_path", "sequential_plan_sha256"}:
+        raise ValueError("sequential resource input fields differ")
+    root = Path(str(resource_input["evidence_root"])).resolve(strict=True)
+
+    def read(reference: dict[str, Any], name: str) -> bytes:
+        if not isinstance(reference, dict) or set(reference) != {"path", "sha256"}:
+            raise ValueError(f"{name} reference differs")
+        relative = reference["path"]
+        if not isinstance(relative, str) or "\\" in relative:
+            raise ValueError(f"{name} path is unsafe")
+        parsed = PurePosixPath(relative)
+        if parsed.is_absolute() or any(part in {"", ".", ".."} for part in parsed.parts):
+            raise ValueError(f"{name} path is unsafe")
+        path = root.joinpath(*parsed.parts)
+        try:
+            path.resolve(strict=True).relative_to(root)
+        except (OSError, ValueError) as exc:
+            raise ValueError(f"{name} path escapes the evidence root") from exc
+        if path.is_symlink() or not path.is_file() or not _SHA256.fullmatch(str(reference["sha256"])):
+            raise ValueError(f"{name} must be a hash-bound regular file")
+        raw = path.read_bytes()
+        if hashlib.sha256(raw).hexdigest() != reference["sha256"]:
+            raise ValueError(f"{name} bytes differ")
+        return raw
+
+    plan_ref = {"path": resource_input["sequential_plan_path"],
+                "sha256": resource_input["sequential_plan_sha256"]}
+    plan_raw = read(plan_ref, "sequential plan")
+    plan = json.loads(plan_raw)
+    output = {"sequential-capacity/plan.json": plan_raw}
+    for index, receipt_ref in enumerate(plan.get("coordinator_receipts", [])):
+        receipt_raw = read(receipt_ref, f"coordinator receipt {index}")
+        output[f"sequential-capacity/coordinator-{index}.json"] = receipt_raw
+        receipt = json.loads(receipt_raw)
+        for run_index, run in enumerate(receipt.get("runs", [])):
+            run_documents: dict[str, bytes] = {}
+            for name in ("package_record", "preservation_receipt", "full_restore_receipt",
+                         "semantic_replay_report", "source_support_closure", "raw_envelope"):
+                raw = read(run[name], f"coordinator receipt {index} run {run_index} {name}")
+                run_documents[name] = raw
+                output[f"sequential-capacity/coordinator-{index}-run-{run_index}-{name}.json"] = raw
+            package_record = json.loads(run_documents["package_record"])
+            output[f"sequential-capacity/coordinator-{index}-run-{run_index}-package-manifest.json"] = read(
+                package_record["package_manifest"],
+                f"coordinator receipt {index} run {run_index} package manifest",
+            )
+    return output
+
+
 def _primary_inputs_from_environment() -> dict[str, Any]:
     raw_path = os.environ.get("FACTORY_OPS_G3_PRIMARY_INPUTS_PATH")
     digest = os.environ.get("FACTORY_OPS_G3_PRIMARY_INPUTS_SHA256")
@@ -278,6 +332,11 @@ def _write_primary_session(
     (output / "calibration-gate.json").write_bytes(calibration_raw)
     (output / "base-experiment-config.json").write_bytes(config_raw)
     (output / "fixed-source-commit.txt").write_bytes((expected_source_commit + "\n").encode("ascii"))
+    sequential_inputs = _sequential_input_bytes(resource_input)
+    for relative, raw in sequential_inputs.items():
+        target = output / relative
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(raw)
     files = {path.relative_to(output).as_posix(): sha(path)
              for path in sorted(output.rglob("*")) if path.is_file()}
     session = {
@@ -293,6 +352,8 @@ def _write_primary_session(
         "scene_closure": deepcopy(settings["conditions"]["closure"]["barrier_provenance"])
             if condition == "closure" else None,
     }
+    if sequential_inputs:
+        session["sequential_capacity_sha256"] = resource_input["sequential_plan_sha256"]
     save(output / "session.json", session)
     return session
 
@@ -356,6 +417,7 @@ def verify_session(output: Path, *, config_dir: Path = CONFIG, expected_context:
                 or session.get("fixed_source_commit") != expected_source_commit
                 or session.get("experiment_config_sha256") != canonical_hash(settings)
                 or session.get("calibration_sha256") != calibration["calibration_sha256"]
+                or session.get("sequential_capacity_sha256") != resource_input.get("sequential_plan_sha256")
                 or session.get("source_config") != source_hashes(config_dir)):
             raise ValueError("primary session metadata differs from bound inputs")
         raw_inputs = {
@@ -364,6 +426,7 @@ def verify_session(output: Path, *, config_dir: Path = CONFIG, expected_context:
             "base-experiment-config.json": config_raw,
             "fixed-source-commit.txt": (expected_source_commit + "\n").encode("ascii"),
         }
+        raw_inputs.update(_sequential_input_bytes(resource_input))
         if any((output / name).read_bytes() != raw for name, raw in raw_inputs.items()):
             raise ValueError("primary session did not preserve exact input bytes")
         expected_files = set(session.get("files", {}))

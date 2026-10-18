@@ -2,7 +2,9 @@ from __future__ import annotations
 
 from copy import deepcopy
 import hashlib
+from io import BytesIO
 import json
+from math import ceil
 import os
 from pathlib import Path
 import shutil
@@ -14,9 +16,12 @@ import unittest
 from unittest.mock import patch
 
 from factory_ops.experiments import canonical_hash, load_experiment_config
-from factory_ops.g3_calibration import (_resource_forecast_actual, build_calibration,
+from factory_ops.g3_calibration import (_resource_forecast_actual, _validate_sequential_capacity_plan,
+                                        build_calibration,
                                         revalidate_physical_report, validate_calibration)
 from factory_ops.source_provenance import verify_source_archive
+from factory_ops.g3_raw_storage import (ENVELOPE_NAME, PACKAGE_NAME, SCHEMA, SUPPORT_SCHEMA,
+                                        _LIMITATIONS, _PROOF_FLAGS, _json_bytes)
 
 
 ROOT = Path(__file__).parents[1]
@@ -37,6 +42,65 @@ def manifest(root: Path, excluded: Path) -> list[dict]:
         {"path": path.relative_to(root).as_posix(), "bytes": path.stat().st_size, "sha256": sha(path)}
         for path in sorted(root.rglob("*")) if path.is_file() and path != excluded
     ]
+
+
+def make_raw_package(root: Path, *, run_id: str, run_label: str, source_commit: str,
+                     condition: str, policy: str, index: int) -> tuple[Path, dict, bytes, bytes]:
+    package_root = root / f"raw-package-{index}"
+    package_root.mkdir()
+    archive_payload = f"archive-{index}".encode()
+    manifest_payload = f"manifest-{index}".encode()
+    archive_record_payload = f"archive-record-{index}".encode()
+    source_bundle_payload = f"source-bundle-{index}".encode()
+    receipt_payload = f"attempt-receipt-{index}".encode()
+    storage_attempt_id = f"{index + 200:032x}"
+    support = {"schema": SUPPORT_SCHEMA, "storage_attempt_id": storage_attempt_id,
+               "categories": {name: [] for name in
+                              ("source", "session", "per-trial", "shared-six-pilot")}}
+    support_payload = _json_bytes(support)
+    per_trial_sha = hashlib.sha256(_json_bytes({
+        "schema": SUPPORT_SCHEMA, "category": "per-trial", "files": []
+    })).hexdigest()
+    internal = {"schema": SCHEMA, "kind": "raw_content_package",
+                "storage_attempt_id": storage_attempt_id, "source_commit": source_commit,
+                "run_label": run_label, "run_id": run_id, "profile": "pilot",
+                "condition": condition, "policy": policy, "seed": 100, "trial_id": None,
+                "archive_record_sha256": hashlib.sha256(archive_record_payload).hexdigest(),
+                "original_archive_bytes": len(archive_payload),
+                "original_archive_sha256": hashlib.sha256(archive_payload).hexdigest(),
+                "output_manifest_bytes": len(manifest_payload),
+                "output_manifest_sha256": hashlib.sha256(manifest_payload).hexdigest(),
+                "output_tree_sha256": hashlib.sha256(f"tree-{index}".encode()).hexdigest(),
+                "file_count": 1, "raw_bytes": len(archive_payload),
+                "attempt_receipt_sha256": hashlib.sha256(receipt_payload).hexdigest(),
+                "support_manifest_sha256": hashlib.sha256(support_payload).hexdigest(),
+                "per_trial_support_manifest_sha256": per_trial_sha,
+                "shared_six_pilot_support_pack_sha256": hashlib.sha256(b"").hexdigest(),
+                "source_bundle_sha256": hashlib.sha256(source_bundle_payload).hexdigest(),
+                "attempt_status": "collected", "limitations": list(_LIMITATIONS),
+                "proof_flags": dict(_PROOF_FLAGS),
+                "qualification_no_billing_attempt_receipt_absent": False}
+    members = {"original/output.tar.gz": archive_payload,
+               "original/output-manifest.json": manifest_payload,
+               "original/archive-record.json": archive_record_payload,
+               "support/source.bundle": source_bundle_payload,
+               "support/attempt-receipt.json": receipt_payload,
+               "support/support-manifest.json": support_payload,
+               "envelope/g3-raw-content-envelope-v1.json": _json_bytes(internal)}
+    package_path = package_root / PACKAGE_NAME
+    with tarfile.open(package_path, "w:") as packed:
+        for name, payload in members.items():
+            info = tarfile.TarInfo(name)
+            info.size = len(payload)
+            info.mode = 0o600
+            info.mtime = 0
+            packed.addfile(info, BytesIO(payload))
+    envelope = {**internal, "package": {"name": PACKAGE_NAME,
+                "bytes": package_path.stat().st_size, "sha256": sha(package_path),
+                "member_count": len(members)}}
+    envelope_path = package_root / ENVELOPE_NAME
+    envelope_path.write_bytes(_json_bytes(envelope))
+    return envelope_path, envelope, archive_payload, manifest_payload
 
 
 def remove_readonly(function, path, _error) -> None:
@@ -397,6 +461,310 @@ class CalibrationTests(unittest.TestCase):
                     expected_config_sha256=self.config_hash, experiment_config_path=CONFIG,
                     allow_explicit_non_evidence=True,
                 )
+
+    @unittest.skipUnless(os.name == "posix", "raw envelope validation uses POSIX pinned-file APIs")
+    def test_sequential_capacity_plan_is_recomputed_and_capacity_shortfall_blocks(self) -> None:
+        root = self.root / "sequential"
+        root.mkdir()
+        reference = lambda path: {"path": path.relative_to(root).as_posix(), "sha256": sha(path)}
+        run_ids = [f"{index + 1:032x}" for index in range(6)]
+        measurements = []
+        raw_packages = []
+        for index, run_id in enumerate(run_ids):
+            condition = ("normal", "closure", "burst")[index // 2]
+            policy = ("fifo", "eta")[index % 2]
+            envelope_path, envelope, archive_payload, manifest_payload = make_raw_package(
+                root, run_id=run_id, run_label=f"g3-p-{condition}-{policy}-{index + 1:03d}",
+                source_commit=self.commit, condition=condition, policy=policy, index=index,
+            )
+            raw_packages.append((envelope_path, envelope))
+            measurements.append({"run_id": run_id, "raw_bytes": envelope["raw_bytes"],
+                                 "compressed_bytes": envelope["original_archive_bytes"],
+                                 "archive_sha256": hashlib.sha256(archive_payload).hexdigest(),
+                                 "output_manifest_sha256": hashlib.sha256(manifest_payload).hexdigest(),
+                                 "output_manifest_bytes": envelope["output_manifest_bytes"],
+                                 "free_disk_bytes_after": 30_000_000_000,
+                                 "worker_phase_wall_time_s": 100.0,
+                                 "validation_phase_wall_time_s": 20.0,
+                                 "archive_phase_wall_time_s": 20.0})
+        shared = {"retained_six_support_bytes": 100, "primary_specific_support_bytes": 200,
+                  "source_bytes": 100, "metadata_bytes": 100, "owned_restore_bytes": 100,
+                  "vm_applicable_scratch_bytes": 500}
+        run_documents = []
+        for index, measured in enumerate(measurements):
+            run_id = measured["run_id"]
+            envelope_path, envelope = raw_packages[index]
+            package_sha = envelope["package"]["sha256"]
+            package_bytes = envelope["package"]["bytes"]
+            closure = root / f"source-support-closure-{index}.json"
+            save(closure, {"schema_version": 1, "classification": "g3_source_support_closure",
+                           "source_commit": self.commit,
+                           "experiment_config_sha256": self.config_hash,
+                           "actual_six_run_ids": run_ids,
+                           "raw_envelope_sha256": sha(envelope_path),
+                           "source_bundle_sha256": envelope["source_bundle_sha256"],
+                           "support_manifest_sha256": envelope["support_manifest_sha256"],
+                           "per_trial_support_manifest_sha256": envelope["per_trial_support_manifest_sha256"],
+                           "shared_six_pilot_support_pack_sha256": envelope["shared_six_pilot_support_pack_sha256"]})
+            package_manifest = root / f"package-manifest-{index}.json"
+            save(package_manifest, {"schema_version": 1,
+                 "classification": "g3_sequential_package_manifest", "run_id": run_id,
+                 "source_commit": self.commit, "package_sha256": package_sha,
+                 "package_bytes": package_bytes,
+                 "members": {"archive": measured["archive_sha256"],
+                             "output_manifest": measured["output_manifest_sha256"],
+                             "source_support_closure": sha(closure),
+                             "raw_envelope": sha(envelope_path),
+                             "source_bundle": envelope["source_bundle_sha256"],
+                             "support_manifest": envelope["support_manifest_sha256"]}})
+            package_record = root / f"package-record-{index}.json"
+            save(package_record, {"schema_version": 1,
+                 "classification": "g3_sequential_package_record", "run_id": run_id,
+                 "source_commit": self.commit, "archive_sha256": measured["archive_sha256"],
+                 "output_manifest_sha256": measured["output_manifest_sha256"],
+                 "package_sha256": package_sha, "package_bytes": package_bytes,
+                 "package_manifest": reference(package_manifest),
+                 "source_support_closure_sha256": sha(closure),
+                 "raw_envelope_sha256": sha(envelope_path)})
+            semantic = root / f"semantic-{index}.json"
+            save(semantic, {"schema_version": 1,
+                 "classification": "g3_existing_semantic_replay_report", "run_id": run_id,
+                 "source_commit": self.commit, "archive_sha256": measured["archive_sha256"],
+                 "package_sha256": package_sha,
+                 "status": "passed_existing_g3_semantic_validator", "errors": []})
+            run_documents.append((package_record, semantic, package_sha, package_bytes,
+                                  measured, closure, envelope_path))
+        receipt_refs = []
+        receipt_paths = []
+        for store, available, device in (("D", 20_000_000_000, "volume-d-001"),
+                                         ("E", 30_000_000_000, "volume-e-001")):
+            coordinator_runs = []
+            for index, (package_record, semantic, package_sha, package_bytes,
+                        measured, closure, envelope_path) in enumerate(run_documents):
+                preservation = root / f"preservation-{store}-{index}.json"
+                save(preservation, {"schema_version": 1,
+                     "classification": "g3_local_package_preservation_receipt", "store_id": store,
+                     "device_identity": device, "run_id": measured["run_id"],
+                     "package_sha256": package_sha, "package_bytes": package_bytes,
+                     "source_support_closure_sha256": sha(closure),
+                     "operation": "closed_after_byte_count_and_sha256_recheck"})
+                restore = root / f"restore-{store}-{index}.json"
+                save(restore, {"schema_version": 1, "classification": "g3_full_restore_receipt",
+                     "store_id": store, "device_identity": device, "run_id": measured["run_id"],
+                     "package_sha256": package_sha,
+                     "restored_archive_sha256": measured["archive_sha256"],
+                     "restored_output_manifest_sha256": measured["output_manifest_sha256"],
+                     "restored_source_support_closure_sha256": sha(closure),
+                     "operation": "full_restore_completed_and_closed"})
+                coordinator_runs.append({"run_id": measured["run_id"],
+                    "package_record": reference(package_record),
+                    "preservation_receipt": reference(preservation),
+                    "full_restore_receipt": reference(restore),
+                    "semantic_replay_report": reference(semantic),
+                    "source_support_closure": reference(closure),
+                    "raw_envelope": reference(envelope_path),
+                    "package_phase_wall_time_s": 10.0, "offload_phase_wall_time_s": 10.0,
+                    "restore_phase_wall_time_s": 10.0, "semantic_phase_wall_time_s": 10.0})
+            receipt = root / f"coordinator-{store}.json"
+            save(receipt, {"schema_version": 1,
+                           "classification": "g3_local_coordinator_capacity_observation",
+                           "store_id": store, "observed_at_utc": "2026-10-18T00:00:00Z",
+                           "device_identity": device, "available_bytes": available,
+                           "runs": coordinator_runs, "shared_bytes": shared})
+            receipt_refs.append(reference(receipt))
+            receipt_paths.append(receipt)
+        reserve = .2
+        package_bytes = max(envelope["package"]["bytes"] for _path, envelope in raw_packages)
+        primary_packages = ceil(60 * package_bytes * (1 + reserve))
+        store_extra = 600
+        store_required = 20_000_000_000 + primary_packages + store_extra
+        vm_base = 100 + max(row["raw_bytes"] for row in measurements) \
+            + max(row["compressed_bytes"] for row in measurements) + package_bytes + 500
+        vm_required = ceil(vm_base * (1 + reserve)) + 20_000_000_000
+        capacity = {
+            "derivation": "lifecycle_maxima_from_rederived_actual_six_and_hash_bound_local_receipts",
+            "vm": {"retained_six_support_bytes": 100,
+                   "one_hot_raw_bytes": max(row["raw_bytes"] for row in measurements),
+                   "canonical_archive_bytes": max(row["compressed_bytes"] for row in measurements),
+                   "one_package_bytes": package_bytes,
+                   "applicable_scratch_bytes": 500, "minimum_observed_available_bytes": 30_000_000_000,
+                   "required_bytes": vm_required, "sufficient": True},
+            "stores": {
+                "D": {"available_bytes": 20_000_000_000, "primary_packages_bytes": primary_packages,
+                      "deduplicated_extra_bytes": store_extra, "owned_restore_bytes": 100,
+                      "required_bytes": store_required, "sufficient": False},
+                "E": {"available_bytes": 30_000_000_000, "primary_packages_bytes": primary_packages,
+                      "deduplicated_extra_bytes": store_extra, "owned_restore_bytes": 100,
+                      "required_bytes": store_required, "sufficient": True},
+            },
+        }
+        phase = 210.0
+        forecast_seconds = phase * 60 * 1.2
+        running_cost = forecast_seconds / 3600 * 3.35
+        cost = {"budget_cap_usd": 400.0, "current_actual_billing_usd": 50.0,
+                "budget_remaining_usd": 350.0, "account_credit_remaining_usd": 409.91,
+                "reserve_fraction": reserve, "project_usable_after_reserve_usd": 280.0,
+                "account_usable_after_reserve_usd": 409.91 * (1 - reserve),
+                "running_hourly_rate_usd": 3.35,
+                "stopped_storage_hourly_rate_usd": .05, "planned_stopped_hours": 2.0,
+                "per_run_closed_wall_time_s": phase, "forecast_running_seconds": forecast_seconds,
+                "forecast_running_cost_usd": running_cost, "forecast_stopped_cost_usd": .1,
+                "forecast_total_cost_usd": running_cost + .1,
+                "project_budget_sufficient": True, "account_credit_sufficient": True,
+                "budget_sufficient": True}
+        plan = root / "plan.json"
+        plan_value = {"schema_version": 2, "classification": "g3_sequential_dual_local_capacity_plan",
+                      "source_commit": self.commit, "experiment_config_sha256": self.config_hash,
+                      "supervisor_sha256": "a" * 64, "billing_sha256": "b" * 64,
+                      "requested_primary_runs": 60, "reserve_fraction": reserve,
+                      "absolute_reserve_bytes": 20_000_000_000,
+                      "actual_six_run_ids": run_ids, "coordinator_receipts": receipt_refs,
+                      "derived_capacity": deepcopy(capacity), "cost_forecast": deepcopy(cost),
+                      "evidence_boundary": "local_coordinator_receipts_hash_bound_not_live_reverified",
+                      "cleanup_authorized": False,
+                      "measurement_basis": "derived_from_exact_manifests_and_packages",
+                      "coordinator_recheck_required_before_each_run": True}
+        save(plan, plan_value)
+        resource = {"evidence_root": root, "supervisor_path": "supervisor.json",
+                    "supervisor_sha256": "a" * 64, "requested_primary_runs": 60,
+                    "reserve_fraction": reserve, "schema_version": 2,
+                    "sequential_plan_path": "plan.json", "sequential_plan_sha256": sha(plan)}
+        billing_value = {"confirmed_hourly_rate_usd": 3.35, "budget_remaining_usd": 409.91,
+                         "project_budget_cap_usd": 400.0, "project_actual_billing_usd": 50.0,
+                         "project_budget_remaining_usd": 350.0,
+                         "observation_sha256": "b" * 64}
+        result = _validate_sequential_capacity_plan(
+            resource, root, measurements, billing_value,
+            supervisor_sha256="a" * 64, expected_source_commit=self.commit,
+            expected_config_sha256=self.config_hash, expected_primary_runs=60,
+        )
+        self.assertFalse(result["disk_sufficient"])
+        self.assertFalse(result["capacity"]["stores"]["D"]["sufficient"])
+        self.assertFalse(result["cleanup_authorized"])
+
+        first_package = raw_packages[0][0].parent / PACKAGE_NAME
+        missing_package = first_package.with_suffix(".missing")
+        first_package.replace(missing_package)
+        try:
+            with self.assertRaises((FileNotFoundError, ValueError)):
+                _validate_sequential_capacity_plan(
+                    resource, root, measurements, billing_value,
+                    supervisor_sha256="a" * 64, expected_source_commit=self.commit,
+                    expected_config_sha256=self.config_hash, expected_primary_runs=60,
+                )
+        finally:
+            missing_package.replace(first_package)
+
+        original_package_bytes = first_package.read_bytes()
+        first_package.write_bytes(original_package_bytes + b"tampered")
+        try:
+            with self.assertRaisesRegex(ValueError, "package.*(bytes|SHA-256)|SHA-256.*package"):
+                _validate_sequential_capacity_plan(
+                    resource, root, measurements, billing_value,
+                    supervisor_sha256="a" * 64, expected_source_commit=self.commit,
+                    expected_config_sha256=self.config_hash, expected_primary_runs=60,
+                )
+        finally:
+            first_package.write_bytes(original_package_bytes)
+
+        e_original = json.loads(receipt_paths[1].read_text(encoding="utf-8"))
+        same_device = deepcopy(e_original)
+        same_device["device_identity"] = " VOLUME-D-001 "
+        save(receipt_paths[1], same_device)
+        plan_value["coordinator_receipts"][1] = reference(receipt_paths[1])
+        save(plan, plan_value)
+        resource["sequential_plan_sha256"] = sha(plan)
+        with self.assertRaisesRegex(ValueError, "device identities must be distinct"):
+            _validate_sequential_capacity_plan(
+                resource, root, measurements, billing_value,
+                supervisor_sha256="a" * 64, expected_source_commit=self.commit,
+                expected_config_sha256=self.config_hash, expected_primary_runs=60,
+            )
+        save(receipt_paths[1], e_original)
+        plan_value["coordinator_receipts"][1] = reference(receipt_paths[1])
+
+        d_original = json.loads(receipt_paths[0].read_text(encoding="utf-8"))
+        opaque = root / "opaque-success.json"
+        save(opaque, {"closed": True})
+        opaque_receipt = deepcopy(d_original)
+        opaque_receipt["runs"][0]["semantic_replay_report"] = reference(opaque)
+        save(receipt_paths[0], opaque_receipt)
+        plan_value["coordinator_receipts"][0] = reference(receipt_paths[0])
+        save(plan, plan_value)
+        resource["sequential_plan_sha256"] = sha(plan)
+        with self.assertRaisesRegex(ValueError, "semantic replay report differs"):
+            _validate_sequential_capacity_plan(
+                resource, root, measurements, billing_value,
+                supervisor_sha256="a" * 64, expected_source_commit=self.commit,
+                expected_config_sha256=self.config_hash, expected_primary_runs=60,
+            )
+
+        zero_receipt = deepcopy(d_original)
+        zero_receipt["available_bytes"] = 0
+        save(receipt_paths[0], zero_receipt)
+        plan_value["coordinator_receipts"][0] = reference(receipt_paths[0])
+        plan_value["derived_capacity"]["stores"]["D"]["available_bytes"] = 0
+        zero_cost = deepcopy(cost)
+        zero_cost.update({"current_actual_billing_usd": 400.0, "budget_remaining_usd": 0.0,
+                          "account_credit_remaining_usd": 0.0,
+                          "project_usable_after_reserve_usd": 0.0,
+                          "account_usable_after_reserve_usd": 0.0,
+                          "project_budget_sufficient": False, "account_credit_sufficient": False,
+                          "budget_sufficient": False})
+        plan_value["cost_forecast"] = zero_cost
+        save(plan, plan_value)
+        resource["sequential_plan_sha256"] = sha(plan)
+        zero_billing = {**billing_value, "budget_remaining_usd": 0.0,
+                        "project_actual_billing_usd": 400.0,
+                        "project_budget_remaining_usd": 0.0}
+        zero_result = _validate_sequential_capacity_plan(
+            resource, root, measurements, zero_billing,
+            supervisor_sha256="a" * 64, expected_source_commit=self.commit,
+            expected_config_sha256=self.config_hash, expected_primary_runs=60,
+        )
+        self.assertFalse(zero_result["disk_sufficient"])
+        self.assertFalse(zero_result["budget_sufficient"])
+
+        for invalid in (True, -1):
+            invalid_receipt = deepcopy(d_original)
+            invalid_receipt["available_bytes"] = invalid
+            save(receipt_paths[0], invalid_receipt)
+            plan_value["coordinator_receipts"][0] = reference(receipt_paths[0])
+            save(plan, plan_value)
+            resource["sequential_plan_sha256"] = sha(plan)
+            with self.subTest(invalid_available=invalid), \
+                    self.assertRaisesRegex(ValueError, "finite nonnegative"):
+                _validate_sequential_capacity_plan(
+                    resource, root, measurements, zero_billing,
+                    supervisor_sha256="a" * 64, expected_source_commit=self.commit,
+                    expected_config_sha256=self.config_hash, expected_primary_runs=60,
+                )
+        duplicate_receipt = deepcopy(d_original)
+        duplicate_receipt["runs"][1]["run_id"] = duplicate_receipt["runs"][0]["run_id"]
+        save(receipt_paths[0], duplicate_receipt)
+        plan_value["coordinator_receipts"][0] = reference(receipt_paths[0])
+        save(plan, plan_value)
+        resource["sequential_plan_sha256"] = sha(plan)
+        with self.assertRaisesRegex(ValueError, "invalid or duplicated"):
+            _validate_sequential_capacity_plan(
+                resource, root, measurements, zero_billing,
+                supervisor_sha256="a" * 64, expected_source_commit=self.commit,
+                expected_config_sha256=self.config_hash, expected_primary_runs=60,
+            )
+
+        save(receipt_paths[0], d_original)
+        plan_value["coordinator_receipts"][0] = reference(receipt_paths[0])
+        plan_value["derived_capacity"] = deepcopy(capacity)
+        plan_value["cost_forecast"] = deepcopy(cost)
+        plan_value["source_commit"] = "f" * 40
+        save(plan, plan_value)
+        resource["sequential_plan_sha256"] = sha(plan)
+        with self.assertRaisesRegex(ValueError, "bindings differ"):
+            _validate_sequential_capacity_plan(
+                resource, root, measurements, billing_value,
+                supervisor_sha256="a" * 64, expected_source_commit=self.commit,
+                expected_config_sha256=self.config_hash, expected_primary_runs=60,
+            )
 
     def test_invalid_report_can_be_replayed_without_opening_a_pass_gate(self) -> None:
         output = self.root / "invalid-output"

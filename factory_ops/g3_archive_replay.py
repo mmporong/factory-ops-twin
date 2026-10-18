@@ -326,9 +326,11 @@ def _support_closure(slot: Mapping[str, Any], record: Mapping[str, Any]) -> tupl
         trees.extend(_directory(Path(str(pilot[name])), f"pilot {key} {name}")
                      for name in ("session_root", "artifact_root"))
     resource = primary.get("resource_input")
-    if not isinstance(resource, Mapping) or set(resource) != {
-            "evidence_root", "supervisor_path", "supervisor_sha256",
-            "requested_primary_runs", "reserve_fraction"}:
+    resource_v1 = {"evidence_root", "supervisor_path", "supervisor_sha256",
+                   "requested_primary_runs", "reserve_fraction"}
+    resource_v2 = resource_v1 | {"schema_version", "sequential_plan_path", "sequential_plan_sha256"}
+    if (not isinstance(resource, Mapping) or set(resource) not in (resource_v1, resource_v2)
+            or (set(resource) == resource_v2 and resource.get("schema_version") != 2)):
         raise ValueError("primary input resource fields differ")
     resource_root = _directory(Path(str(resource["evidence_root"])), "resource evidence root")
     supervisor = _reference_path(
@@ -352,6 +354,43 @@ def _support_closure(slot: Mapping[str, Any], record: Mapping[str, Any]) -> tupl
                 files.append(path)
                 if name == "attempt_receipt":
                     files.extend(_receipt_files(resource_root, path))
+    if set(resource) == resource_v2:
+        plan = _reference_path(
+            resource_root,
+            {"path": resource["sequential_plan_path"], "sha256": resource["sequential_plan_sha256"]},
+            "sequential capacity plan",
+        )
+        files.append(plan)
+        plan_document = _load_object(plan, "sequential capacity plan")
+        receipts = plan_document.get("coordinator_receipts")
+        if not isinstance(receipts, list) or len(receipts) != 2:
+            raise ValueError("sequential coordinator receipt closure differs")
+        for index, reference in enumerate(receipts):
+            receipt = _reference_path(resource_root, reference, f"coordinator receipt {index}")
+            files.append(receipt)
+            receipt_document = _load_object(receipt, f"coordinator receipt {index}")
+            coordinator_runs = receipt_document.get("runs")
+            if not isinstance(coordinator_runs, list) or not coordinator_runs:
+                raise ValueError("sequential coordinator run closure differs")
+            for run_index, coordinator_run in enumerate(coordinator_runs):
+                if not isinstance(coordinator_run, Mapping):
+                    raise ValueError("sequential coordinator run differs")
+                referenced: dict[str, Path] = {}
+                for name in ("package_record", "preservation_receipt", "full_restore_receipt",
+                             "semantic_replay_report", "source_support_closure", "raw_envelope"):
+                    referenced[name] = _reference_path(
+                        resource_root, coordinator_run.get(name),
+                        f"coordinator {index} run {run_index} {name}",
+                    )
+                    files.append(referenced[name])
+                package_record = _load_object(referenced["package_record"], "sequential package record")
+                files.append(_reference_path(
+                    resource_root, package_record.get("package_manifest"), "sequential package manifest"
+                ))
+                from .g3_raw_storage import PACKAGE_NAME, load_raw_envelope
+                load_raw_envelope(referenced["raw_envelope"])
+                files.append(_regular(referenced["raw_envelope"].parent / PACKAGE_NAME,
+                                      "validated raw content package"))
     trees.append(_directory(Path(str(slot["session_root"])), "primary session root"))
     return files, trees
 

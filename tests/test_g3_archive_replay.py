@@ -11,7 +11,10 @@ import tarfile
 import tempfile
 import unittest
 
-from factory_ops.g3_archive_replay import _regular, load_archive_record, materialize_archive_slot
+from factory_ops.g3_archive_replay import (_regular, _snapshot_support, _support_closure,
+                                           _verify_support, load_archive_record,
+                                           materialize_archive_slot)
+from tests.test_g3_calibration import make_raw_package
 
 
 def digest(path: Path) -> str:
@@ -320,6 +323,53 @@ class G3ArchiveReplayTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "requires a v2"):
             with materialize_archive_slot(self.slot(), self.trial, expected_source_commit="b" * 40):
                 pass
+
+    @unittest.skipUnless(os.name == "posix", "raw envelope validation uses POSIX pinned-file APIs")
+    def test_v2_sequential_metadata_and_transitive_support_are_in_replay_closure(self) -> None:
+        primary = json.loads(self.primary.read_text(encoding="utf-8"))
+        resource_root = Path(primary["resource_input"]["evidence_root"])
+        envelope, _value, _archive, _manifest = make_raw_package(
+            resource_root, run_id=self.run_id, run_label="g3-p-normal-fifo-001",
+            source_commit="b" * 40, condition="normal", policy="fifo", index=99,
+        )
+        closure = resource_root / "closure.json"
+        closure.write_text(json.dumps({"portable": "source-support"}), encoding="utf-8")
+        package_manifest = resource_root / "package-manifest.json"
+        package_manifest.write_text('{"portable":true}\n', encoding="utf-8")
+        package_record = resource_root / "package-record.json"
+        package_record.write_text(json.dumps({"package_manifest": {
+            "path": package_manifest.name, "sha256": digest(package_manifest)}}), encoding="utf-8")
+        run = {}
+        for name in ("preservation_receipt", "full_restore_receipt", "semantic_replay_report"):
+            path = resource_root / f"{name}.json"
+            path.write_text(json.dumps({"portable": name}), encoding="utf-8")
+            run[name] = {"path": path.name, "sha256": digest(path)}
+        run.update({"package_record": {"path": package_record.name, "sha256": digest(package_record)},
+                    "source_support_closure": {"path": closure.name, "sha256": digest(closure)},
+                    "raw_envelope": {"path": envelope.relative_to(resource_root).as_posix(),
+                                     "sha256": digest(envelope)}})
+        receipt_refs = []
+        for store in ("D", "E"):
+            receipt = resource_root / f"coordinator-{store}.json"
+            receipt.write_text(json.dumps({"store_id": store, "runs": [run]}),
+                               encoding="utf-8")
+            receipt_refs.append({"path": receipt.name, "sha256": digest(receipt)})
+        plan = resource_root / "sequential-plan.json"
+        plan.write_text(json.dumps({"coordinator_receipts": receipt_refs}), encoding="utf-8")
+        primary["resource_input"].update({"schema_version": 2,
+                                           "sequential_plan_path": plan.name,
+                                           "sequential_plan_sha256": digest(plan)})
+        self.primary.write_text(json.dumps(primary), encoding="utf-8")
+        record = json.loads(self.record.read_text(encoding="utf-8"))
+        files, trees = _support_closure(self.slot(), record)
+        self.assertIn(plan, files)
+        self.assertIn(envelope, files)
+        package = envelope.parent / "g3-raw-content-package-v1.tar"
+        self.assertIn(package, files)
+        snapshot = _snapshot_support(files, trees)
+        package.write_bytes(package.read_bytes() + b"changed")
+        with self.assertRaisesRegex(ValueError, "support closure node changed"):
+            _verify_support(snapshot)
 
     def test_collection_failure_materialization_reuses_immutable_resource_files(self) -> None:
         start = self.resources / "attempt-start.json"

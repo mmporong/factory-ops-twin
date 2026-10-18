@@ -25,6 +25,8 @@ PILOT_SEED = 100
 PILOT_SCOPE = "qualification_and_pilot_only_not_primary_comparison"
 _SHA256 = re.compile(r"^[0-9a-f]{64}$")
 _COMMIT = re.compile(r"^[0-9a-f]{40}$")
+_SEQUENTIAL_BOUNDARY = "local_coordinator_receipts_hash_bound_not_live_reverified"
+_ABSOLUTE_RESERVE_BYTES = 20_000_000_000
 
 
 def _sha256(path: Path) -> str:
@@ -58,6 +60,15 @@ def _positive(value: object, name: str, *, integer: bool = False) -> float | int
         raise ValueError(f"{name} must be a finite positive number")
     if integer and type(value) is not int:
         raise ValueError(f"{name} must be a positive integer")
+    return value
+
+
+def _nonnegative(value: object, name: str, *, integer: bool = False) -> float | int:
+    if (isinstance(value, bool) or not isinstance(value, (int, float))
+            or not isfinite(float(value)) or value < 0):
+        raise ValueError(f"{name} must be a finite nonnegative number")
+    if integer and type(value) is not int:
+        raise ValueError(f"{name} must be a nonnegative integer")
     return value
 
 
@@ -456,18 +467,337 @@ def _archive_measurement(archive: Path, manifest_path: Path) -> tuple[int, int]:
     return sum(size for size, _ in observed.values()), archive.stat().st_size
 
 
+def _validate_sequential_capacity_plan(
+    resource_input: Mapping[str, Any], root: Path, measurements: Sequence[Mapping[str, Any]],
+    billing: Mapping[str, Any], *, supervisor_sha256: str, expected_source_commit: str,
+    expected_config_sha256: str, expected_primary_runs: int,
+) -> dict[str, Any]:
+    plan = _referenced_file(
+        root, {"path": resource_input["sequential_plan_path"],
+               "sha256": resource_input["sequential_plan_sha256"]}, "sequential capacity plan",
+    )
+    document = _load(plan)
+    fields = {
+        "schema_version", "classification", "source_commit", "experiment_config_sha256",
+        "supervisor_sha256", "billing_sha256", "requested_primary_runs", "reserve_fraction",
+        "absolute_reserve_bytes", "actual_six_run_ids", "coordinator_receipts",
+        "derived_capacity", "cost_forecast", "evidence_boundary", "cleanup_authorized",
+        "measurement_basis", "coordinator_recheck_required_before_each_run",
+    }
+    run_ids = sorted(str(row["run_id"]) for row in measurements)
+    if (set(document) != fields or document.get("schema_version") != 2
+            or document.get("classification") != "g3_sequential_dual_local_capacity_plan"):
+        raise ValueError("sequential capacity plan shape differs")
+    if (document["source_commit"] != expected_source_commit
+            or document["experiment_config_sha256"] != expected_config_sha256
+            or document["supervisor_sha256"] != supervisor_sha256
+            or document["billing_sha256"] != billing["observation_sha256"]
+            or document["requested_primary_runs"] != expected_primary_runs
+            or document["reserve_fraction"] != resource_input["reserve_fraction"]
+            or document["absolute_reserve_bytes"] != _ABSOLUTE_RESERVE_BYTES
+            or document["actual_six_run_ids"] != run_ids):
+        raise ValueError("sequential capacity plan bindings differ")
+    if (document["evidence_boundary"] != _SEQUENTIAL_BOUNDARY
+            or document["cleanup_authorized"] is not False
+            or document["measurement_basis"] != "derived_from_exact_manifests_and_packages"
+            or document["coordinator_recheck_required_before_each_run"] is not True):
+        raise ValueError("sequential capacity plan responsibility boundary differs")
+    receipt_refs = document["coordinator_receipts"]
+    if not isinstance(receipt_refs, list) or len(receipt_refs) != 2:
+        raise ValueError("sequential capacity plan requires D and E coordinator receipts")
+    receipt_rows: dict[str, dict[str, Any]] = {}
+    expected_receipt_fields = {
+        "schema_version", "classification", "store_id", "observed_at_utc", "device_identity",
+        "available_bytes", "runs", "shared_bytes",
+    }
+    run_fields = {
+        "run_id", "package_record", "preservation_receipt", "full_restore_receipt",
+        "semantic_replay_report", "source_support_closure", "raw_envelope",
+        "package_phase_wall_time_s",
+        "offload_phase_wall_time_s", "restore_phase_wall_time_s", "semantic_phase_wall_time_s",
+    }
+    shared_fields = {
+        "retained_six_support_bytes", "primary_specific_support_bytes", "source_bytes",
+        "metadata_bytes", "owned_restore_bytes", "vm_applicable_scratch_bytes",
+    }
+    measured_by_run = {str(row["run_id"]): row for row in measurements}
+    device_identities: set[str] = set()
+    for reference in receipt_refs:
+        receipt_path = _referenced_file(root, reference, "local coordinator receipt")
+        value = _load(receipt_path)
+        store = value.get("store_id")
+        if (set(value) != expected_receipt_fields or value.get("schema_version") != 1
+                or value.get("classification") != "g3_local_coordinator_capacity_observation"
+                or store not in {"D", "E"} or store in receipt_rows):
+            raise ValueError("local coordinator receipt shape or store identity differs")
+        _utc(value["observed_at_utc"], "coordinator observed_at_utc")
+        if not isinstance(value["device_identity"], str) or not value["device_identity"].strip():
+            raise ValueError("coordinator device identity is required")
+        normalized_device = value["device_identity"].strip().casefold()
+        if normalized_device in device_identities:
+            raise ValueError("D and E coordinator device identities must be distinct")
+        device_identities.add(normalized_device)
+        _nonnegative(value["available_bytes"], "coordinator available bytes", integer=True)
+        shared = value["shared_bytes"]
+        if not isinstance(shared, Mapping) or set(shared) != shared_fields:
+            raise ValueError("coordinator shared byte fields differ")
+        for name, amount in shared.items():
+            _nonnegative(amount, f"coordinator {name}", integer=True)
+        rows = value["runs"]
+        if not isinstance(rows, list) or len(rows) != len(run_ids):
+            raise ValueError("coordinator receipt must cover the actual six run IDs")
+        indexed: dict[str, Mapping[str, Any]] = {}
+        for row in rows:
+            if not isinstance(row, Mapping) or set(row) != run_fields or row.get("run_id") in indexed:
+                raise ValueError("coordinator run measurement is invalid or duplicated")
+            run_id = str(row["run_id"])
+            if run_id not in measured_by_run:
+                raise ValueError("coordinator run is absent from actual-six measurements")
+            for name in ("package_phase_wall_time_s", "offload_phase_wall_time_s",
+                         "restore_phase_wall_time_s", "semantic_phase_wall_time_s"):
+                _positive(row[name], f"coordinator {name}")
+            envelope_path = _referenced_file(root, row["raw_envelope"], "raw content envelope")
+            from .g3_raw_storage import load_raw_envelope
+            envelope = load_raw_envelope(envelope_path)
+            measured = measured_by_run[run_id]
+            if (envelope.get("run_id") != run_id
+                    or envelope.get("source_commit") != expected_source_commit
+                    or envelope.get("original_archive_sha256") != measured["archive_sha256"]
+                    or envelope.get("original_archive_bytes") != measured["compressed_bytes"]
+                    or envelope.get("raw_bytes") != measured["raw_bytes"]
+                    or envelope.get("output_manifest_sha256") != measured["output_manifest_sha256"]
+                    or envelope.get("output_manifest_bytes") != measured["output_manifest_bytes"]):
+                raise ValueError("raw content envelope differs from actual-six/source bindings")
+            closure_path = _referenced_file(root, row["source_support_closure"], "source/support closure")
+            closure = _load(closure_path)
+            closure_fields = {"schema_version", "classification", "source_commit",
+                              "experiment_config_sha256", "actual_six_run_ids", "raw_envelope_sha256",
+                              "source_bundle_sha256", "support_manifest_sha256",
+                              "per_trial_support_manifest_sha256",
+                              "shared_six_pilot_support_pack_sha256"}
+            if (set(closure) != closure_fields or closure.get("schema_version") != 1
+                    or closure.get("classification") != "g3_source_support_closure"
+                    or closure.get("source_commit") != expected_source_commit
+                    or closure.get("experiment_config_sha256") != expected_config_sha256
+                    or closure.get("actual_six_run_ids") != run_ids
+                    or closure.get("raw_envelope_sha256") != _sha256(envelope_path)
+                    or any(closure.get(name) != envelope.get(name) for name in (
+                        "source_bundle_sha256", "support_manifest_sha256",
+                        "per_trial_support_manifest_sha256", "shared_six_pilot_support_pack_sha256"))):
+                raise ValueError("source/support closure bindings differ")
+            closure_sha = _sha256(closure_path)
+            package_record_path = _referenced_file(root, row["package_record"], "package record")
+            package_record = _load(package_record_path)
+            package_record_fields = {"schema_version", "classification", "run_id", "source_commit",
+                                     "archive_sha256", "output_manifest_sha256", "package_sha256",
+                                     "package_bytes", "package_manifest", "source_support_closure_sha256",
+                                     "raw_envelope_sha256"}
+            if (set(package_record) != package_record_fields or package_record.get("schema_version") != 1
+                    or package_record.get("classification") != "g3_sequential_package_record"
+                    or package_record.get("run_id") != run_id
+                    or package_record.get("source_commit") != expected_source_commit
+                    or package_record.get("archive_sha256") != measured["archive_sha256"]
+                    or package_record.get("output_manifest_sha256") != measured["output_manifest_sha256"]
+                    or package_record.get("source_support_closure_sha256") != closure_sha
+                    or package_record.get("raw_envelope_sha256") != _sha256(envelope_path)
+                    or not _SHA256.fullmatch(str(package_record.get("package_sha256")))):
+                raise ValueError("package record differs from actual-six/source closure bindings")
+            package_bytes = int(_positive(package_record["package_bytes"], "package bytes", integer=True))
+            if (package_record["package_sha256"] != envelope["package"]["sha256"]
+                    or package_bytes != envelope["package"]["bytes"]):
+                raise ValueError("package record differs from validated raw package bytes")
+            package_manifest_path = _referenced_file(root, package_record["package_manifest"], "package manifest")
+            package_manifest = _load(package_manifest_path)
+            manifest_fields = {"schema_version", "classification", "run_id", "source_commit",
+                               "package_sha256", "package_bytes", "members"}
+            members = {"archive": measured["archive_sha256"],
+                       "output_manifest": measured["output_manifest_sha256"],
+                       "source_support_closure": closure_sha,
+                       "raw_envelope": _sha256(envelope_path),
+                       "source_bundle": envelope["source_bundle_sha256"],
+                       "support_manifest": envelope["support_manifest_sha256"]}
+            if (set(package_manifest) != manifest_fields or package_manifest.get("schema_version") != 1
+                    or package_manifest.get("classification") != "g3_sequential_package_manifest"
+                    or package_manifest.get("run_id") != run_id
+                    or package_manifest.get("source_commit") != expected_source_commit
+                    or package_manifest.get("package_sha256") != package_record["package_sha256"]
+                    or package_manifest.get("package_bytes") != package_bytes
+                    or package_manifest.get("members") != members):
+                raise ValueError("package manifest differs from actual-six/package bindings")
+            preservation = _load(_referenced_file(root, row["preservation_receipt"], "preservation receipt"))
+            preservation_expected = {"schema_version": 1,
+                "classification": "g3_local_package_preservation_receipt", "store_id": store,
+                "device_identity": value["device_identity"], "run_id": run_id,
+                "package_sha256": package_record["package_sha256"], "package_bytes": package_bytes,
+                "source_support_closure_sha256": closure_sha,
+                "operation": "closed_after_byte_count_and_sha256_recheck"}
+            if preservation != preservation_expected:
+                raise ValueError("local preservation receipt differs from package/store bindings")
+            restore = _load(_referenced_file(root, row["full_restore_receipt"], "full restore receipt"))
+            restore_expected = {"schema_version": 1,
+                "classification": "g3_full_restore_receipt", "store_id": store,
+                "device_identity": value["device_identity"], "run_id": run_id,
+                "package_sha256": package_record["package_sha256"],
+                "restored_archive_sha256": measured["archive_sha256"],
+                "restored_output_manifest_sha256": measured["output_manifest_sha256"],
+                "restored_source_support_closure_sha256": closure_sha,
+                "operation": "full_restore_completed_and_closed"}
+            if restore != restore_expected:
+                raise ValueError("full restore receipt differs from package/archive bindings")
+            semantic = _load(_referenced_file(root, row["semantic_replay_report"], "semantic replay report"))
+            semantic_expected = {"schema_version": 1,
+                "classification": "g3_existing_semantic_replay_report", "run_id": run_id,
+                "source_commit": expected_source_commit,
+                "archive_sha256": measured["archive_sha256"],
+                "package_sha256": package_record["package_sha256"],
+                "status": "passed_existing_g3_semantic_validator", "errors": []}
+            if semantic != semantic_expected:
+                raise ValueError("semantic replay report differs from run/source/package bindings")
+            indexed[run_id] = {**row, "package_bytes": package_bytes,
+                               "package_sha256": package_record["package_sha256"],
+                               "raw_envelope_sha256": _sha256(envelope_path),
+                               "source_support_closure_sha256": closure_sha}
+        if sorted(indexed) != run_ids:
+            raise ValueError("coordinator run IDs differ from the actual six pilots")
+        receipt_rows[str(store)] = {"value": value, "runs": indexed}
+    if set(receipt_rows) != {"D", "E"}:
+        raise ValueError("sequential capacity plan requires distinct D and E receipts")
+    for run_id in run_ids:
+        if any(receipt_rows["D"]["runs"][run_id][name]
+               != receipt_rows["E"]["runs"][run_id][name]
+               for name in ("package_bytes", "package_sha256", "raw_envelope_sha256",
+                            "source_support_closure_sha256", "package_phase_wall_time_s")):
+            raise ValueError("D and E package/source closure measurements differ")
+    shared = receipt_rows["D"]["value"]["shared_bytes"]
+    if shared != receipt_rows["E"]["value"]["shared_bytes"]:
+        raise ValueError("D and E shared byte measurements differ")
+    multiplier = 1 + float(resource_input["reserve_fraction"])
+    worst_raw = max(int(row["raw_bytes"]) for row in measurements)
+    worst_archive = max(int(row["compressed_bytes"]) for row in measurements)
+    worst_package = max(int(row["package_bytes"]) for row in receipt_rows["D"]["runs"].values())
+    vm_base = (int(shared["retained_six_support_bytes"]) + worst_raw + worst_archive
+               + worst_package + int(shared["vm_applicable_scratch_bytes"]))
+    vm_required = ceil(vm_base * multiplier) + _ABSOLUTE_RESERVE_BYTES
+    store_extra = sum(int(shared[name]) for name in (
+        "retained_six_support_bytes", "primary_specific_support_bytes", "source_bytes",
+        "metadata_bytes", "owned_restore_bytes",
+    ))
+    primary_packages = ceil(expected_primary_runs * worst_package * multiplier)
+    store_required = primary_packages + store_extra + _ABSOLUTE_RESERVE_BYTES
+    minimum_vm_available = min(int(row["free_disk_bytes_after"]) for row in measurements)
+    capacity = {
+        "derivation": "lifecycle_maxima_from_rederived_actual_six_and_hash_bound_local_receipts",
+        "vm": {"retained_six_support_bytes": int(shared["retained_six_support_bytes"]),
+               "one_hot_raw_bytes": worst_raw, "canonical_archive_bytes": worst_archive,
+               "one_package_bytes": worst_package,
+               "applicable_scratch_bytes": int(shared["vm_applicable_scratch_bytes"]),
+               "minimum_observed_available_bytes": minimum_vm_available,
+               "required_bytes": vm_required, "sufficient": minimum_vm_available >= vm_required},
+        "stores": {
+            store: {"available_bytes": int(receipt_rows[store]["value"]["available_bytes"]),
+                    "primary_packages_bytes": primary_packages,
+                    "deduplicated_extra_bytes": store_extra,
+                    "owned_restore_bytes": int(shared["owned_restore_bytes"]),
+                    "required_bytes": store_required,
+                    "sufficient": int(receipt_rows[store]["value"]["available_bytes"]) >= store_required}
+            for store in ("D", "E")},
+    }
+    if document["derived_capacity"] != capacity:
+        raise ValueError("sequential capacity derivation differs")
+    phase_seconds = max(
+        float(measurement["worker_phase_wall_time_s"])
+        + float(measurement["validation_phase_wall_time_s"])
+        + float(measurement["archive_phase_wall_time_s"])
+        + float(receipt_rows["D"]["runs"][str(measurement["run_id"])]["package_phase_wall_time_s"])
+        + sum(sum(float(receipt_rows[store]["runs"][str(measurement["run_id"])][name])
+                  for name in ("offload_phase_wall_time_s", "restore_phase_wall_time_s",
+                               "semantic_phase_wall_time_s")) for store in ("D", "E"))
+        for measurement in measurements
+    )
+    cost = document["cost_forecast"]
+    cost_fields = {
+        "budget_cap_usd", "current_actual_billing_usd", "budget_remaining_usd",
+        "account_credit_remaining_usd", "reserve_fraction",
+        "project_usable_after_reserve_usd", "account_usable_after_reserve_usd",
+        "running_hourly_rate_usd", "stopped_storage_hourly_rate_usd",
+        "planned_stopped_hours", "per_run_closed_wall_time_s", "forecast_running_seconds",
+        "forecast_running_cost_usd", "forecast_stopped_cost_usd", "forecast_total_cost_usd",
+        "project_budget_sufficient", "account_credit_sufficient", "budget_sufficient",
+    }
+    if not isinstance(cost, Mapping) or set(cost) != cost_fields:
+        raise ValueError("sequential cost forecast fields differ")
+    declared_actual = float(_nonnegative(cost["current_actual_billing_usd"], "current actual billing"))
+    remaining = float(_nonnegative(cost["budget_remaining_usd"], "budget remaining"))
+    _nonnegative(cost["account_credit_remaining_usd"], "account credit remaining")
+    _nonnegative(cost["project_usable_after_reserve_usd"], "project usable after reserve")
+    _nonnegative(cost["account_usable_after_reserve_usd"], "account usable after reserve")
+    declared_reserve = cost["reserve_fraction"]
+    if (isinstance(declared_reserve, bool) or not isinstance(declared_reserve, (int, float))
+            or not isfinite(float(declared_reserve)) or declared_reserve != resource_input["reserve_fraction"]):
+        raise ValueError("sequential cost reserve fraction differs")
+    actual = float(billing["project_actual_billing_usd"])
+    project_remaining = float(billing["project_budget_remaining_usd"])
+    account_remaining = float(billing["budget_remaining_usd"])
+    running_rate = float(_positive(cost["running_hourly_rate_usd"], "running hourly rate"))
+    stopped_rate = float(_nonnegative(cost["stopped_storage_hourly_rate_usd"], "stopped storage hourly rate"))
+    stopped_hours = float(_nonnegative(cost["planned_stopped_hours"], "planned stopped hours"))
+    forecast_seconds = phase_seconds * expected_primary_runs * multiplier
+    running_cost = forecast_seconds / 3600 * running_rate
+    stopped_cost = stopped_hours * stopped_rate
+    project_usable = project_remaining * (1 - float(resource_input["reserve_fraction"]))
+    account_usable = account_remaining * (1 - float(resource_input["reserve_fraction"]))
+    total_cost = running_cost + stopped_cost
+    expected_cost = {
+        "budget_cap_usd": 400.0, "current_actual_billing_usd": actual,
+        "budget_remaining_usd": project_remaining,
+        "account_credit_remaining_usd": account_remaining,
+        "reserve_fraction": float(resource_input["reserve_fraction"]),
+        "project_usable_after_reserve_usd": project_usable,
+        "account_usable_after_reserve_usd": account_usable,
+        "running_hourly_rate_usd": float(billing["confirmed_hourly_rate_usd"]),
+        "stopped_storage_hourly_rate_usd": stopped_rate, "planned_stopped_hours": stopped_hours,
+        "per_run_closed_wall_time_s": phase_seconds, "forecast_running_seconds": forecast_seconds,
+        "forecast_running_cost_usd": running_cost, "forecast_stopped_cost_usd": stopped_cost,
+        "forecast_total_cost_usd": total_cost,
+        "project_budget_sufficient": project_usable >= total_cost,
+        "account_credit_sufficient": account_usable >= total_cost,
+        "budget_sufficient": project_usable >= total_cost and account_usable >= total_cost,
+    }
+    if (cost.get("budget_cap_usd") != 400.0
+            or declared_actual != actual
+            or abs(actual + remaining - 400.0) > 1e-9
+            or running_rate != float(billing["confirmed_hourly_rate_usd"])
+            or remaining != project_remaining
+            or dict(cost) != expected_cost):
+        raise ValueError("sequential cost forecast differs from actual billing and closed phase observations")
+    return {
+        "plan_path": str(resource_input["sequential_plan_path"]), "plan_sha256": _sha256(plan),
+        "coordinator_receipts": deepcopy(receipt_refs), "capacity": capacity,
+        "cost_forecast": expected_cost,
+        "disk_sufficient": bool(capacity["vm"]["sufficient"] and all(
+            capacity["stores"][store]["sufficient"] for store in ("D", "E"))),
+        "budget_sufficient": bool(expected_cost["budget_sufficient"]),
+        "boundary": _SEQUENTIAL_BOUNDARY, "cleanup_authorized": False,
+    }
+
+
 def _resource_forecast_actual(
     resource_input: Mapping[str, Any],
     pilots: Sequence[Mapping[str, Any]],
     pilot_slots: Mapping[str, Mapping[str, Any]],
     expected_source_commit: str,
     expected_primary_runs: int,
+    expected_config_sha256: str | None = None,
 ) -> dict[str, Any]:
     run_ids = {str(row["run_id"]) for row in pilots}
     pilot_by_run = {str(row["run_id"]): row for row in pilots}
-    required_input = {"evidence_root", "supervisor_path", "supervisor_sha256", "requested_primary_runs", "reserve_fraction"}
-    if set(resource_input) != required_input:
+    v1_input = {"evidence_root", "supervisor_path", "supervisor_sha256", "requested_primary_runs", "reserve_fraction"}
+    v2_input = v1_input | {"schema_version", "sequential_plan_path", "sequential_plan_sha256"}
+    if set(resource_input) not in (v1_input, v2_input):
         raise ValueError("actual resource input fields differ")
+    if set(resource_input) == v2_input and (resource_input.get("schema_version") != 2
+                                             or expected_config_sha256 is None):
+        raise ValueError("sequential resource input schema or config binding differs")
     root = Path(resource_input["evidence_root"]).resolve(strict=True)
     supervisor = _referenced_file(root, {"path": resource_input["supervisor_path"],
                                          "sha256": resource_input["supervisor_sha256"]}, "supervisor")
@@ -597,6 +927,9 @@ def _resource_forecast_actual(
                              "scene_wall_time_s": scene_wall, "worker_phase_wall_time_s": worker_wall,
                              "validation_phase_wall_time_s": validation_wall, "archive_phase_wall_time_s": archive_wall,
                              "peak_vram_bytes": peak, "raw_bytes": raw, "compressed_bytes": compressed,
+                             "archive_sha256": _sha256(archive),
+                             "output_manifest_sha256": _sha256(output_manifest_path),
+                             "output_manifest_bytes": output_manifest_path.stat().st_size,
                              "free_disk_bytes_before": before, "free_disk_bytes_after": after,
                              "gpu_memory_source_unit": "MiB", "gpu_memory_output_unit": "bytes"})
     if seen != run_ids:
@@ -605,6 +938,9 @@ def _resource_forecast_actual(
     billing = _load(billing_path)
     required_billing = {"observed_at", "source", "confirmation_method", "currency",
                         "confirmed_hourly_rate_usd", "budget_remaining_usd"}
+    if set(resource_input) == v2_input:
+        required_billing |= {"project_budget_cap_usd", "project_actual_billing_usd",
+                             "project_budget_remaining_usd"}
     if set(billing) != required_billing or billing.get("currency") != "USD":
         raise ValueError("billing observation shape differs")
     _utc(billing["observed_at"], "billing observed_at")
@@ -612,7 +948,19 @@ def _resource_forecast_actual(
         raise ValueError("billing source and confirmation method are required")
     count, reserve = resource_input["requested_primary_runs"], resource_input["reserve_fraction"]
     hourly = float(_positive(billing["confirmed_hourly_rate_usd"], "confirmed hourly rate"))
-    budget = float(_positive(billing["budget_remaining_usd"], "budget remaining"))
+    budget_value = (_nonnegative(billing["budget_remaining_usd"], "account credit remaining")
+                    if set(resource_input) == v2_input
+                    else _positive(billing["budget_remaining_usd"], "budget remaining"))
+    budget = float(budget_value)
+    if set(resource_input) == v2_input:
+        cap = float(_positive(billing["project_budget_cap_usd"], "project budget cap"))
+        actual = float(_nonnegative(billing["project_actual_billing_usd"], "project actual billing"))
+        project_remaining = float(_nonnegative(
+            billing["project_budget_remaining_usd"], "project budget remaining"
+        ))
+        if cap != 400.0 or abs(actual + project_remaining - cap) > 1e-9:
+            raise ValueError("project billing does not preserve the fixed 400 USD cap")
+        budget = project_remaining
     _positive(count, "requested primary runs", integer=True)
     if count != expected_primary_runs:
         raise ValueError("requested primary runs must equal the experiment matrix expected_trials")
@@ -626,7 +974,7 @@ def _resource_forecast_actual(
     forecast_cost = forecast_wall / 3600 * hourly
     minimum_free = min(row["free_disk_bytes_after"] for row in measurements)
     forecast_raw, forecast_compressed = ceil(worst_raw * int(count) * multiplier), ceil(worst_compressed * int(count) * multiplier)
-    return {"provenance_status": "actual_supervisor_measurements_rederived",
+    result = {"provenance_status": "actual_supervisor_measurements_rederived",
             "supervisor_sha256": _sha256(supervisor), "measurement_run_ids": sorted(run_ids),
             "requested_primary_runs": int(count), "reserve_fraction": float(reserve),
             "worst_pilot": {"wall_time_s": worst_wall, "raw_bytes": worst_raw,
@@ -641,6 +989,19 @@ def _resource_forecast_actual(
                                "disk_sufficient": minimum_free >= forecast_raw + forecast_compressed,
                                "budget_sufficient": budget >= forecast_cost},
             "billing": {**billing, "observation_sha256": _sha256(billing_path)}}
+    if set(resource_input) == v2_input:
+        assert expected_config_sha256 is not None
+        sequential = _validate_sequential_capacity_plan(
+            resource_input, root, measurements, result["billing"],
+            supervisor_sha256=_sha256(supervisor), expected_source_commit=expected_source_commit,
+            expected_config_sha256=expected_config_sha256,
+            expected_primary_runs=expected_primary_runs,
+        )
+        result["sequential_plan"] = sequential
+        result["batch_forecast"]["disk_sufficient"] = sequential["disk_sufficient"]
+        result["batch_forecast"]["budget_sufficient"] = sequential["budget_sufficient"]
+        result["batch_forecast"]["cost_usd"] = sequential["cost_forecast"]["forecast_total_cost_usd"]
+    return result
 
 
 def build_calibration(
@@ -675,7 +1036,8 @@ def build_calibration(
         raise ValueError("pilot run IDs must be unique")
     resources = (_resource_forecast_non_evidence(resource_input, run_ids, expected_primary_runs)
                  if allow_explicit_non_evidence else _resource_forecast_actual(
-                     resource_input, pilots, pilot_slots, expected_source_commit, expected_primary_runs
+                     resource_input, pilots, pilot_slots, expected_source_commit, expected_primary_runs,
+                     expected_config_sha256
                  ))
     eligible = bool(all(row["calibration_eligible"] for row in pilots)
                     and resources["batch_forecast"]["disk_sufficient"]
