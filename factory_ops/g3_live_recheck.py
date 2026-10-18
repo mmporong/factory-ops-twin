@@ -18,6 +18,7 @@ import uuid
 from .experiments import build_matrix, canonical_hash, load_experiment_config
 from .g3_calibration import validate_calibration
 from .g3_local_preservation import sealed_store_identity
+from .g3_primary_preservation import validate_primary_store_result
 from .g3_raw_storage import ENVELOPE_NAME, PACKAGE_NAME, load_raw_envelope
 from .g3_session import _load_primary_input_manifest, sha
 
@@ -406,112 +407,24 @@ def _validate_primary_store_result(
     """Revalidate persistent package and closed replay proof for one primary."""
     result = _snapshot_load(result_path, "previous G5 store run result", snapshots)
     if result.get("schema_version") == 2:
-        fields_v2 = {
-            "schema_version", "classification", "store_id", "device_identity", "run_id",
-            "preservation_attempt_id", "trial_id", "source_commit", "trial_outcome", "attempt_status", "package",
-            "raw_envelope", "preservation_receipt", "semantic_replay_report", "trial_result",
-            "primary_inputs_path", "primary_inputs_sha256", "replay_workspace_peak_bytes",
-            "transient_disposition", "transient_scope", "persistent_namespace", "wall_time_s",
-            "cleanup_authorized",
-        }
-        if (set(result) != fields_v2
-                or result.get("classification") != "g3_primary_store_run_result"
-                or result.get("store_id") != store_id
-                or result.get("device_identity") != device_identity
-                or result.get("run_id") != run_id
-                or result.get("source_commit") != PRODUCER_SOURCE_COMMIT
-                or result.get("trial_outcome") not in {"completed", "incomplete", "failed"}
-                or result.get("attempt_status") not in {"collected", "collection_failed"}
-                or result.get("transient_disposition") != "removed_after_verified_close"
-                or result.get("transient_scope") != "owned_primary_replay_workspace_only"
-                or result.get("cleanup_authorized") is not False):
-            raise ValueError("previous primary store result binding differs")
-        replay_workspace_peak = int(_number(
-            result["replay_workspace_peak_bytes"], "primary replay workspace peak"))
-        _number(result["wall_time_s"], "primary preservation wall time", positive=True)
         evidence_root = result_path.parents[4]
-        attempt_id = result.get("preservation_attempt_id")
-        if (not isinstance(attempt_id, str) or not _RUN_ID.fullmatch(attempt_id)
-                or result_path.parent.name != attempt_id
-                or result_path.parent.parent.name != run_id
-                or result_path.parent.parent.parent.name != store_id
-                or result_path.name != "store-run-result.json"):
-            raise ValueError("previous primary result path is not canonical")
-        checked_store_root = _no_link_path(store_root, "sealed store root", require_directory=True)
-        namespace = checked_store_root / "factory-ops-g3-primary" / run_id / attempt_id
-        declared = _no_link_path(Path(str(result["persistent_namespace"])),
-                                 "primary persistent namespace", require_directory=True)
-        if (declared != namespace or declared.resolve(strict=True) != namespace
-                or not namespace.is_relative_to(checked_store_root)
-                or (namespace / "owned-primary-replay-workspace").exists()
-                or (namespace / "owned-primary-replay-workspace").is_symlink()):
-            raise ValueError("primary persistent namespace or scratch disposition differs")
-        package = result.get("package")
-        if (not isinstance(package, Mapping) or set(package) != {"path", "bytes", "sha256"}
-                or package.get("bytes") != package_bytes or package.get("sha256") != package_sha256):
-            raise ValueError("previous primary package binding differs")
-        package_path = _no_link_path(Path(str(package["path"])), "previous primary package",
-                                     require_file=True)
-        if (package_path != namespace / PACKAGE_NAME or package_path.stat().st_size != package_bytes
-                or sha(package_path) != package_sha256):
-            raise ValueError("previous primary package bytes differ")
-        raw = result.get("raw_envelope")
-        if not isinstance(raw, Mapping) or set(raw) != {"path", "sha256"}:
-            raise ValueError("previous primary envelope binding differs")
-        envelope_path = _no_link_path(Path(str(raw["path"])), "previous primary envelope",
-                                      require_file=True)
-        _snapshot_bytes(envelope_path, "previous primary envelope", snapshots)
-        if (envelope_path != namespace / ENVELOPE_NAME or sha(envelope_path) != raw["sha256"]):
-            raise ValueError("previous primary envelope bytes differ")
-        envelope = load_raw_envelope(envelope_path)
-        if (envelope.get("run_id") != run_id or envelope.get("source_commit") != PRODUCER_SOURCE_COMMIT
-                or envelope.get("profile") != "primary"
-                or envelope.get("package", {}).get("sha256") != package_sha256
-                or envelope.get("package", {}).get("bytes") != package_bytes):
-            raise ValueError("previous primary envelope closure differs")
-        replay_path = _reference(
-            evidence_root, result["semantic_replay_report"]["path"],
-            result["semantic_replay_report"]["sha256"], "primary semantic replay", snapshots)
-        replay = _snapshot_load(replay_path, "primary semantic replay", snapshots)
-        expected_status = ("passed_collection_failure_contract"
-                           if result["attempt_status"] == "collection_failed"
-                           else "passed_existing_g3_semantic_validator")
-        if (replay.get("schema_version") != 2
-                or replay.get("classification") != "g3_primary_semantic_replay_report"
-                or replay.get("run_id") != run_id
-                or replay.get("source_commit") != PRODUCER_SOURCE_COMMIT
-                or replay.get("package_sha256") != package_sha256
-                or replay.get("primary_inputs_sha256") != result["primary_inputs_sha256"]
-                or replay.get("status") != expected_status or replay.get("errors") != []):
-            raise ValueError("previous primary semantic replay differs")
-        preservation_path = _reference(
-            evidence_root, result["preservation_receipt"]["path"],
-            result["preservation_receipt"]["sha256"], "primary preservation receipt", snapshots)
-        preservation = _snapshot_load(preservation_path, "primary preservation receipt", snapshots)
-        if (preservation.get("schema_version") != 2
-                or preservation.get("classification") != "g3_primary_package_preservation_receipt"
-                or preservation.get("store_id") != store_id
-                or preservation.get("device_identity") != device_identity
-                or preservation.get("run_id") != run_id
-                or preservation.get("package_sha256") != package_sha256
-                or preservation.get("package_bytes") != package_bytes
-                or preservation.get("cleanup_authorized") is not False):
-            raise ValueError("previous primary preservation receipt differs")
+        validated = validate_primary_store_result(
+            result_path=result_path, evidence_root=evidence_root, store_root=store_root,
+            expected_store_id=store_id, expected_device_identity=device_identity,
+            expected_run_id=run_id, expected_source_commit=PRODUCER_SOURCE_COMMIT,
+            expected_package_sha256=package_sha256, expected_package_bytes=package_bytes,
+        )
         trial_result_path = _reference(
-            evidence_root, result["trial_result"]["path"], result["trial_result"]["sha256"],
-            "primary trial result", snapshots)
-        primary_path = _no_link_path(Path(str(result["primary_inputs_path"])),
-                                     "previous primary inputs", require_file=True)
-        _snapshot_bytes(primary_path, "previous primary inputs", snapshots)
-        if (not _SHA256.fullmatch(str(result["primary_inputs_sha256"]))
-                or sha(primary_path) != result["primary_inputs_sha256"]):
-            raise ValueError("previous primary inputs differ")
-        closure_payload = ":".join((sha(trial_result_path), str(result["trial_outcome"]),
-                                    str(result["attempt_status"]),
-                                    str(result["primary_inputs_sha256"]))).encode()
+            evidence_root, validated["trial_result"]["path"],
+            validated["trial_result"]["sha256"], "primary trial result", snapshots)
+        envelope_path = _no_link_path(Path(str(validated["raw_envelope"]["path"])),
+                                      "previous primary envelope", require_file=True)
+        closure_payload = ":".join((sha(trial_result_path), str(validated["trial_outcome"]),
+                                    str(validated["attempt_status"]),
+                                    str(validated["primary_inputs_sha256"]))).encode()
         return (evidence_root, package_sha256, sha(envelope_path),
-                hashlib.sha256(closure_payload).hexdigest(), replay_workspace_peak)
-
+                hashlib.sha256(closure_payload).hexdigest(),
+                int(validated["replay_workspace_peak_bytes"]))
     # Read-only compatibility remains for the actual-six qualification evidence.
     fields = {
         "schema_version", "classification", "store_id", "device_identity", "run_id",

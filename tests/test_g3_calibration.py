@@ -16,6 +16,7 @@ import unittest
 from unittest.mock import patch
 
 from factory_ops.experiments import canonical_hash, load_experiment_config
+from factory_ops.g3_archive_replay import resolve_primary_shared_support
 from factory_ops.g3_calibration import (_resource_forecast_actual, _validate_sequential_capacity_plan,
                                         build_calibration, build_sequential_capacity_plan,
                                         revalidate_physical_report, validate_calibration)
@@ -750,10 +751,46 @@ class CalibrationTests(unittest.TestCase):
                       "measurement_basis": "derived_from_exact_manifests_and_packages",
                       "coordinator_recheck_required_before_each_run": True}
         save(plan, plan_value)
-        resource = {"evidence_root": root, "supervisor_path": "supervisor.json",
-                    "supervisor_sha256": "a" * 64, "requested_primary_runs": 60,
+        billing_closure = root / "billing-closure.json"
+        save(billing_closure, {"observed": True})
+        supervisor = root / "supervisor.json"
+        save(supervisor, {
+            "runs": [{"raw_envelope": reference(path)} for path, _value in raw_packages],
+            "billing": reference(billing_closure),
+        })
+        resource = {"evidence_root": str(root), "supervisor_path": "supervisor.json",
+                    "supervisor_sha256": sha(supervisor), "requested_primary_runs": 60,
                     "reserve_fraction": reserve, "schema_version": 3,
                     "sequential_plan_path": "plan.json", "sequential_plan_sha256": sha(plan)}
+        shared_report = root / "pilot-report.json"
+        shared_mission = root / "pilot-mission.json"
+        save(shared_report, {"fixture": True})
+        save(shared_mission, {"fixture": True})
+        shared_session = root / "pilot-session"
+        shared_artifact = root / "pilot-artifact"
+        shared_session.mkdir()
+        shared_artifact.mkdir()
+        (shared_session / "session.json").write_text("{}", encoding="utf-8")
+        (shared_artifact / "result.json").write_text("{}", encoding="utf-8")
+        primary_trial = root / "primary-trial.json"
+        calibration = root / "calibration.json"
+        save(primary_trial, {"trial_id": "fixture-primary"})
+        save(calibration, {"fixture": True})
+        slots = {f"{condition}:{policy}": {
+            "report_path": str(shared_report), "mission_path": str(shared_mission),
+            "session_root": str(shared_session), "artifact_root": str(shared_artifact),
+        } for condition in ("normal", "closure", "burst") for policy in ("fifo", "eta")}
+        primary_inputs = root / "primary-inputs-five-field.json"
+        save(primary_inputs, {
+            "trial_path": str(primary_trial), "calibration_path": str(calibration),
+            "pilot_slots": slots, "resource_input": resource,
+            "expected_source_commit": self.commit,
+        })
+        closure_files, closure_trees = resolve_primary_shared_support(
+            primary_inputs, sha(primary_inputs))
+        self.assertEqual(len(closure_files), len(set(closure_files)))
+        self.assertEqual(len(closure_trees), len(set(closure_trees)))
+        self.assertIn(raw_packages[0][0].parent / PACKAGE_NAME, closure_files)
         billing_value = {"confirmed_hourly_rate_usd": 3.35, "budget_remaining_usd": 409.91,
                          "project_budget_cap_usd": 400.0, "project_actual_billing_usd": 50.0,
                          "project_budget_remaining_usd": 350.0,

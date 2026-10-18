@@ -9,10 +9,12 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
+from factory_ops.experiments import build_matrix, load_experiment_config
 from factory_ops.g3_primary_preservation import (
     _default_semantic, _restore_source_checkout, close_primary_run, import_primary_run,
     preserve_primary_run,
 )
+from factory_ops.g3_raw_storage import _shared_support_pack_sha
 
 
 def sha(path: Path) -> str:
@@ -38,8 +40,15 @@ class PrimaryPreservationTests(unittest.TestCase):
         self.run_id = "a" * 32
         self.source = "b" * 40
         self.host = "c" * 40
-        self.trial_id = "normal-fifo-seed-0"
-        self.primary = save(self.root / "primary.json", {"canonical": True})
+        self.matrix = build_matrix(load_experiment_config(
+            Path(__file__).parents[1] / "configs/factory-v3/g3-experiment.json"))
+        self.trial_id = self.matrix[0]["trial_id"]
+        self.trial = save(self.root / "trial.json", self.matrix[0])
+        self.primary = save(self.root / "primary.json", {
+            "trial_path": str(self.trial), "calibration_path": str(self.root / "calibration.json"),
+            "pilot_slots": {"fixture": {}}, "resource_input": {"fixture": True},
+            "expected_source_commit": self.source,
+        })
         self.result = save(self.evidence / "trial-result.json", {
             "run_id": self.run_id, "trial_id": self.trial_id,
             "trial_outcome": "failed",
@@ -70,6 +79,19 @@ class PrimaryPreservationTests(unittest.TestCase):
 
     def tearDown(self) -> None:
         self.temporary.cleanup()
+
+    def _live(self, path: Path, *, ordinal: int, trial_id: str,
+              primary: Path, previous_receipts: list[dict[str, object]] | None = None) -> Path:
+        return save(path, {
+            "schema_version": 1, "classification": "g3_live_primary_launch_recheck",
+            "decision": "eligible_for_host_coordinator",
+            "producer_source_commit": self.source, "host_source_commit": self.host,
+            "primary_inputs_sha256": sha(primary), "trial_id": trial_id,
+            "ordinal": ordinal, "previous_receipts": previous_receipts or [],
+            "launch_executed": False, "cleanup_authorized": False,
+            "external_expected_anchor_is_authorization": False,
+            "primary_run_approved": False, "final_approved": False,
+        })
 
     def _preserve(self, store: str, root: Path, *, fail: bool = False) -> Path:
         def extract(_archive: Path, destination: Path) -> None:
@@ -116,7 +138,7 @@ class PrimaryPreservationTests(unittest.TestCase):
         })
 
         def prepare(**kwargs: object) -> Path:
-            self.assertEqual([], kwargs["primary_shared_support_files"])
+            self.assertEqual([result], kwargs["primary_shared_support_files"])
             output = Path(str(kwargs["output"]))
             output.mkdir(parents=True)
             (output / "g3-raw-content-package-v1.tar").write_bytes(b"sealed-package")
@@ -139,6 +161,12 @@ class PrimaryPreservationTests(unittest.TestCase):
         value = json.loads(prepared.read_text())
         self.assertEqual((alternate_run, self.trial_id), (value["run_id"], value["trial_id"]))
         self.assertNotIn("actual_six_run_ids", value)
+
+    def test_primary_only_shared_support_digest_binds_all_emitted_rows(self) -> None:
+        rows = [{"sha256": "1" * 64}, {"sha256": "2" * 64}]
+        expected = hashlib.sha256(("1" * 64 + "2" * 64).encode()).hexdigest()
+        self.assertEqual(expected, _shared_support_pack_sha(rows))
+        self.assertIsNone(_shared_support_pack_sha([]))
 
     def test_import_rechecks_frozen_inputs_after_package_publication(self) -> None:
         archive = save(self.root / "drift-archive.json", {})
@@ -231,12 +259,33 @@ class PrimaryPreservationTests(unittest.TestCase):
         self.assertEqual([], list(evidence_run.glob("*/store-run-result.json")))
         failures = list(evidence_run.glob("*/preserve-failure-*.json"))
         self.assertEqual(1, len(failures))
+        self.assertEqual([], list(evidence_run.glob("*/verified-close-receipt.json")))
         result_e = self._preserve("E", self.store_e)
         self.assertTrue(result_e.is_file())
         retry_d = self._preserve("D", self.store_d)
         self.assertTrue(retry_d.is_file())
         reused_d = self._preserve("D", self.store_d)
         self.assertEqual(retry_d, reused_d)
+
+    def test_reuse_rehashes_envelope_replay_and_verified_close_receipt(self) -> None:
+        result_path = self._preserve("D", self.store_d)
+        value = json.loads(result_path.read_text())
+        envelope = Path(value["raw_envelope"]["path"])
+        envelope.unlink()
+        with self.assertRaises((FileNotFoundError, ValueError)):
+            self._preserve("D", self.store_d)
+
+        # Restoring the exact envelope then proves a rehashed reference cannot
+        # turn an empty semantic report into a valid closed attempt.
+        save(envelope, {"fixture": True})
+        self.assertEqual(value["raw_envelope"]["sha256"], sha(envelope))
+        value = json.loads(result_path.read_text())
+        replay = self.evidence / value["semantic_replay_report"]["path"]
+        replay.write_text("{}", encoding="utf-8")
+        value["semantic_replay_report"]["sha256"] = sha(replay)
+        result_path.write_text(json.dumps(value), encoding="utf-8")
+        with self.assertRaisesRegex(ValueError, "semantic replay"):
+            self._preserve("D", self.store_d)
 
     @unittest.skipUnless(__import__("os").name == "posix", "mount namespace requires POSIX")
     def test_isolated_replay_mounts_literal_root_and_uses_selected_source_origin(self) -> None:
@@ -259,10 +308,12 @@ class PrimaryPreservationTests(unittest.TestCase):
             "expected_result": expected_result})
         primary = literal_root / "inputs/primary.json"
         save(primary, {"trial_path": str(trial)})
-        submitted_result = save(self.root / "submitted-result.json", expected_result)
+        submitted_result = save(literal_root / "primary-results/submitted-result.json",
+                                expected_result)
         package_root = self.root / "restored-package"
         rows = []
-        for index, original in enumerate((primary, trial, config, start, receipt)):
+        for index, original in enumerate((primary, trial, config, start, receipt,
+                                          submitted_result)):
             member = package_root / f"support/per-trial/{index:06d}-{original.name}"
             member.parent.mkdir(parents=True, exist_ok=True)
             member.write_bytes(original.read_bytes())
@@ -319,26 +370,45 @@ class PrimaryPreservationTests(unittest.TestCase):
         )
         self.assertEqual("passed_collection_failure_contract", result["status"])
         self.assertEqual({"trial_path": str(trial)}, json.loads(primary.read_text()))
+        support_path = package_root / "support/support-manifest.json"
+        support_doc = json.loads(support_path.read_text())
+        support_doc["categories"]["per-trial"] = [
+            row for row in support_doc["categories"]["per-trial"]
+            if row["path"] != str(submitted_result)
+        ]
+        save(support_path, support_doc)
+        negative_scratch = self.root / "negative-scratch"
+        negative_scratch.mkdir()
+        with self.assertRaises((FileNotFoundError, ValueError)):
+            _default_semantic(
+                artifact, session, self.run_id, commit, primary, sha(primary),
+                "collection_failure", package_root, checkout, negative_scratch,
+                submitted_result,
+            )
 
     def test_close_binds_matching_d_e_and_chain_then_rejects_corruption(self) -> None:
         result_d = self._preserve("D", self.store_d)
         result_e = self._preserve("E", self.store_e)
-        live = save(self.root / "live.json", {"eligible": True})
-        closed = close_primary_run(
-            output=self.evidence / "closed-001.json", evidence_root=self.evidence,
-            ordinal=1, trial_id=self.trial_id, primary_inputs_path=self.primary,
-            primary_inputs_sha256=sha(self.primary), expected_source_commit=self.source,
-            expected_host_commit=self.host, live_eligibility_path=live,
-            live_eligibility_sha256=sha(live), store_result_paths=[result_d, result_e],
-            stopped_storage_hours=0.5,
-        )
+        live = self._live(self.root / "live.json", ordinal=1,
+                          trial_id=self.trial_id, primary=self.primary)
+        with patch("factory_ops.g3_primary_preservation.load_raw_envelope",
+                   return_value=self.envelope):
+            closed = close_primary_run(
+                output=self.evidence / "closed-001.json", evidence_root=self.evidence,
+                ordinal=1, trial_id=self.trial_id, primary_inputs_path=self.primary,
+                primary_inputs_sha256=sha(self.primary), expected_source_commit=self.source,
+                expected_host_commit=self.host, live_eligibility_path=live,
+                live_eligibility_sha256=sha(live), store_result_paths=[result_d, result_e],
+                stopped_storage_hours=0.5,
+            )
         value = json.loads(closed.read_text())
         self.assertEqual(["D", "E"], [row["store_id"] for row in value["preservations"]])
         self.assertEqual("removed_after_verified_close", value["transient_disposition"])
         tampered = json.loads(result_e.read_text())
         tampered["trial_outcome"] = "completed"
         result_e.write_text(json.dumps(tampered), encoding="utf-8")
-        with self.assertRaisesRegex(ValueError, "outcome or package"):
+        with patch("factory_ops.g3_primary_preservation.load_raw_envelope",
+                   return_value=self.envelope), self.assertRaises(ValueError):
             close_primary_run(
                 output=self.evidence / "closed-002.json", evidence_root=self.evidence,
                 ordinal=1, trial_id=self.trial_id, primary_inputs_path=self.primary,
@@ -346,6 +416,115 @@ class PrimaryPreservationTests(unittest.TestCase):
                 expected_host_commit=self.host, live_eligibility_path=live,
                 live_eligibility_sha256=sha(live), store_result_paths=[result_d, result_e],
                 stopped_storage_hours=0.5,
+            )
+
+    def test_close_rejects_foreign_previous_and_first_receipt_sha(self) -> None:
+        trial_two = save(self.root / "trial-two.json", self.matrix[1])
+        primary_two = save(self.root / "primary-two.json", {
+            "trial_path": str(trial_two),
+            "calibration_path": str(self.root / "calibration.json"),
+            "pilot_slots": {"fixture": {}}, "resource_input": {"fixture": True},
+            "expected_source_commit": self.source,
+        })
+        foreign = save(self.evidence / "foreign-previous.json", {
+            "schema_version": 2, "classification": "g3_closed_primary_preservation_receipt",
+            "ordinal": 1, "trial_id": self.matrix[0]["trial_id"],
+            "source_commit": "d" * 40, "host_source_commit": "e" * 40,
+            "previous_receipt_sha256": "f" * 64,
+        })
+        live = self._live(self.root / "live.json", ordinal=2,
+                          trial_id=self.matrix[1]["trial_id"], primary=primary_two,
+                          previous_receipts=[{
+                              "path": str(foreign), "sha256": sha(foreign), "ordinal": 1,
+                              "trial_id": self.matrix[0]["trial_id"], "run_id": self.run_id,
+                              "primary_inputs_sha256": sha(self.primary),
+                          }])
+        with self.assertRaisesRegex(ValueError, "previous primary receipt chain"):
+            close_primary_run(
+                output=self.evidence / "closed-foreign.json", evidence_root=self.evidence,
+                ordinal=2, trial_id=self.matrix[1]["trial_id"],
+                primary_inputs_path=primary_two, primary_inputs_sha256=sha(primary_two),
+                expected_source_commit=self.source, expected_host_commit=self.host,
+                live_eligibility_path=live, live_eligibility_sha256=sha(live),
+                store_result_paths=[], stopped_storage_hours=0.0,
+                previous_receipt=foreign, previous_receipt_sha256=sha(foreign),
+            )
+        with self.assertRaisesRegex(ValueError, "first primary closure"):
+            live_first = self._live(self.root / "live-first.json", ordinal=1,
+                                    trial_id=self.trial_id, primary=self.primary)
+            close_primary_run(
+                output=self.evidence / "closed-first-with-sha.json", evidence_root=self.evidence,
+                ordinal=1, trial_id=self.trial_id, primary_inputs_path=self.primary,
+                primary_inputs_sha256=sha(self.primary), expected_source_commit=self.source,
+                expected_host_commit=self.host, live_eligibility_path=live_first,
+                live_eligibility_sha256=sha(live_first), store_result_paths=[],
+                stopped_storage_hours=0.0, previous_receipt_sha256="f" * 64,
+            )
+
+    def test_close_accepts_complete_previous_chain_before_current_store_gate(self) -> None:
+        result_d = self._preserve("D", self.store_d)
+        result_e = self._preserve("E", self.store_e)
+        live_one = self._live(self.root / "live-one.json", ordinal=1,
+                              trial_id=self.trial_id, primary=self.primary)
+        with patch("factory_ops.g3_primary_preservation.load_raw_envelope",
+                   return_value=self.envelope):
+            closed_one = close_primary_run(
+                output=self.evidence / "closed-chain-001.json", evidence_root=self.evidence,
+                ordinal=1, trial_id=self.trial_id, primary_inputs_path=self.primary,
+                primary_inputs_sha256=sha(self.primary), expected_source_commit=self.source,
+                expected_host_commit=self.host, live_eligibility_path=live_one,
+                live_eligibility_sha256=sha(live_one),
+                store_result_paths=[result_d, result_e], stopped_storage_hours=0.5,
+            )
+        trial_two = save(self.root / "chain-trial-two.json", self.matrix[1])
+        primary_two = save(self.root / "chain-primary-two.json", {
+            "trial_path": str(trial_two),
+            "calibration_path": str(self.root / "calibration.json"),
+            "pilot_slots": {"fixture": {}}, "resource_input": {"fixture": True},
+            "expected_source_commit": self.source,
+        })
+        chain_reference = {
+            "path": str(closed_one), "sha256": sha(closed_one), "ordinal": 1,
+            "trial_id": self.trial_id, "run_id": self.run_id,
+            "primary_inputs_sha256": sha(self.primary),
+        }
+        live_two = self._live(
+            self.root / "live-two.json", ordinal=2,
+            trial_id=self.matrix[1]["trial_id"], primary=primary_two,
+            previous_receipts=[chain_reference],
+        )
+        with patch("factory_ops.g3_primary_preservation.load_raw_envelope",
+                   return_value=self.envelope), \
+             self.assertRaisesRegex(ValueError, "requires D and E"):
+            close_primary_run(
+                output=self.evidence / "closed-chain-002.json", evidence_root=self.evidence,
+                ordinal=2, trial_id=self.matrix[1]["trial_id"],
+                primary_inputs_path=primary_two, primary_inputs_sha256=sha(primary_two),
+                expected_source_commit=self.source, expected_host_commit=self.host,
+                live_eligibility_path=live_two, live_eligibility_sha256=sha(live_two),
+                store_result_paths=[], stopped_storage_hours=0.0,
+                previous_receipt=closed_one, previous_receipt_sha256=sha(closed_one),
+            )
+
+        spliced = dict(chain_reference)
+        spliced["primary_inputs_sha256"] = "f" * 64
+        spliced_live = self._live(
+            self.root / "live-two-spliced.json", ordinal=2,
+            trial_id=self.matrix[1]["trial_id"], primary=primary_two,
+            previous_receipts=[spliced],
+        )
+        with patch("factory_ops.g3_primary_preservation.load_raw_envelope",
+                   return_value=self.envelope), \
+             self.assertRaisesRegex(ValueError, "chained primary receipt closure differs"):
+            close_primary_run(
+                output=self.evidence / "closed-chain-spliced.json", evidence_root=self.evidence,
+                ordinal=2, trial_id=self.matrix[1]["trial_id"],
+                primary_inputs_path=primary_two, primary_inputs_sha256=sha(primary_two),
+                expected_source_commit=self.source, expected_host_commit=self.host,
+                live_eligibility_path=spliced_live,
+                live_eligibility_sha256=sha(spliced_live), store_result_paths=[],
+                stopped_storage_hours=0.0, previous_receipt=closed_one,
+                previous_receipt_sha256=sha(closed_one),
             )
 
 

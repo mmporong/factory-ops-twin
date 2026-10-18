@@ -399,11 +399,11 @@ def resolve_primary_shared_support(primary_inputs_path: Path,
             or _sha(primary_inputs_path) != primary_inputs_sha256):
         raise ValueError("primary input manifest bytes differ")
     files, trees = _primary_support_closure(primary_inputs_path)
-    # Preserve deterministic ordering and reject aliases across categories.
+    # D/E coordinator records intentionally refer to the same immutable package
+    # closure.  Treat identical absolute paths as one content-set member; the
+    # package pinning layer still rejects distinct paths that alias one inode.
     ordered_files = sorted(set(files), key=str)
     ordered_trees = sorted(set(trees), key=str)
-    if len(ordered_files) != len(files) or len(ordered_trees) != len(trees):
-        raise ValueError("primary support closure contains duplicate paths")
     return ordered_files, ordered_trees
 
 

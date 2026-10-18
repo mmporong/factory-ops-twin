@@ -61,6 +61,13 @@ def _sha_bytes(value: bytes) -> str:
     return hashlib.sha256(value).hexdigest()
 
 
+def _shared_support_pack_sha(rows: Sequence[Mapping[str, Any]]) -> str | None:
+    """Bind every emitted row in the combined shared-support category."""
+    if not rows:
+        return None
+    return hashlib.sha256("".join(str(row["sha256"]) for row in rows).encode()).hexdigest()
+
+
 def _measurement(stream: BinaryIO) -> dict[str, Any]:
     stream.seek(0)
     digest = hashlib.sha256()
@@ -887,8 +894,7 @@ def prepare_raw_package(*, archive_record: Path, attempt_receipt: Path | None,
                 "support_manifest_sha256": support_measurement["sha256"],
                 "per_trial_support_manifest_sha256": per_trial_support_sha,
                 "shared_six_pilot_support_pack_sha256": (
-                    hashlib.sha256("".join(row["sha256"] for row in support["categories"]["shared-six-pilot"]).encode()).hexdigest()
-                    if shared else None),
+                    _shared_support_pack_sha(support["categories"]["shared-six-pilot"])),
                 "source_bundle_sha256": canonical["source_bundle"]["sha256"],
                 "attempt_status": validated["attempt_status"],
                 "qualification_no_billing_attempt_receipt_absent": initial_receipt is None,
