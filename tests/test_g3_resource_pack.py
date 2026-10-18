@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from datetime import datetime
+import io
+import hashlib
 import json
 from pathlib import Path
 import tarfile
@@ -118,6 +120,10 @@ class G3ResourcePackTests(unittest.TestCase):
             workers = checkpoint(self.root, self.run_label, self.run_id, "workers-finished")
             validation = checkpoint(self.root, self.run_label, self.run_id, "validation-finished")
             packed = archive_output(self.root, self.run_label, self.run_id)
+        self.assertEqual(2, packed["schema_version"])
+        self.assertEqual("b" * 40, packed["bindings"]["source_commit"])
+        self.assertEqual(str(self.output.resolve()), packed["original_output_root"])
+        self.assertRegex(packed["output_tree_sha256"], r"^[0-9a-f]{64}$")
         receipt_path = resource / "attempt-receipt.json"
         finalize_attempt(resource / "attempt-start.json", receipt_path, self.root,
                          workers_finished_at_utc=workers["observed_at_utc"],
@@ -132,6 +138,29 @@ class G3ResourcePackTests(unittest.TestCase):
                                           expected_policy="fifo", expected_seed=100)
         self.assertEqual("collection_failed", result["attempt_status"])
         self.assertTrue(all(value.endswith("Z") for value in result["timestamps"].values()))
+
+    def test_hardlinked_output_is_rejected(self):
+        self.record()
+        try:
+            (self.output / "alias.db3").hardlink_to(self.output / "rosbag/data.db3")
+        except OSError as exc:
+            self.skipTest(f"hard links unavailable: {exc}")
+        with self.assertRaisesRegex(ValueError, "hard-linked"):
+            archive_output(self.root, self.run_label, self.run_id)
+
+    def test_unsafe_tar_member_is_rejected(self):
+        archive = self.root / "unsafe.tar.gz"
+        payload = b"unsafe"
+        with tarfile.open(archive, "w:gz") as packed:
+            info = tarfile.TarInfo("../escape")
+            info.size = len(payload)
+            packed.addfile(info, io.BytesIO(payload))
+        manifest = {"schema_version": 1, "files": [{
+            "path": "safe", "bytes": len(payload),
+            "sha256": hashlib.sha256(payload).hexdigest(),
+        }]}
+        with self.assertRaisesRegex(ValueError, "member set differs"):
+            verify_archive(archive, manifest)
 
 
 if __name__ == "__main__":

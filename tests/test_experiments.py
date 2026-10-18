@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
+from contextlib import contextmanager
 import hashlib
 import json
 from pathlib import Path
@@ -330,6 +331,55 @@ class G3ExperimentSummaryTests(unittest.TestCase):
                 self.assertEqual(Path(slots[trial["trial_id"]]["primary_inputs_path"]),
                                  call.kwargs["primary_inputs_path"])
                 self.assertEqual(trial["trial_input_sha256"], call.kwargs["primary_inputs_sha256"])
+
+    def test_all_archive_only_slots_materialize_and_run_the_existing_raw_builder(self) -> None:
+        physical = deepcopy(self.results)
+        by_id = {row["trial_id"]: row for row in physical}
+        for row in physical:
+            row["backend"] = "isaac_sim_ros2_nav2"
+            row["evidence"]["classification"] = "g3_physical_trial"
+        calibration = {"classification": "g3_actual_six_pilot_calibration",
+                       "status": "primary_execution_eligible", "execution_eligible": True,
+                       "calibration_sha256": "4" * 64}
+        slots = {trial["trial_id"]: {
+            "kind": "archive_only", "replay_kind": "validated_trial",
+            "archive_path": f"{trial['trial_id']}.tar.gz",
+            "manifest_path": f"{trial['trial_id']}-manifest.json",
+            "archive_record_path": f"{trial['trial_id']}-record.json",
+            "original_output_root": f"C:/results/{trial['trial_id']}",
+            "report_path": f"C:/results/{trial['trial_id']}/g3-evidence.json",
+            "mission_path": f"C:/results/{trial['trial_id']}/mission-result.json",
+            "artifact_root": f"C:/results/{trial['trial_id']}",
+            "session_root": f"C:/sessions/{trial['trial_id']}",
+            "primary_inputs_path": f"C:/inputs/{trial['trial_id']}.json",
+            "primary_inputs_sha256": trial["trial_input_sha256"],
+        } for trial in self.matrix}
+        materialized_ids: list[str] = []
+
+        @contextmanager
+        def materialize(slot, trial, *, expected_source_commit):
+            self.assertEqual(NON_EVIDENCE_COMMIT, expected_source_commit)
+            materialized_ids.append(trial["trial_id"])
+            yield {name: value for name, value in slot.items()
+                   if name not in {"archive_path", "manifest_path", "archive_record_path",
+                                   "original_output_root", "replay_kind"}} | {"kind": "validated_trial"}
+
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "calibration.json"
+            path.write_text(json.dumps(calibration), encoding="utf-8")
+            with patch("factory_ops.g3_calibration.validate_calibration"), \
+                    patch("factory_ops.experiments.validate_trial_result"), \
+                    patch("factory_ops.g3_archive_replay.materialize_archive_slot", materialize), \
+                    patch("factory_ops.g3_trial_result.build_trial_result",
+                          side_effect=lambda trial, *_args, **_kwargs: by_id[trial["trial_id"]]) as builder:
+                summarize(
+                    physical, self.settings, calibration_path=path,
+                    pilot_slots={"external": {}}, resource_input={"external": True},
+                    expected_source_commit=NON_EVIDENCE_COMMIT,
+                    experiment_config_path=CONFIG, primary_result_slots=slots,
+                )
+        self.assertEqual([trial["trial_id"] for trial in self.matrix], materialized_ids)
+        self.assertEqual(60, builder.call_count)
 
     def test_missing_failed_result_deletion_and_duplicate_are_rejected(self) -> None:
         failed = deepcopy(self.results)

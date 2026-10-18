@@ -715,18 +715,18 @@ def summarize(
             raise ValueError("physical results do not cover the exact canonical 60 trial IDs")
         from .g3_supervisor import build_collection_failure_result
         from .g3_trial_result import build_trial_result
-        for trial in matrix:
-            trial_id = str(trial["trial_id"])
-            slot = _mapping(primary_result_slots[trial_id], f"primary_result_slots.{trial_id}")
+        from .g3_archive_replay import materialize_archive_slot
+
+        def rebuild(trial: Mapping[str, Any], slot: Mapping[str, Any]) -> dict[str, Any]:
             kind = slot.get("kind")
             if kind == "validated_trial":
                 _require_keys(
                     slot,
                     {"kind", "report_path", "mission_path", "artifact_root", "session_root",
                      "primary_inputs_path", "primary_inputs_sha256"},
-                    f"primary_result_slots.{trial_id}",
+                    f"primary_result_slots.{trial['trial_id']}",
                 )
-                rebuilt = build_trial_result(
+                return build_trial_result(
                     trial, Path(str(slot["report_path"])), Path(str(slot["mission_path"])),
                     Path(str(slot["artifact_root"])), session_root=Path(str(slot["session_root"])),
                     source_commit=expected_source_commit,
@@ -734,18 +734,27 @@ def summarize(
                     primary_inputs_path=Path(str(slot["primary_inputs_path"])),
                     primary_inputs_sha256=str(slot["primary_inputs_sha256"]),
                 )
-            elif kind == "collection_failure":
+            if kind == "collection_failure":
                 _require_keys(
                     slot, {"kind", "receipt_path", "evidence_root"},
-                    f"primary_result_slots.{trial_id}",
+                    f"primary_result_slots.{trial['trial_id']}",
                 )
-                rebuilt = build_collection_failure_result(
+                return build_collection_failure_result(
                     trial, Path(str(slot["receipt_path"])), Path(str(slot["evidence_root"])),
                     source_commit=expected_source_commit,
                     experiment_config_path=experiment_config_path,
                 )
-            else:
-                raise ValueError(f"primary result slot kind is invalid: {trial_id}")
+            if kind == "archive_only":
+                with materialize_archive_slot(
+                    slot, trial, expected_source_commit=expected_source_commit,
+                ) as materialized:
+                    return rebuild(trial, materialized)
+            raise ValueError(f"primary result slot kind is invalid: {trial['trial_id']}")
+
+        for trial in matrix:
+            trial_id = str(trial["trial_id"])
+            slot = _mapping(primary_result_slots[trial_id], f"primary_result_slots.{trial_id}")
+            rebuilt = rebuild(trial, slot)
             if supplied[trial_id] != rebuilt:
                 raise ValueError(f"physical result differs from raw artifact replay: {trial_id}")
     indexed: dict[tuple[str, str, int], Mapping[str, Any]] = {}
