@@ -338,10 +338,23 @@ G3b는 `g3-q-normal-fifo-005`에서 두 주문의 자재 투입·완제품 출�
 set -euo pipefail
 cd "$HOME/workspace/factory-ops-g0/project"
 source_commit=$(git rev-parse HEAD)
-bash scripts/brev/run-g3.sh "$HOME/workspace/factory-ops-g0" g3-q-normal-fifo-006 "$source_commit" qualification normal fifo 0
+run_label=g3-q-normal-fifo-014
+build_dir="$HOME/workspace/factory-ops-g0/build-attestations/$run_label"
+python3 scripts/brev/g3_build_attestation.py build \
+  --output-dir "$build_dir" --repository "$PWD" \
+  --source-commit "$source_commit" --run-label "$run_label" \
+  --base-reference factory-ops-nav2:jazzy-g1
+export FACTORY_OPS_G3_BUILD_ATTESTATION="$build_dir/build-attestation.json"
+export FACTORY_OPS_G3_BUILD_ATTESTATION_SHA256=$(sha256sum "$FACTORY_OPS_G3_BUILD_ATTESTATION" | cut -d ' ' -f 1)
+export FACTORY_OPS_G3_BUILD_RECEIPT_SHA256=$(sha256sum "$build_dir/build-receipt.json" | cut -d ' ' -f 1)
+bash scripts/brev/run-g3.sh "$HOME/workspace/factory-ops-g0" "$run_label" "$source_commit" qualification normal fifo 0
 ```
 
 마지막 세 자리 숫자는 실행 attempt이며 seed와 구분한다. 실패해도 같은 폴더를 덮어쓰지 않고 새 attempt로 같은 입력을 재시도한다. supervisor는 code commit·clean checkout·인스턴스의 기존 작업 컨테이너 부재를 확인하고 세션을 새로 만든다. 요청한 profile·condition·policy·seed와 세션 SHA를 고정해 두 worker와 실행 후 검증기에 전달한다.
+
+빌드 도구는 로컬 base 이미지의 전체 ID를 두 `FROM`에 고정하며, `DOCKER_BUILDKIT=0`을 명시한 Linux legacy builder를 사용한다. [Docker는 이 방식을 v23부터 deprecated로 분류](https://docs.docker.com/engine/deprecated/#legacy-builder-for-linux-images)한다. 현재 VM의 Docker Engine·CLI 버전과 builder mode를 영수증에 남기고 실제 빌드 성공을 확인해야 한다. 지원되지 않는 환경에서는 실행을 차단하며, 다른 builder나 mutable tag로 자동 전환하지 않는다. 이 경로는 기존 VM의 호환 절차이며 OCI layout을 이용한 이식 가능한 이미지 보존은 구현 범위에 포함하지 않는다.
+
+빌드 증빙, 원래 이미지와 현재 이미지의 측정값, 설치 파일 세 개는 결과의 `provenance/build/`에 보존한다. source-environment와 전이 manifest가 artifact root의 상대경로·크기·SHA를 결속하며, 닫힌 output archive에도 포함한다. 사후 검증은 이 복원본에서 증빙을 읽고 attestation 환경값을 설정·복원한다. 실제 VM의 빌드·주행 검증을 마치기 전 CPU fixture 통과를 물리 실행의 승인으로 사용하지 않는다.
 
 주행 전에는 저장된 Jazzy 이미지에서 일반 Client introspection과 생성된 FollowPath 서비스 타입을 확인한다. 실제 SendGoal/GetResult/CancelGoal 이벤트, action 상태·센서·TF·지도·구동 허가·예약 결정·휠 궤적과 3개 RGB 시점을 수집한다. recorder 종료 뒤에만 SQLite CDR를 읽는다. 두 worker의 성공만으로 완료하지 않으며 `g3_evidence.py`의 최종 검증과 C/E 백업까지 확인한 뒤 Brev를 Stop한다.
 
