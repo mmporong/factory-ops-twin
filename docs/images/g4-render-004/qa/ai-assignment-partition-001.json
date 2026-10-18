@@ -1,0 +1,20 @@
+{
+  "classification": "pending_review_assignments_no_approval",
+  "selection_sha256": "5ec27b5286b9a13fab97c157f207df2cc0c006aa3d4e7308694680c8e8aa3f57",
+  "assignments": [
+    {
+      "path": "D:\\FactoryOpsArtifacts\\portfolio-qa\\g4-render-004-001\\ai-assignment-a-001.json",
+      "bytes": 121743,
+      "sha256": "566992ec009c36be8baa1ab219e928fc5640ef8dfcad4d98da4e53d5ba9a1b75",
+      "entries": 28,
+      "unique_rgb_images": 18
+    },
+    {
+      "path": "D:\\FactoryOpsArtifacts\\portfolio-qa\\g4-render-004-001\\ai-assignment-b-001.json",
+      "bytes": 75990,
+      "sha256": "72bacac63cac603d3e0b559341bb29157e1198daf6e25a5f1fce9e6c4e7fe611",
+      "entries": 20,
+      "unique_rgb_images": 18
+    }
+  ]
+}

@@ -1,0 +1,2080 @@
+{
+  "schema_version": 1,
+  "classification": "pending_external_AI_visual_review_assignment_no_verdict",
+  "review_pending": true,
+  "dataset": {
+    "dataset_id": "g4-render-004",
+    "dataset_json": {
+      "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\dataset.json",
+      "bytes": 3646866,
+      "path": "dataset.json",
+      "sha256": "73444df27f99445cf13ba2dc5910e300e3586b72c58b56057512e9f2823eaa71"
+    },
+    "declared_profile_sha256": "e751782521cadde0d704576251e4e4feb3b25eac4d0cffd3daca291b47b3fa0e",
+    "root": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004",
+    "run_id": "g4-render-004",
+    "scope": "independent visual configurations of one synthetic layout",
+    "status": "captured_unreviewed"
+  },
+  "production_profile": {
+    "bytes": 1438,
+    "path": "C:\\Users\\LIMMM\\factory-ops-twin\\artifacts\\brev\\postprocessor-source-8a32420\\configs\\factory-v3\\dataset-profile.json",
+    "profile_id": "factory-v3-portfolio-render-v1",
+    "sha256": "e751782521cadde0d704576251e4e4feb3b25eac4d0cffd3daca291b47b3fa0e"
+  },
+  "selection_index": {
+    "path": "D:\\FactoryOpsArtifacts\\portfolio-qa\\g4-render-004-001\\selection\\review-selection-index.json",
+    "sha256": "5ec27b5286b9a13fab97c157f207df2cc0c006aa3d4e7308694680c8e8aa3f57"
+  },
+  "dataset_contract_path": "C:\\Users\\LIMMM\\factory-ops-twin\\artifacts\\brev\\postprocessor-source-8a32420\\docs\\dataset-contract.md",
+  "dataset_contract_sha256": "0b5d8b4376582f2249ca8fc056327a98c28845b18275f759e9fa1aef24ea2ed3",
+  "review_protocol": "factory-dataset-portfolio-visual-review",
+  "review_protocol_version": 1,
+  "review_protocol_sha256": "e49887c72bc96b44d3962423e26428a97e2dd4b800554b2718c7a318d61cf044",
+  "assignment_id": "g4-render-004-a",
+  "unique_rgb_files": [
+    {
+      "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-000\\captures\\f000000124-t000002066666667\\amr_follow\\rgb.png",
+      "bytes": 511146,
+      "path": "scenes/scene-000/captures/f000000124-t000002066666667/amr_follow/rgb.png",
+      "sha256": "0a9e6c06695bb994128123ca505a445b9cc18b9e10f7e9fe1d77f335dbab0ba4"
+    },
+    {
+      "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-000\\captures\\f000000212-t000003533333333\\aisle\\rgb.png",
+      "bytes": 501212,
+      "path": "scenes/scene-000/captures/f000000212-t000003533333333/aisle/rgb.png",
+      "sha256": "0b32d0b455260d4c6bd95001a72aff502788a7ca5e934e3157cede4bf3f2e849"
+    },
+    {
+      "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-000\\captures\\f000000212-t000003533333333\\overhead\\rgb.png",
+      "bytes": 557200,
+      "path": "scenes/scene-000/captures/f000000212-t000003533333333/overhead/rgb.png",
+      "sha256": "dc7c9fa28afd206fcc180873b141bb568f6a26e313cdb91131c3175c833af50e"
+    },
+    {
+      "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-001\\captures\\f000000124-t000002066666667\\amr_follow\\rgb.png",
+      "bytes": 511838,
+      "path": "scenes/scene-001/captures/f000000124-t000002066666667/amr_follow/rgb.png",
+      "sha256": "dfc65e1e5f15b30087a23c7f00171590b2151bf284b470d051d16d864bac5484"
+    },
+    {
+      "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-001\\captures\\f000000160-t000002666666667\\overhead\\rgb.png",
+      "bytes": 532028,
+      "path": "scenes/scene-001/captures/f000000160-t000002666666667/overhead/rgb.png",
+      "sha256": "865f9e01456d7d91360ef429404845cd5c2ada4556f176f1f294a6e047af0276"
+    },
+    {
+      "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-001\\captures\\f000000181-t000003016666667\\aisle\\rgb.png",
+      "bytes": 534916,
+      "path": "scenes/scene-001/captures/f000000181-t000003016666667/aisle/rgb.png",
+      "sha256": "c9fbd0d1ea4a61e9776c68299b96d9500da7b272c5459882be6e4dcc3204c3a1"
+    },
+    {
+      "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-002\\captures\\f000000124-t000002066666667\\amr_follow\\rgb.png",
+      "bytes": 514475,
+      "path": "scenes/scene-002/captures/f000000124-t000002066666667/amr_follow/rgb.png",
+      "sha256": "84532e29c4d49f8552c6a6006627b834bb4dcd02a866ce874f2dd65e960e47a9"
+    },
+    {
+      "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-002\\captures\\f000000154-t000002566666667\\overhead\\rgb.png",
+      "bytes": 563279,
+      "path": "scenes/scene-002/captures/f000000154-t000002566666667/overhead/rgb.png",
+      "sha256": "8aceff8f30e13559e492d9698b652575d1f3699943f973d5ec7a1795aaf65f3d"
+    },
+    {
+      "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-002\\captures\\f000000181-t000003016666667\\aisle\\rgb.png",
+      "bytes": 504123,
+      "path": "scenes/scene-002/captures/f000000181-t000003016666667/aisle/rgb.png",
+      "sha256": "dbf23745764ef7b495064df23cc3a32a2cb0af00c62b310aa57e867df0bdcbed"
+    },
+    {
+      "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-003\\captures\\f000000124-t000002066666667\\aisle\\rgb.png",
+      "bytes": 489079,
+      "path": "scenes/scene-003/captures/f000000124-t000002066666667/aisle/rgb.png",
+      "sha256": "cd098013d95fa45c198b23c9d71a793148c5a559ca58f25c304a3a5fe8f6983f"
+    },
+    {
+      "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-003\\captures\\f000000124-t000002066666667\\amr_follow\\rgb.png",
+      "bytes": 511734,
+      "path": "scenes/scene-003/captures/f000000124-t000002066666667/amr_follow/rgb.png",
+      "sha256": "886a3b2838adc3931f8788ea9b6f08674532fe7b3caea250cfd4919b3afba428"
+    },
+    {
+      "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-003\\captures\\f000000158-t000002633333333\\overhead\\rgb.png",
+      "bytes": 589123,
+      "path": "scenes/scene-003/captures/f000000158-t000002633333333/overhead/rgb.png",
+      "sha256": "c157de691c8ca1810aa980276e2e198592844101f033a23f7d3f8bb6285ad1a6"
+    },
+    {
+      "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-004\\captures\\f000000124-t000002066666667\\amr_follow\\rgb.png",
+      "bytes": 512467,
+      "path": "scenes/scene-004/captures/f000000124-t000002066666667/amr_follow/rgb.png",
+      "sha256": "62d900bfb3daf01981e3f8cc545361104d6faf69b32373508f9bf5f96b393cfa"
+    },
+    {
+      "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-004\\captures\\f000000136-t000002266666667\\overhead\\rgb.png",
+      "bytes": 563689,
+      "path": "scenes/scene-004/captures/f000000136-t000002266666667/overhead/rgb.png",
+      "sha256": "d7942f44a85ddfb8d0ba82bcfc35bca86f336994338df8aeb965a132e53964bd"
+    },
+    {
+      "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-004\\captures\\f000000185-t000003083333333\\aisle\\rgb.png",
+      "bytes": 488415,
+      "path": "scenes/scene-004/captures/f000000185-t000003083333333/aisle/rgb.png",
+      "sha256": "e034d7e366e9d7dfbcb284ade76bdfe3304e747665fc5df5baf89f18116714f8"
+    },
+    {
+      "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-005\\captures\\f000000124-t000002066666667\\amr_follow\\rgb.png",
+      "bytes": 512943,
+      "path": "scenes/scene-005/captures/f000000124-t000002066666667/amr_follow/rgb.png",
+      "sha256": "52287e6c23083af9ffc41c1b3cedef8cbf6670f9a2c283571eab6a54e34aebf0"
+    },
+    {
+      "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-005\\captures\\f000000176-t000002933333333\\overhead\\rgb.png",
+      "bytes": 561904,
+      "path": "scenes/scene-005/captures/f000000176-t000002933333333/overhead/rgb.png",
+      "sha256": "eaeb597c35a682d12205f31171222ca413c8ef48ac9a636c1ddac9b04dc5d95f"
+    },
+    {
+      "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-005\\captures\\f000000181-t000003016666667\\aisle\\rgb.png",
+      "bytes": 497195,
+      "path": "scenes/scene-005/captures/f000000181-t000003016666667/aisle/rgb.png",
+      "sha256": "ef4ac87cfc9fe5c8c042c4ee7c18ef6da235bd899604e53fc255ec8803901e77"
+    }
+  ],
+  "entries": [
+    {
+      "selection_entry_id": "entry-000",
+      "base_expected_entry": {
+        "scene_id": "scene-000",
+        "camera_id": "aisle",
+        "capture_id": "scene-000--f000000212--t000003533333333",
+        "evidence_kind": "scene_camera_review",
+        "rgb_path": "scenes/scene-000/captures/f000000212-t000003533333333/aisle/rgb.png",
+        "rgb_sha256": "0b32d0b455260d4c6bd95001a72aff502788a7ca5e934e3157cede4bf3f2e849",
+        "evidence_source": "dataset_rgb",
+        "reviewer_type": "ai",
+        "human_release_approved": false,
+        "production_passed": false,
+        "physical_contact_verified": false,
+        "robot_ground_contact_verified": false
+      },
+      "selected_evidence": {
+        "camera_id": "aisle",
+        "camera_params": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-000\\captures\\f000000212-t000003533333333\\aisle\\camera_params.json",
+          "bytes": 2891,
+          "path": "scenes/scene-000/captures/f000000212-t000003533333333/aisle/camera_params.json",
+          "sha256": "46422062f5ea9512db36ede589ac85366fe4c0602dd47caa68c9cb000f89ca76"
+        },
+        "capture_id": "scene-000--f000000212--t000003533333333",
+        "capture_record": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-000\\captures\\f000000212-t000003533333333\\capture.json",
+          "bytes": 4757,
+          "path": "scenes/scene-000/captures/f000000212-t000003533333333/capture.json",
+          "sha256": "5697f6f13e8d4aec7445bd7113c8cc0a245f46deb081f2f8856254df1596c255"
+        },
+        "evidence_kind": "scene_camera_review",
+        "normalized": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-000\\captures\\f000000212-t000003533333333\\aisle\\normalized.json",
+          "bytes": 652498,
+          "path": "scenes/scene-000/captures/f000000212-t000003533333333/aisle/normalized.json",
+          "sha256": "51d62b8de241a2a3f17817b841674a6a35c3dd61eaad09e71d00a9f14fdf8e5a"
+        },
+        "physics_frame": 212,
+        "rgb": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-000\\captures\\f000000212-t000003533333333\\aisle\\rgb.png",
+          "bytes": 501212,
+          "path": "scenes/scene-000/captures/f000000212-t000003533333333/aisle/rgb.png",
+          "sha256": "0b32d0b455260d4c6bd95001a72aff502788a7ca5e934e3157cede4bf3f2e849"
+        },
+        "scene_id": "scene-000",
+        "selection_score": {
+          "instance_count": 91,
+          "measured_useful_leaf_count": 891,
+          "non_edge_instance_count": 73,
+          "taxonomy_class_count": 12
+        },
+        "sim_time_ns": 3533333333
+      }
+    },
+    {
+      "selection_entry_id": "entry-001",
+      "base_expected_entry": {
+        "scene_id": "scene-000",
+        "camera_id": "amr_follow",
+        "capture_id": "scene-000--f000000124--t000002066666667",
+        "evidence_kind": "scene_camera_review",
+        "rgb_path": "scenes/scene-000/captures/f000000124-t000002066666667/amr_follow/rgb.png",
+        "rgb_sha256": "0a9e6c06695bb994128123ca505a445b9cc18b9e10f7e9fe1d77f335dbab0ba4",
+        "evidence_source": "dataset_rgb",
+        "reviewer_type": "ai",
+        "human_release_approved": false,
+        "production_passed": false,
+        "physical_contact_verified": false,
+        "robot_ground_contact_verified": false
+      },
+      "selected_evidence": {
+        "camera_id": "amr_follow",
+        "camera_params": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-000\\captures\\f000000124-t000002066666667\\amr_follow\\camera_params.json",
+          "bytes": 2835,
+          "path": "scenes/scene-000/captures/f000000124-t000002066666667/amr_follow/camera_params.json",
+          "sha256": "cfed50ae8ad311aa6aee45eec221ea636af8ee3743bbdb6062e6c099ae4b778c"
+        },
+        "capture_id": "scene-000--f000000124--t000002066666667",
+        "capture_record": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-000\\captures\\f000000124-t000002066666667\\capture.json",
+          "bytes": 4771,
+          "path": "scenes/scene-000/captures/f000000124-t000002066666667/capture.json",
+          "sha256": "405cdb94bd24dee1f954c93a34f55142ff46ed4ba879427a5078d5de7d5f4cbe"
+        },
+        "evidence_kind": "scene_camera_review",
+        "normalized": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-000\\captures\\f000000124-t000002066666667\\amr_follow\\normalized.json",
+          "bytes": 553821,
+          "path": "scenes/scene-000/captures/f000000124-t000002066666667/amr_follow/normalized.json",
+          "sha256": "cdcc1922347836e2bbcef0f6b4e8786160726aa92a654e713b739961783de985"
+        },
+        "physics_frame": 124,
+        "rgb": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-000\\captures\\f000000124-t000002066666667\\amr_follow\\rgb.png",
+          "bytes": 511146,
+          "path": "scenes/scene-000/captures/f000000124-t000002066666667/amr_follow/rgb.png",
+          "sha256": "0a9e6c06695bb994128123ca505a445b9cc18b9e10f7e9fe1d77f335dbab0ba4"
+        },
+        "scene_id": "scene-000",
+        "selection_score": {
+          "instance_count": 9,
+          "measured_useful_leaf_count": 66,
+          "non_edge_instance_count": 3,
+          "taxonomy_class_count": 5
+        },
+        "sim_time_ns": 2066666667
+      }
+    },
+    {
+      "selection_entry_id": "entry-002",
+      "base_expected_entry": {
+        "scene_id": "scene-000",
+        "camera_id": "overhead",
+        "capture_id": "scene-000--f000000212--t000003533333333",
+        "evidence_kind": "scene_camera_review",
+        "rgb_path": "scenes/scene-000/captures/f000000212-t000003533333333/overhead/rgb.png",
+        "rgb_sha256": "dc7c9fa28afd206fcc180873b141bb568f6a26e313cdb91131c3175c833af50e",
+        "evidence_source": "dataset_rgb",
+        "reviewer_type": "ai",
+        "human_release_approved": false,
+        "production_passed": false,
+        "physical_contact_verified": false,
+        "robot_ground_contact_verified": false
+      },
+      "selected_evidence": {
+        "camera_id": "overhead",
+        "camera_params": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-000\\captures\\f000000212-t000003533333333\\overhead\\camera_params.json",
+          "bytes": 2879,
+          "path": "scenes/scene-000/captures/f000000212-t000003533333333/overhead/camera_params.json",
+          "sha256": "af7c2d9b140303fa5c326909286c9d4c91a90f5d27073b54e37da946ed8a61a2"
+        },
+        "capture_id": "scene-000--f000000212--t000003533333333",
+        "capture_record": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-000\\captures\\f000000212-t000003533333333\\capture.json",
+          "bytes": 4757,
+          "path": "scenes/scene-000/captures/f000000212-t000003533333333/capture.json",
+          "sha256": "5697f6f13e8d4aec7445bd7113c8cc0a245f46deb081f2f8856254df1596c255"
+        },
+        "evidence_kind": "scene_camera_review",
+        "normalized": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-000\\captures\\f000000212-t000003533333333\\overhead\\normalized.json",
+          "bytes": 716265,
+          "path": "scenes/scene-000/captures/f000000212-t000003533333333/overhead/normalized.json",
+          "sha256": "5b4fafe09338f7b23068c7db329ccfd58d0d3ac7b2f77567fb35f06ebe4d95b7"
+        },
+        "physics_frame": 212,
+        "rgb": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-000\\captures\\f000000212-t000003533333333\\overhead\\rgb.png",
+          "bytes": 557200,
+          "path": "scenes/scene-000/captures/f000000212-t000003533333333/overhead/rgb.png",
+          "sha256": "dc7c9fa28afd206fcc180873b141bb568f6a26e313cdb91131c3175c833af50e"
+        },
+        "scene_id": "scene-000",
+        "selection_score": {
+          "instance_count": 143,
+          "measured_useful_leaf_count": 1172,
+          "non_edge_instance_count": 131,
+          "taxonomy_class_count": 13
+        },
+        "sim_time_ns": 3533333333
+      }
+    },
+    {
+      "selection_entry_id": "entry-003",
+      "base_expected_entry": {
+        "scene_id": "scene-001",
+        "camera_id": "aisle",
+        "capture_id": "scene-001--f000000181--t000003016666667",
+        "evidence_kind": "scene_camera_review",
+        "rgb_path": "scenes/scene-001/captures/f000000181-t000003016666667/aisle/rgb.png",
+        "rgb_sha256": "c9fbd0d1ea4a61e9776c68299b96d9500da7b272c5459882be6e4dcc3204c3a1",
+        "evidence_source": "dataset_rgb",
+        "reviewer_type": "ai",
+        "human_release_approved": false,
+        "production_passed": false,
+        "physical_contact_verified": false,
+        "robot_ground_contact_verified": false
+      },
+      "selected_evidence": {
+        "camera_id": "aisle",
+        "camera_params": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-001\\captures\\f000000181-t000003016666667\\aisle\\camera_params.json",
+          "bytes": 2831,
+          "path": "scenes/scene-001/captures/f000000181-t000003016666667/aisle/camera_params.json",
+          "sha256": "003c9263cfee6d4370cb2509ea4f3b9f5b2dd03d03924c4f98d459618c6d2391"
+        },
+        "capture_id": "scene-001--f000000181--t000003016666667",
+        "capture_record": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-001\\captures\\f000000181-t000003016666667\\capture.json",
+          "bytes": 4767,
+          "path": "scenes/scene-001/captures/f000000181-t000003016666667/capture.json",
+          "sha256": "871618b36064f000a0e152a0ff5a3cefdf454ffb59666ba968c4cd7d2bb3f892"
+        },
+        "evidence_kind": "scene_camera_review",
+        "normalized": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-001\\captures\\f000000181-t000003016666667\\aisle\\normalized.json",
+          "bytes": 643216,
+          "path": "scenes/scene-001/captures/f000000181-t000003016666667/aisle/normalized.json",
+          "sha256": "18a70f9196c2267a29fa4aa2c694d4fd1d0ce1bb1a9167466ad52821efd36bc9"
+        },
+        "physics_frame": 181,
+        "rgb": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-001\\captures\\f000000181-t000003016666667\\aisle\\rgb.png",
+          "bytes": 534916,
+          "path": "scenes/scene-001/captures/f000000181-t000003016666667/aisle/rgb.png",
+          "sha256": "c9fbd0d1ea4a61e9776c68299b96d9500da7b272c5459882be6e4dcc3204c3a1"
+        },
+        "scene_id": "scene-001",
+        "selection_score": {
+          "instance_count": 84,
+          "measured_useful_leaf_count": 824,
+          "non_edge_instance_count": 71,
+          "taxonomy_class_count": 11
+        },
+        "sim_time_ns": 3016666667
+      }
+    },
+    {
+      "selection_entry_id": "entry-004",
+      "base_expected_entry": {
+        "scene_id": "scene-001",
+        "camera_id": "amr_follow",
+        "capture_id": "scene-001--f000000124--t000002066666667",
+        "evidence_kind": "scene_camera_review",
+        "rgb_path": "scenes/scene-001/captures/f000000124-t000002066666667/amr_follow/rgb.png",
+        "rgb_sha256": "dfc65e1e5f15b30087a23c7f00171590b2151bf284b470d051d16d864bac5484",
+        "evidence_source": "dataset_rgb",
+        "reviewer_type": "ai",
+        "human_release_approved": false,
+        "production_passed": false,
+        "physical_contact_verified": false,
+        "robot_ground_contact_verified": false
+      },
+      "selected_evidence": {
+        "camera_id": "amr_follow",
+        "camera_params": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-001\\captures\\f000000124-t000002066666667\\amr_follow\\camera_params.json",
+          "bytes": 2835,
+          "path": "scenes/scene-001/captures/f000000124-t000002066666667/amr_follow/camera_params.json",
+          "sha256": "e387a52a178665815c0eb7367a540a5fbf7bce88404c5d8b57681eb04c41fffd"
+        },
+        "capture_id": "scene-001--f000000124--t000002066666667",
+        "capture_record": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-001\\captures\\f000000124-t000002066666667\\capture.json",
+          "bytes": 4771,
+          "path": "scenes/scene-001/captures/f000000124-t000002066666667/capture.json",
+          "sha256": "45a6baa2fcca7d0f6550c8720575800a650633fe0500e38c9c357210ed35dde2"
+        },
+        "evidence_kind": "scene_camera_review",
+        "normalized": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-001\\captures\\f000000124-t000002066666667\\amr_follow\\normalized.json",
+          "bytes": 552859,
+          "path": "scenes/scene-001/captures/f000000124-t000002066666667/amr_follow/normalized.json",
+          "sha256": "1cf242b2b016ecb10946feec2cafbcce5cb0559eddd58928461889dd702b9b63"
+        },
+        "physics_frame": 124,
+        "rgb": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-001\\captures\\f000000124-t000002066666667\\amr_follow\\rgb.png",
+          "bytes": 511838,
+          "path": "scenes/scene-001/captures/f000000124-t000002066666667/amr_follow/rgb.png",
+          "sha256": "dfc65e1e5f15b30087a23c7f00171590b2151bf284b470d051d16d864bac5484"
+        },
+        "scene_id": "scene-001",
+        "selection_score": {
+          "instance_count": 9,
+          "measured_useful_leaf_count": 66,
+          "non_edge_instance_count": 3,
+          "taxonomy_class_count": 5
+        },
+        "sim_time_ns": 2066666667
+      }
+    },
+    {
+      "selection_entry_id": "entry-005",
+      "base_expected_entry": {
+        "scene_id": "scene-001",
+        "camera_id": "overhead",
+        "capture_id": "scene-001--f000000160--t000002666666667",
+        "evidence_kind": "scene_camera_review",
+        "rgb_path": "scenes/scene-001/captures/f000000160-t000002666666667/overhead/rgb.png",
+        "rgb_sha256": "865f9e01456d7d91360ef429404845cd5c2ada4556f176f1f294a6e047af0276",
+        "evidence_source": "dataset_rgb",
+        "reviewer_type": "ai",
+        "human_release_approved": false,
+        "production_passed": false,
+        "physical_contact_verified": false,
+        "robot_ground_contact_verified": false
+      },
+      "selected_evidence": {
+        "camera_id": "overhead",
+        "camera_params": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-001\\captures\\f000000160-t000002666666667\\overhead\\camera_params.json",
+          "bytes": 2868,
+          "path": "scenes/scene-001/captures/f000000160-t000002666666667/overhead/camera_params.json",
+          "sha256": "02c79b2f62e0f214e5fbc467a3cc352cf927ab5b38612ee28ca0a1907e66153d"
+        },
+        "capture_id": "scene-001--f000000160--t000002666666667",
+        "capture_record": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-001\\captures\\f000000160-t000002666666667\\capture.json",
+          "bytes": 4772,
+          "path": "scenes/scene-001/captures/f000000160-t000002666666667/capture.json",
+          "sha256": "2d195c26cec0051ee4d4b4f75780b6a1214d79a54f44b90ccac94d9978a4ebfe"
+        },
+        "evidence_kind": "scene_camera_review",
+        "normalized": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-001\\captures\\f000000160-t000002666666667\\overhead\\normalized.json",
+          "bytes": 712221,
+          "path": "scenes/scene-001/captures/f000000160-t000002666666667/overhead/normalized.json",
+          "sha256": "8f55fca9c2acec4b32209fb4f79251efd7f68fc9ee05af6fa9138d9ffa03eb66"
+        },
+        "physics_frame": 160,
+        "rgb": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-001\\captures\\f000000160-t000002666666667\\overhead\\rgb.png",
+          "bytes": 532028,
+          "path": "scenes/scene-001/captures/f000000160-t000002666666667/overhead/rgb.png",
+          "sha256": "865f9e01456d7d91360ef429404845cd5c2ada4556f176f1f294a6e047af0276"
+        },
+        "scene_id": "scene-001",
+        "selection_score": {
+          "instance_count": 141,
+          "measured_useful_leaf_count": 1141,
+          "non_edge_instance_count": 126,
+          "taxonomy_class_count": 13
+        },
+        "sim_time_ns": 2666666667
+      }
+    },
+    {
+      "selection_entry_id": "entry-006",
+      "base_expected_entry": {
+        "scene_id": "scene-002",
+        "camera_id": "aisle",
+        "capture_id": "scene-002--f000000181--t000003016666667",
+        "evidence_kind": "scene_camera_review",
+        "rgb_path": "scenes/scene-002/captures/f000000181-t000003016666667/aisle/rgb.png",
+        "rgb_sha256": "dbf23745764ef7b495064df23cc3a32a2cb0af00c62b310aa57e867df0bdcbed",
+        "evidence_source": "dataset_rgb",
+        "reviewer_type": "ai",
+        "human_release_approved": false,
+        "production_passed": false,
+        "physical_contact_verified": false,
+        "robot_ground_contact_verified": false
+      },
+      "selected_evidence": {
+        "camera_id": "aisle",
+        "camera_params": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-002\\captures\\f000000181-t000003016666667\\aisle\\camera_params.json",
+          "bytes": 2881,
+          "path": "scenes/scene-002/captures/f000000181-t000003016666667/aisle/camera_params.json",
+          "sha256": "385c1a69ca492b8805bf26df8767a81149ab957434b47ddea2c124678edffc9f"
+        },
+        "capture_id": "scene-002--f000000181--t000003016666667",
+        "capture_record": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-002\\captures\\f000000181-t000003016666667\\capture.json",
+          "bytes": 4767,
+          "path": "scenes/scene-002/captures/f000000181-t000003016666667/capture.json",
+          "sha256": "85d1aa366c7616ff9321fe50d5778ad56e7465f3d41dd31f4195da5f99a96785"
+        },
+        "evidence_kind": "scene_camera_review",
+        "normalized": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-002\\captures\\f000000181-t000003016666667\\aisle\\normalized.json",
+          "bytes": 642537,
+          "path": "scenes/scene-002/captures/f000000181-t000003016666667/aisle/normalized.json",
+          "sha256": "93826ef97d1e8dc665f07b710e1754e97a1c78e7f9e1e8512541d532bab6bd48"
+        },
+        "physics_frame": 181,
+        "rgb": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-002\\captures\\f000000181-t000003016666667\\aisle\\rgb.png",
+          "bytes": 504123,
+          "path": "scenes/scene-002/captures/f000000181-t000003016666667/aisle/rgb.png",
+          "sha256": "dbf23745764ef7b495064df23cc3a32a2cb0af00c62b310aa57e867df0bdcbed"
+        },
+        "scene_id": "scene-002",
+        "selection_score": {
+          "instance_count": 82,
+          "measured_useful_leaf_count": 760,
+          "non_edge_instance_count": 67,
+          "taxonomy_class_count": 11
+        },
+        "sim_time_ns": 3016666667
+      }
+    },
+    {
+      "selection_entry_id": "entry-007",
+      "base_expected_entry": {
+        "scene_id": "scene-002",
+        "camera_id": "amr_follow",
+        "capture_id": "scene-002--f000000124--t000002066666667",
+        "evidence_kind": "scene_camera_review",
+        "rgb_path": "scenes/scene-002/captures/f000000124-t000002066666667/amr_follow/rgb.png",
+        "rgb_sha256": "84532e29c4d49f8552c6a6006627b834bb4dcd02a866ce874f2dd65e960e47a9",
+        "evidence_source": "dataset_rgb",
+        "reviewer_type": "ai",
+        "human_release_approved": false,
+        "production_passed": false,
+        "physical_contact_verified": false,
+        "robot_ground_contact_verified": false
+      },
+      "selected_evidence": {
+        "camera_id": "amr_follow",
+        "camera_params": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-002\\captures\\f000000124-t000002066666667\\amr_follow\\camera_params.json",
+          "bytes": 2835,
+          "path": "scenes/scene-002/captures/f000000124-t000002066666667/amr_follow/camera_params.json",
+          "sha256": "86dbc50bab47021e4f8f94e04e049a5756d82271d76b273397328404a2863e1a"
+        },
+        "capture_id": "scene-002--f000000124--t000002066666667",
+        "capture_record": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-002\\captures\\f000000124-t000002066666667\\capture.json",
+          "bytes": 4771,
+          "path": "scenes/scene-002/captures/f000000124-t000002066666667/capture.json",
+          "sha256": "81e0ef5dbad3ddf5c61db312a6ba1842a4cf40f000715cbd9bc35f2c91667c64"
+        },
+        "evidence_kind": "scene_camera_review",
+        "normalized": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-002\\captures\\f000000124-t000002066666667\\amr_follow\\normalized.json",
+          "bytes": 553789,
+          "path": "scenes/scene-002/captures/f000000124-t000002066666667/amr_follow/normalized.json",
+          "sha256": "997ac11e868d8c348ddabd17297d5ea25cf4a24b1a5ed9ec488950e34d421c0d"
+        },
+        "physics_frame": 124,
+        "rgb": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-002\\captures\\f000000124-t000002066666667\\amr_follow\\rgb.png",
+          "bytes": 514475,
+          "path": "scenes/scene-002/captures/f000000124-t000002066666667/amr_follow/rgb.png",
+          "sha256": "84532e29c4d49f8552c6a6006627b834bb4dcd02a866ce874f2dd65e960e47a9"
+        },
+        "scene_id": "scene-002",
+        "selection_score": {
+          "instance_count": 9,
+          "measured_useful_leaf_count": 66,
+          "non_edge_instance_count": 3,
+          "taxonomy_class_count": 5
+        },
+        "sim_time_ns": 2066666667
+      }
+    },
+    {
+      "selection_entry_id": "entry-008",
+      "base_expected_entry": {
+        "scene_id": "scene-002",
+        "camera_id": "overhead",
+        "capture_id": "scene-002--f000000154--t000002566666667",
+        "evidence_kind": "scene_camera_review",
+        "rgb_path": "scenes/scene-002/captures/f000000154-t000002566666667/overhead/rgb.png",
+        "rgb_sha256": "8aceff8f30e13559e492d9698b652575d1f3699943f973d5ec7a1795aaf65f3d",
+        "evidence_source": "dataset_rgb",
+        "reviewer_type": "ai",
+        "human_release_approved": false,
+        "production_passed": false,
+        "physical_contact_verified": false,
+        "robot_ground_contact_verified": false
+      },
+      "selected_evidence": {
+        "camera_id": "overhead",
+        "camera_params": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-002\\captures\\f000000154-t000002566666667\\overhead\\camera_params.json",
+          "bytes": 2652,
+          "path": "scenes/scene-002/captures/f000000154-t000002566666667/overhead/camera_params.json",
+          "sha256": "504a17237c04cc3d3fb0dabf885c7fc07651b3fcb2a60b976a6e5fbb8b39d7b8"
+        },
+        "capture_id": "scene-002--f000000154--t000002566666667",
+        "capture_record": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-002\\captures\\f000000154-t000002566666667\\capture.json",
+          "bytes": 4757,
+          "path": "scenes/scene-002/captures/f000000154-t000002566666667/capture.json",
+          "sha256": "acd04b13162c33173cdd4b6dfa19b4cd537a8cd0de297f1aa582bf5e49c9126b"
+        },
+        "evidence_kind": "scene_camera_review",
+        "normalized": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-002\\captures\\f000000154-t000002566666667\\overhead\\normalized.json",
+          "bytes": 709036,
+          "path": "scenes/scene-002/captures/f000000154-t000002566666667/overhead/normalized.json",
+          "sha256": "fe2b798b35d817fafd7097e7d495f61e0a28289ff58ba61714c117220627de75"
+        },
+        "physics_frame": 154,
+        "rgb": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-002\\captures\\f000000154-t000002566666667\\overhead\\rgb.png",
+          "bytes": 563279,
+          "path": "scenes/scene-002/captures/f000000154-t000002566666667/overhead/rgb.png",
+          "sha256": "8aceff8f30e13559e492d9698b652575d1f3699943f973d5ec7a1795aaf65f3d"
+        },
+        "scene_id": "scene-002",
+        "selection_score": {
+          "instance_count": 138,
+          "measured_useful_leaf_count": 1125,
+          "non_edge_instance_count": 116,
+          "taxonomy_class_count": 13
+        },
+        "sim_time_ns": 2566666667
+      }
+    },
+    {
+      "selection_entry_id": "entry-009",
+      "base_expected_entry": {
+        "scene_id": "scene-003",
+        "camera_id": "aisle",
+        "capture_id": "scene-003--f000000124--t000002066666667",
+        "evidence_kind": "scene_camera_review",
+        "rgb_path": "scenes/scene-003/captures/f000000124-t000002066666667/aisle/rgb.png",
+        "rgb_sha256": "cd098013d95fa45c198b23c9d71a793148c5a559ca58f25c304a3a5fe8f6983f",
+        "evidence_source": "dataset_rgb",
+        "reviewer_type": "ai",
+        "human_release_approved": false,
+        "production_passed": false,
+        "physical_contact_verified": false,
+        "robot_ground_contact_verified": false
+      },
+      "selected_evidence": {
+        "camera_id": "aisle",
+        "camera_params": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-003\\captures\\f000000124-t000002066666667\\aisle\\camera_params.json",
+          "bytes": 2878,
+          "path": "scenes/scene-003/captures/f000000124-t000002066666667/aisle/camera_params.json",
+          "sha256": "991e2796d76e6929977fa0b9e568afca9469c5c6bb1ba83a0a9ac15e35a14d96"
+        },
+        "capture_id": "scene-003--f000000124--t000002066666667",
+        "capture_record": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-003\\captures\\f000000124-t000002066666667\\capture.json",
+          "bytes": 4771,
+          "path": "scenes/scene-003/captures/f000000124-t000002066666667/capture.json",
+          "sha256": "4dbbfed9d7cec544793a16b002585da2cc734831a51ff06f9c1697397598afeb"
+        },
+        "evidence_kind": "scene_camera_review",
+        "normalized": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-003\\captures\\f000000124-t000002066666667\\aisle\\normalized.json",
+          "bytes": 604137,
+          "path": "scenes/scene-003/captures/f000000124-t000002066666667/aisle/normalized.json",
+          "sha256": "51b4d0ad975464eb952af4c081cb89edaa205c830bc7468d83fb0992aa86ee3c"
+        },
+        "physics_frame": 124,
+        "rgb": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-003\\captures\\f000000124-t000002066666667\\aisle\\rgb.png",
+          "bytes": 489079,
+          "path": "scenes/scene-003/captures/f000000124-t000002066666667/aisle/rgb.png",
+          "sha256": "cd098013d95fa45c198b23c9d71a793148c5a559ca58f25c304a3a5fe8f6983f"
+        },
+        "scene_id": "scene-003",
+        "selection_score": {
+          "instance_count": 51,
+          "measured_useful_leaf_count": 375,
+          "non_edge_instance_count": 35,
+          "taxonomy_class_count": 11
+        },
+        "sim_time_ns": 2066666667
+      }
+    },
+    {
+      "selection_entry_id": "entry-010",
+      "base_expected_entry": {
+        "scene_id": "scene-003",
+        "camera_id": "amr_follow",
+        "capture_id": "scene-003--f000000124--t000002066666667",
+        "evidence_kind": "scene_camera_review",
+        "rgb_path": "scenes/scene-003/captures/f000000124-t000002066666667/amr_follow/rgb.png",
+        "rgb_sha256": "886a3b2838adc3931f8788ea9b6f08674532fe7b3caea250cfd4919b3afba428",
+        "evidence_source": "dataset_rgb",
+        "reviewer_type": "ai",
+        "human_release_approved": false,
+        "production_passed": false,
+        "physical_contact_verified": false,
+        "robot_ground_contact_verified": false
+      },
+      "selected_evidence": {
+        "camera_id": "amr_follow",
+        "camera_params": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-003\\captures\\f000000124-t000002066666667\\amr_follow\\camera_params.json",
+          "bytes": 2835,
+          "path": "scenes/scene-003/captures/f000000124-t000002066666667/amr_follow/camera_params.json",
+          "sha256": "67c2b7d255d2f4ab76827309e41dd03efef0c5866ef474a09c8ae0afc8a1b1a2"
+        },
+        "capture_id": "scene-003--f000000124--t000002066666667",
+        "capture_record": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-003\\captures\\f000000124-t000002066666667\\capture.json",
+          "bytes": 4771,
+          "path": "scenes/scene-003/captures/f000000124-t000002066666667/capture.json",
+          "sha256": "4dbbfed9d7cec544793a16b002585da2cc734831a51ff06f9c1697397598afeb"
+        },
+        "evidence_kind": "scene_camera_review",
+        "normalized": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-003\\captures\\f000000124-t000002066666667\\amr_follow\\normalized.json",
+          "bytes": 552885,
+          "path": "scenes/scene-003/captures/f000000124-t000002066666667/amr_follow/normalized.json",
+          "sha256": "e174835ad8a70e88175b96ea7e4e4508dc34f790f6d5d6e6b39cf75345b4d145"
+        },
+        "physics_frame": 124,
+        "rgb": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-003\\captures\\f000000124-t000002066666667\\amr_follow\\rgb.png",
+          "bytes": 511734,
+          "path": "scenes/scene-003/captures/f000000124-t000002066666667/amr_follow/rgb.png",
+          "sha256": "886a3b2838adc3931f8788ea9b6f08674532fe7b3caea250cfd4919b3afba428"
+        },
+        "scene_id": "scene-003",
+        "selection_score": {
+          "instance_count": 9,
+          "measured_useful_leaf_count": 66,
+          "non_edge_instance_count": 3,
+          "taxonomy_class_count": 5
+        },
+        "sim_time_ns": 2066666667
+      }
+    },
+    {
+      "selection_entry_id": "entry-011",
+      "base_expected_entry": {
+        "scene_id": "scene-003",
+        "camera_id": "overhead",
+        "capture_id": "scene-003--f000000158--t000002633333333",
+        "evidence_kind": "scene_camera_review",
+        "rgb_path": "scenes/scene-003/captures/f000000158-t000002633333333/overhead/rgb.png",
+        "rgb_sha256": "c157de691c8ca1810aa980276e2e198592844101f033a23f7d3f8bb6285ad1a6",
+        "evidence_source": "dataset_rgb",
+        "reviewer_type": "ai",
+        "human_release_approved": false,
+        "production_passed": false,
+        "physical_contact_verified": false,
+        "robot_ground_contact_verified": false
+      },
+      "selected_evidence": {
+        "camera_id": "overhead",
+        "camera_params": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-003\\captures\\f000000158-t000002633333333\\overhead\\camera_params.json",
+          "bytes": 2892,
+          "path": "scenes/scene-003/captures/f000000158-t000002633333333/overhead/camera_params.json",
+          "sha256": "380ceb3b00fe95db7bfa87430af76d3c8b2519fde4e4344bc76f3dede24aaea6"
+        },
+        "capture_id": "scene-003--f000000158--t000002633333333",
+        "capture_record": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-003\\captures\\f000000158-t000002633333333\\capture.json",
+          "bytes": 4769,
+          "path": "scenes/scene-003/captures/f000000158-t000002633333333/capture.json",
+          "sha256": "da340da627d44992f5f386d882c6603b8179cb69cc65c24c83dbc4357a7d7efe"
+        },
+        "evidence_kind": "scene_camera_review",
+        "normalized": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-003\\captures\\f000000158-t000002633333333\\overhead\\normalized.json",
+          "bytes": 716306,
+          "path": "scenes/scene-003/captures/f000000158-t000002633333333/overhead/normalized.json",
+          "sha256": "58873742d9eb6ed8b3d9020e1d9ebc7c99e12758167622e33408be1dfd2ddc8c"
+        },
+        "physics_frame": 158,
+        "rgb": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-003\\captures\\f000000158-t000002633333333\\overhead\\rgb.png",
+          "bytes": 589123,
+          "path": "scenes/scene-003/captures/f000000158-t000002633333333/overhead/rgb.png",
+          "sha256": "c157de691c8ca1810aa980276e2e198592844101f033a23f7d3f8bb6285ad1a6"
+        },
+        "scene_id": "scene-003",
+        "selection_score": {
+          "instance_count": 144,
+          "measured_useful_leaf_count": 1171,
+          "non_edge_instance_count": 131,
+          "taxonomy_class_count": 13
+        },
+        "sim_time_ns": 2633333333
+      }
+    },
+    {
+      "selection_entry_id": "entry-012",
+      "base_expected_entry": {
+        "scene_id": "scene-004",
+        "camera_id": "aisle",
+        "capture_id": "scene-004--f000000185--t000003083333333",
+        "evidence_kind": "scene_camera_review",
+        "rgb_path": "scenes/scene-004/captures/f000000185-t000003083333333/aisle/rgb.png",
+        "rgb_sha256": "e034d7e366e9d7dfbcb284ade76bdfe3304e747665fc5df5baf89f18116714f8",
+        "evidence_source": "dataset_rgb",
+        "reviewer_type": "ai",
+        "human_release_approved": false,
+        "production_passed": false,
+        "physical_contact_verified": false,
+        "robot_ground_contact_verified": false
+      },
+      "selected_evidence": {
+        "camera_id": "aisle",
+        "camera_params": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-004\\captures\\f000000185-t000003083333333\\aisle\\camera_params.json",
+          "bytes": 2820,
+          "path": "scenes/scene-004/captures/f000000185-t000003083333333/aisle/camera_params.json",
+          "sha256": "d8afaf0d1103f44e81622f87830c134fffacf937fe9cc743bb65dfae5b977afd"
+        },
+        "capture_id": "scene-004--f000000185--t000003083333333",
+        "capture_record": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-004\\captures\\f000000185-t000003083333333\\capture.json",
+          "bytes": 4768,
+          "path": "scenes/scene-004/captures/f000000185-t000003083333333/capture.json",
+          "sha256": "24bff1d25372c9705bc5749b9e204f4dbdeb6f0f64d38345d2d97908263f7ad7"
+        },
+        "evidence_kind": "scene_camera_review",
+        "normalized": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-004\\captures\\f000000185-t000003083333333\\aisle\\normalized.json",
+          "bytes": 600935,
+          "path": "scenes/scene-004/captures/f000000185-t000003083333333/aisle/normalized.json",
+          "sha256": "dfb732d496c7ba49c16d43c2123c085c33b50038fe4bf9e35862568c9dd44838"
+        },
+        "physics_frame": 185,
+        "rgb": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-004\\captures\\f000000185-t000003083333333\\aisle\\rgb.png",
+          "bytes": 488415,
+          "path": "scenes/scene-004/captures/f000000185-t000003083333333/aisle/rgb.png",
+          "sha256": "e034d7e366e9d7dfbcb284ade76bdfe3304e747665fc5df5baf89f18116714f8"
+        },
+        "scene_id": "scene-004",
+        "selection_score": {
+          "instance_count": 48,
+          "measured_useful_leaf_count": 352,
+          "non_edge_instance_count": 33,
+          "taxonomy_class_count": 11
+        },
+        "sim_time_ns": 3083333333
+      }
+    },
+    {
+      "selection_entry_id": "entry-013",
+      "base_expected_entry": {
+        "scene_id": "scene-004",
+        "camera_id": "amr_follow",
+        "capture_id": "scene-004--f000000124--t000002066666667",
+        "evidence_kind": "scene_camera_review",
+        "rgb_path": "scenes/scene-004/captures/f000000124-t000002066666667/amr_follow/rgb.png",
+        "rgb_sha256": "62d900bfb3daf01981e3f8cc545361104d6faf69b32373508f9bf5f96b393cfa",
+        "evidence_source": "dataset_rgb",
+        "reviewer_type": "ai",
+        "human_release_approved": false,
+        "production_passed": false,
+        "physical_contact_verified": false,
+        "robot_ground_contact_verified": false
+      },
+      "selected_evidence": {
+        "camera_id": "amr_follow",
+        "camera_params": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-004\\captures\\f000000124-t000002066666667\\amr_follow\\camera_params.json",
+          "bytes": 2835,
+          "path": "scenes/scene-004/captures/f000000124-t000002066666667/amr_follow/camera_params.json",
+          "sha256": "281fbf5d366c5efa8c4da3baccb69c064d40c61eaa3c86134b01c4119277d4a1"
+        },
+        "capture_id": "scene-004--f000000124--t000002066666667",
+        "capture_record": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-004\\captures\\f000000124-t000002066666667\\capture.json",
+          "bytes": 4771,
+          "path": "scenes/scene-004/captures/f000000124-t000002066666667/capture.json",
+          "sha256": "6391e98b69cbe5f3b7f3c4ffe795439a7b0ae99c5a2016aea06daf27ac9674b3"
+        },
+        "evidence_kind": "scene_camera_review",
+        "normalized": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-004\\captures\\f000000124-t000002066666667\\amr_follow\\normalized.json",
+          "bytes": 553729,
+          "path": "scenes/scene-004/captures/f000000124-t000002066666667/amr_follow/normalized.json",
+          "sha256": "48e70f3ad8835498ce19a85ab6aabfffdb6c78f221d1847eb0ff427b8170ffc3"
+        },
+        "physics_frame": 124,
+        "rgb": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-004\\captures\\f000000124-t000002066666667\\amr_follow\\rgb.png",
+          "bytes": 512467,
+          "path": "scenes/scene-004/captures/f000000124-t000002066666667/amr_follow/rgb.png",
+          "sha256": "62d900bfb3daf01981e3f8cc545361104d6faf69b32373508f9bf5f96b393cfa"
+        },
+        "scene_id": "scene-004",
+        "selection_score": {
+          "instance_count": 9,
+          "measured_useful_leaf_count": 66,
+          "non_edge_instance_count": 3,
+          "taxonomy_class_count": 5
+        },
+        "sim_time_ns": 2066666667
+      }
+    },
+    {
+      "selection_entry_id": "entry-014",
+      "base_expected_entry": {
+        "scene_id": "scene-004",
+        "camera_id": "overhead",
+        "capture_id": "scene-004--f000000136--t000002266666667",
+        "evidence_kind": "scene_camera_review",
+        "rgb_path": "scenes/scene-004/captures/f000000136-t000002266666667/overhead/rgb.png",
+        "rgb_sha256": "d7942f44a85ddfb8d0ba82bcfc35bca86f336994338df8aeb965a132e53964bd",
+        "evidence_source": "dataset_rgb",
+        "reviewer_type": "ai",
+        "human_release_approved": false,
+        "production_passed": false,
+        "physical_contact_verified": false,
+        "robot_ground_contact_verified": false
+      },
+      "selected_evidence": {
+        "camera_id": "overhead",
+        "camera_params": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-004\\captures\\f000000136-t000002266666667\\overhead\\camera_params.json",
+          "bytes": 2878,
+          "path": "scenes/scene-004/captures/f000000136-t000002266666667/overhead/camera_params.json",
+          "sha256": "6b2acaea7f6e6283b92af9e2486b073a124c6cc38a3cc40778ed3289db75727a"
+        },
+        "capture_id": "scene-004--f000000136--t000002266666667",
+        "capture_record": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-004\\captures\\f000000136-t000002266666667\\capture.json",
+          "bytes": 4754,
+          "path": "scenes/scene-004/captures/f000000136-t000002266666667/capture.json",
+          "sha256": "e6bef27adc66479fa664ec897d25789172cb579ee0b71f0699ad244115bfc215"
+        },
+        "evidence_kind": "scene_camera_review",
+        "normalized": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-004\\captures\\f000000136-t000002266666667\\overhead\\normalized.json",
+          "bytes": 712097,
+          "path": "scenes/scene-004/captures/f000000136-t000002266666667/overhead/normalized.json",
+          "sha256": "cb92ae83692d08bc72146f73a28a69bc072077b3d4c3bc3914a7153a9d6202bb"
+        },
+        "physics_frame": 136,
+        "rgb": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-004\\captures\\f000000136-t000002266666667\\overhead\\rgb.png",
+          "bytes": 563689,
+          "path": "scenes/scene-004/captures/f000000136-t000002266666667/overhead/rgb.png",
+          "sha256": "d7942f44a85ddfb8d0ba82bcfc35bca86f336994338df8aeb965a132e53964bd"
+        },
+        "scene_id": "scene-004",
+        "selection_score": {
+          "instance_count": 140,
+          "measured_useful_leaf_count": 1142,
+          "non_edge_instance_count": 126,
+          "taxonomy_class_count": 13
+        },
+        "sim_time_ns": 2266666667
+      }
+    },
+    {
+      "selection_entry_id": "entry-015",
+      "base_expected_entry": {
+        "scene_id": "scene-005",
+        "camera_id": "aisle",
+        "capture_id": "scene-005--f000000181--t000003016666667",
+        "evidence_kind": "scene_camera_review",
+        "rgb_path": "scenes/scene-005/captures/f000000181-t000003016666667/aisle/rgb.png",
+        "rgb_sha256": "ef4ac87cfc9fe5c8c042c4ee7c18ef6da235bd899604e53fc255ec8803901e77",
+        "evidence_source": "dataset_rgb",
+        "reviewer_type": "ai",
+        "human_release_approved": false,
+        "production_passed": false,
+        "physical_contact_verified": false,
+        "robot_ground_contact_verified": false
+      },
+      "selected_evidence": {
+        "camera_id": "aisle",
+        "camera_params": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-005\\captures\\f000000181-t000003016666667\\aisle\\camera_params.json",
+          "bytes": 2855,
+          "path": "scenes/scene-005/captures/f000000181-t000003016666667/aisle/camera_params.json",
+          "sha256": "5d55fb5bf3701d62117c295af7c9ccfa0bb610ee6e6801b013a73b1620674dd5"
+        },
+        "capture_id": "scene-005--f000000181--t000003016666667",
+        "capture_record": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-005\\captures\\f000000181-t000003016666667\\capture.json",
+          "bytes": 4767,
+          "path": "scenes/scene-005/captures/f000000181-t000003016666667/capture.json",
+          "sha256": "692972e668e847770e1b4a5466236124b362273972ceed9f96817e790290239d"
+        },
+        "evidence_kind": "scene_camera_review",
+        "normalized": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-005\\captures\\f000000181-t000003016666667\\aisle\\normalized.json",
+          "bytes": 650502,
+          "path": "scenes/scene-005/captures/f000000181-t000003016666667/aisle/normalized.json",
+          "sha256": "dd3323602e6c6aeca07f9eee926ea42ea35fc82887e65f6dbac94ce0f04054c8"
+        },
+        "physics_frame": 181,
+        "rgb": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-005\\captures\\f000000181-t000003016666667\\aisle\\rgb.png",
+          "bytes": 497195,
+          "path": "scenes/scene-005/captures/f000000181-t000003016666667/aisle/rgb.png",
+          "sha256": "ef4ac87cfc9fe5c8c042c4ee7c18ef6da235bd899604e53fc255ec8803901e77"
+        },
+        "scene_id": "scene-005",
+        "selection_score": {
+          "instance_count": 90,
+          "measured_useful_leaf_count": 887,
+          "non_edge_instance_count": 74,
+          "taxonomy_class_count": 12
+        },
+        "sim_time_ns": 3016666667
+      }
+    },
+    {
+      "selection_entry_id": "entry-016",
+      "base_expected_entry": {
+        "scene_id": "scene-005",
+        "camera_id": "amr_follow",
+        "capture_id": "scene-005--f000000124--t000002066666667",
+        "evidence_kind": "scene_camera_review",
+        "rgb_path": "scenes/scene-005/captures/f000000124-t000002066666667/amr_follow/rgb.png",
+        "rgb_sha256": "52287e6c23083af9ffc41c1b3cedef8cbf6670f9a2c283571eab6a54e34aebf0",
+        "evidence_source": "dataset_rgb",
+        "reviewer_type": "ai",
+        "human_release_approved": false,
+        "production_passed": false,
+        "physical_contact_verified": false,
+        "robot_ground_contact_verified": false
+      },
+      "selected_evidence": {
+        "camera_id": "amr_follow",
+        "camera_params": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-005\\captures\\f000000124-t000002066666667\\amr_follow\\camera_params.json",
+          "bytes": 2835,
+          "path": "scenes/scene-005/captures/f000000124-t000002066666667/amr_follow/camera_params.json",
+          "sha256": "12e7b35ab81b12b603f802b1723ecef11070f477179d15538635235339a1b83a"
+        },
+        "capture_id": "scene-005--f000000124--t000002066666667",
+        "capture_record": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-005\\captures\\f000000124-t000002066666667\\capture.json",
+          "bytes": 4771,
+          "path": "scenes/scene-005/captures/f000000124-t000002066666667/capture.json",
+          "sha256": "6477341fd92f9f68168af27e3361072cb9e7c2b52aaa39426fadac4c8422a18d"
+        },
+        "evidence_kind": "scene_camera_review",
+        "normalized": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-005\\captures\\f000000124-t000002066666667\\amr_follow\\normalized.json",
+          "bytes": 552947,
+          "path": "scenes/scene-005/captures/f000000124-t000002066666667/amr_follow/normalized.json",
+          "sha256": "048346e03622ebd554fe3659e3c4b1f07f5819cc9c5b5b81161fb02976a5fdb3"
+        },
+        "physics_frame": 124,
+        "rgb": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-005\\captures\\f000000124-t000002066666667\\amr_follow\\rgb.png",
+          "bytes": 512943,
+          "path": "scenes/scene-005/captures/f000000124-t000002066666667/amr_follow/rgb.png",
+          "sha256": "52287e6c23083af9ffc41c1b3cedef8cbf6670f9a2c283571eab6a54e34aebf0"
+        },
+        "scene_id": "scene-005",
+        "selection_score": {
+          "instance_count": 9,
+          "measured_useful_leaf_count": 66,
+          "non_edge_instance_count": 3,
+          "taxonomy_class_count": 5
+        },
+        "sim_time_ns": 2066666667
+      }
+    },
+    {
+      "selection_entry_id": "entry-017",
+      "base_expected_entry": {
+        "scene_id": "scene-005",
+        "camera_id": "overhead",
+        "capture_id": "scene-005--f000000176--t000002933333333",
+        "evidence_kind": "scene_camera_review",
+        "rgb_path": "scenes/scene-005/captures/f000000176-t000002933333333/overhead/rgb.png",
+        "rgb_sha256": "eaeb597c35a682d12205f31171222ca413c8ef48ac9a636c1ddac9b04dc5d95f",
+        "evidence_source": "dataset_rgb",
+        "reviewer_type": "ai",
+        "human_release_approved": false,
+        "production_passed": false,
+        "physical_contact_verified": false,
+        "robot_ground_contact_verified": false
+      },
+      "selected_evidence": {
+        "camera_id": "overhead",
+        "camera_params": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-005\\captures\\f000000176-t000002933333333\\overhead\\camera_params.json",
+          "bytes": 2843,
+          "path": "scenes/scene-005/captures/f000000176-t000002933333333/overhead/camera_params.json",
+          "sha256": "71a6b4d2f55ecd0b0b4903c8cbeb824b8ccca6ec4f30749fc6de478d634648c5"
+        },
+        "capture_id": "scene-005--f000000176--t000002933333333",
+        "capture_record": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-005\\captures\\f000000176-t000002933333333\\capture.json",
+          "bytes": 4768,
+          "path": "scenes/scene-005/captures/f000000176-t000002933333333/capture.json",
+          "sha256": "10b25c381b612934eb52ffca1866f52cf3624c908d171e993b53530633838786"
+        },
+        "evidence_kind": "scene_camera_review",
+        "normalized": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-005\\captures\\f000000176-t000002933333333\\overhead\\normalized.json",
+          "bytes": 708554,
+          "path": "scenes/scene-005/captures/f000000176-t000002933333333/overhead/normalized.json",
+          "sha256": "b4008829b3143e9ef6afcf590de2a162bbe0508cea063fd538b7d58afa62e445"
+        },
+        "physics_frame": 176,
+        "rgb": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-005\\captures\\f000000176-t000002933333333\\overhead\\rgb.png",
+          "bytes": 561904,
+          "path": "scenes/scene-005/captures/f000000176-t000002933333333/overhead/rgb.png",
+          "sha256": "eaeb597c35a682d12205f31171222ca413c8ef48ac9a636c1ddac9b04dc5d95f"
+        },
+        "scene_id": "scene-005",
+        "selection_score": {
+          "instance_count": 138,
+          "measured_useful_leaf_count": 1125,
+          "non_edge_instance_count": 117,
+          "taxonomy_class_count": 13
+        },
+        "sim_time_ns": 2933333333
+      }
+    },
+    {
+      "selection_entry_id": "entry-036",
+      "base_expected_entry": {
+        "scene_id": "scene-005",
+        "camera_id": "overhead",
+        "capture_id": "scene-005--f000000176--t000002933333333",
+        "evidence_kind": "leaf_occlusion_bin",
+        "rgb_path": "scenes/scene-005/captures/f000000176-t000002933333333/overhead/rgb.png",
+        "rgb_sha256": "eaeb597c35a682d12205f31171222ca413c8ef48ac9a636c1ddac9b04dc5d95f",
+        "evidence_source": "dataset_rgb",
+        "reviewer_type": "ai",
+        "human_release_approved": false,
+        "production_passed": false,
+        "physical_contact_verified": false,
+        "robot_ground_contact_verified": false,
+        "occlusion_raw_path": "scenes/scene-005/captures/f000000176-t000002933333333/overhead/occlusion.raw.json",
+        "occlusion_raw_sha256": "551066f5eda2effe854a4d3b60f4532af16a1270f620f7a96ff4c765dbf4ce30",
+        "occlusion_bin": "clear",
+        "renderer_instance_id": 886,
+        "leaf_prim_path": "/World/Visuals/FG_LOW/FinishedTote_4/RimWest",
+        "labelled_root_path": "/World/Visuals/FG_LOW/FinishedTote_4"
+      },
+      "selected_evidence": {
+        "camera_id": "overhead",
+        "camera_params": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-005\\captures\\f000000176-t000002933333333\\overhead\\camera_params.json",
+          "bytes": 2843,
+          "path": "scenes/scene-005/captures/f000000176-t000002933333333/overhead/camera_params.json",
+          "sha256": "71a6b4d2f55ecd0b0b4903c8cbeb824b8ccca6ec4f30749fc6de478d634648c5"
+        },
+        "capture_id": "scene-005--f000000176--t000002933333333",
+        "capture_record": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-005\\captures\\f000000176-t000002933333333\\capture.json",
+          "bytes": 4768,
+          "path": "scenes/scene-005/captures/f000000176-t000002933333333/capture.json",
+          "sha256": "10b25c381b612934eb52ffca1866f52cf3624c908d171e993b53530633838786"
+        },
+        "evidence_kind": "leaf_occlusion_bin",
+        "instance_id": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-005\\captures\\f000000176-t000002933333333\\overhead\\instance-id.npy",
+          "bytes": 3686528,
+          "path": "scenes/scene-005/captures/f000000176-t000002933333333/overhead/instance-id.npy",
+          "sha256": "9c1956b0098caf889047165baeb198d28dcb42f9dabc84670ccd92c5b7c8ddbf"
+        },
+        "instance_id_info": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-005\\captures\\f000000176-t000002933333333\\overhead\\instance-id.raw-info.json",
+          "bytes": 68908,
+          "path": "scenes/scene-005/captures/f000000176-t000002933333333/overhead/instance-id.raw-info.json",
+          "sha256": "78b33f81d8f615a3e3ab757af382b8bcadb6cd49678ade217bb228b0fa80f1dd"
+        },
+        "leaf": {
+          "class": "tote",
+          "labelled_root_path": "/World/Visuals/FG_LOW/FinishedTote_4",
+          "leaf_prim_path": "/World/Visuals/FG_LOW/FinishedTote_4/RimWest",
+          "occlusion_ratio": 0.04999999701976776,
+          "occlusion_raw_value": 0.04999999701976776,
+          "occlusion_status": "measured_leaf",
+          "render_tile_id_raw": 0,
+          "renderer_instance_id": 886,
+          "visible_in_instance_id_mask": true
+        },
+        "normalized": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-005\\captures\\f000000176-t000002933333333\\overhead\\normalized.json",
+          "bytes": 708554,
+          "path": "scenes/scene-005/captures/f000000176-t000002933333333/overhead/normalized.json",
+          "sha256": "b4008829b3143e9ef6afcf590de2a162bbe0508cea063fd538b7d58afa62e445"
+        },
+        "occlusion_bin": "clear",
+        "occlusion_raw": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-005\\captures\\f000000176-t000002933333333\\overhead\\occlusion.raw.json",
+          "bytes": 118741,
+          "path": "scenes/scene-005/captures/f000000176-t000002933333333/overhead/occlusion.raw.json",
+          "sha256": "551066f5eda2effe854a4d3b60f4532af16a1270f620f7a96ff4c765dbf4ce30"
+        },
+        "physics_frame": 176,
+        "raw_occlusion_record": {
+          "instanceId": 886,
+          "occlusionRatio": 0.04999999701976776,
+          "semanticId": 0
+        },
+        "renderer_uri_raw": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-005\\captures\\f000000176-t000002933333333\\overhead\\renderer-instance-uri.raw.json",
+          "bytes": 77894,
+          "path": "scenes/scene-005/captures/f000000176-t000002933333333/overhead/renderer-instance-uri.raw.json",
+          "sha256": "250cb2f11cb104a4e2e918f87b4a50b3a77be1c74fb851f0ecbbdfd75ffab47e"
+        },
+        "rgb": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-005\\captures\\f000000176-t000002933333333\\overhead\\rgb.png",
+          "bytes": 561904,
+          "path": "scenes/scene-005/captures/f000000176-t000002933333333/overhead/rgb.png",
+          "sha256": "eaeb597c35a682d12205f31171222ca413c8ef48ac9a636c1ddac9b04dc5d95f"
+        },
+        "scene_id": "scene-005",
+        "selection_pool": "selected_scene_camera_representatives",
+        "sim_time_ns": 2933333333
+      }
+    },
+    {
+      "selection_entry_id": "entry-037",
+      "base_expected_entry": {
+        "scene_id": "scene-005",
+        "camera_id": "overhead",
+        "capture_id": "scene-005--f000000176--t000002933333333",
+        "evidence_kind": "leaf_occlusion_bin",
+        "rgb_path": "scenes/scene-005/captures/f000000176-t000002933333333/overhead/rgb.png",
+        "rgb_sha256": "eaeb597c35a682d12205f31171222ca413c8ef48ac9a636c1ddac9b04dc5d95f",
+        "evidence_source": "dataset_rgb",
+        "reviewer_type": "ai",
+        "human_release_approved": false,
+        "production_passed": false,
+        "physical_contact_verified": false,
+        "robot_ground_contact_verified": false,
+        "occlusion_raw_path": "scenes/scene-005/captures/f000000176-t000002933333333/overhead/occlusion.raw.json",
+        "occlusion_raw_sha256": "551066f5eda2effe854a4d3b60f4532af16a1270f620f7a96ff4c765dbf4ce30",
+        "occlusion_bin": "partial",
+        "renderer_instance_id": 1073,
+        "leaf_prim_path": "/World/Visuals/PROCESS_2/DoorHandle",
+        "labelled_root_path": "/World/Visuals/PROCESS_2"
+      },
+      "selected_evidence": {
+        "camera_id": "overhead",
+        "camera_params": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-005\\captures\\f000000176-t000002933333333\\overhead\\camera_params.json",
+          "bytes": 2843,
+          "path": "scenes/scene-005/captures/f000000176-t000002933333333/overhead/camera_params.json",
+          "sha256": "71a6b4d2f55ecd0b0b4903c8cbeb824b8ccca6ec4f30749fc6de478d634648c5"
+        },
+        "capture_id": "scene-005--f000000176--t000002933333333",
+        "capture_record": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-005\\captures\\f000000176-t000002933333333\\capture.json",
+          "bytes": 4768,
+          "path": "scenes/scene-005/captures/f000000176-t000002933333333/capture.json",
+          "sha256": "10b25c381b612934eb52ffca1866f52cf3624c908d171e993b53530633838786"
+        },
+        "evidence_kind": "leaf_occlusion_bin",
+        "instance_id": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-005\\captures\\f000000176-t000002933333333\\overhead\\instance-id.npy",
+          "bytes": 3686528,
+          "path": "scenes/scene-005/captures/f000000176-t000002933333333/overhead/instance-id.npy",
+          "sha256": "9c1956b0098caf889047165baeb198d28dcb42f9dabc84670ccd92c5b7c8ddbf"
+        },
+        "instance_id_info": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-005\\captures\\f000000176-t000002933333333\\overhead\\instance-id.raw-info.json",
+          "bytes": 68908,
+          "path": "scenes/scene-005/captures/f000000176-t000002933333333/overhead/instance-id.raw-info.json",
+          "sha256": "78b33f81d8f615a3e3ab757af382b8bcadb6cd49678ade217bb228b0fa80f1dd"
+        },
+        "leaf": {
+          "class": "process_equipment",
+          "labelled_root_path": "/World/Visuals/PROCESS_2",
+          "leaf_prim_path": "/World/Visuals/PROCESS_2/DoorHandle",
+          "occlusion_ratio": 0.29999998211860657,
+          "occlusion_raw_value": 0.29999998211860657,
+          "occlusion_status": "measured_leaf",
+          "render_tile_id_raw": 0,
+          "renderer_instance_id": 1073,
+          "visible_in_instance_id_mask": true
+        },
+        "normalized": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-005\\captures\\f000000176-t000002933333333\\overhead\\normalized.json",
+          "bytes": 708554,
+          "path": "scenes/scene-005/captures/f000000176-t000002933333333/overhead/normalized.json",
+          "sha256": "b4008829b3143e9ef6afcf590de2a162bbe0508cea063fd538b7d58afa62e445"
+        },
+        "occlusion_bin": "partial",
+        "occlusion_raw": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-005\\captures\\f000000176-t000002933333333\\overhead\\occlusion.raw.json",
+          "bytes": 118741,
+          "path": "scenes/scene-005/captures/f000000176-t000002933333333/overhead/occlusion.raw.json",
+          "sha256": "551066f5eda2effe854a4d3b60f4532af16a1270f620f7a96ff4c765dbf4ce30"
+        },
+        "physics_frame": 176,
+        "raw_occlusion_record": {
+          "instanceId": 1073,
+          "occlusionRatio": 0.29999998211860657,
+          "semanticId": 0
+        },
+        "renderer_uri_raw": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-005\\captures\\f000000176-t000002933333333\\overhead\\renderer-instance-uri.raw.json",
+          "bytes": 77894,
+          "path": "scenes/scene-005/captures/f000000176-t000002933333333/overhead/renderer-instance-uri.raw.json",
+          "sha256": "250cb2f11cb104a4e2e918f87b4a50b3a77be1c74fb851f0ecbbdfd75ffab47e"
+        },
+        "rgb": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-005\\captures\\f000000176-t000002933333333\\overhead\\rgb.png",
+          "bytes": 561904,
+          "path": "scenes/scene-005/captures/f000000176-t000002933333333/overhead/rgb.png",
+          "sha256": "eaeb597c35a682d12205f31171222ca413c8ef48ac9a636c1ddac9b04dc5d95f"
+        },
+        "scene_id": "scene-005",
+        "selection_pool": "selected_scene_camera_representatives",
+        "sim_time_ns": 2933333333
+      }
+    },
+    {
+      "selection_entry_id": "entry-038",
+      "base_expected_entry": {
+        "scene_id": "scene-000",
+        "camera_id": "overhead",
+        "capture_id": "scene-000--f000000212--t000003533333333",
+        "evidence_kind": "leaf_occlusion_bin",
+        "rgb_path": "scenes/scene-000/captures/f000000212-t000003533333333/overhead/rgb.png",
+        "rgb_sha256": "dc7c9fa28afd206fcc180873b141bb568f6a26e313cdb91131c3175c833af50e",
+        "evidence_source": "dataset_rgb",
+        "reviewer_type": "ai",
+        "human_release_approved": false,
+        "production_passed": false,
+        "physical_contact_verified": false,
+        "robot_ground_contact_verified": false,
+        "occlusion_raw_path": "scenes/scene-000/captures/f000000212-t000003533333333/overhead/occlusion.raw.json",
+        "occlusion_raw_sha256": "3323881a2e019f0391587a6ef712f9d425bfca1c3fe2629864ad18192117c966",
+        "occlusion_bin": "heavy",
+        "renderer_instance_id": 1513,
+        "leaf_prim_path": "/World/Visuals/FG_HIGH/FinishedTote_4/HandleSouth",
+        "labelled_root_path": "/World/Visuals/FG_HIGH/FinishedTote_4"
+      },
+      "selected_evidence": {
+        "camera_id": "overhead",
+        "camera_params": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-000\\captures\\f000000212-t000003533333333\\overhead\\camera_params.json",
+          "bytes": 2879,
+          "path": "scenes/scene-000/captures/f000000212-t000003533333333/overhead/camera_params.json",
+          "sha256": "af7c2d9b140303fa5c326909286c9d4c91a90f5d27073b54e37da946ed8a61a2"
+        },
+        "capture_id": "scene-000--f000000212--t000003533333333",
+        "capture_record": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-000\\captures\\f000000212-t000003533333333\\capture.json",
+          "bytes": 4757,
+          "path": "scenes/scene-000/captures/f000000212-t000003533333333/capture.json",
+          "sha256": "5697f6f13e8d4aec7445bd7113c8cc0a245f46deb081f2f8856254df1596c255"
+        },
+        "evidence_kind": "leaf_occlusion_bin",
+        "instance_id": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-000\\captures\\f000000212-t000003533333333\\overhead\\instance-id.npy",
+          "bytes": 3686528,
+          "path": "scenes/scene-000/captures/f000000212-t000003533333333/overhead/instance-id.npy",
+          "sha256": "6783278b7b47580570977e97832636570a76707ad9a82cce410e7394f5cd29a1"
+        },
+        "instance_id_info": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-000\\captures\\f000000212-t000003533333333\\overhead\\instance-id.raw-info.json",
+          "bytes": 69806,
+          "path": "scenes/scene-000/captures/f000000212-t000003533333333/overhead/instance-id.raw-info.json",
+          "sha256": "c5c88c65b7a9ec98c78c7dcf6f28e1629f78dde8ea050647fb0c91ddc22909a5"
+        },
+        "leaf": {
+          "class": "tote",
+          "labelled_root_path": "/World/Visuals/FG_HIGH/FinishedTote_4",
+          "leaf_prim_path": "/World/Visuals/FG_HIGH/FinishedTote_4/HandleSouth",
+          "occlusion_ratio": 0.75,
+          "occlusion_raw_value": 0.75,
+          "occlusion_status": "measured_leaf",
+          "render_tile_id_raw": 0,
+          "renderer_instance_id": 1513,
+          "visible_in_instance_id_mask": true
+        },
+        "normalized": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-000\\captures\\f000000212-t000003533333333\\overhead\\normalized.json",
+          "bytes": 716265,
+          "path": "scenes/scene-000/captures/f000000212-t000003533333333/overhead/normalized.json",
+          "sha256": "5b4fafe09338f7b23068c7db329ccfd58d0d3ac7b2f77567fb35f06ebe4d95b7"
+        },
+        "occlusion_bin": "heavy",
+        "occlusion_raw": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-000\\captures\\f000000212-t000003533333333\\overhead\\occlusion.raw.json",
+          "bytes": 120396,
+          "path": "scenes/scene-000/captures/f000000212-t000003533333333/overhead/occlusion.raw.json",
+          "sha256": "3323881a2e019f0391587a6ef712f9d425bfca1c3fe2629864ad18192117c966"
+        },
+        "physics_frame": 212,
+        "raw_occlusion_record": {
+          "instanceId": 1513,
+          "occlusionRatio": 0.75,
+          "semanticId": 0
+        },
+        "renderer_uri_raw": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-000\\captures\\f000000212-t000003533333333\\overhead\\renderer-instance-uri.raw.json",
+          "bytes": 79672,
+          "path": "scenes/scene-000/captures/f000000212-t000003533333333/overhead/renderer-instance-uri.raw.json",
+          "sha256": "c540c1fa66ff99645295650b39a3e1949472162f0a6de911e5e925dbb714911b"
+        },
+        "rgb": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-000\\captures\\f000000212-t000003533333333\\overhead\\rgb.png",
+          "bytes": 557200,
+          "path": "scenes/scene-000/captures/f000000212-t000003533333333/overhead/rgb.png",
+          "sha256": "dc7c9fa28afd206fcc180873b141bb568f6a26e313cdb91131c3175c833af50e"
+        },
+        "scene_id": "scene-000",
+        "selection_pool": "selected_scene_camera_representatives",
+        "sim_time_ns": 3533333333
+      }
+    },
+    {
+      "selection_entry_id": "entry-041",
+      "base_expected_entry": {
+        "scene_id": "scene-001",
+        "camera_id": "aisle",
+        "capture_id": "scene-001--f000000181--t000003016666667",
+        "evidence_kind": "leaf_occlusion_bin",
+        "rgb_path": "scenes/scene-001/captures/f000000181-t000003016666667/aisle/rgb.png",
+        "rgb_sha256": "c9fbd0d1ea4a61e9776c68299b96d9500da7b272c5459882be6e4dcc3204c3a1",
+        "evidence_source": "dataset_rgb",
+        "reviewer_type": "ai",
+        "human_release_approved": false,
+        "production_passed": false,
+        "physical_contact_verified": false,
+        "robot_ground_contact_verified": false,
+        "occlusion_raw_path": "scenes/scene-001/captures/f000000181-t000003016666667/aisle/occlusion.raw.json",
+        "occlusion_raw_sha256": "fbec0eedc2686d1784b12eb50477af9a0eed4a2a0bcfe968dd178791b3b1a279",
+        "occlusion_bin": "heavy",
+        "renderer_instance_id": 813,
+        "leaf_prim_path": "/World/Visuals/RACK_A1/FrontBeam_2",
+        "labelled_root_path": "/World/Visuals/RACK_A1"
+      },
+      "selected_evidence": {
+        "camera_id": "aisle",
+        "camera_params": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-001\\captures\\f000000181-t000003016666667\\aisle\\camera_params.json",
+          "bytes": 2831,
+          "path": "scenes/scene-001/captures/f000000181-t000003016666667/aisle/camera_params.json",
+          "sha256": "003c9263cfee6d4370cb2509ea4f3b9f5b2dd03d03924c4f98d459618c6d2391"
+        },
+        "capture_id": "scene-001--f000000181--t000003016666667",
+        "capture_record": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-001\\captures\\f000000181-t000003016666667\\capture.json",
+          "bytes": 4767,
+          "path": "scenes/scene-001/captures/f000000181-t000003016666667/capture.json",
+          "sha256": "871618b36064f000a0e152a0ff5a3cefdf454ffb59666ba968c4cd7d2bb3f892"
+        },
+        "evidence_kind": "leaf_occlusion_bin",
+        "instance_id": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-001\\captures\\f000000181-t000003016666667\\aisle\\instance-id.npy",
+          "bytes": 3686528,
+          "path": "scenes/scene-001/captures/f000000181-t000003016666667/aisle/instance-id.npy",
+          "sha256": "5a4ec1359da6a58db24745347befe8ab303accdea02c8a20bd0def4a5a4869c2"
+        },
+        "instance_id_info": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-001\\captures\\f000000181-t000003016666667\\aisle\\instance-id.raw-info.json",
+          "bytes": 68805,
+          "path": "scenes/scene-001/captures/f000000181-t000003016666667/aisle/instance-id.raw-info.json",
+          "sha256": "fc5af6eafedfe75ce3a5f39893b7774ac96319e0fa3f364ab77c793fdd6f1e40"
+        },
+        "leaf": {
+          "class": "rack",
+          "labelled_root_path": "/World/Visuals/RACK_A1",
+          "leaf_prim_path": "/World/Visuals/RACK_A1/FrontBeam_2",
+          "occlusion_ratio": 0.75,
+          "occlusion_raw_value": 0.75,
+          "occlusion_status": "measured_leaf",
+          "render_tile_id_raw": 0,
+          "renderer_instance_id": 813,
+          "visible_in_instance_id_mask": true
+        },
+        "normalized": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-001\\captures\\f000000181-t000003016666667\\aisle\\normalized.json",
+          "bytes": 643216,
+          "path": "scenes/scene-001/captures/f000000181-t000003016666667/aisle/normalized.json",
+          "sha256": "18a70f9196c2267a29fa4aa2c694d4fd1d0ce1bb1a9167466ad52821efd36bc9"
+        },
+        "occlusion_bin": "heavy",
+        "occlusion_raw": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-001\\captures\\f000000181-t000003016666667\\aisle\\occlusion.raw.json",
+          "bytes": 115607,
+          "path": "scenes/scene-001/captures/f000000181-t000003016666667/aisle/occlusion.raw.json",
+          "sha256": "fbec0eedc2686d1784b12eb50477af9a0eed4a2a0bcfe968dd178791b3b1a279"
+        },
+        "physics_frame": 181,
+        "raw_occlusion_record": {
+          "instanceId": 813,
+          "occlusionRatio": 0.75,
+          "semanticId": 0
+        },
+        "renderer_uri_raw": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-001\\captures\\f000000181-t000003016666667\\aisle\\renderer-instance-uri.raw.json",
+          "bytes": 77685,
+          "path": "scenes/scene-001/captures/f000000181-t000003016666667/aisle/renderer-instance-uri.raw.json",
+          "sha256": "dc1c5ca772ec124a70e6d3b6c24a8778c549ad647d6a3b6aa8cf2223c833ad7c"
+        },
+        "rgb": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-001\\captures\\f000000181-t000003016666667\\aisle\\rgb.png",
+          "bytes": 534916,
+          "path": "scenes/scene-001/captures/f000000181-t000003016666667/aisle/rgb.png",
+          "sha256": "c9fbd0d1ea4a61e9776c68299b96d9500da7b272c5459882be6e4dcc3204c3a1"
+        },
+        "scene_id": "scene-001",
+        "selection_pool": "selected_scene_camera_representatives",
+        "sim_time_ns": 3016666667
+      }
+    },
+    {
+      "selection_entry_id": "entry-042",
+      "base_expected_entry": {
+        "scene_id": "scene-000",
+        "camera_id": "amr_follow",
+        "capture_id": "scene-000--f000000124--t000002066666667",
+        "evidence_kind": "leaf_occlusion_bin",
+        "rgb_path": "scenes/scene-000/captures/f000000124-t000002066666667/amr_follow/rgb.png",
+        "rgb_sha256": "0a9e6c06695bb994128123ca505a445b9cc18b9e10f7e9fe1d77f335dbab0ba4",
+        "evidence_source": "dataset_rgb",
+        "reviewer_type": "ai",
+        "human_release_approved": false,
+        "production_passed": false,
+        "physical_contact_verified": false,
+        "robot_ground_contact_verified": false,
+        "occlusion_raw_path": "scenes/scene-000/captures/f000000124-t000002066666667/amr_follow/occlusion.raw.json",
+        "occlusion_raw_sha256": "197668b9afca693c53b418d2544865b7c61f433346ca34841427e5fbbc1c4abf",
+        "occlusion_bin": "clear",
+        "renderer_instance_id": 12,
+        "leaf_prim_path": "/World/Visuals/PROCESS_1/GuardPostFL",
+        "labelled_root_path": "/World/Visuals/PROCESS_1"
+      },
+      "selected_evidence": {
+        "camera_id": "amr_follow",
+        "camera_params": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-000\\captures\\f000000124-t000002066666667\\amr_follow\\camera_params.json",
+          "bytes": 2835,
+          "path": "scenes/scene-000/captures/f000000124-t000002066666667/amr_follow/camera_params.json",
+          "sha256": "cfed50ae8ad311aa6aee45eec221ea636af8ee3743bbdb6062e6c099ae4b778c"
+        },
+        "capture_id": "scene-000--f000000124--t000002066666667",
+        "capture_record": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-000\\captures\\f000000124-t000002066666667\\capture.json",
+          "bytes": 4771,
+          "path": "scenes/scene-000/captures/f000000124-t000002066666667/capture.json",
+          "sha256": "405cdb94bd24dee1f954c93a34f55142ff46ed4ba879427a5078d5de7d5f4cbe"
+        },
+        "evidence_kind": "leaf_occlusion_bin",
+        "instance_id": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-000\\captures\\f000000124-t000002066666667\\amr_follow\\instance-id.npy",
+          "bytes": 3686528,
+          "path": "scenes/scene-000/captures/f000000124-t000002066666667/amr_follow/instance-id.npy",
+          "sha256": "a556214f2563bef65398fe9c38b51be25b6995a2268b88c39c8536d5bc50aba6"
+        },
+        "instance_id_info": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-000\\captures\\f000000124-t000002066666667\\amr_follow\\instance-id.raw-info.json",
+          "bytes": 69808,
+          "path": "scenes/scene-000/captures/f000000124-t000002066666667/amr_follow/instance-id.raw-info.json",
+          "sha256": "7091bf5b8e40c9827c35bcc93d084fd0021cad379f29cab1a365bc4092160f83"
+        },
+        "leaf": {
+          "class": "process_equipment",
+          "labelled_root_path": "/World/Visuals/PROCESS_1",
+          "leaf_prim_path": "/World/Visuals/PROCESS_1/GuardPostFL",
+          "occlusion_ratio": 0.0429999977350235,
+          "occlusion_raw_value": 0.0429999977350235,
+          "occlusion_status": "measured_leaf",
+          "render_tile_id_raw": 0,
+          "renderer_instance_id": 12,
+          "visible_in_instance_id_mask": true
+        },
+        "normalized": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-000\\captures\\f000000124-t000002066666667\\amr_follow\\normalized.json",
+          "bytes": 553821,
+          "path": "scenes/scene-000/captures/f000000124-t000002066666667/amr_follow/normalized.json",
+          "sha256": "cdcc1922347836e2bbcef0f6b4e8786160726aa92a654e713b739961783de985"
+        },
+        "occlusion_bin": "clear",
+        "occlusion_raw": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-000\\captures\\f000000124-t000002066666667\\amr_follow\\occlusion.raw.json",
+          "bytes": 110124,
+          "path": "scenes/scene-000/captures/f000000124-t000002066666667/amr_follow/occlusion.raw.json",
+          "sha256": "197668b9afca693c53b418d2544865b7c61f433346ca34841427e5fbbc1c4abf"
+        },
+        "physics_frame": 124,
+        "raw_occlusion_record": {
+          "instanceId": 12,
+          "occlusionRatio": 0.0429999977350235,
+          "semanticId": 0
+        },
+        "renderer_uri_raw": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-000\\captures\\f000000124-t000002066666667\\amr_follow\\renderer-instance-uri.raw.json",
+          "bytes": 79674,
+          "path": "scenes/scene-000/captures/f000000124-t000002066666667/amr_follow/renderer-instance-uri.raw.json",
+          "sha256": "bb3cdb5f9363d7605e07917b1380a304d1f2e1037295cd5b0d34d1d4b5a6c03c"
+        },
+        "rgb": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-000\\captures\\f000000124-t000002066666667\\amr_follow\\rgb.png",
+          "bytes": 511146,
+          "path": "scenes/scene-000/captures/f000000124-t000002066666667/amr_follow/rgb.png",
+          "sha256": "0a9e6c06695bb994128123ca505a445b9cc18b9e10f7e9fe1d77f335dbab0ba4"
+        },
+        "scene_id": "scene-000",
+        "selection_pool": "selected_scene_camera_representatives",
+        "sim_time_ns": 2066666667
+      }
+    },
+    {
+      "selection_entry_id": "entry-043",
+      "base_expected_entry": {
+        "scene_id": "scene-000",
+        "camera_id": "amr_follow",
+        "capture_id": "scene-000--f000000124--t000002066666667",
+        "evidence_kind": "leaf_occlusion_bin",
+        "rgb_path": "scenes/scene-000/captures/f000000124-t000002066666667/amr_follow/rgb.png",
+        "rgb_sha256": "0a9e6c06695bb994128123ca505a445b9cc18b9e10f7e9fe1d77f335dbab0ba4",
+        "evidence_source": "dataset_rgb",
+        "reviewer_type": "ai",
+        "human_release_approved": false,
+        "production_passed": false,
+        "physical_contact_verified": false,
+        "robot_ground_contact_verified": false,
+        "occlusion_raw_path": "scenes/scene-000/captures/f000000124-t000002066666667/amr_follow/occlusion.raw.json",
+        "occlusion_raw_sha256": "197668b9afca693c53b418d2544865b7c61f433346ca34841427e5fbbc1c4abf",
+        "occlusion_bin": "partial",
+        "renderer_instance_id": 1991,
+        "leaf_prim_path": "/World/Carter1/chassis_link/sensors/back_hawk/meshes/Lenses/Lenses",
+        "labelled_root_path": "/World/Carter1"
+      },
+      "selected_evidence": {
+        "camera_id": "amr_follow",
+        "camera_params": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-000\\captures\\f000000124-t000002066666667\\amr_follow\\camera_params.json",
+          "bytes": 2835,
+          "path": "scenes/scene-000/captures/f000000124-t000002066666667/amr_follow/camera_params.json",
+          "sha256": "cfed50ae8ad311aa6aee45eec221ea636af8ee3743bbdb6062e6c099ae4b778c"
+        },
+        "capture_id": "scene-000--f000000124--t000002066666667",
+        "capture_record": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-000\\captures\\f000000124-t000002066666667\\capture.json",
+          "bytes": 4771,
+          "path": "scenes/scene-000/captures/f000000124-t000002066666667/capture.json",
+          "sha256": "405cdb94bd24dee1f954c93a34f55142ff46ed4ba879427a5078d5de7d5f4cbe"
+        },
+        "evidence_kind": "leaf_occlusion_bin",
+        "instance_id": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-000\\captures\\f000000124-t000002066666667\\amr_follow\\instance-id.npy",
+          "bytes": 3686528,
+          "path": "scenes/scene-000/captures/f000000124-t000002066666667/amr_follow/instance-id.npy",
+          "sha256": "a556214f2563bef65398fe9c38b51be25b6995a2268b88c39c8536d5bc50aba6"
+        },
+        "instance_id_info": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-000\\captures\\f000000124-t000002066666667\\amr_follow\\instance-id.raw-info.json",
+          "bytes": 69808,
+          "path": "scenes/scene-000/captures/f000000124-t000002066666667/amr_follow/instance-id.raw-info.json",
+          "sha256": "7091bf5b8e40c9827c35bcc93d084fd0021cad379f29cab1a365bc4092160f83"
+        },
+        "leaf": {
+          "class": "amr",
+          "labelled_root_path": "/World/Carter1",
+          "leaf_prim_path": "/World/Carter1/chassis_link/sensors/back_hawk/meshes/Lenses/Lenses",
+          "occlusion_ratio": 0.30559998750686646,
+          "occlusion_raw_value": 0.30559998750686646,
+          "occlusion_status": "measured_leaf",
+          "render_tile_id_raw": 0,
+          "renderer_instance_id": 1991,
+          "visible_in_instance_id_mask": true
+        },
+        "normalized": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-000\\captures\\f000000124-t000002066666667\\amr_follow\\normalized.json",
+          "bytes": 553821,
+          "path": "scenes/scene-000/captures/f000000124-t000002066666667/amr_follow/normalized.json",
+          "sha256": "cdcc1922347836e2bbcef0f6b4e8786160726aa92a654e713b739961783de985"
+        },
+        "occlusion_bin": "partial",
+        "occlusion_raw": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-000\\captures\\f000000124-t000002066666667\\amr_follow\\occlusion.raw.json",
+          "bytes": 110124,
+          "path": "scenes/scene-000/captures/f000000124-t000002066666667/amr_follow/occlusion.raw.json",
+          "sha256": "197668b9afca693c53b418d2544865b7c61f433346ca34841427e5fbbc1c4abf"
+        },
+        "physics_frame": 124,
+        "raw_occlusion_record": {
+          "instanceId": 1991,
+          "occlusionRatio": 0.30559998750686646,
+          "semanticId": 0
+        },
+        "renderer_uri_raw": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-000\\captures\\f000000124-t000002066666667\\amr_follow\\renderer-instance-uri.raw.json",
+          "bytes": 79674,
+          "path": "scenes/scene-000/captures/f000000124-t000002066666667/amr_follow/renderer-instance-uri.raw.json",
+          "sha256": "bb3cdb5f9363d7605e07917b1380a304d1f2e1037295cd5b0d34d1d4b5a6c03c"
+        },
+        "rgb": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-000\\captures\\f000000124-t000002066666667\\amr_follow\\rgb.png",
+          "bytes": 511146,
+          "path": "scenes/scene-000/captures/f000000124-t000002066666667/amr_follow/rgb.png",
+          "sha256": "0a9e6c06695bb994128123ca505a445b9cc18b9e10f7e9fe1d77f335dbab0ba4"
+        },
+        "scene_id": "scene-000",
+        "selection_pool": "selected_scene_camera_representatives",
+        "sim_time_ns": 2066666667
+      }
+    },
+    {
+      "selection_entry_id": "entry-044",
+      "base_expected_entry": {
+        "scene_id": "scene-000",
+        "camera_id": "amr_follow",
+        "capture_id": "scene-000--f000000124--t000002066666667",
+        "evidence_kind": "leaf_occlusion_bin",
+        "rgb_path": "scenes/scene-000/captures/f000000124-t000002066666667/amr_follow/rgb.png",
+        "rgb_sha256": "0a9e6c06695bb994128123ca505a445b9cc18b9e10f7e9fe1d77f335dbab0ba4",
+        "evidence_source": "dataset_rgb",
+        "reviewer_type": "ai",
+        "human_release_approved": false,
+        "production_passed": false,
+        "physical_contact_verified": false,
+        "robot_ground_contact_verified": false,
+        "occlusion_raw_path": "scenes/scene-000/captures/f000000124-t000002066666667/amr_follow/occlusion.raw.json",
+        "occlusion_raw_sha256": "197668b9afca693c53b418d2544865b7c61f433346ca34841427e5fbbc1c4abf",
+        "occlusion_bin": "heavy",
+        "renderer_instance_id": 2368,
+        "leaf_prim_path": "/World/Carter2/wheel_right/visual/backwheel",
+        "labelled_root_path": "/World/Carter2"
+      },
+      "selected_evidence": {
+        "camera_id": "amr_follow",
+        "camera_params": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-000\\captures\\f000000124-t000002066666667\\amr_follow\\camera_params.json",
+          "bytes": 2835,
+          "path": "scenes/scene-000/captures/f000000124-t000002066666667/amr_follow/camera_params.json",
+          "sha256": "cfed50ae8ad311aa6aee45eec221ea636af8ee3743bbdb6062e6c099ae4b778c"
+        },
+        "capture_id": "scene-000--f000000124--t000002066666667",
+        "capture_record": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-000\\captures\\f000000124-t000002066666667\\capture.json",
+          "bytes": 4771,
+          "path": "scenes/scene-000/captures/f000000124-t000002066666667/capture.json",
+          "sha256": "405cdb94bd24dee1f954c93a34f55142ff46ed4ba879427a5078d5de7d5f4cbe"
+        },
+        "evidence_kind": "leaf_occlusion_bin",
+        "instance_id": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-000\\captures\\f000000124-t000002066666667\\amr_follow\\instance-id.npy",
+          "bytes": 3686528,
+          "path": "scenes/scene-000/captures/f000000124-t000002066666667/amr_follow/instance-id.npy",
+          "sha256": "a556214f2563bef65398fe9c38b51be25b6995a2268b88c39c8536d5bc50aba6"
+        },
+        "instance_id_info": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-000\\captures\\f000000124-t000002066666667\\amr_follow\\instance-id.raw-info.json",
+          "bytes": 69808,
+          "path": "scenes/scene-000/captures/f000000124-t000002066666667/amr_follow/instance-id.raw-info.json",
+          "sha256": "7091bf5b8e40c9827c35bcc93d084fd0021cad379f29cab1a365bc4092160f83"
+        },
+        "leaf": {
+          "class": "amr",
+          "labelled_root_path": "/World/Carter2",
+          "leaf_prim_path": "/World/Carter2/wheel_right/visual/backwheel",
+          "occlusion_ratio": 0.7475999593734741,
+          "occlusion_raw_value": 0.7475999593734741,
+          "occlusion_status": "measured_leaf",
+          "render_tile_id_raw": 0,
+          "renderer_instance_id": 2368,
+          "visible_in_instance_id_mask": true
+        },
+        "normalized": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-000\\captures\\f000000124-t000002066666667\\amr_follow\\normalized.json",
+          "bytes": 553821,
+          "path": "scenes/scene-000/captures/f000000124-t000002066666667/amr_follow/normalized.json",
+          "sha256": "cdcc1922347836e2bbcef0f6b4e8786160726aa92a654e713b739961783de985"
+        },
+        "occlusion_bin": "heavy",
+        "occlusion_raw": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-000\\captures\\f000000124-t000002066666667\\amr_follow\\occlusion.raw.json",
+          "bytes": 110124,
+          "path": "scenes/scene-000/captures/f000000124-t000002066666667/amr_follow/occlusion.raw.json",
+          "sha256": "197668b9afca693c53b418d2544865b7c61f433346ca34841427e5fbbc1c4abf"
+        },
+        "physics_frame": 124,
+        "raw_occlusion_record": {
+          "instanceId": 2368,
+          "occlusionRatio": 0.7475999593734741,
+          "semanticId": 0
+        },
+        "renderer_uri_raw": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-000\\captures\\f000000124-t000002066666667\\amr_follow\\renderer-instance-uri.raw.json",
+          "bytes": 79674,
+          "path": "scenes/scene-000/captures/f000000124-t000002066666667/amr_follow/renderer-instance-uri.raw.json",
+          "sha256": "bb3cdb5f9363d7605e07917b1380a304d1f2e1037295cd5b0d34d1d4b5a6c03c"
+        },
+        "rgb": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-000\\captures\\f000000124-t000002066666667\\amr_follow\\rgb.png",
+          "bytes": 511146,
+          "path": "scenes/scene-000/captures/f000000124-t000002066666667/amr_follow/rgb.png",
+          "sha256": "0a9e6c06695bb994128123ca505a445b9cc18b9e10f7e9fe1d77f335dbab0ba4"
+        },
+        "scene_id": "scene-000",
+        "selection_pool": "selected_scene_camera_representatives",
+        "sim_time_ns": 2066666667
+      }
+    },
+    {
+      "selection_entry_id": "entry-045",
+      "base_expected_entry": {
+        "scene_id": "scene-000",
+        "camera_id": "overhead",
+        "capture_id": "scene-000--f000000212--t000003533333333",
+        "evidence_kind": "compound_root_unknown",
+        "rgb_path": "scenes/scene-000/captures/f000000212-t000003533333333/overhead/rgb.png",
+        "rgb_sha256": "dc7c9fa28afd206fcc180873b141bb568f6a26e313cdb91131c3175c833af50e",
+        "evidence_source": "dataset_rgb",
+        "reviewer_type": "ai",
+        "human_release_approved": false,
+        "production_passed": false,
+        "physical_contact_verified": false,
+        "robot_ground_contact_verified": false,
+        "occlusion_raw_path": "scenes/scene-000/captures/f000000212-t000003533333333/overhead/occlusion.raw.json",
+        "occlusion_raw_sha256": "3323881a2e019f0391587a6ef712f9d425bfca1c3fe2629864ad18192117c966",
+        "labelled_root_path": "/World/Visuals/PROCESS_2"
+      },
+      "selected_evidence": {
+        "camera_id": "overhead",
+        "camera_params": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-000\\captures\\f000000212-t000003533333333\\overhead\\camera_params.json",
+          "bytes": 2879,
+          "path": "scenes/scene-000/captures/f000000212-t000003533333333/overhead/camera_params.json",
+          "sha256": "af7c2d9b140303fa5c326909286c9d4c91a90f5d27073b54e37da946ed8a61a2"
+        },
+        "capture_id": "scene-000--f000000212--t000003533333333",
+        "capture_record": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-000\\captures\\f000000212-t000003533333333\\capture.json",
+          "bytes": 4757,
+          "path": "scenes/scene-000/captures/f000000212-t000003533333333/capture.json",
+          "sha256": "5697f6f13e8d4aec7445bd7113c8cc0a245f46deb081f2f8856254df1596c255"
+        },
+        "evidence_kind": "compound_root_unknown",
+        "instance_id": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-000\\captures\\f000000212-t000003533333333\\overhead\\instance-id.npy",
+          "bytes": 3686528,
+          "path": "scenes/scene-000/captures/f000000212-t000003533333333/overhead/instance-id.npy",
+          "sha256": "6783278b7b47580570977e97832636570a76707ad9a82cce410e7394f5cd29a1"
+        },
+        "instance_id_info": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-000\\captures\\f000000212-t000003533333333\\overhead\\instance-id.raw-info.json",
+          "bytes": 69806,
+          "path": "scenes/scene-000/captures/f000000212-t000003533333333/overhead/instance-id.raw-info.json",
+          "sha256": "c5c88c65b7a9ec98c78c7dcf6f28e1629f78dde8ea050647fb0c91ddc22909a5"
+        },
+        "normalized": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-000\\captures\\f000000212-t000003533333333\\overhead\\normalized.json",
+          "bytes": 716265,
+          "path": "scenes/scene-000/captures/f000000212-t000003533333333/overhead/normalized.json",
+          "sha256": "5b4fafe09338f7b23068c7db329ccfd58d0d3ac7b2f77567fb35f06ebe4d95b7"
+        },
+        "occlusion_raw": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-000\\captures\\f000000212-t000003533333333\\overhead\\occlusion.raw.json",
+          "bytes": 120396,
+          "path": "scenes/scene-000/captures/f000000212-t000003533333333/overhead/occlusion.raw.json",
+          "sha256": "3323881a2e019f0391587a6ef712f9d425bfca1c3fe2629864ad18192117c966"
+        },
+        "physics_frame": 212,
+        "renderer_uri_raw": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-000\\captures\\f000000212-t000003533333333\\overhead\\renderer-instance-uri.raw.json",
+          "bytes": 79672,
+          "path": "scenes/scene-000/captures/f000000212-t000003533333333/overhead/renderer-instance-uri.raw.json",
+          "sha256": "c540c1fa66ff99645295650b39a3e1949472162f0a6de911e5e925dbb714911b"
+        },
+        "rgb": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-000\\captures\\f000000212-t000003533333333\\overhead\\rgb.png",
+          "bytes": 557200,
+          "path": "scenes/scene-000/captures/f000000212-t000003533333333/overhead/rgb.png",
+          "sha256": "dc7c9fa28afd206fcc180873b141bb568f6a26e313cdb91131c3175c833af50e"
+        },
+        "root": {
+          "class": "process_equipment",
+          "labelled_root_path": "/World/Visuals/PROCESS_2",
+          "occlusion_status": "compound_root_unknown",
+          "renderer_leaf_count": 18,
+          "true_compound_occlusion_ratio": null
+        },
+        "scene_id": "scene-000",
+        "selection_pool": "selected_scene_camera_representatives",
+        "sim_time_ns": 3533333333,
+        "visible_measured_descendants": 18
+      }
+    },
+    {
+      "selection_entry_id": "entry-046",
+      "base_expected_entry": {
+        "scene_id": "scene-003",
+        "camera_id": "aisle",
+        "capture_id": "scene-003--f000000124--t000002066666667",
+        "evidence_kind": "compound_root_unknown",
+        "rgb_path": "scenes/scene-003/captures/f000000124-t000002066666667/aisle/rgb.png",
+        "rgb_sha256": "cd098013d95fa45c198b23c9d71a793148c5a559ca58f25c304a3a5fe8f6983f",
+        "evidence_source": "dataset_rgb",
+        "reviewer_type": "ai",
+        "human_release_approved": false,
+        "production_passed": false,
+        "physical_contact_verified": false,
+        "robot_ground_contact_verified": false,
+        "occlusion_raw_path": "scenes/scene-003/captures/f000000124-t000002066666667/aisle/occlusion.raw.json",
+        "occlusion_raw_sha256": "341c8e9d01acf65e106b61d70a23dc9e876abe25fef6ba135749c3d5f8b15aec",
+        "labelled_root_path": "/World/Visuals/PROCESS_3"
+      },
+      "selected_evidence": {
+        "camera_id": "aisle",
+        "camera_params": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-003\\captures\\f000000124-t000002066666667\\aisle\\camera_params.json",
+          "bytes": 2878,
+          "path": "scenes/scene-003/captures/f000000124-t000002066666667/aisle/camera_params.json",
+          "sha256": "991e2796d76e6929977fa0b9e568afca9469c5c6bb1ba83a0a9ac15e35a14d96"
+        },
+        "capture_id": "scene-003--f000000124--t000002066666667",
+        "capture_record": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-003\\captures\\f000000124-t000002066666667\\capture.json",
+          "bytes": 4771,
+          "path": "scenes/scene-003/captures/f000000124-t000002066666667/capture.json",
+          "sha256": "4dbbfed9d7cec544793a16b002585da2cc734831a51ff06f9c1697397598afeb"
+        },
+        "evidence_kind": "compound_root_unknown",
+        "instance_id": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-003\\captures\\f000000124-t000002066666667\\aisle\\instance-id.npy",
+          "bytes": 3686528,
+          "path": "scenes/scene-003/captures/f000000124-t000002066666667/aisle/instance-id.npy",
+          "sha256": "76798f74d1eb2e6418cf4c903f8f59b6ad870ba00ad5caa6370ef05aa95f130a"
+        },
+        "instance_id_info": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-003\\captures\\f000000124-t000002066666667\\aisle\\instance-id.raw-info.json",
+          "bytes": 68860,
+          "path": "scenes/scene-003/captures/f000000124-t000002066666667/aisle/instance-id.raw-info.json",
+          "sha256": "5c6170de3fbba4ac84cb791bb5c718619623631088ad2f99d46437846ad8ecfe"
+        },
+        "normalized": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-003\\captures\\f000000124-t000002066666667\\aisle\\normalized.json",
+          "bytes": 604137,
+          "path": "scenes/scene-003/captures/f000000124-t000002066666667/aisle/normalized.json",
+          "sha256": "51b4d0ad975464eb952af4c081cb89edaa205c830bc7468d83fb0992aa86ee3c"
+        },
+        "occlusion_raw": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-003\\captures\\f000000124-t000002066666667\\aisle\\occlusion.raw.json",
+          "bytes": 111674,
+          "path": "scenes/scene-003/captures/f000000124-t000002066666667/aisle/occlusion.raw.json",
+          "sha256": "341c8e9d01acf65e106b61d70a23dc9e876abe25fef6ba135749c3d5f8b15aec"
+        },
+        "physics_frame": 124,
+        "renderer_uri_raw": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-003\\captures\\f000000124-t000002066666667\\aisle\\renderer-instance-uri.raw.json",
+          "bytes": 77797,
+          "path": "scenes/scene-003/captures/f000000124-t000002066666667/aisle/renderer-instance-uri.raw.json",
+          "sha256": "0089abd4f398e241287d897558388f81fdc9f0a56bb002e2d631fc3a051eb145"
+        },
+        "rgb": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-003\\captures\\f000000124-t000002066666667\\aisle\\rgb.png",
+          "bytes": 489079,
+          "path": "scenes/scene-003/captures/f000000124-t000002066666667/aisle/rgb.png",
+          "sha256": "cd098013d95fa45c198b23c9d71a793148c5a559ca58f25c304a3a5fe8f6983f"
+        },
+        "root": {
+          "class": "process_equipment",
+          "labelled_root_path": "/World/Visuals/PROCESS_3",
+          "occlusion_status": "compound_root_unknown",
+          "renderer_leaf_count": 19,
+          "true_compound_occlusion_ratio": null
+        },
+        "scene_id": "scene-003",
+        "selection_pool": "selected_scene_camera_representatives",
+        "sim_time_ns": 2066666667,
+        "visible_measured_descendants": 19
+      }
+    },
+    {
+      "selection_entry_id": "entry-047",
+      "base_expected_entry": {
+        "scene_id": "scene-000",
+        "camera_id": "amr_follow",
+        "capture_id": "scene-000--f000000124--t000002066666667",
+        "evidence_kind": "compound_root_unknown",
+        "rgb_path": "scenes/scene-000/captures/f000000124-t000002066666667/amr_follow/rgb.png",
+        "rgb_sha256": "0a9e6c06695bb994128123ca505a445b9cc18b9e10f7e9fe1d77f335dbab0ba4",
+        "evidence_source": "dataset_rgb",
+        "reviewer_type": "ai",
+        "human_release_approved": false,
+        "production_passed": false,
+        "physical_contact_verified": false,
+        "robot_ground_contact_verified": false,
+        "occlusion_raw_path": "scenes/scene-000/captures/f000000124-t000002066666667/amr_follow/occlusion.raw.json",
+        "occlusion_raw_sha256": "197668b9afca693c53b418d2544865b7c61f433346ca34841427e5fbbc1c4abf",
+        "labelled_root_path": "/World/Carter1"
+      },
+      "selected_evidence": {
+        "camera_id": "amr_follow",
+        "camera_params": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-000\\captures\\f000000124-t000002066666667\\amr_follow\\camera_params.json",
+          "bytes": 2835,
+          "path": "scenes/scene-000/captures/f000000124-t000002066666667/amr_follow/camera_params.json",
+          "sha256": "cfed50ae8ad311aa6aee45eec221ea636af8ee3743bbdb6062e6c099ae4b778c"
+        },
+        "capture_id": "scene-000--f000000124--t000002066666667",
+        "capture_record": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-000\\captures\\f000000124-t000002066666667\\capture.json",
+          "bytes": 4771,
+          "path": "scenes/scene-000/captures/f000000124-t000002066666667/capture.json",
+          "sha256": "405cdb94bd24dee1f954c93a34f55142ff46ed4ba879427a5078d5de7d5f4cbe"
+        },
+        "evidence_kind": "compound_root_unknown",
+        "instance_id": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-000\\captures\\f000000124-t000002066666667\\amr_follow\\instance-id.npy",
+          "bytes": 3686528,
+          "path": "scenes/scene-000/captures/f000000124-t000002066666667/amr_follow/instance-id.npy",
+          "sha256": "a556214f2563bef65398fe9c38b51be25b6995a2268b88c39c8536d5bc50aba6"
+        },
+        "instance_id_info": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-000\\captures\\f000000124-t000002066666667\\amr_follow\\instance-id.raw-info.json",
+          "bytes": 69808,
+          "path": "scenes/scene-000/captures/f000000124-t000002066666667/amr_follow/instance-id.raw-info.json",
+          "sha256": "7091bf5b8e40c9827c35bcc93d084fd0021cad379f29cab1a365bc4092160f83"
+        },
+        "normalized": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-000\\captures\\f000000124-t000002066666667\\amr_follow\\normalized.json",
+          "bytes": 553821,
+          "path": "scenes/scene-000/captures/f000000124-t000002066666667/amr_follow/normalized.json",
+          "sha256": "cdcc1922347836e2bbcef0f6b4e8786160726aa92a654e713b739961783de985"
+        },
+        "occlusion_raw": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-000\\captures\\f000000124-t000002066666667\\amr_follow\\occlusion.raw.json",
+          "bytes": 110124,
+          "path": "scenes/scene-000/captures/f000000124-t000002066666667/amr_follow/occlusion.raw.json",
+          "sha256": "197668b9afca693c53b418d2544865b7c61f433346ca34841427e5fbbc1c4abf"
+        },
+        "physics_frame": 124,
+        "renderer_uri_raw": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-000\\captures\\f000000124-t000002066666667\\amr_follow\\renderer-instance-uri.raw.json",
+          "bytes": 79674,
+          "path": "scenes/scene-000/captures/f000000124-t000002066666667/amr_follow/renderer-instance-uri.raw.json",
+          "sha256": "bb3cdb5f9363d7605e07917b1380a304d1f2e1037295cd5b0d34d1d4b5a6c03c"
+        },
+        "rgb": {
+          "absolute_path": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-008\\payload\\results\\g4-render-004\\scenes\\scene-000\\captures\\f000000124-t000002066666667\\amr_follow\\rgb.png",
+          "bytes": 511146,
+          "path": "scenes/scene-000/captures/f000000124-t000002066666667/amr_follow/rgb.png",
+          "sha256": "0a9e6c06695bb994128123ca505a445b9cc18b9e10f7e9fe1d77f335dbab0ba4"
+        },
+        "root": {
+          "class": "amr",
+          "labelled_root_path": "/World/Carter1",
+          "occlusion_status": "compound_root_unknown",
+          "renderer_leaf_count": 26,
+          "true_compound_occlusion_ratio": null
+        },
+        "scene_id": "scene-000",
+        "selection_pool": "selected_scene_camera_representatives",
+        "sim_time_ns": 2066666667,
+        "visible_measured_descendants": 20
+      }
+    }
+  ],
+  "required_review_scope": "portfolio_qa_only",
+  "instructions": [
+    "Actually view every assigned original 1280x720 RGB at original detail; do not infer visual quality from metadata alone.",
+    "Keep the frozen selection and original files unchanged. Give actual pass/fail observations for every assigned entry.",
+    "Read capture/camera/normalized and raw leaf evidence where needed for context; whole-dataset numeric QA is separate.",
+    "Report observed defects honestly. Do not switch representatives or auto-generate pass verdicts.",
+    "Apparent visual contact is not physical contact measurement. Keep human, production and physical approval flags false.",
+    "Model identity must come from the installed native vision role catalog or actual runtime, never invented host attestation."
+  ]
+}

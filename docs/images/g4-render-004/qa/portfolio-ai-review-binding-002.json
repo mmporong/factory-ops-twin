@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "checked_at_utc": "2026-10-18T02:31:19.978717+00:00",
+  "classification": "binding and coverage of actual AI portfolio visual reviews; full numeric QA separate",
+  "status": "passed",
+  "errors": [],
+  "validator_stats": {
+    "reviewed_scene_cameras": 36,
+    "reviewer_type": "ai",
+    "declared_model": "gpt-5.6-sol",
+    "sidecar_sha256": "1a38c85051749f928bdc95d62005416feef841fe1c3c20fbd1deb22e350a293e",
+    "validator": {
+      "path": "factory_ops/dataset_review.py",
+      "sha256": "f9b389c5e5119fb6e8710b95d23470f4df306088cccfca1127a3076d6e3acc9d"
+    }
+  },
+  "output": "D:\\FactoryOpsArtifacts\\portfolio-qa\\g4-render-004-001\\portfolio-ai-review-002.json",
+  "output_sha256": "1a38c85051749f928bdc95d62005416feef841fe1c3c20fbd1deb22e350a293e",
+  "entry_count": 48,
+  "actual_original_rgb_views": 36,
+  "evidence_counts": {
+    "scene_camera_review": 36,
+    "leaf_occlusion_bin": 9,
+    "compound_root_unknown": 3
+  },
+  "contact_assessments": {
+    "not_observable": 21,
+    "visible_consistent": 27
+  },
+  "source_files_pre_post_unchanged": 504,
+  "human_release_approved": false,
+  "production_passed": false,
+  "physical_contact_evidence": false
+}

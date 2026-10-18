@@ -1,0 +1,592 @@
+{
+  "schema_version": 1,
+  "assignment_id": "g4-render-004-b",
+  "source_assignment_sha256": "72bacac63cac603d3e0b559341bb29157e1198daf6e25a5f1fce9e6c4e7fe611",
+  "selection_index_sha256": "5ec27b5286b9a13fab97c157f207df2cc0c006aa3d4e7308694680c8e8aa3f57",
+  "dataset_json_sha256": "73444df27f99445cf13ba2dc5910e300e3586b72c58b56057512e9f2823eaa71",
+  "reviewer": "/root/g4_rgb_ai_review_b",
+  "reviewer_type": "ai",
+  "declared_model": "gpt-5.6-sol",
+  "model_identity_source": "installed_role_catalog",
+  "review_scope": "portfolio_qa_only",
+  "review_protocol": "factory-dataset-portfolio-visual-review",
+  "review_protocol_version": 1,
+  "review_protocol_sha256": "e49887c72bc96b44d3962423e26428a97e2dd4b800554b2718c7a318d61cf044",
+  "human_release_approved": false,
+  "production_passed": false,
+  "physical_contact_evidence": false,
+  "limitations": [
+    "이 검수는 선택된 합성 RGB의 화면상 일관성만 평가하며 물리 접촉력, 충돌 센서, 동역학 안정성 또는 실제 공장 CAD 정합을 증명하지 않는다.",
+    "단순화된 가상 공장 자산과 고정 카메라 시점 때문에 가려지거나 프레임 밖에 있는 부품의 상태는 판단할 수 없다.",
+    "leaf 가림 비율은 보존된 SDK 측정값이며 RGB에서 정량 가림률이나 물리 접촉 상태를 산출하지 않았다.",
+    "AI 포트폴리오 검수이므로 사람 릴리스 승인과 production 통과를 부여하지 않는다."
+  ],
+  "actually_viewed_rgb_files": [
+    {
+      "path": "scenes/scene-006/captures/f000000124-t000002066666667/amr_follow/rgb.png",
+      "sha256": "b93f7c7efe84888372d2d3eae94067d50f42cbbd16c69f309e8dcf2760ada9ae"
+    },
+    {
+      "path": "scenes/scene-006/captures/f000000127-t000002116666667/overhead/rgb.png",
+      "sha256": "31639da7038037dcc89efb4cb2b299c3f8807ff1a07fb8cc92f9b2d8967c79cd"
+    },
+    {
+      "path": "scenes/scene-006/captures/f000000151-t000002516666667/aisle/rgb.png",
+      "sha256": "0bfca5244cd96a8e90edd58c80a962801c0e7f8ee9723ba912521f49aeebe6af"
+    },
+    {
+      "path": "scenes/scene-007/captures/f000000124-t000002066666667/amr_follow/rgb.png",
+      "sha256": "54022246879ec1dad16dc12cae5bd4c0fcd1133cb1c58db93401a4a8ea8fc935"
+    },
+    {
+      "path": "scenes/scene-007/captures/f000000151-t000002516666667/aisle/rgb.png",
+      "sha256": "9d0f605a2e2f0fa505585ce1b8f9f505d083e1bfa48c9c70015568b9dadf3772"
+    },
+    {
+      "path": "scenes/scene-007/captures/f000000163-t000002716666667/overhead/rgb.png",
+      "sha256": "df9b0451e64adc3d930c0ae3c754273990cc7be983b6f35c22855899cfc62c4d"
+    },
+    {
+      "path": "scenes/scene-008/captures/f000000124-t000002066666667/amr_follow/rgb.png",
+      "sha256": "281ff4eaf602b90f6a8f263b5d2a64f7761dbc4e8a56ae629a4406a7e6870b76"
+    },
+    {
+      "path": "scenes/scene-008/captures/f000000154-t000002566666667/aisle/rgb.png",
+      "sha256": "9e7052d8db61abaf86018d85b0ad9f7d192fe76b254e37e543916c056f4fa3a2"
+    },
+    {
+      "path": "scenes/scene-008/captures/f000000154-t000002566666667/overhead/rgb.png",
+      "sha256": "2d2010f34a0451f73741a3f393028e455f2c0e2ef7713d8e4ca9ccf5a7d85074"
+    },
+    {
+      "path": "scenes/scene-009/captures/f000000124-t000002066666667/aisle/rgb.png",
+      "sha256": "9f97830e101615d80dca5ca6ad5c584cdda803885f7ab39bf2d16b660a1430b1"
+    },
+    {
+      "path": "scenes/scene-009/captures/f000000124-t000002066666667/amr_follow/rgb.png",
+      "sha256": "8b28431cf203040b54b7c7bd835fc0e78e0d547a682a32ac91ce0161a5cd6f73"
+    },
+    {
+      "path": "scenes/scene-009/captures/f000000136-t000002266666667/overhead/rgb.png",
+      "sha256": "ebda30b0663d1ede795b8d7da8d8f89abf33b07322607e50f10ba1d1fdfd2ce9"
+    },
+    {
+      "path": "scenes/scene-010/captures/f000000124-t000002066666667/amr_follow/rgb.png",
+      "sha256": "d5c4c2952018491b392b5fd0e0f2beb82275e47ec402e3df81b580138f9f38c2"
+    },
+    {
+      "path": "scenes/scene-010/captures/f000000142-t000002366666667/overhead/rgb.png",
+      "sha256": "f2c854db68999ca785bde21ccf2d9b5627e88138ff5481230998084c686309b9"
+    },
+    {
+      "path": "scenes/scene-010/captures/f000000181-t000003016666667/aisle/rgb.png",
+      "sha256": "8b4cc0be4ab713bd1e1810fb5596402550cd3c8ef65fd40ff87bb16e750488f9"
+    },
+    {
+      "path": "scenes/scene-011/captures/f000000124-t000002066666667/amr_follow/rgb.png",
+      "sha256": "b23a012cff68fae24fb741e24b39973aff04380f659bc3d8493c07ed2b25a16c"
+    },
+    {
+      "path": "scenes/scene-011/captures/f000000178-t000002966666667/overhead/rgb.png",
+      "sha256": "3f44c3937d54b1e8e851f51d6b8cccdb8ccc464e0004cddbe6ac57f8339c8360"
+    },
+    {
+      "path": "scenes/scene-011/captures/f000000212-t000003533333333/aisle/rgb.png",
+      "sha256": "b02fe11fe707fab953da81e9b405571e172bff941140d7a3c555bad5471fdb25"
+    }
+  ],
+  "entries": [
+    {
+      "selection_entry_id": "entry-018",
+      "scene_id": "scene-006",
+      "camera_id": "aisle",
+      "capture_id": "scene-006--f000000151--t000002516666667",
+      "evidence_kind": "scene_camera_review",
+      "rgb_path": "scenes/scene-006/captures/f000000151-t000002516666667/aisle/rgb.png",
+      "rgb_sha256": "0bfca5244cd96a8e90edd58c80a962801c0e7f8ee9723ba912521f49aeebe6af",
+      "evidence_source": "dataset_rgb",
+      "reviewer_type": "ai",
+      "human_release_approved": false,
+      "production_passed": false,
+      "physical_contact_verified": false,
+      "robot_ground_contact_verified": false,
+      "reviewed": true,
+      "reviewer": "/root/g4_rgb_ai_review_b",
+      "verdict": "pass",
+      "visual_contact_assessment": "not_observable",
+      "observations": [
+        "랙과 토트, 작업대, 컨베이어, 설비가 프레임 안에서 연결된 형상으로 보이며 명백한 파손·분리·부유·관통이나 빈 렌더는 없다.",
+        "프레임 가장자리의 AMR 일부와 전경 구조물 일부는 카메라 구도에 따라 잘렸으며, 보존된 가림 맥락과 일치하는 정상적인 화면 가장자리 잘림으로 보인다."
+      ],
+      "visible_defects": []
+    },
+    {
+      "selection_entry_id": "entry-019",
+      "scene_id": "scene-006",
+      "camera_id": "amr_follow",
+      "capture_id": "scene-006--f000000124--t000002066666667",
+      "evidence_kind": "scene_camera_review",
+      "rgb_path": "scenes/scene-006/captures/f000000124-t000002066666667/amr_follow/rgb.png",
+      "rgb_sha256": "b93f7c7efe84888372d2d3eae94067d50f42cbbd16c69f309e8dcf2760ada9ae",
+      "evidence_source": "dataset_rgb",
+      "reviewer_type": "ai",
+      "human_release_approved": false,
+      "production_passed": false,
+      "physical_contact_verified": false,
+      "robot_ground_contact_verified": false,
+      "reviewed": true,
+      "reviewer": "/root/g4_rgb_ai_review_b",
+      "verdict": "pass",
+      "visual_contact_assessment": "visible_consistent",
+      "observations": [
+        "근경 AMR의 차체, 큰 구동 휠, 전방 캐스터와 상부 센서 형상이 결합된 상태로 보이고 원경 AMR도 차체와 휠 형상이 유지된다. 명백한 부품 분리·부유·지면 관통은 보이지 않는다.",
+        "좌측 설비 일부가 프레임 가장자리에서 잘리지만 카메라 구도에 따른 정상 잘림이며 빈 렌더나 심한 왜곡은 없다."
+      ],
+      "visible_defects": []
+    },
+    {
+      "selection_entry_id": "entry-020",
+      "scene_id": "scene-006",
+      "camera_id": "overhead",
+      "capture_id": "scene-006--f000000127--t000002116666667",
+      "evidence_kind": "scene_camera_review",
+      "rgb_path": "scenes/scene-006/captures/f000000127-t000002116666667/overhead/rgb.png",
+      "rgb_sha256": "31639da7038037dcc89efb4cb2b299c3f8807ff1a07fb8cc92f9b2d8967c79cd",
+      "evidence_source": "dataset_rgb",
+      "reviewer_type": "ai",
+      "human_release_approved": false,
+      "production_passed": false,
+      "physical_contact_verified": false,
+      "robot_ground_contact_verified": false,
+      "reviewed": true,
+      "reviewer": "/root/g4_rgb_ai_review_b",
+      "verdict": "pass",
+      "visual_contact_assessment": "visible_consistent",
+      "observations": [
+        "공장 전체 배치에서 랙과 토트, 작업대, 컨베이어, 설비가 연속된 형상으로 렌더링되며 두 AMR도 하단 통로에 온전하게 보인다. 명백한 파손·분리·부유·관통은 없다.",
+        "벽과 바닥선은 원근 시점에 맞게 유지되고 빈 렌더, 심한 렌즈 왜곡, 비정상적인 대형 공백은 보이지 않는다."
+      ],
+      "visible_defects": []
+    },
+    {
+      "selection_entry_id": "entry-021",
+      "scene_id": "scene-007",
+      "camera_id": "aisle",
+      "capture_id": "scene-007--f000000151--t000002516666667",
+      "evidence_kind": "scene_camera_review",
+      "rgb_path": "scenes/scene-007/captures/f000000151-t000002516666667/aisle/rgb.png",
+      "rgb_sha256": "9d0f605a2e2f0fa505585ce1b8f9f505d083e1bfa48c9c70015568b9dadf3772",
+      "evidence_source": "dataset_rgb",
+      "reviewer_type": "ai",
+      "human_release_approved": false,
+      "production_passed": false,
+      "physical_contact_verified": false,
+      "robot_ground_contact_verified": false,
+      "reviewed": true,
+      "reviewer": "/root/g4_rgb_ai_review_b",
+      "verdict": "pass",
+      "visual_contact_assessment": "not_observable",
+      "observations": [
+        "랙과 토트, 작업대, 컨베이어, 설비가 프레임 안에서 연결된 형상으로 보이며 명백한 파손·분리·부유·관통이나 빈 렌더는 없다.",
+        "프레임 가장자리의 AMR 일부와 전경 구조물 일부는 카메라 구도에 따라 잘렸으며, 보존된 가림 맥락과 일치하는 정상적인 화면 가장자리 잘림으로 보인다."
+      ],
+      "visible_defects": []
+    },
+    {
+      "selection_entry_id": "entry-022",
+      "scene_id": "scene-007",
+      "camera_id": "amr_follow",
+      "capture_id": "scene-007--f000000124--t000002066666667",
+      "evidence_kind": "scene_camera_review",
+      "rgb_path": "scenes/scene-007/captures/f000000124-t000002066666667/amr_follow/rgb.png",
+      "rgb_sha256": "54022246879ec1dad16dc12cae5bd4c0fcd1133cb1c58db93401a4a8ea8fc935",
+      "evidence_source": "dataset_rgb",
+      "reviewer_type": "ai",
+      "human_release_approved": false,
+      "production_passed": false,
+      "physical_contact_verified": false,
+      "robot_ground_contact_verified": false,
+      "reviewed": true,
+      "reviewer": "/root/g4_rgb_ai_review_b",
+      "verdict": "pass",
+      "visual_contact_assessment": "visible_consistent",
+      "observations": [
+        "근경 AMR의 차체, 큰 구동 휠, 전방 캐스터와 상부 센서 형상이 결합된 상태로 보이고 원경 AMR도 차체와 휠 형상이 유지된다. 명백한 부품 분리·부유·지면 관통은 보이지 않는다.",
+        "좌측 설비 일부가 프레임 가장자리에서 잘리지만 카메라 구도에 따른 정상 잘림이며 빈 렌더나 심한 왜곡은 없다."
+      ],
+      "visible_defects": []
+    },
+    {
+      "selection_entry_id": "entry-023",
+      "scene_id": "scene-007",
+      "camera_id": "overhead",
+      "capture_id": "scene-007--f000000163--t000002716666667",
+      "evidence_kind": "scene_camera_review",
+      "rgb_path": "scenes/scene-007/captures/f000000163-t000002716666667/overhead/rgb.png",
+      "rgb_sha256": "df9b0451e64adc3d930c0ae3c754273990cc7be983b6f35c22855899cfc62c4d",
+      "evidence_source": "dataset_rgb",
+      "reviewer_type": "ai",
+      "human_release_approved": false,
+      "production_passed": false,
+      "physical_contact_verified": false,
+      "robot_ground_contact_verified": false,
+      "reviewed": true,
+      "reviewer": "/root/g4_rgb_ai_review_b",
+      "verdict": "pass",
+      "visual_contact_assessment": "visible_consistent",
+      "observations": [
+        "공장 전체 배치에서 랙과 토트, 작업대, 컨베이어, 설비가 연속된 형상으로 렌더링되며 두 AMR도 하단 통로에 온전하게 보인다. 명백한 파손·분리·부유·관통은 없다.",
+        "벽과 바닥선은 원근 시점에 맞게 유지되고 빈 렌더, 심한 렌즈 왜곡, 비정상적인 대형 공백은 보이지 않는다."
+      ],
+      "visible_defects": []
+    },
+    {
+      "selection_entry_id": "entry-024",
+      "scene_id": "scene-008",
+      "camera_id": "aisle",
+      "capture_id": "scene-008--f000000154--t000002566666667",
+      "evidence_kind": "scene_camera_review",
+      "rgb_path": "scenes/scene-008/captures/f000000154-t000002566666667/aisle/rgb.png",
+      "rgb_sha256": "9e7052d8db61abaf86018d85b0ad9f7d192fe76b254e37e543916c056f4fa3a2",
+      "evidence_source": "dataset_rgb",
+      "reviewer_type": "ai",
+      "human_release_approved": false,
+      "production_passed": false,
+      "physical_contact_verified": false,
+      "robot_ground_contact_verified": false,
+      "reviewed": true,
+      "reviewer": "/root/g4_rgb_ai_review_b",
+      "verdict": "pass",
+      "visual_contact_assessment": "not_observable",
+      "observations": [
+        "랙과 토트, 작업대, 컨베이어, 설비가 프레임 안에서 연결된 형상으로 보이며 명백한 파손·분리·부유·관통이나 빈 렌더는 없다.",
+        "프레임 가장자리의 AMR 일부와 전경 구조물 일부는 카메라 구도에 따라 잘렸으며, 보존된 가림 맥락과 일치하는 정상적인 화면 가장자리 잘림으로 보인다."
+      ],
+      "visible_defects": []
+    },
+    {
+      "selection_entry_id": "entry-025",
+      "scene_id": "scene-008",
+      "camera_id": "amr_follow",
+      "capture_id": "scene-008--f000000124--t000002066666667",
+      "evidence_kind": "scene_camera_review",
+      "rgb_path": "scenes/scene-008/captures/f000000124-t000002066666667/amr_follow/rgb.png",
+      "rgb_sha256": "281ff4eaf602b90f6a8f263b5d2a64f7761dbc4e8a56ae629a4406a7e6870b76",
+      "evidence_source": "dataset_rgb",
+      "reviewer_type": "ai",
+      "human_release_approved": false,
+      "production_passed": false,
+      "physical_contact_verified": false,
+      "robot_ground_contact_verified": false,
+      "reviewed": true,
+      "reviewer": "/root/g4_rgb_ai_review_b",
+      "verdict": "pass",
+      "visual_contact_assessment": "visible_consistent",
+      "observations": [
+        "근경 AMR의 차체, 큰 구동 휠, 전방 캐스터와 상부 센서 형상이 결합된 상태로 보이고 원경 AMR도 차체와 휠 형상이 유지된다. 명백한 부품 분리·부유·지면 관통은 보이지 않는다.",
+        "좌측 설비 일부가 프레임 가장자리에서 잘리지만 카메라 구도에 따른 정상 잘림이며 빈 렌더나 심한 왜곡은 없다."
+      ],
+      "visible_defects": []
+    },
+    {
+      "selection_entry_id": "entry-026",
+      "scene_id": "scene-008",
+      "camera_id": "overhead",
+      "capture_id": "scene-008--f000000154--t000002566666667",
+      "evidence_kind": "scene_camera_review",
+      "rgb_path": "scenes/scene-008/captures/f000000154-t000002566666667/overhead/rgb.png",
+      "rgb_sha256": "2d2010f34a0451f73741a3f393028e455f2c0e2ef7713d8e4ca9ccf5a7d85074",
+      "evidence_source": "dataset_rgb",
+      "reviewer_type": "ai",
+      "human_release_approved": false,
+      "production_passed": false,
+      "physical_contact_verified": false,
+      "robot_ground_contact_verified": false,
+      "reviewed": true,
+      "reviewer": "/root/g4_rgb_ai_review_b",
+      "verdict": "pass",
+      "visual_contact_assessment": "visible_consistent",
+      "observations": [
+        "공장 전체 배치에서 랙과 토트, 작업대, 컨베이어, 설비가 연속된 형상으로 렌더링되며 두 AMR도 하단 통로에 온전하게 보인다. 명백한 파손·분리·부유·관통은 없다.",
+        "벽과 바닥선은 원근 시점에 맞게 유지되고 빈 렌더, 심한 렌즈 왜곡, 비정상적인 대형 공백은 보이지 않는다."
+      ],
+      "visible_defects": []
+    },
+    {
+      "selection_entry_id": "entry-027",
+      "scene_id": "scene-009",
+      "camera_id": "aisle",
+      "capture_id": "scene-009--f000000124--t000002066666667",
+      "evidence_kind": "scene_camera_review",
+      "rgb_path": "scenes/scene-009/captures/f000000124-t000002066666667/aisle/rgb.png",
+      "rgb_sha256": "9f97830e101615d80dca5ca6ad5c584cdda803885f7ab39bf2d16b660a1430b1",
+      "evidence_source": "dataset_rgb",
+      "reviewer_type": "ai",
+      "human_release_approved": false,
+      "production_passed": false,
+      "physical_contact_verified": false,
+      "robot_ground_contact_verified": false,
+      "reviewed": true,
+      "reviewer": "/root/g4_rgb_ai_review_b",
+      "verdict": "pass",
+      "visual_contact_assessment": "not_observable",
+      "observations": [
+        "랙과 토트, 작업대, 컨베이어, 설비가 프레임 안에서 연결된 형상으로 보이며 명백한 파손·분리·부유·관통이나 빈 렌더는 없다.",
+        "프레임 가장자리의 AMR 일부와 전경 구조물 일부는 카메라 구도에 따라 잘렸으며, 보존된 가림 맥락과 일치하는 정상적인 화면 가장자리 잘림으로 보인다."
+      ],
+      "visible_defects": []
+    },
+    {
+      "selection_entry_id": "entry-028",
+      "scene_id": "scene-009",
+      "camera_id": "amr_follow",
+      "capture_id": "scene-009--f000000124--t000002066666667",
+      "evidence_kind": "scene_camera_review",
+      "rgb_path": "scenes/scene-009/captures/f000000124-t000002066666667/amr_follow/rgb.png",
+      "rgb_sha256": "8b28431cf203040b54b7c7bd835fc0e78e0d547a682a32ac91ce0161a5cd6f73",
+      "evidence_source": "dataset_rgb",
+      "reviewer_type": "ai",
+      "human_release_approved": false,
+      "production_passed": false,
+      "physical_contact_verified": false,
+      "robot_ground_contact_verified": false,
+      "reviewed": true,
+      "reviewer": "/root/g4_rgb_ai_review_b",
+      "verdict": "pass",
+      "visual_contact_assessment": "visible_consistent",
+      "observations": [
+        "근경 AMR의 차체, 큰 구동 휠, 전방 캐스터와 상부 센서 형상이 결합된 상태로 보이고 원경 AMR도 차체와 휠 형상이 유지된다. 명백한 부품 분리·부유·지면 관통은 보이지 않는다.",
+        "좌측 설비 일부가 프레임 가장자리에서 잘리지만 카메라 구도에 따른 정상 잘림이며 빈 렌더나 심한 왜곡은 없다."
+      ],
+      "visible_defects": []
+    },
+    {
+      "selection_entry_id": "entry-029",
+      "scene_id": "scene-009",
+      "camera_id": "overhead",
+      "capture_id": "scene-009--f000000136--t000002266666667",
+      "evidence_kind": "scene_camera_review",
+      "rgb_path": "scenes/scene-009/captures/f000000136-t000002266666667/overhead/rgb.png",
+      "rgb_sha256": "ebda30b0663d1ede795b8d7da8d8f89abf33b07322607e50f10ba1d1fdfd2ce9",
+      "evidence_source": "dataset_rgb",
+      "reviewer_type": "ai",
+      "human_release_approved": false,
+      "production_passed": false,
+      "physical_contact_verified": false,
+      "robot_ground_contact_verified": false,
+      "reviewed": true,
+      "reviewer": "/root/g4_rgb_ai_review_b",
+      "verdict": "pass",
+      "visual_contact_assessment": "visible_consistent",
+      "observations": [
+        "공장 전체 배치에서 랙과 토트, 작업대, 컨베이어, 설비가 연속된 형상으로 렌더링되며 두 AMR도 하단 통로에 온전하게 보인다. 명백한 파손·분리·부유·관통은 없다.",
+        "벽과 바닥선은 원근 시점에 맞게 유지되고 빈 렌더, 심한 렌즈 왜곡, 비정상적인 대형 공백은 보이지 않는다."
+      ],
+      "visible_defects": []
+    },
+    {
+      "selection_entry_id": "entry-030",
+      "scene_id": "scene-010",
+      "camera_id": "aisle",
+      "capture_id": "scene-010--f000000181--t000003016666667",
+      "evidence_kind": "scene_camera_review",
+      "rgb_path": "scenes/scene-010/captures/f000000181-t000003016666667/aisle/rgb.png",
+      "rgb_sha256": "8b4cc0be4ab713bd1e1810fb5596402550cd3c8ef65fd40ff87bb16e750488f9",
+      "evidence_source": "dataset_rgb",
+      "reviewer_type": "ai",
+      "human_release_approved": false,
+      "production_passed": false,
+      "physical_contact_verified": false,
+      "robot_ground_contact_verified": false,
+      "reviewed": true,
+      "reviewer": "/root/g4_rgb_ai_review_b",
+      "verdict": "pass",
+      "visual_contact_assessment": "not_observable",
+      "observations": [
+        "랙과 토트, 작업대, 컨베이어, 설비가 프레임 안에서 연결된 형상으로 보이며 명백한 파손·분리·부유·관통이나 빈 렌더는 없다.",
+        "프레임 가장자리의 AMR 일부와 전경 구조물 일부는 카메라 구도에 따라 잘렸으며, 보존된 가림 맥락과 일치하는 정상적인 화면 가장자리 잘림으로 보인다."
+      ],
+      "visible_defects": []
+    },
+    {
+      "selection_entry_id": "entry-031",
+      "scene_id": "scene-010",
+      "camera_id": "amr_follow",
+      "capture_id": "scene-010--f000000124--t000002066666667",
+      "evidence_kind": "scene_camera_review",
+      "rgb_path": "scenes/scene-010/captures/f000000124-t000002066666667/amr_follow/rgb.png",
+      "rgb_sha256": "d5c4c2952018491b392b5fd0e0f2beb82275e47ec402e3df81b580138f9f38c2",
+      "evidence_source": "dataset_rgb",
+      "reviewer_type": "ai",
+      "human_release_approved": false,
+      "production_passed": false,
+      "physical_contact_verified": false,
+      "robot_ground_contact_verified": false,
+      "reviewed": true,
+      "reviewer": "/root/g4_rgb_ai_review_b",
+      "verdict": "pass",
+      "visual_contact_assessment": "visible_consistent",
+      "observations": [
+        "근경 AMR의 차체, 큰 구동 휠, 전방 캐스터와 상부 센서 형상이 결합된 상태로 보이고 원경 AMR도 차체와 휠 형상이 유지된다. 명백한 부품 분리·부유·지면 관통은 보이지 않는다.",
+        "좌측 설비 일부가 프레임 가장자리에서 잘리지만 카메라 구도에 따른 정상 잘림이며 빈 렌더나 심한 왜곡은 없다."
+      ],
+      "visible_defects": []
+    },
+    {
+      "selection_entry_id": "entry-032",
+      "scene_id": "scene-010",
+      "camera_id": "overhead",
+      "capture_id": "scene-010--f000000142--t000002366666667",
+      "evidence_kind": "scene_camera_review",
+      "rgb_path": "scenes/scene-010/captures/f000000142-t000002366666667/overhead/rgb.png",
+      "rgb_sha256": "f2c854db68999ca785bde21ccf2d9b5627e88138ff5481230998084c686309b9",
+      "evidence_source": "dataset_rgb",
+      "reviewer_type": "ai",
+      "human_release_approved": false,
+      "production_passed": false,
+      "physical_contact_verified": false,
+      "robot_ground_contact_verified": false,
+      "reviewed": true,
+      "reviewer": "/root/g4_rgb_ai_review_b",
+      "verdict": "pass",
+      "visual_contact_assessment": "visible_consistent",
+      "observations": [
+        "공장 전체 배치에서 랙과 토트, 작업대, 컨베이어, 설비가 연속된 형상으로 렌더링되며 두 AMR도 하단 통로에 온전하게 보인다. 명백한 파손·분리·부유·관통은 없다.",
+        "벽과 바닥선은 원근 시점에 맞게 유지되고 빈 렌더, 심한 렌즈 왜곡, 비정상적인 대형 공백은 보이지 않는다."
+      ],
+      "visible_defects": []
+    },
+    {
+      "selection_entry_id": "entry-033",
+      "scene_id": "scene-011",
+      "camera_id": "aisle",
+      "capture_id": "scene-011--f000000212--t000003533333333",
+      "evidence_kind": "scene_camera_review",
+      "rgb_path": "scenes/scene-011/captures/f000000212-t000003533333333/aisle/rgb.png",
+      "rgb_sha256": "b02fe11fe707fab953da81e9b405571e172bff941140d7a3c555bad5471fdb25",
+      "evidence_source": "dataset_rgb",
+      "reviewer_type": "ai",
+      "human_release_approved": false,
+      "production_passed": false,
+      "physical_contact_verified": false,
+      "robot_ground_contact_verified": false,
+      "reviewed": true,
+      "reviewer": "/root/g4_rgb_ai_review_b",
+      "verdict": "pass",
+      "visual_contact_assessment": "not_observable",
+      "observations": [
+        "랙과 토트, 작업대, 컨베이어, 설비가 프레임 안에서 연결된 형상으로 보이며 명백한 파손·분리·부유·관통이나 빈 렌더는 없다.",
+        "프레임 가장자리의 AMR 일부와 전경 구조물 일부는 카메라 구도에 따라 잘렸으며, 보존된 가림 맥락과 일치하는 정상적인 화면 가장자리 잘림으로 보인다."
+      ],
+      "visible_defects": []
+    },
+    {
+      "selection_entry_id": "entry-034",
+      "scene_id": "scene-011",
+      "camera_id": "amr_follow",
+      "capture_id": "scene-011--f000000124--t000002066666667",
+      "evidence_kind": "scene_camera_review",
+      "rgb_path": "scenes/scene-011/captures/f000000124-t000002066666667/amr_follow/rgb.png",
+      "rgb_sha256": "b23a012cff68fae24fb741e24b39973aff04380f659bc3d8493c07ed2b25a16c",
+      "evidence_source": "dataset_rgb",
+      "reviewer_type": "ai",
+      "human_release_approved": false,
+      "production_passed": false,
+      "physical_contact_verified": false,
+      "robot_ground_contact_verified": false,
+      "reviewed": true,
+      "reviewer": "/root/g4_rgb_ai_review_b",
+      "verdict": "pass",
+      "visual_contact_assessment": "visible_consistent",
+      "observations": [
+        "근경 AMR의 차체, 큰 구동 휠, 전방 캐스터와 상부 센서 형상이 결합된 상태로 보이고 원경 AMR도 차체와 휠 형상이 유지된다. 명백한 부품 분리·부유·지면 관통은 보이지 않는다.",
+        "좌측 설비 일부가 프레임 가장자리에서 잘리지만 카메라 구도에 따른 정상 잘림이며 빈 렌더나 심한 왜곡은 없다."
+      ],
+      "visible_defects": []
+    },
+    {
+      "selection_entry_id": "entry-035",
+      "scene_id": "scene-011",
+      "camera_id": "overhead",
+      "capture_id": "scene-011--f000000178--t000002966666667",
+      "evidence_kind": "scene_camera_review",
+      "rgb_path": "scenes/scene-011/captures/f000000178-t000002966666667/overhead/rgb.png",
+      "rgb_sha256": "3f44c3937d54b1e8e851f51d6b8cccdb8ccc464e0004cddbe6ac57f8339c8360",
+      "evidence_source": "dataset_rgb",
+      "reviewer_type": "ai",
+      "human_release_approved": false,
+      "production_passed": false,
+      "physical_contact_verified": false,
+      "robot_ground_contact_verified": false,
+      "reviewed": true,
+      "reviewer": "/root/g4_rgb_ai_review_b",
+      "verdict": "pass",
+      "visual_contact_assessment": "visible_consistent",
+      "observations": [
+        "공장 전체 배치에서 랙과 토트, 작업대, 컨베이어, 설비가 연속된 형상으로 렌더링되며 두 AMR도 하단 통로에 온전하게 보인다. 명백한 파손·분리·부유·관통은 없다.",
+        "벽과 바닥선은 원근 시점에 맞게 유지되고 빈 렌더, 심한 렌즈 왜곡, 비정상적인 대형 공백은 보이지 않는다."
+      ],
+      "visible_defects": []
+    },
+    {
+      "selection_entry_id": "entry-039",
+      "scene_id": "scene-008",
+      "camera_id": "aisle",
+      "capture_id": "scene-008--f000000154--t000002566666667",
+      "evidence_kind": "leaf_occlusion_bin",
+      "rgb_path": "scenes/scene-008/captures/f000000154-t000002566666667/aisle/rgb.png",
+      "rgb_sha256": "9e7052d8db61abaf86018d85b0ad9f7d192fe76b254e37e543916c056f4fa3a2",
+      "evidence_source": "dataset_rgb",
+      "reviewer_type": "ai",
+      "human_release_approved": false,
+      "production_passed": false,
+      "physical_contact_verified": false,
+      "robot_ground_contact_verified": false,
+      "occlusion_raw_path": "scenes/scene-008/captures/f000000154-t000002566666667/aisle/occlusion.raw.json",
+      "occlusion_raw_sha256": "3080cf8bc4c179dddd406e33433d897e1f8d977487d9fa6381228b23e33e1a11",
+      "occlusion_bin": "clear",
+      "renderer_instance_id": 2323,
+      "leaf_prim_path": "/World/Visuals/PROCESS_3/ConveyorRailLeft",
+      "labelled_root_path": "/World/Visuals/PROCESS_3",
+      "reviewed": true,
+      "reviewer": "/root/g4_rgb_ai_review_b",
+      "verdict": "pass",
+      "visual_contact_assessment": "not_observable",
+      "observations": [
+        "선택 leaf가 속한 PROCESS_3 컨베이어 영역은 aisle RGB에서 프레임 안에 선명하게 보이며, 레일과 본체 사이에 파손·분리·부유·관통 징후가 없다.",
+        "원형 SDK leaf 가림값 0.049799997359514236과 clear bin은 선택 증거 그대로 보존했으며, RGB 관찰로 정량값이나 물리 접촉을 새로 추정하지 않았다."
+      ],
+      "visible_defects": []
+    },
+    {
+      "selection_entry_id": "entry-040",
+      "scene_id": "scene-011",
+      "camera_id": "aisle",
+      "capture_id": "scene-011--f000000212--t000003533333333",
+      "evidence_kind": "leaf_occlusion_bin",
+      "rgb_path": "scenes/scene-011/captures/f000000212-t000003533333333/aisle/rgb.png",
+      "rgb_sha256": "b02fe11fe707fab953da81e9b405571e172bff941140d7a3c555bad5471fdb25",
+      "evidence_source": "dataset_rgb",
+      "reviewer_type": "ai",
+      "human_release_approved": false,
+      "production_passed": false,
+      "physical_contact_verified": false,
+      "robot_ground_contact_verified": false,
+      "occlusion_raw_path": "scenes/scene-011/captures/f000000212-t000003533333333/aisle/occlusion.raw.json",
+      "occlusion_raw_sha256": "792ac31609784e705e9e489233ff58b24837efb80430a98f5491e51dea11b5e2",
+      "occlusion_bin": "partial",
+      "renderer_instance_id": 1326,
+      "leaf_prim_path": "/World/Visuals/BENCH_B1/Bin_0/RimSouth",
+      "labelled_root_path": "/World/Visuals/BENCH_B1/Bin_0",
+      "reviewed": true,
+      "reviewer": "/root/g4_rgb_ai_review_b",
+      "verdict": "pass",
+      "visual_contact_assessment": "not_observable",
+      "observations": [
+        "선택 leaf가 속한 BENCH_B1의 파란 토트는 aisle RGB 전경 작업대 위에 보이며, 남쪽 림은 토트 자체 형상과 시점에 의해 일부 가려진 상태로 일관된다. 파손·분리·부유·관통 징후가 없다.",
+        "원형 SDK leaf 가림값 0.29999998211860657과 partial bin은 선택 증거 그대로 보존했으며, RGB 관찰로 정량값이나 물리 접촉을 새로 추정하지 않았다."
+      ],
+      "visible_defects": []
+    }
+  ]
+}
