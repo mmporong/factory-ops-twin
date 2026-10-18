@@ -23,7 +23,7 @@ from factory_ops.fleet import FleetMission, FleetOrder
 from factory_ops.callback_drain import CallbackDrain
 from factory_ops.fleet_execution import FOLLOW_PATH_NORMALIZATION, StoppedGate, make_chunk, normalize_follow_path_payload, qualify_computed_path, path_content_sha256, path_clock_ready, path_header_stamp_ns
 from factory_ops.fleet_routing import RouteBook, assess_dispatch_route_compatibility, swept_tiles
-from factory_ops.visual_state import canonical_sha256, make_visual_state, project_ledger_state
+from factory_ops.visual_state import canonical_sha256, make_visual_state, project_ledger_state, publish_visual_state
 from factory_ops.g3_session import config_dir_from_session, save, sha, verify_session
 from factory_ops.navigation import GoalPose, LocalizationPose, NavigationError, NavigationResult
 from factory_ops.operations import LedgerConfig, Transition
@@ -1552,7 +1552,7 @@ def main() -> int:
                 visual_state = make_visual_state(
                     visual_snapshot, projected, sequence=visual_sequence, scenario_id=scenario_id,
                     emitted_sim_time_ns=tick_clock_ns, last_event=mission.ledger.events[-1])
-                atomic_json(output / "visual-state.json", visual_state)
+                publish_visual_state(output, visual_state)
                 journal("visual_state_published", {key: visual_state[key] for key in
                     ("sequence", "ledger_seq", "event_hash", "emitted_sim_time_ns", "projection_sha256")})
                 visual_projection = projected

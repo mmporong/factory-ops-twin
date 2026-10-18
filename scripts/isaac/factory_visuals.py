@@ -16,10 +16,15 @@ from typing import Any, Mapping, Sequence
 
 from factory_ops.layout import Layout, LayoutError, Rect
 from factory_ops.visual_scene import PRODUCTION_BAY_GEOMETRY, _recipe_boxes, export_visual_scene
-from factory_ops.visual_state import SCOPE, canonical_sha256
+from factory_ops.visual_state import (
+    SCOPE,
+    STATE_FILE,
+    STATE_STREAM_DIR,
+    STATE_STREAM_PATTERN,
+    canonical_sha256,
+)
 
 
-STATE_FILE = "visual-state.json"
 EVENTS_FILE = "visual-events.jsonl"
 RUNTIME_FILE = "visual-runtime-manifest.json"
 VISUAL_DIR = "visual-scene"
@@ -315,6 +320,9 @@ class FactoryVisualRuntime:
         self.applied_state_hash: str | None = None
         self.pending: dict[str, Any] | None = None
         self.pending_hash: str | None = None
+        self.pending_queue: list[tuple[dict[str, Any], str]] = []
+        self.stream_sequence_hashes: dict[int, str] = {}
+        self.stream_selected = False
         self.last_observed_file_sha: str | None = None
         self.last_sim_time_ns: int | None = None
         self.last_event: dict[str, Any] | None = None
@@ -443,9 +451,20 @@ class FactoryVisualRuntime:
         if self.last_sim_time_ns is not None and sim_time_ns < self.last_sim_time_ns:
             raise ValueError("visual runtime simulation time regressed")
         self.last_sim_time_ns = sim_time_ns
+        stream_path = self.output / STATE_STREAM_DIR
+        if stream_path.exists() or stream_path.is_symlink():
+            self._observe_stream(stream_path)
+            self.stream_selected = True
+        elif self.stream_selected:
+            raise ValueError("visual state stream disappeared after selection")
+        else:
+            self._observe_legacy_state()
         self._apply_pending_if_due(sim_time_s=float(sim_time_s), sim_time_ns=sim_time_ns, physics_frame=physics_frame)
+
+    def _observe_legacy_state(self) -> None:
+        """Read the pre-stream latest-state handoff only when no stream exists."""
         state_path = self.output / STATE_FILE
-        if state_path.exists():
+        if state_path.exists() or state_path.is_symlink():
             _require_regular(state_path, "visual state")
             source = state_path.read_bytes()
             file_sha = hashlib.sha256(source).hexdigest()
@@ -458,7 +477,47 @@ class FactoryVisualRuntime:
                 state_hash = canonical_sha256(document)
                 self._accept_candidate(document, state_hash)
                 self.last_observed_file_sha = file_sha
-        self._apply_pending_if_due(sim_time_s=float(sim_time_s), sim_time_ns=sim_time_ns, physics_frame=physics_frame)
+
+    def _observe_stream(self, stream_path: Path) -> None:
+        """Validate the immutable stream and enqueue every newly published state."""
+        if stream_path.is_symlink() or not stream_path.is_dir():
+            raise ValueError("visual state stream must be a regular directory")
+        rows: dict[int, tuple[dict[str, Any], str]] = {}
+        for path in stream_path.iterdir():
+            match = STATE_STREAM_PATTERN.fullmatch(path.name)
+            if match is None:
+                raise ValueError(f"visual state stream contains an unexpected entry: {path.name}")
+            _require_regular(path, "visual state stream entry")
+            try:
+                source = path.read_bytes()
+                raw = json.loads(source)
+            except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+                raise ValueError(f"visual state stream is not valid UTF-8 JSON: {exc}") from exc
+            document = validate_visual_state_document(raw, run_id=self.run_id, scenario_id=self.scenario_id)
+            canonical_source = json.dumps(
+                document, sort_keys=True, separators=(",", ":"),
+                ensure_ascii=False, allow_nan=False,
+            ).encode("utf-8")
+            if source != canonical_source:
+                raise ValueError("visual state stream bytes are not canonical")
+            sequence = int(document["sequence"])
+            state_hash = canonical_sha256(document)
+            if sequence != int(match.group("sequence")) or state_hash != match.group("state_hash"):
+                raise ValueError("visual state stream filename identity differs")
+            if sequence in rows:
+                raise ValueError("visual state stream contains duplicate sequences")
+            rows[sequence] = (document, state_hash)
+        if sorted(rows) != list(range(len(rows))):
+            raise ValueError("visual state stream sequence is not contiguous")
+        if len(rows) < len(self.stream_sequence_hashes):
+            raise ValueError("visual state stream was truncated")
+        for sequence, expected_hash in self.stream_sequence_hashes.items():
+            if sequence not in rows or rows[sequence][1] != expected_hash:
+                raise ValueError("visual state stream history was rewritten")
+        for sequence in range(len(self.stream_sequence_hashes), len(rows)):
+            document, state_hash = rows[sequence]
+            self._accept_candidate(document, state_hash, require_contiguous=True)
+            self.stream_sequence_hashes[sequence] = state_hash
 
     def capture_metadata(self) -> dict[str, object]:
         files: dict[str, dict[str, object]] = {}
@@ -487,9 +546,29 @@ class FactoryVisualRuntime:
             "ground_truth_control_input": False,
         }
 
-    def _accept_candidate(self, document: dict[str, Any], state_hash: str) -> None:
+    def _accept_candidate(
+        self, document: dict[str, Any], state_hash: str, *, require_contiguous: bool = False,
+    ) -> None:
         sequence = int(document["sequence"])
         floor = self.applied_sequence
+        queued = ([((int(self.pending["sequence"])), self.pending_hash)] if self.pending is not None else [])
+        queued.extend((int(candidate["sequence"]), candidate_hash)
+                      for candidate, candidate_hash in self.pending_queue)
+        known = ({floor: self.applied_state_hash} if floor is not None else {})
+        known.update({item[0]: item[1] for item in queued})
+        if sequence in known:
+            if known[sequence] != state_hash:
+                raise ValueError("visual state sequence was rewritten with different content")
+            return
+        if require_contiguous:
+            expected = max(known, default=-1) + 1
+            if sequence != expected:
+                raise ValueError("visual state delivery sequence is not contiguous")
+        if queued:
+            prior_document = self.pending if len(queued) == 1 else self.pending_queue[-1][0]
+            assert prior_document is not None
+            if int(document["emitted_sim_time_ns"]) < int(prior_document["emitted_sim_time_ns"]):
+                raise ValueError("visual state emission time regressed")
         if self.pending is not None:
             pending_sequence = int(self.pending["sequence"])
             if sequence < pending_sequence:
@@ -505,15 +584,23 @@ class FactoryVisualRuntime:
                 if state_hash != self.applied_state_hash:
                     raise ValueError("applied visual state sequence was rewritten")
                 return
-        self.pending, self.pending_hash = document, state_hash
+        if self.pending is None:
+            self.pending, self.pending_hash = document, state_hash
+        else:
+            self.pending_queue.append((document, state_hash))
 
     def _apply_pending_if_due(self, *, sim_time_s: float, sim_time_ns: int, physics_frame: int) -> None:
-        if self.pending is None or int(self.pending["emitted_sim_time_ns"]) > sim_time_ns:
-            return
-        pending, state_hash = self.pending, self.pending_hash
-        assert state_hash is not None
-        self.pending, self.pending_hash = None, None
-        self._apply_state(pending, state_hash, sim_time_s=sim_time_s, sim_time_ns=sim_time_ns, physics_frame=physics_frame)
+        while self.pending is not None and int(self.pending["emitted_sim_time_ns"]) <= sim_time_ns:
+            pending, state_hash = self.pending, self.pending_hash
+            assert state_hash is not None
+            if self.pending_queue:
+                self.pending, self.pending_hash = self.pending_queue.pop(0)
+            else:
+                self.pending, self.pending_hash = None, None
+            self._apply_state(
+                pending, state_hash, sim_time_s=sim_time_s,
+                sim_time_ns=sim_time_ns, physics_frame=physics_frame,
+            )
 
     def _apply_state(self, document: dict[str, Any], state_hash: str, *, sim_time_s: float, sim_time_ns: int, physics_frame: int) -> None:
         projection = document["projection"]

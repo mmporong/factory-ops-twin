@@ -9,7 +9,7 @@ from unittest.mock import patch
 from typing import Any
 
 from factory_ops.layout import Layout
-from factory_ops.visual_state import SCOPE, canonical_sha256
+from factory_ops.visual_state import SCOPE, STATE_STREAM_DIR, canonical_sha256, publish_visual_state
 from scripts.isaac.factory_visuals import (
     FactoryVisualRuntime,
     TOTE_SIZE_M,
@@ -477,6 +477,129 @@ class FactoryVisualRuntimeTests(unittest.TestCase):
                 self.assertEqual(apply.call_count, 2)
                 self.assertEqual(apply.call_args_list[0].args[0]["sequence"], 1)
                 self.assertEqual(apply.call_args_list[1].args[0]["sequence"], 2)
+
+    def test_stream_applies_two_same_clock_publications_in_sequence(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            output = Path(temporary)
+            projection = _projection(_row("p1", "source_S1"))
+            publish_visual_state(output, _state(projection, sequence=0, emitted_ns=1_000_000_000))
+            publish_visual_state(output, _state(projection, sequence=1, emitted_ns=1_000_000_000))
+            runtime = FactoryVisualRuntime(LAYOUT_PATH, ROOT / "README.md", output, 0, "run-1", "normal")
+            runtime.stage = object()
+            runtime.layout = self.layout
+            with patch.object(runtime, "_apply_state") as apply:
+                runtime.step(1.0, 60)
+                self.assertEqual([0, 1], [call.args[0]["sequence"] for call in apply.call_args_list])
+                runtime.step(1.0, 61)
+                self.assertEqual(2, apply.call_count)
+
+    def test_stream_keeps_future_head_and_later_state_ordered(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            output = Path(temporary)
+            projection = _projection(_row("p1", "source_S1"))
+            publish_visual_state(output, _state(projection, sequence=0, emitted_ns=2_000_000_000))
+            publish_visual_state(output, _state(projection, sequence=1, emitted_ns=2_000_000_000))
+            runtime = FactoryVisualRuntime(LAYOUT_PATH, ROOT / "README.md", output, 0, "run-1", "normal")
+            runtime.stage = object()
+            runtime.layout = self.layout
+            with patch.object(runtime, "_apply_state") as apply:
+                runtime.step(1.0, 60)
+                apply.assert_not_called()
+                self.assertEqual(0, runtime.pending["sequence"] if runtime.pending else None)
+                self.assertEqual([1], [item[0]["sequence"] for item in runtime.pending_queue])
+                runtime.step(2.0, 120)
+                self.assertEqual([0, 1], [call.args[0]["sequence"] for call in apply.call_args_list])
+
+    def test_stream_restart_replays_history_without_duplicate_polling(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            output = Path(temporary)
+            projection = _projection(_row("p1", "source_S1"))
+            publish_visual_state(output, _state(projection, sequence=0, emitted_ns=0))
+            for _restart in range(2):
+                runtime = FactoryVisualRuntime(LAYOUT_PATH, ROOT / "README.md", output, 0, "run-1", "normal")
+                runtime.stage = object()
+                runtime.layout = self.layout
+                with patch.object(runtime, "_apply_state") as apply:
+                    runtime.step(0.0, 0)
+                    runtime.step(0.0, 1)
+                    self.assertEqual(1, apply.call_count)
+
+    def test_stream_missing_or_tampered_entry_fails_closed(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            output = Path(temporary)
+            projection = _projection(_row("p1", "source_S1"))
+            first = publish_visual_state(output, _state(projection, sequence=0, emitted_ns=0))
+            publish_visual_state(output, _state(projection, sequence=1, emitted_ns=0))
+            first_path = output / first["path"]
+            first_path.unlink()
+            runtime = FactoryVisualRuntime(LAYOUT_PATH, ROOT / "README.md", output, 0, "run-1", "normal")
+            runtime.stage = object()
+            runtime.layout = self.layout
+            with self.assertRaisesRegex(ValueError, "contiguous"):
+                runtime.step(0.0, 0)
+
+        with tempfile.TemporaryDirectory() as temporary:
+            output = Path(temporary)
+            projection = _projection(_row("p1", "source_S1"))
+            record = publish_visual_state(output, _state(projection, sequence=0, emitted_ns=0))
+            path = output / record["path"]
+            document = json.loads(path.read_text(encoding="utf-8"))
+            document["ledger_seq"] += 1
+            path.write_text(json.dumps(document), encoding="utf-8")
+            runtime = FactoryVisualRuntime(LAYOUT_PATH, ROOT / "README.md", output, 0, "run-1", "normal")
+            runtime.stage = object()
+            runtime.layout = self.layout
+            with self.assertRaisesRegex(ValueError, "canonical|filename identity"):
+                runtime.step(0.0, 0)
+
+        with tempfile.TemporaryDirectory() as temporary:
+            output = Path(temporary)
+            projection = _projection(_row("p1", "source_S1"))
+            record = publish_visual_state(output, _state(projection, sequence=0, emitted_ns=0))
+            runtime = FactoryVisualRuntime(LAYOUT_PATH, ROOT / "README.md", output, 0, "run-1", "normal")
+            runtime.stage = object()
+            runtime.layout = self.layout
+            with patch.object(runtime, "_apply_state"):
+                runtime.step(0.0, 0)
+                path = output / record["path"]
+                path.write_bytes(path.read_bytes() + b" ")
+                with self.assertRaisesRegex(ValueError, "canonical"):
+                    runtime.step(0.0, 1)
+
+    def test_stream_is_revalidated_before_due_pending_state_applies(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            output = Path(temporary)
+            projection = _projection(_row("p1", "source_S1"))
+            record = publish_visual_state(
+                output, _state(projection, sequence=0, emitted_ns=2_000_000_000),
+            )
+            runtime = FactoryVisualRuntime(LAYOUT_PATH, ROOT / "README.md", output, 0, "run-1", "normal")
+            runtime.stage = object()
+            runtime.layout = self.layout
+            with patch.object(runtime, "_apply_state") as apply:
+                runtime.step(1.0, 60)
+                path = output / record["path"]
+                path.write_bytes(path.read_bytes() + b" ")
+                with self.assertRaisesRegex(ValueError, "canonical"):
+                    runtime.step(2.0, 120)
+                apply.assert_not_called()
+
+    def test_selected_stream_disappearance_does_not_fall_back_to_latest_file(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            output = Path(temporary)
+            projection = _projection(_row("p1", "source_S1"))
+            publish_visual_state(
+                output, _state(projection, sequence=0, emitted_ns=2_000_000_000),
+            )
+            runtime = FactoryVisualRuntime(LAYOUT_PATH, ROOT / "README.md", output, 0, "run-1", "normal")
+            runtime.stage = object()
+            runtime.layout = self.layout
+            with patch.object(runtime, "_apply_state") as apply:
+                runtime.step(1.0, 60)
+                (output / STATE_STREAM_DIR).rename(output / "removed-visual-state-stream")
+                with self.assertRaisesRegex(ValueError, "disappeared"):
+                    runtime.step(2.0, 120)
+                apply.assert_not_called()
 
 
 if __name__ == "__main__":

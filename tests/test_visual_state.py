@@ -1,8 +1,19 @@
 """Presentation follows committed ownership and cannot relocate another payload."""
 from copy import deepcopy
+import json
+import os
+from pathlib import Path
+import stat
+import tempfile
 import unittest
 
-from factory_ops.visual_state import canonical_sha256, make_visual_state, project_ledger_state
+from factory_ops.visual_state import (
+    STATE_STREAM_DIR,
+    canonical_sha256,
+    make_visual_state,
+    project_ledger_state,
+    publish_visual_state,
+)
 
 
 def snapshot(states):
@@ -62,6 +73,75 @@ class VisualStateTests(unittest.TestCase):
         bad["ledger_seq"] = 11
         with self.assertRaises(ValueError):
             make_visual_state(value, projection, sequence=0, scenario_id="test", emitted_sim_time_ns=500, last_event=bad)
+
+    def test_publication_retains_rapid_states_and_restarts_idempotently(self):
+        value = snapshot([("source_waiting", "source")])
+        projection = project_ledger_state(value)
+        event = {"run_id": value["run_id"], "ledger_seq": 12, "event_hash": "b" * 64}
+        with tempfile.TemporaryDirectory() as temporary:
+            first = make_visual_state(
+                value, projection, sequence=0, scenario_id="test",
+                emitted_sim_time_ns=500, last_event=event,
+            )
+            second = make_visual_state(
+                value, projection, sequence=1, scenario_id="test",
+                emitted_sim_time_ns=500, last_event=event,
+            )
+            first_record = publish_visual_state(temporary, first)
+            second_record = publish_visual_state(temporary, second)
+            publish_visual_state(temporary, first)
+            retry_record = publish_visual_state(temporary, second)
+
+            stream = Path(temporary) / STATE_STREAM_DIR
+            self.assertEqual(2, len(list(stream.glob("*.json"))))
+            self.assertEqual(second_record, retry_record)
+            self.assertEqual(first, json.loads((Path(temporary) / first_record["path"]).read_text(encoding="utf-8")))
+            self.assertEqual(second, json.loads((Path(temporary) / "visual-state.json").read_text(encoding="utf-8")))
+
+    def test_publication_rejects_gaps_rewrites_and_tampered_history(self):
+        value = snapshot([("source_waiting", "source")])
+        projection = project_ledger_state(value)
+        event = {"run_id": value["run_id"], "ledger_seq": 12, "event_hash": "b" * 64}
+        with tempfile.TemporaryDirectory() as temporary:
+            first = make_visual_state(
+                value, projection, sequence=0, scenario_id="test",
+                emitted_sim_time_ns=500, last_event=event,
+            )
+            skipped = make_visual_state(
+                value, projection, sequence=2, scenario_id="test",
+                emitted_sim_time_ns=500, last_event=event,
+            )
+            with self.assertRaisesRegex(ValueError, "contiguous"):
+                publish_visual_state(temporary, skipped)
+            record = publish_visual_state(temporary, first)
+            rewritten = deepcopy(first)
+            rewritten["ledger_seq"] = 13
+            with self.assertRaisesRegex(ValueError, "different content"):
+                publish_visual_state(temporary, rewritten)
+            wrong_identity = deepcopy(first)
+            wrong_identity["sequence"] = 1
+            wrong_identity["scenario_id"] = "other"
+            with self.assertRaisesRegex(ValueError, "identity"):
+                publish_visual_state(temporary, wrong_identity)
+            stream_path = Path(temporary) / record["path"]
+            stream_path.write_bytes(stream_path.read_bytes() + b" ")
+            second = deepcopy(first)
+            second["sequence"] = 1
+            with self.assertRaisesRegex(ValueError, "canonical"):
+                publish_visual_state(temporary, second)
+
+    @unittest.skipIf(os.name == "nt", "POSIX host-reader permissions are checked on Linux")
+    def test_publication_can_be_read_by_the_host_preservation_user(self):
+        value = snapshot([("source_waiting", "source")])
+        projection = project_ledger_state(value)
+        event = {"run_id": value["run_id"], "ledger_seq": 12, "event_hash": "b" * 64}
+        document = make_visual_state(value, projection, sequence=0, scenario_id="test",
+                                     emitted_sim_time_ns=500, last_event=event)
+        with tempfile.TemporaryDirectory() as temporary:
+            record = publish_visual_state(temporary, document)
+            for path in (Path(temporary) / record["path"], Path(temporary) / "visual-state.json"):
+                self.assertTrue(stat.S_IMODE(path.stat().st_mode) & stat.S_IROTH)
+                self.assertFalse(stat.S_IMODE(path.stat().st_mode) & stat.S_IWOTH)
 
 
 if __name__ == "__main__":
