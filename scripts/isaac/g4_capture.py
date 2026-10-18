@@ -814,8 +814,8 @@ def _normalize_annotations(
             and root_path.startswith(record["canonical_root"] + "/")
         ]
         has_individual_bbox = any(root_path in row_roots for row_roots, _row_class in bbox_row_identities)
-        if (instance_pixel_counts.get(instance_id) != 1
-                or bbox[0] != bbox[2] or bbox[1] != bbox[3]
+        pixel_count = instance_pixel_counts.get(instance_id)
+        if (not isinstance(pixel_count, int) or isinstance(pixel_count, bool) or pixel_count <= 0
                 or len(semantic_ids) != 1
                 or semantic_classes.get(str(next(iter(semantic_ids), -1)), {}).get("class") != class_name
                 or has_individual_bbox):
@@ -837,7 +837,7 @@ def _normalize_annotations(
             "occlusion_status": "individual_sdk_bbox_absent",
             "occlusion_raw_value": None,
             "bbox_source": "instance_segmentation_mask",
-            "mask_pixel_count": 1,
+            "mask_pixel_count": pixel_count,
             "mask_semantic_id": next(iter(semantic_ids)),
         }
         if covering_aggregates:

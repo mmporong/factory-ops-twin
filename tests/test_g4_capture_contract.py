@@ -742,7 +742,7 @@ class G4CaptureContractTests(unittest.TestCase):
         self.assertEqual([item["instance_id"] for item in result["instances"]], [110, 124])
         self.assertEqual(source_classes.items_calls, 5)
 
-    def test_one_pixel_instance_without_individual_sdk_bbox_uses_exact_aggregate_or_source_bound_mask(self) -> None:
+    def test_visible_mask_instance_without_individual_sdk_bbox_uses_exact_aggregate_or_source_bound_mask(self) -> None:
         class AggregateStage:
             def GetPrimAtPath(self, path):
                 classes = {
@@ -816,8 +816,11 @@ class G4CaptureContractTests(unittest.TestCase):
         }, "instance_payload": {
             **arguments["instance_payload"], "data": _Array([[43, 27, 27]]),
         }}
-        with self.assertRaisesRegex(CaptureError, "not a one-to-one join"):
-            _normalize_annotations(**two_pixel)
+        two_pixel_result = _normalize_annotations(**two_pixel)
+        two_pixel_missing = next(item for item in two_pixel_result["instances"] if item["instance_id"] == 27)
+        self.assertEqual(two_pixel_missing["bbox_xyxy"], [1, 0, 2, 0])
+        self.assertEqual(two_pixel_missing["raw_bbox_binding"]["mask_pixel_count"], 2)
+        self.assertEqual(two_pixel_missing["raw_bbox_binding"]["kind"], "individual_sdk_bbox_absent")
 
         no_aggregate = json.loads(json.dumps(arguments["bbox_raw"]))
         no_aggregate["data"] = no_aggregate["data"][:1]
@@ -836,6 +839,18 @@ class G4CaptureContractTests(unittest.TestCase):
             "mask_pixel_count": 1,
             "mask_semantic_id": 3,
         })
+
+        two_pixel_source_bound = _normalize_annotations(**{**two_pixel, "bbox_raw": no_aggregate})
+        two_pixel_missing = next(
+            item for item in two_pixel_source_bound["instances"] if item["instance_id"] == 27
+        )
+        self.assertEqual(two_pixel_missing["bbox_xyxy"], [1, 0, 2, 0])
+        self.assertTrue(two_pixel_missing["edge_truncated"])
+        self.assertEqual(two_pixel_missing["raw_bbox_binding"]["mask_pixel_count"], 2)
+        self.assertEqual(
+            two_pixel_missing["raw_bbox_binding"]["kind"],
+            "individual_sdk_bbox_absent_source_bound_mask",
+        )
 
         wrong_semantic_class = {
             **arguments["semantic_payload"],

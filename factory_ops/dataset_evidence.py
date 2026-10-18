@@ -1487,20 +1487,19 @@ def _validate_instances(
             and raw_bbox_binding.get("occlusion_status") == "individual_sdk_bbox_absent"
             and raw_bbox_binding.get("occlusion_raw_value") is None
             and raw_bbox_binding.get("bbox_source") == "instance_segmentation_mask"
-            and _nonnegative_int(raw_bbox_binding.get("mask_pixel_count"))
-            and raw_bbox_binding.get("mask_pixel_count") == 1
+            and _positive_int(raw_bbox_binding.get("mask_pixel_count")) is not None
             and instance_pixel_counts is not None
-            and instance_pixel_counts.get(instance_id) == 1
-            and mask_bbox[0] == mask_bbox[2] and mask_bbox[1] == mask_bbox[3]
+            and raw_bbox_binding.get("mask_pixel_count") == instance_pixel_counts.get(instance_id)
             and len(semantic_ids) == 1
             and _nonnegative_int(raw_bbox_binding.get("mask_semantic_id"))
             and raw_bbox_binding.get("mask_semantic_id") == next(iter(semantic_ids), None)
             and not individual_rows
         )
-        record_matches = [
+        covering_records = [
             record for record in excluded_bbox_rows
             if isinstance(record, dict)
-            and record.get("raw_bbox_index") == aggregate_index_int
+            and _nonnegative_int(record.get("raw_bbox_index"))
+            and int(record["raw_bbox_index"]) in excluded_indices
             and instance_id in record.get("descendant_instance_ids", [])
             and isinstance(record.get("canonical_root"), str)
             and isinstance(normalized_by_id[instance_id].get("usd_root_path"), str)
@@ -1512,14 +1511,11 @@ def _validate_instances(
             aggregate_index_int is None
             or aggregate_index_int >= len(raw_data)
             or aggregate_index_int not in excluded_indices
-            or len(record_matches) != 1
+            or len(covering_records) != 1
+            or covering_records[0].get("raw_bbox_index") != aggregate_index_int
         ):
             errors.append(f"{prefix} instance {instance_id} absent SDK bbox is not covered by one exact aggregate row")
-        elif source_bound and any(
-            isinstance(record, dict)
-            and instance_id in record.get("descendant_instance_ids", [])
-            for record in excluded_bbox_rows
-        ):
+        elif source_bound and covering_records:
             errors.append(f"{prefix} instance {instance_id} source-bound absent SDK bbox has an aggregate row")
         else:
             stats["individual_sdk_bbox_absent_instances"] = stats.get(

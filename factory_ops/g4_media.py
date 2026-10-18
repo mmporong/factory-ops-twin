@@ -516,12 +516,37 @@ def _semantic_panel(path: Path, normalized: Mapping[str, Any], image_module: Any
     return image, {"classes": present, "colors_rgb": {name: list(PALETTE[name]) for name in present}}
 
 
-def _instance_panel(path: Path, normalized: Mapping[str, Any], image_module: Any, image_draw: Any) -> tuple[Any, dict[str, Any]]:
+def _instance_panel(
+    path: Path,
+    semantic_path: Path,
+    normalized: Mapping[str, Any],
+    image_module: Any,
+    image_draw: Any,
+) -> tuple[Any, dict[str, Any]]:
     _dtype, (height, width), values = _unpack_array(path, "instance")
+    _semantic_dtype, semantic_shape, semantic_values = _unpack_array(semantic_path, "semantic")
+    if semantic_shape != (height, width):
+        raise ValueError("semantic and instance masks differ in shape")
     taxonomy = _class_map(normalized, "instance_id_to_labels")
     ids = {int(value) for value in values}
     if not ids.issubset(taxonomy):
         raise ValueError("instance mask contains an ID absent from normalized taxonomy")
+    mask_records: dict[int, dict[str, Any]] = {}
+    for index, (raw_instance_id, raw_semantic_id) in enumerate(zip(values, semantic_values)):
+        instance_id = int(raw_instance_id)
+        x, y = index % width, index // width
+        record = mask_records.get(instance_id)
+        if record is None:
+            mask_records[instance_id] = {
+                "bbox": [x, y, x, y], "count": 1, "semantic_ids": {int(raw_semantic_id)},
+            }
+        else:
+            record["bbox"][0] = min(record["bbox"][0], x)
+            record["bbox"][1] = min(record["bbox"][1], y)
+            record["bbox"][2] = max(record["bbox"][2], x)
+            record["bbox"][3] = max(record["bbox"][3], y)
+            record["count"] += 1
+            record["semantic_ids"].add(int(raw_semantic_id))
     def color(instance_id: int) -> tuple[int, int, int]:
         if instance_id == 0:
             return PALETTE["BACKGROUND"]
@@ -544,12 +569,51 @@ def _instance_panel(path: Path, normalized: Mapping[str, Any], image_module: Any
         if (not isinstance(bbox, list) or len(bbox) != 4 or any(type(value) is not int for value in bbox)
                 or type(instance_id) is not int or not isinstance(class_name, str) or not isinstance(binding, Mapping)):
             raise ValueError("normalized bbox record is invalid")
+        mask_record = mask_records.get(instance_id)
+        if mask_record is None:
+            raise ValueError("normalized instance is absent from the instance mask")
+        actual_bbox = mask_record["bbox"]
+        actual_count = mask_record["count"]
+        if bbox != actual_bbox:
+            raise ValueError("normalized bbox differs from the instance mask tight bounds")
+        actual_edge = (
+            actual_bbox[0] == 0 or actual_bbox[1] == 0
+            or actual_bbox[2] == width - 1 or actual_bbox[3] == height - 1
+        )
+        if item.get("edge_truncated") is not actual_edge:
+            raise ValueError("normalized edge flag differs from the instance mask")
+        semantic_ids = mask_record["semantic_ids"]
+        binding_kind = binding.get("kind")
+        absent_kind = binding_kind in {
+            "individual_sdk_bbox_absent",
+            "individual_sdk_bbox_absent_source_bound_mask",
+        }
+        if absent_kind and (
+            type(binding.get("mask_pixel_count")) is not int
+            or binding.get("mask_pixel_count") != actual_count
+            or len(semantic_ids) != 1
+            or type(binding.get("mask_semantic_id")) is not int
+            or binding.get("mask_semantic_id") != next(iter(semantic_ids))
+            or item.get("bbox_semantic_id") is not None
+            or item.get("raw_bbox_index") is not None
+            or binding.get("bbox_xyxy") is not None
+            or binding.get("edge_truncated") is not None
+            or binding.get("occlusion_ratio") is not None
+            or binding.get("occlusion_status") != "individual_sdk_bbox_absent"
+            or binding.get("occlusion_raw_value") is not None
+            or binding.get("bbox_source") != "instance_segmentation_mask"
+        ):
+            raise ValueError("absent SDK bbox mask provenance differs from the selected masks")
         draw.rectangle(cast(tuple[int, int, int, int], tuple(bbox)), outline=PALETTE.get(class_name, (255, 255, 255)), width=2)
         bbox_records.append({
             "instance_id": instance_id, "class": class_name, "bbox_xyxy": bbox,
             "geometry_source": "instance_segmentation_mask",
             "bbox_source": binding.get("bbox_source", "sdk_bbox"),
-            "raw_bbox_binding_kind": binding.get("kind"),
+            "raw_bbox_binding_kind": binding_kind,
+            "edge_truncated": actual_edge,
+            "mask_pixel_count": actual_count,
+            "mask_semantic_id": next(iter(semantic_ids)) if len(semantic_ids) == 1 else None,
+            "occlusion_status": binding.get("occlusion_status"),
             "bbox_semantic_id": item.get("bbox_semantic_id"), "raw_bbox_index": item.get("raw_bbox_index"),
         })
     return image, {"instance_count": len(instances), "normalized_bboxes": bbox_records}
@@ -679,7 +743,9 @@ def export_media(
                 rgb_panel = _fit(rgb_source, panel_size, Image)
             depth_image, depth_scale = _depth_panel(paths["depth"], Image)
             semantic_image, semantic_legend = _semantic_panel(paths["semantic"], normalized, Image)
-            instance_image, instance_legend = _instance_panel(paths["instance"], normalized, Image, ImageDraw)
+            instance_image, instance_legend = _instance_panel(
+                paths["instance"], paths["semantic"], normalized, Image, ImageDraw
+            )
             panels = (rgb_panel, _fit(depth_image, panel_size, Image), _fit(semantic_image, panel_size, Image),
                       _fit(instance_image, panel_size, Image))
             top = header_height + row * (panel_size[1] + caption_height)

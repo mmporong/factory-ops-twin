@@ -817,7 +817,7 @@ class DatasetEvidenceTests(unittest.TestCase):
         _validate_instances(**common, normalized_instances=[parent, forged_child], errors=errors)
         self.assertTrue(any("class or USD root path" in error for error in errors), errors)
 
-    def test_individual_sdk_bbox_absence_requires_one_pixel_and_exact_aggregate_coverage(self) -> None:
+    def test_individual_sdk_bbox_absence_requires_exact_visible_mask_and_aggregate_coverage(self) -> None:
         floor_sha = "f" * 64
         mark_sha = "1" * 64
         floor = {
@@ -900,6 +900,32 @@ class DatasetEvidenceTests(unittest.TestCase):
         self.assertEqual(source_common["stats"]["individual_sdk_bbox_absent_instances"], 1)
         self.assertEqual(source_common["stats"]["individual_sdk_bbox_absent_source_bound_instances"], 1)
 
+        for width, missing_bbox, edge in (
+            (4, [2, 1, 3, 1], True),
+            (5, [2, 1, 3, 1], False),
+        ):
+            visible = copy.deepcopy(source_bound)
+            visible["bbox_xyxy"] = missing_bbox
+            visible["edge_truncated"] = edge
+            visible["raw_bbox_binding"]["mask_pixel_count"] = 2
+            visible_floor = copy.deepcopy(floor)
+            visible_floor["bbox_xyxy"] = [0, 1, 1, 1]
+            visible_common = {
+                **source_common,
+                "width": width,
+                "height": 3,
+                "stats": Counter(),
+                "instance_bounds": {43: [0, 1, 1, 1], 27: missing_bbox},
+                "instance_pixel_counts": {43: 2, 27: 2},
+            }
+            errors = []
+            _validate_instances(
+                **visible_common,
+                normalized_instances=[visible_floor, visible],
+                errors=errors,
+            )
+            self.assertEqual(errors, [], (width, edge, errors))
+
         wrong_kind = copy.deepcopy(source_bound)
         wrong_kind["raw_bbox_binding"]["kind"] = "individual_sdk_bbox_absent"
         errors = []
@@ -959,6 +985,7 @@ class DatasetEvidenceTests(unittest.TestCase):
         self.assertTrue(any("individual SDK bbox absence" in error for error in errors), errors)
 
         mutations = {
+            "zero pixel count": lambda item: item["raw_bbox_binding"].__setitem__("mask_pixel_count", 0),
             "pixel count": lambda item: item["raw_bbox_binding"].__setitem__("mask_pixel_count", 2),
             "boolean pixel count": lambda item: item["raw_bbox_binding"].__setitem__("mask_pixel_count", True),
             "float pixel count": lambda item: item["raw_bbox_binding"].__setitem__("mask_pixel_count", 1.0),
@@ -1003,6 +1030,40 @@ class DatasetEvidenceTests(unittest.TestCase):
             normalized_instances=[floor, missing], errors=errors,
         )
         self.assertTrue(any("aggregate" in error or "hierarchical" in error for error in errors), errors)
+
+        duplicate_aggregate_raw = [*copy.deepcopy(raw_data), copy.deepcopy(raw_data[1])]
+        duplicate_aggregates = [
+            *copy.deepcopy(excluded),
+            {
+                "raw_bbox_index": 2, "canonical_root": "/World/FG",
+                "descendant_instance_ids": [27, 43], "reason": "hierarchical_semantic_aggregate",
+            },
+        ]
+        duplicate_common = {
+            **common,
+            "stats": Counter(),
+            "raw_data": duplicate_aggregate_raw,
+            "bbox_prim_paths": ["/World/FG/Floor", "/World/FG", "/World/FG"],
+            "excluded_bbox_rows": duplicate_aggregates,
+        }
+        for aggregate_index in (1, 2):
+            forged = copy.deepcopy(missing)
+            forged["raw_bbox_binding"]["covering_aggregate_raw_bbox_index"] = aggregate_index
+            errors = []
+            _validate_instances(
+                **duplicate_common,
+                normalized_instances=[floor, forged],
+                errors=errors,
+            )
+            self.assertTrue(any("one exact aggregate row" in error for error in errors), errors)
+
+        errors = []
+        _validate_instances(
+            **duplicate_common,
+            normalized_instances=[floor, source_bound],
+            errors=errors,
+        )
+        self.assertTrue(any("has an aggregate row" in error for error in errors), errors)
 
         child_raw = copy.deepcopy(raw_data)
         child_raw.append({

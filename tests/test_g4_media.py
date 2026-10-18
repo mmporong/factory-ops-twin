@@ -212,13 +212,22 @@ class G4MediaTests(unittest.TestCase):
                 },
                 "instances": [
                     {"instance_id": 21, "class": "floor", "bbox_xyxy": [0, 1, 3, 1],
-                     "bbox_semantic_id": 2, "raw_bbox_index": 0,
-                     "raw_bbox_binding": {"kind": "instance_mask"}},
+                     "bbox_semantic_id": 2, "raw_bbox_index": 0, "edge_truncated": True,
+                     "raw_bbox_binding": {
+                         "kind": "instance_mask", "occlusion_status": "unavailable_raw_sentinel",
+                     }},
                     {"instance_id": 27, "class": "rack", "bbox_xyxy": [0, 2, 3, 2],
-                     "bbox_semantic_id": None, "raw_bbox_index": None,
+                     "bbox_semantic_id": None, "raw_bbox_index": None, "edge_truncated": True,
                      "raw_bbox_binding": {
                          "kind": "individual_sdk_bbox_absent_source_bound_mask",
                          "bbox_source": "instance_segmentation_mask",
+                         "bbox_xyxy": None,
+                         "edge_truncated": None,
+                         "occlusion_ratio": None,
+                         "occlusion_status": "individual_sdk_bbox_absent",
+                         "occlusion_raw_value": None,
+                         "mask_pixel_count": 4,
+                         "mask_semantic_id": 9,
                      }},
                 ],
             }), encoding="utf-8")
@@ -463,7 +472,42 @@ class G4MediaTests(unittest.TestCase):
             bbox_records[1]["raw_bbox_binding_kind"],
             "individual_sdk_bbox_absent_source_bound_mask",
         )
+        self.assertEqual(bbox_records[1]["edge_truncated"], True)
+        self.assertEqual(bbox_records[1]["mask_pixel_count"], 4)
+        self.assertEqual(bbox_records[1]["mask_semantic_id"], 9)
+        self.assertEqual(bbox_records[1]["occlusion_status"], "individual_sdk_bbox_absent")
         self.assertEqual(len(provenance["render_time_integrity_checks"]), 3)
+
+    def test_instance_panel_rejects_tampered_visible_mask_provenance(self) -> None:
+        camera_root = (
+            self.dataset_root / "scenes" / "scene-000" / "captures"
+            / "f000000120-t000000002000000" / "overhead"
+        )
+        normalized = json.loads((camera_root / "normalized.json").read_text(encoding="utf-8"))
+        absent = normalized["instances"][1]
+        mutations = {
+            "count": lambda: absent["raw_bbox_binding"].__setitem__("mask_pixel_count", 2),
+            "semantic": lambda: absent["raw_bbox_binding"].__setitem__("mask_semantic_id", 2),
+            "status": lambda: absent["raw_bbox_binding"].__setitem__("occlusion_status", "measured_raw"),
+            "nullable bbox": lambda: absent["raw_bbox_binding"].__setitem__("bbox_xyxy", [0, 2, 3, 2]),
+            "nullable occlusion": lambda: absent["raw_bbox_binding"].__setitem__("occlusion_ratio", 0.0),
+            "bbox source": lambda: absent["raw_bbox_binding"].__setitem__("bbox_source", "sdk_bbox"),
+            "edge": lambda: absent.__setitem__("edge_truncated", False),
+            "bbox": lambda: absent.__setitem__("bbox_xyxy", [0, 2, 2, 2]),
+        }
+        for label, mutate in mutations.items():
+            candidate = json.loads(json.dumps(normalized))
+            absent = candidate["instances"][1]
+            mutate()
+            pillow = _fake_pillow()
+            with self.assertRaisesRegex(ValueError, "mask|bbox|edge|provenance"):
+                g4_media._instance_panel(
+                    camera_root / "instance.npy",
+                    camera_root / "semantic.npy",
+                    candidate,
+                    pillow.Image,
+                    pillow.ImageDraw,
+                )
 
     def test_input_mutation_prevents_atomic_publication_and_removes_temporary_package(self) -> None:
         destination = self.base / "mutated-media"
