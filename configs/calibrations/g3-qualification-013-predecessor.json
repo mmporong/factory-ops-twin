@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "source_commit": "11e5b7f032a7dba0c08752cebc2e8949c6e7ad04",
+  "run_label": "g3-q-normal-fifo-013",
+  "prestart_receipt": {
+    "name": "industrial-022-prestart-gate-001.json",
+    "bytes": 1232,
+    "sha256": "7fd26698738dbec9da2fcc1fcaa846a5647dd033cc7f54d7115500f003b6012e",
+    "checked_at_utc": "2026-10-18T06:17:20.679565+00:00"
+  },
+  "source_preservation_receipt": {
+    "name": "industrial-local-supplement-026-verification.json",
+    "bytes": 57131,
+    "sha256": "eb330bbc032dcd86664e1250d793bdecf597a5794d5e5c433dd60d1b76dcad03",
+    "verified_at_utc": "2026-10-18T06:17:03.791722+00:00"
+  },
+  "sealed_supplement_manifest": {
+    "name": "industrial-local-026-sealed-manifest-001.json",
+    "bytes": 21380,
+    "sha256": "f313781e7dbf56a62733847c0d412c67930afffbc29b83ca05cf9ff8317ca37f"
+  },
+  "storage_inventory": {
+    "path": "artifacts/brev/industrial-022-storage-inventory-001.json",
+    "name": "industrial-022-storage-inventory-001.json",
+    "bytes": 1200,
+    "sha256": "fb01d019afcb07958fa2aca06831303e086a407afdef7304f83370d2245f3fa4",
+    "observed_at_utc": "2026-10-18T05:47:07.1807036Z",
+    "snapshot": {
+      "bytes": 1200,
+      "device": 134098395361120000,
+      "inode": 61643019904713012,
+      "links": 1,
+      "sha256": "fb01d019afcb07958fa2aca06831303e086a407afdef7304f83370d2245f3fa4"
+    }
+  },
+  "restore_layout": {
+    "artifact_relative": "results/g3-q-normal-fifo-013",
+    "session_relative": "source-snapshots/g3-q-normal-fifo-013/runs/g3-q-normal-fifo-013-session"
+  },
+  "stores": {
+    "D": {
+      "archive_drive": "D:",
+      "restore_root": "D:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-015\\payload",
+      "device_identity": {"index": 3, "device_id": "\\\\.\\PHYSICALDRIVE3", "serial_sha256_prefix": "C44860F40B08"}
+    },
+    "E": {
+      "archive_drive": "E:",
+      "restore_root": "E:\\FactoryOpsArtifacts\\industrial-diagnostics\\restore-industrial-015\\payload",
+      "device_identity": {"index": 2, "device_id": "\\\\.\\PHYSICALDRIVE2", "serial_sha256_prefix": "5E8530E83D67"}
+    }
+  }
+}

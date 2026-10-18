@@ -24,12 +24,15 @@ def _object(path: Path) -> dict[str, Any]:
 
 
 def main() -> int:
+    if os.name != "nt":
+        raise RuntimeError("qualification predecessor structural validation must run on Windows")
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--spec", type=Path, required=True)
     args = parser.parse_args()
     spec = _object(args.spec)
     expected = {
-        "output", "run_label", "run_id", "restore_rows", "storage_inventory_path",
+        "output", "run_label", "run_id", "restore_rows", "prestart_receipt_path",
+        "source_preservation_receipt_path", "storage_inventory_path",
         "storage_supplement_manifest_path", "storage_supplement_manifest_sha256",
     }
     if set(spec) != expected or not isinstance(spec["restore_rows"], list):
@@ -37,6 +40,8 @@ def main() -> int:
     output = validate_qualification_predecessor(
         Path(spec["output"]), run_label=spec["run_label"], run_id=spec["run_id"],
         restore_rows=spec["restore_rows"],
+        prestart_receipt_path=Path(spec["prestart_receipt_path"]),
+        source_preservation_receipt_path=Path(spec["source_preservation_receipt_path"]),
         storage_inventory_path=Path(spec["storage_inventory_path"]),
         storage_supplement_manifest_path=Path(spec["storage_supplement_manifest_path"]),
         storage_supplement_manifest_sha256=spec["storage_supplement_manifest_sha256"],
