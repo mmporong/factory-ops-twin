@@ -64,6 +64,8 @@ G3_NAV2_RUNTIME_PARAMETERS = {
     "goal_checker.xy_goal_tolerance": ("double", .06),
     "goal_checker.yaw_goal_tolerance": ("double", .15),
 }
+CONFIRMED_XY_CONTROLLER = "factory_ops_goal_checker::ConfirmedXyRegulatedPurePursuitController"
+CONFIRMED_XY_LATCH_MODE = "goal_checker_confirmed_xy_latch"
 
 
 def bag_qos_overrides() -> str:
@@ -80,17 +82,21 @@ def build_g3_namespaced_params(
     template: Mapping[str, Any], scenario: Mapping[str, Any], radii: Mapping[str, float],
     runtime: Mapping[str, Any], *, physical_map: str, navigation_map: str,
 ) -> tuple[dict[str, Any], dict[str, Any]]:
-    """Apply the frozen G3 acceptance values and the two telemetry plugin substitutions."""
+    """Apply the G3 acceptance values and the declared controller mode."""
     baseline = build_namespaced_params(
         template, scenario, radii, physical_map=physical_map, navigation_map=navigation_map,
     )
     result = copy.deepcopy(baseline)
     nav2 = runtime.get("g3_nav2")
-    if (not isinstance(nav2, Mapping) or set(nav2) != set(G3_NAV2_GOAL_ACCEPTANCE)
+    expected_nav2 = dict(G3_NAV2_GOAL_ACCEPTANCE)
+    if isinstance(nav2, Mapping) and nav2.get("follow_path_plugin") == CONFIRMED_XY_CONTROLLER:
+        expected_nav2.update({
+            "follow_path_plugin": CONFIRMED_XY_CONTROLLER, "xy_latch_mode": CONFIRMED_XY_LATCH_MODE,
+        })
+    if (not isinstance(nav2, Mapping) or dict(nav2) != expected_nav2
             or nav2.get("follow_path_stateful") is not True
             or nav2.get("goal_checker_stateful") is not True
             or nav2.get("goal_checker_plugin") != "factory_ops_goal_checker::TelemetryGoalChecker"
-            or nav2.get("follow_path_plugin") != "factory_ops_goal_checker::TelemetryRegulatedPurePursuitController"
             or nav2.get("controller_trace_schema_version") != 1
             or nav2.get("controller_trace_topic") != "controller_cycle_trace"
             or type(nav2.get("xy_goal_tolerance")) is not float
@@ -147,8 +153,14 @@ def build_g3_namespaced_params(
 
 def validate_rpp_runtime_observation(
     observation: Mapping[str, Any], *, generated_params_sha256: str, source_commit: str | None,
+    follow_path_plugin: str = str(G3_NAV2_GOAL_ACCEPTANCE["follow_path_plugin"]),
 ) -> None:
     """Fail closed unless both controllers and diagnostic topics prove the requested runtime."""
+    if follow_path_plugin not in {G3_NAV2_GOAL_ACCEPTANCE["follow_path_plugin"], CONFIRMED_XY_CONTROLLER}:
+        raise ValueError("G3 runtime controller plugin is unsupported")
+    expected_parameters = {
+        **G3_NAV2_RUNTIME_PARAMETERS, "FollowPath.plugin": ("string", follow_path_plugin),
+    }
     expected_fields = {
         "schema_version", "source_commit", "generated_params_sha256", "controllers",
         "observation_topics", "packages", "build_attestation_sha256",
@@ -170,9 +182,9 @@ def validate_rpp_runtime_observation(
         parameters = row.get("parameters") if isinstance(row, Mapping) else None
         if (not isinstance(row, Mapping) or set(row) != {"lifecycle_state", "parameters"}
                 or row.get("lifecycle_state") != 3 or not isinstance(parameters, Mapping)
-                or set(parameters) != set(G3_NAV2_RUNTIME_PARAMETERS)):
+                or set(parameters) != set(expected_parameters)):
             raise ValueError(f"{robot} goal-acceptance runtime parameter set differs")
-        for name, (expected_type, expected_value) in G3_NAV2_RUNTIME_PARAMETERS.items():
+        for name, (expected_type, expected_value) in expected_parameters.items():
             parameter = parameters[name]
             if (not isinstance(parameter, Mapping)
                     or set(parameter) != {"parameter_type", "parameter_value"}
@@ -270,6 +282,7 @@ def collect_rpp_runtime_observation(
     *, get_parameters_type: Any, bool_parameter_type: int, double_parameter_type: int,
     string_parameter_type: int,
     source_commit: str | None,
+    follow_path_plugin: str = str(G3_NAV2_GOAL_ACCEPTANCE["follow_path_plugin"]),
 ) -> dict[str, Any]:
     """Probe active controller parameters and graph types before any initial HOLD is sent."""
     graph_types = {name: types for name, types in event_node.get_topic_names_and_types()}
@@ -319,6 +332,7 @@ def collect_rpp_runtime_observation(
     }
     validate_rpp_runtime_observation(
         observation, generated_params_sha256=sha(params_path), source_commit=source_commit,
+        follow_path_plugin=follow_path_plugin,
     )
     return observation
 
@@ -1086,6 +1100,7 @@ def main() -> int:
             double_parameter_type=ParameterType.PARAMETER_DOUBLE,
             string_parameter_type=ParameterType.PARAMETER_STRING,
             source_commit=os.environ.get("FACTORY_OPS_G3_SOURCE_COMMIT"),
+            follow_path_plugin=runtime_config["g3_nav2"]["follow_path_plugin"],
         )
         validate_goal_checker_install_attestation(
             runtime_observation["packages"],

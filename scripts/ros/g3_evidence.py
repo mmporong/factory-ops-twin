@@ -534,6 +534,7 @@ def validate_nav2_runtime_contract(
         validate_rpp_runtime_observation(
             provenance, generated_params_sha256=params_sha,
             source_commit=os.environ.get("FACTORY_OPS_G3_SOURCE_COMMIT"),
+            follow_path_plugin=config["g3_runtime"]["g3_nav2"]["follow_path_plugin"],
         )
         validate_goal_checker_install_attestation(
             provenance["packages"],

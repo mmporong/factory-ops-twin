@@ -91,6 +91,39 @@ class G3MissionAdmissionTests(unittest.TestCase):
         self.assertEqual(.15, template["controller_server"]["ros__parameters"]["goal_checker"]["yaw_goal_tolerance"])
         self.assertEqual(.1, template["controller_server"]["ros__parameters"]["progress_checker"]["required_movement_radius"])
         self.assertEqual(30., template["controller_server"]["ros__parameters"]["progress_checker"]["movement_time_allowance"])
+        confirmed_runtime = deepcopy(runtime)
+        confirmed_runtime["g3_nav2"].update({
+            "follow_path_plugin": "factory_ops_goal_checker::ConfirmedXyRegulatedPurePursuitController",
+            "xy_latch_mode": "goal_checker_confirmed_xy_latch",
+        })
+        confirmed, _ = build_g3_namespaced_params(
+            template, scenario, radii, confirmed_runtime,
+            physical_map="physical.yaml", navigation_map="navigation.yaml",
+        )
+        expected_confirmed = deepcopy(generated)
+        for robot in ("carter1", "carter2"):
+            expected_confirmed[robot]["controller_server"]["ros__parameters"]["FollowPath"]["plugin"] = (
+                "factory_ops_goal_checker::ConfirmedXyRegulatedPurePursuitController"
+            )
+        self.assertEqual(confirmed, expected_confirmed)
+        for mode in (None, "unknown"):
+            invalid_mode = deepcopy(confirmed_runtime)
+            if mode is None:
+                invalid_mode["g3_nav2"].pop("xy_latch_mode")
+            else:
+                invalid_mode["g3_nav2"]["xy_latch_mode"] = mode
+            with self.assertRaisesRegex(ValueError, "override contract"):
+                build_g3_namespaced_params(
+                    template, scenario, radii, invalid_mode,
+                    physical_map="physical.yaml", navigation_map="navigation.yaml",
+                )
+        wrong_plugin = deepcopy(confirmed_runtime)
+        wrong_plugin["g3_nav2"]["follow_path_plugin"] = runtime["g3_nav2"]["follow_path_plugin"]
+        with self.assertRaisesRegex(ValueError, "override contract"):
+            build_g3_namespaced_params(
+                template, scenario, radii, wrong_plugin,
+                physical_map="physical.yaml", navigation_map="navigation.yaml",
+            )
         changed = deepcopy(template)
         changed["controller_server"]["ros__parameters"]["controller_frequency"] = 9.0
         with self.assertRaisesRegex(ValueError, "10 Hz"):
@@ -127,6 +160,26 @@ class G3MissionAdmissionTests(unittest.TestCase):
                     "controller_cycle_trace": "diagnostic_msgs/msg/DiagnosticArray"}.items()},
             "packages": packages}
         validate_rpp_runtime_observation(observation, generated_params_sha256=params_sha, source_commit=source)
+        confirmed_plugin = "factory_ops_goal_checker::ConfirmedXyRegulatedPurePursuitController"
+        confirmed_observation = deepcopy(observation)
+        for controller in confirmed_observation["controllers"].values():
+            controller["parameters"]["FollowPath.plugin"]["parameter_value"] = confirmed_plugin
+        with self.assertRaises(ValueError):
+            validate_rpp_runtime_observation(
+                confirmed_observation, generated_params_sha256=params_sha, source_commit=source,
+            )
+        validate_rpp_runtime_observation(
+            confirmed_observation, generated_params_sha256=params_sha, source_commit=source,
+            follow_path_plugin=confirmed_plugin,
+        )
+        confirmed_observation["controllers"]["carter2"]["parameters"]["FollowPath.plugin"] = (
+            deepcopy(parameters["FollowPath.plugin"])
+        )
+        with self.assertRaises(ValueError):
+            validate_rpp_runtime_observation(
+                confirmed_observation, generated_params_sha256=params_sha, source_commit=source,
+                follow_path_plugin=confirmed_plugin,
+            )
         mutations = []
         changed = deepcopy(observation); changed["schema_version"] = 1; mutations.append(changed)
         changed = deepcopy(observation); changed["extra"] = True; mutations.append(changed)
