@@ -164,6 +164,8 @@ semantic, instance, bbox label map의 키는 `0`, `9`, `27` 같은 비음수 can
 
 실제 렌더 한 프레임에서 source-bound foreground instance가 instance mask에 정확히 1픽셀로 존재하지만 그 canonical child root의 개별 SDK bbox 행은 없고, 이미 검증된 상위 aggregate 행의 전체 visible descendant 집합에는 포함된 사례가 관찰됐다. 이 경우에만 `raw_bbox_binding.kind: "individual_sdk_bbox_absent"`로 instance를 보존한다. `bbox_semantic_id`, `raw_bbox_index`, 원본 bbox 좌표·edge·occlusion 값은 null이며, mask tight bbox `[x,y,x,y]`, `bbox_source: "instance_segmentation_mask"`, `mask_pixel_count: 1`, 동일 픽셀의 semantic ID, 검증된 aggregate 행 인덱스를 별도 필드로 기록한다. QA는 실제 mask pixel 수와 bounds, canonical path·class·source·stable identity, 개별 child bbox 행이 전혀 없다는 사실, strict ancestor aggregate의 정확한 전체 descendant union과 child ID 포함을 독립적으로 다시 계산한다. 이 상태는 원본 bbox 가림 통계에 포함하지 않고 별도 개수로 보고한다. SDK 내부에서 개별 행이 누락된 이유는 확인되지 않았으므로 추정 원인을 데이터 계약에 기록하지 않는다.
 
+같은 1픽셀 조건에서 검증된 상위 aggregate 행도 없으면 `raw_bbox_binding.kind: "individual_sdk_bbox_absent_source_bound_mask"`를 사용한다. 이 변형은 `covering_aggregate_raw_bbox_index` 필드를 두지 않으며, canonical root·class·source asset SHA·stable key, 정확히 1픽셀인 instance mask, 그 픽셀의 단일 semantic ID와 class, 동일 canonical identity를 가리키는 SDK bbox 행이 0개라는 조건을 모두 만족해야 한다. aggregate 행이 하나라도 있으면 기존 aggregate-backed 형식을 사용하고, 둘 이상이면 모호한 원본으로 거부한다. 두 변형 모두 mask tight bbox를 표시용 geometry로 쓸 뿐 SDK bbox 또는 SDK occlusion 측정으로 취급하지 않으며, QA는 전체 누락 수와 aggregate-backed/source-bound 수를 나눠 보고한다. 이 제한적 정규화는 데이터 무결성 검증이며 human release 승인, production 통과, 1080개 실제 캡처 완료를 뜻하지 않는다.
+
 ## Leaf 가림 증거
 
 가림 검증은 `instance_id_segmentation`의 renderer leaf ID와 `OcclusionSD`를 같은 paused physics frame에서 수집한다. 각 카메라는 기존 산출물에 더해 다음 네 파일을 갖는다.

@@ -742,7 +742,7 @@ class G4CaptureContractTests(unittest.TestCase):
         self.assertEqual([item["instance_id"] for item in result["instances"]], [110, 124])
         self.assertEqual(source_classes.items_calls, 5)
 
-    def test_one_pixel_instance_without_individual_sdk_bbox_is_preserved_only_under_exact_aggregate(self) -> None:
+    def test_one_pixel_instance_without_individual_sdk_bbox_uses_exact_aggregate_or_source_bound_mask(self) -> None:
         class AggregateStage:
             def GetPrimAtPath(self, path):
                 classes = {
@@ -822,8 +822,48 @@ class G4CaptureContractTests(unittest.TestCase):
         no_aggregate = json.loads(json.dumps(arguments["bbox_raw"]))
         no_aggregate["data"] = no_aggregate["data"][:1]
         no_aggregate["info"]["primPaths"] = no_aggregate["info"]["primPaths"][:1]
-        with self.assertRaisesRegex(CaptureError, "not a one-to-one join"):
-            _normalize_annotations(**{**arguments, "bbox_raw": no_aggregate})
+        source_bound = _normalize_annotations(**{**arguments, "bbox_raw": no_aggregate})
+        missing = next(item for item in source_bound["instances"] if item["instance_id"] == 27)
+        self.assertEqual(missing["raw_bbox_binding"], {
+            "kind": "individual_sdk_bbox_absent_source_bound_mask",
+            "bbox_xyxy": None,
+            "instance_ids": [27],
+            "edge_truncated": None,
+            "occlusion_ratio": None,
+            "occlusion_status": "individual_sdk_bbox_absent",
+            "occlusion_raw_value": None,
+            "bbox_source": "instance_segmentation_mask",
+            "mask_pixel_count": 1,
+            "mask_semantic_id": 3,
+        })
+
+        wrong_semantic_class = {
+            **arguments["semantic_payload"],
+            "info": json.loads(json.dumps(arguments["semantic_payload"]["info"])),
+        }
+        wrong_semantic_class["info"]["idToLabels"]["3"] = {"class": "floor"}
+        with self.assertRaises(CaptureError):
+            _normalize_annotations(**{
+                **arguments,
+                "semantic_payload": wrong_semantic_class,
+                "bbox_raw": no_aggregate,
+            })
+
+        wrong_class_identity = json.loads(json.dumps(no_aggregate))
+        wrong_class_identity["data"].append({
+            "semanticId": 8, "x_min": 2, "y_min": 0, "x_max": 2, "y_max": 0,
+            "occlusionRatio": -1.0,
+        })
+        wrong_class_identity["info"]["idToLabels"]["8"] = {"class": "floor"}
+        wrong_class_identity["info"]["primPaths"].append("/World/FG/Mark")
+        with self.assertRaises(CaptureError):
+            _normalize_annotations(**{**arguments, "bbox_raw": wrong_class_identity})
+
+        ambiguous_aggregate = json.loads(json.dumps(arguments["bbox_raw"]))
+        ambiguous_aggregate["data"].append(dict(ambiguous_aggregate["data"][1]))
+        ambiguous_aggregate["info"]["primPaths"].append("/World/FG")
+        with self.assertRaisesRegex(CaptureError, "more than one hierarchical semantic aggregate"):
+            _normalize_annotations(**{**arguments, "bbox_raw": ambiguous_aggregate})
 
     def test_visible_parent_raw_bbox_is_bound_to_exact_semantic_subtree_union(self) -> None:
         class SubtreeStage:

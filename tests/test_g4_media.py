@@ -212,11 +212,14 @@ class G4MediaTests(unittest.TestCase):
                 },
                 "instances": [
                     {"instance_id": 21, "class": "floor", "bbox_xyxy": [0, 1, 3, 1],
-                     "bbox_source": "instance_mask", "bbox_semantic_id": 2, "raw_bbox_index": 0,
+                     "bbox_semantic_id": 2, "raw_bbox_index": 0,
                      "raw_bbox_binding": {"kind": "instance_mask"}},
                     {"instance_id": 27, "class": "rack", "bbox_xyxy": [0, 2, 3, 2],
-                     "bbox_source": "instance_mask", "bbox_semantic_id": 9, "raw_bbox_index": 1,
-                     "raw_bbox_binding": {"kind": "instance_mask"}},
+                     "bbox_semantic_id": None, "raw_bbox_index": None,
+                     "raw_bbox_binding": {
+                         "kind": "individual_sdk_bbox_absent_source_bound_mask",
+                         "bbox_source": "instance_segmentation_mask",
+                     }},
                 ],
             }), encoding="utf-8")
             cameras[camera_id] = {
@@ -451,6 +454,15 @@ class G4MediaTests(unittest.TestCase):
         provenance = json.loads((destination / "g4-media-provenance.json").read_text(encoding="utf-8"))
         self.assertEqual(provenance["selection"]["capture_id"], "capture-000")
         self.assertEqual(provenance["cameras"]["overhead"]["depth_scale"]["unit"], "m")
+        bbox_records = provenance["cameras"]["overhead"]["instance_visualization"]["normalized_bboxes"]
+        self.assertEqual(bbox_records[0]["geometry_source"], "instance_segmentation_mask")
+        self.assertEqual(bbox_records[0]["bbox_source"], "sdk_bbox")
+        self.assertEqual(bbox_records[1]["geometry_source"], "instance_segmentation_mask")
+        self.assertEqual(bbox_records[1]["bbox_source"], "instance_segmentation_mask")
+        self.assertEqual(
+            bbox_records[1]["raw_bbox_binding_kind"],
+            "individual_sdk_bbox_absent_source_bound_mask",
+        )
         self.assertEqual(len(provenance["render_time_integrity_checks"]), 3)
 
     def test_input_mutation_prevents_atomic_publication_and_removes_temporary_package(self) -> None:

@@ -82,6 +82,8 @@ def validate_dataset(
         "occlusion_distribution": {"clear_0_0.1": 0, "partial_0.1_0.5": 0, "heavy_0.5_1": 0},
         "edge_truncated_instances": 0,
         "individual_sdk_bbox_absent_instances": 0,
+        "individual_sdk_bbox_absent_aggregate_backed_instances": 0,
+        "individual_sdk_bbox_absent_source_bound_instances": 0,
         "occlusion_measured_instances": 0,
         "occlusion_unknown_instances": 0,
         "leaf_occlusion": {
@@ -1310,7 +1312,10 @@ def _validate_instances(
         raw_index = item.get("raw_bbox_index")
         raw_bbox_binding = item.get("raw_bbox_binding")
         binding_kind = raw_bbox_binding.get("kind") if isinstance(raw_bbox_binding, dict) else None
-        if binding_kind == "individual_sdk_bbox_absent":
+        if binding_kind in {
+            "individual_sdk_bbox_absent",
+            "individual_sdk_bbox_absent_source_bound_mask",
+        }:
             absent_candidates[instance_id] = (item, mask_bbox, class_name, usd_path)
             continue
         if not _nonnegative_int(raw_index) or int(raw_index) >= len(raw_data) or not isinstance(raw_data[int(raw_index)], dict):
@@ -1441,7 +1446,6 @@ def _validate_instances(
         "kind", "bbox_xyxy", "instance_ids", "edge_truncated",
         "occlusion_ratio", "occlusion_status", "occlusion_raw_value",
         "bbox_source", "mask_pixel_count", "mask_semantic_id",
-        "covering_aggregate_raw_bbox_index",
     }
     for instance_id, (item, mask_bbox, class_name, usd_path) in absent_candidates.items():
         raw_bbox_binding = item.get("raw_bbox_binding")
@@ -1449,6 +1453,12 @@ def _validate_instances(
             errors.append(f"{prefix} instance {instance_id} individual SDK bbox absence is not exact and source-bound")
             continue
         semantic_ids = instance_semantic_ids.get(instance_id, set()) if instance_semantic_ids is not None else set()
+        binding_kind = raw_bbox_binding.get("kind")
+        aggregate_backed = binding_kind == "individual_sdk_bbox_absent"
+        source_bound = binding_kind == "individual_sdk_bbox_absent_source_bound_mask"
+        expected_fields = expected_absent_fields | (
+            {"covering_aggregate_raw_bbox_index"} if aggregate_backed else set()
+        )
         aggregate_index = raw_bbox_binding.get("covering_aggregate_raw_bbox_index")
         aggregate_index_int = int(aggregate_index) if _nonnegative_int(aggregate_index) else None
         individual_rows = []
@@ -1461,10 +1471,11 @@ def _validate_instances(
                 exact_instance_labelled_roots,
                 source_bindings,
             )
-            if candidate_class == class_name and usd_path in candidate_roots:
+            if usd_path in candidate_roots:
                 individual_rows.append(candidate_index)
         valid_absent = (
-            set(raw_bbox_binding) == expected_absent_fields
+            (aggregate_backed or source_bound)
+            and set(raw_bbox_binding) == expected_fields
             and "bbox_semantic_id" in item and "raw_bbox_index" in item
             and item.get("bbox_semantic_id") is None
             and item.get("raw_bbox_index") is None
@@ -1484,8 +1495,6 @@ def _validate_instances(
             and len(semantic_ids) == 1
             and _nonnegative_int(raw_bbox_binding.get("mask_semantic_id"))
             and raw_bbox_binding.get("mask_semantic_id") == next(iter(semantic_ids), None)
-            and aggregate_index_int is not None
-            and aggregate_index_int < len(raw_data)
             and not individual_rows
         )
         record_matches = [
@@ -1499,12 +1508,29 @@ def _validate_instances(
         ]
         if not valid_absent:
             errors.append(f"{prefix} instance {instance_id} individual SDK bbox absence is not exact and source-bound")
-        elif aggregate_index_int not in excluded_indices or len(record_matches) != 1:
+        elif aggregate_backed and (
+            aggregate_index_int is None
+            or aggregate_index_int >= len(raw_data)
+            or aggregate_index_int not in excluded_indices
+            or len(record_matches) != 1
+        ):
             errors.append(f"{prefix} instance {instance_id} absent SDK bbox is not covered by one exact aggregate row")
+        elif source_bound and any(
+            isinstance(record, dict)
+            and instance_id in record.get("descendant_instance_ids", [])
+            for record in excluded_bbox_rows
+        ):
+            errors.append(f"{prefix} instance {instance_id} source-bound absent SDK bbox has an aggregate row")
         else:
             stats["individual_sdk_bbox_absent_instances"] = stats.get(
                 "individual_sdk_bbox_absent_instances", 0
             ) + 1
+            counter = (
+                "individual_sdk_bbox_absent_aggregate_backed_instances"
+                if aggregate_backed
+                else "individual_sdk_bbox_absent_source_bound_instances"
+            )
+            stats[counter] = stats.get(counter, 0) + 1
         edge = mask_bbox[0] == 0 or mask_bbox[1] == 0 or mask_bbox[2] == width - 1 or mask_bbox[3] == height - 1
         if item.get("edge_truncated") is not edge:
             errors.append(f"{prefix} instance {instance_id} edge_truncated does not match the mask bbox")

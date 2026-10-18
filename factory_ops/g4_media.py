@@ -547,7 +547,9 @@ def _instance_panel(path: Path, normalized: Mapping[str, Any], image_module: Any
         draw.rectangle(cast(tuple[int, int, int, int], tuple(bbox)), outline=PALETTE.get(class_name, (255, 255, 255)), width=2)
         bbox_records.append({
             "instance_id": instance_id, "class": class_name, "bbox_xyxy": bbox,
-            "bbox_source": item.get("bbox_source"), "raw_bbox_binding_kind": binding.get("kind"),
+            "geometry_source": "instance_segmentation_mask",
+            "bbox_source": binding.get("bbox_source", "sdk_bbox"),
+            "raw_bbox_binding_kind": binding.get("kind"),
             "bbox_semantic_id": item.get("bbox_semantic_id"), "raw_bbox_index": item.get("raw_bbox_index"),
         })
     return image, {"instance_count": len(instances), "normalized_bboxes": bbox_records}

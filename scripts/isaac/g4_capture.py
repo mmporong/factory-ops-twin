@@ -813,22 +813,36 @@ def _normalize_annotations(
             if instance_id in record["descendant_instance_ids"]
             and root_path.startswith(record["canonical_root"] + "/")
         ]
-        has_individual_bbox = any(
-            row_class == class_name and root_path in row_roots
-            for row_roots, row_class in bbox_row_identities
-        )
+        has_individual_bbox = any(root_path in row_roots for row_roots, _row_class in bbox_row_identities)
         if (instance_pixel_counts.get(instance_id) != 1
                 or bbox[0] != bbox[2] or bbox[1] != bbox[3]
                 or len(semantic_ids) != 1
                 or semantic_classes.get(str(next(iter(semantic_ids), -1)), {}).get("class") != class_name
-                or has_individual_bbox
-                or len(covering_aggregates) != 1):
+                or has_individual_bbox):
             continue
-        aggregate_index = covering_aggregates[0]["raw_bbox_index"]
+        if len(covering_aggregates) > 1:
+            raise CaptureError(
+                f"instance ID {instance_id} is covered by more than one hierarchical semantic aggregate"
+            )
         height, width = instance_array.shape
         edge = bbox[0] == 0 or bbox[1] == 0 or bbox[2] == width - 1 or bbox[3] == height - 1
         asset_sha = instance_asset_shas[str(instance_id)]
         stable = hashlib.sha256(f"{scene_variant_id}\0{root_path}\0{asset_sha}".encode("utf-8")).hexdigest()
+        binding: dict[str, Any] = {
+            "kind": "individual_sdk_bbox_absent_source_bound_mask",
+            "bbox_xyxy": None,
+            "instance_ids": [instance_id],
+            "edge_truncated": None,
+            "occlusion_ratio": None,
+            "occlusion_status": "individual_sdk_bbox_absent",
+            "occlusion_raw_value": None,
+            "bbox_source": "instance_segmentation_mask",
+            "mask_pixel_count": 1,
+            "mask_semantic_id": next(iter(semantic_ids)),
+        }
+        if covering_aggregates:
+            binding["kind"] = "individual_sdk_bbox_absent"
+            binding["covering_aggregate_raw_bbox_index"] = covering_aggregates[0]["raw_bbox_index"]
         instances.append({
             "instance_id": instance_id,
             "bbox_semantic_id": None,
@@ -839,19 +853,7 @@ def _normalize_annotations(
             "bbox_xyxy": bbox,
             "raw_bbox_index": None,
             "edge_truncated": edge,
-            "raw_bbox_binding": {
-                "kind": "individual_sdk_bbox_absent",
-                "bbox_xyxy": None,
-                "instance_ids": [instance_id],
-                "edge_truncated": None,
-                "occlusion_ratio": None,
-                "occlusion_status": "individual_sdk_bbox_absent",
-                "occlusion_raw_value": None,
-                "bbox_source": "instance_segmentation_mask",
-                "mask_pixel_count": 1,
-                "mask_semantic_id": next(iter(semantic_ids)),
-                "covering_aggregate_raw_bbox_index": aggregate_index,
-            },
+            "raw_bbox_binding": binding,
         })
         used_ids.add(instance_id)
     if used_ids != expected_ids:

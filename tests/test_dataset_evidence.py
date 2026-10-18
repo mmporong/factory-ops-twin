@@ -880,6 +880,83 @@ class DatasetEvidenceTests(unittest.TestCase):
         _validate_instances(**common, normalized_instances=[floor, missing], errors=errors)
         self.assertEqual(errors, [])
         self.assertEqual(common["stats"]["individual_sdk_bbox_absent_instances"], 1)
+        self.assertEqual(common["stats"]["individual_sdk_bbox_absent_aggregate_backed_instances"], 1)
+
+        source_bound = copy.deepcopy(missing)
+        source_bound["raw_bbox_binding"]["kind"] = "individual_sdk_bbox_absent_source_bound_mask"
+        source_bound["raw_bbox_binding"].pop("covering_aggregate_raw_bbox_index")
+        source_common = {
+            **common,
+            "stats": Counter(),
+            "raw_data": raw_data[:1],
+            "bbox_map": {6: "floor"},
+            "bbox_raw_labels": {"6": {"class": "floor"}},
+            "bbox_prim_paths": ["/World/FG/Floor"],
+            "excluded_bbox_rows": [],
+        }
+        errors = []
+        _validate_instances(**source_common, normalized_instances=[floor, source_bound], errors=errors)
+        self.assertEqual(errors, [])
+        self.assertEqual(source_common["stats"]["individual_sdk_bbox_absent_instances"], 1)
+        self.assertEqual(source_common["stats"]["individual_sdk_bbox_absent_source_bound_instances"], 1)
+
+        wrong_kind = copy.deepcopy(source_bound)
+        wrong_kind["raw_bbox_binding"]["kind"] = "individual_sdk_bbox_absent"
+        errors = []
+        _validate_instances(**source_common, normalized_instances=[floor, wrong_kind], errors=errors)
+        self.assertTrue(any("individual SDK bbox absence" in error for error in errors), errors)
+
+        aggregate_with_source_kind = copy.deepcopy(source_bound)
+        errors = []
+        _validate_instances(
+            **{**common, "stats": Counter()},
+            normalized_instances=[floor, aggregate_with_source_kind], errors=errors,
+        )
+        self.assertTrue(any("has an aggregate row" in error for error in errors), errors)
+
+        invented_sdk = copy.deepcopy(source_bound)
+        invented_sdk["raw_bbox_binding"]["occlusion_ratio"] = 0.0
+        errors = []
+        _validate_instances(**source_common, normalized_instances=[floor, invented_sdk], errors=errors)
+        self.assertTrue(any("individual SDK bbox absence" in error for error in errors), errors)
+
+        invented_nullable_ids = copy.deepcopy(source_bound)
+        invented_nullable_ids["bbox_semantic_id"] = 8
+        invented_nullable_ids["raw_bbox_index"] = 0
+        errors = []
+        _validate_instances(**source_common, normalized_instances=[floor, invented_nullable_ids], errors=errors)
+        self.assertTrue(any("individual SDK bbox absence" in error for error in errors), errors)
+
+        errors = []
+        _validate_instances(
+            **{**source_common, "stats": Counter(), "instance_semantic_ids": {43: {2}, 27: {3, 4}}},
+            normalized_instances=[floor, source_bound], errors=errors,
+        )
+        self.assertTrue(any("individual SDK bbox absence" in error for error in errors), errors)
+
+        extra_field = copy.deepcopy(source_bound)
+        extra_field["raw_bbox_binding"]["covering_aggregate_raw_bbox_index"] = 0
+        errors = []
+        _validate_instances(**source_common, normalized_instances=[floor, extra_field], errors=errors)
+        self.assertTrue(any("individual SDK bbox absence" in error for error in errors), errors)
+
+        wrong_class_same_identity_raw = [
+            *copy.deepcopy(source_common["raw_data"]),
+            {"semanticId": 8, "x_min": 2, "y_min": 0, "x_max": 2, "y_max": 0, "occlusionRatio": -1.0},
+        ]
+        errors = []
+        _validate_instances(
+            **{
+                **source_common,
+                "stats": Counter(),
+                "raw_data": wrong_class_same_identity_raw,
+                "bbox_map": {6: "floor", 8: "floor"},
+                "bbox_raw_labels": {"6": {"class": "floor"}, "8": {"class": "floor"}},
+                "bbox_prim_paths": ["/World/FG/Floor", "/World/FG/Mark"],
+            },
+            normalized_instances=[floor, source_bound], errors=errors,
+        )
+        self.assertTrue(any("individual SDK bbox absence" in error for error in errors), errors)
 
         mutations = {
             "pixel count": lambda item: item["raw_bbox_binding"].__setitem__("mask_pixel_count", 2),
