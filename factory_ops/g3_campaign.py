@@ -22,7 +22,7 @@ from .g3_session import _load_primary_input_manifest
 
 PRODUCER_SOURCE_COMMIT = "11e5b7f032a7dba0c08752cebc2e8949c6e7ad04"
 EXPERIMENT_CONFIG_SHA256 = "ea079a719f4b72fbaa6463392385119081079180cb6737dfd36ed82de29fbec1"
-V4_PRODUCER_SOURCE_COMMIT = "1b75bc8f6ef77dfceaaf1c2a520383462ef3262a"
+V4_PRODUCER_SOURCE_COMMIT = "ea1aa98270ddf500b5c4fa94996d439f24af3e5c"
 V4_EXPERIMENT_CONFIG_SHA256 = "98d03a57cd1d99b53875214e099698514672a02b9f6036f381b17a2f58eea074"
 V4_EXPERIMENT_CONFIG_PATH = "configs/factory-v4/g3-experiment.json"
 V4_CAMPAIGN_PROTOCOL_PATH = "configs/calibrations/g3-v4-campaign-protocol.json"
@@ -185,7 +185,7 @@ def _resolve_bindings(
     expected = {
         "schema_version": 1,
         "classification": "g3_factory_v4_campaign_protocol",
-        "protocol_id": "factory-v4-amr-1b75bc8",
+        "protocol_id": f"factory-v4-amr-{V4_PRODUCER_SOURCE_COMMIT[:7]}",
         "status": "planned_not_executed",
         "producer_source_commit": V4_PRODUCER_SOURCE_COMMIT,
         "experiment_config_path": V4_EXPERIMENT_CONFIG_PATH,
