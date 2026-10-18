@@ -439,7 +439,7 @@ docker create --name "$nav" --network host --ipc host --user 1234:1234 \
   --entrypoint /bin/bash -e HOME=/tmp -e ROS_DOMAIN_ID=72 -e RMW_IMPLEMENTATION=rmw_fastrtps_cpp \
   -e FACTORY_OPS_G3_SESSION_SHA256="$session_sha" \
   -e FACTORY_OPS_G3_SOURCE_COMMIT="$expected_commit" -e FACTORY_OPS_G3_PROVENANCE_SHA256="$provenance_sha" \
-  -e FACTORY_OPS_G3_BUILD_ATTESTATION_PATH="$build_attestation" \
+  -e FACTORY_OPS_G3_BUILD_ATTESTATION_PATH="/workspace/results/$run/provenance/build/build-attestation.json" \
   -e FACTORY_OPS_G3_BUILD_ATTESTATION_SHA256="$build_attestation_sha" \
   -e FACTORY_OPS_G3_PRIMARY_INPUTS_PATH="$primary_inputs" -e FACTORY_OPS_G3_PRIMARY_INPUTS_SHA256="$primary_inputs_sha" \
   -v "$root:$root:ro" -v "$project:/workspace/project:ro" -v "$root/results:/workspace/results:rw" \
@@ -542,7 +542,7 @@ docker create --name "$evidence" --network none --user 1234:1234 \
   --entrypoint /bin/bash -e HOME=/tmp \
   -e FACTORY_OPS_G3_SESSION_SHA256="$session_sha" \
   -e FACTORY_OPS_G3_SOURCE_COMMIT="$expected_commit" -e FACTORY_OPS_G3_PROVENANCE_SHA256="$provenance_sha" \
-  -e FACTORY_OPS_G3_BUILD_ATTESTATION_PATH="$build_attestation" \
+  -e FACTORY_OPS_G3_BUILD_ATTESTATION_PATH="/workspace/results/$run/provenance/build/build-attestation.json" \
   -e FACTORY_OPS_G3_BUILD_ATTESTATION_SHA256="$build_attestation_sha" \
   -e FACTORY_OPS_G3_PRIMARY_INPUTS_PATH="$primary_inputs" -e FACTORY_OPS_G3_PRIMARY_INPUTS_SHA256="$primary_inputs_sha" \
   -v "$root:$root:ro" -v "$project:/workspace/project:ro" -v "$root/results:/workspace/results:rw" \
