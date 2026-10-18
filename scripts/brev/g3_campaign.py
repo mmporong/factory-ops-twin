@@ -35,25 +35,32 @@ def main() -> int:
     args = parser.parse_args()
     spec = _object(args.spec)
     if args.command == "actual-six":
-        expected = {"output", "evidence_root", "runs", "actual_billing_path"}
-        if set(spec) != expected or not isinstance(spec["runs"], list):
+        required = {"output", "evidence_root", "runs", "actual_billing_path"}
+        optional = {"campaign_protocol_path"}
+        if (not required.issubset(spec) or set(spec) - required - optional
+                or not isinstance(spec["runs"], list)):
             raise ValueError("actual-six specification fields differ")
         output = materialize_actual_six(
             Path(spec["output"]), evidence_root=Path(spec["evidence_root"]),
             runs=spec["runs"], actual_billing_path=Path(spec["actual_billing_path"]),
             host_repository=REPOSITORY,
+            campaign_protocol_path=(Path(spec["campaign_protocol_path"])
+                                    if "campaign_protocol_path" in spec else None),
         )
     else:
-        expected = {
+        required = {
             "output", "pilot_slots_path", "resource_input_path", "experiment_config_path",
         }
-        if set(spec) != expected:
+        optional = {"campaign_protocol_path"}
+        if not required.issubset(spec) or set(spec) - required - optional:
             raise ValueError("freeze-primary specification fields differ")
         output = freeze_primary_campaign(
             Path(spec["output"]), pilot_slots_path=Path(spec["pilot_slots_path"]),
             resource_input_path=Path(spec["resource_input_path"]),
             experiment_config_path=Path(spec["experiment_config_path"]),
             host_repository=REPOSITORY,
+            campaign_protocol_path=(Path(spec["campaign_protocol_path"])
+                                    if "campaign_protocol_path" in spec else None),
         )
     print(output)
     return 0

@@ -22,6 +22,10 @@ from .g3_session import _load_primary_input_manifest
 
 PRODUCER_SOURCE_COMMIT = "11e5b7f032a7dba0c08752cebc2e8949c6e7ad04"
 EXPERIMENT_CONFIG_SHA256 = "ea079a719f4b72fbaa6463392385119081079180cb6737dfd36ed82de29fbec1"
+V4_PRODUCER_SOURCE_COMMIT = "1b75bc8f6ef77dfceaaf1c2a520383462ef3262a"
+V4_EXPERIMENT_CONFIG_SHA256 = "98d03a57cd1d99b53875214e099698514672a02b9f6036f381b17a2f58eea074"
+V4_EXPERIMENT_CONFIG_PATH = "configs/factory-v4/g3-experiment.json"
+V4_CAMPAIGN_PROTOCOL_PATH = "configs/calibrations/g3-v4-campaign-protocol.json"
 _COMMIT = re.compile(r"^[0-9a-f]{40}$")
 _SHA256 = re.compile(r"^[0-9a-f]{64}$")
 _HOST_FILES = (
@@ -132,6 +136,89 @@ def _fixed_bindings(source_commit: str, config_sha256: str) -> None:
         raise ValueError("campaign experiment config differs from fixed C")
 
 
+def _committed_file(repository: Path, path: Path, name: str) -> tuple[Path, str]:
+    """Return a repository-relative committed file after exact live-byte verification."""
+    if not path.is_absolute():
+        raise ValueError(f"{name} must be absolute")
+    if path.is_symlink() or not path.is_file():
+        raise ValueError(f"{name} must be a regular file")
+    resolved = path.resolve(strict=True)
+    try:
+        relative = resolved.relative_to(repository)
+    except ValueError as exc:
+        raise ValueError(f"{name} must remain inside the host repository") from exc
+    relative_text = relative.as_posix()
+    try:
+        committed = subprocess.check_output(
+            ("git", "show", f"HEAD:{relative_text}"), cwd=repository,
+            stderr=subprocess.DEVNULL,
+        )
+    except subprocess.CalledProcessError as exc:
+        raise ValueError(f"{name} must be committed at host HEAD") from exc
+    if committed != resolved.read_bytes():
+        raise ValueError(f"{name} differs from committed bytes")
+    return relative, hashlib.sha256(committed).hexdigest()
+
+
+def _resolve_bindings(
+    host_repository: Path,
+    protocol_path: Path | None,
+    source_commit: str | None,
+    config_sha256: str | None,
+) -> tuple[str, str, dict[str, Any] | None, Path | None]:
+    """Resolve either the strict legacy pair or the committed factory-v4 protocol."""
+    repository = host_repository.resolve(strict=True)
+    if protocol_path is None:
+        selected_source = PRODUCER_SOURCE_COMMIT if source_commit is None else source_commit
+        selected_config = EXPERIMENT_CONFIG_SHA256 if config_sha256 is None else config_sha256
+        _fixed_bindings(selected_source, selected_config)
+        return selected_source, selected_config, None, None
+
+    protocol = protocol_path.resolve(strict=True)
+    expected_protocol = repository / V4_CAMPAIGN_PROTOCOL_PATH
+    if protocol != expected_protocol:
+        raise ValueError("campaign protocol path is not the committed factory-v4 protocol")
+    relative, protocol_sha256 = _committed_file(
+        repository, protocol_path, "campaign protocol"
+    )
+    value = _load_object(protocol_path, "campaign protocol")
+    expected = {
+        "schema_version": 1,
+        "classification": "g3_factory_v4_campaign_protocol",
+        "protocol_id": "factory-v4-amr-1b75bc8",
+        "status": "planned_not_executed",
+        "producer_source_commit": V4_PRODUCER_SOURCE_COMMIT,
+        "experiment_config_path": V4_EXPERIMENT_CONFIG_PATH,
+        "experiment_config_sha256": V4_EXPERIMENT_CONFIG_SHA256,
+    }
+    if value != expected:
+        raise ValueError("campaign protocol fields differ from the fixed factory-v4 binding")
+    if source_commit is not None and source_commit != V4_PRODUCER_SOURCE_COMMIT:
+        raise ValueError("campaign producer source commit differs from selected factory-v4 protocol")
+    if config_sha256 is not None and config_sha256 != V4_EXPERIMENT_CONFIG_SHA256:
+        raise ValueError("campaign experiment config differs from selected factory-v4 protocol")
+    config_path = repository / V4_EXPERIMENT_CONFIG_PATH
+    config_relative, config_blob_sha256 = _committed_file(
+        repository, config_path, "factory-v4 experiment config"
+    )
+    settings = load_experiment_config(config_path)
+    if canonical_hash(settings) != V4_EXPERIMENT_CONFIG_SHA256:
+        raise ValueError("committed factory-v4 experiment config canonical hash differs")
+    protocol_reference = {
+        "classification": "committed_campaign_protocol",
+        "path": relative.as_posix(),
+        "sha256": protocol_sha256,
+        "experiment_config_path": config_relative.as_posix(),
+        "experiment_config_blob_sha256": config_blob_sha256,
+    }
+    return (
+        V4_PRODUCER_SOURCE_COMMIT,
+        V4_EXPERIMENT_CONFIG_SHA256,
+        protocol_reference,
+        config_path,
+    )
+
+
 def _fresh_staging(output: Path) -> Path:
     if not output.is_absolute():
         raise ValueError("campaign namespace must be absolute")
@@ -152,12 +239,15 @@ def materialize_actual_six(
     runs: Sequence[Mapping[str, Any]],
     actual_billing_path: Path,
     host_repository: Path,
-    source_commit: str = PRODUCER_SOURCE_COMMIT,
-    experiment_config_sha256: str = EXPERIMENT_CONFIG_SHA256,
+    source_commit: str | None = None,
+    experiment_config_sha256: str | None = None,
+    campaign_protocol_path: Path | None = None,
 ) -> Path:
     """Bind six closed pilot roots and raw resource rows without opening any gate."""
-    _fixed_bindings(source_commit, experiment_config_sha256)
     host_source_commit = _host_source_commit(host_repository)
+    source_commit, experiment_config_sha256, protocol_reference, _ = _resolve_bindings(
+        host_repository, campaign_protocol_path, source_commit, experiment_config_sha256
+    )
     root = evidence_root.resolve(strict=True)
     if not root.is_dir() or root.is_symlink():
         raise ValueError("evidence root must be a regular directory")
@@ -342,6 +432,7 @@ def materialize_actual_six(
             "producer_source_commit": source_commit,
             "host_source_commit": host_source_commit,
             "experiment_config_sha256": experiment_config_sha256,
+            "campaign_protocol": protocol_reference,
             "actual_six_run_ids": expected_ids,
             "actual_billing": actual_billing_ref,
             "planning_billing_derivation": "exact_core_fields_selected_from_hash_bound_actual_extended_billing",
@@ -365,13 +456,19 @@ def freeze_primary_campaign(
     resource_input_path: Path,
     experiment_config_path: Path,
     host_repository: Path,
-    source_commit: str = PRODUCER_SOURCE_COMMIT,
-    experiment_config_sha256: str = EXPERIMENT_CONFIG_SHA256,
+    source_commit: str | None = None,
+    experiment_config_sha256: str | None = None,
+    campaign_protocol_path: Path | None = None,
 ) -> Path:
     """Revalidate an eligible actual calibration and freeze the canonical 60 inputs."""
-    _fixed_bindings(source_commit, experiment_config_sha256)
     host_source_commit = _host_source_commit(host_repository)
-    settings = load_experiment_config(experiment_config_path.resolve(strict=True))
+    source_commit, experiment_config_sha256, protocol_reference, bound_config_path = _resolve_bindings(
+        host_repository, campaign_protocol_path, source_commit, experiment_config_sha256
+    )
+    resolved_config_path = experiment_config_path.resolve(strict=True)
+    if bound_config_path is not None and resolved_config_path != bound_config_path:
+        raise ValueError("experiment config path differs from selected factory-v4 protocol")
+    settings = load_experiment_config(resolved_config_path)
     if canonical_hash(settings) != experiment_config_sha256:
         raise ValueError("experiment config bytes differ from fixed C")
     pilot_slots = _load_object(pilot_slots_path, "pilot slots")
@@ -441,6 +538,7 @@ def freeze_primary_campaign(
             "producer_source_commit": source_commit,
             "host_source_commit": host_source_commit,
             "experiment_config_sha256": experiment_config_sha256,
+            "campaign_protocol": protocol_reference,
             "trial_count": 60,
             "primary_manifest_count": 60,
             "files": sorted(file_rows, key=lambda row: str(row["path"])),

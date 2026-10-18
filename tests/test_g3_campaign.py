@@ -15,6 +15,10 @@ from factory_ops.experiments import canonical_hash, load_experiment_config
 from factory_ops.g3_campaign import (
     EXPERIMENT_CONFIG_SHA256,
     PRODUCER_SOURCE_COMMIT,
+    V4_CAMPAIGN_PROTOCOL_PATH,
+    V4_EXPERIMENT_CONFIG_PATH,
+    V4_EXPERIMENT_CONFIG_SHA256,
+    V4_PRODUCER_SOURCE_COMMIT,
     _host_source_commit,
     freeze_primary_campaign,
     materialize_actual_six,
@@ -24,6 +28,8 @@ from tests.test_g3_calibration import make_raw_package
 
 ROOT = Path(__file__).parents[1]
 CONFIG = ROOT / "configs/factory-v3/g3-experiment.json"
+V4_CONFIG = ROOT / V4_EXPERIMENT_CONFIG_PATH
+V4_PROTOCOL = ROOT / V4_CAMPAIGN_PROTOCOL_PATH
 
 
 def save(path: Path, value: object) -> None:
@@ -148,6 +154,70 @@ class G3CampaignTests(unittest.TestCase):
             actual_billing_path=self.billing, host_repository=self.host_repository,
         )
 
+    def install_v4_protocol(self, *, value: object | None = None,
+                            malformed: bool = False, commit: bool = True) -> Path:
+        protocol = self.host_repository / V4_CAMPAIGN_PROTOCOL_PATH
+        config = self.host_repository / V4_EXPERIMENT_CONFIG_PATH
+        protocol.parent.mkdir(parents=True, exist_ok=True)
+        config.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(V4_CONFIG, config)
+        if malformed:
+            protocol.write_text("{", encoding="utf-8")
+        elif value is None:
+            shutil.copyfile(V4_PROTOCOL, protocol)
+        else:
+            save(protocol, value)
+        if commit:
+            subprocess.run(
+                ("git", "add", V4_CAMPAIGN_PROTOCOL_PATH, V4_EXPERIMENT_CONFIG_PATH),
+                cwd=self.host_repository, check=True,
+            )
+            subprocess.run(("git", "commit", "-qm", "fixture v4 protocol"),
+                           cwd=self.host_repository, check=True)
+        return protocol
+
+    def rebind_runs_to_v4(self) -> None:
+        for index, raw in enumerate(self.runs):
+            slot = str(raw["slot"])
+            condition, policy = slot.split(":")
+            run_id = self.run_ids[index]
+            report_path = Path(str(raw["run_root"])) / "g3-evidence.json"
+            report = json.loads(report_path.read_text(encoding="utf-8"))
+            report["source"]["commit"] = V4_PRODUCER_SOURCE_COMMIT
+            report["experiment_config_sha256"] = V4_EXPERIMENT_CONFIG_SHA256
+            save(report_path, report)
+            envelope_path, envelope, archive_payload, manifest_payload = make_raw_package(
+                self.evidence, run_id=run_id,
+                run_label=f"g3-v4-p-{condition}-{policy}-{index + 1:03d}",
+                source_commit=V4_PRODUCER_SOURCE_COMMIT,
+                condition=condition, policy=policy, index=index + 100,
+            )
+            resource_path = Path(str(raw["resource_path"]))
+            resource = json.loads(resource_path.read_text(encoding="utf-8"))
+            for name, payload in (("archive", archive_payload),
+                                  ("output_manifest", manifest_payload)):
+                artifact = self.evidence / str(resource[name]["path"])
+                artifact.write_bytes(payload)
+                resource[name]["sha256"] = digest(artifact)
+            save(resource_path, resource)
+            closure_path = Path(str(raw["closure_path"]))
+            save(closure_path, {
+                "schema_version": 1, "classification": "g3_source_support_closure",
+                "source_commit": V4_PRODUCER_SOURCE_COMMIT,
+                "experiment_config_sha256": V4_EXPERIMENT_CONFIG_SHA256,
+                "actual_six_run_ids": sorted(self.run_ids),
+                "raw_envelope_sha256": digest(envelope_path),
+                "source_bundle_sha256": envelope["source_bundle_sha256"],
+                "support_manifest_sha256": envelope["support_manifest_sha256"],
+                "per_trial_support_manifest_sha256": envelope[
+                    "per_trial_support_manifest_sha256"
+                ],
+                "shared_six_pilot_support_pack_sha256": envelope[
+                    "shared_six_pilot_support_pack_sha256"
+                ],
+            })
+            raw["raw_envelope_path"] = str(envelope_path)
+
     def test_actual_six_materializes_exact_slots_rows_and_billing_provenance(self) -> None:
         output = self.materialize()
         slots = json.loads((output / "pilot-slots.json").read_text(encoding="utf-8"))
@@ -165,6 +235,98 @@ class G3CampaignTests(unittest.TestCase):
         self.assertEqual(100.22, planning["project_actual_billing_usd"])
         with self.assertRaises(FileExistsError):
             self.materialize()
+
+    def test_committed_v4_protocol_materializes_six_and_freezes_60_unique_inputs(self) -> None:
+        protocol = self.install_v4_protocol()
+        self.rebind_runs_to_v4()
+        actual = materialize_actual_six(
+            self.evidence / "v4-actual", evidence_root=self.evidence, runs=self.runs,
+            actual_billing_path=self.billing, host_repository=self.host_repository,
+            campaign_protocol_path=protocol,
+        )
+        actual_manifest = json.loads(
+            (actual / "campaign-inputs.json").read_text(encoding="utf-8")
+        )
+        self.assertEqual(V4_PRODUCER_SOURCE_COMMIT, actual_manifest["producer_source_commit"])
+        self.assertEqual(V4_EXPERIMENT_CONFIG_SHA256,
+                         actual_manifest["experiment_config_sha256"])
+        self.assertEqual(V4_CAMPAIGN_PROTOCOL_PATH,
+                         actual_manifest["campaign_protocol"]["path"])
+        self.assertFalse(actual_manifest["actual_data_gate_succeeded"])
+        resource = self.root / "v4-resource-input.json"
+        save(resource, {
+            "evidence_root": str(self.evidence),
+            "supervisor_path": "v4-actual/supervisor.json",
+            "supervisor_sha256": digest(actual / "supervisor.json"),
+            "requested_primary_runs": 60, "reserve_fraction": .2, "schema_version": 3,
+            "sequential_plan_path": "v4-sequential-capacity-plan.json",
+            "sequential_plan_sha256": "a" * 64,
+        })
+        calibration = self.eligible_calibration()
+        with patch("factory_ops.g3_campaign.build_calibration", return_value=calibration), \
+                patch("factory_ops.g3_campaign.validate_calibration"):
+            primary = freeze_primary_campaign(
+                self.root / "v4-primary", pilot_slots_path=actual / "pilot-slots.json",
+                resource_input_path=resource,
+                experiment_config_path=self.host_repository / V4_EXPERIMENT_CONFIG_PATH,
+                host_repository=self.host_repository, campaign_protocol_path=protocol,
+            )
+        primary_manifest = json.loads(
+            (primary / "campaign-manifest.json").read_text(encoding="utf-8")
+        )
+        trials = [json.loads(path.read_text(encoding="utf-8"))
+                  for path in (primary / "trials").glob("*.json")]
+        self.assertEqual(60, len(trials))
+        self.assertEqual(60, len({str(row["trial_id"]) for row in trials}))
+        self.assertEqual(V4_PRODUCER_SOURCE_COMMIT,
+                         primary_manifest["producer_source_commit"])
+        self.assertEqual("canonical_inputs_frozen_not_executed", primary_manifest["status"])
+        self.assertFalse(primary_manifest["launch_authorized"])
+
+    def test_v4_protocol_rejects_uncommitted_file(self) -> None:
+        protocol = self.install_v4_protocol(commit=False)
+        with self.assertRaisesRegex(ValueError, "committed at host HEAD"):
+            materialize_actual_six(
+                self.evidence / "uncommitted", evidence_root=self.evidence, runs=self.runs,
+                actual_billing_path=self.billing, host_repository=self.host_repository,
+                campaign_protocol_path=protocol,
+            )
+
+    def test_v4_protocol_rejects_tampered_committed_bytes(self) -> None:
+        protocol = self.install_v4_protocol()
+        protocol.write_bytes(protocol.read_bytes() + b"\n")
+        with self.assertRaisesRegex(ValueError, "differs from committed bytes"):
+            materialize_actual_six(
+                self.evidence / "tampered", evidence_root=self.evidence, runs=self.runs,
+                actual_billing_path=self.billing, host_repository=self.host_repository,
+                campaign_protocol_path=protocol,
+            )
+
+    def test_v4_protocol_rejects_malformed_committed_json(self) -> None:
+        protocol = self.install_v4_protocol(malformed=True)
+        with self.assertRaises(ValueError):
+            materialize_actual_six(
+                self.evidence / "malformed", evidence_root=self.evidence, runs=self.runs,
+                actual_billing_path=self.billing, host_repository=self.host_repository,
+                campaign_protocol_path=protocol,
+            )
+
+    def test_v4_protocol_rejects_foreign_source_and_config_bindings(self) -> None:
+        original = json.loads(V4_PROTOCOL.read_text(encoding="utf-8"))
+        for field, value in (("producer_source_commit", "f" * 40),
+                             ("experiment_config_sha256", "e" * 64)):
+            with self.subTest(field=field):
+                protocol = self.install_v4_protocol(value=original | {field: value})
+                with self.assertRaisesRegex(ValueError, "fields differ"):
+                    materialize_actual_six(
+                        self.evidence / f"foreign-{field}", evidence_root=self.evidence,
+                        runs=self.runs, actual_billing_path=self.billing,
+                        host_repository=self.host_repository, campaign_protocol_path=protocol,
+                    )
+
+    def test_v4_config_hash_matches_selected_canonical_config(self) -> None:
+        self.assertEqual(V4_EXPERIMENT_CONFIG_SHA256,
+                         canonical_hash(load_experiment_config(V4_CONFIG)))
 
     def test_actual_six_rejects_missing_duplicate_or_foreign_bindings_without_publication(self) -> None:
         cases = []
