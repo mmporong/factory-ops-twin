@@ -117,7 +117,9 @@ def _host_source_commit(repository: Path) -> str:
             ("git", "rev-parse", f"HEAD:{relative}"), cwd=repository,
             text=True, encoding="ascii", errors="strict",
         ).strip()
-        expected_blob = subprocess.check_output(("git", "hash-object", "--stdin"), input=current).decode("ascii").strip()
+        expected_blob = subprocess.check_output(
+            ("git", "hash-object", "--stdin"), cwd=repository, input=current,
+        ).decode("ascii").strip()
         if blob != expected_blob:
             raise ValueError("host source execution file blob binding differs")
     return head
