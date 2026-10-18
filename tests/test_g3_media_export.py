@@ -13,7 +13,7 @@ from typing import Any
 from factory_ops.g3_media import (_trajectory_index, plan_frame_selection, rehash_inputs, sha256_file,
                                   validate_export_inputs, verify_storage_separation)
 from factory_ops.visual_state import canonical_sha256
-from scripts.media.export_g3_media import _uniform_indices, export_media
+from scripts.media.export_g3_media import _operations_timing, _uniform_indices, export_media
 
 
 RUN_LABEL = "g3-q-normal-fifo-009"
@@ -62,6 +62,20 @@ def make_frames() -> list[dict]:
 
 
 class G3MediaPlanningTests(unittest.TestCase):
+    def test_playback_speed_uses_original_timestamps_for_legacy_and_sparse_captures(self) -> None:
+        for source_period_ns, expected_speed in ((1_000_000_000, 10), (10_000_000_000, 100)):
+            with self.subTest(source_period_ns=source_period_ns):
+                frames = [{"sim_time_ns": 50_000_000 + index * source_period_ns} for index in range(4)]
+                timing = _operations_timing(frames)
+                self.assertEqual(expected_speed, timing["nominal_speedup"])
+                self.assertEqual(source_period_ns, timing["source_capture_period_ns"])
+                self.assertEqual(f"g3-full-operations-{expected_speed}x.mp4", timing["filename"])
+
+    def test_nonuniform_source_timestamps_cannot_be_labelled_as_constant_speed(self) -> None:
+        frames = [{"sim_time_ns": value} for value in (0, 10_000_000_000, 20_001_000_000)]
+        with self.assertRaisesRegex(ValueError, "not a uniform capture grid"):
+            _operations_timing(frames)
+
     def test_sparse_ten_second_grid_retains_motion_clip_without_fabricated_frames(self) -> None:
         frames = [row for row in make_frames()
                   if row["physics_frame"] == 2 or row["physics_frame"] % 600 == 3

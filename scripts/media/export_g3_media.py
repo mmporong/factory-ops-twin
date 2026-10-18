@@ -148,6 +148,21 @@ def _gif(ffmpeg: str, ffprobe: str, frames: Path, destination: Path, count: int)
     return probe
 
 
+def _operations_timing(frames: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
+    """Derive playback speed from the original simulation clock at ten output fps."""
+    stamps = [frame.get("sim_time_ns") for frame in frames]
+    if len(stamps) < 2 or any(type(stamp) is not int or stamp < 0 for stamp in stamps):
+        raise ValueError("operation playback requires at least two original frame timestamps")
+    times = cast(list[int], stamps)
+    interval_ns = round((times[-1] - times[0]) / (len(times) - 1))
+    if interval_ns <= 0 or any(abs(end - start - interval_ns) > 1
+                               for start, end in zip(times, times[1:])):
+        raise ValueError("operation playback source timestamps are not a uniform capture grid")
+    speedup = 10 * interval_ns / 1_000_000_000
+    return {"fps": 10, "source_capture_period_ns": interval_ns,
+            "nominal_speedup": speedup, "filename": f"g3-full-operations-{speedup:g}x.mp4"}
+
+
 def _records(frames: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
     return [{"output_index": index, "source_index": frame["index"],
              "physics_frame": frame["physics_frame"], "sim_time_ns": frame["sim_time_ns"],
@@ -179,6 +194,7 @@ def export_media(evidence: Mapping[str, Any], destination_value: Path, *, ffmpeg
     selection = evidence["selection"]
     real_time = cast(list[dict[str, Any]], selection["real_time_frames"])
     base = cast(list[dict[str, Any]], selection["base_frames"])
+    operations_timing = _operations_timing(base)
     for frame in [*real_time, *base]:
         for camera in CAMERAS:
             relative = frame["sources"][camera]["path"]
@@ -189,7 +205,8 @@ def export_media(evidence: Mapping[str, Any], destination_value: Path, *, ffmpeg
         actual_frames, operations_frames = package / ".actual-frames", package / ".operations-frames"
         _materialize_frames(real_time, actual_frames)
         _materialize_frames(base, operations_frames)
-        actual_path, operations_path = package / "g3-actual-24s.mp4", package / "g3-full-operations-10x.mp4"
+        actual_path = package / "g3-actual-24s.mp4"
+        operations_path = package / operations_timing["filename"]
         actual_probe = _encode(ffmpeg, ffprobe, actual_frames, actual_path, 240, 10)
         operations_probe = _encode(ffmpeg, ffprobe, operations_frames, operations_path, len(base), 10)
         representative = package / "g3-representative.png"
@@ -223,7 +240,7 @@ def export_media(evidence: Mapping[str, Any], destination_value: Path, *, ffmpeg
                                 "external_inputs": evidence["external_inputs"],
                                 "source_bundle_verification": evidence["source_evidence"],
                                 "storage_separation": evidence["storage_evidence"]},
-            "postprocessor": {"version": "g3-media-v1", "source_snapshot": {
+            "postprocessor": {"version": "g3-media-v2", "source_snapshot": {
                 **{key: value for key, value in source_snapshot.items() if key != "files"},
                 "files": [{key: value for key, value in record.items() if key != "absolute_path"}
                           for record in cast(list[Mapping[str, Any]], source_snapshot["files"])]}},
@@ -234,8 +251,9 @@ def export_media(evidence: Mapping[str, Any], destination_value: Path, *, ffmpeg
                                "window_id": selection["window_id"],
                                "source_profile_sha256": selection["source_profile_sha256"],
                                "frames": _records(real_time)},
-                "full_operations": {"source": "original capture-first anchored 60-step base grid only",
-                                    "fps": 10, "nominal_speedup": 10,
+                "full_operations": {"source": f"original capture-first anchored {selection['base_capture_every_steps']}-step base grid only",
+                                    "fps": 10, "nominal_speedup": operations_timing["nominal_speedup"],
+                                    "source_capture_period_ns": operations_timing["source_capture_period_ns"],
                                     "nominal_duration_s": len(base) / 10,
                                     "actual_encoded_duration_s": operations_probe["duration_s"],
                                     "base_anchor_physics_frame": selection["base_anchor_physics_frame"],
@@ -275,6 +293,7 @@ def main() -> None:
     parser.add_argument("--backup-record", required=True, type=Path)
     parser.add_argument("--verification", required=True, type=Path)
     parser.add_argument("--source-commit", required=True)
+    parser.add_argument("--postprocessor-commit", help="Exact clean export checkout SHA; defaults to --source-commit")
     parser.add_argument("--storage-inventory", required=True, type=Path)
     parser.add_argument("--storage-supplement-manifest", required=True, type=Path)
     parser.add_argument("--storage-supplement-manifest-sha256", required=True)
@@ -287,7 +306,9 @@ def main() -> None:
         import PIL  # pyright: ignore[reportMissingImports]  # noqa: F401
     except ImportError as error:
         raise RuntimeError("Pillow is required in the existing media environment") from error
-    source_snapshot = capture_postprocessor_source(ROOT, args.source_commit, require_clean_git=True)
+    source_snapshot = capture_postprocessor_source(
+        ROOT, args.postprocessor_commit or args.source_commit, require_clean_git=True,
+    )
     evidence = validate_export_inputs(
         args.evidence_root, args.run_label, args.raw_manifest, args.backup_record, args.verification,
         source_commit=args.source_commit, storage_inventory_path=args.storage_inventory,
