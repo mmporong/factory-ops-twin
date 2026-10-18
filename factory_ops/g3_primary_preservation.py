@@ -27,6 +27,7 @@ from .g3_local_preservation import (
     sealed_store_identity,
 )
 from .g3_raw_storage import ENVELOPE_NAME, PACKAGE_NAME, load_raw_envelope, prepare_raw_package
+from .g3_session import config_dir_from_session, verify_session
 
 
 _SHA256 = re.compile(r"^[0-9a-f]{64}$")
@@ -826,6 +827,7 @@ def close_primary_run(
     store_result_paths: Sequence[Path], store_roots: Mapping[str, Path],
     stopped_storage_hours: float,
     previous_receipt: Path | None = None, previous_receipt_sha256: str | None = None,
+    session_root: Path | None = None,
 ) -> Path:
     """Publish the exactly-once chain receipt after matching D/E replay closure."""
     if output.exists() or output.is_symlink():
@@ -843,7 +845,24 @@ def close_primary_run(
     if (set(current_manifest) != manifest_fields
             or current_manifest.get("expected_source_commit") != expected_source_commit):
         raise ValueError("current primary campaign closure differs")
-    matrix = build_matrix(load_experiment_config(_CONFIG))
+    experiment_config = _CONFIG
+    if session_root is not None:
+        config_dir = config_dir_from_session(session_root)
+        verified_session = verify_session(
+            session_root,
+            config_dir=config_dir,
+            trial_path=Path(str(current_manifest["trial_path"])),
+            calibration_path=Path(str(current_manifest["calibration_path"])),
+            pilot_slots=current_manifest["pilot_slots"],
+            resource_input=current_manifest["resource_input"],
+            expected_source_commit=expected_source_commit,
+        )
+        if (verified_session.get("profile") != "primary"
+                or verified_session.get("primary_evaluation") is not True
+                or verified_session.get("fixed_source_commit") != expected_source_commit):
+            raise ValueError("primary closure session binding differs")
+        experiment_config = config_dir / "g3-experiment.json"
+    matrix = build_matrix(load_experiment_config(experiment_config))
     current_trial = _load(Path(str(current_manifest["trial_path"])), "current primary trial")
     if current_trial != matrix[ordinal - 1] or current_trial.get("trial_id") != trial_id:
         raise ValueError("current primary trial ordinal binding differs")

@@ -426,6 +426,94 @@ class PrimaryPreservationTests(unittest.TestCase):
                 stopped_storage_hours=0.5,
             )
 
+    def test_close_selects_v4_matrix_from_verified_session_and_rejects_mixing(self) -> None:
+        v4_config = Path(__file__).parents[1] / "configs/factory-v4"
+        v3_config = Path(__file__).parents[1] / "configs/factory-v3"
+        v4_matrix = build_matrix(load_experiment_config(v4_config / "g3-experiment.json"))
+        trial = save(self.root / "v4-trial.json", v4_matrix[0])
+        primary = save(self.root / "v4-primary.json", {
+            "trial_path": str(trial),
+            "calibration_path": str(self.root / "v4-calibration.json"),
+            "pilot_slots": {"fixture": {}}, "resource_input": {"fixture": True},
+            "expected_source_commit": self.source,
+        })
+        live = self._live(
+            self.root / "v4-live.json", ordinal=1,
+            trial_id=v4_matrix[0]["trial_id"], primary=primary,
+        )
+        verified = {
+            "profile": "primary", "primary_evaluation": True,
+            "fixed_source_commit": self.source,
+        }
+        session_root = self.root / "v4-session"
+
+        with self.assertRaisesRegex(ValueError, "ordinal binding differs"):
+            close_primary_run(
+                output=self.evidence / "v4-without-profile.json",
+                evidence_root=self.evidence, ordinal=1,
+                trial_id=v4_matrix[0]["trial_id"],
+                primary_inputs_path=primary, primary_inputs_sha256=sha(primary),
+                expected_source_commit=self.source, expected_host_commit=self.host,
+                live_eligibility_path=live, live_eligibility_sha256=sha(live),
+                store_result_paths=[], store_roots={"D": self.store_d, "E": self.store_e},
+                stopped_storage_hours=0.0,
+            )
+
+        with patch(
+            "factory_ops.g3_primary_preservation.config_dir_from_session",
+            return_value=v4_config,
+        ) as profile_resolver, patch(
+            "factory_ops.g3_primary_preservation.verify_session",
+            return_value=verified,
+        ) as session_verifier, self.assertRaisesRegex(ValueError, "requires D and E"):
+            close_primary_run(
+                output=self.evidence / "v4-closed.json", evidence_root=self.evidence,
+                ordinal=1, trial_id=v4_matrix[0]["trial_id"],
+                primary_inputs_path=primary, primary_inputs_sha256=sha(primary),
+                expected_source_commit=self.source, expected_host_commit=self.host,
+                live_eligibility_path=live, live_eligibility_sha256=sha(live),
+                store_result_paths=[], store_roots={"D": self.store_d, "E": self.store_e},
+                stopped_storage_hours=0.0, session_root=session_root,
+            )
+        profile_resolver.assert_called_once_with(session_root)
+        self.assertEqual(v4_config, session_verifier.call_args.kwargs["config_dir"])
+        self.assertEqual(trial, session_verifier.call_args.kwargs["trial_path"])
+        self.assertEqual(self.source, session_verifier.call_args.kwargs["expected_source_commit"])
+
+        with patch(
+            "factory_ops.g3_primary_preservation.config_dir_from_session",
+            return_value=v3_config,
+        ), patch(
+            "factory_ops.g3_primary_preservation.verify_session",
+            return_value=verified,
+        ), self.assertRaisesRegex(ValueError, "ordinal binding differs"):
+            close_primary_run(
+                output=self.evidence / "mixed-profile.json", evidence_root=self.evidence,
+                ordinal=1, trial_id=v4_matrix[0]["trial_id"],
+                primary_inputs_path=primary, primary_inputs_sha256=sha(primary),
+                expected_source_commit=self.source, expected_host_commit=self.host,
+                live_eligibility_path=live, live_eligibility_sha256=sha(live),
+                store_result_paths=[], store_roots={"D": self.store_d, "E": self.store_e},
+                stopped_storage_hours=0.0, session_root=session_root,
+            )
+
+        with patch(
+            "factory_ops.g3_primary_preservation.config_dir_from_session",
+            return_value=v4_config,
+        ), patch(
+            "factory_ops.g3_primary_preservation.verify_session",
+            side_effect=ValueError("session source config binding differs"),
+        ), self.assertRaisesRegex(ValueError, "source config binding differs"):
+            close_primary_run(
+                output=self.evidence / "mixed-source.json", evidence_root=self.evidence,
+                ordinal=1, trial_id=v4_matrix[0]["trial_id"],
+                primary_inputs_path=primary, primary_inputs_sha256=sha(primary),
+                expected_source_commit=self.source, expected_host_commit=self.host,
+                live_eligibility_path=live, live_eligibility_sha256=sha(live),
+                store_result_paths=[], store_roots={"D": self.store_d, "E": self.store_e},
+                stopped_storage_hours=0.0, session_root=session_root,
+            )
+
     def test_close_rejects_current_results_with_forged_live_device_identities(self) -> None:
         result_d = self._preserve("D", self.store_d)
         result_e = self._preserve("E", self.store_e)

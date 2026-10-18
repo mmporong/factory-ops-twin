@@ -24,7 +24,7 @@ from typing import Any, BinaryIO, cast
 from factory_ops.g3_archive_replay import load_archive_record
 from factory_ops.g3_storage import _Directory, _open_input, _require_posix
 from factory_ops.g3_supervisor import validate_attempt_receipt
-from factory_ops.g3_session import verify_session
+from factory_ops.g3_session import config_dir_from_session, verify_session
 
 
 SCHEMA = "g3-raw-content-envelope-v1"
@@ -341,7 +341,10 @@ def _git(command: Sequence[str], *, cwd: Path, descriptor: int) -> subprocess.Co
 
 
 def _verify_bundle_commit(stream: BinaryIO, source_commit: str,
-                          source_config: Mapping[str, Any] | None = None) -> None:
+                          source_config: Mapping[str, Any] | None = None,
+                          config_repository_relative: str = "configs/factory-v3") -> None:
+    if config_repository_relative not in {"configs/factory-v3", "configs/factory-v4"}:
+        raise ValueError("source bundle config profile differs")
     descriptor = stream.fileno()
     bundle = f"/proc/self/fd/{descriptor}"
     with tempfile.TemporaryDirectory() as temporary:
@@ -368,7 +371,7 @@ def _verify_bundle_commit(stream: BinaryIO, source_commit: str,
                         or not _SHA.fullmatch(str(expected))):
                     raise ValueError("session source config binding differs")
                 blob = subprocess.run(
-                    ("git", "show", f"{source_commit}:configs/factory-v3/{name}"),
+                    ("git", "show", f"{source_commit}:{config_repository_relative}/{name}"),
                     cwd=repository, check=True, capture_output=True).stdout
                 if hashlib.sha256(blob).hexdigest() != expected:
                     raise ValueError("source bundle config bytes differ from the session binding")
@@ -835,7 +838,14 @@ def prepare_raw_package(*, archive_record: Path, attempt_receipt: Path | None,
             source_config = verified_session.get("source_config")
             if not isinstance(source_config, Mapping):
                 raise ValueError("session source config binding is absent")
-            _verify_bundle_commit(bundle_stream, source_commit, source_config)
+            config_dir = config_dir_from_session(session_root)
+            config_repository_relative = config_dir.relative_to(
+                Path(__file__).resolve().parents[1]
+            ).as_posix()
+            _verify_bundle_commit(
+                bundle_stream, source_commit, source_config,
+                config_repository_relative=config_repository_relative,
+            )
             primary_keys = {"start.trial", "start.gate", "start.primary_inputs"}
             per_trial = [pin for key, pin in receipt_files.items() if key in primary_keys]
             artifact_root = Path(str(literal["artifact_root"]))

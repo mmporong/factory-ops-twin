@@ -48,7 +48,10 @@ class G3RawStoragePosixTests(unittest.TestCase):
         (repository / "tracked.txt").write_text("source bytes\n", encoding="utf-8")
         shutil.copytree(Path(__file__).resolve().parents[1] / "configs" / "factory-v3",
                         repository / "configs" / "factory-v3")
-        subprocess.run(("git", "add", "tracked.txt", "configs/factory-v3"), cwd=repository, check=True)
+        shutil.copytree(Path(__file__).resolve().parents[1] / "configs" / "factory-v4",
+                        repository / "configs" / "factory-v4")
+        subprocess.run(("git", "add", "tracked.txt", "configs/factory-v3", "configs/factory-v4"),
+                       cwd=repository, check=True)
         subprocess.run(("git", "commit", "-q", "-m", "fixture"), cwd=repository, check=True)
         self.commit = subprocess.run(("git", "rev-parse", "HEAD"), cwd=repository, check=True,
                                      capture_output=True, text=True).stdout.strip()
@@ -192,6 +195,34 @@ class G3RawStoragePosixTests(unittest.TestCase):
                 output=hostile_root / "package", qualification_source_commit=self.commit,
                 qualification_seed=0, qualification_session_root=hostile_session,
             )
+
+    def test_v4_qualification_bundle_uses_session_bound_config_profile(self) -> None:
+        root = self.root / "qualification-v4"
+        root.mkdir()
+        run = "g3-q-normal-fifo-012"
+        run_id = "d" * 32
+        checkpoint(root, run, run_id, "start")
+        session = root / "source-snapshots" / run / "runs" / f"{run}-session"
+        prepare_session(
+            session,
+            config_dir=Path(__file__).resolve().parents[1] / "configs/factory-v4",
+            profile="qualification", condition="normal", policy="fifo", seed=0,
+        )
+        output = root / "results" / run
+        output.mkdir(parents=True)
+        (output / "rosbag.db3").write_bytes(b"qualification-v4-cdr")
+        checkpoint(root, run, run_id, "workers-finished")
+        checkpoint(root, run, run_id, "validation-finished")
+        archive_output(root, run, run_id)
+        envelope_path = prepare_raw_package(
+            archive_record=root / "resources" / run / "archive-record.json",
+            attempt_receipt=None, source_bundle=self.source_bundle,
+            output=root / "package", qualification_source_commit=self.commit,
+            qualification_seed=0, qualification_session_root=session,
+        )
+        envelope = load_raw_envelope(envelope_path)
+        self.assertEqual("qualification", envelope["profile"])
+        self.assertEqual(self.commit, envelope["source_commit"])
 
     def test_rejects_source_bundle_schema_and_record_receipt_identity_forgery(self) -> None:
         envelope_path = self.prepare("valid")
@@ -370,6 +401,49 @@ class G3RawStoragePosixTests(unittest.TestCase):
         receipt = next(output.glob("prepare-error-*.json")).read_text(encoding="utf-8")
         self.assertNotIn("SECRET123", receipt)
         self.assertNotIn("message", json.loads(receipt))
+
+    def test_bundle_config_verification_selects_one_canonical_profile(self) -> None:
+        repository = self.root / "profile-repository"
+        repository.mkdir()
+        subprocess.run(("git", "init", "-q"), cwd=repository, check=True)
+        subprocess.run(("git", "config", "user.email", "fixture@example.invalid"),
+                       cwd=repository, check=True)
+        subprocess.run(("git", "config", "user.name", "Fixture"),
+                       cwd=repository, check=True)
+        v3 = repository / "configs/factory-v3/profile.json"
+        v4 = repository / "configs/factory-v4/profile.json"
+        v3.parent.mkdir(parents=True)
+        v4.parent.mkdir(parents=True)
+        v3.write_bytes(b'{"profile":"v3"}\n')
+        v4.write_bytes(b'{"profile":"v4"}\n')
+        subprocess.run(("git", "add", "configs/factory-v3", "configs/factory-v4"),
+                       cwd=repository, check=True)
+        subprocess.run(("git", "commit", "-qm", "profiles"), cwd=repository, check=True)
+        commit = subprocess.run(
+            ("git", "rev-parse", "HEAD"), cwd=repository, check=True,
+            capture_output=True, text=True,
+        ).stdout.strip()
+        bundle = self.root / "profiles.bundle"
+        subprocess.run(("git", "bundle", "create", str(bundle), "--all"),
+                       cwd=repository, check=True)
+        binding = {"profile.json": hashlib.sha256(v4.read_bytes()).hexdigest()}
+
+        with bundle.open("rb") as stream:
+            _verify_bundle_commit(
+                stream, commit, binding,
+                config_repository_relative="configs/factory-v4",
+            )
+        with bundle.open("rb") as stream, self.assertRaisesRegex(
+            ValueError, "config bytes differ"
+        ):
+            _verify_bundle_commit(stream, commit, binding)
+        with bundle.open("rb") as stream, self.assertRaisesRegex(
+            ValueError, "config profile differs"
+        ):
+            _verify_bundle_commit(
+                stream, commit, binding,
+                config_repository_relative="configs/foreign",
+            )
 
     def test_loader_binds_internal_envelope_support_members_and_actual_count(self) -> None:
         valid_envelope = self.prepare("loader-contract")
