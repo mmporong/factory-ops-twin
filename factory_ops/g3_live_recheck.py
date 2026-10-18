@@ -17,6 +17,7 @@ import uuid
 from .experiments import build_matrix, canonical_hash, load_experiment_config
 from .g3_calibration import validate_calibration
 from .g3_local_preservation import sealed_store_identity
+from .g3_raw_storage import ENVELOPE_NAME, PACKAGE_NAME, load_raw_envelope
 from .g3_session import _load_primary_input_manifest, sha
 
 
@@ -44,11 +45,12 @@ _PREVIOUS_FIELDS = {
     "previous_receipt_sha256", "package", "preservations", "stopped_storage_hours",
     "cleanup_authorized",
 }
+_Snapshots = dict[Path, tuple[int, int, int, int, str]]
 _VM_BINDING_FIELDS = {"checked_at_utc", "source", "workspaces"}
 _VM_PROBE_FIELDS = {
     "schema_version", "classification", "observed_at_utc", "source_commit",
     "host_source_commit", "instance_id", "instance_name", "remote_root", "nonce",
-    "instance_binding_sha256", "command", "exit_code", "stdout", "stdout_sha256",
+    "instance_binding_sha256", "source_review_sha256", "command", "exit_code", "stdout", "stdout_sha256",
     "free_bytes", "read_only",
     "mutation_performed",
 }
@@ -61,6 +63,45 @@ def _load(path: Path, name: str) -> dict[str, Any]:
     if not isinstance(value, dict):
         raise ValueError(f"{name} must contain an object")
     return value
+
+
+def _snapshot_bytes(path: Path, name: str, snapshots: _Snapshots) -> bytes:
+    path = path.resolve(strict=True)
+    if path.is_symlink() or not path.is_file():
+        raise ValueError(f"{name} must be an absolute regular file")
+    before = path.stat(follow_symlinks=False)
+    raw = path.read_bytes()
+    after = path.stat(follow_symlinks=False)
+    identity = (after.st_dev, after.st_ino, after.st_size, after.st_mtime_ns,
+                hashlib.sha256(raw).hexdigest())
+    if ((before.st_dev, before.st_ino, before.st_size, before.st_mtime_ns)
+            != identity[:4] or len(raw) != after.st_size):
+        raise ValueError(f"{name} changed while it was read")
+    prior = snapshots.setdefault(path, identity)
+    if prior != identity:
+        raise ValueError(f"{name} changed after its first snapshot")
+    return raw
+
+
+def _snapshot_load(path: Path, name: str, snapshots: _Snapshots) -> dict[str, Any]:
+    raw = _snapshot_bytes(path, name, snapshots)
+    value = json.loads(raw)
+    if not isinstance(value, dict):
+        raise ValueError(f"{name} must contain an object")
+    return value
+
+
+def _assert_snapshots(snapshots: _Snapshots) -> None:
+    for path, expected in snapshots.items():
+        if path.is_symlink() or not path.is_file():
+            raise ValueError(f"snapshotted input disappeared: {path}")
+        before = path.stat(follow_symlinks=False)
+        digest = sha(path)
+        after = path.stat(follow_symlinks=False)
+        identity = (after.st_dev, after.st_ino, after.st_size, after.st_mtime_ns, digest)
+        if ((before.st_dev, before.st_ino, before.st_size, before.st_mtime_ns)
+                != identity[:4] or identity != expected):
+            raise ValueError(f"snapshotted input changed before publication: {path}")
 
 
 def _write(path: Path, value: object) -> None:
@@ -97,7 +138,10 @@ def _fresh_time(value: object, name: str, *, now: datetime, not_before: datetime
     return observed
 
 
-def _host_source_commit(repository: Path) -> str:
+def _host_source_commit(
+    repository: Path, expected_host_commit: str, source_review_path: Path,
+    source_review_sha256: str,
+) -> str:
     if not repository.is_absolute() or repository.is_symlink() or not repository.is_dir():
         raise ValueError("host source repository must be an absolute regular directory")
     repository = repository.resolve(strict=True)
@@ -114,8 +158,8 @@ def _host_source_commit(repository: Path) -> str:
         ("git", "rev-parse", "HEAD"), cwd=repository,
         text=True, encoding="ascii", errors="strict",
     ).strip()
-    if not _COMMIT.fullmatch(head):
-        raise ValueError("host source checkout HEAD is invalid")
+    if not _COMMIT.fullmatch(expected_host_commit) or head != expected_host_commit:
+        raise ValueError("host source checkout HEAD differs from the external expected T pin")
     for relative in _HOST_FILES:
         current_path, live_path = repository / relative, live_root / relative
         if (current_path.is_symlink() or not current_path.is_file()
@@ -134,6 +178,23 @@ def _host_source_commit(repository: Path) -> str:
         ).decode().strip()
         if blob != expected:
             raise ValueError("host source execution file blob binding differs")
+    review_snapshots: _Snapshots = {}
+    review = _bound_load(source_review_path, source_review_sha256,
+                         "live recheck source review", review_snapshots)
+    _assert_snapshots(review_snapshots)
+    source_hashes = review.get("source_sha256")
+    if (review.get("record_kind") != "leader transcription of an actual native code-reviewer report"
+            or review.get("recommendation") != "APPROVE" or review.get("agent_role") != "code-reviewer"
+            or review.get("host_checkpoint_commit") != expected_host_commit
+            or review.get("producer_source_commit") != PRODUCER_SOURCE_COMMIT
+            or not isinstance(source_hashes, Mapping)
+            or set(source_hashes) != set(_HOST_FILES)
+            or any(source_hashes.get(relative) != sha(repository / relative)
+                   for relative in _HOST_FILES)):
+        raise ValueError("externally pinned source review does not approve these exact host bytes")
+    for key, value in review.items():
+        if (key.endswith("_approved") or key.endswith("_authorized")) and value is not False:
+            raise ValueError("source review must not grant execution or cleanup approval")
     return head
 
 
@@ -146,10 +207,15 @@ def _reference(root: Path, relative: object, expected_sha: object, name: str) ->
     return path
 
 
-def _bound_load(path: Path, expected_sha: str, name: str) -> dict[str, Any]:
-    if not _SHA256.fullmatch(expected_sha) or sha(path) != expected_sha:
+def _bound_load(
+    path: Path, expected_sha: str, name: str, snapshots: _Snapshots | None = None,
+) -> dict[str, Any]:
+    value = (_snapshot_load(path, name, snapshots) if snapshots is not None else _load(path, name))
+    observed_sha = (snapshots[path.resolve(strict=True)][4]
+                    if snapshots is not None else sha(path))
+    if not _SHA256.fullmatch(expected_sha) or observed_sha != expected_sha:
         raise ValueError(f"{name} SHA binding differs")
-    return _load(path, name)
+    return value
 
 
 def _parse_df_stdout(stdout: str, remote_root: str) -> int:
@@ -168,10 +234,11 @@ def _parse_df_stdout(stdout: str, remote_root: str) -> int:
 def _validate_vm_inputs(
     *, binding_path: Path, binding_sha256: str, probe_path: Path, probe_sha256: str,
     nonce: str, host_source_commit: str, now: datetime, not_before: datetime,
-    max_age_s: float,
+    max_age_s: float, source_review_sha256: str,
+    snapshots: _Snapshots | None = None,
 ) -> tuple[int, datetime, datetime, dict[str, str]]:
-    binding = _bound_load(binding_path, binding_sha256, "Brev instance binding")
-    probe = _bound_load(probe_path, probe_sha256, "remote VM capacity probe")
+    binding = _bound_load(binding_path, binding_sha256, "Brev instance binding", snapshots)
+    probe = _bound_load(probe_path, probe_sha256, "remote VM capacity probe", snapshots)
     rows = binding.get("workspaces")
     if (set(binding) != _VM_BINDING_FIELDS
             or binding.get("source") != "authenticated Brev CLI ls --json"
@@ -203,6 +270,7 @@ def _validate_vm_inputs(
             or probe.get("instance_id") != instance["id"]
             or probe.get("instance_name") != instance["name"]
             or probe.get("instance_binding_sha256") != binding_sha256
+            or probe.get("source_review_sha256") != source_review_sha256
             or probe.get("remote_root") != _REMOTE_VM_ROOT or probe.get("nonce") != nonce
             or probe.get("command") != command or probe.get("exit_code") != 0
             or not isinstance(stdout, str)
@@ -224,6 +292,7 @@ def _validate_vm_inputs(
 def capture_vm_capacity_probe(
     output: Path, *, instance_binding_path: Path, instance_binding_sha256: str,
     nonce: str, not_before_utc: str, max_age_s: float, host_repository: Path,
+    expected_host_commit: str, source_review_path: Path, source_review_sha256: str,
 ) -> Path:
     """Capture one read-only remote df observation for the fixed Brev workspace."""
     now = datetime.now(timezone.utc)
@@ -231,8 +300,11 @@ def capture_vm_capacity_probe(
     age = _number(max_age_s, "max_age_s", positive=True)
     if not_before > now:
         raise ValueError("not_before_utc cannot be in the future")
-    host_source_commit = _host_source_commit(host_repository)
-    binding = _bound_load(instance_binding_path, instance_binding_sha256, "Brev instance binding")
+    host_source_commit = _host_source_commit(
+        host_repository, expected_host_commit, source_review_path, source_review_sha256)
+    capture_snapshots: _Snapshots = {}
+    binding = _bound_load(instance_binding_path, instance_binding_sha256,
+                          "Brev instance binding", capture_snapshots)
     rows = binding.get("workspaces")
     if (set(binding) != _VM_BINDING_FIELDS
             or binding.get("source") != "authenticated Brev CLI ls --json"
@@ -265,6 +337,7 @@ def capture_vm_capacity_probe(
         "source_commit": PRODUCER_SOURCE_COMMIT, "host_source_commit": host_source_commit,
         "instance_id": instance["id"], "instance_name": instance["name"],
         "instance_binding_sha256": instance_binding_sha256,
+        "source_review_sha256": source_review_sha256,
         "remote_root": _REMOTE_VM_ROOT, "nonce": nonce, "command": command,
         "exit_code": completed.returncode, "stdout": completed.stdout,
         "stdout_sha256": hashlib.sha256(completed.stdout.encode("utf-8")).hexdigest(),
@@ -276,6 +349,11 @@ def capture_vm_capacity_probe(
     output.parent.mkdir(parents=True, exist_ok=True)
     if output.parent.is_symlink() or output.parent.resolve(strict=True) != output.parent:
         raise ValueError("remote VM probe parent must not traverse links")
+    _assert_snapshots(capture_snapshots)
+    if _host_source_commit(
+            host_repository, expected_host_commit, source_review_path,
+            source_review_sha256) != host_source_commit:
+        raise ValueError("host source changed during remote VM probe")
     temporary = output.with_name(f".{output.name}.{uuid.uuid4().hex}.partial")
     try:
         _write(temporary, record)
@@ -286,11 +364,159 @@ def capture_vm_capacity_probe(
     return output
 
 
+def _validate_primary_store_result(
+    *, result_path: Path, store_root: Path, store_id: str, device_identity: str,
+    run_id: str, package_sha256: str, package_bytes: int, snapshots: _Snapshots,
+) -> tuple[Path, str, str, str]:
+    """Revalidate one primary preservation using the existing G5 receipt layout."""
+    result = _snapshot_load(result_path, "previous G5 store run result", snapshots)
+    fields = {
+        "schema_version", "classification", "store_id", "device_identity", "run_id",
+        "package_record", "preservation_receipt", "full_restore_receipt",
+        "semantic_replay_report", "source_support_closure", "raw_envelope",
+        "package_phase_wall_time_s", "offload_phase_wall_time_s", "restore_phase_wall_time_s",
+        "semantic_phase_wall_time_s", "store_namespace", "cleanup_authorized",
+    }
+    if (set(result) != fields or result.get("schema_version") != 1
+            or result.get("classification") != "g3_local_store_run_result"
+            or result.get("store_id") != store_id or result.get("device_identity") != device_identity
+            or result.get("run_id") != run_id or result.get("cleanup_authorized") is not False):
+        raise ValueError("previous G5 store run result binding differs")
+    for name in ("package_phase_wall_time_s", "offload_phase_wall_time_s",
+                 "restore_phase_wall_time_s", "semantic_phase_wall_time_s"):
+        _number(result[name], f"previous {name}", positive=True)
+    evidence_root = result_path.parents[3]
+    canonical_result = evidence_root / "stores" / store_id / run_id / "store-run-result.json"
+    namespace = store_root / "factory-ops-g3" / run_id
+    if (result_path != canonical_result.resolve(strict=True)
+            or Path(str(result["store_namespace"])).resolve(strict=True) != namespace.resolve(strict=True)):
+        raise ValueError("previous G5 evidence or sealed store namespace is not canonical")
+    package_path = namespace / PACKAGE_NAME
+    _snapshot_bytes(package_path, "previous preserved package", snapshots)
+    if (package_path.is_symlink() or not package_path.is_file()
+            or package_path.stat().st_size != package_bytes or sha(package_path) != package_sha256):
+        raise ValueError("previous preserved package bytes differ")
+    record_path = _reference(evidence_root, result["package_record"]["path"],
+                             result["package_record"]["sha256"], "package record")
+    record = _snapshot_load(record_path, "package record", snapshots)
+    copied_record = namespace / "package-record.json"
+    _snapshot_bytes(copied_record, "preserved package record", snapshots)
+    if sha(copied_record) != sha(record_path):
+        raise ValueError("previous preserved package record bytes differ")
+    record_fields = {
+        "schema_version", "classification", "run_id", "source_commit", "archive_sha256",
+        "output_manifest_sha256", "package_sha256", "package_bytes", "package_manifest",
+        "source_support_closure_sha256", "raw_envelope_sha256",
+    }
+    if (set(record) != record_fields or record.get("schema_version") != 1
+            or record.get("classification") != "g3_sequential_package_record"
+            or record.get("run_id") != run_id or record.get("source_commit") != PRODUCER_SOURCE_COMMIT
+            or record.get("package_sha256") != package_sha256
+            or record.get("package_bytes") != package_bytes):
+        raise ValueError("previous package record differs from run/source/package")
+    envelope_path = _reference(evidence_root, result["raw_envelope"]["path"],
+                               result["raw_envelope"]["sha256"], "raw envelope")
+    _snapshot_bytes(envelope_path, "raw envelope", snapshots)
+    copied_envelope = namespace / ENVELOPE_NAME
+    _snapshot_bytes(copied_envelope, "preserved raw envelope", snapshots)
+    if sha(copied_envelope) != sha(envelope_path):
+        raise ValueError("previous preserved raw envelope bytes differ")
+    envelope = load_raw_envelope(copied_envelope)
+    envelope_package = envelope.get("package")
+    if (envelope.get("run_id") != run_id or envelope.get("source_commit") != PRODUCER_SOURCE_COMMIT
+            or not isinstance(envelope_package, Mapping)
+            or envelope_package.get("sha256") != package_sha256
+            or envelope_package.get("bytes") != package_bytes
+            or envelope.get("original_archive_sha256") != record["archive_sha256"]
+            or envelope.get("output_manifest_sha256") != record["output_manifest_sha256"]
+            or record.get("raw_envelope_sha256") != sha(envelope_path)):
+        raise ValueError("previous raw envelope differs from package/source closure")
+    closure_path = _reference(evidence_root, result["source_support_closure"]["path"],
+                              result["source_support_closure"]["sha256"], "source closure")
+    closure = _snapshot_load(closure_path, "source closure", snapshots)
+    copied_closure = namespace / "source-support-closure.json"
+    _snapshot_bytes(copied_closure, "preserved source closure", snapshots)
+    if sha(copied_closure) != sha(closure_path):
+        raise ValueError("previous preserved source closure bytes differ")
+    if (closure.get("classification") != "g3_source_support_closure"
+            or closure.get("source_commit") != PRODUCER_SOURCE_COMMIT
+            or record.get("source_support_closure_sha256") != sha(closure_path)):
+        raise ValueError("previous source closure differs")
+    manifest_path = _reference(evidence_root, record["package_manifest"]["path"],
+                               record["package_manifest"]["sha256"], "package manifest")
+    manifest = _snapshot_load(manifest_path, "package manifest", snapshots)
+    copied_manifest = namespace / "package-manifest.json"
+    _snapshot_bytes(copied_manifest, "preserved package manifest", snapshots)
+    if sha(copied_manifest) != sha(manifest_path):
+        raise ValueError("previous preserved package manifest bytes differ")
+    expected_members = {
+        "archive": record["archive_sha256"],
+        "output_manifest": record["output_manifest_sha256"],
+        "source_support_closure": sha(closure_path), "raw_envelope": sha(envelope_path),
+        "source_bundle": envelope["source_bundle_sha256"],
+        "support_manifest": envelope["support_manifest_sha256"],
+    }
+    if manifest != {
+        "schema_version": 1, "classification": "g3_sequential_package_manifest",
+        "run_id": run_id, "source_commit": PRODUCER_SOURCE_COMMIT,
+        "package_sha256": package_sha256, "package_bytes": package_bytes,
+        "members": expected_members,
+    }:
+        raise ValueError("previous package manifest closure differs")
+    preservation_path = _reference(evidence_root, result["preservation_receipt"]["path"],
+                                   result["preservation_receipt"]["sha256"], "preservation receipt")
+    preservation = _snapshot_load(preservation_path, "preservation receipt", snapshots)
+    expected_preservation = {
+        "schema_version": 1, "classification": "g3_local_package_preservation_receipt",
+        "store_id": store_id, "device_identity": device_identity, "run_id": run_id,
+        "package_sha256": package_sha256, "package_bytes": package_bytes,
+        "source_support_closure_sha256": sha(closure_path),
+        "operation": "closed_after_byte_count_and_sha256_recheck",
+    }
+    if preservation != expected_preservation:
+        raise ValueError("previous preservation receipt differs")
+    restore_path = _reference(evidence_root, result["full_restore_receipt"]["path"],
+                              result["full_restore_receipt"]["sha256"], "full restore receipt")
+    restore = _snapshot_load(restore_path, "full restore receipt", snapshots)
+    expected_restore = {
+        "schema_version": 1, "classification": "g3_full_restore_receipt",
+        "store_id": store_id, "device_identity": device_identity, "run_id": run_id,
+        "package_sha256": package_sha256,
+        "restored_archive_sha256": record["archive_sha256"],
+        "restored_output_manifest_sha256": record["output_manifest_sha256"],
+        "restored_source_support_closure_sha256": sha(closure_path),
+        "operation": "full_restore_completed_and_closed",
+    }
+    if restore != expected_restore:
+        raise ValueError("previous full restore receipt differs")
+    restored = namespace / "full-restore" / "package" / "original"
+    archive = restored / "output.tar.gz"
+    manifest = restored / "output-manifest.json"
+    _snapshot_bytes(archive, "previous restored archive", snapshots)
+    _snapshot_bytes(manifest, "previous restored manifest", snapshots)
+    if (sha(archive) != record["archive_sha256"]
+            or sha(manifest) != record["output_manifest_sha256"]):
+        raise ValueError("previous restored archive or manifest bytes differ")
+    semantic_path = _reference(evidence_root, result["semantic_replay_report"]["path"],
+                               result["semantic_replay_report"]["sha256"], "semantic replay")
+    semantic = _snapshot_load(semantic_path, "semantic replay", snapshots)
+    if semantic != {
+        "schema_version": 1, "classification": "g3_existing_semantic_replay_report",
+        "run_id": run_id, "source_commit": PRODUCER_SOURCE_COMMIT,
+        "archive_sha256": record["archive_sha256"], "package_sha256": package_sha256,
+        "status": "passed_existing_g3_semantic_validator", "errors": [],
+    }:
+        raise ValueError("previous semantic replay report differs")
+    return (evidence_root, str(record["archive_sha256"]),
+            str(record["output_manifest_sha256"]), sha(closure_path))
+
+
 def _validate_previous_chain(
-    paths: Sequence[Path], matrix: Sequence[Mapping[str, Any]], frozen_identities: Mapping[str, str],
-    frozen_primary: Mapping[str, Any],
+    references: Sequence[Mapping[str, Any]], matrix: Sequence[Mapping[str, Any]],
+    frozen_identities: Mapping[str, str], frozen_primary: Mapping[str, Any],
+    store_roots: Mapping[str, Path], expected_host_commit: str, snapshots: _Snapshots,
 ) -> tuple[list[dict[str, Any]], int, float, datetime | None]:
-    if len(paths) > 59:
+    if len(references) > 59:
         raise ValueError("previous primary chain exceeds the 60-trial matrix")
     rows: list[dict[str, Any]] = []
     run_ids: set[str] = set()
@@ -299,25 +525,41 @@ def _validate_previous_chain(
     stopped_hours = 0.0
     last_closed: datetime | None = None
     seen_paths: set[Path] = set()
-    for index, raw_path in enumerate(paths, start=1):
-        path = raw_path.resolve(strict=True)
+    for index, reference in enumerate(references, start=1):
+        if (set(reference) != {"path", "expected_sha256"}
+                or not isinstance(reference.get("path"), str)
+                or not Path(str(reference.get("path"))).is_absolute()
+                or not _SHA256.fullmatch(str(reference.get("expected_sha256")))):
+            raise ValueError("previous primary receipt requires an external path/SHA pin")
+        path = Path(str(reference["path"])).resolve(strict=True)
         if path in seen_paths:
             raise ValueError("previous primary receipt path is duplicated")
         seen_paths.add(path)
-        value = _load(path, "previous primary receipt")
+        value = _snapshot_load(path, "previous primary receipt", snapshots)
+        if sha(path) != reference["expected_sha256"]:
+            raise ValueError("previous primary receipt differs from its external SHA pin")
         if (set(value) != _PREVIOUS_FIELDS or value.get("schema_version") != 1
                 or value.get("classification") != "g3_closed_primary_preservation_receipt"
                 or value.get("ordinal") != index or value.get("trial_id") != matrix[index - 1]["trial_id"]
                 or value.get("source_commit") != PRODUCER_SOURCE_COMMIT
-                or not _COMMIT.fullmatch(str(value.get("host_source_commit")))
+                or value.get("host_source_commit") != expected_host_commit
                 or not _SHA256.fullmatch(str(value.get("primary_inputs_sha256")))
                 or value.get("trial_outcome") not in {"completed", "incomplete", "failed"}
                 or value.get("cleanup_authorized") is not False
                 or value.get("previous_receipt_sha256") != previous_sha):
             raise ValueError("previous primary receipt chain binding differs")
         prior_manifest_path = Path(str(value["primary_inputs_path"]))
+        prior_snapshot = _snapshot_load(prior_manifest_path, "previous primary input manifest", snapshots)
         prior = _load_primary_input_manifest(prior_manifest_path, str(value["primary_inputs_sha256"]))
-        prior_trial = _load(prior["trial_path"].resolve(strict=True), "previous frozen primary trial")
+        if prior_snapshot != {
+            "trial_path": str(prior["trial_path"]),
+            "calibration_path": str(prior["calibration_path"]),
+            "pilot_slots": prior["pilot_slots"], "resource_input": prior["resource_input"],
+            "expected_source_commit": prior["expected_source_commit"],
+        }:
+            raise ValueError("previous primary input manifest changed while normalized")
+        prior_trial = _snapshot_load(prior["trial_path"].resolve(strict=True),
+                                     "previous frozen primary trial", snapshots)
         if (prior_trial != matrix[index - 1]
                 or prior["calibration_path"].resolve(strict=True)
                 != frozen_primary["calibration_path"].resolve(strict=True)
@@ -338,25 +580,33 @@ def _validate_previous_chain(
         if not isinstance(preservations, list) or len(preservations) != 2:
             raise ValueError("previous primary requires exact D and E full preservations")
         by_store: dict[str, Mapping[str, Any]] = {}
+        store_closures: set[tuple[Path, str, str, str]] = set()
         for preservation in preservations:
-            fields = {"store_id", "device_identity", "package_sha256", "package_bytes",
-                      "full_restore", "receipt_path", "receipt_sha256"}
+            fields = {"store_id", "device_identity", "store_result_path", "store_result_sha256"}
             if (not isinstance(preservation, Mapping) or set(preservation) != fields
                     or preservation.get("store_id") not in {"D", "E"}
                     or preservation.get("store_id") in by_store
                     or preservation.get("device_identity") != frozen_identities.get(str(preservation.get("store_id")))
-                    or preservation.get("package_sha256") != package["sha256"]
-                    or preservation.get("package_bytes") != package["bytes"]
-                    or preservation.get("full_restore") is not True
-                    or not _SHA256.fullmatch(str(preservation.get("receipt_sha256")))):
+                    or not _SHA256.fullmatch(str(preservation.get("store_result_sha256")))):
                 raise ValueError("previous primary preservation binding differs")
-            preservation_path = Path(str(preservation["receipt_path"]))
-            if (_load(preservation_path, "previous full preservation receipt").get("full_restore") is not True
-                    or sha(preservation_path) != preservation["receipt_sha256"]):
-                raise ValueError("previous full preservation receipt bytes differ")
+            store = str(preservation["store_id"])
+            raw_result_path = Path(str(preservation["store_result_path"]))
+            if not raw_result_path.is_absolute():
+                raise ValueError("previous store result path must be absolute")
+            result_path = raw_result_path.resolve(strict=True)
+            if sha(result_path) != preservation["store_result_sha256"]:
+                raise ValueError("previous store result differs from its external SHA pin")
+            store_closures.add(_validate_primary_store_result(
+                result_path=result_path, store_root=store_roots[store], store_id=store,
+                device_identity=frozen_identities[store], run_id=str(run_id),
+                package_sha256=str(package["sha256"]), package_bytes=int(package["bytes"]),
+                snapshots=snapshots,
+            ))
             by_store[str(preservation["store_id"])] = preservation
         if set(by_store) != {"D", "E"} or by_store["D"]["device_identity"] == by_store["E"]["device_identity"]:
             raise ValueError("previous primary D and E preservation is incomplete or spoofed")
+        if len(store_closures) != 1:
+            raise ValueError("previous primary D and E restore manifest closure differs")
         closed = _utc(value["closed_at_utc"], "previous primary closed_at_utc")
         if last_closed is not None and closed <= last_closed:
             raise ValueError("previous primary closure timestamps are not increasing")
@@ -376,7 +626,7 @@ def recheck_campaign_launch(
     primary_inputs_path: Path,
     primary_inputs_sha256: str,
     experiment_config_path: Path,
-    previous_receipt_paths: Sequence[Path],
+    previous_receipt_paths: Sequence[Mapping[str, Any]],
     store_roots: Mapping[str, Path],
     vm_capacity_probe_path: Path,
     vm_capacity_probe_sha256: str,
@@ -390,6 +640,9 @@ def recheck_campaign_launch(
     not_before_utc: str,
     max_age_s: float,
     host_repository: Path,
+    expected_host_commit: str,
+    source_review_path: Path,
+    source_review_sha256: str,
 ) -> Path:
     """Revalidate frozen inputs and current resources without launching a run."""
     now = datetime.now(timezone.utc)
@@ -397,15 +650,39 @@ def recheck_campaign_launch(
     age = _number(max_age_s, "max_age_s", positive=True)
     if not_before > now:
         raise ValueError("not_before_utc cannot be in the future")
-    host_source_commit = _host_source_commit(host_repository)
+    host_source_commit = _host_source_commit(
+        host_repository, expected_host_commit, source_review_path, source_review_sha256)
+    snapshots: _Snapshots = {}
+    primary_snapshot = _snapshot_load(primary_inputs_path, "primary input manifest", snapshots)
+    config_snapshot = _snapshot_load(experiment_config_path, "experiment config", snapshots)
+    for path, name in (
+        (storage_inventory_path, "fresh storage inventory"),
+        (storage_supplement_manifest_path, "fresh storage supplement"),
+        (fresh_billing_path, "fresh extended billing"),
+        (vm_instance_binding_path, "Brev instance binding"),
+        (vm_capacity_probe_path, "remote VM capacity probe"),
+    ):
+        _snapshot_bytes(path, name, snapshots)
+    for reference in previous_receipt_paths:
+        if isinstance(reference, Mapping) and isinstance(reference.get("path"), str):
+            _snapshot_bytes(Path(str(reference["path"])), "previous primary receipt", snapshots)
     pinned = _load_primary_input_manifest(primary_inputs_path, primary_inputs_sha256)
+    if primary_snapshot != {
+        "trial_path": str(pinned["trial_path"]),
+        "calibration_path": str(pinned["calibration_path"]),
+        "pilot_slots": pinned["pilot_slots"], "resource_input": pinned["resource_input"],
+        "expected_source_commit": pinned["expected_source_commit"],
+    }:
+        raise ValueError("primary input manifest changed while normalized")
     if pinned["expected_source_commit"] != PRODUCER_SOURCE_COMMIT:
         raise ValueError("primary input producer source differs from fixed S")
     settings = load_experiment_config(experiment_config_path.resolve(strict=True))
+    if settings != config_snapshot:
+        raise ValueError("experiment config changed while validated")
     if canonical_hash(settings) != EXPERIMENT_CONFIG_SHA256:
         raise ValueError("experiment config differs from fixed C")
     calibration_path = pinned["calibration_path"].resolve(strict=True)
-    calibration = _load(calibration_path, "frozen calibration")
+    calibration = _snapshot_load(calibration_path, "frozen calibration", snapshots)
     validate_calibration(
         calibration, pinned["pilot_slots"], pinned["resource_input"],
         expected_source_commit=PRODUCER_SOURCE_COMMIT,
@@ -422,7 +699,7 @@ def recheck_campaign_launch(
     evidence_root = Path(str(resource["evidence_root"])).resolve(strict=True)
     plan_path = _reference(evidence_root, resource.get("sequential_plan_path"),
                            resource.get("sequential_plan_sha256"), "sequential plan")
-    plan = _load(plan_path, "sequential plan")
+    plan = _snapshot_load(plan_path, "sequential plan", snapshots)
     sequential = calibration.get("resources", {}).get("sequential_plan")
     if (not isinstance(sequential, Mapping) or sequential.get("plan_sha256") != sha(plan_path)
             or plan.get("source_commit") != PRODUCER_SOURCE_COMMIT
@@ -439,8 +716,9 @@ def recheck_campaign_launch(
     for reference in coordinator_refs:
         if not isinstance(reference, Mapping):
             raise ValueError("frozen coordinator reference is invalid")
-        receipt = _load(_reference(evidence_root, reference.get("path"), reference.get("sha256"),
-                                   "coordinator receipt"), "coordinator receipt")
+        receipt_path = _reference(evidence_root, reference.get("path"), reference.get("sha256"),
+                                  "coordinator receipt")
+        receipt = _snapshot_load(receipt_path, "coordinator receipt", snapshots)
         store_id = receipt.get("store_id")
         identity = receipt.get("device_identity")
         if store_id not in {"D", "E"} or store_id in frozen_identities or not isinstance(identity, str):
@@ -450,6 +728,12 @@ def recheck_campaign_launch(
         raise ValueError("frozen D and E identities are incomplete or duplicated")
     if set(store_roots) != {"D", "E"}:
         raise ValueError("live store roots must cover exact D and E")
+    inventory = _snapshot_load(storage_inventory_path, "fresh storage inventory", snapshots)
+    supplement = _snapshot_load(storage_supplement_manifest_path, "fresh storage supplement", snapshots)
+    inventory_time = _fresh_time(inventory.get("observed_at_utc"), "inventory observed_at_utc",
+                                 now=now, not_before=not_before, max_age_s=age)
+    supplement_time = _fresh_time(supplement.get("sealed_at_utc"), "supplement sealed_at_utc",
+                                  now=now, not_before=not_before, max_age_s=age)
     current_identities = {
         store: sealed_store_identity(
             store_root=store_roots[store], store_drive=f"{store}:",
@@ -460,21 +744,16 @@ def recheck_campaign_launch(
     }
     if current_identities != frozen_identities:
         raise ValueError("live sealed store identities differ from frozen receipts")
-    inventory = _load(storage_inventory_path, "fresh storage inventory")
-    supplement = _load(storage_supplement_manifest_path, "fresh storage supplement")
-    inventory_time = _fresh_time(inventory.get("observed_at_utc"), "inventory observed_at_utc",
-                                 now=now, not_before=not_before, max_age_s=age)
-    supplement_time = _fresh_time(supplement.get("sealed_at_utc"), "supplement sealed_at_utc",
-                                  now=now, not_before=not_before, max_age_s=age)
     matrix = build_matrix(settings)
     previous, actual_worst_package, stopped_hours, last_closed = _validate_previous_chain(
-        previous_receipt_paths, matrix, frozen_identities, pinned,
+        previous_receipt_paths, matrix, frozen_identities, pinned, store_roots,
+        expected_host_commit, snapshots,
     )
     if last_closed is not None and not_before < last_closed:
         raise ValueError("not_before_utc must be at or after the latest primary closure")
     ordinal = len(previous) + 1
     trial_path = pinned["trial_path"].resolve(strict=True)
-    trial = _load(trial_path, "frozen primary trial")
+    trial = _snapshot_load(trial_path, "frozen primary trial", snapshots)
     if trial != matrix[ordinal - 1]:
         raise ValueError("primary input trial is not the next canonical ordinal")
     for index, row in enumerate(previous):
@@ -503,8 +782,22 @@ def recheck_campaign_launch(
             raise ValueError(f"live {store} free space is insufficient")
         store_results[store] = {"device_identity": current_identities[store],
                                 "free_bytes": free, "required_bytes": required}
-    vm_required = int(_number(capacity.get("vm", {}).get("required_bytes"),
-                              "frozen VM required bytes", positive=True))
+    frozen_vm = capacity.get("vm")
+    if not isinstance(frozen_vm, Mapping):
+        raise ValueError("frozen VM capacity components are absent")
+    retained = int(_number(frozen_vm.get("retained_six_support_bytes"),
+                           "frozen VM retained support bytes"))
+    raw_bytes = int(_number(frozen_vm.get("one_hot_raw_bytes"), "frozen VM raw bytes"))
+    archive_bytes = int(_number(frozen_vm.get("canonical_archive_bytes"),
+                               "frozen VM archive bytes"))
+    scratch = int(_number(frozen_vm.get("applicable_scratch_bytes"),
+                          "frozen VM scratch bytes"))
+    vm_required = ceil((retained + raw_bytes + archive_bytes + worst_package + scratch)
+                       * (1 + reserve)) + absolute_reserve
+    frozen_vm_required = int(_number(frozen_vm.get("required_bytes"),
+                                     "frozen VM required bytes", positive=True))
+    if vm_required < frozen_vm_required:
+        vm_required = frozen_vm_required
     vm_free, instance_time, probe_time, vm_instance = _validate_vm_inputs(
         binding_path=vm_instance_binding_path,
         binding_sha256=vm_instance_binding_sha256,
@@ -515,10 +808,12 @@ def recheck_campaign_launch(
         now=now,
         not_before=not_before,
         max_age_s=age,
+        source_review_sha256=source_review_sha256,
+        snapshots=snapshots,
     )
     if vm_free < vm_required:
         raise ValueError("live VM free space is insufficient")
-    billing = _load(fresh_billing_path, "fresh extended billing")
+    billing = _snapshot_load(fresh_billing_path, "fresh extended billing", snapshots)
     if set(billing) != _BILLING_FIELDS or billing.get("currency") != "USD":
         raise ValueError("fresh extended billing must contain exact nine fields")
     billing_time = _fresh_time(billing.get("observed_at"), "billing observed_at", now=now,
@@ -542,6 +837,11 @@ def recheck_campaign_launch(
     account_available = account_remaining * (1 - reserve)
     if project_available < required_cost or account_available < required_cost:
         raise ValueError("fresh project or account budget is insufficient")
+    _assert_snapshots(snapshots)
+    if _host_source_commit(
+            host_repository, expected_host_commit, source_review_path,
+            source_review_sha256) != host_source_commit:
+        raise ValueError("host source changed during live recheck")
     output = output.absolute()
     if output.exists() or output.is_symlink():
         raise FileExistsError("live recheck namespace already exists")
@@ -552,6 +852,7 @@ def recheck_campaign_launch(
     staging.mkdir()
     try:
         receipt_path = staging / "live-launch-eligibility.json"
+        _assert_snapshots(snapshots)
         receipt = {
             "schema_version": 1, "classification": "g3_live_primary_launch_recheck",
             "decision": "eligible_for_host_coordinator",
@@ -573,6 +874,7 @@ def recheck_campaign_launch(
                 "vm_capacity_probe_sha256": vm_capacity_probe_sha256,
                 "vm_probe_observed_at_utc": probe_time.isoformat().replace("+00:00", "Z"),
                 "vm_probe_nonce": vm_probe_nonce,
+                "source_review_sha256": source_review_sha256,
                 "not_before_utc": not_before.isoformat().replace("+00:00", "Z"),
                 "max_age_s": age,
             },
@@ -586,6 +888,7 @@ def recheck_campaign_launch(
                        "fresh_hourly_rate_usd": rate,
                        "remaining_stopped_cost_usd": remaining_stopped_cost},
             "launch_executed": False, "cleanup_authorized": False,
+            "external_expected_anchor_is_authorization": False,
             "actual_six_approved": False, "sixty_primary_trials_approved": False,
             "primary_run_approved": False, "final_approved": False,
         }
@@ -595,6 +898,11 @@ def recheck_campaign_launch(
             "files": [{"path": receipt_path.name, "bytes": receipt_path.stat().st_size,
                        "sha256": sha(receipt_path)}],
         })
+        _assert_snapshots(snapshots)
+        if _host_source_commit(
+                host_repository, expected_host_commit, source_review_path,
+                source_review_sha256) != host_source_commit:
+            raise ValueError("host source changed before live recheck publication")
         os.replace(staging, output)
         return output / receipt_path.name
     except BaseException:

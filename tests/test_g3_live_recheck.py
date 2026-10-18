@@ -14,7 +14,9 @@ from factory_ops.experiments import build_matrix, load_experiment_config
 from factory_ops.g3_live_recheck import (
     EXPERIMENT_CONFIG_SHA256,
     PRODUCER_SOURCE_COMMIT,
+    _host_source_commit,
     _parse_df_stdout,
+    _validate_primary_store_result,
     _validate_vm_inputs,
     recheck_campaign_launch,
 )
@@ -60,7 +62,9 @@ class LiveRecheckTests(unittest.TestCase):
         ]
         self.plan = self.evidence / "plan.json"
         self.capacity = {
-            "vm": {"one_package_bytes": 100, "required_bytes": 1_000},
+            "vm": {"retained_six_support_bytes": 100, "one_hot_raw_bytes": 100,
+                   "canonical_archive_bytes": 100, "one_package_bytes": 100,
+                   "applicable_scratch_bytes": 100, "required_bytes": 700},
             "stores": {
                 "D": {"deduplicated_extra_bytes": 50},
                 "E": {"deduplicated_extra_bytes": 50},
@@ -111,9 +115,10 @@ class LiveRecheckTests(unittest.TestCase):
             "project_budget_cap_usd": 400.0, "project_actual_billing_usd": 100.0,
             "project_budget_remaining_usd": 300.0,
         })
-        self.previous: list[Path] = []
+        self.previous: list[dict[str, str]] = []
         self.free = {str(self.store_roots["D"]): 10**9, str(self.store_roots["E"]): 10**9}
         self.vm_free = 10**9
+        self.disk_usage_hook = None
         self.vm_nonce = "1" * 32
         self.vm_binding = self.root / "vm-instance-binding.json"
         self.vm_probe = self.root / "vm-capacity-probe.json"
@@ -139,7 +144,7 @@ class LiveRecheckTests(unittest.TestCase):
 
     def add_previous(self, package_bytes: int = 100) -> Path:
         ordinal = len(self.previous) + 1
-        previous_sha = digest(self.previous[-1]) if self.previous else None
+        previous_sha = self.previous[-1]["expected_sha256"] if self.previous else None
         prior_trial = self.root / f"previous-trial-{ordinal}.json"
         save(prior_trial, self.matrix[ordinal - 1])
         prior_inputs = self.root / f"previous-primary-inputs-{ordinal}.json"
@@ -151,15 +156,14 @@ class LiveRecheckTests(unittest.TestCase):
         preservation_paths = {}
         for store in ("D", "E"):
             preservation_path = self.root / f"previous-{ordinal}-{store}-preservation.json"
-            save(preservation_path, {"store_id": store, "full_restore": True,
-                                     "fixture_boundary": "explicit_nonphysical_preservation_double"})
+            save(preservation_path, {"fixture_boundary": "explicit_nonphysical_G5_store_result_double"})
             preservation_paths[store] = preservation_path
         path = self.root / f"previous-{ordinal}.json"
         save(path, {
             "schema_version": 1, "classification": "g3_closed_primary_preservation_receipt",
             "ordinal": ordinal, "trial_id": self.matrix[ordinal - 1]["trial_id"],
             "run_id": f"{ordinal:032x}", "source_commit": PRODUCER_SOURCE_COMMIT,
-            "host_source_commit": "f" * 40, "primary_inputs_path": str(prior_inputs),
+            "host_source_commit": "9" * 40, "primary_inputs_path": str(prior_inputs),
             "primary_inputs_sha256": digest(prior_inputs),
             "trial_outcome": "completed", "closed_at_utc": (
                 self.not_before - timedelta(seconds=10 - ordinal)
@@ -168,14 +172,13 @@ class LiveRecheckTests(unittest.TestCase):
             "package": {"sha256": "a" * 64, "bytes": package_bytes},
             "preservations": [
                 {"store_id": store, "device_identity": self.identities[store],
-                 "package_sha256": "a" * 64, "package_bytes": package_bytes,
-                 "full_restore": True, "receipt_path": str(preservation_paths[store]),
-                 "receipt_sha256": digest(preservation_paths[store])}
+                 "store_result_path": str(preservation_paths[store]),
+                 "store_result_sha256": digest(preservation_paths[store])}
                 for store in ("D", "E")
             ],
             "stopped_storage_hours": 0.5, "cleanup_authorized": False,
         })
-        self.previous.append(path)
+        self.previous.append({"path": str(path), "expected_sha256": digest(path)})
         save(self.trial, self.matrix[ordinal])
         self.write_primary()
         return path
@@ -185,6 +188,9 @@ class LiveRecheckTests(unittest.TestCase):
             return self.identities[str(kwargs["store_drive"])[0]]
 
         def usage(path):
+            if self.disk_usage_hook is not None:
+                hook, self.disk_usage_hook = self.disk_usage_hook, None
+                hook()
             return Usage(self.free[str(Path(path))])
 
         def vm_probe(**kwargs):
@@ -193,6 +199,7 @@ class LiveRecheckTests(unittest.TestCase):
 
         with patch("factory_ops.g3_live_recheck._host_source_commit", return_value="9" * 40), \
                 patch("factory_ops.g3_live_recheck.validate_calibration"), \
+                patch("factory_ops.g3_live_recheck._validate_primary_store_result"), \
                 patch("factory_ops.g3_live_recheck.sealed_store_identity", side_effect=identity), \
                 patch("factory_ops.g3_live_recheck._validate_vm_inputs", side_effect=vm_probe), \
                 patch("factory_ops.g3_live_recheck.shutil.disk_usage", side_effect=usage):
@@ -210,6 +217,8 @@ class LiveRecheckTests(unittest.TestCase):
                 fresh_billing_path=self.billing,
                 not_before_utc=self.not_before.isoformat().replace("+00:00", "Z"),
                 max_age_s=120.0, host_repository=self.root,
+                expected_host_commit="9" * 40, source_review_path=self.vm_probe,
+                source_review_sha256=digest(self.vm_probe),
             )
 
     def test_eligible_receipt_preserves_manifest_and_never_launches(self) -> None:
@@ -275,17 +284,19 @@ class LiveRecheckTests(unittest.TestCase):
 
     def test_previous_chain_duplicate_ordinal_and_manifest_drift_are_rejected(self) -> None:
         first = self.add_previous()
-        self.previous.append(first)
+        self.previous.append(dict(self.previous[0]))
         with self.assertRaisesRegex(ValueError, "duplicated|binding"):
             self.invoke("duplicate")
         self.previous.pop()
         value = json.loads(first.read_text())
         value["ordinal"] = 2
         save(first, value)
+        self.previous[0]["expected_sha256"] = digest(first)
         with self.assertRaisesRegex(ValueError, "chain binding"):
             self.invoke("ordinal")
         value["ordinal"] = 1
         save(first, value)
+        self.previous[0]["expected_sha256"] = digest(first)
         save(self.trial, self.matrix[3])
         self.write_primary()
         with self.assertRaisesRegex(ValueError, "next canonical ordinal"):
@@ -307,6 +318,8 @@ class LiveRecheckTests(unittest.TestCase):
                     storage_supplement_manifest_sha256=digest(self.supplement),
                     fresh_billing_path=self.billing, not_before_utc=self.not_before.isoformat(),
                     max_age_s=120.0, host_repository=self.root,
+                    expected_host_commit="9" * 40, source_review_path=self.vm_probe,
+                    source_review_sha256=digest(self.vm_probe),
                 )
 
     def test_larger_actual_package_raises_store_requirement(self) -> None:
@@ -317,8 +330,36 @@ class LiveRecheckTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "D free space"):
             self.invoke("raised-package")
         self.free[str(self.store_roots["D"])] = expected
+        expected_vm = ceil((100 + 100 + 100 + 1_000 + 100) * 1.2) + 100
+        self.vm_free = expected_vm - 1
+        with self.assertRaisesRegex(ValueError, "VM free space"):
+            self.invoke("raised-package-vm")
+        self.vm_free = expected_vm
         value = json.loads(self.invoke("raised-package-pass").read_text())
         self.assertEqual(expected, value["stores"]["D"]["required_bytes"])
+        self.assertEqual(expected_vm, value["vm"]["required_bytes"])
+
+    def test_external_previous_pin_and_snapshot_recheck_reject_rewrites(self) -> None:
+        previous = self.add_previous()
+        rewritten = json.loads(previous.read_text())
+        rewritten["stopped_storage_hours"] = 0.0
+        save(previous, rewritten)
+        with self.assertRaisesRegex(ValueError, "external SHA pin"):
+            self.invoke("rewritten-previous")
+
+        self.previous.clear()
+        save(self.trial, self.matrix[0])
+        self.write_primary()
+        original_plan = json.loads(self.plan.read_text())
+
+        def mutate_plan() -> None:
+            changed = deepcopy(original_plan)
+            changed["reserve_fraction"] = .99
+            save(self.plan, changed)
+
+        self.disk_usage_hook = mutate_plan
+        with self.assertRaisesRegex(ValueError, "snapshotted input changed"):
+            self.invoke("plan-toctou")
 
     def test_nonphysical_vm_fixture_is_rejected_by_production_validator(self) -> None:
         now = datetime.now(timezone.utc)
@@ -328,6 +369,7 @@ class LiveRecheckTests(unittest.TestCase):
                 probe_path=self.vm_probe, probe_sha256=digest(self.vm_probe),
                 nonce=self.vm_nonce, host_source_commit="9" * 40, now=now,
                 not_before=self.not_before, max_age_s=120.0,
+                source_review_sha256="8" * 64,
             )
 
     def test_remote_df_parser_rederives_bytes_and_rejects_wrong_root(self) -> None:
@@ -337,6 +379,66 @@ class LiveRecheckTests(unittest.TestCase):
         ))
         with self.assertRaisesRegex(ValueError, "root differs"):
             _parse_df_stdout(stdout, "/tmp/nonphysical-fixture")
+
+    def test_host_T_requires_externally_pinned_actual_review_and_repository_cwd(self) -> None:
+        expected = "9" * 40
+        files = (
+            "factory_ops/g3_live_recheck.py", "scripts/brev/g3_live_recheck.py",
+            "tests/test_g3_live_recheck.py",
+        )
+        review = self.root / "explicit-nonphysical-source-review-fixture.json"
+        save(review, {
+            "schema_version": 1,
+            "record_kind": "leader transcription of an actual native code-reviewer report",
+            "agent_role": "code-reviewer", "recommendation": "APPROVE",
+            "host_checkpoint_commit": expected,
+            "producer_source_commit": PRODUCER_SOURCE_COMMIT,
+            "fixture_boundary": "explicit_nonphysical_subprocess_and_review_double",
+            "source_sha256": {name: digest(ROOT / name) for name in files},
+            "launch_authorized": False, "cleanup_authorized": False,
+        })
+        blobs = {
+            name: hashlib.sha1(
+                f"blob {(ROOT / name).stat().st_size}\0".encode() + (ROOT / name).read_bytes(),
+                usedforsecurity=False,
+            ).hexdigest()
+            for name in files
+        }
+
+        def git_output(args, **kwargs):
+            self.assertEqual(ROOT.resolve(), Path(kwargs["cwd"]).resolve())
+            if args[1:3] == ("status", "--porcelain=v1"):
+                return ""
+            if args[1:] == ("rev-parse", "HEAD"):
+                return expected + "\n"
+            if args[1] == "show":
+                return (ROOT / args[2].split(":", 1)[1]).read_bytes()
+            if args[1] == "rev-parse" and args[2].startswith("HEAD:"):
+                return blobs[args[2].split(":", 1)[1]] + "\n"
+            if args[1:] == ("hash-object", "--stdin"):
+                raw = kwargs["input"]
+                blob = hashlib.sha1(f"blob {len(raw)}\0".encode() + raw,
+                                    usedforsecurity=False).hexdigest()
+                return (blob + "\n").encode()
+            raise AssertionError(args)
+
+        with patch("factory_ops.g3_live_recheck.subprocess.check_output", side_effect=git_output):
+            self.assertEqual(expected, _host_source_commit(
+                ROOT, expected, review, digest(review),
+            ))
+            with self.assertRaisesRegex(ValueError, "external expected T pin"):
+                _host_source_commit(ROOT, "8" * 40, review, digest(review))
+
+    def test_minimal_full_restore_boolean_cannot_substitute_for_G5_closure(self) -> None:
+        fake = self.root / "explicit-nonphysical-minimal-restore.json"
+        save(fake, {"store_id": "D", "full_restore": True,
+                    "fixture_boundary": "explicit_nonphysical_spoof"})
+        with self.assertRaisesRegex(ValueError, "G5 store run result binding differs"):
+            _validate_primary_store_result(
+                result_path=fake, store_root=self.store_roots["D"], store_id="D",
+                device_identity="sealed-D", run_id="1" * 32,
+                package_sha256="a" * 64, package_bytes=777, snapshots={},
+            )
 
 
 if __name__ == "__main__":

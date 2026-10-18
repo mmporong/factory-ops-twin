@@ -41,7 +41,8 @@ def main() -> int:
         spec = _object(args.capture_vm_probe_spec)
         expected = {
             "output", "instance_binding_path", "instance_binding_sha256", "nonce",
-            "not_before_utc", "max_age_s",
+            "not_before_utc", "max_age_s", "expected_host_commit", "source_review_path",
+            "source_review_sha256",
         }
         if set(spec) != expected:
             raise ValueError("VM capacity probe specification fields differ")
@@ -49,7 +50,9 @@ def main() -> int:
             Path(spec["output"]), instance_binding_path=Path(spec["instance_binding_path"]),
             instance_binding_sha256=spec["instance_binding_sha256"], nonce=spec["nonce"],
             not_before_utc=spec["not_before_utc"], max_age_s=spec["max_age_s"],
-            host_repository=REPOSITORY,
+            host_repository=REPOSITORY, expected_host_commit=spec["expected_host_commit"],
+            source_review_path=Path(spec["source_review_path"]),
+            source_review_sha256=spec["source_review_sha256"],
         )
         print(result)
         return 0
@@ -62,7 +65,8 @@ def main() -> int:
         "vm_capacity_probe_sha256", "vm_instance_binding_path",
         "vm_instance_binding_sha256", "vm_probe_nonce", "storage_inventory_path",
         "storage_supplement_manifest_path", "storage_supplement_manifest_sha256",
-        "fresh_billing_path", "not_before_utc", "max_age_s",
+        "fresh_billing_path", "not_before_utc", "max_age_s", "expected_host_commit",
+        "source_review_path", "source_review_sha256",
     }
     if (set(spec) != expected or not isinstance(spec["previous_receipt_paths"], list)
             or not isinstance(spec["store_roots"], dict)):
@@ -71,7 +75,7 @@ def main() -> int:
         Path(spec["output"]), primary_inputs_path=Path(spec["primary_inputs_path"]),
         primary_inputs_sha256=spec["primary_inputs_sha256"],
         experiment_config_path=Path(spec["experiment_config_path"]),
-        previous_receipt_paths=[Path(value) for value in spec["previous_receipt_paths"]],
+        previous_receipt_paths=spec["previous_receipt_paths"],
         store_roots={name: Path(value) for name, value in spec["store_roots"].items()},
         vm_capacity_probe_path=Path(spec["vm_capacity_probe_path"]),
         vm_capacity_probe_sha256=spec["vm_capacity_probe_sha256"],
@@ -83,7 +87,9 @@ def main() -> int:
         storage_supplement_manifest_sha256=spec["storage_supplement_manifest_sha256"],
         fresh_billing_path=Path(spec["fresh_billing_path"]),
         not_before_utc=spec["not_before_utc"], max_age_s=spec["max_age_s"],
-        host_repository=REPOSITORY,
+        host_repository=REPOSITORY, expected_host_commit=spec["expected_host_commit"],
+        source_review_path=Path(spec["source_review_path"]),
+        source_review_sha256=spec["source_review_sha256"],
     )
     print(result)
     return 0
