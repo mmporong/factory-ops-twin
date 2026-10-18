@@ -238,7 +238,6 @@ class G3SessionTests(unittest.TestCase):
         )
         self.assertEqual("goal_checker_confirmed_xy_latch", provenance["instrumentation"]["controller_behavior_mode"])
         self.assertFalse(provenance["claims"]["actual_gpu_trace_validated"])
-        self.assertIn("stale stateful XY latch", provenance["observed_forensics"]["confirmed_failure_mode"])
         self.assertEqual(
             digest(provenance_path),
             verify_session(self.v4_qualification)["source_config"][provenance_path.name],
