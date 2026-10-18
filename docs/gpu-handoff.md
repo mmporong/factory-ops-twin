@@ -356,7 +356,7 @@ bash scripts/brev/run-g3.sh "$HOME/workspace/factory-ops-g0" "$run_label" "$sour
 
 빌드 증빙, 원래 이미지와 현재 이미지의 측정값, 설치 파일 세 개는 결과의 `provenance/build/`에 보존한다. source-environment와 전이 manifest가 artifact root의 상대경로·크기·SHA를 결속하며, 닫힌 output archive에도 포함한다. 사후 검증은 이 복원본에서 증빙을 읽고 attestation 환경값을 설정·복원한다. 실제 VM의 빌드·주행 검증을 마치기 전 CPU fixture 통과를 물리 실행의 승인으로 사용하지 않는다.
 
-주행 전에는 저장된 Jazzy 이미지에서 일반 Client introspection과 생성된 FollowPath 서비스 타입을 확인한다. 실제 SendGoal/GetResult/CancelGoal 이벤트, action 상태·센서·TF·지도·구동 허가·예약 결정·휠 궤적과 3개 RGB 시점을 수집한다. recorder 종료 뒤에만 SQLite CDR를 읽는다. 두 worker의 성공만으로 완료하지 않으며 `g3_evidence.py`의 최종 검증과 C/E 백업까지 확인한 뒤 Brev를 Stop한다.
+주행 전에는 저장된 Jazzy 이미지에서 일반 Client introspection과 생성된 FollowPath 서비스 타입을 확인한다. 실제 SendGoal/GetResult/CancelGoal 이벤트, action 상태·센서·TF·지도·구동 허가·예약 결정·휠 궤적과 3개 RGB 시점을 수집한다. recorder 종료 뒤에만 SQLite CDR를 읽는다. 두 worker의 성공만으로 완료하지 않으며 `g3_evidence.py`의 최종 검증과 D/E 백업까지 확인한 뒤 Brev를 Stop한다.
 
 `scripts/ros/g3_sdk_smoke.py --output <새 JSON 경로>`는 같은 ROS 이미지에서 먼저 실행한다. 격리된 namespace의 synthetic action server에 표준 서비스 요청을 보내고, 실제 middleware의 request/response transaction·UUID·전체 Path 내용을 대조한다. 정규 JSON SHA를 메시지 identity로 사용하며 원본 CDR와 재직렬화 SHA는 보존·진단 자료로 구분한다. 로봇·시뮬레이터를 사용하지 않는 SDK 연결 검사이며 물리 주행 성공으로 집계하지 않는다. Jazzy의 일반 Client가 제공하는 [service introspection API](https://github.com/ros2/rclpy/blob/4e607c09d624debc39a4ae5405680c06d87fac35/rclpy/rclpy/client.py#L193-L208)를 사용한다.
 
