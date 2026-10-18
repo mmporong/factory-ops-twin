@@ -337,8 +337,14 @@ G3b는 `g3-q-normal-fifo-005`에서 두 주문의 자재 투입·완제품 출�
 ```bash
 set -euo pipefail
 cd "$HOME/workspace/factory-ops-g0/project"
-source_commit=$(git rev-parse HEAD)
-run_label=g3-q-normal-fifo-014
+test -z "$(git status --porcelain)"
+if [ "${FACTORY_OPS_G3_FACTORY_PROFILE:-factory-v3}" = factory-v4 ]; then
+  source_commit=$(python3 -c 'import json; print(json.load(open("configs/calibrations/g3-v4-campaign-protocol.json"))["producer_source_commit"])')
+  git checkout --detach "$source_commit"
+else
+  source_commit=$(git rev-parse HEAD)
+fi
+run_label=g3-q-normal-fifo-022
 build_dir="$HOME/workspace/factory-ops-g0/build-attestations/$run_label"
 python3 scripts/brev/g3_build_attestation.py build \
   --output-dir "$build_dir" --repository "$PWD" \
@@ -352,7 +358,7 @@ bash scripts/brev/run-g3.sh "$HOME/workspace/factory-ops-g0" "$run_label" "$sour
 
 마지막 세 자리 숫자는 실행 attempt이며 seed와 구분한다. 실패해도 같은 폴더를 덮어쓰지 않고 새 attempt로 같은 입력을 재시도한다. supervisor는 code commit·clean checkout·인스턴스의 기존 작업 컨테이너 부재를 확인하고 세션을 새로 만든다. 요청한 profile·condition·policy·seed와 세션 SHA를 고정해 두 worker와 실행 후 검증기에 전달한다.
 
-32×20m 생산 구역 후보를 실행할 때는 위 `run-g3.sh` 호출 전에 `export FACTORY_OPS_G3_FACTORY_PROFILE=factory-v4`를 설정한다. 기본값은 기존 `factory-v3`다. v4 세션은 layout revision과 config profile을 묶으며 두 worker·검증기가 동일한 지도·경로·설비·카메라 설정을 읽는다. 진단 기본값은 600스텝 정기 촬영과 상태 변화 촬영이고, 연속 동작 촬영은 꺼져 있다. 새 배치의 실제 주행·렌더 검증은 별도로 남아 있다.
+32×20m 생산 구역을 실행할 때는 위 명령 블록 시작 전에 `export FACTORY_OPS_G3_FACTORY_PROFILE=factory-v4`를 설정한다. 기본값은 기존 `factory-v3`다. v4는 고정 프로토콜에서 생산자 SHA를 읽은 뒤 그 커밋으로 전환해 빌드·실행하며, 실험 입력 생성과 후처리는 최신 프로토콜이 커밋된 깨끗한 호스트에서 수행한다. 두 SHA를 같다고 가정하지 않는다. v4 세션은 layout revision과 config profile을 묶으며 두 worker·검증기가 동일한 지도·경로·설비·카메라 설정을 읽는다. 정기 RGB는 600스텝마다 촬영하고 시작·종료·상태 변화도 기록한다. qualification에서만24초·240표본의 연속 동작 구간을 수집하며 pilot·primary에서는 끈다. 정상 임무와 보정 카메라의 실제 촬영은 확인했으나, 순차 상태 전달 수정 후 전체 GPU 증거 검사와 폐쇄·복구 검증이 남아 있다.
 
 빌드 도구는 로컬 base 이미지의 전체 ID를 두 `FROM`에 고정하며, `DOCKER_BUILDKIT=0`을 명시한 Linux legacy builder를 사용한다. [Docker는 이 방식을 v23부터 deprecated로 분류](https://docs.docker.com/engine/deprecated/#legacy-builder-for-linux-images)한다. 현재 VM의 Docker Engine·CLI 버전과 builder mode를 영수증에 남기고 실제 빌드 성공을 확인해야 한다. 지원되지 않는 환경에서는 실행을 차단하며, 다른 builder나 mutable tag로 자동 전환하지 않는다. 이 경로는 기존 VM의 호환 절차이며 OCI layout을 이용한 이식 가능한 이미지 보존은 구현 범위에 포함하지 않는다.
 
