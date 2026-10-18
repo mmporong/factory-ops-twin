@@ -33,6 +33,11 @@ def digest(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def reference(path: Path) -> dict[str, object]:
+    path = path.resolve(strict=True)
+    return {"path": str(path), "bytes": path.stat().st_size, "sha256": digest(path)}
+
+
 class QualificationGateTests(unittest.TestCase):
     def setUp(self) -> None:
         self.temporary = tempfile.TemporaryDirectory()
@@ -64,6 +69,22 @@ class QualificationGateTests(unittest.TestCase):
                      return_value=self.host_source)
         host.start()
         self.addCleanup(host.stop)
+
+        self.operation_wrapper = self.root / "run-q013-full-restore-operation-001.py"
+        self.semantic_helper = self.root / "replay-q013-restored-evidence-001.py"
+        self.operation_helpers = {
+            "D": self.root / "verify-industrial-g3-015-d-source.py",
+            "E": self.root / "preserve-industrial-g3-015.py",
+        }
+        self.decoder_checkout = self.root / "decoder-source-s"
+        self.decoder_checkout.mkdir()
+        for path, content in (
+            (self.operation_wrapper, "operation wrapper fixture\n"),
+            (self.semantic_helper, "semantic helper fixture\n"),
+            (self.operation_helpers["D"], "D helper fixture\n"),
+            (self.operation_helpers["E"], "E helper fixture\n"),
+        ):
+            path.write_text(content, encoding="utf-8")
 
         self.rows = []
         self.backups = {}
@@ -165,6 +186,17 @@ class QualificationGateTests(unittest.TestCase):
                 "artifact_relative": f"results/{RUN_LABEL}",
                 "session_relative": f"source-snapshots/{RUN_LABEL}/runs/{RUN_LABEL}-session",
             },
+            "operation_producers": {
+                "wrapper": {"name": self.operation_wrapper.name,
+                            "sha256": digest(self.operation_wrapper)},
+                "prepared_manifest_sha256": "9" * 64,
+                "stores": {
+                    name: {"name": path.name, "sha256": digest(path)}
+                    for name, path in self.operation_helpers.items()
+                },
+            },
+            "semantic_producer": {"name": self.semantic_helper.name,
+                                  "sha256": digest(self.semantic_helper)},
             "stores": {},
         }
         for row in self.rows:
@@ -177,6 +209,30 @@ class QualificationGateTests(unittest.TestCase):
                 "device_identity": self.devices[store_id],
             }
             common = self.backups[str(restore.resolve())]["record"]
+            operation_log = self.root / f"operation-{store_id}.log"
+            operation_log.write_text(f"closed operation {store_id}\n", encoding="utf-8")
+            live_cim = self.root / f"live-cim-{store_id}.json"
+            save(live_cim, {
+                "schema_version": 1,
+                "source": "live CIM associations before independent full restore",
+                "observed_at_utc": "2026-10-18T06:59:00+00:00",
+                "stores": [{"store_id": name, "physical_disks": [self.devices[name]]}
+                           for name in ("D", "E")],
+            })
+            helper = self.operation_helpers[store_id]
+            if store_id == "E":
+                command = [str(self.root / "python.exe"), "-B", str(helper.resolve()),
+                           "--expected-source", PRODUCER_SOURCE_COMMIT]
+            else:
+                command = [
+                    str(self.root / "python.exe"), "-B", str(helper.resolve()),
+                    "--expected-source", PRODUCER_SOURCE_COMMIT,
+                    "--archive", archive, "--backup", "E:\\q013.tar",
+                    "--record", str(backup_record.resolve()),
+                    "--restore-parent", str(PureWindowsPath(canonical_restore).parent),
+                    "--download-receipt", str((self.root / "download.json").resolve()),
+                    "--capacity-record", str((self.root / "capacity.json").resolve()),
+                ]
             save(Path(row["operation_receipt_path"]), {
                 "schema_version": 1, "classification": "g3_qualification_full_restore_operation_receipt",
                 "operation": "full_restore_completed_and_closed", "store_id": store_id,
@@ -190,8 +246,12 @@ class QualificationGateTests(unittest.TestCase):
                 "source_bundle_restore_fsck": True, "runtime_source_pins_verified": 17,
                 "started_at_utc": "2026-10-18T07:00:00+00:00",
                 "finished_at_utc": "2026-10-18T07:01:00+00:00",
-                "execution": {"helper_sha256": "d" * 64, "log_sha256": "f" * 64,
-                              "exit_code": 0},
+                "execution": {
+                    "helper": reference(helper), "wrapper": reference(self.operation_wrapper),
+                    "log": reference(operation_log), "live_cim": reference(live_cim),
+                    "command": command, "helper_sha256": digest(helper),
+                    "log_sha256": digest(operation_log), "exit_code": 0,
+                },
             })
             operation_sha = digest(Path(row["operation_receipt_path"]))
             wsl_root = f"/mnt/{store_id.lower()}/fixture/{RUN_ID}/full-restore"
@@ -200,6 +260,42 @@ class QualificationGateTests(unittest.TestCase):
                 "store_id": store_id, "windows_restore_root": canonical_restore,
                 "wsl_restore_root": wsl_root, "restore_manifest_sha256": common["manifest_sha256"],
                 "operation_receipt_sha256": operation_sha,
+            })
+            fresh_report = self.root / f"fresh-{store_id}-g3-evidence.json"
+            shutil.copyfile(Path(row["artifact_root"]) / "g3-evidence.json", fresh_report)
+            semantic_log = self.root / f"semantic-{store_id}.log"
+            preserved_report = json.loads((Path(row["artifact_root"]) / "g3-evidence.json").read_text())
+            semantic_rows = [
+                {"observed_at_utc": "2026-10-18T07:01:10+00:00", "phase": "replay_started",
+                 "store_id": store_id, "run_id": RUN_ID, "source_commit": PRODUCER_SOURCE_COMMIT,
+                 "operation_receipt_sha256": operation_sha,
+                 "path_mapping_sha256": digest(Path(row["path_mapping_path"])),
+                 "decoder_checkout": str(self.decoder_checkout.resolve()),
+                 "helper_sha256": digest(self.semantic_helper)},
+                {"observed_at_utc": "2026-10-18T07:01:20+00:00",
+                 "phase": "closed_bag_revalidation_started",
+                 "report_sha256": digest(Path(row["artifact_root"]) / "g3-evidence.json"),
+                 "session_json_sha256": digest(Path(row["session_root"]) / "session.json"),
+                 "environment_sha256": "e" * 64,
+                 "restore_manifest_sha256": common["manifest_sha256"]},
+                {"observed_at_utc": "2026-10-18T07:01:30+00:00",
+                 "phase": "closed_bag_revalidation_completed", "passed": True,
+                 "semantic_equal": True, "fresh_report_sha256": digest(fresh_report),
+                 "fresh_report_canonical_sha256": _canonical_sha256(preserved_report),
+                 "preserved_report_canonical_sha256": _canonical_sha256(preserved_report),
+                 "exit_code": 0},
+            ]
+            semantic_log.write_text(
+                "".join(json.dumps(value, sort_keys=True) + "\n" for value in semantic_rows),
+                encoding="utf-8",
+            )
+            runtime_manifest = self.root / f"runtime-manifest-{store_id}.json"
+            runtime_files = sorted((fresh_report, semantic_log), key=lambda path: path.name)
+            save(runtime_manifest, {
+                "schema_version": 1,
+                "classification": "g3_qualification_semantic_replay_output_manifest",
+                "files": [{"path": path.name, "bytes": path.stat().st_size,
+                           "sha256": digest(path)} for path in runtime_files],
             })
             save(Path(row["semantic_replay_receipt_path"]), {
                 "schema_version": 1,
@@ -224,6 +320,14 @@ class QualificationGateTests(unittest.TestCase):
                 "source_bundle_sha256": common["source_bundle_sha256"],
                 "source_bundle_restore_fsck": True, "runtime_source_pins_verified": 17,
                 "cleanup_authorized": False,
+                "observed_at_utc": "2026-10-18T07:02:00+00:00",
+                "decoder_source": {"checkout_root": str(self.decoder_checkout.resolve()),
+                                   "head": PRODUCER_SOURCE_COMMIT, "clean": True},
+                "execution": {
+                    "helper": reference(self.semantic_helper), "log": reference(semantic_log),
+                    "fresh_report": reference(fresh_report),
+                    "output_manifest": reference(runtime_manifest), "exit_code": 0,
+                },
             })
         trusted = patch("factory_ops.g3_qualification_gate._trusted_provenance",
                         return_value=self.trusted)
@@ -242,6 +346,9 @@ class QualificationGateTests(unittest.TestCase):
         drive = patch("factory_ops.g3_qualification_gate._drive", side_effect=fixture_drive)
         drive.start()
         self.addCleanup(drive.stop)
+        decoder = patch("factory_ops.g3_qualification_gate._verify_decoder_checkout")
+        decoder.start()
+        self.addCleanup(decoder.stop)
 
     def tearDown(self) -> None:
         self.temporary.cleanup()
@@ -365,6 +472,73 @@ class QualificationGateTests(unittest.TestCase):
             bytes=self.prestart.stat().st_size, sha256=digest(self.prestart))
         with self.assertRaisesRegex(ValueError, "prestart receipt identity"):
             self.invoke("stale-prestart")
+
+    def test_operation_execution_files_are_rehashed_and_command_is_bound(self) -> None:
+        operation_path = Path(self.rows[0]["operation_receipt_path"])
+        operation = json.loads(operation_path.read_text())
+        operation["execution"]["helper_sha256"] = "1" * 64
+        save(operation_path, operation)
+        with self.assertRaisesRegex(ValueError, "producer, log or exit"):
+            self.invoke("invented-helper-hash")
+
+        operation["execution"]["helper_sha256"] = operation["execution"]["helper"]["sha256"]
+        operation["execution"]["command"][2] = str(self.operation_wrapper.resolve())
+        save(operation_path, operation)
+        with self.assertRaisesRegex(ValueError, "execution command"):
+            self.invoke("wrong-operation-command")
+
+        operation["execution"]["command"][2] = operation["execution"]["helper"]["path"]
+        operation["execution"]["command"][0] = str(self.root / "invented-runner.exe")
+        save(operation_path, operation)
+        with self.assertRaisesRegex(ValueError, "execution command"):
+            self.invoke("wrong-operation-runner")
+
+    def test_operation_log_content_must_match_its_receipt_reference(self) -> None:
+        operation_path = Path(self.rows[0]["operation_receipt_path"])
+        operation = json.loads(operation_path.read_text())
+        log_path = Path(operation["execution"]["log"]["path"])
+        log_path.write_text("replacement log\n", encoding="utf-8")
+        with self.assertRaisesRegex(ValueError, "log reference bytes or SHA differ"):
+            self.invoke("changed-operation-log")
+
+    def test_semantic_fresh_result_must_exist_and_must_not_alias_preserved_report(self) -> None:
+        semantic_path = Path(self.rows[0]["semantic_replay_receipt_path"])
+        semantic = json.loads(semantic_path.read_text())
+        fresh_path = Path(semantic["execution"]["fresh_report"]["path"])
+        fresh_path.unlink()
+        with self.assertRaisesRegex(ValueError, "fresh_report reference must be a regular file"):
+            self.invoke("missing-fresh")
+
+        shutil.copyfile(Path(self.rows[0]["artifact_root"]) / "g3-evidence.json", fresh_path)
+        semantic["execution"]["fresh_report"] = reference(
+            Path(self.rows[0]["artifact_root"]) / "g3-evidence.json")
+        save(semantic_path, semantic)
+        with self.assertRaisesRegex(ValueError, "alias preserved evidence"):
+            self.invoke("aliased-fresh")
+
+    def test_semantic_log_bindings_are_checked_after_rehashing_manifest(self) -> None:
+        semantic_path = Path(self.rows[0]["semantic_replay_receipt_path"])
+        semantic = json.loads(semantic_path.read_text())
+        log_path = Path(semantic["execution"]["log"]["path"])
+        log_rows = [json.loads(line) for line in log_path.read_text().splitlines()]
+        log_rows[-1]["passed"] = False
+        log_path.write_text(
+            "".join(json.dumps(value, sort_keys=True) + "\n" for value in log_rows),
+            encoding="utf-8",
+        )
+        semantic["execution"]["log"] = reference(log_path)
+        manifest_path = Path(semantic["execution"]["output_manifest"]["path"])
+        manifest = json.loads(manifest_path.read_text())
+        manifest["files"] = [
+            {"path": log_path.name, "bytes": log_path.stat().st_size, "sha256": digest(log_path)}
+            if row["path"] == log_path.name else row
+            for row in manifest["files"]
+        ]
+        save(manifest_path, manifest)
+        semantic["execution"]["output_manifest"] = reference(manifest_path)
+        save(semantic_path, semantic)
+        with self.assertRaisesRegex(ValueError, "semantic replay log binding differs"):
+            self.invoke("fabricated-semantic-log")
 
     def test_self_consistent_stale_inventory_chain_is_not_trusted(self) -> None:
         save(self.inventory, {"observed_at_utc": "older-inventory-time"})

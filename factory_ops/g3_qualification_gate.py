@@ -6,8 +6,7 @@ from datetime import datetime, timezone
 import hashlib
 import json
 import os
-from pathlib import Path
-from pathlib import PureWindowsPath
+from pathlib import Path, PurePosixPath, PureWindowsPath
 import re
 import shutil
 import subprocess
@@ -120,6 +119,31 @@ def _measure(path: Path) -> dict[str, Any]:
     return {"name": path.name, "bytes": path.stat().st_size, "sha256": sha256_file(path)}
 
 
+def _materialized_path(value: object) -> Path:
+    text = str(value)
+    posix = PurePosixPath(text)
+    if len(posix.parts) >= 3 and posix.parts[:2] == ("/", "mnt") and posix.parts[2] in {"c", "d", "e"}:
+        if os.name == "nt":
+            return Path(f"{posix.parts[2].upper()}:/", *posix.parts[3:])
+        return Path(text)
+    path = Path(text)
+    if not path.is_absolute():
+        raise ValueError("evidence reference path must be absolute")
+    return path
+
+
+def _verified_reference(value: object, name: str) -> tuple[Path, dict[str, Any]]:
+    if not isinstance(value, Mapping) or set(value) != {"path", "bytes", "sha256"}:
+        raise ValueError(f"{name} reference fields differ")
+    path = _materialized_path(value["path"])
+    if path.is_symlink() or not path.is_file():
+        raise ValueError(f"{name} reference must be a regular file")
+    measured = {"path": str(value["path"]), "bytes": path.stat().st_size, "sha256": sha256_file(path)}
+    if measured != dict(value):
+        raise ValueError(f"{name} reference bytes or SHA differ")
+    return path.resolve(strict=True), measured
+
+
 def _drive(path: Path | PureWindowsPath | str) -> str:
     return PureWindowsPath(str(path)).drive.upper()
 
@@ -207,6 +231,195 @@ def _utc_time(value: object) -> datetime:
     return parsed
 
 
+def _verify_decoder_checkout(checkout: Path, source_commit: str) -> None:
+    if checkout.is_symlink() or not checkout.is_dir():
+        raise ValueError("semantic replay decoder checkout is absent")
+    actual_head = subprocess.check_output(
+        ("git", "rev-parse", "HEAD"), cwd=checkout, text=True,
+        encoding="ascii", errors="strict",
+    ).strip()
+    actual_status = subprocess.check_output(
+        ("git", "status", "--porcelain=v1", "--untracked-files=all"), cwd=checkout,
+        text=True, encoding="utf-8", errors="strict",
+    )
+    if actual_head != source_commit or actual_status:
+        raise ValueError("semantic replay decoder checkout is not clean source S")
+
+
+def _verify_operation_execution(
+    execution: object,
+    *,
+    store_id: str,
+    selected_path: str,
+    canonical_root: PureWindowsPath,
+    source_commit: str,
+    started: datetime,
+    trusted: Mapping[str, Any],
+) -> dict[str, Path]:
+    expected_fields = {
+        "helper", "wrapper", "log", "live_cim", "command",
+        "helper_sha256", "log_sha256", "exit_code",
+    }
+    if not isinstance(execution, Mapping) or set(execution) != expected_fields:
+        raise ValueError("full restore execution fields differ")
+    references = {
+        name: _verified_reference(execution[name], f"full restore {name}")
+        for name in ("helper", "wrapper", "log", "live_cim")
+    }
+    resolved = [value[0] for value in references.values()]
+    if len(set(resolved)) != len(resolved):
+        raise ValueError("full restore execution references alias one file")
+    producers = trusted.get("operation_producers")
+    if not isinstance(producers, Mapping) or not isinstance(producers.get("stores"), Mapping):
+        raise ValueError("trusted full restore producer pins are absent")
+    helper_pin = producers["stores"].get(store_id)
+    wrapper_pin = producers.get("wrapper")
+    if not isinstance(helper_pin, Mapping) or not isinstance(wrapper_pin, Mapping):
+        raise ValueError("trusted full restore producer pin differs")
+    helper = references["helper"][1]
+    wrapper = references["wrapper"][1]
+    log = references["log"][1]
+    if (Path(helper["path"]).name != helper_pin.get("name")
+            or helper["sha256"] != helper_pin.get("sha256")
+            or Path(wrapper["path"]).name != wrapper_pin.get("name")
+            or wrapper["sha256"] != wrapper_pin.get("sha256")
+            or execution.get("helper_sha256") != helper["sha256"]
+            or execution.get("log_sha256") != log["sha256"]
+            or execution.get("exit_code") != 0):
+        raise ValueError("full restore execution producer, log or exit binding differs")
+    cim = _load(references["live_cim"][0], "live CIM observation")
+    expected_stores = [
+        {"store_id": name, "physical_disks": [trusted["stores"][name]["device_identity"]]}
+        for name in ("D", "E")
+    ]
+    if (set(cim) != {"schema_version", "source", "observed_at_utc", "stores"}
+            or cim.get("schema_version") != 1
+            or cim.get("source") != "live CIM associations before independent full restore"
+            or cim.get("stores") != expected_stores
+            or _utc_time(cim.get("observed_at_utc")) > started):
+        raise ValueError("live CIM observation differs from trusted physical identities or operation time")
+    command = execution.get("command")
+    if (not isinstance(command, list) or not command
+            or any(not isinstance(item, str) or not item for item in command)
+            or len(command) < 5 or PureWindowsPath(command[0]).name.lower() != "python.exe"
+            or command[1] != "-B"
+            or PureWindowsPath(command[2]) != PureWindowsPath(str(helper["path"]))
+            or command[3:] == [] or command[3:5] != ["--expected-source", source_commit]):
+        raise ValueError("full restore execution command differs")
+    if store_id == "E":
+        if len(command) != 5:
+            raise ValueError("E full restore execution command differs")
+        return {name: value[0] for name, value in references.items()}
+    arguments = command[5:]
+    if len(arguments) % 2 or len(set(arguments[::2])) != len(arguments[::2]):
+        raise ValueError("D full restore execution arguments differ")
+    parsed = dict(zip(arguments[::2], arguments[1::2], strict=True))
+    expected_flags = {
+        "--archive", "--backup", "--record", "--restore-parent",
+        "--download-receipt", "--capacity-record",
+    }
+    selected_archive = PureWindowsPath(selected_path)
+    e_archive = PureWindowsPath("E:/", *selected_archive.parts[1:])
+    if (set(parsed) != expected_flags
+            or PureWindowsPath(parsed["--archive"]) != selected_archive
+            or PureWindowsPath(parsed["--backup"]) != e_archive
+            or PureWindowsPath(parsed["--restore-parent"]) != canonical_root.parent):
+        raise ValueError("D full restore execution command bindings differ")
+    return {name: value[0] for name, value in references.items()}
+
+
+def _verify_semantic_execution(
+    semantic: Mapping[str, Any],
+    *,
+    report_path: Path,
+    report: Mapping[str, Any],
+    store_id: str,
+    run_id: str,
+    source_commit: str,
+    operation_sha256: str,
+    path_mapping_sha256: str,
+    session_json_sha256: str,
+    environment_sha256: str,
+    restore_manifest_sha256: str,
+    operation_finished: datetime,
+    trusted: Mapping[str, Any],
+) -> tuple[dict[str, Path], dict[str, Any]]:
+    execution = semantic.get("execution")
+    if (not isinstance(execution, Mapping)
+            or set(execution) != {"helper", "log", "fresh_report", "output_manifest", "exit_code"}
+            or execution.get("exit_code") != 0):
+        raise ValueError("semantic replay execution fields or exit differ")
+    references = {
+        name: _verified_reference(execution[name], f"semantic replay {name}")
+        for name in ("helper", "log", "fresh_report", "output_manifest")
+    }
+    resolved = [value[0] for value in references.values()]
+    if len(set(resolved)) != len(resolved) or references["fresh_report"][0] == report_path.resolve(strict=True):
+        raise ValueError("semantic replay outputs alias preserved evidence")
+    producer = trusted.get("semantic_producer")
+    helper = references["helper"][1]
+    if (not isinstance(producer, Mapping)
+            or Path(helper["path"]).name != producer.get("name")
+            or helper["sha256"] != producer.get("sha256")):
+        raise ValueError("semantic replay helper differs from trusted producer")
+    fresh = _load(references["fresh_report"][0], "fresh semantic replay report")
+    if fresh != report:
+        raise ValueError("fresh semantic replay report differs from preserved report")
+    log = references["log"][1]
+    fresh_reference = references["fresh_report"][1]
+    manifest = _load(references["output_manifest"][0], "semantic replay output manifest")
+    files = sorted((
+        {"path": Path(log["path"]).name, "bytes": log["bytes"], "sha256": log["sha256"]},
+        {"path": Path(fresh_reference["path"]).name, "bytes": fresh_reference["bytes"],
+         "sha256": fresh_reference["sha256"]},
+    ), key=lambda row: row["path"])
+    if manifest != {"schema_version": 1,
+                    "classification": "g3_qualification_semantic_replay_output_manifest",
+                    "files": files}:
+        raise ValueError("semantic replay output manifest differs")
+    decoder = semantic.get("decoder_source")
+    if (not isinstance(decoder, Mapping) or set(decoder) != {"checkout_root", "head", "clean"}
+            or decoder.get("head") != source_commit or decoder.get("clean") is not True):
+        raise ValueError("semantic replay decoder source identity differs")
+    checkout = _materialized_path(decoder["checkout_root"])
+    _verify_decoder_checkout(checkout, source_commit)
+    log_rows = []
+    for line in references["log"][0].read_text(encoding="utf-8").splitlines():
+        value = json.loads(line)
+        if not isinstance(value, dict):
+            raise ValueError("semantic replay log row must be an object")
+        log_rows.append(value)
+    phases = ["replay_started", "closed_bag_revalidation_started",
+              "closed_bag_revalidation_completed"]
+    if len(log_rows) != len(phases) or [row.get("phase") for row in log_rows] != phases:
+        raise ValueError("semantic replay log phase sequence differs")
+    observed_times = [_utc_time(row.get("observed_at_utc")) for row in log_rows]
+    if observed_times != sorted(observed_times) or observed_times[0] < operation_finished:
+        raise ValueError("semantic replay log time sequence differs")
+    helper_sha = helper["sha256"]
+    expected_rows = [
+        {"phase": phases[0], "store_id": store_id, "run_id": run_id,
+         "source_commit": source_commit, "operation_receipt_sha256": operation_sha256,
+         "path_mapping_sha256": path_mapping_sha256,
+         "decoder_checkout": decoder["checkout_root"], "helper_sha256": helper_sha},
+        {"phase": phases[1], "report_sha256": sha256_file(report_path),
+         "session_json_sha256": session_json_sha256,
+         "environment_sha256": environment_sha256,
+         "restore_manifest_sha256": restore_manifest_sha256},
+        {"phase": phases[2], "passed": True, "semantic_equal": True,
+         "fresh_report_sha256": fresh_reference["sha256"],
+         "fresh_report_canonical_sha256": _canonical_sha256(fresh),
+         "preserved_report_canonical_sha256": _canonical_sha256(report), "exit_code": 0},
+    ]
+    for actual, expected in zip(log_rows, expected_rows, strict=True):
+        if {name: value for name, value in actual.items() if name != "observed_at_utc"} != expected:
+            raise ValueError("semantic replay log binding differs")
+    receipt_observed = _utc_time(semantic.get("observed_at_utc"))
+    if receipt_observed < observed_times[-1]:
+        raise ValueError("semantic replay observation predates full restore completion")
+    return ({name: value[0] for name, value in references.items()}, fresh)
+
+
 def validate_qualification_predecessor(
     output: Path,
     *,
@@ -247,6 +460,8 @@ def validate_qualification_predecessor(
     selected_archives: dict[str, dict[str, Any]] = {}
     restore_targets: set[str] = set()
     archive_paths: set[str] = set()
+    operation_outputs: set[Path] = set()
+    semantic_outputs: set[Path] = set()
     comparison: dict[str, Any] | None = None
     report_sha: str | None = None
     source_pin_count: int | None = None
@@ -332,17 +547,24 @@ def validate_qualification_predecessor(
         operation_static = {name: value for name, value in operation.items()
                             if name not in {"started_at_utc", "finished_at_utc", "execution"}}
         execution = operation.get("execution")
+        started = _utc_time(operation.get("started_at_utc"))
+        finished = _utc_time(operation.get("finished_at_utc"))
         if (operation_static != operation_expected
                 or set(operation) != set(operation_expected) | {"started_at_utc", "finished_at_utc", "execution"}
-                or not isinstance(execution, Mapping) or set(execution) != {"helper_sha256", "log_sha256", "exit_code"}
-                or not _SHA256.fullmatch(str(execution.get("helper_sha256")))
-                or not _SHA256.fullmatch(str(execution.get("log_sha256")))
-                or execution.get("exit_code") != 0
-                or _utc_time(operation.get("finished_at_utc")) < _utc_time(operation.get("started_at_utc"))
+                or finished < started
                 or _drive(selected_path) != str(store_trust["archive_drive"]).upper()
                 or _drive(canonical_root) != str(store_trust["archive_drive"]).upper()
                 or str(PureWindowsPath(destination_value)) != str(canonical_root)):
             raise ValueError("full restore operation receipt differs from archive, target or source bindings")
+        operation_references = _verify_operation_execution(
+            execution, store_id=store_id, selected_path=selected_path,
+            canonical_root=canonical_root, source_commit=source_commit,
+            started=started, trusted=trusted,
+        )
+        for name in ("log", "live_cim"):
+            if operation_references[name] in operation_outputs:
+                raise ValueError("D and E full restore operations reuse dynamic evidence")
+            operation_outputs.add(operation_references[name])
         archive_key = selected_path.upper()
         if archive_key in archive_paths or destination_value.upper() in restore_targets:
             raise ValueError("D and E restore operations reuse an archive or restore target")
@@ -391,6 +613,19 @@ def validate_qualification_predecessor(
             raise ValueError("qualification Windows to WSL restore path mapping differs")
         mapping_sha = sha256_file(mapping_path)
         semantic = _load(paths["semantic_replay_receipt_path"], "independent semantic replay receipt")
+        session_json_sha = sha256_file(session_root / "session.json")
+        semantic_references, fresh_report = _verify_semantic_execution(
+            semantic, report_path=report_path, report=report, store_id=store_id, run_id=run_id,
+            source_commit=source_commit, operation_sha256=operation_sha,
+            path_mapping_sha256=mapping_sha, session_json_sha256=session_json_sha,
+            environment_sha256=str(source_value["environment_sha256"]),
+            restore_manifest_sha256=str(current["manifest_sha256"]),
+            operation_finished=finished, trusted=trusted,
+        )
+        for name in ("log", "fresh_report", "output_manifest"):
+            if semantic_references[name] in semantic_outputs:
+                raise ValueError("D and E semantic replays reuse dynamic evidence")
+            semantic_outputs.add(semantic_references[name])
         semantic_expected = {
             "schema_version": 1,
             "classification": "g3_qualification_independent_semantic_replay_receipt",
@@ -407,9 +642,9 @@ def validate_qualification_predecessor(
             "operation_receipt_sha256": operation_sha,
             "path_mapping_sha256": mapping_sha,
             "report_sha256": current_report_sha,
-            "session_json_sha256": sha256_file(session_root / "session.json"),
+            "session_json_sha256": session_json_sha,
             "preserved_report_canonical_sha256": _canonical_sha256(report),
-            "fresh_report_canonical_sha256": _canonical_sha256(report),
+            "fresh_report_canonical_sha256": _canonical_sha256(fresh_report),
             "semantic_equal": True,
             "environment_sha256": source_value["environment_sha256"],
             "archive_sha256": current["archive_sha256"],
@@ -418,6 +653,9 @@ def validate_qualification_predecessor(
             "source_bundle_restore_fsck": True,
             "runtime_source_pins_verified": source.get("verified_source_pin_count"),
             "cleanup_authorized": False,
+            "observed_at_utc": semantic.get("observed_at_utc"),
+            "decoder_source": semantic.get("decoder_source"),
+            "execution": semantic.get("execution"),
         }
         if semantic != semantic_expected:
             raise ValueError("independent semantic replay receipt differs from restored bindings")

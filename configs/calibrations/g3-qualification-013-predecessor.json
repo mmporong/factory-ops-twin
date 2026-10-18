@@ -37,6 +37,27 @@
     "artifact_relative": "results/g3-q-normal-fifo-013",
     "session_relative": "source-snapshots/g3-q-normal-fifo-013/runs/g3-q-normal-fifo-013-session"
   },
+  "operation_producers": {
+    "wrapper": {
+      "name": "run-q013-full-restore-operation-001.py",
+      "sha256": "f1ffbb395784575175f2cc847ab20a8bac2761fe13dd1034e91500aa5c3825c9"
+    },
+    "prepared_manifest_sha256": "ef328cff0d1a075e18969877f9c38f75c80aeeefb2384a797e01c5c627c433f3",
+    "stores": {
+      "D": {
+        "name": "verify-industrial-g3-015-d-source.py",
+        "sha256": "7d8fc3ff0775563559a51c7d10e8b2a47f1e821d128a51f0c946e3831c785246"
+      },
+      "E": {
+        "name": "preserve-industrial-g3-015.py",
+        "sha256": "5704883b28879193e2c5d84380c875350c5a0ae9ff6707ac101640033c31e70c"
+      }
+    }
+  },
+  "semantic_producer": {
+    "name": "replay-q013-restored-evidence-001.py",
+    "sha256": "9743e7dd79b33b18feb87c9405978e92cfc43dbd68f972009bc868720e4959e1"
+  },
   "stores": {
     "D": {
       "archive_drive": "D:",
