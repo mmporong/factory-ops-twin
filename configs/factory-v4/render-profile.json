@@ -10,7 +10,7 @@
     {"id": "cell_process", "eye_xyz_m": [14, 2.5, 7.5], "target_xyz_m": [20, 10, 1], "focal_length_mm": 35, "purpose": "connected assembly, inspection and pack process"},
     {"id": "east_shipping", "eye_xyz_m": [31.5, 3, 6.5], "target_xyz_m": [25, 10, 0.9], "focal_length_mm": 32, "purpose": "cell handoff, east AMR spine and shipping staging"},
     {"id": "carter1_follow", "eye_xyz_m": [-2.2, -1.6, 1.8], "target_xyz_m": [0.25, 0, 0.35], "focal_length_mm": 26, "purpose": "mission follow camera in carter1 chassis_link frame"},
-    {"id": "carter2_follow", "eye_xyz_m": [-2.2, 1.6, 1.8], "target_xyz_m": [0.25, 0, 0.35], "focal_length_mm": 26, "purpose": "mission follow camera in carter2 chassis_link frame"}
+    {"id": "carter2_follow", "eye_xyz_m": [-1.1, 0.6, 2.2], "target_xyz_m": [0.25, 0, 0.35], "focal_length_mm": 26, "purpose": "short-boom mission follow camera inside the parking boundary in carter2 chassis_link frame"}
   ],
   "capture_contract": {
     "rgb": "PNG, lossless, sRGB",
