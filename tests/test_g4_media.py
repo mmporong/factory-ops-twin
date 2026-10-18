@@ -3,6 +3,7 @@ from __future__ import annotations
 import binascii
 from contextlib import nullcontext
 import hashlib
+from importlib import import_module
 from io import BytesIO
 import json
 import os
@@ -526,7 +527,8 @@ class G4MediaTests(unittest.TestCase):
 
     @unittest.skipUnless(os.environ.get("FACTORY_OPS_G4_ACTUAL_DATASET"), "actual G4 dataset not configured")
     def test_actual_selected_capture_instance_panels_preserve_all_visible_pixels(self) -> None:
-        from PIL import Image, ImageDraw
+        Image = import_module("PIL.Image")
+        ImageDraw = import_module("PIL.ImageDraw")
 
         root = Path(os.environ["FACTORY_OPS_G4_ACTUAL_DATASET"])
         capture_root = (
