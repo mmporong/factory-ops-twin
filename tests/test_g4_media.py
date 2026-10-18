@@ -81,6 +81,9 @@ class _FakeImage:
 
 
 class _FakeDraw:
+    def textbbox(self, _position: object, text: str) -> tuple[int, int, int, int]:
+        return (0, 0, len(text) * 6, 12)
+
     def text(self, *_args: object, **_kwargs: object) -> None:
         return None
 

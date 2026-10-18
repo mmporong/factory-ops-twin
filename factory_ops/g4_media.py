@@ -462,6 +462,32 @@ def _unpack_array(path: Path, label: str) -> tuple[str, tuple[int, int], list[in
     return dtype, shape, [item[0] for item in struct.iter_unpack(formats[dtype], payload)]
 
 
+def _draw_caption(draw: Any, text: str, bounds: tuple[int, int, int, int]) -> None:
+    x, y, width, height = bounds
+    lines: list[str] = []
+    current = ""
+    for word in text.split():
+        candidate = f"{current} {word}" if current else word
+        left, _top, right, _bottom = draw.textbbox((0, 0), candidate)
+        if right - left > width:
+            if not current:
+                raise ValueError("media caption word exceeds its panel")
+            lines.append(current)
+            current = word
+        else:
+            current = candidate
+    if current:
+        lines.append(current)
+    boxes = [draw.textbbox((0, 0), line) for line in lines]
+    if any(right - left > width for left, _top, right, _bottom in boxes):
+        raise ValueError("media caption word exceeds its panel")
+    if sum(bottom - top for _left, top, _right, bottom in boxes) + max(0, len(lines) - 1) * 3 > height:
+        raise ValueError("media caption exceeds its allotted height")
+    for line, (left, top, _right, bottom) in zip(lines, boxes):
+        draw.text((x - left, y - top), line, fill=(34, 44, 58))
+        y += bottom - top + 3
+
+
 def _fit(image: Any, size: tuple[int, int], image_module: Any) -> Any:
     result = image_module.new("RGB", size, (248, 250, 252))
     copy = image.convert("RGB")
@@ -759,7 +785,8 @@ def export_media(
                 f"instances {instance_legend['instance_count']} | boxes from normalized.json",
             )
             for column, caption in enumerate(captions):
-                draw.text((column * panel_size[0] + 10, top + panel_size[1] + 10), caption, fill=(34, 44, 58))
+                _draw_caption(draw, caption, (column * panel_size[0] + 10, top + panel_size[1] + 10,
+                                             panel_size[0] - 20, caption_height - 20))
             output_rgb = package / f"rgb-{camera_id}.png"
             shutil.copyfile(paths["rgb"], output_rgb)
             if sha256_file(output_rgb) != cast(Mapping[str, Any], camera["artifacts"])["rgb"]["sha256"]:
