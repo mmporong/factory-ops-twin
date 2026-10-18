@@ -11,6 +11,8 @@ from pathlib import Path
 from typing import Any, Mapping
 
 SHA256 = re.compile(r"^[0-9a-f]{64}$")
+IMAGE_ID = re.compile(r"^sha256:[0-9a-f]{64}$")
+REPO_DIGEST = re.compile(r"^[A-Za-z0-9._/:+-]+@sha256:[0-9a-f]{64}$")
 SOURCE_PATHS = (
     "scripts/ros/Dockerfile.g3",
     "ros_ws/src/factory_ops_goal_checker/CMakeLists.txt",
@@ -138,13 +140,28 @@ def build_attested_image(
         raise ValueError("G3 Dockerfile does not pin both stages to BASE_IMAGE")
     base_result = execute(["docker", "image", "inspect", base_reference])
     base_inspect = json.loads(base_result.stdout)
+    base_inspect_path = output_dir / "base-image-inspect.json"
+    _write_fresh_json(base_inspect_path, {"images": base_inspect})
     base_identity = _image(base_inspect, "base_image")
     built_reference = f"factory-ops-nav2:g3-{run_label}-{expected_commit[:12]}"
+    try:
+        existing = runner(["docker", "image", "inspect", built_reference], cwd=None)
+    except subprocess.CalledProcessError as error:
+        commands.append({"argv": ["docker", "image", "inspect", built_reference], "cwd": None,
+                         "expected_absent_exit_code": error.returncode})
+        log.write_text("".join(json.dumps(row, sort_keys=True) + "\n" for row in commands), encoding="utf-8")
+    else:
+        commands.append({"argv": ["docker", "image", "inspect", built_reference], "cwd": None,
+                         "exit_code": existing.returncode, "stdout": existing.stdout, "stderr": existing.stderr})
+        log.write_text("".join(json.dumps(row, sort_keys=True) + "\n" for row in commands), encoding="utf-8")
+        raise ValueError("run/source image tag already exists")
     iidfile = output_dir / "built-image.iid"
     execute(["docker", "build", "--pull=false", "--build-arg", f"BASE_IMAGE={base_identity['id']}",
              "--iidfile", str(iidfile), "--tag", built_reference, "--file",
              str(context / "scripts/ros/Dockerfile.g3"), str(context)])
     built_inspect = json.loads(execute(["docker", "image", "inspect", built_reference]).stdout)
+    built_inspect_path = output_dir / "built-image-inspect.json"
+    _write_fresh_json(built_inspect_path, {"images": built_inspect})
     built_identity = _image(built_inspect, "built_image")
     iid = iidfile.read_text(encoding="utf-8").strip()
     if iid != built_identity["id"]:
@@ -174,10 +191,25 @@ def build_attested_image(
         raise ValueError("build repository became dirty during the build")
     proof = {
         "source_archive_sha256": sha256_bytes(archive_before.read_bytes()),
-        "base_inspect_sha256": sha256_bytes(json.dumps(base_inspect, sort_keys=True).encode()),
-        "built_inspect_sha256": sha256_bytes(json.dumps(built_inspect, sort_keys=True).encode()),
+        "base_inspect_sha256": sha256_bytes(base_inspect_path.read_bytes()),
+        "built_inspect_sha256": sha256_bytes(built_inspect_path.read_bytes()),
         "iid": iid, "base_image_arg": base_identity["id"], "container_measurement_closed": True,
     }
+    installed_measurement = output_dir / "installed-measurement.json"
+    _write_fresh_json(installed_measurement, {"schema_version": 1, "image_id": built_identity["id"],
+                                              "files": installed})
+    receipt = {
+        "schema_version": 1, "source_commit": expected_commit, "run_label": run_label,
+        "source_archive_sha256": proof["source_archive_sha256"],
+        "commands_sha256": sha256_bytes(log.read_bytes()),
+        "iidfile_sha256": sha256_bytes(iidfile.read_bytes()),
+        "base_inspect_sha256": proof["base_inspect_sha256"],
+        "built_inspect_sha256": proof["built_inspect_sha256"],
+        "installed_measurement_sha256": sha256_bytes(installed_measurement.read_bytes()),
+        "built_image_id": built_identity["id"], "cleanup_complete": True,
+    }
+    receipt_path = output_dir / "build-receipt.json"
+    _write_fresh_json(receipt_path, receipt)
     value = {
         "schema_version": 1, "status": "built", "source_commit": expected_commit,
         "run_label": run_label, "source_files": sources,
@@ -186,6 +218,7 @@ def build_attested_image(
         "base_image": {"reference": base_reference, **base_identity},
         "built_image": {"reference": built_reference, **built_identity},
         "installed_files": installed, "build_proof": proof,
+        "build_receipt_sha256": sha256_bytes(receipt_path.read_bytes()),
         "build_completed": True, "runtime_eligible": True,
     }
     attestation = output_dir / "build-attestation.json"
@@ -197,15 +230,114 @@ def _image(value: Any, label: str) -> dict[str, Any]:
         raise ValueError(f"{label} docker inspect must contain one image")
     row = value[0]
     result = {"id": row.get("Id"), "repo_digests": sorted(row.get("RepoDigests") or [])}
-    if not isinstance(result["id"], str) or not result["id"].startswith("sha256:"):
+    if not isinstance(result["id"], str) or not IMAGE_ID.fullmatch(result["id"]):
         raise ValueError(f"{label} image ID is invalid")
-    if not all(isinstance(item, str) and "@sha256:" in item for item in result["repo_digests"]):
+    if not all(isinstance(item, str) and REPO_DIGEST.fullmatch(item)
+               for item in result["repo_digests"]):
         raise ValueError(f"{label} image digest is invalid")
     return result
+
+def _archive_commit(path: Path) -> str:
+    with tarfile.open(path) as archive:
+        commit = archive.pax_headers.get("comment")
+    if not isinstance(commit, str) or not re.fullmatch(r"[0-9a-f]{40}", commit):
+        raise ValueError("source archive lacks the fixed Git commit identity")
+    return commit
+
+
+def _validate_build_commands(
+    path: Path, *, source_commit: str, base_reference: str, base_image_id: str,
+    built_reference: str, built_image_id: str,
+) -> None:
+    try:
+        rows = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines()]
+    except (OSError, json.JSONDecodeError) as error:
+        raise ValueError("build command record is invalid") from error
+    if not rows or any(not isinstance(row, Mapping) or not isinstance(row.get("argv"), list)
+                       for row in rows):
+        raise ValueError("build command record is invalid")
+    commands = [row["argv"] for row in rows]
+    if any("error" in row and "expected_absent_exit_code" not in row for row in rows):
+        raise ValueError("build command record contains a failed operation")
+    absent = [index for index, row in enumerate(rows)
+              if row["argv"] == ["docker", "image", "inspect", built_reference]
+              and type(row.get("expected_absent_exit_code")) is int
+              and row["expected_absent_exit_code"] != 0]
+    builds = [index for index, command in enumerate(commands) if command[:2] == ["docker", "build"]]
+    creates = [index for index, command in enumerate(commands)
+               if command[:3] == ["docker", "create", "--name"] and command[-1] == built_image_id]
+    removes = [index for index, command in enumerate(commands)
+               if command[:3] == ["docker", "rm", "-f"]]
+    copies = [(index, command) for index, command in enumerate(commands)
+              if command[:2] == ["docker", "cp"]]
+    archives = [command for command in commands if command[:2] == ["git", "archive"]]
+    if (len(absent) != 1 or len(builds) != 1 or len(creates) != 1 or len(removes) != 1
+            or len(copies) != len(INSTALLED_PATHS) or len(archives) != 2
+            or not (absent[0] < builds[0] < creates[0] < min(index for index, _ in copies)
+                    <= max(index for index, _ in copies) < removes[0])
+            or any(command[-1] != source_commit for command in archives)
+            or [command for command in commands if command == ["docker", "image", "inspect", base_reference]] == []
+            or len([command for command in commands
+                    if command == ["docker", "image", "inspect", built_reference]]) != 2):
+        raise ValueError("closed build command sequence differs")
+    build = commands[builds[0]]
+    required_pairs = {
+        "--build-arg": f"BASE_IMAGE={base_image_id}",
+        "--tag": built_reference,
+    }
+    for option, expected in required_pairs.items():
+        if option not in build or build.index(option) + 1 >= len(build) or build[build.index(option) + 1] != expected:
+            raise ValueError("closed docker build arguments differ")
+    copied_sources = {command[2].split(":", 1)[1] for _, command in copies
+                      if len(command) == 4 and ":" in command[2]}
+    if copied_sources != set(INSTALLED_PATHS):
+        raise ValueError("closed installed measurement command set differs")
+
+def _remeasure_installed(
+    image_id: str, output_dir: Path, *, runner: Any,
+) -> tuple[dict[str, str], Path]:
+    if output_dir.exists() or output_dir.is_symlink():
+        raise FileExistsError(output_dir)
+    output_dir.mkdir(parents=True)
+    installed_root = output_dir / "installed"
+    installed_root.mkdir()
+    container_name = f"factory-ops-preflight-{image_id.removeprefix('sha256:')[:16]}"
+    commands: list[list[str]] = []
+    container_created = False
+    cleanup_complete = False
+    try:
+        command = ["docker", "create", "--name", container_name, image_id]
+        commands.append(command)
+        container_id = runner(command, cwd=None).stdout.strip()
+        if not container_id:
+            raise ValueError("preflight docker create returned no container identity")
+        container_created = True
+        for source in INSTALLED_PATHS:
+            command = ["docker", "cp", f"{container_id}:{source}",
+                       str(installed_root / Path(source).name)]
+            commands.append(command)
+            runner(command, cwd=None)
+    finally:
+        if container_created:
+            command = ["docker", "rm", "-f", container_name]
+            commands.append(command)
+            runner(command, cwd=None)
+            cleanup_complete = True
+    measured = {source: sha256_bytes((installed_root / Path(source).name).read_bytes())
+                for source in INSTALLED_PATHS}
+    receipt_path = output_dir / "preflight-measurement.json"
+    _write_fresh_json(receipt_path, {"schema_version": 1, "image_id": image_id,
+                                     "files": measured, "commands": commands,
+                                     "cleanup_complete": cleanup_complete})
+    return measured, receipt_path
 
 def validate_attestation(
     path: Path, *, expected_sha256: str, source_root: Path, expected_source_commit: str,
     expected_run_label: str, base_inspect: Any, built_inspect: Any, source_archive: Path,
+    build_receipt: Path, expected_build_receipt_sha256: str,
+    build_commands: Path, build_iidfile: Path,
+    build_base_inspect: Path, build_built_inspect: Path,
+    build_installed_measurement: Path, measurement_dir: Path, runner: Any = _run,
 ) -> dict[str, Any]:
     raw = path.read_bytes()
     if path.is_symlink() or not SHA256.fullmatch(expected_sha256) or sha256_bytes(raw) != expected_sha256:
@@ -213,7 +345,8 @@ def validate_attestation(
     value = json.loads(raw)
     required = {"schema_version", "status", "source_commit", "run_label", "source_files",
                 "source_set_sha256", "dockerfile_sha256", "base_image", "built_image",
-                "installed_files", "build_proof", "build_completed", "runtime_eligible"}
+                "installed_files", "build_proof", "build_receipt_sha256",
+                "build_completed", "runtime_eligible"}
     if not isinstance(value, dict) or set(value) != required:
         raise ValueError("build attestation schema differs")
     actual_sources = source_set(source_root)
@@ -224,6 +357,8 @@ def validate_attestation(
             or value["dockerfile_sha256"] != actual_sources["scripts/ros/Dockerfile.g3"]
             or value["build_completed"] is not True or value["runtime_eligible"] is not True):
         raise ValueError("build attestation source or run binding differs")
+    if _archive_commit(source_archive) != expected_source_commit:
+        raise ValueError("source archive commit differs")
     for name, inspect in (("base_image", base_inspect), ("built_image", built_inspect)):
         row = value[name]
         if not isinstance(row, dict) or set(row) != {"reference", "id", "repo_digests"}:
@@ -241,13 +376,59 @@ def validate_attestation(
             or proof["base_image_arg"] != value["base_image"]["id"]
             or proof["container_measurement_closed"] is not True
             or proof["source_archive_sha256"] != sha256_bytes(source_archive.read_bytes())
-            or proof["base_inspect_sha256"] != sha256_bytes(
-                json.dumps(base_inspect, sort_keys=True).encode())
-            or proof["built_inspect_sha256"] != sha256_bytes(
-                json.dumps(built_inspect, sort_keys=True).encode())
+            or proof["base_inspect_sha256"] != sha256_bytes(build_base_inspect.read_bytes())
+            or proof["built_inspect_sha256"] != sha256_bytes(build_built_inspect.read_bytes())
             or not all(SHA256.fullmatch(proof[name]) for name in (
                 "source_archive_sha256", "base_inspect_sha256", "built_inspect_sha256"))):
         raise ValueError("closed build proof differs")
+    receipt_raw = build_receipt.read_bytes()
+    if (not SHA256.fullmatch(expected_build_receipt_sha256)
+            or value["build_receipt_sha256"] != expected_build_receipt_sha256
+            or sha256_bytes(receipt_raw) != expected_build_receipt_sha256):
+        raise ValueError("build receipt hash differs")
+    receipt = json.loads(receipt_raw)
+    _validate_build_commands(
+        build_commands, source_commit=expected_source_commit,
+        base_reference=value["base_image"]["reference"], base_image_id=value["base_image"]["id"],
+        built_reference=value["built_image"]["reference"], built_image_id=value["built_image"]["id"],
+    )
+    build_base_value = json.loads(build_base_inspect.read_text(encoding="utf-8"))
+    build_built_value = json.loads(build_built_inspect.read_text(encoding="utf-8"))
+    expected_receipt_keys = {"schema_version", "source_commit", "run_label",
+        "source_archive_sha256", "commands_sha256", "iidfile_sha256",
+        "base_inspect_sha256", "built_inspect_sha256", "installed_measurement_sha256",
+        "built_image_id", "cleanup_complete"}
+    if (not isinstance(receipt, dict) or set(receipt) != expected_receipt_keys
+            or receipt["schema_version"] != 1 or receipt["source_commit"] != expected_source_commit
+            or receipt["run_label"] != expected_run_label
+            or receipt["source_archive_sha256"] != sha256_bytes(source_archive.read_bytes())
+            or receipt["commands_sha256"] != sha256_bytes(build_commands.read_bytes())
+            or receipt["iidfile_sha256"] != sha256_bytes(build_iidfile.read_bytes())
+            or receipt["base_inspect_sha256"] != sha256_bytes(build_base_inspect.read_bytes())
+            or receipt["built_inspect_sha256"] != sha256_bytes(build_built_inspect.read_bytes())
+            or receipt["installed_measurement_sha256"] != sha256_bytes(
+                build_installed_measurement.read_bytes())
+            or receipt["built_image_id"] != value["built_image"]["id"]
+            or receipt["cleanup_complete"] is not True
+            or build_iidfile.read_text(encoding="utf-8").strip() != value["built_image"]["id"]):
+        raise ValueError("closed production build receipt differs")
+    if (not isinstance(build_base_value, dict) or set(build_base_value) != {"images"}
+            or not isinstance(build_built_value, dict) or set(build_built_value) != {"images"}
+            or _image(build_base_value["images"], "build_base_image") != {
+                "id": value["base_image"]["id"], "repo_digests": value["base_image"]["repo_digests"]}
+            or _image(build_built_value["images"], "build_built_image") != {
+                "id": value["built_image"]["id"], "repo_digests": value["built_image"]["repo_digests"]}):
+        raise ValueError("build image inspect originals differ")
+    build_measurement = json.loads(build_installed_measurement.read_text(encoding="utf-8"))
+    if build_measurement != {"schema_version": 1, "image_id": value["built_image"]["id"],
+                             "files": installed}:
+        raise ValueError("build installed measurement differs")
+    measured, measurement_receipt = _remeasure_installed(
+        value["built_image"]["id"], measurement_dir, runner=runner)
+    if measured != installed:
+        raise ValueError("current immutable image installed bytes differ")
+    value = dict(value)
+    value["preflight_measurement_sha256"] = sha256_bytes(measurement_receipt.read_bytes())
     return value
 
 def references(path: Path, expected_sha256: str) -> tuple[str, str]:

@@ -16,6 +16,7 @@ primary_inputs_sha=${9:-}
 billing=${10:-}
 build_attestation=${FACTORY_OPS_G3_BUILD_ATTESTATION:?externally pinned G3 build attestation required}
 build_attestation_sha=${FACTORY_OPS_G3_BUILD_ATTESTATION_SHA256:?external build attestation SHA-256 required}
+build_receipt_sha=${FACTORY_OPS_G3_BUILD_RECEIPT_SHA256:?external build receipt SHA-256 required}
 
 [[ "$profile" =~ ^(qualification|pilot|primary)$ ]]
 [[ "$condition" =~ ^(normal|closure|burst)$ ]]
@@ -66,26 +67,46 @@ tar --no-same-owner -xf "$archive" -C "$project"
 
 isaac_image=$(docker image inspect nvcr.io/nvidia/isaac-sim:6.2.0 --format '{{index .RepoDigests 0}}')
 [[ "$build_attestation" = /* && "$build_attestation_sha" =~ ^[0-9a-f]{64}$ ]]
+[[ "$build_receipt_sha" =~ ^[0-9a-f]{64}$ ]]
 test -f "$build_attestation"
 test ! -L "$build_attestation"
-attestation_copy="$root/source-snapshots/$run-build-attestation.json"
-test ! -e "$attestation_copy"
-install -m 0444 "$build_attestation" "$attestation_copy"
+build_bundle_source=$(dirname "$build_attestation")
+build_bundle="$root/source-snapshots/$run-build-bundle"
+test ! -e "$build_bundle"
+mkdir "$build_bundle"
+for name in build-attestation.json build-receipt.json commands.jsonl built-image.iid \
+  base-image-inspect.json built-image-inspect.json installed-measurement.json; do
+  test -f "$build_bundle_source/$name"
+  test ! -L "$build_bundle_source/$name"
+  install -m 0444 "$build_bundle_source/$name" "$build_bundle/$name"
+done
+attestation_copy="$build_bundle/build-attestation.json"
 test "$(sha256sum "$attestation_copy" | cut -d ' ' -f 1)" = "$build_attestation_sha"
 build_attestation="$attestation_copy"
 mapfile -t attested_images < <(python3 "$project/scripts/brev/g3_build_attestation.py" references \
   --attestation "$build_attestation" --expected-sha256 "$build_attestation_sha")
 test "${#attested_images[@]}" = 2
-base_inspect="$root/source-snapshots/$run-base-image-inspect.json"
-built_inspect="$root/source-snapshots/$run-built-image-inspect.json"
+base_inspect="$root/source-snapshots/$run-current-base-image-inspect.json"
+built_inspect="$root/source-snapshots/$run-current-built-image-inspect.json"
 test ! -e "$base_inspect" && test ! -e "$built_inspect"
 docker image inspect "${attested_images[0]}" > "$base_inspect"
 docker image inspect "${attested_images[1]}" > "$built_inspect"
-python3 "$project/scripts/brev/g3_build_attestation.py" validate \
+preflight_measurement="$root/source-snapshots/$run-preflight-measurement"
+validation_json=$(python3 "$project/scripts/brev/g3_build_attestation.py" validate \
   --attestation "$build_attestation" --expected-sha256 "$build_attestation_sha" \
   --source-root "$project" --source-commit "$expected_commit" --run-label "$run" \
-  --base-inspect "$base_inspect" --built-inspect "$built_inspect" --source-archive "$archive"
-nav_image=$(docker image inspect "${attested_images[1]}" --format '{{.Id}}')
+  --base-inspect "$base_inspect" --built-inspect "$built_inspect" --source-archive "$archive" \
+  --build-receipt "$build_bundle/build-receipt.json" --build-commands "$build_bundle/commands.jsonl" \
+  --expected-build-receipt-sha256 "$build_receipt_sha" \
+  --build-iidfile "$build_bundle/built-image.iid" \
+  --build-base-inspect "$build_bundle/base-image-inspect.json" \
+  --build-built-inspect "$build_bundle/built-image-inspect.json" \
+  --build-installed-measurement "$build_bundle/installed-measurement.json" \
+  --measurement-dir "$preflight_measurement")
+nav_image=$(python3 -c 'import json,sys; print(json.load(sys.stdin)["built_image_id"])' <<<"$validation_json")
+preflight_measurement_sha=$(python3 -c 'import json,sys; print(json.load(sys.stdin)["preflight_measurement_sha256"])' <<<"$validation_json")
+[[ "$nav_image" =~ ^sha256:[0-9a-f]{64}$ ]]
+[[ "$preflight_measurement_sha" =~ ^[0-9a-f]{64}$ ]]
 run_id=$(python3 -c 'import secrets; print(secrets.token_hex(16))')
 cache="$root/sdk-cache"
 sim="factory-ops-$run-sim"
@@ -209,7 +230,7 @@ PY
 sudo -n install -d -m 0755 -o 1234 -g 1234 "$output"
 python3 - "$root" "$run" "$run_id" "$expected_commit" "$isaac_image" "$nav_image" \
   "$profile" "$condition" "$policy" "$seed" "$scenario" "$primary_inputs" "$primary_inputs_sha" \
-  "$build_attestation" "$build_attestation_sha" <<'PY'
+  "$build_attestation" "$build_attestation_sha" "$build_receipt_sha" "$preflight_measurement_sha" <<'PY'
 from datetime import datetime, timezone
 from pathlib import Path
 import hashlib,json,subprocess,sys
@@ -275,6 +296,8 @@ record={
     'primary_inputs_sha256':sys.argv[13] or None,
     'build_attestation_path':sys.argv[14],
     'build_attestation_sha256':sys.argv[15],
+    'build_receipt_sha256':sys.argv[16],
+    'build_preflight_measurement_sha256':sys.argv[17],
     'session':session_value,
     'session_json_sha256':hashlib.sha256((session/'session.json').read_bytes()).hexdigest(),
     'files':source_files,
@@ -362,6 +385,8 @@ docker create --name "$nav" --network host --ipc host --user 1234:1234 \
   --entrypoint /bin/bash -e HOME=/tmp -e ROS_DOMAIN_ID=72 -e RMW_IMPLEMENTATION=rmw_fastrtps_cpp \
   -e FACTORY_OPS_G3_SESSION_SHA256="$session_sha" \
   -e FACTORY_OPS_G3_SOURCE_COMMIT="$expected_commit" -e FACTORY_OPS_G3_PROVENANCE_SHA256="$provenance_sha" \
+  -e FACTORY_OPS_G3_BUILD_ATTESTATION_PATH="$build_attestation" \
+  -e FACTORY_OPS_G3_BUILD_ATTESTATION_SHA256="$build_attestation_sha" \
   -e FACTORY_OPS_G3_PRIMARY_INPUTS_PATH="$primary_inputs" -e FACTORY_OPS_G3_PRIMARY_INPUTS_SHA256="$primary_inputs_sha" \
   -v "$root:$root:ro" -v "$project:/workspace/project:ro" -v "$root/results:/workspace/results:rw" \
   "$nav_image" -lc "source /opt/ros/jazzy/setup.bash; timeout --signal=TERM --kill-after=30s 5500s python3 /workspace/project/scripts/ros/g3_mission.py --session /workspace/project/runs/${run}-session --output /workspace/results/$run --run-id $run_id" >/dev/null
@@ -463,6 +488,8 @@ docker create --name "$evidence" --network none --user 1234:1234 \
   --entrypoint /bin/bash -e HOME=/tmp \
   -e FACTORY_OPS_G3_SESSION_SHA256="$session_sha" \
   -e FACTORY_OPS_G3_SOURCE_COMMIT="$expected_commit" -e FACTORY_OPS_G3_PROVENANCE_SHA256="$provenance_sha" \
+  -e FACTORY_OPS_G3_BUILD_ATTESTATION_PATH="$build_attestation" \
+  -e FACTORY_OPS_G3_BUILD_ATTESTATION_SHA256="$build_attestation_sha" \
   -e FACTORY_OPS_G3_PRIMARY_INPUTS_PATH="$primary_inputs" -e FACTORY_OPS_G3_PRIMARY_INPUTS_SHA256="$primary_inputs_sha" \
   -v "$root:$root:ro" -v "$project:/workspace/project:ro" -v "$root/results:/workspace/results:rw" \
   "$nav_image" -lc "source /opt/ros/jazzy/setup.bash; timeout --signal=TERM --kill-after=10s 600s python3 /workspace/project/scripts/ros/g3_evidence.py --session /workspace/project/runs/${run}-session --output /workspace/results/$run --run-id $run_id" >/dev/null

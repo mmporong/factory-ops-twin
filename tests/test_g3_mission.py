@@ -17,7 +17,7 @@ from factory_ops.fleet_execution import StoppedGate, path_content_sha256
 from factory_ops.fleet import FleetMission, FleetOrder
 from factory_ops.navigation import GoalPose
 from scripts.ros.g2_mission import build_namespaced_params
-from scripts.ros.g3_mission import angle_error, bag_qos_overrides, build_cutoff_record, build_g3_namespaced_params, collect_rpp_runtime_observation, cutoff_phase_classification, failure_reason, localization_payload, path_final_yaw, path_payload, primary_trial_identity, valid_hold_ack, validate_arrival, validate_rpp_runtime_observation, verify_navigation_maps, stopped_odometry_record, valid_initial_hold_ack, initial_hold_boundary_ready, terminal_recording_boundary, wait_for_terminal_recording, session_verification_record
+from scripts.ros.g3_mission import angle_error, bag_qos_overrides, build_cutoff_record, build_g3_namespaced_params, collect_rpp_runtime_observation, cutoff_phase_classification, failure_reason, localization_payload, path_final_yaw, path_payload, primary_trial_identity, valid_hold_ack, validate_arrival, validate_goal_checker_install_attestation, validate_rpp_runtime_observation, verify_navigation_maps, stopped_odometry_record, valid_initial_hold_ack, initial_hold_boundary_ready, terminal_recording_boundary, wait_for_terminal_recording, session_verification_record
 
 
 class G3MissionAdmissionTests(unittest.TestCase):
@@ -103,6 +103,7 @@ class G3MissionAdmissionTests(unittest.TestCase):
         source = "a" * 40
         params_sha = "b" * 64
         packages = {name: {"name": name, "version": "1.3.13", "package_xml_sha256": "c" * 64,
+                           "plugins_xml_sha256": "d" * 64 if name == "factory_ops_goal_checker" else None,
                            "shared_libraries": [{"name": f"lib{name}.so", "bytes": 1,
                                                   "sha256": "e" * 64}]}
                     for name in ("factory_ops_goal_checker", "nav2_controller", "nav2_regulated_pure_pursuit_controller")}
@@ -114,8 +115,9 @@ class G3MissionAdmissionTests(unittest.TestCase):
             "goal_checker.xy_goal_tolerance": {"parameter_type": "double", "parameter_value": .06},
             "goal_checker.yaw_goal_tolerance": {"parameter_type": "double", "parameter_value": .15},
         }
-        observation = {"schema_version": 3, "source_commit": source,
+        observation = {"schema_version": 4, "source_commit": source,
             "generated_params_sha256": params_sha,
+            "build_attestation_sha256": "f" * 64,
             "controllers": {robot: {"lifecycle_state": 3, "parameters": deepcopy(parameters)}
                             for robot in ("carter1", "carter2")},
             "observation_topics": {f"/{robot}/{name}": type_name
@@ -138,6 +140,9 @@ class G3MissionAdmissionTests(unittest.TestCase):
         changed = deepcopy(observation); changed["controllers"]["carter2"]["parameters"]["goal_checker.yaw_goal_tolerance"]["parameter_value"] = .16; mutations.append(changed)
         changed = deepcopy(observation); changed["observation_topics"].pop("/carter2/lookahead_point"); mutations.append(changed)
         changed = deepcopy(observation); changed["generated_params_sha256"] = "d" * 64; mutations.append(changed)
+        changed = deepcopy(observation); changed["build_attestation_sha256"] = "bad"; mutations.append(changed)
+        changed = deepcopy(observation); changed["packages"]["factory_ops_goal_checker"]["plugins_xml_sha256"] = None; mutations.append(changed)
+        changed = deepcopy(observation); changed["packages"]["nav2_controller"]["plugins_xml_sha256"] = "d" * 64; mutations.append(changed)
         for changed in mutations:
             with self.assertRaises(ValueError):
                 validate_rpp_runtime_observation(changed, generated_params_sha256=params_sha, source_commit=source)
@@ -153,6 +158,7 @@ class G3MissionAdmissionTests(unittest.TestCase):
             "goal_checker.yaw_goal_tolerance",
         ]
         packages = {name: {"name": name, "version": "1.3.13", "package_xml_sha256": "c" * 64,
+                           "plugins_xml_sha256": "d" * 64 if name == "factory_ops_goal_checker" else None,
                            "shared_libraries": [{"name": f"lib{name}.so", "bytes": 1,
                                                   "sha256": "e" * 64}]}
                     for name in ("factory_ops_goal_checker", "nav2_controller", "nav2_regulated_pure_pursuit_controller")}
@@ -195,7 +201,7 @@ class G3MissionAdmissionTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             params_path = Path(temporary) / "nav2-g3-params.yaml"
             params_path.write_text("parameters\n", encoding="utf-8")
-            with patch("scripts.ros.g3_mission.named_subscriber_topics_ready", return_value=True), patch(
+            with patch.dict(os.environ, {"FACTORY_OPS_G3_BUILD_ATTESTATION_SHA256": "f" * 64}), patch("scripts.ros.g3_mission.named_subscriber_topics_ready", return_value=True), patch(
                 "scripts.ros.g3_mission.nav2_package_provenance", return_value=packages,
             ):
                 observation = collect_rpp_runtime_observation(
@@ -205,13 +211,40 @@ class G3MissionAdmissionTests(unittest.TestCase):
                     get_parameters_type=NS(Request=Request), bool_parameter_type=1,
                     double_parameter_type=3, string_parameter_type=4, source_commit=source,
                 )
-        self.assertEqual(3, observation["schema_version"])
+        self.assertEqual(4, observation["schema_version"])
         self.assertEqual({robot: [parameter_names] for robot in robots},
                          {robot: client.requests for robot, client in clients.items()})
         self.assertIs(True, observation["controllers"]["carter1"]["parameters"]
                       ["FollowPath.stateful"]["parameter_value"])
         self.assertEqual(.06, observation["controllers"]["carter1"]["parameters"]
                          ["goal_checker.xy_goal_tolerance"]["parameter_value"])
+
+    def test_installed_goal_checker_three_file_hashes_are_bound_to_external_attestation(self):
+        packages = {
+            "factory_ops_goal_checker": {
+                "package_xml_sha256": "a" * 64,
+                "plugins_xml_sha256": "b" * 64,
+                "shared_libraries": [{"name": "libfactory_ops_goal_checker.so", "sha256": "c" * 64}],
+            },
+        }
+        installed = {
+            "/opt/factory_ops_goal_checker/share/factory_ops_goal_checker/package.xml": "a" * 64,
+            "/opt/factory_ops_goal_checker/share/factory_ops_goal_checker/plugins.xml": "b" * 64,
+            "/opt/factory_ops_goal_checker/lib/libfactory_ops_goal_checker.so": "c" * 64,
+        }
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "build-attestation.json"
+            value = {"status": "built", "build_completed": True,
+                     "runtime_eligible": True, "installed_files": installed}
+            path.write_text(json.dumps(value), encoding="utf-8")
+            expected = __import__("hashlib").sha256(path.read_bytes()).hexdigest()
+            validate_goal_checker_install_attestation(
+                packages, attestation_path=path, expected_sha256=expected)
+            changed = deepcopy(packages)
+            changed["factory_ops_goal_checker"]["plugins_xml_sha256"] = "d" * 64
+            with self.assertRaisesRegex(ValueError, "installed G3 plugin bytes"):
+                validate_goal_checker_install_attestation(
+                    changed, attestation_path=path, expected_sha256=expected)
 
     def test_primary_trial_identity_preserves_verified_input_and_nonprimary_shape(self):
         with tempfile.TemporaryDirectory() as temporary:

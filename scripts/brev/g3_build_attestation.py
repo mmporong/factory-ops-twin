@@ -25,6 +25,14 @@ validate.add_argument("--run-label", required=True)
 validate.add_argument("--base-inspect", type=Path, required=True)
 validate.add_argument("--built-inspect", type=Path, required=True)
 validate.add_argument("--source-archive", type=Path, required=True)
+validate.add_argument("--build-receipt", type=Path, required=True)
+validate.add_argument("--expected-build-receipt-sha256", required=True)
+validate.add_argument("--build-commands", type=Path, required=True)
+validate.add_argument("--build-iidfile", type=Path, required=True)
+validate.add_argument("--build-base-inspect", type=Path, required=True)
+validate.add_argument("--build-built-inspect", type=Path, required=True)
+validate.add_argument("--build-installed-measurement", type=Path, required=True)
+validate.add_argument("--measurement-dir", type=Path, required=True)
 create = sub.add_parser("fixture-create")
 create.add_argument("--output", type=Path, required=True)
 create.add_argument("--source-root", type=Path, required=True)
@@ -49,8 +57,15 @@ elif args.command == "validate":
         source_root=args.source_root, expected_source_commit=args.source_commit,
         expected_run_label=args.run_label,
         base_inspect=json.loads(args.base_inspect.read_text()),
-        built_inspect=json.loads(args.built_inspect.read_text()), source_archive=args.source_archive)
-    print(json.dumps({"status": "valid", "built_image_id": result["built_image"]["id"]}, sort_keys=True))
+        built_inspect=json.loads(args.built_inspect.read_text()), source_archive=args.source_archive,
+        build_receipt=args.build_receipt, build_commands=args.build_commands,
+        expected_build_receipt_sha256=args.expected_build_receipt_sha256,
+        build_iidfile=args.build_iidfile, build_base_inspect=args.build_base_inspect,
+        build_built_inspect=args.build_built_inspect,
+        build_installed_measurement=args.build_installed_measurement,
+        measurement_dir=args.measurement_dir)
+    print(json.dumps({"status": "valid", "built_image_id": result["built_image"]["id"],
+        "preflight_measurement_sha256": result["preflight_measurement_sha256"]}, sort_keys=True))
 elif args.command == "fixture-create":
     result = create_nonphysical_fixture_attestation(args.output, source_root=args.source_root,
         source_commit=args.source_commit, run_label=args.run_label,
@@ -67,4 +82,5 @@ else:
         base_reference=args.base_reference)
     attestation = args.output_dir / "build-attestation.json"
     print(json.dumps({"status": "built", "sha256": __import__("hashlib").sha256(
-        attestation.read_bytes()).hexdigest(), "built_image": result["built_image"]}, sort_keys=True))
+        attestation.read_bytes()).hexdigest(), "build_receipt_sha256": result["build_receipt_sha256"],
+        "built_image": result["built_image"]}, sort_keys=True))

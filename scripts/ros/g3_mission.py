@@ -151,15 +151,16 @@ def validate_rpp_runtime_observation(
     """Fail closed unless both controllers and diagnostic topics prove the requested runtime."""
     expected_fields = {
         "schema_version", "source_commit", "generated_params_sha256", "controllers",
-        "observation_topics", "packages",
+        "observation_topics", "packages", "build_attestation_sha256",
     }
     if (set(observation) != expected_fields
             or not isinstance(source_commit, str)
             or not re.fullmatch(r"[0-9a-f]{40}", source_commit)
             or not _SHA256.fullmatch(generated_params_sha256)
-            or observation.get("schema_version") != 3
+            or observation.get("schema_version") != 4
             or observation.get("source_commit") != source_commit
-            or observation.get("generated_params_sha256") != generated_params_sha256):
+            or observation.get("generated_params_sha256") != generated_params_sha256
+            or not _SHA256.fullmatch(str(observation.get("build_attestation_sha256", "")))):
         raise ValueError("RPP runtime observation source/parameter identity differs")
     controllers = observation.get("controllers")
     if not isinstance(controllers, Mapping) or set(controllers) != set(ROBOT_IDS):
@@ -198,6 +199,9 @@ def validate_rpp_runtime_observation(
         if (not isinstance(row, Mapping) or row.get("name") != name
                 or not isinstance(row.get("version"), str) or not row["version"]
                 or not _SHA256.fullmatch(str(row.get("package_xml_sha256", "")))
+                or (name == "factory_ops_goal_checker"
+                    and not _SHA256.fullmatch(str(row.get("plugins_xml_sha256", ""))))
+                or (name != "factory_ops_goal_checker" and row.get("plugins_xml_sha256") is not None)
                 or not isinstance(libraries, list) or not libraries
                 or any(not isinstance(item, Mapping) or not isinstance(item.get("name"), str)
                        or type(item.get("bytes")) is not int or item["bytes"] <= 0
@@ -221,9 +225,42 @@ def nav2_package_provenance() -> dict[str, Any]:
         for path in sorted((prefix / "lib").glob(f"*{library_token}*.so*")):
             if path.is_file():
                 libraries.append({"name": path.name, "bytes": path.stat().st_size, "sha256": sha(path)})
+        plugins_xml = package_xml.with_name("plugins.xml")
         result[name] = {"name": name, "version": version, "package_xml_sha256": sha(package_xml),
+                        "plugins_xml_sha256": sha(plugins_xml) if plugins_xml.is_file() else None,
                         "shared_libraries": libraries}
     return result
+
+
+def validate_goal_checker_install_attestation(
+    packages: Mapping[str, Any], *, attestation_path: Path, expected_sha256: str,
+) -> None:
+    """Bind the installed plugin bytes to the externally pinned build attestation."""
+    if (attestation_path.is_symlink() or not attestation_path.is_file()
+            or not _SHA256.fullmatch(expected_sha256)):
+        raise ValueError("G3 build attestation path or external hash is invalid")
+    raw = attestation_path.read_bytes()
+    if hashlib.sha256(raw).hexdigest() != expected_sha256:
+        raise ValueError("G3 build attestation external hash differs")
+    attestation = json.loads(raw)
+    installed = attestation.get("installed_files") if isinstance(attestation, Mapping) else None
+    package = packages.get("factory_ops_goal_checker") if isinstance(packages, Mapping) else None
+    libraries = package.get("shared_libraries") if isinstance(package, Mapping) else None
+    goal_libraries = [row for row in libraries or []
+                      if isinstance(row, Mapping) and row.get("name") == "libfactory_ops_goal_checker.so"]
+    measured = {
+        "/opt/factory_ops_goal_checker/share/factory_ops_goal_checker/package.xml": (
+            package.get("package_xml_sha256") if isinstance(package, Mapping) else None),
+        "/opt/factory_ops_goal_checker/share/factory_ops_goal_checker/plugins.xml": (
+            package.get("plugins_xml_sha256") if isinstance(package, Mapping) else None),
+        "/opt/factory_ops_goal_checker/lib/libfactory_ops_goal_checker.so": (
+            goal_libraries[0].get("sha256") if len(goal_libraries) == 1 else None),
+    }
+    if (not isinstance(attestation, Mapping) or attestation.get("status") != "built"
+            or attestation.get("build_completed") is not True
+            or attestation.get("runtime_eligible") is not True
+            or not isinstance(installed, Mapping) or installed != measured):
+        raise ValueError("installed G3 plugin bytes differ from the build attestation")
 
 
 def collect_rpp_runtime_observation(
@@ -271,12 +308,13 @@ def collect_rpp_runtime_observation(
             "parameters": parameters,
         }
     observation = {
-        "schema_version": 3,
+        "schema_version": 4,
         "source_commit": source_commit,
         "generated_params_sha256": sha(params_path),
         "controllers": controller_parameters,
         "observation_topics": observation_topics,
         "packages": nav2_package_provenance(),
+        "build_attestation_sha256": os.environ.get("FACTORY_OPS_G3_BUILD_ATTESTATION_SHA256"),
     }
     validate_rpp_runtime_observation(
         observation, generated_params_sha256=sha(params_path), source_commit=source_commit,
@@ -1047,6 +1085,11 @@ def main() -> int:
             string_parameter_type=ParameterType.PARAMETER_STRING,
             source_commit=os.environ.get("FACTORY_OPS_G3_SOURCE_COMMIT"),
         )
+        validate_goal_checker_install_attestation(
+            runtime_observation["packages"],
+            attestation_path=Path(os.environ["FACTORY_OPS_G3_BUILD_ATTESTATION_PATH"]),
+            expected_sha256=os.environ["FACTORY_OPS_G3_BUILD_ATTESTATION_SHA256"],
+        )
         runtime_observation_path = output / "nav2-runtime-provenance.json"
         atomic_json(runtime_observation_path, runtime_observation)
         result["inputs"]["nav2_runtime_provenance"] = {
@@ -1515,11 +1558,17 @@ def main() -> int:
             run_id=args.run_id, scenario_id=scenario_id, minimum_sim_time_ns=tick_clock_ns,
             wait_wall_s=runtime_config["terminal_recording_wait_wall_s"])
         runtime_end = {
-            "schema_version": 1,
+            "schema_version": 2,
             "source_commit": os.environ.get("FACTORY_OPS_G3_SOURCE_COMMIT"),
             "startup_provenance_sha256": sha(runtime_observation_path),
+            "build_attestation_sha256": os.environ.get("FACTORY_OPS_G3_BUILD_ATTESTATION_SHA256"),
             "packages": nav2_package_provenance(),
         }
+        validate_goal_checker_install_attestation(
+            runtime_end["packages"],
+            attestation_path=Path(os.environ["FACTORY_OPS_G3_BUILD_ATTESTATION_PATH"]),
+            expected_sha256=os.environ["FACTORY_OPS_G3_BUILD_ATTESTATION_SHA256"],
+        )
         if runtime_end["packages"] != runtime_observation["packages"]:
             raise RuntimeError("Nav2/plugin package bytes changed between startup and terminal recording")
         runtime_end_path = output / "nav2-runtime-end-provenance.json"

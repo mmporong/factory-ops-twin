@@ -42,6 +42,7 @@ from scripts.ros.g3_mission import (
     nav2_package_provenance,
     primary_trial_identity,
     terminal_recording_boundary,
+    validate_goal_checker_install_attestation,
     validate_rpp_runtime_observation,
 )
 from scripts.ros.g2_mission import _planning_radius
@@ -534,6 +535,11 @@ def validate_nav2_runtime_contract(
             provenance, generated_params_sha256=params_sha,
             source_commit=os.environ.get("FACTORY_OPS_G3_SOURCE_COMMIT"),
         )
+        validate_goal_checker_install_attestation(
+            provenance["packages"],
+            attestation_path=Path(os.environ["FACTORY_OPS_G3_BUILD_ATTESTATION_PATH"]),
+            expected_sha256=os.environ["FACTORY_OPS_G3_BUILD_ATTESTATION_SHA256"],
+        )
         if provenance.get("packages") != nav2_package_provenance():
             raise ValueError("installed Nav2 package bytes differ from the startup provenance")
         end_path = output / "nav2-runtime-end-provenance.json"
@@ -541,9 +547,10 @@ def validate_nav2_runtime_contract(
                 or mission.get("inputs", {}).get("nav2_runtime_end_provenance", {}).get("sha256") != sha(end_path)):
             raise ValueError("mission terminal Nav2 provenance SHA differs")
         end_provenance = json.loads(end_path.read_text(encoding="utf-8"))
-        if end_provenance != {"schema_version": 1,
+        if end_provenance != {"schema_version": 2,
                 "source_commit": os.environ.get("FACTORY_OPS_G3_SOURCE_COMMIT"),
                 "startup_provenance_sha256": sha(provenance_path),
+                "build_attestation_sha256": os.environ.get("FACTORY_OPS_G3_BUILD_ATTESTATION_SHA256"),
                 "packages": provenance["packages"]}:
             raise ValueError("terminal package rehash differs from startup")
         expected_goal_sources = {
