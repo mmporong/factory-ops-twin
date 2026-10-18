@@ -57,7 +57,7 @@ Nav2의 planner·controller·BT lifecycle이 모두 ACTIVE가 되고 시계·센
 
 구동 치수는 로드한 로봇의 활성 휠 충돌 형상에서 계산한다. 설정의 예상 치수와 다르면 실행을 거부하고 실제 측정값·단위·시각·형상 경로를 기록한다. 휠 각도의 표현 경계는 인접 물리 프레임의 최단 각도 차이로 처리한다. watchdog은 0.5초 지난 명령을 해제하며, 설정 가속도 한계는 선속도 0.25 m/s²·각속도 0.5 rad/s²다. roll 또는 pitch가 설정 한계 0.35 rad를 넘으면 휠 명령을 0으로 만들고 해당 실행을 실패로 보존한다. 이 검사는 자세를 보정하는 제어기가 아니다.
 
-물리 바닥은 Z=0의 보이지 않는 정적 Plane이고, 40×24 m 시각용 슬랩은 비충돌 Cube다. Plane은 무한 평면이며 운행 범위는 유한한 지도와 정책 keepout으로 제한한다. 바닥·설비·마커의 정확한 collider 멤버십과 바닥 변환을 시작 전에 검사한다. 설비 19개의 박스 충돌 형상은 유지한다.
+물리 바닥은 Z=0의 보이지 않는 정적 Plane이고, 배치 경계에 맞춘 시각용 슬랩은 비충돌 Cube다. 기존 v3는 40×24 m, v4 후보는 32×20 m다. Plane은 무한 평면이며 운행 범위는 유한한 지도와 정책 keepout으로 제한한다. 바닥·설비·마커의 정확한 collider 멤버십과 바닥 변환을 시작 전에 검사한다. 각 배치의 설비 19개 충돌 형상을 해당 지도와 대조한다.
 
 `CaptureSession`은 물리 시작 전에 Carter 섀시 하위의 추적 카메라와 고정 조감 카메라를 생성한다. 주행 중 카메라 USD 변환을 수정하지 않는다. 카메라 경로·부모 프레임·로컬 위치와 시선, 매 이미지의 물리 프레임·sim time·GT를 기록한다. 이 RGB는 주행 증거이며 학습용 카메라 데이터셋 승인을 뜻하지 않는다.
 
@@ -95,9 +95,9 @@ G3b는 실제 수락된 goal UUID·예약 세대·신선한 map footprint·Nav2 
 
 첫 qualification은 전체 station 간 경로를 예약하고 한 edge씩 액션을 실행한다. 예약 외곽에는 기존 계획 반경에 추가 추정 이동 여유 0.3 m를 더한다. 이 추가값은 타일 점유에만 적용하며, 물리 지도 통과를 승인하는 로봇 반경을 바꾸지 않는다. 허가 발행마다 신선한 추정 위치의 계획 반경 원판이 보유 타일 안에 남는지 확인한다. 이탈·stale·액션 오류는 점유를 보존한 채 실패로 끝낸다. 이 설정은 전체 경로 충돌을 직렬화하므로 처리량 우열의 근거로 삼지 않는다.
 
-경로는 Nav2 1.3.13의 `ComputePathToPose(GridBased, use_start=False)`로 계산한다. 반환 Path의 frame·시각·시작/끝·최종 yaw·연속 선분 외곽을 검사하고, 동일한 Path를 `FollowPath(FollowPath, goal_checker, progress_checker)`에 전달한다. intermediate goal은 별도 UUID, 마지막 station goal은 `FleetMission` intent UUID를 사용한다. 요청 전에 UUID를 고정하고, 서버 수락 UUID와 예약 세대가 일치한 뒤에만 navigate 허가를 낸다. `plan`의 실제 CDR를 해석한 전체 헤더·3차원 위치·quaternion을 정규 JSON SHA와 값으로 대조한다. 원본 CDR SHA는 보존 무결성 기록이며 재직렬화 바이트를 메시지 identity로 사용하지 않는다. RPP의 `received_global_plan`은 로봇 좌표로 변환·절단된 보조 자료여서 원본 Path SHA와 비교하지 않는다.
+경로는 Nav2 1.3.13의 `ComputePathToPose(GridBased, use_start=False)`로 계산한다. 반환 Path의 frame·시각·시작/끝·최종 yaw·연속 선분 외곽을 검사하고 원본을 보존한다. `FollowPath(FollowPath, goal_checker, progress_checker)`에는 복사본의 마지막 pose header 시각만 0으로 바꿔 전달한다. 이는 정적인 공장 목표를 최신 공통 TF 시각으로 변환하도록 요청하며, Path header의 신선도 판정이나 위치·자세·frame·나머지 pose 시각을 바꾸지 않는다. planner 원본과 실제 follow 요청의 payload·SHA 및 정규화 종류를 각각 기록하고, 사후 검증에서 이 한 항목 외의 차이를 거부한다. intermediate goal은 별도 UUID, 마지막 station goal은 `FleetMission` intent UUID를 사용한다. 요청 전에 UUID를 고정하고, 서버 수락 UUID와 예약 세대가 일치한 뒤에만 navigate 허가를 낸다. `plan`의 실제 CDR는 planner 원본의 전체 헤더·3차원 위치·quaternion과 정규 JSON SHA로 대조한다. 원본 CDR SHA는 보존 무결성 기록이며 재직렬화 바이트를 메시지 identity로 사용하지 않는다. RPP의 `received_global_plan`은 로봇 좌표로 변환·절단된 보조 자료여서 원본 Path SHA와 비교하지 않는다.
 
-Jazzy의 `ActionClient`는 서비스 본문 introspection을 노출하지 않는다. `action_services.py`는 공개된 `node.create_client`, 생성된 SendGoal·GetResult와 표준 CancelGoal 서비스 타입으로 실제 FollowPath RPC를 전담한다. 일반 Client의 `configure_introspection(CONTENTS)`로 발행된 미들웨어 service event를 bag에 기록한다. 별도 ActionClient가 중복 요청을 보내지 않으며 private handle이나 작성한 service event를 사용하지 않는다. `(client_gid, sequence_number)`로 실제 요청·수락 응답·결과를 묶고, SendGoal의 UUID·전체 Path 내용과 planner의 실제 CDR 해석 결과를 대조한다. 진행 중인 goal이 있으면 새 path 전송을 거부한다.
+Jazzy의 `ActionClient`는 서비스 본문 introspection을 노출하지 않는다. `action_services.py`는 공개된 `node.create_client`, 생성된 SendGoal·GetResult와 표준 CancelGoal 서비스 타입으로 실제 FollowPath RPC를 전담한다. 일반 Client의 `configure_introspection(CONTENTS)`로 발행된 미들웨어 service event를 bag에 기록한다. 별도 ActionClient가 중복 요청을 보내지 않으며 private handle이나 작성한 service event를 사용하지 않는다. `(client_gid, sequence_number)`로 실제 요청·수락 응답·결과를 묶고, SendGoal의 UUID·전체 Path 내용을 기록된 실제 follow payload와 대조한다. planner CDR와 follow 요청 사이에는 위의 종단 pose 시각 정규화만 허용한다. 진행 중인 goal이 있으면 새 path 전송을 거부한다.
 
 전환 순서는 terminal 성공 → HOLD 발행 → 물리 step의 해당 세대·goal·sequence ACK → 그 이후 odometry 표본의 0.5초 연속 정지 → goal finished → 다음 세대의 원자 전환이다. 정지 기준은 선속도·각속도 절댓값 0.02 이하이며 표본 간 공백은 0.3초를 넘을 수 없다. 이동·stale 이후에도 전역 관측 시각은 보존해 지연 표본이 정지 창에 끼어들지 못하게 한다. 중간 node에서는 hold를 줄이지 않으며 P1/P2에서만 정지 후 축소한다. 논리 원장의 station과 실제 도착 anchor를 분리해 dock 이탈 이후 배차 거리에도 실제 anchor를 사용한다.
 
