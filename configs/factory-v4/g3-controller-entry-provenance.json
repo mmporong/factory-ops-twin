@@ -24,7 +24,7 @@
     "terminal_goal_checker_xy_error_m": 0.06117601,
     "minimum_terminal_goal_checker_xy_error_m": 0.0607653,
     "confirmed_failure_mode": "RPP retained an earlier stateful XY latch after GoalChecker rejected the transient XY observation",
-    "source_artifact": "artifacts/brev/q019-controller-failure-trace-001.json"
+    "source_artifact": "artifacts/brev/industrial-031-q019-closed-001/q019-controller-failure-summary-001.json"
   },
   "claims": {
     "repair_not_validated": true,
