@@ -8,12 +8,15 @@ import unittest
 
 from factory_ops.layout import Layout, LayoutError, Rect
 from factory_ops.usda import export_usda
-from factory_ops.visual_scene import _recipe_boxes, export_visual_scene
+from factory_ops.visual_scene import PRODUCTION_BAY_GEOMETRY, _factory_shell, _recipe_boxes, _validate_boxes, export_visual_scene
 
 
 ROOT = Path(__file__).resolve().parents[1]
 LAYOUT_PATH = ROOT / "configs" / "factory-v3" / "layout.json"
 CONFIG_PATH = ROOT / "configs" / "factory-v3" / "visual-assets.json"
+V4_LAYOUT_PATH = ROOT / "configs" / "factory-v4" / "layout.json"
+V4_CONFIG_PATH = ROOT / "configs" / "factory-v4" / "visual-assets.json"
+V4_RENDER_PATH = ROOT / "configs" / "factory-v4" / "render-profile.json"
 
 
 class VisualSceneTests(unittest.TestCase):
@@ -204,6 +207,104 @@ class VisualSceneTests(unittest.TestCase):
         boxes = _recipe_boxes("service_cabinet", Rect.from_value(service_rect, "service"), float(service["height_m"]), 0, "SERVICE_CABINET")
         minimum_front = float(service_rect[1]) + (float(service_rect[3]) - float(service_rect[1])) * 0.05
         self.assertTrue(all(box.bounds[1] >= minimum_front for box in boxes))
+
+    def test_v4_finished_goods_use_separate_dimensioned_pallets_and_totes(self) -> None:
+        layout = Layout.from_file(V4_LAYOUT_PATH)
+        obstacle = next(item for item in layout.data["physical_obstacles"] if item["id"] == "FG_LOW")
+        rect = Rect.from_value(obstacle["rect"], "FG_LOW")
+        boxes = _recipe_boxes(
+            "finished_goods", rect, float(obstacle["height_m"]), 0, "FG_LOW",
+            geometry_profile=PRODUCTION_BAY_GEOMETRY,
+        )
+        _validate_boxes("FG_LOW", boxes, (rect.xmin, rect.ymin, 0.0, rect.xmax, rect.ymax, float(obstacle["height_m"])))
+        pallets = [box for box in boxes if box.semantic_class == "pallet"]
+        totes = [box for box in boxes if box.semantic_class == "tote"]
+        self.assertEqual([f"Pallet_{index:02d}" for index in range(4)], [box.name for box in pallets])
+        self.assertEqual(6, len(totes))
+        variant_names = {
+            box.name for box in _recipe_boxes(
+                "finished_goods", rect, float(obstacle["height_m"]), 7, "FG_LOW",
+                geometry_profile=PRODUCTION_BAY_GEOMETRY,
+            )
+        }
+        self.assertEqual({box.name for box in boxes}, variant_names)
+
+        def xy_overlap(left, right):
+            return (left.bounds[0] < right.bounds[3] and right.bounds[0] < left.bounds[3]
+                    and left.bounds[1] < right.bounds[4] and right.bounds[1] < left.bounds[4])
+
+        for index, pallet in enumerate(pallets):
+            self.assertLessEqual(pallet.bounds[3] - pallet.bounds[0], 1.2 + 1e-9)
+            self.assertLessEqual(pallet.bounds[4] - pallet.bounds[1], 1.0 + 1e-9)
+            self.assertFalse(any(xy_overlap(pallet, other) for other in pallets[index + 1:]))
+        for index, tote in enumerate(totes):
+            self.assertLessEqual(tote.bounds[3] - tote.bounds[0], .6 + 1e-9)
+            self.assertLessEqual(tote.bounds[4] - tote.bounds[1], .4 + 1e-9)
+            self.assertFalse(any(xy_overlap(tote, other) for other in totes[index + 1:]))
+            self.assertTrue(any(
+                pallet.bounds[0] <= tote.bounds[0] < tote.bounds[3] <= pallet.bounds[3]
+                and pallet.bounds[1] <= tote.bounds[1] < tote.bounds[4] <= pallet.bounds[4]
+                for pallet in pallets
+            ))
+        self.assertTrue(all(f"{pallet.name}_RunnerL" in {box.name for box in boxes} for pallet in pallets))
+
+    def test_v4_cabinets_are_independent_modules_with_front_details(self) -> None:
+        layout = Layout.from_file(V4_LAYOUT_PATH)
+        for obstacle_id, recipe, expected_count in (
+            ("CELL_CABINET", "control_cabinet", 2),
+            ("SERVICE_CABINET", "service_cabinet", 5),
+        ):
+            obstacle = next(item for item in layout.data["physical_obstacles"] if item["id"] == obstacle_id)
+            rect = Rect.from_value(obstacle["rect"], obstacle_id)
+            boxes = _recipe_boxes(
+                recipe, rect, float(obstacle["height_m"]), 0, obstacle_id,
+                geometry_profile=PRODUCTION_BAY_GEOMETRY,
+            )
+            _validate_boxes(obstacle_id, boxes, (rect.xmin, rect.ymin, 0.0, rect.xmax, rect.ymax, float(obstacle["height_m"])))
+            modules = [box for box in boxes if box.name.startswith("Module_") and box.name.count("_") == 1]
+            self.assertEqual(expected_count, len(modules))
+            self.assertTrue(all(box.semantic_class == "control_cabinet" for box in modules))
+            self.assertTrue(all(.6 <= box.bounds[3] - box.bounds[0] <= 1.0 for box in modules))
+            names = {box.name for box in boxes}
+            for index in range(expected_count):
+                prefix = f"Module_{index:02d}"
+                self.assertTrue({f"{prefix}_Door", f"{prefix}_Handle", f"{prefix}_VentLow", f"{prefix}_VentHigh"} <= names)
+            for left, right in zip(modules, modules[1:]):
+                self.assertLessEqual(left.bounds[3], right.bounds[0])
+
+    def test_export_selects_v4_geometry_and_keeps_legacy_recipe_default(self) -> None:
+        legacy_obstacle = next(item for item in self.layout.data["physical_obstacles"] if item["id"] == "FG_LOW")
+        legacy_rect = Rect.from_value(legacy_obstacle["rect"], "FG_LOW")
+        self.assertEqual(
+            _recipe_boxes("finished_goods", legacy_rect, float(legacy_obstacle["height_m"]), 0, "FG_LOW"),
+            _recipe_boxes("finished_goods", legacy_rect, float(legacy_obstacle["height_m"]), 0, "FG_LOW", geometry_profile="legacy"),
+        )
+        with tempfile.TemporaryDirectory() as temporary:
+            output = Path(temporary)
+            layout = Layout.from_file(V4_LAYOUT_PATH)
+            export_usda(layout, output / "factory-v3.usda")
+            document = export_visual_scene(
+                layout, output, 0, V4_CONFIG_PATH, V4_RENDER_PATH,
+            )
+        instances = document["instances"]
+        assert isinstance(instances, list)
+        stable_ids = {instance["stable_id"] for instance in instances}
+        self.assertIn("FG_LOW:Pallet_00", stable_ids)
+        self.assertIn("FG_LOW:FinishedTote_00", stable_ids)
+        self.assertIn("SERVICE_CABINET:Module_00", stable_ids)
+        self.assertNotIn("FG_LOW:Pallet", stable_ids)
+
+    def test_v4_south_cutaway_wall_is_lower_without_changing_v3(self) -> None:
+        palette = {"light": (1.0, 1.0, 1.0)}
+        v3 = "\n".join(_factory_shell(self.layout, palette))
+        v4 = "\n".join(_factory_shell(Layout.from_file(V4_LAYOUT_PATH), palette))
+
+        def south_wall_block(text: str) -> str:
+            start = text.index('def Cube "SouthWall"')
+            return text[start:text.index("            }", start)]
+
+        self.assertIn("double3 xformOp:scale = (20, 0.06, 0.6)", south_wall_block(v3))
+        self.assertIn("double3 xformOp:scale = (16, 0.06, 0.125)", south_wall_block(v4))
 
     def test_process_cells_have_distinct_open_roof_operational_silhouettes(self) -> None:
         obstacles = {

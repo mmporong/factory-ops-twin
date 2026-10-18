@@ -10,12 +10,13 @@ from pathlib import Path
 import re
 from typing import Any, Mapping, Sequence
 
-from .layout import Layout, LayoutError, Rect
+from .layout import V4_REVISION, Layout, LayoutError, Rect
 
 
 SCHEMA_VERSION = 1
 DEFAULT_CONFIG = Path(__file__).resolve().parents[1] / "configs" / "factory-v3" / "visual-assets.json"
 DEFAULT_RENDER_PROFILE = Path(__file__).resolve().parents[1] / "configs" / "factory-v3" / "render-profile.json"
+PRODUCTION_BAY_GEOMETRY = "production_bay_v4"
 
 
 @dataclass(frozen=True)
@@ -65,6 +66,7 @@ def export_visual_scene(
     render_bytes, render_profile = _load_json_object(render_source, "render profile")
     _validate_config(config, layout)
     _validate_render_profile(render_profile)
+    geometry_profile = PRODUCTION_BAY_GEOMETRY if layout.data.get("revision") == V4_REVISION else "legacy"
 
     palette = _palette(variant_seed)
     obstacle_by_id = {str(item["id"]): item for item in layout.data["physical_obstacles"]}
@@ -98,7 +100,10 @@ def export_visual_scene(
             source_bounds_xy_m=source_bounds,
             asset=recipe,
         ))
-        boxes = _recipe_boxes(recipe, rect, height, variant_seed, obstacle_id)
+        boxes = _recipe_boxes(
+            recipe, rect, height, variant_seed, obstacle_id,
+            geometry_profile=geometry_profile,
+        )
         _validate_boxes(obstacle_id, boxes, bounds)
         lines.extend(_equipment_root(obstacle_id, semantic_class, state_role, recipe, boxes, indent=8))
         for box in boxes:
@@ -332,11 +337,12 @@ def _materials(palette: Mapping[str, tuple[float, float, float]]) -> list[str]:
 def _factory_shell(layout: Layout, palette: Mapping[str, tuple[float, float, float]]) -> list[str]:
     light = palette["light"]
     bounds = layout.bounds
+    south_wall_height = .25 if layout.data.get("revision") == V4_REVISION else 1.2
     lines = ['        def Xform "FactoryShell"', "        {"]
     for name, bounds in (
         ("WestWall", (bounds.xmin - .12, bounds.ymin, 0.0, bounds.xmin, bounds.ymax, 3.2)),
         ("EastWall", (bounds.xmax, bounds.ymin, 0.0, bounds.xmax + .12, bounds.ymax, 3.2)),
-        ("SouthWall", (bounds.xmin, bounds.ymin - .12, 0.0, bounds.xmax, bounds.ymin, 1.2)),
+        ("SouthWall", (bounds.xmin, bounds.ymin - .12, 0.0, bounds.xmax, bounds.ymin, south_wall_height)),
         ("NorthWall", (bounds.xmin, bounds.ymax, 0.0, bounds.xmax, bounds.ymax + .12, 3.2)),
     ):
         lines.extend(_box_usda(_Box(name, bounds, "White"), 12))
@@ -504,11 +510,24 @@ def _tote_parts(box: _Box) -> list[_Box]:
     ]
 
 
-def _recipe_boxes(recipe: str, rect: Rect, height: float, seed: int, obstacle_id: str) -> list[_Box]:
+def _recipe_boxes(
+    recipe: str,
+    rect: Rect,
+    height: float,
+    seed: int,
+    obstacle_id: str,
+    *,
+    geometry_profile: str = "legacy",
+) -> list[_Box]:
     x0, y0, x1, y1 = rect.xmin, rect.ymin, rect.xmax, rect.ymax
     w, d = x1 - x0, y1 - y0
+    if geometry_profile not in {"legacy", PRODUCTION_BAY_GEOMETRY}:
+        raise LayoutError(f"unsupported visual geometry profile: {geometry_profile}")
     def b(name: str, fx0: float, fy0: float, z0: float, fx1: float, fy1: float, z1: float, material: str, semantic: str | None = None, role: str | None = None) -> _Box:
         return _Box(name, (x0 + w * fx0, y0 + d * fy0, z0, x0 + w * fx1, y0 + d * fy1, min(z1, height)), material, semantic, role)
+
+    def absolute(name: str, ax0: float, ay0: float, z0: float, ax1: float, ay1: float, z1: float, material: str, semantic: str | None = None, role: str | None = None) -> _Box:
+        return _Box(name, (ax0, ay0, z0, ax1, ay1, min(z1, height)), material, semantic, role)
 
     if recipe == "flow_rack":
         boxes = [
@@ -632,6 +651,32 @@ def _recipe_boxes(recipe: str, rect: Rect, height: float, seed: int, obstacle_id
             discharge.append(b(f"Roller_{roller}", .15, fy, height * .37, .85, fy + .025, height * .43, "Steel"))
         return discharge
     if recipe in {"control_cabinet", "service_cabinet"}:
+        if geometry_profile == PRODUCTION_BAY_GEOMETRY:
+            module_count = max(2, int(w // .85))
+            margin, gap = .08, .05
+            module_width = (w - 2 * margin - gap * (module_count - 1)) / module_count
+            if not .6 <= module_width <= 1.0:
+                raise LayoutError(f"{obstacle_id} cannot fit 0.6-1.0m cabinet modules")
+            front = y0 + d * (.05 if recipe == "service_cabinet" else .02)
+            body_front, body_back = y0 + d * .12, y1 - d * .05
+            boxes: list[_Box] = []
+            for index in range(module_count):
+                left = x0 + margin + index * (module_width + gap)
+                right = left + module_width
+                prefix = f"Module_{index:02d}"
+                boxes.extend([
+                    absolute(prefix, left, body_front, height * .12, right, body_back, height, "MachinePanel", "control_cabinet", "cabinet_module"),
+                    absolute(f"{prefix}_Plinth", left + .03, y0 + d * .08, 0, right - .03, body_back, height * .12, "MachinePaint"),
+                    absolute(f"{prefix}_Door", left + .025, front, height * .18, right - .025, body_front, height * .91, "MachinePaint"),
+                    absolute(f"{prefix}_Handle", right - .13, front, height * .43, right - .085, body_front, height * .65, "Dark"),
+                    absolute(f"{prefix}_VentLow", left + .12, front, height * .24, right - .18, body_front, height * .29, "Dark"),
+                    absolute(f"{prefix}_VentHigh", left + .12, front, height * .80, right - .18, body_front, height * .85, "Dark"),
+                ])
+            boxes.extend([
+                absolute("StatusGreen", x0 + margin + .12, front, height * .70, x0 + margin + .20, body_front, height * .77, "Green"),
+                absolute("EStop", x1 - margin - .20, front, height * .57, x1 - margin - .10, body_front, height * .66, "SafetyRed", "control_cabinet", "emergency_stop"),
+            ])
+            return boxes
         body_front = .10 if obstacle_id == "SERVICE_CABINET" else .05
         facade_front = .05 if obstacle_id == "SERVICE_CABINET" else .01
         facade_back = .11 if obstacle_id == "SERVICE_CABINET" else .07
@@ -651,6 +696,37 @@ def _recipe_boxes(recipe: str, rect: Rect, height: float, seed: int, obstacle_id
     if recipe == "buffer_fixture":
         return [b("Rail", .10, .02, 0, .90, .98, .18, "Steel"), b("Slot0", .15, .08, .19, .85, .45, .24, "Accent", "buffer_fixture", "slot_0"), b("Slot1", .15, .55, .19, .85, .92, .24, "Accent2", "buffer_fixture", "slot_1"), b("Lamp0", .20, .15, .25, .80, .28, min(.65, height), "Green"), b("Lamp1", .20, .68, .25, .80, .81, min(.65, height), "SafetyYellow")]
     if recipe == "finished_goods":
+        if geometry_profile == PRODUCTION_BAY_GEOMETRY:
+            pallet_width, pallet_depth = min(1.2, (w - .8) / 2), min(1.0, (d - .2) / 2)
+            x_margin = (w - 2 * pallet_width - .8) / 2
+            y_margin = (d - 2 * pallet_depth - .2) / 2
+            boxes = []
+            tote_index = 0
+            for pallet_index in range(4):
+                col, row = pallet_index % 2, pallet_index // 2
+                px0 = x0 + x_margin + col * (pallet_width + .8)
+                py0 = y0 + y_margin + row * (pallet_depth + .2)
+                px1, py1 = px0 + pallet_width, py0 + pallet_depth
+                prefix = f"Pallet_{pallet_index:02d}"
+                boxes.extend([
+                    absolute(prefix, px0, py0, 0, px1, py1, .08, "Wood", "pallet", "finished_goods_pallet"),
+                    absolute(f"{prefix}_RunnerL", px0 + .08, py0 + .05, .08, px0 + .20, py1 - .05, .14, "Wood"),
+                    absolute(f"{prefix}_RunnerC", (px0 + px1) / 2 - .06, py0 + .05, .08, (px0 + px1) / 2 + .06, py1 - .05, .14, "Wood"),
+                    absolute(f"{prefix}_RunnerR", px1 - .20, py0 + .05, .08, px1 - .08, py1 - .05, .14, "Wood"),
+                ])
+                tote_count = 2 if pallet_index in {0, 3} else 1
+                for local_index in range(tote_count):
+                    tote_width, tote_depth = .50, .38
+                    tx0 = px0 + ((pallet_width - tote_width) / 2 if tote_count == 1 else .08 + local_index * (tote_width + .04))
+                    ty0 = py0 + (pallet_depth - tote_depth) / 2
+                    boxes.append(absolute(
+                        f"FinishedTote_{tote_index:02d}", tx0, ty0, .15,
+                        tx0 + tote_width, ty0 + tote_depth, min(.58, height),
+                        "ToteBlue" if (tote_index + seed) % 2 == 0 else "ToteOrange",
+                        "tote", "finished_goods_tote",
+                    ))
+                    tote_index += 1
+            return boxes
         boxes = [
             b("Pallet", .04, .08, 0, .96, .92, .10, "Wood", "pallet", "finished_goods_pallet"),
             b("PalletRunnerL", .08, .12, .10, .16, .88, .16, "Wood"),
