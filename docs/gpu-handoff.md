@@ -352,6 +352,8 @@ bash scripts/brev/run-g3.sh "$HOME/workspace/factory-ops-g0" "$run_label" "$sour
 
 마지막 세 자리 숫자는 실행 attempt이며 seed와 구분한다. 실패해도 같은 폴더를 덮어쓰지 않고 새 attempt로 같은 입력을 재시도한다. supervisor는 code commit·clean checkout·인스턴스의 기존 작업 컨테이너 부재를 확인하고 세션을 새로 만든다. 요청한 profile·condition·policy·seed와 세션 SHA를 고정해 두 worker와 실행 후 검증기에 전달한다.
 
+32×20m 생산 구역 후보를 실행할 때는 위 `run-g3.sh` 호출 전에 `export FACTORY_OPS_G3_FACTORY_PROFILE=factory-v4`를 설정한다. 기본값은 기존 `factory-v3`다. v4 세션은 layout revision과 config profile을 묶으며 두 worker·검증기가 동일한 지도·경로·설비·카메라 설정을 읽는다. 진단 기본값은 600스텝 정기 촬영과 상태 변화 촬영이고, 연속 동작 촬영은 꺼져 있다. 새 배치의 실제 주행·렌더 검증은 별도로 남아 있다.
+
 빌드 도구는 로컬 base 이미지의 전체 ID를 두 `FROM`에 고정하며, `DOCKER_BUILDKIT=0`을 명시한 Linux legacy builder를 사용한다. [Docker는 이 방식을 v23부터 deprecated로 분류](https://docs.docker.com/engine/deprecated/#legacy-builder-for-linux-images)한다. 현재 VM의 Docker Engine·CLI 버전과 builder mode를 영수증에 남기고 실제 빌드 성공을 확인해야 한다. 지원되지 않는 환경에서는 실행을 차단하며, 다른 builder나 mutable tag로 자동 전환하지 않는다. 이 경로는 기존 VM의 호환 절차이며 OCI layout을 이용한 이식 가능한 이미지 보존은 구현 범위에 포함하지 않는다.
 
 빌드 증빙, 원래 이미지와 현재 이미지의 측정값, 설치 파일 세 개는 결과의 `provenance/build/`에 보존한다. source-environment와 전이 manifest가 artifact root의 상대경로·크기·SHA를 결속하며, 닫힌 output archive에도 포함한다. 사후 검증은 이 복원본에서 증빙을 읽고 attestation 환경값을 설정·복원한다. 실제 VM의 빌드·주행 검증을 마치기 전 CPU fixture 통과를 물리 실행의 승인으로 사용하지 않는다.

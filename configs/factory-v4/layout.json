@@ -64,10 +64,10 @@
     {"id": "SERVICE_EDGE", "rect": [19, 18.25, 24, 19.25], "purpose": "service cabinets"}
   ],
   "physical_obstacles": [
-    {"id": "KIT_BENCH_1", "rect": [10.75, 5.75, 13.25, 7], "height_m": 0.95, "type": "modular kitting bench"},
-    {"id": "KIT_BENCH_2", "rect": [10.75, 13, 13.25, 14.25], "height_m": 0.95, "type": "modular kitting bench"},
+    {"id": "KIT_BENCH_1", "rect": [2.5, 0.75, 5, 2], "height_m": 0.95, "type": "source A kitting bench beside S1"},
+    {"id": "KIT_BENCH_2", "rect": [2.5, 18, 5, 19.25], "height_m": 0.95, "type": "source C kitting bench beside S3"},
     {"id": "RACK_A1", "rect": [2.5, 5.75, 4.65, 6.65], "height_m": 2.1, "type": "compact tote rack"},
-    {"id": "RACK_A2", "rect": [4.9, 5.75, 7.05, 6.65], "height_m": 2.1, "type": "compact tote rack"},
+    {"id": "RACK_A2", "rect": [2.5, 7.45, 4.65, 8.35], "height_m": 2.1, "type": "source B tote rack beside S2"},
     {"id": "RACK_B1", "rect": [2.5, 13.35, 4.65, 14.25], "height_m": 2.1, "type": "compact tote rack"},
     {"id": "RACK_B2", "rect": [4.9, 13.35, 7.05, 14.25], "height_m": 2.1, "type": "compact tote rack"},
     {"id": "BENCH_A1", "rect": [10.75, 7.25, 13.25, 8.35], "height_m": 1.1, "type": "assembly bench module"},

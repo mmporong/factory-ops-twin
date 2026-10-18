@@ -24,7 +24,7 @@ from factory_ops.callback_drain import CallbackDrain
 from factory_ops.fleet_execution import StoppedGate, make_chunk, qualify_computed_path, path_content_sha256, path_clock_ready, path_header_stamp_ns
 from factory_ops.fleet_routing import RouteBook, assess_dispatch_route_compatibility, swept_tiles
 from factory_ops.visual_state import canonical_sha256, make_visual_state, project_ledger_state
-from factory_ops.g3_session import save, sha, verify_session
+from factory_ops.g3_session import config_dir_from_session, save, sha, verify_session
 from factory_ops.navigation import GoalPose, LocalizationPose, NavigationError, NavigationResult
 from factory_ops.operations import LedgerConfig, Transition
 from factory_ops.route_reservation import RouteReservationManager
@@ -740,7 +740,7 @@ def prepare_params(project: Path, output: Path, session_root: Path, session: Map
         path.write_text(book.layout._yaml(pgm.name), encoding="utf-8", newline="\n")
         maps[closed] = path
     scenario = json.loads((session_root / "scenarios.json").read_text(encoding="utf-8"))["scenarios"][session["scenario_id"]]
-    template = yaml.safe_load((project / "configs/factory-v3/nav2-g2.yaml").read_text(encoding="utf-8"))
+    template = yaml.safe_load((config_dir_from_session(session_root) / "nav2-g2.yaml").read_text(encoding="utf-8"))
     params, contract = build_g3_namespaced_params(
         template, scenario, radii, config["g3_runtime"],
         physical_map=str(session_root / "maps/open/map.yaml"),
@@ -779,7 +779,8 @@ def main() -> int:
     runtime_config = config["g3_runtime"]
     scenario_id = session["scenario_id"]
     output = args.output.resolve(strict=True)
-    book = RouteBook.from_files(project / "configs/factory-v3/layout.json", project / "configs/factory-v3/g3-routing.json")
+    config_dir = config_dir_from_session(session_root)
+    book = RouteBook.from_files(config_dir / "layout.json", config_dir / "g3-routing.json")
     deadline = time.monotonic() + config["max_wall_time_s"]
     result: dict[str, Any] = {"run_id": args.run_id, "scenario_id": scenario_id, "status": "running", "stage": "wait_scene",
                               "primary_evaluation": session["primary_evaluation"], "scope": session["scope"], "ground_truth_input": False,
@@ -818,7 +819,7 @@ def main() -> int:
             "session_verification": output / "session-verified.json",
             "visual_state_source": project / "factory_ops/visual_state.py",
             "generated_params": params_path, "config": session_root / "config.json",
-            "nav2_template": project / "configs/factory-v3/nav2-g2.yaml"}.items()}
+            "nav2_template": config_dir / "nav2-g2.yaml"}.items()}
         goal_checker_sources = tuple(sorted(
             path for path in (project / "ros_ws/src/factory_ops_goal_checker").rglob("*")
             if path.is_file() and not path.is_symlink()

@@ -105,7 +105,7 @@
   "source_bindings": [
     {
       "path": "configs/factory-v4/layout.json",
-      "sha256": "139121a3bd54dd404c86813d552e487e8dcac67ab68d8422339a57f324253398"
+      "sha256": "002081d9d69f7509b12e0bb320a8bfbd31359482cd07f05ddff63869f06e8b04"
     },
     {
       "path": "configs/factory-v4/traffic.json",

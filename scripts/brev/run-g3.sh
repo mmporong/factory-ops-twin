@@ -11,6 +11,8 @@ profile=${4:?qualification, pilot, or primary profile required}
 condition=${5:?normal, closure, or burst condition required}
 policy=${6:?fifo or eta policy required}
 seed=${7:?qualification/primary seed 0..9 or pilot seed 100 required}
+factory_profile=${FACTORY_OPS_G3_FACTORY_PROFILE:-factory-v3}
+[[ "$factory_profile" =~ ^factory-v[34]$ ]]
 primary_inputs=${8:-}
 primary_inputs_sha=${9:-}
 billing=${10:-}
@@ -198,15 +200,18 @@ if [ "$profile" = primary ]; then
     --entrypoint /bin/bash --workdir /workspace/project -e HOME=/tmp -e PYTHONDONTWRITEBYTECODE=1 \
     -v "$root:$root:ro" -v "$project:/workspace/project:rw" \
     "$nav_image" -lc 'source /opt/ros/jazzy/setup.bash; python3 -m factory_ops.g3_session "$@"' \
-    factory-ops-g3-session --output "runs/${run}-session" --profile "$profile" \
+    factory-ops-g3-session --config-dir "/workspace/project/configs/$factory_profile" \
+    --output "runs/${run}-session" --profile "$profile" \
     --condition "$condition" --policy "$policy" --seed "$seed" \
     --primary-inputs "$primary_inputs" --primary-inputs-sha256 "$primary_inputs_sha"
 else (
   cd "$project"
   python3 -m factory_ops.g3_session \
+    --config-dir "configs/$factory_profile" \
     --output "runs/${run}-session" --profile "$profile" --condition "$condition" \
     --policy "$policy" --seed "$seed"
   python3 -m factory_ops.g3_session --output "runs/${run}-session" --verify \
+    --config-dir "configs/$factory_profile" \
     --profile "$profile" --condition "$condition" --policy "$policy" --seed "$seed"
 )
 fi
@@ -268,7 +273,7 @@ paths=sorted(set(paths) | {
     for directory,patterns in (
         ('factory_ops',('*.py',)),('scripts/isaac',('*.py',)),('scripts/ros',('*.py',)),
         ('ros_ws/src/factory_ops_goal_checker',('*',)),
-        ('configs/factory-v3',('*.json','*.yaml')))
+        ('configs',('*.json','*.yaml')))
     for pattern in patterns for p in (project/directory).rglob(pattern)
     if p.is_file() and not p.is_symlink()
 })
@@ -394,7 +399,7 @@ PY
   test "${#start_values[@]}" = 2
   start_args=(start --output "$resources/attempt-start.json" --evidence-root "$root"
     --run-id "$run_id" --profile "$profile" --condition "$condition" --policy "$policy" --seed "$seed"
-    --source-commit "$expected_commit" --config "$project/configs/factory-v3/g3-experiment.json"
+    --source-commit "$expected_commit" --config "$project/configs/$factory_profile/g3-experiment.json"
     --session-root "$session" --billing "$billing" --started-at-utc "${start_values[0]}"
     --free-disk-bytes-before "${start_values[1]}")
   if [ "$profile" = primary ]; then

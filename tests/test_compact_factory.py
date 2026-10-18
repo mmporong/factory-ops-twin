@@ -10,7 +10,8 @@ from factory_ops.fleet_routing import RouteBook
 from factory_ops.layout import Layout, LayoutError, Rect
 from factory_ops.usda import export_usda
 from factory_ops.visual_scene import _recipe_boxes, export_visual_scene
-from scripts.isaac.factory_visuals import signal_placements
+from factory_ops.visual_evidence import _validate_deterministic_visual_export
+from scripts.isaac.factory_visuals import signal_placements, world_slot_placement
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -21,6 +22,32 @@ V4 = ROOT / "configs" / "factory-v4"
 class CompactProductionBayTests(unittest.TestCase):
     def setUp(self) -> None:
         self.layout = Layout.from_file(V4 / "layout.json")
+
+    def test_source_payloads_are_beside_their_handoff_bays(self) -> None:
+        expected = {"source_S1": ("S1", "KIT_BENCH_1"),
+                    "source_S2": ("S2", "RACK_A2"), "source_S3": ("S3", "KIT_BENCH_2")}
+        for location, (station, obstacle) in expected.items():
+            placement = world_slot_placement(self.layout, location, 0)
+            self.assertEqual(placement["source_obstacle_id"], obstacle)
+            x, y, _ = placement["translate_xyz_m"]
+            goal_x, goal_y = self.layout.stations[station]
+            self.assertLess((x - goal_x) ** 2 + (y - goal_y) ** 2, 9)
+
+    def test_runtime_regeneration_uses_the_compact_asset_and_camera_profiles(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            output = Path(temporary)
+            visual_dir = output / "visual-scene"
+            export_usda(self.layout, visual_dir / "factory-v3.usda")
+            export_visual_scene(
+                self.layout, visual_dir, 0, V4 / "visual-assets.json", V4 / "render-profile.json",
+            )
+            manifest = json.loads((visual_dir / "visual-scene-manifest.json").read_text(encoding="utf-8"))
+            runtime = {"variant_seed": 0, "session_layer": {
+                "visual_sublayer": str((visual_dir / "factory-v3.visual.usda").resolve()),
+            }}
+            errors: list[str] = []
+            _validate_deterministic_visual_export(output, self.layout, runtime, manifest, errors)
+            self.assertEqual(errors, [])
 
     def test_v4_contract_is_explicit_and_v3_coordinates_remain_immutable(self) -> None:
         self.assertEqual(self.layout.data["revision"], "amr-production-bay-v4")

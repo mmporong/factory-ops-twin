@@ -20,7 +20,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from factory_ops.fleet_execution import make_chunk, path_content_sha256, qualify_computed_path, path_header_stamp_ns
 from factory_ops.fleet_routing import RouteBook, swept_tiles
 from factory_ops.experiments import canonical_hash
-from factory_ops.g3_session import SCOPE, sha, verify_session
+from factory_ops.g3_session import SCOPE, config_dir_from_session, sha, verify_session
 from factory_ops.layout import Layout
 from factory_ops.motion_authorization import AuthorizationError, LeaseGuard
 from factory_ops.navigation import GoalPose
@@ -511,7 +511,7 @@ def validate_nav2_runtime_contract(
         radii = {robot: _planning_radius(
             ready["robots"][robot], config["localization_planning_margin_m"],
         )[0] for robot in ROBOTS}
-        template = yaml.safe_load((PROJECT / "configs/factory-v3/nav2-g2.yaml").read_text(encoding="utf-8"))
+        template = yaml.safe_load((config_dir_from_session(session_root) / "nav2-g2.yaml").read_text(encoding="utf-8"))
         expected, contract = build_g3_namespaced_params(
             template, scenario, radii, config["g3_runtime"],
             physical_map=str(session_root / "maps/open/map.yaml"),
@@ -1848,7 +1848,7 @@ def validate_g3_evidence(
         (scene, "source", PROJECT / "scripts/isaac/g2_scene.py"),
         (scene, "g3_scene_source", PROJECT / "scripts/isaac/g3_scene.py"),
         (mission, "mission_source", PROJECT / "scripts/ros/g3_mission.py"),
-        (mission, "nav2_template", PROJECT / "configs/factory-v3/nav2-g2.yaml"),
+        (mission, "nav2_template", config_dir_from_session(session_root) / "nav2-g2.yaml"),
     )
     for document, key, path in source_pins:
         if document.get("inputs", {}).get(key, {}).get("sha256") != sha(path):
@@ -1865,7 +1865,8 @@ def validate_g3_evidence(
     try:
         config = json.loads((session_root / "config.json").read_text(encoding="utf-8"))
         layout = Layout.from_file(session_root / "layout.json")
-        book = RouteBook.from_files(PROJECT / "configs/factory-v3/layout.json", PROJECT / "configs/factory-v3/g3-routing.json")
+        config_dir = config_dir_from_session(session_root)
+        book = RouteBook.from_files(config_dir / "layout.json", config_dir / "g3-routing.json")
         if layout.data != book.layout.data:
             errors.append("session layout semantics differ from the current route-book variant")
         for robot in ROBOTS:
@@ -1990,7 +1991,7 @@ def validate_g3_evidence(
             "passed": not errors, "status": "validated" if not errors else "failed",
             "errors": errors, "evaluation": evaluation, "bag": bounded_bag,
             "source": source_record, "session_sha256": expected_session_sha,
-            "experiment_config_sha256": canonical_hash(json.loads((PROJECT / "configs/factory-v3/g3-experiment.json").read_text(encoding="utf-8"))),
+            "experiment_config_sha256": canonical_hash(json.loads((config_dir_from_session(session_root) / "g3-experiment.json").read_text(encoding="utf-8"))),
             "mission_sha256": sha(output / "mission-result.json"), "trial_outcome": outcome,
             "ground_truth_input": mission.get("ground_truth_input"),
             "closed_bag": not errors, "actual_validator_passed": not errors,

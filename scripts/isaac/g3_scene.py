@@ -14,7 +14,7 @@ import sys
 from typing import Any, Mapping
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
-from factory_ops.g3_session import verify_session
+from factory_ops.g3_session import config_dir_from_session, verify_session
 from factory_ops.g3_build_attestation import PRESERVED_BUILD_FILES
 from factory_ops.source_provenance import verify_source_archive
 from scripts.isaac import g2_scene
@@ -249,7 +249,7 @@ class BarrierLifecycle:
         return self.visuals.after_robots_loaded(stage, definitions)
 
     def configure_cameras(self, stage: Any, capture: Any, second: Any, UsdGeom: Any, Gf: Any) -> dict[str, Any]:
-        profile_path = Path(__file__).resolve().parents[2] / "configs/factory-v3/render-profile.json"
+        profile_path = config_dir_from_session(self.session_root) / "render-profile.json"
         profile = json.loads(profile_path.read_text(encoding="utf-8"))
         cameras_by_id = {row["id"]: row for row in profile["cameras"]}
         specifications = [
@@ -460,8 +460,8 @@ def main() -> int:
                                        "factory_visuals_source": Path(__file__).with_name("factory_visuals.py"),
                                        "visual_scene_source": root.parents[1] / "factory_ops/visual_scene.py",
                                        "visual_state_source": root.parents[1] / "factory_ops/visual_state.py",
-                                       "render_profile": root.parents[1] / "configs/factory-v3/render-profile.json",
-                                       "visual_assets": root.parents[1] / "configs/factory-v3/visual-assets.json"})
+                                       "render_profile": config_dir_from_session(root) / "render-profile.json",
+                                       "visual_assets": config_dir_from_session(root) / "visual-assets.json"})
     print(f"FACTORY_OPS_G3_SCENE_STATUS={'PASS' if code == 0 else 'FAIL'}", flush=True)
     return code
 

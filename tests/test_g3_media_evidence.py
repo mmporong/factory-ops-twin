@@ -89,6 +89,22 @@ class MediaFixture:
 
 
 class RealTimeMediaEvidenceTests(unittest.TestCase):
+    def test_diagnostic_profile_does_not_require_dense_motion_images(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            session, output = root / "session", root / "output"
+            output.mkdir()
+            save(session / "session.json", {"profile": "qualification", "primary_evaluation": False})
+            save(session / "config.json", {
+                "physics_dt_s": 1 / 60,
+                "g3_runtime": {"real_time_media": {**PROFILE, "profiles": []}},
+            })
+            errors: list[str] = []
+            report = _validate_real_time_media(output, session, RUN_ID, SCENARIO_ID, errors)
+            self.assertEqual(errors, [])
+            self.assertEqual(report, {"required": False, "passed": True, "sample_count": 0})
+            self.assertEqual(list(output.iterdir()), [])
+
     def validate(self, fixture: MediaFixture) -> tuple[dict[str, Any], list[str]]:
         errors: list[str] = []
         report = _validate_real_time_media(

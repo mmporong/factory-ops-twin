@@ -13,12 +13,14 @@ if TYPE_CHECKING:
 
 
 def layout_svg(layout: Layout) -> str:
-    parts = ['<svg viewBox="-1 -1 42 26" role="img" aria-label="40m × 24m 공장 계획 배치">',
-             '<rect width="40" height="24" fill="#f1f5f9" stroke="#94a3b8" stroke-width=".08"/>']
+    width = layout.bounds.xmax - layout.bounds.xmin
+    height = layout.bounds.ymax - layout.bounds.ymin
+    parts = [f'<svg viewBox="-1 -1 {width + 2:g} {height + 2:g}" role="img" aria-label="{width:g}m × {height:g}m 공장 계획 배치">',
+             f'<rect width="{width:g}" height="{height:g}" fill="#f1f5f9" stroke="#94a3b8" stroke-width=".08"/>']
 
     def rect(xy, color, title):
         x1, y1, x2, y2 = xy
-        parts.append(f'<rect x="{x1}" y="{24-y2}" width="{x2-x1}" height="{y2-y1}" '
+        parts.append(f'<rect x="{x1}" y="{height-y2}" width="{x2-x1}" height="{y2-y1}" '
                      f'fill="{color}" stroke="#cbd5e1" stroke-width=".05"><title>{escape(title)}</title></rect>')
 
     for region in layout.data.get("reserved_work_areas", []):
@@ -31,10 +33,10 @@ def layout_svg(layout: Layout) -> str:
         x, y = xy
         fill = "#0891b2" if key.startswith("P") else "#2563eb"
         parts.extend([
-            f'<circle cx="{x}" cy="{24-y}" r=".42" fill="{fill}"/>',
-            f'<text x="{x+.65}" y="{24-y+.22}" font-size=".85" fill="#0f172a">{escape(key)}</text>',
+            f'<circle cx="{x}" cy="{height-y}" r=".42" fill="{fill}"/>',
+            f'<text x="{x+.65}" y="{height-y+.22}" font-size=".85" fill="#0f172a">{escape(key)}</text>',
         ])
-    parts.append('<text x="1" y="24.7" font-size=".7" fill="#475569">x → / y ↑ · metres · authored geometry</text></svg>')
+    parts.append(f'<text x="1" y="{height + .7:g}" font-size=".7" fill="#475569">x → / y ↑ · metres · authored geometry</text></svg>')
     return "".join(parts)
 
 

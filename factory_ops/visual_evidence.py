@@ -17,10 +17,11 @@ from .visual_state import canonical_sha256, project_ledger_state
 from scripts.isaac.factory_visuals import (
     ALLOWED_RENDERER_READBACKS,
     LAUNCH_RENDERER,
-    SIGNAL_PLACEMENTS,
     SIGNAL_SIZE_M,
     TOTE_SIZE_M,
     build_payload_visibility_plan,
+    light_positions,
+    signal_placements,
     validate_visual_state_document,
     world_slot_placement,
 )
@@ -42,6 +43,14 @@ POLISHED_MATERIALS = {
     "LightSteel": ((0.42, 0.46, 0.50), 0.65, 0.28),
     "White": ((0.68, 0.72, 0.74), 0.02, 0.72),
 }
+
+
+def _visual_source_pins(layout: Layout) -> dict[str, Path]:
+    result = dict(SOURCE_PINS)
+    if layout.data.get("revision") == "amr-production-bay-v4":
+        result["render_profile"] = PROJECT / "configs/factory-v4/render-profile.json"
+        result["visual_assets"] = PROJECT / "configs/factory-v4/visual-assets.json"
+    return result
 
 
 def validate_visual_evidence(
@@ -70,7 +79,8 @@ def validate_visual_evidence(
         runtime = _load_json(output / "visual-runtime-manifest.json")
         visual_manifest = _load_json(output / "visual-scene/visual-scene-manifest.json")
         _validate_identity(runtime, run_id, scenario_id)
-        _validate_source_pins(scene, errors)
+        source_pins = _visual_source_pins(layout)
+        _validate_source_pins(scene, errors, source_pins)
         _validate_scene_extension(scene, runtime, errors)
         _validate_robot_binding(scene, runtime, errors)
         _validate_static_artifacts(output, session_root, layout, runtime, visual_manifest, errors)
@@ -78,7 +88,7 @@ def validate_visual_evidence(
         result["source_scene_unchanged"] = _validate_base_scene(output, session_root, runtime, errors)
         result["stage_contract"] = _validate_stage_contract(layout, runtime, errors)
         result["semantic_and_lighting"] = _validate_render_claims(output, runtime, visual_manifest, errors)
-        _validate_camera_profile(scene, runtime, errors)
+        _validate_camera_profile(scene, runtime, errors, source_pins)
         ledger_events = _mission_ledger_events(mission)
         visual_events = _load_jsonl(output / "visual-events.jsonl")
         publications = [row for row in _load_jsonl(output / "actions.jsonl") if row.get("kind") == "visual_state_published"]
@@ -125,7 +135,11 @@ def _validate_real_time_media(
             "profiles", "window_s", "sample_every_physics_steps",
             "minimum_abs_linear_m_s", "minimum_abs_angular_rad_s",
         }
-        if set(media_profile) != expected_profile_keys or media_profile.get("profiles") != ["qualification"]:
+        if set(media_profile) != expected_profile_keys:
+            raise ValueError("source profile fields differ")
+        if media_profile.get("profiles") == []:
+            return disabled
+        if media_profile.get("profiles") != ["qualification"]:
             raise ValueError("source profile fields differ")
         if (media_profile.get("window_s") != 24.0
                 or media_profile.get("sample_every_physics_steps") != 6
@@ -252,12 +266,14 @@ def _validate_identity(document: Mapping[str, Any], run_id: str, scenario_id: st
         raise ValueError("visual runtime variant seed is invalid")
 
 
-def _validate_source_pins(scene: Mapping[str, Any], errors: list[str]) -> None:
+def _validate_source_pins(
+    scene: Mapping[str, Any], errors: list[str], source_pins: Mapping[str, Path] = SOURCE_PINS,
+) -> None:
     inputs = scene.get("inputs")
     if not isinstance(inputs, Mapping):
         errors.append("visual runtime source pins are missing")
         return
-    for key, path in SOURCE_PINS.items():
+    for key, path in source_pins.items():
         record = inputs.get(key)
         if not isinstance(record, Mapping) or record.get("sha256") != _sha_file(path):
             errors.append(f"visual runtime source pin differs: {key}")
@@ -323,17 +339,18 @@ def _validate_static_artifacts(
         errors.append("visual scene layout SHA differs")
     asset = manifest.get("asset_provenance")
     asset_config = manifest.get("visual_asset_config")
-    current_asset_sha = _sha_file(SOURCE_PINS["visual_assets"])
+    source_pins = _visual_source_pins(layout)
+    current_asset_sha = _sha_file(source_pins["visual_assets"])
     if (not isinstance(asset, Mapping) or asset.get("license") != "CC0-1.0"
             or asset.get("external_asset_packages") != [] or asset.get("asset_source_sha256") != current_asset_sha
             or not isinstance(asset_config, Mapping) or asset_config.get("sha256") != current_asset_sha
-            or Path(str(asset_config.get("path"))).resolve() != SOURCE_PINS["visual_assets"].resolve()):
+            or Path(str(asset_config.get("path"))).resolve() != source_pins["visual_assets"].resolve()):
         errors.append("visual scene asset provenance is incomplete")
     render_profile = manifest.get("render_profile")
-    current_render = _load_json(SOURCE_PINS["render_profile"])
+    current_render = _load_json(source_pins["render_profile"])
     if (not isinstance(render_profile, Mapping)
-            or render_profile.get("sha256") != _sha_file(SOURCE_PINS["render_profile"])
-            or Path(str(render_profile.get("path"))).resolve() != SOURCE_PINS["render_profile"].resolve()
+            or render_profile.get("sha256") != _sha_file(source_pins["render_profile"])
+            or Path(str(render_profile.get("path"))).resolve() != source_pins["render_profile"].resolve()
             or render_profile.get("value") != current_render):
         errors.append("visual render profile binding differs")
     instances = manifest.get("instances")
@@ -413,7 +430,8 @@ def _validate_deterministic_visual_export(
                 layout,
                 regenerated_dir,
                 variant_seed,
-                config_path=SOURCE_PINS["visual_assets"],
+                config_path=_visual_source_pins(layout)["visual_assets"],
+                render_profile_path=_visual_source_pins(layout)["render_profile"],
             )
             regenerated_manifest = _load_json(regenerated_dir / "visual-scene-manifest.json")
             if (canonical_visual.read_bytes() != (regenerated_dir / "factory-v3.visual.usda").read_bytes()
@@ -571,8 +589,9 @@ def _validate_render_claims(output: Path, runtime: Mapping[str, Any], manifest: 
 
 def _validate_camera_profile(
     scene: Mapping[str, Any], runtime: Mapping[str, Any], errors: list[str],
+    source_pins: Mapping[str, Path] = SOURCE_PINS,
 ) -> None:
-    profile = _load_json(SOURCE_PINS["render_profile"])
+    profile = _load_json(source_pins["render_profile"])
     settings = profile.get("render_settings")
     requested = runtime.get("renderer", {}).get("requested") if isinstance(runtime.get("renderer"), Mapping) else None
     expected_settings = {"sdk_renderer": LAUNCH_RENDERER, "dlss_exec_mode": 2, "rt_subframes": 4}
@@ -583,7 +602,7 @@ def _validate_camera_profile(
     extension = scene.get("scene_extension")
     overrides = extension.get("camera_overrides") if isinstance(extension, Mapping) else None
     if (not isinstance(overrides, Mapping) or overrides.get("source") != "render-profile.json"
-            or overrides.get("source_sha256") != _sha_file(SOURCE_PINS["render_profile"])):
+            or overrides.get("source_sha256") != _sha_file(source_pins["render_profile"])):
         errors.append("visual camera overrides are not bound to the current render profile")
         return
     profile_cameras = {item["id"]: item for item in profile.get("cameras", []) if isinstance(item, Mapping) and isinstance(item.get("id"), str)}
@@ -959,9 +978,9 @@ def _audit_session_snapshot(
             _audit_hidden_payload(record, prim_path, layout, robot_paths)
         elif prim_path in signal_paths:
             name, count = signal_paths[prim_path]
-            _audit_signal(record, prim_path, name, count)
+            _audit_signal(record, prim_path, name, count, layout)
         elif prim_path in light_records:
-            _audit_light(record, prim_path, light_records[prim_path], runtime)
+            _audit_light(record, prim_path, light_records[prim_path], runtime, layout)
         elif prim_path in visual_paths:
             _audit_static_visual_override(record, prim_path, static_semantics)
         else:
@@ -1041,7 +1060,7 @@ def _audit_hidden_payload(
         raise ValueError(f"visual session snapshot prim type differs: {prim_path}")
 
 
-def _audit_signal(record: Mapping[str, Any], prim_path: str, name: str, count: int) -> None:
+def _audit_signal(record: Mapping[str, Any], prim_path: str, name: str, count: int, layout: Layout) -> None:
     if name.startswith(("CI_", "CO_")):
         slot_index = int(name.rsplit("_", 1)[1])
         active = count >= slot_index + 1
@@ -1061,17 +1080,20 @@ def _audit_signal(record: Mapping[str, Any], prim_path: str, name: str, count: i
         "semanticClass": "process_equipment",
         "stateRole": f"{name.lower()}_status",
         "signalCount": count,
-        "xformOp:translate": tuple(float(value) for value in SIGNAL_PLACEMENTS[name]),
+        "xformOp:translate": tuple(float(value) for value in signal_placements(layout)[name]),
         "xformOp:scale": (SIGNAL_SIZE_M, SIGNAL_SIZE_M, SIGNAL_SIZE_M),
         "xformOpOrder": ["xformOp:translate", "xformOp:scale"],
     }
     _require_prim(record, prim_path, "Cube", expected, {})
 
 
-def _audit_light(record: Mapping[str, Any], prim_path: str, readback: Mapping[str, Any], runtime: Mapping[str, Any]) -> None:
+def _audit_light(
+    record: Mapping[str, Any], prim_path: str, readback: Mapping[str, Any],
+    runtime: Mapping[str, Any], layout: Layout,
+) -> None:
     if readback.get("type") == "RectLight":
         index = int(prim_path.rsplit("_", 1)[1])
-        positions = ((8.0, 5.0), (20.0, 5.0), (32.0, 5.0), (8.0, 19.0), (20.0, 19.0), (32.0, 19.0))
+        positions = light_positions(layout)
         expected = {
             "inputs:width": 5.0,
             "inputs:height": 0.8,

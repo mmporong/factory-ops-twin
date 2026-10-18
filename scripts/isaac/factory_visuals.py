@@ -65,6 +65,13 @@ def signal_placements(layout: Layout) -> dict[str, tuple[float, float, float]]:
     }
 
 
+def light_positions(layout: Layout) -> tuple[tuple[float, float], ...]:
+    bounds = layout.bounds
+    xs = tuple(bounds.xmin + (bounds.xmax - bounds.xmin) * fraction for fraction in (.2, .5, .8))
+    ys = tuple(bounds.ymin + (bounds.ymax - bounds.ymin) * fraction for fraction in (5 / 24, 19 / 24))
+    return tuple((x, y) for y in ys for x in xs)
+
+
 def _signal_color(name: str, active: bool) -> tuple[float, float, float]:
     if not active:
         return (.22, .24, .27)
@@ -108,6 +115,9 @@ def world_slot_placement(layout: Layout, location: str, slot: int) -> dict[str, 
     if type(slot) is not int or slot < 0:
         raise ValueError("visual cargo slot must be a nonnegative integer")
     obstacle_id = WORLD_LOCATION_OBSTACLE[location]
+    compact = layout.data.get("revision") == "amr-production-bay-v4"
+    if compact and location == "source_S3":
+        obstacle_id = "KIT_BENCH_2"
     source = next((item for item in layout.data["physical_obstacles"] if item["id"] == obstacle_id), None)
     if source is None:
         raise LayoutError(f"visual cargo obstacle is missing: {obstacle_id}")
@@ -123,6 +133,19 @@ def world_slot_placement(layout: Layout, location: str, slot: int) -> dict[str, 
     if columns < 1 or rows < 1 or slot >= capacity:
         raise ValueError(f"visual cargo slot {slot} exceeds {location} capacity {capacity}")
     column, row = slot % columns, slot // columns
+    if compact:
+        station_id = {"source_S1": "S1", "source_S2": "S2", "source_S3": "S3",
+                      "ci": "CI", "co": "CO", "out": "OUT"}.get(location)
+        target_x, target_y = layout.stations[station_id] if station_id else (
+            (rect.xmin + rect.xmax) / 2, (rect.ymin + rect.ymax) / 2,
+        )
+        slots = [(col, row_index) for row_index in range(rows) for col in range(columns)]
+        slots.sort(key=lambda item: (
+            (rect.xmin + margin + tote_x / 2 + item[0] * pitch_x - target_x) ** 2
+            + (rect.ymin + margin + tote_y / 2 + item[1] * pitch_y - target_y) ** 2,
+            item[1], item[0],
+        ))
+        column, row = slots[slot]
     x = rect.xmin + margin + tote_x / 2 + column * pitch_x
     y = rect.ymin + margin + tote_y / 2 + row * pitch_y
     z = height - margin - tote_z / 2
@@ -232,7 +255,9 @@ class FactoryVisualRuntime:
         shutil.copyfile(self.base_scene_path, copied_base)
         if _sha_file(copied_base) != base_before or _sha_file(self.base_scene_path) != base_before:
             raise ValueError("visual scene base copy changed source bytes")
-        config_dir = self.layout_path.parent
+        config_dir = Path(__file__).resolve().parents[2] / "configs" / (
+            "factory-v4" if self.layout.data.get("revision") == "amr-production-bay-v4" else "factory-v3"
+        )
         visual_config = config_dir / "visual-assets.json"
         render_profile = config_dir / "render-profile.json"
         exported = export_visual_scene(
@@ -606,10 +631,7 @@ class FactoryVisualRuntime:
         readbacks: list[dict[str, object]] = []
         color_temperature = 5200.0 + 100.0 * (self.variant_seed % 4)
         assert self.layout is not None
-        bounds = self.layout.bounds
-        xs = tuple(bounds.xmin + (bounds.xmax - bounds.xmin) * fraction for fraction in (.2, .5, .8))
-        ys = tuple(bounds.ymin + (bounds.ymax - bounds.ymin) * fraction for fraction in (5 / 24, 19 / 24))
-        for index, (x, y) in enumerate((x, y) for y in ys for x in xs):
+        for index, (x, y) in enumerate(light_positions(self.layout)):
             path = f"/World/Visuals/Lights/Panel_{index}"
             light = UsdLux.RectLight.Define(self.stage, path)
             light.CreateWidthAttr(5.0)
