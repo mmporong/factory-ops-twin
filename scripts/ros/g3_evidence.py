@@ -1805,12 +1805,16 @@ def validate_g3_evidence(
     mission = _load_json(output / "mission-result.json", errors)
     control = _load_json(output / "mission-control.json", errors)
     session_marker = _load_json(output / "session-verified.json", errors)
-    primary_identity = validate_mission_primary_identity(session_root, session, mission, errors)
     documents = ((ready, "ready"), (scene, "validated"), (mission, "passed"), (control, "passed"))
     for document, status in documents:
         if (not isinstance(document, Mapping) or document.get("run_id") != run_id
                 or document.get("scenario_id") != scenario_id or document.get("status") != status):
             errors.append(f"worker document is not the matching {status} result")
+    ready, scene, mission, control = (
+        document if isinstance(document, Mapping) else {} for document in (ready, scene, mission, control)
+    )
+    session_marker = session_marker if isinstance(session_marker, Mapping) else {}
+    primary_identity = validate_mission_primary_identity(session_root, session, mission, errors)
     if (not re.fullmatch(r"[0-9a-f]{32}", run_id) or not isinstance(pair, Mapping)
             or pair.get("run_id") != run_id or pair.get("scenario_id") != scenario_id
             or pair.get("nav_exit_code") != 0 or pair.get("sim_exit_code") != 0

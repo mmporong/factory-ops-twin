@@ -8,13 +8,14 @@ import hashlib
 import json
 import math
 import os
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 import re
 import sys
 from typing import Any, Mapping
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from factory_ops.g3_session import verify_session
+from factory_ops.g3_build_attestation import PRESERVED_BUILD_FILES
 from factory_ops.source_provenance import verify_source_archive
 from scripts.isaac import g2_scene
 from scripts.isaac.factory_visuals import FactoryVisualRuntime
@@ -132,7 +133,11 @@ class BarrierLifecycle:
                 or not scene.is_file() or not output.is_dir()):
             raise g2_scene.base.SmokeError("G3 bootstrap scene/output differs from the verified session")
         required_files = {"session-verified.json", "provenance/source.tar",
-                          "provenance/source-commit.raw", "provenance/source-environment.json"}
+                          "provenance/source-commit.raw", "provenance/source-environment.json",
+                          "provenance/build-manifest.json", *PRESERVED_BUILD_FILES}
+        required_directories = {parent.as_posix() for relative in required_files
+                                for parent in PurePosixPath(relative).parents
+                                if parent != PurePosixPath(".")}
         files, directories = set(), set()
         for path in output.rglob("*"):
             if path.is_symlink():
@@ -144,7 +149,7 @@ class BarrierLifecycle:
                 directories.add(relative)
             else:
                 raise g2_scene.base.SmokeError("G3 bootstrap contains a special file")
-        if files != required_files or directories != {"provenance"}:
+        if files != required_files or directories != required_directories:
             raise g2_scene.base.SmokeError("G3 bootstrap exact file set differs; output must be a new attempt")
         source_commit = os.environ.get("FACTORY_OPS_G3_SOURCE_COMMIT", "")
         expected_session_sha = os.environ.get("FACTORY_OPS_G3_SESSION_SHA256", "")
@@ -178,6 +183,31 @@ class BarrierLifecycle:
                 or environment.get("session_json_sha256") != expected_session_sha
                 or environment.get("scenario_id") != self.session["scenario_id"]):
             raise g2_scene.base.SmokeError("G3 bootstrap source environment identity differs")
+        manifest_path = provenance / "build-manifest.json"
+        if (environment.get("build_provenance_manifest_path") != "provenance/build-manifest.json"
+                or g2_scene.base._sha256(manifest_path) != environment.get("build_provenance_manifest_sha256")):
+            raise g2_scene.base.SmokeError("G3 bootstrap build provenance manifest pin differs")
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        if (not isinstance(manifest, dict) or set(manifest) != {"schema_version", "classification", "files"}
+                or manifest.get("schema_version") != 1
+                or manifest.get("classification") != "g3_build_provenance_bundle"
+                or not isinstance(manifest.get("files"), list)):
+            raise g2_scene.base.SmokeError("G3 bootstrap build provenance manifest differs")
+        observed = set()
+        for entry in manifest["files"]:
+            if (not isinstance(entry, dict) or set(entry) != {"path", "bytes", "sha256"}
+                    or not isinstance(entry.get("path"), str)
+                    or entry["path"] not in PRESERVED_BUILD_FILES or entry["path"] in observed
+                    or type(entry.get("bytes")) is not int or entry["bytes"] < 0
+                    or not isinstance(entry.get("sha256"), str)
+                    or re.fullmatch(r"[0-9a-f]{64}", entry["sha256"]) is None):
+                raise g2_scene.base.SmokeError("G3 bootstrap build provenance entry differs")
+            path = output / entry["path"]
+            if path.stat().st_size != entry["bytes"] or g2_scene.base._sha256(path) != entry["sha256"]:
+                raise g2_scene.base.SmokeError("G3 bootstrap build provenance bytes differ")
+            observed.add(entry["path"])
+        if observed != PRESERVED_BUILD_FILES:
+            raise g2_scene.base.SmokeError("G3 bootstrap build provenance exact set differs")
         source_files = environment.get("source_files")
         if not isinstance(source_files, dict) or not {
             "scripts/isaac/g3_scene.py", "scripts/isaac/g2_scene.py", "factory_ops/source_provenance.py"

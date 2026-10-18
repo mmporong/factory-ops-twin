@@ -15,6 +15,21 @@ IMAGE_ID = re.compile(r"^sha256:[0-9a-f]{64}$")
 REPO_DIGEST = re.compile(r"^[A-Za-z0-9._/:+-]+@sha256:[0-9a-f]{64}$")
 BUILDER_MODE = "legacy_docker_builder_docker_buildkit_0"
 LEGACY_BUILD_PREFIX = ["env", "DOCKER_BUILDKIT=0", "docker", "build"]
+PRESERVED_BUILD_FILES = frozenset({
+    "provenance/build/build-attestation.json",
+    "provenance/build/build-receipt.json",
+    "provenance/build/commands.jsonl",
+    "provenance/build/built-image.iid",
+    "provenance/build/base-image-inspect.json",
+    "provenance/build/built-image-inspect.json",
+    "provenance/build/installed-measurement.json",
+    "provenance/build/current-base-image-inspect.json",
+    "provenance/build/current-built-image-inspect.json",
+    "provenance/build/preflight/preflight-measurement.json",
+    "provenance/build/preflight/installed/package.xml",
+    "provenance/build/preflight/installed/plugins.xml",
+    "provenance/build/preflight/installed/libfactory_ops_goal_checker.so",
+})
 SOURCE_PATHS = (
     "scripts/ros/Dockerfile.g3",
     "ros_ws/src/factory_ops_goal_checker/CMakeLists.txt",

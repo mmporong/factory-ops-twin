@@ -16,7 +16,7 @@ from typing import Any
 import uuid
 
 from .experiments import canonical_hash
-from .g3_build_attestation import BUILDER_MODE, _validate_build_commands
+from .g3_build_attestation import BUILDER_MODE, PRESERVED_BUILD_FILES, _validate_build_commands
 from .g3_session import verify_session
 from .source_provenance import verify_source_archive
 
@@ -29,21 +29,7 @@ _SHA256 = re.compile(r"^[0-9a-f]{64}$")
 _COMMIT = re.compile(r"^[0-9a-f]{40}$")
 _SEQUENTIAL_BOUNDARY = "local_coordinator_receipts_hash_bound_not_live_reverified"
 _ABSOLUTE_RESERVE_BYTES = 20_000_000_000
-_BUILD_PROVENANCE_FILES = {
-    "provenance/build/build-attestation.json",
-    "provenance/build/build-receipt.json",
-    "provenance/build/commands.jsonl",
-    "provenance/build/built-image.iid",
-    "provenance/build/base-image-inspect.json",
-    "provenance/build/built-image-inspect.json",
-    "provenance/build/installed-measurement.json",
-    "provenance/build/current-base-image-inspect.json",
-    "provenance/build/current-built-image-inspect.json",
-    "provenance/build/preflight/preflight-measurement.json",
-    "provenance/build/preflight/installed/package.xml",
-    "provenance/build/preflight/installed/plugins.xml",
-    "provenance/build/preflight/installed/libfactory_ops_goal_checker.so",
-}
+_BUILD_PROVENANCE_FILES = PRESERVED_BUILD_FILES
 # A primary package adds the frozen shared closure to a pilot-shaped package.
 # PACKAGE_NAME is an uncompressed POSIX tar (the writer uses ``w|``), so no
 # gzip/deflate expansion applies.  Each added file is charged for tar

@@ -2,15 +2,18 @@
 
 from __future__ import annotations
 
+import ast
 import json
 import math
 import os
+import re
 from pathlib import Path
 import tempfile
 from types import SimpleNamespace
 import unittest
 from unittest.mock import Mock, patch
 
+from factory_ops.g3_build_attestation import PRESERVED_BUILD_FILES
 from scripts.isaac.g3_scene import BarrierLifecycle
 from scripts.isaac import g2_scene
 from scripts.ros.g3_mission import session_verification_record
@@ -457,6 +460,17 @@ class G3BootstrapPathTests(unittest.TestCase):
         provenance.mkdir(parents=True)
         (provenance / "source.tar").write_bytes(b"explicit_non_evidence_archive_fixture")
         (provenance / "source-commit.raw").write_bytes(b"explicit_non_evidence_commit_fixture")
+        build_files = []
+        for relative in sorted(PRESERVED_BUILD_FILES):
+            path = self.output / relative
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(b"explicit_non_evidence_build_fixture:" + relative.encode())
+            build_files.append({"path": relative, "bytes": path.stat().st_size,
+                                "sha256": g2_scene.base._sha256(path)})
+        self.build_manifest_path = provenance / "build-manifest.json"
+        self.build_manifest_path.write_text(json.dumps({
+            "schema_version": 1, "classification": "g3_build_provenance_bundle", "files": build_files,
+        }), encoding="utf-8")
         self.session_sha = g2_scene.base._sha256(self.session_root / "session.json")
         self.archive_sha = g2_scene.base._sha256(provenance / "source.tar")
         self.commit_sha = g2_scene.base._sha256(provenance / "source-commit.raw")
@@ -465,6 +479,8 @@ class G3BootstrapPathTests(unittest.TestCase):
             "checkout_clean": True, "source_git_object_verification": True,
             "session_json_sha256": self.session_sha, "scenario_id": self.session["scenario_id"],
             "source_archive_sha256": self.archive_sha, "source_commit_object_sha256": self.commit_sha,
+            "build_provenance_manifest_path": "provenance/build-manifest.json",
+            "build_provenance_manifest_sha256": g2_scene.base._sha256(self.build_manifest_path),
             "source_files": {key: "c" * 64 for key in (
                 "scripts/isaac/g3_scene.py", "scripts/isaac/g2_scene.py", "factory_ops/source_provenance.py")},
         }
@@ -497,6 +513,16 @@ class G3BootstrapPathTests(unittest.TestCase):
             self.output / "provenance/source-commit.raw", "b" * 40, self.environment["source_files"],
             snapshot_root=self.project)
 
+    def test_build_paths_match_the_production_supervisor(self) -> None:
+        supervisor = (Path(__file__).resolve().parents[1] / "scripts/brev/run-g3.sh").read_text(encoding="utf-8")
+        match = re.search(r"build_sources=(\{.*?\n\})", supervisor, re.S)
+        self.assertIsNotNone(match)
+        assert match is not None
+        assignment = ast.parse("build_sources=" + match.group(1)).body[0]
+        assert isinstance(assignment, ast.Assign) and isinstance(assignment.value, ast.Dict)
+        actual = {key.value for key in assignment.value.keys if isinstance(key, ast.Constant)}
+        self.assertEqual(actual, PRESERVED_BUILD_FILES)
+
     def test_extra_file_empty_directory_and_missing_bootstrap_are_rejected(self) -> None:
         extra = self.output / "old-result.json"
         extra.write_text("{}", encoding="utf-8")
@@ -509,6 +535,12 @@ class G3BootstrapPathTests(unittest.TestCase):
         extra.rmdir()
         self.marker_path.unlink()
         with self.assertRaisesRegex(g2_scene.base.SmokeError, "exact file set"):
+            self.lifecycle.prepare_worker_paths(self.scene, self.output)
+
+    def test_changed_preserved_build_file_is_rejected(self) -> None:
+        path = self.output / "provenance/build/preflight/installed/plugins.xml"
+        path.write_bytes(path.read_bytes() + b"changed")
+        with self.assertRaisesRegex(g2_scene.base.SmokeError, "build provenance"):
             self.lifecycle.prepare_worker_paths(self.scene, self.output)
 
     def test_marker_identity_and_empty_primary_digest_cannot_bypass_binding(self) -> None:
