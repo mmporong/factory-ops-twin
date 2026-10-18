@@ -7,9 +7,10 @@ import hashlib
 import json
 from math import ceil, isfinite
 import os
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 import re
 import shutil
+import stat
 import subprocess
 from typing import Any
 import uuid
@@ -57,18 +58,40 @@ _VM_PROBE_FIELDS = {
 
 
 def _load(path: Path, name: str) -> dict[str, Any]:
-    if not path.is_absolute() or path.is_symlink() or not path.is_file():
-        raise ValueError(f"{name} must be an absolute regular file")
-    value = json.loads(path.read_text(encoding="utf-8"))
+    checked = _no_link_path(path, name, require_file=True)
+    value = json.loads(checked.read_text(encoding="utf-8"))
     if not isinstance(value, dict):
         raise ValueError(f"{name} must contain an object")
     return value
 
 
-def _snapshot_bytes(path: Path, name: str, snapshots: _Snapshots) -> bytes:
-    path = path.resolve(strict=True)
-    if path.is_symlink() or not path.is_file():
+def _is_link_or_junction(path: Path) -> bool:
+    return stat.S_ISLNK(os.lstat(path).st_mode) or (
+        hasattr(os.path, "isjunction") and os.path.isjunction(path)
+    )
+
+
+def _no_link_path(path: Path, name: str, *, require_file: bool = False,
+                  require_directory: bool = False) -> Path:
+    if not path.is_absolute() or ".." in path.parts:
+        raise ValueError(f"{name} must be an absolute lexical path without traversal")
+    checked = Path(os.path.normpath(str(path)))
+    chain = [checked, *checked.parents]
+    for component in reversed(chain):
+        if not component.exists() and not component.is_symlink():
+            raise ValueError(f"{name} path component is absent: {component}")
+        if _is_link_or_junction(component):
+            raise ValueError(f"{name} path must not traverse a symlink or junction")
+    leaf = os.lstat(checked)
+    if require_file and not stat.S_ISREG(leaf.st_mode):
         raise ValueError(f"{name} must be an absolute regular file")
+    if require_directory and not stat.S_ISDIR(leaf.st_mode):
+        raise ValueError(f"{name} must be an absolute directory")
+    return checked
+
+
+def _snapshot_bytes(path: Path, name: str, snapshots: _Snapshots) -> bytes:
+    path = _no_link_path(path, name, require_file=True)
     before = path.stat(follow_symlinks=False)
     raw = path.read_bytes()
     after = path.stat(follow_symlinks=False)
@@ -93,8 +116,7 @@ def _snapshot_load(path: Path, name: str, snapshots: _Snapshots) -> dict[str, An
 
 def _assert_snapshots(snapshots: _Snapshots) -> None:
     for path, expected in snapshots.items():
-        if path.is_symlink() or not path.is_file():
-            raise ValueError(f"snapshotted input disappeared: {path}")
+        path = _no_link_path(path, "snapshotted input", require_file=True)
         before = path.stat(follow_symlinks=False)
         digest = sha(path)
         after = path.stat(follow_symlinks=False)
@@ -144,7 +166,7 @@ def _host_source_commit(
 ) -> str:
     if not repository.is_absolute() or repository.is_symlink() or not repository.is_dir():
         raise ValueError("host source repository must be an absolute regular directory")
-    repository = repository.resolve(strict=True)
+    repository = _no_link_path(repository, "host source repository", require_directory=True)
     live_root = Path(__file__).resolve(strict=True).parents[1]
     if repository != live_root:
         raise ValueError("host source repository must be the active execution checkout")
@@ -198,12 +220,25 @@ def _host_source_commit(
     return head
 
 
-def _reference(root: Path, relative: object, expected_sha: object, name: str) -> Path:
-    if not isinstance(relative, str) or not _SHA256.fullmatch(str(expected_sha)):
+def _reference(
+    root: Path, relative: object, expected_sha: object, name: str,
+    snapshots: _Snapshots | None = None,
+) -> Path:
+    if (not isinstance(relative, str) or "\\" in relative
+            or not _SHA256.fullmatch(str(expected_sha))):
         raise ValueError(f"{name} reference is invalid")
-    path = (root / relative).resolve(strict=True)
-    if not path.is_relative_to(root) or path.is_symlink() or not path.is_file() or sha(path) != expected_sha:
+    parsed = PurePosixPath(relative)
+    if (parsed.is_absolute() or parsed.as_posix() != relative
+            or any(part in {"", ".", ".."} for part in parsed.parts)):
+        raise ValueError(f"{name} reference path is unsafe")
+    checked_root = _no_link_path(root, f"{name} root", require_directory=True)
+    path = checked_root.joinpath(*parsed.parts)
+    active = snapshots if snapshots is not None else {}
+    _snapshot_bytes(path, name, active)
+    if active[path][4] != expected_sha:
         raise ValueError(f"{name} referenced bytes differ")
+    if snapshots is None:
+        _assert_snapshots(active)
     return path
 
 
@@ -347,8 +382,7 @@ def capture_vm_capacity_probe(
     if output.exists() or output.is_symlink():
         raise FileExistsError("remote VM probe output already exists")
     output.parent.mkdir(parents=True, exist_ok=True)
-    if output.parent.is_symlink() or output.parent.resolve(strict=True) != output.parent:
-        raise ValueError("remote VM probe parent must not traverse links")
+    _no_link_path(output.parent, "remote VM probe parent", require_directory=True)
     _assert_snapshots(capture_snapshots)
     if _host_source_commit(
             host_repository, expected_host_commit, source_review_path,
@@ -387,9 +421,16 @@ def _validate_primary_store_result(
         _number(result[name], f"previous {name}", positive=True)
     evidence_root = result_path.parents[3]
     canonical_result = evidence_root / "stores" / store_id / run_id / "store-run-result.json"
-    namespace = store_root / "factory-ops-g3" / run_id
-    if (result_path != canonical_result.resolve(strict=True)
-            or Path(str(result["store_namespace"])).resolve(strict=True) != namespace.resolve(strict=True)):
+    checked_store_root = _no_link_path(store_root, "sealed store root", require_directory=True)
+    namespace = checked_store_root / "factory-ops-g3" / run_id
+    checked_namespace = _no_link_path(namespace, "sealed store namespace", require_directory=True)
+    declared_namespace = Path(str(result["store_namespace"]))
+    checked_declared = _no_link_path(
+        declared_namespace, "declared sealed store namespace", require_directory=True)
+    if (result_path != canonical_result
+            or checked_namespace != namespace or checked_declared != namespace
+            or namespace.resolve(strict=True) != namespace
+            or not namespace.is_relative_to(checked_store_root)):
         raise ValueError("previous G5 evidence or sealed store namespace is not canonical")
     package_path = namespace / PACKAGE_NAME
     _snapshot_bytes(package_path, "previous preserved package", snapshots)
@@ -397,7 +438,7 @@ def _validate_primary_store_result(
             or package_path.stat().st_size != package_bytes or sha(package_path) != package_sha256):
         raise ValueError("previous preserved package bytes differ")
     record_path = _reference(evidence_root, result["package_record"]["path"],
-                             result["package_record"]["sha256"], "package record")
+                             result["package_record"]["sha256"], "package record", snapshots)
     record = _snapshot_load(record_path, "package record", snapshots)
     copied_record = namespace / "package-record.json"
     _snapshot_bytes(copied_record, "preserved package record", snapshots)
@@ -415,7 +456,7 @@ def _validate_primary_store_result(
             or record.get("package_bytes") != package_bytes):
         raise ValueError("previous package record differs from run/source/package")
     envelope_path = _reference(evidence_root, result["raw_envelope"]["path"],
-                               result["raw_envelope"]["sha256"], "raw envelope")
+                               result["raw_envelope"]["sha256"], "raw envelope", snapshots)
     _snapshot_bytes(envelope_path, "raw envelope", snapshots)
     copied_envelope = namespace / ENVELOPE_NAME
     _snapshot_bytes(copied_envelope, "preserved raw envelope", snapshots)
@@ -432,7 +473,7 @@ def _validate_primary_store_result(
             or record.get("raw_envelope_sha256") != sha(envelope_path)):
         raise ValueError("previous raw envelope differs from package/source closure")
     closure_path = _reference(evidence_root, result["source_support_closure"]["path"],
-                              result["source_support_closure"]["sha256"], "source closure")
+                              result["source_support_closure"]["sha256"], "source closure", snapshots)
     closure = _snapshot_load(closure_path, "source closure", snapshots)
     copied_closure = namespace / "source-support-closure.json"
     _snapshot_bytes(copied_closure, "preserved source closure", snapshots)
@@ -443,7 +484,7 @@ def _validate_primary_store_result(
             or record.get("source_support_closure_sha256") != sha(closure_path)):
         raise ValueError("previous source closure differs")
     manifest_path = _reference(evidence_root, record["package_manifest"]["path"],
-                               record["package_manifest"]["sha256"], "package manifest")
+                               record["package_manifest"]["sha256"], "package manifest", snapshots)
     manifest = _snapshot_load(manifest_path, "package manifest", snapshots)
     copied_manifest = namespace / "package-manifest.json"
     _snapshot_bytes(copied_manifest, "preserved package manifest", snapshots)
@@ -464,7 +505,7 @@ def _validate_primary_store_result(
     }:
         raise ValueError("previous package manifest closure differs")
     preservation_path = _reference(evidence_root, result["preservation_receipt"]["path"],
-                                   result["preservation_receipt"]["sha256"], "preservation receipt")
+                                   result["preservation_receipt"]["sha256"], "preservation receipt", snapshots)
     preservation = _snapshot_load(preservation_path, "preservation receipt", snapshots)
     expected_preservation = {
         "schema_version": 1, "classification": "g3_local_package_preservation_receipt",
@@ -476,7 +517,7 @@ def _validate_primary_store_result(
     if preservation != expected_preservation:
         raise ValueError("previous preservation receipt differs")
     restore_path = _reference(evidence_root, result["full_restore_receipt"]["path"],
-                              result["full_restore_receipt"]["sha256"], "full restore receipt")
+                              result["full_restore_receipt"]["sha256"], "full restore receipt", snapshots)
     restore = _snapshot_load(restore_path, "full restore receipt", snapshots)
     expected_restore = {
         "schema_version": 1, "classification": "g3_full_restore_receipt",
@@ -498,7 +539,7 @@ def _validate_primary_store_result(
             or sha(manifest) != record["output_manifest_sha256"]):
         raise ValueError("previous restored archive or manifest bytes differ")
     semantic_path = _reference(evidence_root, result["semantic_replay_report"]["path"],
-                               result["semantic_replay_report"]["sha256"], "semantic replay")
+                               result["semantic_replay_report"]["sha256"], "semantic replay", snapshots)
     semantic = _snapshot_load(semantic_path, "semantic replay", snapshots)
     if semantic != {
         "schema_version": 1, "classification": "g3_existing_semantic_replay_report",
@@ -531,7 +572,8 @@ def _validate_previous_chain(
                 or not Path(str(reference.get("path"))).is_absolute()
                 or not _SHA256.fullmatch(str(reference.get("expected_sha256")))):
             raise ValueError("previous primary receipt requires an external path/SHA pin")
-        path = Path(str(reference["path"])).resolve(strict=True)
+        path = _no_link_path(Path(str(reference["path"])), "previous primary receipt",
+                             require_file=True)
         if path in seen_paths:
             raise ValueError("previous primary receipt path is duplicated")
         seen_paths.add(path)
@@ -558,11 +600,14 @@ def _validate_previous_chain(
             "expected_source_commit": prior["expected_source_commit"],
         }:
             raise ValueError("previous primary input manifest changed while normalized")
-        prior_trial = _snapshot_load(prior["trial_path"].resolve(strict=True),
+        prior_trial_path = _no_link_path(prior["trial_path"], "previous frozen primary trial",
+                                         require_file=True)
+        prior_calibration_path = _no_link_path(
+            prior["calibration_path"], "previous frozen calibration", require_file=True)
+        prior_trial = _snapshot_load(prior_trial_path,
                                      "previous frozen primary trial", snapshots)
         if (prior_trial != matrix[index - 1]
-                or prior["calibration_path"].resolve(strict=True)
-                != frozen_primary["calibration_path"].resolve(strict=True)
+                or prior_calibration_path != frozen_primary["calibration_path"]
                 or prior["pilot_slots"] != frozen_primary["pilot_slots"]
                 or prior["resource_input"] != frozen_primary["resource_input"]
                 or prior["expected_source_commit"] != PRODUCER_SOURCE_COMMIT):
@@ -593,7 +638,7 @@ def _validate_previous_chain(
             raw_result_path = Path(str(preservation["store_result_path"]))
             if not raw_result_path.is_absolute():
                 raise ValueError("previous store result path must be absolute")
-            result_path = raw_result_path.resolve(strict=True)
+            result_path = _no_link_path(raw_result_path, "previous store result", require_file=True)
             if sha(result_path) != preservation["store_result_sha256"]:
                 raise ValueError("previous store result differs from its external SHA pin")
             store_closures.add(_validate_primary_store_result(
@@ -681,7 +726,9 @@ def recheck_campaign_launch(
         raise ValueError("experiment config changed while validated")
     if canonical_hash(settings) != EXPERIMENT_CONFIG_SHA256:
         raise ValueError("experiment config differs from fixed C")
-    calibration_path = pinned["calibration_path"].resolve(strict=True)
+    calibration_path = _no_link_path(pinned["calibration_path"], "frozen calibration",
+                                     require_file=True)
+    pinned["calibration_path"] = calibration_path
     calibration = _snapshot_load(calibration_path, "frozen calibration", snapshots)
     validate_calibration(
         calibration, pinned["pilot_slots"], pinned["resource_input"],
@@ -696,9 +743,10 @@ def recheck_campaign_launch(
     resource = pinned["resource_input"]
     if not isinstance(resource, Mapping) or resource.get("schema_version") != 2:
         raise ValueError("live recheck requires v2 resource input")
-    evidence_root = Path(str(resource["evidence_root"])).resolve(strict=True)
+    evidence_root = _no_link_path(Path(str(resource["evidence_root"])), "evidence root",
+                                  require_directory=True)
     plan_path = _reference(evidence_root, resource.get("sequential_plan_path"),
-                           resource.get("sequential_plan_sha256"), "sequential plan")
+                           resource.get("sequential_plan_sha256"), "sequential plan", snapshots)
     plan = _snapshot_load(plan_path, "sequential plan", snapshots)
     sequential = calibration.get("resources", {}).get("sequential_plan")
     if (not isinstance(sequential, Mapping) or sequential.get("plan_sha256") != sha(plan_path)
@@ -717,7 +765,7 @@ def recheck_campaign_launch(
         if not isinstance(reference, Mapping):
             raise ValueError("frozen coordinator reference is invalid")
         receipt_path = _reference(evidence_root, reference.get("path"), reference.get("sha256"),
-                                  "coordinator receipt")
+                                  "coordinator receipt", snapshots)
         receipt = _snapshot_load(receipt_path, "coordinator receipt", snapshots)
         store_id = receipt.get("store_id")
         identity = receipt.get("device_identity")
@@ -728,6 +776,11 @@ def recheck_campaign_launch(
         raise ValueError("frozen D and E identities are incomplete or duplicated")
     if set(store_roots) != {"D", "E"}:
         raise ValueError("live store roots must cover exact D and E")
+    checked_store_roots = {
+        store: _no_link_path(store_roots[store], f"live {store} store root",
+                             require_directory=True)
+        for store in ("D", "E")
+    }
     inventory = _snapshot_load(storage_inventory_path, "fresh storage inventory", snapshots)
     supplement = _snapshot_load(storage_supplement_manifest_path, "fresh storage supplement", snapshots)
     inventory_time = _fresh_time(inventory.get("observed_at_utc"), "inventory observed_at_utc",
@@ -736,7 +789,7 @@ def recheck_campaign_launch(
                                   now=now, not_before=not_before, max_age_s=age)
     current_identities = {
         store: sealed_store_identity(
-            store_root=store_roots[store], store_drive=f"{store}:",
+            store_root=checked_store_roots[store], store_drive=f"{store}:",
             inventory_path=storage_inventory_path,
             supplement_manifest_path=storage_supplement_manifest_path,
             supplement_manifest_sha256=storage_supplement_manifest_sha256,
@@ -746,13 +799,13 @@ def recheck_campaign_launch(
         raise ValueError("live sealed store identities differ from frozen receipts")
     matrix = build_matrix(settings)
     previous, actual_worst_package, stopped_hours, last_closed = _validate_previous_chain(
-        previous_receipt_paths, matrix, frozen_identities, pinned, store_roots,
+        previous_receipt_paths, matrix, frozen_identities, pinned, checked_store_roots,
         expected_host_commit, snapshots,
     )
     if last_closed is not None and not_before < last_closed:
         raise ValueError("not_before_utc must be at or after the latest primary closure")
     ordinal = len(previous) + 1
-    trial_path = pinned["trial_path"].resolve(strict=True)
+    trial_path = _no_link_path(pinned["trial_path"], "frozen primary trial", require_file=True)
     trial = _snapshot_load(trial_path, "frozen primary trial", snapshots)
     if trial != matrix[ordinal - 1]:
         raise ValueError("primary input trial is not the next canonical ordinal")
@@ -777,7 +830,7 @@ def recheck_campaign_launch(
         extra = int(_number(frozen_store.get("deduplicated_extra_bytes"),
                             "deduplicated store bytes"))
         required = ceil(remaining_runs * worst_package * (1 + reserve)) + extra + absolute_reserve
-        free = shutil.disk_usage(store_roots[store]).free
+        free = shutil.disk_usage(checked_store_roots[store]).free
         if free < required:
             raise ValueError(f"live {store} free space is insufficient")
         store_results[store] = {"device_identity": current_identities[store],
@@ -846,8 +899,7 @@ def recheck_campaign_launch(
     if output.exists() or output.is_symlink():
         raise FileExistsError("live recheck namespace already exists")
     output.parent.mkdir(parents=True, exist_ok=True)
-    if output.parent.is_symlink() or output.parent.resolve(strict=True) != output.parent:
-        raise ValueError("live recheck parent must not traverse links")
+    _no_link_path(output.parent, "live recheck parent", require_directory=True)
     staging = output.with_name(f".{output.name}.{uuid.uuid4().hex}.partial")
     staging.mkdir()
     try:

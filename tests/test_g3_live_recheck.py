@@ -5,6 +5,7 @@ from datetime import datetime, timedelta, timezone
 import hashlib
 import json
 from math import ceil
+import os
 from pathlib import Path
 import tempfile
 import unittest
@@ -16,6 +17,8 @@ from factory_ops.g3_live_recheck import (
     PRODUCER_SOURCE_COMMIT,
     _host_source_commit,
     _parse_df_stdout,
+    _reference,
+    _snapshot_bytes,
     _validate_primary_store_result,
     _validate_vm_inputs,
     recheck_campaign_launch,
@@ -437,6 +440,46 @@ class LiveRecheckTests(unittest.TestCase):
             _validate_primary_store_result(
                 result_path=fake, store_root=self.store_roots["D"], store_id="D",
                 device_identity="sealed-D", run_id="1" * 32,
+                package_sha256="a" * 64, package_bytes=777, snapshots={},
+            )
+
+    @unittest.skipUnless(os.name == "posix", "actual symlink boundary requires WSL/Linux")
+    def test_WSL_final_and_intermediate_symlinks_are_rejected(self) -> None:
+        link_root = self.root / "wsl-link-fixture"
+        link_root.mkdir()
+        target = link_root / "target.json"
+        save(target, {"fixture_boundary": "explicit_nonphysical_symlink_target"})
+        final_link = link_root / "final-link.json"
+        final_link.symlink_to(target)
+        with self.assertRaisesRegex(ValueError, "symlink or junction"):
+            _snapshot_bytes(final_link, "final symlink fixture", {})
+        with self.assertRaisesRegex(ValueError, "symlink or junction"):
+            _reference(link_root, final_link.name, digest(target), "reference symlink fixture", {})
+
+        run_id = "1" * 32
+        evidence = link_root / "evidence" / "stores" / "D" / run_id
+        evidence.mkdir(parents=True)
+        store_root = link_root / "store-D"
+        namespace_parent = store_root / "factory-ops-g3"
+        namespace_parent.mkdir(parents=True)
+        outside = link_root / "outside-namespace"
+        outside.mkdir()
+        namespace = namespace_parent / run_id
+        namespace.symlink_to(outside, target_is_directory=True)
+        result_path = evidence / "store-run-result.json"
+        save(result_path, {
+            "schema_version": 1, "classification": "g3_local_store_run_result",
+            "store_id": "D", "device_identity": "sealed-D", "run_id": run_id,
+            "package_record": {}, "preservation_receipt": {}, "full_restore_receipt": {},
+            "semantic_replay_report": {}, "source_support_closure": {}, "raw_envelope": {},
+            "package_phase_wall_time_s": 1.0, "offload_phase_wall_time_s": 1.0,
+            "restore_phase_wall_time_s": 1.0, "semantic_phase_wall_time_s": 1.0,
+            "store_namespace": str(namespace), "cleanup_authorized": False,
+        })
+        with self.assertRaisesRegex(ValueError, "symlink or junction"):
+            _validate_primary_store_result(
+                result_path=result_path, store_root=store_root, store_id="D",
+                device_identity="sealed-D", run_id=run_id,
                 package_sha256="a" * 64, package_bytes=777, snapshots={},
             )
 
