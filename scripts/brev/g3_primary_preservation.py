@@ -60,7 +60,8 @@ def main() -> int:
         required = {"output", "evidence_root", "ordinal", "trial_id", "primary_inputs_path",
                     "primary_inputs_sha256", "expected_source_commit", "expected_host_commit",
                     "live_eligibility_path", "live_eligibility_sha256", "store_result_paths",
-                    "stopped_storage_hours", "previous_receipt", "previous_receipt_sha256"}
+                    "store_roots", "stopped_storage_hours", "previous_receipt",
+                    "previous_receipt_sha256"}
         if set(value) != required:
             raise ValueError("primary close specification fields differ")
         previous = value["previous_receipt"]
@@ -74,6 +75,7 @@ def main() -> int:
             live_eligibility_path=Path(value["live_eligibility_path"]),
             live_eligibility_sha256=value["live_eligibility_sha256"],
             store_result_paths=[Path(path) for path in value["store_result_paths"]],
+            store_roots={store: Path(path) for store, path in value["store_roots"].items()},
             stopped_storage_hours=value["stopped_storage_hours"],
             previous_receipt=Path(previous) if previous is not None else None,
             previous_receipt_sha256=value["previous_receipt_sha256"],

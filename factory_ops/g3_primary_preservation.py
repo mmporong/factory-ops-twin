@@ -137,6 +137,33 @@ def _validate_live_eligibility(path: Path, expected_sha256: str, *, ordinal: int
     return value
 
 
+def _live_store_identities(value: Mapping[str, Any]) -> dict[str, str]:
+    stores = value.get("stores")
+    fields = {"device_identity", "free_bytes", "required_bytes",
+              "one_primary_replay_workspace_bytes"}
+    if not isinstance(stores, Mapping) or set(stores) != {"D", "E"}:
+        raise ValueError("live eligibility store set differs")
+    identities: dict[str, str] = {}
+    for store in ("D", "E"):
+        row = stores.get(store)
+        if not isinstance(row, Mapping) or set(row) != fields:
+            raise ValueError("live eligibility store shape differs")
+        identity = row.get("device_identity")
+        free = row.get("free_bytes")
+        required = row.get("required_bytes")
+        workspace = row.get("one_primary_replay_workspace_bytes")
+        if (not isinstance(identity, str) or not identity.strip()
+                or type(free) is not int or free < 0
+                or type(required) is not int or required < 0
+                or type(workspace) is not int or workspace < 0
+                or free < required):
+            raise ValueError("live eligibility store binding differs")
+        identities[store] = identity
+    if identities["D"] == identities["E"]:
+        raise ValueError("live eligibility store identities are not independent")
+    return identities
+
+
 def _snapshot(paths: Sequence[Path]) -> dict[Path, tuple[int, int, str]]:
     result: dict[Path, tuple[int, int, str]] = {}
     for path in paths:
@@ -514,6 +541,106 @@ def validate_primary_store_result(
     return result
 
 
+def _validate_closed_chain_entry(
+    *, receipt_path: Path, receipt_sha256: str, evidence_root: Path, ordinal: int,
+    matrix: Sequence[Mapping[str, Any]], current_manifest: Mapping[str, Any],
+    expected_source_commit: str, expected_host_commit: str,
+    expected_previous_sha256: str | None,
+    expected_previous_references: Sequence[Mapping[str, Any]],
+    store_roots: Mapping[str, Path],
+) -> dict[str, Any]:
+    checked_receipt = _plain(receipt_path, "chained primary receipt", file=True)
+    if not _SHA256.fullmatch(receipt_sha256) or _sha(checked_receipt) != receipt_sha256:
+        raise ValueError("chained primary receipt external SHA differs")
+    receipt = _load(checked_receipt, "chained primary receipt")
+    if (set(receipt) != _CLOSED_FIELDS or receipt.get("schema_version") != 2
+            or receipt.get("classification") != "g3_closed_primary_preservation_receipt"
+            or receipt.get("ordinal") != ordinal
+            or receipt.get("trial_id") != matrix[ordinal - 1]["trial_id"]
+            or receipt.get("source_commit") != expected_source_commit
+            or receipt.get("host_source_commit") != expected_host_commit
+            or receipt.get("previous_receipt_sha256") != expected_previous_sha256
+            or receipt.get("trial_outcome") not in _OUTCOMES
+            or receipt.get("attempt_status") not in {"collected", "collection_failed"}
+            or receipt.get("transient_disposition") != "removed_after_verified_close"
+            or receipt.get("transient_scope") != "owned_primary_replay_workspace_only"
+            or receipt.get("cleanup_authorized") is not False
+            or isinstance(receipt.get("stopped_storage_hours"), bool)
+            or not isinstance(receipt.get("stopped_storage_hours"), (int, float))
+            or not 0 <= float(receipt["stopped_storage_hours"]) < float("inf")):
+        raise ValueError("chained primary receipt closure differs")
+    primary_path = _plain(Path(str(receipt["primary_inputs_path"])),
+                          "chained primary input manifest", file=True)
+    primary_sha = str(receipt.get("primary_inputs_sha256"))
+    if not _SHA256.fullmatch(primary_sha) or _sha(primary_path) != primary_sha:
+        raise ValueError("chained primary manifest closure differs")
+    manifest = _load(primary_path, "chained primary input manifest")
+    manifest_fields = {"trial_path", "calibration_path", "pilot_slots", "resource_input",
+                       "expected_source_commit"}
+    if (set(manifest) != manifest_fields
+            or any(manifest[name] != current_manifest[name] for name in (
+                "calibration_path", "pilot_slots", "resource_input", "expected_source_commit"))):
+        raise ValueError("chained primary campaign closure differs")
+    trial = _load(Path(str(manifest["trial_path"])), "chained primary trial")
+    if trial != matrix[ordinal - 1] or trial.get("trial_id") != receipt["trial_id"]:
+        raise ValueError("chained primary trial ordinal binding differs")
+    live = receipt.get("live_eligibility")
+    if (not isinstance(live, Mapping) or set(live) != {"path", "sha256"}
+            or not isinstance(live.get("path"), str)
+            or not Path(str(live["path"])).is_absolute()):
+        raise ValueError("chained primary live eligibility closure differs")
+    live_value = _validate_live_eligibility(
+        Path(str(live["path"])), str(live["sha256"]), ordinal=ordinal,
+        trial_id=str(receipt["trial_id"]), source_commit=expected_source_commit,
+        host_commit=expected_host_commit, primary_inputs_sha256=primary_sha,
+    )
+    if live_value.get("previous_receipts") != list(expected_previous_references):
+        raise ValueError("chained live eligibility history differs")
+    identities = _live_store_identities(live_value)
+    package = receipt.get("package")
+    if (not isinstance(package, Mapping) or set(package) != {"bytes", "sha256"}
+            or type(package.get("bytes")) is not int or int(package["bytes"]) <= 0
+            or not _SHA256.fullmatch(str(package.get("sha256")))):
+        raise ValueError("chained primary package closure differs")
+    preservations = receipt.get("preservations")
+    if not isinstance(preservations, list) or len(preservations) != 2:
+        raise ValueError("chained primary D/E references differ")
+    validated: dict[str, dict[str, Any]] = {}
+    for preservation in preservations:
+        fields = {"store_id", "device_identity", "store_result_path", "store_result_sha256"}
+        if (not isinstance(preservation, Mapping) or set(preservation) != fields
+                or preservation.get("store_id") not in {"D", "E"}
+                or preservation["store_id"] in validated):
+            raise ValueError("chained primary D/E reference differs")
+        store = str(preservation["store_id"])
+        result_path = _plain(Path(str(preservation["store_result_path"])),
+                             "chained primary store result", file=True)
+        if _sha(result_path) != preservation.get("store_result_sha256"):
+            raise ValueError("chained primary D/E result SHA differs")
+        validated[store] = validate_primary_store_result(
+            result_path=result_path, evidence_root=evidence_root, store_root=store_roots[store],
+            expected_store_id=store, expected_device_identity=identities[store],
+            expected_run_id=str(receipt["run_id"]),
+            expected_trial_id=str(receipt["trial_id"]),
+            expected_source_commit=expected_source_commit,
+            expected_primary_inputs_sha256=primary_sha,
+            expected_package_sha256=str(package["sha256"]),
+            expected_package_bytes=int(package["bytes"]),
+        )
+        if preservation["device_identity"] != identities[store]:
+            raise ValueError("chained primary D/E device identity differs")
+    if set(validated) != {"D", "E"}:
+        raise ValueError("chained primary D/E result set differs")
+    comparison = ("run_id", "trial_id", "source_commit", "trial_outcome", "attempt_status",
+                  "trial_result", "primary_inputs_sha256")
+    if (any(validated["D"][name] != validated["E"][name] for name in comparison)
+            or validated["D"]["trial_outcome"] != receipt["trial_outcome"]
+            or validated["D"]["attempt_status"] != receipt["attempt_status"]
+            or validated["D"]["trial_result"] != receipt["trial_result"]):
+        raise ValueError("chained primary outcome closure differs")
+    return receipt
+
+
 def preserve_primary_run(
     *, prepared_path: Path, evidence_root: Path, store_root: Path, store_id: str,
     storage_inventory: Path, storage_supplement_manifest: Path,
@@ -696,7 +823,8 @@ def close_primary_run(
     primary_inputs_path: Path, primary_inputs_sha256: str,
     expected_source_commit: str, expected_host_commit: str,
     live_eligibility_path: Path, live_eligibility_sha256: str,
-    store_result_paths: Sequence[Path], stopped_storage_hours: float,
+    store_result_paths: Sequence[Path], store_roots: Mapping[str, Path],
+    stopped_storage_hours: float,
     previous_receipt: Path | None = None, previous_receipt_sha256: str | None = None,
 ) -> Path:
     """Publish the exactly-once chain receipt after matching D/E replay closure."""
@@ -719,103 +847,28 @@ def close_primary_run(
     current_trial = _load(Path(str(current_manifest["trial_path"])), "current primary trial")
     if current_trial != matrix[ordinal - 1] or current_trial.get("trial_id") != trial_id:
         raise ValueError("current primary trial ordinal binding differs")
+    if not isinstance(store_roots, Mapping) or set(store_roots) != {"D", "E"}:
+        raise ValueError("trusted primary store roots differ")
+    trusted_store_roots = {
+        store: _plain(store_roots[store].resolve(strict=True),
+                      f"trusted primary {store} store root", directory=True)
+        for store in ("D", "E")
+    }
+    if trusted_store_roots["D"] == trusted_store_roots["E"]:
+        raise ValueError("trusted primary store roots are not independent")
     current_live = _validate_live_eligibility(
         live_eligibility_path, live_eligibility_sha256, ordinal=ordinal, trial_id=trial_id,
         source_commit=expected_source_commit, host_commit=expected_host_commit,
         primary_inputs_sha256=primary_inputs_sha256,
     )
-    previous_sha = None
+    current_identities = _live_store_identities(current_live)
+    previous_sha: str | None = None
     if previous_receipt is not None:
-        if (not isinstance(previous_receipt_sha256, str)
+        if (ordinal == 1 or not isinstance(previous_receipt_sha256, str)
                 or not _SHA256.fullmatch(previous_receipt_sha256)
                 or _sha(_plain(previous_receipt, "previous primary receipt", file=True))
                    != previous_receipt_sha256):
             raise ValueError("previous primary receipt external SHA pin differs")
-        previous = _load(previous_receipt, "previous primary receipt")
-        if (set(previous) != _CLOSED_FIELDS or previous.get("schema_version") != 2
-                or previous.get("classification") != "g3_closed_primary_preservation_receipt"
-                or previous.get("ordinal") != ordinal - 1
-                or previous.get("source_commit") != expected_source_commit
-                or previous.get("host_source_commit") != expected_host_commit
-                or previous.get("cleanup_authorized") is not False
-                or previous.get("transient_disposition") != "removed_after_verified_close"
-                or previous.get("transient_scope") != "owned_primary_replay_workspace_only"
-                or (ordinal == 2 and previous.get("previous_receipt_sha256") is not None)
-                or (ordinal > 2 and not _SHA256.fullmatch(
-                    str(previous.get("previous_receipt_sha256"))))):
-            raise ValueError("previous primary receipt chain differs")
-        previous_primary = _plain(Path(str(previous["primary_inputs_path"])),
-                                  "previous primary input manifest", file=True)
-        if (_sha(previous_primary) != previous.get("primary_inputs_sha256")
-                or not _SHA256.fullmatch(str(previous.get("primary_inputs_sha256")))):
-            raise ValueError("previous primary manifest closure differs")
-        previous_manifest = _load(previous_primary, "previous primary input manifest")
-        if (set(previous_manifest) != manifest_fields
-                or any(previous_manifest[name] != current_manifest[name] for name in (
-                    "calibration_path", "pilot_slots", "resource_input", "expected_source_commit"))
-                or previous_manifest["expected_source_commit"] != expected_source_commit):
-            raise ValueError("previous primary campaign closure differs")
-        previous_trial = _load(Path(str(previous_manifest["trial_path"])), "previous primary trial")
-        if (previous_trial != matrix[ordinal - 2]
-                or previous_trial.get("trial_id") != previous.get("trial_id")):
-            raise ValueError("previous primary trial ordinal binding differs")
-        live = previous.get("live_eligibility")
-        if (not isinstance(live, Mapping) or set(live) != {"path", "sha256"}
-                or not isinstance(live.get("path"), str)
-                or not Path(str(live["path"])).is_absolute()):
-            raise ValueError("previous live eligibility closure differs")
-        _validate_live_eligibility(
-            Path(str(live["path"])), str(live["sha256"]), ordinal=ordinal - 1,
-            trial_id=str(previous["trial_id"]), source_commit=expected_source_commit,
-            host_commit=expected_host_commit,
-            primary_inputs_sha256=str(previous["primary_inputs_sha256"]),
-        )
-        previous_trial_result = _resolve(evidence_root, previous["trial_result"],
-                                         "previous primary trial result")
-        previous_trial_value = _load(previous_trial_result, "previous primary trial result")
-        if (previous_trial_value.get("run_id") != previous.get("run_id")
-                or previous_trial_value.get("trial_id") != previous.get("trial_id")
-                or previous_trial_value.get("trial_outcome") != previous.get("trial_outcome")):
-            raise ValueError("previous primary result closure differs")
-        previous_package = previous.get("package")
-        if (not isinstance(previous_package, Mapping)
-                or set(previous_package) != {"bytes", "sha256"}
-                or type(previous_package.get("bytes")) is not int
-                or int(previous_package["bytes"]) <= 0
-                or not _SHA256.fullmatch(str(previous_package.get("sha256")))):
-            raise ValueError("previous primary package closure differs")
-        preservations = previous.get("preservations")
-        if not isinstance(preservations, list) or len(preservations) != 2:
-            raise ValueError("previous primary D/E closure differs")
-        prior_stores: dict[str, dict[str, Any]] = {}
-        for item in preservations:
-            if (not isinstance(item, Mapping) or set(item) != {
-                    "store_id", "device_identity", "store_result_path", "store_result_sha256"}):
-                raise ValueError("previous primary preservation reference differs")
-            prior_result_path = _plain(Path(str(item["store_result_path"])),
-                                       "previous primary store result", file=True)
-            if (_sha(prior_result_path) != item["store_result_sha256"]
-                    or item["store_id"] in prior_stores):
-                raise ValueError("previous primary preservation SHA differs")
-            preliminary = _load(prior_result_path, "previous primary store result")
-            namespace = Path(str(preliminary.get("persistent_namespace")))
-            if len(namespace.parents) < 3:
-                raise ValueError("previous primary store namespace differs")
-            validated = validate_primary_store_result(
-                result_path=prior_result_path, evidence_root=evidence_root,
-                store_root=namespace.parents[2], expected_store_id=str(item["store_id"]),
-                expected_device_identity=str(item["device_identity"]),
-                expected_run_id=str(previous["run_id"]),
-                expected_trial_id=str(previous["trial_id"]),
-                expected_source_commit=expected_source_commit,
-                expected_primary_inputs_sha256=str(previous["primary_inputs_sha256"]),
-                expected_package_sha256=str(previous_package["sha256"]),
-                expected_package_bytes=int(previous_package["bytes"]),
-            )
-            prior_stores[str(item["store_id"])] = validated
-        if (set(prior_stores) != {"D", "E"}
-                or prior_stores["D"]["device_identity"] == prior_stores["E"]["device_identity"]):
-            raise ValueError("previous primary D/E closure differs")
         previous_sha = previous_receipt_sha256
     elif ordinal != 1:
         raise ValueError("non-first primary closure requires its previous receipt")
@@ -835,38 +888,20 @@ def close_primary_run(
                 or not Path(str(reference["path"])).is_absolute()
                 or not _SHA256.fullmatch(str(reference.get("sha256")))):
             raise ValueError("live eligibility previous chain reference differs")
-        chain_path = _plain(Path(str(reference["path"])), "chained primary receipt", file=True)
-        if _sha(chain_path) != reference["sha256"]:
-            raise ValueError("chained primary receipt external SHA differs")
-        chained = _load(chain_path, "chained primary receipt")
-        if (set(chained) != _CLOSED_FIELDS or chained.get("schema_version") != 2
-                or chained.get("classification") != "g3_closed_primary_preservation_receipt"
-                or chained.get("ordinal") != index
-                or chained.get("trial_id") != reference["trial_id"]
-                or chained.get("run_id") != reference["run_id"]
-                or chained.get("primary_inputs_sha256") != reference["primary_inputs_sha256"]
-                or chained.get("source_commit") != expected_source_commit
-                or chained.get("host_source_commit") != expected_host_commit
-                or chained.get("previous_receipt_sha256") != prior_sha):
-            raise ValueError("chained primary receipt closure differs")
-        chained_preservations = chained.get("preservations")
-        if not isinstance(chained_preservations, list) or len(chained_preservations) != 2:
-            raise ValueError("chained primary D/E references differ")
-        seen_chain_stores: set[str] = set()
-        for preservation in chained_preservations:
-            if (not isinstance(preservation, Mapping)
-                    or set(preservation) != {"store_id", "device_identity",
-                                             "store_result_path", "store_result_sha256"}
-                    or preservation.get("store_id") not in {"D", "E"}
-                    or preservation["store_id"] in seen_chain_stores):
-                raise ValueError("chained primary D/E reference differs")
-            chained_store_path = _plain(Path(str(preservation["store_result_path"])),
-                                        "chained primary store result", file=True)
-            if _sha(chained_store_path) != preservation.get("store_result_sha256"):
-                raise ValueError("chained primary D/E result SHA differs")
-            seen_chain_stores.add(str(preservation["store_id"]))
-        if seen_chain_stores != {"D", "E"}:
-            raise ValueError("chained primary D/E result set differs")
+        chained = _validate_closed_chain_entry(
+            receipt_path=Path(str(reference["path"])),
+            receipt_sha256=str(reference["sha256"]), evidence_root=evidence_root,
+            ordinal=index, matrix=matrix, current_manifest=current_manifest,
+            expected_source_commit=expected_source_commit,
+            expected_host_commit=expected_host_commit,
+            expected_previous_sha256=prior_sha,
+            expected_previous_references=chain[:index - 1],
+            store_roots=trusted_store_roots,
+        )
+        if (chained.get("run_id") != reference["run_id"]
+                or chained.get("primary_inputs_sha256")
+                   != reference["primary_inputs_sha256"]):
+            raise ValueError("chained primary receipt reference differs")
         prior_sha = str(reference["sha256"])
     if ((ordinal == 1 and previous_sha is not None)
             or (ordinal > 1 and (prior_sha != previous_sha
@@ -884,12 +919,10 @@ def close_primary_run(
         store = str(preliminary.get("store_id"))
         if store not in {"D", "E"} or store in rows:
             raise ValueError("primary store result store identity differs")
-        namespace = Path(str(preliminary.get("persistent_namespace")))
-        if len(namespace.parents) < 3:
-            raise ValueError("primary store namespace differs")
         value = validate_primary_store_result(
-            result_path=path, evidence_root=evidence_root, store_root=namespace.parents[2],
-            expected_store_id=store, expected_trial_id=trial_id,
+            result_path=path, evidence_root=evidence_root, store_root=trusted_store_roots[store],
+            expected_store_id=store, expected_device_identity=current_identities[store],
+            expected_trial_id=trial_id,
             expected_source_commit=expected_source_commit,
             expected_primary_inputs_sha256=primary_inputs_sha256,
         )
