@@ -36,7 +36,7 @@ S1~S3은 동일한 키트 토트를 준비하는 위치입니다. 하나의 주�
 | 지도 생성 | 50 mm 격자, 물리 장애물 지도와 정책 keepout 지도 분리, ROS PGM·YAML 출력 |
 | USD 생성 | 비충돌 시각용 바닥과 물리 Plane 분리, 바닥·설비·마커 USDA 생성과 Isaac Sim 파싱 통과 |
 | 산업 공장 시각 층 | 설비 외곽 안의 랙·작업대·공정 장비·토트·팔레트, 안전 표시·재질·조명과 원장 기반 화물 표시 구현. 기존40×24 m 정적 RGB·라벨 QA 통과. 신규32×20 m 전체 운송·LiDAR·지도 정합의 통합 검증은 미완료 |
-| 렌더 데이터 수집기 | 기존40×24 m 배치의12개 시각 구성·360개 촬영 시점·3개 카메라에서 RGB1,080장과 대응 modality 수집. 전체 자동 검사·대표36장/48항목의 AI 검수 통과. 신규 배치의 데이터 QA는 별도 확인 필요 |
+| 렌더 데이터 수집기 | 기존40×24 m 배치의 RGB1,080장과 대응 modality 검사·대표 AI 검수 완료. 신규32×20 m의 배치·주차 위치·카메라·설정 해시를 연결한 수집·검사·미디어 경로는 CPU 검증 완료, 실제 촬영·데이터 QA는 남음 |
 | GPU 장면 검사 | Z-up·m 단위, 활성 충돌 API 20개·설비 19개·비충돌 마커 8개 검사, 1280×720 RGB와 SHA 저장 |
 | GPU 종료 판정 | 별도 worker 종료 뒤 supervisor가 실행 ID·장면·PNG·종료 코드를 대조. L40S 실행에서 최종 PASS 확인 |
 | 단일 AMR 운송 | S1 pickup→CI drop→공정 20초→CO pickup→OUT drop, 실제 goal UUID·성공 결과·신선한 map pose를 확인한 뒤 인계 확정 |
@@ -109,13 +109,13 @@ QA 보고서는 데이터셋 ID·실행 ID·검사한 명세의 크기와 SHA256
 
 `scripts/brev/g3_local_preservation.py`는 Linux/WSL에서 `prepare-run → preserve-run → finalize-store → finalize-plan` 순서로 파일럿 원본을 보관하는 도구입니다. 원본 패키지 생성·복사·전체 복원·Git bundle 검사·기존 의미 검증을 수행하고 단계별 시간을 측정합니다. D/E의 봉인된 물리 디스크 식별 자료와 실제 여유 공간을 확인하며, 실행 ID·소스·명세·복원 위치가 맞아야 보존 기록을 만듭니다. 상대 참조로 묶은 증거는 VM에서 다른 경로로 옮겨 검사할 수 있습니다. 두 저장소의 실제 6개 실행 기록이 갖춰지면 같은 용량·비용 계산식으로 다음 실행의 자원 계획을 검증합니다. `python scripts/brev/g3_local_preservation.py --help`에서 네 단계의 입력을 확인할 수 있습니다. CPU 통합 검증을 진행했으며 실제 파일럿 자료의 보존·복원은 새 실행 뒤 수행합니다. 이 도구는 VM 원본 삭제 권한을 부여하지 않습니다.
 
-실험 준비에는 `scripts/brev/g3_campaign.py`의 `actual-six`·`freeze-primary`, Windows의 `scripts/brev/g3_qualification_gate.py`, WSL의 `scripts/brev/g3_live_recheck.py`를 사용합니다. 각각 실제 여섯 실행의 입력과 60회 평가 입력 고정, 양쪽 디스크의 복원·별도 ROS 재검증 근거 확인, 실행 전 최신 비용·저장 공간·이전 원본 보존 확인을 담당합니다. 세 도구는 통합 회귀검사와 별도 코드 리뷰를 통과했습니다. 현재 q013 자료는 임무 실패로 승인되지 않으며, 실제 6개 파일럿과 60회 평가·본실험 보존 연결은 남아 있습니다. 각 도구의 `--help`에서 입력을 확인할 수 있습니다.
+실험 준비에는 `scripts/brev/g3_campaign.py`의 `actual-six`·`freeze-primary`, Windows의 `scripts/brev/g3_qualification_gate.py`, WSL의 `scripts/brev/g3_live_recheck.py`를 사용합니다. 각각 실제 여섯 실행의 입력과 60회 평가 입력 고정, 디스크 복원·ROS 재검증 근거 확인, 실행 전 최신 비용·저장 공간·이전 원본 보존 확인을 담당합니다. v4 실험의 spec에는 `campaign_protocol_path`로 [고정 프로토콜](configs/calibrations/g3-v4-campaign-protocol.json)의 절대 경로를 지정합니다. 프로토콜과 설정은 깨끗한 호스트 저장소의 커밋 바이트와 같아야 하며, 실행 자료의 생산자 소스·설정 해시도 일치해야 합니다. 이 연결의 CPU 검증은 마쳤지만 실제 6개 파일럿과 60회 평가는 아직 실행하지 않았습니다. 프로토콜 파일이나 미실행 입력만으로 실행을 승인하지 않습니다. 이전 q013 자료의 실패 판정도 유지합니다.
 
-`scripts/media/export_g3_media.py`는 검증된 qualification의 복원본에서 24초 원속도 영상, 전체 운영 영상, GIF와 대표 이미지를 생성합니다. 세 카메라의 화면을 보존하고, 해당 시각까지 기록된 주문·운반물·버퍼·주행 허가·예약 이유를 별도 패널에 표시합니다. 기록에 없는 원인이나 같은 시각 이벤트의 선후 관계는 추정해 넣지 않습니다. 실행에는 기존 Pillow·FFmpeg·FFprobe 환경, 깨끗한 고정 커밋, 원본 manifest·백업·복원 검증서와 물리 디스크 색인이 필요합니다. `python scripts/media/export_g3_media.py --help`에서 필수 경로를 확인할 수 있습니다. 후처리 소스와 원본을 생성 전후에 다시 해시하고 MP4·GIF 전체를 디코딩하며, 검증을 통과한 출력만 새 폴더로 확정합니다.
+`scripts/media/export_g3_media.py`는 검증된 qualification의 복원본에서 24초 원속도 영상, 전체 운영 영상, GIF와 대표 이미지를 생성합니다. 전체 운영 영상의 배속은 원본 시뮬레이션 시각으로 계산합니다. 10초 간격의 원본을 10 fps로 재생하면 100배속이며, 촬영 간격이 일정하지 않으면 고정 배속으로 내보내지 않습니다. 세 카메라 화면과 해당 시각까지 기록된 주문·운반물·버퍼·주행 허가·예약 이유를 표시합니다. 기록에 없는 원인이나 같은 시각 이벤트의 선후 관계는 추정하지 않습니다. `--source-commit`은 원본 생산자, `--postprocessor-commit`은 깨끗한 내보내기 코드의 커밋입니다. 후처리 인자를 생략하면 두 커밋이 같아야 합니다. 실행에는 기존 Pillow·FFmpeg·FFprobe 환경, 원본 manifest·백업·복원 검증서와 물리 디스크 색인이 필요합니다. 생성 전후 입력을 다시 해시하고 MP4·GIF 전체를 디코딩한 뒤 출력을 새 폴더로 확정합니다.
 
-`scripts/media/export_g4_media.py`는 최종 프로필의 자동 데이터 검사와 AI 포트폴리오 검수를 통과한 복원본에서 세 카메라의 원본 RGB와 RGB·깊이·semantic·instance/bbox 비교 이미지를 만듭니다. 전체 원본 복원, 두 물리 디스크의 백업, 촬영·라벨·검수·후처리 소스를 대조하고 게시 전후 출력의 파일 집합·크기·해시를 검사합니다. 이 경로로 위 G4 미디어와 최종 보고서를 생성했습니다. 사람의 릴리스 승인과 생산용 승인 상태는 별도로 기록합니다. `python scripts/media/export_g4_media.py --help`에서 필수 경로를 확인할 수 있습니다.
+`scripts/media/export_g4_media.py`는 최종 프로필의 자동 데이터 검사와 AI 포트폴리오 검수를 통과한 복원본에서 원본 RGB와 깊이·semantic·instance/bbox 비교 이미지를 만듭니다. 신규 배치에는 `--factory-profile factory-v4`를 지정하고, 기존 자료는 기본값 `factory-v3`로 처리합니다. 선택한 프로필의 배치·카메라·설정 해시와 촬영 환경을 대조하며, 전체 복원·두 물리 디스크의 백업·라벨·검수·후처리 소스 및 출력 해시도 검사합니다. 위 G4 미디어와 보고서는 기존 v3 자료에서 생성했습니다. 신규 v4 촬영·AI 검수·미디어 승인은 아직 남아 있습니다. 사람의 릴리스 승인과 생산용 승인 상태는 별도로 기록합니다.
 
-GPU 진단은 `scripts/brev/run-g4.sh`의 `g4-probe-NNN` 실행으로 시작합니다. 진단 자료는 미검수 상태로 보존하고, 새 실행은 별도 ID와 새 디렉터리를 사용합니다. 최종 화면과 대응 데이터가 검증된 뒤 대표 이미지와 영상을 갱신합니다. [전체 완료 조건](docs/completion-plan.md)에 운영 시나리오·비교 실험·미디어·복원 검증 범위를 기록했습니다.
+GPU 진단은 `scripts/brev/run-g4.sh <workspace-root> <g4-probe-NNN> <source-sha> [factory-v4|factory-v3]`로 시작합니다. 네 번째 인자의 기본값은 신규 배치인 `factory-v4`이며, 기존 배치는 `factory-v3`를 지정합니다. 진단 자료는 미검수 상태로 보존하고, 새 실행은 별도 ID와 새 디렉터리를 사용합니다. 최종 화면과 대응 데이터가 검증된 뒤 대표 이미지와 영상을 갱신합니다. [전체 완료 조건](docs/completion-plan.md)에 운영 시나리오·비교 실험·미디어·복원 검증 범위를 기록했습니다.
 
 ## G3 두 주문 운송·비교 실험 준비
 
