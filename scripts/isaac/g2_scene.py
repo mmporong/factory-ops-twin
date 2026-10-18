@@ -720,7 +720,10 @@ def _run(
         stage.SetStartTimeCode(0.0)
         stage.SetEndTimeCode(54000.0)
         base._wait_for_stage(app, stage_utils)
-        observed, mismatches = base._inspect_stage(stage, UsdGeom, UsdPhysics)
+        observed, mismatches = base._inspect_stage(
+            stage, UsdGeom, UsdPhysics,
+            bounds_xy=(layout.bounds.xmin, layout.bounds.ymin, layout.bounds.xmax, layout.bounds.ymax),
+        )
         result["observed_factory"] = observed
         if mismatches:
             raise base.SmokeError(f"factory invariants failed: {mismatches}")

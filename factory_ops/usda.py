@@ -37,7 +37,7 @@ def export_usda(layout: Layout, output_path: str | Path) -> dict[str, object]:
     bounds = layout.bounds
     lines.extend(_cube("FloorVisual", bounds, 0.1, -0.05, "floor_visual", collision=False, indent=4))
     lines.append("")
-    lines.extend(_collision_plane("Floor", indent=4))
+    lines.extend(_collision_plane("Floor", bounds=bounds, indent=4))
     lines.append("")
     lines.extend(_scope_open("Obstacles", 4))
     for obstacle in layout.data["physical_obstacles"]:
@@ -96,7 +96,7 @@ def _cube(name: str, rect: Rect, height: float, z: float, marker_id: str, *, col
     ]
 
 
-def _collision_plane(name: str, *, indent: int) -> list[str]:
+def _collision_plane(name: str, *, bounds: Rect, indent: int) -> list[str]:
     pad = " " * indent
     return [
         f'{pad}def Plane "{name}" (',
@@ -106,7 +106,7 @@ def _collision_plane(name: str, *, indent: int) -> list[str]:
         f'{pad}    uniform token axis = "Z"',
         f"{pad}    float3[] extent = [(-1, -1, 0), (1, 1, 0)]",
         f'{pad}    custom string markerId = "floor"',
-        f'{pad}    custom string physicsScope = "infinite plane; bounded operation is enforced by the 40x24 m occupancy map"',
+        f'{pad}    custom string physicsScope = "infinite plane; bounded operation is enforced by the {_num(bounds.xmax - bounds.xmin)}x{_num(bounds.ymax - bounds.ymin)} m occupancy map"',
         f"{pad}    bool physics:collisionEnabled = true",
         f'{pad}    token visibility = "invisible"',
         f"{pad}    quatd xformOp:orient = (1, 0, 0, 0)",

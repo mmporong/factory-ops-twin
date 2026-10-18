@@ -159,6 +159,32 @@ class StageInspectionTests(unittest.TestCase):
         self.assertIn("collision_prim_paths", mismatches)
         self.assertIn("marker_collision_prim_paths", mismatches)
 
+    def test_compact_bounds_validate_visual_slab_and_occupancy_scope(self) -> None:
+        stage = _Stage()
+        stage.floor_visual.attributes.update({
+            "xformOp:scale": (16, 10, 0.05), "xformOp:translate": (16, 10, -0.05),
+        })
+        stage.floor.attributes["physicsScope"] = (
+            "infinite plane; bounded operation is enforced by the 32x20 m occupancy map"
+        )
+        _observed, mismatches = _inspect_stage(stage, _UsdGeom, _UsdPhysics, bounds_xy=(0, 0, 32, 20))
+        self.assertEqual(mismatches, {})
+        stage.floor_visual.attributes["xformOp:scale"] = (20, 12, 0.05)
+        _observed, mismatches = _inspect_stage(stage, _UsdGeom, _UsdPhysics, bounds_xy=(0, 0, 32, 20))
+        self.assertIn("floor_visual", mismatches)
+        self.assertNotIn("floor_collision", mismatches)
+
+    def test_shifted_bounds_require_corresponding_visual_center(self) -> None:
+        stage = _Stage()
+        stage.floor_visual.attributes.update({
+            "xformOp:scale": (20, 12, 0.05), "xformOp:translate": (22, 15, -0.05),
+        })
+        _observed, mismatches = _inspect_stage(stage, _UsdGeom, _UsdPhysics, bounds_xy=(2, 3, 42, 27))
+        self.assertEqual(mismatches, {})
+        stage.floor_visual.attributes["xformOp:translate"] = (20, 12, -0.05)
+        _observed, mismatches = _inspect_stage(stage, _UsdGeom, _UsdPhysics, bounds_xy=(2, 3, 42, 27))
+        self.assertIn("floor_visual", mismatches)
+
     def test_rejects_disabled_obstacle_collision(self) -> None:
         stage = _Stage()
         stage.obstacles.children[3].enabled = False

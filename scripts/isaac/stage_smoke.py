@@ -141,7 +141,10 @@ def _wait_for_stage(simulation_app: Any, stage_utils: Any) -> int:
     return updates
 
 
-def _inspect_stage(stage: Any, UsdGeom: Any, UsdPhysics: Any) -> tuple[dict[str, Any], dict[str, Any]]:
+def _inspect_stage(
+    stage: Any, UsdGeom: Any, UsdPhysics: Any, *,
+    bounds_xy: tuple[float, float, float, float] = (0.0, 0.0, 40.0, 24.0),
+) -> tuple[dict[str, Any], dict[str, Any]]:
     default_prim = stage.GetDefaultPrim()
     default_prim_name = default_prim.GetName() if default_prim and default_prim.IsValid() else None
     up_axis = str(UsdGeom.GetStageUpAxis(stage))
@@ -239,6 +242,17 @@ def _inspect_stage(stage: Any, UsdGeom: Any, UsdPhysics: Any) -> tuple[dict[str,
         "floor_collision": floor_collision,
         "floor_visual": floor_visual_record,
     }
+    xmin, ymin, xmax, ymax = bounds_xy
+    width, depth = xmax - xmin, ymax - ymin
+    expected_floor_collision = dict(EXPECTED_FLOOR_COLLISION)
+    expected_floor_collision["physics_scope"] = (
+        f"infinite plane; bounded operation is enforced by the {width:g}x{depth:g} m occupancy map"
+    )
+    expected_floor_visual = {
+        **EXPECTED_FLOOR_VISUAL,
+        "scale_xyz": [width / 2, depth / 2, 0.05],
+        "translation_xyz": [(xmin + xmax) / 2, (ymin + ymax) / 2, -0.05],
+    }
     expected = {
         "default_prim": "World",
         "up_axis": "Z",
@@ -249,8 +263,8 @@ def _inspect_stage(stage: Any, UsdGeom: Any, UsdPhysics: Any) -> tuple[dict[str,
         "collision_prim_paths": expected_collider_paths,
         "disabled_collision_prim_paths": [],
         "marker_collision_prim_paths": [],
-        "floor_collision": EXPECTED_FLOOR_COLLISION,
-        "floor_visual": EXPECTED_FLOOR_VISUAL,
+        "floor_collision": expected_floor_collision,
+        "floor_visual": expected_floor_visual,
     }
     mismatches = {
         key: {"expected": expected_value, "observed": observed[key]}
