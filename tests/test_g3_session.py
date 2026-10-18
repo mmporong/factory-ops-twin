@@ -146,6 +146,10 @@ class G3SessionTests(unittest.TestCase):
         expected = {
             "follow_path_stateful": True,
             "goal_checker_stateful": True,
+            "goal_checker_plugin": "factory_ops_goal_checker::TelemetryGoalChecker",
+            "follow_path_plugin": "factory_ops_goal_checker::TelemetryRegulatedPurePursuitController",
+            "controller_trace_schema_version": 1,
+            "controller_trace_topic": "controller_cycle_trace",
             "xy_goal_tolerance": 0.06,
             "yaw_goal_tolerance": 0.15,
         }
@@ -176,6 +180,19 @@ class G3SessionTests(unittest.TestCase):
         self.assertTrue(provenance["primary_not_frozen"])
         self.assertEqual(3, provenance["comparison"]["existing"]["qualifying_samples"])
         self.assertEqual(241, provenance["comparison"]["candidate"]["qualifying_samples"])
+        self.assertEqual(
+            digest(provenance_path),
+            verify_session(self.qualification)["source_config"][provenance_path.name],
+        )
+
+    def test_controller_trace_provenance_is_diagnostic_only_and_source_bound(self) -> None:
+        provenance_path = CONFIG / "g3-controller-entry-provenance.json"
+        provenance = load(provenance_path)
+        self.assertEqual("diagnostic_instrumentation_candidate", provenance["status"])
+        self.assertTrue(provenance["claims"]["repair_not_validated"])
+        self.assertFalse(provenance["claims"]["controller_entry_parameter_added"])
+        self.assertFalse(provenance["claims"]["actual_gpu_trace_validated"])
+        self.assertFalse(provenance["observed_forensics"]["is_robot_map_pose_translation_difference"])
         self.assertEqual(
             digest(provenance_path),
             verify_session(self.qualification)["source_config"][provenance_path.name],

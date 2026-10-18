@@ -1,0 +1,12 @@
+<library path="factory_ops_goal_checker">
+  <class name="factory_ops_goal_checker::TelemetryGoalChecker"
+         type="factory_ops_goal_checker::TelemetryGoalChecker"
+         base_class_type="nav2_core::GoalChecker">
+    <description>SimpleGoalChecker delegation with call and stateful-latch telemetry.</description>
+  </class>
+  <class name="factory_ops_goal_checker::TelemetryRegulatedPurePursuitController"
+         type="factory_ops_goal_checker::TelemetryRegulatedPurePursuitController"
+         base_class_type="nav2_core::Controller">
+    <description>RegulatedPurePursuitController delegation with input and protected-state telemetry.</description>
+  </class>
+</library>

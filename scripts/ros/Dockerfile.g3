@@ -1,0 +1,18 @@
+FROM factory-ops-nav2:jazzy-g1 AS builder
+USER root
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends make \
+    && rm -rf /var/lib/apt/lists/*
+COPY ros_ws/src/factory_ops_goal_checker /tmp/factory_ops_goal_checker
+RUN . /opt/ros/jazzy/setup.sh \
+    && cmake -S /tmp/factory_ops_goal_checker -B /tmp/factory_ops_goal_checker-build \
+      -DCMAKE_INSTALL_PREFIX=/opt/factory_ops_goal_checker \
+      -DPython3_EXECUTABLE=/usr/bin/python3 -DBUILD_TESTING=OFF \
+    && cmake --build /tmp/factory_ops_goal_checker-build --parallel 2 \
+    && cmake --install /tmp/factory_ops_goal_checker-build
+
+FROM factory-ops-nav2:jazzy-g1
+USER root
+COPY --from=builder /opt/factory_ops_goal_checker /opt/factory_ops_goal_checker
+ENV AMENT_PREFIX_PATH=/opt/factory_ops_goal_checker:/opt/ros/jazzy
+ENV LD_LIBRARY_PATH=/opt/factory_ops_goal_checker/lib:/opt/ros/jazzy/lib
+WORKDIR /workspace/project

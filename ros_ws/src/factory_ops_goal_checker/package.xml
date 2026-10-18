@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>factory_ops_goal_checker</name>
+  <version>0.1.0</version>
+  <description>G3 goal-checker and RPP controller-cycle telemetry adapters.</description>
+  <maintainer email="noreply@example.invalid">factory-ops-twin</maintainer>
+  <license>BSD-3-Clause</license>
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <depend>diagnostic_msgs</depend>
+  <depend>class_loader</depend>
+  <depend>nav2_controller</depend>
+  <depend>nav2_core</depend>
+  <depend>nav2_regulated_pure_pursuit_controller</depend>
+  <depend>pluginlib</depend>
+  <depend>rclcpp</depend>
+  <depend>rclcpp_lifecycle</depend>
+  <test_depend>ament_cmake_gtest</test_depend>
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

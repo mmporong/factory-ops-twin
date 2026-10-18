@@ -22,7 +22,9 @@ from scripts.ros.g3_evidence import (
     RPP_PAIR_MAX_DB_GAP_NS,
     _hash_json,
     _validate_localization_reservations,
+    decode_controller_trace,
     decode_rpp_observation,
+    validate_controller_trace_observations,
     validate_actions,
     validate_authorization_order,
     validate_final_parking,
@@ -48,6 +50,83 @@ SCENARIO = "QUALIFICATION_NORMAL"
 
 
 class G3EvidenceHelperTests(unittest.TestCase):
+    @staticmethod
+    def controller_trace_fixture():
+        parameters = {"action_xy_tolerance_m": .06, "action_yaw_tolerance_rad": .15}
+        goal = [
+            {"db_timestamp_ns": 1, "cdr_sha256": "1" * 64, "stamp_ns": 0,
+             "event": "initialize", "event_sequence": 1, "plugin_call_sequence": 1,
+             "reset_epoch": 0, "parameters": parameters},
+            {"db_timestamp_ns": 2, "cdr_sha256": "2" * 64, "stamp_ns": 1_100_000_000,
+             "event": "reset", "event_sequence": 2, "plugin_call_sequence": 2,
+             "reset_epoch": 1, "parameters": parameters},
+            {"db_timestamp_ns": 4, "cdr_sha256": "4" * 64, "stamp_ns": 1_400_000_000,
+             "event": "get_tolerances", "event_sequence": 4, "plugin_call_sequence": 3,
+             "reset_epoch": 1, "parameters": parameters,
+             "returned_tolerances": {"returned_pose_x_m": .06, "returned_pose_y_m": .06,
+                 "returned_pose_yaw_quaternion_z": math.sin(.15 / 2),
+                 "returned_pose_yaw_quaternion_w": math.cos(.15 / 2), "base_result": True}},
+            {"db_timestamp_ns": 6, "cdr_sha256": "6" * 64, "stamp_ns": 1_500_000_000,
+             "event": "is_goal_reached", "event_sequence": 6, "plugin_call_sequence": 4,
+             "reset_epoch": 1, "parameters": parameters, "check": {"base_result": False}},
+        ]
+        rpp = [{"db_timestamp_ns": 3, "cdr_sha256": "3" * 64, "stamp_ns": 1_300_000_000,
+            "event": "compute_velocity_commands", "event_sequence": 3, "plugin_call_sequence": 1,
+            "reset_epoch": 0, "plan_epoch": 1, "incoming_pose_stamp_ns": 1_500_000_000,
+            "incoming_pose_frame_id": "map", "parameters": {"goal_dist_tol_m": .06},
+            "compute": {"phase": "begin", "outcome": "pending"}},
+            {"db_timestamp_ns": 5, "cdr_sha256": "5" * 64, "stamp_ns": 1_500_000_000,
+             "event": "compute_velocity_commands", "event_sequence": 5, "plugin_call_sequence": 1,
+             "reset_epoch": 0, "plan_epoch": 1, "incoming_pose_stamp_ns": 1_500_000_000,
+             "incoming_pose_frame_id": "map", "parameters": {"goal_dist_tol_m": .06},
+             "compute": {"phase": "end", "outcome": "returned"}}]
+        topics = {f"/{robot}/controller_cycle_trace": "diagnostic_msgs/msg/DiagnosticArray"
+                  for robot in ("carter1", "carter2")}
+        robot_streams = {"goal_checker": goal, "rpp": rpp}
+        observations = {"lookahead_point": [{"db_timestamp_ns": 6}],
+                        "is_rotating_to_heading": [{"db_timestamp_ns": 7}]}
+        bag = {"controller_traces": {robot: deepcopy(robot_streams) for robot in ("carter1", "carter2")},
+               "rpp_observations": {robot: deepcopy(observations) for robot in ("carter1", "carter2")},
+               "topic_types": topics, "topic_counts": {topic: 6 for topic in topics}}
+        actions = [{"robot_id": robot, "accepted_sim_time_s": 1.0, "terminal_sim_time_s": 2.0}
+                   for robot in ("carter1", "carter2")]
+        return actions, bag, list(topics)
+
+    def test_controller_trace_requires_closed_sequence_parameters_and_episode_binding(self):
+        actions, bag, requested = self.controller_trace_fixture()
+        report = validate_controller_trace_observations(actions, bag, requested)
+        self.assertTrue(report["robots"]["carter1"]["shared_event_sequence_closed"])
+        mutations = []
+        changed = deepcopy(bag); changed["controller_traces"]["carter1"]["goal_checker"].pop(1); mutations.append(changed)
+        changed = deepcopy(bag); changed["controller_traces"]["carter1"]["goal_checker"][-1]["stamp_ns"] = 3_000_000_000; mutations.append(changed)
+        changed = deepcopy(bag); changed["controller_traces"]["carter1"]["goal_checker"][-1]["parameters"]["action_xy_tolerance_m"] = .05; mutations.append(changed)
+        changed = deepcopy(bag); changed["controller_traces"]["carter1"]["rpp"][1]["compute"]["outcome"] = "threw"; mutations.append(changed)
+        for changed in mutations:
+            with self.assertRaises(ValueError):
+                validate_controller_trace_observations(actions, changed, requested)
+
+    def test_controller_trace_cdr_decoder_rejects_missing_and_bad_typed_values(self):
+        values = {
+            "schema_version": "1", "event": "initialize", "event_sequence": "1",
+            "plugin_call_sequence": "1", "reset_epoch": "0", "plugin_name": "goal_checker",
+            "action_xy_tolerance_m": "0.06", "action_yaw_tolerance_rad": "0.15",
+        }
+        def message(payload):
+            return NS(header=NS(stamp=NS(sec=0, nanosec=0)), status=[NS(
+                values=[NS(key=key, value=value) for key, value in payload.items()],
+                message="initialize", hardware_id="factory_ops_goal_checker")])
+        robot, family, row = decode_controller_trace(
+            "/carter1/controller_cycle_trace", "diagnostic_msgs/msg/DiagnosticArray", b"trace", 1,
+            get_message=lambda _: object(), deserialize_message=lambda *_: message(values))
+        self.assertEqual(("carter1", "goal_checker", "initialize"), (robot, family, row["event"]))
+        for changed in ({key: value for key, value in values.items() if key != "event_sequence"},
+                        {**values, "action_xy_tolerance_m": "nan"},
+                        {**values, "action_xy_tolerance_m": "0.04"}):
+            with self.assertRaises(ValueError):
+                decode_controller_trace(
+                    "/carter1/controller_cycle_trace", "diagnostic_msgs/msg/DiagnosticArray", b"trace", 1,
+                    get_message=lambda _: object(), deserialize_message=lambda *_, c=changed: message(c))
+
     @staticmethod
     def rpp_fixture():
         action = {"robot_id": "carter1", "follow_action_uuid": str(uuid4()),

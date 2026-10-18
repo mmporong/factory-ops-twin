@@ -43,14 +43,23 @@ RPP_OBSERVATION_TYPES = {
     "lookahead_point": "geometry_msgs/msg/PointStamped",
     "is_rotating_to_heading": "std_msgs/msg/Bool",
 }
+GOAL_CHECKER_TRACE_TYPES = {
+    "controller_cycle_trace": "diagnostic_msgs/msg/DiagnosticArray",
+}
 G3_NAV2_GOAL_ACCEPTANCE = {
     "follow_path_stateful": True,
     "goal_checker_stateful": True,
+    "goal_checker_plugin": "factory_ops_goal_checker::TelemetryGoalChecker",
+    "follow_path_plugin": "factory_ops_goal_checker::TelemetryRegulatedPurePursuitController",
+    "controller_trace_schema_version": 1,
+    "controller_trace_topic": "controller_cycle_trace",
     "xy_goal_tolerance": .06,
     "yaw_goal_tolerance": .15,
 }
 G3_NAV2_RUNTIME_PARAMETERS = {
     "FollowPath.stateful": ("bool", True),
+    "FollowPath.plugin": ("string", "factory_ops_goal_checker::TelemetryRegulatedPurePursuitController"),
+    "goal_checker.plugin": ("string", "factory_ops_goal_checker::TelemetryGoalChecker"),
     "goal_checker.stateful": ("bool", True),
     "goal_checker.xy_goal_tolerance": ("double", .06),
     "goal_checker.yaw_goal_tolerance": ("double", .15),
@@ -61,7 +70,7 @@ def build_g3_namespaced_params(
     template: Mapping[str, Any], scenario: Mapping[str, Any], radii: Mapping[str, float],
     runtime: Mapping[str, Any], *, physical_map: str, navigation_map: str,
 ) -> tuple[dict[str, Any], dict[str, Any]]:
-    """Apply the two G3-only goal-acceptance changes after the shared G2 materializer."""
+    """Apply the frozen G3 acceptance values and the two telemetry plugin substitutions."""
     baseline = build_namespaced_params(
         template, scenario, radii, physical_map=physical_map, navigation_map=navigation_map,
     )
@@ -70,6 +79,10 @@ def build_g3_namespaced_params(
     if (not isinstance(nav2, Mapping) or set(nav2) != set(G3_NAV2_GOAL_ACCEPTANCE)
             or nav2.get("follow_path_stateful") is not True
             or nav2.get("goal_checker_stateful") is not True
+            or nav2.get("goal_checker_plugin") != "factory_ops_goal_checker::TelemetryGoalChecker"
+            or nav2.get("follow_path_plugin") != "factory_ops_goal_checker::TelemetryRegulatedPurePursuitController"
+            or nav2.get("controller_trace_schema_version") != 1
+            or nav2.get("controller_trace_topic") != "controller_cycle_trace"
             or type(nav2.get("xy_goal_tolerance")) is not float
             or nav2.get("xy_goal_tolerance") != .06
             or type(nav2.get("yaw_goal_tolerance")) is not float
@@ -90,20 +103,36 @@ def build_g3_namespaced_params(
         follow["stateful"] = True
         changed.append({"path": f"{robot}.controller_server.ros__parameters.FollowPath.stateful",
                         "before": before, "after": True})
+        before_follow_plugin = follow["plugin"]
+        follow["plugin"] = nav2["follow_path_plugin"]
+        changed.append({"path": f"{robot}.controller_server.ros__parameters.FollowPath.plugin",
+                        "before": before_follow_plugin, "after": nav2["follow_path_plugin"]})
         before_xy = goal_checker["xy_goal_tolerance"]
         goal_checker["xy_goal_tolerance"] = .06
         changed.append({"path": f"{robot}.controller_server.ros__parameters.goal_checker.xy_goal_tolerance",
                         "before": before_xy, "after": .06})
+        before_plugin = goal_checker["plugin"]
+        goal_checker["plugin"] = nav2["goal_checker_plugin"]
+        changed.append({"path": f"{robot}.controller_server.ros__parameters.goal_checker.plugin",
+                        "before": before_plugin, "after": nav2["goal_checker_plugin"]})
     if result["/**"] != baseline["/**"]:
         raise ValueError("G3 Nav2 override changed shared parameters")
     expected = copy.deepcopy(baseline)
     for robot in ROBOT_IDS:
         controller = expected[robot]["controller_server"]["ros__parameters"]
         controller["FollowPath"]["stateful"] = True
+        controller["FollowPath"]["plugin"] = nav2["follow_path_plugin"]
         controller["goal_checker"]["xy_goal_tolerance"] = .06
+        controller["goal_checker"]["plugin"] = nav2["goal_checker_plugin"]
     if result != expected:
         raise ValueError("G3 Nav2 parameters differ beyond the goal-acceptance candidate")
-    return result, {"schema_version": 1, "only_semantic_changes": changed}
+    return result, {
+        "schema_version": 2,
+        "only_semantic_changes": changed,
+        "relative_to_g3_q013_only_semantic_changes": [
+            row for row in changed if row["path"].endswith(".plugin")
+        ],
+    }
 
 
 def validate_rpp_runtime_observation(
@@ -118,7 +147,7 @@ def validate_rpp_runtime_observation(
             or not isinstance(source_commit, str)
             or not re.fullmatch(r"[0-9a-f]{40}", source_commit)
             or not _SHA256.fullmatch(generated_params_sha256)
-            or observation.get("schema_version") != 2
+            or observation.get("schema_version") != 3
             or observation.get("source_commit") != source_commit
             or observation.get("generated_params_sha256") != generated_params_sha256):
         raise ValueError("RPP runtime observation source/parameter identity differs")
@@ -141,16 +170,18 @@ def validate_rpp_runtime_observation(
             actual = parameter.get("parameter_value")
             if ((expected_type == "bool" and (type(actual) is not bool or actual is not expected_value))
                     or (expected_type == "double"
-                        and (type(actual) is not float or actual != expected_value))):
+                        and (type(actual) is not float or actual != expected_value))
+                    or (expected_type == "string"
+                        and (type(actual) is not str or actual != expected_value))):
                 raise ValueError(f"{robot} runtime parameter value differs: {name}")
     topics = observation.get("observation_topics")
     expected = {f"/{robot}/{name}": type_name for robot in ROBOT_IDS
-                for name, type_name in RPP_OBSERVATION_TYPES.items()}
+                for name, type_name in {**RPP_OBSERVATION_TYPES, **GOAL_CHECKER_TRACE_TYPES}.items()}
     if topics != expected:
         raise ValueError("RPP observation topic graph names/types differ")
     packages = observation.get("packages")
     if (not isinstance(packages, Mapping)
-            or set(packages) != {"nav2_controller", "nav2_regulated_pure_pursuit_controller"}):
+            or set(packages) != {"factory_ops_goal_checker", "nav2_controller", "nav2_regulated_pure_pursuit_controller"}):
         raise ValueError("Nav2 runtime package provenance is incomplete")
     for name, row in packages.items():
         libraries = row.get("shared_libraries") if isinstance(row, Mapping) else None
@@ -170,13 +201,14 @@ def nav2_package_provenance() -> dict[str, Any]:
     import xml.etree.ElementTree as ET
 
     result: dict[str, Any] = {}
-    for name in ("nav2_controller", "nav2_regulated_pure_pursuit_controller"):
+    for name in ("factory_ops_goal_checker", "nav2_controller", "nav2_regulated_pure_pursuit_controller"):
         package_xml = Path(get_package_share_directory(name)) / "package.xml"
         root = ET.fromstring(package_xml.read_bytes())
         version = root.findtext("version")
         prefix = Path(get_package_prefix(name))
         libraries = []
-        for path in sorted((prefix / "lib").glob(f"*{name.removeprefix('nav2_')}*.so*")):
+        library_token = name if name == "factory_ops_goal_checker" else name.removeprefix("nav2_")
+        for path in sorted((prefix / "lib").glob(f"*{library_token}*.so*")):
             if path.is_file():
                 libraries.append({"name": path.name, "bytes": path.stat().st_size, "sha256": sha(path)})
         result[name] = {"name": name, "version": version, "package_xml_sha256": sha(package_xml),
@@ -188,12 +220,13 @@ def collect_rpp_runtime_observation(
     robots: Mapping[str, Mapping[str, Any]], event_node: Any, callback_drain: CallbackDrain,
     states: Mapping[str, int | None], startup_end: float, params_path: Path,
     *, get_parameters_type: Any, bool_parameter_type: int, double_parameter_type: int,
+    string_parameter_type: int,
     source_commit: str | None,
 ) -> dict[str, Any]:
     """Probe active controller parameters and graph types before any initial HOLD is sent."""
     graph_types = {name: types for name, types in event_node.get_topic_names_and_types()}
     observation_topics = {f"/{robot}/{name}": type_name for robot in ROBOT_IDS
-                          for name, type_name in RPP_OBSERVATION_TYPES.items()}
+                          for name, type_name in {**RPP_OBSERVATION_TYPES, **GOAL_CHECKER_TRACE_TYPES}.items()}
     if any(graph_types.get(name) != [type_name] for name, type_name in observation_topics.items()):
         raise RuntimeError("installed RPP observation topics are missing or have unexpected ROS types")
     if not named_subscriber_topics_ready(event_node, tuple(observation_topics), "rosbag2_recorder"):
@@ -213,10 +246,12 @@ def collect_rpp_runtime_observation(
         parameters: dict[str, dict[str, Any]] = {}
         for name, value in zip(request.names, response.values, strict=True):
             expected_type = G3_NAV2_RUNTIME_PARAMETERS[name][0]
-            type_name = ({bool_parameter_type: "bool", double_parameter_type: "double"}
+            type_name = ({bool_parameter_type: "bool", double_parameter_type: "double",
+                          string_parameter_type: "string"}
                          .get(value.type, str(value.type)))
             parameter_value = (bool(value.bool_value) if expected_type == "bool"
-                               else float(value.double_value))
+                               else float(value.double_value) if expected_type == "double"
+                               else str(value.string_value))
             parameters[name] = {
                 "parameter_type": type_name,
                 "parameter_value": parameter_value,
@@ -226,7 +261,7 @@ def collect_rpp_runtime_observation(
             "parameters": parameters,
         }
     observation = {
-        "schema_version": 2,
+        "schema_version": 3,
         "source_commit": source_commit,
         "generated_params_sha256": sha(params_path),
         "controllers": controller_parameters,
@@ -735,6 +770,13 @@ def main() -> int:
             "visual_state_source": project / "factory_ops/visual_state.py",
             "generated_params": params_path, "config": session_root / "config.json",
             "nav2_template": project / "configs/factory-v3/nav2-g2.yaml"}.items()}
+        goal_checker_sources = tuple(sorted(
+            path for path in (project / "ros_ws/src/factory_ops_goal_checker").rglob("*")
+            if path.is_file() and not path.is_symlink()
+        ))
+        result["goal_checker_source_files"] = {
+            path.relative_to(project).as_posix(): sha(path) for path in goal_checker_sources
+        }
         result["navigation_map_files"] = verify_navigation_maps(output, book)
         result["inputs"]["navigation_map_provenance"] = {"path": str(output / "maps/provenance.json"), "sha256": sha(output / "maps/provenance.json")}
         os.environ["FACTORY_OPS_NAV2_PARAMS"] = str(params_path)
@@ -863,7 +905,7 @@ def main() -> int:
         bag_topics = ["/clock", "/factory/g3/events", "/factory/g3/authorizations", "/factory/g3/reservations"]
         for robot in ROBOT_IDS:
             bag_topics += [f"/{robot}/{name}" for name in ("scan_front_raw", "scan_rear_raw", "scan_front", "scan_rear", "scan_localization", "odom", "tf", "tf_static", "map", "navigation_map", "amcl_pose", "plan", "received_global_plan", "cmd_vel", "compute_path_to_pose/_action/status", "follow_path/_action/status", "follow_path/_action/feedback")]
-            bag_topics += [f"/{robot}/{name}" for name in RPP_OBSERVATION_TYPES]
+            bag_topics += [f"/{robot}/{name}" for name in {**RPP_OBSERVATION_TYPES, **GOAL_CHECKER_TRACE_TYPES}]
             bag_topics.extend(robots[robot]["follow"].service_event_topics)
         service_event_topics = tuple(topic for rt in robots.values() for topic in rt["follow"].service_event_topics)
         service_names = [topic.removesuffix("/_service_event") for topic in service_event_topics]
@@ -992,6 +1034,7 @@ def main() -> int:
             get_parameters_type=GetParameters,
             bool_parameter_type=ParameterType.PARAMETER_BOOL,
             double_parameter_type=ParameterType.PARAMETER_DOUBLE,
+            string_parameter_type=ParameterType.PARAMETER_STRING,
             source_commit=os.environ.get("FACTORY_OPS_G3_SOURCE_COMMIT"),
         )
         runtime_observation_path = output / "nav2-runtime-provenance.json"
@@ -1461,6 +1504,19 @@ def main() -> int:
             read_odometry_ns=lambda: {robot: rt.get("last_odom_stamp_ns") for robot, rt in robots.items()},
             run_id=args.run_id, scenario_id=scenario_id, minimum_sim_time_ns=tick_clock_ns,
             wait_wall_s=runtime_config["terminal_recording_wait_wall_s"])
+        runtime_end = {
+            "schema_version": 1,
+            "source_commit": os.environ.get("FACTORY_OPS_G3_SOURCE_COMMIT"),
+            "startup_provenance_sha256": sha(runtime_observation_path),
+            "packages": nav2_package_provenance(),
+        }
+        if runtime_end["packages"] != runtime_observation["packages"]:
+            raise RuntimeError("Nav2/plugin package bytes changed between startup and terminal recording")
+        runtime_end_path = output / "nav2-runtime-end-provenance.json"
+        atomic_json(runtime_end_path, runtime_end)
+        result["inputs"]["nav2_runtime_end_provenance"] = {
+            "path": str(runtime_end_path), "sha256": sha(runtime_end_path),
+        }
         result.update({"status": "passed", "stage": "complete", "origin_sim_time_s": origin,
             "terminal_recording": terminal_boundary,
             "completed_orders_sim_s": completed_at, "mission": mission.export(), "actions": history,

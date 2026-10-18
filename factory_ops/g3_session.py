@@ -38,13 +38,15 @@ def save(path: Path, value: Any) -> None:
 def source_hashes(config_dir: Path) -> dict[str, str]:
     paths = (
         "layout.json", "traffic.json", "g2.json", "g3-routing.json", "g3-experiment.json",
-        "g3-runtime.json", "g3-goal-acceptance-provenance.json", "nav2-g2.yaml",
+        "g3-runtime.json", "g3-goal-acceptance-provenance.json",
+        "g3-controller-entry-provenance.json", "nav2-g2.yaml",
     )
     return {name: sha(config_dir / name) for name in paths}
 
 
 def _validate_runtime(runtime: dict[str, Any]) -> None:
-    if runtime.get("qualification") != "g3_two_robot_orders" or runtime.get("scope") != SCOPE:
+    if (runtime.get("schema_version") != 2
+            or runtime.get("qualification") != "g3_two_robot_orders" or runtime.get("scope") != SCOPE):
         raise ValueError("G3 runtime scope differs")
     for name in (
         "max_wall_time_s", "startup_sim_allowance_s", "chunk_timeout_s", "pose_ttl_s",
@@ -69,12 +71,20 @@ def _validate_runtime(runtime: dict[str, Any]) -> None:
     expected_nav2 = {
         "follow_path_stateful": True,
         "goal_checker_stateful": True,
+        "goal_checker_plugin": "factory_ops_goal_checker::TelemetryGoalChecker",
+        "follow_path_plugin": "factory_ops_goal_checker::TelemetryRegulatedPurePursuitController",
+        "controller_trace_schema_version": 1,
+        "controller_trace_topic": "controller_cycle_trace",
         "xy_goal_tolerance": .06,
         "yaw_goal_tolerance": .15,
     }
     if (not isinstance(nav2, dict) or set(nav2) != set(expected_nav2)
             or nav2.get("follow_path_stateful") is not True
             or nav2.get("goal_checker_stateful") is not True
+            or nav2.get("goal_checker_plugin") != "factory_ops_goal_checker::TelemetryGoalChecker"
+            or nav2.get("follow_path_plugin") != "factory_ops_goal_checker::TelemetryRegulatedPurePursuitController"
+            or nav2.get("controller_trace_schema_version") != 1
+            or nav2.get("controller_trace_topic") != "controller_cycle_trace"
             or type(nav2.get("xy_goal_tolerance")) is not float
             or nav2.get("xy_goal_tolerance") != .06
             or type(nav2.get("yaw_goal_tolerance")) is not float

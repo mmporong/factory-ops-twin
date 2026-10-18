@@ -35,6 +35,7 @@ from scripts.ros.g2_evidence import (
 from scripts.isaac.nav_scene import _tilt_evaluation
 from scripts.isaac.g2_scene import _ros_stamp_parts
 from scripts.ros.g3_mission import (
+    GOAL_CHECKER_TRACE_TYPES,
     RPP_OBSERVATION_TYPES,
     build_g3_namespaced_params,
     cutoff_ledger_payload,
@@ -49,6 +50,29 @@ PROJECT = Path(__file__).resolve().parents[2]
 _SHA256 = re.compile(r"^[0-9a-f]{64}$")
 RPP_TERMINAL_OBSERVATION_MAX_AGE_S = 0.5
 RPP_PAIR_MAX_DB_GAP_NS = 100_000_000
+GOAL_TRACE_COMMON_KEYS = {
+    "schema_version", "event", "event_sequence", "plugin_call_sequence", "reset_epoch", "plugin_name",
+    "action_xy_tolerance_m", "action_yaw_tolerance_rad",
+}
+GOAL_TRACE_CHECK_KEYS = {
+    "query_x_m", "query_y_m", "query_yaw_rad", "goal_x_m", "goal_y_m", "goal_yaw_rad",
+    "xy_error_m", "yaw_error_rad", "linear_x_m_s", "linear_y_m_s", "angular_z_rad_s",
+    "check_xy_before", "check_xy_after", "base_result",
+}
+GOAL_TRACE_TOLERANCE_KEYS = {
+    "returned_pose_x_m", "returned_pose_y_m", "returned_pose_yaw_quaternion_z",
+    "returned_pose_yaw_quaternion_w", "base_result",
+}
+RPP_TRACE_KEYS = {
+    "schema_version", "event", "event_sequence", "plugin_call_sequence", "plugin_name",
+    "phase",
+    "plan_epoch", "reset_epoch", "incoming_pose_stamp_ns", "incoming_pose_frame_id",
+    "pose_x_m", "pose_y_m", "pose_yaw_rad", "velocity_linear_x_m_s",
+    "velocity_linear_y_m_s", "velocity_angular_z_rad_s", "goal_dist_tol_m",
+    "is_rotating_before", "is_rotating_after", "has_reached_xy_before",
+    "has_reached_xy_after", "outcome", "output_linear_x_m_s", "output_linear_y_m_s",
+    "output_angular_z_rad_s", "error_type", "error_message",
+}
 
 
 def primary_inputs_sha_from_environment() -> str | None:
@@ -185,6 +209,120 @@ def decode_rpp_observation(
     return robot, name, row
 
 
+def decode_controller_trace(
+    topic: str, type_name: str, raw: bytes, db_timestamp_ns: int, *,
+    get_message: Any, deserialize_message: Any,
+) -> tuple[str, str, dict[str, Any]]:
+    """Decode the goal-checker DiagnosticArray without mixing it into RPP pairing."""
+    match = re.fullmatch(r"/(carter1|carter2)/controller_cycle_trace", topic)
+    if (match is None or type_name != "diagnostic_msgs/msg/DiagnosticArray"
+            or type(db_timestamp_ns) is not int or db_timestamp_ns < 0):
+        raise ValueError("goal-checker trace topic, type, or database timestamp differs")
+    message = deserialize_message(raw, get_message(type_name))
+    if len(message.status) != 1:
+        raise ValueError("goal-checker trace must contain one diagnostic status")
+    status = message.status[0]
+    values = {str(item.key): str(item.value) for item in status.values}
+    if len(values) != len(status.values):
+        raise ValueError("goal-checker trace contains duplicate keys")
+    event = values.get("event")
+    plugin_name = values.get("plugin_name")
+    family = "goal_checker" if plugin_name == "goal_checker" else "rpp" if plugin_name == "FollowPath" else None
+    expected = (GOAL_TRACE_COMMON_KEYS | (
+        GOAL_TRACE_CHECK_KEYS if event == "is_goal_reached"
+        else GOAL_TRACE_TOLERANCE_KEYS if event == "get_tolerances" else set()
+    )) if family == "goal_checker" else RPP_TRACE_KEYS
+    valid_event = (event in {"initialize", "reset", "is_goal_reached", "get_tolerances"}
+                   if family == "goal_checker" else event == "compute_velocity_commands")
+    if (family is None or not valid_event or set(values) != expected or status.message != event
+            or status.hardware_id != "factory_ops_goal_checker"):
+        raise ValueError("controller trace event schema differs")
+    try:
+        stamp_ns = path_header_stamp_ns({
+            "sec": int(message.header.stamp.sec), "nanosec": int(message.header.stamp.nanosec),
+        })
+        sequence = int(values["plugin_call_sequence"])
+        event_sequence = int(values["event_sequence"])
+        reset_epoch = int(values["reset_epoch"])
+        schema = int(values["schema_version"])
+        parameters = ({name: float(values[name]) for name in (
+            "action_xy_tolerance_m", "action_yaw_tolerance_rad",
+        )} if family == "goal_checker" else {"goal_dist_tol_m": float(values["goal_dist_tol_m"])})
+    except (TypeError, ValueError, KeyError) as exc:
+        raise ValueError("goal-checker trace typed values are invalid") from exc
+    if (schema != 1 or sequence < 1 or event_sequence < 1 or reset_epoch < 0 or stamp_ns < 0
+            or not all(math.isfinite(value) for value in parameters.values())
+            or (family == "goal_checker" and parameters != {
+                "action_xy_tolerance_m": .06, "action_yaw_tolerance_rad": .15})):
+        raise ValueError("controller trace identity or production parameters differ")
+    row: dict[str, Any] = {
+        "db_timestamp_ns": db_timestamp_ns,
+        "cdr_sha256": hashlib.sha256(raw).hexdigest(),
+        "stamp_ns": stamp_ns,
+        "event": event,
+        "event_sequence": event_sequence,
+        "plugin_call_sequence": sequence,
+        "reset_epoch": reset_epoch,
+        "parameters": parameters,
+    }
+    if event == "is_goal_reached":
+        numeric_names = GOAL_TRACE_CHECK_KEYS - {"check_xy_before", "check_xy_after", "base_result"}
+        try:
+            numeric = {name: float(values[name]) for name in numeric_names}
+        except (TypeError, ValueError, KeyError) as exc:
+            raise ValueError("goal-checker trace check values are invalid") from exc
+        booleans = {name: values[name] for name in ("check_xy_before", "check_xy_after", "base_result")}
+        if (not all(math.isfinite(value) for value in numeric.values())
+                or any(value not in {"true", "false"} for value in booleans.values())):
+            raise ValueError("goal-checker trace check values are non-finite or non-boolean")
+        row["check"] = {**numeric, **{name: value == "true" for name, value in booleans.items()}}
+    elif event == "get_tolerances":
+        returned = {name: float(values[name]) for name in GOAL_TRACE_TOLERANCE_KEYS - {"base_result"}}
+        if (not all(math.isfinite(value) for value in returned.values())
+                or values["base_result"] not in {"true", "false"}):
+            raise ValueError("goal-checker returned tolerance trace differs")
+        row["returned_tolerances"] = {**returned, "base_result": values["base_result"] == "true"}
+    elif family == "rpp":
+        numeric_names = {
+            "pose_x_m", "pose_y_m", "pose_yaw_rad", "velocity_linear_x_m_s",
+            "velocity_linear_y_m_s", "velocity_angular_z_rad_s", "goal_dist_tol_m",
+        }
+        numeric = {name: float(values[name]) for name in numeric_names}
+        booleans = {name: values[name] for name in (
+            "is_rotating_before", "is_rotating_after", "has_reached_xy_before", "has_reached_xy_after")}
+        outcome = values["outcome"]
+        phase = values["phase"]
+        if (not all(math.isfinite(value) for value in numeric.values())
+                or any(value not in {"true", "false"} for value in booleans.values())
+                or phase not in {"begin", "end"}
+                or outcome not in {"pending", "returned", "threw"}
+                or (phase == "begin") != (outcome == "pending")):
+            raise ValueError("RPP compute trace values differ")
+        outputs = {}
+        if outcome == "returned":
+            outputs = {name: float(values[name]) for name in (
+                "output_linear_x_m_s", "output_linear_y_m_s", "output_angular_z_rad_s")}
+            if (not all(math.isfinite(value) for value in outputs.values())
+                    or values["error_type"] or values["error_message"]):
+                raise ValueError("RPP returned trace output/error fields differ")
+        elif (any(values[name] for name in (
+                "output_linear_x_m_s", "output_linear_y_m_s", "output_angular_z_rad_s"))
+                or (outcome == "pending" and (values["error_type"] or values["error_message"]))):
+            raise ValueError("RPP thrown trace contains an output")
+        row.update({
+            "plan_epoch": int(values["plan_epoch"]), "reset_epoch": int(values["reset_epoch"]),
+            "incoming_pose_stamp_ns": int(values["incoming_pose_stamp_ns"]),
+            "incoming_pose_frame_id": values["incoming_pose_frame_id"],
+            "compute": {**numeric, **{name: value == "true" for name, value in booleans.items()},
+                        "phase": phase, "outcome": outcome, **outputs,
+                        "error_type": values["error_type"], "error_message": values["error_message"]},
+        })
+        if (row["plan_epoch"] < 1 or row["reset_epoch"] < 0
+                or row["incoming_pose_stamp_ns"] <= 0 or not row["incoming_pose_frame_id"]):
+            raise ValueError("RPP compute trace epoch or incoming pose identity differs")
+    return match.group(1), family, row
+
+
 def _decode_g3_topics(output: Path, run_id: str, scenario_id: str) -> dict[str, Any]:
     """Decode G3 JSON streams, Path CDR and action statuses from immutable bag DBs."""
     from rclpy.serialization import deserialize_message
@@ -205,7 +343,11 @@ def _decode_g3_topics(output: Path, run_id: str, scenario_id: str) -> dict[str, 
     rpp_observations: dict[str, dict[str, list[dict[str, Any]]]] = {
         robot: {name: [] for name in RPP_OBSERVATION_TYPES} for robot in ROBOTS
     }
+    controller_traces: dict[str, dict[str, list[dict[str, Any]]]] = {
+        robot: {"goal_checker": [], "rpp": []} for robot in ROBOTS
+    }
     rpp_topics = {f"/{robot}/{name}" for robot in ROBOTS for name in RPP_OBSERVATION_TYPES}
+    controller_trace_topics = {f"/{robot}/{name}" for robot in ROBOTS for name in GOAL_CHECKER_TRACE_TYPES}
     errors: list[str] = []
     types: dict[str, Any] = {}
     observed_types: dict[str, str] = {}
@@ -224,10 +366,22 @@ def _decode_g3_topics(output: Path, run_id: str, scenario_id: str) -> dict[str, 
                 topic, type_name = topics[int(topic_id)]
                 selected = (topic in {"/factory/g3/events", "/factory/g3/authorizations", "/factory/g3/reservations"}
                             or topic.endswith(("/plan", "/odom", "/_action/status", "/_service_event"))
-                            or topic in rpp_topics)
+                            or topic in rpp_topics or topic in controller_trace_topics)
                 if not selected:
                     continue
                 raw = bytes(data)
+                if topic in controller_trace_topics:
+                    try:
+                        if type_name not in types:
+                            types[type_name] = get_message(type_name)
+                        robot, family, row = decode_controller_trace(
+                            topic, type_name, raw, int(db_timestamp_ns),
+                            get_message=lambda _: types[type_name], deserialize_message=deserialize_message,
+                        )
+                        controller_traces[robot][family].append(row)
+                    except (ValueError, TypeError, AttributeError, RuntimeError) as exc:
+                        errors.append(f"{topic}: invalid controller trace CDR: {exc}")
+                    continue
                 if topic in rpp_topics:
                     try:
                         if type_name not in types:
@@ -329,6 +483,7 @@ def _decode_g3_topics(output: Path, run_id: str, scenario_id: str) -> dict[str, 
         "goal_statuses": dict(statuses),
         "follow_rpc": {robot: dict(value) for robot, value in follow_rpc.items()},
         "rpp_observations": rpp_observations,
+        "controller_traces": controller_traces,
         "rpp_observation_clock_domains": {
             "db_timestamp_ns": "rosbag storage ordering only",
             "lookahead_point.header.stamp_ns": "ROS simulation time used for FollowPath episode bounds",
@@ -378,6 +533,23 @@ def validate_nav2_runtime_contract(
         )
         if provenance.get("packages") != nav2_package_provenance():
             raise ValueError("installed Nav2 package bytes differ from the startup provenance")
+        end_path = output / "nav2-runtime-end-provenance.json"
+        if (end_path.is_symlink()
+                or mission.get("inputs", {}).get("nav2_runtime_end_provenance", {}).get("sha256") != sha(end_path)):
+            raise ValueError("mission terminal Nav2 provenance SHA differs")
+        end_provenance = json.loads(end_path.read_text(encoding="utf-8"))
+        if end_provenance != {"schema_version": 1,
+                "source_commit": os.environ.get("FACTORY_OPS_G3_SOURCE_COMMIT"),
+                "startup_provenance_sha256": sha(provenance_path),
+                "packages": provenance["packages"]}:
+            raise ValueError("terminal package rehash differs from startup")
+        expected_goal_sources = {
+            path.relative_to(PROJECT).as_posix(): sha(path)
+            for path in sorted((PROJECT / "ros_ws/src/factory_ops_goal_checker").rglob("*"))
+            if path.is_file() and not path.is_symlink()
+        }
+        if mission.get("goal_checker_source_files") != expected_goal_sources:
+            raise ValueError("goal checker source pins differ from the runtime snapshot")
         observation_counts = validate_rpp_bag_observations(
             bag, mission.get("bag_topics_requested", []),
         )
@@ -385,9 +557,14 @@ def validate_nav2_runtime_contract(
         if (len(ready_events) != 1
                 or ready_events[0].get("nav2_runtime_provenance_sha256") != sha(provenance_path)):
             raise ValueError("navigation_ready does not bind the RPP runtime provenance")
+        trace_report = validate_controller_trace_observations(
+            mission.get("actions", []), bag, mission.get("bag_topics_requested", []),
+        )
         return {"generated_params_sha256": params_sha,
                 "runtime_provenance_sha256": sha(provenance_path),
+                "runtime_end_provenance_sha256": sha(end_path),
                 "observation_counts": observation_counts,
+                "controller_trace": trace_report,
                 "packages": provenance["packages"]}
     except (OSError, ValueError, TypeError, KeyError, ImportError, json.JSONDecodeError) as exc:
         errors.append(f"G3 Nav2 runtime evidence: {exc}")
@@ -410,6 +587,135 @@ def validate_rpp_bag_observations(
             raise ValueError(f"RPP observation is absent, mistyped, or unbound: {topic}")
         result[topic] = count
     return result
+
+
+def validate_controller_trace_observations(
+    actions: Sequence[Mapping[str, Any]], bag: Mapping[str, Any], requested_topics: object,
+) -> dict[str, Any]:
+    """Bind closed CDR traces to FollowPath episodes and the existing RPP diagnostics."""
+    traces = bag.get("controller_traces")
+    expected_topics = {f"/{robot}/controller_cycle_trace": "diagnostic_msgs/msg/DiagnosticArray"
+                       for robot in ROBOTS}
+    if not isinstance(requested_topics, list) or not isinstance(traces, Mapping) or set(traces) != set(ROBOTS):
+        raise ValueError("controller trace request or decoded robot set differs")
+    for topic, type_name in expected_topics.items():
+        count = bag.get("topic_counts", {}).get(topic)
+        if (bag.get("topic_types", {}).get(topic) != type_name or type(count) is not int
+                or count <= 0 or topic not in requested_topics):
+            raise ValueError(f"controller trace is absent, mistyped, or unbound: {topic}")
+    episodes: dict[str, list[tuple[int, int, int]]] = {robot: [] for robot in ROBOTS}
+    for index, action in enumerate(actions):
+        if action.get("cutoff_classification") == "planner_only_cleanup":
+            continue
+        robot = action.get("robot_id")
+        accepted = _finite_number(action.get("accepted_sim_time_s"))
+        terminal = _finite_number(action.get("terminal_sim_time_s"))
+        if robot not in ROBOTS or accepted is None or terminal is None or terminal < accepted:
+            raise ValueError(f"action {index} cannot bind controller traces")
+        episodes[str(robot)].append((index, int(accepted * 1e9), int(terminal * 1e9)))
+    reports: dict[str, Any] = {}
+    observations = bag.get("rpp_observations")
+    for robot in ROBOTS:
+        streams = traces[robot]
+        if not isinstance(streams, Mapping) or set(streams) != {"goal_checker", "rpp"}:
+            raise ValueError(f"{robot} controller trace families differ")
+        goal_rows, rpp_rows = streams["goal_checker"], streams["rpp"]
+        if not isinstance(goal_rows, list) or not isinstance(rpp_rows, list) or not goal_rows or not rpp_rows:
+            raise ValueError(f"{robot} controller trace family is empty")
+        combined = [*goal_rows, *rpp_rows]
+        if sorted(row.get("event_sequence") for row in combined) != list(range(1, len(combined) + 1)):
+            raise ValueError(f"{robot} shared controller event sequence is missing or duplicated")
+        if sorted(row.get("plugin_call_sequence") for row in goal_rows) != list(range(1, len(goal_rows) + 1)):
+            raise ValueError(f"{robot} goal_checker call sequence differs")
+        for family, rows in (("goal_checker", goal_rows), ("rpp", rpp_rows)):
+            if any(left["db_timestamp_ns"] >= right["db_timestamp_ns"] for left, right in zip(rows, rows[1:])):
+                raise ValueError(f"{robot} {family} database timestamps are not strictly increasing")
+        goal_rows = sorted(goal_rows, key=lambda row: row["plugin_call_sequence"])
+        rpp_groups: dict[int, list[Mapping[str, Any]]] = defaultdict(list)
+        for row in rpp_rows:
+            rpp_groups[row.get("plugin_call_sequence")].append(row)
+        if set(rpp_groups) != set(range(1, len(rpp_groups) + 1)):
+            raise ValueError(f"{robot} RPP compute call sequence differs")
+        rpp_ends: list[Mapping[str, Any]] = []
+        goal_tolerance_sequences = {row["event_sequence"] for row in goal_rows
+                                    if row["event"] == "get_tolerances"}
+        for call_sequence, pair in sorted(rpp_groups.items()):
+            phases = {row.get("compute", {}).get("phase"): row for row in pair}
+            if len(pair) != 2 or set(phases) != {"begin", "end"}:
+                raise ValueError(f"{robot} RPP compute {call_sequence} lacks one begin/end pair")
+            begin, end = phases["begin"], phases["end"]
+            if not begin["event_sequence"] < end["event_sequence"]:
+                raise ValueError(f"{robot} RPP compute begin/end ordering differs")
+            nested = [sequence for sequence in goal_tolerance_sequences
+                      if begin["event_sequence"] < sequence < end["event_sequence"]]
+            if len(nested) != 1:
+                raise ValueError(f"{robot} RPP compute does not enclose one goal tolerance query")
+            rpp_ends.append(end)
+        if goal_rows[0].get("event") != "initialize":
+            raise ValueError(f"{robot} goal checker initialization trace is missing")
+        reset_epoch = 0
+        check_count = tolerance_count = 0
+        bound_actions: set[int] = set()
+        for row in goal_rows:
+            if row.get("parameters") != {"action_xy_tolerance_m": .06,
+                                         "action_yaw_tolerance_rad": .15}:
+                raise ValueError(f"{robot} goal checker trace parameters differ")
+            if row["event"] == "reset":
+                reset_epoch += 1
+            if row.get("reset_epoch") != reset_epoch:
+                raise ValueError(f"{robot} goal checker reset epoch differs")
+            if row["event"] == "get_tolerances":
+                tolerance_count += 1
+                returned = row.get("returned_tolerances", {})
+                yaw = 2.0 * math.atan2(
+                    float(returned.get("returned_pose_yaw_quaternion_z", math.nan)),
+                    float(returned.get("returned_pose_yaw_quaternion_w", math.nan)))
+                if (returned.get("base_result") is not True
+                        or returned.get("returned_pose_x_m") != .06
+                        or returned.get("returned_pose_y_m") != .06
+                        or not math.isclose(yaw, .15, abs_tol=1e-12)):
+                    raise ValueError(f"{robot} SimpleGoalChecker returned tolerances differ")
+            if row["event"] == "is_goal_reached":
+                check_count += 1
+                matches = [index for index, accepted, terminal in episodes[robot]
+                           if accepted <= row["stamp_ns"] <= terminal]
+                if len(matches) != 1:
+                    raise ValueError(f"{robot} goal-check trace does not bind exactly one FollowPath episode")
+                bound_actions.add(matches[0])
+        if not check_count or not tolerance_count:
+            raise ValueError(f"{robot} goal checker check/tolerance trace is incomplete")
+        rpp_bound: set[int] = set()
+        for row in rpp_ends:
+            if row.get("parameters") != {"goal_dist_tol_m": .06}:
+                raise ValueError(f"{robot} RPP goal distance tolerance differs")
+            compute = row.get("compute", {})
+            if compute.get("outcome") != "returned":
+                raise ValueError(f"{robot} RPP compute trace contains an exception")
+            matches = [index for index, accepted, terminal in episodes[robot]
+                       if accepted <= row["stamp_ns"] <= terminal]
+            if len(matches) != 1:
+                raise ValueError(f"{robot} RPP compute trace does not bind exactly one FollowPath episode")
+            if not 0 <= row["stamp_ns"] - row["incoming_pose_stamp_ns"] <= 500_000_000:
+                raise ValueError(f"{robot} RPP incoming pose stamp is future-dated or stale")
+            rpp_bound.add(matches[0])
+        expected_actions = {index for index, _, _ in episodes[robot]}
+        if bound_actions != expected_actions or rpp_bound != expected_actions:
+            raise ValueError(f"{robot} controller traces do not cover every FollowPath episode")
+        robot_rpp = observations.get(robot, {}) if isinstance(observations, Mapping) else {}
+        points, rotations = robot_rpp.get("lookahead_point"), robot_rpp.get("is_rotating_to_heading")
+        if not isinstance(points, list) or not isinstance(rotations, list) or not (
+                len(rpp_ends) == len(points) == len(rotations)):
+            raise ValueError(f"{robot} RPP compute/diagnostic counts are not one-to-one")
+        for row, point, rotation in zip(rpp_ends, points, rotations, strict=True):
+            if (abs(row["db_timestamp_ns"] - point["db_timestamp_ns"]) > RPP_PAIR_MAX_DB_GAP_NS
+                    or abs(row["db_timestamp_ns"] - rotation["db_timestamp_ns"]) > RPP_PAIR_MAX_DB_GAP_NS):
+                raise ValueError(f"{robot} RPP compute/diagnostic database pairing is stale")
+        reports[robot] = {"goal_checker_events": len(goal_rows), "rpp_compute_calls": len(rpp_ends),
+                          "follow_path_episode_count": len(expected_actions),
+                          "shared_event_sequence_closed": True,
+                          "goal_checker_pose_stamp_available": False}
+    return {"schema_version": 1, "topic_counts": {
+        topic: bag["topic_counts"][topic] for topic in expected_topics}, "robots": reports}
 
 
 def validate_rpp_action_observations(
@@ -1657,7 +1963,7 @@ def validate_g3_evidence(
         safe = RESULT
     bounded_bag = {key: value for key, value in bag.items() if key not in {
         "events", "authorizations", "reservations", "amcl_poses", "tf_samples",
-        "odometry", "plan_records", "follow_rpc",
+        "odometry", "plan_records", "follow_rpc", "controller_traces",
     }}
     manifest = _manifest(output, {safe}, errors)
     exported = mission.get("mission", {})

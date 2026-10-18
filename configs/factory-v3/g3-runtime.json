@@ -1,5 +1,5 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "qualification": "g3_two_robot_orders",
   "scope": "qualification_and_pilot_only_not_primary_comparison",
   "max_wall_time_s": 5400,
@@ -23,6 +23,10 @@
   "g3_nav2": {
     "follow_path_stateful": true,
     "goal_checker_stateful": true,
+    "goal_checker_plugin": "factory_ops_goal_checker::TelemetryGoalChecker",
+    "follow_path_plugin": "factory_ops_goal_checker::TelemetryRegulatedPurePursuitController",
+    "controller_trace_schema_version": 1,
+    "controller_trace_topic": "controller_cycle_trace",
     "xy_goal_tolerance": 0.06,
     "yaw_goal_tolerance": 0.15
   },
@@ -41,5 +45,5 @@
     "OUT": 0.0, "P1": 1.5707963267948966, "P2": -1.5707963267948966
   },
   "anchor_yaw_provenance": "S1/CI/CO/OUT follow G1 authored goals; S2/S3 and pocket departure orientations are G3 authored values, not measured docking poses",
-  "provenance": "Authored qualification limits; loaded collision geometry, path admission, wheel stop and physical evidence require runtime validation"
+  "provenance": "Authored qualification limits and diagnostic-only goal-checker instrumentation; loaded collision geometry, path admission, wheel stop and physical evidence require runtime validation"
 }

@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "status": "diagnostic_instrumentation_candidate",
+  "source_run": "g3-q-normal-fifo-013",
+  "action_xy_tolerance_m": 0.06,
+  "yaw_tolerance_rad": 0.15,
+  "stateful": true,
+  "instrumentation": {
+    "goal_checker_plugin": "factory_ops_goal_checker::TelemetryGoalChecker",
+    "controller_plugin": "factory_ops_goal_checker::TelemetryRegulatedPurePursuitController",
+    "trace_schema_version": 1,
+    "relative_topic": "controller_cycle_trace"
+  },
+  "observed_forensics": {
+    "same_header_stamp_s": 438.4,
+    "same_database_timestamp_s": 437.933333333,
+    "map_to_odom_transform_translation_difference_m": 0.11213162040913675,
+    "is_robot_map_pose_translation_difference": false,
+    "amcl_pose_translation_difference_m": 0.009297032812472263,
+    "map_to_odom_yaw_difference_rad": 0.00630131145,
+    "sources": [
+      {
+        "path": "artifacts/brev/q013-mission-diagnosis-001/diagnosis.json",
+        "bytes": 6436,
+        "sha256": "96b94f3ccee8bad263ff0fcee8ee0ba68870e00422f85a40923bbd853411a1fb"
+      },
+      {
+        "path": "artifacts/brev/q013-mission-diagnosis-001/diagnosis.md",
+        "bytes": 16682,
+        "sha256": "7bb4c88558b26d45cf0781909fb3ff5c4111fac729f888dd1110c727a433666c"
+      },
+      {
+        "path": "artifacts/brev/q013-mission-diagnosis-001/freshtf-authority-followup-001.json",
+        "bytes": 5923,
+        "sha256": "5b0af0c023d2c74306123ac6c4b59c58d8cac4d16178f13e81650722d751f4a0"
+      },
+      {
+        "path": "artifacts/brev/q013-mission-diagnosis-001/freshtf-authority-followup-001.md",
+        "bytes": 12132,
+        "sha256": "531beeb9aadcc3a87d55f8453e4962354de8db97f6ae3767820a01bbd8042e3d"
+      }
+    ]
+  },
+  "claims": {
+    "repair_not_validated": true,
+    "controller_entry_parameter_added": false,
+    "second_map_to_odom_publisher_observed": false,
+    "reason_for_no_new_threshold": "goal-checker pose/latch inputs were not captured and the exact terminal cause remains unproven",
+    "actual_gpu_trace_validated": false,
+    "qualification_passed": false,
+    "primary_approved": false
+  }
+}

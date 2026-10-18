@@ -63,7 +63,7 @@ mkdir "$project"
 tar --no-same-owner -xf "$archive" -C "$project"
 
 isaac_image=$(docker image inspect nvcr.io/nvidia/isaac-sim:6.2.0 --format '{{index .RepoDigests 0}}')
-nav_image=$(docker image inspect factory-ops-nav2:jazzy-g1 --format '{{.Id}}')
+nav_image=$(docker image inspect factory-ops-nav2:jazzy-g3-goal-checker --format '{{.Id}}')
 run_id=$(python3 -c 'import secrets; print(secrets.token_hex(16))')
 cache="$root/sdk-cache"
 sim="factory-ops-$run-sim"
@@ -207,7 +207,7 @@ paths=[
     'factory_ops/navigation.py','factory_ops/route_reservation.py',
     'factory_ops/traffic.py','factory_ops/traffic_observation.py','factory_ops/usda.py',
     'factory_ops/visual_scene.py','factory_ops/visual_state.py','factory_ops/visual_evidence.py',
-    'scripts/brev/run-g3.sh',
+    'scripts/brev/run-g3.sh','scripts/ros/Dockerfile','scripts/ros/Dockerfile.g3',
     'scripts/brev/g3_resource_pack.py',
     'scripts/brev/g3_gpu_sampler.py',
     'scripts/brev/g3_pair_wait.py',
@@ -221,6 +221,7 @@ paths=sorted(set(paths) | {
     p.relative_to(project).as_posix()
     for directory,patterns in (
         ('factory_ops',('*.py',)),('scripts/isaac',('*.py',)),('scripts/ros',('*.py',)),
+        ('ros_ws/src/factory_ops_goal_checker',('*',)),
         ('configs/factory-v3',('*.json','*.yaml')))
     for pattern in patterns for p in (project/directory).rglob(pattern)
     if p.is_file() and not p.is_symlink()

@@ -21,14 +21,14 @@ from scripts.ros.g3_mission import angle_error, build_cutoff_record, build_g3_na
 
 
 class G3MissionAdmissionTests(unittest.TestCase):
-    def test_g3_params_change_only_stateful_and_xy_per_robot(self):
+    def test_g3_params_preserve_q013_values_and_add_only_two_trace_plugins_per_robot(self):
         node = lambda: {"ros__parameters": {}}
         def costmap(name):
             return {name: {"ros__parameters": {"inflation_layer": {}, "static_layer": {},
                 "obstacle_layer": {"front": {}, "rear": {}}}}}
         controller = {"ros__parameters": {
             "controller_frequency": 10.0,
-            "goal_checker": {"stateful": True, "xy_goal_tolerance": .05, "yaw_goal_tolerance": .15},
+            "goal_checker": {"plugin": "nav2_controller::SimpleGoalChecker", "stateful": True, "xy_goal_tolerance": .05, "yaw_goal_tolerance": .15},
             "progress_checker": {"required_movement_radius": .1, "movement_time_allowance": 30.},
             "FollowPath": {"plugin": "nav2_regulated_pure_pursuit_controller::RegulatedPurePursuitController"},
         }}
@@ -43,6 +43,10 @@ class G3MissionAdmissionTests(unittest.TestCase):
         runtime = {"g3_nav2": {
             "follow_path_stateful": True,
             "goal_checker_stateful": True,
+            "goal_checker_plugin": "factory_ops_goal_checker::TelemetryGoalChecker",
+            "follow_path_plugin": "factory_ops_goal_checker::TelemetryRegulatedPurePursuitController",
+            "controller_trace_schema_version": 1,
+            "controller_trace_topic": "controller_cycle_trace",
             "xy_goal_tolerance": .06,
             "yaw_goal_tolerance": .15,
         }}
@@ -55,14 +59,19 @@ class G3MissionAdmissionTests(unittest.TestCase):
         for robot in ("carter1", "carter2"):
             controller = expected[robot]["controller_server"]["ros__parameters"]
             controller["FollowPath"]["stateful"] = True
+            controller["FollowPath"]["plugin"] = "factory_ops_goal_checker::TelemetryRegulatedPurePursuitController"
             controller["goal_checker"]["xy_goal_tolerance"] = .06
+            controller["goal_checker"]["plugin"] = "factory_ops_goal_checker::TelemetryGoalChecker"
         self.assertEqual(expected, generated)
-        self.assertEqual(4, len(contract["only_semantic_changes"]))
+        self.assertEqual(8, len(contract["only_semantic_changes"]))
+        self.assertEqual(4, len(contract["relative_to_g3_q013_only_semantic_changes"]))
+        self.assertTrue(all(row["path"].endswith(".plugin")
+                            for row in contract["relative_to_g3_q013_only_semantic_changes"]))
         self.assertEqual(
             {
                 f"{robot}.controller_server.ros__parameters.{name}"
                 for robot in ("carter1", "carter2")
-                for name in ("FollowPath.stateful", "goal_checker.xy_goal_tolerance")
+                for name in ("FollowPath.stateful", "FollowPath.plugin", "goal_checker.xy_goal_tolerance", "goal_checker.plugin")
             },
             {row["path"] for row in contract["only_semantic_changes"]},
         )
@@ -88,21 +97,24 @@ class G3MissionAdmissionTests(unittest.TestCase):
         packages = {name: {"name": name, "version": "1.3.13", "package_xml_sha256": "c" * 64,
                            "shared_libraries": [{"name": f"lib{name}.so", "bytes": 1,
                                                   "sha256": "e" * 64}]}
-                    for name in ("nav2_controller", "nav2_regulated_pure_pursuit_controller")}
+                    for name in ("factory_ops_goal_checker", "nav2_controller", "nav2_regulated_pure_pursuit_controller")}
         parameters = {
             "FollowPath.stateful": {"parameter_type": "bool", "parameter_value": True},
+            "FollowPath.plugin": {"parameter_type": "string", "parameter_value": "factory_ops_goal_checker::TelemetryRegulatedPurePursuitController"},
+            "goal_checker.plugin": {"parameter_type": "string", "parameter_value": "factory_ops_goal_checker::TelemetryGoalChecker"},
             "goal_checker.stateful": {"parameter_type": "bool", "parameter_value": True},
             "goal_checker.xy_goal_tolerance": {"parameter_type": "double", "parameter_value": .06},
             "goal_checker.yaw_goal_tolerance": {"parameter_type": "double", "parameter_value": .15},
         }
-        observation = {"schema_version": 2, "source_commit": source,
+        observation = {"schema_version": 3, "source_commit": source,
             "generated_params_sha256": params_sha,
             "controllers": {robot: {"lifecycle_state": 3, "parameters": deepcopy(parameters)}
                             for robot in ("carter1", "carter2")},
             "observation_topics": {f"/{robot}/{name}": type_name
                 for robot in ("carter1", "carter2") for name, type_name in {
                     "lookahead_point": "geometry_msgs/msg/PointStamped",
-                    "is_rotating_to_heading": "std_msgs/msg/Bool"}.items()},
+                    "is_rotating_to_heading": "std_msgs/msg/Bool",
+                    "controller_cycle_trace": "diagnostic_msgs/msg/DiagnosticArray"}.items()},
             "packages": packages}
         validate_rpp_runtime_observation(observation, generated_params_sha256=params_sha, source_commit=source)
         mutations = []
@@ -122,10 +134,12 @@ class G3MissionAdmissionTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 validate_rpp_runtime_observation(changed, generated_params_sha256=params_sha, source_commit=source)
 
-    def test_runtime_probe_reads_all_four_parameters_from_one_typed_response(self):
+    def test_runtime_probe_reads_q013_values_and_two_plugin_classes_from_one_typed_response(self):
         source = "a" * 40
         parameter_names = [
             "FollowPath.stateful",
+            "FollowPath.plugin",
+            "goal_checker.plugin",
             "goal_checker.stateful",
             "goal_checker.xy_goal_tolerance",
             "goal_checker.yaw_goal_tolerance",
@@ -133,7 +147,7 @@ class G3MissionAdmissionTests(unittest.TestCase):
         packages = {name: {"name": name, "version": "1.3.13", "package_xml_sha256": "c" * 64,
                            "shared_libraries": [{"name": f"lib{name}.so", "bytes": 1,
                                                   "sha256": "e" * 64}]}
-                    for name in ("nav2_controller", "nav2_regulated_pure_pursuit_controller")}
+                    for name in ("factory_ops_goal_checker", "nav2_controller", "nav2_regulated_pure_pursuit_controller")}
 
         class Request:
             def __init__(self):
@@ -146,6 +160,8 @@ class G3MissionAdmissionTests(unittest.TestCase):
             def result(self):
                 return NS(values=[
                     NS(type=1, bool_value=True, double_value=0.0),
+                    NS(type=4, bool_value=False, double_value=0.0, string_value="factory_ops_goal_checker::TelemetryRegulatedPurePursuitController"),
+                    NS(type=4, bool_value=False, double_value=0.0, string_value="factory_ops_goal_checker::TelemetryGoalChecker"),
                     NS(type=1, bool_value=True, double_value=0.0),
                     NS(type=3, bool_value=False, double_value=.06),
                     NS(type=3, bool_value=False, double_value=.15),
@@ -165,6 +181,7 @@ class G3MissionAdmissionTests(unittest.TestCase):
             for robot in ("carter1", "carter2") for name, type_name in {
                 "lookahead_point": "geometry_msgs/msg/PointStamped",
                 "is_rotating_to_heading": "std_msgs/msg/Bool",
+                "controller_cycle_trace": "diagnostic_msgs/msg/DiagnosticArray",
             }.items()]
         states = {f"{robot}/controller_server": 3 for robot in robots}
         with tempfile.TemporaryDirectory() as temporary:
@@ -178,9 +195,9 @@ class G3MissionAdmissionTests(unittest.TestCase):
                     cast(Any, NS(drain=lambda: None)),
                     states, math.inf, params_path,
                     get_parameters_type=NS(Request=Request), bool_parameter_type=1,
-                    double_parameter_type=3, source_commit=source,
+                    double_parameter_type=3, string_parameter_type=4, source_commit=source,
                 )
-        self.assertEqual(2, observation["schema_version"])
+        self.assertEqual(3, observation["schema_version"])
         self.assertEqual({robot: [parameter_names] for robot in robots},
                          {robot: client.requests for robot, client in clients.items()})
         self.assertIs(True, observation["controllers"]["carter1"]["parameters"]
