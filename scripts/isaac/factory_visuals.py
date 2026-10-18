@@ -15,7 +15,7 @@ from contextlib import contextmanager
 from typing import Any, Mapping, Sequence
 
 from factory_ops.layout import Layout, LayoutError, Rect
-from factory_ops.visual_scene import export_visual_scene
+from factory_ops.visual_scene import PRODUCTION_BAY_GEOMETRY, _recipe_boxes, export_visual_scene
 from factory_ops.visual_state import SCOPE, canonical_sha256
 
 
@@ -44,6 +44,15 @@ SIGNAL_PLACEMENTS = {
     "CO_1": (25.55, 14.94, 1.55),
     "Cell": (25.55, 10.68, 1.75),
     "Complete": (38.72, 14.50, 1.08),
+}
+V4_CARGO_SUPPORT = {
+    "source_S1": ("kitting_bench", ("Worktop",)),
+    "source_S2": ("flow_rack", ("ShelfDeck_3",)),
+    "source_S3": ("kitting_bench", ("Worktop",)),
+    "ci": ("process_cell", ("WorkBed",)),
+    "cell": ("process_cell", ("InspectionStage",)),
+    "co": ("process_cell", tuple(f"Roller_{index}" for index in range(8))),
+    "out": ("finished_goods", ("Pallet_01",)),
 }
 
 
@@ -123,6 +132,8 @@ def world_slot_placement(layout: Layout, location: str, slot: int) -> dict[str, 
         raise LayoutError(f"visual cargo obstacle is missing: {obstacle_id}")
     rect = Rect.from_value(source["rect"], f"visual cargo {obstacle_id}")
     height = float(source["height_m"])
+    if compact:
+        return _v4_world_slot_placement(layout, location, slot, obstacle_id, rect, height)
     tote_x, tote_y, tote_z = TOTE_SIZE_M
     margin = 0.06
     pitch_x, pitch_y = tote_x + 0.06, tote_y + 0.06
@@ -133,19 +144,6 @@ def world_slot_placement(layout: Layout, location: str, slot: int) -> dict[str, 
     if columns < 1 or rows < 1 or slot >= capacity:
         raise ValueError(f"visual cargo slot {slot} exceeds {location} capacity {capacity}")
     column, row = slot % columns, slot // columns
-    if compact:
-        station_id = {"source_S1": "S1", "source_S2": "S2", "source_S3": "S3",
-                      "ci": "CI", "co": "CO", "out": "OUT"}.get(location)
-        target_x, target_y = layout.stations[station_id] if station_id else (
-            (rect.xmin + rect.xmax) / 2, (rect.ymin + rect.ymax) / 2,
-        )
-        slots = [(col, row_index) for row_index in range(rows) for col in range(columns)]
-        slots.sort(key=lambda item: (
-            (rect.xmin + margin + tote_x / 2 + item[0] * pitch_x - target_x) ** 2
-            + (rect.ymin + margin + tote_y / 2 + item[1] * pitch_y - target_y) ** 2,
-            item[1], item[0],
-        ))
-        column, row = slots[slot]
     x = rect.xmin + margin + tote_x / 2 + column * pitch_x
     y = rect.ymin + margin + tote_y / 2 + row * pitch_y
     z = height - margin - tote_z / 2
@@ -162,6 +160,88 @@ def world_slot_placement(layout: Layout, location: str, slot: int) -> dict[str, 
         "bounds_xyz_m": list(bounds),
         "capacity": capacity,
     }
+
+
+def _v4_world_slot_placement(
+    layout: Layout, location: str, slot: int, obstacle_id: str, rect: Rect, height: float,
+) -> dict[str, Any]:
+    recipe, support_names = V4_CARGO_SUPPORT[location]
+    parts = _recipe_boxes(
+        recipe, rect, height, 0, obstacle_id,
+        geometry_profile=PRODUCTION_BAY_GEOMETRY,
+    )
+    support = [part for part in parts if part.name in support_names]
+    if {part.name for part in support} != set(support_names):
+        raise LayoutError(f"visual cargo support parts are missing: {obstacle_id}")
+    top = max(part.bounds[5] for part in support)
+    if any(not math.isclose(part.bounds[5], top, abs_tol=1e-9) for part in support):
+        raise LayoutError(f"visual cargo support parts have inconsistent top surfaces: {obstacle_id}")
+    support_bounds = (
+        min(part.bounds[0] for part in support), min(part.bounds[1] for part in support),
+        min(part.bounds[2] for part in support), max(part.bounds[3] for part in support),
+        max(part.bounds[4] for part in support), top,
+    )
+    tote_x, tote_y, tote_z = TOTE_SIZE_M
+    width, depth = support_bounds[3] - support_bounds[0], support_bounds[4] - support_bounds[1]
+    columns, rows = int(width // tote_x), int(depth // tote_y)
+    clearance, stack_gap = .01, .002
+    if columns < 1 or rows < 1 or top + clearance + tote_z > height:
+        raise LayoutError(f"visual cargo support is too small: {obstacle_id}")
+    gap_x = (width - columns * tote_x) / (columns + 1)
+    gap_y = (depth - rows * tote_y) / (rows + 1)
+    layer_pitch = tote_z + stack_gap
+    layers = int((height - top - clearance + stack_gap) // layer_pitch)
+    station_id = {"source_S1": "S1", "source_S2": "S2", "source_S3": "S3",
+                  "ci": "CI", "co": "CO", "out": "OUT"}.get(location)
+    target_x, target_y = layout.stations[station_id] if station_id else (
+        (support_bounds[0] + support_bounds[3]) / 2,
+        (support_bounds[1] + support_bounds[4]) / 2,
+    )
+    candidates: list[tuple[int, float, float, float, tuple[float, ...]]] = []
+    selected_names = set(support_names)
+    blockers = [part for part in parts if part.name not in selected_names]
+    for layer in range(layers):
+        layer_candidates = []
+        bottom = top + clearance + layer * layer_pitch
+        for row in range(rows):
+            for column in range(columns):
+                x = support_bounds[0] + gap_x + tote_x / 2 + column * (tote_x + gap_x)
+                y = support_bounds[1] + gap_y + tote_y / 2 + row * (tote_y + gap_y)
+                bounds = (x - tote_x / 2, y - tote_y / 2, bottom,
+                          x + tote_x / 2, y + tote_y / 2, bottom + tote_z)
+                if any(_bounds_overlap(bounds, part.bounds) for part in blockers):
+                    continue
+                distance = (x - target_x) ** 2 + (y - target_y) ** 2
+                layer_candidates.append((layer, distance, x, y, bounds))
+        layer_candidates.sort(key=lambda item: (item[1], item[3], item[2]))
+        candidates.extend(layer_candidates)
+    legacy_margin, legacy_gap = .06, .06
+    legacy_columns = int((rect.xmax - rect.xmin - 2 * legacy_margin + legacy_gap) // (tote_x + legacy_gap))
+    legacy_rows = int((rect.ymax - rect.ymin - 2 * legacy_margin + legacy_gap) // (tote_y + legacy_gap))
+    capacity = min(legacy_columns * legacy_rows, len(candidates))
+    if slot >= capacity:
+        raise ValueError(f"visual cargo slot {slot} exceeds {location} capacity {capacity}")
+    layer, _distance, x, y, bounds = candidates[slot]
+    z = bounds[2] + tote_z / 2
+    return {
+        "location": location,
+        "slot": slot,
+        "source_obstacle_id": obstacle_id,
+        "parent_path": f"/World/Visuals/CargoSlots/{_prim_name(location)}",
+        "translate_xyz_m": [x, y, z],
+        "size_xyz_m": list(TOTE_SIZE_M),
+        "bounds_xyz_m": list(bounds),
+        "capacity": capacity,
+        "support_part_names": list(support_names),
+        "support_bounds_xyz_m": list(support_bounds),
+        "support_clearance_m": clearance,
+        "stack_gap_m": stack_gap,
+        "stack_layer": layer,
+    }
+
+
+def _bounds_overlap(left: Sequence[float], right: Sequence[float]) -> bool:
+    return all(left[axis] < right[axis + 3] and right[axis] < left[axis + 3] for axis in range(3))
 
 
 def build_payload_visibility_plan(

@@ -13,6 +13,7 @@ from factory_ops.visual_state import SCOPE, canonical_sha256
 from scripts.isaac.factory_visuals import (
     FactoryVisualRuntime,
     TOTE_SIZE_M,
+    V4_CARGO_SUPPORT,
     WORLD_LOCATION_OBSTACLE,
     _export_immutable_session_layer,
     _session_edit_target,
@@ -24,6 +25,7 @@ from scripts.isaac.factory_visuals import (
 
 ROOT = Path(__file__).resolve().parents[1]
 LAYOUT_PATH = ROOT / "configs" / "factory-v3" / "layout.json"
+V4_LAYOUT_PATH = ROOT / "configs" / "factory-v4" / "layout.json"
 
 
 def _projection(*rows: dict[str, object]) -> dict[str, Any]:
@@ -244,6 +246,103 @@ class FactoryVisualRuntimeTests(unittest.TestCase):
             self.assertLessEqual(bounds[5], obstacles[obstacle_id]["height_m"])
             with self.assertRaisesRegex(ValueError, "exceeds"):
                 world_slot_placement(self.layout, location, placement["capacity"])
+
+    def test_v4_world_slots_rest_on_procedural_supports_and_keep_station_order(self) -> None:
+        layout = Layout.from_file(V4_LAYOUT_PATH)
+        expected_support = {
+            "source_S1": ["Worktop"], "source_S2": ["ShelfDeck_3"],
+            "source_S3": ["Worktop"], "ci": ["WorkBed"],
+            "cell": ["InspectionStage"],
+            "co": [f"Roller_{index}" for index in range(8)], "out": ["Pallet_01"],
+        }
+        station_for = {"source_S1": "S1", "source_S2": "S2", "source_S3": "S3",
+                       "ci": "CI", "co": "CO", "out": "OUT"}
+        for location, support_names in expected_support.items():
+            placement = world_slot_placement(layout, location, 0)
+            bounds = placement["bounds_xyz_m"]
+            support = placement["support_bounds_xyz_m"]
+            self.assertEqual(support_names, placement["support_part_names"])
+            self.assertAlmostEqual(support[5] + placement["support_clearance_m"], bounds[2])
+            self.assertGreaterEqual(bounds[0], support[0])
+            self.assertGreaterEqual(bounds[1], support[1])
+            self.assertLessEqual(bounds[3], support[3])
+            self.assertLessEqual(bounds[4], support[4])
+            self.assertEqual(0, placement["stack_layer"])
+            first_layer = [world_slot_placement(layout, location, index)
+                           for index in range(min(4, placement["capacity"]))]
+            first_layer = [item for item in first_layer if item["stack_layer"] == 0]
+            target = layout.stations[station_for[location]] if location in station_for else (
+                (support[0] + support[3]) / 2, (support[1] + support[4]) / 2,
+            )
+            distances = [
+                (item["translate_xyz_m"][0] - target[0]) ** 2
+                + (item["translate_xyz_m"][1] - target[1]) ** 2
+                for item in first_layer
+            ]
+            self.assertEqual(sorted(distances), distances)
+            with self.assertRaisesRegex(ValueError, "exceeds"):
+                world_slot_placement(layout, location, placement["capacity"])
+
+    def test_v4_logical_payload_slots_avoid_static_recipe_parts(self) -> None:
+        from factory_ops.layout import Rect
+        from factory_ops.visual_scene import PRODUCTION_BAY_GEOMETRY, _recipe_boxes
+
+        layout = Layout.from_file(V4_LAYOUT_PATH)
+        obstacles = {str(item["id"]): item for item in layout.data["physical_obstacles"]}
+        logical_counts = {"source_S1": 2, "source_S2": 2, "source_S3": 2,
+                          "ci": 2, "cell": 1, "co": 2, "out": 6}
+
+        def overlaps(left, right):
+            return all(left[axis] < right[axis + 3] and right[axis] < left[axis + 3] for axis in range(3))
+
+        for location, count in logical_counts.items():
+            first = world_slot_placement(layout, location, 0)
+            obstacle = obstacles[first["source_obstacle_id"]]
+            rect = Rect.from_value(obstacle["rect"], str(obstacle["id"]))
+            recipe, support_names = V4_CARGO_SUPPORT[location]
+            parts = _recipe_boxes(
+                recipe, rect, float(obstacle["height_m"]), 0, str(obstacle["id"]),
+                geometry_profile=PRODUCTION_BAY_GEOMETRY,
+            )
+            blockers = [part for part in parts if part.name not in set(support_names)]
+            for slot in range(count):
+                payload = world_slot_placement(layout, location, slot)["bounds_xyz_m"]
+                self.assertFalse(any(overlaps(payload, part.bounds) for part in blockers), (location, slot))
+
+    def test_v4_out_keeps_six_stable_slots_with_nonoverlapping_rim_stacks(self) -> None:
+        layout = Layout.from_file(V4_LAYOUT_PATH)
+        placements = [world_slot_placement(layout, "out", slot) for slot in range(6)]
+        self.assertGreaterEqual(placements[0]["capacity"], 6)
+        self.assertEqual([0, 0, 0, 0, 1, 1], [item["stack_layer"] for item in placements])
+        for index, item in enumerate(placements):
+            bounds = item["bounds_xyz_m"]
+            self.assertLessEqual(bounds[5], 1.4)
+            for other in placements[index + 1:]:
+                other_bounds = other["bounds_xyz_m"]
+                overlap = all(bounds[axis] < other_bounds[axis + 3]
+                              and other_bounds[axis] < bounds[axis + 3] for axis in range(3))
+                self.assertFalse(overlap, (index, other["slot"]))
+        for upper in placements[4:]:
+            lower = next(item for item in placements[:4]
+                         if item["translate_xyz_m"][:2] == upper["translate_xyz_m"][:2])
+            self.assertAlmostEqual(
+                lower["bounds_xyz_m"][5] + upper["stack_gap_m"],
+                upper["bounds_xyz_m"][2],
+            )
+
+    def test_v3_world_slot_contract_remains_legacy(self) -> None:
+        expected = {
+            "source_S1": ("KIT_BENCH_1", 10, .66), "source_S2": ("RACK_A2", 26, 1.86),
+            "source_S3": ("RACK_B2", 26, 1.86), "ci": ("PROCESS_1", 72, 1.96),
+            "cell": ("PROCESS_2", 64, 1.96), "co": ("PROCESS_3", 64, 1.96),
+            "out": ("FG_HIGH", 72, 1.16),
+        }
+        for location, (obstacle_id, capacity, bottom) in expected.items():
+            placement = world_slot_placement(self.layout, location, 0)
+            self.assertEqual(obstacle_id, placement["source_obstacle_id"])
+            self.assertEqual(capacity, placement["capacity"])
+            self.assertAlmostEqual(bottom, placement["bounds_xyz_m"][2])
+            self.assertNotIn("support_part_names", placement)
 
     def test_visibility_plan_has_one_copy_per_payload_and_safe_robot_deck_size(self) -> None:
         projection = _projection(

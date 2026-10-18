@@ -239,6 +239,7 @@ class VisualSceneTests(unittest.TestCase):
             self.assertLessEqual(pallet.bounds[3] - pallet.bounds[0], 1.2 + 1e-9)
             self.assertLessEqual(pallet.bounds[4] - pallet.bounds[1], 1.0 + 1e-9)
             self.assertFalse(any(xy_overlap(pallet, other) for other in pallets[index + 1:]))
+            self.assertEqual((.08, .14), (pallet.bounds[2], pallet.bounds[5]))
         for index, tote in enumerate(totes):
             self.assertLessEqual(tote.bounds[3] - tote.bounds[0], .6 + 1e-9)
             self.assertLessEqual(tote.bounds[4] - tote.bounds[1], .4 + 1e-9)
@@ -249,6 +250,14 @@ class VisualSceneTests(unittest.TestCase):
                 for pallet in pallets
             ))
         self.assertTrue(all(f"{pallet.name}_RunnerL" in {box.name for box in boxes} for pallet in pallets))
+        runners = [box for box in boxes if "_Runner" in box.name]
+        self.assertTrue(all((box.bounds[2], box.bounds[5]) == (0, .08) for box in runners))
+        empty = next(box for box in pallets if box.name == "Pallet_01")
+        self.assertFalse(any(
+            empty.bounds[0] < tote.bounds[3] and tote.bounds[0] < empty.bounds[3]
+            and empty.bounds[1] < tote.bounds[4] and tote.bounds[1] < empty.bounds[4]
+            for tote in totes
+        ))
 
     def test_v4_cabinets_are_independent_modules_with_front_details(self) -> None:
         layout = Layout.from_file(V4_LAYOUT_PATH)

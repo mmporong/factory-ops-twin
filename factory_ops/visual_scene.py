@@ -799,12 +799,12 @@ def _recipe_boxes(
                 px1, py1 = px0 + pallet_width, py0 + pallet_depth
                 prefix = f"Pallet_{pallet_index:02d}"
                 boxes.extend([
-                    absolute(prefix, px0, py0, 0, px1, py1, .08, "Wood", "pallet", "finished_goods_pallet"),
-                    absolute(f"{prefix}_RunnerL", px0 + .08, py0 + .05, .08, px0 + .20, py1 - .05, .14, "Wood"),
-                    absolute(f"{prefix}_RunnerC", (px0 + px1) / 2 - .06, py0 + .05, .08, (px0 + px1) / 2 + .06, py1 - .05, .14, "Wood"),
-                    absolute(f"{prefix}_RunnerR", px1 - .20, py0 + .05, .08, px1 - .08, py1 - .05, .14, "Wood"),
+                    absolute(prefix, px0, py0, .08, px1, py1, .14, "Wood", "pallet", "finished_goods_pallet"),
+                    absolute(f"{prefix}_RunnerL", px0 + .08, py0 + .05, 0, px0 + .20, py1 - .05, .08, "Wood"),
+                    absolute(f"{prefix}_RunnerC", (px0 + px1) / 2 - .06, py0 + .05, 0, (px0 + px1) / 2 + .06, py1 - .05, .08, "Wood"),
+                    absolute(f"{prefix}_RunnerR", px1 - .20, py0 + .05, 0, px1 - .08, py1 - .05, .08, "Wood"),
                 ])
-                tote_count = 2 if pallet_index in {0, 3} else 1
+                tote_count = 0 if pallet_index == 1 else 2
                 for local_index in range(tote_count):
                     tote_width, tote_depth = .50, .38
                     tx0 = px0 + ((pallet_width - tote_width) / 2 if tote_count == 1 else .08 + local_index * (tote_width + .04))
