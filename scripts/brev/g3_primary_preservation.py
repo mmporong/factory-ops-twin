@@ -62,9 +62,10 @@ def main() -> int:
                     "live_eligibility_path", "live_eligibility_sha256", "store_result_paths",
                     "store_roots", "stopped_storage_hours", "previous_receipt",
                     "previous_receipt_sha256"}
-        if set(value) != required:
+        if set(value) not in (required, required | {"session_root"}):
             raise ValueError("primary close specification fields differ")
         previous = value["previous_receipt"]
+        session_root = value.get("session_root")
         output = close_primary_run(
             output=Path(value["output"]), evidence_root=Path(value["evidence_root"]),
             ordinal=value["ordinal"], trial_id=value["trial_id"],
@@ -79,6 +80,7 @@ def main() -> int:
             stopped_storage_hours=value["stopped_storage_hours"],
             previous_receipt=Path(previous) if previous is not None else None,
             previous_receipt_sha256=value["previous_receipt_sha256"],
+            session_root=Path(session_root) if session_root is not None else None,
         )
     print(output)
     return 0
