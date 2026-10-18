@@ -104,6 +104,12 @@ class CompactSessionTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "source binding differs"):
             _bindings(bad, V4)
 
+        renamed = copy.deepcopy(settings)
+        for binding in renamed["source_bindings"]:
+            binding["path"] = binding["path"].replace("configs/factory-v4/", "configs/factory-v3/")
+        with self.assertRaisesRegex(ValueError, "canonical config profile"):
+            _bindings(renamed, V4)
+
         with tempfile.TemporaryDirectory() as temporary:
             session_root = Path(temporary) / "session"
             prepare_session(session_root, config_dir=V4)

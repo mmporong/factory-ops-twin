@@ -94,6 +94,10 @@ def _bindings(settings: dict[str, Any], config_dir: Path) -> None:
         raise ValueError("experiment source bindings must cover layout, routing, G2, and traffic inputs")
     if len(local_prefixes) != 1:
         raise ValueError("experiment local source bindings must use one canonical config profile")
+    for profile in ("factory-v3", "factory-v4"):
+        if (config_root == repo_root / "configs" / profile
+                and local_prefixes != {("configs", profile)}):
+            raise ValueError("experiment source bindings differ from the canonical config profile")
     actual_inputs = _inputs(config_root)
     for name in ("layout.json", "g3-routing.json"):
         if local_bindings[name] != actual_inputs[name]:
