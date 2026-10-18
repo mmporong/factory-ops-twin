@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from copy import deepcopy
 from dataclasses import asdict, dataclass
 from hashlib import sha256
 import json
@@ -14,6 +15,7 @@ from .navigation import GoalPose
 
 CHUNK_SCOPE = "g3b_authored_first_edge_planning_chunk_v1"
 PATH_SCOPE = "g3b_computed_path_geometry_only_not_ros_or_physical_evidence"
+FOLLOW_PATH_NORMALIZATION = "final_pose_header_stamp_zero_latest_tf"
 
 
 def _number(value: object, label: str) -> float:
@@ -48,6 +50,45 @@ def path_header_stamp_ns(header: Mapping[str, Any]) -> int:
             or not 0 <= nanoseconds < 1_000_000_000):
         raise ValueError("Path header requires nonnegative sec and canonical nanosec integers")
     return seconds * 1_000_000_000 + nanoseconds
+
+
+def normalize_follow_path_payload(planner_payload: Mapping[str, Any]) -> dict[str, Any]:
+    """Copy a planner Path and request latest TF only for its terminal pose."""
+    header = planner_payload.get("header")
+    if not isinstance(header, Mapping):
+        raise ValueError("planner Path header must be a mapping")
+    path_header_stamp_ns(header)
+    poses = planner_payload.get("poses")
+    if not isinstance(poses, Sequence) or isinstance(poses, (str, bytes)) or not poses:
+        raise ValueError("planner Path requires at least one pose")
+    for index, pose in enumerate(poses):
+        if not isinstance(pose, Mapping):
+            raise ValueError(f"planner Path pose {index} must be a mapping")
+        pose_header = pose.get("header")
+        if not isinstance(pose_header, Mapping):
+            raise ValueError(f"planner Path pose {index} header must be a mapping")
+        path_header_stamp_ns(pose_header)
+    normalized = deepcopy(dict(planner_payload))
+    normalized["poses"][-1]["header"]["sec"] = 0
+    normalized["poses"][-1]["header"]["nanosec"] = 0
+    return normalized
+
+
+def validate_follow_path_normalization(
+    planner_payload: Mapping[str, Any], follow_payload: Mapping[str, Any], normalization: object,
+) -> None:
+    """Allow exactly the terminal pose stamp-zero transform recorded by the runtime."""
+    if normalization != FOLLOW_PATH_NORMALIZATION:
+        raise ValueError("FollowPath normalization kind is unsupported")
+    poses = planner_payload.get("poses")
+    if (not isinstance(poses, Sequence) or isinstance(poses, (str, bytes)) or not poses
+            or not isinstance(poses[-1], Mapping)):
+        raise ValueError("planner terminal pose requires a nonzero source stamp")
+    terminal_header = poses[-1].get("header")
+    if not isinstance(terminal_header, Mapping) or path_header_stamp_ns(terminal_header) == 0:
+        raise ValueError("planner terminal pose requires a nonzero source stamp")
+    if normalize_follow_path_payload(planner_payload) != follow_payload:
+        raise ValueError("FollowPath differs beyond the terminal pose stamp-zero normalization")
 
 
 def path_clock_ready(header: Mapping[str, Any], *, clock_ns: int,

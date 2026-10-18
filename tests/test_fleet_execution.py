@@ -11,12 +11,15 @@ import unittest
 
 from factory_ops.fleet_execution import (
     CHUNK_SCOPE,
+    FOLLOW_PATH_NORMALIZATION,
     PATH_SCOPE,
     StoppedGate,
     make_chunk,
+    normalize_follow_path_payload,
     path_clock_ready,
     path_header_stamp_ns,
     qualify_computed_path,
+    validate_follow_path_normalization,
 )
 from factory_ops.fleet_routing import RouteBook, swept_tiles
 from factory_ops.layout import Layout
@@ -24,6 +27,47 @@ from factory_ops.navigation import GoalPose
 
 
 ROOT = Path(__file__).resolve().parents[1]
+
+
+class FollowPathNormalizationTests(unittest.TestCase):
+    @staticmethod
+    def planner_path() -> dict:
+        return {
+            "header": {"frame_id": "map", "sec": 10, "nanosec": 50},
+            "poses": [
+                {"header": {"frame_id": "map", "sec": 10, "nanosec": 40},
+                 "position_xyz_m": [4.0, 4.0, 0.0], "orientation_xyzw": [0.0, 0.0, 0.0, 1.0]},
+                {"header": {"frame_id": "map", "sec": 10, "nanosec": 50},
+                 "position_xyz_m": [12.0, 4.0, 0.0], "orientation_xyzw": [0.0, 0.0, 1.0, 0.0]},
+            ],
+        }
+
+    def test_normalization_copies_source_and_preserves_fresh_path_header(self):
+        planner = self.planner_path()
+        original = deepcopy(planner)
+        follow = normalize_follow_path_payload(planner)
+        self.assertEqual(original, planner)
+        self.assertEqual(planner["header"], follow["header"])
+        self.assertEqual({"frame_id": "map", "sec": 0, "nanosec": 0}, follow["poses"][-1]["header"])
+        validate_follow_path_normalization(planner, follow, FOLLOW_PATH_NORMALIZATION)
+
+    def test_validation_rejects_every_change_beyond_terminal_stamp_zero(self):
+        planner = self.planner_path()
+        follow = normalize_follow_path_payload(planner)
+        mutations = (
+            lambda value: value["header"].update(sec=11),
+            lambda value: value["poses"][-1]["header"].update(frame_id="odom"),
+            lambda value: value["poses"][-1]["header"].update(nanosec=1),
+            lambda value: value["poses"][-1]["position_xyz_m"].__setitem__(0, 12.1),
+            lambda value: value["poses"][-1]["orientation_xyzw"].__setitem__(2, .9),
+        )
+        for mutate in mutations:
+            changed = deepcopy(follow)
+            mutate(changed)
+            with self.subTest(changed=changed), self.assertRaises(ValueError):
+                validate_follow_path_normalization(planner, changed, FOLLOW_PATH_NORMALIZATION)
+        with self.assertRaises(ValueError):
+            validate_follow_path_normalization(planner, follow, "unknown")
 
 
 class PathClockTests(unittest.TestCase):

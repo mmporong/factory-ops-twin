@@ -17,7 +17,7 @@ from typing import Any, Mapping, Sequence
 from uuid import UUID
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
-from factory_ops.fleet_execution import make_chunk, path_content_sha256, qualify_computed_path, path_header_stamp_ns
+from factory_ops.fleet_execution import make_chunk, path_content_sha256, qualify_computed_path, path_header_stamp_ns, validate_follow_path_normalization
 from factory_ops.fleet_routing import RouteBook, swept_tiles
 from factory_ops.experiments import canonical_hash
 from factory_ops.g3_session import SCOPE, config_dir_from_session, sha, verify_session
@@ -1009,18 +1009,36 @@ def validate_actions(
                 raise ValueError("journaled planner terminal status is not successful")
             content_hash = path_content_sha256(path)
             if action.get("path_content_sha256") != content_hash:
-                raise ValueError("planner Path content hash differs")
+                raise ValueError("action Path content hash differs")
+            normalization_fields = (
+                "planner_path", "planner_path_content_sha256", "follow_path_normalization",
+            )
+            normalization_count = sum(name in action for name in normalization_fields)
+            if normalization_count not in (0, len(normalization_fields)):
+                raise ValueError("FollowPath normalization evidence is incomplete")
+            planner_path = path
+            planner_content_hash = content_hash
+            if normalization_count:
+                planner_path = action["planner_path"]
+                if not isinstance(planner_path, Mapping):
+                    raise ValueError("planner Path payload is malformed")
+                planner_content_hash = path_content_sha256(planner_path)
+                if action["planner_path_content_sha256"] != planner_content_hash:
+                    raise ValueError("planner Path content hash differs")
+                validate_follow_path_normalization(
+                    planner_path, path, action["follow_path_normalization"],
+                )
             if planner_only:
                 forbidden = {"follow_goal_path_content_sha256", "accepted_sim_time_s", "server_accepted_stamp",
                              "status", "error_code", "error_msg", "terminal_sim_time_s", "receipt",
-                             "navigation_result", "handoff_sim_time_s"}
+                             "navigation_result", "handoff_sim_time_s", *normalization_fields}
                 if forbidden.intersection(action):
                     raise ValueError("planner-only cutoff action contains follower or handoff evidence")
                 if (_finite_number(action.get("planner_terminal_sim_time_s")) is None
                         or _finite_number(action.get("cutoff_horizon_sim_time_s")) is None
                         or float(action["planner_terminal_sim_time_s"]) + 1e-9 < float(action["cutoff_horizon_sim_time_s"])):
                     raise ValueError("planner-only result is not a post-cutoff cleanup")
-                expected_plans[robot].append({"content_sha256": content_hash, "payload": path})
+                expected_plans[robot].append({"content_sha256": planner_content_hash, "payload": planner_path})
                 payload_hashes.append(content_hash)
                 continue
             for name, uid in (("follow_path", follow),):
@@ -1039,7 +1057,7 @@ def validate_actions(
             if chunk["final"] and action.get("leg_kind") == "business" and action.get("mission_goal_uuid") != action["follow_action_uuid"]:
                 raise ValueError("final station FollowPath UUID differs from mission intent UUID")
             expected_follow_counts[robot] += 1
-            expected_plans[robot].append({"content_sha256": content_hash, "payload": path})
+            expected_plans[robot].append({"content_sha256": planner_content_hash, "payload": planner_path})
             payload_hashes.append(content_hash)
         except (KeyError, TypeError, ValueError, IndexError) as exc:
             errors.append(f"action {index} binding: {exc}")

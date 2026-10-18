@@ -12,7 +12,7 @@ import unittest
 from uuid import uuid4
 
 from factory_ops.fleet import FleetMission, FleetOrder
-from factory_ops.fleet_execution import make_chunk, path_content_sha256, qualify_computed_path
+from factory_ops.fleet_execution import FOLLOW_PATH_NORMALIZATION, make_chunk, normalize_follow_path_payload, path_content_sha256, qualify_computed_path
 from factory_ops.fleet_routing import RouteBook
 from factory_ops.fleet_routing import swept_tiles
 from factory_ops.g3_session import sha
@@ -560,6 +560,26 @@ class G3EvidenceHelperTests(unittest.TestCase):
         }
         return action, bag
 
+    def normalized_action_fixture(self):
+        action, bag = self.action_fixture()
+        planner_path = deepcopy(action["path"])
+        follow_path = normalize_follow_path_payload(planner_path)
+        planner_hash = path_content_sha256(planner_path)
+        follow_hash = path_content_sha256(follow_path)
+        action.update({
+            "planner_path": planner_path,
+            "planner_path_content_sha256": planner_hash,
+            "follow_path_normalization": FOLLOW_PATH_NORMALIZATION,
+            "path": follow_path,
+            "path_content_sha256": follow_hash,
+            "follow_goal_path_content_sha256": follow_hash,
+        })
+        bag["plan_records"]["carter1"][0].update({
+            "content_sha256": planner_hash,
+            "payload": deepcopy(planner_path),
+        })
+        return action, bag
+
     def test_follow_rpc_binds_actual_request_path_uuid_acceptance_and_result(self) -> None:
         action, _ = self.action_fixture()
         uid = action["follow_action_uuid"].replace("-", "")
@@ -583,6 +603,54 @@ class G3EvidenceHelperTests(unittest.TestCase):
         failures: list[str] = []
         validate_follow_rpc([action], forged, failures)
         self.assertTrue(failures)
+
+    def test_normalized_action_binds_planner_plan_and_follow_rpc_separately(self) -> None:
+        action, plan_bag = self.normalized_action_fixture()
+        errors: list[str] = []
+        self.assertEqual(validate_actions([action], self.book, plan_bag, errors)["action_count"], 1)
+        self.assertEqual([], errors)
+        uid = action["follow_action_uuid"].replace("-", "")
+        rpc_bag = {"follow_rpc": {"carter1": {
+            "send_goal": [
+                {"transaction": "client:1", "event_type": 0, "goal_uuid": uid,
+                 "path_content_sha256": action["path_content_sha256"], "path": deepcopy(action["path"]),
+                 "controller_id": "FollowPath", "goal_checker_id": "goal_checker",
+                 "progress_checker_id": "progress_checker"},
+                {"transaction": "client:1", "event_type": 3, "accepted": True,
+                 "stamp": deepcopy(action["server_accepted_stamp"])},
+            ],
+            "get_result": [
+                {"transaction": "client:2", "event_type": 0, "goal_uuid": uid},
+                {"transaction": "client:2", "event_type": 3, "status": 4,
+                 "error_code": 0, "error_msg": ""},
+            ],
+        }, "carter2": {"send_goal": [], "get_result": []}}}
+        rpc_errors: list[str] = []
+        self.assertEqual(validate_follow_rpc([action], rpc_bag, rpc_errors)["passed_rpc_count"], 1)
+        self.assertEqual([], rpc_errors)
+
+    def test_normalized_action_rejects_incomplete_evidence_and_non_stamp_changes(self) -> None:
+        action, bag = self.normalized_action_fixture()
+        partial = deepcopy(action)
+        partial.pop("planner_path_content_sha256")
+        attacks = [partial]
+        for mutate in (
+            lambda value: value["header"].update(sec=2),
+            lambda value: value["poses"][-1]["header"].update(frame_id="odom"),
+            lambda value: value["poses"][-1]["header"].update(nanosec=1),
+            lambda value: value["poses"][-1]["position_xyz_m"].__setitem__(0, value["poses"][-1]["position_xyz_m"][0] + .01),
+            lambda value: value["poses"][-1]["orientation_xyzw"].__setitem__(2, .1),
+        ):
+            forged = deepcopy(action)
+            mutate(forged["path"])
+            forged["path_content_sha256"] = path_content_sha256(forged["path"])
+            forged["follow_goal_path_content_sha256"] = forged["path_content_sha256"]
+            attacks.append(forged)
+        for forged in attacks:
+            with self.subTest(fields=forged.keys()):
+                failures: list[str] = []
+                validate_actions([forged], self.book, deepcopy(bag), failures)
+                self.assertTrue(failures)
 
     def test_action_rederivation_binds_chunk_path_reservation_and_actual_statuses(self) -> None:
         action, bag = self.action_fixture()

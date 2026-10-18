@@ -21,7 +21,7 @@ from uuid import UUID, uuid4
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from factory_ops.fleet import FleetMission, FleetOrder
 from factory_ops.callback_drain import CallbackDrain
-from factory_ops.fleet_execution import StoppedGate, make_chunk, qualify_computed_path, path_content_sha256, path_clock_ready, path_header_stamp_ns
+from factory_ops.fleet_execution import FOLLOW_PATH_NORMALIZATION, StoppedGate, make_chunk, normalize_follow_path_payload, qualify_computed_path, path_content_sha256, path_clock_ready, path_header_stamp_ns
 from factory_ops.fleet_routing import RouteBook, assess_dispatch_route_compatibility, swept_tiles
 from factory_ops.visual_state import canonical_sha256, make_visual_state, project_ledger_state
 from factory_ops.g3_session import config_dir_from_session, save, sha, verify_session
@@ -1326,8 +1326,9 @@ def main() -> int:
                         raise RuntimeError("computed Path terminal yaw differs from the authored goal")
                     if not {tuple(tile) for tile in geometry["swept_tiles"]}.issubset(rt["held_tiles"]):
                         raise RuntimeError("computed Path leaves full-leg reservation")
-                    rt["path_hash"] = path_content_sha256(payload)
-                    rt["record"].update({"path": payload, "path_geometry": geometry, "path_content_sha256": rt["path_hash"], "planner_status": 4, "planner_error_code": 0})
+                    planner_path_hash = path_content_sha256(payload)
+                    rt["path_hash"] = planner_path_hash
+                    rt["record"].update({"path": payload, "path_geometry": geometry, "path_content_sha256": planner_path_hash, "planner_status": 4, "planner_error_code": 0})
                     if cutoff is not None:
                         rt["record"].update({"cutoff_classification": "planner_only_cleanup",
                             "planner_terminal_sim_time_s": stamp,
@@ -1339,7 +1340,22 @@ def main() -> int:
                                 "cutoff_horizon_sim_time_s": cutoff["horizon_sim_time_s"]})
                         begin_cutoff_stop(robot, stamp, "planner_only_cleanup")
                         continue
-                    request = FollowPath.Goal(); request.path = path
+                    follow_path = copy.deepcopy(path)
+                    follow_path.poses[-1].header.stamp.sec = 0
+                    follow_path.poses[-1].header.stamp.nanosec = 0
+                    follow_payload = path_payload(follow_path)
+                    expected_follow_payload = normalize_follow_path_payload(payload)
+                    if follow_payload != expected_follow_payload or path_payload(path) != payload:
+                        raise RuntimeError("FollowPath terminal pose stamp normalization changed planner Path content")
+                    rt["path_hash"] = path_content_sha256(follow_payload)
+                    rt["record"].update({
+                        "planner_path": payload,
+                        "planner_path_content_sha256": planner_path_hash,
+                        "follow_path_normalization": FOLLOW_PATH_NORMALIZATION,
+                        "path": follow_payload,
+                        "path_content_sha256": rt["path_hash"],
+                    })
+                    request = FollowPath.Goal(); request.path = follow_path
                     request.controller_id = "FollowPath"; request.goal_checker_id = "goal_checker"; request.progress_checker_id = "progress_checker"
                     follow_path_hash = path_content_sha256(path_payload(request.path))
                     if follow_path_hash != rt["path_hash"]:
