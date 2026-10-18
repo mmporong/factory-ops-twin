@@ -230,7 +230,8 @@ PY
 sudo -n install -d -m 0755 -o 1234 -g 1234 "$output"
 python3 - "$root" "$run" "$run_id" "$expected_commit" "$isaac_image" "$nav_image" \
   "$profile" "$condition" "$policy" "$seed" "$scenario" "$primary_inputs" "$primary_inputs_sha" \
-  "$build_attestation" "$build_attestation_sha" "$build_receipt_sha" "$preflight_measurement_sha" <<'PY'
+  "$build_attestation" "$build_attestation_sha" "$build_receipt_sha" "$preflight_measurement_sha" \
+  "$build_bundle" "$base_inspect" "$built_inspect" "$preflight_measurement" <<'PY'
 from datetime import datetime, timezone
 from pathlib import Path
 import hashlib,json,subprocess,sys
@@ -272,6 +273,32 @@ paths=sorted(set(paths) | {
     if p.is_file() and not p.is_symlink()
 })
 source_files={p:hashlib.sha256((project/p).read_bytes()).hexdigest() for p in paths}
+build_sources={
+    'provenance/build/build-attestation.json':Path(sys.argv[18])/'build-attestation.json',
+    'provenance/build/build-receipt.json':Path(sys.argv[18])/'build-receipt.json',
+    'provenance/build/commands.jsonl':Path(sys.argv[18])/'commands.jsonl',
+    'provenance/build/built-image.iid':Path(sys.argv[18])/'built-image.iid',
+    'provenance/build/base-image-inspect.json':Path(sys.argv[18])/'base-image-inspect.json',
+    'provenance/build/built-image-inspect.json':Path(sys.argv[18])/'built-image-inspect.json',
+    'provenance/build/installed-measurement.json':Path(sys.argv[18])/'installed-measurement.json',
+    'provenance/build/current-base-image-inspect.json':Path(sys.argv[19]),
+    'provenance/build/current-built-image-inspect.json':Path(sys.argv[20]),
+    'provenance/build/preflight/preflight-measurement.json':Path(sys.argv[21])/'preflight-measurement.json',
+    'provenance/build/preflight/installed/package.xml':Path(sys.argv[21])/'installed/package.xml',
+    'provenance/build/preflight/installed/plugins.xml':Path(sys.argv[21])/'installed/plugins.xml',
+    'provenance/build/preflight/installed/libfactory_ops_goal_checker.so':Path(sys.argv[21])/'installed/libfactory_ops_goal_checker.so',
+}
+build_files=[]
+for relative,path in sorted(build_sources.items()):
+    if path.is_symlink() or not path.is_file():
+        raise ValueError(f'build provenance source is not a regular file: {path}')
+    build_files.append({'path':relative,'bytes':path.stat().st_size,
+                        'sha256':hashlib.sha256(path.read_bytes()).hexdigest()})
+build_manifest={'schema_version':1,'classification':'g3_build_provenance_bundle','files':build_files}
+build_manifest_path=root/'logs'/f'{run}-build-provenance-manifest.json'
+with build_manifest_path.open('x',encoding='utf-8',newline='\n') as stream:
+    json.dump(build_manifest,stream,indent=2,sort_keys=True); stream.write('\n')
+build_manifest_sha=hashlib.sha256(build_manifest_path.read_bytes()).hexdigest()
 sys.path.insert(0,str(project))
 from factory_ops.source_provenance import verify_source_archive
 proof=verify_source_archive(root/'source-snapshots'/f'{run}.tar',
@@ -294,10 +321,14 @@ record={
     'seed':int(sys.argv[10]),'scenario_id':sys.argv[11],
     'primary_inputs_path':sys.argv[12] or None,
     'primary_inputs_sha256':sys.argv[13] or None,
-    'build_attestation_path':sys.argv[14],
+    'build_attestation_path':'provenance/build/build-attestation.json',
     'build_attestation_sha256':sys.argv[15],
+    'build_receipt_path':'provenance/build/build-receipt.json',
     'build_receipt_sha256':sys.argv[16],
+    'build_preflight_measurement_path':'provenance/build/preflight/preflight-measurement.json',
     'build_preflight_measurement_sha256':sys.argv[17],
+    'build_provenance_manifest_path':'provenance/build-manifest.json',
+    'build_provenance_manifest_sha256':build_manifest_sha,
     'session':session_value,
     'session_json_sha256':hashlib.sha256((session/'session.json').read_bytes()).hexdigest(),
     'files':source_files,
@@ -321,10 +352,29 @@ import hashlib,sys
 print(hashlib.sha256(Path(sys.argv[1]).read_bytes()).hexdigest())
 PY
 )
-sudo -n install -d -m 0755 -o 1234 -g 1234 "$output/provenance"
+test ! -e "$output/provenance"
+sudo -n install -d -m 0755 -o 1234 -g 1234 \
+  "$output/provenance" "$output/provenance/build" "$output/provenance/build/preflight" \
+  "$output/provenance/build/preflight/installed"
 sudo -n install -m 0444 -o 1234 -g 1234 "$archive" "$output/provenance/source.tar"
 sudo -n install -m 0444 -o 1234 -g 1234 "$commit_object" "$output/provenance/source-commit.raw"
 sudo -n install -m 0444 -o 1234 -g 1234 "$root/logs/$run-environment.json" "$output/provenance/source-environment.json"
+sudo -n install -m 0444 -o 1234 -g 1234 "$root/logs/$run-build-provenance-manifest.json" \
+  "$output/provenance/build-manifest.json"
+for name in build-attestation.json build-receipt.json commands.jsonl built-image.iid \
+  base-image-inspect.json built-image-inspect.json installed-measurement.json; do
+  sudo -n install -m 0444 -o 1234 -g 1234 "$build_bundle/$name" "$output/provenance/build/$name"
+done
+sudo -n install -m 0444 -o 1234 -g 1234 "$base_inspect" \
+  "$output/provenance/build/current-base-image-inspect.json"
+sudo -n install -m 0444 -o 1234 -g 1234 "$built_inspect" \
+  "$output/provenance/build/current-built-image-inspect.json"
+sudo -n install -m 0444 -o 1234 -g 1234 "$preflight_measurement/preflight-measurement.json" \
+  "$output/provenance/build/preflight/preflight-measurement.json"
+for name in package.xml plugins.xml libfactory_ops_goal_checker.so; do
+  sudo -n install -m 0444 -o 1234 -g 1234 "$preflight_measurement/installed/$name" \
+    "$output/provenance/build/preflight/installed/$name"
+done
 chmod -R a-w "$project"
 chmod a-w "$archive" "$commit_object"
 

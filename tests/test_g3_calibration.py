@@ -22,6 +22,7 @@ from factory_ops.g3_calibration import (_resource_forecast_actual, _validate_seq
 from factory_ops.source_provenance import verify_source_archive
 from factory_ops.g3_raw_storage import (ENVELOPE_NAME, PACKAGE_NAME, SCHEMA, SUPPORT_SCHEMA,
                                         _LIMITATIONS, _PROOF_FLAGS, _json_bytes)
+from scripts.brev.g3_resource_pack import archive_output, checkpoint
 
 
 ROOT = Path(__file__).parents[1]
@@ -31,6 +32,99 @@ CONFIG = ROOT / "configs/factory-v3/g3-experiment.json"
 def save(path: Path, value) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(value, sort_keys=True, allow_nan=False), encoding="utf-8")
+
+
+def install_build_provenance(
+    output: Path, environment: dict, *, commit: str = "b" * 40,
+    run_label: str = "g3-p-normal-fifo-001",
+) -> Path:
+    """Create a nonphysical archived build chain for replay boundary tests."""
+    build = output / "provenance/build"
+    preflight = build / "preflight"
+    installed_root = preflight / "installed"
+    installed_root.mkdir(parents=True)
+    base_id, built_id = "sha256:" + "1" * 64, "sha256:" + "3" * 64
+    base_reference, built_reference = "base:pin", "factory-ops-nav2:g3-test"
+    installed_paths = {
+        "/opt/factory_ops_goal_checker/share/factory_ops_goal_checker/package.xml": installed_root / "package.xml",
+        "/opt/factory_ops_goal_checker/share/factory_ops_goal_checker/plugins.xml": installed_root / "plugins.xml",
+        "/opt/factory_ops_goal_checker/lib/libfactory_ops_goal_checker.so": installed_root / "libfactory_ops_goal_checker.so",
+    }
+    for index, path in enumerate(installed_paths.values()):
+        path.write_bytes(f"nonphysical-installed-{index}".encode())
+    installed = {name: sha(path) for name, path in installed_paths.items()}
+    base_inspect = {"images": [{"Id": base_id, "RepoDigests": ["base@sha256:" + "2" * 64]}]}
+    built_inspect = {"images": [{"Id": built_id, "RepoDigests": ["built@sha256:" + "4" * 64]}]}
+    save(build / "base-image-inspect.json", base_inspect)
+    save(build / "built-image-inspect.json", built_inspect)
+    save(build / "current-base-image-inspect.json", base_inspect["images"])
+    save(build / "current-built-image-inspect.json", built_inspect["images"])
+    (build / "built-image.iid").write_text(built_id, encoding="utf-8")
+    commands = [
+        {"argv": ["git", "archive", "--format=tar", "--output=before.tar", commit]},
+        {"argv": ["docker", "image", "inspect", base_reference]},
+        {"argv": ["docker", "image", "inspect", built_reference], "expected_absent_exit_code": 1},
+        {"argv": ["docker", "build", "--build-arg", f"BASE_IMAGE={base_id}", "--tag",
+                  built_reference, "--iidfile", "built-image.iid", "."]},
+        {"argv": ["docker", "image", "inspect", built_reference]},
+        {"argv": ["docker", "create", "--name", "fixture", built_id]},
+        *({"argv": ["docker", "cp", f"container:{source}", path.name]}
+          for source, path in installed_paths.items()),
+        {"argv": ["docker", "rm", "-f", "fixture"]},
+        {"argv": ["git", "archive", "--format=tar", "--output=after.tar", commit]},
+    ]
+    (build / "commands.jsonl").write_text(
+        "".join(json.dumps(row, sort_keys=True) + "\n" for row in commands), encoding="utf-8")
+    save(build / "installed-measurement.json",
+         {"schema_version": 1, "image_id": built_id, "files": installed})
+    save(preflight / "preflight-measurement.json",
+         {"schema_version": 1, "image_id": built_id, "files": installed,
+          "commands": [["docker", "create", "--name", "preflight", built_id],
+                       *[["docker", "cp", f"container:{source}", path.name]
+                         for source, path in installed_paths.items()],
+                       ["docker", "rm", "-f", "preflight"]],
+          "cleanup_complete": True})
+    source_archive_sha = "a" * 64
+    receipt = {
+        "schema_version": 1, "source_commit": commit, "run_label": run_label,
+        "source_archive_sha256": source_archive_sha,
+        "commands_sha256": sha(build / "commands.jsonl"),
+        "iidfile_sha256": sha(build / "built-image.iid"),
+        "base_inspect_sha256": sha(build / "base-image-inspect.json"),
+        "built_inspect_sha256": sha(build / "built-image-inspect.json"),
+        "installed_measurement_sha256": sha(build / "installed-measurement.json"),
+        "built_image_id": built_id, "cleanup_complete": True,
+    }
+    save(build / "build-receipt.json", receipt)
+    attestation = {
+        "status": "built", "build_completed": True, "runtime_eligible": True,
+        "source_commit": commit, "run_label": run_label,
+        "base_image": {"reference": base_reference, "id": base_id},
+        "built_image": {"reference": built_reference, "id": built_id},
+        "installed_files": installed, "build_receipt_sha256": sha(build / "build-receipt.json"),
+    }
+    save(build / "build-attestation.json", attestation)
+    relative_files = sorted(
+        path.relative_to(output).as_posix() for path in build.rglob("*") if path.is_file())
+    manifest = {"schema_version": 1, "classification": "g3_build_provenance_bundle",
+                "files": [{"path": relative, "bytes": (output / relative).stat().st_size,
+                           "sha256": sha(output / relative)} for relative in relative_files]}
+    manifest_path = output / "provenance/build-manifest.json"
+    save(manifest_path, manifest)
+    environment.update({
+        "source_commit": commit, "run_label": run_label, "source_archive_sha256": source_archive_sha,
+        "build_attestation_path": "provenance/build/build-attestation.json",
+        "build_attestation_sha256": sha(build / "build-attestation.json"),
+        "build_receipt_path": "provenance/build/build-receipt.json",
+        "build_receipt_sha256": sha(build / "build-receipt.json"),
+        "build_preflight_measurement_path": "provenance/build/preflight/preflight-measurement.json",
+        "build_preflight_measurement_sha256": sha(preflight / "preflight-measurement.json"),
+        "build_provenance_manifest_path": "provenance/build-manifest.json",
+        "build_provenance_manifest_sha256": sha(manifest_path),
+    })
+    environment_path = output / "provenance/source-environment.json"
+    save(environment_path, environment)
+    return environment_path
 
 
 def sha(path: Path) -> str:
@@ -786,20 +880,21 @@ class CalibrationTests(unittest.TestCase):
                   "status": "failed", "errors": ["closed bag validation failed"]}
         report_path = output / "g3-evidence.json"
         save(report_path, report)
+        environment = install_build_provenance(output, {})
         with patch("scripts.ros.g3_evidence.validate_g3_evidence", return_value=deepcopy(report)):
             replayed = revalidate_physical_report(
                 report_path, session, output, "a" * 32, source_commit="b" * 40,
-                environment_sha256="c" * 64, require_passed=False,
+                environment_sha256=sha(environment), require_passed=False,
             )
             self.assertFalse(replayed["passed"])
         with patch("scripts.ros.g3_evidence.validate_g3_evidence", return_value=deepcopy(report)):
             with self.assertRaisesRegex(ValueError, "did not pass"):
                 revalidate_physical_report(
                     report_path, session, output, "a" * 32, source_commit="b" * 40,
-                    environment_sha256="c" * 64,
+                    environment_sha256=sha(environment),
                 )
 
-    def test_primary_revalidation_binds_five_environment_values_and_restores_them(self) -> None:
+    def test_primary_revalidation_binds_seven_environment_values_and_restores_them(self) -> None:
         output = self.root / "primary-output"
         session = self.root / "primary-session"
         output.mkdir()
@@ -808,9 +903,8 @@ class CalibrationTests(unittest.TestCase):
         primary_inputs = self.root / "primary-inputs.json"
         save(primary_inputs, {"schema_version": 1})
         primary_sha = sha(primary_inputs)
-        environment = output / "provenance/source-environment.json"
-        save(environment, {"primary_inputs_path": str(primary_inputs),
-                           "primary_inputs_sha256": primary_sha})
+        environment = install_build_provenance(output, {
+            "primary_inputs_path": str(primary_inputs), "primary_inputs_sha256": primary_sha})
         save(output / "session-verified.json", {"primary_inputs_sha256": primary_sha})
         report = {"schema_version": 1, "run_id": "a" * 32, "passed": True,
                   "status": "validated", "errors": []}
@@ -818,12 +912,16 @@ class CalibrationTests(unittest.TestCase):
         save(report_path, report)
         names = ("FACTORY_OPS_G3_SESSION_SHA256", "FACTORY_OPS_G3_SOURCE_COMMIT",
                  "FACTORY_OPS_G3_PROVENANCE_SHA256", "FACTORY_OPS_G3_PRIMARY_INPUTS_PATH",
-                 "FACTORY_OPS_G3_PRIMARY_INPUTS_SHA256")
+                 "FACTORY_OPS_G3_PRIMARY_INPUTS_SHA256", "FACTORY_OPS_G3_BUILD_ATTESTATION_PATH",
+                 "FACTORY_OPS_G3_BUILD_ATTESTATION_SHA256")
         previous = {name: f"old-{index}" for index, name in enumerate(names)}
 
         def validate(*_args, **_kwargs):
             self.assertEqual(str(primary_inputs), os.environ[names[3]])
             self.assertEqual(primary_sha, os.environ[names[4]])
+            self.assertEqual(str(output / "provenance/build/build-attestation.json"), os.environ[names[5]])
+            self.assertEqual(json.loads(environment.read_text())["build_attestation_sha256"],
+                             os.environ[names[6]])
             return deepcopy(report)
 
         with patch.dict(os.environ, previous, clear=False), \
@@ -889,6 +987,7 @@ class CalibrationTests(unittest.TestCase):
                   "status": "validated", "errors": []}
         report_path = output / "g3-evidence.json"
         save(report_path, report)
+        environment = install_build_provenance(output, {})
         ambient = {"FACTORY_OPS_G3_PRIMARY_INPUTS_PATH": "foreign.json",
                    "FACTORY_OPS_G3_PRIMARY_INPUTS_SHA256": "f" * 64}
 
@@ -902,12 +1001,63 @@ class CalibrationTests(unittest.TestCase):
                     self.assertRaisesRegex(RuntimeError, "nested pilot failure"):
                 revalidate_physical_report(
                     report_path, session, output, "a" * 32, source_commit="b" * 40,
-                    environment_sha256="c" * 64,
+                    environment_sha256=sha(environment),
                 )
             self.assertEqual(ambient["FACTORY_OPS_G3_PRIMARY_INPUTS_PATH"],
                              os.environ.get("FACTORY_OPS_G3_PRIMARY_INPUTS_PATH"))
             self.assertEqual(ambient["FACTORY_OPS_G3_PRIMARY_INPUTS_SHA256"],
                              os.environ.get("FACTORY_OPS_G3_PRIMARY_INPUTS_SHA256"))
+
+    def test_archive_only_revalidation_restores_build_environment_and_checks_transitive_bytes(self) -> None:
+        run_label, run_id = "g3-p-normal-fifo-009", "9" * 32
+        output = self.root / "results" / run_label
+        session = self.root / "archive-session"
+        output.mkdir(parents=True)
+        session.mkdir()
+        save(session / "session.json", {"primary_evaluation": False})
+        report = {"schema_version": 1, "run_id": run_id, "passed": True,
+                  "status": "validated", "errors": []}
+        save(output / "g3-evidence.json", report)
+        (output / "rosbag").mkdir()
+        (output / "rosbag/data.db3").write_bytes(b"nonphysical-closed-bag-fixture")
+        environment = install_build_provenance(output, {}, run_label=run_label)
+        for phase in ("start", "workers-finished", "validation-finished"):
+            checkpoint(self.root, run_label, run_id, phase)
+        archive_output(self.root, run_label, run_id)
+        archive = self.root / "resources" / run_label / "output.tar.gz"
+        restored = self.root / "archive-only-restored"
+        with tarfile.open(archive, "r:gz") as bundle:
+            bundle.extractall(restored, filter="data")
+        observed: dict[str, str | None] = {}
+
+        def validate(*_args, **_kwargs):
+            observed["path"] = os.environ.get("FACTORY_OPS_G3_BUILD_ATTESTATION_PATH")
+            observed["sha256"] = os.environ.get("FACTORY_OPS_G3_BUILD_ATTESTATION_SHA256")
+            return deepcopy(report)
+
+        with patch.dict(os.environ, {}, clear=True), \
+                patch("scripts.ros.g3_evidence.validate_g3_evidence", side_effect=validate):
+            report_bytes = (restored / "g3-evidence.json").read_bytes()
+            replayed = revalidate_physical_report(
+                restored / "g3-evidence.json", session, restored, run_id,
+                source_commit="b" * 40,
+                environment_sha256=sha(restored / "provenance/source-environment.json"),
+            )
+            self.assertEqual(report, replayed)
+            self.assertEqual(str(restored / "provenance/build/build-attestation.json"), observed["path"])
+            self.assertEqual(json.loads(environment.read_text())["build_attestation_sha256"],
+                             observed["sha256"])
+            self.assertEqual(report_bytes, (restored / "g3-evidence.json").read_bytes())
+            self.assertNotIn("FACTORY_OPS_G3_BUILD_ATTESTATION_PATH", os.environ)
+            self.assertNotIn("FACTORY_OPS_G3_BUILD_ATTESTATION_SHA256", os.environ)
+        tampered = restored / "provenance/build/preflight/installed/plugins.xml"
+        tampered.write_bytes(b"tampered")
+        with self.assertRaisesRegex(ValueError, "manifest bytes"):
+            revalidate_physical_report(
+                restored / "g3-evidence.json", session, restored, run_id,
+                source_commit="b" * 40,
+                environment_sha256=sha(restored / "provenance/source-environment.json"),
+            )
 
 
 if __name__ == "__main__":

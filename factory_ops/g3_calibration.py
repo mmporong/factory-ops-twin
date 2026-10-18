@@ -16,6 +16,7 @@ from typing import Any
 import uuid
 
 from .experiments import canonical_hash
+from .g3_build_attestation import _validate_build_commands
 from .g3_session import verify_session
 from .source_provenance import verify_source_archive
 
@@ -28,6 +29,21 @@ _SHA256 = re.compile(r"^[0-9a-f]{64}$")
 _COMMIT = re.compile(r"^[0-9a-f]{40}$")
 _SEQUENTIAL_BOUNDARY = "local_coordinator_receipts_hash_bound_not_live_reverified"
 _ABSOLUTE_RESERVE_BYTES = 20_000_000_000
+_BUILD_PROVENANCE_FILES = {
+    "provenance/build/build-attestation.json",
+    "provenance/build/build-receipt.json",
+    "provenance/build/commands.jsonl",
+    "provenance/build/built-image.iid",
+    "provenance/build/base-image-inspect.json",
+    "provenance/build/built-image-inspect.json",
+    "provenance/build/installed-measurement.json",
+    "provenance/build/current-base-image-inspect.json",
+    "provenance/build/current-built-image-inspect.json",
+    "provenance/build/preflight/preflight-measurement.json",
+    "provenance/build/preflight/installed/package.xml",
+    "provenance/build/preflight/installed/plugins.xml",
+    "provenance/build/preflight/installed/libfactory_ops_goal_checker.so",
+}
 
 
 def _sha256(path: Path) -> str:
@@ -158,6 +174,137 @@ def validate_source_origin(
     return proof
 
 
+def _validate_preserved_build_provenance(
+    artifact_root: Path, environment: Mapping[str, Any],
+) -> tuple[Path, str]:
+    """Validate the archived source-to-image bundle without ambient host paths."""
+    if artifact_root.is_symlink() or not artifact_root.is_dir():
+        raise ValueError("preserved artifact root must be a regular directory")
+    references = {
+        "build_attestation_path": "build_attestation_sha256",
+        "build_receipt_path": "build_receipt_sha256",
+        "build_preflight_measurement_path": "build_preflight_measurement_sha256",
+        "build_provenance_manifest_path": "build_provenance_manifest_sha256",
+    }
+    resolved: dict[str, Path] = {}
+    root = artifact_root.resolve(strict=True)
+    for path_key, sha_key in references.items():
+        relative = _safe_relative(environment.get(path_key))
+        digest = environment.get(sha_key)
+        target = artifact_root / PurePosixPath(relative)
+        try:
+            resolved_target = target.resolve(strict=True)
+            resolved_target.relative_to(root)
+        except (OSError, ValueError) as error:
+            raise ValueError("preserved build provenance reference escapes artifact root") from error
+        if (resolved_target != target.absolute() or target.is_symlink() or not target.is_file()
+                or not _SHA256.fullmatch(str(digest))
+                or _sha256(target) != digest):
+            raise ValueError(f"preserved build provenance reference differs: {path_key}")
+        resolved[path_key] = target
+    manifest = _load(resolved["build_provenance_manifest_path"])
+    entries = manifest.get("files")
+    if (set(manifest) != {"schema_version", "classification", "files"}
+            or manifest.get("schema_version") != 1
+            or manifest.get("classification") != "g3_build_provenance_bundle"
+            or not isinstance(entries, list)):
+        raise ValueError("preserved build provenance manifest differs")
+    observed: dict[str, tuple[int, str]] = {}
+    for entry in entries:
+        if not isinstance(entry, Mapping) or set(entry) != {"path", "bytes", "sha256"}:
+            raise ValueError("preserved build provenance manifest entry differs")
+        relative = _safe_relative(entry.get("path"))
+        size, digest = entry.get("bytes"), entry.get("sha256")
+        target = artifact_root / PurePosixPath(relative)
+        try:
+            resolved_target = target.resolve(strict=True)
+            resolved_target.relative_to(root)
+        except (OSError, ValueError) as error:
+            raise ValueError("preserved build provenance manifest path escapes artifact root") from error
+        if (relative in observed or type(size) is not int or size < 0
+                or not _SHA256.fullmatch(str(digest)) or resolved_target != target.absolute()
+                or target.is_symlink()
+                or not target.is_file() or target.stat().st_size != size or _sha256(target) != digest):
+            raise ValueError("preserved build provenance manifest bytes differ")
+        observed[relative] = (size, str(digest))
+    if set(observed) != _BUILD_PROVENANCE_FILES:
+        raise ValueError("preserved build provenance file set differs")
+    attestation = _load(resolved["build_attestation_path"])
+    receipt = _load(resolved["build_receipt_path"])
+    preflight = _load(resolved["build_preflight_measurement_path"])
+    installed = attestation.get("installed_files")
+    built = attestation.get("built_image")
+    base = attestation.get("base_image")
+    if (attestation.get("status") != "built" or attestation.get("build_completed") is not True
+            or attestation.get("runtime_eligible") is not True or not isinstance(installed, Mapping)
+            or not isinstance(built, Mapping) or not isinstance(base, Mapping)
+            or attestation.get("source_commit") != environment.get("source_commit")
+            or attestation.get("run_label") != environment.get("run_label")
+            or attestation.get("build_receipt_sha256") != environment.get("build_receipt_sha256")):
+        raise ValueError("preserved build attestation contract differs")
+    build_root = artifact_root / "provenance/build"
+    receipt_hashes = {
+        "commands_sha256": build_root / "commands.jsonl",
+        "iidfile_sha256": build_root / "built-image.iid",
+        "base_inspect_sha256": build_root / "base-image-inspect.json",
+        "built_inspect_sha256": build_root / "built-image-inspect.json",
+        "installed_measurement_sha256": build_root / "installed-measurement.json",
+    }
+    if (receipt.get("schema_version") != 1
+            or receipt.get("source_commit") != environment.get("source_commit")
+            or receipt.get("run_label") != environment.get("run_label")
+            or receipt.get("source_archive_sha256") != environment.get("source_archive_sha256")
+            or receipt.get("cleanup_complete") is not True
+            or receipt.get("built_image_id") != built.get("id")
+            or any(receipt.get(key) != _sha256(path) for key, path in receipt_hashes.items())):
+        raise ValueError("preserved build receipt closure differs")
+    if (build_root / "built-image.iid").read_text(encoding="utf-8").strip() != built.get("id"):
+        raise ValueError("preserved built image iid differs")
+    _validate_build_commands(
+        build_root / "commands.jsonl", source_commit=str(environment.get("source_commit")),
+        base_reference=str(base.get("reference")), base_image_id=str(base.get("id")),
+        built_reference=str(built.get("reference")), built_image_id=str(built.get("id")),
+    )
+    installed_measurement = _load(build_root / "installed-measurement.json")
+    if installed_measurement != {"schema_version": 1, "image_id": built.get("id"), "files": installed}:
+        raise ValueError("preserved installed measurement differs")
+    preflight_files = {
+        "/opt/factory_ops_goal_checker/share/factory_ops_goal_checker/package.xml":
+            build_root / "preflight/installed/package.xml",
+        "/opt/factory_ops_goal_checker/share/factory_ops_goal_checker/plugins.xml":
+            build_root / "preflight/installed/plugins.xml",
+        "/opt/factory_ops_goal_checker/lib/libfactory_ops_goal_checker.so":
+            build_root / "preflight/installed/libfactory_ops_goal_checker.so",
+    }
+    measured = {name: _sha256(path) for name, path in preflight_files.items()}
+    preflight_commands = preflight.get("commands")
+    copied_sources = {
+        command[2].split(":", 1)[1]
+        for command in preflight_commands[1:-1]
+        if isinstance(command, list) and len(command) == 4
+        and command[:2] == ["docker", "cp"] and ":" in command[2]
+    } if isinstance(preflight_commands, list) and len(preflight_commands) == 5 else set()
+    if (preflight.get("schema_version") != 1 or preflight.get("image_id") != built.get("id")
+            or preflight.get("cleanup_complete") is not True or preflight.get("files") != measured
+            or measured != installed or not isinstance(preflight_commands, list)
+            or len(preflight_commands) != 5
+            or any(not isinstance(command, list) for command in preflight_commands)
+            or preflight_commands[0][:2] != ["docker", "create"]
+            or preflight_commands[0][-1] != built.get("id")
+            or preflight_commands[-1][:3] != ["docker", "rm", "-f"]
+            or copied_sources != set(preflight_files)):
+        raise ValueError("preserved immutable-image preflight measurement differs")
+    for name, expected in (("base", base.get("id")), ("built", built.get("id"))):
+        original = _load(build_root / f"{name}-image-inspect.json").get("images")
+        current = json.loads((build_root / f"current-{name}-image-inspect.json").read_text(encoding="utf-8"))
+        if (not isinstance(original, list) or len(original) != 1
+                or not isinstance(current, list) or len(current) != 1
+                or not isinstance(original[0], Mapping) or not isinstance(current[0], Mapping)
+                or original[0].get("Id") != expected or current[0].get("Id") != expected):
+            raise ValueError(f"preserved {name} image identity differs")
+    return resolved["build_attestation_path"], str(environment["build_attestation_sha256"])
+
+
 def revalidate_physical_report(
     report_path: Path, session_root: Path, artifact_root: Path, run_id: str, *,
     source_commit: str, environment_sha256: str,
@@ -170,6 +317,14 @@ def revalidate_physical_report(
         raise ValueError("physical report must be output-root g3-evidence.json")
     session = _load(session_root / "session.json")
     is_primary = session.get("primary_evaluation") is True
+    environment_path = artifact_root / "provenance/source-environment.json"
+    if _sha256(environment_path) != environment_sha256:
+        raise ValueError("source environment bytes differ from the report binding")
+    environment = _load(environment_path)
+    if environment.get("source_commit") != source_commit:
+        raise ValueError("source environment commit differs from revalidation request")
+    build_attestation_path, build_attestation_sha256 = _validate_preserved_build_provenance(
+        artifact_root, environment)
     if (primary_inputs_path is None) != (primary_inputs_sha256 is None):
         raise ValueError("primary inputs path and SHA must be supplied together")
     if is_primary:
@@ -180,10 +335,6 @@ def revalidate_physical_report(
                 or not _SHA256.fullmatch(primary_inputs_sha256)
                 or _sha256(primary_inputs_path) != primary_inputs_sha256):
             raise ValueError("primary inputs artifact or SHA differs")
-        environment_path = artifact_root / "provenance/source-environment.json"
-        if _sha256(environment_path) != environment_sha256:
-            raise ValueError("source environment bytes differ from the report binding")
-        environment = _load(environment_path)
         marker = _load(artifact_root / "session-verified.json")
         if (environment.get("primary_inputs_path") != str(primary_inputs_path)
                 or environment.get("primary_inputs_sha256") != primary_inputs_sha256
@@ -195,10 +346,12 @@ def revalidate_physical_report(
     names = (
         "FACTORY_OPS_G3_SESSION_SHA256", "FACTORY_OPS_G3_SOURCE_COMMIT",
         "FACTORY_OPS_G3_PROVENANCE_SHA256", "FACTORY_OPS_G3_PRIMARY_INPUTS_PATH",
-        "FACTORY_OPS_G3_PRIMARY_INPUTS_SHA256",
+        "FACTORY_OPS_G3_PRIMARY_INPUTS_SHA256", "FACTORY_OPS_G3_BUILD_ATTESTATION_PATH",
+        "FACTORY_OPS_G3_BUILD_ATTESTATION_SHA256",
     )
     previous = {name: os.environ.get(name) for name in names}
     os.environ.update({names[0]: session_sha, names[1]: source_commit, names[2]: environment_sha256})
+    os.environ.update({names[5]: str(build_attestation_path), names[6]: build_attestation_sha256})
     if is_primary:
         os.environ.update({names[3]: str(primary_inputs_path), names[4]: str(primary_inputs_sha256)})
     else:
