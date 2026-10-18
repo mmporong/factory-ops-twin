@@ -56,6 +56,7 @@ void TelemetryGoalChecker::initialize(
   const std::string & plugin_name,
   const std::shared_ptr<nav2_costmap_2d::Costmap2DROS> costmap_ros)
 {
+  xy_confirmed_.store(false, std::memory_order_release);
   nav2_controller::SimpleGoalChecker::initialize(parent, plugin_name, costmap_ros);
   try {
     node_ = parent.lock();
@@ -69,6 +70,7 @@ void TelemetryGoalChecker::initialize(
 void TelemetryGoalChecker::reset()
 {
   nav2_controller::SimpleGoalChecker::reset();
+  xy_confirmed_.store(false, std::memory_order_release);
   {
     std::lock_guard<std::mutex> lock(trace_mutex_);
     ++reset_epoch_;
@@ -84,8 +86,14 @@ bool TelemetryGoalChecker::isGoalReached(
   const bool check_xy_before = check_xy_;
   const bool result = nav2_controller::SimpleGoalChecker::isGoalReached(query_pose, goal_pose, velocity);
   const bool check_xy_after = check_xy_;
+  xy_confirmed_.store(!check_xy_after, std::memory_order_release);
   publishGoalTrace(query_pose, goal_pose, velocity, check_xy_before, check_xy_after, result);
   return result;
+}
+
+bool TelemetryGoalChecker::xyConfirmed() const noexcept
+{
+  return xy_confirmed_.load(std::memory_order_acquire);
 }
 
 bool TelemetryGoalChecker::getTolerances(

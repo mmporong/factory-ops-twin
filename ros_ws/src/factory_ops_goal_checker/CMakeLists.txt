@@ -14,6 +14,7 @@ find_package(rclcpp_lifecycle REQUIRED)
 find_package(tf2_ros REQUIRED)
 
 add_library(factory_ops_goal_checker SHARED
+  src/confirmed_xy_regulated_pure_pursuit_controller.cpp
   src/telemetry_goal_checker.cpp
   src/telemetry_regulated_pure_pursuit_controller.cpp)
 target_compile_features(factory_ops_goal_checker PUBLIC cxx_std_17)
@@ -47,6 +48,11 @@ if(BUILD_TESTING)
   target_link_libraries(test_telemetry_rpp factory_ops_goal_checker)
   ament_target_dependencies(test_telemetry_rpp
     nav2_costmap_2d nav2_regulated_pure_pursuit_controller rclcpp rclcpp_lifecycle tf2_ros)
+  ament_add_gtest(test_confirmed_xy_rpp test/test_confirmed_xy_rpp.cpp)
+  target_link_libraries(test_confirmed_xy_rpp factory_ops_goal_checker)
+  ament_target_dependencies(test_confirmed_xy_rpp
+    diagnostic_msgs nav2_controller nav2_costmap_2d
+    nav2_regulated_pure_pursuit_controller rclcpp rclcpp_lifecycle tf2_ros)
 endif()
 
 ament_export_include_directories(include)

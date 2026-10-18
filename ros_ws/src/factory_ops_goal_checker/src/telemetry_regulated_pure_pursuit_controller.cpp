@@ -89,6 +89,7 @@ geometry_msgs::msg::TwistStamped TelemetryRegulatedPurePursuitController::comput
   ++plugin_call_sequence_;
   publishComputeTrace(pose, velocity, rotating_before, reached_before, nullptr, "begin", "", "");
   try {
+    prepareGoalChecker(goal_checker);
     auto output = nav2_regulated_pure_pursuit_controller::RegulatedPurePursuitController::
       computeVelocityCommands(pose, velocity, goal_checker);
     publishComputeTrace(pose, velocity, rotating_before, reached_before, &output, "end", "", "");

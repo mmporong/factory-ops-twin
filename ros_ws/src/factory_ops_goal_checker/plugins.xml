@@ -9,4 +9,9 @@
          base_class_type="nav2_core::Controller">
     <description>RegulatedPurePursuitController delegation with input and protected-state telemetry.</description>
   </class>
+  <class name="factory_ops_goal_checker::ConfirmedXyRegulatedPurePursuitController"
+         type="factory_ops_goal_checker::ConfirmedXyRegulatedPurePursuitController"
+         base_class_type="nav2_core::Controller">
+    <description>RegulatedPurePursuitController that releases an unconfirmed stale XY latch before current-distance evaluation.</description>
+  </class>
 </library>

@@ -33,6 +33,7 @@ public:
 
 protected:
   virtual void telemetryFaultPoint() {}
+  virtual void prepareGoalChecker(nav2_core::GoalChecker *) {}
 
 private:
   void publishComputeTrace(

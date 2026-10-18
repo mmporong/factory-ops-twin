@@ -53,6 +53,7 @@ TEST_F(GoalCheckerTest, MatchesSimpleGoalCheckerStatefulSemanticsAndReturnedTole
   factory_ops_goal_checker::TelemetryGoalChecker checker;
   nav2_controller::SimpleGoalChecker stock;
   checker.initialize(node, "goal_checker", nullptr);
+  EXPECT_FALSE(checker.xyConfirmed());
   stock.initialize(stock_node, "goal_checker", nullptr);
   std::vector<diagnostic_msgs::msg::DiagnosticArray> traces;
   auto subscriber = node->create_subscription<diagnostic_msgs::msg::DiagnosticArray>(
@@ -60,11 +61,18 @@ TEST_F(GoalCheckerTest, MatchesSimpleGoalCheckerStatefulSemanticsAndReturnedTole
     [&traces](diagnostic_msgs::msg::DiagnosticArray::SharedPtr message) {traces.push_back(*message);});
   geometry_msgs::msg::Twist stopped;
   const auto goal = pose(0.0, 0.0);
-  for (const auto & query : {pose(0.061, 0.0), pose(0.059, -0.16), pose(0.061, -0.14)}) {
+  EXPECT_EQ(stock.isGoalReached(pose(0.061, 0.0), goal, stopped),
+    checker.isGoalReached(pose(0.061, 0.0), goal, stopped));
+  EXPECT_FALSE(checker.xyConfirmed());
+  EXPECT_EQ(stock.isGoalReached(pose(0.059, -0.16), goal, stopped),
+    checker.isGoalReached(pose(0.059, -0.16), goal, stopped));
+  EXPECT_TRUE(checker.xyConfirmed());
+  for (const auto & query : {pose(0.061, -0.14)}) {
     EXPECT_EQ(stock.isGoalReached(query, goal, stopped), checker.isGoalReached(query, goal, stopped));
   }
   checker.reset();
   stock.reset();
+  EXPECT_FALSE(checker.xyConfirmed());
   EXPECT_EQ(stock.isGoalReached(pose(0.061, 0.0), goal, stopped),
     checker.isGoalReached(pose(0.061, 0.0), goal, stopped));
   geometry_msgs::msg::Pose pose_tolerance;
@@ -120,6 +128,7 @@ TEST_F(GoalCheckerTest, TelemetryFailureDoesNotChangeSuccessfulBaseResults)
   const auto query = pose(0.01, 0.01);
   const auto goal = pose(0.0, 0.0);
   EXPECT_EQ(stock.isGoalReached(query, goal, stopped), checker.isGoalReached(query, goal, stopped));
+  EXPECT_TRUE(checker.xyConfirmed());
   geometry_msgs::msg::Pose expected_pose, actual_pose;
   geometry_msgs::msg::Twist expected_velocity, actual_velocity;
   EXPECT_EQ(stock.getTolerances(expected_pose, expected_velocity),

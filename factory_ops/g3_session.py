@@ -99,7 +99,7 @@ def _validate_runtime(runtime: dict[str, Any]) -> None:
             or not math.isfinite(wall_budget) or not 0 < wall_budget <= .1):
         raise ValueError("G3 callback drain wall_budget_s must be finite and in (0, 0.1]")
     nav2 = runtime.get("g3_nav2")
-    expected_nav2 = {
+    legacy_nav2 = {
         "follow_path_stateful": True,
         "goal_checker_stateful": True,
         "goal_checker_plugin": "factory_ops_goal_checker::TelemetryGoalChecker",
@@ -109,11 +109,15 @@ def _validate_runtime(runtime: dict[str, Any]) -> None:
         "xy_goal_tolerance": .06,
         "yaw_goal_tolerance": .15,
     }
-    if (not isinstance(nav2, dict) or set(nav2) != set(expected_nav2)
+    confirmed_nav2 = {
+        **legacy_nav2,
+        "follow_path_plugin": "factory_ops_goal_checker::ConfirmedXyRegulatedPurePursuitController",
+        "xy_latch_mode": "goal_checker_confirmed_xy_latch",
+    }
+    if (not isinstance(nav2, dict) or nav2 not in (legacy_nav2, confirmed_nav2)
             or nav2.get("follow_path_stateful") is not True
             or nav2.get("goal_checker_stateful") is not True
             or nav2.get("goal_checker_plugin") != "factory_ops_goal_checker::TelemetryGoalChecker"
-            or nav2.get("follow_path_plugin") != "factory_ops_goal_checker::TelemetryRegulatedPurePursuitController"
             or nav2.get("controller_trace_schema_version") != 1
             or nav2.get("controller_trace_topic") != "controller_cycle_trace"
             or type(nav2.get("xy_goal_tolerance")) is not float

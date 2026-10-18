@@ -1,6 +1,7 @@
 #ifndef FACTORY_OPS_GOAL_CHECKER__INSET_TELEMETRY_GOAL_CHECKER_HPP_
 #define FACTORY_OPS_GOAL_CHECKER__INSET_TELEMETRY_GOAL_CHECKER_HPP_
 
+#include <atomic>
 #include <cstdint>
 #include <memory>
 #include <mutex>
@@ -32,6 +33,7 @@ public:
   bool getTolerances(
     geometry_msgs::msg::Pose & pose_tolerance,
     geometry_msgs::msg::Twist & vel_tolerance) override;
+  bool xyConfirmed() const noexcept;
 
 protected:
   virtual void telemetryFaultPoint() {}
@@ -52,6 +54,7 @@ private:
   std::mutex trace_mutex_;
   std::uint64_t plugin_call_sequence_{0};
   std::uint64_t reset_epoch_{0};
+  std::atomic_bool xy_confirmed_{false};
 };
 
 }  // namespace factory_ops_goal_checker
