@@ -8,7 +8,7 @@ import tarfile
 import unittest
 from unittest.mock import patch
 
-from factory_ops.g3_session import sha
+from factory_ops.g3_session import prepare_session, sha
 from scripts.ros.g3_evidence import validate_fixed_source, validate_g3_evidence
 from tests import test_source_provenance as source_fixture
 
@@ -80,12 +80,7 @@ class FixedSourceEvidenceTests(unittest.TestCase):
 
     def test_failed_startup_returns_failed_report_when_scene_is_missing(self) -> None:
         session_root = self.base / "session"
-        session_root.mkdir()
-        session = {"scenario_id": "QUALIFICATION_NORMAL", "profile": "qualification", "policy": "fifo",
-                   "condition": "normal", "seed": 0, "primary_evaluation": False,
-                   "scope": "qualification_and_pilot_only_not_primary_comparison",
-                   "files": {name: "c" * 64 for name in (
-                       "scene/factory-v3.usda", "layout.json", "config.json", "scenarios.json")}}
+        prepare_session(session_root)
         (self.output / "pair-exit.json").write_text(json.dumps({
             "run_id": "a" * 32, "profile": "qualification", "policy": "fifo",
             "condition": "normal", "seed": 0, "nav_exit_code": 130, "sim_exit_code": 2,
@@ -93,8 +88,7 @@ class FixedSourceEvidenceTests(unittest.TestCase):
         (self.output / "mission-result.json").write_text(json.dumps({"status": "failed"}), encoding="utf-8")
         before = {path.relative_to(self.output): path.read_bytes()
                   for path in self.output.rglob("*") if path.is_file()}
-        with patch.dict("os.environ", {"FACTORY_OPS_G3_SESSION_SHA256": "b" * 64}), \
-                patch("scripts.ros.g3_evidence.verify_session", return_value=session), \
+        with patch.dict("os.environ", {"FACTORY_OPS_G3_SESSION_SHA256": sha(session_root / "session.json")}), \
                 patch("scripts.ros.g3_evidence.validate_fixed_source", return_value={}):
             report = validate_g3_evidence(session_root, self.output, "a" * 32)
         self.assertFalse(report["passed"])

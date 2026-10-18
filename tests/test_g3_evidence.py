@@ -82,13 +82,16 @@ class G3EvidenceHelperTests(unittest.TestCase):
              "compute": {"phase": "end", "outcome": "returned"}}]
         topics = {f"/{robot}/controller_cycle_trace": "diagnostic_msgs/msg/DiagnosticArray"
                   for robot in ("carter1", "carter2")}
+        for row in [*goal, *rpp]:
+            row.update(db_file_index=0, db_message_id=row["event_sequence"])
         robot_streams = {"goal_checker": goal, "rpp": rpp}
         observations = {"lookahead_point": [{"db_timestamp_ns": 6}],
                         "is_rotating_to_heading": [{"db_timestamp_ns": 7}]}
         bag = {"controller_traces": {robot: deepcopy(robot_streams) for robot in ("carter1", "carter2")},
                "rpp_observations": {robot: deepcopy(observations) for robot in ("carter1", "carter2")},
                "topic_types": topics, "topic_counts": {topic: 6 for topic in topics}}
-        actions = [{"robot_id": robot, "accepted_sim_time_s": 1.0, "terminal_sim_time_s": 2.0}
+        actions = [{"robot_id": robot, "follow_goal_sent_sim_time_s": .9,
+                    "accepted_sim_time_s": 1.0, "terminal_sim_time_s": 2.0}
                    for robot in ("carter1", "carter2")]
         return actions, bag, list(topics)
 
@@ -105,21 +108,63 @@ class G3EvidenceHelperTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 validate_controller_trace_observations(actions, changed, requested)
 
+    def test_controller_trace_allows_paused_clock_with_ordered_sqlite_ids(self):
+        actions, bag, requested = self.controller_trace_fixture()
+        for families in bag["controller_traces"].values():
+            for rows in families.values():
+                for row in rows:
+                    row["db_timestamp_ns"] = 10
+        report = validate_controller_trace_observations(actions, bag, requested)
+        self.assertEqual(1, report["robots"]["carter1"]["rpp_compute_calls"])
+        bag["controller_traces"]["carter1"]["rpp"][-1]["db_message_id"] = 3
+        with self.assertRaises(ValueError):
+            validate_controller_trace_observations(actions, bag, requested)
+
+    def test_controller_trace_before_client_ack_requires_matching_request_epoch(self):
+        actions, bag, requested = self.controller_trace_fixture()
+        for action in actions:
+            action["accepted_sim_time_s"] = 1.6
+        report = validate_controller_trace_observations(actions, bag, requested)
+        self.assertEqual(1, report["robots"]["carter1"]["follow_path_episode_count"])
+        for attack in ("before_request", "wrong_plan_epoch", "wrong_goal_epoch", "ack_before_request"):
+            changed, changed_actions = deepcopy(bag), deepcopy(actions)
+            if attack == "before_request":
+                changed["controller_traces"]["carter1"]["goal_checker"][-1]["stamp_ns"] = 800_000_000
+            elif attack == "wrong_plan_epoch":
+                changed["controller_traces"]["carter1"]["rpp"][-1]["plan_epoch"] = 2
+            elif attack == "wrong_goal_epoch":
+                changed["controller_traces"]["carter1"]["goal_checker"][-1]["reset_epoch"] = 2
+            else:
+                changed_actions[0]["accepted_sim_time_s"] = .8
+            with self.subTest(attack=attack), self.assertRaises(ValueError):
+                validate_controller_trace_observations(changed_actions, changed, requested)
+
     def test_controller_trace_cdr_decoder_rejects_missing_and_bad_typed_values(self):
         values = {
             "schema_version": "1", "event": "initialize", "event_sequence": "1",
             "plugin_call_sequence": "1", "reset_epoch": "0", "plugin_name": "goal_checker",
             "action_xy_tolerance_m": "0.06", "action_yaw_tolerance_rad": "0.15",
         }
-        def message(payload):
+        def message(payload, *, level: object = 0):
             return NS(header=NS(stamp=NS(sec=0, nanosec=0)), status=[NS(
                 values=[NS(key=key, value=value) for key, value in payload.items()],
                 message="initialize", hardware_id="factory_ops_goal_checker",
-                name="goal_checker", level=0)])
+                name="goal_checker", level=level)])
         robot, family, row = decode_controller_trace(
             "/carter1/controller_cycle_trace", "diagnostic_msgs/msg/DiagnosticArray", b"trace", 1,
             get_message=lambda _: object(), deserialize_message=lambda *_: message(values))
         self.assertEqual(("carter1", "goal_checker", "initialize"), (robot, family, row["event"]))
+        decoded_octet = decode_controller_trace(
+            "/carter1/controller_cycle_trace", "diagnostic_msgs/msg/DiagnosticArray", b"trace", 1,
+            get_message=lambda _: object(),
+            deserialize_message=lambda *_: message(values, level=b"\x00"))
+        self.assertEqual((robot, family, row), decoded_octet)
+        for level in (b"", b"\x00\x00", b"\x02", True, 0.0, "0", bytearray(b"\x00")):
+            with self.subTest(level=repr(level)), self.assertRaises(ValueError):
+                decode_controller_trace(
+                    "/carter1/controller_cycle_trace", "diagnostic_msgs/msg/DiagnosticArray", b"trace", 1,
+                    get_message=lambda _: object(),
+                    deserialize_message=lambda *_, v=level: message(values, level=v))
         for changed in ({key: value for key, value in values.items() if key != "event_sequence"},
                         {**values, "action_xy_tolerance_m": "nan"},
                         {**values, "action_xy_tolerance_m": "0.04"}):
@@ -140,16 +185,16 @@ class G3EvidenceHelperTests(unittest.TestCase):
         action = {"robot_id": "carter1", "follow_action_uuid": str(uuid4()),
                   "accepted_sim_time_s": 1.0, "terminal_sim_time_s": 2.0}
         points = [
-            {"db_timestamp_ns": 100, "cdr_sha256": "a" * 64,
+            {"db_timestamp_ns": 100, "db_file_index": 0, "db_message_id": 10, "cdr_sha256": "a" * 64,
              "header": {"frame_id": "base_link", "stamp_ns": 1_200_000_000},
              "position_xyz_m": [.8, 0., 0.]},
-            {"db_timestamp_ns": 200, "cdr_sha256": "b" * 64,
+            {"db_timestamp_ns": 200, "db_file_index": 0, "db_message_id": 20, "cdr_sha256": "b" * 64,
              "header": {"frame_id": "base_link", "stamp_ns": 1_900_000_000},
              "position_xyz_m": [.2, .1, 0.]},
         ]
         rotations = [
-            {"db_timestamp_ns": 101, "cdr_sha256": "c" * 64, "value": True},
-            {"db_timestamp_ns": 199, "cdr_sha256": "d" * 64, "value": False},
+            {"db_timestamp_ns": 101, "db_file_index": 0, "db_message_id": 11, "cdr_sha256": "c" * 64, "value": True},
+            {"db_timestamp_ns": 199, "db_file_index": 0, "db_message_id": 19, "cdr_sha256": "d" * 64, "value": False},
         ]
         bag = {"rpp_observations": {
             "carter1": {"lookahead_point": points, "is_rotating_to_heading": rotations},
@@ -206,11 +251,11 @@ class G3EvidenceHelperTests(unittest.TestCase):
         self.assertFalse(report["causal_claim"])
         reentry = deepcopy(bag)
         reentry["rpp_observations"]["carter1"]["lookahead_point"].append(
-            {"db_timestamp_ns": 300, "cdr_sha256": "e" * 64,
+            {"db_timestamp_ns": 300, "db_file_index": 0, "db_message_id": 30, "cdr_sha256": "e" * 64,
              "header": {"frame_id": "base_link", "stamp_ns": 1_950_000_000},
              "position_xyz_m": [.1, .1, 0.]})
         reentry["rpp_observations"]["carter1"]["is_rotating_to_heading"].append(
-            {"db_timestamp_ns": 299, "cdr_sha256": "f" * 64, "value": True})
+            {"db_timestamp_ns": 299, "db_file_index": 0, "db_message_id": 29, "cdr_sha256": "f" * 64, "value": True})
         reentry_errors: list[str] = []
         reentry_report = validate_rpp_action_observations([action], reentry, reentry_errors)
         self.assertEqual([], reentry_errors)
@@ -269,10 +314,12 @@ class G3EvidenceHelperTests(unittest.TestCase):
         def set_values(values):
             points, rotations = [], []
             for index, value in enumerate(values):
-                points.append({"db_timestamp_ns": 1000 + index * 100, "cdr_sha256": f"{index + 1:064x}",
+                points.append({"db_timestamp_ns": 1000 + index * 100,
+                    "db_file_index": 0, "db_message_id": 2 * index + 1, "cdr_sha256": f"{index + 1:064x}",
                     "header": {"frame_id": "base_link", "stamp_ns": 1_100_000_000 + index * 150_000_000},
                     "position_xyz_m": [.8, 0., 0.]})
                 rotations.append({"db_timestamp_ns": 1001 + index * 100,
+                                  "db_file_index": 0, "db_message_id": 2 * index + 2,
                                   "cdr_sha256": f"{index + 101:064x}", "value": value})
             bag["rpp_observations"]["carter1"] = {
                 "lookahead_point": points, "is_rotating_to_heading": rotations}
@@ -288,6 +335,32 @@ class G3EvidenceHelperTests(unittest.TestCase):
         report = validate_rpp_action_observations([action], bag, errors)
         self.assertEqual([], errors)
         self.assertFalse(report["episodes"][0]["rotation_reentry_observed"])
+
+    def test_rpp_paused_clock_requires_distinct_ordered_sqlite_message_ids(self):
+        action, bag = self.rpp_fixture()
+        streams = bag["rpp_observations"]["carter1"]
+        for rows in streams.values():
+            for row in rows:
+                row["db_timestamp_ns"] = 100
+        errors: list[str] = []
+        self.assertEqual(1, validate_rpp_action_observations([action], bag, errors)["episode_count"])
+        self.assertEqual([], errors)
+        for attack in ("duplicate_id", "reversed_id", "backward_clock", "missing_id", "bool_id"):
+            changed = deepcopy(bag)
+            points = changed["rpp_observations"]["carter1"]["lookahead_point"]
+            if attack == "duplicate_id":
+                points[-1]["db_message_id"] = points[0]["db_message_id"]
+            elif attack == "reversed_id":
+                points[-1]["db_message_id"] = 1
+            elif attack == "backward_clock":
+                points[-1]["db_timestamp_ns"] = 99
+            elif attack == "missing_id":
+                points[-1].pop("db_message_id")
+            else:
+                points[-1]["db_message_id"] = True
+            failures: list[str] = []
+            self.assertEqual({}, validate_rpp_action_observations([action], changed, failures))
+            self.assertTrue(failures, attack)
 
     def test_rpp_observation_topics_require_exact_type_positive_count_and_request(self):
         topic_types = {f"/{robot}/{name}": type_name
@@ -791,6 +864,33 @@ class G3EvidenceHelperTests(unittest.TestCase):
             [action], traces, runtime, race_errors, race_bag,
         )["passed_stop_count"], 1)
         self.assertEqual(race_errors, [])
+        decision = {**action, "stopped_sim_time_s": 4.66, "handoff_sim_time_s": 9.66}
+        continued = deepcopy(bag)
+        continued["odometry"]["carter1"].append(
+            {"stamp_s": 4.66, "linear_m_s": 0.0, "angular_rad_s": 0.0})
+        errors = []
+        self.assertEqual(validate_stop_evidence(
+            [decision], traces, runtime, errors, continued,
+        )["passed_stop_count"], 1)
+        self.assertEqual([], errors)
+        for attack in ("moving_tail", "gap_tail", "stale_claim", "inserted_sample"):
+            forged = deepcopy(decision)
+            forged_bag = deepcopy(continued)
+            rows = forged_bag["odometry"]["carter1"]
+            if attack == "moving_tail":
+                rows[-1]["linear_m_s"] = .020001
+            elif attack == "gap_tail":
+                rows[-1]["stamp_s"] = 4.910001
+                forged["stopped_sim_time_s"] = 4.910001
+            elif attack == "stale_claim":
+                rows.append({"stamp_s": 4.92, "linear_m_s": 0.0, "angular_rad_s": 0.0})
+                forged["stopped_sim_time_s"] = 4.92
+            else:
+                rows.insert(1, {"stamp_s": 4.2, "linear_m_s": 0.0, "angular_rad_s": 0.0})
+            forged["handoff_sim_time_s"] = forged["stopped_sim_time_s"] + 5.0
+            failures = []
+            validate_stop_evidence([forged], traces, runtime, failures, forged_bag)
+            self.assertTrue(failures, attack)
 
     @staticmethod
     def tf_edges(samples):

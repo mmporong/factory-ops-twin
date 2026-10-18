@@ -237,9 +237,13 @@ def decode_controller_trace(
                    if family == "goal_checker" else event == "compute_velocity_commands")
     expected_level = (0 if family == "goal_checker" or values.get("phase") == "begin"
                       or values.get("outcome") == "returned" else 2)
+    level = status.level
+    # ROS octet fields deserialize as one-byte bytes in Jazzy Python messages.
+    if type(level) is bytes and len(level) == 1:
+        level = level[0]
     if (family is None or not valid_event or set(values) != expected or status.message != event
             or status.hardware_id != "factory_ops_goal_checker" or status.name != plugin_name
-            or type(status.level) is not int or status.level != expected_level):
+            or type(level) is not int or level != expected_level):
         raise ValueError("controller trace event schema differs")
     try:
         stamp_ns = path_header_stamp_ns({
@@ -355,7 +359,7 @@ def _decode_g3_topics(output: Path, run_id: str, scenario_id: str) -> dict[str, 
     errors: list[str] = []
     types: dict[str, Any] = {}
     observed_types: dict[str, str] = {}
-    for database in databases:
+    for database_index, database in enumerate(databases):
         with sqlite3.connect(f"file:{database}?mode=ro", uri=True) as connection:
             integrity.extend(str(row[0]) for row in connection.execute("PRAGMA integrity_check"))
             topics = {int(row[0]): (str(row[1]), str(row[2])) for row in connection.execute("SELECT id,name,type FROM topics")}
@@ -365,8 +369,8 @@ def _decode_g3_topics(output: Path, run_id: str, scenario_id: str) -> dict[str, 
                     errors.append(f"{topic}: ROS type differs across bag databases")
             for topic_id, count in connection.execute("SELECT topic_id,COUNT(*) FROM messages GROUP BY topic_id"):
                 counts[topics[int(topic_id)][0]] += int(count)
-            for topic_id, db_timestamp_ns, data in connection.execute(
-                    "SELECT topic_id,timestamp,data FROM messages ORDER BY timestamp"):
+            for message_id, topic_id, db_timestamp_ns, data in connection.execute(
+                    "SELECT id,topic_id,timestamp,data FROM messages ORDER BY timestamp,id"):
                 topic, type_name = topics[int(topic_id)]
                 selected = (topic in {"/factory/g3/events", "/factory/g3/authorizations", "/factory/g3/reservations"}
                             or topic.endswith(("/plan", "/odom", "/_action/status", "/_service_event"))
@@ -382,6 +386,7 @@ def _decode_g3_topics(output: Path, run_id: str, scenario_id: str) -> dict[str, 
                             topic, type_name, raw, int(db_timestamp_ns),
                             get_message=lambda _: types[type_name], deserialize_message=deserialize_message,
                         )
+                        row.update(db_file_index=database_index, db_message_id=int(message_id))
                         controller_traces[robot][family].append(row)
                     except (ValueError, TypeError, AttributeError, RuntimeError) as exc:
                         errors.append(f"{topic}: invalid controller trace CDR: {exc}")
@@ -394,6 +399,7 @@ def _decode_g3_topics(output: Path, run_id: str, scenario_id: str) -> dict[str, 
                             topic, type_name, raw, int(db_timestamp_ns),
                             get_message=lambda _: types[type_name], deserialize_message=deserialize_message,
                         )
+                        row.update(db_file_index=database_index, db_message_id=int(message_id))
                         rpp_observations[robot][name].append(row)
                     except (ValueError, TypeError, AttributeError, RuntimeError) as exc:
                         errors.append(f"{topic}: invalid RPP observation CDR: {exc}")
@@ -619,11 +625,18 @@ def validate_controller_trace_observations(
         if action.get("cutoff_classification") == "planner_only_cleanup":
             continue
         robot = action.get("robot_id")
+        sent = _finite_number(action.get("follow_goal_sent_sim_time_s"))
         accepted = _finite_number(action.get("accepted_sim_time_s"))
         terminal = _finite_number(action.get("terminal_sim_time_s"))
-        if robot not in ROBOTS or accepted is None or terminal is None or terminal < accepted:
+        if (robot not in ROBOTS or sent is None or accepted is None or terminal is None
+                or not 0 <= sent <= accepted <= terminal):
             raise ValueError(f"action {index} cannot bind controller traces")
-        episodes[str(robot)].append((index, int(accepted * 1e9), int(terminal * 1e9)))
+        # Nav2 can compute before its acceptance response reaches the mission client.
+        # Bind the request-to-result interval, then require its controller epoch below.
+        episodes[str(robot)].append((index, round(sent * 1e9), round(terminal * 1e9)))
+    for robot_episodes in episodes.values():
+        if any(left[2] >= right[1] for left, right in zip(robot_episodes, robot_episodes[1:])):
+            raise ValueError("controller trace FollowPath request episodes overlap")
     reports: dict[str, Any] = {}
     observations = bag.get("rpp_observations")
     for robot in ROBOTS:
@@ -639,8 +652,7 @@ def validate_controller_trace_observations(
         if sorted(row.get("plugin_call_sequence") for row in goal_rows) != list(range(1, len(goal_rows) + 1)):
             raise ValueError(f"{robot} goal_checker call sequence differs")
         for family, rows in (("goal_checker", goal_rows), ("rpp", rpp_rows)):
-            if any(left["db_timestamp_ns"] >= right["db_timestamp_ns"] for left, right in zip(rows, rows[1:])):
-                raise ValueError(f"{robot} {family} database timestamps are not strictly increasing")
+            _validate_observation_storage_order(rows, f"{robot} {family}")
         goal_rows = sorted(goal_rows, key=lambda row: row["plugin_call_sequence"])
         rpp_groups: dict[int, list[Mapping[str, Any]]] = defaultdict(list)
         for row in rpp_rows:
@@ -690,7 +702,9 @@ def validate_controller_trace_observations(
                 check_count += 1
                 matches = [index for index, accepted, terminal in episodes[robot]
                            if accepted <= row["stamp_ns"] <= terminal]
-                if len(matches) != 1:
+                epoch = row["reset_epoch"]
+                if (len(matches) != 1 or not 1 <= epoch <= len(episodes[robot])
+                        or matches[0] != episodes[robot][epoch - 1][0]):
                     raise ValueError(f"{robot} goal-check trace does not bind exactly one FollowPath episode")
                 bound_actions.add(matches[0])
         if not check_count or not tolerance_count:
@@ -704,7 +718,9 @@ def validate_controller_trace_observations(
                 raise ValueError(f"{robot} RPP compute trace contains an exception")
             matches = [index for index, accepted, terminal in episodes[robot]
                        if accepted <= row["stamp_ns"] <= terminal]
-            if len(matches) != 1:
+            epoch = row["plan_epoch"]
+            if (len(matches) != 1 or not 1 <= epoch <= len(episodes[robot])
+                    or matches[0] != episodes[robot][epoch - 1][0]):
                 raise ValueError(f"{robot} RPP compute trace does not bind exactly one FollowPath episode")
             if not 0 <= row["stamp_ns"] - row["incoming_pose_stamp_ns"] <= 500_000_000:
                 raise ValueError(f"{robot} RPP incoming pose stamp is future-dated or stale")
@@ -727,6 +743,21 @@ def validate_controller_trace_observations(
                           "goal_checker_pose_stamp_available": False}
     return {"schema_version": 1, "topic_counts": {
         topic: bag["topic_counts"][topic] for topic in expected_topics}, "robots": reports}
+
+
+def _validate_observation_storage_order(rows: Sequence[Mapping[str, Any]], label: str) -> None:
+    previous: tuple[int, int] | None = None
+    previous_stamp = -1
+    for row in rows:
+        file_index, message_id = row.get("db_file_index"), row.get("db_message_id")
+        if (type(file_index) is not int or file_index < 0
+                or type(message_id) is not int or message_id < 1):
+            raise ValueError(f"{label} lacks its decoded SQLite message identity")
+        identity = (file_index, message_id)
+        stamp = row["db_timestamp_ns"]
+        if (previous is not None and identity <= previous) or stamp < previous_stamp:
+            raise ValueError(f"{label} database message ordering differs")
+        previous, previous_stamp = identity, stamp
 
 
 def validate_rpp_action_observations(
@@ -786,9 +817,9 @@ def validate_rpp_action_observations(
                     raise ValueError(f"{robot} lookahead sample matches multiple FollowPath episodes")
                 if matched:
                     point_episode[point_index] = matched[0]
-            point_db_stamps = [int(point["db_timestamp_ns"]) for point in points]
-            if any(current <= previous for previous, current in zip(point_db_stamps, point_db_stamps[1:])):
-                raise ValueError(f"{robot} lookahead database timestamps are not strictly monotonic")
+            # With rosbag use_sim_time, distinct messages can share a paused clock
+            # stamp. SQLite row identities preserve their strict collection order.
+            _validate_observation_storage_order(points, f"{robot} lookahead")
             rotation_episode: dict[int, int] = {}
             rotation_point: dict[int, int] = {}
             for rotation_index, rotation in enumerate(rotations):
@@ -797,9 +828,7 @@ def validate_rpp_action_observations(
                         or type(rotation.get("db_timestamp_ns")) is not int
                         or rotation["db_timestamp_ns"] < 0 or type(rotation.get("value")) is not bool):
                     raise ValueError(f"{robot} decoded rotation-state payload is invalid")
-            rotation_db_stamps = [int(rotation["db_timestamp_ns"]) for rotation in rotations]
-            if any(current <= previous for previous, current in zip(rotation_db_stamps, rotation_db_stamps[1:])):
-                raise ValueError(f"{robot} rotation-state database timestamps are not strictly monotonic")
+            _validate_observation_storage_order(rotations, f"{robot} rotation-state")
             if len(points) != len(rotations):
                 raise ValueError(f"{robot} RPP observation streams are not one-to-one")
             for pair_index, (point, rotation) in enumerate(zip(points, rotations)):
@@ -945,11 +974,16 @@ def validate_stop_evidence(
                 starts = [index for index, row in enumerate(segment)
                           if abs(row["stamp_s"] - measurement_start) < 1e-8]
                 suffix = segment[starts[0]:] if len(starts) == 1 else []
+                # The recorder can receive a later stationary sample before the mission's
+                # callback does. Keep the claimed window exact and inspect the entire
+                # stationary continuation through the decision, including gaps/motion.
+                decision_age = float(action["stopped_sim_time_s"]) - claimed[-1]["stamp_s"]
                 if (not math.isclose(measurement_start, claimed[0]["stamp_s"], abs_tol=1e-8)
                         or measurement_start <= float(ack["evaluation_sim_time_s"])
-                        or suffix != claimed or len(suffix) < 2
-                        or suffix[-1]["stamp_s"] - suffix[0]["stamp_s"] + 1e-12 < float(runtime["stopped_window_s"])):
-                    raise ValueError("claimed stop window is not an exact continuous suffix of decoded /odom")
+                        or suffix[:len(claimed)] != claimed or len(claimed) < 2
+                        or not 0 <= decision_age <= float(runtime["odom_ttl_s"]) + 1e-12
+                        or claimed[-1]["stamp_s"] - claimed[0]["stamp_s"] + 1e-12 < float(runtime["stopped_window_s"])):
+                    raise ValueError("claimed stop window or its decoded stationary continuation differs")
             if float(action["stopped_sim_time_s"]) < stamps[-1]:
                 raise ValueError("goal was marked finished before the stop window")
             if action.get("leg_kind") == "business" and action.get("chunk", {}).get("final"):

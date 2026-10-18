@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "run_label": "g3-q-normal-fifo-020",
+  "run_id": "1879d9840551b6f8df93ab06fa8f9c28",
+  "producer_commit": "8890eaec71b8ea8546a7337bd56c956257008431",
+  "layout_revision": "amr-production-bay-v4",
+  "evidence_scope": "completed normal mission; original final evidence validation failed; not a final qualification approval",
+  "mission": {
+    "status": "passed",
+    "stage": "complete",
+    "action_count": 62,
+    "successful_actions": 62,
+    "handoff_count": 8,
+    "completed_order_count": 2,
+    "expected_order_count": 2,
+    "final_physical_anchors": {
+      "carter1": "P1",
+      "carter2": "P2"
+    }
+  },
+  "original_final_evidence": {
+    "passed": false,
+    "error_count": 154644,
+    "immutable_report_sha256": "6fdb8282fee39b10ce5a8948e795cdff140e5128ba73019ab61ea09082d43418"
+  },
+  "original_mission_sha256": "fa8645f5bc73ca5174f56a7db73f2ecd5d2888d16428fac550a8f1e489ba50eb",
+  "closed_archive": {
+    "bytes": 887205823,
+    "path": "output.tar.gz",
+    "sha256": "b3d4612c0309f3766216347fb4b93f661121f069dcf414b773d3e8b3e7487034",
+    "file_count": 481,
+    "raw_bytes": 5092961449,
+    "exact_archive_content_verified": true
+  },
+  "safety_scope": {
+    "ground_truth_control_input": false,
+    "physical_loading_validated": false,
+    "closure_and_burst_qualified": false,
+    "paired_policy_comparison_completed": false,
+    "new_layout_dataset_approved": false
+  }
+}
