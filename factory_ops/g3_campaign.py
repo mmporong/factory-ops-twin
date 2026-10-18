@@ -375,15 +375,17 @@ def freeze_primary_campaign(
     if canonical_hash(settings) != experiment_config_sha256:
         raise ValueError("experiment config bytes differ from fixed C")
     pilot_slots = _load_object(pilot_slots_path, "pilot slots")
-    resource_input = _load_object(resource_input_path, "v2 resource input")
+    resource_input = _load_object(resource_input_path, "v3 resource input")
     required_resource = {
         "evidence_root", "supervisor_path", "supervisor_sha256", "requested_primary_runs",
         "reserve_fraction", "schema_version", "sequential_plan_path", "sequential_plan_sha256",
     }
-    if set(resource_input) != required_resource or resource_input.get("schema_version") != 2:
-        raise ValueError("primary campaign requires exact v2 resource input")
+    if (set(resource_input) != required_resource
+            or type(resource_input.get("schema_version")) is not int
+            or resource_input["schema_version"] != 3):
+        raise ValueError("primary campaign requires exact v3 resource input")
     if not Path(str(resource_input["evidence_root"])).is_absolute():
-        raise ValueError("v2 resource evidence root must be absolute")
+        raise ValueError("v3 resource evidence root must be absolute")
     calibration = build_calibration(
         pilot_slots, resource_input, expected_source_commit=source_commit,
         expected_config_sha256=experiment_config_sha256,

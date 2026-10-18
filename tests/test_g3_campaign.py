@@ -235,7 +235,7 @@ class G3CampaignTests(unittest.TestCase):
         save(resource, {
             "evidence_root": str(self.evidence), "supervisor_path": "actual/supervisor.json",
             "supervisor_sha256": digest(actual / "supervisor.json"),
-            "requested_primary_runs": 60, "reserve_fraction": .2, "schema_version": 2,
+            "requested_primary_runs": 60, "reserve_fraction": .2, "schema_version": 3,
             "sequential_plan_path": "sequential-capacity-plan.json",
             "sequential_plan_sha256": "a" * 64,
         })
@@ -293,19 +293,35 @@ class G3CampaignTests(unittest.TestCase):
                 )
             self.assertFalse(output.exists())
 
-    def test_primary_freeze_rejects_non_v2_resource_before_core_gate(self) -> None:
+    def test_primary_freeze_rejects_incomplete_v3_resource_before_core_gate(self) -> None:
         pilots, resource = self.primary_inputs()
         value = json.loads(resource.read_text(encoding="utf-8"))
         value.pop("sequential_plan_sha256")
         save(resource, value)
         with patch("factory_ops.g3_campaign.build_calibration") as build, self.assertRaisesRegex(
-            ValueError, "exact v2"
+            ValueError, "exact v3"
         ):
             freeze_primary_campaign(
                 self.root / "primary", pilot_slots_path=pilots, resource_input_path=resource,
                 experiment_config_path=CONFIG, host_repository=self.host_repository,
             )
         build.assert_not_called()
+
+    def test_primary_freeze_rejects_legacy_or_untyped_resource_before_core_gate(self) -> None:
+        pilots, resource = self.primary_inputs()
+        value = json.loads(resource.read_text(encoding="utf-8"))
+        output = self.root / "primary-legacy"
+        for version in (2, 2.0, 3.0, "3", True):
+            save(resource, value | {"schema_version": version})
+            with self.subTest(version=version), \
+                    patch("factory_ops.g3_campaign.build_calibration") as build, \
+                    self.assertRaisesRegex(ValueError, "exact v3"):
+                freeze_primary_campaign(
+                    output, pilot_slots_path=pilots, resource_input_path=resource,
+                    experiment_config_path=CONFIG, host_repository=self.host_repository,
+                )
+            build.assert_not_called()
+            self.assertFalse(output.exists())
 
     def test_fixed_config_hash_matches_repository_config(self) -> None:
         self.assertEqual(EXPERIMENT_CONFIG_SHA256, canonical_hash(load_experiment_config(CONFIG)))

@@ -351,11 +351,17 @@ class G3SessionTests(unittest.TestCase):
         save(plan, {"coordinator_receipts": receipts})
         resource = {"evidence_root": str(root), "supervisor_path": "supervisor.json",
                     "supervisor_sha256": "a" * 64, "requested_primary_runs": 60,
-                    "reserve_fraction": .2, "schema_version": 2,
+                    "reserve_fraction": .2, "schema_version": 3,
                     "sequential_plan_path": plan.name, "sequential_plan_sha256": digest(plan)}
         frozen = _sequential_input_bytes(resource)
         self.assertEqual(plan.read_bytes(), frozen["sequential-capacity/plan.json"])
         self.assertEqual(envelope.read_bytes(), frozen["sequential-capacity/coordinator-0-run-0-raw_envelope.json"])
+        for version in (2, 2.0, 3.0, "3", True):
+            with self.subTest(version=version), \
+                    patch("factory_ops.g3_session.Path") as paths, \
+                    self.assertRaisesRegex(ValueError, "exact v3"):
+                _sequential_input_bytes(resource | {"schema_version": version})
+            paths.assert_not_called()
         envelope.write_bytes(b"changed")
         with self.assertRaisesRegex(ValueError, "bytes differ"):
             _sequential_input_bytes(resource)

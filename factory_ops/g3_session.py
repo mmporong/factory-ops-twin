@@ -214,8 +214,10 @@ def _sequential_input_bytes(resource_input: dict[str, Any]) -> dict[str, bytes]:
     v1 = {"evidence_root", "supervisor_path", "supervisor_sha256", "requested_primary_runs", "reserve_fraction"}
     if "schema_version" not in resource_input:
         return {}
-    if set(resource_input) != v1 | {"schema_version", "sequential_plan_path", "sequential_plan_sha256"}:
-        raise ValueError("sequential resource input fields differ")
+    if (set(resource_input) != v1 | {"schema_version", "sequential_plan_path", "sequential_plan_sha256"}
+            or type(resource_input.get("schema_version")) is not int
+            or resource_input["schema_version"] != 3):
+        raise ValueError("sequential resource input requires exact v3 fields")
     root = Path(str(resource_input["evidence_root"])).resolve(strict=True)
 
     def read(reference: dict[str, Any], name: str) -> bytes:
