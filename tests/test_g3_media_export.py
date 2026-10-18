@@ -62,6 +62,17 @@ def make_frames() -> list[dict]:
 
 
 class G3MediaPlanningTests(unittest.TestCase):
+    def test_sparse_ten_second_grid_retains_motion_clip_without_fabricated_frames(self) -> None:
+        frames = [row for row in make_frames()
+                  if row["physics_frame"] == 2 or row["physics_frame"] % 600 == 3
+                  or row["visual_state"].get("real_time_media") is not None]
+        for index, row in enumerate(frames):
+            row["index"] = index
+        plan = plan_frame_selection(frames, capture_every_steps=600)
+        self.assertEqual(240, len(plan["real_time_frames"]))
+        self.assertEqual([3, 603, 1203, 1803],
+                         [row["physics_frame"] for row in plan["base_frames"]])
+
     def test_mixed_index_separates_240_grid_and_capture_first_base_phase(self) -> None:
         frames = make_frames()
         plan = plan_frame_selection(frames)
@@ -160,7 +171,7 @@ class G3MediaGateTests(unittest.TestCase):
                          "scope": "qualification_and_pilot_only_not_primary_comparison",
                          "primary_evaluation": False}
         save_json(self.session, session_value)
-        save_json(self.session.parent / "config.json", {"g3_runtime": {}})
+        save_json(self.session.parent / "config.json", {"g3_runtime": {}, "camera_capture_every_steps": 60})
 
         frames = make_frames()
         one_pixel = self.run_root / "media" / "pixel.png"

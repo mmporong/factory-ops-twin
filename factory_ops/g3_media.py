@@ -345,7 +345,7 @@ def _tag(frame: Mapping[str, Any]) -> Mapping[str, Any] | None:
 
 
 def plan_frame_selection(frames_value: object, *, capture_every_steps: int = 60) -> dict[str, Any]:
-    """Split one mixed capture index into the 10 Hz window and original 1 Hz grid."""
+    """Split the motion window from the session's source capture grid."""
     if (not isinstance(frames_value, list) or len(frames_value) < 2
             or type(capture_every_steps) is not int or capture_every_steps <= 0):
         raise ValueError("frame index or base cadence is invalid")
@@ -616,7 +616,18 @@ def validate_export_inputs(
         verify_manifest_file(run, relative, strict_manifest)
         verify_manifest_file(root, f"results/{run_label}/{relative}", raw_manifest)
     frames_document = load_json(frames_path)
-    selection = plan_frame_selection(frames_document.get("frames"))
+    capture_config_path = safe_file(
+        root, f"source-snapshots/{run_label}/runs/{run_label}-session/config.json",
+    )
+    verify_manifest_file(root, capture_config_path.relative_to(root).as_posix(), raw_manifest)
+    capture_config = load_json(capture_config_path)
+    capture_period = capture_config.get("camera_capture_every_steps")
+    if type(capture_period) is not int or capture_period <= 0:
+        raise ValueError("source session capture cadence is invalid")
+    selection = plan_frame_selection(
+        frames_document.get("frames"),
+        capture_every_steps=capture_period,
+    )
     trajectories_raw = {robot: load_jsonl(path) for robot, path in trajectory_paths.items()}
     trajectories = {
         robot: _trajectory_index(rows, str(run_id), str(report.get("scenario_id")), robot)

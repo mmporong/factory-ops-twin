@@ -94,6 +94,8 @@ class G3SessionTests(unittest.TestCase):
         self.assertEqual(set(qualification["files"]), set(pilot["files"]))
         qualification_config = load(self.qualification / "config.json")
         pilot_config = load(self.pilot_closure / "config.json")
+        self.assertEqual(qualification_config["camera_capture_every_steps"], 600)
+        self.assertEqual(pilot_config["camera_capture_every_steps"], 600)
         self.assertEqual(qualification_config["g3_runtime"]["real_time_media"],
                          pilot_config["g3_runtime"]["real_time_media"])
         self.assertEqual(

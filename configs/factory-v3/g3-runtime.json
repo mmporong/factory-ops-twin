@@ -30,7 +30,7 @@
     "xy_goal_tolerance": 0.06,
     "yaw_goal_tolerance": 0.15
   },
-  "camera_capture_every_steps": 60,
+  "camera_capture_every_steps": 600,
   "real_time_media": {
     "profiles": ["qualification"],
     "window_s": 24.0,
