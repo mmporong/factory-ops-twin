@@ -103,7 +103,7 @@ class G3MissionAdmissionTests(unittest.TestCase):
         source = "a" * 40
         params_sha = "b" * 64
         packages = {name: {"name": name, "version": "1.3.13", "package_xml_sha256": "c" * 64,
-                           "plugins_xml_sha256": "d" * 64 if name == "factory_ops_goal_checker" else None,
+                           "plugins_xml_sha256": "d" * 64 if name in {"factory_ops_goal_checker", "nav2_controller"} else None,
                            "shared_libraries": [{"name": f"lib{name}.so", "bytes": 1,
                                                   "sha256": "e" * 64}]}
                     for name in ("factory_ops_goal_checker", "nav2_controller", "nav2_regulated_pure_pursuit_controller")}
@@ -142,7 +142,7 @@ class G3MissionAdmissionTests(unittest.TestCase):
         changed = deepcopy(observation); changed["generated_params_sha256"] = "d" * 64; mutations.append(changed)
         changed = deepcopy(observation); changed["build_attestation_sha256"] = "bad"; mutations.append(changed)
         changed = deepcopy(observation); changed["packages"]["factory_ops_goal_checker"]["plugins_xml_sha256"] = None; mutations.append(changed)
-        changed = deepcopy(observation); changed["packages"]["nav2_controller"]["plugins_xml_sha256"] = "d" * 64; mutations.append(changed)
+        changed = deepcopy(observation); changed["packages"]["nav2_controller"]["plugins_xml_sha256"] = "invalid"; mutations.append(changed)
         for changed in mutations:
             with self.assertRaises(ValueError):
                 validate_rpp_runtime_observation(changed, generated_params_sha256=params_sha, source_commit=source)

@@ -201,7 +201,8 @@ def validate_rpp_runtime_observation(
                 or not _SHA256.fullmatch(str(row.get("package_xml_sha256", "")))
                 or (name == "factory_ops_goal_checker"
                     and not _SHA256.fullmatch(str(row.get("plugins_xml_sha256", ""))))
-                or (name != "factory_ops_goal_checker" and row.get("plugins_xml_sha256") is not None)
+                or (name != "factory_ops_goal_checker" and row.get("plugins_xml_sha256") is not None
+                    and not _SHA256.fullmatch(str(row["plugins_xml_sha256"])))
                 or not isinstance(libraries, list) or not libraries
                 or any(not isinstance(item, Mapping) or not isinstance(item.get("name"), str)
                        or type(item.get("bytes")) is not int or item["bytes"] <= 0
