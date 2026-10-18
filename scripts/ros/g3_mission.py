@@ -66,6 +66,16 @@ G3_NAV2_RUNTIME_PARAMETERS = {
 }
 
 
+def bag_qos_overrides() -> str:
+    latched_depths = {"tf_static": 1, "map": 1, "navigation_map": 1,
+                      "controller_cycle_trace": 1024}
+    return "".join(
+        f"/{robot}/{topic}:\n  durability: transient_local\n  reliability: reliable\n"
+        f"  history: keep_last\n  depth: {depth}\n"
+        for robot in ROBOT_IDS for topic, depth in latched_depths.items()
+    )
+
+
 def build_g3_namespaced_params(
     template: Mapping[str, Any], scenario: Mapping[str, Any], radii: Mapping[str, float],
     runtime: Mapping[str, Any], *, physical_map: str, navigation_map: str,
@@ -901,7 +911,7 @@ def main() -> int:
         )
 
         qos = output / "bag-qos.yaml"
-        qos.write_text("".join(f"/{robot}/{topic}:\n  durability: transient_local\n  reliability: reliable\n  history: keep_last\n  depth: 1\n" for robot in ROBOT_IDS for topic in ("tf_static", "map", "navigation_map")), encoding="utf-8")
+        qos.write_text(bag_qos_overrides(), encoding="utf-8")
         bag_topics = ["/clock", "/factory/g3/events", "/factory/g3/authorizations", "/factory/g3/reservations"]
         for robot in ROBOT_IDS:
             bag_topics += [f"/{robot}/{name}" for name in ("scan_front_raw", "scan_rear_raw", "scan_front", "scan_rear", "scan_localization", "odom", "tf", "tf_static", "map", "navigation_map", "amcl_pose", "plan", "received_global_plan", "cmd_vel", "compute_path_to_pose/_action/status", "follow_path/_action/status", "follow_path/_action/feedback")]

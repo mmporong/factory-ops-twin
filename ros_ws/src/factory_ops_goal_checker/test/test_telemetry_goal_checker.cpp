@@ -1,12 +1,16 @@
 #include <algorithm>
+#include <chrono>
 #include <cmath>
 #include <limits>
 #include <memory>
+#include <stdexcept>
 #include <string>
+#include <thread>
 #include <vector>
 
 #include "diagnostic_msgs/msg/diagnostic_array.hpp"
 #include "factory_ops_goal_checker/telemetry_goal_checker.hpp"
+#include "factory_ops_goal_checker/trace_contract.hpp"
 #include "gtest/gtest.h"
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp_lifecycle/lifecycle_node.hpp"
@@ -30,6 +34,12 @@ protected:
   static void TearDownTestSuite() {rclcpp::shutdown();}
 };
 
+class FailingTelemetryGoalChecker : public factory_ops_goal_checker::TelemetryGoalChecker
+{
+protected:
+  void telemetryFaultPoint() override {throw std::runtime_error("forced telemetry failure");}
+};
+
 TEST_F(GoalCheckerTest, MatchesSimpleGoalCheckerStatefulSemanticsAndReturnedTolerances)
 {
   rclcpp::NodeOptions options;
@@ -40,14 +50,14 @@ TEST_F(GoalCheckerTest, MatchesSimpleGoalCheckerStatefulSemanticsAndReturnedTole
   });
   auto node = std::make_shared<rclcpp_lifecycle::LifecycleNode>("goal_checker_test", options);
   auto stock_node = std::make_shared<rclcpp_lifecycle::LifecycleNode>("stock_goal_checker_test", options);
-  std::vector<diagnostic_msgs::msg::DiagnosticArray> traces;
-  auto subscriber = node->create_subscription<diagnostic_msgs::msg::DiagnosticArray>(
-    "controller_cycle_trace", 100,
-    [&traces](diagnostic_msgs::msg::DiagnosticArray::SharedPtr message) {traces.push_back(*message);});
   factory_ops_goal_checker::TelemetryGoalChecker checker;
   nav2_controller::SimpleGoalChecker stock;
   checker.initialize(node, "goal_checker", nullptr);
   stock.initialize(stock_node, "goal_checker", nullptr);
+  std::vector<diagnostic_msgs::msg::DiagnosticArray> traces;
+  auto subscriber = node->create_subscription<diagnostic_msgs::msg::DiagnosticArray>(
+    "controller_cycle_trace", factory_ops_goal_checker::traceQoS(),
+    [&traces](diagnostic_msgs::msg::DiagnosticArray::SharedPtr message) {traces.push_back(*message);});
   geometry_msgs::msg::Twist stopped;
   const auto goal = pose(0.0, 0.0);
   for (const auto & query : {pose(0.061, 0.0), pose(0.059, -0.16), pose(0.061, -0.14)}) {
@@ -71,8 +81,9 @@ TEST_F(GoalCheckerTest, MatchesSimpleGoalCheckerStatefulSemanticsAndReturnedTole
 
   rclcpp::executors::SingleThreadedExecutor executor;
   executor.add_node(node->get_node_base_interface());
-  for (int i = 0; i < 20 && traces.size() < 7; ++i) {
-    executor.spin_some();
+  for (int i = 0; i < 100 && traces.size() < 7; ++i) {
+    executor.spin_some(std::chrono::milliseconds(20));
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
   }
   ASSERT_EQ(7u, traces.size());
   std::uint64_t expected_sequence = 1;
@@ -91,6 +102,30 @@ TEST_F(GoalCheckerTest, MatchesSimpleGoalCheckerStatefulSemanticsAndReturnedTole
       EXPECT_EQ(keys.end(), std::find(keys.begin(), keys.end(), "check_xy_before"));
     }
   }
+}
+
+TEST_F(GoalCheckerTest, TelemetryFailureDoesNotChangeSuccessfulBaseResults)
+{
+  rclcpp::NodeOptions options;
+  options.parameter_overrides({rclcpp::Parameter("goal_checker.stateful", true),
+    rclcpp::Parameter("goal_checker.xy_goal_tolerance", 0.06),
+    rclcpp::Parameter("goal_checker.yaw_goal_tolerance", 0.15)});
+  auto node = std::make_shared<rclcpp_lifecycle::LifecycleNode>("failing_trace_goal", options);
+  auto stock_node = std::make_shared<rclcpp_lifecycle::LifecycleNode>("failing_trace_stock", options);
+  FailingTelemetryGoalChecker checker;
+  nav2_controller::SimpleGoalChecker stock;
+  checker.initialize(node, "goal_checker", nullptr);
+  stock.initialize(stock_node, "goal_checker", nullptr);
+  geometry_msgs::msg::Twist stopped;
+  const auto query = pose(0.01, 0.01);
+  const auto goal = pose(0.0, 0.0);
+  EXPECT_EQ(stock.isGoalReached(query, goal, stopped), checker.isGoalReached(query, goal, stopped));
+  geometry_msgs::msg::Pose expected_pose, actual_pose;
+  geometry_msgs::msg::Twist expected_velocity, actual_velocity;
+  EXPECT_EQ(stock.getTolerances(expected_pose, expected_velocity),
+    checker.getTolerances(actual_pose, actual_velocity));
+  EXPECT_EQ(expected_pose, actual_pose);
+  EXPECT_EQ(expected_velocity, actual_velocity);
 }
 
 }  // namespace

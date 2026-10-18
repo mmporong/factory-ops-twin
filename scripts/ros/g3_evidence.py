@@ -234,8 +234,11 @@ def decode_controller_trace(
     )) if family == "goal_checker" else RPP_TRACE_KEYS
     valid_event = (event in {"initialize", "reset", "is_goal_reached", "get_tolerances"}
                    if family == "goal_checker" else event == "compute_velocity_commands")
+    expected_level = (0 if family == "goal_checker" or values.get("phase") == "begin"
+                      or values.get("outcome") == "returned" else 2)
     if (family is None or not valid_event or set(values) != expected or status.message != event
-            or status.hardware_id != "factory_ops_goal_checker"):
+            or status.hardware_id != "factory_ops_goal_checker" or status.name != plugin_name
+            or type(status.level) is not int or status.level != expected_level):
         raise ValueError("controller trace event schema differs")
     try:
         stamp_ns = path_header_stamp_ns({

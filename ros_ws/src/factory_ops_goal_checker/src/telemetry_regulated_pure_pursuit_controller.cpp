@@ -5,6 +5,7 @@
 #include <iomanip>
 #include <limits>
 #include <sstream>
+#include <string_view>
 #include <typeinfo>
 #include <utility>
 
@@ -46,20 +47,23 @@ void TelemetryRegulatedPurePursuitController::configure(
 {
   nav2_regulated_pure_pursuit_controller::RegulatedPurePursuitController::configure(
     parent, name, std::move(tf), std::move(costmap_ros));
-  trace_node_ = parent.lock();
-  if (!trace_node_) {throw std::runtime_error("RPP lifecycle node expired during configuration");}
-  trace_pub_ = trace_node_->create_publisher<diagnostic_msgs::msg::DiagnosticArray>(kTraceTopic, rclcpp::QoS(100));
+  try {
+    trace_node_ = parent.lock();
+    if (trace_node_) {
+      trace_pub_ = trace_node_->create_publisher<diagnostic_msgs::msg::DiagnosticArray>(kTraceTopic, traceQoS());
+    }
+  } catch (...) {trace_pub_.reset();}
 }
 
 void TelemetryRegulatedPurePursuitController::activate()
 {
   nav2_regulated_pure_pursuit_controller::RegulatedPurePursuitController::activate();
-  trace_pub_->on_activate();
+  try {if (trace_pub_) {trace_pub_->on_activate();}} catch (...) {}
 }
 
 void TelemetryRegulatedPurePursuitController::deactivate()
 {
-  trace_pub_->on_deactivate();
+  try {if (trace_pub_) {trace_pub_->on_deactivate();}} catch (...) {}
   nav2_regulated_pure_pursuit_controller::RegulatedPurePursuitController::deactivate();
 }
 
@@ -105,12 +109,16 @@ void TelemetryRegulatedPurePursuitController::publishComputeTrace(
   const geometry_msgs::msg::Twist & velocity,
   bool rotating_before, bool reached_before,
   const geometry_msgs::msg::TwistStamped * output,
-  const std::string & phase, const std::string & error_type, const std::string & error_message)
+  const char * phase, const char * error_type, const char * error_message) noexcept
 {
+  try {
+  telemetryFaultPoint();
+  if (!trace_node_ || !trace_pub_) {return;}
+  const std::string_view phase_value{phase};
   diagnostic_msgs::msg::DiagnosticArray message;
   message.header.stamp = trace_node_->get_clock()->now();
   diagnostic_msgs::msg::DiagnosticStatus status;
-  status.level = (phase == "begin" || output) ? diagnostic_msgs::msg::DiagnosticStatus::OK : diagnostic_msgs::msg::DiagnosticStatus::ERROR;
+  status.level = (phase_value == "begin" || output) ? diagnostic_msgs::msg::DiagnosticStatus::OK : diagnostic_msgs::msg::DiagnosticStatus::ERROR;
   status.name = plugin_name_;
   status.hardware_id = "factory_ops_goal_checker";
   status.message = "compute_velocity_commands";
@@ -122,7 +130,7 @@ void TelemetryRegulatedPurePursuitController::publishComputeTrace(
     kv("event_sequence", std::to_string(nextEventSequence())),
     kv("plugin_call_sequence", std::to_string(plugin_call_sequence_)),
     kv("plugin_name", plugin_name_),
-    kv("phase", phase),
+    kv("phase", std::string(phase_value)),
     kv("plan_epoch", std::to_string(plan_epoch_)),
     kv("reset_epoch", std::to_string(reset_epoch_)),
     kv("incoming_pose_stamp_ns", std::to_string(incoming_stamp_ns)),
@@ -138,7 +146,7 @@ void TelemetryRegulatedPurePursuitController::publishComputeTrace(
     kv("is_rotating_after", boolean(is_rotating_to_heading_)),
     kv("has_reached_xy_before", boolean(reached_before)),
     kv("has_reached_xy_after", boolean(has_reached_xy_tolerance_)),
-    kv("outcome", phase == "begin" ? "pending" : output ? "returned" : "threw"),
+    kv("outcome", phase_value == "begin" ? "pending" : output ? "returned" : "threw"),
     kv("output_linear_x_m_s", output ? number(output->twist.linear.x) : ""),
     kv("output_linear_y_m_s", output ? number(output->twist.linear.y) : ""),
     kv("output_angular_z_rad_s", output ? number(output->twist.angular.z) : ""),
@@ -146,7 +154,8 @@ void TelemetryRegulatedPurePursuitController::publishComputeTrace(
     kv("error_message", error_message),
   };
   message.status.push_back(std::move(status));
-  try {trace_pub_->publish(message);} catch (...) {}
+  trace_pub_->publish(message);
+  } catch (...) {}
 }
 
 }  // namespace factory_ops_goal_checker

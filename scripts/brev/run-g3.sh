@@ -14,6 +14,8 @@ seed=${7:?qualification/primary seed 0..9 or pilot seed 100 required}
 primary_inputs=${8:-}
 primary_inputs_sha=${9:-}
 billing=${10:-}
+build_attestation=${FACTORY_OPS_G3_BUILD_ATTESTATION:?externally pinned G3 build attestation required}
+build_attestation_sha=${FACTORY_OPS_G3_BUILD_ATTESTATION_SHA256:?external build attestation SHA-256 required}
 
 [[ "$profile" =~ ^(qualification|pilot|primary)$ ]]
 [[ "$condition" =~ ^(normal|closure|burst)$ ]]
@@ -63,7 +65,27 @@ mkdir "$project"
 tar --no-same-owner -xf "$archive" -C "$project"
 
 isaac_image=$(docker image inspect nvcr.io/nvidia/isaac-sim:6.2.0 --format '{{index .RepoDigests 0}}')
-nav_image=$(docker image inspect factory-ops-nav2:jazzy-g3-goal-checker --format '{{.Id}}')
+[[ "$build_attestation" = /* && "$build_attestation_sha" =~ ^[0-9a-f]{64}$ ]]
+test -f "$build_attestation"
+test ! -L "$build_attestation"
+attestation_copy="$root/source-snapshots/$run-build-attestation.json"
+test ! -e "$attestation_copy"
+install -m 0444 "$build_attestation" "$attestation_copy"
+test "$(sha256sum "$attestation_copy" | cut -d ' ' -f 1)" = "$build_attestation_sha"
+build_attestation="$attestation_copy"
+mapfile -t attested_images < <(python3 "$project/scripts/brev/g3_build_attestation.py" references \
+  --attestation "$build_attestation" --expected-sha256 "$build_attestation_sha")
+test "${#attested_images[@]}" = 2
+base_inspect="$root/source-snapshots/$run-base-image-inspect.json"
+built_inspect="$root/source-snapshots/$run-built-image-inspect.json"
+test ! -e "$base_inspect" && test ! -e "$built_inspect"
+docker image inspect "${attested_images[0]}" > "$base_inspect"
+docker image inspect "${attested_images[1]}" > "$built_inspect"
+python3 "$project/scripts/brev/g3_build_attestation.py" validate \
+  --attestation "$build_attestation" --expected-sha256 "$build_attestation_sha" \
+  --source-root "$project" --source-commit "$expected_commit" --run-label "$run" \
+  --base-inspect "$base_inspect" --built-inspect "$built_inspect" --source-archive "$archive"
+nav_image=$(docker image inspect "${attested_images[1]}" --format '{{.Id}}')
 run_id=$(python3 -c 'import secrets; print(secrets.token_hex(16))')
 cache="$root/sdk-cache"
 sim="factory-ops-$run-sim"
@@ -186,7 +208,8 @@ PY
 
 sudo -n install -d -m 0755 -o 1234 -g 1234 "$output"
 python3 - "$root" "$run" "$run_id" "$expected_commit" "$isaac_image" "$nav_image" \
-  "$profile" "$condition" "$policy" "$seed" "$scenario" "$primary_inputs" "$primary_inputs_sha" <<'PY'
+  "$profile" "$condition" "$policy" "$seed" "$scenario" "$primary_inputs" "$primary_inputs_sha" \
+  "$build_attestation" "$build_attestation_sha" <<'PY'
 from datetime import datetime, timezone
 from pathlib import Path
 import hashlib,json,subprocess,sys
@@ -208,6 +231,7 @@ paths=[
     'factory_ops/traffic.py','factory_ops/traffic_observation.py','factory_ops/usda.py',
     'factory_ops/visual_scene.py','factory_ops/visual_state.py','factory_ops/visual_evidence.py',
     'scripts/brev/run-g3.sh','scripts/ros/Dockerfile','scripts/ros/Dockerfile.g3',
+    'scripts/brev/g3_build_attestation.py',
     'scripts/brev/g3_resource_pack.py',
     'scripts/brev/g3_gpu_sampler.py',
     'scripts/brev/g3_pair_wait.py',
@@ -249,6 +273,8 @@ record={
     'seed':int(sys.argv[10]),'scenario_id':sys.argv[11],
     'primary_inputs_path':sys.argv[12] or None,
     'primary_inputs_sha256':sys.argv[13] or None,
+    'build_attestation_path':sys.argv[14],
+    'build_attestation_sha256':sys.argv[15],
     'session':session_value,
     'session_json_sha256':hashlib.sha256((session/'session.json').read_bytes()).hexdigest(),
     'files':source_files,

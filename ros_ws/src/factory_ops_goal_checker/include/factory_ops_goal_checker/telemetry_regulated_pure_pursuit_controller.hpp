@@ -31,13 +31,16 @@ public:
     const geometry_msgs::msg::Twist & velocity,
     nav2_core::GoalChecker * goal_checker) override;
 
+protected:
+  virtual void telemetryFaultPoint() {}
+
 private:
   void publishComputeTrace(
     const geometry_msgs::msg::PoseStamped & pose,
     const geometry_msgs::msg::Twist & velocity,
     bool rotating_before, bool reached_before,
     const geometry_msgs::msg::TwistStamped * output,
-    const std::string & phase, const std::string & error_type, const std::string & error_message);
+    const char * phase, const char * error_type, const char * error_message) noexcept;
 
   rclcpp_lifecycle::LifecycleNode::SharedPtr trace_node_;
   rclcpp_lifecycle::LifecyclePublisher<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr trace_pub_;

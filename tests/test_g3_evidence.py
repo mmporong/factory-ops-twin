@@ -114,7 +114,8 @@ class G3EvidenceHelperTests(unittest.TestCase):
         def message(payload):
             return NS(header=NS(stamp=NS(sec=0, nanosec=0)), status=[NS(
                 values=[NS(key=key, value=value) for key, value in payload.items()],
-                message="initialize", hardware_id="factory_ops_goal_checker")])
+                message="initialize", hardware_id="factory_ops_goal_checker",
+                name="goal_checker", level=0)])
         robot, family, row = decode_controller_trace(
             "/carter1/controller_cycle_trace", "diagnostic_msgs/msg/DiagnosticArray", b"trace", 1,
             get_message=lambda _: object(), deserialize_message=lambda *_: message(values))
@@ -126,6 +127,13 @@ class G3EvidenceHelperTests(unittest.TestCase):
                 decode_controller_trace(
                     "/carter1/controller_cycle_trace", "diagnostic_msgs/msg/DiagnosticArray", b"trace", 1,
                     get_message=lambda _: object(), deserialize_message=lambda *_, c=changed: message(c))
+        for field, value in (("name", "FollowPath"), ("level", 2)):
+            forged = message(values)
+            setattr(forged.status[0], field, value)
+            with self.assertRaises(ValueError):
+                decode_controller_trace(
+                    "/carter1/controller_cycle_trace", "diagnostic_msgs/msg/DiagnosticArray", b"trace", 1,
+                    get_message=lambda _: object(), deserialize_message=lambda *_, m=forged: m)
 
     @staticmethod
     def rpp_fixture():

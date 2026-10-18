@@ -33,12 +33,20 @@ public:
     geometry_msgs::msg::Pose & pose_tolerance,
     geometry_msgs::msg::Twist & vel_tolerance) override;
 
+protected:
+  virtual void telemetryFaultPoint() {}
+
 private:
   using KeyValue = diagnostic_msgs::msg::KeyValue;
 
-  diagnostic_msgs::msg::DiagnosticArray makeTrace(
-    const std::string & event, const std::vector<KeyValue> & event_values);
-  void publishTrace(const std::string & event, const std::vector<KeyValue> & event_values = {});
+  void publishSimpleTrace(const char * event) noexcept;
+  void publishGoalTrace(
+    const geometry_msgs::msg::Pose & query_pose, const geometry_msgs::msg::Pose & goal_pose,
+    const geometry_msgs::msg::Twist & velocity, bool check_xy_before,
+    bool check_xy_after, bool result) noexcept;
+  void publishToleranceTrace(
+    const geometry_msgs::msg::Pose & pose_tolerance, bool result) noexcept;
+  void publishTrace(const char * event, std::vector<KeyValue> event_values) noexcept;
   rclcpp_lifecycle::LifecycleNode::SharedPtr node_;
   rclcpp_lifecycle::LifecyclePublisher<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr trace_pub_;
   std::mutex trace_mutex_;

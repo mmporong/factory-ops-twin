@@ -17,10 +17,18 @@ from factory_ops.fleet_execution import StoppedGate, path_content_sha256
 from factory_ops.fleet import FleetMission, FleetOrder
 from factory_ops.navigation import GoalPose
 from scripts.ros.g2_mission import build_namespaced_params
-from scripts.ros.g3_mission import angle_error, build_cutoff_record, build_g3_namespaced_params, collect_rpp_runtime_observation, cutoff_phase_classification, failure_reason, localization_payload, path_final_yaw, path_payload, primary_trial_identity, valid_hold_ack, validate_arrival, validate_rpp_runtime_observation, verify_navigation_maps, stopped_odometry_record, valid_initial_hold_ack, initial_hold_boundary_ready, terminal_recording_boundary, wait_for_terminal_recording, session_verification_record
+from scripts.ros.g3_mission import angle_error, bag_qos_overrides, build_cutoff_record, build_g3_namespaced_params, collect_rpp_runtime_observation, cutoff_phase_classification, failure_reason, localization_payload, path_final_yaw, path_payload, primary_trial_identity, valid_hold_ack, validate_arrival, validate_rpp_runtime_observation, verify_navigation_maps, stopped_odometry_record, valid_initial_hold_ack, initial_hold_boundary_ready, terminal_recording_boundary, wait_for_terminal_recording, session_verification_record
 
 
 class G3MissionAdmissionTests(unittest.TestCase):
+    def test_rosbag_uses_latched_reliable_controller_trace_qos(self):
+        qos = bag_qos_overrides()
+        for robot in ("carter1", "carter2"):
+            block = qos.split(f"/{robot}/controller_cycle_trace:\n", 1)[1].split("\n/", 1)[0]
+            self.assertIn("durability: transient_local", block)
+            self.assertIn("reliability: reliable", block)
+            self.assertIn("depth: 1024", block)
+
     def test_g3_params_preserve_q013_values_and_add_only_two_trace_plugins_per_robot(self):
         node = lambda: {"ros__parameters": {}}
         def costmap(name):

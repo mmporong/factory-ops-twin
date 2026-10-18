@@ -6,10 +6,12 @@ find_package(class_loader REQUIRED)
 find_package(diagnostic_msgs REQUIRED)
 find_package(nav2_controller REQUIRED)
 find_package(nav2_core REQUIRED)
+find_package(nav2_costmap_2d REQUIRED)
 find_package(nav2_regulated_pure_pursuit_controller REQUIRED)
 find_package(pluginlib REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_lifecycle REQUIRED)
+find_package(tf2_ros REQUIRED)
 
 add_library(factory_ops_goal_checker SHARED
   src/telemetry_goal_checker.cpp
@@ -41,6 +43,10 @@ if(BUILD_TESTING)
   target_compile_definitions(test_plugin_loading PRIVATE
     FACTORY_OPS_GOAL_CHECKER_LIBRARY="$<TARGET_FILE:factory_ops_goal_checker>")
   ament_target_dependencies(test_plugin_loading class_loader nav2_core)
+  ament_add_gtest(test_telemetry_rpp test/test_telemetry_rpp.cpp)
+  target_link_libraries(test_telemetry_rpp factory_ops_goal_checker)
+  ament_target_dependencies(test_telemetry_rpp
+    nav2_costmap_2d nav2_regulated_pure_pursuit_controller rclcpp rclcpp_lifecycle tf2_ros)
 endif()
 
 ament_export_include_directories(include)
