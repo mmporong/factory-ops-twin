@@ -1369,7 +1369,11 @@ def main() -> int:
                     terminal = rt["result_future"].result()
                     rt["record"].update({"status": int(terminal.status), "error_code": int(terminal.result.error_code), "error_msg": str(terminal.result.error_msg), "terminal_sim_time_s": stamp})
                     if terminal.status != 4 or terminal.result.error_code != 0:
-                        raise RuntimeError(f"FollowPath failed: {rt['record']}")
+                        raise RuntimeError(
+                            f"FollowPath failed: robot={robot} goal={rt['follow_uuid']} "
+                            f"status={terminal.status} error_code={terminal.result.error_code}; "
+                            "full action retained in mission-result.json actions"
+                        )
                     rt["phase"] = "stopping"
                     reset_stop_observation(rt)
                     rt["hold_sequence"] = lease(robot, forced_mode="hold")
