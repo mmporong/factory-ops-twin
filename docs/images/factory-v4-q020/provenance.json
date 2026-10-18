@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "scope": "actual candidate-layout render; operational completion and full camera QA not asserted",
+  "run_label": "g3-q-normal-fifo-020",
+  "run_id": "1879d9840551b6f8df93ab06fa8f9c28",
+  "producer_commit": "8890eaec71b8ea8546a7337bd56c956257008431",
+  "factory_profile": "factory-v4",
+  "layout_bounds_xy_m": [
+    0,
+    0,
+    32,
+    20
+  ],
+  "physics_frame": 252,
+  "sim_time_s": 4.2,
+  "capture_index": 1,
+  "source": {
+    "bytes": 537257,
+    "height": 720,
+    "path": "media/overview-00001.png",
+    "sha256": "c0e53ca6cced20a7daf861ca01f4b488d9bbf35f94c7de2c5ff94c7a76e894ca",
+    "width": 1280
+  },
+  "output": {
+    "path": "overview.png",
+    "bytes": 537257,
+    "sha256": "c0e53ca6cced20a7daf861ca01f4b488d9bbf35f94c7de2c5ff94c7a76e894ca"
+  },
+  "processing": "Original PNG bytes copied without editing",
+  "visual_state": {
+    "applied_sequence": 0,
+    "applied_state_hash": "bef6fbb237ddbab291791446eaf8460dba7f47324b27dcf9941dd3f9f742c6c4",
+    "files": {
+      "visual-events.jsonl": {
+        "bytes": 1297,
+        "sha256": "257434aff5cbcb994bcbe28ffbc45302d9f7ddaa0bbb7c90126b8ff99f0241f4"
+      },
+      "visual-runtime-manifest.json": {
+        "bytes": 52663,
+        "sha256": "b7488622441c2a5fce5dd456c7835b868e32843701bb275120706afeee6938e5"
+      },
+      "visual-scene/session-layer-snapshots/f1530834875842e68cc6e48c8fd9df53d838fbba1dbfd21bc12466629612ca40.usda": {
+        "bytes": 127415,
+        "sha256": "f1530834875842e68cc6e48c8fd9df53d838fbba1dbfd21bc12466629612ca40"
+      },
+      "visual-scene/visual-scene-manifest.json": {
+        "bytes": 69909,
+        "sha256": "30ff9f6fb22d8162580aed64b2acf424b13aaf56b26f58fe77948b99fde66434"
+      },
+      "visual-state-snapshots/00000000-bef6fbb237ddbab291791446eaf8460dba7f47324b27dcf9941dd3f9f742c6c4.json": {
+        "bytes": 730,
+        "sha256": "83144682575028a234d3a94f79762053b2af623a1d3635c4939458f128b93c7f"
+      }
+    }
+  },
+  "limitations": [
+    "Qualification was running at capture time; this frame is not evidence of completed transport.",
+    "The carter2 follow view is excluded because the north wall occludes its initial parking view.",
+    "This is an authored factory simulation, not a measured CAD/MES twin."
+  ]
+}
