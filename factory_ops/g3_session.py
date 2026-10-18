@@ -113,6 +113,7 @@ def _validate_runtime(runtime: dict[str, Any]) -> None:
         **legacy_nav2,
         "follow_path_plugin": "factory_ops_goal_checker::ConfirmedXyRegulatedPurePursuitController",
         "xy_latch_mode": "goal_checker_confirmed_xy_latch",
+        "terminal_stop_handshake": True,
     }
     if (not isinstance(nav2, dict) or nav2 not in (legacy_nav2, confirmed_nav2)
             or nav2.get("follow_path_stateful") is not True

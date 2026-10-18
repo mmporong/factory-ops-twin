@@ -8,7 +8,7 @@
 namespace factory_ops_goal_checker
 {
 
-void ConfirmedXyRegulatedPurePursuitController::prepareGoalChecker(
+bool ConfirmedXyRegulatedPurePursuitController::prepareGoalChecker(
   nav2_core::GoalChecker * goal_checker)
 {
   auto * confirmed_goal_checker = dynamic_cast<TelemetryGoalChecker *>(goal_checker);
@@ -16,9 +16,11 @@ void ConfirmedXyRegulatedPurePursuitController::prepareGoalChecker(
     throw std::invalid_argument(
             "ConfirmedXyRegulatedPurePursuitController requires TelemetryGoalChecker");
   }
-  if (!confirmed_goal_checker->xyConfirmed()) {
+  confirmed_goal_checker->enableTerminalStop();
+  if (!confirmed_goal_checker->xyConfirmed() || !confirmed_goal_checker->xyWithinTolerance()) {
     has_reached_xy_tolerance_ = false;
   }
+  return confirmed_goal_checker->terminalStopRequested();
 }
 
 }  // namespace factory_ops_goal_checker

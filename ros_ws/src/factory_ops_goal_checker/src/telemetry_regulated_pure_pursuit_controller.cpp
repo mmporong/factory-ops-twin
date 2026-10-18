@@ -87,20 +87,30 @@ geometry_msgs::msg::TwistStamped TelemetryRegulatedPurePursuitController::comput
   const bool rotating_before = is_rotating_to_heading_;
   const bool reached_before = has_reached_xy_tolerance_;
   ++plugin_call_sequence_;
-  publishComputeTrace(pose, velocity, rotating_before, reached_before, nullptr, "begin", "", "");
+  publishComputeTrace(pose, velocity, rotating_before, reached_before, nullptr, "begin", "", "", "");
   try {
-    prepareGoalChecker(goal_checker);
+    const bool terminal_stop = prepareGoalChecker(goal_checker);
+    if (terminal_stop) {
+      geometry_msgs::msg::TwistStamped output;
+      output.header = pose.header;
+      publishComputeTrace(
+        pose, velocity, rotating_before, reached_before, &output, "end",
+        "terminal_stop_candidate", "", "");
+      return output;
+    }
     auto output = nav2_regulated_pure_pursuit_controller::RegulatedPurePursuitController::
       computeVelocityCommands(pose, velocity, goal_checker);
-    publishComputeTrace(pose, velocity, rotating_before, reached_before, &output, "end", "", "");
+    publishComputeTrace(
+      pose, velocity, rotating_before, reached_before, &output, "end",
+      "regulated_pure_pursuit", "", "");
     return output;
   } catch (const std::exception & error) {
     publishComputeTrace(pose, velocity, rotating_before, reached_before, nullptr, "end",
-      typeid(error).name(), error.what());
+      "", typeid(error).name(), error.what());
     throw;
   } catch (...) {
     publishComputeTrace(pose, velocity, rotating_before, reached_before, nullptr, "end",
-      "unknown", "non-standard exception");
+      "", "unknown", "non-standard exception");
     throw;
   }
 }
@@ -110,7 +120,8 @@ void TelemetryRegulatedPurePursuitController::publishComputeTrace(
   const geometry_msgs::msg::Twist & velocity,
   bool rotating_before, bool reached_before,
   const geometry_msgs::msg::TwistStamped * output,
-  const char * phase, const char * error_type, const char * error_message) noexcept
+  const char * phase, const char * command_reason,
+  const char * error_type, const char * error_message) noexcept
 {
   try {
   telemetryFaultPoint();
@@ -148,6 +159,7 @@ void TelemetryRegulatedPurePursuitController::publishComputeTrace(
     kv("has_reached_xy_before", boolean(reached_before)),
     kv("has_reached_xy_after", boolean(has_reached_xy_tolerance_)),
     kv("outcome", phase_value == "begin" ? "pending" : output ? "returned" : "threw"),
+    kv("command_reason", command_reason),
     kv("output_linear_x_m_s", output ? number(output->twist.linear.x) : ""),
     kv("output_linear_y_m_s", output ? number(output->twist.linear.y) : ""),
     kv("output_angular_z_rad_s", output ? number(output->twist.angular.z) : ""),

@@ -92,6 +92,7 @@ def build_g3_namespaced_params(
     if isinstance(nav2, Mapping) and nav2.get("follow_path_plugin") == CONFIRMED_XY_CONTROLLER:
         expected_nav2.update({
             "follow_path_plugin": CONFIRMED_XY_CONTROLLER, "xy_latch_mode": CONFIRMED_XY_LATCH_MODE,
+            "terminal_stop_handshake": True,
         })
     if (not isinstance(nav2, Mapping) or dict(nav2) != expected_nav2
             or nav2.get("follow_path_stateful") is not True
@@ -131,6 +132,12 @@ def build_g3_namespaced_params(
         goal_checker["plugin"] = nav2["goal_checker_plugin"]
         changed.append({"path": f"{robot}.controller_server.ros__parameters.goal_checker.plugin",
                         "before": before_plugin, "after": nav2["goal_checker_plugin"]})
+        if nav2.get("terminal_stop_handshake") is True:
+            goal_checker["require_stopped_velocity"] = True
+            changed.append({
+                "path": f"{robot}.controller_server.ros__parameters.goal_checker.require_stopped_velocity",
+                "before": None, "after": True,
+            })
     if result["/**"] != baseline["/**"]:
         raise ValueError("G3 Nav2 override changed shared parameters")
     expected = copy.deepcopy(baseline)
@@ -140,6 +147,8 @@ def build_g3_namespaced_params(
         controller["FollowPath"]["plugin"] = nav2["follow_path_plugin"]
         controller["goal_checker"]["xy_goal_tolerance"] = .06
         controller["goal_checker"]["plugin"] = nav2["goal_checker_plugin"]
+        if nav2.get("terminal_stop_handshake") is True:
+            controller["goal_checker"]["require_stopped_velocity"] = True
     if result != expected:
         raise ValueError("G3 Nav2 parameters differ beyond the goal-acceptance candidate")
     return result, {
@@ -161,6 +170,8 @@ def validate_rpp_runtime_observation(
     expected_parameters = {
         **G3_NAV2_RUNTIME_PARAMETERS, "FollowPath.plugin": ("string", follow_path_plugin),
     }
+    if follow_path_plugin == CONFIRMED_XY_CONTROLLER:
+        expected_parameters["goal_checker.require_stopped_velocity"] = ("bool", True)
     expected_fields = {
         "schema_version", "source_commit", "generated_params_sha256", "controllers",
         "observation_topics", "packages", "build_attestation_sha256",
@@ -292,21 +303,24 @@ def collect_rpp_runtime_observation(
         raise RuntimeError("installed RPP observation topics are missing or have unexpected ROS types")
     if not named_subscriber_topics_ready(event_node, tuple(observation_topics), "rosbag2_recorder"):
         raise RuntimeError("rosbag recorder is not subscribed to every RPP observation topic")
+    expected_parameters = dict(G3_NAV2_RUNTIME_PARAMETERS)
+    if follow_path_plugin == CONFIRMED_XY_CONTROLLER:
+        expected_parameters["goal_checker.require_stopped_velocity"] = ("bool", True)
     controller_parameters: dict[str, dict[str, Any]] = {}
     for robot, rt in robots.items():
         request = get_parameters_type.Request()
-        request.names = list(G3_NAV2_RUNTIME_PARAMETERS)
+        request.names = list(expected_parameters)
         future = rt["controller_parameters"].call_async(request)
         while not future.done():
             callback_drain.drain()
             if time.monotonic() > startup_end:
                 raise TimeoutError("RPP runtime parameter query timed out")
         response = future.result()
-        if response is None or len(response.values) != len(G3_NAV2_RUNTIME_PARAMETERS):
+        if response is None or len(response.values) != len(expected_parameters):
             raise RuntimeError(f"{robot} RPP runtime parameter response is missing")
         parameters: dict[str, dict[str, Any]] = {}
         for name, value in zip(request.names, response.values, strict=True):
-            expected_type = G3_NAV2_RUNTIME_PARAMETERS[name][0]
+            expected_type = expected_parameters[name][0]
             type_name = ({bool_parameter_type: "bool", double_parameter_type: "double",
                           string_parameter_type: "string"}
                          .get(value.type, str(value.type)))

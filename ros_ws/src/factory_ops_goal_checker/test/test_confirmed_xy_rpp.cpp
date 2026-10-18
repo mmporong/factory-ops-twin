@@ -105,6 +105,7 @@ TEST_F(ConfirmedXyRppTest, ReleasesOnlyUnconfirmedStaleLatchAndPreservesConfirme
     rclcpp::Parameter("Goal.stateful", true),
     rclcpp::Parameter("Goal.xy_goal_tolerance", 0.06),
     rclcpp::Parameter("Goal.yaw_goal_tolerance", 0.15),
+    rclcpp::Parameter("Goal.require_stopped_velocity", true),
   });
   auto node = std::make_shared<rclcpp_lifecycle::LifecycleNode>("confirmed_xy_rpp", node_options);
   auto tf = std::make_shared<tf2_ros::Buffer>(node->get_clock());
@@ -158,6 +159,40 @@ TEST_F(ConfirmedXyRppTest, ReleasesOnlyUnconfirmedStaleLatchAndPreservesConfirme
   EXPECT_DOUBLE_EQ(0.0, rotating.twist.linear.x);
   EXPECT_NE(0.0, rotating.twist.angular.z);
   EXPECT_TRUE(std::get<1>(confirmed.state()));
+
+  goal_checker.reset();
+  confirmed.setPlan(straightPlan());
+  transform.transform.translation.x = 0.95;
+  ASSERT_TRUE(tf->setTransform(transform, "test", true));
+  geometry_msgs::msg::Twist moving;
+  moving.linear.x = 0.05784344698;
+  moving.angular.z = -0.38109283967;
+  EXPECT_FALSE(goal_checker.isGoalReached(robotPose(0.95).pose, goalPose(), moving));
+  ASSERT_TRUE(goal_checker.terminalStopRequested());
+  const auto terminal_brake =
+    confirmed.computeVelocityCommands(robotPose(0.95), moving, &goal_checker);
+  EXPECT_DOUBLE_EQ(0.0, terminal_brake.twist.linear.x);
+  EXPECT_DOUBLE_EQ(0.0, terminal_brake.twist.linear.y);
+  EXPECT_DOUBLE_EQ(0.0, terminal_brake.twist.angular.z);
+
+  EXPECT_FALSE(goal_checker.isGoalReached(robotPose(0.93).pose, goalPose(), velocity));
+  EXPECT_FALSE(goal_checker.terminalStopRequested());
+  transform.transform.translation.x = 0.93;
+  ASSERT_TRUE(tf->setTransform(transform, "test", true));
+  const auto reacquiring =
+    confirmed.computeVelocityCommands(robotPose(0.93), velocity, &goal_checker);
+  EXPECT_GT(reacquiring.twist.linear.x, 0.0);
+
+  transform.transform.translation.x = 0.95;
+  ASSERT_TRUE(tf->setTransform(transform, "test", true));
+  EXPECT_FALSE(goal_checker.isGoalReached(robotPose(0.95).pose, goalPose(), moving));
+  const auto terminal_brake_again =
+    confirmed.computeVelocityCommands(robotPose(0.95), moving, &goal_checker);
+  EXPECT_DOUBLE_EQ(0.0, terminal_brake_again.twist.linear.x);
+  EXPECT_DOUBLE_EQ(0.0, terminal_brake_again.twist.linear.y);
+  EXPECT_DOUBLE_EQ(0.0, terminal_brake_again.twist.angular.z);
+  EXPECT_TRUE(goal_checker.isGoalReached(robotPose(0.95).pose, goalPose(), velocity));
+  EXPECT_FALSE(goal_checker.terminalStopRequested());
 
   confirmed.setPlan(straightPlan());
   goal_checker.reset();

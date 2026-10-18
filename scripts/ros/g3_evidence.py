@@ -58,7 +58,9 @@ GOAL_TRACE_COMMON_KEYS = {
 GOAL_TRACE_CHECK_KEYS = {
     "query_x_m", "query_y_m", "query_yaw_rad", "goal_x_m", "goal_y_m", "goal_yaw_rad",
     "xy_error_m", "yaw_error_rad", "linear_x_m_s", "linear_y_m_s", "angular_z_rad_s",
-    "check_xy_before", "check_xy_after", "base_result",
+    "check_xy_before", "check_xy_after", "base_result", "terminal_stop_enabled",
+    "pose_within_tolerance",
+    "velocity_stopped", "terminal_candidate", "effective_result",
 }
 GOAL_TRACE_TOLERANCE_KEYS = {
     "returned_pose_x_m", "returned_pose_y_m", "returned_pose_yaw_quaternion_z",
@@ -72,7 +74,7 @@ RPP_TRACE_KEYS = {
     "velocity_linear_y_m_s", "velocity_angular_z_rad_s", "goal_dist_tol_m",
     "is_rotating_before", "is_rotating_after", "has_reached_xy_before",
     "has_reached_xy_after", "outcome", "output_linear_x_m_s", "output_linear_y_m_s",
-    "output_angular_z_rad_s", "error_type", "error_message",
+    "output_angular_z_rad_s", "command_reason", "error_type", "error_message",
 }
 
 
@@ -274,12 +276,17 @@ def decode_controller_trace(
         "parameters": parameters,
     }
     if event == "is_goal_reached":
-        numeric_names = GOAL_TRACE_CHECK_KEYS - {"check_xy_before", "check_xy_after", "base_result"}
+        boolean_names = {
+            "check_xy_before", "check_xy_after", "base_result", "terminal_stop_enabled",
+            "pose_within_tolerance",
+            "velocity_stopped", "terminal_candidate", "effective_result",
+        }
+        numeric_names = GOAL_TRACE_CHECK_KEYS - boolean_names
         try:
             numeric = {name: float(values[name]) for name in numeric_names}
         except (TypeError, ValueError, KeyError) as exc:
             raise ValueError("goal-checker trace check values are invalid") from exc
-        booleans = {name: values[name] for name in ("check_xy_before", "check_xy_after", "base_result")}
+        booleans = {name: values[name] for name in boolean_names}
         if (not all(math.isfinite(value) for value in numeric.values())
                 or any(value not in {"true", "false"} for value in booleans.values())):
             raise ValueError("goal-checker trace check values are non-finite or non-boolean")
@@ -300,11 +307,16 @@ def decode_controller_trace(
             "is_rotating_before", "is_rotating_after", "has_reached_xy_before", "has_reached_xy_after")}
         outcome = values["outcome"]
         phase = values["phase"]
+        command_reason = values["command_reason"]
         if (not all(math.isfinite(value) for value in numeric.values())
                 or any(value not in {"true", "false"} for value in booleans.values())
                 or phase not in {"begin", "end"}
                 or outcome not in {"pending", "returned", "threw"}
-                or (phase == "begin") != (outcome == "pending")):
+                or (phase == "begin") != (outcome == "pending")
+                or (outcome == "pending" and command_reason != "")
+                or (outcome == "returned" and command_reason not in {
+                    "regulated_pure_pursuit", "terminal_stop_candidate"})
+                or (outcome == "threw" and command_reason != "")):
             raise ValueError("RPP compute trace values differ")
         outputs = {}
         if outcome == "returned":
@@ -322,7 +334,8 @@ def decode_controller_trace(
             "incoming_pose_stamp_ns": int(values["incoming_pose_stamp_ns"]),
             "incoming_pose_frame_id": values["incoming_pose_frame_id"],
             "compute": {**numeric, **{name: value == "true" for name, value in booleans.items()},
-                        "phase": phase, "outcome": outcome, **outputs,
+                        "phase": phase, "outcome": outcome, "command_reason": command_reason,
+                        **outputs,
                         "error_type": values["error_type"], "error_message": values["error_message"]},
         })
         if (row["plan_epoch"] < 1 or row["reset_epoch"] < 0

@@ -34,6 +34,9 @@ public:
     geometry_msgs::msg::Pose & pose_tolerance,
     geometry_msgs::msg::Twist & vel_tolerance) override;
   bool xyConfirmed() const noexcept;
+  bool xyWithinTolerance() const noexcept;
+  bool terminalStopRequested() const noexcept;
+  void enableTerminalStop() noexcept;
 
 protected:
   virtual void telemetryFaultPoint() {}
@@ -45,7 +48,8 @@ private:
   void publishGoalTrace(
     const geometry_msgs::msg::Pose & query_pose, const geometry_msgs::msg::Pose & goal_pose,
     const geometry_msgs::msg::Twist & velocity, bool check_xy_before,
-    bool check_xy_after, bool result) noexcept;
+    bool check_xy_after, bool base_result, bool terminal_stop_enabled, bool pose_within_tolerance,
+    bool velocity_stopped, bool terminal_candidate, bool effective_result) noexcept;
   void publishToleranceTrace(
     const geometry_msgs::msg::Pose & pose_tolerance, bool result) noexcept;
   void publishTrace(const char * event, std::vector<KeyValue> event_values) noexcept;
@@ -55,6 +59,9 @@ private:
   std::uint64_t plugin_call_sequence_{0};
   std::uint64_t reset_epoch_{0};
   std::atomic_bool xy_confirmed_{false};
+  std::atomic_bool xy_within_tolerance_{false};
+  std::atomic_bool terminal_stop_enabled_{false};
+  std::atomic_bool terminal_stop_requested_{false};
 };
 
 }  // namespace factory_ops_goal_checker

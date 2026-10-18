@@ -192,6 +192,7 @@ class G3SessionTests(unittest.TestCase):
             "goal_checker_plugin": "factory_ops_goal_checker::TelemetryGoalChecker",
             "follow_path_plugin": "factory_ops_goal_checker::ConfirmedXyRegulatedPurePursuitController",
             "xy_latch_mode": "goal_checker_confirmed_xy_latch",
+            "terminal_stop_handshake": True,
             "controller_trace_schema_version": 1,
             "controller_trace_topic": "controller_cycle_trace",
             "xy_goal_tolerance": 0.06,

@@ -180,6 +180,54 @@ class G3EvidenceHelperTests(unittest.TestCase):
                     "/carter1/controller_cycle_trace", "diagnostic_msgs/msg/DiagnosticArray", b"trace", 1,
                     get_message=lambda _: object(), deserialize_message=lambda *_, m=forged: m)
 
+    def test_controller_trace_decodes_terminal_candidate_and_zero_command_reason(self):
+        def decode(payload, *, event, plugin):
+            message = NS(header=NS(stamp=NS(sec=1, nanosec=0)), status=[NS(
+                values=[NS(key=key, value=value) for key, value in payload.items()],
+                message=event, hardware_id="factory_ops_goal_checker", name=plugin, level=0)])
+            return decode_controller_trace(
+                "/carter1/controller_cycle_trace", "diagnostic_msgs/msg/DiagnosticArray",
+                b"trace", 1, get_message=lambda _: object(),
+                deserialize_message=lambda *_: message,
+            )[2]
+
+        goal = {
+            "schema_version": "1", "event": "is_goal_reached", "event_sequence": "1",
+            "plugin_call_sequence": "1", "reset_epoch": "0", "plugin_name": "goal_checker",
+            "action_xy_tolerance_m": "0.06", "action_yaw_tolerance_rad": "0.15",
+            "query_x_m": "11.4000763965", "query_y_m": "-13.4378835798",
+            "query_yaw_rad": "-1.7755600502", "goal_x_m": "11.3630795334",
+            "goal_y_m": "-13.4850247368", "goal_yaw_rad": "-1.6274379802",
+            "xy_error_m": "0.05992542493", "yaw_error_rad": "0.14812207007",
+            "linear_x_m_s": "0.05784344698", "linear_y_m_s": "0",
+            "angular_z_rad_s": "-0.38109283967", "check_xy_before": "true",
+            "check_xy_after": "false", "base_result": "true", "terminal_stop_enabled": "true",
+            "pose_within_tolerance": "true", "velocity_stopped": "false",
+            "terminal_candidate": "true", "effective_result": "false",
+        }
+        decoded_goal = decode(goal, event="is_goal_reached", plugin="goal_checker")
+        self.assertTrue(decoded_goal["check"]["base_result"])
+        self.assertTrue(decoded_goal["check"]["terminal_candidate"])
+        self.assertFalse(decoded_goal["check"]["effective_result"])
+
+        rpp = {
+            "schema_version": "1", "event": "compute_velocity_commands", "event_sequence": "2",
+            "plugin_call_sequence": "1", "plugin_name": "FollowPath", "phase": "end",
+            "plan_epoch": "1", "reset_epoch": "0", "incoming_pose_stamp_ns": "1",
+            "incoming_pose_frame_id": "map", "pose_x_m": "11.4000763965",
+            "pose_y_m": "-13.4378835798", "pose_yaw_rad": "-1.7755600502",
+            "velocity_linear_x_m_s": "0.05784344698", "velocity_linear_y_m_s": "0",
+            "velocity_angular_z_rad_s": "-0.38109283967", "goal_dist_tol_m": "0.06",
+            "is_rotating_before": "true", "is_rotating_after": "true",
+            "has_reached_xy_before": "true", "has_reached_xy_after": "true",
+            "outcome": "returned", "command_reason": "terminal_stop_candidate",
+            "output_linear_x_m_s": "0", "output_linear_y_m_s": "0",
+            "output_angular_z_rad_s": "0", "error_type": "", "error_message": "",
+        }
+        decoded_rpp = decode(rpp, event="compute_velocity_commands", plugin="FollowPath")
+        self.assertEqual("terminal_stop_candidate", decoded_rpp["compute"]["command_reason"])
+        self.assertEqual(0.0, decoded_rpp["compute"]["output_angular_z_rad_s"])
+
     @staticmethod
     def rpp_fixture():
         action = {"robot_id": "carter1", "follow_action_uuid": str(uuid4()),

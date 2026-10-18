@@ -13,7 +13,7 @@ public:
   static constexpr const char * kBehaviorMode = "goal_checker_confirmed_xy_latch";
 
 protected:
-  void prepareGoalChecker(nav2_core::GoalChecker * goal_checker) override;
+  bool prepareGoalChecker(nav2_core::GoalChecker * goal_checker) override;
 };
 
 }  // namespace factory_ops_goal_checker

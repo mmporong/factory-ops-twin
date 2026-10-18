@@ -16,6 +16,9 @@ namespace factory_ops_goal_checker
 namespace
 {
 
+constexpr double kStoppedLinearVelocityMps = 0.02;
+constexpr double kStoppedAngularVelocityRadps = 0.02;
+
 diagnostic_msgs::msg::KeyValue kv(const std::string & key, const std::string & value)
 {
   diagnostic_msgs::msg::KeyValue item;
@@ -57,10 +60,19 @@ void TelemetryGoalChecker::initialize(
   const std::shared_ptr<nav2_costmap_2d::Costmap2DROS> costmap_ros)
 {
   xy_confirmed_.store(false, std::memory_order_release);
+  xy_within_tolerance_.store(false, std::memory_order_release);
+  terminal_stop_enabled_.store(false, std::memory_order_release);
+  terminal_stop_requested_.store(false, std::memory_order_release);
   nav2_controller::SimpleGoalChecker::initialize(parent, plugin_name, costmap_ros);
+  node_ = parent.lock();
+  if (!node_) {return;}
+  const std::string terminal_stop_parameter = plugin_name + ".require_stopped_velocity";
+  if (!node_->has_parameter(terminal_stop_parameter)) {
+    node_->declare_parameter(terminal_stop_parameter, false);
+  }
+  terminal_stop_enabled_.store(
+    node_->get_parameter(terminal_stop_parameter).as_bool(), std::memory_order_release);
   try {
-    node_ = parent.lock();
-    if (!node_) {return;}
     trace_pub_ = node_->create_publisher<diagnostic_msgs::msg::DiagnosticArray>(kTraceTopic, traceQoS());
     trace_pub_->on_activate();
   } catch (...) {trace_pub_.reset();}
@@ -71,6 +83,8 @@ void TelemetryGoalChecker::reset()
 {
   nav2_controller::SimpleGoalChecker::reset();
   xy_confirmed_.store(false, std::memory_order_release);
+  xy_within_tolerance_.store(false, std::memory_order_release);
+  terminal_stop_requested_.store(false, std::memory_order_release);
   {
     std::lock_guard<std::mutex> lock(trace_mutex_);
     ++reset_epoch_;
@@ -84,16 +98,56 @@ bool TelemetryGoalChecker::isGoalReached(
   const geometry_msgs::msg::Twist & velocity)
 {
   const bool check_xy_before = check_xy_;
-  const bool result = nav2_controller::SimpleGoalChecker::isGoalReached(query_pose, goal_pose, velocity);
+  const bool base_result =
+    nav2_controller::SimpleGoalChecker::isGoalReached(query_pose, goal_pose, velocity);
   const bool check_xy_after = check_xy_;
+  const double xy_error = std::hypot(
+    goal_pose.position.x - query_pose.position.x,
+    goal_pose.position.y - query_pose.position.y);
+  const double yaw_error = yawError(yaw(query_pose.orientation), yaw(goal_pose.orientation));
+  const bool xy_within_tolerance =
+    std::isfinite(xy_error) && xy_error <= xy_goal_tolerance_;
+  const bool pose_within_tolerance =
+    xy_within_tolerance && std::isfinite(yaw_error) &&
+    std::abs(yaw_error) <= yaw_goal_tolerance_;
+  const double linear_speed = std::hypot(velocity.linear.x, velocity.linear.y);
+  const bool velocity_stopped =
+    std::isfinite(linear_speed) && std::isfinite(velocity.angular.z) &&
+    linear_speed <= kStoppedLinearVelocityMps &&
+    std::abs(velocity.angular.z) <= kStoppedAngularVelocityRadps;
+  const bool terminal_stop_enabled = terminal_stop_enabled_.load(std::memory_order_acquire);
+  const bool terminal_candidate =
+    terminal_stop_enabled && pose_within_tolerance && !velocity_stopped;
+  const bool effective_result = terminal_stop_enabled ?
+    base_result && pose_within_tolerance && velocity_stopped : base_result;
   xy_confirmed_.store(!check_xy_after, std::memory_order_release);
-  publishGoalTrace(query_pose, goal_pose, velocity, check_xy_before, check_xy_after, result);
-  return result;
+  xy_within_tolerance_.store(xy_within_tolerance, std::memory_order_release);
+  terminal_stop_requested_.store(terminal_candidate, std::memory_order_release);
+  publishGoalTrace(
+    query_pose, goal_pose, velocity, check_xy_before, check_xy_after, base_result,
+    terminal_stop_enabled, pose_within_tolerance, velocity_stopped,
+    terminal_candidate, effective_result);
+  return effective_result;
 }
 
 bool TelemetryGoalChecker::xyConfirmed() const noexcept
 {
   return xy_confirmed_.load(std::memory_order_acquire);
+}
+
+bool TelemetryGoalChecker::terminalStopRequested() const noexcept
+{
+  return terminal_stop_requested_.load(std::memory_order_acquire);
+}
+
+bool TelemetryGoalChecker::xyWithinTolerance() const noexcept
+{
+  return xy_within_tolerance_.load(std::memory_order_acquire);
+}
+
+void TelemetryGoalChecker::enableTerminalStop() noexcept
+{
+  terminal_stop_enabled_.store(true, std::memory_order_release);
 }
 
 bool TelemetryGoalChecker::getTolerances(
@@ -113,7 +167,8 @@ void TelemetryGoalChecker::publishSimpleTrace(const char * event) noexcept
 void TelemetryGoalChecker::publishGoalTrace(
   const geometry_msgs::msg::Pose & query_pose, const geometry_msgs::msg::Pose & goal_pose,
   const geometry_msgs::msg::Twist & velocity, bool check_xy_before,
-  bool check_xy_after, bool result) noexcept
+  bool check_xy_after, bool base_result, bool terminal_stop_enabled, bool pose_within_tolerance,
+  bool velocity_stopped, bool terminal_candidate, bool effective_result) noexcept
 {
   try {
     const double query_yaw = yaw(query_pose.orientation);
@@ -127,7 +182,12 @@ void TelemetryGoalChecker::publishGoalTrace(
       kv("yaw_error_rad", number(yawError(query_yaw, goal_yaw))),
       kv("linear_x_m_s", number(velocity.linear.x)), kv("linear_y_m_s", number(velocity.linear.y)),
       kv("angular_z_rad_s", number(velocity.angular.z)), kv("check_xy_before", boolean(check_xy_before)),
-      kv("check_xy_after", boolean(check_xy_after)), kv("base_result", boolean(result)),
+      kv("check_xy_after", boolean(check_xy_after)), kv("base_result", boolean(base_result)),
+      kv("terminal_stop_enabled", boolean(terminal_stop_enabled)),
+      kv("pose_within_tolerance", boolean(pose_within_tolerance)),
+      kv("velocity_stopped", boolean(velocity_stopped)),
+      kv("terminal_candidate", boolean(terminal_candidate)),
+      kv("effective_result", boolean(effective_result)),
     });
   } catch (...) {}
 }

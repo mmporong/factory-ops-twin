@@ -69,6 +69,7 @@ TEST_F(GoalCheckerTest, MatchesSimpleGoalCheckerStatefulSemanticsAndReturnedTole
   EXPECT_TRUE(checker.xyConfirmed());
   for (const auto & query : {pose(0.061, -0.14)}) {
     EXPECT_EQ(stock.isGoalReached(query, goal, stopped), checker.isGoalReached(query, goal, stopped));
+    EXPECT_FALSE(checker.xyWithinTolerance());
   }
   checker.reset();
   stock.reset();
@@ -135,6 +136,50 @@ TEST_F(GoalCheckerTest, TelemetryFailureDoesNotChangeSuccessfulBaseResults)
     checker.getTolerances(actual_pose, actual_velocity));
   EXPECT_EQ(expected_pose, actual_pose);
   EXPECT_EQ(expected_velocity, actual_velocity);
+}
+
+TEST_F(GoalCheckerTest, RequiresStoppedVelocityInsidePoseAndClearsCandidateOnExitOrReset)
+{
+  rclcpp::NodeOptions options;
+  options.parameter_overrides({rclcpp::Parameter("goal_checker.stateful", true),
+    rclcpp::Parameter("goal_checker.xy_goal_tolerance", 0.06),
+    rclcpp::Parameter("goal_checker.yaw_goal_tolerance", 0.15),
+    rclcpp::Parameter("goal_checker.require_stopped_velocity", true)});
+  auto node = std::make_shared<rclcpp_lifecycle::LifecycleNode>("terminal_stop_goal", options);
+  factory_ops_goal_checker::TelemetryGoalChecker checker;
+  checker.initialize(node, "goal_checker", nullptr);
+
+  geometry_msgs::msg::Pose query;
+  query.position.x = 11.4000763965;
+  query.position.y = -13.4378835798;
+  query.orientation.z = std::sin(-1.7755600502 / 2.0);
+  query.orientation.w = std::cos(-1.7755600502 / 2.0);
+  geometry_msgs::msg::Pose goal;
+  goal.position.x = 11.3630795334;
+  goal.position.y = -13.4850247368;
+  goal.orientation.z = std::sin(-1.6274379802 / 2.0);
+  goal.orientation.w = std::cos(-1.6274379802 / 2.0);
+  geometry_msgs::msg::Twist moving;
+  moving.linear.x = 0.05784344698;
+  moving.angular.z = -0.38109283967;
+
+  EXPECT_FALSE(checker.isGoalReached(query, goal, moving));
+  EXPECT_TRUE(checker.terminalStopRequested());
+
+  geometry_msgs::msg::Twist stopped;
+  EXPECT_TRUE(checker.isGoalReached(query, goal, stopped));
+  EXPECT_FALSE(checker.terminalStopRequested());
+
+  checker.reset();
+  EXPECT_FALSE(checker.terminalStopRequested());
+  EXPECT_FALSE(checker.isGoalReached(query, goal, moving));
+  EXPECT_TRUE(checker.terminalStopRequested());
+  query.position.x += 0.07;
+  EXPECT_FALSE(checker.isGoalReached(query, goal, stopped));
+  EXPECT_FALSE(checker.terminalStopRequested());
+
+  checker.reset();
+  EXPECT_FALSE(checker.terminalStopRequested());
 }
 
 }  // namespace

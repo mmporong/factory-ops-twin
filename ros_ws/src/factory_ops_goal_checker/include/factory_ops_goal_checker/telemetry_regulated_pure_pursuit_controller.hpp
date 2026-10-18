@@ -33,7 +33,7 @@ public:
 
 protected:
   virtual void telemetryFaultPoint() {}
-  virtual void prepareGoalChecker(nav2_core::GoalChecker *) {}
+  virtual bool prepareGoalChecker(nav2_core::GoalChecker *) {return false;}
 
 private:
   void publishComputeTrace(
@@ -41,7 +41,8 @@ private:
     const geometry_msgs::msg::Twist & velocity,
     bool rotating_before, bool reached_before,
     const geometry_msgs::msg::TwistStamped * output,
-    const char * phase, const char * error_type, const char * error_message) noexcept;
+    const char * phase, const char * command_reason,
+    const char * error_type, const char * error_message) noexcept;
 
   rclcpp_lifecycle::LifecycleNode::SharedPtr trace_node_;
   rclcpp_lifecycle::LifecyclePublisher<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr trace_pub_;
