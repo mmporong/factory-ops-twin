@@ -528,30 +528,49 @@ def _capture_frame_with_extension(
     before_time = float(SimulationManager.get_simulation_time())
     before_frame = int(SimulationManager.get_num_physics_steps())
     before_poses = {robot_id: _pose(runtime["robot"]) for robot_id, runtime in robots.items()}
+    breadcrumb_hook = getattr(scene_extension, "capture_breadcrumb", None)
+
+    def breadcrumb(phase: str) -> None:
+        if callable(breadcrumb_hook):
+            breadcrumb_hook({
+                "capture_index": index,
+                "physics_frame": before_frame,
+                "sim_time_s": before_time,
+                "phase": phase,
+            })
+
     primary_error: BaseException | None = None
     captured: dict[str, Any] | None = None
     try:
+        breadcrumb("zero_delta_flush_start")
         before_hook(rep)
+        breadcrumb("zero_delta_flush_complete")
+        breadcrumb("rgb_readback_start")
         captured = _capture_frame(
             output=output, session=session, second_rgb=second_rgb, robots=robots,
             SimulationManager=SimulationManager, np=np, Image=Image, index=index,
         )
+        breadcrumb("rgb_readback_complete")
     except BaseException as error:
         primary_error = error
     finally:
         try:
+            breadcrumb("capture_finalize_start")
             after_hook()
+            breadcrumb("capture_finalize_complete")
         except BaseException as error:
             if primary_error is None:
                 primary_error = error
             else:
-                primary_error.add_note(f"render product disable failed: {type(error).__name__}: {error}")
+                primary_error.add_note(f"render capture finalize failed: {type(error).__name__}: {error}")
         try:
+            breadcrumb("frozen_state_validation_start")
             after_poses = {robot_id: _pose(runtime["robot"]) for robot_id, runtime in robots.items()}
             if (abs(float(SimulationManager.get_simulation_time()) - before_time) > 1e-8
                     or int(SimulationManager.get_num_physics_steps()) != before_frame
                     or after_poses != before_poses):
                 raise base.SmokeError("industrial capture hooks advanced the frozen simulation state")
+            breadcrumb("frozen_state_validation_complete")
         except BaseException as error:
             if primary_error is None:
                 primary_error = error

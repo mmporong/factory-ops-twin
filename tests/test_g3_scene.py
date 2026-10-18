@@ -9,7 +9,7 @@ from pathlib import Path
 import tempfile
 from types import SimpleNamespace
 import unittest
-from unittest.mock import Mock, call, patch
+from unittest.mock import Mock, patch
 
 from scripts.isaac.g3_scene import BarrierLifecycle
 from scripts.isaac import g2_scene
@@ -197,21 +197,17 @@ class BarrierLifecycleTests(unittest.TestCase):
         lifecycle = self.lifecycle()
         events: list[tuple[str, object]] = []
 
-        def product(name: str):
-            return SimpleNamespace(hydra_texture=SimpleNamespace(
-                set_updates_enabled=Mock(side_effect=lambda enabled: events.append((name, enabled)))
-            ))
+        class Product:
+            @property
+            def hydra_texture(self):
+                raise AssertionError("persistent RGB products must not acquire Hydra update controls")
 
-        products = tuple(product(name) for name in ("overview", "carter1", "carter2"))
+        products = tuple(Product() for _ in range(3))
         registration = lifecycle.register_rgb_render_products(dict(zip(
             ("portfolio_overview", "carter1_follow", "carter2_follow"), products,
         )))
-        self.assertEqual(registration["requested_state_between_captures"], "disabled")
-        self.assertEqual(registration["state_readback"], "SDK setter has no readback")
-        self.assertEqual(events, [
-            ("overview", False), ("carter1", False), ("carter2", False),
-        ])
-        events.clear()
+        self.assertEqual(registration["requested_state_between_captures"], "enabled")
+        self.assertIn("no per-capture Hydra update toggles", registration["lifecycle"])
         rep = SimpleNamespace(orchestrator=SimpleNamespace(
             step=Mock(side_effect=lambda **_kwargs: events.append(("step", "zero_delta")))
         ))
@@ -220,15 +216,15 @@ class BarrierLifecycleTests(unittest.TestCase):
         lifecycle.after_capture()
         rep.orchestrator.step.assert_called_once_with(delta_time=0.0, rt_subframes=4)
         self.assertEqual(events, [
-            ("overview", True), ("carter1", True), ("carter2", True),
             ("step", "zero_delta"), ("read", "three_rgb_and_ground_truth"),
-            ("overview", False), ("carter1", False), ("carter2", False),
         ])
-        self.assertEqual(lifecycle.rgb_render_state, "disabled")
+        self.assertEqual(lifecycle.rgb_render_state, "enabled")
+        lifecycle.cleanup_render_products()
+        self.assertEqual(lifecycle.rgb_render_state, "closed")
 
     def test_rgb_render_products_require_exactly_three_unique_non_lidar_handles(self) -> None:
         lifecycle = self.lifecycle()
-        product = SimpleNamespace(hydra_texture=SimpleNamespace(set_updates_enabled=Mock()))
+        product = object()
         with self.assertRaisesRegex(ValueError, "three named"):
             lifecycle.register_rgb_render_products({"overview": product})
         self.assertEqual(lifecycle.rgb_render_state, "unregistered")
@@ -242,90 +238,50 @@ class BarrierLifecycleTests(unittest.TestCase):
             })
 
         lifecycle = self.lifecycle()
-        products = tuple(SimpleNamespace(
-            hydra_texture=SimpleNamespace(set_updates_enabled=Mock())
-        ) for _ in range(3))
+        products = tuple(object() for _ in range(3))
         lifecycle.register_rgb_render_products(dict(zip(
             ("portfolio_overview", "carter1_follow", "carter2_follow"), products,
         )))
         self.assertEqual(lifecycle.rgb_render_products, products)
-        for item in products:
-            item.hydra_texture.set_updates_enabled.assert_called_once_with(False)
 
-    def test_rgb_update_failures_attempt_to_disable_every_product(self) -> None:
+    def test_rgb_step_failure_does_not_change_persistent_product_state(self) -> None:
         lifecycle = self.lifecycle()
-        calls: list[tuple[int, bool]] = []
-
-        def setter(index: int, enabled: bool) -> None:
-            calls.append((index, enabled))
-            if index == 1 and enabled:
-                raise RuntimeError("enable failed")
-
-        products = tuple(SimpleNamespace(hydra_texture=SimpleNamespace(
-            set_updates_enabled=Mock(side_effect=lambda enabled, index=index: setter(index, enabled))
-        )) for index in range(3))
+        products = tuple(object() for _ in range(3))
         lifecycle.register_rgb_render_products(dict(zip(
             ("portfolio_overview", "carter1_follow", "carter2_follow"), products,
         )))
-        calls.clear()
-        with self.assertRaisesRegex(RuntimeError, "enable failed"):
-            lifecycle.before_capture(SimpleNamespace(orchestrator=SimpleNamespace(step=Mock())))
-        self.assertEqual(calls, [
-            (0, True), (1, True), (2, True),
-            (0, False), (1, False), (2, False),
-        ])
-        lifecycle.after_capture()
-        self.assertEqual(calls[-3:], [(0, False), (1, False), (2, False)])
-        self.assertEqual(lifecycle.rgb_render_state, "disabled")
-
-    def test_initial_disable_failure_attempts_every_product_and_can_be_cleaned_up(self) -> None:
-        lifecycle = self.lifecycle()
-        calls: list[tuple[int, bool]] = []
-        failed_once = False
-
-        def setter(index: int, enabled: bool) -> None:
-            nonlocal failed_once
-            calls.append((index, enabled))
-            if index == 1 and not enabled and not failed_once:
-                failed_once = True
-                raise RuntimeError("initial disable failed")
-
-        products = tuple(SimpleNamespace(hydra_texture=SimpleNamespace(
-            set_updates_enabled=Mock(side_effect=lambda enabled, index=index: setter(index, enabled))
-        )) for index in range(3))
-        with self.assertRaisesRegex(RuntimeError, "initial disable failed"):
-            lifecycle.register_rgb_render_products(dict(zip(
-                ("portfolio_overview", "carter1_follow", "carter2_follow"), products,
-            )))
-        self.assertEqual(calls, [(0, False), (1, False), (2, False)])
-        self.assertEqual(lifecycle.rgb_render_state, "failed")
-        lifecycle.cleanup_render_products()
-        self.assertEqual(calls[-3:], [(0, False), (1, False), (2, False)])
-        self.assertEqual(lifecycle.rgb_render_state, "closed")
-
-    def test_rgb_step_failure_and_cleanup_disable_every_product(self) -> None:
-        lifecycle = self.lifecycle()
-        products = tuple(SimpleNamespace(hydra_texture=SimpleNamespace(
-            set_updates_enabled=Mock()
-        )) for _ in range(3))
-        lifecycle.register_rgb_render_products(dict(zip(
-            ("portfolio_overview", "carter1_follow", "carter2_follow"), products,
-        )))
-        for item in products:
-            item.hydra_texture.set_updates_enabled.reset_mock()
         rep = SimpleNamespace(orchestrator=SimpleNamespace(step=Mock(side_effect=RuntimeError("flush failed"))))
         with self.assertRaisesRegex(RuntimeError, "flush failed"):
             lifecycle.before_capture(rep)
-        for item in products:
-            self.assertEqual(
-                item.hydra_texture.set_updates_enabled.call_args_list,
-                [call(True), call(False)],
-            )
-            item.hydra_texture.set_updates_enabled.reset_mock()
+        self.assertEqual(lifecycle.rgb_render_state, "enabled")
         lifecycle.cleanup_render_products()
-        for item in products:
-            item.hydra_texture.set_updates_enabled.assert_called_once_with(False)
         self.assertEqual(lifecycle.rgb_render_state, "closed")
+
+    def test_render_breadcrumb_journal_is_new_append_only_and_sequenced(self) -> None:
+        lifecycle = self.lifecycle()
+        lifecycle.capture_breadcrumb({
+            "capture_index": 4, "physics_frame": 750, "sim_time_s": 12.5,
+            "phase": "zero_delta_flush_start",
+        })
+        lifecycle.capture_breadcrumb({
+            "capture_index": 4, "physics_frame": 750, "sim_time_s": 12.5,
+            "phase": "zero_delta_flush_complete",
+        })
+        path = self.output / "render-capture-breadcrumbs.jsonl"
+        rows = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines()]
+        self.assertEqual([row["sequence"] for row in rows], [0, 1])
+        self.assertEqual([row["phase"] for row in rows], [
+            "zero_delta_flush_start", "zero_delta_flush_complete",
+        ])
+        self.assertTrue(all(row["run_id"] == RUN_ID for row in rows))
+
+        other = self.lifecycle()
+        other.output = self.output
+        with self.assertRaisesRegex(ValueError, "journal must be new"):
+            other.capture_breadcrumb({
+                "capture_index": 5, "physics_frame": 756, "sim_time_s": 12.6,
+                "phase": "zero_delta_flush_start",
+            })
 
     def test_real_time_media_requires_valid_navigate_command_over_threshold(self) -> None:
         samples = (

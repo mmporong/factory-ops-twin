@@ -46,6 +46,8 @@ class BarrierLifecycle:
         self.media_journal_opened = False
         self.rgb_render_products: tuple[Any, Any, Any] | None = None
         self.rgb_render_state = "unregistered"
+        self.render_breadcrumb_sequence = 0
+        self.render_breadcrumb_opened = False
 
     def _load_real_time_media_profile(self) -> dict[str, Any] | None:
         config_path = self.session_root / "config.json"
@@ -253,21 +255,6 @@ class BarrierLifecycle:
                             "coordinate_frame": "world" if path.startswith("/World/Factory") else "robot chassis_link"})
         return {"source": str(profile_path.name), "source_sha256": g2_scene.base._sha256(profile_path), "cameras": records}
 
-    def _set_rgb_updates(self, enabled: bool) -> None:
-        if self.rgb_render_products is None:
-            raise RuntimeError("G3 RGB render products are not registered")
-        errors: list[BaseException] = []
-        for product in self.rgb_render_products:
-            try:
-                product.hydra_texture.set_updates_enabled(enabled)
-            except BaseException as error:
-                errors.append(error)
-        if errors:
-            primary = errors[0]
-            for error in errors[1:]:
-                primary.add_note(f"additional RGB update failure: {type(error).__name__}: {error}")
-            raise primary
-
     def register_rgb_render_products(self, products_by_role: Mapping[str, Any]) -> dict[str, Any]:
         if self.rgb_render_state != "unregistered":
             raise RuntimeError("G3 RGB render products were already registered")
@@ -277,59 +264,63 @@ class BarrierLifecycle:
         products = tuple(products_by_role[role] for role in roles)
         if len({id(product) for product in products}) != 3:
             raise ValueError("G3 requires three unique RGB render products")
-        for product in products:
-            setter = getattr(getattr(product, "hydra_texture", None), "set_updates_enabled", None)
-            if not callable(setter):
-                raise ValueError("G3 RGB render product update control is unavailable")
         self.rgb_render_products = (products[0], products[1], products[2])
-        try:
-            self._set_rgb_updates(False)
-        except BaseException:
-            self.rgb_render_state = "failed"
-            raise
-        self.rgb_render_state = "disabled"
+        self.rgb_render_state = "enabled"
         return {
             "roles": list(roles),
-            "requested_state_between_captures": "disabled",
-            "state_readback": "SDK setter has no readback",
+            "requested_state_between_captures": "enabled",
+            "lifecycle": "persistent render products; no per-capture Hydra update toggles",
         }
 
     def before_capture(self, rep: Any) -> None:
-        if self.rgb_render_state != "disabled":
-            raise RuntimeError("G3 RGB render products are not disabled before capture")
-        try:
-            self._set_rgb_updates(True)
-            self.rgb_render_state = "enabled"
-            rep.orchestrator.step(delta_time=0.0, rt_subframes=4)
-        except BaseException as error:
-            self.rgb_render_state = "failed"
-            try:
-                self._set_rgb_updates(False)
-            except BaseException as cleanup_error:
-                error.add_note(
-                    f"RGB update rollback failed: {type(cleanup_error).__name__}: {cleanup_error}"
-                )
-            raise
+        if self.rgb_render_state != "enabled":
+            raise RuntimeError("G3 RGB render products are not active before capture")
+        rep.orchestrator.step(delta_time=0.0, rt_subframes=4)
 
     def after_capture(self) -> None:
-        if self.rgb_render_products is None:
-            raise RuntimeError("G3 RGB render products are not registered")
-        try:
-            self._set_rgb_updates(False)
-        except BaseException:
-            self.rgb_render_state = "failed"
-            raise
-        self.rgb_render_state = "disabled"
+        if self.rgb_render_state != "enabled":
+            raise RuntimeError("G3 RGB render products are not active after capture")
 
     def cleanup_render_products(self) -> None:
         if self.rgb_render_products is None:
             return
-        try:
-            self._set_rgb_updates(False)
-        except BaseException:
-            self.rgb_render_state = "failed"
-            raise
         self.rgb_render_state = "closed"
+
+    def capture_breadcrumb(self, event: Mapping[str, Any]) -> None:
+        assert self.output is not None
+        required = {"capture_index", "physics_frame", "sim_time_s", "phase"}
+        if set(event) != required:
+            raise ValueError("G3 render breadcrumb fields differ")
+        if (isinstance(event["capture_index"], bool) or not isinstance(event["capture_index"], int)
+                or event["capture_index"] < 0
+                or isinstance(event["physics_frame"], bool) or not isinstance(event["physics_frame"], int)
+                or event["physics_frame"] < 0
+                or isinstance(event["sim_time_s"], bool)
+                or not isinstance(event["sim_time_s"], (int, float))
+                or not math.isfinite(float(event["sim_time_s"])) or float(event["sim_time_s"]) < 0):
+            raise ValueError("G3 render breadcrumb coordinates are invalid")
+        phases = {
+            "zero_delta_flush_start", "zero_delta_flush_complete",
+            "rgb_readback_start", "rgb_readback_complete",
+            "capture_finalize_start", "capture_finalize_complete",
+            "frozen_state_validation_start", "frozen_state_validation_complete",
+        }
+        if event["phase"] not in phases:
+            raise ValueError("G3 render breadcrumb phase is invalid")
+        path = self.output / "render-capture-breadcrumbs.jsonl"
+        if not self.render_breadcrumb_opened:
+            if path.exists() or path.is_symlink():
+                raise ValueError("G3 render breadcrumb journal must be new")
+            self.render_breadcrumb_opened = True
+        record = {
+            "schema_version": 1,
+            "sequence": self.render_breadcrumb_sequence,
+            "run_id": self.run_id,
+            "scenario_id": self.session["scenario_id"],
+            **event,
+        }
+        g2_scene._append_jsonl(path, record)
+        self.render_breadcrumb_sequence += 1
 
     def capture_metadata(self) -> dict[str, Any]:
         assert self.visuals is not None

@@ -48,15 +48,21 @@ class G2SceneTests(unittest.TestCase):
         manager, robots, robot = self._capture_fixture()
         captured = {"index": 4}
         events: list[str] = []
+        breadcrumbs: list[dict[str, object]] = []
 
         class Extension:
             @staticmethod
             def before_capture(_rep: object) -> None:
-                events.append("enable_and_step")
+                events.append("zero_delta_flush")
 
             @staticmethod
             def after_capture() -> None:
-                events.append("disable")
+                events.append("finalize")
+
+            @staticmethod
+            def capture_breadcrumb(event: dict[str, object]) -> None:
+                breadcrumbs.append(event)
+                events.append(str(event["phase"]))
 
         with patch("scripts.isaac.g2_scene._pose", return_value=([1.0, 2.0, 0.0], [1.0, 0.0, 0.0, 0.0])), \
                 patch("scripts.isaac.g2_scene._capture_frame", side_effect=lambda **_kwargs: (
@@ -68,7 +74,16 @@ class G2SceneTests(unittest.TestCase):
                 rep=object(), scene_extension=Extension(),
             )
             self.assertIs(result, captured)
-            self.assertEqual(events, ["enable_and_step", "read_rgb_and_ground_truth", "disable"])
+            self.assertEqual(events, [
+                "zero_delta_flush_start", "zero_delta_flush", "zero_delta_flush_complete",
+                "rgb_readback_start", "read_rgb_and_ground_truth", "rgb_readback_complete",
+                "capture_finalize_start", "finalize", "capture_finalize_complete",
+                "frozen_state_validation_start", "frozen_state_validation_complete",
+            ])
+            self.assertEqual(len(breadcrumbs), 8)
+            self.assertTrue(all(event["capture_index"] == 4 for event in breadcrumbs))
+            self.assertTrue(all(event["physics_frame"] == 750 for event in breadcrumbs))
+            self.assertTrue(all(event["sim_time_s"] == 12.5 for event in breadcrumbs))
 
             events.clear()
             result = _capture_frame_with_extension(
@@ -81,9 +96,11 @@ class G2SceneTests(unittest.TestCase):
             self.assertEqual(capture.call_count, 2)
         self.assertIsNotNone(robot)
 
-    def test_capture_extension_disables_after_read_failure_and_rejects_state_change(self) -> None:
+    def test_capture_extension_finalizes_after_read_failure_and_rejects_state_change(self) -> None:
         manager, robots, _robot = self._capture_fixture()
-        extension = SimpleNamespace(before_capture=Mock(), after_capture=Mock())
+        extension = SimpleNamespace(
+            before_capture=Mock(), after_capture=Mock(), capture_breadcrumb=Mock(),
+        )
         with patch("scripts.isaac.g2_scene._pose", return_value=([0.0, 0.0, 0.0], [1.0, 0.0, 0.0, 0.0])), \
                 patch("scripts.isaac.g2_scene._capture_frame", side_effect=RuntimeError("RGB read failed")):
             with self.assertRaisesRegex(RuntimeError, "RGB read failed"):
@@ -93,9 +110,17 @@ class G2SceneTests(unittest.TestCase):
                     rep=object(), scene_extension=extension,
                 )
         extension.after_capture.assert_called_once_with()
+        self.assertEqual(
+            [entry.args[0]["phase"] for entry in extension.capture_breadcrumb.call_args_list],
+            [
+                "zero_delta_flush_start", "zero_delta_flush_complete", "rgb_readback_start",
+                "capture_finalize_start", "capture_finalize_complete",
+                "frozen_state_validation_start", "frozen_state_validation_complete",
+            ],
+        )
 
         cleanup_failure = SimpleNamespace(
-            before_capture=Mock(), after_capture=Mock(side_effect=RuntimeError("disable failed")),
+            before_capture=Mock(), after_capture=Mock(side_effect=RuntimeError("finalize failed")),
         )
         with patch("scripts.isaac.g2_scene._pose", return_value=([0.0, 0.0, 0.0], [1.0, 0.0, 0.0, 0.0])), \
                 patch("scripts.isaac.g2_scene._capture_frame", side_effect=RuntimeError("RGB read failed")):
@@ -105,7 +130,7 @@ class G2SceneTests(unittest.TestCase):
                     SimulationManager=manager, np=object(), Image=object(), index=0,
                     rep=object(), scene_extension=cleanup_failure,
                 )
-        self.assertTrue(any("render product disable failed" in note
+        self.assertTrue(any("render capture finalize failed" in note
                             for note in getattr(raised.exception, "__notes__", ())))
 
         pose_reads = iter((
