@@ -690,6 +690,7 @@ def _validate_visual_events(
         errors.append("visual robot chassis bindings are incomplete")
         robot_paths = {}
     previous_projection: Mapping[str, Any] | None = None
+    runtime_session_prims: Mapping[str, Any] | None = None
     known_copy_paths: set[str] = set()
     valid: list[dict[str, Any]] = []
     previous_frame = previous_time_ns = -1
@@ -728,10 +729,13 @@ def _validate_visual_events(
             if state["projection"] != projection:
                 raise ValueError("visual state projection body differs from replay")
             expected_plan = build_payload_visibility_plan(layout, projection, robot_paths)
-            _audit_session_snapshot(
+            observed_runtime_prims = _audit_session_snapshot(
                 session_snapshot, runtime, visual_manifest, layout, expected_plan, event,
                 visual_sublayer=str((output / "visual-scene/factory-v3.visual.usda").resolve(strict=True)),
+                expected_runtime_prims=runtime_session_prims,
             )
+            if runtime_session_prims is None:
+                runtime_session_prims = observed_runtime_prims
             expected_visible = {
                 item["row"]["payload_id"]: {
                     "payload_id": item["row"]["payload_id"], "order_id": item["row"]["order_id"],
@@ -801,11 +805,12 @@ def _validate_capture_frames(
             sim_ns = int(round(float(sim_time) * 1_000_000_000))
             if physics_frame < previous_frame or sim_ns < previous_time_ns:
                 raise ValueError("capture frame or simulation time regressed")
-            eligible = [event for event in visual_events if event["applied_physics_frame"] <= physics_frame and event["applied_sim_time_ns"] <= sim_ns]
-            expected = eligible[-1] if eligible else None
             captured = frame.get("visual_state")
             if not isinstance(captured, Mapping) or captured.get("run_id") != run_id or captured.get("scenario_id") != scenario_id:
                 raise ValueError("capture visual metadata identity differs")
+            expected = _capture_expected_event(
+                visual_events, physics_frame, sim_ns, captured.get("applied_sequence"),
+            )
             if expected is None:
                 if any(captured.get(key) is not None for key in ("applied_sequence", "applied_state_hash", "latest_event", "applied_snapshot")):
                     raise ValueError("capture claims a visual state from the future")
@@ -846,6 +851,36 @@ def _validate_capture_frames(
         "observed_sequences": sorted(observed),
         "unobserved_sequences": sorted(sequences - observed),
     }
+
+
+def _capture_expected_event(
+    visual_events: Sequence[Mapping[str, Any]],
+    physics_frame: int,
+    sim_time_ns: int,
+    claimed_sequence: object,
+) -> Mapping[str, Any] | None:
+    eligible = [
+        event for event in visual_events
+        if event["applied_physics_frame"] <= physics_frame and event["applied_sim_time_ns"] <= sim_time_ns
+    ]
+    if claimed_sequence is None:
+        strictly_prior = [
+            event for event in eligible
+            if event["applied_physics_frame"] < physics_frame or event["applied_sim_time_ns"] < sim_time_ns
+        ]
+        return strictly_prior[-1] if strictly_prior else None
+    if type(claimed_sequence) is not int:
+        raise ValueError("capture applied sequence is invalid")
+    claimed = next((event for event in eligible if event["source_sequence"] == claimed_sequence), None)
+    if claimed is None:
+        raise ValueError("capture claims a visual state from the future")
+    newer = [event for event in eligible if event["source_sequence"] > claimed_sequence]
+    if any(
+        event["applied_physics_frame"] < physics_frame or event["applied_sim_time_ns"] < sim_time_ns
+        for event in newer
+    ):
+        return eligible[-1]
+    return claimed
 
 
 def _event_identity(event: Mapping[str, Any], run_id: str, scenario_id: str, index: int) -> None:
@@ -922,7 +957,8 @@ def _audit_session_snapshot(
     event: Mapping[str, Any],
     *,
     visual_sublayer: str,
-) -> None:
+    expected_runtime_prims: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
     text = path.read_text(encoding="utf-8")
     document = _parse_controlled_usda(text)
     expected_sublayer = visual_sublayer.replace("\\\\", "\\").replace("\\", "/")
@@ -934,6 +970,9 @@ def _audit_session_snapshot(
         raise ValueError("visual session snapshot sublayer binding differs")
 
     prims = document["prims"]
+    runtime_prims = _runtime_session_prims(prims)
+    if expected_runtime_prims is not None and runtime_prims != expected_runtime_prims:
+        raise ValueError("visual session snapshot runtime prims changed between events")
     visual_path = Path(visual_sublayer)
     _regular(visual_path)
     visual_paths = set(_parse_controlled_usda(visual_path.read_text(encoding="utf-8"))["prims"])
@@ -943,6 +982,15 @@ def _audit_session_snapshot(
         if isinstance(item, Mapping) and isinstance(item.get("prim_path"), str)
         and isinstance(item.get("semantic_class"), str)
     }
+    if layout.data.get("revision") == "amr-production-bay-v4":
+        floor_semantics = visual_manifest.get("floor_semantic_roots")
+        if (not isinstance(floor_semantics, Mapping)
+                or any(not isinstance(path, str) or not isinstance(value, str) for path, value in floor_semantics.items())):
+            raise ValueError("visual session snapshot floor semantic manifest is invalid")
+        for prim_path, semantic_class in floor_semantics.items():
+            if prim_path in static_semantics and static_semantics[prim_path] != semantic_class:
+                raise ValueError(f"visual session snapshot semantic manifest conflicts: {prim_path}")
+            static_semantics[prim_path] = semantic_class
     obstacle_paths = {f"/World/Obstacles/{_prim_name(str(item['id']))}" for item in layout.data["physical_obstacles"]}
     payload_items = {str(item["prim_path"]): item for item in expected_plan}
     hidden_paths = {str(value) for value in event.get("hidden_payload_prim_paths", [])}
@@ -958,19 +1006,27 @@ def _audit_session_snapshot(
     light_rows = runtime.get("lights", {}).get("readbacks", []) if isinstance(runtime.get("lights"), Mapping) else []
     light_records = {str(row.get("prim_path")): row for row in light_rows if isinstance(row, Mapping)}
 
-    allowed_paths = set(visual_paths) | {"/World", "/World/Obstacles", "/World/Visuals"} | obstacle_paths
+    allowed_paths = set(visual_paths) | set(runtime_prims) | {"/World", "/World/Obstacles", "/World/Visuals"} | obstacle_paths
     for prim_path in {*payload_items, *hidden_paths, *signal_paths, *light_records}:
         allowed_paths.update(_path_prefixes(prim_path))
     binding = runtime.get("robot_binding", {})
     robot_paths = binding.get("robot_chassis_paths", {}) if isinstance(binding, Mapping) else {}
     for robot_path in robot_paths.values():
         allowed_paths.update(_path_prefixes(f"{str(robot_path).rstrip('/')}/FactoryVisualCargo"))
+    runtime_container_paths: set[str] = set()
+    for prim_path in {*payload_items, *hidden_paths, *signal_paths, *light_records}:
+        runtime_container_paths.update(_path_prefixes(prim_path.rsplit("/", 1)[0]))
+    runtime_container_paths.difference_update({"/World", "/World/Visuals"})
     unexpected = sorted(set(prims) - allowed_paths)
     if unexpected:
         raise ValueError(f"visual session snapshot contains unexpected prims: {unexpected}")
 
     for prim_path, record in prims.items():
-        if prim_path in obstacle_paths:
+        if prim_path in runtime_prims:
+            continue
+        if prim_path in runtime_container_paths:
+            _require_container_prim(record, prim_path)
+        elif prim_path in obstacle_paths:
             _require_prim(record, prim_path, None, {"visibility": "invisible"}, {})
         elif prim_path in payload_items:
             _audit_visible_payload(record, prim_path, payload_items[prim_path])
@@ -993,6 +1049,37 @@ def _audit_session_snapshot(
     missing_semantics = sorted(set(static_semantics) - set(prims))
     if missing_semantics:
         raise ValueError(f"visual session snapshot static semantics are missing: {missing_semantics}")
+    return runtime_prims
+
+
+_RUNTIME_CAMERA_PRIMS = {
+    "/OmniverseKit_Persp",
+    "/OmniverseKit_Front",
+    "/OmniverseKit_Top",
+    "/OmniverseKit_Right",
+}
+_RUNTIME_GRAPH_ROOT_TYPES = {
+    "/Render": None,
+    "/Orchestrator": "OmniGraph",
+    "/WriterOrchestrator": "OmniGraph",
+}
+
+
+def _runtime_session_prims(prims: Mapping[str, Mapping[str, Any]]) -> dict[str, Any]:
+    runtime_prims: dict[str, Any] = {}
+    for prim_path, record in prims.items():
+        if prim_path in _RUNTIME_CAMERA_PRIMS:
+            if record.get("type_name") != "Camera":
+                raise ValueError(f"visual session snapshot runtime camera type differs: {prim_path}")
+            runtime_prims[prim_path] = record
+            continue
+        root = next((value for value in _RUNTIME_GRAPH_ROOT_TYPES if prim_path == value or prim_path.startswith(f"{value}/")), None)
+        if root is not None:
+            runtime_prims[prim_path] = record
+    for root, expected_type in _RUNTIME_GRAPH_ROOT_TYPES.items():
+        if root in runtime_prims and runtime_prims[root].get("type_name") != expected_type:
+            raise ValueError(f"visual session snapshot runtime graph type differs: {root}")
+    return runtime_prims
 
 
 def _audit_visible_payload(record: Mapping[str, Any], prim_path: str, item: Mapping[str, Any]) -> None:
@@ -1014,6 +1101,14 @@ def _audit_visible_payload(record: Mapping[str, Any], prim_path: str, item: Mapp
         "xformOpOrder": ["xformOp:translate", "xformOp:scale"],
     }
     _require_prim(record, prim_path, "Cube", expected, {"apiSchemas": ["SemanticsAPI:Semantics"]})
+
+
+def _require_container_prim(record: Mapping[str, Any], prim_path: str) -> None:
+    if record.get("specifier") not in {"def", "over"} or record.get("type_name") is not None:
+        raise ValueError(f"visual session snapshot container prim type differs: {prim_path}")
+    if _single_assignments(record["body_tokens"], prim_path):
+        raise ValueError(f"visual session snapshot authoring differs: container {prim_path}")
+    _require_prim_metadata(record, prim_path, {})
 
 
 def _audit_hidden_payload(
@@ -1159,6 +1254,8 @@ def _require_prim(
 
 
 def _require_prim_metadata(record: Mapping[str, Any], prim_path: str, expected: Mapping[str, Any]) -> None:
+    if record.get("property_metadata_count") != 0:
+        raise ValueError(f"visual session snapshot property metadata differs: {prim_path}")
     actual = _single_assignments(record["metadata_tokens"], prim_path)
     if set(actual) != set(expected) or any(not _usd_value_equal(actual[key], value) for key, value in expected.items()):
         raise ValueError(f"visual session snapshot metadata differs: {prim_path}")
@@ -1231,6 +1328,15 @@ def _parse_controlled_usda(text: str) -> dict[str, Any]:
         consumed.update(range(start, cursor + 1))
         index = cursor + 1
 
+    property_metadata: dict[int, int] = {}
+    for token_index, token in enumerate(tokens):
+        if (token != ("symbol", "(") or token_index in consumed or token_index == 0
+                or tokens[token_index - 1][0] != "word"):
+            continue
+        close = _matching_delimiter(tokens, token_index, "(", ")")
+        property_metadata[token_index] = close
+        consumed.update(range(token_index, close + 1))
+
     prims: dict[str, dict[str, Any]] = {}
     header: list[tuple[str, str]] = []
     stack: list[str] = []
@@ -1246,8 +1352,16 @@ def _parse_controlled_usda(text: str) -> dict[str, Any]:
                 "type_name": declaration["type_name"],
                 "metadata_tokens": declaration["metadata_tokens"],
                 "body_tokens": [],
+                "property_metadata_count": 0,
             }
             stack.append(prim_path)
+            continue
+        if token_index in property_metadata:
+            if not stack:
+                raise ValueError("visual session snapshot property metadata is outside a prim")
+            prims[stack[-1]]["property_metadata_count"] += 1
+            continue
+        if token_index in consumed:
             continue
         if token == ("symbol", "}"):
             if not stack:
@@ -1256,8 +1370,6 @@ def _parse_controlled_usda(text: str) -> dict[str, Any]:
             continue
         if token == ("symbol", "{"):
             raise ValueError("visual session snapshot uses unsupported non-prim braces")
-        if token_index in consumed:
-            continue
         if stack:
             prims[stack[-1]]["body_tokens"].append(token)
         else:
@@ -1288,12 +1400,22 @@ def _assignments(tokens: Sequence[tuple[str, str]]) -> dict[str, list[Any]]:
             raise ValueError("visual session snapshot assignment name is ambiguous")
         name = tokens[index - 1][1]
         value, _ = _parse_usd_value(tokens, index + 1)
+        if index >= 2 and tokens[index - 2] == ("word", "bool"):
+            if type(value) not in {bool, int} or value not in {0, 1, False, True}:
+                raise ValueError("visual session snapshot boolean assignment differs")
+            value = bool(value)
         result.setdefault(name, []).append(value)
     return result
 
 
 def _single_assignments(tokens: Sequence[tuple[str, str]], prim_path: str) -> dict[str, Any]:
-    grouped = _assignments(tokens)
+    grouped: dict[str, list[Any]] = {}
+    aliases = {
+        "semantic:Semantics:params:semanticType": "semantics:Semantics:semanticType",
+        "semantic:Semantics:params:semanticData": "semantics:Semantics:semanticData",
+    }
+    for name, values in _assignments(tokens).items():
+        grouped.setdefault(aliases.get(name, name), []).extend(values)
     duplicates = sorted(key for key, values in grouped.items() if len(values) != 1)
     if duplicates:
         raise ValueError(f"visual session snapshot requires one attribute per name at {prim_path}: {duplicates}")

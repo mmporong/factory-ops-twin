@@ -14,7 +14,9 @@ from factory_ops.operations import Command, EventId, Ledger, Stage, Transition
 from factory_ops.usda import export_usda
 from factory_ops.visual_evidence import (
     SOURCE_PINS,
+    _capture_expected_event,
     _look_at_camera_to_world,
+    _parse_controlled_usda,
     _stage_collider_bounds,
     validate_visual_evidence,
 )
@@ -469,6 +471,110 @@ class VisualEvidenceTests(unittest.TestCase):
         self.assertEqual(report["ledger_bound_events"], 1)
         self.assertEqual(report["capture_frames"], 1)
 
+    def test_controlled_usda_accepts_sdf_dictionary_prim_metadata(self) -> None:
+        parsed = _parse_controlled_usda('''#usda 1.0
+def Camera "OmniverseKit_Persp" (
+    customData = {
+        dictionary omni = {
+            dictionary kit = {
+                bool hide_in_stage_window = 1
+            }
+        }
+    }
+    kind = "component"
+)
+{
+    token visibility = "inherited"
+}
+''')
+
+        prim = parsed["prims"]["/OmniverseKit_Persp"]
+        self.assertEqual(prim["type_name"], "Camera")
+        self.assertIn(("word", "customData"), prim["metadata_tokens"])
+        self.assertIn(("word", "kind"), prim["metadata_tokens"])
+        self.assertEqual(prim["body_tokens"][-1], ("string", '"inherited"'))
+
+    def test_controlled_usda_still_rejects_non_prim_dictionary_braces(self) -> None:
+        with self.assertRaisesRegex(ValueError, "unsupported non-prim braces"):
+            _parse_controlled_usda('''#usda 1.0
+customData = {
+    string forged = "header"
+}
+def Xform "World" {}
+''')
+
+    def test_capture_sequence_resolves_only_exact_clock_ties(self) -> None:
+        events = [
+            {"source_sequence": 0, "applied_physics_frame": 100, "applied_sim_time_ns": 1_000},
+            {"source_sequence": 1, "applied_physics_frame": 100, "applied_sim_time_ns": 1_000},
+        ]
+        self.assertEqual(_capture_expected_event(events, 100, 1_000, 0), events[0])
+        self.assertEqual(_capture_expected_event(events, 100, 1_000, 1), events[1])
+        self.assertEqual(_capture_expected_event(events, 101, 1_001, 0), events[1])
+        with self.assertRaisesRegex(ValueError, "future"):
+            _capture_expected_event(events, 99, 999, 0)
+
+    def test_sdf_runtime_prims_and_serialized_semantics_pass_full_chain(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            fixture = Fixture(Path(temporary))
+            record = fixture.event["session_layer_snapshot"]
+            old_path = fixture.output / record["path"]
+            content = old_path.read_text(encoding="utf-8")
+            content = content.replace(
+                "semantics:Semantics:semanticType", "semantic:Semantics:params:semanticType",
+            ).replace(
+                "semantics:Semantics:semanticData", "semantic:Semantics:params:semanticData",
+            )
+            runtime_prims = '''def Camera "OmniverseKit_Persp" (
+    customData = {
+        dictionary omni = {
+            dictionary kit = {
+                bool hide_in_stage_window = 1
+            }
+        }
+    }
+)
+{
+    bool hide_in_stage_window = 1
+}
+over "Render" {
+    def OmniGraph "Pipeline" {
+        custom uint inputs:exec (
+            customData = {
+                bool isExecution = 1
+            }
+        )
+    }
+}
+'''
+            content = content.replace('over "World" {', runtime_prims + 'over "World" {', 1)
+            digest = hashlib.sha256(content.encode()).hexdigest()
+            path = old_path.parent / f"{digest}.usda"
+            path.write_bytes(content.encode())
+            record.update({
+                "path": path.relative_to(fixture.output).as_posix(),
+                "sha256": digest,
+                "bytes": path.stat().st_size,
+            })
+            fixture.persist_event()
+            frames_path = fixture.output / "media/frames.json"
+            frames = json.loads(frames_path.read_text(encoding="utf-8"))
+            files = frames["frames"][0]["visual_state"]["files"]
+            del files[old_path.relative_to(fixture.output).as_posix()]
+            for relative in ("visual-events.jsonl", record["path"]):
+                artifact = fixture.output / relative
+                files[relative] = {"sha256": _sha(artifact), "bytes": artifact.stat().st_size}
+            _save(frames_path, frames)
+
+            errors: list[str] = []
+            report = validate_visual_evidence(
+                fixture.output, fixture.session, fixture.scene, fixture.mission,
+                RUN_ID, SCENARIO_ID, errors,
+            )
+
+        self.assertEqual(errors, [])
+        self.assertTrue(report["passed"])
+
     def test_ci_and_co_slot_signal_states_pass_full_visual_chain(self) -> None:
         expected_colors = {
             0: (False, False),
@@ -597,6 +703,11 @@ class VisualEvidenceTests(unittest.TestCase):
         def duplicate_visibility(fixture: Fixture) -> None:
             rewrite_session(fixture, lambda content: content.replace(
                 'token visibility = "inherited"', 'token visibility = "inherited"\n            token visibility = "invisible"', 1,
+            ))
+
+        def payload_property_metadata(fixture: Fixture) -> None:
+            rewrite_session(fixture, lambda content: content.replace(
+                "double size = 1", "double size (customData = { bool forged = 1 }) = 1", 1,
             ))
 
         def signal_position(fixture: Fixture) -> None:
@@ -773,6 +884,7 @@ class VisualEvidenceTests(unittest.TestCase):
             "payload scale overflow": (huge_scale, "snapshot authoring differs"),
             "unknown payload xform op": (unknown_xform, "snapshot authoring differs"),
             "multiple payload visibility values": (duplicate_visibility, "one attribute per name"),
+            "payload property metadata": (payload_property_metadata, "property metadata differs"),
             "signal translation overflow": (signal_position, "snapshot authoring differs"),
             "comment cannot fake payload visibility": (fake_visibility_comment, "snapshot authoring differs"),
             "string cannot fake signal count": (fake_signal_string, "snapshot authoring differs"),
