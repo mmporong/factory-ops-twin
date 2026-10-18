@@ -62,9 +62,13 @@ def install_build_provenance(
     (build / "built-image.iid").write_text(built_id, encoding="utf-8")
     commands = [
         {"argv": ["git", "archive", "--format=tar", "--output=before.tar", commit]},
+        {"argv": ["docker", "version", "--format", "{{json .}}"], "exit_code": 0,
+         "stdout": json.dumps({"Client": {"Version": "27.5.1"},
+                               "Server": {"Version": "27.5.1"}})},
         {"argv": ["docker", "image", "inspect", base_reference]},
         {"argv": ["docker", "image", "inspect", built_reference], "expected_absent_exit_code": 1},
-        {"argv": ["docker", "build", "--build-arg", f"BASE_IMAGE={base_id}", "--tag",
+        {"argv": ["env", "DOCKER_BUILDKIT=0", "docker", "build",
+                  "--build-arg", f"BASE_IMAGE={base_id}", "--tag",
                   built_reference, "--iidfile", "built-image.iid", "."]},
         {"argv": ["docker", "image", "inspect", built_reference]},
         {"argv": ["docker", "create", "--name", "fixture", built_id]},
@@ -93,7 +97,9 @@ def install_build_provenance(
         "base_inspect_sha256": sha(build / "base-image-inspect.json"),
         "built_inspect_sha256": sha(build / "built-image-inspect.json"),
         "installed_measurement_sha256": sha(build / "installed-measurement.json"),
-        "built_image_id": built_id, "cleanup_complete": True,
+        "built_image_id": built_id, "builder_mode": "legacy_docker_builder_docker_buildkit_0",
+        "docker_client_version": "27.5.1", "docker_engine_version": "27.5.1",
+        "cleanup_complete": True,
     }
     save(build / "build-receipt.json", receipt)
     attestation = {
@@ -117,6 +123,9 @@ def install_build_provenance(
         "build_attestation_sha256": sha(build / "build-attestation.json"),
         "build_receipt_path": "provenance/build/build-receipt.json",
         "build_receipt_sha256": sha(build / "build-receipt.json"),
+        "build_builder_mode": "legacy_docker_builder_docker_buildkit_0",
+        "build_docker_client_version": "27.5.1",
+        "build_docker_engine_version": "27.5.1",
         "build_preflight_measurement_path": "provenance/build/preflight/preflight-measurement.json",
         "build_preflight_measurement_sha256": sha(preflight / "preflight-measurement.json"),
         "build_provenance_manifest_path": "provenance/build-manifest.json",

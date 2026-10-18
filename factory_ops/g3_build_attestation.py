@@ -13,6 +13,8 @@ from typing import Any, Mapping
 SHA256 = re.compile(r"^[0-9a-f]{64}$")
 IMAGE_ID = re.compile(r"^sha256:[0-9a-f]{64}$")
 REPO_DIGEST = re.compile(r"^[A-Za-z0-9._/:+-]+@sha256:[0-9a-f]{64}$")
+BUILDER_MODE = "legacy_docker_builder_docker_buildkit_0"
+LEGACY_BUILD_PREFIX = ["env", "DOCKER_BUILDKIT=0", "docker", "build"]
 SOURCE_PATHS = (
     "scripts/ros/Dockerfile.g3",
     "ros_ws/src/factory_ops_goal_checker/CMakeLists.txt",
@@ -138,6 +140,8 @@ def build_attested_image(
     if ("ARG BASE_IMAGE" not in dockerfile_text
             or dockerfile_text.count("FROM ${BASE_IMAGE}") != 2):
         raise ValueError("G3 Dockerfile does not pin both stages to BASE_IMAGE")
+    version_command = ["docker", "version", "--format", "{{json .}}"]
+    docker_versions = _docker_versions(execute(version_command).stdout)
     base_result = execute(["docker", "image", "inspect", base_reference])
     base_inspect = json.loads(base_result.stdout)
     base_inspect_path = output_dir / "base-image-inspect.json"
@@ -156,7 +160,7 @@ def build_attested_image(
         log.write_text("".join(json.dumps(row, sort_keys=True) + "\n" for row in commands), encoding="utf-8")
         raise ValueError("run/source image tag already exists")
     iidfile = output_dir / "built-image.iid"
-    execute(["docker", "build", "--pull=false", "--build-arg", f"BASE_IMAGE={base_identity['id']}",
+    execute([*LEGACY_BUILD_PREFIX, "--pull=false", "--build-arg", f"BASE_IMAGE={base_identity['id']}",
              "--iidfile", str(iidfile), "--tag", built_reference, "--file",
              str(context / "scripts/ros/Dockerfile.g3"), str(context)])
     built_inspect = json.loads(execute(["docker", "image", "inspect", built_reference]).stdout)
@@ -206,7 +210,9 @@ def build_attested_image(
         "base_inspect_sha256": proof["base_inspect_sha256"],
         "built_inspect_sha256": proof["built_inspect_sha256"],
         "installed_measurement_sha256": sha256_bytes(installed_measurement.read_bytes()),
-        "built_image_id": built_identity["id"], "cleanup_complete": True,
+        "built_image_id": built_identity["id"], "builder_mode": BUILDER_MODE,
+        "docker_client_version": docker_versions["client"],
+        "docker_engine_version": docker_versions["engine"], "cleanup_complete": True,
     }
     receipt_path = output_dir / "build-receipt.json"
     _write_fresh_json(receipt_path, receipt)
@@ -245,10 +251,25 @@ def _archive_commit(path: Path) -> str:
     return commit
 
 
+def _docker_versions(raw: str) -> dict[str, str]:
+    try:
+        value = json.loads(raw)
+    except json.JSONDecodeError as error:
+        raise ValueError("docker version JSON is invalid") from error
+    client = value.get("Client") if isinstance(value, Mapping) else None
+    server = value.get("Server") if isinstance(value, Mapping) else None
+    client_version = client.get("Version") if isinstance(client, Mapping) else None
+    engine_version = server.get("Version") if isinstance(server, Mapping) else None
+    if (not isinstance(client_version, str) or not client_version.strip()
+            or not isinstance(engine_version, str) or not engine_version.strip()):
+        raise ValueError("docker client/engine versions are unavailable")
+    return {"client": client_version, "engine": engine_version}
+
+
 def _validate_build_commands(
     path: Path, *, source_commit: str, base_reference: str, base_image_id: str,
     built_reference: str, built_image_id: str,
-) -> None:
+) -> dict[str, str]:
     try:
         rows = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines()]
     except (OSError, json.JSONDecodeError) as error:
@@ -263,7 +284,13 @@ def _validate_build_commands(
               if row["argv"] == ["docker", "image", "inspect", built_reference]
               and type(row.get("expected_absent_exit_code")) is int
               and row["expected_absent_exit_code"] != 0]
-    builds = [index for index, command in enumerate(commands) if command[:2] == ["docker", "build"]]
+    build_like = [index for index, command in enumerate(commands)
+                  if any(command[offset:offset + 2] == ["docker", "build"]
+                         for offset in range(max(0, len(command) - 1)))]
+    builds = [index for index, command in enumerate(commands)
+              if command[:4] == LEGACY_BUILD_PREFIX]
+    version_rows = [(index, row) for index, row in enumerate(rows)
+                    if row["argv"] == ["docker", "version", "--format", "{{json .}}"]]
     creates = [index for index, command in enumerate(commands)
                if command[:3] == ["docker", "create", "--name"] and command[-1] == built_image_id]
     removes = [index for index, command in enumerate(commands)
@@ -271,7 +298,9 @@ def _validate_build_commands(
     copies = [(index, command) for index, command in enumerate(commands)
               if command[:2] == ["docker", "cp"]]
     archives = [command for command in commands if command[:2] == ["git", "archive"]]
-    if (len(absent) != 1 or len(builds) != 1 or len(creates) != 1 or len(removes) != 1
+    if (len(absent) != 1 or len(builds) != 1 or builds != build_like
+            or len(version_rows) != 1 or version_rows[0][0] >= builds[0]
+            or len(creates) != 1 or len(removes) != 1
             or len(copies) != len(INSTALLED_PATHS) or len(archives) != 2
             or not (absent[0] < builds[0] < creates[0] < min(index for index, _ in copies)
                     <= max(index for index, _ in copies) < removes[0])
@@ -292,6 +321,10 @@ def _validate_build_commands(
                       if len(command) == 4 and ":" in command[2]}
     if copied_sources != set(INSTALLED_PATHS):
         raise ValueError("closed installed measurement command set differs")
+    version_row = version_rows[0][1]
+    if version_row.get("exit_code") != 0 or not isinstance(version_row.get("stdout"), str):
+        raise ValueError("closed docker version command differs")
+    return _docker_versions(version_row["stdout"])
 
 def _remeasure_installed(
     image_id: str, output_dir: Path, *, runner: Any,
@@ -387,7 +420,7 @@ def validate_attestation(
             or sha256_bytes(receipt_raw) != expected_build_receipt_sha256):
         raise ValueError("build receipt hash differs")
     receipt = json.loads(receipt_raw)
-    _validate_build_commands(
+    docker_versions = _validate_build_commands(
         build_commands, source_commit=expected_source_commit,
         base_reference=value["base_image"]["reference"], base_image_id=value["base_image"]["id"],
         built_reference=value["built_image"]["reference"], built_image_id=value["built_image"]["id"],
@@ -397,7 +430,8 @@ def validate_attestation(
     expected_receipt_keys = {"schema_version", "source_commit", "run_label",
         "source_archive_sha256", "commands_sha256", "iidfile_sha256",
         "base_inspect_sha256", "built_inspect_sha256", "installed_measurement_sha256",
-        "built_image_id", "cleanup_complete"}
+        "built_image_id", "builder_mode", "docker_client_version", "docker_engine_version",
+        "cleanup_complete"}
     if (not isinstance(receipt, dict) or set(receipt) != expected_receipt_keys
             or receipt["schema_version"] != 1 or receipt["source_commit"] != expected_source_commit
             or receipt["run_label"] != expected_run_label
@@ -409,6 +443,9 @@ def validate_attestation(
             or receipt["installed_measurement_sha256"] != sha256_bytes(
                 build_installed_measurement.read_bytes())
             or receipt["built_image_id"] != value["built_image"]["id"]
+            or receipt["builder_mode"] != BUILDER_MODE
+            or receipt["docker_client_version"] != docker_versions["client"]
+            or receipt["docker_engine_version"] != docker_versions["engine"]
             or receipt["cleanup_complete"] is not True
             or build_iidfile.read_text(encoding="utf-8").strip() != value["built_image"]["id"]):
         raise ValueError("closed production build receipt differs")

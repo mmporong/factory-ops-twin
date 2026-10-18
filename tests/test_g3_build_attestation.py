@@ -1,19 +1,25 @@
 from copy import deepcopy
 import hashlib
 import json
+import os
 from pathlib import Path
 import subprocess
 import tarfile
 import tempfile
 import unittest
+from unittest.mock import patch
 
 from factory_ops.g3_build_attestation import (
-    INSTALLED_PATHS, SOURCE_PATHS, build_attested_image, create_nonphysical_fixture_attestation,
+    BUILDER_MODE, INSTALLED_PATHS, LEGACY_BUILD_PREFIX, SOURCE_PATHS,
+    build_attested_image, create_nonphysical_fixture_attestation,
     validate_attestation,
 )
 
 COMMIT = "a" * 40
 RUN = "g3-q-normal-fifo-014"
+
+def is_legacy_build(args):
+    return args[:4] == LEGACY_BUILD_PREFIX
 
 class FakeRunner:
     def __init__(self, repository: Path):
@@ -40,11 +46,14 @@ class FakeRunner:
                         info.mtime = 0
                         with path.open("rb") as handle:
                             archive.addfile(info, handle)
+        elif args == ["docker", "version", "--format", "{{json .}}"]:
+            stdout = json.dumps({"Client": {"Version": "27.5.1"},
+                                 "Server": {"Version": "27.5.1"}})
         elif args[:3] == ["docker", "image", "inspect"]:
             if args[3] != "base:pin" and not self.built_exists:
                 raise subprocess.CalledProcessError(1, args)
             stdout = json.dumps(self.base if args[3] == "base:pin" else self.built)
-        elif args[:2] == ["docker", "build"]:
+        elif is_legacy_build(args):
             Path(args[args.index("--iidfile") + 1]).write_text(self.built[0]["Id"])
             self.built_exists = True
         elif args[:2] == ["docker", "create"]:
@@ -88,16 +97,22 @@ class G3BuildAttestationTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as folder:
             root = Path(folder) / "repo"; root.mkdir(); self.source_fixture(root)
             output = Path(folder) / "build-proof"; runner = FakeRunner(root)
-            value = build_attested_image(output, repository=root, expected_commit=COMMIT,
-                run_label=RUN, base_reference="base:pin", runner=runner)
+            with patch.dict(os.environ, {"DOCKER_BUILDKIT": "1"}):
+                value = build_attested_image(output, repository=root, expected_commit=COMMIT,
+                    run_label=RUN, base_reference="base:pin", runner=runner)
             self.assertEqual("built", value["status"])
             self.assertTrue(value["runtime_eligible"])
             self.assertEqual(value["base_image"]["id"], value["build_proof"]["base_image_arg"])
-            build = next(command for command in runner.commands if command[:2] == ["docker", "build"])
+            build = next(command for command in runner.commands if is_legacy_build(command))
+            self.assertEqual(LEGACY_BUILD_PREFIX, build[:4])
             self.assertIn(f"BASE_IMAGE={value['base_image']['id']}", build)
             self.assertIn("--iidfile", build)
             self.assertEqual(2, sum(command[:2] == ["git", "archive"] for command in runner.commands))
             self.assertEqual(3, sum(command[:2] == ["docker", "cp"] for command in runner.commands))
+            receipt = json.loads((output / "build-receipt.json").read_text())
+            self.assertEqual(BUILDER_MODE, receipt["builder_mode"])
+            self.assertEqual("27.5.1", receipt["docker_client_version"])
+            self.assertEqual("27.5.1", receipt["docker_engine_version"])
             path = output / "build-attestation.json"
             digest = hashlib.sha256(path.read_bytes()).hexdigest()
             validated = self.validate_built(root, output, runner)
@@ -138,7 +153,7 @@ class G3BuildAttestationTests(unittest.TestCase):
             root = Path(folder) / "repo"; root.mkdir(); self.source_fixture(root)
             output = Path(folder) / "failed"; runner = FakeRunner(root)
             def fail_build(args, *, cwd=None):
-                if args[:2] == ["docker", "build"]:
+                if is_legacy_build(args):
                     raise subprocess.CalledProcessError(7, args)
                 return runner(args, cwd=cwd)
             with self.assertRaises(subprocess.CalledProcessError):
@@ -146,6 +161,25 @@ class G3BuildAttestationTests(unittest.TestCase):
                     run_label=RUN, base_reference="base:pin", runner=fail_build)
             self.assertTrue((output / "commands.jsonl").is_file())
             self.assertFalse((output / "build-attestation.json").exists())
+
+    def test_missing_docker_client_or_engine_version_cannot_issue_attestation(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder) / "repo"; root.mkdir(); self.source_fixture(root)
+            for index, version in enumerate((
+                {"Client": {"Version": "27.5.1"}},
+                {"Client": {"Version": ""}, "Server": {"Version": "27.5.1"}},
+            )):
+                runner = FakeRunner(root)
+                def invalid_version(args, *, cwd=None):
+                    if args == ["docker", "version", "--format", "{{json .}}"]:
+                        runner.commands.append(list(args))
+                        return subprocess.CompletedProcess(args, 0, json.dumps(version), "")
+                    return runner(args, cwd=cwd)
+                output = Path(folder) / f"invalid-version-{index}"
+                with self.subTest(index=index), self.assertRaisesRegex(ValueError, "versions"):
+                    build_attested_image(output, repository=root, expected_commit=COMMIT,
+                        run_label=RUN, base_reference="base:pin", runner=invalid_version)
+                self.assertFalse((output / "build-attestation.json").exists())
 
     def test_current_image_mutation_is_rejected(self):
         with tempfile.TemporaryDirectory() as folder:
@@ -199,7 +233,7 @@ class G3BuildAttestationTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "already exists"):
                 build_attested_image(Path(folder) / "proof", repository=root,
                     expected_commit=COMMIT, run_label=RUN, base_reference="base:pin", runner=runner)
-            self.assertFalse(any(command[:2] == ["docker", "build"] for command in runner.commands))
+            self.assertFalse(any(is_legacy_build(command) for command in runner.commands))
 
     def test_malformed_full_image_id_and_digest_are_rejected(self):
         with tempfile.TemporaryDirectory() as folder:
@@ -247,7 +281,7 @@ class G3BuildAttestationTests(unittest.TestCase):
                 run_label=RUN, base_reference="base:pin", runner=runner)
             commands_path = output / "commands.jsonl"
             rows = [json.loads(line) for line in commands_path.read_text().splitlines()]
-            rows = [row for row in rows if row["argv"][:2] != ["docker", "build"]]
+            rows = [row for row in rows if not is_legacy_build(row["argv"])]
             commands_path.write_text("".join(json.dumps(row, sort_keys=True) + "\n" for row in rows))
             receipt_path = output / "build-receipt.json"
             receipt = json.loads(receipt_path.read_text())
@@ -259,6 +293,38 @@ class G3BuildAttestationTests(unittest.TestCase):
             attestation_path.write_text(json.dumps(attestation, indent=2, sort_keys=True) + "\n")
             with self.assertRaisesRegex(ValueError, "command sequence"):
                 self.validate_built(root, output, runner, measurement_name="fabricated-command-preflight")
+
+    def test_implicit_or_wrong_builder_mode_cannot_open_a_production_receipt(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder) / "repo"; root.mkdir(); self.source_fixture(root)
+            output = Path(folder) / "proof"; runner = FakeRunner(root)
+            build_attested_image(output, repository=root, expected_commit=COMMIT,
+                run_label=RUN, base_reference="base:pin", runner=runner)
+            commands_path = output / "commands.jsonl"
+            original_commands = commands_path.read_bytes()
+            rows = [json.loads(line) for line in commands_path.read_text().splitlines()]
+            build_row = next(row for row in rows if is_legacy_build(row["argv"]))
+            build_row["argv"] = build_row["argv"][2:]
+            commands_path.write_text("".join(json.dumps(row, sort_keys=True) + "\n" for row in rows))
+            receipt_path = output / "build-receipt.json"
+            receipt = json.loads(receipt_path.read_text())
+            receipt["commands_sha256"] = hashlib.sha256(commands_path.read_bytes()).hexdigest()
+            receipt_path.write_text(json.dumps(receipt, indent=2, sort_keys=True) + "\n")
+            attestation_path = output / "build-attestation.json"
+            attestation = json.loads(attestation_path.read_text())
+            attestation["build_receipt_sha256"] = hashlib.sha256(receipt_path.read_bytes()).hexdigest()
+            attestation_path.write_text(json.dumps(attestation, indent=2, sort_keys=True) + "\n")
+            with self.assertRaisesRegex(ValueError, "command sequence"):
+                self.validate_built(root, output, runner, measurement_name="implicit-builder-preflight")
+
+            commands_path.write_bytes(original_commands)
+            receipt["commands_sha256"] = hashlib.sha256(commands_path.read_bytes()).hexdigest()
+            receipt["builder_mode"] = "implicit_default_builder"
+            receipt_path.write_text(json.dumps(receipt, indent=2, sort_keys=True) + "\n")
+            attestation["build_receipt_sha256"] = hashlib.sha256(receipt_path.read_bytes()).hexdigest()
+            attestation_path.write_text(json.dumps(attestation, indent=2, sort_keys=True) + "\n")
+            with self.assertRaisesRegex(ValueError, "production build receipt"):
+                self.validate_built(root, output, runner, measurement_name="wrong-builder-receipt")
 
     def test_tag_mutation_after_inspect_still_measures_attested_full_id(self):
         with tempfile.TemporaryDirectory() as folder:

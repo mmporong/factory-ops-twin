@@ -16,7 +16,7 @@ from typing import Any
 import uuid
 
 from .experiments import canonical_hash
-from .g3_build_attestation import _validate_build_commands
+from .g3_build_attestation import BUILDER_MODE, _validate_build_commands
 from .g3_session import verify_session
 from .source_provenance import verify_source_archive
 
@@ -250,21 +250,27 @@ def _validate_preserved_build_provenance(
         "built_inspect_sha256": build_root / "built-image-inspect.json",
         "installed_measurement_sha256": build_root / "installed-measurement.json",
     }
+    docker_versions = _validate_build_commands(
+        build_root / "commands.jsonl", source_commit=str(environment.get("source_commit")),
+        base_reference=str(base.get("reference")), base_image_id=str(base.get("id")),
+        built_reference=str(built.get("reference")), built_image_id=str(built.get("id")),
+    )
     if (receipt.get("schema_version") != 1
             or receipt.get("source_commit") != environment.get("source_commit")
             or receipt.get("run_label") != environment.get("run_label")
             or receipt.get("source_archive_sha256") != environment.get("source_archive_sha256")
             or receipt.get("cleanup_complete") is not True
             or receipt.get("built_image_id") != built.get("id")
+            or receipt.get("builder_mode") != BUILDER_MODE
+            or receipt.get("builder_mode") != environment.get("build_builder_mode")
+            or receipt.get("docker_client_version") != docker_versions["client"]
+            or receipt.get("docker_client_version") != environment.get("build_docker_client_version")
+            or receipt.get("docker_engine_version") != docker_versions["engine"]
+            or receipt.get("docker_engine_version") != environment.get("build_docker_engine_version")
             or any(receipt.get(key) != _sha256(path) for key, path in receipt_hashes.items())):
         raise ValueError("preserved build receipt closure differs")
     if (build_root / "built-image.iid").read_text(encoding="utf-8").strip() != built.get("id"):
         raise ValueError("preserved built image iid differs")
-    _validate_build_commands(
-        build_root / "commands.jsonl", source_commit=str(environment.get("source_commit")),
-        base_reference=str(base.get("reference")), base_image_id=str(base.get("id")),
-        built_reference=str(built.get("reference")), built_image_id=str(built.get("id")),
-    )
     installed_measurement = _load(build_root / "installed-measurement.json")
     if installed_measurement != {"schema_version": 1, "image_id": built.get("id"), "files": installed}:
         raise ValueError("preserved installed measurement differs")

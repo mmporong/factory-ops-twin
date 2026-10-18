@@ -299,6 +299,7 @@ build_manifest_path=root/'logs'/f'{run}-build-provenance-manifest.json'
 with build_manifest_path.open('x',encoding='utf-8',newline='\n') as stream:
     json.dump(build_manifest,stream,indent=2,sort_keys=True); stream.write('\n')
 build_manifest_sha=hashlib.sha256(build_manifest_path.read_bytes()).hexdigest()
+build_receipt=json.loads((Path(sys.argv[18])/'build-receipt.json').read_text(encoding='utf-8'))
 sys.path.insert(0,str(project))
 from factory_ops.source_provenance import verify_source_archive
 proof=verify_source_archive(root/'source-snapshots'/f'{run}.tar',
@@ -325,6 +326,9 @@ record={
     'build_attestation_sha256':sys.argv[15],
     'build_receipt_path':'provenance/build/build-receipt.json',
     'build_receipt_sha256':sys.argv[16],
+    'build_builder_mode':build_receipt['builder_mode'],
+    'build_docker_client_version':build_receipt['docker_client_version'],
+    'build_docker_engine_version':build_receipt['docker_engine_version'],
     'build_preflight_measurement_path':'provenance/build/preflight/preflight-measurement.json',
     'build_preflight_measurement_sha256':sys.argv[17],
     'build_provenance_manifest_path':'provenance/build-manifest.json',
