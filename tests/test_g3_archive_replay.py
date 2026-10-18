@@ -325,7 +325,7 @@ class G3ArchiveReplayTests(unittest.TestCase):
                 pass
 
     @unittest.skipUnless(os.name == "posix", "raw envelope validation uses POSIX pinned-file APIs")
-    def test_v2_sequential_metadata_and_transitive_support_are_in_replay_closure(self) -> None:
+    def test_v3_sequential_metadata_and_transitive_support_are_in_replay_closure(self) -> None:
         primary = json.loads(self.primary.read_text(encoding="utf-8"))
         resource_root = Path(primary["resource_input"]["evidence_root"])
         envelope, _value, _archive, _manifest = make_raw_package(
@@ -356,7 +356,7 @@ class G3ArchiveReplayTests(unittest.TestCase):
             receipt_refs.append({"path": receipt.name, "sha256": digest(receipt)})
         plan = resource_root / "sequential-plan.json"
         plan.write_text(json.dumps({"coordinator_receipts": receipt_refs}), encoding="utf-8")
-        primary["resource_input"].update({"schema_version": 2,
+        primary["resource_input"].update({"schema_version": 3,
                                            "sequential_plan_path": plan.name,
                                            "sequential_plan_sha256": digest(plan)})
         self.primary.write_text(json.dumps(primary), encoding="utf-8")

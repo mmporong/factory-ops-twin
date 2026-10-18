@@ -413,18 +413,20 @@ def _verify_source_bundle(bundle: Path, destination: Path, source_commit: str) -
                    check=True, capture_output=True, text=True)
 
 
-def _measure_shared_paths(value: Mapping[str, Sequence[str]],
-                          expected_restore_roots: set[Path]) -> dict[str, int]:
+def _measure_shared_inventory(value: Mapping[str, Sequence[str]],
+                              expected_restore_roots: set[Path]) -> tuple[dict[str, int], dict[str, int]]:
     if set(value) != set(_SHARED_FIELDS):
         raise ValueError("shared measurement categories differ")
     identities: set[tuple[int, int]] = set()
     measured: dict[str, int] = {}
+    counts: dict[str, int] = {}
     restore_roots: set[Path] = set()
     for category in _SHARED_FIELDS:
         paths = value[category]
         if isinstance(paths, (str, bytes)) or not isinstance(paths, Sequence):
             raise ValueError("shared measurement category must contain paths")
         total = 0
+        count = 0
         seen_roots: set[Path] = set()
         for raw in paths:
             path = Path(raw)
@@ -447,10 +449,23 @@ def _measure_shared_paths(value: Mapping[str, Sequence[str]],
                         raise ValueError("shared measurement files overlap or use hard links")
                     identities.add(identity)
                     total += stat_value.st_size
-        measured[category] = total
+                    count += 1
+        # Primary production reuses one owned replay workspace.  The six
+        # qualification restores measure its peak, not six retained copies.
+        measured[category] = (max(
+            (sum(node.stat().st_size for node in root.rglob("*") if node.is_file())
+             for root in seen_roots), default=0
+        ) if category == "owned_restore_bytes" else total)
+        counts[category] = count
     if restore_roots != expected_restore_roots:
         raise ValueError("owned restore measurements must cover the exact six restore roots")
-    return measured
+    return measured, counts
+
+
+def _measure_shared_paths(value: Mapping[str, Sequence[str]],
+                          expected_restore_roots: set[Path]) -> dict[str, int]:
+    """Compatibility adapter for callers that only need byte totals."""
+    return _measure_shared_inventory(value, expected_restore_roots)[0]
 
 
 def preserve_run(
@@ -736,14 +751,15 @@ def finalize_store(*, result_paths: Sequence[Path], evidence_root: Path, store_r
         rows.append(row)
     if len(rows) != 6:
         raise ValueError("store receipt requires exactly six run results")
-    shared_bytes = _measure_shared_paths(shared_measurements, restore_roots)
+    shared_bytes, shared_file_counts = _measure_shared_inventory(shared_measurements, restore_roots)
     output = evidence_root / "stores" / store_id / "coordinator-receipt.json"
     _write_new(output, {
-        "schema_version": 1, "classification": "g3_local_coordinator_capacity_observation",
+        "schema_version": 2, "classification": "g3_local_coordinator_capacity_observation",
         "store_id": store_id,
         "observed_at_utc": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
         "device_identity": device_identity, "available_bytes": shutil.disk_usage(store_root).free,
         "runs": sorted(rows, key=lambda row: str(row["run_id"])), "shared_bytes": shared_bytes,
+        "shared_file_counts": shared_file_counts,
     })
     return output
 
@@ -754,7 +770,7 @@ def finalize_plan(
     supervisor_sha256: str, requested_primary_runs: int, reserve_fraction: float,
     stopped_storage_hourly_rate_usd: float, planned_stopped_hours: float,
 ) -> Path:
-    """Build the exact v2 plan using the shared calibration derivation."""
+    """Build the exact v3 plan using the shared calibration derivation."""
     _require_posix()
     evidence_root = _directory(evidence_root, "evidence root")
     identities = []

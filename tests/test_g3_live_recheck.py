@@ -69,8 +69,10 @@ class LiveRecheckTests(unittest.TestCase):
                    "canonical_archive_bytes": 100, "one_package_bytes": 100,
                    "applicable_scratch_bytes": 100, "required_bytes": 700},
             "stores": {
-                "D": {"deduplicated_extra_bytes": 50},
-                "E": {"deduplicated_extra_bytes": 50},
+                "D": {"deduplicated_extra_bytes": 50, "persistent_extra_bytes": 40,
+                      "one_primary_replay_workspace_bytes": 10},
+                "E": {"deduplicated_extra_bytes": 50, "persistent_extra_bytes": 40,
+                      "one_primary_replay_workspace_bytes": 10},
             },
         }
         self.cost = {
@@ -78,6 +80,7 @@ class LiveRecheckTests(unittest.TestCase):
             "planned_stopped_hours": 10.0,
             "stopped_storage_hourly_rate_usd": .04,
         }
+        self.workspace_peak = 10
         save(self.plan, {
             "source_commit": PRODUCER_SOURCE_COMMIT,
             "experiment_config_sha256": EXPERIMENT_CONFIG_SHA256,
@@ -88,7 +91,7 @@ class LiveRecheckTests(unittest.TestCase):
         self.resource = {
             "evidence_root": str(self.evidence), "supervisor_path": "supervisor.json",
             "supervisor_sha256": "1" * 64, "requested_primary_runs": 60,
-            "reserve_fraction": .2, "schema_version": 2,
+            "reserve_fraction": .2, "schema_version": 3,
             "sequential_plan_path": "plan.json", "sequential_plan_sha256": digest(self.plan),
         }
         self.calibration = self.root / "calibration.json"
@@ -162,23 +165,32 @@ class LiveRecheckTests(unittest.TestCase):
             save(preservation_path, {"fixture_boundary": "explicit_nonphysical_G5_store_result_double"})
             preservation_paths[store] = preservation_path
         path = self.root / f"previous-{ordinal}.json"
+        live = self.root / f"previous-{ordinal}-live.json"
+        trial_result = self.evidence / f"previous-{ordinal}-trial-result.json"
+        save(live, {"eligible": True})
+        save(trial_result, {"trial_outcome": "completed"})
         save(path, {
-            "schema_version": 1, "classification": "g3_closed_primary_preservation_receipt",
+            "schema_version": 2, "classification": "g3_closed_primary_preservation_receipt",
             "ordinal": ordinal, "trial_id": self.matrix[ordinal - 1]["trial_id"],
             "run_id": f"{ordinal:032x}", "source_commit": PRODUCER_SOURCE_COMMIT,
             "host_source_commit": "9" * 40, "primary_inputs_path": str(prior_inputs),
             "primary_inputs_sha256": digest(prior_inputs),
-            "trial_outcome": "completed", "closed_at_utc": (
+            "trial_outcome": "completed", "attempt_status": "collected", "closed_at_utc": (
                 self.not_before - timedelta(seconds=10 - ordinal)
             ).isoformat().replace("+00:00", "Z"),
             "previous_receipt_sha256": previous_sha,
             "package": {"sha256": "a" * 64, "bytes": package_bytes},
+            "trial_result": {"path": trial_result.relative_to(self.evidence).as_posix(),
+                             "sha256": digest(trial_result)},
+            "live_eligibility": {"path": str(live), "sha256": digest(live)},
             "preservations": [
                 {"store_id": store, "device_identity": self.identities[store],
                  "store_result_path": str(preservation_paths[store]),
                  "store_result_sha256": digest(preservation_paths[store])}
                 for store in ("D", "E")
             ],
+            "transient_disposition": "removed_after_verified_close",
+            "transient_scope": "owned_primary_replay_workspace_only",
             "stopped_storage_hours": 0.5, "cleanup_authorized": False,
         })
         self.previous.append({"path": str(path), "expected_sha256": digest(path)})
@@ -200,9 +212,22 @@ class LiveRecheckTests(unittest.TestCase):
             observed = datetime.now(timezone.utc) - timedelta(seconds=10)
             return self.vm_free, observed, observed, {"id": "fixture-vm", "name": "fixture-vm"}
 
+        def store_result(**kwargs):
+            result_path = Path(kwargs["result_path"])
+            ordinal = int(result_path.name.split("-")[1])
+            receipt = json.loads((self.root / f"previous-{ordinal}.json").read_text())
+            trial_ref = receipt["trial_result"]
+            trial_sha = digest(self.evidence / trial_ref["path"])
+            closure = hashlib.sha256(":".join((
+                trial_sha, receipt["trial_outcome"], receipt["attempt_status"],
+                receipt["primary_inputs_sha256"],
+            )).encode()).hexdigest()
+            return (self.evidence, receipt["package"]["sha256"], "e" * 64, closure,
+                    self.workspace_peak)
+
         with patch("factory_ops.g3_live_recheck._host_source_commit", return_value="9" * 40), \
                 patch("factory_ops.g3_live_recheck.validate_calibration"), \
-                patch("factory_ops.g3_live_recheck._validate_primary_store_result"), \
+                patch("factory_ops.g3_live_recheck._validate_primary_store_result", side_effect=store_result), \
                 patch("factory_ops.g3_live_recheck.sealed_store_identity", side_effect=identity), \
                 patch("factory_ops.g3_live_recheck._validate_vm_inputs", side_effect=vm_probe), \
                 patch("factory_ops.g3_live_recheck.shutil.disk_usage", side_effect=usage):
@@ -235,6 +260,12 @@ class LiveRecheckTests(unittest.TestCase):
         self.assertEqual(digest(path), json.loads((path.parent / "output-manifest.json").read_text())["files"][0]["sha256"])
         with self.assertRaises(FileExistsError):
             self.invoke()
+
+    def test_v2_capacity_plan_cannot_unlock_primary_execution(self) -> None:
+        self.resource["schema_version"] = 2
+        self.write_primary()
+        with self.assertRaisesRegex(ValueError, "requires v3"):
+            self.invoke("old-v2")
 
     def test_space_budget_rate_nan_stale_future_and_device_fail_closed(self) -> None:
         cases = []
@@ -341,6 +372,18 @@ class LiveRecheckTests(unittest.TestCase):
         value = json.loads(self.invoke("raised-package-pass").read_text())
         self.assertEqual(expected, value["stores"]["D"]["required_bytes"])
         self.assertEqual(expected_vm, value["vm"]["required_bytes"])
+
+    def test_larger_actual_workspace_peak_raises_store_requirement(self) -> None:
+        self.add_previous()
+        self.workspace_peak = 1_000
+        expected = ceil(59 * 100 * 1.2) + 40 + 1_000 + 100
+        self.free[str(self.store_roots["D"])] = expected - 1
+        with self.assertRaisesRegex(ValueError, "D free space"):
+            self.invoke("raised-workspace")
+        self.free[str(self.store_roots["D"])] = expected
+        value = json.loads(self.invoke("raised-workspace-pass").read_text())
+        self.assertEqual(expected, value["stores"]["D"]["required_bytes"])
+        self.assertEqual(1_000, value["stores"]["D"]["one_primary_replay_workspace_bytes"])
 
     def test_external_previous_pin_and_snapshot_recheck_reject_rewrites(self) -> None:
         previous = self.add_previous()

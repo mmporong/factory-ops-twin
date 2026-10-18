@@ -669,40 +669,56 @@ class CalibrationTests(unittest.TestCase):
                     "package_phase_wall_time_s": 10.0, "offload_phase_wall_time_s": 10.0,
                     "restore_phase_wall_time_s": 10.0, "semantic_phase_wall_time_s": 10.0})
             receipt = root / f"coordinator-{store}.json"
-            save(receipt, {"schema_version": 1,
+            save(receipt, {"schema_version": 2,
                            "classification": "g3_local_coordinator_capacity_observation",
                            "store_id": store, "observed_at_utc": "2026-10-18T00:00:00Z",
                            "device_identity": device, "available_bytes": available,
-                           "runs": coordinator_runs, "shared_bytes": shared})
+                           "runs": coordinator_runs, "shared_bytes": shared,
+                           "shared_file_counts": {name: 16 for name in shared}})
             receipt_refs.append(reference(receipt))
             receipt_paths.append(receipt)
         reserve = .2
         package_bytes = max(envelope["package"]["bytes"] for _path, envelope in raw_packages)
-        primary_packages = ceil(60 * package_bytes * (1 + reserve))
-        store_extra = 600
-        store_required = 20_000_000_000 + primary_packages + store_extra
+        persistent_extra = 500
+        primary_support_files = 64
+        primary_support_overhead = primary_support_files * (36 * 1024) + 20 * 1024
+        primary_package_bound = package_bytes + persistent_extra + primary_support_overhead
+        primary_packages = ceil(60 * primary_package_bound * (1 + reserve))
+        replay_workspace = 100 + 2 * (persistent_extra + primary_support_overhead) \
+            + max(row["raw_bytes"] for row in measurements) + package_bytes
+        store_required = 20_000_000_000 + primary_packages + persistent_extra + replay_workspace
         vm_base = 100 + max(row["raw_bytes"] for row in measurements) \
-            + max(row["compressed_bytes"] for row in measurements) + package_bytes + 500
+            + max(row["compressed_bytes"] for row in measurements) + primary_package_bound + 500
         vm_required = ceil(vm_base * (1 + reserve)) + 20_000_000_000
         capacity = {
             "derivation": "lifecycle_maxima_from_rederived_actual_six_and_hash_bound_local_receipts",
             "vm": {"retained_six_support_bytes": 100,
                    "one_hot_raw_bytes": max(row["raw_bytes"] for row in measurements),
                    "canonical_archive_bytes": max(row["compressed_bytes"] for row in measurements),
-                   "one_package_bytes": package_bytes,
+                   "one_package_bytes": primary_package_bound,
+                   "pilot_package_observed_max_bytes": package_bytes,
+                   "primary_support_payload_bytes": persistent_extra,
+                   "primary_support_file_count": primary_support_files,
+                   "primary_support_packaging_overhead_upper_bound_bytes": primary_support_overhead,
                    "applicable_scratch_bytes": 500, "minimum_observed_available_bytes": 30_000_000_000,
                    "required_bytes": vm_required, "sufficient": True},
             "stores": {
                 "D": {"available_bytes": 20_000_000_000, "primary_packages_bytes": primary_packages,
-                      "deduplicated_extra_bytes": store_extra, "owned_restore_bytes": 100,
+                      "deduplicated_extra_bytes": persistent_extra + replay_workspace,
+                      "persistent_extra_bytes": persistent_extra,
+                      "one_primary_replay_workspace_bytes": replay_workspace,
                       "required_bytes": store_required, "sufficient": False},
                 "E": {"available_bytes": 30_000_000_000, "primary_packages_bytes": primary_packages,
-                      "deduplicated_extra_bytes": store_extra, "owned_restore_bytes": 100,
+                      "deduplicated_extra_bytes": persistent_extra + replay_workspace,
+                      "persistent_extra_bytes": persistent_extra,
+                      "one_primary_replay_workspace_bytes": replay_workspace,
                       "required_bytes": store_required, "sufficient": True},
             },
         }
         phase = 210.0
-        forecast_seconds = phase * 60 * 1.2
+        runtime_scale = max(primary_package_bound / package_bytes, replay_workspace / 100)
+        primary_phase = phase * runtime_scale
+        forecast_seconds = primary_phase * 60 * 1.2
         running_cost = forecast_seconds / 3600 * 3.35
         cost = {"budget_cap_usd": 400.0, "current_actual_billing_usd": 50.0,
                 "budget_remaining_usd": 350.0, "account_credit_remaining_usd": 409.91,
@@ -710,13 +726,19 @@ class CalibrationTests(unittest.TestCase):
                 "account_usable_after_reserve_usd": 409.91 * (1 - reserve),
                 "running_hourly_rate_usd": 3.35,
                 "stopped_storage_hourly_rate_usd": .05, "planned_stopped_hours": 2.0,
-                "per_run_closed_wall_time_s": phase, "forecast_running_seconds": forecast_seconds,
+                "pilot_per_run_closed_wall_time_s": phase,
+                "primary_runtime_scale_bound": runtime_scale,
+                "runtime_projection_basis": "pilot_wall_scaled_by_primary_package_and_workspace_bounds",
+                "per_run_closed_wall_time_s": primary_phase,
+                "forecast_running_seconds": forecast_seconds,
                 "forecast_running_cost_usd": running_cost, "forecast_stopped_cost_usd": .1,
                 "forecast_total_cost_usd": running_cost + .1,
-                "project_budget_sufficient": True, "account_credit_sufficient": True,
-                "budget_sufficient": True}
+                "project_budget_sufficient": 280.0 >= running_cost + .1,
+                "account_credit_sufficient": 409.91 * (1 - reserve) >= running_cost + .1,
+                "budget_sufficient": (280.0 >= running_cost + .1
+                                      and 409.91 * (1 - reserve) >= running_cost + .1)}
         plan = root / "plan.json"
-        plan_value = {"schema_version": 2, "classification": "g3_sequential_dual_local_capacity_plan",
+        plan_value = {"schema_version": 3, "classification": "g3_sequential_dual_local_capacity_plan",
                       "source_commit": self.commit, "experiment_config_sha256": self.config_hash,
                       "supervisor_sha256": "a" * 64, "billing_sha256": "b" * 64,
                       "requested_primary_runs": 60, "reserve_fraction": reserve,
@@ -730,7 +752,7 @@ class CalibrationTests(unittest.TestCase):
         save(plan, plan_value)
         resource = {"evidence_root": root, "supervisor_path": "supervisor.json",
                     "supervisor_sha256": "a" * 64, "requested_primary_runs": 60,
-                    "reserve_fraction": reserve, "schema_version": 2,
+                    "reserve_fraction": reserve, "schema_version": 3,
                     "sequential_plan_path": "plan.json", "sequential_plan_sha256": sha(plan)}
         billing_value = {"confirmed_hourly_rate_usd": 3.35, "budget_remaining_usd": 409.91,
                          "project_budget_cap_usd": 400.0, "project_actual_billing_usd": 50.0,
@@ -754,6 +776,34 @@ class CalibrationTests(unittest.TestCase):
             stopped_storage_hourly_rate_usd=.05, planned_stopped_hours=2.0,
         )
         self.assertEqual(plan_value, json.loads(built.read_text(encoding="utf-8")))
+
+        # Exercise a flattened package with many zero-byte support files and a
+        # long-path manifest.  The derived bound must cover both the package
+        # growth and the package-extract + literal-stage workspace duplication.
+        adversarial = root / "adversarial-primary.tar"
+        support_sizes = [500, *([0] * (primary_support_files - 1))]
+        manifest_payload = json.dumps({
+            "files": [{"path": "/" + "x" * 4000, "bytes": size,
+                       "sha256": "f" * 64, "member": f"support/shared/{index:06d}-x"}
+                      for index, size in enumerate(support_sizes)]
+        }).encode()
+        with tarfile.open(adversarial, "w") as packed:
+            info = tarfile.TarInfo("pilot-shaped-base.bin")
+            info.size = package_bytes
+            packed.addfile(info, BytesIO(b"p" * package_bytes))
+            for index, size in enumerate(support_sizes):
+                info = tarfile.TarInfo(f"support/shared/{index:06d}-x")
+                info.size = size
+                packed.addfile(info, BytesIO(b"s" * size))
+            info = tarfile.TarInfo("support/support-manifest.json")
+            info.size = len(manifest_payload)
+            packed.addfile(info, BytesIO(manifest_payload))
+        actual_primary_package = adversarial.stat().st_size
+        actual_increment = actual_primary_package - package_bytes
+        actual_workspace = 100 + 2 * actual_increment \
+            + max(row["raw_bytes"] for row in measurements) + package_bytes
+        self.assertGreaterEqual(primary_package_bound, actual_primary_package)
+        self.assertGreaterEqual(replay_workspace, actual_workspace)
 
         first_package = raw_packages[0][0].parent / PACKAGE_NAME
         missing_package = first_package.with_suffix(".missing")

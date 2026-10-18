@@ -748,6 +748,7 @@ def _publish_pair(directory: _Directory, package_temporary: str,
 def prepare_raw_package(*, archive_record: Path, attempt_receipt: Path | None,
                         source_bundle: Path, output: Path,
                         shared_support_files: Sequence[Path] = (),
+                        primary_shared_support_files: Sequence[Path] = (),
                         qualification_source_commit: str | None = None,
                         qualification_seed: int | None = None,
                         qualification_session_root: Path | None = None) -> Path:
@@ -838,8 +839,15 @@ def prepare_raw_package(*, archive_record: Path, attempt_receipt: Path | None,
             source_files = [pin for pin in source_files if not _inside(pin[0], artifact_root)]
             shared = [_pinned(input_stack, path, "shared-six-pilot support")
                       for path in shared_support_files]
+            if primary_shared_support_files and identity["profile"] != "primary":
+                raise ValueError("primary shared support is limited to primary packages")
+            existing_paths = {pin[0] for pin in source_files + session_pins + per_trial + shared}
+            primary_shared = [
+                _pinned(input_stack, path, "primary shared support")
+                for path in primary_shared_support_files if path not in existing_paths
+            ]
             groups = {"source": source_files, "session": session_pins,
-                      "per-trial": per_trial, "shared-six-pilot": shared}
+                      "per-trial": per_trial, "shared-six-pilot": shared + primary_shared}
             _assert_disjoint(groups)
             support = {
                 "schema": SUPPORT_SCHEMA,
@@ -974,6 +982,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--source-bundle", required=True)
     parser.add_argument("--output", required=True)
     parser.add_argument("--shared-six-pilot-support", action="append", default=[])
+    parser.add_argument("--primary-shared-support", action="append", default=[])
     parser.add_argument("--qualification-source-commit")
     parser.add_argument("--qualification-seed", type=int)
     parser.add_argument("--qualification-session-root")
@@ -983,6 +992,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         attempt_receipt=Path(args.attempt_receipt) if args.attempt_receipt else None,
         source_bundle=Path(args.source_bundle), output=Path(args.output),
         shared_support_files=[Path(value) for value in args.shared_six_pilot_support],
+        primary_shared_support_files=[Path(value) for value in args.primary_shared_support],
         qualification_source_commit=args.qualification_source_commit,
         qualification_seed=args.qualification_seed,
         qualification_session_root=(Path(args.qualification_session_root)

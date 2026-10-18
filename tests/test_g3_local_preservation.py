@@ -486,7 +486,9 @@ class LocalPreservationTests(unittest.TestCase):
             result_paths=results, evidence_root=self.evidence, store_root=self.store,
             store_id="D", shared_measurements=measurements, **self.identity_inputs)
         value = json.loads(receipt.read_text())
-        self.assertEqual(sum(range(1, 7)), value["shared_bytes"]["owned_restore_bytes"])
+        self.assertEqual(2, value["schema_version"])
+        self.assertEqual(6, value["shared_bytes"]["owned_restore_bytes"])
+        self.assertEqual(6, value["shared_file_counts"]["owned_restore_bytes"])
         self.assertEqual(6, len(value["runs"]))
 
         alias = self.root / "metadata-alias.bin"

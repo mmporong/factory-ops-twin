@@ -290,18 +290,10 @@ def _receipt_files(root: Path, receipt_path: Path, archived_root: Path | None = 
     return files
 
 
-def _support_closure(slot: Mapping[str, Any], record: Mapping[str, Any]) -> tuple[list[Path], list[Path]]:
-    literal = record["literal_paths"]
-    evidence_root = _directory(Path(str(literal["evidence_root"])), "archive evidence root")
-    receipt_path = Path(str(literal["attempt_receipt_path"]))
-    artifact_root = Path(str(literal["artifact_root"]))
-    files = _receipt_files(evidence_root, receipt_path, artifact_root)
+def _primary_support_closure(primary_path: Path) -> tuple[list[Path], list[Path]]:
+    """Resolve the canonical primary manifest and every transitive support input."""
+    files: list[Path] = []
     trees: list[Path] = []
-    if slot.get("replay_kind") == "collection_failure":
-        return files, trees
-    if slot.get("replay_kind") != "validated_trial":
-        raise ValueError("archive-only replay kind is invalid")
-    primary_path = Path(str(slot["primary_inputs_path"]))
     primary = _load_object(primary_path, "primary input manifest")
     expected = {"trial_path", "calibration_path", "pilot_slots", "resource_input",
                 "expected_source_commit"}
@@ -328,9 +320,9 @@ def _support_closure(slot: Mapping[str, Any], record: Mapping[str, Any]) -> tupl
     resource = primary.get("resource_input")
     resource_v1 = {"evidence_root", "supervisor_path", "supervisor_sha256",
                    "requested_primary_runs", "reserve_fraction"}
-    resource_v2 = resource_v1 | {"schema_version", "sequential_plan_path", "sequential_plan_sha256"}
-    if (not isinstance(resource, Mapping) or set(resource) not in (resource_v1, resource_v2)
-            or (set(resource) == resource_v2 and resource.get("schema_version") != 2)):
+    resource_v3 = resource_v1 | {"schema_version", "sequential_plan_path", "sequential_plan_sha256"}
+    if (not isinstance(resource, Mapping) or set(resource) not in (resource_v1, resource_v3)
+            or (set(resource) == resource_v3 and resource.get("schema_version") != 3)):
         raise ValueError("primary input resource fields differ")
     resource_root = _directory(Path(str(resource["evidence_root"])), "resource evidence root")
     supervisor = _reference_path(
@@ -354,7 +346,7 @@ def _support_closure(slot: Mapping[str, Any], record: Mapping[str, Any]) -> tupl
                 files.append(path)
                 if name == "attempt_receipt":
                     files.extend(_receipt_files(resource_root, path))
-    if set(resource) == resource_v2:
+    if set(resource) == resource_v3:
         plan = _reference_path(
             resource_root,
             {"path": resource["sequential_plan_path"], "sha256": resource["sequential_plan_sha256"]},
@@ -391,6 +383,45 @@ def _support_closure(slot: Mapping[str, Any], record: Mapping[str, Any]) -> tupl
                 load_raw_envelope(referenced["raw_envelope"])
                 files.append(_regular(referenced["raw_envelope"].parent / PACKAGE_NAME,
                                       "validated raw content package"))
+    return files, trees
+
+
+def resolve_primary_shared_support(primary_inputs_path: Path,
+                                   primary_inputs_sha256: str) -> tuple[list[Path], list[Path]]:
+    """Return a byte-pinned primary support closure without requiring pilot membership.
+
+    The caller must recheck these paths after publication.  This adapter exposes
+    the same strict closure used by archive replay while keeping the canonical
+    five-field manifest immutable.
+    """
+    primary_inputs_path = _regular(primary_inputs_path, "primary input manifest")
+    if (not _SHA256.fullmatch(primary_inputs_sha256)
+            or _sha(primary_inputs_path) != primary_inputs_sha256):
+        raise ValueError("primary input manifest bytes differ")
+    files, trees = _primary_support_closure(primary_inputs_path)
+    # Preserve deterministic ordering and reject aliases across categories.
+    ordered_files = sorted(set(files), key=str)
+    ordered_trees = sorted(set(trees), key=str)
+    if len(ordered_files) != len(files) or len(ordered_trees) != len(trees):
+        raise ValueError("primary support closure contains duplicate paths")
+    return ordered_files, ordered_trees
+
+
+def _support_closure(slot: Mapping[str, Any], record: Mapping[str, Any]) -> tuple[list[Path], list[Path]]:
+    literal = record["literal_paths"]
+    evidence_root = _directory(Path(str(literal["evidence_root"])), "archive evidence root")
+    receipt_path = Path(str(literal["attempt_receipt_path"]))
+    artifact_root = Path(str(literal["artifact_root"]))
+    files = _receipt_files(evidence_root, receipt_path, artifact_root)
+    trees: list[Path] = []
+    if slot.get("replay_kind") == "collection_failure":
+        return files, trees
+    if slot.get("replay_kind") != "validated_trial":
+        raise ValueError("archive-only replay kind is invalid")
+    primary_path = Path(str(slot["primary_inputs_path"]))
+    primary_files, primary_trees = _primary_support_closure(primary_path)
+    files.extend(primary_files)
+    trees.extend(primary_trees)
     trees.append(_directory(Path(str(slot["session_root"])), "primary session root"))
     return files, trees
 

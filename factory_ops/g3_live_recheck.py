@@ -43,7 +43,8 @@ _BILLING_FIELDS = {
 _PREVIOUS_FIELDS = {
     "schema_version", "classification", "ordinal", "trial_id", "run_id", "source_commit",
     "host_source_commit", "primary_inputs_path", "primary_inputs_sha256", "trial_outcome", "closed_at_utc",
-    "previous_receipt_sha256", "package", "preservations", "stopped_storage_hours",
+    "attempt_status", "previous_receipt_sha256", "package", "trial_result", "preservations",
+    "live_eligibility", "transient_disposition", "transient_scope", "stopped_storage_hours",
     "cleanup_authorized",
 }
 _Snapshots = dict[Path, tuple[int, int, int, int, str]]
@@ -401,9 +402,117 @@ def capture_vm_capacity_probe(
 def _validate_primary_store_result(
     *, result_path: Path, store_root: Path, store_id: str, device_identity: str,
     run_id: str, package_sha256: str, package_bytes: int, snapshots: _Snapshots,
-) -> tuple[Path, str, str, str]:
-    """Revalidate one primary preservation using the existing G5 receipt layout."""
+) -> tuple[Path, str, str, str, int]:
+    """Revalidate persistent package and closed replay proof for one primary."""
     result = _snapshot_load(result_path, "previous G5 store run result", snapshots)
+    if result.get("schema_version") == 2:
+        fields_v2 = {
+            "schema_version", "classification", "store_id", "device_identity", "run_id",
+            "preservation_attempt_id", "trial_id", "source_commit", "trial_outcome", "attempt_status", "package",
+            "raw_envelope", "preservation_receipt", "semantic_replay_report", "trial_result",
+            "primary_inputs_path", "primary_inputs_sha256", "replay_workspace_peak_bytes",
+            "transient_disposition", "transient_scope", "persistent_namespace", "wall_time_s",
+            "cleanup_authorized",
+        }
+        if (set(result) != fields_v2
+                or result.get("classification") != "g3_primary_store_run_result"
+                or result.get("store_id") != store_id
+                or result.get("device_identity") != device_identity
+                or result.get("run_id") != run_id
+                or result.get("source_commit") != PRODUCER_SOURCE_COMMIT
+                or result.get("trial_outcome") not in {"completed", "incomplete", "failed"}
+                or result.get("attempt_status") not in {"collected", "collection_failed"}
+                or result.get("transient_disposition") != "removed_after_verified_close"
+                or result.get("transient_scope") != "owned_primary_replay_workspace_only"
+                or result.get("cleanup_authorized") is not False):
+            raise ValueError("previous primary store result binding differs")
+        replay_workspace_peak = int(_number(
+            result["replay_workspace_peak_bytes"], "primary replay workspace peak"))
+        _number(result["wall_time_s"], "primary preservation wall time", positive=True)
+        evidence_root = result_path.parents[4]
+        attempt_id = result.get("preservation_attempt_id")
+        if (not isinstance(attempt_id, str) or not _RUN_ID.fullmatch(attempt_id)
+                or result_path.parent.name != attempt_id
+                or result_path.parent.parent.name != run_id
+                or result_path.parent.parent.parent.name != store_id
+                or result_path.name != "store-run-result.json"):
+            raise ValueError("previous primary result path is not canonical")
+        checked_store_root = _no_link_path(store_root, "sealed store root", require_directory=True)
+        namespace = checked_store_root / "factory-ops-g3-primary" / run_id / attempt_id
+        declared = _no_link_path(Path(str(result["persistent_namespace"])),
+                                 "primary persistent namespace", require_directory=True)
+        if (declared != namespace or declared.resolve(strict=True) != namespace
+                or not namespace.is_relative_to(checked_store_root)
+                or (namespace / "owned-primary-replay-workspace").exists()
+                or (namespace / "owned-primary-replay-workspace").is_symlink()):
+            raise ValueError("primary persistent namespace or scratch disposition differs")
+        package = result.get("package")
+        if (not isinstance(package, Mapping) or set(package) != {"path", "bytes", "sha256"}
+                or package.get("bytes") != package_bytes or package.get("sha256") != package_sha256):
+            raise ValueError("previous primary package binding differs")
+        package_path = _no_link_path(Path(str(package["path"])), "previous primary package",
+                                     require_file=True)
+        if (package_path != namespace / PACKAGE_NAME or package_path.stat().st_size != package_bytes
+                or sha(package_path) != package_sha256):
+            raise ValueError("previous primary package bytes differ")
+        raw = result.get("raw_envelope")
+        if not isinstance(raw, Mapping) or set(raw) != {"path", "sha256"}:
+            raise ValueError("previous primary envelope binding differs")
+        envelope_path = _no_link_path(Path(str(raw["path"])), "previous primary envelope",
+                                      require_file=True)
+        _snapshot_bytes(envelope_path, "previous primary envelope", snapshots)
+        if (envelope_path != namespace / ENVELOPE_NAME or sha(envelope_path) != raw["sha256"]):
+            raise ValueError("previous primary envelope bytes differ")
+        envelope = load_raw_envelope(envelope_path)
+        if (envelope.get("run_id") != run_id or envelope.get("source_commit") != PRODUCER_SOURCE_COMMIT
+                or envelope.get("profile") != "primary"
+                or envelope.get("package", {}).get("sha256") != package_sha256
+                or envelope.get("package", {}).get("bytes") != package_bytes):
+            raise ValueError("previous primary envelope closure differs")
+        replay_path = _reference(
+            evidence_root, result["semantic_replay_report"]["path"],
+            result["semantic_replay_report"]["sha256"], "primary semantic replay", snapshots)
+        replay = _snapshot_load(replay_path, "primary semantic replay", snapshots)
+        expected_status = ("passed_collection_failure_contract"
+                           if result["attempt_status"] == "collection_failed"
+                           else "passed_existing_g3_semantic_validator")
+        if (replay.get("schema_version") != 2
+                or replay.get("classification") != "g3_primary_semantic_replay_report"
+                or replay.get("run_id") != run_id
+                or replay.get("source_commit") != PRODUCER_SOURCE_COMMIT
+                or replay.get("package_sha256") != package_sha256
+                or replay.get("primary_inputs_sha256") != result["primary_inputs_sha256"]
+                or replay.get("status") != expected_status or replay.get("errors") != []):
+            raise ValueError("previous primary semantic replay differs")
+        preservation_path = _reference(
+            evidence_root, result["preservation_receipt"]["path"],
+            result["preservation_receipt"]["sha256"], "primary preservation receipt", snapshots)
+        preservation = _snapshot_load(preservation_path, "primary preservation receipt", snapshots)
+        if (preservation.get("schema_version") != 2
+                or preservation.get("classification") != "g3_primary_package_preservation_receipt"
+                or preservation.get("store_id") != store_id
+                or preservation.get("device_identity") != device_identity
+                or preservation.get("run_id") != run_id
+                or preservation.get("package_sha256") != package_sha256
+                or preservation.get("package_bytes") != package_bytes
+                or preservation.get("cleanup_authorized") is not False):
+            raise ValueError("previous primary preservation receipt differs")
+        trial_result_path = _reference(
+            evidence_root, result["trial_result"]["path"], result["trial_result"]["sha256"],
+            "primary trial result", snapshots)
+        primary_path = _no_link_path(Path(str(result["primary_inputs_path"])),
+                                     "previous primary inputs", require_file=True)
+        _snapshot_bytes(primary_path, "previous primary inputs", snapshots)
+        if (not _SHA256.fullmatch(str(result["primary_inputs_sha256"]))
+                or sha(primary_path) != result["primary_inputs_sha256"]):
+            raise ValueError("previous primary inputs differ")
+        closure_payload = ":".join((sha(trial_result_path), str(result["trial_outcome"]),
+                                    str(result["attempt_status"]),
+                                    str(result["primary_inputs_sha256"]))).encode()
+        return (evidence_root, package_sha256, sha(envelope_path),
+                hashlib.sha256(closure_payload).hexdigest(), replay_workspace_peak)
+
+    # Read-only compatibility remains for the actual-six qualification evidence.
     fields = {
         "schema_version", "classification", "store_id", "device_identity", "run_id",
         "package_record", "preservation_receipt", "full_restore_receipt",
@@ -549,20 +658,21 @@ def _validate_primary_store_result(
     }:
         raise ValueError("previous semantic replay report differs")
     return (evidence_root, str(record["archive_sha256"]),
-            str(record["output_manifest_sha256"]), sha(closure_path))
+            str(record["output_manifest_sha256"]), sha(closure_path), 0)
 
 
 def _validate_previous_chain(
     references: Sequence[Mapping[str, Any]], matrix: Sequence[Mapping[str, Any]],
     frozen_identities: Mapping[str, str], frozen_primary: Mapping[str, Any],
     store_roots: Mapping[str, Path], expected_host_commit: str, snapshots: _Snapshots,
-) -> tuple[list[dict[str, Any]], int, float, datetime | None]:
+) -> tuple[list[dict[str, Any]], int, int, float, datetime | None]:
     if len(references) > 59:
         raise ValueError("previous primary chain exceeds the 60-trial matrix")
     rows: list[dict[str, Any]] = []
     run_ids: set[str] = set()
     previous_sha: str | None = None
     worst_package = 0
+    worst_replay_workspace = 0
     stopped_hours = 0.0
     last_closed: datetime | None = None
     seen_paths: set[Path] = set()
@@ -580,13 +690,16 @@ def _validate_previous_chain(
         value = _snapshot_load(path, "previous primary receipt", snapshots)
         if sha(path) != reference["expected_sha256"]:
             raise ValueError("previous primary receipt differs from its external SHA pin")
-        if (set(value) != _PREVIOUS_FIELDS or value.get("schema_version") != 1
+        if (set(value) != _PREVIOUS_FIELDS or value.get("schema_version") != 2
                 or value.get("classification") != "g3_closed_primary_preservation_receipt"
                 or value.get("ordinal") != index or value.get("trial_id") != matrix[index - 1]["trial_id"]
                 or value.get("source_commit") != PRODUCER_SOURCE_COMMIT
                 or value.get("host_source_commit") != expected_host_commit
                 or not _SHA256.fullmatch(str(value.get("primary_inputs_sha256")))
                 or value.get("trial_outcome") not in {"completed", "incomplete", "failed"}
+                or value.get("attempt_status") not in {"collected", "collection_failed"}
+                or value.get("transient_disposition") != "removed_after_verified_close"
+                or value.get("transient_scope") != "owned_primary_replay_workspace_only"
                 or value.get("cleanup_authorized") is not False
                 or value.get("previous_receipt_sha256") != previous_sha):
             raise ValueError("previous primary receipt chain binding differs")
@@ -625,7 +738,7 @@ def _validate_previous_chain(
         if not isinstance(preservations, list) or len(preservations) != 2:
             raise ValueError("previous primary requires exact D and E full preservations")
         by_store: dict[str, Mapping[str, Any]] = {}
-        store_closures: set[tuple[Path, str, str, str]] = set()
+        store_closures: set[tuple[Path, str, str, str, int]] = set()
         for preservation in preservations:
             fields = {"store_id", "device_identity", "store_result_path", "store_result_sha256"}
             if (not isinstance(preservation, Mapping) or set(preservation) != fields
@@ -652,6 +765,33 @@ def _validate_previous_chain(
             raise ValueError("previous primary D and E preservation is incomplete or spoofed")
         if len(store_closures) != 1:
             raise ValueError("previous primary D and E restore manifest closure differs")
+        closure = next(iter(store_closures))
+        worst_replay_workspace = max(worst_replay_workspace, closure[4])
+        closure_root = closure[0]
+        trial_reference = value.get("trial_result")
+        if not isinstance(trial_reference, Mapping):
+            raise ValueError("previous primary trial result reference differs")
+        trial_result_path = _reference(
+            closure_root, trial_reference.get("path"), trial_reference.get("sha256"),
+            "previous primary trial result", snapshots)
+        live_reference = value.get("live_eligibility")
+        if (not isinstance(live_reference, Mapping)
+                or set(live_reference) != {"path", "sha256"}
+                or not isinstance(live_reference.get("path"), str)
+                or not Path(str(live_reference["path"])).is_absolute()
+                or not _SHA256.fullmatch(str(live_reference.get("sha256")))):
+            raise ValueError("previous primary live eligibility reference differs")
+        live_path = _no_link_path(Path(str(live_reference["path"])),
+                                  "previous primary live eligibility", require_file=True)
+        _snapshot_bytes(live_path, "previous primary live eligibility", snapshots)
+        if sha(live_path) != live_reference["sha256"]:
+            raise ValueError("previous primary live eligibility bytes differ")
+        expected_closure = hashlib.sha256(":".join((
+            sha(trial_result_path), str(value["trial_outcome"]), str(value["attempt_status"]),
+            str(value["primary_inputs_sha256"]),
+        )).encode()).hexdigest()
+        if closure[3] != expected_closure:
+            raise ValueError("previous primary outcome/replay closure differs")
         closed = _utc(value["closed_at_utc"], "previous primary closed_at_utc")
         if last_closed is not None and closed <= last_closed:
             raise ValueError("previous primary closure timestamps are not increasing")
@@ -662,7 +802,7 @@ def _validate_previous_chain(
         rows.append({"path": str(path), "sha256": previous_sha, "ordinal": index,
                      "trial_id": value["trial_id"], "run_id": run_id,
                      "primary_inputs_sha256": value["primary_inputs_sha256"]})
-    return rows, worst_package, stopped_hours, last_closed
+    return rows, worst_package, worst_replay_workspace, stopped_hours, last_closed
 
 
 def recheck_campaign_launch(
@@ -741,8 +881,8 @@ def recheck_campaign_launch(
             or calibration.get("execution_eligible") is not True):
         raise ValueError("frozen calibration is not actual-six eligible")
     resource = pinned["resource_input"]
-    if not isinstance(resource, Mapping) or resource.get("schema_version") != 2:
-        raise ValueError("live recheck requires v2 resource input")
+    if not isinstance(resource, Mapping) or resource.get("schema_version") != 3:
+        raise ValueError("live recheck requires v3 single-workspace resource input")
     evidence_root = _no_link_path(Path(str(resource["evidence_root"])), "evidence root",
                                   require_directory=True)
     plan_path = _reference(evidence_root, resource.get("sequential_plan_path"),
@@ -798,7 +938,7 @@ def recheck_campaign_launch(
     if current_identities != frozen_identities:
         raise ValueError("live sealed store identities differ from frozen receipts")
     matrix = build_matrix(settings)
-    previous, actual_worst_package, stopped_hours, last_closed = _validate_previous_chain(
+    previous, actual_worst_package, actual_worst_workspace, stopped_hours, last_closed = _validate_previous_chain(
         previous_receipt_paths, matrix, frozen_identities, pinned, checked_store_roots,
         expected_host_commit, snapshots,
     )
@@ -829,12 +969,22 @@ def recheck_campaign_launch(
             raise ValueError("frozen store capacity is absent")
         extra = int(_number(frozen_store.get("deduplicated_extra_bytes"),
                             "deduplicated store bytes"))
-        required = ceil(remaining_runs * worst_package * (1 + reserve)) + extra + absolute_reserve
+        persistent_extra = int(_number(frozen_store.get("persistent_extra_bytes"),
+                                       "persistent store bytes"))
+        frozen_replay_workspace = int(_number(
+            frozen_store.get("one_primary_replay_workspace_bytes"),
+            "primary replay workspace bytes"))
+        if extra != persistent_extra + frozen_replay_workspace:
+            raise ValueError("frozen store capacity components differ")
+        replay_workspace = max(frozen_replay_workspace, actual_worst_workspace)
+        required = (ceil(remaining_runs * worst_package * (1 + reserve))
+                    + persistent_extra + replay_workspace + absolute_reserve)
         free = shutil.disk_usage(checked_store_roots[store]).free
         if free < required:
             raise ValueError(f"live {store} free space is insufficient")
         store_results[store] = {"device_identity": current_identities[store],
-                                "free_bytes": free, "required_bytes": required}
+                                "free_bytes": free, "required_bytes": required,
+                                "one_primary_replay_workspace_bytes": replay_workspace}
     frozen_vm = capacity.get("vm")
     if not isinstance(frozen_vm, Mapping):
         raise ValueError("frozen VM capacity components are absent")

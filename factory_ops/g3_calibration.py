@@ -44,6 +44,14 @@ _BUILD_PROVENANCE_FILES = {
     "provenance/build/preflight/installed/plugins.xml",
     "provenance/build/preflight/installed/libfactory_ops_goal_checker.so",
 }
+# A primary package adds the frozen shared closure to a pilot-shaped package.
+# PACKAGE_NAME is an uncompressed POSIX tar (the writer uses ``w|``), so no
+# gzip/deflate expansion applies.  Each added file is charged for tar
+# header/padding, a possible PAX header, and a JSON row whose 4 KiB POSIX path
+# is escaped at six bytes per character, with more than 8 KiB left for fixed
+# fields and framing.  This is a capacity bound, not an observation.
+_PRIMARY_SUPPORT_PER_FILE_OVERHEAD_BYTES = 36 * 1024
+_PRIMARY_PACKAGE_FIXED_OVERHEAD_BYTES = 20 * 1024
 
 
 def _sha256(path: Path) -> str:
@@ -634,33 +642,53 @@ def _derive_sequential_capacity_and_cost(
 ) -> tuple[dict[str, Any], dict[str, Any]]:
     """Apply the single capacity and cost formula used by builder and validator."""
     shared = receipt_rows["D"]["value"]["shared_bytes"]
+    shared_counts = receipt_rows["D"]["value"]["shared_file_counts"]
     multiplier = 1 + reserve_fraction
     worst_raw = max(int(row["raw_bytes"]) for row in measurements)
     worst_archive = max(int(row["compressed_bytes"]) for row in measurements)
-    worst_package = max(int(row["package_bytes"])
-                        for row in receipt_rows["D"]["runs"].values())
+    worst_pilot_package = max(int(row["package_bytes"])
+                              for row in receipt_rows["D"]["runs"].values())
+    persistent_names = ("retained_six_support_bytes", "primary_specific_support_bytes",
+                        "source_bytes", "metadata_bytes")
+    persistent_extra = sum(int(shared[name]) for name in persistent_names)
+    primary_support_files = sum(int(shared_counts[name]) for name in persistent_names)
+    primary_support_packaging_overhead = (
+        primary_support_files * _PRIMARY_SUPPORT_PER_FILE_OVERHEAD_BYTES
+        + _PRIMARY_PACKAGE_FIXED_OVERHEAD_BYTES
+    )
+    primary_additional_payload = persistent_extra + primary_support_packaging_overhead
+    primary_package_bound = worst_pilot_package + primary_additional_payload
     vm_base = (int(shared["retained_six_support_bytes"]) + worst_raw + worst_archive
-               + worst_package + int(shared["vm_applicable_scratch_bytes"]))
+               + primary_package_bound + int(shared["vm_applicable_scratch_bytes"]))
     vm_required = ceil(vm_base * multiplier) + _ABSOLUTE_RESERVE_BYTES
-    store_extra = sum(int(shared[name]) for name in (
-        "retained_six_support_bytes", "primary_specific_support_bytes", "source_bytes",
-        "metadata_bytes", "owned_restore_bytes"))
-    primary_packages = ceil(expected_primary_runs * worst_package * multiplier)
-    store_required = primary_packages + store_extra + _ABSOLUTE_RESERVE_BYTES
+    # The observed pilot restore covers package extraction, artifact/session
+    # expansion, and the restored source clone.  Primary replay adds the frozen
+    # closure once in the extracted package and once in the isolated literal
+    # stage, plus one conservative current artifact/session duplicate.
+    replay_workspace = (int(shared["owned_restore_bytes"])
+                        + 2 * primary_additional_payload + worst_raw + worst_pilot_package)
+    primary_packages = ceil(expected_primary_runs * primary_package_bound * multiplier)
+    store_required = primary_packages + persistent_extra + replay_workspace + _ABSOLUTE_RESERVE_BYTES
     minimum_vm_available = min(int(row["free_disk_bytes_after"]) for row in measurements)
     capacity = {
         "derivation": "lifecycle_maxima_from_rederived_actual_six_and_hash_bound_local_receipts",
         "vm": {"retained_six_support_bytes": int(shared["retained_six_support_bytes"]),
                "one_hot_raw_bytes": worst_raw, "canonical_archive_bytes": worst_archive,
-               "one_package_bytes": worst_package,
+               "one_package_bytes": primary_package_bound,
+               "pilot_package_observed_max_bytes": worst_pilot_package,
+               "primary_support_payload_bytes": persistent_extra,
+               "primary_support_file_count": primary_support_files,
+               "primary_support_packaging_overhead_upper_bound_bytes": (
+                   primary_support_packaging_overhead),
                "applicable_scratch_bytes": int(shared["vm_applicable_scratch_bytes"]),
                "minimum_observed_available_bytes": minimum_vm_available,
                "required_bytes": vm_required, "sufficient": minimum_vm_available >= vm_required},
         "stores": {
             store: {"available_bytes": int(receipt_rows[store]["value"]["available_bytes"]),
                     "primary_packages_bytes": primary_packages,
-                    "deduplicated_extra_bytes": store_extra,
-                    "owned_restore_bytes": int(shared["owned_restore_bytes"]),
+                    "deduplicated_extra_bytes": persistent_extra + replay_workspace,
+                    "persistent_extra_bytes": persistent_extra,
+                    "one_primary_replay_workspace_bytes": replay_workspace,
                     "required_bytes": store_required,
                     "sufficient": int(receipt_rows[store]["value"]["available_bytes"]) >= store_required}
             for store in ("D", "E")},
@@ -674,11 +702,17 @@ def _derive_sequential_capacity_and_cost(
                   for name in ("offload_phase_wall_time_s", "restore_phase_wall_time_s",
                                "semantic_phase_wall_time_s")) for store in ("D", "E"))
         for measurement in measurements)
+    runtime_scale = max(
+        1.0,
+        primary_package_bound / worst_pilot_package,
+        replay_workspace / max(int(shared["owned_restore_bytes"]), 1),
+    )
+    primary_phase_seconds = phase_seconds * runtime_scale
     actual = float(billing["project_actual_billing_usd"])
     project_remaining = float(billing["project_budget_remaining_usd"])
     account_remaining = float(billing["budget_remaining_usd"])
     running_rate = float(billing["confirmed_hourly_rate_usd"])
-    forecast_seconds = phase_seconds * expected_primary_runs * multiplier
+    forecast_seconds = primary_phase_seconds * expected_primary_runs * multiplier
     running_cost = forecast_seconds / 3600 * running_rate
     stopped_cost = planned_stopped_hours * stopped_storage_hourly_rate_usd
     project_usable = project_remaining * (1 - reserve_fraction)
@@ -694,7 +728,11 @@ def _derive_sequential_capacity_and_cost(
         "running_hourly_rate_usd": running_rate,
         "stopped_storage_hourly_rate_usd": stopped_storage_hourly_rate_usd,
         "planned_stopped_hours": planned_stopped_hours,
-        "per_run_closed_wall_time_s": phase_seconds, "forecast_running_seconds": forecast_seconds,
+        "pilot_per_run_closed_wall_time_s": phase_seconds,
+        "primary_runtime_scale_bound": runtime_scale,
+        "runtime_projection_basis": "pilot_wall_scaled_by_primary_package_and_workspace_bounds",
+        "per_run_closed_wall_time_s": primary_phase_seconds,
+        "forecast_running_seconds": forecast_seconds,
         "forecast_running_cost_usd": running_cost, "forecast_stopped_cost_usd": stopped_cost,
         "forecast_total_cost_usd": total_cost,
         "project_budget_sufficient": project_usable >= total_cost,
@@ -722,7 +760,7 @@ def _validate_sequential_capacity_plan(
         "measurement_basis", "coordinator_recheck_required_before_each_run",
     }
     run_ids = sorted(str(row["run_id"]) for row in measurements)
-    if (set(document) != fields or document.get("schema_version") != 2
+    if (set(document) != fields or document.get("schema_version") != 3
             or document.get("classification") != "g3_sequential_dual_local_capacity_plan"):
         raise ValueError("sequential capacity plan shape differs")
     if (document["source_commit"] != expected_source_commit
@@ -745,7 +783,7 @@ def _validate_sequential_capacity_plan(
     receipt_rows: dict[str, dict[str, Any]] = {}
     expected_receipt_fields = {
         "schema_version", "classification", "store_id", "observed_at_utc", "device_identity",
-        "available_bytes", "runs", "shared_bytes",
+        "available_bytes", "runs", "shared_bytes", "shared_file_counts",
     }
     run_fields = {
         "run_id", "package_record", "preservation_receipt", "full_restore_receipt",
@@ -763,7 +801,7 @@ def _validate_sequential_capacity_plan(
         receipt_path = _referenced_file(root, reference, "local coordinator receipt")
         value = _load(receipt_path)
         store = value.get("store_id")
-        if (set(value) != expected_receipt_fields or value.get("schema_version") != 1
+        if (set(value) != expected_receipt_fields or value.get("schema_version") != 2
                 or value.get("classification") != "g3_local_coordinator_capacity_observation"
                 or store not in {"D", "E"} or store in receipt_rows):
             raise ValueError("local coordinator receipt shape or store identity differs")
@@ -780,6 +818,11 @@ def _validate_sequential_capacity_plan(
             raise ValueError("coordinator shared byte fields differ")
         for name, amount in shared.items():
             _nonnegative(amount, f"coordinator {name}", integer=True)
+        shared_counts = value["shared_file_counts"]
+        if not isinstance(shared_counts, Mapping) or set(shared_counts) != shared_fields:
+            raise ValueError("coordinator shared file-count fields differ")
+        for name, amount in shared_counts.items():
+            _nonnegative(amount, f"coordinator {name} file count", integer=True)
         rows = value["runs"]
         if not isinstance(rows, list) or len(rows) != len(run_ids):
             raise ValueError("coordinator receipt must cover the actual six run IDs")
@@ -908,6 +951,9 @@ def _validate_sequential_capacity_plan(
     shared = receipt_rows["D"]["value"]["shared_bytes"]
     if shared != receipt_rows["E"]["value"]["shared_bytes"]:
         raise ValueError("D and E shared byte measurements differ")
+    if (receipt_rows["D"]["value"]["shared_file_counts"]
+            != receipt_rows["E"]["value"]["shared_file_counts"]):
+        raise ValueError("D and E shared file-count measurements differ")
     cost = document["cost_forecast"]
     cost_fields = {
         "budget_cap_usd", "current_actual_billing_usd", "budget_remaining_usd",
@@ -915,11 +961,16 @@ def _validate_sequential_capacity_plan(
         "project_usable_after_reserve_usd", "account_usable_after_reserve_usd",
         "running_hourly_rate_usd", "stopped_storage_hourly_rate_usd",
         "planned_stopped_hours", "per_run_closed_wall_time_s", "forecast_running_seconds",
+        "pilot_per_run_closed_wall_time_s", "primary_runtime_scale_bound",
+        "runtime_projection_basis",
         "forecast_running_cost_usd", "forecast_stopped_cost_usd", "forecast_total_cost_usd",
         "project_budget_sufficient", "account_credit_sufficient", "budget_sufficient",
     }
     if not isinstance(cost, Mapping) or set(cost) != cost_fields:
         raise ValueError("sequential cost forecast fields differ")
+    if cost.get("runtime_projection_basis") != (
+            "pilot_wall_scaled_by_primary_package_and_workspace_bounds"):
+        raise ValueError("sequential primary runtime projection basis differs")
     declared_actual = float(_nonnegative(cost["current_actual_billing_usd"], "current actual billing"))
     remaining = float(_nonnegative(cost["budget_remaining_usd"], "budget remaining"))
     _nonnegative(cost["account_credit_remaining_usd"], "account credit remaining")
@@ -1010,6 +1061,10 @@ def build_sequential_capacity_plan(
     shared = by_store["D"].get("shared_bytes")
     if not isinstance(shared, Mapping) or shared != by_store["E"].get("shared_bytes"):
         raise ValueError("coordinator shared byte measurements differ")
+    shared_counts = by_store["D"].get("shared_file_counts")
+    if (not isinstance(shared_counts, Mapping)
+            or shared_counts != by_store["E"].get("shared_file_counts")):
+        raise ValueError("coordinator shared file-count measurements differ")
     receipt_rows: dict[str, dict[str, Any]] = {}
     for store in ("D", "E"):
         enriched: dict[str, Mapping[str, Any]] = {}
@@ -1034,7 +1089,7 @@ def build_sequential_capacity_plan(
         expected_primary_runs=requested_primary_runs,
         stopped_storage_hourly_rate_usd=stopped_rate, planned_stopped_hours=stopped_hours)
     document = {
-        "schema_version": 2, "classification": "g3_sequential_dual_local_capacity_plan",
+        "schema_version": 3, "classification": "g3_sequential_dual_local_capacity_plan",
         "source_commit": source_commit, "experiment_config_sha256": experiment_config_sha256,
         "supervisor_sha256": supervisor_sha256, "billing_sha256": billing["observation_sha256"],
         "requested_primary_runs": requested_primary_runs, "reserve_fraction": float(reserve_fraction),
@@ -1051,7 +1106,7 @@ def build_sequential_capacity_plan(
         resource_input = {
             "evidence_root": root, "supervisor_path": "supervisor.json",
             "supervisor_sha256": supervisor_sha256, "requested_primary_runs": requested_primary_runs,
-            "reserve_fraction": float(reserve_fraction), "schema_version": 2,
+            "reserve_fraction": float(reserve_fraction), "schema_version": 3,
             "sequential_plan_path": staging.name, "sequential_plan_sha256": _sha256(staging),
         }
         _validate_sequential_capacity_plan(
@@ -1079,10 +1134,10 @@ def _resource_forecast_actual(
     run_ids = {str(row["run_id"]) for row in pilots}
     pilot_by_run = {str(row["run_id"]): row for row in pilots}
     v1_input = {"evidence_root", "supervisor_path", "supervisor_sha256", "requested_primary_runs", "reserve_fraction"}
-    v2_input = v1_input | {"schema_version", "sequential_plan_path", "sequential_plan_sha256"}
-    if set(resource_input) not in (v1_input, v2_input):
+    v3_input = v1_input | {"schema_version", "sequential_plan_path", "sequential_plan_sha256"}
+    if set(resource_input) not in (v1_input, v3_input):
         raise ValueError("actual resource input fields differ")
-    if set(resource_input) == v2_input and (resource_input.get("schema_version") != 2
+    if set(resource_input) == v3_input and (resource_input.get("schema_version") != 3
                                              or expected_config_sha256 is None):
         raise ValueError("sequential resource input schema or config binding differs")
     root = Path(resource_input["evidence_root"]).resolve(strict=True)
@@ -1225,7 +1280,7 @@ def _resource_forecast_actual(
     billing = _load(billing_path)
     required_billing = {"observed_at", "source", "confirmation_method", "currency",
                         "confirmed_hourly_rate_usd", "budget_remaining_usd"}
-    if set(resource_input) == v2_input:
+    if set(resource_input) == v3_input:
         required_billing |= {"project_budget_cap_usd", "project_actual_billing_usd",
                              "project_budget_remaining_usd"}
     if set(billing) != required_billing or billing.get("currency") != "USD":
@@ -1236,10 +1291,10 @@ def _resource_forecast_actual(
     count, reserve = resource_input["requested_primary_runs"], resource_input["reserve_fraction"]
     hourly = float(_positive(billing["confirmed_hourly_rate_usd"], "confirmed hourly rate"))
     budget_value = (_nonnegative(billing["budget_remaining_usd"], "account credit remaining")
-                    if set(resource_input) == v2_input
+                    if set(resource_input) == v3_input
                     else _positive(billing["budget_remaining_usd"], "budget remaining"))
     budget = float(budget_value)
-    if set(resource_input) == v2_input:
+    if set(resource_input) == v3_input:
         cap = float(_positive(billing["project_budget_cap_usd"], "project budget cap"))
         actual = float(_nonnegative(billing["project_actual_billing_usd"], "project actual billing"))
         project_remaining = float(_nonnegative(
@@ -1276,7 +1331,7 @@ def _resource_forecast_actual(
                                "disk_sufficient": minimum_free >= forecast_raw + forecast_compressed,
                                "budget_sufficient": budget >= forecast_cost},
             "billing": {**billing, "observation_sha256": _sha256(billing_path)}}
-    if set(resource_input) == v2_input:
+    if set(resource_input) == v3_input:
         assert expected_config_sha256 is not None
         sequential = _validate_sequential_capacity_plan(
             resource_input, root, measurements, result["billing"],
