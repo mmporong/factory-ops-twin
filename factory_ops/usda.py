@@ -34,7 +34,8 @@ def export_usda(layout: Layout, output_path: str | Path) -> dict[str, object]:
         '    custom string validationStatus = "authored text only; pxr and Isaac Sim validation not performed"',
         "",
     ]
-    lines.extend(_cube("FloorVisual", Rect(0.0, 0.0, 40.0, 24.0), 0.1, -0.05, "floor_visual", collision=False, indent=4))
+    bounds = layout.bounds
+    lines.extend(_cube("FloorVisual", bounds, 0.1, -0.05, "floor_visual", collision=False, indent=4))
     lines.append("")
     lines.extend(_collision_plane("Floor", indent=4))
     lines.append("")
@@ -64,8 +65,8 @@ def export_usda(layout: Layout, output_path: str | Path) -> dict[str, object]:
         "static_collider_count": 20,
         "obstacle_collider_count": 19,
         "floor_collision_geometry": "invisible static Z-axis Plane at z=0; infinite physics surface",
-        "floor_visual_geometry": "non-colliding 40x24x0.1 m Cube slab ending at z=0",
-        "bounded_operations_scope": "40x24 m authored occupancy map; the physics plane is intentionally infinite",
+        "floor_visual_geometry": f"non-colliding {_num(bounds.xmax - bounds.xmin)}x{_num(bounds.ymax - bounds.ymin)}x0.1 m Cube slab ending at z=0",
+        "bounded_operations_scope": f"{_num(bounds.xmax - bounds.xmin)}x{_num(bounds.ymax - bounds.ymin)} m authored occupancy map; the physics plane is intentionally infinite",
         "non_colliding_marker_count": len(layout.stations) + len(layout.pockets),
         "robot_assets": 0,
         "validation": "OpenUSD text authored; pxr/Isaac Sim parsing and collision behavior not validated",

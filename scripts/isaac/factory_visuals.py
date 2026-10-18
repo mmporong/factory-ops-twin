@@ -47,6 +47,24 @@ SIGNAL_PLACEMENTS = {
 }
 
 
+def signal_placements(layout: Layout) -> dict[str, tuple[float, float, float]]:
+    if layout.data.get("revision") != "amr-production-bay-v4":
+        return dict(SIGNAL_PLACEMENTS)
+    obstacles = {str(item["id"]): item for item in layout.data["physical_obstacles"]}
+    ci = Rect.from_value(obstacles["CI_BUFFER"]["rect"], "CI_BUFFER")
+    co = Rect.from_value(obstacles["CO_BUFFER"]["rect"], "CO_BUFFER")
+    cell = Rect.from_value(obstacles["PROCESS_2"]["rect"], "PROCESS_2")
+    out = Rect.from_value(obstacles["FG_HIGH"]["rect"], "FG_HIGH")
+    return {
+        "CI_0": (ci.xmax - .05, ci.ymin + .35, .82),
+        "CI_1": (ci.xmax - .05, ci.ymin + .65, .82),
+        "CO_0": (co.xmax - .05, co.ymin + .35, .82),
+        "CO_1": (co.xmax - .05, co.ymin + .65, .82),
+        "Cell": (cell.xmax - .12, (cell.ymin + cell.ymax) / 2, 1.75),
+        "Complete": (out.xmax - .18, out.ymin + .35, 1.08),
+    }
+
+
 def _signal_color(name: str, active: bool) -> tuple[float, float, float]:
     if not active:
         return (.22, .24, .27)
@@ -214,7 +232,16 @@ class FactoryVisualRuntime:
         shutil.copyfile(self.base_scene_path, copied_base)
         if _sha_file(copied_base) != base_before or _sha_file(self.base_scene_path) != base_before:
             raise ValueError("visual scene base copy changed source bytes")
-        exported = export_visual_scene(self.layout, visual_dir, self.variant_seed)
+        config_dir = self.layout_path.parent
+        visual_config = config_dir / "visual-assets.json"
+        render_profile = config_dir / "render-profile.json"
+        exported = export_visual_scene(
+            self.layout,
+            visual_dir,
+            self.variant_seed,
+            visual_config if visual_config.is_file() else None,
+            render_profile if render_profile.is_file() else None,
+        )
         manifest_path = visual_dir / "visual-scene-manifest.json"
         self.manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
 
@@ -578,7 +605,11 @@ class FactoryVisualRuntime:
         created: list[str] = []
         readbacks: list[dict[str, object]] = []
         color_temperature = 5200.0 + 100.0 * (self.variant_seed % 4)
-        for index, (x, y) in enumerate(((8.0, 5.0), (20.0, 5.0), (32.0, 5.0), (8.0, 19.0), (20.0, 19.0), (32.0, 19.0))):
+        assert self.layout is not None
+        bounds = self.layout.bounds
+        xs = tuple(bounds.xmin + (bounds.xmax - bounds.xmin) * fraction for fraction in (.2, .5, .8))
+        ys = tuple(bounds.ymin + (bounds.ymax - bounds.ymin) * fraction for fraction in (5 / 24, 19 / 24))
+        for index, (x, y) in enumerate((x, y) for y in ys for x in xs):
             path = f"/World/Visuals/Lights/Panel_{index}"
             light = UsdLux.RectLight.Define(self.stage, path)
             light.CreateWidthAttr(5.0)
@@ -666,7 +697,8 @@ class FactoryVisualRuntime:
             cube = self.UsdGeom.Cube.Define(self.stage, path)
             cube.CreateSizeAttr(1.0)
             if not existed:
-                cube.AddTranslateOp().Set(self.Gf.Vec3d(*SIGNAL_PLACEMENTS[name]))
+                assert self.layout is not None
+                cube.AddTranslateOp().Set(self.Gf.Vec3d(*signal_placements(self.layout)[name]))
                 cube.AddScaleOp().Set(self.Gf.Vec3d(SIGNAL_SIZE_M, SIGNAL_SIZE_M, SIGNAL_SIZE_M))
             color = _signal_color(name, active)
             cube.CreateDisplayColorAttr([self.Gf.Vec3f(*color)])

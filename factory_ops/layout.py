@@ -15,7 +15,9 @@ from pathlib import Path
 from typing import Any, Iterable, Mapping, Sequence
 
 
-EXPECTED_STATIONS = {
+V3_REVISION = "amr-focus-v3"
+V4_REVISION = "amr-production-bay-v4"
+V3_STATIONS = {
     "S1": (4.0, 4.0),
     "S2": (4.0, 12.0),
     "S3": (4.0, 20.0),
@@ -23,7 +25,19 @@ EXPECTED_STATIONS = {
     "CO": (28.0, 16.0),
     "OUT": (36.0, 12.0),
 }
-EXPECTED_POCKETS = {"P1": (16.0, 1.5), "P2": (16.0, 22.5)}
+V3_POCKETS = {"P1": (16.0, 1.5), "P2": (16.0, 22.5)}
+V4_STATIONS = {
+    "S1": (3.5, 4.0),
+    "S2": (3.5, 10.0),
+    "S3": (3.5, 16.0),
+    "CI": (21.5, 7.0),
+    "CO": (21.5, 13.0),
+    "OUT": (29.0, 10.0),
+}
+V4_POCKETS = {"P1": (12.0, 1.5), "P2": (12.0, 18.5)}
+# Compatibility aliases preserve the established V1-V3 mission contracts.
+EXPECTED_STATIONS = V3_STATIONS
+EXPECTED_POCKETS = V3_POCKETS
 EXPECTED_RESOURCE_IDS = {"Z_UPPER", "Z_LOWER", "J_SHIP"}
 REQUIRED_FIXTURE_PREFIXES = {"F1", "F2", "F3"}
 
@@ -144,9 +158,20 @@ class Layout:
             raise LayoutError(f"missing keys: {sorted(missing)}")
         if self.data["units"] != "m" or self.data["frame"] != "map":
             raise LayoutError("layout must use metres in the map frame")
+        revision = self.data.get("revision")
+        if revision == V4_REVISION:
+            expected_bounds = (0.0, 0.0, 32.0, 20.0)
+            expected_stations = V4_STATIONS
+            expected_pockets = V4_POCKETS
+            barrier_y = (2.5, 5.5)
+        else:
+            expected_bounds = (0.0, 0.0, 40.0, 24.0)
+            expected_stations = V3_STATIONS
+            expected_pockets = V3_POCKETS
+            barrier_y = (2.5, 5.5)
         bounds = Rect.from_value(self.data["bounds_xy"], "bounds_xy")
-        if tuple((bounds.xmin, bounds.ymin, bounds.xmax, bounds.ymax)) != (0.0, 0.0, 40.0, 24.0):
-            raise LayoutError("bounds_xy must remain [0, 0, 40, 24]")
+        if tuple((bounds.xmin, bounds.ymin, bounds.xmax, bounds.ymax)) != expected_bounds:
+            raise LayoutError(f"bounds_xy must remain {list(expected_bounds)} for revision {revision!r}")
         resolution = _finite_number(self.data["map_resolution_m"], "map_resolution_m")
         if resolution != 0.05:
             raise LayoutError("map_resolution_m must remain 0.05")
@@ -168,18 +193,18 @@ class Layout:
         if not isinstance(station_values, list):
             raise LayoutError("stations must be a list")
         station_ids = _unique_ids(station_values, "stations")
-        if station_ids != set(EXPECTED_STATIONS):
+        if station_ids != set(expected_stations):
             raise LayoutError("station IDs must remain S1, S2, S3, CI, CO, OUT")
         for station in station_values:
             xy = _point(station.get("xy"), f"station {station['id']}")
-            if xy != EXPECTED_STATIONS[station["id"]]:
+            if xy != expected_stations[station["id"]]:
                 raise LayoutError(f"station {station['id']} coordinate is immutable")
             _validate_point_in_bounds(xy, bounds, f"station {station['id']}")
 
         pockets = self.data["pockets"]
-        if not isinstance(pockets, dict) or set(pockets) != set(EXPECTED_POCKETS):
+        if not isinstance(pockets, dict) or set(pockets) != set(expected_pockets):
             raise LayoutError("pockets must remain P1 and P2")
-        for pocket_id, expected in EXPECTED_POCKETS.items():
+        for pocket_id, expected in expected_pockets.items():
             xy = _point(pockets[pocket_id], f"pocket {pocket_id}")
             if xy != expected:
                 raise LayoutError(f"pocket {pocket_id} coordinate is immutable")
@@ -187,7 +212,7 @@ class Layout:
 
         barrier = Rect.from_value(self.data["blocked_aisle"].get("rect"), "blocked_aisle.rect")
         _validate_rect_in_bounds(barrier, bounds, "blocked_aisle.rect")
-        if (barrier.ymin, barrier.ymax) != (2.5, 5.5):
+        if (barrier.ymin, barrier.ymax) != barrier_y:
             raise LayoutError("blocked_aisle must close the full upper aisle width")
         if _finite_number(self.data["blocked_aisle"].get("height_m"), "blocked_aisle.height_m") <= 0:
             raise LayoutError("blocked_aisle height must be positive")
@@ -364,7 +389,8 @@ class Layout:
         traffic_summary = self.validate_traffic(traffic)
         normal = self.shortest_path(self.stations["S1"], self.stations["CI"])
         blocked = self.shortest_path(self.stations["S1"], self.stations["CI"], blocked=True)
-        if not any(row * self.cell_mm + self.cell_mm // 2 >= 18_500 for _, row in blocked.cells):
+        alternative_y_mm = 14_500 if self.data.get("revision") == V4_REVISION else 18_500
+        if not any(row * self.cell_mm + self.cell_mm // 2 >= alternative_y_mm for _, row in blocked.cells):
             raise LayoutError("blocked route does not use the authored lower alternative")
         for label, xy in {**self.stations, **self.pockets}.items():
             if not self.is_planning_free(xy):
@@ -374,7 +400,7 @@ class Layout:
             "probe": "29x29 whole cells; nominal 0.7 m half-extent, 1.45 m cover",
             "normal_s1_ci_m": normal.distance_m,
             "blocked_s1_ci_m": blocked.distance_m,
-            "blocked_uses_y_at_least_m": 18.5,
+            "blocked_uses_y_at_least_m": alternative_y_mm / 1000,
             "stations": len(self.stations),
             "pockets": len(self.pockets),
             **traffic_summary,

@@ -44,6 +44,7 @@ def export_visual_scene(
     output_dir: str | Path,
     variant_seed: int = 0,
     config_path: str | Path | None = None,
+    render_profile_path: str | Path | None = None,
 ) -> dict[str, object]:
     """Author a visual-only USD layer and a composition over ``factory-v3.usda``.
 
@@ -60,7 +61,8 @@ def export_visual_scene(
 
     config_source = Path(config_path) if config_path is not None else DEFAULT_CONFIG
     config_bytes, config = _load_json_object(config_source, "visual asset config")
-    render_bytes, render_profile = _load_json_object(DEFAULT_RENDER_PROFILE, "render profile")
+    render_source = Path(render_profile_path) if render_profile_path is not None else DEFAULT_RENDER_PROFILE
+    render_bytes, render_profile = _load_json_object(render_source, "render profile")
     _validate_config(config, layout)
     _validate_render_profile(render_profile)
 
@@ -69,7 +71,7 @@ def export_visual_scene(
     instances: list[VisualInstance] = []
     lines = _visual_header(variant_seed, palette)
     lines.extend(_materials(palette))
-    lines.extend(_factory_shell(palette))
+    lines.extend(_factory_shell(layout, palette))
     floor_semantic_roots: dict[str, str] = {}
     lines.extend(_floor_graphics(layout, palette, semantic_roots=floor_semantic_roots))
     assignments = config["obstacle_assets"]
@@ -134,7 +136,7 @@ def export_visual_scene(
         "variant": {"id": f"industrial-v{variant_seed:02d}", "seed": variant_seed, "count": 12},
         "layout_sha256": layout.source_sha256,
         "visual_asset_config": {"path": str(config_source), "sha256": config_sha},
-        "render_profile": {"path": str(DEFAULT_RENDER_PROFILE), "sha256": render_sha, "value": render_profile},
+        "render_profile": {"path": str(render_source), "sha256": render_sha, "value": render_profile},
         "outputs": output_hashes,
         "composition": {
             "path": composition_path.name,
@@ -159,7 +161,7 @@ def export_visual_scene(
             "source_static_collider_count": 20,
             "source_marker_count": 8,
             "visual_collision_api_count": 0,
-            "layout_bounds_xy_m": [0.0, 0.0, 40.0, 24.0],
+            "layout_bounds_xy_m": [layout.bounds.xmin, layout.bounds.ymin, layout.bounds.xmax, layout.bounds.ymax],
             "visual_equipment_contained_by_source_xyz_envelopes": True,
             "station_centres_free_of_visual_payload_geometry": True,
         },
@@ -327,14 +329,15 @@ def _materials(palette: Mapping[str, tuple[float, float, float]]) -> list[str]:
     return lines + ["        }"]
 
 
-def _factory_shell(palette: Mapping[str, tuple[float, float, float]]) -> list[str]:
+def _factory_shell(layout: Layout, palette: Mapping[str, tuple[float, float, float]]) -> list[str]:
     light = palette["light"]
+    bounds = layout.bounds
     lines = ['        def Xform "FactoryShell"', "        {"]
     for name, bounds in (
-        ("WestWall", (-0.12, 0.0, 0.0, 0.0, 24.0, 3.2)),
-        ("EastWall", (40.0, 0.0, 0.0, 40.12, 24.0, 3.2)),
-        ("SouthWall", (0.0, -0.12, 0.0, 40.0, 0.0, 1.2)),
-        ("NorthWall", (0.0, 24.0, 0.0, 40.0, 24.12, 3.2)),
+        ("WestWall", (bounds.xmin - .12, bounds.ymin, 0.0, bounds.xmin, bounds.ymax, 3.2)),
+        ("EastWall", (bounds.xmax, bounds.ymin, 0.0, bounds.xmax + .12, bounds.ymax, 3.2)),
+        ("SouthWall", (bounds.xmin, bounds.ymin - .12, 0.0, bounds.xmax, bounds.ymin, 1.2)),
+        ("NorthWall", (bounds.xmin, bounds.ymax, 0.0, bounds.xmax, bounds.ymax + .12, 3.2)),
     ):
         lines.extend(_box_usda(_Box(name, bounds, "White"), 12))
     lines.extend([
@@ -364,14 +367,35 @@ def _floor_graphics(layout: Layout, palette: Mapping[str, tuple[float, float, fl
         if box.semantic_class is not None:
             semantic_roots[f"{root_path}/{_prim_name(box.name)}"] = box.semantic_class
 
-    add_box(_Box("FloorFinish", (0.0, 0.0, 0.001, 40.0, 24.0, 0.006), "Floor", "floor", "factory_floor"))
-    zones = (
-        ("WestZone", (0.2, 0.2, 0.007, 11.0, 23.8, 0.014), "ZoneBlue"),
-        ("CellZone", (12.0, 5.2, 0.007, 30.5, 18.8, 0.014), "ZoneAmber"),
-        ("ShippingZone", (32.5, 5.2, 0.007, 39.8, 18.8, 0.014), "ZoneGreen"),
-    )
-    for name, bounds, material in zones:
-        x0, y0, z0, x1, y1, z1 = bounds
+    bounds = layout.bounds
+    add_box(_Box("FloorFinish", (bounds.xmin, bounds.ymin, 0.001, bounds.xmax, bounds.ymax, 0.006), "Floor", "floor", "factory_floor"))
+    configured_zones = layout.data.get("visual_zones")
+    if configured_zones is None:
+        zones = (
+            ("WestZone", (0.2, 0.2, 0.007, 11.0, 23.8, 0.014), "ZoneBlue"),
+            ("CellZone", (12.0, 5.2, 0.007, 30.5, 18.8, 0.014), "ZoneAmber"),
+            ("ShippingZone", (32.5, 5.2, 0.007, 39.8, 18.8, 0.014), "ZoneGreen"),
+        )
+    else:
+        if not isinstance(configured_zones, list) or len(configured_zones) != 3:
+            raise LayoutError("visual_zones must contain three authored zone rectangles")
+        materials = ("ZoneBlue", "ZoneAmber", "ZoneGreen")
+        authored_zones = []
+        for index, zone in enumerate(configured_zones):
+            if not isinstance(zone, dict) or set(zone) != {"id", "rect"}:
+                raise LayoutError(f"visual_zones[{index}] must contain id and rect")
+            rect = Rect.from_value(zone["rect"], f"visual_zones[{index}].rect")
+            if (rect.xmin < bounds.xmin or rect.ymin < bounds.ymin
+                    or rect.xmax > bounds.xmax or rect.ymax > bounds.ymax):
+                raise LayoutError(f"visual_zones[{index}] lies outside layout bounds")
+            authored_zones.append((
+                str(zone["id"]),
+                (rect.xmin, rect.ymin, .007, rect.xmax, rect.ymax, .014),
+                materials[index],
+            ))
+        zones = tuple(authored_zones)
+    for name, zone_bounds, material in zones:
+        x0, y0, z0, x1, y1, z1 = zone_bounds
         thickness = 0.10
         for suffix, border in (
             ("South", (x0, y0, z0, x1, y0 + thickness, z1)),
@@ -380,8 +404,14 @@ def _floor_graphics(layout: Layout, palette: Mapping[str, tuple[float, float, fl
             ("East", (x1 - thickness, y0 + thickness, z0, x1, y1 - thickness, z1)),
         ):
             add_box(_Box(f"{name}_{suffix}", border, material, "floor_marking", "zone_boundary"))
-    for index, y in enumerate((2.3, 5.7, 10.2, 13.8, 18.3, 21.7)):
-        add_box(_Box(f"AisleLine_{index}", (0.4, y - 0.025, 0.011, 39.6, y + 0.025, 0.016), "SafetyYellow", "floor_marking", "safety_line"))
+    if layout.data.get("revision") == "amr-production-bay-v4":
+        line_specs = ((2.5, bounds.xmin + .4, bounds.xmax - .4), (5.5, bounds.xmin + .4, bounds.xmax - .4),
+                      (8.5, 2.0, 9.0), (11.5, 2.0, 9.0),
+                      (14.5, bounds.xmin + .4, bounds.xmax - .4), (17.5, bounds.xmin + .4, bounds.xmax - .4))
+    else:
+        line_specs = tuple((y, .4, 39.6) for y in (2.3, 5.7, 10.2, 13.8, 18.3, 21.7))
+    for index, (y, x0, x1) in enumerate(line_specs):
+        add_box(_Box(f"AisleLine_{index}", (x0, y - 0.025, 0.011, x1, y + 0.025, 0.016), "SafetyYellow", "floor_marking", "safety_line"))
     for marker_id, xy in sorted({**layout.stations, **layout.pockets}.items()):
         x, y = xy
         root = _prim_name(marker_id)

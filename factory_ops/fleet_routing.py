@@ -295,7 +295,11 @@ class RouteBook:
             if name not in regions:
                 raise ValueError(f"unknown policy region override: {name}")
             regions[name]["rect"] = list(rectangle)
-        variant["revision"] = "amr-focus-v3-g3a"
+        variant["revision"] = (
+            "amr-production-bay-v4"
+            if base_layout.data.get("revision") == "amr-production-bay-v4"
+            else "amr-focus-v3-g3a"
+        )
         variant["status"] = "G3a single-robot corridor preflight only; no physical G3 qualification"
         self.layout = Layout(variant, source_sha256=_hash(variant))
         self.base_layout = base_layout
@@ -343,8 +347,12 @@ class RouteBook:
                 points = tuple(self.nodes[name] for name in names)
                 identity = {"config": self.config_sha256, "layout": self.layout.source_sha256,
                             "closed": closed, "nodes": names, "radius_m": self.planning_radius_m}
-                result = RoutePlan(_hash(identity), start, goal, closed, names, points, distance,
-                                   swept_tiles(points, self.planning_radius_m, tile_size_m=self.tile_size_m))
+                bounds = (self.layout.bounds.xmin, self.layout.bounds.ymin,
+                          self.layout.bounds.xmax, self.layout.bounds.ymax)
+                result = RoutePlan(
+                    _hash(identity), start, goal, closed, names, points, distance,
+                    swept_tiles(points, self.planning_radius_m, tile_size_m=self.tile_size_m, bounds_xy=bounds),
+                )
                 self._routes[key] = result
                 return result
             for neighbor in sorted(self.adjacency[node]):
