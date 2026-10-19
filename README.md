@@ -44,6 +44,8 @@ uv run python -m factory_ops.fleet_transport --bundle runs/fleet4-transport-inpu
 uv run python -m factory_ops.fleet_transport --bundle runs/fleet4-transport-inputs --verify
 ```
 
+4대 개발 ROS 배차는 최근 관측으로 계산한 가상 SOC와 현재 경로를 사용해 픽업·하역·충전대 복귀, 회전·대기·예비 에너지를 계산합니다. 필요한 에너지가 부족하거나 관측이 유효하지 않은 차량에는 새 제품 운송·빈 토트 반납을 배정하지 않습니다. 이미 적재한 운송은 이 필터로 취소하지 않습니다. P1/P2는 복귀 예산의 후보이며 물리 충전기의 완료 근거는 아닙니다. 종료 검증은 수락된 제품 인계와 빈 토트 픽업·반납을 분리하고, 원장을 재생해 재고·소비·토트의 최종 상태를 대조합니다. 이 연결은 CPU 계약 검사를 통과했으며 실제 ROS/GPU 운송 검증은 남아 있습니다.
+
 OpenUSD 자산·운영 상태와 데이터 입력을 연결하고, Omniverse Kit 익스텐션에서 주문·재고·병목을 조작·확인하는 흐름을 다음 구현 대상으로 삼았습니다. 차량 수에 따른 처리량과 대기 변화를 이 흐름 안에서 비교합니다. 현재 실행 도구는 스크립트 기반이며 Kit 익스텐션과 외부 MES/IoT 연결은 미구현입니다.
 
 ## 3D 웹 운영 대시보드

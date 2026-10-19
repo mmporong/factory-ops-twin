@@ -66,6 +66,8 @@ class FleetTransportTests(unittest.TestCase):
         self.assertEqual(json.loads((self.bundle / "energy-profile.json").read_text()), energy["profile"])
         self.assertEqual(set(compiled["registry"].robot_ids), set(energy["initial_soc"]))
         self.assertEqual("authored_virtual_model", energy["profile"]["provenance"]["kind"])
+        self.assertEqual(["P1", "P2"], energy["dispatch"]["charger_anchors"])
+        self.assertEqual(120., energy["dispatch"]["expected_wait_s"])
         root = self.copy_input("energy-tampered")
         self.change_json(root, "energy-profile.json", lambda row: row.update(capacity_wh=9999))
         with self.assertRaisesRegex(ValueError, "input changed: energy-profile.json"):

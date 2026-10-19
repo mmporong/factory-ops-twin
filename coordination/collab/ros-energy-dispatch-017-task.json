@@ -1,0 +1,21 @@
+{
+  "task_id": "ros-energy-dispatch-017",
+  "attempt": 1,
+  "contract_revision": 17,
+  "owner": "control",
+  "inputs_commit": "0070ee7475728881fe8b612b517f35fbe86f08f8",
+  "goal": "Gate real ROS business/empty dispatch on fresh run-bound virtual energy plus full route/return reserve; no charging success claim",
+  "write_paths": [
+    "factory_ops/energy_runtime.py",
+    "factory_ops/energy_dispatch.py",
+    "tests/test_energy_dispatch.py",
+    "coordination/collab/results/ros-energy-dispatch-017.json"
+  ],
+  "contract": [
+    "You are not alone. Root owns scripts/ros/g3_mission.py, configs, validator, docs, Git; preserve others edits. No new agents/dependencies/VM/Git/process services.",
+    "Add read-only EnergyRuntime.can_assign(run_id,robot_id,*,outbound_m,charger_return_m,expected_wait_s,nominal_speed_m_s,loaded,expected_rotation_rad,observed_at_s)->bool. Reuse EnergyFleet formula. Fault/missing/stale/future observation must not authorize; identity/argument errors must not change SOC/fault state.",
+    "New pure adapter evaluate_energy_assignment(*,energy,book,run_id,robot_id,current_anchor,pickup_station,drop_station,observed_at_s,nominal_speed_m_s,expected_wait_s,angular_speed_rad_s,charger_anchors,closed=False)->dict. Return allowed,reason,charger_anchor,route/budget inputs/freshness; no navigation or energy mutation. Use current authored RouteBook current->pickup->drop->one explicitly configured charging anchor and current closures; include turns and rotation time conservatively (no actual yaw means worst-case angular bound). Never infer that parking anchor is physically charging.",
+    "Do not credit charger power. Treat all translation as loaded for conservative task+return budget. Validate nonempty known charger anchor set, positive speed/angular speed, finite wait; missing paths yield excluded candidate. No future closure information/GT.",
+    "Meaningful tests for pickup-only false positive, drop/charger return reserve, stale/missing/fault/future identity, current closure no return route, nonmutating decisions and real FleetMission/MaterialFlow cost callback exclusions. Limit test scope; return exact API/SHA/command/results/limits."
+  ]
+}

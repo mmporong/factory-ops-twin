@@ -48,7 +48,12 @@
   "horizon_s": 1800.0,
   "limits_provenance": "authored development workload; not calibrated production capacity or primary experiment",
   "energy": {
-    "initial_soc": {"carter1": 0.85, "carter2": 0.8, "carter3": 0.75, "carter4": 0.7}
+    "initial_soc": {"carter1": 0.85, "carter2": 0.8, "carter3": 0.75, "carter4": 0.7},
+    "dispatch": {
+      "charger_anchors": ["P1", "P2"],
+      "expected_wait_s": 120.0,
+      "angular_speed_rad_s": 0.4
+    }
   },
   "material_flow": {
     "schema_version": 1,

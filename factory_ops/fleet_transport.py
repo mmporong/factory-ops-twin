@@ -179,6 +179,16 @@ def _compile(root: Path) -> dict[str, Any]:
         if set(energy["initial_soc"]) != robot_ids:
             raise ValueError("energy initial SOC must cover exactly the declared fleet")
         EnergyFleet(energy["profile"], energy["initial_soc"])
+        if "dispatch" in profile["energy"]:
+            settings = deepcopy(profile["energy"]["dispatch"])
+            if (set(settings) != {"charger_anchors", "expected_wait_s", "angular_speed_rad_s"}
+                    or not isinstance(settings["charger_anchors"], list) or not settings["charger_anchors"]
+                    or any(not isinstance(anchor, str) or anchor not in anchors for anchor in settings["charger_anchors"])
+                    or len(set(settings["charger_anchors"])) != len(settings["charger_anchors"])):
+                raise ValueError("energy dispatch requires explicit distinct known charger-return anchors")
+            _positive(settings["expected_wait_s"], "energy expected wait")
+            _positive(settings["angular_speed_rad_s"], "energy planning angular speed")
+            energy["dispatch"] = settings
         workload["energy"] = energy
     session = {"schema_version": 1, "scenario_id": scenario_id, "profile": "development",
                "primary_evaluation": False, "scope": QUALIFICATION, "condition": profile["condition"],

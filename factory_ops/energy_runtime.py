@@ -99,6 +99,24 @@ class EnergyRuntime:
                     "virtual": True, "hardware_calibrated": False, "charging_supported": False,
                     "fault": deepcopy(fault), "scope": SCOPE}
 
+    def can_assign(self, run_id: str, robot_id: str, *, outbound_m: float,
+                   charger_return_m: float, expected_wait_s: float, nominal_speed_m_s: float,
+                   loaded: bool, expected_rotation_rad: float, observed_at_s: float) -> bool:
+        """Read-only full-trip funding gate; queries never latch observation faults."""
+        with self._lock:
+            self._identity(run_id, robot_id)
+            inputs = {"outbound_m": _si(outbound_m, "outbound distance", nonnegative=True),
+                      "charger_return_m": _si(charger_return_m, "charger return distance", nonnegative=True),
+                      "expected_wait_s": _si(expected_wait_s, "expected wait", nonnegative=True),
+                      "nominal_speed_m_s": _si(nominal_speed_m_s, "planning speed", nonnegative=True),
+                      "expected_rotation_rad": _si(expected_rotation_rad, "route rotation", nonnegative=True),
+                      "observed_at_s": _si(observed_at_s, "decision stamp", nonnegative=True)}
+            if inputs["nominal_speed_m_s"] == 0 or type(loaded) is not bool:
+                raise ValueError("planning speed must be positive and load must be boolean")
+            if self.projection(run_id, robot_id, inputs["observed_at_s"])["freshness"] != "fresh":
+                return False
+            return self._fleet.can_assign(robot_id, loaded=loaded, **inputs)
+
     def snapshot(self) -> dict[str, Any]:
         """Return detached model balances and first faults, with no sample history."""
         with self._lock:

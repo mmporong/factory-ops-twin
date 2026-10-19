@@ -23,6 +23,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from factory_ops.fleet import FleetMission, FleetOrder
 from factory_ops.material_flow import MaterialFlow
 from factory_ops.energy_runtime import EnergyRuntime
+from factory_ops.energy_dispatch import evaluate_energy_assignment
 from factory_ops.fleet_registry import FleetRegistry
 from factory_ops.callback_drain import CallbackDrain
 from factory_ops.fleet_execution import FOLLOW_PATH_NORMALIZATION, StoppedGate, make_chunk, normalize_follow_path_payload, qualify_computed_path, path_content_sha256, path_clock_ready, path_header_stamp_ns
@@ -542,6 +543,21 @@ def mission_energy_load(mission: FleetMission, material: MaterialFlow | None, ro
     return product_loaded or (empty_intent is not None and empty_intent.transition is Transition.DROP)
 
 
+def mission_energy_assignment(energy: EnergyRuntime | None, book: Any, settings: Mapping[str, Any] | None, *,
+        run_id: str, robot_id: str, current_anchor: str, pickup_station: str, drop_station: str,
+        observed_at_s: float, nominal_speed_m_s: float, closed: bool) -> dict[str, Any] | None:
+    """Funding gate used by product and empty-return ROS cost callbacks."""
+    if settings is None:
+        return None
+    if energy is None:
+        raise ValueError("configured energy dispatch requires an observation runtime")
+    return evaluate_energy_assignment(energy=energy, book=book, run_id=run_id, robot_id=robot_id,
+        current_anchor=current_anchor, pickup_station=pickup_station, drop_station=drop_station,
+        observed_at_s=observed_at_s, nominal_speed_m_s=nominal_speed_m_s, closed=closed,
+        expected_wait_s=settings["expected_wait_s"], angular_speed_rad_s=settings["angular_speed_rad_s"],
+        charger_anchors=settings["charger_anchors"])
+
+
 def dashboard_state(snapshot: Mapping[str, Any], robots: Mapping[str, Any], *,
                     sim_time_s: float, absolute_sim_time_s: float, pose_ttl_s: float,
                     material: Mapping[str, Any] | None = None, energy: EnergyRuntime | None = None) -> dict[str, Any]:
@@ -974,6 +990,7 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
         result.update(primary_trial_identity(session_root, session))
     launch = bag = ros = mission = callback_drain = None
     energy_runtime: EnergyRuntime | None = None
+    energy_dispatch_settings: Mapping[str, Any] | None = None
     material: MaterialFlow | None = None
     energy_faults: set[str] = set()
     nodes: list[Any] = []
@@ -1356,12 +1373,31 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
         if development and "energy" in session["workload"]:
             energy_config = session["workload"]["energy"]
             energy_runtime = EnergyRuntime(args.run_id, energy_config["profile"], energy_config["initial_soc"])
+            energy_dispatch_settings = energy_config.get("dispatch")
         journal("mission_started", {"origin_sim_time_s": origin, "workload_sha256": session["workload_sha256"],
                 "strategy": runtime_config["reservation_strategy"], "reservation_tracking_margin_m": runtime_config["reservation_tracking_margin_m"]})
         current_closed = session["condition"] == "closure"
         last_update = last_progress = -math.inf
         completed_at: float | None = None
         dispatch_pair_fingerprints: dict[tuple[str, str], str] = {}
+        energy_pair_fingerprints: dict[tuple[str, str], str] = {}
+
+        def assignment_energy(robot: str, task_id: str, pickup: str, drop: str) -> dict[str, Any] | None:
+            assessment = mission_energy_assignment(energy_runtime, book, energy_dispatch_settings,
+                run_id=args.run_id, robot_id=robot, current_anchor=robots[robot]["anchor"],
+                pickup_station=pickup, drop_station=drop, observed_at_s=stamp,
+                nominal_speed_m_s=load["nominal_speed_m_s"], closed=current_closed)
+            if assessment is not None:
+                # Keep fresh evidence in each recorded decision, but emit only semantic changes.
+                identity = {key: assessment[key] for key in ("allowed", "reason", "charger_anchor", "route")}
+                identity["budget_inputs"] = ({key: value for key, value in assessment["budget_inputs"].items()
+                    if key != "observed_at_s"} if assessment["budget_inputs"] else None)
+                fingerprint = canonical_sha256(identity)
+                key = (robot, task_id)
+                if energy_pair_fingerprints.get(key) != fingerprint:
+                    journal("energy_assignment_evaluated", {"robot_id": robot, "task_id": task_id, **assessment})
+                    energy_pair_fingerprints[key] = fingerprint
+            return assessment
         visual_projection: dict[str, Any] | None = None
         visual_sequence = 0
         material_revision = -1
@@ -1711,13 +1747,17 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
                         assessment = assess_dispatch_route_compatibility(book, robot_id=robot, task_id=job.task_id,
                             current_anchor=robots[robot]["anchor"], pickup_station=job.source, drop_station=job.destination,
                             closed=current_closed, reservation_radius_m=reservation_radius, reservation_snapshot=current_reservations)
-                        return assessment.pickup_distance_m if assessment.compatible else None
+                        if not assessment.compatible:
+                            return None
+                        funding = assignment_energy(robot, job.task_id, job.source, job.destination)
+                        return assessment.pickup_distance_m if funding is None or funding["allowed"] else None
                     for intent in material.dispatch(eligible, sim_time_s=elapsed, cost=empty_cost):
                         journal("empty_trip_dispatched", {"robot_id": intent.robot_id, "intent": intent.to_dict()})
                 eligible = [robot for robot in eligible if robot not in material.active_intents]
             if cutoff is None and not mission.completed:
                 route_snapshot = manager.snapshot(now_s=stamp)
                 assessments = {}
+                funding_assessments = {}
                 for task in mission.ledger.ready_tasks:
                     if not mission.ledger.can_assign(task):
                         continue
@@ -1734,13 +1774,19 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
                             reservation_snapshot=route_snapshot,
                         )
                         assessments[(robot, task.task_id)] = assessment
+                        funding = (assignment_energy(robot, task.task_id, task.pickup_station, task.drop_station)
+                                   if assessment.compatible else None)
+                        funding_assessments[(robot, task.task_id)] = funding
                         audit = assessment.to_dict()
-                        audit["decision"] = "candidate" if assessment.compatible else "excluded"
+                        funded = funding is None or funding["allowed"]
+                        audit["decision"] = "candidate" if assessment.compatible and funded else "excluded"
+                        if not funded:
+                            audit["reason"] = "energy_" + funding["reason"]
                         audit["policy"] = session["policy"]
                         audit["policy_cost_input"] = (
                             assessment.pickup_distance_m
                             + (assessment.loaded_distance_m if session["policy"] == "eta" else 0.0)
-                            if assessment.compatible else None
+                            if assessment.compatible and funded else None
                         )
                         fingerprint = hashlib.sha256(json.dumps(audit, sort_keys=True).encode("utf-8")).hexdigest()
                         key = (robot, task.task_id)
@@ -1751,6 +1797,9 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
                 def cost(robot: Any, task: Any) -> float | None:
                     assessment = assessments.get((robot.robot_id, task.task_id))
                     if assessment is None or not assessment.compatible:
+                        return None
+                    funding = funding_assessments.get((robot.robot_id, task.task_id))
+                    if funding is not None and not funding["allowed"]:
                         return None
                     distance = assessment.pickup_distance_m
                     if session["policy"] == "eta":
@@ -1765,6 +1814,7 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
                         "reason": "policy_selected_compatible_pair",
                         "policy": session["policy"],
                         "mission_goal_uuid": intent.goal_id,
+                        "energy": funding_assessments.get((intent.robot_id, intent.task_id)),
                     })
             for robot in idle_for_intents if cutoff is None else ():
                 intent = (material.active_intents.get(robot) if material is not None else None) or mission.active_intents.get(robot)
@@ -1861,6 +1911,8 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
     except BaseException as error:
         reason = failure_reason(error)
         result.update({"status": "failed", "error": {"type": type(error).__name__, "message": reason, "traceback": traceback.format_exc(limit=30)}, "actions": history})
+        if material is not None:
+            result["material_flow"] = material.snapshot()
         if energy_runtime is not None:
             result["energy"] = energy_runtime.snapshot()
         if mission is not None:

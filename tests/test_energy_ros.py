@@ -8,9 +8,10 @@ from factory_ops.dashboard import validate_snapshot
 from factory_ops.energy_runtime import EnergyRuntime
 from factory_ops.fleet import FleetMission, FleetOrder
 from factory_ops.layout import Layout
+from factory_ops.fleet_routing import RouteBook
 from factory_ops.material_flow import MaterialFlow
 from factory_ops.navigation import GoalPose, LocalizationPose, NavigationResult
-from scripts.ros.g3_mission import dashboard_state, mission_energy_load
+from scripts.ros.g3_mission import dashboard_state, mission_energy_load, mission_energy_assignment
 
 
 CONFIG = Path(__file__).resolve().parents[1] / "configs/factory-fleet4"
@@ -88,6 +89,40 @@ class EnergyRosTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             dashboard_state(snapshot, {}, sim_time_s=0, absolute_sim_time_s=0,
                 pose_ttl_s=.5, energy=self.energy)
+
+    def test_ros_mission_cost_gate_excludes_low_energy_without_mutating_the_ledger(self):
+        profile = json.loads((CONFIG / "transport-profile.json").read_text())
+        book = RouteBook.from_files(CONFIG / "layout.json", CONFIG / "g3-routing.json")
+        initial = dict(profile["energy"]["initial_soc"], carter1=.15)
+        energy = EnergyRuntime(self.mission.run_id, json.loads((CONFIG / "energy-profile.json").read_text()), initial)
+        for robot in initial:
+            energy.observe(self.mission.run_id, robot, 100, 0, 0, loaded=False)
+        before = energy.snapshot()
+        assessments = {}
+        def cost(robot, task):
+            decision = mission_energy_assignment(energy, book, profile["energy"]["dispatch"],
+                run_id=self.mission.run_id, robot_id=robot.robot_id,
+                current_anchor=profile["initial_robots"][robot.robot_id], pickup_station=task.pickup_station,
+                drop_station=task.drop_station, observed_at_s=100,
+                nominal_speed_m_s=profile["load"]["nominal_speed_m_s"], closed=False)
+            assert decision is not None
+            assessments[robot.robot_id] = decision
+            return 1. if decision["allowed"] else None
+        intents = self.mission.dispatch(0, cost)
+        self.assertTrue(intents)
+        self.assertTrue(all(intent.robot_id != "carter1" for intent in intents))
+        self.assertFalse(assessments["carter1"]["allowed"])
+        self.assertEqual("insufficient_energy", assessments["carter1"]["reason"])
+        self.assertEqual(before, energy.snapshot())
+
+    def test_ros_mission_energy_gate_preserves_legacy_and_rejects_missing_runtime(self):
+        self.assertIsNone(mission_energy_assignment(None, None, None, run_id="unused", robot_id="unused",
+            current_anchor="P1", pickup_station="S1", drop_station="CI", observed_at_s=0,
+            nominal_speed_m_s=.6, closed=False))
+        with self.assertRaisesRegex(ValueError, "observation runtime"):
+            mission_energy_assignment(None, None, {}, run_id="unused", robot_id="unused",
+                current_anchor="P1", pickup_station="S1", drop_station="CI", observed_at_s=0,
+                nominal_speed_m_s=.6, closed=False)
 
 
 if __name__ == "__main__":

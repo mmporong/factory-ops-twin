@@ -14,6 +14,8 @@ from uuid import UUID
 
 from .fleet_execution import StoppedGate
 from .fleet_transport import SOURCE_FILES, load_bundle
+from .material_evidence import validate_material_evidence
+from .navigation import GoalPose
 from .source_provenance import verify_source_archive
 
 
@@ -27,6 +29,8 @@ REQUIRED_SOURCE_FILES = frozenset({
     "scripts/isaac/g3_scene.py", "scripts/isaac/factory_visuals.py",
     "scripts/ros/g2_mission.py", "scripts/ros/g3_mission.py",
     "scripts/ros/fleet4_mission.py", "scripts/ros/fleet4.launch.py",
+    "factory_ops/material_flow.py", "factory_ops/operations/inventory.py",
+    "factory_ops/energy.py", "factory_ops/energy_runtime.py", "factory_ops/energy_dispatch.py",
 }) | {"configs/factory-fleet4/" + name for name in SOURCE_FILES}
 
 
@@ -374,7 +378,12 @@ def _orders(ros: dict[str, Any], compiled: dict[str, Any], run_id: str, handoffs
         _require(transition in ("pickup", "drop") and entry["result"]["station"] == task[transition + "_station"],
                  "handoff station/transition differs")
         transitions.add((task["task_id"], transition))
-    _require(set(accepted) == set(handoffs), "action handoff missing from accepted ledger journal")
+    business_handoffs = {key: value for key, value in handoffs.items()
+                         if value["result"]["task_id"] in snapshot["tasks"]}
+    _require(set(accepted) == set(business_handoffs), "action handoff missing from accepted ledger journal")
+    empty_ids = {"empty:" + row["order_id"] for row in compiled["session"]["workload"].get("material_flow", {}).get("materials", [])}
+    _require(all(value["result"]["task_id"] in snapshot["tasks"] or value["result"]["task_id"] in empty_ids
+                 for value in handoffs.values()), "action handoff has an undeclared task")
     participating = {entry["robot_id"] for entry in accepted.values()}
     _require(participating == set(compiled["registry"].robot_ids),
              "all four robots must participate in accepted business handoffs; parking alone is insufficient")
@@ -467,7 +476,7 @@ def validate_closed_evidence(*, bundle: Path, stage: Path, expected_run_id: str,
     report: dict[str, Any] = {"schema_version": 1, "scope": SCOPE, "passed": False,
         "run_id": expected_run_id, "source_commit": expected_source_commit, "checks": {}, "errors": [],
         "limitations": ["No bag, action transport, TF or collision qualification is performed.",
-            "Inventory and the empty-tote extension are outside this transport-only validator.",
+            "Material checks reconcile operational receipts; payload mass, contact and lifting are unverified.",
             "Motion requires positive sampled ground-truth XY distance; no minimum-distance criterion is authored.",
             "Parking uses estimated arrival tolerances; ground-truth docking accuracy is not qualified.",
             "Closure is a recorded producer assertion, not a new VM/container observation.",
@@ -506,6 +515,12 @@ def validate_closed_evidence(*, bundle: Path, stage: Path, expected_run_id: str,
                     actions = check("actions", lambda: _actions(ros, compiled, sdk["timing"]["final_sim_time_s"]))
                     if actions is not None:
                         check("orders", lambda: _orders(ros, compiled, expected_run_id, actions["handoffs"]))
+                        material_profile = compiled["session"]["workload"].get("material_flow")
+                        if material_profile is not None:
+                            station_goals = {name: GoalPose("map", compiled["book"].nodes[name][0], compiled["book"].nodes[name][1], yaw)
+                                for name, yaw in compiled["config"]["g3_runtime"]["anchor_yaw_rad"].items()}
+                            check("material", lambda: validate_material_evidence(ros, material_profile,
+                                expected_run_id, actions["handoffs"], station_goals))
                         report["checks"]["actions"]["details"] = {"follow_path_counts": actions["follow_path_counts"]}
                     check("lidars", lambda: _lidars(records, output, compiled, sdk, ros, expected_run_id))
                     check("media", lambda: _media(records, output, sdk))

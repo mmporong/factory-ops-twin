@@ -14,6 +14,6 @@
     "kind": "authored_virtual_model",
     "status": "development candidate; not measured Carter or industrial-AMR battery specifications",
     "inputs": "observed wheel odometry and separately confirmed dock contact",
-    "pending": "ROS odometry adapter authored; actual scenario validation and dock contact/charge dispatch integration pending"
+    "pending": "authored ROS dispatch reserve and odometry adapter; actual scenario, dock contact and charging control validation pending"
   }
 }

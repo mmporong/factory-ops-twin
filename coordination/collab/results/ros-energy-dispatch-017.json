@@ -1,0 +1,239 @@
+{
+  "task": "ros-energy-dispatch-017",
+  "attempt": 1,
+  "contract_revision": 17,
+  "ack": true,
+  "status": "구현·필수 회귀검사·별도 검증 패스 완료, root 수용 대기",
+  "completed_at_utc": "2026-10-19T14:29:13.6311976Z",
+  "inputs_commit_from_card": "0070ee7475728881fe8b612b517f35fbe86f08f8",
+  "owned_paths": [
+    "factory_ops/energy_runtime.py",
+    "factory_ops/energy_dispatch.py",
+    "tests/test_energy_dispatch.py",
+    "coordination/collab/results/ros-energy-dispatch-017.json"
+  ],
+  "api": [
+    "EnergyRuntime.can_assign(run_id, robot_id, *, outbound_m, charger_return_m, expected_wait_s, nominal_speed_m_s, loaded, expected_rotation_rad, observed_at_s) -> bool",
+    "evaluate_energy_assignment(*, energy, book, run_id, robot_id, current_anchor, pickup_station, drop_station, observed_at_s, nominal_speed_m_s, expected_wait_s, angular_speed_rad_s, charger_anchors, closed=False) -> dict"
+  ],
+  "api_ready": true,
+  "api_detail": {
+    "closed": "root 정정 반영: 현재 폐쇄 boolean만 수용하며 임의 폐쇄 목록·미래 정보는 받지 않는다.",
+    "result": "allowed, reason, charger_anchor, freshness, observed_sim_time_s, observation_age_s, route, budget_inputs, excluded_chargers, run_id, robot_id, scope",
+    "route": "유효한 후보가 있으면 to_pickup/to_drop/to_charger 각각 route_id/nodes/points/distance_m/closed를 제공한다. 경로·관측 미지원 시 null이다.",
+    "budget_inputs": "EnergyRuntime.can_assign의 keyword 입력 7개를 보존한다. loaded=True이며 expected_wait_s에는 회전 시간이 포함된다. stationary_wait_s/rotation_time_s/angular_speed_rad_s는 별도 설명 값이다.",
+    "selection": "복귀 거리·anchor 이름 순서의 첫 자금 수용 후보를 반환한다. 모두 부족하면 가장 짧은 복귀 후보를 진단용으로 반환한다. allowed=false인 후보는 배차 승인이 아니다.",
+    "errors": "identity/인수 오류는 ValueError, 누락·stale·future·fault 관측 및 경로/에너지 부족은 allowed=false이다.",
+    "initial_typecheck": "제품 두 파일 Pyright 0 errors, 0 warnings"
+  },
+  "constraints": "root의 ROS/config/종료 검증 파일을 편집하지 않는다. 새 에이전트·의존성·VM·Git·서비스 실행 없음.",
+  "physical_or_charging_proof": false,
+  "changed_paths": [
+    {
+      "path": "factory_ops/energy_runtime.py",
+      "sha256": "07cf3715cdf8c2c540911175ebebf5a015564a5d8dbc75ac4b49d33eb55ca84a",
+      "change": "기존 RLock 안에서 run/robot·인수·관측 신선도를 검사하는 읽기 전용 can_assign을 추가하고 EnergyFleet의 기존 자금 공식을 재사용한다. observe와 fault latch 동작은 유지한다."
+    },
+    {
+      "path": "factory_ops/energy_dispatch.py",
+      "sha256": "18f51b3adad78c4b6559eaf3e621202464e81ea76cc3c5b2e0cdf574d13e1483",
+      "change": "현재 폐쇄 boolean으로 current→pickup→drop→명시한 복귀 후보를 계획하는 순수 에너지 배차 판단 어댑터다. 비영 구간마다 pi와 최종 정렬 pi를 보수적으로 잡고 회전 시간의 idle 에너지·전 구간 loaded 계수·예비 에너지를 포함한다."
+    },
+    {
+      "path": "tests/test_energy_dispatch.py",
+      "sha256": "3c20bee6de100955eda0762cff9688156b8c31a9271ef6f42b9d9f769500ffdc",
+      "change": "EnergyFleet/RouteBook/FleetMission/MaterialFlow 본체를 사용하는 12개 회귀검사를 추가했다. ROS·VM·외부 액션은 실행하지 않는다."
+    }
+  ],
+  "result_path": "coordination/collab/results/ros-energy-dispatch-017.json",
+  "integration_usage": {
+    "business_cost": "FleetMission cost의 첫 인수는 Robot 객체다. robot.robot_id와 robot.location, task.pickup_station/task.drop_station을 어댑터에 전달한다. allowed가 false이면 cost=None으로 제외한다.",
+    "empty_cost": "MaterialFlow cost의 첫 인수는 로봇 ID 문자열이다. 현재 anchor와 job.source/job.destination을 전달한다. allowed가 false이면 cost=None으로 제외한다.",
+    "allowed_cost_example": "decision['route']['to_pickup']['distance_m'] if decision['allowed'] else None",
+    "clock": "observed_at_s는 odometry 샘플과 같은 시뮬레이션 시간축을 사용한다. 현재 anchor와 명시적 charger_anchors는 root의 관측/설정 연결 책임이다.",
+    "freshness": "결과의 freshness/age는 어댑터의 projection 조회 시점 진단이다. 최종 자금 허용은 EnergyRuntime.can_assign의 lock 안에서 관측 신선도와 fault를 다시 검사한다."
+  },
+  "validation": [
+    {
+      "command": ".venv/Scripts/python.exe -m unittest tests.test_energy_dispatch tests.test_energy_runtime -v",
+      "environment": "PYTHONDONTWRITEBYTECODE=1, 로컬 Python 3.12",
+      "exit_code": 0,
+      "tests": 24,
+      "duration_s": 3.035,
+      "result": "신규 12 + 기존 EnergyRuntime 12 모두 PASS",
+      "coverage": [
+        "전 구간/복귀/대기/회전/예비 에너지 공식의 자금 경계와 비변경성",
+        "pickup-only 허용의 오탐 차단, drop까지 자금은 있어도 복귀 비용이 부족한 경우 제외",
+        "missing/stale/future/fault 및 잘못된 run/robot·SI 인수에 대한 거절과 SOC/fault 비변경",
+        "전 구간 loaded와 알려지지 않은 yaw 회전/시간의 보수적 예산, 긴 대기/느린 회전에 따른 제외",
+        "현재 폐쇄 상태를 모든 leg에 반영, 복귀 단절 후보 제외와 다른 명시적 후보 수용, 임의 폐쇄 목록 거절",
+        "실제 FleetMission callback에서 가장 가까운 미충족 차량 제외 후 자금이 있는 차량 배정",
+        "실제 MaterialFlow의 수락된 업무 handoff로 빈 반납 job을 만든 뒤 미충족 차량 제외, 재고 보존",
+        "반환 route/budget 분리와 충전 전력 적립 없음"
+      ]
+    },
+    {
+      "command": "node C:/Users/LIMMM/AppData/Local/npm-cache/_npx/110e52990071af13/node_modules/pyright/dist/pyright.js --typeshedpath C:/Users/LIMMM/AppData/Local/npm-cache/_npx/110e52990071af13/node_modules/pyright/dist/typeshed-fallback --pythonpath .venv/Scripts/python.exe factory_ops/energy_runtime.py factory_ops/energy_dispatch.py tests/test_energy_dispatch.py",
+      "exit_code": 0,
+      "result": "0 errors, 0 warnings, 0 informations"
+    },
+    {
+      "command": ".venv/Scripts/python.exe - (표준입력의 읽기 전용 API 예시)",
+      "exit_code": 0,
+      "input": "factory-fleet4 실제 profile/RouteBook, 동일 run, fresh stamp=10, S1→S1→CI→P1/P2, speed=.65, wait=30, angular_speed=1.2, closed=False",
+      "result": "SOC .153은 insufficient_energy/allowed=false, SOC .8은 allowed=true. 둘 다 P1 진단 후보, outbound=28m, return=23m, rotation=43.982297150257104rad, 회전 포함 wait=66.65191429188093s. 판단 전후 EnergyRuntime.snapshot 동일."
+    }
+  ],
+  "verification_pass": {
+    "method": "작성 후 별도 단독 검증 패스. 독립 에이전트 승인이라고 주장하지 않는다.",
+    "checked": "두 API의 SI/identity 검증, RLock 내 freshness/fault 검사, EnergyFleet 위임, 현재 폐쇄 boolean, 후보 누락 경로 처리, 반환 값 분리, 소유 3파일의 TODO/FIXME/NotImplementedError/skip/only 검색과 최종 SHA",
+    "findings": [],
+    "unfinished_placeholders": false,
+    "initial_validation_repairs": "첫 회귀 실행에서 테스트 fixture의 FleetMission Robot 인수와 MaterialFlow ID 인수 혼동, float 신선도 경계 입력, stamp Optional 타입을 수정했다. 제품 경계는 확장하지 않았으며 수정 후 24개와 타입 검사를 통과했다."
+  },
+  "findings": [],
+  "limits": [
+    "가상 에너지의 배차 가능성 판단이다. charger_anchor는 명시된 복귀 예산 목적지이며 주차를 실제 충전기·접촉·충전 성공으로 추정하지 않는다. 충전 전력은 적립하지 않는다.",
+    "실제 ROS callback/임무·설정 연결과 종료 원본의 재고/반납 검증은 root 소유이며 이번 패스에서 편집하거나 실행하지 않았다.",
+    "현재 RouteBook의 작성된 경로와 단일 현재 폐쇄 boolean만 사용한다. 실제 Nav2 경로·traffic 승인·물리 충돌 여유·미래 장애물 상태를 보장하지 않는다.",
+    "회전은 알려지지 않은 yaw에 대한 보수적 상계이며 배차를 보수적으로 제외할 수 있다. 후보 선정은 복귀 거리 우선이며 새 플릿 최적화 정책을 추가하지 않았다."
+  ],
+  "side_effects": {
+    "edited_paths_outside_contract": [],
+    "new_dependencies": false,
+    "new_agents": false,
+    "git_operations": false,
+    "vm_gpu_cloud_execution": false,
+    "process_services_started": [],
+    "root_owned_product_edits": false
+  },
+  "root_integration_review": {
+    "ack": true,
+    "reviewer": "control",
+    "author": "root",
+    "status": "1회 한정 검수 및 ER017-001 수정 경계 재대조 완료·열린 지적 없음",
+    "assessment": "원래 메모리 재현과 지적은 보존한다. root가 수정한 두 파일에서 attempt=0, NavigationResult/LocalizationPose 재구성, 컴파일된 목표와 validate_goal_pose의 연결을 확인해 ER017-001을 소스상 해결로 판정했다. 새 전면 검수나 전체 검사는 수행하지 않았다.",
+    "source_files": [
+      {
+        "path": "scripts/ros/g3_mission.py",
+        "initial_sha256": "490de1cd80f0e5692f82bd503dd80c83ffa0b6201527d7f09a795e880d16249a",
+        "sha256": "18bfe3970bb54c26e198ecc007d6591f885e2f66e6239d5d5a026643e435dd9a",
+        "note": "검수 중 전체 파일 SHA 변경을 감지했다. 새 mission_energy_assignment/assignment_energy/두 cost와 지정 비선점·폐쇄 연결 분기를 재대조해 동일함을 확인했다. 다른 부분으로 검수를 넓히지 않았다."
+      },
+      {
+        "path": "factory_ops/fleet_transport.py",
+        "sha256": "33aefc60a7ee5272709d936d94cee169b917e1c976cdba1eeb82c15d53b14025"
+      },
+      {
+        "path": "configs/factory-fleet4/transport-profile.json",
+        "sha256": "6519c94906941ffd7ec6694311884de484ed78a11b14b6989094343cbb5d7e59"
+      },
+      {
+        "path": "factory_ops/material_evidence.py",
+        "initial_sha256": "f5d60c69a8963752e6f11e2a7e3157dc5cbb468b68e1350fbb1e9a40304bfe7e",
+        "sha256": "d3cb5679411bfa0e96277104d6da6f75f9b54b225136882a8cb90718064389f8"
+      },
+      {
+        "path": "factory_ops/fleet_transport_evidence.py",
+        "initial_sha256": "d0fc5c7cb8f34d7994f563fdd36bb6e0ac8a80cc0d8edd867e1b996b7bb79269",
+        "sha256": "221ce3aaf20010b65b21e2b591b1a73a410f2693d7077faa33ff58eaac0839c7"
+      }
+    ],
+    "checked_boundaries": [
+      {
+        "location": "scripts/ros/g3_mission.py:546",
+        "result": "설정이 있을 때 EnergyRuntime 누락은 오류로 처리한다. run_id/current_anchor/pickup/drop/현재 절대 sim stamp/nominal speed/current_closed와 dispatch 설정을 새 어댑터에 전달한다. 설정 없음의 None은 선택형 기존 동작이다."
+      },
+      {
+        "location": "scripts/ros/g3_mission.py:1157",
+        "result": "odometry의 절대 stamp와 signed 속도를 같은 run에 기록하며 업무 payload와 실제 빈 반납 DROP intent로 가상 부하를 정한다. 첫 fault 로그는 로봇별 1회다. 새 배차 판단의 절대 stamp와 origin을 뺀 ledger elapsed를 혼용하지 않는다."
+      },
+      {
+        "location": "scripts/ros/g3_mission.py:1385",
+        "result": "fingerprint에 허용/이유/충전 후보/경로와 관측 시각을 뺀 budget을 넣는다. 관측 age나 매 tick stamp만 변할 때 energy_assignment_evaluated를 다시 내보내지 않는다."
+      },
+      {
+        "location": "scripts/ros/g3_mission.py:1736",
+        "result": "물리 phase idle/leg 없음의 새 후보에만 cost를 적용한다. 기존 mission/material active intent는 별도 idle_for_intents 경로에서 다음 leg로 진행하므로 낮거나 신선하지 않은 SOC의 새 배차 거절을 기존 적재 임무 취소로 연결하지 않는다."
+      },
+      {
+        "location": "scripts/ros/g3_mission.py:1746",
+        "result": "빈 반납은 경로 호환성과 funding.allowed 둘 다 수용해야 cost를 반환한다. 업무 cost도 funding.allowed=false를 None으로 제외한다. 현재 폐쇄는 run/scenario가 맞는 scene-state의 boolean에서 갱신한다."
+      },
+      {
+        "location": "factory_ops/fleet_transport.py:176",
+        "result": "초기 SOC는 선언된 4대와 일치하고 EnergyFleet로 프로필을 검사한다. dispatch는 정확한 키, 비어 있지 않은 중복 없는 알려진 anchor 목록, 유한 양의 대기/각속도를 검사해 workload와 SHA에 포함한다. 현재 프로필은 P1/P2, wait=120s, angular=.4rad/s를 명시한다."
+      },
+      {
+        "location": "factory_ops/fleet_transport_evidence.py:380",
+        "result": "사업 handoff와 선언된 empty task를 분리하되 사업 참여 4대·사업 task별 pickup/drop·선언 외 task 거절을 유지한다. material 프로필이 있으면 accepted action handoff를 material 검증으로 전달하고 그 실패를 전체 report 오류로 남긴다."
+      },
+      {
+        "location": "factory_ops/material_evidence.py:18",
+        "result": "material run/completion/active intent, mission ledger 재생, 선언과 empty job, 수락 pickup/drop 각 1개, 로봇·스테이션·process/ready 시간, 사건 순서의 inventory 재생과 최종 snapshot/보존/빈 적재를 대조한다. 아래 지적의 NavigationResult 수락조건은 별도로 빠져 있다."
+      }
+    ],
+    "findings": [
+      {
+        "id": "ER017-001",
+        "severity": "P2",
+        "status": "resolved_in_source",
+        "title": "빈 반납 NavigationResult의 attempt와 결과 pose 수락조건을 검사하지 않아 잘못된 사건도 종료 증거로 통과",
+        "locations": [
+          "factory_ops/material_evidence.py:59",
+          "factory_ops/fleet_transport_evidence.py:338",
+          "factory_ops/fleet_transport_evidence.py:380"
+        ],
+        "evidence": "사업 task는 _orders에서 result.attempt를 task.attempt와 맞추지만 empty handoff를 분리한 뒤 material 검증에서는 로봇/스테이션/시각·두 transition만 대조한다. _actions는 action 도착 pose와 receipt/goal/clock을 검사하지만 navigation_result.pose를 검사하지 않는다. 따라서 실제 MaterialFlow가 수락할 수 없는 NavigationResult도 수락된 빈 반납 증거로 계산된다.",
+        "reproduction": {
+          "method": "기존 tests/test_fleet_transport_evidence.py의 mission_fixture(_compile(configs/factory-fleet4))를 메모리에만 생성하고 _actions→_orders→validate_material_evidence를 호출했다. 원본·제품·설정·test 파일은 쓰지 않았다.",
+          "command": "PYTHONDONTWRITEBYTECODE=1 .venv/Scripts/python.exe - (소규모 표준입력 예시, 전체 검사 아님)",
+          "baseline": "actions 수용, 사업 4건, 반납 4건, 빈 반납 수락 사건 8건, 소비 8개, conservation_replayed=true",
+          "case_1": "첫 empty:F4-001 pickup의 navigation_result.attempt만 0→999로 변경했다. 세 경계가 모두 수용하고 동일한 반납 4/사건 8 결과를 반환했다.",
+          "case_2": "첫 empty pickup의 navigation_result.pose를 frame_id=odom, x=999, y=999, stamp=-1로 변경했다. 세 경계가 모두 수용하고 동일한 반납 4/사건 8 결과를 반환했다.",
+          "exit_codes": [0, 0],
+          "physical_execution": false
+        },
+        "impact": "현재 정상 생산자가 잘못된 배차를 한다는 증거는 아니다. 종료 JSON의 수락조건이 느슨해 실제 반납 계약에 맞지 않는 결과가 재고/토트 반납 증거로 인정되는 검증 오탐이다.",
+        "minimal_recommendation": "선언된 empty intent의 attempt(현재 MaterialFlow는 0)와 결과 pose의 frame/유한 좌표/시간·스테이션 도착 조건을 기존 런타임 수락 규칙에 맞춰 대조한다. 잘못된 attempt와 pose 변조 거절 회귀만 추가한다.",
+        "resolution": {
+          "completed_at_utc": "2026-10-19T14:44:48.9738825Z",
+          "method": "019 공식 문서 확인 완료 후 두 파일의 해당 수정만 읽기 전용 재대조했다.",
+          "evidence": [
+            "factory_ops/material_evidence.py:68은 attempt의 정확한 int 타입과 값 0을 요구하므로 원래 999 변조를 거절한다.",
+            "factory_ops/material_evidence.py:70은 결과와 pose를 NavigationResult/LocalizationPose로 재구성해 해당 값 검증 경로를 사용한다.",
+            "factory_ops/material_evidence.py:71은 선언된 tote/order/robot/transition 및 station_goals의 목표로 NavigationIntent를 재구성하고 :74의 validate_goal_pose 오류를 :75에서 거절한다. 원래 foreign frame·좌표·pose 시각의 우회 경계가 이 검증에 들어간다.",
+            "factory_ops/fleet_transport_evidence.py:520은 컴파일된 book.nodes와 g3_runtime.anchor_yaw_rad로 map GoalPose를 만들고 :522에서 새 필수 station_goals 인수로 전달한다. 결과 JSON의 자가 선언 pose를 목표로 사용하지 않는다."
+          ],
+          "root_reported_tests": "정상 및 attempt/pose/frame/stamp 변조 2개 검사 PASS, 음성 6개 사례 포함",
+          "tests_rerun_by_control": false,
+          "verdict": "ER017-001 소스상 해결. 실행 검증은 root 제공 결과로 구분하며 GPU·물리 반납 검증으로 확대하지 않는다."
+        }
+      }
+    ],
+    "open_findings": [],
+    "acceptance": "지정 수정 경계에서 ER017-001 해결을 확인했다. 열린 지적 없이 root 수용을 권고하며 전체/물리 실행 승인을 뜻하지 않는다.",
+    "root_reported_validation": {
+      "ros_connection": "6 PASS",
+      "closed_evidence": "17 PASS",
+      "settings_source_existing_mission": "32 PASS",
+      "rerun_by_control": false,
+      "typing": "run_mission의 기존 Pyright complexity 오류가 유지된다는 root 보고를 보존한다. 이번 검수에서 타입 검사나 새 오류 0을 주장하지 않는다."
+    },
+    "limits": [
+      "지정 분기의 정적 검수와 종료 반납의 메모리 counterexample만 수행했다. 전체 검사·GPU·ROS·VM·실제 종료 원본·bag에 접근하지 않았다.",
+      "재현은 합성 논리 fixture이며 실제 운송·물리 적재·배터리·충전 성공을 입증하지 않는다.",
+      "root의 병렬 편집을 보존했고 다른 모듈/전체 run_mission 검수로 넓히지 않았다."
+    ],
+    "side_effects": {
+      "written_paths": ["coordination/collab/results/ros-energy-dispatch-017.json"],
+      "product_edits": false,
+      "broad_tests": false,
+      "new_agents_vm_git": false,
+      "process_services_started": []
+    },
+    "next_task": "local-gpu-compatibility-019 공식 자료 확인은 완료했다. root의 기존 4.5 contact coupon 실행은 이 검수에서 조작·검증하지 않았으며 6.2/AMR 운송 증거로 취급하지 않는다."
+  },
+  "accepted": null,
+  "acceptance_owner": "root"
+}

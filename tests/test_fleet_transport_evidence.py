@@ -18,6 +18,7 @@ from uuid import uuid4
 from factory_ops.fleet import FleetMission, FleetOrder
 from factory_ops.fleet_transport import load_bundle, prepare_bundle
 from factory_ops.fleet_transport_evidence import REQUIRED_SOURCE_FILES, SCOPE, main, validate_closed_evidence
+from factory_ops.material_flow import MaterialFlow
 from factory_ops.navigation import GoalPose, LocalizationPose, NavigationResult
 from factory_ops.operations import LedgerConfig
 
@@ -85,7 +86,7 @@ def action_record(robot: str, goal: str, target: str, pose: GoalPose, terminal: 
             "arrival_pose": {"x_m": pose.x, "y_m": pose.y, "yaw_rad": pose.yaw, "stamp_s": terminal + .6}}
 
 
-def mission_fixture(compiled: dict[str, Any], business_ids: tuple[str, ...] | None = None) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+def mission_fixture(compiled: dict[str, Any], business_ids: tuple[str, ...] | None = None) -> tuple[dict[str, Any], list[dict[str, Any]], dict[str, Any]]:
     session, config, book = compiled["session"], compiled["config"], compiled["book"]
     runtime, workload = config["g3_runtime"], session["workload"]
     goals = {name: GoalPose("map", xy[0], xy[1], runtime["anchor_yaw_rad"][name])
@@ -96,6 +97,7 @@ def mission_fixture(compiled: dict[str, Any], business_ids: tuple[str, ...] | No
         ledger_config=LedgerConfig(input_capacity=load["ci_capacity"], output_capacity=load["co_capacity"],
                                   workers=load["workers"], service_time=load["service_time_s"]),
         goal_timeout_s=workload["horizon_s"], horizon=workload["horizon_s"])
+    material = MaterialFlow(mission, workload["material_flow"])
     actions = []
     elapsed = 0.0
     fleet = business_ids or compiled["registry"].robot_ids
@@ -110,16 +112,32 @@ def mission_fixture(compiled: dict[str, Any], business_ids: tuple[str, ...] | No
                 intent.attempt, 4, elapsed,
                 LocalizationPose("map", intent.goal.x, intent.goal.y, intent.goal.yaw, elapsed))
             receipt = mission.submit_result(intent.robot_id, result, error_code=0)
+            material.business_handoff(intent, receipt)
             action = action_record(intent.robot_id, intent.goal_id, intent.station, intent.goal, elapsed + 99)
             action.update({"navigation_result": result.to_dict(), "receipt": receipt.to_dict(),
                            "handoff_sim_time_s": elapsed + 100})
             actions.append(action)
+        material.advance()
         elapsed += 1
     if not mission.completed:
         raise AssertionError("synthetic ledger fixture did not complete")
+    while not material.completed and elapsed < workload["horizon_s"]:
+        material.dispatch(list(compiled["registry"].robot_ids), sim_time_s=elapsed, cost=lambda _r, _j: 1.)
+        for intent in list(material.active_intents.values()):
+            elapsed += 3
+            result = NavigationResult(str(uuid4()), intent.goal_id, intent.task_id, intent.station,
+                intent.attempt, 4, elapsed,
+                LocalizationPose("map", intent.goal.x, intent.goal.y, intent.goal.yaw, elapsed))
+            receipt = material.submit_result(RUN_ID, intent.robot_id, result, error_code=0)
+            action = action_record(intent.robot_id, intent.goal_id, intent.station, intent.goal, elapsed + 99)
+            action.update(navigation_result=result.to_dict(), receipt=receipt, handoff_sim_time_s=elapsed + 100)
+            actions.append(action)
+        elapsed += 1
+    if not material.completed:
+        raise AssertionError("synthetic empty-return fixture did not complete")
     for robot, anchor in workload["initial_robots"].items():
         actions.append(action_record(robot, str(uuid4()), anchor, goals[anchor], elapsed + 110))
-    return mission.export(), actions
+    return mission.export(), actions, material.snapshot()
 
 
 def records_fixture(stage: Path, source_root: Path) -> str:
@@ -172,13 +190,14 @@ def records_fixture(stage: Path, source_root: Path) -> str:
         path = output / name
         path.parent.mkdir(parents=True)
         path.write_text("".join(json.dumps(r) + "\n" for r in rows), encoding="utf-8")
-    mission, actions = mission_fixture(compiled)
+    mission, actions, material = mission_fixture(compiled)
     ros: dict[str, Any] = {**identity, "status": "passed", "stage": "complete", "trial_outcome": "completed",
         "scope": session["scope"], "primary_evaluation": False, "ground_truth_input": False,
         "bundle_sha256": compiled["bundle_sha256"], "session_sha256": sha(bundle / "session.json"),
         "workload_sha256": session["workload_sha256"], "robot_ids": list(registry.robot_ids),
         "namespace_by_id": {r["robot_id"]: r["namespace"] for r in registry.definitions},
         "physical_anchor_by_robot": session["workload"]["initial_robots"], "actions": actions, "mission": mission,
+        "material_flow": material,
         "origin_sim_time_s": 100., "terminal_recording": {
             "final_stamp": {"sec": 1000, "nanosec": 0}, "final_sim_time_ns": 1_000_000_000_000,
             "final_physics_frame": 60000, "minimum_sim_time_ns": 999_000_000_000,
@@ -260,6 +279,8 @@ class ClosedEvidenceTests(unittest.TestCase):
         self.assertEqual(SCOPE, report["scope"])
         self.assertEqual(8, report["checks"]["lidars"]["details"]["sensor_count"])
         self.assertEqual(16, report["checks"]["orders"]["details"]["accepted_handoffs"])
+        self.assertEqual(4, report["checks"]["material"]["details"]["completed_returns"])
+        self.assertEqual(8, report["checks"]["material"]["details"]["accepted_empty_handoffs"])
         self.assertEqual(before, {str(p): sha(p) for p in self.stage.rglob("*") if p.is_file()})
         json.dumps(report, allow_nan=False)
 
@@ -268,10 +289,69 @@ class ClosedEvidenceTests(unittest.TestCase):
             with self.subTest(overrides=overrides):
                 self.assertFalse(self.validate(**overrides)["passed"])
 
+    def test_material_counts_flags_and_tote_locations_cannot_replace_receipts(self) -> None:
+        path = self.output / "mission-result.json"
+        original = path.read_bytes()
+        changes = [lambda r: r.pop("material_flow"),
+                   lambda r: r["material_flow"].update(run_id="foreign"),
+                   lambda r: r["material_flow"].update(completed=False),
+                   lambda r: r["material_flow"]["inventory"]["stock"][0].update(on_hand=20),
+                   lambda r: r["material_flow"]["inventory"]["totes"][0].update(location="OUT"),
+                   lambda r: r["material_flow"]["empty_trips"][0].update(destination="OUT")]
+        for change in changes:
+            with self.subTest(change=change):
+                path.write_bytes(original)
+                self.mutate("mission-result.json", change)
+                self.assert_rejected("material")
+
+    def test_missing_empty_pickup_or_return_receipt_is_rejected(self) -> None:
+        path = self.output / "mission-result.json"
+        original = path.read_bytes()
+        for transition in ("pickup", "drop"):
+            with self.subTest(transition=transition):
+                path.write_bytes(original)
+                def remove(row):
+                    index = next(i for i, action in enumerate(row["actions"])
+                        if action.get("navigation_result", {}).get("task_id") == "empty:F4-001"
+                        and action.get("receipt", {}).get("committed_transition") == transition)
+                    row["actions"].pop(index)
+                self.mutate("mission-result.json", remove)
+                self.assert_rejected("material")
+
+    def test_empty_handoff_cannot_switch_the_returning_robot(self) -> None:
+        def mutate(row):
+            job = row["material_flow"]["empty_trips"][0]
+            job["robot_id"] = next(robot for robot in row["robot_ids"] if robot != job["robot_id"])
+        self.mutate("mission-result.json", mutate)
+        self.assert_rejected("material")
+
+    def test_empty_result_attempt_frame_pose_and_age_use_runtime_arrival_rules(self) -> None:
+        from factory_ops.fleet_transport_evidence import _actions
+        from factory_ops.material_evidence import validate_material_evidence
+        compiled = load_bundle(self.bundle)
+        ros = json.loads((self.output / "mission-result.json").read_text())
+        sdk = json.loads((self.output / "fleet4-transport-scene.json").read_text())
+        goals = {name: GoalPose("map", compiled["book"].nodes[name][0], compiled["book"].nodes[name][1], yaw)
+                 for name, yaw in compiled["config"]["g3_runtime"]["anchor_yaw_rad"].items()}
+        handoffs = _actions(ros, compiled, sdk["timing"]["final_sim_time_s"])["handoffs"]
+        key = next(key for key, entry in handoffs.items() if entry["result"]["task_id"].startswith("empty:"))
+        changes = [lambda r: r.update(attempt=999),
+                   lambda r: r["pose"].update(frame_id="odom"),
+                   lambda r: r["pose"].update(x=999),
+                   lambda r: r["pose"].update(stamp=-1),
+                   lambda r: r["pose"].update(stamp=r["received_sim_time"] - 1),
+                   lambda r: r["pose"].update(stamp=r["received_sim_time"] + 1)]
+        for change in changes:
+            broken = deepcopy(handoffs)
+            change(broken[key]["result"])
+            with self.subTest(change=change), self.assertRaises(ValueError):
+                validate_material_evidence(ros, compiled["session"]["workload"]["material_flow"],
+                    RUN_ID, broken, goals)
+
     def test_fourth_robot_only_parking_is_not_business_participation(self) -> None:
         compiled = load_bundle(self.bundle)
-        mission, actions = mission_fixture(compiled, ("carter1", "carter2", "carter3"))
-        self.mutate("mission-result.json", lambda row: row.update(mission=mission, actions=actions))
+        mission, actions, material = mission_fixture(compiled, ("carter1", "carter2", "carter3"))
+        self.mutate("mission-result.json", lambda row: row.update(mission=mission, actions=actions, material_flow=material))
         report = self.validate()
         self.assertFalse(report["passed"])
         self.assertTrue(any(entry["check"] == "orders" and "parking alone" in entry["reason"]
