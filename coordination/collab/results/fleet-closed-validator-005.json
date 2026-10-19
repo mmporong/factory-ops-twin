@@ -1,0 +1,61 @@
+{
+  "task": "fleet-closed-validator-005",
+  "attempt": 1,
+  "contract_revision": 5,
+  "ack": true,
+  "status": "한정 검수 완료",
+  "input_commit": "438e44db951cb34512ed830b8a637d9824e4b60c",
+  "source_sha256": {
+    "factory_ops/fleet_bootstrap.py": "94fcd56d579e4e346cbb57320ee102396f71813915ec80289d406ad8ec6c0e1a",
+    "scripts/isaac/fleet4_scene.py": "098f2bbaf5196a583dec976ee64b3dd71d21bba37544e53f38dab08b0f2ddd0c",
+    "tests/test_fleet_bootstrap.py": "f33a49999a694990d269352af6352ff1e3c773e3d45a0acfff44ecf211d338a9"
+  },
+  "reviewed_boundaries": [
+    "SDK 종료 이후 사후 검증을 별도 CPU CLI에서 수행",
+    "실제 worker status/cleanup 및 종료 오류 판정"
+  ],
+  "verdict": "수용 권고: 검수한 두 경계에서 치명적/주요 결함 없음",
+  "accepted": null,
+  "acceptance_owner": "root",
+  "findings": [],
+  "boundary_checks": [
+    {
+      "boundary": "별도 CPU 사후 검증",
+      "locations": [
+        "scripts/isaac/fleet4_scene.py:87",
+        "scripts/isaac/fleet4_scene.py:92",
+        "factory_ops/fleet_bootstrap.py:185"
+      ],
+      "result": "SDK worker의 _run 복귀 뒤 validate_result에 의존하던 코드를 제거했다. 별도 --validate-output 모드는 --bundle과 새 --report를 요구하고 --output과 혼합을 거절한다. 검증 결과를 별도 보고서로 저장한 뒤 passed에 따라 exit0/1을 반환한다(:186-193). 기존 report 또는 report symlink는 쓰기 전에 거절하며(:188), validate_result 본문(:112-174)은 원본 결과/저널/입력을 읽어 판정한다. 기존 SDK exit0나 scene wrapper의 PASS 문자열만으로 사후 검증 성공을 대신하지 않는다."
+    },
+    {
+      "boundary": "실제 status/cleanup",
+      "locations": [
+        "factory_ops/fleet_bootstrap.py:138",
+        "tests/test_fleet_bootstrap.py:118",
+        "tests/test_fleet_bootstrap.py:139"
+      ],
+      "result": "최상위 worker status=validated와 cleanup=worker_exit_requested를 함께 요구하고, cleanup_errors 또는 close_error가 있으면 실패한다. qualification 검사도 유지한다. mission_control.status=passed(:124)는 worker status와 구분해 유지한다. 새 테스트는 정상 validated/정상 cleanup을 통과시키고 running·최상위 passed·cleanup_failed를 각각 거절한다. 기존 4대/8LiDAR·run/scenario·입력 SHA·저널 검증을 느슨하게 바꾸지 않았다."
+    }
+  ],
+  "validation": {
+    "performed": [
+      "카드의 지정 3개 SHA256 일치 확인",
+      "git diff -- 지정 3개 파일의 두 경계 및 해당 회귀 테스트 확인",
+      "결과 JSON 구문·필수 메타데이터와 소스 SHA 재대조"
+    ],
+    "tests_executed": false,
+    "cpu_cli_executed": false,
+    "gpu_executed": false,
+    "evidence_source": "실제002 SDK validated·exit0 및 폐쇄 D/E 원본에 대한 새 CPU 검증 4/8 PASS, 원본·실패 운영기록 보존은 사용자/카드 보고이다. 원본이나 원격 실행을 이번 검수에서 열거나 재검증하지 않았다."
+  },
+  "limitations": [
+    "별도 CPU CLI는 종료한 worker의 외부 호출자가 실행해야 한다. SDK 종료 후 동일 프로세스가 이를 자동 실행한다는 주장은 하지 않는다.",
+    "이번 새 테스트는 CLI 인자 조합·기존 report 보존·exit0/1 및 cleanup_errors/close_error의 실행 검증을 추가하지 않았다. 해당 분기는 코드로 확인했으며 검수자가 테스트/CLI를 실행하지 않았다.",
+    "검수 수용은 정지 센서 결과 검증의 두 수정 경계에 한정하며 4대 주행·운송·주차 성공 판정이 아니다."
+  ],
+  "side_effects": "지정 결과 JSON만 작성. 제품 소스·GPU·원격·실행 프로세스·원본·운영기록·commit/push·새 에이전트 변경 없음",
+  "written_paths": [
+    "coordination/collab/results/fleet-closed-validator-005.json"
+  ]
+}

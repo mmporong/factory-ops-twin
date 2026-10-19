@@ -135,7 +135,8 @@ def validate_result(output: Path, root: Path) -> dict[str, Any]:
                             ("fleet_bundle", "bundle.json"), ("fleet_profile", "profile.json")):
         if result.get("inputs", {}).get(input_key, {}).get("sha256") != _sha(root / name):
             errors.append(f"executed input digest differs: {input_key}")
-    if result.get("status") != "passed" or result.get("qualification") != QUALIFICATION:
+    if (result.get("status") != "validated" or result.get("cleanup") != "worker_exit_requested"
+            or result.get("cleanup_errors") or result.get("close_error") or result.get("qualification") != QUALIFICATION):
         errors.append("Isaac stationary worker did not pass")
     if set(result.get("robots", {})) != set(registry.robot_ids):
         errors.append("observed robot identities differ")
@@ -175,9 +176,23 @@ def validate_result(output: Path, root: Path) -> dict[str, Any]:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--output", required=True, type=Path)
+    parser.add_argument("--output", type=Path)
     parser.add_argument("--config", type=Path, default=DEFAULT_CONFIG)
+    parser.add_argument("--bundle", type=Path)
+    parser.add_argument("--validate-output", type=Path)
+    parser.add_argument("--report", type=Path)
     args = parser.parse_args()
+    if args.validate_output is not None:
+        if args.bundle is None or args.report is None or args.output is not None:
+            parser.error("closed-result validation requires --bundle and a new --report, without --output")
+        if args.report.exists() or args.report.is_symlink():
+            raise ValueError("preserve existing validation reports; use a new report path")
+        report = validate_result(args.validate_output, args.bundle)
+        _write(args.report, report)
+        print(json.dumps(report, ensure_ascii=False))
+        raise SystemExit(0 if report["passed"] else 1)
+    if args.output is None or args.bundle is not None or args.report is not None:
+        parser.error("input preparation requires --output")
     print(json.dumps(prepare_bundle(args.output, args.config), ensure_ascii=False))
 
 

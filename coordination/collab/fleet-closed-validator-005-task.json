@@ -1,0 +1,15 @@
+{
+  "read_sha256": {
+    "factory_ops/fleet_bootstrap.py": "94fcd56d579e4e346cbb57320ee102396f71813915ec80289d406ad8ec6c0e1a",
+    "scripts/isaac/fleet4_scene.py": "098f2bbaf5196a583dec976ee64b3dd71d21bba37544e53f38dab08b0f2ddd0c",
+    "tests/test_fleet_bootstrap.py": "f33a49999a694990d269352af6352ff1e3c773e3d45a0acfff44ecf211d338a9"
+  },
+  "contract_revision": 5,
+  "evidence": "002 actual raw SDK status validated, 4 actors/8lidars, exit0. Original wrapper report missing. Closed raw helper validation PASS4/8 using corrected status; original archive untouched.",
+  "task_id": "fleet-closed-validator-005",
+  "write_paths": [
+    "coordination/collab/results/fleet-closed-validator-005.json"
+  ],
+  "scope": "SDK 종료 후 실행되지 않는 post 검증을 별도 CPU CLI로 이동하고, 실제 worker status validated/cleanup worker_exit_requested를 검사하는 수정만 확인",
+  "attempt": 1
+}

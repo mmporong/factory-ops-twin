@@ -10,7 +10,7 @@ import sys
 from typing import Any
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
-from factory_ops.fleet_bootstrap import QUALIFICATION, SCENARIO, validate_result, verify_bundle
+from factory_ops.fleet_bootstrap import QUALIFICATION, SCENARIO, verify_bundle
 from scripts.isaac import g2_scene
 from scripts.isaac.g3_scene import BarrierLifecycle
 
@@ -89,10 +89,8 @@ def main() -> int:
                          scene_extension=FleetSmokeLifecycle(root, args.run_id),
                          extra_inputs={"fleet_bundle": root / "bundle.json", "fleet_profile": root / "profile.json",
                                        "fleet_worker_source": Path(__file__).resolve()})
-    if code == 0:
-        report = validate_result(args.output, root)
-        g2_scene._atomic_json(args.output / "fleet4-smoke-validation.json", report)
-        code = 0 if report["passed"] else 1
+    # SimulationApp.close may end the process. Validate closed output in a
+    # separate CPU process with factory_ops.fleet_bootstrap --validate-output.
     print(f"FACTORY_OPS_FLEET4_SENSOR_SMOKE={'PASS' if code == 0 else 'FAIL'}", flush=True)
     return code
 

@@ -1,0 +1,75 @@
+{
+  "run_label": "fleet4-stationary-smoke-002",
+  "run_id": "3fa995f27444dae34eef5867de2fd860",
+  "gpu_producer_commit": "438e44db951cb34512ed830b8a637d9824e4b60c",
+  "raw_archive_sha256": "01df4ce281eaf3a4e8b00ef0bc5195ac200274315493c5885e1802da508b4322",
+  "scope": "four stationary actors and eight RTX sensors; not navigation, cargo or charging qualification",
+  "closed_sensor_validation": "PASS; all eight identities have advancing GMO headers and raw ROS data",
+  "closed_stationary_validation": [
+    {
+      "robot_id": "carter1",
+      "control_samples": 273,
+      "max_abs_encoder_linear_m_s": 0.001171573256473772,
+      "max_abs_encoder_angular_rad_s": 0.0016469426024868304,
+      "nonzero_applied_commands": 0
+    },
+    {
+      "robot_id": "carter2",
+      "control_samples": 273,
+      "max_abs_encoder_linear_m_s": 0.0014034658730177668,
+      "max_abs_encoder_angular_rad_s": 0.0029329467562932807,
+      "nonzero_applied_commands": 0
+    },
+    {
+      "robot_id": "carter3",
+      "control_samples": 273,
+      "max_abs_encoder_linear_m_s": 0.0012155391327634034,
+      "max_abs_encoder_angular_rad_s": 0.0012317422153927922,
+      "nonzero_applied_commands": 0
+    },
+    {
+      "robot_id": "carter4",
+      "control_samples": 273,
+      "max_abs_encoder_linear_m_s": 0.0012248955719168552,
+      "max_abs_encoder_angular_rad_s": 0.002687726719191503,
+      "nonzero_applied_commands": 0
+    }
+  ],
+  "media": {
+    "path": "docs/images/fleet4-stationary-smoke-overview.png",
+    "sha256": "7e5e430d2e4f2f2183f470e8a5f2ba2bfa14d66c5a091f1dddf80f1202a1da86",
+    "physics_frame": 395,
+    "sim_time_s": 6.583333333333333,
+    "rgb_capture_instants": 2,
+    "rgb_camera_views": 3,
+    "captured_robot_ids": [
+      "carter1",
+      "carter2",
+      "carter3",
+      "carter4"
+    ]
+  },
+  "observed_peak_gpu_memory_mib": 6539.0,
+  "performance_scope": "sampled stationary setup only; peak RAM and full-fleet transport RTF not established",
+  "worker_timing": {
+    "final_physics_frame": 395,
+    "final_sim_time_s": 6.583333333333333,
+    "final_stamp": {
+      "nanosec": 583333333,
+      "sec": 6
+    },
+    "mission_steps": 273,
+    "physics_dt_s": 0.016666666666666666,
+    "required_zero_settle_steps": 30,
+    "settle_step_limit": 135,
+    "settle_steps": 32,
+    "sim_seconds": 4.55,
+    "wall_seconds": 105.04847304900001
+  },
+  "raw_worker_status": "validated",
+  "original_collector_outcome": "missing post-validation file; original runtime record preserved",
+  "validation_method": "separate CPU process after SDK exit, original files unchanged",
+  "validator_source_sha256": "94fcd56d579e4e346cbb57320ee102396f71813915ec80289d406ad8ec6c0e1a",
+  "validation_cli_report_sha256": "f1d6b17ce90e1cfabdb79873937ce1d183e1b0e538167958c774d783695b4298",
+  "actual_stopped_at_utc": "2026-10-19T07:18:44.482993+00:00"
+}

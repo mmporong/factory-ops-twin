@@ -1,0 +1,62 @@
+{
+  "limitations": [
+    "stationary setup only; final four-robot transport/cargo/charging incomplete",
+    "no maximum fleet size or transport RTF established",
+    "Nova Carter remains development chassis; final industrial lifting module incomplete",
+    "web remains CPU default; live four-robot mission integration not complete"
+  ],
+  "container_exit_code": 0,
+  "media": {
+    "sha256": "7e5e430d2e4f2f2183f470e8a5f2ba2bfa14d66c5a091f1dddf80f1202a1da86",
+    "image": "docs/images/fleet4-stationary-smoke-overview.png",
+    "camera_views": 3,
+    "rgb_capture_instants": 2
+  },
+  "retained_local_services": {
+    "next_cli_pid": 17272,
+    "stop_command": "Stop-Process -Id 52156,65976,17272 -ErrorAction SilentlyContinue",
+    "api_pid": 52156,
+    "url": "http://127.0.0.1:3007",
+    "reason": "사용자 관제 미리보기",
+    "next_pid": 65976
+  },
+  "cloud": {
+    "new_instance_created": false,
+    "shared_budget_cap_usd": 4,
+    "actual_stopped_at": "2026-10-19T16:18:44.482993+09:00",
+    "third_gpu_run_performed": false
+  },
+  "closed_raw_validation": {
+    "robots": 4,
+    "nonzero_applied_commands": 0,
+    "existing_report_preservation_guard": "PASS",
+    "validator_source_sha256": "94fcd56d579e4e346cbb57320ee102396f71813915ec80289d406ad8ec6c0e1a",
+    "body_samples_per_robot": 273,
+    "source_review": "coordination/collab/results/fleet-closed-validator-005.json",
+    "lidars": 8,
+    "actual_cpu_cli_executed": true,
+    "passed": true,
+    "source": "docs/evidence/fleet4-stationary-smoke-002.json"
+  },
+  "original_collector_outcome": "failed: same-process post-validation report missing; retained unchanged",
+  "attempt": 2,
+  "status": "accepted_closed_raw_sensor_validation",
+  "gpu_producer_commit": "438e44db951cb34512ed830b8a637d9824e4b60c",
+  "task_id": "fleet4-gpu-smoke-004",
+  "preservation": {
+    "controls": "10 files each on D/E, exact SHA verified",
+    "original_failed001_retained": true,
+    "raw_archive_sha256": "01df4ce281eaf3a4e8b00ef0bc5195ac200274315493c5885e1802da508b4322",
+    "copies": 2
+  },
+  "validation": {
+    "closed_encoder_recalculation": "PASSall4",
+    "new_python_typecheck": "0 errors,0 warnings",
+    "result": "PASS",
+    "real_closed_archive_cli": "PASS4/8",
+    "related_tests": 74
+  },
+  "raw_worker_status": "validated",
+  "run_id": "3fa995f27444dae34eef5867de2fd860",
+  "contract_revision": 5
+}

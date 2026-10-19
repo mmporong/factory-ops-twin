@@ -115,7 +115,7 @@ class FleetBootstrapTest(unittest.TestCase):
                   "ros": {key: 10 for key in ("odom", "tf", "scan_front_raw", "scan_rear_raw")}}
                   for i in range(1, 5)}
         lidars = [{"robot_id": robot, "name": side} for robot in robots for side in ("front", "rear")]
-        result = {"status": "passed", "qualification": QUALIFICATION, "robots": robots,
+        result = {"status": "validated", "cleanup": "worker_exit_requested", "qualification": QUALIFICATION, "robots": robots,
                   "run_id": "d" * 32, "scenario_id": SCENARIO,
                   "mission_control": {"run_id": "d" * 32, "scenario_id": SCENARIO, "status": "passed",
                                       "control_samples": {robot: 240 for robot in robots}},
@@ -136,6 +136,12 @@ class FleetBootstrapTest(unittest.TestCase):
                 for row in lidars for frame in (1, 2)]
         (output / "lidar-acquisition-events.jsonl").write_text("\n".join(json.dumps(r) for r in rows))
         self.assertTrue(validate_result(output, self.bundle)["passed"])
+        for status, cleanup in (("running", "worker_exit_requested"), ("passed", "worker_exit_requested"),
+                                ("validated", "cleanup_failed")):
+            bad = {**result, "status": status, "cleanup": cleanup}
+            path.write_text(json.dumps(bad))
+            self.assertFalse(validate_result(output, self.bundle)["passed"])
+        path.write_text(json.dumps(result))
         journal = output / "lidar-acquisition-events.jsonl"
         for field, value in (("run_id", "e" * 32), ("scenario_id", "other"), ("prim_path", "/World/Other/front")):
             bad_rows = deepcopy(rows)
