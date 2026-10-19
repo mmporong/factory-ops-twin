@@ -16,7 +16,9 @@ export default function ObservationPanel({
   const readOnly = snapshot && !snapshot.capabilities.some((action) => ["pause", "resume", "create_order"].includes(action));
   const sensorRows = snapshot?.robots.filter((robot) => robot.scan_counts && Object.keys(robot.scan_counts).length) ?? [];
   const scope = snapshot?.mode === "local_model"
-    ? "CPU 운영 원장과 경로 보간 · 물리 주행·센서 검증 미연결"
+    ? snapshot.charging
+      ? "CPU 운영·가상 배터리·기하 도킹 모델 · 물리 주행·접촉 센서 검증 미연결"
+      : "CPU 운영 원장과 경로 보간 · 물리 주행·센서 검증 미연결"
     : snapshot?.mode === "replay"
       ? "저장된 관측 재생 · 현재 실행 상태와 구분해 확인하세요."
       : snapshot

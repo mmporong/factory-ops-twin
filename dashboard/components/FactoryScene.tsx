@@ -577,12 +577,19 @@ export default memo(function FactoryScene({
         <WorkAreaMark key={area.id} rect={area.rect} />
       ))}
       <Line points={[[a + 0.15, 0.025, -b - 0.15], [c - 0.15, 0.025, -b - 0.15], [c - 0.15, 0.025, -d + 0.15], [a + 0.15, 0.025, -d + 0.15], [a + 0.15, 0.025, -b - 0.15]]} color="#8d9d9a" lineWidth={1} />
-      {showParking && Object.entries(scene.pockets).map(([id, xy]) => (
-        <group key={id} position={[xy[0], 0.04, -xy[1]]}>
-          <Line points={[[-0.65, 0, -0.7], [-0.65, 0, 0.7], [0.65, 0, 0.7], [0.65, 0, -0.7]]} color="#edf4f3" lineWidth={2} />
-          <MapLabel position={[0, 0.15, -0.9]} text={`${id} 대기`} accent="#657d8b" />
-        </group>
-      ))}
+      {showParking && Object.entries(scene.pockets).map(([id, xy]) => {
+        const dock = snapshot?.charging?.docks.find((item) => item.anchor === id);
+        return (
+          <group key={id} position={[xy[0], 0.04, -xy[1]]}>
+            <Line points={[[-0.65, 0, -0.7], [-0.65, 0, 0.7], [0.65, 0, 0.7], [0.65, 0, -0.7]]} color={dock ? "#56a188" : "#edf4f3"} lineWidth={2} />
+            {dock && <>
+              <CargoPart size={[0.22, 0.72, 0.22]} position={[0.88, 0.36, 0]} color="#647a82" />
+              <CargoPart size={[0.23, 0.06, 0.23]} position={[0.88, 0.76, 0]} color={dock.owner ? "#62d3a1" : "#c5d6d2"} />
+            </>}
+            <MapLabel position={[0, 0.15, -0.9]} text={dock ? `${dock.id} ${dock.owner ? "사용 중" : "충전대"}` : `${id} 대기`} accent={dock ? "#3c7a65" : "#657d8b"} />
+          </group>
+        );
+      })}
       {Array.from({ length: Math.floor(c - a) + 1 }, (_, i) => (
         <Line
           key={`x${i}`}

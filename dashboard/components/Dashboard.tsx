@@ -1,6 +1,7 @@
 "use client";
 import dynamic from "next/dynamic";
 import ObservationPanel from "./ObservationPanel";
+import ChargingPanel from "./ChargingPanel";
 import { inventoryDisplay, stockKey } from "../lib/inventory-display";
 import {
   Component,
@@ -411,16 +412,17 @@ export default function Dashboard() {
                 <span>
                   <strong>{r.label}</strong>
                   <small>
-                    {readable(r.status)} · {readable(r.destination)}
+                    {readable(r.status === "paused" ? r.status : r.charging_phase ?? r.status)} · {readable(r.destination)}
                   </small>
                 </span>
                 <span className="robot-battery">
-                  {r.battery_pct === null ? "SOC 미연결" : `${r.battery_source === "authored_virtual_energy_model" ? "가상 " : ""}${r.battery_pct.toFixed(1)}%`}
+                  {r.battery_pct === null ? "SOC 미연결" : `${r.battery_source.startsWith("authored_") ? "가상 " : ""}${r.battery_pct.toFixed(1)}%`}
                   <span aria-hidden="true">↗</span>
                 </span>
               </button>
             )) ?? <p className="empty">AMR 상태를 기다리고 있습니다.</p>}
           </div>
+          <ChargingPanel snapshot={snapshot} stale={stale} />
         </div>
         <section className="command-section" aria-label="운영 조작">
           <div className="section-heading">
@@ -533,12 +535,12 @@ export default function Dashboard() {
           </p>
           {robot && (
             <>
-              <span className="status-pill" data-state={robot.status}>{readable(robot.status)}</span>
+              <span className="status-pill" data-state={robot.status === "paused" ? robot.status : robot.charging_phase ?? robot.status}>{readable(robot.status === "paused" ? robot.status : robot.charging_phase ?? robot.status)}</span>
               <dl>
                 <Pair label="현재 작업">
                   {robot.task_label ?? readable(robot.task_id)}
                 </Pair>
-                <Pair label="작업 종류">{readable(robot.task_type)}</Pair>
+                <Pair label="작업 종류">{robot.task_type === "charging" ? "충전 운영" : readable(robot.task_type)}</Pair>
                 <Pair label="목적지">{readable(robot.destination)}</Pair>
                 <Pair label="적재물">{robot.payload_id ?? "없음"}</Pair>
                 <Pair label="속도">
@@ -554,15 +556,19 @@ export default function Dashboard() {
                 <Pair label="배터리">
                   {robot.battery_pct === null
                     ? "미연결"
-                    : `${robot.battery_source === "authored_virtual_energy_model" ? "가상 " : ""}${robot.battery_pct.toFixed(1)}%`}
+                    : `${robot.battery_source.startsWith("authored_") ? "가상 " : ""}${robot.battery_pct.toFixed(1)}%`}
                 </Pair>
                 <Pair label="배터리 원천">
                   {robot.battery_source === "unavailable"
                     ? "미연결"
                     : robot.battery_source === "authored_virtual_energy_model"
                       ? "엔코더 기반 가상 에너지 · 실물 보정 전"
+                      : robot.battery_source === "authored_cpu_virtual_energy_model"
+                        ? "CPU 이동 기반 가상 에너지 · 물리 검증 전"
                       : robot.battery_source}
                 </Pair>
+                {robot.charging_phase && <Pair label={robot.status === "paused" ? "정지 전 충전 단계" : "충전 단계"}>{readable(robot.charging_phase)}</Pair>}
+                {robot.charging_dock && <Pair label="충전대">{robot.charging_dock}</Pair>}
                 <Pair label="map 위치">
                   {robot.pose
                     ? `${robot.pose.x_m.toFixed(2)}, ${robot.pose.y_m.toFixed(2)} m`
@@ -676,7 +682,7 @@ export default function Dashboard() {
                     .map((t) => (
                       <tr key={t.id}>
                         <td>
-                          <strong>{readable(t.type)}</strong>
+                          <strong>{t.type === "charging" ? "충전 운영" : readable(t.type)}</strong>
                           <small>
                             {t.order_id} · {t.id}
                           </small>
@@ -701,6 +707,7 @@ export default function Dashboard() {
                         </td>
                         <td>
                           <span className="status-pill" data-state={t.state}>
+                            {snapshot?.paused && (t.type === "charging" || t.type === "undocking") ? "일시정지 · " : ""}
                             {readable(t.state)}
                           </span>
                           {t.progress !== null && (

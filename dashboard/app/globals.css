@@ -681,6 +681,30 @@ summary {
   max-height: 140px;
   overflow: auto;
 }
+.charging-panel {
+  margin: 16px 0 0;
+  padding: 16px 22px;
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  min-width: 0;
+}
+.charging-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.charging-heading h2 { margin: 0; font-size: 16px; }
+.charging-heading p { margin: 5px 0 12px; color: var(--muted); font-size: 11px; }
+.charging-heading > span { color: #286957; font-size: 12px; }
+.charging-slots { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr)); gap: 12px; }
+.charging-slot { display: grid; gap: 6px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 10px; }
+.charging-slot.occupied { border-color: #a1cbbb; background: #f6fcf9; }
+.charging-slot > div:first-child { display: flex; gap: 8px; align-items: baseline; }
+.charging-slot strong { font-size: 13px; }
+.charging-slot small { color: var(--muted); font-size: 11px; }
+.charging-slot > span { font-size: 13px; }
+.charge-meter { display: flex; align-items: center; gap: 12px; }
+.charge-meter meter { flex: 1; min-width: 40px; accent-color: #3f8f73; }
+.charge-meter span { font-size: 12px; font-variant-numeric: tabular-nums; }
+.charge-queue { color: var(--muted); font-size: 12px; overflow-wrap: anywhere; }
+@media (max-width: 640px) { .charging-panel { padding: 14px; } }
 .observation-panel {
   margin: 0 28px 20px;
   padding: 16px 22px 0;

@@ -1,0 +1,90 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-10-19T14:16:55.375709+00:00",
+  "scope": "actual browser captures of optional CPU model; no Isaac physics/ROS/contact proof",
+  "run_id": "web-local-model-0352758f-ea53-44d2-be18-a591d9ec1e4b",
+  "base_commit": "4a1d875579396a6298d1320c414b09b67b1b8c44",
+  "base_commit_is_current_producer_commit": false,
+  "source_hash_method": "SHA256 of UTF-8 file bytes normalized CRLF to LF; uncommitted source captured by hashes",
+  "source_files": [
+    {
+      "path": "factory_ops/dashboard.py",
+      "canonical_lf_sha256": "097227eb967981a1bf23a8767b2cc41b5df29942b797d852c1049ed2fa427d46"
+    },
+    {
+      "path": "factory_ops/dashboard_model.py",
+      "canonical_lf_sha256": "6021f9315e78f070d32fb9e267fb0dc08b242cbd1f99faa619553022179e8af9"
+    },
+    {
+      "path": "factory_ops/dashboard_charging.py",
+      "canonical_lf_sha256": "d04c4357d755cfcf834e890978e67a98bba5e57dc8d125a0ade16e7f4e694446"
+    },
+    {
+      "path": "factory_ops/energy.py",
+      "canonical_lf_sha256": "89689894565e850ef3ef3242fceb636afcf14fc330b083a8080d372d4f6d3be1"
+    },
+    {
+      "path": "factory_ops/charging.py",
+      "canonical_lf_sha256": "8a207ac2844a94f299f88d2f0bb5960b4cfcb927128d4b4b32e1288f59a5ffb5"
+    },
+    {
+      "path": "configs/web-charging-model.json",
+      "canonical_lf_sha256": "75d4196cb12f73f54cb4803c5e0f23253d72be109079fe61cb91e40cc8c30f0c"
+    },
+    {
+      "path": "dashboard/components/Dashboard.tsx",
+      "canonical_lf_sha256": "1da666c3c03998d80b8823020161846109aedd0bff8d8cf31536a0c49d437a4d"
+    },
+    {
+      "path": "dashboard/components/ChargingPanel.tsx",
+      "canonical_lf_sha256": "7c0055fab53feb36194d94c4208bdf2e7e33c6b55518838ecd2193f1eec266b1"
+    },
+    {
+      "path": "dashboard/components/FactoryScene.tsx",
+      "canonical_lf_sha256": "1b8336b874d34e8b3bb096f930693a4bd63a5367f35ad46a69863e318a7fd6ce"
+    },
+    {
+      "path": "dashboard/components/ObservationPanel.tsx",
+      "canonical_lf_sha256": "dd88abd7d2ffad5fe7919f890b340888bc4ff34a78666532cb6ce0b352a3d3ea"
+    },
+    {
+      "path": "dashboard/lib/types.ts",
+      "canonical_lf_sha256": "59f31d52874a6e4852831cae9b264936b344660648eb017dd6c452a151292583"
+    },
+    {
+      "path": "dashboard/app/globals.css",
+      "canonical_lf_sha256": "785c292aae1fd50e7cce4455b2135fe237efb2742c3a3079dbf40e99d384d389"
+    }
+  ],
+  "media": [
+    {
+      "path": "dashboard/evidence/charging-operation-desktop.jpg",
+      "bytes": 284304,
+      "sha256": "86863e1473aa35e7440f9e1714a58c71adad2eb23c0664635f4d42877d310d48"
+    },
+    {
+      "path": "dashboard/evidence/charging-operation-mobile.jpg",
+      "bytes": 164163,
+      "sha256": "4f25434bd53b01fb23bfe586735edfc6aef2365d470396086aef4ca2409d3e19"
+    }
+  ],
+  "observed_amr4_charge": {
+    "first_sim_time_s": 84.59399999998277,
+    "last_sim_time_s": 137.89100000000326,
+    "first_pct": 18.46277510402273,
+    "last_pct": 19.684164687356876,
+    "dock": "CH1",
+    "source": "authored_cpu_virtual_energy_model"
+  },
+  "browser_checks": {
+    "pause_applied_revision": 1,
+    "resume_applied_revision": 2,
+    "mobile_inner_width": 390,
+    "mobile_scroll_width": 375,
+    "viewport_reset": true,
+    "console_errors_warnings": []
+  },
+  "physical_proof": false,
+  "gpu_proof": false,
+  "new_cloud_instance_created": false
+}

@@ -6,8 +6,10 @@ from datetime import datetime, timezone
 from functools import lru_cache
 import math
 from pathlib import Path
-from typing import Any, cast
+from typing import Any, Mapping, cast
+from uuid import uuid4
 
+from .dashboard_charging import DashboardCharging, SCOPE as CHARGING_SCOPE, move_path
 from .fleet_routing import RouteBook
 from .operations import Command, EventId, Ledger, OrderState, Stage, Transition, choose_fifo
 from .operations.inventory import InventoryLedger
@@ -16,9 +18,9 @@ from .operations.inventory import InventoryLedger
 class DashboardModel:
     """Reuse the operation ledger; route motion is illustrative CPU interpolation."""
 
-    def __init__(self, config: Path) -> None:
+    def __init__(self, config: Path, *, charging_profile: Mapping[str, Any] | None = None) -> None:
         self.book = RouteBook.from_files(config / "layout.json", config / "g3-routing.json")
-        self.ledger = Ledger("web-local-model")
+        self.ledger = Ledger(f"web-local-model-{uuid4()}")
         tote_ids = [f"T{i:03}" for i in range(1, 17)]
         self.inventory = InventoryLedger({(s, "sensor-kit"): 20 for s in ("S1", "S2", "S3")},
                                          tote_ids, tote_locations={
@@ -45,6 +47,7 @@ class DashboardModel:
             self._poses[key] = {"x_m": x, "y_m": y, "yaw_rad": 0.0}
         for source in ("S1", "S2", "S3", "S1"):
             self.create_order({"source": source})
+        self.charging = DashboardCharging(self, charging_profile) if charging_profile is not None else None
 
     @lru_cache(maxsize=128)
     def _route(self, start: str, goal: str) -> tuple[tuple[float, float], ...]:
@@ -87,25 +90,38 @@ class DashboardModel:
 
     def _trip(self, robot_id: str, task: Any, start: str, goal: str, phase: str,
               *, kind: str = "order") -> None:
-        self._trips[robot_id] = {"task": task, "phase": phase, "goal": goal,
+        self._trips[robot_id] = {"task": task, "phase": phase, "start": start, "goal": goal,
                                  "kind": kind,
                                  "points": deque(self._route(start, goal)[1:])}
+        if self.charging is not None:
+            self.charging.denied.discard(robot_id)
 
     def _dispatch(self) -> None:
         while True:
             available = [r for r in self.ledger.robots.values() if r.robot_id not in self._trips
-                         and r.available and r.task_id is None and r.payload_id is None]
+                         and r.available and r.task_id is None and r.payload_id is None
+                         and (self.charging is None or self.charging.available(r.robot_id))]
             if not available:
                 return
-            assignment = choose_fifo(self.ledger.ready_tasks, available,
-                                     lambda r, t: self.book.plan(self._locations[r.robot_id], t.pickup_station).distance_m,
+            def cost(robot: Any, task: Any) -> float | None:
+                if self.charging is not None and not self.charging.can_assign(self, robot.robot_id, task.pickup_station, task.drop_station):
+                    return None
+                return self.book.plan(self._locations[robot.robot_id], task.pickup_station).distance_m
+            assignment = choose_fifo(self.ledger.ready_tasks, available, cost,
                                      feasible=self.ledger.can_assign)
             returns = sorted((t for t in self._return_tasks.values() if t["state"] == "ready"),
                              key=lambda t: (t["ready_time_s"], t["id"]))
             order_task = self.ledger.tasks[assignment.task_id] if assignment else None
-            if returns and (order_task is None or returns[0]["ready_time_s"] <= order_task.ready_time):
-                return_task = returns[0]
-                robot = min(available, key=lambda r: (
+            return_choice = None
+            for pending in returns:
+                candidates = [r for r in available if self.charging is None or self.charging.can_assign(
+                    self, r.robot_id, pending["source"], pending["destination"])]
+                if candidates:
+                    return_choice = (pending, candidates)
+                    break
+            if return_choice and (order_task is None or return_choice[0]["ready_time_s"] <= order_task.ready_time):
+                return_task, candidates = return_choice
+                robot = min(candidates, key=lambda r: (
                     self.book.plan(self._locations[r.robot_id], return_task["source"]).distance_m, r.robot_id))
                 return_task.update(state="assigned", robot_id=robot.robot_id)
                 self._trip(robot.robot_id, return_task, self._locations[robot.robot_id], return_task["source"],
@@ -139,6 +155,15 @@ class DashboardModel:
             raise ValueError("model step must be between zero and one second")
         if self.paused or dt == 0:
             return
+        if self.charging is None:
+            self._advance_step(dt)
+        else:
+            steps = max(1, math.ceil(dt / self.charging.max_step_s))
+            for _ in range(steps):
+                self._advance_step(dt / steps)
+
+    def _advance_step(self, dt: float) -> None:
+        before = {r: dict(p) for r, p in self._poses.items()} if self.charging is not None else {}
         self.sim_time += dt
         self.ledger.advance(self.sim_time)
         for order in self.ledger.orders.values():
@@ -154,8 +179,13 @@ class DashboardModel:
                     "payload_id": request["tote_id"], "ready_time_s": self.sim_time, "progress": None}
                 self._event("material_consumed", f"{order.order_id} 자재 {request['quantity']}개 소비 · 빈 토트 회수 요청", None)
         for robot_id, trip in list(self._trips.items()):
+            if self.charging is not None and robot_id in self.charging.faults:
+                continue
             pose = self._poses[robot_id]
             distance_left = 0.65 * dt  # Authored CPU display speed, not a measured AMR response.
+            if self.charging is not None:
+                move_path(pose, trip["points"], dt, self.charging.profile["speed_m_s"], self.charging.profile["angular_speed_rad_s"])
+                distance_left = 0
             while trip["points"] and distance_left > 0:
                 x, y = trip["points"][0]
                 dx, dy = x - pose["x_m"], y - pose["y_m"]
@@ -191,7 +221,13 @@ class DashboardModel:
                 del self._trips[robot_id]
                 self._locations[robot_id] = task.drop_station
                 self._event("drop", f"{robot_id} {task.drop_station} 인계 확인", robot_id)
+        if self.charging is not None:
+            self.charging.move(self, dt)
+            self.charging.record(self, dt, before)
+            self.charging.prepare(self)
         self._dispatch()
+        if self.charging is not None:
+            self.charging.prepare(self)
 
     def snapshot(self) -> dict[str, Any]:
         stock = cast(dict[str, Any], self.inventory.snapshot())
@@ -218,12 +254,33 @@ class DashboardModel:
                            "waiting_reason": "작업 일시정지" if self.paused and trip else None,
                            "route": [{"x_m": x, "y_m": y} for x, y in trip["points"]] if trip else [],
                            "observed_sim_time_s": self.sim_time})
+            if self.charging is not None:
+                row = robots[-1]
+                row.update(self.charging.robot_snapshot(robot_id))
+                row["speed_mps"] = 0. if self.paused else self.charging.speeds[robot_id]
+                auxiliary = self.charging.aux.get(robot_id)
+                phase = row["charging_phase"]
+                if auxiliary or phase == "queued":
+                    row.update(task_id=f"charge:{robot_id}", task_type="undocking" if phase == "undocking" else "charging",
+                               task_label="CPU 출구 이동" if phase == "undocking" else "CPU 가상 충전",
+                               destination=auxiliary["goal"] if auxiliary else None,
+                               route=[{"x_m": x, "y_m": y} for x, y in auxiliary["points"]] if auxiliary else [],
+                               status="paused" if self.paused else "moving" if row["speed_mps"] else "waiting",
+                               waiting_reason="작업 일시정지" if self.paused else f"CPU 충전: {phase}")
+                if phase == "fault":
+                    row.update(status="waiting", waiting_reason="CPU 가상 에너지 오류")
+                elif robot_id in self.charging.denied and trip is None and phase is None:
+                    row.update(waiting_reason="CPU 에너지·충전 복귀 예산 부족")
         tasks = [{"id": t.task_id, "order_id": t.order_id, "type": t.stage.value, "state": t.status.value,
                   "robot_id": t.robot_id, "source": t.pickup_station, "destination": t.drop_station,
                   "payload_id": t.payload_id, "progress": 1 if t.status.value == "complete" else None}
                  for t in self.ledger.tasks.values()]
         tasks.extend(dict(t) for t in self._return_tasks.values())
-        return {"schema_version": 1, "run_id": self.ledger.run_id, "revision": self.revision,
+        if self.charging is not None:
+            tasks.extend({"id": f"charge:{r}", "order_id": "", "type": "undocking" if t["phase"] == "undocking" else "charging",
+                          "state": t["phase"], "robot_id": r, "source": self._locations[r], "destination": t["goal"],
+                          "payload_id": None, "progress": None} for r, t in self.charging.aux.items())
+        result = {"schema_version": 1, "run_id": self.ledger.run_id, "revision": self.revision,
                 "mode": "local_model", "sim_time_s": self.sim_time,
                 "observed_at": datetime.now(timezone.utc).isoformat(), "connection": "connected",
                 "paused": self.paused, "capabilities": ["pause", "resume", "create_order"],
@@ -234,3 +291,8 @@ class DashboardModel:
                          "stock_units": sum(s["on_hand"] for s in stock["stock"])},
                 "events": list(self._events), "commands": [],
                 "model_scope": "CPU ledger and authored route interpolation; no physics, traffic clearance, battery or real MES"}
+        if self.charging is not None:
+            result["charging"] = self.charging.snapshot()
+            result["model_scope"] = CHARGING_SCOPE + "; operational ledger load, no real MES or traffic clearance"
+            result["kpis"]["active_robots"] += len(self.charging.aux)
+        return result

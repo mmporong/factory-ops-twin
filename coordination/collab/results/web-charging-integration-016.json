@@ -1,0 +1,310 @@
+{
+  "task": "web-charging-integration-016",
+  "attempt": 1,
+  "contract_revision": 15,
+  "ack": true,
+  "status": "출구 홀드 병목 수정·관련 검증 완료, root 수용 대기",
+  "owned_paths": [
+    "factory_ops/dashboard_model.py",
+    "factory_ops/dashboard_charging.py",
+    "configs/web-charging-model.json",
+    "tests/test_dashboard_charging.py",
+    "coordination/collab/results/web-charging-integration-016.json"
+  ],
+  "profile_path": "configs/web-charging-model.json",
+  "api": "DashboardModel(config, *, charging_profile=None)",
+  "physical_proof": false,
+  "gpu_proof": false,
+  "accepted": null,
+  "acceptance_owner": "root",
+  "changed_paths": [
+    {
+      "path": "factory_ops/dashboard_model.py",
+      "sha256": "6021f9315e78f070d32fb9e267fb0dc08b242cbd1f99faa619553022179e8af9"
+    },
+    {
+      "path": "factory_ops/dashboard_charging.py",
+      "sha256": "d04c4357d755cfcf834e890978e67a98bba5e57dc8d125a0ade16e7f4e694446"
+    },
+    {
+      "path": "configs/web-charging-model.json",
+      "sha256": "75d4196cb12f73f54cb4803c5e0f23253d72be109079fe61cb91e40cc8c30f0c"
+    },
+    {
+      "path": "tests/test_dashboard_charging.py",
+      "sha256": "fa9cc7b291f8d67cb6885d4a0b6037b8fa8d9ff88146f4d94d98ec9534a8c242"
+    }
+  ],
+  "command_revision": "motion/energy tick은 command revision을 올리지 않는다. applied 명령의 revision 갱신은 기존 API가 담당한다.",
+  "root_reported_fix": {
+    "issue": "tick마다 revision 증가로 polling 사이 CAS pause/resume 거절",
+    "change": "optional advance()의 revision += 1 제거. 실제 .2s/.1s 이동·SOC 변화와 동일 events/command revision 회귀 검사 PASS"
+  },
+  "profile_api": "DashboardModel(config, *, charging_profile=json.loads(profile_path.read_text()))",
+  "completed_at_utc": "2026-10-19T14:07:42.707540+00:00",
+  "result_path": "coordination/collab/results/web-charging-integration-016.json",
+  "inputs_commit_from_card": "4a1d875579396a6298d1320c414b09b67b1b8c44",
+  "implementation": [
+    "선택형 CPU 충전 프로필과 EnergyFleet/ChargingFleet 연결. profile=None은 기존 동작과 battery_pct=null을 유지한다.",
+    "작업·빈 토트 반납 배차 전 픽업/운송/충전소 복귀/대기/회전/예비 에너지를 검사한다. 이미 적재한 운송은 완료 후 충전한다.",
+    "4대/2슬롯 충전 예약과 큐는 유지한다. 충전 중에는 공용 출구를 점유하지 않고 실제 출차 직전에만 출구 홀드를 획득하며 패드 밖 정지·분리 완료 후 해제한다.",
+    "정지와 dt=0에서 시간·경로·SOC·충전 상태를 동결하고 최대 1초 입력을 에너지 관측 간격 이내로 나눈다.",
+    "CPU 가상 SOC, 충전 원천, 보조 작업, 슬롯 소유권과 큐를 snapshot에 노출한다."
+  ],
+  "run_identity": {
+    "location": "factory_ops/dashboard_model.py:24",
+    "format": "web-local-model-{uuid4()}",
+    "change": "Ledger 생성 인수에서 인스턴스별 UUID를 생성한다. 초기 로봇/주문/사건 생성보다 먼저 설정하며 기존 ledger/event를 사후 변경하지 않는다.",
+    "regression": "root API의 두 모델 run_id 분리 및 각 ledger.replay_matches() 검사 PASS"
+  },
+  "validation": [
+    {
+      "command": ".venv/Scripts/python.exe -m unittest tests.test_dashboard_charging tests.test_dashboard_model tests.test_dashboard_charging_api -v",
+      "environment": "PYTHONDONTWRITEBYTECODE=1, Python 3.12.13",
+      "exit_code": 0,
+      "tests": 19,
+      "duration_s": 11.246,
+      "result": "19 PASS: 충전 모델 12(신규 검사 2개 포함), 기존 모델 2, root API 5",
+      "coverage": "출구 병목 보완, 업무/빈 반납 current leg 배출, 기존 충전 lifecycle/재접촉·조기 해제 방지, 4대/2슬롯, 에너지 예산·적재 비선점·재고/토트 보존, CAS·UUID·HTTP pause/resume"
+    },
+    {
+      "command": "node C:/Users/LIMMM/AppData/Local/npm-cache/_npx/110e52990071af13/node_modules/pyright/dist/pyright.js --typeshedpath C:/Users/LIMMM/AppData/Local/npm-cache/_npx/110e52990071af13/node_modules/pyright/dist/typeshed-fallback --pythonpath .venv/Scripts/python.exe factory_ops/dashboard_model.py factory_ops/dashboard_charging.py tests/test_dashboard_charging.py",
+      "exit_code": 0,
+      "result": "0 errors, 0 warnings, 0 informations"
+    },
+    {
+      "check": "별도 검증 패스: prepare()의 출구 홀드 제거, current leg 판정, 출차 획득 및 기존 정지/분리 해제 경계 재확인. 미구현 TODO/FIXME/NotImplementedError/skip/only 검색.",
+      "result": "새 미해결 사항 및 미구현 일치 없음; 최종 제품/테스트 SHA 재계산"
+    }
+  ],
+  "root_boundary_review": {
+    "mode": "작성 패스와 분리한 1회 한정 읽기 전용 검증; 독립 에이전트 승인이 아님",
+    "source_files": [
+      {
+        "path": "factory_ops/dashboard.py",
+        "sha256": "097227eb967981a1bf23a8767b2cc41b5df29942b797d852c1049ed2fa427d46"
+      },
+      {
+        "path": "tests/test_dashboard_charging_api.py",
+        "sha256": "31ff01c6b4012f112f0281edaec6a91bf16267e27026c5f11a231704e0bf6e7f"
+      },
+      {
+        "path": "scripts/brev/fleet4_cloud_run.py",
+        "sha256": "bf1710b5b779c56b7002e46532cd1a70a50fe427dcf9d670f60109f4bc85d6cb"
+      },
+      {
+        "path": "tests/test_fleet4_gcp_target.py",
+        "sha256": "e22dec105179e0a6b4c972fd5012dfde87ee379d6e1332366e8bae84fda951de"
+      }
+    ],
+    "source_stable_through_validation": true,
+    "scope": [
+      "dashboard.py의 선택형 프로필 CLI/API 전달, live/replay 격리, 충전 소유권 검증, 명령 CAS와 run 분리",
+      "fleet4_cloud_run.py의 GCP 대상 설정과 CLI 전달, 대상/불변 이미지/attestation/시간·예산 사전 검증"
+    ],
+    "findings": [],
+    "assessment": "해당 연결 경계에서 추가 실제 통합 오류가 재현되지 않았다. root 제공 API/GCP 관련 7개 검사를 포함해 통과했다.",
+    "execution_boundary": "GCP 검사에서는 외부 command와 Git 조회를 mock했다. 실제 caller.main, Brev/SSH/VM/Git 명령은 실행하지 않았다.",
+    "limits": [
+      "GCP 이미지·attestation의 실제 존재 및 클라우드 실행은 미검증이다.",
+      "브라우저와 preview API 재시작·최종 수용은 root가 수행한다."
+    ],
+    "validated_at_utc": "2026-10-19T13:59:36.656842+00:00"
+  },
+  "findings": [],
+  "unresolved_limits": [
+    "SOC와 접촉은 작성한 CPU 가상 에너지/기하 조건이다. 실제 배터리·충전기·물리 적재·ROS 관측 또는 GPU 성공 증거가 아니다.",
+    "출구 홀드는 새 배차를 제한하는 CPU 운영 제약이며 물리 충돌/교통 안전 검증을 대신하지 않는다.",
+    "CLI/UI 연결과 실제 브라우저 검수는 root 소유다. 이번 패스에서 브라우저·preview 프로세스는 변경하지 않았다."
+  ],
+  "processes": {
+    "persistent_started": [],
+    "temporary": "HTTP 회귀 테스트의 임시 loopback 서버는 finally에서 shutdown/server_close/thread.join으로 정리했다.",
+    "preview": "기존 preview API/Next 서버는 조작하지 않았다."
+  },
+  "side_effects": {
+    "new_dependencies": false,
+    "new_agents": false,
+    "git_operations": false,
+    "vm_gpu_cloud_execution": false,
+    "root_product_edits": false
+  },
+  "validation_history": [
+    {
+      "completed_at_utc": "2026-10-19T13:59:36.656842+00:00",
+      "changed_paths": [
+        {
+          "path": "factory_ops/dashboard_model.py",
+          "sha256": "81dd873e1254d283f6eb3b661f7a9cd31087701df501ab29742d6c0470ab86cf"
+        },
+        {
+          "path": "factory_ops/dashboard_charging.py",
+          "sha256": "4ed8fcf004d2eaf9d92af5feb300c0a8f03084bb8212efa16ad1c5458ebdb468"
+        },
+        {
+          "path": "configs/web-charging-model.json",
+          "sha256": "75d4196cb12f73f54cb4803c5e0f23253d72be109079fe61cb91e40cc8c30f0c"
+        },
+        {
+          "path": "tests/test_dashboard_charging.py",
+          "sha256": "b78eeece5bbe02138c8fc279373830e3f50d1e897faec3c359e871d5a8a34415"
+        }
+      ],
+      "validation": [
+        {
+          "command": ".venv/Scripts/python.exe -m unittest tests.test_dashboard_charging tests.test_dashboard_model tests.test_dashboard_charging_api tests.test_fleet4_gcp_target -v",
+          "environment": "PYTHONDONTWRITEBYTECODE=1, Python 3.12.13",
+          "exit_code": 0,
+          "tests": 19,
+          "duration_s": 10.94,
+          "result": "19 PASS: 충전 모델 10, 기존 모델 2, root API 5, GCP 대상 설정 2",
+          "evidence": [
+            "저SOC 실제 CPU 경로→정렬/접촉 유지→SOC 증가→퇴거→작업 복귀와 재고·토트 보존",
+            "4대/2슬롯 대기·독점, 적재 운송 비선점, 전체 경로 예비 에너지 거절과 빈 반납 거절",
+            "접촉/정렬 부족 시 충전 금지, 퇴거 중 재접촉 시 슬롯/출구 홀드 유지",
+            "최대 dt substep, pause 동결, snapshot 분리, profile=None 호환",
+            "이동/SOC tick 후 revision 보존 및 이전 snapshot revision의 HTTP pause/resume applied",
+            "API 재시작 모델별 UUID run_id 분리와 ledger 재생 일치",
+            "live/replay에 CPU profile 혼합 거절, 충전 소유권 projection 오류 거절",
+            "GCP 대상·불변 이미지/attestation·실행 시간/예산 일치 및 잘못된 입력의 상태 변경 전 거절"
+          ]
+        },
+        {
+          "command": "node C:/Users/LIMMM/AppData/Local/npm-cache/_npx/110e52990071af13/node_modules/pyright/dist/pyright.js --typeshedpath C:/Users/LIMMM/AppData/Local/npm-cache/_npx/110e52990071af13/node_modules/pyright/dist/typeshed-fallback --pythonpath .venv/Scripts/python.exe factory_ops/dashboard_model.py factory_ops/dashboard_charging.py tests/test_dashboard_charging.py",
+          "exit_code": 0,
+          "result": "0 errors, 0 warnings, 0 informations"
+        },
+        {
+          "check": "별도 검증 패스: 소유 파일의 미구현 placeholder/skip 검색과 advance/Ledger 초기화 경계 재확인",
+          "result": "미구현 TODO/FIXME/NotImplementedError/skip/only 일치 없음; 최종 SHA 기록"
+        }
+      ],
+      "note": "출구 홀드 병목 보완 전 검증 기록 보존"
+    }
+  ],
+  "exit_hold_followup": {
+    "requested_by": "root 브라우저/코드 검수",
+    "completed_at_utc": "2026-10-19T14:07:42.707540+00:00",
+    "scope": [
+      "factory_ops/dashboard_charging.py",
+      "factory_ops/dashboard_model.py",
+      "tests/test_dashboard_charging.py",
+      "coordination/collab/results/web-charging-integration-016.json"
+    ],
+    "changes": [
+      "prepare()의 슬롯 예약 시 출구 홀드 획득을 제거했다.",
+      "_trip()에 현재 leg 시작점을 보존한다. 출차 시 peer의 현재 leg 시작/목적지 경로가 출구를 포함하면 업무·빈 반납 구분 없이 undock_pending 상태로 패드에서 대기한다. 이미 출구를 지나도 해당 leg가 끝날 때까지 기다린다.",
+      "현재 leg가 비워지면 undocking 경로 생성 직전에 출구 홀드를 얻는다. 이후 새 배차의 출구 경유를 제한하며, 기존 패드 밖 정지·분리 유지 시간과 fresh release 검증을 통과한 뒤에만 홀드를 해제한다."
+    ],
+    "added_tests": [
+      {
+        "name": "test_charging_does_not_hold_exit_or_block_default_s1_s2_dispatch",
+        "result": "기본 CH1 충전 중 출구 홀드가 없고 추가 S1/S2 주문 둘 다 다른 차량에 배정됨"
+      },
+      {
+        "name": "test_undock_waits_on_pad_until_current_business_or_empty_peer_leg_finishes",
+        "result": "업무/빈 반납 두 하위 사례에서 목표 SOC 도달 후 패드 정지·슬롯 소유·충전량 동결·출구 미점유를 유지하고, 실제 current leg 완료 후 출구 홀드를 얻어 출차함"
+      }
+    ],
+    "reproduction": {
+      "command": ".venv/Scripts/python.exe -m unittest tests.test_dashboard_charging.DashboardChargingTests.test_charging_does_not_hold_exit_or_block_default_s1_s2_dispatch tests.test_dashboard_charging.DashboardChargingTests.test_undock_waits_on_pad_until_current_business_or_empty_peer_leg_finishes -v",
+      "before_fix": "exit 1: 2개 검사 실패(두 번째 검사의 업무/빈 반납 하위 사례 포함). M_LOW가 충전 중 점유되어 정상 경유 leg가 배정되지 않음.",
+      "after_fix": "exit 0: 2 PASS, 1.401초"
+    },
+    "existing_test_adjustment": "병목 해소 후 다른 3대가 충전 중 기본 backlog를 끝내므로 amr-4에 남은 주문이 반드시 배정된다는 기존 시간순서 가정을 제거했다. 충전·퇴거·토트/재고 보존 검사는 유지하고, 해제된 amr-4의 배차 가능성과 전체 S1→CI 운송 에너지 수용을 검사한다.",
+    "intermediate_validation": "기존 시간순서 가정 1건 실패 후 위 검사 기대를 수정했다. 최종 관련 19개 전부 통과.",
+    "findings": [],
+    "limits": "이 출구 홀드는 CPU 경로/운영 모델 제약이며 실제 충돌·Nav2·물리 충전 검증이 아니다."
+  },
+  "root_ui_boundary_review": {
+    "ack": true,
+    "reviewer": "control",
+    "author": "root",
+    "mode": "지정 UI 6파일 1회 읽기 전용 검수 후, root가 수정한 2파일의 해당 분기만 재대조",
+    "completed_at_utc": "2026-10-19T14:14:33.3528148Z",
+    "assessment": "UI016-001 수정 경계를 정적으로 확인했다. 지정 범위의 열린 지적은 없다. 브라우저 정지/재개 및 타입 검사는 root가 수행한다.",
+    "source_files": [
+      {
+        "path": "dashboard/components/ChargingPanel.tsx",
+        "initial_sha256": "3c21236c21b1358950711daa51ddd0e9f0741479383985bb307e435479a9d594",
+        "sha256": "7c0055fab53feb36194d94c4208bdf2e7e33c6b55518838ecd2193f1eec266b1",
+        "rechecked": "일시정지 접두어와 배터리 원천별 meter aria 분기만 재대조"
+      },
+      {
+        "path": "dashboard/components/Dashboard.tsx",
+        "initial_sha256": "40058d35d7ca8795b9a6d9f7b3fdb5ee97867530353b0462f0c4815b98e2b246",
+        "sha256": "e1efb4bb5d2b7ebe7d412536d338e98df9c0d4c3724fd1d2cf1746e3b0a456e7",
+        "rechecked": "AMR 목록/상세 상태 우선순위, 정지 전 단계 설명, 충전/출차 작업행 접두어만 재대조"
+      },
+      {
+        "path": "dashboard/components/FactoryScene.tsx",
+        "sha256": "79bb3ab4cf9b579b6bca74a73ad2895c0483ed2e88197308f2fdc2c81f095ef9"
+      },
+      {
+        "path": "dashboard/components/ObservationPanel.tsx",
+        "sha256": "dd88abd7d2ffad5fe7919f890b340888bc4ff34a78666532cb6ce0b352a3d3ea"
+      },
+      {
+        "path": "dashboard/lib/types.ts",
+        "sha256": "59f31d52874a6e4852831cae9b264936b344660648eb017dd6c452a151292583"
+      },
+      {
+        "path": "dashboard/app/globals.css",
+        "sha256": "bb1ac27f1dd29641348a02dd9f0ec0a22be3ce0415b0371697517e9e68fda2bf"
+      }
+    ],
+    "checked_boundaries": [
+      "charging 선택 항목 누락과 null SOC를 보존하는 타입·렌더 분기, CPU/원천 표시, 충전 슬롯 소유자·큐·단계 투영",
+      "충전 상태와 AMR 선택 상세/목록 연결, API charging.docks.anchor와 scene.pockets 대조, map x,y→Three x,0,-y 변환",
+      "capabilities·stale·sending의 명령 제한, pending 결과 추적, run_id 변경 시 화면 명령 상태 초기화와 지연 응답 억제",
+      "충전 CSS, 목록 대체 경로·포커스·reduced motion·client-only/WebGL 실패 경계의 정적 확인"
+    ],
+    "findings": [
+      {
+        "id": "UI016-001",
+        "severity": "P2",
+        "status": "resolved_in_source",
+        "title": "일시정지 상태보다 충전 단계를 우선해 현재 충전이 진행 중인 것처럼 표시",
+        "original_locations": [
+          "dashboard/components/Dashboard.tsx:415",
+          "dashboard/components/Dashboard.tsx:538",
+          "dashboard/components/ChargingPanel.tsx:25"
+        ],
+        "evidence": "paused=true, robot.status=paused, charging_phase=charging인 상태에서 기존 목록/상세는 charging_phase를 우선하여 '충전 중'을 표시하고 슬롯도 dock.phase만 표시했다. 상단/대기 이유의 일시정지 표시와 충돌했다. 정적 렌더 분기로 확인했으며 브라우저를 실행하지 않았다.",
+        "root_response": "root가 지적을 수용하고 두 UI 파일을 수정했다.",
+        "resolution_evidence": [
+          "Dashboard.tsx:415,538에서 status===paused를 charging_phase보다 우선한다. 따라서 paused+charging 입력은 목록/상세 모두 일시정지로 표시하고 data-state도 paused가 된다.",
+          "Dashboard.tsx:570은 정지 중 상세 필드를 '정지 전 충전 단계'로 표시하므로 보존된 phase와 현재 정지를 구분한다.",
+          "Dashboard.tsx:710은 snapshot.paused일 때 charging/undocking 작업행에 '일시정지 · '를 붙인다.",
+          "ChargingPanel.tsx:25는 점유 슬롯에 snapshot.paused일 때 '일시정지 · '를 붙이며, 빈 슬롯은 일시정지로 오표시하지 않는다.",
+          "ChargingPanel.tsx:28은 battery_source가 authored_로 시작할 때만 meter aria에 '가상'을 붙여 바로 아래 SOC 표시와 원천 구분을 일치시킨다."
+        ],
+        "verification": "두 파일의 해당 변경 분기와 최신 SHA만 재확인했다. 이 지적은 소스 경계에서 해결되었으며 런타임 승인으로 확대하지 않는다."
+      }
+    ],
+    "open_findings": [],
+    "root_reported_validation": {
+      "exit_hold_followup": "root가 관련 31개 검사 PASS로 회수했다고 전달했다. 이번 검수에서 재실행하지 않았다.",
+      "ui": "root가 브라우저 정지/재개 검증 및 타입 검사를 맡는다. 이번 패스의 실행 결과로 주장하지 않는다."
+    },
+    "limitations": [
+      "소스 분기 검수다. 브라우저·WebGL·반응형 픽셀·스크린리더·네트워크 경쟁 상황의 실행 재현은 하지 않았다.",
+      "6개 지정 UI 파일 이외의 API/ROS/충전 엔진을 새로 검수하지 않았다. run_id 화면 초기화 확인을 서버 측 실행 간 명령 격리 검증으로 확대하지 않는다.",
+      "CPU 가상 SOC/기하 도킹 표시 확인이며 물리 주행·배터리·접촉·적재·충전 성공 증거가 아니다."
+    ],
+    "current_operational_constraint": {
+      "instruction": "신규 GCP 생성 취소, 기존 환경만 사용",
+      "user_reported_state": "Brev ls에 g0 하나 STOPPED/UNHEALTHY",
+      "user_reported_followup": "GCP 코드/테스트는 사용자 취소에 따라 root가 원복했다. 앞선 GCP 관련 검증은 과거 이력이며 현재 실행 계획으로 사용하지 않는다.",
+      "independently_queried": false
+    },
+    "side_effects": {
+      "written_paths": ["coordination/collab/results/web-charging-integration-016.json"],
+      "product_edits": false,
+      "tests_typecheck_build_executed": false,
+      "browser_or_application_process_started": false,
+      "git_vm_gpu_cloud_operations": false,
+      "new_agents": false
+    }
+  }
+}

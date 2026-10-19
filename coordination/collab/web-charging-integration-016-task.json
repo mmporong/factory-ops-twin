@@ -1,0 +1,35 @@
+{
+  "task_id": "web-charging-integration-016",
+  "attempt": 1,
+  "contract_revision": 15,
+  "owner": "control",
+  "inputs_commit": "4a1d875579396a6298d1320c414b09b67b1b8c44",
+  "goal": "Make charging/reservation/energy-aware assignment visibly work in optional CPU web model while AWS unavailable; preserve explicit nonphysical scope",
+  "write_paths": [
+    "factory_ops/dashboard_model.py",
+    "factory_ops/dashboard_charging.py",
+    "configs/web-charging-model.json",
+    "tests/test_dashboard_charging.py",
+    "coordination/collab/results/web-charging-integration-016.json"
+  ],
+  "read_paths": [
+    "factory_ops/energy.py",
+    "factory_ops/charging.py",
+    "factory_ops/dashboard.py",
+    "tests/test_dashboard_model.py",
+    "configs/factory-v4/g3-runtime.json",
+    "configs/factory-v4/g3-routing.json"
+  ],
+  "contract": [
+    "You are not alone in the codebase. Root owns dashboard.py, TSX/types/UI, README/docs and Git; do not revert or edit those. No new agents, dependencies, VM, Git, source/archive deletion.",
+    "Add optional DashboardModel(config, *, charging_profile: Mapping[str,Any] | None=None). None preserves existing CPU behavior and SOC null. Root will expose an opt-in CLI profile flag and wire UI.",
+    "Reuse EnergyFleet and ChargingFleet. Define authored virtual profile using existing600Wh/600W/45W/0.05Wh/m/0.015Wh/rad/reserve.15; trigger.20,resume.25; amr1..3 initialSOC .85/.8/.75,amr4 .18. Existing P1/P2 named dock anchors; provenance is authored CPU geometry/motion, never odometry or physical contact. Exact profile structure can be owned by you.",
+    "CPU interpolation consumes signed path delta/time+turn/idle with load from accepted inventory/ledger. dt up to1 public API must substep <=max energy observation gap. Pause/dt0 produce no time/motion/energy/charge. No fabricated ROS sensor observations.",
+    "Before assigning product or empty-return task, include pickup+delivery+charger return+wait/turn reserve in feasibility. Do not start a task that cannot finish and return. Finish existing loaded trip before charging. Reserve exclusive charger, queue excess robots without business assignment, no dock sharing.",
+    "Charge lifecycle: actual CPU approach route -> alignment/stationarity -> separately computed authored geometric pad contact dwell -> charging -> targetSOC -> undock route -> outside pad and stationary -> slot release. Nav arrival alone cannot add charge. Recontact/movement must not release early. Return/exit anchor held through undock completion. No pose teleport for docking.",
+    "Snapshot robot optional fields charging_phase:string|null,charging_dock:string|null; battery_source authored_cpu_virtual_energy_model. Top-level charging object: {scope:string,docks:[{id:string,anchor:string,owner:string|null,phase:string}],queue:[robotID]}. Charging/undocking are auxiliary tasks and product/empty cargo state stays coherent. Model_scope must explicitly say CPU virtual battery/geometric docking, no physics/contact/ROS evidence.",
+    "Meaningful tests must exercise optional model lifecycle end-to-end: lowSOC goes to dock, SOC rises only after dwell/stop/contact, undock then returns to work, queue and exclusive2slots/4robots, loaded trip not preempted, reserve refusal, pause freezing, inventory and tote conservation. Existing legacy tests remain valid without profile.",
+    "Return receipt ACK/task/attempt/revision, exact changed paths+SHA, test command/exit/results, unresolved limits. Core implementation first; no broad review expansion. Root will review once and integrate API/UI."
+  ],
+  "completion": "Optional CPU web model visibly operates charging/energy-aware assignment with deterministic end-to-end tests and honest nonphysical telemetry; no actual GPU/contact success claim"
+}

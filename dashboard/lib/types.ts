@@ -19,6 +19,8 @@ export type Robot = {
   scan_counts?: Record<string, number>;
   odom_count?: number;
   navigation_phase?: string;
+  charging_phase?: string | null;
+  charging_dock?: string | null;
 };
 export type Task = {
   id: string;
@@ -83,6 +85,11 @@ export type Snapshot = {
     robot_id: string | null;
   }[];
   commands: Command[];
+  charging?: {
+    scope: string;
+    docks: { id: string; anchor: string; owner: string | null; phase: string }[];
+    queue: string[];
+  };
 };
 export type Scene = {
   layout_revision: string;
@@ -152,6 +159,16 @@ export const statusNames: Record<string, string> = {
   returning: "반납 중",
   consumed: "소비 완료",
   started: "진행 중",
+  charge: "충전",
+  charging: "충전 중",
+  queued: "충전 대기",
+  approach: "충전대 접근",
+  aligning: "도킹 정렬",
+  contact_pending: "접촉 확인",
+  undock_pending: "분리 준비",
+  undocking: "충전대 이탈",
+  ready_to_leave: "출차 준비",
+  fault: "확인 필요",
 };
 export const readable = (value: string | null | undefined) =>
   value ? (stationNames[value] ?? statusNames[value] ?? value) : "없음";

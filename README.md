@@ -50,15 +50,24 @@ OpenUSD 자산·운영 상태와 데이터 입력을 연결하고, Omniverse Kit
 
 `dashboard/`의 Next.js·React Three Fiber 화면은 공장 배치, AMR 선택 상세, 작업·적재물·경로·재고와 운영 이벤트를 보여줍니다. Python 운영 API가 상태를 제공하고 주문 생성·일시정지·재개의 결과를 확정합니다. 기본 실행은 기존 운영 원장·유한 재고·작성된 경로를 사용하는4대 CPU 모델입니다. 공급·출하와 빈 토트 회수를 공용 차량에 시간순으로 배정합니다. 투입 자재를 소비하면 빈 토트를 CI에서 원래 자재 위치로 반납하며, 도착 후 다음 주문에 재사용합니다. 제품 LOT와 토트 ID를 분리해 같은 용기로 여러 주문을 처리합니다. 이 화면의 이동은 경로 보간이며 Isaac Sim 물리·센서 검증 결과와 구분합니다. SOC 원천이 연결되지 않은 차량은 배터리를 미연결로 표시합니다.
 
-![4대 CPU 운영 모델의 웹 관제 화면](dashboard/evidence/isaac-observation-desktop.jpg)
+![4대 CPU 운영 모델의 물류·가상 충전 관제 화면](dashboard/evidence/charging-operation-desktop.jpg)
 
-실행 중인 웹 화면을 캡처한 미리보기입니다. Isaac Sim 렌더나4대 물리 검증 자료는 아닙니다. 관측 패널에서 실행 ID·시뮬레이션 시계·데이터 지연·공장 배치와 주차면을 확인할 수 있습니다. 원천에 없는 LiDAR·Nav2·물리 적재·종료 검증·Stop은 미연결로 표시합니다. 재고 박스와 빈 토트는 원장 수량을 보여주는 도식이며 실제 포장 위치나 접촉 측정값을 뜻하지 않습니다.
+실행 중인 웹 화면을 캡처한 미리보기입니다. 물류 작업과 빈 토트 반납, CH1/CH2 충전대 점유·대기열·가상 SOC를 같은 원장에서 확인합니다. 관측 패널은 실행 ID·시뮬레이션 시계·데이터 지연·공장 배치와 주차면을 보여줍니다. 원천에 없는 LiDAR·Nav2·물리 적재·종료 검증·Stop은 미연결로 표시합니다. 재고 박스와 빈 토트는 원장 수량을 보여주는 도식이며, 이 화면은 Isaac Sim 렌더나 물리 접촉 검증 자료가 아닙니다.
+
+촬영 시 실행 ID·원천 파일·미디어 해시는 [촬영 명세](dashboard/evidence/charging-operation-manifest.json)에 보관합니다.
 
 PowerShell 터미널 두 개에서 실행합니다.
 
 ```powershell
 cd "$HOME/factory-ops-twin"
 uv run python -m factory_ops.dashboard
+```
+
+가상 배터리와 충전 운영을 함께 보려면 API를 다음 옵션으로 실행합니다. 저전력 차량은 작업+충전대 귀환 예비량을 확인한 뒤 충전대 예약·접근·정렬·기하 접촉 대기·충전·이탈을 거쳐 업무로 돌아옵니다. 두 충전대의 점유와 대기열, 차량별 가상 SOC를 웹에서 확인할 수 있습니다. 이 옵션은 CPU 모델용이며 물리 접촉 센서나 Isaac Sim 충전 검증 결과가 아닙니다. 기본 모델과 외부 live/replay 원천에 자동으로 적용하지 않습니다.
+
+```powershell
+cd "$HOME/factory-ops-twin"
+uv run python -m factory_ops.dashboard --web-charging-profile configs/web-charging-model.json
 ```
 
 ```powershell

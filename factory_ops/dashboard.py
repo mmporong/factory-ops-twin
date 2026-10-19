@@ -75,6 +75,9 @@ def validate_snapshot(value: Any) -> dict[str, Any]:
         for key in ("pose_source", "navigation_phase"):
             if key in robot and not isinstance(robot[key], str):
                 raise ValueError("robot observation source must be a string")
+        for key in ("charging_phase", "charging_dock"):
+            if key in robot and robot[key] is not None and not isinstance(robot[key], str):
+                raise ValueError("robot charging identity must be a string or null")
         if "scan_counts" in robot and (not isinstance(robot["scan_counts"], dict)
                 or any(not isinstance(key, str) or type(count) is not int or count < 0
                        for key, count in robot["scan_counts"].items())):
@@ -90,6 +93,36 @@ def validate_snapshot(value: Any) -> dict[str, Any]:
         soc = robot.get("battery_pct")
         if soc is not None and (type(soc) not in (int, float) or not math.isfinite(soc) or not 0 <= soc <= 100):
             raise ValueError("battery must be observed or null")
+    if "charging" in value:
+        charging = value["charging"]
+        if (not isinstance(charging, dict) or not isinstance(charging.get("scope"), str)
+                or not isinstance(charging.get("docks"), list) or not isinstance(charging.get("queue"), list)):
+            raise ValueError("charging projection requires scope, docks and queue")
+        docks, owners, anchors = set(), set(), set()
+        for dock in charging["docks"]:
+            if (not isinstance(dock, dict) or any(not isinstance(dock.get(key), str) or not dock[key]
+                    for key in ("id", "anchor", "phase")) or dock["id"] in docks or dock["anchor"] in anchors):
+                raise ValueError("charging docks require distinct identities and anchors")
+            if "owner" not in dock:
+                raise ValueError("charging slot ownership must be explicit")
+            owner = dock["owner"]
+            if owner is not None and (not isinstance(owner, str) or owner not in ids or owner in owners):
+                raise ValueError("charging slot owner differs from the fleet or owns two slots")
+            docks.add(dock["id"])
+            anchors.add(dock["anchor"])
+            if owner is not None:
+                owners.add(owner)
+        queue = charging["queue"]
+        if any(not isinstance(robot, str) or robot not in ids for robot in queue) or len(queue) != len(set(queue)):
+            raise ValueError("charging queue must contain distinct declared robots")
+        if owners & set(queue):
+            raise ValueError("a charging slot owner cannot also be queued")
+        for robot in value["robots"]:
+            dock_id = robot.get("charging_dock")
+            if dock_id is not None and not any(d["id"] == dock_id and d.get("owner") == robot["id"] for d in charging["docks"]):
+                raise ValueError("robot charging dock does not match slot ownership")
+    elif any(robot.get("charging_dock") is not None for robot in value["robots"]):
+        raise ValueError("robot charging ownership requires a dock projection")
     for key in ("tasks", "events", "commands", "capabilities"):
         if not isinstance(value.get(key), list):
             raise ValueError(f"snapshot {key} must be a list")
@@ -133,12 +166,15 @@ def validate_snapshot(value: Any) -> dict[str, Any]:
 
 
 class DashboardService:
-    def __init__(self, config: Path, *, source: Path | None = None, outbox: Path | None = None) -> None:
+    def __init__(self, config: Path, *, source: Path | None = None, outbox: Path | None = None,
+                 charging_profile: dict[str, Any] | None = None) -> None:
+        if source is not None and charging_profile is not None:
+            raise ValueError("CPU charging profile cannot modify a live/replay source")
         self.lock = threading.RLock()
         self.scene = json.loads((config / "layout.json").read_text(encoding="utf-8"))
         self.scene["layout_revision"] = self.scene["revision"]
         self.source, self.outbox = source, outbox
-        self.model = DashboardModel(config) if source is None else None
+        self.model = DashboardModel(config, charging_profile=charging_profile) if source is None else None
         self._last: dict[str, Any] | None = None
         self._receipts: dict[str, dict[str, Any]] = {}
         self._fingerprints: dict[str, str] = {}
@@ -283,8 +319,15 @@ def main() -> None:
     parser.add_argument("--port", type=int, default=8765)
     parser.add_argument("--source", type=Path, help="atomically published live/replay JSON; never rosbag SQLite")
     parser.add_argument("--commands-dir", type=Path, help="simulator command outbox; absent means read-only")
+    parser.add_argument("--web-charging-profile", type=Path,
+                        help="optional authored CPU energy/geometric docking model; never applied to live/replay")
     args = parser.parse_args()
-    service = DashboardService(args.config, source=args.source, outbox=args.commands_dir)
+    if args.source is not None and args.web_charging_profile is not None:
+        parser.error("--web-charging-profile is available only in the local CPU model")
+    charging_profile = (json.loads(args.web_charging_profile.read_text(encoding="utf-8"))
+                        if args.web_charging_profile is not None else None)
+    service = DashboardService(args.config, source=args.source, outbox=args.commands_dir,
+                               charging_profile=charging_profile)
     server = make_server(service, args.port)
     stopping = threading.Event()
 
