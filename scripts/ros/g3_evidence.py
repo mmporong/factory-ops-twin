@@ -675,6 +675,7 @@ def validate_controller_trace_observations(
         rpp_ends: list[Mapping[str, Any]] = []
         stock_rpp_ends: list[Mapping[str, Any]] = []
         terminal_stop_confirmations: dict[int, Mapping[str, Any]] = {}
+        terminal_stop_by_action: dict[int, list[Mapping[str, Any]]] = defaultdict(list)
         goal_tolerance_sequences = {row["event_sequence"] for row in goal_rows
                                     if row["event"] == "get_tolerances"}
         goal_checks = [row for row in goal_rows if row["event"] == "is_goal_reached"]
@@ -772,6 +773,7 @@ def validate_controller_trace_observations(
                                         if accepted <= confirmation["stamp_ns"] <= terminal]
                 if confirmation_matches != matches or confirmation["reset_epoch"] != row["plan_epoch"]:
                     raise ValueError(f"{robot} terminal stop confirmation binds a different goal")
+                terminal_stop_by_action[matches[0]].append(row)
             rpp_bound.add(matches[0])
         expected_actions = {index for index, _, _ in episodes[robot]}
         if bound_actions != expected_actions or rpp_bound != expected_actions:
@@ -785,9 +787,41 @@ def validate_controller_trace_observations(
             if (abs(row["db_timestamp_ns"] - point["db_timestamp_ns"]) > RPP_PAIR_MAX_DB_GAP_NS
                     or abs(row["db_timestamp_ns"] - rotation["db_timestamp_ns"]) > RPP_PAIR_MAX_DB_GAP_NS):
                 raise ValueError(f"{robot} RPP compute/diagnostic database pairing is stale")
+        terminal_stop_acceptances = []
+        for action_index, candidates in terminal_stop_by_action.items():
+            candidate = max(candidates, key=lambda row: row["event_sequence"])
+            later_checks = [row for row in goal_checks
+                            if row["event_sequence"] > candidate["event_sequence"]
+                            and row["reset_epoch"] == candidate["plan_epoch"]]
+            if not later_checks:
+                continue
+            acceptance = min(later_checks, key=lambda row: row["event_sequence"])
+            acceptance_matches = [index for index, accepted, terminal in episodes[robot]
+                                  if accepted <= acceptance["stamp_ns"] <= terminal]
+            check = acceptance.get("check", {})
+            if (acceptance_matches != [action_index]
+                    or acceptance["event_sequence"] != candidate["event_sequence"] + 1
+                    or check.get("terminal_stop_enabled") is not True
+                    or check.get("base_result") is not True
+                    or check.get("velocity_stopped") is not True
+                    or check.get("terminal_candidate") is not False
+                    or check.get("effective_result") is not True):
+                continue
+            terminal_stop_acceptances.append({
+                "action_index": action_index,
+                "plan_epoch": candidate["plan_epoch"],
+                "candidate_ros_stamp_ns": candidate["stamp_ns"],
+                "candidate_event_sequence": candidate["event_sequence"],
+                "stopped_ros_stamp_ns": acceptance["stamp_ns"],
+                "stopped_event_sequence": acceptance["event_sequence"],
+                "zero_twist": True,
+                "prior_terminal_candidate": True,
+                "stopped_acceptance": True,
+            })
         reports[robot] = {"goal_checker_events": len(goal_rows), "rpp_compute_calls": len(rpp_ends),
                           "stock_rpp_compute_calls": len(stock_rpp_ends),
                           "terminal_stop_compute_calls": len(terminal_stop_confirmations),
+                          "terminal_stop_acceptances": terminal_stop_acceptances,
                           "follow_path_episode_count": len(expected_actions),
                           "shared_event_sequence_closed": True,
                           "goal_checker_pose_stamp_available": False}
@@ -812,6 +846,7 @@ def _validate_observation_storage_order(rows: Sequence[Mapping[str, Any]], label
 
 def validate_rpp_action_observations(
     actions: Sequence[Mapping[str, Any]], bag: Mapping[str, Any], errors: list[str],
+    controller_trace_report: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Bind decoded RPP diagnostics to each robot's accepted FollowPath episode."""
     episodes: dict[str, list[dict[str, Any]]] = {robot: [] for robot in ROBOTS}
@@ -900,14 +935,48 @@ def validate_rpp_action_observations(
                 )
                 last_stamp_s = last_point["header"]["stamp_ns"] / 1e9
                 age = episode["terminal_sim_time_s"] - last_stamp_s
-                if not 0 <= age <= RPP_TERMINAL_OBSERVATION_MAX_AGE_S:
-                    raise ValueError(f"{robot} FollowPath terminal has no adjacent lookahead sample")
                 episode_rotations = [(index, row) for index, row in enumerate(rotations)
                                      if rotation_episode.get(index) == episode_index]
                 terminal_rotations = [(index, row) for index, row in episode_rotations
                                       if rotation_point.get(index) == last_point_index]
                 if not episode_rotations or not terminal_rotations:
                     raise ValueError(f"{robot} FollowPath episode has no paired rotation-state sample")
+                terminal_observation = {"source": "lookahead_pair"}
+                if not 0 <= age <= RPP_TERMINAL_OBSERVATION_MAX_AGE_S:
+                    trace_robots = (controller_trace_report or {}).get("robots", {})
+                    robot_trace = trace_robots.get(robot, {}) if isinstance(trace_robots, Mapping) else {}
+                    proofs = robot_trace.get("terminal_stop_acceptances", []) if isinstance(
+                        robot_trace, Mapping,
+                    ) else []
+                    if not isinstance(proofs, list):
+                        proofs = []
+                    matching = [proof for proof in proofs if isinstance(proof, Mapping)
+                                and proof.get("action_index") == episode["action_index"]]
+                    if len(matching) != 1:
+                        raise ValueError(f"{robot} FollowPath terminal has no adjacent lookahead or terminal-stop acceptance")
+                    proof = matching[0]
+                    candidate_ns = proof.get("candidate_ros_stamp_ns")
+                    stopped_ns = proof.get("stopped_ros_stamp_ns")
+                    candidate_sequence = proof.get("candidate_event_sequence")
+                    stopped_sequence = proof.get("stopped_event_sequence")
+                    terminal_ns = round(episode["terminal_sim_time_s"] * 1e9)
+                    if (type(proof.get("plan_epoch")) is not int
+                            or proof["plan_epoch"] != episode_index + 1
+                            or type(candidate_ns) is not int or type(stopped_ns) is not int
+                            or type(candidate_sequence) is not int or type(stopped_sequence) is not int
+                            or proof.get("zero_twist") is not True
+                            or proof.get("prior_terminal_candidate") is not True
+                            or proof.get("stopped_acceptance") is not True
+                            or stopped_sequence != candidate_sequence + 1
+                            or not last_point["header"]["stamp_ns"] <= candidate_ns <= stopped_ns <= terminal_ns
+                            or terminal_ns - stopped_ns > round(RPP_TERMINAL_OBSERVATION_MAX_AGE_S * 1e9)):
+                        raise ValueError(f"{robot} FollowPath terminal-stop acceptance is stale or discontinuous")
+                    terminal_observation = {
+                        "source": "controller_trace_terminal_stop",
+                        "candidate_ros_stamp_ns": candidate_ns,
+                        "stopped_ros_stamp_ns": stopped_ns,
+                        "plan_epoch": proof["plan_epoch"],
+                    }
                 values = [bool(row["value"]) for _, row in episode_rotations]
                 transitions = []
                 for value_index in range(1, len(values)):
@@ -938,6 +1007,7 @@ def validate_rpp_action_observations(
                     "terminal_lookahead_cdr_sha256": last_point["cdr_sha256"],
                     "terminal_rotation_value": terminal_rotations[-1][1]["value"],
                     "terminal_rotation_cdr_sha256": terminal_rotations[-1][1]["cdr_sha256"],
+                    "terminal_observation": terminal_observation,
                     "observed_rotation_values": sorted(set(values)),
                     "observed_rotation_transitions": transitions,
                     "rotation_reentry_observed": reentry_observed,
@@ -2042,7 +2112,10 @@ def validate_g3_evidence(
         outcome = "completed" if exported.get("completed") is True else "incomplete" if exported.get("censored") is True else "failed"
         evaluation["actions"] = validate_actions(actions, book, bag, errors)
         evaluation["follow_rpc"] = validate_follow_rpc(actions, supplemental, errors)
-        evaluation["rpp_action_observations"] = validate_rpp_action_observations(actions, bag, errors)
+        trace_report = evaluation.get("nav2_runtime", {}).get("controller_trace")
+        evaluation["rpp_action_observations"] = validate_rpp_action_observations(
+            actions, bag, errors, trace_report if isinstance(trace_report, Mapping) else None,
+        )
         physical_actions = [row for row in actions if row.get("cutoff_classification") != "planner_only_cleanup"]
         evaluation["stops"] = validate_stop_evidence(physical_actions, traces, config["g3_runtime"], errors, bag)
         evaluation["initial_hold_barrier"] = validate_initial_hold_barrier(

@@ -1,0 +1,2744 @@
+{
+  "bag_inputs": {
+    "rosbag_0.db3": {
+      "bytes": 4400943104,
+      "sha256": "7e0b20368f12404bcbdc604cf8af5cb97e47cf59d8659218adddd62ed9498874"
+    }
+  },
+  "checked_at_utc": "2026-10-19T03:05:25.460013+00:00",
+  "controller_trace": {
+    "robots": {
+      "carter1": {
+        "follow_path_episode_count": 30,
+        "goal_checker_events": 39461,
+        "goal_checker_pose_stamp_available": false,
+        "rpp_compute_calls": 19843,
+        "shared_event_sequence_closed": true,
+        "stock_rpp_compute_calls": 19557,
+        "terminal_stop_acceptances": [
+          {
+            "action_index": 0,
+            "candidate_event_sequence": 1441,
+            "candidate_ros_stamp_ns": 23283333333,
+            "plan_epoch": 1,
+            "prior_terminal_candidate": true,
+            "stopped_acceptance": true,
+            "stopped_event_sequence": 1442,
+            "stopped_ros_stamp_ns": 23300000000,
+            "zero_twist": true
+          },
+          {
+            "action_index": 2,
+            "candidate_event_sequence": 3616,
+            "candidate_ros_stamp_ns": 38316666666,
+            "plan_epoch": 2,
+            "prior_terminal_candidate": true,
+            "stopped_acceptance": true,
+            "stopped_event_sequence": 3617,
+            "stopped_ros_stamp_ns": 38333333333,
+            "zero_twist": true
+          },
+          {
+            "action_index": 4,
+            "candidate_event_sequence": 7446,
+            "candidate_ros_stamp_ns": 64033333333,
+            "plan_epoch": 3,
+            "prior_terminal_candidate": true,
+            "stopped_acceptance": true,
+            "stopped_event_sequence": 7447,
+            "stopped_ros_stamp_ns": 64066666666,
+            "zero_twist": true
+          },
+          {
+            "action_index": 6,
+            "candidate_event_sequence": 10130,
+            "candidate_ros_stamp_ns": 86333333333,
+            "plan_epoch": 4,
+            "prior_terminal_candidate": true,
+            "stopped_acceptance": true,
+            "stopped_event_sequence": 10131,
+            "stopped_ros_stamp_ns": 86350000000,
+            "zero_twist": true
+          },
+          {
+            "action_index": 7,
+            "candidate_event_sequence": 11746,
+            "candidate_ros_stamp_ns": 97516666666,
+            "plan_epoch": 5,
+            "prior_terminal_candidate": true,
+            "stopped_acceptance": true,
+            "stopped_event_sequence": 11747,
+            "stopped_ros_stamp_ns": 97533333333,
+            "zero_twist": true
+          },
+          {
+            "action_index": 8,
+            "candidate_event_sequence": 13334,
+            "candidate_ros_stamp_ns": 108533333333,
+            "plan_epoch": 6,
+            "prior_terminal_candidate": true,
+            "stopped_acceptance": true,
+            "stopped_event_sequence": 13335,
+            "stopped_ros_stamp_ns": 108566666666,
+            "zero_twist": true
+          },
+          {
+            "action_index": 9,
+            "candidate_event_sequence": 17702,
+            "candidate_ros_stamp_ns": 137633333333,
+            "plan_epoch": 7,
+            "prior_terminal_candidate": true,
+            "stopped_acceptance": true,
+            "stopped_event_sequence": 17703,
+            "stopped_ros_stamp_ns": 137666666666,
+            "zero_twist": true
+          },
+          {
+            "action_index": 10,
+            "candidate_event_sequence": 19937,
+            "candidate_ros_stamp_ns": 152633333333,
+            "plan_epoch": 8,
+            "prior_terminal_candidate": true,
+            "stopped_acceptance": true,
+            "stopped_event_sequence": 19938,
+            "stopped_ros_stamp_ns": 152666666666,
+            "zero_twist": true
+          },
+          {
+            "action_index": 11,
+            "candidate_event_sequence": 22575,
+            "candidate_ros_stamp_ns": 170833333333,
+            "plan_epoch": 9,
+            "prior_terminal_candidate": true,
+            "stopped_acceptance": true,
+            "stopped_event_sequence": 22576,
+            "stopped_ros_stamp_ns": 170850000000,
+            "zero_twist": true
+          },
+          {
+            "action_index": 12,
+            "candidate_event_sequence": 25512,
+            "candidate_ros_stamp_ns": 195266666666,
+            "plan_epoch": 10,
+            "prior_terminal_candidate": true,
+            "stopped_acceptance": true,
+            "stopped_event_sequence": 25513,
+            "stopped_ros_stamp_ns": 195283333333,
+            "zero_twist": true
+          },
+          {
+            "action_index": 13,
+            "candidate_event_sequence": 27922,
+            "candidate_ros_stamp_ns": 211333333333,
+            "plan_epoch": 11,
+            "prior_terminal_candidate": true,
+            "stopped_acceptance": true,
+            "stopped_event_sequence": 27923,
+            "stopped_ros_stamp_ns": 211366666666,
+            "zero_twist": true
+          },
+          {
+            "action_index": 14,
+            "candidate_event_sequence": 32904,
+            "candidate_ros_stamp_ns": 244216666666,
+            "plan_epoch": 12,
+            "prior_terminal_candidate": true,
+            "stopped_acceptance": true,
+            "stopped_event_sequence": 32905,
+            "stopped_ros_stamp_ns": 244250000000,
+            "zero_twist": true
+          },
+          {
+            "action_index": 15,
+            "candidate_event_sequence": 34502,
+            "candidate_ros_stamp_ns": 255383333333,
+            "plan_epoch": 13,
+            "prior_terminal_candidate": true,
+            "stopped_acceptance": true,
+            "stopped_event_sequence": 34503,
+            "stopped_ros_stamp_ns": 255416666666,
+            "zero_twist": true
+          },
+          {
+            "action_index": 16,
+            "candidate_event_sequence": 37695,
+            "candidate_ros_stamp_ns": 276983333333,
+            "plan_epoch": 14,
+            "prior_terminal_candidate": true,
+            "stopped_acceptance": true,
+            "stopped_event_sequence": 37696,
+            "stopped_ros_stamp_ns": 277016666666,
+            "zero_twist": true
+          },
+          {
+            "action_index": 32,
+            "candidate_event_sequence": 39230,
+            "candidate_ros_stamp_ns": 547566666666,
+            "plan_epoch": 15,
+            "prior_terminal_candidate": true,
+            "stopped_acceptance": true,
+            "stopped_event_sequence": 39231,
+            "stopped_ros_stamp_ns": 547600000000,
+            "zero_twist": true
+          },
+          {
+            "action_index": 33,
+            "candidate_event_sequence": 41403,
+            "candidate_ros_stamp_ns": 562316666666,
+            "plan_epoch": 16,
+            "prior_terminal_candidate": true,
+            "stopped_acceptance": true,
+            "stopped_event_sequence": 41404,
+            "stopped_ros_stamp_ns": 562333333333,
+            "zero_twist": true
+          },
+          {
+            "action_index": 34,
+            "candidate_event_sequence": 45755,
+            "candidate_ros_stamp_ns": 591383333333,
+            "plan_epoch": 17,
+            "prior_terminal_candidate": true,
+            "stopped_acceptance": true,
+            "stopped_event_sequence": 45756,
+            "stopped_ros_stamp_ns": 591400000000,
+            "zero_twist": true
+          },
+          {
+            "action_index": 35,
+            "candidate_event_sequence": 47932,
+            "candidate_ros_stamp_ns": 606116666666,
+            "plan_epoch": 18,
+            "prior_terminal_candidate": true,
+            "stopped_acceptance": true,
+            "stopped_event_sequence": 47933,
+            "stopped_ros_stamp_ns": 606133333333,
+            "zero_twist": true
+          },
+          {
+            "action_index": 36,
+            "candidate_event_sequence": 49680,
+            "candidate_ros_stamp_ns": 618233333333,
+            "plan_epoch": 19,
+            "prior_terminal_candidate": true,
+            "stopped_acceptance": true,
+            "stopped_event_sequence": 49681,
+            "stopped_ros_stamp_ns": 618266666666,
+            "zero_twist": true
+          },
+          {
+            "action_index": 37,
+            "candidate_event_sequence": 51396,
+            "candidate_ros_stamp_ns": 630216666666,
+            "plan_epoch": 20,
+            "prior_terminal_candidate": true,
+            "stopped_acceptance": true,
+            "stopped_event_sequence": 51397,
+            "stopped_ros_stamp_ns": 630250000000,
+            "zero_twist": true
+          },
+          {
+            "action_index": 38,
+            "candidate_event_sequence": 54094,
+            "candidate_ros_stamp_ns": 648416666666,
+            "plan_epoch": 21,
+            "prior_terminal_candidate": true,
+            "stopped_acceptance": true,
+            "stopped_event_sequence": 54095,
+            "stopped_ros_stamp_ns": 648433333333,
+            "zero_twist": true
+          },
+          {
+            "action_index": 39,
+            "candidate_event_sequence": 57079,
+            "candidate_ros_stamp_ns": 673016666666,
+            "plan_epoch": 22,
+            "prior_terminal_candidate": true,
+            "stopped_acceptance": true,
+            "stopped_event_sequence": 57080,
+            "stopped_ros_stamp_ns": 673033333333,
+            "zero_twist": true
+          },
+          {
+            "action_index": 40,
+            "candidate_event_sequence": 59341,
+            "candidate_ros_stamp_ns": 688483333333,
+            "plan_epoch": 23,
+            "prior_terminal_candidate": true,
+            "stopped_acceptance": true,
+            "stopped_event_sequence": 59342,
+            "stopped_ros_stamp_ns": 688516666666,
+            "zero_twist": true
+          },
+          {
+            "action_index": 41,
+            "candidate_event_sequence": 62016,
+            "candidate_ros_stamp_ns": 706133333333,
+            "plan_epoch": 24,
+            "prior_terminal_candidate": true,
+            "stopped_acceptance": true,
+            "stopped_event_sequence": 62017,
+            "stopped_ros_stamp_ns": 706166666666,
+            "zero_twist": true
+          },
+          {
+            "action_index": 42,
+            "candidate_event_sequence": 65171,
+            "candidate_ros_stamp_ns": 731633333333,
+            "plan_epoch": 25,
+            "prior_terminal_candidate": true,
+            "stopped_acceptance": true,
+            "stopped_event_sequence": 65172,
+            "stopped_ros_stamp_ns": 731650000000,
+            "zero_twist": true
+          },
+          {
+            "action_index": 43,
+            "candidate_event_sequence": 67383,
+            "candidate_ros_stamp_ns": 746633333333,
+            "plan_epoch": 26,
+            "prior_terminal_candidate": true,
+            "stopped_acceptance": true,
+            "stopped_event_sequence": 67384,
+            "stopped_ros_stamp_ns": 746650000000,
+            "zero_twist": true
+          },
+          {
+            "action_index": 44,
+            "candidate_event_sequence": 69090,
+            "candidate_ros_stamp_ns": 758333333333,
+            "plan_epoch": 27,
+            "prior_terminal_candidate": true,
+            "stopped_acceptance": true,
+            "stopped_event_sequence": 69091,
+            "stopped_ros_stamp_ns": 758350000000,
+            "zero_twist": true
+          },
+          {
+            "action_index": 45,
+            "candidate_event_sequence": 74233,
+            "candidate_ros_stamp_ns": 792033333333,
+            "plan_epoch": 28,
+            "prior_terminal_candidate": true,
+            "stopped_acceptance": true,
+            "stopped_event_sequence": 74234,
+            "stopped_ros_stamp_ns": 792033333333,
+            "zero_twist": true
+          },
+          {
+            "action_index": 46,
+            "candidate_event_sequence": 75924,
+            "candidate_ros_stamp_ns": 803666666666,
+            "plan_epoch": 29,
+            "prior_terminal_candidate": true,
+            "stopped_acceptance": true,
+            "stopped_event_sequence": 75925,
+            "stopped_ros_stamp_ns": 803700000000,
+            "zero_twist": true
+          },
+          {
+            "action_index": 47,
+            "candidate_event_sequence": 79146,
+            "candidate_ros_stamp_ns": 825316666666,
+            "plan_epoch": 30,
+            "prior_terminal_candidate": true,
+            "stopped_acceptance": true,
+            "stopped_event_sequence": 79147,
+            "stopped_ros_stamp_ns": 825333333333,
+            "zero_twist": true
+          }
+        ],
+        "terminal_stop_compute_calls": 286
+      },
+      "carter2": {
+        "follow_path_episode_count": 32,
+        "goal_checker_events": 41998,
+        "goal_checker_pose_stamp_available": false,
+        "rpp_compute_calls": 21169,
+        "shared_event_sequence_closed": true,
+        "stock_rpp_compute_calls": 20764,
+        "terminal_stop_acceptances": [
+          {
+            "action_index": 1,
+            "candidate_event_sequence": 1413,
+            "candidate_ros_stamp_ns": 28250000000,
+            "plan_epoch": 1,
+            "prior_terminal_candidate": true,
+            "stopped_acceptance": true,
+            "stopped_event_sequence": 1414,
+            "stopped_ros_stamp_ns": 28283333333,
+            "zero_twist": true
+          },
+          {
+            "action_index": 3,
+            "candidate_event_sequence": 3590,
+            "candidate_ros_stamp_ns": 43116666666,
+            "plan_epoch": 2,
+            "prior_terminal_candidate": true,
+            "stopped_acceptance": true,
+            "stopped_event_sequence": 3591,
+            "stopped_ros_stamp_ns": 43150000000,
+            "zero_twist": true
+          },
+          {
+            "action_index": 5,
+            "candidate_event_sequence": 7308,
+            "candidate_ros_stamp_ns": 68333333333,
+            "plan_epoch": 3,
+            "prior_terminal_candidate": true,
+            "stopped_acceptance": true,
+            "stopped_event_sequence": 7309,
+            "stopped_ros_stamp_ns": 68349999999,
+            "zero_twist": true
+          },
+          {
+            "action_index": 17,
+            "candidate_event_sequence": 9905,
+            "candidate_ros_stamp_ns": 294466666666,
+            "plan_epoch": 4,
+            "prior_terminal_candidate": true,
+            "stopped_acceptance": true,
+            "stopped_event_sequence": 9906,
+            "stopped_ros_stamp_ns": 294500000000,
+            "zero_twist": true
+          },
+          {
+            "action_index": 18,
+            "candidate_event_sequence": 11522,
+            "candidate_ros_stamp_ns": 305816666666,
+            "plan_epoch": 5,
+            "prior_terminal_candidate": true,
+            "stopped_acceptance": true,
+            "stopped_event_sequence": 11523,
+            "stopped_ros_stamp_ns": 305833333333,
+            "zero_twist": true
+          },
+          {
+            "action_index": 19,
+            "candidate_event_sequence": 13107,
+            "candidate_ros_stamp_ns": 316916666666,
+            "plan_epoch": 6,
+            "prior_terminal_candidate": true,
+            "stopped_acceptance": true,
+            "stopped_event_sequence": 13108,
+            "stopped_ros_stamp_ns": 316950000000,
+            "zero_twist": true
+          },
+          {
+            "action_index": 20,
+            "candidate_event_sequence": 17569,
+            "candidate_ros_stamp_ns": 346633333333,
+            "plan_epoch": 7,
+            "prior_terminal_candidate": true,
+            "stopped_acceptance": true,
+            "stopped_event_sequence": 17570,
+            "stopped_ros_stamp_ns": 346666666666,
+            "zero_twist": true
+          },
+          {
+            "action_index": 21,
+            "candidate_event_sequence": 19908,
+            "candidate_ros_stamp_ns": 362483333333,
+            "plan_epoch": 8,
+            "prior_terminal_candidate": true,
+            "stopped_acceptance": true,
+            "stopped_event_sequence": 19909,
+            "stopped_ros_stamp_ns": 362500000000,
+            "zero_twist": true
+          },
+          {
+            "action_index": 22,
+            "candidate_event_sequence": 21641,
+            "candidate_ros_stamp_ns": 374566666666,
+            "plan_epoch": 9,
+            "prior_terminal_candidate": true,
+            "stopped_acceptance": true,
+            "stopped_event_sequence": 21642,
+            "stopped_ros_stamp_ns": 374600000000,
+            "zero_twist": true
+          },
+          {
+            "action_index": 23,
+            "candidate_event_sequence": 23927,
+            "candidate_ros_stamp_ns": 390516666666,
+            "plan_epoch": 10,
+            "prior_terminal_candidate": true,
+            "stopped_acceptance": true,
+            "stopped_event_sequence": 23928,
+            "stopped_ros_stamp_ns": 390550000000,
+            "zero_twist": true
+          },
+          {
+            "action_index": 24,
+            "candidate_event_sequence": 26347,
+            "candidate_ros_stamp_ns": 406933333333,
+            "plan_epoch": 11,
+            "prior_terminal_candidate": true,
+            "stopped_acceptance": true,
+            "stopped_event_sequence": 26348,
+            "stopped_ros_stamp_ns": 406950000000,
+            "zero_twist": true
+          },
+          {
+            "action_index": 25,
+            "candidate_event_sequence": 29144,
+            "candidate_ros_stamp_ns": 431066666666,
+            "plan_epoch": 12,
+            "prior_terminal_candidate": true,
+            "stopped_acceptance": true,
+            "stopped_event_sequence": 29145,
+            "stopped_ros_stamp_ns": 431100000000,
+            "zero_twist": true
+          },
+          {
+            "action_index": 26,
+            "candidate_event_sequence": 31640,
+            "candidate_ros_stamp_ns": 447766666666,
+            "plan_epoch": 13,
+            "prior_terminal_candidate": true,
+            "stopped_acceptance": true,
+            "stopped_event_sequence": 31641,
+            "stopped_ros_stamp_ns": 447800000000,
+            "zero_twist": true
+          },
+          {
+            "action_index": 27,
+            "candidate_event_sequence": 33307,
+            "candidate_ros_stamp_ns": 459316666666,
+            "plan_epoch": 14,
+            "prior_terminal_candidate": true,
+            "stopped_acceptance": true,
+            "stopped_event_sequence": 33308,
+            "stopped_ros_stamp_ns": 459350000000,
+            "zero_twist": true
+          },
+          {
+            "action_index": 28,
+            "candidate_event_sequence": 34955,
+            "candidate_ros_stamp_ns": 470616666666,
+            "plan_epoch": 15,
+            "prior_terminal_candidate": true,
+            "stopped_acceptance": true,
+            "stopped_event_sequence": 34956,
+            "stopped_ros_stamp_ns": 470650000000,
+            "zero_twist": true
+          },
+          {
+            "action_index": 29,
+            "candidate_event_sequence": 40051,
+            "candidate_ros_stamp_ns": 504083333333,
+            "plan_epoch": 16,
+            "prior_terminal_candidate": true,
+            "stopped_acceptance": true,
+            "stopped_event_sequence": 40052,
+            "stopped_ros_stamp_ns": 504116666666,
+            "zero_twist": true
+          },
+          {
+            "action_index": 30,
+            "candidate_event_sequence": 41687,
+            "candidate_ros_stamp_ns": 515316666666,
+            "plan_epoch": 17,
+            "prior_terminal_candidate": true,
+            "stopped_acceptance": true,
+            "stopped_event_sequence": 41688,
+            "stopped_ros_stamp_ns": 515350000000,
+            "zero_twist": true
+          },
+          {
+            "action_index": 31,
+            "candidate_event_sequence": 44861,
+            "candidate_ros_stamp_ns": 536766666666,
+            "plan_epoch": 18,
+            "prior_terminal_candidate": true,
+            "stopped_acceptance": true,
+            "stopped_event_sequence": 44862,
+            "stopped_ros_stamp_ns": 536783333333,
+            "zero_twist": true
+          },
+          {
+            "action_index": 48,
+            "candidate_event_sequence": 46276,
+            "candidate_ros_stamp_ns": 835216666666,
+            "plan_epoch": 19,
+            "prior_terminal_candidate": true,
+            "stopped_acceptance": true,
+            "stopped_event_sequence": 46277,
+            "stopped_ros_stamp_ns": 835250000000,
+            "zero_twist": true
+          },
+          {
+            "action_index": 49,
+            "candidate_event_sequence": 48859,
+            "candidate_ros_stamp_ns": 852616666666,
+            "plan_epoch": 20,
+            "prior_terminal_candidate": true,
+            "stopped_acceptance": true,
+            "stopped_event_sequence": 48860,
+            "stopped_ros_stamp_ns": 852633333333,
+            "zero_twist": true
+          },
+          {
+            "action_index": 50,
+            "candidate_event_sequence": 53271,
+            "candidate_ros_stamp_ns": 881783333333,
+            "plan_epoch": 21,
+            "prior_terminal_candidate": true,
+            "stopped_acceptance": true,
+            "stopped_event_sequence": 53272,
+            "stopped_ros_stamp_ns": 881800000000,
+            "zero_twist": true
+          },
+          {
+            "action_index": 51,
+            "candidate_event_sequence": 55479,
+            "candidate_ros_stamp_ns": 896716666666,
+            "plan_epoch": 22,
+            "prior_terminal_candidate": true,
+            "stopped_acceptance": true,
+            "stopped_event_sequence": 55480,
+            "stopped_ros_stamp_ns": 896750000000,
+            "zero_twist": true
+          },
+          {
+            "action_index": 52,
+            "candidate_event_sequence": 57932,
+            "candidate_ros_stamp_ns": 913166666666,
+            "plan_epoch": 23,
+            "prior_terminal_candidate": true,
+            "stopped_acceptance": true,
+            "stopped_event_sequence": 57933,
+            "stopped_ros_stamp_ns": 913183333333,
+            "zero_twist": true
+          },
+          {
+            "action_index": 53,
+            "candidate_event_sequence": 61214,
+            "candidate_ros_stamp_ns": 939716666666,
+            "plan_epoch": 24,
+            "prior_terminal_candidate": true,
+            "stopped_acceptance": true,
+            "stopped_event_sequence": 61215,
+            "stopped_ros_stamp_ns": 939750000000,
+            "zero_twist": true
+          },
+          {
+            "action_index": 54,
+            "candidate_event_sequence": 63730,
+            "candidate_ros_stamp_ns": 956733333333,
+            "plan_epoch": 25,
+            "prior_terminal_candidate": true,
+            "stopped_acceptance": true,
+            "stopped_event_sequence": 63731,
+            "stopped_ros_stamp_ns": 956750000000,
+            "zero_twist": true
+          },
+          {
+            "action_index": 55,
+            "candidate_event_sequence": 66634,
+            "candidate_ros_stamp_ns": 975816666666,
+            "plan_epoch": 26,
+            "prior_terminal_candidate": true,
+            "stopped_acceptance": true,
+            "stopped_event_sequence": 66635,
+            "stopped_ros_stamp_ns": 975850000000,
+            "zero_twist": true
+          },
+          {
+            "action_index": 56,
+            "candidate_event_sequence": 70022,
+            "candidate_ros_stamp_ns": 1002150000000,
+            "plan_epoch": 27,
+            "prior_terminal_candidate": true,
+            "stopped_acceptance": true,
+            "stopped_event_sequence": 70023,
+            "stopped_ros_stamp_ns": 1002183333333,
+            "zero_twist": true
+          },
+          {
+            "action_index": 57,
+            "candidate_event_sequence": 72309,
+            "candidate_ros_stamp_ns": 1017083333333,
+            "plan_epoch": 28,
+            "prior_terminal_candidate": true,
+            "stopped_acceptance": true,
+            "stopped_event_sequence": 72310,
+            "stopped_ros_stamp_ns": 1017100000000,
+            "zero_twist": true
+          },
+          {
+            "action_index": 58,
+            "candidate_event_sequence": 73977,
+            "candidate_ros_stamp_ns": 1028166666666,
+            "plan_epoch": 29,
+            "prior_terminal_candidate": true,
+            "stopped_acceptance": true,
+            "stopped_event_sequence": 73978,
+            "stopped_ros_stamp_ns": 1028200000000,
+            "zero_twist": true
+          },
+          {
+            "action_index": 59,
+            "candidate_event_sequence": 79266,
+            "candidate_ros_stamp_ns": 1061533333333,
+            "plan_epoch": 30,
+            "prior_terminal_candidate": true,
+            "stopped_acceptance": true,
+            "stopped_event_sequence": 79267,
+            "stopped_ros_stamp_ns": 1061550000000,
+            "zero_twist": true
+          },
+          {
+            "action_index": 60,
+            "candidate_event_sequence": 80996,
+            "candidate_ros_stamp_ns": 1072866666666,
+            "plan_epoch": 31,
+            "prior_terminal_candidate": true,
+            "stopped_acceptance": true,
+            "stopped_event_sequence": 80997,
+            "stopped_ros_stamp_ns": 1072900000000,
+            "zero_twist": true
+          },
+          {
+            "action_index": 61,
+            "candidate_event_sequence": 84335,
+            "candidate_ros_stamp_ns": 1094333333333,
+            "plan_epoch": 32,
+            "prior_terminal_candidate": true,
+            "stopped_acceptance": true,
+            "stopped_event_sequence": 84336,
+            "stopped_ros_stamp_ns": 1094349999999,
+            "zero_twist": true
+          }
+        ],
+        "terminal_stop_compute_calls": 405
+      }
+    },
+    "schema_version": 1,
+    "topic_counts": {
+      "/carter1/controller_cycle_trace": 79147,
+      "/carter2/controller_cycle_trace": 84336
+    }
+  },
+  "driver_sha256": "f127bcfd56491acc1d15fede85d6780a2d5d175e0f3864a1dd3944ba70b3c97a",
+  "elapsed_wall_s": 63.51208131400199,
+  "errors": [],
+  "inputs_unchanged": true,
+  "original_artifact_manifest_sha256": "9b7f46a308835ae0a90eac203767357e080eebea8c89ffa831201b8d95ef5233",
+  "original_full_qa_passed": false,
+  "original_report_sha256": "2e8dbf59ec7dae78a2867eef6006f6bd138b6db960c9e11793038ee2c2feb607",
+  "original_validation_errors": [
+    "RPP action observation evidence: carter1 FollowPath terminal has no adjacent lookahead sample"
+  ],
+  "passed": true,
+  "postprocessor": {
+    "commit": "4e5f7a098e1b43d353682d36f1071e4d41c283a0",
+    "path": "scripts/ros/g3_evidence.py",
+    "scope": "separate observation postprocessor; producer012dc57 unchanged",
+    "validator_sha256": "4a7230c5bbb77537cc4aae6fc8c625e6ef478ceb5006086746201e355e2819de"
+  },
+  "producer_commit": "012dc571626df317f6cce4b41cb11ba6a6c1ea17",
+  "rpp_action_observations": {
+    "causal_claim": false,
+    "control_input": false,
+    "episode_count": 62,
+    "episodes": [
+      {
+        "accepted_sim_time_s": 14.483333333,
+        "action_index": 0,
+        "goal_uuid": "79adfc997ace488c92ee7f4082c784dc",
+        "interpretation": "observed controller diagnostics only; no causal conclusion",
+        "lookahead_sample_count": 356,
+        "observed_rotation_transitions": [],
+        "observed_rotation_values": [
+          false
+        ],
+        "rotation_reentry_observed": false,
+        "rotation_sample_count": 356,
+        "terminal_lookahead_cdr_sha256": "8b9c5917e07633e8f09e9be0e63f3f0dc32256851ede3a7102ce0172851d0738",
+        "terminal_lookahead_ros_stamp_ns": 23083333333,
+        "terminal_observation": {
+          "source": "lookahead_pair"
+        },
+        "terminal_rotation_cdr_sha256": "2e22fd435060cd5d3cf5e3ef39f79e198b35bd2c4af31974db36601b3a2f4c91",
+        "terminal_rotation_value": false,
+        "terminal_sim_time_s": 23.316666666
+      },
+      {
+        "accepted_sim_time_s": 23.983333333,
+        "action_index": 2,
+        "goal_uuid": "00b2604adff946a2839f0da1fdc4d850",
+        "interpretation": "observed controller diagnostics only; no causal conclusion",
+        "lookahead_sample_count": 540,
+        "observed_rotation_transitions": [
+          {
+            "episode_sample_index": 120,
+            "from": true,
+            "paired_lookahead_ros_stamp_ns": 27133333333,
+            "rotation_db_timestamp_ns": 27166666666,
+            "to": false
+          },
+          {
+            "episode_sample_index": 527,
+            "from": false,
+            "paired_lookahead_ros_stamp_ns": 37883333333,
+            "rotation_db_timestamp_ns": 37900000000,
+            "to": true
+          },
+          {
+            "episode_sample_index": 533,
+            "from": true,
+            "paired_lookahead_ros_stamp_ns": 38033333333,
+            "rotation_db_timestamp_ns": 38050000000,
+            "to": false
+          }
+        ],
+        "observed_rotation_values": [
+          false,
+          true
+        ],
+        "rotation_reentry_observed": true,
+        "rotation_sample_count": 540,
+        "terminal_lookahead_cdr_sha256": "def3780d0e623031f8e5173ce0eef86c9d41042bbc72412743107437d0ada41c",
+        "terminal_lookahead_ros_stamp_ns": 38183333333,
+        "terminal_observation": {
+          "source": "lookahead_pair"
+        },
+        "terminal_rotation_cdr_sha256": "2e22fd435060cd5d3cf5e3ef39f79e198b35bd2c4af31974db36601b3a2f4c91",
+        "terminal_rotation_value": false,
+        "terminal_sim_time_s": 38.35
+      },
+      {
+        "accepted_sim_time_s": 38.983333333,
+        "action_index": 4,
+        "goal_uuid": "cec8df81a81f4aad984f07e87da1e0ed",
+        "interpretation": "observed controller diagnostics only; no causal conclusion",
+        "lookahead_sample_count": 935,
+        "observed_rotation_transitions": [
+          {
+            "episode_sample_index": 641,
+            "from": false,
+            "paired_lookahead_ros_stamp_ns": 55683333333,
+            "rotation_db_timestamp_ns": 55700000000,
+            "to": true
+          },
+          {
+            "episode_sample_index": 650,
+            "from": true,
+            "paired_lookahead_ros_stamp_ns": 55933333333,
+            "rotation_db_timestamp_ns": 55950000000,
+            "to": false
+          },
+          {
+            "episode_sample_index": 659,
+            "from": false,
+            "paired_lookahead_ros_stamp_ns": 56183333333,
+            "rotation_db_timestamp_ns": 56216666666,
+            "to": true
+          }
+        ],
+        "observed_rotation_values": [
+          false,
+          true
+        ],
+        "rotation_reentry_observed": true,
+        "rotation_sample_count": 935,
+        "terminal_lookahead_cdr_sha256": "3275b904a2c890d2c8c153118c4c58804d81bb4dc0b36bfbf2120c5c63a50247",
+        "terminal_lookahead_ros_stamp_ns": 63233333333,
+        "terminal_observation": {
+          "candidate_ros_stamp_ns": 64033333333,
+          "plan_epoch": 3,
+          "source": "controller_trace_terminal_stop",
+          "stopped_ros_stamp_ns": 64066666666
+        },
+        "terminal_rotation_cdr_sha256": "93a8eaf79354c84442ac0e10c2062c53887deb79944f89aef71d679fd7a88b07",
+        "terminal_rotation_value": true,
+        "terminal_sim_time_s": 64.066666666
+      },
+      {
+        "accepted_sim_time_s": 69.666666666,
+        "action_index": 6,
+        "goal_uuid": "f91902954f4949a38234c8a4f590db64",
+        "interpretation": "observed controller diagnostics only; no causal conclusion",
+        "lookahead_sample_count": 658,
+        "observed_rotation_transitions": [
+          {
+            "episode_sample_index": 654,
+            "from": false,
+            "paired_lookahead_ros_stamp_ns": 86183333333,
+            "rotation_db_timestamp_ns": 86216666666,
+            "to": true
+          },
+          {
+            "episode_sample_index": 656,
+            "from": true,
+            "paired_lookahead_ros_stamp_ns": 86233333333,
+            "rotation_db_timestamp_ns": 86266666666,
+            "to": false
+          }
+        ],
+        "observed_rotation_values": [
+          false,
+          true
+        ],
+        "rotation_reentry_observed": false,
+        "rotation_sample_count": 658,
+        "terminal_lookahead_cdr_sha256": "1e9e2378a3e6c14fc431343a3219cb9a257d82bf530ceb3037f6d42537cfbf5a",
+        "terminal_lookahead_ros_stamp_ns": 86233333333,
+        "terminal_observation": {
+          "source": "lookahead_pair"
+        },
+        "terminal_rotation_cdr_sha256": "2e22fd435060cd5d3cf5e3ef39f79e198b35bd2c4af31974db36601b3a2f4c91",
+        "terminal_rotation_value": false,
+        "terminal_sim_time_s": 86.35
+      },
+      {
+        "accepted_sim_time_s": 87.033333333,
+        "action_index": 7,
+        "goal_uuid": "93c8a2b9aab648509ec03f5f64efcfd2",
+        "interpretation": "observed controller diagnostics only; no causal conclusion",
+        "lookahead_sample_count": 398,
+        "observed_rotation_transitions": [],
+        "observed_rotation_values": [
+          false
+        ],
+        "rotation_reentry_observed": false,
+        "rotation_sample_count": 398,
+        "terminal_lookahead_cdr_sha256": "c0b5a6cf2e287bd49399362b689645e22013691ca6555bda03e2ddba04ed1e78",
+        "terminal_lookahead_ros_stamp_ns": 97333333333,
+        "terminal_observation": {
+          "source": "lookahead_pair"
+        },
+        "terminal_rotation_cdr_sha256": "2e22fd435060cd5d3cf5e3ef39f79e198b35bd2c4af31974db36601b3a2f4c91",
+        "terminal_rotation_value": false,
+        "terminal_sim_time_s": 97.55
+      },
+      {
+        "accepted_sim_time_s": 98.216666666,
+        "action_index": 8,
+        "goal_uuid": "6b9a6dc69b0a4774bb6e7578722bfd09",
+        "interpretation": "observed controller diagnostics only; no causal conclusion",
+        "lookahead_sample_count": 390,
+        "observed_rotation_transitions": [],
+        "observed_rotation_values": [
+          false
+        ],
+        "rotation_reentry_observed": false,
+        "rotation_sample_count": 390,
+        "terminal_lookahead_cdr_sha256": "3fe6043dde9f1217abe5ba952e81096a1e3016ef02ecba7aefd3db0f50bc0406",
+        "terminal_lookahead_ros_stamp_ns": 108333333333,
+        "terminal_observation": {
+          "source": "lookahead_pair"
+        },
+        "terminal_rotation_cdr_sha256": "2e22fd435060cd5d3cf5e3ef39f79e198b35bd2c4af31974db36601b3a2f4c91",
+        "terminal_rotation_value": false,
+        "terminal_sim_time_s": 108.566666666
+      },
+      {
+        "accepted_sim_time_s": 109.266666666,
+        "action_index": 9,
+        "goal_uuid": "95d0fc61743442eca06174a78458726f",
+        "interpretation": "observed controller diagnostics only; no causal conclusion",
+        "lookahead_sample_count": 1085,
+        "observed_rotation_transitions": [],
+        "observed_rotation_values": [
+          false
+        ],
+        "rotation_reentry_observed": false,
+        "rotation_sample_count": 1085,
+        "terminal_lookahead_cdr_sha256": "aac2e360c08bf2a1c65320ee38ac58c5b9777adfd985bb1c021b41067df801d2",
+        "terminal_lookahead_ros_stamp_ns": 137433333333,
+        "terminal_observation": {
+          "source": "lookahead_pair"
+        },
+        "terminal_rotation_cdr_sha256": "2e22fd435060cd5d3cf5e3ef39f79e198b35bd2c4af31974db36601b3a2f4c91",
+        "terminal_rotation_value": false,
+        "terminal_sim_time_s": 137.683333333
+      },
+      {
+        "accepted_sim_time_s": 138.333333333,
+        "action_index": 10,
+        "goal_uuid": "51e5fd47307344c0bcd275bfc4f2e96c",
+        "interpretation": "observed controller diagnostics only; no causal conclusion",
+        "lookahead_sample_count": 551,
+        "observed_rotation_transitions": [
+          {
+            "episode_sample_index": 125,
+            "from": true,
+            "paired_lookahead_ros_stamp_ns": 141633333333,
+            "rotation_db_timestamp_ns": 141650000000,
+            "to": false
+          }
+        ],
+        "observed_rotation_values": [
+          false,
+          true
+        ],
+        "rotation_reentry_observed": false,
+        "rotation_sample_count": 551,
+        "terminal_lookahead_cdr_sha256": "f6ac9c16131843abfffeeef766d09a8d417957cfc9895e1a695357b74a8303bd",
+        "terminal_lookahead_ros_stamp_ns": 152433333333,
+        "terminal_observation": {
+          "source": "lookahead_pair"
+        },
+        "terminal_rotation_cdr_sha256": "2e22fd435060cd5d3cf5e3ef39f79e198b35bd2c4af31974db36601b3a2f4c91",
+        "terminal_rotation_value": false,
+        "terminal_sim_time_s": 152.666666666
+      },
+      {
+        "accepted_sim_time_s": 153.366666666,
+        "action_index": 11,
+        "goal_uuid": "56a1881433eb434ba3fc52461d640004",
+        "interpretation": "observed controller diagnostics only; no causal conclusion",
+        "lookahead_sample_count": 639,
+        "observed_rotation_transitions": [
+          {
+            "episode_sample_index": 127,
+            "from": true,
+            "paired_lookahead_ros_stamp_ns": 156783333333,
+            "rotation_db_timestamp_ns": 156800000000,
+            "to": false
+          },
+          {
+            "episode_sample_index": 601,
+            "from": false,
+            "paired_lookahead_ros_stamp_ns": 169133333333,
+            "rotation_db_timestamp_ns": 169166666666,
+            "to": true
+          }
+        ],
+        "observed_rotation_values": [
+          false,
+          true
+        ],
+        "rotation_reentry_observed": true,
+        "rotation_sample_count": 639,
+        "terminal_lookahead_cdr_sha256": "a4945e3af5fb97a50996c0c65a7cbb6f1d568f96f82c71d618f6c32046b8eb4f",
+        "terminal_lookahead_ros_stamp_ns": 170133333333,
+        "terminal_observation": {
+          "candidate_ros_stamp_ns": 170833333333,
+          "plan_epoch": 9,
+          "source": "controller_trace_terminal_stop",
+          "stopped_ros_stamp_ns": 170850000000
+        },
+        "terminal_rotation_cdr_sha256": "93a8eaf79354c84442ac0e10c2062c53887deb79944f89aef71d679fd7a88b07",
+        "terminal_rotation_value": true,
+        "terminal_sim_time_s": 170.866666666
+      },
+      {
+        "accepted_sim_time_s": 176.483333333,
+        "action_index": 12,
+        "goal_uuid": "d328931dcda043f1a7469a335221a22e",
+        "interpretation": "observed controller diagnostics only; no causal conclusion",
+        "lookahead_sample_count": 730,
+        "observed_rotation_transitions": [
+          {
+            "episode_sample_index": 260,
+            "from": true,
+            "paired_lookahead_ros_stamp_ns": 182833333333,
+            "rotation_db_timestamp_ns": 182850000000,
+            "to": false
+          }
+        ],
+        "observed_rotation_values": [
+          false,
+          true
+        ],
+        "rotation_reentry_observed": false,
+        "rotation_sample_count": 730,
+        "terminal_lookahead_cdr_sha256": "261941fe7ce37ab1129c6f5b702305b0b5a872dbaeab2efc81b4181c38c48124",
+        "terminal_lookahead_ros_stamp_ns": 195083333333,
+        "terminal_observation": {
+          "source": "lookahead_pair"
+        },
+        "terminal_rotation_cdr_sha256": "2e22fd435060cd5d3cf5e3ef39f79e198b35bd2c4af31974db36601b3a2f4c91",
+        "terminal_rotation_value": false,
+        "terminal_sim_time_s": 195.316666666
+      },
+      {
+        "accepted_sim_time_s": 196.0,
+        "action_index": 13,
+        "goal_uuid": "a1d301884fae4b0094ff1d64d9500d19",
+        "interpretation": "observed controller diagnostics only; no causal conclusion",
+        "lookahead_sample_count": 587,
+        "observed_rotation_transitions": [
+          {
+            "episode_sample_index": 138,
+            "from": true,
+            "paired_lookahead_ros_stamp_ns": 199433333333,
+            "rotation_db_timestamp_ns": 199433333333,
+            "to": false
+          },
+          {
+            "episode_sample_index": 553,
+            "from": false,
+            "paired_lookahead_ros_stamp_ns": 210083333333,
+            "rotation_db_timestamp_ns": 210100000000,
+            "to": true
+          }
+        ],
+        "observed_rotation_values": [
+          false,
+          true
+        ],
+        "rotation_reentry_observed": true,
+        "rotation_sample_count": 587,
+        "terminal_lookahead_cdr_sha256": "2d38c1ba086c1748fbc5f284e772c8f6f173723fd3341c80cbb72798e029e526",
+        "terminal_lookahead_ros_stamp_ns": 210933333333,
+        "terminal_observation": {
+          "source": "lookahead_pair"
+        },
+        "terminal_rotation_cdr_sha256": "93a8eaf79354c84442ac0e10c2062c53887deb79944f89aef71d679fd7a88b07",
+        "terminal_rotation_value": true,
+        "terminal_sim_time_s": 211.366666666
+      },
+      {
+        "accepted_sim_time_s": 212.033333333,
+        "action_index": 14,
+        "goal_uuid": "92f848b6e33943f4bbc5d937f6c32d9a",
+        "interpretation": "observed controller diagnostics only; no causal conclusion",
+        "lookahead_sample_count": 1242,
+        "observed_rotation_transitions": [
+          {
+            "episode_sample_index": 139,
+            "from": true,
+            "paired_lookahead_ros_stamp_ns": 215483333333,
+            "rotation_db_timestamp_ns": 215500000000,
+            "to": false
+          },
+          {
+            "episode_sample_index": 1240,
+            "from": false,
+            "paired_lookahead_ros_stamp_ns": 244083333333,
+            "rotation_db_timestamp_ns": 244100000000,
+            "to": true
+          }
+        ],
+        "observed_rotation_values": [
+          false,
+          true
+        ],
+        "rotation_reentry_observed": true,
+        "rotation_sample_count": 1242,
+        "terminal_lookahead_cdr_sha256": "db9a20a72ce92ee725320ec0422aff59628959fe1595005700239be1663cac24",
+        "terminal_lookahead_ros_stamp_ns": 244083333333,
+        "terminal_observation": {
+          "source": "lookahead_pair"
+        },
+        "terminal_rotation_cdr_sha256": "93a8eaf79354c84442ac0e10c2062c53887deb79944f89aef71d679fd7a88b07",
+        "terminal_rotation_value": true,
+        "terminal_sim_time_s": 244.283333333
+      },
+      {
+        "accepted_sim_time_s": 244.983333333,
+        "action_index": 15,
+        "goal_uuid": "744e717e4e8d46af8bf99c53be13a59b",
+        "interpretation": "observed controller diagnostics only; no causal conclusion",
+        "lookahead_sample_count": 394,
+        "observed_rotation_transitions": [
+          {
+            "episode_sample_index": 392,
+            "from": false,
+            "paired_lookahead_ros_stamp_ns": 255233333333,
+            "rotation_db_timestamp_ns": 255233333333,
+            "to": true
+          }
+        ],
+        "observed_rotation_values": [
+          false,
+          true
+        ],
+        "rotation_reentry_observed": false,
+        "rotation_sample_count": 394,
+        "terminal_lookahead_cdr_sha256": "475f9669f879b4bdbd3703605e97b32b5b434b5464e73f0008db9cf4185df7c2",
+        "terminal_lookahead_ros_stamp_ns": 255233333333,
+        "terminal_observation": {
+          "source": "lookahead_pair"
+        },
+        "terminal_rotation_cdr_sha256": "93a8eaf79354c84442ac0e10c2062c53887deb79944f89aef71d679fd7a88b07",
+        "terminal_rotation_value": true,
+        "terminal_sim_time_s": 255.416666666
+      },
+      {
+        "accepted_sim_time_s": 256.116666666,
+        "action_index": 16,
+        "goal_uuid": "74ea2e6bbbf146ca88b4955fe353a0d5",
+        "interpretation": "observed controller diagnostics only; no causal conclusion",
+        "lookahead_sample_count": 774,
+        "observed_rotation_transitions": [
+          {
+            "episode_sample_index": 122,
+            "from": true,
+            "paired_lookahead_ros_stamp_ns": 259383333333,
+            "rotation_db_timestamp_ns": 259416666666,
+            "to": false
+          },
+          {
+            "episode_sample_index": 498,
+            "from": false,
+            "paired_lookahead_ros_stamp_ns": 269183333333,
+            "rotation_db_timestamp_ns": 269200000000,
+            "to": true
+          }
+        ],
+        "observed_rotation_values": [
+          false,
+          true
+        ],
+        "rotation_reentry_observed": true,
+        "rotation_sample_count": 774,
+        "terminal_lookahead_cdr_sha256": "87ff96853ff312d188c4b790d314caf79b17b312be135ae594b4088d5526e91f",
+        "terminal_lookahead_ros_stamp_ns": 276183333333,
+        "terminal_observation": {
+          "candidate_ros_stamp_ns": 276983333333,
+          "plan_epoch": 14,
+          "source": "controller_trace_terminal_stop",
+          "stopped_ros_stamp_ns": 277016666666
+        },
+        "terminal_rotation_cdr_sha256": "93a8eaf79354c84442ac0e10c2062c53887deb79944f89aef71d679fd7a88b07",
+        "terminal_rotation_value": true,
+        "terminal_sim_time_s": 277.016666666
+      },
+      {
+        "accepted_sim_time_s": 537.75,
+        "action_index": 32,
+        "goal_uuid": "6690e4dd3af74834a6069b7dd6709ebb",
+        "interpretation": "observed controller diagnostics only; no causal conclusion",
+        "lookahead_sample_count": 371,
+        "observed_rotation_transitions": [
+          {
+            "episode_sample_index": 369,
+            "from": false,
+            "paired_lookahead_ros_stamp_ns": 547233333333,
+            "rotation_db_timestamp_ns": 547250000000,
+            "to": true
+          }
+        ],
+        "observed_rotation_values": [
+          false,
+          true
+        ],
+        "rotation_reentry_observed": false,
+        "rotation_sample_count": 371,
+        "terminal_lookahead_cdr_sha256": "5e564033ddf99c5469848e3171a42939c13034506549d3e1f854b92bcf96ce44",
+        "terminal_lookahead_ros_stamp_ns": 547233333333,
+        "terminal_observation": {
+          "source": "lookahead_pair"
+        },
+        "terminal_rotation_cdr_sha256": "93a8eaf79354c84442ac0e10c2062c53887deb79944f89aef71d679fd7a88b07",
+        "terminal_rotation_value": true,
+        "terminal_sim_time_s": 547.616666666
+      },
+      {
+        "accepted_sim_time_s": 548.4,
+        "action_index": 33,
+        "goal_uuid": "3d44a5a3501e447ca2080f0549a4e208",
+        "interpretation": "observed controller diagnostics only; no causal conclusion",
+        "lookahead_sample_count": 536,
+        "observed_rotation_transitions": [
+          {
+            "episode_sample_index": 112,
+            "from": true,
+            "paired_lookahead_ros_stamp_ns": 551483333333,
+            "rotation_db_timestamp_ns": 551500000000,
+            "to": false
+          }
+        ],
+        "observed_rotation_values": [
+          false,
+          true
+        ],
+        "rotation_reentry_observed": false,
+        "rotation_sample_count": 536,
+        "terminal_lookahead_cdr_sha256": "9313fbe5c96989f3acbb29e89717316b8f44c822fe4237af743706b26dc268e3",
+        "terminal_lookahead_ros_stamp_ns": 562133333333,
+        "terminal_observation": {
+          "source": "lookahead_pair"
+        },
+        "terminal_rotation_cdr_sha256": "2e22fd435060cd5d3cf5e3ef39f79e198b35bd2c4af31974db36601b3a2f4c91",
+        "terminal_rotation_value": false,
+        "terminal_sim_time_s": 562.35
+      },
+      {
+        "accepted_sim_time_s": 563.2,
+        "action_index": 34,
+        "goal_uuid": "05d05f811bc7480cbde886dd52c89b04",
+        "interpretation": "observed controller diagnostics only; no causal conclusion",
+        "lookahead_sample_count": 1082,
+        "observed_rotation_transitions": [
+          {
+            "episode_sample_index": 1078,
+            "from": false,
+            "paired_lookahead_ros_stamp_ns": 591233333333,
+            "rotation_db_timestamp_ns": 591250000000,
+            "to": true
+          }
+        ],
+        "observed_rotation_values": [
+          false,
+          true
+        ],
+        "rotation_reentry_observed": false,
+        "rotation_sample_count": 1082,
+        "terminal_lookahead_cdr_sha256": "a2cc3c0788e818f2b7bfae043b3daa523a96d741521299d54e3535a1921f8d54",
+        "terminal_lookahead_ros_stamp_ns": 591283333333,
+        "terminal_observation": {
+          "source": "lookahead_pair"
+        },
+        "terminal_rotation_cdr_sha256": "93a8eaf79354c84442ac0e10c2062c53887deb79944f89aef71d679fd7a88b07",
+        "terminal_rotation_value": true,
+        "terminal_sim_time_s": 591.433333333
+      },
+      {
+        "accepted_sim_time_s": 592.033333333,
+        "action_index": 35,
+        "goal_uuid": "83b89e1c0b494784b037a0be7eed4ee5",
+        "interpretation": "observed controller diagnostics only; no causal conclusion",
+        "lookahead_sample_count": 540,
+        "observed_rotation_transitions": [
+          {
+            "episode_sample_index": 126,
+            "from": true,
+            "paired_lookahead_ros_stamp_ns": 595233333333,
+            "rotation_db_timestamp_ns": 595233333333,
+            "to": false
+          }
+        ],
+        "observed_rotation_values": [
+          false,
+          true
+        ],
+        "rotation_reentry_observed": false,
+        "rotation_sample_count": 540,
+        "terminal_lookahead_cdr_sha256": "fa1dd024e1a512a5bd557e41bdd057253324fb09311c203d67118e0439dd677b",
+        "terminal_lookahead_ros_stamp_ns": 605933333333,
+        "terminal_observation": {
+          "source": "lookahead_pair"
+        },
+        "terminal_rotation_cdr_sha256": "2e22fd435060cd5d3cf5e3ef39f79e198b35bd2c4af31974db36601b3a2f4c91",
+        "terminal_rotation_value": false,
+        "terminal_sim_time_s": 606.183333333
+      },
+      {
+        "accepted_sim_time_s": 606.966666666,
+        "action_index": 36,
+        "goal_uuid": "6e3e37af85ea46f09eefa508a8783a7b",
+        "interpretation": "observed controller diagnostics only; no causal conclusion",
+        "lookahead_sample_count": 429,
+        "observed_rotation_transitions": [
+          {
+            "episode_sample_index": 405,
+            "from": false,
+            "paired_lookahead_ros_stamp_ns": 617483333333,
+            "rotation_db_timestamp_ns": 617500000000,
+            "to": true
+          },
+          {
+            "episode_sample_index": 416,
+            "from": true,
+            "paired_lookahead_ros_stamp_ns": 617733333333,
+            "rotation_db_timestamp_ns": 617750000000,
+            "to": false
+          }
+        ],
+        "observed_rotation_values": [
+          false,
+          true
+        ],
+        "rotation_reentry_observed": false,
+        "rotation_sample_count": 429,
+        "terminal_lookahead_cdr_sha256": "702cfb6c0d049e06e8d52261fe7e0126431259faaefcbdd2cb9542558c4ddc55",
+        "terminal_lookahead_ros_stamp_ns": 618033333333,
+        "terminal_observation": {
+          "source": "lookahead_pair"
+        },
+        "terminal_rotation_cdr_sha256": "2e22fd435060cd5d3cf5e3ef39f79e198b35bd2c4af31974db36601b3a2f4c91",
+        "terminal_rotation_value": false,
+        "terminal_sim_time_s": 618.3
+      },
+      {
+        "accepted_sim_time_s": 619.133333333,
+        "action_index": 37,
+        "goal_uuid": "ef45d22fd51441fca30129c36d82aa3e",
+        "interpretation": "observed controller diagnostics only; no causal conclusion",
+        "lookahead_sample_count": 422,
+        "observed_rotation_transitions": [],
+        "observed_rotation_values": [
+          false
+        ],
+        "rotation_reentry_observed": false,
+        "rotation_sample_count": 422,
+        "terminal_lookahead_cdr_sha256": "876ff29dc46c2f2ab7bcd0b4ce3a74d5d4a112c367f3481ae397ff86e15040df",
+        "terminal_lookahead_ros_stamp_ns": 630033333333,
+        "terminal_observation": {
+          "source": "lookahead_pair"
+        },
+        "terminal_rotation_cdr_sha256": "2e22fd435060cd5d3cf5e3ef39f79e198b35bd2c4af31974db36601b3a2f4c91",
+        "terminal_rotation_value": false,
+        "terminal_sim_time_s": 630.283333333
+      },
+      {
+        "accepted_sim_time_s": 631.116666666,
+        "action_index": 38,
+        "goal_uuid": "b46e6ca5ca8b4b7ba6ed866e298640c8",
+        "interpretation": "observed controller diagnostics only; no causal conclusion",
+        "lookahead_sample_count": 656,
+        "observed_rotation_transitions": [
+          {
+            "episode_sample_index": 137,
+            "from": true,
+            "paired_lookahead_ros_stamp_ns": 634483333333,
+            "rotation_db_timestamp_ns": 634483333333,
+            "to": false
+          },
+          {
+            "episode_sample_index": 622,
+            "from": false,
+            "paired_lookahead_ros_stamp_ns": 646983333333,
+            "rotation_db_timestamp_ns": 647000000000,
+            "to": true
+          }
+        ],
+        "observed_rotation_values": [
+          false,
+          true
+        ],
+        "rotation_reentry_observed": true,
+        "rotation_sample_count": 656,
+        "terminal_lookahead_cdr_sha256": "6a4922eadfed4e22eb93586845500a8766a1ee62551f3b73c078ae2b4ffda389",
+        "terminal_lookahead_ros_stamp_ns": 647833333333,
+        "terminal_observation": {
+          "candidate_ros_stamp_ns": 648416666666,
+          "plan_epoch": 21,
+          "source": "controller_trace_terminal_stop",
+          "stopped_ros_stamp_ns": 648433333333
+        },
+        "terminal_rotation_cdr_sha256": "93a8eaf79354c84442ac0e10c2062c53887deb79944f89aef71d679fd7a88b07",
+        "terminal_rotation_value": true,
+        "terminal_sim_time_s": 648.483333333
+      },
+      {
+        "accepted_sim_time_s": 654.25,
+        "action_index": 39,
+        "goal_uuid": "02f2516fa2824ceb9d8803af340f9e98",
+        "interpretation": "observed controller diagnostics only; no causal conclusion",
+        "lookahead_sample_count": 728,
+        "observed_rotation_transitions": [
+          {
+            "episode_sample_index": 240,
+            "from": true,
+            "paired_lookahead_ros_stamp_ns": 660533333333,
+            "rotation_db_timestamp_ns": 660566666666,
+            "to": false
+          }
+        ],
+        "observed_rotation_values": [
+          false,
+          true
+        ],
+        "rotation_reentry_observed": false,
+        "rotation_sample_count": 728,
+        "terminal_lookahead_cdr_sha256": "2f00077e90872015050c2b89d477884180946df13aa5b1288adf82c28e297f4a",
+        "terminal_lookahead_ros_stamp_ns": 672733333333,
+        "terminal_observation": {
+          "source": "lookahead_pair"
+        },
+        "terminal_rotation_cdr_sha256": "2e22fd435060cd5d3cf5e3ef39f79e198b35bd2c4af31974db36601b3a2f4c91",
+        "terminal_rotation_value": false,
+        "terminal_sim_time_s": 673.066666666
+      },
+      {
+        "accepted_sim_time_s": 673.883333333,
+        "action_index": 40,
+        "goal_uuid": "cb30a88de03f46158e02afd3cdd8f12e",
+        "interpretation": "observed controller diagnostics only; no causal conclusion",
+        "lookahead_sample_count": 560,
+        "observed_rotation_transitions": [
+          {
+            "episode_sample_index": 128,
+            "from": true,
+            "paired_lookahead_ros_stamp_ns": 677333333333,
+            "rotation_db_timestamp_ns": 677333333333,
+            "to": false
+          },
+          {
+            "episode_sample_index": 556,
+            "from": false,
+            "paired_lookahead_ros_stamp_ns": 688283333333,
+            "rotation_db_timestamp_ns": 688283333333,
+            "to": true
+          }
+        ],
+        "observed_rotation_values": [
+          false,
+          true
+        ],
+        "rotation_reentry_observed": true,
+        "rotation_sample_count": 560,
+        "terminal_lookahead_cdr_sha256": "fe170a1c83ca55660b23d03aa8d20f8e15a06a2a78e2fd92a668bb9b823f9f4a",
+        "terminal_lookahead_ros_stamp_ns": 688333333333,
+        "terminal_observation": {
+          "source": "lookahead_pair"
+        },
+        "terminal_rotation_cdr_sha256": "93a8eaf79354c84442ac0e10c2062c53887deb79944f89aef71d679fd7a88b07",
+        "terminal_rotation_value": true,
+        "terminal_sim_time_s": 688.533333333
+      },
+      {
+        "accepted_sim_time_s": 689.4,
+        "action_index": 41,
+        "goal_uuid": "ff9d9e98d4d84d3c8f4d9e7aa71a962e",
+        "interpretation": "observed controller diagnostics only; no causal conclusion",
+        "lookahead_sample_count": 659,
+        "observed_rotation_transitions": [
+          {
+            "episode_sample_index": 126,
+            "from": true,
+            "paired_lookahead_ros_stamp_ns": 692333333333,
+            "rotation_db_timestamp_ns": 692350000000,
+            "to": false
+          }
+        ],
+        "observed_rotation_values": [
+          false,
+          true
+        ],
+        "rotation_reentry_observed": false,
+        "rotation_sample_count": 659,
+        "terminal_lookahead_cdr_sha256": "b6e2aa6c475066d8561939867f15a5257dba49751b4196b18dfc2e6a6fd9fd12",
+        "terminal_lookahead_ros_stamp_ns": 705933333333,
+        "terminal_observation": {
+          "source": "lookahead_pair"
+        },
+        "terminal_rotation_cdr_sha256": "2e22fd435060cd5d3cf5e3ef39f79e198b35bd2c4af31974db36601b3a2f4c91",
+        "terminal_rotation_value": false,
+        "terminal_sim_time_s": 706.183333333
+      },
+      {
+        "accepted_sim_time_s": 711.95,
+        "action_index": 42,
+        "goal_uuid": "60324760d6cc4db3bc2541146f3cca45",
+        "interpretation": "observed controller diagnostics only; no causal conclusion",
+        "lookahead_sample_count": 771,
+        "observed_rotation_transitions": [
+          {
+            "episode_sample_index": 254,
+            "from": true,
+            "paired_lookahead_ros_stamp_ns": 718333333333,
+            "rotation_db_timestamp_ns": 718366666666,
+            "to": false
+          }
+        ],
+        "observed_rotation_values": [
+          false,
+          true
+        ],
+        "rotation_reentry_observed": false,
+        "rotation_sample_count": 771,
+        "terminal_lookahead_cdr_sha256": "7510fded11425cc5f51ab742db254696837c0f466cc93a51a946151906b5a796",
+        "terminal_lookahead_ros_stamp_ns": 731433333333,
+        "terminal_observation": {
+          "source": "lookahead_pair"
+        },
+        "terminal_rotation_cdr_sha256": "2e22fd435060cd5d3cf5e3ef39f79e198b35bd2c4af31974db36601b3a2f4c91",
+        "terminal_rotation_value": false,
+        "terminal_sim_time_s": 731.683333333
+      },
+      {
+        "accepted_sim_time_s": 732.516666666,
+        "action_index": 43,
+        "goal_uuid": "2f60f21d37e84fafb955c2b46d7acd20",
+        "interpretation": "observed controller diagnostics only; no causal conclusion",
+        "lookahead_sample_count": 545,
+        "observed_rotation_transitions": [
+          {
+            "episode_sample_index": 123,
+            "from": true,
+            "paired_lookahead_ros_stamp_ns": 735733333333,
+            "rotation_db_timestamp_ns": 735750000000,
+            "to": false
+          }
+        ],
+        "observed_rotation_values": [
+          false,
+          true
+        ],
+        "rotation_reentry_observed": false,
+        "rotation_sample_count": 545,
+        "terminal_lookahead_cdr_sha256": "e588a0eb6ca77f7fe5af0839b2a10a4a5f4d435d7efcff1c033643be09329f07",
+        "terminal_lookahead_ros_stamp_ns": 746433333333,
+        "terminal_observation": {
+          "source": "lookahead_pair"
+        },
+        "terminal_rotation_cdr_sha256": "2e22fd435060cd5d3cf5e3ef39f79e198b35bd2c4af31974db36601b3a2f4c91",
+        "terminal_rotation_value": false,
+        "terminal_sim_time_s": 746.683333333
+      },
+      {
+        "accepted_sim_time_s": 747.55,
+        "action_index": 44,
+        "goal_uuid": "5579da368b234b2a8f1e398584398a8d",
+        "interpretation": "observed controller diagnostics only; no causal conclusion",
+        "lookahead_sample_count": 417,
+        "observed_rotation_transitions": [],
+        "observed_rotation_values": [
+          false
+        ],
+        "rotation_reentry_observed": false,
+        "rotation_sample_count": 417,
+        "terminal_lookahead_cdr_sha256": "4f469c4448dd4a11e05824406842f79db5a51827edfa08b294a1ecc8c8d1b2ac",
+        "terminal_lookahead_ros_stamp_ns": 758133333333,
+        "terminal_observation": {
+          "source": "lookahead_pair"
+        },
+        "terminal_rotation_cdr_sha256": "2e22fd435060cd5d3cf5e3ef39f79e198b35bd2c4af31974db36601b3a2f4c91",
+        "terminal_rotation_value": false,
+        "terminal_sim_time_s": 758.366666666
+      },
+      {
+        "accepted_sim_time_s": 759.25,
+        "action_index": 45,
+        "goal_uuid": "495e92d50656444686a6543589642c76",
+        "interpretation": "observed controller diagnostics only; no causal conclusion",
+        "lookahead_sample_count": 1272,
+        "observed_rotation_transitions": [
+          {
+            "episode_sample_index": 134,
+            "from": true,
+            "paired_lookahead_ros_stamp_ns": 762483333333,
+            "rotation_db_timestamp_ns": 762500000000,
+            "to": false
+          },
+          {
+            "episode_sample_index": 1252,
+            "from": false,
+            "paired_lookahead_ros_stamp_ns": 791183333333,
+            "rotation_db_timestamp_ns": 791200000000,
+            "to": true
+          },
+          {
+            "episode_sample_index": 1254,
+            "from": true,
+            "paired_lookahead_ros_stamp_ns": 791233333333,
+            "rotation_db_timestamp_ns": 791250000000,
+            "to": false
+          },
+          {
+            "episode_sample_index": 1256,
+            "from": false,
+            "paired_lookahead_ros_stamp_ns": 791283333333,
+            "rotation_db_timestamp_ns": 791316666666,
+            "to": true
+          }
+        ],
+        "observed_rotation_values": [
+          false,
+          true
+        ],
+        "rotation_reentry_observed": true,
+        "rotation_sample_count": 1272,
+        "terminal_lookahead_cdr_sha256": "a0f02889ced7ccbcbcf6b47c6d7ee1b81394937c97309df1117532b93803f07a",
+        "terminal_lookahead_ros_stamp_ns": 791683333333,
+        "terminal_observation": {
+          "source": "lookahead_pair"
+        },
+        "terminal_rotation_cdr_sha256": "93a8eaf79354c84442ac0e10c2062c53887deb79944f89aef71d679fd7a88b07",
+        "terminal_rotation_value": true,
+        "terminal_sim_time_s": 792.033333333
+      },
+      {
+        "accepted_sim_time_s": 792.833333333,
+        "action_index": 46,
+        "goal_uuid": "9d750777e19a4b379fe56a8c776896d5",
+        "interpretation": "observed controller diagnostics only; no causal conclusion",
+        "lookahead_sample_count": 414,
+        "observed_rotation_transitions": [
+          {
+            "episode_sample_index": 412,
+            "from": false,
+            "paired_lookahead_ros_stamp_ns": 803433333333,
+            "rotation_db_timestamp_ns": 803450000000,
+            "to": true
+          }
+        ],
+        "observed_rotation_values": [
+          false,
+          true
+        ],
+        "rotation_reentry_observed": false,
+        "rotation_sample_count": 414,
+        "terminal_lookahead_cdr_sha256": "11d8fc3cbb0781658dd6b95e3d74b3334597347568bf8f59c8f0a2495430b581",
+        "terminal_lookahead_ros_stamp_ns": 803433333333,
+        "terminal_observation": {
+          "source": "lookahead_pair"
+        },
+        "terminal_rotation_cdr_sha256": "93a8eaf79354c84442ac0e10c2062c53887deb79944f89aef71d679fd7a88b07",
+        "terminal_rotation_value": true,
+        "terminal_sim_time_s": 803.7
+      },
+      {
+        "accepted_sim_time_s": 804.566666666,
+        "action_index": 47,
+        "goal_uuid": "a9b774f819b446b3a4bdd12bb4f8b633",
+        "interpretation": "observed controller diagnostics only; no causal conclusion",
+        "lookahead_sample_count": 780,
+        "observed_rotation_transitions": [
+          {
+            "episode_sample_index": 128,
+            "from": true,
+            "paired_lookahead_ros_stamp_ns": 807933333333,
+            "rotation_db_timestamp_ns": 807950000000,
+            "to": false
+          },
+          {
+            "episode_sample_index": 503,
+            "from": false,
+            "paired_lookahead_ros_stamp_ns": 817583333333,
+            "rotation_db_timestamp_ns": 817600000000,
+            "to": true
+          }
+        ],
+        "observed_rotation_values": [
+          false,
+          true
+        ],
+        "rotation_reentry_observed": true,
+        "rotation_sample_count": 780,
+        "terminal_lookahead_cdr_sha256": "cca548cfb7dffd34ec4a5b8a3ea5e5a656ffdebcbf1f3f68bd5ebd9bd925a162",
+        "terminal_lookahead_ros_stamp_ns": 824533333333,
+        "terminal_observation": {
+          "candidate_ros_stamp_ns": 825316666666,
+          "plan_epoch": 30,
+          "source": "controller_trace_terminal_stop",
+          "stopped_ros_stamp_ns": 825333333333
+        },
+        "terminal_rotation_cdr_sha256": "93a8eaf79354c84442ac0e10c2062c53887deb79944f89aef71d679fd7a88b07",
+        "terminal_rotation_value": true,
+        "terminal_sim_time_s": 825.383333333
+      },
+      {
+        "accepted_sim_time_s": 19.516666666,
+        "action_index": 1,
+        "goal_uuid": "139f2deb153547ed8b29bf6812a73333",
+        "interpretation": "observed controller diagnostics only; no causal conclusion",
+        "lookahead_sample_count": 338,
+        "observed_rotation_transitions": [],
+        "observed_rotation_values": [
+          false
+        ],
+        "rotation_reentry_observed": false,
+        "rotation_sample_count": 338,
+        "terminal_lookahead_cdr_sha256": "9027cbbd0391ffc0af2342c5e90c50b3f0a194040f5124cdb2f41863c3f06951",
+        "terminal_lookahead_ros_stamp_ns": 28083333333,
+        "terminal_observation": {
+          "source": "lookahead_pair"
+        },
+        "terminal_rotation_cdr_sha256": "2e22fd435060cd5d3cf5e3ef39f79e198b35bd2c4af31974db36601b3a2f4c91",
+        "terminal_rotation_value": false,
+        "terminal_sim_time_s": 28.3
+      },
+      {
+        "accepted_sim_time_s": 28.916666666,
+        "action_index": 3,
+        "goal_uuid": "e15676c9d079471688df837f397e5f02",
+        "interpretation": "observed controller diagnostics only; no causal conclusion",
+        "lookahead_sample_count": 538,
+        "observed_rotation_transitions": [
+          {
+            "episode_sample_index": 113,
+            "from": true,
+            "paired_lookahead_ros_stamp_ns": 32033333333,
+            "rotation_db_timestamp_ns": 32033333333,
+            "to": false
+          }
+        ],
+        "observed_rotation_values": [
+          false,
+          true
+        ],
+        "rotation_reentry_observed": false,
+        "rotation_sample_count": 538,
+        "terminal_lookahead_cdr_sha256": "48c0cf77ba673e2a0d234999e99d84e38355ceb21a4b58e321beae2a0c4d2113",
+        "terminal_lookahead_ros_stamp_ns": 42933333333,
+        "terminal_observation": {
+          "source": "lookahead_pair"
+        },
+        "terminal_rotation_cdr_sha256": "2e22fd435060cd5d3cf5e3ef39f79e198b35bd2c4af31974db36601b3a2f4c91",
+        "terminal_rotation_value": false,
+        "terminal_sim_time_s": 43.15
+      },
+      {
+        "accepted_sim_time_s": 43.783333333,
+        "action_index": 5,
+        "goal_uuid": "d43c2784a1b940a88039907b599453d9",
+        "interpretation": "observed controller diagnostics only; no causal conclusion",
+        "lookahead_sample_count": 907,
+        "observed_rotation_transitions": [
+          {
+            "episode_sample_index": 627,
+            "from": false,
+            "paired_lookahead_ros_stamp_ns": 60333333333,
+            "rotation_db_timestamp_ns": 60350000000,
+            "to": true
+          }
+        ],
+        "observed_rotation_values": [
+          false,
+          true
+        ],
+        "rotation_reentry_observed": false,
+        "rotation_sample_count": 907,
+        "terminal_lookahead_cdr_sha256": "84c4e453b73c1db634a09d3925d968eb8b84906e156b0941b1f8a8bb305b8369",
+        "terminal_lookahead_ros_stamp_ns": 67533333333,
+        "terminal_observation": {
+          "candidate_ros_stamp_ns": 68333333333,
+          "plan_epoch": 3,
+          "source": "controller_trace_terminal_stop",
+          "stopped_ros_stamp_ns": 68349999999
+        },
+        "terminal_rotation_cdr_sha256": "93a8eaf79354c84442ac0e10c2062c53887deb79944f89aef71d679fd7a88b07",
+        "terminal_rotation_value": true,
+        "terminal_sim_time_s": 68.366666666
+      },
+      {
+        "accepted_sim_time_s": 277.85,
+        "action_index": 17,
+        "goal_uuid": "5d32decc346c43bfa353a6cb2c3ff62d",
+        "interpretation": "observed controller diagnostics only; no causal conclusion",
+        "lookahead_sample_count": 642,
+        "observed_rotation_transitions": [
+          {
+            "episode_sample_index": 640,
+            "from": false,
+            "paired_lookahead_ros_stamp_ns": 294283333333,
+            "rotation_db_timestamp_ns": 294300000000,
+            "to": true
+          }
+        ],
+        "observed_rotation_values": [
+          false,
+          true
+        ],
+        "rotation_reentry_observed": false,
+        "rotation_sample_count": 642,
+        "terminal_lookahead_cdr_sha256": "16a203e912546bceb472d34b37e9a59a9ed0ef2fa076afb64f783ec502ce146e",
+        "terminal_lookahead_ros_stamp_ns": 294283333333,
+        "terminal_observation": {
+          "source": "lookahead_pair"
+        },
+        "terminal_rotation_cdr_sha256": "93a8eaf79354c84442ac0e10c2062c53887deb79944f89aef71d679fd7a88b07",
+        "terminal_rotation_value": true,
+        "terminal_sim_time_s": 294.516666666
+      },
+      {
+        "accepted_sim_time_s": 295.283333333,
+        "action_index": 18,
+        "goal_uuid": "abcbdb01ba0c459bad9fc51635757985",
+        "interpretation": "observed controller diagnostics only; no causal conclusion",
+        "lookahead_sample_count": 398,
+        "observed_rotation_transitions": [],
+        "observed_rotation_values": [
+          false
+        ],
+        "rotation_reentry_observed": false,
+        "rotation_sample_count": 398,
+        "terminal_lookahead_cdr_sha256": "c76a82d6d5288571d0a72cf2dee24e7219ba00574eb425ca7cfc50f1c5044c19",
+        "terminal_lookahead_ros_stamp_ns": 305633333333,
+        "terminal_observation": {
+          "source": "lookahead_pair"
+        },
+        "terminal_rotation_cdr_sha256": "2e22fd435060cd5d3cf5e3ef39f79e198b35bd2c4af31974db36601b3a2f4c91",
+        "terminal_rotation_value": false,
+        "terminal_sim_time_s": 305.866666666
+      },
+      {
+        "accepted_sim_time_s": 306.583333333,
+        "action_index": 19,
+        "goal_uuid": "c1aa2574d8e44c6894e73a5b1fc59a80",
+        "interpretation": "observed controller diagnostics only; no causal conclusion",
+        "lookahead_sample_count": 390,
+        "observed_rotation_transitions": [],
+        "observed_rotation_values": [
+          false
+        ],
+        "rotation_reentry_observed": false,
+        "rotation_sample_count": 390,
+        "terminal_lookahead_cdr_sha256": "3ede75925d48b589218b68b1320389bf8a4d39ec4d7a7a63fd616996d7f1ff79",
+        "terminal_lookahead_ros_stamp_ns": 316733333333,
+        "terminal_observation": {
+          "source": "lookahead_pair"
+        },
+        "terminal_rotation_cdr_sha256": "2e22fd435060cd5d3cf5e3ef39f79e198b35bd2c4af31974db36601b3a2f4c91",
+        "terminal_rotation_value": false,
+        "terminal_sim_time_s": 316.966666666
+      },
+      {
+        "accepted_sim_time_s": 317.716666666,
+        "action_index": 20,
+        "goal_uuid": "22ff5eeffd024a04b2b50695444c0558",
+        "interpretation": "observed controller diagnostics only; no causal conclusion",
+        "lookahead_sample_count": 1107,
+        "observed_rotation_transitions": [
+          {
+            "episode_sample_index": 1105,
+            "from": false,
+            "paired_lookahead_ros_stamp_ns": 346383333333,
+            "rotation_db_timestamp_ns": 346383333333,
+            "to": true
+          }
+        ],
+        "observed_rotation_values": [
+          false,
+          true
+        ],
+        "rotation_reentry_observed": false,
+        "rotation_sample_count": 1107,
+        "terminal_lookahead_cdr_sha256": "923032968e9d4e5e7221ead22559068ed44be283d2cfb0de86ce38debd09445b",
+        "terminal_lookahead_ros_stamp_ns": 346383333333,
+        "terminal_observation": {
+          "source": "lookahead_pair"
+        },
+        "terminal_rotation_cdr_sha256": "93a8eaf79354c84442ac0e10c2062c53887deb79944f89aef71d679fd7a88b07",
+        "terminal_rotation_value": true,
+        "terminal_sim_time_s": 346.666666666
+      },
+      {
+        "accepted_sim_time_s": 347.416666666,
+        "action_index": 21,
+        "goal_uuid": "6055bb74bdd8438b82a6c9af6691fec5",
+        "interpretation": "observed controller diagnostics only; no causal conclusion",
+        "lookahead_sample_count": 574,
+        "observed_rotation_transitions": [
+          {
+            "episode_sample_index": 123,
+            "from": true,
+            "paired_lookahead_ros_stamp_ns": 350733333333,
+            "rotation_db_timestamp_ns": 350766666666,
+            "to": false
+          },
+          {
+            "episode_sample_index": 538,
+            "from": false,
+            "paired_lookahead_ros_stamp_ns": 361533333333,
+            "rotation_db_timestamp_ns": 361533333333,
+            "to": true
+          }
+        ],
+        "observed_rotation_values": [
+          false,
+          true
+        ],
+        "rotation_reentry_observed": true,
+        "rotation_sample_count": 574,
+        "terminal_lookahead_cdr_sha256": "c7339c95148ae4fc19410f7c107bf2d12877dcaee2837ec399dcbdc9676091f8",
+        "terminal_lookahead_ros_stamp_ns": 362133333333,
+        "terminal_observation": {
+          "source": "lookahead_pair"
+        },
+        "terminal_rotation_cdr_sha256": "93a8eaf79354c84442ac0e10c2062c53887deb79944f89aef71d679fd7a88b07",
+        "terminal_rotation_value": true,
+        "terminal_sim_time_s": 362.533333333
+      },
+      {
+        "accepted_sim_time_s": 363.25,
+        "action_index": 22,
+        "goal_uuid": "1a51b4b08cb5490f8b48f63bdf785429",
+        "interpretation": "observed controller diagnostics only; no causal conclusion",
+        "lookahead_sample_count": 423,
+        "observed_rotation_transitions": [
+          {
+            "episode_sample_index": 401,
+            "from": false,
+            "paired_lookahead_ros_stamp_ns": 373733333333,
+            "rotation_db_timestamp_ns": 373750000000,
+            "to": true
+          }
+        ],
+        "observed_rotation_values": [
+          false,
+          true
+        ],
+        "rotation_reentry_observed": false,
+        "rotation_sample_count": 423,
+        "terminal_lookahead_cdr_sha256": "30569b2fd17f9f54cac1c67cc42141d78ac3c0f552cd58a436e1d4343a195db2",
+        "terminal_lookahead_ros_stamp_ns": 374283333333,
+        "terminal_observation": {
+          "source": "lookahead_pair"
+        },
+        "terminal_rotation_cdr_sha256": "93a8eaf79354c84442ac0e10c2062c53887deb79944f89aef71d679fd7a88b07",
+        "terminal_rotation_value": true,
+        "terminal_sim_time_s": 374.616666666
+      },
+      {
+        "accepted_sim_time_s": 375.35,
+        "action_index": 23,
+        "goal_uuid": "802d35a1cc324e40948d5572175ea250",
+        "interpretation": "observed controller diagnostics only; no causal conclusion",
+        "lookahead_sample_count": 546,
+        "observed_rotation_transitions": [
+          {
+            "episode_sample_index": 460,
+            "from": false,
+            "paired_lookahead_ros_stamp_ns": 387433333333,
+            "rotation_db_timestamp_ns": 387450000000,
+            "to": true
+          }
+        ],
+        "observed_rotation_values": [
+          false,
+          true
+        ],
+        "rotation_reentry_observed": false,
+        "rotation_sample_count": 546,
+        "terminal_lookahead_cdr_sha256": "36db2d893a78045aafdfacc972e95c838ac657cc9b8bb41b1b02a85c74b7e1ff",
+        "terminal_lookahead_ros_stamp_ns": 389733333333,
+        "terminal_observation": {
+          "candidate_ros_stamp_ns": 390516666666,
+          "plan_epoch": 10,
+          "source": "controller_trace_terminal_stop",
+          "stopped_ros_stamp_ns": 390550000000
+        },
+        "terminal_rotation_cdr_sha256": "93a8eaf79354c84442ac0e10c2062c53887deb79944f89aef71d679fd7a88b07",
+        "terminal_rotation_value": true,
+        "terminal_sim_time_s": 390.55
+      },
+      {
+        "accepted_sim_time_s": 391.316666666,
+        "action_index": 24,
+        "goal_uuid": "c8e7d9b2774345cf964d0a0d05234d7d",
+        "interpretation": "observed controller diagnostics only; no causal conclusion",
+        "lookahead_sample_count": 597,
+        "observed_rotation_transitions": [
+          {
+            "episode_sample_index": 128,
+            "from": true,
+            "paired_lookahead_ros_stamp_ns": 394533333333,
+            "rotation_db_timestamp_ns": 394550000000,
+            "to": false
+          }
+        ],
+        "observed_rotation_values": [
+          false,
+          true
+        ],
+        "rotation_reentry_observed": false,
+        "rotation_sample_count": 597,
+        "terminal_lookahead_cdr_sha256": "3d384a44a588bef6776207648f0d3481324ebde69152dbd49fca5c79982045d2",
+        "terminal_lookahead_ros_stamp_ns": 406733333333,
+        "terminal_observation": {
+          "source": "lookahead_pair"
+        },
+        "terminal_rotation_cdr_sha256": "2e22fd435060cd5d3cf5e3ef39f79e198b35bd2c4af31974db36601b3a2f4c91",
+        "terminal_rotation_value": false,
+        "terminal_sim_time_s": 406.983333333
+      },
+      {
+        "accepted_sim_time_s": 412.7,
+        "action_index": 25,
+        "goal_uuid": "649fae0825d44e2fbd7bdfb233cf9e51",
+        "interpretation": "observed controller diagnostics only; no causal conclusion",
+        "lookahead_sample_count": 684,
+        "observed_rotation_transitions": [
+          {
+            "episode_sample_index": 223,
+            "from": true,
+            "paired_lookahead_ros_stamp_ns": 418733333333,
+            "rotation_db_timestamp_ns": 418766666666,
+            "to": false
+          }
+        ],
+        "observed_rotation_values": [
+          false,
+          true
+        ],
+        "rotation_reentry_observed": false,
+        "rotation_sample_count": 684,
+        "terminal_lookahead_cdr_sha256": "57aab959540692b021eb984b46a56477abd9c274152b2f3d413f0f24b8858551",
+        "terminal_lookahead_ros_stamp_ns": 430883333333,
+        "terminal_observation": {
+          "source": "lookahead_pair"
+        },
+        "terminal_rotation_cdr_sha256": "2e22fd435060cd5d3cf5e3ef39f79e198b35bd2c4af31974db36601b3a2f4c91",
+        "terminal_rotation_value": false,
+        "terminal_sim_time_s": 431.116666666
+      },
+      {
+        "accepted_sim_time_s": 431.883333333,
+        "action_index": 26,
+        "goal_uuid": "43d9cbfed67d4f4580ab6ab556e2c59a",
+        "interpretation": "observed controller diagnostics only; no causal conclusion",
+        "lookahead_sample_count": 611,
+        "observed_rotation_transitions": [
+          {
+            "episode_sample_index": 139,
+            "from": true,
+            "paired_lookahead_ros_stamp_ns": 435083333333,
+            "rotation_db_timestamp_ns": 435100000000,
+            "to": false
+          },
+          {
+            "episode_sample_index": 562,
+            "from": false,
+            "paired_lookahead_ros_stamp_ns": 446083333333,
+            "rotation_db_timestamp_ns": 446100000000,
+            "to": true
+          },
+          {
+            "episode_sample_index": 571,
+            "from": true,
+            "paired_lookahead_ros_stamp_ns": 446333333333,
+            "rotation_db_timestamp_ns": 446350000000,
+            "to": false
+          },
+          {
+            "episode_sample_index": 581,
+            "from": false,
+            "paired_lookahead_ros_stamp_ns": 446583333333,
+            "rotation_db_timestamp_ns": 446600000000,
+            "to": true
+          }
+        ],
+        "observed_rotation_values": [
+          false,
+          true
+        ],
+        "rotation_reentry_observed": true,
+        "rotation_sample_count": 611,
+        "terminal_lookahead_cdr_sha256": "e0e936db5d819db3fd9182789d7b6dafd5a7ff65b0c4662979a960ce0a9031d7",
+        "terminal_lookahead_ros_stamp_ns": 447333333333,
+        "terminal_observation": {
+          "source": "lookahead_pair"
+        },
+        "terminal_rotation_cdr_sha256": "93a8eaf79354c84442ac0e10c2062c53887deb79944f89aef71d679fd7a88b07",
+        "terminal_rotation_value": true,
+        "terminal_sim_time_s": 447.8
+      },
+      {
+        "accepted_sim_time_s": 448.583333333,
+        "action_index": 27,
+        "goal_uuid": "fafad8975b144c9c95c4d6c51b148d58",
+        "interpretation": "observed controller diagnostics only; no causal conclusion",
+        "lookahead_sample_count": 402,
+        "observed_rotation_transitions": [],
+        "observed_rotation_values": [
+          false
+        ],
+        "rotation_reentry_observed": false,
+        "rotation_sample_count": 402,
+        "terminal_lookahead_cdr_sha256": "10d416d6638bbe2da5ca8c691b356f853c42eeceaa764020a6b97774700073da",
+        "terminal_lookahead_ros_stamp_ns": 458883333333,
+        "terminal_observation": {
+          "source": "lookahead_pair"
+        },
+        "terminal_rotation_cdr_sha256": "2e22fd435060cd5d3cf5e3ef39f79e198b35bd2c4af31974db36601b3a2f4c91",
+        "terminal_rotation_value": false,
+        "terminal_sim_time_s": 459.35
+      },
+      {
+        "accepted_sim_time_s": 460.116666666,
+        "action_index": 28,
+        "goal_uuid": "d57fe9cb24eb47c1af7665aeebc2d607",
+        "interpretation": "observed controller diagnostics only; no causal conclusion",
+        "lookahead_sample_count": 407,
+        "observed_rotation_transitions": [
+          {
+            "episode_sample_index": 404,
+            "from": false,
+            "paired_lookahead_ros_stamp_ns": 470483333333,
+            "rotation_db_timestamp_ns": 470516666666,
+            "to": true
+          }
+        ],
+        "observed_rotation_values": [
+          false,
+          true
+        ],
+        "rotation_reentry_observed": false,
+        "rotation_sample_count": 407,
+        "terminal_lookahead_cdr_sha256": "a66ba8f216b984cc48a199bae9ebbfb083d61cfd1dd7506f29afb811a35ee486",
+        "terminal_lookahead_ros_stamp_ns": 470533333333,
+        "terminal_observation": {
+          "source": "lookahead_pair"
+        },
+        "terminal_rotation_cdr_sha256": "93a8eaf79354c84442ac0e10c2062c53887deb79944f89aef71d679fd7a88b07",
+        "terminal_rotation_value": true,
+        "terminal_sim_time_s": 470.683333333
+      },
+      {
+        "accepted_sim_time_s": 471.483333333,
+        "action_index": 29,
+        "goal_uuid": "b5a420aef0134c339875d875572e48a5",
+        "interpretation": "observed controller diagnostics only; no causal conclusion",
+        "lookahead_sample_count": 1258,
+        "observed_rotation_transitions": [
+          {
+            "episode_sample_index": 140,
+            "from": true,
+            "paired_lookahead_ros_stamp_ns": 474933333333,
+            "rotation_db_timestamp_ns": 474966666666,
+            "to": false
+          }
+        ],
+        "observed_rotation_values": [
+          false,
+          true
+        ],
+        "rotation_reentry_observed": false,
+        "rotation_sample_count": 1258,
+        "terminal_lookahead_cdr_sha256": "9095aeba9943a3eb6baca9d5aba8c086d242cfb726a70842a4ad8730f23aa21e",
+        "terminal_lookahead_ros_stamp_ns": 503583333333,
+        "terminal_observation": {
+          "candidate_ros_stamp_ns": 504083333333,
+          "plan_epoch": 16,
+          "source": "controller_trace_terminal_stop",
+          "stopped_ros_stamp_ns": 504116666666
+        },
+        "terminal_rotation_cdr_sha256": "2e22fd435060cd5d3cf5e3ef39f79e198b35bd2c4af31974db36601b3a2f4c91",
+        "terminal_rotation_value": false,
+        "terminal_sim_time_s": 504.116666666
+      },
+      {
+        "accepted_sim_time_s": 504.85,
+        "action_index": 30,
+        "goal_uuid": "018a6ff585694b649e5c368cd8facb02",
+        "interpretation": "observed controller diagnostics only; no causal conclusion",
+        "lookahead_sample_count": 401,
+        "observed_rotation_transitions": [],
+        "observed_rotation_values": [
+          false
+        ],
+        "rotation_reentry_observed": false,
+        "rotation_sample_count": 401,
+        "terminal_lookahead_cdr_sha256": "d331352e03be29792bba1e12170ca940f297d939f3a75f58a7c7c2bc5d2fe875",
+        "terminal_lookahead_ros_stamp_ns": 515133333333,
+        "terminal_observation": {
+          "source": "lookahead_pair"
+        },
+        "terminal_rotation_cdr_sha256": "2e22fd435060cd5d3cf5e3ef39f79e198b35bd2c4af31974db36601b3a2f4c91",
+        "terminal_rotation_value": false,
+        "terminal_sim_time_s": 515.383333333
+      },
+      {
+        "accepted_sim_time_s": 516.133333333,
+        "action_index": 31,
+        "goal_uuid": "56d2392be10b4a50a32c58a49ebaf1ab",
+        "interpretation": "observed controller diagnostics only; no causal conclusion",
+        "lookahead_sample_count": 770,
+        "observed_rotation_transitions": [
+          {
+            "episode_sample_index": 122,
+            "from": true,
+            "paired_lookahead_ros_stamp_ns": 519383333333,
+            "rotation_db_timestamp_ns": 519383333333,
+            "to": false
+          },
+          {
+            "episode_sample_index": 500,
+            "from": false,
+            "paired_lookahead_ros_stamp_ns": 529083333333,
+            "rotation_db_timestamp_ns": 529100000000,
+            "to": true
+          }
+        ],
+        "observed_rotation_values": [
+          false,
+          true
+        ],
+        "rotation_reentry_observed": true,
+        "rotation_sample_count": 770,
+        "terminal_lookahead_cdr_sha256": "303732449088d0bd55b25c53a896a4e3556355482f84dc71738a8d45f731a5c0",
+        "terminal_lookahead_ros_stamp_ns": 535983333333,
+        "terminal_observation": {
+          "candidate_ros_stamp_ns": 536766666666,
+          "plan_epoch": 18,
+          "source": "controller_trace_terminal_stop",
+          "stopped_ros_stamp_ns": 536783333333
+        },
+        "terminal_rotation_cdr_sha256": "93a8eaf79354c84442ac0e10c2062c53887deb79944f89aef71d679fd7a88b07",
+        "terminal_rotation_value": true,
+        "terminal_sim_time_s": 536.816666666
+      },
+      {
+        "accepted_sim_time_s": 826.316666666,
+        "action_index": 48,
+        "goal_uuid": "b5a038ab2d7c4041abf5954e044e5f88",
+        "interpretation": "observed controller diagnostics only; no causal conclusion",
+        "lookahead_sample_count": 347,
+        "observed_rotation_transitions": [
+          {
+            "episode_sample_index": 345,
+            "from": false,
+            "paired_lookahead_ros_stamp_ns": 835083333333,
+            "rotation_db_timestamp_ns": 835100000000,
+            "to": true
+          }
+        ],
+        "observed_rotation_values": [
+          false,
+          true
+        ],
+        "rotation_reentry_observed": false,
+        "rotation_sample_count": 347,
+        "terminal_lookahead_cdr_sha256": "e062981f9b37fe132c8c47fdcec936c69b0ecdc22fd49f36ede53950237890e2",
+        "terminal_lookahead_ros_stamp_ns": 835083333333,
+        "terminal_observation": {
+          "source": "lookahead_pair"
+        },
+        "terminal_rotation_cdr_sha256": "93a8eaf79354c84442ac0e10c2062c53887deb79944f89aef71d679fd7a88b07",
+        "terminal_rotation_value": true,
+        "terminal_sim_time_s": 835.283333333
+      },
+      {
+        "accepted_sim_time_s": 836.116666666,
+        "action_index": 49,
+        "goal_uuid": "24174d87bdd14690a98d79190a1be7e3",
+        "interpretation": "observed controller diagnostics only; no causal conclusion",
+        "lookahead_sample_count": 613,
+        "observed_rotation_transitions": [
+          {
+            "episode_sample_index": 129,
+            "from": true,
+            "paired_lookahead_ros_stamp_ns": 839433333333,
+            "rotation_db_timestamp_ns": 839450000000,
+            "to": false
+          },
+          {
+            "episode_sample_index": 564,
+            "from": false,
+            "paired_lookahead_ros_stamp_ns": 850583333333,
+            "rotation_db_timestamp_ns": 850600000000,
+            "to": true
+          }
+        ],
+        "observed_rotation_values": [
+          false,
+          true
+        ],
+        "rotation_reentry_observed": true,
+        "rotation_sample_count": 613,
+        "terminal_lookahead_cdr_sha256": "a0c0d5df83234ac285c5a5cbf12010a6590798273dec218a265699f3d5cf323c",
+        "terminal_lookahead_ros_stamp_ns": 851833333333,
+        "terminal_observation": {
+          "candidate_ros_stamp_ns": 852616666666,
+          "plan_epoch": 20,
+          "source": "controller_trace_terminal_stop",
+          "stopped_ros_stamp_ns": 852633333333
+        },
+        "terminal_rotation_cdr_sha256": "93a8eaf79354c84442ac0e10c2062c53887deb79944f89aef71d679fd7a88b07",
+        "terminal_rotation_value": true,
+        "terminal_sim_time_s": 852.65
+      },
+      {
+        "accepted_sim_time_s": 853.566666666,
+        "action_index": 50,
+        "goal_uuid": "e1feb1a739e44d76a5441d1db43de8ed",
+        "interpretation": "observed controller diagnostics only; no causal conclusion",
+        "lookahead_sample_count": 1095,
+        "observed_rotation_transitions": [],
+        "observed_rotation_values": [
+          false
+        ],
+        "rotation_reentry_observed": false,
+        "rotation_sample_count": 1095,
+        "terminal_lookahead_cdr_sha256": "5ca2fe885ba90fb90259cc4bd271702d7702d912263cd980390e2e17d4d41552",
+        "terminal_lookahead_ros_stamp_ns": 881583333333,
+        "terminal_observation": {
+          "source": "lookahead_pair"
+        },
+        "terminal_rotation_cdr_sha256": "2e22fd435060cd5d3cf5e3ef39f79e198b35bd2c4af31974db36601b3a2f4c91",
+        "terminal_rotation_value": false,
+        "terminal_sim_time_s": 881.833333333
+      },
+      {
+        "accepted_sim_time_s": 882.683333333,
+        "action_index": 51,
+        "goal_uuid": "dac5a4614aee4473ba992b0704698d6d",
+        "interpretation": "observed controller diagnostics only; no causal conclusion",
+        "lookahead_sample_count": 544,
+        "observed_rotation_transitions": [
+          {
+            "episode_sample_index": 121,
+            "from": true,
+            "paired_lookahead_ros_stamp_ns": 885783333333,
+            "rotation_db_timestamp_ns": 885800000000,
+            "to": false
+          }
+        ],
+        "observed_rotation_values": [
+          false,
+          true
+        ],
+        "rotation_reentry_observed": false,
+        "rotation_sample_count": 544,
+        "terminal_lookahead_cdr_sha256": "95bf2a5aeee7a1f7f5af55c28f79a0606c01dad69d2a0efa144c3b664b14cd87",
+        "terminal_lookahead_ros_stamp_ns": 896533333333,
+        "terminal_observation": {
+          "source": "lookahead_pair"
+        },
+        "terminal_rotation_cdr_sha256": "2e22fd435060cd5d3cf5e3ef39f79e198b35bd2c4af31974db36601b3a2f4c91",
+        "terminal_rotation_value": false,
+        "terminal_sim_time_s": 896.783333333
+      },
+      {
+        "accepted_sim_time_s": 897.716666666,
+        "action_index": 52,
+        "goal_uuid": "3a0638bfa61f4893a73764e8f578d66c",
+        "interpretation": "observed controller diagnostics only; no causal conclusion",
+        "lookahead_sample_count": 609,
+        "observed_rotation_transitions": [
+          {
+            "episode_sample_index": 118,
+            "from": true,
+            "paired_lookahead_ros_stamp_ns": 900883333333,
+            "rotation_db_timestamp_ns": 900883333333,
+            "to": false
+          },
+          {
+            "episode_sample_index": 605,
+            "from": false,
+            "paired_lookahead_ros_stamp_ns": 913033333333,
+            "rotation_db_timestamp_ns": 913066666666,
+            "to": true
+          }
+        ],
+        "observed_rotation_values": [
+          false,
+          true
+        ],
+        "rotation_reentry_observed": true,
+        "rotation_sample_count": 609,
+        "terminal_lookahead_cdr_sha256": "bbe32bfd10d69c36f0c855fc624e85de13ffa14ee46da57806a27a1e3c220fac",
+        "terminal_lookahead_ros_stamp_ns": 913083333333,
+        "terminal_observation": {
+          "source": "lookahead_pair"
+        },
+        "terminal_rotation_cdr_sha256": "93a8eaf79354c84442ac0e10c2062c53887deb79944f89aef71d679fd7a88b07",
+        "terminal_rotation_value": true,
+        "terminal_sim_time_s": 913.25
+      },
+      {
+        "accepted_sim_time_s": 919.05,
+        "action_index": 53,
+        "goal_uuid": "d8f26e6d0f2b4566b7ebaa12a165eb61",
+        "interpretation": "observed controller diagnostics only; no causal conclusion",
+        "lookahead_sample_count": 796,
+        "observed_rotation_transitions": [
+          {
+            "episode_sample_index": 256,
+            "from": true,
+            "paired_lookahead_ros_stamp_ns": 925433333333,
+            "rotation_db_timestamp_ns": 925433333333,
+            "to": false
+          },
+          {
+            "episode_sample_index": 740,
+            "from": false,
+            "paired_lookahead_ros_stamp_ns": 937733333333,
+            "rotation_db_timestamp_ns": 937733333333,
+            "to": true
+          }
+        ],
+        "observed_rotation_values": [
+          false,
+          true
+        ],
+        "rotation_reentry_observed": true,
+        "rotation_sample_count": 796,
+        "terminal_lookahead_cdr_sha256": "530959a7b3dacaa6935ae347320c82d391d1e5845608ce250d10ace3a8f5947b",
+        "terminal_lookahead_ros_stamp_ns": 939133333333,
+        "terminal_observation": {
+          "candidate_ros_stamp_ns": 939716666666,
+          "plan_epoch": 24,
+          "source": "controller_trace_terminal_stop",
+          "stopped_ros_stamp_ns": 939750000000
+        },
+        "terminal_rotation_cdr_sha256": "93a8eaf79354c84442ac0e10c2062c53887deb79944f89aef71d679fd7a88b07",
+        "terminal_rotation_value": true,
+        "terminal_sim_time_s": 939.75
+      },
+      {
+        "accepted_sim_time_s": 940.616666666,
+        "action_index": 54,
+        "goal_uuid": "e9b0db2276a64378ae878404c7bb55b0",
+        "interpretation": "observed controller diagnostics only; no causal conclusion",
+        "lookahead_sample_count": 602,
+        "observed_rotation_transitions": [
+          {
+            "episode_sample_index": 131,
+            "from": true,
+            "paired_lookahead_ros_stamp_ns": 943833333333,
+            "rotation_db_timestamp_ns": 943850000000,
+            "to": false
+          },
+          {
+            "episode_sample_index": 550,
+            "from": false,
+            "paired_lookahead_ros_stamp_ns": 954583333333,
+            "rotation_db_timestamp_ns": 954583333333,
+            "to": true
+          }
+        ],
+        "observed_rotation_values": [
+          false,
+          true
+        ],
+        "rotation_reentry_observed": true,
+        "rotation_sample_count": 602,
+        "terminal_lookahead_cdr_sha256": "1d0bc67942177b31fafbd1f3ad04a1d9a0d3da652678cdfd6693f1b3ebc1dfe0",
+        "terminal_lookahead_ros_stamp_ns": 955883333333,
+        "terminal_observation": {
+          "candidate_ros_stamp_ns": 956733333333,
+          "plan_epoch": 25,
+          "source": "controller_trace_terminal_stop",
+          "stopped_ros_stamp_ns": 956750000000
+        },
+        "terminal_rotation_cdr_sha256": "93a8eaf79354c84442ac0e10c2062c53887deb79944f89aef71d679fd7a88b07",
+        "terminal_rotation_value": true,
+        "terminal_sim_time_s": 956.8
+      },
+      {
+        "accepted_sim_time_s": 957.683333333,
+        "action_index": 55,
+        "goal_uuid": "ba54173681544c9dac1de79170b79ec9",
+        "interpretation": "observed controller diagnostics only; no causal conclusion",
+        "lookahead_sample_count": 714,
+        "observed_rotation_transitions": [
+          {
+            "episode_sample_index": 117,
+            "from": true,
+            "paired_lookahead_ros_stamp_ns": 960733333333,
+            "rotation_db_timestamp_ns": 960750000000,
+            "to": false
+          },
+          {
+            "episode_sample_index": 652,
+            "from": false,
+            "paired_lookahead_ros_stamp_ns": 974033333333,
+            "rotation_db_timestamp_ns": 974066666666,
+            "to": true
+          },
+          {
+            "episode_sample_index": 673,
+            "from": true,
+            "paired_lookahead_ros_stamp_ns": 974533333333,
+            "rotation_db_timestamp_ns": 974533333333,
+            "to": false
+          },
+          {
+            "episode_sample_index": 689,
+            "from": false,
+            "paired_lookahead_ros_stamp_ns": 974933333333,
+            "rotation_db_timestamp_ns": 974933333333,
+            "to": true
+          }
+        ],
+        "observed_rotation_values": [
+          false,
+          true
+        ],
+        "rotation_reentry_observed": true,
+        "rotation_sample_count": 714,
+        "terminal_lookahead_cdr_sha256": "f49610acf8454159307744f0fa5ee060027f8981b36798d0fc242f2a9501e2d3",
+        "terminal_lookahead_ros_stamp_ns": 975533333333,
+        "terminal_observation": {
+          "source": "lookahead_pair"
+        },
+        "terminal_rotation_cdr_sha256": "93a8eaf79354c84442ac0e10c2062c53887deb79944f89aef71d679fd7a88b07",
+        "terminal_rotation_value": true,
+        "terminal_sim_time_s": 975.9
+      },
+      {
+        "accepted_sim_time_s": 981.633333333,
+        "action_index": 56,
+        "goal_uuid": "7111460a56774572940e4bed3efa96f5",
+        "interpretation": "observed controller diagnostics only; no causal conclusion",
+        "lookahead_sample_count": 830,
+        "observed_rotation_transitions": [
+          {
+            "episode_sample_index": 274,
+            "from": true,
+            "paired_lookahead_ros_stamp_ns": 987933333333,
+            "rotation_db_timestamp_ns": 987950000000,
+            "to": false
+          },
+          {
+            "episode_sample_index": 800,
+            "from": false,
+            "paired_lookahead_ros_stamp_ns": 1001133333333,
+            "rotation_db_timestamp_ns": 1001150000000,
+            "to": true
+          }
+        ],
+        "observed_rotation_values": [
+          false,
+          true
+        ],
+        "rotation_reentry_observed": true,
+        "rotation_sample_count": 830,
+        "terminal_lookahead_cdr_sha256": "047d70d7c9a7e0d6507633f77b11e3a720cdd5bff9005d09895877c9ac90de04",
+        "terminal_lookahead_ros_stamp_ns": 1001833333333,
+        "terminal_observation": {
+          "source": "lookahead_pair"
+        },
+        "terminal_rotation_cdr_sha256": "93a8eaf79354c84442ac0e10c2062c53887deb79944f89aef71d679fd7a88b07",
+        "terminal_rotation_value": true,
+        "terminal_sim_time_s": 1002.183333333
+      },
+      {
+        "accepted_sim_time_s": 1002.816666666,
+        "action_index": 57,
+        "goal_uuid": "2fc3e7e459b144ef9beab4dce9c63856",
+        "interpretation": "observed controller diagnostics only; no causal conclusion",
+        "lookahead_sample_count": 564,
+        "observed_rotation_transitions": [
+          {
+            "episode_sample_index": 113,
+            "from": true,
+            "paired_lookahead_ros_stamp_ns": 1005733333333,
+            "rotation_db_timestamp_ns": 1005766666666,
+            "to": false
+          }
+        ],
+        "observed_rotation_values": [
+          false,
+          true
+        ],
+        "rotation_reentry_observed": false,
+        "rotation_sample_count": 564,
+        "terminal_lookahead_cdr_sha256": "f5638b1eb7e0cfa5c6ed114587e343c74b85d0c0c4f20a804a318e12f474434a",
+        "terminal_lookahead_ros_stamp_ns": 1016883333333,
+        "terminal_observation": {
+          "source": "lookahead_pair"
+        },
+        "terminal_rotation_cdr_sha256": "2e22fd435060cd5d3cf5e3ef39f79e198b35bd2c4af31974db36601b3a2f4c91",
+        "terminal_rotation_value": false,
+        "terminal_sim_time_s": 1017.1
+      },
+      {
+        "accepted_sim_time_s": 1017.75,
+        "action_index": 58,
+        "goal_uuid": "ab94b40504874426a9b07562dafb03b4",
+        "interpretation": "observed controller diagnostics only; no causal conclusion",
+        "lookahead_sample_count": 410,
+        "observed_rotation_transitions": [],
+        "observed_rotation_values": [
+          false
+        ],
+        "rotation_reentry_observed": false,
+        "rotation_sample_count": 410,
+        "terminal_lookahead_cdr_sha256": "d413d4c6b33c6ddc02d5e34a33407aef86d59767315733956eeeb65b8d703e73",
+        "terminal_lookahead_ros_stamp_ns": 1027983333333,
+        "terminal_observation": {
+          "source": "lookahead_pair"
+        },
+        "terminal_rotation_cdr_sha256": "2e22fd435060cd5d3cf5e3ef39f79e198b35bd2c4af31974db36601b3a2f4c91",
+        "terminal_rotation_value": false,
+        "terminal_sim_time_s": 1028.216666666
+      },
+      {
+        "accepted_sim_time_s": 1028.849999999,
+        "action_index": 59,
+        "goal_uuid": "af529084c74f419c9b1967111e2f18c3",
+        "interpretation": "observed controller diagnostics only; no causal conclusion",
+        "lookahead_sample_count": 1306,
+        "observed_rotation_transitions": [
+          {
+            "episode_sample_index": 120,
+            "from": true,
+            "paired_lookahead_ros_stamp_ns": 1031933333333,
+            "rotation_db_timestamp_ns": 1031933333333,
+            "to": false
+          }
+        ],
+        "observed_rotation_values": [
+          false,
+          true
+        ],
+        "rotation_reentry_observed": false,
+        "rotation_sample_count": 1306,
+        "terminal_lookahead_cdr_sha256": "b181248c67c3b07a153f42202c607a0b229b4cb14986f3dc6f42bc0dae1194c8",
+        "terminal_lookahead_ros_stamp_ns": 1061083333333,
+        "terminal_observation": {
+          "source": "lookahead_pair"
+        },
+        "terminal_rotation_cdr_sha256": "2e22fd435060cd5d3cf5e3ef39f79e198b35bd2c4af31974db36601b3a2f4c91",
+        "terminal_rotation_value": false,
+        "terminal_sim_time_s": 1061.566666666
+      },
+      {
+        "accepted_sim_time_s": 1062.216666666,
+        "action_index": 60,
+        "goal_uuid": "1627cd0ddbd946e5a227babeb73e05d7",
+        "interpretation": "observed controller diagnostics only; no causal conclusion",
+        "lookahead_sample_count": 427,
+        "observed_rotation_transitions": [
+          {
+            "episode_sample_index": 426,
+            "from": false,
+            "paired_lookahead_ros_stamp_ns": 1072733333333,
+            "rotation_db_timestamp_ns": 1072750000000,
+            "to": true
+          }
+        ],
+        "observed_rotation_values": [
+          false,
+          true
+        ],
+        "rotation_reentry_observed": false,
+        "rotation_sample_count": 427,
+        "terminal_lookahead_cdr_sha256": "cb214b8bec5f63223131fc84cec19baf2a83b7aaf05f5e8d3c520fc5c0a4b2c5",
+        "terminal_lookahead_ros_stamp_ns": 1072733333333,
+        "terminal_observation": {
+          "source": "lookahead_pair"
+        },
+        "terminal_rotation_cdr_sha256": "93a8eaf79354c84442ac0e10c2062c53887deb79944f89aef71d679fd7a88b07",
+        "terminal_rotation_value": true,
+        "terminal_sim_time_s": 1072.9
+      },
+      {
+        "accepted_sim_time_s": 1073.583333333,
+        "action_index": 61,
+        "goal_uuid": "05cee2cbe1254cfcb8675e33c393bf8a",
+        "interpretation": "observed controller diagnostics only; no causal conclusion",
+        "lookahead_sample_count": 810,
+        "observed_rotation_transitions": [
+          {
+            "episode_sample_index": 125,
+            "from": true,
+            "paired_lookahead_ros_stamp_ns": 1076783333333,
+            "rotation_db_timestamp_ns": 1076800000000,
+            "to": false
+          },
+          {
+            "episode_sample_index": 520,
+            "from": false,
+            "paired_lookahead_ros_stamp_ns": 1086483333333,
+            "rotation_db_timestamp_ns": 1086500000000,
+            "to": true
+          }
+        ],
+        "observed_rotation_values": [
+          false,
+          true
+        ],
+        "rotation_reentry_observed": true,
+        "rotation_sample_count": 810,
+        "terminal_lookahead_cdr_sha256": "8d2eda5b6d6daadb13a0d238cc51fe6869e6d61563b5f52af79775f155a22d67",
+        "terminal_lookahead_ros_stamp_ns": 1093533333333,
+        "terminal_observation": {
+          "candidate_ros_stamp_ns": 1094333333333,
+          "plan_epoch": 32,
+          "source": "controller_trace_terminal_stop",
+          "stopped_ros_stamp_ns": 1094349999999
+        },
+        "terminal_rotation_cdr_sha256": "93a8eaf79354c84442ac0e10c2062c53887deb79944f89aef71d679fd7a88b07",
+        "terminal_rotation_value": true,
+        "terminal_sim_time_s": 1094.349999999
+      }
+    ]
+  },
+  "run_id": "e96c01d07e18f09fbcb3e2960e872c2e",
+  "run_label": "g3-q-normal-fifo-028",
+  "schema_version": 1,
+  "scope": "supplemental controller trace and RPP observation recheck only; original fullQA remains failed",
+  "terminal_trace_episode_count": 13
+}

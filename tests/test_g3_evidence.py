@@ -125,7 +125,16 @@ class G3EvidenceHelperTests(unittest.TestCase):
                              "output_angular_z_rad_s": 0.0},
                  "db_file_index": 0, "db_message_id": 8},
             ])
-            bag["topic_counts"][f"/{robot}/controller_cycle_trace"] = 8
+            streams["goal_checker"].append({
+                "db_timestamp_ns": 9, "cdr_sha256": "9" * 64, "stamp_ns": 1_900_000_000,
+                "event": "is_goal_reached", "event_sequence": 9, "plugin_call_sequence": 5,
+                "reset_epoch": 1, "parameters": confirmation["parameters"],
+                "check": {"base_result": True, "terminal_stop_enabled": True,
+                          "pose_within_tolerance": False, "velocity_stopped": True,
+                          "terminal_candidate": False, "effective_result": True},
+                "db_file_index": 0, "db_message_id": 9,
+            })
+            bag["topic_counts"][f"/{robot}/controller_cycle_trace"] = 9
         return bag
 
     def test_controller_trace_requires_closed_sequence_parameters_and_episode_binding(self):
@@ -148,6 +157,7 @@ class G3EvidenceHelperTests(unittest.TestCase):
         self.assertEqual(2, report["robots"]["carter1"]["rpp_compute_calls"])
         self.assertEqual(1, report["robots"]["carter1"]["stock_rpp_compute_calls"])
         self.assertEqual(1, report["robots"]["carter1"]["terminal_stop_compute_calls"])
+        self.assertEqual(1, len(report["robots"]["carter1"]["terminal_stop_acceptances"]))
 
         attacks = []
         nonzero = deepcopy(bag)
@@ -156,17 +166,17 @@ class G3EvidenceHelperTests(unittest.TestCase):
         ] = 0.01
         attacks.append(nonzero)
         no_confirmation = deepcopy(bag)
-        no_confirmation["controller_traces"]["carter1"]["goal_checker"][-1]["check"][
+        no_confirmation["controller_traces"]["carter1"]["goal_checker"][-2]["check"][
             "terminal_candidate"
         ] = False
         attacks.append(no_confirmation)
         gate_tamper = deepcopy(bag)
-        gate_tamper["controller_traces"]["carter1"]["goal_checker"][-1]["check"][
+        gate_tamper["controller_traces"]["carter1"]["goal_checker"][-2]["check"][
             "terminal_stop_enabled"
         ] = False
         attacks.append(gate_tamper)
         forged_base = deepcopy(bag)
-        forged_base["controller_traces"]["carter1"]["goal_checker"][-1]["check"][
+        forged_base["controller_traces"]["carter1"]["goal_checker"][-2]["check"][
             "base_result"
         ] = False
         attacks.append(forged_base)
@@ -178,11 +188,86 @@ class G3EvidenceHelperTests(unittest.TestCase):
                 validate_controller_trace_observations(actions, changed, requested)
 
         stateful_xy_exit = deepcopy(bag)
-        stateful_xy_exit["controller_traces"]["carter1"]["goal_checker"][-1]["check"][
+        stateful_xy_exit["controller_traces"]["carter1"]["goal_checker"][-2]["check"][
             "pose_within_tolerance"
         ] = False
         report = validate_controller_trace_observations(actions, stateful_xy_exit, requested)
         self.assertEqual(1, report["robots"]["carter1"]["terminal_stop_compute_calls"])
+
+    def test_rpp_terminal_stop_acceptance_replaces_only_stale_terminal_lookahead(self):
+        controller_actions, controller_bag, requested = self.controller_trace_fixture()
+        controller_bag = self.add_terminal_stop_cycle(controller_bag)
+        trace_report = validate_controller_trace_observations(
+            controller_actions, controller_bag, requested,
+        )
+        action, bag = self.rpp_fixture()
+        action.update(controller_actions[0])
+        bag["rpp_observations"]["carter1"]["lookahead_point"][-1]["header"][
+            "stamp_ns"
+        ] = 1_400_000_000
+        errors: list[str] = []
+        report = validate_rpp_action_observations([action], bag, errors, trace_report)
+        self.assertEqual([], errors)
+        self.assertEqual(
+            "controller_trace_terminal_stop",
+            report["episodes"][0]["terminal_observation"]["source"],
+        )
+
+        attacks = {}
+        missing = deepcopy(trace_report)
+        missing["robots"]["carter1"]["terminal_stop_acceptances"].clear()
+        attacks["missing"] = missing
+        stale = deepcopy(trace_report)
+        stale["robots"]["carter1"]["terminal_stop_acceptances"][0][
+            "candidate_ros_stamp_ns"
+        ] = 1_400_000_000
+        stale["robots"]["carter1"]["terminal_stop_acceptances"][0][
+            "stopped_ros_stamp_ns"
+        ] = 1_400_000_000
+        attacks["stale"] = stale
+        gap = deepcopy(trace_report)
+        gap["robots"]["carter1"]["terminal_stop_acceptances"][0][
+            "stopped_event_sequence"
+        ] += 1
+        attacks["gap"] = gap
+        different_action = deepcopy(trace_report)
+        different_action["robots"]["carter1"]["terminal_stop_acceptances"][0][
+            "action_index"
+        ] = 1
+        attacks["different_action"] = different_action
+        different_epoch = deepcopy(trace_report)
+        different_epoch["robots"]["carter1"]["terminal_stop_acceptances"][0][
+            "plan_epoch"
+        ] = 2
+        attacks["different_epoch"] = different_epoch
+        forged_zero = deepcopy(trace_report)
+        forged_zero["robots"]["carter1"]["terminal_stop_acceptances"][0]["zero_twist"] = False
+        attacks["forged_zero"] = forged_zero
+        forged_confirmation = deepcopy(trace_report)
+        forged_confirmation["robots"]["carter1"]["terminal_stop_acceptances"][0][
+            "prior_terminal_candidate"
+        ] = False
+        attacks["forged_confirmation"] = forged_confirmation
+        false_acceptance_bag = deepcopy(controller_bag)
+        false_acceptance_bag["controller_traces"]["carter1"]["goal_checker"][-1][
+            "check"
+        ]["effective_result"] = False
+        attacks["false_stopped_acceptance"] = validate_controller_trace_observations(
+            controller_actions, false_acceptance_bag, requested,
+        )
+        for label, changed in attacks.items():
+            failures: list[str] = []
+            with self.subTest(attack=label):
+                self.assertEqual({}, validate_rpp_action_observations(
+                    [action], bag, failures, changed,
+                ))
+                self.assertTrue(failures)
+
+        fresh_action, fresh_bag = self.rpp_fixture()
+        fresh_errors: list[str] = []
+        fresh_report = validate_rpp_action_observations([fresh_action], fresh_bag, fresh_errors)
+        self.assertEqual([], fresh_errors)
+        self.assertEqual("lookahead_pair", fresh_report["episodes"][0]["terminal_observation"]["source"])
 
     def test_controller_trace_allows_paused_clock_with_ordered_sqlite_ids(self):
         actions, bag, requested = self.controller_trace_fixture()
