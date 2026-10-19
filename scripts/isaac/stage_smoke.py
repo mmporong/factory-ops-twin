@@ -144,6 +144,7 @@ def _wait_for_stage(simulation_app: Any, stage_utils: Any) -> int:
 def _inspect_stage(
     stage: Any, UsdGeom: Any, UsdPhysics: Any, *,
     bounds_xy: tuple[float, float, float, float] = (0.0, 0.0, 40.0, 24.0),
+    expected_marker_count: int = EXPECTED_MARKERS,
 ) -> tuple[dict[str, Any], dict[str, Any]]:
     default_prim = stage.GetDefaultPrim()
     default_prim_name = default_prim.GetName() if default_prim and default_prim.IsValid() else None
@@ -259,7 +260,7 @@ def _inspect_stage(
         "meters_per_unit": 1.0,
         "collision_api_count": EXPECTED_COLLIDERS,
         "obstacle_count": EXPECTED_OBSTACLES,
-        "marker_count": EXPECTED_MARKERS,
+        "marker_count": expected_marker_count,
         "collision_prim_paths": expected_collider_paths,
         "disabled_collision_prim_paths": [],
         "marker_collision_prim_paths": [],

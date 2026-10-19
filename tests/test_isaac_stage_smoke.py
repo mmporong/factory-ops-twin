@@ -142,6 +142,14 @@ def _png_bytes(*, width: int = 1, height: int = 1, include_iend: bool = True) ->
 
 
 class StageInspectionTests(unittest.TestCase):
+    def test_expanded_layout_requires_its_declared_marker_count(self) -> None:
+        stage = _Stage()
+        stage.markers.children.extend([_Prim("/World/Markers/M08"), _Prim("/World/Markers/M09")])
+        _observed, legacy_mismatches = _inspect_stage(stage, _UsdGeom, _UsdPhysics)
+        self.assertIn("marker_count", legacy_mismatches)
+        _observed, mismatches = _inspect_stage(stage, _UsdGeom, _UsdPhysics, expected_marker_count=10)
+        self.assertEqual({}, mismatches)
+
     def test_accepts_exact_authored_relationships(self) -> None:
         observed, mismatches = _inspect_stage(_Stage(), _UsdGeom, _UsdPhysics)
         self.assertEqual(mismatches, {})

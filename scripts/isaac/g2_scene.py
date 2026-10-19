@@ -774,6 +774,7 @@ def _run(
         observed, mismatches = base._inspect_stage(
             stage, UsdGeom, UsdPhysics,
             bounds_xy=(layout.bounds.xmin, layout.bounds.ymin, layout.bounds.xmax, layout.bounds.ymax),
+            expected_marker_count=len(layout.stations) + len(layout.pockets),
         )
         result["observed_factory"] = observed
         if mismatches:

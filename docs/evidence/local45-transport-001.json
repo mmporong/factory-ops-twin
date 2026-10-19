@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "scope": "failed first local45 integration admission; no transport success",
+  "run_id": "40213e27dad947fc8daf36c94c69ab71",
+  "source_commit": "0f2162d45611b52bf6f2b20f4c0580746147fac8",
+  "failure_stage": "open_factory",
+  "error": "factory invariants failed: {'marker_count': {'expected': 8, 'observed': 10}}",
+  "observed_marker_count": 10,
+  "expected_marker_count_before_fix": 8,
+  "declared_layout_markers": 10,
+  "status": "failed_preserved",
+  "windows_closed": true,
+  "linux_closed": true,
+  "prelaunch_inputs_verified": true,
+  "windows_remaining_pids": [],
+  "linux_remaining_pids": [],
+  "raw_directory": "D:\\FactoryOpsRuntime\\local45-transport-001",
+  "raw_sha256": {
+    "pair-host.json": "59b130e990abd09770dfe8d6bac249835e9a38111a50086cbd189ee539937031",
+    "job.json": "d7fb04e2368d188f56658230c26a36230afab9bbc0d828c1a7c679fe236c08cf",
+    "nav.log": "5cff4950917ee852dd55e0cc77db370ee991b0ae48ecb1bdcb758dedb28b0cec",
+    "sdk.stdout.log": "9626476377b4c81d1a9fad04f3c30d95e55a4ade9d66e05ad21505ab7a127cea",
+    "results/run/local45-fleet4-transport-scene.json": "01e8159a596e03e2cb6d03a7d4d900e34d1b67f4c301df9745dea901f830c541"
+  },
+  "fix": "derive expected marker count from layout stations and pockets; retain legacy default8",
+  "cpu_regression": "21 stage smoke tests passed; changed2files pyright0",
+  "native_recheck": "pending"
+}
