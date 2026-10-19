@@ -407,18 +407,17 @@ class BarrierLifecycle:
         return "pause_resume"
 
     def before_capture(self, rep: Any) -> None:
-        if self.rgb_render_state != "enabled" or self.timeline is None or self.timeline.is_playing():
-            raise RuntimeError("G3 RGB capture requires active products and a paused timeline")
+        if self.rgb_render_state != "enabled" or self.timeline is None:
+            raise RuntimeError("G3 RGB render products are not active before capture")
         # A manual step leaves Replicator STEPPED. The outer pause/resume pair
         # supplies the PLAY event that rearms continuous ROS sensor writers.
+        # Kit applies a queued pause during update; is_playing() may still be
+        # true here. The shared capture guard checks time/frame/pose instead.
         rep.orchestrator.step(delta_time=0.0, rt_subframes=4, pause_timeline=True)
-        if self.timeline.is_playing():
-            raise RuntimeError("G3 zero-delta render step resumed the timeline")
 
     def after_capture(self) -> None:
-        if (self.rgb_render_state != "enabled" or self.timeline is None
-                or self.timeline.is_playing()):
-            raise RuntimeError("G3 RGB capture did not preserve the paused timeline")
+        if self.rgb_render_state != "enabled" or self.timeline is None:
+            raise RuntimeError("G3 RGB render products are not active after capture")
 
     def cleanup_render_products(self) -> None:
         if self.rgb_render_products is None:

@@ -264,23 +264,23 @@ class BarrierLifecycleTests(unittest.TestCase):
         lifecycle.cleanup_render_products()
         self.assertEqual(lifecycle.rgb_render_state, "closed")
 
-    def test_rgb_capture_rejects_playing_entry_and_implicit_resume(self) -> None:
+    def test_rgb_capture_rejects_inactive_products_and_missing_timeline(self) -> None:
         lifecycle = self.lifecycle()
-        lifecycle.rgb_render_state = "enabled"
         rep = SimpleNamespace(orchestrator=SimpleNamespace(step=Mock()))
         lifecycle.timeline = SimpleNamespace(is_playing=Mock(return_value=True))
-        with self.assertRaisesRegex(RuntimeError, "paused timeline"):
+        for state in ("unregistered", "closed"):
+            lifecycle.rgb_render_state = state
+            with self.assertRaisesRegex(RuntimeError, "not active before capture"):
+                lifecycle.before_capture(rep)
+            with self.assertRaisesRegex(RuntimeError, "not active after capture"):
+                lifecycle.after_capture()
+        lifecycle.rgb_render_state = "enabled"
+        lifecycle.timeline = None
+        with self.assertRaisesRegex(RuntimeError, "not active before capture"):
             lifecycle.before_capture(rep)
         rep.orchestrator.step.assert_not_called()
 
-        lifecycle.timeline = SimpleNamespace(is_playing=Mock(side_effect=[False, True]))
-        with self.assertRaisesRegex(RuntimeError, "resumed the timeline"):
-            lifecycle.before_capture(rep)
-        rep.orchestrator.step.assert_called_once_with(
-            delta_time=0.0, rt_subframes=4, pause_timeline=True,
-        )
-
-    def test_manual_capture_rearms_playback_writer_scheduling(self) -> None:
+    def test_manual_capture_rearms_writer_with_deferred_timeline_commands(self) -> None:
         lifecycle = self.lifecycle()
         lifecycle.rgb_render_state = "enabled"
 
@@ -288,26 +288,35 @@ class BarrierLifecycleTests(unittest.TestCase):
             playing = True
             writer_status = "STARTED"
             play_events = 0
+            pending = None
 
             def is_playing(self):
                 return self.playing
 
             def pause(self):
-                self.playing = False
+                self.pending = "pause"
 
             def play(self):
-                if not self.playing:
+                self.pending = "play"
+
+            def commit(self):
+                if self.pending == "pause":
+                    self.playing = False
+                elif self.pending == "play" and not self.playing:
                     self.play_events += 1
                     self.writer_status = "STARTED"
-                self.playing = True
+                    self.playing = True
+                self.pending = None
 
         timeline = Playback()
         lifecycle.timeline = timeline
 
         def manual_step(*, delta_time, rt_subframes, pause_timeline):
             self.assertEqual((delta_time, rt_subframes, pause_timeline), (0.0, 4, True))
+            self.assertTrue(timeline.is_playing())
+            self.assertEqual(timeline.pending, "pause")
+            timeline.commit()
             timeline.writer_status = "STEPPED"
-            timeline.pause()
 
         rep = SimpleNamespace(orchestrator=SimpleNamespace(step=manual_step))
 
@@ -320,6 +329,9 @@ class BarrierLifecycleTests(unittest.TestCase):
         self.assertEqual(g2_scene._capture_with_timeline_policy(
             timeline, lifecycle, capture,
         ), {"captured": True})
+        self.assertFalse(timeline.is_playing())
+        self.assertEqual(timeline.pending, "play")
+        timeline.commit()
         self.assertTrue(timeline.is_playing())
         self.assertEqual(timeline.play_events, 1)
         self.assertEqual(timeline.writer_status, "STARTED")

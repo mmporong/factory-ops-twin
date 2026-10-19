@@ -17,6 +17,7 @@
 | FOT-004 | 단발 촬영 뒤 Replicator가 STEPPED에 남아 연속 ROS writer가 재개되지 않음 | q024 | 설치 SDK의 상태 전환 확인; 수정의 실제 GPU 검증 미완료 | zero-delta 촬영의 pause/resume 복원, PLAY 이벤트 회귀 검사, 촬영 이후 네 raw stream의 증가 확인 |
 | FOT-005 | Brev Stop이 AWS invalid security token 400으로 실패 | industrial-040 정지 재시도 | 외부 장애; 실제 RUNNING | 백업 후 실제 상태 확인, 실패를 STOPPED로 표시하지 않음; 새 인스턴스·강제 종료로 우회하지 않음 |
 | FOT-006 | 진단 qualification에 24초 연속 촬영이 다시 켜짐 | q024 설정 | 기본 비활성화 수정; 최종 미디어와 진단 구분 | v4의 `real_time_media.profiles=[]`, compact session 검사; 최종 촬영 전 별도 활성화·소스 결속 |
+| FOT-007 | pause 요청 직후 is_playing을 확인해 실제 첫 촬영 전에 실패 | q025 | 수정·CPU37개 확인; 실제 재실행 미완료 | 즉시 상태를 전제로 한 검사 제거, 지연 pause/play 상태 모델 검사, 기존 time/frame/pose 불변 검사 유지 |
 
 ## FOT-002 — 정지 전에 도착 성공
 
@@ -45,10 +46,18 @@ q024는 초기 Isaac 내부 raw scan 준비를 통과했다. 이후 GMO frame·t
 
 수정은 main loop를 확대 변경하지 않고 촬영 경계의 pause/resume을 복원한다. 촬영은 `delta_time=0`, `rt_subframes=4`, `pause_timeline=True`로 수행하고, RGB와 time/frame/pose 불변 검사를 마친 뒤 outer timeline.play가 연속 writer를 다시 시작한다. 이전 q023의 미확정 중단까지 해결했다고 해석하지 않는다.
 
-- 회귀 검사: `test_manual_capture_rearms_playback_writer_scheduling`, `test_rgb_capture_rejects_playing_entry_and_implicit_resume`, 기존 촬영 전후 물리 상태 검사.
+- 회귀 검사: `test_manual_capture_rearms_writer_with_deferred_timeline_commands`, `test_rgb_capture_rejects_inactive_products_and_missing_timeline`, 기존 촬영 전후 물리 상태 검사.
 - 진단: `artifacts/brev/q024-writer-boundary-diagnosis-001.json` 및 `q024-installed-sdk-excerpt.txt`(SHA256 `0f19b9f2…bbf96175`).
 - 원본 보존: `industrial-041-q024-canonical-001`, 741파일·501,693,840B, D/E 복사·정확한 복원·source124개 pin 검사 통과.
 - 수정 완료 조건: 여러 번의 실제 촬영 이후에도 네 raw scan header가 증가하고 AMCL 입력이 유지되며, 정상 임무와 닫힌 bag 검사가 통과해야 한다. CPU 상태 모델만으로 이 조건을 충족했다고 표시하지 않는다.
+
+## FOT-007 — 요청과 반영된 상태의 구분
+
+q025는 outer `timeline.pause()` 호출 직후에도 `is_playing()`이 true인 상태에서 첫 촬영 hook에 들어왔다. 새로 넣은 즉시 정지 확인이 Replicator step 실행 전에 실패시켰다. 이전 CPU fake는 pause/play를 즉시 반영했으므로 이 차이를 검출하지 못했다. q025는 센서 출력 복원 수정의 성공이나 실패를 검증한 실행으로 세지 않는다.
+
+상태 모델을 명령 요청과 update에서의 반영으로 나누었다. 촬영 hook은 즉시 boolean 대신 활성 render product와 timeline 존재를 확인하고, Replicator의 zero-delta step과 기존 time/frame/pose 검사가 촬영 동안의 물리 불변을 검사한다. 원래 신선도·정지·예약 조건은 바꾸지 않는다. 수정 후 실제 첫 촬영과 연속 raw scan 검증이 남아 있다.
+
+- 진단: `artifacts/brev/q025-deferred-pause-diagnosis-001.json`.
 
 ## 실행 전 확인과 후속 기록
 
