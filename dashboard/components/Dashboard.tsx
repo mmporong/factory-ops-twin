@@ -1,15 +1,20 @@
 "use client";
 import dynamic from "next/dynamic";
+import ObservationPanel from "./ObservationPanel";
+import { inventoryDisplay, stockKey } from "../lib/inventory-display";
 import {
   Component,
   useCallback,
   useEffect,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
 import {
   readable,
   equipmentName,
+  modeNames,
+  sceneSize,
   type Command,
   type Scene,
   type Selection,
@@ -40,11 +45,6 @@ class SceneBoundary extends Component<
     );
   }
 }
-const modeNames = {
-  local_model: "로컬 운영 모델",
-  replay: "기록 재생",
-  live: "시뮬레이션 연결",
-};
 const commandNames = {
   applied: "적용됨",
   pending: "승인 대기",
@@ -78,6 +78,12 @@ export default function Dashboard() {
     [commandError, setCommandError] = useState("");
   const [source, setSource] = useState("S1"),
     [quantity, setQuantity] = useState(1);
+  const [showZones, setShowZones] = useState(true),
+    [showParking, setShowParking] = useState(true),
+    [showRoutes, setShowRoutes] = useState(true),
+    [showInventory, setShowInventory] = useState(true);
+  const [viewRequest, setViewRequest] = useState({ version: 0, focus: false });
+  const currentRun = useRef<string | null>(null);
   const refresh = useCallback(async () => {
     const start = performance.now();
     try {
@@ -112,6 +118,7 @@ export default function Dashboard() {
     let stopped = false;
     let timer: ReturnType<typeof setTimeout>;
     async function load() {
+      let delay = 15000;
       try {
         const s = await getJSON<Scene>("/api/scene");
         if (!stopped) {
@@ -123,9 +130,10 @@ export default function Dashboard() {
           setSceneError(
             "공장 배치를 불러오지 못했습니다. 자동으로 다시 시도합니다.",
           );
-          timer = setTimeout(load, 4000);
+          delay = 4000;
         }
       }
+      if (!stopped) timer = setTimeout(load, delay);
     }
     void load();
     return () => {
@@ -137,6 +145,17 @@ export default function Dashboard() {
     const timer = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(timer);
   }, []);
+  useEffect(() => {
+    if (snapshot && currentRun.current !== snapshot.run_id) {
+      currentRun.current = snapshot.run_id;
+      setCommand(null);
+      setCommandError("");
+      setSelection((current) => {
+        if (current?.kind === "robot" && snapshot.robots.some((r) => r.id === current.id)) return current;
+        return snapshot.robots[0] ? { kind: "robot", id: snapshot.robots[0].id } : null;
+      });
+    }
+  }, [snapshot]);
   useEffect(() => {
     if (command?.status === "pending") {
       const updated = snapshot?.commands.find(
@@ -179,8 +198,11 @@ export default function Dashboard() {
           (t, i) => String(t.id ?? t.tote_id ?? i) === selection.id,
         )
       : null;
+  const stock = selection?.kind === "stock" ? snapshot?.inventory.stock.find((s) => stockKey(s) === selection.id) : null;
+  const canFocus = !!scene && !!selection && (selection.kind === "robot" ? !!robot?.pose : selection.kind === "stock" || selection.kind === "tote" ? inventoryDisplay(scene, snapshot).some((s) => s.kind === selection.kind && s.id === selection.id) : !!station || !!equipment);
   async function send(action: string, parameters?: Record<string, unknown>) {
     if (!snapshot || !can(action)) return;
+    const runId = snapshot.run_id;
     setSending(true);
     setCommandError("");
     try {
@@ -195,6 +217,7 @@ export default function Dashboard() {
         }),
       });
       const data = await res.json();
+      if (currentRun.current !== runId) return;
       if (!data.command_id)
         throw new Error(
           data.error ??
@@ -204,9 +227,11 @@ export default function Dashboard() {
       setCommand(data);
       await refresh();
     } catch (e) {
-      setCommandError(
-        `${(e as Error).message} 서버 상태를 확인한 뒤 다시 시도해 주세요.`,
-      );
+      if (currentRun.current === runId) {
+        setCommandError(
+          `${(e as Error).message} 서버 상태를 확인한 뒤 다시 시도해 주세요.`,
+        );
+      }
     } finally {
       setSending(false);
     }
@@ -226,7 +251,7 @@ export default function Dashboard() {
         <div className="site-name">
           <span className="eyebrow">PRODUCTION BAY</span>
           <strong>
-            실내 생산 구역 <span className="muted">/ 32 × 20 m</span>
+            실내 생산 구역 <span className="muted">/ {sceneSize(scene)}</span>
           </strong>
         </div>
         <div className="connection">
@@ -280,6 +305,14 @@ export default function Dashboard() {
           </div>
         ))}
       </section>
+      <ObservationPanel
+        snapshot={snapshot}
+        scene={scene}
+        stale={stale}
+        age={age}
+        observationAge={observationAge}
+        latency={latency}
+      />
       {error && (
         <div role="status" className="alert">
           {error} {received > 0 && "마지막 수신 위치와 수치를 유지합니다."}
@@ -292,7 +325,7 @@ export default function Dashboard() {
               <span className="eyebrow">FACTORY DIGITAL TWIN</span>
               <h1 id="map-title">공장 운영 현황</h1>
             </div>
-            <span className="map-scale">map · m</span>
+            <span className="map-scale">{scene?.frame ?? "map"} · {sceneSize(scene)}</span>
           </div>
           <div className="scene">
             {scene ? (
@@ -302,6 +335,11 @@ export default function Dashboard() {
                   snapshot={snapshot}
                   selection={selection}
                   onSelect={setSelection}
+                  showZones={showZones}
+                  showParking={showParking}
+                  showRoutes={showRoutes}
+                  showInventory={showInventory}
+                  viewRequest={viewRequest}
                 />
               </SceneBoundary>
             ) : (
@@ -310,7 +348,31 @@ export default function Dashboard() {
               </div>
             )}
           </div>
+          <div className="scene-tools" role="group" aria-label="3D 표시 항목">
+            <span>표시 항목</span>
+            <button type="button" aria-pressed={showZones} onClick={() => setShowZones((v) => !v)}>공정 구역</button>
+            <button type="button" aria-pressed={showParking} onClick={() => setShowParking((v) => !v)}>주차 구역</button>
+            <button type="button" aria-pressed={showRoutes} onClick={() => setShowRoutes((v) => !v)}>선택 경로</button>
+            <button type="button" aria-pressed={showInventory} onClick={() => setShowInventory((v) => !v)}>원장 물품</button>
+            <div className="camera-tools" role="group" aria-label="3D 시점">
+              <button type="button" onClick={() => setViewRequest((v) => ({ version: v.version + 1, focus: false }))}>전체 보기</button>
+              <button type="button" disabled={!canFocus} onClick={() => setViewRequest((v) => ({ version: v.version + 1, focus: true }))}>선택 대상 확대</button>
+            </div>
+            <small>{robot?.route.length ? `선택 AMR · ${robot.route.length}개 경유점` : "선택 AMR 수신 경로 없음"}</small>
+          </div>
           <div className="map-footer">
+            <span>
+              <i className="legend-zone legend-material" aria-hidden="true" />
+              자재 보관
+            </span>
+            <span>
+              <i className="legend-zone legend-process" aria-hidden="true" />
+              생산 셀
+            </span>
+            <span>
+              <i className="legend-zone legend-shipping" aria-hidden="true" />
+              출하
+            </span>
             <span>
               <i className="legend-path" />
               AMR 이동 가능 구역
@@ -320,165 +382,9 @@ export default function Dashboard() {
               관측 AMR {snapshot?.robots.length ?? 0}대 / 목표 4대
             </span>
             <span>드래그 회전 · 스크롤 확대</span>
+            <span className="inventory-disclaimer">물품은 원장 기반 도식 · 물리 위치 미관측</span>
           </div>
         </section>
-        <aside className="detail-panel" aria-label="선택 상세">
-          <div className="detail-heading">
-            <span className="eyebrow">ASSET INSPECTOR</span>
-            <span className="tag">
-              {robot
-                ? "AMR"
-                : station
-                  ? "스테이션"
-                  : equipment
-                    ? "설비"
-                    : tote
-                      ? "토트"
-                      : "선택 대기"}
-            </span>
-          </div>
-          <div className="asset-symbol" aria-hidden="true">
-            {robot ? "◈" : station ? "◎" : equipment ? "▥" : "▣"}
-          </div>
-          <h2>
-            {robot?.label ??
-              (station
-                ? readable(station.id)
-                : ((equipment ? equipmentName(equipment.id) : null) ??
-                  (tote ? selection?.id : "대상을 선택하세요")))}
-          </h2>
-          <p className="asset-id">
-            {selection?.id ?? "3D 또는 아래 목록에서 선택"}
-          </p>
-          {robot && (
-            <>
-              <span className="status-pill">{readable(robot.status)}</span>
-              <dl>
-                <Pair label="현재 작업">
-                  {robot.task_label ?? readable(robot.task_id)}
-                </Pair>
-                <Pair label="작업 종류">{readable(robot.task_type)}</Pair>
-                <Pair label="목적지">{readable(robot.destination)}</Pair>
-                <Pair label="적재물">{robot.payload_id ?? "없음"}</Pair>
-                <Pair label="속도">
-                  {robot.speed_mps === null
-                    ? "미관측"
-                    : `${robot.speed_mps.toFixed(2)} m/s`}
-                </Pair>
-                <Pair label="대기 이유">{robot.waiting_reason ?? "없음"}</Pair>
-                <Pair label="배터리">
-                  {robot.battery_pct === null
-                    ? "미연결"
-                    : `${robot.battery_pct.toFixed(0)}%`}
-                </Pair>
-                <Pair label="배터리 원천">
-                  {robot.battery_source === "unavailable"
-                    ? "미연결"
-                    : robot.battery_source}
-                </Pair>
-                <Pair label="map 위치">
-                  {robot.pose
-                    ? `${robot.pose.x_m.toFixed(2)}, ${robot.pose.y_m.toFixed(2)} m`
-                    : "미관측"}
-                </Pair>
-                <Pair label="경로">
-                  {robot.route.length
-                    ? `${robot.route.length}개 경유점`
-                    : "수신 경로 없음"}
-                </Pair>
-              </dl>
-              {robot.route.length > 0 && (
-                <details>
-                  <summary>현재 경로 좌표</summary>
-                  <ol className="route-points">
-                    {robot.route.map((p, i) => (
-                      <li key={i}>
-                        {p.x_m.toFixed(2)}, {p.y_m.toFixed(2)} m
-                      </li>
-                    ))}
-                  </ol>
-                </details>
-              )}
-            </>
-          )}
-          {station && (
-            <dl>
-              <Pair label="위치">{station.xy.join(", ")} m</Pair>
-              <Pair label="역할">{readable(station.id)}</Pair>
-              <Pair label="연결 작업">
-                {snapshot?.tasks.filter(
-                  (t) =>
-                    t.source === station.id || t.destination === station.id,
-                ).length ?? "—"}
-              </Pair>
-            </dl>
-          )}
-          {equipment && (
-            <dl>
-              <Pair label="안정 ID">{equipment.id}</Pair>
-              <Pair label="설비 유형">{equipment.type}</Pair>
-              <Pair label="높이">{equipment.height_m} m</Pair>
-              <Pair label="평면 범위">{equipment.rect.join(", ")} m</Pair>
-            </dl>
-          )}
-          {tote && (
-            <dl>
-              {Object.entries(tote).map(([key, value]) => (
-                <Pair
-                  key={key}
-                  label={
-                    (
-                      {
-                        tote_id: "토트 ID",
-                        state: "상태",
-                        location: "위치",
-                        robot_id: "운반 AMR",
-                        sku: "품목",
-                        quantity: "수량",
-                        request_id: "요청 ID",
-                        owner: "운반 주체",
-                      } as Record<string, string>
-                    )[key] ?? key
-                  }
-                >
-                  {typeof value === "object"
-                    ? JSON.stringify(value)
-                    : String(value ?? "미관측")}
-                </Pair>
-              ))}
-            </dl>
-          )}
-          <div className="provenance">
-            <strong>데이터 연결</strong>
-            <dl>
-              <Pair label="원천">
-                {snapshot ? modeNames[snapshot.mode] : "미연결"}
-              </Pair>
-              <Pair label="관측 경과">
-                {observationAge === null
-                  ? "미관측"
-                  : `${Math.round(observationAge)}초`}
-              </Pair>
-              <Pair label="최근 수신">
-                {age === null ? "없음" : `${age}초 전`}
-              </Pair>
-              <Pair label="API 왕복">
-                {latency === null ? "미측정" : `${latency} ms`}
-              </Pair>
-              <Pair label="관측 시각">
-                {snapshot
-                  ? new Date(snapshot.observed_at).toLocaleTimeString("ko-KR")
-                  : "미관측"}
-              </Pair>
-              <Pair label="시뮬레이션">
-                {snapshot ? `${snapshot.sim_time_s.toFixed(1)} s` : "미관측"}
-              </Pair>
-              <Pair label="센서 / 위치 품질">미측정</Pair>
-            </dl>
-          </div>
-        </aside>
-      </div>
-      <section className="operations">
         <div className="fleet-section">
           <div className="section-heading">
             <div>
@@ -534,6 +440,9 @@ export default function Dashboard() {
               </button>
             )}
           </div>
+          {snapshot && !snapshot.capabilities.some((action) => ["pause", "resume", "create_order"].includes(action)) && (
+            <p className="readonly-notice"><strong>읽기 전용 관측</strong></p>
+          )}
           {snapshot?.capabilities.includes("create_order") && (
             <form
               onSubmit={(e) => {
@@ -587,10 +496,157 @@ export default function Dashboard() {
                   ? `${commandNames[command.status]} (${command.status}) · ${command.reason ?? "서버 처리 결과 수신"} · revision ${command.revision}`
                   : stale
                     ? "연결이 확인되면 지원되는 조작을 사용할 수 있습니다."
-                    : "조작 결과는 서버 승인 상태로 확인합니다.")}
+                    : snapshot?.capabilities.some((action) => ["pause", "resume", "create_order"].includes(action))
+                      ? "조작 결과는 서버 승인 상태로 확인합니다."
+                      : "현재 원천은 웹 명령을 지원하지 않습니다. 수신된 운영 상태를 표시합니다.")}
           </div>
         </section>
-      </section>
+        <aside className="detail-panel" aria-label="선택 상세">
+          <div className="detail-heading">
+            <span className="eyebrow">ASSET INSPECTOR</span>
+            <span className="tag">
+              {robot
+                ? "AMR"
+                : station
+                  ? "스테이션"
+                  : equipment
+                    ? "설비"
+                    : tote
+                      ? "토트"
+                      : stock
+                        ? "자재 재고"
+                      : "선택 대기"}
+            </span>
+          </div>
+          <div className="asset-symbol" aria-hidden="true">
+            {robot ? "◈" : station ? "◎" : equipment ? "▥" : "▣"}
+          </div>
+          <h2>
+            {robot?.label ??
+              (station
+                ? readable(station.id)
+                : ((equipment ? equipmentName(equipment.id) : null) ??
+                  (tote ? selection?.id : stock ? `${readable(stock.location)} 재고` : "대상을 선택하세요")))}
+          </h2>
+          <p className="asset-id">
+            {selection?.id ?? "3D 또는 아래 목록에서 선택"}
+          </p>
+          {robot && (
+            <>
+              <span className="status-pill" data-state={robot.status}>{readable(robot.status)}</span>
+              <dl>
+                <Pair label="현재 작업">
+                  {robot.task_label ?? readable(robot.task_id)}
+                </Pair>
+                <Pair label="작업 종류">{readable(robot.task_type)}</Pair>
+                <Pair label="목적지">{readable(robot.destination)}</Pair>
+                <Pair label="적재물">{robot.payload_id ?? "없음"}</Pair>
+                <Pair label="속도">
+                  {robot.speed_mps === null
+                    ? "미관측"
+                    : `${robot.speed_mps.toFixed(2)} m/s`}
+                </Pair>
+                <Pair label="대기 이유">{robot.waiting_reason ?? "없음"}</Pair>
+              </dl>
+              <details className="asset-observations">
+                <summary>배터리·위치·경로 상세</summary>
+                <dl>
+                <Pair label="배터리">
+                  {robot.battery_pct === null
+                    ? "미연결"
+                    : `${robot.battery_pct.toFixed(0)}%`}
+                </Pair>
+                <Pair label="배터리 원천">
+                  {robot.battery_source === "unavailable"
+                    ? "미연결"
+                    : robot.battery_source}
+                </Pair>
+                <Pair label="map 위치">
+                  {robot.pose
+                    ? `${robot.pose.x_m.toFixed(2)}, ${robot.pose.y_m.toFixed(2)} m`
+                    : "미관측"}
+                </Pair>
+                <Pair label="경로">
+                  {robot.route.length
+                    ? `${robot.route.length}개 경유점`
+                    : "수신 경로 없음"}
+                </Pair>
+              </dl>
+              {robot.route.length > 0 && (
+                <details>
+                  <summary>현재 경로 좌표</summary>
+                  <ol className="route-points">
+                    {robot.route.map((p, i) => (
+                      <li key={i}>
+                        {p.x_m.toFixed(2)}, {p.y_m.toFixed(2)} m
+                      </li>
+                    ))}
+                  </ol>
+                </details>
+              )}
+              </details>
+            </>
+          )}
+          {station && (
+            <dl>
+              <Pair label="위치">{station.xy.join(", ")} m</Pair>
+              <Pair label="역할">{readable(station.id)}</Pair>
+              <Pair label="연결 작업">
+                {snapshot?.tasks.filter(
+                  (t) =>
+                    t.source === station.id || t.destination === station.id,
+                ).length ?? "—"}
+              </Pair>
+            </dl>
+          )}
+          {equipment && (
+            <dl>
+              <Pair label="안정 ID">{equipment.id}</Pair>
+              <Pair label="설비 유형">{equipment.type}</Pair>
+              <Pair label="높이">{equipment.height_m} m</Pair>
+              <Pair label="평면 범위">{equipment.rect.join(", ")} m</Pair>
+            </dl>
+          )}
+          {tote && (
+            <dl>
+              {Object.entries(tote).map(([key, value]) => (
+                <Pair
+                  key={key}
+                  label={
+                    (
+                      {
+                        tote_id: "토트 ID",
+                        state: "상태",
+                        location: "위치",
+                        robot_id: "운반 AMR",
+                        sku: "품목",
+                        quantity: "수량",
+                        request_id: "요청 ID",
+                        owner: "운반 주체",
+                      } as Record<string, string>
+                    )[key] ?? key
+                  }
+                >
+                  {typeof value === "object"
+                    ? JSON.stringify(value)
+                    : key === "state" || key === "location" ? readable(String(value ?? "")) : String(value ?? "미관측")}
+                </Pair>
+              ))}
+            </dl>
+          )}
+          {stock && (
+            <dl>
+              <Pair label="보관 위치">{readable(stock.location)}</Pair>
+              <Pair label="품목">{stock.sku === "sensor-kit" ? "센서 키트" : stock.sku ?? "미관측"}</Pair>
+              <Pair label="보유 수량">{stock.on_hand ?? "미관측"}</Pair>
+              <Pair label="예약 수량">{stock.reserved ?? "미관측"}</Pair>
+              <Pair label="가용 수량">{stock.available ?? "미관측"}</Pair>
+              <Pair label="도식 표시">{scene ? inventoryDisplay(scene, snapshot).filter((s) => s.kind === "stock" && s.id === selection?.id).length : 0}개</Pair>
+              <Pair label="표현 범위">재고 단위 도식 · 선반 배치는 개략</Pair>
+            </dl>
+          )}
+        </aside>
+      </div>
       <section className="activity">
         <div className="tasks">
           <div className="section-heading">
@@ -642,7 +698,7 @@ export default function Dashboard() {
                           )}
                         </td>
                         <td>
-                          <span className="status-pill">
+                          <span className="status-pill" data-state={t.state}>
                             {readable(t.state)}
                           </span>
                           {t.progress !== null && (
@@ -694,6 +750,7 @@ export default function Dashboard() {
       <details className="asset-directory">
         <summary>설비 · 스테이션 · 토트 목록으로 선택</summary>
         <div className="asset-buttons">
+          {snapshot?.inventory.stock.map((stock) => <button key={stockKey(stock)} onClick={() => setSelection({ kind: "stock", id: stockKey(stock) })}>{readable(stock.location)} 재고 · {stock.on_hand ?? "미관측"}</button>)}
           {scene?.stations.map((s) => (
             <button
               key={s.id}

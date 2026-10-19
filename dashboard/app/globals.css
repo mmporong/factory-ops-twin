@@ -204,11 +204,13 @@ strong {
 .workspace {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 310px;
+  grid-template-areas: "map detail" "fleet command";
   margin: 0 28px;
   gap: 18px;
   align-items: start;
 }
 .map-panel {
+  grid-area: map;
   background: #eaf2fb;
   border: 1px solid #d4e2ef;
   border-radius: 16px;
@@ -261,7 +263,8 @@ strong {
 .map-footer {
   display: flex;
   align-items: center;
-  gap: 24px;
+  column-gap: 16px;
+  row-gap: 9px;
   flex-wrap: wrap;
   background: #ffffffc4;
   border-top: 1px solid #d5e3f0;
@@ -280,8 +283,23 @@ strong {
 .legend-path {
   width: 13px;
   height: 8px;
-  background: #c1d9ef;
-  border: 1px solid #a4c3e0;
+  background: #91b2c8;
+  border: 1px solid #779eb7;
+  border-radius: 2px;
+}
+.legend-zone {
+  width: 9px;
+  height: 9px;
+  border-radius: 3px;
+}
+.legend-material {
+  background: #d4a24d;
+}
+.legend-process {
+  background: #347f79;
+}
+.legend-shipping {
+  background: #557c9e;
 }
 .legend-robot {
   width: 8px;
@@ -313,11 +331,12 @@ strong {
   border-color: var(--blue);
 }
 .detail-panel {
+  grid-area: detail;
   border: 1px solid var(--line);
   border-radius: 16px;
   padding: 22px;
   background: var(--paper);
-  min-height: 583px;
+  min-height: 0;
 }
 .detail-heading {
   display: flex;
@@ -406,6 +425,9 @@ strong {
   gap: 18px;
   margin: 20px 28px;
 }
+.fleet-section { grid-area: fleet; }
+.command-section { grid-area: command; }
+.workspace > .fleet-section, .workspace > .command-section { width: 100%; }
 .fleet-section,
 .command-section,
 .activity > div {
@@ -426,17 +448,19 @@ strong {
 }
 .fleet-list {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 10px;
 }
 .robot-card {
-  display: flex;
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr);
   align-items: center;
   gap: 10px;
   padding: 12px;
   text-align: left;
   min-height: 76px;
   background: #fafcfe;
+  min-width: 0;
 }
 .robot-card.active {
   background: #eef4ff;
@@ -464,11 +488,12 @@ strong {
 .robot-battery {
   font-size: 10px;
   color: var(--muted);
-  margin-left: auto;
+  grid-column: 2;
+  margin: 0;
   white-space: nowrap;
 }
 .robot-battery > span {
-  display: block;
+  display: none;
   text-align: right;
   color: var(--blue);
   font-size: 17px;
@@ -527,7 +552,7 @@ strong {
   display: grid;
   grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
   gap: 18px;
-  margin: 0 28px 20px;
+  margin: 20px 28px;
 }
 .table-scroll {
   overflow: auto;
@@ -602,8 +627,9 @@ td small {
   justify-self: start;
 }
 .text-button {
-  min-height: 30px;
-  padding: 3px 0;
+  min-height: 44px;
+  min-width: 44px;
+  padding: 8px 4px;
   color: #285eaa;
   background: none;
   border: 0;
@@ -620,7 +646,7 @@ td small {
 }
 summary {
   cursor: pointer;
-  min-height: 32px;
+  min-height: 44px;
 }
 .asset-buttons {
   display: flex;
@@ -655,6 +681,96 @@ summary {
   max-height: 140px;
   overflow: auto;
 }
+.observation-panel {
+  margin: 0 28px 20px;
+  padding: 16px 22px 0;
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  min-width: 0;
+}
+.observation-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.observation-heading h2 { font-size: 16px; }
+.observation-heading .eyebrow { font-size: 9px; }
+.observation-state {
+  color: #286957;
+  background: #edf7f2;
+  border-radius: 20px;
+  padding: 5px 10px;
+  font-size: 11px;
+  white-space: nowrap;
+}
+.observation-state.is-stale { color: #805717; background: #fff5e4; }
+.observation-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin: 14px 0;
+  gap: 16px;
+}
+.observation-metrics > div + div { border-left: 1px solid var(--line); padding-left: 20px; }
+.observation-metrics dt { font-size: 11px; color: var(--muted); }
+.observation-metrics dd {
+  margin: 4px 0 0;
+  font-size: 18px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.observation-metrics dd > span { font-size: 12px; font-weight: 400; color: var(--muted); }
+.observation-metrics small { font-size: 11px; font-weight: 400; }
+.observation-foot { border-top: 1px solid var(--line); }
+.observation-foot > p { font-size: 12px; color: var(--muted); padding: 12px 0 0; }
+.observation-details > summary {
+  font-size: 12px;
+  color: #285eaa;
+  padding: 11px 0;
+  width: fit-content;
+}
+.observation-evidence {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 30px;
+  border-top: 1px solid var(--line);
+  padding: 14px 0;
+}
+.observation-evidence h3 { font-size: 13px; margin: 0 0 10px; }
+.observation-evidence dl { margin: 0; }
+.observation-evidence dl > div { display: flex; justify-content: space-between; gap: 16px; padding: 6px 0; font-size: 12px; }
+.observation-evidence dt { color: var(--muted); }
+.observation-evidence dd { margin: 0; text-align: right; overflow-wrap: anywhere; max-width: 65%; }
+.evidence-note, .source-scope { font-size: 12px; color: var(--muted); line-height: 1.7; }
+.evidence-note { margin-bottom: 10px; }
+.source-scope { padding-bottom: 16px; overflow-wrap: anywhere; }
+.source-scope > span { color: var(--ink); }
+.scene-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: #f8fbfe;
+  border-top: 1px solid #d5e3f0;
+}
+.scene-tools > span { color: var(--muted); font-size: 11px; margin-right: 4px; }
+.scene-tools button { min-height: 44px; padding: 7px 12px; border-radius: 20px; font-size: 12px; }
+.scene-tools button[aria-pressed="true"] { color: #2358b7; background: #e8f0ff; border-color: #99b9f2; }
+.scene-tools small { margin-left: auto; }
+.camera-tools { display: flex; gap: 6px; margin-left: auto; }
+.camera-tools button { border-radius: 9px; }
+.map-footer .inventory-disclaimer { margin-left: 0; width: 100%; font-size: 11px; }
+.status-pill[data-state="idle"] { background: #eff3f7; color: #53677c; }
+.status-pill[data-state="waiting"], .status-pill[data-state="blocked"], .status-pill[data-state="paused"] { background: #fff3df; color: #805717; }
+.status-pill[data-state="completed"], .status-pill[data-state="done"] { background: #e9f5ef; color: #286957; }
+.asset-observations { border-top: 1px solid var(--line); padding-top: 8px; margin-top: 12px; }
+.asset-observations > summary { padding: 10px 0; }
+.command-section .section-heading { flex-wrap: wrap; }
+.command-section .primary { width: 100%; }
+.readonly-notice { color: #526a81; background: #f2f6fa; border-radius: 10px; padding: 12px 14px; font-size: 13px; }
 .detail-panel details summary {
   font-size: 11px;
   color: var(--blue);
@@ -735,9 +851,14 @@ summary {
   .map-footer {
     gap: 10px;
   }
-  .map-footer span:last-child {
+  .map-footer span:nth-last-child(2) {
     display: none;
   }
+  .observation-panel { margin-left: 20px; margin-right: 20px; }
+  .observation-metrics dd { font-size: 16px; }
+  .scene-tools small { width: 100%; margin: 0; }
+  .workspace > .fleet-section .fleet-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .robot-battery > span { display: none; }
 }
 @media (max-width: 760px) {
   .topbar {
@@ -803,7 +924,7 @@ summary {
     width: 100%;
   }
   .scene {
-    height: 400px;
+    height: 320px;
   }
   .panel-top {
     left: 16px;
@@ -897,6 +1018,21 @@ summary {
     padding: 25px;
     font-size: 12px;
   }
+  .observation-panel { margin: 0 14px 14px; padding: 14px 16px 0; }
+  .observation-metrics { grid-template-columns: 1fr 1fr; gap: 12px; }
+  .observation-metrics > div + div { border: 0; padding: 0; }
+  .observation-metrics dd { font-size: 15px; }
+  .observation-metrics dt, .observation-metrics small { font-size: 11px; }
+  .observation-foot > p { font-size: 11px; }
+  .observation-evidence { grid-template-columns: 1fr; gap: 18px; }
+  .scene-tools { padding: 10px 14px; gap: 7px; }
+  .scene-tools > span { display: none; }
+  .scene-tools button { padding: 7px 10px; font-size: 11px; }
+  .map-footer { font-size: 11px; }
+  .map-scale { max-width: 140px; font-size: 10px; }
+  .robot-card { gap: 6px 9px; }
+  .robot-card strong { font-size: 13px; }
+  .robot-card small, .robot-battery { font-size: 11px; }
 }
 .command-section input {
   display: block;

@@ -36,6 +36,14 @@ export type Tote = {
   state?: string;
   [key: string]: unknown;
 };
+export type Stock = {
+  location?: string;
+  sku?: string;
+  on_hand?: number | null;
+  reserved?: number | null;
+  available?: number | null;
+  [key: string]: unknown;
+};
 export type Command = {
   command_id: string;
   status: "applied" | "pending" | "rejected";
@@ -50,11 +58,12 @@ export type Snapshot = {
   sim_time_s: number;
   observed_at: string;
   connection: string;
+  model_scope?: string;
   paused: boolean;
   capabilities: string[];
   robots: Robot[];
   tasks: Task[];
-  inventory: { stock: unknown[]; totes: Tote[]; conservation: unknown[] };
+  inventory: { stock: Stock[]; totes: Tote[]; conservation: unknown[] };
   kpis: {
     active_robots: number;
     total_robots: number;
@@ -73,6 +82,9 @@ export type Snapshot = {
 };
 export type Scene = {
   layout_revision: string;
+  frame?: string;
+  units?: string;
+  map_resolution_m?: number;
   bounds_xy: Rect;
   stations: { id: string; xy: [number, number]; role: string }[];
   pockets: Record<string, [number, number]>;
@@ -87,9 +99,20 @@ export type Scene = {
   reserved_work_areas: { id: string; rect: Rect; purpose: string }[];
 };
 export type Selection = {
-  kind: "robot" | "station" | "equipment" | "tote";
+  kind: "robot" | "station" | "equipment" | "tote" | "stock";
   id: string;
 };
+export const modeNames = {
+  local_model: "로컬 운영 모델",
+  replay: "기록 재생",
+  live: "실시간 관측",
+};
+export function sceneSize(scene: Scene | null) {
+  if (!scene) return "배치 미연결";
+  const [xmin, ymin, xmax, ymax] = scene.bounds_xy;
+  const number = new Intl.NumberFormat("ko-KR", { maximumFractionDigits: 2 });
+  return `${number.format(xmax - xmin)} × ${number.format(ymax - ymin)} m`;
+}
 export const stationNames: Record<string, string> = {
   S1: "자재 A",
   S2: "자재 B",

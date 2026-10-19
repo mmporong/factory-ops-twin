@@ -1,0 +1,92 @@
+[
+  {
+    "name": "desktop",
+    "disclaimerVisible": "flex",
+    "height": 1200,
+    "panels": [
+      {
+        "name": "map-panel",
+        "top": 492,
+        "width": 1041
+      },
+      {
+        "name": "fleet-section",
+        "top": 1187,
+        "width": 1041
+      },
+      {
+        "name": "command-section",
+        "top": 1187,
+        "width": 310
+      },
+      {
+        "name": "detail-panel",
+        "top": 492,
+        "width": 310
+      }
+    ],
+    "scrollWidth": 1425,
+    "smallActionButtons": [],
+    "width": 1440
+  },
+  {
+    "name": "tablet",
+    "disclaimerVisible": "flex",
+    "height": 900,
+    "panels": [
+      {
+        "name": "map-panel",
+        "top": 480,
+        "width": 680
+      },
+      {
+        "name": "fleet-section",
+        "top": 1227,
+        "width": 680
+      },
+      {
+        "name": "command-section",
+        "top": 1227,
+        "width": 275
+      },
+      {
+        "name": "detail-panel",
+        "top": 480,
+        "width": 275
+      }
+    ],
+    "scrollWidth": 1009,
+    "smallActionButtons": [],
+    "width": 1024
+  },
+  {
+    "name": "mobile",
+    "disclaimerVisible": "flex",
+    "height": 844,
+    "panels": [
+      {
+        "name": "map-panel",
+        "top": 595,
+        "width": 347
+      },
+      {
+        "name": "fleet-section",
+        "top": 1175,
+        "width": 347
+      },
+      {
+        "name": "command-section",
+        "top": 1460,
+        "width": 347
+      },
+      {
+        "name": "detail-panel",
+        "top": 1769,
+        "width": 347
+      }
+    ],
+    "scrollWidth": 375,
+    "smallActionButtons": [],
+    "width": 390
+  }
+]
