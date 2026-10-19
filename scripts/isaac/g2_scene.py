@@ -16,6 +16,7 @@ import traceback
 from typing import Any, Callable, Mapping, Sequence, cast
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+from factory_ops.compat import add_exception_note
 from factory_ops.drive_profile import DriveProfile
 from factory_ops.footprint import qualify_footprint
 from factory_ops.layout import Layout
@@ -565,7 +566,7 @@ def _capture_frame_with_extension(
             if primary_error is None:
                 primary_error = error
             else:
-                primary_error.add_note(f"render capture finalize failed: {type(error).__name__}: {error}")
+                add_exception_note(primary_error, f"render capture finalize failed: {type(error).__name__}: {error}")
         try:
             breadcrumb("frozen_state_validation_start")
             after_poses = {robot_id: _pose(runtime["robot"]) for robot_id, runtime in robots.items()}
@@ -578,7 +579,7 @@ def _capture_frame_with_extension(
             if primary_error is None:
                 primary_error = error
             else:
-                primary_error.add_note(f"frozen-state validation failed: {type(error).__name__}: {error}")
+                add_exception_note(primary_error, f"frozen-state validation failed: {type(error).__name__}: {error}")
     if primary_error is not None:
         raise primary_error
     assert captured is not None
@@ -650,6 +651,7 @@ def _run(
     scenario_ids: set[str] = SCENARIOS, result_file: str = RESULT_FILE,
     scene_extension: Any = None, extra_inputs: Mapping[str, Path] | None = None,
     expected_robot_count: int = 2,
+    local_sdk45: bool = False,
 ) -> int:
     started = time.monotonic()
     app = rclpy = clock_node = session = timeline = np = rep = None
@@ -662,9 +664,12 @@ def _run(
     render_products_cleaned = False
     valid = False
     phase = "preflight"
+    isaac45_runtime: Any = None
+    get_assets_root_path: Any = None
     result: dict[str, Any] = {
         "schema_version": 1, "run_id": args.run_id, "scenario_id": args.scenario,
-        "qualification": qualification, "status": "running", "stage": phase,
+        "qualification": "local45_" + qualification if local_sdk45 else qualification,
+        "status": "running", "stage": phase,
     }
     try:
         if not re.fullmatch(r"[0-9a-f]{32}", args.run_id):
@@ -683,6 +688,18 @@ def _run(
                                         expected_robot_count=expected_robot_count)
         os.environ["ROS_DOMAIN_ID"] = str(int(config["ros_domain_id"]))
         os.environ.setdefault("ROS_DISTRO", "jazzy")
+        runtime45: Any = None
+        if local_sdk45:
+            from factory_ops import isaac45_runtime
+
+            version = (Path(os.environ["ISAAC_PATH"]) / "VERSION").read_text().strip()
+            if not version.startswith("4.5."):
+                raise base.SmokeError("local45 development entry requires the installed SDK4.5")
+            result["runtime_compatibility"] = {
+                "profile": "local45_development", "sdk_version": version,
+                "canonical_6_2_qualification": False,
+                "ros_environment": isaac45_runtime.configure_ros_environment(int(config["ros_domain_id"])),
+            }
         source_path = Path(__file__).resolve()
         result["inputs"] = {
             "scene": {"path": str(scene), "sha256": base._sha256(scene)},
@@ -704,16 +721,18 @@ def _run(
 
         checkpoint("simulation_app")
         from isaacsim import SimulationApp
-        app = SimulationApp({
-            "headless": True, "renderer": "RealTimePathTracing", "sync_loads": True,
-            "fast_shutdown": True, "enable_motion_bvh": True,
-        })
+        launch = {"headless": True,
+                  "renderer": "RayTracedLighting" if local_sdk45 else "RealTimePathTracing",
+                  "sync_loads": True, "fast_shutdown": True}
+        if not local_sdk45:
+            launch["enable_motion_bvh"] = True
+        app = SimulationApp(launch)
         import carb
         renderer_settings = carb.settings.get_settings()
         motion_bvh_enabled = renderer_settings.get("/renderer/raytracingMotion/enabled") is True
         result["renderer"] = {
             "motion_bvh": {
-                "requested": True,
+                "requested": not local_sdk45,
                 "enabled_readback": motion_bvh_enabled,
                 "hydra_engine_masking": _json_safe_setting(
                     renderer_settings.get("/renderer/raytracingMotion/enableHydraEngineMasking")
@@ -721,20 +740,27 @@ def _run(
                 "enabled_hydra_engines": _json_safe_setting(
                     renderer_settings.get("/renderer/raytracingMotion/enabledForHydraEngines")
                 ),
-                "source": "Isaac Sim 6.2 SimulationApp enable_motion_bvh launch option",
+                "source": ("SDK4.5 development readback; 6.2 launch option is not available"
+                           if local_sdk45 else "Isaac Sim 6.2 SimulationApp enable_motion_bvh launch option"),
             }
         }
-        if not motion_bvh_enabled:
+        if not local_sdk45 and not motion_bvh_enabled:
             raise base.SmokeError("G2 renderer Motion BVH enablement readback is not true")
         import numpy as np
         from PIL import Image
         import omni.replicator.core as rep
         import omni.timeline
         from pxr import Gf, Usd, UsdGeom, UsdPhysics
-        import isaacsim.core.experimental.utils.stage as stage_utils
-        from isaacsim.core.simulation_manager import SimulationManager
-        from isaacsim.robot.experimental.wheeled_robots.robots import WheeledRobot
-        from isaacsim.storage.native import get_assets_root_path
+        if local_sdk45:
+            runtime45 = isaac45_runtime.create_runtime(app)
+            stage_utils = runtime45.stage_utils
+            SimulationManager = runtime45.SimulationManager
+            WheeledRobot = runtime45.WheeledRobot
+        else:
+            import isaacsim.core.experimental.utils.stage as stage_utils
+            from isaacsim.core.simulation_manager import SimulationManager
+            from isaacsim.robot.experimental.wheeled_robots.robots import WheeledRobot
+            from isaacsim.storage.native import get_assets_root_path
 
         checkpoint("open_factory")
         opened, stage = stage_utils.open_stage(str(scene))
@@ -756,7 +782,8 @@ def _run(
             result["scene_extension"] = scene_extension.setup(stage, UsdGeom, UsdPhysics, Gf, output)
 
         checkpoint("load_robots")
-        asset = get_assets_root_path() + "/Isaac/Robots/NVIDIA/NovaCarter/nova_carter.usd"
+        asset = (runtime45.asset_url if local_sdk45 else
+                 get_assets_root_path() + "/Isaac/Robots/NVIDIA/NovaCarter/nova_carter.usd")
         result["robots"] = {}
         for definition in config["robots"]:
             robot_id = str(definition["robot_id"])
@@ -803,6 +830,18 @@ def _run(
             result["scene_extension"]["robot_visuals"] = robot_visual_hook(
                 stage, {robot_id: runtime["definition"] for robot_id, runtime in robots.items()})
 
+        if local_sdk45:
+            physics_scenes = [prim for prim in stage.Traverse() if prim.IsA(UsdPhysics.Scene)]
+            if not physics_scenes:
+                UsdPhysics.Scene.Define(stage, "/World/Local45PhysicsScene")
+            elif len(physics_scenes) != 1:
+                raise base.SmokeError("local45 factory must have exactly one PhysicsScene")
+            SimulationManager.setup_simulation(dt=float(config["physics_dt_s"]), device="cpu")
+            omni.timeline.get_timeline_interface().pause()
+            for _ in range(2):
+                app.update()
+            result["runtime_compatibility"]["world_initialized_before_render_products"] = True
+
         def save_rgb(data: Any, path: Path) -> None:
             image = Image.fromarray(np.asarray(data)[:, :, :3].astype(np.uint8))
             try:
@@ -811,12 +850,14 @@ def _run(
                 image.close()
 
         c1 = robots["carter1"]["definition"]
+        capture_options = {"dome_light_factory": runtime45.create_capture_light} if local_sdk45 else {}
         session = CaptureSession(
             output, app, stage, rep, UsdGeom, Gf, SimulationManager, save_rgb,
             medium_camera=CameraSpec(
                 f"{c1['prim_path']}/chassis_link/G2EvidenceCamera", (-3.0, -4.0, 3.0),
                 (0.0, 0.0, 0.25), "base_link",
             ),
+            **capture_options,
         )
         result["load_preview"] = session.capture_load_preview()
         result["factory_overview"] = session.capture_factory_overview()
@@ -845,9 +886,15 @@ def _run(
 
         checkpoint("ros_and_lidars")
         rclpy, clock_node, clock_stamps = _clock_graph(stage, app)
-        lidar_sensors, lidar_metadata = _setup_lidars(
-            config, robots, stage, Usd, UsdGeom, Gf, SimulationManager, app,
-        )
+        if local_sdk45:
+            lidar_sensors, lidar_metadata = runtime45.setup_lidars(
+                config, robots, stage, Usd, UsdGeom, Gf, SimulationManager, app,
+                _author_lidar_local_transform, _verify_lidar_local_transform,
+            )
+        else:
+            lidar_sensors, lidar_metadata = _setup_lidars(
+                config, robots, stage, Usd, UsdGeom, Gf, SimulationManager, app,
+            )
         result["lidars"] = lidar_metadata
         for runtime in robots.values():
             node, ros = _setup_robot_ros(
@@ -1117,6 +1164,8 @@ def _run(
             "error": {"type": type(error).__name__, "message": str(error),
                       "traceback": traceback.format_exc(limit=20)},
         })
+        if getattr(error, "__notes__", None):
+            result["error"]["notes"] = list(error.__notes__)
         print(f"FACTORY_OPS_G2_ERROR={phase}: {type(error).__name__}: {error}", flush=True)
     finally:
         cleanup_errors: list[str] = []
@@ -1172,7 +1221,10 @@ def _run(
             _atomic_json(output / result_file, result)
         if app is not None:
             try:
-                app.close(wait_for_replicator=False, exit_code=code)
+                if local_sdk45:
+                    app.close(wait_for_replicator=False)
+                else:
+                    app.close(wait_for_replicator=False, exit_code=code)
             except BaseException as error:
                 code = 1
                 result["status"] = "failed"

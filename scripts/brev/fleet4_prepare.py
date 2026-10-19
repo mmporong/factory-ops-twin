@@ -50,8 +50,11 @@ def _copy_new(source: Path, destination: Path) -> None:
         shutil.copyfileobj(original, copied)
 
 
-def prepare(stage: Path, source_root: Path, run_id: str, source_commit: str) -> dict[str, Any]:
+def prepare(stage: Path, source_root: Path, run_id: str, source_commit: str,
+            *, runtime_profile: str = "canonical62") -> dict[str, Any]:
     require_python()
+    if runtime_profile not in {"canonical62", "local45_development"}:
+        raise ValueError("unknown fleet runtime profile")
     if re.fullmatch(r"[0-9a-f]{32}", run_id) is None:
         raise ValueError("run_id must be lowercase 32-hex")
     if re.fullmatch(r"[0-9a-f]{40}", source_commit) is None:
@@ -80,12 +83,17 @@ def prepare(stage: Path, source_root: Path, run_id: str, source_commit: str) -> 
     from factory_ops import fleet_transport, source_provenance
     from scripts.isaac.fleet4_transport_scene import SOURCE_PINS
 
+    runtime_pins = SOURCE_PINS
+    if runtime_profile == "local45_development":
+        from scripts.isaac.local45_fleet4_transport_scene import LOCAL_SOURCE_PINS
+        runtime_pins = LOCAL_SOURCE_PINS
+
     for module, relative in ((fleet_transport, "factory_ops/fleet_transport.py"),
                              (source_provenance, "factory_ops/source_provenance.py")):
         module_file = module.__file__
         if module_file is None or Path(module_file).resolve() != source_root / relative:
             raise ValueError("project imports must belong to the requested readonly source_root")
-    names = SOURCE_PINS | EXTRA_PINS | {
+    names = runtime_pins | EXTRA_PINS | {
         "configs/factory-fleet4/" + name for name in fleet_transport.SOURCE_FILES}
     pins = {name: _sha(source_root / name) for name in sorted(names)}
     proof = source_provenance.verify_source_archive(archive, raw_commit, source_commit, pins,
@@ -112,6 +120,8 @@ def prepare(stage: Path, source_root: Path, run_id: str, source_commit: str) -> 
                 "source_commit": source_commit, "bundle_sha256": prepared["bundle_sha256"],
                 "source_files": pins, "source_archive_sha256": proof["source_archive_sha256"],
                 "source_archive_proof": proof, "preparation_python": python_version()}
+    if runtime_profile != "canonical62":
+        metadata["runtime_profile"] = runtime_profile
     with (provenance / "fleet-source.json").open("x", encoding="utf-8") as stream:
         json.dump(metadata, stream, ensure_ascii=False, indent=2, allow_nan=False)
         stream.write("\n")
@@ -130,8 +140,11 @@ def main() -> int:
         parser.add_argument("--source-root", required=True, type=Path)
         parser.add_argument("--run-id", required=True)
         parser.add_argument("--source-commit", required=True)
+        parser.add_argument("--runtime-profile", choices=("canonical62", "local45_development"),
+                            default="canonical62")
         args = parser.parse_args()
-        report = prepare(args.stage, args.source_root, args.run_id, args.source_commit)
+        report = prepare(args.stage, args.source_root, args.run_id, args.source_commit,
+                         runtime_profile=args.runtime_profile)
     except (OSError, ValueError, RuntimeError, ImportError) as error:
         print(json.dumps({"passed": False, "python_version": python_version(),
                           "error": f"{type(error).__name__}: {error}"}, ensure_ascii=False))

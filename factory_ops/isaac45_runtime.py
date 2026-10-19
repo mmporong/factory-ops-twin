@@ -169,15 +169,56 @@ class _SimulationManager:
         return int(self.world.current_time_step_index) if self.ready else 0
 
 
+class _FlatScanObservationHandle:
+    def __init__(self, product, identity, range_min_m, range_max_m):
+        from factory_ops.flat_scan_observation import FlatScanObservationTracker
+
+        rep = importlib.import_module("omni.replicator.core")
+        self._tracker = FlatScanObservationTracker(identity, range_min_m, range_max_m)
+        self._annotator = rep.AnnotatorRegistry.get_annotator(
+            "RtxSensorCpuIsaacComputeRTXLidarFlatScanSimulationTime")
+        self._annotator.attach([product])
+
+    def read(self, **reader_context):
+        if self._annotator is None:
+            raise RuntimeError("native FlatScan observer is closed")
+        payload = self._annotator.get_data()
+        if isinstance(payload, dict):
+            depths = payload.get("linearDepthData")
+            reshape = getattr(depths, "reshape", None)
+            if callable(reshape):
+                payload = {**payload, "linearDepthData": reshape(-1)}
+        return self._tracker.observe(payload, **reader_context)
+
+    def close(self):
+        if self._annotator is not None:
+            self._annotator.detach()
+            self._annotator = None
+
+
 class _LidarSensor:
     def __init__(self, product):
         self._product = product
         self._writer: Any = None
+        self._observer: Any = None
+
+    def open_native_observer(self, identity, range_min_m, range_max_m):
+        if self._product is None or self._observer is not None:
+            raise RuntimeError("sensor is closed or already owns a FlatScan observer")
+        observer = _FlatScanObservationHandle(self._product, identity, range_min_m, range_max_m)
+        self._observer = observer
+        return observer
 
     def detach_writer(self, name):
         if name != LIDAR_WRITER:
             raise ValueError("facade owns only the simulation-time LaserScan writer")
         errors = []
+        if self._observer is not None:
+            try:
+                self._observer.close()
+                self._observer = None
+            except Exception as error:
+                errors.append(f"observer.close: {error}")
         if self._writer is not None:
             try:
                 self._writer.detach()
@@ -224,6 +265,15 @@ class Runtime45:
     @property
     def asset_url(self):
         return self.get_assets_root_path() + ASSET_PATH
+
+    def create_capture_light(self):
+        stage = self._bindings.usd.get_context().get_stage()
+        if stage is None:
+            raise RuntimeError("capture light requires the current stage")
+        lux = importlib.import_module("pxr.UsdLux")
+        light = lux.DomeLight.Define(stage, "/World/G0bPersistentDomeLight")
+        light.CreateIntensityAttr(800.)
+        return light
 
     def setup_lidars(self, config, robots, stage, Usd, UsdGeom, Gf,
                      SimulationManager, app, author_mount, verify_mount):

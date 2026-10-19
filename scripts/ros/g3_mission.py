@@ -951,6 +951,14 @@ def main() -> int:
     return run_mission(args, session_root=session_root, session=session, config=config, book=book)
 
 
+def _scene_runtime(development: bool, profile: str) -> tuple[str, dict[str, str]]:
+    if profile == "local45_development" and development:
+        return "local45-fleet4-transport-scene.json", {"runtime_profile": profile}
+    if profile != "canonical62":
+        raise ValueError("runtime profile is unsupported for this mission entry")
+    return ("fleet4-transport-scene.json" if development else "g3-scene.json"), {}
+
+
 def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mapping[str, Any],
                 config: Mapping[str, Any], book: RouteBook, registry: FleetRegistry | None = None,
                 bundle_sha256: str | None = None) -> int:
@@ -971,7 +979,7 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
         marker = session_verification_record(run_id=args.run_id, scenario_id=session["scenario_id"],
             session_sha256=sha(session_root / "session.json"), session=session)
     marker_name = "fleet-transport-verified.json" if development else "session-verified.json"
-    scene_result_name = "fleet4-transport-scene.json" if development else "g3-scene.json"
+    scene_result_name, runtime_fields = _scene_runtime(development, getattr(args, "runtime_profile", "canonical62"))
     config_dir = session_root if development else config_dir_from_session(session_root)
     runtime_config = config["g3_runtime"]
     scenario_id = session["scenario_id"]
@@ -985,7 +993,8 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
                               "primary_evaluation": session["primary_evaluation"], "scope": session["scope"], "ground_truth_input": False,
                               "workload_sha256": session["workload_sha256"], "session_sha256": sha(session_root / "session.json")}
     if development:
-        result.update({"bundle_sha256": bundle_sha256, "robot_ids": list(robot_ids), "namespace_by_id": namespaces})
+        result.update({"bundle_sha256": bundle_sha256, "robot_ids": list(robot_ids),
+                       "namespace_by_id": namespaces, **runtime_fields})
     else:
         result.update(primary_trial_identity(session_root, session))
     launch = bag = ros = mission = callback_drain = None

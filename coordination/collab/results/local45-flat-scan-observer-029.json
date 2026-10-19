@@ -1,0 +1,200 @@
+{
+  "task_id": "local45-flat-scan-observer-029",
+  "attempt": 1,
+  "contract_revision": 29,
+  "owner": "control",
+  "reviewer": "root",
+  "ack_at_utc": "2026-10-19T23:07:27.0819949Z",
+  "write_paths": [
+    "factory_ops/flat_scan_observation.py",
+    "tests/test_flat_scan_observation.py",
+    "coordination/collab/results/local45-flat-scan-observer-029.json"
+  ],
+  "read_source_sha256": {
+    "coordination/collab/results/local45-mission-boundary-map-027.json": "572ef1c7ca0c51bac4210a3c6aa3a31ca6c65e4a165f202cbbfe311d520f3544",
+    "factory_ops/isaac45_runtime.py": "793c467a8e92e7ddf5a1ff2f7a7c9956435d60e58f0b47f85653fc0c388256ac",
+    "scripts/isaac/local_fleet_runtime_probe.py": "d75b2bfdca68b6f4db7608b3052d9222e709c3283a56a34ddaa7a68d2eac53c1"
+  },
+  "api": "FlatScanObservationTracker(identity, range_min_m, range_max_m).observe(payload, *, read_at_sim_time_s, read_at_physics_frame, timeline_playing, phase) -> JSON-safe dict",
+  "scope": "새 pure tracker/test/receipt만 작성. existing runtime/lifecycle/SDK/ROS/Git 읽기 외 변경 없음.",
+  "status": "implementation_complete_pending_root_review",
+  "api_ready": true,
+  "accepted": false,
+  "changed_paths": [
+    "factory_ops/flat_scan_observation.py",
+    "tests/test_flat_scan_observation.py",
+    "coordination/collab/results/local45-flat-scan-observer-029.json"
+  ],
+  "implementation": {
+    "class": "factory_ops.flat_scan_observation.FlatScanObservationTracker",
+    "location": "factory_ops/flat_scan_observation.py:38",
+    "constructor": "FlatScanObservationTracker(identity: Mapping[str,str], range_min_m: float, range_max_m: float)",
+    "observe": "observe(payload, *, read_at_sim_time_s, read_at_physics_frame, timeline_playing, phase) -> dict",
+    "schema": {
+      "schema_name": "local45-flat-scan-observation",
+      "schema_version": 1
+    },
+    "identity": "정확히 run_id/scenario_id/robot_id/side/prim_path/topic/frame_id/actual_profile_sha256의8개 비어있지 않은 string. profile SHA는64hex. 생성 때 복사하며 payload의 같은 identity 필드/name 충돌은 invalid로 반환한다. payload가 schema/status를 덮지 못한다.",
+    "number_policy": "stdlib numbers.Real/Integral로 등록된 실수/정수 scalar를 plain float/int로 변환한다. bool/string/nonfinite 값은 수치로 허용하지 않는다. NumPy를 import하지 않으며 해당 ABC에 등록된 NumPy numeric scalar 경로도 처리하도록 구현했다.",
+    "reader_context": "유한·비음수 simtime, bool이 아닌 비음수 정수 physics frame, bool timeline_playing, 비어있지 않은 phase. 잘못되면 ValueError이며 event/index 상태 변경 전 거절.",
+    "payload": "native timeStamp(초)/numCols/numRows/flattened linearDepthData iterable. 잘못된 payload나 iteration 예외는 error/invalid row로 보존하고 루프 밖 예외로 확장하지 않는다.",
+    "timestamp": "양수 유한 native timestamp만 sensor_timestamp_s에 원래 수치로 기록한다. zero/missing은 None과 warmup reason, negative/nonfinite/nonnumeric은 None과 invalid reason. native 숫자형 이름은 native_timestamp_type에 보존한다. ns 변환/보간/GT·physics frame 대체 없음.",
+    "dimensions": "numCols/numRows는 bool이 아닌 비음수 Integral을 plain int로 변환한다. 실제 iterable size와의 불일치를 dimensions_match=false/invalid reason으로 기록하고 그 stamp를 소비하지 않는다.",
+    "statistics": "한 번의 iterable 순회로 total_count/finite_count/positive_count/in_range_count/invalid_count/complete만 계산한다. raw range 배열은 반환·저장하지 않는다.",
+    "states": {
+      "new": "유효한 양수 native timestamp와 nonempty complete buffer/일치 dimensions가 처음이거나 이전 max보다 증가. unique_observation_index만1증가.",
+      "duplicate": "동일 native timestamp. reader 시간/frame/phase 변화와 무관하게 index/max 유지.",
+      "regressed": "native timestamp 감소. 받은 timestamp는 기록하되 이전max/index 유지.",
+      "warmup": "zero/missing stamp 또는 empty buffer. index/max 유지.",
+      "invalid": "잘못된 stamp/dimensions/identity나 size mismatch. 이유와 가능한 통계를 기록하고 index/max 유지.",
+      "error": "mapping이 아니거나 payload 읽기/iterator 실패. 가능한 통계와 error_type을 기록하고 index/max 유지."
+    },
+    "event_counter": "journal_event_sequence는 유효한 reader context의 observe 호출마다1증가한다. unique_observation_index는 읽어서 수용한 서로 다른 증가 native timestamps의 수이며 hardware/GMO frame이나 센서 전체 출력 수가 아니다.",
+    "claims": "read_minus_sensor_time_s는 관측 offset일 뿐이다. clock_alignment_verified와 sensor_quality_qualification_verified는 모든 row에서false다."
+  },
+  "api_example": {
+    "code": "from factory_ops.flat_scan_observation import FlatScanObservationTracker\nidentity = {\n    'run_id': 'run029', 'scenario_id': 'development', 'robot_id': 'carter1',\n    'side': 'front', 'prim_path': '/World/Carter1/chassis_link/lidar_front',\n    'topic': '/carter1/scan_front_raw', 'frame_id': 'front_scan',\n    'actual_profile_sha256': 'b230724299cdfe84795d1c46bb3aebdce0452705025a228977bc7aec3c571b64',\n}\ntracker = FlatScanObservationTracker(identity, .05, 30.)\nrow = tracker.observe(\n    {'timeStamp': .3, 'numCols': 2, 'numRows': 1, 'linearDepthData': [.1, 2.]},\n    read_at_sim_time_s=.35, read_at_physics_frame=21, timeline_playing=True, phase='periodic',\n)\n# row['status'] == 'new'; row['unique_observation_index'] == 1\n# json.dumps(row, allow_nan=False) is supported.\n",
+    "sdk_wrapper_contract": "root가 실제 product에 annotator attach/read/detach를 수행하고 depth를 flatten한 뒤 이 함수를 호출한다. tracker는 이 연결이나 실제 sensor source identity를 SDK로 검증하지 않는다.",
+    "persistence_contract": "root lifecycle이 row를 별도 local45 journal에 저장한다. tracker에는 파일 IO나 SDK lifecycle 동작이 없다."
+  },
+  "validation": [
+    {
+      "command": "$env:PYTHONDONTWRITEBYTECODE='1'; .venv/Scripts/python.exe -B -m unittest discover -s tests -p test_flat_scan_observation.py -v",
+      "result": "PASS",
+      "exit_code": 0,
+      "tests": 12,
+      "duration_s": 0.006,
+      "scope": "first/increasing/duplicate/read-clock-only/regression; zero/missing/nonfinite/empty; finite/positive/in-range 통계 및JSONsafe; scalar 정규화/one-pass generator; dimensions mismatch; malformed/실패 iterator 복구; identity copy/collision; constructor/reader validation; future stamp offset; SDK-free cold import."
+    },
+    {
+      "command": "uvx --offline pyright factory_ops/flat_scan_observation.py tests/test_flat_scan_observation.py",
+      "result": "PASS",
+      "exit_code": 0,
+      "errors": 0,
+      "warnings": 0,
+      "informations": 0
+    },
+    {
+      "command": "지정 두 파일 ast.parse(feature_version=(3,10)) 및 메모리 compile",
+      "result": "PASS",
+      "scope": "Python3.10 문법 확인. 실제 SDK/Python3.10 실행 아님."
+    },
+    {
+      "command": "pure CPU API 예제/3200 range generator의 new→duplicate→regressed→new 및 JSON allow_nan=False 직렬화",
+      "result": "PASS",
+      "unique_indices": [
+        1,
+        1,
+        1,
+        2
+      ],
+      "raw_ranges_retained": false,
+      "scope": "제공한 입력에 대한 tracker 계약 확인. 센서 품질/실제 native scan 검증 아님."
+    }
+  ],
+  "verification_pass": {
+    "separate_from_writing": true,
+    "scope": "두 소유 파일의 타입/문법/상태 전이/원문 timestamp/JSON-safe 출력/identity 및 raw range 보존 부재를 별도 확인",
+    "independent_approval": false,
+    "root_review_required": true,
+    "initial_correction": "첫 Pyright에서 잘못된 timestamp 입력을 넣는 test helper의 추론 타입1건을 발견해 stamp:object로 명시했다. 최종0오류다."
+  },
+  "limits": [
+    "새3파일만 작성했다. isaac45_runtime.py/G2/capture/lifecycle/SDKwrapper/Kit/원장/보드/타작성자 제품은 편집하지 않았다.",
+    "SDK/numpy/rclpy/VM/GPU/ROS/새 에이전트/새 세션/패키지 설치/Git 변경/외부전송 없음. 기존 전체 검사도 반복하지 않았다.",
+    "NumPy를 테스트에서 import하지 않았다. stdlib scalar subclass와 ABC 기반 정규화를 확인했으며 실제 NumPy payload/SDK observer 연결 검증은 root 소유다.",
+    "identity는 caller가 제공하는 고정 라벨이다. 실제 ROS publisher/prim/profile bytes와의 결속, 센서 polling cadence, 파일저장/cleanup은 root wrapper/lifecycle 소유다.",
+    "finite/positive/in-range 통계는 품질 gate가 아니다. 모든 depth가 invalid여도 nonempty buffer와 증가한 유효 native timestamp/dimensions가 맞으면 새 관측으로 센다. 품질flag는false이며 유효 scan으로 인증하지 않는다.",
+    "최대 stamp 뒤에 잘못된/회귀/크기불일치 관측이 와도 state를 바꾸지 않는다. 같은 stamp의 수정된 정상 buffer는 아직 소비되지 않았다면 수용할 수 있다.",
+    "raw negative/nonfinite timestamp는 None과 invalid reason으로 남기고 zero/missing은 None과 warmup reason으로 남긴다. 유효 native timestamp 자체는 보정/반올림하지 않는다.",
+    "이 pure tracker는 시간 정렬, angular coverage, 거리 정확도, Nav2/lease/운송/물리 적재/충전 및6.2 qualification 성공을 주장하지 않는다.",
+    "최신 두 소스 SHA를 동결해 root 검수에 제출한다. 기존006 frozen source/원본 증거는 건드리지 않는다."
+  ],
+  "processes": {
+    "started_long_lived": [],
+    "pid": null,
+    "stop_command": null
+  },
+  "pending_work": [],
+  "source_sha256": {
+    "factory_ops/flat_scan_observation.py": "1bc83dc0282e6e18faee81d566f09c9611c6a618caec64a8e0ef6e910cba5bbd",
+    "tests/test_flat_scan_observation.py": "91c47c117c2c9540a33ffc35f9397529a17fc024028f923422f9511ab2002d02"
+  },
+  "final_api_smoke_evidence": {
+    "source_sha256": {
+      "factory_ops/flat_scan_observation.py": "1bc83dc0282e6e18faee81d566f09c9611c6a618caec64a8e0ef6e910cba5bbd",
+      "tests/test_flat_scan_observation.py": "91c47c117c2c9540a33ffc35f9397529a17fc024028f923422f9511ab2002d02"
+    },
+    "python310_parse_compile": "PASS",
+    "api_smoke": {
+      "statuses": [
+        "new",
+        "duplicate",
+        "regressed",
+        "new"
+      ],
+      "unique_indices": [
+        1,
+        1,
+        1,
+        2
+      ],
+      "first_statistics": {
+        "total_count": 3200,
+        "finite_count": 3200,
+        "positive_count": 3200,
+        "in_range_count": 3200,
+        "invalid_count": 0,
+        "complete": true
+      },
+      "serialized_first_bytes": 1205,
+      "raw_ranges_retained": false,
+      "all_rows_json_safe": true
+    },
+    "api_first_example": {
+      "run_id": "run029",
+      "scenario_id": "development",
+      "robot_id": "carter1",
+      "side": "front",
+      "prim_path": "/World/Carter1/chassis_link/lidar_front",
+      "topic": "/carter1/scan_front_raw",
+      "frame_id": "front_scan",
+      "actual_profile_sha256": "b230724299cdfe84795d1c46bb3aebdce0452705025a228977bc7aec3c571b64",
+      "schema_name": "local45-flat-scan-observation",
+      "schema_version": 1,
+      "annotator": "RtxSensorCpuIsaacComputeRTXLidarFlatScanSimulationTime",
+      "journal_event_sequence": 1,
+      "unique_observation_index": 1,
+      "is_new_observation": true,
+      "sensor_timestamp_s": 0.3,
+      "native_timestamp_type": "float",
+      "max_sensor_timestamp_s": 0.3,
+      "read_at_sim_time_s": 0.35,
+      "read_at_physics_frame": 21,
+      "timeline_playing": true,
+      "phase": "periodic",
+      "read_minus_sensor_time_s": 0.04999999999999999,
+      "numCols": 3200,
+      "numRows": 1,
+      "dimensions_match": true,
+      "range_min_m": 0.05,
+      "range_max_m": 30,
+      "range_statistics": {
+        "total_count": 3200,
+        "finite_count": 3200,
+        "positive_count": 3200,
+        "in_range_count": 3200,
+        "invalid_count": 0,
+        "complete": true
+      },
+      "clock_alignment_verified": false,
+      "sensor_quality_qualification_verified": false,
+      "status": "new",
+      "reason": "native_timestamp_advanced",
+      "reasons": [
+        "native_timestamp_advanced"
+      ]
+    }
+  },
+  "completed_at_utc": "2026-10-19T23:12:32.9049145Z"
+}

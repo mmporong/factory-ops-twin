@@ -78,10 +78,13 @@ class Fleet4PreparationTests(unittest.TestCase):
             archive.extractall(self.source, filter="data")
 
     def cli(self, *, source: Path | None = None, prefix: list[str] | None = None,
-            stage: Path | None = None, run_id: str = RUN_ID) -> subprocess.CompletedProcess[str]:
+            stage: Path | None = None, run_id: str = RUN_ID,
+            runtime_profile: str | None = None) -> subprocess.CompletedProcess[str]:
         mounted = source or self.source
         args = [str(mounted / TOOL), "--stage", str(stage or self.stage), "--source-root", str(mounted),
                 "--run-id", run_id, "--source-commit", self.commit]
+        if runtime_profile is not None:
+            args.extend(["--runtime-profile", runtime_profile])
         return subprocess.run([sys.executable, *(prefix or []), *args], cwd=self.case,
                               capture_output=True, text=True, encoding="utf-8", timeout=120,
                               env={**os.environ, "PYTHONUTF8": "1"})
@@ -148,6 +151,22 @@ runpy.run_path(sys.argv[0],run_name='__main__')
                 result = self.assert_rejected(self.cli(prefix=["-c", shim.replace("VERSION", version)]))
                 self.assertIn("Python 3.12", result["error"])
                 self.assertNotIn("PROJECT_IMPORT_BEFORE_GUARD", result["error"])
+        self.assert_no_outputs()
+
+    def test_local45_profile_binds_its_worker_and_observer_to_the_archive(self) -> None:
+        reply = self.cli(runtime_profile="local45_development")
+        self.assertEqual(0, reply.returncode, reply.stdout + reply.stderr)
+        metadata = json.loads((self.stage / "results/run/provenance/fleet-source.json").read_text())
+        self.assertEqual("local45_development", metadata["runtime_profile"])
+        for name in ("scripts/isaac/local45_fleet4_transport_scene.py",
+                     "factory_ops/isaac45_runtime.py", "factory_ops/flat_scan_observation.py"):
+            self.assertEqual(_sha(self.source / name), metadata["source_files"][name])
+
+    def test_local45_source_change_rejects_before_preparing(self) -> None:
+        with (self.source / "factory_ops/flat_scan_observation.py").open("ab") as stream:
+            stream.write(b"\n# changed native observer\n")
+        result = self.assert_rejected(self.cli(runtime_profile="local45_development"))
+        self.assertIn("source archive proof failed", result["error"])
         self.assert_no_outputs()
 
     def test_mounted_source_change_is_rejected_before_preparing(self) -> None:

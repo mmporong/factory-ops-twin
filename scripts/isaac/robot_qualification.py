@@ -17,6 +17,7 @@ import traceback
 from typing import Any, Callable, NamedTuple
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+from factory_ops.compat import add_exception_note
 from factory_ops.footprint import qualify_footprint
 from factory_ops.layout import Layout
 from scripts.isaac import stage_smoke as base
@@ -72,6 +73,7 @@ class CaptureSession:
         SimulationManager: Any,
         save_rgb: Callable[[Any, Path], None],
         medium_camera: CameraSpec = DEFAULT_MEDIUM_CAMERA,
+        dome_light_factory: Callable[[], Any] | None = None,
     ) -> None:
         self.output = output
         self.app = app
@@ -88,7 +90,10 @@ class CaptureSession:
         self.closed = False
         try:
             self.rep.orchestrator.set_capture_on_play(False)
-            self.rep.functional.create.dome_light(intensity=800.0, parent="/World", name="G0bPersistentDomeLight")
+            if dome_light_factory is None:
+                self.rep.functional.create.dome_light(intensity=800.0, parent="/World", name="G0bPersistentDomeLight")
+            else:
+                dome_light_factory()
             medium = _camera(
                 stage, Gf, UsdGeom, medium_camera.path,
                 medium_camera.eye_xyz, medium_camera.target_xyz, base.RENDER_RESOLUTION,
@@ -99,7 +104,7 @@ class CaptureSession:
             try:
                 self.close()
             except BaseException as cleanup_error:
-                error.add_note(f"capture session setup cleanup failed: {cleanup_error}")
+                add_exception_note(error, f"capture session setup cleanup failed: {cleanup_error}")
             raise
 
     def _product(self, camera_path: str, size: tuple[int, int]) -> Any:
@@ -159,7 +164,7 @@ class CaptureSession:
             try:
                 self.close()
             except BaseException as cleanup_error:
-                error.add_note(f"factory overview setup cleanup failed: {cleanup_error}")
+                add_exception_note(error, f"factory overview setup cleanup failed: {cleanup_error}")
             raise
 
     def capture_checkpoint(self, name: str) -> dict[str, Any]:
@@ -221,7 +226,7 @@ class CaptureSession:
             try:
                 self.close()
             except BaseException as cleanup_error:
-                error.add_note(f"onboard setup cleanup failed: {cleanup_error}")
+                add_exception_note(error, f"onboard setup cleanup failed: {cleanup_error}")
             raise
 
     def close(self) -> None:

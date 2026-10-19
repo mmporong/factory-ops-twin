@@ -24,6 +24,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--output", required=True, type=Path)
     parser.add_argument("--run-id", required=True)
     parser.add_argument("--dashboard", action="store_true", help="publish read-only web telemetry; no web control")
+    parser.add_argument("--runtime-profile", choices=("canonical62", "local45_development"),
+                        default="canonical62")
     args = parser.parse_args(argv)
     if re.fullmatch(r"[0-9a-f]{32}", args.run_id) is None:
         parser.error("run-id must be 32 lowercase hexadecimal characters")
