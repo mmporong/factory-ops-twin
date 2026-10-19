@@ -507,7 +507,7 @@ def _capture_frame(
             robot_id: {"position_xyz_m": pose[0], "orientation_wxyz": pose[1]}
             for robot_id, pose in before_poses.items()
         },
-        "source": "three persistent RGB annotators read while the timeline is paused; no interpolation",
+        "source": "three persistent RGB annotators read at one unchanged physics frame; no interpolation",
     }
 
 
@@ -579,6 +579,26 @@ def _capture_frame_with_extension(
     if primary_error is not None:
         raise primary_error
     assert captured is not None
+    return captured
+
+
+def _capture_with_timeline_policy(
+    timeline: Any, scene_extension: Any, capture: Callable[[], dict[str, Any]],
+) -> dict[str, Any]:
+    policy_hook = getattr(scene_extension, "capture_timeline_policy", None)
+    policy = policy_hook() if callable(policy_hook) else "pause_resume"
+    if policy == "pause_resume":
+        timeline.pause()
+        captured = capture()
+        timeline.play()
+        return captured
+    if policy != "preserve_playing":
+        raise base.SmokeError(f"unknown capture timeline policy: {policy}")
+    if not timeline.is_playing():
+        raise base.SmokeError("playing capture policy entered with a paused timeline")
+    captured = capture()
+    if not timeline.is_playing():
+        raise base.SmokeError("playing capture policy paused the timeline")
     return captured
 
 
@@ -831,6 +851,11 @@ def _run(
             runtime["node"], runtime["ros"] = node, ros
             robot_nodes.append(node)
         timeline = omni.timeline.get_timeline_interface()
+        lidar_hook = getattr(scene_extension, "register_lidar_sensors", None)
+        if callable(lidar_hook):
+            result["scene_extension"]["lidar_acquisition"] = lidar_hook(
+                lidar_sensors, lidar_metadata, timeline,
+            )
         rep.orchestrator.set_capture_on_play(True)
         timeline.play()
         for _ in range(int(config["warmup_steps"])):
@@ -1022,18 +1047,19 @@ def _run(
             if callable(extension_capture_due) and extension_capture_due():
                 capture_due = True
             if capture_due:
-                timeline.pause()
-                captured = _capture_frame_with_extension(
-                    output=output, session=session, second_rgb=second_rgb, robots=robots,
-                    SimulationManager=SimulationManager, np=np, Image=Image, index=len(frames),
-                    rep=rep, scene_extension=scene_extension,
+                captured = _capture_with_timeline_policy(
+                    timeline, scene_extension, lambda: _capture_frame_with_extension(
+                        output=output, session=cast(CaptureSession, session), second_rgb=second_rgb,
+                        robots=robots,
+                        SimulationManager=SimulationManager, np=np, Image=Image, index=len(frames),
+                        rep=rep, scene_extension=scene_extension,
+                    ),
                 )
                 capture_metadata_hook = getattr(scene_extension, "capture_metadata", None)
                 if callable(capture_metadata_hook):
                     captured["visual_state"] = capture_metadata_hook()
                 frames.append(captured)
                 _atomic_json(output / MEDIA_INDEX_FILE, {"schema_version": 1, "frames": frames})
-                timeline.play()
             if terminal_error is not None:
                 raise base.SmokeError(terminal_error)
             if settle_remaining == 0:

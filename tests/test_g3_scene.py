@@ -214,10 +214,13 @@ class BarrierLifecycleTests(unittest.TestCase):
         rep = SimpleNamespace(orchestrator=SimpleNamespace(
             step=Mock(side_effect=lambda **_kwargs: events.append(("step", "zero_delta")))
         ))
+        lifecycle.timeline = SimpleNamespace(is_playing=Mock(return_value=True))
         lifecycle.before_capture(rep)
         events.append(("read", "three_rgb_and_ground_truth"))
         lifecycle.after_capture()
-        rep.orchestrator.step.assert_called_once_with(delta_time=0.0, rt_subframes=4)
+        rep.orchestrator.step.assert_called_once_with(
+            delta_time=0.0, rt_subframes=4, pause_timeline=False,
+        )
         self.assertEqual(events, [
             ("step", "zero_delta"), ("read", "three_rgb_and_ground_truth"),
         ])
@@ -253,12 +256,106 @@ class BarrierLifecycleTests(unittest.TestCase):
         lifecycle.register_rgb_render_products(dict(zip(
             ("portfolio_overview", "carter1_follow", "carter2_follow"), products,
         )))
+        lifecycle.timeline = SimpleNamespace(is_playing=Mock(return_value=True))
         rep = SimpleNamespace(orchestrator=SimpleNamespace(step=Mock(side_effect=RuntimeError("flush failed"))))
         with self.assertRaisesRegex(RuntimeError, "flush failed"):
             lifecycle.before_capture(rep)
         self.assertEqual(lifecycle.rgb_render_state, "enabled")
         lifecycle.cleanup_render_products()
         self.assertEqual(lifecycle.rgb_render_state, "closed")
+
+    def test_rgb_capture_rejects_paused_entry_and_implicit_pause(self) -> None:
+        lifecycle = self.lifecycle()
+        lifecycle.rgb_render_state = "enabled"
+        rep = SimpleNamespace(orchestrator=SimpleNamespace(step=Mock()))
+        lifecycle.timeline = SimpleNamespace(is_playing=Mock(return_value=False))
+        with self.assertRaisesRegex(RuntimeError, "not active before capture"):
+            lifecycle.before_capture(rep)
+        rep.orchestrator.step.assert_not_called()
+
+        lifecycle.timeline = SimpleNamespace(is_playing=Mock(side_effect=[True, False]))
+        with self.assertRaisesRegex(RuntimeError, "paused the timeline"):
+            lifecycle.before_capture(rep)
+        rep.orchestrator.step.assert_called_once_with(
+            delta_time=0.0, rt_subframes=4, pause_timeline=False,
+        )
+
+    def test_lidar_acquisition_records_four_headers_warmup_errors_and_capture_phases(self) -> None:
+        lifecycle = self.lifecycle()
+        timeline = SimpleNamespace(is_playing=Mock(return_value=True))
+
+        class Sensor:
+            def __init__(self, data=None, *, has_data=False, error=None) -> None:
+                self.data = data
+                self.available = has_data
+                self.error = error
+                self.attach_annotators = Mock()
+
+            def has_data(self):
+                return self.available
+
+            def get_data(self, annotator):
+                self.requested = annotator
+                if self.error is not None:
+                    raise self.error
+                return self.data, {"source": "fake", "large_payload": object()}
+
+        sensors = [
+            Sensor(), Sensor(SimpleNamespace(frame=11), has_data=False),
+            Sensor(error=RuntimeError("bounded read failure")),
+            Sensor(SimpleNamespace(frame=13), has_data=True),
+        ]
+        metadata = [
+            {"robot_id": robot, "name": side,
+             "prim_path": f"/World/{robot}/chassis_link/lidar_{side}"}
+            for robot in ("carter1", "carter2") for side in ("front", "rear")
+        ]
+        with patch.object(
+            BarrierLifecycle, "_read_lidar_output_buffer_setting",
+            return_value={"status": "observed", "value": False},
+        ), patch(
+            "scripts.isaac.g3_scene._parse_gmo_header",
+            side_effect=lambda data: {
+                "frame_id": data.frame, "timestamp_ns": data.frame * 1000,
+                "num_elements": data.frame + 1,
+            },
+        ):
+            registration = lifecycle.register_lidar_sensors(sensors, metadata, timeline)
+            lifecycle.step(1.0, 60)
+            lifecycle.step(1.5, 90)
+            lifecycle.step(2.0, 120)
+            lifecycle.capture_breadcrumb({
+                "capture_index": 0, "physics_frame": 120, "sim_time_s": 2.0,
+                "phase": "zero_delta_flush_start",
+            })
+            lifecycle.capture_breadcrumb({
+                "capture_index": 0, "physics_frame": 120, "sim_time_s": 2.0,
+                "phase": "capture_finalize_complete",
+            })
+
+        self.assertEqual(registration["sensor_count"], 4)
+        self.assertEqual(registration["output_buffer_on_gpu"], {"status": "observed", "value": False})
+        for sensor in sensors:
+            sensor.attach_annotators.assert_called_once_with("generic-model-output")
+            self.assertEqual(sensor.requested, "generic-model-output")
+        rows = [json.loads(line) for line in
+                (self.output / "lidar-acquisition-events.jsonl").read_text(encoding="utf-8").splitlines()]
+        self.assertEqual(len(rows), 16)
+        self.assertEqual({(row["robot_id"], row["side"], row["prim_path"]) for row in rows}, {
+            (item["robot_id"], item["name"], item["prim_path"]) for item in metadata
+        })
+        self.assertEqual([row["phase"] for row in rows[::4]], [
+            "periodic_1hz", "periodic_1hz", "capture_pre", "capture_post",
+        ])
+        self.assertTrue(all(row["timeline_playing"] for row in rows))
+        self.assertEqual(rows[0]["status"], "warmup_none")
+        self.assertFalse(rows[1]["has_data"])
+        self.assertEqual(rows[1]["status"], "gmo_header")
+        self.assertEqual(set(rows[1]["gmo"]), {"frame_id", "timestamp_ns", "num_elements"})
+        self.assertNotIn("data", rows[1])
+        self.assertEqual(rows[2]["status"], "error")
+        self.assertIn("bounded read failure", rows[2]["error"])
+        self.assertLessEqual(len(rows[2]["error"]), 240)
 
     def test_render_breadcrumb_journal_is_new_append_only_and_sequenced(self) -> None:
         lifecycle = self.lifecycle()

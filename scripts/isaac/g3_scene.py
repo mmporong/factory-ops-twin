@@ -11,7 +11,7 @@ import os
 from pathlib import Path, PurePosixPath
 import re
 import sys
-from typing import Any, Mapping
+from typing import Any, Mapping, Sequence
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from factory_ops.g3_session import config_dir_from_session, verify_session
@@ -19,6 +19,17 @@ from factory_ops.g3_build_attestation import PRESERVED_BUILD_FILES
 from factory_ops.source_provenance import verify_source_archive
 from scripts.isaac import g2_scene
 from scripts.isaac.factory_visuals import FactoryVisualRuntime
+
+
+def _parse_gmo_header(data: Any) -> dict[str, int]:
+    from isaacsim.sensors.experimental.rtx import parse_generic_model_output_data
+
+    gmo = parse_generic_model_output_data(data)
+    return {
+        "frame_id": int(gmo.frameId),
+        "timestamp_ns": int(gmo.timestampNs),
+        "num_elements": int(gmo.numElements),
+    }
 
 
 class BarrierLifecycle:
@@ -49,6 +60,12 @@ class BarrierLifecycle:
         self.rgb_render_state = "unregistered"
         self.render_breadcrumb_sequence = 0
         self.render_breadcrumb_opened = False
+        self.timeline: Any = None
+        self.lidar_diagnostics: list[tuple[Any, dict[str, Any], str, str | None]] = []
+        self.lidar_event_sequence = 0
+        self.lidar_journal_opened = False
+        self.last_periodic_lidar_time_ns: int | None = None
+        self.lidar_output_buffer_setting: dict[str, Any] = {"status": "not_read"}
 
     def _load_real_time_media_profile(self) -> dict[str, Any] | None:
         config_path = self.session_root / "config.json"
@@ -302,13 +319,103 @@ class BarrierLifecycle:
             "lifecycle": "persistent render products; no per-capture Hydra update toggles",
         }
 
+    @staticmethod
+    def _read_lidar_output_buffer_setting() -> dict[str, Any]:
+        try:
+            import carb.settings
+
+            value = carb.settings.get_settings().get("/app/sensors/nv/lidar/outputBufferOnGPU")
+            return {"status": "observed", "value": value if isinstance(value, bool) else None}
+        except BaseException as error:
+            return {"status": "unavailable", "error": f"{type(error).__name__}: {error}"[:240]}
+
+    def register_lidar_sensors(
+        self, sensors: Sequence[Any], metadata: Sequence[Mapping[str, Any]], timeline: Any,
+    ) -> dict[str, Any]:
+        if len(sensors) != 4 or len(metadata) != 4:
+            raise ValueError("G3 lidar diagnostics require exactly four sensors")
+        identities = {(item.get("robot_id"), item.get("name"), item.get("prim_path")) for item in metadata}
+        if len(identities) != 4 or {item[0] for item in identities} != {"carter1", "carter2"} \
+                or {item[1] for item in identities} != {"front", "rear"} \
+                or any(not isinstance(item[2], str) or not item[2] for item in identities):
+            raise ValueError("G3 lidar diagnostic identities differ")
+        if self.lidar_diagnostics:
+            raise RuntimeError("G3 lidar diagnostics were already registered")
+        self.timeline = timeline
+        self.lidar_output_buffer_setting = self._read_lidar_output_buffer_setting()
+        registrations = []
+        for sensor, source in zip(sensors, metadata, strict=True):
+            status, error = "attached", None
+            try:
+                sensor.attach_annotators("generic-model-output")
+            except BaseException as failure:
+                status = "attach_error"
+                error = f"{type(failure).__name__}: {failure}"[:240]
+            record = {
+                "robot_id": str(source["robot_id"]), "side": str(source["name"]),
+                "prim_path": str(source["prim_path"]), "status": status,
+            }
+            if error is not None:
+                record["error"] = error
+            registrations.append(record)
+            self.lidar_diagnostics.append((sensor, record, status, error))
+        return {
+            "annotator": "generic-model-output", "sensor_count": 4,
+            "registrations": registrations,
+            "output_buffer_on_gpu": self.lidar_output_buffer_setting,
+        }
+
+    def _record_lidar_acquisition(self, phase: str, sim_time_s: float, physics_frame: int) -> None:
+        if not self.lidar_diagnostics:
+            return
+        assert self.output is not None
+        path = self.output / "lidar-acquisition-events.jsonl"
+        if not self.lidar_journal_opened:
+            if path.exists() or path.is_symlink():
+                raise ValueError("G3 lidar acquisition journal must be new")
+            self.lidar_journal_opened = True
+        timeline_playing = bool(self.timeline is not None and self.timeline.is_playing())
+        for sensor, identity, registration_status, registration_error in self.lidar_diagnostics:
+            row: dict[str, Any] = {
+                "schema_version": 1, "sequence": self.lidar_event_sequence,
+                "run_id": self.run_id, "scenario_id": self.session["scenario_id"],
+                "robot_id": identity["robot_id"], "side": identity["side"],
+                "prim_path": identity["prim_path"], "sim_time_s": float(sim_time_s),
+                "physics_frame": int(physics_frame), "timeline_playing": timeline_playing,
+                "phase": phase, "annotator": "generic-model-output",
+                "registration_status": registration_status,
+                "output_buffer_on_gpu": self.lidar_output_buffer_setting,
+            }
+            if registration_error is not None:
+                row.update(status="error", error=registration_error)
+            else:
+                try:
+                    row["has_data"] = bool(sensor.has_data())
+                    data, info = sensor.get_data("generic-model-output")
+                    row["info_keys"] = sorted(str(key) for key in info) if isinstance(info, Mapping) else []
+                    if data is None:
+                        row["status"] = "warmup_none"
+                    else:
+                        row.update(status="gmo_header", gmo=_parse_gmo_header(data))
+                except BaseException as error:
+                    row.update(status="error", error=f"{type(error).__name__}: {error}"[:240])
+            g2_scene._append_jsonl(path, row)
+            self.lidar_event_sequence += 1
+
+    @staticmethod
+    def capture_timeline_policy() -> str:
+        return "preserve_playing"
+
     def before_capture(self, rep: Any) -> None:
-        if self.rgb_render_state != "enabled":
+        if self.rgb_render_state != "enabled" or self.timeline is None or not self.timeline.is_playing():
             raise RuntimeError("G3 RGB render products are not active before capture")
-        rep.orchestrator.step(delta_time=0.0, rt_subframes=4)
+        rep.orchestrator.step(delta_time=0.0, rt_subframes=4, pause_timeline=False)
+        if not self.timeline.is_playing():
+            raise RuntimeError("G3 zero-delta render step paused the timeline")
 
     def after_capture(self) -> None:
-        if self.rgb_render_state != "enabled":
+        if (self.rgb_render_state != "enabled" or self.timeline is None
+                or not self.timeline.is_playing()):
             raise RuntimeError("G3 RGB render products are not active after capture")
 
     def cleanup_render_products(self) -> None:
@@ -337,6 +444,14 @@ class BarrierLifecycle:
         }
         if event["phase"] not in phases:
             raise ValueError("G3 render breadcrumb phase is invalid")
+        if event["phase"] == "zero_delta_flush_start":
+            self._record_lidar_acquisition(
+                "capture_pre", float(event["sim_time_s"]), int(event["physics_frame"]),
+            )
+        elif event["phase"] == "capture_finalize_complete":
+            self._record_lidar_acquisition(
+                "capture_post", float(event["sim_time_s"]), int(event["physics_frame"]),
+            )
         path = self.output / "render-capture-breadcrumbs.jsonl"
         if not self.render_breadcrumb_opened:
             if path.exists() or path.is_symlink():
@@ -391,6 +506,11 @@ class BarrierLifecycle:
         assert self.output is not None
         if self.visuals is not None:
             self.visuals.step(sim_time_s, physics_frame)
+        sim_time_ns = round(sim_time_s * 1_000_000_000)
+        if (self.lidar_diagnostics and (self.last_periodic_lidar_time_ns is None
+                or sim_time_ns - self.last_periodic_lidar_time_ns >= 1_000_000_000)):
+            self._record_lidar_acquisition("periodic_1hz", sim_time_s, physics_frame)
+            self.last_periodic_lidar_time_ns = sim_time_ns
         origin_path = self.output / "mission-start.json"
         if self.origin is None and origin_path.is_file():
             start = json.loads(origin_path.read_text(encoding="utf-8"))

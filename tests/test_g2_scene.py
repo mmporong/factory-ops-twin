@@ -15,6 +15,7 @@ from scripts.isaac.g2_scene import (
     _command_audit_snapshot,
     _control_decision,
     _capture_frame_with_extension,
+    _capture_with_timeline_policy,
     _create_robot,
     _load_inputs,
     _read_mission,
@@ -95,6 +96,34 @@ class G2SceneTests(unittest.TestCase):
             self.assertEqual(events, ["read_rgb_and_ground_truth"])
             self.assertEqual(capture.call_count, 2)
         self.assertIsNotNone(robot)
+
+    def test_capture_timeline_policy_preserves_g2_pause_and_g3_playing_state(self) -> None:
+        legacy = SimpleNamespace(pause=Mock(), play=Mock(), is_playing=Mock(return_value=False))
+        capture = Mock(return_value={"index": 1})
+        self.assertEqual(
+            _capture_with_timeline_policy(legacy, None, capture), {"index": 1},
+        )
+        legacy.pause.assert_called_once_with()
+        legacy.play.assert_called_once_with()
+
+        playing = SimpleNamespace(pause=Mock(), play=Mock(), is_playing=Mock(return_value=True))
+        extension = SimpleNamespace(capture_timeline_policy=lambda: "preserve_playing")
+        self.assertEqual(
+            _capture_with_timeline_policy(playing, extension, capture), {"index": 1},
+        )
+        playing.pause.assert_not_called()
+        playing.play.assert_not_called()
+        self.assertEqual(playing.is_playing.call_count, 2)
+
+        paused = SimpleNamespace(pause=Mock(), play=Mock(), is_playing=Mock(return_value=False))
+        with self.assertRaisesRegex(SmokeError, "entered with a paused timeline"):
+            _capture_with_timeline_policy(paused, extension, capture)
+
+        changed = SimpleNamespace(
+            pause=Mock(), play=Mock(), is_playing=Mock(side_effect=[True, False]),
+        )
+        with self.assertRaisesRegex(SmokeError, "paused the timeline"):
+            _capture_with_timeline_policy(changed, extension, capture)
 
     def test_capture_extension_finalizes_after_read_failure_and_rejects_state_change(self) -> None:
         manager, robots, _robot = self._capture_fixture()
