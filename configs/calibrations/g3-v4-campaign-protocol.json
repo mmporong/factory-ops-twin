@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "classification": "g3_factory_v4_campaign_protocol",
-  "protocol_id": "factory-v4-amr-0c594de",
+  "protocol_id": "factory-v4-amr-3a51132",
   "status": "planned_not_executed",
-  "producer_source_commit": "0c594dece226e1e3063782fee36594d37de357f7",
+  "producer_source_commit": "3a51132b86aa444ab004b780d8eb53ac83f86a06",
   "experiment_config_path": "configs/factory-v4/g3-experiment.json",
   "experiment_config_sha256": "98d03a57cd1d99b53875214e099698514672a02b9f6036f381b17a2f58eea074"
 }
