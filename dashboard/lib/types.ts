@@ -15,6 +15,10 @@ export type Robot = {
   waiting_reason: string | null;
   route: { x_m: number; y_m: number }[];
   observed_sim_time_s: number | null;
+  pose_source?: string;
+  scan_counts?: Record<string, number>;
+  odom_count?: number;
+  navigation_phase?: string;
 };
 export type Task = {
   id: string;

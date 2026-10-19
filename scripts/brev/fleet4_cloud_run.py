@@ -29,7 +29,7 @@ NAV_IMAGE = "sha256:47bc5bc84a911b757883c115d2eb0f9a1e616dc8ba2236d45f3968773387
 BUILD = REMOTE_ROOT + "/build-attestations/g3-q-normal-fifo-028/build-attestation.json"
 BUILD_SHA = "609e2be20d613d830ffddb3b75ebe96bedc8fd2938c209c41a5011689a498da7"
 GIB = 1024 ** 3
-RUN_WINDOW_S = 12000
+RUN_WINDOW_S = 10800
 PRESERVATION_RESERVE_S = 2400
 STOP_RESERVE_S = 300
 
@@ -258,10 +258,27 @@ def main() -> int:
         if "STOPPED" not in state():
             raise RuntimeError("start requires the existing environment to be stopped")
         compute_requested = True
-        command(BREV + ["start", "--detached", INSTANCE], timeout=remaining_timeout(deadline, 90))
+        start_reply = command(BREV + ["start", INSTANCE], timeout=remaining_timeout(deadline, 90))
+        result["start_request"] = {"returncode": start_reply.returncode,
+            "output": (start_reply.stdout + start_reply.stderr).decode(errors="replace")[-2000:]}
+        write(record, result)
         print("EXISTING_L40S_START_REQUESTED", flush=True)
+        previous_boot_state = None
+        boot_query_failures = 0
         for _ in range(100):
-            row = state(timeout=remaining_timeout(deadline, 45, reserve_s=PRESERVATION_RESERVE_S))
+            try:
+                row = state(timeout=remaining_timeout(deadline, 45, reserve_s=PRESERVATION_RESERVE_S))
+                boot_query_failures = 0
+            except RuntimeError as error:
+                result.setdefault("boot_query_errors", []).append(str(error))
+                boot_query_failures += 1
+                if boot_query_failures >= 3:
+                    raise
+                time.sleep(2)
+                continue
+            if row != previous_boot_state:
+                print("BOOT_STATE", row.strip(), flush=True)
+                previous_boot_state = row
             if "RUNNING" in row and " READY " in row and "NOT READY" not in row:
                 break
             time.sleep(5)

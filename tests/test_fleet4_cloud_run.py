@@ -77,12 +77,15 @@ class CloudFailureCleanupTests(unittest.TestCase):
             def command(args, **kwargs):
                 if args[:2] == ["git", "archive"]:
                     Path(args[args.index("--output") + 1]).write_bytes(b"test source archive")
-                if args == caller.BREV + ["start", "--detached", caller.INSTANCE]:
+                if args == caller.BREV + ["start", caller.INSTANCE]:
                     flags["started"] = True
                 return subprocess.CompletedProcess(args, 0, b"raw commit fixture", b"")
 
             def state(**kwargs):
                 flags["state_calls"] += 1
+                if ((mode == "boot_transient" and flags["state_calls"] == 2)
+                        or (mode == "boot_failed" and 2 <= flags["state_calls"] <= 4)):
+                    raise RuntimeError("injected boot401 query failure")
                 if mode == "state_failure" and flags["state_calls"] == 3:
                     raise RuntimeError("transient ls failure")
                 return "STOPPED" if not flags["started"] or flags["stopped"] else "RUNNING READY "
@@ -167,6 +170,18 @@ class CloudFailureCleanupTests(unittest.TestCase):
         self.assertEqual(1, flags["tar"])
         self.assertFalse(result["preserved"])
         self.assertGreaterEqual(stops, 1)
+
+    def test_one_transient_boot_query_recovers_but_repeated_failures_stop(self):
+        _, flags, result, stops = self.exercise("boot_transient")
+        self.assertEqual(1, len(result["boot_query_errors"]))
+        self.assertEqual(1, flags["tar"])
+        self.assertGreaterEqual(stops, 1)
+        self.assertEqual(0, result["start_request"]["returncode"])
+        _, flags, result, stops = self.exercise("boot_failed")
+        self.assertEqual(3, len(result["boot_query_errors"]))
+        self.assertEqual(0, flags["tar"])
+        self.assertGreaterEqual(stops, 1)
+        self.assertIn("actual_stopped_at_utc", result)
 
     def test_near_deadline_preserves_the_stop_window_instead_of_archiving(self):
         _, flags, result, stops = self.exercise("near_deadline")

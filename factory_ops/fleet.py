@@ -155,6 +155,7 @@ class FleetMission:
         self._journal: list[dict[str, Any]] = []
         self._result_fingerprints: dict[str, str] = {}
         self._receipts: dict[str, NavigationReceipt] = {}
+        self._committed_intents: dict[str, NavigationIntent] = {}
         self._release_due(0.0)
 
     @property
@@ -168,6 +169,10 @@ class FleetMission:
     @property
     def expected_order_count(self) -> int:
         return len(self._orders)
+
+    @property
+    def declared_orders(self) -> tuple[FleetOrder, ...]:
+        return self._orders
 
     @property
     def completed_order_count(self) -> int:
@@ -354,8 +359,15 @@ class FleetMission:
             applied.ledger_seq,
         )
         self._receipts[result.result_id] = receipt
+        self._committed_intents[result.result_id] = intent
         self._record("result_accepted", {**body, "receipt": receipt.to_dict()})
         return receipt
+
+    def owns_handoff(self, intent: NavigationIntent, receipt: NavigationReceipt) -> bool:
+        original = self._receipts.get(receipt.result_id)
+        return (original is not None and original.accepted
+                and self._committed_intents.get(receipt.result_id) == intent
+                and original.to_dict() == {**receipt.to_dict(), "duplicate": False})
 
     def fail(self, reason: str, *, sim_time: float, robot_id: str | None = None) -> None:
         """Fail-stop an external runtime error without inventing a result."""

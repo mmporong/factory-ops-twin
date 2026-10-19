@@ -1,0 +1,19 @@
+{
+  "capacity_wh": 600.0,
+  "idle_power_w": 45.0,
+  "translation_wh_per_m": 0.05,
+  "rotation_wh_per_rad": 0.015,
+  "loaded_factor": 1.35,
+  "charger_power_w": 600.0,
+  "charger_efficiency": 0.9,
+  "reserve_fraction": 0.15,
+  "max_observation_gap_s": 0.3,
+  "charging_stopped_linear_m_s": 0.02,
+  "charging_stopped_angular_rad_s": 0.02,
+  "provenance": {
+    "kind": "authored_virtual_model",
+    "status": "development candidate; not measured Carter or industrial-AMR battery specifications",
+    "inputs": "observed wheel odometry and separately confirmed dock contact",
+    "pending": "runtime identity binding, docking/charging state machine, ROS integration and actual scenario validation"
+  }
+}

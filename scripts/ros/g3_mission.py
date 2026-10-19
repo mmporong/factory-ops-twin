@@ -21,6 +21,7 @@ from uuid import UUID, uuid4
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from factory_ops.fleet import FleetMission, FleetOrder
+from factory_ops.material_flow import MaterialFlow
 from factory_ops.fleet_registry import FleetRegistry
 from factory_ops.callback_drain import CallbackDrain
 from factory_ops.fleet_execution import FOLLOW_PATH_NORMALIZATION, StoppedGate, make_chunk, normalize_follow_path_payload, qualify_computed_path, path_content_sha256, path_clock_ready, path_header_stamp_ns
@@ -534,7 +535,8 @@ def localization_payload(transform: Any, *, now_s: float, ttl_s: float) -> dict[
 
 
 def dashboard_state(snapshot: Mapping[str, Any], robots: Mapping[str, Any], *,
-                    sim_time_s: float, absolute_sim_time_s: float, pose_ttl_s: float) -> dict[str, Any]:
+                    sim_time_s: float, absolute_sim_time_s: float, pose_ttl_s: float,
+                    material: Mapping[str, Any] | None = None) -> dict[str, Any]:
     """Read-only web projection; localization, ledger and odometry retain their sources."""
     rows = []
     for key, logical in snapshot["robots"].items():
@@ -558,19 +560,33 @@ def dashboard_state(snapshot: Mapping[str, Any], robots: Mapping[str, Any], *,
             "waiting_reason": phase if phase not in ("idle", "following") else None,
             "route": [{"x_m": x, "y_m": y} for x, y in plan.points] if plan else [],
             "observed_sim_time_s": pose["stamp_s"] if pose else None,
-            "pose_source": "estimated map->base_link TF", "scan_counts": runtime.get("scan_counts", {})})
+            "pose_source": "estimated map->base_link TF", "scan_counts": runtime.get("scan_counts", {}),
+            "navigation_phase": phase, "odom_count": runtime.get("odom_count", 0)})
     tasks = [{"id": t["task_id"], "order_id": t["order_id"], "type": t["stage"], "state": t["status"],
               "robot_id": t.get("robot_id"), "source": t["pickup_station"], "destination": t["drop_station"],
               "payload_id": t["payload_id"], "progress": 1 if t["status"] == "complete" else None}
              for t in snapshot["tasks"].values()]
+    if material is not None:
+        if material["run_id"] != snapshot["run_id"]:
+            raise ValueError("material web projection differs from the mission run")
+        for row in rows:
+            intent = material["active_intents"].get(row["id"])
+            if intent:
+                row.update(task_id=intent["task_id"], task_type="empty_return", task_label="빈 토트 반납",
+                    payload_id=intent["payload_id"] if intent["transition"] == "drop" else None, destination=intent["station"])
+        tasks.extend({"id": t["task_id"], "order_id": t["order_id"], "type": "empty_return", "state": t["state"],
+            "robot_id": t["robot_id"], "source": t["source"], "destination": t["destination"],
+            "payload_id": t["tote_id"], "progress": 1 if t["state"] == "complete" else None} for t in material["empty_trips"])
     return {"schema_version": 1, "run_id": snapshot["run_id"], "revision": snapshot["ledger_seq"], "mode": "live",
             "sim_time_s": sim_time_s, "observed_at": datetime.now(timezone.utc).isoformat(),
             "connection": "connected", "paused": False, "capabilities": [], "robots": rows, "tasks": tasks,
-            "inventory": {"stock": [], "totes": [], "conservation": []},
+            "inventory": material["inventory"] if material is not None else {"stock": [], "totes": [], "conservation": []},
             "kpis": {"active_robots": sum(bool(r["task_id"]) for r in rows), "total_robots": len(rows),
                      "completed_orders": sum(o["state"] == "complete" for o in snapshot["orders"].values()),
-                     "pending_tasks": sum(t["state"] != "complete" for t in tasks), "stock_units": None},
-            "events": [], "commands": [], "model_scope": "read-only G3 ledger, estimated TF and encoder odometry; battery/SKU stock unavailable"}
+                     "pending_tasks": sum(t["state"] != "complete" for t in tasks),
+                     "stock_units": sum(t["on_hand"] for t in material["inventory"]["stock"]) if material is not None else None},
+            "events": [], "commands": [], "model_scope": "read-only navigation ledger, estimated TF and encoder odometry; "
+                + ("navigation-bound material accounting; payload contact and battery unverified" if material is not None else "battery/SKU stock unavailable")}
 
 
 class DashboardPublisher:
@@ -580,13 +596,13 @@ class DashboardPublisher:
         self.last_wall = -math.inf
 
     def publish(self, snapshot: Mapping[str, Any], robots: Mapping[str, Any],
-                sim_time_s: float, absolute_sim_time_s: float) -> None:
+                sim_time_s: float, absolute_sim_time_s: float, *, material: Mapping[str, Any] | None = None) -> None:
         wall = time.monotonic()
         if not self.enabled or wall - self.last_wall < 0.5:
             return
         try:
             atomic_json(self.output / "dashboard-state.json", dashboard_state(snapshot, robots,
-                sim_time_s=sim_time_s, absolute_sim_time_s=absolute_sim_time_s, pose_ttl_s=self.pose_ttl_s))
+                sim_time_s=sim_time_s, absolute_sim_time_s=absolute_sim_time_s, pose_ttl_s=self.pose_ttl_s, material=material))
         except (OSError, ValueError, TypeError, KeyError) as error:
             # Presentation failure must not grant movement or disrupt the physical mission.
             self.on_error("dashboard_publication_failed", {"error": str(error)})
@@ -1310,6 +1326,8 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
              robot_stations=session["workload"]["initial_robots"], policy=session["policy"],
              ledger_config=LedgerConfig(input_capacity=load["ci_capacity"], output_capacity=load["co_capacity"], workers=load["workers"], service_time=load["service_time_s"]),
              station_goals=goals, goal_timeout_s=session["workload"]["horizon_s"], eta_speed=load["nominal_speed_m_s"], eta_dwell=load["dwell_s"], horizon=session["workload"]["horizon_s"])
+        material = (MaterialFlow(mission, session["workload"]["material_flow"])
+                    if development and "material_flow" in session["workload"] else None)
         journal("mission_started", {"origin_sim_time_s": origin, "workload_sha256": session["workload_sha256"],
                 "strategy": runtime_config["reservation_strategy"], "reservation_tracking_margin_m": runtime_config["reservation_tracking_margin_m"]})
         current_closed = session["condition"] == "closure"
@@ -1318,6 +1336,7 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
         dispatch_pair_fingerprints: dict[tuple[str, str], str] = {}
         visual_projection: dict[str, Any] | None = None
         visual_sequence = 0
+        material_revision = -1
         dashboard_publisher = DashboardPublisher(args.dashboard, output, runtime_config["pose_ttl_s"], journal)
         cutoff: dict[str, Any] | None = None
 
@@ -1635,15 +1654,39 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
                     pose = rt["pose"]
                     evidence = NavigationResult(str(uuid4()), rt["follow_uuid"], intent.task_id, intent.station, intent.attempt, 4, elapsed,
                         LocalizationPose("map", pose["x_m"], pose["y_m"], pose["yaw_rad"], pose["stamp_s"]-origin))
-                    receipt = mission.submit_result(robot, evidence, error_code=0)
-                    rt["record"].update({"handoff_sim_time_s": stamp, "receipt": receipt.to_dict(), "navigation_result": evidence.to_dict()})
-                    journal("handoff_commit", {"robot_id": robot, "intent": intent.to_dict(), "result": evidence.to_dict(), "receipt": receipt.to_dict(), "ledger_seq": mission.ledger.ledger_seq})
+                    auxiliary = material is not None and robot in material.active_intents
+                    if auxiliary:
+                        receipt_body = material.submit_result(args.run_id, robot, evidence, error_code=0)
+                    else:
+                        receipt = mission.submit_result(robot, evidence, error_code=0)
+                        if material is not None:
+                            material.business_handoff(intent, receipt)
+                        receipt_body = receipt.to_dict()
+                    rt["record"].update({"handoff_sim_time_s": stamp, "receipt": receipt_body, "navigation_result": evidence.to_dict()})
+                    journal("empty_handoff_commit" if auxiliary else "handoff_commit", {"robot_id": robot, "intent": intent.to_dict(), "result": evidence.to_dict(), "receipt": receipt_body, "ledger_seq": mission.ledger.ledger_seq})
                     rt["leg"] = None; rt["chunk"] = None; rt["phase"] = "idle"
                     if intent.transition is Transition.DROP:
                         new_leg(robot, rt["park"])
                 if rt["phase"] in {"compute_sent", "computing", "follow_sent", "following"} and stamp-rt["phase_started"] > runtime_config["chunk_timeout_s"]:
                     raise TimeoutError(f"G3 chunk action deadline: {robot}")
             eligible = [robot for robot, rt in robots.items() if rt["phase"] == "idle" and rt["leg"] is None]
+            idle_for_intents = list(eligible)
+            if material is not None and cutoff is None:
+                material.advance()
+                if elapsed >= horizon and not material.completed:
+                    raise TimeoutError("material and empty-return development horizon reached")
+                earliest_product = min((task.ready_time for task in mission.ledger.ready_tasks), default=math.inf)
+                earliest_empty = min((job.ready_time_s for job in material.jobs.values() if job.state == "ready"), default=math.inf)
+                if earliest_empty <= earliest_product:
+                    current_reservations = manager.snapshot(now_s=stamp)
+                    def empty_cost(robot: str, job: Any) -> float | None:
+                        assessment = assess_dispatch_route_compatibility(book, robot_id=robot, task_id=job.task_id,
+                            current_anchor=robots[robot]["anchor"], pickup_station=job.source, drop_station=job.destination,
+                            closed=current_closed, reservation_radius_m=reservation_radius, reservation_snapshot=current_reservations)
+                        return assessment.pickup_distance_m if assessment.compatible else None
+                    for intent in material.dispatch(eligible, sim_time_s=elapsed, cost=empty_cost):
+                        journal("empty_trip_dispatched", {"robot_id": intent.robot_id, "intent": intent.to_dict()})
+                eligible = [robot for robot in eligible if robot not in material.active_intents]
             if cutoff is None and not mission.completed:
                 route_snapshot = manager.snapshot(now_s=stamp)
                 assessments = {}
@@ -1695,12 +1738,16 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
                         "policy": session["policy"],
                         "mission_goal_uuid": intent.goal_id,
                     })
-            for robot in eligible if cutoff is None else ():
-                intent = mission.active_intents.get(robot)
+            for robot in idle_for_intents if cutoff is None else ():
+                intent = (material.active_intents.get(robot) if material is not None else None) or mission.active_intents.get(robot)
                 if intent is not None:
                     new_leg(robot, intent.station, intent)
             visual_snapshot = mission.ledger.snapshot()
-            dashboard_publisher.publish(visual_snapshot, robots, elapsed, stamp)
+            material_state = material.snapshot() if material is not None else None
+            dashboard_publisher.publish(visual_snapshot, robots, elapsed, stamp, material=material_state)
+            if material_state is not None and material_state["revision"] != material_revision:
+                atomic_json(output / "material-state.json", material_state)
+                material_revision = material_state["revision"]
             projected = project_ledger_state(visual_snapshot, visual_projection)
             if visual_projection is None or canonical_sha256(projected) != canonical_sha256(visual_projection):
                 visual_state = make_visual_state(
@@ -1718,7 +1765,7 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
             if mission.completed and completed_at is None:
                 completed_at = elapsed
                 journal("orders_completed", {"completed_orders": mission.completed_order_count, "elapsed_sim_s": completed_at})
-            if mission.completed and all(rt["phase"] == "idle" and rt["anchor"] == rt["park"] for rt in robots.values()):
+            if mission.completed and (material is None or material.completed) and all(rt["phase"] == "idle" and rt["anchor"] == rt["park"] for rt in robots.values()):
                 break
             if elapsed-last_progress >= 1:
                 atomic_json(output / "mission-progress.json", {"run_id": args.run_id, "scenario_id": scenario_id, "elapsed_sim_s": elapsed,
@@ -1777,6 +1824,8 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
             "scan_counts": {robot: rt["scan_counts"] for robot, rt in robots.items()}, "scan_epoch_ns": scan_epoch_ns,
             "odom_counts": {robot: rt["odom_count"] for robot, rt in robots.items()}, "bag_topics_requested": bag_topics,
             "planning_radius_m": book.planning_radius_m, "reservation_radius_m": reservation_radius})
+        if material is not None:
+            result["material_flow"] = material.snapshot()
         drain_routes()
         print(f"{mission_label}=PASS", flush=True)
     except BaseException as error:

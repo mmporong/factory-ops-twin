@@ -1,0 +1,203 @@
+{
+  "task": "fleet4-material-charge-review-013",
+  "attempt": 1,
+  "contract_revision": 12,
+  "ack": true,
+  "status": "한정 검토 완료·주요 결함 1건 반환",
+  "sha256_check": [
+    {
+      "path": "factory_ops/fleet.py",
+      "expected": "8b1729af93fff13fdaf02d772ddc5d468ddb7565166cc4eaf261d8d8343c5e5e",
+      "actual": "8b1729af93fff13fdaf02d772ddc5d468ddb7565166cc4eaf261d8d8343c5e5e",
+      "match": true
+    },
+    {
+      "path": "factory_ops/material_flow.py",
+      "expected": "3d7a3c3b3b1a289565e73970a66b5fa4ca97493bc60e883a81fef862e8ad5550",
+      "actual": "3d7a3c3b3b1a289565e73970a66b5fa4ca97493bc60e883a81fef862e8ad5550",
+      "match": true
+    },
+    {
+      "path": "factory_ops/fleet_transport.py",
+      "expected": "59c2f59d1fb5290239004d89a596a0ba4e4a74a84bef67c0b877549aeb4bbbb5",
+      "actual": "59c2f59d1fb5290239004d89a596a0ba4e4a74a84bef67c0b877549aeb4bbbb5",
+      "match": true
+    },
+    {
+      "path": "factory_ops/energy.py",
+      "expected": "89689894565e850ef3ef3242fceb636afcf14fc330b083a8080d372d4f6d3be1",
+      "actual": "89689894565e850ef3ef3242fceb636afcf14fc330b083a8080d372d4f6d3be1",
+      "match": true
+    },
+    {
+      "path": "factory_ops/charging.py",
+      "expected": "bd1edc3d0e4276f1d4238e1c4a57dfbf800311bf98503db587f1354a313c3a7b",
+      "actual": "bd1edc3d0e4276f1d4238e1c4a57dfbf800311bf98503db587f1354a313c3a7b",
+      "match": true
+    },
+    {
+      "path": "factory_ops/dashboard.py",
+      "expected": "60fab1758be2b6403f21e2b2fb048cb8afec06274544322b8983b9afaae0461f",
+      "actual": "60fab1758be2b6403f21e2b2fb048cb8afec06274544322b8983b9afaae0461f",
+      "match": true
+    },
+    {
+      "path": "scripts/ros/g3_mission.py",
+      "expected": "4f8d87bedd6d37e3b8597b7fdc5cef66b86fde436dcc7a6e0b2d9a938f044407",
+      "actual": "4f8d87bedd6d37e3b8597b7fdc5cef66b86fde436dcc7a6e0b2d9a938f044407",
+      "match": true
+    },
+    {
+      "path": "scripts/isaac/fleet4_transport_scene.py",
+      "expected": "35fbd915ed9897f05441775325854fc7dca8f97990d86d1274d0240f969f0c81",
+      "actual": "35fbd915ed9897f05441775325854fc7dca8f97990d86d1274d0240f969f0c81",
+      "match": true
+    },
+    {
+      "path": "configs/factory-fleet4/transport-profile.json",
+      "expected": "2c3d1dd445c779d202672bd4752099f9512baa32db6643ccde73a05050c97da6",
+      "actual": "2c3d1dd445c779d202672bd4752099f9512baa32db6643ccde73a05050c97da6",
+      "match": true
+    },
+    {
+      "path": "configs/factory-fleet4/energy-profile.json",
+      "expected": "aba4c049fee1479868de6fd11ea7a47284d20581599aa60ab32587fd39094964",
+      "actual": "aba4c049fee1479868de6fd11ea7a47284d20581599aa60ab32587fd39094964",
+      "match": true
+    },
+    {
+      "path": "tests/test_material_flow.py",
+      "expected": "cc0617d625c4c054fc921215c1c7c486f5b60eb81851a52a542596cef252abd0",
+      "actual": "cc0617d625c4c054fc921215c1c7c486f5b60eb81851a52a542596cef252abd0",
+      "match": true
+    },
+    {
+      "path": "tests/test_energy_charging.py",
+      "expected": "f0777ccb530bdaea0e70c356c4ab89ef556e45a0a08f14c2b3465e2c58c70da1",
+      "actual": "f0777ccb530bdaea0e70c356c4ab89ef556e45a0a08f14c2b3465e2c58c70da1",
+      "match": true
+    },
+    {
+      "path": "tests/test_dashboard.py",
+      "expected": "c33064fd9d24111c2c4520194c215a0de7e50a3b3dc0721bddabe0aae9db2d17",
+      "actual": "c33064fd9d24111c2c4520194c215a0de7e50a3b3dc0721bddabe0aae9db2d17",
+      "match": true
+    }
+  ],
+  "accepted": true,
+  "acceptance_owner": "root",
+  "review_complete": true,
+  "implementation_verdict": "changes_requested",
+  "completed_at_utc": "2026-10-19T10:54:54.693028+00:00",
+  "sha256_recheck_all_match": true,
+  "findings": [
+    {
+      "id": "MC-013-001",
+      "severity": "major",
+      "title": "출차 대기 이후의 신선한 재접촉 관측을 처리하지 않아 슬롯 해제가 계속 허용됨",
+      "locations": [
+        {
+          "path": "factory_ops/charging.py",
+          "line": 83
+        },
+        {
+          "path": "factory_ops/charging.py",
+          "line": 95
+        },
+        {
+          "path": "factory_ops/charging.py",
+          "line": 112
+        }
+      ],
+      "observed": "정상 접촉 dwell과 SOC .8 뒤 .8s에 contact=False를 관측하면 ready_to_leave가 된다. 같은 run/slot의 1.0s contact=True는 phase 허용 목록에 ready_to_leave가 없어 ValueError로 거절되지만 state는 ready_to_leave로 남는다. 이후 release가 성공하고 r2가 같은 CH1을 예약한다.",
+      "expected": "같은 run/slot의 신선한 재접촉 증거가 들어오면 기존 출차 가능 판정을 유지해 슬롯을 해제해서는 안 된다.",
+      "impact": "가상 슬롯 gate가 최신 접촉 상태를 반영하지 못한다. 접촉 해제 증거 이후 새 접촉이 보고돼도 슬롯 반환·재배정이 허용된다. 물리 충전기나 실제 ROS 운행의 결함 재현으로 확대하지 않는다.",
+      "cause": "observe는 ready_to_leave 상태를 관측 가능 phase에서 제외하며 오류 전에 출차 상태를 취소하지 않는다. release는 phase 문자열만 확인하고 현재 접촉 증거를 다시 검사하지 않는다.",
+      "reproduction": {
+        "kind": "in-memory CPU probe; no product files or VM touched",
+        "python": "from factory_ops.charging import ChargingFleet\nc = ChargingFleet(\"review-run\", {\"CH1\": \"P1\"}, max_gap_s=.3, contact_dwell_s=.5,\n                  stopped_linear_m_s=.02, stopped_angular_rad_s=.02, resume_soc=.8)\nc.reserve(\"r1\", carrying_payload=False)\nc.arrived(\"r1\", run_id=\"review-run\", anchor=\"P1\", navigation_succeeded=True)\ndef observe(stamp, contact=True, soc=.2):\n    return c.observe(\"r1\", run_id=\"review-run\", dock_id=\"CH1\", stamp_s=stamp,\n                     contact=contact, linear_m_s=0., angular_rad_s=0., soc=soc)\nfor stamp in (0., .2, .4): observe(stamp)\nobserve(.6, soc=.8)\nassert observe(.8, contact=False, soc=.8)[\"phase\"] == \"ready_to_leave\"\ntry:\n    observe(1., contact=True, soc=.8)\nexcept ValueError as error:\n    assert str(error) == \"contact observation is outside docking lifecycle\"\nassert c.states[\"r1\"].phase == \"ready_to_leave\"\nc.release(\"r1\", run_id=\"review-run\")\nassert c.can_dispatch(\"r1\")\nassert c.reserve(\"r2\", carrying_payload=False) == \"CH1\"\n",
+        "actual_output": {
+          "ready": "ready_to_leave",
+          "recontact_error": "contact observation is outside docking lifecycle",
+          "phase_after_recontact": "ready_to_leave",
+          "released_after_recontact": true,
+          "second_robot_slot": "CH1"
+        }
+      },
+      "bounded_recommendation": "ready_to_leave 이후에도 소유자/run이 일치하는 새 관측을 반영해 재접촉·이동 시 출차 허용을 취소하고, 그 상태에서는 release가 거절되는지 회귀 검사한다."
+    }
+  ],
+  "coverage": [
+    {
+      "scope": "MaterialFlow committed receipt/robot/run binding and duplicate handling",
+      "method": "fleet.py:366-370 owns_handoff와 material_flow.py:58-86/139-169 대조; 기존 robot/receipt binding 및 foreign/wrong-pose 검사 실행",
+      "result": "이 범위에서 추가 주요 오류는 재현하지 못함"
+    },
+    {
+      "scope": "empty trips share Nav2 reservation/stop/dwell, product ownership and completion",
+      "method": "g3_mission.py:1343-1356,1443-1446,1586-1628,1652-1689,1731-1744,1768 및 material_flow.dispatch/submit_result 대조; 두 도착과 유한 재고 테스트 실행",
+      "result": "새 empty intent가 기존 business leg/reservation/stop/dwell로 진입하고 dispatch eligible에서 product/empty active 로봇을 제외한다. 최종 종료에 material.completed와 각 로봇 주차를 함께 요구한다. 실제 Nav2 실행은 검증하지 않음."
+    },
+    {
+      "scope": "EnergyFleet interval, reserve plus charger return and stale observations",
+      "method": "energy.py:49-104 대조; contact=False→True 첫 구간 무충전, True→True .2s 충전 및 stale 거절 probe",
+      "result": "확인 접촉 양끝 구간 .2s에서 .03Wh를 적립했고 stale observe는 원장을 바꾸지 않았으며 현재 .8s의 can_assign은 False. 할당 식에 outbound+charger_return 거리·대기·회전·reserve가 포함됨."
+    },
+    {
+      "scope": "ChargingFleet slot exclusivity, contact dwell and undock gates",
+      "method": "charging.py:53-120; 기존 슬롯 독점/적재 차량 금지 및 stale contact fault 검사; fresh recontact 재현",
+      "result": "기본 독점·stale fault 검사는 PASS. ready_to_leave 이후 재접촉 처리에서 MC-013-001 재현."
+    },
+    {
+      "scope": "web projection error isolation and unknown battery/contact evidence",
+      "method": "dashboard.py validate_snapshot 및 g3_mission.py:539-610 대조; wrong material run을 DashboardPublisher에 전달하는 CPU probe",
+      "result": "wrong material run은 dashboard_publication_failed로 격리되고 publisher가 비활성화됨. 출력 파일은 생성되지 않음. 배터리는 모든 차량에서 null/unavailable이며 contact/물리 payload는 검증됐다고 표시하지 않음."
+    },
+    {
+      "scope": "bundle/SDK input binding",
+      "method": "fleet_transport.py의 material_flow preflight 및 workload SHA 포함, fleet4_transport_scene.py SOURCE_PINS/prepare_worker_paths 대조",
+      "result": "material_flow 프로필과 새 원장 source pin이 입력·SDK 경계에 포함됨. bundle/SDK/VM 실행은 하지 않음."
+    }
+  ],
+  "validation": [
+    {
+      "command": ".venv/Scripts/python.exe -m unittest tests.test_material_flow.MaterialFlowTests.test_material_handoff_must_belong_to_this_mission_and_robot tests.test_material_flow.MaterialFlowTests.test_failed_foreign_or_wrong_pose_return_cannot_change_inventory tests.test_material_flow.MaterialFlowTests.test_products_consume_finite_stock_and_return_jobs_require_both_arrivals tests.test_energy_charging.ChargingTests.test_slot_is_exclusive_and_loaded_vehicle_is_not_diverted tests.test_energy_charging.ChargingTests.test_stale_contact_latches_fault_without_releasing_reserved_slot -v",
+      "environment": "PYTHONDONTWRITEBYTECODE=1",
+      "result": "5 tests PASS",
+      "exit_code": 0,
+      "seconds": 0.349
+    },
+    {
+      "command": "동일 .venv Python에서 메모리 내 CPU probe 3개 실행; 제품/원본 파일 쓰기 없음",
+      "result": "재접촉 뒤 release 허용 결함 재현; energy .03Wh/stale assignment 거절 및 web publication 격리·battery null 확인",
+      "exit_code": 0
+    },
+    {
+      "check": "시작·종료 SHA 대조",
+      "result": "지정 13개 모두 일치"
+    }
+  ],
+  "constraints": [
+    "검토는 카드 지정 13개 SHA와 다섯 경계로 한정했다. 전체 리뷰·전체 테스트·새 구조 설계는 수행하지 않았다.",
+    "지정 ROS/SDK 파일에는 EnergyFleet/ChargingFleet을 운송 dispatch에 연결하는 경로가 없다. 가상 에너지·충전 슬롯의 CPU 기능 검토이며 실제 배터리/접촉/충전·저SOC 재배차를 검증한 것이 아니다.",
+    "기존 테스트는 합성 논리 원장/가상 모델 검사다. 실제 4대 Nav2 운송·적재·충전 성공 근거로 사용하지 않는다.",
+    "Brev CLI401로 SDK 미시작, 실제 Stopped 2026-10-19T10:45:35Z는 사용자 전달 상태로만 기록했다. CLI/UI/VM/인증/약관에는 접근하지 않았다.",
+    "제품·Git·VM·보드·실행 중 bag·다른 작업 산출물은 변경하지 않았다. 신규 테스트/소스 파일을 작성하지 않고 본 receipt만 갱신했다.",
+    "검토자 별도 승인을 받은 것으로 표현하지 않으며 root가 결과 수용을 결정한다."
+  ],
+  "changed_paths": [
+    "coordination/collab/results/fleet4-material-charge-review-013.json"
+  ],
+  "product_edits": [],
+  "processes_started": [],
+  "new_agents": [],
+  "root_resolution": {
+    "MC-013-001": "resolved; ready_to_leave consumes fresh recontact/motion observations; release requires decision timestamp and fresh disengagement; original finding retained",
+    "verification": "14 energy/charging tests PASS; Pyright0errors",
+    "approval_scope": "root accepted the reviewed CPU slice after targeted correction; no second independent review or GPU approval claimed",
+    "changed_sha256": {
+      "factory_ops\\charging.py": "8a207ac2844a94f299f88d2f0bb5960b4cfcb927128d4b4b32e1288f59a5ffb5",
+      "tests\\test_energy_charging.py": "f21be2510fa1050cb7dbb31dc76e8f91427616b0c2fec01093541b2b3a747db1"
+    }
+  }
+}

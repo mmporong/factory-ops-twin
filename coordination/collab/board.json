@@ -1,5 +1,5 @@
 {
-  "revision": 10,
+  "revision": 12,
   "updated_at": "2026-10-19T10:10:15.770156+00:00",
   "scope": {
     "excluded": "실물 로봇 실행, 새 유료 서비스/에셋, 공개 배포",
@@ -303,8 +303,8 @@
       "attempt": 1,
       "contract_revision": 10,
       "owner": "control",
-      "status": "dispatched",
-      "ACK": false,
+      "status": "accepted",
+      "ACK": true,
       "task_path": "coordination/collab/fleet4-runtime-prepare-011-task.md",
       "write_paths": [
         "scripts/brev/fleet4_prepare.py",
@@ -312,7 +312,38 @@
       ],
       "result_path": "coordination/collab/results/fleet4-runtime-prepare-011.json",
       "reviewer": "root",
-      "acceptance": "Python3.12guard beforeprojectimport; realarchiveproof andnew bundle/provenance inCPUcontainer; noGPUclaim"
+      "acceptance": "Python3.12guard beforeprojectimport; realarchiveproof andnew bundle/provenance inCPUcontainer; noGPUclaim",
+      "acceptance_record": "root SHA matched,19 related tests PASS; committed411670c; actual next run pending"
+    },
+    {
+      "task_id": "fleet4-closed-evidence-012",
+      "attempt": 1,
+      "contract_revision": 11,
+      "owner": "control",
+      "status": "accepted",
+      "ACK": true,
+      "task_path": "coordination/collab/fleet4-closed-evidence-012-task.md",
+      "write_paths": [
+        "factory_ops/fleet_transport_evidence.py",
+        "tests/test_fleet_transport_evidence.py"
+      ],
+      "result_path": "coordination/collab/results/fleet4-closed-evidence-012.json",
+      "reviewer": "root",
+      "acceptance": "closed JSON source/worker/4participants/handoffs/parking/sensors/media; no fullQA/loading/charging claim",
+      "acceptance_record": "13 CPU fixture tests PASS; root strengthened4business participation with2 targeted tests; actual raw not available"
+    },
+    {
+      "task_id": "fleet4-material-charge-review-013",
+      "attempt": 1,
+      "contract_revision": 12,
+      "owner": "control",
+      "status": "accepted",
+      "ACK": true,
+      "task_path": "coordination/collab/fleet4-material-charge-review-013-task.json",
+      "result_path": "coordination/collab/results/fleet4-material-charge-review-013.json",
+      "reviewer": "control",
+      "acceptance": "one bounded behavioral review; concrete findings with reproduction; no GPU success claim",
+      "acceptance_record": "bounded review foundMC013001; root fixed fresh recontact/release and14tests/type0; no actual charge/transport claim"
     }
   ],
   "decisions": [

@@ -22,7 +22,9 @@ SOURCE_PINS = frozenset({"factory_ops/fleet_transport.py", "factory_ops/fleet_re
     "factory_ops/fleet_routing.py", "factory_ops/layout.py", "factory_ops/source_provenance.py",
     "scripts/isaac/fleet4_transport_scene.py", "scripts/isaac/g2_scene.py", "scripts/isaac/g3_scene.py",
     "scripts/isaac/factory_visuals.py", "scripts/ros/g2_mission.py", "scripts/ros/g3_mission.py",
-    "scripts/ros/fleet4_mission.py", "scripts/ros/fleet4.launch.py"})
+    "scripts/ros/fleet4_mission.py", "scripts/ros/fleet4.launch.py",
+    "factory_ops/fleet.py", "factory_ops/navigation.py", "factory_ops/material_flow.py",
+    "factory_ops/operations/inventory.py"})
 BOOTSTRAP_FILES = frozenset({"fleet-transport-verified.json", "provenance/source.tar",
                            "provenance/source-commit.raw", "provenance/fleet-source.json"})
 

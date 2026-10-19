@@ -46,5 +46,56 @@
     }
   ],
   "horizon_s": 1800.0,
-  "limits_provenance": "authored development workload; not calibrated production capacity or primary experiment"
+  "limits_provenance": "authored development workload; not calibrated production capacity or primary experiment",
+  "material_flow": {
+    "schema_version": 1,
+    "provenance": "authored finite-stock development workload; no payload mass/contact claim",
+    "initial_stock": [
+      {
+        "location": "S1",
+        "sku": "sensor-kit",
+        "quantity": 20
+      },
+      {
+        "location": "S2",
+        "sku": "sensor-kit",
+        "quantity": 20
+      },
+      {
+        "location": "S3",
+        "sku": "sensor-kit",
+        "quantity": 20
+      }
+    ],
+    "materials": [
+      {
+        "order_id": "F4-001",
+        "source": "S1",
+        "sku": "sensor-kit",
+        "quantity": 2,
+        "tote_id": "F4-TOTE-001"
+      },
+      {
+        "order_id": "F4-002",
+        "source": "S3",
+        "sku": "sensor-kit",
+        "quantity": 2,
+        "tote_id": "F4-TOTE-002"
+      },
+      {
+        "order_id": "F4-003",
+        "source": "S2",
+        "sku": "sensor-kit",
+        "quantity": 2,
+        "tote_id": "F4-TOTE-003"
+      },
+      {
+        "order_id": "F4-004",
+        "source": "S1",
+        "sku": "sensor-kit",
+        "quantity": 2,
+        "tote_id": "F4-TOTE-004"
+      }
+    ]
+  }
 }

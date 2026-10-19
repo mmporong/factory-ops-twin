@@ -1,0 +1,175 @@
+{
+  "task": "fleet4-closed-evidence-012",
+  "attempt": 1,
+  "contract_revision": 11,
+  "ack": true,
+  "status": "구현·한정 검증 완료; root 실제 종료 원본 검증·수용 대기",
+  "completed_at_utc": "2026-10-19T10:47:25.265822+00:00",
+  "accepted": true,
+  "acceptance_owner": "root",
+  "changed_paths": [
+    {
+      "path": "factory_ops/fleet_transport_evidence.py",
+      "sha256": "1b43d3608dc66a7cefa1cc63d9e073151093f6cdd1c42b8366b50408ebc8ddad"
+    },
+    {
+      "path": "tests/test_fleet_transport_evidence.py",
+      "sha256": "4ccab0ce52094d0c7ee51fa8c48b7b0bd72fcecbe83b20053eda07be5783d9a5"
+    }
+  ],
+  "receipt_path": "coordination/collab/results/fleet4-closed-evidence-012.json",
+  "record_format_baseline": {
+    "worktree": "C:\\Users\\LIMMM\\factory-ops-twin-gpu-fleet4-002",
+    "producer_commit": "411670cefb63a5f25e9668b0f5dc9774f9b0a78d",
+    "commit_authority": "사용자 전달값; 커밋 확인용 Git 명령은 실행하지 않았고 작업 전후 읽기 전용 status만 확인",
+    "references": [
+      {
+        "path": "C:\\Users\\LIMMM\\factory-ops-twin-gpu-fleet4-002\\scripts\\brev\\fleet4_cloud_run.py",
+        "sha256": "475681db74e14792a7c1f1f4f8c829596e6bf7cb6081fba5342ce277c9ea6e1f",
+        "lines": "129-187",
+        "basis": "closure-confirmation: passed/run_id/run_label/remaining_owned_containers/observed_at_utc; 실제 컨테이너 조회는 하지 않음"
+      },
+      {
+        "path": "C:\\Users\\LIMMM\\factory-ops-twin-gpu-fleet4-002\\scripts\\brev\\run-fleet4.sh",
+        "sha256": "e853d4d7f23c9212b915707f9da208623030873917eec37c4266ddfd5aa72916",
+        "lines": "35-54",
+        "basis": "runner-exit: run/source, nav/sim State, cleanup_errors/cleanup_passed, 원래·최종 exit code"
+      },
+      {
+        "path": "C:\\Users\\LIMMM\\factory-ops-twin-gpu-fleet4-002\\scripts\\brev\\fleet4_prepare.py",
+        "sha256": "2f5914a533ebd75fbd404b5dc0b268d16ebe4650457dd64fb1c3bee8d3169aa0",
+        "lines": "88-115",
+        "basis": "source.tar/source-commit.raw/fleet-source.json 원천 결속"
+      },
+      {
+        "path": "C:\\Users\\LIMMM\\factory-ops-twin-gpu-fleet4-002\\scripts\\isaac\\fleet4_transport_scene.py",
+        "sha256": "ec3208ea731d6615c0a7b8f2225e65199e88fc55b0422c54402dbd7272560657",
+        "lines": "20-74,82-93",
+        "basis": "필수 source pins, source archive proof, bundle extra_inputs"
+      },
+      {
+        "path": "C:\\Users\\LIMMM\\factory-ops-twin-gpu-fleet4-002\\scripts\\isaac\\g2_scene.py",
+        "sha256": "1cb0180867abacdedda9f3b880786ccd63734e678be3e58d6ef42e5878bb9534",
+        "lines": "476-514,687-696,1008-1039,1059-1110,1165-1171",
+        "basis": "trajectory/odometry/ground_truth; RGB index 0 시작과 세 source; SDK validated/worker_exit_requested와 final stamp/frame"
+      },
+      {
+        "path": "C:\\Users\\LIMMM\\factory-ops-twin-gpu-fleet4-002\\scripts\\isaac\\g3_scene.py",
+        "sha256": "739f0f9abb803b4fc200cf8ab00bee6e6bf2b4f0a9a9df04f09fea61991132fd",
+        "lines": "24-31,336-410",
+        "basis": "8개 센서 exact prim, attached, sequence 0 시작, warmup_none/gmo_header, GMO frame_id/timestamp_ns/num_elements"
+      },
+      {
+        "path": "C:\\Users\\LIMMM\\factory-ops-twin-gpu-fleet4-002\\scripts\\ros\\g3_mission.py",
+        "sha256": "cc443e42e0d5f655c97509eae851466b0c7fa3332eaad0cfe9941f164d5c9f4c",
+        "lines": "471-500,714-739,939-985,1240-1242,1443-1446,1531-1573,1635-1641,1744-1779,1799-1831",
+        "basis": "ROS 개발 scope/4대/input; 성공 FollowPath/정지 창/arrival; handoff receipt; terminal_recording/scan_counts; cleanup 정상 항목도 기록"
+      },
+      {
+        "path": "C:\\Users\\LIMMM\\factory-ops-twin-gpu-fleet4-002\\scripts\\ros\\g2_mission.py",
+        "sha256": "573a56746e9a0ce876a533b686b4de991923e6d3be3ef5ae74a059396f437be0",
+        "lines": "408-425",
+        "basis": "stop_process는 정상 정리 항목에도 label/pid/exit_code 기록; SIGINT -2를 일괄 실패로 판정하지 않음"
+      },
+      {
+        "path": "C:\\Users\\LIMMM\\factory-ops-twin-gpu-fleet4-002\\factory_ops\\fleet.py",
+        "sha256": "258ff25f31bcdb27dddba853db84069de4db16ccc0eb1dc46bc0e5fe688ee5b1",
+        "lines": "270-357,394-414",
+        "basis": "accepted receipt와 실제 navigation_journal/snapshot/export 형식"
+      },
+      {
+        "path": "C:\\Users\\LIMMM\\factory-ops-twin-gpu-fleet4-002\\factory_ops\\operations\\ledger.py",
+        "sha256": "e1c1e90772ff8f6a75828cb077a3b7edc9b121d1955fada29929a495773e1ce3",
+        "lines": "343-362,454-463",
+        "basis": "order complete/owner complete는 논리 출하 상태"
+      },
+      {
+        "path": "C:\\Users\\LIMMM\\factory-ops-twin-gpu-fleet4-002\\factory_ops\\fleet_execution.py",
+        "sha256": "7185119355989d6b082c56211a09a4f50ee0bdebbbf875caae036f2750aaabd6",
+        "lines": "275-365",
+        "basis": "기존 StoppedGate 재사용; 창/속도/시간 신선도 기준"
+      },
+      {
+        "path": "C:\\Users\\LIMMM\\factory-ops-twin-gpu-fleet4-002\\configs\\factory-fleet4\\g3-runtime.json",
+        "sha256": "0f2e98471db86b80b13de23b7dfb7d896dba99f6bda93d8d0df15483aa4c8181",
+        "lines": "13-18,44-56",
+        "basis": "XY .25m/yaw .25rad, 정지 .5s/.02m/s/.02rad/s, odom TTL .3s; 작성된 허용치이며 실측 도킹 오차 아님"
+      }
+    ],
+    "new_main_fields": "main의 재고/빈 토트 반납/에너지·충전/관측 projection 추가 필드는 012 검증 범위에 넣지 않음"
+  },
+  "implemented_checks": [
+    "정확한 run ID/label과 runner source, 두 worker 종료·exit0·cleanup 성공, 종료 이후의 closure, 남은 소유 컨테이너 없음",
+    "load_bundle 재사용, 입력 SHA와 ROS/SDK 생산자 핀 결속, verify_source_archive 재사용으로 raw commit/archive tree/config source pins 검증",
+    "SDK validated/worker_exit_requested 및 오류 부재, ROS/control passed와 정확한 4대 namespace/prim",
+    "SDK/ROS final stamp/frame 및 received_odometry_ns 결속, 4대 trajectory 개수·시간 진행·양의 sampled GT XY 이동·최종 속도·sealed frame 도달",
+    "각 로봇 성공 FollowPath·기존 StoppedGate의 연속 정지 창·설정된 XY/yaw arrival 허용치·최종 전용 주차",
+    "선언된 모든 주문의 pickup/drop accepted receipt와 action/navigation_journal 대조, inbound/outbound 완료 및 논리 출하",
+    "모든 LiDAR JSONL 행의 run/scenario/robot/side/정확 prim, 8센서의 양의 GMO 전진과 ROS raw/filtered/localization counts",
+    "0부터 시작하는 실제 RGB 인덱스 3개 source, 모든 PNG 파일 SHA/bytes/IHDR 치수와 최종 프레임 범위",
+    "새 외부 report만 배타적으로 작성; 원본 내부/기존 report/../ 경로 우회/링크 거절; JSON 중복 키와 비유한 상수 거절"
+  ],
+  "validation": [
+    {
+      "command": "$env:FACTORY_OPS_EVIDENCE_FIXTURE_SOURCE='C:/Users/LIMMM/factory-ops-twin-gpu-fleet4-002'; $env:PYTHONDONTWRITEBYTECODE='1'; .venv/Scripts/python.exe -m unittest tests.test_fleet_transport_evidence -v -f",
+      "result": "13 tests PASS",
+      "exit_code": 0,
+      "seconds": 106.426,
+      "scope": "동결002 source/config bytes 기반 합성 fixture, 기존 load_bundle/verify_source_archive/StoppedGate와 실제 main 함수 실행. Git CLI/SDK/ROS/SQL/RPC는 실행하지 않음"
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m unittest tests.test_fleet_transport_evidence.ClosedEvidenceTests.test_cli_creates_new_external_report_and_refuses_original_or_existing_path -v",
+      "environment": "FACTORY_OPS_EVIDENCE_FIXTURE_SOURCE=동결002; PYTHONDONTWRITEBYTECODE=1",
+      "result": "최종 경로 정규화 변경 후 CLI 한정 1 test PASS",
+      "exit_code": 0,
+      "seconds": 16.308
+    },
+    {
+      "command": "node C:/Users/LIMMM/AppData/Local/npm-cache/_npx/110e52990071af13/node_modules/pyright/dist/pyright.js --typeshedpath C:/Users/LIMMM/AppData/Local/npm-cache/_npx/110e52990071af13/node_modules/pyright/dist/typeshed-fallback --pythonpath .venv/Scripts/python.exe factory_ops/fleet_transport_evidence.py tests/test_fleet_transport_evidence.py",
+      "result": "0 errors, 0 warnings, 0 informations",
+      "exit_code": 0
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m factory_ops.fleet_transport_evidence --help",
+      "result": "요청된 CLI 인자 확인",
+      "exit_code": 0
+    },
+    {
+      "check": "원본 보존",
+      "result": "정상 fixture 전체 파일 SHA를 검증 전후 대조하여 동일; 기존 report 바이트 보존; report 원본 내부와 ../ 우회 거절"
+    },
+    {
+      "check": "음성 검사",
+      "result": "다른 run/source, closure 누락/과거/label, worker 실행·실패·cleanup 실패, 소스 archive/raw/metadata 변조, 차량 누락·미참여·무이동, FollowPath/정지/주차 오류, 주문·receipt 누락, LiDAR prim/진행/count 오류, 미디어 바이트/경로, terminal/truncated trajectory 거절"
+    }
+  ],
+  "verification_pass": "작성 후 별도 자체 검증 패스로 직렬화와 원본 경로 보호를 수정·재검증함. 독립 검수·root 수용으로 표시하지 않음.",
+  "resolved_during_validation": [
+    "첫 검사에서 report의 Path 직렬화 2 오류를 확인했고 문자열 변환 및 쓰기 전 직렬화 후 관련 13개 검사 재통과",
+    "추가 경로 검증 패스에서 ../를 정규화한 뒤 원본 포함 여부를 판정하도록 보완하고 CLI 한정 재통과"
+  ],
+  "scope": "four-AMR development JSON evidence; not full bag/action qualification, physical loading, charging or policy comparison",
+  "limitations": [
+    "실제 normal-002 종료 원본은 이 작업에서 열거나 검증하지 않음. 최신 사용자 전달 기준 SDK worker 시작 전·Brev CLI/UI Stopped이며 실제 상태 조회는 하지 않음.",
+    "fixture는 생산자 키를 따르는 합성 기록이다. source proof 양성 fixture도 source bytes와 유효 Git-format tar/raw object를 CPU에서 구성한 것이며 실제 운송/Git 실행 증거가 아니다.",
+    "closure의 freshness는 동일 run/label 및 runner 종료 이후 UTC로 판정한다. 새 VM 관측·암호학적 종료 증명·임의 TTL을 추가하지 않음.",
+    "stage 디렉터리 basename은 보존된 fleet4-transport-normal-NNN label과 같아야 함. report 부모 폴더는 기존 폴더여야 하며 report는 stage/bundle 외부의 새 경로여야 함.",
+    "이동에는 작성된 최소 이동거리 기준이 없어 양의 sampled GT XY 이동만 요구하며 거리를 보고한다. jitter 수준 분리·충돌·bag/action/TF 전체 QA는 수행하지 않음.",
+    "최종 주차는 기존 estimated arrival 허용치로 검사한다. GT 도킹 오차에 새 기준을 붙이지 않으며 물리 적재·충전·배터리·정책 비교 성공을 판정하지 않음.",
+    "RGB는 인덱스 결속 파일 bytes/hash와 PNG header를 검사하며 디코딩·화질·합성데이터 의미 검증은 수행하지 않음.",
+    "load_bundle가 내부 CPU 재생성 검사를 위해 임시 디렉터리를 사용한다. 검증 대상 원본에는 쓰지 않음."
+  ],
+  "processes_started": [],
+  "external_side_effects": [],
+  "ownership": "신규 모듈·테스트·본 receipt만 작성. root 제품/보드/UI/동결 worktree·원본은 변경하지 않음. commit/push/GPU/VM/새 에이전트 없음.",
+  "pending_work": "root가 실제 종료 원본과 expected run ID/source commit을 지정해 CLI를 실행하고 수용한다.",
+  "root_validation": {
+    "original": "13 producer-shaped fixture tests PASS; no actual transport data",
+    "strengthened_participation": "all4 accepted business handoffs required; fourth-only-parking rejected; 2 targeted tests PASS",
+    "scope": "transport JSON validator only; inventory/empty return, contact/charge and full bag QA excluded; actual raw validation pending",
+    "changed_sha256": {
+      "factory_ops/fleet_transport_evidence.py": "21ef5d57e850ed8e41975752c971c0aa76c8cbc80b979f5ec5f7eb516aed24ce",
+      "tests/test_fleet_transport_evidence.py": "0e3908eb38372822684c3f1773d263fdcf8f5d3d90cc8634d65ff06089c81cc2"
+    }
+  }
+}

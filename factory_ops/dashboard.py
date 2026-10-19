@@ -72,6 +72,15 @@ def validate_snapshot(value: Any) -> dict[str, Any]:
             raise ValueError("robot speed or observation time is invalid")
         if any(not isinstance(robot[k], str) for k in ("label", "status", "battery_source")):
             raise ValueError("robot labels must be strings")
+        for key in ("pose_source", "navigation_phase"):
+            if key in robot and not isinstance(robot[key], str):
+                raise ValueError("robot observation source must be a string")
+        if "scan_counts" in robot and (not isinstance(robot["scan_counts"], dict)
+                or any(not isinstance(key, str) or type(count) is not int or count < 0
+                       for key, count in robot["scan_counts"].items())):
+            raise ValueError("robot scan counters must be nonnegative integers")
+        if "odom_count" in robot and (type(robot["odom_count"]) is not int or robot["odom_count"] < 0):
+            raise ValueError("robot odometry counter must be a nonnegative integer")
         if any(robot[k] is not None and not isinstance(robot[k], str)
                for k in ("task_id", "task_type", "task_label", "payload_id", "destination", "waiting_reason")):
             raise ValueError("robot task fields must be strings or null")

@@ -165,6 +165,13 @@ def _compile(root: Path) -> dict[str, Any]:
     registry = FleetRegistry(config, scenario)
     workload = {"initial_robots": dict(initial), "load": dict(load),
                 "orders": [row.to_dict() for row in orders], "horizon_s": horizon}
+    if "material_flow" in profile:
+        from .fleet import FleetMission
+        from .material_flow import MaterialFlow
+        from .navigation import GoalPose
+        MaterialFlow(FleetMission("input-material-preflight", orders, robot_stations=initial,
+            station_goals={name: GoalPose("map", *xy, yaws[name]) for name, xy in anchors.items()}), profile["material_flow"])
+        workload["material_flow"] = deepcopy(profile["material_flow"])
     session = {"schema_version": 1, "scenario_id": scenario_id, "profile": "development",
                "primary_evaluation": False, "scope": QUALIFICATION, "condition": profile["condition"],
                "policy": profile["policy"], "scene_closure": scene_closure,

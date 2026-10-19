@@ -1,0 +1,35 @@
+{
+  "task": "fleet4-material-charge-review-013",
+  "attempt": 1,
+  "contract_revision": 12,
+  "owner": "control",
+  "mode": "read-only bounded review",
+  "sha256": {
+    "factory_ops/fleet.py": "8b1729af93fff13fdaf02d772ddc5d468ddb7565166cc4eaf261d8d8343c5e5e",
+    "factory_ops/material_flow.py": "3d7a3c3b3b1a289565e73970a66b5fa4ca97493bc60e883a81fef862e8ad5550",
+    "factory_ops/fleet_transport.py": "59c2f59d1fb5290239004d89a596a0ba4e4a74a84bef67c0b877549aeb4bbbb5",
+    "factory_ops/energy.py": "89689894565e850ef3ef3242fceb636afcf14fc330b083a8080d372d4f6d3be1",
+    "factory_ops/charging.py": "bd1edc3d0e4276f1d4238e1c4a57dfbf800311bf98503db587f1354a313c3a7b",
+    "factory_ops/dashboard.py": "60fab1758be2b6403f21e2b2fb048cb8afec06274544322b8983b9afaae0461f",
+    "scripts/ros/g3_mission.py": "4f8d87bedd6d37e3b8597b7fdc5cef66b86fde436dcc7a6e0b2d9a938f044407",
+    "scripts/isaac/fleet4_transport_scene.py": "35fbd915ed9897f05441775325854fc7dca8f97990d86d1274d0240f969f0c81",
+    "configs/factory-fleet4/transport-profile.json": "2c3d1dd445c779d202672bd4752099f9512baa32db6643ccde73a05050c97da6",
+    "configs/factory-fleet4/energy-profile.json": "aba4c049fee1479868de6fd11ea7a47284d20581599aa60ab32587fd39094964",
+    "tests/test_material_flow.py": "cc0617d625c4c054fc921215c1c7c486f5b60eb81851a52a542596cef252abd0",
+    "tests/test_energy_charging.py": "f0777ccb530bdaea0e70c356c4ab89ef556e45a0a08f14c2b3465e2c58c70da1",
+    "tests/test_dashboard.py": "c33064fd9d24111c2c4520194c215a0de7e50a3b3dc0721bddabe0aae9db2d17"
+  },
+  "scope": [
+    "MaterialFlow committed receipt/robot/run binding and duplicate handling",
+    "empty trips use the same Nav2 reservation/stop/dwell, respect product ownership and final completion",
+    "EnergyFleet charging interval, reserve plus charger return and stale observation rules",
+    "ChargingFleet slot exclusivity, contact dwell and undock gates",
+    "web projection must isolate errors and keep missing battery/contact evidence unknown"
+  ],
+  "limits": [
+    "No product edits, Git, VM, new agents or broad architectural review",
+    "Small isolated CPU probes are allowed; no active rosbag SQL",
+    "No claim of actual four-AMR transport/loading/charging; normal-002 did not start SDK and ended on CLI401; actualStopped10:45:35UTC"
+  ],
+  "result_path": "coordination/collab/results/fleet4-material-charge-review-013.json"
+}

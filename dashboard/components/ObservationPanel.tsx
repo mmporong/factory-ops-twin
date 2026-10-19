@@ -14,6 +14,7 @@ export default function ObservationPanel({
 }: Props) {
   const number = new Intl.NumberFormat("ko-KR", { maximumFractionDigits: 1 });
   const readOnly = snapshot && !snapshot.capabilities.some((action) => ["pause", "resume", "create_order"].includes(action));
+  const sensorRows = snapshot?.robots.filter((robot) => robot.scan_counts && Object.keys(robot.scan_counts).length) ?? [];
   const scope = snapshot?.mode === "local_model"
     ? "CPU 운영 원장과 경로 보간 · 물리 주행·센서 검증 미연결"
     : snapshot?.mode === "replay"
@@ -69,15 +70,24 @@ export default function ObservationPanel({
             </div>
             <div>
               <h3>Isaac Sim 연결 항목</h3>
-              <p className="evidence-note">구성 목표: AMR 4대 · LiDAR 8개. 아래 항목은 현재 API에서 관측값을 제공하지 않습니다.</p>
+              <p className="evidence-note">구성 목표: AMR 4대 · LiDAR 8개. 수신 건수는 누적 관측이며 센서 주기나 주행 검증 통과를 뜻하지 않습니다.</p>
               <dl>
-                <div><dt>LiDAR 수신·주기</dt><dd>미연결</dd></div>
-                <div><dt>Nav2 · 위치 추정</dt><dd>미연결</dd></div>
+                <div><dt>LiDAR 수신</dt><dd>{sensorRows.length ? `${sensorRows.length}대의 수신 계수 제공` : "미연결"}</dd></div>
+                <div><dt>LiDAR 주기·신선도</dt><dd>미연결</dd></div>
+                <div><dt>Nav2 · 위치 추정</dt><dd>{sensorRows.length ? "관측된 실행 단계와 TF 원천 표시" : "미연결"}</dd></div>
                 <div><dt>교통 예약·통행 승인</dt><dd>미연결</dd></div>
                 <div><dt>물리 적재·접촉 검증</dt><dd>미연결</dd></div>
                 <div><dt>실행 종료 후 검증</dt><dd>결과 미연결</dd></div>
                 <div><dt>원본 보존 · 인스턴스 Stop</dt><dd>증거 미연결</dd></div>
               </dl>
+              {sensorRows.length > 0 && <ul className="sensor-observations">
+                {sensorRows.map((robot) => <li key={robot.id}>
+                  <strong>{robot.label}</strong>
+                  <span>전방 {robot.scan_counts?.front_raw ?? "미관측"} · 후방 {robot.scan_counts?.rear_raw ?? "미관측"}</span>
+                  <span>엔코더 수신 {robot.odom_count ?? "미관측"} · 실행 단계 {robot.navigation_phase ?? "미관측"}</span>
+                  <small>{robot.pose ? "" : "현재 위치 미관측 · "}{robot.pose_source ?? "위치 원천 미관측"}</small>
+                </li>)}
+              </ul>}
               <p className="evidence-note">주문 완료 수와 명령 승인은 물리 검증·원본 보존·Stop 완료를 뜻하지 않습니다.</p>
             </div>
           </div>

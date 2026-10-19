@@ -169,6 +169,21 @@ class DashboardTest(unittest.TestCase):
             self.assertFalse(publisher.enabled)
             self.assertEqual("dashboard_publication_failed", errors[0][0])
 
+    def test_optional_ros_observations_preserve_unknowns_and_reject_invalid_counters(self):
+        state = self.service.snapshot()
+        robot = state["robots"][0]
+        robot.update(scan_counts={"front_raw": 12, "rear_raw": 8}, odom_count=24,
+                     pose_source="estimated map->base_link TF", navigation_phase="following")
+        checked = validate_snapshot(state)
+        self.assertEqual(12, checked["robots"][0]["scan_counts"]["front_raw"])
+        self.assertIsNone(checked["robots"][0]["battery_pct"])
+        for changes in ({"scan_counts": {"front_raw": True}}, {"scan_counts": {"rear_raw": -1}},
+                        {"odom_count": 1.5}, {"navigation_phase": None}):
+            bad = deepcopy(state)
+            bad["robots"][0].update(changes)
+            with self.assertRaises(ValueError):
+                validate_snapshot(bad)
+
     def test_http_endpoints_and_non_json_commands(self):
         server = make_server(self.service, 0)
         thread = threading.Thread(target=server.serve_forever, daemon=True)
