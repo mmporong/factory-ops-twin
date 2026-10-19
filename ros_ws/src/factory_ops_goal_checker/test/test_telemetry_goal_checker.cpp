@@ -138,7 +138,7 @@ TEST_F(GoalCheckerTest, TelemetryFailureDoesNotChangeSuccessfulBaseResults)
   EXPECT_EQ(expected_velocity, actual_velocity);
 }
 
-TEST_F(GoalCheckerTest, RequiresStoppedVelocityInsidePoseAndClearsCandidateOnExitOrReset)
+TEST_F(GoalCheckerTest, RequiresStoppedVelocityAfterStockAcceptanceAndPreservesStatefulXy)
 {
   rclcpp::NodeOptions options;
   options.parameter_overrides({rclcpp::Parameter("goal_checker.stateful", true),
@@ -175,10 +175,44 @@ TEST_F(GoalCheckerTest, RequiresStoppedVelocityInsidePoseAndClearsCandidateOnExi
   EXPECT_FALSE(checker.isGoalReached(query, goal, moving));
   EXPECT_TRUE(checker.terminalStopRequested());
   query.position.x += 0.07;
-  EXPECT_FALSE(checker.isGoalReached(query, goal, stopped));
+  EXPECT_FALSE(checker.isGoalReached(query, goal, moving));
+  EXPECT_TRUE(checker.terminalStopRequested());
+  EXPECT_FALSE(checker.xyWithinTolerance());
+  EXPECT_TRUE(checker.isGoalReached(query, goal, stopped));
   EXPECT_FALSE(checker.terminalStopRequested());
+  EXPECT_FALSE(checker.xyWithinTolerance());
 
   checker.reset();
+  EXPECT_FALSE(checker.terminalStopRequested());
+  EXPECT_FALSE(checker.isGoalReached(query, goal, stopped));
+  EXPECT_FALSE(checker.xyConfirmed());
+
+  query.position.x -= 0.07;
+  query.orientation.z = std::sin((-1.6274379802 + 0.16) / 2.0);
+  query.orientation.w = std::cos((-1.6274379802 + 0.16) / 2.0);
+  EXPECT_FALSE(checker.isGoalReached(query, goal, moving));
+  EXPECT_FALSE(checker.terminalStopRequested());
+}
+
+TEST_F(GoalCheckerTest, StatelessCheckerRejectsCurrentXyOutsideTolerance)
+{
+  rclcpp::NodeOptions options;
+  options.parameter_overrides({rclcpp::Parameter("goal_checker.stateful", false),
+    rclcpp::Parameter("goal_checker.xy_goal_tolerance", 0.06),
+    rclcpp::Parameter("goal_checker.yaw_goal_tolerance", 0.15),
+    rclcpp::Parameter("goal_checker.require_stopped_velocity", true)});
+  auto node = std::make_shared<rclcpp_lifecycle::LifecycleNode>("stateless_terminal_stop", options);
+  factory_ops_goal_checker::TelemetryGoalChecker checker;
+  checker.initialize(node, "goal_checker", nullptr);
+  geometry_msgs::msg::Twist moving;
+  moving.linear.x = 0.1;
+  geometry_msgs::msg::Twist stopped;
+  const auto goal = pose(0.0, 0.0);
+
+  EXPECT_FALSE(checker.isGoalReached(pose(0.05, 0.0), goal, moving));
+  EXPECT_TRUE(checker.terminalStopRequested());
+  EXPECT_FALSE(checker.xyConfirmed());
+  EXPECT_FALSE(checker.isGoalReached(pose(0.07, 0.0), goal, stopped));
   EXPECT_FALSE(checker.terminalStopRequested());
 }
 

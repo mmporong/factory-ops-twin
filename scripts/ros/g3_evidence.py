@@ -704,7 +704,7 @@ def validate_controller_trace_observations(
                 check = confirmation.get("check", {})
                 if (confirmation["event_sequence"] + 1 != begin["event_sequence"]
                         or check.get("terminal_stop_enabled") is not True
-                        or check.get("pose_within_tolerance") is not True
+                        or check.get("base_result") is not True
                         or check.get("velocity_stopped") is not False
                         or check.get("terminal_candidate") is not True
                         or check.get("effective_result") is not False

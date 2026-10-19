@@ -165,12 +165,24 @@ class G3EvidenceHelperTests(unittest.TestCase):
             "terminal_stop_enabled"
         ] = False
         attacks.append(gate_tamper)
+        forged_base = deepcopy(bag)
+        forged_base["controller_traces"]["carter1"]["goal_checker"][-1]["check"][
+            "base_result"
+        ] = False
+        attacks.append(forged_base)
         missing_normal_diagnostic = deepcopy(bag)
         missing_normal_diagnostic["rpp_observations"]["carter1"]["lookahead_point"].clear()
         attacks.append(missing_normal_diagnostic)
         for changed in attacks:
             with self.assertRaises(ValueError):
                 validate_controller_trace_observations(actions, changed, requested)
+
+        stateful_xy_exit = deepcopy(bag)
+        stateful_xy_exit["controller_traces"]["carter1"]["goal_checker"][-1]["check"][
+            "pose_within_tolerance"
+        ] = False
+        report = validate_controller_trace_observations(actions, stateful_xy_exit, requested)
+        self.assertEqual(1, report["robots"]["carter1"]["terminal_stop_compute_calls"])
 
     def test_controller_trace_allows_paused_clock_with_ordered_sqlite_ids(self):
         actions, bag, requested = self.controller_trace_fixture()

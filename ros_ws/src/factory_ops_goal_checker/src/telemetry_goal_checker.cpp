@@ -117,9 +117,9 @@ bool TelemetryGoalChecker::isGoalReached(
     std::abs(velocity.angular.z) <= kStoppedAngularVelocityRadps;
   const bool terminal_stop_enabled = terminal_stop_enabled_.load(std::memory_order_acquire);
   const bool terminal_candidate =
-    terminal_stop_enabled && pose_within_tolerance && !velocity_stopped;
-  const bool effective_result = terminal_stop_enabled ?
-    base_result && pose_within_tolerance && velocity_stopped : base_result;
+    terminal_stop_enabled && base_result && !velocity_stopped;
+  const bool effective_result =
+    base_result && (!terminal_stop_enabled || velocity_stopped);
   xy_confirmed_.store(!check_xy_after, std::memory_order_release);
   xy_within_tolerance_.store(xy_within_tolerance, std::memory_order_release);
   terminal_stop_requested_.store(terminal_candidate, std::memory_order_release);

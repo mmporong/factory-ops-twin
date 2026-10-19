@@ -159,6 +159,14 @@ TEST_F(ConfirmedXyRppTest, ReleasesOnlyUnconfirmedStaleLatchAndPreservesConfirme
   EXPECT_DOUBLE_EQ(0.0, rotating.twist.linear.x);
   EXPECT_NE(0.0, rotating.twist.angular.z);
   EXPECT_TRUE(std::get<1>(confirmed.state()));
+  EXPECT_TRUE(goal_checker.xyConfirmed());
+  transform.transform.translation.x = 0.93;
+  ASSERT_TRUE(tf->setTransform(transform, "test", true));
+  const auto rotating_outside_xy =
+    confirmed.computeVelocityCommands(robotPose(0.93), velocity, &goal_checker);
+  EXPECT_DOUBLE_EQ(0.0, rotating_outside_xy.twist.linear.x);
+  EXPECT_NE(0.0, rotating_outside_xy.twist.angular.z);
+  EXPECT_TRUE(std::get<1>(confirmed.state()));
 
   goal_checker.reset();
   confirmed.setPlan(straightPlan());
@@ -175,13 +183,8 @@ TEST_F(ConfirmedXyRppTest, ReleasesOnlyUnconfirmedStaleLatchAndPreservesConfirme
   EXPECT_DOUBLE_EQ(0.0, terminal_brake.twist.linear.y);
   EXPECT_DOUBLE_EQ(0.0, terminal_brake.twist.angular.z);
 
-  EXPECT_FALSE(goal_checker.isGoalReached(robotPose(0.93).pose, goalPose(), velocity));
+  EXPECT_TRUE(goal_checker.isGoalReached(robotPose(0.93).pose, goalPose(), velocity));
   EXPECT_FALSE(goal_checker.terminalStopRequested());
-  transform.transform.translation.x = 0.93;
-  ASSERT_TRUE(tf->setTransform(transform, "test", true));
-  const auto reacquiring =
-    confirmed.computeVelocityCommands(robotPose(0.93), velocity, &goal_checker);
-  EXPECT_GT(reacquiring.twist.linear.x, 0.0);
 
   transform.transform.translation.x = 0.95;
   ASSERT_TRUE(tf->setTransform(transform, "test", true));

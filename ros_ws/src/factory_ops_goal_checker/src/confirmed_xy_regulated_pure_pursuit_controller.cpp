@@ -17,7 +17,7 @@ bool ConfirmedXyRegulatedPurePursuitController::prepareGoalChecker(
             "ConfirmedXyRegulatedPurePursuitController requires TelemetryGoalChecker");
   }
   confirmed_goal_checker->enableTerminalStop();
-  if (!confirmed_goal_checker->xyConfirmed() || !confirmed_goal_checker->xyWithinTolerance()) {
+  if (!confirmed_goal_checker->xyConfirmed()) {
     has_reached_xy_tolerance_ = false;
   }
   return confirmed_goal_checker->terminalStopRequested();
