@@ -34,7 +34,7 @@
   },
   "camera_capture_every_steps": 600,
   "real_time_media": {
-    "profiles": ["qualification"],
+    "profiles": [],
     "window_s": 24.0,
     "sample_every_physics_steps": 6,
     "minimum_abs_linear_m_s": 0.15,
