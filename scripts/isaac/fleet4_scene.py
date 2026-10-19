@@ -30,6 +30,11 @@ class FleetSmokeLifecycle(BarrierLifecycle):
 
     def prepare_worker_paths(self, scene_arg: Path, output_arg: Path) -> tuple[Path, Path]:
         verify_bundle(self.session_root)
+        if not output_arg.is_absolute() or output_arg.is_symlink():
+            raise ValueError("stationary output must be an absolute regular directory path")
+        if scene_arg.resolve(strict=True) != (self.session_root / "scene/factory-v3.usda").resolve(strict=True):
+            raise ValueError("stationary scene differs from the verified bundle")
+        output_arg.mkdir(parents=True, exist_ok=True)
         return g2_scene.base._prepare_worker_paths(scene_arg, output_arg)
 
     def capture_due(self) -> bool:

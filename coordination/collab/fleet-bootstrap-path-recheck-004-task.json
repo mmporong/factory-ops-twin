@@ -1,0 +1,16 @@
+{
+  "task_id": "fleet-bootstrap-path-recheck-004",
+  "non_goals": "제품 수정/GPU/새 에이전트/검수 확장 금지",
+  "contract_revision": 4,
+  "write_paths": [
+    "coordination/collab/results/fleet-bootstrap-path-recheck-004.json"
+  ],
+  "evidence": "001은 SDK 초기화 전 출력 폴더 불존재로 종료코드1. 실패 원본 D/E 보존, Stop 요청됨",
+  "acceptance": "absolute/nonsymlink/scene 일치 검사 후 mkdir, 기존 비어 있지 않은 출력은 보존·거절",
+  "attempt": 1,
+  "scope": "새 출력 폴더 준비 누락 수정의 변경5줄과 회귀검사만 확인",
+  "read_sha256": {
+    "scripts/isaac/fleet4_scene.py": "becd9da832144e590d8e54e11db9b2ac6c496e4cd6a60127d62b712c66b9d2fd",
+    "tests/test_fleet_bootstrap.py": "c2f5e39c9ecad3458ac5ba4909b6ee90ab0b1b0ad9daae6ac78171d3d180be6b"
+  }
+}

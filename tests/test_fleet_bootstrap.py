@@ -49,6 +49,22 @@ class FleetBootstrapTest(unittest.TestCase):
             lifecycle.setup(object(), object(), object(), object(), output)
             self.assertEqual(self.bundle, factory.call_args.kwargs["config_directory"])
 
+    def test_new_worker_output_is_created_and_existing_content_is_preserved_and_rejected(self):
+        lifecycle = FleetSmokeLifecycle(self.bundle, "f" * 32)
+        scene = self.bundle / "scene/factory-v3.usda"
+        output = self.root / "results/new-run"
+        observed_scene, observed_output = lifecycle.prepare_worker_paths(scene, output)
+        self.assertEqual(scene.resolve(), observed_scene)
+        self.assertEqual(output.resolve(), observed_output)
+        self.assertEqual([], list(output.iterdir()))
+        sentinel = output / "original.txt"
+        sentinel.write_text("preserve")
+        with self.assertRaisesRegex(SmokeError, "already exist and be empty"):
+            lifecycle.prepare_worker_paths(scene, output)
+        self.assertEqual("preserve", sentinel.read_text())
+        with self.assertRaisesRegex(ValueError, "absolute"):
+            lifecycle.prepare_worker_paths(scene, Path("relative-output"))
+
     def test_eight_lidars_require_one_front_and_rear_for_each_robot_and_unique_paths(self):
         lifecycle = FleetSmokeLifecycle(self.bundle, "a" * 32)
         sensors = [type("Sensor", (), {"attach_annotators": lambda *args: None})() for _ in range(8)]

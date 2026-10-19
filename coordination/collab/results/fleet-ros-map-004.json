@@ -1,0 +1,73 @@
+{
+  "task": "fleet-ros-map-004",
+  "attempt": 1,
+  "contract_revision": 4,
+  "status": "completed_pending_root_acceptance",
+  "ack": true,
+  "input_commit": "60513d9e793b5f8d341d06a5a35364adb1c3c930",
+  "scope": "지정된 ROS helper·G3 테스트·FleetMission의 읽기 전용 경로 분석",
+  "constraints": [
+    "제품 파일 변경 없음",
+    "GPU·원격·실행 중 프로세스 접근 없음",
+    "지정 결과 JSON만 작성",
+    "기존 2대 qualification/session/CDR 게이트 유지"
+  ],
+  "accepted": null,
+  "acceptance_owner": "root",
+  "source_sha256": {
+    "scripts/ros/g3_mission.py": "cbd6ff143a0ca627d8b99c0ffb1e6413463376cb1430bfd5a5f11756325fe961",
+    "scripts/ros/g2_mission.py": "724a0b9a2cca4c0c8cb19f6fb2cf71db14fc81a7d5396e16413949fc73486072",
+    "tests/test_g3_mission.py": "136d738b744b1efa4f629b89f6b83359ce98baccd7bdbf952c023f0914b036bf",
+    "factory_ops/fleet.py": "258ff25f31bcdb27dddba853db84069de4db16ccc0eb1dc46bc0e5fe688ee5b1"
+  },
+  "conclusion": "FleetMission은 이미 선언된 다수 로봇을 처리한다. 최소 경로는 기존 2대 G3 입구와 qualification/session/CDR 게이트를 유지하고, 별도 4대 development 입구에서 registry로 검증한 실행 문맥을 공통 ROS 실행부에 전달하는 것이다. ROBOT_IDS 상수만 4대로 바꾸는 방식은 부족하다.",
+  "fixed_two_robot_boundaries": [
+    {"at": "scripts/ros/g2_mission.py:27", "detail": "ROBOT_IDS=(carter1,carter2)를 g3_mission.py:35에서 import한다."},
+    {"at": "scripts/ros/g2_mission.py:396", "detail": "_load_ready는 정확한 두 ID와 ID=namespace 및 /World/{ID.title()} prim을 요구한다. build_namespaced_params:174/182도 두 ID만 YAML/topic namespace로 사용한다. G2 prepare_params:139/144는 두 대·동일 반경을 고정한다."},
+    {"at": "scripts/ros/g3_mission.py:72", "detail": "bag QoS, G3 params:110/145, runtime controller/topic 검증:190/213 및 수집:301, 반경 검사:819가 두 대로 고정된다."},
+    {"at": "scripts/ros/g3_mission.py:889", "detail": "reservation manager와 node/action client 생성:975, bag topics:1047가 두 대이다. launch:1055는 g2.launch.py이며 scan recorder discovery:1062/1122는 scan_recording_topics()의 두 대 기본값을 사용한다."},
+    {"at": "scripts/ros/g3_mission.py:449", "detail": "initial_hold_boundary_ready와 main 초기 ACK 수집:1213/1221, cutoff 기록:766, 최종 HOLD:1654가 두 대이다. terminal_recording_boundary:479/483 및 wait 호출:495는 두 odom만 최종 frame까지 기다린다."}
+  ],
+  "reusable_boundaries": [
+    {"at": "scripts/ros/g2_mission.py:89", "detail": "scan_recording_topics(robot_ids=ROBOT_IDS)는 이미 집합 인자를 받는다. _planning_radius:118의 footprint/0.2m clearance, scan filtering·recordability·subscriber barrier·authorization 생성은 유지한다. publish_scan_fanout:82의 두 publisher는 costmap/localization 분기 수이며 로봇 수 제한이 아니다."},
+    {"at": "scripts/ros/g3_mission.py:405", "detail": "valid_hold_ack/valid_initial_hold_ack:425는 로봇별 run/scenario/seq/generation/goal/time/zero-command 검증을 재사용한다. localization_payload:507, validate_arrival:580, StopOdometryReceiver:587 및 committed_stopped_odometry_record:706도 유지한다."},
+    {"at": "scripts/ros/g3_mission.py:1038", "detail": "CallbackDrain, tick:1126, lifecycle/startup:1159/1166은 생성된 robots 집합 기반이다. 네 executor와 네 대 센서/pose/action readiness를 구성하면 재사용할 수 있다."},
+    {"at": "scripts/ros/g3_mission.py:1249", "detail": "new_leg 및 reservation/lease·swept_tiles 흐름과 dispatch:1575를 재사용한다. dispatch pair는 로봇-작업 쌍이므로 로봇 두 대 제한이 아니다."},
+    {"at": "factory_ops/fleet.py:81", "detail": "FleetMission은 비어 있지 않은 robot_stations·서로 다른 시작 anchor:95/101, 각 로봇 등록:142, eligible_robot_ids:215, 결과 반영:272를 지원한다. 이 단계에서 fleet.py 변경은 필요하지 않다."}
+  ],
+  "minimal_change_path": [
+    {"path": "scripts/ros/g2_mission.py", "interface": "공통 params helper에 명시 robot_ids와 namespace_by_id를 전달하되 현행 두 대 기본값을 보존한다. ready는 별도 registry 기반 검증 경로에서 run/scenario/status·정확 ID/namespace/prim을 확인한다. ID는 spawn/반경 조회에, namespace는 ROS topic/YAML에 사용한다. G2 main은 유지한다."},
+    {"path": "scripts/ros/g3_mission.py", "interface": "기존 main의 verify_session:868·primary identity:355는 그대로 두고, 검증된 robot_ids/namespace_by_id/workload/runtime_config/book/launch_path를 받는 공통 실행 함수로 실행부를 분리한다. params·bag·관측·initial ACK·cutoff·terminal 경계까지 동일 집합을 전달한다. 전역 ROBOT_IDS 덮어쓰기나 최소 개수 검사로 대체하지 않는다."},
+    {"path": "scripts/ros/fleet4_mission.py (제안 신규 경로)", "interface": "기존 FleetRegistry의 ID·namespace/prim·spawn과 별도 개발 workload/parking 입력을 검증해 공통 실행부에 전달한다. 독립 run/scenario/입력 SHA, primary_evaluation=false 및 개발 scope를 기록한다. G3 session-verified 표식을 검증 없이 만들어 우회하지 않는다. registry 소스는 이번 범위에서 읽지 않았다."},
+    {"path": "scripts/ros/fleet4.launch.py (제안 신규 경로 또는 기존 launcher의 좁은 일반화)", "interface": "동일 registry namespace로 네 Nav2·TF remap·generated params를 기동하는 연결이 필요하다. 근거는 g3_mission.py:975/1055이며 launcher 자체는 이번 범위에서 읽지 않았으므로 최종 파일 선택은 root가 확인한다."},
+    {"path": "tests/test_g3_mission.py 및 4대 개발 입구용 CPU 테스트", "interface": "기존 두 대 회귀를 유지하고 정확 네 대 집합·다른 namespace·partial ACK/late odom·예약/주차 실패 사례를 추가한다. factory_ops/fleet.py는 재사용한다."}
+  ],
+  "actual_missing_inputs_and_conditions": [
+    {"at": "scripts/ros/g3_mission.py:832", "detail": "네 대 spawn·측정 footprint·정확 namespace/prim ready와 별도 개발 workload가 필요하다. 네 initial_robots, 주문 source/목적 station, CI/CO 용량·service/dwell/horizon·policy/condition, route anchor 좌표/yaw를 명시해야 한다(:1232-1237). 정지 센서 ready만으로 운송 입력이 충족됐다고 볼 수 없다."},
+    {"at": "scripts/ros/g3_mission.py:994", "detail": "현재 park는 initial_robots와 동일하며 DROP 후 해당 park로 clearing leg를 보내고(:1567), 종료도 전원 park 복귀를 요구한다(:1646). 네 시작점을 네 주차점으로 간주할 수 없다. 별도 parking_by_robot 또는 검증된 시작=주차 계약이 필요하며, 생산 station의 임시 spawn을 주차 승인으로 해석하거나 P3/P4를 임의 생성하지 않는다."},
+    {"at": "scripts/ros/g3_mission.py:1193", "detail": "네 초기 hold의 planning radius+tracking margin(:1067) swept tiles가 서로 충돌하지 않아야 한다. 네 주차 anchor의 graph/yaw/왕복 clearing 경로 및 최종 hold가 생산 station·공용 통로·다른 로봇 경로를 막지 않는지 확인해야 한다."},
+    {"at": "scripts/ros/g3_mission.py:1579", "detail": "네 대 전체 예약 snapshot으로 픽업·적재·clearing 경로와 용량을 검사한다. 단일 통로/폐쇄/대기에서 full-leg 예약으로 진행 가능한 authored 입력이 필요하다. 지속 wait cycle은 기존 fail-stop:1639를 유지하며 검증되지 않은 자동 해소 성공을 가정하지 않는다."},
+    {"at": "scripts/ros/g3_mission.py:1558", "detail": "handoff는 action 성공→HOLD ACK→실측 정지→도착→dwell 후 원장 반영이다(:1475-1493). 물리 토트 부착/분리·적재 센서 확인은 이 블록에서 확인되지 않는다. 실제 4대 Nav2 주행과 논리 재고 전이를 기록하되 물리 적재 성공은 별도 scene 증거가 있어야 한다(factory_ops/fleet.py:396)."},
+    {"at": "scripts/ros/g3_mission.py:891", "detail": "scene가 개발 입력/시작 표식:1231/로봇별 authorization·ACK:1102/1214/mission-control:1667/최종 scene frame을 같은 run/scenario로 처리하는 연결은 root 확인이 필요하다. scene·session·CDR 검증기 자체는 이번 읽기 범위 밖이므로 이 파일들만 수정하면 실행 가능하다고 판정하지 않는다."}
+  ],
+  "validation_plan": {
+    "cpu": [
+      "기존 두 대 params/QoS/typed runtime provenance 회귀 유지(test_g3_mission.py:24/32/139/210). 네 ID와 다른 namespace 조합으로 정확한 params/topic/client 집합을 검사하고 네 번째 ready/controller/센서 누락·잘못된 타입/반경/identity를 거절한다.",
+      "네 initial/post-terminal ACK 중 하나라도 누락·만료·다른 run/scenario/generation/goal/seq·nonzero input이면 barrier 실패(test_g3_mission.py:455/483). carter3/4 final odom 지연은 대기, wall timeout은 실패(test_g3_mission.py:396/414).",
+      "네 cutoff retained hold/phase와 경로 전체 필드·허용 stamp 정규화·정지·도착·map bytes 회귀 유지(test_g3_mission.py:337/367/507/516/552/559/571). CPU route fixture로 초기/최종 holds·clearing 충돌·wait cycle 거절, 네 로봇 dispatch와 잘못된/중복 결과의 원장 보전을 확인한다."
+    ],
+    "future_gpu_acceptance": [
+      "고정 개발 source/bundle/registry/runtime SHA와 동일 run/scenario 아래 네 Nav2 lifecycle·fresh AMCL TF/odom·8개 실제 raw lidar와 filtered/fan-in 기록을 확인하고, 네 유효 initial HOLD ACK 전에는 시작하지 않는다(g3_mission.py:1166/1213).",
+      "네 로봇 각각 실제 업무 leg의 ComputePathToPose→FollowPath UUID/result/service-event, planner Path 전체 필드·해시 및 허용 stamp 정규화, 예약 swept 영역, post-terminal ACK·실측 정지·도착을 확인한다(:1378/1390/1436/1475). 기존 CDR 엄격성을 유지한 별도 개발 검증에서 네 대 기대 집합을 검사한다.",
+      "영역 이탈/stale pose/lease 만료/충돌·지속 wait cycle/실패 action은 원장 완료로 인정하지 않는다. 업무 주문과 네 terminal parking, 최종 scene frame/odom까지 만족해야 운송 완료이며 horizon censor는 incomplete로 구분한다(:1646/1698).",
+      "정지 센서 시험 또는 SDK 시작 전 종료는 4대 운송 성공 근거가 아니다. recorder 종료 확인 후에만 bag/CDR를 분석하며 실행 중 SQLite는 조회하지 않는다."
+    ]
+  },
+  "validation_performed": [
+    "현재 경로·git status·입력 commit 확인",
+    "지정 네 소스의 SHA256 두 차례 대조 및 git diff --name-only 60513d9 -- 지정 네 파일 결과 비어 있음 확인",
+    "결과 JSON 구문·메타데이터·소스 SHA 재검증"
+  ],
+  "execution_limits": "테스트·ROS·개발 서버·GPU·원격·프로세스 조작·rosbag 접근·commit/push·추가 에이전트 실행 없음. CPU/GPU 항목은 향후 판정 조건이며 현재 PASS 주장이 아니다. registry/launch/scene/session/CDR 검증기와 4대 배치 파일은 읽기 범위 밖이다. 공유 board.json 변경은 보존했다.",
+  "written_paths": ["coordination/collab/results/fleet-ros-map-004.json"]
+}

@@ -1,0 +1,49 @@
+{
+  "task": "fleet-bootstrap-path-recheck-004",
+  "attempt": 1,
+  "contract_revision": 4,
+  "ack": true,
+  "status": "한정 검수 완료",
+  "accepted": null,
+  "acceptance_owner": "root",
+  "input_commit": "60513d9e793b5f8d341d06a5a35364adb1c3c930",
+  "source_sha256": {
+    "scripts/isaac/fleet4_scene.py": "becd9da832144e590d8e54e11db9b2ac6c496e4cd6a60127d62b712c66b9d2fd",
+    "tests/test_fleet_bootstrap.py": "c2f5e39c9ecad3458ac5ba4909b6ee90ab0b1b0ad9daae6ac78171d3d180be6b"
+  },
+  "review_scope": "60513d9 대비 prepare_worker_paths 추가 5줄과 새 회귀 테스트 1개, 테스트 준비 코드만 확인",
+  "verdict": "수용 권고: 확인한 변경에서 치명적/주요 결함 없음",
+  "findings": [],
+  "checks": [
+    {
+      "location": "scripts/isaac/fleet4_scene.py:32",
+      "result": "bundle 검증 후 출력 absolute/leaf symlink 거절(:33), 검증된 bundle scene과 resolve 결과 일치 확인(:35), mkdir(:37), 기존 helper 호출(:38) 순서이다. 상대 출력 또는 다른 scene은 mkdir보다 먼저 거절한다."
+    },
+    {
+      "location": "scripts/isaac/fleet4_scene.py:37",
+      "result": "없는 출력과 부모 폴더를 생성해 기존 helper의 기존 빈 디렉터리 전제에 연결한다. exist_ok=True는 기존 내용을 지우지 않으며 비어 있지 않은 출력의 거절은 기존 helper에 맡긴다. 출력 경로가 기존 파일이면 mkdir가 실패한다."
+    },
+    {
+      "location": "tests/test_fleet_bootstrap.py:52",
+      "result": "격리 TemporaryDirectory/prepare_bundle fixture(:17-22)에서 새 중첩 출력 생성·정규화 경로·빈 내용(:55-59), sentinel이 있는 출력 거절 및 원본 보존(:60-64), 상대 경로 거절(:65-66)을 검사한다. 기존 helper를 mock하지 않아 해당 경계의 회귀 검사로 적합하다."
+    }
+  ],
+  "validation": {
+    "performed": [
+      "카드의 2개 SHA256 일치 확인",
+      "git diff 60513d9 -- 지정 2개 파일로 추가 5줄/새 테스트 범위 확인",
+      "결과 JSON 구문·메타데이터 및 2개 SHA 재대조"
+    ],
+    "tests_executed": false,
+    "reason": "코드·회귀 테스트에 대한 한정 읽기 검수만 수행했다. 테스트 실행 PASS 또는 SDK/GPU 실행 성공을 주장하지 않는다."
+  },
+  "limitations": [
+    "새 테스트는 leaf symlink와 scene 불일치의 거절·출력 미생성까지는 검사하지 않는다. 해당 조건은 코드 순서로 확인했으며 실행 검증은 하지 않았다.",
+    "기존 helper 및 다른 제품 소스의 새 전체 리뷰는 수행하지 않았다.",
+    "첫 GPU 시험의 SDK 시작 전 종료코드1, 원본 D/E 보존, Stop 요청은 사용자 보고이며 이번 검수에서 원격/프로세스로 재확인하지 않았다. 이 수정만으로 GPU 재시도 성공을 판정할 수 없다."
+  ],
+  "written_paths": [
+    "coordination/collab/results/fleet-bootstrap-path-recheck-004.json"
+  ],
+  "side_effects": "제품 수정·다른 리뷰 확대·GPU·원격·실행 프로세스 조작·새 에이전트·commit/push 없음"
+}
