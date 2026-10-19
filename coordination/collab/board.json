@@ -1,12 +1,13 @@
 {
-  "revision": 5,
-  "updated_at": "2026-10-19T07:25:17.4255772Z",
+  "revision": 9,
+  "updated_at": "2026-10-19T09:58:37.169728+00:00",
   "scope": {
     "excluded": "실물 로봇 실행, 새 유료 서비스/에셋, 공개 배포",
     "project_root": "C:\\Users\\LIMMM\\factory-ops-twin",
     "completion": "상태 원장·API·3D/목록 선택·명령 결과·브라우저 검증",
-    "goal": "4대 AMR 디지털 트윈과 선택 가능한 3D 웹 운영 대시보드",
-    "side_effects": "기존 승인 Git commit/push; 로컬 설치/실행/검증; GPU는 별도 필요 시 기존 허용 범위"
+    "goal": "4대 AMR 통합 운영과 관제를 전체 완성품의80% 중간 목표까지 진행",
+    "side_effects": "기존 승인 Git commit/push; 로컬 설치/실행/검증; GPU는 별도 필요 시 기존 허용 범위",
+    "producer_isolation": "root commits backend only; clean detached producerworktree; control dashboard/ user work remains unmodified/uncommitted until own result"
   },
   "orchestrator": {
     "pane_id": "w1:p1D",
@@ -233,6 +234,69 @@
       "status": "accepted",
       "result_path": "coordination/collab/results/fleet-closed-validator-005.json",
       "acceptance": "3 reviewed SHA matched;74 tests, real closed archive CLI4/8 and overwrite guard executed"
+    },
+    {
+      "task_id": "fleet4-ros-006",
+      "attempt": 1,
+      "contract_revision": 6,
+      "owner": "control",
+      "status": "accepted",
+      "ACK": true,
+      "inputs": {
+        "commit": "73640fb1967a451268fa900867d6013a8be71f04"
+      },
+      "task_path": "coordination/collab/fleet4-ros-006-task.md",
+      "write_paths": [
+        "scripts/ros/g2_mission.py",
+        "scripts/ros/g3_mission.py",
+        "scripts/ros/fleet4_mission.py",
+        "scripts/ros/fleet4.launch.py",
+        "tests/test_g3_mission.py",
+        "tests/test_fleet_transport_mission.py"
+      ],
+      "result_path": "coordination/collab/results/fleet4-ros-006.json",
+      "reviewer": "root",
+      "acceptance": "registry-based explicit fleet context; legacy qualification gates retained; targeted regression; no GPU claim",
+      "acceptance_record": "5 source SHA matched; root reviewed explicit runtime/namespace/ACK/cutoff/terminal changes; integrated165 tests164PASS+1existing pxr skip; CPU only"
+    },
+    {
+      "task_id": "fleet4-input-scene-review-007",
+      "attempt": 1,
+      "contract_revision": 7,
+      "owner": "control",
+      "status": "accepted",
+      "ACK": true,
+      "task_path": "coordination/collab/fleet4-input-scene-review-007-task.json",
+      "result_path": "coordination/collab/results/fleet4-input-scene-review-007.json",
+      "reviewer": "control",
+      "acceptance": "bounded root-authored input/SDK review before spending compute",
+      "acceptance_record": "17 frozen file SHA matched; bounded review no major findings; root integrated165 tests164PASS+1existing pxr skip; source typecheck0errors"
+    },
+    {
+      "task_id": "fleet4-runner-review-008",
+      "attempt": 1,
+      "contract_revision": 8,
+      "owner": "control",
+      "status": "needs_revision",
+      "ACK": true,
+      "task_path": "coordination/collab/fleet4-runner-review-008-task.json",
+      "result_path": "coordination/collab/results/fleet4-runner-review-008.json",
+      "reviewer": "control",
+      "acceptance": "focused runner closure/source/preservation/Stop review before GPU",
+      "acceptance_record": "FR001-003 confirmed by isolated reproductions; original findings preserved"
+    },
+    {
+      "task_id": "fleet4-runner-review-008",
+      "attempt": 2,
+      "contract_revision": 9,
+      "owner": "control",
+      "status": "accepted",
+      "ACK": true,
+      "task_path": "coordination/collab/fleet4-runner-review-008-recheck-task.json",
+      "result_path": "coordination/collab/results/fleet4-runner-review-008-recheck.json",
+      "reviewer": "control",
+      "acceptance": "changes-only FR001-003 closure/Stop/deadline recheck",
+      "acceptance_record": "3SHA matched;FR001-003 resolved in boundedrecheck;10mockedfaulttests PASS,rootcaller type0 and bash-n PASS; actualGPU/Stopped notyetclaimed"
     }
   ],
   "decisions": [
@@ -240,6 +304,11 @@
       "request_id": "user-4-amr-dashboard-2026-10-19",
       "applied_revision": 1,
       "decision": "최종 차량4대; control 페인 구현 위임; React/Next.js/R3F 참고; 원장 동기화와 AMR 상세"
+    },
+    {
+      "request_id": "user-progress-80-2026-10-19",
+      "applied_revision": 6,
+      "decision": "약50% 기준선에서80% 중간 목표: 4대 운송·적재/재고/반납·라이브 관제·최소 충전, 실제 실행으로 판정; 전체 완료와 구분"
     }
   ]
 }

@@ -16,11 +16,12 @@ import subprocess
 import sys
 import time
 import traceback
-from typing import Any, Callable, Mapping
+from typing import Any, Callable, Mapping, Sequence
 from uuid import UUID, uuid4
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from factory_ops.fleet import FleetMission, FleetOrder
+from factory_ops.fleet_registry import FleetRegistry
 from factory_ops.callback_drain import CallbackDrain
 from factory_ops.fleet_execution import FOLLOW_PATH_NORMALIZATION, StoppedGate, make_chunk, normalize_follow_path_payload, qualify_computed_path, path_content_sha256, path_clock_ready, path_header_stamp_ns
 from factory_ops.fleet_routing import RouteBook, assess_dispatch_route_compatibility, swept_tiles
@@ -32,7 +33,7 @@ from factory_ops.route_reservation import RouteReservationManager
 from scripts.ros.g1_mission import LifecycleStatePoller
 from scripts.ros.action_services import IntrospectedActionClient
 from scripts.ros.g2_mission import (
-    ROBOT_IDS, _load_ready, _planning_radius, atomic_json, build_namespaced_params,
+    ROBOT_IDS, _load_ready, _planning_radius, atomic_json, build_namespaced_params, fleet_identity,
     evidence_subscribers_ready, filtered_scan_is_recordable, make_authorization,
     mask_scan_ranges, named_subscriber_topics_ready, publish_scan_fanout,
     scan_recording_topics, stop_process,
@@ -69,23 +70,28 @@ CONFIRMED_XY_CONTROLLER = "factory_ops_goal_checker::ConfirmedXyRegulatedPurePur
 CONFIRMED_XY_LATCH_MODE = "goal_checker_confirmed_xy_latch"
 
 
-def bag_qos_overrides() -> str:
+def bag_qos_overrides(robot_ids: Sequence[str] = ROBOT_IDS, *,
+                      namespace_by_id: Mapping[str, str] | None = None) -> str:
+    ids, namespaces = fleet_identity(robot_ids, namespace_by_id)
     latched_depths = {"tf_static": 1, "map": 1, "navigation_map": 1,
                       "controller_cycle_trace": 1024}
     return "".join(
-        f"/{robot}/{topic}:\n  durability: transient_local\n  reliability: reliable\n"
+        f"/{namespaces[robot]}/{topic}:\n  durability: transient_local\n  reliability: reliable\n"
         f"  history: keep_last\n  depth: {depth}\n"
-        for robot in ROBOT_IDS for topic, depth in latched_depths.items()
+        for robot in ids for topic, depth in latched_depths.items()
     )
 
 
 def build_g3_namespaced_params(
     template: Mapping[str, Any], scenario: Mapping[str, Any], radii: Mapping[str, float],
     runtime: Mapping[str, Any], *, physical_map: str, navigation_map: str,
+    robot_ids: Sequence[str] = ROBOT_IDS, namespace_by_id: Mapping[str, str] | None = None,
 ) -> tuple[dict[str, Any], dict[str, Any]]:
     """Apply the G3 acceptance values and the declared controller mode."""
+    ids, namespaces = fleet_identity(robot_ids, namespace_by_id)
     baseline = build_namespaced_params(
         template, scenario, radii, physical_map=physical_map, navigation_map=navigation_map,
+        robot_ids=ids, namespace_by_id=namespaces,
     )
     result = copy.deepcopy(baseline)
     nav2 = runtime.get("g3_nav2")
@@ -107,7 +113,7 @@ def build_g3_namespaced_params(
             or nav2.get("yaw_goal_tolerance") != .15):
         raise ValueError("G3 Nav2 override contract differs")
     changed: list[dict[str, Any]] = []
-    for robot in ROBOT_IDS:
+    for robot in namespaces.values():
         controller = result[robot]["controller_server"]["ros__parameters"]
         if controller.get("controller_frequency") != 10.0:
             raise ValueError("G3 RPP observation pairing requires the source-bound 10 Hz controller")
@@ -142,7 +148,7 @@ def build_g3_namespaced_params(
     if result["/**"] != baseline["/**"]:
         raise ValueError("G3 Nav2 override changed shared parameters")
     expected = copy.deepcopy(baseline)
-    for robot in ROBOT_IDS:
+    for robot in namespaces.values():
         controller = expected[robot]["controller_server"]["ros__parameters"]
         controller["FollowPath"]["stateful"] = True
         controller["FollowPath"]["plugin"] = nav2["follow_path_plugin"]
@@ -164,8 +170,10 @@ def build_g3_namespaced_params(
 def validate_rpp_runtime_observation(
     observation: Mapping[str, Any], *, generated_params_sha256: str, source_commit: str | None,
     follow_path_plugin: str = str(G3_NAV2_GOAL_ACCEPTANCE["follow_path_plugin"]),
+    robot_ids: Sequence[str] = ROBOT_IDS, namespace_by_id: Mapping[str, str] | None = None,
 ) -> None:
     """Fail closed unless both controllers and diagnostic topics prove the requested runtime."""
+    ids, namespaces = fleet_identity(robot_ids, namespace_by_id)
     if follow_path_plugin not in {G3_NAV2_GOAL_ACCEPTANCE["follow_path_plugin"], CONFIRMED_XY_CONTROLLER}:
         raise ValueError("G3 runtime controller plugin is unsupported")
     expected_parameters = {
@@ -187,9 +195,9 @@ def validate_rpp_runtime_observation(
             or not _SHA256.fullmatch(str(observation.get("build_attestation_sha256", "")))):
         raise ValueError("RPP runtime observation source/parameter identity differs")
     controllers = observation.get("controllers")
-    if not isinstance(controllers, Mapping) or set(controllers) != set(ROBOT_IDS):
+    if not isinstance(controllers, Mapping) or set(controllers) != set(ids):
         raise ValueError("RPP runtime observation controller set differs")
-    for robot in ROBOT_IDS:
+    for robot in ids:
         row = controllers[robot]
         parameters = row.get("parameters") if isinstance(row, Mapping) else None
         if (not isinstance(row, Mapping) or set(row) != {"lifecycle_state", "parameters"}
@@ -210,7 +218,7 @@ def validate_rpp_runtime_observation(
                         and (type(actual) is not str or actual != expected_value))):
                 raise ValueError(f"{robot} runtime parameter value differs: {name}")
     topics = observation.get("observation_topics")
-    expected = {f"/{robot}/{name}": type_name for robot in ROBOT_IDS
+    expected = {f"/{namespaces[robot]}/{name}": type_name for robot in ids
                 for name, type_name in {**RPP_OBSERVATION_TYPES, **GOAL_CHECKER_TRACE_TYPES}.items()}
     if topics != expected:
         raise ValueError("RPP observation topic graph names/types differ")
@@ -295,10 +303,14 @@ def collect_rpp_runtime_observation(
     string_parameter_type: int,
     source_commit: str | None,
     follow_path_plugin: str = str(G3_NAV2_GOAL_ACCEPTANCE["follow_path_plugin"]),
+    robot_ids: Sequence[str] = ROBOT_IDS, namespace_by_id: Mapping[str, str] | None = None,
 ) -> dict[str, Any]:
     """Probe active controller parameters and graph types before any initial HOLD is sent."""
+    ids, namespaces = fleet_identity(robot_ids, namespace_by_id)
+    if set(robots) != set(ids):
+        raise ValueError("runtime controller clients differ from the declared fleet")
     graph_types = {name: types for name, types in event_node.get_topic_names_and_types()}
-    observation_topics = {f"/{robot}/{name}": type_name for robot in ROBOT_IDS
+    observation_topics = {f"/{namespaces[robot]}/{name}": type_name for robot in ids
                           for name, type_name in {**RPP_OBSERVATION_TYPES, **GOAL_CHECKER_TRACE_TYPES}.items()}
     if any(graph_types.get(name) != [type_name] for name, type_name in observation_topics.items()):
         raise RuntimeError("installed RPP observation topics are missing or have unexpected ROS types")
@@ -348,6 +360,7 @@ def collect_rpp_runtime_observation(
     validate_rpp_runtime_observation(
         observation, generated_params_sha256=sha(params_path), source_commit=source_commit,
         follow_path_plugin=follow_path_plugin,
+        robot_ids=ids, namespace_by_id=namespaces,
     )
     return observation
 
@@ -447,15 +460,18 @@ def valid_initial_hold_ack(ack: Mapping[str, Any], expected: Mapping[str, Any], 
 
 
 def initial_hold_boundary_ready(acks: Mapping[str, Mapping[str, Any]], expected: Mapping[str, Mapping[str, Any]],
-                                *, now_s: float) -> bool:
-    return bool(set(acks) == set(expected) == set(ROBOT_IDS)
+                                *, now_s: float, robot_ids: Sequence[str] = ROBOT_IDS) -> bool:
+    ids, _ = fleet_identity(robot_ids)
+    return bool(set(acks) == set(expected) == set(ids)
                 and all(valid_initial_hold_ack(acks[robot], expected[robot], now_s=now_s)
-                        and now_s > acks[robot]["sample_sim_time_s"] for robot in ROBOT_IDS))
+                        and now_s > acks[robot]["sample_sim_time_s"] for robot in ids))
 
 
 def terminal_recording_boundary(scene: Mapping[str, Any] | None, odometry_ns: Mapping[str, Any], *,
-                                run_id: str, scenario_id: str, minimum_sim_time_ns: int) -> dict[str, Any] | None:
+                                run_id: str, scenario_id: str, minimum_sim_time_ns: int,
+                                robot_ids: Sequence[str] = ROBOT_IDS) -> dict[str, Any] | None:
     """Keep recording until the scene seals a final ROS-aligned physics frame."""
+    ids, _ = fleet_identity(robot_ids)
     if scene is None:
         return None
     if scene.get("run_id") != run_id or scene.get("scenario_id") != scenario_id:
@@ -476,16 +492,17 @@ def terminal_recording_boundary(scene: Mapping[str, Any] | None, odometry_ns: Ma
             or isinstance(final_seconds, bool) or not isinstance(final_seconds, (int, float)) or not math.isfinite(final_seconds)
             or abs(final_seconds-final_ns/1e9) > 1e-9):
         raise ValueError("terminal scene final frame/time is missing, invalid or backward")
-    if any(type(odometry_ns.get(robot)) is not int or odometry_ns[robot] < final_ns for robot in ROBOT_IDS):
+    if set(odometry_ns) != set(ids) or any(type(odometry_ns.get(robot)) is not int or odometry_ns[robot] < final_ns for robot in ids):
         return None
     return {"final_stamp": dict(timing["final_stamp"]), "final_sim_time_ns": final_ns,
             "final_physics_frame": frame, "minimum_sim_time_ns": minimum_sim_time_ns,
-            "received_odometry_ns": {robot: odometry_ns[robot] for robot in ROBOT_IDS}}
+            "received_odometry_ns": {robot: odometry_ns[robot] for robot in ids}}
 
 
 def wait_for_terminal_recording(*, tick: Callable[[], Any], read_scene: Callable[[], Mapping[str, Any] | None],
                                 read_odometry_ns: Callable[[], Mapping[str, Any]], run_id: str, scenario_id: str,
                                 minimum_sim_time_ns: int, wait_wall_s: float,
+                                robot_ids: Sequence[str] = ROBOT_IDS,
                                 now_wall: Callable[[], float] = time.monotonic) -> dict[str, Any]:
     if type(wait_wall_s) not in (int, float) or not math.isfinite(wait_wall_s) or wait_wall_s <= 0:
         raise ValueError("terminal recording wait must have a finite positive wall bound")
@@ -493,7 +510,7 @@ def wait_for_terminal_recording(*, tick: Callable[[], Any], read_scene: Callable
     while True:
         tick()
         boundary = terminal_recording_boundary(read_scene(), read_odometry_ns(), run_id=run_id,
-            scenario_id=scenario_id, minimum_sim_time_ns=minimum_sim_time_ns)
+            scenario_id=scenario_id, minimum_sim_time_ns=minimum_sim_time_ns, robot_ids=robot_ids)
         if boundary is not None:
             return boundary
         if now_wall() >= deadline:
@@ -753,7 +770,8 @@ def cutoff_ledger_payload(mission_export: Mapping[str, Any]) -> dict[str, Any]:
 def build_cutoff_record(*, mission_export: Mapping[str, Any], horizon_s: float,
                         origin_sim_time_s: float, observed_sim_time_s: float,
                         robots: Mapping[str, Mapping[str, Any]],
-                        retained_holds: Mapping[str, Mapping[str, Any]]) -> dict[str, Any]:
+                        retained_holds: Mapping[str, Mapping[str, Any]],
+                        robot_ids: Sequence[str] = ROBOT_IDS) -> dict[str, Any]:
     """Seal exact-horizon metrics before any retained physical cleanup runs."""
     if not math.isfinite(horizon_s) or horizon_s < 0 or not math.isfinite(origin_sim_time_s):
         raise ValueError("cutoff horizon/origin must be finite and nonnegative")
@@ -762,8 +780,11 @@ def build_cutoff_record(*, mission_export: Mapping[str, Any], horizon_s: float,
     if (mission_export.get("censored") is not True or mission_export.get("failed") is not False
             or not math.isclose(float(mission_export.get("sim_time", math.nan)), horizon_s, abs_tol=1e-9)):
         raise ValueError("cutoff requires an exact-horizon censored mission export")
+    ids, _ = fleet_identity(robot_ids)
+    if set(robots) != set(ids) or set(retained_holds) != set(ids):
+        raise ValueError("cutoff robot state set differs")
     phases: dict[str, dict[str, Any]] = {}
-    for robot in ROBOT_IDS:
+    for robot in ids:
         state = robots.get(robot)
         hold = retained_holds.get(robot)
         if (not isinstance(state, Mapping) or not isinstance(hold, Mapping)
@@ -814,9 +835,14 @@ def verify_navigation_maps(output: Path, book: RouteBook) -> dict[str, str]:
 
 
 def prepare_params(project: Path, output: Path, session_root: Path, session: Mapping[str, Any],
-                   ready: Mapping[str, Any], book: RouteBook, config: Mapping[str, Any]) -> tuple[Path, dict[bool, Path]]:
+                   ready: Mapping[str, Any], book: RouteBook, config: Mapping[str, Any], *,
+                   robot_ids: Sequence[str] = ROBOT_IDS, namespace_by_id: Mapping[str, str] | None = None,
+                   config_directory: Path | None = None, physical_map: Path | None = None) -> tuple[Path, dict[bool, Path]]:
     import yaml
-    radii = {robot: _planning_radius(ready["robots"][robot], config["localization_planning_margin_m"])[0] for robot in ROBOT_IDS}
+    ids, namespaces = fleet_identity(robot_ids, namespace_by_id)
+    if set(ready["robots"]) != set(ids):
+        raise ValueError("ready radius set differs from the declared fleet")
+    radii = {robot: _planning_radius(ready["robots"][robot], config["localization_planning_margin_m"])[0] for robot in ids}
     if any(not math.isclose(value, book.planning_radius_m, abs_tol=1e-6) for value in radii.values()):
         raise ValueError("loaded collision radius differs from G3 routing provenance")
     maps: dict[bool, Path] = {}
@@ -830,11 +856,13 @@ def prepare_params(project: Path, output: Path, session_root: Path, session: Map
         path.write_text(book.layout._yaml(pgm.name), encoding="utf-8", newline="\n")
         maps[closed] = path
     scenario = json.loads((session_root / "scenarios.json").read_text(encoding="utf-8"))["scenarios"][session["scenario_id"]]
-    template = yaml.safe_load((config_dir_from_session(session_root) / "nav2-g2.yaml").read_text(encoding="utf-8"))
+    config_directory = config_dir_from_session(session_root) if config_directory is None else config_directory
+    template = yaml.safe_load((config_directory / "nav2-g2.yaml").read_text(encoding="utf-8"))
     params, contract = build_g3_namespaced_params(
         template, scenario, radii, config["g3_runtime"],
-        physical_map=str(session_root / "maps/open/map.yaml"),
+        physical_map=str(session_root / "maps/open/map.yaml" if physical_map is None else physical_map),
         navigation_map=str(maps[session["condition"] == "closure"]),
+        robot_ids=ids, namespace_by_id=namespaces,
     )
     path = output / "nav2-g3-params.yaml"
     path.write_text(yaml.safe_dump(params, sort_keys=False), encoding="utf-8")
@@ -856,6 +884,13 @@ def session_verification_record(*, run_id: str, scenario_id: str, session_sha256
     }
 
 
+def transport_verification_record(*, run_id: str, session: Mapping[str, Any], registry: FleetRegistry,
+                                  bundle_sha256: str) -> dict[str, Any]:
+    from factory_ops.fleet_transport import transport_verification_record as pure_record
+
+    return pure_record(run_id=run_id, session=session, registry=registry, bundle_sha256=bundle_sha256)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--session", required=True, type=Path)
@@ -863,20 +898,51 @@ def main() -> int:
     parser.add_argument("--run-id", required=True)
     parser.add_argument("--dashboard", action="store_true", help="publish read-only web telemetry; no web control")
     args = parser.parse_args()
-    project = Path(__file__).resolve().parents[2]
     session_root = args.session.resolve(strict=True)
     session = verify_session(session_root, expected_sha256=os.environ["FACTORY_OPS_G3_SESSION_SHA256"])
     config = json.loads((session_root / "config.json").read_text(encoding="utf-8"))
+    config_dir = config_dir_from_session(session_root)
+    book = RouteBook.from_files(config_dir / "layout.json", config_dir / "g3-routing.json")
+    return run_mission(args, session_root=session_root, session=session, config=config, book=book)
+
+
+def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mapping[str, Any],
+                config: Mapping[str, Any], book: RouteBook, registry: FleetRegistry | None = None,
+                bundle_sha256: str | None = None) -> int:
+    """Execute a validated legacy session or a separately verified development bundle."""
+    project = Path(__file__).resolve().parents[2]
+    development = registry is not None
+    robot_ids, namespaces = fleet_identity(
+        ROBOT_IDS if registry is None else registry.robot_ids,
+        None if registry is None else {r["robot_id"]: r["namespace"] for r in registry.definitions})
+    if set(session["workload"]["initial_robots"]) != set(robot_ids):
+        raise ValueError("workload robot identities differ from runtime fleet")
+    if development:
+        if bundle_sha256 is None or registry is None:
+            raise ValueError("development execution requires a verified bundle digest and registry")
+        marker = transport_verification_record(run_id=args.run_id, session=session,
+            registry=registry, bundle_sha256=bundle_sha256)
+    else:
+        marker = session_verification_record(run_id=args.run_id, scenario_id=session["scenario_id"],
+            session_sha256=sha(session_root / "session.json"), session=session)
+    marker_name = "fleet-transport-verified.json" if development else "session-verified.json"
+    scene_result_name = "fleet4-transport-scene.json" if development else "g3-scene.json"
+    config_dir = session_root if development else config_dir_from_session(session_root)
     runtime_config = config["g3_runtime"]
     scenario_id = session["scenario_id"]
     output = args.output.resolve(strict=True)
-    config_dir = config_dir_from_session(session_root)
-    book = RouteBook.from_files(config_dir / "layout.json", config_dir / "g3-routing.json")
+    if development and any((output / name).exists() or (output / name).is_symlink()
+                           for name in (marker_name, "session-verified.json", "mission-result.json")):
+        raise ValueError("preserve existing mission evidence; development output must be new")
+    mission_label = "FACTORY_OPS_FLEET4_TRANSPORT" if development else "FACTORY_OPS_G3_MISSION"
     deadline = time.monotonic() + config["max_wall_time_s"]
     result: dict[str, Any] = {"run_id": args.run_id, "scenario_id": scenario_id, "status": "running", "stage": "wait_scene",
                               "primary_evaluation": session["primary_evaluation"], "scope": session["scope"], "ground_truth_input": False,
                               "workload_sha256": session["workload_sha256"], "session_sha256": sha(session_root / "session.json")}
-    result.update(primary_trial_identity(session_root, session))
+    if development:
+        result.update({"bundle_sha256": bundle_sha256, "robot_ids": list(robot_ids), "namespace_by_id": namespaces})
+    else:
+        result.update(primary_trial_identity(session_root, session))
     launch = bag = ros = mission = callback_drain = None
     nodes: list[Any] = []
     node_executors: list[tuple[Any, Any]] = []
@@ -886,28 +952,34 @@ def main() -> int:
     robots: dict[str, dict[str, Any]] = {}
     history: list[dict[str, Any]] = []
     lease_sender: Any = None
-    manager = RouteReservationManager(args.run_id, ROBOT_IDS, pose_ttl_s=runtime_config["pose_ttl_s"])
+    manager = RouteReservationManager(args.run_id, robot_ids, pose_ttl_s=runtime_config["pose_ttl_s"])
     try:
-        marker_path = output / "session-verified.json"
+        marker_path = output / marker_name
         if marker_path.exists() or marker_path.is_symlink():
             raise RuntimeError("session verification marker already exists; output must be new")
-        atomic_json(marker_path, session_verification_record(
-            run_id=args.run_id, scenario_id=scenario_id,
-            session_sha256=sha(session_root / "session.json"), session=session,
-        ))
+        atomic_json(marker_path, marker)
         while not (output / "sim-ready.json").is_file():
             if time.monotonic() >= deadline:
                 raise TimeoutError("G3 scene did not become ready")
-            scene_file = output / "g3-scene.json"
+            scene_file = output / scene_result_name
             if scene_file.is_file() and json.loads(scene_file.read_text())["status"] == "failed":
                 raise RuntimeError("G3 scene failed before ready")
             time.sleep(0.2)
-        ready = _load_ready(output / "sim-ready.json", args.run_id, scenario_id)
-        params_path, maps = prepare_params(project, output, session_root, session, ready, book, config)
+        ready = _load_ready(output / "sim-ready.json", args.run_id, scenario_id, registry=registry)
+        physical_map = None
+        physical_map_files: dict[str, str] = {}
+        if development:
+            book.layout.export_maps(output / "amcl-map")
+            physical_map = output / "amcl-map/map.yaml"
+            physical_map_files = {p.name: sha(p) for p in (output / "amcl-map").iterdir()}
+            result["physical_map_files"] = physical_map_files
+        params_path, maps = prepare_params(project, output, session_root, session, ready, book, config,
+            robot_ids=robot_ids, namespace_by_id=namespaces,
+            config_directory=config_dir if development else None, physical_map=physical_map)
         result["inputs"] = {name: {"path": str(path), "sha256": sha(path)} for name, path in {
             "mission_source": Path(__file__).resolve(), "session": session_root / "session.json",
             "callback_drain_source": project / "factory_ops/callback_drain.py",
-            "session_verification": output / "session-verified.json",
+            ("fleet_transport_verification" if development else "session_verification"): marker_path,
             "visual_state_source": project / "factory_ops/visual_state.py",
             "generated_params": params_path, "config": session_root / "config.json",
             "nav2_template": config_dir / "nav2-g2.yaml"}.items()}
@@ -972,8 +1044,8 @@ def main() -> int:
             logs["actions"].write(line + "\n"); logs["actions"].flush()
             message = String(); message.data = line; event_pub.publish(message)
 
-        for robot_id in ROBOT_IDS:
-            node = ros.create_node(f"g3_adapter_{robot_id}", namespace=robot_id,
+        for robot_id in robot_ids:
+            node = ros.create_node(f"g3_adapter_{robot_id}", namespace=namespaces[robot_id],
                  cli_args=["--ros-args", "-r", "/tf:=tf", "-r", "/tf_static:=tf_static"],
                  parameter_overrides=[Parameter("use_sim_time", value=True)])
             nodes.append(node)
@@ -1042,24 +1114,26 @@ def main() -> int:
         )
 
         qos = output / "bag-qos.yaml"
-        qos.write_text(bag_qos_overrides(), encoding="utf-8")
+        qos.write_text(bag_qos_overrides(robot_ids, namespace_by_id=namespaces), encoding="utf-8")
         bag_topics = ["/clock", "/factory/g3/events", "/factory/g3/authorizations", "/factory/g3/reservations"]
-        for robot in ROBOT_IDS:
-            bag_topics += [f"/{robot}/{name}" for name in ("scan_front_raw", "scan_rear_raw", "scan_front", "scan_rear", "scan_localization", "odom", "tf", "tf_static", "map", "navigation_map", "amcl_pose", "plan", "received_global_plan", "cmd_vel", "compute_path_to_pose/_action/status", "follow_path/_action/status", "follow_path/_action/feedback")]
-            bag_topics += [f"/{robot}/{name}" for name in {**RPP_OBSERVATION_TYPES, **GOAL_CHECKER_TRACE_TYPES}]
+        for robot in robot_ids:
+            bag_topics += [f"/{namespaces[robot]}/{name}" for name in ("scan_front_raw", "scan_rear_raw", "scan_front", "scan_rear", "scan_localization", "odom", "tf", "tf_static", "map", "navigation_map", "amcl_pose", "plan", "received_global_plan", "cmd_vel", "compute_path_to_pose/_action/status", "follow_path/_action/status", "follow_path/_action/feedback")]
+            bag_topics += [f"/{namespaces[robot]}/{name}" for name in {**RPP_OBSERVATION_TYPES, **GOAL_CHECKER_TRACE_TYPES}]
             bag_topics.extend(robots[robot]["follow"].service_event_topics)
         service_event_topics = tuple(topic for rt in robots.values() for topic in rt["follow"].service_event_topics)
         service_names = [topic.removesuffix("/_service_event") for topic in service_event_topics]
         # Generated action events use /action/ types; list them explicitly as topics too.
         bag = subprocess.Popen(["ros2", "bag", "record", "--use-sim-time", "--include-hidden-topics", "--storage", "sqlite3", "--output", str(output / "rosbag"), "--qos-profile-overrides-path", str(qos), "--topics", *bag_topics, "--services", *service_names], stdout=logs["rosbag"], stderr=subprocess.STDOUT, start_new_session=True)
-        launch = subprocess.Popen(["ros2", "launch", str(project / "scripts/ros/g2.launch.py")], stdout=logs["nav2"], stderr=subprocess.STDOUT, start_new_session=True)
+        launch = subprocess.Popen(["ros2", "launch", str(project / ("scripts/ros/fleet4.launch.py" if development else "scripts/ros/g2.launch.py"))],
+            stdout=logs["nav2"], stderr=subprocess.STDOUT, start_new_session=True,
+            env={**os.environ, "FACTORY_OPS_FLEET_NAMESPACES": json.dumps([namespaces[r] for r in robot_ids])})
         result["stage"] = "evidence_discovery"
         discovery_end = min(deadline, time.monotonic() + 300)
         while True:
             callback_drain.drain()
             if time.monotonic() > discovery_end or launch.poll() is not None or bag.poll() is not None:
                 raise RuntimeError("G3 recorder/Nav2 evidence discovery failed")
-            if now() > 0 and evidence_subscribers_ready((event_pub, auth_pub, route_pub)) and named_subscriber_topics_ready(event_node, (*scan_recording_topics(), *service_event_topics), "rosbag2_recorder"):
+            if now() > 0 and evidence_subscribers_ready((event_pub, auth_pub, route_pub)) and named_subscriber_topics_ready(event_node, (*scan_recording_topics(robot_ids, namespace_by_id=namespaces), *service_event_topics), "rosbag2_recorder"):
                 break
         scan_epoch_ns = max(event_node.get_clock().now().nanoseconds, raw_stamp_peak)
         filters_ready = True
@@ -1115,11 +1189,11 @@ def main() -> int:
             nonlocal tick_clock_ns
             if time.monotonic() > deadline or launch.poll() is not None or bag.poll() is not None:
                 raise RuntimeError("G3 worker wall bound or dependent process failed")
-            scene_path = output / "g3-scene.json"
+            scene_path = output / scene_result_name
             if scene_path.is_file() and json.loads(scene_path.read_text())["status"] == "failed":
                 raise RuntimeError("G3 scene failed")
             callback_drain.drain()
-            if not evidence_subscribers_ready((event_pub, auth_pub, route_pub)) or not named_subscriber_topics_ready(event_node, (*scan_recording_topics(), *service_event_topics), "rosbag2_recorder"):
+            if not evidence_subscribers_ready((event_pub, auth_pub, route_pub)) or not named_subscriber_topics_ready(event_node, (*scan_recording_topics(robot_ids, namespace_by_id=namespaces), *service_event_topics), "rosbag2_recorder"):
                 raise RuntimeError("G3 evidence/scan recording subscriptions were lost")
             tick_clock_ns = event_node.get_clock().now().nanoseconds
             stamp = tick_clock_ns / 1e9
@@ -1178,6 +1252,7 @@ def main() -> int:
             string_parameter_type=ParameterType.PARAMETER_STRING,
             source_commit=os.environ.get("FACTORY_OPS_G3_SOURCE_COMMIT"),
             follow_path_plugin=runtime_config["g3_nav2"]["follow_path_plugin"],
+            robot_ids=robot_ids, namespace_by_id=namespaces,
         )
         validate_goal_checker_install_attestation(
             runtime_observation["packages"],
@@ -1210,15 +1285,15 @@ def main() -> int:
             stamp = tick(require_fresh=True, refresh_leases=False)
             if time.monotonic() > initial_deadline or any(stamp >= payload["valid_until_sim_time_s"] for payload in expected_initial.values()):
                 raise TimeoutError("initial reservation HOLD application did not qualify before lease expiry")
-            for robot in ROBOT_IDS:
+            for robot in robot_ids:
                 path = output / "robots" / robot / "control-ack.json"
                 if robot not in initial_acks and path.is_file():
                     ack = json.loads(path.read_text(encoding="utf-8"))
                     if valid_initial_hold_ack(ack, expected_initial[robot], now_s=stamp):
                         initial_acks[robot] = ack
-            if latched_at is not None and stamp > latched_at and initial_hold_boundary_ready(initial_acks, expected_initial, now_s=stamp):
+            if latched_at is not None and stamp > latched_at and initial_hold_boundary_ready(initial_acks, expected_initial, now_s=stamp, robot_ids=robot_ids):
                 break
-            if latched_at is None and set(initial_acks) == set(ROBOT_IDS):
+            if latched_at is None and set(initial_acks) == set(robot_ids):
                 latched_at = stamp
         initial_barrier = {"expected_authorizations": expected_initial, "acknowledgments": initial_acks,
                            "latched_sim_time_s": latched_at}
@@ -1294,7 +1369,7 @@ def main() -> int:
                     retained_holds = manager.snapshot(now_s=stamp).get("holds", {})
                     cutoff = build_cutoff_record(mission_export=frozen, horizon_s=horizon,
                         origin_sim_time_s=origin, observed_sim_time_s=stamp, robots=robots,
-                        retained_holds=retained_holds)
+                        retained_holds=retained_holds, robot_ids=robot_ids)
                     cutoff["event_seq"] = event_seq + 1
                     result["cutoff"] = cutoff
                     journal("evaluation_cutoff", {key: value for key, value in cutoff.items()
@@ -1651,7 +1726,7 @@ def main() -> int:
                      "robots": {robot: {"phase": rt["phase"], "anchor": rt["anchor"], "target": rt["leg"]["target"] if rt["leg"] else None, "generation": rt["generation"]} for robot, rt in robots.items()}})
                 last_progress = elapsed
         if cutoff is None:
-            for robot in ROBOT_IDS:
+            for robot in robot_ids:
                 lease(robot, forced_mode="hold")
         terminal_kind = "scenario_complete" if mission.completed else "scenario_incomplete"
         journal(terminal_kind, {"completed_orders": mission.completed_order_count,
@@ -1661,18 +1736,20 @@ def main() -> int:
             tick(require_fresh=True)
         if verify_navigation_maps(output, book) != result["navigation_map_files"]:
             raise RuntimeError("navigation map bytes changed before terminal verification")
+        if development and physical_map_files != {p.name: sha(p) for p in (output / "amcl-map").iterdir()}:
+            raise RuntimeError("authored AMCL map bytes changed before terminal verification")
         result["stage"] = "terminal_recording"
         for rt in robots.values():
             reset_stop_observation(rt)
         atomic_json(output / "mission-control.json", {"run_id": args.run_id, "scenario_id": scenario_id, "status": "passed"})
         def read_terminal_scene() -> Mapping[str, Any] | None:
-            path = output / "g3-scene.json"
+            path = output / scene_result_name
             return json.loads(path.read_text(encoding="utf-8")) if path.is_file() else None
         terminal_boundary = wait_for_terminal_recording(
             tick=lambda: tick(require_fresh=False), read_scene=read_terminal_scene,
             read_odometry_ns=lambda: {robot: rt.get("last_odom_stamp_ns") for robot, rt in robots.items()},
             run_id=args.run_id, scenario_id=scenario_id, minimum_sim_time_ns=tick_clock_ns,
-            wait_wall_s=runtime_config["terminal_recording_wait_wall_s"])
+            wait_wall_s=runtime_config["terminal_recording_wait_wall_s"], robot_ids=robot_ids)
         runtime_end = {
             "schema_version": 2,
             "source_commit": os.environ.get("FACTORY_OPS_G3_SOURCE_COMMIT"),
@@ -1701,7 +1778,7 @@ def main() -> int:
             "odom_counts": {robot: rt["odom_count"] for robot, rt in robots.items()}, "bag_topics_requested": bag_topics,
             "planning_radius_m": book.planning_radius_m, "reservation_radius_m": reservation_radius})
         drain_routes()
-        print("FACTORY_OPS_G3_MISSION=PASS", flush=True)
+        print(f"{mission_label}=PASS", flush=True)
     except BaseException as error:
         reason = failure_reason(error)
         result.update({"status": "failed", "error": {"type": type(error).__name__, "message": reason, "traceback": traceback.format_exc(limit=30)}, "actions": history})
@@ -1718,7 +1795,7 @@ def main() -> int:
             except Exception as cleanup_error:
                 cleanup.append({"label": f"{robot}_fault_stop", "error": str(cleanup_error)})
         atomic_json(output / "mission-control.json", {"run_id": args.run_id, "scenario_id": scenario_id, "status": "failed", "reason": reason})
-        print(f"FACTORY_OPS_G3_MISSION=FAIL {type(error).__name__}: {reason}", flush=True)
+        print(f"{mission_label}=FAIL {type(error).__name__}: {reason}", flush=True)
     finally:
         for process, label in ((bag, "rosbag"), (launch, "nav2")):
             try:

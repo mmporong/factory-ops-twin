@@ -1,0 +1,66 @@
+{
+  "task": "fleet4-input-scene-review-007",
+  "attempt": 1,
+  "contract_revision": 7,
+  "owner": "control",
+  "mode": "read-only bounded pre-GPU integration review",
+  "goal": "root-authored bundle/layout/SDK/visual4 contract defects that would invalidate four-robot execution; no broad redesign or repeated review",
+  "read_paths": [
+    "factory_ops/fleet_transport.py",
+    "factory_ops/layout.py",
+    "factory_ops/fleet_routing.py",
+    "factory_ops/visual_scene.py",
+    "scripts/isaac/factory_visuals.py",
+    "scripts/isaac/fleet4_transport_scene.py",
+    "tests/test_fleet_transport.py",
+    "tests/test_fleet_transport_scene.py",
+    "tests/test_fleet_transport_visuals.py",
+    "configs/factory-fleet4/g2.json",
+    "configs/factory-fleet4/g3-routing.json",
+    "configs/factory-fleet4/g3-runtime.json",
+    "configs/factory-fleet4/layout.json",
+    "configs/factory-fleet4/nav2-g2.yaml",
+    "configs/factory-fleet4/render-profile.json",
+    "configs/factory-fleet4/transport-profile.json",
+    "configs/factory-fleet4/visual-assets.json"
+  ],
+  "sha256": {
+    "factory_ops/fleet_transport.py": "b06fddc0a2cc2a77232c8c06022ed4c4cd03db428a294ecac8296d1c78241a1a",
+    "factory_ops/layout.py": "a6b05cbb0cc63910da07d0c8af0a2c3bbb94473e8f0bd09d2426913bddd8caf9",
+    "factory_ops/fleet_routing.py": "2681f2881147bdeb9620e8ec4bd881441f8c207c7a4fd8beb62209306bd0743c",
+    "factory_ops/visual_scene.py": "c819158256c3d454cb74caeff3cf69d35e1a6d624763d8f789cc3847a986c8bb",
+    "scripts/isaac/factory_visuals.py": "25768848d6b035be333d26382b5096b720aafa4782eee8daa894f677721b90db",
+    "scripts/isaac/fleet4_transport_scene.py": "ec3208ea731d6615c0a7b8f2225e65199e88fc55b0422c54402dbd7272560657",
+    "tests/test_fleet_transport.py": "67975cb8a9d12a74ca898732f2f1cec1edbc2ce62cdbd2a9d42f89f5b4857790",
+    "tests/test_fleet_transport_scene.py": "19327253e5ead211350624e27cfca7c5e091154ecaabf9b27729c98da74c44c1",
+    "tests/test_fleet_transport_visuals.py": "4f26012722bebd37811d64f5b073cc83af4d442bf65c78617237d85b4f3b3ac1",
+    "configs/factory-fleet4/g2.json": "1825fe6d35d7fc3a515259c2acf3650c9b190657fbde88f8c9983bb1df0048d2",
+    "configs/factory-fleet4/g3-routing.json": "92003f9860d55344ef8f7ca92748036954879b8f2aeab5eb23c2d7a2b0f3a774",
+    "configs/factory-fleet4/g3-runtime.json": "ccb7b17384f9bec6f3b6e1c24d72de645b6e1f43dc078aa0a2db00c5bb8eddfd",
+    "configs/factory-fleet4/layout.json": "96ea04c77892644867c454efd01b393e63dbe086c3ad2403d069fe65a3888d4d",
+    "configs/factory-fleet4/nav2-g2.yaml": "46da243197437b152552bd139780c498fdf35c7ef293fbd2f152cf608947a5f0",
+    "configs/factory-fleet4/render-profile.json": "5852c4750b5e5c9c5e1aeec75730345e30f8e7f4789b9edccfc3cb5209f7610c",
+    "configs/factory-fleet4/transport-profile.json": "273945722c2dd33843b06ea77ceb246fbc09485b988d3c8ff7ae1641ade2c1cf",
+    "configs/factory-fleet4/visual-assets.json": "e34c572b7ee570919796d719356e3010bfc75d8eec93d6c22c26e276c1088887"
+  },
+  "write_paths": [
+    "coordination/collab/results/fleet4-input-scene-review-007.json"
+  ],
+  "acceptance": [
+    "input/source/bundle/run/scenario marker binding, stale output rejection",
+    "four independent retained parking holds and180 open/closed routes, legacy layout unchanged",
+    "SDK4 and8lidar identities;4 robot visual parents and10markers; no physical load success claim",
+    "report observed defects with source evidence; do not expand into future80%features"
+  ],
+  "validation_evidence": [
+    "root:29 layout/route/bundle tests PASS on preliminary source",
+    "root:6 SDK bootstrap tests PASS on Python3.12",
+    "root:48visual tests47PASS+1existing OpenUSD skip; further marker count assertion now added",
+    "control:52 ROS/helper regressions PASS;5 source SHA matched"
+  ],
+  "constraints": [
+    "do not modify product or board",
+    "no GPU, remote, commit/push, extra agents or server operations",
+    "return task/attempt/ACK, reviewed SHA, findings, recommendation and untested scope; no fake source/GPU proof"
+  ]
+}

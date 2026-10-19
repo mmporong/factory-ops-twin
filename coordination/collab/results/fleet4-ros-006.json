@@ -1,0 +1,121 @@
+{
+  "task": "fleet4-ros-006",
+  "attempt": 1,
+  "contract_revision": 6,
+  "ack": true,
+  "status": "구현·CPU 검증 완료, root 검수 대기",
+  "input_commit": "73640fb1967a451268fa900867d6013a8be71f04",
+  "previous_task": {
+    "status": "UI 작업 완료·검증 통과",
+    "available": "즉시 ROS 작업 수용",
+    "preserved_paths": [
+      "dashboard/components/FactoryScene.tsx",
+      "dashboard/components/Dashboard.tsx",
+      "dashboard/app/globals.css",
+      "dashboard/evidence/interior-colors-desktop.jpg",
+      "dashboard/evidence/interior-colors-tablet.jpg",
+      "dashboard/evidence/interior-colors-mobile.jpg"
+    ],
+    "validation": "npm run typecheck/build PASS, CUA 1440/1024/390px 및 선택 확인"
+  },
+  "accepted": null,
+  "acceptance_owner": "root",
+  "integration_notes": {
+    "marker": "fleet-transport-verified.json",
+    "scene_result": "fleet4-transport-scene.json (root SDK 입구 scripts/isaac/fleet4_transport_scene.py와 합의됨; 기존 G3는 g3-scene.json)",
+    "shared_files": "sim-ready.json, mission-start.json, mission-control.json, robots/<ID>/authorization.json 및 control-ack.json, mission-result.json",
+    "environment": "FACTORY_OPS_G3_SOURCE_COMMIT 및 G3_BUILD_ATTESTATION_PATH/SHA256 엄격 검증 재사용, NAV2_PARAMS/FLEET_NAMESPACES는 실행부가 설정",
+    "physical_map": "bundle authored Layout에서 output/amcl-map/map.yaml 및 관련 map 파일 생성. runtime result.physical_map_files로 SHA 보존·종료 대조",
+    "namespace": "ID는 원장/파일, 명시 namespace는 ROS node/TF/actions/scan/bag/params에 적용",
+    "marker_contract": "SDK/ROS 공통 factory_ops.fleet_transport.transport_verification_record. source_commit은 FACTORY_OPS_G3_SOURCE_COMMIT, source_files는 g3_mission.py/fleet4_mission.py/fleet4.launch.py 세 개",
+    "input_output_prerequisite": "root가 기존 절대 nonsymlink 출력 디렉터리와 source archive proof를 준비한다. ROS가 marker를 쓴 뒤 SDK가 대조한다. root 초기 provenance/source.tar, source-commit.raw, fleet-source.json 파일은 변경하지 않는다."
+  },
+  "revision": 6,
+  "changed_paths": [
+    "scripts/ros/g2_mission.py",
+    "scripts/ros/g3_mission.py",
+    "scripts/ros/fleet4_mission.py",
+    "scripts/ros/fleet4.launch.py",
+    "tests/test_fleet_transport_mission.py"
+  ],
+  "source_sha256": {
+    "scripts/ros/g2_mission.py": "573a56746e9a0ce876a533b686b4de991923e6d3be3ef5ae74a059396f437be0",
+    "scripts/ros/g3_mission.py": "cc443e42e0d5f655c97509eae851466b0c7fa3332eaad0cfe9941f164d5c9f4c",
+    "scripts/ros/fleet4_mission.py": "2c9c3872fc4c1edaeb28cae8e2b47997ccab349161dfdad2291a014374f7e88f",
+    "scripts/ros/fleet4.launch.py": "99fd8143b1c4f8746040b2703106c7101eb9a8a08f7fcca3661dee7a1c667221",
+    "tests/test_fleet_transport_mission.py": "59a2b54f80bee5f822017d4766aa0eb45386f8902dd60c09e2337563e6d0cccc"
+  },
+  "implementation": [
+    "ROBOT_IDS monkeypatch 없이 명시 robot_ids/namespace_by_id를 공통 helper와 실행부 전체에 전달한다. 기본 두 대 G2/G3 입구와 g2.launch.py는 유지한다.",
+    "별도 fleet4_mission CLI가 load_bundle을 지연 import하고 정확 네 대 development 입력을 검사한다. 기존 verify_session/primary_trial_identity는 두 대 G3 입구에 남긴다.",
+    "run_mission이 registry로 ready의 정확 ID/namespace/prim/유한 양수 footprint를 확인하며 robot ID는 원장·파일, namespace는 ROS params/node/TF/action/scan/recorder/provenance에 사용한다.",
+    "초기 HOLD·post-terminal ACK·cutoff·최종 odometry는 선언한 전체 로봇 집합을 검사한다. 기존 실제 planner Path/허용 stamp 정규화/CDR introspection/STOP/retained reservation/GT 금지·goal checker attestation 경계는 보존한다.",
+    "개발 marker는 fleet-transport-verified.json이며 g3_mission.transport_verification_record는 factory_ops.fleet_transport의 순수 함수로 지연 import 후 위임한다. 기존 session-verified.json을 만들지 않는다.",
+    "개발 AMCL 물리 map은 authored Layout.export_maps로 output/amcl-map에 생성한다. navigation maps는 기존 source 재계산 검증을 유지하고 AMCL bytes도 시작/종료 SHA로 대조한다.",
+    "기존 mission evidence가 있는 개발 출력은 덮어쓰지 않고 거절한다. 개발 stdout 표식은 FACTORY_OPS_FLEET4_TRANSPORT이며 G3 qualification 표식과 구분한다."
+  ],
+  "validation": [
+    {
+      "command": ".venv/Scripts/python.exe -m unittest tests.test_fleet_transport_mission tests.test_g2_mission tests.test_g3_mission",
+      "exit_code": 0,
+      "result": "52 tests PASS (새 14 + 기존 38), 17.189s. 부분 ready 음성 검사에서 출력된 FACTORY_OPS_FLEET4_TRANSPORT=FAIL은 예상된 거절이며 테스트 실패가 아니다."
+    },
+    {
+      "command": "node C:/Users/LIMMM/AppData/Local/npm-cache/_npx/110e52990071af13/node_modules/pyright/dist/pyright.js --typeshedpath C:/Users/LIMMM/AppData/Local/npm-cache/_npx/110e52990071af13/node_modules/pyright/dist/typeshed-fallback --pythonpath .venv/Scripts/python.exe scripts/ros/g2_mission.py scripts/ros/fleet4_mission.py scripts/ros/fleet4.launch.py tests/test_fleet_transport_mission.py",
+      "exit_code": 0,
+      "result": "0 errors, 0 warnings"
+    },
+    {
+      "command": "node C:/Users/LIMMM/AppData/Local/npm-cache/_npx/110e52990071af13/node_modules/pyright/dist/pyright.js --typeshedpath C:/Users/LIMMM/AppData/Local/npm-cache/_npx/110e52990071af13/node_modules/pyright/dist/typeshed-fallback --pythonpath .venv/Scripts/python.exe scripts/ros/g2_mission.py scripts/ros/g3_mission.py scripts/ros/fleet4_mission.py scripts/ros/fleet4.launch.py tests/test_fleet_transport_mission.py",
+      "exit_code": 1,
+      "result": "g3_mission.py:909 run_mission Code is too complex 1건, 0 warnings. 기존 대형 main 실행부를 분리한 함수의 정적 분석 제약이며 별도 subset은 오류 0개다. 거대 실행 함수 전체 타입 분석 완료로 주장하지 않는다."
+    },
+    {
+      "command": ".venv/Scripts/python.exe scripts/ros/fleet4_mission.py --help",
+      "exit_code": 0,
+      "result": "새 CLI의 --bundle/--output/--run-id/--dashboard 확인, ROS/SDK 기동 없음"
+    },
+    {
+      "command": "PowerShell stdin CPU smoke + 지속 회귀 test_authored_bundle_generates_four_nav2_stacks_and_shared_development_marker",
+      "exit_code": 0,
+      "result": "실제 root load_bundle: bounds [0,0,32,22], 4 ID, P1/P2/P3/P4, params namespace 4개, open/closed map 2종·4파일, 공통 marker와 entry handoff PASS. footprint fixture 및 runner mock을 사용해 ROS/SDK 물리 성공을 주장하지 않는다."
+    }
+  ],
+  "remaining_limits": [
+    "ROS Jazzy/Nav2 네 실제 stack 기동·action 전송·센서 수신·실측 운송/적재/주차/GPU·CDR 최종 데이터 판정은 실행하지 않았다. root의 SDK/supervisor·source archive proof와 통합 검수가 필요하다.",
+    "기존 qualification/session 및 G3 CDR 검증기를 4대 허용으로 완화하지 않았다. 네 대 운송은 development scope이며 qualified 또는 primary 결과로 보고하지 않는다.",
+    "기존 대형 G3 실행 함수의 Pyright 복잡도 제약 1건은 남아 있다. 전역 진단 억제나 타입검사 통과 위장은 하지 않았다.",
+    "새 장기 실행 프로세스·서버·GPU·원격·Git 변경·commit/push·새 세션/에이전트는 시작하지 않았다. CPU 검증 프로세스는 모두 종료됐다."
+  ],
+  "separate_ui_deliverable": {
+    "request": "사용자의 스마트 팩토리 내부 색상·설비 표현 개선",
+    "source_sha256": {
+      "dashboard/components/FactoryScene.tsx": "85fa92c177fffac880eddfae68d21977fdd40db7581d3084ff33e9ebf533e14a",
+      "dashboard/components/Dashboard.tsx": "2e4c0eb6000ba5bb4846d91e80968db92eb9060f66b12fc5c788085fc5405da6",
+      "dashboard/app/globals.css": "ce087644b0f605449499c452d4000ba277c3033f7ba88e438466ece707b005c5",
+      "dashboard/evidence/interior-colors-desktop.jpg": "0c3daad1baf4b6194512d9792a4909bbdefe9d585c619081958bd3577e550386",
+      "dashboard/evidence/interior-colors-tablet.jpg": "2a795886f4c648bbe8e138482d2c9bb9054f6ff50f956215b332acb5d12b2bd9",
+      "dashboard/evidence/interior-colors-mobile.jpg": "663611b07b5cfb3c093c53489cf70c5e9ea2a0911469e59a4db3eab8fa867415"
+    },
+    "representative_image": "dashboard/evidence/interior-colors-desktop.jpg",
+    "validation": [
+      "npm run typecheck PASS",
+      "npm run build PASS",
+      "CUA 1440x1000/1024x900/390x844: 가로 넘침 없음, 콘솔 오류/경고 없음",
+      "실제 설비 raycast 클릭→조립 공정 상세, AMR 03 Enter→동일 상세·포커스 확인",
+      "미리보기 viewport와 AMR 01 선택을 복원"
+    ],
+    "preview_url": "http://127.0.0.1:3007/",
+    "scope": "자재/생산/출하 색상·황색 안전 구획·철제 랙·청록 작업대·제어 패널·금속 롤러와 범례. ROS 작업에서는 해당 파일을 수정하지 않았다.",
+    "limitation": "당시 API 32x20m local_model 화면 기준 검증. 새 32x22m transport bundle을 공급한 UI 재검증은 별도이며 기존 상단 크기 표기의 갱신 여부도 root 통합 시 확인 필요."
+  },
+  "review": "작성 뒤 별도 diff·namespace 데이터 흐름·회귀/타입 검증 패스를 수행했다. 독립 승인은 아니며 accepted 판정은 root 소유다.",
+  "written_paths": [
+    "scripts/ros/g2_mission.py",
+    "scripts/ros/g3_mission.py",
+    "scripts/ros/fleet4_mission.py",
+    "scripts/ros/fleet4.launch.py",
+    "tests/test_fleet_transport_mission.py",
+    "coordination/collab/results/fleet4-ros-006.json"
+  ]
+}

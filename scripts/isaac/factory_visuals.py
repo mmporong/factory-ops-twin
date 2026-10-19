@@ -62,7 +62,7 @@ V4_CARGO_SUPPORT = {
 
 
 def signal_placements(layout: Layout) -> dict[str, tuple[float, float, float]]:
-    if layout.data.get("revision") != "amr-production-bay-v4":
+    if layout.data.get("revision") not in ("amr-production-bay-v4", "amr-production-bay-fleet4-v1"):
         return dict(SIGNAL_PLACEMENTS)
     obstacles = {str(item["id"]): item for item in layout.data["physical_obstacles"]}
     ci = Rect.from_value(obstacles["CI_BUFFER"]["rect"], "CI_BUFFER")
@@ -96,7 +96,8 @@ def _signal_color(name: str, active: bool) -> tuple[float, float, float]:
     return (.02, .85, .18)
 
 
-def validate_visual_state_document(document: object, *, run_id: str, scenario_id: str) -> dict[str, Any]:
+def validate_visual_state_document(document: object, *, run_id: str, scenario_id: str,
+                                   robot_ids: Sequence[str] | None = None) -> dict[str, Any]:
     """Validate the complete runtime handoff before it can affect presentation."""
     if not isinstance(document, dict):
         raise ValueError("visual state root must be an object")
@@ -118,7 +119,7 @@ def validate_visual_state_document(document: object, *, run_id: str, scenario_id
     expected_projection_sha = canonical_sha256(projection)
     if document.get("projection_sha256") != expected_projection_sha:
         raise ValueError("visual state projection hash differs")
-    _validate_projection(projection)
+    _validate_projection(projection, robot_ids=robot_ids)
     return dict(document)
 
 
@@ -129,7 +130,7 @@ def world_slot_placement(layout: Layout, location: str, slot: int) -> dict[str, 
     if type(slot) is not int or slot < 0:
         raise ValueError("visual cargo slot must be a nonnegative integer")
     obstacle_id = WORLD_LOCATION_OBSTACLE[location]
-    compact = layout.data.get("revision") == "amr-production-bay-v4"
+    compact = layout.data.get("revision") in ("amr-production-bay-v4", "amr-production-bay-fleet4-v1")
     if compact and location == "source_S3":
         obstacle_id = "KIT_BENCH_2"
     source = next((item for item in layout.data["physical_obstacles"] if item["id"] == obstacle_id), None)
@@ -255,7 +256,7 @@ def build_payload_visibility_plan(
     robot_paths: Mapping[str, str],
 ) -> list[dict[str, Any]]:
     """Resolve exactly one visible copy path and placement per logical payload."""
-    _validate_projection(projection)
+    _validate_projection(projection, robot_ids=tuple(robot_paths))
     result: list[dict[str, Any]] = []
     seen_paths: set[str] = set()
     for row in projection["payloads"]:
@@ -263,7 +264,7 @@ def build_payload_visibility_plan(
         if location in WORLD_LOCATION_OBSTACLE:
             placement = world_slot_placement(layout, location, slot)
         else:
-            robot_id = ROBOT_LOCATIONS[location]
+            robot_id = str(row["robot_id"])
             chassis = robot_paths.get(robot_id)
             if not isinstance(chassis, str) or not chassis.startswith("/World/"):
                 raise ValueError(f"visual cargo robot parent is unavailable: {location}")
@@ -386,11 +387,14 @@ class FactoryVisualRuntime:
                 or before["collider_geometry_readbacks"] != after["collider_geometry_readbacks"]
                 or after["collider_count"] != 20):
             raise ValueError("visual setup changed the 20 source collider paths, transforms, bounds or enabled values")
-        if before["obstacle_count"] != 19 or after["obstacle_count"] != 19 or before["marker_count"] != 8 or after["marker_count"] != 8:
+        expected_markers = len(self.layout.stations) + len(self.layout.pockets)
+        if (before["obstacle_count"] != 19 or after["obstacle_count"] != 19
+                or before["marker_count"] != expected_markers or after["marker_count"] != expected_markers):
             raise ValueError("visual setup changed source obstacle or marker counts")
         bbox = self._validate_visual_bounds()
         session_export = _export_immutable_session_layer(session, self.output)
         renderer = _configure_renderer_readback()
+        assert self.manifest is not None
         self.runtime_manifest = {
             "schema_version": 1,
             "run_id": self.run_id,
@@ -483,7 +487,8 @@ class FactoryVisualRuntime:
                     raw = json.loads(source)
                 except (UnicodeDecodeError, json.JSONDecodeError) as exc:
                     raise ValueError(f"visual state is not valid UTF-8 JSON: {exc}") from exc
-                document = validate_visual_state_document(raw, run_id=self.run_id, scenario_id=self.scenario_id)
+                document = validate_visual_state_document(raw, run_id=self.run_id, scenario_id=self.scenario_id,
+                                                         robot_ids=tuple(self.robot_paths) if self.robot_paths else None)
                 state_hash = canonical_sha256(document)
                 self._accept_candidate(document, state_hash)
                 self.last_observed_file_sha = file_sha
@@ -503,7 +508,8 @@ class FactoryVisualRuntime:
                 raw = json.loads(source)
             except (UnicodeDecodeError, json.JSONDecodeError) as exc:
                 raise ValueError(f"visual state stream is not valid UTF-8 JSON: {exc}") from exc
-            document = validate_visual_state_document(raw, run_id=self.run_id, scenario_id=self.scenario_id)
+            document = validate_visual_state_document(raw, run_id=self.run_id, scenario_id=self.scenario_id,
+                                                     robot_ids=tuple(self.robot_paths) if self.robot_paths else None)
             canonical_source = json.dumps(
                 document, sort_keys=True, separators=(",", ":"),
                 ensure_ascii=False, allow_nan=False,
@@ -909,7 +915,7 @@ class FactoryVisualRuntime:
                 raise ValueError("operational signal unexpectedly has CollisionAPI")
 
 
-def _validate_projection(projection: Mapping[str, Any]) -> None:
+def _validate_projection(projection: Mapping[str, Any], *, robot_ids: Sequence[str] | None = None) -> None:
     required = {"scope", "payloads", "signals", "physical_loading_validated", "ground_truth_control_input"}
     if set(projection) != required or projection.get("scope") != SCOPE:
         raise ValueError("visual projection keys or scope differ")
@@ -922,7 +928,11 @@ def _validate_projection(projection: Mapping[str, Any]) -> None:
     orders: set[str] = set()
     occupied: set[tuple[str, int]] = set()
     location_counts: dict[str, int] = {}
-    allowed_locations = set(WORLD_LOCATION_OBSTACLE) | set(ROBOT_LOCATIONS)
+    ids = tuple(ROBOT_LOCATIONS.values()) if robot_ids is None else tuple(robot_ids)
+    if len(set(ids)) != len(ids) or any(not isinstance(r, str) or not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", r) for r in ids):
+        raise ValueError("visual projection robot IDs must be unique identifiers")
+    robot_locations = {f"robot_{robot}": robot for robot in ids}
+    allowed_locations = set(WORLD_LOCATION_OBSTACLE) | set(robot_locations)
     row_keys = {"order_id", "payload_id", "state", "state_version", "owner", "location", "slot", "robot_id"}
     for row in rows:
         if not isinstance(row, dict) or set(row) != row_keys:
@@ -944,7 +954,7 @@ def _validate_projection(projection: Mapping[str, Any]) -> None:
             raise ValueError("visual payload state or owner is invalid")
         if type(row.get("state_version")) is not int or row["state_version"] < 0:
             raise ValueError("visual payload state_version is invalid")
-        expected_robot = ROBOT_LOCATIONS.get(str(location))
+        expected_robot = robot_locations.get(str(location))
         if row.get("robot_id") != expected_robot:
             raise ValueError("visual payload robot identity differs from location")
         if expected_robot is not None and slot != 0:

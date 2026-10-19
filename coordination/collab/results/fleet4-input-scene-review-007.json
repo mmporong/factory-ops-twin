@@ -1,0 +1,120 @@
+{
+  "task": "fleet4-input-scene-review-007",
+  "attempt": 1,
+  "contract_revision": 7,
+  "ack": true,
+  "status": "읽기 전용 한정 검수 완료",
+  "input_commit": "73640fb1967a451268fa900867d6013a8be71f04",
+  "reviewed_sha256": {
+    "factory_ops/fleet_transport.py": "b06fddc0a2cc2a77232c8c06022ed4c4cd03db428a294ecac8296d1c78241a1a",
+    "factory_ops/layout.py": "a6b05cbb0cc63910da07d0c8af0a2c3bbb94473e8f0bd09d2426913bddd8caf9",
+    "factory_ops/fleet_routing.py": "2681f2881147bdeb9620e8ec4bd881441f8c207c7a4fd8beb62209306bd0743c",
+    "factory_ops/visual_scene.py": "c819158256c3d454cb74caeff3cf69d35e1a6d624763d8f789cc3847a986c8bb",
+    "scripts/isaac/factory_visuals.py": "25768848d6b035be333d26382b5096b720aafa4782eee8daa894f677721b90db",
+    "scripts/isaac/fleet4_transport_scene.py": "ec3208ea731d6615c0a7b8f2225e65199e88fc55b0422c54402dbd7272560657",
+    "tests/test_fleet_transport.py": "67975cb8a9d12a74ca898732f2f1cec1edbc2ce62cdbd2a9d42f89f5b4857790",
+    "tests/test_fleet_transport_scene.py": "19327253e5ead211350624e27cfca7c5e091154ecaabf9b27729c98da74c44c1",
+    "tests/test_fleet_transport_visuals.py": "4f26012722bebd37811d64f5b073cc83af4d442bf65c78617237d85b4f3b3ac1",
+    "configs/factory-fleet4/g2.json": "1825fe6d35d7fc3a515259c2acf3650c9b190657fbde88f8c9983bb1df0048d2",
+    "configs/factory-fleet4/g3-routing.json": "92003f9860d55344ef8f7ca92748036954879b8f2aeab5eb23c2d7a2b0f3a774",
+    "configs/factory-fleet4/g3-runtime.json": "ccb7b17384f9bec6f3b6e1c24d72de645b6e1f43dc078aa0a2db00c5bb8eddfd",
+    "configs/factory-fleet4/layout.json": "96ea04c77892644867c454efd01b393e63dbe086c3ad2403d069fe65a3888d4d",
+    "configs/factory-fleet4/nav2-g2.yaml": "46da243197437b152552bd139780c498fdf35c7ef293fbd2f152cf608947a5f0",
+    "configs/factory-fleet4/render-profile.json": "5852c4750b5e5c9c5e1aeec75730345e30f8e7f4789b9edccfc3cb5209f7610c",
+    "configs/factory-fleet4/transport-profile.json": "273945722c2dd33843b06ea77ceb246fbc09485b988d3c8ff7ae1641ade2c1cf",
+    "configs/factory-fleet4/visual-assets.json": "e34c572b7ee570919796d719356e3010bfc75d8eec93d6c22c26e276c1088887"
+  },
+  "sha_mismatch": [],
+  "accepted": null,
+  "acceptance_owner": "root",
+  "revision": 7,
+  "findings": [],
+  "finding_summary": "지정 입력/SDK/시각 연결 경계에서 실제 4대 실행을 막을 치명적/주요 결함을 발견하지 못했다.",
+  "recommendation": "지정된 CPU 사전 통합 범위의 수용을 권고한다. 최종 accepted 판정과 실제 실행 결과 판정은 root 소유다.",
+  "reviewed_boundaries": [
+    {
+      "boundary": "입력·파생 파일·bundle binding",
+      "locations": [
+        "factory_ops/fleet_transport.py:24",
+        "factory_ops/fleet_transport.py:184",
+        "factory_ops/fleet_transport.py:206"
+      ],
+      "evidence": "고정 8개 원본과 파생 config/session/scenario/registry/preflight/scene의 SHA를 검사한다. 원본에서 재컴파일한 JSON과 scene 재생성 SHA를 대조하므로 파일만 다시 해시해 primary claim·registry·scene를 바꾸는 경우를 거절한다. 독립 development profile 및 workload SHA를 유지한다."
+    },
+    {
+      "boundary": "SDK run/source 및 출력 재사용 거절",
+      "locations": [
+        "factory_ops/fleet_transport.py:32",
+        "scripts/isaac/fleet4_transport_scene.py:37",
+        "scripts/isaac/fleet4_transport_scene.py:52"
+      ],
+      "evidence": "절대·nonsymlink scene/output과 bundle scene 일치, 정확 bootstrap 4파일/1디렉터리, 공통 marker 전체 동등성을 검사한다. supervisor가 고정한 metadata SHA와 run/scenario/source commit/bundle SHA를 대조한 뒤 required source pins 및 snapshot_root를 archive verifier로 전달한다. 기존 결과/빈 추가 디렉터리/변조 marker는 사전 거절하며 원본을 지우지 않는다."
+    },
+    {
+      "boundary": "네 주차점과 정상/폐쇄 경로",
+      "locations": [
+        "factory_ops/layout.py:163",
+        "factory_ops/fleet_routing.py:298",
+        "factory_ops/fleet_transport.py:71",
+        "configs/factory-fleet4/g3-routing.json"
+      ],
+      "evidence": "32x22m 새 revision과 전용 P1/P2/P3/P4를 분리했다. station/설비의 y+1m 이동, 모든 anchor 일치, 두 방향 180개 정상/폐쇄 경로와 planning radius+tracking margin 주차 hold의 상호 분리·공용 lane 비차단을 확인한다. 기존 V4의 32x20m/두 pocket 계약은 유지된다."
+    },
+    {
+      "boundary": "SDK actor/sensor 입력",
+      "locations": [
+        "factory_ops/fleet_transport.py:123",
+        "factory_ops/fleet_transport.py:163",
+        "scripts/isaac/fleet4_transport_scene.py:91",
+        "configs/factory-fleet4/g2.json"
+      ],
+      "evidence": "네 ID와 네 시작점의 정확 일치·유일 namespace/prim·front/rear registry를 구성하고 SDK 공통 실행기에 expected_robot_count=4와 명시 scenario/qualification/config directory를 전달한다. 이는 4 actor/8 LiDAR 구성·전달 확인이며 실제 센서 취득 성공 측정이 아니다."
+    },
+    {
+      "boundary": "네 시각 부모와 열 marker",
+      "locations": [
+        "scripts/isaac/factory_visuals.py:429",
+        "scripts/isaac/factory_visuals.py:253",
+        "scripts/isaac/factory_visuals.py:390",
+        "scripts/isaac/factory_visuals.py:918",
+        "factory_ops/visual_scene.py:92",
+        "factory_ops/visual_scene.py:190"
+      ],
+      "evidence": "실제 선언된 robot_paths 집합을 projection validation과 payload parent 선택에 전달한다. 네 로봇마다 유일 chassis/FactoryVisualCargo 부모를 사용하고 모르는 ID·교차 parent를 거절한다. 기존 두 대 기본값도 보존한다. 새 revision이 production geometry recipe를 사용하고 6 station+4 parking=10 marker를 manifest 및 stage 전후 검사에 반영한다. physical_loading_validated와 ground_truth_control_input은 false만 허용한다."
+    }
+  ],
+  "validation": [
+    {
+      "command": "동결 17개 파일 Get-FileHash SHA256 카드 대조",
+      "result": "검수 시작 및 종료 모두 17/17 일치"
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m unittest tests.test_fleet_transport tests.test_fleet_transport_scene tests.test_fleet_transport_visuals",
+      "exit_code": 0,
+      "result": "21 tests PASS, 77.002s. 새 bundle/주차/경로, SDK 사전 경계, 4대 parent·10 marker 회귀에 한정"
+    },
+    {
+      "command": "임시 Python stdin: Layout + world_slot_placement로 현재 4주문이 요구하는 슬롯 계산",
+      "exit_code": 0,
+      "result": "source_S1 2/2, source_S2 1/8, source_S3 1/2, CI 2/30, cell 1/35, CO 2/30, OUT 4/24 (필요 수/도식 capacity). CPU 도식 배치의 용량만 확인하며 물리 적재 검증이 아니다."
+    },
+    {
+      "command": "허용된 변경 diff·신규 SDK/bundle 본문·시각 연결 helper 및 지정 config/테스트 한정 검토",
+      "result": "제품/보드 수정 없음. 지정 밖 제품 소스 본문으로 광역 리뷰를 확장하지 않음"
+    }
+  ],
+  "limitations": [
+    "SDK bootstrap 테스트는 transport marker 함수와 verify_source_archive를 mock한다. 검사 순서·실패 차단·snapshot_root 전달을 검증하지만 실제 source.tar/commit.raw 증명 성공을 대신하지 않는다. 실제 archive proof는 root 실행기에서 확보해야 한다.",
+    "실제 Isaac SDK stage 로드·4 actor/8 LiDAR 데이터·10 marker 실측 readback·Nav2 주행·CDR·완료 후 원본 검증·GPU renderer 결과는 수행하지 않았다.",
+    "네 cargo parent 및 월드 슬롯은 CPU 계획/USDA 생성 기준이다. 실제 4대 투영 소비와 stage의 collider/marker 불변성은 실행 결과로 확인해야 하며 물리 운송/적재 성공으로 주장하지 않는다.",
+    "공통 SDK worker·ROS006 source·source_provenance 내부를 새로 광역 검수하지 않았다. 해당 연결의 전체 실행 판정은 이번 사전 검수 범위를 넘어선다."
+  ],
+  "next_root_checks": [
+    "검수된 source/bundle와 현재 ROS006 SHA를 실행기의 source archive/metadata/marker에 함께 고정한다.",
+    "실제 실행에서는 네 로봇·8 센서·10 marker 및 시각 설정 SHA readback을 보존하고, recorder/worker 종료 후 폐쇄 원본으로 결과를 판정한다."
+  ],
+  "side_effects": "지정 결과 JSON만 작성. 제품/보드/UI 변경·GPU·원격·서버 조작·commit/push·새 에이전트 없음. CPU 테스트/읽기 계산은 종료됐다.",
+  "written_paths": [
+    "coordination/collab/results/fleet4-input-scene-review-007.json"
+  ]
+}

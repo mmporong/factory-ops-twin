@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "scope": "fleet4_transport_development",
+  "policy": "fifo",
+  "condition": "normal",
+  "primary_evaluation": false,
+  "scene_closure": null,
+  "initial_robots": {
+    "carter1": "P1",
+    "carter2": "P2",
+    "carter3": "P3",
+    "carter4": "P4"
+  },
+  "load": {
+    "ci_capacity": 2,
+    "co_capacity": 2,
+    "workers": 1,
+    "service_time_s": 20.0,
+    "nominal_speed_m_s": 0.6,
+    "dwell_s": 5.0
+  },
+  "orders": [
+    {
+      "order_id": "F4-001",
+      "payload_id": "F4-PAY-001",
+      "source_station": "S1",
+      "ready_time": 0.0
+    },
+    {
+      "order_id": "F4-002",
+      "payload_id": "F4-PAY-002",
+      "source_station": "S3",
+      "ready_time": 10.0
+    },
+    {
+      "order_id": "F4-003",
+      "payload_id": "F4-PAY-003",
+      "source_station": "S2",
+      "ready_time": 20.0
+    },
+    {
+      "order_id": "F4-004",
+      "payload_id": "F4-PAY-004",
+      "source_station": "S1",
+      "ready_time": 30.0
+    }
+  ],
+  "horizon_s": 1800.0,
+  "limits_provenance": "authored development workload; not calibrated production capacity or primary experiment"
+}

@@ -10,7 +10,7 @@ from pathlib import Path
 import re
 from typing import Any, Mapping, Sequence
 
-from .layout import V4_REVISION, Layout, LayoutError, Rect
+from .layout import FLEET4_REVISION, V4_REVISION, Layout, LayoutError, Rect
 
 
 SCHEMA_VERSION = 1
@@ -21,6 +21,7 @@ _STENCIL_GLYPHS = {
     "1": ("01100", "11100", "01100", "01100", "01100", "01100", "11111"),
     "2": ("11110", "00001", "00001", "11110", "10000", "10000", "11111"),
     "3": ("11110", "00001", "00001", "01110", "00001", "00001", "11110"),
+    "4": ("10010", "10010", "10010", "11111", "00010", "00010", "00010"),
     "A": ("01110", "10001", "10001", "11111", "10001", "10001", "10001"),
     "B": ("11110", "10001", "10001", "11110", "10001", "10001", "11110"),
     "C": ("01111", "10000", "10000", "10000", "10000", "10000", "01111"),
@@ -88,7 +89,7 @@ def export_visual_scene(
     render_bytes, render_profile = _load_json_object(render_source, "render profile")
     _validate_config(config, layout)
     _validate_render_profile(render_profile)
-    geometry_profile = PRODUCTION_BAY_GEOMETRY if layout.data.get("revision") == V4_REVISION else "legacy"
+    geometry_profile = PRODUCTION_BAY_GEOMETRY if layout.data.get("revision") in (V4_REVISION, FLEET4_REVISION) else "legacy"
 
     palette = _palette(variant_seed)
     obstacle_by_id = {str(item["id"]): item for item in layout.data["physical_obstacles"]}
@@ -186,7 +187,7 @@ def export_visual_scene(
         "physical_invariants": {
             "source_obstacle_count": 19,
             "source_static_collider_count": 20,
-            "source_marker_count": 8,
+            "source_marker_count": len(layout.stations) + len(layout.pockets),
             "visual_collision_api_count": 0,
             "layout_bounds_xy_m": [layout.bounds.xmin, layout.bounds.ymin, layout.bounds.xmax, layout.bounds.ymax],
             "visual_equipment_contained_by_source_xyz_envelopes": True,
@@ -359,7 +360,7 @@ def _materials(palette: Mapping[str, tuple[float, float, float]]) -> list[str]:
 def _factory_shell(layout: Layout, palette: Mapping[str, tuple[float, float, float]]) -> list[str]:
     light = palette["light"]
     bounds = layout.bounds
-    south_wall_height = .25 if layout.data.get("revision") == V4_REVISION else 1.2
+    south_wall_height = .25 if layout.data.get("revision") in (V4_REVISION, FLEET4_REVISION) else 1.2
     lines = ['        def Xform "FactoryShell"', "        {"]
     for name, bounds in (
         ("WestWall", (bounds.xmin - .12, bounds.ymin, 0.0, bounds.xmin, bounds.ymax, 3.2)),
@@ -432,10 +433,12 @@ def _floor_graphics(layout: Layout, palette: Mapping[str, tuple[float, float, fl
             ("East", (x1 - thickness, y0 + thickness, z0, x1, y1 - thickness, z1)),
         ):
             add_box(_Box(f"{name}_{suffix}", border, material, "floor_marking", "zone_boundary"))
-    if layout.data.get("revision") == "amr-production-bay-v4":
+    if layout.data.get("revision") in (V4_REVISION, FLEET4_REVISION):
         line_specs = ((2.5, bounds.xmin + .4, bounds.xmax - .4), (5.5, bounds.xmin + .4, bounds.xmax - .4),
                       (8.5, 2.0, 9.0), (11.5, 2.0, 9.0),
                       (14.5, bounds.xmin + .4, bounds.xmax - .4), (17.5, bounds.xmin + .4, bounds.xmax - .4))
+        if layout.data.get("revision") == FLEET4_REVISION:
+            line_specs = tuple((y + 1.0, x0, x1) for y, x0, x1 in line_specs)
     else:
         line_specs = tuple((y, .4, 39.6) for y in (2.3, 5.7, 10.2, 13.8, 18.3, 21.7))
     for index, (y, x0, x1) in enumerate(line_specs):
@@ -455,7 +458,7 @@ def _floor_graphics(layout: Layout, palette: Mapping[str, tuple[float, float, fl
             offset = (chevron - 1) * 0.34
             lines.extend(_box_usda(_Box(f"Chevron_{chevron}", (x - 0.56 + offset, y - 0.035, 0.017, x - 0.34 + offset, y + 0.035, 0.022), "White"), 16))
         lines.append("            }")
-    if layout.data.get("revision") == V4_REVISION:
+    if layout.data.get("revision") in (V4_REVISION, FLEET4_REVISION):
         stencil_specs = (
             ("S1", (3.75, 3.55), "station_identifier"),
             ("S2", (3.75, 9.55), "station_identifier"),
@@ -471,6 +474,11 @@ def _floor_graphics(layout: Layout, palette: Mapping[str, tuple[float, float, fl
             ("PACK", (16.7, 14.6), "process_identifier"),
             ("SHIP", (27.2, 8.8), "process_identifier"),
         )
+        if layout.data.get("revision") == FLEET4_REVISION:
+            stencil_specs = tuple((name, (xy[0] - .25, xy[1] - .45), "station_identifier")
+                                  for name, xy in {**layout.stations, **layout.pockets}.items()) + tuple(
+                (name, (origin[0], origin[1] + 1.0), role)
+                for name, origin, role in stencil_specs if role == "process_identifier")
         for label, origin, role in stencil_specs:
             lines.extend(_floor_stencil_usda(label, origin, role, indent=12))
             semantic_roots[f"{root_path}/Stencil_{_prim_name(label)}"] = "floor_marking"

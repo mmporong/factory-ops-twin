@@ -36,6 +36,14 @@ Isaac Sim에서 운송·교통을 검증한 구성은 Nova Carter2대입니다. 
 
 Isaac Sim에서 촬영한 정지 시험 장면입니다.4대 혼합 운송·물리 적재·충전은 후속 검증 대상입니다. 종료 결과는 SDK 밖의 별도 CPU 프로세스에서 `python -m factory_ops.fleet_bootstrap --bundle <입력 묶음> --validate-output <종료된 결과 폴더> --report <새 검증 JSON>`으로 확인합니다.
 
+4대 운송 개발 입구는 차량 목록에서 Nav2 namespace·TF·센서·주행 허가·초기 정지와 종료 기록의 대상을 구성합니다. 기존2대 qualification 경로와 별개로 실행하며, 주차 영역4개와 공용 경로를 분리한32×22m 후보를 사용합니다. 기존32×20m 생산 설비의 크기와 간격은 유지하고 앞뒤 서비스 공간을 합계2m 늘렸습니다. 입력 묶음은 원본·파생 설정·지도·USD·차량 목록의 해시와 기하 검사를 결속하며, 이 준비 상태를4대 실제 운송 성공으로 표시하지 않습니다.
+
+```powershell
+cd "$HOME/factory-ops-twin"
+uv run python -m factory_ops.fleet_transport --bundle runs/fleet4-transport-inputs
+uv run python -m factory_ops.fleet_transport --bundle runs/fleet4-transport-inputs --verify
+```
+
 OpenUSD 자산·운영 상태와 데이터 입력을 연결하고, Omniverse Kit 익스텐션에서 주문·재고·병목을 조작·확인하는 흐름을 다음 구현 대상으로 삼았습니다. 차량 수에 따른 처리량과 대기 변화를 이 흐름 안에서 비교합니다. 현재 실행 도구는 스크립트 기반이며 Kit 익스텐션과 외부 MES/IoT 연결은 미구현입니다.
 
 ## 3D 웹 운영 대시보드

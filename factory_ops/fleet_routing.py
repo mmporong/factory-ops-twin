@@ -295,11 +295,10 @@ class RouteBook:
             if name not in regions:
                 raise ValueError(f"unknown policy region override: {name}")
             regions[name]["rect"] = list(rectangle)
-        variant["revision"] = (
-            "amr-production-bay-v4"
-            if base_layout.data.get("revision") == "amr-production-bay-v4"
-            else "amr-focus-v3-g3a"
-        )
+        revision = base_layout.data.get("revision")
+        variant["revision"] = revision if revision in (
+            "amr-production-bay-v4", "amr-production-bay-fleet4-v1"
+        ) else "amr-focus-v3-g3a"
         variant["status"] = "G3a single-robot corridor preflight only; no physical G3 qualification"
         self.layout = Layout(variant, source_sha256=_hash(variant))
         self.base_layout = base_layout
@@ -307,7 +306,7 @@ class RouteBook:
         self.nodes = {name: _point(point) for name, point in self.config["nodes"].items()}
         locations = {**self.layout.stations, **self.layout.pockets}
         if any(self.nodes.get(name) != point for name, point in locations.items()):
-            raise ValueError("routing anchors must match all six stations and two pockets")
+            raise ValueError("routing anchors must match every station and parking pocket")
         self.edges: set[tuple[str, str]] = set()
         self.adjacency: dict[str, list[str]] = {name: [] for name in self.nodes}
         for edge in self.config["edges"]:

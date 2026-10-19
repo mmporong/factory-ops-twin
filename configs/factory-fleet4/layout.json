@@ -1,0 +1,658 @@
+{
+  "schema_version": 1,
+  "revision": "amr-production-bay-fleet4-v1",
+  "status": "authored four-AMR development layout; physical execution not qualified",
+  "units": "m",
+  "frame": "map",
+  "rect_convention": "xmin,ymin,xmax,ymax; grid uses cell centers",
+  "bounds_xy": [
+    0,
+    0,
+    32,
+    22
+  ],
+  "map_resolution_m": 0.05,
+  "grid_rules": {
+    "origin_xy_m": [
+      0,
+      0
+    ],
+    "row_direction": "+y from south; column +x from west",
+    "coordinate_unit": "exact integer millimeters; authored edges are multiples of 50mm",
+    "cell_center_mm": "(50*column+25, 50*row+25)",
+    "coordinate_to_cell": "floor(x_mm/50), floor(y_mm/50); at a boundary choose the +x/+y cell",
+    "rect_rasterization": "half-open [min,max) evaluated at cell centers",
+    "planning_probe": "nominal 0.7m half-extent axis-aligned square; k=ceil(700mm/50mm)=14; all 29x29 cells including boundary must be free; whole-cell cover is 1.45m",
+    "distance": "4-neighbor unit edges; distance_mm=edge_count*50; divide by 1000 only for report",
+    "not_a_carter_footprint": true
+  },
+  "geometry_authority": "Union of amr_allowed_regions minus physical_obstacles. Other floor is AMR keepout, not necessarily solid equipment.",
+  "width_status": "3m low/high mains, west link and east spine; 2.6m centre link; single-lane conflict protection remains required",
+  "amr_allowed_regions": [
+    {
+      "id": "MAIN_LOW",
+      "rect": [
+        2,
+        3.5,
+        30.5,
+        6.5
+      ],
+      "purpose": "3m main transport"
+    },
+    {
+      "id": "MAIN_HIGH",
+      "rect": [
+        2,
+        15.5,
+        30.5,
+        18.5
+      ],
+      "purpose": "3m alternate main transport"
+    },
+    {
+      "id": "WEST_LINK",
+      "rect": [
+        7.5,
+        5,
+        10.5,
+        17
+      ],
+      "purpose": "3m source cross-link"
+    },
+    {
+      "id": "CENTER_LINK",
+      "rect": [
+        13.7,
+        5,
+        16.3,
+        17
+      ],
+      "purpose": "2.6m process cross-link"
+    },
+    {
+      "id": "EAST_SPINE",
+      "rect": [
+        23.5,
+        5,
+        26.5,
+        17
+      ],
+      "purpose": "3m cell and shipping spine"
+    },
+    {
+      "id": "S2_APPROACH",
+      "rect": [
+        3.5,
+        9.5,
+        9,
+        12.5
+      ],
+      "purpose": "source B access"
+    },
+    {
+      "id": "S2_BAY",
+      "rect": [
+        2,
+        9.5,
+        5,
+        12.5
+      ],
+      "purpose": "source B handoff bay"
+    },
+    {
+      "id": "CI_APPROACH",
+      "rect": [
+        20.3,
+        6.7,
+        25,
+        9.3
+      ],
+      "purpose": "cell input access"
+    },
+    {
+      "id": "CI_BAY",
+      "rect": [
+        20.3,
+        6.5,
+        23,
+        9.5
+      ],
+      "purpose": "cell input handoff bay"
+    },
+    {
+      "id": "CO_APPROACH",
+      "rect": [
+        20.3,
+        12.7,
+        25,
+        15.3
+      ],
+      "purpose": "cell output access"
+    },
+    {
+      "id": "CO_BAY",
+      "rect": [
+        20.3,
+        12.5,
+        23,
+        15.5
+      ],
+      "purpose": "cell output handoff bay"
+    },
+    {
+      "id": "OUT_APPROACH",
+      "rect": [
+        25,
+        9.7,
+        29.5,
+        12.3
+      ],
+      "purpose": "shipping access"
+    },
+    {
+      "id": "OUT_BAY",
+      "rect": [
+        27.5,
+        9.5,
+        30.5,
+        12.5
+      ],
+      "purpose": "finished goods handoff bay"
+    },
+    {
+      "id": "P1_POCKET",
+      "rect": [
+        10.5,
+        0,
+        13.5,
+        5
+      ],
+      "purpose": "off-main parking"
+    },
+    {
+      "id": "P2_POCKET",
+      "rect": [
+        10.5,
+        17,
+        13.5,
+        22
+      ],
+      "purpose": "off-main parking"
+    },
+    {
+      "id": "P3_POCKET",
+      "rect": [
+        15.5,
+        0,
+        18.5,
+        5
+      ],
+      "purpose": "off-main south waiting/parking bay"
+    },
+    {
+      "id": "P4_POCKET",
+      "rect": [
+        15.5,
+        17,
+        18.5,
+        22
+      ],
+      "purpose": "off-main north waiting/parking bay"
+    }
+  ],
+  "stations": [
+    {
+      "id": "S1",
+      "xy": [
+        3.5,
+        5
+      ],
+      "role": "prepared material source A",
+      "physical_payload": false
+    },
+    {
+      "id": "S2",
+      "xy": [
+        3.5,
+        11
+      ],
+      "role": "prepared material source B",
+      "physical_payload": false
+    },
+    {
+      "id": "S3",
+      "xy": [
+        3.5,
+        17
+      ],
+      "role": "prepared material source C",
+      "physical_payload": false
+    },
+    {
+      "id": "CI",
+      "xy": [
+        21.5,
+        8
+      ],
+      "role": "one workcell input buffer",
+      "capacity": 2,
+      "physical_payload": false
+    },
+    {
+      "id": "CO",
+      "xy": [
+        21.5,
+        14
+      ],
+      "role": "same workcell output buffer",
+      "capacity": 2,
+      "physical_payload": false
+    },
+    {
+      "id": "OUT",
+      "xy": [
+        29,
+        11
+      ],
+      "role": "finished goods staging handoff",
+      "physical_payload": false
+    }
+  ],
+  "pockets": {
+    "P1": [
+      12,
+      1.5
+    ],
+    "P2": [
+      12,
+      20.5
+    ],
+    "P3": [
+      17,
+      1.5
+    ],
+    "P4": [
+      17,
+      20.5
+    ]
+  },
+  "workcell": {
+    "id": "CELL_1",
+    "workers": 1,
+    "input_capacity": 2,
+    "output_capacity": 2,
+    "service_sim_s": 20,
+    "all_visual_equipment_blocks_are_one_logical_cell": true
+  },
+  "visual_zones": [
+    {
+      "id": "MaterialZone",
+      "rect": [
+        0.2,
+        1.2,
+        10.2,
+        20.8
+      ]
+    },
+    {
+      "id": "ProcessZone",
+      "rect": [
+        10.4,
+        6.55,
+        24.8,
+        15.45
+      ]
+    },
+    {
+      "id": "ShippingZone",
+      "rect": [
+        26.7,
+        6.55,
+        31.8,
+        15.45
+      ]
+    }
+  ],
+  "reserved_work_areas": [
+    {
+      "id": "SOURCE_LOW",
+      "rect": [
+        2.5,
+        6.75,
+        7.25,
+        9.5
+      ],
+      "purpose": "compact flow racks"
+    },
+    {
+      "id": "SOURCE_HIGH",
+      "rect": [
+        2.5,
+        12.5,
+        7.25,
+        15.25
+      ],
+      "purpose": "compact flow racks"
+    },
+    {
+      "id": "BENCH_LOW",
+      "rect": [
+        10.75,
+        6.75,
+        13.5,
+        10.5
+      ],
+      "purpose": "modular assembly and inspection benches"
+    },
+    {
+      "id": "BENCH_HIGH",
+      "rect": [
+        10.75,
+        11.5,
+        13.5,
+        15.25
+      ],
+      "purpose": "modular packing and inspection benches"
+    },
+    {
+      "id": "CELL_EQUIPMENT",
+      "rect": [
+        16.6,
+        6.75,
+        20.1,
+        15.25
+      ],
+      "purpose": "one logical production cell"
+    },
+    {
+      "id": "CONTROL",
+      "rect": [
+        20.7,
+        10,
+        22.7,
+        12
+      ],
+      "purpose": "cell control cabinet"
+    },
+    {
+      "id": "SHIPPING_LOW",
+      "rect": [
+        27,
+        6.75,
+        31,
+        9.25
+      ],
+      "purpose": "finished goods"
+    },
+    {
+      "id": "SHIPPING_HIGH",
+      "rect": [
+        27,
+        12.75,
+        31,
+        15.25
+      ],
+      "purpose": "finished goods"
+    },
+    {
+      "id": "SERVICE_EDGE",
+      "rect": [
+        19,
+        19.25,
+        24,
+        20.25
+      ],
+      "purpose": "service cabinets"
+    }
+  ],
+  "physical_obstacles": [
+    {
+      "id": "KIT_BENCH_1",
+      "rect": [
+        2.5,
+        1.75,
+        5,
+        3
+      ],
+      "height_m": 0.95,
+      "type": "source A kitting bench beside S1"
+    },
+    {
+      "id": "KIT_BENCH_2",
+      "rect": [
+        2.5,
+        19,
+        5,
+        20.25
+      ],
+      "height_m": 0.95,
+      "type": "source C kitting bench beside S3"
+    },
+    {
+      "id": "RACK_A1",
+      "rect": [
+        2.5,
+        6.75,
+        4.65,
+        7.65
+      ],
+      "height_m": 2.1,
+      "type": "compact tote rack"
+    },
+    {
+      "id": "RACK_A2",
+      "rect": [
+        2.5,
+        8.45,
+        4.65,
+        9.35
+      ],
+      "height_m": 2.1,
+      "type": "source B tote rack beside S2"
+    },
+    {
+      "id": "RACK_B1",
+      "rect": [
+        2.5,
+        14.35,
+        4.65,
+        15.25
+      ],
+      "height_m": 2.1,
+      "type": "compact tote rack"
+    },
+    {
+      "id": "RACK_B2",
+      "rect": [
+        4.9,
+        14.35,
+        7.05,
+        15.25
+      ],
+      "height_m": 2.1,
+      "type": "compact tote rack"
+    },
+    {
+      "id": "BENCH_A1",
+      "rect": [
+        10.75,
+        8.25,
+        13.25,
+        9.35
+      ],
+      "height_m": 1.1,
+      "type": "assembly bench module"
+    },
+    {
+      "id": "BENCH_A2",
+      "rect": [
+        10.75,
+        9.6,
+        13.25,
+        10.5
+      ],
+      "height_m": 1.6,
+      "type": "inspection module"
+    },
+    {
+      "id": "BENCH_B1",
+      "rect": [
+        10.75,
+        11.5,
+        13.25,
+        12.6
+      ],
+      "height_m": 1.1,
+      "type": "packing bench module"
+    },
+    {
+      "id": "BENCH_B2",
+      "rect": [
+        10.75,
+        12.85,
+        13.25,
+        13.75
+      ],
+      "height_m": 1.6,
+      "type": "inspection module"
+    },
+    {
+      "id": "PROCESS_1",
+      "rect": [
+        16.6,
+        6.75,
+        19.65,
+        9.25
+      ],
+      "height_m": 2.2,
+      "type": "assembly process module"
+    },
+    {
+      "id": "PROCESS_2",
+      "rect": [
+        16.6,
+        9.5,
+        19.65,
+        12.5
+      ],
+      "height_m": 2.2,
+      "type": "inspection process module"
+    },
+    {
+      "id": "PROCESS_3",
+      "rect": [
+        16.6,
+        12.75,
+        19.65,
+        15.25
+      ],
+      "height_m": 2.2,
+      "type": "pack process module"
+    },
+    {
+      "id": "CELL_CABINET",
+      "rect": [
+        20.7,
+        10,
+        22.7,
+        12
+      ],
+      "height_m": 1.8,
+      "type": "cell control cabinet"
+    },
+    {
+      "id": "CI_BUFFER",
+      "rect": [
+        19.9,
+        6.75,
+        20.1,
+        9.25
+      ],
+      "height_m": 1.1,
+      "type": "input buffer fixture"
+    },
+    {
+      "id": "CO_BUFFER",
+      "rect": [
+        19.9,
+        12.75,
+        20.1,
+        15.25
+      ],
+      "height_m": 1.1,
+      "type": "output buffer fixture"
+    },
+    {
+      "id": "FG_LOW",
+      "rect": [
+        27,
+        6.75,
+        31,
+        9.25
+      ],
+      "height_m": 1.4,
+      "type": "finished goods staging"
+    },
+    {
+      "id": "FG_HIGH",
+      "rect": [
+        27,
+        12.75,
+        31,
+        15.25
+      ],
+      "height_m": 1.4,
+      "type": "finished goods staging"
+    },
+    {
+      "id": "SERVICE_CABINET",
+      "rect": [
+        19,
+        19.25,
+        24,
+        20.25
+      ],
+      "height_m": 1.8,
+      "type": "service cabinets"
+    }
+  ],
+  "blocked_aisle": {
+    "rect": [
+      18.5,
+      3.5,
+      19.5,
+      6.5
+    ],
+    "height_m": 1.5,
+    "active_sim_s": [
+      0,
+      600
+    ],
+    "observed_by": "LiDAR/costmap; future removal time evaluator only"
+  },
+  "traffic_reference": null,
+  "unchanged_contracts": [
+    "19 obstacle footprints translated +1m in y without scaling",
+    "6 process stations translated +1m in y",
+    "32x20m production arrangement preserved within32x22m bounds",
+    "4 separate off-main parking bays",
+    "conservative reservation holds retained"
+  ],
+  "unperformed_validation": [
+    "four-AMR transport",
+    "physical cargo",
+    "charging",
+    "new scene sensor/map alignment"
+  ],
+  "layout_provenance": {
+    "kind": "authored-not-surveyed",
+    "base": "configs/factory-v4/layout.json",
+    "production_translation_xy_m": [
+      0,
+      1
+    ],
+    "extra_service_depth_m": 2,
+    "reason": "four retained footprint holds need separation from main-lane swept tiles; keep production spacing and obstacle sizes",
+    "pending": "actual asset footprint, four-stack Nav2, sensor/map alignment and transport proof"
+  }
+}

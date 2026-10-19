@@ -1,0 +1,26 @@
+{
+  "task": "fleet4-runner-review-008",
+  "attempt": 2,
+  "contract_revision": 9,
+  "owner": "control",
+  "mode": "read-only changes-only recheck",
+  "source_sha256": {
+    "scripts/brev/run-fleet4.sh": "acf83e8f384183636f9eb423f2ecd13c2e2ccf8104b79d18c9f97ee793e890d6",
+    "scripts/brev/fleet4_cloud_run.py": "e60cfd1900050c1d756b5088c129a3f7682acc8e333223a4578813d44f915602",
+    "tests/test_fleet4_cloud_run.py": "41b35bdb0ca66212d632fad204a7dd2af99d42b82da879d5be00b8f5827a68cb"
+  },
+  "write_paths": [
+    "coordination/collab/results/fleet4-runner-review-008-recheck.json"
+  ],
+  "scope": [
+    "FR001: durablePID+labels+abort flag, actual owned process/container closure helper before ANY tar, even lostreply; Runningfalse and cleanup distinct from original worker status",
+    "FR002: outermost finally Stop, per-query exceptions continue attempts, auxiliary record errors never skip Stop",
+    "FR003: one12000s total window incl preserve/Stop,2400s preserve reserve,300s Stop reserve, remaining_timeout for remote/SCP/hash, explicit unknownStopped/overrun flags"
+  ],
+  "validation": "root10targeted testsPASS incl real main/finally external-call mocks;generatedremotePython compile;caller types0;WSLbash-nPASS",
+  "constraints": [
+    "do not modify product/board, remote/GPU/Git/server or addagents",
+    "limit recheck to three earlier findings and new concrete major defects; no broad165test rerun",
+    "preserve original008receipt; write separate attempt2result; final acceptance root"
+  ]
+}

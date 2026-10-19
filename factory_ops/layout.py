@@ -17,6 +17,7 @@ from typing import Any, Iterable, Mapping, Sequence
 
 V3_REVISION = "amr-focus-v3"
 V4_REVISION = "amr-production-bay-v4"
+FLEET4_REVISION = "amr-production-bay-fleet4-v1"
 V3_STATIONS = {
     "S1": (4.0, 4.0),
     "S2": (4.0, 12.0),
@@ -35,6 +36,9 @@ V4_STATIONS = {
     "OUT": (29.0, 10.0),
 }
 V4_POCKETS = {"P1": (12.0, 1.5), "P2": (12.0, 18.5)}
+FLEET4_STATIONS = {name: (xy[0], xy[1] + 1.0) for name, xy in V4_STATIONS.items()}
+FLEET4_POCKETS = {"P1": (12.0, 1.5), "P2": (12.0, 20.5),
+                  "P3": (17.0, 1.5), "P4": (17.0, 20.5)}
 # Compatibility aliases preserve the established V1-V3 mission contracts.
 EXPECTED_STATIONS = V3_STATIONS
 EXPECTED_POCKETS = V3_POCKETS
@@ -159,7 +163,12 @@ class Layout:
         if self.data["units"] != "m" or self.data["frame"] != "map":
             raise LayoutError("layout must use metres in the map frame")
         revision = self.data.get("revision")
-        if revision == V4_REVISION:
+        if revision == FLEET4_REVISION:
+            expected_bounds = (0.0, 0.0, 32.0, 22.0)
+            expected_stations = FLEET4_STATIONS
+            expected_pockets = FLEET4_POCKETS
+            barrier_y = (3.5, 6.5)
+        elif revision == V4_REVISION:
             expected_bounds = (0.0, 0.0, 32.0, 20.0)
             expected_stations = V4_STATIONS
             expected_pockets = V4_POCKETS
@@ -203,7 +212,7 @@ class Layout:
 
         pockets = self.data["pockets"]
         if not isinstance(pockets, dict) or set(pockets) != set(expected_pockets):
-            raise LayoutError("pockets must remain P1 and P2")
+            raise LayoutError(f"pockets must remain {sorted(expected_pockets)}")
         for pocket_id, expected in expected_pockets.items():
             xy = _point(pockets[pocket_id], f"pocket {pocket_id}")
             if xy != expected:
@@ -389,7 +398,8 @@ class Layout:
         traffic_summary = self.validate_traffic(traffic)
         normal = self.shortest_path(self.stations["S1"], self.stations["CI"])
         blocked = self.shortest_path(self.stations["S1"], self.stations["CI"], blocked=True)
-        alternative_y_mm = 14_500 if self.data.get("revision") == V4_REVISION else 18_500
+        alternative_y_mm = {V4_REVISION: 14_500, FLEET4_REVISION: 15_500}.get(
+            str(self.data.get("revision", "")), 18_500)
         if not any(row * self.cell_mm + self.cell_mm // 2 >= alternative_y_mm for _, row in blocked.cells):
             raise LayoutError("blocked route does not use the authored lower alternative")
         for label, xy in {**self.stations, **self.pockets}.items():

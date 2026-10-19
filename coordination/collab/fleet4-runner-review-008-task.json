@@ -1,0 +1,34 @@
+{
+  "task": "fleet4-runner-review-008",
+  "attempt": 1,
+  "contract_revision": 8,
+  "owner": "control",
+  "mode": "read-only focused runner review",
+  "goal": "existing-instance normal four-AMR run, preserved source/raw output, paired closure and Stop; identify concrete costly/invalid-evidence bugs before GPU",
+  "read_paths": [
+    "scripts/brev/run-fleet4.sh",
+    "scripts/brev/fleet4_cloud_run.py",
+    "tests/test_fleet4_cloud_run.py"
+  ],
+  "sha256": {
+    "scripts/brev/run-fleet4.sh": "c44ea7a0482239ce8cb431483cdb0a18d28100db7f57cd6db5408d1717ca073f",
+    "scripts/brev/fleet4_cloud_run.py": "6fdc4af13340022750fa54191e2530a057444aa31321607211a0e056155aa969",
+    "tests/test_fleet4_cloud_run.py": "c376d65c2b3bc93c219107b50eedf08bbdd615199a151bc19b036419a8e666c6"
+  },
+  "write_paths": [
+    "coordination/collab/results/fleet4-runner-review-008.json"
+  ],
+  "validation": "root5preflight tests PASS, caller Pyright0errors, WSLbash-n PASS; prior core165 tests164PASS+1skip",
+  "acceptance": [
+    "same existing evica0x9l, no creation/terms/firewall changes",
+    "clean committed source archive/raw commit + original source proof; common development marker",
+    "own containerIDs, stop/collect both processes before archiving; no active rosbagSQL",
+    "4GiB result cap, local/VM space guards and15USD voluntary batch allocation/time bounds; do not claim hard provider billing guarantee",
+    "D/E exact SHA backups and actual BrevSTOPPED distinguished from worker exit and closed QA"
+  ],
+  "constraints": [
+    "do not change code/board or run remote/cloud/GPU",
+    "do not repeat broad core review or all165tests",
+    "ACK and return sourceSHA/findings/recommendation/limits in specified JSON"
+  ]
+}

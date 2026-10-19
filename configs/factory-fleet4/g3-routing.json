@@ -1,0 +1,259 @@
+{
+  "schema_version": 1,
+  "scope": "four-AMR authored route/parking preflight only; no drive qualification",
+  "base_layout": "configs/factory-fleet4/layout.json",
+  "policy_region_overrides": {
+    "WEST_LINK": [
+      7.5,
+      5,
+      10.5,
+      17
+    ],
+    "CENTER_LINK": [
+      13.7,
+      5,
+      16.3,
+      17
+    ],
+    "EAST_SPINE": [
+      23.5,
+      5,
+      26.5,
+      17
+    ]
+  },
+  "override_scope": "Single-robot clearance only; stations, pockets and all 19 physical obstacle footprints are preserved.",
+  "collision_radius": {
+    "value": 0.6371090915442774,
+    "unit": "m",
+    "measured_at": "2026-10-16T12:12:28.178006+00:00",
+    "valid_for": "G2 Nova Carter enabled collider union in the robot root frame; any V4 GPU startup must remeasure the loaded asset",
+    "source_commit": "81befc881466f0e612465ba3987165eec2c9ca4f",
+    "source_run": "g2-f1-004",
+    "source_run_id": "a37e070db5e98c935dc982deb0b5f564",
+    "source_file": "results/g2-f1-004/sim-ready.json#/robots/carter1/footprint/collision_radius_m",
+    "source_archive_sha256": "03ab2e89e8530c88fdfb998e961313a2c304fa629b6ecb8d48f830e39f89aca1"
+  },
+  "authored_allowances": {
+    "evaluation_clearance_m": 0.2,
+    "localization_planning_margin_m": 0.3,
+    "tile_size_m": 1.0,
+    "scope": "Conservative preflight assumptions; not a safety certification"
+  },
+  "nodes": {
+    "S1": [
+      3.5,
+      5
+    ],
+    "S2": [
+      3.5,
+      11
+    ],
+    "S3": [
+      3.5,
+      17
+    ],
+    "CI": [
+      21.5,
+      8
+    ],
+    "CO": [
+      21.5,
+      14
+    ],
+    "OUT": [
+      29,
+      11
+    ],
+    "P1": [
+      12,
+      1.5
+    ],
+    "P2": [
+      12,
+      20.5
+    ],
+    "W_LOW": [
+      9,
+      5
+    ],
+    "W_MID": [
+      9,
+      11
+    ],
+    "W_HIGH": [
+      9,
+      17
+    ],
+    "M_LOW": [
+      12,
+      5
+    ],
+    "M_HIGH": [
+      12,
+      17
+    ],
+    "C_LOW": [
+      15,
+      5
+    ],
+    "C_HIGH": [
+      15,
+      17
+    ],
+    "E_LOW": [
+      25,
+      5
+    ],
+    "E_CI": [
+      25,
+      8
+    ],
+    "E_MID": [
+      25,
+      11
+    ],
+    "E_CO": [
+      25,
+      14
+    ],
+    "E_HIGH": [
+      25,
+      17
+    ],
+    "P3": [
+      17,
+      1.5
+    ],
+    "P4": [
+      17,
+      20.5
+    ],
+    "P3_MERGE": [
+      17,
+      5
+    ],
+    "P4_MERGE": [
+      17,
+      17
+    ]
+  },
+  "edges": [
+    [
+      "S1",
+      "W_LOW"
+    ],
+    [
+      "W_LOW",
+      "M_LOW"
+    ],
+    [
+      "M_LOW",
+      "C_LOW"
+    ],
+    [
+      "E_LOW",
+      "E_CI"
+    ],
+    [
+      "E_CI",
+      "E_MID"
+    ],
+    [
+      "E_MID",
+      "E_CO"
+    ],
+    [
+      "E_CO",
+      "E_HIGH"
+    ],
+    [
+      "C_HIGH",
+      "M_HIGH"
+    ],
+    [
+      "M_HIGH",
+      "W_HIGH"
+    ],
+    [
+      "W_HIGH",
+      "S3"
+    ],
+    [
+      "W_LOW",
+      "W_MID"
+    ],
+    [
+      "W_MID",
+      "W_HIGH"
+    ],
+    [
+      "W_MID",
+      "S2"
+    ],
+    [
+      "C_LOW",
+      "C_HIGH"
+    ],
+    [
+      "M_LOW",
+      "P1"
+    ],
+    [
+      "M_HIGH",
+      "P2"
+    ],
+    [
+      "E_CI",
+      "CI"
+    ],
+    [
+      "E_CO",
+      "CO"
+    ],
+    [
+      "E_MID",
+      "OUT"
+    ],
+    [
+      "C_LOW",
+      "P3_MERGE"
+    ],
+    [
+      "P3_MERGE",
+      "E_LOW"
+    ],
+    [
+      "P3_MERGE",
+      "P3"
+    ],
+    [
+      "C_HIGH",
+      "P4_MERGE"
+    ],
+    [
+      "P4_MERGE",
+      "E_HIGH"
+    ],
+    [
+      "P4_MERGE",
+      "P4"
+    ]
+  ],
+  "closure": {
+    "edge": [
+      "P3_MERGE",
+      "E_LOW"
+    ],
+    "barrier_source": "configs/factory-fleet4/layout.json#/blocked_aisle",
+    "policy_input": "current closed boolean only",
+    "scope": "closed-state detour and barrier clearance"
+  },
+  "parking": {
+    "carter1": "P1",
+    "carter2": "P2",
+    "carter3": "P3",
+    "carter4": "P4"
+  },
+  "handover_contract": "Retain occupied tiles. Replace a reservation atomically only after fresh estimated occupancy is contained in both predecessor and successor bundles."
+}

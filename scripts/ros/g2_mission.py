@@ -11,6 +11,7 @@ import json
 import math
 import os
 from pathlib import Path
+import re
 import signal
 import subprocess
 import sys
@@ -21,12 +22,34 @@ from uuid import UUID
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from factory_ops.layout import Layout
+from factory_ops.fleet_registry import FleetRegistry
 from factory_ops.traffic import Decision, TrafficController
 from factory_ops.traffic_observation import project_observation
 
 ROBOT_IDS = ("carter1", "carter2")
 SUCCESS = 4
 CANCELED = 5
+
+
+def fleet_identity(robot_ids: Sequence[str] = ROBOT_IDS,
+                   namespace_by_id: Mapping[str, str] | None = None) -> tuple[tuple[str, ...], dict[str, str]]:
+    """Bind logical IDs to unique, single-segment ROS namespaces."""
+    if isinstance(robot_ids, (str, bytes)) or not isinstance(robot_ids, Sequence) or not robot_ids:
+        raise ValueError("fleet IDs must be a nonempty sequence")
+    ids = tuple(robot_ids)
+    if any(not isinstance(value, str) or re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", value) is None for value in ids):
+        raise ValueError("fleet IDs must be valid identifiers")
+    if len(set(ids)) != len(ids):
+        raise ValueError("fleet IDs must be unique")
+    namespaces = {robot: robot for robot in ids}
+    if namespace_by_id is not None:
+        if set(namespace_by_id) != set(ids):
+            raise ValueError("namespace mapping must match fleet IDs exactly")
+        namespaces = dict(namespace_by_id)
+    if (any(not isinstance(value, str) or re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", value) is None
+            for value in namespaces.values()) or len(set(namespaces.values())) != len(ids)):
+        raise ValueError("fleet namespaces must be unique valid identifiers")
+    return ids, namespaces
 
 
 def atomic_json(path: Path, value: Any) -> None:
@@ -86,9 +109,11 @@ def publish_scan_fanout(message: Any, publishers: Sequence[Any]) -> None:
         publisher.publish(message)
 
 
-def scan_recording_topics(robot_ids: Sequence[str] = ROBOT_IDS) -> tuple[str, ...]:
+def scan_recording_topics(robot_ids: Sequence[str] = ROBOT_IDS, *,
+                          namespace_by_id: Mapping[str, str] | None = None) -> tuple[str, ...]:
+    ids, namespaces = fleet_identity(robot_ids, namespace_by_id)
     suffixes = ("scan_front_raw", "scan_rear_raw", "scan_front", "scan_rear", "scan_localization")
-    return tuple(f"/{robot_id}/{suffix}" for robot_id in robot_ids for suffix in suffixes)
+    return tuple(f"/{namespaces[robot_id]}/{suffix}" for robot_id in ids for suffix in suffixes)
 
 
 class PoseFreshnessGate:
@@ -173,13 +198,18 @@ def prepare_params(
 
 def build_namespaced_params(
     template: Mapping[str, Any], scenario: Mapping[str, Any], radii: Mapping[str, float],
-    *, physical_map: str, navigation_map: str,
+    *, physical_map: str, navigation_map: str, robot_ids: Sequence[str] = ROBOT_IDS,
+    namespace_by_id: Mapping[str, str] | None = None,
 ) -> dict[str, Any]:
     """Materialize one independent parameter tree per robot namespace."""
+    ids, namespaces = fleet_identity(robot_ids, namespace_by_id)
+    if set(scenario["spawns"]) != set(ids) or set(radii) != set(ids):
+        raise ValueError("spawn and radius identities must match the fleet exactly")
     source = copy.deepcopy(dict(template))
     common = source.pop("/**")
     result: dict[str, Any] = {"/**": common}
-    for robot_id in ROBOT_IDS:
+    for robot_id in ids:
+        ros_namespace = namespaces[robot_id]
         namespace = copy.deepcopy(source)
         namespace["map_server"]["ros__parameters"]["yaml_filename"] = physical_map
         namespace["navigation_map_server"]["ros__parameters"]["yaml_filename"] = navigation_map
@@ -191,10 +221,10 @@ def build_namespaced_params(
             params = namespace[costmap][costmap]["ros__parameters"]
             params["robot_radius"] = radii[robot_id]
             params["inflation_layer"]["inflation_radius"] = radii[robot_id] + 0.2
-            params["static_layer"]["map_topic"] = f"/{robot_id}/navigation_map"
-            params["obstacle_layer"]["front"]["topic"] = f"/{robot_id}/scan_front"
-            params["obstacle_layer"]["rear"]["topic"] = f"/{robot_id}/scan_rear"
-        result[robot_id] = namespace
+            params["static_layer"]["map_topic"] = f"/{ros_namespace}/navigation_map"
+            params["obstacle_layer"]["front"]["topic"] = f"/{ros_namespace}/scan_front"
+            params["obstacle_layer"]["rear"]["topic"] = f"/{ros_namespace}/scan_rear"
+        result[ros_namespace] = namespace
     return result
 
 
@@ -393,12 +423,32 @@ def stop_process(process: subprocess.Popen | None, label: str) -> dict[str, Any]
     return {"label": label, "pid": process.pid, "exit_code": process.returncode}
 
 
-def _load_ready(path: Path, run_id: str, scenario_id: str) -> dict[str, Any]:
+def _load_ready(path: Path, run_id: str, scenario_id: str, *, registry: FleetRegistry | None = None) -> dict[str, Any]:
     value = json.loads(path.read_text(encoding="utf-8"))
     if (value.get("run_id") != run_id or value.get("scenario_id") != scenario_id
             or value.get("status") != "ready"):
         raise ValueError("G2 scene ready identity/status mismatch")
     robots = value.get("robots")
+    if registry is not None:
+        if not isinstance(robots, dict) or set(robots) != set(registry.robot_ids):
+            raise ValueError("ready robot identities must match the registry exactly")
+        for definition in registry.definitions:
+            robot = robots[definition["robot_id"]]
+            if (not isinstance(robot, Mapping) or robot.get("namespace") != definition["namespace"]
+                    or robot.get("prim_path") != definition["prim_path"]):
+                raise ValueError("ready namespace/prim differs from the registry")
+            if not isinstance(robot.get("lidars"), (dict, list)) or not robot.get("ros"):
+                raise ValueError("ready sensor/ROS metadata missing")
+            footprint = robot.get("footprint")
+            if (not isinstance(footprint, Mapping) or footprint.get("passed") is not True
+                    or any(type(footprint.get(key)) not in (int, float)
+                           or not math.isfinite(footprint[key]) or footprint[key] <= 0
+                           for key in ("collision_radius_m", "clearance_m", "inflated_radius_m"))):
+                raise ValueError("ready collision footprint did not qualify")
+            radius, _ = _planning_radius(robot, 0.0)
+            if not math.isfinite(radius) or radius <= 0:
+                raise ValueError("ready collision footprint did not qualify")
+        return value
     if not isinstance(robots, dict) or set(robots) != set(ROBOT_IDS):
         raise ValueError("G2 scene ready must describe exactly two robots")
     for robot_id, namespace in (("carter1", "carter1"), ("carter2", "carter2")):

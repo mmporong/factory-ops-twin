@@ -1,0 +1,102 @@
+{
+  "task": "fleet4-runner-review-008",
+  "attempt": 2,
+  "contract_revision": 9,
+  "ack": true,
+  "status": "변경 경계 재검수 완료",
+  "reviewed_at_utc": "2026-10-19T09:56:13.343232+00:00",
+  "reviewer": "control",
+  "author": "root",
+  "reviewed_sha256": {
+    "scripts/brev/run-fleet4.sh": "acf83e8f384183636f9eb423f2ecd13c2e2ccf8104b79d18c9f97ee793e890d6",
+    "scripts/brev/fleet4_cloud_run.py": "e60cfd1900050c1d756b5088c129a3f7682acc8e333223a4578813d44f915602",
+    "tests/test_fleet4_cloud_run.py": "41b35bdb0ca66212d632fad204a7dd2af99d42b82da879d5be00b8f5827a68cb"
+  },
+  "sha_mismatch": [],
+  "original_receipt": "C:\\Users\\LIMMM\\factory-ops-twin\\coordination\\collab\\results\\fleet4-runner-review-008.json",
+  "original_receipt_sha256": "958906f214d09ea3b71a8a10fee894246700fcd7a528630551e0d523e43a7907",
+  "original_findings_preserved": true,
+  "accepted": null,
+  "acceptance_owner": "root",
+  "review_decision": "기존 FR-001~003 수정 수용 권고; 한정 재검수 범위에서 추가 주요 결함 없음",
+  "rechecks": [
+    {
+      "id": "FR-001",
+      "status": "수정 확인",
+      "locations": [
+        "scripts/brev/run-fleet4.sh:18-58,62,87-125",
+        "scripts/brev/fleet4_cloud_run.py:129-195,303-313,348-367"
+      ],
+      "evidence": [
+        "cleanup 오류와 원래 worker 종료 코드를 구분하고 Running=true·inspect 실패·stop/rm 실패를 cleanup 실패로 기록한다.",
+        "원격 runner.pid와 launch-requested를 남기고 abort-requested 검사로 시작·후속 실행을 차단한다.",
+        "원격 응답의 PID 확보 여부와 무관하게 confirm_closed_pair를 압축 전에 호출한다. 소유 PID 확인·종료와 run_id/run_label 라벨·정확 컨테이너 이름 대조 후 Running=false, 컨테이너 제거 및 잔여 소유 컨테이너 없음이 필요하다.",
+        "종료 파일 존재만으로 workers_passed를 부여하지 않고 cleanup_passed 및 두 컨테이너의 ExitCode=0/Running=false를 확인한다."
+      ],
+      "validation": "test_launch_reply_loss_and_active_exit_record_never_archive: 응답 유실·활성 종료 기록에 대해 tar 0회 및 Stop 호출 확인. 원격 helper는 생성 Python compile과 소스 대조로 확인했으며 실제 Docker 실행은 없음."
+    },
+    {
+      "id": "FR-002",
+      "status": "수정 확인",
+      "locations": [
+        "scripts/brev/fleet4_cloud_run.py:90-126,363-397"
+      ],
+      "evidence": [
+        "Stop을 보존 구간과 분리된 최외곽 finally에 배치했다.",
+        "best_effort_save가 로컬 기록 오류를 host_record_errors로 남기며 Stop을 건너뛰지 않는다.",
+        "각 상태 조회·Stop 요청 예외를 시도 내부에서 처리하며, 상태 조회 실패에도 승인된 기존 인스턴스 Stop 요청과 후속 확인을 계속한다. 실제 STOPPED 미확인은 stop_error로 남는다."
+      ],
+      "validation": "test_transient_ls_and_record_failure_cannot_skip_stop 및 test_slow_preservation_still_runs_stop PASS. 실제 main/finally를 실행하되 모든 외부 호출은 mock 처리."
+    },
+    {
+      "id": "FR-003",
+      "status": "수정 확인",
+      "locations": [
+        "scripts/brev/fleet4_cloud_run.py:32-34,73-87,97-126,255-274,311-338,367-400"
+      ],
+      "evidence": [
+        "시작 전 12000초 절대 deadline을 잡고 보존용 2400초와 Stop용 300초 여유를 둔다.",
+        "원격 작업·SCP·해시에 남은 시간 제한을 적용하고 Stop 예약 시간 침범 시 보존을 중단한다.",
+        "Stop 확인은 같은 deadline을 사용하며 시간 초과·기록 실패·STOPPED 미확인 시 최종 성공으로 반환하지 않는다.",
+        "선언한 4.2달러/시간 추정 기준 12000초는 14달러에 해당한다. 실제 공급자 청구 상한을 보장하는 수치가 아니다."
+      ],
+      "validation": "test_near_deadline_preserves_the_stop_window_instead_of_archiving 및 test_each_preservation_operation_is_clamped_to_the_remaining_budget PASS."
+    }
+  ],
+  "new_major_findings": [],
+  "validation": [
+    {
+      "command": ".venv/Scripts/python.exe -B -m unittest tests.test_fleet4_cloud_run",
+      "result": "10 tests PASS",
+      "exit_code": 0,
+      "elapsed_s": 0.107,
+      "external_calls": "mock only; 실제 클라우드·GPU·Git·서버 실행 없음"
+    },
+    {
+      "check": "최종 동결 SHA 재대조",
+      "result": "3개 모두 revision9 카드와 일치"
+    }
+  ],
+  "root_reported_validation_not_repeated": [
+    "WSL Bash 문법 검사 PASS",
+    "호출기 Pyright 0오류",
+    "기존 165개 통합 검사"
+  ],
+  "limits": [
+    "변경된 FR-001~003 경계만 검수했으며 전체 제품 재검수가 아니다.",
+    "실제 Linux 프로세스·Docker·Brev STOPPED·D/E 사본 SHA·과금 및 GPU 실행 성공을 이번 검수로 주장하지 않는다.",
+    "테스트의 START 로그와 상태는 모의 응답이며 실제 환경 상태가 아니다.",
+    "원격 생성 helper의 실제 OS 종료·복구 경계는 운영 실행에서 확인해야 한다.",
+    "제품·보드·원본 008 receipt·Git·서버를 수정하지 않았고 활성 rosbag SQLite에 접근하지 않았다."
+  ],
+  "concurrent_user_work": {
+    "request": "front 스킬로 Isaac Sim 관측 UI 개선 진행",
+    "scope": "dashboard/만; 원천·시계·배치·미연결 센서/검증 구분·표시 레이어·모바일 배치",
+    "state": "UI 변경 보존, 이 재검수 완료 후 스타일·타입/빌드·기존 브라우저 검증 계속",
+    "commit_push": "수행하지 않음; root 통합 소유"
+  },
+  "written_paths": [
+    "coordination/collab/results/fleet4-runner-review-008-recheck.json"
+  ],
+  "new_processes_left_running": []
+}
