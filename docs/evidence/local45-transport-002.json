@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "run_id": "a995d5872b694d9cbf6d1e90241aea5b",
+  "source_commit": "eb7602596850263eeb5d234d3b61c527a231b681",
+  "status": "failed_preserved",
+  "scope": "local45 factory startup and first renders only; no Nav2 mission or transport success",
+  "failure_stage": "ros_and_lidars",
+  "error": "No module named 'tf2_ros'",
+  "factory_marker_count": 10,
+  "robot_ids": [
+    "carter1",
+    "carter2",
+    "carter3",
+    "carter4"
+  ],
+  "render_preview_count": 2,
+  "world_initialized_before_render_products": true,
+  "windows_closed": true,
+  "linux_closed": true,
+  "raw_directory": "D:\\FactoryOpsRuntime\\local45-transport-002",
+  "raw_sha256": {
+    "pair-host.json": "8b1b57647463027faa38e13245a9c764e8e3c963bb05abdb5c1a4767e9288de6",
+    "job.json": "7864ca490e726d714ad831558a953aa99afd85ebfe12a12f9ce35a10015a9f77",
+    "nav.log": "5cff4950917ee852dd55e0cc77db370ee991b0ae48ecb1bdcb758dedb28b0cec",
+    "sdk.stdout.log": "ef24f22b0053020ca19cf4fe2d0b29e68f432f29e190c96f31097fec72f02e5f",
+    "results/run/local45-fleet4-transport-scene.json": "de96b05b6d6da2474b74d8dd7fca299bf978ed5aca7e5594ed8e4e054dc658ba"
+  },
+  "fix": "local45 uses bundled TFMessage publishers with reliable dynamic and transient-local static QoS; canonical62 retains tf2_ros",
+  "cpu_regression": "15 runtime tests passed; changed3files pyright0",
+  "native_recheck": "pending"
+}

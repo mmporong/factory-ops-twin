@@ -87,6 +87,30 @@ class World:
 
 
 class RuntimeTests(unittest.TestCase):
+    def test_tf_message_publisher_keeps_namespaces_and_static_durability(self):
+        qos = SimpleNamespace(QoSProfile=lambda **kwargs: SimpleNamespace(**kwargs),
+            DurabilityPolicy=SimpleNamespace(TRANSIENT_LOCAL="latched"),
+            HistoryPolicy=SimpleNamespace(KEEP_LAST="last"))
+        message = SimpleNamespace(TFMessage=lambda **kwargs: SimpleNamespace(**kwargs))
+        def modules(name):
+            return {"tf2_msgs.msg": message, "rclpy.qos": qos}[name]
+        dynamic_pub, static_pub = Mock(), Mock()
+        node = SimpleNamespace(create_publisher=Mock(side_effect=[dynamic_pub, static_pub]))
+        with patch.object(facade.importlib, "import_module", side_effect=modules):
+            dynamic = facade._TfMessagePublisher(node)
+            static = facade._TfMessagePublisher(node, static=True)
+        calls = node.create_publisher.call_args_list
+        self.assertEqual("tf", calls[0].args[1])
+        self.assertEqual(100, calls[0].args[2].depth)
+        self.assertEqual("tf_static", calls[1].args[1])
+        self.assertEqual("latched", calls[1].args[2].durability)
+        first, second = SimpleNamespace(child_frame_id="front"), SimpleNamespace(child_frame_id="rear")
+        dynamic.sendTransform(first)
+        self.assertEqual([first], dynamic_pub.publish.call_args.args[0].transforms)
+        static.sendTransform(first)
+        static.sendTransform([first, second])
+        self.assertEqual([first, second], static_pub.publish.call_args.args[0].transforms)
+
     def setUp(self):
         World.existing = None
         self.stage = Stage()

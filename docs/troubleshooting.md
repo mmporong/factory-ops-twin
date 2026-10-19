@@ -309,6 +309,12 @@ Kit 관제 시험001은 선택·명령 처리·촬영 뒤 종료 검사에서 `_
 
 001의 소스·설정·로그는 새 실행으로 덮지 않는다. 약41초 뒤 Windows Job과 WSL 소유 cgroup의 잔여 프로세스가 없음을 확인했다. SDK 실행기 종료 코드0만으로 성공을 판단할 수 없다. 이 실행의 Job 검사는 통과했어도 장면 JSON과 ROS 임무가 실패했으므로 쌍 전체는 실패로 보존했다. [축약 근거](evidence/local45-transport-001.json)를 참고한다.
 
+## FOT-038 — SDK4.5 ROS 배포본의 tf2_ros Python 도우미 누락
+
+로컬 통합002는 장면 검사·4대 로딩·World 초기화와 초기 RGB2장 촬영 뒤 `ros_and_lidars`에서 `No module named tf2_ros`로 실패했다. 기존 SDK 배포본에는 rclpy와 tf2_msgs 메시지는 있지만 tf2_ros Python 도우미가 없었다. WSL에 설치된 공식 tf2_ros의 동적 depth100·정적 TRANSIENT_LOCAL/depth1 계약을 확인했고, 4.5 facade에서 포함된 TFMessage로 발행하도록 연결했다. 동적 odom→base_link와 정적 base_link→앞뒤 센서 관계는 namespace 안에 유지한다. 기본6.2 경로의 tf2_ros 사용은 유지한다.
+
+정적 메시지 누적·동적 한 건 전달·상대 토픽·내구성 검사를 포함한15개 facade 검사와 변경3개 파일 타입 검사가 통과했다. native TF 수신·AMCL localization의 성공은 후속 실행으로 확인한다.002도 Windows Job과 WSL cgroup의 잔여 프로세스가 없음을 확인했고, 이전001의 marker 수정이 실제 장면 검사에서 통과한 근거로 보존했다. [축약 근거](evidence/local45-transport-002.json)를 참고한다.
+
 ## 실행 전 확인과 후속 기록
 
 1. 깨끗한 생산자 소스·host commit·설정·실행 ID를 결속한다. 실패한 실행 ID와 원본을 다시 사용하지 않는다.

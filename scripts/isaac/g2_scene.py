@@ -377,12 +377,16 @@ def _setup_lidars(
 def _setup_robot_ros(
     rclpy: Any, definition: Mapping[str, Any], lidar_configs: Sequence[Mapping[str, Any]],
     geometry: DriveGeometry, watchdog: VelocityWatchdog,
+    *, broadcaster_types: tuple[Any, Any] | None = None,
 ) -> tuple[Any, dict[str, Any]]:
     from geometry_msgs.msg import TransformStamped, Twist
     from nav_msgs.msg import Odometry
     from rclpy.qos import QoSProfile, ReliabilityPolicy
     from sensor_msgs.msg import LaserScan
-    from tf2_ros import StaticTransformBroadcaster, TransformBroadcaster
+    if broadcaster_types is None:
+        from tf2_ros import StaticTransformBroadcaster, TransformBroadcaster
+    else:
+        TransformBroadcaster, StaticTransformBroadcaster = broadcaster_types
 
     namespace = str(definition["namespace"])
     node = rclpy.create_node(
@@ -899,7 +903,8 @@ def _run(
         result["lidars"] = lidar_metadata
         for runtime in robots.values():
             node, ros = _setup_robot_ros(
-                rclpy, runtime["definition"], config["lidars"], runtime["geometry"], runtime["watchdog"]
+                rclpy, runtime["definition"], config["lidars"], runtime["geometry"], runtime["watchdog"],
+                broadcaster_types=runtime45.tf_broadcaster_types() if local_sdk45 else None,
             )
             runtime["node"], runtime["ros"] = node, ros
             robot_nodes.append(node)

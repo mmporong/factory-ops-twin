@@ -235,12 +235,38 @@ class _LidarSensor:
             raise RuntimeError("; ".join(errors))
 
 
+class _TfMessagePublisher:
+    """Publish the TF wire protocol using the messages bundled with SDK4.5."""
+
+    def __init__(self, node, *, static=False):
+        message = importlib.import_module("tf2_msgs.msg")
+        qos = importlib.import_module("rclpy.qos")
+        self._message = message.TFMessage
+        self._static = static
+        self._transforms = {}
+        profile = (qos.QoSProfile(depth=1, durability=qos.DurabilityPolicy.TRANSIENT_LOCAL,
+                                 history=qos.HistoryPolicy.KEEP_LAST) if static else qos.QoSProfile(depth=100))
+        self._publisher = node.create_publisher(self._message, "tf_static" if static else "tf", profile)
+
+    def sendTransform(self, transform):
+        transforms = list(transform) if isinstance(transform, (list, tuple)) else [transform]
+        if self._static:
+            for row in transforms:
+                self._transforms.setdefault(row.child_frame_id, row)
+            transforms = list(self._transforms.values())
+        self._publisher.publish(self._message(transforms=transforms))
+
+
 class Runtime45:
     def __init__(self, app, bindings):
         self.app, self._bindings = app, bindings
         self._robots = []
         self.stage_utils = _StageUtils(self)
         self.SimulationManager = _SimulationManager(self)
+
+    @staticmethod
+    def tf_broadcaster_types():
+        return (_TfMessagePublisher, lambda node: _TfMessagePublisher(node, static=True))
 
     def WheeledRobot(self, prim_path, wheel_dof_names):
         if self.SimulationManager.world is not None:
