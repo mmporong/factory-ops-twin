@@ -47,7 +47,10 @@
       "carter2",
       "carter3",
       "carter4"
-    ]
+    ],
+    "indexed_rgb_images": 6,
+    "setup_preview_images": 2,
+    "total_new_rgb_images": 8
   },
   "observed_peak_gpu_memory_mib": 6539.0,
   "performance_scope": "sampled stationary setup only; peak RAM and full-fleet transport RTF not established",
@@ -71,5 +74,5 @@
   "validation_method": "separate CPU process after SDK exit, original files unchanged",
   "validator_source_sha256": "94fcd56d579e4e346cbb57320ee102396f71813915ec80289d406ad8ec6c0e1a",
   "validation_cli_report_sha256": "f1d6b17ce90e1cfabdb79873937ce1d183e1b0e538167958c774d783695b4298",
-  "actual_stopped_at_utc": "2026-10-19T07:18:44.482993+00:00"
+  "actual_stopped_at_utc": "2026-10-19T16:18:44.482993+09:00"
 }

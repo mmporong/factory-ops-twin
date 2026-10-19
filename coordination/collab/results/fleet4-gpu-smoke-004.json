@@ -10,7 +10,9 @@
     "sha256": "7e5e430d2e4f2f2183f470e8a5f2ba2bfa14d66c5a091f1dddf80f1202a1da86",
     "image": "docs/images/fleet4-stationary-smoke-overview.png",
     "camera_views": 3,
-    "rgb_capture_instants": 2
+    "rgb_capture_instants": 2,
+    "setup_preview_images": 2,
+    "total_new_rgb_images": 8
   },
   "retained_local_services": {
     "next_cli_pid": 17272,
