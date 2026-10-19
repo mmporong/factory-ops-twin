@@ -1,0 +1,77 @@
+{
+  "schema_version": 1,
+  "status": "transport_component_passed",
+  "scope": "Native SDK4.5 bundled Humble rclpy to existing WSL ROS2 Jazzy; std_msgs/String only",
+  "run_id": "979d7c178d5d45b7a2c932ad076f733b",
+  "sdk_version": "4.5.0-rc.36+release.19112.f59b3005.gl",
+  "native_rclpy_source": "e:\\isaacsim/isaac-sim-4.5.0/exts/isaacsim.ros2.bridge\\humble\\rclpy\\rclpy\\__init__.py",
+  "wsl_rclpy_source": "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/__init__.py",
+  "domain_id": 143,
+  "topic": "/factory_ops_local45/probe_979d7c178d5d45b7a2c932ad076f733b",
+  "published_count": 19,
+  "received": [
+    {
+      "run_id": "979d7c178d5d45b7a2c932ad076f733b",
+      "seq": 16,
+      "sdk_version": "4.5.0-rc.36+release.19112.f59b3005.gl",
+      "publisher_elapsed_wall_s": 1.75
+    },
+    {
+      "run_id": "979d7c178d5d45b7a2c932ad076f733b",
+      "seq": 17,
+      "sdk_version": "4.5.0-rc.36+release.19112.f59b3005.gl",
+      "publisher_elapsed_wall_s": 1.860000000015134
+    },
+    {
+      "run_id": "979d7c178d5d45b7a2c932ad076f733b",
+      "seq": 18,
+      "sdk_version": "4.5.0-rc.36+release.19112.f59b3005.gl",
+      "publisher_elapsed_wall_s": 1.9690000000118744
+    }
+  ],
+  "received_payloads_exactly_match_published": true,
+  "source_sha256": "e5432a4e8705af9ec7752bfb83a7138b66979a1dcd3e6ce154d1b558b60de222",
+  "config_sha256": "67151232e18f1c624d04a11829bf301370efdf3996fc1b0d3b63e90e54a0b7d0",
+  "result_sha256": "e7cbeb4d62b7dfbb473add17b478f77d68a994fc90a0f9bbe0c51fac30c11bfb",
+  "receiver_sha256": "0e51974b4909030d99307f267003cb9987cd437b051053f5a4ad49635598f550",
+  "host": {
+    "run_id": "979d7c178d5d45b7a2c932ad076f733b",
+    "started_at_utc": "2026-10-19T15:17:22.7913850Z",
+    "scope": "native bounded component probe",
+    "timeout_s": 240,
+    "sdk_root": "E:\\IsaacSim\\isaac-sim-4.5.0",
+    "entry_point": "local_ros_probe.py",
+    "inputs_directory": "C:\\Users\\LIMMM\\factory-ops-twin\\artifacts\\local45\\ros-transport-002.inputs",
+    "launcher_sha256": "9551edc167a12ba321b11e56f630ad289c99773084295763507894a9fa64e982",
+    "source_sha256": "e5432a4e8705af9ec7752bfb83a7138b66979a1dcd3e6ce154d1b558b60de222",
+    "gpu": "NVIDIA GeForce RTX 3060, 12288 MiB, 610.62",
+    "timed_out": false,
+    "remaining_owned_pids": [],
+    "launcher_pid": 68988,
+    "exit_code": 0,
+    "owned_pids_at_cleanup": [],
+    "closed": true,
+    "probe_status": "passed",
+    "probe_identity_matched": true,
+    "finished_at_utc": "2026-10-19T15:18:38.4718586Z",
+    "wall_time_s": 75.6808339
+  },
+  "backups": [
+    {
+      "destination": "D:\\FactoryOpsArtifacts\\local45\\checkpoint-001",
+      "files_and_hashes_match": true,
+      "free_bytes_after": 57734873088
+    },
+    {
+      "destination": "E:\\FactoryOpsArtifacts\\local45\\checkpoint-001",
+      "files_and_hashes_match": true,
+      "free_bytes_after": 30326861824
+    }
+  ],
+  "limitations": [
+    "String sequence messages only, not physics clock or sensor transport qualification",
+    "No robot command topics or physical robot",
+    "No firewall or persistent environment modifications",
+    "SDK6.2 fleet qualification remains unchanged"
+  ]
+}

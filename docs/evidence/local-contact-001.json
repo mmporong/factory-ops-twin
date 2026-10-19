@@ -1,0 +1,111 @@
+{
+  "schema_version": 1,
+  "run_id": "3098f674e1aa4f749949529032ab60ba",
+  "status": "component_passed",
+  "sdk_version": "4.5.0-rc.36+release.19112.f59b3005.gl",
+  "python": "3.10.15 (tags/v3.10.15-dirty:ffee63f, Oct  8 2024, 11:54:31) [MSC v.1912 64 bit (AMD64)]",
+  "hardware_from_host": "NVIDIA GeForce RTX 3060, 12288 MiB, 610.62",
+  "source_sha256": "ab2024d5c7a900de4f16771bc1c0fbcb3caeefdd0d38cb507637c7d6c06ae38b",
+  "config_sha256": "f635d6b64d08bcac739cfa4da1359bdd21902b7c4e73be7fd19ac578c0ef96a5",
+  "physics_scope": "authored vertical contact coupon; not AMR docking or fleet qualification",
+  "samples": 14,
+  "transitions": [
+    {
+      "run_id": "3098f674e1aa4f749949529032ab60ba",
+      "physics_frame": 91,
+      "sim_time_s": 0.7750000404193997,
+      "sensor_time_s": 0.7666667103767395,
+      "sensor_step": 93,
+      "fresh": true,
+      "in_contact": true,
+      "expected_pair": true,
+      "pairs": [
+        [
+          "/World/ProbeBody",
+          "/World/ContactPad"
+        ]
+      ],
+      "force_n": 196.27450561523438,
+      "linear_m_s": 0.00032808954711072147,
+      "angular_rad_s": 0.000425774313043803,
+      "position_m": [
+        3.0421888368437067e-05,
+        1.831376357586123e-05,
+        0.24999991059303284
+      ],
+      "transition": "stationary_pair_contact_confirmed"
+    },
+    {
+      "run_id": "3098f674e1aa4f749949529032ab60ba",
+      "physics_frame": 121,
+      "sim_time_s": 1.0250000534579158,
+      "sensor_time_s": 1.0166667699813843,
+      "sensor_step": 123,
+      "fresh": true,
+      "in_contact": true,
+      "expected_pair": true,
+      "pairs": [
+        [
+          "/World/ProbeBody",
+          "/World/ContactPad"
+        ]
+      ],
+      "force_n": 196.27474975585938,
+      "linear_m_s": 0.0003281353856436908,
+      "angular_rad_s": 0.0004261142457835376,
+      "position_m": [
+        3.042201387870591e-05,
+        1.8314038243261166e-05,
+        0.24999991059303284
+      ],
+      "transition": "authored_release_velocity_applied"
+    },
+    {
+      "run_id": "3098f674e1aa4f749949529032ab60ba",
+      "physics_frame": 141,
+      "sim_time_s": 1.1916667288169265,
+      "sensor_time_s": 1.183333396911621,
+      "sensor_step": 143,
+      "fresh": true,
+      "in_contact": false,
+      "expected_pair": false,
+      "pairs": [],
+      "force_n": 0.0,
+      "linear_m_s": 1.3650007247924805,
+      "angular_rad_s": 0.0004225770244374871,
+      "position_m": [
+        3.042201387870591e-05,
+        1.8314038243261166e-05,
+        0.6069372892379761
+      ],
+      "transition": "separation_observed"
+    }
+  ],
+  "closure": {
+    "exit_code": 0,
+    "closed": true,
+    "remaining_owned_pids": [],
+    "wall_time_s": 77.9037728
+  },
+  "media": [
+    {
+      "path": "docs/evidence/local-contact-001-contact.png",
+      "sha256": "fdec8271b6597313004698dd184730ae5a4285c6c6f388e03fa034f2a6e1b95d"
+    },
+    {
+      "path": "docs/evidence/local-contact-001-separated.png",
+      "sha256": "35ce7a510aeda23301fdf6f4eb2ca08503b0bdb1dc0521c378e895fd1cc372fc"
+    }
+  ],
+  "runtime_review": "coordination/collab/results/local-gpu-compatibility-019.json#root_runtime_acceptance",
+  "limits": [
+    "vertical rigid-body contact coupon; authored upward release velocity",
+    "CPU PhysX and GPU rendering; no ROS, navigation, four-AMR, load/lift or electric-charging qualification",
+    "sparse contact observations; all intermediate dwell steps are not independently replayed",
+    "RGB/physics/sensor clock alignment is not qualified"
+  ],
+  "source_archive_directories": [
+    "D:/FactoryOpsArtifacts/local-contact/local-contact-001",
+    "E:/FactoryOpsArtifacts/local-contact/local-contact-001"
+  ]
+}

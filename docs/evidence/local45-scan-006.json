@@ -1,0 +1,118 @@
+{
+  "run_id": "64307f84cc1e46919627c12347dca2e0",
+  "status": "passed",
+  "scope": "SDK4.5 RTX scan and sim clock to WSL; static authored room, no vehicle",
+  "isaac_version": "4.5.0-rc.36+release.19112.f59b3005.gl",
+  "source_sha256": "9958a3546e7a8b97878105bc7f3a734f7e239f4ad204b6ec7008e9f914281760",
+  "config_sha256": "98704dabe65a6162c99842f264ba54c933205307e24c8a363f70e170518fc7d8",
+  "project_source_sha256": {
+    "scripts/isaac/local_lidar_bridge.py": "f6f903b40f7c7a2c5484f9f5eb8b096697935e6930980165bcb0436748d04d5e"
+  },
+  "scan_topic": "/factory_ops_local45/scan_64307f84cc1e46919627c12347dca2e0",
+  "clock_topic": "/factory_ops_local45/clock_64307f84cc1e46919627c12347dca2e0",
+  "frame_id": "probe_lidar_64307f84cc1e46919627c12347dca2e0",
+  "installed_profile": {
+    "path": "E:\\IsaacSim\\isaac-sim-4.5.0\\exts\\isaacsim.sensors.rtx\\data\\lidar_configs\\SLAMTEC\\RPLIDAR_S2E.json",
+    "sha256": "b230724299cdfe84795d1c46bb3aebdce0452705025a228977bc7aec3c571b64"
+  },
+  "render_hz": 10,
+  "physics_hz": 60,
+  "lidar_verified": false,
+  "lidar_transport_verified": true,
+  "raw_fill_95_percent_passed": false,
+  "quality_scope": "angular coverage and wall-distance/clock transport component; raw dropout unresolved",
+  "receiver_source_sha256": "425fede2243c9c6862c372670af1e27505af87fd450ccad167460307ba9446e6",
+  "receiver_clock_count": 4,
+  "nearest_clock_errors_s": [
+    0.049968756,
+    0.04996876,
+    0.04996876300000003
+  ],
+  "scans": [
+    {
+      "stamp_s": 0.166697922,
+      "frame_id": "probe_lidar_64307f84cc1e46919627c12347dca2e0",
+      "angle_min": -3.1415927410125732,
+      "angle_max": 3.1396291255950928,
+      "angle_increment": 0.0019634952768683434,
+      "range_min": 0.05000000074505806,
+      "range_max": 30.0,
+      "finite_returns": 2851,
+      "invalid_returns": 349,
+      "covered_half_degree_sectors": 720,
+      "maximum_valid_return_gap_deg": 0.22502411795003527,
+      "raw_fill_95_percent_passed": false,
+      "quality_scope": "angular coverage and authored wall ranges only; raw dropout preserved",
+      "room_range_error_p95_m": 0.025247996753158475
+    },
+    {
+      "stamp_s": 0.266697923,
+      "frame_id": "probe_lidar_64307f84cc1e46919627c12347dca2e0",
+      "angle_min": -3.1415927410125732,
+      "angle_max": 3.1396291255950928,
+      "angle_increment": 0.0019634952768683434,
+      "range_min": 0.05000000074505806,
+      "range_max": 30.0,
+      "finite_returns": 2851,
+      "invalid_returns": 349,
+      "covered_half_degree_sectors": 720,
+      "maximum_valid_return_gap_deg": 0.22502411795003527,
+      "raw_fill_95_percent_passed": false,
+      "quality_scope": "angular coverage and authored wall ranges only; raw dropout preserved",
+      "room_range_error_p95_m": 0.026687725360934778
+    },
+    {
+      "stamp_s": 0.366697925,
+      "frame_id": "probe_lidar_64307f84cc1e46919627c12347dca2e0",
+      "angle_min": -3.1415927410125732,
+      "angle_max": 3.1396291255950928,
+      "angle_increment": 0.0019634952768683434,
+      "range_min": 0.05000000074505806,
+      "range_max": 30.0,
+      "finite_returns": 2851,
+      "invalid_returns": 349,
+      "covered_half_degree_sectors": 720,
+      "maximum_valid_return_gap_deg": 0.22502411795003527,
+      "raw_fill_95_percent_passed": false,
+      "quality_scope": "angular coverage and authored wall ranges only; raw dropout preserved",
+      "room_range_error_p95_m": 0.025992511369015148
+    }
+  ],
+  "host": {
+    "run_id": "64307f84cc1e46919627c12347dca2e0",
+    "started_at_utc": "2026-10-19T15:58:49.3067373Z",
+    "scope": "native bounded component probe",
+    "timeout_s": 180,
+    "sdk_root": "E:\\IsaacSim\\isaac-sim-4.5.0",
+    "entry_point": "local_ros_probe.py",
+    "inputs_directory": "C:\\Users\\LIMMM\\factory-ops-twin\\artifacts\\local45\\rtx-scan-006.inputs",
+    "launcher_sha256": "4a3476eeb4cfb1e465984d7be834865d649172633d3d642acc066c045c6a573a",
+    "source_sha256": "9958a3546e7a8b97878105bc7f3a734f7e239f4ad204b6ec7008e9f914281760",
+    "gpu": "NVIDIA GeForce RTX 3060, 12288 MiB, 610.62",
+    "timed_out": false,
+    "remaining_owned_pids": [],
+    "config_sha256": "98704dabe65a6162c99842f264ba54c933205307e24c8a363f70e170518fc7d8",
+    "project_source_sha256": {
+      "scripts/isaac/local_lidar_bridge.py": "f6f903b40f7c7a2c5484f9f5eb8b096697935e6930980165bcb0436748d04d5e"
+    },
+    "launcher_pid": 64720,
+    "exit_code": 0,
+    "owned_pids_at_cleanup": [],
+    "closed": true,
+    "probe_status": "passed",
+    "probe_identity_matched": true,
+    "project_sources_matched": true,
+    "finished_at_utc": "2026-10-19T15:59:35.4455087Z",
+    "wall_time_s": 46.141032
+  },
+  "result_sha256": "38d476208f3d0f0eb63badca7c5095374373330757c61d09eddcb88109a750e5",
+  "receiver_result_sha256": "28395a57f44d4ebd6ba0da0ba3eee70d718ac04845f4da94b90a40affa937ae3",
+  "limitations": [
+    "Static room transport/coverage component only; not Nav2/fleet qualification",
+    "349/3200 raw ranges unfilled in each retained scan (10.90625%); no interpolation; cause unverified",
+    "Original raw95% fill criterion remains failed; separate720 half-degree sector coverage criterion used",
+    "Nearest manual clock within50ms only, not sensor/RGB frame synchronization proof",
+    "No motion, inventory, payload, dock or charging verification in this run",
+    "Original attempts001..005 remain failed; SDK6.2 baseline unchanged"
+  ]
+}

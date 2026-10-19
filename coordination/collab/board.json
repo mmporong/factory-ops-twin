@@ -1,6 +1,6 @@
 {
-  "revision": 18,
-  "updated_at": "2026-10-19T14:52:30.253975+00:00",
+  "revision": 22,
+  "updated_at": "2026-10-19T16:04:53.922080+00:00",
   "scope": {
     "excluded": "실물 로봇 실행, 새 유료 서비스/에셋, 공개 배포",
     "project_root": "C:\\Users\\LIMMM\\factory-ops-twin",
@@ -20,7 +20,7 @@
       "role": "dashboard frontend author",
       "name": "control",
       "agent_kind": "codex",
-      "status": "017/018 accepted; 019 local component result review",
+      "status": "022 result received; no pending assignment",
       "session": "default",
       "agent_session": "01a152aa-24b4-7a31-92e3-a2b620f4feeb",
       "terminal_id": "term_65e06d27e415810",
@@ -424,6 +424,57 @@
       "status": "accepted",
       "result_path": "coordination/collab/results/ros-energy-dispatch-017.json",
       "acceptance_record": "closed evidence17 tests plus final normal/attempt/pose6 corruptions2 tests PASS; ER017-001 resolved and changed source hashes matched; operational accounting only"
+    },
+    {
+      "task_id": "local45-asset-admission-020",
+      "attempt": 1,
+      "contract_revision": 19,
+      "owner": "control",
+      "reviewer": "root",
+      "status": "accepted",
+      "ACK": true,
+      "task_path": "coordination/collab/local45-asset-admission-020-task.json",
+      "result_path": "coordination/collab/results/local45-asset-admission-020.json",
+      "write_paths": [
+        "scripts/isaac/local_asset_probe.py",
+        "configs/local-asset-probe.json",
+        "coordination/collab/results/local45-asset-admission-020.json"
+      ],
+      "acceptance": "bounded separate4.5 asset/physics/render probe; native execution by root; no 6.2 transport claim",
+      "acceptance_record": "root actual002: pinned source/config matched; USD composition clean,180 actual samples/3s,stationary dwell2.93s,7DOF/8bodies,RGB640x480; host exit0 closed/PID[]; component4.5 only"
+    },
+    {
+      "task_id": "local45-motion-admission-021",
+      "attempt": 1,
+      "contract_revision": 20,
+      "owner": "control",
+      "reviewer": "root",
+      "status": "accepted",
+      "ACK": true,
+      "task_path": "coordination/collab/local45-motion-admission-021-task.json",
+      "result_path": "coordination/collab/results/local45-motion-admission-021.json",
+      "write_paths": [
+        "scripts/isaac/local_asset_probe.py",
+        "configs/local-motion-probe.json",
+        "tests/test_local_motion_plan.py",
+        "coordination/collab/results/local45-motion-admission-021.json"
+      ],
+      "acceptance": "source/API/CPU 소검사 후 root가 새 native attempt로 actual wheel/body/stop/media와 host closed 확인. 실패 결과 보존. 완료 신호와 SHA receipt 회수.",
+      "acceptance_record": "root actual17simsec/1020samples; measured forward/normal braking/inplace turn/curve/watchdog stop passed; source/config/project SHA matched,3PNG inspected,host closed and D/E backup matched"
+    },
+    {
+      "task_id": "local45-runtime-boundary-review-022",
+      "attempt": 1,
+      "contract_revision": 21,
+      "owner": "control",
+      "status": "accepted_readonly_report",
+      "ACK": true,
+      "result_path": "coordination/collab/results/local45-runtime-boundary-review-022.json",
+      "write_paths": [
+        "coordination/collab/results/local45-runtime-boundary-review-022.json"
+      ],
+      "acceptance": "bounded review of root runtime ownership/provenance and RTX scan gap; no product mutation",
+      "acceptance_record": "Bounded review received. LR022-002: root added count/frame/clock/source/config ACK checks and exact dependency set. LR022-001: guard now declares immediate-child closure scope and unsupported full descendant timeout cleanup; no production full-tree approval. Native007 verifies current source; raw006 unchanged."
     }
   ],
   "decisions": [

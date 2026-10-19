@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "scope": "authored vertical contact coupon; not AMR docking or fleet qualification",
+  "physics_hz": 120,
+  "maximum_sim_time_s": 6.0,
+  "body_dimensions_m": [0.4, 0.4, 0.3],
+  "body_initial_position_m": [0.0, 0.0, 0.6],
+  "body_mass_kg": 20.0,
+  "pad_dimensions_m": [1.0, 1.0, 0.1],
+  "pad_position_m": [0.0, 0.0, 0.05],
+  "minimum_contact_force_n": 0.1,
+  "stationary_linear_m_s": 0.02,
+  "stationary_angular_rad_s": 0.02,
+  "contact_dwell_s": 0.5,
+  "separation_dwell_s": 0.15,
+  "release_velocity_z_m_s": 3.0,
+  "image_size_px": [640, 480],
+  "provenance": "component-test parameters; not vehicle or charger specifications; release is an authored rigid-body velocity perturbation"
+}

@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "scope": "SDK4.5 single NovaCarter asset, CPU PhysX idle and GPU RGB admission only",
+  "robot_count": 1,
+  "asset_relative_path": "/Isaac/Robots/NVIDIA/Carter/nova_carter/nova_carter.usd",
+  "wheel_dof_names": ["joint_wheel_left", "joint_wheel_right"],
+  "physics_hz": 60,
+  "maximum_sim_time_s": 3.0,
+  "maximum_wall_time_s": 360.0,
+  "stage_load_timeout_s": 100.0,
+  "initial_position_m": [0.0, 0.0, 0.05],
+  "stationary_linear_m_s": 0.02,
+  "stationary_angular_rad_s": 0.02,
+  "stationary_dwell_s": 0.5,
+  "image_size_px": [640, 480],
+  "camera_position_m": [2.5, 2.5, 1.8],
+  "camera_target_m": [0.0, 0.0, 0.5]
+}

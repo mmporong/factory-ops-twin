@@ -1,0 +1,34 @@
+{
+  "task_id": "local45-motion-admission-021",
+  "attempt": 1,
+  "contract_revision": 20,
+  "owner": "control",
+  "reviewer": "root",
+  "goal": "기존 SDK4.5 NovaCarter의 실제 휠 구동으로 가감속·제자리 회전·곡선·명령 중단 정지를 관측하는 작은 구성요소 시험",
+  "inputs": {
+    "commit": "9d026f32eaeb263e983ce8f77dba9e4123adcc56",
+    "accepted_native": "artifacts/local45/asset-admission-002",
+    "accepted_source": "a0c996e0b0596d49b186d54d798b473ab21aa8696d4fd9536974fe7ff56c3adf"
+  },
+  "write_paths": [
+    "scripts/isaac/local_asset_probe.py",
+    "configs/local-motion-probe.json",
+    "tests/test_local_motion_plan.py",
+    "coordination/collab/results/local45-motion-admission-021.json"
+  ],
+  "scope": [
+    "020002 실제 passed: 180표본,3초,7DOF8body,최종 선속도0.000424m/s 각속도0.000885rad/s,640x480 PNG,host exit0/closed/PID[] 확인. 020 receipt는 root가 수용 기록한다.",
+    "기존 local_asset_probe.py에 선택적 motion_profile을 추가해 idle 설정 경로 보존. 별도 probe 전체 복제·큰 리팩터링 금지. 이전 source는 002.inputs에 고정되어 있다.",
+    "기존 Python3.10 호환 factory_ops.motion.DriveGeometry/WheelOdometry/VelocityWatchdog 및 drive_profile.DriveProfile 재사용. SDK에서 StrEnum 사용하는 운영 모듈 import 금지. SDK import는 SimulationApp 시작 뒤. 필요한 프로젝트 root sys.path만 설정.",
+    "실제 USD의 활성 바퀴 collider extents와 root 상대 transform으로 radius/track 계산·source provenance 기록. scripts/isaac/nav_scene.py::_drive_geometry_from_colliders의 규칙 참조. 광범위한 해당 모듈 import는 피하고 최소 변경으로 측정 구현. 숫자 추정/벤더홍보사양 대입 금지. 이상 구조면 실행 거절.",
+    "command source는 시간표+실제 sim time만, GT pose는 평가에만 사용. wheel velocity targets만 전달하고 pose/root velocity/kinematic teleport를 이동에 사용하지 않는다. 실제 joint positions로 encoder odom 계산.",
+    "약18초 이하 일정: 초기정지→전진0.3m/s(가속포함3s)→정상감속정지2s→제자리0.4rad/s3s→정상정지2s→곡선0.25m/s+0.3rad/s3s→명령갱신중단과0.3s watchdog 만료→실측연속정지0.5s. 정확한 각 단계는 config에 선언. 선형/각/휠 가속 한계는 기존 DriveLimits 사용.",
+    "60Hz 실제 wheel/body/encoder/target/phase/watchdog 관측 원본 최대약1200행. 각 phase요약과 실제 이동·회전·정지/평면경계 검사. target램프와 실제물리 반응을 구분해 보고. 원하는 값 미달을 통과로 숨기지 않음.",
+    "렌더는 시작/회전후/최종정지 3장만(640x480); 대량 SDG/영상 금지. 시각동기품질 미검증 명시. physics step은 render=False 위주, 캡처 전 only렌더. host 최대480초/내부360초 유지.",
+    "source/config/모든 재사용 프로젝트 .py SHA를 result에 기록하고 native입력 snapshot 보존 계획. root 실행 담당, control은 SDK/ROS/VM 실행하지 않는다.",
+    "SDK4.5 구성요소만: Nav2/예약/4대/적재/충전 전력 검증 성공으로 확대하지 않는다. 별도 최종4대 계약은 유지.",
+    "의미있는 계획/계산 경계만 작은 CPU검사. 이미 통과한 운영 전체검사 반복 금지. 고정된 API사용 근거는 설치4.5 소스에서 확인. 새 의존/에이전트/페인/설치/Git/기존원본 수정 금지. 다른 작업자도 공유중이므로 타인 변경을 되돌리지 말 것."
+  ],
+  "acceptance": "source/API/CPU 소검사 후 root가 새 native attempt로 actual wheel/body/stop/media와 host closed 확인. 실패 결과 보존. 완료 신호와 SHA receipt 회수.",
+  "created_at_utc": "2026-10-19T15:35:43.445820+00:00"
+}

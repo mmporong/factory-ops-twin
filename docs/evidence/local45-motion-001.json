@@ -1,0 +1,841 @@
+{
+  "schema_version": 1,
+  "run_id": "c056d914d1254d79a24f5807ef083953",
+  "status": "passed",
+  "scope": "SDK4.5 single NovaCarter authored wheel-target motion component; not navigation, fleet or physical charging qualification",
+  "isaac_version": "4.5.0-rc.36+release.19112.f59b3005.gl",
+  "python": "3.10.15 (tags/v3.10.15-dirty:ffee63f, Oct  8 2024, 11:54:31) [MSC v.1912 64 bit (AMD64)]",
+  "source_sha256": "042e7c3255c339a5d5705a0bb70e377f0b807d2deda5d06fc0cffb0870bf345c",
+  "config_sha256": "b520bd46cf26907e1543a170de46e7ddbd0c0978b086977ea0372f0ba80b054a",
+  "project_source_sha256": {
+    "factory_ops/__init__.py": "da57bbf586e3c4639fd72b3960ef8dd7a8326b3ba17504836189be26ce5bacb0",
+    "factory_ops/motion.py": "a8d670ce9e0309093c47a6a63ff70c78182021f6b50496933e29985466ed6cd1",
+    "factory_ops/drive_profile.py": "6bba5a51caa5e4a71662339026afc67e1efe1d7370cb04c372cde48eba9d7185"
+  },
+  "drive_geometry": {
+    "wheel_radius_m": 0.14000000059604645,
+    "wheel_separation_m": 0.41319998771250255,
+    "provenance": {
+      "kind": "fresh_asset_collision_geometry_measurement",
+      "method": "ComputeExtentFromPlugins; root-relative XformCache; union three active collision geometries per wheel; X/Z diameter and Y centers",
+      "unit": "m",
+      "wheel_unions": {
+        "left": {
+          "min": [
+            -0.14000000503379842,
+            0.16659999475032092,
+            -3.72529030068236e-09
+          ],
+          "max": [
+            0.13999999615829448,
+            0.24659999296218163,
+            0.2799999974668026
+          ],
+          "size": [
+            0.2800000011920929,
+            0.07999999821186071,
+            0.2800000011920929
+          ],
+          "center": [
+            -4.437751971453352e-09,
+            0.20659999385625127,
+            0.13999999687075615
+          ]
+        },
+        "right": {
+          "min": [
+            -0.14000000498839643,
+            -0.24659999296218163,
+            -3.72529030068236e-09
+          ],
+          "max": [
+            0.13999999620369646,
+            -0.16659999475032092,
+            0.2799999974668026
+          ],
+          "size": [
+            0.2800000011920929,
+            0.07999999821186071,
+            0.2800000011920929
+          ],
+          "center": [
+            -4.392349983728394e-09,
+            -0.20659999385625127,
+            0.13999999687075615
+          ]
+        }
+      },
+      "collision_geometry_records": [
+        {
+          "path": "/World/NovaCarter/wheel_left/Colliders/Cylinder",
+          "collision_api_path": "/World/NovaCarter/wheel_left/Colliders/Cylinder",
+          "min": [
+            -0.12500000443775197,
+            0.1765999945268035,
+            0.014999996870756142
+          ],
+          "max": [
+            0.12499999556224803,
+            0.23659999318569905,
+            0.26499999687075615
+          ],
+          "local_extent": [
+            [
+              -0.125,
+              -0.125,
+              -0.029999999329447746
+            ],
+            [
+              0.125,
+              0.125,
+              0.029999999329447746
+            ]
+          ],
+          "root_relative_transform": [
+            [
+              1.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              -2.220446049250313e-16,
+              -1.0,
+              0.0
+            ],
+            [
+              0.0,
+              1.0,
+              -2.220446049250313e-16,
+              0.0
+            ],
+            [
+              -4.437751968851267e-09,
+              0.20659999385625127,
+              0.13999999687075615,
+              1.0
+            ]
+          ]
+        },
+        {
+          "path": "/World/NovaCarter/wheel_left/Colliders/Cylinder_01",
+          "collision_api_path": "/World/NovaCarter/wheel_left/Colliders/Cylinder_01",
+          "min": [
+            -0.0999999984772875,
+            0.16659999475032092,
+            0.04000000283122062
+          ],
+          "max": [
+            0.09999998960178355,
+            0.24659999296218163,
+            0.23999999091029167
+          ],
+          "local_extent": [
+            [
+              -0.09999999403953552,
+              -0.09999999403953552,
+              -0.03999999910593033
+            ],
+            [
+              0.09999999403953552,
+              0.09999999403953552,
+              0.03999999910593033
+            ]
+          ],
+          "root_relative_transform": [
+            [
+              1.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              -2.220446049250313e-16,
+              -1.0,
+              0.0
+            ],
+            [
+              0.0,
+              1.0,
+              -2.220446049250313e-16,
+              0.0
+            ],
+            [
+              -4.437751968851267e-09,
+              0.20659999385625127,
+              0.13999999687075615,
+              1.0
+            ]
+          ]
+        },
+        {
+          "path": "/World/NovaCarter/wheel_left/Colliders/Cylinder_02",
+          "collision_api_path": "/World/NovaCarter/wheel_left/Colliders/Cylinder_02",
+          "min": [
+            -0.14000000503379842,
+            0.19659999407976866,
+            -3.72529030068236e-09
+          ],
+          "max": [
+            0.13999999615829448,
+            0.21659999363273388,
+            0.2799999974668026
+          ],
+          "local_extent": [
+            [
+              -0.14000000059604645,
+              -0.14000000059604645,
+              -0.009999999776482582
+            ],
+            [
+              0.14000000059604645,
+              0.14000000059604645,
+              0.009999999776482582
+            ]
+          ],
+          "root_relative_transform": [
+            [
+              1.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              -2.220446049250313e-16,
+              -1.0,
+              0.0
+            ],
+            [
+              0.0,
+              1.0,
+              -2.220446049250313e-16,
+              0.0
+            ],
+            [
+              -4.437751968851267e-09,
+              0.20659999385625127,
+              0.13999999687075615,
+              1.0
+            ]
+          ]
+        },
+        {
+          "path": "/World/NovaCarter/wheel_right/Colliders/Cylinder",
+          "collision_api_path": "/World/NovaCarter/wheel_right/Colliders/Cylinder",
+          "min": [
+            -0.12500000439234998,
+            -0.23659999318569905,
+            0.014999996870756142
+          ],
+          "max": [
+            0.12499999560765,
+            -0.1765999945268035,
+            0.26499999687075615
+          ],
+          "local_extent": [
+            [
+              -0.125,
+              -0.125,
+              -0.029999999329447746
+            ],
+            [
+              0.125,
+              0.125,
+              0.029999999329447746
+            ]
+          ],
+          "root_relative_transform": [
+            [
+              1.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              -2.220446049250313e-16,
+              -1.0,
+              0.0
+            ],
+            [
+              0.0,
+              1.0,
+              -2.220446049250313e-16,
+              0.0
+            ],
+            [
+              -4.3923499943535754e-09,
+              -0.20659999385625127,
+              0.13999999687075615,
+              1.0
+            ]
+          ]
+        },
+        {
+          "path": "/World/NovaCarter/wheel_right/Colliders/Cylinder_01",
+          "collision_api_path": "/World/NovaCarter/wheel_right/Colliders/Cylinder_01",
+          "min": [
+            -0.09999999843188552,
+            -0.24659999296218163,
+            0.04000000283122062
+          ],
+          "max": [
+            0.09999998964718552,
+            -0.16659999475032092,
+            0.23999999091029167
+          ],
+          "local_extent": [
+            [
+              -0.09999999403953552,
+              -0.09999999403953552,
+              -0.03999999910593033
+            ],
+            [
+              0.09999999403953552,
+              0.09999999403953552,
+              0.03999999910593033
+            ]
+          ],
+          "root_relative_transform": [
+            [
+              1.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              -2.220446049250313e-16,
+              -1.0,
+              0.0
+            ],
+            [
+              0.0,
+              1.0,
+              -2.220446049250313e-16,
+              0.0
+            ],
+            [
+              -4.3923499943535754e-09,
+              -0.20659999385625127,
+              0.13999999687075615,
+              1.0
+            ]
+          ]
+        },
+        {
+          "path": "/World/NovaCarter/wheel_right/Colliders/Cylinder_02",
+          "collision_api_path": "/World/NovaCarter/wheel_right/Colliders/Cylinder_02",
+          "min": [
+            -0.14000000498839643,
+            -0.21659999363273388,
+            -3.72529030068236e-09
+          ],
+          "max": [
+            0.13999999620369646,
+            -0.19659999407976866,
+            0.2799999974668026
+          ],
+          "local_extent": [
+            [
+              -0.14000000059604645,
+              -0.14000000059604645,
+              -0.009999999776482582
+            ],
+            [
+              0.14000000059604645,
+              0.14000000059604645,
+              0.009999999776482582
+            ]
+          ],
+          "root_relative_transform": [
+            [
+              1.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              -2.220446049250313e-16,
+              -1.0,
+              0.0
+            ],
+            [
+              0.0,
+              1.0,
+              -2.220446049250313e-16,
+              0.0
+            ],
+            [
+              -4.3923499943535754e-09,
+              -0.20659999385625127,
+              0.13999999687075615,
+              1.0
+            ]
+          ]
+        }
+      ]
+    }
+  },
+  "physics": {
+    "source": "native World steps and initialized articulation state",
+    "physics_hz": 60,
+    "device": "cpu",
+    "gpu_dynamics": false,
+    "gravity_direction": [
+      0.0,
+      0.0,
+      -1.0
+    ],
+    "gravity_m_s2": 9.8100004196167,
+    "dof_names": [
+      "joint_caster_base",
+      "joint_wheel_left",
+      "joint_wheel_right",
+      "joint_swing_left",
+      "joint_swing_right",
+      "joint_caster_left",
+      "joint_caster_right"
+    ],
+    "num_dof": 7,
+    "num_bodies": 8,
+    "joint_state_units": {
+      "revolute": [
+        "rad",
+        "rad/s"
+      ],
+      "prismatic": [
+        "m",
+        "m/s"
+      ],
+      "type_source": "geometry.joints USD joint types matched by name"
+    },
+    "commands_sent": 1020,
+    "input_policy": "time-only schedule, watchdog and DriveProfile; wheel velocity targets only; GT used for evaluation only",
+    "samples": 1020,
+    "initial_sim_time_s": 0.03333333507180214,
+    "final_sim_time_s": 17.033334221690893,
+    "elapsed_sim_time_s": 17.00000088661909,
+    "final_state": {
+      "run_id": "c056d914d1254d79a24f5807ef083953",
+      "physics_frame": 1020,
+      "sim_time_s": 17.033334221690893,
+      "position_m": [
+        0.8510276079177856,
+        0.6329705119132996,
+        2.5331974029541016e-06
+      ],
+      "orientation_wxyz": [
+        0.48912757635116577,
+        0.0006925186607986689,
+        -0.0003893412067554891,
+        0.8722119927406311
+      ],
+      "linear_velocity_m_s": [
+        0.00020443243556655943,
+        -0.000418988085584715,
+        -0.00014317798195406795
+      ],
+      "angular_velocity_rad_s": [
+        0.0007577564683742821,
+        0.0001308592763962224,
+        0.00031554410816170275
+      ],
+      "joint_positions_native": [
+        1.878670991573017e-05,
+        -4.746124744415283,
+        1.4799439907073975,
+        -0.9120957255363464,
+        -0.6691175699234009,
+        1.79850435256958,
+        5.253876209259033
+      ],
+      "joint_velocities_native": [
+        0.001999274827539921,
+        -0.002392744179815054,
+        -0.0001722811721265316,
+        -0.025156639516353607,
+        -0.013484479859471321,
+        0.014082488603889942,
+        0.002848976757377386
+      ],
+      "linear_speed_m_s": 0.000487692086351685,
+      "angular_speed_rad_s": 0.0008311961860942167,
+      "motion": {
+        "phase": "watchdog_stop",
+        "phase_end_s": 17.0,
+        "issued_at_sim_time_s": 17.016667554154992,
+        "command_stamp_s": 14.0166673976928,
+        "command_refreshed": false,
+        "watchdog_expired": true,
+        "requested_body_velocity": [
+          0.0,
+          0.0
+        ],
+        "target": {
+          "linear_m_s": 0.0,
+          "angular_rad_s": 0.0,
+          "wheel_targets_rad_s": [
+            0.0,
+            0.0
+          ],
+          "phase": "fault_stop",
+          "curvature_limited": false,
+          "wheel_speed_limited": false,
+          "emergency_stop": true
+        }
+      },
+      "roll_rad": -1.7161934980919493e-06,
+      "pitch_rad": -0.0015889218725429937,
+      "yaw_rad": 2.119414092422627,
+      "forward_velocity_m_s": -0.0004641132054107181,
+      "encoder": {
+        "stamp_s": 17.033334221690893,
+        "x_m": 0.8545102914374559,
+        "y_m": 0.6402823363552095,
+        "yaw_rad": 2.109510291744444,
+        "linear_m_s": -4.45604302997894e-05,
+        "angular_rad_s": -7.997292948550308e-05
+      },
+      "measured_wheel_velocity_rad_s": [
+        -0.002392744179815054,
+        -0.0001722811721265316
+      ]
+    },
+    "stationary_dwell_observed_s": 2.583333468064666,
+    "stationary_passed": true
+  },
+  "motion_evaluation": {
+    "passed": true,
+    "planar_bounds_passed": true,
+    "phases": [
+      {
+        "phase": "initial_stop",
+        "samples": 60,
+        "displacement_xy_m": [
+          0.0008191317319869995,
+          -7.194466888904572e-08
+        ],
+        "yaw_change_rad": -1.6533141915075193e-05,
+        "stationary_dwell_s": 0.9333333820104599,
+        "tail_forward_m_s": 0.0002900138186763825,
+        "tail_angular_rad_s": 0.0003413171965803485,
+        "encoder_delta": {
+          "x_m": 0.0008048081429060989,
+          "y_m": -2.0142932170971634e-08,
+          "yaw_rad": -3.8394833789370675e-05
+        },
+        "tail_measured_wheel_rad_s": [
+          0.0017194805822024742,
+          0.003368478020032247
+        ],
+        "tail_target_wheel_rad_s": [
+          0.0,
+          0.0
+        ],
+        "peak_actual_forward_accel_m_s2": 0.5791172792074492,
+        "peak_target_linear_accel_m_s2": 0.0,
+        "checks": {
+          "complete_phase": true,
+          "stationary_dwell": true
+        },
+        "passed": true
+      },
+      {
+        "phase": "forward",
+        "samples": 180,
+        "displacement_xy_m": [
+          0.7202844172716141,
+          -0.0009364716242998838
+        ],
+        "yaw_change_rad": -0.00230921565864179,
+        "stationary_dwell_s": 0.0,
+        "tail_forward_m_s": 0.3004227924728019,
+        "tail_angular_rad_s": -0.0005889305198555424,
+        "encoder_delta": {
+          "x_m": 0.7203446648321312,
+          "y_m": -0.0009659636822167528,
+          "yaw_rad": -0.0023257343342800068
+        },
+        "tail_measured_wheel_rad_s": [
+          2.149063404401143,
+          2.146893366177877
+        ],
+        "tail_target_wheel_rad_s": [
+          2.142857133733983,
+          2.142857133733983
+        ],
+        "peak_actual_forward_accel_m_s2": 0.2947686491676638,
+        "peak_target_linear_accel_m_s2": 0.2499999869614854,
+        "checks": {
+          "complete_phase": true,
+          "tail_linear": true,
+          "tail_angular": true,
+          "forward_progress": true
+        },
+        "passed": true
+      },
+      {
+        "phase": "normal_stop",
+        "samples": 120,
+        "displacement_xy_m": [
+          0.13255292177200317,
+          -0.0003383863950148225
+        ],
+        "yaw_change_rad": -0.00041405106616467045,
+        "stationary_dwell_s": 1.183333395048976,
+        "tail_forward_m_s": 0.0005066587702893127,
+        "tail_angular_rad_s": 0.00021241630604258433,
+        "encoder_delta": {
+          "x_m": 0.13258767690107798,
+          "y_m": -0.000340659863036586,
+          "yaw_rad": -0.00040891211128159894
+        },
+        "tail_measured_wheel_rad_s": [
+          0.004570518309871356,
+          0.005391313469347855
+        ],
+        "tail_target_wheel_rad_s": [
+          0.0,
+          0.0
+        ],
+        "peak_actual_forward_accel_m_s2": 0.36125377549327614,
+        "peak_target_linear_accel_m_s2": 0.34999998174607994,
+        "checks": {
+          "complete_phase": true,
+          "stationary_dwell": true
+        },
+        "passed": true
+      },
+      {
+        "phase": "turn",
+        "samples": 180,
+        "displacement_xy_m": [
+          -0.0011649727821350098,
+          -0.00569633231498301
+        ],
+        "yaw_change_rad": 0.8643686150490385,
+        "stationary_dwell_s": 0.0,
+        "tail_forward_m_s": -0.010396454582632938,
+        "tail_angular_rad_s": 0.3680595844984055,
+        "encoder_delta": {
+          "x_m": -7.371489709384615e-05,
+          "y_m": -0.005105836453581354,
+          "yaw_rad": 0.8770533512389996
+        },
+        "tail_measured_wheel_rad_s": [
+          -0.5913597563902537,
+          0.44191285967826843
+        ],
+        "tail_target_wheel_rad_s": [
+          -0.5902856942190199,
+          0.5902856942190199
+        ],
+        "peak_actual_forward_accel_m_s2": 0.23419235366723484,
+        "peak_target_linear_accel_m_s2": 0.0,
+        "checks": {
+          "complete_phase": true,
+          "tail_linear": true,
+          "tail_angular": true,
+          "rotation": true,
+          "translation_drift": true
+        },
+        "passed": true
+      },
+      {
+        "phase": "turn_stop",
+        "samples": 120,
+        "displacement_xy_m": [
+          -0.002345561981201172,
+          -0.0030885236337780952
+        ],
+        "yaw_change_rad": 0.10877923601480288,
+        "stationary_dwell_s": 1.450000075623393,
+        "tail_forward_m_s": -0.00048580541301616794,
+        "tail_angular_rad_s": 0.001022240131472548,
+        "encoder_delta": {
+          "x_m": -0.0020730535419172247,
+          "y_m": -0.0028275494427961526,
+          "yaw_rad": 0.10963449084587618
+        },
+        "tail_measured_wheel_rad_s": [
+          -0.00583130045949171,
+          -0.0026157764291080336
+        ],
+        "tail_target_wheel_rad_s": [
+          0.0,
+          0.0
+        ],
+        "peak_actual_forward_accel_m_s2": 0.22963539245401654,
+        "peak_target_linear_accel_m_s2": 0.0,
+        "checks": {
+          "complete_phase": true,
+          "stationary_dwell": true
+        },
+        "passed": true
+      },
+      {
+        "phase": "curve",
+        "samples": 180,
+        "displacement_xy_m": [
+          0.03819751739501953,
+          0.5711321951821446
+        ],
+        "yaw_change_rad": 1.0110553284909314,
+        "stationary_dwell_s": 0.0,
+        "tail_forward_m_s": 0.2413188378863879,
+        "tail_angular_rad_s": 0.38874122500419617,
+        "encoder_delta": {
+          "x_m": 0.039458069259158624,
+          "y_m": 0.576832260546285,
+          "yaw_rad": 0.9895267142899534
+        },
+        "tail_measured_wheel_rad_s": [
+          1.1115564624468486,
+          2.2463419993718463
+        ],
+        "tail_target_wheel_rad_s": [
+          1.343000007447387,
+          2.2284285487759172
+        ],
+        "peak_actual_forward_accel_m_s2": 0.33575927503479114,
+        "peak_target_linear_accel_m_s2": 0.2499999869614854,
+        "checks": {
+          "complete_phase": true,
+          "tail_linear": true,
+          "tail_angular": true,
+          "translation": true,
+          "rotation": true
+        },
+        "passed": true
+      },
+      {
+        "phase": "watchdog_stop",
+        "samples": 180,
+        "displacement_xy_m": [
+          -0.037315964698791504,
+          0.07189810276031494
+        ],
+        "yaw_change_rad": 0.1379507127345756,
+        "stationary_dwell_s": 2.583333468064666,
+        "tail_forward_m_s": -0.00038155651288049585,
+        "tail_angular_rad_s": 0.00035979276387176163,
+        "encoder_delta": {
+          "x_m": -0.03653815925880688,
+          "y_m": 0.07269010539348753,
+          "yaw_rad": 0.13606877664896566
+        },
+        "tail_measured_wheel_rad_s": [
+          -0.0021408026417096457,
+          -0.0008324528966719906
+        ],
+        "tail_target_wheel_rad_s": [
+          0.0,
+          0.0
+        ],
+        "peak_actual_forward_accel_m_s2": 2.6561311147478723,
+        "peak_target_linear_accel_m_s2": 14.999999217689078,
+        "checks": {
+          "complete_phase": true,
+          "stationary_dwell": true,
+          "timeout_observed": true,
+          "expired_targets_zero": true,
+          "timeout_timing": true
+        },
+        "passed": true
+      }
+    ],
+    "truth_usage": "physics response evaluation only; never command source",
+    "threshold_source": "authored component admission criteria, not measured vehicle specifications"
+  },
+  "media": [
+    {
+      "path": "motion-start.png",
+      "sha256": "1d3e231a6aeef1d814308a813bc9375a6fc66a506d1bdfd9fe24a9f0767d0b75",
+      "image_size_px": [
+        640,
+        480
+      ],
+      "source": "native Replicator rgb annotator, RayTracedLighting",
+      "sim_time_s_at_read": 1.0333333872258663,
+      "media_clock_sync_verified": false,
+      "repository_path": "docs/evidence/local45-motion-001-motion-start.png"
+    },
+    {
+      "path": "motion-after-turn.png",
+      "sha256": "a34b94d2484940a377d6ff44424b791bf44ce6d1258d174fbded0119beb2203a",
+      "image_size_px": [
+        640,
+        480
+      ],
+      "source": "native Replicator rgb annotator, RayTracedLighting",
+      "sim_time_s_at_read": 11.033333908766508,
+      "media_clock_sync_verified": false,
+      "repository_path": "docs/evidence/local45-motion-001-motion-after-turn.png"
+    },
+    {
+      "path": "motion-final.png",
+      "sha256": "541bf23ec3b87d7543f75f661e350603f0f64c3280b8ad5b28d091c4242fa031",
+      "image_size_px": [
+        640,
+        480
+      ],
+      "source": "native Replicator rgb annotator, RayTracedLighting",
+      "sim_time_s_at_read": 17.033334221690893,
+      "media_clock_sync_verified": false,
+      "repository_path": "docs/evidence/local45-motion-001-motion-final.png"
+    }
+  ],
+  "render_policy": "physics steps render=False; eight render-only refreshes at each of three captures; media clock synchronization unverified",
+  "source_result_sha256": "df5b17ce655b75f88967f15d18d5689e9d8a1b781cf6dc443e6ec85a2deea05e",
+  "host": {
+    "run_id": "c056d914d1254d79a24f5807ef083953",
+    "started_at_utc": "2026-10-19T15:48:25.1365882Z",
+    "scope": "native bounded component probe",
+    "timeout_s": 180,
+    "sdk_root": "E:\\IsaacSim\\isaac-sim-4.5.0",
+    "entry_point": "local_asset_probe.py",
+    "inputs_directory": "C:\\Users\\LIMMM\\factory-ops-twin\\artifacts\\local45\\motion-admission-001.inputs",
+    "launcher_sha256": "4a3476eeb4cfb1e465984d7be834865d649172633d3d642acc066c045c6a573a",
+    "source_sha256": "042e7c3255c339a5d5705a0bb70e377f0b807d2deda5d06fc0cffb0870bf345c",
+    "gpu": "NVIDIA GeForce RTX 3060, 12288 MiB, 610.62",
+    "timed_out": false,
+    "remaining_owned_pids": [],
+    "config_sha256": "b520bd46cf26907e1543a170de46e7ddbd0c0978b086977ea0372f0ba80b054a",
+    "project_source_sha256": {
+      "factory_ops/__init__.py": "da57bbf586e3c4639fd72b3960ef8dd7a8326b3ba17504836189be26ce5bacb0",
+      "factory_ops/motion.py": "a8d670ce9e0309093c47a6a63ff70c78182021f6b50496933e29985466ed6cd1",
+      "factory_ops/drive_profile.py": "6bba5a51caa5e4a71662339026afc67e1efe1d7370cb04c372cde48eba9d7185"
+    },
+    "launcher_pid": 29548,
+    "exit_code": 0,
+    "owned_pids_at_cleanup": [],
+    "closed": true,
+    "probe_status": "passed",
+    "probe_identity_matched": true,
+    "project_sources_matched": true,
+    "finished_at_utc": "2026-10-19T15:48:57.7139807Z",
+    "wall_time_s": 32.5776202
+  },
+  "backups": [
+    {
+      "destination": "D:\\FactoryOpsArtifacts\\local45\\checkpoint-002",
+      "files_and_hashes_match": true
+    },
+    {
+      "destination": "E:\\FactoryOpsArtifacts\\local45\\checkpoint-002",
+      "files_and_hashes_match": true
+    }
+  ],
+  "limitations": [
+    "SDK4.5 single NovaCarter development platform, no fleet/Nav2/transport/payload proof",
+    "Authored drive envelopes and ground friction, not calibrated hardware motor dynamics",
+    "Ground-truth poses used for evaluation only; command source is time schedule",
+    "Emergency watchdog stop is separate from normal smooth deceleration",
+    "Media clock alignment unqualified; only three component frames"
+  ]
+}

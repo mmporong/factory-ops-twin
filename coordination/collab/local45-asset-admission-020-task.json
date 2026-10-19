@@ -1,0 +1,25 @@
+{
+  "task_id": "local45-asset-admission-020",
+  "attempt": 1,
+  "contract_revision": 19,
+  "owner": "control",
+  "inputs_commit": "9d026f32eaeb263e983ce8f77dba9e4123adcc56",
+  "goal": "Author a bounded SDK4.5 Nova Carter asset/physics/render readiness probe using existing installation; root executes",
+  "write_paths": [
+    "scripts/isaac/local_asset_probe.py",
+    "configs/local-asset-probe.json",
+    "coordination/collab/results/local45-asset-admission-020.json"
+  ],
+  "read_paths": [
+    "scripts/isaac/local_contact_probe.py",
+    "E:/IsaacSim/isaac-sim-4.5.0/standalone_examples/benchmarks/benchmark_robots_nova_carter.py"
+  ],
+  "contract": [
+    "You are not alone. Root owns launcher, docs, raw evidence, board and Git. Do not revert others changes. No new agents/install/dependency/VM/Git or native SDK launch.",
+    "Implement Python3.10-compatible standalone CLI --config --output --run-id matching local_contact_probe.py. Late SDK imports only; do not import project StrEnum Python3.12 modules. New output directory, own source/config SHA, installed VERSION, phase snapshots before app startup; failures save traceback before app.close.",
+    "Use installed vendor benchmark asset relative path exactly /Isaac/Robots/NVIDIA/Carter/nova_carter/nova_carter.usd via get_assets_root_path(). One resolved endpoint only; no guessed alternate URLs. No copying vendor implementation or assets into repo. If unavailable fail and retain reason.",
+    "Create minimal World+ground and one WheeledRobot with joint_wheel_left/right, actual dynamic physics steps at60Hz for ~3sim seconds; gravity only, no cmd_vel/wheel command. Get articulation/rigid body/collision paths, actual dof names/joint state and collision AABB/units. Rendering one representative640x480RGB only if source valid. Prefer actual installed APIs, inspect source if needed.",
+    "Profile robot_count=1 initially. You may allow4 as separate future config but do not execute, do not claim ROS/Nav2/lidar/transport/lift/charging success. We are checking whether existing local hardware/assets can support a subsequent local path; 6.2 existing qualification unchanged.",
+    "Use root wall guard max480s; avoid unbounded Python loops; stage-load update loops get explicit wall deadline and failure. Source is an original wrapper around documented API, not a fork of vendor script. Return result receipt exact API/SHA and actual checks; root executes only after receipt api_ready."
+  ]
+}

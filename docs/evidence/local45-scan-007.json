@@ -1,0 +1,132 @@
+{
+  "run_id": "35c2374518214e2caf00d909e710ed51",
+  "status": "passed",
+  "scope": "SDK4.5 RTX scan and sim clock to WSL; static authored room, no vehicle",
+  "isaac_version": "4.5.0-rc.36+release.19112.f59b3005.gl",
+  "source_sha256": "9958a3546e7a8b97878105bc7f3a734f7e239f4ad204b6ec7008e9f914281760",
+  "config_sha256": "98704dabe65a6162c99842f264ba54c933205307e24c8a363f70e170518fc7d8",
+  "project_source_sha256": {
+    "scripts/isaac/local_lidar_bridge.py": "95a9ad2e1eb43dfa2db405315abd2c67388d6d3a5b8e0dd18070155f2e8cecdc",
+    "scripts/ros/local_dds_receiver.py": "c1874887156c4fbf2825d130fcca160bcc4b9d012f60cef42bee26bd51355c22"
+  },
+  "scan_topic": "/factory_ops_local45/scan_35c2374518214e2caf00d909e710ed51",
+  "clock_topic": "/factory_ops_local45/clock_35c2374518214e2caf00d909e710ed51",
+  "frame_id": "probe_lidar_35c2374518214e2caf00d909e710ed51",
+  "installed_profile": {
+    "path": "E:\\IsaacSim\\isaac-sim-4.5.0\\exts\\isaacsim.sensors.rtx\\data\\lidar_configs\\SLAMTEC\\RPLIDAR_S2E.json",
+    "sha256": "b230724299cdfe84795d1c46bb3aebdce0452705025a228977bc7aec3c571b64"
+  },
+  "render_hz": 10,
+  "physics_hz": 60,
+  "lidar_verified": false,
+  "lidar_transport_verified": true,
+  "raw_fill_95_percent_passed": false,
+  "quality_scope": "angular coverage and wall-distance/clock transport component; raw dropout unresolved",
+  "receiver_source_sha256": "c1874887156c4fbf2825d130fcca160bcc4b9d012f60cef42bee26bd51355c22",
+  "nearest_clock_errors_s": [
+    0.04996876800000005,
+    0.04996877099999997,
+    0.049968775000000076
+  ],
+  "scans": [
+    {
+      "stamp_s": 0.566697931,
+      "frame_id": "probe_lidar_35c2374518214e2caf00d909e710ed51",
+      "angle_min": -3.1415927410125732,
+      "angle_max": 3.1396291255950928,
+      "angle_increment": 0.0019634952768683434,
+      "range_min": 0.05000000074505806,
+      "range_max": 30.0,
+      "finite_returns": 2851,
+      "invalid_returns": 349,
+      "covered_half_degree_sectors": 720,
+      "maximum_valid_return_gap_deg": 0.22502411795003527,
+      "raw_fill_95_percent_passed": false,
+      "quality_scope": "angular coverage and authored wall ranges only; raw dropout preserved",
+      "room_range_error_p95_m": 0.02654085422625929
+    },
+    {
+      "stamp_s": 0.666697933,
+      "frame_id": "probe_lidar_35c2374518214e2caf00d909e710ed51",
+      "angle_min": -3.1415927410125732,
+      "angle_max": 3.1396291255950928,
+      "angle_increment": 0.0019634952768683434,
+      "range_min": 0.05000000074505806,
+      "range_max": 30.0,
+      "finite_returns": 2851,
+      "invalid_returns": 349,
+      "covered_half_degree_sectors": 720,
+      "maximum_valid_return_gap_deg": 0.22502411795003527,
+      "raw_fill_95_percent_passed": false,
+      "quality_scope": "angular coverage and authored wall ranges only; raw dropout preserved",
+      "room_range_error_p95_m": 0.02600578756956118
+    },
+    {
+      "stamp_s": 0.766697934,
+      "frame_id": "probe_lidar_35c2374518214e2caf00d909e710ed51",
+      "angle_min": -3.1415927410125732,
+      "angle_max": 3.1396291255950928,
+      "angle_increment": 0.0019634952768683434,
+      "range_min": 0.05000000074505806,
+      "range_max": 30.0,
+      "finite_returns": 2851,
+      "invalid_returns": 349,
+      "covered_half_degree_sectors": 720,
+      "maximum_valid_return_gap_deg": 0.22502411795003527,
+      "raw_fill_95_percent_passed": false,
+      "quality_scope": "angular coverage and authored wall ranges only; raw dropout preserved",
+      "room_range_error_p95_m": 0.026534982980891186
+    }
+  ],
+  "host": {
+    "run_id": "35c2374518214e2caf00d909e710ed51",
+    "started_at_utc": "2026-10-19T16:04:06.3756814Z",
+    "scope": "native bounded component probe",
+    "timeout_s": 180,
+    "sdk_root": "E:\\IsaacSim\\isaac-sim-4.5.0",
+    "entry_point": "local_ros_probe.py",
+    "inputs_directory": "C:\\Users\\LIMMM\\factory-ops-twin\\artifacts\\local45\\rtx-scan-007.inputs",
+    "launcher_sha256": "0ba2253d4ffa7ac023db6d697aba81cd706641a5009280b2c3e9747536e96c18",
+    "source_sha256": "9958a3546e7a8b97878105bc7f3a734f7e239f4ad204b6ec7008e9f914281760",
+    "gpu": "NVIDIA GeForce RTX 3060, 12288 MiB, 610.62",
+    "timed_out": false,
+    "remaining_owned_pids": [],
+    "config_sha256": "98704dabe65a6162c99842f264ba54c933205307e24c8a363f70e170518fc7d8",
+    "project_source_sha256": {
+      "scripts/isaac/local_lidar_bridge.py": "95a9ad2e1eb43dfa2db405315abd2c67388d6d3a5b8e0dd18070155f2e8cecdc",
+      "scripts/ros/local_dds_receiver.py": "c1874887156c4fbf2825d130fcca160bcc4b9d012f60cef42bee26bd51355c22"
+    },
+    "closure_scope": "launcher and run-matched immediate children; full descendant tree is not guaranteed",
+    "full_descendant_closure_verified": false,
+    "timeout_full_tree_cleanup_supported": false,
+    "launcher_pid": 58020,
+    "exit_code": 0,
+    "owned_pids_at_cleanup": [],
+    "closed": true,
+    "probe_status": "passed",
+    "probe_identity_matched": true,
+    "project_sources_matched": true,
+    "finished_at_utc": "2026-10-19T16:04:55.0759317Z",
+    "wall_time_s": 48.7007366
+  },
+  "result_sha256": "adfa12734cd43f3b82b7ae577da0710c8fb885b2e9c428f7b4261c098436f7cb",
+  "receiver_result_sha256": "cd540622d7796e43baa12e8d59e4daafba7fe98bc0d0083e57b3d50a6367dba9",
+  "limitations": [
+    "Static authored room only; no Nav2/fleet verification",
+    "349/3200 raw ranges unfilled (10.90625%); cause unverified, no interpolation",
+    "Raw95% fill remainsfalse; separate720 sector angular coverage criterion",
+    "Nearest manual clock within50ms only; not exact sensor/RGB synchronization",
+    "Host closure scope is launcher and matched immediate children; full descendant timeout cleanup unsupported",
+    "SDK6.2 baseline unchanged; prior failed attempts retained"
+  ],
+  "backups": [
+    {
+      "destination": "D:\\FactoryOpsArtifacts\\local45\\checkpoint-003",
+      "files_and_hashes_match": true
+    },
+    {
+      "destination": "E:\\FactoryOpsArtifacts\\local45\\checkpoint-003",
+      "files_and_hashes_match": true
+    }
+  ]
+}

@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "scope": "SDK4.5 single NovaCarter authored wheel-target motion component; not navigation, fleet or physical charging qualification",
+  "robot_count": 1,
+  "asset_relative_path": "/Isaac/Robots/NVIDIA/Carter/nova_carter/nova_carter.usd",
+  "wheel_dof_names": ["joint_wheel_left", "joint_wheel_right"],
+  "physics_hz": 60,
+  "maximum_sim_time_s": 17.0,
+  "maximum_wall_time_s": 360.0,
+  "stage_load_timeout_s": 100.0,
+  "initial_position_m": [0.0, 0.0, 0.05],
+  "stationary_linear_m_s": 0.02,
+  "stationary_angular_rad_s": 0.02,
+  "stationary_dwell_s": 0.5,
+  "image_size_px": [640, 480],
+  "camera_position_m": [3.0, 3.0, 2.4],
+  "camera_target_m": [0.6, 0.3, 0.5],
+  "motion_profile": {
+    "command_timeout_s": 0.3,
+    "drive_limits": {
+      "max_linear_m_s": 0.6,
+      "max_angular_rad_s": 1.2,
+      "linear_accel_m_s2": 0.25,
+      "linear_decel_m_s2": 0.35,
+      "angular_accel_rad_s2": 0.5,
+      "angular_decel_rad_s2": 0.7,
+      "lateral_accel_m_s2": 0.2,
+      "max_wheel_rad_s": 6.0,
+      "wheel_accel_rad_s2": 4.0
+    },
+    "phases": [
+      {"name": "initial_stop", "duration_s": 1.0, "linear_m_s": 0.0, "angular_rad_s": 0.0, "refresh_commands": true},
+      {"name": "forward", "duration_s": 3.0, "linear_m_s": 0.3, "angular_rad_s": 0.0, "refresh_commands": true},
+      {"name": "normal_stop", "duration_s": 2.0, "linear_m_s": 0.0, "angular_rad_s": 0.0, "refresh_commands": true},
+      {"name": "turn", "duration_s": 3.0, "linear_m_s": 0.0, "angular_rad_s": 0.4, "refresh_commands": true},
+      {"name": "turn_stop", "duration_s": 2.0, "linear_m_s": 0.0, "angular_rad_s": 0.0, "refresh_commands": true},
+      {"name": "curve", "duration_s": 3.0, "linear_m_s": 0.25, "angular_rad_s": 0.3, "refresh_commands": true},
+      {"name": "watchdog_stop", "duration_s": 3.0, "linear_m_s": 0.0, "angular_rad_s": 0.0, "refresh_commands": false}
+    ],
+    "evaluation": {
+      "minimum_forward_m": 0.4,
+      "minimum_turn_rad": 0.6,
+      "maximum_turn_translation_m": 0.15,
+      "minimum_curve_distance_m": 0.3,
+      "minimum_curve_yaw_rad": 0.3,
+      "tail_window_s": 0.5,
+      "linear_speed_tolerance_m_s": 0.06,
+      "angular_speed_tolerance_rad_s": 0.1,
+      "xy_bounds_m": [-3.0, 3.0, -3.0, 3.0],
+      "z_bounds_m": [-0.1, 0.5],
+      "maximum_tilt_rad": 0.35
+    }
+  }
+}

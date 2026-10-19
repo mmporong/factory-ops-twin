@@ -1,0 +1,311 @@
+{
+  "task_id": "local45-asset-admission-020",
+  "attempt": 1,
+  "contract_revision": 19,
+  "owner": "control",
+  "status": "accepted_component_native002",
+  "acknowledged": true,
+  "inputs_commit_from_card": "9d026f32eaeb263e983ce8f77dba9e4123adcc56",
+  "api_ready": true,
+  "api_ready_meaning": "root가 실제 native002를 완료; see root_runtime_acceptance. Earlier revision notes retain historical pending status.",
+  "scope": "기존 SDK4.5용 1대 NovaCarter 무명령 물리·자산·렌더 준비 probe와 설정 작성. SDK 실행과 최대480초 host guard는 root 소유.",
+  "write_paths": [
+    "scripts/isaac/local_asset_probe.py",
+    "configs/local-asset-probe.json",
+    "coordination/collab/results/local45-asset-admission-020.json",
+    "artifacts/local45/asset-admission-001-source/local_asset_probe.py"
+  ],
+  "source_sha256": {
+    "scripts/isaac/local_asset_probe.py": "a0c996e0b0596d49b186d54d798b473ab21aa8696d4fd9536974fe7ff56c3adf",
+    "configs/local-asset-probe.json": "aacd327031c41d96fee5d43bbd4705f307a87e9d99bd5fe9cf6fe3af016e0ca3"
+  },
+  "api": {
+    "entrypoint": "C:/Users/LIMMM/factory-ops-twin/scripts/isaac/local_asset_probe.py",
+    "cli": "--config <JSON 경로> --output <존재하지 않는 절대 디렉터리> --run-id <32자리 소문자 UUID hex>",
+    "config": "C:/Users/LIMMM/factory-ops-twin/configs/local-asset-probe.json",
+    "python_compatibility": "3.10 문법. SDK 의존성은 main 내 SimulationApp 시작 뒤 import. 프로젝트 모듈과 StrEnum을 import하지 않음.",
+    "asset_relative_path": "/Isaac/Robots/NVIDIA/Carter/nova_carter/nova_carter.usd",
+    "asset_resolver": "isaacsim.storage.native.get_assets_root_path() 1회 호출 후 단일 endpoint 참조. 대체 URL 없음.",
+    "wheel_dof_names": [
+      "joint_wheel_left",
+      "joint_wheel_right"
+    ],
+    "setup": "World + 추가 자산 없는 procedural ground + WheeledRobot 1대. numpy backend, CPU PhysX, GPU dynamics 비활성, 중력 -9.81m/s², GPU RayTracedLighting 렌더.",
+    "physics": "World.reset으로 초기화 후 60Hz 180회, 약3초. 매 표본의 실제 sim time 간격·유한 pose/속도/관절값 검사. wheel/pose/velocity 명령 없음. 기본 자산의 joint drive와 vendor reset 동작은 유지.",
+    "stationary_gate": "마지막 연속0.5초 이상 선속도≤0.02m/s, 각속도≤0.02rad/s를 관측해야 passed. 접촉 쌍·도킹 판정은 포함하지 않음.",
+    "geometry": "합성 USD의 articulation root·enabled/nonkinematic rigid body·collision·joint 경로와 DOF 이름/실제 상태. 활성 collision geometry의 world AABB와 meters_per_unit/up_axis 기록. AABB는 physics cooked hull 또는 접촉 측정이 아님.",
+    "render": "자산 구성·물리·정지 게이트가 통과한 뒤 native Replicator RGB uint8 640x480 데이터 1장 저장. 빈 값·검정·형식 오류는 실패. media clock 동기 품질은 미검증.",
+    "outputs": [
+      "result.json",
+      "observations.jsonl (성공 시 180개 실제 물리 표본)",
+      "nova-carter-idle.png (성공 시 1장)"
+    ],
+    "provenance": "result.json에 run_id, 원본 config/source SHA256, 설치 VERSION, Python 버전, config, 단계별 시간, 단일 resolved endpoint, 실제 상태와 PNG SHA 기록.",
+    "failure_and_shutdown": "SDK 시작 전 result.json 단계 저장. 예외의 failed_phase·traceback을 app.close 전 저장. timeline stop 결과와 close 시도/반환을 구분하며 requires_host_closure=true 유지. native fast shutdown과 잔여 PID 판정은 root host 기록 소유.",
+    "deadlines": "내부 wall 예산360초, stage load100초 및 최대20000 update, physics180회. 각 반복 전후 monotonic deadline 검사. SDK의 반환하지 않는 native 호출·startup·close 중단은 root 최대480초 host guard 필요.",
+    "exit_codes": {
+      "0": "component admission passed 및 반환된 cleanup 경로에 오류 없음; host 종료 증거 별도",
+      "1": "preflight/asset/physics/render/cleanup 실패",
+      "2": "CLI identity 또는 output 경계 오류"
+    },
+    "composition_validation": "Usd.PrimRange.Stage(stage, Usd.TraverseInstanceProxies())로 합성 prim과 instance proxy를 순회하며 각 GetPrimIndex().localErrors를 prim 경로와 함께 모두 수집한다. Pcp.PrimIndex.IsValid는 호출하지 않는다. 빈 순회·GetPrimIndex/localErrors 누락 또는 접근 실패·deadline 초과는 실패한다. hasattr/빈 목록 fallback 없이 composition 오류는 거절한다. 기존 Usd Prim.IsValid, 동적 articulation·충돌 구성 검사와 설정은 유지한다."
+  },
+  "installed_source_evidence": {
+    "benchmark": {
+      "path": "E:/IsaacSim/isaac-sim-4.5.0/standalone_examples/benchmarks/benchmark_robots_nova_carter.py",
+      "sha256": "3766dcd318ac0cebe3b2b401fa5ac0ac6df6fdcf5f70cf43625dd7b7b5ee15c1",
+      "verified": "정확한 Carter/nova_carter asset 경로와 joint_wheel_left/right. benchmark의 회전 명령·warehouse·benchmark 구현은 복제하지 않음."
+    },
+    "version": {
+      "path": "E:/IsaacSim/isaac-sim-4.5.0/VERSION",
+      "value": "4.5.0-rc.36+release.19112.f59b3005.gl",
+      "sha256": "ae03a4157cfcbea2052862857e805daf1d4ab73c3ef5fa8bda59c90b84522f9d"
+    },
+    "signature_checks": [
+      "WheeledRobot.__init__:68 — prim_path/wheel_dof_names/create_robot/usd_path/position",
+      "World.__init__:87 — stage_units_in_meters/physics_dt/rendering_dt/backend/device",
+      "Scene.add_ground_plane:174 — size/restitution/static_friction/dynamic_friction/color",
+      "PhysicsContext.enable_gpu_dynamics:404 / set_broadphase_type:426 / set_gravity:479",
+      "storage.native.nucleus.get_assets_root_path:452 및 __init__.py export",
+      "utils.stage.is_stage_loading:505 — 실제 stage loading status",
+      "SingleArticulation.handles_initialized:118 / dof_names:268 / get_joint_positions:464 / get_joint_velocities:568 / get_linear_velocity:871 / get_angular_velocity:916",
+      "_SinglePrimWrapper.get_world_pose:286와 Articulation.get_world_poses:1832 — 초기화된 physics handle의 root transform 사용",
+      "SimulationContext.stop:924 / is_stopped:811"
+    ],
+    "composition_api": {
+      "native_binding_introspection": {
+        "path": "artifacts/local45/ros-transport-001/result.json",
+        "sha256": "5288b190a145f88f8f99770eacba70da1471e30b45abfc183c86c0b1a6a04aa1",
+        "field": "installed_usd_error_apis",
+        "observed": {
+          "Stage": [],
+          "PrimIndex": [
+            "localErrors"
+          ]
+        },
+        "ownership": "root가 별도 native 실행한 기존 기록의 해당 필드만 읽음; control은 SDK 실행하지 않음"
+      },
+      "installed_documents": [
+        {
+          "path": "E:/IsaacSim/isaac-sim-4.5.0/extscache/omni.usd.libs-1.0.1+d02c707b.wx64.r.cp310/pxr/Usd/__init__.pyi",
+          "sha256": "bec448170f570d826758cf42490e5fd403d73ca3bfd930b9191912dc3bec7414",
+          "evidence": "Prim.GetPrimIndex:6312, PrimRange.Stage:8304, TraverseInstanceProxies:14754. GetPrimIndex는 합성된 cached Pcp prim index를 반환한다."
+        },
+        {
+          "path": "E:/IsaacSim/isaac-sim-4.5.0/extscache/omni.usd.libs-1.0.1+d02c707b.wx64.r.cp310/pxr/Pcp/__init__.pyi",
+          "sha256": "9c26c3be408885abc449b3fdfd678bdfb28ae9b4ae5fde02d9edc03430bab377",
+          "evidence": "PrimIndex.localErrors property:1993 및 docstring list[PcpError]. IsValid:1969도 후속 root native introspection에서 실제 노출이 확인됐다. 현재 revision3는 localErrors 수집에 필요한 경로만 유지한다."
+        },
+        {
+          "path": "E:/IsaacSim/isaac-sim-4.5.0/extscache/omni.usd.libs-1.0.1+d02c707b.wx64.r.cp310/pxr/Pcp/__DOC.py",
+          "sha256": "47d0eb5ae702c70b814ffdc4606e3b5855e26739d6968d5038bd26b244ffe844",
+          "evidence": "1727: PrimIndex.localErrors property 문서: type list[PcpError], 해당 prim의 오류 목록 반환."
+        },
+        {
+          "path": "E:/IsaacSim/isaac-sim-4.5.0/extscache/omni.asset_validator.core-0.16.2/package/omni_asset_validator/compliance_checker.py",
+          "sha256": "10253a46f25a18bc43317902913904eb2d82e6d8281bde71b8059ac20772559a",
+          "evidence": "435: 설치 validator의 Usd.PrimRange.Stage(stage, Usd.TraverseInstanceProxies()) 사용례."
+        }
+      ],
+      "additional_native_binding_introspection": {
+        "path": "artifacts/local45/ros-transport-002/result.json",
+        "sha256": "e7cbeb4d62b7dfbb473add17b478f77d68a994fc90a0f9bbe0c51fac30c11bfb",
+        "field": "installed_usd_error_apis",
+        "observed": {
+          "Stage": [],
+          "PrimIndex": [
+            "ComposeAuthoredVariantSelections",
+            "ComputePrimChildNames",
+            "ComputePrimPropertyNames",
+            "DumpToDotGraph",
+            "DumpToString",
+            "GetNodeProvidingSpec",
+            "GetSelectionAppliedForVariantSet",
+            "IsInstanceable",
+            "IsValid",
+            "PrintStatistics",
+            "__class__",
+            "__delattr__",
+            "__dict__",
+            "__dir__",
+            "__doc__",
+            "__eq__",
+            "__format__",
+            "__ge__",
+            "__getattribute__",
+            "__gt__",
+            "__hash__",
+            "__init__",
+            "__init_subclass__",
+            "__le__",
+            "__lt__",
+            "__module__",
+            "__ne__",
+            "__new__",
+            "__reduce__",
+            "__reduce_ex__",
+            "__repr__",
+            "__setattr__",
+            "__sizeof__",
+            "__str__",
+            "__subclasshook__",
+            "__weakref__",
+            "hasAnyPayloads",
+            "localErrors",
+            "primStack",
+            "rootNode"
+          ]
+        },
+        "ownership": "root의 별도 기존 SDK4.5 native 기록에서 해당 API 필드만 읽었다. control은 SDK 또는 ROS를 실행하지 않았다.",
+        "conclusion": "Pcp.PrimIndex.IsValid/localErrors/rootNode의 실제 노출이 모두 확인됐다. 현재 revision3는 localErrors를 사용하며 불필요한 IsValid 호출을 다시 추가하지 않았다."
+      }
+    }
+  },
+  "validation": [
+    {
+      "command": ".venv/Scripts/python.exe -B - (stdin: ast.parse(feature_version=(3,10)), compile, importlib의 SDK 없는 module import, 설정/벡터/deadline 검사)",
+      "result": "PASS",
+      "evidence": "Python3.10 문법과 compile 통과. 정상 설정1개, 잘못된 설정11개 거절, 누락/길이/비유한 계측3개 거절, 만료 deadline 거절. Python3.12.13의 stdlib로 실행했으며 SDK Python3.10 실행은 하지 않음.",
+      "source_revision": 1
+    },
+    {
+      "command": ".venv/Scripts/python.exe -B - (stdin: unittest.mock으로 filesystem/save/SDK entry를 대체하고 실제 main 3회 실행)",
+      "result": "PASS",
+      "evidence": "설정 오류·VERSION 부재·SDK startup 예외3경로에서 exit1, failed 상태, traceback, media 없음 확인. SDK startup 전 SHA/VERSION 단계 snapshot 확인. 테스트 파일·출력 디렉터리·native SDK 실행 없음.",
+      "source_revision": 1
+    },
+    {
+      "command": ".venv/Scripts/python.exe -B - (stdin: AST call 검사와 설치 소스 signature/benchmark 대조)",
+      "result": "PASS",
+      "evidence": "단일 asset resolver·PNG 저장지점1개·runtime 차량 명령 호출 없음. 설치 API 시그니처6개와 benchmark 경로/DOF 일치. 최종 AST/compile 재검사 통과. vendor wheeled_robot.py를 Python3.12 AST로 읽을 때 기존 정규식 문자열의 SyntaxWarning 1개를 관측했으며 제품 변경 오류가 아님.",
+      "source_revision": 1
+    },
+    {
+      "source_revision": 2,
+      "command": ".venv/Scripts/python.exe -B - (stdin: Python3.10 AST/compile 및 수정된 composition 블록을 메모리 fake prim/index로 실행)",
+      "result": "PASS",
+      "evidence": "8개: 정상 prim+instance proxy 2개 검사, 하위 prim의 localErrors 검출·거절, localErrors API 누락 거절, 무효 Pcp index 거절, GetPrimIndex 누락 거절, 빈 순회 거절, 만료 deadline 거절, localErrors=None 거절. 수정된 실제 블록을 추출해 검사했으며 SDK import/실행과 fixture 파일 생성은 없다."
+    },
+    {
+      "source_revision": 2,
+      "command": ".venv/Scripts/python.exe -B - (stdin: bytes 역산·SHA256 대조·원본 exclusive-create snapshot·현재파일 불변 확인)",
+      "result": "PASS",
+      "evidence": "composition 변경 블록만 이전 호출로 치환한 전체 bytes의 SHA가 a3d461c3 원본과 일치한다. 추가 사용자 승인 경로에 원본 bytes를 보관했고 현재 개발 source 6c4fa6e1은 되돌리지 않았다. 설정 및 native001 result/host SHA도 대조했다. 설치 pyi AST 읽기에서 기존 escape 문자열 SyntaxWarning을 관측했으며 제품 오류가 아니다."
+    },
+    {
+      "source_revision": 3,
+      "command": ".venv/Scripts/python.exe -B - (stdin: Python3.10 AST/compile, 수정된 실제 composition 블록 8개 메모리 검사, revision2 bytes/SHA 역산)",
+      "result": "PASS",
+      "evidence": "IsValid 메서드가 전혀 없는 fake prim index의 localErrors만으로 정상 및 전체 오류 수집을 검사했다. 정상2 prim·서로 다른2 prim의 오류 모두 수집 후 거절·localErrors 누락·None index·GetPrimIndex 누락·빈 순회·만료 deadline·localErrors=None의 8개 경계가 통과했다. 제거한 2줄 복원 시 revision2 SHA 6c4fa6e1 일치, 기존 USD Prim.IsValid/동적 articulation/충돌 게이트 및 원본 snapshot a3d461c3 보존을 확인했다. SDK 실행과 fixture 파일 생성은 없다."
+    },
+    {
+      "source_revision": 3,
+      "command": ".venv/Scripts/python.exe -B - (stdin: 기존 ros-transport-002 JSON의 installed_usd_error_apis 필드 및 source/config/001 snapshot/result/host SHA 대조)",
+      "result": "PASS",
+      "evidence": "Pcp.PrimIndex.IsValid/localErrors/rootNode 실제 노출 기록 확인. source a0c996e0, config aacd3270, 원본 source 전체 bytes a3d461c3 및 native001 result/host SHA 보존 확인. receipt만 갱신했으며 API 코드·설정·원본 변경 또는 SDK/ROS 실행 없음."
+    }
+  ],
+  "limits": [
+    "root native001은 자산 참조 로딩 뒤 asset_inspection의 Stage.GetCompositionErrors AttributeError로 실패했다. revision3의 실제 composition/바디/충돌/180개 표본/물리 정지/PNG는 새 attempt002 실행 대기다.",
+    "root native ros-transport-002 introspection에서 Pcp.PrimIndex.IsValid/localErrors/rootNode 노출을 확인했다. 현재 revision3는 localErrors를 사용한다. 전체 asset-admission 경로는 root의 새 attempt002 실행 대기이며 이번 확인에서 SDK·ROS를 실행하지 않았다.",
+    "설정의 정지 임계값·초기높이·ground friction은 준비 시험용 작성값이며 차량/접촉/충전 장치의 계측 사양이 아니다.",
+    "CPU PhysX+GPU 렌더 준비 입구이며 AMR 도킹·4대 운송·ROS/Nav2/LiDAR·물리 적재·충전전력·SDK6.2 성공으로 확대할 수 없다.",
+    "result의 passed는 probe 범위이며 host exit/closed/잔여PID 검수는 root guard 기록과 결합해야 한다."
+  ],
+  "processes_started": [],
+  "constraints": [
+    "새 에이전트·설치·SDK 실행·VM·Git 작업 없음",
+    "기존 probe·운영 경로·다른 작성자 변경 보존",
+    "최초 배정 probe/config/receipt와 추가 승인된 native001 원본 source snapshot 외 제품·원본 경로 수정 없음. 이번 수정에서는 config도 보존."
+  ],
+  "source_revision": 3,
+  "updated_at_utc": "2026-10-19T15:19:04.187799+00:00",
+  "revision2_write_paths": [
+    "scripts/isaac/local_asset_probe.py",
+    "coordination/collab/results/local45-asset-admission-020.json",
+    "artifacts/local45/asset-admission-001-source/local_asset_probe.py"
+  ],
+  "revision_history": [
+    {
+      "source_revision": 1,
+      "source_sha256": "a3d461c3753bb837685d783d1f5fd1b5417ca62becf0b0690356782bd393b644",
+      "native_attempt": "asset-admission-001",
+      "status": "failed_asset_inspection_missing_stage_method"
+    },
+    {
+      "source_revision": 2,
+      "source_sha256": "6c4fa6e1b0a35be8f534b83ea3146beb41a0d13b9f1de03a89f0e6744f72da4a",
+      "change": "Stage.GetCompositionErrors 호출 블록만 Pcp.PrimIndex.localErrors 검사로 교체",
+      "next_native_attempt": "asset-admission-002",
+      "status": "superseded_before_native_rerun",
+      "superseded_reason": "사용자 보완에 따라 불필요한 Pcp.PrimIndex.IsValid 호출 제거. 기존 실제 binding 확인은 localErrors만 포함한다."
+    },
+    {
+      "source_revision": 3,
+      "source_sha256": "a0c996e0b0596d49b186d54d798b473ab21aa8696d4fd9536974fe7ff56c3adf",
+      "change": "Pcp.PrimIndex.IsValid 검사 2줄만 제거. localErrors 전체 수집·composition 오류 거절과 기존 USD Prim/동적 articulation/충돌 게이트 보존.",
+      "next_native_attempt": "asset-admission-002",
+      "status": "api_ready_native_pending"
+    }
+  ],
+  "native_attempt_001": {
+    "run_id": "687e82bb148d468cafbdf0b410386e63",
+    "source_sha256": "a3d461c3753bb837685d783d1f5fd1b5417ca62becf0b0690356782bd393b644",
+    "config_sha256": "aacd327031c41d96fee5d43bbd4705f307a87e9d99bd5fe9cf6fe3af016e0ca3",
+    "result": {
+      "path": "artifacts/local45/asset-admission-001/result.json",
+      "sha256": "8e35f04bce42e887f446f3262640c0d1c798f58925a6ec0bd4c52514f5385862",
+      "status": "failed",
+      "failed_phase": "asset_inspection",
+      "error": "AttributeError: Stage.GetCompositionErrors not exposed"
+    },
+    "host": {
+      "path": "artifacts/local45/asset-admission-001.host.json",
+      "sha256": "805069e8cd0a9885434a6a7bc48d2705769882f8c795c5c6df6bb4af31db1d1c",
+      "exit_code": 0,
+      "closed": true,
+      "remaining_owned_pids": []
+    },
+    "acceptance": "원본 보존. host exit0은 probe의 failed 상태를 성공으로 바꾸지 않는다. asset reference loading 이후 inspection에 진입했으나 자산·물리·렌더 admission은 통과하지 못했다."
+  },
+  "original_source_snapshot": {
+    "path": "artifacts/local45/asset-admission-001-source/local_asset_probe.py",
+    "sha256": "a3d461c3753bb837685d783d1f5fd1b5417ca62becf0b0690356782bd393b644",
+    "method": "현재 bytes에서 단일 composition 검사 블록을 이전 한 줄로 역산한 뒤 전체 SHA 일치 확인. 존재하는 다른 bytes는 덮어쓰지 않는 exclusive-create로 보관.",
+    "current_development_file_preserved": true,
+    "authorization": "추가 사용자 지시: 첫 native source 전체 bytes 보존"
+  },
+  "revision3_write_paths": [
+    "scripts/isaac/local_asset_probe.py",
+    "coordination/collab/results/local45-asset-admission-020.json"
+  ],
+  "rerun_handoff": {
+    "api_ready": true,
+    "source_revision": 3,
+    "entry_point": "local_asset_probe.py",
+    "source_sha256": "a0c996e0b0596d49b186d54d798b473ab21aa8696d4fd9536974fe7ff56c3adf",
+    "config_sha256": "aacd327031c41d96fee5d43bbd4705f307a87e9d99bd5fe9cf6fe3af016e0ca3",
+    "previous_native_source_preserved": true,
+    "next_attempt": "asset-admission-002",
+    "root_guard_maximum_s": 480,
+    "native_execution_by_control": false,
+    "status": "root 재실행 대기. 기존 001 원본 및 6.2 기준선 유지."
+  },
+  "root_runtime_acceptance": {
+    "status": "accepted_component_only",
+    "at_utc": "2026-10-19T15:35:43.445820+00:00",
+    "attempt": "asset-admission-002",
+    "run_id": "a8fc11e4876c407b85567664a0c85b5f",
+    "result_sha256": "4b3ace064ebf1e5d8f4db246fd29f2579f6d4227da9ad12c58e4c619f4295266",
+    "host_sha256": "dbf26eb23e5473d50408c56527569bb6856a4ed62789a64e0ec04584af95ae30",
+    "evidence": "180 measured physics rows,7DOF/8bodies;3sim seconds;final linear0.0004243779m/s angular0.0008846726rad/s;actualRGB;closed true PID[]",
+    "no_claims": [
+      "four_amr",
+      "navigation",
+      "lidar",
+      "payload",
+      "charging",
+      "sdk62"
+    ]
+  }
+}

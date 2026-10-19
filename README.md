@@ -48,6 +48,22 @@ uv run python -m factory_ops.fleet_transport --bundle runs/fleet4-transport-inpu
 
 OpenUSD 자산·운영 상태와 데이터 입력을 연결하고, Omniverse Kit 익스텐션에서 주문·재고·병목을 조작·확인하는 흐름을 다음 구현 대상으로 삼았습니다. 차량 수에 따른 처리량과 대기 변화를 이 흐름 안에서 비교합니다. 현재 실행 도구는 스크립트 기반이며 Kit 익스텐션과 외부 MES/IoT 연결은 미구현입니다.
 
+기존 로컬 Isaac Sim4.5 설치에서도 소형 접촉 부품 시험을 실행했습니다. 물리 엔진의 센서에서 바디·패드 접촉 상대와 약196N의 힘, 분리 후0N을 관측했고 종료 코드0과 잔여 프로세스 없음을 확인했습니다. [원천·표본·이미지·한계](docs/evidence/local-contact-001.json)를 별도 기록했습니다. 작성된 수직 부품 시험으로, AMR 도킹·바퀴 제어·6.2의4대 운송·전기 충전 검증은 후속 단계입니다. 기존 SDK4.5의 NovaCarter1대를 로딩해 실제 물리 정지·RGB 렌더를 확인했고, native SDK에서 보낸 run별 ROS 메시지3건을 WSL Jazzy가 수신한 원본과 대조했습니다. [차량 준비 시험](docs/evidence/local45-asset-002.json)과 [ROS 연결 시험](docs/evidence/local45-ros-002.json)은6.2 기준선과 분리해 관리합니다. 로컬1대의17초 주행 시험에서는 전진·정상 감속·제자리 회전·곡선 주행과0.3초 watchdog 만료 후 실측 정지를 확인했습니다. 바퀴 collider에서 구동 치수를 측정하고 기존 가감속 제어·엔코더 적분을 재사용했습니다. [주행 원천·실측·이미지](docs/evidence/local45-motion-001.json)를 보존했으며, 산업용 적재 차량의 검증이나4대 자율 운송 결과로 표시하지 않습니다. [로컬 RTX→ROS 시험](docs/evidence/local45-scan-007.json)은 실제 거리3개 스캔의 전방향 관측과 시계 근접성을 확인했습니다. 원본 약10.9%의 빈 칸과 raw fill 검사 실패는 남아 있으며, 이 자료를 최종 센서 품질·Nav2 운송 성공으로 사용하지 않습니다.
+
+로컬 실행기는 PowerShell7에서 짧은 구성요소 시험에 사용합니다. `-SdkPath`는 기존4.5 설치 폴더입니다. 현재 종료 확인 범위는 launcher와 실행 ID가 일치하는 한 단계 자식이며, 전체 후손 트리의 timeout 정리는 보장하지 않습니다. 장시간4대 운영 실행기는 후속 구현 대상입니다.
+
+```powershell
+cd "$HOME/factory-ops-twin"
+$probeRunId = [guid]::NewGuid().ToString("N")
+& ./scripts/isaac/run-local-contact-probe.ps1 `
+  -SdkPath "E:/IsaacSim/isaac-sim-4.5.0" `
+  -Config "$PWD/configs/local-motion-probe.json" `
+  -EntryPoint local_asset_probe.py `
+  -SourceDependency @('factory_ops/__init__.py','factory_ops/motion.py','factory_ops/drive_profile.py') `
+  -OutputDirectory "$PWD/artifacts/local45/motion-$probeRunId" `
+  -RunId $probeRunId -TimeoutSec 180
+```
+
 ## 3D 웹 운영 대시보드
 
 `dashboard/`의 Next.js·React Three Fiber 화면은 공장 배치, AMR 선택 상세, 작업·적재물·경로·재고와 운영 이벤트를 보여줍니다. Python 운영 API가 상태를 제공하고 주문 생성·일시정지·재개의 결과를 확정합니다. 기본 실행은 기존 운영 원장·유한 재고·작성된 경로를 사용하는4대 CPU 모델입니다. 공급·출하와 빈 토트 회수를 공용 차량에 시간순으로 배정합니다. 투입 자재를 소비하면 빈 토트를 CI에서 원래 자재 위치로 반납하며, 도착 후 다음 주문에 재사용합니다. 제품 LOT와 토트 ID를 분리해 같은 용기로 여러 주문을 처리합니다. 이 화면의 이동은 경로 보간이며 Isaac Sim 물리·센서 검증 결과와 구분합니다. SOC 원천이 연결되지 않은 차량은 배터리를 미연결로 표시합니다.

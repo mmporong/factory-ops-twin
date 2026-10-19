@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "mode": "rtx_scan",
+  "lidar_profile": "RPLIDAR_S2E",
+  "render_hz": 10,
+  "physics_hz": 60,
+  "scope": "SDK4.5 RTX LaserScan and simulation clock to existing WSL Jazzy; no vehicle commands",
+  "domain_id": 143,
+  "minimum_messages": 3,
+  "wait_receiver_wall_s": 60,
+  "stream_wall_s": 30,
+  "publish_interval_s": 0.1
+}

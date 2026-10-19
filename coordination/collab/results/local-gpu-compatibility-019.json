@@ -1,0 +1,278 @@
+{
+  "task": "local-gpu-compatibility-019",
+  "ack": true,
+  "status": "공식 자료 한정 확인 완료·설치 및 GPU 실행 없음",
+  "completed_at_utc": "2026-10-19T14:41:24Z",
+  "acknowledged_at_utc": "2026-10-19T14:38:31.7846140Z",
+  "predecessor": {
+    "task": "ros-energy-dispatch-017",
+    "receipt": "coordination/collab/results/ros-energy-dispatch-017.json",
+    "review_completed": true,
+    "finding": "ER017-001"
+  },
+  "scope": "NVIDIA 공식 4.5/6.2 문서로 Windows headless의 기본 PhysX 접촉/도킹 API와 제약 및 기존 6.2 네 대 파이프라인과의 호환성 경계만 확인한다.",
+  "user_reported_local_environment": {
+    "gpu": "RTX 3060 12GB",
+    "driver": "610.62",
+    "ram": "root 확인 중",
+    "isaac_sim": "E:/IsaacSim/isaac-sim-4.5.0",
+    "ros": "WSL Ubuntu /opt/ros/jazzy",
+    "docker": "기존 설치 있음",
+    "independently_inspected_or_executed": false
+  },
+  "constraints": "제품·설치·실행·새 자원 탐색·새 에이전트 없음. 신규 GCP 생성 취소 유지.",
+  "conclusion": {
+    "basic_45_contact_test": "4.5 Windows headless와 CPU 물리 접촉 센서의 문서 기능을 조합하면 작은 PhysX 접촉/도킹 기구 시험을 설계할 근거가 있다. 이는 문서에 근거한 가능성 판단이며 기존 설치의 실행 성공이나 성능 판정이 아니다.",
+    "existing_62_pipeline": "로컬 4.5의 단순 접촉 결과를 기존 6.2의 네 대/8 LiDAR/ROS·Nav2·원본 보존 파이프라인 실행 증거로 인정할 수 없다. 별도 버전·환경·입력·원천·실행 식별자의 시험으로 구분해야 한다.",
+    "hardware": "사용자 전달 RTX3060 12GB는 6.2 공식 표의 RTX4080/16GB 최소 항목에 미달한다. 4.5 최소 표는 이번 확인에서 원문을 확보하지 못했으며, RAM·OS·드라이버 호환성과 실제 작은 장면 실행 여부도 미확인이다."
+  },
+  "api_and_limits": [
+    {
+      "api": "python.bat 및 from isaacsim import SimulationApp; SimulationApp({'headless': True})",
+      "status": "4.5 공식 문서 검색 색인에서 확인",
+      "source_ids": ["S1"],
+      "limits": "SimulationApp 생성 뒤 Omniverse API를 import하는 순서를 지킨다. headless는 창 없는 실행이며 물리 step이나 렌더/GPU 요구를 없앤다는 뜻은 아니다."
+    },
+    {
+      "api": "isaacsim.sensors.physics의 Contact Sensor",
+      "status": "4.5 공식 센서 개요의 검색 색인에서 확장과 기능 확인",
+      "source_ids": ["S2"],
+      "limits": "CPU 물리 기반 센서이며 기본 최대 출력률은 물리 rate다. 문서는 렌더 종료 뒤 실행을 설명하므로 render=False 또는 임의 센서 갱신 생략을 검증 없이 보장하지 않는다."
+    },
+    {
+      "api": "ContactSensor(prim_path=...), initialize(), get_current_frame(), add_raw_contact_data_to_frame()",
+      "status": "6.2의 deprecated legacy API에서 확인한 4.5 계열 후보. 정확한 4.5 서명은 미확인",
+      "source_ids": ["S3", "S4"],
+      "limits": "legacy API는 CollisionAPI와 물리 충돌 보고가 필요하고 in_contact/force/time/physics_step 및 선택 raw contact를 제공한다. 이 API 서명이 로컬 4.5 설치와 동일하다고 확정하지 않는다. 6.2 새 API는 Contact.create(...)와 ContactSensor(...).get_data()로 분리된다."
+    },
+    {
+      "api": "분리된 작은 접촉/도킹 관측 기준",
+      "status": "문서 기능에서 도출한 시험 설계 조건이며 실행 안 함",
+      "source_ids": ["S2", "S3", "S4"],
+      "limits": "실제 collider/rigid-body 접촉을 진행시키며 센서 유효성·증가하는 시각/physics step·힘과 접촉 상대를 확인해야 한다. 바닥 접촉이나 근접만으로 충전 패드 접촉을 인정하지 않는다. 정지 유지와 분리 뒤 접촉 해제도 별도로 관측해야 하며, 전기 충전·물리 적재 성공은 이 센서 결과만으로 성립하지 않는다."
+    }
+  ],
+  "compatibility_boundaries": [
+    {
+      "boundary": "SDK/센서 API와 실행 환경",
+      "source_ids": ["S4", "S5"],
+      "finding": "6.2에는 물리 센서 API 이전과 Python 3.12 요구가 명시되어 있다. 4.5 내장 Python/바이너리·확장 ABI가 기존 6.2와 같다고 가정해 소스·의존성·생성 ROS 모듈을 재사용할 수 없다. 4.5 Python 정확 버전은 이번 한정 확인에서 확정하지 않았다."
+    },
+    {
+      "boundary": "WSL Jazzy/Docker 존재와 통신·빌드 호환성",
+      "source_ids": ["S5", "S6"],
+      "finding": "6.2는 버전에 맞는 IsaacSim-6.2.0 ROS workspace와 생성 모듈의 distro/Python 일치를 요구한다. Windows↔WSL 방식은 deprecated이며 해당 경로의 custom interface 지원에도 제약이 있다. 기존 WSL Jazzy와 Docker 설치만으로 Windows 4.5 bridge·DDS·도메인·Nav2 플러그인/attestation 호환성이 입증되지는 않는다."
+    },
+    {
+      "boundary": "네 대·8 LiDAR의 센서/성능 증거",
+      "source_ids": ["S7", "S8"],
+      "finding": "6.2의 OmniLidar는 tickRate 기반 타이밍 등 버전별 센서 규칙을 갖는다. 한 rigid body의 CPU 접촉 시험은 기존 8 LiDAR GMO/ROS 수신·네 대 교통·운송·종료 검증의 대체가 아니다. 12GB GPU에서 원래 부하가 성립한다고 추정하지 않는다."
+    },
+    {
+      "boundary": "버전이 다른 시험의 수용 범위",
+      "source_ids": ["S6"],
+      "finding": "공식 호환성 문서도 같은 릴리스 번호만으로 모든 backend/정책/custom interface 호환성이 성립하지 않는다고 구분한다. 별도 4.5 접촉 결과는 4.5 한정 기구 증거로만 남기고 기존 6.2 producer/source/build·bundle/run 기준선의 PASS로 합산하지 않는다."
+    }
+  ],
+  "official_sources": [
+    {
+      "id": "S1",
+      "version": "4.5.0",
+      "title": "Python Environment",
+      "url": "https://docs.isaacsim.omniverse.nvidia.com/4.5.0/python_scripting/manual_standalone_python.html",
+      "evidence": "Windows의 python.bat, headless=True SimulationApp, app 생성 뒤 Omniverse import, update/close 사용을 설명한다.",
+      "retrieval": "NVIDIA 공식 URL의 검색 색인 본문 확인. 현재 URL open은 HTTP404여서 현재 원문 접근 성공으로 주장하지 않는다."
+    },
+    {
+      "id": "S2",
+      "version": "4.5.0",
+      "title": "Physics-Based Sensors",
+      "url": "https://docs.isaacsim.omniverse.nvidia.com/4.5.0/sensors/isaacsim_sensors_physics.html",
+      "evidence": "CPU 물리 시뮬레이션, 렌더 뒤 센서 실행, 기본 최대 물리 rate, isaacsim.sensors.physics 및 Contact Sensor를 명시한다.",
+      "retrieval": "NVIDIA 공식 URL의 검색 색인 본문 확인. 현재 URL open은 HTTP404."
+    },
+    {
+      "id": "S3",
+      "version": "6.2.0 legacy API",
+      "title": "isaacsim.sensors.physics — deprecated API",
+      "url": "https://docs.isaacsim.omniverse.nvidia.com/6.2.0/py/source/deprecated/isaacsim.sensors.physics/docs/index.html",
+      "evidence": "ContactSensor legacy 생성·initialize/get_current_frame/raw contact 추가, CollisionAPI 요건, force/contact/time/physics_step 데이터를 설명한다.",
+      "retrieval": "공식 6.2 버전 URL 검색 결과의 API 본문 확인. 4.5 서명 증명으로 대체하지 않는다."
+    },
+    {
+      "id": "S4",
+      "version": "6.2.0 문서의 6.0 migration",
+      "title": "Physics Sensors migration",
+      "url": "https://docs.isaacsim.omniverse.nvidia.com/6.2.0/migration_guides/isaac_sim_6_0/sensors_physics_to_experimental_physics.html",
+      "evidence": "isaacsim.sensors.physics의 deprecated 처리와 experimental.physics의 authoring/runtime 분리, Contact.create와 get_data 기반 이전을 설명한다.",
+      "retrieval": "버전 고정 공식 본문 확인"
+    },
+    {
+      "id": "S5",
+      "version": "6.2.0",
+      "title": "ROS 2 installation",
+      "url": "https://docs.isaacsim.omniverse.nvidia.com/6.2.0/installation/install_ros.html",
+      "evidence": "Python3.12 런타임/custom interface 빌드, 맞는 distro/workspace, native Windows와 deprecated WSL 경로를 구분한다.",
+      "retrieval": "버전 고정 공식 본문 확인"
+    },
+    {
+      "id": "S6",
+      "version": "6.2.0",
+      "title": "Cross-product compatibility",
+      "url": "https://docs.isaacsim.omniverse.nvidia.com/6.2.0/installation/compatibility.html",
+      "evidence": "6.2에 맞는 ROS workspace release를 사용하며 릴리스 번호만으로 backend/정책/custom ROS interface 전체 호환성을 추정하지 않도록 명시한다.",
+      "retrieval": "버전 고정 공식 본문 확인"
+    },
+    {
+      "id": "S7",
+      "version": "6.2.0",
+      "title": "Isaac Sim Requirements",
+      "url": "https://docs.isaacsim.omniverse.nvidia.com/6.2.0/installation/requirements.html",
+      "evidence": "x86 최소 표는 RAM32GB, RTX4080, VRAM16GB, Windows11이며 다수 센서의 VRAM 제약과 Linux 전용 Isaac Sim 컨테이너를 명시한다. 테스트 Windows driver는595.97로 제시한다.",
+      "retrieval": "버전 고정 공식 요구사항 본문 확인"
+    },
+    {
+      "id": "S8",
+      "version": "6.2.0",
+      "title": "RTX Lidar Sensors",
+      "url": "https://docs.isaacsim.omniverse.nvidia.com/6.2.0/ros2_tutorials/tutorial_series/tutorial_ros2_rtx_lidar.html",
+      "evidence": "6.0 이후 OmniLidar의 publish timing은 omni:sensor:tickRate가 담당하며 구형 frameSkipCount와 구분한다. viewport/render·ROS 설정 요구가 별도다.",
+      "retrieval": "버전 고정 공식 검색 결과 본문 확인"
+    }
+  ],
+  "uncertainties": [
+    "4.5 URL 상당수가 현재 HTTP404다. 공식 검색 색인에 남은 4.5 설명과 현재 접근한 6.2 내용을 구분했으며 4.2/6.2 문서의 수치·서명을 4.5 확정값으로 가져오지 않았다.",
+    "로컬 4.5 설치의 VERSION·정확한 ContactSensor 서명·extension 상태·필요 asset 보유 여부는 검사하지 않았다.",
+    "RTX3060/driver610.62/설치경로/WSL·Docker는 사용자 전달값이다. RAM은 root 확인 중이며 OS·4.5 드라이버 호환성·실제 headless 부팅·최소 장면 성능은 미검증이다.",
+    "접촉 검출 가능성과 실제 도킹 반복정밀도·전기 충전·물리 적재·기존 네 대 관제 파이프라인 호환성은 별개의 판정이다."
+  ],
+  "side_effects": {
+    "written_paths": ["coordination/collab/results/local-gpu-compatibility-019.json"],
+    "product_installation_changes": false,
+    "simulator_gpu_vm_execution": false,
+    "new_resource_search_or_creation": false,
+    "downloads_or_terms_acceptance": false,
+    "new_agents": false
+  },
+  "actual_gpu_validation": false,
+  "root_runtime_acceptance": {
+    "ack": true,
+    "reviewer": "control",
+    "producer": "root",
+    "completed_at_utc": "2026-10-19T14:50:23.9804685Z",
+    "mode": "local-contact-001의 지정 소스·설정·종료 기록·14개 표본·3장만 1회 읽기 대조",
+    "verdict": "이 특정 설치와 설정의 vertical rigid-body contact coupon 결과로 한정 수용. 지정 범위에서 소스상의 중대 문제는 발견하지 못했다.",
+    "run_id": "3098f674e1aa4f749949529032ab60ba",
+    "isaac_version_from_result": "4.5.0-rc.36+release.19112.f59b3005.gl",
+    "python_from_result": "3.10.15 (MSC v.1912 64 bit AMD64)",
+    "configuration": "120Hz, 20kg 0.4×0.4×0.3m dynamic body와 1×1×0.1m pad, 최소 force .1N, 정지 기준 선/각속도 .02, 접촉 dwell .5s, 분리 dwell .15s, 작성된 상향 분리 속도 3m/s, GPU RayTracedLighting headless 렌더",
+    "source_files": [
+      {
+        "path": "scripts/isaac/local_contact_probe.py",
+        "sha256": "ab2024d5c7a900de4f16771bc1c0fbcb3caeefdd0d38cb507637c7d6c06ae38b",
+        "record_binding": "result.source_sha256와 현재 소스 bytes 일치"
+      },
+      {
+        "path": "scripts/isaac/run-local-contact-probe.ps1",
+        "sha256": "d7ec412802322a8814a2cb523cddec1bdbd9658676aaf31632b9eb22d89d4dfa",
+        "record_binding": "현재 읽은 launcher 소스 SHA다. host 기록에는 launcher 자체 SHA 필드가 없으므로 당시 launcher bytes에 대한 별도 해시 증명으로 확대하지 않는다."
+      },
+      {
+        "path": "configs/local-contact-probe.json",
+        "sha256": "f635d6b64d08bcac739cfa4da1359bdd21902b7c4e73be7fd19ac578c0ef96a5",
+        "record_binding": "result.config_sha256 및 내장 config 객체와 일치"
+      }
+    ],
+    "artifacts": [
+      {
+        "path": "artifacts/local-contact/local-contact-001/result.json",
+        "sha256": "b11db0bfa4c21185345b2c53edbbd74660c8061ba9442dc38226e025b2ef1780"
+      },
+      {
+        "path": "artifacts/local-contact/local-contact-001/observations.jsonl",
+        "sha256": "77a0feb6d975b80bd8f4c6011a4313863c445db2dbd82787bae57d105ede7fe1"
+      },
+      {
+        "path": "artifacts/local-contact/local-contact-001.host.json",
+        "sha256": "e1e5c0599b16d4d6846e351a76b3cae422c935b6b3970539eb7ea711d77d4c1d"
+      }
+    ],
+    "checks": {
+      "identity_and_config": "result/host/관측 14행의 run_id가 일치한다. source/config SHA와 내장 config 대조 PASS.",
+      "samples": "result.samples=14, observations 14행. 모든 기록행의 fresh=true와 유한 force/선속도/각속도, 증가하는 sim_time/sensor_time/sensor_step을 대조했다.",
+      "sensor_lag_s": {"minimum": 0.008333283476531506, "maximum": 0.008333384059369564, "configured_upper_bound_s": 0.016666666666666666},
+      "contact_pair": ["/World/ProbeBody", "/World/ContactPad"],
+      "transitions_match": "observations의 3개 전이 행과 result.transitions가 내용까지 일치하고 아래 순서를 유지한다.",
+      "transition_summary": [
+        {
+          "transition": "stationary_pair_contact_confirmed",
+          "sim_time_s": 0.7750000404193997,
+          "sensor_time_s": 0.7666667103767395,
+          "sensor_step": 93,
+          "force_n": 196.27450561523438,
+          "linear_m_s": 0.00032808954711072147,
+          "angular_rad_s": 0.000425774313043803,
+          "assessment": "fresh한 실제 expected pair, force>=.1N, 선/각속도 모두 .02 기준 이하"
+        },
+        {
+          "transition": "authored_release_velocity_applied",
+          "sim_time_s": 1.0250000534579158,
+          "sensor_time_s": 1.0166667699813843,
+          "sensor_step": 123,
+          "force_n": 196.27474975585938,
+          "assessment": "소스가 [0,0,3]m/s를 set_linear_velocity로 가하는 작성된 perturbation이다. 이 행의 속도는 명령 전 관측값이며 실제 바퀴/도킹 제어의 3m/s 계측값이 아니다."
+        },
+        {
+          "transition": "separation_observed",
+          "sim_time_s": 1.1916667288169265,
+          "sensor_time_s": 1.183333396911621,
+          "sensor_step": 143,
+          "force_n": 0.0,
+          "linear_m_s": 1.3650007247924805,
+          "assessment": "fresh=true, in_contact=false, expected_pair=false, pairs=[] 및 force=0을 확인했다. 마지막 body는 움직이고 있으므로 최종 정지·안전 출차로 인정하지 않는다."
+        }
+      ],
+      "dwell_scope": "소스는 매 physics step의 fresh pair+힘+정지를 요구해 접촉 dwell을 계산하고 분리도 fresh 무접촉 dwell로 판정한다. 저장은 12회 loop마다 및 전이 시점만 하므로 14개 저장행만으로 모든 중간 step의 연속 유지 시간을 독립 재생한 것은 아니다.",
+      "closure": {
+        "result_status": "passed",
+        "result_stage": "component_complete",
+        "requires_host_closure": true,
+        "host_exit_code": 0,
+        "timed_out": false,
+        "closed": true,
+        "launcher_pid": 67156,
+        "owned_pids_at_cleanup": [],
+        "remaining_owned_pids": [],
+        "wall_time_s": 77.9037728,
+        "timeout_s": 480,
+        "assessment": "app.close 이전 결과 저장과 이후 host exit/cleanup 기록을 함께 대조했다. 남은 PID 없음은 host의 해당 run/script 소유 패턴 조사 기록 기준이며 새 OS process-tree 조회·정지는 수행하지 않았다."
+      }
+    },
+    "media": [
+      {"path": "artifacts/local-contact/local-contact-001/initial.png", "sha256": "c2e22144ee103c5749e529f9f499ee8399427c2427c7fd6a5841f9936121eb39", "width": 640, "height": 480, "metadata_sim_time_s": 0.15000000782310963},
+      {"path": "artifacts/local-contact/local-contact-001/contact.png", "sha256": "fdec8271b6597313004698dd184730ae5a4285c6c6f388e03fa034f2a6e1b95d", "width": 640, "height": 480, "metadata_sim_time_s": 0.7750000404193997},
+      {"path": "artifacts/local-contact/local-contact-001/separated.png", "sha256": "35ce7a510aeda23301fdf6f4eb2ca08503b0bdb1dc0521c378e895fd1cc372fc", "width": 640, "height": 480, "metadata_sim_time_s": 1.1916667288169265}
+    ],
+    "validation": {
+      "method": "PowerShell Get-Content/ConvertFrom-Json·Get-FileHash 및 PNG header 읽기로 지정 원본만 대조",
+      "exit_code": 0,
+      "result": "run/source/config·14행·3전이·host closure·PNG3개 해시/640×480 header 대조 PASS",
+      "tests_or_simulation_launched": false,
+      "source_major_findings": []
+    },
+    "acceptance_limits": [
+      "4.5의 CPU PhysX 접촉 센서와 GPU 렌더를 사용한 vertical rigid-body coupon 한 건이다. 순수 CPU 전용 실행으로 바꿔 설명하지 않는다.",
+      "분리는 작성한 상향 속도 perturbation이다. AMR 도킹·차륜 주행·정밀 정렬·6.2 네 대 운송·ROS·전기 충전·물리 적재 성공으로 확대하지 않는다.",
+      "3장 PNG는 bytes/hash/header/기록된 시각만 대조했다. 픽셀 장면 판독, RGB와 physics/sensor clock 동기 품질은 미검증이다.",
+      "SDK VERSION·GPU/드라이버는 결과/host 기록의 값이다. 설치 바이너리 전체 SHA·하드웨어 재조회·전체 API 호환성 검사는 수행하지 않았다.",
+      "상위 actual_gpu_validation=false와 초기 uncertainties는 019 문헌 확인 패스의 이력이다. 이번 별도 root 실행 기록 수용은 위 범위의 로컬 4.5 coupon에만 적용한다."
+    ],
+    "side_effects": {
+      "written_paths": ["coordination/collab/results/local-gpu-compatibility-019.json"],
+      "source_config_originals_changed": false,
+      "new_run_or_installation": false,
+      "broad_tests": false,
+      "new_agents": false
+    }
+  }
+}

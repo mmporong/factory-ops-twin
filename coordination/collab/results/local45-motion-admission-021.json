@@ -1,0 +1,236 @@
+{
+  "task_id": "local45-motion-admission-021",
+  "attempt": 1,
+  "contract_revision": 20,
+  "owner": "control",
+  "reviewer": "root",
+  "status": "accepted_component_native001",
+  "api_ready": true,
+  "write_paths": [
+    "scripts/isaac/local_asset_probe.py",
+    "configs/local-motion-probe.json",
+    "tests/test_local_motion_plan.py",
+    "coordination/collab/results/local45-motion-admission-021.json"
+  ],
+  "scope": "기존 idle 경로를 보존하는 선택형 motion_profile, 실제 collider 측정과 재사용 drive/encoder/watchdog 경계 구현. 실제 native 실행은 root 소유.",
+  "constraints": [
+    "배정 파일 외 수정 없음",
+    "다른 작성자 변경 및 기존 원본 보존",
+    "SDK·ROS·VM·Git·새 에이전트·설치 작업 없음"
+  ],
+  "acknowledged": true,
+  "updated_at_utc": "2026-10-19T15:47:49.015647+00:00",
+  "source_revision": 1,
+  "api_ready_meaning": "선택형 motion_profile 코드·설정·설치 API 소스 대조와 8개 CPU 경계 검사 완료. source/config 동결. 실제 휠/바디/렌더/종료 성공은 root의 새 native 실행에서 검증한다.",
+  "source_sha256": {
+    "scripts/isaac/local_asset_probe.py": "042e7c3255c339a5d5705a0bb70e377f0b807d2deda5d06fc0cffb0870bf345c",
+    "configs/local-motion-probe.json": "b520bd46cf26907e1543a170de46e7ddbd0c0978b086977ea0372f0ba80b054a",
+    "tests/test_local_motion_plan.py": "ae1ad612ce921e7bcbe9ef35e997b1ed85fd8254c96d4089796fe3372c409f39"
+  },
+  "project_source_sha256": {
+    "factory_ops/__init__.py": "da57bbf586e3c4639fd72b3960ef8dd7a8326b3ba17504836189be26ce5bacb0",
+    "factory_ops/motion.py": "a8d670ce9e0309093c47a6a63ff70c78182021f6b50496933e29985466ed6cd1",
+    "factory_ops/drive_profile.py": "6bba5a51caa5e4a71662339026afc67e1efe1d7370cb04c372cde48eba9d7185"
+  },
+  "baseline": {
+    "input_commit_from_card": "9d026f32eaeb263e983ce8f77dba9e4123adcc56",
+    "accepted_native": "artifacts/local45/asset-admission-002",
+    "accepted_source_sha256": "a0c996e0b0596d49b186d54d798b473ab21aa8696d4fd9536974fe7ff56c3adf",
+    "accepted_result_sha256": "4b3ace064ebf1e5d8f4db246fd29f2579f6d4227da9ad12c58e4c619f4295266",
+    "preservation": "기존 001/002 결과와 입력 snapshot, 020 receipt를 수정하지 않았다. 기존 idle config SHA aacd327031c41d96fee5d43bbd4705f307a87e9d99bd5fe9cf6fe3af016e0ca3와 001 원본 source 전체 bytes a3d461c3753bb837685d783d1f5fd1b5417ca62becf0b0690356782bd393b644 보존을 확인했다."
+  },
+  "api": {
+    "entrypoint": "scripts/isaac/local_asset_probe.py",
+    "cli": "--config <absolute local-motion-probe.json> --output <new absolute directory> --run-id <32 lowercase hexadecimal characters>",
+    "compatibility": "Python3.10 문법. motion.py/drive_profile.py 및 __init__.py만 프로젝트 의존으로 사용한다. StrEnum 운영 모듈을 import하지 않는다. 모든 SDK import는 SimulationApp 시작 경계 안에 둔다.",
+    "idle_path": "motion_profile 없는 기존 설정은 3초/180회/render=True/PNG1장/명령0 경로를 유지한다. 새 전체 probe 복제 또는 운영 경로 변경 없음.",
+    "motion_schedule": [
+      {
+        "phase": "initial_stop",
+        "seconds": 1,
+        "request": [
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "phase": "forward",
+        "seconds": 3,
+        "request": [
+          0.3,
+          0.0
+        ]
+      },
+      {
+        "phase": "normal_stop",
+        "seconds": 2,
+        "request": [
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "phase": "turn",
+        "seconds": 3,
+        "request": [
+          0.0,
+          0.4
+        ]
+      },
+      {
+        "phase": "turn_stop",
+        "seconds": 2,
+        "request": [
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "phase": "curve",
+        "seconds": 3,
+        "request": [
+          0.25,
+          0.3
+        ]
+      },
+      {
+        "phase": "watchdog_stop",
+        "seconds": 3,
+        "refresh_commands": false,
+        "expiry_s": 0.3
+      }
+    ],
+    "duration_and_bounds": "17sim초·60Hz·1020개 JSONL 물리 표본. config 검사에서 전체18초 이하와 정수 physics-frame 단위 일정만 허용. 내부 wall360초, stage load100초, root host guard 최대480초.",
+    "command_source": "MotionPlan.step(now_s,dt_s)는 시간표와 실제 World.current_time만 입력으로 쓴다. GT pose/encoder pose를 입력으로 받지 않는다. DriveGeometry→VelocityWatchdog→DriveProfile→ArticulationAction(joint_velocities)→WheeledRobot.apply_wheel_actions 순서다.",
+    "drive_limits": "config의 기존 DriveLimits 9개 필드로 정상 선형/각/휠 가속·감속·속도·곡률 한계를 적용한다. watchdog 만료는 emergency_stop으로 휠 목표0을 즉시 적용하며, 물리 바디 정지는 별도 연속 속도 표본으로 검증한다.",
+    "geometry": "실제 stage에서 wheel_left/right의 활성 collision geometry와 instance proxy를 순회한다. ComputeExtentFromPlugins 및 root-relative XformCache transform을 사용한다. 각 바퀴3개 geometry의 root-Y 축 방사 대칭/양쪽 치수/좌우 위치를 검사하고, X/Z 직경 평균에서 반경과 Y 중심 차에서 track을 계산한다. 측정값·원본 extent·transform·path를 drive_geometry.provenance에 기록한다. 숫자 추정·홍보 수치·fallback은 없다.",
+    "encoder": "실제 관절 각도의 wheel DOF 인덱스를 사용해 WheelOdometry를 업데이트한다. 원점은 encoder-local 0이며 GT pose를 encoder에 대입하지 않는다.",
+    "observations": "각 행에 actual body pose/선형·각속도, actual joint positions/velocities, 측정 wheel velocity, encoder odom, 시간표 phase, source stamp/갱신 여부, watchdog 만료, requested velocity와 DriveProfile target을 별도 기록한다.",
+    "evaluation": "phase별 실제 이동·부호 있는 yaw 변화·실측속도 tail·연속정지 dwell·encoder 변화·target/actual wheel 평균·실제/target 가속 peak를 구분한다. 전진/회전/곡선 최소 반응, 목표 tail 속도 오차, 정상정지 및 watchdog 후 연속0.5초 정지, GT root XY/Z/tilt 경계, 정확한 phase 행 수를 검사한다. 명령만 움직인 사례는 통과하지 않는다.",
+    "media": "motion-start.png(initial_stop 끝), motion-after-turn.png(turn_stop 끝), motion-final.png(watchdog_stop 끝) 640x480 RGB3장만. physics render=False, 캡처당 render-only refresh8회 후 physics time 불변 검사. source가 비거나 검정/형식 오류면 실패. media clock 동기 품질 미검증.",
+    "provenance": "result.json은 source_sha256/config_sha256/project_source_sha256와 VERSION/run_id를 SDK startup 전에 저장한다. project_source_sha256의 키는 factory_ops/__init__.py, factory_ops/motion.py, factory_ops/drive_profile.py다. config와 새 측정/평가/PNG SHA를 함께 기록한다.",
+    "failure_and_cleanup": "기존 phase checkpoint/실패 traceback/app.close 전 결과 저장/timeline stop/host closure 분리를 유지한다. host exit0만으로 admission 통과를 주장하지 않는다."
+  },
+  "native_api_evidence": [
+    {
+      "path": "E:/IsaacSim/isaac-sim-4.5.0/exts/isaacsim.robot.wheeled_robots/isaacsim/robot/wheeled_robots/robots/wheeled_robot.py",
+      "location": "159",
+      "evidence": "apply_wheel_actions의 ArticulationAction.joint_velocities 전달 및 wheel DOF 매핑. 기존 vendor benchmark의 동일 WheeledRobot와 wheel joint 이름 사용."
+    },
+    {
+      "path": "E:/IsaacSim/isaac-sim-4.5.0/exts/isaacsim.core.utils/isaacsim/core/utils/types.py",
+      "location": "157-176",
+      "evidence": "ArticulationAction 생성자의 joint_velocities 인자. pose/root velocity 명령을 사용하지 않는다."
+    },
+    {
+      "path": "E:/IsaacSim/isaac-sim-4.5.0/exts/isaacsim.core.api/isaacsim/core/api/world/world.py",
+      "location": "506",
+      "evidence": "World.step(render=False)의 physics 전용 step 인자."
+    },
+    {
+      "path": "E:/IsaacSim/isaac-sim-4.5.0/exts/isaacsim.core.api/isaacsim/core/api/simulation_context/simulation_context.py",
+      "location": "253,665-695",
+      "evidence": "current_time의 실제 simulated physical time, render()의 physics update 차단 및 app refresh 경로. 코드에서도 render 전후 physics time 불변을 검사한다."
+    },
+    {
+      "path": "E:/IsaacSim/isaac-sim-4.5.0/exts/isaacsim.core.utils/isaacsim/core/utils/bounds.py",
+      "location": "54",
+      "evidence": "설치 source의 UsdGeom.Boundable.ComputeExtentFromPlugins(boundable,time) 2인자 사용례."
+    },
+    {
+      "path": "E:/IsaacSim/isaac-sim-4.5.0/extscache/omni.usd.libs-1.0.1+d02c707b.wx64.r.cp310/pxr/UsdGeom/__init__.pyi",
+      "location": "1328,13818",
+      "evidence": "ComputeExtentFromPlugins 및 XformCache.ComputeRelativeTransform binding 문서. Python의 transform/reset tuple 사용 패턴은 기존 robot_qualification.py:256-305와 nav_scene.py:304-371의 측정 규칙을 참조했다. 두 광범위 SDK/운영 모듈은 import하지 않는다."
+    }
+  ],
+  "validation": [
+    {
+      "command": ".venv/Scripts/python.exe -B -m unittest discover -s tests -p test_local_motion_plan.py -v",
+      "result": "PASS",
+      "tests": 8,
+      "coverage": [
+        "기존 idle 설정/Python3.10 문법",
+        "17초 일정 및 경계/종료 clock",
+        "unsafe 일정·한계·평면설정 거절",
+        "실측 collider 계산 규칙과 count/NaN/비대칭/축/좌우 오류 거절",
+        "정상 body/wheel target 가속 한계와 watchdog 타이밍/목표0",
+        "합성 정상 반응과 바디 고정 반응의 판정 구분",
+        "평면 이탈·불완전 phase 거절",
+        "실제 main의 SDK startup 실패 주입 시 project/config SHA가 먼저 저장됨"
+      ],
+      "limit": "모든 반응 fixture는 CPU 합성 자료다. SDK/물리 검증 근거로 쓰지 않는다. native SDK 또는 출력 파일을 생성하지 않았다."
+    },
+    {
+      "command": ".venv/Scripts/python.exe -B - (stdin: 배정 코드/재사용3소스 AST feature_version=(3,10)·compile, 금지된 pose/velocity 설정 호출·StrEnum 없는지 검사, idle config/기존 원본 SHA 대조)",
+      "result": "PASS",
+      "evidence": "현재 source/config/test 및 실제 재사용 프로젝트 소스 해시를 계산했다. teleport/body velocity 이동 호출 없음, idle config와 native001 snapshot 보존, native002 accepted source a0c996e0 일치. 추가 광범위 검사·전체검사 반복 없음."
+    }
+  ],
+  "verification_pass": {
+    "method": "구현 뒤 동일 control의 별도 읽기/검증 패스",
+    "independent_approval": false,
+    "reviewer": "root가 실제 native와 수용 검수 담당",
+    "open_findings": []
+  },
+  "native_handoff": {
+    "api_ready": true,
+    "source_frozen": true,
+    "config_frozen": true,
+    "source_sha256": "042e7c3255c339a5d5705a0bb70e377f0b807d2deda5d06fc0cffb0870bf345c",
+    "config_sha256": "b520bd46cf26907e1543a170de46e7ddbd0c0978b086977ea0372f0ba80b054a",
+    "project_source_sha256": {
+      "factory_ops/__init__.py": "da57bbf586e3c4639fd72b3960ef8dd7a8326b3ba17504836189be26ce5bacb0",
+      "factory_ops/motion.py": "a8d670ce9e0309093c47a6a63ff70c78182021f6b50496933e29985466ed6cd1",
+      "factory_ops/drive_profile.py": "6bba5a51caa5e4a71662339026afc67e1efe1d7370cb04c372cde48eba9d7185"
+    },
+    "source_dependency_paths": [
+      "C:/Users/LIMMM/factory-ops-twin/factory_ops/__init__.py",
+      "C:/Users/LIMMM/factory-ops-twin/factory_ops/motion.py",
+      "C:/Users/LIMMM/factory-ops-twin/factory_ops/drive_profile.py"
+    ],
+    "snapshot_plan": "root의 -SourceDependency에 위3개 .py를 전달해 실행 전 .inputs/project/<동일 relative path>로 고정한다. EntryPoint와 config도 root guard가 실행 전 snapshot한다. result source/config/project_source_sha256을 host 입력 SHA와 대조한다. control은 기존 .inputs나 원본을 수정하지 않았다.",
+    "root_host_guard_maximum_s": 480,
+    "native_executed_by_control": false,
+    "acceptance_pending": [
+      "새 native 실제 collider/radius/track",
+      "실제 휠/바디/encoder/phase/watchdog/정지 반응",
+      "3장 RGB",
+      "host closed/exit/잔여 PID 및 입력 SHA 결속"
+    ]
+  },
+  "limits": [
+    "Native SDK/ROS/VM 실행은 하지 않았다. 새 collider 바인딩 전체 경로·실측 drive geometry·모션/정지·PNG는 root native 실행 대기다.",
+    "DriveLimits/phase 시간/평가 임계값/ground friction은 작성된 구성요소 시험값이며 차량/모터/안전 인증 사양이 아니다.",
+    "wheel collider extents는 USD 형상 측정이며 contact patch·하중 반경·slip 또는 동역학 보정값이 아니다. 비대칭/다른 구조는 거절한다.",
+    "평면 검사는 실제 root pose/높이/tilt의 작성된 경계 평가이며 swept collision footprint·예약·교통 또는 안전 인증 검증이 아니다.",
+    "GT는 반응 평가만, encoder는 관절 측정 적분만 사용한다. encoder 오차/GT 차이는 calibration 또는 localization 성공으로 주장하지 않는다.",
+    "watchdog 후 즉시0은 목표값이다. 실제 물리 정지는 속도·연속 dwell로 별도 판정하며 목표 램프만으로 통과하지 않는다.",
+    "SDK4.5의 단일 구성요소 시험이며 Nav2/ROS transport/예약/4대/물리 적재/충전 전력/SDK6.2 최종 계약 성공으로 확대하지 않는다.",
+    "SDK binding 타입 검사와 실제 native 실행을 수행하지 않았으며 이를 0오류 또는 물리 성공으로 표시하지 않는다."
+  ],
+  "processes_started": [],
+  "freeze": "root 결과 또는 새 지시 수신 전 source/config 추가 수정 및 실행 없음",
+  "root_runtime_acceptance": {
+    "status": "accepted_component_only",
+    "at_utc": "2026-10-19T15:50:23.519976+00:00",
+    "run_id": "c056d914d1254d79a24f5807ef083953",
+    "actual_attempt": "motion-admission-001",
+    "source/config/project_sha_matched": true,
+    "observations": 1020,
+    "actual_sim_elapsed_s": 17.00000088661909,
+    "result_sha256": "df5b17ce655b75f88967f15d18d5689e9d8a1b781cf6dc443e6ec85a2deea05e",
+    "host_closed": true,
+    "remaining_pids": [],
+    "backups": [
+      {
+        "destination": "D:\\FactoryOpsArtifacts\\local45\\checkpoint-002",
+        "files_and_hashes_match": true
+      },
+      {
+        "destination": "E:\\FactoryOpsArtifacts\\local45\\checkpoint-002",
+        "files_and_hashes_match": true
+      }
+    ],
+    "qualification_limit": "single vehicle authored motion; existing SDK6.2 fleet baseline unchanged"
+  }
+}

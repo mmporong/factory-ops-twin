@@ -243,6 +243,34 @@ CPU 충전 슬롯 예약과 동시에 공용 출구 M_LOW를 점유해, 다른 �
 
 신선한 관측 시각은 사건에 기록하되 판단의 의미가 바뀔 때만 로그를 추가한다. 에너지·ROS 연결30개와 입력/SDK 입구/기존 임무32개 검사가 통과했다. 변경 모듈과 검사 파일의 타입 오류는0건이며, 기존 run_mission의 복잡도 진단1건은 남아 있다. 실제 SDK/ROS 충전 접촉·전력 전달과 새 배차의 GPU 실행은 미검증이다.
 
+## FOT-029 — 로컬 SDK4.5의 USD API 차이와 종료 코드0 오인
+
+기존 PC의 Isaac Sim4.5에서 NovaCarter 참조 로딩 뒤 `Usd.Stage.GetCompositionErrors` 호출이 AttributeError를 냈다. 실제 바인딩을 조회한 결과 Stage에는 해당 메서드가 없고 `Pcp.PrimIndex.localErrors`가 존재했다. 합성 prim과 instance proxy의 prim index에서 오류를 수집하도록 바꾸었으며, 없는 API를 빈 목록으로 처리하지 않는다. 원래 실패 source는 전체 SHA를 대조해 보존했다.
+
+동시에 SDK의 fast shutdown이 실패를 기록한 스크립트에서도 프로세스 종료 코드0을 반환하는 현상을 확인했다. host 실행기는 결과의 passed 상태·run ID·source SHA와 실제 프로세스 종료·잔여 PID를 함께 확인한다. 새 실행 전 source/config/launcher bytes를 `.inputs`에 고정하고, timeout 정리는 소유한 cmd와 자식 PID만 대상으로 한다.
+
+수정 후 `asset-admission-002`에서 실제 구성 검사·180개 물리 표본·3초의 진행·연속 정지·640×480 RGB와 host closed/PID없음을 확인했다. 이 시험은 바퀴 명령이 없는1대 준비 시험이며 Nav2·적재·충전·4대 운송을 증명하지 않는다. [요약](evidence/local45-asset-002.json)에 원천 SHA와 백업 위치를 보존했다.
+
+## FOT-030 — Windows SDK에 동봉된 ROS 미들웨어 DLL 경로 누락
+
+`ros-transport-001`은 bridge 시작 중 `rmw_fastrtps_cpp.dll`의 LoadLibrary126과 후속 rclpy import 실패를 기록했다. 해당 DLL과 rclpy는 기존 설치에 존재했다. 설치된 bridge의 안내와 대조해 실행 프로세스의 PATH 앞에 SDK의 `exts/isaacsim.ros2.bridge/humble/lib`를 추가한 뒤 bridge를 활성화했다. 전역 환경·방화벽 변경과 추가 설치는 하지 않았다.
+
+새 run ID의 `ros-transport-002`에서 native4.5/Humble 발행 메시지19건 중3건을 기존 WSL ROS2 Jazzy가 수신했다. 동일 run ID·증가하는 순번·원본 JSON payload의 완전 일치와 양쪽 종료를 확인했다. domain143의 run별 String 시험 토픽만 사용했다. 로봇 명령·센서 시계·QoS 전체·Nav2 운영 성공으로 확대하지 않는다. [요약](evidence/local45-ros-002.json)과 실패001을 함께 D/E에 보존했다.
+
+## FOT-031 — 로컬 RTX LaserScan 초기·불완전 버퍼 거절
+
+`rtx-scan-001`의 다중 빔 예제와 `002/003`의 설치된 평면 RPLIDAR_S2E에서 ROS 시계는 WSL에 전달됐지만, 정적8×8m 방의 벽 거리 검사에 필요한95% 유효 반환을 충족한 스캔을 확보하지 못했다. `002`의 첫 스캔은3,200칸 중1,252개가 유효했고, `003`의 첫 스캔은timestamp0·전체 -1이었다. 첫 프레임 원본만으로 이후 모든 스캔의 실패 원인을 단정하지 않는다.
+
+수신 검사는 -1을 무효 칸으로 보존하면서 유효 비율·기하 거리 오차·증가하는 stamp·sim clock 근접성을 함께 검사한다. 첫 부분 스캔을 성공 자료로 쓰거나 합성 거리로 빈 칸을 채우지 않는다. 세 attempt는 failed로 보존했으며 source/config/helper/receiver snapshot과 실제 host 종료·잔여 PID 확인을 결속했다. 다음 진단은 전체 회전 이후의 최선·마지막 버퍼와 render/scan 주기 정합을 확인한다. 이 경계가 통과하기 전에는 로컬4대 Nav2의 센서 연결을 완료로 표시하지 않는다. 후속004에서 최선·마지막 native 버퍼는2,851/3,200칸 유효였고 무효 칸은 단일 칸으로 분산됐다.006은 별도 구성요소 기준으로720개0.5도 방위 sector의 실제 반환·최대 gap0.225도·벽 거리p95오차 약2.5~2.7cm와 수신 시계50ms 이내를 확인했다. raw95% fill은 false로 유지하며 약10.9% dropout의 원인은 미확정이다. 보간이나 원본 대체는 하지 않았다. [연결·품질 범위](evidence/local45-scan-006.json)를 분리해 보존했다.
+
+005는 RTX 초기화가 약66.5초에 이르러 먼저 시작한35초 수신 창이 끝났고0 scan/0 clock으로 실패했다.006은 World.reset 뒤 sensor-stream-ready와 receiver-armed를 같은 run ID로 확인하고 측정 창을 시작했다. 초기화 대기120초·arm30초·측정35초와 host180초를 각각 제한했다. 수정 후3개 실제 scan과4개 clock 수신, native·WSL 종료 및 잔여 프로세스 없음을 확인했다.
+
+## FOT-032 — 로컬 종료 확인 범위와 수신 ACK 결속
+
+한정 검수에서 host의 종료 탐색은 launcher와 run ID가 일치하는 한 단계 자식만 포함하므로 전체 후손 트리의 강제 종료를 보장하지 않는다는 지적을 받았다. 현재 도구의 `closure_scope`와 `full_descendant_closure_verified=false`, `timeout_full_tree_cleanup_supported=false`에 범위를 명시했다. 정상 종료 관측을 임의의 손자 프로세스까지 추적한 증명으로 확대하지 않는다. 장시간 로컬 운영 supervisor의 전체 트리 종료는 후속 구현 대상이다.
+
+또한 ACK의 passed 필드만으로 성공을 받지 않도록 최소3개 scan·같은 frame·증가하는 양의 stamp·방위 coverage·clock 오차와 config/receiver source SHA를 대조한다. receiver source도 host 입력에 고정하고 producer/host의 전체 프로젝트 source 키 집합과 값이 일치해야 한다. 빈 메시지·틀린 source/config·누락된 clock ACK를 거절하는 경계 검사를 통과했다. 최신007에서 엄격한 ACK/source 집합 검사와 실제3개 scan·4개 clock·정상 종료를 확인했다. 이전 원본의 판정은 바꾸지 않는다.
+
 ## 실행 전 확인과 후속 기록
 
 1. 깨끗한 생산자 소스·host commit·설정·실행 ID를 결속한다. 실패한 실행 ID와 원본을 다시 사용하지 않는다.

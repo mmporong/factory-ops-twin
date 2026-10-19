@@ -1,0 +1,372 @@
+{
+  "schema_version": 1,
+  "status": "component_passed",
+  "run_id": "a8fc11e4876c407b85567664a0c85b5f",
+  "scope": "Existing SDK4.5 single NovaCarter idle physics and RGB admission; not fleet operation",
+  "sdk_version": "4.5.0-rc.36+release.19112.f59b3005.gl",
+  "source_sha256": "a0c996e0b0596d49b186d54d798b473ab21aa8696d4fd9536974fe7ff56c3adf",
+  "config_sha256": "aacd327031c41d96fee5d43bbd4705f307a87e9d99bd5fe9cf6fe3af016e0ca3",
+  "result_sha256": "4b3ace064ebf1e5d8f4db246fd29f2579f6d4227da9ad12c58e4c619f4295266",
+  "host": {
+    "run_id": "a8fc11e4876c407b85567664a0c85b5f",
+    "started_at_utc": "2026-10-19T15:21:07.2899664Z",
+    "scope": "native bounded component probe",
+    "timeout_s": 480,
+    "sdk_root": "E:\\IsaacSim\\isaac-sim-4.5.0",
+    "entry_point": "local_asset_probe.py",
+    "inputs_directory": "C:\\Users\\LIMMM\\factory-ops-twin\\artifacts\\local45\\asset-admission-002.inputs",
+    "launcher_sha256": "9551edc167a12ba321b11e56f630ad289c99773084295763507894a9fa64e982",
+    "source_sha256": "a0c996e0b0596d49b186d54d798b473ab21aa8696d4fd9536974fe7ff56c3adf",
+    "gpu": "NVIDIA GeForce RTX 3060, 12288 MiB, 610.62",
+    "timed_out": false,
+    "remaining_owned_pids": [],
+    "launcher_pid": 69604,
+    "exit_code": 0,
+    "owned_pids_at_cleanup": [],
+    "closed": true,
+    "probe_status": "passed",
+    "probe_identity_matched": true,
+    "finished_at_utc": "2026-10-19T15:21:38.3739562Z",
+    "wall_time_s": 31.0859637
+  },
+  "physics": {
+    "source": "native World steps and initialized articulation state",
+    "physics_hz": 60,
+    "device": "cpu",
+    "gpu_dynamics": false,
+    "gravity_direction": [
+      0.0,
+      0.0,
+      -1.0
+    ],
+    "gravity_m_s2": 9.8100004196167,
+    "dof_names": [
+      "joint_caster_base",
+      "joint_wheel_left",
+      "joint_wheel_right",
+      "joint_swing_left",
+      "joint_swing_right",
+      "joint_caster_left",
+      "joint_caster_right"
+    ],
+    "num_dof": 7,
+    "num_bodies": 8,
+    "joint_state_units": {
+      "revolute": [
+        "rad",
+        "rad/s"
+      ],
+      "prismatic": [
+        "m",
+        "m/s"
+      ],
+      "type_source": "geometry.joints USD joint types matched by name"
+    },
+    "commands_sent": 0,
+    "input_policy": "gravity and asset-authored joint drives; no wheel/pose/velocity commands during stepping",
+    "samples": 180,
+    "initial_sim_time_s": 0.03333333507180214,
+    "final_sim_time_s": 3.0333334915339947,
+    "elapsed_sim_time_s": 3.0000001564621925,
+    "final_state": {
+      "run_id": "a8fc11e4876c407b85567664a0c85b5f",
+      "physics_frame": 180,
+      "sim_time_s": 3.0333334915339947,
+      "position_m": [
+        0.00041159987449645996,
+        -2.3317988961935043e-07,
+        1.0281801223754883e-06
+      ],
+      "orientation_wxyz": [
+        0.9999997019767761,
+        2.690242808967014e-06,
+        -0.0007901452481746674,
+        -8.691234143043403e-06
+      ],
+      "linear_velocity_m_s": [
+        0.0003975027648266405,
+        -0.00014577679394278675,
+        -2.8936037779203616e-05
+      ],
+      "angular_velocity_rad_s": [
+        0.0008548583136871457,
+        -0.00022655466455034912,
+        2.314750599907711e-05
+      ],
+      "joint_positions_native": [
+        1.2155682270531543e-05,
+        0.0029546169098466635,
+        0.0028710586484521627,
+        0.00012909527868032455,
+        0.00015973355039022863,
+        0.00536565575748682,
+        0.0051813554018735886
+      ],
+      "joint_velocities_native": [
+        -0.00022805703338235617,
+        0.0042681521736085415,
+        0.004085134714841843,
+        -0.009093474596738815,
+        -0.0008927853778004646,
+        0.006791842170059681,
+        0.005088340491056442
+      ],
+      "linear_speed_m_s": 0.0004243779164605772,
+      "angular_speed_rad_s": 0.000884672571940336
+    },
+    "stationary_dwell_observed_s": 2.9333334863185883,
+    "stationary_passed": true
+  },
+  "articulation": null,
+  "media": [
+    {
+      "path": "nova-carter-idle.png",
+      "sha256": "fccf8e896e064956fd16eb04d2c755f15ab3abe969bb94dbf961fbb452c9768e",
+      "image_size_px": [
+        640,
+        480
+      ],
+      "source": "native Replicator rgb annotator, RayTracedLighting",
+      "sim_time_s_at_read": 3.0333334915339947,
+      "media_clock_sync_verified": false
+    }
+  ],
+  "sample_count": 180,
+  "backups": [
+    {
+      "destination": "D:\\FactoryOpsArtifacts\\local45\\checkpoint-001",
+      "files_and_hashes_match": true,
+      "free_bytes_after": 57734873088
+    },
+    {
+      "destination": "E:\\FactoryOpsArtifacts\\local45\\checkpoint-001",
+      "files_and_hashes_match": true,
+      "free_bytes_after": 30326861824
+    }
+  ],
+  "limitations": [
+    "No wheel commands in this attempt",
+    "No Nav2, LiDAR, fleet transport, payload or charging verification",
+    "Authored collision bounds are not cooked contact geometry",
+    "RGB/sensor clock alignment unqualified",
+    "Separate from SDK6.2 qualification"
+  ],
+  "measurement_report_keys": [
+    "amr_docking_verified",
+    "asset",
+    "charging_power_verified",
+    "commands_sent",
+    "config",
+    "config_sha256",
+    "elapsed_wall_s_before_close",
+    "finished_at_utc",
+    "four_amr_verified",
+    "geometry",
+    "isaac_version",
+    "lidar_verified",
+    "media",
+    "navigation_verified",
+    "phases",
+    "physics",
+    "python",
+    "requires_host_closure",
+    "robot_count",
+    "ros_verified",
+    "run_id",
+    "schema_version",
+    "scope",
+    "sdk62_qualification",
+    "sdk_close_attempted",
+    "sdk_close_returned",
+    "source_sha256",
+    "stage",
+    "started_at_utc",
+    "status",
+    "timeline_stopped",
+    "transport_verified"
+  ],
+  "geometry": {
+    "articulation_paths": [
+      "/World/NovaCarter/chassis_link"
+    ],
+    "rigid_bodies": [
+      {
+        "path": "/World/NovaCarter/chassis_link",
+        "enabled": true,
+        "kinematic": false,
+        "disable_gravity": false
+      },
+      {
+        "path": "/World/NovaCarter/wheel_left",
+        "enabled": true,
+        "kinematic": false,
+        "disable_gravity": false
+      },
+      {
+        "path": "/World/NovaCarter/wheel_right",
+        "enabled": true,
+        "kinematic": false,
+        "disable_gravity": false
+      },
+      {
+        "path": "/World/NovaCarter/caster_frame_base",
+        "enabled": true,
+        "kinematic": false,
+        "disable_gravity": false
+      },
+      {
+        "path": "/World/NovaCarter/caster_swivel_left",
+        "enabled": true,
+        "kinematic": false,
+        "disable_gravity": false
+      },
+      {
+        "path": "/World/NovaCarter/caster_swivel_right",
+        "enabled": true,
+        "kinematic": false,
+        "disable_gravity": false
+      },
+      {
+        "path": "/World/NovaCarter/caster_wheel_left",
+        "enabled": true,
+        "kinematic": false,
+        "disable_gravity": false
+      },
+      {
+        "path": "/World/NovaCarter/caster_wheel_right",
+        "enabled": true,
+        "kinematic": false,
+        "disable_gravity": false
+      }
+    ],
+    "collisions": [
+      {
+        "path": "/World/NovaCarter/chassis_link/visual",
+        "type": "Xform",
+        "enabled": true,
+        "aabb_world_stage_units": {
+          "min": [
+            -0.5873512029647827,
+            -0.23847079277038574,
+            0.12599999830126762
+          ],
+          "max": [
+            0.11970335990190506,
+            0.23847131431102753,
+            0.5298819728195667
+          ]
+        }
+      },
+      {
+        "path": "/World/NovaCarter/caster_frame_base/visual",
+        "type": "Xform",
+        "enabled": true,
+        "aabb_world_stage_units": {
+          "min": [
+            -0.5217025174028898,
+            -0.16395413805355166,
+            0.1596221067936461
+          ],
+          "max": [
+            -0.42219986425111533,
+            0.16404664135396277,
+            0.23939210566035532
+          ]
+        }
+      }
+    ],
+    "joints": [
+      {
+        "path": "/World/NovaCarter/joint_caster_base",
+        "type": "PhysicsRevoluteJoint",
+        "body0": [
+          "/World/NovaCarter/chassis_link"
+        ],
+        "body1": [
+          "/World/NovaCarter/caster_frame_base"
+        ]
+      },
+      {
+        "path": "/World/NovaCarter/joint_swing_left",
+        "type": "PhysicsRevoluteJoint",
+        "body0": [
+          "/World/NovaCarter/caster_frame_base"
+        ],
+        "body1": [
+          "/World/NovaCarter/caster_swivel_left"
+        ]
+      },
+      {
+        "path": "/World/NovaCarter/joint_swing_right",
+        "type": "PhysicsRevoluteJoint",
+        "body0": [
+          "/World/NovaCarter/caster_frame_base"
+        ],
+        "body1": [
+          "/World/NovaCarter/caster_swivel_right"
+        ]
+      },
+      {
+        "path": "/World/NovaCarter/joint_caster_left",
+        "type": "PhysicsRevoluteJoint",
+        "body0": [
+          "/World/NovaCarter/caster_swivel_left"
+        ],
+        "body1": [
+          "/World/NovaCarter/caster_wheel_left"
+        ]
+      },
+      {
+        "path": "/World/NovaCarter/joint_caster_right",
+        "type": "PhysicsRevoluteJoint",
+        "body0": [
+          "/World/NovaCarter/caster_swivel_right"
+        ],
+        "body1": [
+          "/World/NovaCarter/caster_wheel_right"
+        ]
+      },
+      {
+        "path": "/World/NovaCarter/joint_wheel_left",
+        "type": "PhysicsRevoluteJoint",
+        "body0": [
+          "/World/NovaCarter/chassis_link"
+        ],
+        "body1": [
+          "/World/NovaCarter/wheel_left"
+        ]
+      },
+      {
+        "path": "/World/NovaCarter/joint_wheel_right",
+        "type": "PhysicsRevoluteJoint",
+        "body0": [
+          "/World/NovaCarter/chassis_link"
+        ],
+        "body1": [
+          "/World/NovaCarter/wheel_right"
+        ]
+      }
+    ],
+    "meters_per_unit": 1.0,
+    "up_axis": "Z",
+    "collision_aabb_source": "composed USD enabled collision geometry world bounds before stepping; not contact or cooked hull measurement",
+    "collision_aabb_m": {
+      "min": [
+        -0.5873512029647827,
+        -0.23847079277038574,
+        0.12599999830126762
+      ],
+      "max": [
+        0.11970335990190506,
+        0.23847131431102753,
+        0.5298819728195667
+      ],
+      "size": [
+        0.7070545628666878,
+        0.47694210708141327,
+        0.4038819745182991
+      ]
+    }
+  },
+  "isaac_version": "4.5.0-rc.36+release.19112.f59b3005.gl"
+}
