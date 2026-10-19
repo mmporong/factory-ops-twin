@@ -415,7 +415,7 @@ export default function Dashboard() {
                   </small>
                 </span>
                 <span className="robot-battery">
-                  {r.battery_pct === null ? "SOC 미연결" : `${r.battery_pct}%`}
+                  {r.battery_pct === null ? "SOC 미연결" : `${r.battery_source === "authored_virtual_energy_model" ? "가상 " : ""}${r.battery_pct.toFixed(1)}%`}
                   <span aria-hidden="true">↗</span>
                 </span>
               </button>
@@ -554,12 +554,14 @@ export default function Dashboard() {
                 <Pair label="배터리">
                   {robot.battery_pct === null
                     ? "미연결"
-                    : `${robot.battery_pct.toFixed(0)}%`}
+                    : `${robot.battery_source === "authored_virtual_energy_model" ? "가상 " : ""}${robot.battery_pct.toFixed(1)}%`}
                 </Pair>
                 <Pair label="배터리 원천">
                   {robot.battery_source === "unavailable"
                     ? "미연결"
-                    : robot.battery_source}
+                    : robot.battery_source === "authored_virtual_energy_model"
+                      ? "엔코더 기반 가상 에너지 · 실물 보정 전"
+                      : robot.battery_source}
                 </Pair>
                 <Pair label="map 위치">
                   {robot.pose

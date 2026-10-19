@@ -1,6 +1,6 @@
 {
-  "revision": 12,
-  "updated_at": "2026-10-19T10:10:15.770156+00:00",
+  "revision": 14,
+  "updated_at": "2026-10-19T11:27:46.248006+00:00",
   "scope": {
     "excluded": "실물 로봇 실행, 새 유료 서비스/에셋, 공개 배포",
     "project_root": "C:\\Users\\LIMMM\\factory-ops-twin",
@@ -20,7 +20,7 @@
       "role": "dashboard frontend author",
       "name": "control",
       "agent_kind": "codex",
-      "status": "completed all assigned registry/review/map work; root accepted results",
+      "status": "all assigned tasks through015 accepted; no pending work",
       "session": "default",
       "agent_session": "01a152aa-24b4-7a31-92e3-a2b620f4feeb",
       "terminal_id": "term_65e06d27e415810",
@@ -344,6 +344,37 @@
       "reviewer": "control",
       "acceptance": "one bounded behavioral review; concrete findings with reproduction; no GPU success claim",
       "acceptance_record": "bounded review foundMC013001; root fixed fresh recontact/release and14tests/type0; no actual charge/transport claim"
+    },
+    {
+      "task_id": "fleet4-industrial-carrier-reference-014",
+      "attempt": 1,
+      "contract_revision": 13,
+      "owner": "control",
+      "status": "accepted",
+      "ACK": true,
+      "task_path": "coordination/collab/fleet4-industrial-carrier-reference-014-task.json",
+      "result_path": "coordination/collab/results/fleet4-industrial-carrier-reference-014.json",
+      "reviewer": "root",
+      "acceptance": "primary-source industrial carrier path/license/unknowns; no product or GPU claim",
+      "acceptance_record": "root accepted bounded official references; iw.hub remains conditional, USD hierarchy/license/load physics unknown"
+    },
+    {
+      "task_id": "fleet4-energy-runtime-015",
+      "attempt": 1,
+      "contract_revision": 14,
+      "owner": "control",
+      "status": "accepted",
+      "ACK": true,
+      "task_path": "coordination/collab/fleet4-energy-runtime-015-task.json",
+      "result_path": "coordination/collab/results/fleet4-energy-runtime-015.json",
+      "write_paths": [
+        "factory_ops/energy_runtime.py",
+        "tests/test_energy_runtime.py",
+        "coordination/collab/results/fleet4-energy-runtime-015.json"
+      ],
+      "acceptance": "run-bound observed odometry energy adapter; no real battery or charge claim",
+      "reviewer": "root",
+      "acceptance_record": "root/control separate author-review boundaries matched; 57 integration+26 energy tests PASS; UI typecheck/browser checks; no GPU or charging proof"
     }
   ],
   "decisions": [

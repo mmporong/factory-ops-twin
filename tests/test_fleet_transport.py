@@ -60,6 +60,17 @@ class FleetTransportTests(unittest.TestCase):
             prepare_bundle(self.bundle)
         self.assertEqual(before, (self.bundle / "bundle.json").read_bytes())
 
+    def test_energy_coefficients_and_initial_fleet_are_frozen_in_workload(self):
+        compiled = load_bundle(self.bundle)
+        energy = compiled["session"]["workload"]["energy"]
+        self.assertEqual(json.loads((self.bundle / "energy-profile.json").read_text()), energy["profile"])
+        self.assertEqual(set(compiled["registry"].robot_ids), set(energy["initial_soc"]))
+        self.assertEqual("authored_virtual_model", energy["profile"]["provenance"]["kind"])
+        root = self.copy_input("energy-tampered")
+        self.change_json(root, "energy-profile.json", lambda row: row.update(capacity_wh=9999))
+        with self.assertRaisesRegex(ValueError, "input changed: energy-profile.json"):
+            verify_bundle(root)
+
     def test_changed_frozen_inputs_are_rejected(self):
         root = self.copy_input("tampered")
         with (root / "config.json").open("a", encoding="utf-8") as stream:

@@ -1,0 +1,30 @@
+{
+  "task_id": "fleet4-energy-runtime-015",
+  "attempt": 1,
+  "contract_revision": 14,
+  "owner": "control",
+  "root": "C:/Users/LIMMM/factory-ops-twin",
+  "inputs_commit": "9d9a67c5f9a65d841ef966c34ae7884215c5fc42",
+  "goal": "Connect existing virtual EnergyFleet to a reusable run-bound odometry adapter; root will integrate ROS/config/web separately",
+  "write_paths": [
+    "factory_ops/energy_runtime.py",
+    "tests/test_energy_runtime.py",
+    "coordination/collab/results/fleet4-energy-runtime-015.json"
+  ],
+  "read_paths": [
+    "factory_ops/energy.py",
+    "factory_ops/charging.py",
+    "scripts/ros/g3_mission.py",
+    "configs/factory-fleet4/energy-profile.json"
+  ],
+  "contract": [
+    "Not alone in codebase: do not revert or stage other changes. Only own listed files; no git/VM/new agents/dependencies.",
+    "Expose EnergyRuntime(run_id, profile, initial_soc). observe(run_id, robot_id, stamp_s, linear_m_s, angular_rad_s, *, loaded) integrates EnergyFleet from each odometry callback. No public charge/contact flag: this adapter does not yet own a contact observation source.",
+    "Reject other run and unknown robots without mutation. Duplicate exact samples idempotent. Backward/conflicting/gapped/nonfinite observations fault only that robot and never invent energy across missing intervals. First sample creates observation baseline, not motion from time zero. Faulted robot cannot silently recover or reset SOC in same run.",
+    "projection(run_id, robot_id, observed_at_s) returns battery_pct/source/observed time and explicit virtual/fault/freshness information. Missing/stale/future/fault observations -> battery_pct null, never fallback to authored initial SOC as observed.",
+    "snapshot returns run-bound per-robot energy/consumed/charged/provenance/faults, limited state not dense logs. API must be plain stdlib and float SI; no ROS import.",
+    "Tests prove actual integration of varying signed velocity/load/turn/idle, cross-run/robot rejection, duplicate/stale/conflicting faults, independent robots and projection unknown/freshness. No mirror-only tests.",
+    "Report exact changed paths, test commands/output and SHA; GPU/charging proof false. Root owns config/session source pins and ROS/web edits, do not edit those."
+  ],
+  "completion": "bounded adapter implemented and targeted meaningful tests/typecheck; result JSON ACK with task/attempt/revision and immutable files hashes"
+}

@@ -1,0 +1,18 @@
+{
+  "task": "fleet4-industrial-carrier-reference-014",
+  "attempt": 1,
+  "contract_revision": 13,
+  "owner": "control",
+  "scope": "bounded official read-only research",
+  "questions": [
+    "Isaac Sim6.2 공식 제공 로봇 중 토트/카트 운반용 저상 산업 AMR(예:Idealworks iw.hub)의 정확한 asset root/path, 배포/사용 조건을 확인한다. 기억으로 경로·하중을 채우지 않는다.",
+    "이 프로젝트 NovaCarter 차동구동/휠 encoder/8LiDAR/ROS/Nav2 구조에 맞출 때 확인할 wheel joint names, body prim, dimensions/mass/drive 수치의 공식 원천이 있는지 확인한다. 문서에 없으면 미확인으로 남긴다.",
+    "최소 변경으로 실제 적재 모듈·lift/contact를 구현할 수 있는 후보1개와 정확한 미확인 사항을 권고한다. 제조사 실제 정격과 시뮬레이션 검증을 혼용하지 않는다."
+  ],
+  "limits": [
+    "공식 NVIDIA/제조사/업스트림 근거 최대3개 중심; 대형 자산 다운로드·VM·Git·제품 코드 수정·새 에이전트·약관 수락·구매·인증정보 조회 없음",
+    "source/SDK/profile의 원래 NovaCarter 기준선과 GPU003 immutable worktree는 변경하지 않는다",
+    "current root is bounded retry003 using existing CLI; no new terms accepted; actual SDK not started yet; research does not prove transport/loading"
+  ],
+  "result_path": "coordination/collab/results/fleet4-industrial-carrier-reference-014.json"
+}

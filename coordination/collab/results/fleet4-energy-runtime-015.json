@@ -1,0 +1,189 @@
+{
+  "task": "fleet4-energy-runtime-015",
+  "attempt": 1,
+  "contract_revision": 14,
+  "ack": true,
+  "status": "어댑터 구현·검증 완료; root 연결의 한정 검증 패스 완료",
+  "owned_paths": [
+    "factory_ops/energy_runtime.py",
+    "tests/test_energy_runtime.py",
+    "coordination/collab/results/fleet4-energy-runtime-015.json"
+  ],
+  "api": {
+    "constructor": "EnergyRuntime(run_id: str, profile: Mapping[str, Any], initial_soc: Mapping[str, float])",
+    "observe": "observe(run_id, robot_id, stamp_s, linear_m_s, angular_rad_s, *, loaded) -> 현재 sample 시각의 projection dict; 부적합 관측과 latched fault는 ValueError",
+    "projection": "projection(run_id, robot_id, observed_at_s) -> run_id/robot_id/battery_pct/battery_source/observed_sim_time_s/observed_at_s/observation_age_s/freshness/virtual/hardware_calibrated/charging_supported/fault/scope",
+    "snapshot": "snapshot() -> run_id, robots {robot_id: energy_wh/consumed_wh/charged_wh/observed_sim_time_s/battery_source/hardware_calibrated/virtual/charging_supported/fault}, provenance, observation_source, contact_source, scope",
+    "snapshot_soc": "snapshot에는 freshness를 판정할 현재 시각이 없으므로 battery_pct를 넣지 않는다. 웹 SOC에는 projection을 사용한다.",
+    "fault_shape": "null 또는 {code: invalid_observation, reason: string}; 최초 fault를 보존한다.",
+    "freshness": [
+      "missing",
+      "fresh",
+      "stale",
+      "future",
+      "fault"
+    ],
+    "query_behavior": "projection의 잘못된 identity/비유한 또는 음수 observed_at_s는 ValueError이며 fault를 만들거나 지우지 않는다."
+  },
+  "charging_proof": false,
+  "gpu_proof": false,
+  "accepted": true,
+  "acceptance_owner": "root",
+  "completed_at_utc": "2026-10-19T11:26:20.336185+00:00",
+  "input_commit_from_card": "9d9a67c5f9a65d841ef966c34ae7884215c5fc42",
+  "changed_paths": [
+    {
+      "path": "factory_ops/energy_runtime.py",
+      "sha256": "58808abeef568da932a98b895a67a19db16ec08dcbf00c0e21cd06ae69afe3c2"
+    },
+    {
+      "path": "tests/test_energy_runtime.py",
+      "sha256": "383c6138d17e54afe370bb9e845d10093dd49d2cf190acaf9fb465f8a97142e6"
+    }
+  ],
+  "result_path": "coordination/collab/results/fleet4-energy-runtime-015.json",
+  "implementation": [
+    "기존 EnergyFleet에 각 signed odometry sample과 operational loaded 값을 전달해 가상 소비량을 적분한다. 첫 sample 이전 시간을 적분하지 않는다.",
+    "run/robot identity 오류는 상태를 바꾸지 않는다. 정확한 반복은 idempotent이며, 역행·동일시각 충돌·누락 간격·비유한 값·소진은 해당 로봇 fault를 고정한다.",
+    "fault 이후 유효 sample이나 동일 sample로 SOC를 재설정·복구하지 않는다. 다른 로봇은 계속 갱신할 수 있다.",
+    "projection은 missing/fresh/stale/future/fault를 구분하고 fresh인 경우만 battery_pct를 제공한다. 출처와 virtual/hardware_calibrated/fault를 함께 제공한다.",
+    "snapshot은 per-robot balance/consumed/charged/last good observation/provenance/fault의 분리된 사본만 반환한다. sample history는 보관하지 않는다.",
+    "충전·접촉 인자는 공개하지 않고 EnergyFleet의 기본 contact=False만 사용한다. charging_supported=False이며 charged_wh는 0이다.",
+    "run_id는 읽기 전용 property이고 callback과 projection/snapshot 상태 접근은 stdlib RLock으로 보호한다. ROS나 새 패키지를 import하지 않는다."
+  ],
+  "validation": [
+    {
+      "command": ".venv/Scripts/python.exe -m unittest tests.test_energy_runtime -v",
+      "environment": "PYTHONDONTWRITEBYTECODE=1",
+      "exit_code": 0,
+      "result": "12 tests PASS",
+      "seconds": 0.008,
+      "evidence": "가속/제동·역방향·회전·적재 전환·idle의 해석적 기대 소비 .0245Wh, 기준 시각 생성, 중복, cross-run/robot 거절, 개별 fault 고정, missing/fresh/stale/future, 소진, 상태 사본 보호, 1000 sample의 bounded state"
+    },
+    {
+      "command": "node C:/Users/LIMMM/AppData/Local/npm-cache/_npx/110e52990071af13/node_modules/pyright/dist/pyright.js --typeshedpath C:/Users/LIMMM/AppData/Local/npm-cache/_npx/110e52990071af13/node_modules/pyright/dist/typeshed-fallback --pythonpath .venv/Scripts/python.exe factory_ops/energy_runtime.py tests/test_energy_runtime.py",
+      "exit_code": 0,
+      "result": "0 errors, 0 warnings, 0 informations"
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m unittest tests.test_fleet_transport.FleetTransportTests.test_energy_coefficients_and_initial_fleet_are_frozen_in_workload -v",
+      "environment": "PYTHONDONTWRITEBYTECODE=1",
+      "exit_code": 0,
+      "result": "root energy profile 동결·변조 거절 1 test PASS",
+      "seconds": 11.218
+    },
+    {
+      "command": "root의 실제 nested odometry 함수 AST와 result[energy] 대입을 메모리에서 추출·실행; ROS clock/message 경계만 SimpleNamespace로 제공",
+      "environment": "PYTHONDONTWRITEBYTECODE=1",
+      "exit_code": 0,
+      "output": {
+        "load_branches": "product and empty pickup/drop PASS",
+        "actual_callback": "loaded .2s = .0052Wh PASS",
+        "fault_isolation": "one journal event, affected robot frozen, other robot fresh PASS",
+        "web_projection": "fault/missing SOC null; healthy virtual SOC PASS",
+        "final_result": "run-bound JSON snapshot PASS"
+      }
+    }
+  ],
+  "root_boundary_review": {
+    "requested": "추가 사용자 지시에 따른 별도 단일 검증 패스; root 파일 편집 없음",
+    "sha256": [
+      {
+        "path": "scripts/ros/g3_mission.py",
+        "reviewed_sha256": "03dd5114d49b7724ca363e5d2d2a85d07ca9930dbd392d32fdafcf6315c965f8",
+        "current_sha256": "03dd5114d49b7724ca363e5d2d2a85d07ca9930dbd392d32fdafcf6315c965f8"
+      },
+      {
+        "path": "factory_ops/fleet_transport.py",
+        "reviewed_sha256": "aa0dc4dbf885f935a044851b548c70f4e50f346923ac0a8fd16bacf283b768db",
+        "current_sha256": "aa0dc4dbf885f935a044851b548c70f4e50f346923ac0a8fd16bacf283b768db"
+      },
+      {
+        "path": "scripts/isaac/fleet4_transport_scene.py",
+        "reviewed_sha256": "6bc887866527a09d9e8a4a40b883af83b42e35f275dc9493ba241f95d47de519",
+        "current_sha256": "6bc887866527a09d9e8a4a40b883af83b42e35f275dc9493ba241f95d47de519"
+      },
+      {
+        "path": "configs/factory-fleet4/energy-profile.json",
+        "reviewed_sha256": "e3c59d24bf525610e07995c0a34522858dded859b98544b5964ec7a1daa0d914",
+        "current_sha256": "e3c59d24bf525610e07995c0a34522858dded859b98544b5964ec7a1daa0d914"
+      },
+      {
+        "path": "configs/factory-fleet4/transport-profile.json",
+        "reviewed_sha256": "e6068a95f077ccca5a0a9003e6affb7ee4363ab5d259cef08f1b87e1dcd0bcf9",
+        "current_sha256": "e6068a95f077ccca5a0a9003e6affb7ee4363ab5d259cef08f1b87e1dcd0bcf9"
+      }
+    ],
+    "root_sources_stable_during_review": true,
+    "findings": [],
+    "verdict": "확인한 연결 경계에서 오류를 재현하지 못함. 전체 ROS/SDK 실행 또는 제품 전체 승인으로 확대하지 않음.",
+    "scope": [
+      {
+        "path": "scripts/ros/g3_mission.py",
+        "lines": "538-542",
+        "checked": "실제 product pickup과 empty pickup/drop 상태를 이용해 mission_energy_load의 적재 분기를 확인"
+      },
+      {
+        "path": "scripts/ros/g3_mission.py",
+        "lines": "975-978,1126-1149,1354-1358",
+        "checked": "callback의 absolute stamp/velocity/run/robot/loaded 인자, 후기 초기화 closure, 로봇별 최초 fault 기록 및 정상 로봇 계속 갱신"
+      },
+      {
+        "path": "scripts/ros/g3_mission.py",
+        "lines": "573-575,617-618,1775",
+        "checked": "absolute_sim_time_s를 projection에 전달; fault/missing SOC는 null이고 정상 SOC의 authored_virtual_energy_model 출처를 유지"
+      },
+      {
+        "path": "scripts/ros/g3_mission.py",
+        "lines": "1857-1858,1864-1865",
+        "checked": "성공·실패 결과 경로에 run-bound snapshot 저장; 실제 대입을 메모리에서 실행하고 JSON 직렬화 확인"
+      },
+      {
+        "path": "scripts/isaac/fleet4_transport_scene.py",
+        "lines": "21-27",
+        "checked": "energy.py와 energy_runtime.py가 SOURCE_PINS에 포함됨"
+      },
+      {
+        "path": "factory_ops/fleet_transport.py",
+        "lines": "26-28,176-186",
+        "checked": "energy-profile.json이 SOURCE_FILES에 포함되고 profile/initial_soc이 workload 및 workload SHA에 결속됨"
+      }
+    ],
+    "limits": "실제 ROS executor/transport/VM/SDK를 실행하지 않았다. 실제 callback 본문을 실행한 CPU 경계 검증이며 전체 main/finally 재현은 아니다."
+  },
+  "findings": [],
+  "limitations": [
+    "가상 SOC의 시작값·계수는 작성된 모델 값이다. 물리 배터리 측정/보정이나 실제 GPU 운송 성공을 뜻하지 않는다.",
+    "충전 슬롯/접촉/저SOC dispatch·충전 이동 연결은 이 어댑터의 범위가 아니다. 충전량을 생성하지 않는다.",
+    "입력 loaded는 운영 원장의 상태이며 물리 적재 접촉 증거가 아니다.",
+    "stale/future 조회는 상태를 바꾸지 않는다. 실제 callback 누락이 max_observation_gap_s를 넘으면 fault가 고정되며 같은 run의 재동기화·SOC 리셋 API는 없다.",
+    "root 연결의 검증 결과는 receipt에 기록한 SHA에 한정한다. root 소유 config/session source pin/ROS/web 제품 파일은 수정하지 않았다.",
+    "사용자 전달: Brev003 boot bound 종료·실제 Stopped 20:20:28, D/E host source proof 보존. 상태 조회·새 GPU 실행은 하지 않았다."
+  ],
+  "processes_started": [],
+  "dependencies_added": [],
+  "git_actions": [],
+  "vm_actions": [],
+  "new_agents": [],
+  "ownership": "energy_runtime.py, test_energy_runtime.py 및 본 receipt만 작성. 기존 변경과 root 파일을 되돌리거나 stage하지 않음.",
+  "root_acceptance": {
+    "at_utc": "2026-10-19T11:27:46.248006+00:00",
+    "review": "root read implementation and meaningful adapter tests; author hashes and control-reviewed integration hashes matched",
+    "tests": {
+      "affected_integration": {
+        "passed": 57,
+        "log": "artifacts/fleet4/energy-runtime-integration-tests-001.log"
+      },
+      "energy_runtime_and_charging": {
+        "passed": 26,
+        "log": "artifacts/fleet4/energy-runtime-boundary-tests-001.log"
+      },
+      "total_distinct_tests": 83,
+      "ui_typecheck": "PASS",
+      "new_python_modules": "Pyright 0 errors",
+      "legacy_g3_analysis_limit": "run_mission remains too complex to analyze, one pre-existing diagnostic; not a whole-run typecheck pass",
+      "browser": "existing CPU preview keeps all four SOC unavailable; captured error/warn list empty"
+    },
+    "scope": "observed odometry virtual energy only; no physical battery/contact/charging/GPU/80% claim"
+  }
+}

@@ -22,6 +22,7 @@ from uuid import UUID, uuid4
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from factory_ops.fleet import FleetMission, FleetOrder
 from factory_ops.material_flow import MaterialFlow
+from factory_ops.energy_runtime import EnergyRuntime
 from factory_ops.fleet_registry import FleetRegistry
 from factory_ops.callback_drain import CallbackDrain
 from factory_ops.fleet_execution import FOLLOW_PATH_NORMALIZATION, StoppedGate, make_chunk, normalize_follow_path_payload, qualify_computed_path, path_content_sha256, path_clock_ready, path_header_stamp_ns
@@ -534,9 +535,16 @@ def localization_payload(transform: Any, *, now_s: float, ttl_s: float) -> dict[
     return {"x_m": values[0], "y_m": values[1], "yaw_rad": math.atan2(2*(q.w*q.z+q.x*q.y), 1-2*(q.y*q.y+q.z*q.z)), "stamp_s": stamp}
 
 
+def mission_energy_load(mission: FleetMission, material: MaterialFlow | None, robot: str) -> bool:
+    """Operational load affects virtual consumption; payload contact is unmeasured."""
+    product_loaded = mission.ledger.robots[robot].payload_id is not None
+    empty_intent = material.active_intents.get(robot) if material is not None else None
+    return product_loaded or (empty_intent is not None and empty_intent.transition is Transition.DROP)
+
+
 def dashboard_state(snapshot: Mapping[str, Any], robots: Mapping[str, Any], *,
                     sim_time_s: float, absolute_sim_time_s: float, pose_ttl_s: float,
-                    material: Mapping[str, Any] | None = None) -> dict[str, Any]:
+                    material: Mapping[str, Any] | None = None, energy: EnergyRuntime | None = None) -> dict[str, Any]:
     """Read-only web projection; localization, ledger and odometry retain their sources."""
     rows = []
     for key, logical in snapshot["robots"].items():
@@ -562,6 +570,9 @@ def dashboard_state(snapshot: Mapping[str, Any], robots: Mapping[str, Any], *,
             "observed_sim_time_s": pose["stamp_s"] if pose else None,
             "pose_source": "estimated map->base_link TF", "scan_counts": runtime.get("scan_counts", {}),
             "navigation_phase": phase, "odom_count": runtime.get("odom_count", 0)})
+        if energy is not None:
+            battery = energy.projection(snapshot["run_id"], key, observed_at_s=absolute_sim_time_s)
+            rows[-1].update(battery_pct=battery["battery_pct"], battery_source=battery["battery_source"])
     tasks = [{"id": t["task_id"], "order_id": t["order_id"], "type": t["stage"], "state": t["status"],
               "robot_id": t.get("robot_id"), "source": t["pickup_station"], "destination": t["drop_station"],
               "payload_id": t["payload_id"], "progress": 1 if t["status"] == "complete" else None}
@@ -586,7 +597,8 @@ def dashboard_state(snapshot: Mapping[str, Any], robots: Mapping[str, Any], *,
                      "pending_tasks": sum(t["state"] != "complete" for t in tasks),
                      "stock_units": sum(t["on_hand"] for t in material["inventory"]["stock"]) if material is not None else None},
             "events": [], "commands": [], "model_scope": "read-only navigation ledger, estimated TF and encoder odometry; "
-                + ("navigation-bound material accounting; payload contact and battery unverified" if material is not None else "battery/SKU stock unavailable")}
+                + ("navigation-bound material accounting; payload contact unverified; " if material is not None else "SKU stock unavailable; ")
+                + ("odometry-integrated virtual battery, uncalibrated; charging unconnected" if energy is not None else "battery unavailable")}
 
 
 class DashboardPublisher:
@@ -596,13 +608,14 @@ class DashboardPublisher:
         self.last_wall = -math.inf
 
     def publish(self, snapshot: Mapping[str, Any], robots: Mapping[str, Any],
-                sim_time_s: float, absolute_sim_time_s: float, *, material: Mapping[str, Any] | None = None) -> None:
+                sim_time_s: float, absolute_sim_time_s: float, *, material: Mapping[str, Any] | None = None,
+                energy: EnergyRuntime | None = None) -> None:
         wall = time.monotonic()
         if not self.enabled or wall - self.last_wall < 0.5:
             return
         try:
             atomic_json(self.output / "dashboard-state.json", dashboard_state(snapshot, robots,
-                sim_time_s=sim_time_s, absolute_sim_time_s=absolute_sim_time_s, pose_ttl_s=self.pose_ttl_s, material=material))
+                sim_time_s=sim_time_s, absolute_sim_time_s=absolute_sim_time_s, pose_ttl_s=self.pose_ttl_s, material=material, energy=energy))
         except (OSError, ValueError, TypeError, KeyError) as error:
             # Presentation failure must not grant movement or disrupt the physical mission.
             self.on_error("dashboard_publication_failed", {"error": str(error)})
@@ -960,6 +973,9 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
     else:
         result.update(primary_trial_identity(session_root, session))
     launch = bag = ros = mission = callback_drain = None
+    energy_runtime: EnergyRuntime | None = None
+    material: MaterialFlow | None = None
+    energy_faults: set[str] = set()
     nodes: list[Any] = []
     node_executors: list[tuple[Any, Any]] = []
     streams: list[Any] = []
@@ -1121,6 +1137,15 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
                     stamp_s=stamp, stop_after_s=state["stop_after"], now_s=robot_now,
                 )
                 state["stop_samples"] = state["stop_receiver"].samples
+                if energy_runtime is not None and mission is not None:
+                    try:
+                        energy_runtime.observe(args.run_id, robot, stamp,
+                            state["last_odom"]["linear_m_s"], state["last_odom"]["angular_rad_s"],
+                            loaded=mission_energy_load(mission, material, robot))
+                    except ValueError as error:
+                        if robot not in energy_faults:
+                            journal("virtual_energy_observation_fault", {"robot_id": robot, "error": str(error)})
+                            energy_faults.add(robot)
             rt["subscriptions"].append(node.create_subscription(Odometry, "odom", lambda message, r=robot_id: odometry(message, r), qos_profile_sensor_data))
 
         callback_drain = CallbackDrain(
@@ -1328,6 +1353,9 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
              station_goals=goals, goal_timeout_s=session["workload"]["horizon_s"], eta_speed=load["nominal_speed_m_s"], eta_dwell=load["dwell_s"], horizon=session["workload"]["horizon_s"])
         material = (MaterialFlow(mission, session["workload"]["material_flow"])
                     if development and "material_flow" in session["workload"] else None)
+        if development and "energy" in session["workload"]:
+            energy_config = session["workload"]["energy"]
+            energy_runtime = EnergyRuntime(args.run_id, energy_config["profile"], energy_config["initial_soc"])
         journal("mission_started", {"origin_sim_time_s": origin, "workload_sha256": session["workload_sha256"],
                 "strategy": runtime_config["reservation_strategy"], "reservation_tracking_margin_m": runtime_config["reservation_tracking_margin_m"]})
         current_closed = session["condition"] == "closure"
@@ -1744,7 +1772,7 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
                     new_leg(robot, intent.station, intent)
             visual_snapshot = mission.ledger.snapshot()
             material_state = material.snapshot() if material is not None else None
-            dashboard_publisher.publish(visual_snapshot, robots, elapsed, stamp, material=material_state)
+            dashboard_publisher.publish(visual_snapshot, robots, elapsed, stamp, material=material_state, energy=energy_runtime)
             if material_state is not None and material_state["revision"] != material_revision:
                 atomic_json(output / "material-state.json", material_state)
                 material_revision = material_state["revision"]
@@ -1826,11 +1854,15 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
             "planning_radius_m": book.planning_radius_m, "reservation_radius_m": reservation_radius})
         if material is not None:
             result["material_flow"] = material.snapshot()
+        if energy_runtime is not None:
+            result["energy"] = energy_runtime.snapshot()
         drain_routes()
         print(f"{mission_label}=PASS", flush=True)
     except BaseException as error:
         reason = failure_reason(error)
         result.update({"status": "failed", "error": {"type": type(error).__name__, "message": reason, "traceback": traceback.format_exc(limit=30)}, "actions": history})
+        if energy_runtime is not None:
+            result["energy"] = energy_runtime.snapshot()
         if mission is not None:
             if not (mission.completed or mission.failed or mission.censored):
                 mission.fail(reason, sim_time=mission.sim_time)

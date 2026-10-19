@@ -1,0 +1,196 @@
+{
+  "task": "fleet4-industrial-carrier-reference-014",
+  "attempt": 1,
+  "contract_revision": 13,
+  "ack": true,
+  "status": "공식 3개 출처 한정 조사 완료",
+  "scope": "bounded official read-only research",
+  "accepted": true,
+  "acceptance_owner": "root",
+  "completed_at_utc": "2026-10-19T11:09:06.539783+00:00",
+  "sources": [
+    {
+      "id": "S1",
+      "title": "NVIDIA Isaac Sim 6.2.0 — Wheeled Robot Assets",
+      "url": "https://docs.isaacsim.omniverse.nvidia.com/6.2.0/assets/usd_assets_robots_wheeled.html",
+      "sections": "Every USD Path; Idealworks/iwhub variants (본문 481,918-989행)",
+      "supports": "카탈로그 기준 경로·변형·joint/link/DOF 수·physics APIs. iw.hub별 License 항목과 기구 scalar는 이 절에 없음."
+    },
+    {
+      "id": "S2",
+      "title": "NVIDIA Isaac Sim 6.2.0 — Isaac Sim Assets",
+      "url": "https://docs.isaacsim.omniverse.nvidia.com/6.2.0/assets/usd_assets_overview.html",
+      "sections": "본문 479-486행",
+      "supports": "Content Browser, asset root 설정, local disk/Nucleus 배치 안내, Asset Region Profile에 따른 제공 범위 차이."
+    },
+    {
+      "id": "S3",
+      "title": "Idealworks — iw.hub Underride transport",
+      "url": "https://www.idealworks.com/en/robotics/iw-hub",
+      "sections": "Get the highlights; Configured for your loads; Compatible load formats (89-177행)",
+      "supports": "실물 underride dolly/pallet 운송, 최대 속도·하중, 적재물 형식. USD 물성·접촉·리프트 검증 근거가 아님."
+    }
+  ],
+  "source_count": 3,
+  "candidate": {
+    "name": "Idealworks iw.hub",
+    "selection": "후속 산업용 저상 운반 후보 1개; 채택·교체·구매 결정 아님",
+    "basis": [
+      "공식 6.2 카탈로그에 PhysX 기반 USD가 있음 [S1]",
+      "제조사가 dolly/pallet underride 운송과 pallet/conveyor 확장을 설명함 [S3]"
+    ],
+    "recommended_asset_variant": "Idealworks/iwhub/iw_hub.usd",
+    "recommendation_status": "조건부 기술 후보라는 추론. 이 조사에서 자산을 열거나 프로젝트 호환성을 입증하지 않음."
+  },
+  "asset_paths": {
+    "status": "공식 카탈로그 상대 경로 확인; 실제 배포 endpoint와 설치 가용성 미확인",
+    "source_ids": [
+      "S1",
+      "S2"
+    ],
+    "catalog_base": "Isaac Sim/Robots",
+    "physx_relative": "Idealworks/iwhub/iw_hub.usd",
+    "sensor_variant_relative": "Idealworks/iwhub/iw_hub_sensors.usd",
+    "static_variant_relative": "Idealworks/iwhub/iw_hub_static.usd",
+    "multiphysics_catalog_base": "Isaac Sim/Robots_Multiphysics",
+    "multiphysics_relative": "Idealworks/iwhub/iw_hub/iw_hub.usda",
+    "asset_root_setting": "persistent.isaac.asset_root.default",
+    "runtime_absolute_url": null,
+    "absolute_url_status": "카탈로그의 표시 기준과 런타임 HTTP/Nucleus/local 실제 root를 구분함. root 값을 조회하지 않아 URL이나 추가 /Isaac/ 접두어를 합성하지 않음.",
+    "availability": "카탈로그는 default Asset Region Profile 기준이다. 다른 profile의 자산·종속성 제공 여부와 현재 003 환경의 cache 존재는 확인하지 않음.",
+    "base_metadata": {
+      "joints": 7,
+      "links": 8,
+      "dofs": 7,
+      "physics_apis": [
+        "PhysX RigidBodyAPI",
+        "PhysX ArticulationAPI",
+        "PhysX JointAPI",
+        "PhysX CollisionAPI",
+        "PhysX SceneAPI"
+      ]
+    },
+    "sensor_metadata": "sensor 변형에는 camera 2개만 표기됨. 실제 LiDAR 수·모델·mount prim과 4대×2 LiDAR 호환성은 미확인.",
+    "interpretation": "7 DOF나 multiphysics Validated 표시는 lift 지원·8LiDAR·이 프로젝트 적재/운송 성공의 증거가 아님. 기존 PhysX 기준선에 multiphysics 전환을 제안하지 않음."
+  },
+  "distribution_and_usage": {
+    "confirmed": [
+      {
+        "claim": "문서는 sample content를 local disk 또는 Nucleus server에 두는 배포 방식을 안내함. 실제 다운로드는 수행하지 않음.",
+        "source_ids": [
+          "S2"
+        ]
+      }
+    ],
+    "not_confirmed": [
+      {
+        "claim": "iw.hub의 개별 license·상업 사용·변형·재배포 권한은 이 3개 본문에서 확인하지 못함. S1의 다른 로봇 license를 iw.hub에 적용하지 않음.",
+        "source_ids": [
+          "S1",
+          "S2"
+        ]
+      },
+      {
+        "claim": "정확한 asset pack/region endpoint·인증 요구·별도 약관 적용 여부는 조회하지 않음. 문서의 catalog 제공 사실을 무조건적 사용 허가로 해석하지 않음.",
+        "source_ids": [
+          "S2"
+        ]
+      }
+    ],
+    "commercial_use_allowed": null,
+    "modification_allowed": null,
+    "redistribution_allowed": null,
+    "terms_accepted": false,
+    "assets_downloaded": false,
+    "legal_scope": "법적 허용 여부 판정은 하지 않음. 허가 미확인을 허가 또는 금지로 단정하지 않음."
+  },
+  "manufacturer_reference": {
+    "source_ids": [
+      "S3"
+    ],
+    "confirmed": {
+      "transport_form": "underride dolly/pallet carrier",
+      "payload_up_to_kg": 1000,
+      "payload_condition": "with dolly or pallet",
+      "top_speed_up_to_m_s": 2.2,
+      "compatible_dolly_up_to_mm": [
+        1750,
+        2000
+      ],
+      "euro_pallet_mm": [
+        1200,
+        800
+      ],
+      "industrial_pallet_mm": [
+        1200,
+        1000
+      ]
+    },
+    "separation": "위 값은 제조사 실물 제품·호환 적재물의 설명이다. dolly/pallet 치수를 로봇 본체 치수로 사용하지 않으며, USD mass/drive effort/lift 정격이나 현재 4대 시뮬레이션 성공으로 전용하지 않음."
+  },
+  "integration_unknowns": [
+    {
+      "item": "wheel joint names / left-right 순서·축·부호·단위",
+      "status": "미확인",
+      "basis": "S1에 개별 이름·joint axis가 없음. NovaCarter 이름을 복사하지 않음."
+    },
+    {
+      "item": "body prim / articulation root / wheel·sensor child prim",
+      "status": "미확인",
+      "basis": "S1에 내부 USD hierarchy가 없음. chassis_link나 특정 /World 경로로 추정하지 않음."
+    },
+    {
+      "item": "wheel radius / separation / drive type·limits·gains",
+      "status": "미확인",
+      "basis": "확인한 6.2 S1 절에 scalar가 없음. 구버전 검색 요약의 수치나 NovaCarter 캘리브레이션을 채택하지 않음."
+    },
+    {
+      "item": "본체 L/W/H·충돌 형상·최소 지상고·질량·관성·CoM",
+      "status": "미확인",
+      "basis": "S1/S3 본문에 해당 수치가 없음. 적재물 치수와 1000kg 실물 하중으로 역산하지 않음."
+    },
+    {
+      "item": "lift joint·stroke·속도·힘 한계·마운트 위치·하중 질량",
+      "status": "미확인",
+      "basis": "S3는 운반/확장 용도를 설명하나 actuator 수치는 제시하지 않음. 7 DOF에서 lift joint 존재를 추론하지 않음."
+    },
+    {
+      "item": "토트/카트 접촉·마찰·collision filtering·load transfer·분리 증거",
+      "status": "미확인",
+      "basis": "자산/물리 실행을 하지 않았음. 논리 material receipt를 물리 적재 성공으로 취급하지 않음."
+    },
+    {
+      "item": "기존 wheel encoder/ROS/Nav2/TF와 8 LiDAR adapter 호환",
+      "status": "미확인",
+      "basis": "카탈로그 metadata로 접속 호환성을 입증할 수 없음. body·wheel·sensor identity와 footprint가 미확인임."
+    }
+  ],
+  "minimal_change_recommendation": {
+    "kind": "문서 근거에 따른 추론·후속 확인 항목이며 구현 요청 아님",
+    "baseline": "원래 NovaCarter 차동구동·encoder·4대/8LiDAR·ROS/Nav2와 immutable003은 그대로 유지한다.",
+    "candidate_path": "iw.hub PhysX 기본 USD를 후속 별도 carrier 후보로 한정한다. wheel/body/footprint/encoder 연결을 확인한 뒤 기존 상위 작업·예약·정지 경계를 재사용할 수 있는지 판단한다.",
+    "payload_module": "lift가 이미 rigging돼 있다고 가정하지 않는다. 후속 적재 모듈에는 lift의 실제 joint/한계, 카트 collider·질량·접촉·load transfer와 분리 관측을 명시해야 한다. Nav2 도착이나 원장 receipt만으로 loaded를 확정하지 않는다.",
+    "decision": "현재 문서만으로 대체 구현의 최소 수정량이나 실행 가능성을 확정할 수 없다. 라이선스·실제 USD 구조·기구 수치는 미확인 상태로 반환한다."
+  },
+  "validation": {
+    "method": "공식 NVIDIA 6.2 문서 2개와 제조사 본문 1개 열람·동일 문서 내 키 검색. 제3자 요약과 구버전 수치는 최종 근거에서 제외.",
+    "download_or_execution": "없음; 웹 본문 열람만 수행",
+    "scope_complete": true,
+    "simulation_verified": false
+  },
+  "root_context": "사용자 전달: 기존 CLI 조회 정상 복구, 기존 환경 승인003 대기·새 약관 수락 없음. 이 작업은 환경 상태를 조회하거나 실행하지 않음.",
+  "changed_paths": [
+    "coordination/collab/results/fleet4-industrial-carrier-reference-014.json"
+  ],
+  "product_edits": [],
+  "processes_started": [],
+  "git_actions": [],
+  "vm_actions": [],
+  "new_agents": [],
+  "baseline_changed": false,
+  "root_acceptance": {
+    "at_utc": "2026-10-19T11:18:33.331339+00:00",
+    "method": "root read complete receipt and checked source/scope/unknown separation",
+    "scope": "three-source conditional industrial carrier reference only; no replacement or physics verification"
+  }
+}

@@ -24,7 +24,8 @@ from .visual_state import canonical_sha256
 QUALIFICATION = "fleet4_transport_development"
 DEFAULT_CONFIG = Path(__file__).resolve().parents[1] / "configs/factory-fleet4"
 SOURCE_FILES = frozenset({"g2.json", "g3-runtime.json", "layout.json", "g3-routing.json",
-                          "nav2-g2.yaml", "render-profile.json", "visual-assets.json", "transport-profile.json"})
+                          "nav2-g2.yaml", "render-profile.json", "visual-assets.json", "transport-profile.json",
+                          "energy-profile.json"})
 BUNDLE_FILES = SOURCE_FILES | {"config.json", "session.json", "scenarios.json", "registry.json",
                                "scene/factory-v3.usda", "route-preflight.json"}
 
@@ -172,6 +173,13 @@ def _compile(root: Path) -> dict[str, Any]:
         MaterialFlow(FleetMission("input-material-preflight", orders, robot_stations=initial,
             station_goals={name: GoalPose("map", *xy, yaws[name]) for name, xy in anchors.items()}), profile["material_flow"])
         workload["material_flow"] = deepcopy(profile["material_flow"])
+    if "energy" in profile:
+        from .energy import EnergyFleet
+        energy = {"profile": _read(root, "energy-profile.json"), "initial_soc": deepcopy(profile["energy"]["initial_soc"])}
+        if set(energy["initial_soc"]) != robot_ids:
+            raise ValueError("energy initial SOC must cover exactly the declared fleet")
+        EnergyFleet(energy["profile"], energy["initial_soc"])
+        workload["energy"] = energy
     session = {"schema_version": 1, "scenario_id": scenario_id, "profile": "development",
                "primary_evaluation": False, "scope": QUALIFICATION, "condition": profile["condition"],
                "policy": profile["policy"], "scene_closure": scene_closure,
