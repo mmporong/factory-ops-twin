@@ -1,0 +1,119 @@
+{
+  "attempt": 1,
+  "side_effects": {
+    "new_packages": false,
+    "new_agents": false,
+    "outside_owned_product_paths_modified": false,
+    "gpu": false,
+    "commit": false,
+    "push": false,
+    "new_background_processes": false
+  },
+  "changed_paths": [
+    "factory_ops/fleet_registry.py",
+    "tests/test_fleet_registry.py",
+    "coordination/collab/results/fleet-registry-003.json"
+  ],
+  "validation_coverage": [
+    "1/2/4 robots, config order, namespaces differing from robot IDs, 2N sensors, JSON manifest serialization",
+    "existing G2 scenario document",
+    "duplicate robot ID/namespace/path and nested prim paths in both input orders; similarly prefixed sibling names remain valid",
+    "spawn key mismatch; wrong vector lengths; NaN/Inf/bool/strings/overflowing integers; signed-zero equal XY",
+    "missing/duplicate/unknown sensors; invalid/duplicate frames; invalid extrinsics; missing required fields",
+    "input preservation; caller mutation after construction; nested export mutation; read-only public properties",
+    "nearby but distinct XY accepted: no footprint or runtime-clearance claim"
+  ],
+  "limitations": [
+    "Declared identities only. Does not create ROS topics or load USD/Isaac assets; existing bridge remains runtime owner.",
+    "Duplicate XY check is exact equality after float conversion; no footprint clearance, bounds, traffic or physical qualification is implied.",
+    "ROS names and USD identifier segments use ASCII [A-Za-z_][A-Za-z0-9_]*; Unicode USD identifiers are outside this declared naming subset.",
+    "Definitions and spawns are detached copies with no public setters; consumers must keep returned copies if they need local mutations.",
+    "manifest schema conventions above are additive local API choices because the card did not fix nested key names; root should use these keys for integration.",
+    "Existing G2/main runtime/profile support is not broadened by this module or its unit tests."
+  ],
+  "base_commit": "d0aaee2bb3e459244b1e546dbb5e22877db975b5",
+  "implemented": [
+    "stdlib-only FleetRegistry(config, scenario), read-only robot_ids/definitions/spawns/sensor_keys properties",
+    "config 로봇 순서 보존; robot ID/namespace/path uniqueness and no ancestor/descendant robot prim paths",
+    "exact spawn robot key set, three finite int/float components excluding bool, duplicate XY rejection",
+    "exact front/rear lidar templates, unique valid frame IDs, finite XYZ/yaw",
+    "detached internal copies and detached definitions/spawns/manifest exports; caller mutations cannot corrupt validated identities",
+    "manifest schema1 with namespaced scan raw/filtered/odom/cmd_vel declarations, flattened lidar identities and count"
+  ],
+  "task_id": "fleet-registry-003",
+  "manifest_api": {
+    "lidar_prim_path": "<robot prim_path>/chassis_link/lidar_<front|rear>",
+    "topics": [
+      "scan_front_raw",
+      "scan_front",
+      "scan_rear_raw",
+      "scan_rear",
+      "odom",
+      "cmd_vel"
+    ],
+    "lidar_row": "original lidar definition + robot_id + namespace + intended prim_path + raw_topic + filtered_topic",
+    "lidar_count": "2 * len(robot_ids)",
+    "top_level_keys": [
+      "schema_version",
+      "robot_ids",
+      "robots",
+      "lidars",
+      "lidar_count",
+      "scope"
+    ],
+    "robot_row": "original definition + spawn_xy_yaw list + topics dict",
+    "topic_authority": "namespace, not robot_id",
+    "scope": "declared configuration only; not runtime qualification"
+  },
+  "accepted_by_author": false,
+  "status": "ready_for_root_review",
+  "file_sha256": [
+    {
+      "path": "factory_ops/fleet_registry.py",
+      "sha256": "0dabd5e87e2603773d3864ab0df4e1954483c652da51f896e122f158d9d672ff"
+    },
+    {
+      "path": "tests/test_fleet_registry.py",
+      "sha256": "abffde2a11654112e258d934bcbd0e2ba9875697e2f1fad0585603c0fed2868d"
+    }
+  ],
+  "processes": [],
+  "ACK": true,
+  "contract_revision": 3,
+  "diagnostic_history": [
+    {
+      "resolution": "Used already-installed cached Pyright1.1.414 with its existing bundled typeshed path; final specified two-file check has 0 errors and 0 warnings. No package installed.",
+      "observation": "System Python lacks pyright; initial cached Pyright invocation without explicit typeshed produced stdlib-resolution errors."
+    }
+  ],
+  "verification": [
+    {
+      "test_count": 9,
+      "exit_code": 0,
+      "command": ".venv/Scripts/python.exe -B -m unittest discover -s tests -p test_fleet_registry.py -v",
+      "result": "PASS"
+    },
+    {
+      "result": "PASS",
+      "information": 0,
+      "command": "node <existing npm-cache pyright/dist/pyright.js> --typeshedpath <same package/typeshed-fallback> --pythonpath .venv/Scripts/python.exe factory_ops/fleet_registry.py tests/test_fleet_registry.py",
+      "package_installed": false,
+      "errors": 0,
+      "exit_code": 0,
+      "tool_version": "1.1.414",
+      "warnings": 0
+    },
+    {
+      "exit_code": 0,
+      "command": "git diff --check -- factory_ops/fleet_registry.py tests/test_fleet_registry.py",
+      "result": "PASS"
+    }
+  ],
+  "input_path_note": {
+    "card_reference": "configs/factory-v4/g2-scenarios.json (absent)",
+    "actual_scenario_document": "configs/factory-v3/g2-scenarios.json",
+    "actual_config": "configs/factory-v4/g2.json",
+    "compatibility_check": "every actual G2 scenario validates against existing two-robot definition; synthetic 1/2/4 definitions separately tested"
+  }
+}
+

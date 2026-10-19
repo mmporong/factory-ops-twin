@@ -103,6 +103,7 @@ def _json_safe_setting(value: Any) -> Any:
 def _load_inputs(
     config_path: Path, scenarios_path: Path, scenario_id: str, *,
     qualification: str = "g2_multi_robot_traffic", scenario_ids: set[str] = SCENARIOS,
+    expected_robot_count: int = 2,
 ) -> tuple[dict[str, Any], dict[str, Any]]:
     config = json.loads(config_path.read_text(encoding="utf-8"))
     document = json.loads(scenarios_path.read_text(encoding="utf-8"))
@@ -132,8 +133,10 @@ def _load_inputs(
         raise base.SmokeError("G2 drive geometry provenance is missing")
     DriveGeometry(float(geometry["wheel_radius_m"]), float(geometry["wheel_separation_m"]))
     robots = config.get("robots")
-    if not isinstance(robots, list) or len(robots) != 2:
-        raise base.SmokeError("G2 requires exactly two robot definitions")
+    if type(expected_robot_count) is not int or expected_robot_count < 2:
+        raise base.SmokeError("shared Isaac worker requires at least two robots for evidence cameras")
+    if not isinstance(robots, list) or len(robots) != expected_robot_count:
+        raise base.SmokeError(f"Isaac worker requires exactly {expected_robot_count} robot definitions")
     identities: list[tuple[str, str, str]] = []
     for robot in robots:
         if not isinstance(robot, dict):
@@ -142,7 +145,7 @@ def _load_inputs(
         if any(not isinstance(value, str) or not value for value in values):
             raise base.SmokeError("G2 robot identity fields are required")
         identities.append(values)  # type: ignore[arg-type]
-    if any(len({value[index] for value in identities}) != 2 for index in range(3)):
+    if any(len({value[index] for value in identities}) != expected_robot_count for index in range(3)):
         raise base.SmokeError("G2 robot IDs, namespaces and prim paths must be unique")
     lidars = config.get("lidars")
     if not isinstance(lidars, list) or {item.get("name") for item in lidars if isinstance(item, dict)} != {"front", "rear"}:
@@ -646,6 +649,7 @@ def _run(
     args: argparse.Namespace, *, qualification: str = "g2_multi_robot_traffic",
     scenario_ids: set[str] = SCENARIOS, result_file: str = RESULT_FILE,
     scene_extension: Any = None, extra_inputs: Mapping[str, Path] | None = None,
+    expected_robot_count: int = 2,
 ) -> int:
     started = time.monotonic()
     app = rclpy = clock_node = session = timeline = np = rep = None
@@ -675,7 +679,8 @@ def _run(
         scenarios_path = args.scenarios.resolve(strict=True)
         layout = Layout.from_file(layout_path)
         config, scenario = _load_inputs(config_path, scenarios_path, args.scenario,
-                                        qualification=qualification, scenario_ids=scenario_ids)
+                                        qualification=qualification, scenario_ids=scenario_ids,
+                                        expected_robot_count=expected_robot_count)
         os.environ["ROS_DOMAIN_ID"] = str(int(config["ros_domain_id"]))
         os.environ.setdefault("ROS_DISTRO", "jazzy")
         source_path = Path(__file__).resolve()
@@ -881,7 +886,7 @@ def _run(
             _spin_nodes(rclpy, [clock_node, *robot_nodes])
         if not all(runtime["ros"]["scan_front_raw"] > 0 and runtime["ros"]["scan_rear_raw"] > 0
                    for runtime in robots.values()):
-            raise base.SmokeError("G2 four RTX LaserScan writers did not all produce data")
+            raise base.SmokeError("not all declared robot RTX LaserScan writers produced data")
         initial_time = float(SimulationManager.get_simulation_time())
         for robot_id, runtime in robots.items():
             left, right = _wheel_angles(runtime["robot"])

@@ -1,0 +1,116 @@
+{
+  "original_result": {
+    "sha256": "12d61daf823106b44fc8a6e9cce396c1614cbca72668eb76afe97cbdba24d4d9",
+    "path": "coordination/collab/results/fleet-bootstrap-review-003.json"
+  },
+  "items": [
+    {
+      "test_source_checked": [
+        "test_visual_runtime_uses_the_verified_bundle_configuration: 생성자에 bundle 설정 디렉터리가 전달됨을 mock 대조",
+        "test_result_requires_observed_ros_and_advancing_all_eight_rtx_sensors: 실제 visual_assets SHA 불일치 거절"
+      ],
+      "id": "FB-001",
+      "status": "resolved",
+      "locations": [
+        "scripts/isaac/g3_scene.py:248",
+        "scripts/isaac/g3_scene.py:252",
+        "scripts/isaac/factory_visuals.py:301",
+        "scripts/isaac/factory_visuals.py:349",
+        "scripts/isaac/factory_visuals.py:354",
+        "scripts/isaac/factory_visuals.py:399",
+        "factory_ops/fleet_bootstrap.py:129",
+        "tests/test_fleet_bootstrap.py:43",
+        "tests/test_fleet_bootstrap.py:137"
+      ],
+      "previous_severity": "HIGH",
+      "accepted": true,
+      "evidence": "FleetSmokeLifecycle의 config_directory=root가 BarrierLifecycle.setup을 거쳐 FactoryVisualRuntime으로 전달된다. 값이 None이면 기존 생성자 호출에 해당 키를 추가하지 않고 이전 경로 선택을 유지한다. 명시된 경우 번들의 visual/render 설정을 정규 파일로 확인해 사용하며, 실제 export manifest의 입력 path/SHA를 runtime result의 configuration_inputs에 보존한다. validate_result가 두 입력의 실제 SHA를 bundle 설정 SHA와 대조한다.",
+      "assessment": "기존 번들 복사본과 runtime 시각 생성 입력의 분리 문제가 수정됐다. 두 설정에 같은 SHA 비교 경로가 적용됨을 소스에서 확인했다."
+    },
+    {
+      "test_source_checked": [
+        "정상 fixture에 result/mission_control/journal 실행·시나리오와 sensor prim 추가",
+        "다른 run_id/scenario_id/prim journal 행 거절",
+        "mission_control의 다른 실행 또는1대 counts 거절"
+      ],
+      "id": "FB-002",
+      "status": "resolved",
+      "locations": [
+        "factory_ops/fleet_bootstrap.py:120",
+        "factory_ops/fleet_bootstrap.py:123",
+        "factory_ops/fleet_bootstrap.py:159",
+        "factory_ops/fleet_bootstrap.py:160",
+        "factory_ops/fleet_bootstrap.py:164",
+        "tests/test_fleet_bootstrap.py:103",
+        "tests/test_fleet_bootstrap.py:116",
+        "tests/test_fleet_bootstrap.py:124",
+        "tests/test_fleet_bootstrap.py:130"
+      ],
+      "previous_severity": "HIGH",
+      "accepted": true,
+      "evidence": "result run_id 형식 및 고정 scenario를 검사한다. mission_control의 실행·시나리오·passed 상태, 정확한4대 control_samples 집합과 최소 샘플 수를 대조한다. registry 기반 기대 sensor prim을 구성하고 journal의 run/scenario/prim 불일치를 거절하며, GMO 증가 근거로 채택하는 행도 같은 실행·시나리오·정확한 sensor prim에 결속한다.",
+      "assessment": "같은 robot/side 이름만으로 다른 실행의 GMO 근거를 섞던 기존 문제가 수정됐다."
+    }
+  ],
+  "contract_revision": 3,
+  "status": "bounded_recheck_complete",
+  "sha_verified_before_and_after": true,
+  "mutations": {
+    "push": false,
+    "gpu": false,
+    "commit": false,
+    "new_agents": false,
+    "new_background_processes": false,
+    "original_result": false,
+    "product_files": false
+  },
+  "original_findings_preserved": true,
+  "scope": "기존 FB-001/002 수정 경계만 정적 재확인. 반복 전체 리뷰 아님.",
+  "limits": [
+    "수용은 FB-001/002 수정에 한정한다. 실제4대 Isaac/ROS/RTX 실행이나 운송·주차·충전 qualification을 승인한 결과가 아니다.",
+    "기존 runtime 정지 gate의 source 확인과 결과 결속을 수용한 것이며, 이번 패스에서 전체 trajectory를 독립 재계산하거나 GPU 관측을 수행하지 않았다."
+  ],
+  "attempt": 1,
+  "validation": {
+    "root_reported": "사용자 보고: 73개 관련 테스트와 신규 Python 타입검사 재실행. control이 재실행한 결과로 주장하지 않음.",
+    "reviewer_gpu_run": false,
+    "reviewer_tests_run": false,
+    "method": "동결 SHA7개 및 수정된 두 경계·회귀 테스트 본문의 정적 재대조"
+  },
+  "acceptance": "accepted_for_fb_001_and_fb_002",
+  "file_sha256": [
+    {
+      "sha256": "1cb0180867abacdedda9f3b880786ccd63734e678be3e58d6ef42e5878bb9534",
+      "path": "scripts/isaac/g2_scene.py"
+    },
+    {
+      "sha256": "739f0f9abb803b4fc200cf8ab00bee6e6bf2b4f0a9a9df04f09fea61991132fd",
+      "path": "scripts/isaac/g3_scene.py"
+    },
+    {
+      "sha256": "af271d8eb6bf0dc272b8d5b6b7d4e3ad258abdc59946623e5fe777e6a4f5470a",
+      "path": "factory_ops/fleet_bootstrap.py"
+    },
+    {
+      "sha256": "8278822c66d729a00c772a163641cfc6bfcac3986b8ea24f7cbb610cdc279d90",
+      "path": "scripts/isaac/factory_visuals.py"
+    },
+    {
+      "sha256": "3dcd6bd81a6189b37977189699785a06d293565c1f0ba963b394544c39c24bd5",
+      "path": "scripts/isaac/fleet4_scene.py"
+    },
+    {
+      "sha256": "ae824a40a60282e3b35e3707eea0898e6e7bcb3e1cc6588f93ea6999e9957413",
+      "path": "tests/test_fleet_bootstrap.py"
+    },
+    {
+      "sha256": "fcbebead97e72d2536558bf101d4ea4c5d3aa9995db37465871b637f9b6c23bc",
+      "path": "configs/factory-v4/fleet4-development.json"
+    }
+  ],
+  "recheck": 1,
+  "sha_manifest": "coordination/collab/fleet-bootstrap-recheck-003-sha.json",
+  "task_id": "fleet-bootstrap-review-003",
+  "remaining_blockers_in_recheck_scope": [],
+  "accepted": true
+}

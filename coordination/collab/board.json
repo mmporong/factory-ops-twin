@@ -1,6 +1,6 @@
 {
-  "revision": 2,
-  "updated_at": "2026-10-19T06:29:24.2075371Z",
+  "revision": 3,
+  "updated_at": "2026-10-19T06:55:19.6302082Z",
   "scope": {
     "excluded": "실물 로봇 실행, 새 유료 서비스/에셋, 공개 배포",
     "project_root": "C:\\Users\\LIMMM\\factory-ops-twin",
@@ -19,7 +19,7 @@
       "role": "dashboard frontend author",
       "name": "control",
       "agent_kind": "codex",
-      "status": "idle; dashboard-visual-002, inventory-return-review-002 and dashboard-labels-002 received and accepted by root",
+      "status": "completed registry and bounded bootstrap review; source received and accepted",
       "session": "default",
       "agent_session": "01a152aa-24b4-7a31-92e3-a2b620f4feeb",
       "terminal_id": "term_65e06d27e415810",
@@ -132,6 +132,41 @@
       "reviewer": "root",
       "result_path": "coordination/collab/results/dashboard-labels-002.json",
       "acceptance_record": "2 added label mappings reviewed; SHA matched; typecheck PASS"
+    },
+    {
+      "task_id": "fleet-registry-003",
+      "attempt": 1,
+      "contract_revision": 3,
+      "owner": "control",
+      "status": "accepted",
+      "reviewer": "root",
+      "task_path": "coordination/collab/fleet-registry-003-task.md",
+      "write_paths": [
+        "factory_ops/fleet_registry.py",
+        "tests/test_fleet_registry.py",
+        "coordination/collab/results/fleet-registry-003.json"
+      ],
+      "result_path": "coordination/collab/results/fleet-registry-003.json",
+      "acceptance": "ID/namespace/USD path/spawn/lidar identity validation; 1/2/4 robot CPU tests"
+    },
+    {
+      "task_id": "fleet-bootstrap-003",
+      "attempt": 1,
+      "contract_revision": 3,
+      "owner": "root",
+      "reviewer": "control",
+      "status": "accepted",
+      "result_path": "coordination/collab/results/fleet-bootstrap-003.json",
+      "acceptance": "CPU implementation only: four inputs/eight sensors, default legacy two, bound source and result; GPU pending"
+    },
+    {
+      "task_id": "fleet-bootstrap-review-003",
+      "attempt": 1,
+      "contract_revision": 3,
+      "owner": "control",
+      "status": "accepted",
+      "result_path": "coordination/collab/results/fleet-bootstrap-review-003-recheck.json",
+      "acceptance": "FB-001/002 fixed and reviewed SHA matched"
     }
   ],
   "decisions": [

@@ -1,0 +1,39 @@
+{
+  "task_id": "fleet-bootstrap-review-003",
+  "author": "root",
+  "read_paths": [
+    "factory_ops/fleet_bootstrap.py",
+    "scripts/isaac/fleet4_scene.py",
+    "scripts/isaac/g2_scene.py",
+    "scripts/isaac/g3_scene.py",
+    "scripts/isaac/factory_visuals.py",
+    "tests/test_fleet_bootstrap.py",
+    "configs/factory-v4/fleet4-development.json"
+  ],
+  "owner": "control",
+  "attempt": 1,
+  "contract_revision": 3,
+  "non_goals": "No GPU, no product file mutations, no new agents/processes, no broad refactor or repeated full review",
+  "acceptance": [
+    "G2/G3 defaults retain two robots and old qualification gates",
+    "explicit new four-robot development smoke uses four definitions, eight lidar identities and zero commands",
+    "smoke completion waits for fresh four-robot controls and is separated from transport/parking/charging",
+    "bundle and actual result input digests match; ROS counters and advancing eight GMO headers required"
+  ],
+  "write_paths": [
+    "coordination/collab/results/fleet-bootstrap-review-003.json"
+  ],
+  "result_path": "coordination/collab/results/fleet-bootstrap-review-003.json",
+  "inputs": {
+    "base_commit": "d0aaee2bb3e459244b1e546dbb5e22877db975b5",
+    "sha256": {
+      "factory_ops/fleet_bootstrap.py": "d5fe5850324a320e06728605de5c38f08015cadabe7768b02c0477c07f522fee",
+      "scripts/isaac/factory_visuals.py": "4842dc99d33ce22523afe7c12d5ac6295997d2b3263ebfa58d7184128535a27f",
+      "scripts/isaac/g2_scene.py": "1cb0180867abacdedda9f3b880786ccd63734e678be3e58d6ef42e5878bb9534",
+      "scripts/isaac/fleet4_scene.py": "3dcd6bd81a6189b37977189699785a06d293565c1f0ba963b394544c39c24bd5",
+      "configs/factory-v4/fleet4-development.json": "fcbebead97e72d2536558bf101d4ea4c5d3aa9995db37465871b637f9b6c23bc",
+      "tests/test_fleet_bootstrap.py": "a872b3fe9b2475343af571e76847a12c9f849c51c49ea8a6cc10cf02a70733e7",
+      "scripts/isaac/g3_scene.py": "c8af00c3057ca52ea723a8a7ee428f87257132d0b9b2bafe86515f7076f79f0d"
+    }
+  }
+}

@@ -37,7 +37,12 @@ class BarrierLifecycle:
 
     align_terminal_encoder = True
 
-    def __init__(self, session: dict[str, Any], run_id: str, session_root: Path) -> None:
+    def __init__(self, session: dict[str, Any], run_id: str, session_root: Path, *,
+                 robot_ids: Sequence[str] = ("carter1", "carter2"), config_directory: Path | None = None) -> None:
+        if not robot_ids or len(set(robot_ids)) != len(robot_ids) or any(not isinstance(r, str) or not r for r in robot_ids):
+            raise ValueError("lidar diagnostics require distinct declared robot IDs")
+        self.expected_robot_ids = tuple(robot_ids)
+        self.config_directory = config_directory
         self.session = session
         self.run_id = run_id
         self.collision = self.visible = None
@@ -243,7 +248,8 @@ class BarrierLifecycle:
         self.visuals = FactoryVisualRuntime(
             layout_path=self.session_root / "layout.json",
             base_scene_path=self.session_root / "scene/factory-v3.usda", output=output,
-            variant_seed=0, run_id=self.run_id, scenario_id=self.session["scenario_id"])
+            variant_seed=0, run_id=self.run_id, scenario_id=self.session["scenario_id"],
+            **({"config_directory": self.config_directory} if self.config_directory is not None else {}))
         industrial_visuals = self.visuals.setup(stage, UsdGeom, UsdPhysics, Gf)
         specification = self.session["scene_closure"]
         if specification is not None:
@@ -266,7 +272,7 @@ class BarrierLifecycle:
         return self.visuals.after_robots_loaded(stage, definitions)
 
     def configure_cameras(self, stage: Any, capture: Any, second: Any, UsdGeom: Any, Gf: Any) -> dict[str, Any]:
-        profile_path = config_dir_from_session(self.session_root) / "render-profile.json"
+        profile_path = (self.config_directory or config_dir_from_session(self.session_root)) / "render-profile.json"
         profile = json.loads(profile_path.read_text(encoding="utf-8"))
         cameras_by_id = {row["id"]: row for row in profile["cameras"]}
         specifications = [
@@ -332,12 +338,13 @@ class BarrierLifecycle:
     def register_lidar_sensors(
         self, sensors: Sequence[Any], metadata: Sequence[Mapping[str, Any]], timeline: Any,
     ) -> dict[str, Any]:
-        if len(sensors) != 4 or len(metadata) != 4:
-            raise ValueError("G3 lidar diagnostics require exactly four sensors")
+        expected = {(robot, side) for robot in self.expected_robot_ids for side in ("front", "rear")}
+        if len(sensors) != len(expected) or len(metadata) != len(expected):
+            raise ValueError("lidar diagnostics require two sensors per declared robot")
         identities = {(item.get("robot_id"), item.get("name"), item.get("prim_path")) for item in metadata}
-        if len(identities) != 4 or {item[0] for item in identities} != {"carter1", "carter2"} \
-                or {item[1] for item in identities} != {"front", "rear"} \
-                or any(not isinstance(item[2], str) or not item[2] for item in identities):
+        if ({(item[0], item[1]) for item in identities} != expected
+                or len({item[2] for item in identities}) != len(expected)
+                or any(not isinstance(item[2], str) or not item[2] for item in identities)):
             raise ValueError("G3 lidar diagnostic identities differ")
         if self.lidar_diagnostics:
             raise RuntimeError("G3 lidar diagnostics were already registered")
@@ -360,7 +367,7 @@ class BarrierLifecycle:
             registrations.append(record)
             self.lidar_diagnostics.append((sensor, record, status, error))
         return {
-            "annotator": "generic-model-output", "sensor_count": 4,
+            "annotator": "generic-model-output", "sensor_count": len(expected),
             "registrations": registrations,
             "output_buffer_on_gpu": self.lidar_output_buffer_setting,
         }

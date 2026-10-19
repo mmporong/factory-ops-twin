@@ -1,0 +1,9 @@
+{
+  "scripts/isaac/g2_scene.py": "1cb0180867abacdedda9f3b880786ccd63734e678be3e58d6ef42e5878bb9534",
+  "scripts/isaac/g3_scene.py": "739f0f9abb803b4fc200cf8ab00bee6e6bf2b4f0a9a9df04f09fea61991132fd",
+  "factory_ops/fleet_bootstrap.py": "af271d8eb6bf0dc272b8d5b6b7d4e3ad258abdc59946623e5fe777e6a4f5470a",
+  "scripts/isaac/factory_visuals.py": "8278822c66d729a00c772a163641cfc6bfcac3986b8ea24f7cbb610cdc279d90",
+  "scripts/isaac/fleet4_scene.py": "3dcd6bd81a6189b37977189699785a06d293565c1f0ba963b394544c39c24bd5",
+  "tests/test_fleet_bootstrap.py": "ae824a40a60282e3b35e3707eea0898e6e7bcb3e1cc6588f93ea6999e9957413",
+  "configs/factory-v4/fleet4-development.json": "fcbebead97e72d2536558bf101d4ea4c5d3aa9995db37465871b637f9b6c23bc"
+}

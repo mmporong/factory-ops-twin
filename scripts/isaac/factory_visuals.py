@@ -298,6 +298,8 @@ class FactoryVisualRuntime:
         variant_seed: int,
         run_id: str,
         scenario_id: str,
+        *,
+        config_directory: Path | None = None,
     ) -> None:
         if not run_id or not scenario_id:
             raise ValueError("visual runtime run_id and scenario_id are required")
@@ -307,6 +309,7 @@ class FactoryVisualRuntime:
         self.variant_seed = variant_seed
         self.run_id = run_id
         self.scenario_id = scenario_id
+        self.config_directory = config_directory
         self.layout: Layout | None = None
         self.stage: Any = None
         self.UsdGeom: Any = None
@@ -343,11 +346,14 @@ class FactoryVisualRuntime:
         shutil.copyfile(self.base_scene_path, copied_base)
         if _sha_file(copied_base) != base_before or _sha_file(self.base_scene_path) != base_before:
             raise ValueError("visual scene base copy changed source bytes")
-        config_dir = Path(__file__).resolve().parents[2] / "configs" / (
+        config_dir = self.config_directory or Path(__file__).resolve().parents[2] / "configs" / (
             "factory-v4" if self.layout.data.get("revision") == "amr-production-bay-v4" else "factory-v3"
         )
         visual_config = config_dir / "visual-assets.json"
         render_profile = config_dir / "render-profile.json"
+        if self.config_directory is not None:
+            _require_regular(visual_config, "explicit visual assets")
+            _require_regular(render_profile, "explicit render profile")
         exported = export_visual_scene(
             self.layout,
             visual_dir,
@@ -390,6 +396,10 @@ class FactoryVisualRuntime:
             "run_id": self.run_id,
             "scenario_id": self.scenario_id,
             "variant_seed": self.variant_seed,
+            "configuration_inputs": {
+                "visual_assets": self.manifest["visual_asset_config"],
+                "render_profile": {key: self.manifest["render_profile"][key] for key in ("path", "sha256")},
+            },
             "scope": "presentation only; source physics, navigation and ledger ownership remain authoritative",
             "base_scene": {"source_path": str(self.base_scene_path), "sha256": base_before, "copied_path": str(copied_base.relative_to(self.output)), "source_bytes_unchanged": True},
             "visual_export": {"manifest_path": str(manifest_path.relative_to(self.output)), "manifest_sha256": _sha_file(manifest_path), "outputs": exported["outputs"]},
@@ -409,30 +419,30 @@ class FactoryVisualRuntime:
         if stage is not self.stage or self.stage is None:
             raise RuntimeError("visual runtime robot binding requires the setup stage")
         if isinstance(robot_definitions, Mapping):
-            if set(robot_definitions) != {"carter1", "carter2"}:
+            if set(robot_definitions) != {d.get("robot_id") for d in robot_definitions.values() if isinstance(d, Mapping)}:
                 raise ValueError("visual robot definition mapping keys differ")
             definitions = list(robot_definitions.values())
         elif isinstance(robot_definitions, list):
             definitions = robot_definitions
         else:
             definitions = []
-        if len(definitions) != 2:
-            raise ValueError("visual runtime requires two robot definitions")
+        if not definitions:
+            raise ValueError("visual runtime requires declared robot definitions")
         paths: dict[str, str] = {}
         for definition in definitions:
             if not isinstance(definition, Mapping):
                 raise ValueError("visual robot definition must be an object")
             robot_id, prim_path = definition.get("robot_id"), definition.get("prim_path")
-            if robot_id not in {"carter1", "carter2"} or not isinstance(prim_path, str) or not prim_path.startswith("/World/"):
+            if not isinstance(robot_id, str) or not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", robot_id) or not isinstance(prim_path, str) or not prim_path.startswith("/World/"):
                 raise ValueError("visual robot identity or prim path is invalid")
+            if robot_id in paths or prim_path.rstrip("/") + "/chassis_link" in paths.values():
+                raise ValueError("visual robot definitions must be unique")
             if not stage.GetPrimAtPath(prim_path).IsValid():
                 raise ValueError(f"visual robot prim is missing: {prim_path}")
             chassis = prim_path.rstrip("/") + "/chassis_link"
             if not stage.GetPrimAtPath(chassis).IsValid():
                 raise ValueError(f"visual robot chassis prim is missing: {chassis}")
             paths[str(robot_id)] = chassis
-        if set(paths) != {"carter1", "carter2"}:
-            raise ValueError("visual robot definitions must be unique")
         self.robot_paths = paths
         result = {"robot_chassis_paths": dict(paths), "payload_parenting": "visual child only; no collider, mass or physical load", "deck_tote_size_xyz_m": list(TOTE_SIZE_M)}
         if self.runtime_manifest is not None:

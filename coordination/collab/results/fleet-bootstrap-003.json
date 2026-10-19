@@ -1,0 +1,24 @@
+{
+  "source_sha_matched": true,
+  "scope": "CPU input/runtime implementation accepted; actual GPU execution remains pending; not final four-robot transport/parking/charging",
+  "attempt": 1,
+  "source_review": "coordination/collab/results/fleet-bootstrap-review-003-recheck.json",
+  "status": "accepted_cpu_implementation",
+  "pending_gpu": "One bounded stationary smoke on existing Brev; no campaign or raw retirement",
+  "contract_revision": 3,
+  "validation": {
+    "result": "PASS",
+    "python_typecheck": "0 errors, 0 warnings",
+    "lidar_count": 8,
+    "robot_ids": [
+      "carter1",
+      "carter2",
+      "carter3",
+      "carter4"
+    ],
+    "bundle": "artifacts/fleet4/fleet4-input-001/bundle.json",
+    "tests": 108
+  },
+  "registry_review": "root inspected source and actual Isaac bridge topic/prim conventions; 9 tests included in 108 targeted passing tests",
+  "task_id": "fleet-bootstrap-003"
+}

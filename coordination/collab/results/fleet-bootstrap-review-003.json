@@ -1,0 +1,163 @@
+{
+  "severity_counts": {
+    "critical": 0,
+    "high": 2
+  },
+  "validation": {
+    "new_test_processes": false,
+    "tests_run": false,
+    "root_reported": "이전 사용자 보고: registry9개 포함72개 관련 테스트 PASS. control이 재실행한 결과로 사용하지 않음.",
+    "method": "지정7파일 SHA 시작/종료 대조, diff·호출 경로·CPU 테스트 본문 정적 검수"
+  },
+  "file_sha256": [
+    {
+      "path": "factory_ops/fleet_bootstrap.py",
+      "sha256": "d5fe5850324a320e06728605de5c38f08015cadabe7768b02c0477c07f522fee"
+    },
+    {
+      "path": "scripts/isaac/factory_visuals.py",
+      "sha256": "4842dc99d33ce22523afe7c12d5ac6295997d2b3263ebfa58d7184128535a27f"
+    },
+    {
+      "path": "scripts/isaac/g2_scene.py",
+      "sha256": "1cb0180867abacdedda9f3b880786ccd63734e678be3e58d6ef42e5878bb9534"
+    },
+    {
+      "path": "scripts/isaac/fleet4_scene.py",
+      "sha256": "3dcd6bd81a6189b37977189699785a06d293565c1f0ba963b394544c39c24bd5"
+    },
+    {
+      "path": "configs/factory-v4/fleet4-development.json",
+      "sha256": "fcbebead97e72d2536558bf101d4ea4c5d3aa9995db37465871b637f9b6c23bc"
+    },
+    {
+      "path": "tests/test_fleet_bootstrap.py",
+      "sha256": "a872b3fe9b2475343af571e76847a12c9f849c51c49ea8a6cc10cf02a70733e7"
+    },
+    {
+      "path": "scripts/isaac/g3_scene.py",
+      "sha256": "c8af00c3057ca52ea723a8a7ee428f87257132d0b9b2bafe86515f7076f79f0d"
+    }
+  ],
+  "accepted": false,
+  "author": "root",
+  "task_id": "fleet-bootstrap-review-003",
+  "acceptance": "request_changes",
+  "findings": [
+    {
+      "recommendation": "FactoryVisualRuntime에 선택적 설정 디렉터리/명시 설정 경로를 전달하고 fleet4에서는 bundle 경로를 사용한다. 기존 G2/G3 기본 경로는 유지한다. 실행 결과 또는 visual-runtime manifest의 실제 사용 visual/render 해시를 bundle 해시와 대조한다.",
+      "id": "FB-001",
+      "line": 346,
+      "related_locations": [
+        "factory_ops/fleet_bootstrap.py:73",
+        "factory_ops/fleet_bootstrap.py:85",
+        "scripts/isaac/fleet4_scene.py:28",
+        "scripts/isaac/g3_scene.py:248",
+        "scripts/isaac/g3_scene.py:274",
+        "factory_ops/fleet_bootstrap.py:119"
+      ],
+      "title": "준비된 번들의 visual/render 설정과 실제 시각 자산 생성 입력이 분리된다",
+      "suggested_targeted_test": "번들 준비 후 저장소의 설정과 다른 설정을 주입하거나 config 경로를 mock하여 fleet4의 시각 생성이 번들의 두 설정만 읽는지 검사한다. 실제 사용 설정 해시가 다르면 validate_result가 실패해야 한다.",
+      "confidence": "high",
+      "path": "scripts/isaac/factory_visuals.py",
+      "impact": "준비 후 저장소 설정이 바뀌거나 다른 config_dir로 번들을 만들면 registry/핵심 입력 해시는 맞아도 시각 자산은 다른 설정으로 생성될 수 있다. validate_result는 실제 visual/render 입력 해시를 검사하지 않아 이 불일치를 통과시킨다. 카드의 bundle/실행 입력 일치 근거가 완전하지 않다.",
+      "evidence": "prepare_bundle은 visual-assets.json과 render-profile.json을 번들에 복사하고 해시를 고정한다. FleetSmokeLifecycle은 config_directory=root를 전달하므로 camera 설정은 번들을 읽지만, FactoryVisualRuntime.setup은 __file__ 기준 저장소 configs/factory-v4 경로를 다시 계산해 visual-assets.json/render-profile.json을 읽는다. BarrierLifecycle.setup은 FactoryVisualRuntime에 이 config_directory를 전달하지 않는다.",
+      "validation": "정적 호출/경로 추적; 제품 수정·GPU·재현 실행 없음",
+      "severity": "HIGH"
+    },
+    {
+      "recommendation": "result의 유효 run_id와 SCENARIO를 검사하고 모든 채택 관측을 같은 실행/시나리오 및 registry에 따른 정확한 lidar prim에 결속한다. 다른 실행/prim의 행은 근거로 사용하지 않거나 명시적으로 거절한다. result의 mission_control도 같은 실행·시나리오인지 확인하면 정지 완료 근거가 함께 결속된다.",
+      "id": "FB-002",
+      "line": 146,
+      "related_locations": [
+        "factory_ops/fleet_bootstrap.py:117",
+        "factory_ops/fleet_bootstrap.py:124",
+        "scripts/isaac/g3_scene.py:385",
+        "scripts/isaac/g2_scene.py:1085",
+        "tests/test_fleet_bootstrap.py:93",
+        "tests/test_fleet_bootstrap.py:101",
+        "tests/test_fleet_bootstrap.py:105"
+      ],
+      "title": "결과 검증이 실제 센서 관측을 해당 실행과 prim에 결속하지 않는다",
+      "suggested_targeted_test": "정상 fixture에 실제 run/scenario/prim을 포함한 후, 다른 run/scenario의 journal로 교체하거나 한 센서 prim을 바꾸거나 식별 필드를 누락시켰을 때 실패하는지 CPU 테스트로 확인한다. GPU 재실행 없이 검사 가능하다.",
+      "confidence": "high",
+      "path": "factory_ops/fleet_bootstrap.py",
+      "impact": "같은 번들을 재사용한 다른 실행의 GMO journal이나 잘못된 prim에서 온 행을 합쳐도 robot/side와 카운터가 같으면 현재 실행의 8센서 근거로 인정된다. 실행 결과/센서 근거 혼합을 차단하지 못한다.",
+      "evidence": "실제 lidar journal은 run_id/scenario_id/prim_path를 기록하지만 validate_result는 robot_id/side/status와 두 GMO 헤더의 끝값 증가만 사용한다. result의 run_id/scenario_id도 확인하지 않는다. 현재 positive 테스트 fixture는 이 실행 식별자와 prim 경로가 빠진 result/journal을 만들고도 passed=True를 기대한다.",
+      "validation": "실제 writer 필드와 validator 선택 조건·positive fixture 정적 대조; 위조 데이터 실행이나 새 테스트 실행 없음",
+      "severity": "HIGH"
+    }
+  ],
+  "reviewer": "control",
+  "scope": "카드의 SHA 고정 7개 파일과 변경 diff·관련 테스트 본문만 한정 검수. 제품 수정/전체 테스트/새 리뷰 확장 없음.",
+  "status": "bounded_review_complete",
+  "mutations": {
+    "product_files": false,
+    "gpu": false,
+    "push": false,
+    "new_background_processes": false,
+    "new_agents": false,
+    "commit": false
+  },
+  "contract_revision": 3,
+  "sha_verified_before_and_after": true,
+  "base_commit": "d0aaee2bb3e459244b1e546dbb5e22877db975b5",
+  "attempt": 1,
+  "ACK": true,
+  "confirmed": [
+    {
+      "locations": [
+        "scripts/isaac/g2_scene.py:103",
+        "scripts/isaac/g2_scene.py:134",
+        "scripts/isaac/g2_scene.py:652",
+        "scripts/isaac/g3_scene.py:41",
+        "scripts/isaac/g3_scene.py:584"
+      ],
+      "acceptance": "G2/G3 기본2대와 기존 qualification 경계 유지",
+      "detail": "expected_robot_count 기본값2, G3 기본 센서 ID carter1/carter2와 기존 worker 호출 유지. 명시 fleet4 wrapper만 count4를 전달한다.",
+      "result": "소스에서 확인"
+    },
+    {
+      "locations": [
+        "factory_ops/fleet_bootstrap.py:42",
+        "factory_ops/fleet_bootstrap.py:60",
+        "factory_ops/fleet_bootstrap.py:102",
+        "scripts/isaac/fleet4_scene.py:42",
+        "scripts/isaac/g3_scene.py:340"
+      ],
+      "acceptance": "명시4대/8센서/정지 smoke",
+      "detail": "profile4대·registry8센서, unique robot/side/prim 등록과 per-control 적용 명령0 검사. 실제 생성/관측 통과와는 구분한다.",
+      "result": "소스에서 확인"
+    },
+    {
+      "locations": [
+        "scripts/isaac/fleet4_scene.py:44",
+        "scripts/isaac/fleet4_scene.py:61",
+        "scripts/isaac/fleet4_scene.py:64",
+        "configs/factory-v4/fleet4-development.json:4",
+        "factory_ops/fleet_bootstrap.py:153"
+      ],
+      "acceptance": "fresh4대 control 및 운송/주차/충전과 분리",
+      "detail": "유한 encoder 정지 한도, 개별 timestamp 증가, 4초 관측·각30개 control·모든 최신 control 2physics dt 이내를 모두 만족해야 passed 제어 파일을 쓴다. scope는 stationary sensor bootstrap으로 제한된다.",
+      "result": "runtime gate 소스에서 확인"
+    },
+    {
+      "locations": [
+        "factory_ops/fleet_bootstrap.py:95",
+        "factory_ops/fleet_bootstrap.py:119",
+        "factory_ops/fleet_bootstrap.py:140",
+        "factory_ops/fleet_bootstrap.py:145"
+      ],
+      "acceptance": "핵심 입력 해시 및 ROS/GMO 근거",
+      "detail": "8개 bundle 파일 정확 집합/바이트 해시, registry 재구성, core6 실행 입력 해시, 4대 ROS odom/tf/raw scan 최소5건, 각8센서의 num_elements>0 및 첫/마지막 timestamp/frame 증가 조건은 존재한다.",
+      "result": "일부 충족, FB-001/002 수정 필요"
+    }
+  ],
+  "actual_limits": [
+    "현재 결과는 소스와 CPU 테스트 본문 검수다. 실제 Isaac/ROS/GPU 4대 로딩,8개RTX 생산,정지 encoder 관측을 새로 검증하지 않았다.",
+    "4개 anchor가 계획상 free이고 XY가 다름을 확인하지만, 실제 Carter 외곽 간 분리/정지안전구역 자격 검증을 대체하지 않는다.",
+    "카메라/미디어 역할은 carter1/carter2를 사용하므로 4대 각 로봇 추적 카메라를 제공한다는 주장이 아니다.",
+    "validate_result는 runtime worker의 passed와 mission 결과를 신뢰하며, 이번 소스에서는 trajectory의 정지 한도/관측 시간을 별도로 재계산하지 않는다. 이를 독립적인 정지 궤적 재검증 결과로 표시하면 안 된다.",
+    "서브디렉터리 심볼릭 링크 전체 및 바이트 외부 서명 검증 같은 신규 보안 요구로 검수 범위를 확장하지 않았다."
+  ]
+}
