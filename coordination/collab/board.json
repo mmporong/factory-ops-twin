@@ -1,6 +1,6 @@
 {
-  "revision": 1,
-  "updated_at": "2026-10-19T06:11:26.1663481Z",
+  "revision": 2,
+  "updated_at": "2026-10-19T06:29:24.2075371Z",
   "scope": {
     "excluded": "실물 로봇 실행, 새 유료 서비스/에셋, 공개 배포",
     "project_root": "C:\\Users\\LIMMM\\factory-ops-twin",
@@ -19,7 +19,7 @@
       "role": "dashboard frontend author",
       "name": "control",
       "agent_kind": "codex",
-      "status": "working; initial prompt created current Codex session; matching task ACK and terminal output verified",
+      "status": "idle; dashboard-visual-002, inventory-return-review-002 and dashboard-labels-002 received and accepted by root",
       "session": "default",
       "agent_session": "01a152aa-24b4-7a31-92e3-a2b620f4feeb",
       "terminal_id": "term_65e06d27e415810",
@@ -69,6 +69,69 @@
       "acceptance": "상태출처·stale·명령멱등성/CAS/ACK·원장/물리권한경계",
       "reviewer": "control",
       "acceptance_record": "coordination/collab/results/api-review-001-recheck.json; 4 source SHA matched"
+    },
+    {
+      "task_id": "dashboard-visual-002",
+      "attempt": 1,
+      "contract_revision": 2,
+      "owner": "control",
+      "goal": "진행 중인 공장 웹 렌더링 개선과 검증",
+      "write_paths": [
+        "dashboard/",
+        "coordination/collab/results/dashboard-visual-002.json"
+      ],
+      "inputs": {
+        "commit": "fc92a5d1bbeadd80a29c93cad12b2a0121fd35ad"
+      },
+      "status": "accepted",
+      "reviewer": "root",
+      "result_path": "coordination/collab/results/dashboard-visual-002.json",
+      "acceptance": "기존 선택/상태 기능 보존, 실제 브라우저 렌더·타입·빌드 검증",
+      "acceptance_record": "coordination/collab/results/inventory-return-002.json"
+    },
+    {
+      "task_id": "inventory-return-002",
+      "attempt": 1,
+      "contract_revision": 2,
+      "owner": "root",
+      "goal": "4대 CPU 운영의 빈 토트 반납·재사용과 논리 플릿 대수 제한 해제",
+      "write_paths": [
+        "factory_ops/dashboard_model.py",
+        "factory_ops/operations/inventory.py",
+        "factory_ops/fleet.py",
+        "tests/",
+        "README.md",
+        "docs/completion-plan.md",
+        "docs/troubleshooting.md"
+      ],
+      "inputs": {
+        "commit": "fc92a5d1bbeadd80a29c93cad12b2a0121fd35ad"
+      },
+      "status": "accepted",
+      "reviewer": "control",
+      "result_path": "coordination/collab/results/inventory-return-002.json",
+      "acceptance": "재고 보존·토트 재사용·혼합 배정·중복 적재 방지와 1/2/4대 논리 배차 회귀; 물리 검증으로 과장하지 않음",
+      "acceptance_record": "coordination/collab/results/inventory-return-002.json"
+    },
+    {
+      "task_id": "inventory-return-review-002",
+      "attempt": 1,
+      "contract_revision": 2,
+      "owner": "control",
+      "status": "accepted",
+      "ACK": true,
+      "result_path": "coordination/collab/results/inventory-return-review-002.json",
+      "acceptance_record": "6 reviewed source SHA matched; bounded static review, no major findings"
+    },
+    {
+      "task_id": "dashboard-labels-002",
+      "attempt": 1,
+      "contract_revision": 2,
+      "owner": "control",
+      "status": "accepted",
+      "reviewer": "root",
+      "result_path": "coordination/collab/results/dashboard-labels-002.json",
+      "acceptance_record": "2 added label mappings reviewed; SHA matched; typecheck PASS"
     }
   ],
   "decisions": [

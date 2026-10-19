@@ -123,6 +123,23 @@ class InventoryLedgerTest(unittest.TestCase):
             self.ledger.collect_empty("op-8", "T1", "amr-1")
         self.assertEqual(before, self.ledger.snapshot())
 
+    def test_known_tote_location_cannot_teleport_to_another_source(self) -> None:
+        ledger = InventoryLedger({("A", "kit"): 3, ("B", "kit"): 3}, ["T1"],
+                                 tote_locations={"T1": "A"})
+        before = ledger.snapshot()
+        with self.assertRaisesRegex(InventoryError, "not at the requested source"):
+            ledger.reserve("wrong-source", "R1", "B", "kit", 1, "T1")
+        self.assertEqual(before, ledger.snapshot())
+        ledger.reserve("reserve", "R1", "A", "kit", 1, "T1")
+        ledger.pickup("pickup", "R1", "amr-1")
+        ledger.deliver("deliver", "R1", "CI")
+        ledger.consume("consume", "R1")
+        ledger.collect_empty("collect", "T1", "amr-1")
+        ledger.return_empty("return", "T1", "A")
+        ledger.reserve("reserve-again", "R2", "A", "kit", 1, "T1")
+        with self.assertRaisesRegex(InventoryError, "unknown initial tote_id"):
+            InventoryLedger({}, ["T1"], tote_locations={"unknown": "A"})
+
 
 if __name__ == "__main__":
     unittest.main()

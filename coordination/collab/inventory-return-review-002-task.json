@@ -1,0 +1,44 @@
+{
+  "task_id": "inventory-return-review-002",
+  "attempt": 1,
+  "contract_revision": 2,
+  "owner": "control",
+  "goal": "빈 토트 반납·재사용 및 1/2/4대 논리 플릿 변경의 한정 검수",
+  "inputs": {
+    "sha256": {
+      "tests/test_fleet.py": "82093a4916ba6668f11410588218b97f114b329fe560897093ba738315176e77",
+      "factory_ops/fleet.py": "258ff25f31bcdb27dddba853db84069de4db16ccc0eb1dc46bc0e5fe688ee5b1",
+      "tests/test_inventory.py": "72491036f1099ff56f3c51b41bdb9496de8b4d992675f8cb3ef1fc9f866bc02a",
+      "factory_ops/operations/inventory.py": "2af1bd6f7e0914dc813b52c885e3ba1f873aae0953fc80b3d3d0bba6061a7181",
+      "tests/test_dashboard_model.py": "106ddd206692dbe3fa47d411ba94191d62a611a2c9bd9beb8a3ab4aaa2a313c4",
+      "factory_ops/dashboard_model.py": "f668265fb6e765ac8ab423ee119c3e1d7630318d7a66625f87d10c1ece67fad7"
+    },
+    "base_commit": "fc92a5d1bbeadd80a29c93cad12b2a0121fd35ad"
+  },
+  "read_paths": [
+    "factory_ops/dashboard_model.py",
+    "factory_ops/operations/inventory.py",
+    "factory_ops/fleet.py",
+    "tests/test_dashboard_model.py",
+    "tests/test_inventory.py",
+    "tests/test_fleet.py"
+  ],
+  "write_paths": [
+    "coordination/collab/results/inventory-return-review-002.json"
+  ],
+  "result_path": "coordination/collab/results/inventory-return-review-002.json",
+  "acceptance": [
+    "동시 제품/빈 토트 중복 배정과 적재 없음",
+    "회수·이동·반납 후 가용 상태와 원래 source 결속",
+    "제품 LOT와 재사용 토트 ID 분리, 재고 수량 보존",
+    "기존2대 계약을 유지하는 1/2/4대 배차, 물리 검증으로 과장 없음"
+  ],
+  "non_goals": [
+    "리팩터링",
+    "GPU 실행",
+    "대량 데이터 생성",
+    "새 세션 생성",
+    "원장 accepted 판정"
+  ],
+  "verification": "81 targeted tests PASS; changed modules pyright 0 errors 0 warnings. 검수는 해당 경계와 치명적/주요 결함만 확인, 소스 수정은 root에 반환."
+}

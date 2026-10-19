@@ -1,0 +1,135 @@
+{
+  "validation": {
+    "method": "고정 소스·diff·신규/기존 테스트 본문 정적 대조 및 시작/종료 SHA 일치 확인",
+    "root_reported": "81개 관련 테스트 PASS, 타입 0오류. 검수자가 재실행한 결과로 확대하지 않음.",
+    "reviewer_tests_run": false
+  },
+  "status": "bounded_review_complete",
+  "reviewer": "control",
+  "attempt": 1,
+  "severity_counts": {
+    "critical": 0,
+    "high": 0
+  },
+  "checks": [
+    {
+      "contract": "동시 제품/빈 토트 중복 배정과 적재 없음",
+      "result": "소스 경계 충족",
+      "evidence": [
+        "factory_ops/dashboard_model.py:96: _trips/available/task_id/payload_id로 바쁜 AMR 배차 제외",
+        "factory_ops/dashboard_model.py:103: ready 반납만 선택하고 assigned로 바꾼 뒤 _trips에 등록",
+        "factory_ops/operations/inventory.py:252: 기존 적재가 있으면 제품 토트 pickup 거절",
+        "factory_ops/operations/inventory.py:316: EMPTY/owner/robot_loads 조건으로 빈 토트 중복 적재 거절",
+        "tests/test_dashboard_model.py:32: 활성 task당 AMR 중복과 robot_loads 토트 중복을 매 tick 검사"
+      ]
+    },
+    {
+      "contract": "회수·이동·반납 후 가용 상태와 원래 source 결속",
+      "result": "CPU 어댑터 경로 충족",
+      "evidence": [
+        "factory_ops/dashboard_model.py:145: 공정 소비 후 1회 반납 task 생성",
+        "factory_ops/dashboard_model.py:153: 목적지를 해당 order.source_station으로 고정",
+        "factory_ops/dashboard_model.py:125: 회수 leg 종료 후 collect_empty, drop leg 종료 후 return_empty",
+        "factory_ops/dashboard_model.py:133: 반납 도착 후 어댑터 위치 갱신 및 trip 해제",
+        "factory_ops/operations/inventory.py:335: RETURNING/owner/load 결속 확인 후 AVAILABLE·목적지·owner/request 초기화",
+        "factory_ops/dashboard_model.py:61: 요청 source에 있는 AVAILABLE 토트만 예약",
+        "factory_ops/operations/inventory.py:205: 다른 source에 있는 토트 예약 거절",
+        "tests/test_dashboard_model.py:57: 반납 중 pause 및 실제 모델 좌표의 source 도착 후 가용 상태 검사",
+        "tests/test_inventory.py:126: 잘못된 source 거절과 반납 후 동일 토트 재예약 검사"
+      ]
+    },
+    {
+      "contract": "제품 LOT와 재사용 토트 ID 분리, 재고 수량 보존",
+      "result": "소스 경계 충족",
+      "evidence": [
+        "factory_ops/dashboard_model.py:67: InventoryLedger에 재사용 T ID를 예약",
+        "factory_ops/dashboard_model.py:70: 생산 Ledger payload는 새 LOT ID로 등록",
+        "factory_ops/dashboard_model.py:126: 반환은 요청의 tote_id로 처리하며 LOT와 분리",
+        "factory_ops/operations/inventory.py:215: 가용 재고 초과 예약 거절",
+        "factory_ops/operations/inventory.py:260: pickup에서 한 번 차감",
+        "factory_ops/operations/inventory.py:302: consume은 소비량만 갱신, 반납은 수량을 증가시키지 않음",
+        "tests/test_dashboard_model.py:16: 16토트로 20주문 혼합 실행, 보존식·완료 수·가용 복귀·replay·LOT 접두사 검사"
+      ]
+    },
+    {
+      "contract": "기존2대 계약을 유지하는 1/2/4대 배차, 물리 검증으로 과장 없음",
+      "result": "선언된 논리 fleet 범위 충족",
+      "evidence": [
+        "factory_ops/fleet.py:95: 비어 있지 않은 정상 robot/station 이름 검사",
+        "factory_ops/fleet.py:101: 시작 슬롯 중복 거절",
+        "factory_ops/fleet.py:125: 알려진 anchor 또는 명시 GoalPose 슬롯 허용",
+        "factory_ops/fleet.py:142: fleet 수와 무관하게 기존 Ledger/dispatch 경로 사용",
+        "tests/test_fleet.py:89: 1/2/4대 같은 dispatch·관측 handover 계약 및 원장 replay 검사",
+        "tests/test_fleet.py:106: 중복 슬롯/잘못된 custom slot 거절과 GoalPose custom slot 허용",
+        "factory_ops/fleet.py:396: process-local synthetic adapter이며 ROS/Isaac/physical 결과가 아니라는 범위 보존"
+      ]
+    }
+  ],
+  "file_sha256": [
+    {
+      "sha256": "82093a4916ba6668f11410588218b97f114b329fe560897093ba738315176e77",
+      "path": "tests/test_fleet.py"
+    },
+    {
+      "sha256": "258ff25f31bcdb27dddba853db84069de4db16ccc0eb1dc46bc0e5fe688ee5b1",
+      "path": "factory_ops/fleet.py"
+    },
+    {
+      "sha256": "72491036f1099ff56f3c51b41bdb9496de8b4d992675f8cb3ef1fc9f866bc02a",
+      "path": "tests/test_inventory.py"
+    },
+    {
+      "sha256": "2af1bd6f7e0914dc813b52c885e3ba1f873aae0953fc80b3d3d0bba6061a7181",
+      "path": "factory_ops/operations/inventory.py"
+    },
+    {
+      "sha256": "106ddd206692dbe3fa47d411ba94191d62a611a2c9bd9beb8a3ab4aaa2a313c4",
+      "path": "tests/test_dashboard_model.py"
+    },
+    {
+      "sha256": "f668265fb6e765ac8ab423ee119c3e1d7630318d7a66625f87d10c1ece67fad7",
+      "path": "factory_ops/dashboard_model.py"
+    }
+  ],
+  "contract_revision": 2,
+  "documented_limits": [
+    {
+      "topic": "물리 검증",
+      "detail": "CPU 보간 이동과 논리 원장/배차 검수다. 실제 4대 ROS/Nav2/Isaac 충돌 회피·풋프린트·물리 적재를 검증한 결과로 사용하면 안 된다.",
+      "severity": "INFO"
+    },
+    {
+      "topic": "복구 범위",
+      "detail": "_return_tasks/_trips/_locations는 프로세스 내 어댑터 상태다. 생산 Ledger.replay_matches()는 제품 원장을 검증하며 빈 토트 이동 상태까지 재시작 복구한다는 뜻은 아니다.",
+      "severity": "INFO"
+    },
+    {
+      "topic": "source 결속 책임",
+      "detail": "현재 DashboardModel은 반납 목적지를 원래 order source로 고정한다. InventoryLedger.return_empty 자체는 일반 목적지 인자를 받는 기존 API이며, 어댑터 밖 임의 호출에서도 원래 source만 허용한다는 보장은 아니다. 현재 카드의 어댑터 경로에서는 우회 호출을 발견하지 않았다.",
+      "severity": "INFO"
+    },
+    {
+      "topic": "POOL 호환성",
+      "detail": "InventoryLedger는 기존 사용자용 POOL 예약을 허용한다. 이번 DashboardModel은 source별 초기 토트 위치와 source 필터를 사용한다.",
+      "severity": "INFO"
+    }
+  ],
+  "task_id": "inventory-return-review-002",
+  "sha_verified_before_and_after": true,
+  "findings": [],
+  "base_commit": "fc92a5d1bbeadd80a29c93cad12b2a0121fd35ad",
+  "ACK": true,
+  "author": "root",
+  "followup": "검수 완료 후 허용된 types.ts 라벨 2개 추가는 별도 dashboard-labels-002.json으로 보고",
+  "scope": "카드의 6개 SHA 고정 소스와 해당 diff, acceptance 4개 경계만 한정 검수. 반복 전체 리뷰 아님.",
+  "ledger_accepted_status_changed": false,
+  "mutations": {
+    "push": false,
+    "factory_scene": false,
+    "new_agents": false,
+    "gpu": false,
+    "python_files": false,
+    "commit": false
+  },
+  "review_recommendation": "no_critical_or_major_defect_found_with_documented_limits"
+}

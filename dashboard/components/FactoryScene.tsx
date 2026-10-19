@@ -5,11 +5,18 @@ import {
   OrbitControls,
   OrthographicCamera,
   RoundedBox,
+  Environment,
+  Lightformer,
 } from "@react-three/drei";
 import type { Scene, Snapshot, Selection, Rect } from "../lib/types";
 import { stationNames } from "../lib/types";
 import { useEffect, useMemo } from "react";
-import { CanvasTexture, SRGBColorSpace } from "three";
+import {
+  ACESFilmicToneMapping,
+  CanvasTexture,
+  PCFSoftShadowMap,
+  SRGBColorSpace,
+} from "three";
 
 type Props = {
   scene: Scene;
@@ -17,6 +24,41 @@ type Props = {
   selection: Selection | null;
   onSelect: (s: Selection) => void;
 };
+function SoftBox({
+  size,
+  position,
+  color,
+  radius = 0.12,
+  roughness = 0.4,
+  metalness = 0.08,
+}: {
+  size: [number, number, number];
+  position: [number, number, number];
+  color: string;
+  radius?: number;
+  roughness?: number;
+  metalness?: number;
+}) {
+  return (
+    <RoundedBox
+      args={size}
+      position={position}
+      radius={Math.min(radius, ...size.map((n) => n * 0.45))}
+      smoothness={3}
+      bevelSegments={3}
+      castShadow
+      receiveShadow
+    >
+      <meshPhysicalMaterial
+        color={color}
+        roughness={roughness}
+        metalness={metalness}
+        clearcoat={0.24}
+        clearcoatRoughness={0.4}
+      />
+    </RoundedBox>
+  );
+}
 function MapLabel({
   text,
   position,
@@ -32,15 +74,20 @@ function MapLabel({
     canvas.height = 128;
     const context = canvas.getContext("2d");
     if (context) {
-      context.fillStyle = selected ? "#245fe5" : "#ffffff";
+      context.shadowColor = "#203e6426";
+      context.shadowBlur = 9;
+      context.shadowOffsetY = 4;
+      context.fillStyle = selected ? "#2866e5" : "#ffffff";
       context.beginPath();
-      context.roundRect(4, 12, 504, 104, 18);
+      context.roundRect(8, 12, 496, 104, 32);
       context.fill();
-      context.strokeStyle = selected ? "#245fe5" : "#9cb9d6";
-      context.lineWidth = 4;
+      context.shadowBlur = 0;
+      context.shadowOffsetY = 0;
+      context.strokeStyle = selected ? "#2866e5" : "#d3dfec";
+      context.lineWidth = 2;
       context.stroke();
       context.fillStyle = selected ? "#ffffff" : "#254b72";
-      context.font = '600 45px Arial, "Malgun Gothic", sans-serif';
+      context.font = '600 42px Arial, "Malgun Gothic", sans-serif';
       context.textAlign = "center";
       context.textBaseline = "middle";
       context.fillText(text, 256, 66, 470);
@@ -57,6 +104,7 @@ function MapLabel({
         transparent
         depthTest={false}
         depthWrite={false}
+        toneMapped={false}
       />
     </sprite>
   );
@@ -68,7 +116,7 @@ function Camera({ cx, cy }: { cx: number; cy: number }) {
       <OrthographicCamera
         makeDefault
         position={[cx + 27, 32, -cy + 32]}
-        zoom={Math.min(size.width / 40, size.height / 32) * 0.9}
+        zoom={Math.min(size.width / 42, (size.height - 105) / 24) * 1.08}
         near={0.1}
         far={200}
       />
@@ -86,7 +134,7 @@ function Camera({ cx, cy }: { cx: number; cy: number }) {
 function FloorRect({
   rect,
   color,
-  y = 0.015,
+  y = 0,
 }: {
   rect: Rect;
   color: string;
@@ -100,7 +148,7 @@ function FloorRect({
       receiveShadow
     >
       <planeGeometry args={[c - a, d - b]} />
-      <meshStandardMaterial color={color} />
+      <meshStandardMaterial color={color} roughness={0.82} />
     </mesh>
   );
 }
@@ -119,7 +167,8 @@ function Equipment({
     h = item.height_m;
   const rack = item.id.startsWith("RACK"),
     machine = item.id.startsWith("PROCESS"),
-    fg = item.id.startsWith("FG");
+    fg = item.id.startsWith("FG"),
+    bench = item.id.startsWith("BENCH") || item.id.startsWith("KIT");
   return (
     <group
       position={[(a + c) / 2, 0, -(b + d) / 2]}
@@ -130,63 +179,141 @@ function Equipment({
     >
       {rack ? (
         <>
-          <mesh position={[0, h, 0]} castShadow>
-            <boxGeometry args={[w, 0.09, z]} />
-            <meshStandardMaterial color="#527799" />
-          </mesh>
+          <SoftBox
+            size={[w, 0.12, z]}
+            position={[0, h - 0.06, 0]}
+            color={selected ? "#5a91ec" : "#6b8fb2"}
+            radius={0.055}
+          />
           {[-w / 2 + 0.06, w / 2 - 0.06].flatMap((x) =>
             [-z / 2 + 0.06, z / 2 - 0.06].map((v) => (
-              <mesh key={`${x}-${v}`} position={[x, h / 2, v]} castShadow>
-                <boxGeometry args={[0.08, h, 0.08]} />
-                <meshStandardMaterial
-                  color={selected ? "#1764f5" : "#5a7794"}
-                />
-              </mesh>
+              <SoftBox
+                key={`${x}-${v}`}
+                size={[0.1, h, 0.1]}
+                position={[x, h / 2, v]}
+                color={selected ? "#4d82d7" : "#7592ad"}
+                radius={0.035}
+              />
             )),
           )}
           {[0.2, 0.85, 1.5].map((y) => (
-            <mesh key={y} position={[0, y, 0]} castShadow>
-              <boxGeometry args={[w, 0.09, z]} />
-              <meshStandardMaterial color="#b7c8d8" />
-            </mesh>
+            <SoftBox
+              key={y}
+              size={[w, 0.11, z]}
+              position={[0, y, 0]}
+              color="#e6eef5"
+              radius={0.045}
+            />
           ))}
+        </>
+      ) : bench ? (
+        <>
+          <SoftBox
+            size={[w, 0.2, z]}
+            position={[0, h - 0.1, 0]}
+            radius={0.09}
+            color={selected ? "#91b7ee" : "#e2ecf4"}
+          />
+          <SoftBox
+            size={[w * 0.93, 0.07, z * 0.91]}
+            position={[0, h - 0.22, 0]}
+            radius={0.03}
+            color="#6e99be"
+          />
+          {[-w / 2 + 0.16, w / 2 - 0.16].flatMap((x) =>
+            [-z / 2 + 0.12, z / 2 - 0.12].map((v) => (
+              <SoftBox
+                key={`${x}-${v}`}
+                size={[0.15, h - 0.2, 0.15]}
+                position={[x, (h - 0.2) / 2, v]}
+                color="#b9cddd"
+                radius={0.045}
+              />
+            )),
+          )}
+          {h > 1.3 && (
+            <SoftBox
+              size={[w * 0.42, h * 0.38, 0.12]}
+              position={[w * 0.18, h * 0.65, -z * 0.36]}
+              color="#7da2c2"
+              radius={0.05}
+            />
+          )}
         </>
       ) : (
         <>
-          <RoundedBox
-            args={[w, h, z]}
-            radius={Math.min(0.09, w / 6, z / 6)}
-            position={[0, h / 2, 0]}
-            castShadow
-            receiveShadow
-          >
-            <meshStandardMaterial
-              color={
-                selected
-                  ? "#91b8fb"
-                  : fg
-                    ? "#c7d9e7"
-                    : machine
-                      ? "#e0e8ee"
-                      : "#b9cad8"
-              }
-              roughness={0.65}
-            />
-          </RoundedBox>
-          <mesh position={[0, h + 0.025, 0]}>
-            <boxGeometry args={[w * 0.98, 0.05, z * 0.98]} />
-            <meshStandardMaterial color={machine ? "#2e6bc1" : "#8ca5bb"} />
-          </mesh>
+          <SoftBox
+            size={[w, h - 0.2, z]}
+            position={[0, h / 2 - 0.02, 0]}
+            color={
+              selected
+                ? "#a4c6f4"
+                : fg
+                  ? "#d8e7f2"
+                  : machine
+                    ? "#e5eef7"
+                    : "#d7e4ef"
+            }
+            radius={machine ? 0.24 : 0.16}
+            roughness={0.36}
+          />
+          <SoftBox
+            size={[w * 0.91, 0.15, z * 0.89]}
+            position={[0, 0.075, 0]}
+            color="#92abc0"
+            radius={0.065}
+            metalness={0.25}
+          />
+          <SoftBox
+            size={[w * 0.98, 0.2, z * 0.98]}
+            position={[0, h - 0.1, 0]}
+            color={machine ? "#4a85d1" : "#a4c0d7"}
+            radius={0.065}
+          />
+          {fg &&
+            [-0.28, 0, 0.28].map((x) => (
+              <SoftBox
+                key={x}
+                size={[w * 0.18, 0.05, z * 0.83]}
+                position={[w * x, h - 0.003, 0]}
+                color="#edf4fa"
+                radius={0.024}
+              />
+            ))}
           {machine && (
             <>
-              <mesh position={[0, h * 0.58, z / 2 + 0.015]}>
-                <boxGeometry args={[w * 0.74, h * 0.52, 0.04]} />
-                <meshStandardMaterial color="#1d3c57" roughness={0.25} />
-              </mesh>
-              <mesh position={[w * 0.35, h * 0.87, z / 2 + 0.05]}>
-                <boxGeometry args={[0.13, 0.13, 0.04]} />
-                <meshStandardMaterial color="#39a88c" emissive="#24674e" />
-              </mesh>
+              <SoftBox
+                size={[w * 0.78, h * 0.56, 0.1]}
+                position={[0, h * 0.55, z / 2 - 0.025]}
+                color="#9bb8cf"
+                radius={0.045}
+              />
+              <SoftBox
+                size={[w * 0.7, h * 0.48, 0.105]}
+                position={[0, h * 0.55, z / 2 - 0.015]}
+                color="#365d80"
+                radius={0.046}
+                roughness={0.2}
+                metalness={0.2}
+              />
+              <SoftBox
+                size={[w * 0.22, 0.055, 0.11]}
+                position={[w * 0.13, h * 0.59, z / 2 + 0.045]}
+                color="#aacfe9"
+                radius={0.024}
+              />
+              <SoftBox
+                size={[w * 0.76, 0.08, 0.06]}
+                position={[0, h * 0.2, z / 2 + 0.01]}
+                color="#c5d7e6"
+                radius={0.025}
+              />
+              <SoftBox
+                size={[0.15, 0.15, 0.075]}
+                position={[w * 0.35, h * 0.86, z / 2 + 0.005]}
+                color="#6fb3df"
+                radius={0.035}
+              />
             </>
           )}
         </>
@@ -211,8 +338,12 @@ export default function FactoryScene({
       shadows
       dpr={[1, 1.6]}
       frameloop="demand"
+      gl={{ antialias: true, alpha: false, powerPreference: "default" }}
       onCreated={({ gl }) => {
-        gl.setClearColor("#eaf2fb");
+        gl.setClearColor("#edf3fa");
+        gl.toneMapping = ACESFilmicToneMapping;
+        gl.toneMappingExposure = 1.05;
+        gl.shadowMap.type = PCFSoftShadowMap;
       }}
       fallback={
         <div className="scene-fallback">
@@ -221,10 +352,38 @@ export default function FactoryScene({
       }
     >
       <Camera cx={cx} cy={cy} />
-      <ambientLight intensity={1.6} />
+      <ambientLight intensity={0.35} />
+      <hemisphereLight args={["#f6faff", "#a7bfd6", 0.65]} />
+      <Environment resolution={64} frames={1} environmentIntensity={0.25}>
+        <Lightformer
+          form="rect"
+          intensity={3}
+          color="#ffffff"
+          position={[0, 14, 0]}
+          rotation={[Math.PI / 2, 0, 0]}
+          scale={[24, 16, 1]}
+        />
+        <Lightformer
+          form="rect"
+          intensity={2}
+          color="#d9eaff"
+          position={[-16, 8, 5]}
+          rotation={[0, Math.PI / 2, 0]}
+          scale={[12, 14, 1]}
+        />
+        <Lightformer
+          form="rect"
+          intensity={1.5}
+          color="#ffffff"
+          position={[12, 6, -18]}
+          scale={[16, 10, 1]}
+        />
+      </Environment>
       <directionalLight
-        position={[5, 25, 5]}
-        intensity={2.3}
+        position={[cx - 10, 28, -cy + 12]}
+        target-position={[cx, 0, -cy]}
+        intensity={1.8}
+        color="#fffaf4"
         castShadow
         shadow-mapSize={[2048, 2048]}
         shadow-camera-left={-40}
@@ -232,32 +391,47 @@ export default function FactoryScene({
         shadow-camera-top={40}
         shadow-camera-bottom={-40}
         shadow-bias={-0.0005}
+        shadow-normalBias={0.035}
+        shadow-radius={4}
+        onUpdate={(light) => light.target.updateMatrixWorld()}
       />
-      <mesh position={[cx, -0.22, -cy]} receiveShadow>
-        <boxGeometry args={[c - a + 0.5, 0.4, d - b + 0.5]} />
-        <meshStandardMaterial color="#c1d2e4" />
+      <directionalLight
+        position={[cx + 18, 16, -cy - 18]}
+        intensity={0.65}
+        color="#d8eaff"
+      />
+      <mesh
+        rotation={[-Math.PI / 2, 0, 0]}
+        position={[cx, -0.56, -cy]}
+        receiveShadow
+      >
+        <planeGeometry args={[200, 200]} />
+        <shadowMaterial color="#7195bb" opacity={0.16} transparent />
       </mesh>
-      <FloorRect rect={scene.bounds_xy} color="#f6f8fb" />
-      {scene.visual_zones.map((z, i) => (
-        <FloorRect
-          key={z.id}
-          rect={z.rect}
-          color={["#e6edf4", "#e2eaf2", "#e7edf3"][i % 3]}
-        />
+      <SoftBox
+        size={[c - a + 0.5, 0.5, d - b + 0.5]}
+        position={[cx, -0.28, -cy]}
+        radius={0.22}
+        color="#d2e1ef"
+        roughness={0.65}
+      />
+      <FloorRect rect={scene.bounds_xy} color="#f5f8fc" y={-0.01} />
+      {scene.visual_zones.map((z) => (
+        <FloorRect key={z.id} rect={z.rect} color="#e8eef5" />
       ))}
       {scene.amr_allowed_regions.map((z) => (
-        <FloorRect key={z.id} rect={z.rect} color="#d3e4f6" y={0.025} />
+        <FloorRect key={z.id} rect={z.rect} color="#bcd5ef" y={0.012} />
       ))}
       {Array.from({ length: Math.floor(c - a) + 1 }, (_, i) => (
         <Line
           key={`x${i}`}
           points={[
-            [a + i, 0.035, -b],
-            [a + i, 0.035, -d],
+            [a + i, 0.02, -b],
+            [a + i, 0.02, -d],
           ]}
-          color="#bccddd"
+          color="#b7c9dc"
           transparent
-          opacity={0.3}
+          opacity={0.18}
           lineWidth={0.5}
         />
       ))}
@@ -265,12 +439,12 @@ export default function FactoryScene({
         <Line
           key={`y${i}`}
           points={[
-            [a, 0.035, -b - i],
-            [c, 0.035, -b - i],
+            [a, 0.02, -b - i],
+            [c, 0.02, -b - i],
           ]}
-          color="#bccddd"
+          color="#b7c9dc"
           transparent
-          opacity={0.3}
+          opacity={0.18}
           lineWidth={0.5}
         />
       ))}
@@ -318,41 +492,71 @@ export default function FactoryScene({
             >
               <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, 0]}>
                 <ringGeometry
-                  args={[0.86, selection?.id === r.id ? 1.01 : 0.9, 40]}
+                  args={[0.88, selection?.id === r.id ? 1.02 : 0.92, 64]}
                 />
                 <meshBasicMaterial
                   color={selection?.id === r.id ? "#2166f3" : "#8babca"}
                 />
               </mesh>
-              <RoundedBox
-                args={[1.15, 0.42, 0.85]}
-                radius={0.12}
-                position={[0, 0.3, 0]}
-                castShadow
-              >
-                <meshStandardMaterial
-                  color={selection?.id === r.id ? "#1a5ee8" : "#397ec5"}
-                  metalness={0.12}
-                  roughness={0.4}
-                />
-              </RoundedBox>
-              <mesh position={[0, 0.58, 0]} castShadow>
-                <boxGeometry args={[0.8, 0.12, 0.65]} />
-                <meshStandardMaterial color="#e9f1f7" />
-              </mesh>
-              <mesh position={[0.58, 0.32, 0]}>
-                <boxGeometry args={[0.03, 0.09, 0.5]} />
-                <meshStandardMaterial color="#78e5e0" emissive="#287f91" />
-              </mesh>
+              <SoftBox
+                size={[1.08, 0.17, 0.78]}
+                position={[0, 0.12, 0]}
+                color="#2c4664"
+                radius={0.075}
+                roughness={0.6}
+              />
+              <SoftBox
+                size={[1.15, 0.42, 0.85]}
+                position={[0, 0.33, 0]}
+                color={selection?.id === r.id ? "#2c6ce8" : "#4c8cdb"}
+                radius={0.18}
+                roughness={0.28}
+                metalness={0.12}
+              />
+              <SoftBox
+                size={[0.92, 0.14, 0.71]}
+                position={[0, 0.57, 0]}
+                color="#f1f7fc"
+                radius={0.06}
+                roughness={0.3}
+              />
+              <SoftBox
+                size={[0.06, 0.085, 0.48]}
+                position={[0.535, 0.33, 0]}
+                color="#a9e5ef"
+                radius={0.028}
+                roughness={0.24}
+              />
+              {[-0.44, 0.44].flatMap((x) =>
+                [-0.36, 0.36].map((z) => (
+                  <mesh
+                    key={`${x}-${z}`}
+                    position={[x, 0.15, z]}
+                    rotation={[Math.PI / 2, 0, 0]}
+                    castShadow
+                  >
+                    <cylinderGeometry args={[0.13, 0.13, 0.1, 24]} />
+                    <meshStandardMaterial color="#354b64" roughness={0.75} />
+                  </mesh>
+                )),
+              )}
               <mesh position={[-0.35, 0.75, 0]}>
-                <cylinderGeometry args={[0.12, 0.12, 0.2, 16]} />
-                <meshStandardMaterial color="#23425a" />
+                <cylinderGeometry args={[0.12, 0.14, 0.18, 32]} />
+                <meshPhysicalMaterial
+                  color="#3b5878"
+                  roughness={0.25}
+                  metalness={0.2}
+                  clearcoat={0.3}
+                />
               </mesh>
               {r.payload_id && (
-                <mesh position={[0.08, 0.9, 0]} castShadow>
-                  <boxGeometry args={[0.6, 0.5, 0.5]} />
-                  <meshStandardMaterial color="#76c5ce" />
-                </mesh>
+                <SoftBox
+                  size={[0.6, 0.5, 0.5]}
+                  position={[0.08, 0.9, 0]}
+                  color="#86c5d2"
+                  radius={0.085}
+                  roughness={0.36}
+                />
               )}
               <MapLabel
                 position={[0, 1.5, 0]}
@@ -396,11 +600,17 @@ export default function FactoryScene({
               onSelect({ kind: "tote", id });
             }}
           >
-            <RoundedBox args={[0.65, 0.6, 0.5]} radius={0.04} castShadow>
-              <meshStandardMaterial
-                color={selection?.id === id ? "#2477f5" : "#6cb6c3"}
-              />
-            </RoundedBox>
+            <SoftBox
+              size={[0.65, 0.6, 0.5]}
+              position={[0, 0, 0]}
+              radius={0.085}
+              color={
+                selection?.kind === "tote" && selection.id === id
+                  ? "#5e9ee9"
+                  : "#8bc3d0"
+              }
+              roughness={0.4}
+            />
           </group>
         );
       })}

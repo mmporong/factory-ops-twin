@@ -10,7 +10,7 @@ import unittest
 from uuid import uuid4
 
 from factory_ops.fleet import FleetMission, FleetOrder
-from factory_ops.navigation import ABORTED, SUCCEEDED, LocalizationPose, NavigationError, NavigationIntent, NavigationResult
+from factory_ops.navigation import ABORTED, SUCCEEDED, GoalPose, LocalizationPose, NavigationError, NavigationIntent, NavigationResult
 from factory_ops.operations import LedgerConfig, OrderState, Transition
 
 
@@ -85,6 +85,35 @@ class FleetMissionTest(unittest.TestCase):
             mission.submit_result("intruder", self.result(intents[0], 1.0), error_code=0)
         self.assertEqual(before, mission.ledger.snapshot())
         self.assertEqual(intents[0], mission.active_intents[intents[0].robot_id])
+
+    def test_one_two_and_four_robots_use_same_dispatch_and_observed_handover_contract(self) -> None:
+        for count in (1, 2, 4):
+            with self.subTest(count=count):
+                starts = dict(zip((f"carter{i}" for i in range(1, count + 1)), ("S1", "S2", "S3", "OUT")))
+                mission = FleetMission(f"fleet-{count}",
+                    [self.order(i, source="S1") for i in range(1, count + 1)],
+                    robot_stations=starts, ledger_config=LedgerConfig(input_capacity=count))
+                intents = mission.dispatch(0, self.costs)
+                self.assertEqual(count, len(intents))
+                self.assertEqual(count, len({i.goal_id for i in intents}))
+                for intent in intents:
+                    self.accept(mission, intent, 1)
+                for intent in list(mission.active_intents.values()):
+                    self.assertEqual(Transition.DROP, intent.transition)
+                    self.accept(mission, intent, 2)
+                self.assertFalse(mission.active_intents)
+                self.assertTrue(mission.ledger.replay_matches())
+
+    def test_start_slots_must_be_distinct_and_custom_slots_need_a_valid_goal(self) -> None:
+        for starts in ({}, {"carter1": "P1", "carter2": "P1"}, {" ": "P1"}, {"carter1": "P3"}):
+            with self.subTest(starts=starts), self.assertRaises(NavigationError):
+                FleetMission("invalid-starts", [self.order(1)], robot_stations=starts)
+        base = self.mission()
+        goals = {**base.station_goals, "P3": GoalPose("map", 18, 1.5, 0)}
+        mission = FleetMission("custom-start", [self.order(1)], robot_stations={"carter3": "P3"}, station_goals=goals)
+        self.assertEqual("P3", mission.ledger.robots["carter3"].location)
+        # Declaring a coordinate is an adapter contract, not footprint/traffic qualification.
+        self.assertEqual(1, len(mission.dispatch(0, self.costs)))
 
     def test_future_order_is_not_exposed_but_remains_expected_and_censored(self) -> None:
         mission = self.mission(

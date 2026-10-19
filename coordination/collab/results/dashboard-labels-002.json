@@ -1,0 +1,50 @@
+{
+  "new_agents": false,
+  "commit": false,
+  "labels": {
+    "empty_return": "빈 토트 반납",
+    "empty": "빈 토트"
+  },
+  "source_sha256": {
+    "after": "13c3fc45b2340c009391da6c7461bfc8eadef238ef59e37625e1c2f163b8536c",
+    "before": "a086ceb01ad2b40d9c77a70a06dd209fb7ca51ea31a6d685c0d884844e96095a"
+  },
+  "status": "ready_for_root_review",
+  "gpu": false,
+  "python_modified": false,
+  "diff_summary": "statusNames에 2줄 추가만 수행. 다른 타입/컴포넌트/API 변경 없음.",
+  "task_id": "dashboard-labels-002",
+  "push": false,
+  "attempt": 1,
+  "verification": [
+    {
+      "command": "npm run typecheck",
+      "result": "PASS",
+      "exit_code": 0
+    },
+    {
+      "command": "git diff --check -- dashboard/lib/types.ts",
+      "result": "PASS",
+      "exit_code": 0
+    },
+    {
+      "command": "git diff -- dashboard/lib/types.ts",
+      "result": "요청한 statusNames 라벨 2줄만 추가"
+    },
+    {
+      "command": "Get-FileHash dashboard/components/FactoryScene.tsx -Algorithm SHA256",
+      "sha256": "f068b5a4ce7d7554f4bb0ae5f5b20586763eea225f27d40364b3ca02b7ae7bbc",
+      "result": "기존 SHA 유지"
+    }
+  ],
+  "changed_paths": [
+    "dashboard/lib/types.ts",
+    "coordination/collab/results/dashboard-labels-002.json"
+  ],
+  "factory_scene_modified": false,
+  "accepted_by_author": false,
+  "authorization": "inventory-return-review-002 검수 완료 후 types.ts 라벨 2개만 추가",
+  "limits": [
+    "문자열 매핑 2개 추가에 대한 타입/diff 검증이다. 모든 토트 UI 필드의 표시를 바꾸거나 실브라우저 검증을 확대한 작업은 아니다."
+  ]
+}

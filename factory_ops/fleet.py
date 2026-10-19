@@ -76,7 +76,7 @@ class FleetOrder:
 
 
 class FleetMission:
-    """Coordinate released orders across exactly two AMRs in logical time."""
+    """Coordinate a declared non-empty AMR fleet in logical time."""
 
     def __init__(
         self,
@@ -92,10 +92,14 @@ class FleetMission:
         eta_dwell: float = 0.0,
         horizon: float | None = None,
     ) -> None:
-        if len(robot_stations) != 2 or any(not key or not value for key, value in robot_stations.items()):
-            raise NavigationError("G3 fleet requires exactly two robots with starting stations")
-        if any(station not in ROBOT_ANCHORS for station in robot_stations.values()):
-            raise NavigationError("robot starting station must be a known station or parking pocket")
+        if not robot_stations or any(
+            not isinstance(key, str) or not key.strip() or key != key.strip()
+            or not isinstance(value, str) or not value.strip() or value != value.strip()
+            for key, value in robot_stations.items()
+        ):
+            raise NavigationError("fleet requires named robots with starting stations")
+        if len(set(robot_stations.values())) != len(robot_stations):
+            raise NavigationError("robot starting stations must be distinct")
         if policy not in ("fifo", "eta"):
             raise NavigationError("policy must be fifo or eta")
         timeout = _finite(goal_timeout_s, "goal_timeout_s")
@@ -118,10 +122,13 @@ class FleetMission:
             for station, xy in EXPECTED_STATIONS.items()
         }
         goals = dict(default_goals if station_goals is None else station_goals)
+        anchors = ROBOT_ANCHORS | goals.keys()
+        if any(station not in anchors for station in robot_stations.values()):
+            raise NavigationError("robot starting station must be a known station or parking pocket")
         required_stations = {item.source_station for item in declared} | {"CI", "CO", "OUT"}
         if not required_stations.issubset(goals):
             raise NavigationError(f"station_goals must include {sorted(required_stations)}")
-        if any(not isinstance(goals[name], GoalPose) for name in required_stations):
+        if any(not isinstance(goal, GoalPose) for goal in goals.values()):
             raise NavigationError("station goals must be GoalPose values")
 
         self.run_id = run_id

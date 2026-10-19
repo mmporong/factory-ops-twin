@@ -65,6 +65,8 @@ class InventoryLedger:
         self,
         initial_stock: Mapping[tuple[str, str], int],
         tote_ids: Iterable[str],
+        *,
+        tote_locations: Mapping[str, str] | None = None,
     ) -> None:
         stock: dict[tuple[str, str], int] = {}
         initial_by_sku: dict[str, int] = {}
@@ -86,6 +88,11 @@ class InventoryLedger:
             if tote_id in totes:
                 raise InventoryError(f"duplicate tote_id: {tote_id}")
             totes[tote_id] = _Tote(tote_id)
+
+        for tote_id, location in (tote_locations or {}).items():
+            if tote_id not in totes:
+                raise InventoryError(f"unknown initial tote_id: {tote_id}")
+            totes[tote_id].location = self._identifier(location, "tote location")
 
         self._stock = stock
         self._initial_by_sku = initial_by_sku
@@ -195,6 +202,8 @@ class InventoryLedger:
             tote = self._require_tote(tote_key)
             if tote.state is not ToteState.AVAILABLE or tote.owner is not None or tote.request_id is not None:
                 raise InventoryError(f"tote is not available: {tote_key}")
+            if tote.location not in ("POOL", source_id):
+                raise InventoryError(f"tote is not at the requested source: {tote_key}")
             key = (source_id, sku_id)
             on_hand = self._stock.get(key, 0)
             reserved = sum(

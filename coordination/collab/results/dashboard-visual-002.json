@@ -1,0 +1,106 @@
+{
+  "side_effects": {
+    "gpu": false,
+    "new_browser": false,
+    "new_agents": false,
+    "commit": false,
+    "new_server": false,
+    "product_files_outside_dashboard_modified": false,
+    "push": false
+  },
+  "open_items": [
+    "최종 미감·통합 승인은 총괄/root 담당.",
+    "일부 AMR가 API에서 같은 idle 좌표를 수신하면 겹쳐 보인다. 표시를 위해 pose를 분산하거나 가짜 상태를 생성하지 않음. root 운영모델 작업 범위.",
+    "저사양 장치의 FPS/메모리는 실측하지 않음. cubemap64/frames1 및 DPR상한1.6으로 제한.",
+    "이번 패스는 렌더링 변경으로 주문/pause/resume를 재실행하지 않았으며 API·Python·GPU는 수정/기동하지 않음. WebGL 실패 주입 및 OS reduced-motion 에뮬레이션도 재실행하지 않음."
+  ],
+  "changed_paths": [
+    "dashboard/components/FactoryScene.tsx",
+    "dashboard/evidence/visual-002-desktop.jpg",
+    "dashboard/evidence/visual-002-tablet.jpg",
+    "dashboard/evidence/visual-002-mobile.jpg",
+    "coordination/collab/results/dashboard-visual-002.json"
+  ],
+  "scope_note": "사용자의 3D 렌더링 개선 요청을 수행. root의 Python 운영/플릿 변경과 분리. 새 기능이나 제어 명령 추가 없음.",
+  "scope_conflict": false,
+  "active_user_scope": [
+    "렌더링 좀 더 고급스럽게 해봐, 약간 둥글둥글하게 하고",
+    "$front"
+  ],
+  "source_sha256": {
+    "path": "dashboard/components/FactoryScene.tsx",
+    "sha256": "f068b5a4ce7d7554f4bb0ae5f5b20586763eea225f27d40364b3ca02b7ae7bbc"
+  },
+  "status": "ready_for_root_visual_review",
+  "verification": [
+    {
+      "command": "npm run typecheck",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "npm run build",
+      "exit_code": 0,
+      "result": "PASS; page + 3 proxy routes"
+    },
+    {
+      "command": "git diff --check -- dashboard/components/FactoryScene.tsx",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "result": "실제 3D 장면·둥근 형상·재질·그림자 렌더링 확인. 로딩 표시만으로 성공 판정하지 않음.",
+      "command": "CUA existing Chrome tab http://127.0.0.1:3007/"
+    },
+    {
+      "result": "실제 AMR mesh 클릭 후 AMR02 상세와 목록 선택이 동기화됨.",
+      "command": "CUA 3D raycast click"
+    },
+    {
+      "result": "heading AMR04 및 선택 상세 반영 확인.",
+      "command": "CUA AMR04 목록 Enter"
+    },
+    {
+      "result": "3개 폭에서 장면 표시 및 가로 넘침 없음. viewport 임시 override는 원래 크기로 복원.",
+      "command": "CUA desktop1920 / tablet1024 / mobile390"
+    },
+    {
+      "result": "개선 후 reload 및 선택·크기 변경 시점에 errors=[] warnings=[].",
+      "command": "CUA browser console warn/error"
+    }
+  ],
+  "attempt": 1,
+  "accepted_by_author": false,
+  "evidence": {
+    "desktop": "dashboard/evidence/visual-002-desktop.jpg",
+    "mobile": "dashboard/evidence/visual-002-mobile.jpg",
+    "tablet": "dashboard/evidence/visual-002-tablet.jpg"
+  },
+  "changes": [
+    "설비/랙/작업대/AMR/토트에 치수에 맞춰 제한한 둥근 모서리 적용",
+    "새틴·클리어코트 재질, 코드로 만든 스튜디오 반사광, 반구/보조 조명과 부드러운 그림자",
+    "작업대 다리·AMR 하부/바퀴·설비 상판/전면 디테일을 추가해 형상 구분 개선",
+    "바닥/구역/통로의 겹친 면 높이를 분리하고 격자 대비 절제",
+    "선택 라벨의 둥근 외형과 선명한 글자, 화면 폭에 맞춘 초기 조감도 확대"
+  ],
+  "task_id": "dashboard-visual-002",
+  "preserved": [
+    "API 좌표와 map x,y → Three x,0,-y 변환",
+    "수신 pose/SOC/원장/명령 처리 및 capability 판정",
+    "Html 중첩 DOM 없음; 라벨은 기존 CanvasTexture sprite 방식",
+    "reduced-motion 대응: 자동 회전·자동 애니메이션 없음, demand 렌더링/Orbit damping 비활성 유지",
+    "새 runtime 패키지·유료 자산·외부 HDR/폰트 다운로드 없음"
+  ],
+  "processes": [
+    {
+      "ownership": "기존 공유 Next 서버 재사용, 새 서버 생성 없음",
+      "stop_command": "Stop-Process -Id 17272,65976 -ErrorAction SilentlyContinue",
+      "upstream": "http://127.0.0.1:8765",
+      "url": "http://127.0.0.1:3007",
+      "start_command": "cd $HOME/factory-ops-twin/dashboard; npm run dev -- --port 3007",
+      "cli_pid": 17272,
+      "retained_reason": "총괄/root CUA 검수용",
+      "pid": 65976
+    }
+  ]
+}

@@ -1,0 +1,55 @@
+{
+  "task_id": "inventory-return-002",
+  "attempt": 1,
+  "contract_revision": 2,
+  "status": "accepted",
+  "author": "root",
+  "reviewer": "control",
+  "source_review": "coordination/collab/results/inventory-return-review-002.json",
+  "reviewed_sha_matched": true,
+  "validation": {
+    "command": ".venv/Scripts/python.exe -B -m unittest tests.test_dashboard_model tests.test_dashboard tests.test_inventory tests.test_fleet tests.test_fleet_execution tests.test_fleet_routing tests.test_route_reservation tests.test_operations tests.test_g3_mission",
+    "browser": "AMR detail empty_return/T001/source/route visible; pause applied revision1 at sim131.5, resume applied revision2",
+    "python_typecheck": "0 errors, 0 warnings",
+    "simulation_contract": "16 totes, 20 orders, no duplicate task/cargo, quantity conservation, return arrival, pause, product ledger replay",
+    "targeted_tests": 135,
+    "test_result": "PASS",
+    "browser_console_new_errors": 0
+  },
+  "visual_acceptance": {
+    "source_sha_matched": true,
+    "reviewer": "root",
+    "readme_image": "dashboard/evidence/visual-002-desktop.jpg",
+    "labels_source_sha_matched": true,
+    "source": "coordination/collab/results/dashboard-visual-002.json",
+    "method": "diff and saved desktop/mobile screenshot inspection; fresh operating dashboard screenshot"
+  },
+  "observed_preview": {
+    "stock_units": 56,
+    "sim_time_s": 172.2039999999979,
+    "robots": 4,
+    "mode": "local_model",
+    "completed_orders": 3,
+    "revision": 2,
+    "paused": false
+  },
+  "retained_processes": [
+    {
+      "LocalPort": 8765,
+      "OwningProcess": 52156
+    },
+    {
+      "LocalPort": 3007,
+      "OwningProcess": 65976
+    }
+  ],
+  "retained_reason": "사용자가 동작 중인 로컬 대시보드를 확인할 수 있도록 API와 Next 서버를 함께 유지",
+  "stop_command": "Stop-Process -Id 52156,65976,17272 -ErrorAction SilentlyContinue",
+  "limits": [
+    "Isaac physical fleet remains two; actual four-robot spawns/sensors/loading not qualified",
+    "CPU interpolation has no traffic/physics/energy/charging",
+    "Return trips are process-local and not restart recovery evidence",
+    "No GPU restart or new synthetic dataset",
+    "Full project goal remains incomplete"
+  ]
+}
