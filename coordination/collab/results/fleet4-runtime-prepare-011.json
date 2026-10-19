@@ -1,0 +1,96 @@
+{
+  "task": "fleet4-runtime-prepare-011",
+  "attempt": 1,
+  "contract_revision": 10,
+  "ack": true,
+  "status": "구현·관련 검증 완료",
+  "completed_at_utc": "2026-10-19T10:28:51.993031+00:00",
+  "accepted": true,
+  "acceptance_owner": "root",
+  "changed_paths": [
+    "scripts/brev/fleet4_prepare.py",
+    "tests/test_fleet4_prepare.py"
+  ],
+  "source_sha256": {
+    "scripts/brev/fleet4_prepare.py": "2f5914a533ebd75fbd404b5dc0b268d16ebe4650457dd64fb1c3bee8d3169aa0",
+    "tests/test_fleet4_prepare.py": "37a6d8fb11f1d6026e65f492c4bba0443814d282ccee9d22e5f336cebd780942"
+  },
+  "cli": "python3 scripts/brev/fleet4_prepare.py --stage <absolute existing stage> --source-root <absolute readonly source snapshot> --run-id <32hex> --source-commit <40hex>",
+  "implementation": [
+    "최상위는 표준 라이브러리만 import한다. main과 prepare의 첫 단계에서 프로젝트 requires-python 범위에 맞춰 Python3.12 minor를 요구한다.",
+    "stage/source-root는 절대·기존 일반 디렉터리여야 하며 symlink/junction 경로와 기존 inputs/results를 거절한다. stage 출력이 source-root 내부에 생기는 경우도 거절한다.",
+    "source-root에서 프로젝트 모듈을 로드하고 실제 module.__file__ 경로를 대조한다. bytecode 생성도 막아 읽기 전용 스냅샷을 보존한다.",
+    "SOURCE_PINS + 준비 도구/호출기/원격 sh의 필수 3개 경로를 핀으로 사용한다. 추가로 prepare_bundle이 소비하는 configs/factory-fleet4의 설정8개를 archive에 결속한다. 메타데이터의 기존 source_files 확장만 사용하며 API/SDK 필드는 바꾸지 않는다.",
+    "기존 verify_source_archive를 실제 source.tar/raw commit/source-root에 적용한다. source-root가 stage/source와 다른 경우 추출본도 같은 pins와 archive로 재확인한다. proof 통과 전에 inputs/results를 만들지 않는다.",
+    "기존 prepare_bundle로 새 inputs를 만들고 provenance source.tar/source-commit.raw/fleet-source.json만 새로 생성한다. run/scenario/source/bundle SHA/source_files/archive proof/preparation_python을 기록한다.",
+    "transport marker는 만들지 않는다. stdout에는 passed,bundle_sha256,python_version,run/source identity와 source_proof 요약을 반환하며 준비 범위를 명시한다.",
+    "기존 원본과 source-root는 수정하지 않는다. 준비 중 실패해서 생긴 부분 출력도 지우거나 재사용하지 않아 root가 실패 원본을 보존할 수 있다."
+  ],
+  "validation": [
+    {
+      "command": ".venv/Scripts/python.exe -B -m unittest tests.test_fleet4_prepare",
+      "result": "9 tests PASS; 최종 skip 없음",
+      "exit_code": 0,
+      "python": "3.12.13",
+      "scope": [
+        "Python3.10/3.13 version_info 거절 및 프로젝트 import 금지; 3.10 문법 AST parse",
+        "실제 임시 Git init/commit/archive/raw commit을 사용한 별도 source mount 양성 검사",
+        "원본 archive/commit 및 두 source tree의 전후 파일/바이트 보존",
+        "pinned mounted source·소비 설정·stage 추출본·raw commit 불일치 거절",
+        "기존 inputs/results 파일 보존·재사용 거절",
+        "상대 경로·잘못된 run ID 거절",
+        "Windows 실제 임시 junction source 거절"
+      ]
+    },
+    {
+      "command": "node C:/Users/LIMMM/AppData/Local/npm-cache/_npx/110e52990071af13/node_modules/pyright/dist/pyright.js --typeshedpath C:/Users/LIMMM/AppData/Local/npm-cache/_npx/110e52990071af13/node_modules/pyright/dist/typeshed-fallback --pythonpath .venv/Scripts/python.exe scripts/brev/fleet4_prepare.py tests/test_fleet4_prepare.py",
+      "result": "0 errors, 0 warnings, 0 informations",
+      "exit_code": 0
+    },
+    {
+      "command": ".venv/Scripts/python.exe -B scripts/brev/fleet4_prepare.py --help",
+      "result": "CLI 네 필수 인자 확인; 프로젝트/GPU 실행 없음",
+      "exit_code": 0
+    },
+    {
+      "check": "작성 후 별도 계약·실패 경계 검토",
+      "result": "버전 검사 순서, fresh output, source proof 후 생성, 기존 bootstrap shape, 캐시 쓰기 금지, 원본 보존 확인. 새 에이전트에 의한 독립 승인은 아님."
+    },
+    {
+      "check": "UI 완료 소스 SHA 재대조",
+      "result": "010 receipt의8개 source SHA 모두 유지됨"
+    }
+  ],
+  "validation_history": [
+    "초기 호스트 symlink 권한 제한으로1skip이 있었으며 최종에는 Windows junction 생성·거절을 검사해9PASS/0skip을 확인했다.",
+    "최초 Pyright의 module.__file__ Optional 타입 오류2건은 None 경로 거절을 추가해 수정했고 재검사0오류를 확인했다."
+  ],
+  "integration_notes": {
+    "root_owned_paths": [
+      "scripts/brev/fleet4_cloud_run.py",
+      "scripts/brev/run-fleet4.sh"
+    ],
+    "root_stage_mount": "--stage /workspace/fleet4-stage --source-root /workspace/project 지원. stage/source 추출본도 있어야 한다.",
+    "python_contract": "3.12.x; VM 기본3.10은 프로젝트 import 전에 거절. 실제 CPU 컨테이너 실행은 root 소유.",
+    "provenance": "SDK SOURCE_PINS를 포함하는 source_files dict이며 추가 준비 경로와 소비 설정도 포함한다. ROOT source는 source_commit 인자로 받은 archive/raw commit proof에 결속한다.",
+    "failure_preservation": "입력 또는 결과를 이미 만들다 실패한 경로는 다음 실행에서 거절한다. 재시도는 새 stage가 필요하다.",
+    "marker_owner": "fleet-transport-verified.json은 이후 ROS가 생성한다."
+  },
+  "limits": [
+    "실제 VM/ROS Jazzy CPU 컨테이너/GPU/SDK/ROS 운송/실물 적재 성공은 실행하거나 검증하지 않았다.",
+    "실제 Python3.10/3.13 인터프리터를 기동하지 않았으며 version_info 마스킹과3.10 AST parse로 거절 순서를 검사했다.",
+    "Windows 일반 symlink 생성 권한이 없어 junction으로 실제 경로 거절을 검사했다. 일반 symlink는 동일한 guard의 정적 확인 및 배포 호스트의 추가 확인 범위다.",
+    "임시 Git fixture만 새로 만들고 로컬 commit/archive를 생성했다. 제품 저장소의 Git index/commit/push·원격 저장소는 변경하지 않았다.",
+    "전체165개 검사는 반복하지 않았다.",
+    "root의 현재 Stop 확인·D/E 원본·준비 실행기/sh는 수정하거나 실행하지 않았다."
+  ],
+  "ui_receipt": "coordination/collab/results/isaac-observation-ui-010.json",
+  "ui_representative_image": "dashboard/evidence/isaac-observation-desktop.jpg",
+  "new_processes_left_running": [],
+  "written_receipt": "coordination/collab/results/fleet4-runtime-prepare-011.json",
+  "root_validation": {
+    "result": "19 related tests PASS (9 preparation + 10 caller); runtime/path/source archive review accepted",
+    "log": "artifacts/fleet4/runtime-prepare-root-tests-001.log",
+    "scope": "CPU only; next normal-002 must confirm actual container Python3.12 and four-AMR runtime"
+  }
+}

@@ -73,8 +73,10 @@ test -d "$project"
 test -d "$output/provenance"
 test ! -e "$stage/runner-exit.json"
 test -z "$(docker ps -aq --filter 'name=^/factory-ops-')"
-export PYTHONPATH="$project"
-python3 -m factory_ops.fleet_transport --bundle "$inputs" --verify > "$stage/input-verification.json"
+docker run --rm --network none --user "$(id -u):$(id -g)" --entrypoint python3 \
+  -e PYTHONPATH=/workspace/project -e PYTHONDONTWRITEBYTECODE=1 \
+  -v "$project:/workspace/project:ro" -v "$inputs:/workspace/fleet4-inputs:ro" \
+  "$nav_image" -m factory_ops.fleet_transport --bundle /workspace/fleet4-inputs --verify > "$stage/input-verification.json"
 wall_limit=$(python3 -c 'import json,sys; print(int(json.load(open(sys.argv[1]))["max_wall_time_s"]))' "$inputs/config.json")
 [[ "$wall_limit" =~ ^[0-9]+$ && "$wall_limit" -le 10800 ]]
 cache="$instance_root/sdk-cache"

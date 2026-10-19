@@ -1,6 +1,6 @@
 {
-  "revision": 9,
-  "updated_at": "2026-10-19T09:58:37.169728+00:00",
+  "revision": 10,
+  "updated_at": "2026-10-19T10:10:15.770156+00:00",
   "scope": {
     "excluded": "실물 로봇 실행, 새 유료 서비스/에셋, 공개 배포",
     "project_root": "C:\\Users\\LIMMM\\factory-ops-twin",
@@ -297,6 +297,22 @@
       "reviewer": "control",
       "acceptance": "changes-only FR001-003 closure/Stop/deadline recheck",
       "acceptance_record": "3SHA matched;FR001-003 resolved in boundedrecheck;10mockedfaulttests PASS,rootcaller type0 and bash-n PASS; actualGPU/Stopped notyetclaimed"
+    },
+    {
+      "task_id": "fleet4-runtime-prepare-011",
+      "attempt": 1,
+      "contract_revision": 10,
+      "owner": "control",
+      "status": "dispatched",
+      "ACK": false,
+      "task_path": "coordination/collab/fleet4-runtime-prepare-011-task.md",
+      "write_paths": [
+        "scripts/brev/fleet4_prepare.py",
+        "tests/test_fleet4_prepare.py"
+      ],
+      "result_path": "coordination/collab/results/fleet4-runtime-prepare-011.json",
+      "reviewer": "root",
+      "acceptance": "Python3.12guard beforeprojectimport; realarchiveproof andnew bundle/provenance inCPUcontainer; noGPUclaim"
     }
   ],
   "decisions": [

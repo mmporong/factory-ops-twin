@@ -276,30 +276,17 @@ def main() -> int:
 test "$(sha256sum {stage}/source.tar | cut -d ' ' -f 1)" = {result['source_tar_sha256']}
 mkdir {stage}/source
 tar --no-same-owner -xf {stage}/source.tar -C {stage}/source
-export PYTHONPATH={stage}/source PYTHONDONTWRITEBYTECODE=1
-python3 -m factory_ops.fleet_transport --bundle {stage}/inputs > {stage}/preflight.json
-mkdir -p {stage}/results/run/provenance {stage}/build
-cp {stage}/source.tar {stage}/results/run/provenance/source.tar
-cp {stage}/source.commit {stage}/results/run/provenance/source-commit.raw
+docker run --rm --network none --user "$(id -u):$(id -g)" --entrypoint python3 \
+ -e PYTHONPATH=/workspace/project -e PYTHONDONTWRITEBYTECODE=1 \
+ -v {stage}/source:/workspace/project:ro -v {stage}:/workspace/fleet4-stage:rw \
+ {NAV_IMAGE} /workspace/project/scripts/brev/fleet4_prepare.py \
+ --stage /workspace/fleet4-stage --source-root /workspace/project \
+ --run-id {run_id} --source-commit {commit} > {stage}/preflight.json
+mkdir {stage}/build
 cp {BUILD} {stage}/build/build-attestation.json
 cp $(dirname {BUILD})/build-receipt.json {stage}/build/build-receipt.json
 docker image inspect {NAV_IMAGE} > {stage}/nav-image-inspect.json
 docker image inspect nvcr.io/nvidia/isaac-sim:6.2.0 > {stage}/isaac-image-inspect.json
-python3 - {stage} {run_id} {commit} <<'PY'
-import hashlib,json,pathlib,sys
-from scripts.isaac.fleet4_transport_scene import SOURCE_PINS
-from factory_ops.fleet_transport import load_bundle
-from factory_ops.source_provenance import verify_source_archive
-stage=pathlib.Path(sys.argv[1]); source=stage/'source'; loaded=load_bundle(stage/'inputs')
-pins={{name:hashlib.sha256((source/name).read_bytes()).hexdigest() for name in SOURCE_PINS}}
-proof=verify_source_archive(stage/'source.tar',stage/'source.commit',sys.argv[3],pins,snapshot_root=source)
-assert proof['passed'], proof
-meta={{'schema_version':1,'run_id':sys.argv[2],'source_commit':sys.argv[3],
- 'scenario_id':loaded['session']['scenario_id'],'bundle_sha256':loaded['bundle_sha256'],
- 'source_files':pins,'source_archive_sha256':proof['source_archive_sha256'],
- 'source_archive_proof':proof}}
-(stage/'results/run/provenance/fleet-source.json').write_text(json.dumps(meta,indent=2)+'\\n')
-PY
 test ! -e {stage}/abort-requested
 touch {stage}/launch-requested
 test ! -e {stage}/abort-requested
