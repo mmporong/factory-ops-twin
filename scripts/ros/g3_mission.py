@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import copy
+from datetime import datetime, timezone
 import hashlib
 import json
 import math
@@ -515,6 +516,67 @@ def localization_payload(transform: Any, *, now_s: float, ttl_s: float) -> dict[
     return {"x_m": values[0], "y_m": values[1], "yaw_rad": math.atan2(2*(q.w*q.z+q.x*q.y), 1-2*(q.y*q.y+q.z*q.z)), "stamp_s": stamp}
 
 
+def dashboard_state(snapshot: Mapping[str, Any], robots: Mapping[str, Any], *,
+                    sim_time_s: float, absolute_sim_time_s: float, pose_ttl_s: float) -> dict[str, Any]:
+    """Read-only web projection; localization, ledger and odometry retain their sources."""
+    rows = []
+    for key, logical in snapshot["robots"].items():
+        runtime = robots.get(key, {})
+        pose = runtime.get("pose")
+        if pose is not None and not 0 <= absolute_sim_time_s - pose["stamp_s"] <= pose_ttl_s:
+            pose = None
+        odom = runtime.get("last_odom")
+        fresh_odom = (odom is not None and math.isfinite(odom["linear_m_s"])
+                      and 0 <= absolute_sim_time_s - odom["stamp_s"] <= pose_ttl_s)
+        task = snapshot["tasks"].get(logical.get("task_id"))
+        leg = runtime.get("leg")
+        plan = leg.get("plan") if leg else None
+        phase = runtime.get("phase", "unknown")
+        rows.append({"id": key, "label": key, "pose": {k: pose[k] for k in ("x_m", "y_m", "yaw_rad")} if pose else None,
+            "status": "unknown" if pose is None else "idle" if phase == "idle" else "moving" if phase == "following" else "waiting",
+            "speed_mps": odom["linear_m_s"] if fresh_odom and odom is not None else None,
+            "battery_pct": None, "battery_source": "unavailable", "task_id": logical.get("task_id"),
+            "task_type": task["stage"] if task else None, "task_label": task["stage"] if task else None,
+            "payload_id": logical.get("payload_id"), "destination": leg.get("target") if leg else None,
+            "waiting_reason": phase if phase not in ("idle", "following") else None,
+            "route": [{"x_m": x, "y_m": y} for x, y in plan.points] if plan else [],
+            "observed_sim_time_s": pose["stamp_s"] if pose else None,
+            "pose_source": "estimated map->base_link TF", "scan_counts": runtime.get("scan_counts", {})})
+    tasks = [{"id": t["task_id"], "order_id": t["order_id"], "type": t["stage"], "state": t["status"],
+              "robot_id": t.get("robot_id"), "source": t["pickup_station"], "destination": t["drop_station"],
+              "payload_id": t["payload_id"], "progress": 1 if t["status"] == "complete" else None}
+             for t in snapshot["tasks"].values()]
+    return {"schema_version": 1, "run_id": snapshot["run_id"], "revision": snapshot["ledger_seq"], "mode": "live",
+            "sim_time_s": sim_time_s, "observed_at": datetime.now(timezone.utc).isoformat(),
+            "connection": "connected", "paused": False, "capabilities": [], "robots": rows, "tasks": tasks,
+            "inventory": {"stock": [], "totes": [], "conservation": []},
+            "kpis": {"active_robots": sum(bool(r["task_id"]) for r in rows), "total_robots": len(rows),
+                     "completed_orders": sum(o["state"] == "complete" for o in snapshot["orders"].values()),
+                     "pending_tasks": sum(t["state"] != "complete" for t in tasks), "stock_units": None},
+            "events": [], "commands": [], "model_scope": "read-only G3 ledger, estimated TF and encoder odometry; battery/SKU stock unavailable"}
+
+
+class DashboardPublisher:
+    def __init__(self, enabled: bool, output: Path, pose_ttl_s: float,
+                 on_error: Callable[[str, Mapping[str, Any]], None]) -> None:
+        self.enabled, self.output, self.pose_ttl_s, self.on_error = enabled, output, pose_ttl_s, on_error
+        self.last_wall = -math.inf
+
+    def publish(self, snapshot: Mapping[str, Any], robots: Mapping[str, Any],
+                sim_time_s: float, absolute_sim_time_s: float) -> None:
+        wall = time.monotonic()
+        if not self.enabled or wall - self.last_wall < 0.5:
+            return
+        try:
+            atomic_json(self.output / "dashboard-state.json", dashboard_state(snapshot, robots,
+                sim_time_s=sim_time_s, absolute_sim_time_s=absolute_sim_time_s, pose_ttl_s=self.pose_ttl_s))
+        except (OSError, ValueError, TypeError, KeyError) as error:
+            # Presentation failure must not grant movement or disrupt the physical mission.
+            self.on_error("dashboard_publication_failed", {"error": str(error)})
+            self.enabled = False
+        self.last_wall = wall
+
+
 def validate_arrival(pose: Mapping[str, float], target: GoalPose, *, xy_limit: float, yaw_limit: float) -> None:
     if (not 0 < xy_limit <= .25 or not 0 < yaw_limit <= .25
             or math.dist((pose["x_m"], pose["y_m"]), (target.x, target.y)) > xy_limit
@@ -799,6 +861,7 @@ def main() -> int:
     parser.add_argument("--session", required=True, type=Path)
     parser.add_argument("--output", required=True, type=Path)
     parser.add_argument("--run-id", required=True)
+    parser.add_argument("--dashboard", action="store_true", help="publish read-only web telemetry; no web control")
     args = parser.parse_args()
     project = Path(__file__).resolve().parents[2]
     session_root = args.session.resolve(strict=True)
@@ -1180,6 +1243,7 @@ def main() -> int:
         dispatch_pair_fingerprints: dict[tuple[str, str], str] = {}
         visual_projection: dict[str, Any] | None = None
         visual_sequence = 0
+        dashboard_publisher = DashboardPublisher(args.dashboard, output, runtime_config["pose_ttl_s"], journal)
         cutoff: dict[str, Any] | None = None
 
         def new_leg(robot: str, target: str, intent: Any = None) -> None:
@@ -1561,6 +1625,7 @@ def main() -> int:
                 if intent is not None:
                     new_leg(robot, intent.station, intent)
             visual_snapshot = mission.ledger.snapshot()
+            dashboard_publisher.publish(visual_snapshot, robots, elapsed, stamp)
             projected = project_ledger_state(visual_snapshot, visual_projection)
             if visual_projection is None or canonical_sha256(projected) != canonical_sha256(visual_projection):
                 visual_state = make_visual_state(

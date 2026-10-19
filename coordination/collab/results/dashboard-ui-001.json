@@ -1,0 +1,87 @@
+{
+  "selected_stack": [
+    "Next.js",
+    "React",
+    "React Three Fiber",
+    "three.js",
+    "@react-three/drei"
+  ],
+  "status": "awaiting_root_3d_recheck",
+  "contract_revision": 1,
+  "ACK": true,
+  "attempt": 1,
+  "task_id": "dashboard-ui-001",
+  "processes": [
+    {
+      "url": "http://127.0.0.1:3007",
+      "stop_command": "Stop-Process -Id 17272,65976 -ErrorAction SilentlyContinue",
+      "upstream": "http://127.0.0.1:8765",
+      "pid": 65976,
+      "reason": "총괄 CUA 재검수용으로 유지",
+      "start_command": "cd $HOME/factory-ops-twin/dashboard; npm install; npm run dev -- --port 3007",
+      "cli_pid": 17272
+    }
+  ],
+  "progress": "All Drei Html removed; CanvasTexture sprites replace nested React DOM labels. Final typecheck and build PASS. Root CUA must reload and confirm rendered factory geometry, selection and absence of prior Html removeChild/unmount errors. No browser automation launched by control.",
+  "changed_paths": [
+    "dashboard/.gitignore",
+    "dashboard/api-integration-results.json",
+    "dashboard/app/api/commands/route.ts",
+    "dashboard/app/api/scene/route.ts",
+    "dashboard/app/api/snapshot/route.ts",
+    "dashboard/app/globals.css",
+    "dashboard/app/layout.tsx",
+    "dashboard/app/page.tsx",
+    "dashboard/components/Dashboard.tsx",
+    "dashboard/components/FactoryScene.tsx",
+    "dashboard/lib/proxy.ts",
+    "dashboard/lib/types.ts",
+    "dashboard/next-env.d.ts",
+    "dashboard/next.config.ts",
+    "dashboard/package-lock.json",
+    "dashboard/package.json",
+    "dashboard/tsconfig.json",
+    "coordination/collab/results/dashboard-ui-001.json"
+  ],
+  "verification": [
+    {
+      "exit_code": 0,
+      "command": "npm run typecheck",
+      "result": "PASS"
+    },
+    {
+      "exit_code": 0,
+      "command": "npm run build",
+      "result": "PASS (Next16.4.2, 3 proxy routes, page prerender)"
+    },
+    {
+      "exit_code": 0,
+      "command": "HTTP GET http://127.0.0.1:3007/ and /api/snapshot and /api/scene",
+      "result": "PASS; HTTP200, root API8765, 4 observed AMRs, 4 null SOC, 32x20m, 19 obstacles"
+    },
+    {
+      "exit_code": 0,
+      "command": "Invoke-RestMethod via Next /api/commands + server snapshot checks",
+      "result": "PASS pause/resume/create_order applied; stale revision/quantity0 rejected with reasons; previous paused=false restored",
+      "evidence": "dashboard/api-integration-results.json"
+    },
+    {
+      "result": "Initial review FAILED at Drei Html/removeChild. Fix provided; fresh root browser verification pending.",
+      "command": "root CUA browser"
+    }
+  ],
+  "known_limitations": [
+    "Root browser recheck of actual 3D rendering, click/keyboard/responsive/reduced-motion/WebGL fallback and console remains pending; not accepted by author.",
+    "No live Isaac/G3 rendering or sensor/localization quality measurement claimed. stock_units supports null.",
+    "Scenario persistence/comparison, Replicator execution/media integration, charging and teleop deferred: no backend handlers/buttons fabricated.",
+    "API round-trip latency is browser-to-Next-to-API HTTP time, not ROS sensor latency.",
+    "create_order source/quantity follows current backend; CI→OUT workflow is fixed."
+  ],
+  "stopped_processes": [
+    {
+      "pid": 43384,
+      "port": 8766,
+      "result": "isolated CPU API stopped; no listener remains"
+    }
+  ]
+}

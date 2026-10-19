@@ -1,0 +1,142 @@
+{
+  "task_id": "api-review-001",
+  "attempt": 1,
+  "recheck": 1,
+  "status": "recheck_complete",
+  "scope": "이전 API-001~005의 수정만 정적 재대조. 새 전체 리뷰 아님.",
+  "acceptance": "accepted_for_api_001_through_005",
+  "accepted": true,
+  "summary": "이전 5개 지적의 수정이 현재 SHA에서 확인됐다. 지정된 지적 범위에 남은 blocker는 없다.",
+  "product_files_modified": false,
+  "ui_files_modified": false,
+  "tests_executed_by_reviewer": false,
+  "gpu_started": false,
+  "agents_spawned": false,
+  "file_sha256": [
+    {
+      "path": "factory_ops/dashboard.py",
+      "sha256": "170a4b2aa89a58db4c4302b30053bfe93dea0042a8ecc6b3a635b7759fe0ac50",
+      "changed_since_review": true
+    },
+    {
+      "path": "factory_ops/dashboard_model.py",
+      "sha256": "7c95554d352e8e4985fd5676e64e3d8ffe1e19132683c9346b3ab5cadca38282",
+      "changed_since_review": false
+    },
+    {
+      "path": "scripts/ros/g3_mission.py",
+      "sha256": "cbd6ff143a0ca627d8b99c0ffb1e6413463376cb1430bfd5a5f11756325fe961",
+      "changed_since_review": true
+    },
+    {
+      "path": "tests/test_dashboard.py",
+      "sha256": "3a4f557f6afa5f1cfc39c9b9b5298e247a9d7802c17b2bd7bc0ef36497defbe1",
+      "changed_since_review": true
+    }
+  ],
+  "items": [
+    {
+      "id": "API-001",
+      "previous_severity": "HIGH",
+      "status": "resolved",
+      "accepted": true,
+      "locations": [
+        "tests/test_dashboard.py:26",
+        "tests/test_dashboard.py:27",
+        "tests/test_dashboard.py:31",
+        "tests/test_dashboard.py:41"
+      ],
+      "evidence": "유한 재고·완료 수·원장 replay 검증이 모델 테스트 안으로 복구됐다. state는 27행에서 초기화한 뒤 사용하고, publisher 실패 테스트에는 잘못 이동했던 state 참조가 남아 있지 않다.",
+      "test_source_checked": [
+        "test_four_robot_model_uses_finite_inventory_and_cannot_claim_live",
+        "test_disabled_or_failed_ros_web_publication_does_not_mutate_mission"
+      ]
+    },
+    {
+      "id": "API-002",
+      "previous_severity": "HIGH",
+      "status": "resolved",
+      "accepted": true,
+      "locations": [
+        "scripts/ros/g3_mission.py:529",
+        "scripts/ros/g3_mission.py:537",
+        "scripts/ros/g3_mission.py:573",
+        "tests/test_dashboard.py:157"
+      ],
+      "evidence": "fresh_odom에 속도 math.isfinite 조건이 추가되어 NaN은 speed_mps=null로 투영된다. publisher 경계는 OSError/ValueError/TypeError/KeyError를 진단하고 비활성화한다. 추가 테스트 소스는 NaN의 null 보존과 손상 projection의 격리·비활성화를 확인한다.",
+      "test_source_checked": [
+        "test_ros_publisher_sanitizes_nonfinite_speed_and_isolates_projection_error"
+      ]
+    },
+    {
+      "id": "API-003",
+      "previous_severity": "HIGH",
+      "status": "resolved",
+      "accepted": true,
+      "locations": [
+        "factory_ops/dashboard.py:136",
+        "factory_ops/dashboard.py:169",
+        "factory_ops/dashboard.py:174",
+        "factory_ops/dashboard.py:178",
+        "factory_ops/dashboard.py:189",
+        "factory_ops/dashboard.py:191",
+        "factory_ops/dashboard.py:225",
+        "tests/test_dashboard.py:122"
+      ],
+      "evidence": "_command_runs에 제출 실행을 저장한다. 다른 실행의 pending을 거절/만료시키고 ACK 결합에서 제외하며, 반환 commands도 현재 실행으로 제한한다. 중복 ID 처리 전에 최신 snapshot을 읽고 과거 실행 ID 재사용을 거절한다. 새 테스트는 run-A pending과 run-B 동일 ID applied ACK가 섞이지 않고 ID 재사용이 거절됨을 확인한다.",
+      "test_source_checked": [
+        "test_run_switch_cannot_acknowledge_or_replay_another_runs_command"
+      ]
+    },
+    {
+      "id": "API-004",
+      "previous_severity": "MEDIUM",
+      "status": "resolved",
+      "accepted": true,
+      "locations": [
+        "factory_ops/dashboard.py:175",
+        "factory_ops/dashboard.py:176",
+        "factory_ops/dashboard.py:177",
+        "tests/test_dashboard.py:92",
+        "tests/test_dashboard.py:95"
+      ],
+      "evidence": "ACK revision의 정수 여부와 제출 revision 이상·현재 source revision 이하 조건을 검사하고, 승인/거절 상태 반영 시 revision도 갱신한다. 기존 ACK 테스트 소스는 제출 revision0에서 적용 revision1로 갱신됨을 확인한다.",
+      "test_source_checked": [
+        "test_live_source_requires_freshness_and_ack_for_command_success"
+      ]
+    },
+    {
+      "id": "API-005",
+      "previous_severity": "MEDIUM",
+      "status": "resolved",
+      "accepted": true,
+      "locations": [
+        "factory_ops/dashboard.py:60",
+        "factory_ops/dashboard.py:71",
+        "factory_ops/dashboard.py:78",
+        "factory_ops/dashboard.py:90",
+        "factory_ops/dashboard.py:95",
+        "factory_ops/dashboard.py:98",
+        "factory_ops/dashboard.py:100",
+        "factory_ops/dashboard.py:108",
+        "factory_ops/dashboard.py:115",
+        "tests/test_dashboard.py:138"
+      ],
+      "evidence": "robot 필수 key·문자열/null·유한 숫자와 route 좌표 구조, inventory 배열, KPI 필수 key, task/event/command의 렌더링 필드를 검사한다. stock_units=null은 허용한다. 새 손상 source 테스트는 speed_mps 문자열, route=null, totes 누락, pending_tasks 누락을 각각 넣어 disconnected와 마지막 정상 robot 유지 조건을 확인한다.",
+      "test_source_checked": [
+        "test_structural_source_corruption_preserves_last_valid_observation"
+      ]
+    }
+  ],
+  "remaining_blockers_in_recheck_scope": [],
+  "validation_basis": {
+    "reviewer_observed": "현재 소스·테스트 본문·호출 조건의 정적 재대조와 SHA 확인. 관련 테스트나 전체 테스트를 새로 실행하지 않았다.",
+    "root_reported": "59개 관련 테스트 PASS, 신규 Python 모듈/테스트 pyright 오류0·경고0. 이는 총괄이 제공한 실행 결과이며 검수자가 재실행한 결과로 주장하지 않는다.",
+    "root_browser_reported": "3D·AMR raycast 선택·키보드 선택·주문 생성·pause/resume 성공. 모바일390px 가로넘침 없음. 초기 Html 오류는 reload 후 미재현. UI는 추가 편집하지 않았다."
+  },
+  "limits": [
+    "수용 범위는 API-001~005의 수정이다. 전체 제품·실물 로봇·외부 명령 handler의 신규 인증을 뜻하지 않는다.",
+    "프로세스 재시작까지 포괄하는 정확히 한 번 명령 실행 보장은 이번 재검수 범위 밖이며 기존 제약으로 유지한다.",
+    "기준 c67c2da의 기존 G3 main code-too-complex 1건/yaml 경고1건을 이번 변경의 신규 오류로 취급하지 않는다."
+  ]
+}

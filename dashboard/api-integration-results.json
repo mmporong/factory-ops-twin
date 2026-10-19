@@ -1,0 +1,47 @@
+[
+  {
+    "check": "stale revision",
+    "receipt": {
+      "command_id": "af1e20b9-dc70-42b4-b903-8ce20b846775",
+      "status": "rejected",
+      "reason": "상태가 변경됐습니다. 최신 상태에서 다시 요청하세요",
+      "revision": 0
+    }
+  },
+  {
+    "check": "pause + server snapshot",
+    "receipt": {
+      "command_id": "1c4c91d4-1075-4f10-b8d7-097e26464d31",
+      "status": "applied",
+      "reason": null,
+      "revision": 1
+    }
+  },
+  {
+    "check": "invalid quantity",
+    "receipt": {
+      "command_id": "1c9ff08c-3096-4b1e-9707-9ace9f834dbb",
+      "status": "rejected",
+      "reason": "수량은 양의 정수여야 합니다",
+      "revision": 1
+    }
+  },
+  {
+    "check": "create_order + task observed",
+    "receipt": {
+      "command_id": "7e684be3-f05e-411c-9d29-a6c8ee4f3dfc",
+      "status": "applied",
+      "reason": null,
+      "revision": 2
+    }
+  },
+  {
+    "check": "resume + server snapshot",
+    "receipt": {
+      "command_id": "c0d495c3-4b61-4e91-8ced-705fe507b25f",
+      "status": "applied",
+      "reason": null,
+      "revision": 3
+    }
+  }
+]

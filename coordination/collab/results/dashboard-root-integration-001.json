@@ -1,0 +1,68 @@
+{
+  "task_id": "dashboard-root-integration-001",
+  "at_utc": "2026-10-19T06:11:26.1514900Z",
+  "goal_complete": false,
+  "fleet_target": 4,
+  "physical_fleet_verified": 2,
+  "local_model_fleet": 4,
+  "python_tests": {
+    "command": ".venv/Scripts/python.exe -B -m unittest tests.test_dashboard tests.test_g3_mission tests.test_inventory tests.test_operations",
+    "exit": 0,
+    "count": 59
+  },
+  "new_python_pyright": {
+    "warnings": 0,
+    "errors": 0
+  },
+  "g3_pyright": {
+    "baseline": "c67c2dac4dcee1f339fe764b6cac62e85466cefb",
+    "existing_yaml_source_warning": 1,
+    "existing_code_too_complex": 1
+  },
+  "browser": {
+    "last_observed_console_error_utc": "2026-10-19T05:53:55.334Z",
+    "factory_3d": true,
+    "raycast_select": "AMR01 selected in 3D; inspector and fleet selection updated",
+    "mobile": {
+      "scroll_width": 375,
+      "width": 390
+    },
+    "new_error_after_reload_observed": false,
+    "webgl_forced_failure_test": false,
+    "type": "Chrome via CUA",
+    "url": "http://127.0.0.1:3007",
+    "viewport_restored": true,
+    "medium": {
+      "scroll_width": 885,
+      "width": 900
+    },
+    "commands": "create order ORD0006; pending then applied revision4; pause revision5 frozen sim513.5; resume revision6",
+    "keyboard": "AMR02 Space selection updated inspector"
+  },
+  "api_review": "coordination/collab/results/api-review-001-recheck.json",
+  "source_sha_verified": true,
+  "retained_processes": [
+    {
+      "port": 8765,
+      "stop": "Stop-Process -Id 36908",
+      "reason": "paired local dashboard preview",
+      "pid": 36908,
+      "owner": "root"
+    },
+    {
+      "stop": "Stop-Process -Id 65976,17272",
+      "port": 3007,
+      "cli_pid": 17272,
+      "owner": "control",
+      "reason": "paired local dashboard preview",
+      "pid": 65976
+    }
+  ],
+  "limits": [
+    "CPU route interpolation is not physics",
+    "live G3 read-only publisher not run on GPU",
+    "battery/SKU unavailable in current G3",
+    "web SDG/charging/Kit unfinished",
+    "native goal remains incomplete"
+  ]
+}

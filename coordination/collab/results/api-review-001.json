@@ -1,0 +1,184 @@
+{
+  "task_id": "api-review-001",
+  "attempt": 1,
+  "status": "review_complete",
+  "review_mode": "지정 범위 읽기 전용 동료 검수 1회",
+  "acceptance": "request_changes",
+  "accepted": false,
+  "summary": "물리 제어 우회 경로는 발견하지 않았으나, 테스트 초기화 누락과 선택적 웹 publisher 오류 격리 문제를 수정해야 한다. 외부 명령 ACK는 실행별 분리와 revision 갱신도 보완해야 한다.",
+  "product_files_modified": false,
+  "tests_executed": false,
+  "gpu_started": false,
+  "agents_spawned": false,
+  "basis": "코드·diff·호출 경로·기존 원장 구현의 정적 검수. 테스트·브라우저 실행은 총괄 담당. 동작 재현이나 전체 검사 PASS로 확대하지 않음.",
+  "file_sha256": [
+    {
+      "path": "factory_ops/dashboard.py",
+      "sha256": "5d2f598c0c9987a98198f22b121fb09a3a07220c9de6a246676fa59779abd2db"
+    },
+    {
+      "path": "factory_ops/dashboard_model.py",
+      "sha256": "7c95554d352e8e4985fd5676e64e3d8ffe1e19132683c9346b3ab5cadca38282"
+    },
+    {
+      "path": "scripts/ros/g3_mission.py",
+      "sha256": "456208eeea3994b56f9158584b42446c4becd36fe6290df533ebb09fdb8738a3"
+    },
+    {
+      "path": "tests/test_dashboard.py",
+      "sha256": "30eca935c34b7560982a2ee7e1bf4a7ceb866a3948384f6303caee949955458f"
+    }
+  ],
+  "findings": [
+    {
+      "id": "API-001",
+      "severity": "HIGH",
+      "path": "tests/test_dashboard.py",
+      "line": 48,
+      "related_lines": [
+        26,
+        32,
+        51
+      ],
+      "title": "publisher 오류 테스트에서 state를 대입 전에 참조한다",
+      "evidence": "test_disabled_or_failed_ros_web_publication_does_not_mutate_mission의 48행은 state를 읽지만 같은 함수의 첫 대입은 51행이다. 27행 state는 다른 테스트 함수의 지역변수다.",
+      "impact": "현재 파일의 해당 테스트는 UnboundLocalError로 중단되며 49~56행 유한 재고·완료 수·원장 replay 검증에 도달하지 못한다. 이전 32개 PASS를 이 SHA의 증거로 재사용할 수 없다.",
+      "recommendation": "유한 재고 검증 구간을 원래 모델 테스트로 돌리거나 해당 함수에서 snapshot을 먼저 초기화하고, 수정 후 관련 테스트를 총괄이 재실행한다.",
+      "confidence": "high",
+      "validation": "정적 제어 흐름 확인; 실행하지 않음"
+    },
+    {
+      "id": "API-002",
+      "severity": "HIGH",
+      "path": "scripts/ros/g3_mission.py",
+      "line": 572,
+      "related_lines": [
+        536,
+        570,
+        574,
+        1027,
+        1627
+      ],
+      "title": "선택적 웹 게시의 직렬화·projection 오류가 물리 mission 실패 경로로 전파된다",
+      "evidence": "DashboardPublisher.publish는 OSError만 격리한다. fresh last_odom의 linear_m_s를 검증 없이 projection에 복사하고, 사용 중인 g2_mission.atomic_json은 allow_nan=False로 직렬화한다. NaN 속도는 ValueError를 내지만 잡히지 않는다. odometry는 last_odom을 먼저 기록하며 stop_after=None일 때 StopSampleReceiver.observe가 속도 유한성 검사 전에 반환할 수 있다.",
+      "impact": "웹 표시를 켠 것만으로 표현 데이터 오류가 main의 BaseException/mission.fail/비상정지 경로를 유발할 수 있다. 웹 게시 실패가 mission을 교란하지 않는다는 경계와 불일치한다.",
+      "recommendation": "관측 속도의 유한성을 검증해 미관측 null로 보존하고, publisher 경계에서 예상 가능한 ValueError/TypeError/KeyError를 진단 후 비활성화한다. 이를 오류 주입 테스트로 검증하되 안전 오류 전체를 무차별 삼키지는 않는다.",
+      "confidence": "high",
+      "validation": "g3 publisher→g2 atomic_json→main 실패 처리 호출 경로 정적 추적; 오류 주입 실행하지 않음"
+    },
+    {
+      "id": "API-003",
+      "severity": "HIGH",
+      "path": "factory_ops/dashboard.py",
+      "line": 114,
+      "related_lines": [
+        82,
+        83,
+        100,
+        117,
+        130,
+        158
+      ],
+      "title": "외부 명령 receipt와 ACK를 run_id로 분리하지 않는다",
+      "evidence": "source의 run_id 변경은 허용하지만 _receipts/_fingerprints는 유지한다. pending→ACK는 command_id만 비교한다. outbox payload에는 run_id를 넣지만 receipt에는 저장하거나 대조하지 않는다. source A에 pending인 ID X가 source B의 commands에도 있으면 B의 ACK가 A의 요청을 applied로 바꿀 수 있다. 동일 payload 재전송은 source 확인 전 130~133행에서 이전 실행의 receipt를 반환한다.",
+      "impact": "서로 다른 실행 사이에 명령 승인 상태가 섞일 수 있다. 현재 G3는 capabilities=[]라 이 경로로 물리 제어가 열리지는 않지만, --source/--commands-dir 외부 명령 계약은 수용하기 어렵다.",
+      "recommendation": "pending 요청의 run_id와 제출 revision을 내부에 보존하고 ACK를 같은 실행에만 결합한다. source run 전환 시 이전 pending을 명시적으로 거절/만료시키거나 실행별 상태를 분리하며 교차 실행 ACK 테스트를 추가한다.",
+      "confidence": "high",
+      "validation": "run 변경·pending 결합·중복 ID 조기 반환 분기 정적 추적; 실제 물리 명령 실행하지 않음"
+    },
+    {
+      "id": "API-004",
+      "severity": "MEDIUM",
+      "path": "factory_ops/dashboard.py",
+      "line": 118,
+      "related_lines": [
+        135
+      ],
+      "title": "applied ACK를 받아도 receipt revision이 제출 시점에 남는다",
+      "evidence": "pending receipt는 제출 당시 state.revision으로 생성된다. ACK 결합에서는 status와 reason만 갱신하므로 source ACK revision이 1이어도 snapshot.commands의 적용 receipt revision은 0으로 남는다.",
+      "impact": "UI의 적용 버전과 실제 서버 적용 버전이 달라지고 명령 추적 근거가 부정확해진다.",
+      "recommendation": "ACK revision의 형식·실행·단조성 조건을 확인하고 receipt에 적용 버전을 반영한다. 기존 ACK 테스트도 적용 revision까지 확인하도록 보강한다.",
+      "confidence": "high",
+      "validation": "receipt 생성 및 update 필드 정적 확인"
+    },
+    {
+      "id": "API-005",
+      "severity": "MEDIUM",
+      "path": "factory_ops/dashboard.py",
+      "line": 51,
+      "related_lines": [
+        62,
+        65,
+        97,
+        103
+      ],
+      "title": "부분적으로 손상된 구조적 snapshot이 유효 상태로 캐시된다",
+      "evidence": "validate_snapshot은 robot id/pose/SOC와 최상위 일부 컨테이너만 검사한다. robots[0].speed_mps='bad', route=null, inventory.totes 누락, kpis 필수 key 누락 등을 거절하지 않고 _last로 저장할 수 있다. 프런트는 해당 필드에서 toFixed/map/length를 사용한다.",
+      "impact": "잘못된 외부 파일이 마지막 정상 상태를 대체해 목록/상세/3D 렌더링 오류를 유발한다. 부분 손상 시 마지막 상태 유지라는 계약을 충분히 보장하지 못한다.",
+      "recommendation": "렌더링에 필요한 필수 key·컨테이너·유한 숫자/null·route 좌표 구조를 source 경계에서 검사한다. stock_units=null 등 미관측 계약은 허용하고, 손상값을 가짜 수치로 보정하지 않는다.",
+      "confidence": "high",
+      "validation": "검증 필드와 snapshot 소비부를 대조한 정적 검수; malformed source 실행하지 않음"
+    }
+  ],
+  "confirmed_boundaries": [
+    {
+      "topic": "mode/stale",
+      "result": "로컬 모델은 local_model, 외부 source는 live/replay만 허용한다. live 관측이 3초보다 오래되거나 1초 초과 미래이면 stale이며 capability를 비운다. JSON 오류/시간·revision 역행은 마지막 pose를 disconnected로 보존한다. replay와 outbox 부재도 쓰기를 막는다.",
+      "locations": [
+        "factory_ops/dashboard.py:97",
+        "factory_ops/dashboard.py:100",
+        "factory_ops/dashboard.py:109",
+        "factory_ops/dashboard.py:112"
+      ]
+    },
+    {
+      "topic": "명령 ID/버전 기본 동작",
+      "result": "같은 서비스 내 동일 ID·다른 payload를 거절하고 expected_revision이 다르면 거절한다. 로컬 모델만 동기 applied이며 외부 outbox 기록은 pending이다. 단, 실행 간 분리는 API-003, ACK 적용 버전은 API-004가 남는다.",
+      "locations": [
+        "factory_ops/dashboard.py:128",
+        "factory_ops/dashboard.py:136",
+        "factory_ops/dashboard.py:150",
+        "factory_ops/dashboard.py:162"
+      ]
+    },
+    {
+      "topic": "유한 재고/원장",
+      "result": "CPU 모델은 기존 Ledger/InventoryLedger/choose_fifo/RouteBook을 재사용한다. 원천별 재고 20·토트 16을 만들고 reserve/pickup/deliver/consume로 이동한다. reserve는 가용 재고보다 많은 수량을 거절한다. 무한 재고·임의 SOC·프런트 완료 판정 경로는 발견하지 않았다.",
+      "locations": [
+        "factory_ops/dashboard_model.py:11",
+        "factory_ops/dashboard_model.py:21",
+        "factory_ops/dashboard_model.py:58",
+        "factory_ops/dashboard_model.py:71",
+        "factory_ops/dashboard_model.py:89",
+        "factory_ops/dashboard_model.py:113",
+        "factory_ops/dashboard_model.py:120"
+      ]
+    },
+    {
+      "topic": "웹→물리 제어 우회",
+      "result": "검수한 G3 diff는 --dashboard 선택 옵션, 읽기 전용 projection과 주기적 파일 게시만 추가한다. publisher는 웹 명령 outbox를 읽지 않고 capabilities=[]이다. 기존 lease/reservation/mission dispatch를 웹 입력이 바꾸는 호출 경로는 발견하지 않았다. 센서·TF와 원장만 읽으며 ROS bag SQLite에 연결하지 않는다.",
+      "locations": [
+        "scripts/ros/g3_mission.py:519",
+        "scripts/ros/g3_mission.py:550",
+        "scripts/ros/g3_mission.py:558",
+        "scripts/ros/g3_mission.py:863",
+        "scripts/ros/g3_mission.py:1245",
+        "scripts/ros/g3_mission.py:1627"
+      ]
+    }
+  ],
+  "nonblocking_limitations": [
+    "실제 G3는 관측된 fleet만 노출하며 stock_units/SOC는 null이다. 센서 scan_counts는 누계이며 rate 또는 localization 정확도 측정으로 해석하면 안 된다.",
+    "실제 G3 projection의 events와 inventory 상세는 빈 배열이다. 로컬 모델의 운영 이벤트/재고와 구분해야 한다.",
+    "CPU 모델에는 빈 토트 반납 자동화가 없어 유한 토트 소진 후 주문이 거절될 수 있다. 미연결 기능을 가짜 성공으로 표시하지 않으므로 현재 범위의 결함으로 단정하지 않았다.",
+    "HTTP 서비스의 중복 명령 메모리는 프로세스 범위다. 재시작을 포괄하는 정확히 한 번 실행 보장은 검증하지 않았다.",
+    "기존 G3 main의 pyright code-too-complex 1건과 yaml 경고 1건은 기준 c67c2da에도 있다는 총괄 근거를 유지한다. 이번 변경이 원인이라는 판정을 내리지 않았다."
+  ],
+  "root_actions": [
+    "API-001과 API-002 수정 후 관련 테스트 재실행",
+    "외부 명령 경로를 제공한다면 API-003/004 보완 및 교차 실행 ACK 검증",
+    "API-005 구조 검증 보강",
+    "총괄 CUA로 UI 3D 및 실제 데이터 흐름 재검수"
+  ],
+  "sha_stability": "검수 시작과 마지막 읽기에서 4개 SHA가 일치함. 이후 제품 파일이 바뀌면 해당 finding의 적용 범위를 수정된 SHA와 다시 대조해야 함."
+}
