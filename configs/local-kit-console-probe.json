@@ -1,0 +1,8 @@
+{
+  "schema_version": 1,
+  "api_url": "http://127.0.0.1:8765",
+  "maximum_wall_time_s": 150,
+  "operation_timeout_s": 12,
+  "image_size_px": [1100, 900],
+  "scope": "SDK4.5 native Kit console to CPU model API; no physical robot or fleet proof"
+}

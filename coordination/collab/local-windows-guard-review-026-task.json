@@ -1,0 +1,42 @@
+{
+  "task_id": "local-windows-guard-review-026",
+  "attempt": 1,
+  "contract_revision": 26,
+  "owner": "control",
+  "author": "root",
+  "goal": "새Job guard/enumcompat의도달가능한major/blocking오류만한정검수",
+  "read_paths": [
+    "scripts/isaac/windows_job_runner.py",
+    "scripts/isaac/run-local-contact-probe.ps1",
+    "tests/test_windows_job_runner.py",
+    "factory_ops/compat.py",
+    "factory_ops/operations/model.py",
+    "factory_ops/operations/inventory.py",
+    "tests/test_operations_python_compat.py"
+  ],
+  "source_sha256": {
+    "scripts/isaac/windows_job_runner.py": "72b355dcfca5ba6603ddc3f791c0f97020e59f87f8fe7386a59656263bb75fb2",
+    "scripts/isaac/run-local-contact-probe.ps1": "a8ddc4815f43ddb3ea91ce57efb71b8e3641bbc6b3dac1e270fbedeceec7e0fd",
+    "tests/test_windows_job_runner.py": "4ebb157638e37ba074f34543186a9b89893f23384a704b85ee55d685b93f2495",
+    "factory_ops/compat.py": "4294ba7ebbb0ee020b1ece6572e6c1f66069fd2fde4848603bcc31fe4547e53a",
+    "factory_ops/operations/model.py": "17b90c1436b78f436d88b325adb27d1531440b63ef0cf169aece1d6070bfb38e",
+    "factory_ops/operations/inventory.py": "1114b23fcdb3520de0b12f2e246680e5a0fbdcb945ac2ed9b3de0a2f9a5972f4",
+    "tests/test_operations_python_compat.py": "ac8f35e2a2484114330d3e6c0fba77b4ededea517b5b0ddb2f7e83475909bff0"
+  },
+  "evidence": [
+    "artifacts/local45/contact-003.host.json",
+    "artifacts/local45/contact-003.job.json",
+    "artifacts/local45/runtime-001.host.json"
+  ],
+  "write_paths": [
+    "coordination/collab/results/local-windows-guard-review-026.json"
+  ],
+  "contract": [
+    "다른작성자와함께작업중. 지정7파일읽기와receipt만, 제품/원장/Git/VM/SDK실행/새세션변경금지.",
+    "root 실제Windows3검사PASS(정상/부모종료손자잔류/timeout), stdout보존검사. 실제SDKcontact003과native모션runtime001 모두Job동일source/run/spec+전체activePID[]=closed. runtime001모션420step7s.585mPASS, scans없음으로probe전체실패. source/config엄격집합수용.",
+    "root코드검토만 major/blocking도달가능재현위주. 추가전체검사/외부리서치/고도화추가금지. enumSDK3.10/CPU3.12직렬화검사+fleetimportPASS, pyright지정0. windowsjobfakeSDK3검사실제네이티브process사용.",
+    "assignment전gate/SDK실행불가, jobinherit/no-breakaway/killclose/normalororphan/timeout/identity/exception진술을확인. 능력밖이나환경특이위험은근거와범위를구분.",
+    "SDK4.5 runtime0252파일은동결그대로두세요. root가scan진단probe를소유해별도진행. 검수완료후receipt/SHA를보내고대기."
+  ],
+  "created_at_utc": "2026-10-19T22:33:54.806120+00:00"
+}

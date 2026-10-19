@@ -1,0 +1,202 @@
+{
+  "task_id": "local45-probe-claim-review-028",
+  "attempt": 1,
+  "contract_revision": 28,
+  "owner": "control",
+  "author": "root",
+  "ack_at_utc": "2026-10-19T23:01:22.2616358Z",
+  "source_sha256": {
+    "scripts/isaac/local_fleet_runtime_probe.py": "d75b2bfdca68b6f4db7608b3052d9222e709c3283a56a34ddaa7a68d2eac53c1",
+    "configs/local45-fleet-runtime-probe.json": "d891d14d1a090a46a3d3d361257b38c3016a976c942cda6344230efeb54c55f8",
+    "docs/evidence/local45-runtime-006.json": "04dd14b30b6b0c39204c0094847766d162d4354d90720f43c940a93a9c48c85b"
+  },
+  "sha_match": true,
+  "scope": "지정3파일/006 result·host JSON/025 typing receipt만 읽기. major 판정 및 주장 경계 검수, receipt만 작성.",
+  "status": "completed",
+  "reviewer": "control",
+  "verdict": "accepted_with_existing_component_limits",
+  "major_count": 0,
+  "findings": [],
+  "conclusion": "지정 SHA의 시험기·설정·공개 요약과006 result/host가 일치한다. 4대의 authored wheel 이동/종단 저속 및8개 차량 topic의 수신·header 전진이라는 한정 주장은 수용 가능하다. 센서 품질/Nav2/운송/적재/충전/시각 정렬을 통과로 과장하는 주요 결함은 발견하지 못했다.",
+  "checked_boundaries": [
+    {
+      "scope": "source/config/run 및typing source 구분",
+      "locations": [
+        "scripts/isaac/local_fleet_runtime_probe.py:65",
+        "docs/evidence/local45-runtime-006.json:8",
+        "coordination/collab/results/local45-runtime-facade-025.json:typing_only_finish"
+      ],
+      "result": "시험기d75b2bfd/configd891d14d가 raw/host/공개 요약과 일치. 공통24필드 동일, raw/host bytes SHA도 요약의 digest와 동일. 실행 facade95139a78은025 receipt의 typing 이전 source와 일치하고 최종793c467a와 분리되어 있다. typing AST 동일성은 수용된025 기록을 참조하고 이번에 재검사하지 않음."
+    },
+    {
+      "scope": "실제4pose/encoder/time 및이동·종단속도",
+      "locations": [
+        "scripts/isaac/local_fleet_runtime_probe.py:219",
+        "scripts/isaac/local_fleet_runtime_probe.py:224",
+        "scripts/isaac/local_fleet_runtime_probe.py:242",
+        "scripts/isaac/local_fleet_runtime_probe.py:270",
+        "scripts/isaac/local_fleet_runtime_probe.py:279"
+      ],
+      "result": "root 시험기는 실제 native pose/joint/World counter를 읽고 .2m/s의 짧은 authored 명령을 DriveProfile/실제 wheel action에 적용한다. 71표본의 시간/frame이 증가하고 각4대 encoder 값이 변한다. 표본으로 이동0.5846017~0.5847996m와 종단속도0.0011017~0.0011253m/s가 재계산된다. 실제 delta420step/7.000000365s와 공개 요약이 일치한다.",
+      "limit": "stop 주장은 마지막 두 pose의 약0.08333s 구간 평균속도가 기존0.03m/s gate 미만이라는 범위이다. 안전 정지 인증·watchdog·외부 정지·장기 dwell·Nav2 완료를 의미하지 않는다."
+    },
+    {
+      "scope": "8개 차량 sensor/topic identity와수신 전진",
+      "locations": [
+        "scripts/isaac/local_fleet_runtime_probe.py:99",
+        "scripts/isaac/local_fleet_runtime_probe.py:175",
+        "scripts/isaac/local_fleet_runtime_probe.py:199",
+        "scripts/isaac/local_fleet_runtime_probe.py:276",
+        "configs/local45-fleet-runtime-probe.json:static_reference_lidar"
+      ],
+      "result": "config의4namespace×front/rear가 실제 metadata의8prim/8topic과 정확히 일치한다. expected frame_id와 양수·증가 stamp 및 최소유효 range를 검사한 count는53~54, 전체callback은53~55로 구분되어 있다.8개 native buffer는 각각3200칸이며 static reference는false이다.",
+      "limit": "저장된 scan은 header/count 요약이다. 각 packet 원문/전체timestamp열·range품질·각도coverage·10Hz 달성·GMO frame을 검증한 기록으로 취급하지 않는다. frame_id는 namespace topic 안의 설정값 일치이며 전역TF 구별 성공을 뜻하지 않는다."
+    },
+    {
+      "scope": "주장false flags 및정리",
+      "locations": [
+        "docs/evidence/local45-runtime-006.json:662",
+        "docs/evidence/local45-runtime-006.json:669",
+        "docs/evidence/local45-runtime-006.json:674",
+        "scripts/isaac/local_fleet_runtime_probe.py:298"
+      ],
+      "result": "운송/적재/충전/Nav2/센서품질/ROS시각정렬6flag가 모두false다. host의exit0/closed=true/full_descendant_closure_verified=true/remaining_owned_pids=[]/prelaunch identity가 공개host_summary와 일치한다. debug graybox 이미지는 portfolio render로 주장하지 않는다.",
+      "limit": "full closed 판정은 지정host JSON 기록과의 대조다. 이번에 OS process/Job 실행이나 guard 구현을 재검수하지 않았고, 별도Job JSON은 카드 범위 밖이므로 doc의 job_receipt_sha256 값만 보존한다."
+    }
+  ],
+  "existing_open_limits": [
+    {
+      "boundary": "ROS stamp와물리시각 정렬",
+      "evidence": "마지막 pose 표본 sim_time7.0500003677s에 비해 최대 LaserScan header stamp7.992333749s이다. 현재 scan gate는 양수/전진만 확인한다.",
+      "interpretation": "동일 clock 정렬 또는 freshness 성공으로 해석할 수 없다. 원인/정확한 timestamp 의미는 이번 지정 범위에서 미확정이다.",
+      "claim_assessment": "공개 요약이 ros_clock_alignment_verified=false로 명시하므로 이 component 한정 수용을 막는새 major로 분류하지 않는다. 향후 mission/FlatScan observer에서 이false 경계를 유지한다."
+    },
+    {
+      "boundary": "range품질",
+      "evidence": "마지막 ROS valid_fraction0.15625~0.68375, native positive finite502~2201/3200.",
+      "claim_assessment": "3200은 buffer 길이이며3200유효ray 성공이 아니다. 공개 sensor_quality_qualification_verified=false 및 range/coverage/rate 미인증 문구가 적합하다."
+    }
+  ],
+  "validation": {
+    "method": "지정 JSON 읽기·동일필드/해시 대조 및 저장표본 산술 재계산만 수행",
+    "result": "PASS within stated claim boundary",
+    "test_suite_executed": false,
+    "sdk_gpu_ros_vm_execution": false,
+    "new_qualification_gate_added": false,
+    "product_or_original_modified": false
+  },
+  "write_paths": [
+    "coordination/collab/results/local45-probe-claim-review-028.json"
+  ],
+  "processes": {
+    "started": [],
+    "pid": null,
+    "stop_command": null
+  },
+  "limits": [
+    "요청한3파일과006 result/host/025 typing receipt만 읽음. 제품/보드/Git/설치/프로세스/VM/SDK/GPU/새에이전트 변경 없음.",
+    "SDK source dependencies/scene USD/launch guard/ROS mission/원장/Job JSON/이미지는 이번에 넓혀 읽지 않음.",
+    "판정은006의4대8sensor component 기록과 명시된 주장 범위에 한정한다.6.2 qualification/실제4대운송 성공을 승인하지 않는다."
+  ],
+  "evidence_audit": {
+    "evidence_sha256": {
+      "scripts/isaac/local_fleet_runtime_probe.py": "d75b2bfdca68b6f4db7608b3052d9222e709c3283a56a34ddaa7a68d2eac53c1",
+      "configs/local45-fleet-runtime-probe.json": "d891d14d1a090a46a3d3d361257b38c3016a976c942cda6344230efeb54c55f8",
+      "docs/evidence/local45-runtime-006.json": "04dd14b30b6b0c39204c0094847766d162d4354d90720f43c940a93a9c48c85b",
+      "artifacts/local45/runtime-006/result.json": "c9c0adbef7cdec5eac05fad17211ebef6dc279ae14109648ea4177f47a80ed57",
+      "artifacts/local45/runtime-006.host.json": "611f51d9025bee634eded4ac7c1ff5f1b4a558fb8dae72290ac5072e6cbc8891",
+      "coordination/collab/results/local45-runtime-facade-025.json": "f01e3d3e7def171aaca36745292bc140644993fb68e2f3c7a098b3cf824806c6"
+    },
+    "run_id": "501882ec6e464e2f870ccae88de661b7",
+    "common_fields_equal": 24,
+    "source_config_run_identity_match": true,
+    "sample_count": 71,
+    "sample_clock_frame_monotonic": true,
+    "first_sample_sim_time_s": 0.06666667014360428,
+    "last_sample_sim_time_s": 7.0500003676861525,
+    "first_sample_physics_frame": 4,
+    "last_sample_physics_frame": 423,
+    "tail_speed_window_s": 0.08333333767950535,
+    "actual_physics_steps": 420,
+    "actual_sim_time_s": 7.000000365078449,
+    "robot_results_recomputed": {
+      "carter1": {
+        "displacement_m": 0.584786430283757,
+        "tail_speed_m_s": 0.001101731551636036,
+        "observed_joint_count": 7,
+        "encoder_values_changed": true
+      },
+      "carter2": {
+        "displacement_m": 0.5846080467241176,
+        "tail_speed_m_s": 0.001122046308531844,
+        "observed_joint_count": 7,
+        "encoder_values_changed": true
+      },
+      "carter3": {
+        "displacement_m": 0.5847996118587422,
+        "tail_speed_m_s": 0.0011121984647353576,
+        "observed_joint_count": 7,
+        "encoder_values_changed": true
+      },
+      "carter4": {
+        "displacement_m": 0.584601709029445,
+        "tail_speed_m_s": 0.0011252515788820862,
+        "observed_joint_count": 7,
+        "encoder_values_changed": true
+      }
+    },
+    "sensor_count": 8,
+    "accepted_scan_count_range": [
+      53,
+      54
+    ],
+    "callback_count_range": [
+      53,
+      55
+    ],
+    "native_range_counts": [
+      3200,
+      3200,
+      3200,
+      3200,
+      3200,
+      3200,
+      3200,
+      3200
+    ],
+    "native_positive_counts": [
+      1916,
+      502,
+      2039,
+      572,
+      1947,
+      556,
+      2201,
+      607
+    ],
+    "ros_valid_fraction_range": [
+      0.15625,
+      0.68375
+    ],
+    "latest_scan_stamp_s": 7.992333749,
+    "false_claim_flags": {
+      "four_amr_transport_verified": false,
+      "physical_loading_verified": false,
+      "physical_charging_verified": false,
+      "nav2_mission_verified": false,
+      "sensor_quality_qualification_verified": false,
+      "ros_clock_alignment_verified": false
+    },
+    "host_summary": {
+      "exit_code": 0,
+      "closed": true,
+      "full_descendant_closure_verified": true,
+      "remaining_owned_pids": [],
+      "prelaunch_inputs_verified": true,
+      "project_sources_matched": true,
+      "probe_identity_matched": true,
+      "timed_out": false
+    }
+  },
+  "completed_at_utc": "2026-10-19T23:03:15.9523156Z"
+}

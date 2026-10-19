@@ -1,0 +1,35 @@
+{
+  "task_id": "local45-mission-boundary-map-027",
+  "attempt": 1,
+  "contract_revision": 27,
+  "owner": "control",
+  "goal": "4.5 facade를실제4대ROS mission loop에연결할때남은SDK6.2전용API/센서lifecycle 경계를빠짐없이작게매핑",
+  "read_paths": [
+    "scripts/isaac/g2_scene.py",
+    "scripts/isaac/g3_scene.py",
+    "scripts/isaac/fleet4_transport_scene.py",
+    "scripts/isaac/factory_visuals.py",
+    "factory_ops/isaac45_runtime.py",
+    "scripts/isaac/robot_qualification.py"
+  ],
+  "source_sha256": {
+    "scripts/isaac/g2_scene.py": "1cb0180867abacdedda9f3b880786ccd63734e678be3e58d6ef42e5878bb9534",
+    "scripts/isaac/g3_scene.py": "739f0f9abb803b4fc200cf8ab00bee6e6bf2b4f0a9a9df04f09fea61991132fd",
+    "scripts/isaac/fleet4_transport_scene.py": "d7d4d13e896cf115562addef84597ee26e564eb14aa85073a47875600a2c6f71",
+    "scripts/isaac/factory_visuals.py": "25768848d6b035be333d26382b5096b720aafa4782eee8daa894f677721b90db",
+    "factory_ops/isaac45_runtime.py": "95139a7834e16c1f864e52ee36b26869eac26159830d7cbb7288baf602f316f2",
+    "scripts/isaac/robot_qualification.py": "28b5953366d1472b7c9b94cad44a40752f2213f314b85ace813534e3c9bf8737"
+  },
+  "write_paths": [
+    "coordination/collab/results/local45-mission-boundary-map-027.json"
+  ],
+  "contract": [
+    "지정6파일과그함수의필요한인접설치SDK API만읽기,receipt만작성. root가g2통합/newlocalentry/probe/원장/Git소유. 다른작성자파일/GPU/VM/새세션/패키지변경없음.",
+    "root native005 실제1대/앞뒤scan통과,현재0064대/8차량scan실행중. 025revision2source95139a78 동결. 추가단발광범위리뷰요청아님,다음구현의사실매핑.",
+    "g2 default6.2 canonical/sourcequalification유지. 명시local45별도entry/flag로runtime.factory를연결하는최소patch point. rendererMotionBVH/clock/wheel/capture/lidar/_ready_payload APIs를API근거로열거.",
+    "특히BarrierLifecycle.register_lidar_sensors/step/cleanup 및parse_generic_model_output_data에의존하는실제경로와기존6.2GMO frame/timestamp계약을찾아4.5native FlatScan의timestamp/unique-observation count로새스키마를쓸최소별도관찰자방법을제안. 6.2GMO header를가짜로만들거나 GT/physicsframe로센서frame을대체하는안금지.",
+    "원래qualification verifier를약화시키지말고4.5개발실행과closed evidence를구분. 기능손상없이가능한최소Local45Lifecycle subclass/adapter interface와추가필요경계만. sourcearchive/pins/preflight/closedsource identity도읽은경로중새import로필요하면지적.",
+    "bounded<=준비된사실우선. 불명확한외부버전조사나새architectureworkflow없음. 함수/라인/근거와root의다음편집3~5묶음,blocker만receipt로제출."
+  ],
+  "created_at_utc": "2026-10-19T22:47:59.841013+00:00"
+}

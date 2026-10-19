@@ -1,0 +1,33 @@
+{
+  "task_id": "local45-probe-claim-review-028",
+  "attempt": 1,
+  "contract_revision": 28,
+  "owner": "control",
+  "author": "root",
+  "goal": "native006을생성한root시험기의관측/판정과공개요약주장만한정검수",
+  "read_paths": [
+    "scripts/isaac/local_fleet_runtime_probe.py",
+    "configs/local45-fleet-runtime-probe.json",
+    "docs/evidence/local45-runtime-006.json"
+  ],
+  "source_sha256": {
+    "scripts/isaac/local_fleet_runtime_probe.py": "d75b2bfdca68b6f4db7608b3052d9222e709c3283a56a34ddaa7a68d2eac53c1",
+    "configs/local45-fleet-runtime-probe.json": "d891d14d1a090a46a3d3d361257b38c3016a976c942cda6344230efeb54c55f8",
+    "docs/evidence/local45-runtime-006.json": "04dd14b30b6b0c39204c0094847766d162d4354d90720f43c940a93a9c48c85b"
+  },
+  "evidence": [
+    "artifacts/local45/runtime-006/result.json",
+    "artifacts/local45/runtime-006.host.json",
+    "coordination/collab/results/local45-runtime-facade-025.json"
+  ],
+  "write_paths": [
+    "coordination/collab/results/local45-probe-claim-review-028.json"
+  ],
+  "contract": [
+    "당신은작성자와다른검수자. 지정3파일과native006 JSON/host및typing-only receipt만읽고결과receipt만작성. 제품/보드/Git/SDK/VM/새agent/전체검사없음.",
+    "실제4pose/encoder/timecounter,8topic distinct id/stamp/count,step420/sim7s,stop측정/한계falseflag가실제원본과같은지검토. 센서품질/Nav2/적재/충전을통과로과장하는오류만major로지적. 더강한새qualification기준이나새프로젝트조건추가없음.",
+    "원본006runtime95139a78은새793c467타입주석만다르고normalizedruntimeASTsame. 시험기소스는원본006 SHA와현재일치. 원본renderer회색box는componentdebug이며README대표이미지아님.",
+    "추가실험/광범위코드리뷰없이결과간단확정. minor개선은필요시단문만. Root가그동안sourcearchive/commit구성과다음local45G2통합준비."
+  ],
+  "created_at_utc": "2026-10-19T23:01:04.695493+00:00"
+}

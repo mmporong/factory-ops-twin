@@ -1,6 +1,6 @@
 {
-  "revision": 22,
-  "updated_at": "2026-10-19T16:04:53.922080+00:00",
+  "revision": 29,
+  "updated_at": "2026-10-19T23:07:02.085301+00:00",
   "scope": {
     "excluded": "실물 로봇 실행, 새 유료 서비스/에셋, 공개 배포",
     "project_root": "C:\\Users\\LIMMM\\factory-ops-twin",
@@ -20,7 +20,7 @@
       "role": "dashboard frontend author",
       "name": "control",
       "agent_kind": "codex",
-      "status": "022 result received; no pending assignment",
+      "status": "023 revision2 visual contrast repair",
       "session": "default",
       "agent_session": "01a152aa-24b4-7a31-92e3-a2b620f4feeb",
       "terminal_id": "term_65e06d27e415810",
@@ -475,6 +475,136 @@
       ],
       "acceptance": "bounded review of root runtime ownership/provenance and RTX scan gap; no product mutation",
       "acceptance_record": "Bounded review received. LR022-002: root added count/frame/clock/source/config ACK checks and exact dependency set. LR022-001: guard now declares immediate-child closure scope and unsupported full descendant timeout cleanup; no production full-tree approval. Native007 verifies current source; raw006 unchanged."
+    },
+    {
+      "task_id": "kit-operator-console-023",
+      "attempt": 1,
+      "contract_revision": 23,
+      "owner": "control",
+      "reviewer": "root",
+      "status": "accepted",
+      "ACK": true,
+      "task_path": "coordination/collab/kit-operator-console-023-task.json",
+      "result_path": "coordination/collab/results/kit-operator-console-023.json",
+      "write_paths": [
+        "factory_ops/kit_client.py",
+        "tests/test_kit_client.py",
+        "extensions/factory.ops.console/config/extension.toml",
+        "extensions/factory.ops.console/factory_ops_console/__init__.py",
+        "extensions/factory.ops.console/factory_ops_console/extension.py",
+        "coordination/collab/results/kit-operator-console-023.json"
+      ],
+      "acceptance": "표준클라이언트검사 PASS + root의 실제SDK4.5 extension enable/window state/실제API선택·pause/resume·주문receipt와shutdown 확인; CPU모드와물리결과구분",
+      "acceptance_record": "root actual003 passed3 APIactions+selection, same businessrun, visible white UI and disabled absence reviewed, actual ownedwindowhidden/hidecallback. All5 controlSHA matched. SDK closed normally; old host tree limitation retained."
+    },
+    {
+      "task_id": "mock-mes-boundary-review-024",
+      "attempt": 1,
+      "contract_revision": 24,
+      "owner": "control",
+      "author": "root",
+      "status": "accepted",
+      "ACK": true,
+      "task_path": "coordination/collab/mock-mes-boundary-review-024-task.json",
+      "result_path": "coordination/collab/results/mock-mes-boundary-review-024.json",
+      "write_paths": [
+        "coordination/collab/results/mock-mes-boundary-review-024.json"
+      ],
+      "acceptance": "도달가능한 major/blocking 오류만 실제소스 경로와최소수정 제시. 추가전체검사·웹리서치·SDK·제품변경 없음. root의10MES/24기존검사PASS와실제HTTPflow(추가6·신규ORD5·중복재적용없음·다른run400) 참고. Kit023작성경로는이제동결; root native실행중. 원장/타작성자파일/Git/VM/새에이전트 변경금지.",
+      "acceptance_record": "review source SHA matched; no major/blocking in specified MES/idempotency/conservation/run/time/readonly boundary;34 tests and actualHTTP input flow evidence; no physical/MES-site claim"
+    },
+    {
+      "task_id": "local45-runtime-facade-025",
+      "attempt": 1,
+      "contract_revision": 25,
+      "owner": "control",
+      "reviewer": "root",
+      "write_paths": [
+        "factory_ops/isaac45_runtime.py",
+        "tests/test_isaac45_runtime.py",
+        "coordination/collab/results/local45-runtime-facade-025.json"
+      ],
+      "acceptance": "root source 검수와새actualSDK실행에서stage/actualworldclock/actualwheel/sampletopic확인. mock검사만으로native통과주장금지.",
+      "status": "accepted",
+      "ACK": true,
+      "task_path": "coordination/collab/local45-runtime-facade-025-task.json",
+      "result_path": "coordination/collab/results/local45-runtime-facade-025.json",
+      "acceptance_record": "root actual006:4 body motion/stop,420steps7s,8 actualscan identities53-54/native3200,preflight/fullJobclosed. Finaltyping3annotations leavesnormalizedruntimeASTsame;14CPU/type0 received,2finalSHA matched. Not Nav2/material/charging qualification."
+    },
+    {
+      "task_id": "local-windows-guard-review-026",
+      "attempt": 1,
+      "contract_revision": 26,
+      "owner": "control",
+      "author": "root",
+      "write_paths": [
+        "coordination/collab/results/local-windows-guard-review-026.json"
+      ],
+      "status": "needs_revision",
+      "ACK": false,
+      "task_path": "coordination/collab/local-windows-guard-review-026-task.json",
+      "result_path": "coordination/collab/results/local-windows-guard-review-026.json",
+      "acceptance_record": "WG026001 found: missing launch-time source/config/dependency/spec binding. Original finding preserved; resolved by separate attempt2."
+    },
+    {
+      "task_id": "local45-mission-boundary-map-027",
+      "attempt": 1,
+      "contract_revision": 27,
+      "owner": "control",
+      "write_paths": [
+        "coordination/collab/results/local45-mission-boundary-map-027.json"
+      ],
+      "status": "accepted_readonly_report",
+      "ACK": true,
+      "task_path": "coordination/collab/local45-mission-boundary-map-027-task.json",
+      "result_path": "coordination/collab/results/local45-mission-boundary-map-027.json",
+      "acceptance_record": "sourceSHA beforetyping matched;5unchanged sources and runtime typing-only diff verified. Four bounded edit groups retained; no implementation/native success claim."
+    },
+    {
+      "task_id": "local-windows-guard-review-026",
+      "attempt": 2,
+      "contract_revision": 26,
+      "owner": "control",
+      "author": "root",
+      "status": "accepted",
+      "ACK": true,
+      "task_path": "coordination/collab/local-windows-guard-review-026-recheck-task.json",
+      "result_path": "coordination/collab/results/local-windows-guard-review-026-recheck.json",
+      "write_paths": [
+        "coordination/collab/results/local-windows-guard-review-026-recheck.json"
+      ],
+      "acceptance_record": "WG026001 resolved within launch-time scope;7SHA matched,5 regression tests and actualnative004/005 source/config/spec/input/Job closure. Source freeze during runtime remains required."
+    },
+    {
+      "task_id": "local45-probe-claim-review-028",
+      "attempt": 1,
+      "contract_revision": 28,
+      "owner": "control",
+      "author": "root",
+      "write_paths": [
+        "coordination/collab/results/local45-probe-claim-review-028.json"
+      ],
+      "status": "accepted",
+      "ACK": true,
+      "task_path": "coordination/collab/local45-probe-claim-review-028-task.json",
+      "result_path": "coordination/collab/results/local45-probe-claim-review-028.json",
+      "acceptance_record": "3sourceSHA matched; major0; raw4body displacement/terminalspeed/420steps7s/8topiccounts and explicit nonqualification flags recomputed by control, no extra native runs."
+    },
+    {
+      "task_id": "local45-flat-scan-observer-029",
+      "attempt": 1,
+      "contract_revision": 29,
+      "owner": "control",
+      "reviewer": "root",
+      "write_paths": [
+        "factory_ops/flat_scan_observation.py",
+        "tests/test_flat_scan_observation.py",
+        "coordination/collab/results/local45-flat-scan-observer-029.json"
+      ],
+      "status": "dispatched",
+      "ACK": false,
+      "task_path": "coordination/collab/local45-flat-scan-observer-029-task.json",
+      "result_path": "coordination/collab/results/local45-flat-scan-observer-029.json"
     }
   ],
   "decisions": [

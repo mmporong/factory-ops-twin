@@ -1,0 +1,37 @@
+Start testing: Oct 20 07:11 KST
+----------------------------------------------------------
+2/4 Testing: test_plugin_loading
+2/4 Test: test_plugin_loading
+Command: "/usr/bin/python3" "-u" "/opt/ros/jazzy/share/ament_cmake_test/cmake/run_test.py" "/mnt/d/FactoryOpsRuntime/local45-025/nav2-build/test_results/factory_ops_goal_checker/test_plugin_loading.gtest.xml" "--package-name" "factory_ops_goal_checker" "--output-file" "/mnt/d/FactoryOpsRuntime/local45-025/nav2-build/ament_cmake_gtest/test_plugin_loading.txt" "--command" "/mnt/d/FactoryOpsRuntime/local45-025/nav2-build/test_plugin_loading" "--gtest_output=xml:/mnt/d/FactoryOpsRuntime/local45-025/nav2-build/test_results/factory_ops_goal_checker/test_plugin_loading.gtest.xml"
+Directory: /mnt/d/FactoryOpsRuntime/local45-025/nav2-build
+"test_plugin_loading" start time: Oct 20 07:11 KST
+Output:
+----------------------------------------------------------
+-- run_test.py: invoking following command in '/mnt/d/FactoryOpsRuntime/local45-025/nav2-build':
+ - /mnt/d/FactoryOpsRuntime/local45-025/nav2-build/test_plugin_loading --gtest_output=xml:/mnt/d/FactoryOpsRuntime/local45-025/nav2-build/test_results/factory_ops_goal_checker/test_plugin_loading.gtest.xml
+Running main() from /opt/ros/jazzy/src/gtest_vendor/src/gtest_main.cc
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from FactoryOpsGoalCheckerPluginLoading
+[ RUN      ] FactoryOpsGoalCheckerPluginLoading.LoadsAllClassesFromOneSharedLibrary
+[       OK ] FactoryOpsGoalCheckerPluginLoading.LoadsAllClassesFromOneSharedLibrary (163 ms)
+[----------] 1 test from FactoryOpsGoalCheckerPluginLoading (163 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (163 ms total)
+[  PASSED  ] 1 test.
+-- run_test.py: return code 0
+-- run_test.py: inject classname prefix into gtest result file '/mnt/d/FactoryOpsRuntime/local45-025/nav2-build/test_results/factory_ops_goal_checker/test_plugin_loading.gtest.xml'
+-- run_test.py: verify result file '/mnt/d/FactoryOpsRuntime/local45-025/nav2-build/test_results/factory_ops_goal_checker/test_plugin_loading.gtest.xml'
+<end of output>
+Test time =   0.29 sec
+----------------------------------------------------------
+Test Passed.
+"test_plugin_loading" end time: Oct 20 07:11 KST
+"test_plugin_loading" time elapsed: 00:00:00
+----------------------------------------------------------
+
+End testing: Oct 20 07:11 KST
+
+gtest =   0.29 sec*proc
+

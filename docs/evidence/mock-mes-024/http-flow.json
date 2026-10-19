@@ -1,0 +1,2508 @@
+{
+  "schema_version": 1,
+  "status": "passed",
+  "scope": "mock MES HTTP to CPU inventory/order/tote ledger; not real MES or physical transport",
+  "started_at_utc": "2026-10-19T22:42:16.890208+00:00",
+  "api": "http://127.0.0.1:8765",
+  "source_sha256": "2c7133fda2be42ebf0e12c0ac19a6f156340b0f5289d32e3f77b74349ee526f0",
+  "exchanges": [
+    {
+      "path": "/api/snapshot",
+      "request": null,
+      "http_status": 200,
+      "response": {
+        "schema_version": 1,
+        "run_id": "web-local-model-83f1eca4-1ebb-4b18-8ae2-60190785a2eb",
+        "revision": 0,
+        "mode": "local_model",
+        "sim_time_s": 0.21899999998277053,
+        "observed_at": "2026-10-19T22:42:17.398805+00:00",
+        "connection": "connected",
+        "paused": false,
+        "capabilities": [
+          "pause",
+          "resume",
+          "create_order"
+        ],
+        "robots": [
+          {
+            "id": "amr-1",
+            "label": "AMR 01",
+            "status": "moving",
+            "pose": {
+              "x_m": 3.5714999999909196,
+              "y_m": 4.0,
+              "yaw_rad": 0.0
+            },
+            "speed_mps": 0.65,
+            "battery_pct": 84.99894046875012,
+            "battery_source": "authored_cpu_virtual_energy_model",
+            "task_id": "ORD-0001:in",
+            "task_type": "inbound",
+            "task_label": "자재 공급",
+            "payload_id": "T001",
+            "destination": "CI",
+            "waiting_reason": null,
+            "route": [
+              {
+                "x_m": 9.0,
+                "y_m": 4.0
+              },
+              {
+                "x_m": 12.0,
+                "y_m": 4.0
+              },
+              {
+                "x_m": 15.0,
+                "y_m": 4.0
+              },
+              {
+                "x_m": 25.0,
+                "y_m": 4.0
+              },
+              {
+                "x_m": 25.0,
+                "y_m": 7.0
+              },
+              {
+                "x_m": 21.5,
+                "y_m": 7.0
+              }
+            ],
+            "observed_sim_time_s": 0.21899999998277053,
+            "charging_phase": null,
+            "charging_dock": null
+          },
+          {
+            "id": "amr-2",
+            "label": "AMR 02",
+            "status": "moving",
+            "pose": {
+              "x_m": 3.5714999999909196,
+              "y_m": 10.0,
+              "yaw_rad": 0.0
+            },
+            "speed_mps": 0.65,
+            "battery_pct": 79.99894046875012,
+            "battery_source": "authored_cpu_virtual_energy_model",
+            "task_id": "ORD-0002:in",
+            "task_type": "inbound",
+            "task_label": "자재 공급",
+            "payload_id": "T002",
+            "destination": "CI",
+            "waiting_reason": null,
+            "route": [
+              {
+                "x_m": 9.0,
+                "y_m": 10.0
+              },
+              {
+                "x_m": 9.0,
+                "y_m": 4.0
+              },
+              {
+                "x_m": 12.0,
+                "y_m": 4.0
+              },
+              {
+                "x_m": 15.0,
+                "y_m": 4.0
+              },
+              {
+                "x_m": 25.0,
+                "y_m": 4.0
+              },
+              {
+                "x_m": 25.0,
+                "y_m": 7.0
+              },
+              {
+                "x_m": 21.5,
+                "y_m": 7.0
+              }
+            ],
+            "observed_sim_time_s": 0.21899999998277053,
+            "charging_phase": null,
+            "charging_dock": null
+          },
+          {
+            "id": "amr-3",
+            "label": "AMR 03",
+            "status": "idle",
+            "pose": {
+              "x_m": 3.5,
+              "y_m": 16.0,
+              "yaw_rad": 0.0
+            },
+            "speed_mps": 0.0,
+            "battery_pct": 74.99954375000004,
+            "battery_source": "authored_cpu_virtual_energy_model",
+            "task_id": null,
+            "task_type": null,
+            "task_label": null,
+            "payload_id": null,
+            "destination": null,
+            "waiting_reason": null,
+            "route": [],
+            "observed_sim_time_s": 0.21899999998277053,
+            "charging_phase": null,
+            "charging_dock": null
+          },
+          {
+            "id": "amr-4",
+            "label": "AMR 04",
+            "status": "waiting",
+            "pose": {
+              "x_m": 29.0,
+              "y_m": 10.0,
+              "yaw_rad": 0.2627999999793246
+            },
+            "speed_mps": 0.0,
+            "battery_pct": 17.998968500000082,
+            "battery_source": "authored_cpu_virtual_energy_model",
+            "task_id": "charge:amr-4",
+            "task_type": "charging",
+            "task_label": "CPU 가상 충전",
+            "payload_id": null,
+            "destination": "P1",
+            "waiting_reason": "CPU 충전: approach",
+            "route": [
+              {
+                "x_m": 25.0,
+                "y_m": 10.0
+              },
+              {
+                "x_m": 25.0,
+                "y_m": 7.0
+              },
+              {
+                "x_m": 25.0,
+                "y_m": 4.0
+              },
+              {
+                "x_m": 15.0,
+                "y_m": 4.0
+              },
+              {
+                "x_m": 12.0,
+                "y_m": 4.0
+              },
+              {
+                "x_m": 12.0,
+                "y_m": 1.5
+              }
+            ],
+            "observed_sim_time_s": 0.21899999998277053,
+            "charging_phase": "approach",
+            "charging_dock": "CH1"
+          }
+        ],
+        "tasks": [
+          {
+            "id": "ORD-0001:in",
+            "order_id": "ORD-0001",
+            "type": "inbound",
+            "state": "started",
+            "robot_id": "amr-1",
+            "source": "S1",
+            "destination": "CI",
+            "payload_id": "LOT-0001",
+            "progress": null
+          },
+          {
+            "id": "ORD-0002:in",
+            "order_id": "ORD-0002",
+            "type": "inbound",
+            "state": "started",
+            "robot_id": "amr-2",
+            "source": "S2",
+            "destination": "CI",
+            "payload_id": "LOT-0002",
+            "progress": null
+          },
+          {
+            "id": "ORD-0003:in",
+            "order_id": "ORD-0003",
+            "type": "inbound",
+            "state": "ready",
+            "robot_id": null,
+            "source": "S3",
+            "destination": "CI",
+            "payload_id": "LOT-0003",
+            "progress": null
+          },
+          {
+            "id": "ORD-0004:in",
+            "order_id": "ORD-0004",
+            "type": "inbound",
+            "state": "ready",
+            "robot_id": null,
+            "source": "S1",
+            "destination": "CI",
+            "payload_id": "LOT-0004",
+            "progress": null
+          },
+          {
+            "id": "charge:amr-4",
+            "order_id": "",
+            "type": "charging",
+            "state": "approach",
+            "robot_id": "amr-4",
+            "source": "OUT",
+            "destination": "P1",
+            "payload_id": null,
+            "progress": null
+          }
+        ],
+        "inventory": {
+          "model_scope": "operational bookkeeping; not hardware measurement",
+          "stock": [
+            {
+              "location": "S1",
+              "sku": "sensor-kit",
+              "on_hand": 19,
+              "reserved": 1,
+              "available": 18
+            },
+            {
+              "location": "S2",
+              "sku": "sensor-kit",
+              "on_hand": 19,
+              "reserved": 0,
+              "available": 19
+            },
+            {
+              "location": "S3",
+              "sku": "sensor-kit",
+              "on_hand": 20,
+              "reserved": 1,
+              "available": 19
+            }
+          ],
+          "requests": [
+            {
+              "request_id": "ORD-0001",
+              "source": "S1",
+              "sku": "sensor-kit",
+              "quantity": 1,
+              "tote_id": "T001",
+              "state": "picked",
+              "robot_id": "amr-1",
+              "destination": null
+            },
+            {
+              "request_id": "ORD-0002",
+              "source": "S2",
+              "sku": "sensor-kit",
+              "quantity": 1,
+              "tote_id": "T002",
+              "state": "picked",
+              "robot_id": "amr-2",
+              "destination": null
+            },
+            {
+              "request_id": "ORD-0003",
+              "source": "S3",
+              "sku": "sensor-kit",
+              "quantity": 1,
+              "tote_id": "T003",
+              "state": "reserved",
+              "robot_id": null,
+              "destination": null
+            },
+            {
+              "request_id": "ORD-0004",
+              "source": "S1",
+              "sku": "sensor-kit",
+              "quantity": 1,
+              "tote_id": "T004",
+              "state": "reserved",
+              "robot_id": null,
+              "destination": null
+            }
+          ],
+          "totes": [
+            {
+              "tote_id": "T001",
+              "state": "filled",
+              "location": "IN_TRANSIT",
+              "owner": "amr-1",
+              "request_id": "ORD-0001"
+            },
+            {
+              "tote_id": "T002",
+              "state": "filled",
+              "location": "IN_TRANSIT",
+              "owner": "amr-2",
+              "request_id": "ORD-0002"
+            },
+            {
+              "tote_id": "T003",
+              "state": "filled",
+              "location": "S3",
+              "owner": null,
+              "request_id": "ORD-0003"
+            },
+            {
+              "tote_id": "T004",
+              "state": "filled",
+              "location": "S1",
+              "owner": null,
+              "request_id": "ORD-0004"
+            },
+            {
+              "tote_id": "T005",
+              "state": "available",
+              "location": "S2",
+              "owner": null,
+              "request_id": null
+            },
+            {
+              "tote_id": "T006",
+              "state": "available",
+              "location": "S3",
+              "owner": null,
+              "request_id": null
+            },
+            {
+              "tote_id": "T007",
+              "state": "available",
+              "location": "S1",
+              "owner": null,
+              "request_id": null
+            },
+            {
+              "tote_id": "T008",
+              "state": "available",
+              "location": "S2",
+              "owner": null,
+              "request_id": null
+            },
+            {
+              "tote_id": "T009",
+              "state": "available",
+              "location": "S3",
+              "owner": null,
+              "request_id": null
+            },
+            {
+              "tote_id": "T010",
+              "state": "available",
+              "location": "S1",
+              "owner": null,
+              "request_id": null
+            },
+            {
+              "tote_id": "T011",
+              "state": "available",
+              "location": "S2",
+              "owner": null,
+              "request_id": null
+            },
+            {
+              "tote_id": "T012",
+              "state": "available",
+              "location": "S3",
+              "owner": null,
+              "request_id": null
+            },
+            {
+              "tote_id": "T013",
+              "state": "available",
+              "location": "S1",
+              "owner": null,
+              "request_id": null
+            },
+            {
+              "tote_id": "T014",
+              "state": "available",
+              "location": "S2",
+              "owner": null,
+              "request_id": null
+            },
+            {
+              "tote_id": "T015",
+              "state": "available",
+              "location": "S3",
+              "owner": null,
+              "request_id": null
+            },
+            {
+              "tote_id": "T016",
+              "state": "available",
+              "location": "S1",
+              "owner": null,
+              "request_id": null
+            }
+          ],
+          "robot_loads": {
+            "amr-1": "T001",
+            "amr-2": "T002"
+          },
+          "conservation": [
+            {
+              "sku": "sensor-kit",
+              "initial": 60,
+              "replenished": 0,
+              "on_hand": 58,
+              "in_totes": 2,
+              "consumed": 0,
+              "balanced": true
+            }
+          ]
+        },
+        "kpis": {
+          "active_robots": 3,
+          "total_robots": 4,
+          "completed_orders": 0,
+          "pending_tasks": 5,
+          "stock_units": 58
+        },
+        "events": [
+          {
+            "id": "event-1",
+            "sim_time_s": 0.0,
+            "type": "order_created",
+            "message": "ORD-0001 자재 공급 요청",
+            "robot_id": null
+          },
+          {
+            "id": "event-2",
+            "sim_time_s": 0.0,
+            "type": "order_created",
+            "message": "ORD-0002 자재 공급 요청",
+            "robot_id": null
+          },
+          {
+            "id": "event-3",
+            "sim_time_s": 0.0,
+            "type": "order_created",
+            "message": "ORD-0003 자재 공급 요청",
+            "robot_id": null
+          },
+          {
+            "id": "event-4",
+            "sim_time_s": 0.0,
+            "type": "order_created",
+            "message": "ORD-0004 자재 공급 요청",
+            "robot_id": null
+          },
+          {
+            "id": "event-5",
+            "sim_time_s": 0.0,
+            "type": "charge_queued",
+            "message": "amr-4 CPU 가상 충전 대기",
+            "robot_id": "amr-4"
+          },
+          {
+            "id": "event-6",
+            "sim_time_s": 0.0,
+            "type": "charge_reserved",
+            "message": "amr-4 CH1 CPU 슬롯 예약",
+            "robot_id": "amr-4"
+          },
+          {
+            "id": "event-7",
+            "sim_time_s": 0.054499999998370185,
+            "type": "assigned",
+            "message": "amr-1 ORD-0001 배정",
+            "robot_id": "amr-1"
+          },
+          {
+            "id": "event-8",
+            "sim_time_s": 0.054499999998370185,
+            "type": "assigned",
+            "message": "amr-2 ORD-0002 배정",
+            "robot_id": "amr-2"
+          },
+          {
+            "id": "event-9",
+            "sim_time_s": 0.10899999999674037,
+            "type": "pickup",
+            "message": "amr-1 LOT-0001 적재 확인",
+            "robot_id": "amr-1"
+          },
+          {
+            "id": "event-10",
+            "sim_time_s": 0.10899999999674037,
+            "type": "pickup",
+            "message": "amr-2 LOT-0002 적재 확인",
+            "robot_id": "amr-2"
+          }
+        ],
+        "commands": [],
+        "model_scope": "CPU virtual battery/geometric docking; no physics, contact sensor or ROS evidence; operational ledger load, no real MES or traffic clearance",
+        "charging": {
+          "scope": "CPU virtual battery/geometric docking; no physics, contact sensor or ROS evidence",
+          "docks": [
+            {
+              "id": "CH1",
+              "anchor": "P1",
+              "owner": "amr-4",
+              "phase": "approach"
+            },
+            {
+              "id": "CH2",
+              "anchor": "P2",
+              "owner": null,
+              "phase": "available"
+            }
+          ],
+          "queue": []
+        },
+        "integrations": {
+          "mock_mes": {
+            "scope": "mock MES/IoT; CPU ledger only",
+            "available": true,
+            "connection": "unconnected",
+            "sources": [],
+            "equipment": [],
+            "receipts": []
+          }
+        },
+        "api_producer": {
+          "scope": "selected API/model source bytes at service start",
+          "selected_modules_sha256": {
+            "factory_ops/dashboard.py": "416988a3f947264fa545d8bf6480e6f4fd49716af28ef1d1f3b1eab8776561f4",
+            "factory_ops/dashboard_model.py": "0a8eb5045b414ad39ddd619d8753d52067a06fc9db4e6989495bfdea56b74097",
+            "factory_ops/mock_mes.py": "dcfd587b137875bc3a3029e8328c4fb3cf8220660b507792184fc66a9dfde7d2",
+            "factory_ops/dashboard_charging.py": "d04c4357d755cfcf834e890978e67a98bba5e57dc8d125a0ade16e7f4e694446",
+            "factory_ops/operations/ledger.py": "e1c1e90772ff8f6a75828cb077a3b7edc9b121d1955fada29929a495773e1ce3",
+            "factory_ops/operations/inventory.py": "1114b23fcdb3520de0b12f2e246680e5a0fbdcb945ac2ed9b3de0a2f9a5972f4",
+            "factory_ops/operations/model.py": "17b90c1436b78f436d88b325adb27d1531440b63ef0cf169aece1d6070bfb38e",
+            "factory_ops/compat.py": "4294ba7ebbb0ee020b1ece6572e6c1f66069fd2fde4848603bcc31fe4547e53a"
+          }
+        }
+      }
+    },
+    {
+      "path": "/api/commands",
+      "request": {
+        "command_id": "mes-demo-pause-68ea2f51f38a4939ac3e6b908080f54c",
+        "expected_revision": 0,
+        "expected_run_id": "web-local-model-83f1eca4-1ebb-4b18-8ae2-60190785a2eb",
+        "action": "pause"
+      },
+      "http_status": 200,
+      "response": {
+        "command_id": "mes-demo-pause-68ea2f51f38a4939ac3e6b908080f54c",
+        "run_id": "web-local-model-83f1eca4-1ebb-4b18-8ae2-60190785a2eb",
+        "status": "applied",
+        "reason": null,
+        "revision": 1
+      }
+    },
+    {
+      "path": "/api/snapshot",
+      "request": null,
+      "http_status": 200,
+      "response": {
+        "schema_version": 1,
+        "run_id": "web-local-model-83f1eca4-1ebb-4b18-8ae2-60190785a2eb",
+        "revision": 1,
+        "mode": "local_model",
+        "sim_time_s": 0.21899999998277053,
+        "observed_at": "2026-10-19T22:42:17.413747+00:00",
+        "connection": "connected",
+        "paused": true,
+        "capabilities": [
+          "pause",
+          "resume",
+          "create_order"
+        ],
+        "robots": [
+          {
+            "id": "amr-1",
+            "label": "AMR 01",
+            "status": "paused",
+            "pose": {
+              "x_m": 3.5714999999909196,
+              "y_m": 4.0,
+              "yaw_rad": 0.0
+            },
+            "speed_mps": 0.0,
+            "battery_pct": 84.99894046875012,
+            "battery_source": "authored_cpu_virtual_energy_model",
+            "task_id": "ORD-0001:in",
+            "task_type": "inbound",
+            "task_label": "자재 공급",
+            "payload_id": "T001",
+            "destination": "CI",
+            "waiting_reason": "작업 일시정지",
+            "route": [
+              {
+                "x_m": 9.0,
+                "y_m": 4.0
+              },
+              {
+                "x_m": 12.0,
+                "y_m": 4.0
+              },
+              {
+                "x_m": 15.0,
+                "y_m": 4.0
+              },
+              {
+                "x_m": 25.0,
+                "y_m": 4.0
+              },
+              {
+                "x_m": 25.0,
+                "y_m": 7.0
+              },
+              {
+                "x_m": 21.5,
+                "y_m": 7.0
+              }
+            ],
+            "observed_sim_time_s": 0.21899999998277053,
+            "charging_phase": null,
+            "charging_dock": null
+          },
+          {
+            "id": "amr-2",
+            "label": "AMR 02",
+            "status": "paused",
+            "pose": {
+              "x_m": 3.5714999999909196,
+              "y_m": 10.0,
+              "yaw_rad": 0.0
+            },
+            "speed_mps": 0.0,
+            "battery_pct": 79.99894046875012,
+            "battery_source": "authored_cpu_virtual_energy_model",
+            "task_id": "ORD-0002:in",
+            "task_type": "inbound",
+            "task_label": "자재 공급",
+            "payload_id": "T002",
+            "destination": "CI",
+            "waiting_reason": "작업 일시정지",
+            "route": [
+              {
+                "x_m": 9.0,
+                "y_m": 10.0
+              },
+              {
+                "x_m": 9.0,
+                "y_m": 4.0
+              },
+              {
+                "x_m": 12.0,
+                "y_m": 4.0
+              },
+              {
+                "x_m": 15.0,
+                "y_m": 4.0
+              },
+              {
+                "x_m": 25.0,
+                "y_m": 4.0
+              },
+              {
+                "x_m": 25.0,
+                "y_m": 7.0
+              },
+              {
+                "x_m": 21.5,
+                "y_m": 7.0
+              }
+            ],
+            "observed_sim_time_s": 0.21899999998277053,
+            "charging_phase": null,
+            "charging_dock": null
+          },
+          {
+            "id": "amr-3",
+            "label": "AMR 03",
+            "status": "idle",
+            "pose": {
+              "x_m": 3.5,
+              "y_m": 16.0,
+              "yaw_rad": 0.0
+            },
+            "speed_mps": 0.0,
+            "battery_pct": 74.99954375000004,
+            "battery_source": "authored_cpu_virtual_energy_model",
+            "task_id": null,
+            "task_type": null,
+            "task_label": null,
+            "payload_id": null,
+            "destination": null,
+            "waiting_reason": null,
+            "route": [],
+            "observed_sim_time_s": 0.21899999998277053,
+            "charging_phase": null,
+            "charging_dock": null
+          },
+          {
+            "id": "amr-4",
+            "label": "AMR 04",
+            "status": "paused",
+            "pose": {
+              "x_m": 29.0,
+              "y_m": 10.0,
+              "yaw_rad": 0.2627999999793246
+            },
+            "speed_mps": 0.0,
+            "battery_pct": 17.998968500000082,
+            "battery_source": "authored_cpu_virtual_energy_model",
+            "task_id": "charge:amr-4",
+            "task_type": "charging",
+            "task_label": "CPU 가상 충전",
+            "payload_id": null,
+            "destination": "P1",
+            "waiting_reason": "작업 일시정지",
+            "route": [
+              {
+                "x_m": 25.0,
+                "y_m": 10.0
+              },
+              {
+                "x_m": 25.0,
+                "y_m": 7.0
+              },
+              {
+                "x_m": 25.0,
+                "y_m": 4.0
+              },
+              {
+                "x_m": 15.0,
+                "y_m": 4.0
+              },
+              {
+                "x_m": 12.0,
+                "y_m": 4.0
+              },
+              {
+                "x_m": 12.0,
+                "y_m": 1.5
+              }
+            ],
+            "observed_sim_time_s": 0.21899999998277053,
+            "charging_phase": "approach",
+            "charging_dock": "CH1"
+          }
+        ],
+        "tasks": [
+          {
+            "id": "ORD-0001:in",
+            "order_id": "ORD-0001",
+            "type": "inbound",
+            "state": "started",
+            "robot_id": "amr-1",
+            "source": "S1",
+            "destination": "CI",
+            "payload_id": "LOT-0001",
+            "progress": null
+          },
+          {
+            "id": "ORD-0002:in",
+            "order_id": "ORD-0002",
+            "type": "inbound",
+            "state": "started",
+            "robot_id": "amr-2",
+            "source": "S2",
+            "destination": "CI",
+            "payload_id": "LOT-0002",
+            "progress": null
+          },
+          {
+            "id": "ORD-0003:in",
+            "order_id": "ORD-0003",
+            "type": "inbound",
+            "state": "ready",
+            "robot_id": null,
+            "source": "S3",
+            "destination": "CI",
+            "payload_id": "LOT-0003",
+            "progress": null
+          },
+          {
+            "id": "ORD-0004:in",
+            "order_id": "ORD-0004",
+            "type": "inbound",
+            "state": "ready",
+            "robot_id": null,
+            "source": "S1",
+            "destination": "CI",
+            "payload_id": "LOT-0004",
+            "progress": null
+          },
+          {
+            "id": "charge:amr-4",
+            "order_id": "",
+            "type": "charging",
+            "state": "approach",
+            "robot_id": "amr-4",
+            "source": "OUT",
+            "destination": "P1",
+            "payload_id": null,
+            "progress": null
+          }
+        ],
+        "inventory": {
+          "model_scope": "operational bookkeeping; not hardware measurement",
+          "stock": [
+            {
+              "location": "S1",
+              "sku": "sensor-kit",
+              "on_hand": 19,
+              "reserved": 1,
+              "available": 18
+            },
+            {
+              "location": "S2",
+              "sku": "sensor-kit",
+              "on_hand": 19,
+              "reserved": 0,
+              "available": 19
+            },
+            {
+              "location": "S3",
+              "sku": "sensor-kit",
+              "on_hand": 20,
+              "reserved": 1,
+              "available": 19
+            }
+          ],
+          "requests": [
+            {
+              "request_id": "ORD-0001",
+              "source": "S1",
+              "sku": "sensor-kit",
+              "quantity": 1,
+              "tote_id": "T001",
+              "state": "picked",
+              "robot_id": "amr-1",
+              "destination": null
+            },
+            {
+              "request_id": "ORD-0002",
+              "source": "S2",
+              "sku": "sensor-kit",
+              "quantity": 1,
+              "tote_id": "T002",
+              "state": "picked",
+              "robot_id": "amr-2",
+              "destination": null
+            },
+            {
+              "request_id": "ORD-0003",
+              "source": "S3",
+              "sku": "sensor-kit",
+              "quantity": 1,
+              "tote_id": "T003",
+              "state": "reserved",
+              "robot_id": null,
+              "destination": null
+            },
+            {
+              "request_id": "ORD-0004",
+              "source": "S1",
+              "sku": "sensor-kit",
+              "quantity": 1,
+              "tote_id": "T004",
+              "state": "reserved",
+              "robot_id": null,
+              "destination": null
+            }
+          ],
+          "totes": [
+            {
+              "tote_id": "T001",
+              "state": "filled",
+              "location": "IN_TRANSIT",
+              "owner": "amr-1",
+              "request_id": "ORD-0001"
+            },
+            {
+              "tote_id": "T002",
+              "state": "filled",
+              "location": "IN_TRANSIT",
+              "owner": "amr-2",
+              "request_id": "ORD-0002"
+            },
+            {
+              "tote_id": "T003",
+              "state": "filled",
+              "location": "S3",
+              "owner": null,
+              "request_id": "ORD-0003"
+            },
+            {
+              "tote_id": "T004",
+              "state": "filled",
+              "location": "S1",
+              "owner": null,
+              "request_id": "ORD-0004"
+            },
+            {
+              "tote_id": "T005",
+              "state": "available",
+              "location": "S2",
+              "owner": null,
+              "request_id": null
+            },
+            {
+              "tote_id": "T006",
+              "state": "available",
+              "location": "S3",
+              "owner": null,
+              "request_id": null
+            },
+            {
+              "tote_id": "T007",
+              "state": "available",
+              "location": "S1",
+              "owner": null,
+              "request_id": null
+            },
+            {
+              "tote_id": "T008",
+              "state": "available",
+              "location": "S2",
+              "owner": null,
+              "request_id": null
+            },
+            {
+              "tote_id": "T009",
+              "state": "available",
+              "location": "S3",
+              "owner": null,
+              "request_id": null
+            },
+            {
+              "tote_id": "T010",
+              "state": "available",
+              "location": "S1",
+              "owner": null,
+              "request_id": null
+            },
+            {
+              "tote_id": "T011",
+              "state": "available",
+              "location": "S2",
+              "owner": null,
+              "request_id": null
+            },
+            {
+              "tote_id": "T012",
+              "state": "available",
+              "location": "S3",
+              "owner": null,
+              "request_id": null
+            },
+            {
+              "tote_id": "T013",
+              "state": "available",
+              "location": "S1",
+              "owner": null,
+              "request_id": null
+            },
+            {
+              "tote_id": "T014",
+              "state": "available",
+              "location": "S2",
+              "owner": null,
+              "request_id": null
+            },
+            {
+              "tote_id": "T015",
+              "state": "available",
+              "location": "S3",
+              "owner": null,
+              "request_id": null
+            },
+            {
+              "tote_id": "T016",
+              "state": "available",
+              "location": "S1",
+              "owner": null,
+              "request_id": null
+            }
+          ],
+          "robot_loads": {
+            "amr-1": "T001",
+            "amr-2": "T002"
+          },
+          "conservation": [
+            {
+              "sku": "sensor-kit",
+              "initial": 60,
+              "replenished": 0,
+              "on_hand": 58,
+              "in_totes": 2,
+              "consumed": 0,
+              "balanced": true
+            }
+          ]
+        },
+        "kpis": {
+          "active_robots": 3,
+          "total_robots": 4,
+          "completed_orders": 0,
+          "pending_tasks": 5,
+          "stock_units": 58
+        },
+        "events": [
+          {
+            "id": "event-1",
+            "sim_time_s": 0.0,
+            "type": "order_created",
+            "message": "ORD-0001 자재 공급 요청",
+            "robot_id": null
+          },
+          {
+            "id": "event-2",
+            "sim_time_s": 0.0,
+            "type": "order_created",
+            "message": "ORD-0002 자재 공급 요청",
+            "robot_id": null
+          },
+          {
+            "id": "event-3",
+            "sim_time_s": 0.0,
+            "type": "order_created",
+            "message": "ORD-0003 자재 공급 요청",
+            "robot_id": null
+          },
+          {
+            "id": "event-4",
+            "sim_time_s": 0.0,
+            "type": "order_created",
+            "message": "ORD-0004 자재 공급 요청",
+            "robot_id": null
+          },
+          {
+            "id": "event-5",
+            "sim_time_s": 0.0,
+            "type": "charge_queued",
+            "message": "amr-4 CPU 가상 충전 대기",
+            "robot_id": "amr-4"
+          },
+          {
+            "id": "event-6",
+            "sim_time_s": 0.0,
+            "type": "charge_reserved",
+            "message": "amr-4 CH1 CPU 슬롯 예약",
+            "robot_id": "amr-4"
+          },
+          {
+            "id": "event-7",
+            "sim_time_s": 0.054499999998370185,
+            "type": "assigned",
+            "message": "amr-1 ORD-0001 배정",
+            "robot_id": "amr-1"
+          },
+          {
+            "id": "event-8",
+            "sim_time_s": 0.054499999998370185,
+            "type": "assigned",
+            "message": "amr-2 ORD-0002 배정",
+            "robot_id": "amr-2"
+          },
+          {
+            "id": "event-9",
+            "sim_time_s": 0.10899999999674037,
+            "type": "pickup",
+            "message": "amr-1 LOT-0001 적재 확인",
+            "robot_id": "amr-1"
+          },
+          {
+            "id": "event-10",
+            "sim_time_s": 0.10899999999674037,
+            "type": "pickup",
+            "message": "amr-2 LOT-0002 적재 확인",
+            "robot_id": "amr-2"
+          }
+        ],
+        "commands": [
+          {
+            "command_id": "mes-demo-pause-68ea2f51f38a4939ac3e6b908080f54c",
+            "run_id": "web-local-model-83f1eca4-1ebb-4b18-8ae2-60190785a2eb",
+            "status": "applied",
+            "reason": null,
+            "revision": 1
+          }
+        ],
+        "model_scope": "CPU virtual battery/geometric docking; no physics, contact sensor or ROS evidence; operational ledger load, no real MES or traffic clearance",
+        "charging": {
+          "scope": "CPU virtual battery/geometric docking; no physics, contact sensor or ROS evidence",
+          "docks": [
+            {
+              "id": "CH1",
+              "anchor": "P1",
+              "owner": "amr-4",
+              "phase": "approach"
+            },
+            {
+              "id": "CH2",
+              "anchor": "P2",
+              "owner": null,
+              "phase": "available"
+            }
+          ],
+          "queue": []
+        },
+        "integrations": {
+          "mock_mes": {
+            "scope": "mock MES/IoT; CPU ledger only",
+            "available": true,
+            "connection": "unconnected",
+            "sources": [],
+            "equipment": [],
+            "receipts": []
+          }
+        },
+        "api_producer": {
+          "scope": "selected API/model source bytes at service start",
+          "selected_modules_sha256": {
+            "factory_ops/dashboard.py": "416988a3f947264fa545d8bf6480e6f4fd49716af28ef1d1f3b1eab8776561f4",
+            "factory_ops/dashboard_model.py": "0a8eb5045b414ad39ddd619d8753d52067a06fc9db4e6989495bfdea56b74097",
+            "factory_ops/mock_mes.py": "dcfd587b137875bc3a3029e8328c4fb3cf8220660b507792184fc66a9dfde7d2",
+            "factory_ops/dashboard_charging.py": "d04c4357d755cfcf834e890978e67a98bba5e57dc8d125a0ade16e7f4e694446",
+            "factory_ops/operations/ledger.py": "e1c1e90772ff8f6a75828cb077a3b7edc9b121d1955fada29929a495773e1ce3",
+            "factory_ops/operations/inventory.py": "1114b23fcdb3520de0b12f2e246680e5a0fbdcb945ac2ed9b3de0a2f9a5972f4",
+            "factory_ops/operations/model.py": "17b90c1436b78f436d88b325adb27d1531440b63ef0cf169aece1d6070bfb38e",
+            "factory_ops/compat.py": "4294ba7ebbb0ee020b1ece6572e6c1f66069fd2fde4848603bcc31fe4547e53a"
+          }
+        }
+      }
+    },
+    {
+      "path": "/api/mes/events",
+      "request": {
+        "schema_version": 1,
+        "event_id": "mock-mes-11c665396208:1",
+        "run_id": "web-local-model-83f1eca4-1ebb-4b18-8ae2-60190785a2eb",
+        "source_id": "mock-mes-11c665396208",
+        "source_sequence": 1,
+        "occurred_at": "2026-10-19T22:42:17.413747+00:00",
+        "type": "heartbeat",
+        "payload": {}
+      },
+      "http_status": 200,
+      "response": {
+        "event_id": "mock-mes-11c665396208:1",
+        "run_id": "web-local-model-83f1eca4-1ebb-4b18-8ae2-60190785a2eb",
+        "source_id": "mock-mes-11c665396208",
+        "source_sequence": 1,
+        "type": "heartbeat",
+        "status": "applied",
+        "reason": null,
+        "received_at": "2026-10-19T22:42:17.413747+00:00",
+        "occurred_at": "2026-10-19T22:42:17.413747+00:00",
+        "sim_time_s": 0.21899999998277053,
+        "revision": 2,
+        "scope": "mock MES input to CPU ledger; not real factory or physical control",
+        "effect": {
+          "effect": "source_heartbeat"
+        }
+      }
+    },
+    {
+      "path": "/api/mes/events",
+      "request": {
+        "schema_version": 1,
+        "event_id": "mock-mes-11c665396208:2",
+        "run_id": "web-local-model-83f1eca4-1ebb-4b18-8ae2-60190785a2eb",
+        "source_id": "mock-mes-11c665396208",
+        "source_sequence": 2,
+        "occurred_at": "2026-10-19T22:42:17.413747+00:00",
+        "type": "inventory.receipt",
+        "payload": {
+          "location": "S1",
+          "sku": "sensor-kit",
+          "quantity": 6
+        }
+      },
+      "http_status": 200,
+      "response": {
+        "event_id": "mock-mes-11c665396208:2",
+        "run_id": "web-local-model-83f1eca4-1ebb-4b18-8ae2-60190785a2eb",
+        "source_id": "mock-mes-11c665396208",
+        "source_sequence": 2,
+        "type": "inventory.receipt",
+        "status": "applied",
+        "reason": null,
+        "received_at": "2026-10-19T22:42:17.428638+00:00",
+        "occurred_at": "2026-10-19T22:42:17.413747+00:00",
+        "sim_time_s": 0.21899999998277053,
+        "revision": 3,
+        "scope": "mock MES input to CPU ledger; not real factory or physical control",
+        "effect": {
+          "inventory_operation": {
+            "model_scope": "operational bookkeeping; not hardware measurement",
+            "stock": [
+              {
+                "location": "S1",
+                "sku": "sensor-kit",
+                "on_hand": 25,
+                "reserved": 1,
+                "available": 24
+              },
+              {
+                "location": "S2",
+                "sku": "sensor-kit",
+                "on_hand": 19,
+                "reserved": 0,
+                "available": 19
+              },
+              {
+                "location": "S3",
+                "sku": "sensor-kit",
+                "on_hand": 20,
+                "reserved": 1,
+                "available": 19
+              }
+            ],
+            "requests": [
+              {
+                "request_id": "ORD-0001",
+                "source": "S1",
+                "sku": "sensor-kit",
+                "quantity": 1,
+                "tote_id": "T001",
+                "state": "picked",
+                "robot_id": "amr-1",
+                "destination": null
+              },
+              {
+                "request_id": "ORD-0002",
+                "source": "S2",
+                "sku": "sensor-kit",
+                "quantity": 1,
+                "tote_id": "T002",
+                "state": "picked",
+                "robot_id": "amr-2",
+                "destination": null
+              },
+              {
+                "request_id": "ORD-0003",
+                "source": "S3",
+                "sku": "sensor-kit",
+                "quantity": 1,
+                "tote_id": "T003",
+                "state": "reserved",
+                "robot_id": null,
+                "destination": null
+              },
+              {
+                "request_id": "ORD-0004",
+                "source": "S1",
+                "sku": "sensor-kit",
+                "quantity": 1,
+                "tote_id": "T004",
+                "state": "reserved",
+                "robot_id": null,
+                "destination": null
+              }
+            ],
+            "totes": [
+              {
+                "tote_id": "T001",
+                "state": "filled",
+                "location": "IN_TRANSIT",
+                "owner": "amr-1",
+                "request_id": "ORD-0001"
+              },
+              {
+                "tote_id": "T002",
+                "state": "filled",
+                "location": "IN_TRANSIT",
+                "owner": "amr-2",
+                "request_id": "ORD-0002"
+              },
+              {
+                "tote_id": "T003",
+                "state": "filled",
+                "location": "S3",
+                "owner": null,
+                "request_id": "ORD-0003"
+              },
+              {
+                "tote_id": "T004",
+                "state": "filled",
+                "location": "S1",
+                "owner": null,
+                "request_id": "ORD-0004"
+              },
+              {
+                "tote_id": "T005",
+                "state": "available",
+                "location": "S2",
+                "owner": null,
+                "request_id": null
+              },
+              {
+                "tote_id": "T006",
+                "state": "available",
+                "location": "S3",
+                "owner": null,
+                "request_id": null
+              },
+              {
+                "tote_id": "T007",
+                "state": "available",
+                "location": "S1",
+                "owner": null,
+                "request_id": null
+              },
+              {
+                "tote_id": "T008",
+                "state": "available",
+                "location": "S2",
+                "owner": null,
+                "request_id": null
+              },
+              {
+                "tote_id": "T009",
+                "state": "available",
+                "location": "S3",
+                "owner": null,
+                "request_id": null
+              },
+              {
+                "tote_id": "T010",
+                "state": "available",
+                "location": "S1",
+                "owner": null,
+                "request_id": null
+              },
+              {
+                "tote_id": "T011",
+                "state": "available",
+                "location": "S2",
+                "owner": null,
+                "request_id": null
+              },
+              {
+                "tote_id": "T012",
+                "state": "available",
+                "location": "S3",
+                "owner": null,
+                "request_id": null
+              },
+              {
+                "tote_id": "T013",
+                "state": "available",
+                "location": "S1",
+                "owner": null,
+                "request_id": null
+              },
+              {
+                "tote_id": "T014",
+                "state": "available",
+                "location": "S2",
+                "owner": null,
+                "request_id": null
+              },
+              {
+                "tote_id": "T015",
+                "state": "available",
+                "location": "S3",
+                "owner": null,
+                "request_id": null
+              },
+              {
+                "tote_id": "T016",
+                "state": "available",
+                "location": "S1",
+                "owner": null,
+                "request_id": null
+              }
+            ],
+            "robot_loads": {
+              "amr-1": "T001",
+              "amr-2": "T002"
+            },
+            "conservation": [
+              {
+                "sku": "sensor-kit",
+                "initial": 60,
+                "replenished": 6,
+                "on_hand": 64,
+                "in_totes": 2,
+                "consumed": 0,
+                "balanced": true
+              }
+            ]
+          },
+          "location": "S1",
+          "sku": "sensor-kit",
+          "quantity": 6
+        }
+      }
+    },
+    {
+      "path": "/api/mes/events",
+      "request": {
+        "schema_version": 1,
+        "event_id": "mock-mes-11c665396208:3",
+        "run_id": "web-local-model-83f1eca4-1ebb-4b18-8ae2-60190785a2eb",
+        "source_id": "mock-mes-11c665396208",
+        "source_sequence": 3,
+        "occurred_at": "2026-10-19T22:42:17.428638+00:00",
+        "type": "order.release",
+        "payload": {
+          "source": "S1",
+          "quantity": 2
+        }
+      },
+      "http_status": 200,
+      "response": {
+        "event_id": "mock-mes-11c665396208:3",
+        "run_id": "web-local-model-83f1eca4-1ebb-4b18-8ae2-60190785a2eb",
+        "source_id": "mock-mes-11c665396208",
+        "source_sequence": 3,
+        "type": "order.release",
+        "status": "applied",
+        "reason": null,
+        "received_at": "2026-10-19T22:42:17.429643+00:00",
+        "occurred_at": "2026-10-19T22:42:17.428638+00:00",
+        "sim_time_s": 0.21899999998277053,
+        "revision": 4,
+        "scope": "mock MES input to CPU ledger; not real factory or physical control",
+        "effect": {
+          "order_id": "ORD-0005",
+          "source": "S1",
+          "quantity": 2
+        }
+      }
+    },
+    {
+      "path": "/api/mes/events",
+      "request": {
+        "schema_version": 1,
+        "event_id": "mock-mes-11c665396208:3",
+        "run_id": "web-local-model-83f1eca4-1ebb-4b18-8ae2-60190785a2eb",
+        "source_id": "mock-mes-11c665396208",
+        "source_sequence": 3,
+        "occurred_at": "2026-10-19T22:42:17.428638+00:00",
+        "type": "order.release",
+        "payload": {
+          "source": "S1",
+          "quantity": 2
+        }
+      },
+      "http_status": 200,
+      "response": {
+        "event_id": "mock-mes-11c665396208:3",
+        "run_id": "web-local-model-83f1eca4-1ebb-4b18-8ae2-60190785a2eb",
+        "source_id": "mock-mes-11c665396208",
+        "source_sequence": 3,
+        "type": "order.release",
+        "status": "applied",
+        "reason": null,
+        "received_at": "2026-10-19T22:42:17.429643+00:00",
+        "occurred_at": "2026-10-19T22:42:17.428638+00:00",
+        "sim_time_s": 0.21899999998277053,
+        "revision": 4,
+        "scope": "mock MES input to CPU ledger; not real factory or physical control",
+        "effect": {
+          "order_id": "ORD-0005",
+          "source": "S1",
+          "quantity": 2
+        }
+      }
+    },
+    {
+      "path": "/api/mes/events",
+      "request": {
+        "schema_version": 1,
+        "event_id": "mock-mes-11c665396208:4",
+        "run_id": "web-local-model-83f1eca4-1ebb-4b18-8ae2-60190785a2eb",
+        "source_id": "mock-mes-11c665396208",
+        "source_sequence": 4,
+        "occurred_at": "2026-10-19T22:42:17.444571+00:00",
+        "type": "equipment.observation",
+        "payload": {
+          "equipment_id": "CELL1",
+          "state": "running"
+        }
+      },
+      "http_status": 200,
+      "response": {
+        "event_id": "mock-mes-11c665396208:4",
+        "run_id": "web-local-model-83f1eca4-1ebb-4b18-8ae2-60190785a2eb",
+        "source_id": "mock-mes-11c665396208",
+        "source_sequence": 4,
+        "type": "equipment.observation",
+        "status": "applied",
+        "reason": null,
+        "received_at": "2026-10-19T22:42:17.464714+00:00",
+        "occurred_at": "2026-10-19T22:42:17.444571+00:00",
+        "sim_time_s": 0.21899999998277053,
+        "revision": 5,
+        "scope": "mock MES input to CPU ledger; not real factory or physical control",
+        "effect": {
+          "equipment_id": "CELL1",
+          "effect": "observation_only"
+        }
+      }
+    },
+    {
+      "path": "/api/mes/events",
+      "request": {
+        "schema_version": 1,
+        "event_id": "mock-mes-11c665396208:5",
+        "run_id": "another-run",
+        "source_id": "mock-mes-11c665396208",
+        "source_sequence": 5,
+        "occurred_at": "2026-10-19T22:42:17.464714+00:00",
+        "type": "order.release",
+        "payload": {
+          "source": "S2",
+          "quantity": 1
+        }
+      },
+      "http_status": 400,
+      "response": {
+        "error": "MES input belongs to another run"
+      }
+    },
+    {
+      "path": "/api/snapshot",
+      "request": null,
+      "http_status": 200,
+      "response": {
+        "schema_version": 1,
+        "run_id": "web-local-model-83f1eca4-1ebb-4b18-8ae2-60190785a2eb",
+        "revision": 5,
+        "mode": "local_model",
+        "sim_time_s": 0.21899999998277053,
+        "observed_at": "2026-10-19T22:42:17.464714+00:00",
+        "connection": "connected",
+        "paused": true,
+        "capabilities": [
+          "pause",
+          "resume",
+          "create_order"
+        ],
+        "robots": [
+          {
+            "id": "amr-1",
+            "label": "AMR 01",
+            "status": "paused",
+            "pose": {
+              "x_m": 3.5714999999909196,
+              "y_m": 4.0,
+              "yaw_rad": 0.0
+            },
+            "speed_mps": 0.0,
+            "battery_pct": 84.99894046875012,
+            "battery_source": "authored_cpu_virtual_energy_model",
+            "task_id": "ORD-0001:in",
+            "task_type": "inbound",
+            "task_label": "자재 공급",
+            "payload_id": "T001",
+            "destination": "CI",
+            "waiting_reason": "작업 일시정지",
+            "route": [
+              {
+                "x_m": 9.0,
+                "y_m": 4.0
+              },
+              {
+                "x_m": 12.0,
+                "y_m": 4.0
+              },
+              {
+                "x_m": 15.0,
+                "y_m": 4.0
+              },
+              {
+                "x_m": 25.0,
+                "y_m": 4.0
+              },
+              {
+                "x_m": 25.0,
+                "y_m": 7.0
+              },
+              {
+                "x_m": 21.5,
+                "y_m": 7.0
+              }
+            ],
+            "observed_sim_time_s": 0.21899999998277053,
+            "charging_phase": null,
+            "charging_dock": null
+          },
+          {
+            "id": "amr-2",
+            "label": "AMR 02",
+            "status": "paused",
+            "pose": {
+              "x_m": 3.5714999999909196,
+              "y_m": 10.0,
+              "yaw_rad": 0.0
+            },
+            "speed_mps": 0.0,
+            "battery_pct": 79.99894046875012,
+            "battery_source": "authored_cpu_virtual_energy_model",
+            "task_id": "ORD-0002:in",
+            "task_type": "inbound",
+            "task_label": "자재 공급",
+            "payload_id": "T002",
+            "destination": "CI",
+            "waiting_reason": "작업 일시정지",
+            "route": [
+              {
+                "x_m": 9.0,
+                "y_m": 10.0
+              },
+              {
+                "x_m": 9.0,
+                "y_m": 4.0
+              },
+              {
+                "x_m": 12.0,
+                "y_m": 4.0
+              },
+              {
+                "x_m": 15.0,
+                "y_m": 4.0
+              },
+              {
+                "x_m": 25.0,
+                "y_m": 4.0
+              },
+              {
+                "x_m": 25.0,
+                "y_m": 7.0
+              },
+              {
+                "x_m": 21.5,
+                "y_m": 7.0
+              }
+            ],
+            "observed_sim_time_s": 0.21899999998277053,
+            "charging_phase": null,
+            "charging_dock": null
+          },
+          {
+            "id": "amr-3",
+            "label": "AMR 03",
+            "status": "idle",
+            "pose": {
+              "x_m": 3.5,
+              "y_m": 16.0,
+              "yaw_rad": 0.0
+            },
+            "speed_mps": 0.0,
+            "battery_pct": 74.99954375000004,
+            "battery_source": "authored_cpu_virtual_energy_model",
+            "task_id": null,
+            "task_type": null,
+            "task_label": null,
+            "payload_id": null,
+            "destination": null,
+            "waiting_reason": null,
+            "route": [],
+            "observed_sim_time_s": 0.21899999998277053,
+            "charging_phase": null,
+            "charging_dock": null
+          },
+          {
+            "id": "amr-4",
+            "label": "AMR 04",
+            "status": "paused",
+            "pose": {
+              "x_m": 29.0,
+              "y_m": 10.0,
+              "yaw_rad": 0.2627999999793246
+            },
+            "speed_mps": 0.0,
+            "battery_pct": 17.998968500000082,
+            "battery_source": "authored_cpu_virtual_energy_model",
+            "task_id": "charge:amr-4",
+            "task_type": "charging",
+            "task_label": "CPU 가상 충전",
+            "payload_id": null,
+            "destination": "P1",
+            "waiting_reason": "작업 일시정지",
+            "route": [
+              {
+                "x_m": 25.0,
+                "y_m": 10.0
+              },
+              {
+                "x_m": 25.0,
+                "y_m": 7.0
+              },
+              {
+                "x_m": 25.0,
+                "y_m": 4.0
+              },
+              {
+                "x_m": 15.0,
+                "y_m": 4.0
+              },
+              {
+                "x_m": 12.0,
+                "y_m": 4.0
+              },
+              {
+                "x_m": 12.0,
+                "y_m": 1.5
+              }
+            ],
+            "observed_sim_time_s": 0.21899999998277053,
+            "charging_phase": "approach",
+            "charging_dock": "CH1"
+          }
+        ],
+        "tasks": [
+          {
+            "id": "ORD-0001:in",
+            "order_id": "ORD-0001",
+            "type": "inbound",
+            "state": "started",
+            "robot_id": "amr-1",
+            "source": "S1",
+            "destination": "CI",
+            "payload_id": "LOT-0001",
+            "progress": null
+          },
+          {
+            "id": "ORD-0002:in",
+            "order_id": "ORD-0002",
+            "type": "inbound",
+            "state": "started",
+            "robot_id": "amr-2",
+            "source": "S2",
+            "destination": "CI",
+            "payload_id": "LOT-0002",
+            "progress": null
+          },
+          {
+            "id": "ORD-0003:in",
+            "order_id": "ORD-0003",
+            "type": "inbound",
+            "state": "ready",
+            "robot_id": null,
+            "source": "S3",
+            "destination": "CI",
+            "payload_id": "LOT-0003",
+            "progress": null
+          },
+          {
+            "id": "ORD-0004:in",
+            "order_id": "ORD-0004",
+            "type": "inbound",
+            "state": "ready",
+            "robot_id": null,
+            "source": "S1",
+            "destination": "CI",
+            "payload_id": "LOT-0004",
+            "progress": null
+          },
+          {
+            "id": "ORD-0005:in",
+            "order_id": "ORD-0005",
+            "type": "inbound",
+            "state": "ready",
+            "robot_id": null,
+            "source": "S1",
+            "destination": "CI",
+            "payload_id": "LOT-0005",
+            "progress": null
+          },
+          {
+            "id": "charge:amr-4",
+            "order_id": "",
+            "type": "charging",
+            "state": "approach",
+            "robot_id": "amr-4",
+            "source": "OUT",
+            "destination": "P1",
+            "payload_id": null,
+            "progress": null
+          }
+        ],
+        "inventory": {
+          "model_scope": "operational bookkeeping; not hardware measurement",
+          "stock": [
+            {
+              "location": "S1",
+              "sku": "sensor-kit",
+              "on_hand": 25,
+              "reserved": 3,
+              "available": 22
+            },
+            {
+              "location": "S2",
+              "sku": "sensor-kit",
+              "on_hand": 19,
+              "reserved": 0,
+              "available": 19
+            },
+            {
+              "location": "S3",
+              "sku": "sensor-kit",
+              "on_hand": 20,
+              "reserved": 1,
+              "available": 19
+            }
+          ],
+          "requests": [
+            {
+              "request_id": "ORD-0001",
+              "source": "S1",
+              "sku": "sensor-kit",
+              "quantity": 1,
+              "tote_id": "T001",
+              "state": "picked",
+              "robot_id": "amr-1",
+              "destination": null
+            },
+            {
+              "request_id": "ORD-0002",
+              "source": "S2",
+              "sku": "sensor-kit",
+              "quantity": 1,
+              "tote_id": "T002",
+              "state": "picked",
+              "robot_id": "amr-2",
+              "destination": null
+            },
+            {
+              "request_id": "ORD-0003",
+              "source": "S3",
+              "sku": "sensor-kit",
+              "quantity": 1,
+              "tote_id": "T003",
+              "state": "reserved",
+              "robot_id": null,
+              "destination": null
+            },
+            {
+              "request_id": "ORD-0004",
+              "source": "S1",
+              "sku": "sensor-kit",
+              "quantity": 1,
+              "tote_id": "T004",
+              "state": "reserved",
+              "robot_id": null,
+              "destination": null
+            },
+            {
+              "request_id": "ORD-0005",
+              "source": "S1",
+              "sku": "sensor-kit",
+              "quantity": 2,
+              "tote_id": "T007",
+              "state": "reserved",
+              "robot_id": null,
+              "destination": null
+            }
+          ],
+          "totes": [
+            {
+              "tote_id": "T001",
+              "state": "filled",
+              "location": "IN_TRANSIT",
+              "owner": "amr-1",
+              "request_id": "ORD-0001"
+            },
+            {
+              "tote_id": "T002",
+              "state": "filled",
+              "location": "IN_TRANSIT",
+              "owner": "amr-2",
+              "request_id": "ORD-0002"
+            },
+            {
+              "tote_id": "T003",
+              "state": "filled",
+              "location": "S3",
+              "owner": null,
+              "request_id": "ORD-0003"
+            },
+            {
+              "tote_id": "T004",
+              "state": "filled",
+              "location": "S1",
+              "owner": null,
+              "request_id": "ORD-0004"
+            },
+            {
+              "tote_id": "T005",
+              "state": "available",
+              "location": "S2",
+              "owner": null,
+              "request_id": null
+            },
+            {
+              "tote_id": "T006",
+              "state": "available",
+              "location": "S3",
+              "owner": null,
+              "request_id": null
+            },
+            {
+              "tote_id": "T007",
+              "state": "filled",
+              "location": "S1",
+              "owner": null,
+              "request_id": "ORD-0005"
+            },
+            {
+              "tote_id": "T008",
+              "state": "available",
+              "location": "S2",
+              "owner": null,
+              "request_id": null
+            },
+            {
+              "tote_id": "T009",
+              "state": "available",
+              "location": "S3",
+              "owner": null,
+              "request_id": null
+            },
+            {
+              "tote_id": "T010",
+              "state": "available",
+              "location": "S1",
+              "owner": null,
+              "request_id": null
+            },
+            {
+              "tote_id": "T011",
+              "state": "available",
+              "location": "S2",
+              "owner": null,
+              "request_id": null
+            },
+            {
+              "tote_id": "T012",
+              "state": "available",
+              "location": "S3",
+              "owner": null,
+              "request_id": null
+            },
+            {
+              "tote_id": "T013",
+              "state": "available",
+              "location": "S1",
+              "owner": null,
+              "request_id": null
+            },
+            {
+              "tote_id": "T014",
+              "state": "available",
+              "location": "S2",
+              "owner": null,
+              "request_id": null
+            },
+            {
+              "tote_id": "T015",
+              "state": "available",
+              "location": "S3",
+              "owner": null,
+              "request_id": null
+            },
+            {
+              "tote_id": "T016",
+              "state": "available",
+              "location": "S1",
+              "owner": null,
+              "request_id": null
+            }
+          ],
+          "robot_loads": {
+            "amr-1": "T001",
+            "amr-2": "T002"
+          },
+          "conservation": [
+            {
+              "sku": "sensor-kit",
+              "initial": 60,
+              "replenished": 6,
+              "on_hand": 64,
+              "in_totes": 2,
+              "consumed": 0,
+              "balanced": true
+            }
+          ]
+        },
+        "kpis": {
+          "active_robots": 3,
+          "total_robots": 4,
+          "completed_orders": 0,
+          "pending_tasks": 6,
+          "stock_units": 64
+        },
+        "events": [
+          {
+            "id": "event-1",
+            "sim_time_s": 0.0,
+            "type": "order_created",
+            "message": "ORD-0001 자재 공급 요청",
+            "robot_id": null
+          },
+          {
+            "id": "event-2",
+            "sim_time_s": 0.0,
+            "type": "order_created",
+            "message": "ORD-0002 자재 공급 요청",
+            "robot_id": null
+          },
+          {
+            "id": "event-3",
+            "sim_time_s": 0.0,
+            "type": "order_created",
+            "message": "ORD-0003 자재 공급 요청",
+            "robot_id": null
+          },
+          {
+            "id": "event-4",
+            "sim_time_s": 0.0,
+            "type": "order_created",
+            "message": "ORD-0004 자재 공급 요청",
+            "robot_id": null
+          },
+          {
+            "id": "event-5",
+            "sim_time_s": 0.0,
+            "type": "charge_queued",
+            "message": "amr-4 CPU 가상 충전 대기",
+            "robot_id": "amr-4"
+          },
+          {
+            "id": "event-6",
+            "sim_time_s": 0.0,
+            "type": "charge_reserved",
+            "message": "amr-4 CH1 CPU 슬롯 예약",
+            "robot_id": "amr-4"
+          },
+          {
+            "id": "event-7",
+            "sim_time_s": 0.054499999998370185,
+            "type": "assigned",
+            "message": "amr-1 ORD-0001 배정",
+            "robot_id": "amr-1"
+          },
+          {
+            "id": "event-8",
+            "sim_time_s": 0.054499999998370185,
+            "type": "assigned",
+            "message": "amr-2 ORD-0002 배정",
+            "robot_id": "amr-2"
+          },
+          {
+            "id": "event-9",
+            "sim_time_s": 0.10899999999674037,
+            "type": "pickup",
+            "message": "amr-1 LOT-0001 적재 확인",
+            "robot_id": "amr-1"
+          },
+          {
+            "id": "event-10",
+            "sim_time_s": 0.10899999999674037,
+            "type": "pickup",
+            "message": "amr-2 LOT-0002 적재 확인",
+            "robot_id": "amr-2"
+          },
+          {
+            "id": "event-11",
+            "sim_time_s": 0.21899999998277053,
+            "type": "mes_input",
+            "message": "mock-mes-11c665396208 · inventory.receipt · applied · mock-mes-11c665396208:2",
+            "robot_id": null
+          },
+          {
+            "id": "event-12",
+            "sim_time_s": 0.21899999998277053,
+            "type": "order_created",
+            "message": "ORD-0005 자재 공급 요청",
+            "robot_id": null
+          },
+          {
+            "id": "event-13",
+            "sim_time_s": 0.21899999998277053,
+            "type": "mes_input",
+            "message": "mock-mes-11c665396208 · order.release · applied · mock-mes-11c665396208:3",
+            "robot_id": null
+          },
+          {
+            "id": "event-14",
+            "sim_time_s": 0.21899999998277053,
+            "type": "mes_input",
+            "message": "mock-mes-11c665396208 · equipment.observation · applied · mock-mes-11c665396208:4",
+            "robot_id": null
+          }
+        ],
+        "commands": [
+          {
+            "command_id": "mes-demo-pause-68ea2f51f38a4939ac3e6b908080f54c",
+            "run_id": "web-local-model-83f1eca4-1ebb-4b18-8ae2-60190785a2eb",
+            "status": "applied",
+            "reason": null,
+            "revision": 1
+          }
+        ],
+        "model_scope": "CPU virtual battery/geometric docking; no physics, contact sensor or ROS evidence; operational ledger load, no real MES or traffic clearance",
+        "charging": {
+          "scope": "CPU virtual battery/geometric docking; no physics, contact sensor or ROS evidence",
+          "docks": [
+            {
+              "id": "CH1",
+              "anchor": "P1",
+              "owner": "amr-4",
+              "phase": "approach"
+            },
+            {
+              "id": "CH2",
+              "anchor": "P2",
+              "owner": null,
+              "phase": "available"
+            }
+          ],
+          "queue": []
+        },
+        "integrations": {
+          "mock_mes": {
+            "scope": "mock MES/IoT; CPU ledger only",
+            "available": true,
+            "connection": "connected",
+            "sources": [
+              {
+                "id": "mock-mes-11c665396208",
+                "sequence": 4,
+                "occurred_at": "2026-10-19T22:42:17.444571+00:00",
+                "received_at": "2026-10-19T22:42:17.464714+00:00",
+                "last_event_id": "mock-mes-11c665396208:4",
+                "age_s": 0.020143,
+                "connection": "connected"
+              }
+            ],
+            "equipment": [
+              {
+                "equipment_id": "CELL1",
+                "state": "running",
+                "source_id": "mock-mes-11c665396208",
+                "source_sequence": 4,
+                "occurred_at": "2026-10-19T22:42:17.444571+00:00",
+                "event_id": "mock-mes-11c665396208:4",
+                "scope": "informational observation; no machine/robot interlock",
+                "age_s": 0.020143,
+                "connection": "connected"
+              }
+            ],
+            "receipts": [
+              {
+                "event_id": "mock-mes-11c665396208:1",
+                "run_id": "web-local-model-83f1eca4-1ebb-4b18-8ae2-60190785a2eb",
+                "source_id": "mock-mes-11c665396208",
+                "source_sequence": 1,
+                "type": "heartbeat",
+                "status": "applied",
+                "reason": null,
+                "received_at": "2026-10-19T22:42:17.413747+00:00",
+                "occurred_at": "2026-10-19T22:42:17.413747+00:00",
+                "sim_time_s": 0.21899999998277053,
+                "revision": 2,
+                "scope": "mock MES input to CPU ledger; not real factory or physical control",
+                "effect": {
+                  "effect": "source_heartbeat"
+                }
+              },
+              {
+                "event_id": "mock-mes-11c665396208:2",
+                "run_id": "web-local-model-83f1eca4-1ebb-4b18-8ae2-60190785a2eb",
+                "source_id": "mock-mes-11c665396208",
+                "source_sequence": 2,
+                "type": "inventory.receipt",
+                "status": "applied",
+                "reason": null,
+                "received_at": "2026-10-19T22:42:17.428638+00:00",
+                "occurred_at": "2026-10-19T22:42:17.413747+00:00",
+                "sim_time_s": 0.21899999998277053,
+                "revision": 3,
+                "scope": "mock MES input to CPU ledger; not real factory or physical control",
+                "effect": {
+                  "inventory_operation": {
+                    "model_scope": "operational bookkeeping; not hardware measurement",
+                    "stock": [
+                      {
+                        "location": "S1",
+                        "sku": "sensor-kit",
+                        "on_hand": 25,
+                        "reserved": 1,
+                        "available": 24
+                      },
+                      {
+                        "location": "S2",
+                        "sku": "sensor-kit",
+                        "on_hand": 19,
+                        "reserved": 0,
+                        "available": 19
+                      },
+                      {
+                        "location": "S3",
+                        "sku": "sensor-kit",
+                        "on_hand": 20,
+                        "reserved": 1,
+                        "available": 19
+                      }
+                    ],
+                    "requests": [
+                      {
+                        "request_id": "ORD-0001",
+                        "source": "S1",
+                        "sku": "sensor-kit",
+                        "quantity": 1,
+                        "tote_id": "T001",
+                        "state": "picked",
+                        "robot_id": "amr-1",
+                        "destination": null
+                      },
+                      {
+                        "request_id": "ORD-0002",
+                        "source": "S2",
+                        "sku": "sensor-kit",
+                        "quantity": 1,
+                        "tote_id": "T002",
+                        "state": "picked",
+                        "robot_id": "amr-2",
+                        "destination": null
+                      },
+                      {
+                        "request_id": "ORD-0003",
+                        "source": "S3",
+                        "sku": "sensor-kit",
+                        "quantity": 1,
+                        "tote_id": "T003",
+                        "state": "reserved",
+                        "robot_id": null,
+                        "destination": null
+                      },
+                      {
+                        "request_id": "ORD-0004",
+                        "source": "S1",
+                        "sku": "sensor-kit",
+                        "quantity": 1,
+                        "tote_id": "T004",
+                        "state": "reserved",
+                        "robot_id": null,
+                        "destination": null
+                      }
+                    ],
+                    "totes": [
+                      {
+                        "tote_id": "T001",
+                        "state": "filled",
+                        "location": "IN_TRANSIT",
+                        "owner": "amr-1",
+                        "request_id": "ORD-0001"
+                      },
+                      {
+                        "tote_id": "T002",
+                        "state": "filled",
+                        "location": "IN_TRANSIT",
+                        "owner": "amr-2",
+                        "request_id": "ORD-0002"
+                      },
+                      {
+                        "tote_id": "T003",
+                        "state": "filled",
+                        "location": "S3",
+                        "owner": null,
+                        "request_id": "ORD-0003"
+                      },
+                      {
+                        "tote_id": "T004",
+                        "state": "filled",
+                        "location": "S1",
+                        "owner": null,
+                        "request_id": "ORD-0004"
+                      },
+                      {
+                        "tote_id": "T005",
+                        "state": "available",
+                        "location": "S2",
+                        "owner": null,
+                        "request_id": null
+                      },
+                      {
+                        "tote_id": "T006",
+                        "state": "available",
+                        "location": "S3",
+                        "owner": null,
+                        "request_id": null
+                      },
+                      {
+                        "tote_id": "T007",
+                        "state": "available",
+                        "location": "S1",
+                        "owner": null,
+                        "request_id": null
+                      },
+                      {
+                        "tote_id": "T008",
+                        "state": "available",
+                        "location": "S2",
+                        "owner": null,
+                        "request_id": null
+                      },
+                      {
+                        "tote_id": "T009",
+                        "state": "available",
+                        "location": "S3",
+                        "owner": null,
+                        "request_id": null
+                      },
+                      {
+                        "tote_id": "T010",
+                        "state": "available",
+                        "location": "S1",
+                        "owner": null,
+                        "request_id": null
+                      },
+                      {
+                        "tote_id": "T011",
+                        "state": "available",
+                        "location": "S2",
+                        "owner": null,
+                        "request_id": null
+                      },
+                      {
+                        "tote_id": "T012",
+                        "state": "available",
+                        "location": "S3",
+                        "owner": null,
+                        "request_id": null
+                      },
+                      {
+                        "tote_id": "T013",
+                        "state": "available",
+                        "location": "S1",
+                        "owner": null,
+                        "request_id": null
+                      },
+                      {
+                        "tote_id": "T014",
+                        "state": "available",
+                        "location": "S2",
+                        "owner": null,
+                        "request_id": null
+                      },
+                      {
+                        "tote_id": "T015",
+                        "state": "available",
+                        "location": "S3",
+                        "owner": null,
+                        "request_id": null
+                      },
+                      {
+                        "tote_id": "T016",
+                        "state": "available",
+                        "location": "S1",
+                        "owner": null,
+                        "request_id": null
+                      }
+                    ],
+                    "robot_loads": {
+                      "amr-1": "T001",
+                      "amr-2": "T002"
+                    },
+                    "conservation": [
+                      {
+                        "sku": "sensor-kit",
+                        "initial": 60,
+                        "replenished": 6,
+                        "on_hand": 64,
+                        "in_totes": 2,
+                        "consumed": 0,
+                        "balanced": true
+                      }
+                    ]
+                  },
+                  "location": "S1",
+                  "sku": "sensor-kit",
+                  "quantity": 6
+                }
+              },
+              {
+                "event_id": "mock-mes-11c665396208:3",
+                "run_id": "web-local-model-83f1eca4-1ebb-4b18-8ae2-60190785a2eb",
+                "source_id": "mock-mes-11c665396208",
+                "source_sequence": 3,
+                "type": "order.release",
+                "status": "applied",
+                "reason": null,
+                "received_at": "2026-10-19T22:42:17.429643+00:00",
+                "occurred_at": "2026-10-19T22:42:17.428638+00:00",
+                "sim_time_s": 0.21899999998277053,
+                "revision": 4,
+                "scope": "mock MES input to CPU ledger; not real factory or physical control",
+                "effect": {
+                  "order_id": "ORD-0005",
+                  "source": "S1",
+                  "quantity": 2
+                }
+              },
+              {
+                "event_id": "mock-mes-11c665396208:4",
+                "run_id": "web-local-model-83f1eca4-1ebb-4b18-8ae2-60190785a2eb",
+                "source_id": "mock-mes-11c665396208",
+                "source_sequence": 4,
+                "type": "equipment.observation",
+                "status": "applied",
+                "reason": null,
+                "received_at": "2026-10-19T22:42:17.464714+00:00",
+                "occurred_at": "2026-10-19T22:42:17.444571+00:00",
+                "sim_time_s": 0.21899999998277053,
+                "revision": 5,
+                "scope": "mock MES input to CPU ledger; not real factory or physical control",
+                "effect": {
+                  "equipment_id": "CELL1",
+                  "effect": "observation_only"
+                }
+              }
+            ]
+          }
+        },
+        "api_producer": {
+          "scope": "selected API/model source bytes at service start",
+          "selected_modules_sha256": {
+            "factory_ops/dashboard.py": "416988a3f947264fa545d8bf6480e6f4fd49716af28ef1d1f3b1eab8776561f4",
+            "factory_ops/dashboard_model.py": "0a8eb5045b414ad39ddd619d8753d52067a06fc9db4e6989495bfdea56b74097",
+            "factory_ops/mock_mes.py": "dcfd587b137875bc3a3029e8328c4fb3cf8220660b507792184fc66a9dfde7d2",
+            "factory_ops/dashboard_charging.py": "d04c4357d755cfcf834e890978e67a98bba5e57dc8d125a0ade16e7f4e694446",
+            "factory_ops/operations/ledger.py": "e1c1e90772ff8f6a75828cb077a3b7edc9b121d1955fada29929a495773e1ce3",
+            "factory_ops/operations/inventory.py": "1114b23fcdb3520de0b12f2e246680e5a0fbdcb945ac2ed9b3de0a2f9a5972f4",
+            "factory_ops/operations/model.py": "17b90c1436b78f436d88b325adb27d1531440b63ef0cf169aece1d6070bfb38e",
+            "factory_ops/compat.py": "4294ba7ebbb0ee020b1ece6572e6c1f66069fd2fde4848603bcc31fe4547e53a"
+          }
+        }
+      }
+    },
+    {
+      "path": "/api/commands",
+      "request": {
+        "command_id": "mes-demo-resume-a12b09e0873246588538fca7e08dd116",
+        "expected_revision": 5,
+        "expected_run_id": "web-local-model-83f1eca4-1ebb-4b18-8ae2-60190785a2eb",
+        "action": "resume"
+      },
+      "http_status": 200,
+      "response": {
+        "command_id": "mes-demo-resume-a12b09e0873246588538fca7e08dd116",
+        "run_id": "web-local-model-83f1eca4-1ebb-4b18-8ae2-60190785a2eb",
+        "status": "applied",
+        "reason": null,
+        "revision": 6
+      }
+    }
+  ],
+  "run_id": "web-local-model-83f1eca4-1ebb-4b18-8ae2-60190785a2eb",
+  "source_id": "mock-mes-11c665396208",
+  "order_id": "ORD-0005",
+  "stock_delta": 6,
+  "duplicate_did_not_reapply": true,
+  "invalid_run_rejected": true,
+  "finished_at_utc": "2026-10-19T22:42:17.467336+00:00"
+}

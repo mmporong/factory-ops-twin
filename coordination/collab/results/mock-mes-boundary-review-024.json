@@ -1,0 +1,148 @@
+{
+  "task_id": "mock-mes-boundary-review-024",
+  "attempt": 1,
+  "contract_revision": 24,
+  "owner": "control",
+  "author": "root",
+  "status": "review_complete",
+  "ack": {
+    "received": true,
+    "ack_at_utc": "2026-10-20T07:05:48.082212+09:00",
+    "scope": "지정 5파일의 격리·재고보존·중복·순서·시각·readonly 경계만 한정 읽기 검수. 023 소스 동결 유지."
+  },
+  "sha_match": true,
+  "reviewed_sha256": {
+    "factory_ops/mock_mes.py": "dcfd587b137875bc3a3029e8328c4fb3cf8220660b507792184fc66a9dfde7d2",
+    "factory_ops/dashboard.py": "9471448749874909fc779fc42f0718534f561d8eac25a55e31b8f20f28809393",
+    "factory_ops/dashboard_model.py": "0a8eb5045b414ad39ddd619d8753d52067a06fc9db4e6989495bfdea56b74097",
+    "tests/test_mock_mes.py": "d23a2f9b50a55836514e3ca7415f75699c08b950cb2eaa7073b95648794af5bb",
+    "scripts/demo/mock_mes_flow.py": "2c7133fda2be42ebf0e12c0ac19a6f156340b0f5289d32e3f77b74349ee526f0"
+  },
+  "verdict": "no_major_or_blocking_findings_in_scoped_review",
+  "recommendation": "이번 한정 backend 경계는 주요 결함 지적 없이 회수 가능. 전체 시스템 또는 023 native 성공의 판정으로 확대하지 않음.",
+  "findings": [],
+  "verified_boundaries": [
+    {
+      "boundary": "CPU 모델과 live/replay 격리",
+      "evidence": [
+        "factory_ops/dashboard.py:178",
+        "factory_ops/dashboard.py:183",
+        "factory_ops/dashboard.py:189",
+        "factory_ops/dashboard.py:222",
+        "tests/test_mock_mes.py:105"
+      ],
+      "observation": "외부 source가 있으면 model/mock_mes를 만들지 않으며 ingest_mes가 원장 호출 전에 거절한다. replay 또는 outbox 없는 source의 명령 capability는 제거된다. MES가 live/replay의 원장·로봇·outbox를 변경하는 경로는 찾지 못했다."
+    },
+    {
+      "boundary": "run 결속과 동시 요청 격리",
+      "evidence": [
+        "factory_ops/mock_mes.py:44",
+        "factory_ops/dashboard_model.py:23",
+        "factory_ops/dashboard.py:174",
+        "factory_ops/dashboard.py:189",
+        "factory_ops/dashboard.py:195",
+        "factory_ops/dashboard.py:200",
+        "factory_ops/dashboard.py:259",
+        "tests/test_mock_mes.py:73",
+        "tests/test_mock_mes.py:98"
+      ],
+      "observation": "현재 모델 UUID run을 검증한 후 MES 입력을 처리한다. service의 RLock이 MES 반영·tick·snapshot·명령을 직렬화한다. 과거 run의 operator 명령은 현재 run의 rejected receipt로 남고 MES의 다른 run은 반영 전에 ValueError로 거절된다."
+    },
+    {
+      "boundary": "중복 입력과 ID 재사용",
+      "evidence": [
+        "factory_ops/mock_mes.py:50",
+        "factory_ops/mock_mes.py:52",
+        "factory_ops/mock_mes.py:84",
+        "tests/test_mock_mes.py:43",
+        "tests/test_mock_mes.py:53"
+      ],
+      "observation": "같은 event_id와 같은 전체 입력의 재시도는 원래 receipt의 복사본을 반환해 원장을 다시 호출하지 않는다. 같은 ID의 다른 내용은 거절한다. rejected receipt와 사용한 source/sequence도 보존하므로 동일 ID·sequence를 수정 입력으로 재사용할 수 없다."
+    },
+    {
+      "boundary": "source 순서와 사건 시각",
+      "evidence": [
+        "factory_ops/mock_mes.py:46",
+        "factory_ops/mock_mes.py:56",
+        "factory_ops/mock_mes.py:68",
+        "factory_ops/mock_mes.py:80",
+        "factory_ops/mock_mes.py:126",
+        "tests/test_mock_mes.py:62",
+        "tests/test_mock_mes.py:82"
+      ],
+      "observation": "양의 정수 sequence와 offset timestamp를 요구한다. 서버 now 대비 -1~30초 창, 이미 사용된 sequence, 마지막 applied source sequence 이하, 마지막 applied source 사건보다 과거인 시각은 _apply 전에 거절한다. 연속 sequence를 요구하지는 않는다. source heartbeat와 equipment observation 신선도는 각각 자체 occurred_at에서 산출한다."
+    },
+    {
+      "boundary": "유한 재고·토트·기존 원장 연결",
+      "evidence": [
+        "factory_ops/mock_mes.py:95",
+        "factory_ops/mock_mes.py:103",
+        "factory_ops/mock_mes.py:105",
+        "factory_ops/mock_mes.py:110",
+        "factory_ops/dashboard_model.py:56",
+        "factory_ops/dashboard_model.py:63",
+        "factory_ops/dashboard_model.py:70",
+        "factory_ops/dashboard_model.py:171",
+        "tests/test_mock_mes.py:30",
+        "tests/test_mock_mes.py:53",
+        "tests/test_mock_mes.py:92"
+      ],
+      "observation": "MES 업무 입력은 S1/S2/S3와 sensor-kit 및 1~1000 정수 수량으로 제한된다. order.release는 기존 create_order의 빈 토트 확인·재고 reserve 경로를 재사용하고 inventory.receipt는 기존 InventoryLedger.replenish에 이벤트별 operation ID를 넘긴다. 기존 검사는 부족 재고 거절, 중복 미반영, 소비·빈 반납 후 보존과 원장 replay 일치를 확인하는 내용이다."
+    },
+    {
+      "boundary": "장비 관측과 물리/운영 권한",
+      "evidence": [
+        "factory_ops/mock_mes.py:112",
+        "factory_ops/mock_mes.py:120",
+        "factory_ops/mock_mes.py:138",
+        "factory_ops/dashboard_model.py:294",
+        "tests/test_mock_mes.py:82"
+      ],
+      "observation": "equipment.observation은 관측 dict에만 저장하며 pause·로봇 pose·물리 인터록을 변경하지 않는다. snapshot과 receipt에 mock/CPU/informational scope를 표시한다. 충전 전력·실물 이송·실제 MES 성공을 뜻하지 않는다."
+    },
+    {
+      "boundary": "HTTP 연결과 demo 증거",
+      "evidence": [
+        "factory_ops/dashboard.py:316",
+        "factory_ops/dashboard.py:325",
+        "factory_ops/dashboard.py:332",
+        "tests/test_mock_mes.py:111",
+        "scripts/demo/mock_mes_flow.py:49",
+        "scripts/demo/mock_mes_flow.py:65",
+        "scripts/demo/mock_mes_flow.py:78",
+        "scripts/demo/mock_mes_flow.py:99"
+      ],
+      "observation": "HTTP는 loopback에 바인딩하고 MES POST를 같은 service 원장에 연결한다. demo는 CPU mode/connected/run을 확인하고 자재 추가·주문·동일 event 재시도·다른 run 거절·보존을 확인하는 흐름이다. 실패 시 같은 run에서만 정지 복원을 시도하며 실제 HTTP demo 결과는 root 보고 근거로 구분했다."
+    }
+  ],
+  "validation": {
+    "review_method": "동결 SHA 5개 대조 후 지정 소스/기존 검사/demo의 분기와 호출 경로를 한 번 읽는 별도 검수 패스",
+    "read_only_hash_check": "Get-FileHash -Algorithm SHA256: 지정 5파일 모두 카드와 일치, 종료 직전 재확인",
+    "new_tests_run": [],
+    "reported_author_evidence": [
+      "root: MES 10개/기존 24개 검사 PASS",
+      "root: 실제 HTTP flow 자재+6·신규 ORD5 qty2·중복 무재적용·다른 run HTTP400 PASS"
+    ],
+    "independently_reran_author_tests": false,
+    "http_or_native_execution_by_reviewer": false
+  },
+  "limits": [
+    "검토는 카드의 정확한 5개 SHA와 지정 경계에 한정된다. 전체 테스트·웹 리서치·실제 HTTP·SDK/ROS/VM 실행은 하지 않았다.",
+    "InventoryLedger·Ledger 및 충전 내부의 전면 재검수는 범위에 포함하지 않았다. 이 검수는 MES가 기존 경로를 재사용하는지와 제공된 회귀검사 내용을 확인했다.",
+    "source_id는 모의 입력의 원천 표기이며 실제 MES 장치 인증 또는 영속 exactly-once 처리를 입증하지 않는다. 현재 adapter의 중복 기록은 해당 CPU run의 메모리 범위다.",
+    "일반 JSON 입력·현재 모델 상태에서 도달 가능한 major/blocking 경로를 찾는 검수이며 부재 증명 또는 전체 적합성 보증이 아니다.",
+    "023 source는 수정하지 않았다. root 진행 중인 console001 native 결과·글리프·실제 UI 동작은 이번 검수 판정에 포함하지 않았다."
+  ],
+  "written_paths": [
+    "coordination/collab/results/mock-mes-boundary-review-024.json"
+  ],
+  "product_files_modified": [],
+  "processes_started": [],
+  "constraints_observed": [
+    "023 소스 동결 유지",
+    "다른 작성자 변경 보존",
+    "제품·board·Git·VM·원본 수정 없음",
+    "새 에이전트·서버·SDK·전체 검사 없음"
+  ],
+  "completed_at_utc": "2026-10-19T22:07:49.2395406+00:00"
+}

@@ -1,0 +1,148 @@
+{
+  "task_id": "local-windows-guard-review-026",
+  "attempt": 1,
+  "contract_revision": 26,
+  "owner": "control",
+  "author": "root",
+  "status": "review_complete_changes_requested",
+  "ack": {
+    "received": true,
+    "ack_at_utc": "2026-10-20T07:34:09.1672266+09:00"
+  },
+  "sha_match": true,
+  "source_sha256": {
+    "scripts/isaac/windows_job_runner.py": "72b355dcfca5ba6603ddc3f791c0f97020e59f87f8fe7386a59656263bb75fb2",
+    "scripts/isaac/run-local-contact-probe.ps1": "a8ddc4815f43ddb3ea91ce57efb71b8e3641bbc6b3dac1e270fbedeceec7e0fd",
+    "tests/test_windows_job_runner.py": "4ebb157638e37ba074f34543186a9b89893f23384a704b85ee55d685b93f2495",
+    "factory_ops/compat.py": "4294ba7ebbb0ee020b1ece6572e6c1f66069fd2fde4848603bcc31fe4547e53a",
+    "factory_ops/operations/model.py": "17b90c1436b78f436d88b325adb27d1531440b63ef0cf169aece1d6070bfb38e",
+    "factory_ops/operations/inventory.py": "1114b23fcdb3520de0b12f2e246680e5a0fbdcb945ac2ed9b3de0a2f9a5972f4",
+    "tests/test_operations_python_compat.py": "ac8f35e2a2484114330d3e6c0fba77b4ededea517b5b0ddb2f7e83475909bff0"
+  },
+  "verdict": "one_major_execution_input_identity_gap",
+  "findings": [
+    {
+      "id": "WG026-001",
+      "severity": "major",
+      "title": "입력 사본을 보존하지만 실행 전 원본 source/config/dependency 변경을 차단하지 않음",
+      "locations": [
+        {
+          "path": "scripts/isaac/run-local-contact-probe.ps1",
+          "line": 35,
+          "detail": "35~53에서 source/config/project dependency를 .inputs에 복사하고 SHA를 계산"
+        },
+        {
+          "path": "scripts/isaac/run-local-contact-probe.ps1",
+          "line": 55,
+          "detail": "실행 command는 frozen copy가 아닌 원본 probeScript/configPath를 가리킴; dependency도 원래 project import 경로"
+        },
+        {
+          "path": "scripts/isaac/windows_job_runner.py",
+          "line": 92,
+          "detail": "gated_worker는 spec를 다시 읽고 gate run_id만 대조한 뒤99~100에서 command 실행. parent가 승인한 spec digest/source/config 집합 검증 없음"
+        },
+        {
+          "path": "scripts/isaac/run-local-contact-probe.ps1",
+          "line": 107,
+          "detail": "source/config/project 집합 수용 검사는 SDK 실행이 끝난 뒤 이루어짐"
+        }
+      ],
+      "trigger": "입력 snapshot을 만든 뒤 gated worker가 SDK를 실행하기 전에 다른 작성자 또는 root가 실행 원본/config/아직 import하지 않은 dependency를 수정한 경우. 또는 parent와 child의 spec read 사이에 job spec가 변경된 경우.",
+      "observed": "사본은 실행 전 원고 보존과 실행 후 identity 판정에 사용되지만 gate가 검사하는 것은 run_id뿐이다. SDK가 Job에 할당되기 전 실행되는 문제는 아니며, 할당 후 승인된 입력 identity를 확인하지 않은 채 SDK를 시작할 수 있는 문제다.",
+      "impact": "최종 host 판정이 mismatch로 실패하더라도 이미 변경된 입력으로 SDK/native 부수효과가 발생한다. 따라서 현재 snapshot은 immutable execution 또는 변경 입력의 launch 차단을 보장하지 않는다.",
+      "bounded_reproduction": {
+        "method": "frozen runner SHA72b355dc의 gated_worker만 CPU에서 import하고 spec/gate는 MemoryPath, subprocess.call은 Mock으로 대체. 파일·SDK·native child 생성 없음.",
+        "setup": "approved bytes의 SHA와 snapshot 이후 changed bytes의 SHA가 다른 메모리 상황에서 동일 run_id gate와 live-source.py command를 제공.",
+        "result": "gated_worker가 Mock launch를1회 호출하고0을 반환. source/config digest 확인 경로가 없음을 원본 PowerShell command 흐름과 함께 대조.",
+        "limit": "실제 SDK를 바뀐 입력으로 실행하거나 파일 경합을 일으킨 검사가 아니다. 지정 코드의 도달 가능한 launch 경로를 mock으로 확인했다."
+      },
+      "minimum_fix": [
+        "job spec에 snapshot으로부터 산출한 expected source/config/dependency SHA 집합을 전달하고, gated_worker가 SDK 호출 바로 전에 실행 입력을 재검증하여 mismatch이면 native command를 호출하지 않도록 한다.",
+        "parent가 읽고 승인한 spec digest를 child에 전달해 child의 새 spec read도 같은 bytes인지 확인한다. 실행 중 파일 불변은 별도 소유권 규칙으로 유지하거나 실제 frozen input 실행을 적용한다.",
+        "더 강한 immutable execution이 필요하면 frozen source/config/import root를 실행 대상으로 삼아야 한다. 기존 상대 import/경로 의미를 유지하도록 root가 선택하며 이번 검수에서 새 구조를 구현하지 않는다."
+      ],
+      "targeted_regression_proposal": "snapshot/spec read 후 source/config/dependency 또는 spec 변경을 주입하고 SDK launch mock이0회인지 확인하는 음성 검사. 전체 SDK/검사 재실행을 요구하는 제안은 아님.",
+      "evidence_vs_inference": "현재 실행경로와 사전 검증 부재는 확인된 소스 사실. 공유 트리의 실제 수정이 해당 창에 겹칠 가능성과 변경 입력 실행은 그 경로의 조건부 결과다. 제공된 contact003/runtime001이 오염됐거나 잔여 PID를 남겼다고 주장하지 않음."
+    }
+  ],
+  "other_boundaries": [
+    {
+      "boundary": "할당 전 gate",
+      "references": [
+        "scripts/isaac/windows_job_runner.py:94",
+        "scripts/isaac/windows_job_runner.py:126",
+        "scripts/isaac/windows_job_runner.py:130"
+      ],
+      "result": "gate는 assign 성공 뒤 atomic replace로 열고 worker는 gate 확인 전 SDK를 호출하지 않는다. assign 실패 시 unassigned worker 종료 경로가 있으며 gate는 열리지 않는다. 위 finding은 이 Job containment 순서와 구분한다."
+    },
+    {
+      "boundary": "Job 소유권/후손/killclose",
+      "references": [
+        "scripts/isaac/windows_job_runner.py:56",
+        "scripts/isaac/windows_job_runner.py:60",
+        "scripts/isaac/windows_job_runner.py:72",
+        "scripts/isaac/windows_job_runner.py:145"
+      ],
+      "result": "Job handle은 보안속성None으로 생성하고 kill-on-close만 설정하며 breakaway 허용 플래그를 주지 않는다. active job PID 전체를 조회해 정상 parent 종료 뒤 orphan 후손과 timeout의 후손을 종료/재조회한다. 제공된 실제 JSON과 root3개 Windows 검사 보고는 이 경계를 지지한다."
+    },
+    {
+      "boundary": "종료 판정과 예외",
+      "references": [
+        "scripts/isaac/windows_job_runner.py:137",
+        "scripts/isaac/windows_job_runner.py:157",
+        "scripts/isaac/run-local-contact-probe.ps1:84",
+        "scripts/isaac/run-local-contact-probe.ps1:98",
+        "scripts/isaac/run-local-contact-probe.ps1:123"
+      ],
+      "result": "query/terminate/wait 오류는 closed=false로 남고 성공으로 승격하지 않는다. host는 job run/runner/spec identity와 assignment/gate/closed/빈 PID/runner 종료를 함께 확인한다. 최종 launcher 성공은 probe passed/source/config/정확 dependency 집합도 요구한다."
+    },
+    {
+      "boundary": "runtime001의 실패 보존",
+      "references": [
+        "artifacts/local45/runtime-001.host.json",
+        "scripts/isaac/run-local-contact-probe.ps1:123"
+      ],
+      "result": "runtime001 host에서 job_status passed/closed=true와 probe_status failed를 구분해 보존한다. host exit_code0은 Job runner process의 코드이며 PS 최종 실패 조건에는 probe_status가 포함되므로 scan 실패를 전체 probe PASS로 바꾸는 문제는 찾지 못했다."
+    },
+    {
+      "boundary": "enum Python3.10/3.12 wire 호환",
+      "references": [
+        "factory_ops/compat.py:6",
+        "factory_ops/compat.py:11",
+        "factory_ops/operations/model.py:10",
+        "factory_ops/operations/inventory.py:20",
+        "tests/test_operations_python_compat.py:10"
+      ],
+      "result": "현재6개 enum은 모두 명시 string 값이며 fallback(str,Enum)+str.__str__의 적용 범위에 맞는다. 검사 내용은 str/f-string/JSON/값 재구성/hash lookup을 확인한다. 이 범위에서 추가 major/blocking 결함은 찾지 못했다. 미래 auto()/비문자 enum 값의 완전한 stdlib StrEnum 호환성을 주장하지 않음."
+    }
+  ],
+  "evidence": {
+    "sha256": {
+      "artifacts/local45/contact-003.host.json": "f546e0c32286f9e208b6ea3868b31caa4bc7863d9dddebc06948b6ef0219c5e4",
+      "artifacts/local45/contact-003.job.json": "044677df4e40479669fbef2137c804ed86ee31d92a355138d05e29ce33a50c71",
+      "artifacts/local45/runtime-001.host.json": "ad418e0ddf895da85cc4fa751b483ccbe840f65905fa8eb89aa6563de1efbb81"
+    },
+    "contact003": "host/job의 run_id e6db5bf3f86843569797bcd49f35e328, runner SHA72b355dc, spec SHA0c04d20e 일치. assignment/gate/closed=true, remaining_owned_pids=[]; job/status와 probe/status passed.",
+    "runtime001": "host run9f50f14ccc524aa9bcacd635e1f7877d, runner SHA72b355dc, launcher SHAa8ddc481 일치. closed/full_descendant=true·remaining=[]이나 probe_status=failed를 그대로 기록.",
+    "reported_author_checks": "root 보고: 실제 Windows 정상/부모종료 손자잔류/timeout3검사 및 stdout 보존 PASS; SDK3.10/CPU3.12 enum 직렬화·fleet import PASS; 지정 Pyright0. 이 작성자는 재실행하지 않음."
+  },
+  "validation": {
+    "full_tests_run": [],
+    "native_sdk_ros_vm_runs": [],
+    "bounded_mock_reproduction": "WG026-001 gated_worker launch 1회 확인; 실제 subprocess.call은 Mock",
+    "read_pass": "지정7파일의 요청 경계 및 제공3JSON 한정. 원장 알고리즘/센서/025 facade 추가 리뷰 없음.",
+    "source_sha_rechecked": true,
+    "product_files_modified": [],
+    "processes_started_by_review": []
+  },
+  "limits": [
+    "Job 구조/후손 상속은 지정 코드와 제공된 실제 실행 기록/기존 검사 내용을 한정 대조했다. 새로운 native process·SDK·전체 검사로 재현하지 않았다.",
+    "원래 승인 source가 실행 중 불변이라는 외부 운영 가정이 유지되면 WG026-001 trigger는 피할 수 있다. 현재 guard 코드 자체가 이를 강제하지 않는다는 지적이다.",
+    "025 facade와 센서 scan 진단은 동결/root 소유로 유지했다. runtime001 motion 성공과 scan 실패 원인 분석은 이번 범위에 포함하지 않음.",
+    "OS/서비스를 통한 외부 프로세스 생성, 권한을 가진 악의적 artifact 변조 같은 환경 공격까지 Job 소유권 보장으로 확대하지 않는다."
+  ],
+  "written_paths": [
+    "coordination/collab/results/local-windows-guard-review-026.json"
+  ],
+  "completed_at_utc": "2026-10-19T22:37:31.1656160+00:00"
+}

@@ -1,0 +1,49 @@
+{
+  "task_id": "kit-operator-console-023",
+  "attempt": 1,
+  "contract_revision": 23,
+  "owner": "control",
+  "reviewer": "root",
+  "inputs_commit": "72ce28e77552df0ef250a585ff83a1cb48b7da74",
+  "goal": "실제 Omniverse Kit 확장으로 기존 HTTP 운영 원장의4대 목록/선택/재고/충전/이벤트와 전체 pause/resume/create_order를 연결",
+  "write_paths": [
+    "factory_ops/kit_client.py",
+    "tests/test_kit_client.py",
+    "extensions/factory.ops.console/config/extension.toml",
+    "extensions/factory.ops.console/factory_ops_console/__init__.py",
+    "extensions/factory.ops.console/factory_ops_console/extension.py",
+    "coordination/collab/results/kit-operator-console-023.json"
+  ],
+  "read_paths": [
+    "coordination/collab/dashboard-contract.md",
+    "factory_ops/dashboard.py",
+    "factory_ops/dashboard_model.py",
+    "docs/completion-plan.md",
+    "E:/IsaacSim/isaac-sim-4.5.0/exts/isaacsim.examples.ui/config/extension.toml",
+    "E:/IsaacSim/isaac-sim-4.5.0/exts/isaacsim.examples.ui/isaacsim/examples/ui/extension.py"
+  ],
+  "contract": [
+    "기존 control session/이름/배치 유지. 당신만 작업하지 않으므로 다른 작성자 변경을 되돌리지 말 것. root가 backend/dashboard/model/MES 및 native실행 담당, 위 write_paths만 작성. 새세션/에이전트/설치/VM/Git/GPU실행 금지.",
+    "기존 SDK4.5에서 사용 가능한 omni.ext.IExt + omni.ui 네이티브 확장. Python3.10 문법, vendor코드 복제 금지. 설치 API 근거만 확인. factory_ops.kit_client는 표준라이브러리만; 운영 모델(StrEnum3.11)을 SDK에서 import하지 말 것.",
+    "API env FACTORY_OPS_API_URL 기본 http://127.0.0.1:8765. loopback HTTP만 허용(터널 포함). GET /api/snapshot, POST /api/commands. POST command_id 새UUID, expected_revision 및 expected_run_id=관측run_id, action, parameters. root는 expected_run_id선택필드 검사를 추가한다. 이전웹호환 유지.",
+    "create_order parameters source=S1/S2/S3,quantity=양의정수. 4대로 하드코딩한 관측을 만들지 않고 실제snapshot robots표시. pause/resume은전체운영임을라벨. capability+connected+마지막fetch시각 freshness 확인 후만 조작. pending접수를applied로변경하지 않고 후속 snapshot commands로결과확정.",
+    "화이트톤 창(대략480x720); run/mode/connection/revision/simtime, 클릭 가능한차량목록, 선택차량 작업/목적지/속도/SOC원천/적재/대기사유, 재고/토트/충전 요약, 최근event8개, 전체정지/재개/주문. 영어모델명과한국어표시중택가능 한국어폰트가실제SDK에없으면글리프실패숨기지말것.",
+    "HTTP는 UI mainthread를막지않는 단일background request/짧은timeout 사용. 중복poll 제한, run변경/연결실패/지연시이전값보관+stale표시+명령disabled. on_shutdown 구독/창/pending작업정리, 늦은결과가닫힌UI를갱신하지않게 한다. 전역SDK테마변경/기존stageclear/physics명령없음.",
+    "native검증을위해 package.get_instance() -> 활성Extension 또는None, 인스턴스.get_probe_state() -> run/connection/selected_robot/rendered_labels/enabled_actions/last_receipt 등현재상태, 인스턴스.submit_action(action,parameters=None) -> 실제버튼과같은비동기처리. 테스트용우회명령경로 금지. root가SDK에서실제API와window활성/선택/명령/종료를확인한다.",
+    "root는 snapshot에 선택형 integrations 필드를추가할수있음: mock_mes의최근입력원천/신선도/처리·거절receipt. 없으면미연결, 있으면간단요약표시. 이 필드때문에구현대기하지말것.",
+    "의미있는CPUclient경계검사만:timeout/stale/run변경/capability/receipt. 전체테스트반복금지. 완료후source SHA/실제설치API근거/클라이언트검사/확장enable방법/제약을receipt저장. 자기accepted판정금지. root검수·실제SDK실행 별도."
+  ],
+  "acceptance": "표준클라이언트검사 PASS + root의 실제SDK4.5 extension enable/window state/실제API선택·pause/resume·주문receipt와shutdown 확인; CPU모드와물리결과구분",
+  "created_at_utc": "2026-10-19T21:53:40.924846+00:00",
+  "revision3_request": {
+    "goal": "native002 shutdown 검사에서 Workspace window handle visible이 true로 남는 원인 확인 및 실제 UI 종료 보장",
+    "native_evidence": "artifacts/kit-console/console-002/result.json",
+    "notes": [
+      "manager disabled=true, module instance=None, Workspace get_window visible remains true; log has on_shutdown with no exception",
+      "actual screenshot revision2 visually accepted: white readable controls fixed bottom",
+      "SDK clears IExt __dict__ after on_shutdown. Do not call old instance after disable. Root owns probe script and native execution.",
+      "Inspect installed omni.ui WindowHandle docs: visible may be method rather than bool. If probe wrong, explain exact patch to root, do not mutate product unnecessarily. If actual extension bug, edit only previously owned extension paths."
+    ],
+    "acceptance": "Root new actual native capture and disabled window verification; preserve001/002 failures. No broad reviews/tests, GPU/VM/native process launches or new delegates."
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "task_id": "local45-flat-scan-observer-029",
+  "attempt": 1,
+  "contract_revision": 29,
+  "owner": "control",
+  "reviewer": "root",
+  "goal": "실제4.5 FlatScan payload의시각/통계/고유관측을분리하는pure Python3.10 tracker",
+  "write_paths": [
+    "factory_ops/flat_scan_observation.py",
+    "tests/test_flat_scan_observation.py",
+    "coordination/collab/results/local45-flat-scan-observer-029.json"
+  ],
+  "read_paths": [
+    "coordination/collab/results/local45-mission-boundary-map-027.json",
+    "factory_ops/isaac45_runtime.py",
+    "scripts/isaac/local_fleet_runtime_probe.py"
+  ],
+  "contract": [
+    "새3파일만소유,당신만작업하는것아니므로타작성자변경보존. Root가G2/capture/SDKwrapper/lifecycle/preparer/worker/Kittyping/원장/Git를소유한다. factory_ops/isaac45_runtime.py도root가이제소유하므로수정하지말것. SDK/VM/패키지/새agent/세션/외부전송금지.",
+    "stdlib만사용,SDK/numpy/rclpyimport없음. Python3.10문법. 실제SDK고유frameId가있는것처럼만들지말고schema local45-flat-scan-observation v1.",
+    "API FlatScanObservationTracker(identity, range_min_m, range_max_m).observe(payload, *, read_at_sim_time_s, read_at_physics_frame, timeline_playing, phase)->JSON-safe dict. identity는run_id/scenario_id/robot_id/side/prim_path/topic/frame_id/actual_profile_sha256의고정mapping. 입력payload키timeStamp,numCols,numRows,linearDepthData는설치실제flat-scan출력. depth는rootwrapper가flatten해주는float iterable(NumPy scalars포함가능).",
+    "실제양수finite native timeStamp와비어있지않은buffer만고유관측후보. timestamp==last면duplicate,index증가안함; 감소면regressed/invalid로보존하고기존maxstamp/index변경안함. stamp0/missing/nonfinite/empty는warmup또는invalid로보존. read_at_time/frame증가만으로새scan번호만들지말것. unique_observation_index는이observer가읽은서로다른native timestamps수이며GMO/hardwareframe아님.",
+    "finite/positive/in-range/total size stats만,raw3,200ranges를반환/저장하지않음. 모든무효raw값은JSONNaN없이None/상태·reason으로반환. nativeTimeStamp수정/보간/physicsframe로대체금지. read_at_sim_time_s/native_stamp차이는관측offset으로둘수있으나clockaligned/qualitypass/GT제어주장없음.",
+    "identity필드복사와충돌방지,run/robot/name/topic새identity를기존tracker에조용히섞지않음. range bounds/reader context는유한값,frame정수,b bool구분. Payload malformed에서루프전체죽이기보다error관측을반환하되constructor/readercontext오류는ValueError허용. actual numCols/numRows와buffer size불일치는상태에남김.",
+    "테스트는실제관측경계위주: first/increasing/duplicate/readclock-only/regressed/warmup/nonfinite/empty/range통계JSONsafe/identity보존;scope는작게. 새전체suite/Native실행없음. frozen2files SHA+API예+CPU/Pyright결과receipt. 자기accepted판정금지.",
+    "028source세SHA대조수용(major0). Root는지금첫checkpointcommit전Kitclient/nativeKitProbe/MES테스트type표기보정만마무리중. 새029파일은첫commit에서제외한다."
+  ],
+  "created_at_utc": "2026-10-19T23:07:02.085301+00:00"
+}

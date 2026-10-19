@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "recorded_at_utc": "2026-10-19T22:19:19.919836+00:00",
+  "status": "passed",
+  "scope": "local WSL Jazzy build, plugin loading and isolated install only; no Nav2 mission or Isaac fleet result",
+  "source_commit": "72ce28e77552df0ef250a585ff83a1cb48b7da74",
+  "source_worktree_unchanged": true,
+  "source_sha256": {
+    "ros_ws/src/factory_ops_goal_checker/CMakeLists.txt": "f16f607edbd558a9e4a66feacd89733df32337fc0d800318e539683ef45cf2bc",
+    "ros_ws/src/factory_ops_goal_checker/include/factory_ops_goal_checker/confirmed_xy_regulated_pure_pursuit_controller.hpp": "71be95905ec6208cbbaa1c910b861dc7dfe06de52d90f7fc12cc6648cc20f363",
+    "ros_ws/src/factory_ops_goal_checker/include/factory_ops_goal_checker/telemetry_goal_checker.hpp": "e037539d8aa9da7e95f8621e32108770d0a8bd9044edf423722c8d2c720699e8",
+    "ros_ws/src/factory_ops_goal_checker/include/factory_ops_goal_checker/telemetry_regulated_pure_pursuit_controller.hpp": "df6d7872a07be7fd26e2f1fe05dbd84e6accb57054221ff11ed8ca279be9e296",
+    "ros_ws/src/factory_ops_goal_checker/include/factory_ops_goal_checker/trace_contract.hpp": "ee379203dd3dfcb6bb8c7959aeb1d14696507ea59f54ee50471fe8cc2a48ceec",
+    "ros_ws/src/factory_ops_goal_checker/package.xml": "a5755de568a7ea7965393f950688a06a577c381181472c4abae0f284a2b684dc",
+    "ros_ws/src/factory_ops_goal_checker/plugins.xml": "c69fcb838c05902288de39b44a11388d87bf5889c3095dbfa1c150efc532b7ac",
+    "ros_ws/src/factory_ops_goal_checker/src/confirmed_xy_regulated_pure_pursuit_controller.cpp": "30bfda25778870af3df15459effc59d45b622f14f5d650104ea9cfaf94d85de6",
+    "ros_ws/src/factory_ops_goal_checker/src/telemetry_goal_checker.cpp": "1f45752bec7544458049732d78d2d3486332c602519d3d2dfd567340d98999a3",
+    "ros_ws/src/factory_ops_goal_checker/src/telemetry_regulated_pure_pursuit_controller.cpp": "4ad59259219d90e7af9c95a14d140bcc380d093c81d504484d14ab4f0982a4a2",
+    "ros_ws/src/factory_ops_goal_checker/test/test_confirmed_xy_rpp.cpp": "6bf7eb1a45b775e3abdfa87e76d79c3327529690a6c8d32044dd13af740d9c0b",
+    "ros_ws/src/factory_ops_goal_checker/test/test_plugin_loading.cpp": "fdd9800b59b22c1f4470adf325d032e083a8ed426dd7cafaeac3e39bab626aab",
+    "ros_ws/src/factory_ops_goal_checker/test/test_telemetry_goal_checker.cpp": "f9fef597e79ba57f45e330cbd0b35dc34ec48b3a790ae1bd82b49a8ecdfbcee8",
+    "ros_ws/src/factory_ops_goal_checker/test/test_telemetry_rpp.cpp": "c769837324d148b6757f94d43afc7bf393fecb091df51fd13c17120b6fb06eec"
+  },
+  "build_directory": "D:\\FactoryOpsRuntime\\local45-025\\nav2-build",
+  "install_directory": "D:\\FactoryOpsRuntime\\local45-025\\nav2-install",
+  "compiler": "g++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0",
+  "ros_distro": "jazzy",
+  "nav2_controller_version": "1.3.13",
+  "commands": [
+    "cmake -S /mnt/c/Users/LIMMM/factory-ops-twin/ros_ws/src/factory_ops_goal_checker -B /mnt/d/FactoryOpsRuntime/local45-025/nav2-build -DCMAKE_INSTALL_PREFIX=/mnt/d/FactoryOpsRuntime/local45-025/nav2-install -DBUILD_TESTING=ON -DPython3_EXECUTABLE=/usr/bin/python3",
+    "cmake --build /mnt/d/FactoryOpsRuntime/local45-025/nav2-build --target test_plugin_loading -j 2",
+    "ctest --test-dir /mnt/d/FactoryOpsRuntime/local45-025/nav2-build -R ^test_plugin_loading$ --output-on-failure",
+    "cmake --install /mnt/d/FactoryOpsRuntime/local45-025/nav2-build"
+  ],
+  "test_count": 1,
+  "test_failures": 0,
+  "plugin_classes": [
+    {
+      "name": "factory_ops_goal_checker::TelemetryGoalChecker",
+      "type": "factory_ops_goal_checker::TelemetryGoalChecker",
+      "base_class_type": "nav2_core::GoalChecker"
+    },
+    {
+      "name": "factory_ops_goal_checker::TelemetryRegulatedPurePursuitController",
+      "type": "factory_ops_goal_checker::TelemetryRegulatedPurePursuitController",
+      "base_class_type": "nav2_core::Controller"
+    },
+    {
+      "name": "factory_ops_goal_checker::ConfirmedXyRegulatedPurePursuitController",
+      "type": "factory_ops_goal_checker::ConfirmedXyRegulatedPurePursuitController",
+      "base_class_type": "nav2_core::Controller"
+    }
+  ],
+  "library_sha256": "e2dbd8bdc8a8ef2e3abe65107fafaf33faebee39f03efad096a9c6b690010257",
+  "retained_evidence_sha256": {
+    "LastTest.log": "6c3903e0cf36a928ba0ca73a6aa9a66a9419d1bbb425ab5cb0a0e143febee73c",
+    "test_plugin_loading.gtest.xml": "ff87d5b0ac1d222063c74796ee619930343ba62de2af65024b8373b10e184165",
+    "install_manifest.txt": "6f47b5eae4f3bda4ee27de57f049cdf81841341a69d25005e6e79f12d2b3e420"
+  },
+  "four_amr_navigation_verified": false,
+  "notes": [
+    "Initial DrvFS compilation emitted subsecond future-mtime warnings. An incremental build after timestamps settled completed without those warnings. CTest and install succeeded.",
+    "No colcon installation, global ROS environment change or running Nav2 nodes."
+  ]
+}

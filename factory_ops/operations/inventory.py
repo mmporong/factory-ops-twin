@@ -8,8 +8,9 @@ from __future__ import annotations
 
 from copy import deepcopy
 from dataclasses import dataclass
-from enum import StrEnum
 from typing import Callable, Iterable, Mapping
+
+from factory_ops.compat import StrEnum
 
 
 class InventoryError(ValueError):

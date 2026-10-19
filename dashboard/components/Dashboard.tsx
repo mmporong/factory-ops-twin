@@ -213,6 +213,7 @@ export default function Dashboard() {
         body: JSON.stringify({
           command_id: crypto.randomUUID(),
           expected_revision: snapshot.revision,
+          expected_run_id: snapshot.run_id,
           action,
           ...(parameters ? { parameters } : {}),
         }),

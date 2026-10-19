@@ -1,0 +1,42 @@
+{
+  "run_id": "501882ec6e464e2f870ccae88de661b7",
+  "started_at_utc": "2026-10-19T22:47:06.2107929Z",
+  "scope": "native bounded component probe",
+  "timeout_s": 480,
+  "sdk_root": "E:\\IsaacSim\\isaac-sim-4.5.0",
+  "entry_point": "local_fleet_runtime_probe.py",
+  "inputs_directory": "C:\\Users\\LIMMM\\factory-ops-twin\\artifacts\\local45\\runtime-006.inputs",
+  "launcher_sha256": "ee0290cda90d2e81fe4794a8645086d5a790b9362c965525b6604f142c6f227e",
+  "source_sha256": "d75b2bfdca68b6f4db7608b3052d9222e709c3283a56a34ddaa7a68d2eac53c1",
+  "gpu": "NVIDIA GeForce RTX 3060, 12288 MiB, 610.62",
+  "timed_out": false,
+  "remaining_owned_pids": [],
+  "config_sha256": "d891d14d1a090a46a3d3d361257b38c3016a976c942cda6344230efeb54c55f8",
+  "project_source_sha256": {
+    "factory_ops/__init__.py": "da57bbf586e3c4639fd72b3960ef8dd7a8326b3ba17504836189be26ce5bacb0",
+    "factory_ops/isaac45_runtime.py": "95139a7834e16c1f864e52ee36b26869eac26159830d7cbb7288baf602f316f2",
+    "factory_ops/drive_profile.py": "6bba5a51caa5e4a71662339026afc67e1efe1d7370cb04c372cde48eba9d7185",
+    "factory_ops/motion.py": "a8d670ce9e0309093c47a6a63ff70c78182021f6b50496933e29985466ed6cd1",
+    "scripts/isaac/local_asset_probe.py": "042e7c3255c339a5d5705a0bb70e377f0b807d2deda5d06fc0cffb0870bf345c"
+  },
+  "closure_scope": "gated worker and descendants contained in an owned Windows Job Object",
+  "job_runner_sha256": "e75e21b22c76c1b911516c001a8786b8bafc1a442bd3ae78396911fa1b68057b",
+  "job_spec_sha256": "6c7a14199e16d097c7b05bfe35d3e93895a5c67f0e5b26c16c03c505542b2c45",
+  "full_descendant_closure_verified": true,
+  "timeout_full_tree_cleanup_supported": true,
+  "launcher_pid": 37892,
+  "exit_code": 0,
+  "closed": true,
+  "job_identity_matched": true,
+  "job_assignment_confirmed": true,
+  "prelaunch_inputs_verified": true,
+  "owned_pids_at_cleanup": [
+    52868
+  ],
+  "job_status": "passed",
+  "probe_status": "passed",
+  "probe_identity_matched": true,
+  "project_sources_matched": true,
+  "finished_at_utc": "2026-10-19T22:48:05.0170295Z",
+  "wall_time_s": 58.8070094
+}

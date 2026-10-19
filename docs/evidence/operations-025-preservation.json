@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "status": "passed",
+  "scope": "closed component raw attempts, frozen sources/configs, selected CPU HTTP proofs and isolated Nav2 install; no live API/Next logs or databases",
+  "file_count": 375,
+  "bytes": 12098556,
+  "manifest_sha256": "ff9c31d82dc3cc8fa5704cadf8cd2f307266dc324aacab3e90cc5abeea448810",
+  "manifest_path": "artifacts/brev/operations-025-preservation-001.json",
+  "copies": [
+    {
+      "root": "D:\\FactoryOpsArtifacts\\operations-025\\checkpoint-001",
+      "exact_payload_file_set": true,
+      "all_sha256_matched": true
+    },
+    {
+      "root": "E:\\FactoryOpsArtifacts\\operations-025\\checkpoint-001",
+      "exact_payload_file_set": true,
+      "all_sha256_matched": true
+    }
+  ],
+  "payload_plus_manifest_exact_file_set": true,
+  "source_archive": "stored separately after verified Git commit; runtime bytes remain in frozen .inputs snapshots",
+  "additional_checkpoint": {
+    "manifest_path": "artifacts/brev/operations-025-preservation-002.json",
+    "manifest_sha256": "bd663c1fc673f9adb702b4a3221d5d771e6335c0d485772298d1098ff1642fbe",
+    "file_count": 37,
+    "bytes": 1553083,
+    "copies": [
+      {
+        "root": "D:\\FactoryOpsArtifacts\\operations-025\\checkpoint-002",
+        "exact_payload_file_set": true,
+        "all_sha256_matched": true
+      },
+      {
+        "root": "E:\\FactoryOpsArtifacts\\operations-025\\checkpoint-002",
+        "exact_payload_file_set": true,
+        "all_sha256_matched": true
+      }
+    ],
+    "scope": "append-only new/changed closed evidence since checkpoint001; prior payloads preserved, not a working-tree mirror"
+  }
+}

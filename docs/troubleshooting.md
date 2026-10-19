@@ -267,9 +267,41 @@ CPU 충전 슬롯 예약과 동시에 공용 출구 M_LOW를 점유해, 다른 �
 
 ## FOT-032 — 로컬 종료 확인 범위와 수신 ACK 결속
 
-한정 검수에서 host의 종료 탐색은 launcher와 run ID가 일치하는 한 단계 자식만 포함하므로 전체 후손 트리의 강제 종료를 보장하지 않는다는 지적을 받았다. 현재 도구의 `closure_scope`와 `full_descendant_closure_verified=false`, `timeout_full_tree_cleanup_supported=false`에 범위를 명시했다. 정상 종료 관측을 임의의 손자 프로세스까지 추적한 증명으로 확대하지 않는다. 장시간 로컬 운영 supervisor의 전체 트리 종료는 후속 구현 대상이다.
+한정 검수에서 이전 host의 종료 탐색은 launcher와 run ID가 일치하는 한 단계 자식만 포함하므로 전체 후손 트리의 강제 종료를 보장하지 않는다는 지적을 받았다. 해당 실행 기록의 `closure_scope`와 `full_descendant_closure_verified=false`, `timeout_full_tree_cleanup_supported=false`에 범위를 명시했다. 정상 종료 관측을 임의의 손자 프로세스까지 추적한 증명으로 확대하지 않는다.
+
+후속 실행기는 Windows Job Object에 대기 중인 worker를 먼저 배정한 뒤 SDK 실행 gate를 연다. breakaway를 허용하지 않고 kill-on-close를 설정하며, 종료·시간 초과 뒤 같은 Job의 active PID 목록이 비었는지 확인한다. 실제 Windows의 정상 종료·부모가 종료한 손자 프로세스·시간 초과3개 검사를 통과했다. `contact-003`은 실제 SDK 접촉 시험과 전체 Job 종료를 통과했고, SDK 종료 뒤 남아 있던17개 보조 프로세스도 같은 소유 Job에서 정리했다. 이전 기록의 종료 범위는 소급해서 바꾸지 않는다.
+
+`contact-002`는 새 Job의 종료와 물리 시험은 통과했지만 기존 접촉 probe에 프로젝트 의존성의 빈 집합 필드가 없어 host의 source 집합 검사가 실패했다. producer에 명시적인 빈 `project_source_sha256`를 추가해003에서 대조했다. 숨긴 worker의 표준 출력이 사라지는 현상은 자식에 stdout/stderr 핸들을 명시해 수정했고,003의 SDK 로그를 보존했다.
+
+한정 검수 WG026-001은 원본 source/config/dependency와 job spec가 snapshot 뒤 실행 전에 바뀌어도 SDK 호출 자체는 차단되지 않는 경로를 지적했다. 부모가 spec bytes를 한 번 읽어 SHA를 child에 전달하고, child는 gate가 열린 뒤 실제 입력의 SHA를 검사해 통과한 경우에만 SDK를 호출하도록 보정했다. source/config/dependency 및 spec 변조에서 SDK 호출이 없음을 확인한2개 회귀 검사와 기존 Windows3개 검사를 통과했다.004의 실제 SDK 실행에서 같은 run/spec/input preflight와 Job 종료도 확인했다. 검수자는 launch-time 경계에서 해결된 것으로 재검수했다. 실행 중 파일시스템 불변이나 권한 있는 악의적 변조까지 보장하지 않으므로 native 실행 중 담당 소스의 동결 조건은 유지한다.
 
 또한 ACK의 passed 필드만으로 성공을 받지 않도록 최소3개 scan·같은 frame·증가하는 양의 stamp·방위 coverage·clock 오차와 config/receiver source SHA를 대조한다. receiver source도 host 입력에 고정하고 producer/host의 전체 프로젝트 source 키 집합과 값이 일치해야 한다. 빈 메시지·틀린 source/config·누락된 clock ACK를 거절하는 경계 검사를 통과했다. 최신007에서 엄격한 ACK/source 집합 검사와 실제3개 scan·4개 clock·정상 종료를 확인했다. 이전 원본의 판정은 바꾸지 않는다.
+
+## FOT-033 — Kit 종료 후 IExt 객체와 Workspace 캐시 오인
+
+Kit 관제 시험001은 선택·명령 처리·촬영 뒤 종료 검사에서 `_client` AttributeError가 발생했다. 설치 SDK는 `on_shutdown()` 뒤 IExt 객체의 `__dict__`를 비우므로 종료된 인스턴스의 검사 메서드를 다시 부를 수 없다.002는 manager와 활성 module 인스턴스 해제를 확인했지만 `Workspace.get_window()`의 visible 값이 true여서 실패했다.
+
+003은 종료 전 실제 소유 ui.Window 참조와 숨김 callback을 확보하고 확장을 해제한 뒤 검사했다. manager 비활성·module 인스턴스 없음·소유 창의 visible=false·hide callback을 확인했으며, 종료 후 PNG에서도 패널이 사라졌다. 같은 시점의 Workspace handle만 true로 남았다. 제품을 강제로 숨기는 검사를 추가하지 않았으며, 캐시 값은 진단 필드로 보존한다.001/002의 실패 판정도 유지한다.
+
+클라이언트의 Nullable 경계를 명시한 뒤004에서도 선택·세 명령·같은 원장 반영·창 종료를 재확인했다.004는 새로운 Job/prelaunch 검사와 전체 후손 종료까지 확인했으며 최신 촬영·소스 명세는 `docs/evidence/kit-console-004/`에 둔다.
+
+## FOT-034 — SDK4.5 Python3.10의 운영 enum import 실패
+
+로컬 SDK에서 fleet transport 모듈을 import할 때 Python3.11에 추가된 `enum.StrEnum`이 없어 실패했다. Python3.11 이상은 표준 StrEnum을 유지하고,3.10에서는 문자열 값·출력·포맷·JSON·동등성에 필요한 str/Enum 호환 클래스를 사용한다. 실제 SDK3.10과 CPU3.12에서 전체 운영 enum의 직렬화·값 복원 검사를 통과했고, SDK3.10의 fleet worker import도 성공했다. 이 결과는 SDK6.2 전용 센서·물리 API의 호환성을 증명하지 않는다.
+
+## FOT-035 — Canvas 대체 문구를 렌더 실패로 오인
+
+기존 Chrome 관제 탭은 도구의 focus-emulation 요청이 timeout되어 조작하지 않았다. 새 작업 탭은 API 상태·4대 목록·원장·충전 정보를 수신했다. 접근성 트리와 Canvas 자식 DOM에 있는 WebGL fallback 문구를 실제 렌더 실패로 오인했으나, 해당 문구는 Canvas 내부의 대체 콘텐츠였다. 화면 촬영에서 공장3D와 이동 중 차량·선택 상세가 정상 표시되는 것을 확인했다. 따라서 DOM의 fallback 텍스트 존재만으로 WebGL 실패를 판정하지 않는다. console 오류 목록도 비어 있었다.
+
+브라우저 내부 `chrome://gpu/` 진단 페이지는 허용 프로토콜 정책이 거절했으며 우회하지 않았다. 제품의 HTTP 화면을 촬영하는 더 작은 확인으로 표시 여부를 판별했다. 사용자 Chrome 재시작이나 전역 그래픽 설정 변경은 하지 않았다. 기존 탭의 도구 연결 timeout과 새 탭의 실제 렌더 성공은 서로 다른 관측으로 보존한다.
+
+## FOT-036 — World 초기화 전에 만든 RTX 센서 자원 미동작
+
+4.5 facade의 native001~003은 바퀴 이동·정지와420스텝의 실제 시계 진행을 통과했으나 차량 앞뒤 LiDAR의 ROS 콜백이 없었다.003에서 실효 domain146·BEST_EFFORT 구독은 확인했지만 발행자는0이고 native flat-scan 버퍼도 비어 있었다. 렌더 갱신만 늘려도 해결되지 않았다.
+
+004는 같은 실행에서 World 초기화 뒤 만든 정적 기준 LiDAR가3,200칸 native 버퍼와74개 ROS 메시지를 내는 반면, 초기화 전에 만든 차량 센서는 계속 비어 있음을 확인했다. facade에서 World 생성·reset을 센서·RenderProduct·writer 생성 앞으로 옮기고 초기화 순서의 CPU 회귀 검사를 추가했다. domain·QoS나 주행 로직은 바꾸지 않았다. 정확히 어느 SDK 내부 자원 초기화가 기존 자원을 무효화했는지는 확정하지 않는다.
+
+수정 뒤005의 단일 차량 앞뒤 센서와006의4대·8개 차량 센서가 실제 발행했다.006은 정적 기준 센서를 포함하지 않으며 각 차량 약0.585m 이동·실측 정지, 센서별53~54개 스캔과3,200칸 native 버퍼, source/config/prelaunch/전체 Job 종료를 확인했다. 이 시험은 센서 ID·발행 진행과 짧은 물리 주행만 판정하며 거리·방위·ROS clock 정합·Nav2·자재 운송·충전 qualification은 미완료로 유지한다. 원래001~004 실패와 source snapshot을 보존한다.
 
 ## 실행 전 확인과 후속 기록
 

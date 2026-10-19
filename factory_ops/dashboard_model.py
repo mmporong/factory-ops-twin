@@ -53,7 +53,7 @@ class DashboardModel:
     def _route(self, start: str, goal: str) -> tuple[tuple[float, float], ...]:
         return self.book.plan(start, goal).points
 
-    def create_order(self, parameters: dict[str, Any]) -> None:
+    def create_order(self, parameters: dict[str, Any]) -> str:
         source = parameters.get("source", ("S1", "S2", "S3")[self._order_seq % 3])
         quantity = parameters.get("quantity", 1)
         if source not in ("S1", "S2", "S3"):
@@ -73,6 +73,7 @@ class DashboardModel:
         self.ledger.add_order(order, f"LOT-{next_id:04}", source, ready_time=self.sim_time)
         self._order_seq = next_id
         self._event("order_created", f"{order} 자재 공급 요청", None)
+        return order
 
     def _event(self, kind: str, message: str, robot: str | None) -> None:
         self._event_seq += 1

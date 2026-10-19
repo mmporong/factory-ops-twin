@@ -34,6 +34,7 @@ def main() -> int:
         "started_at_utc": datetime.now(timezone.utc).isoformat(), "config": cfg,
         "config_sha256": hashlib.sha256(args.config.read_bytes()).hexdigest(),
         "source_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+        "project_source_sha256": {},
         "scope": cfg["scope"], "python": sys.version,
         "amr_docking_verified": False, "four_amr_verified": False, "charging_power_verified": False,
         "navigation_arrival": "not used; this is a vertical rigid-body contact coupon",

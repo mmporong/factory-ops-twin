@@ -1,0 +1,113 @@
+{
+  "task_id": "local-windows-guard-review-026",
+  "attempt": 2,
+  "contract_revision": 26,
+  "owner": "control",
+  "author": "root",
+  "status": "recheck_complete",
+  "ack": {
+    "received": true,
+    "ack_at_utc": "2026-10-20T07:41:18.6102434+09:00"
+  },
+  "sha_match": true,
+  "source_sha256": {
+    "scripts/isaac/windows_job_runner.py": "e75e21b22c76c1b911516c001a8786b8bafc1a442bd3ae78396911fa1b68057b",
+    "scripts/isaac/run-local-contact-probe.ps1": "ee0290cda90d2e81fe4794a8645086d5a790b9362c965525b6604f142c6f227e",
+    "tests/test_windows_job_runner.py": "eb9ec297c6be9aa4f249b0567fb08c5edc4e16c6c5c42eb278f61db4b227c7af",
+    "factory_ops/compat.py": "4294ba7ebbb0ee020b1ece6572e6c1f66069fd2fde4848603bcc31fe4547e53a",
+    "factory_ops/operations/model.py": "17b90c1436b78f436d88b325adb27d1531440b63ef0cf169aece1d6070bfb38e",
+    "factory_ops/operations/inventory.py": "1114b23fcdb3520de0b12f2e246680e5a0fbdcb945ac2ed9b3de0a2f9a5972f4",
+    "tests/test_operations_python_compat.py": "ac8f35e2a2484114330d3e6c0fba77b4ededea517b5b0ddb2f7e83475909bff0"
+  },
+  "verdict": "WG026-001_resolved_within_launch_time_scope",
+  "finding_resolution": {
+    "id": "WG026-001",
+    "previous_severity": "major",
+    "status": "resolved",
+    "qualification": "source/config/dependency의 launch-time 바이트 검사와 parent-child spec 결속 범위에서 해결. 실행 중 source 동결 계약은 유지하며 immutable 전체 실행은 주장하지 않음.",
+    "evidence": [
+      {
+        "path": "scripts/isaac/run-local-contact-probe.ps1",
+        "line": 44,
+        "observation": "snapshot bytes에서 실제 source/config/dependency 경로의 expected hash map을 생성해 job spec의 expected_inputs로 전달한다. source/config는45~46, dependency는56~57이다."
+      },
+      {
+        "path": "scripts/isaac/windows_job_runner.py",
+        "line": 128,
+        "observation": "parent가 spec bytes를 한 번만 읽고 같은 bytes로 SHA와 parse 결과를 만든다.146~148에서 child에 expected-spec-sha256과 preflight 경로를 전달한다."
+      },
+      {
+        "path": "scripts/isaac/windows_job_runner.py",
+        "line": 96,
+        "observation": "child가 읽은 spec bytes SHA를 parent가 포착한 SHA와 대조하며, 불일치 시 SDK subprocess.call 전에 거절한다."
+      },
+      {
+        "path": "scripts/isaac/windows_job_runner.py",
+        "line": 104,
+        "observation": "assignment gate를 기다려 run ID를 확인한 뒤111~115에서 각 실제 입력 bytes SHA를 검사한다. 불일치하면119의 SDK 호출에 도달하지 않는다."
+      },
+      {
+        "path": "scripts/isaac/windows_job_runner.py",
+        "line": 116,
+        "observation": "passed preflight에 run ID/parent spec SHA/실제 검사한 input SHA map과 launch-time/source-freeze scope를 기록한다. 실패는 failed preflight로 남긴다."
+      },
+      {
+        "path": "scripts/isaac/windows_job_runner.py",
+        "line": 191,
+        "observation": "parent는 preflight status/run/spec/입력 SHA map의 정확한 일치를 요구하고199~202의 PASS 조건에 prelaunch_inputs_verified를 포함한다."
+      },
+      {
+        "path": "scripts/isaac/run-local-contact-probe.ps1",
+        "line": 99,
+        "observation": "host가 prelaunch_inputs_verified를 기록하고128의 최종 성공 조건에 필수화한다. 기존 run/runner/spec, probe source/config, 정확 dependency 집합 검사를 유지한다."
+      },
+      {
+        "path": "tests/test_windows_job_runner.py",
+        "line": 78,
+        "observation": "source/config/dependency를 각각 변경한3개 음성 사례에서 ValueError/SDK launch mock0회/failed preflight를 확인하는 검사가 추가됐다."
+      },
+      {
+        "path": "tests/test_windows_job_runner.py",
+        "line": 96,
+        "observation": "parent 포착 후 spec 변경의 SDK launch mock0회 검사가 추가됐다. 기존 Windows3개 검사에도 preflight 확인이 추가됐다."
+      }
+    ]
+  },
+  "new_major_or_blocking_findings_in_changed_gate": [],
+  "changed_files_reviewed": [
+    "scripts/isaac/windows_job_runner.py",
+    "scripts/isaac/run-local-contact-probe.ps1",
+    "tests/test_windows_job_runner.py"
+  ],
+  "unchanged_sha_only": [
+    "factory_ops/compat.py",
+    "factory_ops/operations/model.py",
+    "factory_ops/operations/inventory.py",
+    "tests/test_operations_python_compat.py"
+  ],
+  "validation": {
+    "method": "WG026-001 대응 부분만 읽기 전용으로 한 번 재대조. 지정3파일의 launch-time 흐름과 추가 음성 검사 확인. 나머지4파일은 SHA 불변만 확인.",
+    "reported_author_result": "root 보고: 5검사 PASS(기존 Windows3 + 입력변경 + spec변경), 지정 Pyright0, PowerShell parse0. 작성자가 재실행한 결과와 구분.",
+    "reviewer_tests_rerun": [],
+    "sdk_ros_vm_processes_started": [],
+    "product_files_modified": [],
+    "source_sha_rechecked": true,
+    "original_receipt_preserved": true,
+    "new_native_acceptance_claim": false
+  },
+  "limits": [
+    "launch-time 검사 통과 뒤 파일을 변경하지 않는 소유권/동결 계약은 계속 필요하다. hash 검사와 OS load 사이 및 지연 import까지 immutable filesystem/적대적 동시 변경 방어로 보장하지 않는다.",
+    "SourceDependency에 명시한 집합의 검사이며 SDK/vendor binary 또는 명시하지 않은 모든 import까지 검증했다고 주장하지 않는다.",
+    "원래 finding의 gate 경계만 재검수했다. enum/Job 전체/센서/runtime025 광역 리뷰나 SDK·전체 검사 반복은 하지 않았다.",
+    "contact003/runtime001은 이전 SHA의 과거 증거로 보존한다. 새 gate의 실제 native 결과 또는 root의 별도 센서 진단을 이 판정에 포함하지 않는다."
+  ],
+  "original_receipt": {
+    "path": "coordination/collab/results/local-windows-guard-review-026.json",
+    "sha256": "da7e98ee9c37b1b708e57f6c9b5c3415bbcb9c839a1fb11797820cb6f6e48c57",
+    "preserved": true
+  },
+  "written_paths": [
+    "coordination/collab/results/local-windows-guard-review-026-recheck.json"
+  ],
+  "completed_at_utc": "2026-10-19T22:42:34.3994999+00:00"
+}

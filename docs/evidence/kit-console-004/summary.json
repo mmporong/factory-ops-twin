@@ -1,0 +1,137 @@
+{
+  "schema_version": 1,
+  "run_id": "346c23267a244968bbe75ef0239e6438",
+  "status": "passed",
+  "scope": "SDK4.5 native Kit console to CPU model API; no physical robot or fleet proof",
+  "started_at_utc": "2026-10-19T23:08:58.346488+00:00",
+  "finished_at_utc": "2026-10-19T23:09:18.716581+00:00",
+  "source_sha256": "dad9aeb7d2684eaa47789f8a080f1cedc412372e8e2c9e135df538ce95854b75",
+  "config_sha256": "176f81c665700879b89c7de5bcf5bbec47e56c1a02332c7618799f415840462c",
+  "project_source_sha256": {
+    "factory_ops/__init__.py": "da57bbf586e3c4639fd72b3960ef8dd7a8326b3ba17504836189be26ce5bacb0",
+    "factory_ops/kit_client.py": "bfb468b3341b487c0f93ca32baac47a86b9055b21fdf3771d1f93dafa4ddb1d9",
+    "extensions/factory.ops.console/factory_ops_console/__init__.py": "6e5f6dede02cd956b94f93b558fe7b1a725ca16bf574c5e83d53496d0245af2e",
+    "extensions/factory.ops.console/factory_ops_console/extension.py": "b4fd2e4e8d31011f8961225f72cf72806dd9884255009373d7532bd6f27bfbe5"
+  },
+  "extension_manifest_sha256": "295cacaa636e7e1fdbf524189f9dd58e0201a8c155c1b253f6cf968660915d47",
+  "isaac_version": "4.5.0-rc.36+release.19112.f59b3005.gl",
+  "python": "3.10.15 (tags/v3.10.15-dirty:ffee63f, Oct  8 2024, 11:54:31) [MSC v.1912 64 bit (AMD64)]",
+  "business_run_id": "web-local-model-83f1eca4-1ebb-4b18-8ae2-60190785a2eb",
+  "operations": [
+    {
+      "action": "pause",
+      "submission": {
+        "submitted": true,
+        "command_id": "105cea05-d489-4101-a7df-9f00db1a97c9"
+      },
+      "receipt": {
+        "command_id": "105cea05-d489-4101-a7df-9f00db1a97c9",
+        "run_id": "web-local-model-83f1eca4-1ebb-4b18-8ae2-60190785a2eb",
+        "status": "applied",
+        "reason": null,
+        "revision": 9
+      },
+      "api_revision": 9,
+      "api_paused": true,
+      "mode": "local_model"
+    },
+    {
+      "action": "resume",
+      "submission": {
+        "submitted": true,
+        "command_id": "ed3b8294-7a65-4209-b07c-0359ae7c42e9"
+      },
+      "receipt": {
+        "command_id": "ed3b8294-7a65-4209-b07c-0359ae7c42e9",
+        "run_id": "web-local-model-83f1eca4-1ebb-4b18-8ae2-60190785a2eb",
+        "status": "applied",
+        "reason": null,
+        "revision": 10
+      },
+      "api_revision": 10,
+      "api_paused": false,
+      "mode": "local_model"
+    },
+    {
+      "action": "create_order",
+      "submission": {
+        "submitted": true,
+        "command_id": "3278868d-7db6-4a48-94b9-c4eb4a5a9251"
+      },
+      "receipt": {
+        "command_id": "3278868d-7db6-4a48-94b9-c4eb4a5a9251",
+        "run_id": "web-local-model-83f1eca4-1ebb-4b18-8ae2-60190785a2eb",
+        "status": "applied",
+        "reason": null,
+        "revision": 11
+      },
+      "api_revision": 11,
+      "api_paused": false,
+      "mode": "local_model"
+    }
+  ],
+  "media": [
+    {
+      "path": "kit-console.png",
+      "sha256": "46b089298fef237f9de39e6e5320dd126525718ac37f67b7470d410ffcd0d25c",
+      "image_size_px": [
+        1100,
+        900
+      ],
+      "source": "native Kit renderer swapchain; headless UI shown, no desktop window",
+      "requires_visual_review": true
+    },
+    {
+      "path": "kit-console-disabled.png",
+      "sha256": "460306f7ccb0e669cd4515281950f9f9f4653be9a1ea038388e1801eacd775ec",
+      "source": "native swapchain after extension disable; manual absence check required",
+      "requires_visual_review": true
+    }
+  ],
+  "shutdown": {
+    "manager_disabled": true,
+    "active_instance_removed": true,
+    "owned_window_hidden": true,
+    "hide_callback_observed": true
+  },
+  "workspace_window_after_disable": {
+    "present": true,
+    "visible": true,
+    "use": "diagnostic; Workspace may retain a destroyed ImGui window handle"
+  },
+  "visibility_events": [
+    false
+  ],
+  "four_amr_physics_verified": false,
+  "sensor_verified": false,
+  "physical_charging_verified": false,
+  "raw_result_sha256": "62ac7bd2cce5418834f1d1ac8657cb119b30658c1ff77e8e777659f51473544e",
+  "host_receipt_sha256": "96368a6cfe7c1d072d5b99c6d032be322cdcb2fa7d83c994da22ae4cacfd2353",
+  "api_producer_at_service_start": {
+    "scope": "selected API/model source bytes at service start",
+    "selected_modules_sha256": {
+      "factory_ops/dashboard.py": "416988a3f947264fa545d8bf6480e6f4fd49716af28ef1d1f3b1eab8776561f4",
+      "factory_ops/dashboard_model.py": "0a8eb5045b414ad39ddd619d8753d52067a06fc9db4e6989495bfdea56b74097",
+      "factory_ops/mock_mes.py": "dcfd587b137875bc3a3029e8328c4fb3cf8220660b507792184fc66a9dfde7d2",
+      "factory_ops/dashboard_charging.py": "d04c4357d755cfcf834e890978e67a98bba5e57dc8d125a0ade16e7f4e694446",
+      "factory_ops/operations/ledger.py": "e1c1e90772ff8f6a75828cb077a3b7edc9b121d1955fada29929a495773e1ce3",
+      "factory_ops/operations/inventory.py": "1114b23fcdb3520de0b12f2e246680e5a0fbdcb945ac2ed9b3de0a2f9a5972f4",
+      "factory_ops/operations/model.py": "17b90c1436b78f436d88b325adb27d1531440b63ef0cf169aece1d6070bfb38e",
+      "factory_ops/compat.py": "4294ba7ebbb0ee020b1ece6572e6c1f66069fd2fde4848603bcc31fe4547e53a"
+    }
+  },
+  "visual_review": {
+    "passed": true,
+    "observed": [
+      "white readable panel with four observed IDs and selected AMR04 task/SOC, fixed command controls and applied receipt",
+      "post-disable actual native swapchain image shows no Factory Operations panel"
+    ],
+    "method": "root reviewed both console004 PNG files",
+    "not_verified": "actual factory rendering, physical four-robot transport, real SOC/MES"
+  },
+  "prior_attempts_preserved": [
+    "artifacts/kit-console/console-001",
+    "artifacts/kit-console/console-002",
+    "artifacts/kit-console/console-003"
+  ]
+}

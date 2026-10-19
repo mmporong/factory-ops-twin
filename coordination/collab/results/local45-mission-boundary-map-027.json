@@ -1,0 +1,362 @@
+{
+  "task_id": "local45-mission-boundary-map-027",
+  "attempt": 1,
+  "contract_revision": 27,
+  "owner": "control",
+  "ack_at_utc": "2026-10-20T07:48:16.8580518+09:00",
+  "source_sha256": {
+    "scripts/isaac/g2_scene.py": "1cb0180867abacdedda9f3b880786ccd63734e678be3e58d6ef42e5878bb9534",
+    "scripts/isaac/g3_scene.py": "739f0f9abb803b4fc200cf8ab00bee6e6bf2b4f0a9a9df04f09fea61991132fd",
+    "scripts/isaac/fleet4_transport_scene.py": "d7d4d13e896cf115562addef84597ee26e564eb14aa85073a47875600a2c6f71",
+    "scripts/isaac/factory_visuals.py": "25768848d6b035be333d26382b5096b720aafa4782eee8daa894f677721b90db",
+    "factory_ops/isaac45_runtime.py": "95139a7834e16c1f864e52ee36b26869eac26159830d7cbb7288baf602f316f2",
+    "scripts/isaac/robot_qualification.py": "28b5953366d1472b7c9b94cad44a40752f2213f314b85ace813534e3c9bf8737"
+  },
+  "sha_match": true,
+  "scope": "지정6파일과 필요한 설치SDK 근거만 한정 읽기 매핑. 코드/SDK/프로세스/검사 실행 없이 receipt만 작성.",
+  "status": "completed_read_only_mapping",
+  "verdict": "4.5 facade의 이동/정지/8센서는 root actual006에서 통과했다고 수신했다. 실제 mission 연결에는 아래 별도 runtime/capture/FlatScan 관찰 경계가 남는다. 6.2 qualification을 변경하거나 통과로 대체하지 않는다.",
+  "runtime_evidence_received": {
+    "source": "사용자/root 보고; 이번 지정6파일 매핑에서 actual 원본은 다시 열지 않음",
+    "actual005": "1대 420 physics steps/7s, 약0.585m 이동 및 정지, front113/rear112 ROS scans PASS",
+    "actual006": "4대 각각420 steps/7s, 0.5846~0.5848m 이동/정지, 8개 scan53~54개 및 native3200, preflight+Job full closed PASS; 기준 sensor 없음",
+    "boundary": "component admission이다. Nav2/lease/실제4대 운송/물리 적재/충전전력/6.2 qualification 완료 증거로 확대하지 않는다."
+  },
+  "mapping": [
+    {
+      "boundary": "opt-in entry와 runtime factory",
+      "locations": [
+        "scripts/isaac/fleet4_transport_scene.py:81 main",
+        "scripts/isaac/fleet4_transport_scene.py:93 g2._run 호출",
+        "scripts/isaac/g2_scene.py:648 _run",
+        "scripts/isaac/g2_scene.py:734 experimental stage import",
+        "scripts/isaac/g2_scene.py:735 experimental SimulationManager import",
+        "scripts/isaac/g2_scene.py:736 experimental WheeledRobot import"
+      ],
+      "evidence": "현재 _run은 runtime 주입 인자가 없고 6.2 API를 고정 import한다. FleetTransportLifecycle은 registry의4대 ID와 선택 config_directory를 BarrierLifecycle로 전달한다.",
+      "minimum_alternative": "별도 local45 entry에서만 configure_ros_environment(domain) 및 create_runtime(app)를 선택하도록 _run에 선택 runtime factory/adapter 경계를 둔다. 기존 인자 생략 경로와 qualification/default는 그대로 유지한다. stage_utils/SimulationManager/WheeledRobot/asset/setup_lidars만 adapter로 받는다."
+    },
+    {
+      "boundary": "ROS 환경·renderer·shutdown",
+      "locations": [
+        "scripts/isaac/g2_scene.py:685 ROS_DISTRO 기본값",
+        "scripts/isaac/g2_scene.py:706 SimulationApp 생성",
+        "scripts/isaac/g2_scene.py:713 renderer readback",
+        "scripts/isaac/g2_scene.py:727 MotionBVH 필수 gate",
+        "scripts/isaac/g2_scene.py:1175 app.close",
+        "factory_ops/isaac45_runtime.py:32 configure_ros_environment"
+      ],
+      "evidence": "6.2 경로는 enable_motion_bvh=True 및 enabled readback True를 요구한다. 설치4.5 SimulationApp 구현에는 이 launcher 옵션/setting 연결이 없으며 close는 wait_for_replicator 인자만 받는다.",
+      "minimum_alternative": "4.5 분기에서 SDK/ROS import 전에 기존 bundled Humble 환경을 설정한다. 설치 지원 renderer와 실제 readback을 별도로 기록하고 MotionBVH는 미확인/비적용으로 남긴다. 6.2 hard gate는 유지한다. 4.5 close(wait_for_replicator=False) 뒤 entry의 실제 exit code 및 root Job/host closed 증거를 사용한다. close의 존재/반환만으로 full closed를 확정하지 않는다."
+    },
+    {
+      "boundary": "robot·wheel·clock",
+      "locations": [
+        "scripts/isaac/g2_scene.py:253 _create_robot",
+        "scripts/isaac/g2_scene.py:759 NovaCarter URL",
+        "scripts/isaac/g2_scene.py:873 wheel zero",
+        "scripts/isaac/g2_scene.py:982 wheel apply",
+        "scripts/isaac/robot_qualification.py:308 _clock_graph",
+        "factory_ops/isaac45_runtime.py:94 _Robot",
+        "factory_ops/isaac45_runtime.py:126 _SimulationManager",
+        "factory_ops/isaac45_runtime.py:225 asset_url"
+      ],
+      "evidence": "기존 G2 helper는 facade의 stage tuple, wheel names, 실제 encoder, batched pose, Action 변환으로 연결 가능한 형태이다. facade는 World/PhysX 콜백의 실제 시간과 step을 읽는다. 4.5 asset은 /Isaac/Robots/NVIDIA/Carter/nova_carter/nova_carter.usd이며 G2 고정 URL과 다르다. _clock_graph는 experimental API 대신 OG ReadSimulationTime→ROS2PublishClock을 사용한다.",
+      "minimum_alternative": "asset URL만 runtime.asset_url로 분리한다. 실제 wheel·encoder·World counter를 재사용한다. _clock_graph의 실제 /clock와 ROS timestamp는 새 local mission에서 확인하며 GT/loop 카운터로 대체하지 않는다. 실제 사용 PhysicsScene이 정확히1개가 되도록 root entry에서 명시 authoring 후 facade가 재사용한다."
+    },
+    {
+      "boundary": "World-before-RTX/RGB와 capture",
+      "locations": [
+        "scripts/isaac/g2_scene.py:814 CaptureSession 생성",
+        "scripts/isaac/g2_scene.py:837 register_rgb_render_products",
+        "scripts/isaac/g2_scene.py:848 _setup_lidars",
+        "scripts/isaac/g2_scene.py:302 _setup_lidars",
+        "factory_ops/isaac45_runtime.py:268 World setup",
+        "scripts/isaac/robot_qualification.py:64 CaptureSession.__init__",
+        "scripts/isaac/robot_qualification.py:91 functional dome light",
+        "scripts/isaac/g2_scene.py:517 _capture_frame_with_extension",
+        "scripts/isaac/g2_scene.py:588 _capture_with_timeline_policy"
+      ],
+      "evidence": "6.2 _setup_lidars는 sensor 생성 뒤 SimulationManager.setup_simulation을 호출한다. 4.5 facade revision2는 반대로 World reset 후 sensor/product/writer를 만들며 root005/006에서 통과했다. G2의 RGB 제품은 현재 _setup_lidars보다 먼저 만들어진다. 설치4.5 Replicator functional은 physics와 파일 IO만 export하며 functional.create가 없다.",
+      "minimum_alternative": "local45 경로는 로봇/PhysicsScene 준비 뒤 World 초기화를 먼저 완료하고 RGB와 RTX product/writer를 생성한다. 이후 setup_lidars의 같은 dt 호출은 reset하지 않는 기존 계약을 이용한다. preview/capture 동안 timeline 정책과 simtime/physicsframe/pose 불변 검사를 유지한다. DomeLight 한 지점은 4.5 전용 capture adapter에서 UsdLux.DomeLight 또는 설치 rep.create.light(light_type='Dome')로 대체한다.",
+      "evidence_vs_inference": "World-before-lidar는 root 실험 보고로 지지된다. reset 전 RGB product도 같은 실패를 낼지는 이번 범위에서 실험하지 않은 위험 추론이다. World setup 후 capture 중 물리 시간이 멈추는지도 실제 연결에서 확인해야 한다.",
+      "python310_error_boundary": "g2_scene.py:568/581 및 robot_qualification.py:102/162/224의 BaseException.add_note는 Python3.10에 없다. 정상 성공 경로가 아니라 이중 실패 시 원래 오류를 가릴 수 있다. local45 capture/error adapter 또는 호환 note helper로 보존하며 실패를 무시하지 않는다."
+    },
+    {
+      "boundary": "4.5 lidar 생성과 ready payload",
+      "locations": [
+        "scripts/isaac/g2_scene.py:302 _setup_lidars",
+        "scripts/isaac/g2_scene.py:608 _ready_payload",
+        "scripts/isaac/g2_scene.py:859 register_lidar_sensors hook",
+        "factory_ops/isaac45_runtime.py:228 Runtime45.setup_lidars",
+        "factory_ops/isaac45_runtime.py:172 _LidarSensor"
+      ],
+      "evidence": "G2 _setup_lidars는 6.2 Lidar.create/LidarSensor 및 tickRate/accumulateOutputs를 전제로 한다. facade는 구형 IsaacSensorCreateRtxLidar/RenderProduct/실제 simulation-time ROS writer를 사용하며 requested/actual profile과 실제 bytes SHA를 분리한다. _ready_payload는 robot/namespace/topic/frame/mount metadata를 복사하므로 GMO header를 요구하지 않는다. 현재 _LidarSensor의 공개 메서드는 detach_writer뿐이다.",
+      "minimum_alternative": "local runtime.setup_lidars로 분기하고 요청 profile/실사용 RPLIDAR_S2E/프로필 SHA를 유지한다. ready의 기존 명령/lease/robot/topic/frame 필드를 유지하면서 별도 runtime/qualification/schema를 추가한다. 6.2 tickRate/accumulateOutputs나 GMO 필드를 생성하지 않는다. 실제 product의 FlatScan observer attach/read/detach를 facade가 소유하는 작은 공개 경계가 추가로 필요하며 현재 typing 마무리에 포함하지 않는다."
+    },
+    {
+      "boundary": "GMO lifecycle 실제 호출",
+      "locations": [
+        "scripts/isaac/g3_scene.py:24 _parse_gmo_header",
+        "scripts/isaac/g3_scene.py:338 BarrierLifecycle.register_lidar_sensors",
+        "scripts/isaac/g3_scene.py:375 _record_lidar_acquisition",
+        "scripts/isaac/g3_scene.py:434 capture_breadcrumb",
+        "scripts/isaac/g3_scene.py:513 step",
+        "scripts/isaac/g3_scene.py:429 cleanup_render_products",
+        "scripts/isaac/g2_scene.py:927 lifecycle.step",
+        "scripts/isaac/g2_scene.py:1079 cleanup hook",
+        "scripts/isaac/g2_scene.py:1148 finally cleanup hook",
+        "scripts/isaac/g2_scene.py:1153 sensor.detach_writer"
+      ],
+      "evidence": "register는 센서별 attach_annotators('generic-model-output')를 호출한다. periodic step(약1Hz)와 capture_pre/post breadcrumb가 _record_lidar_acquisition으로 이어지고 has_data/get_data('generic-model-output') 뒤 experimental parser가 실제 GMO frameId/timestampNs/numElements를 읽는다. 현재 facade에는 이3메서드가 없다. inherited register는 AttributeError를 기록하고 진행할 수 있어 run 시작만으로 관측 성공을 판단할 수 없다.",
+      "minimum_alternative": "원래 BarrierLifecycle/GMO parser를 유지하고 별도 Local45Lifecycle에서 register_lidar_sensors/_record_lidar_acquisition/cleanup_render_products를 재정의한다. run/scenario/robot/side/prim의 정확한8개 identity 검사를 유지하고 facade 소유 FlatScan 관찰 handle을 등록한다. 새 관측 schema/journal만 쓰며 기존 GMO 검증기의 accepted 입력으로 취급하지 않는다."
+    },
+    {
+      "boundary": "visuals·capture 공통 API",
+      "locations": [
+        "scripts/isaac/g3_scene.py:246 setup",
+        "scripts/isaac/g3_scene.py:311 register_rgb_render_products",
+        "scripts/isaac/g3_scene.py:416 before_capture",
+        "scripts/isaac/g3_scene.py:550 after_control",
+        "scripts/isaac/factory_visuals.py:334 FactoryVisualRuntime.setup",
+        "scripts/isaac/factory_visuals.py:457 step",
+        "scripts/isaac/factory_visuals.py:798 semantics",
+        "scripts/isaac/factory_visuals.py:975 renderer readback"
+      ],
+      "evidence": "확인한 visual 경로는 USD/UsdLux/legacy Semantics/Carb readback이고 experimental RTX import가 없다. Replicator4.5는 step(delta_time,rt_subframes,pause_timeline), set_capture_on_play, annotators, render_product, wait_until_complete를 제공한다. g3 before_capture의 인자 자체는 이 설치 버전에서 지원된다.",
+      "minimum_alternative": "visual setup/폐쇄 일정/control ACK/기존 collider 불변/물리 적재 미검증 표시를 상속해 유지한다. Local45Lifecycle의 센서 기록만 분리한다. capture pause/play 재arm과 RGB persistent product 규칙을 유지한다. renderer profile의 요청값과4.5 actual readback은 구분한다. _ready_payload나 visual state의 관측 GT를 실제 ROS 제어/센서 frame으로 승격하지 않는다."
+    },
+    {
+      "boundary": "source archive·preflight·closed identity",
+      "locations": [
+        "scripts/isaac/fleet4_transport_scene.py:21 SOURCE_PINS",
+        "scripts/isaac/fleet4_transport_scene.py:29 BOOTSTRAP_FILES",
+        "scripts/isaac/fleet4_transport_scene.py:40 FleetTransportLifecycle.prepare_worker_paths",
+        "scripts/isaac/g3_scene.py:149 BarrierLifecycle.prepare_worker_paths",
+        "scripts/isaac/g2_scene.py:672 path guard",
+        "scripts/isaac/g2_scene.py:687 result inputs",
+        "scripts/isaac/g2_scene.py:694 extra_inputs",
+        "scripts/isaac/g2_scene.py:1170 validated status"
+      ],
+      "evidence": "기존 bootstrap은 정확한 파일 집합, run/scenario/source/provenance 및 source archive의 필수 소스를 대조한다. 현재 SOURCE_PINS에는 새4.5 facade/별도 entry/lifecycle/observer가 없다. G2 결과 validated와 worker_exit_requested는 full closed 증거와 다르다.",
+      "minimum_alternative": "별도4.5 개발 실행의 pins/manifest에 실제 import한 facade·local entry/lifecycle/observer·capture/compat helper 및 자체 의존 소스를 포함하고 archive와 실행 전 input snapshot/digest를 대조한다. 입력 config/profile bytes SHA도 고정한다. 기존6.2 canonical pins/verifier/marker를 바꿔 local45를 통과시키지 않는다. 종료 후 root host Job/PID/exit/closed 및 동일 run/source/config를 별도 CPU 증거로 대조한다."
+    }
+  ],
+  "local45_lifecycle_minimum": {
+    "base": "FleetTransportLifecycle 또는 동일 bundle/registry identity를 유지하는 BarrierLifecycle subclass. 기존6.2 class를 치환하지 않는 별도 entry에서만 선택.",
+    "register_lidar_sensors": "동일 인자 sensors/metadata/timeline; registry당 front/rear 각1개·정확 prim·중복 금지. facade 소유 실제 product에 RtxSensorCpuIsaacComputeRTXLidarFlatScanSimulationTime annotator를 붙이는 공개 attach/read/detach handle 사용. sensor.attach_annotators('generic-model-output')는 호출하지 않음.",
+    "record": "_record_lidar_acquisition을 재정의해 local45 전용 journal에 native timeStamp, 실제 버퍼 크기/범위 품질과 관측 identity를 기록한다. inherited step과 capture_breadcrumb가 이 메서드를 호출하므로 시각화/폐쇄/ACK 동작은 보존 가능.",
+    "cadence": "기존 periodic step은 약1Hz 표본이므로 unique count는 읽은 고유 관측 수이고 센서 전체 출력 frame 수가 아니다. 높은 빈도 관측이 필요하면 Local45Lifecycle.step에서 observer poll 후 super.step 호출하되 timestamp 중복 제거로 periodic/capture 중복 증가를 막는다. 읽기 cadence를 기록한다.",
+    "cleanup": "cleanup_render_products에서 own observer annotator를 detach한 뒤 super의 RGB lifecycle 정리를 수행한다. G2 정상/finally 양쪽 호출에 무해하고 writer/product destroy 전 실행되도록 한다. 오류를 보존하고 early setup 실패도 own handle을 정리한다.",
+    "preserve": [
+      "visual/setup와 config_directory 전달",
+      "barrier schedule와 run/time 결속",
+      "after_control 승인/lease 경로",
+      "capture pose/time/frame 불변",
+      "폐쇄/임무 완료/원장/ROS 권한",
+      "원래6.2 qualification verifier"
+    ]
+  },
+  "new_observation_schema_proposal": {
+    "schema_name": "local45-flat-scan-observation",
+    "schema_version": 1,
+    "journal": "local45-lidar-observations.jsonl (기존 lidar-acquisition-events.jsonl GMO schema와 분리)",
+    "identity_fields": [
+      "run_id",
+      "scenario_id",
+      "robot_id",
+      "side",
+      "prim_path",
+      "topic",
+      "frame_id",
+      "runtime_version",
+      "annotator",
+      "actual_profile_sha256",
+      "source_sha256"
+    ],
+    "native_fields": [
+      "timeStamp 원문값/원문 숫자형",
+      "sensor_timestamp_s (설치 OGN의 simulation-time 초 단위)",
+      "numCols",
+      "numRows",
+      "실제 linearDepthData 길이",
+      "실제 finite/positive/range 유효 통계"
+    ],
+    "observer_fields": [
+      "journal_event_sequence",
+      "unique_observation_index",
+      "read_at_sim_time_s",
+      "read_at_physics_frame",
+      "timeline_playing",
+      "phase",
+      "read_cadence",
+      "status/reason"
+    ],
+    "new_observation_rule": "동일 sensor identity에서 nonempty 실제 buffer와 유한 native timestamp를 읽은 뒤 이전보다 timestamp가 증가한 관측만 unique_observation_index를 증가시킨다. 동일 timestamp 재독은 duplicate/stale, 회귀·누락·비유한값은 오류로 보존한다. 초기 stamp0은 warmup과 유효 첫 표본을 buffer/clock 근거로 구분하며 임의의 새 stamp를 부여하지 않는다.",
+    "timestamp_evidence": "설치 FlatScanSimulationTime annotator는 IsaacReadSimulationTime.outputs:simulationTime을 inputs:timeStamp에 연결한다. 설치 OGN 입력 timeStamp는 초(s), 출력은 first beam timestamp로 기술되어 있다.",
+    "not_equivalent": [
+      "unique_observation_index는 로컬 관측 counter이며 hardware/GMO frameId가 아님",
+      "read_at_physics_frame과 journal sequence는 센서 frame으로 사용하지 않음",
+      "timeStamp를 단순 ns 변환해 GMO.timestampNs라는 이름으로 만들지 않음",
+      "달라진 observer 시각만으로 새 scan을 만들지 않음"
+    ],
+    "required_actual_check": "정지/재개/수동RGB capture 동안 native output timestamp와 실제 ROS scan header의 전진·중복·freshness 관계는 root의 다음 local mission에서 확인해야 한다. native timestamp 검사는 range/coverage 품질이나 ROS end-to-end 성공을 대신하지 않는다."
+  },
+  "next_edit_groups": [
+    {
+      "order": 1,
+      "owner": "root",
+      "scope": "별도 local45 entry + opt-in _run runtime 주입",
+      "actions": [
+        "Humble 환경을 SDK/ROS import 전 준비",
+        "facade stage/robot/clock/asset/setup_lidars 선택",
+        "4.5 renderer readback/close 분리와 기존6.2 기본 경로 보존"
+      ]
+    },
+    {
+      "order": 2,
+      "owner": "root",
+      "scope": "World-first capture/lidar 및4.5 capture 호환",
+      "actions": [
+        "로봇/명시1PhysicsScene 뒤 World 초기화",
+        "그 뒤 RGB/RTX products 생성하고 이후 reset 금지",
+        "functional dome-light 한 지점 대체",
+        "Python3.10 이중 실패 note 처리와 capture freeze/pause/rearm 보존"
+      ]
+    },
+    {
+      "order": 3,
+      "owner": "root와 향후 명시 배정 facade owner",
+      "scope": "별도 Local45Lifecycle/FlatScan handle",
+      "actions": [
+        "공개 own-product observer attach/read/detach 경계",
+        "8개 sensor identity 검사",
+        "native 초 timestamp+고유 관측 수의 별도 schema",
+        "기존 visuals/barrier/control ACK 상속 및 cleanup 순서 보존"
+      ]
+    },
+    {
+      "order": 4,
+      "owner": "root",
+      "scope": "새 source/config proof와 개발/closed 증거 분리",
+      "actions": [
+        "실제 새 imports/helper를 source pins/archive/preflight에 포함",
+        "config/profile SHA 및 run/scenario 결속",
+        "원래6.2 verifier 불변",
+        "SDK validated와 host Job/exit/closed 종료 증거 분리"
+      ]
+    }
+  ],
+  "blocking_issues": [
+    {
+      "id": "MAP027-B1",
+      "scope": "현 G2를 그대로4.5에서 실행",
+      "confirmed": "6.2 experimental imports/고정 asset/6.2 MotionBVH hard gate 및 close(exit_code) 호출이 남아 있음",
+      "resolution_group": 1
+    },
+    {
+      "id": "MAP027-B2",
+      "scope": "G2 capture 초기화",
+      "confirmed": "설치4.5 rep.functional.create가 없어 CaptureSession91에서 실패 가능. World/RGB 생성 순서와 Python3.10 add_note 이중 실패도 분리 필요",
+      "resolution_group": 2
+    },
+    {
+      "id": "MAP027-B3",
+      "scope": "G3 sensor evidence",
+      "confirmed": "facade에는 attach_annotators/has_data/get_data가 없고 GMO parser는6.2전용. 현재 등록 오류를 남기고 진행하므로 ready만으로 센서 증거 성공을 선언할 수 없음",
+      "resolution_group": 3
+    },
+    {
+      "id": "MAP027-B4",
+      "scope": "새 local mission의 증거 인정",
+      "confirmed": "새 runtime/lifecycle/capture source가 기존 required pins에 없어 별도 proof와 closed schema 없이는 원래6.2 qualification으로 인정할 수 없음",
+      "resolution_group": 4
+    }
+  ],
+  "installed_sdk_evidence": [
+    {
+      "path": "E:/IsaacSim/isaac-sim-4.5.0/exts/isaacsim.simulation_app/isaacsim/simulation_app/simulation_app.py",
+      "lines": [
+        57,
+        71,
+        183,
+        450,
+        561
+      ],
+      "evidence": "기본 launcher와 renderer 처리, close(wait_for_replicator=True) signature 확인. enable_motion_bvh/raytracingMotion 구현 검색 결과 없음;4.5 지원을 주장하지 않음."
+    },
+    {
+      "path": "E:/IsaacSim/isaac-sim-4.5.0/extscache/omni.replicator.core-1.11.35+106.5.0.wx64.r.cp310/omni/replicator/core/scripts/functional/__init__.py",
+      "lines": [
+        1,
+        2
+      ],
+      "evidence": "physics/IO exports만 있으며 create가 없음. functional 모듈 자체가 없는 것으로 오인하지 않음."
+    },
+    {
+      "path": "E:/IsaacSim/isaac-sim-4.5.0/extscache/omni.replicator.core-1.11.35+106.5.0.wx64.r.cp310/omni/replicator/core/scripts/create.py",
+      "lines": [
+        1418
+      ],
+      "evidence": "legacy rep.create.light 제공"
+    },
+    {
+      "path": "E:/IsaacSim/isaac-sim-4.5.0/extscache/omni.replicator.core-1.11.35+106.5.0.wx64.r.cp310/omni/replicator/core/scripts/orchestrator.py",
+      "lines": [
+        1160,
+        1366,
+        1380,
+        1467,
+        1577
+      ],
+      "evidence": "wait_until_complete, step의 rt_subframes/pause_timeline/delta_time와 delta_time0 의미, capture_on_play 지원"
+    },
+    {
+      "path": "E:/IsaacSim/isaac-sim-4.5.0/exts/isaacsim.sensors.rtx/isaacsim/sensors/rtx/scripts/extension.py",
+      "lines": [
+        167,
+        168,
+        174,
+        177
+      ],
+      "evidence": "FlatScanSimulationTime annotator 이름과 실제 simulationTime→timeStamp 연결"
+    },
+    {
+      "path": "E:/IsaacSim/isaac-sim-4.5.0/exts/isaacsim.sensors.rtx/isaacsim/sensors/rtx/ogn/tests/usd/OgnIsaacComputeRTXLidarFlatScanTemplate.usda",
+      "lines": [
+        34,
+        35,
+        46,
+        57,
+        60,
+        63,
+        69,
+        70
+      ],
+      "evidence": "native 초 단위 입력 timestamp, full-scan exec/버퍼/first-beam 출력 timestamp"
+    },
+    {
+      "path": "E:/IsaacSim/isaac-sim-4.5.0/exts/isaacsim.ros2.bridge/isaacsim/ros2/bridge/scripts/extension.py",
+      "lines": [
+        139,
+        351
+      ],
+      "evidence": "simulation-time LaserScan writer의 FlatScan 연결; system-time writer와 구분"
+    }
+  ],
+  "limits": [
+    "지정6개 SHA와 필요한 인접 설치SDK 소스만 읽음. 제품/보드/설치/원본/실행 상태 변경 없음.",
+    "SDK·ROS·GPU·VM·새 에이전트·새 세션·패키지·Git 변경·검사 실행 없음.",
+    "새 adapter/entry/observer는 제안 매핑이며 구현하지 않음. 다음025 typing 작업에 기능 변경을 포함하지 않음.",
+    "기존 qualification verifier와 외부 base._with_alarm 구현은 지정 읽기 범위 밖이므로 이번에 재검수하지 않음.",
+    "공통 API의 설치 소스 존재는 실제 mission 성공을 뜻하지 않는다. 새4.5 mission의 capture/clock/FlatScan freshness/lease/closed 증거는 root 통합·실행에서 확인해야 한다.",
+    "actual006 frozen source의 동작 증명은 user/root 보고로 분리했다. 다음 typing-only SHA는 원래006 실행 source SHA와 구분한다."
+  ],
+  "processes": {
+    "started": [],
+    "pid": null,
+    "stop_command": null
+  },
+  "completed_at_utc": "2026-10-19T22:54:08.6422946Z",
+  "source_sha_rechecked_before_typing_change": true
+}

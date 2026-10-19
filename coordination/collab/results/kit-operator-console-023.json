@@ -1,0 +1,352 @@
+{
+  "task_id": "kit-operator-console-023",
+  "attempt": 1,
+  "contract_revision": 23,
+  "owner": "control",
+  "reviewer": "root",
+  "api_ready": true,
+  "accepted": true,
+  "updated_at_utc": "2026-10-20T07:21:35.5769919+09:00",
+  "ack": {
+    "received": true,
+    "scope": "지정 5개 소스·설정·검사 파일과 이 receipt만 작성. backend와 native 실행은 root 소유."
+  },
+  "changed_paths": [
+    "coordination/collab/results/kit-operator-console-023.json"
+  ],
+  "source_sha256": {
+    "factory_ops/kit_client.py": "eb86b1152ed11d60e6faf712b8199ca6814dd5c8fabd363ae7065c224b34b269",
+    "tests/test_kit_client.py": "b23682c5704ed665acc36575dd7aab2b57fee8556bcfa47754a2e71a3f9b7b30",
+    "extensions/factory.ops.console/config/extension.toml": "295cacaa636e7e1fdbf524189f9dd58e0201a8c155c1b253f6cf968660915d47",
+    "extensions/factory.ops.console/factory_ops_console/__init__.py": "6e5f6dede02cd956b94f93b558fe7b1a725ca16bf574c5e83d53496d0245af2e",
+    "extensions/factory.ops.console/factory_ops_console/extension.py": "b4fd2e4e8d31011f8961225f72cf72806dd9884255009373d7532bd6f27bfbe5"
+  },
+  "implementation": [
+    "SDK4.5 omni.ext.IExt + omni.ui의 480×720 화이트 창. 실제 관측 차량 수·선택 상세·원천 run/mode/revision/sim time·연결/지연 상태 표시.",
+    "작업·목적지·속도·SOC와 battery_source·적재·대기 이유·재고/토트·충전·최근 사건 8개 및 선택형 MES 요약 표시. null SOC는 Not connected로 보존.",
+    "HTTP는 표준라이브러리만 사용하며 loopback HTTP origin만 허용. proxy와 redirect 차단. UI 스레드에서 HTTP를 실행하지 않고 단일 worker/단일 요청을 사용.",
+    "capability·서버 연결·fetch 신선도·현재 요청/미확정 명령을 확인해 전체 pause/resume와 S1/S2/S3 양의 정수 주문만 허용.",
+    "매 명령 UUID와 관측 expected_run_id/expected_revision 전송. POST receipt와 후속 snapshot 확인 상태를 구분하고 서버 결과를 임의 확정하지 않음.",
+    "다른 run 요청의 rejected는 서버 현재 run_id로 보존하고 원래 expected run도 별도 보존. 다른 run의 applied/pending은 수용하지 않음.",
+    "run 변경은 이전 관측값을 stale로 유지하고 두 번째 같은 run fetch에서 전환. 오류·지연 때 명령 비활성. POST timeout은 delivery_uncertain으로 보존하고 자동 재전송하지 않음.",
+    "on_shutdown에서 구독 해제·창 파괴·클라이언트 닫기·대기 future 취소. 늦게 끝난 worker 결과는 닫힌 UI에 반영하지 않음.",
+    "설치된 malgun.ttf는 창의 text style에만 지정. 비ASCII 서버 원문은 tooltip/probe에 보존하고 본문은 짧은 영어 fallback 사용. Unicode escape 본문 표시 없음.",
+    "사용자 화면에서 font 파일·native 검수 안내를 제거. 해당 구현 정보는 probe metadata에만 남김. 원천 mode/model_scope·물리 미검증 범위·미연결 표시는 유지.",
+    "MES sources의 신선도/연결과 최신 receipt를 요약하며 equipment observation은 informational only로 표시. stage/physics/물리권한 및 전역 테마 변경 없음."
+  ],
+  "native_inspection_api": {
+    "package": "factory_ops_console",
+    "get_instance": "활성 Extension 또는 None",
+    "get_probe_state": [
+      "active",
+      "window_visible",
+      "run_id",
+      "mode",
+      "connection",
+      "revision",
+      "selected_robot",
+      "rendered_labels",
+      "raw_server_labels",
+      "enabled_actions",
+      "last_receipt",
+      "receipt_run_id",
+      "receipt_expected_run_id",
+      "submission_state",
+      "error",
+      "font_path",
+      "font_glyphs_verified",
+      "client_source_path"
+    ],
+    "select_robot": "select_robot(observed_robot_id) -> bool; 실제 차량 행 클릭과 같은 경로",
+    "submit_action": "submit_action(action, parameters=None) -> submitted/command_id 또는 거절 이유; 실제 버튼과 같은 비동기 경로"
+  },
+  "validation": [
+    {
+      "command": "$env:PYTHONDONTWRITEBYTECODE='1'; .venv/Scripts/python.exe -B -m unittest discover -s tests -p test_kit_client.py -v",
+      "result": "PASS",
+      "tests": 15,
+      "runtime": "CPU Python3.12.13",
+      "duration_s": 0.008,
+      "scope": "loopback/redirect, 단일 요청, timeout·fetch age·연결, run 전환, capability·주문 입력, UUID/CAS, pending→snapshot 확인, POST 불확실성과 무재전송, 타 run/퇴행·미래 revision 거절, null/NaN, 현재 run rejected, shutdown 늦은 완료, Python3.10 문법. mock transport/executor 사용; HTTP 서버·SDK 실행 없음."
+    },
+    {
+      "command": "지정 Python 4파일 ast.parse(feature_version=(3,10)) + 메모리 compile; tomllib 확장 설정/module/dependencies 확인",
+      "result": "PASS",
+      "runtime": "CPU Python3.12.13",
+      "scope": "SDK import 또는 bytecode 파일 생성 없이 정적 확인. 실제 SDK3.10 실행 결과로 주장하지 않음."
+    },
+    {
+      "command": "완료 receipt 기록 전후 지정 5파일 SHA256 재대조 및 receipt JSON 재파싱",
+      "result": "PASS"
+    }
+  ],
+  "single_review_pass": {
+    "completed": true,
+    "scope": "revision1 한정 검수 기록 보존. revision2는 배경/텍스트 대비·고정 조작 배치·숫자 표기와 생명주기 불변만 별도 확인.",
+    "fixed": [
+      "현재 run rejected의 actual/expected run 분리",
+      "snapshot receipt가 관측 revision보다 미래인 경우 거절",
+      "사용자 화면의 font/native 검수 구현 안내 제거"
+    ],
+    "independent_approval": false,
+    "root_native_acceptance_pending": true
+  },
+  "installed_api_evidence": [
+    {
+      "path": "E:/IsaacSim/isaac-sim-4.5.0/exts/isaacsim.examples.ui/config/extension.toml",
+      "evidence": "설치된 확장의 omni.kit.uiapp 의존성과 python.module 구성 확인"
+    },
+    {
+      "path": "E:/IsaacSim/isaac-sim-4.5.0/exts/isaacsim.examples.ui/isaacsim/examples/ui/extension.py",
+      "line": 396,
+      "evidence": "IExt 생명주기·ui.Window/frame 및 update_event_stream.create_subscription_to_pop 사용 예 확인"
+    },
+    {
+      "path": "E:/IsaacSim/isaac-sim-4.5.0/extscache/omni.ui-2.26.5+d02c707b.wx64.r.cp310/omni/ui/_ui.pyi",
+      "evidence": "설치 cp310 바인딩 선언의 ComboBox(2096), IntField(5151), ScrollingFrame(8469), SimpleIntModel(8956)/set_min(8964), Widget.enabled(11108)/tooltip(11258), Window.destroy(11464) 확인"
+    },
+    {
+      "path": "E:/IsaacSim/isaac-sim-4.5.0/extscache/omni.ui-2.26.5+d02c707b.wx64.r.cp310/docs/CHANGELOG.md",
+      "line": 675,
+      "evidence": "style 'font' 지원 기록"
+    },
+    {
+      "path": "E:/IsaacSim/isaac-sim-4.5.0/extscache/omni.ui-2.26.5+d02c707b.wx64.r.cp310/omni/ui/tests/test_label.py",
+      "line": 172,
+      "evidence": "Label style의 font 파일 지정 설치 예 확인"
+    },
+    {
+      "path": "C:/Windows/Fonts/malgun.ttf",
+      "size_bytes": 13459196,
+      "evidence": "기존 파일 존재 확인. 복사·설치·다운로드하지 않음. 실제 glyph 렌더는 미검증."
+    }
+  ],
+  "root_native_handoff": {
+    "extension_id": "factory.ops.console",
+    "search_root": "C:/Users/LIMMM/factory-ops-twin/extensions",
+    "kit_enable_args": [
+      "--ext-folder",
+      "C:/Users/LIMMM/factory-ops-twin/extensions",
+      "--enable",
+      "factory.ops.console"
+    ],
+    "api_environment": {
+      "FACTORY_OPS_API_URL": "http://127.0.0.1:8765"
+    },
+    "enable_method": "root의 기존 SDK launcher에서 위 검색 경로와 확장 enable 인자를 적용. SDK 준비 후 import factory_ops_console 및 get_instance()로 활성 인스턴스 확인.",
+    "checks_pending": [],
+    "reported_root_evidence": "native002 선택/3명령/API/run/capture 성공 및 revision2 시각 수용을 반영함. 종료는 failed 원본 유지. root는 probe만 보완해 native003 실행 중이며 결과는 아직 검수 전."
+  },
+  "limitations": [
+    "revision2 시각·선택·명령은 root가 실제 native002에서 확인했으나 shutdown은 실패 원본으로 유지. native003 실제 숨김/종료 후 화면 확인 전이며 제품 source는 변경하지 않음.",
+    "정적 색상 명암비와 CPU 포맷/구조 검사는 실제 native 시각 수용을 대신하지 않는다. 기존 15개 클라이언트 검사는 revision1 결과로 유지한다.",
+    "원천 CPU/virtual scope·물리 미검증·미연결을 유지했다. 실제 물리 적재·도킹·전력·ROS/Nav2 또는 4대 운송 성공으로 확대하지 않는다.",
+    "기존 폰트는 창 내부에서만 지정하고 font_glyphs_verified=false를 유지한다. 서버 비ASCII 본문은 짧은 영어 fallback, 원문은 tooltip/probe에 보존한다.",
+    "클라이언트의 기존 1.5초 socket timeout/불확실 POST 처리 한계와 종료 후 늦은 결과 무시 동작은 유지된다. 이미 실행 중인 HTTP 요청의 강제 취소 또는 절대 wall-clock deadline은 제공하지 않는다."
+  ],
+  "processes": {
+    "started": [],
+    "server_pid": null,
+    "stop_command": null,
+    "note": "작성자가 새 서버·SDK·장기 프로세스를 시작하지 않음. 기존 root API/preview를 변경하지 않음."
+  },
+  "constraints_observed": [
+    "revision3는 receipt만 작성, 제품 5파일 revision2 SHA 유지",
+    "root probe/원장/타작성자/원본/Git/VM 수정 없음",
+    "SDK·native·새 프로세스·새 세션·새 에이전트 실행 없음",
+    "visible() 호출·종료 성공 우회·cache 강제 숨김 추가 없음"
+  ],
+  "revision": 3,
+  "implementation_revision": 2,
+  "status": "accepted_by_root_native003",
+  "change_scope": "023 구현 revision2. 기존 task contract_revision=23 유지. 이번 작성은 extension.py와 이 receipt 두 경로만 허용.",
+  "revision2_changes": [
+    "native001 PNG의 darkgray 배경/어두운 본문 및 밝은 버튼/흰 글씨 대비 문제를 확인했다.",
+    "창 내부 ZStack에 100% 크기의 불투명 흰 Rectangle을 두고 ScrollingFrame 배경도 불투명 흰색으로 명시했다. 앱 전역 theme/설정은 변경하지 않았다.",
+    "Button.Label의 정상·hovered·pressed·disabled 글씨와 Button의 상태별 배경색을 명시했다. Field/ComboBox도 창 내부 흰 배경·어두운 글씨로 지정했다.",
+    "상단 run/mode/연결은 고정하고 관측 목록·선택 상세·scope·재고·충전·MES·이벤트만 Scrollable에 배치했다. 전체 정지·재개·주문과 command receipt는 하단 고정 영역으로 옮겼다.",
+    "sim time·사건 시각·MES age는 소수 1자리, speed는 소수 2자리로 표시한다. null/비유한 수치는 '-'로 표시하며 서버 원문은 tooltip/probe에 유지한다.",
+    "on_shutdown/get_probe_state 생명주기 코드는 변경하지 않았다. disable 이후 삭제된 IExt 인스턴스 접근을 우회하는 검사 코드를 추가하지 않았다."
+  ],
+  "revision2_validation": {
+    "result": "PASS_CPU_STATIC_ONLY",
+    "runtime": "CPU Python3.12, SDK import/실행 없음",
+    "checks": [
+      "extension.py Python3.10 ast.parse(feature_version=(3,10)) 및 메모리 compile PASS",
+      "실제 format_number 함수만 AST로 분리해 8개 사례 검증 PASS: sim 65.34300000002258→65.3, speed 0.650000000000013→0.65, age 64.774128→64.8, 0→0.00, None/NaN/Infinity/bool→'-'",
+      "AST 구조 확인 PASS: pause/resume/order/source/receipt는 ScrollingFrame 밖, 차량 목록/scope/events는 ScrollingFrame 안",
+      "정상/disabled Button.Label 및 ScrollingFrame 흰 배경 선언 확인 PASS",
+      "기존 on_shutdown AST 동일 및 전역 설정/stage/physics 변경 경로 없음 확인 PASS",
+      "나머지 023 소스 4개 SHA가 revision1과 동일함을 확인 PASS",
+      "새 receipt JSON 파싱 및 source SHA 재대조 PASS"
+    ],
+    "configured_color_contrast_ratios": {
+      "body_on_white": 11.74,
+      "button_normal": 9.58,
+      "button_disabled": 5.11,
+      "scope": "omni.ui ABGR 지정값을 sRGB 명암비로 계산한 정적 수치. 실제 렌더 픽셀 또는 native 시각 수용 결과가 아님."
+    },
+    "previous_tests": "기존 CPU 클라이언트 15 PASS는 revision1 결과로 보존. 이번에는 클라이언트/테스트 소스를 변경하지 않아 전체 재실행하지 않았음.",
+    "actual_revised_native_render_verified": false
+  },
+  "native001_evidence": {
+    "run": "console-001",
+    "extension_source_sha256": "1b262b43be353492b8eb37717782c8682d8d78ce13f2ed893b5e8fbcbcc9ae6e",
+    "image_path": "C:/Users/LIMMM/factory-ops-twin/artifacts/kit-console/console-001/kit-console.png",
+    "image_sha256": "33e30d17fa1fab7ac02258f9168b1cac8f7fa4bad5371ad334f748e19047282c",
+    "image_inspected_with_view_image": true,
+    "image_observations": [
+      "Factory Operations 창의 배경이 darkgray이며 본문이 어두워 가독성이 낮음",
+      "밝은 차량 선택 버튼의 글씨가 흰색 계열로 대비가 낮음",
+      "AMR03 선택 및 지나치게 긴 sim time/speed 소수 표시 확인",
+      "정지/재개/주문 영역이 원본 screenshot의 현재 viewport에 보이지 않음"
+    ],
+    "root_reported_functional_result": "실제 Kit enable·AMR3 선택·정지/재개/주문 3건 applied·동일 run 확인·UI PNG 생성 성공",
+    "root_reported_shutdown_failure": "시험기가 disable된 IExt.get_probe_state를 다시 호출했고 SDK가 _client 속성을 제거해 실패. root가 Workspace window/extension manager/module instance로 검사기를 수정함.",
+    "interpretation": "native001의 기능 성공과 시각 결함/시험기 종료 오류를 구분한다. 전체 native001 또는 revision2의 성공으로 확대하지 않음.",
+    "original_artifacts_modified": false
+  },
+  "revision2_installed_api_evidence": [
+    {
+      "path": "E:/IsaacSim/isaac-sim-4.5.0/exts/isaacsim.gui.components/isaacsim/gui/components/style.py",
+      "lines": [
+        81,
+        84,
+        85,
+        153
+      ],
+      "evidence": "설치 UI의 Button 상태별 배경, Button.Label/disabled 글씨, ComboBox 색상 selector 사용 확인. vendor 코드를 복제하지 않고 필요한 selector만 적용."
+    },
+    {
+      "path": "E:/IsaacSim/isaac-sim-4.5.0/extscache/omni.ui-2.26.5+d02c707b.wx64.r.cp310/omni/ui/tests/test_scrollingframe.py",
+      "line": 16,
+      "evidence": "ScrollingFrame background_color/secondary_color/scrollbar_size 및 고정 영역과 Scrollable 분리 설치 예 확인"
+    },
+    {
+      "path": "E:/IsaacSim/isaac-sim-4.5.0/extscache/omni.ui-2.26.5+d02c707b.wx64.r.cp310/omni/ui/_ui.pyi",
+      "lines": [
+        3129,
+        7545
+      ],
+      "evidence": "설치 Fraction/Percent 길이 API 확인"
+    }
+  ],
+  "revision_history": [
+    {
+      "implementation_revision": 1,
+      "prior_receipt_sha256": "be119a3c54c8207a97248db2b7556bc57b8a88dd5cb88d0746abc88ee392dfe2",
+      "source_sha256": {
+        "factory_ops/kit_client.py": "eb86b1152ed11d60e6faf712b8199ca6814dd5c8fabd363ae7065c224b34b269",
+        "tests/test_kit_client.py": "b23682c5704ed665acc36575dd7aab2b57fee8556bcfa47754a2e71a3f9b7b30",
+        "extensions/factory.ops.console/config/extension.toml": "295cacaa636e7e1fdbf524189f9dd58e0201a8c155c1b253f6cf968660915d47",
+        "extensions/factory.ops.console/factory_ops_console/__init__.py": "6e5f6dede02cd956b94f93b558fe7b1a725ca16bf574c5e83d53496d0245af2e",
+        "extensions/factory.ops.console/factory_ops_console/extension.py": "1b262b43be353492b8eb37717782c8682d8d78ce13f2ed893b5e8fbcbcc9ae6e"
+      },
+      "result": "CPU 15 PASS; native001 기능 성공과 시각 결함/시험기 종료 오류는 native001_evidence 참조"
+    }
+  ],
+  "revision3_review": {
+    "ack": true,
+    "scope": "revision3_request와 console002의 종료 경계 및 설치 SDK API만 한정 확인. root의 새 probe는 frozen producer와의 해당 diff만 구분. 모든 023 제품 source SHA 동결 유지.",
+    "decision": "extension_unchanged_root_probe_observation_corrected_native003_pending",
+    "confirmed": [
+      "설치 _ui.pyi:11890~11900에서 WindowHandle.visible은 @property/getter/setter bool이다. Workspace.get_window(:12012)는 WindowHandle을 반환한다. visible()로 바꾸는 수정은 맞지 않는다.",
+      "설치 workspace_utils.py:668은 w.visible을 속성으로 사용한다. :662~666의 vendor 주석은 ImGui Begin/End 밖에서 WindowHandle.visible 조회 결과가 다를 수 있음을 명시한다.",
+      "설치 test_window.py:63~82는 ui.Window 참조 제거 후 ImGui cache에 Workspace handle이 남는 사례를 보여 준다. Window.destroy 문서(_ui.pyi:11464~11466)는 callback/circular reference 제거를 설명하며 Workspace cache 항목 제거는 보장하지 않는다.",
+      "native002 frozen probe:175의 window_inactive는 Workspace handle.visible만으로 산출했다. 결과는 manager_disabled=true/active_instance_removed=true/window_inactive=false이고 실제 소유 Window 상태·hide callback·disable 후 PNG를 기록하지 않았다.",
+      "현재 확장 on_shutdown(:236~242)은 alive=false→구독 해제→client.close→Window.visible=false→Window.destroy→module instance=None이다. console002.log:430에 확장 shutdown이 있고 관련 예외는 보이지 않는다.",
+      "console002 selected_state는 amr-3이다. pause/resume/create_order가 모두 applied이고 선택/명령/최종 API의 business run이 일치한다. root는 revision2의 흰 배경/대비/고정 조작부를 수용했다고 보고했다. native002 전체 결과 failed는 원본 그대로 보존한다."
+    ],
+    "causal_assessment": {
+      "method_vs_property": "설치 선언과 vendor Python 실사용은 bool property를 지지한다. 이 작성자가 SDK runtime introspection을 실행한 결과는 아님.",
+      "probe_expression": "remaining_window.visible를 속성으로 읽는 표현 자체는 설치 API에 맞는다. visible() 호출 누락이 원인이라는 가설은 지지되지 않는다.",
+      "confirmed_measurement_gap": "Workspace cache/context 의존 값 하나를 실제 창 종료 판정과 분리하지 않았다.",
+      "supported_inference": "Workspace의 남은 cache 값으로 종료 후 실제 창 잔존을 과대 판정했을 가능성이 있다.",
+      "still_open": "native002 원본만으로 실제 창 잔존인지 cache 값만 남은 것인지 확정할 수 없다. 확장 종료 버그를 확인하지 못했으므로 추측성 제품 수정은 하지 않음.",
+      "product_fix": "없음. extension.py를 포함한 기존 제품 5파일 모두 revision2 SHA 유지."
+    },
+    "root_probe_proposal": {
+      "owner_path": "C:/Users/LIMMM/factory-ops-twin/scripts/isaac/local_kit_console_probe.py",
+      "applies_to_frozen_producer_sha256": "b2e39beb29dea3926867e44a2bc1ba47c071a7bab79617e0f05965995b1b13ba",
+      "target": "frozen producer:163~177 disable_extension 블록",
+      "changes": [
+        "disable 전에 owned_window=console._window로 별도 ui.Window 참조를 확보한다. 이후 old IExt를 조회하지 않는다.",
+        "owned_window.set_visibility_changed_fn으로 숨김 bool 전이를 기록한다. 설치 _ui.pyi:11533이 Callable[[bool], None] API를 선언한다.",
+        "disable/update 뒤 manager 비활성·module instance 제거·owned_window.visible=false·hide callback 관측을 검사한다. Workspace handle.visible는 독립 진단값으로 보존한다.",
+        "기존 capture 경로로 새 kit-console-disabled.png를 남겨 root가 실제 콘솔 부재를 확인한다. 기존 kit-console.png와 실패 원본을 덮지 않는다.",
+        "probe에서 Workspace handle을 강제로 숨기거나 Workspace.clear/새 Window 생성으로 관측 상태를 바꾸지 않는다. 실제 소유 Window가 보이거나 종료 후 화면에 콘솔이 남으면 실패를 유지한다."
+      ],
+      "minimal_excerpt": "owned_window = console._window\nvisibility_events = []\nowned_window.set_visibility_changed_fn(lambda visible: visibility_events.append(bool(visible)))\nconsole = None\nmanager.set_extension_enabled_immediate(extension_id, False)\nfor _ in range(5):\n    app.update()\nremaining_window = ui.Workspace.get_window('Factory Operations')\n# Keep the Workspace cached value as a separate diagnostic.\n# Shutdown gate also requires manager/module removal.\nowned_window_hidden = not owned_window.visible\nhide_callback_observed = False in visibility_events\n# Capture a NEW kit-console-disabled.png and visually verify absence.\n# Do not force-hide a Workspace handle to make the test pass.\n",
+      "acceptance": "native003의 실제 owner hidden/callback 및 disable 후 화면 확인 전에는 shutdown 성공으로 승격하지 않는다."
+    },
+    "root_followup_delta": {
+      "status": "root_implemented_probe_delta_observed_native003_running",
+      "source_sha256": "9594c45840fc9c11b430081e086f598ab2a6da3c3c1830e7534ef7745abfa58a",
+      "comparison": "native002 frozen input의 exact SHA를 확인하고 현재 root probe와 unified diff로 해당 변경만 대조했다. 최초 SHA가 바뀌었다는 이유로 frozen 분석을 중단하지 않았음.",
+      "observed": [
+        "기존 capture 실패가 더 이상 무시되지 않고 raise됨",
+        "별도 ui.Window 참조와 set_visibility_changed_fn으로 hide callback 기록",
+        "Workspace visible를 workspace_window_after_disable 진단으로 분리",
+        "shutdown 필드에 owned_window_hidden/hide_callback_observed 추가",
+        "kit-console-disabled.png 별도 capture·media SHA 보존",
+        "manager/module 해제 검사 유지, 창 강제 숨김 없음"
+      ],
+      "limit": "root 작성 diff의 지정 종료 경계만 읽었고 제품 파일을 편집하거나 native003을 실행·수용하지 않았다. native003 실제 결과와 종료 후 PNG는 root 진행 중이다."
+    },
+    "native002": {
+      "result_path": "C:/Users/LIMMM/factory-ops-twin/artifacts/kit-console/console-002/result.json",
+      "result_sha256": "b2c2aa461dcae33898521f18e8b7a0e2624d963392f5da86a5865af6bec3dc4e",
+      "frozen_probe_path": "C:/Users/LIMMM/factory-ops-twin/artifacts/kit-console/console-002.inputs/local_kit_console_probe.py",
+      "frozen_probe_sha256": "b2e39beb29dea3926867e44a2bc1ba47c071a7bab79617e0f05965995b1b13ba",
+      "frozen_probe_matches_result_producer": true,
+      "run_id": "926339f8e12346dcb255df2626f8827f",
+      "business_run_id": "web-local-model-535e9718-8c79-405c-9119-224ab7bccbfb",
+      "status": "failed",
+      "failed_phase": "disable_extension",
+      "shutdown": {
+        "manager_disabled": true,
+        "active_instance_removed": true,
+        "window_inactive": false
+      },
+      "physical_scope": "CPU ledger 연결 시험이며 물리·ROS·센서·충전전력 성공 아님"
+    },
+    "read_source_sha256": {
+      "coordination/collab/kit-operator-console-023-task.json": "14d5b087c083537627c97823ba32b13f9c6c3d0b9986c56d525ad713bde9da02",
+      "artifacts/kit-console/console-002.inputs/local_kit_console_probe.py": "b2e39beb29dea3926867e44a2bc1ba47c071a7bab79617e0f05965995b1b13ba",
+      "scripts/isaac/local_kit_console_probe.py": "9594c45840fc9c11b430081e086f598ab2a6da3c3c1830e7534ef7745abfa58a",
+      "artifacts/kit-console/console-002/result.json": "b2c2aa461dcae33898521f18e8b7a0e2624d963392f5da86a5865af6bec3dc4e",
+      "artifacts/kit-console/console-002.log": "5d9f5f74e81fed66e7e0567a0ec0f69775b9c668f28e0c8fe76d5b2690336179",
+      "E:/IsaacSim/isaac-sim-4.5.0/extscache/omni.ui-2.26.5+d02c707b.wx64.r.cp310/omni/ui/_ui.pyi": "663f9893b3f2ffa8b73208a4d09bd6202e692cbcf5534df345a4336b4bac3173",
+      "E:/IsaacSim/isaac-sim-4.5.0/extscache/omni.ui-2.26.5+d02c707b.wx64.r.cp310/omni/ui/workspace_utils.py": "b38ddc494ce08d703d5cce7d07991cd75597f961c8ca074d79e3d59e1b244b4b",
+      "E:/IsaacSim/isaac-sim-4.5.0/extscache/omni.ui-2.26.5+d02c707b.wx64.r.cp310/omni/ui/tests/test_window.py": "8c8c6882ad7bddcfaa3658bea61d6de22d3c2cd1767eb7bc8dc3fe4a50bc3ca4"
+    },
+    "validation": {
+      "new_tests_or_native_runs": [],
+      "product_edits": [],
+      "checks": [
+        "revision3_request 읽음",
+        "native002 선택/receipt/run/shutdown 및 producer source SHA 대조",
+        "설치 API 선언/vendor 실사용/캐시 예제 한정 확인",
+        "native002 log의 해당 확장 shutdown/관련 예외 확인",
+        "frozen probe와 현재 root probe의 지정 diff 분리",
+        "023 제품 5파일 SHA 동결 대조",
+        "receipt JSON 재파싱"
+      ],
+      "limit": "종료의 실제 성공 판정은 root native003 결과/화면 전이다. 원본 native001/002 실패를 덮거나 변경하지 않음."
+    },
+    "written_paths": [
+      "coordination/collab/results/kit-operator-console-023.json"
+    ],
+    "current_probe_sha_at_receipt": "9594c45840fc9c11b430081e086f598ab2a6da3c3c1830e7534ef7745abfa58a",
+    "current_probe_still_matches_delta": true,
+    "completed_at_utc": "2026-10-20T07:21:35.56926+09:00",
+    "previous_receipt_sha256": "8d7795a3c8821e385dd9520708c768cb048cf2fe0806c78bcd0dae0edb789a73"
+  },
+  "root_acceptance": {
+    "reported_by": "root",
+    "status": "accepted",
+    "evidence": "사용자/root 보고: native003 PASS, 화면 수용, manager disabled/instance None/owned Window hidden/hide callback, disable후 PNG에서 패널 부재 확인. Workspace true는 캐시로 구분.",
+    "source_revision": 2,
+    "independent_native_execution_by_control": false
+  }
+}

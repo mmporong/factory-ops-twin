@@ -1,0 +1,76 @@
+{
+  "schema_version": 1,
+  "robot_count": 4,
+  "domain_id": 146,
+  "maximum_wall_time_s": 420,
+  "physics_dt_s": 0.016666666666666666,
+  "scene": "artifacts/fleet4/transport-bundle-001/scene/factory-v3.usda",
+  "scene_sha256": "2126f01ecde38e0f36417a827676b09dcbc6c2af523e05ca78851e966e301db7",
+  "robots": [
+    {
+      "robot_id": "carter1",
+      "namespace": "carter1",
+      "prim_path": "/World/Carter1",
+      "spawn_xy_yaw": [
+        12.0,
+        1.5,
+        1.5707963267948966
+      ]
+    },
+    {
+      "robot_id": "carter2",
+      "namespace": "carter2",
+      "prim_path": "/World/Carter2",
+      "spawn_xy_yaw": [
+        12.0,
+        20.5,
+        -1.5707963267948966
+      ]
+    },
+    {
+      "robot_id": "carter3",
+      "namespace": "carter3",
+      "prim_path": "/World/Carter3",
+      "spawn_xy_yaw": [
+        17.0,
+        1.5,
+        1.5707963267948966
+      ]
+    },
+    {
+      "robot_id": "carter4",
+      "namespace": "carter4",
+      "prim_path": "/World/Carter4",
+      "spawn_xy_yaw": [
+        17.0,
+        20.5,
+        -1.5707963267948966
+      ]
+    }
+  ],
+  "lidars": [
+    {
+      "name": "front",
+      "frame_id": "front_scan",
+      "translation_xyz_m": [
+        0.2,
+        0,
+        0.32
+      ],
+      "yaw_rad": 0.0
+    },
+    {
+      "name": "rear",
+      "frame_id": "rear_scan",
+      "translation_xyz_m": [
+        -0.65,
+        0,
+        0.32
+      ],
+      "yaw_rad": 3.141592653589793
+    }
+  ],
+  "lidar_profile": "RPLIDAR_S2E",
+  "scope": "local4.5 adapter admission in authored32x22m fleet development layout; not navigation/transport qualification",
+  "static_reference_lidar": false
+}

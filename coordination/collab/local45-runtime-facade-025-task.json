@@ -1,0 +1,41 @@
+{
+  "task_id": "local45-runtime-facade-025",
+  "attempt": 1,
+  "contract_revision": 25,
+  "owner": "control",
+  "reviewer": "root",
+  "created_at_utc": "2026-10-19T22:23:04.661430+00:00",
+  "goal": "설치SDK4.5의 기존 World/WheeledRobot/RTX API를 G2 worker 호출면에 맞추는 별도 opt-in facade",
+  "write_paths": [
+    "factory_ops/isaac45_runtime.py",
+    "tests/test_isaac45_runtime.py",
+    "coordination/collab/results/local45-runtime-facade-025.json"
+  ],
+  "read_paths": [
+    "scripts/isaac/g2_scene.py",
+    "scripts/isaac/nav_scene.py",
+    "scripts/isaac/local_asset_probe.py",
+    "scripts/isaac/local_lidar_bridge.py",
+    "configs/factory-fleet4/g2.json",
+    "E:/IsaacSim/isaac-sim-4.5.0/exts"
+  ],
+  "contract": [
+    "당신만 작업하지 않음. 위3경로만 수정, 기존 작성자 변경보존. root가 g2 integration/launcher/actual native/ROS/README/Git/원장 소유. 새VM/패키지/네이티브에이전트/외부메시지/GPU프로세스/대량검사 금지.",
+    "먼저023receipt 마무리. root native003은 PASS: managerdisabled/instanceNone/실제ownedwindow.visibleFalse/hidecallbackFalse, afterPNG에패널없음 확인. Workspacehandle만true캐시. 제품5SHA revision2일치. root가023수용.",
+    "factory_ops.isaac45_runtime.create_runtime(app) -> runtime. 외부import만으로omni/isaac/numpy를import하지말것; native API는create/runtime실행에서만lazyimport. Python3.10.",
+    "runtime.stage_utils.open_stage(path)->(bool, actualstage), add_reference_to_stage(usd_path,path) old prim_path번역, is_stage_loading 위임. runtime.WheeledRobot(prim_path,wheel_dof_names) -> wrapper. Native World.scene 등록은setup_simulation 때. wrapper.dof_names,get_dof_positions(),get_world_poses()->batchdimension,apply_wheel_actions(np_vector)->ArticulationAction. 원래encoder 휠위치읽기/실제physics사용; pose순간이동/가짜센서금지.",
+    "runtime.SimulationManager.setup_simulation(dt,device=\"cpu\"): 기존 stage PhysicsScene 하나를 찾아 World physics_prim_path로재사용, 여러개면거절. 기존spawnrobot등록/World.reset/초기화. get_simulation_time/get_num_physics_steps는 actualphysx콜백 또는 World카운터에서 advancing app.update를검증할수있게. 겹친physicsScene추가금지. 초기화전시간0 허용. world.step을필수로하면root에게stepinterface제안; 가짜clock증가금지.",
+    "runtime.setup_lidars(config,robots,stage,Usd,UsdGeom,Gf,SimulationManager,app,author_mount,verify_mount)->(sensors,metadata). 설치4.5 IsaacSensorCreateRtxLidar + rep.render_product + RtxLidarROS2PublishLaserScan(시뮬레이션clock), old RPLIDAR_S2E profile 사용. runtime asset_url/getassetsroot + 실제4.5 Carter 경로 제공. robotsdefinition/설정lidars앞뒤/mount author+verify callbacks재사용. setupPhysics순서는oldSDK문서/예제로결정. sensor detach_writer(name) cleanup 지원, 프레임/namespace/topic메타실제원천 유지. 센서profilebytesSHA metadata. GMO6.2속성을가짜로만들지말것.",
+    "6.2canonical worker경로수정없음. root는명시local4.5 opt-in branch를추가하며 qualification을separate로남김. 4.5지원불가특성은receipt에정확히적고root협의. source검사는짧은mock wrapper계약/변환/불변식에만, SDK실행root.",
+    "root는운영enum Python3.10compat수정완료, native fleet4_transport_scene import실제성공. 이모듈/operations 파일은수정하지말것. 기존OS env변경필요는 configure_ros_environment함수로현재process환경만, SDK paths fromISAAC_PATH. root local_lidar_bridge의DLL/PATH패턴재사용.",
+    "완료receipt: task/attempt/ACK/sourceSHA/API근거/actualCPU검사/통합예제/남은한계. 자기accepted판정금지. 과도한범위면최소usable facade먼저제출하고나머지root에알림."
+  ],
+  "acceptance": "root source 검수와새actualSDK실행에서stage/actualworldclock/actualwheel/sampletopic확인. mock검사만으로native통과주장금지.",
+  "revision2_request": {
+    "native_evidence": "artifacts/local45/runtime-004/result.json",
+    "observed": "World setup전 만든 carter1 front/rear nativeflat buffer0 / ROS publisher0; World setup후 만든 /World/ReferenceLidar native3200 ranges / ROS74scan publisher1. rclpyDomain146/BESTEFFORT 정상. Source unchanged motion420step7sec.585m+정지PASS.",
+    "hypothesis": "Runtime.setup_lidars가World/physics/rendering 초기화보다먼저RenderProduct/writer를생성해무효화가능성. parentdynamic와구별할단계.",
+    "requested_minimal_fix": "setup_simulation(dt,cpu)를validspec/profile 검사후 sensor/RenderProduct creation전에호출. 이후app.update/mountverify 유지. 센서모든조작은source-ownedfacade에서, setup후Worldreset재호출금지. 기존13검사에Worldsetup-before-native-sensorcreateregression필요한범위추가.",
+    "acceptance": "새native1/2LiDAR로root가검증. scope확대/새SDK실행없음. 소스2파일+receipt동결시회수."
+  }
+}

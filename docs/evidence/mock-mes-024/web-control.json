@@ -1,0 +1,76 @@
+{
+  "status": "passed",
+  "scope": "actual Chrome UI pause and resume to CPU ledger; same API run; no Isaac physical controls",
+  "run_id": "web-local-model-83f1eca4-1ebb-4b18-8ae2-60190785a2eb",
+  "pause": {
+    "command_id": "a9268787-1fd7-469b-9de8-aa13bc82876b",
+    "run_id": "web-local-model-83f1eca4-1ebb-4b18-8ae2-60190785a2eb",
+    "status": "applied",
+    "reason": null,
+    "revision": 7
+  },
+  "resume": {
+    "command_id": "0afc615a-0f83-461f-95ca-ae3e1fbefd71",
+    "run_id": "web-local-model-83f1eca4-1ebb-4b18-8ae2-60190785a2eb",
+    "status": "applied",
+    "reason": null,
+    "revision": 8
+  },
+  "browser_observed": [
+    "paused label and applied revision7",
+    "resume label and applied revision8",
+    "native web screenshot shows actual factory3D; Canvas child fallback text is not a failure signal"
+  ],
+  "api_producer": {
+    "scope": "selected API/model source bytes at service start",
+    "selected_modules_sha256": {
+      "factory_ops/dashboard.py": "416988a3f947264fa545d8bf6480e6f4fd49716af28ef1d1f3b1eab8776561f4",
+      "factory_ops/dashboard_model.py": "0a8eb5045b414ad39ddd619d8753d52067a06fc9db4e6989495bfdea56b74097",
+      "factory_ops/mock_mes.py": "dcfd587b137875bc3a3029e8328c4fb3cf8220660b507792184fc66a9dfde7d2",
+      "factory_ops/dashboard_charging.py": "d04c4357d755cfcf834e890978e67a98bba5e57dc8d125a0ade16e7f4e694446",
+      "factory_ops/operations/ledger.py": "e1c1e90772ff8f6a75828cb077a3b7edc9b121d1955fada29929a495773e1ce3",
+      "factory_ops/operations/inventory.py": "1114b23fcdb3520de0b12f2e246680e5a0fbdcb945ac2ed9b3de0a2f9a5972f4",
+      "factory_ops/operations/model.py": "17b90c1436b78f436d88b325adb27d1531440b63ef0cf169aece1d6070bfb38e",
+      "factory_ops/compat.py": "4294ba7ebbb0ee020b1ece6572e6c1f66069fd2fde4848603bcc31fe4547e53a"
+    }
+  },
+  "media": {
+    "path": "web-control.jpg",
+    "sha256": "d9663233aeadd1774fe5850147a98c9c53a3d00d8e4ba7eeda0a3d7f37236b85",
+    "bytes": 289674,
+    "image_size_px": [
+      1905,
+      2841
+    ],
+    "method": "actual Chrome tab screenshot through cua; no image synthesis",
+    "file_written_at_utc": "2026-10-19T23:03:01.392141+00:00",
+    "scope": "CPU model after applied resume revision8; not physical simulator telemetry",
+    "frame_exact_synchronization_verified": false
+  },
+  "wrong_run_command_check": {
+    "status": "passed",
+    "scope": "wrong-run command with current revision rejected without order/inventory/revision mutation",
+    "request": {
+      "command_id": "wrong-run-check-ff69079070b94bf0b73e44b44c1cabc2",
+      "expected_revision": 6,
+      "expected_run_id": "different-run",
+      "action": "create_order",
+      "parameters": {
+        "source": "S1",
+        "quantity": 1
+      }
+    },
+    "receipt": {
+      "command_id": "wrong-run-check-ff69079070b94bf0b73e44b44c1cabc2",
+      "run_id": "web-local-model-83f1eca4-1ebb-4b18-8ae2-60190785a2eb",
+      "status": "rejected",
+      "reason": "실행이 변경됐습니다. 최신 실행에서 다시 요청하세요",
+      "revision": 6
+    },
+    "before_revision": 6,
+    "after_revision": 6,
+    "tasks_unchanged": true,
+    "inventory_unchanged": true
+  },
+  "wrong_run_command_raw_sha256": "ca86487521373cbec7b0b0010e176326d172361e7d31175cfc9166ef1b052f4f"
+}

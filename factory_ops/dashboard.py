@@ -16,6 +16,7 @@ import time
 from typing import Any
 
 from .dashboard_model import DashboardModel
+from .mock_mes import MockMESAdapter
 
 
 def atomic_json(path: Path, value: Any) -> None:
@@ -179,6 +180,17 @@ class DashboardService:
         self._receipts: dict[str, dict[str, Any]] = {}
         self._fingerprints: dict[str, str] = {}
         self._command_runs: dict[str, str] = {}
+        self.mock_mes = MockMESAdapter(self.model) if self.model is not None else None
+        module_root = Path(__file__).resolve().parent
+        self.producer_sources = {"factory_ops/" + name: hashlib.sha256((module_root / name).read_bytes()).hexdigest()
+            for name in ("dashboard.py", "dashboard_model.py", "mock_mes.py", "dashboard_charging.py",
+                         "operations/ledger.py", "operations/inventory.py", "operations/model.py", "compat.py")}
+
+    def ingest_mes(self, event: Any) -> dict[str, Any]:
+        with self.lock:
+            if self.mock_mes is None:
+                raise ValueError("Mock MES input is unavailable for live/replay sources")
+            return self.mock_mes.ingest(event)
 
     def tick(self, dt: float) -> None:
         with self.lock:
@@ -221,6 +233,10 @@ class DashboardService:
                     and receipt["revision"] <= ack["revision"] <= result["revision"]):
                     receipt.update(status=ack["status"], reason=ack.get("reason"), revision=ack["revision"])
             result["commands"] = deepcopy([r for k, r in self._receipts.items() if self._command_runs[k] == result["run_id"]][-30:])
+            if self.mock_mes is not None:
+                result["integrations"] = {"mock_mes": self.mock_mes.snapshot()}
+            result["api_producer"] = {"scope": "selected API/model source bytes at service start",
+                                      "selected_modules_sha256": dict(self.producer_sources)}
             return result
 
     def command(self, value: Any) -> dict[str, Any]:
@@ -238,8 +254,11 @@ class DashboardService:
                 if self._fingerprints[key] != fingerprint:
                     raise ValueError("같은 명령 ID에 다른 요청을 사용할 수 없습니다")
                 return deepcopy(self._receipts[key])
-            receipt = {"command_id": key, "status": "rejected", "reason": None, "revision": state["revision"]}
-            if type(value.get("expected_revision")) is not int or value["expected_revision"] != state["revision"]:
+            receipt = {"command_id": key, "run_id": state["run_id"],
+                       "status": "rejected", "reason": None, "revision": state["revision"]}
+            if "expected_run_id" in value and value["expected_run_id"] != state["run_id"]:
+                receipt["reason"] = "실행이 변경됐습니다. 최신 실행에서 다시 요청하세요"
+            elif type(value.get("expected_revision")) is not int or value["expected_revision"] != state["revision"]:
                 receipt["reason"] = "상태가 변경됐습니다. 최신 상태에서 다시 요청하세요"
             elif value.get("action") not in state["capabilities"]:
                 receipt["reason"] = "현재 연결에서 지원하지 않는 명령입니다"
@@ -295,7 +314,7 @@ def make_server(service: DashboardService, port: int = 8765) -> ThreadingHTTPSer
                 self._reply(503, {"error": str(error)})
 
         def do_POST(self) -> None:
-            if self.path != "/api/commands":
+            if self.path not in ("/api/commands", "/api/mes/events"):
                 self._reply(404, {"error": "unknown endpoint"})
                 return
             try:
@@ -303,7 +322,7 @@ def make_server(service: DashboardService, port: int = 8765) -> ThreadingHTTPSer
                 if self.headers.get_content_type() != "application/json" or not 0 < length <= 65536:
                     raise ValueError("JSON command body must be at most 64 KiB")
                 value = json.loads(self.rfile.read(length))
-                self._reply(200, service.command(value))
+                self._reply(200, service.ingest_mes(value) if self.path == "/api/mes/events" else service.command(value))
             except (ValueError, TypeError) as error:
                 self._reply(400, {"error": str(error)})
 

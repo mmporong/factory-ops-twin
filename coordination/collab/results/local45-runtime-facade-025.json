@@ -1,0 +1,388 @@
+{
+  "task_id": "local45-runtime-facade-025",
+  "attempt": 1,
+  "contract_revision": 25,
+  "owner": "control",
+  "reviewer": "root",
+  "status": "typing_only_complete_ready_for_root_acceptance",
+  "api_ready": true,
+  "accepted": false,
+  "ack": {
+    "received": true,
+    "ack_at_utc": "2026-10-20T07:23:33.2770521+09:00",
+    "scope": "지정 3경로만 facade/CPU 검사/receipt 작성. SDK/ROS/guard/통합은 root 소유."
+  },
+  "changed_paths": [
+    "factory_ops/isaac45_runtime.py",
+    "tests/test_isaac45_runtime.py",
+    "coordination/collab/results/local45-runtime-facade-025.json"
+  ],
+  "source_sha256": {
+    "tests/test_isaac45_runtime.py": "4c705fd072d3502bbf2370a0c37844b667e35da9b98058a2da394f61081172f3",
+    "factory_ops/isaac45_runtime.py": "793c467a8e92e7ddf5a1ff2f7a7c9956435d60e58f0b47f85653fc0c388256ac"
+  },
+  "interfaces": {
+    "create_runtime": "factory_ops.isaac45_runtime.create_runtime(app) -> Runtime45. 외부 import는 stdlib만; SDK/numpy는 실행 시 lazy binding.",
+    "configure_ros_environment": "module.configure_ros_environment(domain_id=None). ISAAC_PATH의 기존 bundled Humble DLL을 검증한 뒤 현재 process의 PATH/ROS_DISTRO/RMW/ROS_LOCALHOST_ONLY/선택 domain만 설정. DLL search handle 보존. root가 ROS extension enable 전에 호출.",
+    "stage_utils": "open_stage(path)->(bool,actualstage), add_reference_to_stage(usd_path,path)->native prim_path keyword 변환, is_stage_loading() 위임. robot/World 생성 뒤 stage 교체 거절.",
+    "WheeledRobot": "runtime.WheeledRobot(prim_path,wheel_dof_names)->wrapper. native robot 생성/World.scene 등록은 setup_simulation 시점. dof_names/get_dof_positions는 실제 native articulation 값, get_world_poses는 단일 batch list ([position],[orientation_wxyz]).",
+    "wheel_actions": "apply_wheel_actions(vector): wheel 수/1차원/유한값 검증 후 ArticulationAction(joint_velocities=vector)로 native apply_wheel_actions 호출. pose/encoder 값을 합성하지 않음.",
+    "SimulationManager": "setup_simulation(dt,device='cpu')가 정확히 하나의 기존 PhysicsScene을 찾아 World physics_prim_path로 재사용, CPU dynamics 설정, robot 등록, World.reset/초기화. 기존 다른 World/scene0개/복수 scene 거절. 같은 dt 재호출은 reset 없이 동일 World 반환; 다른 dt 거절.",
+    "clock": "get_simulation_time()/get_num_physics_steps()는 초기화 전 0, 이후 World.current_time/current_time_step_index를 반환. 설치 World의 실제 PhysX 콜백 카운터이며 facade에서 clock/frame을 증가시키지 않음.",
+    "assets": "runtime.get_assets_root_path() 및 runtime.asset_url property. 4.5 경로 /Isaac/Robots/NVIDIA/Carter/nova_carter/nova_carter.usd 사용.",
+    "setup_lidars": "runtime.setup_lidars(config,robots,stage,Usd,UsdGeom,Gf,SimulationManager,app,author_mount,verify_mount)->(sensors,metadata). G2의 robots[robot_id]={definition,robot,...} 및 mount callback 인자를 그대로 사용.",
+    "sensor_cleanup": "sensor.detach_writer('RtxLidarROS2PublishLaserScan')가 writer.detach와 render_product.destroy를 수행. 성공 뒤 재호출은 무해하며 정리 실패는 보고/재시도 가능. setup 실패에서도 생성된 writer/product를 정리."
+  },
+  "lidar_contract": {
+    "actual_profile": "RPLIDAR_S2E",
+    "requested_profile_preserved": true,
+    "profile_path": "E:/IsaacSim/isaac-sim-4.5.0/exts/isaacsim.sensors.rtx/data/lidar_configs/SLAMTEC/RPLIDAR_S2E.json",
+    "profile_sha256": "b230724299cdfe84795d1c46bb3aebdce0452705025a228977bc7aec3c571b64",
+    "creation": "profile/spec 검증 -> World setup/reset/robot 초기화 -> IsaacSensorCreateRtxLidar -> author_mount -> render_product -> simulation-time writer initialize/attach -> app.update -> verify_mount. 이후 reset 없음.",
+    "writer": "RtxLidarROS2PublishLaserScan",
+    "clock": "simulation_time, SystemTime writer를 선택하지 않음",
+    "topic_example": "/carter1/scan_front_raw",
+    "frame_example": "front_scan (설정 원문 유지)",
+    "metadata": [
+      "robot_id/namespace/name/prim_path/topic/frame_id",
+      "translation_xyz_m/yaw_rad/local_transform",
+      "requested_profile/actual profile/path/bytes SHA",
+      "profile scanRateBaseHz/reportRateBaseHz/near/far 및 계산한 horizontal resolution",
+      "writer/clock_source/parameter_source/runtime scope"
+    ],
+    "no_synthetic_62_attributes": [
+      "tickRate",
+      "accumulateOutputs"
+    ],
+    "parameter_limit": "profile 기반 파라미터이며 실제 ROS LaserScan header·coverage·시간 일치 검증을 대신하지 않음. 기존 6.2 metadata와 동일하다고 주장하지 않음."
+  },
+  "validation": [
+    {
+      "command": "$env:PYTHONDONTWRITEBYTECODE='1'; .venv/Scripts/python.exe -B -m unittest discover -s tests -p test_isaac45_runtime.py -v",
+      "result": "PASS",
+      "tests": 13,
+      "duration_s": 0.037,
+      "runtime": "CPU Python3.12.13",
+      "scope": "SDK 미import cold module/Python3.10 문법, stage keyword/actualstage 변환, 단일 PhysicsScene 재사용/중복·외부World 거절, dt/reset 불변, native counter/encoder/pose 형태, wheel Action 변환, asset 경로, profile SHA/mount/topic/cleanup, process ROS 환경 idempotence. SDK API는 mock이며 실제 native 성공 아님."
+    },
+    {
+      "command": "지정 Python 2파일 ast.parse(feature_version=(3,10)) 및 메모리 compile",
+      "result": "PASS",
+      "scope": "SDK import/실행 또는 bytecode 파일 생성 없이 문법 확인"
+    },
+    {
+      "command": "receipt 확정 전후 지정 2파일 SHA256 대조 및 receipt JSON 재파싱",
+      "result": "PASS"
+    }
+  ],
+  "installed_api_evidence": [
+    {
+      "path": "E:/IsaacSim/isaac-sim-4.5.0/exts/isaacsim.core.utils/isaacsim/core/utils/stage.py",
+      "lines": [
+        221,
+        297,
+        505
+      ],
+      "evidence": "old add_reference_to_stage prim_path, open_stage bool, is_stage_loading 경로 확인"
+    },
+    {
+      "path": "E:/IsaacSim/isaac-sim-4.5.0/exts/isaacsim.core.api/isaacsim/core/api/world/world.py",
+      "lines": [
+        87,
+        351
+      ],
+      "evidence": "physics_prim_path/physics_dt/rendering_dt/backend/device와 scene finalize/post_reset 순서 확인"
+    },
+    {
+      "path": "E:/IsaacSim/isaac-sim-4.5.0/exts/isaacsim.core.api/isaacsim/core/api/simulation_context/simulation_context.py",
+      "lines": [
+        237,
+        253,
+        1338,
+        1360
+      ],
+      "evidence": "실제 PhysX step subscription이 World time/frame 카운터를 갱신하고 timeline auto_update를 설정함. facade는 카운터 읽기만 수행"
+    },
+    {
+      "path": "E:/IsaacSim/isaac-sim-4.5.0/exts/isaacsim.robot.wheeled_robots/isaacsim/robot/wheeled_robots/robots/wheeled_robot.py",
+      "lines": [
+        68,
+        159,
+        184,
+        198
+      ],
+      "evidence": "native constructor, ArticulationAction wheel mapping, 초기화/velocity mode reset 확인"
+    },
+    {
+      "path": "E:/IsaacSim/isaac-sim-4.5.0/exts/isaacsim.core.prims/isaacsim/core/prims/impl/single_articulation.py",
+      "lines": [
+        268,
+        464
+      ],
+      "evidence": "dof_names와 get_joint_positions 확인; batch는 실제 값의 차원만 감쌈"
+    },
+    {
+      "path": "E:/IsaacSim/isaac-sim-4.5.0/exts/isaacsim.sensors.rtx/isaacsim/sensors/rtx/scripts/commands.py",
+      "lines": [
+        23,
+        40
+      ],
+      "evidence": "IsaacSensorCreateRtxLidar path/parent/config/translation/orientation 및 실제 Camera sensorModelConfig authoring 경로 확인"
+    },
+    {
+      "path": "E:/IsaacSim/isaac-sim-4.5.0/exts/isaacsim.ros2.bridge/isaacsim/ros2/bridge/scripts/extension.py",
+      "lines": [
+        139,
+        351
+      ],
+      "evidence": "simulation/system time writer 구분. RtxLidarROS2PublishLaserScan은 IsaacComputeRTXLidarFlatScanSimulationTime와 SimulationGate를 연결함"
+    },
+    {
+      "path": "scripts/isaac/local_asset_probe.py",
+      "evidence": "이미 사용 중인 4.5 Carter 경로/World/WheeledRobot/Action 패턴을 참고. 해당 파일 수정 없음"
+    },
+    {
+      "path": "scripts/isaac/local_lidar_bridge.py",
+      "evidence": "기존 4.5 RTX command/render_product/writer/reset/cleanup 패턴 참고. 해당 파일 수정 없음"
+    },
+    {
+      "path": "scripts/isaac/local_ros_probe.py",
+      "lines": [
+        43,
+        47,
+        58
+      ],
+      "evidence": "현재 process의 bundled Humble middleware PATH 및 extension enable 패턴 참고. 해당 파일 수정 없음"
+    }
+  ],
+  "root_integration_example": "# Before SimulationApp/ROS enable, no SDK imports at module load:\nfrom factory_ops.isaac45_runtime import configure_ros_environment, create_runtime\nconfigure_ros_environment(config['ros_domain_id'])\n# root creates SimulationApp and enables isaacsim.ros2.bridge\nruntime = create_runtime(app)\nstage_utils = runtime.stage_utils\nSimulationManager = runtime.SimulationManager\nWheeledRobot = runtime.WheeledRobot\nopened, stage = stage_utils.open_stage(str(scene))\nasset = runtime.asset_url\n# root defines exactly ONE PhysicsScene if the authored scene has none\n# Use the existing G2 _create_robot with stage_utils/WheeledRobot.\nsensors, metadata = runtime.setup_lidars(\n    config, robots, stage, Usd, UsdGeom, Gf, SimulationManager, app,\n    g2._author_lidar_local_transform, g2._verify_lidar_local_transform)\n# timeline.play(); app.update(); check actual World counters advance.\n# Native wheel/encoder/ROS scan validation remains root owned.\n",
+  "first_native_admission_handoff": {
+    "root_reported_setup": "root가 local_fleet_runtime_probe.py/config를 작성했고 원래 authored scene의 PhysicsScene0개를 probe가 명시 Local45PhysicsScene1개로 만든 뒤 facade가 재사용할 예정. g2 canonical 수정은 아직 없음.",
+    "first_plan": "artifacts/local45/runtime-config-001.json: 1대/2scan/7simsec. 4대 config와 첫 작은 admission 범위를 구분.",
+    "actual_result": "과거001/004 configured scan0의 failed 원본은 보존. root actual005는1대/front113 rear112 ROS scans, actual006은4대/8센서53~54 scans로 PASS 보고. 각각420step/7s, actual006 이동0.5846~0.5848m/정지 및 preflight+Job full closed 통과.",
+    "root_guard_evidence": "사용자/root 보고: Windows job guard의 실제SDK 실행/전체후손 cleanup 통과. facade CPU 검사의 증거와 구분."
+  },
+  "limits_and_proposals": [
+    "최신2SHA는 typing-only 보정이다. 기존14CPU PASS·pyright0오류/경고·Python3.10 parse/compile·원본SHA 역치환/AST 대조를 마쳤다. SDK 추가 실행은 하지 않았고 요청하지 않는다.",
+    "World-before-RTX revision2의 실제 동작 증명은 root actual005/006 frozen source95139a78에 속한다. 이전001/004 failed 원본과006 frozen inputs는 보존하며 새 typing SHA로 덮어 표현하지 않는다.",
+    "facade는 정확히1개 PhysicsScene을 재사용한다. 기존 foreign World를 제거/clear하지 않고 World stop/app close/전체 후손 종료는 root 소유다.",
+    "RPLIDAR_S2E 실제 profile/SHA와 requested profile을 분리한다. 6.2 tickRate/accumulateOutputs/GMO header를 생성하지 않는다.",
+    "4대8scan component admission은 실제 Nav2/lease/운송/물리 적재/충전전력/6.2 qualification을 입증하지 않는다.",
+    "027 매핑은 typing 전의6개 고정SHA를 기준으로 완료했다. 구현 제안4묶음은 receipt027에 있으며 이번 typing 수정에는 새 observer/runtime API를 추가하지 않았다.",
+    "타작성자/root 운영/원장/guard/probe/config/G2/원본 변경, 새 SDK/GPU/ROS/VM/설치/패키지/세션/에이전트/Git 변경 없음."
+  ],
+  "review_pass": {
+    "separate_self_review": true,
+    "scope": "revision2의 World-before-RTX 생성 순서/이후 reset 부재/기존 validation과 update/verify 유지 경계만 별도 확인. 새로운 광역 리뷰 없음.",
+    "independent_approval": false
+  },
+  "prior_task_finalize": {
+    "task": "023",
+    "path": "coordination/collab/results/kit-operator-console-023.json",
+    "authorization": "025 카드의 먼저023receipt 마무리 지시",
+    "result": "사용자/root native003 accepted 보고를 기록. 023 제품 source5개 수정 없음."
+  },
+  "processes": {
+    "started": [],
+    "pid": null,
+    "stop_command": null
+  },
+  "constraints_observed": [
+    "025 지정3경로만 작성",
+    "타작성자/root 원장/운영compat/guard/probe/config/G2/원본 변경 없음",
+    "새 SDK·GPU·ROS·VM·Git·새 세션·새 에이전트·설치 없음",
+    "native/통합/원본 수용은 root 소유"
+  ],
+  "completed_at_utc": "2026-10-19T22:56:29.2667850Z",
+  "revision": 2,
+  "revision2_ack": {
+    "received": true,
+    "at_utc": "2026-10-20T07:43:58.8710411+09:00",
+    "scope": "카드 revision2_request의 World 초기화 순서만 수정. source/test/receipt 3경로. domain/QoS/root probe 수정 및 SDK 실행 없음."
+  },
+  "revision2": {
+    "status": "root_reported_native005_and006_pass",
+    "scope": "카드 revision2_request의 World/RTX 생성 순서만 최소 수정",
+    "change": "모든 profile/robot/lidar spec 검증 후 SimulationManager.setup_simulation(dt,cpu)를 먼저 호출하고 그 뒤 native sensor/RenderProduct/writer를 생성한다. 마지막 위치의 setup 호출을 제거했다.",
+    "preserved": [
+      "후속 app.update와 mount verify",
+      "World.reset 재호출 없음",
+      "domain/QoS/ROS환경/profile/topic/frame 값",
+      "실제 World clock/encoder/wheel/pose 경로",
+      "cleanup/원본/6.2 canonical/root probe 파일"
+    ],
+    "runtime_change_location": "factory_ops/isaac45_runtime.py:267",
+    "regression": {
+      "name": "test_world_reset_precedes_rtx_graph_creation_and_is_not_repeated",
+      "required_order": [
+        "World.reset",
+        "sensor",
+        "render_product",
+        "writer",
+        "sensor",
+        "render_product",
+        "writer"
+      ],
+      "checks": [
+        "sensor/product/writer 생성 시 manager.ready=true, reset count1",
+        "생성 완료 후에도 reset count1",
+        "기존 app.update1회",
+        "잘못된 spec는 World 생성 전 거절"
+      ],
+      "red": {
+        "command": ".venv/Scripts/python.exe -B -m unittest discover -s tests -p test_isaac45_runtime.py -k world_reset_precedes -v",
+        "result": "EXPECTED_FAIL",
+        "source_sha256": "203e90db2709a329a70ed0dd3f34d5679607278dde482a83ebd71626484549d9",
+        "reason": "기존 코드의 sensor 생성 시 SimulationManager.ready=false AssertionError"
+      },
+      "green": {
+        "command": "$env:PYTHONDONTWRITEBYTECODE='1'; .venv/Scripts/python.exe -B -m unittest discover -s tests -p test_isaac45_runtime.py -v",
+        "result": "PASS",
+        "tests": 14,
+        "duration_s": 0.037,
+        "runtime": "CPU Python3.12.13; native API mock"
+      },
+      "syntax": "source/test 두 파일 Python3.10 ast.parse + 메모리 compile PASS. SDK import/실행 없음."
+    },
+    "native004_evidence": {
+      "path": "C:/Users/LIMMM/factory-ops-twin/artifacts/local45/runtime-004/result.json",
+      "sha256": "2a885a90d52bd28f769c4da38c973eb7bf67a871386e38c7b163710479c24832",
+      "run_id": "5328b8dbe046408dbbc7435a1960a36a",
+      "facade_source_sha256": "203e90db2709a329a70ed0dd3f34d5679607278dde482a83ebd71626484549d9",
+      "status": "failed",
+      "observation": "기존 front/rear native buffers0/0 및 ROS publisher0. World 이후 만든 static reference는3200 native ranges, /local45_reference_scan74 ROS callbacks. 실제 physics420steps/약7s, root 보고 이동.585m와 정지 PASS.",
+      "quality_limit": "reference valid_fraction0.3784375/positive finite1211이므로 scan 품질·4대 성공으로 확대하지 않음. 이 원본 failed와 과거 source bytes를 변경하지 않음.",
+      "inference": "World setup/reset 이후 생성한 RTX 자원만 유효한 관측과 일치하는 생성 순서 가설. 동적 chassis 부착 영향과 정확한 내부 무효화 원인은 새 native 재시험 전 미확정. domain/QoS 추측 변경을 하지 않았음."
+    },
+    "handoff": "World-first runtime source95139a78/test601ee8c3를 root가 actual005/006으로 검증했다. frozen source/원본은 유지한다. 이후 typing-only source793c467a/test4c705fd0은 아래 별도 검증을 참조한다.",
+    "accepted": true
+  },
+  "implementation_revision": 2,
+  "revision_history": [
+    {
+      "revision": 1,
+      "source_sha256": {
+        "factory_ops/isaac45_runtime.py": "203e90db2709a329a70ed0dd3f34d5679607278dde482a83ebd71626484549d9",
+        "tests/test_isaac45_runtime.py": "551958b16edf8d4de2bc9b6fac66f605ee62ca4299a7aa4b4dec4ddbd2f2bef1"
+      },
+      "cpu_tests": 13,
+      "status": "motion/clock/stop verified by root; configured scans absent, overall failed; native004 original preserved"
+    },
+    {
+      "revision": 2,
+      "phase": "World-before-RTX source before typing-only finish",
+      "source_sha256": {
+        "factory_ops/isaac45_runtime.py": "95139a7834e16c1f864e52ee36b26869eac26159830d7cbb7288baf602f316f2",
+        "tests/test_isaac45_runtime.py": "601ee8c3918610cdfadf93e33faff8ff8a7fb221f65e0b2eb35c2835145840c1"
+      },
+      "cpu_tests": 14,
+      "status": "root actual005/006 PASS reported; frozen native inputs remain preserved by root"
+    }
+  ],
+  "typing_only_ack": {
+    "received": true,
+    "at_utc": "2026-10-19T22:54:37.9976754Z",
+    "scope": "027 매핑 receipt 완료 후 소유2파일 typing-only 보정. dynamic SDK Any 명시와 test import spec/loader narrowing만 추가; runtime 논리/SDK/GPU 실행 없음.",
+    "baseline_pyright_errors": 10,
+    "original_runtime_sha256": "95139a7834e16c1f864e52ee36b26869eac26159830d7cbb7288baf602f316f2",
+    "original_test_sha256": "601ee8c3918610cdfadf93e33faff8ff8a7fb221f65e0b2eb35c2835145840c1"
+  },
+  "typing_only_finish": {
+    "scope": "root 요청대로 소유 runtime/test 2파일만 typing-only 수정. SDK API/논리/파라미터/타이밍/정리순서 변경 없음.",
+    "changed_paths": [
+      "factory_ops/isaac45_runtime.py",
+      "tests/test_isaac45_runtime.py"
+    ],
+    "changes": [
+      {
+        "path": "factory_ops/isaac45_runtime.py",
+        "lines": [
+          99,
+          129,
+          175
+        ],
+        "change": "_Robot._native, _SimulationManager.world, _LidarSensor._writer를 Any로 명시. 기존 초기값 None과 모든 제어문/호출/반환 유지."
+      },
+      {
+        "path": "tests/test_isaac45_runtime.py",
+        "lines": [
+          10,
+          62,
+          115
+        ],
+        "change": "stdlib typing.Any import, mock World.existing: Any 명시, importlib spec/loader None assert narrowing. 기존14개 검사 시나리오 유지."
+      }
+    ],
+    "verification": [
+      {
+        "command": "uvx --offline pyright factory_ops/isaac45_runtime.py tests/test_isaac45_runtime.py",
+        "result": "PASS",
+        "exit_code": 0,
+        "errors": 0,
+        "warnings": 0,
+        "informations": 0,
+        "before_errors": 10
+      },
+      {
+        "command": "$env:PYTHONDONTWRITEBYTECODE='1'; .venv/Scripts/python.exe -B -m unittest discover -s tests -p test_isaac45_runtime.py -v",
+        "result": "PASS",
+        "exit_code": 0,
+        "tests": 14,
+        "duration_s": 0.045,
+        "scope": "기존 CPU mock 계약. SDK/GPU/ROS 실행 아님."
+      },
+      {
+        "command": "지정2파일 Python3.10 ast.parse(feature_version=(3,10)) 및 메모리 compile",
+        "result": "PASS"
+      },
+      {
+        "command": "요청한6개 텍스트 변경을 역치환한 원문 SHA 대조 및 runtime annotation-normalized AST 비교",
+        "result": "PASS",
+        "scope": "원래 source95139a78/test601ee8c3와 요청 편집 외 차이 없음. runtime에서 타입 선언을 제외한 AST 일치."
+      }
+    ],
+    "root_native_evidence": {
+      "source": "사용자/root actual006 PASS 보고; 이 작성자가 새 SDK 실행 또는 원본 변경을 하지 않음.",
+      "source_sha256": "95139a7834e16c1f864e52ee36b26869eac26159830d7cbb7288baf602f316f2",
+      "test_sha256": "601ee8c3918610cdfadf93e33faff8ff8a7fb221f65e0b2eb35c2835145840c1",
+      "actual005": "1대/앞뒤 ROS113/112 scans, 420step/7s 약0.585m 및 정지 PASS",
+      "actual006": "4로봇 각420step/7s, 이동0.5846~0.5848m 및 정지, 8센서 scan53~54개/native3200, preflight+Job full closed PASS; 기준 sensor 없음.",
+      "preservation": "006 frozen source는 root가 보존했다고 보고했다. 이 작성자는 원본/inputs/host 기록을 쓰지 않았음.",
+      "typing_sha_boundary": "actual006의 원래 실행 bytes와 최신 typing-only SHA를 구분한다. 새 SDK 실행을 요청하지 않으며 최신 source로 native를 재실행한 것으로 표현하지 않음.",
+      "claim_limit": "4.5 component admission 범위. 실제 Nav2 임무/lease4대 운송/물리 적재/충전전력/6.2 qualification 완결 아님."
+    },
+    "separate_verification_pass": {
+      "performed": true,
+      "scope": "작성 후 CPU/type 검사와 원래SHA/한정diff/정규화AST 대조",
+      "independent_approval": false,
+      "root_acceptance_pending": "최신 typing-only source 수용은 root 소유. revision2 frozen source의 actual 통과는 별도 root 보고로 기록."
+    },
+    "pending_work": [],
+    "sdk_rerun_requested": false,
+    "completed_at_utc": "2026-10-19T22:56:29.2707865Z",
+    "before_source_sha256": {
+      "factory_ops/isaac45_runtime.py": "95139a7834e16c1f864e52ee36b26869eac26159830d7cbb7288baf602f316f2",
+      "tests/test_isaac45_runtime.py": "601ee8c3918610cdfadf93e33faff8ff8a7fb221f65e0b2eb35c2835145840c1"
+    },
+    "final_source_sha256": {
+      "tests/test_isaac45_runtime.py": "4c705fd072d3502bbf2370a0c37844b667e35da9b98058a2da394f61081172f3",
+      "factory_ops/isaac45_runtime.py": "793c467a8e92e7ddf5a1ff2f7a7c9956435d60e58f0b47f85653fc0c388256ac"
+    },
+    "exact_typing_only_diff": {
+      "tests/test_isaac45_runtime.py": {
+        "sha256": "4c705fd072d3502bbf2370a0c37844b667e35da9b98058a2da394f61081172f3",
+        "only_requested_edits": true,
+        "python310_parse_compile": "PASS",
+        "annotation_normalized_runtime_ast_equal": null,
+        "diff": "--- before/tests/test_isaac45_runtime.py\n+++ after/tests/test_isaac45_runtime.py\n@@ -7,6 +7,7 @@\n import os\n from pathlib import Path\n from types import SimpleNamespace\n+from typing import Any\n import tempfile\n import unittest\n from unittest.mock import Mock, patch\n@@ -58,7 +59,7 @@\n \n \n class World:\n-    existing = None\n+    existing: Any = None\n \n     @classmethod\n     def instance(cls):\n@@ -111,6 +112,7 @@\n                 raise AssertionError('eager SDK import: ' + name)\n             return original(name, *args, **kwargs)\n         spec = importlib.util.spec_from_file_location('cold_runtime025', path)\n+        assert spec is not None and spec.loader is not None\n         with patch('builtins.__import__', side_effect=guarded):\n             spec.loader.exec_module(importlib.util.module_from_spec(spec))\n \n"
+      },
+      "factory_ops/isaac45_runtime.py": {
+        "sha256": "793c467a8e92e7ddf5a1ff2f7a7c9956435d60e58f0b47f85653fc0c388256ac",
+        "only_requested_edits": true,
+        "python310_parse_compile": "PASS",
+        "annotation_normalized_runtime_ast_equal": true,
+        "diff": "--- before/factory_ops/isaac45_runtime.py\n+++ after/factory_ops/isaac45_runtime.py\n@@ -96,7 +96,7 @@\n         self._runtime = runtime\n         self.prim_path = prim_path\n         self._wheel_names = tuple(wheel_dof_names)\n-        self._native = None\n+        self._native: Any = None\n \n     def _ready(self):\n         if self._native is None or not self._runtime.SimulationManager.ready:\n@@ -126,7 +126,7 @@\n class _SimulationManager:\n     def __init__(self, runtime):\n         self._runtime = runtime\n-        self.world = None\n+        self.world: Any = None\n         self.ready = False\n         self._dt = None\n \n@@ -172,7 +172,7 @@\n class _LidarSensor:\n     def __init__(self, product):\n         self._product = product\n-        self._writer = None\n+        self._writer: Any = None\n \n     def detach_writer(self, name):\n         if name != LIDAR_WRITER:\n"
+      }
+    }
+  }
+}

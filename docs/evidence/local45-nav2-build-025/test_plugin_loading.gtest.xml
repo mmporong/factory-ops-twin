@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites tests="1" failures="0" disabled="0" errors="0" time="0.163" timestamp="2026-10-20T07:11:53.373" name="AllTests">
+  <testsuite name="FactoryOpsGoalCheckerPluginLoading" tests="1" failures="0" disabled="0" skipped="0" errors="0" time="0.163" timestamp="2026-10-20T07:11:53.373">
+    <testcase name="LoadsAllClassesFromOneSharedLibrary" file="/mnt/c/Users/LIMMM/factory-ops-twin/ros_ws/src/factory_ops_goal_checker/test/test_plugin_loading.cpp" line="9" status="run" result="completed" time="0.163" timestamp="2026-10-20T07:11:53.373" classname="factory_ops_goal_checker.FactoryOpsGoalCheckerPluginLoading" />
+  </testsuite>
+</testsuites>

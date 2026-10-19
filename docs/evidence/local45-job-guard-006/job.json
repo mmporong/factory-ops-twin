@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "run_id": "501882ec6e464e2f870ccae88de661b7",
+  "status": "passed",
+  "runner_sha256": "e75e21b22c76c1b911516c001a8786b8bafc1a442bd3ae78396911fa1b68057b",
+  "spec_sha256": "6c7a14199e16d097c7b05bfe35d3e93895a5c67f0e5b26c16c03c505542b2c45",
+  "prelaunch_inputs_verified": true,
+  "containment": "Windows Job Object; assignment before worker gate opens; no breakaway",
+  "kill_on_job_close": true,
+  "assignment_confirmed": true,
+  "gate_opened": true,
+  "timed_out": false,
+  "closed": true,
+  "remaining_owned_pids": [],
+  "gated_worker_pid": 45984,
+  "worker_exit_code": 0,
+  "owned_pids_before_cleanup": [
+    52868
+  ],
+  "preflight": {
+    "status": "passed",
+    "spec_sha256": "6c7a14199e16d097c7b05bfe35d3e93895a5c67f0e5b26c16c03c505542b2c45",
+    "run_id": "501882ec6e464e2f870ccae88de661b7",
+    "inputs_sha256": {
+      "C:\\Users\\LIMMM\\factory-ops-twin\\scripts\\isaac\\local_fleet_runtime_probe.py": "d75b2bfdca68b6f4db7608b3052d9222e709c3283a56a34ddaa7a68d2eac53c1",
+      "C:\\Users\\LIMMM\\factory-ops-twin\\configs\\local45-fleet-runtime-probe.json": "d891d14d1a090a46a3d3d361257b38c3016a976c942cda6344230efeb54c55f8",
+      "C:\\Users\\LIMMM\\factory-ops-twin\\factory_ops\\__init__.py": "da57bbf586e3c4639fd72b3960ef8dd7a8326b3ba17504836189be26ce5bacb0",
+      "C:\\Users\\LIMMM\\factory-ops-twin\\factory_ops\\isaac45_runtime.py": "95139a7834e16c1f864e52ee36b26869eac26159830d7cbb7288baf602f316f2",
+      "C:\\Users\\LIMMM\\factory-ops-twin\\factory_ops\\drive_profile.py": "6bba5a51caa5e4a71662339026afc67e1efe1d7370cb04c372cde48eba9d7185",
+      "C:\\Users\\LIMMM\\factory-ops-twin\\factory_ops\\motion.py": "a8d670ce9e0309093c47a6a63ff70c78182021f6b50496933e29985466ed6cd1",
+      "C:\\Users\\LIMMM\\factory-ops-twin\\scripts\\isaac\\local_asset_probe.py": "042e7c3255c339a5d5705a0bb70e377f0b807d2deda5d06fc0cffb0870bf345c"
+    },
+    "scope": "launch-time byte check; source must remain unchanged while the SDK imports/runs"
+  },
+  "elapsed_wall_s": 58.360000000015134
+}

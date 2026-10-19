@@ -1,0 +1,27 @@
+{
+  "task_id": "mock-mes-boundary-review-024",
+  "attempt": 1,
+  "contract_revision": 24,
+  "owner": "control",
+  "author": "root",
+  "goal": "모의MES 입력의 중복/순서/시각/run 격리·재고/주문 반영과 live/replay 불변 경계 한정 검수",
+  "read_paths": [
+    "factory_ops/mock_mes.py",
+    "factory_ops/dashboard.py",
+    "factory_ops/dashboard_model.py",
+    "tests/test_mock_mes.py",
+    "scripts/demo/mock_mes_flow.py"
+  ],
+  "read_sha256": {
+    "factory_ops/mock_mes.py": "dcfd587b137875bc3a3029e8328c4fb3cf8220660b507792184fc66a9dfde7d2",
+    "factory_ops/dashboard.py": "9471448749874909fc779fc42f0718534f561d8eac25a55e31b8f20f28809393",
+    "factory_ops/dashboard_model.py": "0a8eb5045b414ad39ddd619d8753d52067a06fc9db4e6989495bfdea56b74097",
+    "tests/test_mock_mes.py": "d23a2f9b50a55836514e3ca7415f75699c08b950cb2eaa7073b95648794af5bb",
+    "scripts/demo/mock_mes_flow.py": "2c7133fda2be42ebf0e12c0ac19a6f156340b0f5289d32e3f77b74349ee526f0"
+  },
+  "write_paths": [
+    "coordination/collab/results/mock-mes-boundary-review-024.json"
+  ],
+  "acceptance": "도달가능한 major/blocking 오류만 실제소스 경로와최소수정 제시. 추가전체검사·웹리서치·SDK·제품변경 없음. root의10MES/24기존검사PASS와실제HTTPflow(추가6·신규ORD5·중복재적용없음·다른run400) 참고. Kit023작성경로는이제동결; root native실행중. 원장/타작성자파일/Git/VM/새에이전트 변경금지.",
+  "created_at_utc": "2026-10-19T22:05:32.783627+00:00"
+}

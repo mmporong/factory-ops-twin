@@ -1,0 +1,15 @@
+[core]
+reloadable = true
+
+[package]
+version = "0.1.0"
+title = "Factory Operations Console"
+description = "Loopback HTTP operator window; no stage or physical control"
+category = "Simulation"
+
+[dependencies]
+"omni.kit.uiapp" = {}
+"omni.ui" = {}
+
+[[python.module]]
+name = "factory_ops_console"
