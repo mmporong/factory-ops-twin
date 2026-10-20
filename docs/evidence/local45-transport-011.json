@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "run_id": "7fdb9fae5a2c41a1a07b3fd30c939711",
+  "source_commit": "711c8a40eefd84a0463a489c87e694611915b2ce",
+  "status": "failed_initial_native_time_representation",
+  "actual_sdk_error": "FACTORY_OPS_G2_ERROR=ros_and_lidars: ValueError: timeStamp: positive native seconds do not fit a nonzero ROS Time",
+  "raw_timestamp_value_recorded": false,
+  "windows_closed": true,
+  "linux_closed": true,
+  "cleanup_errors": [],
+  "bag_sql_opened": false,
+  "next_change": "begin publication after existing120 physics-step sensor warmup; keep timestamp guards and add raw value diagnostics",
+  "actual_transport_completed": false,
+  "actual_charging_verified": false,
+  "records_sha256": {
+    "pair-host.json": "87512356e5e50ca8fb022ea2c56ce633d69ff2fd52f4ab9c02176f5240fb38ef",
+    "sdk.stdout.log": "5b69d79d3271dc69c25524363a94b50a182d6480b766c2d12d785d1f442fdcec",
+    "job.json": "646416fc51854c589046fbe8f76239d5566c983a5a90368a7ae8c3b80fbf84f6"
+  }
+}

@@ -508,11 +508,16 @@ def _setup_native_lidar_publication(
 
         converter = NativeFlatScanPublisher(publish, str(row["frame_id"]))
         states = runtime["ros"].setdefault("native_scan_publication", {})
-        bindings.append((sensor, converter, states, str(row["name"])))
+        bindings.append((sensor, converter, states, str(row["name"]), str(row["robot_id"])))
 
     def publish_available() -> None:
-        for sensor, converter, states, side in bindings:
-            states[side] = converter.publish(sensor.read_native_scan())
+        for sensor, converter, states, side, robot_id in bindings:
+            payload = sensor.read_native_scan()
+            try:
+                states[side] = converter.publish(payload)
+            except ValueError as error:
+                stamp = payload.get("timeStamp") if isinstance(payload, Mapping) else None
+                raise ValueError(f"native scan {robot_id}/{side} timeStamp={stamp!r}: {error}") from error
 
     return publish_available
 
@@ -976,7 +981,6 @@ def _run(
         timeline.play()
         for _ in range(int(config["warmup_steps"])):
             app.update()
-            publish_native_scans()
             now = float(SimulationManager.get_simulation_time())
             for runtime in robots.values():
                 runtime["ros"]["latest_sim_time"] = now
