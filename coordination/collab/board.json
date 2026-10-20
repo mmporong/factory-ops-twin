@@ -1,6 +1,6 @@
 {
   "revision": 41,
-  "updated_at": "2026-10-20T03:21:21.903391+00:00",
+  "updated_at": "2026-10-20T03:28:57.987657+00:00",
   "scope": {
     "excluded": "실물 로봇 실행, 새 유료 서비스/에셋, 공개 배포",
     "project_root": "C:\\Users\\LIMMM\\factory-ops-twin",
@@ -813,7 +813,7 @@
       "contract_revision": 41,
       "owner": "control",
       "reviewer": "root",
-      "status": "running",
+      "status": "accepted_cpu_native_pending",
       "ACK": true,
       "task_path": "coordination/collab/remaining-route-reservation-041-task.json",
       "result_path": "coordination/collab/results/remaining-route-reservation-041.json",
@@ -821,7 +821,8 @@
         "scripts/ros/g3_mission.py",
         "tests/test_g3_remaining_reservations.py",
         "coordination/collab/results/remaining-route-reservation-041.json"
-      ]
+      ],
+      "acceptance_record": "Root source/test/digest check:2SHA matched,4focused CPU cases once. Active/finished boundary, observed-body transfer intersection, denial retaining predecessor and stable retry covered. Actual013 f065 remains unchanged. Native admission and measured wait improvement pending next run; no speedup claim."
     }
   ],
   "decisions": [

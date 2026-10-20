@@ -1,0 +1,65 @@
+{
+  "task_id": "remaining-route-reservation-041",
+  "attempt": 1,
+  "contract_revision": 41,
+  "ACK": true,
+  "owner": "control",
+  "status": "completed_cpu_verified_pending_root_acceptance",
+  "accepted": false,
+  "completed_at": "2026-10-20T03:27:05.7769209Z",
+  "changed_paths": [
+    "scripts/ros/g3_mission.py",
+    "tests/test_g3_remaining_reservations.py",
+    "coordination/collab/results/remaining-route-reservation-041.json"
+  ],
+  "source_sha256": {
+    "scripts/ros/g3_mission.py": "7b98c8194962bb7e224cdb3d0a34b0882b2770143833aea3c74ccb5209303d9e",
+    "tests/test_g3_remaining_reservations.py": "2a70424ec66fc27aca467492a07eff25b74e8127c0decc70393ff660d8d0717b"
+  },
+  "implementation": [
+    "request_remaining_reservation은 request 단계의 새 chunk 경계에서 현재 anchor부터 같은 leg target까지 RouteBook.plan을 호출합니다. 기존 leg.closed, 예약 반경, tile size, layout bounds로 swept_tiles를 계산합니다.",
+    "기존 terminal 성공 → HOLD ACK → 신선한 zero-odom 정지 → 도착 검증 → mark_goal_finished → anchor 갱신 순서를 유지했습니다. 활성 goal hold의 새 successor 준비도 거절합니다.",
+    "chunk/remaining_plan/pending_tiles/follow_uuid를 새 chunk에서 한 번 생성하여 pending 재시도의 요청 식별자를 유지합니다.",
+    "기존 manager.transfer가 관측 body의 predecessor/successor 교집합, generation, UUID, 소유권 및 peer 충돌을 검사합니다. 거절 시 generation/held_tiles와 predecessor hold를 유지하며, 승인된 경우에만 새 보유 상태로 바꿉니다.",
+    "원래 leg plan/tiles/leg_id를 보존합니다. 승인된 action record의 reservation_tiles는 실제 held_tiles이며 reservation_start와 reservation_plan_id로 남은 경로 출처를 남깁니다. 기존 chunk/goal/lease/path 검증은 유지했습니다."
+  ],
+  "integration": {
+    "function": "scripts/ros/g3_mission.py:560 request_remaining_reservation(book, manager, robot, runtime, *, reservation_radius_m, now_s) -> ReservationDecision",
+    "caller": "scripts/ros/g3_mission.py:1638 기존 request/new-chunk 경계",
+    "accepted_record": "scripts/ros/g3_mission.py:1653 reservation_tiles, reservation_start, reservation_plan_id",
+    "closure": "기존 leg.closed variant를 유지합니다. 실행 중인 leg의 폐쇄 정책을 바꾸거나 미래 폐쇄를 입력하지 않습니다."
+  },
+  "validation": [
+    {
+      "command": "& ./.venv/Scripts/python.exe -m unittest tests.test_g3_remaining_reservations -v",
+      "cwd": "C:/Users/LIMMM/factory-ops-twin",
+      "python": "3.12.13",
+      "runs": 1,
+      "passed": 4,
+      "exit_code": 0,
+      "elapsed_test_seconds": 0.596,
+      "cases": [
+        "완료된 hold의 atomic successor 승인 뒤 지나온 구역을 peer가 예약하며 현재 body는 계속 보유",
+        "following 단계·미완료 accepted goal 거절 및 body 불포함 successor의 manager 거절/이전 hold 유지",
+        "peer 충돌 거절 후 generation/held_tiles/pending sequence/chunk/UUID/타일의 재시도 안정성",
+        "정상·폐쇄·동일 endpoint 경로의 target/yaw/예약 envelope와 원래 leg 식별자 보존"
+      ]
+    },
+    {
+      "command": "git diff --check -- scripts/ros/g3_mission.py",
+      "exit_code": 0,
+      "result": "공백 오류 없음; 읽기 전용 diff 확인"
+    }
+  ],
+  "findings": [],
+  "limits": [
+    "CPU 테스트의 pose/정지/goal 완료 입력은 합성 fixture입니다. 실제 ROS 정지·lease 실행·native 주행 검증을 주장하지 않습니다.",
+    "실제013 immutable 실행·D 원본·설정·프로세스·SDK/GPU/ROS·API/dashboard는 변경하거나 실행하지 않았습니다. 실제 적용 검증은 root 담당입니다.",
+    "요청 범위에 따라 관련 CPU 검사 1회만 수행했고 전체 테스트·타입 검사·추가 리뷰 루프는 수행하지 않았습니다.",
+    "helper는 기존 정지 검증 경계의 상태를 소비합니다. 새로운 정지 판정이나 pose 허용치·시각 보정·ground truth 입력을 추가하지 않았습니다."
+  ],
+  "runtime_changed": false,
+  "gpu_native_ros_executed": false,
+  "git_mutations": false,
+  "new_agents": false
+}

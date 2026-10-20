@@ -35,7 +35,7 @@ from factory_ops.visual_state import canonical_sha256, make_visual_state, projec
 from factory_ops.g3_session import config_dir_from_session, save, sha, verify_session
 from factory_ops.navigation import GoalPose, LocalizationPose, NavigationError, NavigationResult
 from factory_ops.operations import LedgerConfig, Transition
-from factory_ops.route_reservation import RouteReservationManager
+from factory_ops.route_reservation import ReservationDecision, RouteReservationManager
 from scripts.ros.g1_mission import LifecycleStatePoller
 from scripts.ros.action_services import IntrospectedActionClient
 from scripts.ros.g2_mission import (
@@ -555,6 +555,33 @@ def navigation_leg_goal(plan: Any, authored_goals: Mapping[str, GoalPose], *, al
         raise ValueError(f"navigation target has no authored station goal: {target}")
     before, final = plan.points[-2:]
     return GoalPose("map", final[0], final[1], math.atan2(final[1]-before[1], final[0]-before[0]))
+
+
+def request_remaining_reservation(book: RouteBook, manager: RouteReservationManager,
+                                  robot: str, runtime: dict[str, Any], *,
+                                  reservation_radius_m: float, now_s: float) -> ReservationDecision:
+    """Request at the qualified stopped boundary; retain the hold on denial."""
+    if runtime["phase"] != "request":
+        raise RuntimeError("remaining route transfer requires the stopped request boundary")
+    leg = runtime["leg"]
+    if runtime["chunk"] is None:
+        hold = manager.snapshot(now_s=now_s)["holds"].get(robot)
+        if hold is not None and hold["accepted_goal_uuid"] is not None and not hold["parked"]:
+            raise RuntimeError("remaining route transfer cannot replace an active goal")
+        plan = book.plan(runtime["anchor"], leg["target"], closed=leg["closed"])
+        chunk = make_chunk(book, runtime["anchor"], leg["target"],
+                           closed=leg["closed"], final_goal=leg["final_goal"])
+        bounds = book.layout.bounds
+        tiles = swept_tiles(plan.points, reservation_radius_m, tile_size_m=book.tile_size_m,
+                            bounds_xy=(bounds.xmin, bounds.ymin, bounds.xmax, bounds.ymax))
+        runtime["chunk"], runtime["remaining_plan"], runtime["pending_tiles"] = chunk, plan, tiles
+        runtime["follow_uuid"] = leg["intent"].goal_id if chunk.final and leg["intent"] else str(uuid4())
+    decision = manager.transfer(robot, runtime["generation"], runtime["chunk"].route_id,
+                                runtime["follow_uuid"], runtime["pending_tiles"], now_s=now_s)
+    runtime["last_request"] = now_s
+    if decision.granted:
+        runtime["generation"], runtime["held_tiles"] = decision.generation, runtime["pending_tiles"]
+    return decision
 
 
 def observe_charging_odometry(charging: RosChargingRuntime, run_id: str, robot_id: str,
@@ -1608,14 +1635,10 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
                 phase = rt["phase"]
                 if phase == "request" and maps_ready and stamp-rt["last_request"] >= .2:
                     leg = rt["leg"]
-                    if rt["chunk"] is None:
-                        rt["chunk"] = make_chunk(book, rt["anchor"], leg["target"], closed=leg["closed"], final_goal=leg["final_goal"])
-                        rt["follow_uuid"] = leg["intent"].goal_id if rt["chunk"].final and leg["intent"] else str(uuid4())
-                    decision = manager.transfer(robot, rt["generation"], rt["chunk"].route_id, rt["follow_uuid"], leg["tiles"], now_s=stamp)
-                    rt["last_request"] = stamp
+                    decision = request_remaining_reservation(book, manager, robot, rt,
+                        reservation_radius_m=reservation_radius, now_s=stamp)
                     if not decision.granted:
                         continue
-                    rt["generation"], rt["held_tiles"] = decision.generation, leg["tiles"]
                     chunk = rt["chunk"]
                     request = ComputePathToPose.Goal()
                     request.goal = PoseStamped(); request.goal.header.frame_id = "map"; request.goal.header.stamp = event_node.get_clock().now().to_msg()
@@ -1628,7 +1651,8 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
                     rt["path_clock_first_seen_wall"] = None
                     rt["pending_path"] = None
                     rt["record"] = {"robot_id": robot, "chunk": chunk.to_dict(), "leg_id": leg["plan"].route_id,
-                         "leg_target": leg["target"], "leg_kind": leg["kind"], "reservation_tiles": sorted(leg["tiles"]),
+                         "leg_target": leg["target"], "leg_kind": leg["kind"], "reservation_tiles": sorted(rt["held_tiles"]),
+                         "reservation_start": chunk.start, "reservation_plan_id": rt["remaining_plan"].route_id,
                          "generation": rt["generation"], "planner_action_uuid": rt["compute_uuid"], "follow_action_uuid": rt["follow_uuid"],
                          "mission_goal_uuid": leg["intent"].goal_id if leg["intent"] else None, "requested_sim_time_s": stamp}
                     history.append(rt["record"])
