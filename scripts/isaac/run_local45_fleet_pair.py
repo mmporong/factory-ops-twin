@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+from ipaddress import IPv4Address
 import json
 import os
 from pathlib import Path
@@ -32,11 +33,26 @@ def linux(path: Path) -> str:
     return "/mnt/" + path.drive[0].lower() + path.as_posix()[2:]
 
 
-def prepare_ros_transport(stage: Path, domain_id: int) -> tuple[Path, dict[str, str]]:
+def _validate_dds_interfaces(windows: str | None, linux_interface: str | None) -> None:
+    if (windows is None) != (linux_interface is None):
+        raise ValueError("Windows and Linux DDS interfaces must be supplied together")
+    for address in (windows, linux_interface):
+        if address is not None:
+            if not isinstance(address, str):
+                raise ValueError("DDS interface must be a numeric IPv4 address string")
+            IPv4Address(address)
+
+
+def prepare_ros_transport(stage: Path, domain_id: int, *, interface: str | None = None,
+                          platform: str = "windows") -> tuple[Path, dict[str, str]]:
     """Create the run-owned UDP participant profile before ROS processes start."""
     if isinstance(domain_id, bool) or not isinstance(domain_id, int) or not 0 <= domain_id <= 232:
         raise ValueError("bundle ROS domain must be an integer in0..232")
-    profile = stage / "fastdds-udp.xml"
+    if interface is not None:
+        if platform not in {"windows", "linux"} or not isinstance(interface, str):
+            raise ValueError("DDS whitelist requires a platform and numeric IPv4 address string")
+        interface = str(IPv4Address(interface))
+    profile = stage / ("fastdds-udp.xml" if interface is None else f"fastdds-udp-{platform}.xml")
     text = '''<?xml version="1.0" encoding="UTF-8"?>
 <profiles xmlns="http://www.eprosima.com/XMLSchemas/fastRTPS_Profiles">
   <transport_descriptors>
@@ -50,6 +66,9 @@ def prepare_ros_transport(stage: Path, domain_id: int) -> tuple[Path, dict[str, 
   </participant>
 </profiles>
 '''
+    if interface is not None:
+        text = text.replace("<type>UDPv4</type>", "<type>UDPv4</type>"
+            f"<interfaceWhiteList><address>{interface}</address></interfaceWhiteList>")
     with profile.open("x", encoding="utf-8", newline="\n") as stream:
         stream.write(text)
     return profile, {"ROS_DOMAIN_ID": str(domain_id), "RMW_IMPLEMENTATION": "rmw_fastrtps_cpp",
@@ -149,13 +168,15 @@ def monitor_pair(worker, owner: WslProcessSupervisor, *, started: float, bound: 
 
 
 def run(stage: Path, sdk: Path, bound: int, *, charge_robot: str | None = None, charge_resume_soc: float = .8,
-        lidar_backend: str = "rtx_flat_scan", physics_cadence: str = "owned_step6") -> int:
+        lidar_backend: str = "rtx_flat_scan", physics_cadence: str = "owned_step6",
+        windows_dds_interface: str | None = None, linux_dds_interface: str | None = None) -> int:
     if os.name != "nt" or not 60 <= bound <= 7200:
         raise ValueError("local development requires Windows and an explicit 60..7200s bound")
     if lidar_backend not in {"rtx_flat_scan", "physx_planar"}:
         raise ValueError("unsupported local45 lidar backend")
     if physics_cadence not in {"app_update", "owned_step6"}:
         raise ValueError("unsupported local45 physics cadence")
+    _validate_dds_interfaces(windows_dds_interface, linux_dds_interface)
     stage, sdk = stage.resolve(strict=True), sdk.resolve(strict=True)
     if charge_robot is not None and charge_robot not in {"carter1", "carter2", "carter3", "carter4"}:
         raise ValueError("charge robot must belong to the four-AMR development fleet")
@@ -187,12 +208,21 @@ def run(stage: Path, sdk: Path, bound: int, *, charge_robot: str | None = None, 
         attestation = json.loads((stage / "build-attestation.json").read_text(encoding="utf-8"))
         installed = linux(Path(attestation["actual_install_directory"]))
         config = json.loads((stage / "inputs/config.json").read_text(encoding="utf-8"))
-        transport, ros_environment = prepare_ros_transport(stage, config["ros_domain_id"])
-        linux_environment = {**ros_environment, "FASTRTPS_DEFAULT_PROFILES_FILE": linux(transport),
-                             "FASTDDS_DEFAULT_PROFILES_FILE": linux(transport)}
+        transport, ros_environment = prepare_ros_transport(stage, config["ros_domain_id"],
+            interface=windows_dds_interface, platform="windows")
+        linux_transport = transport
+        if linux_dds_interface is not None:
+            linux_transport, _ = prepare_ros_transport(stage, config["ros_domain_id"],
+                interface=linux_dds_interface, platform="linux")
+        linux_environment = {**ros_environment, "FASTRTPS_DEFAULT_PROFILES_FILE": linux(linux_transport),
+                             "FASTDDS_DEFAULT_PROFILES_FILE": linux(linux_transport)}
         report["ros_transport"] = {"profile": str(transport), "sha256": sha(transport),
             "windows_environment": ros_environment, "linux_environment": linux_environment,
             "scope": "configured run-local UDP profile; not packet-capture transport proof"}
+        if windows_dds_interface is not None:
+            report["ros_transport"]["interface_whitelist"] = {
+                "windows": {"address": windows_dds_interface, "profile": str(transport), "sha256": sha(transport)},
+                "linux": {"address": linux_dds_interface, "profile": str(linux_transport), "sha256": sha(linux_transport)}}
         save(receipt_path, report)
         charging_args = (["--virtual-charging", "--charge-robot", charge_robot,
                           "--charge-resume-soc", str(charge_resume_soc)] if charge_robot else [])
@@ -220,6 +250,7 @@ def run(stage: Path, sdk: Path, bound: int, *, charge_robot: str | None = None, 
         expected[str(metadata)] = sha(metadata)
         expected[str(marker)] = sha(marker)
         expected[str(transport)] = sha(transport)
+        expected[str(linux_transport)] = sha(linux_transport)
         entry = source / "scripts/isaac/local45_fleet4_transport_scene.py"
         launcher = sdk / "python.bat"
         for path in (entry, launcher, output, stage):
@@ -267,7 +298,10 @@ if __name__ == "__main__":
     parser.add_argument("--charge-resume-soc", type=float, default=.8)
     parser.add_argument("--lidar-backend", choices=("rtx_flat_scan", "physx_planar"), default="rtx_flat_scan")
     parser.add_argument("--physics-cadence", choices=("app_update", "owned_step6"), default="owned_step6")
+    parser.add_argument("--windows-dds-interface")
+    parser.add_argument("--linux-dds-interface")
     options = parser.parse_args()
     raise SystemExit(run(options.stage, options.sdk, options.wall_bound_s,
         charge_robot=options.charge_robot, charge_resume_soc=options.charge_resume_soc,
-        lidar_backend=options.lidar_backend, physics_cadence=options.physics_cadence))
+        lidar_backend=options.lidar_backend, physics_cadence=options.physics_cadence,
+        windows_dds_interface=options.windows_dds_interface, linux_dds_interface=options.linux_dds_interface))

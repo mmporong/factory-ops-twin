@@ -559,6 +559,10 @@ SDK mission-failed는 ROS FollowPath 실패의 후속이다. 양쪽 실행은 �
 
 072의 명시적 physics-cadence 인자는 동일 센서·시계·executor·허가 조건에서 기존 app_update와 owned_step6를 비교하기 위한 경로다. 기본값은 유지한다. 관련 CPU6개·구문4파일을 한 번 확인했다.031은app_update로 명령 수신과 첫 실제 주행부터 확인해 앱 이벤트 갱신 의존성을 좁힌다. 시각·물리·시작점 허용 기준을 바꾸지 않는다.
 
+031은 동일 PhysX·시계·전용 executor에서 app_update로 진행했지만 명령 수신0·거절0·graph 발행자4와 FollowPath105가 재현됐다. 실행 중 사전·사후 host running을 확인한 독립 WSL 구독기는4초 동안 carter1 명령39건·최신 선속도0.4m/s를 받았다. 해당 graph에는 SDK cmd 구독기가 없었으나 graph 목록은 실제 DDS match를 입증하지 않는다. 종료 후 원본 bag은 carter1 명령2687건 중2686건·carter2 명령1753건이0이 아니었다. 재개·콜백 소유 경계 외의 데이터 전달 원인은 여전히 미확정이다. 종료 후149파일239,030,127바이트를 D·E에 보존했다. [031 근거](evidence/local45-transport-031.json)에 유효한 live 관측과 한계를 남겼다.
+
+073은 프로젝트별 UDP 프로필의 interfaceWhiteList에 Windows와 WSL의 해당 로컬 IPv4를 각각 지정하는 선택지를 추가했다. 한쪽 주소만 주거나 숫자 IPv4가 아니면 파일·프로세스를 만들기 전에 거절한다. 두 XML의 경로·해시와 양쪽 환경을 실행 근거에 결속하며 기본 설정은 유지한다. [Fast DDS2.6 공식 문서](https://fast-dds.docs.eprosima.com/en/2.6.x/fastdds/transport/whitelist.html)로 문법을 확인했고 관련 CPU3개·구문2파일을 한 번 확인했다.032의 실제 프로필 적재와 명령 수신은 미확인이다. OS 방화벽·보안 정책은 변경하지 않았다.
+
 ## 실행 전 확인과 후속 기록
 
 1. 깨끗한 생산자 소스·host commit·설정·실행 ID를 결속한다. 실패한 실행 ID와 원본을 다시 사용하지 않는다.

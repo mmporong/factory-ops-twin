@@ -1,6 +1,6 @@
 {
-  "revision": 72,
-  "updated_at": "2026-10-20T13:35:17.365933+00:00",
+  "revision": 73,
+  "updated_at": "2026-10-20T13:50:33.071649+00:00",
   "scope": {
     "excluded": "실물 로봇 실행, 새 유료 서비스/에셋, 공개 배포",
     "project_root": "C:\\Users\\LIMMM\\factory-ops-twin",
@@ -1339,6 +1339,22 @@
         "coordination/collab/results/local45-cadence-ab-072.json"
       ],
       "acceptance_record": "Root one bounded4file diff read/4SHA matched: enumthreaded hostCLI->SDKentry->G2->stepper, defaultpreserved, app_update reportsnoonestepguarantee, RTX/canonicalrouteunchanged. Author6CPU/4coldSDKAST once. Actual031 baseline next."
+    },
+    {
+      "task_id": "local45-dds-interfaces-073",
+      "attempt": 1,
+      "contract_revision": 73,
+      "owner": "control",
+      "status": "accepted",
+      "ACK": true,
+      "task_path": "coordination/collab/local45-dds-interfaces-073-task.json",
+      "result_path": "coordination/collab/results/local45-dds-interfaces-073.json",
+      "write_paths": [
+        "scripts/isaac/run_local45_fleet_pair.py",
+        "tests/test_local45_dds_interfaces.py",
+        "coordination/collab/results/local45-dds-interfaces-073.json"
+      ],
+      "acceptance_record": "Root one boundedpairdiff/newtest read/2SHA matched: pairedIPv4beforemutation, separateOSXML/env/metadata andbothprofileinputhashes; defaultcompat; author3CPU .108s/2coldAST once/oneofficialFastDDS2.6syntaxlookup. Actual032 loading/delivery pending."
     }
   ],
   "decisions": [

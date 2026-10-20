@@ -1,0 +1,46 @@
+{
+  "task_id": "local45-dds-interfaces-073",
+  "attempt": 1,
+  "contract_revision": 73,
+  "ack": true,
+  "status": "implemented_pending_root_review_and_actual032",
+  "self_accepted": false,
+  "source_sha256": {
+    "scripts/isaac/run_local45_fleet_pair.py": "853d836e4088a7cf7c73a71ddc1d313e40d0fa294b41bff9e96673bf9177e295",
+    "tests/test_local45_dds_interfaces.py": "3bcb27144f9d87f48170f3992626f6037acce9c5be4c18acc384856f35b58ee5"
+  },
+  "official_evidence": {
+    "url": "https://fast-dds.docs.eprosima.com/en/2.6.x/fastdds/transport/whitelist.html",
+    "document_version": "Fast DDS 2.6.12",
+    "lookups": 1,
+    "supported_syntax": "transport_descriptor/interfaceWhiteList/address containing the local interface IPv4 address; documented for UDP and TCP transports",
+    "limits": "This documents XML syntax only. The installed binary version, actual NIC availability and actual participant/profile loading were not tested here."
+  },
+  "implementation": [
+    "Optional run/CLI parameters windows_dds_interface and linux_dds_interface must be supplied together as IPv4 strings. Validation uses stdlib IPv4Address before any stage reads, file writes or process ownership setup.",
+    "With the pair, author fastdds-udp-windows.xml and fastdds-udp-linux.xml, each containing only its platform address in the UDP interfaceWhiteList. The SDK receives the Windows profile path; WSL receives the /mnt drive path for the Linux profile, via both existing Fast DDS environment variable names.",
+    "pair-host.json retains the previous ros_transport fields and adds interface_whitelist windows/linux address/profile/SHA records only when enabled. Both XML files and hashes are included in SDK job-spec expected_inputs.",
+    "With neither address, preserve the original fastdds-udp.xml content, environment and report schema. Existing UDP-only/useBuiltinTransports=false behavior, domain/QoS and physics/executor arguments remain unchanged. No runtime addresses are hardcoded."
+  ],
+  "root_usage": "Append --windows-dds-interface <current-Windows-IPv4> --linux-dds-interface <current-Linux-IPv4> to the existing pair invocation. Omit both to retain the unscoped baseline. Root supplies verified current addresses.",
+  "validation": [
+    {
+      "command": "& './.venv/Scripts/python.exe' -B -m unittest tests.test_local45_dds_interfaces -v",
+      "runs": 1,
+      "exit_code": 0,
+      "result": "3 PASS in 0.108s",
+      "scope": "Default profile/environment and overwrite refusal; independent XML addresses, actual run wiring with mocked external calls, platform paths and both report/input hashes; seven malformed or partial pairs rejected before files/processes. No actual SDK/WSL process was launched."
+    },
+    {
+      "command": "PowerShell here-string using ast.parse and hashlib.sha256 on the two source_sha256 paths | & 'E:/IsaacSim/isaac-sim-4.5.0/kit/python/python.exe' -B -S -",
+      "runs": 1,
+      "python": "3.10.15",
+      "exit_code": 0,
+      "result": "2 AST PASS; hashes above; no SDK imports"
+    }
+  ],
+  "limits": [
+    "031 app_update retained the receive failure; the cause remains unknown. Graph publisher counts do not establish compatible DDS matches or command delivery. This option is one controlled interface-selection experiment, not a confirmed repair.",
+    "No OS/firewall/security edits, network changes, installations, dependencies, GPU/SDK/ROS/WSL/bag/Git/server operations or new agents. Only the three allowed paths were written. Root owns source acceptance, preserved runtime inputs and actual032 first-command validation."
+  ]
+}

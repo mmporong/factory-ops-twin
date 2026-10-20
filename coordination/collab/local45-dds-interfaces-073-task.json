@@ -1,0 +1,21 @@
+{
+  "task_id": "local45-dds-interfaces-073",
+  "attempt": 1,
+  "contract_revision": 73,
+  "owner": "control",
+  "reviewer": "root",
+  "write_paths": [
+    "scripts/isaac/run_local45_fleet_pair.py",
+    "tests/test_local45_dds_interfaces.py",
+    "coordination/collab/results/local45-dds-interfaces-073.json"
+  ],
+  "facts": "031 app_update baseline SAMEcmdmiss/FollowPath105 closedbothOS. SDKreceived0/rejected0/graph4 despitecorrecttopics and stableexecutors; notisolatedtoreducedrender. During031running(beforeANDafter), independentWSLsubscriber received39nonzeroC1Twist in4wallsecs (.4m/s); graphSDKcmdsubscriber notlisted (graphincomplete nottrueDDSmatchproof). Hostinterfaces read2026-10-20: Windows vEthernet(WSL Hyper-Vfirewall)192.168.96.1/20, Linuxeth0 192.168.98.11/20 gateway192.168.96.1. ExistingUDPcustomtransportbindsallinterfaces, noWHITELIST. Rootwillpreserve031; noSDKactive.",
+  "goal": "One narrowly scoped reversibleDDSinterface test: optional paired --windows-dds-interface IPv4 / --linux-dds-interface IPv4; generate platform-specificUDPprofiles with eProsima interfaceWhiteList. Keepdefaultunscoped profile/behavior untouched. NoOS/firewall/security edits, installs, dependencies, newagents/SDK/GPU/ROS/WSL/Git. Root will032sameowned_step6 app withcurrentverifiedinterfaces, nothardcodeIPs inproduct.",
+  "acceptance": [
+    "ACK073attempt1. First confirm exactXMLinterfaceWhiteList syntax from primaryofficialFastDDS2.6.x docs or installedofficialsource (one focusedofficiallookup; no broadnetworkresearch). RecordURL/version/limitsinreceipt; do notinferrootcausenow. ExistingFastDDSprofile code isbaseline.",
+    "Add optionalpaired hostrun/CLI params. ValidateIPv4 andboth-or-neither beforefiles/processes; defaultreturnsold prepare_ros_transport profile/env asbefore. Withinterfaces, author separateWindows/Linux profilefiles, eachonlyitsownaddressunder UDPtransport interfaceWhiteList; correctenvpath for SDKWindows vs WSLLinux; noempty/builtinsharedmemorytransport changes. Domain/QoS/leases/timing/physics/modelunchanged.",
+    "Bind bothXMLfiles andtheirhashes inhostreport andSDKexpected_inputs; defaultpathschema remainscompatible. Do notweakenboundaries orchange ROSapplication files. Useipaddressstdlib safeXMLvalidatednumericvalues no arbitraryXML. CLIactualIPs suppliedatroot runtime, noUserIPshardcoded. PreservedefaultSDKrenderer/executor/mode args.",
+    "One smallnewCPUmodule fordefaultcompatibility/twoindependentXMLaddressvalues/correctmetadataorpaths/partialpair andinvalidenumIP rejection beforewrite. ColdAST2files once. No old/fullsuite or extra reviewchain. Rootone boundedsource/hash review thenoneactual032 firstcommandgate.",
+    "Finishminimumcode+onepass+ASCIIreceipt. Ifofficialsyntaxunsupportedreportblocker ratherthanprivateAPI ornewinfrastructure. Sourcecodeonly atlistedfiles; do not mutate frozenDinputs orrunningstate."
+  ]
+}

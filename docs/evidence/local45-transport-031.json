@@ -1,0 +1,328 @@
+{
+  "schema_version": 1,
+  "run_id": "5f2ad23ece104b27bf0729f1d6b4405f",
+  "producer_source_commit": "1c8b7eae4301f4b67c2808189ed35b4c2d0edfb6",
+  "status": "app_update_baseline_same_command_delivery_failure",
+  "primary_ros_error": {
+    "message": "FollowPath failed: robot=carter1 goal=5002d23e-a941-4572-8fe3-a52c1d12395d status=6 error_code=105; full action retained in mission-result.json actions",
+    "traceback": "Traceback (most recent call last):\n  File \"/mnt/d/FactoryOpsRuntime/local45-transport-031/source/scripts/ros/g3_mission.py\", line 1871, in run_mission\n    raise RuntimeError(\nRuntimeError: FollowPath failed: robot=carter1 goal=5002d23e-a941-4572-8fe3-a52c1d12395d status=6 error_code=105; full action retained in mission-result.json actions\n",
+    "type": "RuntimeError"
+  },
+  "secondary_sdk_error": {
+    "message": "G2 mission controller ended with failed",
+    "traceback": "Traceback (most recent call last):\n  File \"D:\\FactoryOpsRuntime\\local45-transport-031\\source\\scripts\\isaac\\g2_scene.py\", line 1595, in _run\n    raise base.SmokeError(terminal_error)\nscripts.isaac.stage_smoke.SmokeError: G2 mission controller ended with failed\n",
+    "type": "SmokeError"
+  },
+  "physics_cadence_original": {
+    "explicit_rgb_capture": "separate paused render with frozen physics validation",
+    "mode": "app_update",
+    "native_sensor_timestamp_available": false,
+    "physics": "app.update() per control iteration; no native one-step guarantee",
+    "post_capture_render_only_flush": false,
+    "requested_mode": "app_update",
+    "run_id": "5f2ad23ece104b27bf0729f1d6b4405f",
+    "scan_publication": "after each app.update() through the existing publication path",
+    "scheduled_render_every_physics_steps": null,
+    "start_physics_frame": 123,
+    "start_world_time_s": 2.0500001069158316,
+    "startup_physics": "app.update() for warmup and sensor/start gates in both modes"
+  },
+  "scope_capture_fix": "App_update comparison uses legacy pausedcapture/play path; no owned-step one-frame proof claimed.",
+  "last_observed_sim_s": 36.88333525694907,
+  "sdk_command_observations": {
+    "carter1": {
+      "last_sim_time_s": 36.88333525694907,
+      "last_frame": 2213,
+      "maximum_received_command_sequence": 0,
+      "last_received_command_time_s": null,
+      "nonzero_wheel_target_samples": 0
+    },
+    "carter2": {
+      "last_sim_time_s": 36.88333525694907,
+      "last_frame": 2213,
+      "maximum_received_command_sequence": 0,
+      "last_received_command_time_s": null,
+      "nonzero_wheel_target_samples": 0
+    },
+    "carter3": {
+      "last_sim_time_s": 36.88333525694907,
+      "last_frame": 2213,
+      "maximum_received_command_sequence": 0,
+      "last_received_command_time_s": null,
+      "nonzero_wheel_target_samples": 0
+    },
+    "carter4": {
+      "last_sim_time_s": 36.88333525694907,
+      "last_frame": 2213,
+      "maximum_received_command_sequence": 0,
+      "last_received_command_time_s": null,
+      "nonzero_wheel_target_samples": 0
+    }
+  },
+  "closed_bag_command_summary": {
+    "run_id": "5f2ad23ece104b27bf0729f1d6b4405f",
+    "source_commit": "1c8b7eae4301f4b67c2808189ed35b4c2d0edfb6",
+    "scope": "Read-only SQL and Jazzy official Twist deserialization only after bothOSclosed; bag transport reception is not SDK receipt proof.",
+    "topics": {
+      "/carter4/cmd_vel": {
+        "messages": 0,
+        "nonzero_messages": 0,
+        "first_nonzero": null,
+        "last_nonzero": null,
+        "max_abs_linear_m_s": null,
+        "max_abs_angular_rad_s": null
+      },
+      "/carter3/cmd_vel": {
+        "messages": 0,
+        "nonzero_messages": 0,
+        "first_nonzero": null,
+        "last_nonzero": null,
+        "max_abs_linear_m_s": null,
+        "max_abs_angular_rad_s": null
+      },
+      "/carter1/cmd_vel": {
+        "messages": 2687,
+        "nonzero_messages": 2686,
+        "first_nonzero": [
+          6850000357,
+          0.4,
+          2.116757859853894e-06
+        ],
+        "last_nonzero": [
+          36833335254,
+          0.4,
+          9.713162503732367e-06
+        ],
+        "max_abs_linear_m_s": 0.4,
+        "max_abs_angular_rad_s": 2.5880456586173552e-05
+      },
+      "/carter2/cmd_vel": {
+        "messages": 1753,
+        "nonzero_messages": 1753,
+        "first_nonzero": [
+          16833334211,
+          0.4,
+          -2.7991976465654614e-06
+        ],
+        "last_nonzero": [
+          36850001922,
+          0.4,
+          -5.281235014325374e-06
+        ],
+        "max_abs_linear_m_s": 0.4,
+        "max_abs_angular_rad_s": 2.519745494476551e-05
+      }
+    }
+  },
+  "command_receipt_original": {
+    "executor_mode": "dedicated_single_threaded_executor_per_node",
+    "physics_frame": 2164,
+    "robots": {
+      "carter1": {
+        "cmd_rejected": 0,
+        "cmd_vel": 0,
+        "command_sequence": 0,
+        "command_sim_time_s": null,
+        "diagnostic_errors": [
+          {
+            "field": "matched_publisher_count",
+            "message": "installed Subscription.get_publisher_count unavailable; DDS match unknown",
+            "type": "AttributeError"
+          }
+        ],
+        "graph_publisher_count": 4,
+        "last_command_rejection": null,
+        "matched_publisher_count": null,
+        "resolved_cmd_topic": "/carter1/cmd_vel"
+      },
+      "carter2": {
+        "cmd_rejected": 0,
+        "cmd_vel": 0,
+        "command_sequence": 0,
+        "command_sim_time_s": null,
+        "diagnostic_errors": [
+          {
+            "field": "matched_publisher_count",
+            "message": "installed Subscription.get_publisher_count unavailable; DDS match unknown",
+            "type": "AttributeError"
+          }
+        ],
+        "graph_publisher_count": 4,
+        "last_command_rejection": null,
+        "matched_publisher_count": null,
+        "resolved_cmd_topic": "/carter2/cmd_vel"
+      },
+      "carter3": {
+        "cmd_rejected": 0,
+        "cmd_vel": 0,
+        "command_sequence": 0,
+        "command_sim_time_s": null,
+        "diagnostic_errors": [
+          {
+            "field": "matched_publisher_count",
+            "message": "installed Subscription.get_publisher_count unavailable; DDS match unknown",
+            "type": "AttributeError"
+          }
+        ],
+        "graph_publisher_count": 4,
+        "last_command_rejection": null,
+        "matched_publisher_count": null,
+        "resolved_cmd_topic": "/carter3/cmd_vel"
+      },
+      "carter4": {
+        "cmd_rejected": 0,
+        "cmd_vel": 0,
+        "command_sequence": 0,
+        "command_sim_time_s": null,
+        "diagnostic_errors": [
+          {
+            "field": "matched_publisher_count",
+            "message": "installed Subscription.get_publisher_count unavailable; DDS match unknown",
+            "type": "AttributeError"
+          }
+        ],
+        "graph_publisher_count": 4,
+        "last_command_rejection": null,
+        "matched_publisher_count": null,
+        "resolved_cmd_topic": "/carter4/cmd_vel"
+      }
+    },
+    "run_id": "5f2ad23ece104b27bf0729f1d6b4405f",
+    "scope": "existing callback counters and readbacks only; graph publisher count is not DDS match; unknown counts are null, not zero",
+    "sim_time_s": 36.066668547689915
+  },
+  "bag_sql_opened_only_after_both_OS_closed": true,
+  "cause_limit": "Dedicated executors were active; SDKcmdaccepted0/rejected0 andgraphpublishers4 withcorrectresolvedtopics. WSLreceived nonzeroTwist. Stableexecutorownership alone is not sufficient; data-delivery cause remainsunknown. InstalledtrueDDSmatch APIunsupportednull; graphcount notmatchproof.",
+  "live_audit_original": {
+    "carter1": {
+      "received": 39,
+      "latest": {
+        "linear": 0.4,
+        "angular": 2.093311042705014e-05
+      },
+      "publishers": [
+        {
+          "node": "behavior_server",
+          "namespace": "/carter1",
+          "type": "geometry_msgs/msg/Twist",
+          "reliability": "1",
+          "durability": "2"
+        },
+        {
+          "node": "behavior_server",
+          "namespace": "/carter1",
+          "type": "geometry_msgs/msg/Twist",
+          "reliability": "1",
+          "durability": "2"
+        },
+        {
+          "node": "behavior_server",
+          "namespace": "/carter1",
+          "type": "geometry_msgs/msg/Twist",
+          "reliability": "1",
+          "durability": "2"
+        },
+        {
+          "node": "controller_server",
+          "namespace": "/carter1",
+          "type": "geometry_msgs/msg/Twist",
+          "reliability": "1",
+          "durability": "2"
+        }
+      ],
+      "subscribers": [
+        {
+          "node": "factory_readonly_cmd_audit_031",
+          "namespace": "/",
+          "type": "geometry_msgs/msg/Twist",
+          "reliability": "1",
+          "durability": "2"
+        },
+        {
+          "node": "rosbag2_recorder",
+          "namespace": "/",
+          "type": "geometry_msgs/msg/Twist",
+          "reliability": "1",
+          "durability": "2"
+        }
+      ]
+    },
+    "carter2": {
+      "received": 0,
+      "latest": null,
+      "publishers": [
+        {
+          "node": "controller_server",
+          "namespace": "/carter2",
+          "type": "geometry_msgs/msg/Twist",
+          "reliability": "1",
+          "durability": "2"
+        },
+        {
+          "node": "behavior_server",
+          "namespace": "/carter2",
+          "type": "geometry_msgs/msg/Twist",
+          "reliability": "1",
+          "durability": "2"
+        },
+        {
+          "node": "behavior_server",
+          "namespace": "/carter2",
+          "type": "geometry_msgs/msg/Twist",
+          "reliability": "1",
+          "durability": "2"
+        },
+        {
+          "node": "behavior_server",
+          "namespace": "/carter2",
+          "type": "geometry_msgs/msg/Twist",
+          "reliability": "1",
+          "durability": "2"
+        }
+      ],
+      "subscribers": [
+        {
+          "node": "factory_readonly_cmd_audit_031",
+          "namespace": "/",
+          "type": "geometry_msgs/msg/Twist",
+          "reliability": "1",
+          "durability": "2"
+        },
+        {
+          "node": "rosbag2_recorder",
+          "namespace": "/",
+          "type": "geometry_msgs/msg/Twist",
+          "reliability": "1",
+          "durability": "2"
+        }
+      ]
+    }
+  },
+  "live_audit_console_host_status": {
+    "before": "running",
+    "after": "running"
+  },
+  "live_audit_limit": "Same bounded invocation asserted/printed runningbefore/after. Saved originalcontains topics only, no per-message timestamps or atomicSDKsample. WSLobserver received39nonzeroC1messages; noSDKbridge subscriberlisted initsgraph, nottrueDDSmatchproof.",
+  "sdk_ParticipantEntitiesInfo_CDR_errors": "Present; also observed in a prior working prefix, so not assigned as causal proof.",
+  "material_revision": 0,
+  "inventory_conservation": [
+    {
+      "balanced": true,
+      "consumed": 0,
+      "in_totes": 0,
+      "initial": 60,
+      "on_hand": 60,
+      "replenished": 0,
+      "sku": "sensor-kit"
+    }
+  ],
+  "completed_orders": 0,
+  "empty_returns_completed": 0,
+  "goal80_complete": false,
+  "windows_closed": true,
+  "linux_closed": true,
+  "cleanup_errors": [],
+  "new_video_or_SDG_generated": false,
+  "original_database_sha256": "59a49d3572eca84084c0f023fd1e7a3bfbe17a3f940b7c7b0401dc046d59fa54",
+  "next": "073 scopedWindows/Linux DDSinterfaces withseparateprofiles, one032firstcommandtest; causeunknown, noOSsecuritychanges."
+}
