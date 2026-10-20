@@ -99,6 +99,11 @@ def validate_snapshot(value: Any) -> dict[str, Any]:
         if (not isinstance(charging, dict) or not isinstance(charging.get("scope"), str)
                 or not isinstance(charging.get("docks"), list) or not isinstance(charging.get("queue"), list)):
             raise ValueError("charging projection requires scope, docks and queue")
+        if "queue_available" in charging and type(charging["queue_available"]) is not bool:
+            raise ValueError("charging queue availability must be explicit boolean")
+        if charging.get("queue_available") is False and (charging["queue"]
+                or not isinstance(charging.get("queue_source"), str) or not charging["queue_source"]):
+            raise ValueError("unavailable charging queue requires empty data and its source limitation")
         docks, owners, anchors = set(), set(), set()
         for dock in charging["docks"]:
             if (not isinstance(dock, dict) or any(not isinstance(dock.get(key), str) or not dock[key]
@@ -166,15 +171,100 @@ def validate_snapshot(value: Any) -> dict[str, Any]:
     return value
 
 
+def _join_ros_charging(primary: Any, companion: Any) -> dict[str, Any]:
+    """Project reservation telemetry only; primary observation values stay intact."""
+    if not isinstance(primary, dict) or not isinstance(companion, dict):
+        raise ValueError("primary and charging sources must be JSON objects")
+    run = primary.get("run_id")
+    if not isinstance(run, str) or not run or companion.get("run_id") != run:
+        raise ValueError("charging source belongs to another run")
+    if not isinstance(primary.get("robots"), list) or any(not isinstance(row, dict)
+            or not isinstance(row.get("id"), str) or not row["id"] for row in primary["robots"]):
+        raise ValueError("primary charging fleet identities are invalid")
+    fleet = {row["id"]: row for row in primary["robots"]}
+    rows, docks, owners = (companion.get(key) for key in ("robots", "docks", "owners"))
+    if (len(fleet) != len(primary["robots"]) or not isinstance(rows, dict) or set(rows) != set(fleet)
+            or not isinstance(docks, dict) or not docks or not isinstance(owners, dict)):
+        raise ValueError("charging source must cover exactly the primary fleet and named docks")
+    contact_source = "estimated_pose_geometric_dock"
+    if (companion.get("contact_source") != contact_source or companion.get("virtual") is not True
+            or any(companion.get(key) is not False for key in ("hardware_calibrated",
+                "physical_contact_verified", "physical_electrical_charging_verified"))):
+        raise ValueError("charging source must declare virtual, uncalibrated and physically unverified provenance")
+    if (any(not isinstance(dock, str) or not dock or dock not in docks
+            or not isinstance(robot, str) or robot not in fleet for dock, robot in owners.items())
+            or len(set(owners.values())) != len(owners)):
+        raise ValueError("charging owners must be distinct declared robots at declared docks")
+    for dock_id, dock in docks.items():
+        if (not isinstance(dock_id, str) or not dock_id or not isinstance(dock, dict)
+                or not isinstance(dock.get("anchor"), str) or not dock["anchor"]
+                or any(not _finite(dock.get(key)) for key in ("x_m", "y_m", "yaw_rad"))):
+            raise ValueError("charging docks require authored anchor and finite map geometry")
+    phases = {"approach", "contact_pending", "charging", "undock_pending", "ready_to_leave", "fault"}
+    for robot, primary_row in fleet.items():
+        row = rows[robot]
+        if (not isinstance(row, dict) or row.get("run_id") != run or row.get("robot_id") != robot
+                or "charging" not in row or not isinstance(row.get("energy"), dict)
+                or row["energy"].get("run_id") != run or row["energy"].get("robot_id") != robot):
+            raise ValueError("charging robot/energy identity differs from the primary run and fleet")
+        charging = row["charging"]
+        if charging is None:
+            if robot in owners.values() or primary_row.get("charging_dock") is not None or primary_row.get("charging_phase") is not None:
+                raise ValueError("primary robot has charging ownership absent from its companion")
+            continue
+        if not isinstance(charging, dict):
+            raise ValueError("robot charging state must be an object or null")
+        dock_id = charging.get("dock_id")
+        if (not isinstance(dock_id, str) or dock_id not in docks or owners.get(dock_id) != robot
+                or charging.get("anchor") != docks[dock_id]["anchor"]
+                or charging.get("phase") not in phases
+                or primary_row.get("charging_dock") != dock_id
+                or primary_row.get("charging_phase") != charging["phase"]):
+            raise ValueError("primary and companion charging dock/owner/phase disagree")
+        if (charging.get("contact_source") != contact_source or charging.get("virtual") is not True
+                or charging.get("hardware_calibrated") is not False or charging.get("physical_contact_verified") is not False
+                or type(charging.get("geometric_dock_confirmed")) is not bool
+                or not isinstance(charging.get("virtual_connector_state"), str)
+                or not _finite(charging.get("last_stamp_s"), nullable=True, nonnegative=True)):
+            raise ValueError("robot charging provenance or observation stamp is invalid")
+    json.dumps(companion, allow_nan=False)
+    result = deepcopy(primary)
+    projected = []
+    for dock_id, dock in docks.items():
+        owner = owners.get(dock_id)
+        state = rows[owner]["charging"] if owner is not None else None
+        projected.append({"id": dock_id, "anchor": dock["anchor"], "owner": owner,
+            "phase": state["phase"] if state is not None else "unreserved",
+            **({key: state[key] for key in ("virtual_connector_state", "geometric_dock_confirmed", "last_stamp_s")}
+               if state is not None else {})})
+    scope = "ROS observed virtual geometric charging; physical contact/electrical charging unverified"
+    result["charging"] = {"scope": scope, "docks": projected, "queue": [],
+        "queue_available": False, "queue_source": "unavailable_in_ros_charging_state",
+        "contact_source": contact_source, "virtual": True, "hardware_calibrated": False,
+        "physical_contact_verified": False, "physical_electrical_charging_verified": False,
+        "body_occupancy_owner": companion.get("body_occupancy_owner"),
+        "producer": {"kind": "RosChargingRuntime.snapshot", "run_id": run}}
+    model_scope = result.get("model_scope", "")
+    if not isinstance(model_scope, str):
+        raise ValueError("primary model_scope must be text")
+    result["model_scope"] = (model_scope.replace("charging unconnected", scope)
+        if "charging unconnected" in model_scope else model_scope + "; " + scope)
+    result["capabilities"] = []
+    return result
+
+
 class DashboardService:
     def __init__(self, config: Path, *, source: Path | None = None, outbox: Path | None = None,
-                 charging_profile: dict[str, Any] | None = None) -> None:
+                 charging_profile: dict[str, Any] | None = None, charging_source: Path | None = None) -> None:
         if source is not None and charging_profile is not None:
             raise ValueError("CPU charging profile cannot modify a live/replay source")
+        if charging_source is not None and (source is None or outbox is not None or charging_profile is not None):
+            raise ValueError("charging_source requires a read-only primary source without command outbox or CPU charging profile")
         self.lock = threading.RLock()
         self.scene = json.loads((config / "layout.json").read_text(encoding="utf-8"))
         self.scene["layout_revision"] = self.scene["revision"]
         self.source, self.outbox = source, outbox
+        self.charging_source = charging_source
         self.model = DashboardModel(config, charging_profile=charging_profile) if source is None else None
         self._last: dict[str, Any] | None = None
         self._receipts: dict[str, dict[str, Any]] = {}
@@ -204,7 +294,11 @@ class DashboardService:
             else:
                 try:
                     assert self.source is not None
-                    result = validate_snapshot(json.loads(self.source.read_text(encoding="utf-8")))
+                    result = json.loads(self.source.read_text(encoding="utf-8"))
+                    if self.charging_source is not None:
+                        companion = json.loads(self.charging_source.read_text(encoding="utf-8"))
+                        result = _join_ros_charging(result, companion)
+                    result = validate_snapshot(result)
                     if result["mode"] == "local_model":
                         raise ValueError("external source must identify live or replay mode")
                     if self._last and result["run_id"] == self._last["run_id"]:
@@ -237,6 +331,9 @@ class DashboardService:
                 result["integrations"] = {"mock_mes": self.mock_mes.snapshot()}
             result["api_producer"] = {"scope": "selected API/model source bytes at service start",
                                       "selected_modules_sha256": dict(self.producer_sources)}
+            if self.charging_source is not None:
+                result["api_producer"]["input_sources"] = {"primary": str(self.source),
+                    "charging": str(self.charging_source), "projection": "same-run read-only ROS virtual charging"}
             return result
 
     def command(self, value: Any) -> dict[str, Any]:
@@ -337,16 +434,21 @@ def main() -> None:
     parser.add_argument("--config", type=Path, default=Path("configs/factory-v4"))
     parser.add_argument("--port", type=int, default=8765)
     parser.add_argument("--source", type=Path, help="atomically published live/replay JSON; never rosbag SQLite")
+    parser.add_argument("--charging-source", type=Path,
+                        help="optional same-run ROS virtual charger JSON; requires read-only --source")
     parser.add_argument("--commands-dir", type=Path, help="simulator command outbox; absent means read-only")
     parser.add_argument("--web-charging-profile", type=Path,
                         help="optional authored CPU energy/geometric docking model; never applied to live/replay")
     args = parser.parse_args()
     if args.source is not None and args.web_charging_profile is not None:
         parser.error("--web-charging-profile is available only in the local CPU model")
+    if args.charging_source is not None and (args.source is None or args.commands_dir is not None
+                                            or args.web_charging_profile is not None):
+        parser.error("--charging-source requires --source and excludes --commands-dir/--web-charging-profile")
     charging_profile = (json.loads(args.web_charging_profile.read_text(encoding="utf-8"))
                         if args.web_charging_profile is not None else None)
     service = DashboardService(args.config, source=args.source, outbox=args.commands_dir,
-                               charging_profile=charging_profile)
+                               charging_profile=charging_profile, charging_source=args.charging_source)
     server = make_server(service, args.port)
     stopping = threading.Event()
 

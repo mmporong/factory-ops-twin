@@ -1,0 +1,79 @@
+{
+  "task_id": "ros-charging-web-projection-040",
+  "attempt": 1,
+  "contract_revision": 40,
+  "ACK": true,
+  "owner": "control",
+  "status": "completed_cpu_verified_pending_root_review",
+  "accepted": false,
+  "completed_at": "2026-10-20T02:53:18.4622125Z",
+  "changed_paths": [
+    "factory_ops/dashboard.py",
+    "tests/test_dashboard_ros_charging.py",
+    "dashboard/lib/types.ts",
+    "dashboard/components/ChargingPanel.tsx",
+    "coordination/collab/results/ros-charging-web-projection-040.json"
+  ],
+  "source_sha256": {
+    "factory_ops/dashboard.py": "2c78a0ae395084df894807184eb7fadbd4542a989c5686ba871bc23dab57791e",
+    "tests/test_dashboard_ros_charging.py": "c7cd8c1f0a1ff71bca5a9f846f937d51cc51fdb90c2bf7861105bfabdadf92e6",
+    "dashboard/lib/types.ts": "effe4c1f7f42f54f3bfe3ca8ae1dc5dfa48046fd27d1a45ac786b50fc09c21f5",
+    "dashboard/components/ChargingPanel.tsx": "3263ebdb21f3a949de84fdee0cdc40a2a5fde249635d7e4341094d1dc05e9b34"
+  },
+  "implementation": [
+    "charging_source 명시 선택 시 same-run/fleet/dock/owner/phase를 결합한 뒤 기존 validate_snapshot을 사용합니다.",
+    "주 primary의 pose, SOC/source, 관측 시각, 센서 수, 재고·작업을 보존하며 companion의 이전 energy 값으로 덮어쓰지 않습니다.",
+    "잘못되거나 아직 서로 맞지 않는 입력은 기존 disconnected/last-good 경로를 사용하고, 정상 입력 복구 시 connected로 돌아갑니다. 기존 freshness 판정도 유지합니다.",
+    "대기열 미제공은 queue=[], queue_available=false, queue_source=unavailable_in_ros_charging_state이며 화면에는 대기열 알 수 없음을 표시합니다. CPU 대기열 표시 기본값은 유지합니다.",
+    "ROS 가상 기하 충전·uncalibrated·접촉 및 전기 충전 미검증의 원천을 명시하고, 선택 결합 경로에서만 charging unconnected 문구를 갱신합니다.",
+    "결합 경로의 capabilities는 빈 목록이며 outbox/CPU profile을 함께 설정할 수 없습니다. 원천 경로와 API 시작 시 모듈 SHA를 제공합니다."
+  ],
+  "root_integration_api": {
+    "constructor": "DashboardService(config_path, source=primary_path, charging_source=companion_path)",
+    "cli": "--source D:/FactoryOpsRuntime/local45-transport-013/results/run/dashboard-state.json --charging-source D:/FactoryOpsRuntime/local45-transport-013/results/run/charging-state.json",
+    "constraints": "기존 config/port를 root가 선택합니다. --commands-dir 및 --web-charging-profile은 함께 사용할 수 없습니다.",
+    "executed": false
+  },
+  "validation": [
+    {
+      "command": "& ./.venv/Scripts/python.exe -m unittest tests.test_dashboard_ros_charging -v",
+      "cwd": "C:/Users/LIMMM/factory-ops-twin",
+      "python": "3.12.13",
+      "runs": 1,
+      "exit_code": 0,
+      "passed": 4,
+      "elapsed_test_seconds": 5.632,
+      "result": "PASS: 실제 형태의 결합·원천 보존·읽기 전용, 잘못된 companion/마지막 정상 상태/복구, 선택 생성자·CPU 기본 보호, 대기열 미관측 규약"
+    },
+    {
+      "command": "npm run typecheck -- --incremental false",
+      "cwd": "C:/Users/LIMMM/factory-ops-twin/dashboard",
+      "runs": 1,
+      "exit_code": 0,
+      "result": "PASS; noEmit, incremental=false"
+    },
+    {
+      "command": "git diff --check -- factory_ops/dashboard.py dashboard/lib/types.ts dashboard/components/ChargingPanel.tsx",
+      "exit_code": 0,
+      "result": "공백 오류 없음; Git 상태 변경 없음"
+    }
+  ],
+  "findings": [],
+  "limits": [
+    "검사는 임시 JSON fixture 및 TypeScript 정적 검사입니다. HTTP 서버·브라우저·현재013 API 전환은 실행하지 않았으며 root 검수 대상입니다.",
+    "companion은 상태 변경 시 기록되는 예약 관측입니다. 별도 queue/history나 새 충전 시뮬레이션을 생성하지 않습니다.",
+    "두 JSON의 순차 갱신 사이 dock/phase 불일치는 일시 disconnected/last-good가 될 수 있습니다. 마지막 정상 관측이 오래되면 기존 stale 표시가 적용됩니다.",
+    "비예약 슬롯은 예약 없음으로 표시하며 실제 물리적 점유 가능 여부를 판정하지 않습니다. 가상 SOC/기하 도킹은 실제 접촉·전기 충전 성공 증거가 아닙니다.",
+    "광역 테스트·빌드·별도 리뷰 루프는 수행하지 않았습니다."
+  ],
+  "raw_runtime_files_changed": false,
+  "servers_started_or_stopped": false,
+  "sdk_gpu_ros_actions": false,
+  "git_mutations": false,
+  "new_agents": false,
+  "preserved_unowned_changes": [
+    "coordination/collab/board.json",
+    "dashboard/next-env.d.ts",
+    "dashboard/evidence/*"
+  ]
+}

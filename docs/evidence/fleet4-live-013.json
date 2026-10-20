@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "run_id": "2f3bd7f3302a4dae9a8f232e3438a302",
+  "simulation_source_commit": "f06597c51d7e6acf841455c39dbbe0f028749a97",
+  "scope": "live in-progress navigation ledger and virtual geometric charging; not completed mission",
+  "api_mode": "live",
+  "web_mode": "live",
+  "robot_ids": [
+    "carter1",
+    "carter2",
+    "carter3",
+    "carter4"
+  ],
+  "selected_browser_robot": "carter2",
+  "browser_observed_fields": [
+    "F4-PAY-002",
+    "estimated route",
+    "encoder speed",
+    "virtual SOC",
+    "stock58",
+    "CH1 carter1"
+  ],
+  "image": "docs/images/fleet4-live-013/dashboard-live-running.jpg",
+  "image_sha256": "a118940b2e65b2ea42b825945f39fc6cd54ac10f4b7bc10e236e8232b277bab4",
+  "image_file_time_utc": "2026-10-20T02:56:40.788809+00:00",
+  "adjacent_snapshot_sha256": "13a138f1b63168fc7e46368cf1bd8fbf8e79d9af740f87a21182c4bda0eada96",
+  "snapshot_alignment": "same run, adjacent observation; not an atomic screenshot/state frame",
+  "api_producer": {
+    "scope": "selected API/model source bytes at service start",
+    "selected_modules_sha256": {
+      "factory_ops/dashboard.py": "2c78a0ae395084df894807184eb7fadbd4542a989c5686ba871bc23dab57791e",
+      "factory_ops/dashboard_model.py": "0a8eb5045b414ad39ddd619d8753d52067a06fc9db4e6989495bfdea56b74097",
+      "factory_ops/mock_mes.py": "dcfd587b137875bc3a3029e8328c4fb3cf8220660b507792184fc66a9dfde7d2",
+      "factory_ops/dashboard_charging.py": "d04c4357d755cfcf834e890978e67a98bba5e57dc8d125a0ade16e7f4e694446",
+      "factory_ops/operations/ledger.py": "e1c1e90772ff8f6a75828cb077a3b7edc9b121d1955fada29929a495773e1ce3",
+      "factory_ops/operations/inventory.py": "1114b23fcdb3520de0b12f2e246680e5a0fbdcb945ac2ed9b3de0a2f9a5972f4",
+      "factory_ops/operations/model.py": "17b90c1436b78f436d88b325adb27d1531440b63ef0cf169aece1d6070bfb38e",
+      "factory_ops/compat.py": "8a0465fb8b82d7e19c84c7a52ca1dddcf6e1a020a88172b3f660ee34c9fff5f2"
+    },
+    "input_sources": {
+      "primary": "D:\\FactoryOpsRuntime\\local45-transport-013\\results\\run\\dashboard-state.json",
+      "charging": "D:\\FactoryOpsRuntime\\local45-transport-013\\results\\run\\charging-state.json",
+      "projection": "same-run read-only ROS virtual charging"
+    }
+  },
+  "companion_queue_available": false,
+  "commands_enabled": false,
+  "physical_contact_verified": false,
+  "physical_electrical_charging_verified": false,
+  "mission_complete_claim": false,
+  "bag_sql_opened": false,
+  "validation": "control4 focused CPU cases and one TypeScript check; root source/hash review; actual APIs and browser selection checked once"
+}

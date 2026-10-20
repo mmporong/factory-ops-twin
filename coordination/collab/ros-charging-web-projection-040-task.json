@@ -1,0 +1,22 @@
+{
+  "task_id": "ros-charging-web-projection-040",
+  "attempt": 1,
+  "contract_revision": 40,
+  "owner": "control",
+  "goal": "Join actual same-run ROS virtual charger reservation telemetry into the read-only dashboard API; current physical run continues immutable",
+  "write_paths": ["factory_ops/dashboard.py", "tests/test_dashboard_ros_charging.py", "dashboard/lib/types.ts", "dashboard/components/ChargingPanel.tsx", "coordination/collab/results/ros-charging-web-projection-040.json"],
+  "read_paths": ["factory_ops/ros_charging.py", "scripts/ros/g3_mission.py", "factory_ops/dashboard_charging.py", "D:/FactoryOpsRuntime/local45-transport-013/results/run/dashboard-state.json", "D:/FactoryOpsRuntime/local45-transport-013/results/run/charging-state.json"],
+  "context": "Actual013 f06597c has8native ROS scans, camera capture, real FollowPath accepted; carter1 actual cmd0.4m/s at13sim. Web primary includes charging_phase/dock but no charging dock projection, so validate_snapshot rejects ownership. Existing CPU API8765 remains intact; root has not stopped it. Do not edit immutable D runtime or raw files.",
+  "api": "DashboardService optional keyword-only charging_source:Path|None=None; CLI --charging-source; requires existing --source and excludes CPU charging profile. Defaults unchanged. Read primary and companion, join then existing validate_snapshot.",
+  "acceptance": [
+    "Use actual charging-state run_id/docks/owners/robot phases. Require same primary run, declared fleet identities and consistent owners; malformed or mismatched companion follows existing disconnected/last-good semantics",
+    "Construct charging scope/docks/queue schema: dock id/anchor/phase/owner from actual reservation telemetry. Preserve all primary robot poses, sensor counts, battery_pct/source and native observation stamps. No generated state or charge simulation in API",
+    "Queue is NOT exposed by current ROS state: queue=[] with queue_available=false and an explicit unavailable source; frontend displays queue unknown instead of claiming zero. CPU model queue display stays unchanged",
+    "Keep physical contact/electrical charging unverified and virtual/uncalibrated provenance explicit. Correct stale primary model_scope charging-unconnected wording only in the explicit joined projection",
+    "Read-only source retains no command outbox and no CPU capabilities. Include useful small API producer/source provenance; no hidden inference or clock shifts",
+    "Focused tests once under Python3.12: real-shaped join validates, wrong run/owner rejected, primary data preserved and CPU/constructor defaults protected. One affected TypeScript check if available, no broad test/build loop"
+  ],
+  "non_goals": ["No G3/runtime/source pin edits, raw bag reads, native/GPU/ROS launches, servers, Git, new dependencies, agents or panes", "No edits to dashboard/next-env.d.ts or existing unowned images"],
+  "notes": "ACK040/attempt1. Not alone in shared tree; root owns every other path and actual process supervision. Do not revert edits or expand scope. Return result with exact changed paths/SHA/tests/limits; root reviews once and starts actual API.",
+  "result_path": "coordination/collab/results/ros-charging-web-projection-040.json"
+}

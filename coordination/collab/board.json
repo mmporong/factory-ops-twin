@@ -1,6 +1,6 @@
 {
-  "revision": 39,
-  "updated_at": "2026-10-20T02:29:16.877514+00:00",
+  "revision": 40,
+  "updated_at": "2026-10-20T02:58:17.160525+00:00",
   "scope": {
     "excluded": "실물 로봇 실행, 새 유료 서비스/에셋, 공개 배포",
     "project_root": "C:\\Users\\LIMMM\\factory-ops-twin",
@@ -787,6 +787,25 @@
         "coordination/collab/results/native-scan-integration-review-039.json"
       ],
       "acceptance_record": "All4 frozenSHA matched; control read one bounded source pass, blocking0, no extra executions. Root011 real sensor continuity and transport remain pending."
+    },
+    {
+      "task_id": "ros-charging-web-projection-040",
+      "attempt": 1,
+      "contract_revision": 40,
+      "owner": "control",
+      "reviewer": "root",
+      "status": "accepted",
+      "ACK": true,
+      "task_path": "coordination/collab/ros-charging-web-projection-040-task.json",
+      "result_path": "coordination/collab/results/ros-charging-web-projection-040.json",
+      "write_paths": [
+        "factory_ops/dashboard.py",
+        "tests/test_dashboard_ros_charging.py",
+        "dashboard/lib/types.ts",
+        "dashboard/components/ChargingPanel.tsx",
+        "coordination/collab/results/ros-charging-web-projection-040.json"
+      ],
+      "acceptance_record": "Root reviewed explicit same-run reservation join, owner/phase mismatch and last-good behavior; all4 sourceSHA matched.4 focused CPU and TypeScript once. Actual source, APIs8765/3007 same run/live4robots and browser carter2 payload/speed/route, stock58, CH1 charging confirmed. Read-only; full mission not complete."
     }
   ],
   "decisions": [

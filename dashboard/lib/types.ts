@@ -89,6 +89,13 @@ export type Snapshot = {
     scope: string;
     docks: { id: string; anchor: string; owner: string | null; phase: string }[];
     queue: string[];
+    queue_available?: boolean;
+    queue_source?: string;
+    contact_source?: string;
+    virtual?: boolean;
+    hardware_calibrated?: boolean;
+    physical_contact_verified?: boolean;
+    physical_electrical_charging_verified?: boolean;
   };
 };
 export type Scene = {
@@ -161,6 +168,7 @@ export const statusNames: Record<string, string> = {
   started: "진행 중",
   charge: "충전",
   charging: "충전 중",
+  unreserved: "예약 없음",
   queued: "충전 대기",
   approach: "충전대 접근",
   aligning: "도킹 정렬",
