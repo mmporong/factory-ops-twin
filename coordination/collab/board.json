@@ -1,6 +1,6 @@
 {
-  "revision": 73,
-  "updated_at": "2026-10-20T13:50:33.071649+00:00",
+  "revision": 75,
+  "updated_at": "2026-10-20T15:06:03.829988+00:00",
   "scope": {
     "excluded": "실물 로봇 실행, 새 유료 서비스/에셋, 공개 배포",
     "project_root": "C:\\Users\\LIMMM\\factory-ops-twin",
@@ -1355,6 +1355,40 @@
         "coordination/collab/results/local45-dds-interfaces-073.json"
       ],
       "acceptance_record": "Root one boundedpairdiff/newtest read/2SHA matched: pairedIPv4beforemutation, separateOSXML/env/metadata andbothprofileinputhashes; defaultcompat; author3CPU .108s/2coldAST once/oneofficialFastDDS2.6syntaxlookup. Actual032 loading/delivery pending."
+    },
+    {
+      "task_id": "ros-dashboard-waits-074",
+      "attempt": 1,
+      "contract_revision": 74,
+      "owner": "control",
+      "reviewer": "root",
+      "write_paths": [
+        "scripts/ros/g3_mission.py",
+        "tests/test_g3_dashboard_wait_reason.py",
+        "coordination/collab/results/ros-dashboard-waits-074.json"
+      ],
+      "result_path": "C:\\Users\\LIMMM\\factory-ops-twin\\coordination\\collab\\results\\ros-dashboard-waits-074.json",
+      "status": "accepted_cpu_runtime_pending",
+      "ACK": true,
+      "task_path": "coordination/collab/ros-dashboard-waits-074-task.json",
+      "acceptance_record": "Root one bounded g3diff/newtestsource pass+2SHA match. Actual denieddecision/originalstamp andsameleg/segment binding only; no manager/control changes. Author6CPU .725s +2SDK310AST once; runtime033 pending."
+    },
+    {
+      "task_id": "business-station-hold-075",
+      "attempt": 1,
+      "contract_revision": 75,
+      "owner": "control",
+      "reviewer": "root",
+      "write_paths": [
+        "scripts/ros/g3_mission.py",
+        "tests/test_g3_business_station_hold.py",
+        "coordination/collab/results/business-station-hold-075.json"
+      ],
+      "result_path": "C:\\Users\\LIMMM\\factory-ops-twin\\coordination\\collab\\results\\business-station-hold-075.json",
+      "status": "accepted_cpu_runtime_pending",
+      "ACK": true,
+      "task_path": "coordination/collab/business-station-hold-075-task.json",
+      "acceptance_record": "Root one bounded helper/caller/newtest source pass+2SHA match. Existing actualstop/arrival/finishedgoal gates; dev4material finalbusiness-only stationbody shrink viaexistingAPI, failurepreserves oldtiles/generation; canonical2/parking/cutoff/control unchanged. Author6CPU4.023s+2coldSDK310AST once; finite28/36tile reciprocalcase. Actual033pending."
     }
   ],
   "decisions": [

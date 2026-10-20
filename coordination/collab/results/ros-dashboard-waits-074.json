@@ -1,0 +1,44 @@
+{
+  "task_id": "ros-dashboard-waits-074",
+  "attempt": 1,
+  "contract_revision": 74,
+  "ack": true,
+  "status": "implemented_cpu_only_pending_root_review",
+  "self_accepted": false,
+  "input_sha256_verified": {
+    "scripts/ros/g3_mission.py": "1e4746dee722da9e6e47e9361cd207ed6d35c96403d04e1bb846ec26eb786a87",
+    "factory_ops/route_reservation.py": "10a22c7cff44648e8daae65e01b0773d8ec7984f689612ce1195c594daa3b86e",
+    "factory_ops/dashboard.py": "990bfafe21a279a5a6b29a71cf385608881451cd9000290a042468fe7ba0220c"
+  },
+  "source_sha256": {
+    "scripts/ros/g3_mission.py": "c575380eb185a5424bf1fa109d4952406f97e4f32fab6ea83f945af8560c60cc",
+    "tests/test_g3_dashboard_wait_reason.py": "9ca8caded2b36698481e249eddce01ff2cc300bf425397c94710fa70d20c3f38"
+  },
+  "implementation": [
+    "Capture only the result of the existing request_remaining_reservation transfer, with its original now_s, exact leg/chunk identities, full-leg route_id, anchor and follow UUID. Denied decision route_id may identify the retained hold, so request binding uses existing runtime data. No extra manager or observer calls.",
+    "Clear the display cache on grant, new leg and transition to the next stopped segment. The read-only helper requires request phase, matching request identity, denied hold decision for this robot and original timestamp within existing pose_ttl_s. Stale/future/malformed/missing or mismatched data uses the neutral Korean route-permission-wait label.",
+    "Only known peer blockers in occupied-tile decisions receive a Korean corridor-occupancy-wait label and actual peer names. Older conflicting requests receive a separate factual prior-request-wait label. No inferred blockers or deadlock assertion; other phases have concise factual Korean labels.",
+    "Project solely through existing waiting_reason. Display freshness uses absolute ROS simulation time, not mission elapsed time. Reservation, assignment, navigation and actuation behavior are unchanged."
+  ],
+  "validation": [
+    {
+      "command": "& './.venv/Scripts/python.exe' -B -m unittest tests.test_g3_dashboard_wait_reason -v",
+      "runs": 1,
+      "exit_code": 0,
+      "result": "6 PASS in 0.725s",
+      "coverage": "Denial/original timestamp/no extra manager reads; grant reset; new leg/route/segment/anchor/goal isolation; stale/future/invalid timestamp; non-request phases and invalid decisions/blockers; existing validate_snapshot and read-only DashboardService preserve the generated Korean waiting_reason. No HTTP server or ROS process."
+    },
+    {
+      "command": "PowerShell here-string using ast.parse and hashlib.sha256 on the two source_sha256 paths | & 'E:/IsaacSim/isaac-sim-4.5.0/kit/python/python.exe' -B -S -",
+      "runs": 1,
+      "python": "3.10.15",
+      "exit_code": 0,
+      "result": "2 AST PASS; hashes above; no SDK imports"
+    }
+  ],
+  "limits": [
+    "New projection is CPU-only until a later runtime. Actual032 remains on its frozen older source and was not changed or inspected.",
+    "No UI/API schema changes, GT input, transport/IPC fallback, clock/TTL/lease/watchdog/deadline/start-gate/route-selection changes, new topics or loop-cadence changes.",
+    "Only the three assigned paths were written. No SDK/GPU/ROS/WSL/browser/process lifecycle/bag/Git/board operations, dependencies or new agents. Root owns bounded review and integration; no further review chain."
+  ]
+}

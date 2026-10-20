@@ -1,0 +1,43 @@
+{
+  "task_id": "ros-dashboard-waits-074",
+  "attempt": 1,
+  "contract_revision": 74,
+  "owner": "control",
+  "reviewer": "root",
+  "project_root": "C:\\Users\\LIMMM\\factory-ops-twin",
+  "binding": {
+    "session": "default",
+    "pane_id": "w1:p1C",
+    "terminal_id": "term_65e06d27e415810",
+    "agent_session": "01a152aa-24b4-7a31-92e3-a2b620f4feeb"
+  },
+  "source_commit": "b907ceec2b5716cc2e0118e7b151247ebce24385",
+  "input_sha256": {
+    "scripts/ros/g3_mission.py": "1e4746dee722da9e6e47e9361cd207ed6d35c96403d04e1bb846ec26eb786a87",
+    "factory_ops/route_reservation.py": "10a22c7cff44648e8daae65e01b0773d8ec7984f689612ce1195c594daa3b86e",
+    "factory_ops/dashboard.py": "990bfafe21a279a5a6b29a71cf385608881451cd9000290a042468fe7ba0220c"
+  },
+  "goal": "Show actual route reservation wait reason and blocking robot names through existing waiting_reason in read-only ROS dashboard projection. Keep all control/dispatch semantics unchanged.",
+  "non_goals": [
+    "No IPC/DDS changes: actual032 now receives commands for allfour; no transport fallback",
+    "No GPU/WSL/browser/process starts or stops",
+    "No writes to immutable D:/FactoryOpsRuntime/local45-transport-032",
+    "No new dependencies, UI/API schema expansion, broad refactor, new reviewers or agents, Git or board writes"
+  ],
+  "write_paths": [
+    "scripts/ros/g3_mission.py",
+    "tests/test_g3_dashboard_wait_reason.py",
+    "coordination/collab/results/ros-dashboard-waits-074.json"
+  ],
+  "result_path": "C:\\Users\\LIMMM\\factory-ops-twin\\coordination\\collab\\results\\ros-dashboard-waits-074.json",
+  "acceptance": [
+    "Capture only an existing denied request_remaining_reservation decision, its original ROS stamp and current leg/route+segment binding; no new reservation manager calls or observers. Clear on grant/new leg; stale/wrong-leg/wrong-segment/non-request metadata must not leak.",
+    "Project a concise Korean waiting_reason with genuine known blockers (e.g. 통로 점유 대기: carter4). Unknown/not present/stale data falls back to neutral 경로 허가 대기, no invented blocker or deadlock assertion. Other phases get readable factual Korean labels if needed; scope small.",
+    "Use existing pose_ttl_s / original sim time for display freshness only. No changed clock, lease, watchdog, permission, occupancy, deadline, path start gate, route selection, task assignment, actuation, topics or loop cadence.",
+    "Existing waiting_reason field only; current dashboard service should accept generated string without API/frontend edits. Pure read-only projection, no GT input.",
+    "One focused CPU unittest pass covering denial, grant/reset, new leg/segment, stale/future data, non-request status and actual DashboardService/validate_snapshot compatibility as practical. One cold SDK3.10 AST for changed Python. Do not repeat full suites/old probes.",
+    "Return task/attempt/revision ACK, exact changed-file SHAs, command+exit evidence and limitations. Actual032 is frozen older source; label new projection CPU-only until a later runtime, do not claim it is already in live032."
+  ],
+  "status": "dispatched",
+  "instructions": "You are not alone in this codebase. Do not revert other edits. Root owns live032 observation, preservation, docs, Git and final integration. Work only listed paths. If expansion is needed report it. Root will make one bounded source review; no separate review chain. Keep implementation small and move to code after focused lookup."
+}

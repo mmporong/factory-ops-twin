@@ -675,6 +675,9 @@ def request_remaining_reservation(book: RouteBook, manager: RouteReservationMana
     decision = manager.transfer(robot, runtime["generation"], runtime["chunk"].route_id,
                                 runtime["follow_uuid"], runtime["pending_tiles"], now_s=now_s)
     runtime["last_request"] = now_s
+    runtime["dashboard_reservation_wait"] = None if decision.granted else {
+        "decision": decision, "stamp_s": now_s, "leg": leg, "route_id": leg["plan"].route_id,
+        "chunk": runtime["chunk"], "anchor": runtime["anchor"], "follow_uuid": runtime["follow_uuid"]}
     if decision.granted:
         runtime["generation"], runtime["held_tiles"] = decision.generation, runtime["pending_tiles"]
     return decision
@@ -716,6 +719,39 @@ def mission_energy_assignment(energy: EnergyRuntime | None, book: Any, settings:
         charger_anchors=settings["charger_anchors"])
 
 
+def dashboard_wait_reason(runtime: Mapping[str, Any], robot_id: str, known_robots: Sequence[str], *,
+                          now_s: float, pose_ttl_s: float) -> str | None:
+    """Display only the existing denied request, bound to its original leg and segment."""
+    phase = runtime.get("phase", "unknown")
+    if phase in ("idle", "following"):
+        return None
+    if phase != "request":
+        return {"compute_sent": "경로 계획 요청 응답 대기", "computing": "경로 계산 대기",
+            "follow_sent": "주행 요청 응답 대기", "stopping": "정지 확인 대기", "dwell": "작업 처리 대기",
+            "charging": "가상 충전 상태 확인", "cutoff_stopping": "종료 정지 확인 대기",
+            "cutoff_stationary": "종료 정지 상태 유지"}.get(phase, "상태 확인 대기")
+    neutral = "경로 허가 대기"
+    wait, leg, chunk = runtime.get("dashboard_reservation_wait"), runtime.get("leg"), runtime.get("chunk")
+    if not isinstance(wait, Mapping) or not isinstance(leg, Mapping) or chunk is None:
+        return neutral
+    stamp = wait.get("stamp_s")
+    if (any(type(value) not in (int, float) or not math.isfinite(value) for value in (stamp, now_s, pose_ttl_s))
+            or not 0 <= now_s-stamp <= pose_ttl_s
+            or wait.get("leg") is not leg or wait.get("chunk") is not chunk
+            or wait.get("route_id") != getattr(leg.get("plan"), "route_id", None)
+            or wait.get("anchor") != runtime.get("anchor")
+            or wait.get("follow_uuid") != runtime.get("follow_uuid")):
+        return neutral
+    decision = wait.get("decision")
+    if (not isinstance(decision, ReservationDecision) or decision.granted is not False
+            or decision.command != "hold" or decision.robot_id != robot_id or not decision.blockers
+            or any(peer not in known_robots or peer == robot_id for peer in decision.blockers)):
+        return neutral
+    label = {"route_tiles_occupied": "통로 점유 대기", "successor_tiles_occupied": "통로 점유 대기",
+             "older_conflicting_request": "선행 경로 요청 대기"}.get(decision.reason)
+    return f"{label}: {', '.join(sorted(set(decision.blockers)))}" if label else neutral
+
+
 def dashboard_state(snapshot: Mapping[str, Any], robots: Mapping[str, Any], *,
                     sim_time_s: float, absolute_sim_time_s: float, pose_ttl_s: float,
                     material: Mapping[str, Any] | None = None, energy: EnergyRuntime | None = None) -> dict[str, Any]:
@@ -742,7 +778,8 @@ def dashboard_state(snapshot: Mapping[str, Any], robots: Mapping[str, Any], *,
             "charging_phase": runtime.get("charger_state", {}).get("phase"),
             "charging_dock": runtime.get("charger_state", {}).get("dock_id"),
             "payload_id": logical.get("payload_id"), "destination": leg.get("target") if leg else runtime.get("charging_anchor"),
-            "waiting_reason": phase if phase not in ("idle", "following") else None,
+            "waiting_reason": dashboard_wait_reason(runtime, key, tuple(snapshot["robots"]),
+                now_s=absolute_sim_time_s, pose_ttl_s=pose_ttl_s),
             "route": [{"x_m": x, "y_m": y} for x, y in plan.points] if plan else [],
             "observed_sim_time_s": pose["stamp_s"] if pose else None,
             "pose_source": "estimated map->base_link TF", "scan_counts": runtime.get("scan_counts", {}),
@@ -943,6 +980,40 @@ def committed_stopped_odometry_record(
         return None
     return {"stopped_sim_time_s": event_now, "stopped_odometry": samples,
             "stop_measurement_start_stamp_s": samples[0]["stamp_s"]}
+
+
+def finish_stopped_goal(manager: RouteReservationManager, robot: str, runtime: dict[str, Any], *,
+                        local_now_s: float, now_s: float, xy_limit: float, yaw_limit: float,
+                        station_tiles: frozenset[tuple[int, int]] | None = None) -> dict[str, Any] | None:
+    """Keep the existing stop/arrival/finish gates; optionally retain a final business station body."""
+    if station_tiles is not None:
+        if (runtime["phase"] != "stopping" or not runtime["chunk"].final
+                or runtime["leg"]["kind"] != "business"
+                or runtime["record"].get("status") != 4 or runtime["record"].get("error_code") != 0):
+            raise RuntimeError("business station shrink requires a successful final business stop")
+        if not runtime["record"].get("hold_ack"):
+            return None
+    stopped = (committed_stopped_odometry_record(runtime["stop_receiver"],
+        local_now_s=local_now_s, event_now_s=now_s) if runtime["stop_after"] is not None else None)
+    if stopped is None:
+        return None
+    validate_arrival(runtime["pose"], runtime["chunk"].goal_pose, xy_limit=xy_limit, yaw_limit=yaw_limit)
+    finished = manager.mark_goal_finished(robot, runtime["generation"], runtime["follow_uuid"], now_s=now_s)
+    if not finished.granted:
+        raise RuntimeError("finished goal reservation binding differs")
+    if station_tiles is not None:
+        predecessor = runtime["generation"]
+        shrunk = manager.shrink_hold(robot, predecessor, station_tiles, now_s=now_s, stopped=True)
+        if not shrunk.granted:
+            raise RuntimeError(f"business station hold shrink failed: {shrunk.reason}")
+        runtime["generation"], runtime["held_tiles"] = shrunk.generation, station_tiles
+        stopped["business_station_hold_shrink"] = {"robot_id": robot, "anchor": runtime["chunk"].goal,
+            "finished_goal_uuid": runtime["follow_uuid"], "predecessor_generation": predecessor,
+            "successor_generation": shrunk.generation, "retained_tiles": sorted(station_tiles),
+            "stopped_record_link": {"leg_id": runtime["record"]["leg_id"],
+                "follow_action_uuid": runtime["follow_uuid"], "stopped_sim_time_s": stopped["stopped_sim_time_s"],
+                "stop_measurement_start_stamp_s": stopped["stop_measurement_start_stamp_s"]}}
+    return stopped
 
 
 def cutoff_phase_classification(phase: str) -> str:
@@ -1664,6 +1735,7 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
             full_tiles = swept_tiles(plan.points, reservation_radius, tile_size_m=book.tile_size_m, bounds_xy=bounds)
             rt["leg"] = {"plan": plan, "target": target, "intent": intent, "closed": current_closed, "index": 0,
                          "tiles": full_tiles, "kind": "business" if intent else "clearing", "final_goal": final_goal}
+            rt["dashboard_reservation_wait"] = None
             rt["phase"] = "request"
             rt["chunk"] = None
             rt["last_request"] = -math.inf
@@ -1899,17 +1971,18 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
                                 rt["record"]["hold_ack"] = ack
                     if stamp-rt["stop_wait_started"] > 30:
                         raise TimeoutError("post-terminal hold acknowledgment / fresh odometry stop failed")
-                    stopped = (committed_stopped_odometry_record(
-                        rt["stop_receiver"], local_now_s=stop_now, event_now_s=stamp,
-                    ) if rt["stop_after"] is not None else None)
+                    station_tiles = (tiles_at(book.nodes[rt["chunk"].goal], reservation_radius)
+                        if development and material is not None and len(robot_ids) == 4 and cutoff is None
+                        and rt["chunk"].final and rt["leg"]["kind"] == "business" else None)
+                    stopped = finish_stopped_goal(manager, robot, rt, local_now_s=stop_now, now_s=stamp,
+                        xy_limit=runtime_config["station_xy_tolerance_m"],
+                        yaw_limit=runtime_config["station_yaw_tolerance_rad"], station_tiles=station_tiles)
                     if stopped is not None:
-                        pose = rt["pose"]; target = rt["chunk"].goal_pose
-                        validate_arrival(pose, target, xy_limit=runtime_config["station_xy_tolerance_m"], yaw_limit=runtime_config["station_yaw_tolerance_rad"])
-                        finished = manager.mark_goal_finished(robot, rt["generation"], rt["follow_uuid"], now_s=stamp)
-                        if not finished.granted:
-                            raise RuntimeError("finished goal reservation binding differs")
+                        pose = rt["pose"]
                         rt["record"].update(stopped)
                         rt["record"]["arrival_pose"] = dict(pose)
+                        if station_tiles is not None:
+                            journal("business_station_hold_shrunk", stopped["business_station_hold_shrink"])
                         reset_stop_observation(rt)
                         rt["anchor"] = rt["chunk"].goal
                         if cutoff is not None:
@@ -1928,6 +2001,7 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
                             rt["phase"] = "cutoff_stationary"
                         elif not rt["chunk"].final:
                             rt["chunk"] = None; rt["phase"] = "request"; rt["last_request"] = -math.inf
+                            rt["dashboard_reservation_wait"] = None
                         elif rt["leg"]["kind"] == "clearing":
                             held = tiles_at(book.nodes[rt["anchor"]], reservation_radius)
                             shrunk = manager.shrink_hold(robot, rt["generation"], held, now_s=stamp, stopped=True)

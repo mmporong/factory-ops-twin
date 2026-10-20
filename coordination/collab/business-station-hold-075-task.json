@@ -1,0 +1,57 @@
+{
+  "task_id": "business-station-hold-075",
+  "attempt": 1,
+  "contract_revision": 75,
+  "owner": "control",
+  "reviewer": "root",
+  "project_root": "C:\\Users\\LIMMM\\factory-ops-twin",
+  "binding": {
+    "session": "default",
+    "pane_id": "w1:p1C",
+    "terminal_id": "term_65e06d27e415810",
+    "agent_session": "01a152aa-24b4-7a31-92e3-a2b620f4feeb"
+  },
+  "input_sha256": {
+    "scripts/ros/g3_mission.py": "c575380eb185a5424bf1fa109d4952406f97e4f32fab6ea83f945af8560c60cc",
+    "factory_ops/route_reservation.py": "10a22c7cff44648e8daae65e01b0773d8ec7984f689612ce1195c594daa3b86e",
+    "configs/factory-fleet4/layout.json": "96ea04c77892644867c454efd01b393e63dbe086c3ad2403d069fe65a3888d4d",
+    "configs/factory-fleet4/g3-routing.json": "92003f9860d55344ef8f7ca92748036954879b8f2aeab5eb23c2d7a2b0f3a774"
+  },
+  "goal": "Resolve actual032 reciprocal retained incoming-route wait after fully qualified final business stops; preserve current body occupancy and all stop/control gates.",
+  "non_goals": [
+    "NoD032writes orruntime/GPU/WSL/browser/probes/bagSQL; root handlespreservation/docs/Git",
+    "No DDS/IPC, clocks/TTL/deadline/start-tolerance, path/map/width/radius, assignment policy, dependencies, manager release/transfer algorithm or canonical2robot changes",
+    "No freeing active/unfinishedgoal or GT input; no extraagents/reviewchain; retain074 andotherunownededits"
+  ],
+  "write_paths": [
+    "scripts/ros/g3_mission.py",
+    "tests/test_g3_business_station_hold.py",
+    "coordination/collab/results/business-station-hold-075.json"
+  ],
+  "result_path": "C:\\Users\\LIMMM\\factory-ops-twin\\coordination\\collab\\results\\business-station-hold-075.json",
+  "acceptance": [
+    "First finiteCPUreproducer with actualfleet4 RouteBook+RouteReservationManager: C1/C2 retained finalincomingroutes reproduce reciprocaldenial. Use bounded032JSON/JSONLonly ifneeded; do not fabricate causalproof ifreproducer disagrees.",
+    "Use existing shrink_hold only after final BUSINESS arrival in development4robot materialoperation, AFTER existing matchingHOLDACK, freshcommittedstoppedodom, validate_arrival andmark_goal_finished. No midroute/cutoff/moving/activegoal shrink. Keepcanonical2robot andparking unchanged.",
+    "Retain stationbody tiles with EXISTING radius/tile logic andmanager freshness/footprintcontainment, sameasexistingparking API. Failclosedonshrinkdenial, nooldholdrelease. Update runtimegeneration/heldtiles asparkingdoes; preserve lease/watchdog/occupancy andatomictransfer.",
+    "Journal business_station_hold_shrunk with originalfinishedgoal/stoppedrecord link, predecessor/successorgeneration andretainedtiles forclosedtrace.",
+    "FocusedCPUreproducer/regression proves stale/unproven/moving/incorrectarrival cannotshrink; retainedbody stillblocks trueconflict; reciprocalcaseadvances after safe shrink and subsequent observedoccupancyupdates. OnefocusedCPU +coldSDK310AST; related existingaffectedtestsonly ifneeded. Do notrerun074sixunlesschanged.",
+    "Return task/attempt/revisionACK, changedfileSHAs, reproduction outputs andcommand/exitreceipt. Root oneboundedsourcepass; actualfix remainsunverifieduntil033."
+  ],
+  "status": "dispatched",
+  "instructions": "You are not alone in this codebase. Own onlylistedpaths; preserve otheredits. 074accepted. Root owns032closedpreservation/docs/Git. Implement smallest safe stoppedstation boundary fix; report before broaderinvariantchanges. Do notselfaccept orspawnagents.",
+  "depends_on": [
+    "ros-dashboard-waits-074"
+  ],
+  "observed_actual032": {
+    "stage": "D:/FactoryOpsRuntime/local45-transport-032",
+    "run_id": "9b6d17df36b941a09fa46c669db2acdc",
+    "closed": "bothOSverified, cleanup_errors=[]",
+    "primary": "persistent full-leg wait cycle; preserve reservations and fail-stop",
+    "progress": "all4businesshandoffs;4inboundpickups;3inbounddrops/consumed6;1outboundorder;3emptyjobs,0returns",
+    "cycle": "C1 atCI requestsP1 blockedC2;C2 atS1 requestsCI blockedC1;C3/P3,C4/P4 waitCI blockedC1",
+    "last_retained_routes": {
+      "carter1": "E_CI(25,8)->CI(21.5,8),28tiles",
+      "carter2": "W_LOW(9,5)->S1(3.5,5),36tiles"
+    }
+  }
+}

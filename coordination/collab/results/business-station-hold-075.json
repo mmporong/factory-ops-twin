@@ -1,0 +1,57 @@
+{
+  "task_id": "business-station-hold-075",
+  "attempt": 1,
+  "contract_revision": 75,
+  "ack": true,
+  "status": "implemented_cpu_only_pending_root_review_and_actual033",
+  "self_accepted": false,
+  "input_sha256_verified": {
+    "scripts/ros/g3_mission.py": "c575380eb185a5424bf1fa109d4952406f97e4f32fab6ea83f945af8560c60cc",
+    "factory_ops/route_reservation.py": "10a22c7cff44648e8daae65e01b0773d8ec7984f689612ce1195c594daa3b86e",
+    "configs/factory-fleet4/layout.json": "96ea04c77892644867c454efd01b393e63dbe086c3ad2403d069fe65a3888d4d",
+    "configs/factory-fleet4/g3-routing.json": "92003f9860d55344ef8f7ca92748036954879b8f2aeab5eb23c2d7a2b0f3a774"
+  },
+  "source_sha256": {
+    "scripts/ros/g3_mission.py": "895d6ac0489a4c58fd240b7f22770423775795429b245bdb2c8fc1bf8bface72",
+    "tests/test_g3_business_station_hold.py": "0516201d57848db49156b2dfc015dd71835b78395e4e0342f4616de460fcbde2"
+  },
+  "first_finite_reproducer": {
+    "command": "PowerShell here-string importing retained_station_fixture and reciprocal_requests, printing decisions and asserting reciprocal blockers | & './.venv/Scripts/python.exe' -B -",
+    "exit_code": 0,
+    "before_product_edit": true,
+    "inputs": "Actual fleet4 RouteBook, existing configured radii and RouteReservationManager; synthetic stationary observations and accepted/finished incoming goals only",
+    "incoming_tile_counts": {"carter1": 28, "carter2": 36},
+    "requests": {
+      "carter1_CI_to_P1": {"granted": false, "reason": "successor_tiles_occupied", "blockers": ["carter2"]},
+      "carter2_S1_to_CI": {"granted": false, "reason": "successor_tiles_occupied", "blockers": ["carter1"]}
+    },
+    "limit": "Reproduces the reported retained-route mechanism, not the complete actual032 ROS execution. No D-stage or bag was read."
+  },
+  "implementation": [
+    "Extract the unchanged committed-stop, validate_arrival and mark_goal_finished sequence into finish_stopped_goal. With no station_tiles opt-in, the incoming finished hold remains unchanged.",
+    "Opt in only for development four-robot material operations, cutoff absent, final business chunk. The existing matching HOLD ACK gate remains upstream. Missing stop evidence or ACK does not qualify; nonfinal/nonbusiness/active/cutoff/unsuccessful opt-in fails closed.",
+    "After the original fresh committed stop, qualified arrival and successful mark_goal_finished, call only existing shrink_hold with station body tiles from the unchanged tiles_at/reservation_radius calculation. Denial fails closed without releasing tiles or updating runtime generation/held_tiles. Success updates them exactly as parking does.",
+    "Journal business_station_hold_shrunk and attach the trace to the existing action record: finished goal UUID, original leg/stopped-record link, predecessor/successor generation and retained tiles. Parking and cutoff shrink policy remain unchanged; 074 projection is preserved."
+  ],
+  "validation": [
+    {
+      "command": "& './.venv/Scripts/python.exe' -B -m unittest tests.test_g3_business_station_hold -v",
+      "runs": 1,
+      "exit_code": 0,
+      "result": "6 PASS in 4.023s",
+      "coverage": "Reciprocal retained-route reproduction; qualified business shrink and body conflict retention; C1 departure then synthetic parking observation/unchanged parking shrink allows C2; unproven/moving/stale/future stop rejection; nonfinal/nonbusiness/cutoff/active/unsuccessful/wrong-arrival rejection; stale peer or out-of-station footprint denial preserves old tiles/generation; no-opt-in retains original finished hold."
+    },
+    {
+      "command": "PowerShell here-string using ast.parse and hashlib.sha256 on the two source_sha256 paths | & 'E:/IsaacSim/isaac-sim-4.5.0/kit/python/python.exe' -B -S -",
+      "runs": 1,
+      "python": "3.10.15",
+      "exit_code": 0,
+      "result": "2 AST PASS; hashes above; no SDK imports"
+    }
+  ],
+  "limits": [
+    "New behavior is CPU-only until actual033. Synthetic stop inputs do not prove ROS HOLD ACK authenticity, physical stopping or complete business transport. Existing caller ACK qualification is retained, not replaced by the unit fixture.",
+    "No manager algorithm, canonical two-robot policy, radius/map/path, tolerance, lease/TTL/clock, deadline, assignment, start-gate or transport changes. No old/full suites or 074 reruns.",
+    "Only the three assigned paths were written. No runtime/SDK/GPU/WSL/browser/bag/Git/board actions, dependencies, extra agents or review chain. Root owns closed032 preservation, review and actual033 integration."
+  ]
+}

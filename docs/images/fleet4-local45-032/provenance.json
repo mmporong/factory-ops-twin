@@ -1,0 +1,59 @@
+{
+  "run_id": "9b6d17df36b941a09fa46c669db2acdc",
+  "producer_source_commit": "b907ceec2b5716cc2e0118e7b151247ebce24385",
+  "scope": "Closed partial four-AMR development run; first order shipped, then retained-route wait cycle. Not80completion orcanonical6.2/payloadcontact proof.",
+  "native_overview": {
+    "physics_frame": 27946,
+    "sim_time_s": 465.7666909582913,
+    "original": {
+      "bytes": 173258,
+      "height": 360,
+      "path": "media/overview-00039.png",
+      "sha256": "7e389a6970a2c1066df51e49a09dd541ed911f5f30f3c4b44934d964ce966845",
+      "width": 640
+    },
+    "copied_image_unchanged": true
+  },
+  "web": {
+    "source": "artifacts/local45/032-web/first-shipment-empty-assignments.jpg",
+    "scope": "Operational web visualization of same run, not native Isaac RGB or atomic same-frame snapshot. Firstshipment andtwoemptyassignments visible."
+  },
+  "timeline": {
+    "source_manifest_sha256": "5c34baa731b747757233f90a92a83d914f68505f6a9aad1316665803620b2081",
+    "capture_count": 54,
+    "nominal_playback_factor": 28,
+    "probe": {
+      "programs": [],
+      "stream_groups": [],
+      "streams": [
+        {
+          "width": 1280,
+          "height": 720,
+          "nb_read_frames": "247"
+        }
+      ],
+      "format": {
+        "duration": "24.700000"
+      }
+    },
+    "full_decode_passed": true,
+    "sparse_images_held": true,
+    "interpolation": false,
+    "mission_status": "failed"
+  },
+  "files": {
+    "dashboard-first-shipment.jpg": {
+      "sha256": "9edf7d0f8984547964886b74529570fef3220b251d1e69239433602c745bc3b8",
+      "bytes": 262451
+    },
+    "overview.png": {
+      "sha256": "7e389a6970a2c1066df51e49a09dd541ed911f5f30f3c4b44934d964ce966845",
+      "bytes": 173258
+    },
+    "operations-partial.mp4": {
+      "sha256": "d9e2580abbb7db4fa138671d62a72427126c7941194c855b10b7878cfd82e263",
+      "bytes": 917315
+    }
+  },
+  "preservation_record": "artifacts/brev/operations-070-preservation-001.json"
+}
