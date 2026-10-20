@@ -1,6 +1,6 @@
 {
-  "revision": 66,
-  "updated_at": "2026-10-20T12:19:11.150496+00:00",
+  "revision": 67,
+  "updated_at": "2026-10-20T12:34:10.531302+00:00",
   "scope": {
     "excluded": "실물 로봇 실행, 새 유료 서비스/에셋, 공개 배포",
     "project_root": "C:\\Users\\LIMMM\\factory-ops-twin",
@@ -1245,6 +1245,21 @@
         "tests/test_g3_scene.py"
       ],
       "acceptance_record": "Root bounded g3diff/test read and6SHA match; author8CPU+3SDK310AST once; control bounded rootfaultmarker/monitor sourcePASS; root11CPU+2SDK310AST once. Actual026 pending, no time/tolerance relax."
+    },
+    {
+      "task_id": "local45-physx-cadence-probe-067",
+      "attempt": 1,
+      "contract_revision": 67,
+      "owner": "control",
+      "status": "accepted",
+      "ACK": true,
+      "task_path": "coordination/collab/local45-physx-cadence-probe-067-task.json",
+      "result_path": "coordination/collab/results/local45-physx-cadence-probe-067.json",
+      "write_paths": [
+        "scripts/isaac/probe_local45_physx_cadence.py",
+        "coordination/collab/results/local45-physx-cadence-probe-067.json"
+      ],
+      "acceptance_record": "Root one full probe source read +5SHA matched. One coldSDK310AST authorPASS. Actualdynamicrange/cadence unverified until isolated067; no fleet switch."
     }
   ],
   "decisions": [

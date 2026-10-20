@@ -1,0 +1,24 @@
+{
+  "task_id": "local45-physx-cadence-probe-067",
+  "attempt": 1,
+  "contract_revision": 67,
+  "owner": "control",
+  "reviewer": "root",
+  "inputs": {
+    "commit": "765166d0907cef0abe481bfd545fe8802cd65b32",
+    "active_run": "026 immutableDsource; do not change/stop it",
+    "facts": "026 originboundary nowpassed, actualC1/C2moving, but costly app.update perphysicsframe. Existing Local45Stepper World.step(render=False)+world.render every6 alreadyCPUtested, and063 no-renderphysicalprobe392sim/166wall. Cannot use reducedrender cadence for PhysX lidar without actual geometry/range-change evidence."
+  },
+  "write_paths": [
+    "scripts/isaac/probe_local45_physx_cadence.py",
+    "coordination/collab/results/local45-physx-cadence-probe-067.json"
+  ],
+  "goal": "Prepare ONE bounded standalone SDK4.5 probe that compares actual PhysX planar buffer changes under app.update versus existing Local45Stepper(render_every_steps=6). Root willreview source and execute AFTER026closed; no runtime switch now. Not alone; root owns live026 and futureG2wiring. Do not revert others. ACK task067/attempt1.",
+  "acceptance": [
+    "Only listedfiles. NoSDK/GPU/ROS/WSL/bag/Git/newagents/deps. ColdSDK3.10AST once; no fulltests/review chain. Probe itself actualGPU run only rootafter026stop.",
+    "Use existing exact factory_ops.physx_planar LIDAR_PARAMETERS (enable_semanticsTrue,720x1) and installed API from isaac45_runtime.create_physx helper as source. Simple collider wall and static lidar target (noAMRs/ROS/rendererassets required). Wall authored at distinctly different known x positions across genuine physics-step blocks. Nativeclosestforward azimuth ray expected wallfrontdistance is geometric oracle; do not fabricate ranges/timestamps or control anAMRfromGT.",
+    "Same probe/lidar compares baseline app.update and candidate existingLocal45Stepper(render_every_steps=6). ActualWorldtime/frame mustadvance exactlyone perphysicalstep, render mustnot advancephysics; record nativearrays shape/azimuth/depth/digests and actualgeometryresponse after each6stepblock. Repeatedrangeforchangedwall mustfail. Severalpositions e.g6/4/7m and multipleblocks make freshnessobservable; nativeabsolute acquisitiontime remains unavailable and do notclaim currentframe native timestamp. Pure staticarray shape is insufficient.",
+    "Measure per-phase wall duration and actualsteps/time; report fixture performance only, notwholefactory measuredspeed. Preserve originalbaseline/failure/candidate data, sourceSHA/probeSHA, <=240sinternal bound, finally attemptapp.close; save primaryresult beforepotentialcleanuphang. Root WindowsJob containment required. No runtime45 or physicsstepper edits unless rootagrees.",
+    "Use minimalgeometry and oneoriginalsensor; actualclosestforwardray tolerance tied to beamgeometry/depthquantization (documentdesigninput), no motion/TTL/startgates edits. Ifnot safe withinstalledAPI report concreteblocker before broadening. Root chooses cadence integration only after actualrangeprobePASS. No literature/researchdocuments needed."
+  ]
+}

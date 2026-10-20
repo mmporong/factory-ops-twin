@@ -1,0 +1,375 @@
+{
+  "schema_version": 1,
+  "run_id": "52eeaaff9698406d87261ee7e9fab06f",
+  "producer_source_commit": "765166d0907cef0abe481bfd545fe8802cd65b32",
+  "status": "intentionally_stopped_after_origin_fix_navigation_virtual_docking_prefix",
+  "operator_decision": {
+    "run_id": "52eeaaff9698406d87261ee7e9fab06f",
+    "source_commit": "765166d0907cef0abe481bfd545fe8802cd65b32",
+    "decision": "intentional_owned_stop_for_isolated_cadence_probe",
+    "recorded_at_utc": "2026-10-20T12:34:10.515190+00:00",
+    "reason": "Origin fix exercised with actual navigation and virtual docking; slow baseline measured. Close owned026 before one isolated PhysX dynamic range/cadence probe, then fresh full mission. No SDK primary error observed before this decision.",
+    "measurement": {
+      "wall_interval_s": 89.74419283866882,
+      "simulated_interval_s": 7.000000365078449,
+      "simulated_per_wall": 0.07799947989573205,
+      "scope": "Observation interval includes all factory/render/ROS/IO work, causal bottleneck not isolated."
+    },
+    "goal80_complete": false
+  },
+  "initial_hold_status": "ready",
+  "original_mission_origin": {
+    "run_id": "52eeaaff9698406d87261ee7e9fab06f",
+    "scenario_id": "fleet4_transport_normal",
+    "sim_time_s": 5.200000271
+  },
+  "origin_fix_actual_effect": "Original marker accepted after actual World progression; navigation and virtual docking continued beyond60simseconds without original error.",
+  "motion_evaluation_only": {
+    "carter1": {
+      "first_ground_truth": {
+        "orientation_wxyz": [
+          0.7071074843406677,
+          0.0005593394162133336,
+          -0.0005585358594544232,
+          0.7071059346199036
+        ],
+        "position_xyz_m": [
+          12.000001907348633,
+          1.5002152919769287,
+          -1.4156103134155273e-06
+        ],
+        "tilt_evaluation": {
+          "passed": true,
+          "pitch_rad": -0.0015809148728561575,
+          "roll_rad": 1.1381345681385866e-06,
+          "threshold_rad": 0.35,
+          "use": "simulator-truth run validity evaluation only; never navigation or steering"
+        },
+        "use": "evaluation and media only"
+      },
+      "last_ground_truth": {
+        "orientation_wxyz": [
+          -0.7193421721458435,
+          -0.0005831460584886372,
+          0.0006020877626724541,
+          -0.6946555972099304
+        ],
+        "position_xyz_m": [
+          12.088805198669434,
+          1.3788434267044067,
+          -1.385807991027832e-06
+        ],
+        "tilt_evaluation": {
+          "passed": true,
+          "pitch_rad": -0.0016763863702698475,
+          "roll_rad": 2.4758395578490327e-06,
+          "threshold_rad": 0.35,
+          "use": "simulator-truth run validity evaluation only; never navigation or steering"
+        },
+        "use": "evaluation and media only"
+      },
+      "last_actual_world_s": 70.23333699628711,
+      "last_physics_frame": 4214,
+      "nonzero_profile_samples": 2267
+    },
+    "carter2": {
+      "first_ground_truth": {
+        "orientation_wxyz": [
+          -0.7071065306663513,
+          0.0005596534465439618,
+          0.0005585200269706547,
+          0.7071068286895752
+        ],
+        "position_xyz_m": [
+          11.999998092651367,
+          20.49977684020996,
+          -1.2814998626708984e-06
+        ],
+        "tilt_evaluation": {
+          "passed": true,
+          "pitch_rad": -0.0015813365237144876,
+          "roll_rad": -1.6025658643707603e-06,
+          "threshold_rad": 0.35,
+          "use": "simulator-truth run validity evaluation only; never navigation or steering"
+        },
+        "use": "evaluation and media only"
+      },
+      "last_ground_truth": {
+        "orientation_wxyz": [
+          -0.9994469285011292,
+          -2.7674814191414043e-05,
+          0.0008393737953156233,
+          -0.03324656933546066
+        ],
+        "position_xyz_m": [
+          3.4342923164367676,
+          17.054643630981445,
+          -5.960464477539063e-08
+        ],
+        "tilt_evaluation": {
+          "passed": true,
+          "pitch_rad": -0.0016796600982351081,
+          "roll_rad": -4.935827840247363e-07,
+          "threshold_rad": 0.35,
+          "use": "simulator-truth run validity evaluation only; never navigation or steering"
+        },
+        "use": "evaluation and media only"
+      },
+      "last_actual_world_s": 70.23333699628711,
+      "last_physics_frame": 4214,
+      "nonzero_profile_samples": 3060
+    },
+    "carter3": {
+      "first_ground_truth": {
+        "orientation_wxyz": [
+          0.7071134448051453,
+          0.000558418279979378,
+          -0.0005591195658780634,
+          0.7070998549461365
+        ],
+        "position_xyz_m": [
+          17.0000057220459,
+          1.5002164840698242,
+          -1.8328428268432617e-06
+        ],
+        "tilt_evaluation": {
+          "passed": true,
+          "pitch_rad": -0.001580437552048923,
+          "roll_rad": -9.76581882731147e-07,
+          "threshold_rad": 0.35,
+          "use": "simulator-truth run validity evaluation only; never navigation or steering"
+        },
+        "use": "evaluation and media only"
+      },
+      "last_ground_truth": {
+        "orientation_wxyz": [
+          0.031051194295287132,
+          0.000782824819907546,
+          -2.2072579668019898e-05,
+          0.999517560005188
+        ],
+        "position_xyz_m": [
+          15.052650451660156,
+          4.90241813659668,
+          -2.5480985641479492e-06
+        ],
+        "tilt_evaluation": {
+          "passed": true,
+          "pitch_rad": -0.0015662657081214203,
+          "roll_rad": 4.491434727826678e-06,
+          "threshold_rad": 0.35,
+          "use": "simulator-truth run validity evaluation only; never navigation or steering"
+        },
+        "use": "evaluation and media only"
+      },
+      "last_actual_world_s": 70.23333699628711,
+      "last_physics_frame": 4214,
+      "nonzero_profile_samples": 1416
+    },
+    "carter4": {
+      "first_ground_truth": {
+        "orientation_wxyz": [
+          -0.7070986032485962,
+          0.0005590291111730039,
+          0.0005588462227024138,
+          0.7071147561073303
+        ],
+        "position_xyz_m": [
+          16.99999237060547,
+          20.499778747558594,
+          -1.8328428268432617e-06
+        ],
+        "tilt_evaluation": {
+          "passed": true,
+          "pitch_rad": -0.0015809148927431356,
+          "roll_rad": -2.4058673667833356e-07,
+          "threshold_rad": 0.35,
+          "use": "simulator-truth run validity evaluation only; never navigation or steering"
+        },
+        "use": "evaluation and media only"
+      },
+      "last_ground_truth": {
+        "orientation_wxyz": [
+          -0.7071096897125244,
+          0.0005594525136984885,
+          0.0005586358602158725,
+          0.7071036696434021
+        ],
+        "position_xyz_m": [
+          17.00000762939453,
+          20.499778747558594,
+          -1.7434358596801758e-06
+        ],
+        "tilt_evaluation": {
+          "passed": true,
+          "pitch_rad": -0.0015812161693183656,
+          "roll_rad": -1.1616546865857182e-06,
+          "threshold_rad": 0.35,
+          "use": "simulator-truth run validity evaluation only; never navigation or steering"
+        },
+        "use": "evaluation and media only"
+      },
+      "last_actual_world_s": 70.23333699628711,
+      "last_physics_frame": 4214,
+      "nonzero_profile_samples": 0
+    }
+  },
+  "charging_state_original": {
+    "body_occupancy_owner": "G3 reservation manager",
+    "contact_source": "estimated_pose_geometric_dock",
+    "docks": {
+      "CH1": {
+        "anchor": "P1",
+        "x_m": 12.0,
+        "y_m": 1.5,
+        "yaw_rad": 1.5707963267948966
+      },
+      "CH2": {
+        "anchor": "P2",
+        "x_m": 12.0,
+        "y_m": 20.5,
+        "yaw_rad": -1.5707963267948966
+      }
+    },
+    "hardware_calibrated": false,
+    "owners": {
+      "CH1": "carter1"
+    },
+    "physical_contact_verified": false,
+    "physical_electrical_charging_verified": false,
+    "robots": {
+      "carter1": {
+        "charging": {
+          "anchor": "P1",
+          "arrival": {
+            "anchor": "P1",
+            "goal_id": "1d5a7312957f49a8b90a51faa75b7bfd",
+            "navigation_succeeded": true,
+            "stamp_s": 44.350002313
+          },
+          "body_occupancy_owner": "G3 reservation manager",
+          "contact_since_s": 44.400002316,
+          "contact_source": "estimated_pose_geometric_dock",
+          "dock_id": "CH1",
+          "fault": null,
+          "geometric_dock_confirmed": true,
+          "hardware_calibrated": false,
+          "last_stamp_s": 45.400002368,
+          "phase": "charging",
+          "physical_contact_verified": false,
+          "reason": "charging",
+          "reserved_at_s": 5.200000271,
+          "virtual": true,
+          "virtual_connector_state": "simulated_engaged"
+        },
+        "energy": {
+          "battery_pct": 84.84085652332648,
+          "battery_source": "authored_virtual_energy_model",
+          "charging_supported": true,
+          "fault": null,
+          "freshness": "fresh",
+          "hardware_calibrated": false,
+          "observation_age_s": 0.016666666999995527,
+          "observed_at_s": 45.416669035,
+          "observed_sim_time_s": 45.400002368,
+          "robot_id": "carter1",
+          "run_id": "52eeaaff9698406d87261ee7e9fab06f",
+          "scope": "odometry-driven authored virtual energy; no hardware battery or charging proof",
+          "virtual": true
+        },
+        "robot_id": "carter1",
+        "run_id": "52eeaaff9698406d87261ee7e9fab06f"
+      },
+      "carter2": {
+        "charging": null,
+        "energy": {
+          "battery_pct": 79.85314318257771,
+          "battery_source": "authored_virtual_energy_model",
+          "charging_supported": true,
+          "fault": null,
+          "freshness": "fresh",
+          "hardware_calibrated": false,
+          "observation_age_s": 0.016666666999995527,
+          "observed_at_s": 45.416669035,
+          "observed_sim_time_s": 45.400002368,
+          "robot_id": "carter2",
+          "run_id": "52eeaaff9698406d87261ee7e9fab06f",
+          "scope": "odometry-driven authored virtual energy; no hardware battery or charging proof",
+          "virtual": true
+        },
+        "robot_id": "carter2",
+        "run_id": "52eeaaff9698406d87261ee7e9fab06f"
+      },
+      "carter3": {
+        "charging": null,
+        "energy": {
+          "battery_pct": 74.91610558352323,
+          "battery_source": "authored_virtual_energy_model",
+          "charging_supported": true,
+          "fault": null,
+          "freshness": "fresh",
+          "hardware_calibrated": false,
+          "observation_age_s": 0.016666666999995527,
+          "observed_at_s": 45.416669035,
+          "observed_sim_time_s": 45.400002368,
+          "robot_id": "carter3",
+          "run_id": "52eeaaff9698406d87261ee7e9fab06f",
+          "scope": "odometry-driven authored virtual energy; no hardware battery or charging proof",
+          "virtual": true
+        },
+        "robot_id": "carter3",
+        "run_id": "52eeaaff9698406d87261ee7e9fab06f"
+      },
+      "carter4": {
+        "charging": null,
+        "energy": {
+          "battery_pct": 69.91614334790867,
+          "battery_source": "authored_virtual_energy_model",
+          "charging_supported": true,
+          "fault": null,
+          "freshness": "fresh",
+          "hardware_calibrated": false,
+          "observation_age_s": 0.016666666999995527,
+          "observed_at_s": 45.416669035,
+          "observed_sim_time_s": 45.400002368,
+          "robot_id": "carter4",
+          "run_id": "52eeaaff9698406d87261ee7e9fab06f",
+          "scope": "odometry-driven authored virtual energy; no hardware battery or charging proof",
+          "virtual": true
+        },
+        "robot_id": "carter4",
+        "run_id": "52eeaaff9698406d87261ee7e9fab06f"
+      }
+    },
+    "run_id": "52eeaaff9698406d87261ee7e9fab06f",
+    "virtual": true
+  },
+  "material_revision": 0,
+  "inventory_conservation": [
+    {
+      "balanced": true,
+      "consumed": 0,
+      "in_totes": 0,
+      "initial": 60,
+      "on_hand": 60,
+      "replenished": 0,
+      "sku": "sensor-kit"
+    }
+  ],
+  "completed_orders": 0,
+  "empty_returns_completed": 0,
+  "all4_business_motion_verified": false,
+  "sdk_errors_observed_before_owned_abort": [],
+  "sdk_report_original_status": "running",
+  "windows_closed": true,
+  "linux_closed": true,
+  "cleanup_errors": [],
+  "bag_sql_opened": false,
+  "original_database_bytes": 155701248,
+  "original_database_sha256": "8812253e28a76a0d83bed588437e13531ecea76beffea0e6a52228ac7f4c677d",
+  "preview_image": "artifacts/local45/026-web/active-carter1.jpg",
+  "preview_scope": "Actual live026 observations with intermittent lag displayed; virtual energy and operational bookkeeping, not load/contact physics.",
+  "new_video_or_SDG_generated": false,
+  "goal80_complete": false,
+  "next": "One isolated actual PhysX geometry/range-change probe before any reduced-render fleet cadence switch."
+}

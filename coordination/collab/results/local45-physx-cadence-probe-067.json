@@ -1,0 +1,57 @@
+{
+  "task_id": "local45-physx-cadence-probe-067",
+  "attempt": 1,
+  "contract_revision": 67,
+  "owner": "control",
+  "reviewer": "root",
+  "ack": true,
+  "accepted": false,
+  "status": "probe_prepared_cold_syntax_checked_pending_root_review_and_later_execution",
+  "document_encoding": "ASCII",
+  "written_paths": [
+    "scripts/isaac/probe_local45_physx_cadence.py",
+    "coordination/collab/results/local45-physx-cadence-probe-067.json"
+  ],
+  "source_sha256": {
+    "scripts/isaac/probe_local45_physx_cadence.py": "39b04233cff6a4cb88b1acbe0bd1b9e31faca2bbdea94cb92d9a59f2a0659965"
+  },
+  "read_dependency_sha256": {
+    "factory_ops/__init__.py": "da57bbf586e3c4639fd72b3960ef8dd7a8326b3ba17504836189be26ce5bacb0",
+    "factory_ops/physx_planar.py": "634dac24bef78a4afbaf5a1bf16bbb20743184a8a5758102dd6e34648fedb853",
+    "factory_ops/local45_stepping.py": "efef8b3ad99bfb45812cc8f022eaf737323754e132e5eac6c5dbaccaf17a6bbb",
+    "factory_ops/isaac45_runtime.py": "0073287ff74c4bd124542c8277b18398ba0206c8d3c719ecd0954730d361a03c"
+  },
+  "root_interface": {
+    "arguments": "--output <new absolute canonical nonsymlink directory> --run-id <32 lowercase hex characters>",
+    "source_root": "Derived from the frozen probe location, two parents above scripts/isaac. Preserve listed project modules and the runtime API reference file in that source tree.",
+    "internal_wall_bound_s": 210,
+    "host_containment": "Existing Windows Job containment required; root runs only after026 closes. No execution was started here.",
+    "outputs": "result.json, fixture.json, probe-source.py and original numeric arrays in arrays/*.npz with file/raw-byte digests.",
+    "result_scope": "passed_range_change_fixture means both cadence phases met this small geometric oracle. It does not accept host closure, full-factory cadence integration or transport."
+  },
+  "fixture": [
+    "One static lidar and one collision cube wall, no robot/ROS/asset references or render products. World is initialized/reset before the original sensor is created using exactly dict(LIDAR_PARAMETERS), including enable_semantics=True and720x1 profile.",
+    "Both phases share the same World, original lidar and interface. After60 baseline warmup steps, each phase runs6 blocks of6 actual physics steps with wall x centers6,4,7,6,4,7m; wall size0.2x4x2m and lidar at0,0,1m.",
+    "Baseline uses app.update with actual one-frame/dt checks. Candidate uses the existing Local45Stepper(render_every_steps=6), including its check that render-only refresh does not advance physics. Configured physics/rendering dt remains1/60; only render invocation cadence changes.",
+    "Each block preserves original linear/uint16 depth, intensity, azimuth and zenith arrays and their shapes/dtypes/digests before range rejection. World counters are recorded before/after reads, never substituted by loop counters or sensor timestamps.",
+    "The closest actual forward azimuth ray must hit the wall front at (wall_x-0.1)/(cos(actual_azimuth)*cos(actual_zenith)). Horizontal geometry and the selected beam's wall intersection are checked. A changed wall must change both the forward range and native depth digest; stale repeated ranges fail.",
+    "Oracle tolerance is an authored design budget: four uint16 depth quanta across the configured min/max range, half-bin projection at0.25degrees, plus0.0001m floating margin. The actual uint16 dtype is required before using this budget; it is not measured factory accuracy.",
+    "Per-phase actual steps/time, total wall duration including evidence IO, and stepping-only wall duration are separate. Any displayed baseline/candidate ratio is fixture-only, not measured whole-factory speed."
+  ],
+  "failure_and_cleanup": "Initial and partial phase evidence are checkpointed. Primary failure/result is saved before native teardown; finally attempts app.close even if final metadata save fails. sdk_close_requested/returned and cleanup_errors remain separate from required host Job closure. No existing runtime, facade or stepper source was changed.",
+  "validation": {
+    "kind": "one cold SDK Python3.10 AST pass",
+    "cwd": "C:/Users/LIMMM/factory-ops-twin",
+    "command": "stdin ast.parse/hashlib script | & 'E:/IsaacSim/isaac-sim-4.5.0/kit/python/python.exe' -B -S -",
+    "python": "3.10.15",
+    "result": "1 probe AST PASS",
+    "exit_code": 0,
+    "scope": "Read/parse probe bytes and hash dependencies only; no product or SDK imports. No CPU suite or previous tests were run."
+  },
+  "limits": [
+    "Actual SDK API execution, dynamic range response, reduced-render behavior and performance are unverified until root's one frozen probe.",
+    "Native absolute acquisition timestamp remains unavailable. World read time is observation context only; current-frame native acquisition timestamp is explicitly not verified, even if six-step geometry response passes.",
+    "No GT steering, fabricated ranges, altered timestamps, motion/TTL/start-gate changes, fleet cadence switch, SDK/GPU/ROS/WSL/bag/Git operations, dependencies or agents.",
+    "Active026 immutable source, processes and originals were not accessed or modified. Root owns review, execution and any later integration decision."
+  ]
+}
