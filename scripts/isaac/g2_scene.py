@@ -771,8 +771,68 @@ def _capture_frame_with_extension(
     return captured
 
 
+def _flush_local45_capture_resume(
+    world: Any, robots: Mapping[str, dict[str, Any]], *, output: Path, run_id: str, capture_index: int,
+) -> dict[str, Any]:
+    """Process queued play via one render, requiring exact frozen physics."""
+    from factory_ops.local45_stepping import physics_state
+
+    state: dict[str, Any] = {"run_id": run_id, "capture_index": capture_index, "status": "failed",
+        "before": None, "after": None, "physics_match": None, "pose_match": None,
+        "robot_pose_matches": {}, "render_attempted": False, "error": None}
+    primary_error: BaseException | None = None
+    before_poses = after_poses = None
+
+    def read_state():
+        frame, stamp = physics_state(world)
+        playing = world.is_playing()
+        if type(playing) is not bool:
+            raise base.SmokeError("capture resume World.is_playing did not return bool")
+        poses = {robot_id: tuple(tuple(part) for part in _pose(runtime["robot"]))
+                 for robot_id, runtime in robots.items()}
+        return {"physics_frame": frame, "sim_time_s": stamp, "playing": playing}, poses
+
+    try:
+        state["before"], before_poses = read_state()
+        state["render_attempted"] = True
+        world.render()
+    except BaseException as error:
+        primary_error = error
+    try:
+        state["after"], after_poses = read_state()
+        if before_poses is not None:
+            state["robot_pose_matches"] = {key: after_poses[key] == pose for key, pose in before_poses.items()}
+            state["pose_match"] = all(state["robot_pose_matches"].values())
+            state["physics_match"] = all(state["before"][key] == state["after"][key]
+                                         for key in ("physics_frame", "sim_time_s"))
+            if not state["physics_match"] or not state["pose_match"]:
+                raise base.SmokeError("capture resume render changed the frozen physics state")
+        if not state["after"]["playing"]:
+            raise base.SmokeError("capture resume render left native World paused")
+    except BaseException as error:
+        if primary_error is None:
+            primary_error = error
+        else:
+            add_exception_note(primary_error, f"capture resume readback failed: {type(error).__name__}: {error}")
+    if primary_error is None:
+        state["status"] = "passed"
+    else:
+        state["error"] = {"type": type(primary_error).__name__, "message": str(primary_error)}
+    try:
+        _atomic_json(output / "capture-resume-state.json", state)
+    except BaseException as error:
+        if primary_error is None:
+            primary_error = error
+        else:
+            add_exception_note(primary_error, f"capture resume checkpoint failed: {type(error).__name__}: {error}")
+    if primary_error is not None:
+        raise primary_error
+    return state
+
+
 def _capture_with_timeline_policy(
     timeline: Any, scene_extension: Any, capture: Callable[[], dict[str, Any]],
+    *, after_resume: Callable[[], Any] | None = None,
 ) -> dict[str, Any]:
     policy_hook = getattr(scene_extension, "capture_timeline_policy", None)
     policy = policy_hook() if callable(policy_hook) else "pause_resume"
@@ -780,6 +840,8 @@ def _capture_with_timeline_policy(
         timeline.pause()
         captured = capture()
         timeline.play()
+        if after_resume is not None:
+            after_resume()
         return captured
     if policy != "preserve_playing":
         raise base.SmokeError(f"unknown capture timeline policy: {policy}")
@@ -1389,6 +1451,10 @@ def _run(
                         SimulationManager=SimulationManager, np=np, Image=Image, index=len(frames),
                         rep=rep, scene_extension=scene_extension,
                     ),
+                    after_resume=(lambda: _flush_local45_capture_resume(
+                        SimulationManager.world, robots, output=output, run_id=args.run_id,
+                        capture_index=len(frames),
+                    )) if mission_stepper is not None else None,
                 )
                 capture_metadata_hook = getattr(scene_extension, "capture_metadata", None)
                 if callable(capture_metadata_hook):

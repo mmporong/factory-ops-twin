@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "run_id": "e629c81594834021a71de405e2dc7c12",
+  "producer_source_commit": "8dad90bbbb2b2ea3d04cbdb2f000c9aa49eb0f36",
+  "status": "failed_native_step_delta_guard_automatically_closed",
+  "primary_sdk_failure": {
+    "message": "native physics delta differs from one configured step; before=(124, 2.0666667744517326); after=(124, 2.0666667744517326); frame_delta=0; time_delta_s=0.0; configured_dt_s=0.016666666666666666",
+    "traceback": "Traceback (most recent call last):\n  File \"D:\\FactoryOpsRuntime\\local45-transport-028\\source\\scripts\\isaac\\g2_scene.py\", line 1310, in _run\n    rendered = _update_physics_app(app, world_clock, stepper=mission_stepper)\n  File \"D:\\FactoryOpsRuntime\\local45-transport-028\\source\\scripts\\isaac\\g2_scene.py\", line 91, in _update_physics_app\n    rendered = stepper.step()[\"rendered\"]\n  File \"D:\\FactoryOpsRuntime\\local45-transport-028\\source\\factory_ops\\local45_stepping.py\", line 48, in step\n    raise RuntimeError(\"native physics delta differs from one configured step\"\nRuntimeError: native physics delta differs from one configured step; before=(124, 2.0666667744517326); after=(124, 2.0666667744517326); frame_delta=0; time_delta_s=0.0; configured_dt_s=0.016666666666666666\n",
+    "type": "RuntimeError"
+  },
+  "phase_start_actual": {
+    "explicit_rgb_capture": "separate paused render with frozen physics validation",
+    "native_sensor_timestamp_available": false,
+    "physics": "one actual World.step(render=False) per control iteration",
+    "run_id": "e629c81594834021a71de405e2dc7c12",
+    "scan_publication": "only after scheduled render; first interval may include the startup-to-mission phase change",
+    "scheduled_render_every_physics_steps": 6,
+    "start_physics_frame": 123,
+    "start_world_time_s": 2.0500001069158316
+  },
+  "last_completed_trajectory_samples": {
+    "carter1": {
+      "sim_time_s": 2.0666667744517326,
+      "physics_frame": 124
+    },
+    "carter2": {
+      "sim_time_s": 2.0666667744517326,
+      "physics_frame": 124
+    },
+    "carter3": {
+      "sim_time_s": 2.0666667744517326,
+      "physics_frame": 124
+    },
+    "carter4": {
+      "sim_time_s": 2.0666667744517326,
+      "physics_frame": 124
+    }
+  },
+  "configured_physics_dt_s": 0.016666666666666666,
+  "exact_failing_before_after_observed": true,
+  "cause_limit": "Observed before/after=(124,2.0666667744517326), delta0. Capture0 frozen checks complete at124 immediately before failure. Source has queued timeline.play and World.step skips when paused; postcapture render-only event flush is a causal candidate awaiting029, not proven yet.",
+  "automatic_primary_failure_checkpoint_and_monitor_exercised": true,
+  "host_primary_error": "RuntimeError: SDK failure before cleanup: mission: RuntimeError: native physics delta differs from one configured step; before=(124, 2.0666667744517326); after=(124, 2.0666667744517326); frame_delta=0; time_delta_s=0.0; configured_dt_s=0.016666666666666666",
+  "windows_abort_requested": true,
+  "windows_closed": true,
+  "linux_closed": true,
+  "cleanup_errors": [],
+  "host_total_wall_s": 56.18700000003446,
+  "sdk_final_report_original_status": "running",
+  "secondary_ros_error": {
+    "message": "error creating node: the given context is not valid, either rcl_init() was not called or rcl_shutdown() was called., at ./src/rcl/guard_condition.c:67",
+    "traceback": "Traceback (most recent call last):\n  File \"/mnt/d/FactoryOpsRuntime/local45-transport-028/source/scripts/ros/g3_mission.py\", line 1254, in run_mission\n    event_node = ros.create_node(\"factory_g3_mission\", parameter_overrides=[Parameter(\"use_sim_time\", value=True)])\n                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/__init__.py\", line 184, in create_node\n    return Node(\n           ^^^^^\n  File \"/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/node.py\", line 188, in __init__\n    self.__node = _rclpy.Node(\n                  ^^^^^^^^^^^^\nrclpy._rclpy_pybind11.RCLError: error creating node: the given context is not valid, either rcl_init() was not called or rcl_shutdown() was called., at ./src/rcl/guard_condition.c:67\n",
+    "type": "RCLError"
+  },
+  "secondary_scope": "ROS context shutdown after owned SDK failure; not the primary step-guard cause.",
+  "material_state_present": false,
+  "completed_orders": 0,
+  "empty_returns_completed": 0,
+  "bag_sql_opened": false,
+  "new_video_or_SDG_generated": false,
+  "goal80_complete": false,
+  "next": "070 local45PhysX postcapture render-only event flush with exactnativeframe/time/pose freeze andplayingreadbacks, then029prefix; no guard/tolerance changes."
+}

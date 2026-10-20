@@ -1,0 +1,20 @@
+{
+  "task_id": "local45-capture-resume-070",
+  "attempt": 1,
+  "contract_revision": 70,
+  "owner": "control",
+  "reviewer": "root",
+  "write_paths": [
+    "scripts/isaac/g2_scene.py",
+    "tests/test_local45_capture_resume.py",
+    "coordination/collab/results/local45-capture-resume-070.json"
+  ],
+  "facts": "028 original error: before=(124,2.0666667744517326),after=SAME,frame_delta0,time_delta0. Source capture0 completed exactfrozen checks atframe124 then _capture_with_timeline_policy queues timeline.play withoutKitupdate. Installed SimulationContext.step(render=False) steps ONLY ifis_playing; World.render app.update with/app/player/playSimulationsFalse thenTrue, no normalphysicsadvance. Baseline app.update processed queuedtimeline events; reducedrender imperativeWorld.step doesnot. This is source-backed causal candidate, actualrepair stillneeds029 prefix. 028 auto-closed bothOS. Root owns preservation/docs/Git/fresh029, no activeSDKrunning.",
+  "goal": "Local45PhysX-only postcapture render-only event flush, with exactframe/time/pose freeze and nativeplaying readbacks. No tolerance/count/physicsstep guard loosening. Not alone, own onlylistedG2/test/receipt; no revertothers.",
+  "acceptance": [
+    "ACK070attempt1. After successful existing pause/resumeRGB capture in mainloop onlywhen mission_stepper exists, call one world.render() to process queuedtimelineevents BEFORE next physicsstep. No app.update fallback or World.step retry, no manualcurrent_time/frame/pose/joint/clock writes, no GTcontrol, no dt/tolerance/TTL/cameraintervalchanges. Existingstartup/defaultRTX/6.2 paths unchanged.",
+    "Small helper maytake world,robots,outputpath/runid andcaptureindex. Read originalactualWorldframe/time and robotposes before/after render, require EXACT equality; require world.is_playing afterflush. Save a small latest capture-resume-state.json atomically with before/afterframe/time/playing/pose-match andrunid/captureindex so nextfailure retainsobservations. No perframejournal/newmedia/bulkdata. Preserve primaryerror ifflushfailure. Avoid addingunexpectedkeys tostrictmedia indexschemas.",
+    "World.render flush is a hypothesis to test in029, not currentproof; sourcebound asyncpause/play commentsinG3lines444+, SDK World.step/render support this test. Existing stepper invariant self._last stays unchanged acrossrender and thenrequiresoneactualstep. Ifgeometrychanges/noadvanceisnotplaying persists, failwithreadbacks; do not silentlycontinue.",
+    "One focusedCPU suite for queuedplay becomesplaying onlyonrender, exactunchangedstate success and nextactualstep; render advancingframe/time, changingpose, remainingpaused orraising allfail and preservecheckpoint; defaultnoextra render via actualmaincaller read. ColdSDK310AST affectedfiles once. No fullsuite/SDK/GPU/ROS/WSL/bag/Git/newagents/deps/reviewchain. SmallASCII receipt hashes/limits; rootboundedreview thenactual029."
+  ]
+}

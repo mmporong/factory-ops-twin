@@ -1,0 +1,55 @@
+{
+  "task_id": "local45-capture-resume-070",
+  "attempt": 1,
+  "contract_revision": 70,
+  "owner": "control",
+  "reviewer": "root",
+  "ack": true,
+  "accepted": false,
+  "status": "implemented_focused_CPU_and_cold_AST_passed_pending_root029",
+  "document_encoding": "ASCII",
+  "baseline_g2_sha256": "b677011d8b67fb8e40f1f5385052e1c9b538082f2b13c57f0a795be7f740ac4d",
+  "source_sha256": {
+    "scripts/isaac/g2_scene.py": "980c2ed3c42104a01722efaa24a7867dbcca5591da3260f3b47f64be19885a4e",
+    "tests/test_local45_capture_resume.py": "fa3d0f9a766ee95aa2bd23617b4c0f58ba7f1f20fa52c71118e416904d3fa3ce"
+  },
+  "written_paths": [
+    "scripts/isaac/g2_scene.py",
+    "tests/test_local45_capture_resume.py",
+    "coordination/collab/results/local45-capture-resume-070.json"
+  ],
+  "change": [
+    "The main RGB capture call supplies an after_resume callback only when mission_stepper exists, hence only on the selected local45 PhysX mission path. Startup/default RTX/canonical paths receive None.",
+    "The existing capture policy invokes this optional callback only after successful pause_resume capture and timeline.play. Failed capture and preserve_playing policy do not flush. Captured media data/schema are unchanged.",
+    "_flush_local45_capture_resume calls world.render once, compares exact before/after actual World frame/time and copied robot poses, and requires native world.is_playing() after the flush. No tolerance, step retry, app.update fallback or state write.",
+    "A latest atomic capture-resume-state.json records run_id/capture_index, before/after frame/time/playing, physics_match, pose_match/per-robot matches, render_attempted and error. Readbacks are attempted even if render raises; the original error is preserved if later readback/checkpoint also fails.",
+    "The stepper's stored state and one-step guard remain unchanged. Render-only state changes or a still-paused World fail rather than continuing silently."
+  ],
+  "root_api": {
+    "helper": "_flush_local45_capture_resume(world, robots, *, output, run_id, capture_index) -> diagnostic dict; raises on failed render/freeze/playing checks",
+    "capture_policy": "_capture_with_timeline_policy(timeline, scene_extension, capture, *, after_resume=None)",
+    "checkpoint": "<output>/capture-resume-state.json; latest capture only, no per-frame journal or pose bulk data"
+  },
+  "validation": [
+    {
+      "cwd": "C:/Users/LIMMM/factory-ops-twin",
+      "command": "& './.venv/Scripts/python.exe' -B -m unittest tests.test_local45_capture_resume -v",
+      "result": "6 PASS",
+      "elapsed_unittest_s": 0.052,
+      "exit_code": 0,
+      "scope": "Queued play committed by one render, exact frozen state and next genuine step; frame/time change including1e-10s; in-place pose change; paused/raising render; checkpoint failure preserving primary error; default/preserve-playing/failed-capture paths without extra flush. Main caller placement was read, not asserted by source-string tests."
+    },
+    {
+      "command": "stdin ast.parse/hashlib script | & 'E:/IsaacSim/isaac-sim-4.5.0/kit/python/python.exe' -B -S -",
+      "python": "3.10.15",
+      "result": "2 files cold AST PASS",
+      "exit_code": 0,
+      "scope": "Parse affected source/test bytes and emit SHA256; no product or SDK import."
+    }
+  ],
+  "limits": [
+    "Actual World.render recovery remains a hypothesis for root029. CPU fakes are not SDK effect or physical mission evidence.",
+    "No stepper/tolerance/count/poisoning, dt, clock, TTL, gains, camera interval, pose/joint state, reservation or0.15m start-gate change. Pose reads are freeze validation only, never steering.",
+    "Root028 originals were not opened or changed. No SDK/GPU/ROS/WSL/bag/Git actions, dependencies, agents, old/full suites or review chain. Root owns preservation, review and real029."
+  ]
+}

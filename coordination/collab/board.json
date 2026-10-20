@@ -1,6 +1,6 @@
 {
-  "revision": 69,
-  "updated_at": "2026-10-20T12:47:41.487622+00:00",
+  "revision": 70,
+  "updated_at": "2026-10-20T12:57:54.803835+00:00",
   "scope": {
     "excluded": "실물 로봇 실행, 새 유료 서비스/에셋, 공개 배포",
     "project_root": "C:\\Users\\LIMMM\\factory-ops-twin",
@@ -1289,6 +1289,22 @@
         "coordination/collab/results/local45-step-diagnostic-069.json"
       ],
       "acceptance_record": "Root bounded diagnostic-only error-message diff read/1SHA matched. Author1affectedCPU/1coldSDKAST once; exactbefore/after stillunobserved.028diagnosticprefix next; gatesunchanged."
+    },
+    {
+      "task_id": "local45-capture-resume-070",
+      "attempt": 1,
+      "contract_revision": 70,
+      "owner": "control",
+      "status": "accepted",
+      "ACK": true,
+      "task_path": "coordination/collab/local45-capture-resume-070-task.json",
+      "result_path": "coordination/collab/results/local45-capture-resume-070.json",
+      "write_paths": [
+        "scripts/isaac/g2_scene.py",
+        "tests/test_local45_capture_resume.py",
+        "coordination/collab/results/local45-capture-resume-070.json"
+      ],
+      "acceptance_record": "Root one boundedG2diff/test read +2SHA matched: onlylocal45PhysX successful pause_resume callback, one render with exactnativeframe/time/pose andplaying guard, latestcheckpoint preservesprimaryexception. Author6CPU .052s/2coldSDKAST once; actual029pending, no invariant relaxation."
     }
   ],
   "decisions": [
