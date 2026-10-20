@@ -1,6 +1,6 @@
 {
   "revision": 39,
-  "updated_at": "2026-10-20T02:27:08.965125+00:00",
+  "updated_at": "2026-10-20T02:29:16.877514+00:00",
   "scope": {
     "excluded": "실물 로봇 실행, 새 유료 서비스/에셋, 공개 배포",
     "project_root": "C:\\Users\\LIMMM\\factory-ops-twin",
@@ -779,13 +779,14 @@
       "contract_revision": 39,
       "owner": "control",
       "author": "root",
-      "status": "running",
+      "status": "accepted_bounded_source_review",
       "ACK": true,
       "task_path": "coordination/collab/native-scan-integration-review-039-task.json",
       "result_path": "coordination/collab/results/native-scan-integration-review-039.json",
       "write_paths": [
         "coordination/collab/results/native-scan-integration-review-039.json"
-      ]
+      ],
+      "acceptance_record": "All4 frozenSHA matched; control read one bounded source pass, blocking0, no extra executions. Root011 real sensor continuity and transport remain pending."
     }
   ],
   "decisions": [

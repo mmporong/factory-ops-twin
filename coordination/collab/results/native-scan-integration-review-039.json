@@ -1,0 +1,86 @@
+{
+  "task_id": "native-scan-integration-review-039",
+  "attempt": 1,
+  "contract_revision": 39,
+  "ACK": true,
+  "owner": "control",
+  "author": "root",
+  "status": "completed_bounded_read_only_review",
+  "completed_at_utc": "2026-10-20T02:28:33.2157360Z",
+  "verdict": "bounded_approval_pending_native_011",
+  "blocking_findings": [],
+  "blocking_count": 0,
+  "source_sha256": {
+    "factory_ops/isaac45_runtime.py": "93924e40e2020b13ca41871afd9d90ea1a9cae267c3c8c194ac51ef073772f5c",
+    "scripts/isaac/g2_scene.py": "2e589e531227d1f8d71118ddf04b9b5937d4fa6a770eeaae0cec2ba6ff154d4a",
+    "scripts/isaac/local45_fleet4_transport_scene.py": "34d8b3caf293ec70a16ccfadbf7f6be35d645f7e80cbec9217616712535585cd",
+    "tests/test_native_scan_publication.py": "d4f20d1eef17cfc0b917914f8550ad5e19b317fa23af447a71fb81ea92190183"
+  },
+  "all_card_hashes_matched": true,
+  "checks": [
+    {
+      "boundary": "local writer 분리와 실패 cleanup",
+      "locations": [
+        "factory_ops/isaac45_runtime.py:212",
+        "factory_ops/isaac45_runtime.py:229",
+        "factory_ops/isaac45_runtime.py:418",
+        "factory_ops/isaac45_runtime.py:444",
+        "scripts/isaac/g2_scene.py:1280"
+      ],
+      "evidence": "native_publication=True는 native annotator만 attach하고 Replicator ROS writer는 만들지 않음. publication annotator는 attach 전에 sensor 소유 필드에 등록. setup 실패 및 worker finally가 detach_writer를 통해 observer/publication annotator/product 정리를 시도하며 오류를 숨겨 성공으로 바꾸지 않음."
+    },
+    {
+      "boundary": "센서별 converter/publisher와 native 필드",
+      "locations": [
+        "scripts/isaac/g2_scene.py:391",
+        "scripts/isaac/g2_scene.py:480",
+        "scripts/isaac/g2_scene.py:499",
+        "scripts/isaac/local45_fleet4_transport_scene.py:48"
+      ],
+      "evidence": "registry namespace의 robot node에 상대 scan_front_raw/scan_rear_raw topic을 만들고 각 센서에 converter 하나를 연결. callback target은 default argument로 각 publisher에 고정. converter의 stamp sec/nanosec/frame/angular/rate/range 필드를 그대로 LaserScan에 대입. read_native_scan은 원본 timestamp를 유지하고 거리 buffer만 reshape(-1). lifecycle가 8개 prim/topic/robot/side 정체성을 검사."
+    },
+    {
+      "boundary": "warmup/readiness/main 발행과 JSON",
+      "locations": [
+        "scripts/isaac/g2_scene.py:967",
+        "scripts/isaac/g2_scene.py:977",
+        "scripts/isaac/g2_scene.py:994",
+        "scripts/isaac/g2_scene.py:1114",
+        "scripts/isaac/g2_scene.py:1008",
+        "scripts/isaac/g2_scene.py:1216"
+      ],
+      "evidence": "각 루프의 app.update 뒤 publish_native_scans 실행. 센서별 converter가 동일 native timestamp 재발행을 막음. converter/publisher binding은 local closure에만 보관하고 ros state에는 primitive outcome만 저장. resources와 publish_odom은 최종 JSON에서 제외. startup JSON도 callback/annotator/ranges 객체 대신 primitive samples/outcomes만 포함."
+    },
+    {
+      "boundary": "local opt-in/6.2/Start/source pins",
+      "locations": [
+        "scripts/isaac/g2_scene.py:949",
+        "scripts/isaac/g2_scene.py:967",
+        "scripts/isaac/local45_fleet4_transport_scene.py:18",
+        "scripts/isaac/local45_fleet4_transport_scene.py:42"
+      ],
+      "evidence": "local_sdk45=True에서만 native publication 경로 선택. canonical else는 기존 _setup_lidars와 no-op 발행 hook. Local45 lifecycle에 실패한 Replicator Start/Resume override가 남아 있지 않음. LOCAL_SOURCE_PINS에 factory_ops/flat_scan_ros.py가 있고 provenance key 포함 검사가 유지됨."
+    }
+  ],
+  "test_evidence": {
+    "root_reported": "root가 6개 focused CPU case PASS를 보고했으나 재실행하지 않음.",
+    "read_test": "지정 test_native_scan_publication.py의 한 테스트를 읽음. CPU 대체 message/node에서 2대·front/rear별 topic/frame/native stamp/ranges와 중복·새 timestamp 후 재발행 수를 확인하는 구조. 실제 ROS 결과로 확대하지 않음.",
+    "control_tests_run": 0
+  },
+  "native_gaps": [
+    "실제 4대·8센서 native buffer 지속 진행, camera frozen capture 이후 연속 발행, 실제 NumPy/rclpy serializer/subscriber 수신은 미실행. root 011의 검증 범위.",
+    "native first-beam timestamp와 World/ROS clock 간 차이·TTL·각도 끝점/coverage/거리 품질·ROS 발행률은 이 읽기 검수에서 증명하지 않음.",
+    "SDK 내부에서 동일 annotator/product를 observer와 publication이 함께 사용할 때의 실제 동작·detach 결과는 native 실행에서 확인해야 함. 현재 코드에는 각 소유 handle의 cleanup 경로가 있으나 실행 성공을 주장하지 않음."
+  ],
+  "limits": [
+    "카드 고정 SHA 4개와 지정 변경 함수·연결 문맥을 한 차례 읽기 전용으로 확인. Git 금지에 따라 Git diff 명령은 실행하지 않았으며 전체 commit/광역 소스 승인을 뜻하지 않음.",
+    "추가 CPU/SDK/GPU/ROS/프로세스 실행·제품 소스 수정·Git·새 agent·추가 검수 루프 없음. 지정 결과 JSON만 작성.",
+    "038 receipt는 앞서 추가 검사 없이 간단히 마무리했으며 8 PASS 기존 출력을 유지."
+  ],
+  "processes": {
+    "started": [],
+    "stopped": []
+  },
+  "pending_owner_work": [],
+  "next_owner": "root가 011 native 실행에서 센서 연속성과 실제 수신을 확인"
+}
