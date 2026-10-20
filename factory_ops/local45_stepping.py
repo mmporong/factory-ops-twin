@@ -45,7 +45,10 @@ class Local45Stepper:
             after = physics_state(self.world)
             if (after[0] - before[0] != 1
                     or not math.isclose(after[1] - before[1], self.dt, rel_tol=1e-7, abs_tol=1e-9)):
-                raise RuntimeError("native physics delta differs from one configured step")
+                raise RuntimeError("native physics delta differs from one configured step"
+                    f"; before={before!r}; after={after!r}"
+                    f"; frame_delta={after[0]-before[0]!r}; time_delta_s={after[1]-before[1]!r}"
+                    f"; configured_dt_s={self.dt!r}")
             self._calls += 1
             rendered = self._calls % self.factor == 0
             if rendered:

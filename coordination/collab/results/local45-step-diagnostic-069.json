@@ -1,0 +1,31 @@
+{
+  "task_id": "local45-step-diagnostic-069",
+  "attempt": 1,
+  "contract_revision": 69,
+  "owner": "control",
+  "ack": true,
+  "accepted": false,
+  "status": "diagnostic_only_change_complete",
+  "document_encoding": "ASCII",
+  "baseline_sha256": "efef8b3ad99bfb45812cc8f022eaf737323754e132e5eac6c5dbaccaf17a6bbb",
+  "source_sha256": {
+    "factory_ops/local45_stepping.py": "634e9a04bcaf0294ab9e18d64827b64583b15949cbcd62f6e214cb0868268a4b"
+  },
+  "change": "Keep the original RuntimeError prefix and append repr(before), repr(after), measured frame_delta, time_delta_s and configured_dt_s. No guard, tolerance, count, poisoning, rounding, fallback or flow change.",
+  "validation": [
+    {
+      "cwd": "C:/Users/LIMMM/factory-ops-twin",
+      "command": "& './.venv/Scripts/python.exe' -B -m unittest tests.test_local45_stepping.SteppingTests.test_missing_or_extra_native_step_and_bad_time_poison_instance -v",
+      "result": "1 affected existing CPU test PASS",
+      "exit_code": 0
+    },
+    {
+      "command": "stdin ast.parse/hashlib script | & 'E:/IsaacSim/isaac-sim-4.5.0/kit/python/python.exe' -B -S -",
+      "python": "3.10.15",
+      "result": "1 file cold AST PASS; no product or SDK import",
+      "exit_code": 0
+    }
+  ],
+  "limits": "Exact027 failing guard values remain unknown; no cause inferred. Root owns preservation and028 diagnostic prefix. No SDK/GPU/ROS/WSL/bag/Git actions, new tests, full suites, agents or other file changes.",
+  "written_paths": ["factory_ops/local45_stepping.py", "coordination/collab/results/local45-step-diagnostic-069.json"]
+}

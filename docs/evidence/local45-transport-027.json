@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "run_id": "7be41e77f3f543e7999b2cee3f3f3017",
+  "producer_source_commit": "8f7276dba0ad8e512ea44cca1c811c3c4dac0fb0",
+  "status": "failed_native_step_delta_guard_automatically_closed",
+  "primary_sdk_failure": {
+    "message": "native physics delta differs from one configured step",
+    "traceback": "Traceback (most recent call last):\n  File \"D:\\FactoryOpsRuntime\\local45-transport-027\\source\\scripts\\isaac\\g2_scene.py\", line 1310, in _run\n    rendered = _update_physics_app(app, world_clock, stepper=mission_stepper)\n  File \"D:\\FactoryOpsRuntime\\local45-transport-027\\source\\scripts\\isaac\\g2_scene.py\", line 91, in _update_physics_app\n    rendered = stepper.step()[\"rendered\"]\n  File \"D:\\FactoryOpsRuntime\\local45-transport-027\\source\\factory_ops\\local45_stepping.py\", line 48, in step\n    raise RuntimeError(\"native physics delta differs from one configured step\")\nRuntimeError: native physics delta differs from one configured step\n",
+    "type": "RuntimeError"
+  },
+  "phase_start_actual": {
+    "explicit_rgb_capture": "separate paused render with frozen physics validation",
+    "native_sensor_timestamp_available": false,
+    "physics": "one actual World.step(render=False) per control iteration",
+    "run_id": "7be41e77f3f543e7999b2cee3f3f3017",
+    "scan_publication": "only after scheduled render; first interval may include the startup-to-mission phase change",
+    "scheduled_render_every_physics_steps": 6,
+    "start_physics_frame": 123,
+    "start_world_time_s": 2.0500001069158316
+  },
+  "last_completed_trajectory_samples": {
+    "carter1": {
+      "sim_time_s": 2.0666667744517326,
+      "physics_frame": 124
+    },
+    "carter2": {
+      "sim_time_s": 2.0666667744517326,
+      "physics_frame": 124
+    },
+    "carter3": {
+      "sim_time_s": 2.0666667744517326,
+      "physics_frame": 124
+    },
+    "carter4": {
+      "sim_time_s": 2.0666667744517326,
+      "physics_frame": 124
+    }
+  },
+  "configured_physics_dt_s": 0.016666666666666666,
+  "exact_failing_before_after_observed": false,
+  "cause_limit": "Original guard emitted no failing before/after pair. Current evidence cannot distinguish frame-count discrepancy, zero timestep or another native delta. Do not infer the cause from the prior small fixture.",
+  "automatic_primary_failure_checkpoint_and_monitor_exercised": true,
+  "host_primary_error": "RuntimeError: SDK failure before cleanup: mission: RuntimeError: native physics delta differs from one configured step",
+  "windows_abort_requested": true,
+  "windows_closed": true,
+  "linux_closed": true,
+  "cleanup_errors": [],
+  "host_total_wall_s": 63.01600000000326,
+  "sdk_final_report_original_status": "running",
+  "secondary_ros_error": {
+    "message": "Failed to create publisher: rcl node's context is invalid, at ./src/rcl/node.c:404",
+    "traceback": "Traceback (most recent call last):\n  File \"/mnt/d/FactoryOpsRuntime/local45-transport-027/source/scripts/ros/g3_mission.py\", line 1268, in run_mission\n    event_pub = event_node.create_publisher(String, \"/factory/g3/events\", 50)\n                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/node.py\", line 1560, in create_publisher\n    publisher_object = _rclpy.Publisher(\n                       ^^^^^^^^^^^^^^^^^\nrclpy._rclpy_pybind11.RCLError: Failed to create publisher: rcl node's context is invalid, at ./src/rcl/node.c:404\n",
+    "type": "RCLError"
+  },
+  "secondary_scope": "ROS context shutdown after owned SDK failure; not the primary step-guard cause.",
+  "material_state_present": false,
+  "completed_orders": 0,
+  "empty_returns_completed": 0,
+  "bag_sql_opened": false,
+  "new_video_or_SDG_generated": false,
+  "goal80_complete": false,
+  "next": "Diagnostic-only guard message with original before/after/deltas/configured dt; unchanged gates, then fresh028prefix."
+}

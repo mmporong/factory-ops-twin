@@ -1,0 +1,21 @@
+{
+  "task_id": "local45-step-diagnostic-069",
+  "attempt": 1,
+  "contract_revision": 69,
+  "owner": "control",
+  "reviewer": "root",
+  "write_paths": [
+    "factory_ops/local45_stepping.py",
+    "coordination/collab/results/local45-step-diagnostic-069.json"
+  ],
+  "inputs": {
+    "commit": "8f7276dba0ad8e512ea44cca1c811c3c4dac0fb0",
+    "actual027": "D:/FactoryOpsRuntime/local45-transport-027",
+    "facts": "027 SDKfailednative physics delta differs from one configured step on missionstepper; startWorldframe123 t2.0500001069158316; original trajectorylastframe124 t2.0666667744517326. Configdt1/60. Exactfailingbefore/after guardvalues NOTrecorded; do not infercause. SDKfailurecheckpointmonitor DIDautomatically closebothOS, no cleanup errors, parent54934terminalexit1 after63.016wall. Rootowns027preservation and028diagnosticprefix."
+  },
+  "goal": "Tiny diagnostic-only change: when native step delta guard fails, original RuntimeError must include repr(before), repr(after), measured frame/time delta and configured dt. Keep all math.isclose tolerances/count/poisoning/flow EXACTLYUNCHANGED. No fixhypothesis/tolerancewidening/newclasses/fallback/rounding. Not alone; root otherfiles owned.",
+  "acceptance": [
+    "ACK069attempt1; onlylistedfiles. One affected existing CPUcase tests.test_local45_stepping.SteppingTests.test_missing_or_extra_native_step_and_bad_time_poison_instance if useful once; coldAST1file once, nofullsuite/noSDK/GPU/WSL/bag/Git/newagents.",
+    "Keep originalerrorprefix for compatibility; append raworiginalobservations only; ifguardconcretevalues show nextphysicscounter invalid root willinspect. No newmirror-string tests. ReturntinyASCII receipt SHA/commands/limits. Rootreadsoneerror-line thenfreezes028actualprefix, no extra reviewchain."
+  ]
+}
