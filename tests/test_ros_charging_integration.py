@@ -3,11 +3,30 @@ from collections import deque
 from types import SimpleNamespace
 import unittest
 from unittest.mock import Mock
+import math
+from pathlib import Path
 
-from scripts.ros.g3_mission import observe_charging_odometry
+from factory_ops.fleet_execution import make_chunk
+from factory_ops.fleet_routing import RouteBook
+from factory_ops.navigation import GoalPose
+from scripts.ros.g3_mission import navigation_leg_goal, observe_charging_odometry
 
 
 class ChargingIntegrationTests(unittest.TestCase):
+    def test_charging_staging_uses_route_endpoint_and_tangent_without_a_station_goal(self):
+        configs = Path(__file__).resolve().parents[1]/'configs/factory-fleet4'
+        book = RouteBook.from_files(configs/'layout.json', configs/'g3-routing.json')
+        plan = book.plan('P1','M_LOW',closed=False)
+        goal = navigation_leg_goal(plan, {}, allow_transit=True)
+        self.assertEqual(('map',12.,5.,math.pi/2), (goal.frame_id,goal.x,goal.y,goal.yaw))
+        chunk = make_chunk(book,'P1','M_LOW',closed=False,final_goal=goal)
+        self.assertTrue(chunk.final)
+        self.assertEqual('M_LOW',chunk.goal)
+        with self.assertRaisesRegex(ValueError, 'no authored station goal'):
+            navigation_leg_goal(plan, {})
+        authored = GoalPose('map',12.,5.,0.)
+        self.assertIs(authored, navigation_leg_goal(plan, {'M_LOW':authored}, allow_transit=True))
+
     def setUp(self):
         self.charging = SimpleNamespace(energy=SimpleNamespace(charging_limits={"max_observation_gap_s": .3}),
                                        observe=Mock(return_value={"energy": {}}))

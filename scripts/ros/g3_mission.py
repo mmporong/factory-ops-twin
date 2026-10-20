@@ -546,6 +546,17 @@ def mission_energy_load(mission: FleetMission, material: MaterialFlow | None, ro
     return product_loaded or (empty_intent is not None and empty_intent.transition is Transition.DROP)
 
 
+def navigation_leg_goal(plan: Any, authored_goals: Mapping[str, GoalPose], *, allow_transit: bool = False) -> GoalPose:
+    """Keep station orientation; charging staging ends along its authored route edge."""
+    target = plan.nodes[-1]
+    if target in authored_goals:
+        return authored_goals[target]
+    if not allow_transit or len(plan.points) < 2:
+        raise ValueError(f"navigation target has no authored station goal: {target}")
+    before, final = plan.points[-2:]
+    return GoalPose("map", final[0], final[1], math.atan2(final[1]-before[1], final[0]-before[0]))
+
+
 def observe_charging_odometry(charging: RosChargingRuntime, run_id: str, robot_id: str,
                               runtime: Mapping[str, Any], reservation: Mapping[str, Any] | None,
                               now_s: float) -> dict[str, Any] | None:
@@ -1501,9 +1512,11 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
             rt = robots[robot]
             reset_stop_observation(rt)
             plan = book.plan(rt["anchor"], target, closed=current_closed)
+            final_goal = navigation_leg_goal(plan, goals,
+                allow_transit=intent is None and robot in charging_reservations)
             full_tiles = swept_tiles(plan.points, reservation_radius, tile_size_m=book.tile_size_m, bounds_xy=bounds)
             rt["leg"] = {"plan": plan, "target": target, "intent": intent, "closed": current_closed, "index": 0,
-                         "tiles": full_tiles, "kind": "business" if intent else "clearing"}
+                         "tiles": full_tiles, "kind": "business" if intent else "clearing", "final_goal": final_goal}
             rt["phase"] = "request"
             rt["chunk"] = None
             rt["last_request"] = -math.inf
@@ -1596,7 +1609,7 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
                 if phase == "request" and maps_ready and stamp-rt["last_request"] >= .2:
                     leg = rt["leg"]
                     if rt["chunk"] is None:
-                        rt["chunk"] = make_chunk(book, rt["anchor"], leg["target"], closed=leg["closed"], final_goal=goals[leg["target"]])
+                        rt["chunk"] = make_chunk(book, rt["anchor"], leg["target"], closed=leg["closed"], final_goal=leg["final_goal"])
                         rt["follow_uuid"] = leg["intent"].goal_id if rt["chunk"].final and leg["intent"] else str(uuid4())
                     decision = manager.transfer(robot, rt["generation"], rt["chunk"].route_id, rt["follow_uuid"], leg["tiles"], now_s=stamp)
                     rt["last_request"] = stamp

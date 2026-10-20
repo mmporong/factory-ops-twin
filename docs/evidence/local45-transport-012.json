@@ -1,0 +1,153 @@
+{
+  "schema_version": 1,
+  "run_id": "bac57ed350a4460f82670c29c41bd834",
+  "source_commit": "2af9e4f3495789b3fef763f48ed8a97b892a688d",
+  "status": "failed_charging_staging_goal_lookup",
+  "mission_error": {
+    "message": "'M_LOW'",
+    "traceback": "Traceback (most recent call last):\n  File \"/mnt/d/FactoryOpsRuntime/local45-transport-012/source/scripts/ros/g3_mission.py\", line 1599, in run_mission\n    rt[\"chunk\"] = make_chunk(book, rt[\"anchor\"], leg[\"target\"], closed=leg[\"closed\"], final_goal=goals[leg[\"target\"]])\n                                                                                                 ~~~~~^^^^^^^^^^^^^^^\nKeyError: 'M_LOW'\n",
+    "type": "KeyError"
+  },
+  "windows_closed": true,
+  "linux_closed": true,
+  "cleanup_errors": [],
+  "bag_sql_opened": false,
+  "sensor_initial_samples": {
+    "carter1": [
+      {
+        "angle_increment": 0.0019634952768683434,
+        "angle_max": 3.1396291255950928,
+        "angle_min": -3.1415927410125732,
+        "finite_count": 3200,
+        "frame_id": "front_scan",
+        "minimum_finite_m": -1.0,
+        "name": "front",
+        "range_count": 3200,
+        "range_max": 30.0,
+        "range_min": 0.05000000074505806,
+        "scan_time": 0.10000000149011612,
+        "stamp_s": 1.916698016,
+        "time_increment": 3.1249997846316546e-05
+      },
+      {
+        "angle_increment": 0.0019634952768683434,
+        "angle_max": 3.1396291255950928,
+        "angle_min": -3.1415927410125732,
+        "finite_count": 3200,
+        "frame_id": "rear_scan",
+        "minimum_finite_m": -1.0,
+        "name": "rear",
+        "range_count": 3200,
+        "range_max": 30.0,
+        "range_min": 0.05000000074505806,
+        "scan_time": 0.10000000149011612,
+        "stamp_s": 1.933364684,
+        "time_increment": 3.1249997846316546e-05
+      }
+    ],
+    "carter2": [
+      {
+        "angle_increment": 0.0019634952768683434,
+        "angle_max": 3.1396291255950928,
+        "angle_min": -3.1415927410125732,
+        "finite_count": 3200,
+        "frame_id": "front_scan",
+        "minimum_finite_m": -1.0,
+        "name": "front",
+        "range_count": 3200,
+        "range_max": 30.0,
+        "range_min": 0.05000000074505806,
+        "scan_time": 0.10000000149011612,
+        "stamp_s": 1.916698016,
+        "time_increment": 3.1249997846316546e-05
+      },
+      {
+        "angle_increment": 0.0019634952768683434,
+        "angle_max": 3.1396291255950928,
+        "angle_min": -3.1415927410125732,
+        "finite_count": 3200,
+        "frame_id": "rear_scan",
+        "minimum_finite_m": -1.0,
+        "name": "rear",
+        "range_count": 3200,
+        "range_max": 30.0,
+        "range_min": 0.05000000074505806,
+        "scan_time": 0.10000000149011612,
+        "stamp_s": 1.916698016,
+        "time_increment": 3.1249997846316546e-05
+      }
+    ],
+    "carter3": [
+      {
+        "angle_increment": 0.0019634952768683434,
+        "angle_max": 3.1396291255950928,
+        "angle_min": -3.1415927410125732,
+        "finite_count": 3200,
+        "frame_id": "front_scan",
+        "minimum_finite_m": -1.0,
+        "name": "front",
+        "range_count": 3200,
+        "range_max": 30.0,
+        "range_min": 0.05000000074505806,
+        "scan_time": 0.10000000149011612,
+        "stamp_s": 1.916698016,
+        "time_increment": 3.1249997846316546e-05
+      },
+      {
+        "angle_increment": 0.0019634952768683434,
+        "angle_max": 3.1396291255950928,
+        "angle_min": -3.1415927410125732,
+        "finite_count": 3200,
+        "frame_id": "rear_scan",
+        "minimum_finite_m": -1.0,
+        "name": "rear",
+        "range_count": 3200,
+        "range_max": 30.0,
+        "range_min": 0.05000000074505806,
+        "scan_time": 0.10000000149011612,
+        "stamp_s": 1.933364684,
+        "time_increment": 3.1249997846316546e-05
+      }
+    ],
+    "carter4": [
+      {
+        "angle_increment": 0.0019634952768683434,
+        "angle_max": 3.1396291255950928,
+        "angle_min": -3.1415927410125732,
+        "finite_count": 3200,
+        "frame_id": "front_scan",
+        "minimum_finite_m": -1.0,
+        "name": "front",
+        "range_count": 3200,
+        "range_max": 30.0,
+        "range_min": 0.05000000074505806,
+        "scan_time": 0.10000000149011612,
+        "stamp_s": 1.916698016,
+        "time_increment": 3.1249997846316546e-05
+      },
+      {
+        "angle_increment": 0.0019634952768683434,
+        "angle_max": 3.1396291255950928,
+        "angle_min": -3.1415927410125732,
+        "finite_count": 3200,
+        "frame_id": "rear_scan",
+        "minimum_finite_m": -1.0,
+        "name": "rear",
+        "range_count": 3200,
+        "range_max": 30.0,
+        "range_min": 0.05000000074505806,
+        "scan_time": 0.10000000149011612,
+        "stamp_s": 1.916698016,
+        "time_increment": 3.1249997846316546e-05
+      }
+    ]
+  },
+  "actual_transport_completed": false,
+  "actual_charging_completed": false,
+  "next_change": "charging transit target uses route endpoint/tangent; station poses preserved",
+  "records_sha256": {
+    "pair-host.json": "06ca9e7d90ba9bdb99d57e98fc2bc49b98bd198348ea45ae043e20514fdebbc5",
+    "results/run/mission-result.json": "0e9236cefdb8dfc5ce4c510da3c3d28a2174762635ec03a126103425ee5122db",
+    "results/run/native-scan-startup.json": "dcf981d18707c30de854dadcdaedfd45621a446920a51e92934bb29aeabe398b"
+  }
+}
