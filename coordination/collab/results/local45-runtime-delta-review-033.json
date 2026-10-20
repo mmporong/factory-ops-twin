@@ -1,0 +1,119 @@
+{
+  "task_id": "local45-runtime-delta-review-033",
+  "attempt": 1,
+  "contract_revision": 33,
+  "owner": "control",
+  "reviewer": "control",
+  "author": "root",
+  "ack_at_utc": "2026-10-20T00:07:53.1342825Z",
+  "baseline_commit": "0ddc750",
+  "review_commit": "b89eb8674d4795822a1acd2a4199506bb4d736d2",
+  "scope": "지정6경로의critical delta와지정2evidence만읽기. receipt외쓰기/소스/실행중004/기존수용범위/Git변경/새테스트/연구/에이전트/프로세스조작없음.",
+  "bookkeeping": {
+    "task": "031 recheck",
+    "dispatched_contract_revision": 32,
+    "recorded_result_contract_revision": 31,
+    "task_attempt_finding_source_scope_match": true,
+    "root_acceptance_scope": "PAIR031-001 boundary only",
+    "original_report_preserved": true
+  },
+  "status": "completed_read_only_critical_delta_review",
+  "verdict": "no_reachable_major_or_blocker_found_in_requested_delta",
+  "major_count": 0,
+  "blocker_count": 0,
+  "findings": [],
+  "checks": [
+    {
+      "scope": "replace_shared_file 및2호출 경계",
+      "paths": [
+        "factory_ops/compat.py:32",
+        "scripts/ros/g2_mission.py:56",
+        "factory_ops/visual_state.py:167"
+      ],
+      "result": "PermissionError만 bounded retry하고 os.replace의 원자적 교체를 유지한다. target 삭제·부분 덮기 fallback이 없다. authorization JSON과 visual legacy state의 기존 임시파일 작성/flush 경계도 유지된다.",
+      "limit": "기본0.2s 동안 잠금이 풀리지 않으면 실패를 전파한다. fixture는14attempt/50.3ms 후 complete file 성공 사례이며 모든경합/004성공의 증거는 아니다."
+    },
+    {
+      "scope": "local45 bag policy와두recorder gate",
+      "path": "scripts/ros/g3_mission.py",
+      "lines": [
+        963,
+        1198,
+        1199,
+        1214,
+        1274
+      ],
+      "result": "local45_development에서만 정확한basename scan_front/scan_rear/scan_localization의 bag 복사본을 제외한다. 실제8개raw/TF/control/event 등은 남는다. 초기/유지 subscriber gate 모두 같은 recorded_scan_topics를 사용한다. 기존 필터publisher/원본subscriber·mask/fanout 및 AMCL 데이터 경로는 이diff에서 변경되지 않았다. canonical62는 원래topic목록을 복사해 유지한다."
+    },
+    {
+      "scope": "RGB3-only gate",
+      "path": "scripts/isaac/local45_fleet4_transport_scene.py",
+      "lines": [
+        39,
+        52,
+        59,
+        65,
+        140
+      ],
+      "result": "기존 역할 검증으로 저장된3개 RGB 제품만 toggle한다. register후gated→before_capture enabled/기존zero-delta flush→after_capture gated이며 finalcleanup도False를 시도한다.8RTX제품·writer/observer에는 gate를 적용하지 않는다. local45별도class이며 canonical6.2 lifecycle 변경은 없다. 요청 상태와 native update readback 미검증도metadata로 구분한다.",
+      "limit": "004의 실제fresh RGB·8RTX 진행·clock/성능은 미열람/미검증이다."
+    },
+    {
+      "scope": "ROS exit30s SDK cleanup grace와pass",
+      "path": "scripts/isaac/run_local45_fleet_pair.py",
+      "lines": [
+        142,
+        147,
+        151,
+        160
+      ],
+      "result": "ROS 소유cgroup의 closure 확인 후 즉시 SDK를 종료하던 경로 대신30s까지 SDK 정리를 기다리며 기존globalbound도 유지한다. 이후 Windows exit0·mission passed·scene validated를 모두 요구하고 독립 close_pair의양쪽종료/receipt 판정도 유지한다. SDK exit0이나 ROS 종료만으로 passed로 올리지 않는다.",
+      "limit": "003의 누락된Windows Job 종료증거를 복구했다고 주장하지 않는다.004의 실제grace/종료 결과는 root 검증 대상이다. 수용된031 close_pair 구현은 반복검수하지 않았다."
+    }
+  ],
+  "evidence_notes": {
+    "crossos_fixture": "docs/evidence/crossos-atomic-001.json: 기존rename PermissionError, retry14회/0.050317915s, complete new JSON, statuspassed. 지정JSON만읽고fixture를재실행하지 않음.",
+    "actual003": "docs/evidence/local45-transport-003.json: failed_preserved/orders authorization rename PermissionError. carter1약3.306m/peak0.4m_s이며 나머지AMR의 운송완료를 뜻하지 않는다.8raw/4staticTF/clock671은 문서기록으로 수신했고 bag SQL을 열지 않았다. Windows Job closure=false/Linux closure=true 및Windows증거gap을 그대로 유지한다.",
+    "actual004": "동결 b89eb86의 실행중runtime/stage/source/log는 열거나 바꾸거나 정지하지 않았다. 이번판정은 코드delta 한정이다."
+  },
+  "validation": {
+    "performed": "지정0ddc750..b89eb86 diff와필요한동일파일문맥/지정evidence2개 읽기 및SHA계산",
+    "root_reported_only": "atomic/recordpolicy/cleanup7PASS, RGB/lifecycle5PASS/type0, visual7PASS+Windows비적용POSIX1skip",
+    "new_tests": false,
+    "new_research": false,
+    "sdk_gpu_ros_process_actions": false,
+    "source_edits": false,
+    "git_mutations": false,
+    "accepted_scope_repeated": false
+  },
+  "limits": [
+    "reachable major/blocker만한정검수했다.0건은004전체실행·운송/시각정렬/센서품질/적재·충전 성공을 의미하지 않는다.",
+    "030 supervisor/031 close_pair/029 tracker 및전체repo를 재리뷰하거나 테스트하지 않았다.",
+    "sourceSHA는 지정 frozen commit의Git blob bytes 기준이다. crossOSfixture의compat SHA는 동일내용 CRLF형태와일치함을 hash로대조했으며 frozenblob LF와혼동하지 않는다.",
+    "031 bookkeeping mismatch는 metadata문제다. task/attempt/finding/source scope가같고root수용은PAIR031-001 경계만이었다. 원본031/recheck receipt를 덮지 않았다.",
+    "쓰기 경로는 본033 JSON만이다. root소스/Git/보드/실행중004및기존030파일은 변경하지 않았고 여기서 검수를 종료한다."
+  ],
+  "processes": {
+    "started": [],
+    "stopped": []
+  },
+  "pending_work": [],
+  "source_sha256": {
+    "factory_ops/compat.py": "1f868e88a0dfdc55a29c4f38e5df2a949783d21c9764c9b1b9bf702f2537f718",
+    "scripts/ros/g2_mission.py": "8de9aba87a70c1836cf16982d2b87b72e0ab0a2bed145bb04e92ec5961134e7c",
+    "factory_ops/visual_state.py": "9a1f60cc69168032ecce4252329981b4e34d016f1a6b504851291c189601a496",
+    "scripts/ros/g3_mission.py": "dfe604f5e770992fc5dc753c140bdee65956cd91b51a97379caa177f56df3ce4",
+    "scripts/isaac/local45_fleet4_transport_scene.py": "1b660eddc2416b09ac84155eb28a9728acdf83dedeec12d8c512773969d6d573",
+    "scripts/isaac/run_local45_fleet_pair.py": "2e44cfda08cb7a2e38f5bff99c021c68e7e7e84515b91e2434b5538581d0687a"
+  },
+  "evidence_sha256": {
+    "docs/evidence/crossos-atomic-001.json": "83926d252347a5c5f56c7dca7d78197c15ce4bd29b531acda6a540268686070a",
+    "docs/evidence/local45-transport-003.json": "affddc3c0e5dfb74e55d37a967220d159a682ea9afbbe104084c889689c60747"
+  },
+  "fixture_source_byte_binding": {
+    "fixture_source_sha256": "c1ead80e3e3e33aac10850d45bae570e12b5ec796331fb69314c6c26651a8fe8",
+    "frozen_git_blob_sha256": "1f868e88a0dfdc55a29c4f38e5df2a949783d21c9764c9b1b9bf702f2537f718",
+    "fixture_matches_crlf_form": true
+  },
+  "completed_at_utc": "2026-10-20T00:09:42.0243320Z"
+}

@@ -1,0 +1,17 @@
+{
+  "task": {
+    "task_id": "local45-runtime-delta-review-033",
+    "attempt": 1,
+    "contract_revision": 33,
+    "owner": "control",
+    "author": "root",
+    "status": "dispatched",
+    "ACK": false,
+    "task_path": "coordination/collab/local45-runtime-delta-review-033-task.json",
+    "result_path": "coordination/collab/results/local45-runtime-delta-review-033.json",
+    "write_paths": [
+      "coordination/collab/results/local45-runtime-delta-review-033.json"
+    ]
+  },
+  "instruction": "Task033 final small critical-delta review, read-only existing control; no new agents. Root selected032 optionA only, implemented and launched frozen b89eb8674d4795822a1acd2a4199506bb4d736d2 as004 (do not inspect/mutate/stop runtime). Read only diff0ddc750..b89eb86 for: factory_ops/compat.py replace_shared_file, scripts/ros/g2_mission.py and factory_ops/visual_state.py replacement calls, scripts/ros/g3_mission.py _recording_topics +both subscriber gates, scripts/isaac/local45_fleet4_transport_scene.py RGB3-only gating, scripts/isaac/run_local45_fleet_pair.py ROS-exit30s cleanup grace/pass checks. Do not repeat accepted030/031close_pair/029/fullrepo review. Root tests: atomic/recordpolicy/cleanup7PASS, RGB/lifecycle5PASS,type0; visual7PASS1Windows-inapplicablePOSIXskip. Real crossOS fixture oldrename PermissionError, retry14attempts50.3ms completefilePASS (docs/evidence/crossos-atomic-001.json). Actual003 failed authorization rename; oneAMR3.306m/peak.4m_s;8ROSraw +4staticTF+clock671 received; sourcefulldetailsdocs/evidence/local45-transport-003.json.004 records8raw+TF/control/events but excludes onlyscan_front/scan_rear/scan_localization bag copies; actual ROS filtering+AMCL consumption unchanged, canonical62 fullbag unchanged. Please identify only reachable major/blocker and minimal correction. No tests/research/GPU/ROS/process/code/Git/extra docs. Own only coordination/collab/results/local45-runtime-delta-review-033.json: sourceSHA/verdict/concrete findings/limits. Concise report; no repeated general analysis. ACK033. Root continuing main runtime and backup. Also sourcecard recheck031 dispatched contractrevision32 but your result31; note this bookkeeping mismatch in033 rather than overwrite original report; finding/task/attempt/source scope match, root accepted onlyPAIR031001 boundary. You are not alone; source/Git/board ownedroot."
+}

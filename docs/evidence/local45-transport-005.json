@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "run_id": "331e650e5cf8415181e8d69062847c99",
+  "source_commit": "3cbca74f3e23b6905d75488965ac7bb4c6f3ddf8",
+  "status": "failed_preserved",
+  "scope": "second bounded RGB gate attempt; optimization retired after empty-buffer failure",
+  "failure_stage": "mission",
+  "error": "RGB not ready for overview-00000.png: shape=(0,)",
+  "windows_closed": true,
+  "linux_closed": true,
+  "prelaunch_inputs_verified": true,
+  "raw_directory": "D:\\FactoryOpsRuntime\\local45-transport-005",
+  "raw_sha256": {
+    "pair-host.json": "15d4664391ef77af3da5838cdddc0421587c01f5cff4e5eafc2fd9fdec0225a1",
+    "job.json": "bfd9d308f78d8d0f9db2869dc3276c466ab1281d9c8e9771093d29619955600a",
+    "results/run/local45-fleet4-transport-scene.json": "93649ed8ce61e3ce4e98b8aab401f69778c7c1c5640c8175cb65e15df15b2037"
+  },
+  "decision": "return local45 lifecycle to inherited continuous RGB updates; keep RGB readiness guard, atomic retry, lean recording and cleanup fixes",
+  "performance_claim": false
+}

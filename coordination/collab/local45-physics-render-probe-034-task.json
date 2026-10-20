@@ -1,0 +1,21 @@
+{
+  "task": {
+    "task_id": "local45-physics-render-probe-034",
+    "attempt": 1,
+    "contract_revision": 34,
+    "owner": "control",
+    "reviewer": "root",
+    "status": "dispatched",
+    "ACK": false,
+    "task_path": "coordination/collab/local45-physics-render-probe-034-task.json",
+    "result_path": "coordination/collab/results/local45-physics-render-probe-034.json",
+    "write_paths": [
+      "factory_ops/local45_stepping.py",
+      "scripts/isaac/local45_cadence_probe.py",
+      "configs/local45-cadence-probe.json",
+      "tests/test_local45_stepping.py",
+      "coordination/collab/results/local45-physics-render-probe-034.json"
+    ]
+  },
+  "instruction": "Task034 bounded implementation using your032 B-source advice, existing control only, no newagents. Root owns all existingfiles/Git/mainnative. You are not alone; do not revert others or edit existing source. Root actual004/005 bothfail firstRGB overview empty despite5pausedKitupdates; fullWindows/WSLclosedTrue both. RGBgatingA is now retired (removed overrides/tests fromrootworkingtree), returning to003 continuous3RGB. Root will run006 continuous to verify atomic write+lean recording/first transport while you prepare an ISOLATED B microprobe; do not launch GPU/SDK/ROS/process/VM/Git now. Own ONLY factory_ops/local45_stepping.py, scripts/isaac/local45_cadence_probe.py, configs/local45-cadence-probe.json, tests/test_local45_stepping.py, coordination/collab/results/local45-physics-render-probe-034.json. Reuse032 installed-source knowledge and existing facade/probe helpers. Provide config/output/run-id CLI matching existing run-local-contact-probe.ps1 guard. Microprobe must initializeWorld before3 persistent1280x720 RGB+8RTX, use four existingNovaCarter assetrefs/scene fromlocal45-fleet-runtime-probe config (no new assets), actual World.step(render=False) one per60Hz control sample and world.render every6 steps, rendering_dt1/10 configured before render products. Need explicit source/config/dependency hashes+newoutput refusal+bounded walltime/cleanup same pattern as existing local_fleet_runtime_probe. Do not modify old probe/facade/G2. Native actualWorld time/frame deltas, positive/increasing native LaserScan stamps and actualROSclock receipts must be compared; reuse current clock graph ifpossible. Never substitute loopcounter forphysics/sensor frame or pretendtimelineclockmatchesWorld. Detect/report mismatch asfail, no hiddenclockfallback. All4 robots canstayzero (no autonomous missionclaim); finite actualpose/physicsclock plus native8scan progression and3RGB valid buffers/frozenstep captures atsamephysics time suffice. Brief native experiment120physicssteps afterwarmup (2simsec) withfactor1/6 option forrootcomparison ifuseful. Pure steppertest meaningful: exactlyonePhysics step/call, render cadence, counter mismatch/failedrender fail; no fakeSDKpass. Source/controller changes no mainstreamphysics yet. Root will review and launch actual probe after006 closes. Report CPUtests/type/importPython3.10/sourceSHA and actualSDKnotrun flags. Keepcode small and grounded; no generic optimizations, extra research, broadreview/docs. ACK034 then work. Finish resultfile, do notextend."
+}

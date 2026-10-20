@@ -5,7 +5,7 @@ from pathlib import Path
 from types import SimpleNamespace
 import tempfile
 import unittest
-from unittest.mock import Mock, patch, call
+from unittest.mock import Mock
 
 from factory_ops.fleet_transport import prepare_bundle
 from scripts.isaac.local45_fleet4_transport_scene import Local45FleetLifecycle
@@ -52,29 +52,6 @@ class Local45LifecycleTests(unittest.TestCase):
         self.lifecycle.cleanup_render_products()
         for observer in self.observers:
             observer.close.assert_called_once()
-
-    def test_only_owned_rgb_products_are_gated_and_enabled_during_frozen_capture(self):
-        textures = [SimpleNamespace(set_updates_enabled=Mock()) for _ in range(3)]
-        products = {role: SimpleNamespace(hydra_texture=texture) for role, texture in zip(
-            ("portfolio_overview", "carter1_follow", "carter2_follow"), textures)}
-        summary = self.lifecycle.register_rgb_render_products(products)
-        self.assertEqual("gated", summary["requested_state_between_captures"])
-        self.assertFalse(summary["lidar_products_gated"])
-        self.lifecycle.timeline = self.timeline
-        rep = SimpleNamespace(orchestrator=SimpleNamespace(step=Mock()))
-        app = SimpleNamespace(update=Mock())
-        with patch("scripts.isaac.local45_fleet4_transport_scene.importlib.import_module",
-                   return_value=SimpleNamespace(get_app=lambda: app)):
-            self.lifecycle.before_capture(rep)
-        self.assertEqual("enabled", self.lifecycle.rgb_render_state)
-        self.assertEqual([call(delta_time=0., rt_subframes=4, pause_timeline=True)] * 2,
-                         rep.orchestrator.step.call_args_list)
-        self.assertEqual(5, app.update.call_count)
-        self.lifecycle.after_capture()
-        self.assertEqual("gated", self.lifecycle.rgb_render_state)
-        for texture in textures:
-            self.assertEqual([False, True, False], [call.args[0] for call in texture.set_updates_enabled.call_args_list])
-        self.assertTrue(all(not sensor.open_native_observer.called for sensor in self.sensors))
 
     def test_duplicate_and_wrong_robot_paths_are_rejected(self):
         duplicate = deepcopy(self.metadata)

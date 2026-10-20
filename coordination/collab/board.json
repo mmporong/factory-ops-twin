@@ -1,5 +1,5 @@
 {
-  "revision": 32,
+  "revision": 34,
   "updated_at": "2026-10-19T23:07:02.085301+00:00",
   "scope": {
     "excluded": "실물 로봇 실행, 새 유료 서비스/에셋, 공개 배포",
@@ -667,6 +667,39 @@
         "coordination/collab/results/local45-render-cadence-032.json"
       ],
       "acceptance_record": "root read installed-source advice; choseA RGB3product gate only for next attempt. No measured speedup claim; physics/control/clock/8RTX cadence unchanged."
+    },
+    {
+      "task_id": "local45-runtime-delta-review-033",
+      "attempt": 1,
+      "contract_revision": 33,
+      "owner": "control",
+      "author": "root",
+      "status": "accepted",
+      "ACK": true,
+      "task_path": "coordination/collab/local45-runtime-delta-review-033-task.json",
+      "result_path": "coordination/collab/results/local45-runtime-delta-review-033.json",
+      "write_paths": [
+        "coordination/collab/results/local45-runtime-delta-review-033.json"
+      ],
+      "acceptance_record": "control checked frozenb89 delta major0; source received. Actual004/005 RGBempty failure is preserved and gate code retired, not claimed validated. Atomic/recording/cleanup review remains within frozen source boundary."
+    },
+    {
+      "task_id": "local45-physics-render-probe-034",
+      "attempt": 1,
+      "contract_revision": 34,
+      "owner": "control",
+      "reviewer": "root",
+      "status": "dispatched",
+      "ACK": false,
+      "task_path": "coordination/collab/local45-physics-render-probe-034-task.json",
+      "result_path": "coordination/collab/results/local45-physics-render-probe-034.json",
+      "write_paths": [
+        "factory_ops/local45_stepping.py",
+        "scripts/isaac/local45_cadence_probe.py",
+        "configs/local45-cadence-probe.json",
+        "tests/test_local45_stepping.py",
+        "coordination/collab/results/local45-physics-render-probe-034.json"
+      ]
     }
   ],
   "decisions": [
