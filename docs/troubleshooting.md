@@ -399,6 +399,16 @@ ROS가 실패 종료한 직후 외부 실행기가 아직 정리 중인 Windows 
 
 042는 이미 소유권 admission을 마친 foreground `systemd-run --wait` Popen 클라이언트를 관찰하도록 수정했다. 실행 중 반복 WSL 조회에 의존하지 않고, 시작·최종 종료의 unit/cgroup/PID 소유권 확인과 전체 시간 상한·SDK 종료 유예는 유지한다. Windows 클라이언트 종료를 Linux 완전 종료 증명으로 사용하지 않는다. 관련 CPU 검사9개를1회 실행해 통과했으며 총괄의 한정 diff 검수를 마쳤다. 실제 적용은 다음 실행에서 확인할 항목이다.
 
+## FOT-052 — native FlatScan 입력의 한 물리 스텝 시각 역행
+
+016은 약200.433초까지 진행해 자재 픽업2건·재고60→56과 가상 충전 복귀·예약 해제를 확인했다. 첫 CI 도착·정지 뒤 하역 대기 중 carter2/rear의 native timeStamp200.3333437821436이 마지막 ROS 발행200.350010449보다 약16.666667ms 이전이라 strict converter가 실패했다. 종료된 bag의 마지막24개 후방 스캔과 clock 표본만 읽어 이 경계를 확인했다. 거절된 native 거리 버퍼 전체는016에서 저장하지 않아 같은 버퍼의 재조회인지, 내부 계산·전달 순서 문제인지는 확정할 수 없다.
+
+이후 fresh map pose unavailable과 SDK 종료 유예90초 초과는 최초 센서 오류 이후의 결과로 구분한다. Windows·Linux 소유 트리 종료와 정리 오류 없음은 확인했다.042의 반복 WSL 상태 조회 timeout은 재발하지 않았으며 최초·최종 소유권 확인도 통과했다. 픽업·충전의 부분 결과를 주문 완료·빈 토트 반납 완료나80% 완료로 표시하지 않는다. 원본171파일737,547,621바이트를 D·E 저장소에 보존해 해시를 대조했다.
+
+044는 strict 변환기의 기본 실패를 유지하고, 로컬4.5에만 명시적 거절 어댑터를 연결한다. 한 스캔 기간 이내의 역순 입력을 발행하지 않고 원본 bytes·dtype·shape·시각·해시를 보존한다. 회복 한도는 스캔 기간을 물리 스텝으로 올림한 값이며 현 구성은6프레임이다. 새 시각이 돌아오지 않거나 큰 역행·World clock/frame 초기화·원본 저장 실패·센서별16건의 보존 한도 초과가 생기면 실패한다. 유효한 마지막 시각을 낮추거나 기존 관측 유효시간을 늘리지 않는다. 같은 시각의 반복 입력은 버퍼를 다시 읽지 않는 기존 처리 방식을 유지한다. 초기22개 검사와 해당 처리 보완 후 영향받은15개 검사를 각각1회 통과했으며, SDK Python3.10.15의 두 소스 구문도 확인했다. 실제 적용 검증은 다음017 실행에 남아 있다.
+
+[SDK4.5 FlatScan 명세](https://docs.isaacsim.omniverse.nvidia.com/4.5.0/py/source/extensions/isaacsim.sensors.rtx/docs/ogn/OgnIsaacComputeRTXLidarFlatScan.html)는 출력 시각을 첫 빔의 초 단위 시각으로 정의한다. SDK 내부의 역행 원인이나 반환 버퍼의 원자적 일관성은 이번 자료로 확정하지 않는다. [016 부분 실행](evidence/local45-transport-016.json)과 [044 결과](../coordination/collab/results/bounded-native-scan-admission-044.json)에 구현·검사·미확인을 구분했다.
+
 ## 실행 전 확인과 후속 기록
 
 1. 깨끗한 생산자 소스·host commit·설정·실행 ID를 결속한다. 실패한 실행 ID와 원본을 다시 사용하지 않는다.

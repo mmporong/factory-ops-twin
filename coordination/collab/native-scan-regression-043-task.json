@@ -1,0 +1,18 @@
+{
+  "task_id": "native-scan-regression-043",
+  "attempt": 1,
+  "contract_revision": 43,
+  "owner": "control",
+  "goal": "Read-only bounded SDK4.5 FlatScanSimulationTime timestamp semantics and safe handling advice after016 native regression",
+  "inputs": {
+    "source_commit": "f84fe5ef194c54532a94d1b97d508b35f06c3af0",
+    "stage": "D:/FactoryOpsRuntime/local45-transport-016",
+    "error": "carter2/rear native timeStamp200.3333437821436 below last successful; exact prior header pending closed-bag read",
+    "closure": "pair-host Windows and Linux closed true; cleanup_errors empty"
+  },
+  "read_paths": ["factory_ops/flat_scan_ros.py", "factory_ops/isaac45_runtime.py", "scripts/isaac/g2_scene.py", "E:/IsaacSim/isaac-sim-4.5.0/exts/isaacsim.sensors.rtx"],
+  "write_paths": ["coordination/collab/results/native-scan-regression-043.json"],
+  "result_path": "coordination/collab/results/native-scan-regression-043.json",
+  "acceptance": "ACK task/attempt. One bounded pass: installed official OGN or NVIDIA primary docs for timestamp/async buffer semantics, facts versus hypotheses. Assess whether explicit rejection+raw anomaly preservation of old input, without ROS publication/clock shift/freshness relaxation, is a safe local adapter policy; distinguish from silently treating regression as duplicate. Prefer smallest correction; report exact docs/code references. No source edits/GPU/WSL/servers/Git/deps/new agents/broad reviews/tests. Root separately reads closed bag, do not duplicate that work.",
+  "coordination": "You are not alone; preserve all other changes. Do not accept your own result. Report missing evidence rather than invent a source cause."
+}

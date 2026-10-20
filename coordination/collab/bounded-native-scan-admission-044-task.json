@@ -1,0 +1,34 @@
+{
+  "task_id": "bounded-native-scan-admission-044",
+  "attempt": 1,
+  "contract_revision": 44,
+  "owner": "control",
+  "goal": "Explicit bounded local45 rejection of regressed native input, original anomaly preservation, strict failure outside recovery budget",
+  "inputs": {
+    "source_commit": "f84fe5ef194c54532a94d1b97d508b35f06c3af0",
+    "advice": "coordination/collab/results/native-scan-regression-043.json",
+    "closed_evidence": "docs/evidence/local45-transport-016.json"
+  },
+  "write_paths": [
+    "factory_ops/flat_scan_ros.py",
+    "scripts/isaac/g2_scene.py",
+    "tests/test_flat_scan_admission.py",
+    "tests/test_native_scan_publication.py",
+    "coordination/collab/results/native-scan-regression-043.json",
+    "coordination/collab/results/bounded-native-scan-admission-044.json",
+    "README.md"
+  ],
+  "requirements": [
+    "Keep strict NativeFlatScanPublisher default behavior and tests. Distinguish native regression with a typed ValueError subtype carrying rejected and last-success native/ROS timestamps. Never catch all ValueError to continue.",
+    "Put a small opt-in admission guard in the existing flat_scan_ros.py (avoid new bundled modules). Local45 wiring only: reject old input without ROS publication, without changing last success/high-water/published/duplicate/warmup counters. Report rejected count separately. Do not call it duplicate or assert SDK cause/buffer identity.",
+    "Authored safety budget, not a sensor-normality claim: maximum backward delta and recovery interval each one native scan period from valid configured/native rotationRate. Read actual world sim time for recovery deadline; require monotonic finite observed time. If no strictly newer successful native publication within that interval, fail, including when old input changes to duplicate/warmup. Large regression, clock reset, malformed metadata, invalid time and callback failures remain failures. No clock shifts, nanosecond-restamping, source floor/reset, synthesized ranges or age/TTL widening.",
+    "Record each rejected input before continuing. Preserve owned raw depth+FlatScan metadata with dtype/shape and bytes SHA, including NaN/Inf/-1 unchanged (e.g. non-object NPZ plus primitive JSONL). Record run, robot, side/frame, prim/render-product identity available from metadata, actual physics frame/sim clock, old/current stamp, delta, decision and policy. Do not claim atomic SDK frame consistency. Snapshot/journal failure aborts. Use an explicit authored maximum16 stored anomalies per sensor/run; exceeding it fails instead of silently dropping further inputs. Budget is for diagnostic storage, not a measured hardware property.",
+    "Keep existing camera freeze guard, physics cadence, publication cadence, ROS source timestamps, controller/map freshness, source/config provenance and6.2/legacy writer behavior. Preserve early warmup behavior before first successful scan. Existing known startup warmup120steps stays unchanged.",
+    "Correct043 receipt OGN digest formatting only: exact installed SHA ed3b3aa02acc5e6a1d206a988a94fef6a054c19e7316b03fdd8faaeabf9a38d0. Do not redo043 research."
+  ],
+  "validation": "One targeted CPU invocation: existing strict converter and affected native-publication tests plus new guard cases for exact016 sequence+recovery with untouched timestamps, deadline including duplicates/warmup, large/reset/malformed failures, callback/preservation failure, snapshot value/dtype fidelity and cap. No broad tests/reviews, WSL/GPU/servers/Git/deps/new agents. Return ACK, changed paths/SHA, exact one-run checks and limitations. Root performs one source review then017 actual run.",
+  "result_path": "coordination/collab/results/bounded-native-scan-admission-044.json",
+  "coordination": "You are not alone; do not revert root docs/board or four unowned dashboard files. Own only listed files. Do not self-accept or expand the task; return conflicts upward.",
+  "numeric_boundary_clarification": "Observed SDK world time uses float32 physics dt:6steps=0.1000000052154s. Quantize one-scan recovery budget to ceil(scan_period/configured_physics_dt) actual world frames,6here; preserve finite/monotonic real simclock and frame resets as failure. No timestamp or TTL changes. Include actual-number CPU boundary fixture in same targeted pass.",
+  "readme_update": "After focused checks, make only a small README status correction: earlier4fleet section still says GPU charging/material connection unverified, while013 proves pickups,process consumption,virtual charge/release. Correct those old CPU-only phrases using docs/evidence/local45-transport-013.json; keep4fleet completion/empty-return/physical payload-contact unverified. Add one brief local45 native-admission policy/status sentence: reject+preserve original,one-scan frame recovery bound,large/reset failure,CPU checked actual use pending. No new media/full rewrite. Root reviews this diff with044 once; no extra test invocation for prose."
+}

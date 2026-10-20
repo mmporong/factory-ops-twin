@@ -1,0 +1,105 @@
+{
+  "task_id": "native-scan-regression-043",
+  "attempt": 1,
+  "contract_revision": 43,
+  "ACK": true,
+  "owner": "control",
+  "status": "completed_bounded_read_only_pending_root_acceptance",
+  "accepted": false,
+  "source_commit_reported": "f84fe5ef194c54532a94d1b97d508b35f06c3af0",
+  "source_commit_basis": "카드와 root 추출 JSON의 일치값입니다. Git 조회로 재검증하지 않았습니다.",
+  "scope": "설치된 SDK4.5 OGN/센서 소스와 지정 어댑터의 timestamp 경계만 읽었습니다. root의 closed-native-tail.json을 참조했으며 bag은 열지 않았습니다.",
+  "verdict": "명시적 역행 입력 거절·원본 보존·미발행은 조건부로 타당한 국소 어댑터 정책입니다. SDK 내부 원인 규명이나 센서 정상 판정으로 볼 수 없습니다.",
+  "reviewed_source_sha256": {
+    "factory_ops/flat_scan_ros.py": "69ccc558f269dd6c83a1585d7e8dd6467b5cf636a8c1fde4f0d689cd7802b012",
+    "factory_ops/isaac45_runtime.py": "93924e40e2020b13ca41871afd9d90ea1a9cae267c3c8c194ac51ef073772f5c",
+    "scripts/isaac/g2_scene.py": "925f33f8ad094201ae99b974bf79ac72f89db1a2135c638f57e268bd183f5e21"
+  },
+  "frozen_source_comparison": {
+    "root": "D:/FactoryOpsRuntime/local45-transport-016/source",
+    "result": "위 3개 경로의 SHA는 조사 시점 작업 트리와 frozen016에서 모두 일치했습니다. 원본은 변경하지 않았습니다."
+  },
+  "runtime_evidence": {
+    "path": "D:/FactoryOpsRuntime/local45-transport-016/closed-native-tail.json",
+    "sha256": "a96db70c3e3e0ff7e4e3000c677a6367ab45813a7fd333ae1b717c71ee49ba3a",
+    "run_id": "6ef04b5ecbbd409d8e2bdd062f16bd51",
+    "sensor": "carter2/rear",
+    "last_ros_stamps_s": [
+      200.116708354,
+      200.216708359,
+      200.350010449
+    ],
+    "rejected_native_stamp_s": 200.3333437821436,
+    "regression_s": 0.01666666685639484,
+    "last_ros_ranges_count": 3200,
+    "last_ros_range_bytes_sha256": "93dd61beacc1fc913883053187427637e4fccf8583c8e44cd1416425147ef3b2",
+    "rejected_full_buffer_available": false,
+    "interpretation": "차이는 약60Hz 물리1step입니다. ROS ns 반올림 규모의 차이가 아닙니다. 거절 버퍼가 없어 마지막 ROS 데이터와의 동일성·버퍼 재조회 여부는 비교할 수 없습니다.",
+    "bag_analysis_repeated": false
+  },
+  "official_installed_evidence": [
+    {
+      "path": "E:/IsaacSim/isaac-sim-4.5.0/exts/isaacsim.sensors.rtx/ogn/docs/OgnIsaacComputeRTXLidarFlatScan.rst",
+      "sha256": "ed3b3aa02acc5e6a1d206a988a94fef6a054c19e7316b03fdd8faaeabf9a38d0",
+      "lines": "21,38-42,53,57,61,74-76",
+      "fact": "상태를 가진 CPU 메모리/C++ 노드가 전체 scan을 누적하고 완성 시 output exec를 냅니다. 입력은 render 결과 포인터와 초 단위 시각이며 출력 시각은 scan 첫 빔 시각입니다. depth는 azimuth 오름차순의 실제 m 배열입니다.",
+      "limit": "이 명세에는 Python get_data 호출 순서별 timestamp 단조 증가·버퍼 불변성·원자적 frame snapshot 보장이 없습니다. C++ 내부 구현/큐 순서를 확인한 것은 아닙니다."
+    },
+    {
+      "path": "E:/IsaacSim/isaac-sim-4.5.0/exts/isaacsim.sensors.rtx/isaacsim/sensors/rtx/scripts/extension.py",
+      "sha256": "9fad332cac81d66abd2fe41fe306d46303f8d65d6fcea77520c4d6c28fd2cfd8",
+      "lines": "167-181,183-197",
+      "fact": "SimulationTime annotator는 RtxSensorCpuPtr와 IsaacReadSimulationTime.outputs:simulationTime을 FlatScan 입력에 연결합니다. SystemTime은 별도 등록입니다. 현재 어댑터는 SimulationTime 이름을 사용합니다.",
+      "limit": "이 연결만으로 출력 첫 빔 시각이 매 app.update의 현재 World 시각과 같거나 read 간 항상 증가한다고 증명할 수 없습니다."
+    },
+    {
+      "path": "E:/IsaacSim/isaac-sim-4.5.0/exts/isaacsim.sensors.rtx/isaacsim/sensors/rtx/scripts/lidar_rtx.py",
+      "sha256": "0e2ffba3cd798612e25c56faeaa438277c562d2e914eee8386b51cb52b7a0986",
+      "lines": "160-165,239-241,308-329",
+      "fact": "설치 Python 센서는 같은 SimulationTime annotator를 attach하고 get_data로 depth/각도 필드를 읽습니다. getter는 노드 metadata를 읽습니다.",
+      "limit": "이 경로에도 오래된 결과를 허용한다는 문서화된 약속이나, 결과가 불변 복사본이라는 근거는 없습니다."
+    },
+    {
+      "path": "E:/IsaacSim/isaac-sim-4.5.0/exts/isaacsim.sensors.rtx/docs/CHANGELOG.md",
+      "sha256": "5fee4bb9258b6fa799bb8870098046de81792d133266dd777e93f8702c036616",
+      "lines": "133-135",
+      "fact": "12.7.0 변경 기록은 FlatScan timestamp가 scan 첫 빔 시각이 되도록 수정했다고 명시합니다. 이를 frame 끝 시각이나 현재 clock으로 바꾸는 근거로 사용할 수 없습니다."
+    }
+  ],
+  "code_findings": [
+    {
+      "reference": "factory_ops/flat_scan_ros.py:85-89,133-134,148-154",
+      "fact": "native stamp < 마지막 성공 stamp는 ValueError이고 같은 stamp만 duplicate입니다. 회귀는 range 버퍼를 복사하기 전에 거절됩니다. ROS ns에서도 증가를 확인하고 callback 성공 뒤에만 _last/_ros_stamp를 갱신합니다. 현재 순서 보호는 올바른 fail-fast 동작입니다."
+    },
+    {
+      "reference": "factory_ops/isaac45_runtime.py:212-220,418-420",
+      "fact": "sensor별 persistent annotator의 get_data를 읽고 depth를 reshape(-1)합니다. 반환 buffer의 소유 복사를 명시하지 않습니다. reshape가 항상 원본과 독립적인 메모리를 만든다고 볼 수 없습니다."
+    },
+    {
+      "reference": "scripts/isaac/g2_scene.py:509-520,1118-1123,1244-1251",
+      "fact": "sensor별 converter를 사용합니다. app.update 후 publish하며 ValueError에 robot/side/native stamp를 붙여 전파합니다. outer 실패 경로가 장면을 실패로 기록하므로 현재는 한 역행도 전체 실행 종료로 이어집니다. 거절된 전체 range buffer를 보존하는 분기는 없습니다."
+    }
+  ],
+  "hypotheses_not_proven": [
+    "누적 scan/렌더 결과의 관측 순서 또는 비동기 버퍼 갱신이 관여했을 가능성은 있으나, 설치 문서와 1step 차이만으로 확인할 수 없습니다.",
+    "이전 buffer의 재조회, 서로 다른 scan, metadata/data 조합 불일치 중 어느 경우인지 미확정입니다. GPU 부하·경쟁·clock reset을 원인으로 단정하지 않습니다."
+  ],
+  "smallest_policy_advice": [
+    "timestamp 회귀만 구별하는 명시적 typed rejection 또는 별도 rejected outcome을 사용하고, 모든 ValueError를 catch하여 계속하는 방식은 피합니다. malformed metadata/비유한 시각/callback 실패 등 기존 실패는 유지해야 합니다.",
+    "회귀 입력은 ROS 발행 없이 거절합니다. _last와 _ros_stamp는 마지막 성공 high-water로 유지하고 duplicate/warmup/published 수를 늘리지 않습니다. 후속 입력도 기존 native 및 ROS ns 단조 증가 검사를 통과해야 합니다.",
+    "거절 시 run/sensor/frame/render-product 식별, native double 시각, 마지막 성공 native 및 ROS sec/ns, 현재 관측 가능한 clock/physics-frame, delta와 명시적 rejected 이유를 기록합니다. 당시 반환된 depth 및 metadata는 소유 복사하고 dtype/shape/원본 bytes/hash를 보존합니다. NaN/Inf/-1을 보간·null 대체하지 않습니다. 버퍼 내부 frame 원자성까지 검증됐다고 표시하지 않습니다.",
+    "첫 anomaly 원본과 누적 rejected 지표를 보존하며 크기 제한을 명시합니다. 원본 저장 실패를 조용히 무시하지 않습니다. 016의 누락된 거절 버퍼는 나중에 복원할 수 없습니다.",
+    "기존 ROS freshness/관측 timeout/clock-reset 실패는 유지합니다. 거절 입력으로 마지막 유효 수신 시각을 갱신하거나 허용 pose age를 늘리지 않고, 현재 clock·run·frame을 덮어써서 새 관측처럼 만들지 않습니다. 실제 clock reset이면 같은 converter의 high-water를 낮춰 재개하지 않습니다.",
+    "1회의 차이로 1step 역행이 SDK 정상 동작이라는 허용 규칙을 도출하지 않습니다. 국소 rejection을 허용하더라도 명시적 anomaly 상태로 남기고, 정상 신선 입력이 돌아오지 않으면 기존 실패 경계가 실행을 중단해야 합니다."
+  ],
+  "limits": [
+    "이번 결과는 구현·실험·독립 수용 판정이 아닌 한정 정책 조언입니다. 제품 소스를 수정하지 않았고 테스트/SDK/GPU/ROS/WSL/서버/Git/웹/새 에이전트를 실행하지 않았습니다.",
+    "SDK 비동기 큐와 frame-buffer 원자성의 공식 보장은 확인되지 않았습니다. 검토한 installed RTX 테스트도 이번 역행 재현·허용 계약의 근거가 되지 않습니다.",
+    "freshness 및 clock-reset 감시 전체를 광역 재검수하지 않았습니다. 해당 기존 실패 경계를 보존하는 것은 root 후속 수정의 필수 조건입니다.",
+    "종료된016의 SQLite/bag은 열거나 분석하지 않았습니다. 마지막 ROS 시각은 root가 추출한 JSON만 참조했습니다."
+  ],
+  "product_edited": false,
+  "sdk_gpu_wsl_ros_tests_executed": false,
+  "git_actions": false,
+  "new_agents": false
+}

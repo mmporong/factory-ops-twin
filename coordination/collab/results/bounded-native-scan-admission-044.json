@@ -1,0 +1,123 @@
+{
+  "task_id": "bounded-native-scan-admission-044",
+  "attempt": 1,
+  "contract_revision": 44,
+  "ACK": true,
+  "owner": "control",
+  "status": "completed_targeted_cpu_verified_pending_root_acceptance",
+  "accepted": false,
+  "completed_at": "2026-10-20T05:06:12.9076023Z",
+  "changed_paths": [
+    "factory_ops/flat_scan_ros.py",
+    "scripts/isaac/g2_scene.py",
+    "tests/test_flat_scan_admission.py",
+    "tests/test_native_scan_publication.py",
+    "README.md",
+    "coordination/collab/results/bounded-native-scan-admission-044.json"
+  ],
+  "source_sha256": {
+    "factory_ops/flat_scan_ros.py": "e14652edf19097f9b8d006d77a8cc73e7460fb13acf683dfd25c63db21fb5df4",
+    "scripts/isaac/g2_scene.py": "01002c1485c51735f1a4e4205b887343b25fa3a59234c66e38e15fadacbb6b23",
+    "tests/test_flat_scan_admission.py": "4e6fb57b502fa2d3442f25e1426da66d00b3079180e784bf2db8233142d53c3e",
+    "tests/test_native_scan_publication.py": "e8abde223660be2421d9c9b66d4a1bee04c09742c971489b9c3fbc5afa8296ee",
+    "README.md": "f3065727251f90302efe0c21c37a53561f3c7d3697bd30cb01202f4c9be7d339"
+  },
+  "receipt043_note": "OGN digest는 이미 공백 없이 지정 값과 일치했습니다. 043 내용·근거를 재조사하거나 변경하지 않았습니다. 이 receipt의 일본어 중간 설명은 한글로 수정했습니다.",
+  "receipt043_ogn_sha256": "ed3b3aa02acc5e6a1d206a988a94fef6a054c19e7316b03fdd8faaeabf9a38d0",
+  "implementation": [
+    "NativeFlatScanPublisher의 기본 strict 거절을 유지하며 NativeTimestampRegression(ValueError 하위형)에 거절 native/마지막 성공 native 및 ROS 시각을 담습니다. callback 성공 뒤 high-water를 갱신하는 순서를 유지합니다.",
+    "NativeScanAdmissionGuard는 별도 선택 경로입니다. 정상 configured/native rotationRate로 한 scan의 최대 역행 폭을 계산하고, 거절된 입력은 ROS로 발행하지 않습니다. 마지막 성공 시각과 published/duplicate/warmup 수를 바꾸지 않고 rejected_count를 별도로 기록합니다.",
+    "회복 기한은 ceil(scan_period/configured_physics_dt)의 실제 World physics-frame 수입니다. 현10Hz/60Hz 구성은6step이며6번째step에 새 scan의 성공 발행이 있어야 합니다. 7번째step 또는6번째step의 duplicate/warmup은 실패하고 반복 거절이 기한을 연장하지 않습니다. simclock/frame의 유한성·비음수·단조성도 검사합니다.",
+    "큰 역행·clock/frame reset·잘못된 metadata/시각·callback 실패는 실패로 전파합니다. native stamp, ROS stamp 변환 규칙, source high-water, range 값, 기존TTL·컨트롤러·지도 freshness를 보정하거나 완화하지 않습니다.",
+    "동일 stamp는 본문·길이·metadata를 읽지 않고 기존 duplicate fast path를 사용합니다. 미발행 상태이며 신선도나 pending recovery deadline을 갱신하지 않습니다. regressed/new 입력의 metadata 검사는 유지합니다.",
+    "local45 선택 경로에만 실제 SimulationManager의 시계/physics-frame과 configured physics_dt를 연결했습니다. 6.2/legacy writer·카메라 freeze guard·물리/발행 cadence·기존 warmup_steps는 수정하지 않았습니다."
+  ],
+  "api": {
+    "typed_error": "NativeTimestampRegression.rejected_native_stamp_s / last_success_native_stamp_s / last_success_ros_stamp=(sec,nanosec)",
+    "guard": "NativeScanAdmissionGuard(publisher, *, rotation_rate_hz, physics_dt_s, preserve_rejection)",
+    "publish": "guard.publish(payload, *, observed_sim_time_s, physics_frame) -> primitive outcome; typed native regression만 선택적으로 거절·보존하며 다른 실패를 계속 처리하지 않습니다.",
+    "preservation_callback": "preserve_rejection(payload, event) -> primitive evidence; 동기 저장 완료 또는 예외 전파",
+    "wiring": "_setup_native_lidar_publication(..., admission=None)은 strict 기본값입니다. local_sdk45 경로만 run_id/output/physics_dt_s/실제 simulation_time·physics_frame callback을 명시합니다.",
+    "locations": [
+      "factory_ops/flat_scan_ros.py:41",
+      "factory_ops/flat_scan_ros.py:177",
+      "scripts/isaac/g2_scene.py:543",
+      "scripts/isaac/g2_scene.py:1053"
+    ]
+  },
+  "storage": {
+    "layout": "output/native-scan-anomalies/sensor-NN/KK/{buffer-NNN.bin,snapshot.json}; output/native-scan-anomalies/events.jsonl",
+    "format": "stdlib memoryview 소유 bytes 복사 + primitive JSON/JSONL입니다. pickle/object 배열이나 새 NumPy 의존성을 추가하지 않습니다.",
+    "metadata": "run/robot/side/frame/prim/render-product, 실제 simclock/physics-frame, 거절·마지막 성공 시각, delta, 정책/결정/기한, dtype·buffer format·shape·itemsize·endianness·strides 및 bytes SHA를 보존합니다.",
+    "maximum_per_sensor_run": 16,
+    "cap_behavior": "17번째에는 저장 없이 실패하며 계속 진행하지 않습니다. 회복 성공 후에도 같은 센서·run의 보존 수를 초기화하지 않습니다.",
+    "failure_behavior": "raw/snapshot/journal 생성·쓰기·flush/fsync 실패는 전파하여 계속 진행하지 않습니다. 기존 파일을 덮어쓰지 않습니다.",
+    "fidelity": "NaN payload bits/양음Inf/-1을 원시 bytes로 유지합니다. SDK 내부 frame 일관성이나 동일 버퍼 재조회 여부는 검증했다고 표시하지 않습니다."
+  },
+  "numeric_boundary": {
+    "evidence_kind": "root가 제공한 수치의 CPU fixture이며 새로운 SDK 측정이 아닙니다.",
+    "world_time_fixture": "12026 * float32(1/60) = 200.43334378674626",
+    "recovery": "6step의 실제 clock 증가0.1000000052154s를 .1s 절대 비교로 기각하지 않습니다. frame12032의 새 native 발행은 허용하고12033은 거절합니다.",
+    "nominal_seconds": "nominal_recovery_deadline_sim_s는 진단 값이며 판정은 recovery_deadline_physics_frame을 사용합니다. clock/stamp를 재작성하지 않습니다."
+  },
+  "validation": {
+    "initial": {
+      "command": "& ./.venv/Scripts/python.exe -m unittest tests.test_flat_scan_ros tests.test_flat_scan_admission tests.test_native_scan_publication -v",
+      "python": "3.12.13",
+      "runs": 1,
+      "passed": 22,
+      "exit_code": 0,
+      "elapsed_test_seconds": 0.078,
+      "tested_source_sha256": {
+        "factory_ops/flat_scan_ros.py": "eb257287ab4c2ac519b4d2f6397a8ca805be242a44c055136c43e52712e3766a",
+        "scripts/isaac/g2_scene.py": "01002c1485c51735f1a4e4205b887343b25fa3a59234c66e38e15fadacbb6b23",
+        "tests/test_flat_scan_admission.py": "a5228802cde3f54316604f682c65ca7fc3687a069932ecf09c3bf9f87863fdd6",
+        "tests/test_native_scan_publication.py": "e8abde223660be2421d9c9b66d4a1bee04c09742c971489b9c3fbc5afa8296ee"
+      },
+      "note": "초기22PASS 원본 기록을 보존합니다. 이후 초기warmup 기본값 보강 및 root duplicate 지적을 수정했습니다."
+    },
+    "root_requested_recheck": {
+      "command": "& ./.venv/Scripts/python.exe -m unittest tests.test_flat_scan_admission tests.test_native_scan_publication -v",
+      "cwd": "C:/Users/LIMMM/factory-ops-twin",
+      "runs": 1,
+      "passed": 15,
+      "exit_code": 0,
+      "elapsed_test_seconds": 0.041,
+      "source_scope": "최종 source_sha256의4개 code/test 파일을 대상으로 합니다. 이후 code/test 수정은 없습니다.",
+      "coverage": [
+        "Unreadable duplicate의 길이·순회·metadata 무검사/미발행 및 pending deadline 유지",
+        "초기 누락·0시각/0rate·빈버퍼 warmup 보존",
+        "관측016 timestamp 순서의 CPU fixture와 시각 무변경 회복",
+        "float32 clock의6번째step 허용·7번째step 거절",
+        "기한 내 newer 성공 없음: duplicate/warmup/반복거절/늦은새입력 실패",
+        "큰 역행·clock/frame reset·invalid metadata/time·callback·raw/journal 저장 실패",
+        "소유 raw bytes/dtype/shape/NaN bits·Inf·-1 보존 및 센서run당16건 cap",
+        "선택형 ROS 메시지 adapter의 헤더·identity·보존 기록 연결과 strict 기본 거절"
+      ],
+      "note": "root의 한정 수정 요청에 따라 두 모듈만 한 번 재검사했습니다. strict8·광역 검사는 반복하지 않았습니다."
+    },
+    "diff": "지정 코드와 README의 git diff --check 통과. 읽기 전용 diff만 확인했으며 Git 상태 변경은 하지 않았습니다."
+  },
+  "root_feedback": {
+    "duplicate_body_validation": "해결: equal-stamp의 _prepare_fields 호출을 제거하고 사전 길이·rate 검사도 건너뜁니다. 새 Unreadable fixture가 통과했습니다.",
+    "other_boundaries": "root는 raw 보존/6frame 예산/6.2 분리를 한정 소스에서 확인했다고 전달했습니다. 최종 전체 수용은 root 판정 대상입니다."
+  },
+  "readme_update": {
+    "scope": "기존 두 문구 정정 및 native 정책 한 줄만 추가했습니다. changelog·이미지·광역 개편은 추가하지 않았습니다.",
+    "evidence": "docs/evidence/local45-transport-013.json: 자재 인수·공정 소비·가상 충전 예약 해제의 부분 근거",
+    "limits_preserved": "4대 운송 완주·빈 토트 반납 완료·물리 적재 접촉/승강/도킹 및 전기 충전은 미검증으로 유지합니다.",
+    "verification": "근거·변경 diff를 대조했으며 prose 때문에 검사를 반복하지 않았습니다."
+  },
+  "limits": [
+    "016에는 거절 range 원본이 없습니다. 테스트는 관측 timestamp 순서와 작성된 CPU range fixture를 사용했으며 전체 native buffer 재현·SDK 버그 재현·센서 정상 판정이 아닙니다.",
+    "소유 raw 보존 검사는 stdlib array/memoryview buffers로 수행했습니다. 실제 SDK NumPy/GPU buffer의 비동기·원자성 및 실제017 적용은 검증하지 않았습니다.",
+    "물리·ROS freshness/clock-reset 전체를 광역 재검수하지 않았습니다. 기존TTL·실패 경로를 변경하지 않았고 root가 실제 적용을 담당합니다.",
+    "별도 타입 검사·빌드·광역 검사·043 재조사는 수행하지 않았습니다."
+  ],
+  "runtime_changed": false,
+  "sdk_gpu_wsl_ros_executed": false,
+  "raw_originals_changed": false,
+  "git_mutations": false,
+  "dependencies_added": false,
+  "new_agents": false
+}

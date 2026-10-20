@@ -5,12 +5,15 @@ from __future__ import annotations
 
 import argparse
 from datetime import datetime, timezone
+import hashlib
 import json
 import math
+from numbers import Integral, Real
 import os
 from pathlib import Path
 import re
 import sys
+import struct
 import time
 import traceback
 from typing import Any, Callable, Mapping, Sequence, cast
@@ -479,16 +482,17 @@ def _spin_nodes(rclpy: Any, nodes: Sequence[Any], passes: int = 4) -> None:
 
 def _setup_native_lidar_publication(
     sensors: Sequence[Any], metadata: Sequence[Mapping[str, Any]], robots: Mapping[str, Any],
+    *, admission: Mapping[str, Any] | None = None,
 ) -> Callable[[], None]:
     """Publish each new native scan once; camera capture never owns these ROS writers."""
-    from factory_ops.flat_scan_ros import NativeFlatScanPublisher
+    from factory_ops.flat_scan_ros import NativeFlatScanPublisher, NativeScanAdmissionGuard
     from rclpy.qos import QoSProfile, ReliabilityPolicy
     from sensor_msgs.msg import LaserScan
 
     if len(sensors) != len(metadata):
         raise ValueError("native publication requires matched sensor metadata")
     bindings = []
-    for sensor, row in zip(sensors, metadata):
+    for index, (sensor, row) in enumerate(zip(sensors, metadata)):
         runtime = robots[row["robot_id"]]
         publisher = runtime["node"].create_publisher(
             LaserScan, f"scan_{row['name']}_raw",
@@ -506,7 +510,16 @@ def _setup_native_lidar_publication(
                 setattr(message, field, fields[field])
             target.publish(message)
 
-        converter = NativeFlatScanPublisher(publish, str(row["frame_id"]))
+        converter: Any = NativeFlatScanPublisher(publish, str(row["frame_id"]))
+        if admission is not None:
+            identity = {**dict(row), "run_id": admission["run_id"], "sensor_index": index,
+                "side": str(row["name"]),
+                "render_product_path": str(getattr(getattr(sensor, "_product", None), "path", "")) or None}
+            converter = NativeScanAdmissionGuard(converter,
+                rotation_rate_hz=row["rotation_frequency_hz"],
+                physics_dt_s=admission["physics_dt_s"],
+                preserve_rejection=lambda payload, event, identity=identity:
+                    _preserve_native_scan_rejection(admission["output"], identity, payload, event))
         states = runtime["ros"].setdefault("native_scan_publication", {})
         bindings.append((sensor, converter, states, str(row["name"]), str(row["robot_id"])))
 
@@ -514,12 +527,79 @@ def _setup_native_lidar_publication(
         for sensor, converter, states, side, robot_id in bindings:
             payload = sensor.read_native_scan()
             try:
-                states[side] = converter.publish(payload)
+                if admission is None:
+                    states[side] = converter.publish(payload)
+                else:
+                    states[side] = converter.publish(payload,
+                        observed_sim_time_s=admission["simulation_time"](),
+                        physics_frame=admission["physics_frame"]())
             except ValueError as error:
                 stamp = payload.get("timeStamp") if isinstance(payload, Mapping) else None
                 raise ValueError(f"native scan {robot_id}/{side} timeStamp={stamp!r}: {error}") from error
 
     return publish_available
+
+
+def _preserve_native_scan_rejection(output: Path, identity: Mapping[str, Any],
+                                    payload: Mapping[str, Any], event: Mapping[str, Any]) -> dict[str, Any]:
+    """Own returned bytes before IO; this does not prove an atomic SDK frame."""
+    buffers: list[bytes] = []
+
+    def freeze(value: Any) -> Any:
+        try:
+            view = memoryview(value)
+        except TypeError:
+            view = None
+        if view is not None:
+            if view.format.lstrip("@=<>!") not in ("b", "B", "h", "H", "i", "I", "l", "L", "q", "Q", "f", "d", "?"):
+                raise ValueError("native anomaly requires numeric, non-object buffers")
+            raw = view.tobytes(order="C")
+            filename = f"buffer-{len(buffers):03d}.bin"
+            buffers.append(raw)
+            return {"file": filename, "dtype": str(getattr(value, "dtype", view.format)),
+                "buffer_format": view.format, "shape": list(view.shape), "itemsize": view.itemsize,
+                "host_byteorder": sys.byteorder,
+                "buffer_byteorder": ("big" if view.format.startswith((">", "!")) else
+                                     "little" if view.format.startswith("<") else sys.byteorder),
+                "source_strides": list(view.strides), "stored_order": "C",
+                "bytes": len(raw), "sha256": hashlib.sha256(raw).hexdigest()}
+        if isinstance(value, Mapping):
+            if any(not isinstance(key, str) for key in value):
+                raise ValueError("native anomaly metadata keys must be strings")
+            return {key: freeze(item) for key, item in value.items()}
+        if isinstance(value, (list, tuple)):
+            return [freeze(item) for item in value]
+        if value is None or isinstance(value, (str, bool)):
+            return value
+        if isinstance(value, Integral):
+            return int(value)
+        if isinstance(value, Real):
+            number = float(value)
+            return number if math.isfinite(number) else {"float64_bytes_le": struct.pack("<d", number).hex()}
+        raise ValueError("unsupported native anomaly metadata type: " + type(value).__name__)
+
+    # Depth must retain its delivered element type and shape, not inferred casts.
+    memoryview(payload["linearDepthData"])
+    snapshot = {"identity": freeze(identity), "event": freeze(event), "payload": freeze(payload),
+                "scope": "owned copies of returned buffers; atomic SDK frame consistency unverified"}
+    directory = output / "native-scan-anomalies" / f"sensor-{identity['sensor_index']:02d}" / f"{event['rejected_count']:02d}"
+    directory.mkdir(parents=True, exist_ok=False)
+    for index, raw in enumerate(buffers):
+        with (directory / f"buffer-{index:03d}.bin").open("xb") as stream:
+            stream.write(raw)
+            stream.flush()
+            os.fsync(stream.fileno())
+    document = directory / "snapshot.json"
+    raw_json = _canonical_bytes(snapshot)
+    with document.open("xb") as stream:
+        stream.write(raw_json)
+        stream.flush()
+        os.fsync(stream.fileno())
+    evidence = {"path": document.relative_to(output).as_posix(),
+                "sha256": hashlib.sha256(raw_json).hexdigest(), "buffer_count": len(buffers)}
+    _append_jsonl(output / "native-scan-anomalies" / "events.jsonl",
+                  {"identity": snapshot["identity"], **dict(event), "snapshot": evidence})
+    return evidence
 
 
 def _append_jsonl(path: Path, value: Any) -> None:
@@ -969,7 +1049,11 @@ def _run(
             )
             runtime["node"], runtime["ros"] = node, ros
             robot_nodes.append(node)
-        publish_native_scans = (_setup_native_lidar_publication(lidar_sensors, lidar_metadata, robots)
+        publish_native_scans = (_setup_native_lidar_publication(lidar_sensors, lidar_metadata, robots,
+                                    admission={"run_id": args.run_id, "output": output,
+                                        "physics_dt_s": config["physics_dt_s"],
+                                        "simulation_time": SimulationManager.get_simulation_time,
+                                        "physics_frame": SimulationManager.get_num_physics_steps})
                                 if local_sdk45 else lambda: None)
         timeline = omni.timeline.get_timeline_interface()
         lidar_hook = getattr(scene_extension, "register_lidar_sensors", None)
@@ -1008,6 +1092,7 @@ def _run(
             result["runtime_compatibility"]["lidar_publication"] = {
                 "source": "native_FlatScan_to_rclpy_LaserScan", "timestamp_policy": "native_first_beam_seconds",
                 "deduplication": "strictly_increasing_native_timestamp", "replicator_ros_writer": False,
+                "admission_policy": "authored_one_scan_recovery_v1", "max_stored_anomalies_per_sensor": 16,
             }
             _atomic_json(output / "native-scan-startup.json", {
                 "run_id": args.run_id, "scope": "initial ROS scan headers; no sensor quality qualification",

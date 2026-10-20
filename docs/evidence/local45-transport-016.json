@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "run_id": "6ef04b5ecbbd409d8e2bdd062f16bd51",
+  "source_commit": "f84fe5ef194c54532a94d1b97d508b35f06c3af0",
+  "status": "failed_native_scan_timestamp_regression",
+  "primary_sdk_error": "carter2/rear native timeStamp regressed below last successful publication",
+  "last_observed_sim_s": 200.43334378674626,
+  "rejected_native_stamp_s": 200.3333437821436,
+  "last_published_stamp_s": 200.350010449,
+  "regression_s": 0.01666666685639484,
+  "specific_native_cause_confirmed": false,
+  "offending_native_range_buffer_preserved": false,
+  "closed_bag_tail_audit": {
+    "path": "D:\\FactoryOpsRuntime\\local45-transport-016\\closed-native-tail.json",
+    "database_sha256": "af7cb4717d8779dba2d29ea202be4e32f20132d2b7852e630750153ba259a9e8",
+    "scope": "last24 carter2/rear and clock messages only; not full sensor-quality qualification"
+  },
+  "secondary_failures": [
+    "fresh map pose unavailable after sensor-loop failure",
+    "SDK cleanup exceeded90s after ROS exit"
+  ],
+  "windows_closed": true,
+  "linux_closed": true,
+  "cleanup_errors": [],
+  "host_status_query_timeout_recurred": false,
+  "material_revision": 2,
+  "conservation": [
+    {
+      "balanced": true,
+      "consumed": 0,
+      "in_totes": 4,
+      "initial": 60,
+      "on_hand": 56,
+      "replenished": 0,
+      "sku": "sensor-kit"
+    }
+  ],
+  "orders_complete": 0,
+  "empty_return_complete": false,
+  "goal80_complete": false,
+  "media_frame_count": 17,
+  "preservation": {
+    "copies": [
+      "D:/FactoryOpsArtifacts/operations-043/checkpoint-001",
+      "E:/FactoryOpsArtifacts/operations-043/checkpoint-001"
+    ],
+    "files": 171,
+    "bytes": 737547621,
+    "all_sha256_matched": true
+  },
+  "repair_task": "bounded-native-scan-admission-044; CPU accepted, actual017 pending"
+}
