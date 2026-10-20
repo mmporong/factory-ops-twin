@@ -1,0 +1,60 @@
+{
+  "run_id": "65a800beeb3d4006ac498f024610e586",
+  "source_commit": "fccbba6696f0b4b65fe2438469c55fbfd62222c9",
+  "scope": "034 actual partial failed run;079 static image is separate and explicit.",
+  "native_frame": {
+    "index": 123,
+    "physics_frame": 90123,
+    "sim_time_s": 1502.050078338012
+  },
+  "dashboard_scope": "Actual running034 observations; web and RGB are not atomic snapshots.",
+  "timeline_scope": "124 capture times;60x nominal sparse held RGB;25.4s; no interpolation; full decode passed; failed ending retained.",
+  "pixel_limit": "Immediate cargo transition frames20/21 retained blue cargo and22 a residual; do not use as training labels or assert metadata proves semantic pixels.",
+  "empty_tote_fixture": {
+    "render_run_id": "18c48868f3c449e8bac4dbda61a5494b",
+    "source_run_id": null,
+    "scope": "079 authored static blue-to-amber transition, unchanged frame2/time0.03333333507180214; not034 replay/contact/live-quality proof.",
+    "quality_effect_verified": false,
+    "result": "../../evidence/local45-visual-flush-079.json"
+  },
+  "original_preservation": [
+    "D:/FactoryOpsArtifacts/operations-074/checkpoint-001",
+    "E:/FactoryOpsArtifacts/operations-074/checkpoint-001"
+  ],
+  "fixture_preservation": [
+    "D:/FactoryOpsArtifacts/operations-075/checkpoint-001",
+    "E:/FactoryOpsArtifacts/operations-075/checkpoint-001"
+  ],
+  "files": [
+    {
+      "path": "overview.png",
+      "source_path": "D:\\FactoryOpsRuntime\\local45-transport-034\\results\\run\\media\\overview-00123.png",
+      "bytes": 172804,
+      "sha256": "6f699d567fca32f33d4daa4506f6529a5880e776aaca49f4b360238a33cd34b1"
+    },
+    {
+      "path": "dashboard-first-return.jpg",
+      "source_path": "C:\\Users\\LIMMM\\factory-ops-twin\\artifacts\\local45\\034-web\\first-empty-return-complete.jpg",
+      "bytes": 267549,
+      "sha256": "544ce980c80233511cf7cf3367445f299581ef6bd2858183af695cee2af48031"
+    },
+    {
+      "path": "empty-tote-carrier-detail.jpg",
+      "source_path": "C:\\Users\\LIMMM\\factory-ops-twin\\artifacts\\local45\\034-web\\empty-tote-carrier-detail.jpg",
+      "bytes": 303325,
+      "sha256": "366be5cf07c91c19d313210637efa3dc49aa96894d5d6fea30b5478366191171"
+    },
+    {
+      "path": "operations-partial.mp4",
+      "source_path": "C:\\Users\\LIMMM\\factory-ops-twin\\artifacts\\local45\\034-preview-video\\operations-timeline.mp4",
+      "bytes": 1269763,
+      "sha256": "d91e3cda53646067012fb9545c859f0152b9c97a3f2a22ba7cdbe8fe175011db"
+    },
+    {
+      "path": "empty-tote-static-fixture.png",
+      "source_path": "D:\\FactoryOpsRuntime\\local45-visual-flush-079\\output\\candidate_rep_step0_wait.png",
+      "bytes": 212697,
+      "sha256": "38b5e27c8dc3be73dbd6641b057ad09bb19ebf5232de7cf8124d4dea6c06d8cb"
+    }
+  ]
+}

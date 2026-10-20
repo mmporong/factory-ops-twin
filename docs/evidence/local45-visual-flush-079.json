@@ -1,0 +1,107 @@
+{
+  "run_id": "18c48868f3c449e8bac4dbda61a5494b",
+  "status": "limited",
+  "source_run_id": null,
+  "source_scope": "authored static visibility transition; sequential A/B at one frozen physics state, not source034 replay",
+  "candidate_current_state_verified": true,
+  "quality_effect_verified": false,
+  "conclusion": "Candidate image current; baseline lag not established. No comparative fix claim.",
+  "intended_exit_code": 2,
+  "process_exit_alone_is_not_quality_verdict": true,
+  "source_sha256": {
+    "scripts/isaac/local45_fleet4_transport_scene.py": "cc0d6d4968e4c032b3b6dbddbce862671f2d78559c1c2ad346401934dcc5a4fd",
+    "scripts/isaac/factory_visuals.py": "25768848d6b035be333d26382b5096b720aafa4782eee8daa894f677721b90db",
+    "scripts/isaac/local_asset_probe.py": "042e7c3255c339a5d5705a0bb70e377f0b807d2deda5d06fc0cffb0870bf345c",
+    "factory_ops/layout.py": "a6b05cbb0cc63910da07d0c8af0a2c3bbb94473e8f0bd09d2426913bddd8caf9",
+    "factory_ops/visual_state.py": "9a1f60cc69168032ecce4252329981b4e34d016f1a6b504851291c189601a496"
+  },
+  "frozen_state": {
+    "physics_frame": 2,
+    "world_time_s": 0.03333333507180214,
+    "robot_chassis_world_transform": [
+      [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        1.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0,
+        1.0,
+        0.0
+      ],
+      [
+        12.0,
+        20.5,
+        0.09727495908737183,
+        1.0
+      ]
+    ]
+  },
+  "criteria": {
+    "roi_xyxy_fraction": [
+      0.3,
+      0.3,
+      0.7,
+      0.7
+    ],
+    "minimum_reference_blue_pixels": 128,
+    "minimum_amber_pixels": 64,
+    "maximum_reference_blue_retained_fraction": 0.1,
+    "blue_rgb_rule": {
+      "b_minus_r_min": 30,
+      "b_minus_g_min": 15,
+      "b_min": 60
+    },
+    "amber_rgb_rule": {
+      "r_minus_b_min": 50,
+      "g_minus_b_min": 15,
+      "r_minus_g_min": 15,
+      "r_min": 90
+    }
+  },
+  "captures": {
+    "reference_blue": {
+      "path": "reference_blue.png",
+      "sha256": "598864f6b2382b303f9525b83cc0939853750a7b2cbb8439d6575f42a267efa5",
+      "blue_pixels": 18248,
+      "amber_pixels": 0,
+      "reference_blue_retained_fraction": null,
+      "frozen_state_unchanged": true
+    },
+    "baseline_world_render4": {
+      "path": "baseline_world_render4.png",
+      "sha256": "e939d360b1f4ad1cbfead7f95b7c0a311717f0632193260846c63bbc69ab0b4a",
+      "blue_pixels": 130,
+      "amber_pixels": 14081,
+      "reference_blue_retained_fraction": 0.007124068391056554,
+      "frozen_state_unchanged": true
+    },
+    "candidate_rep_step0_wait": {
+      "path": "candidate_rep_step0_wait.png",
+      "sha256": "38b5e27c8dc3be73dbd6641b057ad09bb19ebf5232de7cf8124d4dea6c06d8cb",
+      "blue_pixels": 68,
+      "amber_pixels": 16340,
+      "reference_blue_retained_fraction": 0.003726435773783428,
+      "frozen_state_unchanged": true
+    }
+  },
+  "windows_job_closed": true,
+  "remaining_owned_pids": [],
+  "physical_loading_validated": false,
+  "live_mission_quality_validated": false,
+  "preservation": [
+    "D:/FactoryOpsArtifacts/operations-075/checkpoint-001",
+    "E:/FactoryOpsArtifacts/operations-075/checkpoint-001"
+  ],
+  "integrated035_status": "rejected_first_capture_frozen_state_guard",
+  "integrated035_run_id": "d81dbba35fc542e9a97b18f111749753",
+  "mission_capture_repair": "Restored original four World.render calls; static079 remains limited, not integrated quality proof."
+}

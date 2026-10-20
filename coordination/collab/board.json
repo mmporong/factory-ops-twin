@@ -1,13 +1,13 @@
 {
-  "revision": 78,
-  "updated_at": "2026-10-20T16:54:37.977062+00:00",
+  "revision": 86,
+  "updated_at": "2026-10-20T19:21:39.397188+00:00",
   "scope": {
     "excluded": "실물 로봇 실행, 새 유료 서비스/에셋, 공개 배포",
     "project_root": "C:\\Users\\LIMMM\\factory-ops-twin",
     "completion": "상태 원장·API·3D/목록 선택·명령 결과·브라우저 검증",
     "goal": "4대 AMR 통합 운영과 관제를 전체 완성품의80% 중간 목표까지 진행",
     "side_effects": "기존 승인 Git commit/push; 로컬 설치/실행/검증; GPU는 별도 필요 시 기존 허용 범위",
-    "producer_isolation": "root commits backend only; clean detached producerworktree; control dashboard/ user work remains unmodified/uncommitted until own result"
+    "producer_isolation": "Actual producer Git archive and raw commit-object proof; unowned dashboard changes excluded from commits and frozen producer inputs."
   },
   "orchestrator": {
     "pane_id": "w1:p1D",
@@ -20,7 +20,7 @@
       "role": "dashboard frontend author",
       "name": "control",
       "agent_kind": "codex",
-      "status": "065accepted; no collaboratorpending;rootfresh025actual",
+      "status": "085accepted; control086readonly Nav2startup diagnosis; root036native owner",
       "session": "default",
       "agent_session": "01a152aa-24b4-7a31-92e3-a2b620f4feeb",
       "terminal_id": "term_65e06d27e415810",
@@ -1445,6 +1445,136 @@
       "ACK": true,
       "task_path": "coordination/collab/root-render-evidence-078-task.json",
       "acceptance_record": "Control one boundedreadonly rootprobe-delta/publication pass:7SHA matched, nativepassed+closed+noPID, exactframe/time guard, installeddetachAPI,033 and076 scope separated; no blockers/no newtests/GPU."
+    },
+    {
+      "task_id": "native-visual-flush-079",
+      "attempt": 1,
+      "contract_revision": 79,
+      "owner": "control",
+      "reviewer": "root",
+      "write_paths": [
+        "scripts/isaac/local45_fleet4_transport_scene.py",
+        "scripts/isaac/probe_local45_visual_flush.py",
+        "coordination/collab/results/native-visual-flush-079.json"
+      ],
+      "result_path": "C:\\Users\\LIMMM\\factory-ops-twin\\coordination\\collab\\results\\native-visual-flush-079.json",
+      "status": "accepted_native_fixture_limited",
+      "ACK": true,
+      "task_path": "coordination/collab/native-visual-flush-079-task.json",
+      "acceptance_record": "Root actual079 result+3 RGB hashes and images+Job closure verified. Candidate current state and exact frozen frame/time/chassis. Baseline also current, so limited/intended2 and no comparative quality fix. Actual process exit0 alone not accepted as quality pass.034 raw transition limitation retained."
+    },
+    {
+      "task_id": "demo-workload-bound-080",
+      "attempt": 1,
+      "contract_revision": 80,
+      "owner": "control",
+      "reviewer": "root",
+      "write_paths": [
+        "coordination/collab/results/demo-workload-bound-080.json"
+      ],
+      "result_path": "C:\\Users\\LIMMM\\factory-ops-twin\\coordination\\collab\\results\\demo-workload-bound-080.json",
+      "status": "accepted_readonly_facts",
+      "ACK": true,
+      "task_path": "coordination/collab/demo-workload-bound-080-task.json",
+      "acceptance_record": "Sourcecap/default/use-sites andgeneral3orderinputshape received; no rootrerun/stopdecision. Root clarified actualmissionglobaldeadline g2config10800line1246, g3-runtime5400notthatentryglobalwall. Current034unchanged."
+    },
+    {
+      "task_id": "local45-runtime-budget-081",
+      "attempt": 1,
+      "contract_revision": 81,
+      "owner": "control",
+      "reviewer": "root",
+      "write_paths": [
+        "scripts/isaac/run_local45_fleet_pair.py",
+        "scripts/isaac/windows_job_runner.py",
+        "tests/test_local45_runtime_budget.py",
+        "coordination/collab/results/local45-runtime-budget-081.json"
+      ],
+      "result_path": "C:\\Users\\LIMMM\\factory-ops-twin\\coordination\\collab\\results\\local45-runtime-budget-081.json",
+      "status": "accepted_CPU_future_prelaunch_only",
+      "ACK": true,
+      "task_path": "coordination/collab/local45-runtime-budget-081-task.json",
+      "acceptance_record": "Rootonebounded2filecapdiff/testread+3SHA+actualOSCPUJobreceipt matched.4CPU pass,3coldSDKAST. Future60..10800/1..10800range withsame450default andownedkill/cleanup; CPU9000configured childgone. PermanentCretention. Current034unchanged7200; no simulated/control gatechanges or9000missionproof."
+    },
+    {
+      "task_id": "frozen-config-choice-082",
+      "attempt": 1,
+      "contract_revision": 82,
+      "owner": "control",
+      "reviewer": "root",
+      "write_paths": [
+        "scripts/brev/fleet4_prepare.py",
+        "configs/factory-fleet4-normal3/ (only exact SOURCE_FILES copies plus matching3orderprofile)",
+        "tests/test_fleet4_prepare_config_choice.py",
+        "coordination/collab/results/frozen-config-choice-082.json"
+      ],
+      "result_path": "C:\\Users\\LIMMM\\factory-ops-twin\\coordination\\collab\\results\\frozen-config-choice-082.json",
+      "status": "accepted_source_CPU_preparation",
+      "ACK": true,
+      "task_path": "coordination/collab/frozen-config-choice-082-task.json",
+      "acceptance_record": "Root bounded prepare diff and meaningful CPU test read;11 source SHAs matched,8 unchanged source copies confirmed. Real archive fixture/default4/selected3/negative and tamper proof received; no native completion or future workload choice claim."
+    },
+    {
+      "task_id": "stale-planner-recovery-083",
+      "attempt": 1,
+      "contract_revision": 83,
+      "owner": "control",
+      "reviewer": "root",
+      "write_paths": [
+        "scripts/ros/g3_mission.py",
+        "factory_ops/fleet_execution.py (only if typed stale error needed)",
+        "tests/test_stale_planner_recovery.py",
+        "coordination/collab/results/stale-planner-recovery-083.json"
+      ],
+      "result_path": "C:\\Users\\LIMMM\\factory-ops-twin\\coordination\\collab\\results\\stale-planner-recovery-083.json",
+      "status": "accepted_source_CPU_native_pending",
+      "ACK": true,
+      "task_path": "coordination/collab/stale-planner-recovery-083-task.json",
+      "acceptance_record": "Root bounded2filediff+6meaningfulCPUcase source read, manager snapshot and lease lifecycle cross-read,3exactSHA matched. Only typed expired otherwisevalidgeometry retries; unchanged HOLD/generation/tiles/noFollow/freshstoppedencoder/4freshfootprints, max3 and originalchunkdeadline retained. Fresh UUID/estimatedpose/clock, original Path/history preserved; canonical/cutoff/geometry/futurefail closed. Actual03471pose fixture CPU6pass+3coldAST received. Nativefuture proof pending; no whole80 claim."
+    },
+    {
+      "task_id": "root-034-publication-084",
+      "attempt": 1,
+      "contract_revision": 84,
+      "owner": "control",
+      "reviewer": "root",
+      "write_paths": [
+        "coordination/collab/results/root-034-publication-084.json"
+      ],
+      "result_path": "C:\\Users\\LIMMM\\factory-ops-twin\\coordination\\collab\\results\\root-034-publication-084.json",
+      "status": "accepted",
+      "ACK": true,
+      "task_path": "coordination/collab/root-034-publication-084-task.json",
+      "acceptance_record": "Control one bounded readonly approval PASS of6exactfrozen input hashes and5media source/publishedSHA,034 actualpartial/primaryTTL+closure+074 and079 staticlimited/075. No findings/no additional tests/native. Root exact6hashmatched before subsequent separatelyscoped035 repair documentation delta."
+    },
+    {
+      "task_id": "integrated-capture-revert-085",
+      "attempt": 1,
+      "contract_revision": 85,
+      "owner": "control",
+      "reviewer": "root",
+      "write_paths": [
+        "coordination/collab/results/integrated-capture-revert-085.json"
+      ],
+      "result_path": "C:\\Users\\LIMMM\\factory-ops-twin\\coordination\\collab\\results\\integrated-capture-revert-085.json",
+      "status": "accepted",
+      "ACK": true,
+      "task_path": "coordination/collab/integrated-capture-revert-085-task.json",
+      "acceptance_record": "Control tiny4hash delta PASS source035failure/closure and restored4World.render; no extra test/native. Root4hashmatched and gitdifffccentryempty. Actual036 first+second strictcapturepassed observed separately afterreview; wholetransportpending."
+    },
+    {
+      "task_id": "nav2-startup-observation-086",
+      "attempt": 1,
+      "contract_revision": 86,
+      "owner": "control",
+      "reviewer": "root",
+      "write_paths": [
+        "coordination/collab/results/nav2-startup-observation-086.json"
+      ],
+      "result_path": "C:\\Users\\LIMMM\\factory-ops-twin\\coordination\\collab\\results\\nav2-startup-observation-086.json",
+      "status": "dispatched",
+      "ACK": false,
+      "task_path": "coordination/collab/nav2-startup-observation-086-task.json"
     }
   ],
   "decisions": [

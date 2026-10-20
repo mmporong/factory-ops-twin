@@ -1,0 +1,32 @@
+{
+  "task_id": "nav2-startup-observation-086",
+  "attempt": 1,
+  "contract_revision": 86,
+  "owner": "control",
+  "reviewer": "root",
+  "binding": {
+    "session": "default",
+    "pane_id": "w1:p1C",
+    "terminal_id": "term_65e06d27e415810",
+    "agent_session": "01a152aa-24b4-7a31-92e3-a2b620f4feeb"
+  },
+  "project_root": "C:\\Users\\LIMMM\\factory-ops-twin",
+  "status": "dispatched",
+  "goal": "Bounded read-only diagnose current036 Nav2/AMCL startup stall. No new implementation/reviews. Root handles publication/Git and currentpairedSDK.",
+  "inputs": {
+    "stage": "E:/FactoryOpsRuntime/local45-transport-036",
+    "run_id": "e6be8b8845ba47d3a942a7c2867fee2a",
+    "source_commit": "26e19711b1ddf29ad02f2bbe312cee337779b23c",
+    "ROS_DOMAIN_ID": 73,
+    "linux_profile": "/mnt/e/FactoryOpsRuntime/local45-transport-036/fastdds-udp-linux.xml"
+  },
+  "write_paths": [
+    "coordination/collab/results/nav2-startup-observation-086.json"
+  ],
+  "result_path": "C:\\Users\\LIMMM\\factory-ops-twin\\coordination\\collab\\results\\nav2-startup-observation-086.json",
+  "acceptance": [
+    "036 strictfirst/secondcapture passed, worldclock advances, but dashboard-state andmission-control absent. nav2.log repeatedly carter3 mapframe nonexistent; carter3AMCL drops front_scan timestamp40.650 earlier than all TF cache. Inspect actualbounded logs/JSON and exactfrozen source startup lifecycle to determine which gate/perrobot missing.083 onlylaterplanner code, sourcecapture exactly034; do not presume cause from these facts.",
+    "Read-only targeted ROS graph/topic/service queries and a bounded <=10s clock/TF/scan subscriber allowed in existing WSL with exactdomain73/profile. No data publishing/initialpose injection/action/motion/settings changes; no bagSQL/copy, no new SDK or anothermission/unit. CLI/subscriber process must be reaped. Avoid daemon creation where supported. No need alltopics/broadlogs/research. If source auto-fails duringread, reportactualprimary/timing/closure and useclosedJSON only.",
+    "Ownreceipt concise: observed facts and which clock/scan/TF/AMCL aremissing/current perrobot; cause onlyifproven; smallest proposedrepair ifneeded. Do not stophealthyexecution, changebudgets/source/config/leases/clock/TF, installdeps, run broadtests, Git/board/docs, newagents/panes or run GPU. No extra implementation without root specifictask. You are notalone; preserveothers."
+  ]
+}

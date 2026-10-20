@@ -1,0 +1,42 @@
+{
+  "task_id": "root-034-publication-084",
+  "attempt": 1,
+  "contract_revision": 84,
+  "owner": "control",
+  "reviewer": "root",
+  "binding": {
+    "session": "default",
+    "pane_id": "w1:p1C",
+    "terminal_id": "term_65e06d27e415810",
+    "agent_session": "01a152aa-24b4-7a31-92e3-a2b620f4feeb"
+  },
+  "project_root": "C:\\Users\\LIMMM\\factory-ops-twin",
+  "status": "dispatched",
+  "goal": "One bounded read-only approval pass of root034/079 publication and generic future035 frozen prepare helper; root concurrently reviews your083 source. No full suite or native application.",
+  "input_sha256": {
+    "README.md": "408fca4015dcb062c8a6318c68a36833935b606b7703d5e4dd06ad3daa026c50",
+    "docs/troubleshooting.md": "e046888a15c7849448b728ed22ecc5715d980463d9d74f2ae9c1ff7fcf5c8ec6",
+    "docs/evidence/local45-transport-034.json": "793c645af1601654107e127fa7cbb8772749e36743229387a140e4d634f98547",
+    "docs/evidence/local45-visual-flush-079.json": "2a9da2a3fe0f5a06ce6a0bc451c551bbfcb5d0670d4ad8418f6d9c371203b52c",
+    "docs/images/fleet4-local45-034/provenance.json": "952cbb3e3bbeea1d586818ca7dccdb48238552a805f3547e1a50f78c22adee87",
+    "artifacts/local45/prepare_transport_attempt.py": "7afe372e796f3749889bf5c58a58acd62ee9181111b5e2b2351bafe895362ec9"
+  },
+  "read_paths": [
+    "D:/FactoryOpsRuntime/local45-transport-034/pair-host.json",
+    "D:/FactoryOpsRuntime/local45-transport-034/job.json",
+    "D:/FactoryOpsRuntime/local45-transport-034/results/run/mission-result.json",
+    "D:/FactoryOpsRuntime/local45-visual-flush-079/output/result.json",
+    "D:/FactoryOpsRuntime/local45-visual-flush-079/job.json",
+    "artifacts/brev/operations-074-preservation-001.json",
+    "artifacts/brev/operations-075-preservation-001.json"
+  ],
+  "write_paths": [
+    "coordination/collab/results/root-034-publication-084.json"
+  ],
+  "result_path": "C:\\Users\\LIMMM\\factory-ops-twin\\coordination\\collab\\results\\root-034-publication-084.json",
+  "acceptance": [
+    "Verify exact six input hashes; read once against actual bounded raw results.034 primaryTTL0.516666694>0.5, NOT walltimeout. Four business robots/3ships/2returns/52+8=60; bothOSclosed. Original033critical case passed034 does not imply full mission. Preserved610files3208555650bytes D/E.079 candidatecurrent+frozen+closed BUT limited/intended2/baselinealso current/no comparativefixclaim; 075 D/E copies verified2266files198150624bytes.",
+    "Read new034 media provenance and README changed paragraphs only. Check image/video SHA and actual frame123/time1502.050; static079image separately labeled with no replay/contact/live-quality claim. Sparse124captures/60x/25.4sec/failed ending, not real-speed/SDG. No need re-decode already decoded MP4 or recopy allGB.",
+    "Read prepare_transport_attempt.py optionalargv2 forwarded config-dir BEFORE immutable input preparation, actualGitarchive/commit proof and pluginreuse. Future035 explicitly normal3/fourrobots and proposed prelaunch9000 resourcebound (not yet launched), no change to old034 or model clocks/guards. Flag only substantive blocker. No broad tests/SQL/GPU/runtime mutations/Git/board/docs/newagents. Receipt with hashes/findings/pass or needs_revision. You are notalone; preserve existing edits."
+  ]
+}

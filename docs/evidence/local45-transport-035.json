@@ -1,0 +1,44 @@
+{
+  "run_id": "d81dbba35fc542e9a97b18f111749753",
+  "source_commit": "3c39246a3b09774446c9b69b5fadfe7089cb7ec8",
+  "status": "failed_first_integrated_capture",
+  "normal_transport_passed": false,
+  "goal80_complete": false,
+  "primary_error": {
+    "message": "industrial capture hooks advanced the frozen simulation state",
+    "traceback": "Traceback (most recent call last):\n  File \"E:\\FactoryOpsRuntime\\local45-transport-035\\source\\scripts\\isaac\\g2_scene.py\", line 1577, in _run\n    captured = _capture_with_timeline_policy(\n  File \"E:\\FactoryOpsRuntime\\local45-transport-035\\source\\scripts\\isaac\\g2_scene.py\", line 950, in _capture_with_timeline_policy\n    captured = capture()\n  File \"E:\\FactoryOpsRuntime\\local45-transport-035\\source\\scripts\\isaac\\g2_scene.py\", line 1578, in <lambda>\n    timeline, scene_extension, lambda: _capture_frame_with_extension(\n  File \"E:\\FactoryOpsRuntime\\local45-transport-035\\source\\scripts\\isaac\\g2_scene.py\", line 878, in _capture_frame_with_extension\n    raise primary_error\n  File \"E:\\FactoryOpsRuntime\\local45-transport-035\\source\\scripts\\isaac\\g2_scene.py\", line 870, in _capture_frame_with_extension\n    raise base.SmokeError(\"industrial capture hooks advanced the frozen simulation state\")\nscripts.isaac.stage_smoke.SmokeError: industrial capture hooks advanced the frozen simulation state\n",
+    "type": "SmokeError"
+  },
+  "failure_stage": "mission",
+  "SDK_elapsed_wall_s": 38.48399999999674,
+  "secondary_ROS_error": {
+    "message": "failed to initialize wait set: the given context is not valid, either rcl_init() was not called or rcl_shutdown() was called., at ./src/rcl/wait.c:130",
+    "traceback": "Traceback (most recent call last):\n  File \"/mnt/e/FactoryOpsRuntime/local45-transport-035/source/scripts/ros/g3_mission.py\", line 1597, in run_mission\n    callback_drain.drain()\n  File \"/mnt/e/FactoryOpsRuntime/local45-transport-035/source/factory_ops/callback_drain.py\", line 69, in drain\n    executor.spin_once(timeout_sec=0.0)\n  File \"/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/executors.py\", line 926, in spin_once\n    self._spin_once_impl(timeout_sec)\n  File \"/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/executors.py\", line 907, in _spin_once_impl\n    handler, entity, node = self.wait_for_ready_callbacks(\n                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/executors.py\", line 877, in wait_for_ready_callbacks\n    return next(self._cb_iter)\n           ^^^^^^^^^^^^^^^^^^^\n  File \"/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/executors.py\", line 757, in _wait_for_ready_callbacks\n    wait_set = _rclpy.WaitSet(\n               ^^^^^^^^^^^^^^^\nrclpy._rclpy_pybind11.RCLError: failed to initialize wait set: the given context is not valid, either rcl_init() was not called or rcl_shutdown() was called., at ./src/rcl/wait.c:130\n",
+    "type": "RCLError"
+  },
+  "secondary_scope": "ROS context shutdown follows owned SDK failure/paired shutdown; not diagnosed as independent ROS init cause.",
+  "source_config": "configs/factory-fleet4-normal3",
+  "robot_count": 4,
+  "orders": 3,
+  "source_preparation_passed": true,
+  "external_wall_bound_s": 9000,
+  "resource_timeout": false,
+  "admitted_capture_count": 0,
+  "business_handoffs": 0,
+  "diagnosis": "079 staticfixture candidate was current/frozen but integration aggregate guard failed at first mission capture. Specific changed SimulationManager clock/frame/pose component not separately retained; no unsupported exact component claim.",
+  "repair": "Restore original four World.render calls from pre079 source while keeping strict outer guard and083 path recovery. No state/clock tolerance change.",
+  "repair_integration_status": "future036 pending;035 original failed verdict preserved",
+  "windows_closed": true,
+  "linux_closed": true,
+  "linux_closure_verified": true,
+  "host_cleanup_errors": [],
+  "SDK_scene_cleanup_status": "cleanup_failed",
+  "remaining_owned_pids": [],
+  "raw_bag_copied_only_after_OS_closure": true,
+  "bag_SQL_opened": false,
+  "new_SDG": false,
+  "preservation": [
+    "D:/FactoryOpsArtifacts/operations-076/checkpoint-001",
+    "E:/FactoryOpsArtifacts/operations-076/checkpoint-001"
+  ]
+}

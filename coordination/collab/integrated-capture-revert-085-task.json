@@ -1,0 +1,37 @@
+{
+  "task_id": "integrated-capture-revert-085",
+  "attempt": 1,
+  "contract_revision": 85,
+  "owner": "control",
+  "reviewer": "root",
+  "binding": {
+    "session": "default",
+    "pane_id": "w1:p1C",
+    "terminal_id": "term_65e06d27e415810",
+    "agent_session": "01a152aa-24b4-7a31-92e3-a2b620f4feeb"
+  },
+  "project_root": "C:\\Users\\LIMMM\\factory-ops-twin",
+  "status": "dispatched",
+  "input_sha256": {
+    "scripts/isaac/local45_fleet4_transport_scene.py": "a5e7e9fd6459c69f663bbcc1ecf1f5ebc30574599a64a39d5a102dcd946236e0",
+    "docs/troubleshooting.md": "cddbaba75517313b468efa7a0a7e89c50d04cc25dc613ce9738b8b05ce0fedbb",
+    "docs/evidence/local45-transport-035.json": "c2931267d56fbc94a7b3a901826bbce2b62ba232bdb9e43787919ef9364dbfcd",
+    "docs/evidence/local45-visual-flush-079.json": "1b0d5304f74b7078f89bacfacfd29b2dac46c50203908cfd20715959e399bfff"
+  },
+  "goal": "One tiny delta review: root reverted079 mission capture to exact previously reviewedfcc/actual034 source after035 firstcapture guard failure.036 fresh native case nowrunning under sameguards. No extra tests or native operations.",
+  "write_paths": [
+    "coordination/collab/results/integrated-capture-revert-085.json"
+  ],
+  "result_path": "C:\\Users\\LIMMM\\factory-ops-twin\\coordination\\collab\\results\\integrated-capture-revert-085.json",
+  "read_paths": [
+    "E:/FactoryOpsRuntime/local45-transport-035/results/run/sdk-failure.json",
+    "E:/FactoryOpsRuntime/local45-transport-035/pair-host.json",
+    "E:/FactoryOpsRuntime/local45-transport-035/job.json",
+    "artifacts/brev/operations-076-preservation-001.json"
+  ],
+  "acceptance": [
+    "Review ONLY new delta, not prior084 media/README again. Entry 8line change restores4World.render hook and whole entry has zero gitdiff against fccbba6; material placements and outerG2freeze/resume guards untouched. Root already coldSDK3.10 AST passed;083 sourceCPU accepted and unchanged. Static079limited/current does not prove integrated capture.",
+    "035 actual SDKprimary aggregatefrozen-state guard, not independent ROSinitialization diagnosis;38.484wall,0admittedcaptures,0handoffs; no exact clock/frame/pose component claim because individualaftervaluesnotretained. Preserve internalcleanup_failed vs hostbothOSclosed/noPID/cleanup[] difference.07695files134158122B D/E verified.035 originalverdict staysfailed.",
+    "Read only FOT069 replacement/FOT070 new paragraphs and079 evidence3 appended fields plus035 summary, against bounded rawerror/closure.036 differentrun/source currentlyrunning with repairedcapture/3orders4robots9000resourcebound; no fullnormal success claim. No requirement to wait036 ending. Return concise PASS/blockers+4hashes, maxusefulsummary. No extra tests/SQL/GPU/ROS/Git/board/docs/source edits/newagents. You are notalone, preserve others."
+  ]
+}

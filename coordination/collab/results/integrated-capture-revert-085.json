@@ -1,0 +1,32 @@
+{
+  "task_id": "integrated-capture-revert-085",
+  "attempt": 1,
+  "contract_revision": 85,
+  "acknowledged": true,
+  "status": "review_complete",
+  "verdict": "PASS",
+  "source_sha256": {
+    "scripts/isaac/local45_fleet4_transport_scene.py": "a5e7e9fd6459c69f663bbcc1ecf1f5ebc30574599a64a39d5a102dcd946236e0",
+    "docs/troubleshooting.md": "cddbaba75517313b468efa7a0a7e89c50d04cc25dc613ce9738b8b05ce0fedbb",
+    "docs/evidence/local45-transport-035.json": "c2931267d56fbc94a7b3a901826bbce2b62ba232bdb9e43787919ef9364dbfcd",
+    "docs/evidence/local45-visual-flush-079.json": "1b0d5304f74b7078f89bacfacfd29b2dac46c50203908cfd20715959e399bfff"
+  },
+  "all_four_pins_match": true,
+  "blocking_findings": [],
+  "reviewed_delta": [
+    "before_capture lines218-232 retains active-product/World checks and material placement provenance, then calls World.render exactly four times. The079 Replicator step/wait branch is absent; no replacement state/tolerance fallback is introduced.",
+    "FOT069 accurately records accepted083 CPU-only bounded retry and unchanged deadlines/TTL. FOT070 and the three079 appended fields preserve static079 limited status and reject using it as integrated capture proof.",
+    "035 raw sdk-failure records aggregate frozen-state rejection at38.48399999999674wall seconds. It does not retain individual after clock/frame/pose differences; no exact component or independent ROS initialization cause is asserted.",
+    "035 remains failed despite Job worker exit0/statuspassed. Pair evidence verifies Windows/Linux closed, owned Linux cgroup absent/PIDs empty/client closed, Windows remaining PIDs empty and host cleanup_errors empty. Published SDK cleanup_failed is kept separate from owner closure.",
+    "035 summary retains zero admitted captures/zero handoffs, three orders/four robots and9000s resource bound. Preservation manifest has95rows totaling134158122bytes and D/E copy-match attestation. No original verdict is replaced.",
+    "036 is a distinct pending native case; first-capture recovery and complete transport are not claimed or observed in this review."
+  ],
+  "limits": [
+    "One tiny source/document delta pass only. Exact whole-entry equality to fccbba6 is root-reported; this pass matched the supplied current pin and inspected the affected hook, without running Git or rereading outerG2/083.",
+    "Zero capture/handoff counts and internal cleanup_failed are retained from the bounded035 summary; raw aggregate error and host closure were cross-checked. No additional mission/scene originals or036 runtime were opened.",
+    "No tests, AST, SDK, GPU, ROS, WSL, SQL, servers, agents, runtime operations, or product/docs edits.084 was not repeated. Root retains acceptance authority."
+  ],
+  "written_paths": [
+    "coordination/collab/results/integrated-capture-revert-085.json"
+  ]
+}

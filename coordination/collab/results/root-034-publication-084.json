@@ -1,0 +1,185 @@
+{
+  "task_id": "root-034-publication-084",
+  "attempt": 1,
+  "contract_revision": 84,
+  "acknowledged": true,
+  "status": "review_complete",
+  "verdict": "PASS",
+  "review_scope": "One bounded read-only source/publication/evidence pass. Root retains acceptance and launch authority.",
+  "input_sha256": {
+    "README.md": "408fca4015dcb062c8a6318c68a36833935b606b7703d5e4dd06ad3daa026c50",
+    "docs/troubleshooting.md": "e046888a15c7849448b728ed22ecc5715d980463d9d74f2ae9c1ff7fcf5c8ec6",
+    "docs/evidence/local45-transport-034.json": "793c645af1601654107e127fa7cbb8772749e36743229387a140e4d634f98547",
+    "docs/evidence/local45-visual-flush-079.json": "2a9da2a3fe0f5a06ce6a0bc451c551bbfcb5d0670d4ad8418f6d9c371203b52c",
+    "docs/images/fleet4-local45-034/provenance.json": "952cbb3e3bbeea1d586818ca7dccdb48238552a805f3547e1a50f78c22adee87",
+    "artifacts/local45/prepare_transport_attempt.py": "7afe372e796f3749889bf5c58a58acd62ee9181111b5e2b2351bafe895362ec9"
+  },
+  "all_six_frozen_inputs_match": true,
+  "read_sha256": {
+    "D:/FactoryOpsRuntime/local45-transport-034/pair-host.json": "ed40f823dc6eff2cd19129da32ff9c156080c7ec33cf38a1139b09862b833eca",
+    "D:/FactoryOpsRuntime/local45-transport-034/job.json": "4533881b0ea6138fad8dfe8d09a55c3f1b6a43d375a39c17c3acd7e6f9c2c09a",
+    "D:/FactoryOpsRuntime/local45-transport-034/results/run/mission-result.json": "de4c2feb232e920dea273fe83f5f6504790bc10b25c27ca360ec5ea6d2fcc51b",
+    "D:/FactoryOpsRuntime/local45-visual-flush-079/output/result.json": "7c37a516a7709b7982f06f2cd29e8854257751ea50d4a00fbdd192d6c5cca8b7",
+    "D:/FactoryOpsRuntime/local45-visual-flush-079/job.json": "16bea88e06997b816aa6c590c209168920a7b35c3b6a5811e48a708b70f70893",
+    "artifacts/brev/operations-074-preservation-001.json": "5a293c314207dfa8e321318e475ada2ba93d92e4cdde27cdeddb8f26bb93d922",
+    "artifacts/brev/operations-075-preservation-001.json": "c556c5067568526e0aacd9749ec3fbea929505b68de3d3e36482311449199998",
+    "D:/FactoryOpsRuntime/local45-transport-034/results/run/media/frames.json": "ff48db96409d288c3708b7c7d219296c469d2dadf5d4e231230bde1a423af248"
+  },
+  "media_read_sha256": [
+    {
+      "published_path": "docs/images/fleet4-local45-034/overview.png",
+      "source_path": "D:/FactoryOpsRuntime/local45-transport-034/results/run/media/overview-00123.png",
+      "sha256": "6f699d567fca32f33d4daa4506f6529a5880e776aaca49f4b360238a33cd34b1",
+      "source_sha256": "6f699d567fca32f33d4daa4506f6529a5880e776aaca49f4b360238a33cd34b1",
+      "provenance_and_source_match": true
+    },
+    {
+      "published_path": "docs/images/fleet4-local45-034/dashboard-first-return.jpg",
+      "source_path": "C:/Users/LIMMM/factory-ops-twin/artifacts/local45/034-web/first-empty-return-complete.jpg",
+      "sha256": "544ce980c80233511cf7cf3367445f299581ef6bd2858183af695cee2af48031",
+      "source_sha256": "544ce980c80233511cf7cf3367445f299581ef6bd2858183af695cee2af48031",
+      "provenance_and_source_match": true
+    },
+    {
+      "published_path": "docs/images/fleet4-local45-034/empty-tote-carrier-detail.jpg",
+      "source_path": "C:/Users/LIMMM/factory-ops-twin/artifacts/local45/034-web/empty-tote-carrier-detail.jpg",
+      "sha256": "366be5cf07c91c19d313210637efa3dc49aa96894d5d6fea30b5478366191171",
+      "source_sha256": "366be5cf07c91c19d313210637efa3dc49aa96894d5d6fea30b5478366191171",
+      "provenance_and_source_match": true
+    },
+    {
+      "published_path": "docs/images/fleet4-local45-034/operations-partial.mp4",
+      "source_path": "C:/Users/LIMMM/factory-ops-twin/artifacts/local45/034-preview-video/operations-timeline.mp4",
+      "sha256": "d91e3cda53646067012fb9545c859f0152b9c97a3f2a22ba7cdbe8fe175011db",
+      "source_sha256": "d91e3cda53646067012fb9545c859f0152b9c97a3f2a22ba7cdbe8fe175011db",
+      "provenance_and_source_match": true
+    },
+    {
+      "published_path": "docs/images/fleet4-local45-034/empty-tote-static-fixture.png",
+      "source_path": "D:/FactoryOpsRuntime/local45-visual-flush-079/output/candidate_rep_step0_wait.png",
+      "sha256": "38b5e27c8dc3be73dbd6641b057ad09bb19ebf5232de7cf8124d4dea6c06d8cb",
+      "source_sha256": "38b5e27c8dc3be73dbd6641b057ad09bb19ebf5232de7cf8124d4dea6c06d8cb",
+      "provenance_and_source_match": true
+    }
+  ],
+  "task_card_sha256": "d218be20bb2bba489974385ecba360ee4e48b80e65f7bb5ed32ee670bdfaf7e5",
+  "findings": [],
+  "checks": {
+    "034_primary_failure": {
+      "status": "failed",
+      "message": "computed path is stale",
+      "robot_id": "carter1",
+      "planner_action_uuid": "795727d2-42ea-4efa-bade-23ee869d7051",
+      "path_stamp_ns": 1507833411973,
+      "admitted_clock_ns": 1508350078667,
+      "age_s": 0.516666694,
+      "unchanged_ttl_s": 0.5,
+      "planner_status": 4,
+      "planner_error_code": 0,
+      "qualified": false,
+      "sent_to_FollowPath": false,
+      "wall_bound_s": 7200,
+      "host_wall_s": 6753.5,
+      "job_timed_out": false,
+      "conclusion": "Path TTL rejection is primary; SDK mission-failed is subsequent, not a resource timeout."
+    },
+    "034_partial_outcome": {
+      "business_handoff_robots": [
+        "carter1",
+        "carter2",
+        "carter3",
+        "carter4"
+      ],
+      "accepted_handoffs": 14,
+      "completed_order_ids": [
+        "F4-001",
+        "F4-002",
+        "F4-003"
+      ],
+      "expected_orders": 4,
+      "completed_empty_returns": 2,
+      "remaining_assigned_returns": 2,
+      "inventory": {
+        "initial": 60,
+        "on_hand": 52,
+        "consumed": 8,
+        "in_totes": 0,
+        "balanced": true
+      },
+      "whole_mission_complete": false,
+      "previous033_edge": "Actual carter3 C_HIGH->C_LOW: 431 poses, planner qualified, FollowPath status4/error0, stopped at879.966712561s. This is a successful subcase, not whole-mission completion."
+    },
+    "034_closure": {
+      "windows_closed": true,
+      "windows_remaining_pids": [],
+      "linux_closed": true,
+      "linux_ownership_match": true,
+      "linux_cgroup_exists": false,
+      "linux_cgroup_pids": [],
+      "linux_live_known_processes": [],
+      "foreground_client_closed": true,
+      "host_cleanup_errors": [],
+      "scope": "Owner process-tree closure. The mission result separately retains an already-shutdown rclpy context cleanup message; it is not hidden or interpreted as an active process."
+    },
+    "079": {
+      "status": "limited",
+      "intended_exit_code": 2,
+      "observed_job_worker_exit_code": 0,
+      "candidate_current": true,
+      "baseline_current": true,
+      "baseline_lag_observed": false,
+      "quality_effect_verified": false,
+      "physics_frame": 2,
+      "world_time_s": 0.03333333507180214,
+      "all_three_captures_same_before_after_state": true,
+      "windows_job_closed": true,
+      "remaining_owned_pids": [],
+      "scope": "Authored static sequential A/B; no source034 replay, contact/lift proof, live quality success, or comparative fix claim. Observed process exit0 does not replace limited quality verdict."
+    },
+    "preservation": {
+      "074": {
+        "file_count": 610,
+        "bytes": 3208555650,
+        "D_E_copy_match_attested": true
+      },
+      "075": {
+        "file_count": 2266,
+        "bytes": 198150624,
+        "D_E_copy_match_attested": true
+      },
+      "scope": "Manifest row counts/byte sums and reviewed raw-result identities match. No multi-GB copy or complete D/E rehash was repeated."
+    },
+    "media_and_publication": {
+      "all_five_published_files_match_named_sources": true,
+      "four_still_images_viewed": true,
+      "frame_index_sha256": "ff48db96409d288c3708b7c7d219296c469d2dadf5d4e231230bde1a423af248",
+      "capture_times": 124,
+      "camera_files": 372,
+      "overview_index": 123,
+      "physics_frame": 90123,
+      "sim_time_s": 1502.050078338012,
+      "nominal_playback_factor": 60,
+      "sparse_images_held": true,
+      "interpolation": false,
+      "encoded_duration_s_from_existing_probe": 25.4,
+      "failed_ending_retained_in_existing_timeline_record": true,
+      "scope": "README and changed troubleshooting paragraphs distinguish partial failed034, web/native non-atomic observations, static079, pixel lag, unverified physical payload/contact, and incomplete four-robot mission. No real-speed, SDG, or comparative quality claim."
+    },
+    "future_prepare_helper": {
+      "config_argument": "Optional argv[2] appended as --config-dir before the frozen fleet4_prepare subprocess runs.",
+      "source_proof": "Archives explicit HEAD commit and saves raw git commit object; invokes the frozen source/scripts/brev/fleet4_prepare.py with source-root, source-commit, run-id and local45_development.",
+      "plugin_reuse": "Checks recorded goal-checker source hashes against both working and archived source, checks existing installed library hash, then records installed package/plugin/library hashes in an attestation.",
+      "prelaunch_only": "Writes prepared_only/native_started=false. No SDK/ROS launch or prior034 source/config mutation.",
+      "future035_choice": "normal3 is an explicit optional second argument; omitted argument retains default four-order input. The separate normal3 input still has four robots. Proposed9000s is a future prelaunch resource choice, not a034 change or a launch performed by this helper/review.",
+      "scope": "Helper source inspection only; archived pin validation reuses the previously accepted082 API. No Git command, preparation execution, or new plugin build was performed in084."
+    }
+  },
+  "limits": [
+    "No tests, AST, SDK, GPU, ROS, WSL, server, native process, Git, bag SQLite, agents, or product/document edits.",
+    "Existing MP4 decode/probe evidence was checked against the matched output digest; MP4 was not decoded again.",
+    "This PASS is limited to publication consistency and the named helper source. It does not accept083, authorize035, certify all D/E bytes anew, or establish complete transport/physical loading/charging."
+  ],
+  "written_paths": [
+    "coordination/collab/results/root-034-publication-084.json"
+  ]
+}
