@@ -1,0 +1,74 @@
+{
+  "task_id": "native-flat-scan-publisher-038",
+  "attempt": 1,
+  "contract_revision": 38,
+  "ACK": true,
+  "owner": "control",
+  "status": "completed_cpu_verified_pending_root_integration",
+  "accepted": false,
+  "completed_at_utc": "2026-10-20T11:26:11.855309+09:00",
+  "finalized_at_utc": "2026-10-20T02:26:34.5623021Z",
+  "changed_paths": [
+    "factory_ops/flat_scan_ros.py",
+    "tests/test_flat_scan_ros.py",
+    "coordination/collab/results/native-flat-scan-publisher-038.json"
+  ],
+  "source_sha256": {
+    "factory_ops/flat_scan_ros.py": "69ccc558f269dd6c83a1585d7e8dd6467b5cf636a8c1fde4f0d689cd7802b012",
+    "tests/test_flat_scan_ros.py": "25c87120cff9958419ca7fae49be609f505ff4b410e1f9de1572390b1a77fe56"
+  },
+  "public_api": {
+    "callback_fields": [
+      "stamp_sec",
+      "stamp_nanosec",
+      "frame_id",
+      "angle_min",
+      "angle_max",
+      "angle_increment",
+      "scan_time",
+      "time_increment",
+      "range_min",
+      "range_max",
+      "ranges"
+    ],
+    "formula": {
+      "angle_min": "radians(azimuthRange[0])",
+      "angle_max": "radians(azimuthRange[1])",
+      "angle_increment": "radians(horizontalResolution)",
+      "scan_time": "1 / rotationRate",
+      "time_increment": "(horizontalResolution / 360) / rotationRate",
+      "range_min": "depthRange[0]",
+      "range_max": "depthRange[1]",
+      "ranges": "순서를 보존한 Python float list. 원본 NaN/Inf/음수/범위 밖 값을 유지."
+    },
+    "constructor": "NativeFlatScanPublisher(publish_fields_callable: Callable[[dict[str, Any]], Any], frame_id: str)",
+    "publish": "publish(payload: Mapping[str, Any]) -> dict[str, Any]",
+    "outcomes": "published/duplicate/warmup primitive dict. 잘못된 populated input·역행은 field 진단 ValueError; callback 예외는 전파. callback 성공 후에만 timestamp/count commit.",
+    "dedup": "같은 native timestamp는 buffer에 접근하지 않고 미발행. sensor/frame/run마다 인스턴스 하나."
+  },
+  "installed_primary_source_sha256": {
+    "E:/IsaacSim/isaac-sim-4.5.0/exts/isaacsim.sensors.rtx/isaacsim/sensors/rtx/scripts/lidar_rtx.py": "0e2ffba3cd798612e25c56faeaa438277c562d2e914eee8386b51cb52b7a0986",
+    "E:/IsaacSim/isaac-sim-4.5.0/exts/isaacsim.sensors.rtx/isaacsim/sensors/rtx/ogn/tests/TestOgnIsaacComputeRTXLidarFlatScan.py": "fbb8f75478eac76256acdcccdbd82acc0c47107cd52f1f1608d502453f08bcbe",
+    "E:/IsaacSim/isaac-sim-4.5.0/exts/isaacsim.sensors.rtx/ogn/docs/OgnIsaacComputeRTXLidarFlatScan.rst": "ed3b3aa02acc5e6a1d206a988a94fef6a054c19e7316b03fdd8faaeabf9a38d0",
+    "E:/IsaacSim/isaac-sim-4.5.0/exts/isaacsim.sensors.rtx/isaacsim/sensors/rtx/ogn/tests/usd/OgnIsaacComputeRTXLidarFlatScanTemplate.usda": "d46f1dcff7cd59168e73eb1785f56feb869b5d32c8b70e1d90d09f88c174ab0a",
+    "E:/IsaacSim/isaac-sim-4.5.0/exts/isaacsim.sensors.rtx/docs/CHANGELOG.md": "5fee4bb9258b6fa799bb8870098046de81792d133266dd777e93f8702c036616"
+  },
+  "unit_evidence": "설치 OGN RST L51-61 및 USD template에서 azimuthRange/horizontalResolution=deg, depthRange/ranges=m, rotationRate=Hz, timeStamp=first beam seconds 확인. 값·순서/NaN/±Inf를 보존.",
+  "validation": {
+    "result": "8 PASS, 0.004s, 기존 1회 실행",
+    "command": "python3.10 -m unittest tests.test_flat_scan_ros -v",
+    "additional_tests_run": false
+  },
+  "limits": [
+    "실제 SDK/NumPy payload·rclpy 발행·subscriber 수신·World/ROS 시각 정합은 미검증. SDK/GPU/ROS/Git/새 agent 실행 없음.",
+    "native 각도 끝점과 거리값을 보정하지 않으며 angular_span_error_rad는 진단용. 센서 품질 합격을 주장하지 않음.",
+    "callback은 발행 오류를 전파해야 함. 실제 발행 뒤 예외가 발생하면 재시도 시 외부 중복 가능."
+  ],
+  "root_wiring_example": "from factory_ops.flat_scan_ros import NativeFlatScanPublisher\n# LaserScan and ros_publisher are created by root in its ROS/runtime wiring.\ndef publish_fields(fields):\n    message = LaserScan()\n    message.header.frame_id = fields[\"frame_id\"]\n    message.header.stamp.sec = fields[\"stamp_sec\"]\n    message.header.stamp.nanosec = fields[\"stamp_nanosec\"]\n    for name in (\"angle_min\", \"angle_max\", \"angle_increment\", \"scan_time\",\n                 \"time_increment\", \"range_min\", \"range_max\", \"ranges\"):\n        setattr(message, name, fields[name])\n    ros_publisher.publish(message)  # Let an actual publication exception propagate.\n\nconverter = NativeFlatScanPublisher(publish_fields, actual_sensor_frame_id)\n# In root's existing native read hook, with no Replicator Start/Resume:\npayload = actual_native_flat_scan_payload\nif \"linearDepthData\" in payload:\n    depths = payload[\"linearDepthData\"]\n    reshape = getattr(depths, \"reshape\", None)\n    if callable(reshape):\n        payload = {**payload, \"linearDepthData\": reshape(-1)}\noutcome = converter.publish(payload)\n# Journal primitive outcomes/counts; verify actual ROS receipt separately.\n",
+  "processes": {
+    "stopped": [],
+    "started": []
+  },
+  "pending_owner_work": [],
+  "next_owner": "root 연결 검수/실행"
+}

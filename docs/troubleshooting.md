@@ -359,6 +359,12 @@ ROS가 실패 종료한 직후 외부 실행기가 아직 정리 중인 Windows 
 
 037은foreground WSL 클라이언트를 유지하는 방식으로 보완했고12개 관련 CPU 검사를1회 통과했다. 실제 WSL 단위1회에서는70.016초 동안 추가 WSL 조회 없이 같은 boot ID와 살아 있는 클라이언트를 유지했다. 이후 부모·setsid 자식·unit/cgroup·Linux waiter·Windows 클라이언트가 모두 종료됐고 강제 클라이언트 종료는 없었다. 전체 fixture는71.875초였다. [수명·종료 근거](evidence/wsl-lifetime-037.json)에 소스와 원본 해시를 남겼다. 이 결과를009 재부팅 원인이나4대 운송 성공으로 확대하지 않는다.
 
+## FOT-046 — 촬영 뒤 Replicator Start가 동결된 물리를 전진시킴
+
+010은 촬영 뒤 `orchestrator.run(start_timeline=False)`를 호출한 첫 시점에 물리 프레임 불변 검사를 통과하지 못했다. SDK 오류는 `industrial capture hooks advanced the frozen simulation state`였다. Python mock 검사의 비차단 호출 확인은 native 물리 불변의 근거가 아니므로 해당 후보와 mock 검사를 제거한다. SDK 정리가 끝나지 않아 같은 run ID의 취소 파일로 소유 Job을 종료했고 Windows·WSL 종료와 정리 오류 없음이 확인됐다. 정리 정체의 native 내부 원인은 확정하지 않는다. [010 근거](evidence/local45-transport-010.json)를 보존한다.
+
+후속 구현은 설치 SDK의 SimulationTime FlatScan 원본 버퍼를 읽고 고유 원본 시각마다 rclpy LaserScan을 한 번 발행한다. RGB 촬영은 기존 pause/resume 정책을 사용하며 별도 Replicator Start/Resume을 제출하지 않는다. 센서 시각 이동·TTL 확대·주행 위치 대입은 하지 않는다. 변환기는 도·m·Hz·첫 빔 시각이라는 설치 OGN 메타데이터를 사용하고 원본 거리 순서와 유효하지 않은 거리 값을 보존한다. warmup 빈 버퍼는 미발행, 역행 시각과 잘못된 populated 메타데이터는 오류로 처리한다. 촬영 이후8개 ROS 스캔의 연속성·AMCL·실제 운송은 새 실행에서 확인할 항목이다.
+
 ## 실행 전 확인과 후속 기록
 
 1. 깨끗한 생산자 소스·host commit·설정·실행 ID를 결속한다. 실패한 실행 ID와 원본을 다시 사용하지 않는다.

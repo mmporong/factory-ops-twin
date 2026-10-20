@@ -1,0 +1,32 @@
+{
+  "task_id": "native-scan-integration-review-039",
+  "attempt": 1,
+  "contract_revision": 39,
+  "owner": "control",
+  "author": "root",
+  "goal": "One bounded read-only review of root native FlatScan ROS wiring after finishing task038",
+  "read_paths": [
+    "factory_ops/isaac45_runtime.py",
+    "scripts/isaac/g2_scene.py",
+    "scripts/isaac/local45_fleet4_transport_scene.py",
+    "tests/test_native_scan_publication.py"
+  ],
+  "write_paths": [
+    "coordination/collab/results/native-scan-integration-review-039.json"
+  ],
+  "acceptance": [
+    "No Replicator ROS writer in the local opt-in path; native annotator cleanup still runs on failure",
+    "One native converter and ROS publisher per sensor with correct namespace/frame; actual timestamp and ranges preserved",
+    "Publish on warmup/readiness/main app updates; dedup prevents replay; nonprimitive objects excluded from result JSON",
+    "Failed Start override is removed; canonical6.2 path remains unaffected; local source pins include converter"
+  ],
+  "validation": "Read changed diff and frozen SHA once. Do not run extra tests, GPU, ROS, code changes, Git or spawn agents. Root ran6 focused CPU cases; actual011 will prove sensor continuity. Return only blocking defects or bounded approval and native gaps.",
+  "notes": "Not alone in shared tree. Do not revert edits or extend review. Finish038 receipt before accepting039. Root owns source and native execution.",
+  "result_path": "coordination/collab/results/native-scan-integration-review-039.json",
+  "input_sha256": {
+    "factory_ops/isaac45_runtime.py": "93924e40e2020b13ca41871afd9d90ea1a9cae267c3c8c194ac51ef073772f5c",
+    "scripts/isaac/g2_scene.py": "2e589e531227d1f8d71118ddf04b9b5937d4fa6a770eeaae0cec2ba6ff154d4a",
+    "scripts/isaac/local45_fleet4_transport_scene.py": "34d8b3caf293ec70a16ccfadbf7f6be35d645f7e80cbec9217616712535585cd",
+    "tests/test_native_scan_publication.py": "d4f20d1eef17cfc0b917914f8550ad5e19b317fa23af447a71fb81ea92190183"
+  }
+}

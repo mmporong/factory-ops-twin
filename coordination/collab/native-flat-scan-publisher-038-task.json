@@ -1,0 +1,38 @@
+{
+  "task_id": "native-flat-scan-publisher-038",
+  "attempt": 1,
+  "contract_revision": 38,
+  "owner": "control",
+  "source_commit": "f14b4dc3b03444acb6e3304467b4a34d1b842a1c",
+  "goal": "SDK/ROS-free conversion and publication deduplication for actual SDK4.5 native FlatScan buffers; root owns native sensors and rclpy wiring",
+  "write_paths": [
+    "factory_ops/flat_scan_ros.py",
+    "tests/test_flat_scan_ros.py",
+    "coordination/collab/results/native-flat-scan-publisher-038.json"
+  ],
+  "read_paths": [
+    "factory_ops/flat_scan_observation.py",
+    "factory_ops/isaac45_runtime.py",
+    "E:/IsaacSim/isaac-sim-4.5.0/exts/isaacsim.sensors.rtx/isaacsim/sensors/rtx/scripts/lidar_rtx.py",
+    "E:/IsaacSim/isaac-sim-4.5.0/exts/isaacsim.sensors.rtx/isaacsim/sensors/rtx/ogn/tests/TestOgnIsaacComputeRTXLidarFlatScan.py"
+  ],
+  "api": "NativeFlatScanPublisher(publish_fields_callable, frame_id); publish(payload) returns primitive outcome dict; callback receives LaserScan field dict including stamp_sec/stamp_nanosec/frame_id, angle_min/max/increment, scan_time/time_increment, range_min/max/ranges",
+  "acceptance": [
+    "Use actual timeStamp seconds; positive native time only. No wall clock, simulation loop counter, offset, generated scan or pose shortcut",
+    "Support installed NumPy numeric scalar/flat array payloads without importing NumPy/SDK/ROS. Root flattens linearDepthData before calling",
+    "Preserve native range order/values including standard nonfinite invalid ranges; reject bool/string/complex values. Validate one row, matching numCols/buffer count, finite angular/range/rate metadata",
+    "Derive angle/time/range fields from actual azimuthRange, horizontalResolution, rotationRate and depthRange. Verify angular units from installed primary SDK surface; report uncertainty rather than invent fields",
+    "Warmup empty/zero timestamp or empty buffer returns a clear non-publication outcome; malformed populated data fails with actionable field diagnostics",
+    "Only publish a new native timestamp; exact repeat does not re-copy/publish ranges. Regressing native time fails. Update last-published stamp only after callback succeeds",
+    "Expose small primitive counts/outcomes so root can record actual unique publication; do not call it sensor quality qualification",
+    "Focused CPU tests once for field mapping, startup, duplicate, regression, malformed shape/metadata and publisher failure. Python3.10 compatible, no new dependencies"
+  ],
+  "non_goals": [
+    "No edits to runtime/G2/local lifecycle/Git/config or old evidence",
+    "No SDK/GPU/ROS launches, no agents or panes, no package changes",
+    "Do not reintroduce Replicator Start/Resume, change physical time or relax TTL"
+  ],
+  "context": "010 nonblocking Replicator Start still advanced frozen physics and hit guard, then hung cleanup; scoped abort requested. Root is removing this candidate and wiring native FlatScan -> rclpy LaserScan so camera capture no longer controls ROS writer execution.037 lifetime anchor passed and is retained.",
+  "result_path": "coordination/collab/results/native-flat-scan-publisher-038.json",
+  "notes": "ACK task/attempt. Not alone in shared tree; root owns all other source. Do not revert others. Return exact public API, validation, hashes and unresolved native assumptions. Root does one bounded result check."
+}

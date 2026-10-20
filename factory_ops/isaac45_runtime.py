@@ -19,6 +19,7 @@ from typing import Any
 ASSET_PATH = "/Isaac/Robots/NVIDIA/Carter/nova_carter/nova_carter.usd"
 LIDAR_PROFILE = "RPLIDAR_S2E"
 LIDAR_WRITER = "RtxLidarROS2PublishLaserScan"
+FLAT_SCAN_ANNOTATOR = "RtxSensorCpuIsaacComputeRTXLidarFlatScanSimulationTime"
 _DLL_HANDLES: dict[str, Any] = {}
 
 
@@ -181,7 +182,7 @@ class _FlatScanObservationHandle:
         rep = importlib.import_module("omni.replicator.core")
         self._tracker = FlatScanObservationTracker(identity, range_min_m, range_max_m)
         self._annotator = rep.AnnotatorRegistry.get_annotator(
-            "RtxSensorCpuIsaacComputeRTXLidarFlatScanSimulationTime")
+            FLAT_SCAN_ANNOTATOR)
         self._annotator.attach([product])
 
     def read(self, **reader_context):
@@ -206,6 +207,17 @@ class _LidarSensor:
         self._product = product
         self._writer: Any = None
         self._observer: Any = None
+        self._publication_annotator: Any = None
+
+    def read_native_scan(self):
+        if self._publication_annotator is None:
+            raise RuntimeError("sensor has no native publication annotator")
+        payload = self._publication_annotator.get_data()
+        if isinstance(payload, dict):
+            reshape = getattr(payload.get("linearDepthData"), "reshape", None)
+            if callable(reshape):
+                payload = {**payload, "linearDepthData": reshape(-1)}
+        return payload
 
     def open_native_observer(self, identity, range_min_m, range_max_m):
         if self._product is None or self._observer is not None:
@@ -230,6 +242,12 @@ class _LidarSensor:
                 self._writer = None
             except Exception as error:
                 errors.append(f"writer.detach: {error}")
+        if self._publication_annotator is not None:
+            try:
+                self._publication_annotator.detach()
+                self._publication_annotator = None
+            except Exception as error:
+                errors.append(f"publication_annotator.detach: {error}")
         if self._product is not None:
             try:
                 self._product.destroy()
@@ -342,7 +360,9 @@ class Runtime45:
         return records
 
     def setup_lidars(self, config, robots, stage, Usd, UsdGeom, Gf,
-                     SimulationManager, app, author_mount, verify_mount):
+                     SimulationManager, app, author_mount, verify_mount, *, native_publication=False):
+        if type(native_publication) is not bool:
+            raise ValueError("native_publication must be a boolean")
         if SimulationManager is not self.SimulationManager or app is not self.app:
             raise ValueError("lidars and physics must belong to this runtime/application")
         if stage != self._bindings.usd.get_context().get_stage():
@@ -395,9 +415,13 @@ class Runtime45:
                 product = rep.create.render_product(prim.GetPath(), (1, 1), name=f"Local45_{definition['robot_id']}_{lidar['name']}")
                 sensor = _LidarSensor(product)
                 sensors.append(sensor)
-                sensor._writer = rep.writers.get(LIDAR_WRITER)
-                sensor._writer.initialize(topicName=topic, frameId=lidar["frame_id"])
-                sensor._writer.attach([product])
+                if native_publication:
+                    sensor._publication_annotator = rep.AnnotatorRegistry.get_annotator(FLAT_SCAN_ANNOTATOR)
+                    sensor._publication_annotator.attach([product])
+                else:
+                    sensor._writer = rep.writers.get(LIDAR_WRITER)
+                    sensor._writer.initialize(topicName=topic, frameId=lidar["frame_id"])
+                    sensor._writer.attach([product])
                 metadata.append({"robot_id": definition["robot_id"], "name": lidar["name"],
                     "namespace": definition["namespace"], "prim_path": path, "topic": topic,
                     "frame_id": lidar["frame_id"], "translation_xyz_m": list(lidar["translation_xyz_m"]),
@@ -407,7 +431,9 @@ class Runtime45:
                     "rotation_frequency_hz": profile["scanRateBaseHz"], "report_rate_hz": profile["reportRateBaseHz"],
                     "near_range_m": profile["nearRangeM"], "far_range_m": profile["farRangeM"],
                     "horizontal_resolution_deg": 360. * profile["scanRateBaseHz"] / profile["reportRateBaseHz"],
-                    "writer": LIDAR_WRITER, "clock_source": "simulation_time",
+                    "writer": "native_FlatScan_to_rclpy_LaserScan" if native_publication else LIDAR_WRITER,
+                    "native_publication_annotator": FLAT_SCAN_ANNOTATOR if native_publication else None,
+                    "clock_source": "simulation_time",
                     "parameter_source": "installed4.5 JSON profile; actual ROS scan header validation is separate",
                     "runtime": "SDK4.5 opt-in; no6.2 tickRate/accumulateOutputs attributes synthesized"})
             app.update()

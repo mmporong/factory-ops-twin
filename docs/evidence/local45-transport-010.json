@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "run_id": "bd51d512bf1f4976988d13a3c61f2510",
+  "source_commit": "f14b4dc3b03444acb6e3304467b4a34d1b842a1c",
+  "status": "failed_capture_advanced_frozen_physics",
+  "original_directory": "D:\\FactoryOpsRuntime\\local45-transport-010",
+  "actual_sdk_error": "FACTORY_OPS_G2_ERROR=mission: SmokeError: industrial capture hooks advanced the frozen simulation state",
+  "candidate": "Replicator orchestrator.run(start_timeline=False) after manual capture",
+  "decision": "candidate retired; native FlatScan to rclpy publication is the next implementation",
+  "windows_closed": true,
+  "linux_closed": true,
+  "cleanup_errors": [],
+  "scoped_abort_requested": true,
+  "known": "the frozen-state guard rejected the first capture; cleanup did not finish before scoped host abort",
+  "not_proven": [
+    "exact native cleanup hang cause",
+    "transport completion",
+    "actual charging",
+    "sensor continuity"
+  ],
+  "bag_sql_opened": false,
+  "source_archive_sha256": "05b8d1d8d4d996635d6b52ffa114c21f02e56f88019d4ae5fdf3fc0386087c42",
+  "records_sha256": {
+    "pair-host.json": "1d5a16154b47739f06f15b68fbdbaf6eaa4d53701a265df940f2f218a4cf378f",
+    "sdk.stdout.log": "8eefc607fe5737f44cef49b4d4533365456e37ed84cb6937fbba5eb75b495cc0",
+    "sdk.stderr.log": "75165106d316db69d190951fa7be148b6ed75f96ed4595497b2e5297f3e56a78",
+    "job.json": "5446183d88a8044030c9284c53e2568f846e3b40082af320769a28059fb92df0"
+  }
+}

@@ -12,16 +12,6 @@ from scripts.isaac.local45_fleet4_transport_scene import Local45FleetLifecycle
 
 
 class Local45LifecycleTests(unittest.TestCase):
-    def test_manual_capture_submits_nonblocking_start_without_advancing_timeline(self):
-        self.lifecycle.timeline = self.timeline
-        self.lifecycle.rgb_render_state = "enabled"
-        rep = Mock()
-        self.lifecycle.before_capture(rep)
-        rep.orchestrator.step.assert_called_once_with(delta_time=0.0, rt_subframes=4, pause_timeline=True)
-        self.lifecycle.after_capture()
-        rep.orchestrator.run.assert_called_once_with(start_timeline=False)
-        self.assertIsNone(self.lifecycle._capture_rep)
-
     @classmethod
     def setUpClass(cls):
         cls.temp = tempfile.TemporaryDirectory()

@@ -418,6 +418,11 @@ def _setup_robot_ros(
                 finite = [float(value) for value in message.ranges if math.isfinite(value)]
                 state["scan_samples"].append({
                     "name": sensor_name, "frame_id": message.header.frame_id,
+                    "stamp_s": message.header.stamp.sec + message.header.stamp.nanosec * 1e-9,
+                    "angle_min": message.angle_min, "angle_max": message.angle_max,
+                    "angle_increment": message.angle_increment, "scan_time": message.scan_time,
+                    "time_increment": message.time_increment,
+                    "range_min": message.range_min, "range_max": message.range_max,
                     "range_count": len(message.ranges), "finite_count": len(finite),
                     "minimum_finite_m": min(finite) if finite else None,
                 })
@@ -470,6 +475,46 @@ def _spin_nodes(rclpy: Any, nodes: Sequence[Any], passes: int = 4) -> None:
     for _ in range(passes):
         for node in nodes:
             rclpy.spin_once(node, timeout_sec=0.0)
+
+
+def _setup_native_lidar_publication(
+    sensors: Sequence[Any], metadata: Sequence[Mapping[str, Any]], robots: Mapping[str, Any],
+) -> Callable[[], None]:
+    """Publish each new native scan once; camera capture never owns these ROS writers."""
+    from factory_ops.flat_scan_ros import NativeFlatScanPublisher
+    from rclpy.qos import QoSProfile, ReliabilityPolicy
+    from sensor_msgs.msg import LaserScan
+
+    if len(sensors) != len(metadata):
+        raise ValueError("native publication requires matched sensor metadata")
+    bindings = []
+    for sensor, row in zip(sensors, metadata):
+        runtime = robots[row["robot_id"]]
+        publisher = runtime["node"].create_publisher(
+            LaserScan, f"scan_{row['name']}_raw",
+            QoSProfile(depth=50, reliability=ReliabilityPolicy.BEST_EFFORT),
+        )
+        runtime["ros"]["resources"].append(publisher)
+
+        def publish(fields: Mapping[str, Any], *, target: Any = publisher) -> None:
+            message = LaserScan()
+            message.header.stamp.sec = fields["stamp_sec"]
+            message.header.stamp.nanosec = fields["stamp_nanosec"]
+            message.header.frame_id = fields["frame_id"]
+            for field in ("angle_min", "angle_max", "angle_increment", "scan_time", "time_increment",
+                          "range_min", "range_max", "ranges"):
+                setattr(message, field, fields[field])
+            target.publish(message)
+
+        converter = NativeFlatScanPublisher(publish, str(row["frame_id"]))
+        states = runtime["ros"].setdefault("native_scan_publication", {})
+        bindings.append((sensor, converter, states, str(row["name"])))
+
+    def publish_available() -> None:
+        for sensor, converter, states, side in bindings:
+            states[side] = converter.publish(sensor.read_native_scan())
+
+    return publish_available
 
 
 def _append_jsonl(path: Path, value: Any) -> None:
@@ -905,6 +950,7 @@ def _run(
             lidar_sensors, lidar_metadata = runtime45.setup_lidars(
                 config, robots, stage, Usd, UsdGeom, Gf, SimulationManager, app,
                 _author_lidar_local_transform, _verify_lidar_local_transform,
+                native_publication=True,
             )
         else:
             lidar_sensors, lidar_metadata = _setup_lidars(
@@ -918,6 +964,8 @@ def _run(
             )
             runtime["node"], runtime["ros"] = node, ros
             robot_nodes.append(node)
+        publish_native_scans = (_setup_native_lidar_publication(lidar_sensors, lidar_metadata, robots)
+                                if local_sdk45 else lambda: None)
         timeline = omni.timeline.get_timeline_interface()
         lidar_hook = getattr(scene_extension, "register_lidar_sensors", None)
         if callable(lidar_hook):
@@ -928,6 +976,7 @@ def _run(
         timeline.play()
         for _ in range(int(config["warmup_steps"])):
             app.update()
+            publish_native_scans()
             now = float(SimulationManager.get_simulation_time())
             for runtime in robots.values():
                 runtime["ros"]["latest_sim_time"] = now
@@ -943,17 +992,25 @@ def _run(
                    for runtime in robots.values()):
                 break
             app.update()
+            publish_native_scans()
             now = float(SimulationManager.get_simulation_time())
             for runtime in robots.values():
                 runtime["ros"]["latest_sim_time"] = now
             _spin_nodes(rclpy, [clock_node, *robot_nodes])
         if not all(runtime["ros"]["scan_front_raw"] > 0 and runtime["ros"]["scan_rear_raw"] > 0
                    for runtime in robots.values()):
-            raise base.SmokeError("not all declared robot RTX LaserScan writers produced data")
+            raise base.SmokeError("not all declared robot RTX LaserScan publishers produced data")
         if local_sdk45:
-            result["runtime_compatibility"]["lidar_publication_gates"] = runtime45.configure_lidar_publication(
-                lidar_sensors, lidar_metadata, physics_dt_s=float(config["physics_dt_s"]),
-            )
+            result["runtime_compatibility"]["lidar_publication"] = {
+                "source": "native_FlatScan_to_rclpy_LaserScan", "timestamp_policy": "native_first_beam_seconds",
+                "deduplication": "strictly_increasing_native_timestamp", "replicator_ros_writer": False,
+            }
+            _atomic_json(output / "native-scan-startup.json", {
+                "run_id": args.run_id, "scope": "initial ROS scan headers; no sensor quality qualification",
+                "robots": {key: {"samples": value["ros"]["scan_samples"],
+                                  "publication": value["ros"]["native_scan_publication"]}
+                           for key, value in robots.items()},
+            })
         initial_time = float(SimulationManager.get_simulation_time())
         for robot_id, runtime in robots.items():
             left, right = _wheel_angles(runtime["robot"])
@@ -1055,6 +1112,7 @@ def _run(
                     "command_audit": command_audit,
                 }
             app.update()
+            publish_native_scans()
             _spin_nodes(rclpy, [clock_node, *robot_nodes])
             step += 1
             stamp = float(SimulationManager.get_simulation_time())

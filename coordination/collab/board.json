@@ -1,6 +1,6 @@
 {
-  "revision": 37,
-  "updated_at": "2026-10-20T01:50:53.069971+00:00",
+  "revision": 39,
+  "updated_at": "2026-10-20T02:27:08.965125+00:00",
   "scope": {
     "excluded": "실물 로봇 실행, 새 유료 서비스/에셋, 공개 배포",
     "project_root": "C:\\Users\\LIMMM\\factory-ops-twin",
@@ -755,6 +755,37 @@
         "artifacts/local45/wsl-lifetime-037"
       ],
       "acceptance_record": "Root inspected foreground wait admission, exact unit/cgroup/waiter ownership and bounded client join. Source/fixtureSHA matched.12 CPU cases once; actual70.016s quiet interval same boot,71 client-alive samples, parent+setsid child+waiter+Windowsclient closed with no forced termination. Specific009 reboot trigger remains unconfirmed."
+    },
+    {
+      "task_id": "native-flat-scan-publisher-038",
+      "attempt": 1,
+      "contract_revision": 38,
+      "owner": "control",
+      "reviewer": "root",
+      "status": "accepted_cpu_integration_pending",
+      "ACK": true,
+      "task_path": "coordination/collab/native-flat-scan-publisher-038-task.json",
+      "result_path": "coordination/collab/results/native-flat-scan-publisher-038.json",
+      "write_paths": [
+        "factory_ops/flat_scan_ros.py",
+        "tests/test_flat_scan_ros.py",
+        "coordination/collab/results/native-flat-scan-publisher-038.json"
+      ],
+      "acceptance_record": "Root read converter/dedup/error handling and8 focused test cases; both sourceSHA matched. Native units cite installed OGN.6 root boundary/lifecycle CPU cases passed once. Actual sensor continuity pending011; no sensor-quality claim."
+    },
+    {
+      "task_id": "native-scan-integration-review-039",
+      "attempt": 1,
+      "contract_revision": 39,
+      "owner": "control",
+      "author": "root",
+      "status": "running",
+      "ACK": true,
+      "task_path": "coordination/collab/native-scan-integration-review-039-task.json",
+      "result_path": "coordination/collab/results/native-scan-integration-review-039.json",
+      "write_paths": [
+        "coordination/collab/results/native-scan-integration-review-039.json"
+      ]
     }
   ],
   "decisions": [

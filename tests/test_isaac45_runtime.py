@@ -278,12 +278,39 @@ class RuntimeTests(unittest.TestCase):
             'omni.replicator.core':SimpleNamespace(create=SimpleNamespace(render_product=product), writers=SimpleNamespace(get=writer))}
         return config, robots, modules, products, writers, profile
 
-    def setup_lidars(self, config, robots, verify=None):
+    def setup_lidars(self, config, robots, verify=None, **options):
         author = Mock()
         verifier = verify or Mock(return_value={'parent_frame':'base_link'})
         sensors, metadata = self.runtime.setup_lidars(config, robots, self.stage, object(), object(),
-            SimpleNamespace(Quatd=lambda *args:args), self.runtime.SimulationManager, self.app, author, verifier)
+            SimpleNamespace(Quatd=lambda *args:args), self.runtime.SimulationManager, self.app, author, verifier, **options)
         return sensors, metadata, author, verifier
+
+    def test_native_publication_owns_buffers_without_a_replicator_ros_writer(self):
+        with tempfile.TemporaryDirectory() as directory:
+            cfg, robots, modules, products, writers, _ = self.lidar_fixture(directory)
+            annotators = []
+            depths = SimpleNamespace(reshape=Mock(return_value=[1., 2.]))
+            def annotator(name):
+                self.assertEqual(facade.FLAT_SCAN_ANNOTATOR, name)
+                handle = SimpleNamespace(attach=Mock(), detach=Mock(),
+                    get_data=Mock(return_value={"timeStamp": 1.25, "linearDepthData": depths}))
+                annotators.append(handle)
+                return handle
+            modules['omni.replicator.core'].AnnotatorRegistry = SimpleNamespace(get_annotator=annotator)
+            with patch.dict(os.environ, ISAAC_PATH=directory), patch.object(facade.importlib, 'import_module', side_effect=modules.__getitem__):
+                sensors, metadata, _, _ = self.setup_lidars(cfg, robots, native_publication=True)
+            self.assertEqual([], writers)
+            self.assertEqual(2, len(annotators))
+            self.assertEqual(1.25, sensors[0].read_native_scan()['timeStamp'])
+            self.assertEqual([1., 2.], sensors[0].read_native_scan()['linearDepthData'])
+            self.assertEqual('native_FlatScan_to_rclpy_LaserScan', metadata[0]['writer'])
+            for sensor in sensors:
+                sensor.detach_writer(facade.LIDAR_WRITER)
+                sensor.detach_writer(facade.LIDAR_WRITER)
+            for handle in annotators:
+                handle.detach.assert_called_once_with()
+            for product in products:
+                product.destroy.assert_called_once_with()
 
     def test_lidar_mount_topics_profile_proof_and_cleanup(self):
         with tempfile.TemporaryDirectory() as directory:
