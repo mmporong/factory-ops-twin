@@ -1,0 +1,29 @@
+{
+  "task_id": "native-completion-dedup-051",
+  "attempt": 1,
+  "contract_revision": 51,
+  "owner": "control",
+  "reviewer": "root",
+  "goal": "Count and preserve each rejected owned completion event once while retaining real-frame recovery checks on every read",
+  "inputs": {
+    "source_commit": "4b399938728d3dd6b518cec2e4725f41d506c6a5",
+    "active_stage": "D:/FactoryOpsRuntime/local45-transport-019",
+    "active_run_id": "e215b3d124cb4b638e4e7ac753566765",
+    "observation": "At34.85sim, carter3/front and carter4/front/rear each stored6 rejections but each has1 unique native stamp+range SHA. carter1/front and carter2/front stored8 for3 unique pairs. Completion cache is re-read every physics frame; do not infer new acquisition from a re-read."
+  },
+  "write_paths": [
+    "factory_ops/flat_scan_completion.py",
+    "factory_ops/flat_scan_ros.py",
+    "tests/test_native_completion_dedup.py",
+    "coordination/collab/results/native-completion-dedup-051.json"
+  ],
+  "acceptance": [
+    "Root owns and continues active019 from immutable D source4b399. You are not alone; do not modify D/runtime/G2 files or restart/abort processes. Only listed root files; no new agents/panes/cloud/SDK/ROS/server/Git or dependencies. Keep current4AMR run independent; root decides when to integrate after closure.",
+    "Add a clearly namespaced local completion sequence to the owned snapshot atomically with callback_sequence under existing lock. It is a local callback ID, never a hardware/physics frame or a native sensor field. Keep original10native fields/bytes/stamps and ScriptNode connection/lifetime unchanged. Existing publish function signature and G2 call can remain unchanged if guard reads this optional metadata.",
+    "In opt-in tagged payload mode only, repeated reads of the same completion generation must not call publisher again, re-preserve buffers, increment rejected/new/duplicate acquisition counts or refresh last successful header. Return explicit no-new-completion observation. Untagged default converter/admission behavior stays unchanged. Validate generation is positive integer/non-bool, never regresses/disappears after tagged mode, and same generation cannot be reused with another payload object or changed native timestamp.",
+    "Actual World time/frame validation must run on every call before any skip. Pending recovery deadline remains from the first rejection and is never extended: no new event at deadline fails; a genuinely newer successful publication exactly at deadline can pass as before. Large regressions, reset, malformed new frames, storage/publisher errors and16 DISTINCT rejected completion events still fail as before. Do not widen clock/TTL/deadline/cap or sort/rewrite sensor values.",
+    "Commit generation tracking only after successfully handled publication/duplicate/warmup/rejection; a failed publisher callback cannot consume a generation and silently skip retry. Existing strict publisher and duplicate-body fast path for untagged/default mode remain unchanged.",
+    "One focused CPU pass for new behavior only: repeated same bad event produces one preservation with unchanged high-water/counters; duplicate reads still hit real-frame deadline/reset; valid new generation at exact deadline; distinct new rejection cap16; ID mismatch/reset/missing and failed publisher retry. No full suite, no repeated old9/15/22 tests or tests that only count source text. Run SDK3.10 cold AST if syntax changed. Return source hashes and command/exit once; root bounded source review and future actual run provide integration evidence."
+  ],
+  "result_path": "coordination/collab/results/native-completion-dedup-051.json"
+}

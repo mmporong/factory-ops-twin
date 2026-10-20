@@ -1,0 +1,186 @@
+{
+  "schema_version": 1,
+  "run_id": "e215b3d124cb4b638e4e7ac753566765",
+  "source_commit": "4b399938728d3dd6b518cec2e4725f41d506c6a5",
+  "status": "failed_native_one_scan_recovery_deadline",
+  "last_observed_sim_s": 0.0,
+  "primary_sdk_error": "TimeoutError: native scan recovery needs a newer successful publication within one scan period",
+  "secondary_failures": [
+    "ROS fresh map pose unavailable after SDK failure",
+    "SDK cleanup exceeded90s after ROS exit"
+  ],
+  "storage_cap_was_primary": false,
+  "sdk_internal_cause_confirmed": false,
+  "startup_ready": true,
+  "sdk_contexts": {
+    "contexts": {
+      "carter1": {
+        "configured_transport_profile": "D:\\FactoryOpsRuntime\\local45-transport-019\\fastdds-udp.xml",
+        "domain_id": 73,
+        "expected_domain_id": 73,
+        "namespace": "/carter1",
+        "rclpy_file": "e:\\isaacsim/isaac-sim-4.5.0/exts/isaacsim.ros2.bridge\\humble\\rclpy\\rclpy\\__init__.py",
+        "rmw_identifier": "rmw_fastrtps_cpp"
+      },
+      "carter2": {
+        "configured_transport_profile": "D:\\FactoryOpsRuntime\\local45-transport-019\\fastdds-udp.xml",
+        "domain_id": 73,
+        "expected_domain_id": 73,
+        "namespace": "/carter2",
+        "rclpy_file": "e:\\isaacsim/isaac-sim-4.5.0/exts/isaacsim.ros2.bridge\\humble\\rclpy\\rclpy\\__init__.py",
+        "rmw_identifier": "rmw_fastrtps_cpp"
+      },
+      "carter3": {
+        "configured_transport_profile": "D:\\FactoryOpsRuntime\\local45-transport-019\\fastdds-udp.xml",
+        "domain_id": 73,
+        "expected_domain_id": 73,
+        "namespace": "/carter3",
+        "rclpy_file": "e:\\isaacsim/isaac-sim-4.5.0/exts/isaacsim.ros2.bridge\\humble\\rclpy\\rclpy\\__init__.py",
+        "rmw_identifier": "rmw_fastrtps_cpp"
+      },
+      "carter4": {
+        "configured_transport_profile": "D:\\FactoryOpsRuntime\\local45-transport-019\\fastdds-udp.xml",
+        "domain_id": 73,
+        "expected_domain_id": 73,
+        "namespace": "/carter4",
+        "rclpy_file": "e:\\isaacsim/isaac-sim-4.5.0/exts/isaacsim.ros2.bridge\\humble\\rclpy\\rclpy\\__init__.py",
+        "rmw_identifier": "rmw_fastrtps_cpp"
+      }
+    },
+    "run_id": "e215b3d124cb4b638e4e7ac753566765"
+  },
+  "rejections_preserved": 71,
+  "rejected_original_snapshot_and_buffer_hashes_verified": true,
+  "per_sensor": {
+    "carter1/front": {
+      "stored": 13,
+      "distinct_snapshot_pairs": 5
+    },
+    "carter2/front": {
+      "stored": 13,
+      "distinct_snapshot_pairs": 5
+    },
+    "carter2/rear": {
+      "stored": 11,
+      "distinct_snapshot_pairs": 3
+    },
+    "carter3/front": {
+      "stored": 10,
+      "distinct_snapshot_pairs": 2
+    },
+    "carter4/front": {
+      "stored": 6,
+      "distinct_snapshot_pairs": 1
+    },
+    "carter4/rear": {
+      "stored": 6,
+      "distinct_snapshot_pairs": 1
+    },
+    "carter1/rear": {
+      "stored": 12,
+      "distinct_snapshot_pairs": 5
+    }
+  },
+  "last_rejection": {
+    "atomic_sdk_frame_consistency_verified": false,
+    "backward_delta_s": 0.015479168000013033,
+    "budget_clock": "actual World physics frames; nominal seconds are diagnostic only",
+    "configured_physics_dt_s": 0.016666666666666666,
+    "frame_id": "front_scan",
+    "identity": {
+      "clock_source": "simulation_time",
+      "far_range_m": 30.0,
+      "frame_id": "front_scan",
+      "horizontal_resolution_deg": 0.1125,
+      "local_transform": {
+        "parent_frame": "base_link",
+        "rotation_xyzw": [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "translation_xyz_m": [
+          0.2,
+          0.0,
+          0.32
+        ]
+      },
+      "name": "front",
+      "namespace": "carter3",
+      "native_publication_annotator": "RtxSensorCpuIsaacComputeRTXLidarFlatScanSimulationTime",
+      "near_range_m": 0.05,
+      "parameter_source": "installed4.5 JSON profile; actual ROS scan header validation is separate",
+      "prim_path": "/World/Carter3/chassis_link/lidar_front",
+      "profile": "RPLIDAR_S2E",
+      "profile_path": "E:\\IsaacSim\\isaac-sim-4.5.0\\exts\\isaacsim.sensors.rtx\\data\\lidar_configs\\SLAMTEC\\RPLIDAR_S2E.json",
+      "profile_sha256": "b230724299cdfe84795d1c46bb3aebdce0452705025a228977bc7aec3c571b64",
+      "render_product_path": "/Render/OmniverseKit/HydraTextures/Local45_carter3_front",
+      "report_rate_hz": 32000,
+      "requested_profile": "Example_Rotary_2D",
+      "robot_id": "carter3",
+      "rotation_frequency_hz": 10.0,
+      "run_id": "e215b3d124cb4b638e4e7ac753566765",
+      "runtime": "SDK4.5 opt-in; no6.2 tickRate/accumulateOutputs attributes synthesized",
+      "sensor_index": 4,
+      "side": "front",
+      "topic": "/carter3/scan_front_raw",
+      "translation_xyz_m": [
+        0.2,
+        0,
+        0.32
+      ],
+      "writer": "native_FlatScan_to_rclpy_LaserScan",
+      "yaw_rad": 0.0
+    },
+    "last_success_native_stamp_s": 54.63336743267952,
+    "last_success_ros_stamp": [
+      54,
+      633367433
+    ],
+    "max_backward_s": 0.1,
+    "max_stored_anomalies": 16,
+    "nominal_recovery_deadline_sim_s": 54.233336156606676,
+    "observed_sim_time_s": 54.18333615921438,
+    "physics_frame": 3251,
+    "policy": "authored_one_scan_recovery_v1",
+    "published": false,
+    "reason": "native_timestamp_regressed",
+    "recovery_deadline_physics_frame": 3254,
+    "recovery_interval_s": 0.1,
+    "recovery_max_physics_steps": 6,
+    "recovery_started_sim_s": 54.133336156606674,
+    "rejected_count": 10,
+    "rejected_native_stamp_s": 54.61788826467951,
+    "sdk_cause_confirmed": false,
+    "sensor_quality_verified": false,
+    "snapshot": {
+      "buffer_count": 4,
+      "path": "native-scan-anomalies/sensor-04/10/snapshot.json",
+      "sha256": "9688ae65fc26f69e05f3f66dbcf9a0ec82136c12d51afce080b8e2844540c26e"
+    },
+    "status": "rejected"
+  },
+  "dedup_fix_boundary": "051 counts distinct owned callback IDs once; it retains the same6-frame deadline and does not establish a deadline fix.",
+  "completed_orders": 0,
+  "empty_returns_completed": 0,
+  "material_revision": 0,
+  "conservation": [
+    {
+      "balanced": true,
+      "consumed": 0,
+      "in_totes": 0,
+      "initial": 60,
+      "on_hand": 60,
+      "replenished": 0,
+      "sku": "sensor-kit"
+    }
+  ],
+  "windows_closed": true,
+  "linux_closed": true,
+  "cleanup_errors": [],
+  "sql_used": false,
+  "full_sensor_quality_verified": false,
+  "goal80_complete": false,
+  "raw_originals": "D:\\FactoryOpsRuntime\\local45-transport-019"
+}

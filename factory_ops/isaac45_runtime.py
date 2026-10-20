@@ -176,30 +176,43 @@ class _SimulationManager:
 
 
 class _FlatScanObservationHandle:
-    def __init__(self, product, identity, range_min_m, range_max_m):
+    def __init__(self, product, identity, range_min_m, range_max_m, *, completion_sink=None):
         from factory_ops.flat_scan_observation import FlatScanObservationTracker
 
-        rep = importlib.import_module("omni.replicator.core")
         self._tracker = FlatScanObservationTracker(identity, range_min_m, range_max_m)
-        self._annotator = rep.AnnotatorRegistry.get_annotator(
-            FLAT_SCAN_ANNOTATOR)
-        self._annotator.attach([product])
+        self._annotator = None
+        self._completion_sink = completion_sink
+        self._closed = False
+        if completion_sink is None:
+            rep = importlib.import_module("omni.replicator.core")
+            self._annotator = rep.AnnotatorRegistry.get_annotator(FLAT_SCAN_ANNOTATOR)
+            self._annotator.attach([product])
 
     def read(self, **reader_context):
-        if self._annotator is None:
+        if self._closed:
             raise RuntimeError("native FlatScan observer is closed")
-        payload = self._annotator.get_data()
+        payload = (self._completion_sink.read() if self._completion_sink is not None
+                   else self._annotator.get_data())
         if isinstance(payload, dict):
             depths = payload.get("linearDepthData")
             reshape = getattr(depths, "reshape", None)
             if callable(reshape):
                 payload = {**payload, "linearDepthData": reshape(-1)}
-        return self._tracker.observe(payload, **reader_context)
+        row = self._tracker.observe(payload, **reader_context)
+        row["reader_source"] = ("owned_completed_scan_snapshot" if self._completion_sink is not None
+                                else "independent_native_annotator")
+        if self._completion_sink is not None:
+            from factory_ops.flat_scan_ros import LOCAL_COMPLETION_SEQUENCE_KEY
+            row[LOCAL_COMPLETION_SEQUENCE_KEY] = payload.get(LOCAL_COMPLETION_SEQUENCE_KEY)
+        return row
 
     def close(self):
         if self._annotator is not None:
             self._annotator.detach()
             self._annotator = None
+        # The sensor owns the completion sink; an observer only borrows it.
+        self._completion_sink = None
+        self._closed = True
 
 
 class _LidarSensor:
@@ -225,7 +238,8 @@ class _LidarSensor:
     def open_native_observer(self, identity, range_min_m, range_max_m):
         if self._product is None or self._observer is not None:
             raise RuntimeError("sensor is closed or already owns a FlatScan observer")
-        observer = _FlatScanObservationHandle(self._product, identity, range_min_m, range_max_m)
+        observer = _FlatScanObservationHandle(self._product, identity, range_min_m, range_max_m,
+                                               completion_sink=self._completion_sink)
         self._observer = observer
         return observer
 

@@ -1,0 +1,32 @@
+{
+  "task_id": "shared-native-observer-052",
+  "attempt": 1,
+  "contract_revision": 52,
+  "owner": "root",
+  "reviewer": "control",
+  "goal": "One bounded source review of diagnostics borrowing the native publication completion cache",
+  "inputs": {
+    "base_commit": "4b399938728d3dd6b518cec2e4725f41d506c6a5",
+    "source_sha256": {
+      "factory_ops/isaac45_runtime.py": "9514020ae69fa1875abb05e6a782258c0c644c508dd3da0a85a21dd585ea2efc",
+      "tests/test_native_observer_cache.py": "2b3ca5adb0169af6ab775fceb1e0499d47758e068b959e745acc3aa394488e6c"
+    },
+    "root_checks": "One new CPU ownership/identity/error test PASS; SDK3.10 AST PASS. No SDK job active;019 both closed.",
+    "051": "Root accepted; no requested re-review of051.",
+    "cause_boundary": "Neither second annotator nor asyncRendering established as019 cause. Installed app already defaults asyncRendering=false; no flag change planned."
+  },
+  "read_paths": [
+    "factory_ops/isaac45_runtime.py",
+    "tests/test_native_observer_cache.py"
+  ],
+  "write_paths": [
+    "coordination/collab/results/shared-native-observer-052.json"
+  ],
+  "acceptance": [
+    "Only changed observer lines and new test in one source pass; no broad review/repeated tests/SDK/GPU/ROS/Git/new agents.",
+    "Native publication observer borrows same completion sink without second attachment/get_data; legacy nonnative path preserves independent annotator.",
+    "Observer close must not close borrowed producer; sensor cleanup owns sink. Errors propagate and reader_source/local completion ID distinguish provenance.",
+    "Do not claim transport fix or SDK causality. Return PASS or concrete blocker and actual2source hashes. Preserve all other edits."
+  ],
+  "result_path": "coordination/collab/results/shared-native-observer-052.json"
+}

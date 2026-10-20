@@ -8,6 +8,8 @@ from types import MappingProxyType
 from typing import Any
 from uuid import uuid4
 
+from .flat_scan_ros import LOCAL_COMPLETION_SEQUENCE_KEY
+
 
 FIELDS = ('timeStamp', 'linearDepthData', 'intensitiesData', 'azimuthRange', 'depthRange',
           'horizontalFov', 'horizontalResolution', 'numCols', 'numRows', 'rotationRate')
@@ -25,8 +27,10 @@ def capture_complete_scan(token: str, payload: Mapping[str, Any]) -> bool:
         snapshot = deepcopy({field: payload[field] for field in FIELDS})
         context = dict(owner._context()) if owner._context is not None else None
         with owner._lock:
+            sequence = owner.callback_sequence + 1
+            snapshot[LOCAL_COMPLETION_SEQUENCE_KEY] = sequence
             owner._snapshot = MappingProxyType(snapshot)
-            owner.callback_sequence += 1
+            owner.callback_sequence = sequence
             owner.last_callback_context = context
         return True
     except Exception as error:

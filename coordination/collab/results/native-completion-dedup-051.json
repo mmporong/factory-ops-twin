@@ -1,0 +1,122 @@
+{
+  "task_id": "native-completion-dedup-051",
+  "attempt": 1,
+  "contract_revision": 51,
+  "ACK": true,
+  "owner": "control",
+  "reviewer": "root",
+  "status": "implemented_focused_cpu_checked_pending_root_review",
+  "accepted": false,
+  "source_base_commit": "4b399938728d3dd6b518cec2e4725f41d506c6a5",
+  "changed_paths": [
+    "factory_ops/flat_scan_completion.py",
+    "factory_ops/flat_scan_ros.py",
+    "tests/test_native_completion_dedup.py",
+    "coordination/collab/results/native-completion-dedup-051.json"
+  ],
+  "before_source_sha256": {
+    "factory_ops/flat_scan_completion.py": "23b5a07e4f35dd814cbbdc937761e23eb5f5e5f2cac0e729202551cc4bc135a8",
+    "factory_ops/flat_scan_ros.py": "e14652edf19097f9b8d006d77a8cc73e7460fb13acf683dfd25c63db21fb5df4"
+  },
+  "source_sha256": {
+    "factory_ops/flat_scan_completion.py": "cb5b968156a2d8069214f58892856ed414a6e7f080295ba4ad1502661844c30d",
+    "factory_ops/flat_scan_ros.py": "e2b56a0022b76125f94ef96151ccdc8f56206733ae99b9dbacbc03713c2ffc81",
+    "tests/test_native_completion_dedup.py": "d854a7d1e653a2c873b7d5d7bcca1c26f6c33ee94abf676cdb7fe8d8f10ff237"
+  },
+  "api": {
+    "metadata_key": "_factory_ops_completion_sequence",
+    "exported_constant": "factory_ops.flat_scan_ros.LOCAL_COMPLETION_SEQUENCE_KEY",
+    "identity_scope": "소유 Python callback의 양의 정수 ID이며 hardware/physics/native sensor frame이 아닙니다.",
+    "producer": "capture_complete_scan의 기존 lock 안에서 새 snapshot에 ID를 추가하고 callback_sequence와 함께 교체합니다. 원래10개 native 필드/bytes/stamp와 ScriptNode 연결/수명주기는 유지했습니다.",
+    "guard_signature": "NativeScanAdmissionGuard.publish(payload, *, observed_sim_time_s, physics_frame) -> dict; 변경 없음",
+    "tagged_mode": "옵션 metadata가 있는 payload만 completion ID를 사용합니다. tag를 본 뒤 누락·감소·0/음수/bool/비정수, 같은 ID의 다른 payload 객체 또는 바뀐 native timestamp를 거절합니다.",
+    "two_phase_handling": "ID/객체/stamp는 먼저 식별용으로 고정하되 _completion_handled는 처리 완료 시에만 설정합니다. publisher 또는 보존 callback이 실패하면 같은 ID/같은 객체를 재시도할 수 있으며 실패한 호출이 ID를 소모해 재시도를 건너뛰지 않습니다.",
+    "repeated_observation": {
+      "status": "no_new_completion",
+      "published": false,
+      "reason": "local_completion_sequence_unchanged",
+      "completion_acquisition": false,
+      "effect": "publisher 호출·본문 재읽기·보존·획득/duplicate/warmup/rejected 계수·마지막 성공 native/ROS header를 갱신하지 않습니다."
+    },
+    "new_observation": "새 tagged completion의 처리 결과에는 같은 metadata ID와 completion_acquisition=true가 포함됩니다. 새 ID에 같은 native timestamp가 와도 원래 converter의 duplicate 정책을 한 번 적용합니다.",
+    "clocks_and_deadline": "모든 호출에서 실제 World 시간/frame의 유한성·단조성과 기존 복구 frame 상한을 먼저 검사합니다. 반복 읽기도 최초 deadline을 유지하며 deadline에서 새 성공이 없으면 실패합니다. 새 ID의 실제 성공은 정확한6번째 frame에서도 기존대로 통과할 수 있습니다.",
+    "cap": "동일 stamp/동일 ranges여도 서로 다른 completion ID16개는 각각 보존·계수합니다.17번째 distinct 거절은 기존 cap16으로 실패합니다.",
+    "untagged": "metadata가 없는 기본 입력은 기존 strict publisher/admission과 duplicate-body fast path·계수 의미를 유지합니다.",
+    "integration": "G2/runtime/CLI 변경은 필요하지 않습니다. 향후 root가 새 main 소스를 통합하면 기존 guard가 snapshot metadata를 읽습니다. 실행 중019는 변경하지 않았습니다."
+  },
+  "validation": {
+    "focused_cpu": {
+      "command": "& './.venv/Scripts/python.exe' -B -m unittest tests.test_native_completion_dedup -v",
+      "cwd": "C:/Users/LIMMM/factory-ops-twin",
+      "runs": 1,
+      "passed": 10,
+      "exit_code": 0,
+      "test_wall_s": 0.006,
+      "process_wall_s": 0.8419518,
+      "cases": [
+        "소유 snapshot ID와 callback_sequence 정합, 원래 bytes/NaN bit pattern/과거 snapshot 보존",
+        "같은 거절 completion 반복 읽기에서1회 보존·계수/header/high-water 불변",
+        "반복 읽기에서도 deadline/clock reset/frame reset/invalid World 입력 실패",
+        "float32 dt의 정확한6번째 frame에서 새 ID 성공 및 deadline 해제",
+        "동일 native stamp/bytes의16개 distinct ID와17번째 cap 실패",
+        "ID 불량/누락/감소/객체 재사용/같은 객체의 timestamp 변경 거절",
+        "publisher callback 실패 후 같은 ID·객체의 재시도 성공",
+        "새 ID의 warmup/duplicate1회 처리와 반복 읽기의 deadline 불연장",
+        "큰 역행·잘못된 새 metadata·보존 오류가 계속 실패하며 오류를 숨기지 않음",
+        "untagged duplicate-body fast path와 기존 반복 거절 정책 유지"
+      ],
+      "scope": "CPU fixture이며 SDK/실제 native graph·ROS 발행 성공의 증거가 아닙니다."
+    },
+    "sdk310_cold_ast": {
+      "command": "& 'E:/IsaacSim/isaac-sim-4.5.0/kit/python/python.exe' -B -S -",
+      "stdin_python": "import ast, hashlib, json, sys\nfrom pathlib import Path\npaths = ('factory_ops/flat_scan_completion.py', 'factory_ops/flat_scan_ros.py', 'tests/test_native_completion_dedup.py')\nrows = []\nfor name in paths:\n    data = Path(name).read_bytes()\n    ast.parse(data, filename=name)\n    rows.append({'path': name, 'sha256': hashlib.sha256(data).hexdigest()})\nprint(json.dumps({'python': sys.version.split()[0], 'ast_parse': 'PASS', 'files': rows}))",
+      "runs": 1,
+      "python": "3.10.15",
+      "result": "PASS",
+      "exit_code": 0,
+      "files": [
+        "factory_ops/flat_scan_completion.py",
+        "factory_ops/flat_scan_ros.py",
+        "tests/test_native_completion_dedup.py"
+      ],
+      "scope": "파일을 ast.parse로 읽었으며 SDK 모듈/SimulationApp을 import하거나 초기화하지 않았습니다."
+    },
+    "full_or_old_suites_repeated": false,
+    "independent_agent_approval": false,
+    "verification": "작성 후 ID 처리·deadline·실패 후 재시도 경계를 별도 패스로 확인하고 새 검사1회와 cold AST만 수행했습니다."
+  },
+  "preserved": {
+    "active_stage": "D:/FactoryOpsRuntime/local45-transport-019",
+    "active_run_id": "e215b3d124cb4b638e4e7ac753566765",
+    "stage_or_processes_touched": false,
+    "g2_runtime_or_other_authors_sources_edited": false,
+    "sensor_rate_clock_ttl_deadline_or_cap_widened": false,
+    "original_native_fields_restamped_or_sorted": false,
+    "sdk_gpu_ros_wsl_server_operations": false,
+    "git_operations": false,
+    "new_agents_or_sessions": false,
+    "new_dependencies": false
+  },
+  "limitations": [
+    "019의 관측 내용은 작업 카드의 근거이며 이번 구현 중 D 원본/프로세스·bag에 접근하지 않았습니다.",
+    "완료 ID는 callback 식별자일 뿐 native buffer의 내부 원자적 일관성이나 SDK 역행 원인을 증명하지 않습니다.",
+    "이미 완료 처리한 ID만 재조회를 건너뜁니다. publisher/보존 실패는 계속 오류로 전파하며 같은 ID가 성공 처리되지 않은 동안 재시도 경로를 유지합니다.",
+    "동일 ID의 payload 내부 본문을 반복 해시하지 않습니다. 소유 snapshot의 객체 identity와 native timestamp를 검사하며 원래 body 변조 방지나 새 SDK 품질 보장을 주장하지 않습니다.",
+    "실제4AMR/완주·센서 품질·통합 효과는 검증하지 않았습니다.019는 root 보고상54.2167sim s의 복구 deadline으로 실패하고 양쪽 종료가 확인됐습니다. 통합 시점과 다음 실제 실행은 root가 결정합니다."
+  ],
+  "scope_expansion_requested": false,
+  "errors": [],
+  "root019_final_status_update": {
+    "source": "root의 이번 상태 전달",
+    "active_run_id": "e215b3d124cb4b638e4e7ac753566765",
+    "observed_sim_time_s": 54.2167,
+    "status": "failed",
+    "primary_failure": "6개 물리 frame 내 새 성공 scan 부재로 복구 deadline 실패",
+    "storage_cap16_was_primary_failure": false,
+    "both_owned_process_trees_closed": true,
+    "independently_verified_here": false,
+    "scope": "원본/runtime 재조회 없이 전달받은 근거를 기록했습니다."
+  },
+  "outcome_distinction": "051은 같은 owned completion의 반복 읽기로 생기는 중복 보존과 획득 계수를 줄입니다. 새 성공 scan을 생성하거나 복구 deadline 문제를 해결하지 않으며, 최초6프레임 내 새 성공이 없으면 기존대로 실패합니다.019의 최초 실패는 cap16이 아니므로 이 변경을019 실패 해결로 주장하지 않습니다.",
+  "followup_boundary": "별도 diagnostic annotator 제거/같은 owned cache 관측 변경은 root의 다음 검토 범위이며 이번051에서 시작하거나 편집하지 않았습니다."
+}

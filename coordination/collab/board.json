@@ -1,6 +1,6 @@
 {
-  "revision": 50,
-  "updated_at": "2026-10-20T07:40:22.325867+00:00",
+  "revision": 52,
+  "updated_at": "2026-10-20T08:16:35.322708+00:00",
   "scope": {
     "excluded": "실물 로봇 실행, 새 유료 서비스/에셋, 공개 배포",
     "project_root": "C:\\Users\\LIMMM\\factory-ops-twin",
@@ -20,7 +20,7 @@
       "role": "dashboard frontend author",
       "name": "control",
       "agent_kind": "codex",
-      "status": "050 implementation accepted; no pending control task; root owns transport019",
+      "status": "052 accepted; no pending control work",
       "session": "default",
       "agent_session": "01a152aa-24b4-7a31-92e3-a2b620f4feeb",
       "terminal_id": "term_65e06d27e415810",
@@ -982,6 +982,39 @@
       "status": "accepted_source_isolation_passed_transport_pending",
       "ACK": true,
       "acceptance_record": "Root small diff/source SHA checked: only local45 before_capture adds enabled/timeline/World checks and4public render calls; root source pin retained. Author SDK3.10 syntax/diff once; no mirror tests. Actual0522sensors270sim,13frozenRGB captures,0regressions; process closure passed.8sensor/four-AMR pending; SDK release log issue preserved separately."
+    },
+    {
+      "task_id": "native-completion-dedup-051",
+      "attempt": 1,
+      "contract_revision": 51,
+      "owner": "control",
+      "reviewer": "root",
+      "write_paths": [
+        "factory_ops/flat_scan_completion.py",
+        "factory_ops/flat_scan_ros.py",
+        "tests/test_native_completion_dedup.py",
+        "coordination/collab/results/native-completion-dedup-051.json"
+      ],
+      "result_path": "coordination/collab/results/native-completion-dedup-051.json",
+      "status": "accepted_cpu_transport_pending",
+      "ACK": true,
+      "task_path": "coordination/collab/native-completion-dedup-051-task.json",
+      "acceptance_record": "Root bounded source pass and3SHA matched. Local generation is staged but only successful handling skips later reads; original World/reset/deadline/cap checks remain.10new CPU cases and SDK AST once; no old suites repeated. Does not fix/prove019 recovery deadline."
+    },
+    {
+      "task_id": "shared-native-observer-052",
+      "attempt": 1,
+      "contract_revision": 52,
+      "owner": "root",
+      "reviewer": "control",
+      "write_paths": [
+        "coordination/collab/results/shared-native-observer-052.json"
+      ],
+      "result_path": "coordination/collab/results/shared-native-observer-052.json",
+      "status": "accepted_source_transport_pending",
+      "ACK": true,
+      "task_path": "coordination/collab/shared-native-observer-052-task.json",
+      "acceptance_record": "Control one bounded source pass PASS;2SHA matched; root1new CPU and SDK AST once; no SDK causality/transport success claimed."
     }
   ],
   "decisions": [

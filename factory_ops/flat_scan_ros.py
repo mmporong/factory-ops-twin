@@ -14,6 +14,10 @@ import threading
 from typing import Any
 
 
+# Python-owned callback generation, never a native sensor or physics frame.
+LOCAL_COMPLETION_SEQUENCE_KEY = "_factory_ops_completion_sequence"
+
+
 def _real(value: Any, field: str, *, finite: bool = True) -> float:
     if isinstance(value, bool) or not isinstance(value, Real):
         raise ValueError(field + ": expected a real numeric scalar, not bool/string/complex")
@@ -175,7 +179,12 @@ class NativeFlatScanPublisher:
 
 
 class NativeScanAdmissionGuard:
-    """Opt-in one-scan diagnostic budget, not a sensor-normality guarantee."""
+    """Opt-in one-scan budget with optional owned-completion deduplication.
+
+    Tagged IDs bind to a payload object/time; only handled IDs skip publication.
+    World checks and the original recovery deadline apply even on skipped reads.
+    Untagged input keeps the existing per-read admission and converter policy.
+    """
 
     MAX_STORED_ANOMALIES = 16
     POLICY = "authored_one_scan_recovery_v1"
@@ -199,6 +208,41 @@ class NativeScanAdmissionGuard:
         self._deadline_frame: int | None = None
         self._recovery_started_sim_s: float | None = None
         self.rejected_count = 0
+        self._completion_sequence: int | None = None
+        self._completion_payload: Mapping[str, Any] | None = None
+        self._completion_stamp: float | None = None
+        self._completion_handled = False
+        self._completion_failure: str | None = None
+
+    def _completion_repeated(self, payload: Mapping[str, Any]) -> bool:
+        if not isinstance(payload, Mapping) or LOCAL_COMPLETION_SEQUENCE_KEY not in payload:
+            if self._completion_sequence is not None:
+                raise ValueError("local completion sequence disappeared after tagged mode")
+            return False
+        sequence = payload[LOCAL_COMPLETION_SEQUENCE_KEY]
+        if isinstance(sequence, bool) or not isinstance(sequence, Integral) or sequence <= 0:
+            raise ValueError("local completion sequence must be a positive integer, not bool")
+        raw_stamp = payload.get("timeStamp")
+        stamp = _real(raw_stamp, "timeStamp") if raw_stamp is not None else None
+        if self._completion_sequence is not None:
+            if sequence < self._completion_sequence:
+                raise ValueError("local completion sequence regressed")
+            if sequence == self._completion_sequence:
+                if payload is not self._completion_payload or stamp != self._completion_stamp:
+                    raise ValueError("local completion sequence reused with another payload or native timestamp")
+                return self._completion_handled
+        # Stage identity before publication; failures leave it retryable, not handled.
+        self._completion_sequence = int(sequence)
+        self._completion_payload, self._completion_stamp = payload, stamp
+        self._completion_handled, self._completion_failure = False, None
+        return False
+
+    def _handled_completion(self, result: dict[str, Any]) -> dict[str, Any]:
+        if self._completion_sequence is None:
+            return result
+        self._completion_handled = True
+        return {**result, LOCAL_COMPLETION_SEQUENCE_KEY: self._completion_sequence,
+                "completion_acquisition": True}
 
     def publish(self, payload: Mapping[str, Any], *, observed_sim_time_s: float,
                 physics_frame: int) -> dict[str, Any]:
@@ -210,6 +254,22 @@ class NativeScanAdmissionGuard:
         if self._deadline_frame is not None and physics_frame > self._deadline_frame:
             raise TimeoutError("native scan recovery exceeded one scan period")
         self._last_observed, self._last_frame = now, int(physics_frame)
+        if self._completion_repeated(payload):
+            if self._completion_failure is not None:
+                raise ValueError(self._completion_failure)
+            if self._deadline_frame is not None and physics_frame >= self._deadline_frame:
+                raise TimeoutError("native scan recovery needs a newer successful publication within one scan period")
+            return {"status": "no_new_completion", "published": False,
+                "reason": "local_completion_sequence_unchanged", "completion_acquisition": False,
+                LOCAL_COMPLETION_SEQUENCE_KEY: self._completion_sequence,
+                "frame_id": self.publisher._frame, "native_stamp_s": self._completion_stamp,
+                "last_success_native_stamp_s": self.publisher._last,
+                "last_success_ros_stamp": list(self.publisher._ros_stamp) if self.publisher._ros_stamp is not None else None,
+                **{key + "_count": count for key, count in self.publisher._counts.items()},
+                "rejected_count": self.rejected_count, "admission_policy": self.POLICY,
+                "recovery_deadline_physics_frame": self._deadline_frame,
+                "observed_sim_time_s": now, "physics_frame": int(physics_frame),
+                "sensor_quality_verified": False}
         duplicate = (isinstance(payload, Mapping) and self.publisher._last is not None
                      and payload.get("timeStamp") == self.publisher._last)
         if not duplicate:
@@ -246,16 +306,22 @@ class NativeScanAdmissionGuard:
                 "budget_clock": "actual World physics frames; nominal seconds are diagnostic only",
                 "sensor_quality_verified": False,
                 "sdk_cause_confirmed": False, "atomic_sdk_frame_consistency_verified": False}
+            if self._completion_sequence is not None:
+                event[LOCAL_COMPLETION_SEQUENCE_KEY] = self._completion_sequence
             evidence = self._preserve(payload, event)
             self.rejected_count += 1
             if decision != "rejected":
+                if self._completion_sequence is not None:
+                    self._completion_handled = True
+                    self._completion_failure = "native scan admission " + decision
                 raise ValueError("native scan admission " + decision) from error
             self._deadline_frame, self._recovery_started_sim_s = deadline, started
-            return {**event, "status": "rejected", "evidence": evidence,
-                **{key + "_count": count for key, count in self.publisher._counts.items()}}
+            return self._handled_completion({**event, "status": "rejected", "evidence": evidence,
+                **{key + "_count": count for key, count in self.publisher._counts.items()}})
         if result["published"]:
             self._deadline_frame, self._recovery_started_sim_s = None, None
-        elif self._deadline_frame is not None and physics_frame >= self._deadline_frame:
+        result = self._handled_completion({**result, "rejected_count": self.rejected_count,
+            "admission_policy": self.POLICY, "recovery_deadline_physics_frame": self._deadline_frame})
+        if not result["published"] and self._deadline_frame is not None and physics_frame >= self._deadline_frame:
             raise TimeoutError("native scan recovery needs a newer successful publication within one scan period")
-        return {**result, "rejected_count": self.rejected_count, "admission_policy": self.POLICY,
-                "recovery_deadline_physics_frame": self._deadline_frame}
+        return result
