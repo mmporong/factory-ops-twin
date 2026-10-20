@@ -1,0 +1,51 @@
+{
+  "task_id": "ros-geometric-charging-036",
+  "attempt": 1,
+  "contract_revision": 36,
+  "owner": "control",
+  "binding": {
+    "session": "default",
+    "pane_id": "w1:p1C",
+    "terminal_id": "term_65e06d27e415810",
+    "agent_session": "01a152aa-24b4-7a31-92e3-a2b620f4feeb"
+  },
+  "goal": "ROS odometry energy runtime + exclusive virtual geometric docking/charging bridge for root G3 integration. No physical contact or battery calibration claim.",
+  "write_paths": [
+    "factory_ops/energy_runtime.py",
+    "factory_ops/ros_charging.py",
+    "tests/test_ros_charging.py",
+    "tests/test_energy_runtime.py",
+    "coordination/collab/results/ros-geometric-charging-036.json"
+  ],
+  "read_paths": [
+    "factory_ops/charging.py",
+    "factory_ops/energy.py",
+    "factory_ops/energy_runtime.py",
+    "factory_ops/energy_dispatch.py",
+    "scripts/ros/g3_mission.py",
+    "factory_ops/operations/model.py"
+  ],
+  "inputs": {
+    "factory_ops/energy_runtime.py": "07cf3715cdf8c2c540911175ebebf5a015564a5d8dbc75ac4b49d33eb55ca84a",
+    "factory_ops/charging.py": "8a207ac2844a94f299f88d2f0bb5960b4cfcb927128d4b4b32e1288f59a5ffb5",
+    "factory_ops/energy.py": "89689894565e850ef3ef3242fceb636afcf14fc330b083a8080d372d4f6d3be1"
+  },
+  "acceptance": [
+    "EnergyRuntime optional explicit virtual charging source; default remains no charging, unchanged canonical behavior",
+    "New RosChargingRuntime composes existing ChargingFleet with same EnergyRuntime, exact run/robot/dock identity and exclusive owner",
+    "Nav2 successful arrival alone never charges. Require reserved anchor, positive successful goal identity, fresh estimated map pose within authored position/yaw bounds and fresh signed wheel odometry stationary for dwell. Clearly label contact_source=estimated_pose_geometric_dock; virtual=true/hardware_calibrated=false; no physical-contact assertion",
+    "Only one energy observe per odom sample; repeated same timestamp cannot credit twice. stale/future/nonfinite/mismatched samples never credit charge. Existing two-sided confirmed-contact integration retained",
+    "Expose reserve/arrival/observe/snapshot/release APIs suitable for G3 root. Root owns actual route legs and dispatcher; no synthetic arrivals/timer navigation",
+    "At resume SOC provide explicit simulated connector disengagement state, stop charging before release; keep body occupancy under G3 reservation manager. No fake physical sensor signal",
+    "Focused tests once for arrival-without-geometry, stationary dwell, correct SOC increment, ownership/run/stale/moving/no-double-credit and default energy behavior; no broad test/review loop",
+    "Return receipt with exact public API and example for G3 callbacks, source digests and validation. Do not mark accepted."
+  ],
+  "non_goals": [
+    "No GPU/ROS/SDK process launches",
+    "No edits G3/lifecycle/config/charging.py/energy.py",
+    "No Git mutations, no new agents or panes",
+    "Do not touch immutable running D:/FactoryOpsRuntime/local45-transport-008/source or inputs"
+  ],
+  "result_path": "C:\\Users\\LIMMM\\factory-ops-twin\\coordination\\collab\\results\\ros-geometric-charging-036.json",
+  "notes": "Not alone. Root owns g3_mission and current integration008 frozen09ba8ff. This is future source only; do not revert others. ACK task/attempt before work. No additional reviewer; root does one bounded result check."
+}

@@ -79,10 +79,14 @@ def close_pair(worker, streams, owner, stage: Path, report: dict, started: float
     save(stage / "pair-host.json", report)
 
 
-def run(stage: Path, sdk: Path, bound: int) -> int:
+def run(stage: Path, sdk: Path, bound: int, *, charge_robot: str | None = None, charge_resume_soc: float = .8) -> int:
     if os.name != "nt" or not 60 <= bound <= 7200:
         raise ValueError("local development requires Windows and an explicit 60..7200s bound")
     stage, sdk = stage.resolve(strict=True), sdk.resolve(strict=True)
+    if charge_robot is not None and charge_robot not in {"carter1", "carter2", "carter3", "carter4"}:
+        raise ValueError("charge robot must belong to the four-AMR development fleet")
+    if not 0 < charge_resume_soc <= 1:
+        raise ValueError("charge target must be a0..1 fraction")
     launch = json.loads((stage / "launch.json").read_text(encoding="utf-8"))
     run_id = launch["run_id"]
     output, source = stage / "results/run", stage / "source"
@@ -97,6 +101,7 @@ def run(stage: Path, sdk: Path, bound: int) -> int:
         "scope": "bounded local45 development integration admission; no qualification or completion claim",
         "launcher_sha256": sha(Path(__file__)), "wsl_supervisor_sha256": sha(Path(__file__).resolve().parents[2] / "factory_ops/wsl_process_supervisor.py"),
         "status": "starting", "wall_bound_s": bound, "windows_closed": False, "linux_closed": False}
+    report["virtual_charging_request"] = {"robot_id": charge_robot, "resume_soc": charge_resume_soc}
     save(receipt_path, report)
     owner = WslProcessSupervisor(run_id)
     worker = None
@@ -106,6 +111,8 @@ def run(stage: Path, sdk: Path, bound: int) -> int:
         root_linux = linux(stage)
         attestation = json.loads((stage / "build-attestation.json").read_text(encoding="utf-8"))
         installed = linux(Path(attestation["actual_install_directory"]))
+        charging_args = (["--virtual-charging", "--charge-robot", charge_robot,
+                          "--charge-resume-soc", str(charge_resume_soc)] if charge_robot else [])
         command = "\n".join([
             "set -e", "source /opt/ros/jazzy/setup.bash",
             "export AMENT_PREFIX_PATH=" + shlex.quote(installed) + ':"${AMENT_PREFIX_PATH:-}"',
@@ -116,7 +123,7 @@ def run(stage: Path, sdk: Path, bound: int) -> int:
             "export FACTORY_OPS_G3_BUILD_ATTESTATION_SHA256=" + shlex.quote(launch["build_attestation_sha256"]),
             "exec " + shlex.join(["/usr/bin/python3", root_linux + "/source/scripts/ros/fleet4_mission.py",
                 "--bundle", root_linux + "/inputs", "--output", root_linux + "/results/run", "--run-id", run_id,
-                "--runtime-profile", "local45_development", "--dashboard"]),
+                "--runtime-profile", "local45_development", "--dashboard", *charging_args]),
         ])
         (stage / "nav-command.sh").write_text(command + "\n", encoding="utf-8", newline="\n")
         report["linux_start"] = owner.start(["/bin/bash", linux(stage / "nav-command.sh")],
@@ -157,8 +164,8 @@ def run(stage: Path, sdk: Path, bound: int) -> int:
             if state["closure_verified"]:
                 if ros_exit_seen is None:
                     ros_exit_seen = time.monotonic()
-                if time.monotonic() - ros_exit_seen > 30:
-                    raise RuntimeError("SDK did not finish cleanup within30s after ROS exit")
+                if time.monotonic() - ros_exit_seen > 90:
+                    raise RuntimeError("SDK did not finish cleanup within90s after ROS exit")
             time.sleep(2)
         report["windows_exit_code"] = worker.returncode
         mission_path = output / "mission-result.json"
@@ -181,5 +188,8 @@ if __name__ == "__main__":
     parser.add_argument("--stage", required=True, type=Path)
     parser.add_argument("--sdk", required=True, type=Path)
     parser.add_argument("--wall-bound-s", type=int, default=450)
+    parser.add_argument("--charge-robot", choices=("carter1", "carter2", "carter3", "carter4"))
+    parser.add_argument("--charge-resume-soc", type=float, default=.8)
     options = parser.parse_args()
-    raise SystemExit(run(options.stage, options.sdk, options.wall_bound_s))
+    raise SystemExit(run(options.stage, options.sdk, options.wall_bound_s,
+        charge_robot=options.charge_robot, charge_resume_soc=options.charge_resume_soc))

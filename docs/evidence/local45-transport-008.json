@@ -1,0 +1,98 @@
+{
+  "schema_version": 1,
+  "run_id": "c28c5d97e5114df286a51e542abcda66",
+  "source_commit": "09ba8ffa666ff7c836e7c89c54ef1cfdd03d48ac",
+  "status": "failed_tf_freshness_after_capture",
+  "original_directory": "D:\\FactoryOpsRuntime\\local45-transport-008",
+  "primary_error": "fresh map pose unavailable for carter3",
+  "secondary_host_error": "RuntimeError: SDK did not finish cleanup within30s after ROS exit",
+  "windows_closed": true,
+  "linux_closed": true,
+  "cleanup_errors": [],
+  "wall_s": 481.3280000000086,
+  "sensor_data": {
+    "/carter4/scan_front_raw": {
+      "count": 395,
+      "unique_stamps": 395,
+      "first_stamp_s": 3.116698079,
+      "last_stamp_s": 42.616700139,
+      "last_lag_s": 0.13330209000000082
+    },
+    "/carter1/scan_rear_raw": {
+      "count": 395,
+      "unique_stamps": 395,
+      "first_stamp_s": 3.116698079,
+      "last_stamp_s": 42.616700139,
+      "last_lag_s": 0.13330209000000082
+    },
+    "/carter1/scan_front_raw": {
+      "count": 395,
+      "unique_stamps": 395,
+      "first_stamp_s": 3.116698079,
+      "last_stamp_s": 42.616700139,
+      "last_lag_s": 0.13330209000000082
+    },
+    "/carter2/scan_rear_raw": {
+      "count": 395,
+      "unique_stamps": 395,
+      "first_stamp_s": 3.116698079,
+      "last_stamp_s": 42.616700139,
+      "last_lag_s": 0.13330209000000082
+    },
+    "/carter3/scan_front_raw": {
+      "count": 199,
+      "unique_stamps": 199,
+      "first_stamp_s": 22.016699065,
+      "last_stamp_s": 41.816700097,
+      "last_lag_s": 0.18330209299999467
+    },
+    "/carter2/scan_front_raw": {
+      "count": 199,
+      "unique_stamps": 199,
+      "first_stamp_s": 22.016699065,
+      "last_stamp_s": 41.816700097,
+      "last_lag_s": 0.18330209299999467
+    },
+    "/carter3/scan_rear_raw": {
+      "count": 199,
+      "unique_stamps": 199,
+      "first_stamp_s": 22.033365732,
+      "last_stamp_s": 41.833366764,
+      "last_lag_s": 0.16663542599999914
+    },
+    "/carter4/scan_rear_raw": {
+      "count": 199,
+      "unique_stamps": 199,
+      "first_stamp_s": 22.016699065,
+      "last_stamp_s": 41.816700097,
+      "last_lag_s": 0.18330209299999467
+    }
+  },
+  "clock_regressions": 0,
+  "bag_bytes": 97300480,
+  "bag_sha256": "715b12421b7b1d5596b82c2a9f136684334c43542c0133ddf0cddc2139b0ae46",
+  "recorder_closed_before_sql": true,
+  "capture_records": 6,
+  "rgb_files": 18,
+  "capture_times_s": [
+    2.0500001069158316,
+    22.033334482461214,
+    22.966667864471674,
+    32.966668386012316,
+    32.98333505354822,
+    42.0333355255425
+  ],
+  "rgb_resolution": [
+    640,
+    360
+  ],
+  "near_failure_last_carter3_map_odom_stamp_s": 42.233366759,
+  "diagnosis": "All8 topics have about10Hz unique stamps while active.4 stop publishing after final capture at42.033s while clock/odom continue; carter3 map->odom age then exceeds unchanged0.5s bound. Capture lifecycle/rearm is next repair candidate; no longer scan interval or TTL relaxation. Native acquisition after last capture not independently qualified.",
+  "next_change": "local45 after_capture submits documented nonblocking Replicator Start(start_timeline=False); actual sensor continuity pending next transport run",
+  "not_proven": [
+    "completed orders",
+    "same-run material and empty-return completion",
+    "real charging/contact",
+    "full sensor range quality"
+  ]
+}

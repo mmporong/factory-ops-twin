@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+from collections import deque
 import copy
 from datetime import datetime, timezone
 import hashlib
@@ -16,13 +17,15 @@ import subprocess
 import sys
 import time
 import traceback
-from typing import Any, Callable, Mapping, Sequence
+from typing import TYPE_CHECKING, Any, Callable, Mapping, Sequence
 from uuid import UUID, uuid4
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from factory_ops.fleet import FleetMission, FleetOrder
 from factory_ops.material_flow import MaterialFlow
-from factory_ops.energy_runtime import EnergyRuntime
+from factory_ops.energy_runtime import EnergyRuntime, GEOMETRIC_CONTACT_SOURCE
+if TYPE_CHECKING:
+    from factory_ops.ros_charging import RosChargingRuntime
 from factory_ops.energy_dispatch import evaluate_energy_assignment
 from factory_ops.fleet_registry import FleetRegistry
 from factory_ops.callback_drain import CallbackDrain
@@ -532,7 +535,7 @@ def localization_payload(transform: Any, *, now_s: float, ttl_s: float) -> dict[
         raise ValueError("map->base_link TF has an invalid frame, position or quaternion")
     stamp = transform.header.stamp.sec + transform.header.stamp.nanosec/1e9
     if stamp < 0 or not 0 <= now_s-stamp <= ttl_s:
-        raise PoseNotFreshError("map->base_link TF is stale or future")
+        raise PoseNotFreshError(f"map->base_link TF is stale or future: stamp={stamp}, now={now_s}, age={now_s-stamp}, ttl={ttl_s}")
     return {"x_m": values[0], "y_m": values[1], "yaw_rad": math.atan2(2*(q.w*q.z+q.x*q.y), 1-2*(q.y*q.y+q.z*q.z)), "stamp_s": stamp}
 
 
@@ -541,6 +544,27 @@ def mission_energy_load(mission: FleetMission, material: MaterialFlow | None, ro
     product_loaded = mission.ledger.robots[robot].payload_id is not None
     empty_intent = material.active_intents.get(robot) if material is not None else None
     return product_loaded or (empty_intent is not None and empty_intent.transition is Transition.DROP)
+
+
+def observe_charging_odometry(charging: RosChargingRuntime, run_id: str, robot_id: str,
+                              runtime: Mapping[str, Any], reservation: Mapping[str, Any] | None,
+                              now_s: float) -> dict[str, Any] | None:
+    """Wait for the actual ROS clock; never move future odometry into the present."""
+    pending = runtime["charging_odom_pending"]
+    latest = None
+    gap = charging.energy.charging_limits["max_observation_gap_s"]
+    while pending and pending[0]["stamp_s"] <= now_s:
+        observation = pending.popleft()
+        estimated = runtime["pose"]
+        pose = None
+        if (reservation is not None and estimated is not None
+                and 0 <= now_s - estimated["stamp_s"] <= gap
+                and estimated["stamp_s"] <= observation["stamp_s"]):
+            pose = {"run_id": run_id, "robot_id": robot_id, "frame_id": "map", **estimated}
+        latest = charging.observe(run_id, robot_id, observation["stamp_s"],
+            observation["linear_m_s"], observation["angular_rad_s"], loaded=observation["loaded"],
+            observed_at_s=now_s, dock_id=reservation["dock_id"] if reservation else None, pose=pose)
+    return latest
 
 
 def mission_energy_assignment(energy: EnergyRuntime | None, book: Any, settings: Mapping[str, Any] | None, *,
@@ -576,11 +600,12 @@ def dashboard_state(snapshot: Mapping[str, Any], robots: Mapping[str, Any], *,
         plan = leg.get("plan") if leg else None
         phase = runtime.get("phase", "unknown")
         rows.append({"id": key, "label": key, "pose": {k: pose[k] for k in ("x_m", "y_m", "yaw_rad")} if pose else None,
-            "status": "unknown" if pose is None else "idle" if phase == "idle" else "moving" if phase == "following" else "waiting",
+            "status": "unknown" if pose is None else "charging" if phase == "charging" and runtime.get("charger_state", {}).get("phase") == "charging" else "idle" if phase == "idle" else "moving" if phase == "following" else "waiting",
             "speed_mps": odom["linear_m_s"] if fresh_odom and odom is not None else None,
             "battery_pct": None, "battery_source": "unavailable", "task_id": logical.get("task_id"),
-            "task_type": task["stage"] if task else None, "task_label": task["stage"] if task else None,
-            "payload_id": logical.get("payload_id"), "destination": leg.get("target") if leg else None,
+            "task_type": task["stage"] if task else "virtual_charge" if runtime.get("charging_anchor") else None,
+            "task_label": task["stage"] if task else "가상 충전" if runtime.get("charging_anchor") else None,
+            "payload_id": logical.get("payload_id"), "destination": leg.get("target") if leg else runtime.get("charging_anchor"),
             "waiting_reason": phase if phase not in ("idle", "following") else None,
             "route": [{"x_m": x, "y_m": y} for x, y in plan.points] if plan else [],
             "observed_sim_time_s": pose["stamp_s"] if pose else None,
@@ -1007,6 +1032,16 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
         result.update(primary_trial_identity(session_root, session))
     launch = bag = ros = mission = callback_drain = None
     energy_runtime: EnergyRuntime | None = None
+    charging_runtime: RosChargingRuntime | None = None
+    charging_reservations: dict[str, dict[str, Any]] = {}
+    charging_requests = set(getattr(args, "charge_robot", ()))
+    charging_revision: str | None = None
+    virtual_charging = getattr(args, "virtual_charging", False)
+    charge_resume_soc = getattr(args, "charge_resume_soc", .8)
+    if (virtual_charging and not development or charging_requests and not virtual_charging
+            or not charging_requests.issubset(robot_ids)
+            or not math.isfinite(charge_resume_soc) or not 0 < charge_resume_soc <= 1):
+        raise ValueError("virtual charging requires a development fleet, known robots and finite resume SOC")
     energy_dispatch_settings: Mapping[str, Any] | None = None
     material: MaterialFlow | None = None
     energy_faults: set[str] = set()
@@ -1137,6 +1172,7 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
                 "scan_counts": {key: 0 for key in ("front_raw", "rear_raw", "front", "rear", "localization_front", "localization_rear")},
                 "subscriptions": [], "map_future": None}
             rt = robots[robot_id]
+            rt["charging_odom_pending"] = deque()
             front = node.create_publisher(LaserScan, "scan_front", qos_profile_sensor_data)
             rear = node.create_publisher(LaserScan, "scan_rear", qos_profile_sensor_data)
             localization = node.create_publisher(LaserScan, "scan_localization", qos_profile_sensor_data)
@@ -1172,6 +1208,12 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
                 )
                 state["stop_samples"] = state["stop_receiver"].samples
                 if energy_runtime is not None and mission is not None:
+                    if charging_runtime is not None:
+                        if len(state["charging_odom_pending"]) >= 64:
+                            raise RuntimeError("virtual charging odometry queue overflow")
+                        state["charging_odom_pending"].append({**state["last_odom"],
+                            "loaded": mission_energy_load(mission, material, robot)})
+                        return
                     try:
                         energy_runtime.observe(args.run_id, robot, stamp,
                             state["last_odom"]["linear_m_s"], state["last_odom"]["angular_rad_s"],
@@ -1302,6 +1344,16 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
                         manager.observe(robot, occupied, pose_stamp_s=pose["stamp_s"], now_s=stamp)
                         logs["localization"].write(json.dumps({"run_id": args.run_id, "scenario_id": scenario_id, "robot_id": robot, "sim_time_s": stamp, **pose}, allow_nan=False) + "\n")
                         rt["last_observation"] = stamp
+                if charging_runtime is not None:
+                    try:
+                        observe_charging_odometry(charging_runtime, args.run_id, robot, rt,
+                            charging_reservations.get(robot), stamp)
+                    except ValueError as error:
+                        if robot not in energy_faults:
+                            journal("virtual_charging_observation_fault", {"robot_id": robot, "error": str(error)})
+                            energy_faults.add(robot)
+                        if robot in charging_reservations:
+                            raise RuntimeError(f"virtual charging observation invalid for {robot}: {error}") from error
                 if refresh_leases and stamp-rt["last_lease"] >= .1:
                     lease(robot)
             logs["localization"].flush()
@@ -1392,8 +1444,23 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
                     if development and "material_flow" in session["workload"] else None)
         if development and "energy" in session["workload"]:
             energy_config = session["workload"]["energy"]
-            energy_runtime = EnergyRuntime(args.run_id, energy_config["profile"], energy_config["initial_soc"])
+            energy_runtime = EnergyRuntime(args.run_id, energy_config["profile"], energy_config["initial_soc"],
+                virtual_charging_source=GEOMETRIC_CONTACT_SOURCE if virtual_charging else None)
             energy_dispatch_settings = energy_config.get("dispatch")
+            if virtual_charging:
+                from factory_ops.ros_charging import RosChargingRuntime
+
+                if energy_dispatch_settings is None:
+                    raise ValueError("virtual charging requires authored charger anchors")
+                docks = {f"CH{index+1}": {"anchor": anchor, "x_m": book.nodes[anchor][0],
+                    "y_m": book.nodes[anchor][1], "yaw_rad": runtime_config["anchor_yaw_rad"][anchor]}
+                    for index, anchor in enumerate(energy_dispatch_settings["charger_anchors"])}
+                charging_runtime = RosChargingRuntime(energy_runtime, docks, contact_dwell_s=1.,
+                    position_tolerance_m=runtime_config["station_xy_tolerance_m"],
+                    yaw_tolerance_rad=runtime_config["station_yaw_tolerance_rad"], resume_soc=charge_resume_soc)
+                result["virtual_charging"] = {"enabled": True, "manual_requests": sorted(charging_requests),
+                    "resume_soc": charge_resume_soc, "contact_source": GEOMETRIC_CONTACT_SOURCE,
+                    "physical_contact_verified": False, "hardware_calibrated": False}
         journal("mission_started", {"origin_sim_time_s": origin, "workload_sha256": session["workload_sha256"],
                 "strategy": runtime_config["reservation_strategy"], "reservation_tracking_margin_m": runtime_config["reservation_tracking_margin_m"]})
         current_closed = session["condition"] == "closure"
@@ -1408,6 +1475,8 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
                 pickup_station=pickup, drop_station=drop, observed_at_s=stamp,
                 nominal_speed_m_s=load["nominal_speed_m_s"], closed=current_closed)
             if assessment is not None:
+                if charging_runtime is not None and assessment["reason"] == "insufficient_energy":
+                    charging_requests.add(robot)
                 # Keep fresh evidence in each recorded decision, but emit only semantic changes.
                 identity = {key: assessment[key] for key in ("allowed", "reason", "charger_anchor", "route")}
                 identity["budget_inputs"] = ({key: value for key, value in assessment["budget_inputs"].items()
@@ -1645,6 +1714,14 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
                             f"status={terminal.status} error_code={terminal.result.error_code}; "
                             "full action retained in mission-result.json actions"
                         )
+                    reservation = charging_reservations.get(robot)
+                    if (charging_runtime is not None and reservation is not None and rt["chunk"].final
+                            and rt["leg"]["kind"] == "clearing" and rt["leg"]["target"] == reservation["anchor"]):
+                        arrived = charging_runtime.arrived(args.run_id, robot, dock_id=reservation["dock_id"],
+                            anchor=reservation["anchor"], goal_id=rt["follow_uuid"],
+                            navigation_succeeded=True, stamp_s=stamp, observed_at_s=stamp)
+                        reservation["arrival_submitted"] = True
+                        journal("virtual_charger_arrived", {"robot_id": robot, "dock": arrived})
                     rt["phase"] = "stopping"
                     reset_stop_observation(rt)
                     rt["hold_sequence"] = lease(robot, forced_mode="hold")
@@ -1700,6 +1777,14 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
                             rt["generation"], rt["held_tiles"] = shrunk.generation, held
                             journal("parked", {"robot_id": robot, "anchor": rt["anchor"], "generation": rt["generation"], "tiles": sorted(held)})
                             rt["leg"] = None; rt["chunk"] = None; rt["phase"] = "idle"
+                            reservation = charging_reservations.get(robot)
+                            if reservation is not None:
+                                if rt["anchor"] == reservation["anchor"]:
+                                    if not reservation.get("arrival_submitted"):
+                                        raise RuntimeError("charger stop has no accepted Nav2 arrival")
+                                    rt["phase"] = "charging"
+                                else:
+                                    new_leg(robot, reservation["anchor"])
                         else:
                             rt["phase"] = "dwell"; rt["dwell_until"] = stamp + load["dwell_s"]
                         journal("edge_stopped", rt["record"])
@@ -1753,6 +1838,66 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
                         new_leg(robot, rt["park"])
                 if rt["phase"] in {"compute_sent", "computing", "follow_sent", "following"} and stamp-rt["phase_started"] > runtime_config["chunk_timeout_s"]:
                     raise TimeoutError(f"G3 chunk action deadline: {robot}")
+            if charging_runtime is not None:
+                charge_state = charging_runtime.snapshot(args.run_id, observed_at_s=stamp)
+                for robot, reservation in list(charging_reservations.items()):
+                    dock = charge_state["robots"][robot]["charging"]
+                    if dock is None:
+                        raise RuntimeError("reserved virtual charger disappeared")
+                    robots[robot]["charger_state"] = dock
+                    if dock is not None and dock["phase"] == "fault":
+                        raise RuntimeError(f"virtual charger fault for {robot}: {dock['fault']}")
+                    if robots[robot]["phase"] == "charging" and dock["phase"] == "ready_to_leave":
+                        released = charging_runtime.release(args.run_id, robot,
+                            dock_id=reservation["dock_id"], observed_at_s=stamp)
+                        del charging_reservations[robot]
+                        robots[robot].pop("charger_state", None)
+                        robots[robot].pop("charging_anchor", None)
+                        charging_requests.discard(robot)
+                        robots[robot]["phase"] = "idle"
+                        journal("virtual_charger_released", released)
+                        if robots[robot]["anchor"] != robots[robot]["park"]:
+                            new_leg(robot, robots[robot]["park"])
+                for robot in sorted(charging_requests):
+                    rt = robots[robot]
+                    if (robot in charging_reservations or rt["phase"] != "idle" or rt["leg"] is not None
+                            or robot in mission.active_intents
+                            or material is not None and robot in material.active_intents
+                            or mission_energy_load(mission, material, robot)):
+                        continue
+                    energy = energy_runtime.projection(args.run_id, robot, stamp)
+                    if energy["freshness"] != "fresh":
+                        continue
+                    if energy["battery_pct"] >= charge_resume_soc * 100:
+                        charging_requests.discard(robot)
+                        journal("virtual_charger_request_already_funded", {"robot_id": robot})
+                        continue
+                    reservation = charging_runtime.reserve(args.run_id, robot,
+                        carrying_payload=False, observed_at_s=stamp)
+                    if reservation is None:
+                        continue
+                    charging_reservations[robot] = reservation
+                    rt["charging_anchor"] = reservation["anchor"]
+                    target = reservation["anchor"]
+                    if target == rt["anchor"]:
+                        # Obtain an actual approach action, even when starting in its own dock.
+                        candidates = [(book.plan(target, node, closed=current_closed).distance_m, node)
+                                      for node in book.nodes if node != target]
+                        target = min(candidates)[1]
+                    new_leg(robot, target)
+                    journal("virtual_charger_reserved", {"robot_id": robot, "dock": reservation})
+                charge_state = charging_runtime.snapshot(args.run_id, observed_at_s=stamp)
+                fingerprint = canonical_sha256({"owners": charge_state["owners"],
+                    "robots": {key: {field: value["charging"].get(field) for field in
+                        ("dock_id", "phase", "geometric_dock_confirmed", "virtual_connector_state", "fault")}
+                        if value["charging"] is not None else None for key, value in charge_state["robots"].items()}})
+                if fingerprint != charging_revision:
+                    atomic_json(output / "charging-state.json", charge_state)
+                    journal("virtual_charging_state", {"owners": charge_state["owners"],
+                        "robots": {key: value["charging"] for key, value in charge_state["robots"].items()}})
+                    charging_revision = fingerprint
+                if elapsed >= horizon and (charging_requests or charging_reservations):
+                    raise TimeoutError("virtual charging development horizon reached")
             eligible = [robot for robot, rt in robots.items() if rt["phase"] == "idle" and rt["leg"] is None]
             idle_for_intents = list(eligible)
             if material is not None and cutoff is None:
@@ -1863,7 +2008,9 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
             if mission.completed and completed_at is None:
                 completed_at = elapsed
                 journal("orders_completed", {"completed_orders": mission.completed_order_count, "elapsed_sim_s": completed_at})
-            if mission.completed and (material is None or material.completed) and all(rt["phase"] == "idle" and rt["anchor"] == rt["park"] for rt in robots.values()):
+            if (mission.completed and (material is None or material.completed)
+                    and not charging_requests and not charging_reservations
+                    and all(rt["phase"] == "idle" and rt["anchor"] == rt["park"] for rt in robots.values())):
                 break
             if elapsed-last_progress >= 1:
                 atomic_json(output / "mission-progress.json", {"run_id": args.run_id, "scenario_id": scenario_id, "elapsed_sim_s": elapsed,

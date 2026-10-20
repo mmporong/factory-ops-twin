@@ -32,6 +32,7 @@ class Local45FleetLifecycle(FleetTransportLifecycle):
         self._native_observers: list[Any] = []
         self._native_journal_opened = False
         self._native_periodic_ns: int | None = None
+        self._capture_rep: Any = None
         project = Path(__file__).resolve().parents[2]
         self._observer_sources = {name: g2_scene.base._sha256(project/name) for name in (
             "scripts/isaac/local45_fleet4_transport_scene.py", "factory_ops/isaac45_runtime.py",
@@ -107,6 +108,19 @@ class Local45FleetLifecycle(FleetTransportLifecycle):
                 or stamp-self._native_periodic_ns >= 1_000_000_000):
             self._record_lidar_acquisition("periodic_1hz", sim_time_s, physics_frame)
             self._native_periodic_ns = stamp
+
+    def before_capture(self, rep: Any) -> None:
+        self._capture_rep = rep
+        super().before_capture(rep)
+
+    def after_capture(self) -> None:
+        super().after_capture()
+        if self._capture_rep is None:
+            raise RuntimeError("local45 capture resume requires its Replicator owner")
+        # SDK4.5 step() leaves the orchestrator STEPPED. Submit its documented
+        # nonblocking Start command; the outer PLAY event alone missed writers.
+        self._capture_rep.orchestrator.run(start_timeline=False)
+        self._capture_rep = None
 
     def cleanup_render_products(self) -> None:
         errors = []

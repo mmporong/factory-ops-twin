@@ -1,0 +1,142 @@
+{
+  "task_id": "ros-geometric-charging-036",
+  "attempt": 1,
+  "contract_revision": 36,
+  "ACK": true,
+  "owner": "control",
+  "status": "implemented_cpu_tested_awaiting_root_integration",
+  "input_sha_matched": true,
+  "actual_sdk_run": false,
+  "actual_ros_run": false,
+  "physical_contact_verified": false,
+  "physical_electrical_charging_verified": false,
+  "accepted": false,
+  "completed_at_utc": "2026-10-20T10:27:32.967234+09:00",
+  "changed_paths": [
+    "factory_ops/energy_runtime.py",
+    "factory_ops/ros_charging.py",
+    "tests/test_ros_charging.py",
+    "tests/test_energy_runtime.py",
+    "coordination/collab/results/ros-geometric-charging-036.json"
+  ],
+  "source_sha256": {
+    "factory_ops/energy_runtime.py": "3c23bf4d59e76f5d000f57a0967d67f52abf340db8557f3ebf21e94b902969ed",
+    "factory_ops/ros_charging.py": "7dcc67b28028afe15b1621e1e4ea752b5fec53aa9fc735414e217e11a2a91b0b",
+    "tests/test_ros_charging.py": "de117bb6a786848b24e1a0b86810947e2b7b25b4718f9c8d68786c75cbda618a",
+    "tests/test_energy_runtime.py": "2f55123397edad7824b5b31f9661e3f7e96df3c36aff95d48589bf6c962e5054"
+  },
+  "read_dependency_sha256": {
+    "factory_ops/charging.py": "8a207ac2844a94f299f88d2f0bb5960b4cfcb927128d4b4b32e1288f59a5ffb5",
+    "factory_ops/energy.py": "89689894565e850ef3ef3242fceb636afcf14fc330b083a8080d372d4f6d3be1"
+  },
+  "implementation": [
+    "EnergyRuntime의 기본 생성/observe API는 충전 미지원 동작을 유지한다. keyword-only virtual_charging_source=\"estimated_pose_geometric_dock\"를 명시한 인스턴스만 가상 충전 owner를 연결할 수 있다.",
+    "RosChargingRuntime은 전달받은 동일 EnergyRuntime과 기존 ChargingFleet를 조합한다. 구성된 run/robot/dock/anchor와 owner를 검증하고 하나의 EnergyRuntime을 두 어댑터가 소유하지 못하게 한다.",
+    "예약 후 수신된 새로운 nonzero Nav2 goal UUID와 성공 boolean·실제 수신 시각을 받아야 도착 상태로 전환한다. 성공 도착만으로 SOC를 올리지 않는다.",
+    "실제 부호 있는 encoder odometry와 현재 ROS 시각, run/robot/map frame을 가진 추정 pose가 모두 신선하고, 작성된 XY/yaw 범위와 정지 dwell을 충족해야 가상 기하 도킹을 확인한다.",
+    "ChargingFleet의 dwell/slot lifecycle과 EnergyFleet의 양 끝점 확인 적분을 유지한다. 동일 odometry timestamp는 회계/dwell을 재실행하지 않는다. 변조·오래됨·미래·비유한 관측은 적립하지 않고 확인 연속성을 끊어 불확실한 구간을 나중에 적립하지 않는다.",
+    "재개 SOC에 도달하면 즉시 undock_pending/simulated_disengaging으로 전환해 다음 구간의 적립을 끊는다. 이후 신선한 정지 odometry 표본에서 가상 커넥터 분리 상태를 확인한 뒤 charging slot만 해제할 수 있다. 차체/출구/lane 점유 예약은 G3가 관리한다.",
+    "모든 충전 view는 contact_source=estimated_pose_geometric_dock, virtual=true, hardware_calibrated=false, physical_contact_verified=false를 명시한다. 전기 충전/접촉 센서 데이터를 만들지 않는다."
+  ],
+  "validation": [
+    {
+      "command": "python3.10 -m unittest tests.test_ros_charging tests.test_energy_runtime -v",
+      "result": "PASS: 20 tests in 0.021s, exit0",
+      "execution_count": 1,
+      "coverage": [
+        "기존 EnergyRuntime 기본 동작/결함 latch/정체성/분리 snapshot/회계 회귀 유지",
+        "source opt-in 및 하나의 owner만 허용, 기본 observe와 가상 adapter 중복 연결 거절",
+        "Nav2 도착만/도착 전 기하 위치/없거나 XY·yaw 범위 밖 pose는 미적립",
+        "정지 dwell 후 양 끝점이 확인된 .2초에 .03Wh 가상 공급; .8초 idle .01Wh를 반영하여 300.02Wh",
+        "같은 timestamp 중복 호출은 energy.observe_virtual_charging 1회만 수행; 충돌 표본은 무적립",
+        "run/robot/dock/goal UUID/예약 독점과 시간 검증",
+        "stale/future/nonfinite/wrong-frame/wrong-identity/이동/적재 표본과 그 다음 불확실 구간의 무적립",
+        "재개 SOC에서 적립 중단, 이동 중 해제 금지, 가상 분리 완료 뒤 슬롯 해제·G3 차체 점유 미해제·과거 goal 재사용 거절"
+      ],
+      "runtime": "기존 Python3.10에서 import/실행. ROS/SDK 없는 순수 CPU 모델 검사."
+    }
+  ],
+  "test_pass_count": 20,
+  "test_execution_count": 1,
+  "typecheck_run": false,
+  "additional_review_loop": false,
+  "public_api": {
+    "energy_constructor": "EnergyRuntime(run_id: str, profile: Mapping[str, Any], initial_soc: Mapping[str, float], *, virtual_charging_source: str | None = None)",
+    "source_constant": "factory_ops.energy_runtime.GEOMETRIC_CONTACT_SOURCE == \"estimated_pose_geometric_dock\"",
+    "runtime_constructor": "RosChargingRuntime(energy: EnergyRuntime, docks: Mapping[str, Mapping[str, Any]], *, contact_dwell_s: float, position_tolerance_m: float, yaw_tolerance_rad: float, resume_soc: float)",
+    "docks_shape": {
+      "CH1": {
+        "anchor": "authored charger routing anchor",
+        "x_m": "authored map goal x in metres",
+        "y_m": "authored map goal y in metres",
+        "yaw_rad": "authored map goal heading in radians"
+      }
+    },
+    "limits": "dwell/XY/yaw/resume_soc는 호출자가 명시한다. max_gap_s와 정지 linear/angular 임계치는 같은 EnergyRuntime.charging_limits의 profile 값을 사용한다. resume_soc는 0~1 비율이다.",
+    "reserve": "reserve(run_id: str, robot_id: str, *, carrying_payload: bool, observed_at_s: float) -> dict[str, Any] | None",
+    "reserve_result": "빈 슬롯이 없으면 None. 성공 시 dock_id/anchor/phase/reserved_at_s/arrival/virtual_connector_state 등을 반환한다. 같은 예약은 재호출해도 유지한다. 적재 중이면 예약을 거절한다.",
+    "arrived": "arrived(run_id: str, robot_id: str, *, dock_id: str, anchor: str, goal_id: str, navigation_succeeded: bool, stamp_s: float, observed_at_s: float) -> dict[str, Any] | None",
+    "arrival_contract": "예약 이후의 양수 실제 수신 stamp, 신선한 now, 미사용 nonzero UUID, 예약 anchor와 navigation_succeeded=True가 필요하다. UUID는 hex로 정규화한다. 실제 Nav2 action result만 전달한다. 가상 기하 contact는 odometry stamp가 수락된 arrival stamp 이상인 표본에서만 가능.",
+    "observe": "observe(run_id: str, robot_id: str, stamp_s: float, linear_m_s: float, angular_rad_s: float, *, loaded: bool, observed_at_s: float, dock_id: str | None = None, pose: Mapping[str, Any] | None = None) -> dict[str, Any]",
+    "observe_result": "{run_id, robot_id, energy: freshness-qualified EnergyRuntime.projection, charging: charging state or None}",
+    "pose_keys": [
+      "run_id",
+      "robot_id",
+      "frame_id=\"map\"",
+      "x_m",
+      "y_m",
+      "yaw_rad",
+      "stamp_s"
+    ],
+    "pose_policy": "pose=None이면 기하 확인 불가로 미적립. pose는 own run/robot/map 및 유한 SI 값이어야 하며 0 <= now - pose_stamp <= max_gap_s, pose_stamp <= odometry_stamp가 필요. pose의 원 timestamp를 유지한다.",
+    "odometry_policy": "0 <= observed_at_s - stamp_s <= max_gap_s. signed wheel linear/angular velocity와 operational loaded bool을 전달. unreserved robot은 dock_id=None/pose=None으로 같은 observe를 사용하여 일반 소비 회계를 유지한다.",
+    "snapshot": "snapshot(run_id: str, *, observed_at_s: float) -> dict[str, Any]",
+    "snapshot_result": "{run_id, robots: {id: {run_id, robot_id, energy, charging}}, owners: {dock_id: robot_id}, docks, contact_source, virtual, hardware_calibrated, physical_contact_verified, physical_electrical_charging_verified, body_occupancy_owner}",
+    "release": "release(run_id: str, robot_id: str, *, dock_id: str, observed_at_s: float) -> dict[str, Any]",
+    "release_result": "{run_id, robot_id, dock_id, virtual_connector_state=\"simulated_disengaged\", charging_reservation_released=True, body_occupancy_released=False, contact_source, virtual=True, hardware_calibrated=False}",
+    "phase_sequence": "approach -> contact_pending -> charging -> undock_pending -> ready_to_leave -> release. geometry/stationary 확인이 끊기면 contact_pending, stale lifecycle gap은 fault.",
+    "energy_adapter_hooks": "EnergyRuntime.charging_limits(read-only detached dict), claim_virtual_charging_source(owner, *, source), observe_virtual_charging(owner, run_id, robot_id, stamp_s, linear_m_s, angular_rad_s, *, loaded, geometric_dock_confirmed). RosChargingRuntime 내부 소유 경계용이며 G3 callback은 RosChargingRuntime.observe만 사용."
+  },
+  "root_callback_example": "from factory_ops.energy_runtime import EnergyRuntime, GEOMETRIC_CONTACT_SOURCE\nfrom factory_ops.ros_charging import RosChargingRuntime\n\nenergy = EnergyRuntime(run_id, energy_profile, initial_soc,\n    virtual_charging_source=GEOMETRIC_CONTACT_SOURCE)\ncharging = RosChargingRuntime(energy, authored_docks,\n    contact_dwell_s=authored_dwell_s,\n    position_tolerance_m=authored_xy_limit_m,\n    yaw_tolerance_rad=authored_yaw_limit_rad,\n    resume_soc=authored_resume_soc_fraction)\nreservations = {}\n\n# G3 dispatcher: operational payload must already be delivered.\nreservation = charging.reserve(run_id, robot_id,\n    carrying_payload=mission_energy_load(mission, material, robot_id),\n    observed_at_s=actual_ros_now_s)\nif reservation is not None:\n    reservations[robot_id] = reservation\n    # G3 owns the real route/lease/goal launch to reservation[\"anchor\"].\n\n# Real successful Nav2 result callback, not a timer or fabricated result.\ncharging.arrived(run_id, robot_id,\n    dock_id=reservations[robot_id][\"dock_id\"],\n    anchor=reservations[robot_id][\"anchor\"],\n    goal_id=actual_follow_goal_uuid,\n    navigation_succeeded=(actual_nav2_result_status == 4),\n    stamp_s=actual_result_received_absolute_ros_s,\n    observed_at_s=actual_ros_now_s)\n\n# Existing odometry callback: call this OR energy.observe, never both.\nreservation = reservations.get(robot_id)\np = actual_estimated_map_pose  # Existing TF estimate; retain its original stamp.\npose = ({\"run_id\": run_id, \"robot_id\": robot_id, \"frame_id\": \"map\",\n         \"x_m\": p[\"x_m\"], \"y_m\": p[\"y_m\"], \"yaw_rad\": p[\"yaw_rad\"],\n         \"stamp_s\": p[\"stamp_s\"]}\n        if reservation is not None and p is not None else None)\nobservation = charging.observe(run_id, robot_id,\n    actual_odom_stamp_s, actual_signed_encoder_linear_m_s, actual_signed_encoder_angular_rad_s,\n    loaded=mission_energy_load(mission, material, robot_id),\n    observed_at_s=actual_robot_node_ros_clock_s,\n    dock_id=reservation[\"dock_id\"] if reservation is not None else None,\n    pose=pose)\n# Observe returns fresh energy plus the virtual dock state; avoid logging every tick.\n\n# Dispatcher: only after observe reports ready_to_leave/simulated_disengaged.\nreleased = charging.release(run_id, robot_id,\n    dock_id=reservations[robot_id][\"dock_id\"], observed_at_s=actual_ros_now_s)\nreservations.pop(robot_id)\n# Keep G3 body/exit/lane holds until its normal physical-clearance boundary.\n",
+  "integration_requirements": [
+    "EnergyRuntime 생성과 G3 odometry callback을 함께 선택 연결해야 한다. owner 연결 후 기존 energy.observe를 병행하면 ValueError이며 중복 회계를 허용하지 않는다.",
+    "모든 stamp/observed_at_s/pose stamp는 같은 절대 ROS simulation seconds 축을 사용한다. G3 origin을 뺀 elapsed NavigationResult 시각을 그대로 섞지 않는다.",
+    "authored_docks의 x/y/yaw와 anchor는 root가 실제 Nav2 목표와 같은 작성된 목표에서 전달한다. 추정 pose를 목표 좌표로 덮어쓰거나 성공 UUID/도착을 생성하지 않는다.",
+    "충전 예약이 남은 robot은 G3 일반 배차에서 제외한다. RosChargingRuntime이 route/dispatcher/Nav2/차체 lease를 조작하지 않는다.",
+    "충전 중 stop 상태/관측 중단 처리와 stale 경보는 root 운영 연결 책임이다. snapshot의 geometric_dock_confirmed/phase는 last_stamp_s 당시 관측 상태이며 현재성은 energy.freshness와 observation_age_s를 함께 확인한다.",
+    "종료 evidence/source pins에 새 ros_charging.py와 갱신된 energy_runtime.py를 root가 미래 소스에 포함해야 한다. 현재008 immutable 입력과 실행은 바꾸지 않는다."
+  ],
+  "errors_or_limits": [
+    "실제 ROS/GPU/SDK/G3 route 통합을 실행하지 않았다. 테스트는 호출자 관측을 입력한 명시적 가상 모델만 확인한다.",
+    "기하 도킹은 추정 map pose와 부호 있는 encoder 속도에 근거한다. 물리 접촉 센서·connector 측정·전기 전력·실제 SOC·hardware calibration 성공이 아니다.",
+    "재개 SOC 도달 시 한 관측 간격의 가상 적립 후 중단한다. 이후 적립이 없음을 확인하며 실제 커넥터 구동/분리 센서가 있다고 주장하지 않는다.",
+    "stale dock lifecycle 또는 기존 EnergyRuntime fault를 자동 초기화하거나 관측되지 않은 시간의 SOC를 채우지 않는다. 실패한 접근 예약 취소/복구 우회 API는 추가하지 않았다.",
+    "약60% 전체 진행/80 미완료 상태, 기존008 원본, 034 cadence 미적용 판단은 변경하지 않는다.",
+    "사용자 범위에 따라 작은 관련 검사 1회만 수행했다. 광역 검사·별도 검수·타입검사는 실행하지 않았고 accepted로 표시하지 않는다.",
+    "검사 1회 뒤 도착 이전 odometry의 소급 적립을 차단하는 2줄 시간 조건을 강화했다. 최종 ros_charging.py의 해당 조건은 재실행 미검증이며 검사 당시 SHA를 별도로 보존했다."
+  ],
+  "current_user_task_scope": "036 지정4 code/test파일과 receipt만 작성. root 소유 G3/config/lifecycle/charging.py/energy.py·현재008 immutable 실행 입력은 편집하지 않음.",
+  "actual_gpu_run": false,
+  "processes": {
+    "started": [],
+    "stopped": []
+  },
+  "pending_owner_work": [],
+  "next_owner": "root의 한정 결과 검수와 미래 G3 route/dispatcher/odometry 연결",
+  "tested_source_sha256": {
+    "factory_ops/energy_runtime.py": "3c23bf4d59e76f5d000f57a0967d67f52abf340db8557f3ebf21e94b902969ed",
+    "factory_ops/ros_charging.py": "f9cd443ea8a39c726938d426435f4e13f07095c474d981f5d8e7826cb45c7c36",
+    "tests/test_ros_charging.py": "de117bb6a786848b24e1a0b86810947e2b7b25b4718f9c8d68786c75cbda618a",
+    "tests/test_energy_runtime.py": "2f55123397edad7824b5b31f9661e3f7e96df3c36aff95d48589bf6c962e5054"
+  },
+  "input_source_sha256": {
+    "factory_ops/energy_runtime.py": "07cf3715cdf8c2c540911175ebebf5a015564a5d8dbc75ac4b49d33eb55ca84a",
+    "factory_ops/charging.py": "8a207ac2844a94f299f88d2f0bb5960b4cfcb927128d4b4b32e1288f59a5ffb5",
+    "factory_ops/energy.py": "89689894565e850ef3ef3242fceb636afcf14fc330b083a8080d372d4f6d3be1"
+  },
+  "post_test_bounded_change": {
+    "verification": "관련 검사 1회 제한을 지켜 재실행하지 않음. 위 20 PASS는 이 2줄 조건 강화 전 SHA 기준이며 tested_source_sha256와 최종 source_sha256를 구분. 나머지 소스/테스트 SHA는 동일. root의 결과 검수·연결 검사 대상.",
+    "change": "기하 contact 조건에 odometry stamp >= 수락된 Nav2 arrival stamp를 추가. 늦게 도착한 과거 odometry로 도착 이전 구간을 소급 충전하지 않도록 보수적으로 제한.",
+    "path": "factory_ops/ros_charging.py"
+  }
+}

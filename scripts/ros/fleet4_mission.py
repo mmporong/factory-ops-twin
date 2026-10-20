@@ -24,6 +24,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--output", required=True, type=Path)
     parser.add_argument("--run-id", required=True)
     parser.add_argument("--dashboard", action="store_true", help="publish read-only web telemetry; no web control")
+    parser.add_argument("--virtual-charging", action="store_true", help="enable authored geometric docking with virtual battery charging")
+    parser.add_argument("--charge-robot", action="append", default=[], help="request an empty robot's manual virtual top-up")
+    parser.add_argument("--charge-resume-soc", type=float, default=.8, help="authored virtual charge target as a0..1 fraction")
     parser.add_argument("--runtime-profile", choices=("canonical62", "local45_development"),
                         default="canonical62")
     args = parser.parse_args(argv)

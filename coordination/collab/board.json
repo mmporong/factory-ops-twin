@@ -1,6 +1,6 @@
 {
-  "revision": 35,
-  "updated_at": "2026-10-20T01:11:52.836792+00:00",
+  "revision": 36,
+  "updated_at": "2026-10-20T01:18:54.263913+00:00",
   "scope": {
     "excluded": "실물 로봇 실행, 새 유료 서비스/에셋, 공개 배포",
     "project_root": "C:\\Users\\LIMMM\\factory-ops-twin",
@@ -718,6 +718,25 @@
         "coordination/collab/results/local45-capture-resolution-035.json"
       ],
       "acceptance_record": "Root inspected instance-resolution code and3 focused CPU tests/result; source digests matched. Default1280x720, selected-size buffer checks and positional API retained. Actual SDK verification belongs to next transport run; no speedup claim."
+    },
+    {
+      "task_id": "ros-geometric-charging-036",
+      "attempt": 1,
+      "contract_revision": 36,
+      "owner": "control",
+      "reviewer": "root",
+      "status": "accepted_cpu_integration_pending",
+      "ACK": true,
+      "task_path": "coordination/collab/ros-geometric-charging-036-task.json",
+      "result_path": "coordination/collab/results/ros-geometric-charging-036.json",
+      "write_paths": [
+        "factory_ops/energy_runtime.py",
+        "factory_ops/ros_charging.py",
+        "tests/test_ros_charging.py",
+        "tests/test_energy_runtime.py",
+        "coordination/collab/results/ros-geometric-charging-036.json"
+      ],
+      "acceptance_record": "Root inspected same energy owner, arrival identity/geometry/stationary gates, two-sided contact integration and release;20 focused child CPU checks passed once, source digests matched. G3 wiring is root future delta; actual charging still unverified, no physical contact claim."
     }
   ],
   "decisions": [

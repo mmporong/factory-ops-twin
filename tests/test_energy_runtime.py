@@ -6,7 +6,7 @@ import json
 from pathlib import Path
 import unittest
 
-from factory_ops.energy_runtime import EnergyRuntime
+from factory_ops.energy_runtime import EnergyRuntime, GEOMETRIC_CONTACT_SOURCE
 
 
 PROFILE = Path(__file__).resolve().parents[1] / "configs/factory-fleet4/energy-profile.json"
@@ -191,6 +191,39 @@ class EnergyRuntimeTests(unittest.TestCase):
         self.assertEqual("fresh", runtime.projection("stream", "r1", 125.25)["freshness"])
         self.assertEqual("stale", runtime.projection("stream", "r1", 125.2501)["freshness"])
         self.assertLess(len(json.dumps(state)), len(json.dumps(shape)) + 100)
+
+    def test_optional_virtual_source_requires_opt_in_and_exclusive_owner(self) -> None:
+        owner = object()
+        with self.assertRaises(ValueError):
+            self.runtime.claim_virtual_charging_source(owner, source=GEOMETRIC_CONTACT_SOURCE)
+        with self.assertRaises(ValueError):
+            EnergyRuntime("run", self.profile, {"r1": .5}, virtual_charging_source="hardware")
+        runtime = EnergyRuntime("run", self.profile, {"r1": .5},
+                                virtual_charging_source=GEOMETRIC_CONTACT_SOURCE)
+        runtime.claim_virtual_charging_source(owner, source=GEOMETRIC_CONTACT_SOURCE)
+        before = runtime.snapshot()
+        with self.assertRaises(ValueError):
+            runtime.claim_virtual_charging_source(object(), source=GEOMETRIC_CONTACT_SOURCE)
+        with self.assertRaises(ValueError):
+            runtime.observe("run", "r1", 1., 0., 0., loaded=False)
+        with self.assertRaises(ValueError):
+            runtime.observe_virtual_charging(object(), "run", "r1", 1., 0., 0.,
+                loaded=False, geometric_dock_confirmed=True)
+        self.assertEqual(before, runtime.snapshot())
+        self.assertEqual(GEOMETRIC_CONTACT_SOURCE, before["contact_source"])
+
+    def test_virtual_source_retains_two_confirmed_endpoints_accounting(self) -> None:
+        runtime = EnergyRuntime("run", self.profile, {"r1": .5},
+                                virtual_charging_source=GEOMETRIC_CONTACT_SOURCE)
+        owner = object()
+        runtime.claim_virtual_charging_source(owner, source=GEOMETRIC_CONTACT_SOURCE)
+        for stamp, confirmed in ((0., True), (.2, False), (.4, True), (.6, True)):
+            runtime.observe_virtual_charging(owner, "run", "r1", stamp, 0., 0.,
+                loaded=False, geometric_dock_confirmed=confirmed)
+        state = runtime.snapshot()["robots"]["r1"]
+        self.assertAlmostEqual(.03, state["charged_wh"])
+        self.assertAlmostEqual(.0075, state["consumed_wh"])
+        self.assertAlmostEqual(300.0225, state["energy_wh"])
 
 
 if __name__ == "__main__":
