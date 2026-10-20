@@ -1,0 +1,111 @@
+{
+  "schema_version": 1,
+  "run_id": "d28653e6a366418ca309f452709ee12c",
+  "source_commit": "1c5bd817c7fa7c5e8868767772517cb0d7f57586",
+  "status": "incomplete_development_wall_timeout",
+  "scope": "4 local45 Nav2 stacks,2 active AMRs,3 completed route chunks; no completed material orders or fleet transport qualification",
+  "original_directory": "D:\\FactoryOpsRuntime\\local45-transport-007",
+  "wall_limit_s": 450,
+  "observed_wall_s": 468.4690000000119,
+  "primary_termination": "Windows owned Job wall timeout; later ROS ExternalShutdownException is teardown",
+  "windows_closed": true,
+  "linux_closed": true,
+  "cleanup_errors": [],
+  "shared_file_permission_error_observed": false,
+  "robots": {
+    "carter1": {
+      "samples": 2280,
+      "first_sim_time_s": 2.0500001069158316,
+      "last_sim_time_s": 40.03333542123437,
+      "travelled_xy_m": 8.450511428370074,
+      "peak_applied_linear_m_s": 0.4,
+      "trajectory_sha256": "c77d770013529f8a12eeff27124fea836a40fe5f2128750ab465ff5d9b9d8b0f"
+    },
+    "carter2": {
+      "samples": 2280,
+      "first_sim_time_s": 2.0500001069158316,
+      "last_sim_time_s": 40.03333542123437,
+      "travelled_xy_m": 5.9299023450989985,
+      "peak_applied_linear_m_s": 0.4,
+      "trajectory_sha256": "81864e780590b1ffe95d1675deff884539d9e1142caaf382313e229227e33336"
+    },
+    "carter3": {
+      "samples": 2280,
+      "first_sim_time_s": 2.0500001069158316,
+      "last_sim_time_s": 40.03333542123437,
+      "travelled_xy_m": 0.04601696780333239,
+      "peak_applied_linear_m_s": 0.0,
+      "trajectory_sha256": "3612fc36836c1bfd2383bc832b054fa4ba765fe1308ad4990170306bbcb2cb96"
+    },
+    "carter4": {
+      "samples": 2280,
+      "first_sim_time_s": 2.0500001069158316,
+      "last_sim_time_s": 40.03333542123437,
+      "travelled_xy_m": 0.04584581082130955,
+      "peak_applied_linear_m_s": 0.0,
+      "trajectory_sha256": "8401701710611cfe099d4286a9b64f9bb6fcb1653781c47d70275fcc80c03afc"
+    }
+  },
+  "actions": {
+    "navigation_ready": 1,
+    "mission_started": 1,
+    "energy_assignment_evaluated": 11,
+    "dispatch_pair_evaluated": 11,
+    "visual_state_published": 6,
+    "dispatch_pair_selected": 2,
+    "leg_requested": 2,
+    "planner_goal_sent": 5,
+    "action_accepted": 10,
+    "follow_goal_sent": 5,
+    "action_terminal": 3,
+    "edge_stopped": 3
+  },
+  "latest_published_progress": {
+    "completed_orders": 0,
+    "elapsed_sim_s": 32.050001672,
+    "released_orders": 4,
+    "robots": {
+      "carter1": {
+        "anchor": "W_LOW",
+        "generation": 9,
+        "phase": "following",
+        "target": "S1"
+      },
+      "carter2": {
+        "anchor": "M_HIGH",
+        "generation": 8,
+        "phase": "following",
+        "target": "S3"
+      },
+      "carter3": {
+        "anchor": "P3",
+        "generation": 3,
+        "phase": "idle",
+        "target": null
+      },
+      "carter4": {
+        "anchor": "P4",
+        "generation": 4,
+        "phase": "idle",
+        "target": null
+      }
+    },
+    "run_id": "d28653e6a366418ca309f452709ee12c",
+    "scenario_id": "fleet4_transport_normal"
+  },
+  "capture_records": 8,
+  "rgb_files": 24,
+  "media_index_sha256": "9544d37b03877eedc7738ef6f98c5b52cf493190989b3b8fe049e9fa19afa98a",
+  "bag_sql_opened_for_this_summary": false,
+  "remaining": [
+    "4 AMRs completing all material orders",
+    "inventory consumption and empty returns in same completed physical run",
+    "live simulator commands and charging integration",
+    "final industrial carrier and final portfolio media"
+  ],
+  "source_sha256": {
+    "pair-host.json": "6b9a1d413e75e47bb01a0b90cdb0f8b56430dff8a0067d7420b43762f928d53a",
+    "job.json": "00ebf4f8a1c0d3fd11a3547b8d7bc52bc1a0fc66d4c7db5f2ee14d5fe55e6594",
+    "launch.json": "e0139dc29a891124c2da6f63a7d2bd0ce8174f7b90fd4b4eeadc7d21b5b37055"
+  }
+}
