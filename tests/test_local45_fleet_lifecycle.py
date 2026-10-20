@@ -5,7 +5,7 @@ from pathlib import Path
 from types import SimpleNamespace
 import tempfile
 import unittest
-from unittest.mock import Mock
+from unittest.mock import Mock, patch, call
 
 from factory_ops.fleet_transport import prepare_bundle
 from scripts.isaac.local45_fleet4_transport_scene import Local45FleetLifecycle
@@ -62,9 +62,14 @@ class Local45LifecycleTests(unittest.TestCase):
         self.assertFalse(summary["lidar_products_gated"])
         self.lifecycle.timeline = self.timeline
         rep = SimpleNamespace(orchestrator=SimpleNamespace(step=Mock()))
-        self.lifecycle.before_capture(rep)
+        app = SimpleNamespace(update=Mock())
+        with patch("scripts.isaac.local45_fleet4_transport_scene.importlib.import_module",
+                   return_value=SimpleNamespace(get_app=lambda: app)):
+            self.lifecycle.before_capture(rep)
         self.assertEqual("enabled", self.lifecycle.rgb_render_state)
-        rep.orchestrator.step.assert_called_once_with(delta_time=0., rt_subframes=4, pause_timeline=True)
+        self.assertEqual([call(delta_time=0., rt_subframes=4, pause_timeline=True)] * 2,
+                         rep.orchestrator.step.call_args_list)
+        self.assertEqual(5, app.update.call_count)
         self.lifecycle.after_capture()
         self.assertEqual("gated", self.lifecycle.rgb_render_state)
         for texture in textures:

@@ -479,7 +479,10 @@ def _append_jsonl(path: Path, value: Any) -> None:
 
 
 def _save_rgb(annotator: Any, path: Path, np: Any, Image: Any) -> dict[str, Any]:
-    image = Image.fromarray(np.asarray(annotator.get_data())[:, :, :3].astype(np.uint8))
+    pixels = np.asarray(annotator.get_data())
+    if pixels.ndim != 3 or min(pixels.shape[:2]) <= 0 or pixels.shape[2] < 3:
+        raise base.SmokeError(f"RGB not ready for {path.name}: shape={pixels.shape}")
+    image = Image.fromarray(pixels[:, :, :3].astype(np.uint8))
     try:
         image.save(path)
     finally:

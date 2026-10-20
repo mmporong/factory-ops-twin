@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import importlib
 import json
 from pathlib import Path
 import sys
@@ -60,6 +61,12 @@ class Local45FleetLifecycle(FleetTransportLifecycle):
         if self.rgb_render_state != "gated":
             raise RuntimeError("local45 capture requires its RGB products gated between captures")
         self._set_rgb_updates(True)
+        super().before_capture(rep)
+        # Kit must apply re-enabled RGB textures while the first zero-delta
+        # step has the timeline paused; the outer time/frame/pose guard stays.
+        app = importlib.import_module("omni.kit.app").get_app()
+        for _ in range(5):
+            app.update()
         super().before_capture(rep)
 
     def after_capture(self) -> None:

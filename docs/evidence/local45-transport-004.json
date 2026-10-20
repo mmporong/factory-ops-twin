@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "run_id": "cf5db3c3f2314726b868ab0e07a74330",
+  "source_commit": "b89eb8674d4795822a1acd2a4199506bb4d736d2",
+  "status": "failed_preserved",
+  "scope": "first RGB gating admission, not a performance or mission result",
+  "failure_stage": "mission",
+  "error": "too many indices for array: array is 1-dimensional, but 3 were indexed",
+  "media_index_created": false,
+  "frozen_capture_sim_s": 2.0500001069158316,
+  "frozen_capture_physics_frame": 123,
+  "frozen_state_validation_complete": true,
+  "windows_closed": true,
+  "linux_closed": true,
+  "prelaunch_inputs_verified": true,
+  "window_job_remaining_pids": [],
+  "linux_remaining_pids": [],
+  "wall_s": 137.39000000001397,
+  "raw_directory": "D:\\FactoryOpsRuntime\\local45-transport-004",
+  "raw_sha256": {
+    "pair-host.json": "7dd38af83ab3f962622db0cbf4fe376671ebbe3a8bc1f4ef9bf68f223b9b1a2e",
+    "job.json": "d31740817d7271a96319519afcde784178d052d0c21c2fa023fe563e5f24be3a",
+    "results/run/local45-fleet4-transport-scene.json": "be1288cdcb39088560ec541117c91f04e801b451e259e50be55bade9ad376126",
+    "results/run/render-capture-breadcrumbs.jsonl": "00c89f2d668a35a4f0c09a4edb0fd14110babd737ca6c63b8befb1d8e166866d"
+  },
+  "next_change": "allow paused Kit updates after RGB re-enable, keep original frozen-state checks; native validation pending"
+}
