@@ -1,0 +1,83 @@
+{
+  "task_id": "nav2-startup-observation-086",
+  "attempt": 1,
+  "contract_revision": 86,
+  "acknowledged": true,
+  "status": "completed_read_only",
+  "conclusion": "startup_resolved_without_mutation",
+  "stage": "E:/FactoryOpsRuntime/local45-transport-036",
+  "run_id": "e6be8b8845ba47d3a942a7c2867fee2a",
+  "source_commit": "26e19711b1ddf29ad02f2bbe312cee337779b23c",
+  "facts": {
+    "startup_ready_sim_s": 56.300002936,
+    "initial_hold_latched_sim_s": 56.466669612,
+    "mission_start_sim_s": 56.516669614,
+    "all_robots": "At the final startup record, planner/controller/bt states are3; all four have map->base_link poses stamped56.250002934s, odometry and all six scan streams above the unchanged minimum5.",
+    "per_robot": [
+      {
+        "id": "carter1",
+        "first_recorded_pose_sim_s": 6.733333685,
+        "first_recorded_all_active_sim_s": 7.816667074,
+        "odom_count_at_ready": 1064,
+        "front_rear_scan_counts_at_ready": [
+          304,
+          297
+        ]
+      },
+      {
+        "id": "carter2",
+        "first_recorded_pose_sim_s": 6.733333685,
+        "first_recorded_all_active_sim_s": 7.816667074,
+        "odom_count_at_ready": 1021,
+        "front_rear_scan_counts_at_ready": [
+          295,
+          304
+        ]
+      },
+      {
+        "id": "carter3",
+        "first_recorded_pose_sim_s": 56.233336266,
+        "first_recorded_all_active_sim_s": 56.300002936,
+        "odom_count_at_ready": 1021,
+        "front_rear_scan_counts_at_ready": [
+          438,
+          438
+        ]
+      },
+      {
+        "id": "carter4",
+        "first_recorded_pose_sim_s": 6.733333685,
+        "first_recorded_all_active_sim_s": 7.816667074,
+        "odom_count_at_ready": 1019,
+        "front_rear_scan_counts_at_ready": [
+          473,
+          504
+        ]
+      }
+    ],
+    "C3_delayed_gate": "At55.033336204s C3 pose is null and lifecycle is planner=null/controller2/bt2, while odom and front/rear raw/filtered/localization scans are arriving with current stamps. At56.233336266s pose exists and planner/controller3, bt2; bt becomes3 at56.300002936s.",
+    "log_corroboration": "C3 global costmap repeatedly reports missing map target frame, then controller/bt activation and Managed nodes are active at wall1792524085.569686004.",
+    "context": "Startup journal confirms domain73/rmw_fastrtps_cpp and exact /mnt/e/FactoryOpsRuntime/local45-transport-036/fastdds-udp-linux.xml.",
+    "worker_later_snapshot": "At19:22:30UTC dashboard exists/live; all four estimated poses are stamped72.050003758s, SDK world72.066670425s/self-clock agrees, capture6 resume guard passed. C1/C2 following; C3 reservation-waiting, C4 idle. Dashboard elapsed time is mission-relative, not absolute World time.",
+    "root_latest_update": "At19:23:05UTC root observed World81.0667s/mission elapsed24.0333s, no failure, C1 M_LOW->P1 and C2 M_HIGH->S3 following, command counts959/542, four guided planner requests and charge reserved. This is a root-supplied later observation, not an extra worker query."
+  },
+  "cause": {
+    "proven": "Immediate startup blockers were C3 missing qualified map pose and incomplete lifecycle activation; they subsequently cleared with unchanged gates.",
+    "not_proven": "Underlying AMCL/TF startup-delay cause, or the internal cause of the reported40.650s scan/TF-cache mismatch. Receiving scans/odom does not by itself prove AMCL accepted each scan.",
+    "scope": "First recorded readiness times are journal sample times, not exact first message/TF creation times."
+  },
+  "proposal": "No repair or gate/budget/TTL/clock/TF change is justified or requested for this resolved observation. Continue the existing root-owned mission.",
+  "read_identity": {
+    "frozen_source/scripts/ros/g3_mission.py": "a3fd94acdb0fb466e692719865a2eb72e6299df2eda7d37643a3d492fc6df401",
+    "startup-observations.jsonl": "a659a677655c8397aeec3a5e1b86618cf3d46a8ab758eb89d760b43786b45d8e",
+    "initial-hold-barrier.json": "1b3646a9ffa10f9d71b4ddc4b7abd96d711b3c169ae5772769b8d76ffaa1f80e",
+    "mission-start.json": "08a0f6c18ae837e068a2cff6a21f98ede034a27935f05d6f50bd409b9602d612",
+    "nav2.log_prefix_238704_bytes": "c0c5d6864a48f4213793450a769c660ca931789ae45f26fd778d4e7e79e862e8",
+    "scope": "Snapshot digests at read time; active logs/state may continue changing."
+  },
+  "limits": [
+    "No ROS graph/subscriber queries were needed; no observer ROS/WSL process was started.",
+    "No tests, SDK/GPU, bag SQL/copy, Git, settings/source/runtime mutation, stop or repair. Only this receipt is written.",
+    "Mission remains root-owned and running at the supplied observation; no completion or closure claim."
+  ]
+}

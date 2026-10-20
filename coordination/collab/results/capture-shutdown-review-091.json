@@ -1,0 +1,140 @@
+{
+  "task_id": "capture-shutdown-review-091",
+  "attempt": 1,
+  "contract_revision": 91,
+  "acknowledged": true,
+  "status": "bounded_review_complete",
+  "verdict": "PASS",
+  "findings": [],
+  "all_four_source_hashes_match": true,
+  "source_sha256": {
+    "scripts/isaac/g2_scene.py": "7db558a27f68cde06b229b529166b46a7e3407dba0201ebcc871253546a26273",
+    "scripts/isaac/robot_qualification.py": "cb6a55baf57dd728e51614801ee4b16f42ac780feba48175f3af40b43201608f",
+    "scripts/isaac/probe_local45_capture_shutdown.py": "5350395be0b066e76d362e4e400df0f4cb55726261a28faa83e20f71bed9f717",
+    "tests/test_capture_shutdown.py": "b5e6c8fff2bbb3ca5cd7f2e656f1ddfacc6eef39fe8ba29e3e44df99e839424d"
+  },
+  "source_review": [
+    "CaptureSession stop_before_drain is a strict bool, defaultFalse. Opt-in executes stop before drain; stop failure skips potentially unbounded drain, still detaches/destroys and raises SmokeError. Drain failure also preserves cleanup and failure. Idempotent close retained.",
+    "g2_scene.py1232-1241 enables the option only under local_sdk45; canonical/default CaptureSession behavior stays unchanged.",
+    "The probe checkpoints before_session_close and records before/after World time/frame and orchestrator status. It rejects a failed freeze or a non-STOPPED final state. It does not establish full robot/SimulationManager/ROS terminal closure."
+  ],
+  "CPU_evidence": {
+    "status": "root_observed15PASS",
+    "exit_code": 0,
+    "artifact_sha256": "11da9659116b949a9ac17c2d58def703300c53dcbced8f4d01fe0840255d6c1d",
+    "scope": "Recorded command/pins inspected; no worker rerun."
+  },
+  "native_evidence": {
+    "088": {
+      "status": "failed",
+      "reason": "Third RGB initialization invalid before shutdown measurement. Job closed/PIDs[] despite worker exit0; not a shutdown success.",
+      "result_sha256": "7a0018cab7543136222bcd8f43308e1c20305634329a1ee89662e723189a9fa5",
+      "job_sha256": "4cd4df33bae2f702f81e7dd399aacf56ca565bb71b223c0fe12f84dd70367f95"
+    },
+    "089": {
+      "status": "passed_compatibility_only",
+      "transition": "STEPPED->STOPPED",
+      "world_s": 0.13333334028720856,
+      "physics_frame": 8,
+      "frozen": true,
+      "close_wall_s": 0.01600000000325963,
+      "closed": true,
+      "remaining_pids": [],
+      "result_sha256": "606add102520e70a844aafe74e931ce20e925b3ba32433ad1b3d561b7c4d2e5b",
+      "job_sha256": "4718255fd67e7f0d8d5e178c0c5ae2174bbde09a527738efca735de8b51fc2a3"
+    },
+    "090": {
+      "status": "passed_authored_paused_fixture",
+      "run_id": "8ff6ee2f5093462b821d644fd0b0c853",
+      "transition": "PAUSED->STOPPED",
+      "world_s": 0.13333334028720856,
+      "physics_frame": 8,
+      "frozen": true,
+      "products": 3,
+      "annotators": 3,
+      "close_wall_s": 0.01600000000325963,
+      "job_closed": true,
+      "remaining_pids": [],
+      "observed_worker_exit_code": 0,
+      "prelaunch_inputs_verified": true,
+      "result_sha256": "6e47ebef6697d979e908f406904dc2a4a263102419f843af6426a778c964f012",
+      "job_sha256": "a0ef020afa27ef7db85b52a80a738b77eed3203685eed9d1b8c9dcbc53336de1",
+      "scope": "Only result/job small JSON read once after root confirmed closure. Probe source digest matches the pinned5350395b. Public API authored PAUSED state, not retained036 state or exact036 block-call proof."
+    }
+  },
+  "036_publication": {
+    "run_id": "e6be8b8845ba47d3a942a7c2867fee2a",
+    "source_commit": "26e19711b1ddf29ad02f2bbe312cee337779b23c",
+    "orders": "3/3",
+    "empty_returns": "3/3",
+    "business_robots": 4,
+    "final_parked_robots": 4,
+    "material": {
+      "initial": 60,
+      "on_hand": 54,
+      "consumed": 6,
+      "balanced": true
+    },
+    "stale_recovery": [
+      {
+        "robot_id": "carter4",
+        "generation": 179,
+        "age_s": 0.5000000259999524,
+        "ttl_s": 0.5,
+        "fresh_planner_action_uuid": "8c5fb9d0-9d15-4d9b-90e6-9d0a587c89c0",
+        "terminal_status": 4,
+        "terminal_error_code": 0,
+        "stopped_world_s": 1650.083419392,
+        "rejected_path_never_followed": true
+      },
+      {
+        "robot_id": "carter1",
+        "generation": 180,
+        "age_s": 0.5000000259999524,
+        "ttl_s": 0.5,
+        "fresh_planner_action_uuid": "23a2787b-6455-401f-84eb-b059fd17c453",
+        "terminal_status": 4,
+        "terminal_error_code": 0,
+        "stopped_world_s": 1659.850086568,
+        "rejected_path_never_followed": true
+      }
+    ],
+    "original_status": "failed_terminal_recording",
+    "SDK_scene_status": "running",
+    "timing_scope": "The036 ROS terminal boundary wait was60s (accepted087 frozen-input evidence); subsequent SDK host cleanup grace90s is separate. No retrospective pass or80release.",
+    "scope": "IsaacSim4.5/PhysX development; virtual energy/geometric docking and noncolliding visual cargo. No contact/lift/electrical charging or canonical6.2/RTX validation.",
+    "preservation": {
+      "files": 636,
+      "bytes": 3559197286,
+      "D_E_match_attested": true,
+      "scope": "Manifest row count/byte sum inspected; no multi-GB recopy/rehash."
+    },
+    "evidence_sha256": "63f6640bb5cb6884531a5a31f4ee1e244a89482bfeda8347ae83bdf829bd0d93",
+    "preservation_sha256": "c192d3db7952c9a38ccbc63f36d19bb862de30c93089a3ef8cc2eeb02e5def13"
+  },
+  "README_and_media": {
+    "README_sha256_at_review": "39ef04eea3017705a0f9c6d59ed919aa53c89c20a09afbdf30e1ff2ba40bc00b",
+    "provenance_sha256": "4ba620ff14f5a39261a92174161cf5711ab5e057e7077c4ed47291a19a749338",
+    "all_five_published_files_match_provenance_and_named_source": true,
+    "files_sha256": {
+      "overview.png": "51d9802c5f6586f1f31150bce2624cbb8f5ccc781d5016dbc4286f19ffc78440",
+      "loaded-carrier.png": "d3eb38b37f2e66f0a612f4e68f1b9fa07df2a36deb47edacce069d2a8042626d",
+      "dashboard-all-orders.jpg": "74cc47056d6e1f8979a2dfbe87abbffac167726219853f25ac0aa0a052ee1a3f",
+      "empty-tote-carrier-detail.jpg": "6939abd0ac1f8463df8e394f413294ae92760bee9de97b121498fb53afabcc66",
+      "operations-business-complete.mp4": "edd5fd9cb47f76792b7ea0120c882f0dcea5d9782a9f6915dd15f33b89d01d92"
+    },
+    "four_stills_viewed": true,
+    "referenced_local_gallery_and_evidence_links_exist": true,
+    "native_frame": {
+      "index": 124,
+      "physics_frame": 103323,
+      "sim_time_s": 1722.0500898119062
+    },
+    "timeline": "134 sparse capture times, three cameras, nominal74x/25.4s encoded duration; held images/no interpolation; failed ending and pixel-transition limits retained. Existing decode record checked, no repeat decode.",
+    "scope": "README separates completed business/parking from terminal failure and80hold; web/RGB are non-atomic and use elapsed/World clocks as labeled. No newSDG/physical loading/live-render quality claim."
+  },
+  "limits": [
+    "One bounded pass; only this receipt written. No source/docs changes, tests/AST, SDK/GPU/ROS/WSL, bagSQL/copy, Git, agents or runtime actions.",
+    "PASS covers reviewed source, static close compatibility/PAUSED fixture evidence and publication consistency. It does not certify036original, full final encoder/recording gate or the80milestone. Root retains acceptance/integration authority."
+  ]
+}

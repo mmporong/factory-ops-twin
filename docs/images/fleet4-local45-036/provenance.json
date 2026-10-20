@@ -1,0 +1,3317 @@
+{
+  "run_id": "e6be8b8845ba47d3a942a7c2867fee2a",
+  "source_commit": "26e19711b1ddf29ad02f2bbe312cee337779b23c",
+  "native_frame": {
+    "index": 124,
+    "physics_frame": 103323,
+    "sim_time_s": 1722.0500898119062
+  },
+  "native_scope": "Actual RGB at settled state after F4-003 pickup; no generation or interpolation. Business and parking completed; terminal recording timeout means overall run failed.",
+  "dashboard_scope": "Actual same-run live observations; web and RGB are not atomic snapshots; live input is read only.",
+  "time_scope": "Journal/media sim_time_s uses absolute World time; ledger intent/result times and web mission clock use elapsed time from origin_sim_time_s. No clock correction is applied.",
+  "timeline": {
+    "schema_version": 1,
+    "run_id": "e6be8b8845ba47d3a942a7c2867fee2a",
+    "producer_source_commit": "26e19711b1ddf29ad02f2bbe312cee337779b23c",
+    "host_status": "failed",
+    "mission_status": "failed",
+    "robot_ids": [
+      "carter1",
+      "carter2",
+      "carter3",
+      "carter4"
+    ],
+    "scope": "RGB capture timeline; not continuous real-speed motion or payload-contact validation",
+    "both_owned_trees_closed": true,
+    "nominal_playback_factor": 74,
+    "source_time_span_s": [
+      2.0666667744517326,
+      1851.0000965371728
+    ],
+    "nominal_output_duration_s": 25.185586888685435,
+    "capture_count": 134,
+    "interpolation": false,
+    "sparse_images_held": true,
+    "source_index_sha256": "c3f65df240928e5a7295f875969ad645b0de7d84510924db90205eac5d25026c",
+    "source_files": [
+      {
+        "camera": "overview",
+        "capture_index": 0,
+        "sim_time_s": 2.0666667744517326,
+        "physics_frame": 124,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00000.png",
+        "sha256": "c3f12b39b0dcd30ab985413615c01d5842b5166d2f2d831599f4bc5b2de34a6f"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 1,
+        "sim_time_s": 22.050001149997115,
+        "physics_frame": 1323,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00001.png",
+        "sha256": "446d9c614b7a6ca66143e6b06b9577699c5d23e737ef30a3a151bf5badfc1ff2"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 2,
+        "sim_time_s": 42.0500021930784,
+        "physics_frame": 2523,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00002.png",
+        "sha256": "32d1b5329ccaf5444aad92d9574dfcf06a480425614aab9b078783936b5655f1"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 3,
+        "sim_time_s": 56.56666961684823,
+        "physics_frame": 3394,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00003.png",
+        "sha256": "78964777d386dfe5ccebf1dff6075ebbcbe40658fa43c44177a2bd9f50ac04fc"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 4,
+        "sim_time_s": 56.58333628438413,
+        "physics_frame": 3395,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00004.png",
+        "sha256": "3dd6e2c2f1d2b066bdcc03ae1467d0d3895993f64cfadf5028b4f7c2d8c25264"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 5,
+        "sim_time_s": 62.05000323615968,
+        "physics_frame": 3723,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00005.png",
+        "sha256": "99b7641f2e6110b7d6eb66314156cfebc4e4c0334dad2b24b2965e7ab288176f"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 6,
+        "sim_time_s": 66.56667013838887,
+        "physics_frame": 3994,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00006.png",
+        "sha256": "a1f9e81eda1df906c9566d58554335240ac9796b6a7b8e66aa3d65f524f8c2ae"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 7,
+        "sim_time_s": 76.56667065992951,
+        "physics_frame": 4594,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00007.png",
+        "sha256": "2d48fab404aa74c2f86ba871fe3b145d8ce06ceab254700c6457b22155d6a86e"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 8,
+        "sim_time_s": 82.05000427924097,
+        "physics_frame": 4923,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00008.png",
+        "sha256": "0ac1167570cd6b1f7650ff194aad59c038f635798e99089ee051591a7b95db74"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 9,
+        "sim_time_s": 102.05000532232225,
+        "physics_frame": 6123,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00009.png",
+        "sha256": "a0447567b8665ca09b7f2e2b26e6009893c273f5a87d04e4d2fd20f5bc63c7e0"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 10,
+        "sim_time_s": 122.05000636540353,
+        "physics_frame": 7323,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00010.png",
+        "sha256": "12d23f010e6bb2222c73dc3465f4e501b5123fa5416139f1118f7e081e6ec1b3"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 11,
+        "sim_time_s": 125.46667321026325,
+        "physics_frame": 7528,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00011.png",
+        "sha256": "387234b2fd42bd4f34d5de33f749d982cc4d594ff54f1895afbbb7283daa0b1f"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 12,
+        "sim_time_s": 142.05000740848482,
+        "physics_frame": 8523,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00012.png",
+        "sha256": "00b2181d252bd5b72afc684ae512bfc52d49ac069e992c2a8708d0acfe6b5885"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 13,
+        "sim_time_s": 162.0500084515661,
+        "physics_frame": 9723,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00013.png",
+        "sha256": "46eb52df6bc5a787b8accb3103541a0f9c2c691a3de7c4f5c5daae186a807528"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 14,
+        "sim_time_s": 172.66667567193508,
+        "physics_frame": 10360,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00014.png",
+        "sha256": "288f099ab12719eacdf6477c314d5961e3ee32d6d43132b15047e6d335d6b2cc"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 15,
+        "sim_time_s": 182.05000949464738,
+        "physics_frame": 10923,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00015.png",
+        "sha256": "511b5c60e77a0e9e9ef461117347fe71d25a5459b66297df9d7f00f28ec6aa3c"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 16,
+        "sim_time_s": 202.05001053772867,
+        "physics_frame": 12123,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00016.png",
+        "sha256": "ce2fd94068fcf7e259ead591dcf1a073407e63c7a0e03c396ef88aad6466dc70"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 17,
+        "sim_time_s": 222.05001158080995,
+        "physics_frame": 13323,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00017.png",
+        "sha256": "191fd36b33093d19409420cdce457f00b8ac9726fd315b4bb20097658f0f762a"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 18,
+        "sim_time_s": 242.05001262389123,
+        "physics_frame": 14523,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00018.png",
+        "sha256": "394b7acd67133c0436b53f8a987305fd6091caa31a3b03abf90de0459072dfe8"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 19,
+        "sim_time_s": 256.7666800580919,
+        "physics_frame": 15406,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00019.png",
+        "sha256": "6dd9e966052b4b33399e2c4d7ea51e67c80f37692c04326a9112eb8c3a7c97b9"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 20,
+        "sim_time_s": 256.7833467256278,
+        "physics_frame": 15407,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00020.png",
+        "sha256": "de0e96ac1abbaf713a319ac583fc30e4ff2043d638dff37549e20c0da30f0f4b"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 21,
+        "sim_time_s": 256.8000133931637,
+        "physics_frame": 15408,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00021.png",
+        "sha256": "bb68cbf88fcb10876c1ea365d963d50f34078df22c646422ccfd9a62b15164fe"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 22,
+        "sim_time_s": 262.0500136669725,
+        "physics_frame": 15723,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00022.png",
+        "sha256": "c96d4a398b7d5a47114ad82938e7ffc90134924c813531929d5d70211c3936b0"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 23,
+        "sim_time_s": 276.83334777131677,
+        "physics_frame": 16610,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00023.png",
+        "sha256": "e8cb662650b5781d7144e4d745228ad1478b9e2e02a5b4287ba9d0f85b919bfe"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 24,
+        "sim_time_s": 282.0500147100538,
+        "physics_frame": 16923,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00024.png",
+        "sha256": "a5c1a64fb125d5e2689390155d006643e7c3cfddb7e54343fc31fff9999f40df"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 25,
+        "sim_time_s": 302.0500157531351,
+        "physics_frame": 18123,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00025.png",
+        "sha256": "e636eacacb21584124f987909bbc36d858e22b95722142970f29aab6cf6a4b59"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 26,
+        "sim_time_s": 322.05001679621637,
+        "physics_frame": 19323,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00026.png",
+        "sha256": "97d56ff41b08e8dfa03eba29c619f7223f0ac295c0463991417c65f99ffe9276"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 27,
+        "sim_time_s": 342.05001783929765,
+        "physics_frame": 20523,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00027.png",
+        "sha256": "0a62342e502418b27fad0cc6f614a656ad7fd2f827a3cb3f0e52135b5ea48507"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 28,
+        "sim_time_s": 345.11668466590345,
+        "physics_frame": 20707,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00028.png",
+        "sha256": "2faf9516dc81b7cb7be7ea41ad20f2ae1ac576b824713c9934c9d34bb226a1a6"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 29,
+        "sim_time_s": 345.13335133343935,
+        "physics_frame": 20708,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00029.png",
+        "sha256": "30964befe5859172049543fddf82d72e58befd09b294be8332d54d1da16e3e38"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 30,
+        "sim_time_s": 362.05001888237894,
+        "physics_frame": 21723,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00030.png",
+        "sha256": "ba9b3ccd9cff1075eb20ab67cc7d101af59b8e8dfc2704ab48b8bafe971d0906"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 31,
+        "sim_time_s": 382.0500199254602,
+        "physics_frame": 22923,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00031.png",
+        "sha256": "8130f11c9f053be8bd7aeda4664f688e333cf19b42b81fe4169f3ef079d22b91"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 32,
+        "sim_time_s": 387.36668686941266,
+        "physics_frame": 23242,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00032.png",
+        "sha256": "1098d3bfec9469852dadd33f2b1f5bd76796562bd107042585488635b5199f2e"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 33,
+        "sim_time_s": 402.0500209685415,
+        "physics_frame": 24123,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00033.png",
+        "sha256": "b41852ac18066a6121823fc4789e60abd2e54abe1364478ff1bad5ff7b0cd93e"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 34,
+        "sim_time_s": 420.7500219438225,
+        "physics_frame": 25245,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00034.png",
+        "sha256": "0c355bc2fb31a337f8cbe14097ef70339f0e75cedb9e9ff516471aff6635d0b2"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 35,
+        "sim_time_s": 420.7666886113584,
+        "physics_frame": 25246,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00035.png",
+        "sha256": "d14514aeccd38fcca084aa309ca21cd045cfe792abfc4ee3fbf45d8e3d0a28e0"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 36,
+        "sim_time_s": 422.0500220116228,
+        "physics_frame": 25323,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00036.png",
+        "sha256": "cb355721697c83ee553821ebbcd460e1af7608cf486992b89a3b2f2c3882fd81"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 37,
+        "sim_time_s": 440.8333563245833,
+        "physics_frame": 26450,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00037.png",
+        "sha256": "14c3dd3e615d1f7acf14a6be3d923ac4cab4898eb959862b3d51cdc812e4548a"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 38,
+        "sim_time_s": 442.05002305470407,
+        "physics_frame": 26523,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00038.png",
+        "sha256": "94e806c91222648229cf95d201efa0b03c6e7fdd4380e1ffa2e53be5315fade2"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 39,
+        "sim_time_s": 462.05002409778535,
+        "physics_frame": 27723,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00039.png",
+        "sha256": "f325da5fe359d4a7766707e4092e94e0109965757308369264a7fc15c73e3e18"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 40,
+        "sim_time_s": 482.05002514086664,
+        "physics_frame": 28923,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00040.png",
+        "sha256": "bb037252dccc50333baf717fca0ed15f8d730c3666ce2cd3a09671843f8c657e"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 41,
+        "sim_time_s": 484.8333586193621,
+        "physics_frame": 29090,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00041.png",
+        "sha256": "1faeeb66133f38e630ec8774514396cc01876abf3b1b2a5ee541068740f28b58"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 42,
+        "sim_time_s": 484.850025286898,
+        "physics_frame": 29091,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00042.png",
+        "sha256": "5dec4b5bdbd5b80099b9d154025cbe6359b24bf679e70d56ae6c0ef729cc16db"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 43,
+        "sim_time_s": 502.0500261839479,
+        "physics_frame": 30123,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00043.png",
+        "sha256": "fe439569be8ca71d76d0b8008e23e0ad5548e14b59f3a8d013357aaecb6603e5"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 44,
+        "sim_time_s": 507.25002645514905,
+        "physics_frame": 30435,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00044.png",
+        "sha256": "7a0afe7e0127eaaa075707e52a4da522373e14cedba3266a441eb716f454e00a"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 45,
+        "sim_time_s": 522.0500272270292,
+        "physics_frame": 31323,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00045.png",
+        "sha256": "2f660d5e72b70ecf3d5585734b16555d45a1efe1b8913784d9fe978ec70be6c0"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 46,
+        "sim_time_s": 542.0500282701105,
+        "physics_frame": 32523,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00046.png",
+        "sha256": "0e3b446843f3ff860eda65ebe52778a86915df3c1102c6f6c01d21a3ee10cd37"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 47,
+        "sim_time_s": 542.0666949376464,
+        "physics_frame": 32524,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00047.png",
+        "sha256": "d105c3ab8c7f310760381742933ad98ec91634a4e8b44d73ea88ae13695e5949"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 48,
+        "sim_time_s": 562.0500293131918,
+        "physics_frame": 33723,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00048.png",
+        "sha256": "509a4c9aeb3919a4e340f5fc0f6f7d68801204642c88f943c08449570d862e1b"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 49,
+        "sim_time_s": 582.050030356273,
+        "physics_frame": 34923,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00049.png",
+        "sha256": "3efa62b64e3d9434e21c867e38ec716a06d872a947c0620eff65cec1b6680814"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 50,
+        "sim_time_s": 602.0500313993543,
+        "physics_frame": 36123,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00050.png",
+        "sha256": "430ef60e915b65cf6846e6b28ab14165a0af327cd5704f15ac09d423ebdf3ab0"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 51,
+        "sim_time_s": 622.0500324424356,
+        "physics_frame": 37323,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00051.png",
+        "sha256": "fb6b340b999cf9761d7a758c53a6f2a294d7cff8c1f9a49605b26f77a1afbfa6"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 52,
+        "sim_time_s": 638.166699949652,
+        "physics_frame": 38290,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00052.png",
+        "sha256": "7f98cfc07ff4abb812072c7c7117d8c687eab01eaa8bac1eff8bc78596fb34e5"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 53,
+        "sim_time_s": 642.0500334855169,
+        "physics_frame": 38523,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00053.png",
+        "sha256": "2880e84c4b9e6ac44d3939a6cdae9a63392d965a90f422e4fbcdc6a18d0d457d"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 54,
+        "sim_time_s": 662.0500345285982,
+        "physics_frame": 39723,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00054.png",
+        "sha256": "2a4413f85ae748017877070dac0d8a57ad1cd0b311b48346ef85d14642126d0e"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 55,
+        "sim_time_s": 682.0500355716795,
+        "physics_frame": 40923,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00055.png",
+        "sha256": "ad6a74db333c6d3a9b81b0beda4415845f1d6141181cdfed70d8e5b23eec8e3d"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 56,
+        "sim_time_s": 702.0500366147608,
+        "physics_frame": 42123,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00056.png",
+        "sha256": "28592b16b3ec7908fddef164162e0ec2e56f3e753f6239a5f12ff26b5d4beaea"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 57,
+        "sim_time_s": 722.050037657842,
+        "physics_frame": 43323,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00057.png",
+        "sha256": "58a857a2bb9f49b943eb9a73939e0aec64e8caab10ee07cc27f5fd94e0fcb5cf"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 58,
+        "sim_time_s": 742.0500387009233,
+        "physics_frame": 44523,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00058.png",
+        "sha256": "ab43627321a760e9020ccc0bec455508a423bdd4222366196f3443544372e51a"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 59,
+        "sim_time_s": 753.0833726096898,
+        "physics_frame": 45185,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00059.png",
+        "sha256": "77d60ec4143bf77fdd9f1c0c5e9dbbe0f02bedcd8c2c33f8fc917dcedfc3ab89"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 60,
+        "sim_time_s": 762.0500397440046,
+        "physics_frame": 45723,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00060.png",
+        "sha256": "edb2dd70f5c341a97addac374186b6c5d7a242cafd735f90db335842accb7c6f"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 61,
+        "sim_time_s": 782.0500407870859,
+        "physics_frame": 46923,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00061.png",
+        "sha256": "fbde4193baa8691ba289439f7ff72ea1c11101d835bd5e180a6adc71893f515b"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 62,
+        "sim_time_s": 802.0500418301672,
+        "physics_frame": 48123,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00062.png",
+        "sha256": "553edde2037998095c31887ef88c4629660e18022a369accbe61aeea1b85e801"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 63,
+        "sim_time_s": 822.0500428732485,
+        "physics_frame": 49323,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00063.png",
+        "sha256": "408e06e920dd990951bc066f088b036130b9d0a45d833b8e3a1b438b4cab0d74"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 64,
+        "sim_time_s": 842.0500439163297,
+        "physics_frame": 50523,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00064.png",
+        "sha256": "b799c1601d2b1d8c945428739d211410b39c2ef093f5c8c3d2c9fb95758de35c"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 65,
+        "sim_time_s": 862.050044959411,
+        "physics_frame": 51723,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00065.png",
+        "sha256": "2b129e4c2af946eebceecad148c19deb567887c5a7acd5b5c6ab38579c97eb8a"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 66,
+        "sim_time_s": 882.0500460024923,
+        "physics_frame": 52923,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00066.png",
+        "sha256": "510243ea26831aaadfe82a0188ef6e1792906e224c4905ba111ca83e443b3da4"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 67,
+        "sim_time_s": 902.0500470455736,
+        "physics_frame": 54123,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00067.png",
+        "sha256": "cf25fcf1758ed2c8708a2cc5055a2a5d9d7dc8c7cce6ec477f00b12e58f38462"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 68,
+        "sim_time_s": 908.6667140573263,
+        "physics_frame": 54520,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00068.png",
+        "sha256": "f6bb80af9258403a3161487cfbd8d4b475b6e0580e385758d7ca01861cc9ac7c"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 69,
+        "sim_time_s": 922.0500480886549,
+        "physics_frame": 55323,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00069.png",
+        "sha256": "7cfe113010431a55e708a296c946ccc8af2678e4f0ade3bd5fd50ee20dbe892e"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 70,
+        "sim_time_s": 942.0500491317362,
+        "physics_frame": 56523,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00070.png",
+        "sha256": "0882cac61deff1211540aa53c5e6c077c99649951650d69518e8404182259f98"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 71,
+        "sim_time_s": 944.9667159505188,
+        "physics_frame": 56698,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00071.png",
+        "sha256": "ecc227045e5568c623f04355e022cf3a37006b703bd1d8896cab9715bfd89b08"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 72,
+        "sim_time_s": 944.9833826180547,
+        "physics_frame": 56699,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00072.png",
+        "sha256": "6cbcd99b458cd5169003a26c02400d1b81f6307f313e6bcaf0478a23145f5961"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 73,
+        "sim_time_s": 962.0500501748174,
+        "physics_frame": 57723,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00073.png",
+        "sha256": "694f552172c497d065ba6eb9b3605d93f6aca7043fbe2122f0bdbf53d33cc886"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 74,
+        "sim_time_s": 965.0000503286719,
+        "physics_frame": 57900,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00074.png",
+        "sha256": "6c6176de65a90eceeff28df502308a2921982fe36f73bd00f0ddcd68a887df2f"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 75,
+        "sim_time_s": 982.0500512178987,
+        "physics_frame": 58923,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00075.png",
+        "sha256": "1c1f858bb0cb59b79d0a9e4b6437ec90e996e89c4ad05129dfb7fb8853b9f30d"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 76,
+        "sim_time_s": 1002.05005226098,
+        "physics_frame": 60123,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00076.png",
+        "sha256": "86e699aeb98c62fb112e432d92dfb93572329c08f0a29662ded3fe768cc785d4"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 77,
+        "sim_time_s": 1008.7667192779481,
+        "physics_frame": 60526,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00077.png",
+        "sha256": "bc8c1104d27bb6549b127e365243d744227cf5d341c5b3100ddf82ff533a17b0"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 78,
+        "sim_time_s": 1008.783385945484,
+        "physics_frame": 60527,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00078.png",
+        "sha256": "9621eed336b8633a2cba408a76f7ed5e348b10fc1fc54028624c91ec25272d94"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 79,
+        "sim_time_s": 1022.0500533040613,
+        "physics_frame": 61323,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00079.png",
+        "sha256": "9eaa186026c8e6b647d737531b592f1d826853bf845470bdd4d21d2aeca0cb4e"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 80,
+        "sim_time_s": 1042.0500543471426,
+        "physics_frame": 62523,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00080.png",
+        "sha256": "be0eb3e1b10127f73d60463d886b5811d2acd3fc15ea80755ccc58c0c9ab4063"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 81,
+        "sim_time_s": 1049.7667214162648,
+        "physics_frame": 62986,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00081.png",
+        "sha256": "ee5d0f1805663985538f612ea50d410debf4018a6f8cf08fdd5b0fe20add193e"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 82,
+        "sim_time_s": 1054.966721687466,
+        "physics_frame": 63298,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00082.png",
+        "sha256": "03e77781013497c83a1183b84a9ac34aa454e683d03b195e52fdc5d96bac8b14"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 83,
+        "sim_time_s": 1062.0500553902239,
+        "physics_frame": 63723,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00083.png",
+        "sha256": "d31090e1080cf2cc8702d622c4aefcbabf02117a0bf9cb66996348494a0984aa"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 84,
+        "sim_time_s": 1070.266722485423,
+        "physics_frame": 64216,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00084.png",
+        "sha256": "7fd089e24704ae76650a7084d32cd03b9ec8b70f7ea8ea8e543c410af80ebcd0"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 85,
+        "sim_time_s": 1070.283389152959,
+        "physics_frame": 64217,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00085.png",
+        "sha256": "4b8c146043368a23a54081cb0aeb34e97787f62d2a8c35638cff440e9c946ee9"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 86,
+        "sim_time_s": 1082.0500564333051,
+        "physics_frame": 64923,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00086.png",
+        "sha256": "276caa9014d0b63762445a994a63529edfaf682d1f2da11a3e6b7267fdcf3b99"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 87,
+        "sim_time_s": 1102.0500574763864,
+        "physics_frame": 66123,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00087.png",
+        "sha256": "a3a78457d2fd338d98a2bbc0c9acd7e9d5926308ed447bbdca2202571ae59387"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 88,
+        "sim_time_s": 1122.0500585194677,
+        "physics_frame": 67323,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00088.png",
+        "sha256": "659decdee072614b4612523eb94c83961ac4c3ffa662ed3bd539189d0c5d937f"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 89,
+        "sim_time_s": 1142.050059562549,
+        "physics_frame": 68523,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00089.png",
+        "sha256": "7db0ead721fb26b1f9010295f39cc9a737afd9cffe1d74f087c8ec09f06a87b8"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 90,
+        "sim_time_s": 1147.0833931583911,
+        "physics_frame": 68825,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00090.png",
+        "sha256": "fd8a7e63cb639b383623f7cbc6f1fdf54b23b16c614282390d5d8149269707ee"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 91,
+        "sim_time_s": 1162.0500606056303,
+        "physics_frame": 69723,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00091.png",
+        "sha256": "c8f70c706eeb4aa674fb48d417de8aa9a3cd999b07e7b09cbc597b453c80cc1c"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 92,
+        "sim_time_s": 1182.0500616487116,
+        "physics_frame": 70923,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00092.png",
+        "sha256": "103ca49ecb8f9f7299598fce56d102e0a49a010b3518c0c4f20ba88eefa1417b"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 93,
+        "sim_time_s": 1202.0500626917928,
+        "physics_frame": 72123,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00093.png",
+        "sha256": "54ca833dace2310e94afb073fe07a33567538534feb5a93dfaa9e7047dcc3844"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 94,
+        "sim_time_s": 1222.0500637348741,
+        "physics_frame": 73323,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00094.png",
+        "sha256": "d5136aa0f66d63e505127e10bd2ac2bf34a980f2f31214af8dff0276923f9d88"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 95,
+        "sim_time_s": 1242.0500647779554,
+        "physics_frame": 74523,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00095.png",
+        "sha256": "9576d989b182fbbd8b8e23d40ccb0b64e62a1b961616f4aa851f632c1fe1a47e"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 96,
+        "sim_time_s": 1262.0500658210367,
+        "physics_frame": 75723,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00096.png",
+        "sha256": "5a919556134dc6231c7bd215e86ec47bad9ade3b95173b9054f51ba0d9ee9834"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 97,
+        "sim_time_s": 1282.050066864118,
+        "physics_frame": 76923,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00097.png",
+        "sha256": "4bd4f71c5fef0a5f8b6591e5bdce0d31429f35c50d8b6a4c0ae0dd547cf2d6b0"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 98,
+        "sim_time_s": 1302.0500679071993,
+        "physics_frame": 78123,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00098.png",
+        "sha256": "a7090888e221899f9470c93a4cbc67c7f00a0207f016f5e6579dfc6991bf251d"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 99,
+        "sim_time_s": 1319.0667354613543,
+        "physics_frame": 79144,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00099.png",
+        "sha256": "f59389401dd42a69d3de9b3de15537f9513fde25e8a981667dec1a9408fc9299"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 100,
+        "sim_time_s": 1322.0500689502805,
+        "physics_frame": 79323,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00100.png",
+        "sha256": "7c174a263572cfa4c56ef6431c1ee94ca446a789a6eb8c87deb2fb5e59bc2cf2"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 101,
+        "sim_time_s": 1342.0500699933618,
+        "physics_frame": 80523,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00101.png",
+        "sha256": "731790c15a1ac440b9597a50ef601bfe1a3d2b98987ec489d3abb4451f4359e8"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 102,
+        "sim_time_s": 1357.350070791319,
+        "physics_frame": 81441,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00102.png",
+        "sha256": "c6dbac77d3424e0965fc582923ac0310db8ed8cda8a48bf4f6847c3eb5757ff1"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 103,
+        "sim_time_s": 1362.0500710364431,
+        "physics_frame": 81723,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00103.png",
+        "sha256": "a8faec9c26f566efbfaa95848334bf66cdb8d78de716e41d7bd4ee4bef842a70"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 104,
+        "sim_time_s": 1382.0500720795244,
+        "physics_frame": 82923,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00104.png",
+        "sha256": "20cc31ac590b1e9c5f9d77b47671aff18f8482127f903ca03762c733ae449d41"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 105,
+        "sim_time_s": 1402.0500731226057,
+        "physics_frame": 84123,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00105.png",
+        "sha256": "aa36e2ba84fb339da12e0a912580d4a51b1b0be721d18fc261c35da0407ed232"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 106,
+        "sim_time_s": 1422.050074165687,
+        "physics_frame": 85323,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00106.png",
+        "sha256": "a841f142483203f602cc03133b3c4055bf7568268d694be36dad68f4c2e4dbe1"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 107,
+        "sim_time_s": 1442.0500752087682,
+        "physics_frame": 86523,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00107.png",
+        "sha256": "f7b0b899bfca33f5ebca993a8669a95857559e4a3a06a3da943b97c5cfd30cd3"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 108,
+        "sim_time_s": 1462.0500762518495,
+        "physics_frame": 87723,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00108.png",
+        "sha256": "5a88c605fcdf4d462491698360b3783adfe23de3f9417f4bc8cf252eb0444bfd"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 109,
+        "sim_time_s": 1482.0500772949308,
+        "physics_frame": 88923,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00109.png",
+        "sha256": "df31714d1382084d92659457e6ca7ec8eb7b67cb75ecc7d267bbb966704589c2"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 110,
+        "sim_time_s": 1502.050078338012,
+        "physics_frame": 90123,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00110.png",
+        "sha256": "86d25412ef35e327e9a8dd74616569c7689c4905d472899c98a6230c0d97d7df"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 111,
+        "sim_time_s": 1522.0500793810934,
+        "physics_frame": 91323,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00111.png",
+        "sha256": "49215eac225b3dc9540f69fd9ac5ed52393059d6b5d6658c08658f2b7e01a1e4"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 112,
+        "sim_time_s": 1542.0500804241747,
+        "physics_frame": 92523,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00112.png",
+        "sha256": "1c8ad5eb1cc4fa92ba514a27d42bfdd9da16d972d4beabf9f1b71d6bc207a5ee"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 113,
+        "sim_time_s": 1562.050081467256,
+        "physics_frame": 93723,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00113.png",
+        "sha256": "2e442b8f74edfcc3b40fc45099bca04c1f6a7dd7b345480e52659c638a1f4fa6"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 114,
+        "sim_time_s": 1567.1667484007776,
+        "physics_frame": 94030,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00114.png",
+        "sha256": "94d4a0e9b77b5aa2d3eda5ac93d67e0a99a10d7c9c474fd3818d8d4a727f1473"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 115,
+        "sim_time_s": 1582.0500825103372,
+        "physics_frame": 94923,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00115.png",
+        "sha256": "e5513032a129680e86ed1b841f6adbe98fa89c21d28f98ad4d919ee485b2a156"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 116,
+        "sim_time_s": 1602.0500835534185,
+        "physics_frame": 96123,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00116.png",
+        "sha256": "8c58dd9a9dac07e4363350e3454e109de7c55232688ba7cac9677cb44639cf38"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 117,
+        "sim_time_s": 1622.0500845964998,
+        "physics_frame": 97323,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00117.png",
+        "sha256": "cd3d750bd943866fd48fffc214a520da6b76436b1a363bb25c653a65dae144e2"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 118,
+        "sim_time_s": 1642.050085639581,
+        "physics_frame": 98523,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00118.png",
+        "sha256": "19ea89c192c52b14480c1b9f1b972d562d7daa31377fb985de44d2d74dcea790"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 119,
+        "sim_time_s": 1662.0500866826624,
+        "physics_frame": 99723,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00119.png",
+        "sha256": "8435b8b7353fe7396dafcd5cdf03f6b7fedebd4ce1fade9ea9ac12dc3349234c"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 120,
+        "sim_time_s": 1665.15008684434,
+        "physics_frame": 99909,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00120.png",
+        "sha256": "3cb4d03af8f5003f229dd9ad829bb3f1ad54b9e898c526a48aae8e37d73605c9"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 121,
+        "sim_time_s": 1665.1667535118759,
+        "physics_frame": 99910,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00121.png",
+        "sha256": "42d274eb05bc608efd6b862cfe3c09a0ce9f0fd2e3ae31a6e3c14cb4d721b434"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 122,
+        "sim_time_s": 1682.0500877257437,
+        "physics_frame": 100923,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00122.png",
+        "sha256": "b6458f5511cef484372c42fb053a9b3d111bc4ba9994688a46e4ac9ab64ed870"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 123,
+        "sim_time_s": 1702.050088768825,
+        "physics_frame": 102123,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00123.png",
+        "sha256": "9f077dbe0f898a5808b01c22466cdbf0dd0c4f8d26f79d1be4e2033a019731ee"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 124,
+        "sim_time_s": 1722.0500898119062,
+        "physics_frame": 103323,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00124.png",
+        "sha256": "51d9802c5f6586f1f31150bce2624cbb8f5ccc781d5016dbc4286f19ffc78440"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 125,
+        "sim_time_s": 1727.2667567506433,
+        "physics_frame": 103636,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00125.png",
+        "sha256": "5103d3124de7406c35a232993cacc07048bb42eefce95c03e9ebee16d4d5e7fc"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 126,
+        "sim_time_s": 1727.2834234181792,
+        "physics_frame": 103637,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00126.png",
+        "sha256": "f81c05212250830f32dc4514a28e6f8574958b8152959cb6cfbb8d64642bb05d"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 127,
+        "sim_time_s": 1742.0500908549875,
+        "physics_frame": 104523,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00127.png",
+        "sha256": "e0609dd54fef914788e51ef15bfb72590431f2db86e48011a998247860b16b17"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 128,
+        "sim_time_s": 1762.0500918980688,
+        "physics_frame": 105723,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00128.png",
+        "sha256": "74d5d60007fb5f24b8eb8a9564ed9237c3d6e2afdd1b0ddee95ccb38fad6d30f"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 129,
+        "sim_time_s": 1782.05009294115,
+        "physics_frame": 106923,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00129.png",
+        "sha256": "dc1322fe3eba4e1799843c99bcd71486746a70a8d3373d4b1340217a58e63343"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 130,
+        "sim_time_s": 1802.0500939842314,
+        "physics_frame": 108123,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00130.png",
+        "sha256": "db7bb4f076d375a9172eb3415bdda9acac52aea886a07d78ab99e6b57bda4d7b"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 131,
+        "sim_time_s": 1822.0500950273126,
+        "physics_frame": 109323,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00131.png",
+        "sha256": "e2cfeeee7c91bca168d03eee453abc6afe9a1f0267c8987228986ae9e71a9897"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 132,
+        "sim_time_s": 1842.050096070394,
+        "physics_frame": 110523,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00132.png",
+        "sha256": "c169a483a2bb4738dff697047087c18579cacfd21a4184779817ed04e83a4f3b"
+      },
+      {
+        "camera": "overview",
+        "capture_index": 133,
+        "sim_time_s": 1851.0000965371728,
+        "physics_frame": 111060,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00133.png",
+        "sha256": "ae2a7ad2aecd691ac03cf3b15ff1c2e170a90fbef70fe923d5866c0d99701b8e"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 0,
+        "sim_time_s": 2.0666667744517326,
+        "physics_frame": 124,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00000.png",
+        "sha256": "90a4e19f340320a5e8421c125cf55ae9739c360cf303021bfe9d98caa046c5e0"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 1,
+        "sim_time_s": 22.050001149997115,
+        "physics_frame": 1323,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00001.png",
+        "sha256": "9822d6511a1606491915143ec384671c7e25834c18b503afdb4684f9bd8adb75"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 2,
+        "sim_time_s": 42.0500021930784,
+        "physics_frame": 2523,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00002.png",
+        "sha256": "be3c3bfedaf9d9a0d2a93937c88bfa60459f5946c8983c5c8a1026d73c6f491d"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 3,
+        "sim_time_s": 56.56666961684823,
+        "physics_frame": 3394,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00003.png",
+        "sha256": "92910d58c510ec52857131ac78edca0d379785ce062b98e08a45c31848550045"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 4,
+        "sim_time_s": 56.58333628438413,
+        "physics_frame": 3395,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00004.png",
+        "sha256": "4134665b86fe1cdf075b452d2b9a64c78ae5e991efd5301e1b19d222265f300d"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 5,
+        "sim_time_s": 62.05000323615968,
+        "physics_frame": 3723,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00005.png",
+        "sha256": "38a60ae6b51a13b4c440f9d522814846b657b3ae570c17344a2ab912e4a83e59"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 6,
+        "sim_time_s": 66.56667013838887,
+        "physics_frame": 3994,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00006.png",
+        "sha256": "4956cc7e6f04ae1b1264212e70c8608d95da46ff693bc016ff690f9aee7e45af"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 7,
+        "sim_time_s": 76.56667065992951,
+        "physics_frame": 4594,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00007.png",
+        "sha256": "d06883f25e689b15b276d5181eecc917c954894d105c0729c6798f0f3d40f811"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 8,
+        "sim_time_s": 82.05000427924097,
+        "physics_frame": 4923,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00008.png",
+        "sha256": "eaa41b8d54fab87a8d1b8d16d047a4d3b63474f780c46dd2b94c903e6a75104d"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 9,
+        "sim_time_s": 102.05000532232225,
+        "physics_frame": 6123,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00009.png",
+        "sha256": "c9a1578e1a81d26cca1198945e003345f8b21902d4a4b1c5acd27ecb48c6aac2"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 10,
+        "sim_time_s": 122.05000636540353,
+        "physics_frame": 7323,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00010.png",
+        "sha256": "566881c19e4b9cc4b312d689ca5f04529bda8a0efed785dc5b55f97703d3f7aa"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 11,
+        "sim_time_s": 125.46667321026325,
+        "physics_frame": 7528,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00011.png",
+        "sha256": "25825f4c6bc9c667fdd421bbd24ef1eb35fd6f65e85d12eed715a52808113ff7"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 12,
+        "sim_time_s": 142.05000740848482,
+        "physics_frame": 8523,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00012.png",
+        "sha256": "45c3d5e90f133659632ee89d3ba67b90683f0b36ae3469415ca309d20e2d43c1"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 13,
+        "sim_time_s": 162.0500084515661,
+        "physics_frame": 9723,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00013.png",
+        "sha256": "1d9a6e2695be6098c0d3dd06064bbb6f6ef49ddb525f4f4fa12dbec6e5d53b98"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 14,
+        "sim_time_s": 172.66667567193508,
+        "physics_frame": 10360,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00014.png",
+        "sha256": "5f9d1974bceed1c7337649789af35ef83e059338bb15713ef9429d93c420b1df"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 15,
+        "sim_time_s": 182.05000949464738,
+        "physics_frame": 10923,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00015.png",
+        "sha256": "bf67f08e4bd49bc5914135cb45b054bcd054345ff920fe444468319a62bb9588"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 16,
+        "sim_time_s": 202.05001053772867,
+        "physics_frame": 12123,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00016.png",
+        "sha256": "7a395289cb1d9a8a2f902976dac76e6a93332675f5373431bb2d8483d7244371"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 17,
+        "sim_time_s": 222.05001158080995,
+        "physics_frame": 13323,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00017.png",
+        "sha256": "263eb8a6a3a239b43b58c56d72d136de36e9d140670dbfb321cd94f0f06c97e6"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 18,
+        "sim_time_s": 242.05001262389123,
+        "physics_frame": 14523,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00018.png",
+        "sha256": "389a588fa2a24bfbc484d1b262c482f3581d82d3cbb19442f9023f7a3d3f108b"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 19,
+        "sim_time_s": 256.7666800580919,
+        "physics_frame": 15406,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00019.png",
+        "sha256": "1173305c3538a77768fc2db6666f238d6f3f7871d8f5bf7af676784bf22ed5b0"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 20,
+        "sim_time_s": 256.7833467256278,
+        "physics_frame": 15407,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00020.png",
+        "sha256": "4ec4726d145ce13f37d8003c3b1318f32d86c2a505ad738ade0e6c77fb601c65"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 21,
+        "sim_time_s": 256.8000133931637,
+        "physics_frame": 15408,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00021.png",
+        "sha256": "e4f30607ab3d97aa8c9b8c81dbc250a0858ae88d546862e6dea073e57373ace2"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 22,
+        "sim_time_s": 262.0500136669725,
+        "physics_frame": 15723,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00022.png",
+        "sha256": "4cd110576336181ca589c2228e58ed9705b78b0d4d8510c3737fca80e2410d63"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 23,
+        "sim_time_s": 276.83334777131677,
+        "physics_frame": 16610,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00023.png",
+        "sha256": "e776aaeb92db96e9da2144f87e1b506fcfc345ebc8051bd1094364102bc0282c"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 24,
+        "sim_time_s": 282.0500147100538,
+        "physics_frame": 16923,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00024.png",
+        "sha256": "afb2765abb673a2ee2d779f418e41f6105eddc8112b5358b5bfec29dd540004c"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 25,
+        "sim_time_s": 302.0500157531351,
+        "physics_frame": 18123,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00025.png",
+        "sha256": "22f1604872f156de7843e91fecb44ca7d7a04af81fa71ef88e141026a93e4c97"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 26,
+        "sim_time_s": 322.05001679621637,
+        "physics_frame": 19323,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00026.png",
+        "sha256": "6d1cf6ee2d411de260550c47ae0282443e526e6f247ec0a53fe75f15f4863ae8"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 27,
+        "sim_time_s": 342.05001783929765,
+        "physics_frame": 20523,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00027.png",
+        "sha256": "47e8260891c99064aaeb813caaf2bfc24843634fb9a85e38f01c1884baca58f3"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 28,
+        "sim_time_s": 345.11668466590345,
+        "physics_frame": 20707,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00028.png",
+        "sha256": "7182c5befedae1e47023cadfd953079face0dfbd312c2b137ab8150c285092e1"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 29,
+        "sim_time_s": 345.13335133343935,
+        "physics_frame": 20708,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00029.png",
+        "sha256": "ab8f7f34762e966e3c67d9976f1a6eaa37527281e210549ebd097f00f6295855"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 30,
+        "sim_time_s": 362.05001888237894,
+        "physics_frame": 21723,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00030.png",
+        "sha256": "60ed8d459d12a101c161efb82677f2109775ad6a6a77c63124c0b56253467563"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 31,
+        "sim_time_s": 382.0500199254602,
+        "physics_frame": 22923,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00031.png",
+        "sha256": "25ba9d0f2cfcb6229084efad160575bc26899525be17d1be86a5b36e2b1437ee"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 32,
+        "sim_time_s": 387.36668686941266,
+        "physics_frame": 23242,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00032.png",
+        "sha256": "aa049b2324b79cee1dccc23934198f9fced361a6a91821bfc8cf07a53b85ba2c"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 33,
+        "sim_time_s": 402.0500209685415,
+        "physics_frame": 24123,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00033.png",
+        "sha256": "00d8b90711a4f37e6e89669c911085680e1783ec79aa2e4d1b631ff470401b9c"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 34,
+        "sim_time_s": 420.7500219438225,
+        "physics_frame": 25245,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00034.png",
+        "sha256": "29fa9309ef5cb59a5ca829bde189d677ed308263e0eb86f808a76c0a3c976635"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 35,
+        "sim_time_s": 420.7666886113584,
+        "physics_frame": 25246,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00035.png",
+        "sha256": "f6cc21eac6e1fe25d9ecbcbd4aafa563acff12354051ecfec5362dfd6b6e2cd1"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 36,
+        "sim_time_s": 422.0500220116228,
+        "physics_frame": 25323,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00036.png",
+        "sha256": "a0cad2a1928eeff15289a3577ca1c8c381cced04d2a448dcdea0893284c7a8c2"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 37,
+        "sim_time_s": 440.8333563245833,
+        "physics_frame": 26450,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00037.png",
+        "sha256": "9889d948838cdc63e21ff530363d8b9475ce90e34b4a1a10e0cd71b9ba814bb6"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 38,
+        "sim_time_s": 442.05002305470407,
+        "physics_frame": 26523,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00038.png",
+        "sha256": "66415356d931368161b4a841b6c3ab297bc205971a80386b74211716dfd9c069"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 39,
+        "sim_time_s": 462.05002409778535,
+        "physics_frame": 27723,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00039.png",
+        "sha256": "d1335def7f4d5c3dcce4e3331c15072f734f4054a3180af4234361cc38ddacae"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 40,
+        "sim_time_s": 482.05002514086664,
+        "physics_frame": 28923,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00040.png",
+        "sha256": "0b31fc360429430b44ac0849b23df6de93ebb1fa7caf5372f1dd60f78a67a612"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 41,
+        "sim_time_s": 484.8333586193621,
+        "physics_frame": 29090,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00041.png",
+        "sha256": "e4838429fdc08c79799ecd0bcdaa67fd751877ed0e39aba7b434a44fa8db971c"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 42,
+        "sim_time_s": 484.850025286898,
+        "physics_frame": 29091,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00042.png",
+        "sha256": "afeab08498d7c80c5a25ff8245caf046bc2b8428688e85ae414c8a078d1f5ad0"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 43,
+        "sim_time_s": 502.0500261839479,
+        "physics_frame": 30123,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00043.png",
+        "sha256": "fa7d1f327478d3cff1a072c2b1396ada12985651619445b8ee65643acd493f6e"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 44,
+        "sim_time_s": 507.25002645514905,
+        "physics_frame": 30435,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00044.png",
+        "sha256": "6745fea3ee75ae6b78e17d23a096bf13e2067ecd89a29bbced8192291a412b8b"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 45,
+        "sim_time_s": 522.0500272270292,
+        "physics_frame": 31323,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00045.png",
+        "sha256": "695e5478d111d1ed05cf9834e011547f47c65ee6bfdd437339c78e70e7e49a53"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 46,
+        "sim_time_s": 542.0500282701105,
+        "physics_frame": 32523,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00046.png",
+        "sha256": "719bc992fdf4a21945582546431bfef8d88c5df1e10cf627969f2372cc9fac40"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 47,
+        "sim_time_s": 542.0666949376464,
+        "physics_frame": 32524,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00047.png",
+        "sha256": "43b661c224c3bdf396f53f783f775fefb43f689078b641f8b1f7e17e56458747"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 48,
+        "sim_time_s": 562.0500293131918,
+        "physics_frame": 33723,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00048.png",
+        "sha256": "31c68d460a2c4922a19e39554ccd5dfe4127faeef1f171a1e4620ce5180361c5"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 49,
+        "sim_time_s": 582.050030356273,
+        "physics_frame": 34923,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00049.png",
+        "sha256": "3cb0b6912c9803256488cade2d842ba1139fa491194693b82b542bcb24d3dc0f"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 50,
+        "sim_time_s": 602.0500313993543,
+        "physics_frame": 36123,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00050.png",
+        "sha256": "17614fbebb6bf6adc6ee97a6d6859e5719f5963670b7ab5644956b0822056afc"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 51,
+        "sim_time_s": 622.0500324424356,
+        "physics_frame": 37323,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00051.png",
+        "sha256": "99f711e7f8e6a3a38532a197168854942381bc73893bdb2cb599165f4bf7e411"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 52,
+        "sim_time_s": 638.166699949652,
+        "physics_frame": 38290,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00052.png",
+        "sha256": "ae1272dd061e8d912ddbea69a58816febbc4c1c7864f3d2354ad529c72d88f5b"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 53,
+        "sim_time_s": 642.0500334855169,
+        "physics_frame": 38523,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00053.png",
+        "sha256": "12bec9e71db7bcd61b829ecbc6fa513dccdace2eaa3bce44ca0fb77b207c2b2e"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 54,
+        "sim_time_s": 662.0500345285982,
+        "physics_frame": 39723,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00054.png",
+        "sha256": "9200cce280a7bfc1e3e6422f0d604f82b181e74dd3078fe7360bdb839f638890"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 55,
+        "sim_time_s": 682.0500355716795,
+        "physics_frame": 40923,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00055.png",
+        "sha256": "60b81c62d097fd2f945f34d9e4c1bd7dde75d82b01142b1da56b0a9a12430474"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 56,
+        "sim_time_s": 702.0500366147608,
+        "physics_frame": 42123,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00056.png",
+        "sha256": "accc13c10e54c1120d1e076ba1ad52484f3af2669b5428fbedf6ccbf79b792e8"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 57,
+        "sim_time_s": 722.050037657842,
+        "physics_frame": 43323,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00057.png",
+        "sha256": "3776467744784bbe3bae4aa9bc95b30a5d6a45b78245fe56b16e70699b3d85b5"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 58,
+        "sim_time_s": 742.0500387009233,
+        "physics_frame": 44523,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00058.png",
+        "sha256": "8d912068ac26766a56af096a69c7ab179d7e3db651be94cd03845948c228ded2"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 59,
+        "sim_time_s": 753.0833726096898,
+        "physics_frame": 45185,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00059.png",
+        "sha256": "06bcbae5139740632366c451109240ef699a09cb2dcb0046ec0ff04d22adb6b7"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 60,
+        "sim_time_s": 762.0500397440046,
+        "physics_frame": 45723,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00060.png",
+        "sha256": "6862f81d177c7389118c75bf27b5f078c718a60f54b36a225a8a93869cf950e4"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 61,
+        "sim_time_s": 782.0500407870859,
+        "physics_frame": 46923,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00061.png",
+        "sha256": "5720a50a873448c7c145e822c657da9d58cfe396831957fb3ada07f6af357e1b"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 62,
+        "sim_time_s": 802.0500418301672,
+        "physics_frame": 48123,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00062.png",
+        "sha256": "ce8914d104360cad5142260bc32a8f624452020d1a9c4fb2b684d116801e6b0d"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 63,
+        "sim_time_s": 822.0500428732485,
+        "physics_frame": 49323,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00063.png",
+        "sha256": "5dcd32ef3b1729e63ecec51c28886242d52b7bb588a937ccbc2aa38072916a72"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 64,
+        "sim_time_s": 842.0500439163297,
+        "physics_frame": 50523,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00064.png",
+        "sha256": "7ad3fefacd2bc2bc6b8a4a84b99477591a03c197f4b40a64e4d508ced7f40a88"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 65,
+        "sim_time_s": 862.050044959411,
+        "physics_frame": 51723,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00065.png",
+        "sha256": "979e1a5180f29dd50719ad8d38e070b379fba6b3b53d75099f9bc9693cd0d376"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 66,
+        "sim_time_s": 882.0500460024923,
+        "physics_frame": 52923,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00066.png",
+        "sha256": "b151a9fef3bbcba1802fcb53a33388b1f9afdc57bbbcbd0a2e51e373efced156"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 67,
+        "sim_time_s": 902.0500470455736,
+        "physics_frame": 54123,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00067.png",
+        "sha256": "98ad3423278af414de892c1adb1d76cf7e7fe491d03d2125baaf988999f86e7c"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 68,
+        "sim_time_s": 908.6667140573263,
+        "physics_frame": 54520,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00068.png",
+        "sha256": "7c4b5f7d10ca3b484e2f31e05f1b098521024c9e150307f8f55d7e007a22338f"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 69,
+        "sim_time_s": 922.0500480886549,
+        "physics_frame": 55323,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00069.png",
+        "sha256": "e975c330af14e4ea0e3343753e19a1ea089d377f35d190a987d1014fc953525d"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 70,
+        "sim_time_s": 942.0500491317362,
+        "physics_frame": 56523,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00070.png",
+        "sha256": "d3ded8c497f795f15c804d3aa80e0468dde8f48f48da1d53e0b41ef5ec341e38"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 71,
+        "sim_time_s": 944.9667159505188,
+        "physics_frame": 56698,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00071.png",
+        "sha256": "7cc1bab78dc204a77e2b2933963e89c8efa6b6af3e44e1827fd00607b1877185"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 72,
+        "sim_time_s": 944.9833826180547,
+        "physics_frame": 56699,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00072.png",
+        "sha256": "ca7166d2b9dc2ade0b27edae9425a94ba17558ac40e69ecf656385a77ad9de37"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 73,
+        "sim_time_s": 962.0500501748174,
+        "physics_frame": 57723,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00073.png",
+        "sha256": "0dbf4d59b21a85492cba15f35c2f72040ba0da3af6e2c3bab0919aa88b548156"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 74,
+        "sim_time_s": 965.0000503286719,
+        "physics_frame": 57900,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00074.png",
+        "sha256": "82de8966f36b3a89c5110b314836207f9e937087292ceeaa936a621fa4000e04"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 75,
+        "sim_time_s": 982.0500512178987,
+        "physics_frame": 58923,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00075.png",
+        "sha256": "084a51936d094ccc03a7958f53c3601dd7835df19a932fc21bb727a81d98de4a"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 76,
+        "sim_time_s": 1002.05005226098,
+        "physics_frame": 60123,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00076.png",
+        "sha256": "d3bf9edb0c3b4941ddfa33f41776e1125195872ea38ec82811aebd1f5e3a40c0"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 77,
+        "sim_time_s": 1008.7667192779481,
+        "physics_frame": 60526,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00077.png",
+        "sha256": "65568a4e95b56565ad26bea1ba7a4ef91ab025bdb7229ca0762a01654a91ec0c"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 78,
+        "sim_time_s": 1008.783385945484,
+        "physics_frame": 60527,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00078.png",
+        "sha256": "b0f15a7b87cd2aa3e984731d3284cab5af378592ae1349a06c0428ac4c968965"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 79,
+        "sim_time_s": 1022.0500533040613,
+        "physics_frame": 61323,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00079.png",
+        "sha256": "ad9f3eef98e314a21065b80c55a8c034ada689795f3ecc34100687370195c1bf"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 80,
+        "sim_time_s": 1042.0500543471426,
+        "physics_frame": 62523,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00080.png",
+        "sha256": "5532804353bb3c11e8ddba3b40cd9090a4ed3edc0c7f2aac5841e28e2cfa2437"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 81,
+        "sim_time_s": 1049.7667214162648,
+        "physics_frame": 62986,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00081.png",
+        "sha256": "234c4bc61ac726187efa2ecc3c6d36e693a6d47a4cba37e31838e67770791a5e"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 82,
+        "sim_time_s": 1054.966721687466,
+        "physics_frame": 63298,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00082.png",
+        "sha256": "93b50bbf5602f4069ba2b7739167882deb643ec1e7eeef38e6bf3a20a4714a19"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 83,
+        "sim_time_s": 1062.0500553902239,
+        "physics_frame": 63723,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00083.png",
+        "sha256": "eb328d1e988ab2fdf5a5ad28b067e54135e1fb2c96f55bedd32460e2d818a53b"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 84,
+        "sim_time_s": 1070.266722485423,
+        "physics_frame": 64216,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00084.png",
+        "sha256": "f29a5b0bc2765bc16788daa63092ec9b37bb0b87228a2cc591998044246e6bfd"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 85,
+        "sim_time_s": 1070.283389152959,
+        "physics_frame": 64217,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00085.png",
+        "sha256": "cbca53d209b1158da046c2657ce41b1b93d9126908a7efaf3c0cbb51cb8a642a"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 86,
+        "sim_time_s": 1082.0500564333051,
+        "physics_frame": 64923,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00086.png",
+        "sha256": "2cd3d5345634f2f694c1107fe6ee483513b2b6ca3f15f6a45fba760cec78d72e"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 87,
+        "sim_time_s": 1102.0500574763864,
+        "physics_frame": 66123,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00087.png",
+        "sha256": "316cd82b984efde6d3fd8cf38a1df42ceb08f5acbec6cce55ee26cb3e1a3bf71"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 88,
+        "sim_time_s": 1122.0500585194677,
+        "physics_frame": 67323,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00088.png",
+        "sha256": "84edf73eace0cb6c298be34da9063f20302ebba198b4cae27a50b57798ea1835"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 89,
+        "sim_time_s": 1142.050059562549,
+        "physics_frame": 68523,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00089.png",
+        "sha256": "b1afb159557d895632123ff42a1180d0374690b3110308722acd81324740306b"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 90,
+        "sim_time_s": 1147.0833931583911,
+        "physics_frame": 68825,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00090.png",
+        "sha256": "8af13ccd01dd7f44f19de0722ca4cda04ad9de08d921e69d34dcc2d615e6a344"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 91,
+        "sim_time_s": 1162.0500606056303,
+        "physics_frame": 69723,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00091.png",
+        "sha256": "2a2150ae49b696fb5d8ed13dc810c6389e8a97e410a0b840eab92453ebb9afdf"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 92,
+        "sim_time_s": 1182.0500616487116,
+        "physics_frame": 70923,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00092.png",
+        "sha256": "92f756784088c7916e429c685c334f0dd5961a49a0cd80ea06c238b0ffaa470d"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 93,
+        "sim_time_s": 1202.0500626917928,
+        "physics_frame": 72123,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00093.png",
+        "sha256": "647accb9bb6e5003f0f10c96f58fc01f656c0f9ba7ce0456f8307cff27aa3376"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 94,
+        "sim_time_s": 1222.0500637348741,
+        "physics_frame": 73323,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00094.png",
+        "sha256": "a8fe88f0d742fcfa11b987e51c834fa8afe39039f1277f1f6ff8770cb5873fef"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 95,
+        "sim_time_s": 1242.0500647779554,
+        "physics_frame": 74523,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00095.png",
+        "sha256": "11396c4ebe5b8da116b1871cc377d9f995b3275c50c7f9117fcae8120bbd188e"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 96,
+        "sim_time_s": 1262.0500658210367,
+        "physics_frame": 75723,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00096.png",
+        "sha256": "808313e0e29c4da57db0de9fe76e496d8bcb85de15edb302096075d78d5aea97"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 97,
+        "sim_time_s": 1282.050066864118,
+        "physics_frame": 76923,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00097.png",
+        "sha256": "4c850621acde7beab8323665604d012f99151df8279b8b9cc6039ab05f85dbb3"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 98,
+        "sim_time_s": 1302.0500679071993,
+        "physics_frame": 78123,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00098.png",
+        "sha256": "ba49584e32168e642854ac9738c64888888b86171a985643ec43aa92d21aee3a"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 99,
+        "sim_time_s": 1319.0667354613543,
+        "physics_frame": 79144,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00099.png",
+        "sha256": "136a276866a7ff37f31f1f6be47a8279c1be8ceb29edc97ecb9feb7755648230"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 100,
+        "sim_time_s": 1322.0500689502805,
+        "physics_frame": 79323,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00100.png",
+        "sha256": "8f44496e9d0f6f3dde8f4d23658fae6eb2006d92fc84d294f0346b5ad6c2fec2"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 101,
+        "sim_time_s": 1342.0500699933618,
+        "physics_frame": 80523,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00101.png",
+        "sha256": "6c7ec8fca476b35fb252977b155e719c696e0057774f1c8f507bb525097ab4ce"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 102,
+        "sim_time_s": 1357.350070791319,
+        "physics_frame": 81441,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00102.png",
+        "sha256": "cac1438622acfcda621e0b89f8d0b3e3a783a7f3b91e974e8fe7f90a66ef6bd8"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 103,
+        "sim_time_s": 1362.0500710364431,
+        "physics_frame": 81723,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00103.png",
+        "sha256": "efd8f837df10823c9d796704833c80b67cc636f6d781050a833d084bf72629de"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 104,
+        "sim_time_s": 1382.0500720795244,
+        "physics_frame": 82923,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00104.png",
+        "sha256": "5853e88b2e6937b6ac8475c1f5cce497ff096249b2044fd96bee11ca00fdb8a6"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 105,
+        "sim_time_s": 1402.0500731226057,
+        "physics_frame": 84123,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00105.png",
+        "sha256": "3a5c83e0817a3594ecef611cf74baa754fcbb153ebdb0146876b2e77ce6ce7d1"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 106,
+        "sim_time_s": 1422.050074165687,
+        "physics_frame": 85323,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00106.png",
+        "sha256": "90c6aee14d75e70bd9786317d73ef241fb21844ee73cd2a9405543e1afde9660"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 107,
+        "sim_time_s": 1442.0500752087682,
+        "physics_frame": 86523,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00107.png",
+        "sha256": "bf6e1946ea096b4211216025222e80ef9ef2d94b2bc9cc12974299f80b5ee45f"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 108,
+        "sim_time_s": 1462.0500762518495,
+        "physics_frame": 87723,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00108.png",
+        "sha256": "ea27f1e8e0a6ccc918dbbb0705e5902ef348c9f8bc8579a6e1e58fd12de71d0b"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 109,
+        "sim_time_s": 1482.0500772949308,
+        "physics_frame": 88923,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00109.png",
+        "sha256": "45388c07556c6556729f45ff91c73ea65c14a9129a862dcfff6c0fe999acae08"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 110,
+        "sim_time_s": 1502.050078338012,
+        "physics_frame": 90123,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00110.png",
+        "sha256": "1d57dd3a1231962c1a24f0f4f86e2994f8050610b7e1db105b804e3bdd9f543d"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 111,
+        "sim_time_s": 1522.0500793810934,
+        "physics_frame": 91323,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00111.png",
+        "sha256": "31fb2b52301a4a5a7ead3340586898957097a14c44bf15b44c021209dfe6b74b"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 112,
+        "sim_time_s": 1542.0500804241747,
+        "physics_frame": 92523,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00112.png",
+        "sha256": "934d40e24695f2c2d40ddfcd1a5f46d2d95a32c85a23d5f777d7be871cbb2a73"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 113,
+        "sim_time_s": 1562.050081467256,
+        "physics_frame": 93723,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00113.png",
+        "sha256": "639011e4e7010b2eaf405fa7d8f073a6a43baa77ea121cb6dc8b69fa286cb63f"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 114,
+        "sim_time_s": 1567.1667484007776,
+        "physics_frame": 94030,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00114.png",
+        "sha256": "6d24fbd5dc94cdd39b1fa03639687de4bcfaa7c9f41a3cb5f5b4fbc2d043d981"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 115,
+        "sim_time_s": 1582.0500825103372,
+        "physics_frame": 94923,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00115.png",
+        "sha256": "f68cfce37d78b70f78ae5fb436605074965bfb0d668018656b2d4af7490ca5e2"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 116,
+        "sim_time_s": 1602.0500835534185,
+        "physics_frame": 96123,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00116.png",
+        "sha256": "9faecc5ea811f9e7ed1521194575f97780818ffcd60d635e6a2d23f0c9dd6e97"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 117,
+        "sim_time_s": 1622.0500845964998,
+        "physics_frame": 97323,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00117.png",
+        "sha256": "f3f7622669ba791ef1002b0042fbf4b533ad380d873d1fb2fa4849784c37b461"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 118,
+        "sim_time_s": 1642.050085639581,
+        "physics_frame": 98523,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00118.png",
+        "sha256": "231584d5eb896a93ab5038cebccd4ca9cc4edd33b71f24a846929a353cd6a346"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 119,
+        "sim_time_s": 1662.0500866826624,
+        "physics_frame": 99723,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00119.png",
+        "sha256": "0b75f5970468b949c36991ef81805e306ecb5196f8c4d8ccb8322936c98448d4"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 120,
+        "sim_time_s": 1665.15008684434,
+        "physics_frame": 99909,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00120.png",
+        "sha256": "ffd072548713f424f49f652dd24ac7a76f23c872e0fce1d311cafa345ecb9e99"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 121,
+        "sim_time_s": 1665.1667535118759,
+        "physics_frame": 99910,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00121.png",
+        "sha256": "672ad8e83d418fc9cc3f195745eed5a7440a9645722b7a86255c78bc2ddf4d69"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 122,
+        "sim_time_s": 1682.0500877257437,
+        "physics_frame": 100923,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00122.png",
+        "sha256": "ab92785ef47650296eeeb8b71bc12bf7a2efc02a66c0a22f8f8239673651ea84"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 123,
+        "sim_time_s": 1702.050088768825,
+        "physics_frame": 102123,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00123.png",
+        "sha256": "2221a0a951fa18e2db8a2d8f2b820a37770e9b15e2ccbfe38527200fa4b58f70"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 124,
+        "sim_time_s": 1722.0500898119062,
+        "physics_frame": 103323,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00124.png",
+        "sha256": "d3eb38b37f2e66f0a612f4e68f1b9fa07df2a36deb47edacce069d2a8042626d"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 125,
+        "sim_time_s": 1727.2667567506433,
+        "physics_frame": 103636,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00125.png",
+        "sha256": "cefe471b7d4412063ebd78d99739563500977d4a4764ffb93c4d995a4c4baa6c"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 126,
+        "sim_time_s": 1727.2834234181792,
+        "physics_frame": 103637,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00126.png",
+        "sha256": "9eeb49adf5321892a08f740189d9e8b37aa433f5e9f8f95c27a649aaba6bed82"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 127,
+        "sim_time_s": 1742.0500908549875,
+        "physics_frame": 104523,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00127.png",
+        "sha256": "6c8d32099200852f4523a628ebae197318592f365aad5fa743abecae8286aa27"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 128,
+        "sim_time_s": 1762.0500918980688,
+        "physics_frame": 105723,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00128.png",
+        "sha256": "fae49dab7ec89b0b00f01ae54e7319ee520f7394272a7228285e403774e08a20"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 129,
+        "sim_time_s": 1782.05009294115,
+        "physics_frame": 106923,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00129.png",
+        "sha256": "3b389bb0204fcd05845d1d5ca2f5dceb95e4a31aa9ca6b3f2f518be671a31784"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 130,
+        "sim_time_s": 1802.0500939842314,
+        "physics_frame": 108123,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00130.png",
+        "sha256": "f17b4b4d9123d6b82f8c7a7a0103197c8040a8ae1f995047c1aa9d5aed7e8d28"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 131,
+        "sim_time_s": 1822.0500950273126,
+        "physics_frame": 109323,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00131.png",
+        "sha256": "9bec5d8929a3df25a1fc5874c086a8f5596945ab2e8d47619a2bab54f55c6f51"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 132,
+        "sim_time_s": 1842.050096070394,
+        "physics_frame": 110523,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00132.png",
+        "sha256": "862e59c8f758e0f3bb28ba8f337f82ad896d4ef38f2ee1e7d81ac7c186e3defb"
+      },
+      {
+        "camera": "carter1",
+        "capture_index": 133,
+        "sim_time_s": 1851.0000965371728,
+        "physics_frame": 111060,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00133.png",
+        "sha256": "12b36820c076d662c3e484d180b41f40feeb4253d98f028f75b94960315c5973"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 0,
+        "sim_time_s": 2.0666667744517326,
+        "physics_frame": 124,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00000.png",
+        "sha256": "32d6c8d8f1ea2d38cb53ad75059ef4d0f91081a75673353e4995bb9df9c852b3"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 1,
+        "sim_time_s": 22.050001149997115,
+        "physics_frame": 1323,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00001.png",
+        "sha256": "257e20e71aa040baecf914234d14bbde27ea034b2a2ac3b7bf578335d50b2352"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 2,
+        "sim_time_s": 42.0500021930784,
+        "physics_frame": 2523,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00002.png",
+        "sha256": "20167646b88df0515d360161bd6417928e94625bb14033dc9dadd6d5560148fb"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 3,
+        "sim_time_s": 56.56666961684823,
+        "physics_frame": 3394,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00003.png",
+        "sha256": "fa7ed64e58adbe5d7c68056b7ab23806696bc770e997c60909a39a15761da465"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 4,
+        "sim_time_s": 56.58333628438413,
+        "physics_frame": 3395,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00004.png",
+        "sha256": "37fa1d9d082c62c0c6f14edd016acd0205fbdc449628c8c579bfc8ce3577e996"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 5,
+        "sim_time_s": 62.05000323615968,
+        "physics_frame": 3723,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00005.png",
+        "sha256": "9a55a44e73ea62a726fbd6a030c025ec43b823853abbc5fbccc1f7045940b33c"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 6,
+        "sim_time_s": 66.56667013838887,
+        "physics_frame": 3994,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00006.png",
+        "sha256": "36c065b55d222366f212041702b272b49bfd01b400498f8fe0f78424965b9af7"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 7,
+        "sim_time_s": 76.56667065992951,
+        "physics_frame": 4594,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00007.png",
+        "sha256": "9992e0574019de050bb560a888b7ff357130cce155eaaa173331785f3bb4e677"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 8,
+        "sim_time_s": 82.05000427924097,
+        "physics_frame": 4923,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00008.png",
+        "sha256": "2fa52351035311dfc4988c83efde9530d8b43486e88e9949f85e47e3ce475431"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 9,
+        "sim_time_s": 102.05000532232225,
+        "physics_frame": 6123,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00009.png",
+        "sha256": "79f7d85c0a4b6914de4b6da8492a6e1b570f7b9ff329d677017d94bd15d24a88"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 10,
+        "sim_time_s": 122.05000636540353,
+        "physics_frame": 7323,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00010.png",
+        "sha256": "286093a12bd62435d04a9dac308e04c21d258c2c187ece0bb65984899426a51f"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 11,
+        "sim_time_s": 125.46667321026325,
+        "physics_frame": 7528,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00011.png",
+        "sha256": "111e6ba77260a70f4dafbe852dbc226148666763024dbe599e9e42cdef876ee6"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 12,
+        "sim_time_s": 142.05000740848482,
+        "physics_frame": 8523,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00012.png",
+        "sha256": "ab91274c677eddb5b0dfcb41c2aa0b71b9524153d3345fc94d249e2eb0c1af45"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 13,
+        "sim_time_s": 162.0500084515661,
+        "physics_frame": 9723,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00013.png",
+        "sha256": "63d8a465a91f546bcbffa456915c96908adf125e482029e89d749afc8bf2871b"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 14,
+        "sim_time_s": 172.66667567193508,
+        "physics_frame": 10360,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00014.png",
+        "sha256": "5ed845a404f89b0785783c7790d6296075bdde7c6cc40841c62c37602efbee18"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 15,
+        "sim_time_s": 182.05000949464738,
+        "physics_frame": 10923,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00015.png",
+        "sha256": "4337442d8f593d4b5fa08f07a0e4b26dd548647da38e0cb5929d6c288c8ca5c8"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 16,
+        "sim_time_s": 202.05001053772867,
+        "physics_frame": 12123,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00016.png",
+        "sha256": "f4bf2318156ed2511cd032e59695b4b4e93dea0f062490233e4a6be4bb83d8b0"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 17,
+        "sim_time_s": 222.05001158080995,
+        "physics_frame": 13323,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00017.png",
+        "sha256": "aae4ed0f889addebed396f45e4b2f9f2c12a3b6710e6edbb286b5f9bf4ada8ba"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 18,
+        "sim_time_s": 242.05001262389123,
+        "physics_frame": 14523,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00018.png",
+        "sha256": "2e7393a5b0e4cf6ba3f22d42de7e545a42c26e0e60833204e6afa3ba18252960"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 19,
+        "sim_time_s": 256.7666800580919,
+        "physics_frame": 15406,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00019.png",
+        "sha256": "22016dbe3617fd58fbf85630f81771abdf5f9377c9188e84cb1751449b663801"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 20,
+        "sim_time_s": 256.7833467256278,
+        "physics_frame": 15407,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00020.png",
+        "sha256": "a79bbd55e6dd8476f0381e203802e3adbfb3c75f082d592e52453f96480d8ad6"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 21,
+        "sim_time_s": 256.8000133931637,
+        "physics_frame": 15408,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00021.png",
+        "sha256": "c0bcc390ce98a114b23bfd547f9026456afc322b0255e71336b2fad64d8171b7"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 22,
+        "sim_time_s": 262.0500136669725,
+        "physics_frame": 15723,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00022.png",
+        "sha256": "98cc6f6e4f7f05f4b2f6a04996f88ca685236bfd56ce86fe0a73afdc2ff4ea00"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 23,
+        "sim_time_s": 276.83334777131677,
+        "physics_frame": 16610,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00023.png",
+        "sha256": "79c650c4a34f9bfaaa9d27c4ae8920450009665300d4beb75ac856c6c3cd898d"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 24,
+        "sim_time_s": 282.0500147100538,
+        "physics_frame": 16923,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00024.png",
+        "sha256": "c3426436d078a31ac0593b590167975cbddc9f2f4f670bd7b5770bcc69be5c63"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 25,
+        "sim_time_s": 302.0500157531351,
+        "physics_frame": 18123,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00025.png",
+        "sha256": "edf2d788c6863918126fa68485cce8ae194b7ea8510d0944aa43536c142ae8b7"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 26,
+        "sim_time_s": 322.05001679621637,
+        "physics_frame": 19323,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00026.png",
+        "sha256": "efc4a33575d6f1bbb5002b1617058968acb72851bf3fb9be0ad940395e871128"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 27,
+        "sim_time_s": 342.05001783929765,
+        "physics_frame": 20523,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00027.png",
+        "sha256": "685d2d4124b4b31598e3ccb103a3cf7ba9fb3c941e6fa383a7311834af90091f"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 28,
+        "sim_time_s": 345.11668466590345,
+        "physics_frame": 20707,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00028.png",
+        "sha256": "02903f4d609a61d64702ae1322f6b5807e929791ebc7f7cacb7928eabe6ce626"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 29,
+        "sim_time_s": 345.13335133343935,
+        "physics_frame": 20708,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00029.png",
+        "sha256": "16044160f7e2d34389b61a0b59e44b4e2213a47767f02a6eed1d3b51ac9bf1d3"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 30,
+        "sim_time_s": 362.05001888237894,
+        "physics_frame": 21723,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00030.png",
+        "sha256": "5838a58f942f98d7fcb70e6c10937bbc2ef021054a562b9388757018a63da68b"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 31,
+        "sim_time_s": 382.0500199254602,
+        "physics_frame": 22923,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00031.png",
+        "sha256": "83798c4ac07e7f8220a62880825259cf457c81a8680397c6b1b0f5436925ea0e"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 32,
+        "sim_time_s": 387.36668686941266,
+        "physics_frame": 23242,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00032.png",
+        "sha256": "0e348eb2ccdfadcdcd3e3e07d0ad7eec9055aedfe9f41aba35d07cfecc6922d8"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 33,
+        "sim_time_s": 402.0500209685415,
+        "physics_frame": 24123,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00033.png",
+        "sha256": "234d15e81b0335a3f73f0e8f99a880dd927f01562b87bf4c299943e71bdc26f6"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 34,
+        "sim_time_s": 420.7500219438225,
+        "physics_frame": 25245,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00034.png",
+        "sha256": "e227dcdef57c8b0fa8c41be617ac6db9c2977b5ba48a691943a9568118125bfc"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 35,
+        "sim_time_s": 420.7666886113584,
+        "physics_frame": 25246,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00035.png",
+        "sha256": "3f534c0d2ecc6473d62b3dcbfa8d345866cbc00837669650c1068d72d4cf6db9"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 36,
+        "sim_time_s": 422.0500220116228,
+        "physics_frame": 25323,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00036.png",
+        "sha256": "07e8c28f8010c27df2e2b83eb62d0f991fe40054155f862fe556e579c8594aba"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 37,
+        "sim_time_s": 440.8333563245833,
+        "physics_frame": 26450,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00037.png",
+        "sha256": "0378db36dddda7ca1c839b6f5e401df489099377ae99fc392f930b36e1e2bb4e"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 38,
+        "sim_time_s": 442.05002305470407,
+        "physics_frame": 26523,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00038.png",
+        "sha256": "885444247d385c015abfd114645b1a18394380c6ec667856c8f9cb4ac7417c53"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 39,
+        "sim_time_s": 462.05002409778535,
+        "physics_frame": 27723,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00039.png",
+        "sha256": "dac1e1c09cbc78afedcd9fea7007e6ea60c23fe80658a528d0d1afaa308639fd"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 40,
+        "sim_time_s": 482.05002514086664,
+        "physics_frame": 28923,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00040.png",
+        "sha256": "a4d1129855990e4a036bdc716b40754d900b1fa186f95e4d610174de6353ebc0"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 41,
+        "sim_time_s": 484.8333586193621,
+        "physics_frame": 29090,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00041.png",
+        "sha256": "49591d03036b53c6f206de908a613d104a539e8cb244791c52d016e373c25699"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 42,
+        "sim_time_s": 484.850025286898,
+        "physics_frame": 29091,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00042.png",
+        "sha256": "6fc5cdac5811bef966a4c094d0a8f31020946b99cc437a9fd054e48772bde6ce"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 43,
+        "sim_time_s": 502.0500261839479,
+        "physics_frame": 30123,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00043.png",
+        "sha256": "73e365493836eb08a5ccbdc528d06aa7939da3294fb10e28f1d47250c97cea77"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 44,
+        "sim_time_s": 507.25002645514905,
+        "physics_frame": 30435,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00044.png",
+        "sha256": "cd8174703e7bc85a8ddd4fdad5c80e7f9707b7c7d7f336fdf44aac3f22d2b80e"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 45,
+        "sim_time_s": 522.0500272270292,
+        "physics_frame": 31323,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00045.png",
+        "sha256": "7e580b2c07c5c3d555cbdcb7c55d3f1d7d6d7789017aba0088b220ba946d21f2"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 46,
+        "sim_time_s": 542.0500282701105,
+        "physics_frame": 32523,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00046.png",
+        "sha256": "eb6ace8f8c2b2fba780a0cfb43c6a540d5af4265b66d73b7b20a0c9f705f005e"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 47,
+        "sim_time_s": 542.0666949376464,
+        "physics_frame": 32524,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00047.png",
+        "sha256": "d584e64d3a023a3255fdcc818c5477c0528516f38f86d97b31af185d4a0e6d75"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 48,
+        "sim_time_s": 562.0500293131918,
+        "physics_frame": 33723,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00048.png",
+        "sha256": "13842d22769fcd4d5101015b3e8b254c4d74c9ab005ce36fefc71f3d12e82316"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 49,
+        "sim_time_s": 582.050030356273,
+        "physics_frame": 34923,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00049.png",
+        "sha256": "ce0dafb3e08955926816bd2b319e910cea451617c36611961cd31357dd11a437"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 50,
+        "sim_time_s": 602.0500313993543,
+        "physics_frame": 36123,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00050.png",
+        "sha256": "1d419bae424e9c7e9b7af292f7ae6ee1a186469b12efc0e31a9bdb881c982929"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 51,
+        "sim_time_s": 622.0500324424356,
+        "physics_frame": 37323,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00051.png",
+        "sha256": "f1c08d1fac47844b17429cd1e0d4bc5207c2bbed8b8f9e53d7776ec063998e93"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 52,
+        "sim_time_s": 638.166699949652,
+        "physics_frame": 38290,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00052.png",
+        "sha256": "d216b66087362b27d5a4cbf2a9a74cb7f6f363311107778523a8ca11a422131a"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 53,
+        "sim_time_s": 642.0500334855169,
+        "physics_frame": 38523,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00053.png",
+        "sha256": "6b817bcf6c4ac3c72e43fcbbcb1fbe4beb93eef44f9284869cf914138ac009e5"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 54,
+        "sim_time_s": 662.0500345285982,
+        "physics_frame": 39723,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00054.png",
+        "sha256": "e331ee90b02a39f898dc69822ba04b311adf040cfce4bd8b38c65f1fb3741803"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 55,
+        "sim_time_s": 682.0500355716795,
+        "physics_frame": 40923,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00055.png",
+        "sha256": "131fb27906299d1ad36e93f3eca2bb1e26601e514a58f2e3026ee137a91c07b0"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 56,
+        "sim_time_s": 702.0500366147608,
+        "physics_frame": 42123,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00056.png",
+        "sha256": "ded974ede7473b83d748eb11a88d4a0078ea25404319a6e46e5d13e0c0fa81f3"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 57,
+        "sim_time_s": 722.050037657842,
+        "physics_frame": 43323,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00057.png",
+        "sha256": "69154f6980fa21e850f0763f6d8471414b0f322976986b4f5774fb87b9a16f39"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 58,
+        "sim_time_s": 742.0500387009233,
+        "physics_frame": 44523,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00058.png",
+        "sha256": "4fd9e8357c74b36d428be54a0328d3915edac947cbc58ed734ba59f9da31de48"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 59,
+        "sim_time_s": 753.0833726096898,
+        "physics_frame": 45185,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00059.png",
+        "sha256": "005efa4e4207953461ef465b55d0b62f0eb3744ff0237ecbece20f13db063c0f"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 60,
+        "sim_time_s": 762.0500397440046,
+        "physics_frame": 45723,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00060.png",
+        "sha256": "912d2b109a1717d5a318772a8ab7769532c4b77f94433abd53180f388b08bc91"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 61,
+        "sim_time_s": 782.0500407870859,
+        "physics_frame": 46923,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00061.png",
+        "sha256": "93b60edc8e7dbc59e10569d2179cf37cdbcf871cca2f2e3f8ef6b393ed395eec"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 62,
+        "sim_time_s": 802.0500418301672,
+        "physics_frame": 48123,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00062.png",
+        "sha256": "a9b7dec9f5cdb8155225a9a115241a1e7f31496862e609a61dc190a29aab8ee0"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 63,
+        "sim_time_s": 822.0500428732485,
+        "physics_frame": 49323,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00063.png",
+        "sha256": "f44b2572b3bf737edd6dac3c50d9d29547d0d4e7dbc31be2e4786aaeb02bf334"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 64,
+        "sim_time_s": 842.0500439163297,
+        "physics_frame": 50523,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00064.png",
+        "sha256": "d709ccc278d3d89a96ac63c8bf3584e6a4beaf9868280dd766c1c7a7a3b179ee"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 65,
+        "sim_time_s": 862.050044959411,
+        "physics_frame": 51723,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00065.png",
+        "sha256": "b4225229e9c09e276860bace94dcacc16fe8c329dc59029ffaeccd8993b0365d"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 66,
+        "sim_time_s": 882.0500460024923,
+        "physics_frame": 52923,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00066.png",
+        "sha256": "19f9bb2f7e3078832b6f19c74326d8722f7c0ab737f93dea12f0dce20815db20"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 67,
+        "sim_time_s": 902.0500470455736,
+        "physics_frame": 54123,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00067.png",
+        "sha256": "cd523f87d63596ae95b12242cd8b8ea7f665d27a8cea5863862e6fb976b03797"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 68,
+        "sim_time_s": 908.6667140573263,
+        "physics_frame": 54520,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00068.png",
+        "sha256": "f9841df9a1c96d0ef339258efd3df394f3c0a57bd6f38b9d4ff63a1654ef752a"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 69,
+        "sim_time_s": 922.0500480886549,
+        "physics_frame": 55323,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00069.png",
+        "sha256": "9afb592449c2e80a3880368e315a68d2275b9554a80d46e8ae54251b4c1c92b5"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 70,
+        "sim_time_s": 942.0500491317362,
+        "physics_frame": 56523,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00070.png",
+        "sha256": "669e452f35867afc4c049a237a416cc058bf86e5c78fe3c1bc69957fc7716b44"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 71,
+        "sim_time_s": 944.9667159505188,
+        "physics_frame": 56698,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00071.png",
+        "sha256": "cef8dd1a7ec5c5f9b0fd2b98e1948b580d00b8e8d22b1f3121f5e9cffca36574"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 72,
+        "sim_time_s": 944.9833826180547,
+        "physics_frame": 56699,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00072.png",
+        "sha256": "0ccb8e93871da309bc431ae8e173a3c2c27c7e751f4b6a52e8962c3fb5337430"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 73,
+        "sim_time_s": 962.0500501748174,
+        "physics_frame": 57723,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00073.png",
+        "sha256": "fc0bd7fbd54c44c822a29d4a2efb157f72e6c3534e71dc46075ffe2faac0e3f9"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 74,
+        "sim_time_s": 965.0000503286719,
+        "physics_frame": 57900,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00074.png",
+        "sha256": "d88ff028a477dc1678b180d8dcd81182a17b0c393a57bd829711d126429037bf"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 75,
+        "sim_time_s": 982.0500512178987,
+        "physics_frame": 58923,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00075.png",
+        "sha256": "1251e94f68f33ed1a9a5d958e863676fed4eef7fa71df7d34781788e3e6a0f54"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 76,
+        "sim_time_s": 1002.05005226098,
+        "physics_frame": 60123,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00076.png",
+        "sha256": "2a04b1d63566cf12e736ddb5016c7b97c3b00641b085218ed8259379263d8eb0"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 77,
+        "sim_time_s": 1008.7667192779481,
+        "physics_frame": 60526,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00077.png",
+        "sha256": "8a53cb5cbf2b2c75be15ffe6b0c023a7896cf55bd7a40f3985a5575bc54062cf"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 78,
+        "sim_time_s": 1008.783385945484,
+        "physics_frame": 60527,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00078.png",
+        "sha256": "28972f591f905e024f685cbd725e0e71aff1ce1d99ec34770d7f25a5907d637c"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 79,
+        "sim_time_s": 1022.0500533040613,
+        "physics_frame": 61323,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00079.png",
+        "sha256": "0ffcf01bedeeaebb2944a6a8aa8a6a143e9a603319dfd93acf11edb9e0b22c55"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 80,
+        "sim_time_s": 1042.0500543471426,
+        "physics_frame": 62523,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00080.png",
+        "sha256": "e0355d2a5e69e2c3cb4cc101e5383357a7100b84ec5a53af0f06c87a34cb8c2a"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 81,
+        "sim_time_s": 1049.7667214162648,
+        "physics_frame": 62986,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00081.png",
+        "sha256": "a34655e24f99c4c558c7a69c44ea30823cde1ccb43171373f18bcf2e519920fc"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 82,
+        "sim_time_s": 1054.966721687466,
+        "physics_frame": 63298,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00082.png",
+        "sha256": "f2c23356b94d08c411633f2f46c5ad77eaed78dac16dec84c39a33b23bc5a30f"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 83,
+        "sim_time_s": 1062.0500553902239,
+        "physics_frame": 63723,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00083.png",
+        "sha256": "98bd4e734ea295b5e1dcdc69f1fa92f0bc80ab06f32ca269d33041c7ecfe61ff"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 84,
+        "sim_time_s": 1070.266722485423,
+        "physics_frame": 64216,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00084.png",
+        "sha256": "8ad3a39a24c85943647170fe3c9aa9671d2c1728ecea7c4495174caccc07767d"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 85,
+        "sim_time_s": 1070.283389152959,
+        "physics_frame": 64217,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00085.png",
+        "sha256": "3816c0610aa04090b52bdb8865c298c1e852a027a64b75c07f5a82c0cea27334"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 86,
+        "sim_time_s": 1082.0500564333051,
+        "physics_frame": 64923,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00086.png",
+        "sha256": "9f7f0d41a9af5637e7af825ac05c93df7ff3f296906eeacb4018fc66597ab510"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 87,
+        "sim_time_s": 1102.0500574763864,
+        "physics_frame": 66123,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00087.png",
+        "sha256": "82ef6e7977cb9c3c4acb01abe982964a43819d9dec82c137d93f888df6914f17"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 88,
+        "sim_time_s": 1122.0500585194677,
+        "physics_frame": 67323,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00088.png",
+        "sha256": "f1f7747283eb73db7817794e763d34ffaabd29696ca6bb37b3979daf0128212e"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 89,
+        "sim_time_s": 1142.050059562549,
+        "physics_frame": 68523,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00089.png",
+        "sha256": "aa1a878d37fc8d63733b3bf9594a1368347c2f3a5131f4b61045e7f30746d778"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 90,
+        "sim_time_s": 1147.0833931583911,
+        "physics_frame": 68825,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00090.png",
+        "sha256": "339a318f0d1796a6d3e5a18b63f2ad0e6c59f0fc805bf5aa88f68142264d3411"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 91,
+        "sim_time_s": 1162.0500606056303,
+        "physics_frame": 69723,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00091.png",
+        "sha256": "90f5bf013c2f5c5ee369828310f90d9ed39d934e798e1c6bdd459220a3f12ffa"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 92,
+        "sim_time_s": 1182.0500616487116,
+        "physics_frame": 70923,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00092.png",
+        "sha256": "21241cac15433eed6b3dfaf12c443bac4979684cad95467dd030a27564f3cf2a"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 93,
+        "sim_time_s": 1202.0500626917928,
+        "physics_frame": 72123,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00093.png",
+        "sha256": "dd7d920cafdd1d3ffde0ad812007fec1f95b4b992a0450808abf43c090e4b22d"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 94,
+        "sim_time_s": 1222.0500637348741,
+        "physics_frame": 73323,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00094.png",
+        "sha256": "f8698d48c03b2e9db452a5a03712c3b8bd39dfaa7e38324ca5c819f5bab63527"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 95,
+        "sim_time_s": 1242.0500647779554,
+        "physics_frame": 74523,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00095.png",
+        "sha256": "b23d3f77af110546562b72e784c9b0654e6ceb02d133c7219acad993e25afb36"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 96,
+        "sim_time_s": 1262.0500658210367,
+        "physics_frame": 75723,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00096.png",
+        "sha256": "d3e8abb13a30d59242c461298e3fdd7d77e16a496d4dc3beef030f9fa6da224e"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 97,
+        "sim_time_s": 1282.050066864118,
+        "physics_frame": 76923,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00097.png",
+        "sha256": "bdead42a0ba5284d967ffacd499bd282fe9dc7f0f4743db99307d9a565f7c152"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 98,
+        "sim_time_s": 1302.0500679071993,
+        "physics_frame": 78123,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00098.png",
+        "sha256": "b2e68a0964d19f474b0713f4279d5ed0bcc10915e3ebadd1769e89e54b9e4efd"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 99,
+        "sim_time_s": 1319.0667354613543,
+        "physics_frame": 79144,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00099.png",
+        "sha256": "d75423b0134849c5a4d3b45b60ae60a1e06d807b8ba5c96567a20889799b7033"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 100,
+        "sim_time_s": 1322.0500689502805,
+        "physics_frame": 79323,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00100.png",
+        "sha256": "0fdc9f0a38faa2ae91d480c90c8ee4bf98a90ce6a81c8578dae7dfcb31752483"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 101,
+        "sim_time_s": 1342.0500699933618,
+        "physics_frame": 80523,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00101.png",
+        "sha256": "532a4f6babd94eac84082d3077bda77be06d0b2470fd5a7a5052ec627bfc248a"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 102,
+        "sim_time_s": 1357.350070791319,
+        "physics_frame": 81441,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00102.png",
+        "sha256": "b68eb3e18647c4fc3017d299367436e1ffc5506b310d76e02bb605fdc695bd32"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 103,
+        "sim_time_s": 1362.0500710364431,
+        "physics_frame": 81723,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00103.png",
+        "sha256": "1bb372b5ee73bc0b23b2b93c06fa4c775752dbc2739df26cd4c06d24196e7b92"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 104,
+        "sim_time_s": 1382.0500720795244,
+        "physics_frame": 82923,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00104.png",
+        "sha256": "4fd54de4f71a58fd9fa49625a6665b433b93a187664d8dd29a637e798b83784f"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 105,
+        "sim_time_s": 1402.0500731226057,
+        "physics_frame": 84123,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00105.png",
+        "sha256": "340e9db0a4596a3bbf8a95e2e1f5bcd800434759508476e32cc3b07391980979"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 106,
+        "sim_time_s": 1422.050074165687,
+        "physics_frame": 85323,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00106.png",
+        "sha256": "87716393ed32756401173cd745025182e77aa34651906d8d9860e5ab40589735"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 107,
+        "sim_time_s": 1442.0500752087682,
+        "physics_frame": 86523,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00107.png",
+        "sha256": "75908425029ddb7aba38d21620f952296784445474c52c1860f7382c9cf34857"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 108,
+        "sim_time_s": 1462.0500762518495,
+        "physics_frame": 87723,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00108.png",
+        "sha256": "1051255854045fa90a1ed3d85bfc0d6700e0cb15a8f27b9daa91199f52581b68"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 109,
+        "sim_time_s": 1482.0500772949308,
+        "physics_frame": 88923,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00109.png",
+        "sha256": "ffcdb3f8b6098c79f73f3095571247a3577f57d90e2d3f41c8077a52a593d886"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 110,
+        "sim_time_s": 1502.050078338012,
+        "physics_frame": 90123,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00110.png",
+        "sha256": "0bc5ce4433a99640880248c8547fd1bbd673ee4c08d59e24607c25609b1da791"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 111,
+        "sim_time_s": 1522.0500793810934,
+        "physics_frame": 91323,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00111.png",
+        "sha256": "14a8790ff043061958834bc0a72e5be23214cfc191c8bddbcdfcbeefd4899db1"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 112,
+        "sim_time_s": 1542.0500804241747,
+        "physics_frame": 92523,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00112.png",
+        "sha256": "dd5ed89bb780360346b1a3bbb70d19ad97253d514d5ae07903f76294b7c74e04"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 113,
+        "sim_time_s": 1562.050081467256,
+        "physics_frame": 93723,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00113.png",
+        "sha256": "508621c06ca352cdc37851d309e7e1cd205ea249ffc8f14c2077389bebee43aa"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 114,
+        "sim_time_s": 1567.1667484007776,
+        "physics_frame": 94030,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00114.png",
+        "sha256": "d52d816219b077298d4abb84c90d7cdff75671bb57768e03a3b50cc5471ca52e"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 115,
+        "sim_time_s": 1582.0500825103372,
+        "physics_frame": 94923,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00115.png",
+        "sha256": "6092bb0d95c8acfa78764d9f785cf4deac1847f28c29e7f200877575fbc5b8e7"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 116,
+        "sim_time_s": 1602.0500835534185,
+        "physics_frame": 96123,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00116.png",
+        "sha256": "04df525d8a6052b6def88618cff261430f85a822e394df0771a10c19821c74c6"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 117,
+        "sim_time_s": 1622.0500845964998,
+        "physics_frame": 97323,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00117.png",
+        "sha256": "addd99a68b1deb742ab8ba6ac1b8e4906d8eb63fe3429933746ab4fffb6c6978"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 118,
+        "sim_time_s": 1642.050085639581,
+        "physics_frame": 98523,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00118.png",
+        "sha256": "d5ff9628bc207b1463ea1d7297f78af7497cb40cc9706349c3a1c611f9785899"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 119,
+        "sim_time_s": 1662.0500866826624,
+        "physics_frame": 99723,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00119.png",
+        "sha256": "c630d5e6da753fa0d93f45f16f9edd609482810d8b776f92859c4b4072331bd4"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 120,
+        "sim_time_s": 1665.15008684434,
+        "physics_frame": 99909,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00120.png",
+        "sha256": "b3d2f9da3295dfafe0f7eb5428716e5c359c837921ea8e502898e3b971329b08"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 121,
+        "sim_time_s": 1665.1667535118759,
+        "physics_frame": 99910,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00121.png",
+        "sha256": "3b1f0cd3784dc22b04b8d8ab2a1412a93608bf59dd7d839bf55c8f6ca6e5d7a8"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 122,
+        "sim_time_s": 1682.0500877257437,
+        "physics_frame": 100923,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00122.png",
+        "sha256": "91821507e4bdc05e81b6b5840cd8186d936aa4931b925f7972ba180f694fb18a"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 123,
+        "sim_time_s": 1702.050088768825,
+        "physics_frame": 102123,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00123.png",
+        "sha256": "2f46018d6baf43eddbd9929695639f70a10f29092924a24b6eb11f692aa696dd"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 124,
+        "sim_time_s": 1722.0500898119062,
+        "physics_frame": 103323,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00124.png",
+        "sha256": "6ea496cbc66da5937ea787af22031ef507641ee5227689efb40213b4c0f06dbb"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 125,
+        "sim_time_s": 1727.2667567506433,
+        "physics_frame": 103636,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00125.png",
+        "sha256": "e6611659d730a8a3f93a542dbcf14b5bcb95ddc29a73635262491270259267ef"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 126,
+        "sim_time_s": 1727.2834234181792,
+        "physics_frame": 103637,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00126.png",
+        "sha256": "551ef33cda1485da89366b384ac7e9d383482f2885ab563624a20d5ad5988b6d"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 127,
+        "sim_time_s": 1742.0500908549875,
+        "physics_frame": 104523,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00127.png",
+        "sha256": "91693728b6651827afe91e539a3f82a28340c4a2e41b0339e7338647ec4033ee"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 128,
+        "sim_time_s": 1762.0500918980688,
+        "physics_frame": 105723,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00128.png",
+        "sha256": "1a063772921191ef167a884e2e010b8ebc8f26c38bb431238edc910db50e1b78"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 129,
+        "sim_time_s": 1782.05009294115,
+        "physics_frame": 106923,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00129.png",
+        "sha256": "fcc00ca0fa2ac36796006b466e65b31084397df9d0cdff19f8fcefa3428217b1"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 130,
+        "sim_time_s": 1802.0500939842314,
+        "physics_frame": 108123,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00130.png",
+        "sha256": "7661a7e37fb1de51266e0a745fafde5932858a5ffe161c6b80b9e899c6fbd47a"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 131,
+        "sim_time_s": 1822.0500950273126,
+        "physics_frame": 109323,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00131.png",
+        "sha256": "77b70e56ec986d52661e0f9a30d0c52968ce9a3d28e8d965830d6def2b6fb8fd"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 132,
+        "sim_time_s": 1842.050096070394,
+        "physics_frame": 110523,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00132.png",
+        "sha256": "7bc012dfdc15926a2dc52119a22c3b68a5cc57c2f53f7b3c01191b818adf899e"
+      },
+      {
+        "camera": "carter2",
+        "capture_index": 133,
+        "sim_time_s": 1851.0000965371728,
+        "physics_frame": 111060,
+        "path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter2-00133.png",
+        "sha256": "eeabfecf7d1f1af71f55dd47720b83b895bebb59aac6db51bd8e7823bdb9133a"
+      }
+    ],
+    "postprocessor_source_sha256": "ad12bdde19dbecef17754dcc9b7c2c31fee18a32d2c08d8aae9ee7d2ba620073",
+    "output_sha256": "edd5fd9cb47f76792b7ea0120c882f0dcea5d9782a9f6915dd15f33b89d01d92",
+    "probe": {
+      "programs": [],
+      "stream_groups": [],
+      "streams": [
+        {
+          "width": 1280,
+          "height": 720,
+          "nb_read_frames": "254"
+        }
+      ],
+      "format": {
+        "duration": "25.400000"
+      }
+    },
+    "full_decode_passed": true,
+    "raw_files_changed": false,
+    "bag_sql_opened": false,
+    "goal80_evaluated_here": false
+  },
+  "original_preservation": [
+    "D:/FactoryOpsArtifacts/operations-077/checkpoint-001",
+    "E:/FactoryOpsArtifacts/operations-077/checkpoint-001"
+  ],
+  "limits": [
+    "Local IsaacSim4.5/PhysX development, not canonical6.2/RTX qualification.",
+    "Material ledger and noncolliding visual cargo; no contact/lift physics validation.",
+    "Authored virtual energy and estimated-pose stopped geometric docking; not electrical contact proof.",
+    "Sparse original RGB for presentation. FOT068 transition pixel limitation remains; no training label generation."
+  ],
+  "files": [
+    {
+      "path": "overview.png",
+      "source_path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\overview-00124.png",
+      "bytes": 173970,
+      "sha256": "51d9802c5f6586f1f31150bce2624cbb8f5ccc781d5016dbc4286f19ffc78440"
+    },
+    {
+      "path": "loaded-carrier.png",
+      "source_path": "E:\\FactoryOpsRuntime\\local45-transport-036\\results\\run\\media\\carter1-00124.png",
+      "bytes": 155533,
+      "sha256": "d3eb38b37f2e66f0a612f4e68f1b9fa07df2a36deb47edacce069d2a8042626d"
+    },
+    {
+      "path": "dashboard-all-orders.jpg",
+      "source_path": "C:\\Users\\LIMMM\\factory-ops-twin\\artifacts\\local45\\036-web\\all-orders-complete.jpg",
+      "bytes": 276509,
+      "sha256": "74cc47056d6e1f8979a2dfbe87abbffac167726219853f25ac0aa0a052ee1a3f"
+    },
+    {
+      "path": "empty-tote-carrier-detail.jpg",
+      "source_path": "C:\\Users\\LIMMM\\factory-ops-twin\\artifacts\\local45\\036-web\\empty-carried-carter4-detail.jpg",
+      "bytes": 297464,
+      "sha256": "6939abd0ac1f8463df8e394f413294ae92760bee9de97b121498fb53afabcc66"
+    },
+    {
+      "path": "operations-business-complete.mp4",
+      "source_path": "C:\\Users\\LIMMM\\factory-ops-twin\\artifacts\\local45\\036-preview-video\\operations-timeline.mp4",
+      "bytes": 1381689,
+      "sha256": "edd5fd9cb47f76792b7ea0120c882f0dcea5d9782a9f6915dd15f33b89d01d92"
+    }
+  ]
+}

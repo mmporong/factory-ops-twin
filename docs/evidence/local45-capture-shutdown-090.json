@@ -1,0 +1,114 @@
+{
+  "status": "authored_paused_generation_shutdown_passed",
+  "cases": [
+    {
+      "case": 88,
+      "result": {
+        "run_id": "8dd68e33ceab44c596d97d076125b602",
+        "status": "failed",
+        "scope": "Static three-product capture shutdown only; not transport or036 retrospective pass.",
+        "source_sha256": "e8578ea166f50ca6cecb871dc6c272c4c70ce801a48444ea18725648bfce37ed",
+        "phase": "failed",
+        "error": "ValueError: invalid RGB",
+        "traceback": "Traceback (most recent call last):\n  File \"E:\\FactoryOpsRuntime\\local45-capture-shutdown-088\\source\\scripts\\isaac\\probe_local45_capture_shutdown.py\", line 78, in main\n    save_rgb(third.get_data(), args.output/'third.png')\n  File \"E:\\FactoryOpsRuntime\\local45-capture-shutdown-088\\source\\scripts\\isaac\\probe_local45_capture_shutdown.py\", line 58, in save_rgb\n    raise ValueError('invalid RGB')\nValueError: invalid RGB\n",
+        "unfinished_session_owned_by_external_job": true,
+        "intended_exit_code": 1
+      },
+      "host_closed": true,
+      "host_timed_out": false,
+      "host_worker_exit_code": 0,
+      "source_overlay": {
+        "base_commit": "d527423925da9c55bdb7640a533d83946454b6b2",
+        "overlay_sha256": {
+          "scripts/isaac/g2_scene.py": "7db558a27f68cde06b229b529166b46a7e3407dba0201ebcc871253546a26273",
+          "scripts/isaac/robot_qualification.py": "cb6a55baf57dd728e51614801ee4b16f42ac780feba48175f3af40b43201608f",
+          "scripts/isaac/probe_local45_capture_shutdown.py": "e8578ea166f50ca6cecb871dc6c272c4c70ce801a48444ea18725648bfce37ed",
+          "tests/test_capture_shutdown.py": "b5e6c8fff2bbb3ca5cd7f2e656f1ddfacc6eef39fe8ba29e3e44df99e839424d"
+        }
+      }
+    },
+    {
+      "case": 89,
+      "result": {
+        "run_id": "8d065110865f4ffabb6386b48d0aa2ac",
+        "status": "passed",
+        "scope": "Static three-product capture shutdown only; not transport or036 retrospective pass.",
+        "source_sha256": "fcf167ce9c08c99350f05b9ff1c102e93b06db11417515a84df9e3aa21c989c3",
+        "phase": "closed",
+        "before": {
+          "world_s": 0.13333334028720856,
+          "physics_frame": 8,
+          "orchestrator_status": "Status.STEPPED"
+        },
+        "products": 3,
+        "annotators": 3,
+        "after": {
+          "world_s": 0.13333334028720856,
+          "physics_frame": 8,
+          "orchestrator_status": "Status.STOPPED"
+        },
+        "close_wall_s": 0.01600000000325963,
+        "frozen_state_unchanged": true,
+        "generation_stopped": true,
+        "intended_exit_code": 0
+      },
+      "host_closed": true,
+      "host_timed_out": false,
+      "host_worker_exit_code": 0,
+      "source_overlay": {
+        "base_commit": "d527423925da9c55bdb7640a533d83946454b6b2",
+        "overlay_sha256": {
+          "scripts/isaac/g2_scene.py": "7db558a27f68cde06b229b529166b46a7e3407dba0201ebcc871253546a26273",
+          "scripts/isaac/robot_qualification.py": "cb6a55baf57dd728e51614801ee4b16f42ac780feba48175f3af40b43201608f",
+          "scripts/isaac/probe_local45_capture_shutdown.py": "fcf167ce9c08c99350f05b9ff1c102e93b06db11417515a84df9e3aa21c989c3",
+          "tests/test_capture_shutdown.py": "b5e6c8fff2bbb3ca5cd7f2e656f1ddfacc6eef39fe8ba29e3e44df99e839424d"
+        }
+      }
+    },
+    {
+      "case": 90,
+      "result": {
+        "run_id": "8ff6ee2f5093462b821d644fd0b0c853",
+        "status": "passed",
+        "scope": "Static three-product capture shutdown only; not transport or036 retrospective pass.",
+        "source_sha256": "5350395be0b066e76d362e4e400df0f4cb55726261a28faa83e20f71bed9f717",
+        "phase": "closed",
+        "authored_generation_state": "paused",
+        "reproduction_scope": "Public API authored state, not retained036 orchestrator state.",
+        "before": {
+          "world_s": 0.13333334028720856,
+          "physics_frame": 8,
+          "orchestrator_status": "Status.PAUSED"
+        },
+        "products": 3,
+        "annotators": 3,
+        "after": {
+          "world_s": 0.13333334028720856,
+          "physics_frame": 8,
+          "orchestrator_status": "Status.STOPPED"
+        },
+        "close_wall_s": 0.01600000000325963,
+        "frozen_state_unchanged": true,
+        "generation_stopped": true,
+        "intended_exit_code": 0
+      },
+      "host_closed": true,
+      "host_timed_out": false,
+      "host_worker_exit_code": 0,
+      "source_overlay": {
+        "base_commit": "d527423925da9c55bdb7640a533d83946454b6b2",
+        "overlay_sha256": {
+          "scripts/isaac/g2_scene.py": "7db558a27f68cde06b229b529166b46a7e3407dba0201ebcc871253546a26273",
+          "scripts/isaac/robot_qualification.py": "cb6a55baf57dd728e51614801ee4b16f42ac780feba48175f3af40b43201608f",
+          "scripts/isaac/probe_local45_capture_shutdown.py": "5350395be0b066e76d362e4e400df0f4cb55726261a28faa83e20f71bed9f717",
+          "tests/test_capture_shutdown.py": "b5e6c8fff2bbb3ca5cd7f2e656f1ddfacc6eef39fe8ba29e3e44df99e839424d"
+        }
+      }
+    }
+  ],
+  "scope": "Static3RGB resource shutdown only. No fourRobot ROS final stamp/transport admission;036 remains failed and80onhold.089STEPPED compatibility is not reproduction;090PAUSED is authored through public API.088 invalidRGB fixture failed beforeclose.",
+  "CPU_tests": 15,
+  "new_cloud": false,
+  "new_SDG": false,
+  "canonical_default_stop_before_drain": false
+}

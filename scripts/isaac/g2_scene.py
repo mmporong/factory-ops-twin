@@ -1230,7 +1230,8 @@ def _run(
 
         c1 = robots["carter1"]["definition"]
         capture_options = {"dome_light_factory": runtime45.create_capture_light,
-                           "resolution": render_resolution} if local_sdk45 else {}
+                           "resolution": render_resolution,
+                           "stop_before_drain": True} if local_sdk45 else {}
         session = CaptureSession(
             output, app, stage, rep, UsdGeom, Gf, SimulationManager, save_rgb,
             medium_camera=CameraSpec(
@@ -1600,14 +1601,17 @@ def _run(
 
         for runtime in robots.values():
             runtime["robot"].apply_wheel_actions(np.zeros(2, dtype=np.float32))
+        checkpoint("terminal_render_cleanup")
         timeline.pause()
         rep.orchestrator.set_capture_on_play(False)
         render_products_cleanup = getattr(scene_extension, "cleanup_render_products", None)
         if render_products_registered and callable(render_products_cleanup):
             render_products_cleanup()
             render_products_cleaned = True
+        checkpoint("terminal_capture_drain")
         session.close()
         session = None
+        checkpoint("terminal_capture_drained")
         result["mission_control"] = mission
         result["media"] = {"index": MEDIA_INDEX_FILE, "frame_count": len(frames), "same_frame_sources": 3}
         for robot_id, runtime in robots.items():

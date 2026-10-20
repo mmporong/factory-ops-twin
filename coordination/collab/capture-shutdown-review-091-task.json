@@ -1,0 +1,39 @@
+{
+  "attempt": 1,
+  "owner": "control",
+  "reviewer": "root",
+  "binding": {
+    "session": "default",
+    "pane_id": "w1:p1C",
+    "terminal_id": "term_65e06d27e415810",
+    "agent_session": "01a152aa-24b4-7a31-92e3-a2b620f4feeb"
+  },
+  "project_root": "C:\\Users\\LIMMM\\factory-ops-twin",
+  "task_id": "capture-shutdown-review-091",
+  "contract_revision": 91,
+  "status": "dispatched",
+  "goal": "One bounded review rootlocal45 stop-before-drain candidate,CPU15,short native fixture evidence plus truthful036README/media. No whole80pass.",
+  "write_paths": [
+    "coordination/collab/results/capture-shutdown-review-091.json"
+  ],
+  "result_path": "C:\\Users\\LIMMM\\factory-ops-twin\\coordination\\collab\\results\\capture-shutdown-review-091.json",
+  "inputs": {
+    "root_source_sha256": {
+      "scripts/isaac/g2_scene.py": "7db558a27f68cde06b229b529166b46a7e3407dba0201ebcc871253546a26273",
+      "scripts/isaac/robot_qualification.py": "cb6a55baf57dd728e51614801ee4b16f42ac780feba48175f3af40b43201608f",
+      "scripts/isaac/probe_local45_capture_shutdown.py": "5350395be0b066e76d362e4e400df0f4cb55726261a28faa83e20f71bed9f717",
+      "tests/test_capture_shutdown.py": "b5e6c8fff2bbb3ca5cd7f2e656f1ddfacc6eef39fe8ba29e3e44df99e839424d"
+    },
+    "closed036": "docs/evidence/local45-transport-036.json",
+    "preservation": "artifacts/brev/operations-077-preservation-001.json",
+    "gallery": "docs/images/fleet4-local45-036/provenance.json",
+    "CPU": "artifacts/local45/capture-shutdown-tests-091.json",
+    "fixture088": "E:/FactoryOpsRuntime/local45-capture-shutdown-088",
+    "fixture089": "E:/FactoryOpsRuntime/local45-capture-shutdown-089",
+    "fixture090": "E:/FactoryOpsRuntime/local45-capture-shutdown-090"
+  },
+  "acceptance": [
+    "Read listed frozen hashes and small JSON only.090 currently one owned shortJob; do not start clients/SDK/SQL or copyactive files. Only read its result.json/job.json onceafterclosure.088RGBinitializationfailed;089STEPPEDclose .016s frozen8/.13333334 passedcompatible but didnotreproducePAUSED;090authoredpublicPAUSEDstate candidate, not036actualstate. No retrospective036pass or80release.",
+    "Review opt-in stop->drain keeps resource cleanup/error failclosed,canonicaldefaultfalse,diagnosticcheckpoint, CPU15observed evidence. g2capture option localSDK45only. Check036all3orders/3returns/4business+4park, stale2actualsuccess+stop, material54+6=60; originalterminalfailure+60s/90sdistinction, scopesphysx/virtual/no lifting. Publicgallery5SHA/source and localREADMElinks smallcheck. No broadtests/research/GPU or anotherreviewchain. Ownreceipt concise pass or concreteissues; allothersfiles/Git/board rootowned. Not alone; preserve others."
+  ]
+}

@@ -76,11 +76,15 @@ class CaptureSession:
         dome_light_factory: Callable[[], Any] | None = None,
         *,
         resolution: tuple[int, int] = base.RENDER_RESOLUTION,
+        stop_before_drain: bool = False,
     ) -> None:
+        if type(stop_before_drain) is not bool:
+            raise ValueError("stop_before_drain must be a plain boolean")
         if (type(resolution) is not tuple or len(resolution) != 2
                 or any(type(value) is not int or value <= 0 for value in resolution)):
             raise ValueError("capture resolution must be a tuple of two positive plain integers")
         self.resolution = resolution
+        self.stop_before_drain = stop_before_drain
         self.output = output
         self.app = app
         self.stage = stage
@@ -240,8 +244,16 @@ class CaptureSession:
             return
         self.closed = True
         errors: list[str] = []
+        drain_ready = True
+        if self.stop_before_drain:
+            try:
+                self.rep.orchestrator.stop()
+            except BaseException as error:
+                errors.append(f"generation stop: {type(error).__name__}: {error}")
+                drain_ready = False
         try:
-            base._with_alarm(120, "G0b capture session drain", self.rep.orchestrator.wait_until_complete)
+            if drain_ready:
+                base._with_alarm(120, "G0b capture session drain", self.rep.orchestrator.wait_until_complete)
         except BaseException as error:
             errors.append(f"writer drain: {type(error).__name__}: {error}")
         for annotator in reversed(self.annotators):

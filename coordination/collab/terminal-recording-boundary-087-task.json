@@ -1,0 +1,31 @@
+{
+  "attempt": 1,
+  "owner": "control",
+  "reviewer": "root",
+  "binding": {
+    "session": "default",
+    "pane_id": "w1:p1C",
+    "terminal_id": "term_65e06d27e415810",
+    "agent_session": "01a152aa-24b4-7a31-92e3-a2b620f4feeb"
+  },
+  "project_root": "C:\\Users\\LIMMM\\factory-ops-twin",
+  "task_id": "terminal-recording-boundary-087",
+  "contract_revision": 87,
+  "status": "dispatched",
+  "goal": "Read-only diagnosis of036 terminal recording timeout after all3ship/all3empty/all4park, not normal pass.",
+  "inputs": {
+    "stage": "E:/FactoryOpsRuntime/local45-transport-036",
+    "run_id": "e6be8b8845ba47d3a942a7c2867fee2a",
+    "source_commit": "26e19711b1ddf29ad02f2bbe312cee337779b23c",
+    "ROS_DOMAIN_ID": 73,
+    "linux_profile": "/mnt/e/FactoryOpsRuntime/local45-transport-036/fastdds-udp-linux.xml"
+  },
+  "write_paths": [
+    "coordination/collab/results/terminal-recording-boundary-087.json"
+  ],
+  "result_path": "C:\\Users\\LIMMM\\factory-ops-twin\\coordination\\collab\\results\\terminal-recording-boundary-087.json",
+  "acceptance": [
+    "Read targeted frozenSDK/ROS sources and036 JSON/JSONL+host logs. NO bag SQL/copy while owners not closed, NO ROS extra clients, NO SDK/GPU run. Parent owns source mutations and preservation. Need establish why SDK did not seal validated terminal scene within existing terminal_recording_wait_wall_s, whether cleanup stage hangs, versus missing final encoder stamp. SDK scene still running, mission-result stage terminal_recording failed; scenario_complete and all4park true atWorld1850.250096498. Do not relabel as normal80pass.",
+    "Own receipt only: facts/evidence vs inferred cause, smallest bounded repair+focused verification proposal. Consider a bounded terminal-only native fixture rather than another2h transport rerun, but cannot certify036original as passed. No code/docs/Git/board edits, deps, agents/panes, test/rerun or budget/TTL/clock/guard widening. Not alone; preserve others."
+  ]
+}

@@ -1,0 +1,78 @@
+{
+  "task_id": "terminal-recording-boundary-087",
+  "attempt": 1,
+  "contract_revision": 87,
+  "acknowledged": true,
+  "status": "read_only_diagnosis_complete",
+  "run_id": "e6be8b8845ba47d3a942a7c2867fee2a",
+  "source_commit": "26e19711b1ddf29ad02f2bbe312cee337779b23c",
+  "original_verdict": "failed",
+  "goal80": "on_hold",
+  "facts": {
+    "business": "Mission completed3/3 orders; material completed3/3 empty returns. Final parked records cover C1/P1,C2/P2,C3/P3,C4/P4; scenario_complete recorded at1850.250096498s.",
+    "final_capture": {
+      "index": 133,
+      "total_frames": 134,
+      "world_time_s": 1851.0000965371728,
+      "physics_frame": 111060,
+      "frozen_validation": "passed",
+      "capture_resume": "passed",
+      "all_four_pose_matches": true
+    },
+    "primary_observed_failure": "ROS mission-result statusfailed/stageterminal_recording: terminal scene / final odometry recording boundary did not qualify.",
+    "scene": "SDK scene JSON remains the original statusrunning/stagemission record, with no sealed timing/final_stamp/cleanup validation. No sdk-failure.json was present.",
+    "encoder_distinction": "g3_mission.py597-598 returns pending for running scene before inspecting final odometry at612-613. Therefore unsealed scene is a sufficient blocker; missing final WSL encoder stamp is not established. SDK final publication/WSL final receipt must still be verified in a future fixture.",
+    "timing_limits": "Actual inputs/config.json g3_runtime.terminal_recording_wait_wall_s=60. CaptureSession drain requests120s; later host cleanup grace after ROS exit is90s. These are separate waits, not evidence of a single90s terminal limit.",
+    "cleanup_order": "g2_scene.py1601-1610: zero wheels -> timeline.pause -> capture_on_playFalse -> render-product cleanup -> session.close. Final timing is assembled1621-1635 and validated/worker_exit_requested is written1712-1714 only after cleanup.",
+    "final_owner_result": "Pair host failed: SDK did not finish cleanup within90s after ROS foreground client exit. Windows/Linux closed=true, host cleanup_errors=[], Job closed=true/PIDs[], timed_out=false. Mission cleanup recorded rosbag/nav2 exit0. This does not turn the failed original into a pass."
+  },
+  "installed_official_api": {
+    "source": "E:\\IsaacSim\\isaac-sim-4.5.0\\extscache\\omni.replicator.core-1.11.35+106.5.0.wx64.r.cp310\\omni\\replicator\\core\\scripts\\orchestrator.py",
+    "sha256": "8c55512361376279acf3025958c71d6fa03bf006b309877edc576be6829f2e9a",
+    "version": "omni.replicator.core1.11.35 bundled with Isaac Sim4.5",
+    "evidence": [
+      "stop implementation754-766: submits Stop; installed docstring recommends nonasync stop followed by wait_until_complete for a full standalone stop. Public API1103-1109 documents that stop itself does not wait.",
+      "wait_until_complete996-1031: only STEPPED calls stop automatically at1021-1022; otherwise loops app.update until STOPPED at1024-1025, then drains BackendDispatch. No wall deadline is present.",
+      "Timeline PAUSE handler267-289 can set orchestrator PAUSED. set_capture_on_play1577-1586 changes a setting; it is not an explicit Stop request.",
+      "Status handler207-232 can call timeline.stop/commit on STOPPING or STOPPED while capture_on_play is enabled. Disable capture-on-play before explicit stop, and verify physical/SimulationManager state rather than assuming stop is frozen-safe.",
+      "CaptureSession.close238-246 waits without stop. stage_smoke._with_alarm106-125 returns operation() without a timer when SIGALRM/setitimer are unavailable, including Windows."
+    ]
+  },
+  "cause_assessment": {
+    "confirmed_source_boundary": "Unconditional wait does not stop continuous PAUSED/STARTED orchestration; unlike canonical stepped capture, reaching STOPPED is not ensured by this close path. The nominal120s alarm does not impose a Windows deadline.",
+    "supported_runtime_candidate": "The continuous local45 orchestrator drain can wait indefinitely after the final capture and pause. Final capture+resume succeeded, scene was never sealed, and subsequent paired cleanup also expired.",
+    "not_proven": "036 has no per-cleanup-call/status breadcrumbs. Exact blocked native call and actual orchestrator status were not retained. session.close/drain is the strongest source-supported candidate, not a measured036 stack/call-site diagnosis. DDS warnings are not assigned as the cause."
+  },
+  "minimal_proposal": [
+    "Root candidate: CaptureSession opt-in stop_before_drain:bool=False; G2 sets true only for local45. In close, issue rep.orchestrator.stop() immediately before the existing wait_until_complete when opted in. Default/canonical6.2 behavior remains unchanged.",
+    "Keep timeline paused and capture-on-play disabled before stop. Preserve drain, annotator detach, render-product destruction, ROS cleanup and final scene validation; never replace validation with a success flag.",
+    "Record before/after stop, drain, detach and close with public orchestrator status, wall time, World/SimulationManager time+frame and all chassis poses. Enforce unchanged frozen physical state until teardown evidence is sealed; fail on advancement/reset. No clock/TTL/guard/budget widening.",
+    "If Windows requires a hard bound, retain an external owned-process guard for the fixture; the existing POSIX alarm is not a Windows safety boundary. Do not extend transport/cleanup waits to mask missing Stop."
+  ],
+  "terminal_only_fixture_proposal": [
+    "Root runs one separately owned short native fixture with existing local45 World/cadence, four zero-command robots and three persistent continuous RGB products; no orders, routes or long transport rerun.",
+    "Take a real final encoder-aligned sample and final frozen capture through the unchanged capture/resume guard; retain its actual frame/stamp/poses. Keep the intended recording consumer alive for final receipts.",
+    "Exercise timeline.pause/capture-on-playFalse and the opted-in stop->drain->detach/close path. Save per-phase checkpoints and immutable sources/config. Verify public STOPPED and completion within the existing fixed short fixture host guard, without changing simulation state.",
+    "Require sealed scene validated/worker_exit_requested with original final frame/stamp, all four received final encoder stamps >= final stamp, successful app/ROS exit and Windows/Linux owner closure. Missing stamp, teardown error or incomplete drain remains failed.",
+    "This fixture can admit the repaired terminal boundary only. It cannot recertify036, establish full normal qualification, or release the80 milestone."
+  ],
+  "source_sha256": {
+    "scripts/ros/g3_mission.py": "a3fd94acdb0fb466e692719865a2eb72e6299df2eda7d37643a3d492fc6df401",
+    "scripts/isaac/g2_scene.py": "ec97d65f98bd885e70bb96b4f28a34ad884eeca793d1181676e6e66fa3b286e8",
+    "scripts/isaac/g3_scene.py": "206d97a6a3e37f1ba2607582770b9674397a46842a00355248e71f44e92e100c",
+    "scripts/isaac/local45_fleet4_transport_scene.py": "99b78fea1000b2c0d06f269749b513ee4ad912f57578c015755120d53710bcee",
+    "scripts/isaac/robot_qualification.py": "a65b14a5bfa3d594b36eac1370dd161293182710ec9fa09bb429eeb4cceffcb9",
+    "scripts/isaac/stage_smoke.py": "94e47f21c593ad1f9a5e5640f2d372b7102d91ce3008cfb60bd8fd11cc464d29"
+  },
+  "evidence_sha256": {
+    "pair-host.json": "f8a5475a994a0236f9ae436ef57fbd0f3bea2b94311f00385998132c17200709",
+    "job.json": "81dd44872b310818100e7c272499779f087ff284fcb2a5a7253cefe1977c3c51",
+    "results/run/mission-result.json": "ed5e50c6a5e44e0e99e10690de658b655094945b2828478be1d2daf5d77aa33a",
+    "results/run/local45-fleet4-transport-scene.json": "d8ac3d18aeac22a4a1a0ad837d9d97699186e00bf23468145df3e5fc7b03f4f9",
+    "results/run/actions.jsonl": "4f4af9ba3d53d1193e75f67f0c437c12ed4c878f69dacaccc8109e5e28eeb7c3",
+    "results/run/capture-resume-state.json": "4aeee67cc74539f35eaa50c3d7a44582571e8895c8e7a9d7faa36a06412d47b3",
+    "results/run/media/frames.json": "c3f65df240928e5a7295f875969ad645b0de7d84510924db90205eac5d25026c",
+    "inputs/config.json": "14bf59b5aa58bb1089dc5f494d4ecf0ea13e1154412ed39d76a95417c8513df0"
+  },
+  "limits": "Read-only source/JSON/JSONL/log inspection, including local installed NVIDIA source. No SDK imports/runtime, SQL/bag copy, ROS, tests, Git, source/docs mutation, or agents. Only this receipt is written; root owns implementation, preservation, acceptance and actual fixture."
+}
