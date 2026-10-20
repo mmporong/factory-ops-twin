@@ -1,0 +1,51 @@
+{
+  "task_id": "local45-command-executors-071",
+  "attempt": 1,
+  "contract_revision": 71,
+  "ack": true,
+  "status": "implemented_pending_root_review_and_actual030",
+  "self_accepted": false,
+  "source_sha256": {
+    "scripts/isaac/g2_scene.py": "a7016cc9160f7c9a14068a7c82c48129c895f899f3056c4584961313e2746ee6",
+    "tests/test_local45_ros_spin.py": "b7a3ff7d8e713495745de99e0d1b2d3dca40f0f1d48ca4fc8111393376b52462"
+  },
+  "g2_baseline_sha256": "980c2ed3c42104a01722efaa24a7867dbcca5591da3260f3b47f64be19885a4e",
+  "changes": [
+    "Only local45+physx creates one stable SingleThreadedExecutor per existing clock/robot node, using each node.context, before the first _spin_nodes call. Four fair rounds with timeout_sec=0.0 remain; RTX/canonical keeps legacy global spin_once.",
+    "Construction failures clean all returned executors without destroying nodes/contexts. Final cleanup attempts owned executor shutdown before existing node/context cleanup. Secondary cleanup errors do not replace the original primary error.",
+    "At the existing 1-simulation-second world-clock checkpoint, atomically overwrite command-receipt-state.json with run_id, physics_frame, sim_time_s, executor_mode and per-robot command_sequence/cmd_vel/cmd_rejected/command_sim_time_s/last_command_rejection/resolved_cmd_topic/matched_publisher_count/graph_publisher_count/diagnostic_errors. Snapshot write errors are diagnostic only.",
+    "Existing TypeError/ValueError handling retains the last rejection type/message and cumulative rejection count. Command validation, QoS, watchdog, authorization and timing gates remain unchanged."
+  ],
+  "installed_api_evidence": {
+    "root": "E:/IsaacSim/isaac-sim-4.5.0/exts/isaacsim.ros2.bridge/humble/rclpy/rclpy",
+    "sha256": {
+      "__init__.py": "1e21a419fa9e3f43b5e2fd060dbdf5b3f0ad24712289f3858183c86fc103a384",
+      "executors.py": "b768fb0fff0254cbd751c5a891d48a1fcbb4e050a47b84726dc612df630b8e33",
+      "node.py": "b004e8d2792984be5a6156951f97adea53680378d531bd8a8136b028526c4616",
+      "subscription.py": "b11f42e11ac14c160d311398077ed891928418b1bbdb49631b306ca6ea389bdf"
+    },
+    "basis": "Public SingleThreadedExecutor(context), add_node, spin_once, shutdown and Node.executor/context support stable ownership. Public Subscription.topic_name gives the resolved topic. Bundled Subscription has no public get_publisher_count: actual DDS match stays null with an explicit unsupported diagnostic. Public Node.count_publishers(resolved_topic), node.py:1844, supplies separately labeled graph_publisher_count; it is not DDS compatibility or delivery proof. Failed or unsupported readbacks stay null, distinct from observed zero."
+  },
+  "validation": [
+    {
+      "command": "& './.venv/Scripts/python.exe' -B -m unittest tests.test_local45_ros_spin -v",
+      "runs": 1,
+      "exit_code": 0,
+      "result": "8 PASS",
+      "coverage": "Stable registration/context and fair spin budget; legacy fallback; cleanup/partial construction/primary-error retention; independent graph versus DDS counts and unknowns; rejected-command reason/count and unchanged QoS; snapshot write failure. CPU fakes only."
+    },
+    {
+      "command": "PowerShell here-string using ast.parse and hashlib.sha256 on the two source_sha256 paths | & 'E:/IsaacSim/isaac-sim-4.5.0/kit/python/python.exe' -B -S -",
+      "runs": 1,
+      "python": "3.10.15",
+      "exit_code": 0,
+      "result": "2 AST PASS; hashes recorded above; no SDK imports"
+    }
+  ],
+  "limits": [
+    "029 command-delivery cause remains unknown. Root-provided closed-bag decode reports C1 1469 commands/1468 nonzero and C2 985/985 nonzero, peak linear 0.4 m/s, offered QoS RELIABLE/VOLATILE; SDK command sequences were zero. This worker did not open bag SQLite. FastCDR warnings are not causal proof.",
+    "No actual SDK/DDS delivery or performance claim. Unsupported true DDS match is not replaced by a graph count. Root owns review and actual030 validation.",
+    "Only the three owned paths were written. No new agents, SDK/GPU/ROS/WSL/server/process lifecycle operations, Git operations, dependencies or broad tests."
+  ],
+  "stop_condition": "Focused CPU pass, cold syntax pass and ASCII receipt complete; no further review or execution."
+}

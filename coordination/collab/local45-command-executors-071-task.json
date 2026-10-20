@@ -1,0 +1,23 @@
+{
+  "task_id": "local45-command-executors-071",
+  "attempt": 1,
+  "contract_revision": 71,
+  "owner": "control",
+  "reviewer": "root",
+  "write_paths": [
+    "scripts/isaac/g2_scene.py",
+    "tests/test_local45_ros_spin.py",
+    "coordination/collab/results/local45-command-executors-071.json"
+  ],
+  "facts": "029 closed bothOS/cleanup[], root56245terminal1. Capture-resume actualpassed repeated upto~42sim (nativebeforeplayingFalse->afterTrue, exactF/T/4poses unchanged). ROSFollowPathC1failed105 progress; allSDKcmdsequence0/inputreceivedNone although closedbag contains1469 C1Twist and985 C2Twist (nonzero values rootabouttodecode). Rootliveaudit ran AFTERshutdown so emptypeers notactive evidence. SDKstderr ParticipantEntitiesInfo FastCDR/Badalloc also present inpreviousworking026, notcausalproof. _spin_nodes uses repeated rclpy.spin_once(node) GLOBALexecutor add/remove; installedSDKrclpy/__init__.py documents work mayserveanothernode duepartiallycompletedcoroutine. Need explicitstable callbackownership andmatch/read receipt diagnostics, no claim this isproven029cause.",
+  "goal": "Local45PhysX mission runtime uses stable dedicatedSingleThreadedExecutor per ownednode beforefirstSDKspin, same bounded4round nonblocking spin budget; small latest command-receipt-state withDDSmatchedpublishercount/actualcmdreceived/rejected perrobot toseparate discovery fromcallback problem in030. Not alone/rootpreserves029/docs/Git/030; ownlistedfiles only.",
+  "acceptance": [
+    "ACK071attempt1. Use installed primaryRclpy sources; nointernet/libraries/newagents/SDK/GPU/ROS/WSL/bag/Git/fullsuite. TinyfocusedCPUandcoldASTaffectedfiles once. Do not rereadwholepipeline orrepeatoldtests.",
+    "Current commanddeliverycause unknown. Change local45+physx path only, beforefirst_spin_nodes (startup andmission useownedstableexecutors). OtherRTX/canonical usesoldspin. Eachnode registeredonce toitsownSingleThreadedExecutor with itsactualcontext; no global executor/add-remove perphysics tick. 4fair rounds timeout0 preserveexistingcallshape/budget; do not change clock/motion/TTL/poses/watchdog/seq/0.15/deadlines. Reuse existing helperwherefitting, avoid newlayers/deps.",
+    "Clean executors before nodes/rclpyshutdown, preserving original SDK primaryerror ifshutdown fails. No danglingexecutors/threads, no node/context shutdown when notowned. Constructionpartialfailure cleansconstructedexecutors withoutdestroyingnodes.",
+    "Latest atomic command-receipt-state.json at existing1simHz world-clock checkpoint (notperframe) records runid/F/T and eachrobot command_sequence/cmd_vel/cmd_rejected/command_sim_time_s, exactresolvedcmdtopic and subscription.get_publisher_count (actualDDSmatch), diagnosticerrorsasunknown ratherthan0. UseknownAPIfrombundledHumbleread, no graphservice ornewsubscribers/publishers. Snapshotonly; no effectoncontroller. Savingfailure mustnot hideprimary and no bulkjournals. Include runtimeexecutor mode inreport.",
+    "CPU checks stable registration once/4round ordering/no globalcalls, matchingper-nodecontexts, shutdown/partial failure, command snapshotfields including0vsunknown, runtimebranch placementread once. Keep author suite small targeted. ReturnASCII receipt hashes/commands/limits. Rootboundedreview thenoneactual030; no standaloneGPUprobe/reviewchain.",
+    "Small receipt refinement: callback state may retain LAST rejected command type/message when catching existingTypeError/ValueError (no guard change) and include it inlatestreceipt; this avoids another run if rejectioncount>0. Root closedbag offeredQoS forC1/C2 is RELIABLE/VOLATILE, so do not changeQoS on speculation.",
+    "Root source observation beforeauthorfinal: bundled Humble rclpy/subscription.py exposes topic_name but NO public get_publisher_count method. Keep matched_publisher_count=null with explicit unavailableerror. Include separately labeled graph_publisher_count via existing node.count_publishers(resolvedtopic) if installedsupported; nevercall it DDSmatch. Do not invent/privateABI/ctypes/newdependency for unavailable true match. This boundedfallback provides graph0vsunknown evidence plus actualreceipts in030."
+  ]
+}

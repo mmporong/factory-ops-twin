@@ -1,0 +1,153 @@
+{
+  "schema_version": 1,
+  "run_id": "4ed4a5cc228f4398ae75202cf309063a",
+  "producer_source_commit": "028ccad925ebe458ff2bf77e3f2fc9b23023c4b4",
+  "status": "capture_resume_fixed_then_FollowPath105_without_SDK_command_receipts",
+  "primary_ros_error": {
+    "message": "FollowPath failed: robot=carter1 goal=704cf3ef-0c46-40e8-a10a-93c6c493344f status=6 error_code=105; full action retained in mission-result.json actions",
+    "traceback": "Traceback (most recent call last):\n  File \"/mnt/d/FactoryOpsRuntime/local45-transport-029/source/scripts/ros/g3_mission.py\", line 1871, in run_mission\n    raise RuntimeError(\nRuntimeError: FollowPath failed: robot=carter1 goal=704cf3ef-0c46-40e8-a10a-93c6c493344f status=6 error_code=105; full action retained in mission-result.json actions\n",
+    "type": "RuntimeError"
+  },
+  "secondary_sdk_error": {
+    "message": "G2 mission controller ended with failed",
+    "traceback": "Traceback (most recent call last):\n  File \"D:\\FactoryOpsRuntime\\local45-transport-029\\source\\scripts\\isaac\\g2_scene.py\", line 1465, in _run\n    raise base.SmokeError(terminal_error)\nscripts.isaac.stage_smoke.SmokeError: G2 mission controller ended with failed\n",
+    "type": "SmokeError"
+  },
+  "last_capture_resume_original": {
+    "after": {
+      "physics_frame": 2560,
+      "playing": true,
+      "sim_time_s": 42.66666889190674
+    },
+    "before": {
+      "physics_frame": 2560,
+      "playing": false,
+      "sim_time_s": 42.66666889190674
+    },
+    "capture_index": 7,
+    "error": null,
+    "physics_match": true,
+    "pose_match": true,
+    "render_attempted": true,
+    "robot_pose_matches": {
+      "carter1": true,
+      "carter2": true,
+      "carter3": true,
+      "carter4": true
+    },
+    "run_id": "4ed4a5cc228f4398ae75202cf309063a",
+    "status": "passed"
+  },
+  "scope_capture_fix": "Actual queued play false->true with exactly unchanged native time/frame and all4poses; next real steps and subsequent captures continued through42simseconds.",
+  "last_observed_sim_s": 42.68333555944264,
+  "sdk_command_observations": {
+    "carter1": {
+      "last_sim_time_s": 42.68333555944264,
+      "last_frame": 2561,
+      "maximum_received_command_sequence": 0,
+      "last_received_command_time_s": null,
+      "nonzero_wheel_target_samples": 0
+    },
+    "carter2": {
+      "last_sim_time_s": 42.68333555944264,
+      "last_frame": 2561,
+      "maximum_received_command_sequence": 0,
+      "last_received_command_time_s": null,
+      "nonzero_wheel_target_samples": 0
+    },
+    "carter3": {
+      "last_sim_time_s": 42.68333555944264,
+      "last_frame": 2561,
+      "maximum_received_command_sequence": 0,
+      "last_received_command_time_s": null,
+      "nonzero_wheel_target_samples": 0
+    },
+    "carter4": {
+      "last_sim_time_s": 42.68333555944264,
+      "last_frame": 2561,
+      "maximum_received_command_sequence": 0,
+      "last_received_command_time_s": null,
+      "nonzero_wheel_target_samples": 0
+    }
+  },
+  "closed_bag_command_summary": {
+    "run_id": "4ed4a5cc228f4398ae75202cf309063a",
+    "source_commit": "028ccad925ebe458ff2bf77e3f2fc9b23023c4b4",
+    "scope": "Read-only SQL and Jazzy official Twist deserialization only after bothOSclosed; bag transport reception is not SDK receipt proof.",
+    "topics": {
+      "/carter4/cmd_vel": {
+        "messages": 0,
+        "nonzero_messages": 0,
+        "first_nonzero": null,
+        "last_nonzero": null,
+        "max_abs_linear_m_s": null,
+        "max_abs_angular_rad_s": null
+      },
+      "/carter3/cmd_vel": {
+        "messages": 0,
+        "nonzero_messages": 0,
+        "first_nonzero": null,
+        "last_nonzero": null,
+        "max_abs_linear_m_s": null,
+        "max_abs_angular_rad_s": null
+      },
+      "/carter1/cmd_vel": {
+        "messages": 1469,
+        "nonzero_messages": 1468,
+        "first_nonzero": [
+          12666667327,
+          0.4,
+          -1.4631244361324153e-06
+        ],
+        "last_nonzero": [
+          42650002224,
+          0.4,
+          8.701527879048004e-06
+        ],
+        "max_abs_linear_m_s": 0.4,
+        "max_abs_angular_rad_s": 2.9557351255638936e-05
+      },
+      "/carter2/cmd_vel": {
+        "messages": 985,
+        "nonzero_messages": 985,
+        "first_nonzero": [
+          22666667849,
+          0.4,
+          8.612378485993153e-06
+        ],
+        "last_nonzero": [
+          42666668892,
+          0.4,
+          4.594585227775062e-06
+        ],
+        "max_abs_linear_m_s": 0.4,
+        "max_abs_angular_rad_s": 2.7490455432146615e-05
+      }
+    }
+  },
+  "bag_sql_opened_only_after_both_OS_closed": true,
+  "cause_limit": "WSL recorder received nonzero Twist messages but SDK accepted none. DDS matched-writer counts and rejected-callback counts were not recorded. Global executor node membership, DDS delivery/deserialization and other causes remain unconfirmed.",
+  "live_audit_limit": "The auxiliary4s read-only peer audit ran after owned shutdown; its empty endpoints cannot describe active command delivery.",
+  "sdk_ParticipantEntitiesInfo_CDR_errors": "Present; also observed in a prior working prefix, so not assigned as causal proof.",
+  "material_revision": 0,
+  "inventory_conservation": [
+    {
+      "balanced": true,
+      "consumed": 0,
+      "in_totes": 0,
+      "initial": 60,
+      "on_hand": 60,
+      "replenished": 0,
+      "sku": "sensor-kit"
+    }
+  ],
+  "completed_orders": 0,
+  "empty_returns_completed": 0,
+  "goal80_complete": false,
+  "windows_closed": true,
+  "linux_closed": true,
+  "cleanup_errors": [],
+  "new_video_or_SDG_generated": false,
+  "original_database_sha256": "f8072e38446ff92993c18a7936fe81f573a86275b08bb8974defa642e4fd8d0c",
+  "next": "071 local45PhysX stable pernode executors plus latest actualDDSmatch/commandaccepted/rejected snapshot;030 actual delivery test, no motion/clock/gate relaxation."
+}

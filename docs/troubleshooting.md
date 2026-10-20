@@ -543,6 +543,18 @@ SDK는 최초 오류를 출력했지만 native 정리 단계에서 반환하지 
 
 촬영 후 재개 수정은 관련 CPU6개·구문2파일을 한 번 통과했다. 성공한 촬영에서 기존 pause/resume 뒤에만 render 전용 callback을 수행하며, 해당 경로는 로컬4.5 PhysX 임무에 한정한다. 최신 체크포인트에 실제 render 전후 시각·프레임·재생 상태·차량 pose 일치 여부를 기록한다. 실제 SDK 복구 효과와 이후 촬영·운송은029에서 확인한다.
 
+029의 실제 첫 촬영에서 render 전 재생 상태는false·갱신 후true였으며124프레임·2.066666774초·네 차량 pose가 정확히 같았다. 이후 실제 물리 시간42초와 후속 촬영까지 진행했다. 마지막 촬영7의 체크포인트도2560프레임·42.666668892초에서 같은 조건을 통과했다. 이 실행에서는 촬영 재개·물리 스텝 검사가 재발하지 않았다. 후속 실패는 아래 ROS 명령 수신 경계로 분리한다.
+
+## FOT-065 — WSL에서 발행한 주행 명령의 SDK 미수신
+
+029는 carter1 FollowPath의 진행 검사에서 status6·error_code105로 종료됐다. SDK의 모든 차량 명령 수신 sequence는0·수신 시각은없음·바퀴 목표는0이었다. 소유 Windows·Linux 종료를 확인한 뒤에만 원본 bag을 read-only SQL과 Jazzy 공식 Twist 역직렬화로 확인했다. carter1 명령1469건 중1468건, carter2 명령985건 모두0이 아닌 명령이며 최대 선속도는0.4m/s다. WSL 기록기의 수신은 SDK 수신을 입증하지 않는다. 당시 SDK의 DDS writer match·거절 callback 계수는 기록되지 않아 정확한 원인은 미확정이다.
+
+SDK에는 ParticipantEntitiesInfo의 FastCDR·Badalloc 오류도 있으나 앞선 주행 성공 구간에서도 관측됐으므로 최초 원인으로 단정하지 않는다.4초짜리 보조 peer 조회는 소유 실행 종료 후 수행돼 빈 endpoint를 보였으며, 실행 중 상태로 인용하지 않는다. 다음 수정은 노드별 고정 executor로 콜백 소유 경계를 유지하고, 최신 진단에 발행자 정보·수신·거절 계수를 함께 남기는 범위다. 주행 허가·watchdog·시각·물리·시작점 기준은 유지한다. 원인을 해결했는지는 새 실제 실행에서 확인한다.
+
+SDK mission-failed는 ROS FollowPath 실패의 후속이다. 양쪽 실행은 자동 정리됐고 정리 오류는 없다. 재고60·소비0·적재0이며 주문 완료·빈 토트 반납은0이다. 원본155파일211,402,568바이트를 D·E에 보존해 해시를 대조했다. 새 영상·SDG를 생성하지 않았다. [029 근거](evidence/local45-transport-029.json)에 원본 명령과 수신 미확인 범위를 남겼다.
+
+071은 로컬4.5 PhysX의 첫 spin 전에 각 소유 노드를 해당 context의 고정 SingleThreadedExecutor에 등록한다. 기존4라운드·비차단 호출 예산을 유지하고 노드/context 정리 전에 executor를 정리한다. 기존1시뮬레이션초 체크포인트에서 명령 수신·거절·마지막 거절 사유·정확한 토픽·발행자 정보를 최신 파일로 기록한다. 설치 Humble Subscription에는 공개된 matched publisher 계수 API가 없어 해당 값은null·지원 불가로 남긴다. 제공되는 node.count_publishers 값은graph_publisher_count로 별도 표기하며 실제 DDS match로 바꾸지 않는다. 관련 CPU8개·구문2파일을 한 번 확인했다.029의 최초 원인 해결 여부는030의 실제 수신과 주행으로 확인한다.
+
 ## 실행 전 확인과 후속 기록
 
 1. 깨끗한 생산자 소스·host commit·설정·실행 ID를 결속한다. 실패한 실행 ID와 원본을 다시 사용하지 않는다.

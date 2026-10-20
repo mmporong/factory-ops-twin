@@ -7,6 +7,7 @@ import argparse
 from datetime import datetime, timezone
 from functools import partial
 import hashlib
+import importlib
 import json
 import math
 from numbers import Integral, Real
@@ -427,6 +428,7 @@ def _setup_robot_ros(
     )
     state: dict[str, Any] = {
         "cmd_vel": 0, "cmd_rejected": 0, "command_sequence": 0, "command_sim_time_s": None,
+        "last_command_rejection": None,
         "odom": 0, "tf": 0, "tf_static": 0, "latest_sim_time": 0.0,
         "scan_front_raw": 0, "scan_rear_raw": 0, "scan_samples": [],
     }
@@ -437,8 +439,10 @@ def _setup_robot_ros(
             state["cmd_vel"] += 1
             state["command_sequence"] += 1
             state["command_sim_time_s"] = float(state["latest_sim_time"])
-        except (TypeError, ValueError):
+        except (TypeError, ValueError) as error:
             state["cmd_rejected"] += 1
+            state["last_command_rejection"] = {
+                "type": type(error).__name__, "message": str(error), "count": state["cmd_rejected"]}
 
     node._g2_cmd_subscription = node.create_subscription(Twist, "cmd_vel", command, 50)
     qos = QoSProfile(depth=50, reliability=ReliabilityPolicy.BEST_EFFORT)
@@ -503,10 +507,113 @@ def _setup_robot_ros(
     return node, state
 
 
+def _shutdown_node_executors(owned: Sequence[tuple[Any, Any]]) -> None:
+    errors = []
+    for node, executor in reversed(owned):
+        try:
+            if node.executor is executor:
+                node.executor = None
+            if getattr(node, "_g2_owned_executor", None) is executor:
+                del node._g2_owned_executor
+        except BaseException as error:
+            errors.append(f"executor detach: {type(error).__name__}: {error}")
+        try:
+            if executor.shutdown(timeout_sec=0.0) is not True:
+                raise RuntimeError("owned executor did not finish shutdown")
+        except BaseException as error:
+            errors.append(f"executor shutdown: {type(error).__name__}: {error}")
+    if errors:
+        raise RuntimeError("; ".join(errors))
+
+
+def _create_node_executors(nodes: Sequence[Any]) -> list[tuple[Any, Any]]:
+    if len({id(node) for node in nodes}) != len(nodes) or any(
+            node.executor is not None or getattr(node, "_g2_owned_executor", None) is not None for node in nodes):
+        raise RuntimeError("owned SDK nodes must be distinct and not registered to another executor")
+    factory = importlib.import_module("rclpy.executors").SingleThreadedExecutor
+    owned: list[tuple[Any, Any]] = []
+    try:
+        for node in nodes:
+            executor = factory(context=node.context)
+            owned.append((node, executor))
+            if not executor.add_node(node) or node.executor is not executor:
+                raise RuntimeError("owned SDK node registration failed")
+            node._g2_owned_executor = executor
+        return owned
+    except BaseException as error:
+        try:
+            _shutdown_node_executors(owned)
+        except BaseException as cleanup_error:
+            add_exception_note(error, f"partial executor cleanup failed: {cleanup_error}")
+        raise
+
+
 def _spin_nodes(rclpy: Any, nodes: Sequence[Any], passes: int = 4) -> None:
     for _ in range(passes):
         for node in nodes:
-            rclpy.spin_once(node, timeout_sec=0.0)
+            executor = getattr(node, "_g2_owned_executor", None)
+            if executor is None:
+                rclpy.spin_once(node, timeout_sec=0.0)
+            else:
+                if node.executor is not executor or executor.context is not node.context:
+                    raise RuntimeError("owned SDK executor/node context or registration changed")
+                executor.spin_once(timeout_sec=0.0)
+
+
+def _command_receipt_state(robots: Mapping[str, dict[str, Any]], *, run_id: str,
+                           physics_frame: int, sim_time_s: float, executor_mode: str) -> dict[str, Any]:
+    rows = {}
+    for robot_id, runtime in robots.items():
+        ros = runtime["ros"]
+        row: dict[str, Any] = {key: ros.get(key) for key in (
+            "command_sequence", "cmd_vel", "cmd_rejected", "command_sim_time_s", "last_command_rejection")}
+        row.update(resolved_cmd_topic=None, matched_publisher_count=None,
+                   graph_publisher_count=None, diagnostic_errors=[])
+        try:
+            subscription = runtime["node"]._g2_cmd_subscription
+        except Exception as error:
+            row["diagnostic_errors"].append({"field": "subscription", "type": type(error).__name__, "message": str(error)})
+        else:
+            try:
+                topic = subscription.topic_name
+                if not isinstance(topic, str) or not topic.startswith("/"):
+                    raise ValueError("subscription topic name is not fully resolved")
+                row["resolved_cmd_topic"] = topic
+            except Exception as error:
+                row["diagnostic_errors"].append({"field": "resolved_cmd_topic", "type": type(error).__name__, "message": str(error)})
+            try:
+                getter = getattr(subscription, "get_publisher_count", None)
+                if not callable(getter):
+                    raise AttributeError("installed Subscription.get_publisher_count unavailable; DDS match unknown")
+                count = getter()
+                if isinstance(count, bool) or not isinstance(count, Integral) or count < 0:
+                    raise ValueError("subscription matched publisher count is not a nonnegative integer")
+                row["matched_publisher_count"] = int(count)
+            except Exception as error:
+                row["diagnostic_errors"].append({"field": "matched_publisher_count", "type": type(error).__name__, "message": str(error)})
+            try:
+                if row["resolved_cmd_topic"] is None:
+                    raise ValueError("resolved command topic unavailable; graph publisher count unknown")
+                count = runtime["node"].count_publishers(row["resolved_cmd_topic"])
+                if isinstance(count, bool) or not isinstance(count, Integral) or count < 0:
+                    raise ValueError("graph publisher count is not a nonnegative integer")
+                row["graph_publisher_count"] = int(count)
+            except Exception as error:
+                row["diagnostic_errors"].append({"field": "graph_publisher_count", "type": type(error).__name__, "message": str(error)})
+        rows[robot_id] = row
+    return {"run_id": run_id, "physics_frame": physics_frame, "sim_time_s": sim_time_s,
+        "executor_mode": executor_mode, "robots": rows,
+        "scope": "existing callback counters and readbacks only; graph publisher count is not DDS match; unknown counts are null, not zero"}
+
+
+def _save_command_receipt_state(output: Path, robots: Mapping[str, dict[str, Any]], result: dict[str, Any],
+                                *, run_id: str, physics_frame: int, sim_time_s: float,
+                                executor_mode: str) -> None:
+    try:
+        _atomic_json(output / "command-receipt-state.json", _command_receipt_state(robots,
+            run_id=run_id, physics_frame=physics_frame, sim_time_s=sim_time_s, executor_mode=executor_mode))
+    except Exception as error:
+        result["command_receipt_checkpoint_error"] = f"{type(error).__name__}: {error}"
 
 
 def _ros_context_details(rclpy: Any, node: Any, expected_domain: int) -> dict[str, Any]:
@@ -911,6 +1018,8 @@ def _run(
     app = rclpy = clock_node = session = timeline = np = rep = None
     output: Path | None = None
     robot_nodes: list[Any] = []
+    node_executors: list[tuple[Any, Any]] = []
+    executor_mode = "legacy_global_spin_once"
     lidar_sensors: list[Any] = []
     robots: dict[str, dict[str, Any]] = {}
     robot_handles: dict[str, Any] = {}
@@ -926,6 +1035,7 @@ def _run(
         "schema_version": 1, "run_id": args.run_id, "scenario_id": args.scenario,
         "qualification": "local45_" + qualification if local_sdk45 else qualification,
         "status": "running", "stage": phase,
+        "ros_executor_mode": executor_mode,
     }
     try:
         if not re.fullmatch(r"[0-9a-f]{32}", args.run_id):
@@ -1173,6 +1283,10 @@ def _run(
             robot_nodes.append(node)
             if local_sdk45:
                 ros["context"] = _ros_context_details(rclpy, node, config["ros_domain_id"])
+        if local_sdk45 and lidar_backend == "physx_planar":
+            node_executors = _create_node_executors([clock_node, *robot_nodes])
+            executor_mode = "dedicated_single_threaded_executor_per_node"
+            result["ros_executor_mode"] = executor_mode
         if local_sdk45:
             _atomic_json(output / "ros-contexts.json", {"run_id": args.run_id,
                 "contexts": {key: value["ros"]["context"] for key, value in robots.items()}})
@@ -1383,6 +1497,9 @@ def _run(
                     "publication": world_clock.report(), "sdk_received_count": len(clock_stamps),
                     "sdk_last_received_clock_s": clock_stamps[-1] if clock_stamps else None,
                     "scope": "owned publisher and SDK self-receipt; WSL consumers require separate evidence"})
+                if node_executors:
+                    _save_command_receipt_state(output, robots, result, run_id=args.run_id,
+                        physics_frame=physics_frame, sim_time_s=stamp, executor_mode=executor_mode)
                 last_clock_report_frame = physics_frame
             all_zero = True
             for robot_id, runtime in robots.items():
@@ -1553,6 +1670,8 @@ def _run(
                 "sdk_last_observed_clock_s": clock_stamps[-1] if clock_stamps else None,
                 "global_clock_endpoint_count_verified": result.get("world_clock_owner", {}).get("publisher_endpoint_count") == 1}
         actions = []
+        if node_executors:
+            actions.append(lambda: _shutdown_node_executors(node_executors))
         if session is not None and rep is not None:
             actions.append(lambda: rep.orchestrator.set_capture_on_play(False))
         render_products_cleanup = getattr(scene_extension, "cleanup_render_products", None)
