@@ -1,0 +1,92 @@
+{
+  "task_id": "local45-parking-brake-api-062",
+  "attempt": 1,
+  "contract_revision": 62,
+  "owner": "control",
+  "ack": true,
+  "status": "installed_source_advice_complete",
+  "document_encoding": "ASCII",
+  "conclusion": "SDK4.5 supports encoder-position wheel hold through indexed ArticulationAction and explicit PD gains. Do not rely on a position-mode name switch to restore nonzero stiffness. Effectiveness and numeric gains require root runtime readback and the bounded physical comparison.",
+  "sources": {
+    "facade": {
+      "path": "C:/Users/LIMMM/factory-ops-twin/factory_ops/isaac45_runtime.py",
+      "sha256": "8acc2355db040b9c6730360beac13575af95535ed843f55e1b67c3926dffc78d"
+    },
+    "g2": {
+      "path": "C:/Users/LIMMM/factory-ops-twin/scripts/isaac/g2_scene.py",
+      "sha256": "5b4cc759dc8750660b10af94faee645e22b1dbe796b000d724a5545238641261"
+    },
+    "wheel": {
+      "path": "E:/IsaacSim/isaac-sim-4.5.0/exts/isaacsim.robot.wheeled_robots/isaacsim/robot/wheeled_robots/robots/wheeled_robot.py",
+      "sha256": "1547480036ff9f66291aaaebbf96f53b4f08a0a8621d93aa36252b9c07f9a6f0"
+    },
+    "controller": {
+      "path": "E:/IsaacSim/isaac-sim-4.5.0/exts/isaacsim.core.api/isaacsim/core/api/controllers/articulation_controller.py",
+      "sha256": "033eb5d590a88993df6695843922008b831b1a8963f0d4a69fc4d242ebfc49a8"
+    },
+    "single": {
+      "path": "E:/IsaacSim/isaac-sim-4.5.0/exts/isaacsim.core.prims/isaacsim/core/prims/impl/single_articulation.py",
+      "sha256": "c31805f8a18846ae84fd38527f1625a77c9365e3c66985f71408e9ca59e09098"
+    },
+    "view": {
+      "path": "E:/IsaacSim/isaac-sim-4.5.0/exts/isaacsim.core.prims/isaacsim/core/prims/impl/articulation.py",
+      "sha256": "cc6f2781e4899c5fddb272c247b32b58134f6114bb57135b15ec71a859d2f54a"
+    },
+    "action": {
+      "path": "E:/IsaacSim/isaac-sim-4.5.0/exts/isaacsim.core.utils/isaacsim/core/utils/types.py",
+      "sha256": "133ce02af28c80fe76d20d333518b4318f5313cfdeaab917d7097bbdad914472"
+    }
+  },
+  "supported_api": [
+    {
+      "source": "wheel:106,114,184; single:311,464,823",
+      "signature": "native.wheel_dof_indices; native.get_dof_index(dof_name: str); native.get_wheel_positions(); native.get_joint_positions(joint_indices=None); native.get_articulation_controller()",
+      "use": "After World.reset/initialization, resolve the two configured wheel names and verify distinct valid indices. get_wheel_positions reads actual joint positions in configured wheel order; copy and finite-check both encoder angles. The facade already obtains this initialized native robot through _ready()."
+    },
+    {
+      "source": "controller:96,115,167,195",
+      "signature": "controller.get_gains() -> (kps, kds); controller.set_gains(kps=None, kds=None, save_to_usd=False); controller.get_max_efforts(); controller.get_effort_modes()",
+      "use": "Controller gain arrays cover ALL DOFs. Preserve copies of original wheel Kp/Kd, effort limits and force/acceleration modes after reset. For the public-controller route, copy CURRENT full gain vectors, replace ONLY wheel entries, then set_gains; restore only saved wheel entries in current vectors on release. This preserves every other joint value. Do not pass a two-element gain vector to this all-DOF setter."
+    },
+    {
+      "source": "view:2965,3105,2781,2571",
+      "signature": "view.set_gains(kps=None, kds=None, indices=None, joint_indices=None, joint_names=None, save_to_usd=False); view.get_gains(indices=None, joint_indices=None, joint_names=None, clone=True); view.get_max_efforts(indices=None, joint_indices=None, joint_names=None, clone=True); view.get_effort_modes(indices=None, joint_indices=None, joint_names=None)",
+      "use": "An indexed alternative changes only the two wheel gains: one-articulation view gains have shape (1,2), with joint_indices=wheel_indices and indices=[0]. Do not confuse articulation indices with DOF indices or supply joint_names and joint_indices together. Existing controller._articulation_view is installed implementation access, not a new public facade contract. No new World/reset/view owner is needed."
+    },
+    {
+      "source": "action:166; single:934; controller:38; view:1655-1686",
+      "signature": "ArticulationAction(joint_positions=None, joint_velocities=None, joint_efforts=None, joint_indices=None); native.apply_action(control_actions)",
+      "use": "Hold with native.apply_action(ArticulationAction(joint_positions=latched_encoder_pair, joint_velocities=zero_pair, joint_indices=wheel_indices)). Both vectors have length 2. Indexed position/velocity actions preserve other target entries. Leave joint_efforts=None; do not add an effort action. Apply targets before the next normal physics update, without changing physical state."
+    },
+    {
+      "source": "controller:127,139; view:3226,3323",
+      "signature": "controller.switch_control_mode(mode: str); controller.switch_dof_control_mode(dof_index: int, mode: str); view.switch_control_mode(mode, indices=None, joint_indices=None, joint_names=None)",
+      "use": "These implement PD gain changes, not a separate parking lock. Avoid the controller's global mode switch. Explicit selected wheel gain setting/restoration is safer than relying on cached defaults."
+    }
+  ],
+  "minimal_transition_plan": [
+    "Initialize once after reset: save original two wheel gains and effort/mode readback; verify the intended velocity baseline has zero wheel Kp and appropriate nonzero damping. Do not infer values from the asset name.",
+    "On first exact all-zero FINITE wheel target, including startup: latch a copy of the two CURRENT encoder angles once. Set only wheel Kp to a root-authored positive hold gain with verified damping, preserving other gains and existing max efforts/force modes. Submit the indexed position target plus zero velocity in the same control boundary before physics advances.",
+    "While targets remain exactly zero, retain the same anchor and reapply its position plus zero velocity. Never re-anchor every tick, modulo/zero the encoder, use GT pose, or rewrite state. Re-anchoring would follow creep instead of opposing it.",
+    "On either wheel target becoming nonzero, restore the saved wheel velocity gains BEFORE applying the indexed nonzero velocity target. Use actual profiled wheel output, preserving existing deceleration and authorization behavior. No new threshold, start tolerance, lease, scope or time policy is required."
+  ],
+  "installed_pitfalls": [
+    "wheel:159-181 expands wheel actions to full-DOF zero-filled arrays without joint_indices. Position hold through that wrapper can target every non-wheel joint at zero. Use indexed native.apply_action for hold AND resumed velocity to preserve other targets.",
+    "wheel:198-201 switches all joints to velocity on post_reset. view:3102 overwrites cached _default_kps/_default_kds after EVERY set_gains; view:3288-3308 reuses these defaults. After velocity sets Kp=0, switching to position alone can leave Kp=0. Save original values externally and explicitly set hold/restore gains.",
+    "wheel:136-145 get_wheel_velocities references the misspelled _wheel_dof_indicies. For diagnostic wheel speeds, use native.get_joint_velocities() indexed by verified wheel indices instead.",
+    "single:494-502 warns that set_joint_velocities immediately changes state. set_wheel_positions/set_wheel_velocities call state setters; they are not physical brake targets. Do not use these, base teleporting, kinematic locking, pose rewriting or odometry zeroing."
+  ],
+  "gain_units_and_limits": {
+    "source_proof": "view:3070-3098 and 3208-3218 convert angular USD degree-domain gain values to/from physics API values. Use matching get_gains/set_gains readback units; do not paste raw USD angular stiffness/damping values. view:2571-2593 distinguishes force and acceleration effort modes.",
+    "dimensional_interpretation": "For rotational force drives, PD torque gains have units N*m/rad and N*m*s/rad. For acceleration drives the corresponding angular-acceleration gains have units 1/s^2 and 1/s. This is dimensional interpretation, not measured asset configuration.",
+    "numeric_values": "No gains or new effort limits proposed. Read actual wheel gains, mode, max effort and applied targets; keep original effort limits and drive type unchanged. A finite positive position gain does not guarantee no chassis slip, adequate torque or stable contact. Root must select/read back a bounded gain and compare physical encoder/GT drift."
+  },
+  "evidence_boundary": {
+    "reported_by_root": "Closed023 C4 physical/encoder creep under zero targets; unchanged ROS start gate 0.15m failed. No closed artifacts were opened here.",
+    "source_confirmed": "Installed APIs, array/index semantics, target update path and cached-gain/wrapper pitfalls only.",
+    "unconfirmed": "Exact creep force/contact/drive cause, runtime gain/effort values, actual brake effectiveness and SDK behavior under the proposed change.",
+    "runtime_owner": "Root implements and runs one bounded stationary physical comparison. GT is evaluation only; no GT steering or tolerance relaxation."
+  },
+  "performed": "Read-only source lookup and SHA256 capture. No product edits, tests, AST, SDK/GPU/ROS/WSL/bag/Git operations, dependencies or new agents.",
+  "written_paths": ["coordination/collab/results/local45-parking-brake-api-062.json"]
+}

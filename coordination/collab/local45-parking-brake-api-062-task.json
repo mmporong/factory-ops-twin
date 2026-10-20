@@ -1,0 +1,21 @@
+{
+  "task_id": "local45-parking-brake-api-062",
+  "attempt": 1,
+  "contract_revision": 62,
+  "owner": "control",
+  "read_paths": [
+    "factory_ops/isaac45_runtime.py",
+    "scripts/isaac/g2_scene.py",
+    "E:/IsaacSim/isaac-sim-4.5.0/exts"
+  ],
+  "write_paths": [
+    "coordination/collab/results/local45-parking-brake-api-062.json"
+  ],
+  "goal": "Bounded installed-SDK API advice for physical zero-command wheel parking hold.023 closedfailed320.58sim: C4GTy20.4977->20.1433m and encoderwheelangle.016->2.55rad underallzero wheel targets. ROSobserved0.35m fromP4 exceedsunchanged0.15m start gate. This is real physicalcreep, not merelyodometry bias. Exact force/drive causeunconfirmed. Root owns evidence/media/preservation and implementation/probe.",
+  "acceptance": [
+    "Read installed4.5 WheeledRobot/ArticulationController/View APIs andcurrentfacade; no product edits, tests/AST, SDK/GPU/ROS/WSL/bag/Git/newagents. Do notread fullhistoricdocs. One small ASCII JSON result.",
+    "Return exact supported API/signatures/sourcepaths for changing ONLYtwo wheel gains/modes andtargets, preservingallotherjoints; reading gains/maxefforts/currentwheelangles; switchfinite encoderposition-hold atzero target thenrestore originalvelocitymode onnonzero. Position feedback isencoder; GT mayonlyevaluate. No teleport/kinematicbase/pose rewrite/odomzeroing/tolerance widening.",
+    "Explain safest minimal approach and any API pitfalls (wheelvector vsallDOFs; per-jointgain units; apply positionANDzero velocity commands; anchor latching onlyonce attransition; original driveeffortlimits). Do notinvent numericgains frommemory; indicate runtime readbackneeded. Rootwilldoone fastno-render physicallystationary comparison beforeanotherfullfleet.",
+    "Do not claim SDKeffect or exactrootforcecauseverified. All4joint/ROSlease/scope/timeconditions unchanged."
+  ]
+}

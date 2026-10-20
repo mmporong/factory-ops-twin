@@ -1,0 +1,27 @@
+{
+  "task_id": "local45-wheel-hold-063",
+  "attempt": 1,
+  "contract_revision": 63,
+  "owner": "control",
+  "reviewer": "root",
+  "inputs": [
+    "coordination/collab/results/local45-parking-brake-api-062.json",
+    "docs/evidence/local45-transport-023.json"
+  ],
+  "write_paths": [
+    "factory_ops/isaac45_runtime.py",
+    "factory_ops/wheel_parking_hold.py",
+    "tests/test_wheel_parking_hold.py",
+    "coordination/collab/results/local45-wheel-hold-063.json"
+  ],
+  "goal": "Implement opt-in finite physical encoder-position parking hold for SDK4.5 wheel pair; root ownsG2routing, actualno-renderprobe, docs/Git. Notalone; do nottouchroot/unownedfiles.",
+  "acceptance": [
+    "Onlylistedfiles. No GPU/SDK/ROS/WSL/bag/Git/newagents/deps, no broadoldtests. One focusednewCPU suite for meaningful wheelindex/nonwheelpreservation, anchorlatch/release/restore, invalidgains. SDK3.10 coldAST ifneededonce. ReturnsmallASCIIJSON sourceSHA/results/API.",
+    "Add optional keyword wheel_parking_hold:bool=False toRuntime45.WheeledRobot; defaultFalse EXACToldwrapperbehavior. RootG2 enablesonlylocal45PhysX, leavingcanonical62/defaultRTX modelunchanged. ProbeusesFalsebaseline andTruehold simultaneously. Keepexisting2argcallsvalid.",
+    "Useinstalled indexed native.apply_action(Action(...joint_indices=verifiedwheelindices)). Preserveallotherjointgains/targets, originalwheelKp/Kd/maxefforts/effortmodes. Do NOTusefullDOFzero-filling wheelwrapper foroptinhold/release. No immediate state setters/kinematic/GTinput/odometrychanges.",
+    "OnfirstEXACTbothwheelprofiledtargets0, copyactualwheelencoderpaironce. Apply positivepositiongain andoriginaldamping ONLY2wheels; indexedlatchedposition+zero velocitytargets beforephysics. Whileallzero,retainoriginalanchor unchanged. Onanynonzero,restoreoriginalwheelgains BEFORE indexedvelocitytarget; otherjointsnotchanged. Keepaccel/decel/leaseprofiledecisionsunchanged.",
+    "Root-authored response_time_s=0.2s (designinput, notmeasured) mayderive holdKp=originalwheelKd/response_time_s; Kdoriginalretained. ValidatefinitepositiveKd, originalvelocityKp==0 andfinitepositiveoriginaleffortlimit beforeenabling; no arbitraryunboundedgain/effortincrease. Readbackoriginalmode/gains; numericaleffectunverifieduntilrootprobe. IfAPIdtype/indexdetailsambiguoususeactualinstalledsource; no madeupAPI.",
+    "Expose facade parking_brake_report() JSON-safe original/readbackgain/effort/mode/indices, authoredresponse, activeanchor/state/transitioncounts; noGT. Rootwillpersiststartup+probe reports. ModulemustremainSDKcoldimportable; useNumPyonlyinsideSDKpath/adapter ifneeded. Newhelpercanbeomittedifunnecessary butlistedpathownershipreserved.",
+    "Do notrelax0.15mstartgate, TTLs, clocks, reservations, deadlines; no sim resets/pose/encoderzeroing/re-anchor eachtick. Failunsafeinputs beforeapplyingpartialtargetupdates. Rootwillrunone physicalstationary+drivecomparison aftersourcefreeze, notanotherfullfleetuntilverified."
+  ]
+}

@@ -1,0 +1,141 @@
+{
+  "schema_version": 1,
+  "run_id": "66d8a24961714c9fb0404f62196bac9c",
+  "producer_source_commit": "3a95baa07e5274fd072dd8d1fe870a52a51dee80",
+  "status": "failed_carter4_authored_chunk_start_tolerance",
+  "last_observed_sim_s": 320.5833500530571,
+  "primary_ros_error": {
+    "message": "observed start is outside authored chunk start tolerance",
+    "traceback": "Traceback (most recent call last):\n  File \"/mnt/d/FactoryOpsRuntime/local45-transport-023/source/scripts/ros/g3_mission.py\", line 1821, in run_mission\n    geometry = qualify_computed_path(book, rt[\"chunk\"], [[item[\"position_xyz_m\"][0], item[\"position_xyz_m\"][1]] for item in payload[\"poses\"]],\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/mnt/d/FactoryOpsRuntime/local45-transport-023/source/factory_ops/fleet_execution.py\", line 238, in qualify_computed_path\n    raise ValueError(\"observed start is outside authored chunk start tolerance\")\nValueError: observed start is outside authored chunk start tolerance\n",
+    "type": "ValueError"
+  },
+  "secondary_errors": [
+    "SDK mission-failed after ROS error",
+    "RuntimeError: SDK did not finish cleanup within90s after ROS foreground client exit"
+  ],
+  "sdk_report_status": "running",
+  "sdk_report_limit": "Original report remained running/incomplete; host has closed the owned Job. Do not infer an SDK pass.",
+  "initial_hold_barrier": {
+    "status": "ready",
+    "actual_receiver_clock_s": 5.95000031,
+    "latched_sim_time_s": 5.933333643,
+    "candidate_observed_clock_s": {
+      "carter1": 5.916666975,
+      "carter2": 5.916666975,
+      "carter3": 5.916666975,
+      "carter4": 5.916666975
+    },
+    "qualified_at_clock_s": {
+      "carter1": 5.933333643,
+      "carter2": 5.933333643,
+      "carter3": 5.933333643,
+      "carter4": 5.933333643
+    }
+  },
+  "startup_all4_ready": true,
+  "backend": "physx_collision_planar",
+  "last_carter4_path_clock": {
+    "admitted_clock_ns": 320383350043,
+    "first_observed_clock_ns": 320383350043,
+    "path_stamp_ns": 320350016708,
+    "waited_wall_s": 0.0
+  },
+  "failed_robot": "carter4",
+  "authored_anchor_xy_m": [
+    17.0,
+    20.5
+  ],
+  "start_tolerance_m": 0.15,
+  "last_observed_ros_pose": {
+    "run_id": "66d8a24961714c9fb0404f62196bac9c",
+    "scenario_id": "fleet4_transport_normal",
+    "robot_id": "carter4",
+    "sim_time_s": 320.350016708,
+    "x_m": 16.99661720525438,
+    "y_m": 20.146460036985065,
+    "yaw_rad": -1.587294185013711,
+    "stamp_s": 320.300016705
+  },
+  "observed_anchor_distance_m": 0.35355614652964606,
+  "physical_stationary_evaluation": {
+    "samples": 19112,
+    "all_wheel_targets_zero": true,
+    "first_sim_s": 2.0666667744517326,
+    "last_sim_s": 320.5833500530571,
+    "first_gt_xyz_m": [
+      16.9999942779541,
+      20.497705459594727,
+      -1.8328428268432617e-06
+    ],
+    "last_gt_xyz_m": [
+      16.998470306396484,
+      20.143266677856445,
+      -3.427267074584961e-07
+    ],
+    "gt_delta_xyz_m": [
+      -0.0015239715576171875,
+      -0.35443878173828125,
+      1.4901161193847656e-06
+    ],
+    "gt_xy_displacement_m": 0.35444205801431833,
+    "first_wheel_angles_rad": [
+      0.016165675595402718,
+      0.016105666756629944
+    ],
+    "last_wheel_angles_rad": [
+      2.550619125366211,
+      2.52433180809021
+    ],
+    "last_encoder_odometry": {
+      "angular_rad_s": -0.0011341615454307707,
+      "linear_m_s": 0.0015200614201141642,
+      "x_m": 0.35300238786129007,
+      "y_m": -0.0011470677925531332,
+      "yaw_rad": -0.008885586793894626
+    },
+    "scope": "GT used for evaluation only, never steering; exact force/drive cause unconfirmed"
+  },
+  "operational_pickups": 2,
+  "process_consumed_units": 2,
+  "empty_return_jobs": 1,
+  "completed_orders": 0,
+  "empty_returns_completed": 0,
+  "conservation": [
+    {
+      "balanced": true,
+      "consumed": 2,
+      "in_totes": 2,
+      "initial": 60,
+      "on_hand": 56,
+      "replenished": 0,
+      "sku": "sensor-kit"
+    }
+  ],
+  "payload_scope": "Navigation arrival/stop linked operational ledger and visual tote projection; no payload contact/lift validation",
+  "virtual_charge_released_observed": true,
+  "actual_motion_robots": [
+    "carter1",
+    "carter2",
+    "carter3"
+  ],
+  "carter4_business_motion_verified": false,
+  "windows_closed": true,
+  "linux_closed": true,
+  "cleanup_errors": [],
+  "original_database_bytes": 636702720,
+  "original_database_sha256": "5734fda3fd6724acf5f1f5dd4ffaef55d8688999297eac11f642e680771a6c2a",
+  "bag_sql_opened": false,
+  "partial_media": {
+    "capture_count": 26,
+    "nominal_playback_factor": 12,
+    "seconds": 25.4,
+    "output_sha256": "b6f4ae9a8d4abae0ee886206e90b74965164a42c446d0f0486a78a85d6c1a29f",
+    "full_decode_passed": true,
+    "sparse_images_held": true,
+    "interpolation": false,
+    "mission_failed_caption": true
+  },
+  "goal80_complete": false,
+  "raw_originals": "D:\\FactoryOpsRuntime\\local45-transport-023",
+  "next": "Installed wheel-drive API readback and one small physical stationary/brake comparison; retain0.15m start gate, timestamps and original measurements."
+}

@@ -93,11 +93,26 @@ class _StageUtils:
 
 
 class _Robot:
-    def __init__(self, runtime, prim_path, wheel_dof_names):
+    def __init__(self, runtime, prim_path, wheel_dof_names, *, wheel_parking_hold=False):
         self._runtime = runtime
         self.prim_path = prim_path
         self._wheel_names = tuple(wheel_dof_names)
         self._native: Any = None
+        self._parking_hold_enabled = wheel_parking_hold
+        self._parking_hold: Any = None
+
+    def _initialize_parking_hold(self):
+        if self._parking_hold_enabled:
+            from factory_ops.wheel_parking_hold import WheelParkingHold
+
+            self._parking_hold = WheelParkingHold(self._native, self._wheel_names, self._runtime._bindings.Action)
+
+    def parking_brake_report(self):
+        if self._parking_hold is not None:
+            return self._parking_hold.report()
+        return {"enabled": self._parking_hold_enabled,
+                "state": "not_initialized" if self._parking_hold_enabled else "disabled",
+                "wheel_names": list(self._wheel_names)}
 
     def _ready(self):
         if self._native is None or not self._runtime.SimulationManager.ready:
@@ -121,7 +136,12 @@ class _Robot:
             raise ValueError("wheel velocity vector shape differs from configured wheels")
         if not all(_finite(value) for value in vector):
             raise ValueError("wheel velocity vector must be finite")
-        native.apply_wheel_actions(self._runtime._bindings.Action(joint_velocities=vector))
+        if self._parking_hold_enabled:
+            if self._parking_hold is None:
+                raise RuntimeError("parking hold was not initialized after World reset")
+            self._parking_hold.apply(vector)
+        else:
+            native.apply_wheel_actions(self._runtime._bindings.Action(joint_velocities=vector))
 
 
 class _SimulationManager:
@@ -164,6 +184,8 @@ class _SimulationManager:
         actual_scenes = [str(prim.GetPath()) for prim in stage.Traverse() if prim.IsA(bindings.physics.Scene)]
         if actual_scenes != [scene_path]:
             raise RuntimeError("World changed the existing PhysicsScene identity")
+        for robot in self._runtime._robots:
+            robot._initialize_parking_hold()
         self.ready = True
         return self.world
 
@@ -314,17 +336,19 @@ class Runtime45:
     def tf_broadcaster_types():
         return (_TfMessagePublisher, lambda node: _TfMessagePublisher(node, static=True))
 
-    def WheeledRobot(self, prim_path, wheel_dof_names):
+    def WheeledRobot(self, prim_path, wheel_dof_names, *, wheel_parking_hold: bool = False):
         if self.SimulationManager.world is not None:
             raise RuntimeError("register robot before World setup")
         if isinstance(wheel_dof_names, (str, bytes)):
             raise ValueError("wheel names must be a sequence of joint names")
         names = tuple(wheel_dof_names)
+        if type(wheel_parking_hold) is not bool or (wheel_parking_hold and len(names) != 2):
+            raise ValueError("parking hold must be bool and requires exactly two wheels when enabled")
         if (not isinstance(prim_path, str) or not prim_path.startswith("/") or not names
                 or any(not isinstance(name, str) or not name for name in names) or len(set(names)) != len(names)
                 or any(robot.prim_path == prim_path for robot in self._robots)):
             raise ValueError("robot path/wheel identities must be nonempty and distinct")
-        robot = _Robot(self, prim_path, names)
+        robot = _Robot(self, prim_path, names, wheel_parking_hold=wheel_parking_hold)
         self._robots.append(robot)
         return robot
 

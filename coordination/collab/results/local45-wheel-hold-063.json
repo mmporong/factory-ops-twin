@@ -1,0 +1,69 @@
+{
+  "task_id": "local45-wheel-hold-063",
+  "attempt": 1,
+  "contract_revision": 63,
+  "owner": "control",
+  "reviewer": "root",
+  "ack": true,
+  "accepted": false,
+  "api_ready": true,
+  "status": "implemented_focused_CPU_and_cold_AST_passed_pending_root_physical_probe",
+  "document_encoding": "ASCII",
+  "written_paths": [
+    "factory_ops/isaac45_runtime.py",
+    "factory_ops/wheel_parking_hold.py",
+    "tests/test_wheel_parking_hold.py",
+    "coordination/collab/results/local45-wheel-hold-063.json"
+  ],
+  "baseline_facade_sha256": "8acc2355db040b9c6730360beac13575af95535ed843f55e1b67c3926dffc78d",
+  "source_sha256": {
+    "factory_ops/isaac45_runtime.py": "0073287ff74c4bd124542c8277b18398ba0206c8d3c719ecd0954730d361a03c",
+    "factory_ops/wheel_parking_hold.py": "ca6780e20ecdfc6fdfa340a692cd4b45749fbe0615c08255cf3165daa85a11ee",
+    "tests/test_wheel_parking_hold.py": "f08e322abc3f5046a3ee7cc29f011ad18753c161f523cbc7ec2832ff3f418805"
+  },
+  "root_api": {
+    "register": "runtime.WheeledRobot(prim_path, wheel_dof_names, *, wheel_parking_hold: bool = False)",
+    "enable_example": "robot = runtime.WheeledRobot('/World/Carter', wheel_dof_names, wheel_parking_hold=True)",
+    "initialization": "Existing setup_simulation performs the same single World.reset, then initializes enabled hold helpers from actual native readback before marking the facade ready. Helpers add no physics updates or resets.",
+    "apply": "robot.apply_wheel_actions(profiled_two_wheel_vector) keeps its existing signature. Disabled mode uses the original native.apply_wheel_actions wrapper unchanged. Enabled mode uses indexed native.apply_action for hold and motion.",
+    "report": "robot.parking_brake_report() -> JSON-safe dict; disabled/not_initialized before helper readiness, otherwise velocity/hold/faulted with original/readback wheel gains, efforts, modes, names/indices, authored response, anchor, counters and failure.",
+    "report_example": "startup_report = robot.parking_brake_report(); probe_report = robot.parking_brake_report()",
+    "routing": "Root owns G2 selection and enables this option only for local45 PhysX. G2, canonical62 and default RTX routing were not edited here."
+  },
+  "behavior": [
+    "Verify exactly two distinct configured native wheel indices, original zero velocity Kp, finite positive wheel Kd and max effort, and force/acceleration mode readback before enabling. Reject invalid baseline or nonfinite derived gains without drive writes.",
+    "Authored response_time_s=0.2, not measured. Hold Kp=original wheel Kd/0.2; original wheel damping, effort limits and effort modes are preserved. No mode helper or effort-limit setter is used.",
+    "On the first exact two-wheel zero output, copy actual encoder angles once. Apply indexed encoder position targets AND zero velocity with positive hold gain. Repeated zero outputs reuse the same anchor without re-reading it.",
+    "On any nonzero wheel output, restore original wheel Kp/Kd before applying indexed velocity targets; clear the active anchor only after successful application. A later zero transition latches new actual encoder angles.",
+    "Public controller gain setters require full DOF arrays. Copy current full vectors and replace only the two wheel entries; validate conversion preserves other gains and original damping. Indexed action vectors preserve other joint targets. No full-DOF zero-filled wheel wrapper is used in enabled mode.",
+    "Validate input and converted target/gain arrays before writes. Read back changed gains and unchanged effort/modes before target application. Native write/readback failures propagate and fault the helper; failed transitions are not counted as successful or silently retried."
+  ],
+  "validation": [
+    {
+      "kind": "one focused new CPU suite",
+      "cwd": "C:/Users/LIMMM/factory-ops-twin",
+      "command": "& './.venv/Scripts/python.exe' -B -m unittest tests.test_wheel_parking_hold -v",
+      "result": "8 PASS",
+      "elapsed_unittest_s": 0.010,
+      "exit_code": 0,
+      "scope": "Nonsequential wheel indices and both force/acceleration readback; nonwheel gains/targets and physical-state preservation; one-time encoder anchor; exact nonzero release ordering/original gain restoration/re-latch; invalid baseline/target/encoder/conversion rejection; native failure accounting; default wrapper compatibility; opt-in facade routing; initialization after reset; SDK/NumPy-cold module imports.",
+      "limit": "Native API and arrays are substituted CPU protocols. This is not actual SDK dtype, contact, chassis-drift or brake-effect validation. No previous/full test suite repeated."
+    },
+    {
+      "kind": "one cold Python3.10 AST pass",
+      "cwd": "C:/Users/LIMMM/factory-ops-twin",
+      "command": "stdin ast.parse/hashlib script | & 'E:/IsaacSim/isaac-sim-4.5.0/kit/python/python.exe' -B -S -",
+      "python": "3.10.15",
+      "files": ["factory_ops/isaac45_runtime.py", "factory_ops/wheel_parking_hold.py", "tests/test_wheel_parking_hold.py"],
+      "action": "Read the three source files, parse AST and emit SHA256. No product or SDK import.",
+      "result": "3 files PASS",
+      "exit_code": 0
+    }
+  ],
+  "limits": [
+    "Physical effect, settling response and the force/contact cause of closed023 creep remain unverified. Root owns the bounded stationary/drive physical comparison and acceptance.",
+    "SDK API exceptions can occur after a gain write; the helper records a fault and does not claim target success or transactional rollback. Root retains runtime lifecycle ownership.",
+    "No GT input, immediate state setter, pose/encoder/odometry rewrite, kinematic lock, tolerance/TTL/clock/reservation/deadline change, or acceleration/deceleration profile change.",
+    "Only listed paths were written. No SDK/GPU/ROS/WSL/bag/Git actions, dependencies, agents, servers or persistent processes started."
+  ]
+}

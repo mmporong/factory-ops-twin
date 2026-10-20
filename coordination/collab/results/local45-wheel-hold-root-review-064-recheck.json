@@ -1,0 +1,20 @@
+{
+  "task_id": "local45-wheel-hold-root-review-064",
+  "attempt": 1,
+  "contract_revision": 64,
+  "mode": "affected_source_recheck_only",
+  "document_encoding": "ASCII",
+  "verdict": "PASS",
+  "source_sha256": {
+    "artifacts/local45/probe_parking_hold_063.py": "f3dfc0c6d4cbc963ca9900f88d4f8a446822a94b86cf99793974ded267b7deb1"
+  },
+  "expected_digest_matched": true,
+  "resolved_issue": {
+    "id": "WHP064-001",
+    "status": "resolved_in_affected_source",
+    "evidence": "Line93 converts every wheel target to a builtin float before storing it in the report. Lines131-139 place final save/print inside try/finally, so an existing app still receives an app.close attempt if metadata save or print raises. Host closure remains independently required."
+  },
+  "findings": [],
+  "limits": "Only affected target serialization and final cleanup lines plus the new probe digest were checked. No full-source, G2 or accepted063 rereview; no tests, AST, SDK/GPU/ROS/WSL/bag/Git operations or agents. Physical comparison and runtime/host closure are not accepted by this source check.",
+  "original_review_preserved": true
+}

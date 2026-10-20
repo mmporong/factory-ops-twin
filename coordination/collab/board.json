@@ -1,5 +1,5 @@
 {
-  "revision": 60,
+  "revision": 64,
   "updated_at": "2026-10-20T10:08:19.979059+00:00",
   "scope": {
     "excluded": "실물 로봇 실행, 새 유료 서비스/에셋, 공개 배포",
@@ -20,7 +20,7 @@
       "role": "dashboard frontend author",
       "name": "control",
       "agent_kind": "codex",
-      "status": "060 product accepted; root023 integration; no product changes pending",
+      "status": "063implementation/064boundedreview accepted; no collaborators pending; root onephysicalprobe",
       "session": "default",
       "agent_session": "01a152aa-24b4-7a31-92e3-a2b620f4feeb",
       "terminal_id": "term_65e06d27e415810",
@@ -1152,6 +1152,66 @@
       "ACK": true,
       "task_path": "coordination/collab/initial-hold-ack-buffer-060-task.json",
       "acceptance_record": "root bounded source diff review: strict identity/time/lease and extra real tick retained;2SHA matched; author7CPU/SDK3.10AST2PASS; UTF8 receipt intact"
+    },
+    {
+      "task_id": "local45-timeline-review-061",
+      "attempt": 1,
+      "contract_revision": 61,
+      "owner": "control",
+      "status": "accepted",
+      "ACK": true,
+      "task_path": "coordination/collab/local45-timeline-review-061-task.json",
+      "result_path": "coordination/collab/results/local45-timeline-review-061.json",
+      "write_paths": [
+        "coordination/collab/results/local45-timeline-review-061.json"
+      ],
+      "acceptance_record": "Control bounded read-only sourcePASS1SHA; rootAST once; actual export deferred until023closed. No runtime/80claim."
+    },
+    {
+      "task_id": "local45-parking-brake-api-062",
+      "attempt": 1,
+      "contract_revision": 62,
+      "owner": "control",
+      "status": "accepted",
+      "ACK": true,
+      "task_path": "coordination/collab/local45-parking-brake-api-062-task.json",
+      "result_path": "coordination/collab/results/local45-parking-brake-api-062.json",
+      "write_paths": [
+        "coordination/collab/results/local45-parking-brake-api-062.json"
+      ],
+      "acceptance_record": "Installed7sourceSHA matched; indexed physical PD wheelhold APIs confirmed; runtime gains/effect unverified. Root ownsprobe."
+    },
+    {
+      "task_id": "local45-wheel-hold-063",
+      "attempt": 1,
+      "contract_revision": 63,
+      "owner": "control",
+      "status": "accepted",
+      "ACK": true,
+      "task_path": "coordination/collab/local45-wheel-hold-063-task.json",
+      "result_path": "coordination/collab/results/local45-wheel-hold-063.json",
+      "write_paths": [
+        "factory_ops/isaac45_runtime.py",
+        "factory_ops/wheel_parking_hold.py",
+        "tests/test_wheel_parking_hold.py",
+        "coordination/collab/results/local45-wheel-hold-063.json"
+      ],
+      "acceptance_record": "Root bounded3file source read/3SHA matched; author8CPU+.010s andSDK3.10AST3PASS; physicalprobe pending"
+    },
+    {
+      "task_id": "local45-wheel-hold-root-review-064",
+      "attempt": 1,
+      "contract_revision": 64,
+      "owner": "control",
+      "status": "accepted",
+      "ACK": true,
+      "task_path": "coordination/collab/local45-wheel-hold-root-review-064-task.json",
+      "result_path": "coordination/collab/results/local45-wheel-hold-root-review-064.json",
+      "write_paths": [
+        "coordination/collab/results/local45-wheel-hold-root-review-064.json"
+      ],
+      "acceptance_record": "064root2G2diff clear/2SHA unchanged; WHP001 corrected; affectedrecheckPASS probeSHAf3df; same reviewed bytes promoted scripts/isaac/probe_local45_parking_hold.py; physicalprobe pending",
+      "recheck_result_path": "coordination/collab/results/local45-wheel-hold-root-review-064-recheck.json"
     }
   ],
   "decisions": [

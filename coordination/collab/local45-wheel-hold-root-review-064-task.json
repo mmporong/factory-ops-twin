@@ -1,0 +1,27 @@
+{
+  "task_id": "local45-wheel-hold-root-review-064",
+  "attempt": 1,
+  "contract_revision": 64,
+  "owner": "control",
+  "reviewer": "control",
+  "read_paths": [
+    "artifacts/local45/wheel-hold-root-wiring-064.diff",
+    "artifacts/local45/probe_parking_hold_063.py"
+  ],
+  "source_sha256": {
+    "scripts/isaac/g2_scene.py": "9a1f2e4475c884b39c01d1baa69d65cc43b4568b25a74dfc65f21a30fc5f7050",
+    "scripts/isaac/local45_fleet4_transport_scene.py": "2ed226724aa598371babe24bfbac50d9a292d29ccebf1cdf3664f059215186c6",
+    "artifacts/local45/probe_parking_hold_063.py": "275297e4764087015b9e588a3ab7beb174375fa2c5dfb9db74a5bc8e522f6831"
+  },
+  "write_paths": [
+    "coordination/collab/results/local45-wheel-hold-root-review-064.json"
+  ],
+  "goal": "One bounded source check of ROOT-written2-file G2routing/pins diff andsmall2Carterphysicalprobe.063facade/helper alreadyrootaccepted, no rereview.",
+  "acceptance": [
+    "ReadONLYlisted diff+probe anddigest3sourcefiles; no codeedits/tests/AST/SDK/GPU/ROS/WSL/bag/Gitmutations/newagents. RootSDK3.10AST3filespass, then1affectedprobeASTafterfinite-state/native-time-reportfix. One smallASCIIreceipt PASS orconcreteblockers.",
+    "G2 onlylocal45PhysX factorypartialTrue; defaultRTX/canonical62sameoldfactory. Startuprealgainreport afterwarmup, newhelperLocalSourcePin. No ROSclock/TTL/lease/0.15startgatechange.",
+    "Probe willrunfromfrozenDsource underexistingWindowsJobObject timeout240s. Only2referencedCartermodels onoriginalfloor, yaw90, x12/17y1.5 initialspawn, thenphysicaldrive targets. Nativeposition/GTread onlyforvalidation; encoderholdvia063. No pose/encoderreset/kinematic or GT steering, no ROS/scan/renderproducts. World.step(render=False) realframeprogression, measurednativeelapsedretained (notforcedexact320nominal).",
+    "Probe usesconfig besideoriginal scene; 2ssettle/320nominalsecstationary/6sstraight/30srehold/4sturn/30srehold.0.02mfunctionalholdbound anddrive/turnresumethresholds, baselineexceeds.15separateflag notsameasfullreproduction. Actualnumerics/source/frame/effortreadbacks preserved; reportwrittenbeforeSDKclose andhostJobclosureseparatelyrequired. Safetargetmatrix/unrelatedjoints leftto063module.",
+    "No requirementtoqualifyfull4mission fromprobe. Rootowns actualoneprobe/hostclosure/evidence, no additional reviewloops unlessconcreteaffecteddefect."
+  ]
+}

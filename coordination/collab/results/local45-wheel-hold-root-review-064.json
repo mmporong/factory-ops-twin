@@ -1,0 +1,40 @@
+{
+  "task_id": "local45-wheel-hold-root-review-064",
+  "attempt": 1,
+  "contract_revision": 64,
+  "owner": "control",
+  "ack": true,
+  "mode": "bounded_read_only_source_review",
+  "verdict": "BLOCKED",
+  "document_encoding": "ASCII",
+  "source_sha256": {
+    "scripts/isaac/g2_scene.py": "9a1f2e4475c884b39c01d1baa69d65cc43b4568b25a74dfc65f21a30fc5f7050",
+    "scripts/isaac/local45_fleet4_transport_scene.py": "2ed226724aa598371babe24bfbac50d9a292d29ccebf1cdf3664f059215186c6",
+    "artifacts/local45/probe_parking_hold_063.py": "275297e4764087015b9e588a3ab7beb174375fa2c5dfb9db74a5bc8e522f6831"
+  },
+  "all_three_expected_digests_matched": true,
+  "findings": [
+    {
+      "id": "WHP064-001",
+      "severity": "major",
+      "file": "artifacts/local45/probe_parking_hold_063.py",
+      "line": 93,
+      "title": "NumPy float32 targets prevent report serialization after the first phase",
+      "evidence": "Line62 creates zero=np.zeros(2,dtype=np.float32); line105 passes zero to the first settle phase. Line93 stores list(targets), retaining numpy.float32 elements, and line99 appends that item to report. Line101 calls save(), whose line22 json.dumps has no NumPy converter. Standard JSON cannot encode numpy.float32, so this path fails after settle rather than reaching stationary/drive comparison.",
+      "cleanup_effect": "The unencodable phase remains in report. The unconditional save at line131 also fails before the explicit app.close call at line134. Host Job closure remains required and may close the process, but this probe cannot complete its intended report/close sequence.",
+      "minimal_repair": "At line93 store wheel_targets_rad_s=[float(v) for v in targets]. Preserve the measured native times, original phase targets and all physical gates.",
+      "basis": "Source-only reachable-path analysis; not executed or reproduced here."
+    }
+  ],
+  "other_checked_boundaries": [
+    "Provided G2 diff enables wheel_parking_hold only under local_sdk45 and physx_planar, records actual startup brake reports after warmup, and adds the helper to local source pins. No blocker found in these changes; default RTX/canonical62 branch and clock/TTL/lease/start gate are unchanged by the provided diff.",
+    "Probe uses two initial referenced spawns, profiled physical wheel targets, actual World.step(render=False) frame deltas and measured positive native elapsed time. GT/encoder snapshots feed evaluation only; no state-reset or GT steering path observed.",
+    "Functional hold/drive/turn gates are separate from baseline displacement and full-fleet qualification. SDK close flags and independent host closure requirement are explicit."
+  ],
+  "limits": [
+    "Read only the provided wiring diff and small probe; obtained the three source digests without reading full G2 sources.",
+    "Did not rereview accepted063 facade/helper, edit products, run tests/AST/SDK/ROS/WSL/GPU, access bags, mutate Git, or spawn agents.",
+    "No physical-effect, SDK-completion, source-freeze or host-closure acceptance is claimed. Root owns repair, one frozen comparison and evidence."
+  ],
+  "written_paths": ["coordination/collab/results/local45-wheel-hold-root-review-064.json"]
+}

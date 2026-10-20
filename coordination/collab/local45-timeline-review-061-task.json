@@ -1,0 +1,21 @@
+{
+  "task_id": "local45-timeline-review-061",
+  "attempt": 1,
+  "contract_revision": 61,
+  "owner": "control",
+  "reviewer": "control",
+  "mode": "bounded_read_only_source_review",
+  "read_paths": [
+    "scripts/media/export_local45_timeline.py"
+  ],
+  "source_sha256": "ad12bdde19dbecef17754dcc9b7c2c31fee18a32d2c08d8aae9ee7d2ba620073",
+  "write_paths": [
+    "coordination/collab/results/local45-timeline-review-061.json"
+  ],
+  "goal": "Review closed-run sparse RGB timeline exporter. Source written by root; existing canonical2robot G3 exporter unchanged. Current023 runs frozen3a95baa; do not touch runtime.",
+  "acceptance": [
+    "One bounded source read; no code changes or repeated AST/tests, no SDK/GPU/ROS/WSL/bag access, Git, new agents or dependencies. Root AST passed once. Actual FFmpeg encode/probe/decode only after023 closes.",
+    "Review closure-before-export; mission/host run ID; original-index snapshot and source hashes/path containment; nonuniform original capture time durations; nominal sparse playback caption/no interpolation/no real-speed/80% claim; producer vs postprocessor separation; new outside destination.",
+    "Report only concrete blockers or PASS with source SHA. Do not broaden2robot validator, add new approval gates or request global reviews."
+  ]
+}

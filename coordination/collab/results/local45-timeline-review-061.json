@@ -1,0 +1,32 @@
+{
+  "task_id": "local45-timeline-review-061",
+  "attempt": 1,
+  "contract_revision": 61,
+  "owner": "control",
+  "ack": true,
+  "mode": "bounded_read_only_source_review",
+  "verdict": "PASS",
+  "verdict_scope": "No concrete blocking defect found in the specified source. Source review only; not runtime or export acceptance.",
+  "source_sha256": {
+    "scripts/media/export_local45_timeline.py": "ad12bdde19dbecef17754dcc9b7c2c31fee18a32d2c08d8aae9ee7d2ba620073"
+  },
+  "expected_digest_matched": true,
+  "findings": [],
+  "checked": [
+    "Lines 29-37 require both owned runtime trees closed, Linux closure verified, and matching mission/host run IDs before export.",
+    "Lines 38-72 preserve original index bytes, require increasing finite capture times and consistent robot IDs, contain resolved image paths within the run, reject final symlinks and unsafe concat characters, and check image hashes and sizes.",
+    "Lines 50-51 derive nonuniform nominal durations from original capture-time deltas using one playback factor; the final image has an explicit 0.2-second hold.",
+    "Lines 76-88 require a new destination outside the stage, copy the original index and postprocessor source, and label playback as nominal sparse original-frame holds without interpolation.",
+    "Lines 102-123 require encoding, probing and full decoding to succeed, recheck original index/image hashes, separate producer commit from postprocessor hash, and disclaim real-speed, payload-contact and 80-percent evaluation claims."
+  ],
+  "limits": [
+    "One source read and digest check only; no other product sources or runtime evidence reviewed.",
+    "No tests, AST, SDK, ROS, WSL, GPU, Git, agents, server operations or bag access performed.",
+    "FFmpeg availability, actual encoding, measured output timing, subtitles, probing and decoding remain unexecuted here. Root will validate export after the frozen runtime closes.",
+    "Frozen runtime 023 and all product sources were left unchanged."
+  ],
+  "written_paths": [
+    "coordination/collab/results/local45-timeline-review-061.json"
+  ],
+  "document_encoding": "ASCII"
+}

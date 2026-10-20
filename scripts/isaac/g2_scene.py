@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 from datetime import datetime, timezone
+from functools import partial
 import hashlib
 import json
 import math
@@ -939,6 +940,8 @@ def _run(
             stage_utils = runtime45.stage_utils
             SimulationManager = runtime45.SimulationManager
             WheeledRobot = runtime45.WheeledRobot
+            if lidar_backend == "physx_planar":
+                WheeledRobot = partial(WheeledRobot, wheel_parking_hold=True)
         else:
             import isaacsim.core.experimental.utils.stage as stage_utils
             from isaacsim.core.simulation_manager import SimulationManager
@@ -1125,6 +1128,13 @@ def _run(
                     state, None, evaluation_sim_time_s=now,
                 )
             _spin_nodes(rclpy, [clock_node, *robot_nodes])
+        if local_sdk45 and lidar_backend == "physx_planar":
+            parking = {key: value["robot"].parking_brake_report() for key, value in robots.items()}
+            result["wheel_parking_hold"] = parking
+            _atomic_json(output / "wheel-parking-startup.json", {
+                "run_id": args.run_id, "robots": parking,
+                "scope": "local45 PhysX encoder-position drive targets; not a hardware brake or contact qualification",
+            })
         for _ in range(240):
             if all(runtime["ros"]["scan_front_raw"] > 0 and runtime["ros"]["scan_rear_raw"] > 0
                    for runtime in robots.values()):
