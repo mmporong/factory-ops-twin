@@ -1,0 +1,27 @@
+{
+  "task_id": "g3-hold-ack-upgrade-065",
+  "attempt": 1,
+  "contract_revision": 65,
+  "owner": "control",
+  "reviewer": "root",
+  "inputs": {
+    "source_commit": "53a0b9263230a8d4674e9cf849767c764a699262",
+    "run_id": "9f8131b922ee485d90087239e0a85800",
+    "stage": "D:/FactoryOpsRuntime/local45-transport-024",
+    "facts": "InitialHOLDseq23 issued5.783333635 until6.283333635; SDKfirsteval5.783333634957671/sample5.80000030249 (strict eval<issued), all4raw30validHOLDzero samples. after_control emitsONLYfirstsampleperseq thencontrol_sequences suppressesnextvalidsamples. Receivercheckpointpending/qualifiedEMPTYthrough6.283333661expiry. Reconstructedactualnextsample passesinitial_hold_ack_candidate; scopeexactmatch. Consumer060buffer alonecannotfixproducer cache. Physicalholdstartupall4enabled/hold/failureNone."
+  },
+  "write_paths": [
+    "scripts/isaac/g3_scene.py",
+    "tests/test_g3_control_ack_upgrade.py",
+    "coordination/collab/results/g3-hold-ack-upgrade-065.json"
+  ],
+  "goal": "Upgrade an initially unusable HOLD receipt once a later original physical sample of SAMEsequence is eligible, preserving strict receiver admission. Root owns024preservation/Git/next025fullrun. Not alone;do nottouchrootothers.",
+  "acceptance": [
+    "Onlylistedfiles. One focusednewCPU pass andSDK3.10coldASTifneededonce; noSDK/GPU/ROS/WSL/bag/Git/newagents/deps/fullsuite. ReturnsmallASCIIJSON SHA/results/limits.",
+    "InspectG3SceneLifecycle.after_control. Preserve original first ACK diagnostics and per-sequence de-dup for navigation/emergency. For HOLD, first unusable/invalid ACK cannot permanentlyconsume the sequence. Allow one same-sequence upgrade when a later actual sample has validHOLDzero-input andstrict issued<=evaluation<sample<until. Do not round/offset/add epsilon/renew leases/nonce/generation orwiden0.5s/30wall/start0.15. Originalconsumer valid_initial_hold_ack and060buffer unchanged.",
+    "Smallest per-robot cached eligibility alongside currentsequence (or equivalent). Emitfirstreceipt asbefore; suppressunchanged ineligible repeats; onfirsteligibleactualHOLDsample emitupdatedreceipt once/cachequalified; suppresslatersamequalifiedsequence. Differentrobots independent. Do not fabricate eligibility by passing future now. Noextra per-frame/bulkjournal; originalrawfirstsamples alreadyintrajectory.",
+    "Keep raworiginal emitted fields/auth.valid flag exactly, upgrade uses actual originalnextframe/eval/command/scope. Finite/type/valid/zero command conditions mustnotlatch badsample; wrongscope/time data stillrejectedbyconsumer. Originalnegative receipt is diagnostic; sourceproducer can classify using itsownoriginalpayload issued/until andexactscope. No actualcommand/mode/physics/odometry/brake edits.",
+    "CPUfixture should reproduce exact024firstpreissued ACK thennexteligibleactualsample tosamefile andconsumer candidatecanreadit; nextsameeligibledoesnotrewrite. FirstinvalidHOLD->latereligibleupgrade; repeatedinvaliddedup; navigation/emergencyoldonce; all4independent/newsequence resets; no test-stringmirrors. One suite, rootwilldoactual025prefix afterfreeze (no repeatbrakeprobe).",
+    "Root willrecord original024 failure andnewsource effect. Do not claim022receiver race proven; acknowledge024 producer behavior is source+trajectory-backed. No reviewchains or unrelatedcleanup."
+  ]
+}

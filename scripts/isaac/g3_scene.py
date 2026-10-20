@@ -32,6 +32,32 @@ def _parse_gmo_header(data: Any) -> dict[str, int]:
     }
 
 
+def _eligible_hold_ack(ack: Mapping[str, Any], payload: Any) -> bool:
+    """Classify the original HOLD sample without inventing a receiver clock."""
+    if not isinstance(payload, Mapping):
+        return False
+    scope, command = payload.get("scope"), ack.get("input_command")
+    issued, until = payload.get("issued_sim_time_s"), payload.get("valid_until_sim_time_s")
+    evaluation, sample = ack.get("evaluation_sim_time_s"), ack.get("sample_sim_time_s")
+    for value in (issued, until, evaluation, sample):
+        if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value):
+            return False
+    return bool(ack.get("mode") == payload.get("mode") == "hold" and ack.get("valid") is True
+        and type(ack.get("authorization_seq")) is int and ack["authorization_seq"] > 0
+        and type(payload.get("authorization_seq")) is int
+        and ack["authorization_seq"] == payload["authorization_seq"]
+        and ack.get("run_id") == payload.get("run_id") and ack.get("robot_id") == payload.get("robot_id")
+        and isinstance(scope, Mapping) and ack.get("scope") == scope
+        and scope.get("scenario_id") == ack.get("scenario_id")
+        and type(scope.get("reservation_id")) is int and scope["reservation_id"] > 0
+        and type(ack.get("physics_frame")) is int and ack["physics_frame"] > 0
+        and isinstance(command, Mapping) and set(command) == {"linear_m_s", "angular_rad_s"}
+        and all(type(v) in (int, float) and v == 0 for v in command.values())
+        and issued <= evaluation < sample < until
+        # Match the existing consumer duration guard; no tolerance on sample comparisons.
+        and 0 < until-issued <= .5+1e-9)
+
+
 class BarrierLifecycle:
     """Exogenous collider schedule; no truth is supplied to the dispatcher."""
 
@@ -50,6 +76,7 @@ class BarrierLifecycle:
         self.last_state: bool | None = None
         self.origin: float | None = None
         self.control_sequences: dict[str, int | None] = {}
+        self.control_hold_eligible: dict[str, bool] = {}
         self.session_root = session_root
         self.visuals: FactoryVisualRuntime | None = None
         self.last_captured_visual_sequence: int | None = None
@@ -552,7 +579,9 @@ class BarrierLifecycle:
         self._observe_real_time_media(robot_id, sample)
         authorization = sample["authorization"]
         sequence = authorization["sequence"]
-        if sequence is None or self.control_sequences.get(robot_id) == sequence:
+        same_sequence = self.control_sequences.get(robot_id) == sequence
+        if sequence is None or (same_sequence and (
+                authorization["mode"] != "hold" or self.control_hold_eligible.get(robot_id, True))):
             return
         acknowledgment = {"run_id": self.run_id, "scenario_id": self.session["scenario_id"],
                           "robot_id": robot_id, "authorization_seq": sequence,
@@ -563,8 +592,12 @@ class BarrierLifecycle:
                           "input_command": sample["motion_profile"]["input_command"],
                           "scope": authorization["payload"]["scope"],
                           "source": "post-step drive authorization evaluation; no ground truth"}
+        eligible = _eligible_hold_ack(acknowledgment, authorization["payload"])
+        if same_sequence and not eligible:
+            return
         g2_scene._atomic_json(self.output / "robots" / robot_id / "control-ack.json", acknowledgment)
         self.control_sequences[robot_id] = sequence
+        self.control_hold_eligible[robot_id] = authorization["mode"] != "hold" or eligible
 
 
 def main() -> int:

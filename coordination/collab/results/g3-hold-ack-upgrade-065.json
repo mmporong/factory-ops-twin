@@ -1,0 +1,57 @@
+{
+  "task_id": "g3-hold-ack-upgrade-065",
+  "attempt": 1,
+  "contract_revision": 65,
+  "owner": "control",
+  "reviewer": "root",
+  "ack": true,
+  "accepted": false,
+  "status": "implemented_focused_CPU_and_cold_AST_passed_pending_root_integration",
+  "document_encoding": "ASCII",
+  "baseline_source_sha256": "739f0f9abb803b4fc200cf8ab00bee6e6bf2b4f0a9a9df04f09fea61991132fd",
+  "source_sha256": {
+    "scripts/isaac/g3_scene.py": "4b6bf5783d4a33504e78e4b886e470c1d6aad5ab5a564eae8dba8d69744bdf9b",
+    "tests/test_g3_control_ack_upgrade.py": "789e49393ddf2758b0c0cf71a3569bfe1a537da258c598c8ff9566b64d510115"
+  },
+  "written_paths": [
+    "scripts/isaac/g3_scene.py",
+    "tests/test_g3_control_ack_upgrade.py",
+    "coordination/collab/results/g3-hold-ack-upgrade-065.json"
+  ],
+  "changes": [
+    "BarrierLifecycle.after_control keeps the original first ACK emission and all emitted fields, including the original authorization.valid flag. Raw trajectory diagnostics and their production path are unchanged.",
+    "A per-robot control_hold_eligible boolean accompanies the existing current-sequence cache. An ineligible first HOLD receipt leaves one upgrade available; unchanged ineligible repeats do not rewrite the file.",
+    "The first later eligible actual HOLD sample of the same sequence atomically replaces control-ack.json once. Only a successful write marks the sequence eligible; later same-sequence samples are suppressed. New sequences and different robots remain independent.",
+    "Eligibility uses original payload identity, exact sequence/scope, positive physics frame, valid HOLD and exact zero input, finite typed times and strict issued<=evaluation<sample<until. It never invents a receiver now or alters payload timestamps.",
+    "Navigation/emergency retain their existing once-per-sequence behavior. No extra journal, physical command, brake, mode, odometry, consumer validator or060 pending-buffer changes."
+  ],
+  "time_boundary": "The existing consumer duration expression 0 < until-issued <= .5+1e-9 is matched without changing consumer truth or emitted leases. No epsilon, rounding or offset is applied to issued/evaluation/sample comparisons. TTL, clocks, nonce/generation/scope, sequence, reservation, 30-second wall bound and0.15m start gate are unchanged.",
+  "validation": [
+    {
+      "kind": "one focused new CPU suite",
+      "cwd": "C:/Users/LIMMM/factory-ops-twin",
+      "command": "& './.venv/Scripts/python.exe' -B -m unittest tests.test_g3_control_ack_upgrade -v",
+      "result": "6 PASS",
+      "elapsed_unittest_s": 0.533,
+      "exit_code": 0,
+      "scope": "Exact024 first pre-issued timestamps, a constructed later eligible CPU sample through the actual producer file and existing consumer predicates, one upgrade then de-dup, invalid-first/repeated-invalid behavior, malformed metadata rejection, navigation/emergency compatibility, four independent caches/new sequence reset, and failed-write retry without false qualification.",
+      "limit": "The later step is a CPU fixture, not a replay of a preserved complete SDK buffer or a new physical observation. Previous/full suites were not repeated."
+    },
+    {
+      "kind": "one cold Python3.10 AST pass",
+      "cwd": "C:/Users/LIMMM/factory-ops-twin",
+      "command": "stdin ast.parse/hashlib script | & 'E:/IsaacSim/isaac-sim-4.5.0/kit/python/python.exe' -B -S -",
+      "python": "3.10.15",
+      "files": ["scripts/isaac/g3_scene.py", "tests/test_g3_control_ack_upgrade.py"],
+      "action": "Read and parse source bytes and emit SHA256; no product or SDK import.",
+      "result": "2 files PASS",
+      "exit_code": 0
+    }
+  ],
+  "evidence_boundary": {
+    "source_confirmed": "The original producer returned early solely on an already-seen sequence, suppressing later eligible HOLD samples.",
+    "root_provided_024": "The card reports30 actual valid HOLD-zero samples per robot, first evaluation below issued, and empty consumer pending/qualified until expiry. Closed024 materials were not opened here.",
+    "not_claimed": "No new SDK effect, physical brake comparison,025 result, full mission success or proof of the earlier022 receiver-race hypothesis. Root owns preservation, integration and actual025."
+  },
+  "restrictions_observed": "Only listed paths written. No SDK/GPU/ROS/WSL/bag/Git actions, new dependencies, agents, servers or persistent processes."
+}

@@ -1,5 +1,5 @@
 {
-  "revision": 64,
+  "revision": 65,
   "updated_at": "2026-10-20T10:08:19.979059+00:00",
   "scope": {
     "excluded": "실물 로봇 실행, 새 유료 서비스/에셋, 공개 배포",
@@ -20,7 +20,7 @@
       "role": "dashboard frontend author",
       "name": "control",
       "agent_kind": "codex",
-      "status": "063implementation/064boundedreview accepted; no collaborators pending; root onephysicalprobe",
+      "status": "065accepted; no collaboratorpending;rootfresh025actual",
       "session": "default",
       "agent_session": "01a152aa-24b4-7a31-92e3-a2b620f4feeb",
       "terminal_id": "term_65e06d27e415810",
@@ -1212,6 +1212,22 @@
       ],
       "acceptance_record": "064root2G2diff clear/2SHA unchanged; WHP001 corrected; affectedrecheckPASS probeSHAf3df; same reviewed bytes promoted scripts/isaac/probe_local45_parking_hold.py; physicalprobe pending",
       "recheck_result_path": "coordination/collab/results/local45-wheel-hold-root-review-064-recheck.json"
+    },
+    {
+      "task_id": "g3-hold-ack-upgrade-065",
+      "attempt": 1,
+      "contract_revision": 65,
+      "owner": "control",
+      "status": "accepted",
+      "ACK": true,
+      "task_path": "coordination/collab/g3-hold-ack-upgrade-065-task.json",
+      "result_path": "coordination/collab/results/g3-hold-ack-upgrade-065.json",
+      "write_paths": [
+        "scripts/isaac/g3_scene.py",
+        "tests/test_g3_control_ack_upgrade.py",
+        "coordination/collab/results/g3-hold-ack-upgrade-065.json"
+      ],
+      "acceptance_record": "Root boundedproducer/testsource read: firstdiagnostic+oneeligible same-seq upgrade, cacheonlyafterwrite, allrawtime/lease/scope preserved;2SHA matched;author6CPU/2SDK310AST; actual025pending"
     }
   ],
   "decisions": [

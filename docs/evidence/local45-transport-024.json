@@ -1,0 +1,98 @@
+{
+  "schema_version": 1,
+  "run_id": "9f8131b922ee485d90087239e0a85800",
+  "producer_source_commit": "53a0b9263230a8d4674e9cf849767c764a699262",
+  "status": "failed_initial_HOLD_producer_first_sample_cache",
+  "last_observed_sim_s": 6.300000328570604,
+  "primary_ros_error": {
+    "message": "initial reservation HOLD application did not qualify before lease expiry",
+    "traceback": "Traceback (most recent call last):\n  File \"/mnt/d/FactoryOpsRuntime/local45-transport-024/source/scripts/ros/g3_mission.py\", line 1584, in run_mission\n    initial_barrier, stamp = wait_for_initial_hold_acks(expected_initial,\n                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/mnt/d/FactoryOpsRuntime/local45-transport-024/source/scripts/ros/g3_mission.py\", line 547, in wait_for_initial_hold_acks\n    raise TimeoutError(\"initial reservation HOLD application did not qualify before lease expiry\")\nTimeoutError: initial reservation HOLD application did not qualify before lease expiry\n",
+    "type": "TimeoutError"
+  },
+  "secondary_errors": [
+    "SDK mission-failed afterROSfailure",
+    "RuntimeError: SDK did not finish cleanup within90s after ROS foreground client exit"
+  ],
+  "initial_hold_barrier": {
+    "status": "timeout",
+    "actual_receiver_clock_s": 6.283333661,
+    "candidate_observed_clock_s": {},
+    "qualified_at_clock_s": {},
+    "latched_sim_time_s": null
+  },
+  "actual_raw_samples": {
+    "carter1": {
+      "same_sequence_samples": 30,
+      "sequence": 23,
+      "issued_sim_time_s": 5.783333635,
+      "valid_until_sim_time_s": 6.283333635,
+      "first_evaluation_sim_s": 5.783333634957671,
+      "first_sample_sim_s": 5.800000302493572,
+      "first_candidate_passed": false,
+      "later_evaluation_sim_s": 5.800000302493572,
+      "later_sample_sim_s": 5.816666970029473,
+      "later_candidate_passed": true,
+      "scope_matched": true
+    },
+    "carter2": {
+      "same_sequence_samples": 30,
+      "sequence": 23,
+      "issued_sim_time_s": 5.783333635,
+      "valid_until_sim_time_s": 6.283333635,
+      "first_evaluation_sim_s": 5.783333634957671,
+      "first_sample_sim_s": 5.800000302493572,
+      "first_candidate_passed": false,
+      "later_evaluation_sim_s": 5.800000302493572,
+      "later_sample_sim_s": 5.816666970029473,
+      "later_candidate_passed": true,
+      "scope_matched": true
+    },
+    "carter3": {
+      "same_sequence_samples": 30,
+      "sequence": 23,
+      "issued_sim_time_s": 5.783333635,
+      "valid_until_sim_time_s": 6.283333635,
+      "first_evaluation_sim_s": 5.783333634957671,
+      "first_sample_sim_s": 5.800000302493572,
+      "first_candidate_passed": false,
+      "later_evaluation_sim_s": 5.800000302493572,
+      "later_sample_sim_s": 5.816666970029473,
+      "later_candidate_passed": true,
+      "scope_matched": true
+    },
+    "carter4": {
+      "same_sequence_samples": 30,
+      "sequence": 23,
+      "issued_sim_time_s": 5.783333635,
+      "valid_until_sim_time_s": 6.283333635,
+      "first_evaluation_sim_s": 5.783333634957671,
+      "first_sample_sim_s": 5.800000302493572,
+      "first_candidate_passed": false,
+      "later_evaluation_sim_s": 5.800000302493572,
+      "later_sample_sim_s": 5.816666970029473,
+      "later_candidate_passed": true,
+      "scope_matched": true
+    }
+  },
+  "receipt_evidence_scope": "First/later receipt fields reconstructed from original trajectory and unchanged producer code. First ACK file was overwritten by final emergency; exact receiver-read times were not recorded.",
+  "producer_source_sha256": "739f0f9abb803b4fc200cf8ab00bee6e6bf2b4f0a9a9df04f09fea61991132fd",
+  "source_confirmed_behavior": "after_control returns for the same authorization sequence after first emission; no eligible receipt upgrade",
+  "consumer_buffer_limit": "A preissued firstreceipt fails strict candidate; later eligible rawsamples remain unpublished, so buffering alone cannot admit them",
+  "all4_physical_parking_hold_enabled": true,
+  "parking_scope": "Startup readback only; separate063fixturepassed, fullfleet transport stillunverified",
+  "motion_goals": 0,
+  "completed_orders": 0,
+  "empty_returns_completed": 0,
+  "material_state_present": false,
+  "material_limit": "Missing state is not zero stock",
+  "windows_closed": true,
+  "linux_closed": true,
+  "cleanup_errors": [],
+  "original_database_bytes": 3276800,
+  "original_database_sha256": "f9174e9020cbfd6c4a55d3f8b9b1319d6d2772055740a59f60406f33ad6a4942",
+  "bag_sql_opened": false,
+  "new_video_or_SDG_generated": false,
+  "goal80_complete": false,
+  "raw_originals": "D:\\FactoryOpsRuntime\\local45-transport-024",
+  "next": "065producer preservesfirstdiagnostic and permits firsteligible same-sequenceHOLD receipt upgrade; no clock/lease/tolerance relaxation; thenfresh025"
+}
