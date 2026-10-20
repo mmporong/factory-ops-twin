@@ -1,0 +1,28 @@
+{
+  "task_id": "initial-hold-ack-buffer-060",
+  "attempt": 1,
+  "contract_revision": 60,
+  "owner": "control",
+  "reviewer": "root",
+  "goal": "Buffer the first contract-matching initial HOLD receipt until the real ROS clock reaches its sample; retain strict admission/lease bounds",
+  "inputs": {
+    "base_commit": "6492bf3937ae3baa441ce2ea76fe0b47993bee79",
+    "closed_stage": "D:/FactoryOpsRuntime/local45-transport-022",
+    "facts": "022 all4Nav2/pose/odom/scan startupPASS, oneactualClockpublisherRELIABLE and SDKselfreceipt matchesWorld. Failedbeforemotion: initialHOLD gate expired. Expectedseq20 issued5.250000274 until5.750000274. All4actualSDKtrajectory has30validHOLDzero-command samples, firstsample5.266666941/eval5.2500002738, lastsample5.750000299/eval5.733333632. Firsteval differsissued by<1ns; do NOT addtolerance/rounding. Existingreader repeatedlyreads newestcontrol-ack andonlyretainsalready-current receipts. Future-ACK chasing is a hypothesis, receiver observation times were notpersisted. Bothownersclosed; noSDKactive."
+  },
+  "write_paths": [
+    "scripts/ros/g3_mission.py",
+    "tests/test_g3_initial_hold_buffer.py",
+    "coordination/collab/results/initial-hold-ack-buffer-060.json"
+  ],
+  "acceptance": [
+    "Onlylistedfiles, notalone. Rootrecords/preserves022 andownsG2/runtime/Git; no GPU/SDK/ROS/WSL/bagSQL/Git/newagents/deps. Do notmodifyD orclockmodule. One focusedCPU suite, noold/fulltestrepeats. G3moduleSDKcoldAST ifneeded; no semantic source-stringtests.",
+    "Inspect valid_hold_ack/valid_initial_hold_ack/initial_hold_boundary_ready andinitial barrier loop. Preserve externalvalid_initial_hold_ack truth conditions exactly: identity,scope,exactseq/run/robot/generation/goal,positivephysicsframe,validHOLDzero command, issued<=evaluation<sample<=REALnow<until andduration<=0.5. No timeoffset/rounding/epsilon/future acceptance/lease renewal/deadline widening.",
+    "Extract smallest structural/lease-time candidate predicate independentofnow (strict issued<=evaluation<sample<until andallotherfields), then current validInitial composes itwithactualnow bounds. Never call current-time validator with made-up future now. The first samplewhoseevaluation<issued remainsrejected; choose latereligibleoriginalreceipt.",
+    "Keep first eligible future orcurrentreceipt perrobot in an immutable/deepcopied pending dict; do not chase newerACKfiles forever. Reevaluate thatsamecandidate eachrealclocktick. Move intoqualifiedinitial_acks ONLY when existingactualnow/timegatespass. Keep latched_at andadditionalfutureactualtick boundary, originalleaseexpiry0.5/30wallbound andheldreservation/generation/nonce/sequence unchanged. Ifclocknevercatchesbeforeexpiry failasbefore. No newmotiongoalbeforeall4qualify.",
+    "Malformed/wrongscope/seq/currentexpiredreceipts cannotfillcandidate slot; invalidfirstfilemustnotpermanentlyblocklatereligiblecorrectreceipt. Do not broadenlater/terminal HOLDack behavior orothermissionphases.",
+    "Persist a small initial-hold-barrier.json checkpoint oncandidate/qualified/latch changes andbeforetimeout, with expected/pending/qualified receipts andactualreceiverclock, preserving original fields. No per-loopdata bulk, no fresh timestamp foroldreceipt. This diagnosesfuturefailures withoutactivebagreads.",
+    "One CPUpass: latest receipts stayoneframeaheadofactualclock; bufferedoriginalqualifiesonlyafterclockcatches thenonefurtherclock boundary; wrongscope/firstinvalidnotcached, expired/future remainnotadmitted, all4slotsindependent/deepcopy, nolease/deadline/reservation/nonce changes. Existingvalidator equivalencecases fresh/future/expiry/types mustremain. ReturnfileSHA/commandexitandlimitations; exact022receiver race notclaimedproven."
+  ],
+  "result_path": "coordination/collab/results/initial-hold-ack-buffer-060.json"
+}

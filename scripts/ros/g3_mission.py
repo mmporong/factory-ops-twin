@@ -449,28 +449,52 @@ def valid_hold_ack(ack: Mapping[str, Any], *, run_id: str, scenario_id: str, rob
         and all(type(v) in (int, float) and v == 0 for v in command.values()))
 
 
-def valid_initial_hold_ack(ack: Mapping[str, Any], expected: Mapping[str, Any], *, now_s: float) -> bool:
+def initial_hold_ack_candidate(ack: Any, expected: Mapping[str, Any]) -> bool:
+    """Match an original receipt's identity/lease structure without a pretend now."""
+    if not isinstance(ack, Mapping) or not isinstance(expected, Mapping):
+        return False
     scope = expected.get("scope")
     issued, until, sample = (expected.get("issued_sim_time_s"), expected.get("valid_until_sim_time_s"),
                             ack.get("sample_sim_time_s"))
     if (expected.get("mode") != "hold" or not isinstance(scope, Mapping)
             or type(scope.get("reservation_id")) is not int or scope["reservation_id"] <= 0
-            or type(expected.get("authorization_seq")) is not int or expected["authorization_seq"] <= 0):
+            or type(expected.get("authorization_seq")) is not int or expected["authorization_seq"] <= 0
+            or not all(key in expected for key in ("run_id", "robot_id")) or "scenario_id" not in scope):
         return False
-    numeric = []
-    for value in (issued, until, sample, now_s):
+    evaluation = ack.get("evaluation_sim_time_s")
+    for value in (issued, until, sample, evaluation):
         if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value):
             return False
-        numeric.append(float(value))
-    issued_time, until_time, sample_time, current_time = numeric
+    issued_time, until_time, sample_time = float(issued), float(until), float(sample)
+    command = ack.get("input_command")
+    return bool(ack.get("run_id") == expected["run_id"] and ack.get("scenario_id") == scope["scenario_id"]
+                and ack.get("robot_id") == expected["robot_id"] and ack.get("mode") == "hold"
+                and ack.get("valid") is True and type(ack.get("authorization_seq")) is int
+                and ack["authorization_seq"] == expected["authorization_seq"]
+                and isinstance(ack.get("scope"), Mapping) and ack["scope"] == scope
+                and type(ack.get("physics_frame")) is int and ack["physics_frame"] > 0
+                and isinstance(command, Mapping) and set(command) == {"linear_m_s", "angular_rad_s"}
+                and all(type(v) in (int, float) and v == 0 for v in command.values())
+                and issued_time <= evaluation < sample_time < until_time
+                # Preserve the preexisting duration guard; do not soften issued/evaluation/sample comparisons.
+                and 0 < until_time-issued_time <= .5+1e-9)
+
+
+def valid_initial_hold_ack(ack: Mapping[str, Any], expected: Mapping[str, Any], *, now_s: float) -> bool:
+    if not initial_hold_ack_candidate(ack, expected):
+        return False
+    if isinstance(now_s, bool) or not isinstance(now_s, (int, float)) or not math.isfinite(now_s):
+        return False
+    scope = expected["scope"]
+    issued_time, until_time, sample_time, current_time = (
+        float(expected["issued_sim_time_s"]), float(expected["valid_until_sim_time_s"]),
+        float(ack["sample_sim_time_s"]), float(now_s))
     if not valid_hold_ack(ack, run_id=expected["run_id"], scenario_id=scope["scenario_id"],
             robot_id=expected["robot_id"], minimum_sequence=expected["authorization_seq"],
             generation=scope["reservation_id"], goal_uuid=scope.get("goal_uuid"),
             terminal_time_s=issued_time, now_s=current_time):
         return False
-    return bool(ack["authorization_seq"] == expected["authorization_seq"] and ack.get("scope") == scope
-                and issued_time <= ack["evaluation_sim_time_s"] < sample_time <= current_time < until_time
-                and 0 < until_time-issued_time <= .5+1e-9)
+    return bool(sample_time <= current_time < until_time)
 
 
 def initial_hold_boundary_ready(acks: Mapping[str, Mapping[str, Any]], expected: Mapping[str, Mapping[str, Any]],
@@ -479,6 +503,70 @@ def initial_hold_boundary_ready(acks: Mapping[str, Mapping[str, Any]], expected:
     return bool(set(acks) == set(expected) == set(ids)
                 and all(valid_initial_hold_ack(acks[robot], expected[robot], now_s=now_s)
                         and now_s > acks[robot]["sample_sim_time_s"] for robot in ids))
+
+
+def read_initial_hold_receipt(output: Path, robot: str) -> Any:
+    path = output / "robots" / robot / "control-ack.json"
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except (FileNotFoundError, UnicodeDecodeError, json.JSONDecodeError):
+        return None
+
+
+def wait_for_initial_hold_acks(expected: Mapping[str, Mapping[str, Any]], *,
+        tick: Callable[[], float], read_ack: Callable[[str], Any],
+        checkpoint: Callable[[Mapping[str, Any]], None], wall_deadline_s: float,
+        robot_ids: Sequence[str] = ROBOT_IDS,
+        now_wall: Callable[[], float] = time.monotonic) -> tuple[dict[str, Any], float]:
+    """Latch first matching receipts, then use only actual receiver clock ticks."""
+    ids, _ = fleet_identity(robot_ids)
+    if set(expected) != set(ids):
+        raise ValueError("initial HOLD authorization set differs from robot IDs")
+    expected = copy.deepcopy(dict(expected))
+    pending: dict[str, dict[str, Any]] = {}
+    initial_acks: dict[str, dict[str, Any]] = {}
+    candidate_clocks: dict[str, float] = {}
+    qualified_clocks: dict[str, float] = {}
+    latched_at: float | None = None
+
+    def persist(status: str) -> None:
+        checkpoint(copy.deepcopy({"schema_name": "g3-initial-hold-barrier", "schema_version": 1,
+            "status": status, "actual_receiver_clock_s": stamp, "receiver_wall_time_s": wall_now,
+            "wall_deadline_s": wall_deadline_s, "expected_authorizations": expected,
+            "pending_acknowledgments": pending, "acknowledgments": initial_acks,
+            "candidate_observed_clock_s": candidate_clocks, "qualified_at_clock_s": qualified_clocks,
+            "latched_sim_time_s": latched_at}))
+
+    while True:
+        stamp = tick()
+        if isinstance(stamp, bool) or not isinstance(stamp, (int, float)) or not math.isfinite(stamp):
+            raise ValueError("initial HOLD barrier requires a finite actual receiver clock")
+        wall_now = now_wall()
+        if wall_now > wall_deadline_s or any(stamp >= item["valid_until_sim_time_s"] for item in expected.values()):
+            persist("timeout")
+            raise TimeoutError("initial reservation HOLD application did not qualify before lease expiry")
+        changed = False
+        for robot in ids:
+            if robot not in pending and robot not in initial_acks:
+                ack = read_ack(robot)
+                if initial_hold_ack_candidate(ack, expected[robot]):
+                    pending[robot] = copy.deepcopy(dict(ack))
+                    candidate_clocks[robot] = stamp
+                    changed = True
+            if robot in pending and valid_initial_hold_ack(pending[robot], expected[robot], now_s=stamp):
+                initial_acks[robot] = pending.pop(robot)
+                qualified_clocks[robot] = stamp
+                changed = True
+        ready = (latched_at is not None and stamp > latched_at
+                 and initial_hold_boundary_ready(initial_acks, expected, now_s=stamp, robot_ids=ids))
+        if latched_at is None and set(initial_acks) == set(ids):
+            latched_at = stamp
+            changed = True
+        if changed or ready:
+            persist("ready" if ready else "waiting")
+        if ready:
+            return {"expected_authorizations": expected, "acknowledgments": initial_acks,
+                    "latched_sim_time_s": latched_at}, stamp
 
 
 def terminal_recording_boundary(scene: Mapping[str, Any] | None, odometry_ns: Mapping[str, Any], *,
@@ -1492,25 +1580,13 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
             lease(robot, forced_mode="hold")
             expected_initial[robot] = copy.deepcopy(rt["last_authorization"])
         result["stage"] = "initial_hold_barrier"
-        initial_acks: dict[str, dict[str, Any]] = {}
-        latched_at: float | None = None
         initial_deadline = min(deadline, time.monotonic()+30)
-        while True:
-            stamp = tick(require_fresh=True, refresh_leases=False)
-            if time.monotonic() > initial_deadline or any(stamp >= payload["valid_until_sim_time_s"] for payload in expected_initial.values()):
-                raise TimeoutError("initial reservation HOLD application did not qualify before lease expiry")
-            for robot in robot_ids:
-                path = output / "robots" / robot / "control-ack.json"
-                if robot not in initial_acks and path.is_file():
-                    ack = json.loads(path.read_text(encoding="utf-8"))
-                    if valid_initial_hold_ack(ack, expected_initial[robot], now_s=stamp):
-                        initial_acks[robot] = ack
-            if latched_at is not None and stamp > latched_at and initial_hold_boundary_ready(initial_acks, expected_initial, now_s=stamp, robot_ids=robot_ids):
-                break
-            if latched_at is None and set(initial_acks) == set(robot_ids):
-                latched_at = stamp
-        initial_barrier = {"expected_authorizations": expected_initial, "acknowledgments": initial_acks,
-                           "latched_sim_time_s": latched_at}
+        initial_barrier, stamp = wait_for_initial_hold_acks(expected_initial,
+            tick=lambda: tick(require_fresh=True, refresh_leases=False),
+            read_ack=lambda robot: read_initial_hold_receipt(output, robot),
+            checkpoint=lambda state: atomic_json(output / "initial-hold-barrier.json",
+                {"run_id": args.run_id, "scenario_id": scenario_id, **state}),
+            wall_deadline_s=initial_deadline, robot_ids=robot_ids)
         result["initial_hold_barrier"] = initial_barrier
         origin = stamp
         result["origin_sim_time_s"] = origin

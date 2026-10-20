@@ -1,6 +1,6 @@
 {
-  "revision": 59,
-  "updated_at": "2026-10-20T09:43:50.506233+00:00",
+  "revision": 60,
+  "updated_at": "2026-10-20T10:08:19.979059+00:00",
   "scope": {
     "excluded": "실물 로봇 실행, 새 유료 서비스/에셋, 공개 배포",
     "project_root": "C:\\Users\\LIMMM\\factory-ops-twin",
@@ -20,7 +20,7 @@
       "role": "dashboard frontend author",
       "name": "control",
       "agent_kind": "codex",
-      "status": "058/059 accepted; no pending control task; root022actual",
+      "status": "060 product accepted; root023 integration; no product changes pending",
       "session": "default",
       "agent_session": "01a152aa-24b4-7a31-92e3-a2b620f4feeb",
       "terminal_id": "term_65e06d27e415810",
@@ -1135,6 +1135,23 @@
       "ACK": true,
       "task_path": "coordination/collab/world-clock-root-wiring-059-task.json",
       "acceptance_record": "Control one bounded3file source PASS/3SHA matched; no findings or test repetition. Newowner onlyPhysX; actualupdate->publish order, constantendpoint startup gate and source-limited diagnostics, defaultRTX/62 kept. Root2CPU+3AST once; module7CPU+2AST once;22actualcross-consumer proof pending."
+    },
+    {
+      "task_id": "initial-hold-ack-buffer-060",
+      "attempt": 1,
+      "contract_revision": 60,
+      "owner": "control",
+      "reviewer": "root",
+      "write_paths": [
+        "scripts/ros/g3_mission.py",
+        "tests/test_g3_initial_hold_buffer.py",
+        "coordination/collab/results/initial-hold-ack-buffer-060.json"
+      ],
+      "result_path": "coordination/collab/results/initial-hold-ack-buffer-060.json",
+      "status": "accepted",
+      "ACK": true,
+      "task_path": "coordination/collab/initial-hold-ack-buffer-060-task.json",
+      "acceptance_record": "root bounded source diff review: strict identity/time/lease and extra real tick retained;2SHA matched; author7CPU/SDK3.10AST2PASS; UTF8 receipt intact"
     }
   ],
   "decisions": [

@@ -1,0 +1,233 @@
+{
+  "schema_version": 1,
+  "run_id": "0bf8c29d0bae494bad6de84308961a17",
+  "source_commit": "6492bf3937ae3baa441ce2ea76fe0b47993bee79",
+  "status": "failed_initial_hold_application_barrier",
+  "last_observed_sim_s": 5.76666696742177,
+  "primary_ros_error": {
+    "message": "initial reservation HOLD application did not qualify before lease expiry",
+    "traceback": "Traceback (most recent call last):\n  File \"/mnt/d/FactoryOpsRuntime/local45-transport-022/source/scripts/ros/g3_mission.py\", line 1501, in run_mission\n    raise TimeoutError(\"initial reservation HOLD application did not qualify before lease expiry\")\nTimeoutError: initial reservation HOLD application did not qualify before lease expiry\n",
+    "type": "TimeoutError"
+  },
+  "secondary_errors": [
+    "SDK mission-failed after ROS failure",
+    "RuntimeError: SDK did not finish cleanup within90s after ROS foreground client exit"
+  ],
+  "startup_all4_ready": true,
+  "sensor_backend": "physx_collision_planar",
+  "clock_startup": {
+    "duplicate_count": 0,
+    "endpoint_verification_scope": "startup DDS endpoint list; not continuous WSL delivery proof",
+    "global_clock_endpoint_count_verified": true,
+    "hardware_timestamp_claimed": false,
+    "last_physics_frame": 123,
+    "last_published_physics_frame": 123,
+    "last_published_stamp": {
+      "nanosec": 50000107,
+      "sec": 2
+    },
+    "last_published_world_time_s": 2.0500001069158316,
+    "last_received_clock_stamp": {
+      "nanosec": 50000107,
+      "sec": 2
+    },
+    "last_world_time_s": 2.0500001069158316,
+    "mode": "explicit_local45_world_clock_owner",
+    "native_timestamp_claimed": false,
+    "omni_graph_clock_created": false,
+    "omni_graph_clock_used": false,
+    "published_count": 122,
+    "publisher_endpoint_count": 1,
+    "publisher_endpoints": [
+      {
+        "node_name": "factory_local45_world_clock_owner",
+        "node_namespace": "/",
+        "reliability": "ReliabilityPolicy.RELIABLE",
+        "topic_type": "rosgraph_msgs/msg/Clock"
+      }
+    ],
+    "qos_policy": {
+      "publisher": {
+        "depth": 10,
+        "durability": "VOLATILE",
+        "history": "KEEP_LAST",
+        "reliability": "RELIABLE",
+        "topic": "/clock"
+      },
+      "self_observer": {
+        "depth": 10,
+        "durability": "VOLATILE",
+        "history": "KEEP_LAST",
+        "reliability": "BEST_EFFORT",
+        "topic": "/clock"
+      }
+    },
+    "received_clock_count": 122,
+    "reset_policy": "fail_on_time_or_frame_regression_or_inconsistent_pair; no offset/interpolation",
+    "sensor_acquisition": false,
+    "source": "actualWorldphysics",
+    "transport": "rclpy_rosgraph_msgs_Clock",
+    "warmup_count": 0
+  },
+  "closed_clock_tail_count": 128,
+  "last_recorded_clock": {
+    "id": 739,
+    "nearest_prior_clock_s": 5.7500003,
+    "stamp_s": 5.7500003
+  },
+  "clock_claim_limit": "One startup publisher and closed bag delivery through5.7500003s observed; no planner goal or post-capture operational clock proof.",
+  "initial_hold_zero_command_observations": {
+    "carter1": {
+      "count": 30,
+      "expected": {
+        "authorization_seq": 20,
+        "issued_sim_time_s": 5.250000274,
+        "mode": "hold",
+        "robot_id": "carter1",
+        "run_id": "0bf8c29d0bae494bad6de84308961a17",
+        "schema_version": 1,
+        "scope": {
+          "decision_event_seq": 40,
+          "exit_id": "G3_FULL_LEG:end",
+          "goal_uuid": "5ff56583-764d-4af8-8367-4f73471714f9",
+          "leg_id": null,
+          "path_content_sha256": null,
+          "recovery_id": null,
+          "reservation_generation": 1,
+          "reservation_id": 1,
+          "resources": [
+            "G3_FULL_LEG"
+          ],
+          "route_id": null,
+          "scenario_id": "fleet4_transport_normal",
+          "tile_hash": "a5645ea876c0ad4079c947521994d1f6b39d40ecd16713aaf1dde33ee93b1bc6"
+        },
+        "valid_until_sim_time_s": 5.750000274
+      },
+      "first_evaluation_sim_s": 5.250000273808837,
+      "first_sample_sim_s": 5.266666941344738,
+      "first_frame": 316,
+      "last_evaluation_sim_s": 5.733333632349968,
+      "last_sample_sim_s": 5.750000299885869,
+      "last_frame": 345
+    },
+    "carter2": {
+      "count": 30,
+      "expected": {
+        "authorization_seq": 20,
+        "issued_sim_time_s": 5.250000274,
+        "mode": "hold",
+        "robot_id": "carter2",
+        "run_id": "0bf8c29d0bae494bad6de84308961a17",
+        "schema_version": 1,
+        "scope": {
+          "decision_event_seq": 40,
+          "exit_id": "G3_FULL_LEG:end",
+          "goal_uuid": "a622a0b2-322b-401a-8a13-9e9951221cf6",
+          "leg_id": null,
+          "path_content_sha256": null,
+          "recovery_id": null,
+          "reservation_generation": 2,
+          "reservation_id": 2,
+          "resources": [
+            "G3_FULL_LEG"
+          ],
+          "route_id": null,
+          "scenario_id": "fleet4_transport_normal",
+          "tile_hash": "3ca1f34e1ad37326afbd93674f5f036e95e51faa7590718ae603944aea29ffec"
+        },
+        "valid_until_sim_time_s": 5.750000274
+      },
+      "first_evaluation_sim_s": 5.250000273808837,
+      "first_sample_sim_s": 5.266666941344738,
+      "first_frame": 316,
+      "last_evaluation_sim_s": 5.733333632349968,
+      "last_sample_sim_s": 5.750000299885869,
+      "last_frame": 345
+    },
+    "carter3": {
+      "count": 30,
+      "expected": {
+        "authorization_seq": 20,
+        "issued_sim_time_s": 5.250000274,
+        "mode": "hold",
+        "robot_id": "carter3",
+        "run_id": "0bf8c29d0bae494bad6de84308961a17",
+        "schema_version": 1,
+        "scope": {
+          "decision_event_seq": 40,
+          "exit_id": "G3_FULL_LEG:end",
+          "goal_uuid": "abcaac5c-876c-4acc-a36d-e5bf0664db07",
+          "leg_id": null,
+          "path_content_sha256": null,
+          "recovery_id": null,
+          "reservation_generation": 3,
+          "reservation_id": 3,
+          "resources": [
+            "G3_FULL_LEG"
+          ],
+          "route_id": null,
+          "scenario_id": "fleet4_transport_normal",
+          "tile_hash": "e9a62eda5904bcee4c042104dd982aa54e568092dfd2c177115bf877e32da4b1"
+        },
+        "valid_until_sim_time_s": 5.750000274
+      },
+      "first_evaluation_sim_s": 5.250000273808837,
+      "first_sample_sim_s": 5.266666941344738,
+      "first_frame": 316,
+      "last_evaluation_sim_s": 5.733333632349968,
+      "last_sample_sim_s": 5.750000299885869,
+      "last_frame": 345
+    },
+    "carter4": {
+      "count": 30,
+      "expected": {
+        "authorization_seq": 20,
+        "issued_sim_time_s": 5.250000274,
+        "mode": "hold",
+        "robot_id": "carter4",
+        "run_id": "0bf8c29d0bae494bad6de84308961a17",
+        "schema_version": 1,
+        "scope": {
+          "decision_event_seq": 40,
+          "exit_id": "G3_FULL_LEG:end",
+          "goal_uuid": "6cf15ff3-121e-4da3-88bf-37f7d3e359b0",
+          "leg_id": null,
+          "path_content_sha256": null,
+          "recovery_id": null,
+          "reservation_generation": 4,
+          "reservation_id": 4,
+          "resources": [
+            "G3_FULL_LEG"
+          ],
+          "route_id": null,
+          "scenario_id": "fleet4_transport_normal",
+          "tile_hash": "ec88f13fe698743127c8518766f3663ac81c660c066fc719fe5ebf914980d2eb"
+        },
+        "valid_until_sim_time_s": 5.750000274
+      },
+      "first_evaluation_sim_s": 5.250000273808837,
+      "first_sample_sim_s": 5.266666941344738,
+      "first_frame": 316,
+      "last_evaluation_sim_s": 5.733333632349968,
+      "last_sample_sim_s": 5.750000299885869,
+      "last_frame": 345
+    }
+  },
+  "receiver_ack_read_clock_recorded": false,
+  "first_receipt_boundary": "First evaluation precedes issued time by less than1ns and remains invalid under strict comparison; no tolerance added.",
+  "working_hypothesis": "Repeated latest-file reads may chase an ACK ahead of receiver clock. Exact receiver read clocks were not recorded, so this cause is unconfirmed.",
+  "motion_goals": 0,
+  "completed_orders": 0,
+  "empty_returns_completed": 0,
+  "material_state_present": false,
+  "material_claim_limit": "No transport business event reached; missing state is not zero stock.",
+  "original_database_sha256": "4390e770f70eae3d3e5733f30435abbca7abe64d4047f4d4dd429a57bec9ed04",
+  "original_database_bytes": 3043328,
+  "windows_closed": true,
+  "linux_closed": true,
+  "cleanup_errors": [],
+  "goal80_complete": false,
+  "raw_originals": "D:\\FactoryOpsRuntime\\local45-transport-022",
+  "next": "Buffer first eligible original HOLD receipt until actual receiver clock catches it; retain strict lease/sequence/scope and later-tick barrier."
+}

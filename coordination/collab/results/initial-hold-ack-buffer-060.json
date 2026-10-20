@@ -1,0 +1,88 @@
+{
+  "task_id": "initial-hold-ack-buffer-060",
+  "attempt": 1,
+  "contract_revision": 60,
+  "owner": "control",
+  "reviewer": "root",
+  "ack": true,
+  "accepted": false,
+  "status": "구현 및 한정 CPU·구문 검사 완료, root 통합 검수 대기",
+  "document_encoding": "UTF-8",
+  "base_commit_from_card": "6492bf3937ae3baa441ce2ea76fe0b47993bee79",
+  "baseline_source_sha256": {
+    "scripts/ros/g3_mission.py": "e86fed75d7c5e4f8756b5f24acdeabfd25086bf5a6918b392bd652f13443e513"
+  },
+  "written_paths": [
+    "scripts/ros/g3_mission.py",
+    "tests/test_g3_initial_hold_buffer.py",
+    "coordination/collab/results/initial-hold-ack-buffer-060.json"
+  ],
+  "source_sha256": {
+    "scripts/ros/g3_mission.py": "1e4746dee722da9e6e47e9361cd207ed6d35c96403d04e1bb846ec26eb786a87",
+    "tests/test_g3_initial_hold_buffer.py": "b196ec72cda42b2d5f9b2f916d469185f4acb0b9faf13236a057b2fa63670d17"
+  },
+  "changes": [
+    "initial_hold_ack_candidate는 현재 시각 없이 원본 identity·전체 scope·정확한 sequence·양수 physics frame·valid HOLD zero command·lease 내부 시각만 검사한다. 현재 시각 validator에 미래 시각을 만들어 전달하지 않는다.",
+    "valid_initial_hold_ack는 candidate와 기존 valid_hold_ack를 실제 now_s로 결합한다. issued<=evaluation<sample<=실제 now<until 조건을 유지한다. later/terminal valid_hold_ack와 initial_hold_boundary_ready 본문은 변경하지 않았다.",
+    "차량별 첫 적격 원본 ACK를 deepcopy한 pending에 보관한다. 보관 뒤에는 해당 차량 파일을 다시 읽지 않고 같은 원본을 실제 tick마다 판정한다. qualified로 옮긴 뒤 네 차량 latch 및 추가 실제 미래 tick을 유지한다.",
+    "잘못된 scope·sequence·schema·시각은 pending을 차지하지 않는다. 누락·부분 JSON·잘못된 UTF-8 파일은 후보 없이 다음 tick을 기다려 이후 올바른 원본을 받을 수 있다.",
+    "initial-hold-barrier.json은 candidate·qualified·latch 변경, 최종 ready 및 barrier timeout 직전에만 atomic_json으로 갱신한다. expected/pending/qualified 원본과 실제 receiver clock, 후보 관측·자격 획득 clock, 기존 wall deadline을 보존한다. 반복 tick마다 쓰지 않는다.",
+    "main 초기 gate에 helper를 연결했다. 초기 lease 발행 횟수·reservation/generation/nonce/sequence, min(existing deadline, monotonic()+30), refresh_leases=False, 실제 준비 tick을 사용하는 mission origin은 유지한다."
+  ],
+  "time_boundary_note": {
+    "nominal_lease_s": 0.5,
+    "unchanged_preexisting_duration_expression": "0 < until_time-issued_time <= .5+1e-9",
+    "explanation": "외부 valid_initial_hold_ack의 기존 truth 조건을 보존하기 위해 기존 duration 표현을 그대로 옮겼다. issued/evaluation/sample/실제 now 비교에는 epsilon·반올림·offset을 추가하지 않았다. 발행 lease와 만료 시각을 바꾸지 않았다.",
+    "first_022_sample": "issued=5.250000274, evaluation=5.2500002738, sample=5.266666941의 CPU timestamp fixture는 evaluation<issued로 계속 거절된다."
+  },
+  "root_api": {
+    "candidate": "initial_hold_ack_candidate(ack, expected) -> bool",
+    "reader": "read_initial_hold_receipt(output: Path, robot: str) -> 원본 JSON 또는 None",
+    "wait": "wait_for_initial_hold_acks(expected, tick=실제 tick, read_ack=reader, checkpoint=atomic callback, wall_deadline_s=기존 deadline, robot_ids=실제 차량 목록) -> (기존 형태 initial_barrier, ready 실제 stamp)",
+    "diagnostic_path": "<run output>/initial-hold-barrier.json",
+    "diagnostic_scope": "수신한 원본 receipt의 관측·선별 상태이며 실제 SDK 적용이나 별도 ROS 수신을 새로 증명하지 않는다."
+  },
+  "validation": [
+    {
+      "kind": "새 관련 CPU suite 1회",
+      "cwd": "C:/Users/LIMMM/factory-ops-twin",
+      "command": "& './.venv/Scripts/python.exe' -B -m unittest tests.test_g3_initial_hold_buffer -v",
+      "result": "7 PASS",
+      "elapsed_unittest_s": 0.020,
+      "exit_code": 0,
+      "coverage": [
+        "매번 최신 ACK가 한 frame 앞서는 fixture에서 첫 원본 보관·실제 clock 도달 전 미자격·동일 clock 미통과·추가 미래 tick 통과",
+        "네 차량 독립 슬롯, 첫 evaluation<issued·wrong scope·wrong sequence·잘못된 schema 거절 후 후속 적격 원본 수용",
+        "외부 ACK·authorization·checkpoint callback 변경으로 내부 원본이 바뀌지 않는 deepcopy",
+        "기존 lease expiry 및 고정 wall deadline timeout, pending 원본과 실제 timeout clock 진단 보존",
+        "fresh/future/expiry/bool/NaN/Inf·identity/scope/zero command 및 기존 duration·terminal validator 계약 사례",
+        "누락·부분 JSON·잘못된 UTF-8 뒤 유효 원본 읽기와 비유한 실제 clock 거절"
+      ]
+    },
+    {
+      "kind": "cold Python 3.10 AST 1회",
+      "cwd": "C:/Users/LIMMM/factory-ops-twin",
+      "command": "stdin ast.parse/hashlib script | & 'E:/IsaacSim/isaac-sim-4.5.0/kit/python/python.exe' -B -S -",
+      "stdin_action": "지정 두 파일 bytes를 UTF-8로 읽어 ast.parse하고 SHA256를 출력했다. 제품 모듈·SDK는 import하지 않았다.",
+      "python": "3.10.15",
+      "files": ["scripts/ros/g3_mission.py", "tests/test_g3_initial_hold_buffer.py"],
+      "result": "2파일 PASS",
+      "exit_code": 0
+    }
+  ],
+  "limitations": [
+    "SDK/GPU/ROS/WSL 및 실제 gate 재실행은 수행하지 않았다. 기존·전체 test suite도 반복하지 않았다.",
+    "닫힌 022의 bag·D 원본을 조회하거나 수정하지 않았다. 022 사실은 카드의 root 제공 근거이며 receiver 도착 시각은 보존되지 않아 future-ACK chasing 원인을 확정하지 않는다.",
+    "테스트는 timestamp와 수신 순서를 구성한 CPU fixture다. 실제 SDK 전체 buffer나 운영 race 재현을 주장하지 않는다.",
+    "TTL·clock·lease·예약을 완화하지 않았다. clock이 원본 sample에 도달하지 않으면 기존 만료 경계에서 실패한다.",
+    "root가 실제 통합과 수용을 담당한다. 이 receipt는 독립 승인이나 실제 네 대 임무 성공을 뜻하지 않는다."
+  ],
+  "side_effects": {
+    "sdk_or_gpu_run": false,
+    "ros_or_wsl_run": false,
+    "git_operations": false,
+    "new_agents_or_sessions": false,
+    "new_packages": false,
+    "started_processes_to_keep": []
+  }
+}
