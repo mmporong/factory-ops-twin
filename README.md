@@ -78,6 +78,10 @@ $probeRunId = [guid]::NewGuid().ToString("N")
 
 [CPU 운영 모델의 물류·가상 충전 관제 화면](dashboard/evidence/charging-operation-desktop.jpg)도 별도로 제공합니다.
 
+![동일 실행에서 촬영한 공장과 차량의 주요 RGB 시점](docs/images/fleet4-live-013/preview-frame.jpg)
+
+[19초 운영 진행 영상](docs/images/fleet4-live-013/operations-partial.mp4)은 실제 RGB21시점·3개 카메라를 재사용한 명목12배속 기록입니다. 촬영 사이에는 이전 프레임을 유지하며 보간하지 않습니다. 연속 주행 영상·전체 운송 완료·물리 적재 검증과 구분합니다. [원본·인코딩·두 저장소 보존 근거](docs/evidence/fleet4-partial-media-013.json)를 함께 제공합니다.
+
 실행 중인 웹 화면을 캡처한 미리보기입니다. 물류 작업과 빈 토트 반납, CH1/CH2 충전대 점유·대기열·가상 SOC를 같은 원장에서 확인합니다. 관측 패널은 실행 ID·시뮬레이션 시계·데이터 지연·공장 배치와 주차면을 보여줍니다. 원천에 없는 LiDAR·Nav2·물리 적재·종료 검증·Stop은 미연결로 표시합니다. 재고 박스와 빈 토트는 원장 수량을 보여주는 도식이며, 이 화면은 Isaac Sim 렌더나 물리 접촉 검증 자료가 아닙니다.
 
 촬영 시 실행 ID·원천 파일·미디어 해시는 [촬영 명세](dashboard/evidence/charging-operation-manifest.json)에 보관합니다.

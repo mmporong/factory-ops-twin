@@ -1,0 +1,41 @@
+{
+  "run_id": "2f3bd7f3302a4dae9a8f232e3438a302",
+  "source_commit": "f06597c51d7e6acf841455c39dbbe0f028749a97",
+  "scope": "in-progress RGB capture timeline, not completed transport or real-speed motion",
+  "playback_factor": 12.0,
+  "interpolation": false,
+  "sparse_images_held": true,
+  "capture_count": 21,
+  "source_time_span_s": [
+    2.0666667744517326,
+    225.50001176074147
+  ],
+  "source_index_sha256": "07bc7a43bfcc032a0928bafa0ccd1428cf15fb75735656329a49b47c4f9ff67f",
+  "output_sha256": "7eb92ebddf162462d0e196103b1f6b04ed804cf2feab788363bead4e2090ba12",
+  "probe": {
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "width": 1280,
+        "height": 720,
+        "nb_read_frames": "190"
+      }
+    ],
+    "format": {
+      "duration": "19.000000"
+    }
+  },
+  "full_decode_passed": true,
+  "bag_sql_opened": false,
+  "raw_files_changed": false,
+  "video": "docs/images/fleet4-live-013/operations-partial.mp4",
+  "poster": "docs/images/fleet4-live-013/preview-frame.jpg",
+  "poster_sha256": "ad24f515f7a65afe986fbe0d95ee42bc5ef2461145facaae2c379f890b7e4293",
+  "preservation": {
+    "files": 69,
+    "bytes": 70597575,
+    "copies_sha256_matched": true,
+    "manifest_sha256": "8a114490c801b1986a1540f16894bbbe1cec7b1b8e15cc6069d47d231c9c7d79"
+  }
+}

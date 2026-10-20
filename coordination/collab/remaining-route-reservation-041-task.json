@@ -1,0 +1,20 @@
+{
+  "task_id": "remaining-route-reservation-041",
+  "attempt": 1,
+  "contract_revision": 41,
+  "owner": "control",
+  "goal": "At a completed/stopped authored node, request only the successor remaining route rather than re-reserving already traversed leg history",
+  "write_paths": ["scripts/ros/g3_mission.py", "tests/test_g3_remaining_reservations.py", "coordination/collab/results/remaining-route-reservation-041.json"],
+  "read_paths": ["factory_ops/route_reservation.py", "factory_ops/fleet_routing.py", "factory_ops/fleet_execution.py", "tests/test_route_reservation.py", "D:/FactoryOpsRuntime/local45-transport-013/results/run/mission-progress.json"],
+  "context": "013 immutable f065 is running normally: native scans/capture past200sim, charge86% cycle released, S3 pickup/drop toCI consumed2 and empty return job created; 3 waits atS1 while2 clearsCI->P2, others idle due route conflicts. Current g3 requests leg['tiles'] from the original full plan for every successor chunk. Current physical run must continue unchanged. Root supervises it and owns all other paths.",
+  "acceptance": [
+    "Inspect existing transfer/footprint/active-goal checks before editing. Keep retained hold until atomic successor transfer succeeds; no manual release/shrink of past tiles while a goal remains active",
+    "Compile successor tile envelope from actual current authored anchor to the same leg target using existing RouteBook, closure variant, reservation radius/tile size/bounds. Do so at the current request/new-chunk boundary after existing terminal+holdack+fresh zero-odom and arrival checks update anchor",
+    "Keep UUID/generation/body-footprint/ownership/lease enforcement. Existing manager must reject any proposed successor lacking current observed body tiles; do not relax checks, useGT, shifttimestamps or increase pose tolerance",
+    "Denied transfer preserves the old hold and held_tiles. Only accepted successor state/record uses new requested tiles. Repeated pending request identity stays stable. Original leg identity and actual chunk provenance remain truthful",
+    "Small focused CPU tests once under3.12: traversed-only area becomes usable after finished/stopped atomic transfer; active or body-incompatible transfer cannot free occupancy; denial leaves predecessor hold; endpoint/closure/tile geometry are preserved. Reuse existing helpers rather than a new framework",
+    "No new GPU/native/ROS execution or changes to immutable D source, config, runtime files, API/dashboard, Git or agents. Native admission is root work after existing013 closes normally. If a safe bounded change is unsupported, report evidence rather than broad redesign"
+  ],
+  "notes": "ACK041/attempt1. Not alone in shared tree; do not revert others. Keep implementation bounded and verification minimal. Source/test digest and result JSON are the outputs; do not self-accept or extend scope.",
+  "result_path": "coordination/collab/results/remaining-route-reservation-041.json"
+}

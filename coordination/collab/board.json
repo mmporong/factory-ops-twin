@@ -1,6 +1,6 @@
 {
-  "revision": 40,
-  "updated_at": "2026-10-20T02:58:17.160525+00:00",
+  "revision": 41,
+  "updated_at": "2026-10-20T03:21:21.903391+00:00",
   "scope": {
     "excluded": "실물 로봇 실행, 새 유료 서비스/에셋, 공개 배포",
     "project_root": "C:\\Users\\LIMMM\\factory-ops-twin",
@@ -806,6 +806,22 @@
         "coordination/collab/results/ros-charging-web-projection-040.json"
       ],
       "acceptance_record": "Root reviewed explicit same-run reservation join, owner/phase mismatch and last-good behavior; all4 sourceSHA matched.4 focused CPU and TypeScript once. Actual source, APIs8765/3007 same run/live4robots and browser carter2 payload/speed/route, stock58, CH1 charging confirmed. Read-only; full mission not complete."
+    },
+    {
+      "task_id": "remaining-route-reservation-041",
+      "attempt": 1,
+      "contract_revision": 41,
+      "owner": "control",
+      "reviewer": "root",
+      "status": "running",
+      "ACK": true,
+      "task_path": "coordination/collab/remaining-route-reservation-041-task.json",
+      "result_path": "coordination/collab/results/remaining-route-reservation-041.json",
+      "write_paths": [
+        "scripts/ros/g3_mission.py",
+        "tests/test_g3_remaining_reservations.py",
+        "coordination/collab/results/remaining-route-reservation-041.json"
+      ]
     }
   ],
   "decisions": [
