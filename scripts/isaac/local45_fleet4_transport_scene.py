@@ -127,6 +127,7 @@ def main() -> int:
     parser.add_argument("--bundle", required=True, type=Path)
     parser.add_argument("--output", required=True, type=Path)
     parser.add_argument("--run-id", required=True)
+    parser.add_argument("--capture-resolution", choices=("640x360", "1280x720"), default="640x360")
     args = parser.parse_args()
     root = args.bundle.resolve(strict=True)
     compiled = load_bundle(root)
@@ -139,6 +140,7 @@ def main() -> int:
     extras["fleet_bundle"] = root/"bundle.json"
     return g2_scene._run(shared, qualification=QUALIFICATION, scenario_ids={scenario_id},
         result_file=RESULT_FILE, expected_robot_count=4, local_sdk45=True,
+        capture_resolution=tuple(int(value) for value in args.capture_resolution.split("x")),
         scene_extension=Local45FleetLifecycle(root, args.run_id), extra_inputs=extras)
 
 

@@ -1,6 +1,6 @@
 {
-  "revision": 34,
-  "updated_at": "2026-10-19T23:07:02.085301+00:00",
+  "revision": 35,
+  "updated_at": "2026-10-20T01:11:52.836792+00:00",
   "scope": {
     "excluded": "실물 로봇 실행, 새 유료 서비스/에셋, 공개 배포",
     "project_root": "C:\\Users\\LIMMM\\factory-ops-twin",
@@ -701,6 +701,23 @@
         "coordination/collab/results/local45-physics-render-probe-034.json"
       ],
       "acceptance_record": "CPU implementation received. Root004 actual120 physicsframes/2.000000104s/20renders/3RGB; overall failed independent sensor clock comparison, rear timestamps about27ms future. No main-loop adoption or full performance claim. Further cadence experiments deferred for transport completion."
+    },
+    {
+      "task_id": "local45-capture-resolution-035",
+      "attempt": 1,
+      "contract_revision": 35,
+      "owner": "control",
+      "reviewer": "root",
+      "status": "accepted",
+      "ACK": true,
+      "task_path": "coordination/collab/local45-capture-resolution-035-task.json",
+      "result_path": "coordination/collab/results/local45-capture-resolution-035.json",
+      "write_paths": [
+        "scripts/isaac/robot_qualification.py",
+        "tests/test_capture_resolution.py",
+        "coordination/collab/results/local45-capture-resolution-035.json"
+      ],
+      "acceptance_record": "Root inspected instance-resolution code and3 focused CPU tests/result; source digests matched. Default1280x720, selected-size buffer checks and positional API retained. Actual SDK verification belongs to next transport run; no speedup claim."
     }
   ],
   "decisions": [

@@ -74,7 +74,13 @@ class CaptureSession:
         save_rgb: Callable[[Any, Path], None],
         medium_camera: CameraSpec = DEFAULT_MEDIUM_CAMERA,
         dome_light_factory: Callable[[], Any] | None = None,
+        *,
+        resolution: tuple[int, int] = base.RENDER_RESOLUTION,
     ) -> None:
+        if (type(resolution) is not tuple or len(resolution) != 2
+                or any(type(value) is not int or value <= 0 for value in resolution)):
+            raise ValueError("capture resolution must be a tuple of two positive plain integers")
+        self.resolution = resolution
         self.output = output
         self.app = app
         self.stage = stage
@@ -96,9 +102,9 @@ class CaptureSession:
                 dome_light_factory()
             medium = _camera(
                 stage, Gf, UsdGeom, medium_camera.path,
-                medium_camera.eye_xyz, medium_camera.target_xyz, base.RENDER_RESOLUTION,
+                medium_camera.eye_xyz, medium_camera.target_xyz, self.resolution,
             )
-            self.medium_product = self._product(str(medium.GetPath()), base.RENDER_RESOLUTION)
+            self.medium_product = self._product(str(medium.GetPath()), self.resolution)
             self.medium_rgb = self._annotator("rgb", self.medium_product)
         except BaseException as error:
             try:
@@ -140,21 +146,21 @@ class CaptureSession:
         self._frozen_step("G0b persistent load preview")
         path = self.output / "diagnostic-load" / base.IMAGE_FILENAME
         path.parent.mkdir()
-        return self._save(self.medium_rgb, path, base.RENDER_RESOLUTION, self.medium_camera)
+        return self._save(self.medium_rgb, path, self.resolution, self.medium_camera)
 
     def capture_factory_overview(self) -> dict[str, Any]:
         try:
             if not hasattr(self, "overview_rgb"):
                 overview = _camera(
                     self.stage, self.Gf, self.UsdGeom, "/World/FactoryOverviewCamera",
-                    (20.0, -24.0, 52.0), (20.0, 12.0, 0.0), base.RENDER_RESOLUTION,
+                    (20.0, -24.0, 52.0), (20.0, 12.0, 0.0), self.resolution,
                 )
-                self.overview_product = self._product(str(overview.GetPath()), base.RENDER_RESOLUTION)
+                self.overview_product = self._product(str(overview.GetPath()), self.resolution)
                 self.overview_rgb = self._annotator("rgb", self.overview_product)
             self._frozen_step("G0b persistent factory overview")
             path = self.output / base.IMAGE_FILENAME
             return self._save(
-                self.overview_rgb, path, base.RENDER_RESOLUTION,
+                self.overview_rgb, path, self.resolution,
                 CameraSpec(
                     "/World/FactoryOverviewCamera", (20.0, -24.0, 52.0),
                     (20.0, 12.0, 0.0), "world",
@@ -174,7 +180,7 @@ class CaptureSession:
         path = self.output / "diagnostic-pipeline" / f"{name}.png"
         path.parent.mkdir(exist_ok=True)
         evidence = self._save(
-            self.medium_rgb, path, base.RENDER_RESOLUTION,
+            self.medium_rgb, path, self.resolution,
             self.medium_camera,
         )
         evidence["checkpoint"] = name

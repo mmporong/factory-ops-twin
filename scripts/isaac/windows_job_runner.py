@@ -130,7 +130,7 @@ def run(spec_path: Path, receipt_path: Path, timeout_s: float, abort_request: Pa
     spec = json.loads(spec_bytes.decode("utf-8-sig"))
     gate = receipt_path.with_suffix(receipt_path.suffix + ".gate")
     preflight_path = receipt_path.with_suffix(receipt_path.suffix + ".preflight.json")
-    if receipt_path.exists() or gate.exists() or preflight_path.exists() or not 1 <= timeout_s <= 480:
+    if receipt_path.exists() or gate.exists() or preflight_path.exists() or not 1 <= timeout_s <= 7200:
         raise ValueError("use a new receipt/gate and a bounded timeout")
     if abort_request is not None and (not abort_request.is_absolute() or abort_request.exists() or abort_request.is_symlink()):
         raise ValueError("abort request must be a new absolute path")

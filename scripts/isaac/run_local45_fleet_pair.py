@@ -80,8 +80,8 @@ def close_pair(worker, streams, owner, stage: Path, report: dict, started: float
 
 
 def run(stage: Path, sdk: Path, bound: int) -> int:
-    if os.name != "nt" or not 60 <= bound <= 450:
-        raise ValueError("initial local development admission requires Windows and a 60..450s bound")
+    if os.name != "nt" or not 60 <= bound <= 7200:
+        raise ValueError("local development requires Windows and an explicit 60..7200s bound")
     stage, sdk = stage.resolve(strict=True), sdk.resolve(strict=True)
     launch = json.loads((stage / "launch.json").read_text(encoding="utf-8"))
     run_id = launch["run_id"]

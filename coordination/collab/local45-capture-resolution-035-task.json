@@ -1,0 +1,38 @@
+{
+  "task_id": "local45-capture-resolution-035",
+  "attempt": 1,
+  "contract_revision": 35,
+  "owner": "control",
+  "binding": {
+    "session": "default",
+    "pane_id": "w1:p1C",
+    "terminal_id": "term_65e06d27e415810",
+    "agent_session": "01a152aa-24b4-7a31-92e3-a2b620f4feeb"
+  },
+  "goal": "CaptureSession optional validated RGB resolution, unchanged default1280x720; enables root to use640x360 for local development transport only",
+  "source_commit": "5dc292b6c6e96830ab6d4cfbdebabd143e7ef46e",
+  "inputs": {
+    "scripts/isaac/robot_qualification.py": "c89823dc694bf15272a66808752cfdb35021d9f863876c32e35dd9dc883bc3f5"
+  },
+  "write_paths": [
+    "scripts/isaac/robot_qualification.py",
+    "tests/test_capture_resolution.py",
+    "coordination/collab/results/local45-capture-resolution-035.json"
+  ],
+  "non_goals": [
+    "no G2/lifecycle/config/runtime/ROS changes",
+    "no RGB updates gating or cadence edits",
+    "no SDK/GPU/ROS runs",
+    "no Git mutations, no new sessions or agents"
+  ],
+  "acceptance": [
+    "keyword parameter resolution:tuple[int,int]=base.RENDER_RESOLUTION; preserve existing positional API",
+    "positive plain ints only; reject bool/nonfinite/invalid tuple before creating SDK resources",
+    "all medium/overview/checkpoint product sizes, camera aspects and saved metadata/checks use instance resolution",
+    "default behavior1280x720 unchanged; no mutation of base global",
+    "small focused CPU tests once; Python3.10 compatibility; no broad tests or review loop",
+    "return result receipt with SHA,commands/results,ACK; native buffers remain unverified until root main integration"
+  ],
+  "result_path": "C:\\Users\\LIMMM\\factory-ops-twin\\coordination\\collab\\results\\local45-capture-resolution-035.json",
+  "notes": "You are not alone in codebase. Root owns g2_scene/local45 lifecycle/runner/g3 recording. Do not revert others or edit unowned files. ACK task/attempt then implement only assigned paths. User minimizes reviews, no extra review artifacts."
+}

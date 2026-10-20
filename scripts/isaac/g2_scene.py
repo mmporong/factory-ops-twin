@@ -659,7 +659,11 @@ def _run(
     scene_extension: Any = None, extra_inputs: Mapping[str, Path] | None = None,
     expected_robot_count: int = 2,
     local_sdk45: bool = False,
+    capture_resolution: tuple[int, int] | None = None,
 ) -> int:
+    if capture_resolution is not None and not local_sdk45:
+        raise ValueError("custom transport capture resolution is limited to local45 development")
+    render_resolution = capture_resolution or base.RENDER_RESOLUTION
     started = time.monotonic()
     app = rclpy = clock_node = session = timeline = np = rep = None
     output: Path | None = None
@@ -705,6 +709,8 @@ def _run(
             result["runtime_compatibility"] = {
                 "profile": "local45_development", "sdk_version": version,
                 "canonical_6_2_qualification": False,
+                "rgb_resolution": list(render_resolution),
+                "rgb_use": "development operation evidence; final portfolio capture can select1280x720",
                 "ros_environment": isaac45_runtime.configure_ros_environment(int(config["ros_domain_id"])),
             }
         source_path = Path(__file__).resolve()
@@ -858,7 +864,8 @@ def _run(
                 image.close()
 
         c1 = robots["carter1"]["definition"]
-        capture_options = {"dome_light_factory": runtime45.create_capture_light} if local_sdk45 else {}
+        capture_options = {"dome_light_factory": runtime45.create_capture_light,
+                           "resolution": render_resolution} if local_sdk45 else {}
         session = CaptureSession(
             output, app, stage, rep, UsdGeom, Gf, SimulationManager, save_rgb,
             medium_camera=CameraSpec(
@@ -876,9 +883,9 @@ def _run(
         )
         second_camera = _camera(
             stage, Gf, UsdGeom, second_spec.path, second_spec.eye_xyz, second_spec.target_xyz,
-            base.RENDER_RESOLUTION,
+            render_resolution,
         )
-        second_product = session._product(str(second_camera.GetPath()), base.RENDER_RESOLUTION)
+        second_product = session._product(str(second_camera.GetPath()), render_resolution)
         second_rgb = session._annotator("rgb", second_product)
         camera_hook = getattr(scene_extension, "configure_cameras", None)
         if callable(camera_hook):
@@ -943,6 +950,10 @@ def _run(
         if not all(runtime["ros"]["scan_front_raw"] > 0 and runtime["ros"]["scan_rear_raw"] > 0
                    for runtime in robots.values()):
             raise base.SmokeError("not all declared robot RTX LaserScan writers produced data")
+        if local_sdk45:
+            result["runtime_compatibility"]["lidar_publication_gates"] = runtime45.configure_lidar_publication(
+                lidar_sensors, lidar_metadata, physics_dt_s=float(config["physics_dt_s"]),
+            )
         initial_time = float(SimulationManager.get_simulation_time())
         for robot_id, runtime in robots.items():
             left, right = _wheel_angles(runtime["robot"])

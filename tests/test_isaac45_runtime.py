@@ -87,6 +87,33 @@ class World:
 
 
 class RuntimeTests(unittest.TestCase):
+    def test_publication_gate_uses_distinct_products_and_native_scan_period(self):
+        sensors = [SimpleNamespace(_writer=object(), _product=SimpleNamespace(path=f"/Render/Lidar{i}"))
+                   for i in range(2)]
+        metadata = [{"rotation_frequency_hz":10.} for _ in sensors]
+        synthetic = Mock()
+        synthetic.get_node_attributes.return_value = {"inputs:step":6}
+        module = SimpleNamespace(SyntheticData=SimpleNamespace(Get=lambda:synthetic))
+        with patch.object(facade.importlib, "import_module", return_value=module):
+            records = self.runtime.configure_lidar_publication(sensors, metadata, physics_dt_s=1./60)
+        self.assertEqual(2, len(records))
+        self.assertEqual(["/Render/Lidar0", "/Render/Lidar1"], [r["render_product_path"] for r in records])
+        self.assertTrue(all(r["step_readback"] == 6 and r["nominal_publish_hz"] == 10. for r in records))
+        for call, sensor in zip(synthetic.set_node_attributes.call_args_list, sensors):
+            self.assertEqual(("PostProcessDispatchIsaacSimulationGate", {"inputs:step":6}, sensor._product.path), call.args)
+        self.assertEqual(records, [r["ros_publication_gate"] for r in metadata])
+
+    def test_publication_gate_failure_never_reports_success_or_rewrites_timestamps(self):
+        sensors = [SimpleNamespace(_writer=object(), _product=SimpleNamespace(path="/Render/Lidar"))]
+        metadata = [{"rotation_frequency_hz":10.}]
+        synthetic = Mock()
+        synthetic.get_node_attributes.return_value = {"inputs:step":1}
+        module = SimpleNamespace(SyntheticData=SimpleNamespace(Get=lambda:synthetic))
+        with patch.object(facade.importlib, "import_module", return_value=module):
+            with self.assertRaisesRegex(RuntimeError, "readback"):
+                self.runtime.configure_lidar_publication(sensors, metadata, physics_dt_s=1./60)
+        self.assertNotIn("ros_publication_gate", metadata[0])
+
     def test_tf_message_publisher_keeps_namespaces_and_static_durability(self):
         qos = SimpleNamespace(QoSProfile=lambda **kwargs: SimpleNamespace(**kwargs),
             DurabilityPolicy=SimpleNamespace(TRANSIENT_LOCAL="latched"),

@@ -306,6 +306,41 @@ class Runtime45:
         light.CreateIntensityAttr(800.)
         return light
 
+    def configure_lidar_publication(self, sensors, metadata, *, physics_dt_s):
+        """Use the installed ROS helper's publication gate without changing sensor time."""
+        if not _finite(physics_dt_s) or physics_dt_s <= 0 or not sensors or len(sensors) != len(metadata):
+            raise ValueError("publication gates require positive physics dt and matched sensors")
+        plans = []
+        paths = set()
+        for sensor, row in zip(sensors, metadata, strict=True):
+            rate = row["rotation_frequency_hz"]
+            if not _finite(rate) or rate <= 0 or sensor._writer is None:
+                raise ValueError("publication gate requires an attached rotary scan writer")
+            steps = 1. / (physics_dt_s * rate)
+            stride = round(steps)
+            if not 1 <= stride <= 60 or not math.isclose(steps, stride, rel_tol=1e-7):
+                raise ValueError("native scan period must contain an integral number of physics steps")
+            path = str(sensor._product.path)
+            if not path.startswith("/") or path in paths:
+                raise ValueError("publication gates require distinct render products")
+            paths.add(path)
+            plans.append((row, path, stride))
+        synthetic_data = importlib.import_module("omni.syntheticdata").SyntheticData.Get()
+        template = "PostProcessDispatchIsaacSimulationGate"
+        records = []
+        for row, path, stride in plans:
+            synthetic_data.set_node_attributes(template, {"inputs:step": stride}, path)
+            observed = synthetic_data.get_node_attributes(template, ["inputs:step"], path)
+            if not observed or observed.get("inputs:step") != stride:
+                raise RuntimeError("RTX publication gate readback differs from requested stride")
+            record = {"render_product_path": path, "template": template,
+                "physics_steps_per_publish": stride, "nominal_publish_hz": 1. / (physics_dt_s * stride),
+                "step_readback": int(observed["inputs:step"]),
+                "scope": "ROS publication cadence only; native sensor and clock unchanged"}
+            row["ros_publication_gate"] = record
+            records.append(record)
+        return records
+
     def setup_lidars(self, config, robots, stage, Usd, UsdGeom, Gf,
                      SimulationManager, app, author_mount, verify_mount):
         if SimulationManager is not self.SimulationManager or app is not self.app:

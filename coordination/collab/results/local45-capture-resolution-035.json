@@ -1,0 +1,56 @@
+{
+  "task_id": "local45-capture-resolution-035",
+  "attempt": 1,
+  "contract_revision": 35,
+  "ACK": true,
+  "status": "completed_cpu_verified_native_unverified",
+  "owner": "control",
+  "input_source_sha256": "c89823dc694bf15272a66808752cfdb35021d9f863876c32e35dd9dc883bc3f5",
+  "actual_sdk_run": false,
+  "completed_at_utc": "2026-10-20T01:13:44.6439208Z",
+  "changed_paths": [
+    "scripts/isaac/robot_qualification.py",
+    "tests/test_capture_resolution.py",
+    "coordination/collab/results/local45-capture-resolution-035.json"
+  ],
+  "source_sha256": {
+    "scripts/isaac/robot_qualification.py": "a65b14a5bfa3d594b36eac1370dd161293182710ec9fa09bb429eeb4cceffcb9",
+    "tests/test_capture_resolution.py": "0dfbf96b327442431ffed3ba694c2a664f2b023b917d3cf66fbae2bf7f81ecc0"
+  },
+  "implementation": [
+    "CaptureSession 기존 positional 인자를 보존하고 keyword-only resolution: tuple[int,int] = base.RENDER_RESOLUTION 추가. 기본 1280x720 및 base global 불변.",
+    "길이 2의 tuple과 양수 plain int만 허용. bool/float/NaN/inf/리스트/잘못된 길이/0/음수는 SDK 자원 생성 전에 ValueError.",
+    "medium 및 overview 제품 생성과 카메라 aperture 비율, load preview·overview·checkpoint 저장 메타데이터와 실제 PNG 크기 검사에 self.resolution 사용.",
+    "기존 onboard SENSOR_SIZE, RGB 제품/annotator의 수명·연결, capture_on_play 및 frozen-step/cadence/cleanup 코드는 변경하지 않음."
+  ],
+  "validation": [
+    {
+      "command": "python3.10 -m unittest tests.test_capture_resolution -v",
+      "result": "PASS: 3 focused CPU tests, 0.334s, exit0",
+      "coverage": [
+        "기본 1280x720·640x360·640x480의 medium/overview 제품 크기·카메라 비율·preview/overview/checkpoint PNG/메타데이터, 기존 positional API, 자원 유지와 base global 불변",
+        "13개 잘못된 해상도 입력을 자원 생성 전 거절",
+        "선택 해상도와 다른 PNG 버퍼 크기를 거절"
+      ],
+      "python310_compatibility": "기존 Python3.10으로 대상 소스와 테스트를 import·실행하여 확인. SDK import/실행 없음."
+    }
+  ],
+  "test_pass_count": 3,
+  "test_execution_count": 1,
+  "additional_review_loop": false,
+  "typecheck_run": false,
+  "gpu_run": false,
+  "ros_run": false,
+  "native_buffers_verified": false,
+  "limits": [
+    "실제 640x360/1280x720 RGB 버퍼·native 카메라·성능은 root G2 연결 및 실행 전까지 미검증.",
+    "root가 G2 연결/실행 시간/ROS 기록량을 담당. 해당 파일과 lifecycle/config/runtime/Git/030/034 소스 및 실행 중 자원은 변경하지 않음.",
+    "전체 약60%, 80% 목표 미완료 상태를 유지. 사용자 보고의 007 개발 한도 종료 및 034 timestamp 비교 실패를 새 성공으로 확대하지 않음.",
+    "별도 타입/광역 검사/리뷰 루프 없이 요청된 작은 CPU 검사 1회로 종료."
+  ],
+  "processes": {
+    "started": [],
+    "stopped": []
+  },
+  "pending_owner_work": []
+}
