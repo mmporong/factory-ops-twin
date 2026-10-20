@@ -1,0 +1,40 @@
+{
+  "task_id": "stale-planner-retry-057",
+  "attempt": 1,
+  "contract_revision": 57,
+  "owner": "control",
+  "reviewer": "root",
+  "ack": true,
+  "status": "paused_by_user_pending_replacement_contract",
+  "completed": false,
+  "accepted": false,
+  "api_ready": false,
+  "product_files_written": [],
+  "product_changes_to_preserve": [],
+  "test_files_written": [],
+  "tests_run": false,
+  "cold_ast_run": false,
+  "runtime_run": false,
+  "progress_before_pause": "컴퓨팅 terminal 결과 분기, 기존 strict path qualification, clock wait, 예약·현재 chunk·deadline 흐름을 읽고 최소 helper 방식을 검토했다. 제품 구현이나 테스트 작성에는 착수하지 않았다.",
+  "known_source_before_sha256": {
+    "scripts/ros/g3_mission.py": "e86fed75d7c5e4f8756b5f24acdeabfd25086bf5a6918b392bd652f13443e513"
+  },
+  "source_hash_scope": "위 SHA는 보류 요청 전에 수행한 읽기 단계에서 확보했다. 보류 후 새 소스 검사나 재해시는 하지 않았다. 이 작업이 G3에 작성한 변경은 없다.",
+  "new_root_evidence_not_independently_queried": {
+    "source": "사용자가 전달한 종료된 021 bag 확인 결과",
+    "clock": "총 91건이며 마지막 /clock은 5.450000284, id1022다.",
+    "continued_observations": "이후 odom/raw는 14.85~14.9까지 계속됐다.",
+    "planner": "carter2 planner accepted_stamp와 returned plan 모두 5.45다.",
+    "interpretation": "단순히 늦은 결과만의 문제가 아니라 clock 발행/수신 중단이 선행했다는 새 근거를 우선한다. 어느 내부 발행/수신 경계가 원인인지는 이 작업에서 규명하지 않았다.",
+    "bag_accessed_here": false
+  },
+  "handoff": {
+    "root_direction": "root가 G2 clock 단일 owner 수정으로 방향을 전환하고 새 계약을 전달할 예정이다.",
+    "g3_ownership": "scripts/ros/g3_mission.py는 root가 인계받을 때까지 추가 수정하지 않는다. 기존 다른 작성자의 변경을 보존한다.",
+    "retry_policy": "bounded stale 재계획은 구현되지 않았다. TTL·시각·예약·cutoff·기한을 변경하지 않았다.",
+    "stop_condition": "새 계약을 기다리며 추가 구현·검사·실행을 하지 않는다."
+  },
+  "side_effects": "이 결과 JSON 저장 외 제품·Git·SDK/GPU/ROS/WSL/서버·새 에이전트 작업은 없다.",
+  "written_paths": ["coordination/collab/results/stale-planner-retry-057.json"],
+  "document_encoding": "UTF-8"
+}

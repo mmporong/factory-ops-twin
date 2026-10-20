@@ -1,0 +1,34 @@
+{
+  "task_id": "world-clock-root-wiring-059",
+  "attempt": 1,
+  "contract_revision": 59,
+  "owner": "root",
+  "reviewer": "control",
+  "goal": "One bounded source review of root Worldclock routing/call order/evidence before022",
+  "inputs": {
+    "source_commit": "17542ba0ba778a8598fd256a840dee02be155e93",
+    "source_sha256": {
+      "scripts/isaac/g2_scene.py": "5b4cc759dc8750660b10af94faee645e22b1dbe796b000d724a5545238641261",
+      "scripts/isaac/local45_fleet4_transport_scene.py": "b3fdb8d5fd59f35bd930d305580144ba74962a312cd107e3a77528bdb47cb2c9",
+      "tests/test_world_clock_integration.py": "308c399e7aaa708a875f91b7c37084adcb887328d54ee0e8ebea2fad003735bd"
+    },
+    "058": "Root accepted module/2SHA. Do not re-review your own module or repeat7tests.",
+    "root_checks": "2newclock factoryselection/updateorder CPU PASS0.001s once;3file SDK3.10AST PASS finalbytes. No old/full suites."
+  },
+  "read_paths": [
+    "scripts/isaac/g2_scene.py",
+    "scripts/isaac/local45_fleet4_transport_scene.py",
+    "tests/test_world_clock_integration.py"
+  ],
+  "write_paths": [
+    "coordination/collab/results/world-clock-root-wiring-059.json"
+  ],
+  "acceptance": [
+    "Only changed root lines/newtest onepass; no SDK/ROS/GPU/Git/newagents/sourceedits/tests repeated.",
+    "PhysXlocal45 only selects newClockfactory; canonical62/defaultRTX useoldOGNhelper. Newbranch createsno oldgraph. Actualphysicsupdate then .publish before scans/robotspins atsetup/warmup/startup/main; pausedrender hook hasno newclocktick.",
+    "Startup sourcechecks recordactualendpointQoS/count and requireonepublisher; module ownreportfalse verification flag overridden ONLY byrootstartupcount withscopeexplicit. Error/finalreport stores ownpub/SDKselfreceipt facts distinct fromWSLdelivery. world-clock-state overwrittenonly1simHz no bulkdata.",
+    "Sourcepins include newworldclockmodule. Existingclocksensorstamps/TTL/deadlines/workload/authorization/reservations unchanged. No staleplanner retry implementation; G3sourceunchanged.",
+    "ReturnPASS/concreteblocker andactual3SHA. No broad audit/repeated checks; actual022 isroot validation."
+  ],
+  "result_path": "coordination/collab/results/world-clock-root-wiring-059.json"
+}

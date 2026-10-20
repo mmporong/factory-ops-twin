@@ -1,6 +1,6 @@
 {
-  "revision": 56,
-  "updated_at": "2026-10-20T09:06:28.741437+00:00",
+  "revision": 59,
+  "updated_at": "2026-10-20T09:43:50.506233+00:00",
   "scope": {
     "excluded": "실물 로봇 실행, 새 유료 서비스/에셋, 공개 배포",
     "project_root": "C:\\Users\\LIMMM\\factory-ops-twin",
@@ -20,7 +20,7 @@
       "role": "dashboard frontend author",
       "name": "control",
       "agent_kind": "codex",
-      "status": "055/056 source accepted; no pending control task; root021 actual next",
+      "status": "058/059 accepted; no pending control task; root022actual",
       "session": "default",
       "agent_session": "01a152aa-24b4-7a31-92e3-a2b620f4feeb",
       "terminal_id": "term_65e06d27e415810",
@@ -1086,6 +1086,55 @@
         "scripts/isaac/run_local45_fleet_pair.py": "15209dc1b20feae475a7dcd10b59894a16067302574c0066f77f7632b96165f8",
         "tests/test_physx_planar_integration.py": "7a658d14fd67e4a88c608775f5d6654e7f5ee317c7586f908663a43f8452b136"
       }
+    },
+    {
+      "task_id": "stale-planner-retry-057",
+      "attempt": 1,
+      "contract_revision": 57,
+      "owner": "control",
+      "reviewer": "root",
+      "write_paths": [
+        "scripts/ros/g3_mission.py",
+        "tests/test_g3_planner_retry.py",
+        "coordination/collab/results/stale-planner-retry-057.json"
+      ],
+      "result_path": "coordination/collab/results/stale-planner-retry-057.json",
+      "status": "superseded_before_product_edits",
+      "ACK": true,
+      "task_path": "coordination/collab/stale-planner-retry-057-task.json",
+      "acceptance_record": "New closed21evidence: bag /clock stops5.45 while rclpy mission clock/odom/raw progress14.9; planner acceptance+path5.45. Exact producer vs delivery/QoS boundary unconfirmed. Author returned no product/test changes. Do not implement retries over incoherent clock."
+    },
+    {
+      "task_id": "world-clock-owner-058",
+      "attempt": 1,
+      "contract_revision": 58,
+      "owner": "control",
+      "reviewer": "root",
+      "write_paths": [
+        "factory_ops/world_clock.py",
+        "tests/test_world_clock.py",
+        "coordination/collab/results/world-clock-owner-058.json"
+      ],
+      "result_path": "coordination/collab/results/world-clock-owner-058.json",
+      "status": "accepted_cpu_native_pending",
+      "ACK": true,
+      "task_path": "coordination/collab/world-clock-owner-058-task.json",
+      "acceptance_record": "Root one bounded source pass/2SHA match: actualWorldpair/nooffset, duplicate/reset guards, failedcallbackretry, explicitconstantQoS, receivedClock distinct frompublished, partialsetup cleanup. Author7CPU+ASTonce; root2newclock selection/updateorder CPU once. Actual aftercapture/cpp/bag delivery unverified."
+    },
+    {
+      "task_id": "world-clock-root-wiring-059",
+      "attempt": 1,
+      "contract_revision": 59,
+      "owner": "root",
+      "reviewer": "control",
+      "write_paths": [
+        "coordination/collab/results/world-clock-root-wiring-059.json"
+      ],
+      "result_path": "coordination/collab/results/world-clock-root-wiring-059.json",
+      "status": "accepted_source_native_pending",
+      "ACK": true,
+      "task_path": "coordination/collab/world-clock-root-wiring-059-task.json",
+      "acceptance_record": "Control one bounded3file source PASS/3SHA matched; no findings or test repetition. Newowner onlyPhysX; actualupdate->publish order, constantendpoint startup gate and source-limited diagnostics, defaultRTX/62 kept. Root2CPU+3AST once; module7CPU+2AST once;22actualcross-consumer proof pending."
     }
   ],
   "decisions": [

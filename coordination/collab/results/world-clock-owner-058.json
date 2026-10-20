@@ -1,0 +1,87 @@
+{
+  "task_id": "world-clock-owner-058",
+  "attempt": 1,
+  "contract_revision": 58,
+  "owner": "control",
+  "reviewer": "root",
+  "ack": true,
+  "status": "implemented_focused_cpu_and_cold_ast_checked_pending_root_integration",
+  "accepted": false,
+  "api_ready": true,
+  "actual_sdk_run": false,
+  "document_encoding": "UTF-8",
+  "written_paths": [
+    "factory_ops/world_clock.py",
+    "tests/test_world_clock.py",
+    "coordination/collab/results/world-clock-owner-058.json"
+  ],
+  "source_sha256": {
+    "factory_ops/world_clock.py": "b84da8f5126d73cefed615519cc62b611c4ce9370efc422d6f2f96239375d477",
+    "tests/test_world_clock.py": "eb7dec3f32b4884f9f5b1f289efbedeca38340aa0ac54e93bc667c9794561fd6"
+  },
+  "root_api": {
+    "pure_owner": "WorldClockPublisher(publish_callback, simulation_time, physics_frame)",
+    "callback": "publish_callback(sec: int, nanosec: int). 반환 성공 때만 발행 highwater와 published_count를 확정한다. 콜백 오류는 전파하며 같은 World pair 재시도가 가능하다.",
+    "publish": "owner.publish() -> JSON-safe dict. 매번 실제 World reader 두 개를 호출한다. status는 published/duplicate/warmup이며 published bool 및 report 필드를 포함한다.",
+    "report": "owner.report() -> JSON-safe dict. source='actualWorldphysics', mode='explicit_local45_world_clock_owner', 발행/중복/warmup 수, 마지막 관측 World time/frame, 마지막 성공 World time/frame·ROS stamp, QoS, 수신 Clock 수와 마지막 원본 정수 stamp를 기록한다.",
+    "factory": "from factory_ops.world_clock import create_ros_world_clock; rclpy, clock_node, observed_clock_stamps, clock_owner = create_ros_world_clock(app, SimulationManager)",
+    "world_readers": "SimulationManager.get_simulation_time 및 get_num_physics_steps를 변경 없이 전달한다. 시계 offset·보간·합성 tick이나 센서 acquisition을 만들지 않는다.",
+    "root_call_site": "local45 PhysX에서만 기존 _clock_graph 호출을 건너뛰고 이 factory를 사용한다. root가 실제 physics app.update 이후 clock_owner.publish()를 호출한다. 정지 render hook에는 호출점을 추가하지 않는다.",
+    "observed_clock_stamps": "기존 helper와 호환되는 list[float]로 수신 메시지의 sec + nanosec/1e9만 추가한다. World read나 publish 성공을 수신으로 간주하지 않는다. 마지막 수신 sec/nanosec 정수 원본은 report.last_received_clock_stamp에도 보존한다.",
+    "strong_references": "clock_node._factory_clock_publisher, _factory_clock_subscription, _factory_world_clock_owner에 참조를 유지한다. 정상 반환 뒤 node.destroy_node()/rclpy.shutdown()은 기존 G2 정리 경로의 책임이다.",
+    "setup_failure": "factory가 초기화한 context와 만든 node만 부분 실패 시 정리한다. rclpy.init 자체가 실패한 경우 외부 context를 shutdown하지 않는다. 정리 오류도 보존해 전파한다."
+  },
+  "qos": {
+    "publisher": {"topic": "/clock", "reliability": "RELIABLE", "history": "KEEP_LAST", "depth": 10, "durability": "VOLATILE"},
+    "self_observer": {"topic": "/clock", "reliability": "BEST_EFFORT", "history": "KEEP_LAST", "depth": 10, "durability": "VOLATILE"},
+    "wire_type": "rosgraph_msgs.msg.Clock",
+    "scope": "factory가 publisher와 subscriber를 각각 하나 생성한다. 전역 endpoint 개수는 검증하지 않으며 root가 실제 startup에서 기록한다. 이 QoS 선택을 이전 현상의 원인 규명으로 주장하지 않는다."
+  },
+  "behavior": [
+    "시간은 유한·비음수 real, frame은 비음수 integral이며 bool은 거절한다. ROS int32 seconds 표현 범위와 ns 반올림 carry를 검증한다.",
+    "World time/frame reset, 동일 frame의 시간 변경, frame 증가에 비해 시간 비증가를 거절한다. 오류를 피하려고 시간이나 TTL을 바꾸지 않는다.",
+    "time0/frame0은 warmup으로 건너뛴다. 성공 발행과 같은 pair를 재조회하면 duplicate만 세며 발행하지 않는다. 실패한 콜백의 동일 pair는 발행 확정을 소비하지 않아 재시도할 수 있다.",
+    "SDK bridge 활성화는 기존 robot_qualification._clock_graph의 extension manager 방식과 app.update 순서를 따른다. OmniGraph import·/World/ROSClock 생성·삭제·timer·thread는 없다.",
+    "report는 native/hardware timestamp와 센서 acquisition을 주장하지 않는다. 순수 callback 사용에서는 ROS QoS를 가정하지 않고 factory가 생성한 경우에만 실제 선택 정책을 표시한다."
+  ],
+  "validation": [
+    {
+      "kind": "관련 CPU suite 1회",
+      "cwd": "C:/Users/LIMMM/factory-ops-twin",
+      "command": "& './.venv/Scripts/python.exe' -B -m unittest tests.test_world_clock -v",
+      "result": "7 PASS",
+      "unittest_elapsed_s": 0.003,
+      "exit_code": 0,
+      "coverage": "paused/same-frame 중복 방지, 다음 frame의 원래 시각·ns carry, reset/invalid 입력, callback 실패 후 재시도, factory의 publisher/subscriber 각1개·명시 QoS·강한 참조, 원본 수신 stamp 구분, 부분 초기화 소유권 정리",
+      "limit": "설치 API의 protocol 대체물을 쓰는 CPU 검사다. SDK 기동·실제 DDS 전달·다른 ROS 소비자 신선도 증거가 아니다. 기존 suite는 반복하지 않았다."
+    },
+    {
+      "kind": "cold SDK Python3.10 AST 1회",
+      "executable": "E:/IsaacSim/isaac-sim-4.5.0/kit/python/python.exe",
+      "arguments": ["-B", "-S", "-"],
+      "stdin_action": "ast.parse로 지정 2파일 bytes를 읽고 SHA256를 출력했다. 제품 모듈이나 SDK를 import하지 않았다.",
+      "python": "3.10.15",
+      "files": ["factory_ops/world_clock.py", "tests/test_world_clock.py"],
+      "result": "PASS",
+      "exit_code": 0
+    }
+  ],
+  "evidence_boundary": {
+    "confirmed_context": "사용자가 전달한 021 근거는 /clock bag tail과 planner accepted/path5.45, mission event의 rclpy clock14.933 및 odom/raw14.85 사이의 관측 불일치다.",
+    "not_established": "모든 clock publisher의 발행 중단이나 특정 QoS·SDK graph 내부 원인은 확정하지 않는다. 종료된 bag과 D 원본을 추가로 조회하지 않았다.",
+    "057": "stale planner 재계획은 보류된 상태이며 구현하거나 G3를 수정하지 않았다."
+  },
+  "root_wiring_reported_not_reviewed": {
+    "source": "사용자가 전달한 root의 미커밋 연결 완료 보고",
+    "api_maintained": "create_ros_world_clock의 4-tuple 및 .publish()/.report() 계약을 변경하지 않았다.",
+    "reported_call_sites": "G2 PhysX만 새 factory를 선택하고 setupLidar 이후 및 warmup/startup/main의 실제 app.update 뒤 publish를 호출한다고 전달받았다.",
+    "reported_evidence": "초기 publisher endpoint gate·QoS readback, SDK selfreceipt 범위의 1simHz world-clock-state.json 및 finally report 기록을 root가 담당한다.",
+    "source_review_performed_here": false,
+    "actual_runtime_verified_here": false
+  },
+  "remaining_limits": [
+    "G2 clock 분기·source pins·호출점·실제 domain/RMW·endpoint 개수·기록은 root 소유다. 이 작업에서는 해당 제품 경로를 수정하지 않았다.",
+    "실제 SDK 및 capture 이후 모든 4대 ROS 소비자의 clock 관측·신선도·종료는 root의 actual022 통합 검증으로 남는다. 문제 해결 완료나 transport 성공을 주장하지 않는다.",
+    "일반 타입검사·전체 suite·기존 검사 반복은 하지 않았다. GPU/SDK/ROS/WSL/서버/VM/설치/Git/새 에이전트 작업은 없다."
+  ]
+}

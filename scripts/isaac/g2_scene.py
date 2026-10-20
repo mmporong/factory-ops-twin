@@ -65,6 +65,21 @@ def _ros_stamp_parts(stamp_s: float) -> tuple[int, int]:
     return sec, nanosec
 
 
+def _setup_worker_clock(stage: Any, app: Any, manager: Any, *, local_sdk45: bool,
+                        lidar_backend: str) -> tuple[Any, Any, list[float], Any]:
+    if local_sdk45 and lidar_backend == "physx_planar":
+        from factory_ops.world_clock import create_ros_world_clock
+        return create_ros_world_clock(app, manager)
+    rclpy, node, stamps = _clock_graph(stage, app)
+    return rclpy, node, stamps, None
+
+
+def _update_physics_app(app: Any, clock_owner: Any) -> None:
+    app.update()
+    if clock_owner is not None:
+        clock_owner.publish()
+
+
 def _advance_terminal_settle(
     remaining: int, *, all_zero: bool, step: int, encoder_period: int,
     align_encoder: bool,
@@ -829,6 +844,8 @@ def _run(
     phase = "preflight"
     isaac45_runtime: Any = None
     get_assets_root_path: Any = None
+    world_clock: Any = None
+    clock_stamps: list[float] = []
     result: dict[str, Any] = {
         "schema_version": 1, "run_id": args.run_id, "scenario_id": args.scenario,
         "qualification": "local45_" + qualification if local_sdk45 else qualification,
@@ -1053,7 +1070,8 @@ def _run(
             })
 
         checkpoint("ros_and_lidars")
-        rclpy, clock_node, clock_stamps = _clock_graph(stage, app)
+        rclpy, clock_node, clock_stamps, world_clock = _setup_worker_clock(
+            stage, app, SimulationManager, local_sdk45=local_sdk45, lidar_backend=lidar_backend)
         if local_sdk45:
             lidar_sensors, lidar_metadata = runtime45.setup_lidars(
                 config, robots, stage, Usd, UsdGeom, Gf, SimulationManager, app,
@@ -1066,6 +1084,8 @@ def _run(
                 config, robots, stage, Usd, UsdGeom, Gf, SimulationManager, app,
             )
         result["lidars"] = lidar_metadata
+        if world_clock is not None:
+            world_clock.publish()
         for runtime in robots.values():
             node, ros = _setup_robot_ros(
                 rclpy, runtime["definition"], config["lidars"], runtime["geometry"], runtime["watchdog"],
@@ -1094,7 +1114,7 @@ def _run(
         rep.orchestrator.set_capture_on_play(True)
         timeline.play()
         for _ in range(int(config["warmup_steps"])):
-            app.update()
+            _update_physics_app(app, world_clock)
             now = float(SimulationManager.get_simulation_time())
             for runtime in robots.values():
                 runtime["ros"]["latest_sim_time"] = now
@@ -1109,7 +1129,7 @@ def _run(
             if all(runtime["ros"]["scan_front_raw"] > 0 and runtime["ros"]["scan_rear_raw"] > 0
                    for runtime in robots.values()):
                 break
-            app.update()
+            _update_physics_app(app, world_clock)
             publish_native_scans()
             now = float(SimulationManager.get_simulation_time())
             for runtime in robots.values():
@@ -1138,6 +1158,17 @@ def _run(
                                   "publication": value["ros"]["native_scan_publication"]}
                            for key, value in robots.items()},
             })
+        if world_clock is not None:
+            endpoints = clock_node.get_publishers_info_by_topic("/clock")
+            result["world_clock_owner"] = {**world_clock.report(),
+                "publisher_endpoints": [{"node_name": e.node_name, "node_namespace": e.node_namespace,
+                    "topic_type": e.topic_type, "reliability": str(e.qos_profile.reliability)} for e in endpoints],
+                "publisher_endpoint_count": len(endpoints), "omni_graph_clock_created": False,
+                "global_clock_endpoint_count_verified": len(endpoints) == 1,
+                "endpoint_verification_scope": "startup DDS endpoint list; not continuous WSL delivery proof"}
+            if len(endpoints) != 1:
+                raise base.SmokeError(f"World-clock mode requires one /clock publisher; observed {len(endpoints)}")
+            _atomic_json(output / "world-clock-startup.json", result["world_clock_owner"])
         initial_time = float(SimulationManager.get_simulation_time())
         for robot_id, runtime in robots.items():
             left, right = _wheel_angles(runtime["robot"])
@@ -1170,6 +1201,7 @@ def _run(
         )
         final_sim_time_s: float | None = None
         final_physics_frame: int | None = None
+        last_clock_report_frame: int | None = None
         start_sim = initial_time
         max_sim = min(float(config["max_sim_time_s"]), float(scenario["max_sim_time_s"]))
         while True:
@@ -1238,12 +1270,20 @@ def _run(
                     "requested_angular": requested_angular, "stop_reason": stop_reason,
                     "command_audit": command_audit,
                 }
-            app.update()
+            _update_physics_app(app, world_clock)
             publish_native_scans()
             _spin_nodes(rclpy, [clock_node, *robot_nodes])
             step += 1
             stamp = float(SimulationManager.get_simulation_time())
             physics_frame = int(SimulationManager.get_num_physics_steps())
+            if world_clock is not None and (last_clock_report_frame is None
+                    or physics_frame - last_clock_report_frame >= 60):
+                _atomic_json(output / "world-clock-state.json", {"run_id": args.run_id,
+                    "read_at_sim_time_s": stamp, "physics_frame": physics_frame,
+                    "publication": world_clock.report(), "sdk_received_count": len(clock_stamps),
+                    "sdk_last_received_clock_s": clock_stamps[-1] if clock_stamps else None,
+                    "scope": "owned publisher and SDK self-receipt; WSL consumers require separate evidence"})
+                last_clock_report_frame = physics_frame
             all_zero = True
             for robot_id, runtime in robots.items():
                 left, right = _wheel_angles(runtime["robot"])
@@ -1396,6 +1436,11 @@ def _run(
                     cleanup_errors.append(f"{robot_id} fault stop: {type(error).__name__}: {error}")
                 cleanup_fault_response[robot_id] = response
             result["cleanup_fault_response"] = cleanup_fault_response
+        if world_clock is not None:
+            result["world_clock_owner"] = {**result.get("world_clock_owner", {}), **world_clock.report(),
+                "sdk_observed_clock_count": len(clock_stamps),
+                "sdk_last_observed_clock_s": clock_stamps[-1] if clock_stamps else None,
+                "global_clock_endpoint_count_verified": result.get("world_clock_owner", {}).get("publisher_endpoint_count") == 1}
         actions = []
         if session is not None and rep is not None:
             actions.append(lambda: rep.orchestrator.set_capture_on_play(False))

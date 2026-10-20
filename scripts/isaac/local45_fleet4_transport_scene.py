@@ -17,7 +17,7 @@ from scripts.isaac.fleet4_transport_scene import FleetTransportLifecycle, SOURCE
 RESULT_FILE = "local45-fleet4-transport-scene.json"
 LOCAL_SOURCE_PINS = BASE_SOURCE_PINS | frozenset({
     "scripts/isaac/local45_fleet4_transport_scene.py", "factory_ops/isaac45_runtime.py",
-    "factory_ops/flat_scan_observation.py", "factory_ops/flat_scan_ros.py", "factory_ops/flat_scan_completion.py", "factory_ops/physx_planar.py", "factory_ops/compat.py",
+    "factory_ops/flat_scan_observation.py", "factory_ops/flat_scan_ros.py", "factory_ops/flat_scan_completion.py", "factory_ops/physx_planar.py", "factory_ops/world_clock.py", "factory_ops/compat.py",
     "factory_ops/operations/model.py", "scripts/isaac/robot_qualification.py",
     "scripts/isaac/nav_scene.py", "scripts/isaac/stage_smoke.py",
     "factory_ops/visual_state.py", "factory_ops/wsl_process_supervisor.py",

@@ -1,0 +1,252 @@
+{
+  "schema_version": 1,
+  "run_id": "730d0f11d9ec4a4db73af541375132d1",
+  "source_commit": "17542ba0ba778a8598fd256a840dee02be155e93",
+  "sensor_backend": "physx_collision_planar",
+  "status": "failed_stale_planner_path_with_incoherent_clock_observations",
+  "last_observed_sim_s": 14.95000077970326,
+  "primary_ros_error": {
+    "message": "computed path is stale",
+    "traceback": "Traceback (most recent call last):\n  File \"/mnt/d/FactoryOpsRuntime/local45-transport-021/source/scripts/ros/g3_mission.py\", line 1745, in run_mission\n    geometry = qualify_computed_path(book, rt[\"chunk\"], [[item[\"position_xyz_m\"][0], item[\"position_xyz_m\"][1]] for item in payload[\"poses\"]],\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/mnt/d/FactoryOpsRuntime/local45-transport-021/source/factory_ops/fleet_execution.py\", line 229, in qualify_computed_path\n    raise ValueError(\"computed path is stale\")\nValueError: computed path is stale\n",
+    "type": "ValueError"
+  },
+  "secondary_errors": [
+    "SDK mission-failed afterROSfailure",
+    "SDK cleanup90s exceeded"
+  ],
+  "failed_robot": "carter2",
+  "planner_requested_sim_s": 14.933334112,
+  "planner_path_clock": {
+    "admitted_clock_ns": 14933334112,
+    "first_observed_clock_ns": 14933334112,
+    "path_stamp_ns": 5450000284,
+    "waited_wall_s": 0.0
+  },
+  "returned_path_age_s": 9.483333828,
+  "path_ttl_s": 0.5,
+  "recorded_clock_count": 91,
+  "last_recorded_clock": {
+    "id": 1022,
+    "nearest_prior_clock_s": 5.450000284,
+    "stamp_s": 5.450000284
+  },
+  "planner_server_acceptance_and_path_stamp_s": 5.450000284,
+  "mission_rclpy_clock_at_admission_s": 14.933334112,
+  "raw_tail": {
+    "/carter3/scan_front_raw": [
+      {
+        "id": 19527,
+        "nearest_prior_clock_s": 5.450000284,
+        "stamp_s": 14.550000759,
+        "range_count": 720,
+        "time_increment": 0.0
+      },
+      {
+        "id": 19666,
+        "nearest_prior_clock_s": 5.450000284,
+        "stamp_s": 14.650000764,
+        "range_count": 720,
+        "time_increment": 0.0
+      },
+      {
+        "id": 19824,
+        "nearest_prior_clock_s": 5.450000284,
+        "stamp_s": 14.750000769,
+        "range_count": 720,
+        "time_increment": 0.0
+      }
+    ],
+    "/carter1/scan_front_raw": [
+      {
+        "id": 19662,
+        "nearest_prior_clock_s": 5.450000284,
+        "stamp_s": 14.650000764,
+        "range_count": 720,
+        "time_increment": 0.0
+      },
+      {
+        "id": 19811,
+        "nearest_prior_clock_s": 5.450000284,
+        "stamp_s": 14.750000769,
+        "range_count": 720,
+        "time_increment": 0.0
+      },
+      {
+        "id": 19954,
+        "nearest_prior_clock_s": 5.450000284,
+        "stamp_s": 14.850000774,
+        "range_count": 720,
+        "time_increment": 0.0
+      }
+    ],
+    "/carter3/scan_rear_raw": [
+      {
+        "id": 19676,
+        "nearest_prior_clock_s": 5.450000284,
+        "stamp_s": 14.650000764,
+        "range_count": 720,
+        "time_increment": 0.0
+      },
+      {
+        "id": 19825,
+        "nearest_prior_clock_s": 5.450000284,
+        "stamp_s": 14.750000769,
+        "range_count": 720,
+        "time_increment": 0.0
+      },
+      {
+        "id": 19966,
+        "nearest_prior_clock_s": 5.450000284,
+        "stamp_s": 14.850000774,
+        "range_count": 720,
+        "time_increment": 0.0
+      }
+    ],
+    "/carter4/scan_rear_raw": [
+      {
+        "id": 19678,
+        "nearest_prior_clock_s": 5.450000284,
+        "stamp_s": 14.650000764,
+        "range_count": 720,
+        "time_increment": 0.0
+      },
+      {
+        "id": 19827,
+        "nearest_prior_clock_s": 5.450000284,
+        "stamp_s": 14.750000769,
+        "range_count": 720,
+        "time_increment": 0.0
+      },
+      {
+        "id": 19977,
+        "nearest_prior_clock_s": 5.450000284,
+        "stamp_s": 14.850000774,
+        "range_count": 720,
+        "time_increment": 0.0
+      }
+    ],
+    "/carter1/scan_rear_raw": [
+      {
+        "id": 19663,
+        "nearest_prior_clock_s": 5.450000284,
+        "stamp_s": 14.650000764,
+        "range_count": 720,
+        "time_increment": 0.0
+      },
+      {
+        "id": 19812,
+        "nearest_prior_clock_s": 5.450000284,
+        "stamp_s": 14.750000769,
+        "range_count": 720,
+        "time_increment": 0.0
+      },
+      {
+        "id": 19955,
+        "nearest_prior_clock_s": 5.450000284,
+        "stamp_s": 14.850000774,
+        "range_count": 720,
+        "time_increment": 0.0
+      }
+    ],
+    "/carter2/scan_front_raw": [
+      {
+        "id": 19664,
+        "nearest_prior_clock_s": 5.450000284,
+        "stamp_s": 14.650000764,
+        "range_count": 720,
+        "time_increment": 0.0
+      },
+      {
+        "id": 19813,
+        "nearest_prior_clock_s": 5.450000284,
+        "stamp_s": 14.750000769,
+        "range_count": 720,
+        "time_increment": 0.0
+      },
+      {
+        "id": 19956,
+        "nearest_prior_clock_s": 5.450000284,
+        "stamp_s": 14.850000774,
+        "range_count": 720,
+        "time_increment": 0.0
+      }
+    ],
+    "/carter2/scan_rear_raw": [
+      {
+        "id": 19517,
+        "nearest_prior_clock_s": 5.450000284,
+        "stamp_s": 14.550000759,
+        "range_count": 720,
+        "time_increment": 0.0
+      },
+      {
+        "id": 19665,
+        "nearest_prior_clock_s": 5.450000284,
+        "stamp_s": 14.650000764,
+        "range_count": 720,
+        "time_increment": 0.0
+      },
+      {
+        "id": 19823,
+        "nearest_prior_clock_s": 5.450000284,
+        "stamp_s": 14.750000769,
+        "range_count": 720,
+        "time_increment": 0.0
+      }
+    ],
+    "/carter4/scan_front_raw": [
+      {
+        "id": 19677,
+        "nearest_prior_clock_s": 5.450000284,
+        "stamp_s": 14.650000764,
+        "range_count": 720,
+        "time_increment": 0.0
+      },
+      {
+        "id": 19826,
+        "nearest_prior_clock_s": 5.450000284,
+        "stamp_s": 14.750000769,
+        "range_count": 720,
+        "time_increment": 0.0
+      },
+      {
+        "id": 19967,
+        "nearest_prior_clock_s": 5.450000284,
+        "stamp_s": 14.850000774,
+        "range_count": 720,
+        "time_increment": 0.0
+      }
+    ]
+  },
+  "clock_claim_limit": "recorded /clock andplanner remain5.45 whilePython mission clock progresses14.93; exact producer/delivery/QoS boundary unconfirmed. Not evidence that all clock publication ceased.",
+  "bag_timestamp_coherence_verified": false,
+  "original_database_sha256": "777cf2ba3b67f0ea8d56d5c1f65dd47be6344e8f82704776ca13a6732fc48dbe",
+  "original_database_bytes": 29667328,
+  "startup_all4_ready": true,
+  "first_real_carter1_motion": true,
+  "new_backend8rawROS720arrays_started": true,
+  "instantaneous_time_increment_s": 0,
+  "self_hit_prim_identity_observed": true,
+  "self_hit_source": "actual21semanticsTrue; static054false-semanticsunknown remains unchanged",
+  "completed_orders": 0,
+  "empty_returns_completed": 0,
+  "material_revision": 0,
+  "conservation": [
+    {
+      "balanced": true,
+      "consumed": 0,
+      "in_totes": 0,
+      "initial": 60,
+      "on_hand": 60,
+      "replenished": 0,
+      "sku": "sensor-kit"
+    }
+  ],
+  "windows_closed": true,
+  "linux_closed": true,
+  "cleanup_errors": [],
+  "goal80_complete": false,
+  "full_sensor_quality_verified": false,
+  "raw_originals": "D:\\FactoryOpsRuntime\\local45-transport-021",
+  "next": "single explicit Worldclockpublisher/constantQoS forlocal45PhysX only; no clockoffset/TTL enlargement/stale-path acceptance"
+}

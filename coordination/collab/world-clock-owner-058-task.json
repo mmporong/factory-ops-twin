@@ -1,0 +1,30 @@
+{
+  "task_id": "world-clock-owner-058",
+  "attempt": 1,
+  "contract_revision": 58,
+  "owner": "control",
+  "reviewer": "root",
+  "goal": "One explicit World physics-clock publisher for local45 PhysX mode, independent of capture execution graph; root owns G2 integration",
+  "inputs": {
+    "base_commit": "17542ba0ba778a8598fd256a840dee02be155e93",
+    "source_reference": "scripts/isaac/robot_qualification.py:_clock_graph lines319ff",
+    "evidence": "D:/FactoryOpsRuntime/local45-transport-021/closed-clock-plan-tail.json",
+    "facts": "Closedbag /clock91 records last5.450000284; carter2 accepted+path5.45 while missionevent rclpyclock14.933 andmanualodom/raw14.85continue. This proves inconsistent clock observations, not that every publisher ceased. No exact SDK graph/QoS/internal cause proven. Retryingstale result notimplemented. Root owns closed021/preservation; no ownedGPUactive."
+  },
+  "write_paths": [
+    "factory_ops/world_clock.py",
+    "tests/test_world_clock.py",
+    "coordination/collab/results/world-clock-owner-058.json"
+  ],
+  "acceptance": [
+    "Onlylisted files; notalone. Do NOT edit G2/local45lifecycle/robot_qualification/G3/runtime orD. Root wires sourcepins/CLIclock branch. No GPU/SDK/ROS/WSL/server/Git/newagents/newdeps. One focused CPU pass and coldSDK3.10AST. No old/full suites repeated.",
+    "Cold-importable WorldClockPublisher(publish_callback, simulation_time, physics_frame) with publish() and report()->JSONdict. Read actual providedWorld functions eachcall; validate finite/nonnegative time, integralnonboolframe, ROS int32seconds representability, monotonic World time/frame pair. Sameframe unchanged ->no duplicatepublication; sameframe changedtime/reset/nonfinite ->fail. Frameadvanced mustadvancetime. No synthetictime/clockoffset/TTL/wall interpolation. Successfulcallback commits publishedhighwater; callbackfailure propagates and sameframe retry remains possible.",
+    "publish_callback takes integer(sec,nanosec); round exactactualWorld seconds toROS nanoseconds with carry. Time0/frame0 warmup can skip untilactualWorldadvances. report includes source=actualWorldphysics, publication/duplicatecounts,lastWorldtime/frame, resetpolicy; no native/hardware timestamp claim. Clock sampling/newframepublication is not new sensor acquisition.",
+    "Export create_ros_world_clock(app, SimulationManager) -> (rclpy,node,observed_clock_stamps,WorldClockPublisher). Enable installed isaacsim.ros2.bridge the same way existing helper does, app.update(), thenrclpy.init(), createoneprocess-owned node and one global /clock publisher. NO OmniGraph /World/ROSClock creation/deletion. Root skips old _clock_graph entirely in local45physx only, canonical62/defaultRTX unchanged.",
+    "Use rosgraph_msgs.msg.Clock and explicit QoS RELIABLE/KEEP_LAST/depth10/VOLATILE for publisher, BEST_EFFORT/depth10 subscriber as SDKselfobserver. Goal reliableoffered compatiblewithcurrentreaderprofiles and constantowner acrosspausedcaptures; do not assertthis provesoldQoScause. Keep publisher/subscription refs onnode untilcaller destroysnode/shutsrclpy asalreadyG2 cleanup. No backgroundtimer/thread: root invokes publish aftereachactualphysics app.update, never frompausedrender hook.",
+    "Factoryclosure uses SimulationManager.get_simulation_time/get_num_physics_steps without rewritingthem. ROSwire callback buildsClock(sec,nanosec). Observer appendsoriginalreceivedClockstamps, not Worldreadvalues. Reportmode/QoSpolicyexplicit. Root records actualSDKdomain/RMW and counts publisherendpoints atstartup.",
+    "FocusedCPUbehavior: sameframe/paused no republish, nextWorldframe exactwiretime/carry; resets/bools/nonfinite/sameframeinconsistency failure; failedcallbackretry; sourcefactory producesonePublisher/oneSubscription withcorrectQoS andkeepsrefs using substitutedinstalledAPI protocol, no fakeSDKproof. No source-string tests.",
+    "Return exact API/sourcehash/testcommand/exit. No productfileoutside3paths or proof that oldSDKissuefullyfixed. Actual22aftercapture/all4 ROS consumers isroot integration evidence."
+  ],
+  "result_path": "coordination/collab/results/world-clock-owner-058.json"
+}

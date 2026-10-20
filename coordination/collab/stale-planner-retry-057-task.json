@@ -1,0 +1,28 @@
+{
+  "task_id": "stale-planner-retry-057",
+  "attempt": 1,
+  "contract_revision": 57,
+  "owner": "control",
+  "reviewer": "root",
+  "goal": "Recover a stale completed ComputePathToPose result by bounded fresh replanning while retaining reservation/stop safety; never follow stale path",
+  "inputs": {
+    "base_commit": "17542ba0ba778a8598fd256a840dee02be155e93",
+    "latest_stage": "D:/FactoryOpsRuntime/local45-transport-021",
+    "facts": "021 actualPhysX all4startupPASS,8raw720scans, matchingprimselfhitIDs, movingcarter1. Failed14.95sim: carter2 compute request/accepted clock14.933334112 but returned path header5.450000284 (age9.483333828)>pathTTL0.5. carter4TFstamp14.850/clock14.900 age0.05; no nativeadmission error. Exact Nav2 stale header origin unconfirmed. Root owns closure/backup; do not access active bag."
+  },
+  "write_paths": [
+    "scripts/ros/g3_mission.py",
+    "tests/test_g3_planner_retry.py",
+    "coordination/collab/results/stale-planner-retry-057.json"
+  ],
+  "acceptance": [
+    "Only listed files; you are not alone. Root owns runtime/infrastructure/records/Git. No SDK/GPU/ROS/WSL/servers/cloud/Git/new agents or dependencies. Root keeps all021 D originals unchanged and handles any remaining owner closure.",
+    "Inspect the computing terminal-result branch and existing planner timeout/reservation/current-scope logic. Add at most2stale-result replans (initial+2total attempts), keeping existing TTL0.5/clock-wait/run/action deadlines and strict qualify_computed_path unchanged. No timestamp shift/synthesis/TTL enlargement, GT, changedgeometry or broad rewrite.",
+    "Fresh result behavior unchanged. When otherwise successful result is stale, do not call FollowPath. Send a NEW ComputePathToPose with fresh goal header from actual node clock and NEW unique planner UUID; actual computed Path header remains producer original. Keep the SAME held reservation, generation, current chunk/leg/Follow UUID and original phase_started/deadline. Do not return through request_remaining_reservation or release/regrant/free tiles just to retry. Planning robot remains without a newly accepted motion action; normal authorization/heartbeat handling continues.",
+    "Reset only pending planner result/path/clock-wait bookkeeping needed for new compute_sent. Do not reset action deadline or retry count on every send; count must be scoped to the original chunk and reset only for a genuinely new chunk. Exceeding2retries fails with clear original path/clock/age facts. Future/invalid frame/failed planner terminal result must retain existing handling.",
+    "Preserve original stale result facts in an explicit planner attempt list/event (old UUID/path header/request/observed clocks/age/path hash or sufficient original metadata). Do not make stale attempts additional successful drive actions/history entries; maintain one main record per eventual Follow leg and preserve original planner UUID in attempt record if primary field changes. Dashboard new event support not required; original JSONL remains authoritative.",
+    "Factor the smallest testable helper if needed; no new framework. One focused CPU pass for stale->newCompute/noFollow, same reservation/generation/followUUID/deadline unchanged, freshresult goes through existing geometry/yaw/tiles gates, retry exhaustion, future/invalid metadata and callback failure propagation. Use actual existing node/client protocol substitutes, not source text tests. SDK3.10 coldAST if shared-import syntax relevant; no old/full suites repeated.",
+    "Return exact sourceSHA and command/exit. Keep uncertain Nav2 internal reason open; this is bounded recovery of a rejected result, not proof that sensor or Nav2 clocks are fixed. Root one bounded review then actual022 validates."
+  ],
+  "result_path": "coordination/collab/results/stale-planner-retry-057.json"
+}

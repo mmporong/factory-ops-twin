@@ -58,7 +58,7 @@ OpenUSD 자산·운영 상태와 데이터 입력을 연결하고, Kit 운영 �
 
 역행 scan을 보정하거나 ROS로 발행하지 않는 입력 정책은 유지합니다. 거절 뒤 한 scan 기간 안에 새 scan이 오지 않거나 큰 역행·시계 reset이 발생하면 실패하고, 센서·실행당 서로 다른 거절 사건의 원본을 최대16건 보존합니다. 같은 완료 복사본의 재조회는 발행·획득 계수·보존을 늘리지 않으며 진단도 발행과 같은 소유 복사본을 읽습니다. [회복 기한 실패](docs/evidence/local45-transport-019.json)와 [후속 실행의 위치 TF 유효시간 실패](docs/evidence/local45-transport-020.json)를 구분해 남겼으며, 전체 운송과 센서 시계 정합은 아직 검증 중입니다.
 
-로컬4.5 실행기에 `--lidar-backend physx_planar`를 지정하면 PhysX 충돌 형상에서 거리를 읽는 별도 개발 모델을 선택합니다. 720개 방위의 순간 평면 스캔을 실제 World 6프레임 간격으로 취득하고, 시각도 World 취득 시각으로 표기합니다. 원시 차체 가림은 보존하며 기존 센서별 앞쪽 반평면 소비 경로를 사용합니다. 기본값은 기존 RTX입니다. 이 모델의 [보정 시험과 한계](docs/evidence/physx-planar-admission-054.json)는 RTX/RPLIDAR 검증과 구분하며, 새 모델의4대 운송 통합은 아직 확인 전입니다.
+로컬4.5 실행기에 `--lidar-backend physx_planar`를 지정하면 PhysX 충돌 형상에서 거리를 읽는 별도 개발 모델을 선택합니다. 720개 방위의 순간 평면 스캔을 실제 World 6프레임 간격으로 취득하고, 시각도 World 취득 시각으로 표기합니다. 원시 차체 가림과 기존 센서별 앞쪽 반평면 소비 경로를 유지합니다. ROS 시계는 같은 World 물리 시각을 지속되는 rclpy 발행자에서 제공합니다. 기본값은 기존 RTX입니다. 이 모델의 [보정 시험과 한계](docs/evidence/physx-planar-admission-054.json)는 RTX/RPLIDAR 검증과 구분합니다. [4대 초기화·주행 시작](docs/evidence/local45-transport-021.json)은 확인했으나 시계 소비자 불일치로 중단됐으며, 새 시계의 촬영 후 전달과 운송 완주는 검증 중입니다.
 
 4대 ROS 운행용 로컬 실행기는 실행별 UDP 통신 설정을 Windows·WSL에 적용하고 실제 ROS context와 기동 수신 계수를 기록합니다. 센서·odometry·TF의 기록 QoS도 발행자에 맞춰 명시합니다. 실제 네 차량의 ROS 기동 조건과 같은 실행의 운반·공정 소비를 확인했으며, 전체 운송·빈 토트 반납 완료는 남아 있습니다.
 
