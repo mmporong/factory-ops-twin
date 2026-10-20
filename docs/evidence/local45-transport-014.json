@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "run_id": "d88db3e512fa4f468a40ef46e1679677",
+  "source_commit": "2400fbe20e3a6b3efd4908e49c90ebbef68f3e68",
+  "status": "failed_evidence_discovery_before_orders",
+  "windows_closed": true,
+  "linux_closed": true,
+  "cleanup_errors": [],
+  "reservation_change_exercised": false,
+  "observed": "recorder waited for clock; lifecycle services waited; read-only graph saw1clock publisher and service endpoints without proving messages/responses",
+  "root_cause": "unconfirmed discovery/data-delivery failure",
+  "next_trial": "same source/physics/motion/TTL/workload, isolate ROS domain72->73",
+  "global_settings_changed": false,
+  "bag_sql_opened": false,
+  "records_sha256": {
+    "pair-host.json": "babb19c1c31976308dac678af3443d330e040774f9436728d586096f43a36230",
+    "nav.log": "a4bf989f93dc3e4ef4b117b48dfde9b2b3db835c76ede3f1d5a93485ed5fef3b",
+    "results/run/rosbag.log": "4424f90115e5634cd20704df249b2948bbb7dc259a7e5e092c83ee8b84da49c7",
+    "results/run/nav2.log": "ec87cb2e9d760f6e4712a07398c8cd2bbfb3edd4f01596449e1d5057b2d04582",
+    "graph-diagnostic-001.json": "85f3da6e155df8a83b89cfdb3b877a9aa056bbcccb51a41876716a2d3f644960"
+  }
+}

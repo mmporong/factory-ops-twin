@@ -383,6 +383,14 @@ ROS가 실패 종료한 직후 외부 실행기가 아직 정리 중인 Windows 
 
 041은 기존 종료 성공·HOLD ACK·신선한 zero-odometry·도착 검사로 anchor가 갱신된 경계에서만 남은 경로를 계산한다. 이전 hold는 원자적 successor transfer가 승인될 때까지 유지하고, 현재 관측된 차량 점유가 포함되지 않거나 peer와 충돌하면 기존 manager가 거절한다. 승인된 기록에 실제 예약 타일과 남은 경로 출처를 남기며 원래 leg 식별자도 보존한다. 관련 CPU 검사4개가1회 통과했다. 실제 ROS 적용·대기 시간·처리량 개선은 다음 실행에서 확인할 항목이다. [041 결과](../coordination/collab/results/remaining-route-reservation-041.json)를 참고한다.
 
+013은 기준 관측을 마친 뒤041 적용 실행으로 전환하기 위해 부분 종료했다. 종료 상태를 성공으로 바꾸지 않았다. 종료 후8개 raw 스캔은 각각2108~2441개의 고유 시각을 기록했고, 약274초까지 스캔과 clock의 시각 역행은 없었다. 원본198파일은 D·E에 보존해 해시를 대조했다. 전체 주문 완료·빈 토트 반납 완료와 센서 품질 합격은 아니다. [부분 기준 실행 근거](evidence/local45-transport-013.json)를 참고한다.
+
+## FOT-050 — endpoint 발견과 실제 clock 수신의 차이
+
+014는 예약 개선 함수에 진입하기 전 evidence_discovery 단계에서 실패했다. recorder는 약300초 동안 clock을 기다렸고 일부 lifecycle manager도 서비스를 기다렸다. 단일 읽기 진단 노드에서는 clock 발행자1개와 해당 서비스 endpoint가 보였지만 실제 표본 수신·서비스 응답을 증명하지는 않았다. Nav2 PID는 살아 있었고 WSL 가용 메모리는 약38GiB, swap 사용은0이었다. 뒤의 exit -9는 임무 실패 이후 정리 과정과 구분한다. 실제 발견·전송 실패의 세부 원인은 미확정이다.
+
+다음 실행은 다른 조건을 유지하고 이 프로젝트의 ROS domain을72에서73으로 분리한다. 이것은 재사용된 통신 그래프 영향 여부를 가리는 한 변수 시험이며 원인 확정이나 해결 선언이 아니다. Windows와 WSL은 같은 입력 config를 사용하고 전역 환경·배포판·다른 작업 프로세스는 바꾸지 않는다. ROS domain은 통신 그룹을 나누지만 실제 통신 성공의 충분조건은 아니다. [공식 domain 설명](https://docs.ros.org/en/jazzy/Concepts/Intermediate/About-Domain-ID.html)을 참고한다.014의 Windows·WSL 종료와 정리 오류 없음은 확인했다. [014 근거](evidence/local45-transport-014.json)를 보존한다.
+
 ## 실행 전 확인과 후속 기록
 
 1. 깨끗한 생산자 소스·host commit·설정·실행 ID를 결속한다. 실패한 실행 ID와 원본을 다시 사용하지 않는다.

@@ -1,0 +1,221 @@
+{
+  "schema_version": 1,
+  "run_id": "2f3bd7f3302a4dae9a8f232e3438a302",
+  "source_commit": "f06597c51d7e6acf841455c39dbbe0f028749a97",
+  "status": "intentionally_stopped_partial_baseline_for_remaining_route_successor",
+  "original_host_status": "failed",
+  "originals_unchanged": true,
+  "transport_completed": false,
+  "goal80_complete": false,
+  "windows_closed": true,
+  "linux_closed": true,
+  "cleanup_errors": [],
+  "clock_regressions": 0,
+  "raw_scan_topics": {
+    "/carter1/scan_front_raw": {
+      "count": 2441,
+      "unique_stamps": 2441,
+      "first_stamp_s": 4.716698163,
+      "last_stamp_s": 274.416712229,
+      "regressions": 0
+    },
+    "/carter3/scan_front_raw": {
+      "count": 2246,
+      "unique_stamps": 2246,
+      "first_stamp_s": 4.716698163,
+      "last_stamp_s": 274.416712229,
+      "regressions": 0
+    },
+    "/carter3/scan_rear_raw": {
+      "count": 2221,
+      "unique_stamps": 2221,
+      "first_stamp_s": 4.73336483,
+      "last_stamp_s": 274.433378896,
+      "regressions": 0
+    },
+    "/carter1/scan_rear_raw": {
+      "count": 2341,
+      "unique_stamps": 2341,
+      "first_stamp_s": 4.816698168,
+      "last_stamp_s": 274.416712229,
+      "regressions": 0
+    },
+    "/carter2/scan_front_raw": {
+      "count": 2302,
+      "unique_stamps": 2302,
+      "first_stamp_s": 4.816698168,
+      "last_stamp_s": 274.416712229,
+      "regressions": 0
+    },
+    "/carter2/scan_rear_raw": {
+      "count": 2279,
+      "unique_stamps": 2279,
+      "first_stamp_s": 4.816698168,
+      "last_stamp_s": 274.416712229,
+      "regressions": 0
+    },
+    "/carter4/scan_front_raw": {
+      "count": 2132,
+      "unique_stamps": 2132,
+      "first_stamp_s": 4.816698168,
+      "last_stamp_s": 274.416712229,
+      "regressions": 0
+    },
+    "/carter4/scan_rear_raw": {
+      "count": 2108,
+      "unique_stamps": 2108,
+      "first_stamp_s": 4.816698168,
+      "last_stamp_s": 274.416712229,
+      "regressions": 0
+    }
+  },
+  "sensor_quality_qualified": false,
+  "stream_scope": "ROS timestamp uniqueness/continuity only; ranges/coverage/alignment qualification separate",
+  "material_conservation": [
+    {
+      "balanced": true,
+      "consumed": 2,
+      "in_totes": 2,
+      "initial": 60,
+      "on_hand": 56,
+      "replenished": 0,
+      "sku": "sensor-kit"
+    }
+  ],
+  "material_requests": [
+    {
+      "destination": null,
+      "quantity": 2,
+      "request_id": "F4-001",
+      "robot_id": "carter3",
+      "sku": "sensor-kit",
+      "source": "S1",
+      "state": "picked",
+      "tote_id": "F4-TOTE-001"
+    },
+    {
+      "destination": "CI",
+      "quantity": 2,
+      "request_id": "F4-002",
+      "robot_id": "carter2",
+      "sku": "sensor-kit",
+      "source": "S3",
+      "state": "consumed",
+      "tote_id": "F4-TOTE-002"
+    },
+    {
+      "destination": null,
+      "quantity": 2,
+      "request_id": "F4-003",
+      "robot_id": null,
+      "sku": "sensor-kit",
+      "source": "S2",
+      "state": "reserved",
+      "tote_id": "F4-TOTE-003"
+    },
+    {
+      "destination": null,
+      "quantity": 2,
+      "request_id": "F4-004",
+      "robot_id": null,
+      "sku": "sensor-kit",
+      "source": "S1",
+      "state": "reserved",
+      "tote_id": "F4-TOTE-004"
+    }
+  ],
+  "empty_trips": [
+    {
+      "destination": "S3",
+      "order_id": "F4-002",
+      "ready_time_s": 199.433343735,
+      "robot_id": null,
+      "source": "CI",
+      "state": "ready",
+      "task_id": "empty:F4-002",
+      "tote_id": "F4-TOTE-002"
+    }
+  ],
+  "virtual_charge_events": [
+    {
+      "event_seq": 63,
+      "kind": "virtual_charger_arrived",
+      "sim_time_s": 48.950002552,
+      "robot_id": "carter1",
+      "dock": {
+        "anchor": "P1",
+        "reserved_at_s": 6.066666983,
+        "arrival": {
+          "goal_id": "198d462b15f24827b71d5eced3cc7c24",
+          "stamp_s": 48.950002552,
+          "anchor": "P1",
+          "navigation_succeeded": true
+        },
+        "virtual_connector_state": "not_engaged",
+        "reason": "awaiting_fresh_geometric_dwell",
+        "dock_id": "CH1",
+        "phase": "contact_pending",
+        "geometric_dock_confirmed": false,
+        "contact_since_s": null,
+        "last_stamp_s": null,
+        "fault": null,
+        "contact_source": "estimated_pose_geometric_dock",
+        "virtual": true,
+        "hardware_calibrated": false,
+        "physical_contact_verified": false,
+        "body_occupancy_owner": "G3 reservation manager"
+      }
+    },
+    {
+      "event_seq": 119,
+      "kind": "virtual_charger_released",
+      "sim_time_s": 100.916671929,
+      "robot_id": "carter1",
+      "dock": null
+    }
+  ],
+  "progress": {
+    "completed_orders": 0,
+    "elapsed_sim_s": 268.13334731799995,
+    "released_orders": 4,
+    "robots": {
+      "carter1": {
+        "anchor": "P1",
+        "generation": 11,
+        "phase": "idle",
+        "target": null
+      },
+      "carter2": {
+        "anchor": "E_HIGH",
+        "generation": 30,
+        "phase": "following",
+        "target": "P2"
+      },
+      "carter3": {
+        "anchor": "S1",
+        "generation": 18,
+        "phase": "request",
+        "target": "CI"
+      },
+      "carter4": {
+        "anchor": "P4",
+        "generation": 4,
+        "phase": "request",
+        "target": "CO"
+      }
+    },
+    "run_id": "2f3bd7f3302a4dae9a8f232e3438a302",
+    "scenario_id": "fleet4_transport_normal"
+  },
+  "bag_bytes": 705990656,
+  "bag_sha256": "25b775d8af4dacec5c4b5c6628550ac37d5cc0435254b749206c0ee9f649e60c",
+  "recorder_closed_before_sql": true,
+  "preservation": {
+    "file_count": 198,
+    "bytes": 1017193259,
+    "copies_sha256_matched": true,
+    "manifest_sha256": "dcf84fcd051c42fb678647a13514792a129c61fc28ed3eb4591626ad070d110d"
+  },
+  "next_stage": "local45-transport-014",
+  "next_source_commit": "2400fbe20e3a6b3efd4908e49c90ebbef68f3e68"
+}

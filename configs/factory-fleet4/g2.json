@@ -57,7 +57,7 @@
     "evaluation_contract": "independent physics goal limits remain 0.35 m and 0.35 rad; simulator truth never feeds goal acceptance"
   },
   "qualification": "fleet4_transport_development",
-  "ros_domain_id": 72,
+  "ros_domain_id": 73,
   "camera_capture_every_steps": 1200,
   "warmup_steps": 120,
   "max_sim_time_s": 2100,
