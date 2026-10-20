@@ -1,5 +1,5 @@
 {
-  "revision": 29,
+  "revision": 32,
   "updated_at": "2026-10-19T23:07:02.085301+00:00",
   "scope": {
     "excluded": "실물 로봇 실행, 새 유료 서비스/에셋, 공개 배포",
@@ -601,10 +601,72 @@
         "tests/test_flat_scan_observation.py",
         "coordination/collab/results/local45-flat-scan-observer-029.json"
       ],
-      "status": "dispatched",
-      "ACK": false,
+      "status": "accepted",
+      "ACK": true,
       "task_path": "coordination/collab/local45-flat-scan-observer-029-task.json",
-      "result_path": "coordination/collab/results/local45-flat-scan-observer-029.json"
+      "result_path": "coordination/collab/results/local45-flat-scan-observer-029.json",
+      "acceptance_record": "root source/hash review and actual SDK3.10 12 tracker +2 compatibility tests passed; observer semantics only, no native mission qualification"
+    },
+    {
+      "task_id": "local-wsl-owned-process-030",
+      "attempt": 1,
+      "contract_revision": 30,
+      "owner": "control",
+      "reviewer": "root",
+      "status": "accepted",
+      "ACK": true,
+      "task_path": "coordination/collab/local-wsl-owned-process-030-task.json",
+      "result_path": "coordination/collab/results/local-wsl-owned-process-030.json",
+      "write_paths": [
+        "factory_ops/wsl_process_supervisor.py",
+        "tests/test_wsl_process_supervisor.py",
+        "coordination/collab/results/local-wsl-owned-process-030.json"
+      ],
+      "acceptance_record": "root full supervisor source/actual admission/hash review:7 CPU checks/type0; actual parent+setsid child same cgroup, both gone; unit removed and cgroupempty. Integration001 also closed both Windows/Linux after failed scene. No mission success claim."
+    },
+    {
+      "task_id": "local45-pair-boundary-review-031",
+      "attempt": 1,
+      "contract_revision": 31,
+      "owner": "control",
+      "author": "root",
+      "status": "needs_revision",
+      "ACK": true,
+      "task_path": "coordination/collab/local45-pair-boundary-review-031-task.json",
+      "result_path": "coordination/collab/results/local45-pair-boundary-review-031.json",
+      "write_paths": [
+        "coordination/collab/results/local45-pair-boundary-review-031.json"
+      ],
+      "acceptance_record": "PAIR031-001 cleanup exception can skip Linux stop/final receipt. Original review preserved; root repaired and2 fault-injection tests/type0 passed. Recheck separateattempt."
+    },
+    {
+      "task_id": "local45-pair-boundary-review-031",
+      "attempt": 2,
+      "contract_revision": 32,
+      "owner": "control",
+      "author": "root",
+      "status": "accepted",
+      "ACK": true,
+      "task_path": "coordination/collab/local45-pair-boundary-review-031-recheck-task.json",
+      "result_path": "coordination/collab/results/local45-pair-boundary-review-031-recheck.json",
+      "write_paths": [
+        "coordination/collab/results/local45-pair-boundary-review-031-recheck.json",
+        "coordination/collab/results/local45-render-cadence-032.json"
+      ],
+      "acceptance_record": "PAIR031-001 resolved:2 fault-injection tests/type0/controlrecheck649483d source matched. Later monitor grace differs outside reviewed close_pair; no full later-source approval claim."
+    },
+    {
+      "task_id": "local45-render-cadence-032",
+      "attempt": 1,
+      "contract_revision": 32,
+      "owner": "control",
+      "status": "accepted_readonly_report",
+      "ACK": true,
+      "result_path": "coordination/collab/results/local45-render-cadence-032.json",
+      "write_paths": [
+        "coordination/collab/results/local45-render-cadence-032.json"
+      ],
+      "acceptance_record": "root read installed-source advice; choseA RGB3product gate only for next attempt. No measured speedup claim; physics/control/clock/8RTX cadence unchanged."
     }
   ],
   "decisions": [

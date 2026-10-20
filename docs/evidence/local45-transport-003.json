@@ -1,0 +1,76 @@
+{
+  "schema_version": 1,
+  "run_id": "975c543943d14cb7ab45b08479723a2d",
+  "source_commit": "0ddc75037b0dbc5ec80991b73fb41a7b21068bda",
+  "status": "failed_preserved",
+  "scope": "first local45 four-stack Nav2 connection; one robot began its first leg, no completed transport order",
+  "failure_stage": "orders",
+  "error": "[Errno 13] Permission denied: '/mnt/d/FactoryOpsRuntime/local45-transport-003/results/run/robots/carter2/.authorization.json.87429.tmp' -> '/mnt/d/FactoryOpsRuntime/local45-transport-003/results/run/robots/carter2/authorization.json'",
+  "robots": {
+    "carter1": {
+      "samples": 838,
+      "first_sim_s": 2.0500001069158316,
+      "last_sim_s": 16.000000834465027,
+      "displacement_xy_m": 3.3057552068301055,
+      "peak_applied_speed_m_s": 0.4
+    },
+    "carter2": {
+      "samples": 838,
+      "first_sim_s": 2.0500001069158316,
+      "last_sim_s": 16.000000834465027,
+      "displacement_xy_m": 0.01548576381409428,
+      "peak_applied_speed_m_s": 0.0
+    },
+    "carter3": {
+      "samples": 838,
+      "first_sim_s": 2.0500001069158316,
+      "last_sim_s": 16.000000834465027,
+      "displacement_xy_m": 0.015321507514088641,
+      "peak_applied_speed_m_s": 0.0
+    },
+    "carter4": {
+      "samples": 838,
+      "first_sim_s": 2.0500001069158316,
+      "last_sim_s": 16.000000834465027,
+      "displacement_xy_m": 0.015476243731588428,
+      "peak_applied_speed_m_s": 0.0
+    }
+  },
+  "clock_messages_received": 671,
+  "raw_scan_messages_received": {
+    "/carter1/scan_front_raw": 463,
+    "/carter1/scan_rear_raw": 90,
+    "/carter2/scan_front_raw": 91,
+    "/carter2/scan_rear_raw": 465,
+    "/carter3/scan_front_raw": 458,
+    "/carter3/scan_rear_raw": 82,
+    "/carter4/scan_front_raw": 457,
+    "/carter4/scan_rear_raw": 454
+  },
+  "static_tf_messages_received": {
+    "/carter1/tf_static": 1,
+    "/carter2/tf_static": 1,
+    "/carter3/tf_static": 1,
+    "/carter4/tf_static": 1
+  },
+  "bag_bytes": 216563712,
+  "bag_sha256": "6a608e583829f381d88e2e8d51a4820d094c365c2544591b5caa8310d9741461",
+  "media_capture_count": 3,
+  "windows_job_closure_verified": false,
+  "linux_cgroup_closure_verified": true,
+  "windows_gap": "outer launcher terminated Job runner before its final receipt; no SDK processes observed afterward, complete Job closure record missing",
+  "raw_directory": "D:\\FactoryOpsRuntime\\local45-transport-003",
+  "raw_sha256": {
+    "pair-host.json": "d02c436818196288391ecd6c12d869b2b8a0986218ae38a59ed787a1de987032",
+    "job.json": "d7a63557a9f3d3c63de69ec019855b4fcea30793c0a9953369714d5fb0e21c61",
+    "nav.log": "e485ececf9e7056a09536482db1a8e0b3ab3210b987aecc2a73cb8aba652b06b",
+    "results/run/mission-result.json": "2e8dae3c31d1fc730676dc4d5fd0a9b9efa88b67fc9eac07853638baf747c73d",
+    "closed-bag-topic-summary.json": "4a67a2178ee8750e470951f2054940d9dde6cb51afa51e42f73917dd474bedc3"
+  },
+  "fixes_pending_native_recheck": [
+    "bounded atomic rename retries",
+    "independent cleanup and30s SDK cleanup grace after ROS exit",
+    "RGB3products gated between frozen captures",
+    "omit filtered scan copies from local45 development bag only"
+  ]
+}

@@ -1,0 +1,326 @@
+{
+  "run_id": "55d20c5b170f4b5ebcaf3054359fc2fe",
+  "unit_name": "factory-ops-55d20c5b170f4b5ebcaf3054359fc2fe-18fa06db453d4c569c170ada734ec002.service",
+  "windows_test_directory": "C:\\Users\\LIMMM\\artifacts\\local45\\wsl-030-001",
+  "linux_test_directory": "/mnt/c/Users/LIMMM/artifacts/local45/wsl-030-001",
+  "command": [
+    "/usr/bin/python3",
+    "-u",
+    "-c",
+    "import json,os,signal,subprocess,sys,time\nchild=subprocess.Popen([sys.executable,'-c','import time; time.sleep(180)'],start_new_session=True)\ndef stop(signum,frame):\n    child.wait(timeout=12)\n    raise SystemExit(0)\nsignal.signal(signal.SIGTERM,stop)\nprint(json.dumps({'event':'ready','parent_pid':os.getpid(),'child_pid':child.pid,\n    'parent_session':os.getsid(0),'child_session':os.getsid(child.pid),'argv_literal':sys.argv[1:]}),flush=True)\nwhile True:\n    time.sleep(.1)\n",
+    "$HOME %u $(echo not-a-shell); 'quoted'"
+  ],
+  "runtime_bound_s": 180,
+  "status": "passed",
+  "source_sha256": {
+    "factory_ops/wsl_process_supervisor.py": "db34b177fae6f911544e6d041485afb6bd007599911e2a489f0927caa8f2ad97",
+    "tests/test_wsl_process_supervisor.py": "1d4ce46765bdaae9fe9df418a9c72937a9e9c35f63cf237a2837ec883a1ecd32"
+  },
+  "started": {
+    "unit_name": "factory-ops-55d20c5b170f4b5ebcaf3054359fc2fe-18fa06db453d4c569c170ada734ec002.service",
+    "run_id": "55d20c5b170f4b5ebcaf3054359fc2fe",
+    "unit_state": {
+      "TimeoutStopUSec": "10s",
+      "RuntimeMaxUSec": "3min",
+      "MainPID": "86895",
+      "Result": "success",
+      "ExecMainStatus": "0",
+      "ControlGroup": "/user.slice/user-1000.slice/user@1000.service/app.slice/factory-ops-55d20c5b170f4b5ebcaf3054359fc2fe-18fa06db453d4c569c170ada734ec002.service",
+      "WorkingDirectory": "/mnt/c/Users/LIMMM/artifacts/local45/wsl-030-001",
+      "StandardOutput": "append",
+      "StandardError": "append",
+      "KillMode": "control-group",
+      "SendSIGKILL": "yes",
+      "Id": "factory-ops-55d20c5b170f4b5ebcaf3054359fc2fe-18fa06db453d4c569c170ada734ec002.service",
+      "Description": "factory-ops run=55d20c5b170f4b5ebcaf3054359fc2fe owner=18fa06db453d4c569c170ada734ec002",
+      "LoadState": "loaded",
+      "ActiveState": "active",
+      "SubState": "running",
+      "Transient": "yes",
+      "InvocationID": "3ed75fe4837148f3af217b83ca56a4b6"
+    },
+    "ownership_match": true,
+    "starting_state": {
+      "TimeoutStopUSec": "1min 30s",
+      "RuntimeMaxUSec": "infinity",
+      "MainPID": "0",
+      "Result": "success",
+      "ExecMainStatus": "0",
+      "ControlGroup": "",
+      "WorkingDirectory": "",
+      "StandardOutput": "inherit",
+      "StandardError": "inherit",
+      "KillMode": "control-group",
+      "SendSIGKILL": "yes",
+      "Id": "factory-ops-55d20c5b170f4b5ebcaf3054359fc2fe-18fa06db453d4c569c170ada734ec002.service",
+      "Description": "factory-ops-55d20c5b170f4b5ebcaf3054359fc2fe-18fa06db453d4c569c170ada734ec002.service",
+      "LoadState": "not-found",
+      "ActiveState": "inactive",
+      "SubState": "dead",
+      "Transient": "no",
+      "InvocationID": ""
+    },
+    "starting_identity": {
+      "Id": "factory-ops-55d20c5b170f4b5ebcaf3054359fc2fe-18fa06db453d4c569c170ada734ec002.service",
+      "InvocationID": "3ed75fe4837148f3af217b83ca56a4b6",
+      "Description": "factory-ops run=55d20c5b170f4b5ebcaf3054359fc2fe owner=18fa06db453d4c569c170ada734ec002",
+      "ControlGroup": "/user.slice/user-1000.slice/user@1000.service/app.slice/factory-ops-55d20c5b170f4b5ebcaf3054359fc2fe-18fa06db453d4c569c170ada734ec002.service"
+    },
+    "control_group": "/user.slice/user-1000.slice/user@1000.service/app.slice/factory-ops-55d20c5b170f4b5ebcaf3054359fc2fe-18fa06db453d4c569c170ada734ec002.service",
+    "cgroup_exists": true,
+    "cgroup_populated": true,
+    "cgroup_pids": [
+      86895,
+      86899
+    ],
+    "processes": [
+      {
+        "pid": 86895,
+        "start_ticks": 19206166,
+        "state": "S",
+        "session_id": 86895
+      },
+      {
+        "pid": 86899,
+        "start_ticks": 19206176,
+        "state": "S",
+        "session_id": 86899
+      }
+    ],
+    "live_known_processes": [],
+    "known_processes": {
+      "86895": 19206166,
+      "86899": 19206176
+    },
+    "closure_verified": false,
+    "closure_scope": "owned Linux systemd user-service cgroup and observed PID/start-time identities"
+  },
+  "ready": {
+    "event": "ready",
+    "parent_pid": 86895,
+    "child_pid": 86899,
+    "parent_session": 86895,
+    "child_session": 86899,
+    "argv_literal": [
+      "$HOME %u $(echo not-a-shell); 'quoted'"
+    ]
+  },
+  "before_stop": {
+    "unit_name": "factory-ops-55d20c5b170f4b5ebcaf3054359fc2fe-18fa06db453d4c569c170ada734ec002.service",
+    "run_id": "55d20c5b170f4b5ebcaf3054359fc2fe",
+    "unit_state": {
+      "TimeoutStopUSec": "10s",
+      "RuntimeMaxUSec": "3min",
+      "MainPID": "86895",
+      "Result": "success",
+      "ExecMainStatus": "0",
+      "ControlGroup": "/user.slice/user-1000.slice/user@1000.service/app.slice/factory-ops-55d20c5b170f4b5ebcaf3054359fc2fe-18fa06db453d4c569c170ada734ec002.service",
+      "WorkingDirectory": "/mnt/c/Users/LIMMM/artifacts/local45/wsl-030-001",
+      "StandardOutput": "append",
+      "StandardError": "append",
+      "KillMode": "control-group",
+      "SendSIGKILL": "yes",
+      "Id": "factory-ops-55d20c5b170f4b5ebcaf3054359fc2fe-18fa06db453d4c569c170ada734ec002.service",
+      "Description": "factory-ops run=55d20c5b170f4b5ebcaf3054359fc2fe owner=18fa06db453d4c569c170ada734ec002",
+      "LoadState": "loaded",
+      "ActiveState": "active",
+      "SubState": "running",
+      "Transient": "yes",
+      "InvocationID": "3ed75fe4837148f3af217b83ca56a4b6"
+    },
+    "ownership_match": true,
+    "starting_state": {
+      "TimeoutStopUSec": "1min 30s",
+      "RuntimeMaxUSec": "infinity",
+      "MainPID": "0",
+      "Result": "success",
+      "ExecMainStatus": "0",
+      "ControlGroup": "",
+      "WorkingDirectory": "",
+      "StandardOutput": "inherit",
+      "StandardError": "inherit",
+      "KillMode": "control-group",
+      "SendSIGKILL": "yes",
+      "Id": "factory-ops-55d20c5b170f4b5ebcaf3054359fc2fe-18fa06db453d4c569c170ada734ec002.service",
+      "Description": "factory-ops-55d20c5b170f4b5ebcaf3054359fc2fe-18fa06db453d4c569c170ada734ec002.service",
+      "LoadState": "not-found",
+      "ActiveState": "inactive",
+      "SubState": "dead",
+      "Transient": "no",
+      "InvocationID": ""
+    },
+    "starting_identity": {
+      "Id": "factory-ops-55d20c5b170f4b5ebcaf3054359fc2fe-18fa06db453d4c569c170ada734ec002.service",
+      "InvocationID": "3ed75fe4837148f3af217b83ca56a4b6",
+      "Description": "factory-ops run=55d20c5b170f4b5ebcaf3054359fc2fe owner=18fa06db453d4c569c170ada734ec002",
+      "ControlGroup": "/user.slice/user-1000.slice/user@1000.service/app.slice/factory-ops-55d20c5b170f4b5ebcaf3054359fc2fe-18fa06db453d4c569c170ada734ec002.service"
+    },
+    "control_group": "/user.slice/user-1000.slice/user@1000.service/app.slice/factory-ops-55d20c5b170f4b5ebcaf3054359fc2fe-18fa06db453d4c569c170ada734ec002.service",
+    "cgroup_exists": true,
+    "cgroup_populated": true,
+    "cgroup_pids": [
+      86895,
+      86899
+    ],
+    "processes": [
+      {
+        "pid": 86895,
+        "start_ticks": 19206166,
+        "state": "S",
+        "session_id": 86895
+      },
+      {
+        "pid": 86899,
+        "start_ticks": 19206176,
+        "state": "S",
+        "session_id": 86899
+      }
+    ],
+    "live_known_processes": [
+      {
+        "pid": 86895,
+        "start_ticks": 19206166,
+        "state": "S",
+        "session_id": 86895
+      },
+      {
+        "pid": 86899,
+        "start_ticks": 19206176,
+        "state": "S",
+        "session_id": 86899
+      }
+    ],
+    "known_processes": {
+      "86895": 19206166,
+      "86899": 19206176
+    },
+    "closure_verified": false,
+    "closure_scope": "owned Linux systemd user-service cgroup and observed PID/start-time identities"
+  },
+  "stopped": {
+    "unit_name": "factory-ops-55d20c5b170f4b5ebcaf3054359fc2fe-18fa06db453d4c569c170ada734ec002.service",
+    "run_id": "55d20c5b170f4b5ebcaf3054359fc2fe",
+    "unit_state": {
+      "TimeoutStopUSec": "1min 30s",
+      "RuntimeMaxUSec": "infinity",
+      "MainPID": "0",
+      "Result": "success",
+      "ExecMainStatus": "0",
+      "ControlGroup": "",
+      "WorkingDirectory": "",
+      "StandardOutput": "inherit",
+      "StandardError": "inherit",
+      "KillMode": "control-group",
+      "SendSIGKILL": "yes",
+      "Id": "factory-ops-55d20c5b170f4b5ebcaf3054359fc2fe-18fa06db453d4c569c170ada734ec002.service",
+      "Description": "factory-ops-55d20c5b170f4b5ebcaf3054359fc2fe-18fa06db453d4c569c170ada734ec002.service",
+      "LoadState": "not-found",
+      "ActiveState": "inactive",
+      "SubState": "dead",
+      "Transient": "no",
+      "InvocationID": ""
+    },
+    "ownership_match": true,
+    "starting_state": {
+      "TimeoutStopUSec": "1min 30s",
+      "RuntimeMaxUSec": "infinity",
+      "MainPID": "0",
+      "Result": "success",
+      "ExecMainStatus": "0",
+      "ControlGroup": "",
+      "WorkingDirectory": "",
+      "StandardOutput": "inherit",
+      "StandardError": "inherit",
+      "KillMode": "control-group",
+      "SendSIGKILL": "yes",
+      "Id": "factory-ops-55d20c5b170f4b5ebcaf3054359fc2fe-18fa06db453d4c569c170ada734ec002.service",
+      "Description": "factory-ops-55d20c5b170f4b5ebcaf3054359fc2fe-18fa06db453d4c569c170ada734ec002.service",
+      "LoadState": "not-found",
+      "ActiveState": "inactive",
+      "SubState": "dead",
+      "Transient": "no",
+      "InvocationID": ""
+    },
+    "starting_identity": {
+      "Id": "factory-ops-55d20c5b170f4b5ebcaf3054359fc2fe-18fa06db453d4c569c170ada734ec002.service",
+      "InvocationID": "3ed75fe4837148f3af217b83ca56a4b6",
+      "Description": "factory-ops run=55d20c5b170f4b5ebcaf3054359fc2fe owner=18fa06db453d4c569c170ada734ec002",
+      "ControlGroup": "/user.slice/user-1000.slice/user@1000.service/app.slice/factory-ops-55d20c5b170f4b5ebcaf3054359fc2fe-18fa06db453d4c569c170ada734ec002.service"
+    },
+    "control_group": "/user.slice/user-1000.slice/user@1000.service/app.slice/factory-ops-55d20c5b170f4b5ebcaf3054359fc2fe-18fa06db453d4c569c170ada734ec002.service",
+    "cgroup_exists": false,
+    "cgroup_populated": false,
+    "cgroup_pids": [],
+    "processes": [],
+    "live_known_processes": [],
+    "known_processes": {
+      "86895": 19206166,
+      "86899": 19206176
+    },
+    "closure_verified": true,
+    "closure_scope": "owned Linux systemd user-service cgroup and observed PID/start-time identities"
+  },
+  "finally_closure": {
+    "unit_name": "factory-ops-55d20c5b170f4b5ebcaf3054359fc2fe-18fa06db453d4c569c170ada734ec002.service",
+    "run_id": "55d20c5b170f4b5ebcaf3054359fc2fe",
+    "unit_state": {
+      "TimeoutStopUSec": "1min 30s",
+      "RuntimeMaxUSec": "infinity",
+      "MainPID": "0",
+      "Result": "success",
+      "ExecMainStatus": "0",
+      "ControlGroup": "",
+      "WorkingDirectory": "",
+      "StandardOutput": "inherit",
+      "StandardError": "inherit",
+      "KillMode": "control-group",
+      "SendSIGKILL": "yes",
+      "Id": "factory-ops-55d20c5b170f4b5ebcaf3054359fc2fe-18fa06db453d4c569c170ada734ec002.service",
+      "Description": "factory-ops-55d20c5b170f4b5ebcaf3054359fc2fe-18fa06db453d4c569c170ada734ec002.service",
+      "LoadState": "not-found",
+      "ActiveState": "inactive",
+      "SubState": "dead",
+      "Transient": "no",
+      "InvocationID": ""
+    },
+    "ownership_match": true,
+    "starting_state": {
+      "TimeoutStopUSec": "1min 30s",
+      "RuntimeMaxUSec": "infinity",
+      "MainPID": "0",
+      "Result": "success",
+      "ExecMainStatus": "0",
+      "ControlGroup": "",
+      "WorkingDirectory": "",
+      "StandardOutput": "inherit",
+      "StandardError": "inherit",
+      "KillMode": "control-group",
+      "SendSIGKILL": "yes",
+      "Id": "factory-ops-55d20c5b170f4b5ebcaf3054359fc2fe-18fa06db453d4c569c170ada734ec002.service",
+      "Description": "factory-ops-55d20c5b170f4b5ebcaf3054359fc2fe-18fa06db453d4c569c170ada734ec002.service",
+      "LoadState": "not-found",
+      "ActiveState": "inactive",
+      "SubState": "dead",
+      "Transient": "no",
+      "InvocationID": ""
+    },
+    "starting_identity": {
+      "Id": "factory-ops-55d20c5b170f4b5ebcaf3054359fc2fe-18fa06db453d4c569c170ada734ec002.service",
+      "InvocationID": "3ed75fe4837148f3af217b83ca56a4b6",
+      "Description": "factory-ops run=55d20c5b170f4b5ebcaf3054359fc2fe owner=18fa06db453d4c569c170ada734ec002",
+      "ControlGroup": "/user.slice/user-1000.slice/user@1000.service/app.slice/factory-ops-55d20c5b170f4b5ebcaf3054359fc2fe-18fa06db453d4c569c170ada734ec002.service"
+    },
+    "control_group": "/user.slice/user-1000.slice/user@1000.service/app.slice/factory-ops-55d20c5b170f4b5ebcaf3054359fc2fe-18fa06db453d4c569c170ada734ec002.service",
+    "cgroup_exists": false,
+    "cgroup_populated": false,
+    "cgroup_pids": [],
+    "processes": [],
+    "live_known_processes": [],
+    "known_processes": {
+      "86895": 19206166,
+      "86899": 19206176
+    },
+    "closure_verified": true,
+    "closure_scope": "owned Linux systemd user-service cgroup and observed PID/start-time identities"
+  }
+}

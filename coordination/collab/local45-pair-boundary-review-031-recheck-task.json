@@ -1,0 +1,18 @@
+{
+  "task": {
+    "task_id": "local45-pair-boundary-review-031",
+    "attempt": 2,
+    "contract_revision": 32,
+    "owner": "control",
+    "author": "root",
+    "status": "dispatched",
+    "ACK": false,
+    "task_path": "coordination/collab/local45-pair-boundary-review-031-recheck-task.json",
+    "result_path": "coordination/collab/results/local45-pair-boundary-review-031-recheck.json",
+    "write_paths": [
+      "coordination/collab/results/local45-pair-boundary-review-031-recheck.json",
+      "coordination/collab/results/local45-render-cadence-032.json"
+    ]
+  },
+  "instruction": "031 recheck +032 bounded read-only advice, existing control only. Repo unchanged ownership: root main code/Git, you only2 JSON reports. Root received031 findingPAIR031-001 and repaired independent close_pair in scripts/isaac/run_local45_fleet_pair.py SHA 649483d09fd7e0c17e2aa24408e49b314f86d473d3ebfb3097f49212da6c4b3d.2 fault-injection tests pass (Windows terminate/wait/log failure still Linuxstop/finalfailedreceipt; Linuxstopfailure stillWindowsreceipt/finalsave), type0. Recheck only that finding +2 tests; write coordination/collab/results/local45-pair-boundary-review-031-recheck.json with hashes and status. Preserve original031. Also root commit0ddc750 fixed real002 No tf2_ros by local45 bundledTFMessage publishers/default6.2 unchanged;15 facade tests/type0.003 immutable source now simready at2.033s,8 actualbuffers3200, nativejournal works,4 Nav2 namespaces launched, first Compute/FollowPath accepted and actualwheel motion observed, live dashboardstate published. Do not touch/stop anyruntime. Performance bottleneck: ~few simseconds perminute with3 continuous1280x720 RGB +8 RTX, 60Hz app.update. Read installed4.5 SimulationContext/World.step and render APIs localofficialsource +current g2 app.update/capture/clock hooks; write only coordination/collab/results/local45-render-cadence-032.json with exact API semantics and smallest feasible4.5-only optimization options (RGBupdates gated only or60Hzphysics/10Hzrender), warnings for OnPlaybackTick/World.time/RTX/zero-delta captures. No web/newagent/codeedits/GPU/ROS/process actions, no broad review. Goal is useful bounded advice, not generic optimization list; distinguish sourceproof/inference. Stop when2 smallreportsdone. Root implements and validates actual ifchosen. ACK and keep all030 files frozen."
+}

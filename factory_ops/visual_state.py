@@ -11,6 +11,7 @@ import tempfile
 from typing import Any
 
 from .operations.model import OrderState
+from .compat import replace_shared_file
 
 SCOPE = "committed ledger presentation; no physics loading, grasping, control or MES input"
 STATE_FILE = "visual-state.json"
@@ -174,7 +175,7 @@ def _atomic_bytes(path: Path, payload: bytes) -> None:
             handle.flush()
             os.chmod(temporary, 0o644)
             os.fsync(handle.fileno())
-        os.replace(temporary, path)
+        replace_shared_file(temporary, path)
     finally:
         temporary.unlink(missing_ok=True)
 

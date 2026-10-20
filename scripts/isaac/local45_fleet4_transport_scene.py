@@ -20,6 +20,8 @@ LOCAL_SOURCE_PINS = BASE_SOURCE_PINS | frozenset({
     "factory_ops/flat_scan_observation.py", "factory_ops/compat.py",
     "factory_ops/operations/model.py", "scripts/isaac/robot_qualification.py",
     "scripts/isaac/nav_scene.py", "scripts/isaac/stage_smoke.py",
+    "factory_ops/visual_state.py", "factory_ops/wsl_process_supervisor.py",
+    "scripts/isaac/run_local45_fleet_pair.py",
 })
 
 
@@ -33,6 +35,36 @@ class Local45FleetLifecycle(FleetTransportLifecycle):
         self._observer_sources = {name: g2_scene.base._sha256(project/name) for name in (
             "scripts/isaac/local45_fleet4_transport_scene.py", "factory_ops/isaac45_runtime.py",
             "factory_ops/flat_scan_observation.py")}
+
+    def _set_rgb_updates(self, enabled: bool) -> None:
+        if self.rgb_render_products is None:
+            raise RuntimeError("RGB products are not registered")
+        errors = []
+        for product in self.rgb_render_products:
+            try:
+                product.hydra_texture.set_updates_enabled(enabled)
+            except Exception as error:
+                errors.append(str(error))
+        self.rgb_render_state = "error" if errors else "enabled" if enabled else "gated"
+        if errors:
+            raise RuntimeError("owned RGB update request failed: " + "; ".join(errors))
+
+    def register_rgb_render_products(self, products_by_role: Mapping[str, Any]) -> dict[str, Any]:
+        summary = super().register_rgb_render_products(products_by_role)
+        self._set_rgb_updates(False)
+        return {**summary, "requested_state_between_captures": "gated",
+            "lifecycle": "SDK4.5 only: three persistent RGB products enabled for frozen captures",
+            "lidar_products_gated": False, "native_update_state_readback_verified": False}
+
+    def before_capture(self, rep: Any) -> None:
+        if self.rgb_render_state != "gated":
+            raise RuntimeError("local45 capture requires its RGB products gated between captures")
+        self._set_rgb_updates(True)
+        super().before_capture(rep)
+
+    def after_capture(self) -> None:
+        super().after_capture()
+        self._set_rgb_updates(False)
 
     def prepare_worker_paths(self, scene_arg: Path, output_arg: Path) -> tuple[Path, Path]:
         scene, output = super().prepare_worker_paths(scene_arg, output_arg)
@@ -107,6 +139,11 @@ class Local45FleetLifecycle(FleetTransportLifecycle):
 
     def cleanup_render_products(self) -> None:
         errors = []
+        if self.rgb_render_products is not None and self.rgb_render_state != "closed":
+            try:
+                self._set_rgb_updates(False)
+            except Exception as error:
+                errors.append(str(error))
         for observer in self._native_observers:
             try:
                 observer.close()

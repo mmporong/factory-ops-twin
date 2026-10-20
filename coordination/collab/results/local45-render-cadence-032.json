@@ -1,0 +1,166 @@
+{
+  "task_id": "local45-render-cadence-032",
+  "attempt": 1,
+  "contract_revision": 32,
+  "owner": "control",
+  "ack_at_utc": "2026-10-19T23:53:04.4239651Z",
+  "scope": "설치SDK4.5 SimulationContext/World/Replicator render API 및 현재 G2/capture/clock hooks의 한정 읽기. 옵션/근거/추론만 기록. 코드/실행/프로세스/ROS/웹/새에이전트 없음.",
+  "root_actual003_received": "simready2.033s/8native3200/4Nav2namespace/Compute·FollowPath수락/바퀴이동/dashboard publish는 root 보고이며 새 전체 성공으로 확대하지 않음.",
+  "status": "completed_read_only_advice",
+  "recommendation": "첫 새4.5 attempt는3개 RGB HydraTexture만 촬영 사이에 gate하는 A안을 우선한다. 기존60Hz 제어/app.update·8RTX·/clock 경로를 유지하므로 변경 폭이 가장 작다. B안의60physics/10render는 가능 후보지만 한 loop=한 physics step 계약과 clock/RTX 재검증이 필요하다. 속도 향상 수치는 측정하지 않았다.",
+  "source_proof": [
+    {
+      "api": "SimulationContext.step(render=False)",
+      "location": "isaacsim/core/api/simulation_context/simulation_context.py:625",
+      "semantics": "timeline이 playing이면 PhysicsContext._step(current_time)를1회 호출하며 app.update를 하지 않는다. _step는 configured physics dt로 simulate 후 fetch_results를 호출한다. World.step(render=False)는 task pre_step/선택bbox/log 처리 후 이 경로로 위임한다.",
+      "evidence_lines": [
+        649,
+        659,
+        660,
+        661,
+        662
+      ],
+      "adjacent": "isaacsim/core/api/physics_context/physics_context.py:559-562; isaacsim/core/api/world/world.py:506-545"
+    },
+    {
+      "api": "SimulationContext.step(render=True) / app.update",
+      "location": "isaacsim/core/api/simulation_context/simulation_context.py:649",
+      "semantics": "physics_dt/rendering_dt가 둘 다0이 아니면 render=True는 app.update를 호출한다. set_simulation_dt는 rendering_dt/physics_dt 비율을 substeps로 PhysicsContext에 전달하고 Kit manual step size/target framerate도 rendering_dt로 설정한다. render=True를 한 physics step과 동일시하면 안 된다."
+    },
+    {
+      "api": "SimulationContext.render() (World 상속)",
+      "location": "isaacsim/core/api/simulation_context/simulation_context.py:665",
+      "semantics": "필요시 Fabric force_update 후 /app/player/playSimulations=False -> app.update -> True 순서다. 물리 simulate는 호출하지 않는 렌더 전용 경로다. 자체적으로 이전 playSimulations 설정을 저장/복원하지 않고True로 끝난다.",
+      "evidence_lines": [
+        692,
+        693,
+        694,
+        695
+      ],
+      "limit": "이는 설치 소스의 경로 설명이다. 실제 ROS OnPlaybackTick/RTX timestamp/전체clock의 동등성까지 증명하지 않는다."
+    },
+    {
+      "api": "World.set_simulation_dt(physics_dt,rendering_dt)",
+      "location": "isaacsim/core/api/simulation_context/simulation_context.py:391",
+      "semantics": "rendering_dt>=physics_dt의 정수배 조합을 권고한다. 1/60과1/10은6비율이다. 설정은 physics dt뿐 아니라 main loop rateLimit/시간코드율/timeline target rate/manual step size도 바꾼다. step(render=False)에서는 이 substeps 수를 사용하지 않는다.",
+      "evidence_lines": [
+        400,
+        417,
+        418,
+        421,
+        424,
+        434,
+        436,
+        437,
+        442
+      ]
+    },
+    {
+      "api": "World.current_time/current_time_step_index",
+      "location": "isaacsim/core/api/simulation_context/simulation_context.py:237",
+      "semantics": "각각 실제 물리step callback이 누적하는 _current_time/_number_of_steps를 읽는다. callback은 step_size를 더하고 counter를1증가시킨다. timeline STOP callback은둘을0으로 돌린다. loop index나render 횟수로 대체하면 안 된다.",
+      "evidence_lines": [
+        250,
+        266,
+        1339,
+        1351,
+        1360,
+        1361,
+        1362,
+        1365,
+        1367,
+        1368
+      ]
+    },
+    {
+      "api": "RGB product.hydra_texture.set_updates_enabled(bool)",
+      "location": "Replicator scripts/utils/viewport_manager.py:42",
+      "semantics": "설치 Replicator가 HydraTexture wrapper의 공개 hydra_texture를 생성하고 destroy 경로에서 set_updates_enabled(False)를 사용한다. annotator 코드에도 False/True 호출이 있다. create.render_product는 viewport_manager의 제품을 반환한다. 소유 RGB3개에 한정한 on/off API 근거다.",
+      "adjacent": [
+        "Replicator scripts/create.py:1526,1589-1596",
+        "Replicator scripts/annotators.py:579-582,793-796"
+      ],
+      "limit": "API 사용 근거만 확인했다. 이 장면에서 gate 후fresh RGB와 RTX 지속 출력/성능 향상은 실행해 확인하지 않았다."
+    },
+    {
+      "api": "rep.orchestrator.step(delta_time=0,rt_subframes=4,pause_timeline=True)",
+      "location": "Replicator scripts/orchestrator.py:1366",
+      "semantics": "standalone 전용 수동 capture step. delta_time0은 timeline을 전진시키지 않으며 rt_subframes 동안 simulation이 paused다. 활성 annotators/writers를 capture한다. 실제G2 before/after 시간/frame/pose 불변 검사는 그대로 유지해야 한다.",
+      "evidence_lines": [
+        1369,
+        1371,
+        1372,
+        1375,
+        1379,
+        1380
+      ]
+    }
+  ],
+  "options": [
+    {
+      "id": "A",
+      "priority": 1,
+      "scope": "4.5 Local45FleetLifecycle의 RGB3개만 gate; 물리/Kit render cadence는 유지",
+      "minimum_patch": "G2가 register_rgb_render_products로 넘기는 portfolio_overview/session.overview_product, carter1_follow/session.medium_product, carter2_follow/second_product만 보관한다. 기존 초기 preview가 끝난 뒤 평상시는 hydra_texture.set_updates_enabled(False), before_capture에서3개True 후 기존 zero-delta flush/동일frame readback, after_capture/failure-finalize에서3개False로 돌린다. 제품·annotator는 재생성/재attach하지 않는다.",
+      "preserve": [
+        "8개 RTX 제품/writer/observer는 gate하지 않음",
+        "set_capture_on_play를 RGB gate 수단으로 전역False 처리하지 않음",
+        "물리60Hz/app.update/encoder·watchdog·lease·/clock 흐름 유지",
+        "기존 zero-delta flush/3source 동일 frame·time·pose 검사",
+        "실패 시 소유 제품 정리"
+      ],
+      "required_local_override": "BarrierLifecycle.register_rgb_render_products/before_capture/after_capture의 현재 'between captures enabled/no toggles' 계약은 canonical6.2에 유지한다. local45 override와 metadata에서 gated 상태를 명시한다. disabled를enabled로 기록한 채 base 검사를 통과시키지 않는다.",
+      "source_proof": "3개 제품의 실제 역할 연결은 g2_scene.py:883-890, base lifecycle의 기존 상태 계약은 g3_scene.py:311-326/416-427이다.",
+      "inference": "매 app.update의3×1280×720 RGB shading/readback 관련 작업을 줄일 가능성이 있다.8RTX/물리/CPU 비용은 남으며 실제 병목 기여도와 RTF 향상은 미측정이다.",
+      "root_acceptance_focus": "새attempt에서3source capture의 fresh 이미지/고정물리좌표, capture후8RTX 실제native stamp·ROS scan 진행, clock/명령/정지 경계를 확인한다. 과거003 성능이나 전체mission완료로 소급 주장하지 않는다."
+    },
+    {
+      "id": "B",
+      "priority": 2,
+      "scope": "4.5 standalone worker만 simulation-time60Hz physics/10Hz render",
+      "minimum_patch": "World를 physics_dt=1/60, rendering_dt=1/10으로 준비하고1loop=1physics step인 local45 advance helper를 사용한다. 명령/DriveProfile/authorization/odometry/settle 처리는 각1/60step에 유지하고 world.step(render=False)를1회 수행한다.6physics step마다 world.render()를1회 호출한다. 이 경로에 추가 app.update를 섞어 physics를 이중 전진시키지 않는다.",
+      "illustrative_sequence": "# local45 standalone only; actual validation still required\n# World is configured once: physics_dt=1/60, rendering_dt=1/10\n# for each physical-control iteration:\napply_existing_control_for_one_physics_dt()\nworld.step(render=False)\nread_existing_real_counter_encoder_and_ack()\nif six_physics_steps_completed:\n    world.render()\nspin_existing_ros_callbacks()\n",
+      "do_not_do": "World의 rendering_dt만0.1로 바꾸고 기존 command/profile.step(dt=1/60) -> app.update 루프를 그대로 두지 않는다. 한 Kit update에 여러 physics substeps가 진행할 수 있어 제어·encoder/capture/settle step 주기와 실제시각을 어긋나게 한다.",
+      "clock_warning": "현재 /clock은 robot_qualification._clock_graph의 OnPlaybackTick -> ROS2PublishClock이며 reader는 IsaacReadSimulationTime이다. physics-only step은 Kit app.update가 아니므로 /clock이 physics60Hz로 계속 발행된다고 가정할 수 없다. render10Hz의 /clock/ROS timer cadence와 World.current_time, encoder stamps, native FlatScan timestamp의 관계를 확인해야 한다. 물리frame을ROS/sensor frame으로 복제하지 않는다.",
+      "rtx_warning": "RTX는render가 필요하다. 10Hz는 nominal10Hz LiDAR와 맞는 후보지만 profile tick/누적/3200buffer/freshness/ROS 발행률·coverage가 유지된다는 보장은 아니다. raw buffer count와range품질을 분리하고8개 모두 관찰한다.",
+      "loop_warning": "warmup/scan-ready 대기/mission/terminal settle의 app.update 위치를 같은 local45 helper 관점으로 정리해야 한다. 현재G2각loop와DriveProfile은1dt를 가정한다. 외부 Nav2/lease/command callback이 simulation time을 따라갈 기회도 유지한다.",
+      "capture_warning": "수동 RGB capture는 pause -> RGBenable -> 기존delta0flush/readback -> RGBrestore -> play 흐름 및 기존state guards를 유지한다. render()는 playSimulations를True로 끝내므로 capture 중 무조건 섞지 않는다. 기존 pause/play가 Replicator STEPPED 뒤 ROS writer를 rearm한다는 소스 주석도 보존한다.",
+      "scope_warning": "World.step/render 소스는standalone용이며 Extension이 소유한 Kit loop에 같은제어를 이식하라는 제안이 아니다. 기본6.2 branch와 원래GMO/capture lifecycle은 변경하지 않는다.",
+      "inference": "렌더 호출 수를 simulation-time60→10으로 줄일 수 있는 구조적 후보다. wall-time10FPS/실시간60Hz 달성, ROS/Nav2 성능 향상 또는 clock 정합을 실측한 결과가 아니다."
+    }
+  ],
+  "current_hooks": {
+    "physics": "factory_ops/isaac45_runtime.py:149의 World는 현재 physics_dt=rendering_dt=dt로 초기화한다.",
+    "control_loop": "scripts/isaac/g2_scene.py:978-1053에서 실제시각을 읽고 profile(dt=config physicsdt)/wheel 적용 후 app.update를1회 수행하고 encoder/odom/ACK를 갱신한다.",
+    "capture": "scripts/isaac/g2_scene.py:522-590은 before/after hook 전체의 시간/frame/pose 불변을 검사한다.593-602는pause/capture/play다.",
+    "clock": "scripts/isaac/robot_qualification.py:313-345의 OnPlaybackTick/IsaacReadSimulationTime/ROS2PublishClock 연결",
+    "native": "4.5 observer는 native seconds/고유 관측과reader context를 분리한다. 렌더를 줄여도 읽은표본수를센서전체frame으로 주장하지 않는다."
+  },
+  "limits": [
+    "설치된 NVIDIA4.5 Python 소스와 현재G2/capture/clock 호출 경계만 읽은 자문이다. web/새agent/소스편집/새검사/SDK/GPU/ROS/프로세스 조작 없음.",
+    "root003의sim-ready2.033s/8native3200/4Nav2namespace/Compute·FollowPath수락/실제이동/dashboardstate 발행은 사용자 보고로 수신했다. 미완료 전체mission/시각정합/품질/물리적재·충전 성공으로 확대하지 않는다.",
+    "성능 원인이RGB라고 단정하거나 몇 배 빨라진다는 수치를 제시하지 않는다. sourceproof는 API와호출의미이며 성능/시각관계는추론·후속실행 확인 대상으로 분리했다.",
+    "현재 실행003과immutable stage/source/030파일은 동결 유지했다. root가 선택한 경우 새immutable attempt에만 적용·검증한다.",
+    "추가 generic GPU 설정/해상도/센서 profile 변경이나 광역 최적화 목록은 제안하지 않는다."
+  ],
+  "processes": {
+    "started": [],
+    "stopped": []
+  },
+  "pending_work": [],
+  "read_source_sha256": {
+    "scripts/isaac/g2_scene.py": "ca46edf24e1e9e89949eb8502ef02e580f5367160067fe54a930be0ce78458b7",
+    "scripts/isaac/g3_scene.py": "739f0f9abb803b4fc200cf8ab00bee6e6bf2b4f0a9a9df04f09fea61991132fd",
+    "scripts/isaac/robot_qualification.py": "c89823dc694bf15272a66808752cfdb35021d9f863876c32e35dd9dc883bc3f5",
+    "factory_ops/isaac45_runtime.py": "0d5794b74770cbbec67a6ee9a2c2446d0021eaee714634caa0bdf7f2b0682411",
+    "scripts/isaac/local45_fleet4_transport_scene.py": "8b835cfcb85e7cf7a44fab42aadff581e1dec7bcfc2904e94d4d7d98100017ee",
+    "E:/IsaacSim/isaac-sim-4.5.0/exts/isaacsim.core.api/isaacsim/core/api/simulation_context/simulation_context.py": "f6b2cccb4f83131a633f3c1e88155c3f3d689d610582bbcd989d187e16d54225",
+    "E:/IsaacSim/isaac-sim-4.5.0/exts/isaacsim.core.api/isaacsim/core/api/world/world.py": "695a2409a3a44ec3bf0f7cf5a90cf6fad535491e3f4a4207c457f3a75de950bb",
+    "E:/IsaacSim/isaac-sim-4.5.0/exts/isaacsim.core.api/isaacsim/core/api/physics_context/physics_context.py": "b1c4746e4b2e8c9bab70561bebc8f6ffd0c4701be0cbc4f989997d4518757315",
+    "E:\\IsaacSim\\isaac-sim-4.5.0\\extscache\\omni.replicator.core-1.11.35+106.5.0.wx64.r.cp310\\omni\\replicator\\core\\scripts\\create.py": "fb24b1becba1712ebe07bf1f04512c28fc9efeb9d97376332b44131383e04465",
+    "E:\\IsaacSim\\isaac-sim-4.5.0\\extscache\\omni.replicator.core-1.11.35+106.5.0.wx64.r.cp310\\omni\\replicator\\core\\scripts\\annotators.py": "bf2d989f1564f62049f501512a6a7e8deed999877f01b2fbb536fe09557b1559",
+    "E:\\IsaacSim\\isaac-sim-4.5.0\\extscache\\omni.replicator.core-1.11.35+106.5.0.wx64.r.cp310\\omni\\replicator\\core\\scripts\\utils\\viewport_manager.py": "4647f7d5e0ea490ffcb48870b0eb2c38c3556f602bae5ef902f5a39245c200ba",
+    "E:\\IsaacSim\\isaac-sim-4.5.0\\extscache\\omni.replicator.core-1.11.35+106.5.0.wx64.r.cp310\\omni\\replicator\\core\\scripts\\orchestrator.py": "8c55512361376279acf3025958c71d6fa03bf006b309877edc576be6829f2e9a"
+  },
+  "completed_at_utc": "2026-10-19T23:56:16.1880810Z"
+}

@@ -1,0 +1,176 @@
+{
+  "task_id": "local45-pair-boundary-review-031",
+  "attempt": 1,
+  "contract_revision": 31,
+  "owner": "control",
+  "author": "root",
+  "reviewer": "control",
+  "ack_at_utc": "2026-10-19T23:44:45.401846Z",
+  "source_commit": "0f2162d45611b52bf6f2b20f4c0580746147fac8",
+  "launcher_path": "scripts/isaac/run_local45_fleet_pair.py",
+  "launcher_sha256": "40875cfcb89164c12834f4ce069fe7d260d362d69b933e5148d05dc821be1b13",
+  "launcher_sha_match": true,
+  "scope": "지정 commit 변경분과 launcher만 읽기. startup/sensor-clock/default6.2/cleanup-pass의 major/blocker 한정. receipt 외 수정/자동수정/새검사/연구/SDK/ROS/프로세스 조작/Git 변경 없음.",
+  "preceding_task": {
+    "receipt": "coordination/collab/results/local-wsl-owned-process-030.json",
+    "receipt_sha256": "8e2e823a7f6c2b424d0316a11b90fa5b7eee4a1821f735ba4deb02906e10e8a4",
+    "frozen": true,
+    "actual_closure_verified": true
+  },
+  "status": "completed_read_only_review",
+  "verdict": "major_cleanup_path_repair_requested",
+  "accepted": false,
+  "major_count": 1,
+  "blocker_count": 0,
+  "findings": [
+    {
+      "id": "PAIR031-001",
+      "severity": "major",
+      "path": "scripts/isaac/run_local45_fleet_pair.py",
+      "line": 125,
+      "related_lines": [
+        127,
+        128,
+        129,
+        132,
+        142
+      ],
+      "source_sha256": "40875cfcb89164c12834f4ce069fe7d260d362d69b933e5148d05dc821be1b13",
+      "title": "Windows 정리 예외가 독립 WSL 정지와 최종 receipt 저장을 건너뜀",
+      "evidence": "finally의 worker.terminate()/worker.wait(timeout=10) 및 stream.close가 WSL owner.stop보다 앞에 보호 없이 실행된다. 이 중 terminate 오류·wait TimeoutExpired·close 오류가 발생하면132행 owner.stop와142행 save가 실행되지 않는다. 따라서 Windows 정리 실패 시 독립 Linux unit이 즉시 정리되지 않고 pair-host가 running 또는 이전 상태로 남을 수 있다.",
+      "impact": "각 운영체제의 소유자를 따로 사용하더라도 한쪽 정리 오류가 다른쪽 정리 시도와 종료 증거를 막는다. WSL RuntimeMaxSec는 별도 상한이며 이 즉시 정리 경로 누락을 증명된 closed로 대체하지 못한다.",
+      "evidence_class": "정적 제어흐름 확인. 새 실패 재현/프로세스 조작은 수행하지 않음.001 정상 종료는 이 예외 경로를 검증하지 않음.",
+      "minimal_repair": "Windows terminate/wait와 stream close의 예외를 각각 report에 보존하고, 중첩 finally로 Linux owner.stop 및 최종 failed receipt 저장을 항상 시도한다. 한쪽 cleanup 실패가 다른쪽 cleanup을 건너뛰지 않게 한다. 실행 중인002나 동결 source에는 이 검수자가 수정/중단하지 않는다."
+    }
+  ],
+  "bounded_checks": [
+    {
+      "scope": "startup 및 marker 후속수정",
+      "result": "0f2162d의 고정 marker8 검사는 실제001에서 observed10으로 실패한 근거가 있다. 후속 eb760259의 g2/stage_smoke/test3파일을 읽었고 layout stations+pockets 합 전달과 stage_smoke 기본8 보존을 확인했다. 이 이미 수정된 장애를 새미해결 finding으로 중복 등록하지 않는다.",
+      "references": [
+        "scripts/isaac/g2_scene.py:777",
+        "scripts/isaac/stage_smoke.py:144",
+        "tests/test_isaac_stage_smoke.py:145"
+      ]
+    },
+    {
+      "scope": "4.5 SDK/observer/capture 연결",
+      "result": "opt-in local_sdk45 branch에서4.5버전/Humble환경/facade/asset/light/close를 분리한다. World 초기화 뒤 RGB/RTX를 생성하며 같은 dt facade setup은 reset을 반복하지 않는다. registry의8개 prim/topic identity와 고정 tracker identity를 연결하고 실제 FlatScan payload만 별도 journal로 기록한다.",
+      "limit": "실제002의 센서/clock/capture가 정상이라는 판정은 하지 않았다. 새SDK API조사나실행·002로그/원본열람 없음."
+    },
+    {
+      "scope": "기본6.2 경로",
+      "result": "local_sdk45=False 및 runtime_profile=canonical62가 기본이다. experimental imports/6.2asset/MotionBVH gate/app.close(exit_code)와 기본 CaptureSession 동작은 분기 밖에서 유지된다. marker 함수 기본8도 유지된다. 명확한 default6.2 회귀는 해당 diff에서 발견하지 못했다.",
+      "limit": "6.2 실제 재실행은 하지 않았고 결과를 보증하지 않는다."
+    },
+    {
+      "scope": "시각/센서 주장",
+      "result": "새 local45 관측은 native 초 timestamp/고유관측/reader context를 분리하고 clock_alignment_verified·sensor_quality_qualification_verified=false를 유지한다. 물리 frame을 GMO frame으로 만드는 코드는 없다. 기존 ROS_DOMAIN_ID는 run_mission에서 rclpy init 전에 config로 설정된다.",
+      "limit": "029 tracker와030 supervisor는 기존 수용/실제proof를 활용했으며 반복 전체리뷰하지 않았다. 실제ROSclock정렬이나 센서품질 성공 주장은 하지 않는다."
+    },
+    {
+      "scope": "pair pass 및001 실패기록",
+      "result": "launcher는 Windows returncode0 외에 mission_status=passed와 scene_status=validated를 모두 요구하고, 최종 Windows/WSL closed가 아니면failed로 낮춘다. 추가001 문서는 SDK exit0이어도open_factory장면실패→pair failed_preserved를 기록하며 Windows/WSL closed=true·잔여PID[]를 보존한다.",
+      "limit": "001의 raw SHA 값은 지정 문서의 기록으로만 확인했다. D:/FactoryOpsRuntime의 실행/원본/stage는 열거나 변경하지 않았고 새 host 종료를 검증한 것이 아니다."
+    }
+  ],
+  "actual_evidence_addendum": {
+    "input": "docs/evidence/local45-transport-001.json",
+    "source_commit": "0f2162d45611b52bf6f2b20f4c0580746147fac8",
+    "run_id": "40213e27dad947fc8daf36c94c69ab71",
+    "status": "failed_preserved",
+    "failure_stage": "open_factory",
+    "expected_markers_before_fix": 8,
+    "observed_markers": 10,
+    "windows_closed": true,
+    "linux_closed": true,
+    "fix_commit": "eb7602596850263eeb5d234d3b61c527a231b681",
+    "root_reported_validation": "21 stage smoke tests/type0; 이 검수자가 반복 실행하지 않음",
+    "active002": "eb76025 immutable source의 실행 중인 pair는 미열람/미수정/미중단"
+  },
+  "validation": {
+    "method": "요청한 commit diff/고정 blob·launcher·필요 호출 context의 읽기 전용 대조와SHA 계산만",
+    "new_tests": false,
+    "new_research": false,
+    "sdk_gpu_ros_vm_actions": false,
+    "process_control_actions": false,
+    "git_mutations": false,
+    "existing_diagnostics": "g3_mission의 large-function complexity와yaml warning은 root가oldHEAD에서도재현한 기존사항으로 수신했다. 새오류로 등록하거나 전체type0으로 과장하지 않는다."
+  },
+  "limits": [
+    "쓰기 경로는 본031 receipt만.030 source/test는 이미실제시험한2SHA로 동결하며 기존proof와 receipt는 보존했다.",
+    "주요 finding은 launcher40875cfc의 Windows cleanup 예외경로1건이다. 정상001 종료를 부정하거나 현재002를 중단해야 한다는 판정은 아니다.",
+    "검수 기준은0f2162d 고정commit 및 명시추가 eb76025의3파일변경이다. 현재 공유작업트리의 다른byte변경/후속작업은 별도hash로 구분하며 범위를 넓혀 검수하지 않았다.",
+    "SDK/ROS/VM/설치/프로세스/센서/소스/보드/원장/Git 변경·새에이전트·광역검수·전체테스트 없이 종료한다."
+  ],
+  "write_paths": [
+    "coordination/collab/results/local45-pair-boundary-review-031.json"
+  ],
+  "processes": {
+    "started": [],
+    "stopped": []
+  },
+  "pending_work": [],
+  "source_hashes": {
+    "base_commit_sha256": {
+      "README.md": "99ed56b1b6eff3c027a4e61b5a1010abe14e7d4083c72529b8d80366bea75a3b",
+      "coordination/collab/results/local45-flat-scan-observer-029.json": "583e0677ecdd637f084b05402466c958b1c9abb7abd6e5b7961a6133a10ec973",
+      "factory_ops/compat.py": "fb0f6101d1a97e05faf35fdf4ae3993f074ea33b1c647a913be0fedd8e7ccfd4",
+      "factory_ops/flat_scan_observation.py": "1bc83dc0282e6e18faee81d566f09c9611c6a618caec64a8e0ef6e910cba5bbd",
+      "factory_ops/isaac45_runtime.py": "a101f017418d2cfbcec8c5dad37200577ec3ce2cbf65753ba245ffe17e58236a",
+      "scripts/brev/fleet4_prepare.py": "77d45dfd83c34d32ed01c23b9a731d55a57955201e6bb184a550ba185e37c1bd",
+      "scripts/isaac/g2_scene.py": "62cce6872f3956d28f57cb1bece9dd9fd2a7b8407bc084cae9580ca6aa260061",
+      "scripts/isaac/local45_fleet4_transport_scene.py": "8b835cfcb85e7cf7a44fab42aadff581e1dec7bcfc2904e94d4d7d98100017ee",
+      "scripts/isaac/robot_qualification.py": "c89823dc694bf15272a66808752cfdb35021d9f863876c32e35dd9dc883bc3f5",
+      "scripts/ros/fleet4_mission.py": "19bd4e3b0f8b7f16c2d2c7362bf92cf3ce1f790c356e1a07d98cf4eed81bbe0a",
+      "scripts/ros/g3_mission.py": "9a57455d37c1346e7a1537bf25a61a81c38cdbdb17486f7737ab2563f74f032d",
+      "tests/test_flat_scan_observation.py": "91c47c117c2c9540a33ffc35f9397529a17fc024028f923422f9511ab2002d02",
+      "tests/test_fleet4_prepare.py": "61fea4227a1df6fac27402bcd2da439bc758393713b9abf0e8b6c9f3f5ee1470",
+      "tests/test_local45_fleet_lifecycle.py": "a18b72702e21487363c24e1a34125282dc610b0341b45707d73b5dfb1fc8bd4d",
+      "tests/test_python310_notes.py": "ef38516ed9d55547c2d24b69f99098f5a869b6e64f769eb6f79143c40d8fac06"
+    },
+    "marker_fix_commit_sha256": {
+      "scripts/isaac/g2_scene.py": "0396c4fc072e37e6377d134d1ac28b9089dc73f017195345d6f7a76ee28496e1",
+      "scripts/isaac/stage_smoke.py": "94e47f21c593ad1f9a5e5640f2d372b7102d91ce3008cfb60bd8fd11cc464d29",
+      "tests/test_isaac_stage_smoke.py": "6835fd19ef39f04fe4504d6171b5f47a70a12f1c4a8abfc0fdd892820447777c",
+      "docs/evidence/local45-transport-001.json": "75648763f25e1b8fcfa27f790ce0cd871491cfd428a866cc5de99f8dff77f9c1"
+    },
+    "adjacent_context_sha256": {
+      "scripts/isaac/g3_scene.py": "739f0f9abb803b4fc200cf8ab00bee6e6bf2b4f0a9a9df04f09fea61991132fd",
+      "scripts/isaac/factory_visuals.py": "25768848d6b035be333d26382b5096b720aafa4782eee8daa894f677721b90db"
+    },
+    "launcher_sha256": "40875cfcb89164c12834f4ce069fe7d260d362d69b933e5148d05dc821be1b13",
+    "current_reviewed_files_match_commits": {
+      "scripts/brev/fleet4_prepare.py": true,
+      "scripts/ros/fleet4_mission.py": true,
+      "tests/test_local45_fleet_lifecycle.py": true,
+      "scripts/isaac/g2_scene.py": false,
+      "docs/evidence/local45-transport-001.json": false,
+      "factory_ops/compat.py": false,
+      "factory_ops/isaac45_runtime.py": false,
+      "tests/test_fleet4_prepare.py": true,
+      "tests/test_isaac_stage_smoke.py": true,
+      "factory_ops/flat_scan_observation.py": true,
+      "coordination/collab/results/local45-flat-scan-observer-029.json": false,
+      "scripts/isaac/local45_fleet4_transport_scene.py": true,
+      "scripts/ros/g3_mission.py": true,
+      "scripts/isaac/robot_qualification.py": true,
+      "scripts/isaac/stage_smoke.py": true,
+      "tests/test_flat_scan_observation.py": true,
+      "README.md": false,
+      "tests/test_python310_notes.py": true
+    },
+    "mismatched_current_sha256": {
+      "scripts/isaac/g2_scene.py": "ca46edf24e1e9e89949eb8502ef02e580f5367160067fe54a930be0ce78458b7",
+      "docs/evidence/local45-transport-001.json": "ef4819f4a8820cbe3fcc39de7649f90e9c45f603409e7559c41636639b3d23be",
+      "factory_ops/compat.py": "3cec6539de6b2f91093249232ce07ffd1532a226c60cbcb0197d61ab1c406d79",
+      "factory_ops/isaac45_runtime.py": "0d5794b74770cbbec67a6ee9a2c2446d0021eaee714634caa0bdf7f2b0682411",
+      "coordination/collab/results/local45-flat-scan-observer-029.json": "0121b36dd5bf768b422b1d9d5e62a25311e35ab108ed8defb75d02d201a065a7",
+      "README.md": "348f120cf927077a27553c8cfa5b6dc11591a613930b7bdbacfa264edc65dde0"
+    }
+  },
+  "launcher_sha256_at_completion": "40875cfcb89164c12834f4ce069fe7d260d362d69b933e5148d05dc821be1b13",
+  "launcher_still_matches_requested_sha": true,
+  "evidence001_current_sha256": "1f4aee6dff8cf5a757cd73f3281dde0a405dced086f2adf80c87644fd6f059bf",
+  "completed_at_utc": "2026-10-19T23:48:37.3978734Z"
+}

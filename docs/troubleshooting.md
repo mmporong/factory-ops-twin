@@ -315,6 +315,14 @@ Kit 관제 시험001은 선택·명령 처리·촬영 뒤 종료 검사에서 `_
 
 정적 메시지 누적·동적 한 건 전달·상대 토픽·내구성 검사를 포함한15개 facade 검사와 변경3개 파일 타입 검사가 통과했다. native TF 수신·AMCL localization의 성공은 후속 실행으로 확인한다.002도 Windows Job과 WSL cgroup의 잔여 프로세스가 없음을 확인했고, 이전001의 marker 수정이 실제 장면 검사에서 통과한 근거로 보존했다. [축약 근거](evidence/local45-transport-002.json)를 참고한다.
 
+## FOT-039 — Windows 읽기와 WSL 원자적 JSON 교체 충돌
+
+통합003은4대·8개 센서 준비와4개 Nav2 스택 기동, 첫 ComputePath/FollowPath 수락·실제 가속·라이브 관제 발행까지 진행했다. 이후 carter2의 authorization.json을 WSL이 교체할 때 PermissionError로 임무가 실패했다. 별도 무해한 시험에서 Windows가 대상을 읽기 위해 열면 WSL os.replace가 같은 오류를 내는 것을 재현했다. 공유 충돌에만 최대0.2초 재시도하고, 원본·임시 파일을 유지하다 원자적으로 교체하도록 수정했다. 실제 재현 시험은 열린 읽기 핸들을 약50ms 뒤 닫자14회 시도 뒤 완성된 새 JSON을 게시했고, 고정 권한 오류·다른 I/O 오류는 계속 실패하도록 검사했다. ROS 승인·상태와 시각화의 교체 경로에 적용한다.
+
+003의 최초 실측은 carter1 약3.306m 이동·최대 적용0.4m/s이며, 다른3대는 명령0으로 대기했다. 종료된 bag에서8개 raw scan 토픽과4개 정적 TF,671개 clock 메시지를 확인했다. 주문 완주·4대 혼합 운송 성공은 아니다. 데이터 대부분은 raw/filtered/localization 스캔 사본이므로 다음 local45 개발 bag은 원본8개 센서와 제어·TF·이벤트를 남기고 전처리·합류 사본을 제외한다. 실제 필터 발행·Nav2 소비는 유지하고6.2 평가 기록 정책은 바꾸지 않는다.
+
+ROS가 실패 종료한 직후 외부 실행기가 아직 정리 중인 Windows Job runner를 종료해 최종 Job receipt가 남지 않았다. Linux cgroup 종료는 확인됐고 이후 SDK 프로세스가 없는 것을 관측했지만,003의 전체 Job 종료 증명은 미완료로 보존한다. 실행기에 ROS 종료 뒤 최대30초의 SDK 정리 유예를 추가했다. 별도 검수 PAIR031-001의 한쪽 정리 예외가 다른쪽 정리를 건너뛰는 문제도 수정했고,2개 오류 주입 검사와 control 재검수로 해당 경계를 확인했다. 새 native 실행으로 최종 종료 기록을 다시 확인해야 한다. [통합003 근거](evidence/local45-transport-003.json)와 [파일 충돌 재현](evidence/crossos-atomic-001.json)을 참고한다.
+
 ## 실행 전 확인과 후속 기록
 
 1. 깨끗한 생산자 소스·host commit·설정·실행 ID를 결속한다. 실패한 실행 ID와 원본을 다시 사용하지 않는다.

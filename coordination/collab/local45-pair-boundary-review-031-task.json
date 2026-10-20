@@ -1,0 +1,17 @@
+{
+  "task": {
+    "task_id": "local45-pair-boundary-review-031",
+    "attempt": 1,
+    "contract_revision": 31,
+    "owner": "control",
+    "author": "root",
+    "status": "dispatched",
+    "ACK": false,
+    "task_path": "coordination/collab/local45-pair-boundary-review-031-task.json",
+    "result_path": "coordination/collab/results/local45-pair-boundary-review-031.json",
+    "write_paths": [
+      "coordination/collab/results/local45-pair-boundary-review-031.json"
+    ]
+  },
+  "instruction": "Task031 after finishing task030 receipt: root received/read actual WSL030 passed, exact supervisor SHA db34b177fae6f911544e6d041485afb6bd007599911e2a489f0927caa8f2ad97, parent/setsid-child gone/cgroup empty. Freeze030 source/test now; root copied source to standalone hostsupport. One SDK/ROS pair now running against immutable D:/FactoryOpsRuntime/local45-transport-001/source at local commit0f2162d; do not touch runtime or stage. Please finish030 then bounded read-only major/blocker review of root commit0f2162d diff and scripts/isaac/run_local45_fleet_pair.py (SHA40875cfcb89164c12834f4ce069fe7d260d362d69b933e5148d05dc821be1b13). Scope startup fatal errors, wrong native/ROS sensor ownership or clocks, default6.2 regression, process cleanup/pass claims only. No broad reviews/new tests/research/GPU/process/ROS actions, no source edits/Git/new agents. Root CPU prepare+scope+tracker/capture tests passed, 8 changedPython files pyright0; g3_mission large-function complexity and yaml warning reproduced on oldHEAD (not new). Own only coordination/collab/results/local45-pair-boundary-review-031.json with source hashes and major findings/minimal repairs. No auto mutation. Current main SDK source frozen0f2162d; launcher current one uncommitted at givenSHA; if unchanged record hash; root will handle fixes. You are not alone. ACK031 and preserve030 actual proof. Stop after result, do not extend review."
+}

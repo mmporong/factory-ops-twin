@@ -1,0 +1,19 @@
+{
+  "task": {
+    "task_id": "local-wsl-owned-process-030",
+    "attempt": 1,
+    "contract_revision": 30,
+    "owner": "control",
+    "reviewer": "root",
+    "status": "dispatched",
+    "ACK": false,
+    "task_path": "coordination/collab/local-wsl-owned-process-030-task.json",
+    "result_path": "coordination/collab/results/local-wsl-owned-process-030.json",
+    "write_paths": [
+      "factory_ops/wsl_process_supervisor.py",
+      "tests/test_wsl_process_supervisor.py",
+      "coordination/collab/results/local-wsl-owned-process-030.json"
+    ]
+  },
+  "instruction": "Task030: Existing control only, no new agents. Repo C:/Users/LIMMM/factory-ops-twin. You are not alone; root owns all main4.5 files, bootstrap and Git. Do not revert or edit others. Implement a small Windows-to-existing-WSL Ubuntu supervisor using systemd --user transient units to own a ROS launch process tree (including setsid descendants). Own ONLY factory_ops/wsl_process_supervisor.py, tests/test_wsl_process_supervisor.py, coordination/collab/results/local-wsl-owned-process-030.json. No new packages/VM/billing/SDK/GPU, no Git. Existing systemd --user running confirmed. Need bounded command args (no shell interpolation for user command), unique owned unit name prefix factory-ops- plus run hex, explicit working directory/output log/runtime bound, stop/inspect only exact owned unit. Return observed unit state/control-group and closure proof; do not claim Windows Job closes Linux. Capture starting identity so do not stop preexisting unit. Keep implementation small. Test actual harmless WSL python parent+setsid child, stop exact transient unit, prove both gone/cgroup empty; preserve logs outside repo artifacts/local45/wsl-030-001. Pure malformed-input unit tests as needed, not broad QA. Report source hashes, commands/outcomes and actual test path. No production ROS launch yet. Read AGENTS. ACK task030 before work. If systemd authority fails report evidence and alternatives, do not install or elevate. Root will integrate/review result."
+}

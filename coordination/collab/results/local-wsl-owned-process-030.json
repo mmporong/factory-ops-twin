@@ -1,0 +1,241 @@
+{
+  "task_id": "local-wsl-owned-process-030",
+  "attempt": 1,
+  "contract_revision": 30,
+  "owner": "control",
+  "reviewer": "root",
+  "ack_at_utc": "2026-10-19T23:37:03.8539405Z",
+  "write_paths": [
+    "factory_ops/wsl_process_supervisor.py",
+    "tests/test_wsl_process_supervisor.py",
+    "coordination/collab/results/local-wsl-owned-process-030.json"
+  ],
+  "scope": "기존 Ubuntu systemd --user transient unit과 정확한 invocation/cgroup 소유권. 무해한 parent+setsid child 실제 종료 확인. 설치/상승/ROS/SDK/GPU/VM/Git/타작성자 파일 변경 없음.",
+  "authority": "Ubuntu systemd --user show-environment 성공, systemd255.4/Python3.12.3/UID1000 확인",
+  "actual_test_directory": "C:/Users/LIMMM/artifacts/local45/wsl-030-001",
+  "status": "implementation_complete_pending_root_review",
+  "api_ready": true,
+  "accepted": false,
+  "source_frozen": true,
+  "root_actual_readback_received": true,
+  "implementation": {
+    "class": "factory_ops.wsl_process_supervisor.WslProcessSupervisor",
+    "constructor": "WslProcessSupervisor(run_id_32_lowercase_hex, distribution='Ubuntu', command_timeout_s=20, stop_timeout_s=10)",
+    "start": "start(command_argv, *, working_directory=absolute_linux_directory, log_path=new_absolute_linux_file, runtime_bound_s=finite_seconds) -> observed dict",
+    "inspect": "inspect() -> observed unit/cgroup/PID identities/closure. Before captured ownership, denied.",
+    "stop": "stop() -> closure record. Only the generated exact unit is addressed after InvocationID/description verification. Already closed calls are read-only.",
+    "ownership": "factory-ops-<run hex>-<random32hex>.service. Before creation LoadState must be not-found. Capture actual transient Id/InvocationID/unique description/ControlGroup. Existing or changed unit does not grant stop authority.",
+    "command_transport": "Bounded list/tuple argv, absolute executable, no NUL, count<=128, perarg<=4096, totalchars<=8192, encodedargv<=16384. Base64 JSON is passed as one argument to a fixed Python execv wrapper. subprocess shell=False and systemd --expand-environment=no; user command is never composed into shell code.",
+    "paths": "Explicit existing Linux working directory; new exclusive log file (O_EXCL), parent must exist. Absolute paths exclude traversal/control characters/systemd percent specifiers.",
+    "runtime": "Required RuntimeMaxSec1..86400, KillMode=control-group, SendSIGKILL=yes, bounded TimeoutStopSec1..30 and host command timeout<=60. Log stdout/stderr append to the newly reserved path.",
+    "closure": "Read recursive cgroup.procs and cgroup.events populated; retain observed PID/start_ticks/session identities. Closed requires inactive/failed or unloaded unit, unpopulated/empty cgroup and no same PID/start-time process alive. Missing cgroup after stop is recorded as removed.",
+    "boundary": "Linux closure is owned by the systemd user-service cgroup. Windows Job closure is not claimed."
+  },
+  "validation": [
+    {
+      "command": "$env:PYTHONDONTWRITEBYTECODE='1'; .venv/Scripts/python.exe -B -m unittest discover -s tests -p test_wsl_process_supervisor.py -v",
+      "result": "PASS",
+      "tests": 7,
+      "duration_s": 0.003,
+      "exit_code": 0,
+      "scope": "Malformed argv/path/bounds, no remote effects on validation failure; preexisting/raced/replaced unit denial; unique name and opaque argv; knownPID proof; exact stop and idempotence."
+    },
+    {
+      "command": "uvx --offline pyright factory_ops/wsl_process_supervisor.py tests/test_wsl_process_supervisor.py",
+      "result": "PASS",
+      "errors": 0,
+      "warnings": 0,
+      "exit_code": 0
+    },
+    {
+      "command": "$env:PYTHONDONTWRITEBYTECODE='1'; .venv/Scripts/python.exe -B tests/test_wsl_process_supervisor.py --actual",
+      "result": "PASS",
+      "exit_code": 0,
+      "scope": "Existing Ubuntu/systemd255/Python3.12.3, harmless parent+setsid child only. No ROS."
+    },
+    {
+      "command": "지정2파일의 actual 기록 sourceSHA와 현재 bytes 대조 및 Python3.10 AST/메모리compile",
+      "result": "PASS"
+    },
+    {
+      "command": "정지 완료 후 같은 두 /proc PID와 저장된 정확 cgroup 경로의 존재 여부를 읽기 전용 재확인",
+      "result": "PASS",
+      "parent_proc_exists": false,
+      "child_proc_exists": false,
+      "cgroup_exists": false
+    }
+  ],
+  "actual_test": {
+    "scope": "무해한 Python parent+setsid child를 한 번 실행하고 정확한 transient unit 정지. ROS/SDK/GPU 없음.",
+    "runtime_bound_readback": "running snapshot RuntimeMaxUSec=3min, TimeoutStopUSec=10s, KillMode=control-group, SendSIGKILL=yes",
+    "literal_argv_result": "$HOME %u $(echo not-a-shell); 'quoted'가 원문 그대로 child 준비 로그에 기록됨. expansion/셸 실행 없음.",
+    "stop_result": "unit LoadState=not-found/ActiveState=inactive, cgroup 제거, cgroup_pids=[], live_known_processes=[], closure_verified=true. finally의 반복 stop 확인도true.",
+    "readback_limit": "unload 후 systemctl show의 기본값 RuntimeMaxUSec=infinity는 사라진 unit의 기본값이다. 실제 실행 설정의 증거는 보존된 running snapshot의3min이다.",
+    "authority": "기존 Ubuntu systemd --user show-environment 및 transient start/stop 권한 성공. 설치/sudo/elevation/인증 변경 없음.",
+    "run_id": "55d20c5b170f4b5ebcaf3054359fc2fe",
+    "unit_name": "factory-ops-55d20c5b170f4b5ebcaf3054359fc2fe-18fa06db453d4c569c170ada734ec002.service",
+    "ready": {
+      "event": "ready",
+      "parent_pid": 86895,
+      "child_pid": 86899,
+      "parent_session": 86895,
+      "child_session": 86899,
+      "argv_literal": [
+        "$HOME %u $(echo not-a-shell); 'quoted'"
+      ]
+    },
+    "control_group": "/user.slice/user-1000.slice/user@1000.service/app.slice/factory-ops-55d20c5b170f4b5ebcaf3054359fc2fe-18fa06db453d4c569c170ada734ec002.service",
+    "starting_state": {
+      "TimeoutStopUSec": "1min 30s",
+      "RuntimeMaxUSec": "infinity",
+      "MainPID": "0",
+      "Result": "success",
+      "ExecMainStatus": "0",
+      "ControlGroup": "",
+      "WorkingDirectory": "",
+      "StandardOutput": "inherit",
+      "StandardError": "inherit",
+      "KillMode": "control-group",
+      "SendSIGKILL": "yes",
+      "Id": "factory-ops-55d20c5b170f4b5ebcaf3054359fc2fe-18fa06db453d4c569c170ada734ec002.service",
+      "Description": "factory-ops-55d20c5b170f4b5ebcaf3054359fc2fe-18fa06db453d4c569c170ada734ec002.service",
+      "LoadState": "not-found",
+      "ActiveState": "inactive",
+      "SubState": "dead",
+      "Transient": "no",
+      "InvocationID": ""
+    },
+    "starting_identity": {
+      "Id": "factory-ops-55d20c5b170f4b5ebcaf3054359fc2fe-18fa06db453d4c569c170ada734ec002.service",
+      "InvocationID": "3ed75fe4837148f3af217b83ca56a4b6",
+      "Description": "factory-ops run=55d20c5b170f4b5ebcaf3054359fc2fe owner=18fa06db453d4c569c170ada734ec002",
+      "ControlGroup": "/user.slice/user-1000.slice/user@1000.service/app.slice/factory-ops-55d20c5b170f4b5ebcaf3054359fc2fe-18fa06db453d4c569c170ada734ec002.service"
+    },
+    "observed_running_state": {
+      "TimeoutStopUSec": "10s",
+      "RuntimeMaxUSec": "3min",
+      "MainPID": "86895",
+      "Result": "success",
+      "ExecMainStatus": "0",
+      "ControlGroup": "/user.slice/user-1000.slice/user@1000.service/app.slice/factory-ops-55d20c5b170f4b5ebcaf3054359fc2fe-18fa06db453d4c569c170ada734ec002.service",
+      "WorkingDirectory": "/mnt/c/Users/LIMMM/artifacts/local45/wsl-030-001",
+      "StandardOutput": "append",
+      "StandardError": "append",
+      "KillMode": "control-group",
+      "SendSIGKILL": "yes",
+      "Id": "factory-ops-55d20c5b170f4b5ebcaf3054359fc2fe-18fa06db453d4c569c170ada734ec002.service",
+      "Description": "factory-ops run=55d20c5b170f4b5ebcaf3054359fc2fe owner=18fa06db453d4c569c170ada734ec002",
+      "LoadState": "loaded",
+      "ActiveState": "active",
+      "SubState": "running",
+      "Transient": "yes",
+      "InvocationID": "3ed75fe4837148f3af217b83ca56a4b6"
+    },
+    "stopped_observation": {
+      "unit_name": "factory-ops-55d20c5b170f4b5ebcaf3054359fc2fe-18fa06db453d4c569c170ada734ec002.service",
+      "run_id": "55d20c5b170f4b5ebcaf3054359fc2fe",
+      "unit_state": {
+        "TimeoutStopUSec": "1min 30s",
+        "RuntimeMaxUSec": "infinity",
+        "MainPID": "0",
+        "Result": "success",
+        "ExecMainStatus": "0",
+        "ControlGroup": "",
+        "WorkingDirectory": "",
+        "StandardOutput": "inherit",
+        "StandardError": "inherit",
+        "KillMode": "control-group",
+        "SendSIGKILL": "yes",
+        "Id": "factory-ops-55d20c5b170f4b5ebcaf3054359fc2fe-18fa06db453d4c569c170ada734ec002.service",
+        "Description": "factory-ops-55d20c5b170f4b5ebcaf3054359fc2fe-18fa06db453d4c569c170ada734ec002.service",
+        "LoadState": "not-found",
+        "ActiveState": "inactive",
+        "SubState": "dead",
+        "Transient": "no",
+        "InvocationID": ""
+      },
+      "ownership_match": true,
+      "starting_state": {
+        "TimeoutStopUSec": "1min 30s",
+        "RuntimeMaxUSec": "infinity",
+        "MainPID": "0",
+        "Result": "success",
+        "ExecMainStatus": "0",
+        "ControlGroup": "",
+        "WorkingDirectory": "",
+        "StandardOutput": "inherit",
+        "StandardError": "inherit",
+        "KillMode": "control-group",
+        "SendSIGKILL": "yes",
+        "Id": "factory-ops-55d20c5b170f4b5ebcaf3054359fc2fe-18fa06db453d4c569c170ada734ec002.service",
+        "Description": "factory-ops-55d20c5b170f4b5ebcaf3054359fc2fe-18fa06db453d4c569c170ada734ec002.service",
+        "LoadState": "not-found",
+        "ActiveState": "inactive",
+        "SubState": "dead",
+        "Transient": "no",
+        "InvocationID": ""
+      },
+      "starting_identity": {
+        "Id": "factory-ops-55d20c5b170f4b5ebcaf3054359fc2fe-18fa06db453d4c569c170ada734ec002.service",
+        "InvocationID": "3ed75fe4837148f3af217b83ca56a4b6",
+        "Description": "factory-ops run=55d20c5b170f4b5ebcaf3054359fc2fe owner=18fa06db453d4c569c170ada734ec002",
+        "ControlGroup": "/user.slice/user-1000.slice/user@1000.service/app.slice/factory-ops-55d20c5b170f4b5ebcaf3054359fc2fe-18fa06db453d4c569c170ada734ec002.service"
+      },
+      "control_group": "/user.slice/user-1000.slice/user@1000.service/app.slice/factory-ops-55d20c5b170f4b5ebcaf3054359fc2fe-18fa06db453d4c569c170ada734ec002.service",
+      "cgroup_exists": false,
+      "cgroup_populated": false,
+      "cgroup_pids": [],
+      "processes": [],
+      "live_known_processes": [],
+      "known_processes": {
+        "86895": 19206166,
+        "86899": 19206176
+      },
+      "closure_verified": true,
+      "closure_scope": "owned Linux systemd user-service cgroup and observed PID/start-time identities"
+    },
+    "windows_test_directory": "C:\\Users\\LIMMM\\artifacts\\local45\\wsl-030-001",
+    "linux_test_directory": "/mnt/c/Users/LIMMM/artifacts/local45/wsl-030-001",
+    "artifacts": [
+      {
+        "path": "C:\\Users\\LIMMM\\artifacts\\local45\\wsl-030-001\\admission.json",
+        "sha256": "d257b3e1162e4528f123ab34808872e47f01631f169f7a9dd7544785cb9acbce"
+      },
+      {
+        "path": "C:\\Users\\LIMMM\\artifacts\\local45\\wsl-030-001\\process.log",
+        "sha256": "3f0246b8d97d77d08d549377fb0a8596925fd6e3763cf406215973392bdf1570"
+      }
+    ],
+    "exact_stop_command": "wsl.exe --distribution Ubuntu --exec systemctl --user --no-ask-password stop factory-ops-55d20c5b170f4b5ebcaf3054359fc2fe-18fa06db453d4c569c170ada734ec002.service"
+  },
+  "api_example": "from factory_ops.wsl_process_supervisor import WslProcessSupervisor\nsupervisor = WslProcessSupervisor(run_id)\ntry:\n    started = supervisor.start(\n        ['/usr/bin/python3', '/absolute/existing/owned_launcher.py'],\n        working_directory='/absolute/existing/work',\n        log_path='/absolute/existing/output/new-run.log', runtime_bound_s=480,\n    )\n    observed = supervisor.inspect()\nfinally:\n    closure = supervisor.stop()\n# Require closure['closure_verified']; retain returned identity/state/cgroup/PID proof.\n",
+  "verification_pass": {
+    "separate_from_writing": true,
+    "independent_approval": false,
+    "root_review_required": true,
+    "scope": "입력/소유권/argv/정지 조건 코드 검토 후7개 CPU검사, 실제 cgroup admission, 종료 후 /proc·cgroup 존재와 sourceSHA를 다시 대조."
+  },
+  "limits": [
+    "새 모듈/test/receipt3파일과 명시된 실제 시험 출력 경로만 작성. root main4.5/bootstrap/Git/원장/SDK/ROS 파일은 변경하지 않았다.",
+    "하드코딩된 --actual 시험 폴더는 새 디렉터리여야 한다. 기존001 증거를 덮는 재실행은 거절한다.",
+    "실제 시험은 정상 SIGTERM 정지 경로다. RuntimeMaxSec180 및 SIGKILL fallback은 실행 설정/readback을 확인했고180초 만료나 강제kill을 추가 시험하지 않았다.",
+    "systemd user manager의 권한/응답 실패 시 소유권/종료가 불명확하면 성공으로 표시하지 않는다. 시작 후 transport 오류에서도 정확한 소유권을 캡처한 경우만 정리하며, 소유권을 확정할 수 없으면 bounded RuntimeMaxSec 외에 종료를 보장했다고 주장하지 않는다.",
+    "소유권 확인과 systemctl stop은 별도 호출이며 외부 DBus actor를 상대로 원자적인 compare-and-stop이 아니다. 무작위 unit명/단일-use/생성 전 부재/InvocationID·description 대조를 사용하고 외부 변경이 관측되면 정지를 거절한다.",
+    "cgroup 밖으로 다른 unit을 만들거나 의도적으로 옮긴 미관측 process까지 닫는 도구가 아니다. setsid만 수행한 실제 child는 같은 cgroup에 남아 종료됐다.",
+    "ROS 환경 sourcing/프로덕션 launch/센서/SDK/Windows Job 통합 성공은 검증하지 않았다. root가 기존환경을 준비한 실행파일과 필요한 bounds를 넘기며 통합한다.",
+    "실제030 source/test bytes는 결과의2SHA 그대로 동결한다. root가 standalone hostsupport로 복사했다고 수신했고 여기서는 추가 편집하지 않는다."
+  ],
+  "processes": {
+    "still_running": [],
+    "owned_unit_removed": true,
+    "parent_pid": 86895,
+    "child_pid": 86899,
+    "stop_required_now": false
+  },
+  "pending_work": [],
+  "source_sha256": {
+    "factory_ops/wsl_process_supervisor.py": "db34b177fae6f911544e6d041485afb6bd007599911e2a489f0927caa8f2ad97",
+    "tests/test_wsl_process_supervisor.py": "1d4ce46765bdaae9fe9df418a9c72937a9e9c35f63cf237a2837ec883a1ecd32"
+  },
+  "completed_at_utc": "2026-10-19T23:44:14.4112406Z"
+}

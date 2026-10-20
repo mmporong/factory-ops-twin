@@ -2,6 +2,10 @@
 from __future__ import annotations
 
 import sys
+import math
+import os
+from pathlib import Path
+import time
 
 if sys.version_info >= (3, 11):
     from enum import StrEnum
@@ -23,3 +27,18 @@ def add_exception_note(error: BaseException, note: str) -> None:
         notes = list(getattr(error, "__notes__", []))
         notes.append(note)
         error.__notes__ = notes
+
+
+def replace_shared_file(source: Path, target: Path, *, timeout_s: float = .2) -> None:
+    """Retry bounded sharing conflicts while retaining atomic replacement."""
+    if isinstance(timeout_s, bool) or not math.isfinite(timeout_s) or not 0 < timeout_s <= 1:
+        raise ValueError("shared-file replacement requires a positive bound of at most one second")
+    deadline = time.monotonic() + timeout_s
+    while True:
+        try:
+            os.replace(source, target)
+            return
+        except PermissionError:
+            if time.monotonic() >= deadline:
+                raise
+            time.sleep(.002)

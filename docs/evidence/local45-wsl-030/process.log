@@ -1,0 +1,1 @@
+{"event": "ready", "parent_pid": 86895, "child_pid": 86899, "parent_session": 86895, "child_session": 86899, "argv_literal": ["$HOME %u $(echo not-a-shell); 'quoted'"]}

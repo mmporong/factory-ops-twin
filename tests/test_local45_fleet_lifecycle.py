@@ -53,6 +53,24 @@ class Local45LifecycleTests(unittest.TestCase):
         for observer in self.observers:
             observer.close.assert_called_once()
 
+    def test_only_owned_rgb_products_are_gated_and_enabled_during_frozen_capture(self):
+        textures = [SimpleNamespace(set_updates_enabled=Mock()) for _ in range(3)]
+        products = {role: SimpleNamespace(hydra_texture=texture) for role, texture in zip(
+            ("portfolio_overview", "carter1_follow", "carter2_follow"), textures)}
+        summary = self.lifecycle.register_rgb_render_products(products)
+        self.assertEqual("gated", summary["requested_state_between_captures"])
+        self.assertFalse(summary["lidar_products_gated"])
+        self.lifecycle.timeline = self.timeline
+        rep = SimpleNamespace(orchestrator=SimpleNamespace(step=Mock()))
+        self.lifecycle.before_capture(rep)
+        self.assertEqual("enabled", self.lifecycle.rgb_render_state)
+        rep.orchestrator.step.assert_called_once_with(delta_time=0., rt_subframes=4, pause_timeline=True)
+        self.lifecycle.after_capture()
+        self.assertEqual("gated", self.lifecycle.rgb_render_state)
+        for texture in textures:
+            self.assertEqual([False, True, False], [call.args[0] for call in texture.set_updates_enabled.call_args_list])
+        self.assertTrue(all(not sensor.open_native_observer.called for sensor in self.sensors))
+
     def test_duplicate_and_wrong_robot_paths_are_rejected(self):
         duplicate = deepcopy(self.metadata)
         duplicate[-1] = deepcopy(duplicate[0])

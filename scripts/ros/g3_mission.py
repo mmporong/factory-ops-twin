@@ -953,10 +953,18 @@ def main() -> int:
 
 def _scene_runtime(development: bool, profile: str) -> tuple[str, dict[str, str]]:
     if profile == "local45_development" and development:
-        return "local45-fleet4-transport-scene.json", {"runtime_profile": profile}
+        return "local45-fleet4-transport-scene.json", {"runtime_profile": profile,
+            "recording_policy": "raw sensor and control evidence; filtered scan duplicates omitted; not canonical qualification"}
     if profile != "canonical62":
         raise ValueError("runtime profile is unsupported for this mission entry")
     return ("fleet4-transport-scene.json" if development else "g3-scene.json"), {}
+
+
+def _recording_topics(topics: Sequence[str], profile: str) -> list[str]:
+    if profile == "local45_development":
+        duplicates = {"scan_front", "scan_rear", "scan_localization"}
+        return [topic for topic in topics if topic.rsplit("/", 1)[-1] not in duplicates]
+    return list(topics)
 
 
 def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mapping[str, Any],
@@ -1187,6 +1195,9 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
             bag_topics += [f"/{namespaces[robot]}/{name}" for name in ("scan_front_raw", "scan_rear_raw", "scan_front", "scan_rear", "scan_localization", "odom", "tf", "tf_static", "map", "navigation_map", "amcl_pose", "plan", "received_global_plan", "cmd_vel", "compute_path_to_pose/_action/status", "follow_path/_action/status", "follow_path/_action/feedback")]
             bag_topics += [f"/{namespaces[robot]}/{name}" for name in {**RPP_OBSERVATION_TYPES, **GOAL_CHECKER_TRACE_TYPES}]
             bag_topics.extend(robots[robot]["follow"].service_event_topics)
+        bag_topics = _recording_topics(bag_topics, getattr(args, "runtime_profile", "canonical62"))
+        recorded_scan_topics = _recording_topics(scan_recording_topics(robot_ids, namespace_by_id=namespaces),
+                                                 getattr(args, "runtime_profile", "canonical62"))
         service_event_topics = tuple(topic for rt in robots.values() for topic in rt["follow"].service_event_topics)
         service_names = [topic.removesuffix("/_service_event") for topic in service_event_topics]
         # Generated action events use /action/ types; list them explicitly as topics too.
@@ -1200,7 +1211,7 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
             callback_drain.drain()
             if time.monotonic() > discovery_end or launch.poll() is not None or bag.poll() is not None:
                 raise RuntimeError("G3 recorder/Nav2 evidence discovery failed")
-            if now() > 0 and evidence_subscribers_ready((event_pub, auth_pub, route_pub)) and named_subscriber_topics_ready(event_node, (*scan_recording_topics(robot_ids, namespace_by_id=namespaces), *service_event_topics), "rosbag2_recorder"):
+            if now() > 0 and evidence_subscribers_ready((event_pub, auth_pub, route_pub)) and named_subscriber_topics_ready(event_node, (*recorded_scan_topics, *service_event_topics), "rosbag2_recorder"):
                 break
         scan_epoch_ns = max(event_node.get_clock().now().nanoseconds, raw_stamp_peak)
         filters_ready = True
@@ -1260,7 +1271,7 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
             if scene_path.is_file() and json.loads(scene_path.read_text())["status"] == "failed":
                 raise RuntimeError("G3 scene failed")
             callback_drain.drain()
-            if not evidence_subscribers_ready((event_pub, auth_pub, route_pub)) or not named_subscriber_topics_ready(event_node, (*scan_recording_topics(robot_ids, namespace_by_id=namespaces), *service_event_topics), "rosbag2_recorder"):
+            if not evidence_subscribers_ready((event_pub, auth_pub, route_pub)) or not named_subscriber_topics_ready(event_node, (*recorded_scan_topics, *service_event_topics), "rosbag2_recorder"):
                 raise RuntimeError("G3 evidence/scan recording subscriptions were lost")
             tick_clock_ns = event_node.get_clock().now().nanoseconds
             stamp = tick_clock_ns / 1e9

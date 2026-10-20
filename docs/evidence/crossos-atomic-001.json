@@ -1,0 +1,19 @@
+{
+  "scope": "harmless Windows reader and WSL atomic rename; no ROS/bag/SDK",
+  "unretired_exit_code": 1,
+  "unretried_stderr": "Traceback (most recent call last):\n  File \"<string>\", line 1, in <module>\nPermissionError: [Errno 13] Permission denied: '/mnt/d/FactoryOpsRuntime/crossos-atomic-001/staging.json' -> '/mnt/d/FactoryOpsRuntime/crossos-atomic-001/state.json'\n",
+  "source_sha256": {
+    "factory_ops/compat.py": "c1ead80e3e3e33aac10850d45bae570e12b5ec796331fb69314c6c26651a8fe8"
+  },
+  "status": "passed",
+  "locked_reader_value": "{\"version\":\"old\"}",
+  "retried_exit_code": 0,
+  "retried_stderr": "",
+  "result": {
+    "attempt_count": 14,
+    "elapsed_s": 0.0503179150109645,
+    "value": {
+      "version": "new"
+    }
+  }
+}

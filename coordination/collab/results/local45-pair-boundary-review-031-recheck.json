@@ -1,0 +1,54 @@
+{
+  "task_id": "local45-pair-boundary-review-031",
+  "attempt": 2,
+  "contract_revision": 31,
+  "owner": "control",
+  "author": "root",
+  "status": "completed_recheck",
+  "ack_at_utc": "2026-10-19T23:53:04.3979749Z",
+  "verdict": "PAIR031-001 resolved within reviewed boundary",
+  "finding_id": "PAIR031-001",
+  "finding_resolved": true,
+  "new_major_count": 0,
+  "original_receipt": {
+    "path": "coordination/collab/results/local45-pair-boundary-review-031.json",
+    "sha256": "088ee969644b34ee6719230bd584951a3ff81e272135b5ccf273a536f01dba49",
+    "preserved": true
+  },
+  "source_sha256": {
+    "scripts/isaac/run_local45_fleet_pair.py": "649483d09fd7e0c17e2aa24408e49b314f86d473d3ebfb3097f49212da6c4b3d",
+    "tests/test_local45_pair_cleanup.py": "96a54f2dd8f9233ec91f6f397c76d63195848f6b2f50df8a2b707db7582bee92"
+  },
+  "evidence": [
+    "close_pair가 Windows terminate/poll, wait, 각 stream.close의 예외를 각각 수집한 뒤 독립적으로 Linux owner.stop을 시도한다.",
+    "Linux stop 실패도 별도 수집하고 Windows job receipt 읽기와 최종 failed 판정/저장을 계속한다. run_id·closed·remaining_owned_pids도 대조한다.",
+    "run의 finally가 close_pair를 호출한다. 기존031의 한쪽 정리 예외가 다른쪽 정리와 receipt 저장을 건너뛰던 제어흐름을 보정했다."
+  ],
+  "tests_read": [
+    {
+      "name": "test_windows_and_log_failures_still_stop_linux_and_write_failed_receipt",
+      "assertions": "terminate OSError + wait TimeoutExpired + log close OSError에서도 owner.stop1회, wait1회, saved failed/linux_closed=true/windows_closed=false/4개error"
+    },
+    {
+      "name": "test_linux_failure_does_not_skip_windows_receipt_and_final_save",
+      "assertions": "owner.stop RuntimeError에도 matching Windows job receipt를 읽고 saved failed/windows_closed=true/linux_closed=false"
+    }
+  ],
+  "validation": {
+    "method": "지정 수정 경계와 두 테스트 읽기만",
+    "root_reported": "fault-injection2 PASS/type0",
+    "reexecuted": false,
+    "new_tests": false,
+    "process_actions": false,
+    "scope_expanded": false
+  },
+  "limitations": [
+    "최종 save 자체의 저장장치/권한 실패에서 파일 쓰기 성공까지 보장하는 판정은 아니다. 이는 원래031 finding 범위 밖이다.",
+    "SDK/ROS/GPU/프로세스 조작·소스편집·Git 변경·새 에이전트 없이 재검수했다. 실행 중인003/runtime/stage는 미열람/미변경/미중단이다."
+  ],
+  "frozen030_sha256": {
+    "factory_ops/wsl_process_supervisor.py": "db34b177fae6f911544e6d041485afb6bd007599911e2a489f0927caa8f2ad97",
+    "tests/test_wsl_process_supervisor.py": "1d4ce46765bdaae9fe9df418a9c72937a9e9c35f63cf237a2837ec883a1ecd32"
+  },
+  "completed_at_utc": "2026-10-19T23:53:04.4043910Z"
+}
