@@ -480,6 +480,16 @@ def _spin_nodes(rclpy: Any, nodes: Sequence[Any], passes: int = 4) -> None:
             rclpy.spin_once(node, timeout_sec=0.0)
 
 
+def _ros_context_details(rclpy: Any, node: Any, expected_domain: int) -> dict[str, Any]:
+    details = {"domain_id": int(node.context.get_domain_id()), "expected_domain_id": expected_domain,
+        "rmw_identifier": rclpy.utilities.get_rmw_implementation_identifier(),
+        "rclpy_file": getattr(rclpy, "__file__", None), "namespace": node.get_namespace(),
+        "configured_transport_profile": os.environ.get("FASTRTPS_DEFAULT_PROFILES_FILE")}
+    if details["domain_id"] != expected_domain or details["rmw_identifier"] != "rmw_fastrtps_cpp":
+        raise RuntimeError("local45 ROS context mismatch: " + json.dumps(details))
+    return details
+
+
 def _setup_native_lidar_publication(
     sensors: Sequence[Any], metadata: Sequence[Mapping[str, Any]], robots: Mapping[str, Any],
     *, admission: Mapping[str, Any] | None = None,
@@ -1049,6 +1059,11 @@ def _run(
             )
             runtime["node"], runtime["ros"] = node, ros
             robot_nodes.append(node)
+            if local_sdk45:
+                ros["context"] = _ros_context_details(rclpy, node, config["ros_domain_id"])
+        if local_sdk45:
+            _atomic_json(output / "ros-contexts.json", {"run_id": args.run_id,
+                "contexts": {key: value["ros"]["context"] for key, value in robots.items()}})
         publish_native_scans = (_setup_native_lidar_publication(lidar_sensors, lidar_metadata, robots,
                                     admission={"run_id": args.run_id, "output": output,
                                         "physics_dt_s": config["physics_dt_s"],

@@ -1,0 +1,112 @@
+{
+  "task_id": "ros-bootstrap-046",
+  "attempt": 1,
+  "contract_revision": 46,
+  "ACK": true,
+  "owner": "control",
+  "status": "completed_bounded_source_review",
+  "verdict": "PASS",
+  "accepted": false,
+  "blocking_findings": [],
+  "source_base_commit": "d260ede0506d2cbd7f1f8a3bdc6f61c48be17c49",
+  "frozen_hashes_match": true,
+  "conclusion": "동결8개 입력의 변경 경계를 한 차례 확인했으며 도달 가능한 차단 결함을 찾지 못했습니다. 이는 소스 검수 판정이며 실제018의 DDS 전달·기동 성공 판정은 아닙니다.",
+  "checks": [
+    {
+      "boundary": "run별 UDP profile 및 양쪽 부모 환경",
+      "refs": [
+        "scripts/isaac/run_local45_fleet_pair.py:35",
+        "scripts/isaac/run_local45_fleet_pair.py:175",
+        "scripts/isaac/run_local45_fleet_pair.py:190",
+        "scripts/isaac/run_local45_fleet_pair.py:216"
+      ],
+      "result": "domain 정수 범위 검증 후 실행별 fastdds-udp.xml을 x 모드로 생성합니다. UDPv4 participant를 양쪽 자식 시작 전에 준비하며 같은 domain/RMW/local-only와 profile의 Windows/WSL 경로를 각 자식 환경에 설정합니다. 전역 환경 수정은 추가되지 않았습니다."
+    },
+    {
+      "boundary": "SDK·WSL 실제 context 검사",
+      "refs": [
+        "scripts/isaac/g2_scene.py:483",
+        "scripts/isaac/g2_scene.py:854",
+        "scripts/isaac/g2_scene.py:882",
+        "scripts/isaac/g2_scene.py:1062",
+        "scripts/ros/g3_mission.py:1168"
+      ],
+      "result": "기존 SDK pre-app 환경 설정을 유지합니다. SDK 차량 node.context.get_domain_id() 및 실제 RMW identifier를 config와 비교하고 불일치 시 실패합니다. ros-contexts.json에 run과4대 관측을 남깁니다. WSL도 event node의 실제 context domain/RMW/module/profile을 결과에 남기고 불일치 시 실패합니다. SDK·WSL 기본 context를 환경 문자열만으로 성공 처리하지 않습니다."
+    },
+    {
+      "boundary": "local45 recorder QoS와6.2 분리",
+      "refs": [
+        "scripts/ros/g3_mission.py:79",
+        "scripts/ros/g3_mission.py:1168",
+        "scripts/ros/g3_mission.py:1298",
+        "tests/test_local45_recording_policy.py:7",
+        "tests/test_local45_recording_policy.py:31"
+      ],
+      "result": "local45=True일 때만 raw front/rear에 BEST_EFFORT, odom/dynamicTF에 RELIABLE·volatile을 추가합니다. 기존 latched 항목은 유지되며 기본 local45=False의6.2 QoS 출력은 기존과 같습니다. 기존 raw 보존/filtered bag 제외 정책과 실제 필터링·AMCL 소비 경로는 바뀌지 않았습니다."
+    },
+    {
+      "boundary": "초기화 캐시 저널·원래 수신시각",
+      "refs": [
+        "scripts/ros/g3_mission.py:1233",
+        "scripts/ros/g3_mission.py:1244",
+        "scripts/ros/g3_mission.py:1254",
+        "scripts/ros/g3_mission.py:1435",
+        "scripts/ros/g3_mission.py:1447"
+      ],
+      "result": "raw 수신 계수/원래 ns stamp를 필터 gate 이전에 분리하고 필터 후 원래 stamp도 기록합니다. 기존 odom/pose/lifecycle 캐시를 이용하며 진단용 추가 DDS 질의는 없습니다. 5초 경과 시와 성공/시간초과 경계에서 JSONL을 flush하고 최종 관측을 result에 보존합니다. 새 stream은 기존 finally 정리 목록에 등록됩니다."
+    },
+    {
+      "boundary": "기동 조건·TTL·시간 상한·source pin·cleanup",
+      "refs": [
+        "scripts/ros/g3_mission.py:1374",
+        "scripts/ros/g3_mission.py:1431",
+        "scripts/ros/g3_mission.py:1442",
+        "scripts/isaac/run_local45_fleet_pair.py:155",
+        "scripts/isaac/run_local45_fleet_pair.py:203",
+        "scripts/isaac/run_local45_fleet_pair.py:237",
+        "scripts/isaac/run_local45_fleet_pair.py:242"
+      ],
+      "result": "017 대비 diff에서 기존 all-active/pose/odom>=5/각scan>=5/action/service 조건과300초 상한은 같은 의미로 유지됩니다. pose TTL·정지·운동 조건 변경은 없습니다. metadata/archive/build attestation 검사와 기존 source/input pins를 유지하고 새 profile hash도 Windows worker expected_inputs에 포함합니다. 소유권·양쪽 독립 cleanup·최종 closure/pass 조건은 변경되지 않았습니다."
+    },
+    {
+      "boundary": "검사 소스와 주장 범위",
+      "refs": [
+        "tests/test_local45_ros_environment.py:14",
+        "tests/test_local45_ros_environment.py:36",
+        "tests/test_local45_ros_environment.py:50",
+        "tests/test_local45_ros_environment.py:59",
+        "README.md:59",
+        "docs/troubleshooting.md:412",
+        "docs/evidence/local45-transport-017.json"
+      ],
+      "result": "검사 소스는 profile 재사용 거절/invalid domain/환경과 실제 context 구분/불일치 실패 및 local45/default recording 분리를 확인합니다. 문서는017 실제 context 미기록·근본원인 미확정·016에도 FastCDR 경고 존재·AMCL 수신 반증·실제 효과018 대기를 명시합니다. profile 설정을 wire transport 검증이나017 원인 확정으로 확대하지 않았습니다."
+    }
+  ],
+  "source_sha256": {
+    "scripts/isaac/run_local45_fleet_pair.py": "7acb858fb947b34011893a06feea8e9bbc47d9ea1211fa549d46d9c25035a8bc",
+    "scripts/isaac/g2_scene.py": "bf5ed465a306b02b46a39d91e5e2ae0ed37826c7c7e08546f7e033b8751bf6a6",
+    "scripts/ros/g3_mission.py": "e86fed75d7c5e4f8756b5f24acdeabfd25086bf5a6918b392bd652f13443e513",
+    "tests/test_local45_ros_environment.py": "a9a691f8f96c0f5cbb0b1754571d1fa891fb155ad53d9776a7681cf0b1ad26a8",
+    "tests/test_local45_recording_policy.py": "ac0a9676df29e162975c2d17361e1ad33645a869ad06bc3c71a5d0938161aa28",
+    "README.md": "0b0920ddf82d544c3b5795d9eba3994f5728108cb0e8a2ca6b4fd525957bea30",
+    "docs/troubleshooting.md": "bf7ab0c13fb601ec85672369d60365a469673f27ab9ffa069245b418ea68b32f",
+    "docs/evidence/local45-transport-017.json": "ed78cd8fd3bd1764d91a886661aa6d41043beffd0a8db5760fa0f2aee3384a57"
+  },
+  "validation": {
+    "reviewer_performed": "8개 파일 SHA 대조, 동결017 동일 경로와 변경 diff 및 관련 호출부 읽기, 배정된 검사·문서 소스 확인. 실행형 회귀검사는 수행하지 않았습니다.",
+    "root_reported_only": "root receipt의 초기16 PASS + QoS 최종3 PASS + SDK3.10 ast.parse/diff 확인을 인용하며 재실행하지 않았습니다.",
+    "additional_tests_run": false,
+    "sdk_wsl_ros_gpu_executed": false,
+    "git_executed": false,
+    "dependencies_changed": false,
+    "new_agents": false,
+    "product_edited": false,
+    "only_written_path": "coordination/collab/results/ros-bootstrap-046-review.json"
+  },
+  "limits": [
+    "profile의 실제 로딩/UDP wire 사용과 SDK·WSL 실측 context 및 기록/기동 효과는018에서 root가 확인할 범위입니다.",
+    "017 실제 context domain과 최초 전달 실패 원인은 여전히 미확정입니다.",
+    "닫힌/실행 중 bag,018 runtime 및 배정 밖 제품 경로를 조사하거나 변경하지 않았습니다.",
+    "추가 검수·테스트 루프로 확장하지 않고 이번 소스 확인을 종료합니다."
+  ]
+}

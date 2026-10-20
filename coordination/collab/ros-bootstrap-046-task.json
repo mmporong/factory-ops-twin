@@ -1,0 +1,31 @@
+{
+  "task_id": "ros-bootstrap-046",
+  "attempt": 1,
+  "contract_revision": 46,
+  "owner": "root",
+  "reviewer": "control",
+  "goal": "Per-run Windows/WSL ROS bootstrap and observable local45 startup without changing motion or startup acceptance",
+  "inputs": {
+    "source_commit": "d260ede0506d2cbd7f1f8a3bdc6f61c48be17c49",
+    "advice": "coordination/collab/results/nav2-startup-045.json"
+  },
+  "write_paths": [
+    "scripts/isaac/run_local45_fleet_pair.py",
+    "scripts/isaac/g2_scene.py",
+    "scripts/ros/g3_mission.py",
+    "tests/test_local45_ros_environment.py",
+    "tests/test_local45_recording_policy.py",
+    "README.md",
+    "docs/troubleshooting.md",
+    "docs/evidence/local45-transport-017.json"
+  ],
+  "acceptance": [
+    "Create one immutable run-local FastDDS UDP profile before both child processes; pin its hash and set matching domain/RMW/local-only/profile env for Windows and WSL. Use existing official UDP participant profile, no new dependencies, IP/firewall/global WSL edits or new instances.",
+    "Observe actual SDK node and WSL context domain/RMW/module; mismatch fails. Record measured context, not merely environment strings. Existing SDK pre-app settings remain;017 prior context is unknown.",
+    "Local45 recorder pins raw sensors BEST_EFFORT and odometry/dynamicTF RELIABLE to the existing native publishers; existing latched topics and canonical62 unchanged. No claim that017 QoS/domain root cause is proven.",
+    "Local45 startup records cached lifecycle/pose/odom/raw receipt vs filtered counters and original stamps in a small append journal/result, no extra DDS queries or bag SQL. Existing all-active/freshness/scan/stop/startup timeout predicates unchanged.",
+    "One focused CPU pass plus SDK3.10 syntax; control one bounded source review. Root integrates and starts018 only after acceptance. No broad review or SDG bulk."
+  ],
+  "result_path": "coordination/collab/results/ros-bootstrap-046-root.json",
+  "review_path": "coordination/collab/results/ros-bootstrap-046-review.json"
+}

@@ -1,6 +1,6 @@
 {
-  "revision": 44,
-  "updated_at": "2026-10-20T05:07:45.204277+00:00",
+  "revision": 46,
+  "updated_at": "2026-10-20T06:00:42.946132+00:00",
   "scope": {
     "excluded": "실물 로봇 실행, 새 유료 서비스/에셋, 공개 배포",
     "project_root": "C:\\Users\\LIMMM\\factory-ops-twin",
@@ -20,7 +20,7 @@
       "role": "dashboard frontend author",
       "name": "control",
       "agent_kind": "codex",
-      "status": "044 accepted CPU; actual017 belongs to root; no pending control task",
+      "status": "046 review received; no pending control task",
       "session": "default",
       "agent_session": "01a152aa-24b4-7a31-92e3-a2b620f4feeb",
       "terminal_id": "term_65e06d27e415810",
@@ -877,6 +877,44 @@
       "reviewer": "root",
       "task_path": "coordination/collab/bounded-native-scan-admission-044-task.json",
       "acceptance_record": "Root bounded source/test/README review:5SHA matched. Strict default/high-water unchanged; only typed native regression rejected, owned bytes metadata preserved,6frame recovery,16cap,large/reset/storage failures retained. Found unnecessary duplicate full-buffer validation; author removed it and15 affected checks passed once after initial22 pass. SDK3.10.15 ast parse2sources passed. Runtime4.5 World frame/time methods already used by existing capture guard. No full review repeats. Actual017 and SDK native storage remain pending."
+    },
+    {
+      "task_id": "nav2-startup-045",
+      "attempt": 1,
+      "contract_revision": 45,
+      "owner": "control",
+      "result_path": "coordination/collab/results/nav2-startup-045.json",
+      "write_paths": [
+        "coordination/collab/results/nav2-startup-045.json"
+      ],
+      "status": "accepted_bounded_diagnosis",
+      "ACK": true,
+      "reviewer": "root",
+      "task_path": "coordination/collab/nav2-startup-045-task.json",
+      "acceptance_record": "Root inspected evidence/counterevidence and source hashes. SDK already configured before SimulationApp; late-env cause rejected. Clock2852 with no recorded raw/odom/dynamicTF, but AMCL partial scans prohibit all-subscriber-zero claim. Context/recording/startup diagnostics incomplete;017 root cause remains unknown."
+    },
+    {
+      "task_id": "ros-bootstrap-046",
+      "attempt": 1,
+      "contract_revision": 46,
+      "owner": "root",
+      "reviewer": "control",
+      "write_paths": [
+        "scripts/isaac/run_local45_fleet_pair.py",
+        "scripts/isaac/g2_scene.py",
+        "scripts/ros/g3_mission.py",
+        "tests/test_local45_ros_environment.py",
+        "tests/test_local45_recording_policy.py",
+        "README.md",
+        "docs/troubleshooting.md",
+        "docs/evidence/local45-transport-017.json"
+      ],
+      "result_path": "coordination/collab/results/ros-bootstrap-046-root.json",
+      "review_path": "coordination/collab/results/ros-bootstrap-046-review.json",
+      "status": "accepted_cpu_native_pending",
+      "ACK": true,
+      "task_path": "coordination/collab/ros-bootstrap-046-task.json",
+      "acceptance_record": "Control one bounded source review PASS,8SHA matched,blocking0. Root16 targeted CPU +3 QoS final checks and SDK3.10 syntax; no reviewer execution/repeats. UDP config/context/receiver diagnostics do not prove017 cause or018 delivery. Actual018 pending."
     }
   ],
   "decisions": [

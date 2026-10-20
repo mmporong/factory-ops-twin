@@ -32,6 +32,31 @@ def linux(path: Path) -> str:
     return "/mnt/" + path.drive[0].lower() + path.as_posix()[2:]
 
 
+def prepare_ros_transport(stage: Path, domain_id: int) -> tuple[Path, dict[str, str]]:
+    """Create the run-owned UDP participant profile before ROS processes start."""
+    if isinstance(domain_id, bool) or not isinstance(domain_id, int) or not 0 <= domain_id <= 232:
+        raise ValueError("bundle ROS domain must be an integer in0..232")
+    profile = stage / "fastdds-udp.xml"
+    text = '''<?xml version="1.0" encoding="UTF-8"?>
+<profiles xmlns="http://www.eprosima.com/XMLSchemas/fastRTPS_Profiles">
+  <transport_descriptors>
+    <transport_descriptor><transport_id>FactoryUdp</transport_id><type>UDPv4</type></transport_descriptor>
+  </transport_descriptors>
+  <participant profile_name="factory_udp" is_default_profile="true">
+    <rtps>
+      <userTransports><transport_id>FactoryUdp</transport_id></userTransports>
+      <useBuiltinTransports>false</useBuiltinTransports>
+    </rtps>
+  </participant>
+</profiles>
+'''
+    with profile.open("x", encoding="utf-8", newline="\n") as stream:
+        stream.write(text)
+    return profile, {"ROS_DOMAIN_ID": str(domain_id), "RMW_IMPLEMENTATION": "rmw_fastrtps_cpp",
+        "ROS_LOCALHOST_ONLY": "0", "FASTRTPS_DEFAULT_PROFILES_FILE": str(profile),
+        "FASTDDS_DEFAULT_PROFILES_FILE": str(profile)}
+
+
 def close_pair(worker, streams, owner, stage: Path, report: dict, started: float) -> None:
     errors = []
     if worker is not None:
@@ -147,6 +172,14 @@ def run(stage: Path, sdk: Path, bound: int, *, charge_robot: str | None = None, 
         root_linux = linux(stage)
         attestation = json.loads((stage / "build-attestation.json").read_text(encoding="utf-8"))
         installed = linux(Path(attestation["actual_install_directory"]))
+        config = json.loads((stage / "inputs/config.json").read_text(encoding="utf-8"))
+        transport, ros_environment = prepare_ros_transport(stage, config["ros_domain_id"])
+        linux_environment = {**ros_environment, "FASTRTPS_DEFAULT_PROFILES_FILE": linux(transport),
+                             "FASTDDS_DEFAULT_PROFILES_FILE": linux(transport)}
+        report["ros_transport"] = {"profile": str(transport), "sha256": sha(transport),
+            "windows_environment": ros_environment, "linux_environment": linux_environment,
+            "scope": "configured run-local UDP profile; not packet-capture transport proof"}
+        save(receipt_path, report)
         charging_args = (["--virtual-charging", "--charge-robot", charge_robot,
                           "--charge-resume-soc", str(charge_resume_soc)] if charge_robot else [])
         command = "\n".join([
@@ -154,6 +187,7 @@ def run(stage: Path, sdk: Path, bound: int, *, charge_robot: str | None = None, 
             "export AMENT_PREFIX_PATH=" + shlex.quote(installed) + ':"${AMENT_PREFIX_PATH:-}"',
             "export LD_LIBRARY_PATH=" + shlex.quote(installed + "/lib") + ':"${LD_LIBRARY_PATH:-}"',
             "export RMW_IMPLEMENTATION=rmw_fastrtps_cpp ROS_LOCALHOST_ONLY=0 PYTHONDONTWRITEBYTECODE=1",
+            *["export " + key + "=" + shlex.quote(value) for key, value in linux_environment.items()],
             "export FACTORY_OPS_G3_SOURCE_COMMIT=" + shlex.quote(launch["source_commit"]),
             "export FACTORY_OPS_G3_BUILD_ATTESTATION_PATH=" + shlex.quote(root_linux + "/build-attestation.json"),
             "export FACTORY_OPS_G3_BUILD_ATTESTATION_SHA256=" + shlex.quote(launch["build_attestation_sha256"]),
@@ -171,6 +205,7 @@ def run(stage: Path, sdk: Path, bound: int, *, charge_robot: str | None = None, 
         expected.update({str(path): sha(path) for path in (stage / "inputs").rglob("*") if path.is_file()})
         expected[str(metadata)] = sha(metadata)
         expected[str(marker)] = sha(marker)
+        expected[str(transport)] = sha(transport)
         entry = source / "scripts/isaac/local45_fleet4_transport_scene.py"
         launcher = sdk / "python.bat"
         for path in (entry, launcher, output, stage):
@@ -178,7 +213,7 @@ def run(stage: Path, sdk: Path, bound: int, *, charge_robot: str | None = None, 
         command_line = '"' + str(os.environ["COMSPEC"]) + '" /d /s /c ""' + str(launcher) + '" "' + str(entry) + '" --bundle "' + str(stage / "inputs") + '" --output "' + str(output) + '" --run-id ' + run_id + '"'
         spec = {"run_id": run_id, "cwd": str(sdk), "command": command_line, "expected_inputs": expected}
         save(stage / "job-spec.json", spec)
-        environment = {**os.environ, "FACTORY_OPS_G3_SOURCE_COMMIT": launch["source_commit"],
+        environment = {**os.environ, **ros_environment, "FACTORY_OPS_G3_SOURCE_COMMIT": launch["source_commit"],
             "FACTORY_OPS_FLEET4_PROVENANCE_SHA256": launch["provenance_sha256"], "PYTHONDONTWRITEBYTECODE": "1"}
         for label in ("sdk.stdout.log", "sdk.stderr.log"):
             streams.append((stage / label).open("xb"))

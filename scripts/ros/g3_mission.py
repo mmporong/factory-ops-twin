@@ -77,15 +77,23 @@ CONFIRMED_XY_LATCH_MODE = "goal_checker_confirmed_xy_latch"
 
 
 def bag_qos_overrides(robot_ids: Sequence[str] = ROBOT_IDS, *,
-                      namespace_by_id: Mapping[str, str] | None = None) -> str:
+                      namespace_by_id: Mapping[str, str] | None = None,
+                      local45: bool = False) -> str:
     ids, namespaces = fleet_identity(robot_ids, namespace_by_id)
     latched_depths = {"tf_static": 1, "map": 1, "navigation_map": 1,
                       "controller_cycle_trace": 1024}
-    return "".join(
+    latched = "".join(
         f"/{namespaces[robot]}/{topic}:\n  durability: transient_local\n  reliability: reliable\n"
         f"  history: keep_last\n  depth: {depth}\n"
         for robot in ids for topic, depth in latched_depths.items()
     )
+    sensors = "".join(
+        f"/{namespaces[robot]}/{topic}:\n  durability: volatile\n  reliability: {reliability}\n"
+        "  history: keep_last\n  depth: 50\n"
+        for robot in ids for topic, reliability in (("scan_front_raw", "best_effort"),
+            ("scan_rear_raw", "best_effort"), ("odom", "reliable"), ("tf", "reliable"))
+    ) if local45 else ""
+    return latched + sensors
 
 
 def build_g3_namespaced_params(
@@ -1157,6 +1165,15 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
         ros.init()
         event_node = ros.create_node("factory_g3_mission", parameter_overrides=[Parameter("use_sim_time", value=True)])
         nodes.append(event_node)
+        local45 = getattr(args, "runtime_profile", "canonical62") == "local45_development"
+        if local45:
+            from rclpy.utilities import get_rmw_implementation_identifier
+            result["ros_context"] = {"domain_id": int(event_node.context.get_domain_id()),
+                "expected_domain_id": config["ros_domain_id"], "rmw_identifier": get_rmw_implementation_identifier(),
+                "rclpy_file": ros.__file__, "configured_transport_profile": os.environ.get("FASTRTPS_DEFAULT_PROFILES_FILE")}
+            if (result["ros_context"]["domain_id"] != config["ros_domain_id"]
+                    or result["ros_context"]["rmw_identifier"] != "rmw_fastrtps_cpp"):
+                raise RuntimeError("local45 ROS context mismatch: " + json.dumps(result["ros_context"]))
         event_executor = SingleThreadedExecutor()
         event_executor.add_node(event_node)
         node_executors.append((event_node, event_executor))
@@ -1212,6 +1229,9 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
                 "scan_counts": {key: 0 for key in ("front_raw", "rear_raw", "front", "rear", "localization_front", "localization_rear")},
                 "subscriptions": [], "map_future": None}
             rt = robots[robot_id]
+            if local45:
+                rt["startup_receipts"] = {"raw_counts": {"front": 0, "rear": 0},
+                    "last_raw_stamp_ns": {}, "last_filtered_stamp_ns": {}}
             rt["charging_odom_pending"] = deque()
             front = node.create_publisher(LaserScan, "scan_front", qos_profile_sensor_data)
             rear = node.create_publisher(LaserScan, "scan_rear", qos_profile_sensor_data)
@@ -1220,12 +1240,18 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
             def scan(message: Any, robot: str, side: str, publisher: Any, local_pub: Any) -> None:
                 nonlocal raw_stamp_peak
                 stamp = message.header.stamp.sec * 1_000_000_000 + message.header.stamp.nanosec
+                if local45:
+                    receipt = robots[robot]["startup_receipts"]
+                    receipt["raw_counts"][side] += 1
+                    receipt["last_raw_stamp_ns"][side] = stamp
                 raw_stamp_peak = max(raw_stamp_peak, stamp)
                 if not filtered_scan_is_recordable(filters_ready, scan_epoch_ns, stamp):
                     return
                 filtered = copy.deepcopy(message)
                 filtered.ranges = mask_scan_ranges(message.angle_min, message.angle_max, message.angle_increment, message.ranges)
                 publish_scan_fanout(filtered, (publisher, local_pub))
+                if local45:
+                    robots[robot]["startup_receipts"]["last_filtered_stamp_ns"][side] = stamp
                 for key in (f"{side}_raw", side, f"localization_{side}"):
                     robots[robot]["scan_counts"][key] += 1
 
@@ -1271,7 +1297,7 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
         )
 
         qos = output / "bag-qos.yaml"
-        qos.write_text(bag_qos_overrides(robot_ids, namespace_by_id=namespaces), encoding="utf-8")
+        qos.write_text(bag_qos_overrides(robot_ids, namespace_by_id=namespaces, local45=local45), encoding="utf-8")
         bag_topics = ["/clock", "/factory/g3/events", "/factory/g3/authorizations", "/factory/g3/reservations"]
         for robot in robot_ids:
             bag_topics += [f"/{namespaces[robot]}/{name}" for name in ("scan_front_raw", "scan_rear_raw", "scan_front", "scan_rear", "scan_localization", "odom", "tf", "tf_static", "map", "navigation_map", "amcl_pose", "plan", "received_global_plan", "cmd_vel", "compute_path_to_pose/_action/status", "follow_path/_action/status", "follow_path/_action/feedback")]
@@ -1404,13 +1430,31 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
         lifecycle_clients = {f"{robot}/{name}": client for robot, rt in robots.items() for name, client in rt["lifecycle"].items()}
         startup_end = min(deadline, time.monotonic()+300)
         result["stage"] = "startup"
+        startup_log = None
+        startup_last_write = -math.inf
+        if local45:
+            startup_log = (output / "startup-observations.jsonl").open("x", encoding="utf-8")
+            streams.append(startup_log)
         while True:
-            tick(require_fresh=False)
-            states = poller.poll(time.monotonic(), lifecycle_clients, GetState.Request)
-            if (all(value == 3 for value in states.values()) and all(
+            startup_stamp = tick(require_fresh=False)
+            startup_wall = time.monotonic()
+            states = poller.poll(startup_wall, lifecycle_clients, GetState.Request)
+            startup_ready = (all(value == 3 for value in states.values()) and all(
                     rt["pose"] and rt["odom_count"] >= 5 and min(rt["scan_counts"].values()) >= 5
                     and rt["compute"].server_is_ready() and rt["follow"].server_is_ready()
-                    and rt["controller_parameters"].service_is_ready() for rt in robots.values())):
+                    and rt["controller_parameters"].service_is_ready() for rt in robots.values()))
+            if local45:
+                observation = {"run_id": args.run_id, "sim_time_s": startup_stamp, "wall_time_unix_s": time.time(),
+                    "ready": startup_ready, "ros_context": result["ros_context"], "lifecycle_last_polled": dict(states),
+                    "robots": {robot: {"odom_count": rt["odom_count"], "last_odom_stamp_ns": rt.get("last_odom_stamp_ns"),
+                        "scan_counts": dict(rt["scan_counts"]), "raw_receipts": copy.deepcopy(rt["startup_receipts"]),
+                        "pose": rt["pose"]} for robot, rt in robots.items()}}
+                result["startup_observation"] = observation
+                if startup_ready or startup_wall - startup_last_write >= 5 or startup_wall > startup_end:
+                    startup_log.write(json.dumps(observation, allow_nan=False) + "\n")
+                    startup_log.flush()
+                    startup_last_write = startup_wall
+            if startup_ready:
                 break
             if time.monotonic() > startup_end:
                 raise TimeoutError("G3 planner/controller/TF/odometry/scan startup did not qualify")

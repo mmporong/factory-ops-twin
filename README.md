@@ -56,6 +56,8 @@ OpenUSD 자산·운영 상태와 데이터 입력을 연결하고, Kit 운영 �
 
 로컬4.5의 선택형 native 입력 정책은 역행 scan을 시각 보정이나 ROS 발행 없이 원본과 함께 기록하며, 한 scan 기간의 물리 프레임 수 안에 새 scan이 오지 않거나 큰 역행·시계 reset이 발생하면 실패합니다(센서·실행당 최대16건 보존, CPU 검사 통과·실제 적용 검증 전).
 
+4대 ROS 운행용 로컬 실행기는 실행별 UDP 통신 설정을 Windows·WSL에 적용하고 실제 ROS context와 기동 수신 계수를 기록합니다. 센서·odometry·TF의 기록 QoS도 발행자에 맞춰 명시합니다. 이 보완의 실제 운행 효과는 확인 중입니다.
+
 로컬 실행기는 PowerShell7에서 구성요소 시험에 사용합니다. `-SdkPath`는 기존4.5 설치 폴더입니다. 대기 중인 worker를 Windows Job Object에 배정한 뒤 source/config/dependency를 실행 직전에 대조합니다. 정상 종료와 시간 초과 뒤에는 소유 Job 전체의 잔여 PID를 확인합니다. 실제 SDK 실행과 손자 프로세스·시간 초과 검사를 통과했으며, [종료 근거](docs/evidence/local45-job-guard-006/host.json)를 제공합니다. 실행 중 담당 소스는 동결해야 합니다.WSL Nav2는 소유한 systemd 단위와 foreground 실행 클라이언트를 함께 유지하며, 종료할 때 unit·자식 프로세스·클라이언트를 모두 확인합니다. [수명·종료 근거](docs/evidence/wsl-lifetime-037.json)는 실제70초 WSL 단위 실행을 다룹니다. 4대 자율 임무의 장시간 운영 검증은 남아 있습니다.
 
 ```powershell

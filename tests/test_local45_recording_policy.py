@@ -1,8 +1,23 @@
 import unittest
-from scripts.ros.g3_mission import _recording_topics, _scene_runtime
+import yaml
+from scripts.ros.g3_mission import _recording_topics, _scene_runtime, bag_qos_overrides
 
 
 class Local45RecordingTests(unittest.TestCase):
+    def test_local_sensor_recording_does_not_depend_on_discovery_qos(self):
+        ids = ('carter1', 'carter2', 'carter3', 'carter4')
+        qos = yaml.safe_load(bag_qos_overrides(ids, local45=True))
+        for robot in ids:
+            for topic in ('scan_front_raw', 'scan_rear_raw', 'odom', 'tf'):
+                self.assertEqual('best_effort' if topic.endswith('_raw') else 'reliable',
+                    qos[f'/{robot}/{topic}']['reliability'])
+                self.assertEqual('volatile', qos[f'/{robot}/{topic}']['durability'])
+            self.assertEqual('transient_local', qos[f'/{robot}/tf_static']['durability'])
+            self.assertEqual('reliable', qos[f'/{robot}/controller_cycle_trace']['reliability'])
+        canonical = yaml.safe_load(bag_qos_overrides(ids))
+        self.assertNotIn('/carter1/scan_front_raw', canonical)
+        self.assertNotIn('/carter1/odom', canonical)
+
     def test_development_keeps_all_eight_raw_sensors_and_control_without_filtered_copies(self):
         raw = [f"/carter{robot}/scan_{side}_raw" for robot in range(1, 5) for side in ("front", "rear")]
         copies = [f"/carter{robot}/{name}" for robot in range(1, 5)

@@ -1,0 +1,59 @@
+{
+  "task_id": "ros-bootstrap-046",
+  "attempt": 1,
+  "contract_revision": 46,
+  "owner": "root",
+  "status": "authored_cpu_checked_pending_control_review",
+  "source_base_commit": "d260ede0506d2cbd7f1f8a3bdc6f61c48be17c49",
+  "source_sha256": {
+    "scripts/isaac/run_local45_fleet_pair.py": "7acb858fb947b34011893a06feea8e9bbc47d9ea1211fa549d46d9c25035a8bc",
+    "scripts/isaac/g2_scene.py": "bf5ed465a306b02b46a39d91e5e2ae0ed37826c7c7e08546f7e033b8751bf6a6",
+    "scripts/ros/g3_mission.py": "e86fed75d7c5e4f8756b5f24acdeabfd25086bf5a6918b392bd652f13443e513",
+    "tests/test_local45_ros_environment.py": "a9a691f8f96c0f5cbb0b1754571d1fa891fb155ad53d9776a7681cf0b1ad26a8",
+    "tests/test_local45_recording_policy.py": "ac0a9676df29e162975c2d17361e1ad33645a869ad06bc3c71a5d0938161aa28",
+    "README.md": "0b0920ddf82d544c3b5795d9eba3994f5728108cb0e8a2ca6b4fd525957bea30",
+    "docs/troubleshooting.md": "bf7ab0c13fb601ec85672369d60365a469673f27ab9ffa069245b418ea68b32f",
+    "docs/evidence/local45-transport-017.json": "ed78cd8fd3bd1764d91a886661aa6d41043beffd0a8db5760fa0f2aee3384a57"
+  },
+  "validation": {
+    "initial": {
+      "command": ".venv/Scripts/python.exe -B -m unittest tests.test_local45_ros_environment tests.test_local45_recording_policy tests.test_local45_pair_monitor tests.test_local45_pair_cleanup -v",
+      "passed": 16,
+      "runs": 1,
+      "test_wall_s": 0.07,
+      "scope": "before matching odom/TF recorder reliability to verified publishers"
+    },
+    "qos_final": {
+      "command": ".venv/Scripts/python.exe -B -m unittest tests.test_local45_recording_policy -v",
+      "passed": 3,
+      "runs": 1,
+      "test_wall_s": 0.01
+    },
+    "sdk_syntax": {
+      "python": "3.10.15",
+      "method": "ast.parse only; no SDK/GPU initialization",
+      "files": [
+        "scripts/isaac/run_local45_fleet_pair.py",
+        "scripts/isaac/g2_scene.py"
+      ],
+      "passed": true
+    },
+    "diff_check": true
+  },
+  "preserved": [
+    "startup all-active/pose/odom/scan/action predicates and300s bound",
+    "controller/map freshness and motion",
+    "strict process ownership and cleanup",
+    "canonical62 recording",
+    "no active bag SQL/copy"
+  ],
+  "runtime_eligible_after_review": true,
+  "gpu_run_executed": false,
+  "limits": [
+    "016/017 actual-context cause unknown; pre-app SDK settings already existed",
+    "UDP XML configured, actual wire transport not captured",
+    "actual SDK/WSL contexts/startup diagnostics and recording effect await018",
+    "new startup diagnostics exercise requires real ROS; CPU tests do not prove end-to-end delivery"
+  ],
+  "review_request": "One bounded read of changed source/tests/README against card and frozen hashes. No new tests, SDK/WSL/GPU/servers/Git/deps/agents. Return blocking findings or PASS with reviewed digests to review_path."
+}

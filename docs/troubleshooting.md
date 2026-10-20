@@ -409,6 +409,14 @@ ROS가 실패 종료한 직후 외부 실행기가 아직 정리 중인 Windows 
 
 [SDK4.5 FlatScan 명세](https://docs.isaacsim.omniverse.nvidia.com/4.5.0/py/source/extensions/isaacsim.sensors.rtx/docs/ogn/OgnIsaacComputeRTXLidarFlatScan.html)는 출력 시각을 첫 빔의 초 단위 시각으로 정의한다. SDK 내부의 역행 원인이나 반환 버퍼의 원자적 일관성은 이번 자료로 확정하지 않는다. [016 부분 실행](evidence/local45-transport-016.json)과 [044 결과](../coordination/collab/results/bounded-native-scan-admission-044.json)에 구현·검사·미확인을 구분했다.
 
+## FOT-053 — clock 수신과 차량 데이터 기록·초기화의 불일치
+
+017은 기록기의 구독 생성까지 진행했지만 planner/controller/TF/odometry/scan 기동 조건에서 실패했다. 종료된 bag에서 clock2,852개·4.667~51.950초·시각 역행0을 확인했고, 선택한8개 raw scan·odometry·dynamic TF는 기록0건이었다. static TF는 이 검사 대상이 아니다. Windows SDK의8개 센서 자체 구독 헤더는 존재한다. AMCL에도4.817/7.317/7.517초의 일부 스캔 수신·TF cache/queue 거절 로그가 있어, bag0건을 모든 WSL 구독자의 미수신으로 확대할 수 없다.
+
+동결 소스는 SDK 환경을 SimulationApp 생성 전에 설정하고 있었다.017의 실제 Python context domain은 기록이 없어 domain0이라고 소급 판정하지 않는다. FastCDR ParticipantEntitiesInfo 경고는 기동에 성공한016에도 있어 단독 원인으로 보지 않는다. 초기 pose의 ROS 시각은016에서4.233초,017에서0초였고017의 map TF는 성립하지 않았다. 정확한 전달·기동 실패 원인은 미확정이다. G3 기동 TimeoutError가 최초이며 SDK90초 종료 유예 초과는 후속이다. 양쪽 소유 프로세스와 기록기 종료를 확인한 후 bag을 읽었고 정리 오류는 없었다.
+
+046은 실행별 UDP participant 파일과 부모 환경을 고정하고 실제 SDK·WSL domain/RMW를 기록·대조한다. 로컬 기록기의 raw scan은 BEST_EFFORT, odometry·dynamic TF는 해당 발행자의 RELIABLE로 명시하며 기존 latched 주제와6.2 경로는 유지한다. 기동 동안 raw 수신과 전처리 후 계수·원래 시각·odometry·pose·마지막 lifecycle 상태를 별도 저널에 남긴다. 기존 기동 조건·관측 유효시간·시간 상한은 유지한다. [017 근거](evidence/local45-transport-017.json), [045 진단](../coordination/collab/results/nav2-startup-045.json), [UDP 설정 참고: NVIDIA5.1 설치 안내](https://docs.isaacsim.omniverse.nvidia.com/5.1.0/installation/install_ros.html)를 함께 보존한다. 실제 효과는 다음018에서 확인한다.
+
 ## 실행 전 확인과 후속 기록
 
 1. 깨끗한 생산자 소스·host commit·설정·실행 ID를 결속한다. 실패한 실행 ID와 원본을 다시 사용하지 않는다.

@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "run_id": "09b02d947c6646248474c5f1f998152e",
+  "source_commit": "d260ede0506d2cbd7f1f8a3bdc6f61c48be17c49",
+  "status": "failed_startup",
+  "primary_error": "G3 planner/controller/TF/odometry/scan startup did not qualify",
+  "stage": "startup",
+  "windows_closed": true,
+  "linux_closed": true,
+  "cleanup_errors": [],
+  "secondary_error": "RuntimeError: SDK did not finish cleanup within90s after ROS foreground client exit",
+  "clock": {
+    "count": 2852,
+    "unique_stamps": 2838,
+    "first_stamp_s": 4.66666691,
+    "last_stamp_s": 51.950002709,
+    "max_stamp_s": 51.950002709,
+    "last_receive_clock_s": 51.950002709,
+    "regressions": 0,
+    "last_lag_s": 0.0,
+    "last_samples": [
+      [
+        51.900002706,
+        51.900002706
+      ],
+      [
+        51.916669374,
+        51.916669374
+      ],
+      [
+        51.933336041,
+        51.933336041
+      ],
+      [
+        51.950002709,
+        51.950002709
+      ]
+    ]
+  },
+  "recorded_raw_scan_topics": 0,
+  "recorded_odometry_topics": 0,
+  "recorded_dynamic_tf_edges": 0,
+  "audit_scope": "closed bag clock/raw scans/odometry/dynamicTF only; tf_static excluded",
+  "counterevidence": "AMCL logged several received filtered front scans; bag0 does not prove every WSL subscriber received0",
+  "actual017_context_domain_recorded": false,
+  "root_cause_confirmed": false,
+  "native_rejection_journal_present": false,
+  "business_transport_started": false,
+  "goal80_complete": false,
+  "database_sha256": "531510c20b21eb7a08679dec70754132d8b0d252827fcc7ddff2e65dfd32709b",
+  "database_bytes": 3813376,
+  "diagnosis": "coordination/collab/results/nav2-startup-045.json"
+}

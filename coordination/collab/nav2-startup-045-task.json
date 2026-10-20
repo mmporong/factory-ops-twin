@@ -1,0 +1,20 @@
+{
+  "task_id": "nav2-startup-045",
+  "attempt": 1,
+  "contract_revision": 45,
+  "owner": "control",
+  "goal": "Bounded read-only diagnosis of017 startup failure compared with successful016 startup",
+  "inputs": {
+    "source_commit": "d260ede0506d2cbd7f1f8a3bdc6f61c48be17c49",
+    "failed_stage": "D:/FactoryOpsRuntime/local45-transport-017",
+    "baseline_stage": "D:/FactoryOpsRuntime/local45-transport-016",
+    "observed": "017 mission failed stage startup, g3_mission.py1416 TimeoutError planner/controller/TF/odometry/scan startup did not qualify; rosbag subscribed all requested topics; Nav2 costmaps repeatedly map frame absent; no native regression journal/G2 error; Windows and Linux closed true, cleanup_errors empty; SDK90s cleanup secondary",
+    "source_delta": "044 flat-scan typed bounded guard and raw anomaly storage only; G3/controller/config unchanged from016; same domain73",
+    "root_work": "Root separately reads closed017 bag once for actual clock/8scans/odom/TF; do not open or duplicate bag work"
+  },
+  "read_paths": ["scripts/ros/g3_mission.py", "scripts/ros/fleet4.launch.py", "scripts/ros/g2.launch.py", "D:/FactoryOpsRuntime/local45-transport-017", "D:/FactoryOpsRuntime/local45-transport-016"],
+  "write_paths": ["coordination/collab/results/nav2-startup-045.json"],
+  "result_path": "coordination/collab/results/nav2-startup-045.json",
+  "acceptance": "ACK then one bounded pass. Compare AMCL activation/initial pose/maps/message-filter and lifecycle startup logs against016; relevant startup predicates and params. Compare FastCDR ParticipantEntitiesInfo warning occurrence with016 before blaming interoperability. Return exact line/file evidence, facts vs inference, smallest recovery or diagnostic delta if evidence insufficient. No broad review/research, source edits, tests, WSL/GPU/servers/Git/deps/new agents. No TTL/timeout inflation, no invented good startup, no global WSL restart or DDS cleanup. Close with concise result paths and limits.",
+  "coordination": "You are not alone; preserve root docs/board and other edits. Only result path may be written. Do not self-accept or add agents."
+}

@@ -1,0 +1,171 @@
+{
+  "task_id": "nav2-startup-045",
+  "attempt": 1,
+  "contract_revision": 45,
+  "ACK": true,
+  "owner": "control",
+  "status": "completed_bounded_read_only",
+  "accepted": false,
+  "source_commit": "d260ede0506d2cbd7f1f8a3bdc6f61c48be17c49",
+  "verdict": "017 기동 실패는 확인됐으나 근본 원인은 미확정입니다. 차량 데이터/TF 수신과 실제 ROS context 식별이 우선 경계입니다. 환경변수를 SimulationApp 이후에만 설정한다는 가설은 동결 소스와 맞지 않습니다.",
+  "run_ids": {
+    "baseline016": "6ef04b5ecbbd409d8e2bdd062f16bd51",
+    "failed017": "09b02d947c6646248474c5f1f998152e"
+  },
+  "findings": [
+    {
+      "id": "NS045-001",
+      "severity": "major",
+      "classification": "관측된 기동 차단; 원인 미확정",
+      "finding": "017은 지도 로드와 AMCL 활성화까지 진행했으나 map TF가 성립하지 않고 planner 이후 lifecycle 활성화가 완료되지 않았습니다.",
+      "evidence": [
+        {
+          "path": "D:/FactoryOpsRuntime/local45-transport-016/results/run/nav2.log",
+          "lines": "650/654/664/668; 679/697/709/715; 887/906/909/914",
+          "fact": "4대 지도 수신, 초기 pose simtime 4.233334, 모든 Managed nodes active."
+        },
+        {
+          "path": "D:/FactoryOpsRuntime/local45-transport-017/results/run/nav2.log",
+          "lines": "650/652/656/660; 689/695/703/707; 710/716/722/724",
+          "fact": "4대 지도 수신, 초기 pose simtime 0.000000, planner 활성화 이후 controller/bt_navigator 활성화 완료 기록 없음."
+        },
+        {
+          "path": "D:/FactoryOpsRuntime/local45-transport-017/results/run/nav2.log",
+          "lines": "714~3373",
+          "fact": "map frame 부재 메시지 2572건. 016은 27건 후 기동 성공. AMCL Message Filter dropping은 017 73건/016 0건이며 costmap의 별도 drop은 제외."
+        },
+        {
+          "path": "D:/FactoryOpsRuntime/local45-transport-017/closed-time-audit.json",
+          "fact": "root의 종료 bag 확인: /clock 2852건, 4.66666691~51.950002709s, 역행0, 8 raw scan/odom/TF 수신0, tf_edges 없음, 3813376B. 이 검수자는 bag을 열지 않았습니다."
+        },
+        {
+          "path": "D:/FactoryOpsRuntime/local45-transport-017/results/run/native-scan-startup.json",
+          "fact": "Windows SDK의 8개 Python 발행/자체 구독 헤더는 1.916698017~1.933364684s, 각3200 ranges입니다. WSL 수신이나 센서 품질 증명은 아닙니다."
+        }
+      ],
+      "inference": "clock 경로와 Python 차량 출력 경로를 분리해 진단할 근거가 있습니다. bag 0건을 모든 WSL 구독자의 무수신으로 확대하지 않습니다.",
+      "unresolved_counterevidence": "017 nav2.log L905/1086/1099~1105에는 AMCL이 front_scan stamp 4.817/7.317/7.517을 처리하다 TF cache/queue 사유로 거절한 기록이 있습니다. G3는 raw 수신 후 scan_localization으로 fanout합니다(g3_mission.py L1220~1234). 이 로그와 bag 0건의 차이를 publisher/context 식별 없이 단일 원인으로 확정하지 않았습니다.",
+      "minimal_action": "기존 startup 결과에 로봇별 raw/filtered scan count와 마지막 stamp, odom count/stamp, map→base_link lookup 결과, lifecycle state를 남겨 실패한 조건을 구분합니다. TTL/timeout/AMCL 조건을 완화하지 않습니다."
+    },
+    {
+      "id": "NS045-002",
+      "severity": "medium",
+      "classification": "확인된 환경 고정/진단 공백; 017 원인으로 확정하지 않음",
+      "finding": "SDK 자식은 앱 생성 전에 환경을 설정하지만 부모 Windows launcher는 config의 domain/RMW/local-only를 명시적으로 고정하지 않으며, 생성된 rclpy context의 실제 domain과 RMW 식별자를 기록하지 않습니다.",
+      "evidence": [
+        {
+          "path": "D:/FactoryOpsRuntime/local45-transport-017/source/scripts/isaac/g2_scene.py",
+          "lines": "830; 844; 866~872",
+          "fact": "ROS_DOMAIN_ID 설정과 configure_ros_environment 호출이 SimulationApp import/생성보다 앞입니다."
+        },
+        {
+          "path": "D:/FactoryOpsRuntime/local45-transport-017/source/factory_ops/isaac45_runtime.py",
+          "lines": "47~52",
+          "fact": "ROS_DISTRO=humble, RMW_IMPLEMENTATION=rmw_fastrtps_cpp, ROS_LOCALHOST_ONLY=0 및 domain을 설정합니다. 반환값은 환경 문자열이며 실제 context 조회가 아닙니다."
+        },
+        {
+          "path": "D:/FactoryOpsRuntime/local45-transport-017/hostsupport/scripts/isaac/run_local45_fleet_pair.py",
+          "lines": "181~188",
+          "fact": "os.environ을 상속하고 provenance/bytecode 값만 추가합니다. ROS 세 값의 명시적 override는 없습니다."
+        },
+        {
+          "path": "D:/FactoryOpsRuntime/local45-transport-017/source/scripts/isaac/windows_job_runner.py",
+          "lines": "119; 148",
+          "fact": "gated worker와 vendor command는 별도 env override 없이 상속합니다."
+        },
+        {
+          "path": "D:/FactoryOpsRuntime/local45-transport-017/source/scripts/isaac/robot_qualification.py",
+          "lines": "328~347",
+          "fact": "OmniGraph ROS2Context domain 입력은 환경에서 설정합니다. Python rclpy.init()은 domain_id 인자 없이 호출합니다."
+        },
+        {
+          "path": "D:/FactoryOpsRuntime/local45-transport-017/source/scripts/isaac/g2_scene.py",
+          "lines": "395~398",
+          "fact": "차량 node를 기본 context로 생성하며 실제 domain 일치를 기록하지 않습니다."
+        }
+      ],
+      "minimal_action": [
+        "부모가 이미 동결·검증한 bundle config의 ros_domain_id로 worker용 env를 구성합니다: ROS_DOMAIN_ID=str(config['ros_domain_id']), RMW_IMPLEMENTATION=rmw_fastrtps_cpp, ROS_LOCALHOST_ONLY=0. Popen 이전에 적용하고 기대값을 run receipt에 기록합니다. 전역 Windows 환경은 바꾸지 않습니다.",
+        "기존 SDK 내부 설정을 유지하며 SimulationApp 직전 환경을 기록합니다. rclpy 초기화 및 차량 node 생성 직후 node.context.get_domain_id()를 config와 대조하고 rclpy.utilities.get_rmw_implementation_identifier(), rclpy.__file__을 기록합니다. 불일치는 명시적으로 실패시키며 이미 생성된 context를 환경 변경으로 고쳤다고 취급하지 않습니다.",
+        "설치 Humble은 rclpy.init(domain_id=...)를 지원합니다. 필요하면 local45 호출 경계에만 기대 domain을 전달하며 기본6.2 호출은 보존합니다."
+      ],
+      "installed_api_proof": [
+        {
+          "path": "E:/IsaacSim/isaac-sim-4.5.0/exts/isaacsim.ros2.bridge/humble/rclpy/rclpy/context.py",
+          "lines": "49~74; 146~151",
+          "fact": "Context.init(domain_id=...)와 초기화된 Context.get_domain_id()의 native 조회를 지원합니다."
+        },
+        {
+          "path": "E:/IsaacSim/isaac-sim-4.5.0/exts/isaacsim.ros2.bridge/humble/rclpy/rclpy/__init__.py",
+          "lines": "65~88",
+          "fact": "rclpy.init(domain_id=...)를 Context.init으로 전달합니다."
+        },
+        {
+          "path": "E:/IsaacSim/isaac-sim-4.5.0/exts/isaacsim.ros2.bridge/humble/rclpy/rclpy/utilities.py",
+          "lines": "78~81",
+          "fact": "get_rmw_implementation_identifier()를 지원합니다."
+        }
+      ],
+      "limit": "설치 파일 소스만 확인했습니다. SDK/rclpy를 실행하지 않았습니다. 017 실제 context domain은 기록이 없어 0 또는73으로 소급 확정하지 않습니다. 부모 환경 고정이 017을 해결한다는 실행 증거도 없습니다."
+    }
+  ],
+  "comparison": {
+    "source_and_params": "G3와 두 launch 파일은016/017 동일 SHA입니다. 생성 params는 stage 경로의016/017 문자열만 정규화하면 차이가 없습니다. use_sim_time, namespace별TF remap, AMCL initial pose/tf_broadcast, lifecycle autostart/order를 확인했습니다.",
+    "launch_refs": "fleet4.launch.py L30~52; nav2-g3-params.yaml L3/18~47 및 나머지3개 namespace의 대응 항목",
+    "startup_predicates": {
+      "refs": "g3_mission.py L1206~1212, L1403~1416",
+      "condition": "planner/controller/bt_navigator 모두state3, 모든 로봇 유효pose·odom>=5·raw/filtered/localization 6계수 각각>=5, Compute/Follow action 및 controller parameter service 준비.",
+      "limit": "현재 TimeoutError는 AND 전체를 요약하므로 실패한 로봇/입력을 구분할 수 없습니다."
+    },
+    "fastcdr": {
+      "baseline016": {
+        "fast_cdr_exception": 203,
+        "participant_bad_alloc": 203
+      },
+      "failed017": {
+        "fast_cdr_exception": 17,
+        "participant_bad_alloc": 17
+      },
+      "refs": "각 sdk.stderr.log L5 ParticipantEntitiesInfo Fast CDR, L9 ParticipantEntitiesInfo Bad alloc",
+      "conclusion": "동일 경고가016 성공 초기화에도 있습니다.017만의 원인으로 단정할 근거가 없으며 실행 길이가 달라 건수를 발생률로 비교하지 않습니다."
+    },
+    "cleanup": "제공된017 종료 근거는 Windows/Linux closed=true, cleanup_errors=[]입니다. SDK90초 종료는 초기 기동 실패의 후속 사항으로 구분했습니다.",
+    "baseline_limit": "016은 초기화 성공 기준선이며 전체 운송 성공은 아닙니다. 이후 native timestamp/fresh-pose 실패는 재조사하지 않았습니다."
+  },
+  "source_sha256": {
+    "D:/FactoryOpsRuntime/local45-transport-017/source/scripts/ros/g3_mission.py": "7b98c8194962bb7e224cdb3d0a34b0882b2770143833aea3c74ccb5209303d9e",
+    "D:/FactoryOpsRuntime/local45-transport-017/source/scripts/ros/fleet4.launch.py": "99fd8143b1c4f8746040b2703106c7101eb9a8a08f7fcca3661dee7a1c667221",
+    "D:/FactoryOpsRuntime/local45-transport-017/source/scripts/ros/g2.launch.py": "258c67430f4b81684bfb0f3e606e92e215e6d99206773f77a05a3485f162d08a",
+    "D:/FactoryOpsRuntime/local45-transport-017/source/scripts/isaac/g2_scene.py": "01002c1485c51735f1a4e4205b887343b25fa3a59234c66e38e15fadacbb6b23",
+    "D:/FactoryOpsRuntime/local45-transport-017/source/scripts/isaac/robot_qualification.py": "a65b14a5bfa3d594b36eac1370dd161293182710ec9fa09bb429eeb4cceffcb9",
+    "D:/FactoryOpsRuntime/local45-transport-017/source/factory_ops/isaac45_runtime.py": "93924e40e2020b13ca41871afd9d90ea1a9cae267c3c8c194ac51ef073772f5c",
+    "D:/FactoryOpsRuntime/local45-transport-017/source/scripts/isaac/local45_fleet4_transport_scene.py": "e881b70a116551fdf7d90a5ccc7db3b7d4e342c97fe84a1d3ad8e2e2b7714dde",
+    "D:/FactoryOpsRuntime/local45-transport-017/hostsupport/scripts/isaac/run_local45_fleet_pair.py": "014597d1f31f900fffec8f055c46c13f6c81e707864b1d6c6f68565dbe438df8",
+    "D:/FactoryOpsRuntime/local45-transport-017/source/scripts/isaac/windows_job_runner.py": "529fa4bb5a766a200430a62e2c26c4d7ccb504a3258734a033a02daeee9cb379",
+    "E:/IsaacSim/isaac-sim-4.5.0/exts/isaacsim.ros2.bridge/humble/rclpy/rclpy/context.py": "e1852dda96a0a1196ab9d796230610dad02bbc3412280540293043b6eacd4e23",
+    "E:/IsaacSim/isaac-sim-4.5.0/exts/isaacsim.ros2.bridge/humble/rclpy/rclpy/__init__.py": "1e21a419fa9e3f43b5e2fd060dbdf5b3f0ad24712289f3858183c86fc103a384",
+    "E:/IsaacSim/isaac-sim-4.5.0/exts/isaacsim.ros2.bridge/humble/rclpy/rclpy/utilities.py": "6a39a10c501b9cc9d012f48bcc87c4a231a71b690a63a1e6d866b03923ef067b"
+  },
+  "evidence_sha256": {
+    "D:/FactoryOpsRuntime/local45-transport-016/results/run/nav2.log": "0720c3d4bc24bb0bf770d8fab000d8d048838bf1e6ba0a0bd97ef7a49c44d574",
+    "D:/FactoryOpsRuntime/local45-transport-017/results/run/nav2.log": "c308a49c597c7ac6875e1f7ddb332911015a2cff5d55f9aa4272c2d20bbf5e92",
+    "D:/FactoryOpsRuntime/local45-transport-016/results/run/nav2-g3-params.yaml": "7d22fa5e46ee8b2018c628b434147ecd8672cbddcc15b07044c9cc411855cdb6",
+    "D:/FactoryOpsRuntime/local45-transport-017/results/run/nav2-g3-params.yaml": "2a02b1cc586557cfe0af56a090bcfc0cf9aea94bdd97295fcd61a26476f6b74f",
+    "D:/FactoryOpsRuntime/local45-transport-016/sdk.stderr.log": "e445e95af67253eec3b2954253d7d550d416f3c4d3cf112aa8c3b2ac437b75ac",
+    "D:/FactoryOpsRuntime/local45-transport-017/sdk.stderr.log": "9c33d97e7528665717fc78fb898fa527cc3da46cf93f6234afcd89e9082a1317",
+    "D:/FactoryOpsRuntime/local45-transport-017/results/run/native-scan-startup.json": "5be62ca10137a131e0f1d8552c68e1ba1c2ab4586799e0de1ed64628010207dc",
+    "D:/FactoryOpsRuntime/local45-transport-017/closed-time-audit.json": "b92e15c1029ee118af30ac5d021dd80aadc29b4855fafe5afbe81db65dc80f21"
+  },
+  "validation_and_limits": {
+    "performed": "동결 소스/텍스트 로그/기존 JSON의 한정 읽기, SHA256 확인, stage 경로 정규화 params 비교, 설치 API 소스 대조.",
+    "bag_attribution": "closed-time-audit.json 자체는 /clock 항목과 빈 tf_edges를 담습니다. 차량 토픽0건은 root 확정 보고를 인용했으며 bag을 열거나 분석을 중복하지 않았습니다.",
+    "tests_run": false,
+    "SDK_GPU_ROS_WSL_executed": false,
+    "web_research": false,
+    "new_agents": false,
+    "product_edited": false,
+    "git_executed": false,
+    "only_written_path": "coordination/collab/results/nav2-startup-045.json",
+    "stop": "요청한 비교와 최소 진단/복구 제안을 반환해 종료합니다. 실제 변경·재실행·수용은 root 범위입니다."
+  }
+}
