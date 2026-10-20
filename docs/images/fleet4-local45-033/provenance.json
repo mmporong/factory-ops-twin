@@ -1,0 +1,53 @@
+{
+  "run_id": "b28ac5ae32d34f769ba36068fbc85e0e",
+  "source_commit": "82a2f04d907399f02ccbd02abe08dfb6993a051b",
+  "scope": "033 partialfailed operations; separate076 staticrender marked explicitly",
+  "dashboard_scope": "Live033 observation of first empty return; screen elapsed clock and ROS absolute event time differ. Not atomic with RGB.",
+  "native_frame": {
+    "index": 58,
+    "physics_frame": 48123,
+    "sim_time_s": 802.0500418301672
+  },
+  "timeline_scope": "62 originalRGBcapture times, nominal33x sparse held images, no interpolation,25.3seconds. Failedrun not fullcompletion.",
+  "new_empty_tote_geometry_in_033RGB": false,
+  "empty_tote_fixture": {
+    "render_run_id": "090eaec258f94f6cab99791ef23e2058",
+    "source_run_id": "b28ac5ae32d34f769ba36068fbc85e0e",
+    "scope": "Closed033 materialrevision12 at authored staticrobotpositions. Newemptygeometry exists in076fixture, not original033RGB. No trajectoryreplay/eventtime/contact or liveintegration proof.",
+    "result": "../../evidence/local45-material-visual-076.json"
+  },
+  "files": [
+    {
+      "path": "dashboard-first-return.jpg",
+      "source_path": "C:\\Users\\LIMMM\\factory-ops-twin\\artifacts\\local45\\033-web\\first-empty-return-complete.jpg",
+      "bytes": 261216,
+      "sha256": "dbb62b3c0614bf13b7e815072207d31f63b3d0a34142da8b232f4dff64f23d43"
+    },
+    {
+      "path": "overview.png",
+      "source_path": "D:\\FactoryOpsRuntime\\local45-transport-033\\results\\run\\media\\overview-00058.png",
+      "bytes": 172994,
+      "sha256": "001815e7006399accdf6a5d205515c289e2e4027d41b6c228c18a50c95e41fa3"
+    },
+    {
+      "path": "operations-partial.mp4",
+      "source_path": "C:\\Users\\LIMMM\\factory-ops-twin\\artifacts\\local45\\033-preview-video\\operations-timeline.mp4",
+      "bytes": 1046025,
+      "sha256": "72b61d67e834cd7d96e5c921727ee677ab63434b98c8feb9a8cb89ffd0560ac0"
+    },
+    {
+      "path": "empty-tote-static-fixture.png",
+      "source_path": "D:\\FactoryOpsRuntime\\local45-material-visual-076-r4\\output\\material.png",
+      "bytes": 279378,
+      "sha256": "5adbe4a81c615ae27e467525f5884e9e1e440070befda6039152dd29459a2f0c"
+    }
+  ],
+  "original_preservation": [
+    "D:/FactoryOpsArtifacts/operations-071/checkpoint-001",
+    "E:/FactoryOpsArtifacts/operations-071/checkpoint-001"
+  ],
+  "fixture_preservation": [
+    "D:/FactoryOpsArtifacts/operations-072/checkpoint-001",
+    "E:/FactoryOpsArtifacts/operations-072/checkpoint-001"
+  ]
+}

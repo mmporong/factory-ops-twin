@@ -1,0 +1,133 @@
+{
+  "task_id": "root-render-evidence-078",
+  "attempt": 1,
+  "contract_revision": 78,
+  "ack": true,
+  "verdict": "PASS_bounded_root_probe_delta_and_publication_review",
+  "blocking_findings": [],
+  "reviewed_sha256": {
+    "scripts/isaac/probe_local45_material_visual.py": "82686c4919c86a0cc929a880ea7d17a0c121c16c9daa1036ae26e65d99e5537f",
+    "README.md": "a91ca6c48e0252f0b69ff4c07731bfc15009b716c0365bea8ec33f0fed803b38",
+    "docs/completion-plan.md": "52243ead340e75ea869509418844478d8c85c9a54d7eddbfa1535341f244a908",
+    "docs/troubleshooting.md": "8acb6b2daac2812599dcbc0facaf3f065a0db1e5f5477f03ce11f8fae9daca14",
+    "docs/evidence/local45-transport-033.json": "16ed890803f851f657447a04d6abe3605c74f745358d13b35c690dbe5e435a05",
+    "docs/evidence/local45-material-visual-076.json": "5f4268d92d87a7d518503cddb8c245e6bbd84150b7557538ed10d8c7c9d16e69",
+    "docs/images/fleet4-local45-033/provenance.json": "ce3be5637fc610be79d77ecfcbb39dbcbc829bd6c159e981d89c1fd09a94aa94"
+  },
+  "all_seven_card_sha256_matched": true,
+  "probe_delta_review": {
+    "accepted076_source": "D:/FactoryOpsRuntime/local45-material-visual-076/source/scripts/isaac/probe_local45_material_visual.py",
+    "accepted076_sha256": "58e725201c59c537ba58481458d488231c83030f08286f42ec207173fbbf2f32",
+    "frozen_r4_source_sha256": "82686c4919c86a0cc929a880ea7d17a0c121c16c9daa1036ae26e65d99e5537f",
+    "checks": [
+      {
+        "location": "scripts/isaac/probe_local45_material_visual.py:104-110",
+        "finding": "FactoryVisualRuntime.setup precedes every robot asset reference. Comparison with the accepted frozen076 source shows only the scoped initialization, capture diagnostics and detach repairs."
+      },
+      {
+        "location": "scripts/isaac/probe_local45_material_visual.py:126-141",
+        "finding": "Paused capture uses set_capture_on_play(false), step(delta_time=0.0, rt_subframes=8), wait_until_complete; raw shape/finite/nonzero/before/after are reported, and exact World frame/time equality is required."
+      },
+      {
+        "location": "scripts/isaac/probe_local45_material_visual.py:147",
+        "finding": "No-argument rgb.detach() is supported by installed Annotator.detach(render_products=None). The installed source handles stored render-product paths when omitted; it avoids the list-of-HydraTexture conversion failure recorded in r3."
+      }
+    ],
+    "installed_api_source": "E:\\IsaacSim\\isaac-sim-4.5.0\\extscache\\omni.replicator.core-1.11.35+106.5.0.wx64.r.cp310\\omni\\replicator\\core\\scripts\\annotators.py",
+    "installed_api_sha256": "bf2d989f1564f62049f501512a6a7e8deed999877f01b2fbb536fe09557b1559",
+    "installed_api_lines": "800-829",
+    "original_attempts": "Original076 and separate r2/r3 failures remain failures in the public attempts list; r4 is a distinct run. Frozen original source hash matches accepted076."
+  },
+  "native_r4_evidence": {
+    "result_path": "D:\\FactoryOpsRuntime\\local45-material-visual-076-r4\\output\\result.json",
+    "result_sha256": "5949ad3591af7b5490531134d52798be74450d4c9dcb957a919226f47041f705",
+    "job_path": "D:\\FactoryOpsRuntime\\local45-material-visual-076-r4\\job.json",
+    "job_sha256": "fa6441ee270c481d5d9eee188de7c5105bb6da5245c4e5ade76230d11899cfac",
+    "render_run_id": "090eaec258f94f6cab99791ef23e2058",
+    "source_run_id": "b28ac5ae32d34f769ba36068fbc85e0e",
+    "result_status": "passed",
+    "job_status": "passed",
+    "closed": true,
+    "remaining_owned_pids": [],
+    "worker_exit_code": 0,
+    "timed_out": false,
+    "prelaunch_inputs_verified": true,
+    "buffer_observation": {
+      "shape": [
+        480,
+        640,
+        4
+      ],
+      "finite": true,
+      "nonzero": true,
+      "before": [
+        2,
+        0.03333333507180214
+      ],
+      "after": [
+        2,
+        0.03333333507180214
+      ]
+    },
+    "frozen_physics_frame": 2,
+    "frozen_world_time_s": 0.03333333507180214,
+    "capture": {
+      "path": "material.png",
+      "sha256": "5adbe4a81c615ae27e467525f5884e9e1e440070befda6039152dd29459a2f0c"
+    },
+    "public_summary_matches_native_fields": true,
+    "acceptance_boundary": "PASS requires native passed, host closed and remaining_owned_pids empty together, not exit0 alone."
+  },
+  "publication_review": {
+    "locations": [
+      "README.md:31",
+      "README.md:61",
+      "README.md:95-107",
+      "docs/completion-plan.md:48",
+      "docs/troubleshooting.md:568-584"
+    ],
+    "four_business_robot_ids": [
+      "carter1",
+      "carter2",
+      "carter3",
+      "carter4"
+    ],
+    "completed_orders": 1,
+    "completed_order_ids": [
+      "F4-002"
+    ],
+    "completed_empty_returns": 1,
+    "inventory_conservation": [
+      {
+        "balanced": true,
+        "consumed": 6,
+        "in_totes": 2,
+        "initial": 60,
+        "on_hand": 52,
+        "replenished": 0,
+        "sku": "sensor-kit"
+      }
+    ],
+    "primary_error": "computed path swept envelope leaves reserved chunk tiles",
+    "secondary_error": "G2 mission controller ended with failed",
+    "error_boundary": "Computed path envelope was rejected before FollowPath; SDK mission-failed is secondary. Planner cost cause remains unproven.",
+    "timeline": {
+      "capture_timepoints": 62,
+      "nominal_playback_factor": 33,
+      "sparse_images_held": true,
+      "interpolation": false,
+      "actual_export_duration_s": 25.3,
+      "decode_evidence": true
+    },
+    "source_separation": "README, completion plan and image provenance distinguish same-run033 web/native sparse RGB from076 static snapshot rendering at authored robot positions. Original033 RGB is explicitly stated not to contain new empty-tote geometry.",
+    "claim_limits_preserved": "No 80-percent completion, full four-robot mission, canonical6.2/RTX qualification, exact snapshot event time, live076 synchronization, contact/lift/load physics or electrical charging proof is claimed.",
+    "links": "New033/076 evidence and provenance links are scoped consistently; root media SHA/link/decode checks were not repeated."
+  },
+  "review_scope_and_limits": [
+    "Read-only source delta, frozen JSON and changed publication facts only; no product/document/board/Git edits.",
+    "No tests, AST, SDK initialization, GPU, ROS, WSL, server or agent operations. Root cold AST and full video/media checks were not rerun.",
+    "Raw buffer validity is supported by the saved native report; this review did not rerender, decode video or independently assess pixel quality.",
+    "033 operational details were compared with the SHA-fixed public summary; no bag SQL or broader source review.",
+    "077 implementation and all other authors changes preserved. This PASS is limited to task078 review scope; root owns final integration acceptance."
+  ]
+}

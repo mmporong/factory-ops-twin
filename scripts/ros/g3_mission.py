@@ -429,6 +429,21 @@ def path_final_yaw(payload: Mapping[str, Any]) -> float:
     return math.atan2(2*(w*z+x*y), 1-2*(y*y+z*z))
 
 
+def retain_unqualified_planner_path(record: dict[str, Any], path: Any, *,
+                                    status: int, error_code: int, error_msg: str) -> dict[str, Any]:
+    """Retain the rejected candidate before admission without authorizing FollowPath."""
+    record.update(planner_status=status, planner_error_code=error_code, planner_error_msg=error_msg,
+                  planner_path_qualified=False)
+    try:
+        payload = path_payload(path)
+        record["unqualified_planner_path"] = copy.deepcopy(payload)
+        record["unqualified_planner_path_content_sha256"] = path_content_sha256(payload)
+        return payload
+    except ValueError as error:
+        record["planner_path_admission_error"] = {"type": type(error).__name__, "message": str(error)}
+        raise
+
+
 def valid_hold_ack(ack: Mapping[str, Any], *, run_id: str, scenario_id: str, robot_id: str,
                    minimum_sequence: int, generation: int, goal_uuid: str | None,
                    terminal_time_s: float, now_s: float) -> bool:
@@ -1333,6 +1348,16 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
             if (result["ros_context"]["domain_id"] != config["ros_domain_id"]
                     or result["ros_context"]["rmw_identifier"] != "rmw_fastrtps_cpp"):
                 raise RuntimeError("local45 ROS context mismatch: " + json.dumps(result["ros_context"]))
+        planner_action, planner_topic, use_guides = ComputePathToPose, "compute_path_to_pose", False
+        if local45:
+            from factory_ops.planner_guidance import guided_planner_scope, guided_request
+            use_guides = guided_planner_scope(runtime_profile=args.runtime_profile, development=development,
+                robot_count=len(robot_ids), material_enabled="material_flow" in session["workload"],
+                sensor_backends=[row.get("sensor_backend") for value in ready["robots"].values() for row in value["lidars"]])
+            if use_guides:
+                from nav2_msgs.action import ComputePathThroughPoses
+                planner_action, planner_topic = ComputePathThroughPoses, "compute_path_through_poses"
+        result["planner_method"] = planner_topic
         event_executor = SingleThreadedExecutor()
         event_executor.add_node(event_node)
         node_executors.append((event_node, event_executor))
@@ -1374,7 +1399,7 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
                  max_linear_m_s=runtime_config["stopped_linear_m_s"], max_angular_rad_s=runtime_config["stopped_angular_rad_s"],
                  ttl_s=runtime_config["odom_ttl_s"])
             robots[robot_id] = {"node": node, "tf": buffer, "listener": TransformListener(buffer, node),
-                "compute": ActionClient(node, ComputePathToPose, "compute_path_to_pose"),
+                "compute": ActionClient(node, planner_action, planner_topic),
                 "follow": IntrospectedActionClient(node, FollowPath, "follow_path", cancel_type=CancelGoal,
                     event_qos=qos_profile_services_default, introspection_state=ServiceIntrospectionState.CONTENTS),
                 "load_map": node.create_client(LoadMap, "navigation_map_server/load_map"),
@@ -1459,7 +1484,7 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
         qos.write_text(bag_qos_overrides(robot_ids, namespace_by_id=namespaces, local45=local45), encoding="utf-8")
         bag_topics = ["/clock", "/factory/g3/events", "/factory/g3/authorizations", "/factory/g3/reservations"]
         for robot in robot_ids:
-            bag_topics += [f"/{namespaces[robot]}/{name}" for name in ("scan_front_raw", "scan_rear_raw", "scan_front", "scan_rear", "scan_localization", "odom", "tf", "tf_static", "map", "navigation_map", "amcl_pose", "plan", "received_global_plan", "cmd_vel", "compute_path_to_pose/_action/status", "follow_path/_action/status", "follow_path/_action/feedback")]
+            bag_topics += [f"/{namespaces[robot]}/{name}" for name in ("scan_front_raw", "scan_rear_raw", "scan_front", "scan_rear", "scan_localization", "odom", "tf", "tf_static", "map", "navigation_map", "amcl_pose", "plan", "received_global_plan", "cmd_vel", planner_topic+"/_action/status", "follow_path/_action/status", "follow_path/_action/feedback")]
             bag_topics += [f"/{namespaces[robot]}/{name}" for name in {**RPP_OBSERVATION_TYPES, **GOAL_CHECKER_TRACE_TYPES}]
             bag_topics.extend(robots[robot]["follow"].service_event_topics)
         bag_topics = _recording_topics(bag_topics, getattr(args, "runtime_profile", "canonical62"))
@@ -1832,11 +1857,17 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
                     if not decision.granted:
                         continue
                     chunk = rt["chunk"]
-                    request = ComputePathToPose.Goal()
-                    request.goal = PoseStamped(); request.goal.header.frame_id = "map"; request.goal.header.stamp = event_node.get_clock().now().to_msg()
-                    request.goal.pose.position.x, request.goal.pose.position.y = chunk.goal_pose.x, chunk.goal_pose.y
-                    request.goal.pose.orientation.z, request.goal.pose.orientation.w = math.sin(chunk.goal_pose.yaw/2), math.cos(chunk.goal_pose.yaw/2)
-                    request.use_start = False; request.planner_id = "GridBased"
+                    request_stamp = event_node.get_clock().now().to_msg()
+                    planner_start = dict(rt["pose"]) if use_guides else None
+                    if use_guides:
+                        request = guided_request(chunk, planner_start, request_stamp,
+                            goal_type=planner_action.Goal, pose_type=PoseStamped)
+                    else:
+                        request = ComputePathToPose.Goal()
+                        request.goal = PoseStamped(); request.goal.header.frame_id = "map"; request.goal.header.stamp = request_stamp
+                        request.goal.pose.position.x, request.goal.pose.position.y = chunk.goal_pose.x, chunk.goal_pose.y
+                        request.goal.pose.orientation.z, request.goal.pose.orientation.w = math.sin(chunk.goal_pose.yaw/2), math.cos(chunk.goal_pose.yaw/2)
+                        request.use_start = False; request.planner_id = "GridBased"
                     rt["compute_uuid"] = str(uuid4())
                     rt["send_future"] = rt["compute"].send_goal_async(request, goal_uuid=GoalUUID(uuid=list(UUID(rt["compute_uuid"]).bytes)))
                     rt["phase"], rt["phase_started"] = "compute_sent", stamp
@@ -1846,7 +1877,10 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
                          "leg_target": leg["target"], "leg_kind": leg["kind"], "reservation_tiles": sorted(rt["held_tiles"]),
                          "reservation_start": chunk.start, "reservation_plan_id": rt["remaining_plan"].route_id,
                          "generation": rt["generation"], "planner_action_uuid": rt["compute_uuid"], "follow_action_uuid": rt["follow_uuid"],
-                         "mission_goal_uuid": leg["intent"].goal_id if leg["intent"] else None, "requested_sim_time_s": stamp}
+                         "mission_goal_uuid": leg["intent"].goal_id if leg["intent"] else None, "requested_sim_time_s": stamp,
+                         "planner_method": planner_topic, "planner_start_pose": planner_start,
+                         "planner_request_stamp": {"sec": int(request_stamp.sec), "nanosec": int(request_stamp.nanosec)},
+                         "authored_guide_count": len(request.goals) if use_guides else 0}
                     history.append(rt["record"])
                     journal("planner_goal_sent", rt["record"])
                 elif phase in {"compute_sent", "follow_sent"} and rt["send_future"].done():
@@ -1867,36 +1901,45 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
                     journal("action_accepted", {"robot_id": robot, "action": "compute" if phase == "compute_sent" else "follow", "goal_uuid": expected_uuid, "generation": rt["generation"]})
                 elif phase == "computing" and rt["result_future"].done():
                     terminal = rt["result_future"].result()
-                    if terminal is None or terminal.status != 4 or terminal.result.error_code != 0:
-                        raise RuntimeError(f"ComputePathToPose failed for {robot}: {terminal}")
                     wall_now = time.monotonic()
+                    if terminal is not None and rt["path_clock_first_seen_wall"] is None:
+                        candidate_payload = retain_unqualified_planner_path(rt["record"], terminal.result.path,
+                            status=int(terminal.status), error_code=int(terminal.result.error_code),
+                            error_msg=str(terminal.result.error_msg))
+                    if terminal is None or terminal.status != 4 or terminal.result.error_code != 0:
+                        raise RuntimeError(f"{planner_topic} failed for {robot}: {terminal}")
                     if rt["path_clock_first_seen_wall"] is None:
                         rt["pending_path"] = copy.deepcopy(terminal.result.path)
-                        rt["pending_path_payload"] = path_payload(rt["pending_path"])
+                        rt["pending_path_payload"] = candidate_payload
                         rt["path_clock_first_seen_wall"] = wall_now
                         rt["record"]["path_clock"] = {
                             "path_stamp_ns": path_header_stamp_ns(rt["pending_path_payload"]["header"]),
                             "first_observed_clock_ns": tick_clock_ns}
                     path, payload = rt["pending_path"], rt["pending_path_payload"]
                     clock_wait_wall_s = wall_now-rt["path_clock_first_seen_wall"]
-                    if not path_clock_ready(payload["header"], clock_ns=tick_clock_ns,
-                            elapsed_wall_s=clock_wait_wall_s,
-                            max_wait_wall_s=runtime_config["path_clock_wait_wall_s"]):
-                        if "path_clock_wait" not in rt["record"]:
-                            observation = {"path_stamp_ns": path_header_stamp_ns(payload["header"]),
-                                           "observed_clock_ns": tick_clock_ns, "mode": "hold"}
-                            rt["record"]["path_clock_wait"] = observation
-                            journal("planner_clock_wait", {"robot_id": robot, **observation})
-                        continue
-                    rt["record"]["path_clock"].update({"admitted_clock_ns": tick_clock_ns,
-                                                      "waited_wall_s": clock_wait_wall_s})
-                    geometry = qualify_computed_path(book, rt["chunk"], [[item["position_xyz_m"][0], item["position_xyz_m"][1]] for item in payload["poses"]],
-                        frame_id=payload["header"]["frame_id"], stamp_s=path_header_stamp_ns(payload["header"])/1e9,
-                        now_s=stamp, start_xy=(rt["pose"]["x_m"], rt["pose"]["y_m"]), max_age_s=runtime_config["path_ttl_s"])
-                    if angle_error(path_final_yaw(payload), rt["chunk"].goal_pose.yaw) > .05:
-                        raise RuntimeError("computed Path terminal yaw differs from the authored goal")
-                    if not {tuple(tile) for tile in geometry["swept_tiles"]}.issubset(rt["held_tiles"]):
-                        raise RuntimeError("computed Path leaves full-leg reservation")
+                    try:
+                        if not path_clock_ready(payload["header"], clock_ns=tick_clock_ns,
+                                elapsed_wall_s=clock_wait_wall_s,
+                                max_wait_wall_s=runtime_config["path_clock_wait_wall_s"]):
+                            if "path_clock_wait" not in rt["record"]:
+                                observation = {"path_stamp_ns": path_header_stamp_ns(payload["header"]),
+                                               "observed_clock_ns": tick_clock_ns, "mode": "hold"}
+                                rt["record"]["path_clock_wait"] = observation
+                                journal("planner_clock_wait", {"robot_id": robot, **observation})
+                            continue
+                        rt["record"]["path_clock"].update({"admitted_clock_ns": tick_clock_ns,
+                                                          "waited_wall_s": clock_wait_wall_s})
+                        geometry = qualify_computed_path(book, rt["chunk"], [[item["position_xyz_m"][0], item["position_xyz_m"][1]] for item in payload["poses"]],
+                            frame_id=payload["header"]["frame_id"], stamp_s=path_header_stamp_ns(payload["header"])/1e9,
+                            now_s=stamp, start_xy=(rt["pose"]["x_m"], rt["pose"]["y_m"]), max_age_s=runtime_config["path_ttl_s"])
+                        if angle_error(path_final_yaw(payload), rt["chunk"].goal_pose.yaw) > .05:
+                            raise RuntimeError("computed Path terminal yaw differs from the authored goal")
+                        if not {tuple(tile) for tile in geometry["swept_tiles"]}.issubset(rt["held_tiles"]):
+                            raise RuntimeError("computed Path leaves full-leg reservation")
+                    except (ValueError, RuntimeError, TimeoutError) as error:
+                        rt["record"]["planner_path_admission_error"] = {"type": type(error).__name__, "message": str(error)}
+                        raise
+                    rt["record"]["planner_path_qualified"] = True
                     planner_path_hash = path_content_sha256(payload)
                     rt["path_hash"] = planner_path_hash
                     rt["record"].update({"path": payload, "path_geometry": geometry, "path_content_sha256": planner_path_hash, "planner_status": 4, "planner_error_code": 0})
@@ -2223,6 +2266,14 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
             dashboard_publisher.publish(visual_snapshot, robots, elapsed, stamp, material=material_state, energy=energy_runtime)
             if material_state is not None and material_state["revision"] != material_revision:
                 atomic_json(output / "material-state.json", material_state)
+                if (local45 and development and {row.get("sensor_backend") for value in ready["robots"].values()
+                        for row in value["lidars"]} == {"physx_collision_planar"}):
+                    from factory_ops.material_visual import make_material_visual_state, publish_material_visual
+                    companion = make_material_visual_state(material_state, run_id=args.run_id,
+                        scenario_id=scenario_id, source_sim_time_s=stamp,
+                        materials=session["workload"]["material_flow"]["materials"],
+                        robot_ids=robot_ids, ci_capacity=load["ci_capacity"])
+                    publish_material_visual(output, companion)
                 material_revision = material_state["revision"]
             projected = project_ledger_state(visual_snapshot, visual_projection)
             if visual_projection is None or canonical_sha256(projected) != canonical_sha256(visual_projection):

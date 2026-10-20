@@ -1,0 +1,234 @@
+{
+  "task_id": "reserved-planner-077",
+  "attempt": 1,
+  "contract_revision": 77,
+  "ack": true,
+  "status": "implemented_cpu_verified_pending_root_review_and_actual034",
+  "changed_paths": [
+    "factory_ops/planner_guidance.py",
+    "scripts/ros/g3_mission.py",
+    "scripts/isaac/local45_fleet4_transport_scene.py",
+    "scripts/ros/probe_reserved_chunk_planner.py",
+    "tests/test_planner_guidance.py"
+  ],
+  "source_sha256": {
+    "factory_ops/planner_guidance.py": "3f06046030f3c23d09548c36f8fccfc9fe66c992022fc39c34fb6907d7c9ff80",
+    "scripts/ros/g3_mission.py": "e26b7e2a0c957ab729f5b7cb14d20138a13b053a473de03890ce4c6619ceba33",
+    "scripts/isaac/local45_fleet4_transport_scene.py": "a5e7e9fd6459c69f663bbcc1ecf1f5ebc30574599a64a39d5a102dcd946236e0",
+    "scripts/ros/probe_reserved_chunk_planner.py": "79a47fb3711f356dac6b5d30ee4b5aa00d4051fb1ad6c2fae1bbccce9dbbb8ca",
+    "tests/test_planner_guidance.py": "f0f26667f9d7ba19c0947970985f977b89ef11e11f41f716c73151f382cf3420"
+  },
+  "input_sha256_verified_before_edit": {
+    "scripts/ros/g3_mission.py": "8413235ad71aff0df0581912e73c5fa284a1fa600a6587b2db43c45c08817795",
+    "scripts/isaac/local45_fleet4_transport_scene.py": "69c64ccebd34b6a44554f374149a39db949a68f74a472bc83800ff4f122f3493",
+    "factory_ops/fleet_execution.py": "7185119355989d6b082c56211a09a4f50ee0bdebbbf875caae036f2750aaabd6",
+    "factory_ops/fleet_routing.py": "2681f2881147bdeb9620e8ec4bd881441f8c207c7a4fd8beb62209306bd0743c"
+  },
+  "implementation": [
+    "Authored guides at no more than 0.5m spacing, bounded at 2048 poses, excluding the initial anchor and preserving the exact chunk terminal pose/yaw. Spacing is a design choice, not measured calibration.",
+    "ComputePathThroughPoses selected only for local45_development + development registry + four robots + material workload + exclusively physx_collision_planar sensors. Canonical two-robot, default RTX and canonical62 retain ComputePathToPose.",
+    "Installed Jazzy goals[] API; use_start=true with the first estimated start copied at request, original ROS request stamp and GridBased planner. Guide geometry comes only from the authored chunk, never measured or ground-truth interpolation.",
+    "Record selected planner method, request stamp, observed start and guide count. Record the matching compute action status topic. Added helper to local45 source pins.",
+    "Retain unqualified decoded planner Path and content hash before clock/geometry admission. Preserve rejection reason and qualified=false. FollowPath remains after original clock/freshness/start/goal/radius/chunk/full-leg/yaw guards; no failed path is followed.",
+    "Existing HOLD, UUID, authorization, reservation and cutoff flows, 075 qualified station shrink and 076 optional empty-tote visual implementation preserved."
+  ],
+  "api_evidence": {
+    "source": "installed /opt/ros/jazzy/share/nav2_msgs/action/ComputePathThroughPoses.action",
+    "request": [
+      "geometry_msgs/PoseStamped[] goals",
+      "geometry_msgs/PoseStamped start",
+      "string planner_id",
+      "bool use_start"
+    ],
+    "result": [
+      "nav_msgs/Path path",
+      "uint16 error_code",
+      "string error_msg"
+    ],
+    "actual_context_domain": 74
+  },
+  "cpu_planner_fixture": {
+    "command": ".\\.venv\\Scripts\\python.exe -B scripts/ros/probe_reserved_chunk_planner.py --frozen-stage D:/FactoryOpsRuntime/local45-transport-033 --case C:/Users/LIMMM/factory-ops-twin/artifacts/local45/033-analysis/failing-path.json --output C:/Users/LIMMM/factory-ops-twin/artifacts/local45/planner-077-001 --run-id 77f35d7fb7e44e0ead262ace6f43a340",
+    "exit_code": 0,
+    "status": "passed",
+    "run_id": "77f35d7fb7e44e0ead262ace6f43a340",
+    "maximum_wall_s": 240,
+    "observed_host_wall_s": 6.780999999959022,
+    "source_case_sha256": "50f3b68ba1b0ed71d4e546e08e05bc2cb929d52eae42946562aa129ee89caf56",
+    "source_params_sha256": "81b5f0eabeba977404e856f996c529716687c4fda691a1ad9e2512cd2e79da5c",
+    "fixture_params_sha256": "4954e6f47e26a7ee63b5f57d6a037ad194d9adf85d2c1cc86aded99885ec0ad2",
+    "map_inputs": {
+      "navigation.yaml": "18633d664fe978d6d76f19c1cbeca5a0769eccb0f4f0f9061e338a9ced8d92bd",
+      "navigation.pgm": "8d813e8d8e3500ead53ca5158872235c731018f0960691bd4f8851c5532a68f5"
+    },
+    "chunk_route_id": "145c71405c69efa1c34cf3b4bcaa33144916f5661760acc8c4c10bb400cbc93d",
+    "reserved_tile_count": 60,
+    "supplied_start": {
+      "stamp_s": 827.700043168,
+      "x_m": 14.946113760329675,
+      "y_m": 16.996795582406115,
+      "yaw_rad": 0.004293838726940977
+    },
+    "authored_chunk_points": [
+      [
+        15.0,
+        17.0
+      ],
+      [
+        15.0,
+        5.0
+      ]
+    ],
+    "cases": {
+      "to_pose": {
+        "status": 4,
+        "error_code": 0,
+        "error_msg": "",
+        "wall_s": 0.09512931200151797,
+        "point_count": 899,
+        "raw_header": {
+          "frame_id": "map",
+          "sec": 1792514537,
+          "nanosec": 387937419
+        },
+        "path_sha256": "4affc03fdfab47e241a52478aa406db9bd7f1da47aebc088c434819c6ad15436",
+        "x_range_m": [
+          9.040928021683214,
+          15.0
+        ],
+        "guide_count": 0,
+        "geometry_passed": false,
+        "actual_clock_admission": "computed path swept envelope leaves reserved chunk tiles",
+        "outside_tile_count": 42
+      },
+      "through_poses": {
+        "status": 4,
+        "error_code": 0,
+        "error_msg": "",
+        "wall_s": 0.07158701599837514,
+        "point_count": 431,
+        "raw_header": {
+          "frame_id": "map",
+          "sec": 1792514537,
+          "nanosec": 567222636
+        },
+        "path_sha256": "9273e0e4184dc639eee33cd115f0801950a84b4ca2c904e55a07161681cc550f",
+        "x_range_m": [
+          14.938997109815432,
+          15.000000223517418
+        ],
+        "guide_count": 24,
+        "geometry_passed": true,
+        "actual_clock_admission": "passed",
+        "outside_tile_count": 0
+      }
+    },
+    "deviations": [
+      "domain74/localhost CPU only",
+      "use_sim_time=false/system clock, no SDK clock",
+      "one static map->base_link TF at supplied previous qualified arrival, not the exact later TF sample",
+      "original obstacle plugins/parameters retained, but no live scans/dynamic obstacles supplied",
+      "only map_server/planner_server lifecycle nodes; no controller/AMCL/robots/actuation"
+    ],
+    "proof_boundary": "A real Jazzy CPU static-map planner comparison. Original raw headers were saved unchanged. Candidate passed the unchanged geometry qualifier with actual fixture ROS now. This is not integrated ROS/physics/freshness or mission completion evidence.",
+    "source_sequence": "Probe executed before main integration wiring. The authored_guides body used by the real comparison was unchanged by subsequent scope/request helper additions. Final helper SHA includes those added functions.",
+    "artifacts": {
+      "result.json": "C:\\Users\\LIMMM\\factory-ops-twin\\artifacts\\local45\\planner-077-001\\result.json",
+      "host.json": "C:\\Users\\LIMMM\\factory-ops-twin\\artifacts\\local45\\planner-077-001\\host.json",
+      "closure.json": "C:\\Users\\LIMMM\\factory-ops-twin\\artifacts\\local45\\planner-077-001\\closure.json",
+      "unit.log": "C:\\Users\\LIMMM\\factory-ops-twin\\artifacts\\local45\\planner-077-001\\unit.log",
+      "navigation_map_server.log": "C:\\Users\\LIMMM\\factory-ops-twin\\artifacts\\local45\\planner-077-001\\navigation_map_server.log",
+      "planner_server.log": "C:\\Users\\LIMMM\\factory-ops-twin\\artifacts\\local45\\planner-077-001\\planner_server.log",
+      "to_pose-path.json": "C:\\Users\\LIMMM\\factory-ops-twin\\artifacts\\local45\\planner-077-001\\to_pose-path.json",
+      "through_poses-path.json": "C:\\Users\\LIMMM\\factory-ops-twin\\artifacts\\local45\\planner-077-001\\through_poses-path.json",
+      "params.yaml": "C:\\Users\\LIMMM\\factory-ops-twin\\artifacts\\local45\\planner-077-001\\params.yaml"
+    }
+  },
+  "closure": {
+    "unit_name": "factory-ops-77f35d7fb7e44e0ead262ace6f43a340-ed3341460a934a538fdef605d05c6be2.service",
+    "control_group": "/user.slice/user-1000.slice/user@1000.service/app.slice/factory-ops-77f35d7fb7e44e0ead262ace6f43a340-ed3341460a934a538fdef605d05c6be2.service",
+    "starting_identity": {
+      "Id": "factory-ops-77f35d7fb7e44e0ead262ace6f43a340-ed3341460a934a538fdef605d05c6be2.service",
+      "InvocationID": "3eb76e44a42a47568372b5c1e94ed1b4",
+      "Description": "factory-ops run=77f35d7fb7e44e0ead262ace6f43a340 owner=ed3341460a934a538fdef605d05c6be2",
+      "ControlGroup": "/user.slice/user-1000.slice/user@1000.service/app.slice/factory-ops-77f35d7fb7e44e0ead262ace6f43a340-ed3341460a934a538fdef605d05c6be2.service"
+    },
+    "ownership_match": true,
+    "child_pids": [
+      31238,
+      31239
+    ],
+    "child_exit_codes": [
+      {
+        "pid": 31239,
+        "returncode": 0
+      },
+      {
+        "pid": 31238,
+        "returncode": 0
+      }
+    ],
+    "unit_state": {
+      "Id": "factory-ops-77f35d7fb7e44e0ead262ace6f43a340-ed3341460a934a538fdef605d05c6be2.service",
+      "LoadState": "not-found",
+      "ActiveState": "inactive",
+      "SubState": "dead",
+      "MainPID": "0"
+    },
+    "cgroup_populated": false,
+    "cgroup_pids": [],
+    "live_known_processes": [],
+    "foreground_client": {
+      "started": true,
+      "pid": 40684,
+      "running": false,
+      "returncode": 0,
+      "closed": true,
+      "forced_termination": false,
+      "stdout_tail": "",
+      "stderr_tail": ""
+    },
+    "closure_verified": true,
+    "active_owned_processes_remaining": false,
+    "scope": "Exact owned Linux unit/cgroup, observed PID/start-time identities and foreground WSL client; not a Windows Job claim."
+  },
+  "validation": [
+    {
+      "command": ".\\.venv\\Scripts\\python.exe -B -m unittest tests.test_planner_guidance -v",
+      "environment": {
+        "PLANNER_GUIDANCE_FIXTURES": {
+          "original_case": "artifacts/local45/033-analysis/failing-path.json",
+          "probe_directory": "artifacts/local45/planner-077-001"
+        }
+      },
+      "exit_code": 1,
+      "result": "6 cases: 5 PASS, 1 FAIL. Test compared current-config route identity to frozen033 identity; no product failure. Exact frozen inputs now supplied through optional fixture environment."
+    },
+    {
+      "command": ".\\.venv\\Scripts\\python.exe -B -m unittest tests.test_planner_guidance.PlannerGuidanceTests.test_rejected_path_payload_and_hash_survive_original_geometry_guard -v",
+      "environment": {
+        "PLANNER_GUIDANCE_FIXTURES": {
+          "original_case": "artifacts/local45/033-analysis/failing-path.json",
+          "probe_directory": "artifacts/local45/planner-077-001",
+          "layout": "D:/FactoryOpsRuntime/local45-transport-033/inputs/layout.json",
+          "routing": "D:/FactoryOpsRuntime/local45-transport-033/inputs/g3-routing.json"
+        }
+      },
+      "exit_code": 0,
+      "result": "Affected 1 case PASS using exact frozen033 inputs and original 899-pose failed Path. Other five already passed; no full suite repeated."
+    },
+    {
+      "command": "Cold ast.parse(feature_version=(3,10)) on all five changed Python files via E:/IsaacSim/isaac-sim-4.5.0/kit/python/python.exe -B -S -",
+      "python": "3.10.15",
+      "exit_code": 0,
+      "result": "5 AST PASS; standard-library only, no SDK import/application."
+    }
+  ],
+  "limits": [
+    "Only a static-map CPU planner fixture was executed; original obstacle layers were configured but live dynamic scans were absent. Intermediate authored guides can still fail with real obstacles; original guards fail closed.",
+    "First supplied CPU start is the previous qualified arrival, not an asserted exact later TF. Raw source stamps and all input maps/radii/tolerances remain unchanged.",
+    "Focused offline geometry replay uses the unchanged source stamp as an offline comparison now; it does not claim live clock/freshness qualification.",
+    "No maintransport, GPU, SDK, new package, Git, server, active bag SQL or extra agent operations. Frozen D033/D076 and other authors files were not modified.",
+    "Integrated actual034 and acceptance belong to root. No self-acceptance or completed four-robot mission claim."
+  ]
+}

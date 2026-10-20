@@ -1,0 +1,117 @@
+{
+  "schema_version": 1,
+  "run_id": "77f35d7fb7e44e0ead262ace6f43a340",
+  "source_run_id": "b28ac5ae32d34f769ba36068fbc85e0e",
+  "status": "actual_static_planner_comparison_passed_integrated034_pending",
+  "scope": "A real Jazzy CPU static-map planner comparison. Original raw headers were saved unchanged. Candidate passed the unchanged geometry qualifier with actual fixture ROS now. This is not integrated ROS/physics/freshness or mission completion evidence.",
+  "cases": {
+    "to_pose": {
+      "status": 4,
+      "error_code": 0,
+      "error_msg": "",
+      "wall_s": 0.09512931200151797,
+      "point_count": 899,
+      "raw_header": {
+        "frame_id": "map",
+        "sec": 1792514537,
+        "nanosec": 387937419
+      },
+      "path_sha256": "4affc03fdfab47e241a52478aa406db9bd7f1da47aebc088c434819c6ad15436",
+      "x_range_m": [
+        9.040928021683214,
+        15.0
+      ],
+      "guide_count": 0,
+      "geometry_passed": false,
+      "actual_clock_admission": "computed path swept envelope leaves reserved chunk tiles",
+      "outside_tile_count": 42
+    },
+    "through_poses": {
+      "status": 4,
+      "error_code": 0,
+      "error_msg": "",
+      "wall_s": 0.07158701599837514,
+      "point_count": 431,
+      "raw_header": {
+        "frame_id": "map",
+        "sec": 1792514537,
+        "nanosec": 567222636
+      },
+      "path_sha256": "9273e0e4184dc639eee33cd115f0801950a84b4ca2c904e55a07161681cc550f",
+      "x_range_m": [
+        14.938997109815432,
+        15.000000223517418
+      ],
+      "guide_count": 24,
+      "geometry_passed": true,
+      "actual_clock_admission": "passed",
+      "outside_tile_count": 0
+    }
+  },
+  "source_case_sha256": "50f3b68ba1b0ed71d4e546e08e05bc2cb929d52eae42946562aa129ee89caf56",
+  "source_params_sha256": "81b5f0eabeba977404e856f996c529716687c4fda691a1ad9e2512cd2e79da5c",
+  "fixture_params_sha256": "4954e6f47e26a7ee63b5f57d6a037ad194d9adf85d2c1cc86aded99885ec0ad2",
+  "map_inputs": {
+    "navigation.yaml": "18633d664fe978d6d76f19c1cbeca5a0769eccb0f4f0f9061e338a9ced8d92bd",
+    "navigation.pgm": "8d813e8d8e3500ead53ca5158872235c731018f0960691bd4f8851c5532a68f5"
+  },
+  "reserved_tile_count": 60,
+  "authored_guide_count": 24,
+  "design_spacing_m": 0.5,
+  "deviations": [
+    "domain74/localhost CPU only",
+    "use_sim_time=false/system clock, no SDK clock",
+    "one static map->base_link TF at supplied previous qualified arrival, not the exact later TF sample",
+    "original obstacle plugins/parameters retained, but no live scans/dynamic obstacles supplied",
+    "only map_server/planner_server lifecycle nodes; no controller/AMCL/robots/actuation"
+  ],
+  "closure_verified": true,
+  "cgroup_pids": [],
+  "live_known_processes": [],
+  "validation": [
+    {
+      "command": ".\\.venv\\Scripts\\python.exe -B -m unittest tests.test_planner_guidance -v",
+      "environment": {
+        "PLANNER_GUIDANCE_FIXTURES": {
+          "original_case": "artifacts/local45/033-analysis/failing-path.json",
+          "probe_directory": "artifacts/local45/planner-077-001"
+        }
+      },
+      "exit_code": 1,
+      "result": "6 cases: 5 PASS, 1 FAIL. Test compared current-config route identity to frozen033 identity; no product failure. Exact frozen inputs now supplied through optional fixture environment."
+    },
+    {
+      "command": ".\\.venv\\Scripts\\python.exe -B -m unittest tests.test_planner_guidance.PlannerGuidanceTests.test_rejected_path_payload_and_hash_survive_original_geometry_guard -v",
+      "environment": {
+        "PLANNER_GUIDANCE_FIXTURES": {
+          "original_case": "artifacts/local45/033-analysis/failing-path.json",
+          "probe_directory": "artifacts/local45/planner-077-001",
+          "layout": "D:/FactoryOpsRuntime/local45-transport-033/inputs/layout.json",
+          "routing": "D:/FactoryOpsRuntime/local45-transport-033/inputs/g3-routing.json"
+        }
+      },
+      "exit_code": 0,
+      "result": "Affected 1 case PASS using exact frozen033 inputs and original 899-pose failed Path. Other five already passed; no full suite repeated."
+    },
+    {
+      "command": "Cold ast.parse(feature_version=(3,10)) on all five changed Python files via E:/IsaacSim/isaac-sim-4.5.0/kit/python/python.exe -B -S -",
+      "python": "3.10.15",
+      "exit_code": 0,
+      "result": "5 AST PASS; standard-library only, no SDK import/application."
+    }
+  ],
+  "post_probe_integration_source_sha256": {
+    "factory_ops/planner_guidance.py": "3f06046030f3c23d09548c36f8fccfc9fe66c992022fc39c34fb6907d7c9ff80",
+    "scripts/ros/g3_mission.py": "e26b7e2a0c957ab729f5b7cb14d20138a13b053a473de03890ce4c6619ceba33",
+    "scripts/isaac/local45_fleet4_transport_scene.py": "a5e7e9fd6459c69f663bbcc1ecf1f5ebc30574599a64a39d5a102dcd946236e0",
+    "scripts/ros/probe_reserved_chunk_planner.py": "79a47fb3711f356dac6b5d30ee4b5aa00d4051fb1ad6c2fae1bbccce9dbbb8ca",
+    "tests/test_planner_guidance.py": "f0f26667f9d7ba19c0947970985f977b89ef11e11f41f716c73151f382cf3420"
+  },
+  "source_sequence_limit": "Probe executed before main integration wiring. The authored_guides body used by the real comparison was unchanged by subsequent scope/request helper additions. Final helper SHA includes those added functions.",
+  "root_review": "One bounded helper/test/probe andintegrationdiff pass;5exactSHAs andrealfixture output/closure verified. Original runtime guards retained.",
+  "goal80_complete": false,
+  "preservation_destinations": [
+    "D:/FactoryOpsArtifacts/operations-073/checkpoint-001",
+    "E:/FactoryOpsArtifacts/operations-073/checkpoint-001"
+  ]
+}

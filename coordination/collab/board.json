@@ -1,6 +1,6 @@
 {
-  "revision": 75,
-  "updated_at": "2026-10-20T15:06:03.829988+00:00",
+  "revision": 78,
+  "updated_at": "2026-10-20T16:54:37.977062+00:00",
   "scope": {
     "excluded": "실물 로봇 실행, 새 유료 서비스/에셋, 공개 배포",
     "project_root": "C:\\Users\\LIMMM\\factory-ops-twin",
@@ -1368,10 +1368,10 @@
         "coordination/collab/results/ros-dashboard-waits-074.json"
       ],
       "result_path": "C:\\Users\\LIMMM\\factory-ops-twin\\coordination\\collab\\results\\ros-dashboard-waits-074.json",
-      "status": "accepted_cpu_runtime_pending",
+      "status": "accepted_actual033",
       "ACK": true,
       "task_path": "coordination/collab/ros-dashboard-waits-074-task.json",
-      "acceptance_record": "Root one bounded g3diff/newtestsource pass+2SHA match. Actual denieddecision/originalstamp andsameleg/segment binding only; no manager/control changes. Author6CPU .725s +2SDK310AST once; runtime033 pending."
+      "acceptance_record": "Root one bounded g3diff/newtestsource pass+2SHA match. Actual denieddecision/originalstamp andsameleg/segment binding only; no manager/control changes. Author6CPU .725s +2SDK310AST once; runtime033 pending. Actual033 API+web Korean blocker observed; image preservedops071."
     },
     {
       "task_id": "business-station-hold-075",
@@ -1385,10 +1385,66 @@
         "coordination/collab/results/business-station-hold-075.json"
       ],
       "result_path": "C:\\Users\\LIMMM\\factory-ops-twin\\coordination\\collab\\results\\business-station-hold-075.json",
-      "status": "accepted_cpu_runtime_pending",
+      "status": "accepted_actual033_stations_fullrun_incomplete",
       "ACK": true,
       "task_path": "coordination/collab/business-station-hold-075-task.json",
-      "acceptance_record": "Root one bounded helper/caller/newtest source pass+2SHA match. Existing actualstop/arrival/finishedgoal gates; dev4material finalbusiness-only stationbody shrink viaexistingAPI, failurepreserves oldtiles/generation; canonical2/parking/cutoff/control unchanged. Author6CPU4.023s+2coldSDK310AST once; finite28/36tile reciprocalcase. Actual033pending."
+      "acceptance_record": "Root one bounded helper/caller/newtest source pass+2SHA match. Existing actualstop/arrival/finishedgoal gates; dev4material finalbusiness-only stationbody shrink viaexistingAPI, failurepreserves oldtiles/generation; canonical2/parking/cutoff/control unchanged. Author6CPU4.023s+2coldSDK310AST once; finite28/36tile reciprocalcase. Actual033pending. Actual033 sixbusinesssite stoppedshrink, firstemptyreturn completed; entire normalrun interrupted by separateNav2pathguard."
+    },
+    {
+      "task_id": "native-empty-tote-076",
+      "attempt": 1,
+      "contract_revision": 76,
+      "owner": "control",
+      "reviewer": "root",
+      "write_paths": [
+        "factory_ops/material_visual.py",
+        "scripts/ros/g3_mission.py",
+        "scripts/isaac/local45_fleet4_transport_scene.py",
+        "scripts/isaac/g3_scene.py",
+        "tests/test_material_visual.py",
+        "scripts/isaac/probe_local45_material_visual.py",
+        "coordination/collab/results/native-empty-tote-076.json"
+      ],
+      "result_path": "C:\\Users\\LIMMM\\factory-ops-twin\\coordination\\collab\\results\\native-empty-tote-076.json",
+      "status": "accepted_native_static_live_integration_pending",
+      "ACK": true,
+      "task_path": "coordination/collab/native-empty-tote-076-task.json",
+      "acceptance_record": "Root one bounded5file source/test/probe pass+5SHA match. Realinventory TOTE/productID separation; originalsource time/futurepending; immutable perrevision cache withapplied capturemetadata, visual-only5partgeometry existingparent/supports andnoncollision; local45PhysX optional only/noG2changes. Authorinitial5pass+1error then2affectedrecheckPASS,5SDKAST+1probeAST; nativeprobe pending. 033originalRGB notnewemptygeometryproof. Actualstatic076r4passed+hostclosed, source033snapshot andauthoredpositions only; rootprobe-onlyrepair review078 pending, ops072preserved."
+    },
+    {
+      "task_id": "reserved-planner-077",
+      "attempt": 1,
+      "contract_revision": 77,
+      "owner": "control",
+      "reviewer": "root",
+      "write_paths": [
+        "factory_ops/planner_guidance.py",
+        "scripts/ros/g3_mission.py",
+        "scripts/isaac/local45_fleet4_transport_scene.py",
+        "scripts/ros/probe_reserved_chunk_planner.py",
+        "tests/test_planner_guidance.py",
+        "coordination/collab/results/reserved-planner-077.json"
+      ],
+      "result_path": "C:\\Users\\LIMMM\\factory-ops-twin\\coordination\\collab\\results\\reserved-planner-077.json",
+      "status": "accepted_cpu_planner_actual034_pending",
+      "ACK": true,
+      "task_path": "coordination/collab/reserved-planner-077-task.json",
+      "acceptance_record": "One bounded helper/test/probe andintegrationdiff pass;5exactSHAs andrealfixture output/closure verified. Original runtime guards retained. ActualCPU static ToPose42outside/899poses vsThroughPoses0/431poses, same60reservedtiles;closureverified. 5CPUthen1affectedrecheckPASS+5coldSDK310AST. ops073preserved."
+    },
+    {
+      "task_id": "root-render-evidence-078",
+      "attempt": 1,
+      "contract_revision": 78,
+      "owner": "control",
+      "reviewer": "root",
+      "write_paths": [
+        "coordination/collab/results/root-render-evidence-078.json"
+      ],
+      "result_path": "C:\\Users\\LIMMM\\factory-ops-twin\\coordination\\collab\\results\\root-render-evidence-078.json",
+      "status": "accepted",
+      "ACK": true,
+      "task_path": "coordination/collab/root-render-evidence-078-task.json",
+      "acceptance_record": "Control one boundedreadonly rootprobe-delta/publication pass:7SHA matched, nativepassed+closed+noPID, exactframe/time guard, installeddetachAPI,033 and076 scope separated; no blockers/no newtests/GPU."
     }
   ],
   "decisions": [

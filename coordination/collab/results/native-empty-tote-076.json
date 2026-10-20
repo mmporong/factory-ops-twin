@@ -1,0 +1,79 @@
+{
+  "task_id": "native-empty-tote-076",
+  "attempt": 1,
+  "contract_revision": 76,
+  "ack": true,
+  "status": "implemented_cpu_only_pending_root_review_and_closed_source_render_fixture",
+  "self_accepted": false,
+  "source_sha256": {
+    "factory_ops/material_visual.py": "a242cd6d76f670fdaf73991eaa84b619a79bdc0f45fa10a9b3c225e4a2b6e0fd",
+    "scripts/ros/g3_mission.py": "8413235ad71aff0df0581912e73c5fa284a1fa600a6587b2db43c45c08817795",
+    "scripts/isaac/local45_fleet4_transport_scene.py": "69c64ccebd34b6a44554f374149a39db949a68f74a472bc83800ff4f122f3493",
+    "tests/test_material_visual.py": "7a61a41013e93d2262beb99199d10d25fa259f3029754fa1b183e054566bf237",
+    "scripts/isaac/probe_local45_material_visual.py": "58e725201c59c537ba58481458d488231c83030f08286f42ec207173fbbf2f32"
+  },
+  "design": {
+    "publisher": "Existing G3 material_revision change block, only local45 development with verified PhysX sensor_backend metadata. Preserve material-state.json and product visual schemas; publish material-visual-state.json plus immutable per-revision material-visual-snapshots. Each document embeds exact material snapshot, canonical source SHA, run/scenario/revision and original ROS tick stamp.",
+    "native": "Local45FleetLifecycle.step and after_robots_loaded; optional PhysX/material-flow branch. AppliedMaterialVisual validates identity/digest/schema/revision/source time and waits for actual World time without rounding, offsets or epsilon. Only declared F4-TOTE IDs, genuine inventory/jobs/return intents and known owners/locations are projected. Filled/reused containers are hidden.",
+    "geometry": "Separate hollow amber markers, five visual-only parts, using existing authored TOTE_SIZE_M and robot cargo offset or world_slot_placement supports. No CollisionAPI, rigid bodies, joint/pose setters or GT control input. Robot children follow native chassis transforms. Product markers remain independent; existing support slots occupied by applied product markers are avoided. No free slot leaves a new source pending; product-sequence changes refresh placements and fail closed on an incompatible applied placement.",
+    "capture": "Existing local45 before_capture caches applied document and placements at frozen World frame/time, including native world transforms. capture_metadata returns this cache, not a newer disk source. capture_due recognizes newly applied material revisions. Material module added to LOCAL_SOURCE_PINS.",
+    "unchanged": "No G2 path expansion. scripts/isaac/g3_scene.py and factory_ops/visual_state.py unchanged. Existing canonical two-robot/default RTX behavior, 075 stop/hold gates and main033 frozen source are preserved."
+  },
+  "validation": [
+    {
+      "command": "$env:FACTORY_OPS_MATERIAL_VISUAL_OBSERVATIONS='[\"artifacts/local45/033-web/material-carried-observation.json\",\"artifacts/local45/033-web/material-returned-observation.json\"]'; & './.venv/Scripts/python.exe' -B -m unittest tests.test_material_visual -v",
+      "runs": 1,
+      "exit_code": 1,
+      "result": "Initial 5 PASS, 1 error: reserving source slots beyond product capacity exceeded source_S1 capacity 2.",
+      "coverage": "Real MaterialFlow lifecycle; ID separation; unknown metadata; exact future pending and revision binding; cached applied source versus newer file; both captured actual JSON schemas; active-source render refusal."
+    },
+    {
+      "command": "& './.venv/Scripts/python.exe' -B -m unittest tests.test_material_visual.MaterialVisualTests.test_real_lifecycle_wait_carry_return_reuse_and_authored_support_slots tests.test_material_visual.MaterialVisualTests.test_binding_revision_and_exact_future_wait_without_rebinding_time -v",
+      "exit_code": 0,
+      "result": "Affected recheck 2 PASS in 0.142s after correction; no full module or old-suite repeat.",
+      "correction": "Reuse available existing source support slots instead of exceeding capacity. CPU mock protocol confirms product slot exclusion, five hollow-marker parts and pending when all slots are occupied. Cache does not claim an application when placement remains pending. No rack or geometry-envelope expansion."
+    },
+    {
+      "command": "Cold ast.parse plus hashlib on the five changed Python paths through E:/IsaacSim/isaac-sim-4.5.0/kit/python/python.exe -B -S -",
+      "python": "3.10.15",
+      "exit_code": 0,
+      "result": "5 AST PASS. Subsequently only the probe was adjusted for host-compatible run_id and an explicit scene path, then cold AST rechecked once: PASS, final probe SHA above. No SDK imports."
+    }
+  ],
+  "captured_json_evidence": [
+    {
+      "path": "artifacts/local45/033-web/material-carried-observation.json",
+      "wrapper_sha256": "2f10f9770f14ec7379e33c3849f420ffd7bdf5e035c4fdc36e2ca58cce62196a",
+      "snapshot_canonical_sha256": "00c5f1d4bc14623e8aa292c090859de1438a2909bf6c8264e49329386dcb9efc",
+      "revision": 12,
+      "tote": "F4-TOTE-002 returning / IN_TRANSIT / carter3"
+    },
+    {
+      "path": "artifacts/local45/033-web/material-returned-observation.json",
+      "wrapper_sha256": "21d14ee2d7a20b677507d2051ea9663b2b5b763bd83b7673c14cb78078521314",
+      "snapshot_canonical_sha256": "ddecfe7ae217a0e06b3cb76486a8a776150f0c7343596db9ee6eae15260ea406",
+      "revision": 13,
+      "tote": "F4-TOTE-002 available / S3 / owner null / request_id null"
+    }
+  ],
+  "render_fixture_api": {
+    "script": "scripts/isaac/probe_local45_material_visual.py",
+    "cli": "--config <absolute-config.json> --output <new-absolute-directory> --run-id <distinct-32hex-render-id>",
+    "config_keys": {
+      "observation_path": "Captured wrapper containing source_run_id and snapshot",
+      "observation_sha256": "SHA256 of the complete captured wrapper bytes",
+      "closed_pair_host_path": "Source pair-host.json AFTER verified source closure",
+      "closed_pair_host_sha256": "SHA256 of that closed host record",
+      "factory_directory": "Directory containing layout.json, transport-profile.json and visual configuration",
+      "scene_path": "Optional explicit existing authored scene path; otherwise factory_directory/scene/factory-v3.usda"
+    },
+    "guards_and_scope": "Validate both closed flags, empty cleanup errors, matching source run and a distinct render run before SDK creation. Single static snapshot/view, original NovaCarter ASSET_PATH, authored robot layout positions and existing cargo geometry. No replay, motion or source event-time reconstruction. result.run_id equals render_run_id; source_run_id is separate. Records source snapshot/digests, input/source hashes and frozen render placements. Host must verify actual process closure.",
+    "execution": "NOT RUN. Root may run one fixture only after actual033 pair closure."
+  },
+  "limits": [
+    "Source run b28ac5ae32d34f769ba36068fbc85e0e / commit82a2f04 remains a frozen older runtime. Its current RGB is not evidence of this new native empty-tote binding.",
+    "Captured wrappers were read only after explicit read authorization. Checkpoint observations, including about723s, were never used as source event/capture time or live-application qualification. Static fixture source_event_sim_time_s stays null.",
+    "Native USD parenting, rendered appearance, buffer acquisition and fixture cleanup still require root SDK execution. CPU fakes verify protocols only; no physical lift/contact, sensor, complete transport or SDK success claim.",
+    "No GPU/SDK/ROS/WSL/browser/runtime/bag/Git/board operations, dependencies, new agents, wide reviews or unrelated file writes. Only five allowed code/test files and this receipt changed."
+  ]
+}

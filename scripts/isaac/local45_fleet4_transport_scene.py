@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+from copy import deepcopy
 import json
 from pathlib import Path
 import sys
@@ -21,9 +22,77 @@ LOCAL_SOURCE_PINS = BASE_SOURCE_PINS | frozenset({
     "factory_ops/operations/model.py", "scripts/isaac/robot_qualification.py",
     "scripts/isaac/nav_scene.py", "scripts/isaac/stage_smoke.py",
     "factory_ops/visual_state.py", "factory_ops/wsl_process_supervisor.py",
+    "factory_ops/material_visual.py",
+    "factory_ops/planner_guidance.py",
     "scripts/isaac/run_local45_fleet_pair.py",
     "scripts/isaac/windows_job_runner.py",
 })
+
+
+class EmptyToteGeometry:
+    """Non-colliding hollow markers using the existing authored cargo envelope/supports."""
+    def __init__(self, visuals: Any):
+        self.visuals, self.copies = visuals, {}
+
+    def apply(self, rows: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]] | None:
+        from scripts.isaac.factory_visuals import TOTE_SIZE_M, world_slot_placement, _session_edit_target
+        v, placements = self.visuals, []
+        occupied = {(row["location"], row["slot"]) for row in (v.last_event or {}).get("displayed_payloads", [])}
+        for row in rows:
+            row = dict(row)
+            if row["robot_id"] is None:
+                capacity = world_slot_placement(v.layout, row["location"], 0)["capacity"]
+                free = [slot for slot in range(capacity) if (row["location"], slot) not in occupied]
+                if not free:
+                    return None  # Wait for the existing product projection to free a support slot.
+                row["slot"] = row["slot"] if row["slot"] in free else free[0]
+                occupied.add((row["location"], row["slot"]))
+                placement = world_slot_placement(v.layout, row["location"], row["slot"])
+            else:
+                if (row["location"], 0) in occupied:
+                    return None
+                placement = {"parent_path": v.robot_paths[row["robot_id"]] + "/FactoryVisualCargo",
+                    "translate_xyz_m": [0., 0., .52], "size_xyz_m": list(TOTE_SIZE_M),
+                    "scope": "existing authored robot cargo offset; no measured mount/contact claim"}
+            suffix = f"{row['location']}_{row['slot']}".replace("-", "_")
+            path = f"{placement['parent_path']}/Empty_{row['tote_id'].replace('-', '_')}_{suffix}"
+            placements.append({**dict(row), **placement, "prim_path": path})
+        with _session_edit_target(v.stage):
+            for item in placements:
+                path = item["prim_path"]
+                if path not in self.copies:
+                    group = v.UsdGeom.Xform.Define(v.stage, path)
+                    group.AddTranslateOp().Set(v.Gf.Vec3d(*item["translate_xyz_m"]))
+                    group.GetPrim().SetCustomDataByKey("materialToteId", item["tote_id"])
+                    sx, sy, sz = TOTE_SIZE_M
+                    wall = min(TOTE_SIZE_M) * .08  # Authored visual thickness, not a measured tote.
+                    parts = [("Base", (0, 0, -sz/2+wall/2), (sx, sy, wall)),
+                        ("Left", (-(sx-wall)/2, 0, wall/2), (wall, sy, sz-wall)),
+                        ("Right", ((sx-wall)/2, 0, wall/2), (wall, sy, sz-wall)),
+                        ("Front", (0, -(sy-wall)/2, wall/2), (sx-2*wall, wall, sz-wall)),
+                        ("Rear", (0, (sy-wall)/2, wall/2), (sx-2*wall, wall, sz-wall))]
+                    for name, xyz, size in parts:
+                        cube = v.UsdGeom.Cube.Define(v.stage, path + "/" + name)
+                        cube.CreateSizeAttr(1.)
+                        cube.AddTranslateOp().Set(v.Gf.Vec3d(*xyz))
+                        cube.AddScaleOp().Set(v.Gf.Vec3d(*size))
+                        cube.CreateDisplayColorAttr([v.Gf.Vec3f(.92, .56, .12)])
+                        if cube.GetPrim().HasAPI(v.UsdPhysics.CollisionAPI):
+                            raise ValueError("empty tote marker unexpectedly has a collider")
+                    self.copies[path] = v.UsdGeom.Imageable(group.GetPrim())
+            visible = {item["prim_path"] for item in placements}
+            for path, imageable in self.copies.items():
+                imageable.CreateVisibilityAttr().Set("inherited" if path in visible else "invisible")
+        return placements
+
+    def capture_placements(self, metadata: dict[str, Any]) -> dict[str, Any]:
+        applied = metadata["applied"]
+        if applied is not None:
+            cache = self.visuals.UsdGeom.XformCache()
+            for item in applied["placements"]:
+                matrix = cache.GetLocalToWorldTransform(self.visuals.stage.GetPrimAtPath(item["prim_path"]))
+                item["captured_world_transform"] = [[float(matrix[i][j]) for j in range(4)] for i in range(4)]
+        return metadata
 
 
 class Local45FleetLifecycle(FleetTransportLifecycle):
@@ -32,6 +101,15 @@ class Local45FleetLifecycle(FleetTransportLifecycle):
         if lidar_backend not in {"rtx_flat_scan", "physx_planar"}:
             raise ValueError("unsupported local45 observation backend")
         self.lidar_backend = lidar_backend
+        self.material_visual = self.empty_geometry = None
+        self.material_capture = None
+        self.last_captured_material_revision = None
+        self.last_material_product_sequence = None
+        if lidar_backend == "physx_planar" and "material_flow" in self.session["workload"]:
+            from factory_ops.material_visual import AppliedMaterialVisual
+            self.material_visual = AppliedMaterialVisual(run_id, self.session["scenario_id"],
+                self.session["workload"]["material_flow"]["materials"], self.expected_robot_ids,
+                self.session["workload"]["load"]["ci_capacity"])
         self._native_observers: list[Any] = []
         self._native_journal_opened = False
         self._native_periodic_ns: int | None = None
@@ -113,6 +191,24 @@ class Local45FleetLifecycle(FleetTransportLifecycle):
 
     def step(self, sim_time_s: float, physics_frame: int) -> None:
         super().step(sim_time_s, physics_frame)
+        if self.material_visual is not None and self.empty_geometry is not None:
+            from factory_ops.material_visual import STATE_FILE
+            assert self.output is not None
+            assert self.visuals is not None
+            path = self.output / STATE_FILE
+            if path.is_symlink():
+                raise ValueError("material visual companion cannot be a symlink")
+            if path.is_file():
+                self.material_visual.offer(json.loads(path.read_text(encoding="utf-8")))
+            self.material_visual.advance(sim_time_s, physics_frame, self.empty_geometry.apply)
+            if (self.material_visual.applied is not None
+                    and self.last_material_product_sequence != self.visuals.applied_sequence):
+                placements = self.empty_geometry.apply(self.material_visual.applied["document"]["empty_totes"])
+                if placements is None:
+                    raise ValueError("applied empty tote placements conflict with current product markers")
+                self.material_visual.applied["placements"] = placements
+                self.material_visual.applied["placement_physics_frame"] = physics_frame
+                self.last_material_product_sequence = self.visuals.applied_sequence
         stamp = round(sim_time_s*1_000_000_000)
         if self._native_observers and (self._native_periodic_ns is None
                 or stamp-self._native_periodic_ns >= 1_000_000_000):
@@ -127,9 +223,33 @@ class Local45FleetLifecycle(FleetTransportLifecycle):
         world = World.instance()
         if world is None:
             raise RuntimeError("local45 frozen capture requires an initialized World")
+        if self.material_visual is not None and self.empty_geometry is not None:
+            self.material_capture = self.empty_geometry.capture_placements(self.material_visual.capture_metadata())
+            self.material_capture["captured_physics_frame"] = int(world.current_time_step_index)
+            self.material_capture["captured_sim_time_s"] = float(world.current_time)
         # The outer G2 capture guard owns timeline pause/resume and frozen-state checks.
         for _ in range(4):
             world.render()
+
+    def after_robots_loaded(self, stage: Any, definitions: dict[str, Any]) -> dict[str, Any]:
+        metadata = super().after_robots_loaded(stage, definitions)
+        if self.material_visual is not None:
+            self.empty_geometry = EmptyToteGeometry(self.visuals)
+            metadata["empty_totes"] = "optional material companion; authored hollow visual-only geometry"
+        return metadata
+
+    def capture_due(self) -> bool:
+        due = super().capture_due()
+        applied = self.material_visual.applied if self.material_visual is not None else None
+        return due or applied is not None and applied["document"]["material_revision"] != self.last_captured_material_revision
+
+    def capture_metadata(self) -> dict[str, Any]:
+        metadata = super().capture_metadata()
+        if self.material_visual is not None:
+            metadata["native_empty_totes"] = deepcopy(self.material_capture)
+            applied = self.material_capture["applied"] if self.material_capture is not None else None
+            self.last_captured_material_revision = applied["document"]["material_revision"] if applied else None
+        return metadata
 
     def cleanup_render_products(self) -> None:
         errors = []

@@ -1,0 +1,38 @@
+{
+  "task_id": "root-render-evidence-078",
+  "attempt": 1,
+  "contract_revision": 78,
+  "owner": "control",
+  "reviewer": "root",
+  "project_root": "C:\\Users\\LIMMM\\factory-ops-twin",
+  "binding": {
+    "session": "default",
+    "pane_id": "w1:p1C",
+    "terminal_id": "term_65e06d27e415810",
+    "agent_session": "01a152aa-24b4-7a31-92e3-a2b620f4feeb"
+  },
+  "status": "dispatched",
+  "goal": "After finishing077, one bounded readonly approval of root probe-only076 repairs and033/076 publication facts. No reviewchain/newtests/GPU.",
+  "input_sha256": {
+    "scripts/isaac/probe_local45_material_visual.py": "82686c4919c86a0cc929a880ea7d17a0c121c16c9daa1036ae26e65d99e5537f",
+    "README.md": "a91ca6c48e0252f0b69ff4c07731bfc15009b716c0365bea8ec33f0fed803b38",
+    "docs/completion-plan.md": "52243ead340e75ea869509418844478d8c85c9a54d7eddbfa1535341f244a908",
+    "docs/troubleshooting.md": "8acb6b2daac2812599dcbc0facaf3f065a0db1e5f5477f03ce11f8fae9daca14",
+    "docs/evidence/local45-transport-033.json": "16ed890803f851f657447a04d6abe3605c74f745358d13b35c690dbe5e435a05",
+    "docs/evidence/local45-material-visual-076.json": "5f4268d92d87a7d518503cddb8c245e6bbd84150b7557538ed10d8c7c9d16e69",
+    "docs/images/fleet4-local45-033/provenance.json": "ce3be5637fc610be79d77ecfcbb39dbcbc829bd6c159e981d89c1fd09a94aa94"
+  },
+  "write_paths": [
+    "coordination/collab/results/root-render-evidence-078.json"
+  ],
+  "result_path": "C:\\Users\\LIMMM\\factory-ops-twin\\coordination\\collab\\results\\root-render-evidence-078.json",
+  "acceptance": [
+    "Compare only root changes after accepted076: FactoryVisualRuntime.setup before robotreferences like existingG2; pausedcapture uses existing Replicator zero-delta step+wait and exact frame/time guard, raw buffer report; detach() matches installedAPI. ProbeSHA82686c4919c86a0cc929a880ea7d17a0c121c16c9daa1036ae26e65d99e5537f. FrozenD076 untouched; r2/r3/r4 separate preserved attempts.",
+    "Read D:/FactoryOpsRuntime/local45-material-visual-076-r4/output/result.json and job.json and publicsummary; resultpassed ANDclosed ANDremaining_owned_pids[] required, not exit0. rootcoldSDKASTonce perchangedprobe. one640x480 finite/nonzero image and exactframe2/time .03333333507180214 unchanged. Native snapshotfixture only, not live033RGB/replay/physical loading.",
+    "Check only changedpublication paragraphs andnew033/076links: actual033 all4business,ship1,emptyreturn1,stock52+carried2+consumed6=60; Nav2pathguardreject beforefollowing primary, SDKfailuresecondary. same-runweb seen, RGB62timepoints25.3s nominal33x sparseheld; no80/final/canonical62proof. Static076 separate. Rootalreadychecked4mediaSHAs/newlinks/diff and fullvideo decodeexport.",
+    "Return bounded approval/issues +reviewedSHAs, no code/docs/board/Git edits. Do not repeat oldsource review/fulltests/research; report concrete issue only. You are not alone; preserve077 implementation and unowned changes."
+  ],
+  "depends_on": [
+    "reserved-planner-077"
+  ]
+}

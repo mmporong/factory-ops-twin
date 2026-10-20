@@ -1,0 +1,53 @@
+{
+  "task_id": "native-empty-tote-076",
+  "attempt": 1,
+  "contract_revision": 76,
+  "owner": "control",
+  "reviewer": "root",
+  "project_root": "C:\\Users\\LIMMM\\factory-ops-twin",
+  "binding": {
+    "session": "default",
+    "pane_id": "w1:p1C",
+    "terminal_id": "term_65e06d27e415810",
+    "agent_session": "01a152aa-24b4-7a31-92e3-a2b620f4feeb"
+  },
+  "input_sha256": {
+    "scripts/ros/g3_mission.py": "895d6ac0489a4c58fd240b7f22770423775795429b245bdb2c8fc1bf8bface72",
+    "scripts/isaac/local45_fleet4_transport_scene.py": "e8f2c82b45de197854c1d0a76491d425f8289ea185a25ab3b4ae3276db582f5d",
+    "scripts/isaac/g3_scene.py": "206d97a6a3e37f1ba2607582770b9674397a46842a00355248e71f44e92e100c",
+    "factory_ops/visual_state.py": "9a1f60cc69168032ecce4252329981b4e34d016f1a6b504851291c189601a496",
+    "factory_ops/material_flow.py": "3d7a3c3b3b1a289565e73970a66b5fa4ca97493bc60e883a81fef862e8ad5550"
+  },
+  "goal": "Bind reusable EMPTY TOTE state from MaterialFlow to optional native local45 development visual geometry and capture provenance. Main033 stays frozen and running; no runtime actions.",
+  "non_goals": [
+    "No writes to D033 oractiveGPU/ROS/WSL/browser/bag operations. Root owns current033 session37115; never start a second SDK job. No Git/board/docs edits or newagents/reviewchains.",
+    "No changes to motion, leases, TTL/clocks/start/deadlines, route/map/robotbody/collision/physics/control/sensor inputs, assignment or075 behavior. Canonical existing2robot/default RTX paths unchanged.",
+    "No full replay system, extra dataset collection, new dependencies, stockrack redesign, physical lift/contact claim or industrialasset replacement. Extra files/framework boundaries require root message before edits."
+  ],
+  "write_paths": [
+    "factory_ops/material_visual.py",
+    "scripts/ros/g3_mission.py",
+    "scripts/isaac/local45_fleet4_transport_scene.py",
+    "scripts/isaac/g3_scene.py",
+    "tests/test_material_visual.py",
+    "scripts/isaac/probe_local45_material_visual.py",
+    "coordination/collab/results/native-empty-tote-076.json"
+  ],
+  "result_path": "C:\\Users\\LIMMM\\factory-ops-twin\\coordination\\collab\\results\\native-empty-tote-076.json",
+  "acceptance": [
+    "Choose the smallest optional visual companion/native binding by reusing existing visual/cargo placement and capture hooks. If a companion is needed, emit only on MaterialFlow revision changes, with exact run/scenario/material revision, original ROS tick timestamp and embedded source snapshot/digest. Preserve existing material-state and canonical logical-product schemas; no olddata overwrite.",
+    "Keep reusable F4-TOTE IDs distinct from product F4-PAY/LOT. Show only genuinely EMPTY containers from current inventory/jobs: waiting atCI, carried by the recorded owner robot, returned at source. Filled/reused/unknown containers must not be duplicated asempty; unknown IDs/owners/locations invalid. Use authored existing station/cargo-support offsets, document visual-only placements, no made-up measured dimensions.",
+    "Geometry is non-colliding visual-only, follows current native robot pose using existing visualization mechanism; no physicalpose/joint setting or steering from GT. Keep current product markers independent. No sensor/physicscontact proof implied.",
+    "Apply only same-run/scenario monotonic valid revisions at or after original source simtimestamp. For a slightlyfuture stamp wait for real World advancement; no rounding/offset/epsilon or timestamp rebinding. No stale control freshness fabricated; this is persistent visual state.",
+    "Captured metadata must identify EXACT applied material revision/source digest/snapshot and visual placements at that frozen frame. Do not hash a newer on-disk companion as if it was already rendered; cache applied source data. Include new module in local source pins ifused. Guard optional hook so existing2robot/canonical behavior remains unchanged.",
+    "One focused CPU pass covers real schema/lifecycle projection, ID separation, waiting/carry/return andhidefilled, badrun/owner/location/revision/futurepending, capture-applied vs newerfile provenance. One coldSDK310 AST on changedPython. No full/old test reruns or GPU. Small render-only fixture script may accept a CLOSED actual material snapshot and capture a few states later; source_run_id anddistinct render_run_id explicit. Root runs GPU once only after033closure.",
+    "Return ACK(task/attempt/revision), minimal chosen hook design, changedfileSHAs, command/exit evidence, and honest live/probe limitations. Root one bounded source review. If wider G2 hook edits are essential request path expansion first; move from bounded lookup to code."
+  ],
+  "status": "dispatched",
+  "instructions": "You are not alone in the codebase. Own listed files, preserve075 andotheredits. Root handles033 active coreoperations, preservation/docs/Git. Prepare native emptyTOTE visual code while currentD033 remains unchanged. No runtime/GPU start or source rewriting of033. Keep design small and use existing placement/provenance utilities; do not reinvent a replay stack.",
+  "depends_on": [
+    "business-station-hold-075"
+  ],
+  "source_commit": "82a2f04d907399f02ccbd02abe08dfb6993a051b",
+  "confirmed_gap": "g3_mission visual_snapshot=mission.ledger.snapshot and project_ledger_state only logical products. material_state goes to dashboard/material-state.json only. Emptytrip vehicle/accounting/web work, but no source binding proves native empty-TOTE geometry. Do not claim current033 RGB shows transported emptytote."
+}

@@ -1,0 +1,60 @@
+{
+  "task_id": "reserved-planner-077",
+  "attempt": 1,
+  "contract_revision": 77,
+  "owner": "control",
+  "reviewer": "root",
+  "project_root": "C:\\Users\\LIMMM\\factory-ops-twin",
+  "binding": {
+    "session": "default",
+    "pane_id": "w1:p1C",
+    "terminal_id": "term_65e06d27e415810",
+    "agent_session": "01a152aa-24b4-7a31-92e3-a2b620f4feeb"
+  },
+  "input_sha256": {
+    "scripts/ros/g3_mission.py": "8413235ad71aff0df0581912e73c5fa284a1fa600a6587b2db43c45c08817795",
+    "scripts/isaac/local45_fleet4_transport_scene.py": "69c64ccebd34b6a44554f374149a39db949a68f74a472bc83800ff4f122f3493",
+    "factory_ops/fleet_execution.py": "7185119355989d6b082c56211a09a4f50ee0bdebbbf875caae036f2750aaabd6",
+    "factory_ops/fleet_routing.py": "2681f2881147bdeb9620e8ec4bd881441f8c207c7a4fd8beb62209306bd0743c"
+  },
+  "goal": "Resolve Nav2 planner/reserved-corridor mismatch without weakening any path, map, radius or freshness guard. First compare actual Nav2 baseline versus authored via-poses on a bounded CPU-only planner fixture, then wire only local45 four-robot development if comparison passes.",
+  "non_goals": [
+    "No GPU/SDK/maintransport starts. Root runs only076 staticrender fixture on already frozenD076 overlay; do not touch D076/D033 or rootartifacts other than ownCPUprobe output folder.",
+    "No widening/changing map, corridorwidth, collision/planning/evaluationradius, .15start/goal tolerance, .5path/lease freshness, clocks/stamps/deadlines, occupancy, route selection/graph or control limits. No dropping pathguard or overriding failed admission.",
+    "Preserve076 publisher/nativevisual code and075 stationstop fixes. Existing canonical2/default RTX/canonical62 behavior unchanged. No newdependencies, agents, broadresearch/reviewchain, Git/board/docs writes."
+  ],
+  "write_paths": [
+    "factory_ops/planner_guidance.py",
+    "scripts/ros/g3_mission.py",
+    "scripts/isaac/local45_fleet4_transport_scene.py",
+    "scripts/ros/probe_reserved_chunk_planner.py",
+    "tests/test_planner_guidance.py",
+    "coordination/collab/results/reserved-planner-077.json"
+  ],
+  "result_path": "C:\\Users\\LIMMM\\factory-ops-twin\\coordination\\collab\\results\\reserved-planner-077.json",
+  "acceptance": [
+    "Use installed official Jazzy API and frozen033 inputmap/params. Build one bounded CPU-only map_server/planner_server fixture with original start14.946113760329675,16.996795582406115 and C_LOW goal15,5 yaw-pi/2. Isolate ROS_DOMAIN_ID74 and own all childprocesses via existing WslProcessSupervisor/unit or equally explicit ownedPID cleanup. No bagSQL needed: exact decodedPath alreadyprovided. Fixture max240wall; never pkill/allROS. Return actualunit/PID closure evidence.",
+    "Compare ComputePathToPose baseline with ComputePathThroughPoses guides from AUTHORED chunk geometry only, e.g <=.5m authored spacing. Keep map and relevantcostmap/planner/radius parameters; fixtureclock/staticTF changes must be explicit. If any original dynamic layers cannot run, state that limited staticgeometry scope. Do not force blockedgoals: candidate must genuinely plan and its evaluation swepttiles must be subset of SAME originalchunk. Preserve rawheaders; fixture geometry comparison is not fullROS/time/physics qualification.",
+    "Only after candidategeometry passes, wire authoredguide planning for local45 development4robot material scope. Keep canonical existing2/default paths unchanged. Use actual installed goals field; preserve firstobserved start and final authored yaw, original ROSrequest stamps, same action/HOLD/reservation flow. Densify authoredreference poses, never GT/measuredtrajectory interpolation or pose steering. .5m is an authored planning design spacing, not a measured/calibrated number.",
+    "Record actual planner method and correct computeaction status topics. Add helper to local sourcepins. Before original pathqualification, retain unqualified plannerpayload/hash/error in action record so a future rejection is inspectable; never mark failed payload qualified or follow it. Do not move or relax guard.",
+    "One focusedCPU helper/regression pass and one coldSDK310AST ofchangedPython; use originalfailedPath as meaningful counterexample without hardcoded userartifact dependency in portabletests. Reuse fixtureactual successful guidedPath proof; no whole old suites or mainGPU rerun. Report timing/point count/outside tiles and all fixture deviations/limitations.",
+    "Return ACK task/attempt/revision, exactchangedSHAs, command/exit/probe result/closure paths. Root reviews source once and owns integrated actual034 run. If fixture does not support the proposed strategy report concrete data and bounded alternative before broadening implementation."
+  ],
+  "status": "dispatched",
+  "instructions": "You are not alone in the codebase. 076 acceptedCPU, root froze its5files inD076 forGPU; you may now own listedCfiles and must preserve076 changes. Root owns033preservation and076nativefixture. Start with bounded Nav2CPUcomparison, then smallest local4 guide integration onlyifproofpasses. No rawfailingPath is currentlyretained in actual033 actionrecord, but rootdecoded it afterbothOSclosure inanalysisJSON.",
+  "depends_on": [
+    "native-empty-tote-076"
+  ],
+  "source_commit": "82a2f04d907399f02ccbd02abe08dfb6993a051b",
+  "input_case": {
+    "analysis": "C:/Users/LIMMM/factory-ops-twin/artifacts/local45/033-analysis/failing-path.json",
+    "closed_source_stage": "D:/FactoryOpsRuntime/local45-transport-033",
+    "source_run_id": "b28ac5ae32d34f769ba36068fbc85e0e",
+    "robot": "carter3",
+    "edge": "C_HIGH(15,17)->C_LOW(15,5), clearingP3",
+    "exact_path_stamp_ns": 827950043181,
+    "observations": "899poses, minx9.040928021683214 maxx15,5.959071978316786m lateral detour. Same guard reproduced from exact closedbag Path. Actual C1atCI,C2atS1 are not this primaryerror.",
+    "layout": "Central allowedcorridor13.7..16.3 width2.6m; planningradius1.1371090915442774 evaluationradius.8371090915442774; Nav2inflation1.3371090915442774. Do not assume why Navfnchose left until fixture.",
+    "api": "Installed /opt/ros/jazzy/share/nav2_msgs/action/ComputePathThroughPoses.action verified: PoseStamped[] goals, start,planner_id,use_start; result Path path,error_code,error_msg. No new packages required."
+  }
+}

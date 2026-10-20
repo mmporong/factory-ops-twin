@@ -1,0 +1,229 @@
+{
+  "schema_version": 1,
+  "run_id": "090eaec258f94f6cab99791ef23e2058",
+  "source_run_id": "b28ac5ae32d34f769ba36068fbc85e0e",
+  "status": "static_native_render_passed_live_integration_pending",
+  "scope": "static render-only fixture; periodic clock checkpoints are not exact event/capture timing; authored robot positions",
+  "physical_loading_validated": false,
+  "original033RGB_contains_new_geometry": false,
+  "buffer_observation": {
+    "shape": [
+      480,
+      640,
+      4
+    ],
+    "finite": true,
+    "nonzero": true,
+    "before": [
+      2,
+      0.03333333507180214
+    ],
+    "after": [
+      2,
+      0.03333333507180214
+    ]
+  },
+  "placements": [
+    {
+      "tote_id": "F4-TOTE-001",
+      "state": "empty",
+      "location": "ci",
+      "slot": 2,
+      "robot_id": null,
+      "task_id": "empty:F4-001",
+      "source_obstacle_id": "PROCESS_1",
+      "parent_path": "/World/Visuals/CargoSlots/ci",
+      "translate_xyz_m": [
+        19.04433333333333,
+        8.406666666666666,
+        0.9580000000000001
+      ],
+      "size_xyz_m": [
+        0.44,
+        0.34,
+        0.18
+      ],
+      "bounds_xyz_m": [
+        18.824333333333332,
+        8.236666666666666,
+        0.8680000000000001,
+        19.26433333333333,
+        8.576666666666666,
+        1.048
+      ],
+      "capacity": 30,
+      "support_part_names": [
+        "WorkBed"
+      ],
+      "support_bounds_xyz_m": [
+        16.966,
+        7.15,
+        0.66,
+        19.284,
+        8.95,
+        0.8580000000000001
+      ],
+      "support_clearance_m": 0.01,
+      "stack_gap_m": 0.002,
+      "stack_layer": 0,
+      "prim_path": "/World/Visuals/CargoSlots/ci/Empty_F4_TOTE_001_ci_2",
+      "captured_world_transform": [
+        [
+          1.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          19.04433333333333,
+          8.406666666666666,
+          0.9580000000000001,
+          1.0
+        ]
+      ]
+    },
+    {
+      "tote_id": "F4-TOTE-002",
+      "state": "returning",
+      "location": "robot_carter3",
+      "slot": 0,
+      "robot_id": "carter3",
+      "task_id": "empty:F4-002",
+      "parent_path": "/World/MaterialFixture/carter3/chassis_link/FactoryVisualCargo",
+      "translate_xyz_m": [
+        0.0,
+        0.0,
+        0.52
+      ],
+      "size_xyz_m": [
+        0.44,
+        0.34,
+        0.18
+      ],
+      "scope": "existing authored robot cargo offset; no measured mount/contact claim",
+      "prim_path": "/World/MaterialFixture/carter3/chassis_link/FactoryVisualCargo/Empty_F4_TOTE_002_robot_carter3_0",
+      "captured_world_transform": [
+        [
+          1.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          17.0,
+          1.5,
+          0.6172749590873718,
+          1.0
+        ]
+      ]
+    }
+  ],
+  "source_snapshot_sha256": "00c5f1d4bc14623e8aa292c090859de1438a2909bf6c8264e49329386dcb9efc",
+  "observation_sha256": "2f10f9770f14ec7379e33c3849f420ffd7bdf5e035c4fdc36e2ca58cce62196a",
+  "project_source_sha256": {
+    "factory_ops/material_visual.py": "a242cd6d76f670fdaf73991eaa84b619a79bdc0f45fa10a9b3c225e4a2b6e0fd",
+    "factory_ops/visual_state.py": "9a1f60cc69168032ecce4252329981b4e34d016f1a6b504851291c189601a496",
+    "scripts/isaac/factory_visuals.py": "25768848d6b035be333d26382b5096b720aafa4782eee8daa894f677721b90db",
+    "scripts/isaac/local45_fleet4_transport_scene.py": "69c64ccebd34b6a44554f374149a39db949a68f74a472bc83800ff4f122f3493",
+    "scripts/isaac/local_asset_probe.py": "042e7c3255c339a5d5705a0bb70e377f0b807d2deda5d06fc0cffb0870bf345c"
+  },
+  "factory_input_sha256": {
+    "layout.json": "46480d5dc336db761664eb1cacccbdd5e47e4e38b71e07b68c9246ddebc2fd82",
+    "transport-profile.json": "11df33e3b7829eb63773808707b58f3315a253f9e1d2c8e58fc5c0592042c3db",
+    "scene": "2126f01ecde38e0f36417a827676b09dcbc6c2af523e05ca78851e966e301db7"
+  },
+  "captures": [
+    {
+      "path": "material.png",
+      "sha256": "5adbe4a81c615ae27e467525f5884e9e1e440070befda6039152dd29459a2f0c"
+    }
+  ],
+  "attempts": [
+    {
+      "stage": "local45-material-visual-076",
+      "run_id": "a1a385fc9f6146a1a39c606c555c04a4",
+      "render_status": "failed",
+      "error": "ValueError: visual setup changed the 20 source collider paths, transforms, bounds or enabled values",
+      "host_closed": true,
+      "remaining_owned_pids": [],
+      "result_sha256": "0808b5f048b2588c59f983668c6fe2b9c3cbad0e0e57e6e5975002a1ed3a5c66",
+      "job_sha256": "ee1607c58c6348a8538ea7f342da2f4fde3107329b80458c08e0502f2ece1712",
+      "captures": []
+    },
+    {
+      "stage": "local45-material-visual-076-r2",
+      "run_id": "f046e7fb902e4dcc9425ee2627db9bde",
+      "render_status": "failed",
+      "error": "RuntimeError: render-only buffer or frozen physics validation failed",
+      "host_closed": true,
+      "remaining_owned_pids": [],
+      "result_sha256": "d3d9026b680734c8d2be2c7893a29ba9c3a6423f884b22621deda17e0d4df940",
+      "job_sha256": "f2a19350e440d52873529bd58bbeaf2e0cad7c01bfd09d0ae8dd954c669d2615",
+      "captures": []
+    },
+    {
+      "stage": "local45-material-visual-076-r3",
+      "run_id": "c0c48d77e80549148c5479318035fb82",
+      "render_status": "failed",
+      "error": "AttributeError: 'HydraTexture' object has no attribute 'split'",
+      "host_closed": true,
+      "remaining_owned_pids": [],
+      "result_sha256": "a086489ca44f0c218dbeaf2a7ad51af11f331f469deeef3355aec7f14f4fa613",
+      "job_sha256": "3c5983b0f130c10bfbdca41935861edbba7f8cf7195a29401e66657b0aa6c090",
+      "captures": [
+        {
+          "path": "material.png",
+          "sha256": "c682f0bee449b27b71d69d055e3d9ba40ef61d8661345ba275ab30ff326b21ef"
+        }
+      ]
+    },
+    {
+      "stage": "local45-material-visual-076-r4",
+      "run_id": "090eaec258f94f6cab99791ef23e2058",
+      "render_status": "passed",
+      "error": null,
+      "host_closed": true,
+      "remaining_owned_pids": [],
+      "result_sha256": "5949ad3591af7b5490531134d52798be74450d4c9dcb957a919226f47041f705",
+      "job_sha256": "fa6441ee270c481d5d9eee188de7c5105bb6da5245c4e5ade76230d11899cfac",
+      "captures": [
+        {
+          "path": "material.png",
+          "sha256": "5adbe4a81c615ae27e467525f5884e9e1e440070befda6039152dd29459a2f0c"
+        }
+      ]
+    }
+  ],
+  "both_source_OS_closed": true,
+  "render_host_closed": true,
+  "remaining_owned_pids": [],
+  "goal80_complete": false,
+  "preservation_destinations": [
+    "D:/FactoryOpsArtifacts/operations-072/checkpoint-001",
+    "E:/FactoryOpsArtifacts/operations-072/checkpoint-001"
+  ]
+}
