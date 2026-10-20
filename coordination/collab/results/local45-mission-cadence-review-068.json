@@ -1,0 +1,31 @@
+{
+  "task_id": "local45-mission-cadence-review-068",
+  "attempt": 1,
+  "contract_revision": 68,
+  "owner": "control",
+  "ack": true,
+  "mode": "one_bounded_read_only_source_review",
+  "verdict": "PASS",
+  "document_encoding": "ASCII",
+  "source_sha256": {
+    "scripts/isaac/g2_scene.py": "b677011d8b67fb8e40f1f5385052e1c9b538082f2b13c57f0a795be7f740ac4d",
+    "scripts/isaac/local45_fleet4_transport_scene.py": "dc8370ebce70a7ba55f7dd5432930f5fab5bd7097cb89a44ad6cead898596d69",
+    "tests/test_local45_mission_cadence.py": "451d6dbcc71fafb918014e885bb3a8091cee487c2a0302c5034711b176445426"
+  },
+  "all_three_expected_digests_matched": true,
+  "findings": [],
+  "checked": [
+    "g2_scene lines78-94 select the existing stepper only for local45+physx_planar. Other paths retain app.update. Clock publication follows every successful physics update; a stepper exception propagates without fallback or clock publication.",
+    "Startup warmup and initial scan admission still use the old update path. The mission stepper is created after startup at lines1230-1243, with the initial actual frame/time and phase-boundary limitation recorded.",
+    "Main loop lines1310-1316 use the helper render boolean to gate native scan acquisition/publication, spin ROS afterward, and read actual World time/frame for control evidence. No cache clear, timestamp rewrite or native frame offset appears in this integration.",
+    "Relevant existing publisher/observer lines confirm that PhysX acquisition occurs in the gated publisher, while diagnostics read cached_snapshot without side acquisition. RGB remains on the separate existing capture/frozen-physics path.",
+    "local45 source pins include factory_ops/local45_stepping.py. No motion, TTL, start gate or clock-value changes found in the reviewed cadence boundary.",
+    "New test source covers default routing, update-before-clock ordering,12 physical ticks from frame124 with clocks125..136 and scans/render130,136, plus failure propagation without fallback. Tests were read, not run."
+  ],
+  "limits": [
+    "Source-only bounded review of the specified regions/new test and relevant existing caller/observer lines. No product edits, tests, AST, SDK reads, runtime actions, bags, Git or new agents.",
+    "Root-reported4 CPU PASS,3 AST PASS and actual067 range-response PASS were not rerun or independently reaccepted here. The067 speed ratio is fixture-only.",
+    "Full-factory performance, actual027 behavior, four-robot completion and host closure remain outside this source verdict. Native acquisition timestamp remains unavailable."
+  ],
+  "written_paths": ["coordination/collab/results/local45-mission-cadence-review-068.json"]
+}

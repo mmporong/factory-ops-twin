@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "run_id": "0d2753fab4654ee1a4d099e5a9f74001",
+  "producer_source_commit": "58daaa1fd05ea1a41af86c9e02869d9fdde6fe61",
+  "probe_source_sha256": "39b04233cff6a4cb88b1acbe0bd1b9e31faca2bbdea94cb92d9a59f2a0659965",
+  "status": "passed_range_change_fixture",
+  "phases": {
+    "baseline_app_update": {
+      "actual_steps": 36,
+      "actual_elapsed_sim_s": 0.6000000312924385,
+      "stepping_wall_s": 0.3910000000614673,
+      "block_count": 6,
+      "actual_forward_ranges_m": [
+        5.900000095367432,
+        3.9000000953674316,
+        6.900000095367432,
+        5.900000095367432,
+        3.9000000953674316,
+        6.900000095367432
+      ],
+      "wall_centers_x_m": [
+        6.0,
+        4.0,
+        7.0,
+        6.0,
+        4.0,
+        7.0
+      ],
+      "all_geometry_change_checks_passed": true
+    },
+    "candidate_stepper6": {
+      "actual_steps": 36,
+      "actual_elapsed_sim_s": 0.6000000312924385,
+      "stepping_wall_s": 0.07700000004842877,
+      "block_count": 6,
+      "actual_forward_ranges_m": [
+        5.900000095367432,
+        3.9000000953674316,
+        6.900000095367432,
+        5.900000095367432,
+        3.9000000953674316,
+        6.900000095367432
+      ],
+      "wall_centers_x_m": [
+        6.0,
+        4.0,
+        7.0,
+        6.0,
+        4.0,
+        7.0
+      ],
+      "all_geometry_change_checks_passed": true
+    }
+  },
+  "fixture_stepping_wall_ratio_baseline_over_candidate": 5.077922075526621,
+  "performance_scope": "Small fixture stepping-only interval, not measured whole-factory speed; startup/evidence IO separate.",
+  "sensor_scope": "One exact720x1 planar PhysX sensor; changed wall response within6actual steps observed with actual native arrays. No AMR, ROS or real lidar qualification.",
+  "native_absolute_acquisition_time_available": false,
+  "current_frame_native_timestamp_verified": false,
+  "sdk_close_requested": true,
+  "sdk_close_returned_recorded": false,
+  "host_job_closed": true,
+  "remaining_owned_pids": [],
+  "timed_out": false,
+  "cleanup_errors": [],
+  "raw_originals": "D:\\FactoryOpsRuntime\\local45-physx-cadence-067",
+  "bag_or_SDG_generated": false,
+  "goal80_complete": false,
+  "next": "Local45 PhysX-only mission cadence wiring; actual scan publication after scheduledrender, actual fullfleet027 evidence still required."
+}

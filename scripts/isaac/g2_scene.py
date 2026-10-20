@@ -75,10 +75,23 @@ def _setup_worker_clock(stage: Any, app: Any, manager: Any, *, local_sdk45: bool
     return rclpy, node, stamps, None
 
 
-def _update_physics_app(app: Any, clock_owner: Any) -> None:
-    app.update()
+def _setup_mission_stepper(manager: Any, physics_dt_s: float, *, local_sdk45: bool,
+                           lidar_backend: str) -> Any:
+    if not (local_sdk45 and lidar_backend == "physx_planar"):
+        return None
+    from factory_ops.local45_stepping import Local45Stepper
+    return Local45Stepper(manager.world, physics_dt_s, render_every_steps=6)
+
+
+def _update_physics_app(app: Any, clock_owner: Any, *, stepper: Any = None) -> bool:
+    if stepper is None:
+        app.update()
+        rendered = True
+    else:
+        rendered = stepper.step()["rendered"]
     if clock_owner is not None:
         clock_owner.publish()
+    return rendered
 
 
 def _advance_terminal_settle(
@@ -1214,6 +1227,20 @@ def _run(
         last_clock_report_frame: int | None = None
         start_sim = initial_time
         max_sim = min(float(config["max_sim_time_s"]), float(scenario["max_sim_time_s"]))
+        mission_stepper = _setup_mission_stepper(SimulationManager, float(config["physics_dt_s"]),
+            local_sdk45=local_sdk45, lidar_backend=lidar_backend)
+        if mission_stepper is not None:
+            result["mission_physics_cadence"] = {
+                "physics": "one actual World.step(render=False) per control iteration",
+                "scheduled_render_every_physics_steps": 6,
+                "scan_publication": "only after scheduled render; first interval may include the startup-to-mission phase change",
+                "explicit_rgb_capture": "separate paused render with frozen physics validation",
+                "native_sensor_timestamp_available": False,
+            }
+            _atomic_json(output / "physics-cadence.json", {"run_id": args.run_id,
+                "start_physics_frame": int(SimulationManager.get_num_physics_steps()),
+                "start_world_time_s": float(SimulationManager.get_simulation_time()),
+                **result["mission_physics_cadence"]})
         while True:
             now = float(SimulationManager.get_simulation_time())
             if scene_extension is not None:
@@ -1280,8 +1307,9 @@ def _run(
                     "requested_angular": requested_angular, "stop_reason": stop_reason,
                     "command_audit": command_audit,
                 }
-            _update_physics_app(app, world_clock)
-            publish_native_scans()
+            rendered = _update_physics_app(app, world_clock, stepper=mission_stepper)
+            if rendered:
+                publish_native_scans()
             _spin_nodes(rclpy, [clock_node, *robot_nodes])
             step += 1
             stamp = float(SimulationManager.get_simulation_time())
