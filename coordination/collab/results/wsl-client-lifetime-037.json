@@ -1,0 +1,234 @@
+{
+  "task_id": "wsl-client-lifetime-037",
+  "attempt": 1,
+  "contract_revision": 37,
+  "ACK": true,
+  "owner": "control",
+  "status": "completed_root_accepted",
+  "input_sha_matched": true,
+  "009_reboot_cause": "미확정. Linux boot epoch 변화와 별도 종료 회수는 사용자 보고로 수신함.",
+  "gpu_sdk_ros_run": false,
+  "test_command": "python3.10 -m unittest tests.test_wsl_process_supervisor -v",
+  "test_result": "12 PASS, 0.012s, 1회 실행",
+  "fixture_path": "artifacts/local45/wsl-lifetime-037/admission.json",
+  "accepted": true,
+  "completed_at_utc": "2026-10-20T11:00:06.888943+09:00",
+  "input_source_sha256": {
+    "factory_ops/wsl_process_supervisor.py": "db34b177fae6f911544e6d041485afb6bd007599911e2a489f0927caa8f2ad97",
+    "tests/test_wsl_process_supervisor.py": "1d4ce46765bdaae9fe9df418a9c72937a9e9c35f63cf237a2837ec883a1ecd32"
+  },
+  "source_sha256": {
+    "factory_ops/wsl_process_supervisor.py": "b963a088c5137165300a8d19b6201b3bba62d881fe10430f04e6d5dddb1768aa",
+    "tests/test_wsl_process_supervisor.py": "ff9c9fc4099f6f8ecf87513d3ab95fc0957a46b0561d6a2796b91a4988d6ee21"
+  },
+  "source_changed_after_cpu_or_actual": false,
+  "changed_paths": [
+    "factory_ops/wsl_process_supervisor.py",
+    "tests/test_wsl_process_supervisor.py",
+    "coordination/collab/results/wsl-client-lifetime-037.json",
+    "artifacts/local45/wsl-lifetime-037"
+  ],
+  "implementation": [
+    "기존 start/inspect/stop API, single-use, 랜덤 소유 unit 이름과 실행 전 not-found 확인, description/InvocationID/cgroup 소유 검증, 사용자 command의 bounded argv/base64 JSON 전달을 유지.",
+    "wsl.exe --distribution Ubuntu --exec systemd-run --wait를 shell=False/CREATE_NO_WINDOW Popen으로 유지한다. start는 기존 command timeout을 쓰는 유한 admission polling 뒤 활성 unit과 살아 있는 클라이언트를 확인하여 반환하며 작업 종료를 기다리지 않는다.",
+    "unit의 StandardOutput/StandardError append 로그, RuntimeMaxSec, TimeoutStopSec, KillMode=control-group, SendSIGKILL=yes를 유지. 클라이언트 진단은 file-backed 임시 스트림을 사용하여 읽지 않은 PIPE가 수명 연결을 막지 않도록 함.",
+    "inspect는 foreground Windows client PID/running/returncode/closed/forced_termination을 반환. exact --unit 인자가 일치하는 Linux systemd-run waiter도 PID/start_ticks로 관측하며 unit process와 구분해 보존.",
+    "stop은 같은 소유 unit만 systemctl --user stop으로 종료한다. 기존 cgroup/관측된 PID 소멸에 더해 exact-unit waiter 소멸과 foreground client join이 충족돼야 closure_verified=true. Windows Job이 Linux를 닫았다고 표현하지 않음.",
+    "stop/query 실패 경로에도 해당 Popen 인스턴스를 bounded join한다. 필요 시 그 인스턴스에만 terminate/kill fallback을 쓰며 다른 PID/이름 검색 종료는 하지 않는다. Linux/소유권 검증에 실패하면 closure 성공으로 바꾸지 않는다.",
+    "_show와 _checked의 비정상 결과에 returncode와 stdout/stderr 마지막 1500자를 포함. stderr가 비어 있어도 실패 정보를 보존."
+  ],
+  "validation": [
+    {
+      "command": "python3.10 -m unittest tests.test_wsl_process_supervisor -v",
+      "result": "PASS: 12 tests, 0.012s, exit0",
+      "execution_count": 1,
+      "scope": "malformed/preexisting/opaque argv/single-use/foreign identity/cgroup/PID closure 회귀, 살아 있는 foreground admission, query 진단, 실패 경로 join, exact-unit waiter closure"
+    },
+    {
+      "command": "python3.10 -c \"import subprocess,sys; subprocess.run([sys.executable,'tests/test_wsl_process_supervisor.py','--actual-lifetime'],timeout=100,check=True)\"",
+      "result": "PASS: WSL-only fixture 1회, 외부 상한100초, 내부 실제71.875초, quiet interval70.016초, exit0",
+      "execution_count": 1,
+      "runtime_bound_s": 85,
+      "scope": "실제 기존 Ubuntu systemd --user transient unit, harmless Python parent + setsid child, foreground WSL client, 동일 boot ID와 전체 owned closure"
+    },
+    {
+      "command": "PowerShell Get-Process -Id 63132 -ErrorAction SilentlyContinue",
+      "result": "종료 후 해당 Windows client PID 미존재. 종료 명령 추가 실행 없음."
+    }
+  ],
+  "cpu_test_execution_count": 1,
+  "actual_fixture_execution_count": 1,
+  "typecheck_run": false,
+  "fixture": {
+    "path": "artifacts/local45/wsl-lifetime-037/admission.json",
+    "sha256": "644fede4daa3295586977c2fe600a81e828d323d679e9227ca4f15953e28255c",
+    "status": "passed",
+    "unit_name": "factory-ops-524d2e5203e44380960c62e6b5afc438-0a4c69e00e3e412eb2e7941e5c1d7721.service",
+    "run_id": "524d2e5203e44380960c62e6b5afc438",
+    "boot_id_before": "6378bf6a-d9ed-4c2c-b891-551f92944eb1",
+    "boot_id_after": "6378bf6a-d9ed-4c2c-b891-551f92944eb1",
+    "same_boot_id": true,
+    "quiet_interval_s": 70.01600000000326,
+    "elapsed_wall_s": 71.875,
+    "fixture_hard_bound_s": 100,
+    "service_runtime_bound_s": 85,
+    "windows_client_pid": 63132,
+    "linux_parent_pid": 945,
+    "linux_setsid_child_pid": 949,
+    "linux_systemd_run_waiters": [
+      {
+        "pid": 943,
+        "start_ticks": 73110,
+        "state": "S",
+        "session_id": 943
+      }
+    ],
+    "windows_poll_samples": 71,
+    "no_wsl_queries_during_quiet_interval": true,
+    "all_poll_samples_client_alive": true,
+    "starting_state": {
+      "TimeoutStopUSec": "1min 30s",
+      "RuntimeMaxUSec": "infinity",
+      "MainPID": "0",
+      "Result": "success",
+      "ExecMainStatus": "0",
+      "ControlGroup": "",
+      "WorkingDirectory": "",
+      "StandardOutput": "inherit",
+      "StandardError": "inherit",
+      "KillMode": "control-group",
+      "SendSIGKILL": "yes",
+      "Id": "factory-ops-524d2e5203e44380960c62e6b5afc438-0a4c69e00e3e412eb2e7941e5c1d7721.service",
+      "Description": "factory-ops-524d2e5203e44380960c62e6b5afc438-0a4c69e00e3e412eb2e7941e5c1d7721.service",
+      "LoadState": "not-found",
+      "ActiveState": "inactive",
+      "SubState": "dead",
+      "Transient": "no",
+      "InvocationID": ""
+    },
+    "starting_identity": {
+      "Id": "factory-ops-524d2e5203e44380960c62e6b5afc438-0a4c69e00e3e412eb2e7941e5c1d7721.service",
+      "InvocationID": "a2409ded8333451186ba756c91a28d10",
+      "Description": "factory-ops run=524d2e5203e44380960c62e6b5afc438 owner=0a4c69e00e3e412eb2e7941e5c1d7721",
+      "ControlGroup": "/user.slice/user-1000.slice/user@1000.service/app.slice/factory-ops-524d2e5203e44380960c62e6b5afc438-0a4c69e00e3e412eb2e7941e5c1d7721.service"
+    },
+    "final_client": {
+      "started": true,
+      "pid": 63132,
+      "running": false,
+      "returncode": 0,
+      "closed": true,
+      "forced_termination": false,
+      "stdout_tail": "",
+      "stderr_tail": ""
+    },
+    "linux_closure_verified": true,
+    "closure_verified": true,
+    "cgroup_exists": false,
+    "cgroup_populated": false,
+    "cgroup_pids": [],
+    "live_known_processes": [],
+    "remaining_exact_unit_waiters": [],
+    "known_processes": {
+      "945": 73121,
+      "949": 73127,
+      "943": 73110
+    },
+    "windows_client_pid_present_after_close": false,
+    "log_path": "artifacts/local45/wsl-lifetime-037/process.log",
+    "log_sha256": "d89bb2160b2d11abc079c37c2f335adc9dee4def4e62db1d99aa82e268f91bf9",
+    "source_snapshots": [
+      "artifacts/local45/wsl-lifetime-037/wsl_process_supervisor.py",
+      "artifacts/local45/wsl-lifetime-037/test_wsl_process_supervisor.py"
+    ]
+  },
+  "api_notes": {
+    "constructor_unchanged": "WslProcessSupervisor(run_id, *, distribution=\"Ubuntu\", command_timeout_s=20, stop_timeout_s=10)",
+    "start_unchanged": "start(command: Sequence[str], *, working_directory: str, log_path: str, runtime_bound_s: float) -> dict[str, Any]",
+    "inspect_unchanged": "inspect() -> dict[str, Any]",
+    "stop_unchanged": "stop() -> dict[str, Any]",
+    "new_return_fields": "client: {started,pid,running,returncode,closed,forced_termination,stdout_tail,stderr_tail}; foreground_waiters; linux_closure_verified. 진단 tail은 join 후 추가된다.",
+    "closure": "closure_verified는 Linux unit/cgroup/관측 PID/exact-unit waiter와 Windows client가 모두 닫혔을 때만 true. 서비스 작업의 성공 종료 판정과 구분한다.",
+    "failure": "예외를 성공 receipt로 바꾸지 않는다. query/identity 실패 경로에서도 소유 Popen은 finally에서 join한다. unit stop 권한은 포착한 description/invocation/cgroup에 한정한다.",
+    "caller_lifecycle": "start 후 같은 인스턴스를 유지하고 root의 기존 close_pair/finally에서 stop을 호출한다. client만 종료한 결과를 Linux closure 증거로 쓰지 않는다.",
+    "integration": "root가 030 supervisor를 standalone hostsupport에 복사한 상태이므로 향후 immutable 실행에는 root가 새 SHA를 복사·동결해야 한다. 이 작업은 hostsupport/coordinator/과거 source를 편집하지 않았다."
+  },
+  "references": [
+    {
+      "url": "https://learn.microsoft.com/en-us/windows/wsl/systemd",
+      "evidence": "How does enabling systemd affect WSL architecture 절: systemd 서비스 자체는 WSL instance를 살려 두지 않는다. 수명 연결을 보완하는 근거이며 009 reboot의 특정 원인으로 단정하지 않는다."
+    },
+    {
+      "url": "https://www.freedesktop.org/software/systemd/man/255/systemd-run.html",
+      "evidence": "--wait 절: transient service가 멈출 때까지 동기적으로 기다린다. --quiet로 정보 출력을 억제한다. 기존 user service/cgroup/log 속성을 보존하는 foreground client에 사용했다."
+    }
+  ],
+  "limits": [
+    "009 재부팅 원인은 미확정으로 유지. 이번 fixture를 과거 원인의 증명으로 확대하지 않음.",
+    "기존 12개 CPU 검사와 WSL fixture 1회 결과를 최종 정리했으며 추가 검사·SDK/GPU/ROS/Git/전역 환경 변경은 실행하지 않음.",
+    "이번 수용은 수명 유지 연결과 소유 범위 종료 경계에 한정. 전체 통합 실행은 root가 이어감."
+  ],
+  "global_environment_changed": false,
+  "processes": {
+    "started_and_closed": [
+      {
+        "scope": "owned Windows foreground wsl.exe",
+        "pid": 63132,
+        "returncode": 0
+      },
+      {
+        "scope": "owned Linux systemd-run --wait",
+        "pids": [
+          943
+        ]
+      },
+      {
+        "scope": "owned harmless Python parent/setsid child",
+        "pids": [
+          945,
+          949
+        ]
+      }
+    ],
+    "remaining_owned_processes": [],
+    "remaining_owned_units": [],
+    "stop_command": "systemctl --user --no-ask-password stop factory-ops-524d2e5203e44380960c62e6b5afc438-0a4c69e00e3e412eb2e7941e5c1d7721.service (이미 실행하고 closure 확인 완료. 추가 실행 불필요)"
+  },
+  "pending_owner_work": [],
+  "next_owner": "root가 이후 통합 실행을 이어감",
+  "finalized_at_utc": "2026-10-20T02:02:02.0575872Z",
+  "root_acceptance": {
+    "source_diff_bounded_review": "root가 현재 source diff를 한정 확인했다고 통보",
+    "fixture": "root가 admission.json의 70.016초·동일 boot_id·unit/cgroup/client closure passed를 확인했다고 통보",
+    "additional_tests_run": false
+  },
+  "final_validation": {
+    "cpu_command": "python3.10 -m unittest tests.test_wsl_process_supervisor -v",
+    "cpu_result": "12 PASS, 0.012s, 기존 1회 실행",
+    "actual_fixture_count": 1,
+    "fixture_path": "artifacts/local45/wsl-lifetime-037/admission.json",
+    "fixture_sha256": "644fede4daa3295586977c2fe600a81e828d323d679e9227ca4f15953e28255c",
+    "fixture_status": "passed",
+    "quiet_interval_s": 70.01600000000326,
+    "elapsed_wall_s": 71.875,
+    "same_boot_id": true,
+    "boot_id": "6378bf6a-d9ed-4c2c-b891-551f92944eb1",
+    "closure_verified": true,
+    "linux_closure_verified": true,
+    "cgroup_populated": false,
+    "cgroup_pids": [],
+    "live_known_processes": [],
+    "foreground_waiters": [],
+    "client": {
+      "started": true,
+      "pid": 63132,
+      "running": false,
+      "returncode": 0,
+      "closed": true,
+      "forced_termination": false,
+      "stdout_tail": "",
+      "stderr_tail": ""
+    },
+    "additional_tests_run": false
+  }
+}

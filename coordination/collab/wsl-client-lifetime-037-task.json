@@ -1,0 +1,46 @@
+{
+  "task_id": "wsl-client-lifetime-037",
+  "attempt": 1,
+  "contract_revision": 37,
+  "owner": "control",
+  "source_commit": "834b19ec5fb62c365c3fe291eca38e6878e45c1c",
+  "binding": {
+    "session": "default",
+    "pane_id": "w1:p1C",
+    "terminal_id": "term_65e06d27e415810",
+    "agent_session": "01a152aa-24b4-7a31-92e3-a2b620f4feeb"
+  },
+  "goal": "Keep an owned foreground WSL client alive for its supervised unit lifetime; preserve existing cgroup ownership and bounded cleanup",
+  "write_paths": [
+    "factory_ops/wsl_process_supervisor.py",
+    "tests/test_wsl_process_supervisor.py",
+    "coordination/collab/results/wsl-client-lifetime-037.json",
+    "artifacts/local45/wsl-lifetime-037"
+  ],
+  "evidence": [
+    "D:/FactoryOpsRuntime/local45-transport-009/pair-host.json: failed _show; stderr empty",
+    "D:/FactoryOpsRuntime/local45-transport-009/linux-recovery-001.json: Linux boot epoch after run start, no owned process or cgroup, unit not found; closure separately recovered",
+    "https://learn.microsoft.com/en-us/windows/wsl/systemd: systemd services do not keep WSL alive",
+    "https://www.freedesktop.org/software/systemd/man/255/systemd-run.html: --wait remains until service termination"
+  ],
+  "acceptance": [
+    "Preserve start/inspect/stop API, single-use and exact description/invocation/cgroup ownership checks",
+    "Prefer foreground wsl.exe systemd-run --wait through Popen, retaining current unit log properties; start returns after bounded admission polling rather than waiting for the workload to finish",
+    "Track client PID, exit and closure; stop exact unit, verify cgroup empty and join the foreground client. Leave no orphan client/helper",
+    "Preserve truthful failure handling; include query return code and stdout/stderr diagnostics where useful",
+    "Focused CPU tests once, then one WSL-only 70-second fixture: same boot ID, living foreground client through interval, complete unit/cgroup/client closure. Actual fixture hard bound 100 seconds",
+    "Return source digests, API notes, commands/results, fixture path and closure evidence; root performs a bounded integration check"
+  ],
+  "non_goals": [
+    "No GPU, SDK or ROS launch",
+    "No global WSL settings, distribution restart, package installation or global services",
+    "No edits to coordinator, G3, charging, README or Git",
+    "No additional agents or panes, no bag access, no old evidence mutation"
+  ],
+  "result_path": "coordination/collab/results/wsl-client-lifetime-037.json",
+  "notes": "Not alone in the shared tree. Root owns other files and will not modify your two source/test paths. ACK task/attempt. Reboot in009 is observed; idle shutdown as its specific cause remains unproven. This task repairs the missing lifetime anchor.",
+  "inputs": {
+    "factory_ops/wsl_process_supervisor.py": "db34b177fae6f911544e6d041485afb6bd007599911e2a489f0927caa8f2ad97",
+    "tests/test_wsl_process_supervisor.py": "1d4ce46765bdaae9fe9df418a9c72937a9e9c35f63cf237a2837ec883a1ecd32"
+  }
+}

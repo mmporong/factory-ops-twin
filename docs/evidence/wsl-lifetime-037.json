@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "scope": "owned WSL client lifetime; no GPU/ROS/mission qualification",
+  "source_sha256": {
+    "factory_ops/wsl_process_supervisor.py": "b963a088c5137165300a8d19b6201b3bba62d881fe10430f04e6d5dddb1768aa",
+    "tests/test_wsl_process_supervisor.py": "ff9c9fc4099f6f8ecf87513d3ab95fc0957a46b0561d6a2796b91a4988d6ee21"
+  },
+  "cpu_tests": 12,
+  "cpu_test_runs": 1,
+  "actual_fixture_runs": 1,
+  "quiet_interval_s": 70.01600000000326,
+  "elapsed_wall_s": 71.875,
+  "same_boot_id": true,
+  "all_client_samples_alive": true,
+  "client_pid": 63132,
+  "final_client": {
+    "started": true,
+    "pid": 63132,
+    "running": false,
+    "returncode": 0,
+    "closed": true,
+    "forced_termination": false,
+    "stdout_tail": "",
+    "stderr_tail": ""
+  },
+  "unit_cgroup_waiter_closed": true,
+  "remaining_linux_cgroup_pids": [],
+  "remaining_linux_waiters": [],
+  "fixture_path": "artifacts/local45/wsl-lifetime-037/admission.json",
+  "fixture_sha256": "644fede4daa3295586977c2fe600a81e828d323d679e9227ca4f15953e28255c",
+  "009_specific_reboot_cause": "unconfirmed",
+  "official_references": [
+    "https://learn.microsoft.com/en-us/windows/wsl/systemd",
+    "https://www.freedesktop.org/software/systemd/man/255/systemd-run.html"
+  ]
+}

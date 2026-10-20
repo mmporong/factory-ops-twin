@@ -1,6 +1,6 @@
 {
-  "revision": 36,
-  "updated_at": "2026-10-20T01:18:54.263913+00:00",
+  "revision": 37,
+  "updated_at": "2026-10-20T01:50:53.069971+00:00",
   "scope": {
     "excluded": "실물 로봇 실행, 새 유료 서비스/에셋, 공개 배포",
     "project_root": "C:\\Users\\LIMMM\\factory-ops-twin",
@@ -737,6 +737,24 @@
         "coordination/collab/results/ros-geometric-charging-036.json"
       ],
       "acceptance_record": "Root inspected same energy owner, arrival identity/geometry/stationary gates, two-sided contact integration and release;20 focused child CPU checks passed once, source digests matched. G3 wiring is root future delta; actual charging still unverified, no physical contact claim."
+    },
+    {
+      "task_id": "wsl-client-lifetime-037",
+      "attempt": 1,
+      "contract_revision": 37,
+      "owner": "control",
+      "reviewer": "root",
+      "status": "accepted",
+      "ACK": true,
+      "task_path": "coordination/collab/wsl-client-lifetime-037-task.json",
+      "result_path": "coordination/collab/results/wsl-client-lifetime-037.json",
+      "write_paths": [
+        "factory_ops/wsl_process_supervisor.py",
+        "tests/test_wsl_process_supervisor.py",
+        "coordination/collab/results/wsl-client-lifetime-037.json",
+        "artifacts/local45/wsl-lifetime-037"
+      ],
+      "acceptance_record": "Root inspected foreground wait admission, exact unit/cgroup/waiter ownership and bounded client join. Source/fixtureSHA matched.12 CPU cases once; actual70.016s quiet interval same boot,71 client-alive samples, parent+setsid child+waiter+Windowsclient closed with no forced termination. Specific009 reboot trigger remains unconfirmed."
     }
   ],
   "decisions": [

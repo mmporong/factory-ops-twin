@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "run_id": "c023df04f27b4bf0b2591b34a74fc808",
+  "source_commit": "834b19ec5fb62c365c3fe291eca38e6878e45c1c",
+  "status": "failed_wsl_observation_with_midrun_linux_reboot",
+  "original_directory": "D:\\FactoryOpsRuntime\\local45-transport-009",
+  "host_error": "RuntimeError: cannot observe the existing user manager: ",
+  "windows_closed": true,
+  "initial_linux_closed": false,
+  "linux_closure_recovered": true,
+  "recovered_owned_processes": [],
+  "recovered_cgroup_exists": false,
+  "recovery_boot_id": "6378bf6a-d9ed-4c2c-b891-551f92944eb1",
+  "linux_boot_epoch_s": 1792460669.1999638,
+  "run_start_epoch_s": 1792460624.7771087,
+  "boot_after_run_start": true,
+  "recovery_record_sha256": "fc154557d308a86c167ef0be35eab5b3f3876566c011e32887c8962de7785b07",
+  "cause": "specific reboot trigger unconfirmed; detached systemd service lacked a foreground WSL lifetime client",
+  "pending_repair": "037 owned foreground systemd-run --wait lifetime and paired client/unit cleanup",
+  "official_references": [
+    "https://learn.microsoft.com/en-us/windows/wsl/systemd",
+    "https://www.freedesktop.org/software/systemd/man/255/systemd-run.html"
+  ],
+  "bag_sql_opened": false,
+  "actual_charging_verified": false,
+  "actual_transport_completed": false
+}

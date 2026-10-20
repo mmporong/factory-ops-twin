@@ -11,6 +11,7 @@ import math
 from pathlib import PurePosixPath
 import re
 import subprocess
+import tempfile
 import time
 from typing import Any, Sequence
 import uuid
@@ -27,6 +28,7 @@ os.close(fd)
 _CGROUP_PROBE = """import json,os,sys
 group=sys.argv[1]
 known=json.loads(sys.argv[2])
+unit=sys.argv[3]
 root='/sys/fs/cgroup'+group
 def identity(pid):
     try:
@@ -52,13 +54,28 @@ if present:
         except FileNotFoundError:
             pass
 processes=[p for pid in sorted(pids) if (p:=identity(pid)) is not None]
+waiters=[]
+for pid in os.listdir('/proc'):
+    if not pid.isdigit():
+        continue
+    try:
+        with open('/proc/'+pid+'/cmdline','rb') as f:
+            args=f.read().split(bytes([0]))
+        if (args and os.path.basename(args[0])==b'systemd-run'
+                and ('--unit='+unit).encode() in args):
+            current=identity(pid)
+            if current is not None:
+                waiters.append(current)
+    except (FileNotFoundError, ProcessLookupError, PermissionError):
+        pass
 live_known=[]
 for pid,ticks in known.items():
     current=identity(pid)
     if current is not None and current['start_ticks']==ticks:
         live_known.append(current)
 print(json.dumps({'cgroup_exists':present,'cgroup_populated':populated,
-    'cgroup_pids':sorted(pids),'processes':processes,'live_known_processes':live_known}))
+    'cgroup_pids':sorted(pids),'processes':processes,'live_known_processes':live_known,
+    'foreground_waiters':waiters}))
 """
 
 
@@ -103,6 +120,11 @@ class WslProcessSupervisor:
         self._identity: dict[str, str] | None = None
         self._starting_state: dict[str, str] | None = None
         self._known_processes: dict[str, int] = {}
+        self._client: subprocess.Popen[str] | None = None
+        self._client_output: list[Any] = []
+        self._client_joined = False
+        self._client_forced = False
+        self._client_diagnostics: dict[str, str] = {}
 
     @property
     def unit_name(self) -> str:
@@ -116,15 +138,70 @@ class WslProcessSupervisor:
     def _checked(self, args: Sequence[str]) -> str:
         result = self._call(args)
         if result.returncode:
-            raise RuntimeError("WSL user-manager command failed: " + result.stderr[-1500:])
+            raise RuntimeError("WSL user-manager command failed: " + self._diagnostics(result))
         return result.stdout
+
+    @staticmethod
+    def _diagnostics(result: subprocess.CompletedProcess[str]) -> str:
+        return f"returncode={result.returncode}; stdout={result.stdout[-1500:]!r}; stderr={result.stderr[-1500:]!r}"
+
+    def _launch(self, args: Sequence[str]) -> None:
+        # Unit output stays in its authored log. File-backed client diagnostics
+        # avoid an unread PIPE blocking the lifetime anchor.
+        self._client_output = [tempfile.TemporaryFile(), tempfile.TemporaryFile()]
+        try:
+            self._client = subprocess.Popen(
+                ["wsl.exe", "--distribution", self.distribution, "--exec", *args],
+                stdin=subprocess.DEVNULL, stdout=self._client_output[0], stderr=self._client_output[1],
+                text=True, encoding="utf-8", errors="replace", shell=False,
+                creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+        except BaseException:
+            for stream in self._client_output:
+                stream.close()
+            self._client_output = []
+            raise
+
+    def _join_client(self, *, force: bool = True) -> None:
+        if self._client is None or self._client_joined:
+            return
+        try:
+            self._client.wait(timeout=self._stop_timeout)
+        except subprocess.TimeoutExpired:
+            if not force:
+                return
+            self._client_forced = True
+            self._client.terminate()  # Only this Popen instance, never a PID/name search.
+            try:
+                self._client.wait(timeout=self._stop_timeout)
+            except subprocess.TimeoutExpired:
+                self._client.kill()
+                self._client.wait(timeout=self._stop_timeout)
+        self._client_joined = True
+        for label, stream in zip(("stdout_tail", "stderr_tail"), self._client_output):
+            try:
+                stream.seek(0, 2)
+                stream.seek(max(0, stream.tell() - 1500))
+                self._client_diagnostics[label] = stream.read().decode("utf-8", errors="replace")
+            finally:
+                stream.close()
+        self._client_output = []
+
+    def _client_state(self) -> dict[str, Any]:
+        if self._client is None:
+            return {"started": False, "pid": None, "running": False, "returncode": None, "closed": True}
+        code = self._client.poll()
+        if code is not None:
+            self._join_client(force=False)
+        return {"started": True, "pid": self._client.pid, "running": code is None,
+                "returncode": code, "closed": code is not None and self._client_joined,
+                "forced_termination": self._client_forced, **self._client_diagnostics}
 
     def _show(self) -> dict[str, str]:
         result = self._call(["systemctl", "--user", "--no-ask-password", "show", self._unit,
                              "--property=" + _PROPERTIES])
         state = dict(line.split("=", 1) for line in result.stdout.splitlines() if "=" in line)
         if result.returncode not in (0, 4) or "LoadState" not in state:
-            raise RuntimeError("cannot observe the existing user manager: " + result.stderr[-1500:])
+            raise RuntimeError("cannot observe the existing user manager: " + self._diagnostics(result))
         return state
 
     def _capture_identity(self, state: dict[str, str]) -> None:
@@ -159,7 +236,7 @@ class WslProcessSupervisor:
         self._checked(["/usr/bin/python3", "-c", _PREPARE_LOG, working_directory, log_path])
         # Base64 JSON keeps user argv opaque to systemd specifier/environment
         # expansion as well as to Windows/WSL quoting. The wrapper execs argv.
-        launch = ["systemd-run", "--user", "--no-ask-password", "--quiet", "--service-type=exec",
+        launch = ["systemd-run", "--wait", "--user", "--no-ask-password", "--quiet", "--service-type=exec",
             "--unit=" + self._unit, "--description=" + self._description,
             "--expand-environment=no", "--working-directory=" + working_directory,
             "--property=RuntimeMaxSec=" + str(runtime),
@@ -169,10 +246,24 @@ class WslProcessSupervisor:
             "--property=StandardError=append:" + log_path,
             "--", "/usr/bin/python3", "-c", _EXEC, encoded]
         try:
-            self._checked(launch)
-            self._capture_identity(self._show())
-            return self.inspect()
-        except Exception:
+            self._launch(launch)
+            deadline = time.monotonic() + self._timeout
+            while True:
+                state = self._show()
+                if state["LoadState"] != "not-found":
+                    if state.get("Description") != self._description:
+                        raise RuntimeError("unit description changed during admission; no stop authority")
+                    if state.get("ControlGroup") and state.get("InvocationID"):
+                        self._capture_identity(state)
+                        if state.get("ActiveState") == "active":
+                            if not self._client_state()["running"]:
+                                raise RuntimeError("foreground WSL client exited during admission: " + repr(self._client_state()))
+                            return self.inspect()
+                if not self._client_state()["running"] or time.monotonic() >= deadline:
+                    raise RuntimeError("foreground WSL unit admission failed: " + repr({
+                        "unit_state": state, "client": self._client_state()}))
+                time.sleep(.05)
+        except BaseException:
             # A transport timeout can occur after service creation. Only the
             # exact generated description/invocation may authorize cleanup.
             if self._identity is None:
@@ -180,8 +271,11 @@ class WslProcessSupervisor:
                     self._capture_identity(self._show())
                 except Exception:
                     pass
-            if self._identity is not None:
-                self.stop()
+            try:
+                if self._identity is not None:
+                    self.stop()
+            finally:
+                self._join_client()
             raise
 
     def inspect(self) -> dict[str, Any]:
@@ -191,32 +285,48 @@ class WslProcessSupervisor:
         missing = state["LoadState"] == "not-found"
         matched = missing or all(state.get(key) == self._identity[key]
             for key in ("Id", "InvocationID", "Description")) and state.get("Transient") == "yes"
+        if not missing:
+            group = state.get("ControlGroup", "")
+            matched = matched and (group == self._identity["ControlGroup"]
+                or not group and state.get("ActiveState") in ("inactive", "failed"))
         if not matched:
             return {"unit_name": self._unit, "run_id": self.run_id, "unit_state": state,
                     "ownership_match": False, "closure_verified": False,
-                    "starting_state": self._starting_state, "starting_identity": dict(self._identity)}
+                    "starting_state": self._starting_state, "starting_identity": dict(self._identity),
+                    "client": self._client_state()}
         observed = json.loads(self._checked(["/usr/bin/python3", "-c", _CGROUP_PROBE,
-            self._identity["ControlGroup"], json.dumps(self._known_processes)]))
-        for process in observed["processes"]:
+            self._identity["ControlGroup"], json.dumps(self._known_processes), self._unit]))
+        for process in observed["processes"] + observed.get("foreground_waiters", []):
             self._known_processes[str(process["pid"])] = process["start_ticks"]
         inactive = missing or state.get("ActiveState") in ("inactive", "failed")
-        closed = inactive and not observed["cgroup_populated"] and not observed["cgroup_pids"] and not observed["live_known_processes"]
+        linux_closed = (inactive and not observed["cgroup_populated"] and not observed["cgroup_pids"]
+                        and not observed["live_known_processes"] and not observed.get("foreground_waiters"))
+        client = self._client_state()
         return {"unit_name": self._unit, "run_id": self.run_id, "unit_state": state,
                 "ownership_match": True, "starting_state": self._starting_state,
                 "starting_identity": dict(self._identity), "control_group": self._identity["ControlGroup"],
                 **observed, "known_processes": dict(self._known_processes),
-                "closure_verified": closed, "closure_scope": "owned Linux systemd user-service cgroup and observed PID/start-time identities"}
+                "client": client, "linux_closure_verified": linux_closed,
+                "closure_verified": linux_closed and client["closed"],
+                "closure_scope": "owned Linux unit/cgroup, observed PID/start-time identities, exact-unit systemd-run waiter and foreground WSL client"}
 
     def stop(self) -> dict[str, Any]:
-        before = self.inspect()
-        if not before["ownership_match"]:
-            raise RuntimeError("unit invocation changed; refusing to stop another owner's unit")
-        if before["closure_verified"]:
-            return before
-        self._checked(["systemctl", "--user", "--no-ask-password", "stop", self._unit])
-        deadline = time.monotonic() + self._stop_timeout
-        while True:
-            result = self.inspect()
-            if result["closure_verified"] or not result["ownership_match"] or time.monotonic() >= deadline:
+        try:
+            before = self.inspect()
+            if not before["ownership_match"]:
+                raise RuntimeError("unit invocation changed; refusing to stop another owner's unit")
+            if before["closure_verified"]:
+                return before
+            self._checked(["systemctl", "--user", "--no-ask-password", "stop", self._unit])
+            deadline = time.monotonic() + self._stop_timeout
+            while True:
+                result = self.inspect()
+                if result["closure_verified"] or not result["ownership_match"] or time.monotonic() >= deadline:
+                    break
+                time.sleep(.1)
+            if result["closure_verified"]:
                 return result
-            time.sleep(.1)
+            self._join_client()
+            return self.inspect()
+        finally:
+            self._join_client()

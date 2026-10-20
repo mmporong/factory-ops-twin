@@ -353,6 +353,12 @@ ROS가 실패 종료한 직후 외부 실행기가 아직 정리 중인 Windows 
 
 008은8개 SimulationGate 읽기6과640×360 RGB를 확인했다. 종료된 bag에서는 활성 구간의8개 원본 토픽이 약10Hz 고유 시각으로 발행됐고 clock 역행은 없었다. 마지막 촬영은42.033초였고4개 토픽은 그 직전41.817~41.833초 이후의 발행이 없었다. 다른4개 토픽·clock·odom은 이후에도 진행했다. carter3 map→odom 마지막 시각은42.233초이며 마지막 정상 위치 검사42.700초에서는 나이0.467초였다. 이후 기존0.5초 위치 기준을 넘겨 ROS 임무가 실패했다. 발행 간격 부족으로 단정하지 않으며, 촬영 후 Replicator 연속 실행 복구를 보완하는 다음 실행에서 인과를 확인한다. SDK4.5의 문서화된 비차단 Start(start_timeline=False)를 촬영 뒤 제출하고 외부 PLAY와 함께 사용한다. 센서·ROS 시각을 보정하거나 TTL을 늘리지 않는다. SDK 종료의 기존30초 유예를 넘긴 후 host 취소로 양쪽 소유 트리 종료를 확인했다. 후속 유예는90초로 바꾸어 실제 실패 기록과 SDK 정리를 기다린다. [008 근거](evidence/local45-transport-008.json)를 보존한다.
 
+## FOT-045 — 실행 중 WSL 재부팅과 수명 유지 연결 누락
+
+009는 WSL user manager 조회 실패로 host가 중단했다. Windows Job은 종료됐지만 최초 Linux 종료 확인도 실패했다. 이후 Linux 부팅 시각이 해당 실행 시작보다 늦음을 확인했고, 원 unit은 not-found/inactive, cgroup과 해당 실행 경로를 사용하는 프로세스는 없었다. 별도 복구 기록으로 Linux 종료를 확인했으며 최초 host 기록을 성공으로 고치지 않았다. 재부팅을 촉발한 원인은 확정하지 않는다. Microsoft 문서는 systemd 서비스가 WSL 인스턴스 수명을 유지하지 않는다고 명시한다. 기존 detached systemd-run은 명령 제출 뒤 반환해 지속적인 WSL 클라이언트가 없었다.037에서 systemd-run --wait의 foreground 클라이언트를 소유해 유지하고, 실제 unit/cgroup과 클라이언트를 함께 종료하는 경로를 보완한다. 전역 설정이나 배포판 재시작은 이 복구에서 수행하지 않았다. [009 근거](evidence/local45-transport-009.json), [Microsoft 문서](https://learn.microsoft.com/en-us/windows/wsl/systemd), [systemd255 문서](https://www.freedesktop.org/software/systemd/man/255/systemd-run.html)를 참고한다.
+
+037은foreground WSL 클라이언트를 유지하는 방식으로 보완했고12개 관련 CPU 검사를1회 통과했다. 실제 WSL 단위1회에서는70.016초 동안 추가 WSL 조회 없이 같은 boot ID와 살아 있는 클라이언트를 유지했다. 이후 부모·setsid 자식·unit/cgroup·Linux waiter·Windows 클라이언트가 모두 종료됐고 강제 클라이언트 종료는 없었다. 전체 fixture는71.875초였다. [수명·종료 근거](evidence/wsl-lifetime-037.json)에 소스와 원본 해시를 남겼다. 이 결과를009 재부팅 원인이나4대 운송 성공으로 확대하지 않는다.
+
 ## 실행 전 확인과 후속 기록
 
 1. 깨끗한 생산자 소스·host commit·설정·실행 ID를 결속한다. 실패한 실행 ID와 원본을 다시 사용하지 않는다.
