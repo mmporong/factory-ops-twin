@@ -1,0 +1,103 @@
+{
+  "task_id": "local45-physx-scan-fallback-053",
+  "attempt": 1,
+  "contract_revision": 53,
+  "owner": "control",
+  "reviewer": "root",
+  "ack": true,
+  "status": "bounded_source_advice_complete_pending_root_review",
+  "accepted": false,
+  "verdict": "CONDITIONALLY_FEASIBLE_API_PRESENT_RUNTIME_UNVERIFIED",
+  "conclusion": "설치 SDK4.5의 isaacsim.sensors.physx 2.2.4는 PhysX 충돌 raycast LiDAR 생성·읽기를 제공하며 rotation_rate=0.0 사용은 설치 공식 테스트에 있다. 별도 local45 opt-in 대안은 가능하다. 정확한 수평 행·배열 축/방위·자기 충돌·취득 시각 결속의 실제 확인 전에는 평면 720ray/10Hz ROS 센서나 운송 성공으로 인정할 수 없다.",
+  "context": {
+    "card_source_commit": "ba4904689ed3c9c48546b4ced9cdfd51060e5bd3",
+    "source_commit_independently_queried": false,
+    "active_020": "카드의 진행 중 실행과 immutable 원본·프로세스를 조회하거나 변경하지 않았다.",
+    "cause_boundary": "RTX 실패 원인은 이 조사로 규명되지 않는다. PhysX 대안은 RTX/RPLIDAR/GMO 동등 모델이나 native FlatScan 수정이 아니다."
+  },
+  "source_sha256": {
+    "factory_ops/isaac45_runtime.py": "9514020ae69fa1875abb05e6a782258c0c644c508dd3da0a85a21dd585ea2efc",
+    "scripts/isaac/g2_scene.py": "bf5ed465a306b02b46a39d91e5e2ae0ed37826c7c7e08546f7e033b8751bf6a6",
+    "scripts/isaac/local45_fleet4_transport_scene.py": "0fba8bc580a44a90f12a28f82c4844e7a3f79ce3fb644ddc453402adb45a00d9",
+    "E:/IsaacSim/isaac-sim-4.5.0/exts/isaacsim.sensors.physx/config/extension.toml": "98fe308d79a160d701760191779b20f954aa1e16a8845c7ea2ae46ee9245fed0",
+    "E:/IsaacSim/isaac-sim-4.5.0/exts/isaacsim.sensors.physx/isaacsim/sensors/physx/scripts/commands.py": "458816e700b6e76b5bc7d70cee3698a232caa2ac6cdb79d01b5d12af31f16f95",
+    "E:/IsaacSim/isaac-sim-4.5.0/exts/isaacsim.sensors.physx/isaacsim/sensors/physx/scripts/rotating_lidar_physX.py": "d57afd52b09574fa4c65cbff56137d91bff345d3e93186b84ffe75bfa1fd0f6a",
+    "E:/IsaacSim/isaac-sim-4.5.0/exts/isaacsim.sensors.physx/isaacsim/sensors/physx/tests/test_lidar.py": "3eea3efef5d687bb7f5e87c97318c41b311a513ffa0382fd082d2b6a18ed201e",
+    "E:/IsaacSim/isaac-sim-4.5.0/exts/isaacsim.sensors.physx/isaacsim/sensors/physx/_range_sensor.cp310-win_amd64.pyd": "f75de98fe6a78506827d494de18dadaab153dd0afa37c5b4ec926a5b66711ce9",
+    "E:/IsaacSim/isaac-sim-4.5.0/exts/isaacsim.sensors.physx/include/RangeSensorInterface.h": "186cd9438aebcadb5478616467a3c787b46008865af9627102aea381787058bf",
+    "E:/IsaacSim/isaac-sim-4.5.0/exts/isaacsim.sensors.physx/ogn/docs/OgnIsaacReadLidarBeams.rst": "1c3a4cc5f25359d908c83152e890fd2d32a9f8162d29722c343a30ceaf5efab3"
+  },
+  "supported_api": {
+    "enable": {
+      "extension": "isaacsim.sensors.physx",
+      "version": "2.2.4",
+      "basis": "config/extension.toml:5-12,19-42。확장 설명이 PhysX-raycast 기반임을 명시한다. 기존 설치 확장을 새 opt-in 실행에서 활성화하는 범위이며 설치 작업은 하지 않았다."
+    },
+    "create": {
+      "call": "ok, lidar = omni.kit.commands.execute('RangeSensorCreateLidar', path=owned_path, parent=None, min_range=range_min, max_range=range_max, draw_points=False, draw_lines=False, horizontal_fov=360.0, vertical_fov=vertical_fov_deg, horizontal_resolution=horizontal_resolution_deg, vertical_resolution=vertical_resolution_deg, rotation_rate=0.0, high_lod=False, yaw_offset=0.0, enable_semantics=False)",
+      "return_contract": "두 번째 반환은 RangeSensorSchema.Lidar schema 객체다. lidar.GetPrim()/GetPath()를 사용하며 RTX command의 반환 형식을 그대로 가정하지 않는다. 성공·유효 prim·정확한 요청 경로를 확인한다. 내부 get_next_free_path 때문에 이름 충돌 시 다른 경로가 생길 수 있으므로 사전 중복 거절도 필요하다.",
+      "basis": "scripts/commands.py:28-60,67-139; tests/test_lidar.py:90-120,137-170",
+      "rotation_zero": "설치 static/dynamic/Carter 테스트 모두 360도 FOV와 rotation_rate=0.0을 사용한다. 이는 소스의 지원 사용례이며 이번 실행 성공 근거가 아니다.",
+      "angular_configuration": "생성 FOV/resolution은 도 단위다. 360/1.0 또는 360/0.5로 360/720 방위를 요청하는 것이 최소 후보이며 실제 개수는 읽은 배열로 확정한다. vertical_fov=0이 반드시 수평 1행을 만든다는 근거는 확보하지 못했다. high_lod=False만으로 정확한 1행을 보장한다고도 단정하지 않는다."
+    },
+    "pose": {
+      "call": "lidar.GetPrim().GetAttribute('xformOp:translate').Set(Gf.Vec3d(...)) 또는 기존 _author_lidar_local_transform(lidar.GetPrim(), UsdGeom, Gf, xyz, yaw_rad)",
+      "mount_contract": "chassis_link 아래 소유 prim으로 생성하고 기존 front/rear 장착·frame_id를 유지한다. 부모 USD transform을 따르는 이동 센서는 설치 dynamic/Carter 테스트에 있다. 기존 _verify_lidar_local_transform으로 상대 위치·회전·reset stack을 확인할 수 있다. 센서에 별도 rigid body를 추가하지 않는다.",
+      "basis": "scripts/commands.py:53-59; tests/test_lidar.py:137-170,229-247; scripts/isaac/g2_scene.py:275-303"
+    },
+    "read": {
+      "acquire": "from isaacsim.sensors.physx import _range_sensor; interface = _range_sensor.acquire_lidar_sensor_interface()",
+      "methods": ["get_linear_depth_data(path)", "get_depth_data(path)", "get_intensity_data(path)", "get_azimuth_data(path)", "get_zenith_data(path)", "get_num_rows(path)", "get_num_cols(path)", "get_num_cols_ticked(path)", "get_prim_data(path)"],
+      "basis": "scripts/rotating_lidar_physX.py:42,168-201; tests/test_lidar.py:28,117-120; 설치 .pyd의 메서드명·내장 docstring 정적 추출; include/RangeSensorInterface.h:28-50",
+      "distance": "get_linear_depth_data는 numpy.ndarray, 거리 m. get_depth_data는 min/max로 스케일한 uint16 배열이므로 ROS m 거리로 그대로 사용하면 안 된다.",
+      "hit": "get_intensity_data의 내장 계약은 hit=255/no-hit=0이다. 설치 static 테스트는 뒤쪽 no-hit의 uint16 depth가 65535임을 검사한다. linear-depth no-hit의 정확한 수치 sentinel은 이 소스만으로 확정하지 못했으므로 intensity mask와 원시 depth를 함께 보존하고 no-hit을 판별한다. ROS의 +inf 변환은 명시적 어댑터 정책으로 구분한다.",
+      "angles_shape": "azimuth는 각 column의 rad, zenith는 각 row의 rad라는 내장 docstring이 있다. 그러나 설치 테스트는 depth[방위 인덱스, 0]을 사용하므로 메모리 축을 (row,col)로 추정해 reshape하지 않는다. 실제 shape와 angle 길이로 대응을 확인하고 정확한 수평 zenith 행만 선택한다. 설치 소스의 방위/zenith 수식 비교 테스트는 주석 처리되어 있어 검증 PASS 근거가 아니다.",
+      "ordering": "원시 각도와 대응 거리를 함께 복사한 뒤 단조 증가·균일 간격·360도 seam 중복 여부를 확인한다. 필요하면 관측된 방위로 거리와 mask를 함께 재정렬하며 임의 linspace나 보간으로 빈 빔을 만들지 않는다. +X 기준/반시계 방향 및 장착 yaw는 알려진 벽 위치와 대조할 실제 확인 항목이다.",
+      "ownership": "getter가 반환한 배열의 복사/수명 보장은 확보하지 못했다. 추가 physics/app update 전에 한 취득의 거리·mask·각도를 소유 메모리로 복사하는 별도 snapshot이 필요하다."
+    },
+    "time": {
+      "native_stamp": "확인한 Python low-level 읽기 API에는 절대 native acquisition stamp가 없다. C++ header에는 getBeamTimeData/getSequenceNumber가 있지만 같은 이름의 Python 바인딩을 확인하지 못했으므로 호출안을 만들지 않는다.",
+      "wrapper_warning": "RotatingLidarPhysX의 current_frame['time']/physics_step는 initialize 후 callback의 step_size 누적/호출 수다(68-88,168-188). 실제 World 시각·프레임이나 센서가 제공한 native timestamp로 이름을 바꿔 쓰면 안 된다.",
+      "recommended_contract": "동기 physics 진행 뒤 실제 World.current_time/current_time_step_index와 raw 배열을 함께 취득하고 전후 World 값 불변을 확인하는 authored World 결속 snapshot을 둔다. time_source='authored_world_acquisition', sensor_backend='physx_collision_planar'를 명시한다. 해당 raw buffer가 그 step에서 갱신된다는 PhysX plugin/callback 순서는 현재 미확인이다. 이 결속 확인 전에는 read 시각만으로 오래된 버퍼를 새 scan으로 발행하지 않는다.",
+      "cadence": "rotation_rate=0은 회전 없음이며 10Hz 발행 주기와 별개다. 실제 World frame이 전진하고 새 취득이 확인된 snapshot 중 약 0.1s마다 선택하며 같은 frame을 중복 발행하지 않는다. 60Hz에서는 실제 6 physics-frame 간격 후보를 쓰되 SDK 물리 dt와 기록된 실제 stamp를 보존한다. 순간 평면 scan의 time_increment=0, scan_time은 확인된 취득 간격이며 scan_time=0으로 회전 없음과 혼동하지 않는다."
+    },
+    "collision_and_self_hit": {
+      "basis": "config/extension.toml의 PhysX raycast 설명 및 tests/test_lidar.py:65-75의 CollisionAPI 적용 객체",
+      "contract": "시각 mesh가 아니라 PhysX collision geometry를 읽는 별도 모델이다. 충돌이 없는 장식은 관측되지 않을 수 있으며 실제 장면의 collider와 m 단위를 확인해야 한다.",
+      "self_filter": "RangeSensorCreateLidar/RotatingLidarPhysX의 확인한 인자에 robot 제외 목록이 없다. 자동 부모/차체 제외 여부도 소스 근거가 없다. ProximitySensor의 exclusions를 LiDAR 지원으로 옮겨 해석하면 안 된다. get_prim_data는 존재하나 빔별 shape/빈 값 대응은 미확인이다. 장착 위치·높이에서 자기 collider hit를 확인해야 하며, 자기 첫 hit를 +inf로 지워 뒤 벽이 관측됐다고 만들면 안 된다. min_range 변경도 검증된 자기 충돌 필터로 취급하지 않는다."
+    },
+    "cleanup": {
+      "call": "동일 실행이 만든 센서 prim에 stage.RemovePrim(owned_path)",
+      "basis": "scripts/commands.py:62-64의 RangeSensorCreatePrim.undo; RangeSensorCreateLidar.undo 자체는 141-143에서 비어 있다.",
+      "contract": "소유 sensor prim만 제거하고 새 어댑터가 보유한 publisher/subscription/배열 참조를 정리한다. 부모 chassis나 공유 World/PhysicsScene은 삭제하지 않는다. RTX writer/annotator/render product를 이 backend에서 만들 필요는 없다. .pyd에 release_lidar_sensor_interface 이름은 있지만 이번 정적 자료에서 인자 계약을 확인하지 못했으므로 임의 close()/destroy()/release 호출 형식을 제시하지 않는다. wrapper initialize의 callback 정리도 추가 수명이 생기므로 최소안은 low-level interface 사용이다."
+    }
+  },
+  "smallest_separate_integration": [
+    {
+      "path": "factory_ops/isaac45_runtime.py:385-465",
+      "proposal": "새 local45 명시 backend에서만 RangeSensorCreateLidar와 소유 collision-ray snapshot을 생성한다. RTX JSON profile·RPLIDAR_S2E·FlatScan completion sink를 재사용하지 않는다. 기존 기본 RTX 및 canonical6.2 경로는 유지한다."
+    },
+    {
+      "path": "scripts/isaac/g2_scene.py:493-550,1044-1115,1218-1223",
+      "proposal": "새 backend 전용 converter/publisher 경계를 두고 현재 native FlatScan/admission guard에 끼워 넣지 않는다. 기존 raw 토픽/frame 계약을 유지한다면 센서별 publisher는 하나만 두고 해당 새 실행에서만 RTX 생성을 생략한다. 실제 wheel/encoder/odom/TF·AMCL/Nav2·예약·TTL·clock-reset/종료 조건은 유지한다. backend별 시작 증거·source/config SHA와 schema를 분리한다."
+    },
+    {
+      "path": "scripts/isaac/local45_fleet4_transport_scene.py:48-84",
+      "proposal": "8개 robot/side/prim/topic 식별 검사는 유지하고 PhysX 전용 observation schema·source·parameter digest를 기록한다. RtxSensorCpuIsaacComputeRTXLidarFlatScanSimulationTime 또는 실제 RTX profile_sha256로 위장하지 않는다. 현재 flat-scan journal을 같은 의미로 덮어쓰지 않는다."
+    }
+  ],
+  "one_bounded_next_candidate": {
+    "recommendation": "추가 구현을 선택한다면 별도 opt-in low-level PhysX 평면 backend 한 가지로 한정한다. 먼저 한 센서의 360도 충돌 장면에서 배열 shape/정확한 수평 행/알려진 앞·좌·뒤·우 방향/노히트 mask/자기 hit/이동 후 거리 변화와 World 취득 결속을 함께 입증하는 작은 admission이 필요하다. 이 조사에서는 작성하거나 실행하지 않았다.",
+    "candidate_parameters": {"rotation_rate": 0.0, "horizontal_fov_deg": 360.0, "horizontal_resolution_deg": 0.5, "requested_publish_hz": 10.0},
+    "unfixed_vertical_parameters": "vertical_fov=0에서 1행인지 확인되지 않았으므로 완성된 평면 config를 제시하지 않는다. 실제 zenith=pi/2 행과 배열 축이 확인되는 수직 FOV/resolution을 먼저 확정해야 한다.",
+    "release_gaps": ["정확한 수평 행과 720개 고유 방위·축/좌표 확인", "World physics step과 PhysX buffer 갱신 순서 결속", "장착 위치의 차체 self-hit와 no-hit/prim mask 실제 대응", "8센서 CPU 부하·10Hz 지속성과 기존 Nav2 실제 소비 미실행"]
+  },
+  "official_web_supplement": {
+    "url": "https://docs.isaacsim.omniverse.nvidia.com/4.5.0/py/source/extensions/isaacsim.sensors.physx/docs/index.html",
+    "supports": "검색 결과의 공식4.5 API 본문은 확장 2.2.4·RangeSensorCreateLidar·RotatingLidarPhysX를 확인한다. 실행 결과나 평면 배열 보장은 제공하지 않는다.",
+    "retrieval_limit": "4개 공식4.5 URL 열기를 시도했으나 도구에서 404/접근 실패였다. 위 공식 검색 본문만 보조로 사용하며 핵심 판정은 설치 파일이다. 최신6.x 및4.0/4.2 검색 결과를4.5 계약 근거로 채택하지 않았다. 추가 웹 탐색은 하지 않았다."
+  },
+  "performed": ["지정 프로젝트 경계 및 설치 PhysX 소스·공식 테스트 코드 읽기", "설치 Python binding binary의 메서드명/docstring 정적 문자열 확인(로드·import 없음)", "근거 파일 SHA256 계산", "한정 공식 문서 조회"],
+  "not_performed": ["제품 구현/수정", "CPU 테스트", "SDK/GPU/ROS/WSL/서버/VM 실행", "active 원본/bag/프로세스 조회", "Git 작업", "새 에이전트/세션"],
+  "written_paths": ["coordination/collab/results/local45-physx-scan-fallback-053.json"]
+}

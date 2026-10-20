@@ -1,0 +1,28 @@
+{
+  "task_id": "physx-planar-admission-054",
+  "attempt": 1,
+  "contract_revision": 54,
+  "owner": "control",
+  "reviewer": "root",
+  "goal": "Write one bounded standalone SDK4.5 PhysX native sensor admission script; root executes only after020 closes",
+  "inputs": {
+    "source_commit": "ba4904689ed3c9c48546b4ced9cdfd51060e5bd3",
+    "reference": "coordination/collab/results/local45-physx-scan-fallback-053.json",
+    "active020": "D:/FactoryOpsRuntime/local45-transport-020 remains immutable/active"
+  },
+  "write_paths": [
+    "scripts/isaac/probe_physx_planar.py",
+    "coordination/collab/results/physx-planar-admission-054.json"
+  ],
+  "acceptance": [
+    "Only script+receipt. No actual SDK/GPU/ROS/WSL/server/Git/new agents. Root owns020 and later Windows Job launch. One cold SDK3.10 AST; no mock/string tests or broad review.",
+    "New absolute output directory/run ID arguments; script wall limit180s/physics step cap600. JSON report updates and try/finally owned sensor cleanup. Report input/source bytes SHA, SDK version, authored params, actual World times/frames and original dtype/shape/angles/hit arrays. No fabricated native timestamp.",
+    "Use low-level installed PhysX API from053. Request rotation_rate0,360FOV,0.5degree horizontal. Find actual exact horizontal row by observed zenith/rays and known geometry, do not assume memory axes or synthesize linspace. vertical_fov2/resolution1 candidate; retain raw if exact horizontal missing and fail admission. Verify every raw shape/axis against actual azimuth/zenith lengths before deriving a plane.",
+    "One static Carter USD reference using existing ASSET_PATH/get_assets_root_path with actual front/rear local mounts from factory config (read only). Do not drive robot or load ROS. Can create the two sensors under actual chassis. Parent robot physics fixed for calibration; no successful navigation claim. If fixed parent is problematic report source geometry rather than changing articulation joints.",
+    "Known asymmetric collision targets/walls at +X/-X/+Y/-Y (separate distances) plus no-hit azimuth sector, at sensor plane; minimal cube geometry. Report observed actual directions/angle ordering/range intensities/prim hits, expected ray distances with tolerance and PASS/failure. Actual self hits must be detected from prim data if beam correspondence supports it; unknown => pending, never delete self returns or relabel as wall.",
+    "Prove updating after physics: change one owned target collider pose between actual World steps and show corresponding raw depth responds with original before/after bytes. Preserve snapshots and copies across another step. Do not publish old depth with new read time. Record get_num_cols_ticked and any SDK sequence actually available; do not invent method. Distinguish authored World acquisition stamp from native.",
+    "Include one paused4World.render boundary with time/frame before/after and whether raw arrays changed; no Replicator orchestrator step, no RGB data bulk. Do not claim native current-step sequence if evidence only supports bounded observation. End report clearly passed/failed/pending gaps; SDK cleanup errors preserved separately.",
+    "Do not integrate backend into product yet or edit other files. Goal is ONE meaningful native candidate, not more RTX adapters. Root will source-check once then run when oldownedSDK closed."
+  ],
+  "result_path": "coordination/collab/results/physx-planar-admission-054.json"
+}

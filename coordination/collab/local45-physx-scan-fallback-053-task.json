@@ -1,0 +1,31 @@
+{
+  "task_id": "local45-physx-scan-fallback-053",
+  "attempt": 1,
+  "contract_revision": 53,
+  "owner": "control",
+  "reviewer": "root",
+  "goal": "Bounded source-backed feasibility of an explicit SDK4.5 PhysX planar navigation LiDAR fallback if RTX continues to fail",
+  "inputs": {
+    "source_commit": "ba4904689ed3c9c48546b4ced9cdfd51060e5bd3",
+    "active_run_id": "6dfcf88d68e94a22a481eb067f819148",
+    "active_stage": "D:/FactoryOpsRuntime/local45-transport-020",
+    "context": "019 failed6frame recovery;052 observer source accepted.020 unchanged4AMR/4orders now active. Root does not want more blind RTX adapter loops. A separate honest native PhysX collision-ray model could unblock business transport without claiming RPLIDAR/RTX/GMO equivalence."
+  },
+  "read_paths": [
+    "factory_ops/isaac45_runtime.py",
+    "scripts/isaac/g2_scene.py",
+    "scripts/isaac/local45_fleet4_transport_scene.py",
+    "E:/IsaacSim/isaac-sim-4.5.0/exts/isaacsim.sensors.physx"
+  ],
+  "write_paths": [
+    "coordination/collab/results/local45-physx-scan-fallback-053.json"
+  ],
+  "acceptance": [
+    "Read-only advice only. No product edits, GPU/SDK/ROS/runtime/Git/new agents. Preserve all other edits.020 remains immutable and active.",
+    "Use installed SDK4.5 source/API/examples first, at most4 official primary web sources if needed. Return exact supported create/read/pose/cleanup API with source hashes and contracts. Do not invent extension/name/return shape.",
+    "Question: instantaneous full360 planar lidar on real PhysX collision geometry, rotationRate=0 if supported;360or720rays at10Hz. API depth units, beam azimuth/elevation/order/dimensions, no-hit representation and self-hit filtering/mount behavior. Distinguish API supplied timestamp from authored actual World acquisition time if no native stamp.",
+    "Give smallest separate opt-in local45 backend integration paths/risks: existing real wheel/encoder/AMCL/Nav2/reservation unchanged; separate publisher schema, instantaneous time_increment0, honest World acquisition stamp (never restamp RTX or label as native FlatScan/GMO); disable faulty RTX only for new backend. Canonical62 and RTX failure evidence remain.",
+    "Do not perform generic comparisons or broad redesign; feasibility yes/no/unknown with explicit gaps. Return bounded recommended implementation, no source-mutation authority assertions."
+  ],
+  "result_path": "coordination/collab/results/local45-physx-scan-fallback-053.json"
+}

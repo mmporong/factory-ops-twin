@@ -1,0 +1,76 @@
+{
+  "task_id": "physx-planar-admission-054",
+  "attempt": 1,
+  "contract_revision": 54,
+  "owner": "control",
+  "reviewer": "root",
+  "ack": true,
+  "status": "candidate_written_cold_ast_pass_pending_root_review_and_execution",
+  "api_ready": true,
+  "accepted": false,
+  "actual_sdk_run": false,
+  "native_admission_passed": null,
+  "written_paths": [
+    "scripts/isaac/probe_physx_planar.py",
+    "coordination/collab/results/physx-planar-admission-054.json"
+  ],
+  "source_sha256": {
+    "scripts/isaac/probe_physx_planar.py": "b8aaa2b3691fe36dc10a8c82ec73af421b66b2ce684d27c0720a3eb1cf64b9c9"
+  },
+  "source_bytes": 27762,
+  "read_only_input_sha256": {
+    "configs/local45-fleet-runtime-probe.json": "d891d14d1a090a46a3d3d361257b38c3016a976c942cda6344230efeb54c55f8",
+    "factory_ops/__init__.py": "da57bbf586e3c4639fd72b3960ef8dd7a8326b3ba17504836189be26ce5bacb0",
+    "factory_ops/isaac45_runtime.py": "9514020ae69fa1875abb05e6a782258c0c644c508dd3da0a85a21dd585ea2efc"
+  },
+  "root_entry_contract": {
+    "entrypoint": "C:/Users/LIMMM/factory-ops-twin/scripts/isaac/probe_physx_planar.py",
+    "arguments": ["--config", "<기존_설정_절대경로>", "--output", "<새_출력_절대경로>", "--run-id", "<32자리_hex>"],
+    "recommended_existing_config": "C:/Users/LIMMM/factory-ops-twin/configs/local45-fleet-runtime-probe.json",
+    "config_use": "기존 설정의physics_dt_s와front/rear 이름·장착값만 읽는다. 기존scene/4대 운영을 로드하지 않는다.",
+    "source_dependencies_for_host_snapshot": ["factory_ops/__init__.py", "factory_ops/isaac45_runtime.py"],
+    "sdk_environment": "기존SDK4.5의ISAAC_PATH가 필요하다. 호스트Job 기동과 종료 확인은root 소유다.",
+    "result_filename": "result.json",
+    "exit_codes": {"passed": 0, "failed": 1, "pending": 2},
+    "execution_authority": "이 receipt는 실행 결과가 아니다. root가 소스를 확인하고 기존 SDK 실행 종료 뒤 한 번 실행하는 후보로만 전달한다."
+  },
+  "implementation": [
+    "새 절대·canonical·비링크 출력 경로와32자리hex run ID를 요구한다. 기존 출력은 거절한다. 실행 입력 source/config 원본 bytes를inputs 아래 보존하며 SHA를 기록한다.",
+    "설치4.5 VERSION·확장 설정/commands/binding SHA와 자체 import 소스2개의 SHA를 기록한다. 기존 ASSET_PATH와get_assets_root_path를 사용한다.",
+    "새 보정 장면에 NovaCarter USD 참조1개와 실제 설정의front/rear 장착2개만 생성한다. 보정용 참조의 기존 rigidBodyEnabled를False로 하여 collider를 남기고 조인트는 편집하지 않는다. 이 고정 방식이 실패하면 해당 오류를 보고하며 다른 조인트 수정으로 우회하지 않는다.",
+    "저수준PhysX interface, rotation_rate0/360도/0.5도/수직FOV2도·resolution1도 후보를 사용한다. 원시 거리·uint16 depth·intensity·azimuth·zenith·prim hits를 파생 검사 전에.npy와dtype/shape/strides/bytes SHA로 저장한다.",
+    "실제 각도 길이와 배열 shape로 유일한 축 대응을 찾는다. zenith가pi/2인 유일한 행을 요구하며 없거나 모호하면 원본 보존 후 실패한다. linspace·보간·거리 삭제는 없다.",
+    "실제 장착 transform과 원시 방위로ray를 계산하고 비대칭+X/-X/+Y/-Y 충돌 타깃의 slab 교차 거리와0.08m 이내인지 비교한다. 35~55도 no-hit 구역과 관측intensity/prim 경로를 기록한다. prim-to-beam 대응이 불명확하면 자기 차체 관측은unknown/pending이다.",
+    "12회 실제World physics 진행 뒤east collider를4m에서5m로 변경한다. 실제1회와6회physics 진행 뒤 원본 취득·SHA·거리 반응을 비교한다. 이전 소유 복사본의bytes가 추가step 뒤 유지되는지도 검사한다.",
+    "World pause 후4회World.render만 수행하고 시각·프레임과raw bytes 변화를 기록한다. Replicator orchestrator·ROS·RGB 대량 취득은 없다.",
+    "180초 협력형 wall deadline·600physics-call 및 실제World frame 상한을 둔다. 각step은 nativeWorldframe1회 증가/시각 증가를 요구한다. SDK 호출 내부 정지에는root의 외부Job wall guard가 필요하다.",
+    "try/finally에서 생성한 센서 prim·보정 root만 제거하고 부재를 확인한다. 정리 오류는 본 실패와 분리하여 기록하며app.close 요청/반환을 구분한다. 프로세스 전체 종료 증명은 호스트에 남긴다."
+  ],
+  "validation": {
+    "passes_run": 1,
+    "kind": "cold SDK Python3.10 AST only",
+    "executable": "E:/IsaacSim/isaac-sim-4.5.0/kit/python/python.exe",
+    "arguments": ["-B", "-S", "-"],
+    "stdin": "import ast, hashlib, json, sys\nfrom pathlib import Path\npath = Path('scripts/isaac/probe_physx_planar.py')\ndata = path.read_bytes()\nast.parse(data, filename=str(path))\nprint(json.dumps({'python': sys.version.split()[0], 'ast_parse': 'PASS', 'path': str(path), 'source_sha256': hashlib.sha256(data).hexdigest(), 'bytes': len(data)}))",
+    "cwd": "C:/Users/LIMMM/factory-ops-twin",
+    "python": "3.10.15",
+    "result": "PASS",
+    "exit_code": 0,
+    "sdk_imported_or_launched": false,
+    "tests_run": false
+  },
+  "root020_latest_report_not_independently_queried": {
+    "status": "양쪽 종료 확인·session21008 terminal이라는 root 전달을 반영했다.",
+    "first_failure": "carter4 map->base TF age0.5333 > TTL0.5",
+    "later_failures": "SDK mission-failed 및cleanup90s는 후속",
+    "observations": "closed-tail에서odom/tf와수신clock63.450, raw front/rear header63.91670125로 약0.467초 미래였다는 root 근거. 센서/시계 불일치 관측이며 내부 원인 확정 아님.",
+    "no_policy_relaxation": "054에는 TTL 완화·기존ROS/RTX stamp 보정·운영 파일 변경을 넣지 않았다."
+  },
+  "limits": [
+    "실제SDK·sensor API 호출·자산 로딩·static-body 고정·array shape·prim 대응·cleanup은 미실행이다. AST PASS를 네이티브 성공으로 확대하지 않는다.",
+    "World before/after 관측과 움직인 타깃 반응을 기록할 뿐native 절대timestamp나current-step sequence를 만들지 않는다. SDK sequence 이름은 실제dir 결과만 기록하고 검증하지 않은 메서드를 호출하지 않는다.",
+    "정확한 수평 행 부재는failed, prim/self-hit 대응이나정지render의raw변화·양센서1step반응 미확인은pending으로 남긴다. 자기 반환을 제거하거나 벽으로 바꾸지 않는다.",
+    "10Hz 지속 발행·4대/8센서·ROS/AMCL/Nav2·운송·물리충전·RTX/RPLIDAR/GMO 동등성은 이 후보의 성공 범위가 아니다.",
+    "실행 프로세스·active/closed bag·원본·Git·다른 작성자의 제품 경로를 변경하지 않았다."
+  ]
+}

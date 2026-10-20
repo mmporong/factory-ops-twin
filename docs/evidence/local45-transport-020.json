@@ -1,0 +1,100 @@
+{
+  "schema_version": 1,
+  "run_id": "6dfcf88d68e94a22a481eb067f819148",
+  "source_commit": "ba4904689ed3c9c48546b4ced9cdfd51060e5bd3",
+  "status": "failed_map_tf_freshness",
+  "last_observed_sim_s": 63.500003311783075,
+  "primary_ros_error": {
+    "message": "fresh map pose unavailable for carter4",
+    "traceback": "Traceback (most recent call last):\n  File \"/mnt/d/FactoryOpsRuntime/local45-transport-020/source/scripts/ros/g3_mission.py\", line 1396, in tick\n    pose = localization_payload(transform, now_s=stamp, ttl_s=runtime_config[\"pose_ttl_s\"])\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/mnt/d/FactoryOpsRuntime/local45-transport-020/source/scripts/ros/g3_mission.py\", line 546, in localization_payload\n    raise PoseNotFreshError(f\"map->base_link TF is stale or future: stamp={stamp}, now={now_s}, age={now_s-stamp}, ttl={ttl_s}\")\nscripts.ros.g3_mission.PoseNotFreshError: map->base_link TF is stale or future: stamp=62.916701171, now=63.450003309, age=0.5333021380000034, ttl=0.5\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/mnt/d/FactoryOpsRuntime/local45-transport-020/source/scripts/ros/g3_mission.py\", line 1613, in run_mission\n    stamp = tick(require_fresh=True)\n            ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/mnt/d/FactoryOpsRuntime/local45-transport-020/source/scripts/ros/g3_mission.py\", line 1400, in tick\n    raise RuntimeError(f\"fresh map pose unavailable for {robot}\") from error\nRuntimeError: fresh map pose unavailable for carter4\n",
+    "type": "RuntimeError"
+  },
+  "secondary_errors": [
+    "SDK mission controller ended failed",
+    "SDK cleanup90s exceeded after ROS exit"
+  ],
+  "native_recovery_or_storage_cap_primary": false,
+  "native_rejections": 23,
+  "per_sensor_completion_ids": {
+    "carter3/rear": [
+      202,
+      285
+    ],
+    "carter1/front": [
+      202,
+      247,
+      268,
+      281
+    ],
+    "carter2/front": [
+      202,
+      248,
+      270,
+      283
+    ],
+    "carter2/rear": [
+      202,
+      270,
+      283
+    ],
+    "carter3/front": [
+      202,
+      270,
+      283
+    ],
+    "carter4/front": [
+      202,
+      270
+    ],
+    "carter4/rear": [
+      202,
+      270
+    ],
+    "carter1/rear": [
+      247,
+      269,
+      282
+    ]
+  },
+  "distinct_rejected_completion_ids": true,
+  "startup_ready": true,
+  "completed_orders": 0,
+  "empty_returns_completed": 0,
+  "conservation": [
+    {
+      "balanced": true,
+      "consumed": 0,
+      "in_totes": 0,
+      "initial": 60,
+      "on_hand": 60,
+      "replenished": 0,
+      "sku": "sensor-kit"
+    }
+  ],
+  "virtual_geometric_charging_started": true,
+  "last_carter4_raw_scan": {
+    "id": 140794,
+    "clock_at_receipt_s": 63.450003309,
+    "stamp_s": 63.91670125
+  },
+  "last_carter4_map_odom": {
+    "id": 139259,
+    "clock_at_receipt_s": 62.450003257,
+    "stamp_s": 62.916701171,
+    "parent": "map",
+    "child": "odom"
+  },
+  "last_carter4_raw_header_minus_nearest_prior_bag_clock_s": 0.4666979409999996,
+  "tail_clock_comparison_scope": "nearest prior recorded clock message by bag receipt order, not atomic sample or SDK internal cause proof",
+  "closed_tf_tail_sha256": "ba9f279ea6e0e971f3188f8963d678209a73819e045e0b634e248863dd9ad27c",
+  "closed_bag_sha256": "82b72f31e219c8569c8f22c7b1bd952860526047ae4f1242b20ae63b75973336",
+  "bag_bytes": 208113664,
+  "windows_closed": true,
+  "linux_closed": true,
+  "cleanup_errors": [],
+  "goal80_complete": false,
+  "full_sensor_quality_verified": false,
+  "sdk_internal_cause_confirmed": false,
+  "raw_originals": "D:\\FactoryOpsRuntime\\local45-transport-020",
+  "web_originals": "artifacts/local45/020-web"
+}

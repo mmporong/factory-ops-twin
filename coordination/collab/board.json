@@ -1,6 +1,6 @@
 {
-  "revision": 52,
-  "updated_at": "2026-10-20T08:16:35.322708+00:00",
+  "revision": 54,
+  "updated_at": "2026-10-20T08:40:31.794791+00:00",
   "scope": {
     "excluded": "실물 로봇 실행, 새 유료 서비스/에셋, 공개 배포",
     "project_root": "C:\\Users\\LIMMM\\factory-ops-twin",
@@ -20,7 +20,7 @@
       "role": "dashboard frontend author",
       "name": "control",
       "agent_kind": "codex",
-      "status": "052 accepted; no pending control work",
+      "status": "054 source accepted; no pending control task; root isolated native candidate next",
       "session": "default",
       "agent_session": "01a152aa-24b4-7a31-92e3-a2b620f4feeb",
       "terminal_id": "term_65e06d27e415810",
@@ -1015,6 +1015,37 @@
       "ACK": true,
       "task_path": "coordination/collab/shared-native-observer-052-task.json",
       "acceptance_record": "Control one bounded source pass PASS;2SHA matched; root1new CPU and SDK AST once; no SDK causality/transport success claimed."
+    },
+    {
+      "task_id": "local45-physx-scan-fallback-053",
+      "attempt": 1,
+      "contract_revision": 53,
+      "owner": "control",
+      "reviewer": "root",
+      "write_paths": [
+        "coordination/collab/results/local45-physx-scan-fallback-053.json"
+      ],
+      "result_path": "coordination/collab/results/local45-physx-scan-fallback-053.json",
+      "status": "accepted_bounded_feasibility",
+      "ACK": true,
+      "task_path": "coordination/collab/local45-physx-scan-fallback-053-task.json",
+      "acceptance_record": "Root read specific create/getter/time/shape/self-hit gaps and11source hashes matched; conditional native API only, no runtime proof or RTX fix."
+    },
+    {
+      "task_id": "physx-planar-admission-054",
+      "attempt": 1,
+      "contract_revision": 54,
+      "owner": "control",
+      "reviewer": "root",
+      "write_paths": [
+        "scripts/isaac/probe_physx_planar.py",
+        "coordination/collab/results/physx-planar-admission-054.json"
+      ],
+      "result_path": "coordination/collab/results/physx-planar-admission-054.json",
+      "status": "accepted_source_native_pending",
+      "ACK": true,
+      "task_path": "coordination/collab/physx-planar-admission-054-task.json",
+      "acceptance_record": "Root one source pass: exact-owned prim lifetime, native arrays before derivation, inferred shape checks and explicit pending conditions;1SHA matched. Author cold SDK AST once; no rerun. No runtime success claim.020 bothclosed and terminal; root owns isolated native run."
     }
   ],
   "decisions": [
