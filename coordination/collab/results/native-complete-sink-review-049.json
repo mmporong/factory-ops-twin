@@ -1,0 +1,130 @@
+{
+  "task_id": "native-complete-sink-review-049",
+  "attempt": 1,
+  "contract_revision": 49,
+  "ACK": true,
+  "owner": "control",
+  "author": "root",
+  "status": "completed_bounded_source_review",
+  "verdict": "BLOCKING_FINDING",
+  "accepted": false,
+  "base_commit": "c7ed54765270e9d3c1600134d4568bed6f5bfa3c",
+  "candidate_sha256": {
+    "factory_ops/flat_scan_completion.py": "c67aed1d74ab4a17f1961f1d5f12089a68c65da737811a37b7b12e7bc386e206",
+    "factory_ops/isaac45_runtime.py": "eaeb055ec113357c2699b9c9aca2728596e4129308b95500638dc7a2ac9cad28",
+    "scripts/isaac/local45_fleet4_transport_scene.py": "7eb2f16286bce2644a355251999d05ae3945ac0962e0e9784f5c60a67556aed0"
+  },
+  "candidate_hashes_match": true,
+  "blocking_findings": [
+    {
+      "id": "SINK049-001",
+      "severity": "blocking",
+      "confidence": "높음: 설치 API 계약과 SDK wrapper 구현으로 확인",
+      "path": "factory_ops/flat_scan_completion.py",
+      "lines": "71~74",
+      "problem": "Node.create_attribute()의 성공 여부 bool을 og.Attribute로 취급하여 upstream.connect(downstream, True)의 목적지로 넘깁니다.",
+      "reachable_path": "native_publication=True → isaac45_runtime.py L431 NativeFlatScanCompletion 생성 → FIELDS의 첫 timeStamp input 생성 → bool 목적지로 connect 호출. 이 단계에서 올바른 data edge를 만들 수 없으므로 sink 초기화가 막힙니다.",
+      "installed_evidence": [
+        {
+          "path": "E:/IsaacSim/isaac-sim-4.5.0/extscache/omni.graph-1.140.2+d02c707b.wx64.r.cp310/omni/graph/core/_omni_graph_core.pyi",
+          "lines": "4153~4171",
+          "fact": "Node.create_attribute의 설명은 success state를 반환하며 Returns는 bool입니다."
+        },
+        {
+          "path": "E:/IsaacSim/isaac-sim-4.5.0/extscache/omni.graph-1.140.2+d02c707b.wx64.r.cp310/omni/graph/core/_omni_graph_core.pyi",
+          "lines": "149~158",
+          "fact": "Attribute.connect의 목적지는 omni.graph.core.Attribute입니다."
+        },
+        {
+          "path": "E:/IsaacSim/isaac-sim-4.5.0/extscache/omni.graph-1.140.2+d02c707b.wx64.r.cp310/omni/graph/core/_impl/commands/topology_commands.py",
+          "lines": "474~485",
+          "fact": "SDK CreateAttr 구현도 node.create_attribute 반환값을 self._created 성공 상태로 저장하고, 실제 attribute 존재 여부는 별도로 조회합니다."
+        },
+        {
+          "path": "E:/IsaacSim/isaac-sim-4.5.0/extscache/omni.graph-1.140.2+d02c707b.wx64.r.cp310/omni/graph/core/_impl/node_controller.py",
+          "lines": "41~65,118~132",
+          "fact": "반면 Controller.create_attribute wrapper는 생성 후 omg_node.get_attribute(attr_name)으로 조회하여 실제 og.Attribute를 반환합니다."
+        }
+      ],
+      "minimal_repair": "L71의 self._node.create_attribute(...)를 og.Controller.create_attribute(self._node, ...)로 바꾸고 반환 Attribute의 유효성을 확인한 뒤 기존 connect를 호출합니다. 또는 Node.create_attribute의 bool을 검사한 다음 self._node.get_attribute('inputs:' + field)를 조회합니다. 다른 구조 변경은 필요하지 않습니다.",
+      "execution_limit": "실제 SDK에서 TypeError나 연결 실패를 재현하지 않았습니다. 이 finding은 설치 API 타입 계약 및 wrapper 소스에 따른 기동 차단 판정이며 SDK 실행 근거가 아닙니다."
+    }
+  ],
+  "bounded_checks": [
+    {
+      "boundary": "graph 및 포트",
+      "refs": [
+        "factory_ops/flat_scan_completion.py:60",
+        "factory_ops/flat_scan_completion.py:65",
+        "factory_ops/flat_scan_completion.py:81"
+      ],
+      "result": "기존 annotator의 graph, upstream resolved type, native outputs:exec→ScriptNode inputs:execIn 구성을 사용합니다. 별도 Writer/Orchestrator/exec polling/수동 evaluate는 없습니다. 다만 SINK049-001 때문에 현재 data 연결 생성은 차단됩니다."
+    },
+    {
+      "boundary": "원래 bytes/stamp·callback 오류",
+      "refs": [
+        "factory_ops/flat_scan_completion.py:17",
+        "factory_ops/flat_scan_completion.py:25",
+        "factory_ops/flat_scan_completion.py:90",
+        "factory_ops/isaac45_runtime.py:213"
+      ],
+      "result": "callback에서 native 필드를 deepcopy한 소유 snapshot으로 교체하며 timestamp를 변환하지 않습니다. callback 오류는 sticky _error로 저장하여 read()가 실패합니다. ScriptNode 구현은 user compute 반환 bool 자체를 처리하지 않지만 owner의 read 오류 경로가 있어 이를 성공으로 숨기지는 않습니다. 실제 배열 shape/복사·완료 scheduling은 probe 미검증입니다."
+    },
+    {
+      "boundary": "소유 정리",
+      "refs": [
+        "factory_ops/flat_scan_completion.py:86",
+        "factory_ops/flat_scan_completion.py:98",
+        "factory_ops/isaac45_runtime.py:248",
+        "factory_ops/isaac45_runtime.py:457"
+      ],
+      "result": "생성 실패 시 close로 소유 node/token 정리를 시도하며 정상 해제 순서는 sink→publication annotator→render product입니다. 특정 token/node만 대상으로 하고 정리 예외를 상위로 전달합니다. SDK의 실제 삭제·정리 성공은 실행하지 않았습니다."
+    },
+    {
+      "boundary": "local45 source pin과 기존 경계",
+      "refs": [
+        "scripts/isaac/local45_fleet4_transport_scene.py:18",
+        "scripts/isaac/local45_fleet4_transport_scene.py:43",
+        "scripts/isaac/local45_fleet4_transport_scene.py:139",
+        "factory_ops/isaac45_runtime.py:427"
+      ],
+      "result": "flat_scan_completion.py가 LOCAL_SOURCE_PINS 및 extra_inputs 해시에 포함됩니다. native publication 경로에만 새 sink가 들어가고 이3파일에는 converter/admission·cap16/6frame·TTL·6.2 경로를 완화하는 변경이 없습니다. 배정 밖 해당 구현을 광역 재검수하지 않았습니다."
+    }
+  ],
+  "installed_api_sha256": {
+    "E:/IsaacSim/isaac-sim-4.5.0/extscache/omni.graph-1.140.2+d02c707b.wx64.r.cp310/omni/graph/core/_omni_graph_core.pyi": "06c5907f3dc845dd13859bef6d97aae1fbaa396cf32bf8a16356a487d6389937",
+    "E:/IsaacSim/isaac-sim-4.5.0/extscache/omni.graph-1.140.2+d02c707b.wx64.r.cp310/omni/graph/core/_impl/controller.py": "d794c0d827043124764f569a92e56d2763afdd6795ee800ca786c4c256f295b3",
+    "E:/IsaacSim/isaac-sim-4.5.0/extscache/omni.graph-1.140.2+d02c707b.wx64.r.cp310/omni/graph/core/_impl/node_controller.py": "ff2b756c39a08dae4d5efaf20e1c25dadc0c6af750ec5c2e4c2afb94da4364e1",
+    "E:/IsaacSim/isaac-sim-4.5.0/extscache/omni.graph-1.140.2+d02c707b.wx64.r.cp310/omni/graph/core/_impl/commands/topology_commands.py": "0ffc3de4136ac1d3c443cda589213620a8750534dcce48953885692f92a721f2",
+    "E:/IsaacSim/isaac-sim-4.5.0/extscache/omni.graph.scriptnode-1.40.1+106.5.0/omni/graph/scriptnode/ogn/python/nodes/OgnScriptNode.py": "a8a9fc4945756ae0ddb6aa66f378269037836834ce832a62155b79b4016aa9f4",
+    "E:/IsaacSim/isaac-sim-4.5.0/exts/isaacsim.sensors.rtx/ogn/docs/OgnIsaacComputeRTXLidarFlatScan.rst": "ed3b3aa02acc5e6a1d206a988a94fef6a054c19e7316b03fdd8faaeabf9a38d0"
+  },
+  "limits": {
+    "scope": "배정3개 후보와 해당 설치 API의 한정 소스 확인1회입니다. 048 조언 전체나 다른 제품 경계를 재검수하지 않았습니다.",
+    "source_edited": false,
+    "tests_run": false,
+    "sdk_gpu_ros_wsl_server_operations": false,
+    "git_operations": false,
+    "new_sessions_or_agents": false,
+    "self_accepted": false,
+    "only_written_path": "coordination/collab/results/native-complete-sink-review-049.json",
+    "runtime_claim": "지원 API 확인은 실제270sim probe 성공이나4대 운송 증거가 아닙니다. 구현 수정·SDK3.10 확인·실제 probe·최종 수용은 root 범위입니다."
+  },
+  "affected_recheck": {
+    "finding_id": "SINK049-001",
+    "verdict": "PASS_AFFECTED_BOUNDARY",
+    "resolution": "해결",
+    "reviewed_path": "factory_ops/flat_scan_completion.py",
+    "reviewed_lines": "69~78",
+    "source_sha256": "23b5a07e4f35dd814cbbdc937761e23eb5f5e5f2cac0e729202551cc4bc135a8",
+    "original_source_sha256": "c67aed1d74ab4a17f1961f1d5f12089a68c65da737811a37b7b12e7bc386e206",
+    "original_receipt_sha256_before_append": "f9b1ed6ba5b5e32d353207c9fd195dc19682a3be158ac76be6a62155c39b86a9",
+    "evidence": "L71~73에서 Node.create_attribute()의 bool 성공 여부를 검사하고, L74에서 node.get_attribute()로 실제 Attribute를 조회한 뒤 L75의 connect 목적지로 전달합니다. 이전 bool/Attribute 혼동은 제거됐습니다.",
+    "scope": "이 수정 경계와 새 소스 SHA만 확인했습니다. 최초 finding·판정·검수 SHA는 과거 기록으로 보존하며 나머지2파일/SDK 문서/테스트는 반복하지 않았습니다.",
+    "source_edited": false,
+    "tests_run": false,
+    "sdk_executed": false,
+    "self_accepted": false,
+    "limit": "소스 수준의 해당 차단 결함 해결 판정입니다. 실제 연결·snapshot·freshness·정리·270sim probe 성공을 주장하지 않습니다. 실제 SDK 실행과 수용은 root 범위입니다."
+  }
+}

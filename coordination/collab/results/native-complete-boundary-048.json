@@ -1,0 +1,145 @@
+{
+  "task_id": "native-complete-boundary-048",
+  "attempt": 1,
+  "contract_revision": 48,
+  "ACK": true,
+  "owner": "control",
+  "reviewer": "root",
+  "status": "completed_bounded_advice",
+  "accepted": false,
+  "base_commit": "7a9928e4f060906bbdee6105b8b71a5e20046372",
+  "conclusion": "다음 격리 probe는 기존 FlatScan의 full-scan execution 출력을 같은 그래프의 설치 ScriptNode 입력에 연결하는 경로 한 가지를 권고합니다. 지원 API와 연결 의미의 소스 근거를 확인했으며 실제 동작·018 원인 해결은 미검증입니다.",
+  "facts": [
+    "018은234.267s 부근까지 증가한 native time 뒤8센서에서111개의 subperiod 역행을 보존했고 cap16으로 실패했습니다. 종료 tail의 ROS header는 역행0이지만 일부 양의 간격이10us 수준입니다. SDK 내부 원인은 미확정입니다.",
+    "018의 동일 물리 frame 촬영 전후184개 센서 관측에서 timestamp 변화0이므로 촬영이 역행 원인이라는 근거는 없습니다.",
+    "049의 Writer cache는20s manual capture 전까지 갱신됐고20.2333343885839s에0.3sim s freshness로 실패했습니다. 촬영 전후 실제 frame/time은1203/20.050001045688987로 같았습니다. job passed/closed=true/PID[]는 정리 결과이며 probe는 failed입니다.",
+    "050의 exec 값 polling은 한 센서의 완료 표본을 놓쳐1.5000000782310963sim s에서 같은 freshness 조건으로 실패했습니다. capture는0회이며 job은 closed=true/PID[]입니다. exec 값0/1을 app update 후 읽는 방식을 다시 권고하지 않습니다."
+  ],
+  "supported_sources": [
+    {
+      "path": "E:/IsaacSim/isaac-sim-4.5.0/exts/isaacsim.sensors.rtx/ogn/docs/OgnIsaacComputeRTXLidarFlatScan.rst",
+      "lines": "38~61,70~76",
+      "proof": "FlatScan은 전체 scan 누적 node이며 outputs:exec(execution)는 full scan 누적 완료에 발생한다고 명시합니다. linearDepthData(float[])·intensitiesData(uchar[])·azimuthRange(float[2],deg)·depthRange(float[2],m)·timeStamp(double,첫 빔 시각) 등을 CPU 출력으로 제공합니다."
+    },
+    {
+      "path": "E:/IsaacSim/isaac-sim-4.5.0/extscache/omni.replicator.core-1.11.35+106.5.0.wx64.r.cp310/omni/replicator/core/scripts/annotators.py",
+      "lines": "907~911",
+      "proof": "attach된 annotator의 public get_node()가 og.Node를 반환합니다. caller가 SDK private graph registry를 조회할 필요는 없습니다."
+    },
+    {
+      "path": "E:/IsaacSim/isaac-sim-4.5.0/extscache/omni.replicator.core-1.11.35+106.5.0.wx64.r.cp310/omni/replicator/core/scripts/writers.py",
+      "lines": "69~104,107~130",
+      "proof": "SDK는 controller.create_node((node_name,graph),node_type_id)와 source attribute의 resolved type을 사용합니다. annotator의 execution 출력을 AsyncGate inputs:execIn에 연결하고 나머지 output을 writer input에 연결합니다. 이는 execution 연결의 근거이며049의 writer 경로 성공 증명은 아닙니다."
+    },
+    {
+      "path": "E:/IsaacSim/isaac-sim-4.5.0/extscache/omni.graph.scriptnode-1.40.1+106.5.0/omni/graph/scriptnode/ogn/python/nodes/OgnScriptNode.ogn",
+      "lines": "4~17,19~33",
+      "proof": "설치 node type omni.graph.scriptnode.ScriptNode는 inputs:execIn(execution), inputs:script(string), Python runtime compute와 동적 attribute를 지원합니다. scheduling은 usd-write입니다."
+    },
+    {
+      "path": "E:/IsaacSim/isaac-sim-4.5.0/extscache/omni.graph.scriptnode-1.40.1+106.5.0/omni/graph/scriptnode/ogn/python/nodes/OgnScriptNode.pre.rst",
+      "lines": "64~71,94~115,123~133,240~249,295~299",
+      "proof": "ScriptNode는 graph에 연결해 실행할 수 있고 db.inputs로 동적 input을 읽으며 db.per_instance_state로 상태를 유지합니다. setup/cleanup 수명주기도 문서화되어 있습니다. 단, 이 설명은 RTX 출력의 atomic snapshot 보장이 아닙니다."
+    },
+    {
+      "path": "E:/IsaacSim/isaac-sim-4.5.0/extscache/omni.graph.scriptnode-1.40.1+106.5.0/omni/graph/scriptnode/tests/test_scriptnode.py",
+      "lines": "27~68,117~140",
+      "proof": "설치 공식 예제는 Controller.edit CREATE_NODES/CONNECT, Script.inputs:execIn 연결, Controller.create_attribute(..., ATTRIBUTE_PORT_TYPE_INPUT), inputs:script의 def compute(db) 사용을 보여줍니다. 예제를 실행하지는 않았습니다."
+    },
+    {
+      "path": "E:/IsaacSim/isaac-sim-4.5.0/extscache/omni.graph.scriptnode-1.40.1+106.5.0/omni/graph/scriptnode/ogn/python/nodes/OgnScriptNode.py",
+      "lines": "242~257",
+      "proof": "실제 구현이 user-defined compute_fn(db)를 호출합니다. 예외는 log 후 False를 반환하므로 probe는 로그만으로 성공 처리하지 말고 callback count와 cache freshness를 별도로 확인해야 합니다."
+    },
+    {
+      "path": "E:/IsaacSim/isaac-sim-4.5.0/extscache/omni.graph-1.140.2+d02c707b.wx64.r.cp310/omni/graph/core/_omni_graph_core.pyi",
+      "lines": "1561~1566,4268~4275",
+      "proof": "Node.get_graph()와 Graph.get_path_to_graph()가 설치 API에 있습니다. annotator의 기존 graph를 사용하며 다른 OnTick 그래프를 만들어 완료 사건을 대신하지 않습니다."
+    }
+  ],
+  "next_probe": {
+    "name": "기존 FlatScan full-scan execution → 같은 graph의 ScriptNode cache",
+    "recommendation_count": 1,
+    "kind": "root가 구현·실행할 격리 제안; 이번에는 실행하지 않음",
+    "setup": [
+      "049/050과 같은2개 고정 RPLIDAR_S2E·World/센서 주기·환경을 재사용합니다. 설치된 omni.graph.scriptnode만 probe에서 활성화하며 새 설치/의존성/ROS/차량 명령은 추가하지 않습니다.",
+      "annotator.attach 후 annotator.get_node().get_graph() 안에 sensor별 ScriptNode1개를 만들고, FlatScan outputs:exec → sink inputs:execIn을 연결합니다. 별도 Writer/AsyncGate/OnTick/exec-value polling을 두지 않습니다.",
+      "기존 output의 get_resolved_type()과 INPUT port type으로 sink 동적 inputs를 만듭니다. timeStamp, linearDepthData, intensitiesData, azimuthRange, depthRange, horizontalFov, horizontalResolution, numCols, numRows, rotationRate를 이름별로 연결합니다.",
+      "inputs:script의 def compute(db)에서 연결된 db.inputs를 읽고 ranges/intensities는 callback 안에서 소유 배열로 copy합니다. 원래 timeStamp·각도 단위·-1 sentinel을 유지합니다. setup/db.per_instance_state 또는 probe 소유 Python cache에 단일 snapshot과 callback_sequence를 저장하고 cleanup에서 소유 참조를 해제합니다.",
+      "main loop는 완료 callback이 남긴 cache만 소비합니다. native get_data()/outputs:exec를 매 frame 읽거나 ScriptNode compute/graph evaluate를 수동 호출하지 않습니다. callback_sequence를 물리 frame이나 native sensor frame으로 부르지 않습니다."
+    ],
+    "connection_spec": {
+      "execution": [
+        "FlatScan.outputs:exec",
+        "ScriptNode.inputs:execIn"
+      ],
+      "node_type": "omni.graph.scriptnode.ScriptNode",
+      "graph": "원래 annotator node의 graph",
+      "data_ports": [
+        "timeStamp",
+        "linearDepthData",
+        "intensitiesData",
+        "azimuthRange",
+        "depthRange",
+        "horizontalFov",
+        "horizontalResolution",
+        "numCols",
+        "numRows",
+        "rotationRate"
+      ],
+      "capture": "049와 같은20sim s 간격의 delta_time=0, rt_subframes=4, pause_timeline=True 촬영과 timeline 재개. 새 reset/Start/주기 보정은 추가하지 않습니다."
+    },
+    "bounded_run": "049의270sim s 목표와850s wall bound 및 기존 소유 Job cleanup을 유지하는 단일 격리 실행을 제안합니다.20s capture 이후와 원래234s 이상 구간까지 도달해야 하며 시간 상한 종료는 성공이 아닙니다.",
+    "observations": [
+      "센서별 callback_sequence, 원본 native first-beam stamp, 실제 World time/frame, range 수·dtype·SHA와 복사 완료 세대를 제한된 저널에 남깁니다.",
+      "촬영 전후 실제 World time/frame이 같고, timeline 재개 뒤 같은 두 센서에서 새 completion cache가 기존0.3sim s 안에 갱신되는지 확인합니다.",
+      "원래 stamp의 증가/중복/역행 및 양의 delta 분포를 보존합니다. 본문을 읽어 재생성한 시각·GT/합성 거리·ROS clock offset으로 통과시키지 않습니다."
+    ],
+    "failure_conditions": [
+      "node/port/type/연결이 설치 graph에서 유효하지 않거나 ScriptNode compute가 호출되지 않으면 즉시 지원 경계 실패로 기록합니다. 다른 graph로 옮겨 강제 evaluate하는 fallback은 두지 않습니다.",
+      "기존 warmup 이후 한 센서라도0.3sim s cache freshness를 넘으면 실패합니다.049와 같은20.233s stall을 성공으로 처리하지 않습니다.",
+      "원본 timestamp 역행·비유한 metadata·불완전한 크기/타입·native snapshot 불일치가 발견되면 원본과 callback/world 식별을 보존하고 실패합니다. 중복 stamp는 새 데이터/신선도 갱신으로 세지 않습니다.",
+      "10us 수준의 양의 delta가 다시 나오면 full-scan callback이었다는 이유만으로 정상 완료로 인정하지 않고 completion 경계/본문 일관성 미검증으로 남깁니다.",
+      "촬영이 실제 World time/frame을 전진시키거나 source/config 불일치·소유 프로세스 정리 실패가 생기면 실패합니다."
+    ],
+    "unproven": "이 연결이 render-product graph의 native 실행 순서를 보존하고 manual Replicator step 이후에도 계속 dispatch되는지는 실제 확인이 필요합니다. 설치 API 지원은 확인했지만 RTX buffer의 원자성이나018 역행 원인을 증명한 것은 아닙니다.2센서 통과도8센서·AMR 운송·6.2 성공을 뜻하지 않습니다."
+  },
+  "alternative_considered": {
+    "candidate": "Attribute.register_value_changed_callback",
+    "source": "E:/IsaacSim/isaac-sim-4.5.0/extscache/omni.graph-1.140.2+d02c707b.wx64.r.cp310/omni/graph/core/_omni_graph_core.pyi",
+    "lines": "491~501",
+    "reason_not_selected": "설치 API는 attribute 값 변경 알림과 단일 callback만 보장하며 새 등록이 기존 callback을 대체합니다. full-scan execution마다 호출됨·여러 출력의 일관된 snapshot·native compute 후 순서는 명시하지 않습니다. 따라서 완료 경계의 대체로 권고하지 않습니다."
+  },
+  "sha256": {
+    "docs/evidence/local45-transport-018.json": "678e95a7aeafa8ed750ad9dd4f191f8b650651c8937c2c90d2c4f0d468c95b3d",
+    "D:/FactoryOpsRuntime/local45-transport-018/closed-native-tail.json": "e75f65a10ac8dd410b7af8e7a632dea2cd65c9d726cb6ae6b39e8a9c4350b1ff",
+    "D:/FactoryOpsRuntime/native-complete-probe-049/probe.py": "cc03c2ab5eb2695c7e71ddff178baa2c40336876af191d970635a40fc6eef750",
+    "D:/FactoryOpsRuntime/native-complete-probe-049/output/probe.json": "9b21fd7ed9d140d6678f15f96d5f8b92f53c70a09eec941d1773bf5bb5877c66",
+    "D:/FactoryOpsRuntime/native-complete-probe-049/job.json": "0fa1c5dd8adb3e04970fc28b3e793090c83a22614d8716e9c81b034f421efffe",
+    "D:/FactoryOpsRuntime/native-exec-gate-probe-050/probe.py": "4811bdf5d717b3ff4e9fe32aa09ebdbbe50bfbe847f2e594790575ede0c45182",
+    "D:/FactoryOpsRuntime/native-exec-gate-probe-050/output/probe.json": "592f5e4810d88df60e80d1f8b193f83700316480b99db540e623b81690308bf2",
+    "D:/FactoryOpsRuntime/native-exec-gate-probe-050/job.json": "4069f0aefe06cbd2c625a58085eb1096c66a825b2625d5f1173208732f3911f9",
+    "E:/IsaacSim/isaac-sim-4.5.0/exts/isaacsim.sensors.rtx/ogn/docs/OgnIsaacComputeRTXLidarFlatScan.rst": "ed3b3aa02acc5e6a1d206a988a94fef6a054c19e7316b03fdd8faaeabf9a38d0",
+    "E:/IsaacSim/isaac-sim-4.5.0/extscache/omni.replicator.core-1.11.35+106.5.0.wx64.r.cp310/omni/replicator/core/scripts/writers.py": "4224ef8c4c2b812c1a7655a6f489647cf7c2342e000ca94a76e2a77503f4ec5f",
+    "E:/IsaacSim/isaac-sim-4.5.0/extscache/omni.replicator.core-1.11.35+106.5.0.wx64.r.cp310/omni/replicator/core/scripts/annotators.py": "bf2d989f1564f62049f501512a6a7e8deed999877f01b2fbb536fe09557b1559",
+    "E:/IsaacSim/isaac-sim-4.5.0/extscache/omni.graph.scriptnode-1.40.1+106.5.0/omni/graph/scriptnode/ogn/python/nodes/OgnScriptNode.ogn": "bc72ac31fc67391e8460e82b7d3b3a57bc3fab959b71fe96bd300d0f8dd56f6c",
+    "E:/IsaacSim/isaac-sim-4.5.0/extscache/omni.graph.scriptnode-1.40.1+106.5.0/omni/graph/scriptnode/ogn/python/nodes/OgnScriptNode.py": "a8a9fc4945756ae0ddb6aa66f378269037836834ce832a62155b79b4016aa9f4",
+    "E:/IsaacSim/isaac-sim-4.5.0/extscache/omni.graph.scriptnode-1.40.1+106.5.0/omni/graph/scriptnode/ogn/python/nodes/OgnScriptNode.pre.rst": "1803117cac27fc4901ba4d628c10107c1e0a876d0c82e51f65ca47bbfd0c5259",
+    "E:/IsaacSim/isaac-sim-4.5.0/extscache/omni.graph.scriptnode-1.40.1+106.5.0/omni/graph/scriptnode/tests/test_scriptnode.py": "5801b8b8d004407d391e7cba8be06e2b0a90888f7ceb0b1c5e9cb43e09f963f2",
+    "E:/IsaacSim/isaac-sim-4.5.0/extscache/omni.graph-1.140.2+d02c707b.wx64.r.cp310/omni/graph/core/_omni_graph_core.pyi": "06c5907f3dc845dd13859bef6d97aae1fbaa396cf32bf8a16356a487d6389937"
+  },
+  "limits": {
+    "verification": "설치 primary 소스/문서와 종료된 JSON/허용된 probe 소스를 읽고 SHA를 확인한 한정 조언입니다. API 실행 검증은 하지 않았습니다.",
+    "sdk_cpp_impl": "FlatScan native C++ 내부 누적/출력 갱신의 원자적 일관성 구현은 이 자료에서 확인하지 못했습니다.",
+    "tests_run": false,
+    "sdk_gpu_ros_wsl_started": false,
+    "bag_opened": false,
+    "server_changed": false,
+    "git_changed": false,
+    "dependencies_changed": false,
+    "new_agents": false,
+    "product_source_edited": false,
+    "only_written_path": "coordination/collab/results/native-complete-boundary-048.json",
+    "stop": "단일 다음 probe 제안을 반환하고 종료합니다. 구현·실제 실행·수용은 root 범위입니다."
+  }
+}

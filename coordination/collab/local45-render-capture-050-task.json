@@ -1,0 +1,26 @@
+{
+  "task_id": "local45-render-capture-050",
+  "attempt": 1,
+  "contract_revision": 50,
+  "owner": "control",
+  "reviewer": "root",
+  "goal": "Use public World.render for local45 frozen RGB capture, preserve completed native sensor execution",
+  "inputs": {
+    "base_commit": "c7ed54765270e9d3c1600134d4568bed6f5bfa3c",
+    "working_file_sha256": "7eb2f16286bce2644a355251999d05ae3945ac0962e0e9784f5c60a67556aed0",
+    "active_probe": "D:/FactoryOpsRuntime/native-script-render-probe-052",
+    "probe_run_id": "98a070df0d80439cbef90a12a22311da",
+    "sdk_api": "E:/IsaacSim/isaac-sim-4.5.0/exts/isaacsim.core.api/isaacsim/core/api/simulation_context/simulation_context.py lines181-190 and665-694"
+  },
+  "write_paths": [
+    "scripts/isaac/local45_fleet4_transport_scene.py",
+    "coordination/collab/results/local45-render-capture-050.json"
+  ],
+  "acceptance": [
+    "Own only Local45FleetLifecycle.before_capture override in the named source; preserve root new flat_scan_completion.py source pin already present. You are not alone. Do not edit root completion/runtime modules or active D source; no new dependencies/agents/panes/server/Git or SDK/GPU/ROS/WSL runs.",
+    "Same hook signature before_capture(rep). Keep enabled RGB/timeline preconditions. Lazy import installed World, require World.instance() available, call public world.render()4times while outer G2 pause/resume guard owns the timeline. No Replicator.orchestrator.step/Start/reset/manual graph evaluation. Do not touch canonical G3/6.2 hooks, physics dt, control or sensor/admission/TTL.",
+    "Existing G2 capture guard must still prove unchanged actual World time/frame and robot poses. Four render updates replace rt_subframes4; no claim they match antialiasing or quality. The actual052 two-sensor/RGB probe is root-owned: after55sim s and2frozen captures reception continues, but270sim and4AMR are still pending.",
+    "No tests that mirror the4calls. One cold SDK3.10 AST parse for this file plus diff check is sufficient here; root separately reviews the small diff and uses actual052 plus later transport run. Return exact SHA/commands/results and no completion overclaim in receipt."
+  ],
+  "result_path": "coordination/collab/results/local45-render-capture-050.json"
+}

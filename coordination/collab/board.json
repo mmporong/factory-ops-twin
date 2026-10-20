@@ -1,6 +1,6 @@
 {
-  "revision": 48,
-  "updated_at": "2026-10-20T07:04:51.227461+00:00",
+  "revision": 50,
+  "updated_at": "2026-10-20T07:40:22.325867+00:00",
   "scope": {
     "excluded": "실물 로봇 실행, 새 유료 서비스/에셋, 공개 배포",
     "project_root": "C:\\Users\\LIMMM\\factory-ops-twin",
@@ -20,7 +20,7 @@
       "role": "dashboard frontend author",
       "name": "control",
       "agent_kind": "codex",
-      "status": "047 accepted;048 bounded native acquisition advice dispatched",
+      "status": "050 implementation accepted; no pending control task; root owns transport019",
       "session": "default",
       "agent_session": "01a152aa-24b4-7a31-92e3-a2b620f4feeb",
       "terminal_id": "term_65e06d27e415810",
@@ -948,8 +948,40 @@
       ],
       "result_path": "coordination/collab/results/native-complete-boundary-048.json",
       "task_path": "coordination/collab/native-complete-boundary-048-task.json",
-      "status": "dispatched",
-      "ACK": false
+      "status": "accepted_bounded_advice",
+      "ACK": true,
+      "acceptance_record": "Root reviewed one supported next probe, matched15 source/evidence hashes; ScriptNode fullscan-exec sink only. Both prior candidates rejected, no runtime success claimed."
+    },
+    {
+      "task_id": "native-complete-sink-review-049",
+      "attempt": 1,
+      "contract_revision": 49,
+      "owner": "root",
+      "reviewer": "control",
+      "write_paths": [
+        "coordination/collab/results/native-complete-sink-review-049.json"
+      ],
+      "result_path": "coordination/collab/results/native-complete-sink-review-049.json",
+      "status": "accepted_source_native_pending",
+      "ACK": true,
+      "task_path": "coordination/collab/native-complete-sink-review-049-task.json",
+      "acceptance_record": "One3file source pass found bool/Attribute creation mismatch; exact repair affected lines/SHA rechecked PASS. No broad review/tests repeated. Sink callbacks worked in051 but Replicator capture stalled execution;052 same sink plus World.render/RGB currently55sim s and2captures without loss; actual270/full4fleet pending."
+    },
+    {
+      "task_id": "local45-render-capture-050",
+      "attempt": 1,
+      "contract_revision": 50,
+      "owner": "control",
+      "reviewer": "root",
+      "write_paths": [
+        "scripts/isaac/local45_fleet4_transport_scene.py",
+        "coordination/collab/results/local45-render-capture-050.json"
+      ],
+      "result_path": "coordination/collab/results/local45-render-capture-050.json",
+      "task_path": "coordination/collab/local45-render-capture-050-task.json",
+      "status": "accepted_source_isolation_passed_transport_pending",
+      "ACK": true,
+      "acceptance_record": "Root small diff/source SHA checked: only local45 before_capture adds enabled/timeline/World checks and4public render calls; root source pin retained. Author SDK3.10 syntax/diff once; no mirror tests. Actual0522sensors270sim,13frozenRGB captures,0regressions; process closure passed.8sensor/four-AMR pending; SDK release log issue preserved separately."
     }
   ],
   "decisions": [

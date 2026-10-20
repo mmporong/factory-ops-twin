@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "run_id": "98a070df0d80439cbef90a12a22311da",
+  "base_commit": "c7ed54765270e9d3c1600134d4568bed6f5bfa3c",
+  "scope": "two static native RTX sensors and small RGB render-only frozen-capture isolation; not4AMR transport or full sensor quality qualification",
+  "status": "data_and_frozen_capture_passed",
+  "elapsed_sim_s": 270.0000140815973,
+  "wall_s": 259.4059999999881,
+  "frozen_rgb_captures": 13,
+  "all_capture_clock_frames_unchanged": true,
+  "rgb_shape": [
+    36,
+    64,
+    4
+  ],
+  "sensors": {
+    "0": {
+      "cached_changes": 2708,
+      "cached_regressions": 0,
+      "cached_min_positive_delta_s": 0.08333333767950535,
+      "cached_max_delta_s": 0.10000000600001613,
+      "completed_callback_sequence": 2709,
+      "owned_snapshot_stable": true
+    },
+    "1": {
+      "cached_changes": 2708,
+      "cached_regressions": 0,
+      "cached_min_positive_delta_s": 0.08336458767950461,
+      "cached_max_delta_s": 0.10000000600001613,
+      "completed_callback_sequence": 2709,
+      "owned_snapshot_stable": true
+    }
+  },
+  "candidate_source_sha256": "23b5a07e4f35dd814cbbdc937761e23eb5f5e5f2cac0e729202551cc4bc135a8",
+  "probe_source_sha256": "4fad32be8f06fb33a5191085cbe55b4510bbcda873a4b87ca554fe4286241fe1",
+  "probe_report_sha256": "60f18a9e2de8f699f7e84ad9cdc9ea7eac5cbd721ef4e183a826bb0af9138753",
+  "job_receipt_sha256": "7f186df5b1a6419f7ac08660e634d9c9bfbad950f68709a3e15d13997c4c6ca2",
+  "owned_process_tree_closed": true,
+  "python_cleanup_errors": [],
+  "sdk_release_callback_error_logs": 4,
+  "open_limitations": [
+    "SDK ScriptNode.release logs reference state:omni_initialized after owned node removal; Python cleanup returned and owned job closed. This is preserved, not zero SDK log errors.",
+    "270sim2sensor pass does not qualify8sensors,4AMR navigation, range accuracy, physical loading or charging. Original018 cause is not proven by this isolated result."
+  ],
+  "raw_originals": "D:\\FactoryOpsRuntime\\native-script-render-probe-052",
+  "next": "apply local45 capture override and run unchanged4AMR transport workload with original clocks/admission/TTL"
+}

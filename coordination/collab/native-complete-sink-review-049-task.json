@@ -1,0 +1,27 @@
+{
+  "task_id": "native-complete-sink-review-049",
+  "attempt": 1,
+  "contract_revision": 49,
+  "owner": "root",
+  "reviewer": "control",
+  "goal": "One bounded source/API review of root completed-scan sink candidate before isolated SDK probe; no broad review/test loop",
+  "inputs": {
+    "base_commit": "c7ed54765270e9d3c1600134d4568bed6f5bfa3c",
+    "advice": "coordination/collab/results/native-complete-boundary-048.json",
+    "candidate_sha256": {
+      "factory_ops/flat_scan_completion.py": "c67aed1d74ab4a17f1961f1d5f12089a68c65da737811a37b7b12e7bc386e206",
+      "factory_ops/isaac45_runtime.py": "eaeb055ec113357c2699b9c9aca2728596e4129308b95500638dc7a2ac9cad28",
+      "scripts/isaac/local45_fleet4_transport_scene.py": "7eb2f16286bce2644a355251999d05ae3945ac0962e0e9784f5c60a67556aed0"
+    }
+  },
+  "write_paths": [
+    "coordination/collab/results/native-complete-sink-review-049.json"
+  ],
+  "acceptance": [
+    "Read these3 candidate files and the installed API sources already collected. Focus graph/typed port connection, original native bytes/stamp ownership, callback errors, close ownership, and new local45 source pin. Do not repeat whole project reviews.",
+    "Root wrote the candidate. Reviewer does not edit source, run SDK/GPU/ROS/WSL/server/tests/Git or create sessions. Root owns isolated probe and actual runtime validation. Return blocking findings only plus digests; supported API is not actual runtime proof.",
+    "Native converter/admission and cap16/6frame recovery/TTL unchanged; canonical6.2 unchanged. No Orchestrator/Writer/polled execution flag or manual graph evaluate. ScriptNode is SDK-installed and source token scoped; no global trust/security reset.",
+    "Candidate root will run SDK3.10 syntax and one2sensor actual270sim sink probe with frozen source and owned job; this is not4AMR navigation evidence. If blocked API discrepancy exists, report exact line and smallest repair."
+  ],
+  "result_path": "coordination/collab/results/native-complete-sink-review-049.json"
+}

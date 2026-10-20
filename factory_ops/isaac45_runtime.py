@@ -208,11 +208,14 @@ class _LidarSensor:
         self._writer: Any = None
         self._observer: Any = None
         self._publication_annotator: Any = None
+        self._completion_sink: Any = None
 
     def read_native_scan(self):
         if self._publication_annotator is None:
             raise RuntimeError("sensor has no native publication annotator")
-        payload = self._publication_annotator.get_data()
+        if self._completion_sink is None:
+            raise RuntimeError("native publication requires its completed-scan execution sink")
+        payload = self._completion_sink.read()
         if isinstance(payload, dict):
             reshape = getattr(payload.get("linearDepthData"), "reshape", None)
             if callable(reshape):
@@ -243,6 +246,12 @@ class _LidarSensor:
             except Exception as error:
                 errors.append(f"writer.detach: {error}")
         if self._publication_annotator is not None:
+            if self._completion_sink is not None:
+                try:
+                    self._completion_sink.close()
+                    self._completion_sink = None
+                except Exception as error:
+                    errors.append(f"completion_sink.close: {error}")
             try:
                 self._publication_annotator.detach()
                 self._publication_annotator = None
@@ -416,8 +425,12 @@ class Runtime45:
                 sensor = _LidarSensor(product)
                 sensors.append(sensor)
                 if native_publication:
+                    from factory_ops.flat_scan_completion import NativeFlatScanCompletion
                     sensor._publication_annotator = rep.AnnotatorRegistry.get_annotator(FLAT_SCAN_ANNOTATOR)
                     sensor._publication_annotator.attach([product])
+                    sensor._completion_sink = NativeFlatScanCompletion(sensor._publication_annotator,
+                        context=lambda: {"world_sim_time_s": float(SimulationManager.get_simulation_time()),
+                                         "world_physics_frame": int(SimulationManager.get_num_physics_steps())})
                 else:
                     sensor._writer = rep.writers.get(LIDAR_WRITER)
                     sensor._writer.initialize(topicName=topic, frameId=lidar["frame_id"])

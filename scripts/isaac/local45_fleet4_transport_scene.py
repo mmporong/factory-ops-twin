@@ -17,7 +17,7 @@ from scripts.isaac.fleet4_transport_scene import FleetTransportLifecycle, SOURCE
 RESULT_FILE = "local45-fleet4-transport-scene.json"
 LOCAL_SOURCE_PINS = BASE_SOURCE_PINS | frozenset({
     "scripts/isaac/local45_fleet4_transport_scene.py", "factory_ops/isaac45_runtime.py",
-    "factory_ops/flat_scan_observation.py", "factory_ops/flat_scan_ros.py", "factory_ops/compat.py",
+    "factory_ops/flat_scan_observation.py", "factory_ops/flat_scan_ros.py", "factory_ops/flat_scan_completion.py", "factory_ops/compat.py",
     "factory_ops/operations/model.py", "scripts/isaac/robot_qualification.py",
     "scripts/isaac/nav_scene.py", "scripts/isaac/stage_smoke.py",
     "factory_ops/visual_state.py", "factory_ops/wsl_process_supervisor.py",
@@ -107,6 +107,18 @@ class Local45FleetLifecycle(FleetTransportLifecycle):
                 or stamp-self._native_periodic_ns >= 1_000_000_000):
             self._record_lidar_acquisition("periodic_1hz", sim_time_s, physics_frame)
             self._native_periodic_ns = stamp
+
+    def before_capture(self, rep: Any) -> None:
+        if self.rgb_render_state != "enabled" or self.timeline is None:
+            raise RuntimeError("local45 RGB render products are not active before capture")
+        from isaacsim.core.api import World
+
+        world = World.instance()
+        if world is None:
+            raise RuntimeError("local45 frozen capture requires an initialized World")
+        # The outer G2 capture guard owns timeline pause/resume and frozen-state checks.
+        for _ in range(4):
+            world.render()
 
     def cleanup_render_products(self) -> None:
         errors = []
