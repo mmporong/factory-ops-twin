@@ -1,0 +1,89 @@
+{
+  "schema_version": 1,
+  "run_id": "d2fed0a2b4cf4119b1a7241e738bca17",
+  "producer_source_commit": "3c436a4c8d1cfc948f748dd805a138197ebed2a4",
+  "status": "failed_mission_origin_ros_native_clock_boundary",
+  "primary_sdk_error": "FACTORY_OPS_G2_ERROR=mission: ValueError: G3 mission-start time is invalid",
+  "sdk_report_original_status": "running",
+  "failure_checkpoint_present": false,
+  "first_HOLD_upgrade_actual": {
+    "carter1": {
+      "sequence": 11,
+      "issued_sim_time_s": 4.60000024,
+      "original_first_frame": 277,
+      "original_first_evaluation_s": 4.600000239908695,
+      "accepted_original_frame": 278,
+      "accepted_evaluation_s": 4.616666907444596,
+      "accepted_sample_s": 4.633333574980497,
+      "last_world_s": 4.650000242516398
+    },
+    "carter2": {
+      "sequence": 11,
+      "issued_sim_time_s": 4.60000024,
+      "original_first_frame": 277,
+      "original_first_evaluation_s": 4.600000239908695,
+      "accepted_original_frame": 278,
+      "accepted_evaluation_s": 4.616666907444596,
+      "accepted_sample_s": 4.633333574980497,
+      "last_world_s": 4.650000242516398
+    },
+    "carter3": {
+      "sequence": 11,
+      "issued_sim_time_s": 4.60000024,
+      "original_first_frame": 277,
+      "original_first_evaluation_s": 4.600000239908695,
+      "accepted_original_frame": 278,
+      "accepted_evaluation_s": 4.616666907444596,
+      "accepted_sample_s": 4.633333574980497,
+      "last_world_s": 4.650000242516398
+    },
+    "carter4": {
+      "sequence": 11,
+      "issued_sim_time_s": 4.60000024,
+      "original_first_frame": 277,
+      "original_first_evaluation_s": 4.600000239908695,
+      "accepted_original_frame": 278,
+      "accepted_evaluation_s": 4.616666907444596,
+      "accepted_sample_s": 4.633333574980497,
+      "last_world_s": 4.650000242516398
+    }
+  },
+  "initial_hold_ready_clock_s": 4.650000243,
+  "mission_origin_original_s": 4.650000243,
+  "last_actual_world_s": 4.650000242516398,
+  "origin_ahead_native_world_s": 4.836016032072621e-10,
+  "cause": "Original nanosecond ROS origin is strictly greater than native World double at the same physics frame; BarrierLifecycle.step rejects before the next physical frame.",
+  "cleanup_hang_scope": "SDK printed the primary error but did not exit native cleanup; ROS simulated clock was frozen. Root requested only this Windows Job abort, then pair owner closed its Linux unit.",
+  "secondary_ros_error": {
+    "message": "failed to initialize wait set: the given context is not valid, either rcl_init() was not called or rcl_shutdown() was called., at ./src/rcl/wait.c:130",
+    "traceback": "Traceback (most recent call last):\n  File \"/mnt/d/FactoryOpsRuntime/local45-transport-025/source/scripts/ros/g3_mission.py\", line 1689, in run_mission\n    stamp = tick(require_fresh=True)\n            ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/mnt/d/FactoryOpsRuntime/local45-transport-025/source/scripts/ros/g3_mission.py\", line 1469, in tick\n    callback_drain.drain()\n  File \"/mnt/d/FactoryOpsRuntime/local45-transport-025/source/factory_ops/callback_drain.py\", line 69, in drain\n    executor.spin_once(timeout_sec=0.0)\n  File \"/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/executors.py\", line 926, in spin_once\n    self._spin_once_impl(timeout_sec)\n  File \"/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/executors.py\", line 907, in _spin_once_impl\n    handler, entity, node = self.wait_for_ready_callbacks(\n                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/executors.py\", line 877, in wait_for_ready_callbacks\n    return next(self._cb_iter)\n           ^^^^^^^^^^^^^^^^^^^\n  File \"/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/executors.py\", line 757, in _wait_for_ready_callbacks\n    wait_set = _rclpy.WaitSet(\n               ^^^^^^^^^^^^^^^\nrclpy._rclpy_pybind11.RCLError: failed to initialize wait set: the given context is not valid, either rcl_init() was not called or rcl_shutdown() was called., at ./src/rcl/wait.c:130\n",
+    "type": "RCLError"
+  },
+  "secondary_ros_error_scope": "Recorded after owned shutdown; not the cause of the earlier SDK failure.",
+  "action_records": 1,
+  "material_revision": 0,
+  "inventory_conservation": [
+    {
+      "balanced": true,
+      "consumed": 0,
+      "in_totes": 0,
+      "initial": 60,
+      "on_hand": 60,
+      "replenished": 0,
+      "sku": "sensor-kit"
+    }
+  ],
+  "pickups": 0,
+  "completed_orders": 0,
+  "empty_returns_completed": 0,
+  "windows_closed": true,
+  "linux_closed": true,
+  "cleanup_errors": [],
+  "original_database_bytes": 89600000,
+  "original_database_sha256": "ed4c87503bc80e5ec8e7ee64644f29d7f3937cf55245381f4675c3f9c09c8719",
+  "bag_sql_opened": false,
+  "new_video_or_SDG_generated": false,
+  "goal80_complete": false,
+  "raw_originals": "D:\\FactoryOpsRuntime\\local45-transport-025",
+  "next": "066 waits for one real subsequent physics frame with unchanged origin; durable SDK primary-failure checkpoint allows owned pair shutdown before native cleanup hangs."
+}

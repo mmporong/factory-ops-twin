@@ -1422,6 +1422,13 @@ def _run(
         if getattr(error, "__notes__", None):
             result["error"]["notes"] = list(error.__notes__)
         print(f"FACTORY_OPS_G2_ERROR={phase}: {type(error).__name__}: {error}", flush=True)
+        if local_sdk45 and output is not None:
+            # Preserve the primary failure before native teardown can block.
+            try:
+                _atomic_json(output / "sdk-failure.json", result)
+            except Exception as checkpoint_error:
+                result["failure_checkpoint_error"] = f"{type(checkpoint_error).__name__}: {checkpoint_error}"
+                print(f"FACTORY_OPS_G2_CHECKPOINT_ERROR={result['failure_checkpoint_error']}", flush=True)
     finally:
         cleanup_errors: list[str] = []
         if not valid:

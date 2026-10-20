@@ -1,5 +1,6 @@
 """CPU-only foreground-client monitoring; no WSL/SDK process is launched."""
 from pathlib import Path
+import json
 import subprocess
 import tempfile
 import unittest
@@ -84,6 +85,34 @@ class PairMonitorTests(unittest.TestCase):
             monitor_pair(worker, self.owner, started=0, bound=60)
         sleep.assert_not_called()
         self.client.poll.assert_not_called()
+
+    def test_sdk_primary_failure_preempts_a_live_frozen_ros_client(self):
+        with tempfile.TemporaryDirectory() as folder:
+            marker = Path(folder) / "sdk-failure.json"
+            marker.write_text(json.dumps({"run_id": "a" * 32, "status": "failed",
+                "stage": "mission", "error": {"type": "ValueError",
+                "message": "G3 mission-start time is invalid"}}), encoding="utf-8")
+            worker = Mock()
+            worker.poll.return_value = None
+            with patch("scripts.isaac.run_local45_fleet_pair.time.monotonic", return_value=5), \
+                    patch("scripts.isaac.run_local45_fleet_pair.time.sleep") as sleep, \
+                    self.assertRaisesRegex(RuntimeError, "SDK failure before cleanup: mission: ValueError: G3 mission-start"):
+                monitor_pair(worker, self.owner, started=0, bound=60,
+                             failure_path=marker, run_id="a" * 32)
+            sleep.assert_not_called()
+            self.client.poll.assert_not_called()
+            worker.terminate.assert_not_called()  # Caller finally owns both OS cleanup paths.
+
+    def test_sdk_failure_checkpoint_from_another_run_is_rejected(self):
+        with tempfile.TemporaryDirectory() as folder:
+            marker = Path(folder) / "sdk-failure.json"
+            marker.write_text(json.dumps({"run_id": "b" * 32, "status": "failed"}), encoding="utf-8")
+            worker = Mock()
+            worker.poll.return_value = None
+            with patch("scripts.isaac.run_local45_fleet_pair.time.monotonic", return_value=5), \
+                    self.assertRaisesRegex(RuntimeError, "identity/status mismatch"):
+                monitor_pair(worker, self.owner, started=0, bound=60,
+                             failure_path=marker, run_id="a" * 32)
 
     def test_bootstrap_marker_is_read_without_unit_queries(self):
         with tempfile.TemporaryDirectory() as folder:

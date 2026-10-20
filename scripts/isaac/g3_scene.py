@@ -75,6 +75,7 @@ class BarrierLifecycle:
         self.output: Path | None = None
         self.last_state: bool | None = None
         self.origin: float | None = None
+        self.pending_origin: tuple[bytes, int] | None = None
         self.control_sequences: dict[str, int | None] = {}
         self.control_hold_eligible: dict[str, bool] = {}
         self.session_root = session_root
@@ -547,14 +548,35 @@ class BarrierLifecycle:
             self._record_lidar_acquisition("periodic_1hz", sim_time_s, physics_frame)
             self.last_periodic_lidar_time_ns = sim_time_ns
         origin_path = self.output / "mission-start.json"
-        if self.origin is None and origin_path.is_file():
-            start = json.loads(origin_path.read_text(encoding="utf-8"))
+        if self.origin is None and (origin_path.is_file() or self.pending_origin is not None):
+            if not origin_path.is_file():
+                raise ValueError("G3 mission-start marker changed while pending")
+            marker = origin_path.read_bytes()
+            if self.pending_origin is not None and marker != self.pending_origin[0]:
+                raise ValueError("G3 mission-start marker changed while pending")
+            start = json.loads(marker.decode("utf-8"))
+            if not isinstance(start, dict):
+                raise ValueError("G3 mission-start marker must be an object")
             if start.get("run_id") != self.run_id or start.get("scenario_id") != self.session["scenario_id"]:
                 raise ValueError("G3 mission-start identity mismatch")
-            raw_origin = start["sim_time_s"]
-            if type(raw_origin) not in (int, float) or not math.isfinite(raw_origin) or not 0 <= raw_origin <= sim_time_s:
+            raw_origin = start.get("sim_time_s")
+            if type(raw_origin) not in (int, float) or not math.isfinite(raw_origin) or raw_origin < 0:
                 raise ValueError("G3 mission-start time is invalid")
-            self.origin = float(raw_origin)
+            if self.pending_origin is not None:
+                received_frame = self.pending_origin[1]
+                if type(physics_frame) is not int or physics_frame < received_frame:
+                    raise ValueError("G3 mission-start physics frame is invalid or regressed")
+                if physics_frame > received_frame:
+                    if raw_origin > sim_time_s:
+                        raise ValueError("G3 mission-start time is invalid after the next physics frame")
+                    self.origin = raw_origin
+                    self.pending_origin = None
+            elif raw_origin <= sim_time_s:
+                self.origin = raw_origin
+            else:
+                if type(physics_frame) is not int or physics_frame < 0:
+                    raise ValueError("G3 mission-start receiving physics frame is invalid")
+                self.pending_origin = (marker, physics_frame)
         specification = self.session["scene_closure"]
         closed = specification is not None
         if closed and self.origin is not None:

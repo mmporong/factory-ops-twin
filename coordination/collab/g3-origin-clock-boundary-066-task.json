@@ -1,0 +1,27 @@
+{
+  "task_id": "g3-origin-clock-boundary-066",
+  "attempt": 1,
+  "contract_revision": 66,
+  "owner": "control",
+  "reviewer": "root",
+  "inputs": {
+    "source_commit": "3c436a4c8d1cfc948f748dd805a138197ebed2a4",
+    "run_id": "d2fed0a2b4cf4119b1a7241e738bca17",
+    "stage": "D:/FactoryOpsRuntime/local45-transport-025",
+    "facts": "065 actual ACK upgrade frame277->278 passed all4; barrierreadyROS4.650000243; actualnativeWorld4.650000242516398. mission-start.json originalsim_time_s4.650000243. BarrierLifecycle.step raises G3 mission-start time is invalid before nextactualtick. SDK cleanup hangs; root owns stopping025/preserving and SDKfault monitor fix."
+  },
+  "write_paths": [
+    "scripts/isaac/g3_scene.py",
+    "tests/test_g3_mission_origin.py",
+    "coordination/collab/results/g3-origin-clock-boundary-066.json",
+    "tests/test_g3_scene.py"
+  ],
+  "goal": "Preserve original mission marker and defer future-by-clock-representation origin until a real subsequent physics frame. Not alone: root edits g2_scene.py/run_local45_fleet_pair.py and evidence; do not revert others. ACK task066/attempt1, own only listed files, no Git/SDK/WSL/GPU/newagents/deps/fullsuite.",
+  "acceptance": [
+    "Identity/type bool/nonfinite/negative markers remain errors. Preserve exact original origin value, no rounding/offset/epsilon/clock edits. Existing valid nonfuture origin can bind as before.",
+    "For a structurally valid future origin, buffer original marker+actual receiving physics frame; do not accept using future now or assume another function call means frame progression. At first later actual physics frame bind only if unchanged original origin<=actualWorldtime. Still-future marker after that real frame fails; rewritten marker/identity changes while pending fail. Same frame repeated calls remain pending. No unbounded future wait.",
+    "No navigation/TTL/gains/0.15 tolerances changes. During pending origin retain existing pre-origin scene behavior. Use existing actual frame argument or actual world frame counter, not synthetic time. If architecture issue blocks minimal fix report before broadening.",
+    "One focused CPU suite covering exact025 raw times/currentframe, sameframe retry, actualnextframe binding with exact unchanged origin, stillfuture rejection nextframe, invalid/identity/rewrite and nonfuture old behavior; SDK3.10 coldAST once. Small ASCII receipt SHA/results/limits. Root will bounded review then actual026; do not rerun past suites.",
+    "Scope update: tests/test_g3_scene.py only existing immediate-future-rejection case may be updated to next-actual-frame rejection; do not edit unrelated cases. After own066 implementation, bounded read-only review rootdiff scripts/isaac/g2_scene.py + scripts/isaac/run_local45_fleet_pair.py + tests/test_local45_pair_monitor.py once; include sourceSHA/findings in own receipt. Root11targetedtests PASS .049s. Check original primaryfailure checkpoint emitted before cleanup and exactrun monitor triggers close_pair, no whole-suite or extra chain."
+  ]
+}

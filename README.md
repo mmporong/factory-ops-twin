@@ -62,6 +62,8 @@ OpenUSD 자산·운영 상태와 데이터 입력을 연결하고, Kit 운영 �
 
 종료된 로컬 실행의 RGB 타임랩스는 [내보내기 스크립트](scripts/media/export_local45_timeline.py)로 만듭니다. 두 실행 프로세스의 종료·실행 ID·원본 이미지 해시를 확인하고, 실패 상태도 영상에 유지합니다. 원본 촬영 시각으로 계산한 명목 배속과 정지 프레임 유지 방식을 표시하며, 연속 실시간 동작 영상으로 취급하지 않습니다. [정차 유지 비교 스크립트](scripts/isaac/probe_local45_parking_hold.py)는 두 차량의 엔코더 위치 유지·재출발·회전을 작은 장면에서 확인하는 개발 도구입니다.
 
+로컬 실행기는 SDK의 최초 오류를 정리 전에 파일로 남깁니다. 호스트는 같은 실행 ID의 오류 기록을 감지하면 해당 Windows Job과 Linux 단위를 종료하고, 두 환경의 종료 결과를 따로 확인합니다. SDK 정리 단계가 멈춰도 전체 실행 제한까지 계속 기다리지 않도록 합니다.
+
 4대 ROS 운행용 로컬 실행기는 실행별 UDP 통신 설정을 Windows·WSL에 적용하고 실제 ROS context와 기동 수신 계수를 기록합니다. 센서·odometry·TF의 기록 QoS도 발행자에 맞춰 명시합니다. 실제 네 차량의 ROS 기동 조건과 같은 실행의 운반·공정 소비를 확인했으며, 전체 운송·빈 토트 반납 완료는 남아 있습니다.
 
 로컬 실행기는 PowerShell7에서 구성요소 시험에 사용합니다. `-SdkPath`는 기존4.5 설치 폴더입니다. 대기 중인 worker를 Windows Job Object에 배정한 뒤 source/config/dependency를 실행 직전에 대조합니다. 정상 종료와 시간 초과 뒤에는 소유 Job 전체의 잔여 PID를 확인합니다. 실제 SDK 실행과 손자 프로세스·시간 초과 검사를 통과했으며, [종료 근거](docs/evidence/local45-job-guard-006/host.json)를 제공합니다. 실행 중 담당 소스는 동결해야 합니다.WSL Nav2는 소유한 systemd 단위와 foreground 실행 클라이언트를 함께 유지하며, 종료할 때 unit·자식 프로세스·클라이언트를 모두 확인합니다. [수명·종료 근거](docs/evidence/wsl-lifetime-037.json)는 실제70초 WSL 단위 실행을 다룹니다. 4대 자율 임무의 장시간 운영 검증은 남아 있습니다.

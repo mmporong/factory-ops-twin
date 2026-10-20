@@ -1,6 +1,6 @@
 {
-  "revision": 65,
-  "updated_at": "2026-10-20T10:08:19.979059+00:00",
+  "revision": 66,
+  "updated_at": "2026-10-20T12:19:11.150496+00:00",
   "scope": {
     "excluded": "실물 로봇 실행, 새 유료 서비스/에셋, 공개 배포",
     "project_root": "C:\\Users\\LIMMM\\factory-ops-twin",
@@ -1228,6 +1228,23 @@
         "coordination/collab/results/g3-hold-ack-upgrade-065.json"
       ],
       "acceptance_record": "Root boundedproducer/testsource read: firstdiagnostic+oneeligible same-seq upgrade, cacheonlyafterwrite, allrawtime/lease/scope preserved;2SHA matched;author6CPU/2SDK310AST; actual025pending"
+    },
+    {
+      "task_id": "g3-origin-clock-boundary-066",
+      "attempt": 1,
+      "contract_revision": 66,
+      "owner": "control",
+      "status": "accepted",
+      "ACK": true,
+      "task_path": "coordination/collab/g3-origin-clock-boundary-066-task.json",
+      "result_path": "coordination/collab/results/g3-origin-clock-boundary-066.json",
+      "write_paths": [
+        "scripts/isaac/g3_scene.py",
+        "tests/test_g3_mission_origin.py",
+        "coordination/collab/results/g3-origin-clock-boundary-066.json",
+        "tests/test_g3_scene.py"
+      ],
+      "acceptance_record": "Root bounded g3diff/test read and6SHA match; author8CPU+3SDK310AST once; control bounded rootfaultmarker/monitor sourcePASS; root11CPU+2SDK310AST once. Actual026 pending, no time/tolerance relax."
     }
   ],
   "decisions": [

@@ -1,0 +1,73 @@
+{
+  "task_id": "g3-origin-clock-boundary-066",
+  "attempt": 1,
+  "contract_revision": 66,
+  "owner": "control",
+  "reviewer": "root",
+  "ack": true,
+  "accepted": false,
+  "status": "implemented_focused_validation_complete_root_boundary_source_review_complete",
+  "document_encoding": "ASCII",
+  "baseline_g3_source_sha256": "4b6bf5783d4a33504e78e4b886e470c1d6aad5ab5a564eae8dba8d69744bdf9b",
+  "source_sha256": {
+    "scripts/isaac/g3_scene.py": "206d97a6a3e37f1ba2607582770b9674397a46842a00355248e71f44e92e100c",
+    "tests/test_g3_mission_origin.py": "d1bdd8cddd9d21a175c42bf435e830e7b64d56e9e7773c364ad6c0bcc9d85cd5",
+    "tests/test_g3_scene.py": "269c47924485709c4e4040e9591a65f096616b96330c5982baefe8a146f57557"
+  },
+  "written_paths": [
+    "scripts/isaac/g3_scene.py",
+    "tests/test_g3_mission_origin.py",
+    "tests/test_g3_scene.py",
+    "coordination/collab/results/g3-origin-clock-boundary-066.json"
+  ],
+  "implementation": [
+    "BarrierLifecycle stores original mission-start marker bytes and the receiving actual physics_frame only when a structurally valid marker origin is future relative to the current World time.",
+    "Repeated calls in the same frame remain pending even if their reported time reaches the origin. The first later actual frame binds the exact unchanged original numeric origin only when origin<=actual World time; still-future values fail at that frame.",
+    "Pending marker deletion, byte rewrite, identity change or regressed/invalid physics frame fails. Bool/nonfinite/negative/invalid-type times and wrong identities remain errors. Valid nonfuture origins still bind immediately.",
+    "Pre-origin scene behavior continues while pending. No marker rewrite, rounding, epsilon, offset, synthetic clock/frame, navigation, TTL, gain, reservation, lease, deadline or0.15m start-gate changes.",
+    "Updated only the existing immediate-future-rejection case in tests/test_g3_scene.py to reject on the first later actual frame. Other existing cases were left unchanged."
+  ],
+  "validation": [
+    {
+      "kind": "one focused CPU invocation",
+      "cwd": "C:/Users/LIMMM/factory-ops-twin",
+      "command": "& './.venv/Scripts/python.exe' -B -m unittest tests.test_g3_mission_origin tests.test_g3_scene.BarrierLifecycleTests.test_mission_start_identity_and_timestamp_are_validated -v",
+      "result": "8 PASS: 7 new tests plus the one affected existing test",
+      "elapsed_unittest_s": 0.267,
+      "exit_code": 0,
+      "scope": "Exact025 marker4.650000243 versus native4.650000242516398; CPU frame279 fixture; same-frame retries; unchanged-origin binding after actual frame increment; still-future next-frame rejection; invalid/identity/marker rewrite/deletion; immediate nonfuture binding; pre-origin closure behavior; frame validity/regression."
+    },
+    {
+      "kind": "one cold Python3.10 AST pass",
+      "cwd": "C:/Users/LIMMM/factory-ops-twin",
+      "command": "stdin ast.parse/hashlib script | & 'E:/IsaacSim/isaac-sim-4.5.0/kit/python/python.exe' -B -S -",
+      "python": "3.10.15",
+      "files": ["scripts/isaac/g3_scene.py", "tests/test_g3_mission_origin.py", "tests/test_g3_scene.py"],
+      "result": "3 files PASS",
+      "exit_code": 0,
+      "action": "Parse source bytes and emit SHA256 only; no product or SDK import."
+    }
+  ],
+  "root_boundary_review": {
+    "mode": "one bounded read-only source pass after own implementation",
+    "verdict": "PASS",
+    "source_sha256": {
+      "scripts/isaac/g2_scene.py": "39fafde907a233331d3af5838e66d5a5d3da36b82faa879f6413fe2b4865dc4c",
+      "scripts/isaac/run_local45_fleet_pair.py": "0f883eefcd239facfb995bbfb5432e592ca2ddcc07b0c4af63dc1fd354f877e7",
+      "tests/test_local45_pair_monitor.py": "6f9593967fcf644bd9e127b87066c771a6bc476c3b214a708480aa6e24d929b1"
+    },
+    "findings": [],
+    "checked": [
+      "G2 lines1416-1432 preserve primary exception type/message/traceback/stage in the current run result and attempt atomic sdk-failure.json publication before entering native cleanup. Checkpoint errors are recorded rather than replacing the primary error.",
+      "Pair monitor lines130-136 requires the exact configured run_id and failed status, then raises with original stage/type/message before waiting on the ROS client or cleanup grace. Mismatched run/status fails closed.",
+      "The run call passes the owned output marker path and current run ID; monitor exceptions set the host result failed and its finally calls close_pair. Existing Windows abort/wait and Linux stop closure paths remain separate.",
+      "The two affected monitor tests cover a live-client SDK failure checkpoint and rejection of another run's checkpoint. Source read only; root-reported11 PASS was not rerun."
+    ],
+    "limits": "Source boundary only. No root file edits, tests, AST or runtime/closure verification performed for these three files. No whole launcher or accepted prior helper/cleanup rereview."
+  },
+  "limits": [
+    "No SDK/GPU/ROS/WSL/bag/Git operations, dependencies, agents, servers or persistent processes. Closed025 stage and preserved originals were not opened or modified.",
+    "Tests use CPU fixtures and do not prove actual026 success or native cleanup. Root owns lifecycle, preservation, integration and actual execution.",
+    "The one-frame wait is bounded by actual physics-frame progression; no new wait deadline or tolerance was introduced. Existing external runtime bounds remain in force."
+  ]
+}

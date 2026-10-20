@@ -118,7 +118,8 @@ def wait_for_bootstrap_marker(marker: Path, owner: WslProcessSupervisor, *, star
         time.sleep(.2)
 
 
-def monitor_pair(worker, owner: WslProcessSupervisor, *, started: float, bound: int) -> dict | None:
+def monitor_pair(worker, owner: WslProcessSupervisor, *, started: float, bound: int,
+                 failure_path: Path | None = None, run_id: str | None = None) -> dict | None:
     """Observe client exit, retaining SDK cleanup grace and the pair deadline."""
     exit_seen = None
     exit_record = None
@@ -126,6 +127,13 @@ def monitor_pair(worker, owner: WslProcessSupervisor, *, started: float, bound: 
         now = time.monotonic()
         if now - started > bound + 35:
             raise TimeoutError("pair owner deadline exceeded")
+        if failure_path is not None and failure_path.exists():
+            failure = json.loads(failure_path.read_text(encoding="utf-8"))
+            if failure.get("run_id") != run_id or failure.get("status") != "failed":
+                raise RuntimeError("SDK failure checkpoint identity/status mismatch")
+            error = failure["error"]
+            raise RuntimeError(f"SDK failure before cleanup: {failure['stage']}: "
+                               f"{error['type']}: {error['message']}")
         client = owner.client_state()
         if not client["started"]:
             raise RuntimeError("admitted foreground WSL client is missing")
@@ -226,9 +234,10 @@ def run(stage: Path, sdk: Path, bound: int, *, charge_robot: str | None = None, 
             "--abort-request", str(stage / "job-abort-request.txt")],
             env=environment, stdout=streams[0], stderr=streams[1], creationflags=subprocess.CREATE_NO_WINDOW)
         report.update(status="running", windows_runner_pid=worker.pid, linux_unit=owner.unit_name)
-        report["monitor_scope"] = "owned foreground client only; final owner.stop verifies Linux unit/cgroup/PID closure"
+        report["monitor_scope"] = "owned SDK failure checkpoint and foreground client; final owner.stop verifies Linux unit/cgroup/PID closure"
         save(receipt_path, report)
-        client_exit = monitor_pair(worker, owner, started=started, bound=bound)
+        client_exit = monitor_pair(worker, owner, started=started, bound=bound,
+                                   failure_path=output / "sdk-failure.json", run_id=run_id)
         if client_exit is not None:
             report["ros_foreground_exit"] = client_exit
         report["windows_exit_code"] = worker.returncode

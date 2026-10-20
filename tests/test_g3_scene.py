@@ -537,7 +537,6 @@ class BarrierLifecycleTests(unittest.TestCase):
             ({"scenario_id": "OTHER"}, 10.0, "identity"),
             ({"sim_time_s": -1.0}, 10.0, "time is invalid"),
             ({"sim_time_s": math.nan}, 10.0, "time is invalid"),
-            ({"sim_time_s": 11.0}, 10.0, "time is invalid"),
             ({"sim_time_s": True}, 10.0, "time is invalid"),
             ({"sim_time_s": False}, 10.0, "time is invalid"),
             ({"sim_time_s": "10.0"}, 10.0, "time is invalid"),
@@ -551,6 +550,16 @@ class BarrierLifecycleTests(unittest.TestCase):
                 (folder / "mission-start.json").write_text(json.dumps(value), encoding="utf-8")
                 with self.assertRaisesRegex(ValueError, message):
                     lifecycle.step(now, 1)
+
+        folder = Path(tempfile.mkdtemp(dir=self.output))
+        lifecycle = BarrierLifecycle(closure_session(), RUN_ID, folder)
+        lifecycle.setup(object(), self.usd.UsdGeom, self.usd.UsdPhysics, self.usd.Gf, folder)
+        (folder / "mission-start.json").write_text(json.dumps({
+            "run_id": RUN_ID, "scenario_id": SCENARIO_ID, "sim_time_s": 11.0}), encoding="utf-8")
+        lifecycle.step(10.0, 1)
+        self.assertIsNone(lifecycle.origin)
+        with self.assertRaisesRegex(ValueError, "time is invalid"):
+            lifecycle.step(10.0 + 1/60, 2)
 
     def test_post_step_control_ack_tracks_new_sequence_start_and_stop_without_ground_truth(self) -> None:
         lifecycle = self.lifecycle()
