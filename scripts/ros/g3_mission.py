@@ -584,6 +584,166 @@ def wait_for_initial_hold_acks(expected: Mapping[str, Mapping[str, Any]], *,
                     "latched_sim_time_s": latched_at}, stamp
 
 
+def startup_command_probe_scope(*, local45: bool, development: bool,
+                                robot_count: int, sensor_backends: Sequence[Any]) -> bool:
+    return (local45 and development and robot_count == 4 and len(sensor_backends) == 8
+            and set(sensor_backends) == {"physx_collision_planar"})
+
+
+def assess_startup_command_receipt(document: Any, *, run_id: str, namespaces: Mapping[str, str],
+        now_s: float, ttl_s: float, baseline: Mapping[str, Any] | None = None,
+        probe_started_s: float | None = None) -> dict[str, Any]:
+    def number(value: Any) -> bool:
+        return type(value) in (int, float) and math.isfinite(value)
+
+    if not number(now_s) or now_s < 0 or not number(ttl_s) or ttl_s <= 0:
+        raise ValueError("startup command receipt requires a finite actual clock and existing TTL")
+    reason = None
+    if not isinstance(document, Mapping):
+        reason = "missing_or_partial_sdk_receipt"
+    elif document.get("run_id") != run_id:
+        reason = "sdk_receipt_run_mismatch"
+    elif (not number(document.get("sim_time_s"))
+          or not 0 <= now_s-document["sim_time_s"] <= ttl_s):
+        reason = "sdk_receipt_clock_not_current"
+    elif type(document.get("physics_frame")) is not int or document["physics_frame"] <= 0:
+        reason = "invalid_sdk_physics_frame"
+    elif not isinstance(document.get("robots"), Mapping) or set(document["robots"]) != set(namespaces):
+        reason = "sdk_receipt_robot_set_mismatch"
+    if reason:
+        return {"ready": False, "reason": reason, "robots": {}}
+    rows = {}
+    for robot, namespace in namespaces.items():
+        row = document["robots"][robot]
+        reason = None
+        if not isinstance(row, Mapping):
+            reason = "invalid_robot_receipt"
+        elif row.get("resolved_cmd_topic") != f"/{namespace}/cmd_vel":
+            reason = "command_topic_mismatch"
+        elif any(type(row.get(k)) is not int or row[k] < 0 for k in ("command_sequence", "cmd_vel")):
+            reason = "invalid_command_counters"
+        elif "last_accepted_command" not in row:
+            reason = "accepted_command_metadata_unsupported"
+        elif baseline is not None:
+            before = baseline[robot]
+            command, stamp = row["last_accepted_command"], row.get("command_sim_time_s")
+            if any(row[k] <= before[k] for k in ("command_sequence", "cmd_vel")):
+                reason = "command_counters_not_advanced"
+            elif (not isinstance(command, Mapping) or set(command) != {"linear_m_s", "angular_rad_s"}
+                  or any(not number(v) or v != 0 for v in command.values())):
+                reason = "last_accepted_command_not_zero"
+            elif (not number(stamp) or not number(probe_started_s)
+                  or not probe_started_s <= stamp <= document["sim_time_s"]
+                  or not 0 <= now_s-stamp <= ttl_s):
+                reason = "accepted_command_not_current_after_probe"
+        rows[robot] = {"reason": reason}
+        if reason is None:
+            fields = ("command_sequence", "cmd_vel") if baseline is None else (
+                "command_sequence", "cmd_vel", "command_sim_time_s", "last_accepted_command")
+            rows[robot].update({k: copy.deepcopy(row.get(k)) for k in fields})
+    return {"ready": all(row["reason"] is None for row in rows.values()),
+            "reason": None, "sim_time_s": document["sim_time_s"],
+            "physics_frame": document["physics_frame"], "robots": rows}
+
+
+def startup_hold_boundary(robots: Mapping[str, Any], starts: Mapping[str, tuple[float, float, float]], *,
+        run_id: str, scenario_id: str, now_s: float, runtime_config: Mapping[str, Any],
+        authorization_ttl_s: float) -> dict[str, Any]:
+    rows = {}
+    for robot, rt in robots.items():
+        lease, pose = rt.get("last_authorization", {}), rt.get("pose")
+        scope = lease.get("scope", {})
+        held = (rt["generation"] is None and rt["phase"] == "idle" and rt["leg"] is None
+                and lease.get("run_id") == run_id and lease.get("robot_id") == robot
+                and lease.get("mode") == "hold" and scope.get("scenario_id") == scenario_id
+                and scope.get("reservation_id") is None
+                and lease.get("issued_sim_time_s", math.inf) <= now_s < lease.get("valid_until_sim_time_s", -math.inf)
+                and 0 < authorization_ttl_s <= .5
+                and lease["valid_until_sim_time_s"] == lease["issued_sim_time_s"]+authorization_ttl_s)
+        x, y, yaw = starts[robot]
+        at_start = bool(pose and 0 <= now_s-pose["stamp_s"] <= runtime_config["pose_ttl_s"]
+            and math.hypot(pose["x_m"]-x, pose["y_m"]-y) <= runtime_config["station_xy_tolerance_m"]
+            and abs(math.atan2(math.sin(pose["yaw_rad"]-yaw), math.cos(pose["yaw_rad"]-yaw)))
+                <= runtime_config["station_yaw_tolerance_rad"])
+        stopped = rt["stop_receiver"].is_stopped(now_s=now_s)
+        rows[robot] = {"hold_valid": held, "at_initial_start": at_start, "stopped": stopped}
+    return {"ready": all(all(row.values()) for row in rows.values()), "robots": rows}
+
+
+def wait_for_startup_command_receipts(*, nodes: Mapping[str, Any], twist_type: Any,
+        namespaces: Mapping[str, str], run_id: str, scenario_id: str, tick: Callable[[], float],
+        read_receipt: Callable[[], Any], read_boundary: Callable[[float], Mapping[str, Any]],
+        checkpoint: Callable[[Mapping[str, Any]], None], wall_deadline_s: float, ttl_s: float,
+        now_wall: Callable[[], float] = time.monotonic) -> dict[str, Any]:
+    """Probe real zero Twist delivery under renewed HOLD, with one existing deadline."""
+    if (len(nodes) != 4 or set(nodes) != set(namespaces)
+            or type(wall_deadline_s) not in (int, float) or not math.isfinite(wall_deadline_s)):
+        raise ValueError("startup command probe needs four identified robots and a finite existing deadline")
+    publishers: dict[str, Any] = {}
+    state: dict[str, Any] = {"schema_name": "g3-startup-command-receipt", "schema_version": 1,
+        "run_id": run_id, "scenario_id": scenario_id, "status": "waiting_baseline",
+        "wall_deadline_s": wall_deadline_s, "baseline": None, "probe_started_sim_time_s": None,
+        "published_per_robot": {robot: 0 for robot in nodes},
+        "scope": "actual accepted zero-command readiness only; no sender attribution or motion qualification"}
+    next_publish, last_save, last_clock = -math.inf, -math.inf, -math.inf
+    try:
+        for robot, node in nodes.items():
+            publishers[robot] = node.create_publisher(twist_type, "cmd_vel", 50)
+        while True:
+            stamp, wall_now = tick(), now_wall()
+            if type(stamp) not in (int, float) or not math.isfinite(stamp) or stamp < last_clock or stamp < 0:
+                raise ValueError("startup command probe clock must be finite and monotonic")
+            last_clock = stamp
+            state["actual_receiver_clock_s"] = stamp
+            state["boundary"] = dict(read_boundary(stamp))
+            if any(not row["hold_valid"] or not row["at_initial_start"]
+                   for row in state["boundary"].get("robots", {}).values()):
+                raise RuntimeError("initial HOLD lease or authored start boundary was lost during command probe")
+            observation = assess_startup_command_receipt(read_receipt(), run_id=run_id,
+                namespaces=namespaces, now_s=stamp, ttl_s=ttl_s, baseline=state["baseline"],
+                probe_started_s=state["probe_started_sim_time_s"])
+            state["receipt"] = observation
+            if wall_now >= wall_deadline_s:
+                raise TimeoutError("four-robot zero-command receipt/start boundary did not qualify before startup deadline")
+            if state["baseline"] is None and observation["ready"]:
+                state["baseline"] = {robot: {k: observation["robots"][robot][k]
+                    for k in ("command_sequence", "cmd_vel")} for robot in nodes}
+                state["probe_started_sim_time_s"] = stamp
+                state["status"] = "waiting_receipts"
+                last_save = -math.inf
+            elif observation["ready"] and state["boundary"]["ready"]:
+                state.update(status="ready", qualified_sim_time_s=stamp)
+                return state
+            if state["baseline"] is not None and wall_now >= next_publish:
+                for robot, publisher in publishers.items():
+                    zero = twist_type()
+                    zero.linear.x = zero.linear.y = zero.linear.z = 0.0
+                    zero.angular.x = zero.angular.y = zero.angular.z = 0.0
+                    publisher.publish(zero)
+                    state["published_per_robot"][robot] += 1
+                next_publish = wall_now + .1
+            if wall_now-last_save >= 1.0:
+                checkpoint(copy.deepcopy(state))
+                last_save = wall_now
+    except BaseException as error:
+        state.update(status="failed", reason=f"{type(error).__name__}: {error}")
+        raise
+    finally:
+        errors = []
+        for robot, publisher in publishers.items():
+            try:
+                if nodes[robot].destroy_publisher(publisher) is False:
+                    raise RuntimeError("publisher destruction returned false")
+            except BaseException as error:
+                errors.append(f"{robot}: {type(error).__name__}: {error}")
+        state["probe_publishers_destroyed"] = len(publishers)-len(errors)
+        if errors:
+            state.update(status="failed", publisher_cleanup_errors=errors)
+        checkpoint(copy.deepcopy(state))
+        if errors and sys.exc_info()[0] is None:
+            raise RuntimeError("startup zero-command publisher cleanup failed: " + "; ".join(errors))
+
+
 def terminal_recording_boundary(scene: Mapping[str, Any] | None, odometry_ns: Mapping[str, Any], *,
                                 run_id: str, scenario_id: str, minimum_sim_time_ns: int,
                                 robot_ids: Sequence[str] = ROBOT_IDS) -> dict[str, Any] | None:
@@ -1413,7 +1573,7 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
         os.environ["ROS_DOMAIN_ID"] = str(config["ros_domain_id"])
         import rclpy as ros
         from action_msgs.srv import CancelGoal
-        from geometry_msgs.msg import PoseStamped
+        from geometry_msgs.msg import PoseStamped, Twist
         from lifecycle_msgs.srv import GetState
         from nav2_msgs.action import ComputePathToPose, FollowPath
         from nav2_msgs.srv import LoadMap
@@ -1756,6 +1916,35 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
         result["inputs"]["nav2_runtime_provenance"] = {
             "path": str(runtime_observation_path), "sha256": sha(runtime_observation_path),
         }
+        if startup_command_probe_scope(local45=local45, development=development, robot_count=len(robot_ids),
+                sensor_backends=[row.get("sensor_backend") for value in ready["robots"].values()
+                                 for row in value["lidars"]]):
+            result["stage"] = "startup_command_receipt"
+            starts = {robot: (*book.nodes[rt["park"]], runtime_config["anchor_yaw_rad"][rt["park"]])
+                      for robot, rt in robots.items()}
+            for rt in robots.values():
+                reset_stop_observation(rt)
+                rt["stop_after"] = now()
+
+            def read_command_receipt() -> Any:
+                try:
+                    return json.loads((output / "command-receipt-state.json").read_text(encoding="utf-8"))
+                except (FileNotFoundError, UnicodeDecodeError, json.JSONDecodeError):
+                    return None
+
+            try:
+                result["startup_command_receipt"] = wait_for_startup_command_receipts(
+                    nodes={robot: rt["node"] for robot, rt in robots.items()}, twist_type=Twist,
+                    namespaces=namespaces, run_id=args.run_id, scenario_id=scenario_id,
+                    tick=lambda: tick(require_fresh=True), read_receipt=read_command_receipt,
+                    read_boundary=lambda stamp: startup_hold_boundary(robots, starts,
+                        run_id=args.run_id, scenario_id=scenario_id, now_s=stamp,
+                        runtime_config=runtime_config, authorization_ttl_s=config["authorization_ttl_s"]),
+                    checkpoint=lambda state: atomic_json(output / "startup-command-receipt.json", state),
+                    wall_deadline_s=startup_end, ttl_s=runtime_config["pose_ttl_s"])
+            finally:
+                for rt in robots.values():
+                    reset_stop_observation(rt)
         tick(require_fresh=True)
         for robot, rt in robots.items():
             held = tiles_at(book.nodes[rt["anchor"]], reservation_radius)

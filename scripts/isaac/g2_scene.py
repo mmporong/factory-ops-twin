@@ -409,6 +409,21 @@ def _setup_lidars(
     return sensors, metadata
 
 
+def _receive_velocity_command(state: dict[str, Any], watchdog: VelocityWatchdog, message: Any) -> None:
+    try:
+        linear, angular = float(message.linear.x), float(message.angular.z)
+        stamp = float(state["latest_sim_time"])
+        watchdog.receive(stamp, linear, angular)
+        state["cmd_vel"] += 1
+        state["command_sequence"] += 1
+        state["command_sim_time_s"] = stamp
+        state["last_accepted_command"] = {"linear_m_s": linear, "angular_rad_s": angular}
+    except (TypeError, ValueError) as error:
+        state["cmd_rejected"] += 1
+        state["last_command_rejection"] = {
+            "type": type(error).__name__, "message": str(error), "count": state["cmd_rejected"]}
+
+
 def _setup_robot_ros(
     rclpy: Any, definition: Mapping[str, Any], lidar_configs: Sequence[Mapping[str, Any]],
     geometry: DriveGeometry, watchdog: VelocityWatchdog,
@@ -430,21 +445,13 @@ def _setup_robot_ros(
     )
     state: dict[str, Any] = {
         "cmd_vel": 0, "cmd_rejected": 0, "command_sequence": 0, "command_sim_time_s": None,
-        "last_command_rejection": None,
+        "last_command_rejection": None, "last_accepted_command": None,
         "odom": 0, "tf": 0, "tf_static": 0, "latest_sim_time": 0.0,
         "scan_front_raw": 0, "scan_rear_raw": 0, "scan_samples": [],
     }
 
     def command(message: Any) -> None:
-        try:
-            watchdog.receive(float(state["latest_sim_time"]), float(message.linear.x), float(message.angular.z))
-            state["cmd_vel"] += 1
-            state["command_sequence"] += 1
-            state["command_sim_time_s"] = float(state["latest_sim_time"])
-        except (TypeError, ValueError) as error:
-            state["cmd_rejected"] += 1
-            state["last_command_rejection"] = {
-                "type": type(error).__name__, "message": str(error), "count": state["cmd_rejected"]}
+        _receive_velocity_command(state, watchdog, message)
 
     node._g2_cmd_subscription = node.create_subscription(Twist, "cmd_vel", command, 50)
     qos = QoSProfile(depth=50, reliability=ReliabilityPolicy.BEST_EFFORT)
@@ -568,7 +575,8 @@ def _command_receipt_state(robots: Mapping[str, dict[str, Any]], *, run_id: str,
     for robot_id, runtime in robots.items():
         ros = runtime["ros"]
         row: dict[str, Any] = {key: ros.get(key) for key in (
-            "command_sequence", "cmd_vel", "cmd_rejected", "command_sim_time_s", "last_command_rejection")}
+            "command_sequence", "cmd_vel", "cmd_rejected", "command_sim_time_s", "last_command_rejection",
+            "last_accepted_command")}
         row.update(resolved_cmd_topic=None, matched_publisher_count=None,
                    graph_publisher_count=None, diagnostic_errors=[])
         try:

@@ -1,0 +1,32 @@
+{
+  "attempt": 1,
+  "owner": "control",
+  "reviewer": "root",
+  "binding": {
+    "session": "default",
+    "pane_id": "w1:p1C",
+    "terminal_id": "term_65e06d27e415810",
+    "agent_session": "01a152aa-24b4-7a31-92e3-a2b620f4feeb"
+  },
+  "project_root": "C:\\Users\\LIMMM\\factory-ops-twin",
+  "task_id": "dds-command-reference-092",
+  "contract_revision": 92,
+  "status": "dispatched",
+  "goal": "Bounded official-reference research for037 WSLpub/SDK0 command delivery, no review/test/mutation.",
+  "inputs": {
+    "run": "E:/FactoryOpsRuntime/local45-transport-037",
+    "evidence": "docs/evidence/local45-transport-037.json",
+    "official_already_read": [
+      "https://fast-dds.docs.eprosima.com/en/2.6.x/fastdds/discovery/simple.html",
+      "https://docs.isaacsim.omniverse.nvidia.com/latest/installation/install_ros.html"
+    ]
+  },
+  "write_paths": [
+    "coordination/collab/results/dds-command-reference-092.json"
+  ],
+  "result_path": "C:\\Users\\LIMMM\\factory-ops-twin\\coordination\\collab\\results\\dds-command-reference-092.json",
+  "acceptance": [
+    "Existing control only. Official NVIDIA4.5 WindowsROS/WSL/distro support, ROS2 QoS/endpoint delivery, FastDDS2.6 explicit paired initial peers/maxInitialPeersRange. Main need version-scoped primary refs and minimal testable hypotheses. Root already verified037closedbag /C1cmd1399,/C2cmd937 whileSDK all0, nodegraphcounts4 notdelivery. Source/config identical036 exceptterminalstopcandidate. Prior036 receivedcommands andcompletedbusiness; do not label newerror a proven terminalstopregression.",
+    "Read3strong official/upstream sources + installedsmallversion/source ifnecessary. NVIDIA latest6.2 explicitpeers120 pattern is an inference for4.5, not automaticallyqualification. 4.5installation/install_ros.html404 and ROSdocs Anubis; find canonical4.5page or upstreamROSdocsGitHub. No broadweb, newagents/panes, SDK/ROS, SQL, firewall/networksettings, installs/Git/board/code/docs. Ownreceipt links+supportingfacts/version/uncertainty and smallest bounded bidirectional4Twistprobe recommendation. Do not propose wideningmissionTTL/horizon/clock/gates. Notalone;preserveothers."
+  ]
+}

@@ -1,0 +1,64 @@
+{
+  "task_id": "startup-command-receipt-098",
+  "attempt": 1,
+  "contract_revision": 98,
+  "acknowledged": true,
+  "status": "implemented_CPU_and_cold_AST_verified_pending_root_native",
+  "insertion_blockers": [],
+  "changed_paths": [
+    "scripts/ros/g3_mission.py",
+    "scripts/isaac/g2_scene.py",
+    "tests/test_startup_command_receipt.py",
+    "coordination/collab/results/startup-command-receipt-098.json"
+  ],
+  "source_sha256": {
+    "scripts/ros/g3_mission.py": "4062b1e3351469018b07e0bdb9e7aee57c49e28e7a6fec628164ed5fdf2b1549",
+    "scripts/isaac/g2_scene.py": "01b029443e37fc2d56bd678a17a3ffc3015f434872ad9b76141059a55d7be081",
+    "tests/test_startup_command_receipt.py": "3c050ca81d633cfe0f4b45946256f0f167f55a6b645ca1e6cec1ee9b982f5d2b"
+  },
+  "source_before_sha256": {
+    "scripts/ros/g3_mission.py": "a3fd94acdb0fb466e692719865a2eb72e6299df2eda7d37643a3d492fc6df401",
+    "scripts/isaac/g2_scene.py": "7db558a27f68cde06b229b529166b46a7e3407dba0201ebcc871253546a26273"
+  },
+  "implementation": {
+    "scope": "Automatic only for local45_development + development fleet of4 robots with8 physx_collision_planar lidar rows. Canonical62, RTX and other fleet sizes skip the new gate.",
+    "insertion": "After Nav2 startup/plugin provenance validation; before initial reservation allocation/initial reservation HOLD ACK, mission origin, FleetMission/MaterialFlow creation, order release and charge requests. No navigation goal is sent by the probe.",
+    "HOLD_semantics": "tick(require_fresh=True) continues the existing .1sim-second lease-renewal path. Existing pre-reservation generation=None and HOLD scope are preserved, rather than fabricating a reservation/generation0 value. The subsequent positive-generation initial HOLD ACK barrier is unchanged.",
+    "SDK_fields": "Normal accepted callback records last_accepted_command={linear_m_s,angular_rad_s} only after watchdog.receive succeeds. Existing sequence/cmd_vel/command_sim_time_s and rejection count/last reason remain. command-receipt-state.json includes the new accepted values; no pose/SOC/sender data is synthesized.",
+    "baseline": "Require a current same-run SDK document with four exact robot IDs/topics, positive real physics frame, plain nonnegative sequence/cmd_vel counters and supported accepted-command metadata before sending. No missing-data-to-zero fallback.",
+    "publication": "Temporary publishers on existing namespaced robot nodes publish geometry_msgs/Twist with all six components explicitly0.0 to the real cmd_vel topics. Rate is capped at one publish/.1wall-second per robot; no sleep or clock adjustment.",
+    "admission": "All4 SDK sequence and cmd_vel counters must exceed their captured baselines. Last accepted physical linear/angular values must be finite plain numeric zeros; actual SDK receipt stamp must be >=probe start, <=snapshot time and fresh under the existing pose_ttl_s. Wrong-run, stale/future, missing/partial, unsupported, unchanged, nonzero or malformed receipts cannot qualify. Graph counts do not participate.",
+    "physical_start_boundary": "Keep a valid same-run pre-reservation HOLD with the exact original authorization TTL arithmetic. Lost HOLD or authored start position/yaw fails. Reuse existing station XY/yaw tolerances and StopOdometryReceiver/StoppedGate continuous stopped window, odom TTL and pose TTL; no epsilon or wider limits.",
+    "deadline": "Uses the exact existing absolute startup_end; no new300s allowance,9000host extension or mission horizon change. Nonmonotonic/invalid actual receiver clock fails.",
+    "cleanup_and_origin": "All temporary publishers are destroyed in finally, including partial construction, timeout and error. Cleanup failure fails closed. Only after the helper returns with publishers destroyed does the unchanged initial reservation HOLD barrier establish the current mission origin. Normal new-navigation minimum command sequence logic is untouched.",
+    "diagnostic": "Same-run startup-command-receipt.json stores baseline, observed SDK fields, clock, per-robot HOLD/start/stopped flags, counts, reasons and publisher cleanup outcome. The final successful state is also in mission-result.startup_command_receipt.",
+    "preserved_root_work": "G2 stop-before-drain/terminal checkpoints and teardown flow were not edited. G3 terminal recording, reservation/path/clock/TTL logic and unrelated dashboard/docs/board changes were not reverted."
+  },
+  "validation": [
+    {
+      "command": "./.venv/Scripts/python.exe -B -m unittest tests.test_startup_command_receipt -v",
+      "runs": 1,
+      "exit_code": 0,
+      "tests": 8,
+      "reported_test_wall_s": 0.004,
+      "result": "OK",
+      "coverage": "Scoped applicability; actual receipt-adapter accepted/rejected fields; malformed/stale/wrong-run/partial/nonzero/unchanged receipt rejection; four CPU callback advances; missing receiver deadline; missing baseline without synthetic values; publisher ownership/cleanup failures; unchanged stop/pose/HOLD requirements.",
+      "limit": "Mocked CPU nodes/messages/clock and receipt adapter. This is not DDS, SDK, ROS or physical delivery evidence."
+    },
+    {
+      "command": "@'\nimport ast,pathlib,sys\npaths=['scripts/ros/g3_mission.py','scripts/isaac/g2_scene.py','tests/test_startup_command_receipt.py']\nfor name in paths:\n ast.parse(pathlib.Path(name).read_text(encoding='utf-8-sig'),filename=name)\n print('AST PASS '+name)\nprint('Python '+sys.version.split()[0]+'; '+str(len(paths))+' files PASS; no SDK imports')\n'@ | E:/IsaacSim/isaac-sim-4.5.0/kit/python/python.exe -B -S -",
+      "runs": 1,
+      "exit_code": 0,
+      "python": "3.10.15",
+      "files": 3,
+      "result": "3AST PASS; no SDK imports"
+    }
+  ],
+  "root_integration_notes": [
+    "New receipt values require the matching new G2 source; old/missing last_accepted_command remains fail-closed with explicit unsupported metadata. Existing source pin paths already include both changed modules; root owns archive/commit/native launch.",
+    "The SDK normal receipt checkpoint remains at its existing1sim-Hz cadence. The gate consumes actual current snapshots inside the shared startup deadline; it does not force fresh stamps or increase a TTL.",
+    "Zero receipt establishes data readiness only and does not attribute which publisher supplied a Twist, certify Nav2 command source, allow motion, prove a network cause, or repair the terminal recording boundary.",
+    "Root-reported093/094/096/097 baseline data reception PASS is not rerun here.037 cause remains unresolved. No network/profile change was introduced."
+  ],
+  "limits": "No SDK/ROS/WSL/GPU/native application, new agents/dependencies, broad suite, repeated review, typecheck, Git mutation, docs/board/server or unrelated source edits. No worker-owned long-running process. Root retains source acceptance, docs/Git, preservation and fresh native verification."
+}

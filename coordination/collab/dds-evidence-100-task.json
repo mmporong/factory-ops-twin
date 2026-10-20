@@ -1,0 +1,33 @@
+{
+  "task_id": "dds-evidence-100",
+  "attempt": 1,
+  "contract_revision": 100,
+  "owner": "control",
+  "reviewer": "root",
+  "binding": {
+    "session": "default",
+    "pane_id": "w1:p1C",
+    "terminal_id": "term_65e06d27e415810",
+    "agent_session": "01a152aa-24b4-7a31-92e3-a2b620f4feeb"
+  },
+  "project_root": "C:\\Users\\LIMMM\\factory-ops-twin",
+  "status": "accepted",
+  "goal": "One bounded read-only acceptance of root diagnostic tools and037/093..099 publication; no review chain or execution.",
+  "inputs_sha256": {
+    "scripts/ros/probe_dds_command_delivery.py": "0f70084a2a65fdfd0561830ae712f4fa7637e5b9edce7365a8ecb0fb39e28fb9",
+    "scripts/ros/probe_nav2_twist_publisher.cpp": "a59ce09f4862a422d0823e806c583a3e222f6657b9dba3317b628ff7805a57ee",
+    "docs/evidence/local45-dds-delivery-097.json": "f23b0aadd05e7a1a17cfea5eac8fc60957bfbf1ca24de4032b8cd5ae88d3a53f",
+    "docs/evidence/local45-transport-037.json": "4da2479e03860b907c1bc5a722ed65e71927823e35b54c55affd5af9ab8c1aef",
+    "docs/troubleshooting.md": "a8ca5bb7028f264e64425f62ae64a013040a22b30580d73bb712d2b42ca18e77",
+    "README.md": "4f6600e58bf305efda0d1c49170fcddda7f0940a283f925e5943d6d131f3e7e3",
+    "docs/completion-plan.md": "b01490ea180d79c94151b580f8f68a65e45a704d553f45dc68e3058f26d5432f"
+  },
+  "write_paths": [
+    "coordination/collab/results/dds-evidence-100.json"
+  ],
+  "result_path": "C:\\Users\\LIMMM\\factory-ops-twin\\coordination\\collab\\results\\dds-evidence-100.json",
+  "acceptance": [
+    "Only inspect listed source/diffs and small frozen host/job/windows/linux receipts for037/099 as needed. Verify isolated32hex namespace + zero drive components; actual installed C++ Nav2 wrapper path; source does not touch production topics; declared237/robot callback receipts and bothOS closure;037 remains failed/unresolved,098 not native-qualified. Root accepted your098 hash-matched source and CPU8/AST3; no need re-review or execute098. No broad suite, SDK/ROS/GPU/SQL/browser, installs, agents, source/docs/Git/board edits. Not alone preserve others. Return brief PASS/findings and exact inspected SHA; one pass only, no polishing suggestions."
+  ],
+  "ack": "100 ACK/result received; root compared7inspected source and4frozen099 receipt SHA, all matched. One scoped pass PASS/no findings; no extra run/review."
+}

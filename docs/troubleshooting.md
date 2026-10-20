@@ -609,7 +609,21 @@ SDK mission-failed는 위 ROS 교착 실패의 후속이다. 양쪽 소유 실�
 
 설치된 Replicator1.11.35의 wait_until_complete는 STEPPED만 자동으로 stop하고, 그 외에는 STOPPED까지 app.update를 반복한다. CaptureSession.close는 stop 요청 없이 drain을 기다렸으며 Windows에는 POSIX SIGALRM 제한이 적용되지 않는다. 종료된036에는 호출별 정체 위치가 없어 정확한 blocking call은 미확정이고, 생성 상태 종료 누락은 소스 근거가 있는 후보 원인이다. 원래 실패 판정은 보존한다.
 
-로컬4.5 전용 stop_before_drain을 추가해 stop 뒤 기존 drain·annotator detach·product destroy를 유지한다. 기본6.2 경로의 옵션은 false다. 세 종료 checkpoint를 남기며 시간 제한·TTL·시계·물리 입장 조건은 늘리지 않는다. CPU 종료/오류/기본 경로와 기존 촬영 검사15건을 통과했고, 088 fixture는 세 번째 RGB priming 누락으로 종료 경로 도달 전에 실패했다. 이를 보완한089는 STEPPED 상태의 호환 종료를 확인했고,090에서는 공개 API로 작성한 PAUSED 상태에서0.016초 만에 STOPPED가 됐다. World0.133333340초·프레임8과3개 RGB 제품의 종료를 확인했다. Windows Job 종료와 잔여 PID없음도 확인했다. 이는 정적 생성 종료 시험이며 네 대 ROS의 최종 stamp/종료 경계 검증은 남아 있다. 이 수정과 fixture는036의 정상 재판정이나80% 완료 근거가 아니다.
+로컬4.5 전용 stop_before_drain을 추가해 stop 뒤 기존 drain·annotator detach·product destroy를 유지한다. 기본6.2 경로의 옵션은 false다. [NVIDIA 현재 Replicator API](https://docs.omniverse.nvidia.com/kit/docs/omni_replicator/latest/source/extensions/omni.replicator.core/docs/API.html#omni.replicator.core.orchestrator.stop)는 stop 요청과 완료 대기를 구분한다.1.11.35 문서 URL이 최신판으로 이동하므로 세부 대기 조건은 설치된1.11.35의 orchestrator.py 배포 소스와 대조했다. 세 종료 checkpoint를 남기며 시간 제한·TTL·시계·물리 입장 조건은 늘리지 않는다. CPU 종료/오류/기본 경로와 기존 촬영 검사15건을 통과했고, 088 fixture는 세 번째 RGB priming 누락으로 종료 경로 도달 전에 실패했다. 이를 보완한089는 STEPPED 상태의 호환 종료를 확인했고,090에서는 공개 API로 작성한 PAUSED 상태에서0.016초 만에 STOPPED가 됐다. World0.133333340초·프레임8과3개 RGB 제품의 종료를 확인했다. Windows Job 종료와 잔여 PID없음도 확인했다. 이는 정적 생성 종료 시험이며 네 대 ROS의 최종 stamp/종료 경계 검증은 남아 있다. 이 수정과 fixture는036의 정상 재판정이나80% 완료 근거가 아니다.
+
+## FOT-072 — WSL 속도 명령 발행과 SDK 수신의 불일치
+
+수정 생산자 e3ea8a8의037은 같은3주문·4대 입력과9000초 외부 상한으로 시작했다. 첫 촬영·네 차량의 초기 정지/기동·Nav2 액션 수락 뒤 SDK의 cmd_vel 수신 계수는 네 대 모두0에 머물렀다. World37.316668613초에 carter1의 FollowPath가 status6/error105로 실패했다. 설치된 Jazzy nav2_msgs/FollowPath.action에서105는 FAILED_TO_MAKE_PROGRESS다. SDK mission-controller-failed는 그 뒤의 오류이며, 종료 stop/drain 수정이 이 수신 실패를 만들었다는 근거는 없다.
+
+양쪽 소유 트리와 Job 종료를 확인한 뒤 bag의 토픽별 개수만 조회했다. WSL bag에는 carter1/cmd_vel1399건·carter2/cmd_vel937건이 기록됐지만 SDK 수신은0건이다. 이 개수는 명령의 값이0인지와 SDK 전달 성공을 입증하지 않는다. 그래프의 publisher4개와 설치된 Subscription.get_publisher_count 미지원/null도 실제 endpoint 매칭이나 전달 성공으로 해석하지 않는다. paired NIC 주소는 Windows192.168.96.1·WSL192.168.98.11로 유지됐다. 정확한 손실·타입/QoS·discovery 원인은 미확정이다.
+
+원본147파일222,395,023바이트를 D·E operations-079에 보존해 SHA를 대조했다. 운송 인계·출하·반납은0건이며 새로운 대표 영상이나 SDG는 만들지 않았다. 전체 실행은 추가 반복 전에 작은 네 토픽 양방향 통신 재현으로 확인한다. ROS/Humble·Fast DDS2.6과 설치 SDK의 공식/배포 소스를 기준으로 버전을 구분하고, 최신6.2의 설정을4.5의 검증 완료로 옮기지 않는다. 수신 경계와 시작 전 준비 조건을 확인하며 물리·경로·시각·TTL 조건은 유지한다.
+
+참고: [Fast DDS2.6 SIMPLE discovery와 initial peers](https://fast-dds.docs.eprosima.com/en/2.6.x/fastdds/discovery/simple.html)는 participant 발견과 endpoint 발견을 나누고, 명시적 peer 및 예상 participant 범위를 설명한다. [NVIDIA 최신 ROS 설치 지침](https://docs.isaacsim.omniverse.nvidia.com/latest/installation/install_ros.html)의 WSL NAT/명시적 peer 설명은 후속 시험 후보의 근거이며 설치4.5의 동일 동작을 보장하지 않는다. 버전별 공식 근거와 재현 결과를 확보한 뒤 원인·수정을 갱신한다. [Humble QoS 상류 원문](https://raw.githubusercontent.com/ros2/ros2_documentation/humble/source/Concepts/Intermediate/About-Quality-of-Service-Settings.rst)과 [2.6.12 initial peers 설명](https://fast-dds.docs.eprosima.com/en/v2.6.12/fastdds/use_cases/wifi/initial_peers.html)도 확인했다.4.5 아카이브 페이지의 접근 실패로 지원표는 재확인하지 못했으며, 설치 확장4.1.15의 기본 distro가 humble인 사실만 확인했다.
+
+기존 설정의093 양방향 네 토픽과094 공유 context 시험은 통과했다.095는 CPU fixture의 tf2_ros 미연결로 데이터 시험 전에 실패했고, 실제4.5 경로와 같은 Runtime45 TF 어댑터를 사용한096에서 네 G2 callback이 각각234건을 받았다.097의 실제 SDK 앱 안에서도 네 G2 callback이 각각234건 수신·거절0건을 기록했다.099는 설치된 Nav2 C++ TwistPublisher를 사용해 네 callback의237건 수신·거절0건을 확인했다. [Nav2 Jazzy 상류 소스](https://raw.githubusercontent.com/ros-navigation/navigation2/jazzy/nav2_util/include/nav2_util/twist_publisher.hpp)의 기본 Twist 발행 경로와 설치 헤더를 대조했다. 모든 소유 트리 종료와 잔여 PID없음을 확인했다. 이 시험은 별도 probe 토픽과 작성된 watchdog 시계0을 사용하며 공장 시계·주행·실제 전체 Nav2 노드 구성을 검증하지 않는다. [짧은 전달 시험 근거](evidence/local45-dds-delivery-097.json)는037 오류를 재현하지 못한 범위로 기록하며, peer·QoS·방화벽 설정은 변경하지 않았다.
+
+098은 기존 local45/PhysX4 시작 제한 안에서 초기 HOLD·정지·시작 위치를 유지하며 실제 여섯 성분이 모두0인 Twist를 네 운영 토픽에 보낸다. 같은 실행 SDK의 수신 계수 증가·수락한0속도·기존 TTL 안의 실제 수신 시각을 확인하고 임시 발행자를 모두 정리한 뒤 임무 원점을 설정한다. 그래프 개수·다른 실행·누락·오래된 문서·0이 아닌 값은 준비 근거가 될 수 없다. 기존 예약·주행 명령 입장 검사는 유지한다. CPU8건과 Python3.10 구문3파일을 통과했으며 실제 공장 실행 확인은 남아 있다. 이는 초기 전달 실패를 조기에 구분하기 위한 조치이며037의 원인을 해결했다고 표시하지 않는다. 반복 오류는 같은 실패 ID·재현 조건·확인된 원인/가설·수정·후속 결과에 누적하고, 관련 공식 문서는 버전과 적용 범위를 함께 기록한다.
 
 ## 실행 전 확인과 후속 기록
 

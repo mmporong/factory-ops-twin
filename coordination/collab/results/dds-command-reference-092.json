@@ -1,0 +1,106 @@
+{
+  "task_id": "dds-command-reference-092",
+  "attempt": 1,
+  "contract_revision": 92,
+  "acknowledged": true,
+  "status": "official_reference_complete_with_version_access_gap",
+  "kind": "reference_research_not_code_review",
+  "037_observed": {
+    "evidence": "docs/evidence/local45-transport-037.json",
+    "sha256": "4da2479e03860b907c1bc5a722ed65e71927823e35b54c55affd5af9ab8c1aef",
+    "run_id": "1172144a16db4f7fa4b798d479f68c4d",
+    "source_commit": "e3ea8a8dfdf65d26b912a47a10c4d0898d3f767f",
+    "closed_WSL_recorded_cmd_counts": {
+      "carter1": 1399,
+      "carter2": 937,
+      "carter3": 0,
+      "carter4": 0
+    },
+    "SDK_received": {
+      "carter1": 0,
+      "carter2": 0,
+      "carter3": 0,
+      "carter4": 0
+    },
+    "both_OS_closed": true,
+    "owner_cleanup_errors": [],
+    "scope": "Counts are existing closed-bag summary evidence, not a new SQL query, nonzero payload audit, or Windows delivery proof. Graph publisher count4 is not a callback/data receipt.",
+    "cause": "unresolved",
+    "terminal_stop_regression_proven": false,
+    "comparison_limit": "Root reports036 previously received commands/completed business and037 source/config differed only by terminal stop candidate. This pair alone does not identify a causal regression."
+  },
+  "selected_official_sources": [
+    {
+      "id": "NVIDIA",
+      "title": "ROS2 installation",
+      "url": "https://docs.isaacsim.omniverse.nvidia.com/latest/installation/install_ros.html",
+      "retrieved_version": "6.2.0, NOT4.5",
+      "supporting_facts": "Current guide separates Windows/WSL distro procedures and provides paired Windows-host/WSL NAT addresses in initialPeersList with UDPv4 maxInitialPeersRange120. Same domain/middleware/profile environment is required on communicating terminals.",
+      "locator": "Configure Fast DDS over UDP, retrieved lines1167-1198; page introduction identifies IsaacSim6.2.0.",
+      "qualification_limit": "The paired-peers pattern is a candidate for4.5, not4.5 qualification.120 is a newer-guide example, not a proved requirement or remedy for037. No4.5 Humble-to-Jazzy support guarantee is inferred."
+    },
+    {
+      "id": "ROS2",
+      "title": "ROS2 Humble QoS settings, upstream documentation source",
+      "url": "https://raw.githubusercontent.com/ros2/ros2_documentation/humble/source/Concepts/Intermediate/About-Quality-of-Service-Settings.rst",
+      "retrieved_version": "humble branch, not a newer distro manual",
+      "supporting_facts": "Connection requires compatible requested/offered policies. Reliable offered/reliable requested is compatible; best-effort offered/reliable requested is not. Volatile-to-volatile accepts new messages, not retained late-join data. All compatibility policies matter; a visible topic is insufficient to infer delivery.",
+      "locator": "Lines108-165 and245-249; QoS event descriptions258-286.",
+      "qualification_limit": "Reliable is not an unconditional end-to-end callback guarantee when endpoints are unmatched, transport is unavailable or an executor does not service callbacks. Actual037 offered/requested QoS and delivery state are not diagnosed from graph counts."
+    },
+    {
+      "id": "FastDDS",
+      "title": "Configuring Initial Peers",
+      "url": "https://fast-dds.docs.eprosima.com/en/v2.6.12/fastdds/use_cases/wifi/initial_peers.html",
+      "retrieved_version": "2.6.12, version-pinned2.6 family",
+      "supporting_facts": "Explicit initial peer locators target discovery traffic. The example port7412 is for domain0/participantID1, not an arbitrary reusable port. For unknown participant IDs, the guide directs maxInitialPeersRange sizing to cover expected DomainParticipants.",
+      "locator": "Lines9-14 and28-44.",
+      "qualification_limit": "Count actual participants/ID coverage, not four robot names or graph endpoints. Discovery configuration does not prove data delivery. Actual loaded Windows/WSL FastDDS build and2.6 XML acceptance must be recorded before adopting a candidate."
+    }
+  ],
+  "4_5_access_and_local_evidence": {
+    "archive_gap": "Canonical4.5 install_ros.html404 was already reported by root. Targeted archive alternatives ros2_reference_architecture.html and installation/download.html also returned404; ros2_installation.html was inaccessible. Cached4.5 search snippets were not treated as a verified current support matrix. Further broad searching was stopped.",
+    "support_matrix_status": "4.5 Windows/WSL distro support matrix not independently re-established in this bounded pass.",
+    "installed_extension": {
+      "path": "E:/IsaacSim/isaac-sim-4.5.0/exts/isaacsim.ros2.bridge/config/extension.toml",
+      "sha256": "a28f854c6d843aee5e2a37b7f76765a400bf239d27684b3a5b9104792bfd7c9b",
+      "package_version": "4.1.15",
+      "default_ros_distro": "humble",
+      "locator": "Lines5-6,42-43",
+      "limit": "Installed default only; not a Windows+WSL+Jazzy interoperability certificate or exact FastDDS library version."
+    },
+    "installed_short_README": {
+      "path": "E:/IsaacSim/isaac-sim-4.5.0/exts/isaacsim.ros2.bridge/docs/README.md",
+      "sha256": "0b9be622cebb86bd3074edea05412652edc5303a36819a6e715483c04d827dcf",
+      "bytes": 116,
+      "limit": "No usable support matrix found."
+    }
+  },
+  "minimal_testable_hypotheses": [
+    {
+      "hypothesis": "Asymmetric participant/endpoint discovery or peer range/interface selection misses the SDK command readers.",
+      "basis": "Paired discovery is configurable; receiving clock/odom in another direction does not establish every endpoint pair.",
+      "status": "inference, not037 cause"
+    },
+    {
+      "hypothesis": "Requested/offered QoS or endpoint construction/context environment differs from the expected command connection.",
+      "basis": "Compatibility is per endpoint pair and all relevant policies.",
+      "status": "unproven; record before changing QoS"
+    },
+    {
+      "hypothesis": "Messages reach middleware but callbacks are not serviced in the actual bundled-context/executor topology.",
+      "basis": "A graph count does not distinguish data-path loss from callback scheduling.",
+      "status": "unproven; a minimal receipt-only probe separates layers without robot motion"
+    }
+  ],
+  "smallest_probe_recommendation": {
+    "status": "proposal_only_not_executed_or_authorized_as_a_mission_change",
+    "shape": "One root-owned bounded Windows bundled-Humble/WSL-Jazzy pair, four geometry_msgs/Twist channels each direction, stable public executors. No Nav2, physics mission, robot actuator attachment, rosbag or second SDK application is needed for the first transport-only admission.",
+    "isolation": "Use unique /dds_probe/<run-id>/carterN/wsl_to_sdk and sdk_to_wsl topics, never production cmd_vel. Send distinct finite authored payload/counter patterns; Twist has no header, so log send/receive wall-clock/counter evidence separately and do not fabricate a sensor timestamp.",
+    "baseline": "Reuse existing paired environment/profile and actual requested/offered QoS unchanged, e.g. the actual reliable/volatile command policy if confirmed. Record loaded distro/rclpy/RMW and available FastDDS build, domain, profile paths+SHA and actual public context domain. Bound discovery/sampling with a short fixture deadline and external ownership guard.",
+    "receipts": "Require payload-matching callbacks on all four channels in both directions, with publish/receive counts, public endpoint names/GIDs/QoS and explicit callback errors. If true DDS matched-reader/publisher counters are unsupported, leave null/unsupported and keep graph counts separately labeled.",
+    "paired_peer_candidate": "If baseline discovery/delivery fails, root may choose one separate stage-local profile comparison adding both actual host/WSL peer addresses and a2.6-supported participant range covering the measured topology. Do not copy domain0 port7412 or assume120 is mandatory. Change no OS/firewall/network setting and no QoS simultaneously.",
+    "closure_and_limit": "Root must reap exact owned Windows clients and WSL unit/cgroup and preserve small JSON receipts. A pass admits only this topology/data path, not full mission load, physical motion,4.5 official cross-distro support or a terminal-stop regression diagnosis."
+  },
+  "boundaries": "Only this receipt written. No new SDK/ROS/WSL/probe process, test, SQL, network/firewall setting, dependency, Git, source/docs/board edit or agents. No mission TTL/horizon/clock/gate widening.037 original failed verdict remains."
+}

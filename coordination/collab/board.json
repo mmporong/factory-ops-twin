@@ -1,6 +1,6 @@
 {
-  "revision": 91,
-  "updated_at": "2026-10-20T21:46:43.282837+00:00",
+  "revision": 101,
+  "updated_at": "2026-10-20T22:30:44.797595+00:00",
   "scope": {
     "excluded": "실물 로봇 실행, 새 유료 서비스/에셋, 공개 배포",
     "project_root": "C:\\Users\\LIMMM\\factory-ops-twin",
@@ -20,7 +20,7 @@
       "role": "dashboard frontend author",
       "name": "control",
       "agent_kind": "codex",
-      "status": "091accepted; no pendingcontrol work; root037normal3 fresh preparation aftercommit",
+      "status": "098dispatched scoped startupreadyimplementation; root owns diagnostics/proofs/publication/GPU",
       "session": "default",
       "agent_session": "01a152aa-24b4-7a31-92e3-a2b620f4feeb",
       "terminal_id": "term_65e06d27e415810",
@@ -1648,6 +1648,108 @@
         "Review opt-in stop->drain keeps resource cleanup/error failclosed,canonicaldefaultfalse,diagnosticcheckpoint, CPU15observed evidence. g2capture option localSDK45only. Check036all3orders/3returns/4business+4park, stale2actualsuccess+stop, material54+6=60; originalterminalfailure+60s/90sdistinction, scopesphysx/virtual/no lifting. Publicgallery5SHA/source and localREADMElinks smallcheck. No broadtests/research/GPU or anotherreviewchain. Ownreceipt concise pass or concreteissues; allothersfiles/Git/board rootowned. Not alone; preserve others."
       ],
       "ack": "091 PASS; root4source and6native result/job SHA verified;5media SHA/rootlinks inspected by control.036failed/80hold and staticfixture-only scope preserved."
+    },
+    {
+      "attempt": 1,
+      "owner": "control",
+      "reviewer": "root",
+      "binding": {
+        "session": "default",
+        "pane_id": "w1:p1C",
+        "terminal_id": "term_65e06d27e415810",
+        "agent_session": "01a152aa-24b4-7a31-92e3-a2b620f4feeb"
+      },
+      "project_root": "C:\\Users\\LIMMM\\factory-ops-twin",
+      "task_id": "dds-command-reference-092",
+      "contract_revision": 92,
+      "status": "accepted",
+      "goal": "Bounded official-reference research for037 WSLpub/SDK0 command delivery, no review/test/mutation.",
+      "inputs": {
+        "run": "E:/FactoryOpsRuntime/local45-transport-037",
+        "evidence": "docs/evidence/local45-transport-037.json",
+        "official_already_read": [
+          "https://fast-dds.docs.eprosima.com/en/2.6.x/fastdds/discovery/simple.html",
+          "https://docs.isaacsim.omniverse.nvidia.com/latest/installation/install_ros.html"
+        ]
+      },
+      "write_paths": [
+        "coordination/collab/results/dds-command-reference-092.json"
+      ],
+      "result_path": "C:\\Users\\LIMMM\\factory-ops-twin\\coordination\\collab\\results\\dds-command-reference-092.json",
+      "acceptance": [
+        "Existing control only. Official NVIDIA4.5 WindowsROS/WSL/distro support, ROS2 QoS/endpoint delivery, FastDDS2.6 explicit paired initial peers/maxInitialPeersRange. Main need version-scoped primary refs and minimal testable hypotheses. Root already verified037closedbag /C1cmd1399,/C2cmd937 whileSDK all0, nodegraphcounts4 notdelivery. Source/config identical036 exceptterminalstopcandidate. Prior036 receivedcommands andcompletedbusiness; do not label newerror a proven terminalstopregression.",
+        "Read3strong official/upstream sources + installedsmallversion/source ifnecessary. NVIDIA latest6.2 explicitpeers120 pattern is an inference for4.5, not automaticallyqualification. 4.5installation/install_ros.html404 and ROSdocs Anubis; find canonical4.5page or upstreamROSdocsGitHub. No broadweb, newagents/panes, SDK/ROS, SQL, firewall/networksettings, installs/Git/board/code/docs. Ownreceipt links+supportingfacts/version/uncertainty and smallest bounded bidirectional4Twistprobe recommendation. Do not propose wideningmissionTTL/horizon/clock/gates. Notalone;preserveothers."
+      ],
+      "ack": "092 ACK;3official primary refs scoped;4.5 support matrix access gap retained;037EP and2installed SHA matched. Root093/094/096/097 baseline data passes, so no peer/firewall/QoS mutation selected."
+    },
+    {
+      "attempt": 1,
+      "owner": "control",
+      "reviewer": "root",
+      "binding": {
+        "session": "default",
+        "pane_id": "w1:p1C",
+        "terminal_id": "term_65e06d27e415810",
+        "agent_session": "01a152aa-24b4-7a31-92e3-a2b620f4feeb"
+      },
+      "project_root": "C:\\Users\\LIMMM\\factory-ops-twin",
+      "task_id": "startup-command-receipt-098",
+      "contract_revision": 98,
+      "status": "accepted",
+      "goal": "Implement bounded local45/PhysX4 startup zero-command receipt admission before business mission, actual data only; no terminal/clock/TTL widening.",
+      "inputs": {
+        "source_commit": "e3ea8a8dfdf65d26b912a47a10c4d0898d3f767f",
+        "failure037": "docs/evidence/local45-transport-037.json",
+        "official_refs": "coordination/collab/results/dds-command-reference-092.json",
+        "passed_minimal_native": "E:/FactoryOpsRuntime/local45-dds-delivery-097/host.json"
+      },
+      "write_paths": [
+        "scripts/ros/g3_mission.py",
+        "scripts/isaac/g2_scene.py",
+        "tests/test_startup_command_receipt.py",
+        "coordination/collab/results/startup-command-receipt-098.json"
+      ],
+      "result_path": "C:\\Users\\LIMMM\\factory-ops-twin\\coordination\\collab\\results\\startup-command-receipt-098.json",
+      "acceptance": [
+        "First inspect actual initial_hold startup flow/tick/renewal and identify smallest safe insertion. Existing4.5physx4 path only, canonical/RTX behavior unchanged. While all4 initial HOLD leases remain valid, publish actual all-zero geometry_msgs/Twist on four real /carterN/cmd_vel topics from WSL at bounded modest rate, before anyNav2goal/business/order/charge action. Existing SDK callback must receive them; never synthesize receipts or repurpose nonzero Twist fields. No ROS/SKD execution by worker; root owns runs.",
+        "Use same-run current SDK command-receipt-state.json and before-probe perrobot sequence baselines; require all4 counters advance with accepted0linear/0angular values, actual receipt simstamp fresh under existing clock TTL and identity. g2 can add last accepted linear/angular fields to normal state/receipt. Preserve command rejection diagnostics and actualclock. Graph counts neverqualify. Stale/wrongrun/missing/partial/nonzero receipt must fail/pending as appropriate; no arbitrarysleep/clockoffset/restamp/epsilon/TTL widening.",
+        "Renew all4 generation0HOLD and require stopped/start boundary stillvalid while waiting; use a bounded existing startup wait or same absolute startup deadline (do not extend9000host/mission horizons). Establish actual missionorigin from currentWorld onlyafter gate. Stop/destroy allprobe publishers beforefirstaction; normal navigation freshgoal minsequence gate remains. Zero receipt is readiness only, not Nav2 source/physical/motion success. Unsupported/missing data staysfailclosed with explicitreason/small same-run preflight JSON.",
+        "Own above3code/test paths only; notalone preserve root g2 terminal checkpoints/stop-before-drain edits and unowned dashboard files. Root handles docs/board/Git/preservation/SDK. No new deps/agents/panes/workflows or formalreviewchain; one focusedCPU suite +3.10coldAST, report exactoutputs/sourceSHA/limits and any insertion blocker. Avoid broad old suites. Root will review diff once and launch fresh native onlyaftercommit."
+      ],
+      "ack": "098 control ACK and completion received; root inspected implementation/insertion/error cleanup and8focusedCPU +3.10AST receipts; all3source SHA matched. Native remains pending, no037 cause claim."
+    },
+    {
+      "task_id": "dds-evidence-100",
+      "attempt": 1,
+      "contract_revision": 100,
+      "owner": "control",
+      "reviewer": "root",
+      "binding": {
+        "session": "default",
+        "pane_id": "w1:p1C",
+        "terminal_id": "term_65e06d27e415810",
+        "agent_session": "01a152aa-24b4-7a31-92e3-a2b620f4feeb"
+      },
+      "project_root": "C:\\Users\\LIMMM\\factory-ops-twin",
+      "status": "accepted",
+      "goal": "One bounded read-only acceptance of root diagnostic tools and037/093..099 publication; no review chain or execution.",
+      "inputs_sha256": {
+        "scripts/ros/probe_dds_command_delivery.py": "0f70084a2a65fdfd0561830ae712f4fa7637e5b9edce7365a8ecb0fb39e28fb9",
+        "scripts/ros/probe_nav2_twist_publisher.cpp": "a59ce09f4862a422d0823e806c583a3e222f6657b9dba3317b628ff7805a57ee",
+        "docs/evidence/local45-dds-delivery-097.json": "f23b0aadd05e7a1a17cfea5eac8fc60957bfbf1ca24de4032b8cd5ae88d3a53f",
+        "docs/evidence/local45-transport-037.json": "4da2479e03860b907c1bc5a722ed65e71927823e35b54c55affd5af9ab8c1aef",
+        "docs/troubleshooting.md": "a8ca5bb7028f264e64425f62ae64a013040a22b30580d73bb712d2b42ca18e77",
+        "README.md": "4f6600e58bf305efda0d1c49170fcddda7f0940a283f925e5943d6d131f3e7e3",
+        "docs/completion-plan.md": "b01490ea180d79c94151b580f8f68a65e45a704d553f45dc68e3058f26d5432f"
+      },
+      "write_paths": [
+        "coordination/collab/results/dds-evidence-100.json"
+      ],
+      "result_path": "C:\\Users\\LIMMM\\factory-ops-twin\\coordination\\collab\\results\\dds-evidence-100.json",
+      "acceptance": [
+        "Only inspect listed source/diffs and small frozen host/job/windows/linux receipts for037/099 as needed. Verify isolated32hex namespace + zero drive components; actual installed C++ Nav2 wrapper path; source does not touch production topics; declared237/robot callback receipts and bothOS closure;037 remains failed/unresolved,098 not native-qualified. Root accepted your098 hash-matched source and CPU8/AST3; no need re-review or execute098. No broad suite, SDK/ROS/GPU/SQL/browser, installs, agents, source/docs/Git/board edits. Not alone preserve others. Return brief PASS/findings and exact inspected SHA; one pass only, no polishing suggestions."
+      ],
+      "ack": "100 ACK/result received; root compared7inspected source and4frozen099 receipt SHA, all matched. One scoped pass PASS/no findings; no extra run/review."
     }
   ],
   "decisions": [
@@ -1665,6 +1767,11 @@
       "request_id": "user-existing-resources-only-2026-10-19",
       "applied_revision": 16,
       "decision": "신규 GCP 생성 취소. Deploy 미실행, 기존 AWS g0 한 개 STOPPED/UNHEALTHY 확인. 기존 환경과 로컬만 사용하며 공급자 장애 중 반복 Start를 하지 않는다."
+    },
+    {
+      "request_id": "user-minimal-review-troubleshooting-official-refs-2026-10-21",
+      "applied_revision": 100,
+      "decision": "Focused changed-behavior checks and one author/root pass; no repeated old suites/review chain. Track errors and recurrence guards in troubleshooting; official references keep installed-version scope."
     }
   ]
 }

@@ -1,0 +1,640 @@
+{
+  "status": "baseline_delivery_passed_037_not_reproduced",
+  "scope": "Isolated receipt probes, no factory assets/actuators/Nav2/sensors or physical/time qualification.095fixture failed missingtf2 adapter and was corrected using production Runtime45.tf_broadcaster_types.093/094ordinary RCL,096actualG2coldcallback,097actualG2callback within nativeSDK.",
+  "cases": [
+    {
+      "case": 93,
+      "run_id": "60a7fa51f28c42dabfe8b066fec48ab8",
+      "status": "passed",
+      "GPU_started": false,
+      "windows": {
+        "run_id": "60a7fa51f28c42dabfe8b066fec48ab8",
+        "side": "windows",
+        "status": "passed",
+        "GPU_started": false,
+        "motion_topics_used": false,
+        "rclpy_file": "E:\\IsaacSim\\isaac-sim-4.5.0\\exts\\isaacsim.ros2.bridge\\humble\\rclpy\\rclpy\\__init__.py",
+        "DDS_profile": "E:\\FactoryOpsRuntime\\local45-dds-delivery-093\\windows.xml",
+        "domain": "73",
+        "passive_participants": 1,
+        "sent": {
+          "1": 192,
+          "2": 192,
+          "3": 192,
+          "4": 192
+        },
+        "received": {
+          "1": 234,
+          "2": 234,
+          "3": 234,
+          "4": 233
+        },
+        "last_received_sequence": {
+          "1": 234.0,
+          "3": 234.0,
+          "2": 234.0,
+          "4": 234.0
+        },
+        "participants_closed": true,
+        "participant_count": 5,
+        "graph_publishers": {
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0
+        },
+        "cleanup_errors": [],
+        "intended_exit_code": 0
+      },
+      "linux": {
+        "run_id": "60a7fa51f28c42dabfe8b066fec48ab8",
+        "side": "linux",
+        "status": "passed",
+        "GPU_started": false,
+        "motion_topics_used": false,
+        "rclpy_file": "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/__init__.py",
+        "DDS_profile": "/mnt/e/FactoryOpsRuntime/local45-dds-delivery-093/linux.xml",
+        "domain": "73",
+        "passive_participants": 32,
+        "sent": {
+          "1": 234,
+          "2": 234,
+          "3": 234,
+          "4": 234
+        },
+        "received": {
+          "1": 191,
+          "2": 189,
+          "3": 190,
+          "4": 174
+        },
+        "last_received_sequence": {
+          "1": 191.0,
+          "3": 191.0,
+          "2": 191.0,
+          "4": 191.0
+        },
+        "participants_closed": true,
+        "participant_count": 36,
+        "graph_publishers": {
+          "1": 1,
+          "2": 1,
+          "3": 1,
+          "4": 1
+        },
+        "cleanup_errors": [],
+        "intended_exit_code": 0
+      },
+      "host_wall_s": 15.28100000001723,
+      "both_OS_owners_closed": true,
+      "Windows_Job_remaining_PIDs": [],
+      "source_sha256": "5337e9e265057369355e2406e05e8d39e0f60773f66738d98e99fab30399c478",
+      "host_json_sha256": "e0b3d96b0019ac90178ca33c735aa935123240e2d8afb2093695496757c7b31d",
+      "job_sha256": "b0c94dd2d651dbb876286b0d436446eb6678a46018a09b1064cd8f1a04b3cabb"
+    },
+    {
+      "case": 94,
+      "run_id": "1515fb6c7ac24370bf8af4f37701a068",
+      "status": "passed",
+      "GPU_started": false,
+      "windows": {
+        "run_id": "1515fb6c7ac24370bf8af4f37701a068",
+        "side": "windows",
+        "status": "passed",
+        "GPU_started": false,
+        "motion_topics_used": false,
+        "rclpy_file": "E:\\IsaacSim\\isaac-sim-4.5.0\\exts\\isaacsim.ros2.bridge\\humble\\rclpy\\rclpy\\__init__.py",
+        "DDS_profile": "E:\\FactoryOpsRuntime\\local45-dds-delivery-094\\windows.xml",
+        "domain": "73",
+        "passive_participants": 1,
+        "context_mode": "shared",
+        "sent": {
+          "1": 192,
+          "2": 192,
+          "3": 192,
+          "4": 192
+        },
+        "received": {
+          "1": 234,
+          "2": 234,
+          "3": 234,
+          "4": 234
+        },
+        "last_received_sequence": {
+          "1": 234.0,
+          "2": 234.0,
+          "3": 234.0,
+          "4": 234.0
+        },
+        "participants_closed": true,
+        "participant_count": 1,
+        "node_count": 5,
+        "graph_publishers": {
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0
+        },
+        "cleanup_errors": [],
+        "intended_exit_code": 0
+      },
+      "linux": {
+        "run_id": "1515fb6c7ac24370bf8af4f37701a068",
+        "side": "linux",
+        "status": "passed",
+        "GPU_started": false,
+        "motion_topics_used": false,
+        "rclpy_file": "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/__init__.py",
+        "DDS_profile": "/mnt/e/FactoryOpsRuntime/local45-dds-delivery-094/linux.xml",
+        "domain": "73",
+        "passive_participants": 32,
+        "context_mode": "per_node",
+        "sent": {
+          "1": 234,
+          "2": 234,
+          "3": 234,
+          "4": 234
+        },
+        "received": {
+          "1": 191,
+          "2": 191,
+          "3": 191,
+          "4": 191
+        },
+        "last_received_sequence": {
+          "1": 191.0,
+          "2": 191.0,
+          "3": 191.0,
+          "4": 191.0
+        },
+        "participants_closed": true,
+        "participant_count": 36,
+        "node_count": 36,
+        "graph_publishers": {
+          "1": 1,
+          "2": 1,
+          "3": 1,
+          "4": 1
+        },
+        "cleanup_errors": [],
+        "intended_exit_code": 0
+      },
+      "host_wall_s": 15.26500000001397,
+      "both_OS_owners_closed": true,
+      "Windows_Job_remaining_PIDs": [],
+      "source_sha256": "8897c10c7932d88702d2199683a01d5825589106201b07f07671eb09be4cf67d",
+      "host_json_sha256": "a11898b58e24213659bd042554c216fc2c1819f3b9cb38d03e0d2f029dc4f965",
+      "job_sha256": "dd8a6277c0514a19ab9fa543af633e4938ee826047ff0426f72a17147ae6d133"
+    },
+    {
+      "case": 95,
+      "run_id": "6debd03ebf984430a7fb7984d44fc653",
+      "status": "failed",
+      "GPU_started": false,
+      "windows": {
+        "run_id": "6debd03ebf984430a7fb7984d44fc653",
+        "side": "windows",
+        "status": "failed",
+        "GPU_started": false,
+        "motion_topics_used": false,
+        "rclpy_file": "E:\\IsaacSim\\isaac-sim-4.5.0\\exts\\isaacsim.ros2.bridge\\humble\\rclpy\\rclpy\\__init__.py",
+        "DDS_profile": "E:\\FactoryOpsRuntime\\local45-dds-delivery-095\\windows.xml",
+        "domain": "73",
+        "passive_participants": 1,
+        "context_mode": "g2_default",
+        "sent": {
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0
+        },
+        "received": {
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0
+        },
+        "last_received_sequence": {},
+        "participants_closed": true,
+        "g2_source": "E:\\FactoryOpsRuntime\\local45-transport-037\\source\\scripts\\isaac\\g2_scene.py",
+        "g2_source_sha256": "7db558a27f68cde06b229b529166b46a7e3407dba0201ebcc871253546a26273",
+        "error": "ModuleNotFoundError: No module named 'tf2_ros'",
+        "traceback": "Traceback (most recent call last):\n  File \"E:\\FactoryOpsRuntime\\local45-dds-delivery-095\\source\\scripts\\ros\\probe_dds_command_delivery.py\", line 75, in main\n    node,state=g2._setup_robot_ros(rclpy,{'namespace':prefix+f'/to_windows/carter{i}'},[],None,watchdog)\n  File \"E:\\FactoryOpsRuntime\\local45-transport-037\\source\\scripts\\isaac\\g2_scene.py\", line 422, in _setup_robot_ros\n    from tf2_ros import StaticTransformBroadcaster, TransformBroadcaster\nModuleNotFoundError: No module named 'tf2_ros'\n",
+        "cleanup_errors": [],
+        "intended_exit_code": 1
+      },
+      "linux": {
+        "run_id": "6debd03ebf984430a7fb7984d44fc653",
+        "side": "linux",
+        "status": "ready",
+        "GPU_started": false,
+        "motion_topics_used": false,
+        "rclpy_file": "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/__init__.py",
+        "DDS_profile": "/mnt/e/FactoryOpsRuntime/local45-dds-delivery-095/linux.xml",
+        "domain": "73",
+        "passive_participants": 32,
+        "context_mode": "per_node",
+        "sent": {
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0
+        },
+        "received": {
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0
+        },
+        "last_received_sequence": {},
+        "participants_closed": false,
+        "participant_count": 36,
+        "node_count": 36
+      },
+      "host_wall_s": 4.01500000001397,
+      "both_OS_owners_closed": true,
+      "Windows_Job_remaining_PIDs": [],
+      "source_sha256": "9cfaa9d2b60e9c864190dc771c56d0fafa1ff021a7dcbfe4d2f496ed6ba41256",
+      "host_json_sha256": "98250938c290c064cad5d2a88e6c6e4b52ce76295f65ba10298d93d649a678e2",
+      "job_sha256": "01873ebabf83bc206951fd306e57a5207bd1041f395d106d0c572c0b1d1d5c88"
+    },
+    {
+      "case": 96,
+      "run_id": "41d2c92a89c24f69abcc8f34ce66b18f",
+      "status": "passed",
+      "GPU_started": false,
+      "windows": {
+        "run_id": "41d2c92a89c24f69abcc8f34ce66b18f",
+        "side": "windows",
+        "status": "passed",
+        "GPU_started": false,
+        "motion_topics_used": false,
+        "rclpy_file": "E:\\IsaacSim\\isaac-sim-4.5.0\\exts\\isaacsim.ros2.bridge\\humble\\rclpy\\rclpy\\__init__.py",
+        "DDS_profile": "E:\\FactoryOpsRuntime\\local45-dds-delivery-096\\windows.xml",
+        "domain": "73",
+        "passive_participants": 1,
+        "context_mode": "g2_default",
+        "sent": {
+          "1": 192,
+          "2": 192,
+          "3": 192,
+          "4": 192
+        },
+        "received": {
+          "1": 234,
+          "2": 234,
+          "3": 234,
+          "4": 234
+        },
+        "last_received_sequence": {
+          "1": 234.0,
+          "2": 234.0,
+          "3": 234.0,
+          "4": 234.0
+        },
+        "participants_closed": true,
+        "g2_source": "E:\\FactoryOpsRuntime\\local45-transport-037\\source\\scripts\\isaac\\g2_scene.py",
+        "g2_source_sha256": "7db558a27f68cde06b229b529166b46a7e3407dba0201ebcc871253546a26273",
+        "participant_count": 1,
+        "node_count": 5,
+        "graph_publishers": {
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0
+        },
+        "g2_received": {
+          "1": 234,
+          "2": 234,
+          "3": 234,
+          "4": 234
+        },
+        "g2_rejected": {
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0
+        },
+        "g2_scope": "Actual frozen callback/executor with authored0 watchdog clock and zero velocity; no clock/actuator or physical evidence.",
+        "cleanup_errors": [],
+        "intended_exit_code": 0
+      },
+      "linux": {
+        "run_id": "41d2c92a89c24f69abcc8f34ce66b18f",
+        "side": "linux",
+        "status": "passed",
+        "GPU_started": false,
+        "motion_topics_used": false,
+        "rclpy_file": "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/__init__.py",
+        "DDS_profile": "/mnt/e/FactoryOpsRuntime/local45-dds-delivery-096/linux.xml",
+        "domain": "73",
+        "passive_participants": 32,
+        "context_mode": "per_node",
+        "sent": {
+          "1": 234,
+          "2": 234,
+          "3": 234,
+          "4": 234
+        },
+        "received": {
+          "1": 191,
+          "2": 191,
+          "3": 191,
+          "4": 191
+        },
+        "last_received_sequence": {
+          "1": 191.0,
+          "2": 191.0,
+          "3": 191.0,
+          "4": 191.0
+        },
+        "participants_closed": true,
+        "participant_count": 36,
+        "node_count": 36,
+        "graph_publishers": {
+          "1": 1,
+          "2": 1,
+          "3": 1,
+          "4": 1
+        },
+        "cleanup_errors": [],
+        "intended_exit_code": 0
+      },
+      "host_wall_s": 15.48499999998603,
+      "both_OS_owners_closed": true,
+      "Windows_Job_remaining_PIDs": [],
+      "source_sha256": "77eb1048e0846a743696b35ec7cc5c85f88b67ec602b5838a9ac087a0656dd2b",
+      "host_json_sha256": "4e706704927bd3773957d89c00f11826eb9a96aa6ac811ba8fed42d4f1a02b76",
+      "job_sha256": "82e4ef3055b5d530f8a62e499ab7cf3fe406fb9a499d1bcac854b0cef2949560"
+    },
+    {
+      "case": 97,
+      "run_id": "8c22524e6a4d4887b5e2669207153b3f",
+      "status": "passed",
+      "GPU_started": true,
+      "windows": {
+        "run_id": "8c22524e6a4d4887b5e2669207153b3f",
+        "side": "windows",
+        "status": "passed",
+        "GPU_started": true,
+        "motion_topics_used": false,
+        "rclpy_file": "E:\\IsaacSim\\isaac-sim-4.5.0\\exts\\isaacsim.ros2.bridge\\humble\\rclpy\\rclpy\\__init__.py",
+        "DDS_profile": "E:\\FactoryOpsRuntime\\local45-dds-delivery-097\\windows.xml",
+        "domain": "73",
+        "passive_participants": 1,
+        "context_mode": "g2_default",
+        "sent": {
+          "1": 192,
+          "2": 192,
+          "3": 192,
+          "4": 192
+        },
+        "received": {
+          "1": 234,
+          "2": 234,
+          "3": 234,
+          "4": 234
+        },
+        "last_received_sequence": {
+          "1": 234.0,
+          "2": 234.0,
+          "3": 234.0,
+          "4": 234.0
+        },
+        "participants_closed": true,
+        "g2_source": "E:\\FactoryOpsRuntime\\local45-transport-037\\source\\scripts\\isaac\\g2_scene.py",
+        "g2_source_sha256": "7db558a27f68cde06b229b529166b46a7e3407dba0201ebcc871253546a26273",
+        "participant_count": 1,
+        "node_count": 5,
+        "graph_publishers": {
+          "1": 1,
+          "2": 0,
+          "3": 0,
+          "4": 0
+        },
+        "g2_received": {
+          "1": 234,
+          "2": 234,
+          "3": 234,
+          "4": 234
+        },
+        "g2_rejected": {
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0
+        },
+        "g2_scope": "Actual frozen callback/executor with authored0 watchdog clock and zero velocity; no clock/actuator or physical evidence.",
+        "cleanup_errors": [],
+        "intended_exit_code": 0
+      },
+      "linux": {
+        "run_id": "8c22524e6a4d4887b5e2669207153b3f",
+        "side": "linux",
+        "status": "passed",
+        "GPU_started": false,
+        "motion_topics_used": false,
+        "rclpy_file": "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/__init__.py",
+        "DDS_profile": "/mnt/e/FactoryOpsRuntime/local45-dds-delivery-097/linux.xml",
+        "domain": "73",
+        "passive_participants": 32,
+        "context_mode": "per_node",
+        "sent": {
+          "1": 234,
+          "2": 234,
+          "3": 234,
+          "4": 234
+        },
+        "received": {
+          "1": 192,
+          "2": 192,
+          "3": 192,
+          "4": 192
+        },
+        "last_received_sequence": {
+          "1": 192.0,
+          "2": 192.0,
+          "3": 192.0,
+          "4": 192.0
+        },
+        "participants_closed": true,
+        "participant_count": 36,
+        "node_count": 36,
+        "graph_publishers": {
+          "1": 1,
+          "2": 1,
+          "3": 1,
+          "4": 1
+        },
+        "cleanup_errors": [],
+        "intended_exit_code": 0
+      },
+      "host_wall_s": 35.85899999999674,
+      "both_OS_owners_closed": true,
+      "Windows_Job_remaining_PIDs": [],
+      "source_sha256": "ee3f35fa545cb859c0fba686f28d1709427ececb691af8ed8a27c8a3361f71e8",
+      "host_json_sha256": "8a959d190c9bf2d7c7c5a8a2744a058c8be02524d1d9b41888cbf4d17e946b8b",
+      "job_sha256": "cc48bf5792c338de60fe225fa814d7eb07755f1eec4964fae19799494f310aa0"
+    },
+    {
+      "case": 99,
+      "run_id": "caa986c7d9434f679a78b8a644e5ccb3",
+      "status": "passed",
+      "GPU_started": true,
+      "windows": {
+        "run_id": "caa986c7d9434f679a78b8a644e5ccb3",
+        "side": "windows",
+        "status": "passed",
+        "GPU_started": true,
+        "motion_topics_used": false,
+        "rclpy_file": "E:\\IsaacSim\\isaac-sim-4.5.0\\exts\\isaacsim.ros2.bridge\\humble\\rclpy\\rclpy\\__init__.py",
+        "DDS_profile": "E:\\FactoryOpsRuntime\\local45-dds-delivery-099\\windows.xml",
+        "domain": "73",
+        "passive_participants": 1,
+        "context_mode": "g2_default",
+        "sent": {
+          "1": 192,
+          "2": 192,
+          "3": 192,
+          "4": 192
+        },
+        "received": {
+          "1": 237,
+          "2": 237,
+          "3": 237,
+          "4": 237
+        },
+        "last_received_sequence": {
+          "1": 237.0,
+          "2": 237.0,
+          "3": 237.0,
+          "4": 237.0
+        },
+        "participants_closed": true,
+        "g2_source": "E:\\FactoryOpsRuntime\\local45-transport-037\\source\\scripts\\isaac\\g2_scene.py",
+        "g2_source_sha256": "7db558a27f68cde06b229b529166b46a7e3407dba0201ebcc871253546a26273",
+        "participant_count": 1,
+        "node_count": 5,
+        "graph_publishers": {
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0
+        },
+        "g2_received": {
+          "1": 237,
+          "2": 237,
+          "3": 237,
+          "4": 237
+        },
+        "g2_rejected": {
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0
+        },
+        "g2_scope": "Actual frozen callback/executor with authored0 watchdog clock and zero velocity; no clock/actuator or physical evidence.",
+        "cleanup_errors": [],
+        "intended_exit_code": 0
+      },
+      "linux": {
+        "run_id": "caa986c7d9434f679a78b8a644e5ccb3",
+        "side": "linux",
+        "status": "passed",
+        "GPU_started": false,
+        "motion_topics_used": false,
+        "rclpy_file": "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/__init__.py",
+        "DDS_profile": "/mnt/e/FactoryOpsRuntime/local45-dds-delivery-099/linux.xml",
+        "domain": "73",
+        "passive_participants": 32,
+        "context_mode": "per_node",
+        "sent": {
+          "1": 237,
+          "2": 237,
+          "3": 237,
+          "4": 237
+        },
+        "received": {
+          "1": 191,
+          "2": 191,
+          "3": 191,
+          "4": 191
+        },
+        "last_received_sequence": {
+          "1": 191.0,
+          "2": 191.0,
+          "3": 191.0,
+          "4": 191.0
+        },
+        "participants_closed": true,
+        "publisher_source": "Installed nav2_util::TwistPublisher in four owned C++ processes; no Python forward publishers.",
+        "participant_count": 36,
+        "node_count": 36,
+        "graph_publishers": {
+          "1": 1,
+          "2": 1,
+          "3": 1,
+          "4": 1
+        },
+        "cpp_publishers": {
+          "1": {
+            "robot": 1,
+            "sent": 237,
+            "matched_at_start": 2,
+            "matched_at_end": 2,
+            "enable_stamped_cmd_vel": false,
+            "linear_x": 0,
+            "angular_z": 0
+          },
+          "2": {
+            "robot": 2,
+            "sent": 237,
+            "matched_at_start": 2,
+            "matched_at_end": 2,
+            "enable_stamped_cmd_vel": false,
+            "linear_x": 0,
+            "angular_z": 0
+          },
+          "3": {
+            "robot": 3,
+            "sent": 237,
+            "matched_at_start": 2,
+            "matched_at_end": 2,
+            "enable_stamped_cmd_vel": false,
+            "linear_x": 0,
+            "angular_z": 0
+          },
+          "4": {
+            "robot": 4,
+            "sent": 237,
+            "matched_at_start": 2,
+            "matched_at_end": 2,
+            "enable_stamped_cmd_vel": false,
+            "linear_x": 0,
+            "angular_z": 0
+          }
+        },
+        "cleanup_errors": [],
+        "intended_exit_code": 0
+      },
+      "host_wall_s": 34.09299999999348,
+      "both_OS_owners_closed": true,
+      "Windows_Job_remaining_PIDs": [],
+      "source_sha256": "f68c91d22cebd2eef00c467a06222f7d8c252edbab0d4ee901528cc5d82638b3",
+      "cpp_source_sha256": "a59ce09f4862a422d0823e806c583a3e222f6657b9dba3317b628ff7805a57ee",
+      "cpp_binary_sha256": "bb22681e515b30b532dc12813a38eaf043196a4056e34ddfe13da4cc35e28992",
+      "host_json_sha256": "0ee4cc4c7917725dfdd9d1d9e6e0551c97614e4c2e8d79f5ad49ee44a91d6100",
+      "job_sha256": "3d2ea34f0390e2b71d5e867edd32ae75d0adb9beae392f27d2367b7e41f0ef27"
+    }
+  ],
+  "network_or_firewall_settings_changed": false,
+  "peer_candidate_executed": false,
+  "original037_status": "failed",
+  "goal80_complete": false,
+  "official_refs": "../../coordination/collab/results/dds-command-reference-092.json",
+  "version_limit": "Installed SDK4.5 bundledHumble + WSLJazzy measured only.4.5 officialinterop support matrix not re-established; newest6.2 guide not4.5qualification.",
+  "production_QoS_changed": false,
+  "probe_QoS_scope": "Ordinary probes use reliable/volatile depth10. Actual G2 command reader in096/097 retains production depth50 with shadow reader depth10. No production QoS or peer setting change.",
+  "native_probe_limits": "Bare SDK app with frozen037 G2 callback/executors and authored watchdog clock0; isolated probe topics, zero differential-drive x/z velocity and synthetic unused-component counters. No robot assets, actual world/sensor clocks, full Nav2 topology, physical motion or terminal recording qualification.099 adds actual installed Nav2 C++ TwistPublisher; original037 not reproduced.",
+  "Nav2_upstream_reference": "https://raw.githubusercontent.com/ros-navigation/navigation2/jazzy/nav2_util/include/nav2_util/twist_publisher.hpp"
+}

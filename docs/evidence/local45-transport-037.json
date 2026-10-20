@@ -1,0 +1,170 @@
+{
+  "run_id": "1172144a16db4f7fa4b798d479f68c4d",
+  "source_commit": "e3ea8a8dfdf65d26b912a47a10c4d0898d3f767f",
+  "status": "closed_milestone_gate_incomplete",
+  "host_status": "failed",
+  "host_wall_s": 222.14100000000326,
+  "origin_sim_time_s": 7.216667043,
+  "time_scope": "Journal/media sim_time_s uses absolute World time; ledger intent/result times and web mission clock use elapsed time from origin_sim_time_s. No clock correction is applied.",
+  "mission_status": "failed",
+  "scene_status": "running",
+  "normal_transport_passed": false,
+  "four_robot_operational_gate_passed": false,
+  "goal80_complete": false,
+  "business_flow_complete": false,
+  "final_parked_robot_ids": [],
+  "scenario_complete_events": [],
+  "terminal_boundary_failed": false,
+  "stale_recovery_audit": null,
+  "milestone_scope": "Preservation and operation gate only; final80 judgment is separate, not full100 completion.",
+  "experiment": "Separate three-order four-robot input configs/factory-fleet4-normal3;034 four-order failure remains unchanged.",
+  "business_handoff_robot_ids": [],
+  "completed_order_ids": [],
+  "empty_returns_completed": 0,
+  "material_completed": false,
+  "inventory_conservation": [
+    {
+      "balanced": true,
+      "consumed": 0,
+      "in_totes": 0,
+      "initial": 60,
+      "on_hand": 60,
+      "replenished": 0,
+      "sku": "sensor-kit"
+    }
+  ],
+  "empty_return_states": {},
+  "accepted_product_handoffs": [],
+  "accepted_empty_handoffs": [],
+  "physical_motion": {
+    "carter1": {
+      "samples": 2119,
+      "maximum_GT_evaluation_displacement_m": 1.0501249096653575e-05,
+      "maximum_command_sequence": 0,
+      "nonzero_wheel_target_samples": 0,
+      "last_world_time_s": 37.3666686154902
+    },
+    "carter2": {
+      "samples": 2119,
+      "maximum_GT_evaluation_displacement_m": 1.1162471686095834e-05,
+      "maximum_command_sequence": 0,
+      "nonzero_wheel_target_samples": 0,
+      "last_world_time_s": 37.3666686154902
+    },
+    "carter3": {
+      "samples": 2119,
+      "maximum_GT_evaluation_displacement_m": 2.0983882704364655e-05,
+      "maximum_command_sequence": 0,
+      "nonzero_wheel_target_samples": 0,
+      "last_world_time_s": 37.3666686154902
+    },
+    "carter4": {
+      "samples": 2119,
+      "maximum_GT_evaluation_displacement_m": 2.486878358918247e-05,
+      "maximum_command_sequence": 0,
+      "nonzero_wheel_target_samples": 0,
+      "last_world_time_s": 37.3666686154902
+    }
+  },
+  "GT_scope": "Evaluation only, no GT steering or transform injection.",
+  "virtual_charging_events": [
+    {
+      "run_id": "1172144a16db4f7fa4b798d479f68c4d",
+      "scenario_id": "fleet4_transport_normal",
+      "event_seq": 14,
+      "sim_time_s": 7.250000378,
+      "kind": "virtual_charger_reserved",
+      "robot_id": "carter1",
+      "dock": {
+        "anchor": "P1",
+        "reserved_at_s": 7.250000378,
+        "arrival": null,
+        "virtual_connector_state": "not_engaged",
+        "reason": "awaiting_real_nav2_arrival",
+        "dock_id": "CH1",
+        "phase": "approach",
+        "geometric_dock_confirmed": false,
+        "contact_since_s": null,
+        "last_stamp_s": null,
+        "fault": null,
+        "contact_source": "estimated_pose_geometric_dock",
+        "virtual": true,
+        "hardware_calibrated": false,
+        "physical_contact_verified": false,
+        "body_occupancy_owner": "G3 reservation manager"
+      }
+    }
+  ],
+  "stale_rejection_events": [],
+  "recovery_runtime_exercised": false,
+  "planner_method_counts": {
+    "compute_path_through_poses": 2
+  },
+  "capture_count": 6,
+  "timeline": null,
+  "error": {
+    "host": "RuntimeError: SDK failure before cleanup: mission: SmokeError: G2 mission controller ended with failed",
+    "SDK": {
+      "message": "G2 mission controller ended with failed",
+      "traceback": "Traceback (most recent call last):\n  File \"E:\\FactoryOpsRuntime\\local45-transport-037\\source\\scripts\\isaac\\g2_scene.py\", line 1596, in _run\n    raise base.SmokeError(terminal_error)\nscripts.isaac.stage_smoke.SmokeError: G2 mission controller ended with failed\n",
+      "type": "SmokeError"
+    },
+    "mission": {
+      "message": "FollowPath failed: robot=carter1 goal=f488caf4-67ae-472b-ba4f-2b3af8c517d5 status=6 error_code=105; full action retained in mission-result.json actions",
+      "traceback": "Traceback (most recent call last):\n  File \"/mnt/e/FactoryOpsRuntime/local45-transport-037/source/scripts/ros/g3_mission.py\", line 2106, in run_mission\n    raise RuntimeError(\nRuntimeError: FollowPath failed: robot=carter1 goal=f488caf4-67ae-472b-ba4f-2b3af8c517d5 status=6 error_code=105; full action retained in mission-result.json actions\n",
+      "type": "RuntimeError"
+    }
+  },
+  "source_OS_trees_closed": true,
+  "owner_cleanup_errors": [],
+  "mission_cleanup": [
+    {
+      "exit_code": 0,
+      "label": "rosbag",
+      "pid": 41333
+    },
+    {
+      "exit_code": -15,
+      "label": "nav2",
+      "pid": 41334
+    },
+    {
+      "error": "failed to shutdown: rcl_shutdown already called on the given context, at ./src/rcl/init.c:333",
+      "label": "rclpy.shutdown"
+    }
+  ],
+  "SDK_scene_cleanup": null,
+  "malformed_final_action_lines": [],
+  "scope": "Local IsaacSim4.5/PhysX development, not canonical6.2/RTX qualification.",
+  "loading_scope": "Material ledger and noncolliding visual cargo; no contact/lift physics validation.",
+  "charging_scope": "Authored virtual energy and estimated-pose stopped geometric docking; not electrical contact proof.",
+  "RGB_scope": "Sparse original RGB for presentation. FOT068 transition pixel limitation remains; no training label generation.",
+  "new_SDG": false,
+  "bag_SQL_opened_for_postprocessing": true,
+  "closed_command_delivery_counts": {
+    "run_id": "1172144a16db4f7fa4b798d479f68c4d",
+    "query": "select t.name,t.type,count(m.id) from topics t left join messages m on t.id=m.topic_id group by t.id",
+    "scope": "Actual closed bag query observed after both OS owners and Job closure, not active SQL. Counts prove recorded WSL publications, not SDK delivery or nonzero value.",
+    "closed_owners_verified": true,
+    "topic_counts": {
+      "/carter1/cmd_vel": 1399,
+      "/carter2/cmd_vel": 937,
+      "/carter3/cmd_vel": 0,
+      "/carter4/cmd_vel": 0
+    },
+    "SDK_received": {
+      "carter1": 0,
+      "carter2": 0,
+      "carter3": 0,
+      "carter4": 0
+    },
+    "raw_bag_sha256": "dca14ef9a82b9453b2552859bf7cdcfa5882516bc16e137c3335d4c8aa2f8404",
+    "hypothesis": "WSL-to-Windows command delivery unresolved. Topic graph presence alone is not delivery; no cause assigned."
+  },
+  "external_resource_wall_bound_s": 9000,
+  "inflight_bounds_changed": false,
+  "preservation": [
+    "D:/FactoryOpsArtifacts/operations-079/checkpoint-001",
+    "E:/FactoryOpsArtifacts/operations-079/checkpoint-001"
+  ]
+}

@@ -1,0 +1,51 @@
+{
+  "task_id": "dds-evidence-100",
+  "attempt": 1,
+  "contract_revision": 100,
+  "ack": true,
+  "status": "review_complete",
+  "verdict": "PASS",
+  "acceptance_authority": "root",
+  "scope": "One bounded read-only pass of seven assigned paths and four small frozen 099 JSON receipts. No blocking finding within this scope.",
+  "inspected_source_sha256": {
+    "scripts/ros/probe_dds_command_delivery.py": "0f70084a2a65fdfd0561830ae712f4fa7637e5b9edce7365a8ecb0fb39e28fb9",
+    "scripts/ros/probe_nav2_twist_publisher.cpp": "a59ce09f4862a422d0823e806c583a3e222f6657b9dba3317b628ff7805a57ee",
+    "docs/evidence/local45-dds-delivery-097.json": "f23b0aadd05e7a1a17cfea5eac8fc60957bfbf1ca24de4032b8cd5ae88d3a53f",
+    "docs/evidence/local45-transport-037.json": "4da2479e03860b907c1bc5a722ed65e71927823e35b54c55affd5af9ab8c1aef",
+    "docs/troubleshooting.md": "a8ca5bb7028f264e64425f62ae64a013040a22b30580d73bb712d2b42ca18e77",
+    "README.md": "4f6600e58bf305efda0d1c49170fcddda7f0940a283f925e5943d6d131f3e7e3",
+    "docs/completion-plan.md": "b01490ea180d79c94151b580f8f68a65e45a704d553f45dc68e3058f26d5432f"
+  },
+  "all_seven_card_digests_match": true,
+  "checks": {
+    "isolation": "Python requires 32 lowercase hex run ID and constructs /probe_<run>/to_windows|to_linux/carterN namespaces. C++ is invoked with that private prefix. No production robot topics or actuator handles are used.",
+    "payload": "linear.x and angular.z remain zero; unused components carry explicit probe tags/counters. This is zero differential-drive velocity, not an all-six-components-zero command.",
+    "publisher": "C++ includes nav2_util/twist_publisher.hpp and invokes installed nav2_util::TwistPublisher with enable_stamped_cmd_vel=false. Python disables its forward publishers in this mode; four owned C++ children supply the forward channel.",
+    "099_receipts": {
+      "run_id": "caa986c7d9434f679a78b8a644e5ccb3",
+      "g2_received_each": 237,
+      "g2_rejected_each": 0,
+      "cpp_sent_each": 237,
+      "participants_closed_both": true,
+      "cleanup_errors_both": []
+    },
+    "ownership": "099 Windows Job assignment and prelaunch inputs verified, worker exit 0, closed=true, remaining_owned_pids=[]. Linux exact owned transient unit started absent; final unit absent, cgroup absent/unpopulated, known live processes and waiters empty, foreground client exit 0/closed, closure_verified=true.",
+    "publication": "037 remains failed and its delivery cause unresolved. Baselines do not reproduce the original failure. 098 remains CPU/AST-qualified with factory validation pending. No full transport, terminal recording, 80-percent completion, physical motion or version-wide interoperability success is claimed."
+  },
+  "frozen_099_receipt_sha256": {
+    "E:/FactoryOpsRuntime/local45-dds-delivery-099/host.json": "0ee4cc4c7917725dfdd9d1d9e6e0551c97614e4c2e8d79f5ad49ee44a91d6100",
+    "E:/FactoryOpsRuntime/local45-dds-delivery-099/job.json": "3d2ea34f0390e2b71d5e867edd32ae75d0adb9beae392f27d2367b7e41f0ef27",
+    "E:/FactoryOpsRuntime/local45-dds-delivery-099/windows-result.json": "570aa639856fa88c9552117a9882fab4479b9b93b4bbd60e2ad3107493622c08",
+    "E:/FactoryOpsRuntime/local45-dds-delivery-099/linux-result.json": "0c83251d678a1c4041d4e1b3992f4239f4a2f0d8cc12cc0f035c5be3b3918bd8"
+  },
+  "findings": [],
+  "limits": [
+    "Source review is not new execution or independent runtime acceptance. Root retains acceptance authority.",
+    "099 Job pins frozen Python probe f68c91d22cebd2eef00c467a06222f7d8c252edbab0d4ee901528cc5d82638b3, not the current reviewed 0f70084a source. The current Python source is not claimed executed by 099. C++ source digest matches the published 099 source; binary digest is bb22681e515b30b532dc12813a38eaf043196a4056e34ddfe13da4cc35e28992.",
+    "Authored watchdog clock zero and isolated tagged payloads do not qualify real world/sensor clocks, nonzero motion, complete Nav2 topology or original 037 conditions.",
+    "No tests, AST, SDK/ROS/WSL/GPU/server/browser/SQL/Git operations, installations, new agents or source/document edits were performed for this task."
+  ],
+  "write_paths": [
+    "coordination/collab/results/dds-evidence-100.json"
+  ]
+}
