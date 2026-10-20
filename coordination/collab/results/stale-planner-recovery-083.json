@@ -1,0 +1,113 @@
+{
+  "task_id": "stale-planner-recovery-083",
+  "attempt": 1,
+  "contract_revision": 83,
+  "ack": true,
+  "status": "implemented_source_only_focused_CPU_verified_pending_root_review_native_validation",
+  "changed_paths": [
+    "scripts/ros/g3_mission.py",
+    "factory_ops/fleet_execution.py",
+    "tests/test_stale_planner_recovery.py"
+  ],
+  "source_sha256": {
+    "scripts/ros/g3_mission.py": "a3fd94acdb0fb466e692719865a2eb72e6299df2eda7d37643a3d492fc6df401",
+    "factory_ops/fleet_execution.py": "d3f6f86e16d6118b6103620b2e6be9f100271ea50c58d74ef7be21afffe874ad",
+    "tests/test_stale_planner_recovery.py": "656357e746e1e8f8651166f4ca5b0edbb869d3a7a7ac4e43681eb69db8eb6b7a"
+  },
+  "input_source_sha256_before_edit": {
+    "scripts/ros/g3_mission.py": "e26b7e2a0c957ab729f5b7cb14d20138a13b053a473de03890ce4c6619ceba33",
+    "factory_ops/fleet_execution.py": "7185119355989d6b082c56211a09a4f50ee0bdebbbf875caae036f2750aaabd6"
+  },
+  "closed034_evidence": {
+    "mission_result": "D:/FactoryOpsRuntime/local45-transport-034/results/run/mission-result.json",
+    "mission_result_sha256_as_read": "de4c2feb232e920dea273fe83f5f6504790bc10b25c27ca360ec5ea6d2fcc51b",
+    "pair_host": "D:/FactoryOpsRuntime/local45-transport-034/pair-host.json",
+    "run_id": "65a800beeb3d4006ac498f024610e586",
+    "status": "failed",
+    "windows_closed": true,
+    "linux_closed": true,
+    "cleanup_errors": [],
+    "robot_id": "carter1",
+    "planner_action_uuid": "795727d2-42ea-4efa-bade-23ee869d7051",
+    "planner_method": "compute_path_through_poses",
+    "planner_status": 4,
+    "planner_error_code": 0,
+    "chunk": "C_LOW -> P3_MERGE, business leg to CI",
+    "generation": 182,
+    "retained_full_leg_tile_count": 77,
+    "unqualified_point_count": 71,
+    "unqualified_path_sha256": "0989cb5119026ff6eddc190c4f132bb89d010388534633626105761fa8a142b2",
+    "path_stamp_ns": 1507833411973,
+    "admitted_clock_ns": 1508350078667,
+    "observed_age_s": 0.516666694,
+    "path_ttl_s": 0.5,
+    "path_clock_waited_wall_s": 0.0,
+    "planner_path_qualified": false,
+    "follow_goal_sent": false,
+    "diagnosis": "An expired successful planner result was rejected at its first recorded clock admission, not a resource timeout. Underlying planning/delivery/callback latency cause remains unproven."
+  },
+  "safe_reentry_rationale": [
+    {
+      "ref": "scripts/ros/g3_mission.py:671 (existing request_remaining_reservation); factory_ops/route_reservation.py:181-220",
+      "fact": "Ordinary request transfer allocates a successor generation. Retry bypasses that transfer ONLY after validating and retaining the exact existing hold; no tile release/shrink/new reservation decision is fabricated."
+    },
+    {
+      "ref": "scripts/ros/g3_mission.py:701 retained_planner_retry_hold",
+      "fact": "Require same run/chunk/leg/generation/follow UUID/exact full-leg tiles, no accepted FollowPath, unqualified old record and no prior FollowPath send. All four estimated footprint observations must remain fresh and the current body inside retained tiles."
+    },
+    {
+      "ref": "scripts/ros/g3_mission.py:701 retained_planner_retry_hold; existing lease/tick path",
+      "fact": "Require current same-scope HOLD authorization/sequence/tile hash within original <=0.5s authorization validity, and latest encoder sample within existing odom TTL and stopped speed thresholds. Existing request boundaries come from initial HOLD or qualified prior terminal stop. Retry issues no navigate permission."
+    },
+    {
+      "ref": "scripts/ros/g3_mission.py:745 schedule_stale_planner_retry",
+      "fact": "Retry only a real successful matching planner terminal, preserved raw Path/hash and original clock, under the existing local45 four-material PhysX-guided scope. Cutoff-active and other scopes/errors never schedule."
+    }
+  ],
+  "implementation": [
+    "StaleComputedPathError subclasses ValueError and keeps the original message/TTL/stamp/age. Existing canonical frame/start/end/swept geometry must pass BEFORE classifying an error as transient stale; an invalid stale geometry therefore still fails closed. The expired Path never returns passed.",
+    "Before scheduling, preserve original raw Path/hash/action UUID and rejection in history; journal a correlated stale rejection with original path clock/age/TTL. Existing terminal yaw0.05 and full-leg swept subset are also required.",
+    "Queue request-phase re-entry with a retained hold snapshot, unchanged generation/follow UUID/full-leg ownership and preserved chunk phase_started. Revalidate that exact hold before each fresh request; skip ordinary reservation transfer.",
+    "Fresh guided request uses a new random compute UUID, current estimated pose and original newly observed ROS request stamp. Authored guides and original UUID acceptance checks remain. No old Path is restamped or followed.",
+    "Maximum3 fresh retries after the initial computation per authored chunk route ID. Exhaustion raises explicit failure with rejection/exhaustion evidence. Budget clears only after a fully admitted fresh Path or starts anew for a genuinely different authored chunk.",
+    "Original chunk timeout includes retry pending time and all retries; its start is not reset. Original horizon/cutoff/global wall limits remain. No new goal after cutoff, ledger handoff, fake action terminal or task completion from retry.",
+    "Fresh result must still pass existing path clock, TTL0.5, geometry, terminal yaw and full-leg gates before FollowPath; default/canonical/RTX scope receives no retry."
+  ],
+  "validation": [
+    {
+      "command": ".\\.venv\\Scripts\\python.exe -B -m unittest tests.test_stale_planner_recovery -v",
+      "environment": {
+        "STALE_PLANNER_RECOVERY_FIXTURE": {
+          "result": "D:/FactoryOpsRuntime/local45-transport-034/results/run/mission-result.json",
+          "planner_action_uuid": "795727d2-42ea-4efa-bade-23ee869d7051",
+          "layout": "D:/FactoryOpsRuntime/local45-transport-034/inputs/layout.json",
+          "routing": "D:/FactoryOpsRuntime/local45-transport-034/inputs/g3-routing.json"
+        }
+      },
+      "exit_code": 0,
+      "result": "6 tests PASS in0.604s, one focused pass, no skips.",
+      "coverage": [
+        "Actual closed71-pose stale Path remains rejected and retained; safe request re-entry keeps hold and original chunk deadline, creates a new UUID with fresh pose/stamp, then a separate fresh CPU Path passes strict gates.",
+        "Initial+3 retries exhaust without reservation release or FollowPath.",
+        "Canonical-disabled/cutoff/other errors do not schedule.",
+        "Invalid geometry/frame/future stamp and terminal yaw fail closed.",
+        "Only genuinely different authored chunk starts a distinct budget.",
+        "Accepted FollowPath, changed generation/tiles, navigate or expired lease, moving/stale encoder, stale peer and original deadline overrun all deny retry."
+      ],
+      "fixture_boundary": "Tests use actual closed Path bytes/headers plus synthetic CPU reservation/lease/encoder states and fresh-result fixture; not a replay of all actual034 observations or ROS/native recovery proof."
+    },
+    {
+      "command": "Cold ast.parse(feature_version=(3,10)) of the three changed Python files via E:/IsaacSim/isaac-sim-4.5.0/kit/python/python.exe -B -S -",
+      "python": "3.10.15",
+      "exit_code": 0,
+      "result": "3 AST PASS in one cold invocation; standard library only, no SDK application."
+    }
+  ],
+  "limits": [
+    "No native/SDK/GPU/ROS/systemd app, Git, board/docs, new agent or079/081/082 edits. D034 evidence was read-only; no active bag SQL.",
+    "Recovery is conservative: missing/changed HOLD, ownership, footprint, encoder or original timing proof fails closed rather than adding a waiting/release/control workaround.",
+    "Typed stale classification now occurs after unchanged geometry checks so geometry failures cannot be swallowed as retryable. All scopes still reject expired data; canonical recovery behavior remains fail-stop.",
+    "Original034 remains a failed four-order run with both owned OS trees closed. No retroactive success,80-percent judgment or physical recovery claim.",
+    "Root owns source review,079 native fixture/preservation and any future integrated retry verification."
+  ]
+}

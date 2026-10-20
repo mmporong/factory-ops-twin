@@ -1,0 +1,44 @@
+{
+  "task_id": "native-visual-flush-079",
+  "attempt": 1,
+  "contract_revision": 79,
+  "owner": "control",
+  "reviewer": "root",
+  "project_root": "C:\\Users\\LIMMM\\factory-ops-twin",
+  "binding": {
+    "session": "default",
+    "pane_id": "w1:p1C",
+    "terminal_id": "term_65e06d27e415810",
+    "agent_session": "01a152aa-24b4-7a31-92e3-a2b620f4feeb"
+  },
+  "source_commit": "fccbba6696f0b4b65fe2438469c55fbfd62222c9",
+  "status": "dispatched",
+  "input_sha256": {
+    "scripts/isaac/local45_fleet4_transport_scene.py": "a5e7e9fd6459c69f663bbcc1ecf1f5ebc30574599a64a39d5a102dcd946236e0",
+    "scripts/isaac/probe_local45_material_visual.py": "82686c4919c86a0cc929a880ea7d17a0c121c16c9daa1036ae26e65d99e5537f",
+    "scripts/isaac/g2_scene.py": "ec97d65f98bd885e70bb96b4f28a34ad884eeca793d1181676e6e66fa3b286e8",
+    "scripts/isaac/g3_scene.py": "206d97a6a3e37f1ba2607582770b9674397a46842a00355248e71f44e92e100c"
+  },
+  "goal": "Repair actual observed local45 RGB visibility-transition lag with the smallest capture-only change, and prepare one meaningful native A/B render fixture for root after034 closes. Main034 remains running immutableDsource.",
+  "write_paths": [
+    "scripts/isaac/local45_fleet4_transport_scene.py",
+    "scripts/isaac/probe_local45_visual_flush.py",
+    "coordination/collab/results/native-visual-flush-079.json"
+  ],
+  "result_path": "C:\\Users\\LIMMM\\factory-ops-twin\\coordination\\collab\\results\\native-visual-flush-079.json",
+  "observations": [
+    "034 native firstempty at frameindex20/Worldframe13312/sim221.86667823791504 materialrev4. Productvisual metadata stillseq6carter2loaded at20, seq8processing/hidingcarter2 at21(sim221.88334490545094), but RGB20/21 retainedbluecargo; RGB22(222.05001158080995) hadblue residualghost. Cause notyetproven; do not label all asTAA. SourceframesandPNG readable immutableoutputs, no bagSQL.",
+    "Current local45 before_capture cachesmaterialplacements then calls world.render()4times whilepaused. 076r2 standalone pausedworld.render8 didnotyieldvalidbuffer; 076r4 Replicator step(delta0,rt_subframes8)+wait producedvalidRGB/exactfrozenframe/time. Existing canonicalG3 usesrepstep0subframes4. Reuse installed SDKknownAPI."
+  ],
+  "acceptance": [
+    "No SDK/GPU/ROS/server start byauthor, no D034/D076 or rootartifacts writes, no activebagSQL, no control/physics/clock/guards/G2/canonical62/defaultRTX changes, no newdependencies/agents/testsuites/reviewchains/Git/board/docs writes. Mainrootrunning034oneownedGPU.",
+    "Only local45 physx_collision_planar capture path maychange. Prefer explicit zero-delta Replicator capture+wait with exactexisting Worldtime/frame/pose guard and outerpause/resume unchanged. RTXpath retains existing world.render4. Preserve076 materialcache/metadata and077 sourcepins. No arbitrary sleep/retryloops/broadtiming changes.",
+    "Prepare one boundedheadless SDK45 render-only fixture (max240wall via root-ownedWindowsJob runner). Use existingofficialNovaCarter/factoryvisual pattern. Author a fixture-only visiblebluecargo->hiddenblue/showamberhollow toggle on staticauthoredrobot, then baseline4worldrenders versuscandidatecaptureflush at SAME exactfrozenWorldframe/time. RealnativeRGB outputs and rawUSDvisibility/placement evidence; reportobservedimage/colourmaskmetrics ifused. No actualsource eventtime overwrite/replay/teleportcontrol claim, no training/SDGdataset orlivebagread. Distinct fixture/renderID. This fixture can use authoredfixture-only state instead of pretending to replaysource034.",
+    "Meaningfulfixture should show baseline buffer lag ifobserved andcandidatecurrentstate withbothRGBreadback andUSDvisibility andunchangedWorldframe/time. Colour/pixelmask conditions are authoredfixture criteria, not measuredhardwarecalibration; report rawcounts/thresholds explicitly and never adjustafterfailtofakepass. Ifeffectcannot beverified leavepending/reportlimitedproof. Reuse existingnoncolliding cargooffset andhollowTOTEgeometry, no scene/vehicle redesign.",
+    "Source onlyuntilrootGPUfree: one coldSDK310 AST changedfiles; no unittestmirroringmethodcalls. Root reviewsonce/runsoneboundedGPUfixtureafter034closure, then fixesconcretefailureonlyifneeded. ReturnACK/exactchangedSHAs/fixtureCLI+outputcontract/CPUASTresult/limits. No claim main034RGBorwholemission fixed by newCsource. You are not alone; preserveotherauthors/unownedfiles."
+  ],
+  "depends_on": [
+    "reserved-planner-077",
+    "root-render-evidence-078"
+  ]
+}

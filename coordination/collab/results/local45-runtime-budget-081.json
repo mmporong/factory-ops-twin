@@ -1,0 +1,109 @@
+{
+  "task_id": "local45-runtime-budget-081",
+  "attempt": 1,
+  "contract_revision": 81,
+  "ack": true,
+  "status": "implemented_focused_CPU_verified_pending_root_review_future_prelaunch_only",
+  "input_sha256_verified_before_edit": {
+    "scripts/isaac/run_local45_fleet_pair.py": "853d836e4088a7cf7c73a71ddc1d313e40d0fa294b41bff9e96673bf9177e295",
+    "scripts/isaac/windows_job_runner.py": "529fa4bb5a766a200430a62e2c26c4d7ccb504a3258734a033a02daeee9cb379"
+  },
+  "changed_paths": [
+    "scripts/isaac/run_local45_fleet_pair.py",
+    "scripts/isaac/windows_job_runner.py",
+    "tests/test_local45_runtime_budget.py"
+  ],
+  "source_sha256": {
+    "scripts/isaac/run_local45_fleet_pair.py": "4f8c36530405874d5e867bb4867262b57c897242b01aedf2422340e2ca50337c",
+    "scripts/isaac/windows_job_runner.py": "2ad8ed05bfc5f96edd522900f6cd8ff11bafdace8376b68ca4f8dbd4489cbad5",
+    "tests/test_local45_runtime_budget.py": "d01faceae8f1c07856531a0a9c1fcb272558b6b83a8475831d251f1e96a1fda4"
+  },
+  "product_delta": [
+    {
+      "path": "scripts/isaac/run_local45_fleet_pair.py",
+      "change": "External pair bound60..7200 ->60..10800 and matching error text only. Existing450 default and all argument forwarding/ownership/monitor/closure behavior preserved."
+    },
+    {
+      "path": "scripts/isaac/windows_job_runner.py",
+      "change": "Generic Windows Job timeout1..7200 ->1..10800 only. Existing hash preflight, assignment gate, kill-on-close, owned descendant cleanup and pass conditions unchanged."
+    }
+  ],
+  "validation": [
+    {
+      "command": ".\\.venv\\Scripts\\python.exe -B -m unittest tests.test_local45_runtime_budget -v",
+      "environment": {
+        "FACTORY_OPS_RUNTIME_BUDGET_EVIDENCE": "C:\\Users\\LIMMM\\AppData\\Local\\Temp\\factory-ops-runtime-budget-081-baabb01814db499bb03b1bb960f3280a"
+      },
+      "exit_code": 0,
+      "result": "4 tests PASS in one focused pass; no skips.",
+      "coverage": [
+        "Pair existing60/450/7200 and future9000/10800 reach the unused-input guard before any owner/process creation.",
+        "Pair >10800/NaN/Inf and below-minimum bounds fail before path resolution.",
+        "Job >10800/NaN/Inf/below-minimum and existing receipt/gate/preflight inputs reject before owned artifact mutation or Job creation.",
+        "Real tiny CPU Job uses timeout9000, exits promptly, cleans inherited live descendant and proves PID gone."
+      ]
+    },
+    {
+      "command": "Cold ast.parse(feature_version=(3,10)) on the three changed Python files using E:/IsaacSim/isaac-sim-4.5.0/kit/python/python.exe -B -S -",
+      "python": "3.10.15",
+      "exit_code": 0,
+      "result": "3 AST PASS in one cold invocation; standard-library only, no SDK application."
+    }
+  ],
+  "actual_CPU_fixture": {
+    "run_id": "82fe557c0b0f41a390477d6a51bbfa11",
+    "requested_timeout_s": 9000,
+    "actual_exit_code": 0,
+    "observed_wall_s": 0.4220000000204891,
+    "descendant_check": {
+      "pid": 47568,
+      "handle_opened": false,
+      "winerror": 87,
+      "gone": true
+    },
+    "job_receipt": "C:\\Users\\LIMMM\\AppData\\Local\\Temp\\factory-ops-runtime-budget-081-baabb01814db499bb03b1bb960f3280a\\job.json",
+    "job_status": "passed",
+    "closed": true,
+    "remaining_owned_pids": [],
+    "scope": "CPU Job only; no SDK/ROS/WSL",
+    "job_receipt_sha256": "f320e2835a0e3b3424e10dd9969a1de811fa1215812381dff026b9b3cee7c43d",
+    "fixture_summary_sha256": "cc83ab20f8261cf2a0d0d748d6cb57bee7ce792f7f982e11d464c31f8bfaa269",
+    "assignment_confirmed": true,
+    "gate_opened": true,
+    "prelaunch_inputs_verified": true,
+    "kill_on_job_close": true,
+    "gated_worker_pid": 43828,
+    "owned_pids_before_cleanup": [
+      60468,
+      47568,
+      50644
+    ],
+    "worker_exit_code": 0,
+    "timed_out": false,
+    "abort_requested": false,
+    "runner_observed_wall_s": 0.28100000001722947,
+    "artifacts": {
+      "job.json": "C:\\Users\\LIMMM\\AppData\\Local\\Temp\\factory-ops-runtime-budget-081-baabb01814db499bb03b1bb960f3280a\\job.json",
+      "fixture.json": "C:\\Users\\LIMMM\\AppData\\Local\\Temp\\factory-ops-runtime-budget-081-baabb01814db499bb03b1bb960f3280a\\fixture.json",
+      "spec.json": "C:\\Users\\LIMMM\\AppData\\Local\\Temp\\factory-ops-runtime-budget-081-baabb01814db499bb03b1bb960f3280a\\spec.json",
+      "descendant.pid": "C:\\Users\\LIMMM\\AppData\\Local\\Temp\\factory-ops-runtime-budget-081-baabb01814db499bb03b1bb960f3280a\\descendant.pid",
+      "runner.stdout.log": "C:\\Users\\LIMMM\\AppData\\Local\\Temp\\factory-ops-runtime-budget-081-baabb01814db499bb03b1bb960f3280a\\runner.stdout.log",
+      "runner.stderr.log": "C:\\Users\\LIMMM\\AppData\\Local\\Temp\\factory-ops-runtime-budget-081-baabb01814db499bb03b1bb960f3280a\\runner.stderr.log"
+    },
+    "retention": "Own temporary evidence directory retained for root review. No associated process remains; closure=true/empty owned PID list plus exact recorded descendant PID absent (WinError87)."
+  },
+  "source_fact_080_clarification": {
+    "ref": "scripts/ros/g3_mission.py:1239-1246 (run_mission)",
+    "source_sha256": "e26b7e2a0c957ab729f5b7cb14d20138a13b053a473de03890ce4c6619ceba33",
+    "fact": "runtime_config=config[g3_runtime] is a separate mapping, but the mission global wall deadline is time.monotonic()+config[max_wall_time_s]. The g3-runtime.json5400 field does not establish this entry global mission deadline. Root reports immutableD034 g2 max_wall_time_s10800, max_sim_time_s2100 and workload horizon1800.",
+    "scope": "Readonly clarification here; original080 receipt and all control/config source files untouched."
+  },
+  "limits": [
+    "This prepares future explicit prelaunch external resource selection only. It does not select or start a9000s SDK/mission allocation.",
+    "The actual CPU Job was configured9000 but ran only about0.422s; no3-hour durability or full transport test is claimed.",
+    "Current034 remains its original7200 bound and immutable source. No stop/restart/inflight extension, outcome prediction or80-percent completion judgment.",
+    "No workload count/horizon, simulation/physics/clock/sensor/map/radius/controller/arrival/stopped/path TTL/lease/UUID/qualification or GPU changes.",
+    "No SDK/GPU/ROS/WSL/systemd-unit launch, Git, board/docs or D034/D079/root-artifact mutation. Only own tiny Windows CPU Job was started and closed.",
+    "079 files/frozenD079 preserved. Root owns034 outcome, verified closure and any later resource choice/acceptance."
+  ]
+}

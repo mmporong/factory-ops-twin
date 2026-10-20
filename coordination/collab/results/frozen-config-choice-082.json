@@ -1,0 +1,162 @@
+{
+  "task_id": "frozen-config-choice-082",
+  "attempt": 1,
+  "contract_revision": 82,
+  "ack": true,
+  "status": "implemented_source_preparation_CPU_verified_pending_root_review_no_experiment_selected",
+  "input_prepare_sha256_before_edit": "77d45dfd83c34d32ed01c23b9a731d55a57955201e6bb184a550ba185e37c1bd",
+  "changed_paths": [
+    "scripts/brev/fleet4_prepare.py",
+    "configs/factory-fleet4-normal3/energy-profile.json",
+    "configs/factory-fleet4-normal3/g2.json",
+    "configs/factory-fleet4-normal3/g3-routing.json",
+    "configs/factory-fleet4-normal3/g3-runtime.json",
+    "configs/factory-fleet4-normal3/layout.json",
+    "configs/factory-fleet4-normal3/nav2-g2.yaml",
+    "configs/factory-fleet4-normal3/render-profile.json",
+    "configs/factory-fleet4-normal3/transport-profile.json",
+    "configs/factory-fleet4-normal3/visual-assets.json",
+    "tests/test_fleet4_prepare_config_choice.py"
+  ],
+  "source_sha256": {
+    "scripts/brev/fleet4_prepare.py": "702281105be52bf7b93f2a1b739e7ff3c2a91d85c626cbd252869a15cbb41f81",
+    "configs/factory-fleet4-normal3/energy-profile.json": "50569a9f18337928c635d94a2e0102dd50d9f9c83d7f0f3c2e01baa42ddd0fe5",
+    "configs/factory-fleet4-normal3/g2.json": "6994172e4ae5e536a5b883767fdab05610deca930d2c665deae8b9996f6b9ad3",
+    "configs/factory-fleet4-normal3/g3-routing.json": "92003f9860d55344ef8f7ca92748036954879b8f2aeab5eb23c2d7a2b0f3a774",
+    "configs/factory-fleet4-normal3/g3-runtime.json": "ccb7b17384f9bec6f3b6e1c24d72de645b6e1f43dc078aa0a2db00c5bb8eddfd",
+    "configs/factory-fleet4-normal3/layout.json": "96ea04c77892644867c454efd01b393e63dbe086c3ad2403d069fe65a3888d4d",
+    "configs/factory-fleet4-normal3/nav2-g2.yaml": "46da243197437b152552bd139780c498fdf35c7ef293fbd2f152cf608947a5f0",
+    "configs/factory-fleet4-normal3/render-profile.json": "5852c4750b5e5c9c5e1aeec75730345e30f8e7f4789b9edccfc3cb5209f7610c",
+    "configs/factory-fleet4-normal3/transport-profile.json": "fbd675bd434a5180f33260759606d9b63cc077ed8bd788b84a5f2d515b3e606a",
+    "configs/factory-fleet4-normal3/visual-assets.json": "e34c572b7ee570919796d719356e3010bfc75d8eec93d6c22c26e276c1088887",
+    "tests/test_fleet4_prepare_config_choice.py": "665c8d99d3adc67a830306dcff8327299f063bbc6b780c250321669cdc222f02"
+  },
+  "interface": {
+    "api": "prepare(stage, source_root, run_id, source_commit, *, runtime_profile=\"canonical62\", config_dir=None)",
+    "cli": "Python3.12 <frozen_source>/scripts/brev/fleet4_prepare.py --stage <new_stage> --source-root <frozen_source> --run-id <new_32hex> --source-commit <actual_archive_commit> --runtime-profile local45_development --config-dir configs/factory-fleet4-normal3",
+    "selection": "Absolute paths or source-root-relative paths; resolved existing regular nonlink directory must stay inside readonly source_root. Missing/external/linked inputs fail before output creation.",
+    "proof": "Retain all existing runtime/extra/default-profile pins and add every selected SOURCE_FILES pin before archive and snapshot verification. Compile selected source only after proof passes; verify separate extracted snapshot with the same expanded pins.",
+    "traceability": "Metadata and prepare report record source-relative config_directory; source_files contains exact selected and default input paths/digests bound to archive/commit/snapshot.",
+    "default": "Omitted config_dir still chooses source_root/configs/factory-fleet4; default four orders unchanged. No prepared session or provenance patching."
+  },
+  "named_input": {
+    "directory": "configs/factory-fleet4-normal3",
+    "file_count": 9,
+    "orders": [
+      "F4-001",
+      "F4-002",
+      "F4-003"
+    ],
+    "material_orders": [
+      "F4-001",
+      "F4-002",
+      "F4-003"
+    ],
+    "robot_ids": [
+      "carter1",
+      "carter2",
+      "carter3",
+      "carter4"
+    ],
+    "horizon_s": 1800.0,
+    "source_files_except_profile_byte_identical": true,
+    "profile_only_semantic_delta": "Retain F4-001/F4-002/F4-003 and their matching material rows; every other field equals the original profile.",
+    "default_order_ids": [
+      "F4-001",
+      "F4-002",
+      "F4-003",
+      "F4-004"
+    ],
+    "default_profile_sha256": "6519c94906941ffd7ec6694311884de484ed78a11b14b6989094343cbb5d7e59",
+    "scope": "Explicit three-order four-robot development input; same accepted schema/scenario IDs, distinct config directory/workload/bundle/run identity. No change to current four-order experiment or qualification outcome."
+  },
+  "validation": [
+    {
+      "command": ".\\.venv\\Scripts\\python.exe -B -m unittest tests.test_fleet4_prepare_config_choice -v",
+      "environment": {
+        "FACTORY_OPS_CONFIG_CHOICE_EVIDENCE": "C:\\Users\\LIMMM\\AppData\\Local\\Temp\\factory-ops-frozen-config-082-9a520eb3d4bf47adb41c3cf1b94e4d90"
+      },
+      "exit_code": 0,
+      "result": "4 tests PASS in29.105s, one focused pass; no skips.",
+      "coverage": [
+        "Exact nine-file named input; eight byte-identical copies and only three order/material rows retained.",
+        "Full-stage default4 and selected3 preparation using real source archive/commit-object verifier, followed by load_bundle with four robots.",
+        "Selected and default SOURCE_FILES plus all current LOCAL_SOURCE_PINS preserved; selected initial material inventory balanced60, reserved6.",
+        "External/missing/missing-file/not-in-archive/selected-tampered/default-tampered sources rejected before inputs/results; tampered copied prepared bundle rejected."
+      ]
+    },
+    {
+      "command": "Cold ast.parse(feature_version=(3,10)) of scripts/brev/fleet4_prepare.py and tests/test_fleet4_prepare_config_choice.py via E:/IsaacSim/isaac-sim-4.5.0/kit/python/python.exe -B -S -",
+      "python": "3.10.15",
+      "exit_code": 0,
+      "result": "2 AST PASS in one cold invocation. Actual preparation remains Python3.12.13; no SDK application imported."
+    }
+  ],
+  "CPU_fixture_proof": {
+    "directory": "C:\\Users\\LIMMM\\AppData\\Local\\Temp\\factory-ops-frozen-config-082-9a520eb3d4bf47adb41c3cf1b94e4d90",
+    "kind": "Synthetic content-addressed tar and raw commit-object fixture; no Git command or real producer commit claim.",
+    "synthetic_commit": "feea8cf6acf9e78c4bcb783535f4328d9251a5d8",
+    "archive_sha256": "71596db500f733effc862f403bc70640a31abfc28adcba5487b01a9b84a97cc2",
+    "raw_commit_sha256": "06b2dac427cfeeb0aef385261da49200bcd687d4d0b778603478b309b45f0183",
+    "default4": {
+      "passed": true,
+      "bundle_sha256": "588c19b4a3d6e4b20567d673e12c0a6da433356c4b1a9b3d0ee2ca78ffe35788",
+      "config_directory": "configs/factory-fleet4",
+      "python_version": "3.12.13",
+      "run_id": "be9adca898cf4bee97860158c3a68c08",
+      "source_commit": "feea8cf6acf9e78c4bcb783535f4328d9251a5d8",
+      "source_proof": {
+        "passed": true,
+        "commit_sha1": "feea8cf6acf9e78c4bcb783535f4328d9251a5d8",
+        "commit_tree_sha1": "d9d65c416149517f2ef082f4b8653138a39ea450",
+        "archive_tree_sha1": "d9d65c416149517f2ef082f4b8653138a39ea450",
+        "source_archive_sha256": "71596db500f733effc862f403bc70640a31abfc28adcba5487b01a9b84a97cc2",
+        "source_pin_count": 53,
+        "snapshot_checked": true
+      },
+      "scope": "development input/bootstrap preparation only; no SDK, ROS or physical transport run"
+    },
+    "selected3": {
+      "passed": true,
+      "bundle_sha256": "0d6094a7aa1b11988a2001b684b193359aa837ae3a144f1405372eea23664956",
+      "config_directory": "configs/factory-fleet4-normal3",
+      "python_version": "3.12.13",
+      "run_id": "baa6f853f4b3406bbae68599107e44d7",
+      "source_commit": "feea8cf6acf9e78c4bcb783535f4328d9251a5d8",
+      "source_proof": {
+        "passed": true,
+        "commit_sha1": "feea8cf6acf9e78c4bcb783535f4328d9251a5d8",
+        "commit_tree_sha1": "d9d65c416149517f2ef082f4b8653138a39ea450",
+        "archive_tree_sha1": "d9d65c416149517f2ef082f4b8653138a39ea450",
+        "source_archive_sha256": "71596db500f733effc862f403bc70640a31abfc28adcba5487b01a9b84a97cc2",
+        "source_pin_count": 62,
+        "snapshot_checked": true
+      },
+      "scope": "development input/bootstrap preparation only; no SDK, ROS or physical transport run"
+    },
+    "artifacts": {
+      "source.tar": "C:\\Users\\LIMMM\\AppData\\Local\\Temp\\factory-ops-frozen-config-082-9a520eb3d4bf47adb41c3cf1b94e4d90\\source.tar",
+      "source.commit": "C:\\Users\\LIMMM\\AppData\\Local\\Temp\\factory-ops-frozen-config-082-9a520eb3d4bf47adb41c3cf1b94e4d90\\source.commit",
+      "default4/prepare.stdout.log": "C:\\Users\\LIMMM\\AppData\\Local\\Temp\\factory-ops-frozen-config-082-9a520eb3d4bf47adb41c3cf1b94e4d90\\default4\\prepare.stdout.log",
+      "default4/results/run/provenance/fleet-source.json": "C:\\Users\\LIMMM\\AppData\\Local\\Temp\\factory-ops-frozen-config-082-9a520eb3d4bf47adb41c3cf1b94e4d90\\default4\\results\\run\\provenance\\fleet-source.json",
+      "default4/inputs/bundle.json": "C:\\Users\\LIMMM\\AppData\\Local\\Temp\\factory-ops-frozen-config-082-9a520eb3d4bf47adb41c3cf1b94e4d90\\default4\\inputs\\bundle.json",
+      "selected3/prepare.stdout.log": "C:\\Users\\LIMMM\\AppData\\Local\\Temp\\factory-ops-frozen-config-082-9a520eb3d4bf47adb41c3cf1b94e4d90\\selected3\\prepare.stdout.log",
+      "selected3/results/run/provenance/fleet-source.json": "C:\\Users\\LIMMM\\AppData\\Local\\Temp\\factory-ops-frozen-config-082-9a520eb3d4bf47adb41c3cf1b94e4d90\\selected3\\results\\run\\provenance\\fleet-source.json",
+      "selected3/inputs/bundle.json": "C:\\Users\\LIMMM\\AppData\\Local\\Temp\\factory-ops-frozen-config-082-9a520eb3d4bf47adb41c3cf1b94e4d90\\selected3\\inputs\\bundle.json",
+      "selected3/inputs/session.json": "C:\\Users\\LIMMM\\AppData\\Local\\Temp\\factory-ops-frozen-config-082-9a520eb3d4bf47adb41c3cf1b94e4d90\\selected3\\inputs\\session.json",
+      "selected3/material-preflight.json": "C:\\Users\\LIMMM\\AppData\\Local\\Temp\\factory-ops-frozen-config-082-9a520eb3d4bf47adb41c3cf1b94e4d90\\selected3\\material-preflight.json"
+    },
+    "retention": "Own temporary CPU fixture tree retained for root review. CPU prepare subprocesses exited; no runtime service was launched."
+  },
+  "preserved": [
+    "Current034 immutableD source, originalfourorder workload and7200 budget untouched; no runtime inspection/stop/restart or deadline change.",
+    "079 entry/probe and081 range/source unchanged. Runtime LOCAL_SOURCE_PINS retained and asserted as a subset in selected metadata.",
+    "No controller/mission/model/physics/sensor/clock/map/radius/horizon/TTL/lease/arrival/qualification changes. Named copies preserve those inputs exactly.",
+    "No GPU/SDK/ROS/systemd-unit/Git/board/docs/new-agent operations or D034/D079/root-artifact writes."
+  ],
+  "limits": [
+    "CPU source/archive/bundle preparation only; no transport completion, physical/electrical proof or80-percent judgment.",
+    "Synthetic fixture validates the boundary but is not actual repository Git archive evidence. Root owns the future real frozen Git stage, review and experiment/resource choice after034 outcome and verified closure.",
+    "A three-order input is a separate experiment and cannot relabel any four-order failed/incomplete result."
+  ]
+}

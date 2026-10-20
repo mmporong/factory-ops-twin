@@ -1,0 +1,42 @@
+{
+  "task_id": "local45-runtime-budget-081",
+  "attempt": 1,
+  "contract_revision": 81,
+  "owner": "control",
+  "reviewer": "root",
+  "project_root": "C:\\Users\\LIMMM\\factory-ops-twin",
+  "binding": {
+    "session": "default",
+    "pane_id": "w1:p1C",
+    "terminal_id": "term_65e06d27e415810",
+    "agent_session": "01a152aa-24b4-7a31-92e3-a2b620f4feeb"
+  },
+  "status": "dispatched",
+  "goal": "Prepare a FUTURE PRELAUNCH external resource budget range matching the already-authored10800s SDK/mission wall ceiling. Current034 remains7200 and unchanged; no claim about its eventual result.",
+  "source_commit": "fccbba6696f0b4b65fe2438469c55fbfd62222c9",
+  "input_sha256": {
+    "scripts/isaac/run_local45_fleet_pair.py": "853d836e4088a7cf7c73a71ddc1d313e40d0fa294b41bff9e96673bf9177e295",
+    "scripts/isaac/windows_job_runner.py": "529fa4bb5a766a200430a62e2c26c4d7ccb504a3258734a033a02daeee9cb379"
+  },
+  "write_paths": [
+    "scripts/isaac/run_local45_fleet_pair.py",
+    "scripts/isaac/windows_job_runner.py",
+    "tests/test_local45_runtime_budget.py",
+    "coordination/collab/results/local45-runtime-budget-081.json"
+  ],
+  "result_path": "C:\\Users\\LIMMM\\factory-ops-twin\\coordination\\collab\\results\\local45-runtime-budget-081.json",
+  "basis": [
+    "Measured whole-running-scene RTF~.23. Pair/Job max7200 source caps are below already-existing g2 SDK/mission max_wall_time_s10800. Root read immutableD034inputs: g2maxwall10800/maxsim2100, workloadhorizon1800; g3-runtime has5400 but run_mission.py:1246 deadline uses config[g2] maxwall, notruntime_config. Current034 remains7200; no actualtimeout failure asserted yet.",
+    "New resource range admits future explicit9000 within unchanged3h childceiling, not a simulated/control deadline change. Distinguish the oldverdict andfuture experimentbudget inreceipt. No sourceD034/hostsupport/job mutation and no inflight resource extension."
+  ],
+  "acceptance": [
+    "Smallest2file change: supported pair externalbound60..10800 andgenericWindowsJob timeout1..10800. Preserve all defaults, ownership/hash/preflight/Jobkill-on-close/WSLclose behavior. No newflags/profileabstraction/dependency. Valuesabove10800/nonfinite/incompatible oldinputs stillrejected.",
+    "Do not change any workloadcount/horizon, g2/g3 config, physics/sensors/scene, route/radius/controller/arrival/stopped/pathfreshness/lease/UUID/clock/qualification outcome or GPU setup. No sourceD034/D079/rootartifact edits. FrozenD034 currenthost andSDK trees continue unaffected. No restart/stop/rerun/GPU/SDK/ROS/unitlaunch/newagents/Git/board/docs edits.",
+    "One focused meaningful CPU-only validation: real tiny owned WindowsJob with timeout9000 allowed, exits promptly and closed=true/remaining_owned_pids[]; include descendant cleanup ifexistingtestfixture supportsit. No GPU/SDK app inthisjob. Existing normalbound/default compatibility andinvalid >10800/NaN/Inf admission tested before artifactmutation. Avoid mirror-only assertion tests oroldfullsuites. One coldSDK310AST changedPython only.",
+    "ReturnACK exactchangedSHAs/testcommand+exit/actualJobreceiptclosure/limits. Existing9000future resource allocation is not yet selected/running; root decidesonlyafter034outcome andverifiedclosure. Never retroactively label current034passed orgoal80 complete.",
+    "Also clarify080sourcefact: run_mission.py:1246 uses config[g2].max_wall_time_s; g3-runtime5400 present doesnot mean thisentryusesit as missionglobalwall deadline. Sourcefacts only. You are not alone; preserve079entry/probechanges andunownedfiles."
+  ],
+  "depends_on": [
+    "demo-workload-bound-080"
+  ]
+}

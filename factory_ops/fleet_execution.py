@@ -18,6 +18,15 @@ PATH_SCOPE = "g3b_computed_path_geometry_only_not_ros_or_physical_evidence"
 FOLLOW_PATH_NORMALIZATION = "final_pose_header_stamp_zero_latest_tf"
 
 
+class StaleComputedPathError(ValueError):
+    """An otherwise valid geometry remains inadmissible at its original expired stamp."""
+
+    def __init__(self, stamp_s: float, now_s: float, max_age_s: float, tiles: frozenset[Tile]):
+        super().__init__("computed path is stale")
+        self.stamp_s, self.now_s, self.max_age_s = stamp_s, now_s, max_age_s
+        self.age_s, self.swept_tiles = now_s-stamp_s, tiles
+
+
 def _number(value: object, label: str) -> float:
     if isinstance(value, bool) or not isinstance(value, (int, float)):
         raise ValueError(f"{label} must be finite numeric data")
@@ -225,8 +234,6 @@ def qualify_computed_path(
         raise ValueError("path timestamps and max age must be nonnegative")
     if stamp > now:
         raise ValueError("computed path stamp is in the future")
-    if now - stamp > age:
-        raise ValueError("computed path is stale")
     samples = tuple(_point(point, f"points[{index}]") for index, point in enumerate(points))
     if not samples:
         raise ValueError("computed path must contain at least one point")
@@ -254,6 +261,8 @@ def qualify_computed_path(
     )
     if not actual_tiles.issubset(chunk.tiles):
         raise ValueError("computed path swept envelope leaves reserved chunk tiles")
+    if now - stamp > age:
+        raise StaleComputedPathError(stamp, now, age, actual_tiles)
     point_list = [[x, y] for x, y in samples]
     tile_list = _tile_list(actual_tiles)
     return {

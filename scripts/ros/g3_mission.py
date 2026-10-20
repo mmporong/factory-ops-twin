@@ -29,7 +29,7 @@ if TYPE_CHECKING:
 from factory_ops.energy_dispatch import evaluate_energy_assignment
 from factory_ops.fleet_registry import FleetRegistry
 from factory_ops.callback_drain import CallbackDrain
-from factory_ops.fleet_execution import FOLLOW_PATH_NORMALIZATION, StoppedGate, make_chunk, normalize_follow_path_payload, qualify_computed_path, path_content_sha256, path_clock_ready, path_header_stamp_ns
+from factory_ops.fleet_execution import FOLLOW_PATH_NORMALIZATION, StaleComputedPathError, StoppedGate, make_chunk, normalize_follow_path_payload, qualify_computed_path, path_content_sha256, path_clock_ready, path_header_stamp_ns
 from factory_ops.fleet_routing import RouteBook, assess_dispatch_route_compatibility, swept_tiles
 from factory_ops.visual_state import canonical_sha256, make_visual_state, project_ledger_state, publish_visual_state
 from factory_ops.g3_session import config_dir_from_session, save, sha, verify_session
@@ -698,6 +698,100 @@ def request_remaining_reservation(book: RouteBook, manager: RouteReservationMana
     return decision
 
 
+def retained_planner_retry_hold(robot: str, runtime: Mapping[str, Any], snapshot: Mapping[str, Any], *,
+                                run_id: str, scenario_id: str, now_s: float,
+                                limits: Mapping[str, float]) -> dict[str, Any]:
+    """Prove the existing no-Follow HOLD binding without transferring or shrinking it."""
+    hold = snapshot.get("holds", {}).get(robot)
+    chunk, record = runtime["chunk"], runtime["record"]
+    auth = runtime.get("last_authorization") or {}
+    scope, odom = auth.get("scope") or {}, runtime.get("last_odom") or {}
+    observed = snapshot.get("observations", {})
+    times = [now_s, runtime["phase_started"], auth.get("issued_sim_time_s"),
+             auth.get("valid_until_sim_time_s"), odom.get("stamp_s"),
+             odom.get("linear_m_s"), odom.get("angular_rad_s")]
+    if (any(type(v) not in (int, float) or not math.isfinite(v) for v in times)
+            or not 0 <= now_s-runtime["phase_started"] <= limits["chunk_timeout_s"]):
+        raise RuntimeError("stale planner retry requires finite evidence within original chunk deadline")
+    if (runtime["phase"] not in {"computing", "request"} or not isinstance(hold, Mapping)
+            or snapshot.get("run_id") != run_id or len(observed) != 4 or robot not in observed
+            or not all(row.get("fresh") is True for row in observed.values())
+            or hold["generation"] != runtime["generation"] or hold["route_id"] != chunk.route_id
+            or hold["goal_uuid"] != runtime["follow_uuid"] or hold["accepted_goal_uuid"] is not None
+            or hold["parked"] is not False or frozenset(map(tuple, hold["tiles"])) != runtime["held_tiles"]
+            or runtime["pending_tiles"] != runtime["held_tiles"]
+            or not set(map(tuple, observed.get(robot, {}).get("tiles", []))).issubset(runtime["held_tiles"])
+            or record.get("planner_method") != "compute_path_through_poses"
+            or record.get("generation") != runtime["generation"]
+            or record.get("follow_action_uuid") != runtime["follow_uuid"]
+            or record.get("chunk", {}).get("route_id") != chunk.route_id
+            or record.get("leg_id") != runtime["leg"]["plan"].route_id
+            or record.get("planner_path_qualified") is not False or "follow_goal_sent_sim_time_s" in record):
+        raise RuntimeError("stale planner retry lost its unchanged unaccepted full-leg HOLD")
+    if (auth.get("run_id") != run_id or auth.get("robot_id") != robot or auth.get("mode") != "hold"
+            or type(auth.get("authorization_seq")) is not int or auth.get("authorization_seq") != runtime["sequence"]
+            or scope.get("scenario_id") != scenario_id or scope.get("route_id") != chunk.route_id
+            or scope.get("reservation_id") != runtime["generation"] or scope.get("goal_uuid") != runtime["follow_uuid"]
+            or scope.get("tile_hash") != hold["tile_hash"]
+            or not auth["issued_sim_time_s"] <= now_s <= auth["valid_until_sim_time_s"]
+            or not 0 < auth["valid_until_sim_time_s"]-auth["issued_sim_time_s"] <= .5
+            or not 0 <= now_s-odom["stamp_s"] <= limits["odom_ttl_s"]
+            or abs(odom["linear_m_s"]) > limits["stopped_linear_m_s"]
+            or abs(odom["angular_rad_s"]) > limits["stopped_angular_rad_s"]):
+        raise RuntimeError("stale planner retry requires current HOLD and fresh stationary encoder evidence")
+    return copy.deepcopy(dict(hold))
+
+
+def schedule_stale_planner_retry(robot: str, runtime: dict[str, Any], snapshot: Mapping[str, Any], *,
+                                 error: BaseException, enabled: bool, cutoff: Any,
+                                 run_id: str, scenario_id: str, now_s: float,
+                                 limits: Mapping[str, float]) -> dict[str, Any] | None:
+    """Reject the old Path; schedule at most three new computations under the same hold."""
+    if not enabled or cutoff is not None or not isinstance(error, StaleComputedPathError):
+        return None
+    record = runtime["record"]
+    if (runtime["phase"] != "computing" or record.get("planner_status") != 4
+            or record.get("planner_error_code") != 0 or not isinstance(record.get("planner_action_uuid"), str)
+            or record["planner_action_uuid"] != runtime.get("compute_uuid")):
+        raise RuntimeError("stale retry requires an actual successful planner terminal")
+    payload = record["unqualified_planner_path"]
+    if (path_content_sha256(payload) != record["unqualified_planner_path_content_sha256"]
+            or path_header_stamp_ns(payload["header"])/1e9 != error.stamp_s or error.now_s != now_s):
+        raise RuntimeError("stale retry Path identity or original clock differs")
+    if angle_error(path_final_yaw(payload), runtime["chunk"].goal_pose.yaw) > .05:
+        raise RuntimeError("computed Path terminal yaw differs from the authored goal")
+    if not error.swept_tiles.issubset(runtime["held_tiles"]):
+        raise RuntimeError("computed Path leaves full-leg reservation")
+    hold = retained_planner_retry_hold(robot, runtime, snapshot, run_id=run_id,
+        scenario_id=scenario_id, now_s=now_s, limits=limits)
+    key = runtime["chunk"].route_id
+    budget = runtime.get("planner_retry_budget") or {}
+    retries = budget.get("retries", 0) if budget.get("key") == key else 0
+    event = {"robot_id": robot, "rejected_planner_action_uuid": record["planner_action_uuid"],
+        "rejected_path_sha256": record["unqualified_planner_path_content_sha256"],
+        "path_stamp_ns": path_header_stamp_ns(payload["header"]),
+        "observed_clock_ns": record["path_clock"]["admitted_clock_ns"],
+        "age_s": error.age_s, "path_ttl_s": error.max_age_s,
+        "generation": runtime["generation"], "follow_action_uuid": runtime["follow_uuid"],
+        "retry_limit": 3, "retries_already_used": retries}
+    if retries >= 3:
+        record["planner_retry_exhausted"] = event
+        raise RuntimeError("stale planner retry exhausted after3 retries") from error
+    event["retry_number"] = retries+1
+    record["planner_stale_retry"] = copy.deepcopy(event)
+    runtime["planner_retry_budget"] = {"key": key, "retries": retries+1}
+    runtime["planner_retry_pending"] = {"retained_hold": hold, "event": event}
+    runtime["phase"], runtime["last_request"] = "request", now_s
+    runtime["pending_path"], runtime["pending_path_payload"] = None, None
+    return event
+
+
+def fresh_guided_compute_request(chunk: Any, pose: Mapping[str, Any], stamp: Any, *,
+                                 goal_type: Any, pose_type: Any) -> tuple[str, Any]:
+    from factory_ops.planner_guidance import guided_request
+    return str(uuid4()), guided_request(chunk, dict(pose), stamp, goal_type=goal_type, pose_type=pose_type)
+
+
 def observe_charging_odometry(charging: RosChargingRuntime, run_id: str, robot_id: str,
                               runtime: Mapping[str, Any], reservation: Mapping[str, Any] | None,
                               now_s: float) -> dict[str, Any] | None:
@@ -1350,7 +1444,7 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
                 raise RuntimeError("local45 ROS context mismatch: " + json.dumps(result["ros_context"]))
         planner_action, planner_topic, use_guides = ComputePathToPose, "compute_path_to_pose", False
         if local45:
-            from factory_ops.planner_guidance import guided_planner_scope, guided_request
+            from factory_ops.planner_guidance import guided_planner_scope
             use_guides = guided_planner_scope(runtime_profile=args.runtime_profile, development=development,
                 robot_count=len(robot_ids), material_enabled="material_flow" in session["workload"],
                 sensor_backends=[row.get("sensor_backend") for value in ready["robots"].values() for row in value["lidars"]])
@@ -1852,15 +1946,22 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
                 phase = rt["phase"]
                 if phase == "request" and maps_ready and stamp-rt["last_request"] >= .2:
                     leg = rt["leg"]
-                    decision = request_remaining_reservation(book, manager, robot, rt,
-                        reservation_radius_m=reservation_radius, now_s=stamp)
-                    if not decision.granted:
-                        continue
+                    retry = rt.get("planner_retry_pending")
+                    if retry is not None:
+                        retained = retained_planner_retry_hold(robot, rt, manager.snapshot(now_s=stamp),
+                            run_id=args.run_id, scenario_id=scenario_id, now_s=stamp, limits=runtime_config)
+                        if retained != retry["retained_hold"]:
+                            raise RuntimeError("planner retry full-leg ownership changed before fresh request")
+                    else:
+                        decision = request_remaining_reservation(book, manager, robot, rt,
+                            reservation_radius_m=reservation_radius, now_s=stamp)
+                        if not decision.granted:
+                            continue
                     chunk = rt["chunk"]
                     request_stamp = event_node.get_clock().now().to_msg()
                     planner_start = dict(rt["pose"]) if use_guides else None
                     if use_guides:
-                        request = guided_request(chunk, planner_start, request_stamp,
+                        rt["compute_uuid"], request = fresh_guided_compute_request(chunk, planner_start, request_stamp,
                             goal_type=planner_action.Goal, pose_type=PoseStamped)
                     else:
                         request = ComputePathToPose.Goal()
@@ -1868,9 +1969,11 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
                         request.goal.pose.position.x, request.goal.pose.position.y = chunk.goal_pose.x, chunk.goal_pose.y
                         request.goal.pose.orientation.z, request.goal.pose.orientation.w = math.sin(chunk.goal_pose.yaw/2), math.cos(chunk.goal_pose.yaw/2)
                         request.use_start = False; request.planner_id = "GridBased"
-                    rt["compute_uuid"] = str(uuid4())
+                        rt["compute_uuid"] = str(uuid4())
                     rt["send_future"] = rt["compute"].send_goal_async(request, goal_uuid=GoalUUID(uuid=list(UUID(rt["compute_uuid"]).bytes)))
-                    rt["phase"], rt["phase_started"] = "compute_sent", stamp
+                    rt["phase"] = "compute_sent"
+                    if retry is None:
+                        rt["phase_started"] = stamp
                     rt["path_clock_first_seen_wall"] = None
                     rt["pending_path"] = None
                     rt["record"] = {"robot_id": robot, "chunk": chunk.to_dict(), "leg_id": leg["plan"].route_id,
@@ -1881,6 +1984,10 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
                          "planner_method": planner_topic, "planner_start_pose": planner_start,
                          "planner_request_stamp": {"sec": int(request_stamp.sec), "nanosec": int(request_stamp.nanosec)},
                          "authored_guide_count": len(request.goals) if use_guides else 0}
+                    if retry is not None:
+                        rt["record"].update(planner_retry_number=retry["event"]["retry_number"],
+                            retry_of_planner_action_uuid=retry["event"]["rejected_planner_action_uuid"])
+                    rt["planner_retry_pending"] = None
                     history.append(rt["record"])
                     journal("planner_goal_sent", rt["record"])
                 elif phase in {"compute_sent", "follow_sent"} and rt["send_future"].done():
@@ -1938,8 +2045,21 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
                             raise RuntimeError("computed Path leaves full-leg reservation")
                     except (ValueError, RuntimeError, TimeoutError) as error:
                         rt["record"]["planner_path_admission_error"] = {"type": type(error).__name__, "message": str(error)}
+                        if use_guides and cutoff is None and isinstance(error, StaleComputedPathError):
+                            journal("planner_path_stale_rejected", {"robot_id": robot,
+                                "planner_action_uuid": rt["compute_uuid"],
+                                "path_content_sha256": rt["record"]["unqualified_planner_path_content_sha256"],
+                                "path_clock": rt["record"]["path_clock"], "age_s": error.age_s,
+                                "path_ttl_s": error.max_age_s})
+                            retry = schedule_stale_planner_retry(robot, rt, manager.snapshot(now_s=stamp),
+                                error=error, enabled=use_guides, cutoff=cutoff, run_id=args.run_id,
+                                scenario_id=scenario_id, now_s=stamp, limits=runtime_config)
+                            if retry is not None:
+                                journal("planner_path_stale_retry", retry)
+                                continue
                         raise
                     rt["record"]["planner_path_qualified"] = True
+                    rt["planner_retry_budget"] = None
                     planner_path_hash = path_content_sha256(payload)
                     rt["path_hash"] = planner_path_hash
                     rt["record"].update({"path": payload, "path_geometry": geometry, "path_content_sha256": planner_path_hash, "planner_status": 4, "planner_error_code": 0})
@@ -2112,7 +2232,8 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
                     rt["leg"] = None; rt["chunk"] = None; rt["phase"] = "idle"
                     if intent.transition is Transition.DROP:
                         new_leg(robot, rt["park"])
-                if rt["phase"] in {"compute_sent", "computing", "follow_sent", "following"} and stamp-rt["phase_started"] > runtime_config["chunk_timeout_s"]:
+                if (rt["phase"] in {"compute_sent", "computing", "follow_sent", "following"}
+                        or rt.get("planner_retry_pending") is not None) and stamp-rt["phase_started"] > runtime_config["chunk_timeout_s"]:
                     raise TimeoutError(f"G3 chunk action deadline: {robot}")
             if charging_runtime is not None:
                 charge_state = charging_runtime.snapshot(args.run_id, observed_at_s=stamp)

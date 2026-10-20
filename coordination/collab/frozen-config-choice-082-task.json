@@ -1,0 +1,35 @@
+{
+  "task_id": "frozen-config-choice-082",
+  "attempt": 1,
+  "contract_revision": 82,
+  "owner": "control",
+  "reviewer": "root",
+  "project_root": "C:\\Users\\LIMMM\\factory-ops-twin",
+  "binding": {
+    "session": "default",
+    "pane_id": "w1:p1C",
+    "terminal_id": "term_65e06d27e415810",
+    "agent_session": "01a152aa-24b4-7a31-92e3-a2b620f4feeb"
+  },
+  "status": "dispatched",
+  "goal": "Expose existing bundle config-dir selection through frozen full-stage preparation, and author an explicit three-order FOUR-robot normal-demo input. Source-only preparation; current034 stays originalfourorders/7200 and no futureexperimentchoice yet.",
+  "write_paths": [
+    "scripts/brev/fleet4_prepare.py",
+    "configs/factory-fleet4-normal3/ (only exact SOURCE_FILES copies plus matching3orderprofile)",
+    "tests/test_fleet4_prepare_config_choice.py",
+    "coordination/collab/results/frozen-config-choice-082.json"
+  ],
+  "result_path": "C:\\Users\\LIMMM\\factory-ops-twin\\coordination\\collab\\results\\frozen-config-choice-082.json",
+  "acceptance": [
+    "Smallest optional prepare(...config_dir=None)/CLI --config-dir interface forwarding the already-existing fleet_transport.prepare_bundle(output,config_dir). Defaultfrozenwrapper still source_root/configs/factory-fleet4/fourorders unchanged. No newprofile framework/dependency. Configselection must be resolved regular nonlink directory INSIDE frozen source_root; external or missing/tampered archive inputs fail BEFOREinputs/results/bundlecreation.",
+    "Extend source proof pins from selected directory/SOURCE_FILES before archive/snapshot verification, then compilecopy/hash from chosen source configuration. Never patch prepared session/provenance afterward, never drop profile pins. Immutableactualselectedsource directory must be traceable. Retain current LOCAL_SOURCE_PINS incl079/081 from currentC.",
+    "Author named configs/factory-fleet4-normal3 by copying exactly SOURCE_FILES of existing configs/factory-fleet4; all sourcefiles except transport-profile.json byte-identical. Source-profile only retains F4-001/F4-002/F4-003 and corresponding materials; FOURinitialrobots, samehorizon1800/maxsim2100/allcontrol,energy,stock,layout,routes,physics/sensors/TTL unchanged. Keep schema/scenario IDs accepted; distinct configDir/workload/bundle/run identifies experiment. Threeorders are a separate explicit experiment, never relabel4-orderoutcome. Defaultmainprofile remainsfourorders.",
+    "One focused meaningfulCPU pass: selected3order/fourrobot bundle prep+load andmatchedmaterialdeclarations/conservation; default4 compatibility; external/missing/unpinned selectedconfig andtamperedpreparedinputs rejected. Reuse existing temporary validarchive/testfixture helpers for full-stage source proof where feasible. No newGPU/SDK/ROS/unitlaunch, no broadoldsuites. One coldSDK310AST changedPython only.",
+    "No product/controller/mission/model/horizon/radius/lease/TTL/arrival/clock/qualification gate changes, no D034/D079 orrootartifacts writes, no currentruntime operations, no source081/079 edits, no Git/board/docs/newagents. Root owns source review, actualfrozenGitstage prep and anyfutureGPU choice onlyafter034closure.",
+    "ReturnACK explicitfilelist/exactSHAs/CPUcommands+result andfixtureproofpaths/CLIexample/limits. You are notalone; preserveotherauthors andunownedfiles. Keep bounded, do not expand scenario library."
+  ],
+  "depends_on": [
+    "demo-workload-bound-080",
+    "local45-runtime-budget-081"
+  ]
+}

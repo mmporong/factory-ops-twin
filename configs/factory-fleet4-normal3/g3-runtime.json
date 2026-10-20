@@ -1,0 +1,58 @@
+{
+  "schema_version": 2,
+  "qualification": "g3_two_robot_orders",
+  "scope": "qualification_and_pilot_only_not_primary_comparison",
+  "max_wall_time_s": 5400,
+  "startup_sim_allowance_s": 300,
+  "chunk_timeout_s": 180,
+  "pose_ttl_s": 0.5,
+  "path_ttl_s": 0.5,
+  "path_clock_wait_wall_s": 5,
+  "terminal_recording_wait_wall_s": 60,
+  "reservation_tracking_margin_m": 0.3,
+  "station_xy_tolerance_m": 0.25,
+  "station_yaw_tolerance_rad": 0.25,
+  "stopped_window_s": 0.5,
+  "stopped_linear_m_s": 0.02,
+  "stopped_angular_rad_s": 0.02,
+  "odom_ttl_s": 0.3,
+  "callback_drain": {
+    "max_rounds": 64,
+    "wall_budget_s": 0.05
+  },
+  "g3_nav2": {
+    "follow_path_stateful": true,
+    "goal_checker_stateful": true,
+    "goal_checker_plugin": "factory_ops_goal_checker::TelemetryGoalChecker",
+    "follow_path_plugin": "factory_ops_goal_checker::ConfirmedXyRegulatedPurePursuitController",
+    "xy_latch_mode": "goal_checker_confirmed_xy_latch",
+    "terminal_stop_handshake": true,
+    "controller_trace_schema_version": 1,
+    "controller_trace_topic": "controller_cycle_trace",
+    "xy_goal_tolerance": 0.06,
+    "yaw_goal_tolerance": 0.15
+  },
+  "camera_capture_every_steps": 1200,
+  "real_time_media": {
+    "profiles": [],
+    "window_s": 24.0,
+    "sample_every_physics_steps": 6,
+    "minimum_abs_linear_m_s": 0.15,
+    "minimum_abs_angular_rad_s": 0.15
+  },
+  "reservation_strategy": "full_leg_qualification_with_one_edge_actions_and_retained_stationary_footprints",
+  "anchor_yaw_rad": {
+    "S1": 0.0,
+    "S2": 0.0,
+    "S3": 0.0,
+    "CI": 3.141592653589793,
+    "CO": 3.141592653589793,
+    "OUT": 0.0,
+    "P1": 1.5707963267948966,
+    "P2": -1.5707963267948966,
+    "P3": 1.5707963267948966,
+    "P4": -1.5707963267948966
+  },
+  "anchor_yaw_provenance": "S1/CI/CO/OUT follow G1 authored goals; S2/S3 and pocket departure orientations are G3 authored values, not measured docking poses",
+  "provenance": "Authored qualification limits and diagnostic-only goal-checker instrumentation; loaded collision geometry, path admission, wheel stop and physical evidence require runtime validation"
+}

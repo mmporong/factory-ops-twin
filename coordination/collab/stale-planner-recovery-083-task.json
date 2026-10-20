@@ -1,0 +1,38 @@
+{
+  "task_id": "stale-planner-recovery-083",
+  "attempt": 1,
+  "contract_revision": 83,
+  "owner": "control",
+  "reviewer": "root",
+  "project_root": "C:\\Users\\LIMMM\\factory-ops-twin",
+  "binding": {
+    "session": "default",
+    "pane_id": "w1:p1C",
+    "terminal_id": "term_65e06d27e415810",
+    "agent_session": "01a152aa-24b4-7a31-92e3-a2b620f4feeb"
+  },
+  "status": "dispatched",
+  "goal": "Fix transient stale planner-result recovery without admitting an expired path.034 actually failed path TTL before7200; both OS closed. Source-only bounded change, no GPU or runtime launch.",
+  "inputs": {
+    "closed_stage": "D:/FactoryOpsRuntime/local45-transport-034",
+    "run_id": "65a800beeb3d4006ac498f024610e586",
+    "failed_action_uuid": "795727d2-42ea-4efa-bade-23ee869d7051",
+    "path_stamp_ns": 1507833411973,
+    "admitted_clock_ns": 1508350078667,
+    "observed_age_s": 0.516666694,
+    "unchanged_path_ttl_s": 0.5
+  },
+  "write_paths": [
+    "scripts/ros/g3_mission.py",
+    "factory_ops/fleet_execution.py (only if typed stale error needed)",
+    "tests/test_stale_planner_recovery.py",
+    "coordination/collab/results/stale-planner-recovery-083.json"
+  ],
+  "result_path": "C:\\Users\\LIMMM\\factory-ops-twin\\coordination\\collab\\results\\stale-planner-recovery-083.json",
+  "acceptance": [
+    "Inspect actual closed034 action and existing request/lease/HOLD/stop/reservation lifecycle. Keep original path, action UUID, age and rejection evidence. TTL0.5, stamps, World clock, endpoint/geometry checks remain exact. Do not restamp/admit stale data or loosen gates.",
+    "If an existing provable safe request-phase re-entry exists, implement ONLY local45-development four-material PhysX-guided scope: reject expired successful planner result, retain HOLD and unchanged full-leg ownership, retry fresh computation with fresh estimated pose/stamp/new action UUID and bounded max3 retries per chunk. Fresh result still passes every original gate before FollowPath. No stale result sent to FollowPath, no fictitious action terminal, no handoff or ledger update from a retry. Preserve prior rejection in history/journal. Geometry/future timestamp/errors continue fail closed; retry exhaustion fails with explicit evidence. Reset bound only on genuinely different chunk/success as justified. Do not add an unsafe request loop if HOLD/reservation/identity cannot be proved; return bounded diagnosis and minimal safe design instead.",
+    "One focused CPU pass tests stale rejection->safe fresh retry with new UUID and original retained, fresh pass, bounded exhaustion, invalid geometry/future/other failures not swallowed, and canonical scope unchanged. Reuse source pure helpers or mocks without ROS imports as needed; no mirror-only text assertions. One cold SDK3.10 AST of changed Python. Read-only JSON/JSONL evidence only; no SQL required.",
+    "You are not alone. Preserve other edits and root files. No Git/board/docs/current stage writes, no079/081/082 edits, no new dependency/agents/panes, no GPU/SDK/ROS/systemd application. Root concurrently preserves034 and runs one already-reviewed079 static visual fixture. Return ACK/exact SHAs/source rationale/actual focused test evidence/remaining limitations."
+  ]
+}

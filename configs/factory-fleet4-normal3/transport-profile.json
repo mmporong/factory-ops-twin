@@ -1,0 +1,104 @@
+{
+  "schema_version": 1,
+  "scope": "fleet4_transport_development",
+  "policy": "fifo",
+  "condition": "normal",
+  "primary_evaluation": false,
+  "scene_closure": null,
+  "initial_robots": {
+    "carter1": "P1",
+    "carter2": "P2",
+    "carter3": "P3",
+    "carter4": "P4"
+  },
+  "load": {
+    "ci_capacity": 2,
+    "co_capacity": 2,
+    "workers": 1,
+    "service_time_s": 20.0,
+    "nominal_speed_m_s": 0.6,
+    "dwell_s": 5.0
+  },
+  "orders": [
+    {
+      "order_id": "F4-001",
+      "payload_id": "F4-PAY-001",
+      "source_station": "S1",
+      "ready_time": 0.0
+    },
+    {
+      "order_id": "F4-002",
+      "payload_id": "F4-PAY-002",
+      "source_station": "S3",
+      "ready_time": 10.0
+    },
+    {
+      "order_id": "F4-003",
+      "payload_id": "F4-PAY-003",
+      "source_station": "S2",
+      "ready_time": 20.0
+    }
+  ],
+  "horizon_s": 1800.0,
+  "limits_provenance": "authored development workload; not calibrated production capacity or primary experiment",
+  "energy": {
+    "initial_soc": {
+      "carter1": 0.85,
+      "carter2": 0.8,
+      "carter3": 0.75,
+      "carter4": 0.7
+    },
+    "dispatch": {
+      "charger_anchors": [
+        "P1",
+        "P2"
+      ],
+      "expected_wait_s": 120.0,
+      "angular_speed_rad_s": 0.4
+    }
+  },
+  "material_flow": {
+    "schema_version": 1,
+    "provenance": "authored finite-stock development workload; no payload mass/contact claim",
+    "initial_stock": [
+      {
+        "location": "S1",
+        "sku": "sensor-kit",
+        "quantity": 20
+      },
+      {
+        "location": "S2",
+        "sku": "sensor-kit",
+        "quantity": 20
+      },
+      {
+        "location": "S3",
+        "sku": "sensor-kit",
+        "quantity": 20
+      }
+    ],
+    "materials": [
+      {
+        "order_id": "F4-001",
+        "source": "S1",
+        "sku": "sensor-kit",
+        "quantity": 2,
+        "tote_id": "F4-TOTE-001"
+      },
+      {
+        "order_id": "F4-002",
+        "source": "S3",
+        "sku": "sensor-kit",
+        "quantity": 2,
+        "tote_id": "F4-TOTE-002"
+      },
+      {
+        "order_id": "F4-003",
+        "source": "S2",
+        "sku": "sensor-kit",
+        "quantity": 2,
+        "tote_id": "F4-TOTE-003"
+      }
+    ]
+  }
+}

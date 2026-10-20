@@ -1,0 +1,39 @@
+{
+  "task_id": "demo-workload-bound-080",
+  "attempt": 1,
+  "contract_revision": 80,
+  "owner": "control",
+  "reviewer": "root",
+  "project_root": "C:\\Users\\LIMMM\\factory-ops-twin",
+  "binding": {
+    "session": "default",
+    "pane_id": "w1:p1C",
+    "terminal_id": "term_65e06d27e415810",
+    "agent_session": "01a152aa-24b4-7a31-92e3-a2b620f4feeb"
+  },
+  "status": "dispatched",
+  "goal": "One bounded readonly source lookup of resource-wall-bound versus simulated/control deadlines and already-supported workload counts. Main034 continues, no mutation or rerun decision.",
+  "write_paths": [
+    "coordination/collab/results/demo-workload-bound-080.json"
+  ],
+  "result_path": "C:\\Users\\LIMMM\\factory-ops-twin\\coordination\\collab\\results\\demo-workload-bound-080.json",
+  "inputs": [
+    "scripts/isaac/run_local45_fleet_pair.py",
+    "scripts/isaac/windows_job_runner.py",
+    "scripts/brev/fleet4_prepare.py",
+    "factory_ops/fleet_transport.py",
+    "configs/factory-fleet4/transport-profile.json",
+    "configs/factory-fleet4/session.json",
+    "artifacts/local45/034-web/runtime-rate-observation.json"
+  ],
+  "acceptance": [
+    "READONLY source/config lookup only. No product/source/docs/board/Git edits, tests, SDK/GPU/ROS/unitstart, sourceD034/D079 writes, activebagSQL ornewagents. You are not alone; preserve079andunownedfiles.",
+    "Clarify exact repository use sites of CLI wall-bound-s: host monitor, bootstrap, WindowsJob timeout, WSLunitRuntimeMax. Distinguish whether the value changes any simulatedhorizon/action/lease/pathfreshness/physics/controlgate or onlyresource/runtime containment. Include concretepath/line references, not authorization judgments.",
+    "Find whether existing public preparation API/CLI accepts a3-order four-robot development workload without editing prepared/provenance inputs afterward, while preserving all horizons, safety/arrival/radius/TTL/controllimits and4vehicles. If notsupported sayso; do not implement override or propose fakeproof. A3-order scenario is a different explicit experiment, never turns failed4-order result into passed.",
+    "Known data: main034 launched2026-10-20T16:55:33Z with7200wall; latestsnapshot18:26:40Z world1239, out3/4,return1/4. Two observed whole-scene intervals RTF.23048/.22753; no fixedcompletion-time guarantee. It mayfinish beforebound, otherwise rootdecidesnextonlyafterverifiedclosure. Do not stop or modify the running attempt, extendinflightbound, relaxsimulated/controlgates ormark80.",
+    "ReturnACK and concise facts/options/limitations withsource references. One boundedread, no broadresearch/reviewchain. Rootownsactualoutcome andresource choice."
+  ],
+  "depends_on": [
+    "native-visual-flush-079"
+  ]
+}

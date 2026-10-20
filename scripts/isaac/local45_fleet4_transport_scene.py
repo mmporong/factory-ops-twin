@@ -228,8 +228,12 @@ class Local45FleetLifecycle(FleetTransportLifecycle):
             self.material_capture["captured_physics_frame"] = int(world.current_time_step_index)
             self.material_capture["captured_sim_time_s"] = float(world.current_time)
         # The outer G2 capture guard owns timeline pause/resume and frozen-state checks.
-        for _ in range(4):
-            world.render()
+        if self.lidar_backend == "physx_planar":
+            rep.orchestrator.step(delta_time=0.0, rt_subframes=8, pause_timeline=True)
+            rep.orchestrator.wait_until_complete()
+        else:
+            for _ in range(4):
+                world.render()
 
     def after_robots_loaded(self, stage: Any, definitions: dict[str, Any]) -> dict[str, Any]:
         metadata = super().after_robots_loaded(stage, definitions)

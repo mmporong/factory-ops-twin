@@ -1,0 +1,133 @@
+{
+  "task_id": "demo-workload-bound-080",
+  "attempt": 1,
+  "contract_revision": 80,
+  "ack": true,
+  "status": "bounded_readonly_source_facts_complete",
+  "reviewed_sha256": {
+    "scripts/isaac/run_local45_fleet_pair.py": "853d836e4088a7cf7c73a71ddc1d313e40d0fa294b41bff9e96673bf9177e295",
+    "scripts/isaac/windows_job_runner.py": "529fa4bb5a766a200430a62e2c26c4d7ccb504a3258734a033a02daeee9cb379",
+    "scripts/brev/fleet4_prepare.py": "77d45dfd83c34d32ed01c23b9a731d55a57955201e6bb184a550ba185e37c1bd",
+    "factory_ops/fleet_transport.py": "33aefc60a7ee5272709d936d94cee169b917e1c976cdba1eeb82c15d53b14025",
+    "configs/factory-fleet4/transport-profile.json": "6519c94906941ffd7ec6694311884de484ed78a11b14b6989094343cbb5d7e59",
+    "artifacts/local45/034-web/runtime-rate-observation.json": "8782b56ec665b31684d111788d723a66c8922a72558a8266596467662fa92665",
+    "factory_ops/wsl_process_supervisor.py": "e83026038e6ad5f6e8e362576fe39c889d060d9e059fba6dd13b5a8c1b400072",
+    "factory_ops/material_flow.py": "3d7a3c3b3b1a289565e73970a66b5fa4ca97493bc60e883a81fef862e8ad5550",
+    "configs/factory-fleet4/g2.json": "6994172e4ae5e536a5b883767fdab05610deca930d2c665deae8b9996f6b9ad3",
+    "configs/factory-fleet4/g3-runtime.json": "ccb7b17384f9bec6f3b6e1c24d72de645b6e1f43dc078aa0a2db00c5bb8eddfd"
+  },
+  "wall_bound_use_sites": [
+    {
+      "ref": "scripts/isaac/run_local45_fleet_pair.py:173,296,304",
+      "fact": "CLI wall-bound-s defaults450; run accepts60..7200 wall seconds. Existing CLI does not accept a bound above7200."
+    },
+    {
+      "ref": "scripts/isaac/run_local45_fleet_pair.py:126-134,205",
+      "fact": "Bootstrap marker wait has its own25s deadline plus overall elapsed bound+35 check from the host monotonic start."
+    },
+    {
+      "ref": "scripts/isaac/run_local45_fleet_pair.py:140-163",
+      "fact": "Host foreground-client/SDK-fault monitor checks overall elapsed bound+35; existing ROS-exit cleanup grace remains separate."
+    },
+    {
+      "ref": "scripts/isaac/run_local45_fleet_pair.py:243-244; factory_ops/wsl_process_supervisor.py:225-250",
+      "fact": "WSL owner.start receives bound+30; supervisor passes that value to systemd RuntimeMaxSec. This is owned Linux process containment, not simulated time."
+    },
+    {
+      "ref": "scripts/isaac/run_local45_fleet_pair.py:265-268; scripts/isaac/windows_job_runner.py:127-134,161-195",
+      "fact": "Windows Job runner receives timeout=bound, validates1..7200, uses monotonic wall deadline, then closes its owned tree and records residual PIDs."
+    },
+    {
+      "ref": "scripts/isaac/run_local45_fleet_pair.py:228-240,254-257; scripts/brev/fleet4_prepare.py:53-54,110,139-147",
+      "fact": "The CLI bound is not forwarded into SDK/ROS control arguments or fleet preparation. Preparation has no wall-bound/order-count override; simulated inputs come from the frozen bundle."
+    }
+  ],
+  "separate_limits": {
+    "conclusion": "Changing a supported prelaunch host bound changes external resource/runtime containment only in these use sites. It does not rewrite workload horizon, simulated action deadlines, lease/path TTL, physics or control gates. Independent wall limits still apply.",
+    "source_config_values_not_reverified_as_live034": [
+      {
+        "ref": "configs/factory-fleet4/transport-profile.json:60; factory_ops/fleet_transport.py:120-123,167-196",
+        "fact": "Workload horizon1800s is compiled independently and must be below max_sim_time_s."
+      },
+      {
+        "ref": "configs/factory-fleet4/g2.json:63-65",
+        "fact": "Source SDK config max_sim_time_s2100, max_wall_time_s10800, authorization_ttl_s0.5 are separate fields."
+      },
+      {
+        "ref": "configs/factory-fleet4/g3-runtime.json:5-7",
+        "fact": "Source ROS runtime max_wall_time_s5400, startup_sim_allowance_s300 and chunk_timeout_s180 are independent of the pair CLI bound."
+      }
+    ],
+    "inflight": "No running bound was changed or extended; no rerun/stop/resource authorization decision was made."
+  },
+  "three_order_support": {
+    "verdict": "Supported input shape through general bundle API/CLI; no order-count override in the frozen full-stage wrapper. Source-based finding only, not an executed3-order preparation.",
+    "public_api": {
+      "ref": "factory_ops/fleet_transport.py:209-228",
+      "signature": "prepare_bundle(output, config_dir=DEFAULT_CONFIG)",
+      "fact": "Reads authored source configuration before creating a NEW output, copies inputs, generates session and hashes bundle files."
+    },
+    "public_cli": {
+      "ref": "factory_ops/fleet_transport.py:269-276",
+      "shape": "python -m factory_ops.fleet_transport --bundle <new_output> --config-dir <authored_config_directory>",
+      "executed": false
+    },
+    "requirements": [
+      {
+        "ref": "factory_ops/fleet_transport.py:125-138",
+        "fact": "Exactly four configured starting robot IDs are required; orders must be nonempty with distinct order/payload IDs and ready times inside the unchanged horizon. There is no exact-four-order check, so three valid orders are allowed by this source boundary."
+      },
+      {
+        "ref": "factory_ops/fleet_transport.py:169-175; factory_ops/material_flow.py:35-46",
+        "fact": "Material declarations must match the mission order IDs exactly; a three-order input must have corresponding material declarations before preparation, not just truncate generated session.json."
+      },
+      {
+        "ref": "factory_ops/fleet_transport.py:193-196,219,224-227,244-252",
+        "fact": "Session/workload digest and bundle source/file hashes are derived and verified. Existing radius, route, safety/control inputs can remain unchanged in the authored source configuration; prepared/provenance files must not be patched afterward."
+      }
+    ],
+    "wrapper_limit": {
+      "ref": "scripts/brev/fleet4_prepare.py:98-110,139-147",
+      "fact": "Full-stage prepare always uses source_root/configs/factory-fleet4, with archive/snapshot proof. It exposes runtime-profile only, not config-dir or order-count. Current source profile contains four orders. General bundle CLI support is not a ready full-stage3-order override."
+    },
+    "experiment_boundary": "A three-order four-vehicle workload would be a different explicit experiment with newly authored inputs and identity. It cannot convert a failed/incomplete four-order result into passed. No such experiment was selected or prepared."
+  },
+  "known_observation": {
+    "path": "artifacts/local45/034-web/runtime-rate-observation.json",
+    "run_id": "65a800beeb3d4006ac498f024610e586",
+    "scope": "Asynchronous periodic World-clock state observations of the whole running scene; includes navigation, sensing and rendering. Not an isolated performance benchmark or a completion-time guarantee.",
+    "host_start_utc": "2026-10-20T16:55:33+00:00",
+    "configured_host_wall_bound_s": 7200,
+    "observed_interval_RTF": [
+      0.23047993407639503,
+      0.22753250138967057
+    ],
+    "inflight_bound_changed": false,
+    "root_card_snapshot_only": {
+      "utc": "2026-10-20T18:26:40Z",
+      "world_s": 1239,
+      "out": "3/4",
+      "empty_return": "1/4"
+    },
+    "limits": "Periodic whole-scene intervals and a single GPU sample do not guarantee completion time or identify an isolated bottleneck. No fresh runtime query or outcome decision was performed."
+  },
+  "missing_input": {
+    "path": "configs/factory-fleet4/session.json",
+    "status": "absent",
+    "explanation": "session.json is generated at output/session.json by prepare_bundle (factory_ops/fleet_transport.py:219), not a present source config. No invented SHA or active-stage substitute read."
+  },
+  "actions": {
+    "source_edits": false,
+    "tests_or_AST": false,
+    "SDK_GPU_ROS_unit_start": false,
+    "runtime_mutation": false,
+    "active_bag_SQL": false,
+    "Git": false,
+    "agents": false,
+    "D034_D079_writes": false
+  },
+  "limits": [
+    "Readonly source facts; no functional3-order acceptance claim, completion-time guarantee,80-percent judgment or operating decision.",
+    "Root retains actual034 outcome and any later resource/experiment choice after verified closure."
+  ]
+}

@@ -51,7 +51,7 @@ def _copy_new(source: Path, destination: Path) -> None:
 
 
 def prepare(stage: Path, source_root: Path, run_id: str, source_commit: str,
-            *, runtime_profile: str = "canonical62") -> dict[str, Any]:
+            *, runtime_profile: str = "canonical62", config_dir: Path | None = None) -> dict[str, Any]:
     require_python()
     if runtime_profile not in {"canonical62", "local45_development"}:
         raise ValueError("unknown fleet runtime profile")
@@ -63,6 +63,11 @@ def prepare(stage: Path, source_root: Path, run_id: str, source_commit: str,
     source_root = _directory(source_root, "source_root")
     if stage.is_relative_to(source_root):
         raise ValueError("stage outputs must be outside the readonly source_root")
+    selected = config_dir if config_dir is not None else Path("configs/factory-fleet4")
+    selected = _directory(selected if selected.is_absolute() else source_root / selected, "config_dir")
+    if not selected.is_relative_to(source_root):
+        raise ValueError("config_dir must be inside the readonly source_root")
+    config_relative = selected.relative_to(source_root)
     for name in ("inputs", "results"):
         output = stage / name
         if output.exists() or output.is_symlink() or output.is_junction():
@@ -94,7 +99,11 @@ def prepare(stage: Path, source_root: Path, run_id: str, source_commit: str,
         if module_file is None or Path(module_file).resolve() != source_root / relative:
             raise ValueError("project imports must belong to the requested readonly source_root")
     names = runtime_pins | EXTRA_PINS | {
-        "configs/factory-fleet4/" + name for name in fleet_transport.SOURCE_FILES}
+        "configs/factory-fleet4/" + name for name in fleet_transport.SOURCE_FILES} | {
+        (config_relative / name).as_posix() for name in fleet_transport.SOURCE_FILES}
+    for name in fleet_transport.SOURCE_FILES:
+        if not (selected / name).is_file():
+            raise ValueError(f"selected config must contain a regular source file: {name}")
     pins = {name: _sha(source_root / name) for name in sorted(names)}
     proof = source_provenance.verify_source_archive(archive, raw_commit, source_commit, pins,
                                                     snapshot_root=source_root)
@@ -107,7 +116,7 @@ def prepare(stage: Path, source_root: Path, run_id: str, source_commit: str,
             raise ValueError(f"extracted source archive proof failed: {extracted_proof.get('errors')}")
 
     # A rejected proof must never create inputs/results or a transport marker.
-    prepared = fleet_transport.prepare_bundle(stage / "inputs", source_root / "configs/factory-fleet4")
+    prepared = fleet_transport.prepare_bundle(stage / "inputs", selected)
     session = json.loads((stage / "inputs/session.json").read_text(encoding="utf-8"))
     results = stage / "results"
     results.mkdir()
@@ -118,6 +127,7 @@ def prepare(stage: Path, source_root: Path, run_id: str, source_commit: str,
     _copy_new(raw_commit, provenance / "source-commit.raw")
     metadata = {"schema_version": 1, "run_id": run_id, "scenario_id": session["scenario_id"],
                 "source_commit": source_commit, "bundle_sha256": prepared["bundle_sha256"],
+                "config_directory": config_relative.as_posix(),
                 "source_files": pins, "source_archive_sha256": proof["source_archive_sha256"],
                 "source_archive_proof": proof, "preparation_python": python_version()}
     if runtime_profile != "canonical62":
@@ -126,6 +136,7 @@ def prepare(stage: Path, source_root: Path, run_id: str, source_commit: str,
         json.dump(metadata, stream, ensure_ascii=False, indent=2, allow_nan=False)
         stream.write("\n")
     return {"passed": True, "bundle_sha256": prepared["bundle_sha256"],
+            "config_directory": config_relative.as_posix(),
             "python_version": python_version(), "run_id": run_id, "source_commit": source_commit,
             "source_proof": {key: proof[key] for key in ("passed", "commit_sha1", "commit_tree_sha1",
                 "archive_tree_sha1", "source_archive_sha256", "source_pin_count", "snapshot_checked")},
@@ -142,9 +153,10 @@ def main() -> int:
         parser.add_argument("--source-commit", required=True)
         parser.add_argument("--runtime-profile", choices=("canonical62", "local45_development"),
                             default="canonical62")
+        parser.add_argument("--config-dir", type=Path)
         args = parser.parse_args()
         report = prepare(args.stage, args.source_root, args.run_id, args.source_commit,
-                         runtime_profile=args.runtime_profile)
+                         runtime_profile=args.runtime_profile, config_dir=args.config_dir)
     except (OSError, ValueError, RuntimeError, ImportError) as error:
         print(json.dumps({"passed": False, "python_version": python_version(),
                           "error": f"{type(error).__name__}: {error}"}, ensure_ascii=False))

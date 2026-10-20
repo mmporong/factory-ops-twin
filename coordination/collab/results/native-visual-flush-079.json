@@ -1,0 +1,129 @@
+{
+  "task_id": "native-visual-flush-079",
+  "attempt": 1,
+  "contract_revision": 79,
+  "ack": true,
+  "status": "source_ready_pending_root_review_and_post034_native_fixture",
+  "changed_paths": [
+    "scripts/isaac/local45_fleet4_transport_scene.py",
+    "scripts/isaac/probe_local45_visual_flush.py"
+  ],
+  "source_sha256": {
+    "scripts/isaac/local45_fleet4_transport_scene.py": "cc0d6d4968e4c032b3b6dbddbce862671f2d78559c1c2ad346401934dcc5a4fd",
+    "scripts/isaac/probe_local45_visual_flush.py": "35a227de259e4314ca74c62b307774644540821b926d49e6e39c6b736e305572"
+  },
+  "input_sha256_verified_before_edit": {
+    "scripts/isaac/local45_fleet4_transport_scene.py": "a5e7e9fd6459c69f663bbcc1ecf1f5ebc30574599a64a39d5a102dcd946236e0",
+    "scripts/isaac/probe_local45_material_visual.py": "82686c4919c86a0cc929a880ea7d17a0c121c16c9daa1036ae26e65d99e5537f",
+    "scripts/isaac/g2_scene.py": "ec97d65f98bd885e70bb96b4f28a34ad884eeca793d1181676e6e66fa3b286e8",
+    "scripts/isaac/g3_scene.py": "206d97a6a3e37f1ba2607582770b9674397a46842a00355248e71f44e92e100c"
+  },
+  "main_capture_change": {
+    "path": "scripts/isaac/local45_fleet4_transport_scene.py",
+    "scope": "Local45FleetLifecycle.before_capture, lidar_backend=physx_planar only",
+    "calls": [
+      "rep.orchestrator.step(delta_time=0.0, rt_subframes=8, pause_timeline=True)",
+      "rep.orchestrator.wait_until_complete()"
+    ],
+    "preserved": [
+      "RTX world.render() exactly four times",
+      "outer G2 pause/resume and original frame/time/pose guards",
+      "076 applied material cache and capture metadata",
+      "077 planner helper source pin",
+      "existing continuous RGB products/control/physics/clock paths"
+    ],
+    "cause_limit": "034 visibility-transition lag is observed; its renderer/internal cause is not established. No TAA cause assertion."
+  },
+  "fixture": {
+    "path": "scripts/isaac/probe_local45_visual_flush.py",
+    "cli": "<existing SDK45 Python under root Windows Job> <frozen_source>/scripts/isaac/probe_local45_visual_flush.py --config <new_frozen_stage>/config.json --output <new_frozen_stage>/output --run-id <fresh_32_lowercase_hex>",
+    "prerequisite": "Root verifies BOTH034 owned OS trees closed before launching the one fixture. Author did not inspect or stop the live runtime.",
+    "root_host_requirement": "Existing Windows Job runner with maximum240 wall seconds; exact owned closure and remaining_owned_pids=[] required. Probe internal210s checks cannot interrupt a blocked native call; the host Job is the hard bound.",
+    "config_example": {
+      "factory_directory": "D:/FactoryOpsRuntime/local45-transport-033/inputs",
+      "scene_path": "D:/FactoryOpsRuntime/local45-transport-033/inputs/scene/factory-v3.usda",
+      "robot_id": "carter2"
+    },
+    "inputs": "Existing factory/layout/profile and official NovaCarter reference only. No034 event/snapshot input. Source/config/selected dependency and factory input hashes are emitted.",
+    "identity": "Fresh fixture_run_id/render_run_id; source_run_id and source_event_sim_time_s are null. Authored initial station pose is fixture-only, not a mission replay, teleport-control or actual source event time.",
+    "protocol": [
+      "FactoryVisualRuntime.setup before one robot reference; reset and pause; reuse existing noncolliding blue cargo geometry, offset(0,0,.52), TOTE_SIZE_M and EmptyToteGeometry hollow amber shape.",
+      "Create both markers before warmup. Capture visible blue/hidden hollow reference with fixed zero-delta Replicator flush; require visible blue support pixels.",
+      "Hide blue and show hollow amber with fixture-only USD edits. Baseline: exactly four World.render calls and RGB readback. Candidate: fixed zero-delta Replicator step+wait and RGB readback.",
+      "Require exact frozen World frame/time/chassis transform throughout. Save raw USD visibility/computed visibility/world placement, buffer shape/dtype/finite/nonzero/hash and valid native RGB PNGs.",
+      "Use fixed center ROI, blue/amber colour rules and thresholds declared in source before any native run. Record pixel counts and reference-blue retention. No retry, sleep, post-failure threshold adjustment or calibration claim."
+    ],
+    "authored_criteria": {
+      "resolution": [
+        640,
+        480
+      ],
+      "roi_xyxy_fraction": [
+        0.3,
+        0.3,
+        0.7,
+        0.7
+      ],
+      "minimum_reference_blue_pixels": 128,
+      "minimum_amber_pixels": 64,
+      "maximum_reference_blue_retained_fraction": 0.1,
+      "blue_rgb_rule": {
+        "b_minus_r_min": 30,
+        "b_minus_g_min": 15,
+        "b_min": 60
+      },
+      "amber_rgb_rule": {
+        "r_minus_b_min": 50,
+        "g_minus_b_min": 15,
+        "r_minus_g_min": 15,
+        "r_min": 90
+      }
+    },
+    "outputs": [
+      "result.json",
+      "reference_blue.png if valid",
+      "baseline_world_render4.png if valid",
+      "candidate_rep_step0_wait.png if valid",
+      "existing factory visual runtime metadata"
+    ],
+    "output_contract": {
+      "result": "status/run_id/render_run_id/source hashes/config hash/frozen_state/criteria/toggle USD+placement/captures/cleanup errors/intended_exit_code/requires_host_closure",
+      "capture_rows": "raw shape,dtype,finite,nonzero,buffer hash,exact before/after state,USD raw and computed visibility/world matrices,PNG hash,ROI blue/amber counts and reference blue retention fraction",
+      "passed_exit0": "Valid baseline fails fixed current-state image criteria, candidate passes them at the same frozen state; quality_effect_verified=true. Claim remains limited to this authored sequential static fixture.",
+      "limited_exit2": "Candidate current-state criteria pass but baseline lag is not established, including invalid baseline buffer. quality_effect_verified=false; no comparative fix claim.",
+      "failed_exit1": "Candidate/reference/native state guard fails or owned resource detach/destroy fails.",
+      "closure": "Result is written before app.close because native close can terminate Python. intended_exit_code is not observed process exit. Root Job status/actual exit/closed/remaining PID evidence remain authoritative."
+    },
+    "limits": [
+      "Sequential static A/B, not an independent performance experiment or renderer-cause isolation.",
+      "Colour masks are authored image criteria, not hardware calibration or semantic truth.",
+      "Probe uses the same candidate SDK sequence, not a full G2 mission or material companion replay.",
+      "Actual images and transition effect remain unverified until root native execution."
+    ]
+  },
+  "validation": [
+    {
+      "command": "Cold ast.parse(feature_version=(3,10)) of the two changed files via E:/IsaacSim/isaac-sim-4.5.0/kit/python/python.exe -B -S -",
+      "python": "3.10.15",
+      "exit_code": 0,
+      "result": "2 AST PASS in one cold invocation; only standard library imported."
+    }
+  ],
+  "readonly_inputs_unchanged": {
+    "scripts/isaac/probe_local45_material_visual.py": "82686c4919c86a0cc929a880ea7d17a0c121c16c9daa1036ae26e65d99e5537f",
+    "scripts/isaac/g2_scene.py": "ec97d65f98bd885e70bb96b4f28a34ad884eeca793d1181676e6e66fa3b286e8",
+    "scripts/isaac/g3_scene.py": "206d97a6a3e37f1ba2607582770b9674397a46842a00355248e71f44e92e100c"
+  },
+  "runtime_actions": {
+    "sdk_application_started": false,
+    "gpu_started": false,
+    "ros_started": false,
+    "unit_tests_run": false,
+    "active_bag_sql_opened": false,
+    "existing_processes_touched": false,
+    "git_operations": false,
+    "new_agents": false,
+    "D_frozen_source_or_root_artifact_writes": false
+  },
+  "remaining": "Root one source review and one bounded render fixture after034 closure. No claim that immutable034 images, whole mission or live material synchronization are fixed by new C source."
+}

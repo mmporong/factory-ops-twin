@@ -170,8 +170,8 @@ def monitor_pair(worker, owner: WslProcessSupervisor, *, started: float, bound: 
 def run(stage: Path, sdk: Path, bound: int, *, charge_robot: str | None = None, charge_resume_soc: float = .8,
         lidar_backend: str = "rtx_flat_scan", physics_cadence: str = "owned_step6",
         windows_dds_interface: str | None = None, linux_dds_interface: str | None = None) -> int:
-    if os.name != "nt" or not 60 <= bound <= 7200:
-        raise ValueError("local development requires Windows and an explicit 60..7200s bound")
+    if os.name != "nt" or not 60 <= bound <= 10800:
+        raise ValueError("local development requires Windows and an explicit 60..10800s bound")
     if lidar_backend not in {"rtx_flat_scan", "physx_planar"}:
         raise ValueError("unsupported local45 lidar backend")
     if physics_cadence not in {"app_update", "owned_step6"}:
