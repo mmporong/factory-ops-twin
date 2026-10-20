@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "run_id": "9ec4edeb2345478eb5b96bd1c182a152",
+  "source_commit": "e1d884e8569ff69797126e5bf23879c4d25c3c86",
+  "scope": "actual stopped-node successor transfer only; run later closed after host observation timeout",
+  "robot_id": "carter2",
+  "target": "S3",
+  "prior_reservation_start": "P2",
+  "next_reservation_start": "M_HIGH",
+  "prior_tile_count": 60,
+  "next_tile_count": 48,
+  "released_past_tile_count": 12,
+  "remaining_is_strict_subset": true,
+  "old_generation": 6,
+  "next_generation": 9,
+  "stop_confirmed_sim_time_s": 25.916668018,
+  "next_requested_sim_time_s": 25.933334685,
+  "hold_ack": {
+    "authorization_seq": 226,
+    "evaluation_sim_time_s": 25.366667989641428,
+    "input_command": {
+      "angular_rad_s": 0.0,
+      "linear_m_s": 0.0
+    },
+    "mode": "hold",
+    "physics_frame": 1523,
+    "robot_id": "carter2",
+    "run_id": "9ec4edeb2345478eb5b96bd1c182a152",
+    "sample_sim_time_s": 25.38333465717733,
+    "scenario_id": "fleet4_transport_normal",
+    "scope": {
+      "decision_event_seq": 1307,
+      "exit_id": "G3_FULL_LEG:end",
+      "goal_uuid": "6be6967d-21f2-4980-a888-091bea49c6e6",
+      "leg_id": "8bd39940298fadabdaa785b371a292ef0b0f54582a22ffec791a88fbf3e5c5f6",
+      "path_content_sha256": "7644fe4e3464069503b844c159fe0e37279373e6fb6e366b5fa91240fb2d5f75",
+      "recovery_id": null,
+      "reservation_generation": 6,
+      "reservation_id": 6,
+      "resources": [
+        "G3_FULL_LEG"
+      ],
+      "route_id": "8b0be190c97e882dafd8a4cb5fb1327c8f0d99b4471e5e3571a6e93e114bb412",
+      "scenario_id": "fleet4_transport_normal",
+      "tile_hash": "e84954194dee012ef058f011b42567afc9c7187e39357db78cef707ffc7df996"
+    },
+    "source": "post-step drive authorization evaluation; no ground truth",
+    "valid": true
+  },
+  "prior_follow_uuid": "6be6967d-21f2-4980-a888-091bea49c6e6",
+  "next_follow_uuid": "bf03688b-4d6b-47e8-972c-e948dd091a9d",
+  "record_line_sha256": {
+    "first_request": "ec955ea4fef224efb367ac660963bb1611caf3698e5df5e41999cf494617d977",
+    "stopped": "e412114ffe4df3862d063750414c5e3e5ca88304945730068a3b23d552294f8c",
+    "next_request": "6366213b8b0a8c76c582943ace938eee8be1115ba2bf261cc9cfedf0d1efde4a"
+  },
+  "source_log": "D:\\FactoryOpsRuntime\\local45-transport-015\\results\\run\\actions.jsonl",
+  "source_complete_prefix_bytes": 485219,
+  "source_complete_prefix_sha256": "edf50e762b08ae5c23d07a7687adcc71c1027f4aad2223609217b7b83c07ea27",
+  "bag_sql_opened": false,
+  "throughput_improvement_claim": false,
+  "goal80_complete": false
+}

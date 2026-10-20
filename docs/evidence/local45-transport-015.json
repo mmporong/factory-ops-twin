@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "run_id": "9ec4edeb2345478eb5b96bd1c182a152",
+  "source_commit": "e1d884e8569ff69797126e5bf23879c4d25c3c86",
+  "status": "failed_host_observation_timeout",
+  "primary_host_error": "TimeoutExpired: Command '['wsl.exe', '--distribution', 'Ubuntu', '--exec', 'systemctl', '--user', '--no-ask-password', 'show', 'factory-ops-9ec4edeb2345478eb5b96bd1c182a152-52005572d97b4bbe8de201def48543cd.service', '--property=Id,LoadState,ActiveState,SubState,InvocationID,ControlGroup,Description,Transient,MainPID,Result,ExecMainStatus,KillMode,SendSIGKILL,RuntimeMaxUSec,TimeoutStopUSec,WorkingDirectory,StandardOutput,StandardError']' timed out after 20.0 seconds",
+  "windows_closed": true,
+  "linux_closed": true,
+  "cleanup_errors": [],
+  "secondary_ros_error": "RCLError invalid context during paired cleanup",
+  "last_observed_sim_s": 40.08333542384207,
+  "stopped_successor_transfer_exercised": true,
+  "native_boundary_proof": "remaining-reservation-native-015.json",
+  "goal80_complete": false,
+  "transport_completed": false,
+  "bag_sql_opened": false,
+  "repair": "monitor owned foreground wait client without repeated WSL status processes; strict initial/final Linux ownership/closure retained"
+}

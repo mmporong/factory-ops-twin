@@ -79,6 +79,42 @@ def close_pair(worker, streams, owner, stage: Path, report: dict, started: float
     save(stage / "pair-host.json", report)
 
 
+def wait_for_bootstrap_marker(marker: Path, owner: WslProcessSupervisor, *, started: float, bound: int) -> None:
+    deadline = time.monotonic() + 25
+    while True:
+        now = time.monotonic()
+        if now - started > bound + 35:
+            raise TimeoutError("pair owner deadline exceeded")
+        client = owner.client_state()
+        if now > deadline or not client["started"] or not client["running"]:
+            raise RuntimeError("ROS mission did not create its verified bootstrap marker with a living foreground client")
+        if marker.exists():
+            return
+        time.sleep(.2)
+
+
+def monitor_pair(worker, owner: WslProcessSupervisor, *, started: float, bound: int) -> dict | None:
+    """Observe client exit, retaining SDK cleanup grace and the pair deadline."""
+    exit_seen = None
+    exit_record = None
+    while worker.poll() is None:
+        now = time.monotonic()
+        if now - started > bound + 35:
+            raise TimeoutError("pair owner deadline exceeded")
+        client = owner.client_state()
+        if not client["started"]:
+            raise RuntimeError("admitted foreground WSL client is missing")
+        if not client["running"]:
+            if exit_seen is None:
+                exit_seen = now
+                exit_record = {"observed_elapsed_s": now - started, "client": client,
+                               "scope": "foreground client exit only; Linux closure not inferred"}
+            if now - exit_seen > 90:
+                raise RuntimeError("SDK did not finish cleanup within90s after ROS foreground client exit")
+        time.sleep(2)
+    return exit_record
+
+
 def run(stage: Path, sdk: Path, bound: int, *, charge_robot: str | None = None, charge_resume_soc: float = .8) -> int:
     if os.name != "nt" or not 60 <= bound <= 7200:
         raise ValueError("local development requires Windows and an explicit 60..7200s bound")
@@ -129,11 +165,7 @@ def run(stage: Path, sdk: Path, bound: int, *, charge_robot: str | None = None, 
         report["linux_start"] = owner.start(["/bin/bash", linux(stage / "nav-command.sh")],
             working_directory=root_linux, log_path=root_linux + "/nav.log", runtime_bound_s=bound + 30)
         marker = output / "fleet-transport-verified.json"
-        marker_deadline = time.monotonic() + 25
-        while not marker.exists():
-            if time.monotonic() > marker_deadline or owner.inspect()["closure_verified"]:
-                raise RuntimeError("ROS mission did not create its verified bootstrap marker")
-            time.sleep(.2)
+        wait_for_bootstrap_marker(marker, owner, started=started, bound=bound)
         pins = json.loads(metadata.read_text(encoding="utf-8"))["source_files"]
         expected = {str(source / path): digest for path, digest in pins.items()}
         expected.update({str(path): sha(path) for path in (stage / "inputs").rglob("*") if path.is_file()})
@@ -155,18 +187,11 @@ def run(stage: Path, sdk: Path, bound: int, *, charge_robot: str | None = None, 
             "--abort-request", str(stage / "job-abort-request.txt")],
             env=environment, stdout=streams[0], stderr=streams[1], creationflags=subprocess.CREATE_NO_WINDOW)
         report.update(status="running", windows_runner_pid=worker.pid, linux_unit=owner.unit_name)
+        report["monitor_scope"] = "owned foreground client only; final owner.stop verifies Linux unit/cgroup/PID closure"
         save(receipt_path, report)
-        ros_exit_seen = None
-        while worker.poll() is None:
-            if time.monotonic() - started > bound + 35:
-                raise TimeoutError("pair owner deadline exceeded")
-            state = owner.inspect()
-            if state["closure_verified"]:
-                if ros_exit_seen is None:
-                    ros_exit_seen = time.monotonic()
-                if time.monotonic() - ros_exit_seen > 90:
-                    raise RuntimeError("SDK did not finish cleanup within90s after ROS exit")
-            time.sleep(2)
+        client_exit = monitor_pair(worker, owner, started=started, bound=bound)
+        if client_exit is not None:
+            report["ros_foreground_exit"] = client_exit
         report["windows_exit_code"] = worker.returncode
         mission_path = output / "mission-result.json"
         scene_path = output / "local45-fleet4-transport-scene.json"

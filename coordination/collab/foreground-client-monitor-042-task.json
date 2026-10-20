@@ -1,0 +1,20 @@
+{
+  "task_id": "foreground-client-monitor-042",
+  "attempt": 1,
+  "contract_revision": 42,
+  "owner": "control",
+  "goal": "Monitor the already-admitted owned systemd-run --wait Popen client without repeated WSL status commands terminating an otherwise progressing simulation",
+  "write_paths": ["factory_ops/wsl_process_supervisor.py", "scripts/isaac/run_local45_fleet_pair.py", "tests/test_local45_pair_monitor.py", "coordination/collab/results/foreground-client-monitor-042.json"],
+  "read_paths": ["tests/test_wsl_process_supervisor.py", "tests/test_local45_pair_cleanup.py", "D:/FactoryOpsRuntime/local45-transport-015/pair-host.json", "docs/evidence/remaining-reservation-native-015.json"],
+  "context": "015 domain73 reached active Nav2, actual stopped successor60->48tiles after25.916s, continued40sim. Host primary error was subprocess.TimeoutExpired on owner.inspect systemctl --user show (20s). Except/finally closed both, causing secondary ROS RCLError. Current run closed with cleanup_errors empty. Current monitor calls inspect every2s; marker loop every.2s.037 already owns foreground --wait client and has real70s lifetime/closure proof. Do not re-run that fixture or GPU.",
+  "acceptance": [
+    "Keep initial owner.start admission and final stop/unit/cgroup/PID/client closure verification unchanged and strict. Do not infer Linux closure from a live/exited Windows client",
+    "Expose/reuse a small read-only state of the supervisor-owned Popen client (pid, running, returncode, closed), with no WSL subprocess. Active monitor and bootstrap marker wait should use this already-admitted owned client instead of issuing systemctl/cgroup queries every loop",
+    "Retain pair owner deadline, Windows Job timeout/abort, bootstrap marker deadline, and bounded SDK cleanup grace after ROS foreground client exit. A client exit is exit observation, not proof of unit closure; final ownership-checked stop/inspect still decides closure",
+    "No stale unit observation may be labelled fresh, no guessed success, no timeout enlargement or ignored failures in admission/closure, no global WSL restart or process-name kills",
+    "One small focused CPU test invocation under3.12: healthy foreground client is monitored without calling an inspect method that would timeout; exited client starts bounded grace; pair deadline remains enforced; bootstrap marker handling remains bounded. Reuse cleanup contract and keep code small",
+    "Do not alter physics/ROS/domain/config/traffic/API/immutable D source, start services/GPU/WSL fixtures, mutate Git, add dependencies or agents. Root handles next actual admission"
+  ],
+  "notes": "ACK042 attempt1. You are not alone; root owns all other files. Do not revert others. Return exact APIs, code/test SHA and test output once; root reviews once. If separate monitor helper is needed keep it in the existing runner and do not create a framework.",
+  "result_path": "coordination/collab/results/foreground-client-monitor-042.json"
+}

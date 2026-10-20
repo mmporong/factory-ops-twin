@@ -1,6 +1,6 @@
 {
-  "revision": 41,
-  "updated_at": "2026-10-20T03:28:57.987657+00:00",
+  "revision": 42,
+  "updated_at": "2026-10-20T04:06:44.027355+00:00",
   "scope": {
     "excluded": "실물 로봇 실행, 새 유료 서비스/에셋, 공개 배포",
     "project_root": "C:\\Users\\LIMMM\\factory-ops-twin",
@@ -20,7 +20,7 @@
       "role": "dashboard frontend author",
       "name": "control",
       "agent_kind": "codex",
-      "status": "023 revision2 visual contrast repair",
+      "status": "042 received and accepted; no pending implementation",
       "session": "default",
       "agent_session": "01a152aa-24b4-7a31-92e3-a2b620f4feeb",
       "terminal_id": "term_65e06d27e415810",
@@ -813,7 +813,7 @@
       "contract_revision": 41,
       "owner": "control",
       "reviewer": "root",
-      "status": "accepted_cpu_native_pending",
+      "status": "accepted_cpu_partial_native",
       "ACK": true,
       "task_path": "coordination/collab/remaining-route-reservation-041-task.json",
       "result_path": "coordination/collab/results/remaining-route-reservation-041.json",
@@ -822,7 +822,25 @@
         "tests/test_g3_remaining_reservations.py",
         "coordination/collab/results/remaining-route-reservation-041.json"
       ],
-      "acceptance_record": "Root source/test/digest check:2SHA matched,4focused CPU cases once. Active/finished boundary, observed-body transfer intersection, denial retaining predecessor and stable retry covered. Actual013 f065 remains unchanged. Native admission and measured wait improvement pending next run; no speedup claim."
+      "acceptance_record": "Root source/test/digest check:2SHA matched,4focused CPU cases once. Active/finished boundary, observed-body transfer intersection, denial retaining predecessor and stable retry covered. Actual013 f065 remains unchanged. Native admission and measured wait improvement pending next run; no speedup claim. Native015 carter2 P2->M_HIGH stop25.916668s, successor25.933334s,60->48tiles/12pasttiles freed. Host status-query timeout ended run40s; whole-fleet operations and wait improvement remain pending."
+    },
+    {
+      "task_id": "foreground-client-monitor-042",
+      "attempt": 1,
+      "contract_revision": 42,
+      "owner": "control",
+      "reviewer": "root",
+      "status": "accepted_cpu_native_pending",
+      "ACK": true,
+      "task_path": "coordination/collab/foreground-client-monitor-042-task.json",
+      "result_path": "coordination/collab/results/foreground-client-monitor-042.json",
+      "write_paths": [
+        "factory_ops/wsl_process_supervisor.py",
+        "scripts/isaac/run_local45_fleet_pair.py",
+        "tests/test_local45_pair_monitor.py",
+        "coordination/collab/results/foreground-client-monitor-042.json"
+      ],
+      "acceptance_record": "Root inspected bounded diff/tests:3 sourceSHA matched;9 focused CPU cases once from author receipt. Runtime polling uses only owned Popen; admission/final unit+cgroup+PID closure,25s marker,pair deadline,90s cleanup grace and pass conditions retained. Actual016 pending; no Linux closure inferred from client exit."
     }
   ],
   "decisions": [

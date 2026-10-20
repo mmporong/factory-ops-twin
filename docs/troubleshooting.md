@@ -391,6 +391,14 @@ ROS가 실패 종료한 직후 외부 실행기가 아직 정리 중인 Windows 
 
 다음 실행은 다른 조건을 유지하고 이 프로젝트의 ROS domain을72에서73으로 분리한다. 이것은 재사용된 통신 그래프 영향 여부를 가리는 한 변수 시험이며 원인 확정이나 해결 선언이 아니다. Windows와 WSL은 같은 입력 config를 사용하고 전역 환경·배포판·다른 작업 프로세스는 바꾸지 않는다. ROS domain은 통신 그룹을 나누지만 실제 통신 성공의 충분조건은 아니다. [공식 domain 설명](https://docs.ros.org/en/jazzy/Concepts/Intermediate/About-Domain-ID.html)을 참고한다.014의 Windows·WSL 종료와 정리 오류 없음은 확인했다. [014 근거](evidence/local45-transport-014.json)를 보존한다.
 
+015의 domain73에서는 clock 수신·기록기 전체 구독·4개 Nav2 ACTIVE와 실제 주행이 시작됐다. 2번 차량은 정지 확인25.916668초 뒤25.933335초에 새 예약을 요청했고, P2에서 시작한60타일을 M_HIGH부터의48타일로 줄였다.12개의 지나온 타일을 제외한 실제 경계 관측이며 전체 처리량 개선은 아니다. [정지 후 갱신 근거](evidence/remaining-reservation-native-015.json)를 보존했다.014의 세부 발견 실패 원인은 여전히 미확정이다.
+
+## FOT-051 — 호스트 상태 조회 timeout이 실행을 종료함
+
+015의 최초 host 오류는 `systemctl --user show`를 실행하는 WSL 클라이언트가20초 안에 응답하지 않은 TimeoutExpired였다. 기존 감시 루프는2초마다 inspect를 호출했고, 이 읽기 조회 예외를 전체 실행 실패로 처리해 finally에서 Windows·WSL을 정리했다. 뒤의 ROS context-invalid 오류는 이 정리 과정과 구분한다. 종료 전 실제 시뮬레이션은 약40초까지 진행했고, 양쪽 소유 프로세스의 종료와 정리 오류 없음은 확인했다. 원본 상태를 성공으로 바꾸지 않았다. [015 근거](evidence/local45-transport-015.json)를 참고한다.
+
+042는 이미 소유권 admission을 마친 foreground `systemd-run --wait` Popen 클라이언트를 관찰하도록 수정했다. 실행 중 반복 WSL 조회에 의존하지 않고, 시작·최종 종료의 unit/cgroup/PID 소유권 확인과 전체 시간 상한·SDK 종료 유예는 유지한다. Windows 클라이언트 종료를 Linux 완전 종료 증명으로 사용하지 않는다. 관련 CPU 검사9개를1회 실행해 통과했으며 총괄의 한정 diff 검수를 마쳤다. 실제 적용은 다음 실행에서 확인할 항목이다.
+
 ## 실행 전 확인과 후속 기록
 
 1. 깨끗한 생산자 소스·host commit·설정·실행 ID를 결속한다. 실패한 실행 ID와 원본을 다시 사용하지 않는다.

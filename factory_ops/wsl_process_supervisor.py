@@ -196,6 +196,14 @@ class WslProcessSupervisor:
                 "returncode": code, "closed": code is not None and self._client_joined,
                 "forced_termination": self._client_forced, **self._client_diagnostics}
 
+    def client_state(self) -> dict[str, Any]:
+        """Observe only the owned Windows Popen; never prove Linux unit closure.
+
+        Polls/joins this client without issuing a WSL command. Admission and
+        final ownership/cgroup/PID verification still require start/stop.
+        """
+        return self._client_state()
+
     def _show(self) -> dict[str, str]:
         result = self._call(["systemctl", "--user", "--no-ask-password", "show", self._unit,
                              "--property=" + _PROPERTIES])
