@@ -1,0 +1,15 @@
+{
+  "task_id": "live-business-events-047",
+  "attempt": 1,
+  "reviewer": "root",
+  "status": "accepted",
+  "source_sha256": {
+    "factory_ops/dashboard_events.py": "571b4dad78ae4f587a981297c4c822c5d4dee42cd96dc2350788014153c82dce",
+    "factory_ops/dashboard.py": "990bfafe21a279a5a6b29a71cf385608881451cd9000290a042468fe7ba0220c",
+    "tests/test_dashboard_live_events.py": "b603585f5e9579174cb9d047430304dae859538f24b3fdc76a10cd7766ce51f7"
+  },
+  "blocking_findings": 0,
+  "review": "Bounded independent source/contract review. One actual plural orders_completed producer mismatch was corrected; only that new case ran once after initial9 passed. Partial/read/retention/foreign-run/provenance boundaries preserved.",
+  "actual_integration": "coordination/collab/results/live-business-events-047-root-integration.json",
+  "actual_result": "closed018 primary stayed stale;10 original pickup/drop/virtual charger events, no primary refresh; no complete return/order inferred"
+}

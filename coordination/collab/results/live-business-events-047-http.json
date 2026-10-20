@@ -1,0 +1,9 @@
+{
+  "run_id": "6038caf54aa2409485b4023a460a5e0a",
+  "api_connection": "stale",
+  "api_events": 10,
+  "web_run_id": "6038caf54aa2409485b4023a460a5e0a",
+  "web_connection": "stale",
+  "web_events": 10,
+  "primary_observed_at_unchanged": true
+}

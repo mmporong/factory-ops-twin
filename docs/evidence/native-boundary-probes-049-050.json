@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "scope": "two static RTX sensor acquisition candidates; no ROS/AMR/transport qualification; no018 cause established",
+  "probes": [
+    {
+      "stage": "D:\\FactoryOpsRuntime\\native-complete-probe-049",
+      "run_id": "bd402158d5c944c4bbfbaeebe9e375fe",
+      "status": "failed",
+      "source_sha256": "cc03c2ab5eb2695c7e71ddff178baa2c40336876af191d970635a40fc6eef750",
+      "error": "RuntimeError: completed-scan writer cache exceeded0.3sim s freshness",
+      "elapsed_sim_s": 20.2333343885839,
+      "elapsed_wall_s": 44.296999999991385,
+      "owned_tree_closed": true,
+      "job_pass_is_not_probe_pass": true,
+      "probe_sha256": "9b21fd7ed9d140d6678f15f96d5f8b92f53c70a09eec941d1773bf5bb5877c66",
+      "job_sha256": "0fa1c5dd8adb3e04970fc28b3e793090c83a22614d8716e9c81b034f421efffe",
+      "candidate_rejected": true
+    },
+    {
+      "stage": "D:\\FactoryOpsRuntime\\native-exec-gate-probe-050",
+      "run_id": "86bc140506cf471493169b10233761cc",
+      "status": "failed",
+      "source_sha256": "4811bdf5d717b3ff4e9fe32aa09ebdbbe50bfbe847f2e594790575ede0c45182",
+      "error": "RuntimeError: completed-scan writer cache exceeded0.3sim s freshness",
+      "elapsed_sim_s": 1.5000000782310963,
+      "elapsed_wall_s": 25.812000000005355,
+      "owned_tree_closed": true,
+      "job_pass_is_not_probe_pass": true,
+      "probe_sha256": "592f5e4810d88df60e80d1f8b193f83700316480b99db540e623b81690308bf2",
+      "job_sha256": "4069f0aefe06cbd2c625a58085eb1096c66a825b2625d5f1173208732f3911f9",
+      "candidate_rejected": true
+    }
+  ],
+  "decision": "Do not deploy either rejected acquisition candidate or relax freshness. Seek supported event delivery boundary; no current SDK job remains."
+}

@@ -16,6 +16,7 @@ import time
 from typing import Any
 
 from .dashboard_model import DashboardModel
+from .dashboard_events import DashboardEventSource
 from .mock_mes import MockMESAdapter
 
 
@@ -255,16 +256,20 @@ def _join_ros_charging(primary: Any, companion: Any) -> dict[str, Any]:
 
 class DashboardService:
     def __init__(self, config: Path, *, source: Path | None = None, outbox: Path | None = None,
-                 charging_profile: dict[str, Any] | None = None, charging_source: Path | None = None) -> None:
+                 charging_profile: dict[str, Any] | None = None, charging_source: Path | None = None,
+                 events_source: Path | None = None) -> None:
         if source is not None and charging_profile is not None:
             raise ValueError("CPU charging profile cannot modify a live/replay source")
         if charging_source is not None and (source is None or outbox is not None or charging_profile is not None):
             raise ValueError("charging_source requires a read-only primary source without command outbox or CPU charging profile")
+        if events_source is not None and (source is None or outbox is not None or charging_profile is not None):
+            raise ValueError("events_source requires a read-only primary source without command outbox or CPU charging profile")
         self.lock = threading.RLock()
         self.scene = json.loads((config / "layout.json").read_text(encoding="utf-8"))
         self.scene["layout_revision"] = self.scene["revision"]
         self.source, self.outbox = source, outbox
         self.charging_source = charging_source
+        self.events_source = DashboardEventSource(events_source) if events_source is not None else None
         self.model = DashboardModel(config, charging_profile=charging_profile) if source is None else None
         self._last: dict[str, Any] | None = None
         self._receipts: dict[str, dict[str, Any]] = {}
@@ -275,6 +280,9 @@ class DashboardService:
         self.producer_sources = {"factory_ops/" + name: hashlib.sha256((module_root / name).read_bytes()).hexdigest()
             for name in ("dashboard.py", "dashboard_model.py", "mock_mes.py", "dashboard_charging.py",
                          "operations/ledger.py", "operations/inventory.py", "operations/model.py", "compat.py")}
+        if self.events_source is not None:
+            self.producer_sources["factory_ops/dashboard_events.py"] = hashlib.sha256(
+                (module_root / "dashboard_events.py").read_bytes()).hexdigest()
 
     def ingest_mes(self, event: Any) -> dict[str, Any]:
         with self.lock:
@@ -334,6 +342,11 @@ class DashboardService:
             if self.charging_source is not None:
                 result["api_producer"]["input_sources"] = {"primary": str(self.source),
                     "charging": str(self.charging_source), "projection": "same-run read-only ROS virtual charging"}
+            if self.events_source is not None:
+                events, provenance = self.events_source.snapshot(result["run_id"], {r["id"] for r in result["robots"]})
+                original_ids = {event["id"] for event in result["events"]}
+                result["events"] = (result["events"] + [event for event in events if event["id"] not in original_ids])[-100:]
+                result["api_producer"]["events_projection"] = provenance
             return result
 
     def command(self, value: Any) -> dict[str, Any]:
@@ -436,6 +449,8 @@ def main() -> None:
     parser.add_argument("--source", type=Path, help="atomically published live/replay JSON; never rosbag SQLite")
     parser.add_argument("--charging-source", type=Path,
                         help="optional same-run ROS virtual charger JSON; requires read-only --source")
+    parser.add_argument("--events-source", type=Path,
+                        help="optional same-run actions JSONL; bounded read-only business events; requires --source")
     parser.add_argument("--commands-dir", type=Path, help="simulator command outbox; absent means read-only")
     parser.add_argument("--web-charging-profile", type=Path,
                         help="optional authored CPU energy/geometric docking model; never applied to live/replay")
@@ -445,10 +460,14 @@ def main() -> None:
     if args.charging_source is not None and (args.source is None or args.commands_dir is not None
                                             or args.web_charging_profile is not None):
         parser.error("--charging-source requires --source and excludes --commands-dir/--web-charging-profile")
+    if args.events_source is not None and (args.source is None or args.commands_dir is not None
+                                          or args.web_charging_profile is not None):
+        parser.error("--events-source requires --source and excludes --commands-dir/--web-charging-profile")
     charging_profile = (json.loads(args.web_charging_profile.read_text(encoding="utf-8"))
                         if args.web_charging_profile is not None else None)
     service = DashboardService(args.config, source=args.source, outbox=args.commands_dir,
-                               charging_profile=charging_profile, charging_source=args.charging_source)
+                               charging_profile=charging_profile, charging_source=args.charging_source,
+                               events_source=args.events_source)
     server = make_server(service, args.port)
     stopping = threading.Event()
 

@@ -1,0 +1,30 @@
+{
+  "task_id": "live-business-events-047",
+  "attempt": 1,
+  "contract_revision": 47,
+  "owner": "control",
+  "reviewer": "root",
+  "goal": "Project meaningful same-run ROS business events into the existing read-only web event list without changing the active simulator",
+  "inputs": {
+    "source_commit": "7a9928e4f060906bbdee6105b8b71a5e20046372",
+    "stage": "D:/FactoryOpsRuntime/local45-transport-018",
+    "run_id": "6038caf54aa2409485b4023a460a5e0a",
+    "journal": "results/run/actions.jsonl",
+    "primary": "results/run/dashboard-state.json"
+  },
+  "write_paths": [
+    "factory_ops/dashboard_events.py",
+    "factory_ops/dashboard.py",
+    "tests/test_dashboard_live_events.py",
+    "coordination/collab/results/live-business-events-047.json"
+  ],
+  "acceptance": [
+    "Use an explicit optional --events-source for the existing read-only live/replay primary; no command capability, outbox, CPU-model mutation or automatic unrelated file discovery. Preserve behavior when absent. Root alone restarts the owned API after acceptance; active018 immutable source and SDK/WSL remain untouched.",
+    "Bound JSONL reading and retained event count; tolerate an in-progress final partial line without inventing data, stable event identity from run+original event_seq, prevent duplicate display and exclude foreign run/malformed/non-finite rows. Do not scan an unbounded file every snapshot. No SQLite connection/copy or ROS commands.",
+    "Display only supported original handoff_commit, empty_handoff_commit, empty_trip_dispatched, virtual charger arrival/release/state milestones and order completion events; no per-tick scan/route spam. Classify pickup vs drop and inbound/outbound/empty from original intent/accepted receipt, never imply contact/lifting/electric charge. Material consumption is not currently an actions journal event: only include if a matching original source event exists; never synthesize it from stock differences.",
+    "Keep original source timestamps and distinguish the journal ROS clock from dashboard mission elapsed time; do not silently offset/shift timestamps or widen freshness. Events never refresh primary observed_at/connection/revision or change robot pose/speed/battery/scan counters. Join unavailable/mismatch must be explicit in projection provenance without falsely reviving the primary.",
+    "Reuse the existing event contract/renderer. Inspect the real TS event fields first. If a small UI clock-label change is required, report its exact file before editing outside the write paths. No new dependencies, broad refactor, SDK runs, new agents, new instances, commit/push or unowned dashboard files.",
+    "One focused CPU test pass for the new behavior, not the full suite: optional disabled path, partial tail, foreign run/duplicate/malformed data, read limit, preserved primary staleness and original event time. Return hashes, test command/exit and limitations in result receipt. Root performs one bounded source/evidence review; no repeated review loop."
+  ],
+  "result_path": "coordination/collab/results/live-business-events-047.json"
+}

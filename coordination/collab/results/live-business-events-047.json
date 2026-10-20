@@ -1,0 +1,177 @@
+{
+  "task_id": "live-business-events-047",
+  "attempt": 1,
+  "contract_revision": 47,
+  "ACK": true,
+  "owner": "control",
+  "reviewer": "root",
+  "status": "implemented_cpu_checked_pending_root_review",
+  "accepted": false,
+  "source_base_commit": "7a9928e4f060906bbdee6105b8b71a5e20046372",
+  "changed_paths": [
+    "factory_ops/dashboard_events.py",
+    "factory_ops/dashboard.py",
+    "tests/test_dashboard_live_events.py",
+    "coordination/collab/results/live-business-events-047.json"
+  ],
+  "source_sha256": {
+    "factory_ops/dashboard_events.py": "571b4dad78ae4f587a981297c4c822c5d4dee42cd96dc2350788014153c82dce",
+    "factory_ops/dashboard.py": "990bfafe21a279a5a6b29a71cf385608881451cd9000290a042468fe7ba0220c",
+    "tests/test_dashboard_live_events.py": "b603585f5e9579174cb9d047430304dae859538f24b3fdc76a10cd7766ce51f7"
+  },
+  "implementation": {
+    "cli": "기존 --source에 선택형 --events-source <actions.jsonl>을 추가했습니다.",
+    "service_api": "DashboardService(config: Path, *, source=primary, outbox=None, charging_source=optional_companion, events_source=journal)",
+    "reader_api": "DashboardEventSource(path, *, read_limit_bytes=262144, max_line_bytes=65536, max_events=100).snapshot(run_id, robot_ids: set[str]) -> (events, provenance)",
+    "disabled": "events_source 미지정 시 기존 source/model 동작과 이벤트 목록을 유지합니다.",
+    "readonly": "명시적 live/replay primary가 필요하며 outbox·CPU charging profile과의 결합을 거절합니다. capability 추가·CPU 모델 변경·자동 파일 탐색은 없습니다.",
+    "bounds": {
+      "bytes_per_poll": 262144,
+      "max_line_bytes": 65536,
+      "retained_events": 100,
+      "merged_event_limit": 100
+    },
+    "reading": "poll마다 저장 cursor부터 바이트 상한까지만 읽습니다. 마지막 미완성 줄은 보류하고 과대 줄은 개행까지 건너뛰며 계수를 남깁니다. 파일 교체/축소와 primary run 변경 시 이전 이력은 초기화합니다.",
+    "identity": "ros:<원래 run_id>:<원래 event_seq>. 같은 run의 단조 증가 event_seq로 식별하며 중복/과거 sequence·외부 run·malformed/non-finite 행을 제외합니다.",
+    "projection": "handoff_commit/empty_handoff_commit은 원래 intent의 stage/transition과 accepted·비중복 receipt의 goal 일치로 분류합니다. empty_trip_dispatched와 가상 충전 예약/도착/해제/상태 이정표를 선별하고 같은 충전 단계의 반복 요약은 표시하지 않습니다. outbound drop에서 별도 주문 완료 이벤트를 만들지 않습니다. 주문 완료는 원래 orders_completed(completed_orders, elapsed_sim_s) 집계 사건만 사용하며, count는 bool이 아닌 0 이상 정수, elapsed는 bool이 아닌 0 이상 유한 수로 검증합니다. 원본 ROS 시각과 mission elapsed를 별도로 보존하고 로봇별 완료로 바꾸지 않습니다.",
+    "clocks": "sim_time_s는 원본 저널의 ROS stamp를 변환 없이 보존합니다. 기존 message의 ‘ROS 시각 · ’ 접두어와 source.clock=ros_sim_time, provenance의 primary_clock=mission_elapsed_time/time_transform으로 구분합니다.",
+    "provenance": "api_producer.events_projection에 source/run/status, unavailable/run_mismatch, partial_line/catching_up, byte offset와 제외 계수를 남깁니다. 옵션이 켜졌을 때만 dashboard_events.py SHA를 API producer에 추가합니다.",
+    "preservation": "이벤트가 primary observed_at/connection/revision/sim_time, pose/speed/battery/scan/odom, inventory/kpis/tasks를 갱신하지 않습니다. 원본 쓰기와 freshness 완화는 없습니다."
+  },
+  "ts_contract_inspected": {
+    "files": [
+      "dashboard/lib/types.ts:80",
+      "dashboard/components/Dashboard.tsx:735"
+    ],
+    "fields": [
+      "id",
+      "sim_time_s",
+      "type",
+      "message",
+      "robot_id"
+    ],
+    "decision": "기존 renderer가 time과 message를 함께 표시하므로 message에서 ROS 시각을 명시할 수 있습니다. UI 변경이나 범위 확장은 필요하지 않았으며 UI/types 파일은 읽기만 했습니다."
+  },
+  "evidence_read": {
+    "stage": "D:/FactoryOpsRuntime/local45-transport-018",
+    "run_id": "6038caf54aa2409485b4023a460a5e0a",
+    "primary": "results/run/dashboard-state.json",
+    "journal": "results/run/actions.jsonl",
+    "scope": "원본 JSON과 최대4MiB의 JSONL 추출로 기존 형식을 확인했습니다. SQLite/SDK/ROS에는 연결하지 않았습니다.",
+    "original_examples": [
+      {
+        "event_seq": 63,
+        "kind": "virtual_charger_arrived",
+        "ros_time_s": 43.950002292
+      },
+      {
+        "event_seq": 72,
+        "kind": "virtual_charging_state",
+        "ros_time_s": 45.016669014
+      },
+      {
+        "event_seq": 87,
+        "kind": "handoff_commit",
+        "ros_time_s": 71.850003747,
+        "transition": "pickup",
+        "stage": "inbound"
+      },
+      {
+        "event_seq": 113,
+        "kind": "virtual_charger_released",
+        "ros_time_s": 95.616671653
+      },
+      {
+        "event_seq": 164,
+        "kind": "handoff_commit",
+        "ros_time_s": 202.416677223,
+        "transition": "drop",
+        "stage": "inbound"
+      }
+    ],
+    "scope_limit": "원본 입력 형식의 근거이며 새 API의 실제 브라우저/운행 성공 근거는 아닙니다."
+  },
+  "validation": {
+    "command": "& './.venv/Scripts/python.exe' -B -m unittest tests.test_dashboard_live_events -v",
+    "cwd": "C:/Users/LIMMM/factory-ops-twin",
+    "runs": 1,
+    "passed": 9,
+    "exit_code": 0,
+    "test_wall_s": 2.349,
+    "cases": [
+      "옵션 미사용/읽기 전용 설정",
+      "부분 줄·원래 ROS 시각·안정된 ID",
+      "외부 run/중복/불량/비유한 값 제외",
+      "바이트/줄/이력 한도와 증분 읽기",
+      "primary stale·관측·명령 거절·원본 불변",
+      "미연결/run 불일치/replay/run 교체",
+      "intent/accepted receipt에 따른 인수·인계 분류",
+      "가상 충전 이정표·반복 단계 억제",
+      "저널 교체 시 이전 run 이력 제외"
+    ],
+    "verification_pass": "작성 후 변경 경계를 별도 패스로 확인한 다음 관련 CPU 검사1회를 수행했습니다. 독립 에이전트 승인은 아닙니다.",
+    "full_suite": false,
+    "typecheck": false,
+    "browser": false,
+    "api_server_started_or_restarted": false,
+    "sdk_gpu_ros_wsl_executed": false,
+    "git_mutations": false,
+    "read_only_git_status": true,
+    "new_agents": false,
+    "scope_note": "기존9개 PASS는 집계 수정 전 검증 기록입니다. 수정 후에는 요청한 새 검사1개만 실행했으며 나머지9개는 반복하지 않았습니다."
+  },
+  "root_handoff": {
+    "additional_cli_args": [
+      "--events-source",
+      "D:/FactoryOpsRuntime/local45-transport-018/results/run/actions.jsonl"
+    ],
+    "primary_source": "D:/FactoryOpsRuntime/local45-transport-018/results/run/dashboard-state.json",
+    "lifecycle": "root의 한정 소스/근거 검수와 수용 후 기존 소유 API의 인자에 추가합니다. 이 에이전트는 API/SDK/WSL을 재시작하지 않았습니다.",
+    "provenance_path": "snapshot.api_producer.events_projection",
+    "expected_first_polls": "큰 저널은 여러 poll에 걸쳐 따라갑니다. bytes_remaining/catching_up으로 진행을 확인하며 primary freshness는 기존 판정을 유지합니다."
+  },
+  "limitations": [
+    "live018 API 결합·브라우저 표시·운행 효과는 실행하지 않았으며 root 범위입니다.",
+    "주문 완료 집계는 G3의 원래 orders_completed 사건이 있을 때만 표시합니다. producer 소스 두 발행 위치를 확인했으며 실제 집계 발생/브라우저 표시는 검증하지 않았습니다.",
+    "material consumption은 현재 actions 계약에 없어 투영하지 않습니다. 재고 차이나 뒤의 인계 사건으로 합성하지 않습니다.",
+    "빈 토트 반납 분류도 CPU fixture로 확인했습니다. 읽은018 표본은 빈 반납 완료의 실제 증거가 아닙니다.",
+    "이력/cursor는 API 프로세스 메모리에만 있습니다. API 재시작 시 처음부터 상한 내에서 다시 읽으며 과대/불량 행은 제외 계수로 남깁니다.",
+    "현재 생산자와 같은 append-only·단조 증가 event_seq를 전제로 하며 원래 시각을 보정하지 않습니다.",
+    "접촉·들기·전기 충전·4대 완주를 주장하지 않습니다. 기존018 원본/runtime/UI와 다른 작성자 변경은 편집하지 않았습니다."
+  ],
+  "scope_expansion_requested": false,
+  "errors": [],
+  "root_requested_aggregate_correction": {
+    "request": "root의 원본 producer 계약 수정1건",
+    "status": "implemented_targeted_test_pass_pending_root_review",
+    "producer_refs": [
+      "scripts/ros/g3_mission.py:1623",
+      "scripts/ros/g3_mission.py:2093"
+    ],
+    "original_kind": "orders_completed",
+    "required_fields": [
+      "completed_orders",
+      "elapsed_sim_s"
+    ],
+    "message": "ROS 시각 · 주문 완료 집계 N건",
+    "details": "order_complete/order_completed 별칭을 제거했습니다. 원래 run/event_seq/ROS 시각으로 사건을 식별하고 source.completed_orders와 source.elapsed_sim_s/elapsed_clock에 집계 입력을 보존합니다. outbound drop에서 새 사건을 추정하지 않습니다.",
+    "invalid_cases": "음수/bool/소수 count, 음수/bool elapsed, 양쪽 NaN/Infinity/-Infinity·문자열·null의17개 음성 입력 제외. 0건/0초 정상 경계도 확인했습니다.",
+    "test_fixture_update": "기존 인계 분류 검사의 잘못된 completion fixture를 실제 집계 형식으로 교체했으며 이 기존 검사는 재실행하지 않았습니다.",
+    "validation": {
+      "command": "& './.venv/Scripts/python.exe' -B -m unittest tests.test_dashboard_live_events.DashboardLiveEventsTests.test_actual_orders_completed_aggregate_validates_count_and_elapsed -v",
+      "runs": 1,
+      "passed": 1,
+      "exit_code": 0,
+      "test_wall_s": 0.225,
+      "previous_nine_repeated": false
+    },
+    "previous_source_sha256": {
+      "factory_ops/dashboard.py": "990bfafe21a279a5a6b29a71cf385608881451cd9000290a042468fe7ba0220c",
+      "factory_ops/dashboard_events.py": "52c82e54c84a1f863d4a007aed851e68416eabb37a5a713b078e2d5ec193bc97",
+      "tests/test_dashboard_live_events.py": "617667806f2e6928064cd7b62db1b00ed3ab74ecc714f7f200f1a08fd4ed5555"
+    },
+    "scope": "dashboard_events.py/test_dashboard_live_events.py/기존047 receipt만 수정. dashboard.py는 변경하지 않았습니다.",
+    "runtime_or_api_changed": false,
+    "task048_started": false
+  }
+}

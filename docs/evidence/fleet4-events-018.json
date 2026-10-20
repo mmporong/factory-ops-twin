@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "run_id": "6038caf54aa2409485b4023a460a5e0a",
+  "api_connection": "stale",
+  "api_events": 10,
+  "web_run_id": "6038caf54aa2409485b4023a460a5e0a",
+  "web_connection": "stale",
+  "web_events": 10,
+  "primary_observed_at_unchanged": true,
+  "scope": "actual closed018 ROS business journal projected through read-only API; not new live movement or completed return/order proof",
+  "image": {
+    "path": "docs/images/fleet4-live-018/business-events.jpg",
+    "sha256": "9763b7b25312190745d11a477b56b2cd32ae91e72ea522f8244b9529b25d9911",
+    "scope": "existing workflow and event pane; image captured after HTTP integration, not an atomic renderer/API frame"
+  },
+  "api_selected_sources_sha256": {
+    "factory_ops/dashboard_events.py": "571b4dad78ae4f587a981297c4c822c5d4dee42cd96dc2350788014153c82dce",
+    "factory_ops/dashboard.py": "990bfafe21a279a5a6b29a71cf385608881451cd9000290a042468fe7ba0220c",
+    "tests/test_dashboard_live_events.py": "b603585f5e9579174cb9d047430304dae859538f24b3fdc76a10cd7766ce51f7"
+  },
+  "event_clock": "unmodified ROS simulation timestamp; primary clock is mission elapsed time",
+  "raw_source": "D:/FactoryOpsRuntime/local45-transport-018/results/run/actions.jsonl",
+  "original_events": [
+    "virtual charger reserved/arrival/phase/release",
+    "inbound material pickups F4-001/F4-002",
+    "inbound material drop F4-002 atCI"
+  ],
+  "not_observed": [
+    "completed empty return",
+    "completed outbound shipment"
+  ],
+  "cpu_validation": "initial9 tests once plus one aggregate-contract correction test once; no full suite repeated"
+}

@@ -1,0 +1,27 @@
+{
+  "task_id": "native-complete-boundary-048",
+  "attempt": 1,
+  "contract_revision": 48,
+  "owner": "control",
+  "reviewer": "root",
+  "goal": "Find one supported SDK4.5 completed-scan acquisition boundary that avoids per-frame output polling and Replicator manual-step writer stalls; bounded advice only",
+  "inputs": {
+    "base_commit": "7a9928e4f060906bbdee6105b8b71a5e20046372",
+    "failure": "docs/evidence/local45-transport-018.json",
+    "originals": "D:/FactoryOpsRuntime/local45-transport-018",
+    "writer_probe": "D:/FactoryOpsRuntime/native-complete-probe-049",
+    "exec_flag_probe": "D:/FactoryOpsRuntime/native-exec-gate-probe-050"
+  },
+  "write_paths": [
+    "coordination/collab/results/native-complete-boundary-048.json"
+  ],
+  "acceptance": [
+    "Read only advice, no source changes, SDK/GPU/ROS/WSL/server/Git mutations/new sessions or new instance. Both probes are closed; root owns all runtime. Preserve source and failure originals. No active/closed bag SQL needed: closed-native-tail.json already contains selected evidence.",
+    "018 source direct annotator.get_data poll accepted increasing native timestamps until234.267, then111 subperiod regressions; header delta as short10us. Fullscan OGN outputs exec is documented to fire only when full scan accumulated; cause remains unconfirmed. Capture pre/post same-physics-frame184pairs showed0timestamp changes.",
+    "SDK source scripts/writers.py _connect_to_writer connects native execution output to async gate; cached Python Writer probe049 had data until20s manual Replicator capture then cache freshness failed at20.233s. Its process job passed closure, but own probe report FAILED. Do not recommend that exact rejected path blindly.",
+    "Direct polling of outputs:exec flag with owned snapshot probe050 missed completed data on one sensor and failed0.3s freshness at1.5sim while direct poll advanced. Exec values0/1 are transient: do not recommend polling that flag or widening freshness/TTL/cap to pass.",
+    "Find the smallest supported event/callback or connected-node path from installed SDK primary source/docs, or a supported capture protocol that leaves native fullscan scheduling intact. Consider but verify attribute change callbacks or Python OmniGraph sink; no invented APIs or private runtime resets. Keep sensor native time, bodies and rates; no GT/synthetic scan/clock shift.",
+    "Return exact API/source paths+line ranges+digests and one recommended next isolated probe with limits/failure condition. Compare two candidates only if needed; no broad research review loop, tests or GPU runs. SDK E:/IsaacSim/isaac-sim-4.5.0; Replicator1.11.35+106.5.0. Root will implement/run the next chosen probe."
+  ],
+  "result_path": "coordination/collab/results/native-complete-boundary-048.json"
+}

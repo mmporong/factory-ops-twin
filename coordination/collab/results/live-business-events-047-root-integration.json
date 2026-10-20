@@ -1,0 +1,81 @@
+{
+  "run_id": "6038caf54aa2409485b4023a460a5e0a",
+  "connection": "stale",
+  "mode": "live",
+  "count": 10,
+  "events": [
+    {
+      "id": "ros:6038caf54aa2409485b4023a460a5e0a:14",
+      "time_s": 5.266666941,
+      "message": "ROS 시각 · 가상 충전 예약 · CH1"
+    },
+    {
+      "id": "ros:6038caf54aa2409485b4023a460a5e0a:15",
+      "time_s": 5.266666941,
+      "message": "ROS 시각 · 가상 충전 상태 · carter1 CH1: 접근"
+    },
+    {
+      "id": "ros:6038caf54aa2409485b4023a460a5e0a:63",
+      "time_s": 43.950002292,
+      "message": "ROS 시각 · 가상 충전소 Nav2 도착 · CH1"
+    },
+    {
+      "id": "ros:6038caf54aa2409485b4023a460a5e0a:65",
+      "time_s": 43.950002292,
+      "message": "ROS 시각 · 가상 충전 상태 · carter1 CH1: 기하 도킹 대기"
+    },
+    {
+      "id": "ros:6038caf54aa2409485b4023a460a5e0a:72",
+      "time_s": 45.016669014,
+      "message": "ROS 시각 · 가상 충전 상태 · carter1 CH1: 가상 SOC 충전"
+    },
+    {
+      "id": "ros:6038caf54aa2409485b4023a460a5e0a:87",
+      "time_s": 71.850003747,
+      "message": "ROS 시각 · 입고 자재 원장 인수 · F4-002 · S3"
+    },
+    {
+      "id": "ros:6038caf54aa2409485b4023a460a5e0a:112",
+      "time_s": 95.56667165,
+      "message": "ROS 시각 · 가상 충전 상태 · carter1 CH1: 가상 분리 대기"
+    },
+    {
+      "id": "ros:6038caf54aa2409485b4023a460a5e0a:113",
+      "time_s": 95.616671653,
+      "message": "ROS 시각 · 가상 충전 예약 해제 · CH1"
+    },
+    {
+      "id": "ros:6038caf54aa2409485b4023a460a5e0a:135",
+      "time_s": 120.950006308,
+      "message": "ROS 시각 · 입고 자재 원장 인수 · F4-001 · S1"
+    },
+    {
+      "id": "ros:6038caf54aa2409485b4023a460a5e0a:164",
+      "time_s": 202.416677223,
+      "message": "ROS 시각 · 입고 자재 원장 인계 · F4-002 · CI"
+    }
+  ],
+  "projection": {
+    "source": "D:\\FactoryOpsRuntime\\local45-transport-018\\results\\run\\actions.jsonl",
+    "run_id": "6038caf54aa2409485b4023a460a5e0a",
+    "source_clock": "ros_sim_time",
+    "primary_clock": "mission_elapsed_time",
+    "time_transform": "none; original journal timestamp preserved",
+    "sequence_policy": "append-only event_seq; replacement/truncation resets history",
+    "read_limit_bytes": 262144,
+    "max_line_bytes": 65536,
+    "retained_event_limit": 100,
+    "bytes_read": 136310,
+    "status": "joined",
+    "bytes_remaining": 0,
+    "catching_up": false,
+    "partial_line": false,
+    "same_run_rows": 187,
+    "foreign_rows": 0,
+    "malformed_rows": 0,
+    "oversized_rows": 12,
+    "duplicate_rows": 0,
+    "byte_offset": 3806326,
+    "retained_events": 10
+  }
+}

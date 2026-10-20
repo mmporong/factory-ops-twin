@@ -1,0 +1,265 @@
+{
+  "schema_version": 1,
+  "run_id": "6038caf54aa2409485b4023a460a5e0a",
+  "source_commit": "7a9928e4f060906bbdee6105b8b71a5e20046372",
+  "status": "failed_native_anomaly_storage_cap",
+  "last_observed_sim_s": 235.5000122822821,
+  "primary_sdk_error": "carter1/front native scan anomaly storage cap16 exceeded",
+  "secondary_failures": [
+    "ROS fresh pose unavailable after SDK failure",
+    "SDK cleanup exceeded90s after ROS foreground exit"
+  ],
+  "sdk_cause_confirmed": false,
+  "anomaly_count_preserved": 111,
+  "anomaly_interval_sim_s": [
+    234.26667888462543,
+    234.91667891852558
+  ],
+  "native_rejected_buffers_preserved": true,
+  "rejected_snapshots_hash_verified": true,
+  "closed_tail": {
+    "path": "D:\\FactoryOpsRuntime\\local45-transport-018\\closed-native-tail.json",
+    "bag_bytes": 537092096,
+    "bag_sha256": "cb355c079c59ffbddbe9874da3a988b5b48e75a3016c3de3a9b5750bc8aa5b85",
+    "scope": "closed last128 messages/topic and preserved native rejection buffers; not full quality qualification",
+    "all_selected_tail_header_regressions": 0
+  },
+  "startup_ready": true,
+  "sdk_actual_ros_contexts": {
+    "contexts": {
+      "carter1": {
+        "configured_transport_profile": "D:\\FactoryOpsRuntime\\local45-transport-018\\fastdds-udp.xml",
+        "domain_id": 73,
+        "expected_domain_id": 73,
+        "namespace": "/carter1",
+        "rclpy_file": "e:\\isaacsim/isaac-sim-4.5.0/exts/isaacsim.ros2.bridge\\humble\\rclpy\\rclpy\\__init__.py",
+        "rmw_identifier": "rmw_fastrtps_cpp"
+      },
+      "carter2": {
+        "configured_transport_profile": "D:\\FactoryOpsRuntime\\local45-transport-018\\fastdds-udp.xml",
+        "domain_id": 73,
+        "expected_domain_id": 73,
+        "namespace": "/carter2",
+        "rclpy_file": "e:\\isaacsim/isaac-sim-4.5.0/exts/isaacsim.ros2.bridge\\humble\\rclpy\\rclpy\\__init__.py",
+        "rmw_identifier": "rmw_fastrtps_cpp"
+      },
+      "carter3": {
+        "configured_transport_profile": "D:\\FactoryOpsRuntime\\local45-transport-018\\fastdds-udp.xml",
+        "domain_id": 73,
+        "expected_domain_id": 73,
+        "namespace": "/carter3",
+        "rclpy_file": "e:\\isaacsim/isaac-sim-4.5.0/exts/isaacsim.ros2.bridge\\humble\\rclpy\\rclpy\\__init__.py",
+        "rmw_identifier": "rmw_fastrtps_cpp"
+      },
+      "carter4": {
+        "configured_transport_profile": "D:\\FactoryOpsRuntime\\local45-transport-018\\fastdds-udp.xml",
+        "domain_id": 73,
+        "expected_domain_id": 73,
+        "namespace": "/carter4",
+        "rclpy_file": "e:\\isaacsim/isaac-sim-4.5.0/exts/isaacsim.ros2.bridge\\humble\\rclpy\\rclpy\\__init__.py",
+        "rmw_identifier": "rmw_fastrtps_cpp"
+      }
+    },
+    "run_id": "6038caf54aa2409485b4023a460a5e0a"
+  },
+  "ros_startup": {
+    "run_id": "6038caf54aa2409485b4023a460a5e0a",
+    "sim_time_s": 5.116666933,
+    "wall_time_unix_s": 1792476297.8581922,
+    "ready": true,
+    "ros_context": {
+      "domain_id": 73,
+      "expected_domain_id": 73,
+      "rmw_identifier": "rmw_fastrtps_cpp",
+      "rclpy_file": "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/__init__.py",
+      "configured_transport_profile": "/mnt/d/FactoryOpsRuntime/local45-transport-018/fastdds-udp.xml"
+    },
+    "lifecycle_last_polled": {
+      "carter1/planner_server": 3,
+      "carter1/controller_server": 3,
+      "carter1/bt_navigator": 3,
+      "carter2/planner_server": 3,
+      "carter2/controller_server": 3,
+      "carter2/bt_navigator": 3,
+      "carter3/planner_server": 3,
+      "carter3/controller_server": 3,
+      "carter3/bt_navigator": 3,
+      "carter4/planner_server": 3,
+      "carter4/controller_server": 3,
+      "carter4/bt_navigator": 3
+    },
+    "robots": {
+      "carter1": {
+        "odom_count": 45,
+        "last_odom_stamp_ns": 5100000266,
+        "scan_counts": {
+          "front_raw": 7,
+          "rear_raw": 7,
+          "front": 7,
+          "rear": 7,
+          "localization_front": 7,
+          "localization_rear": 7
+        },
+        "raw_receipts": {
+          "raw_counts": {
+            "front": 20,
+            "rear": 19
+          },
+          "last_raw_stamp_ns": {
+            "front": 4916698173,
+            "rear": 4916698173
+          },
+          "last_filtered_stamp_ns": {
+            "front": 4916698173,
+            "rear": 4916698173
+          }
+        },
+        "pose": {
+          "x_m": 12.000000006108952,
+          "y_m": 1.500955462531733,
+          "yaw_rad": 1.5707997366515387,
+          "stamp_s": 5.100000266
+        }
+      },
+      "carter2": {
+        "odom_count": 44,
+        "last_odom_stamp_ns": 5100000266,
+        "scan_counts": {
+          "front_raw": 7,
+          "rear_raw": 7,
+          "front": 7,
+          "rear": 7,
+          "localization_front": 7,
+          "localization_rear": 7
+        },
+        "raw_receipts": {
+          "raw_counts": {
+            "front": 21,
+            "rear": 21
+          },
+          "last_raw_stamp_ns": {
+            "front": 4916698173,
+            "rear": 4916698173
+          },
+          "last_filtered_stamp_ns": {
+            "front": 4916698173,
+            "rear": 4916698173
+          }
+        },
+        "pose": {
+          "x_m": 12.000000000879718,
+          "y_m": 20.499017369896855,
+          "yaw_rad": -1.5708070883736112,
+          "stamp_s": 5.100000266
+        }
+      },
+      "carter3": {
+        "odom_count": 44,
+        "last_odom_stamp_ns": 5100000266,
+        "scan_counts": {
+          "front_raw": 7,
+          "rear_raw": 7,
+          "front": 7,
+          "rear": 7,
+          "localization_front": 7,
+          "localization_rear": 7
+        },
+        "raw_receipts": {
+          "raw_counts": {
+            "front": 21,
+            "rear": 20
+          },
+          "last_raw_stamp_ns": {
+            "front": 4916698173,
+            "rear": 4933364841
+          },
+          "last_filtered_stamp_ns": {
+            "front": 4916698173,
+            "rear": 4933364841
+          }
+        },
+        "pose": {
+          "x_m": 16.999999992369954,
+          "y_m": 1.5009732884677085,
+          "yaw_rad": 1.5707933425347456,
+          "stamp_s": 5.100000266
+        }
+      },
+      "carter4": {
+        "odom_count": 44,
+        "last_odom_stamp_ns": 5100000266,
+        "scan_counts": {
+          "front_raw": 6,
+          "rear_raw": 7,
+          "front": 6,
+          "rear": 7,
+          "localization_front": 6,
+          "localization_rear": 7
+        },
+        "raw_receipts": {
+          "raw_counts": {
+            "front": 18,
+            "rear": 20
+          },
+          "last_raw_stamp_ns": {
+            "front": 4916698173,
+            "rear": 4916698173
+          },
+          "last_filtered_stamp_ns": {
+            "front": 4916698173,
+            "rear": 4916698173
+          }
+        },
+        "pose": {
+          "x_m": 17.000000008128147,
+          "y_m": 20.499025979167705,
+          "yaw_rad": -1.570805217914756,
+          "stamp_s": 5.100000266
+        }
+      }
+    }
+  },
+  "windows_closed": true,
+  "linux_closed": true,
+  "cleanup_errors": [],
+  "completed_orders": 0,
+  "empty_returns_completed": 0,
+  "empty_return_jobs": [
+    {
+      "destination": "S3",
+      "order_id": "F4-002",
+      "ready_time_s": 197.200010285,
+      "robot_id": null,
+      "source": "CI",
+      "state": "ready",
+      "task_id": "empty:F4-002",
+      "tote_id": "F4-TOTE-002"
+    }
+  ],
+  "material_revision": 4,
+  "conservation": [
+    {
+      "balanced": true,
+      "consumed": 2,
+      "in_totes": 2,
+      "initial": 60,
+      "on_hand": 56,
+      "replenished": 0,
+      "sku": "sensor-kit"
+    }
+  ],
+  "virtual_charge_released": true,
+  "fourth_robot_outbound_assigned_not_moved": true,
+  "same_run_web_verified": true,
+  "web_originals": "artifacts/local45/018-web",
+  "media_capture_points": 23,
+  "goal80_complete": false,
+  "full_quality_pass": false,
+  "capture_pre_post_native_stamp_changes_at_same_physics_frame": 0,
+  "capture_pair_sensor_observations": 184,
+  "findings": [
+    "111 preserved rejections from8sensors clustered within0.65sim s; admission recovered between some rejections but total storage cap triggered",
+    "closed last128 per raw scan show10us-scale positive header increments near failure; raw same-SDK frame coherence and completed-scan event gating remain unverified",
+    "same frozen-frame native pre/post capture timestamps did not change; no capture cause established"
+  ]
+}
