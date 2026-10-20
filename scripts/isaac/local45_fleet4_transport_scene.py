@@ -17,7 +17,7 @@ from scripts.isaac.fleet4_transport_scene import FleetTransportLifecycle, SOURCE
 RESULT_FILE = "local45-fleet4-transport-scene.json"
 LOCAL_SOURCE_PINS = BASE_SOURCE_PINS | frozenset({
     "scripts/isaac/local45_fleet4_transport_scene.py", "factory_ops/isaac45_runtime.py",
-    "factory_ops/flat_scan_observation.py", "factory_ops/flat_scan_ros.py", "factory_ops/flat_scan_completion.py", "factory_ops/compat.py",
+    "factory_ops/flat_scan_observation.py", "factory_ops/flat_scan_ros.py", "factory_ops/flat_scan_completion.py", "factory_ops/physx_planar.py", "factory_ops/compat.py",
     "factory_ops/operations/model.py", "scripts/isaac/robot_qualification.py",
     "scripts/isaac/nav_scene.py", "scripts/isaac/stage_smoke.py",
     "factory_ops/visual_state.py", "factory_ops/wsl_process_supervisor.py",
@@ -27,8 +27,11 @@ LOCAL_SOURCE_PINS = BASE_SOURCE_PINS | frozenset({
 
 
 class Local45FleetLifecycle(FleetTransportLifecycle):
-    def __init__(self, root: Path, run_id: str) -> None:
+    def __init__(self, root: Path, run_id: str, *, lidar_backend: str = "rtx_flat_scan") -> None:
         super().__init__(root, run_id)
+        if lidar_backend not in {"rtx_flat_scan", "physx_planar"}:
+            raise ValueError("unsupported local45 observation backend")
+        self.lidar_backend = lidar_backend
         self._native_observers: list[Any] = []
         self._native_journal_opened = False
         self._native_periodic_ns: int | None = None
@@ -36,6 +39,8 @@ class Local45FleetLifecycle(FleetTransportLifecycle):
         self._observer_sources = {name: g2_scene.base._sha256(project/name) for name in (
             "scripts/isaac/local45_fleet4_transport_scene.py", "factory_ops/isaac45_runtime.py",
             "factory_ops/flat_scan_observation.py")}
+        if self.lidar_backend == "physx_planar":
+            self._observer_sources["factory_ops/physx_planar.py"] = g2_scene.base._sha256(project/"factory_ops/physx_planar.py")
 
     def prepare_worker_paths(self, scene_arg: Path, output_arg: Path) -> tuple[Path, Path]:
         scene, output = super().prepare_worker_paths(scene_arg, output_arg)
@@ -63,6 +68,9 @@ class Local45FleetLifecycle(FleetTransportLifecycle):
                 topic = "/"+robot["namespace"]+"/scan_"+row["name"]+"_raw"
                 if row["prim_path"] != path or row["topic"] != topic:
                     raise ValueError("native sensor prim/topic differs from the registry")
+                expected_backend = "physx_collision_planar" if self.lidar_backend == "physx_planar" else "rtx_flat_scan"
+                if row.get("sensor_backend", "rtx_flat_scan") != expected_backend:
+                    raise ValueError("sensor metadata differs from the selected observation backend")
                 identity = {"run_id": self.run_id, "scenario_id": self.session["scenario_id"],
                     "robot_id": row["robot_id"], "side": row["name"], "prim_path": path,
                     "topic": topic, "frame_id": row["frame_id"],
@@ -78,8 +86,9 @@ class Local45FleetLifecycle(FleetTransportLifecycle):
                     pass  # Sensor ownership retains the handle for final cleanup.
             self._native_observers.clear()
             raise
-        return {"schema_name": "local45-flat-scan-observation", "schema_version": 1,
-            "annotator": "RtxSensorCpuIsaacComputeRTXLidarFlatScanSimulationTime",
+        return {"schema_name": "local45-physx-planar-observation" if self.lidar_backend == "physx_planar" else "local45-flat-scan-observation", "schema_version": 1,
+            "annotator": None if self.lidar_backend == "physx_planar" else "RtxSensorCpuIsaacComputeRTXLidarFlatScanSimulationTime",
+            "sensor_backend": self.lidar_backend,
             "sensor_count": len(expected), "registrations": registrations,
             "not_equivalent_to_gmo": True}
 
@@ -88,7 +97,7 @@ class Local45FleetLifecycle(FleetTransportLifecycle):
             return
         if self.output is None:
             raise RuntimeError("native lidar journal requires the owned output")
-        path = self.output/"local45-lidar-observations.jsonl"
+        path = self.output/("physx-planar-observations.jsonl" if self.lidar_backend == "physx_planar" else "local45-lidar-observations.jsonl")
         if not self._native_journal_opened:
             if path.exists() or path.is_symlink():
                 raise ValueError("native lidar journal must be new")
@@ -97,7 +106,9 @@ class Local45FleetLifecycle(FleetTransportLifecycle):
             row = observer.read(read_at_sim_time_s=sim_time_s, read_at_physics_frame=physics_frame,
                 timeline_playing=bool(self.timeline is not None and self.timeline.is_playing()), phase=phase)
             row.update(runtime_version="4.5", observer_sources_sha256=self._observer_sources,
-                read_cadence="periodic1Hz and capture pre/post; unique index counts only sampled native timestamps")
+                read_cadence=("periodic1Hz and capture pre/post; cached authored World acquisition, no native timestamp"
+                    if self.lidar_backend == "physx_planar" else
+                    "periodic1Hz and capture pre/post; unique index counts only sampled native timestamps"))
             g2_scene._append_jsonl(path, row)
 
     def step(self, sim_time_s: float, physics_frame: int) -> None:
@@ -140,6 +151,7 @@ def main() -> int:
     parser.add_argument("--output", required=True, type=Path)
     parser.add_argument("--run-id", required=True)
     parser.add_argument("--capture-resolution", choices=("640x360", "1280x720"), default="640x360")
+    parser.add_argument("--lidar-backend", choices=("rtx_flat_scan", "physx_planar"), default="rtx_flat_scan")
     args = parser.parse_args()
     root = args.bundle.resolve(strict=True)
     compiled = load_bundle(root)
@@ -153,7 +165,8 @@ def main() -> int:
     return g2_scene._run(shared, qualification=QUALIFICATION, scenario_ids={scenario_id},
         result_file=RESULT_FILE, expected_robot_count=4, local_sdk45=True,
         capture_resolution=tuple(int(value) for value in args.capture_resolution.split("x")),
-        scene_extension=Local45FleetLifecycle(root, args.run_id), extra_inputs=extras)
+        lidar_backend=args.lidar_backend,
+        scene_extension=Local45FleetLifecycle(root, args.run_id, lidar_backend=args.lidar_backend), extra_inputs=extras)
 
 
 if __name__ == "__main__":

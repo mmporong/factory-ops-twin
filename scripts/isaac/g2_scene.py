@@ -492,15 +492,17 @@ def _ros_context_details(rclpy: Any, node: Any, expected_domain: int) -> dict[st
 
 def _setup_native_lidar_publication(
     sensors: Sequence[Any], metadata: Sequence[Mapping[str, Any]], robots: Mapping[str, Any],
-    *, admission: Mapping[str, Any] | None = None,
+    *, admission: Mapping[str, Any] | None = None, backend: str = "rtx_flat_scan",
 ) -> Callable[[], None]:
-    """Publish each new native scan once; camera capture never owns these ROS writers."""
+    """Publish sensor acquisitions; camera capture never owns these ROS writers."""
     from factory_ops.flat_scan_ros import NativeFlatScanPublisher, NativeScanAdmissionGuard
     from rclpy.qos import QoSProfile, ReliabilityPolicy
     from sensor_msgs.msg import LaserScan
 
     if len(sensors) != len(metadata):
         raise ValueError("native publication requires matched sensor metadata")
+    if backend not in {"rtx_flat_scan", "physx_planar"}:
+        raise ValueError("unsupported local45 lidar publication backend")
     bindings = []
     for index, (sensor, row) in enumerate(zip(sensors, metadata)):
         runtime = robots[row["robot_id"]]
@@ -520,8 +522,12 @@ def _setup_native_lidar_publication(
                 setattr(message, field, fields[field])
             target.publish(message)
 
-        converter: Any = NativeFlatScanPublisher(publish, str(row["frame_id"]))
-        if admission is not None:
+        if backend == "physx_planar":
+            from factory_ops.physx_planar import PhysxPlanarPublisher
+            converter: Any = PhysxPlanarPublisher(publish, str(row["frame_id"]))
+        else:
+            converter = NativeFlatScanPublisher(publish, str(row["frame_id"]))
+        if admission is not None and backend == "rtx_flat_scan":
             identity = {**dict(row), "run_id": admission["run_id"], "sensor_index": index,
                 "side": str(row["name"]),
                 "render_product_path": str(getattr(getattr(sensor, "_product", None), "path", "")) or None}
@@ -535,17 +541,20 @@ def _setup_native_lidar_publication(
 
     def publish_available() -> None:
         for sensor, converter, states, side, robot_id in bindings:
-            payload = sensor.read_native_scan()
+            payload = (sensor.read_planar_snapshot() if backend == "physx_planar"
+                       else sensor.read_native_scan())
             try:
-                if admission is None:
+                if admission is None or backend == "physx_planar":
                     states[side] = converter.publish(payload)
                 else:
                     states[side] = converter.publish(payload,
                         observed_sim_time_s=admission["simulation_time"](),
                         physics_frame=admission["physics_frame"]())
             except ValueError as error:
-                stamp = payload.get("timeStamp") if isinstance(payload, Mapping) else None
-                raise ValueError(f"native scan {robot_id}/{side} timeStamp={stamp!r}: {error}") from error
+                stamp = payload.get("acquired_world_time_s" if backend == "physx_planar" else "timeStamp") if isinstance(payload, Mapping) else None
+                label = (f"physx_planar scan {robot_id}/{side} acquired_world_time_s={stamp!r}"
+                         if backend == "physx_planar" else f"native scan {robot_id}/{side} timeStamp={stamp!r}")
+                raise ValueError(f"{label}: {error}") from error
 
     return publish_available
 
@@ -800,9 +809,12 @@ def _run(
     expected_robot_count: int = 2,
     local_sdk45: bool = False,
     capture_resolution: tuple[int, int] | None = None,
+    lidar_backend: str = "rtx_flat_scan",
 ) -> int:
     if capture_resolution is not None and not local_sdk45:
         raise ValueError("custom transport capture resolution is limited to local45 development")
+    if lidar_backend not in {"rtx_flat_scan", "physx_planar"} or (not local_sdk45 and lidar_backend != "rtx_flat_scan"):
+        raise ValueError("alternate lidar backend requires explicit local45 development")
     render_resolution = capture_resolution or base.RENDER_RESOLUTION
     started = time.monotonic()
     app = rclpy = clock_node = session = timeline = np = rep = None
@@ -848,6 +860,7 @@ def _run(
                 raise base.SmokeError("local45 development entry requires the installed SDK4.5")
             result["runtime_compatibility"] = {
                 "profile": "local45_development", "sdk_version": version,
+                "lidar_backend": lidar_backend,
                 "canonical_6_2_qualification": False,
                 "rgb_resolution": list(render_resolution),
                 "rgb_use": "development operation evidence; final portfolio capture can select1280x720",
@@ -1046,6 +1059,7 @@ def _run(
                 config, robots, stage, Usd, UsdGeom, Gf, SimulationManager, app,
                 _author_lidar_local_transform, _verify_lidar_local_transform,
                 native_publication=True,
+                backend=lidar_backend,
             )
         else:
             lidar_sensors, lidar_metadata = _setup_lidars(
@@ -1068,7 +1082,8 @@ def _run(
                                     admission={"run_id": args.run_id, "output": output,
                                         "physics_dt_s": config["physics_dt_s"],
                                         "simulation_time": SimulationManager.get_simulation_time,
-                                        "physics_frame": SimulationManager.get_num_physics_steps})
+                                        "physics_frame": SimulationManager.get_num_physics_steps},
+                                    backend=lidar_backend)
                                 if local_sdk45 else lambda: None)
         timeline = omni.timeline.get_timeline_interface()
         lidar_hook = getattr(scene_extension, "register_lidar_sensors", None)
@@ -1102,14 +1117,22 @@ def _run(
             _spin_nodes(rclpy, [clock_node, *robot_nodes])
         if not all(runtime["ros"]["scan_front_raw"] > 0 and runtime["ros"]["scan_rear_raw"] > 0
                    for runtime in robots.values()):
-            raise base.SmokeError("not all declared robot RTX LaserScan publishers produced data")
+            raise base.SmokeError("not all declared robot LaserScan publishers produced data")
         if local_sdk45:
-            result["runtime_compatibility"]["lidar_publication"] = {
+            publication = {
                 "source": "native_FlatScan_to_rclpy_LaserScan", "timestamp_policy": "native_first_beam_seconds",
                 "deduplication": "strictly_increasing_native_timestamp", "replicator_ros_writer": False,
                 "admission_policy": "authored_one_scan_recovery_v1", "max_stored_anomalies_per_sensor": 16,
             }
-            _atomic_json(output / "native-scan-startup.json", {
+            startup_name = "native-scan-startup.json"
+            if lidar_backend == "physx_planar":
+                publication = {"source": "physx_collision_planar", "timestamp_policy": "authored_world_acquisition",
+                    "deduplication": "actual_world_physics_frame", "replicator_ros_writer": False,
+                    "time_increment_s": 0, "rtx_rplidar_equivalent": False,
+                    "native_absolute_timestamp_available": False, "sensor_quality_verified": False}
+                startup_name = "physx-scan-startup.json"
+            result["runtime_compatibility"]["lidar_publication"] = publication
+            _atomic_json(output / startup_name, {
                 "run_id": args.run_id, "scope": "initial ROS scan headers; no sensor quality qualification",
                 "robots": {key: {"samples": value["ros"]["scan_samples"],
                                   "publication": value["ros"]["native_scan_publication"]}

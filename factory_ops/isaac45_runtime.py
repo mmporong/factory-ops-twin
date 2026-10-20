@@ -383,20 +383,25 @@ class Runtime45:
         return records
 
     def setup_lidars(self, config, robots, stage, Usd, UsdGeom, Gf,
-                     SimulationManager, app, author_mount, verify_mount, *, native_publication=False):
+                     SimulationManager, app, author_mount, verify_mount, *, native_publication=False,
+                     backend="rtx_flat_scan"):
         if type(native_publication) is not bool:
             raise ValueError("native_publication must be a boolean")
+        if backend not in ("rtx_flat_scan", "physx_planar"):
+            raise ValueError("unknown local45 lidar backend")
         if SimulationManager is not self.SimulationManager or app is not self.app:
             raise ValueError("lidars and physics must belong to this runtime/application")
         if stage != self._bindings.usd.get_context().get_stage():
             raise ValueError("lidar stage differs from the current runtime stage")
-        profile_path = _sdk_root() / "exts/isaacsim.sensors.rtx/data/lidar_configs/SLAMTEC/RPLIDAR_S2E.json"
-        profile_bytes = profile_path.read_bytes()
-        profile = json.loads(profile_bytes)["profile"]
-        fields = ("scanRateBaseHz", "reportRateBaseHz", "nearRangeM", "farRangeM")
-        if (profile.get("scanType") != "rotary" or any(not _finite(profile[key]) or profile[key] <= 0 for key in fields)
-                or profile["nearRangeM"] >= profile["farRangeM"]):
-            raise ValueError("installed rotary lidar profile parameters are invalid")
+        profile_path, profile_bytes, profile = None, b"", {}
+        if backend == "rtx_flat_scan":
+            profile_path = _sdk_root() / "exts/isaacsim.sensors.rtx/data/lidar_configs/SLAMTEC/RPLIDAR_S2E.json"
+            profile_bytes = profile_path.read_bytes()
+            profile = json.loads(profile_bytes)["profile"]
+            fields = ("scanRateBaseHz", "reportRateBaseHz", "nearRangeM", "farRangeM")
+            if (profile.get("scanType") != "rotary" or any(not _finite(profile[key]) or profile[key] <= 0 for key in fields)
+                    or profile["nearRangeM"] >= profile["farRangeM"]):
+                raise ValueError("installed rotary lidar profile parameters are invalid")
         specs, paths, topics = [], set(), set()
         for key, runtime in robots.items():
             definition = runtime["definition"]
@@ -423,8 +428,13 @@ class Runtime45:
                 specs.append((definition, lidar, chassis, path, topic))
         if not specs:
             raise ValueError("at least one configured lidar is required")
-        # Initialize/reset World before creating any RTX sensor graph resources.
+        if backend == "physx_planar" and (len(robots) != 4 or len(specs) != 8
+                or {lidar["name"] for _, lidar, _, _, _ in specs} != {"front", "rear"}):
+            raise ValueError("PhysX planar backend requires four robots and their eight front/rear sensors")
+        # Initialize/reset World before creating either backend's sensor resources.
         SimulationManager.setup_simulation(dt=float(config["physics_dt_s"]), device="cpu")
+        if backend == "physx_planar":
+            return self._setup_physx_planar(specs, config, stage, Usd, UsdGeom, Gf, author_mount, verify_mount)
         commands = importlib.import_module("omni.kit.commands")
         rep = importlib.import_module("omni.replicator.core")
         sensors, metadata = [], []
@@ -477,6 +487,76 @@ class Runtime45:
                     cleanup_errors.append(str(cleanup_error))
             if cleanup_errors:
                 raise RuntimeError(f"lidar setup failed: {error}; cleanup: {cleanup_errors}") from error
+            raise
+
+    def _setup_physx_planar(self, specs, config, stage, Usd, UsdGeom, Gf, author_mount, verify_mount):
+        from factory_ops.physx_planar import (
+            LIDAR_PARAMETERS, PROFILE_SHA256, PUBLICATION_HZ, SENSOR_BACKEND, PhysxPlanarSensor,
+        )
+
+        importlib.import_module("isaacsim.core.utils.extensions").enable_extension("isaacsim.sensors.physx")
+        interface = importlib.import_module("isaacsim.sensors.physx._range_sensor").acquire_lidar_sensor_interface()
+        commands = importlib.import_module("omni.kit.commands")
+        sensors, metadata = [], []
+        attempted_paths = []
+        try:
+            for definition, lidar, chassis, path, topic in specs:
+                attempted_paths.append(path)
+                ok, lidar_schema = commands.execute("RangeSensorCreateLidar", path=path, parent=None, **dict(LIDAR_PARAMETERS))
+                if not ok or not lidar_schema or str(lidar_schema.GetPath()) != path or not lidar_schema.GetPrim().IsValid():
+                    raise RuntimeError("PhysX command did not create the exact owned sensor prim")
+
+                def remove_owned(active_path=path):
+                    if stage.GetPrimAtPath(active_path).IsValid() and not stage.RemovePrim(active_path):
+                        raise RuntimeError("could not remove owned PhysX sensor " + active_path)
+                    if stage.GetPrimAtPath(active_path).IsValid():
+                        raise RuntimeError("owned PhysX sensor remains " + active_path)
+
+                sensor = PhysxPlanarSensor(interface, path, self.SimulationManager.world, remove_owned)
+                sensors.append(sensor)
+                prim = lidar_schema.GetPrim()
+                author_mount(prim, UsdGeom, Gf, lidar["translation_xyz_m"], float(lidar["yaw_rad"]))
+                metadata.append({"robot_id": definition["robot_id"], "name": lidar["name"],
+                    "namespace": definition["namespace"], "prim_path": path, "topic": topic,
+                    "frame_id": lidar["frame_id"], "translation_xyz_m": list(lidar["translation_xyz_m"]),
+                    "yaw_rad": float(lidar["yaw_rad"]), "profile": "authored_physx_planar_v1",
+                    "requested_profile": config.get("lidar_profile"),
+                    "profile_path": str(Path(__file__).with_name("physx_planar.py")),
+                    "profile_sha256": PROFILE_SHA256, "authored_parameters": dict(LIDAR_PARAMETERS),
+                    "sensor_backend": SENSOR_BACKEND, "rotation_frequency_hz": PUBLICATION_HZ,
+                    "rotation_rate_hz": 0.0, "report_rate_hz": PUBLICATION_HZ,
+                    "publication_cadence_source": "authored minimum6actualWorldframes",
+                    "near_range_m": 0.1, "far_range_m": 30.0, "horizontal_resolution_deg": 0.5,
+                    "writer": "authored_PhysX_planar_to_rclpy_LaserScan", "native_publication_annotator": None,
+                    "clock_source": "authored_world_acquisition", "native_absolute_timestamp_available": False,
+                    "physics_plugin_current_step_sequence_verified": False,
+                    "parameter_source": "authored canonical JSON of factory_ops.physx_planar.LIDAR_PARAMETERS",
+                    "runtime": "SDK4.5 explicit collision-ray backend; no RTX/RPLIDAR/GMO equivalence"})
+            self.app.update()
+            for row, (_, lidar, chassis, path, _) in zip(metadata, specs):
+                row["local_transform"] = verify_mount(stage, Usd, UsdGeom, path, chassis,
+                    lidar["translation_xyz_m"], float(lidar["yaw_rad"]))
+            return sensors, metadata
+        except BaseException as error:
+            cleanup_errors = []
+            for sensor in sensors:
+                try:
+                    sensor.detach_writer(LIDAR_WRITER)
+                except Exception as cleanup_error:
+                    cleanup_errors.append(str(cleanup_error))
+            handled_paths = {sensor.prim_path for sensor in sensors}
+            for path in attempted_paths:
+                if path in handled_paths:
+                    continue
+                try:
+                    if stage.GetPrimAtPath(path).IsValid() and not stage.RemovePrim(path):
+                        raise RuntimeError("could not remove partially created PhysX sensor " + path)
+                    if stage.GetPrimAtPath(path).IsValid():
+                        raise RuntimeError("partially created PhysX sensor remains " + path)
+                except Exception as cleanup_error:
+                    cleanup_errors.append(str(cleanup_error))
+            if cleanup_errors:
+                raise RuntimeError(f"PhysX lidar setup failed: {error}; cleanup: {cleanup_errors}") from error
             raise
 
 

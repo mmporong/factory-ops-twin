@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "run_id": "05abebbf6e494605b8453186a71b1f00",
+  "source_commit": "911a7fbf90654fa9abbd9bd74be5bca8a88eaa36",
+  "status": "original_native_admission_failed",
+  "original_result_sha256": "05f6981ba99912e84ec4197861a78d952f0f2cf7691d7b911154278aa27f3fa2",
+  "original_reason": "probe assumed horizontal zenith pi/2; actual native raw row is0. Body occlusion also prevents every sensor seeing every wall.",
+  "actual_native_shape": [
+    720,
+    1
+  ],
+  "actual_native_azimuth_count": 720,
+  "actual_native_zenith": [
+    0.0
+  ],
+  "raw_units": "linear-depth float32 meters; intensity uint8 hit255/nohit0; azimuth/zenith float32 radians",
+  "front_outward_target_range_before_m": 3.700000047683716,
+  "front_outward_target_range_after_one_physics_step_m": 4.699999809265137,
+  "backward_occlusion_range_m": 0.10000000149011612,
+  "body_prim_identity_verified": false,
+  "raw_prim_paths_empty_with_semantics_disabled": true,
+  "physics_step_calls": 18,
+  "frozen_capture": {
+    "before": {
+      "world_time_s": 0.3333333507180214,
+      "world_physics_frame": 20
+    },
+    "render_calls": 4,
+    "after": {
+      "world_time_s": 0.3333333507180214,
+      "world_physics_frame": 20
+    },
+    "changed_raw_fields": {
+      "front": [],
+      "rear": []
+    }
+  },
+  "owned_copies_stable": true,
+  "python_cleanup_errors": [],
+  "sdk_close_requested": true,
+  "sdk_close_returned_recorded": false,
+  "host_job_status": "passed",
+  "host_job_closed": true,
+  "remaining_owned_pids": [],
+  "host_status_is_not_sensor_admission": true,
+  "derived_horizontal_zero_analysis_sha256": "3f236c2b5f040ebbb318e99995a04432934783c42a318c6d31330bd07d2b5e8a",
+  "sdk_static_joint_error_logs": 7,
+  "scope": "one static collision calibration; no driving/ROS/four-AMR/runtime-quality claim",
+  "next": "separate authored-World-time PhysX development backend; raw occlusion retained, defaultRTX/canonical62 unchanged",
+  "goal80_complete": false,
+  "raw_originals": "D:\\FactoryOpsRuntime\\physx-planar-admission-054"
+}

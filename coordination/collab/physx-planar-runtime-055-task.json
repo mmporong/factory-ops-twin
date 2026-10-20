@@ -1,0 +1,30 @@
+{
+  "task_id": "physx-planar-runtime-055",
+  "attempt": 1,
+  "contract_revision": 55,
+  "owner": "control",
+  "reviewer": "root",
+  "goal": "Implement one explicit local45 PhysX instantaneous planar navigation backend; root owns CLI/G2/lifecycle integration",
+  "inputs": {
+    "base_commit": "911a7fbf90654fa9abbd9bd74be5bca8a88eaa36",
+    "native_originals": "D:/FactoryOpsRuntime/physx-planar-admission-054",
+    "derived": "D:/FactoryOpsRuntime/physx-planar-admission-054/derived-horizontal-zero.json",
+    "facts": "054 raw actual arrays720x1, azimuth720, zenith[0.0] (horizontal elevation, original pi/2 test assumption wrong). Dynamic east target front range3.7->4.7 after1actualphysicsstep. Front west/rear east return0.1 because Carter body occludes; preserve, never replace behind-body beams. prim_hits empty with enable_semanticsFalse. Original report FAILED and unchanged. Job closed/no PIDs. No active ownedSDK."
+  },
+  "write_paths": [
+    "factory_ops/physx_planar.py",
+    "factory_ops/isaac45_runtime.py",
+    "tests/test_physx_planar.py",
+    "coordination/collab/results/physx-planar-runtime-055.json"
+  ],
+  "acceptance": [
+    "Only listed files; you are not alone. Root owns scripts/isaac/g2_scene.py, local45_fleet4_transport_scene.py, pair runner/source pins/CLI/Git. Do not edit those or D originals. No GPU/SDK/ROS/server/Git/new agents/deps. One bounded CPU pass +SDK3.10 cold AST; no old suites/reviews repeated.",
+    "Add setup_lidars(..., native_publication=False, backend=\"rtx_flat_scan\") keyword. Default same RTX; optional backend=\"physx_planar\" enables existing isaacsim.sensors.physx and creates8owned sensors at exact same robot/front/rear mounts, World initialized/reset BEFORE sensor creation exactly as existing path. No RTX annotator/writer/render product in this opt-in mode. Use RangeSensorCreateLidar high_lodFalse rotation_rate0 horizontalFOV360/horizontalResolution0.5 verticalFOV2/resolution1, min0.1/max30m, enable_semanticsTrue (installed test uses it with get_prim_data; paths can still be unknown). No robot freezing, joint edits or GT steering in product.",
+    "New sensor handle read_planar_snapshot() and open_native_observer(identity,min,max); detach_writer(existing LIDAR_WRITER cleanup token) removes only owned sensor prim; no parent/World deletion. Same identity/metadata keys required by existing local45 register hook (robot/name/prim/topic/frame/profile_sha256) but profile_sha256 MUST authored params digest, profile_path/source must honest authored config/module. Add sensor_backend=\"physx_collision_planar\", rotation_frequency_hz=10 authored publication cadence (rotation_rate remains0), near/far fields. Root adapts lifecycle journal separately; do not reuse FlatScan tracker/schema.",
+    "Cold-importable new module. Snapshot owns copies of actual get_linear_depth_data/intensity/azimuth/zenith plus optional prim paths; validate actual720x1 shape, zenith0 and uniform measured angles. Original ranges/order/hit arrays stay in snapshot. Before/after actual World.current_time/frame must be unchanged. Acquire only after a new actual World frame and at least6frames since last acquisition, never during same-frame re-read; cache repeated calls for publication/observer. get_num_cols_ticked must match720 else raise/no populated frame, never publish stale unknown buffer under new time. No fake native stamp/sequence. time_source=\"authored_world_acquisition\"; statement of physics plugin current-step sequence not independently available stays explicit.",
+    "Export PhysxPlanarPublisher(publish_callback, frame_id). publish(snapshot)->dict accepts None/empty warmup. Use schema_name=\"local45-physx-planar-snapshot\", acquired_world_time_s/acquired_physics_frame. Same-frame duplicate is not new acquisition; resets/nonfinite/invalid shape/changed same-frame payload fail. Measured azimuth sorted with associated raw distance/intensity only, no interpolation. Hit255 range retained (including body0.1); nohit0 ->positive infinity explicit adapter policy. ROS fields stamp_sec/nanosec from authored World snapshot time, angle_min/max/increment from measured sorted angles, time_increment0, scan_time actual accepted interval or authored0.1 first. Counters published_count/duplicate_count/warmup_count. No RTX admission guard or rewritingRTX headers.",
+    "Observer read(**reader_context) reads cached snapshot only and returns honest schema backend/source, acquisition World context, raw shapes/angle bounds/finite-range stats, self-hit count only if nonempty matched prim paths else unknown. Observer close does not close borrowed producer. Root writes physx-planar-observations.jsonl instead of FlatScan journal. No sensor-quality/hardware/native timestamp claim.",
+    "One focused CPU suite for new converter: actual-shape elevation0 fixture, measured angle/order alignment, body hit preserved, nohit inf explicit, instantaneous timing and exact World stamp, same-frame skip/reset/invalid shape and callback retry. Do not create fake SDK proof. Return API summary/source hashes; root bounded source review and actual4AMR run supply integration evidence."
+  ],
+  "result_path": "coordination/collab/results/physx-planar-runtime-055.json"
+}

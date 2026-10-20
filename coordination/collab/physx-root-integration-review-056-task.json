@@ -1,0 +1,41 @@
+{
+  "task_id": "physx-root-integration-review-056",
+  "attempt": 1,
+  "contract_revision": 56,
+  "owner": "root",
+  "reviewer": "control",
+  "goal": "One small source review of root PhysX G2/CLI/journal wiring before actual4AMR execution",
+  "inputs": {
+    "base_commit": "911a7fbf90654fa9abbd9bd74be5bca8a88eaa36",
+    "source_sha256": {
+      "scripts/isaac/g2_scene.py": "a8f72a05b996e44b8ae032b990f4ef93a045d5fade2961ec3685727ed77ec026",
+      "scripts/isaac/local45_fleet4_transport_scene.py": "4de3950c67e1afac24bfeec8f5fb147925d4d05b1598787edb67adf486f38b78",
+      "scripts/isaac/run_local45_fleet_pair.py": "15209dc1b20feae475a7dcd10b59894a16067302574c0066f77f7632b96165f8",
+      "tests/test_physx_planar_integration.py": "7a658d14fd67e4a88c608775f5d6654e7f5ee317c7586f908663a43f8452b136"
+    },
+    "root_checks": "2new real converter->8ROS wire/journal boundary tests PASS14.741s once;1affected defaultRTX wire test PASSonce; final4fileSDK3.10AST PASS. No full suite repeated.",
+    "055": "Root source review/3SHA accepted; do not re-review your own implementation or rerun11tests."
+  },
+  "read_paths": [
+    "scripts/isaac/g2_scene.py",
+    "scripts/isaac/local45_fleet4_transport_scene.py",
+    "scripts/isaac/run_local45_fleet_pair.py",
+    "tests/test_physx_planar_integration.py"
+  ],
+  "write_paths": [
+    "coordination/collab/results/physx-root-integration-review-056.json"
+  ],
+  "acceptance": [
+    "Read only changed root lines and new boundary test once; no repeated tests/SDK/GPU/ROS/Git/new agents/product edits.",
+    "DefaultRTX and canonical62 kept. PhysX explicitopt-in only; runner argument enum validated and actual CLI choice audited in host report/argv.",
+    "PhysX path uses your actual PhysxPlanarPublisher/read_planar_snapshot without RTX timestamp admission/restamping; same8rawtopics/frames/QoS/resources kept.",
+    "Lifecycle exact8sensor identity/backend check, separatephysxjournal, sourcepins include newmodule; source/time schemahonest. Native startup metadata separatefiles notFlatScan/RPLIDAR claims.",
+    "Report PASS or concrete blocker, actual4sourceSHAs. No broad review or unrelated cleanup. Root does actualnativeproof after source acceptance."
+  ],
+  "result_path": "coordination/collab/results/physx-root-integration-review-056.json",
+  "affected_followup": {
+    "path": "scripts\\isaac\\local45_fleet4_transport_scene.py",
+    "source_sha256": "6e00a32ddb7bbc6ca3c8eea179f755f88452d6ba77cbc31c9dc576a5c72a3fda",
+    "change": "Only read_cadence annotation now says authored World/no native timestamp forPhysX; RTX text retained. No behavior change."
+  }
+}

@@ -140,9 +140,12 @@ def monitor_pair(worker, owner: WslProcessSupervisor, *, started: float, bound: 
     return exit_record
 
 
-def run(stage: Path, sdk: Path, bound: int, *, charge_robot: str | None = None, charge_resume_soc: float = .8) -> int:
+def run(stage: Path, sdk: Path, bound: int, *, charge_robot: str | None = None, charge_resume_soc: float = .8,
+        lidar_backend: str = "rtx_flat_scan") -> int:
     if os.name != "nt" or not 60 <= bound <= 7200:
         raise ValueError("local development requires Windows and an explicit 60..7200s bound")
+    if lidar_backend not in {"rtx_flat_scan", "physx_planar"}:
+        raise ValueError("unsupported local45 lidar backend")
     stage, sdk = stage.resolve(strict=True), sdk.resolve(strict=True)
     if charge_robot is not None and charge_robot not in {"carter1", "carter2", "carter3", "carter4"}:
         raise ValueError("charge robot must belong to the four-AMR development fleet")
@@ -161,7 +164,8 @@ def run(stage: Path, sdk: Path, bound: int, *, charge_robot: str | None = None, 
     report = {"schema_version": 1, "run_id": run_id, "source_commit": launch["source_commit"],
         "scope": "bounded local45 development integration admission; no qualification or completion claim",
         "launcher_sha256": sha(Path(__file__)), "wsl_supervisor_sha256": sha(Path(__file__).resolve().parents[2] / "factory_ops/wsl_process_supervisor.py"),
-        "status": "starting", "wall_bound_s": bound, "windows_closed": False, "linux_closed": False}
+        "status": "starting", "wall_bound_s": bound, "windows_closed": False, "linux_closed": False,
+        "lidar_backend": lidar_backend}
     report["virtual_charging_request"] = {"robot_id": charge_robot, "resume_soc": charge_resume_soc}
     save(receipt_path, report)
     owner = WslProcessSupervisor(run_id)
@@ -210,7 +214,7 @@ def run(stage: Path, sdk: Path, bound: int, *, charge_robot: str | None = None, 
         launcher = sdk / "python.bat"
         for path in (entry, launcher, output, stage):
             linux(path)  # Same metacharacter restriction protects the vendor cmd launcher.
-        command_line = '"' + str(os.environ["COMSPEC"]) + '" /d /s /c ""' + str(launcher) + '" "' + str(entry) + '" --bundle "' + str(stage / "inputs") + '" --output "' + str(output) + '" --run-id ' + run_id + '"'
+        command_line = '"' + str(os.environ["COMSPEC"]) + '" /d /s /c ""' + str(launcher) + '" "' + str(entry) + '" --bundle "' + str(stage / "inputs") + '" --output "' + str(output) + '" --run-id ' + run_id + ' --lidar-backend ' + lidar_backend + '"'
         spec = {"run_id": run_id, "cwd": str(sdk), "command": command_line, "expected_inputs": expected}
         save(stage / "job-spec.json", spec)
         environment = {**os.environ, **ros_environment, "FACTORY_OPS_G3_SOURCE_COMMIT": launch["source_commit"],
@@ -250,6 +254,8 @@ if __name__ == "__main__":
     parser.add_argument("--wall-bound-s", type=int, default=450)
     parser.add_argument("--charge-robot", choices=("carter1", "carter2", "carter3", "carter4"))
     parser.add_argument("--charge-resume-soc", type=float, default=.8)
+    parser.add_argument("--lidar-backend", choices=("rtx_flat_scan", "physx_planar"), default="rtx_flat_scan")
     options = parser.parse_args()
     raise SystemExit(run(options.stage, options.sdk, options.wall_bound_s,
-        charge_robot=options.charge_robot, charge_resume_soc=options.charge_resume_soc))
+        charge_robot=options.charge_robot, charge_resume_soc=options.charge_resume_soc,
+        lidar_backend=options.lidar_backend))

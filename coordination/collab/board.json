@@ -1,6 +1,6 @@
 {
-  "revision": 54,
-  "updated_at": "2026-10-20T08:40:31.794791+00:00",
+  "revision": 56,
+  "updated_at": "2026-10-20T09:06:28.741437+00:00",
   "scope": {
     "excluded": "실물 로봇 실행, 새 유료 서비스/에셋, 공개 배포",
     "project_root": "C:\\Users\\LIMMM\\factory-ops-twin",
@@ -20,7 +20,7 @@
       "role": "dashboard frontend author",
       "name": "control",
       "agent_kind": "codex",
-      "status": "054 source accepted; no pending control task; root isolated native candidate next",
+      "status": "055/056 source accepted; no pending control task; root021 actual next",
       "session": "default",
       "agent_session": "01a152aa-24b4-7a31-92e3-a2b620f4feeb",
       "terminal_id": "term_65e06d27e415810",
@@ -1042,10 +1042,50 @@
         "coordination/collab/results/physx-planar-admission-054.json"
       ],
       "result_path": "coordination/collab/results/physx-planar-admission-054.json",
-      "status": "accepted_source_native_pending",
+      "status": "accepted_source_native_failed",
       "ACK": true,
       "task_path": "coordination/collab/physx-planar-admission-054-task.json",
-      "acceptance_record": "Root one source pass: exact-owned prim lifetime, native arrays before derivation, inferred shape checks and explicit pending conditions;1SHA matched. Author cold SDK AST once; no rerun. No runtime success claim.020 bothclosed and terminal; root owns isolated native run."
+      "acceptance_record": "Root one source pass: exact-owned prim lifetime, native arrays before derivation, inferred shape checks and explicit pending conditions;1SHA matched. Author cold SDK AST once; no rerun. No runtime success claim.020 bothclosed and terminal; root owns isolated native run.",
+      "native_execution": "Original failed, angular-row assumption wrong; raw720x1/zenith0 and front target1step response available; body occlusion preserved. SDK static-joint errors and missing close-return record preserved; host job closed with0PID. No transport admission."
+    },
+    {
+      "task_id": "physx-planar-runtime-055",
+      "attempt": 1,
+      "contract_revision": 55,
+      "owner": "control",
+      "reviewer": "root",
+      "write_paths": [
+        "factory_ops/physx_planar.py",
+        "factory_ops/isaac45_runtime.py",
+        "tests/test_physx_planar.py",
+        "coordination/collab/results/physx-planar-runtime-055.json"
+      ],
+      "result_path": "coordination/collab/results/physx-planar-runtime-055.json",
+      "status": "accepted_cpu_native_pending",
+      "ACK": true,
+      "task_path": "coordination/collab/physx-planar-runtime-055-task.json",
+      "acceptance_record": "Root one bounded source pass and3SHA match. Original raw order/hit preservation, authored World time/frame gating/copy, optional prim-identity unknown, callback retry/owned cleanup preserved. Author11new CPU cases and SDK AST once; root2new G2/journal integration cases once. No native four-AMR success claimed."
+    },
+    {
+      "task_id": "physx-root-integration-review-056",
+      "attempt": 1,
+      "contract_revision": 56,
+      "owner": "root",
+      "reviewer": "control",
+      "write_paths": [
+        "coordination/collab/results/physx-root-integration-review-056.json"
+      ],
+      "result_path": "coordination/collab/results/physx-root-integration-review-056.json",
+      "status": "accepted_source_native_pending",
+      "ACK": true,
+      "task_path": "coordination/collab/physx-root-integration-review-056-task.json",
+      "acceptance_record": "Control one bounded4file source PASS; after only PhysX read_cadence label repair, affected location/new SHA checked PASS.3initial+1followup hashes match current. No broad review/test repetition; author11CPU/root2integration+1defaultRTX passed; actual021 pending.",
+      "accepted_source_sha256": {
+        "scripts/isaac/g2_scene.py": "a8f72a05b996e44b8ae032b990f4ef93a045d5fade2961ec3685727ed77ec026",
+        "scripts/isaac/local45_fleet4_transport_scene.py": "6e00a32ddb7bbc6ca3c8eea179f755f88452d6ba77cbc31c9dc576a5c72a3fda",
+        "scripts/isaac/run_local45_fleet_pair.py": "15209dc1b20feae475a7dcd10b59894a16067302574c0066f77f7632b96165f8",
+        "tests/test_physx_planar_integration.py": "7a658d14fd67e4a88c608775f5d6654e7f5ee317c7586f908663a43f8452b136"
+      }
     }
   ],
   "decisions": [

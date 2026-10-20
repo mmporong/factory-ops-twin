@@ -1,0 +1,83 @@
+{
+  "task_id": "physx-planar-runtime-055",
+  "attempt": 1,
+  "contract_revision": 55,
+  "owner": "control",
+  "reviewer": "root",
+  "ack": true,
+  "status": "implemented_cpu_and_cold_ast_checked_pending_root_review_and_native_integration",
+  "accepted": false,
+  "api_ready": true,
+  "actual_sdk_run": false,
+  "written_paths": [
+    "factory_ops/physx_planar.py",
+    "factory_ops/isaac45_runtime.py",
+    "tests/test_physx_planar.py",
+    "coordination/collab/results/physx-planar-runtime-055.json"
+  ],
+  "source_sha256": {
+    "factory_ops/physx_planar.py": "634dac24bef78a4afbaf5a1bf16bbb20743184a8a5758102dd6e34648fedb853",
+    "factory_ops/isaac45_runtime.py": "8acc2355db040b9c6730360beac13575af95535ed843f55e1b67c3926dffc78d",
+    "tests/test_physx_planar.py": "a56ff9631e0820ea55fe806413d2282a0c242190c5b6d8de54126dc34fd787ab"
+  },
+  "runtime_source_before_sha256": "9514020ae69fa1875abb05e6a782258c0c644c508dd3da0a85a21dd585ea2efc",
+  "root_api": {
+    "setup": "runtime.setup_lidars(config, robots, stage, Usd, UsdGeom, Gf, SimulationManager, app, author_mount, verify_mount, native_publication=True, backend='physx_planar') -> (sensors, metadata)",
+    "default": "backend='rtx_flat_scan', native_publication=False를 유지한다. PhysX 분기는 실제4대·front/rear8개만 허용한다.",
+    "publish": "from factory_ops.physx_planar import PhysxPlanarPublisher; converter = PhysxPlanarPublisher(publish_callback, frame_id); state = converter.publish(sensor.read_planar_snapshot())",
+    "publish_callback": "인자1개dict: frame_id, stamp_sec, stamp_nanosec, angle_min, angle_max, angle_increment, time_increment, scan_time, range_min, range_max, ranges. ROS import나publisher 생성은 root가 소유한다.",
+    "publication_state": "status/published/published_count/duplicate_count/warmup_count, last_published_stamp_s, acquired_world_time_s/acquired_physics_frame, sensor_backend/time_source/native_timestamp=None을 반환한다. 콜백 실패는 전파하고 성공 카운트·중복 확정을 소비하지 않아 동일 snapshot 재시도가 가능하다.",
+    "snapshot": {
+      "schema_name": "local45-physx-planar-snapshot",
+      "sensor_backend": "physx_collision_planar",
+      "time_source": "authored_world_acquisition",
+      "keys": ["schema_version", "acquired_world_time_s", "acquired_physics_frame", "num_cols_ticked", "linear_depth_data", "intensity_data", "azimuth_rad", "zenith_rad", "prim_paths", "prim_path_error", "raw_shapes", "raw_dtypes", "native_timestamp", "physics_plugin_current_step_sequence_verified"],
+      "shapes": "실제depth/intensity720x1, azimuth720, zenith1·elevation0을 검증한다. numpy 복사본은readonly, CPU 순서는독립 tuple로 보유하며 원래 배열 순서·거리·hit 값을 유지한다. 최상위와shape/dtype 표는MappingProxyType이다.",
+      "warmup": "생성 당시와 같은World frame 또는frame0에서는None을 반환한다. publish는None/빈mapping을warmup으로 처리한다.",
+      "cache": "실제새World frame이며 이전취득 이후최소6frame일 때만 SDK를 다시 읽는다. 나머지는 같은 snapshot 객체를 반환한다. 모든조회에서World reset/비유한값/동일frame의시각변경을 거절한다. get_num_cols_ticked!=720은새 populated snapshot을 만들지 않고 예외를 낸다. 취득전후·검증후World 시각/frame 불변을 확인한다."
+    },
+    "observer": "observer = sensor.open_native_observer(identity, .1, 30.); observer.read(**reader_context) -> local45-physx-planar-observation dict. 캐시만 조회하며 SDK 취득을 유발하지 않는다. acquisition context와raw shape/dtype·각도경계·유한거리통계·원시hit/no-hit 수를 반환한다. observer.close()는생산자나센서prim을제거하지않는다.",
+    "cleanup": "sensor.detach_writer('RtxLidarROS2PublishLaserScan')는기존cleanup token만수용한다. 생성한 정확한sensor prim만제거·부재확인하며부모/World를삭제하지않는다. 제거실패를전파하고재시도할수있다.",
+    "metadata": "기존robot_id/name/prim_path/topic/frame_id/profile_sha256 key와 .../chassis_link/lidar_front,rear 경로를유지한다. sensor_backend='physx_collision_planar', rotation_frequency_hz/report_rate_hz=10(작성한발행주기), rotation_rate_hz=0(물리센서회전없음), near/far=.1/30을표시한다.",
+    "profile_digest": "profile_sha256는physx_planar.PROFILE_BYTES(sort_keys=True,separators=(',',':')의LIDAR_PARAMETERS JSON bytes)의SHA256이다. SDK제품profile이나source파일전체SHA가아니다. profile_path는작성근거인factory_ops/physx_planar.py이며parameter_source가정확한계산근거를명시한다. source pin은별도source_sha256를사용한다."
+  },
+  "implementation_boundaries": [
+    "World 초기화/reset을 두backend의센서생성보다앞에유지한다. opt-in PhysX에서만기존isaacsim.sensors.physx를활성화하고저수준interface를빌린다.",
+    "PhysX 파라미터는rotation_rate0/high_lodFalse/360도·0.5도/verticalFOV2·resolution1/min0.1·max30/enable_semanticsTrue다. 이 분기는RTX profile을읽거나annotator/writer/render product를생성하지않는다.",
+    "실제zenith0을수평elevation으로검증한다. 기존054의pi/2 가정이잘못됐다는root의native파생근거를반영했으며원래FAILED report를변경하지않았다.",
+    "ROS변환에서만측정azimuth를거리·intensity와함께정렬한다. hit255의원시거리를그대로쓰며차체0.1m반환도보존한다. nohit0만명시적정책으로+inf로변환한다. 보간·차체삭제·추정뒤벽반환은없다.",
+    "World취득시각으로ROS stamp를분리하고time_increment=0을쓴다. 첫scan_time=.1, 이후는실제성공발행취득시각간격이다. native절대timestamp/실제plugin current-step sequence를보유했다고표시하지않는다.",
+    "동일frame에서변경된payload·reset·잘못된shape/각도/비유한metadata를거절한다. observer의self_hit_count는hit에대응하는비어있지않은prim paths가있을때만계산한다. 빈값·대응불명·선택prim읽기오류는unknown과오류문구로남긴다.",
+    "기존±pi/2 hemispheric fusion과Nav2 inf_is_valid=false는root가확인한소비계약으로만반영했다. 해당코드를읽거나수정하지않았고새필터를추가하지않았다.",
+    "G2/CLI/lifecycle/source pins/runner·로봇고정·조인트·GT steering·기존원본은수정하지않았다."
+  ],
+  "validation": [
+    {
+      "kind": "새모듈관련CPU suite 1회",
+      "cwd": "C:/Users/LIMMM/factory-ops-twin",
+      "command": "& './.venv/Scripts/python.exe' -B -m unittest tests.test_physx_planar -v",
+      "result": "11 PASS",
+      "unittest_elapsed_s": 0.132,
+      "exit_code": 0,
+      "coverage": "720x1/elevation0 CPU fixture, 측정순서정렬·차체hit보존·nohit inf, World stamp/순간취득간격, warmup/duplicate/동일frame변조/reset/invalid 입력, callback재시도, 취득캐시/복사소유권/observer 비취득, 불완전ticks·복사중World전진거절, self-hit unknown분리, cleanup token·재시도",
+      "limit": "interface/World protocol fixture는CPU검증이며SDK실제취득이나054전체버퍼재생증거가아니다. 기존suite는반복하지않았다."
+    },
+    {
+      "kind": "cold SDK Python3.10 AST 1회",
+      "executable": "E:/IsaacSim/isaac-sim-4.5.0/kit/python/python.exe",
+      "arguments": ["-B", "-S", "-"],
+      "stdin_action": "ast.parse로지정3파일bytes를읽고각SHA256를출력; SDK import와제품코드실행없음",
+      "python": "3.10.15",
+      "files": ["factory_ops/physx_planar.py", "factory_ops/isaac45_runtime.py", "tests/test_physx_planar.py"],
+      "result": "PASS",
+      "exit_code": 0
+    }
+  ],
+  "remaining_limits": [
+    "실제4대·8센서SDK생성/실시간ROS/AMCL/Nav2·관측journal·종료는root통합실행에서확인해야한다. 이receipt는구현과CPU/문법근거만반환하며자체수용하지않는다.",
+    "6frame 취득간격은현재60Hz설정의작성한10Hz목표다. 실제accepted 간격을scan_time으로기록하며고정된센서native주기라고주장하지않는다.",
+    "PhysX plugin의current-step sequence는독립적으로없으며World-bounded 취득이다. metadata/observer/state에해당미검증을유지한다.",
+    "기본RTX 경로의구조는유지했으나기존suite나실제RTX를재실행하지않았다. 신규타입검사/전체테스트를추가하지않았다.",
+    "GPU/SDK/ROS/WSL/서버/VM/설치/Git/새에이전트작업은없다. D:/FactoryOpsRuntime 원본은읽기만했다."
+  ]
+}

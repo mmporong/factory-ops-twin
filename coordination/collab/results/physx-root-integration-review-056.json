@@ -1,0 +1,69 @@
+{
+  "task_id": "physx-root-integration-review-056",
+  "attempt": 1,
+  "contract_revision": 56,
+  "owner": "root",
+  "reviewer": "control",
+  "ack": true,
+  "status": "bounded_source_review_complete_pending_root_acceptance",
+  "verdict": "PASS",
+  "accepted": false,
+  "findings": [],
+  "all_expected_source_hashes_match": true,
+  "source_sha256": {
+    "scripts/isaac/g2_scene.py": "a8f72a05b996e44b8ae032b990f4ef93a045d5fade2961ec3685727ed77ec026",
+    "scripts/isaac/local45_fleet4_transport_scene.py": "4de3950c67e1afac24bfeec8f5fb147925d4d05b1598787edb67adf486f38b78",
+    "scripts/isaac/run_local45_fleet_pair.py": "15209dc1b20feae475a7dcd10b59894a16067302574c0066f77f7632b96165f8",
+    "tests/test_physx_planar_integration.py": "7a658d14fd67e4a88c608775f5d6654e7f5ee317c7586f908663a43f8452b136"
+  },
+  "reviewed_boundaries": [
+    {
+      "location": "scripts/isaac/g2_scene.py:493-559,806-817,1057-1087",
+      "result": "기본값은 rtx_flat_scan이다. 대체 backend는 local_sdk45에서만 허용한다. PhysX는 PhysxPlanarPublisher와 read_planar_snapshot을 사용하며 RTX admission guard와 관측시각 인자를 적용하지 않는다. 기존 8개 raw 토픽·frame_id·BEST_EFFORT QoS·publisher resource 등록과 실제 ROS 필드 전달을 유지한다."
+    },
+    {
+      "location": "scripts/isaac/g2_scene.py:861-868,1122-1139",
+      "result": "실행 metadata에 선택 backend를 기록한다. PhysX startup은 physx-scan-startup.json으로 분리하고 authored_world_acquisition, time_increment0, native 절대시각 미지원, 센서 품질 미검증 및 RTX/RPLIDAR 비동등성을 표시한다. 기본 RTX startup 경로는 유지한다."
+    },
+    {
+      "location": "scripts/isaac/local45_fleet4_transport_scene.py:18-50,53-110,146-167",
+      "result": "새 모듈이 LOCAL_SOURCE_PINS와 PhysX 관측 source SHA 목록에 포함된다. 정확한 8개 robot/side, 고유 prim/topic, registry 경로 및 선택 backend를 검사한다. CLI 선택을 G2와 lifecycle 양쪽에 전달하며 별도 physx-planar-observations.jsonl에 기록한다. 관측 schema와 annotator 유무를 분리하고 기존 FlatScan journal을 덮지 않는다."
+    },
+    {
+      "location": "scripts/isaac/run_local45_fleet_pair.py:143-168,213-218,251-261",
+      "result": "runner와 CLI 모두 두 값의 enum을 검증하고 기본 RTX를 유지한다. 선택 backend를 host report 및 실제 SDK command의 --lidar-backend 인자에 기록한다. 변경된 인자 전달에서 실행을 차단하거나 선택을 누락하는 문제는 발견하지 못했다."
+    },
+    {
+      "location": "tests/test_physx_planar_integration.py:20-89",
+      "result": "새 테스트 소스는 실제 변환기에서 8개 ROS wire로 이어지는 World stamp·순간 취득·중복 방지·차체 hit 보존·no-hit 정책을 검사하며, RTX 읽기/guard 사용을 거절한다. 별도 journal과 잘못된 metadata backend 거절도 검사한다. 테스트 실행 여부는 root 보고로만 구분했다."
+    }
+  ],
+  "validation": {
+    "performed": ["지정 4파일 SHA256 대조", "변경된 root 연결 경계와 새 테스트 소스 한정 검토 1회"],
+    "tests_run": false,
+    "runtime_run": false,
+    "product_files_modified": false,
+    "root_reported_not_repeated": "새 CPU 연결 2개 PASS, 영향받는 기본 RTX wire 1개 PASS, 4파일 SDK3.10 AST PASS는 카드의 root 보고이며 재실행하지 않았다."
+  },
+  "limits": [
+    "PASS는 지정 소스 연결에서 차단 결함이 발견되지 않았다는 판정이다. 실제 4대 SDK·ROS·센서 품질·운송·종료 성공을 판정하지 않았다.",
+    "source pin 선언과 전달 경계를 확인했으며 실제 archive·동결 실행의 hash 검증은 수행하지 않았다.",
+    "수용된 055 구현과 11개 검사를 다시 검토하거나 실행하지 않았다. 기존 전체 경로·정리·광역 보안 검토로 확대하지 않았다.",
+    "제품 편집·Git·SDK/GPU/ROS/WSL/서버·새 에이전트 작업은 없으며 결과 JSON만 작성했다."
+  ],
+  "affected_followup": {
+    "verdict": "PASS",
+    "findings": [],
+    "location": "scripts/isaac/local45_fleet4_transport_scene.py:109-111",
+    "source_sha256": "6e00a32ddb7bbc6ca3c8eea179f755f88452d6ba77cbc31c9dc576a5c72a3fda",
+    "expected_source_hash_matches": true,
+    "previous_review_source_sha256": "4de3950c67e1afac24bfeec8f5fb147925d4d05b1598787edb67adf486f38b78",
+    "result": "PhysX의 read_cadence가 cached authored World acquisition, no native timestamp로 분기됨을 확인했다. RTX 분기의 기존 sampled native timestamps 문구는 유지된다. 이 한 위치에서 차단 결함은 없다.",
+    "initial_review_preserved": "상위 source_sha256와 최초 검토 결과는 당시 4파일 근거로 보존한다. 이번 최신 SHA와 재대조 범위는 이 affected_followup에 구분했다.",
+    "tests_run": false,
+    "runtime_run": false,
+    "product_files_modified": false,
+    "limit": "카드 affected_followup과 지정 한 위치·해당 파일 SHA만 확인했다. 광역 재검토나 검사 재실행은 하지 않았다."
+  },
+  "written_paths": ["coordination/collab/results/physx-root-integration-review-056.json"]
+}
