@@ -689,8 +689,8 @@
       "contract_revision": 34,
       "owner": "control",
       "reviewer": "root",
-      "status": "dispatched",
-      "ACK": false,
+      "status": "accepted_cpu_partial_native_failed",
+      "ACK": true,
       "task_path": "coordination/collab/local45-physics-render-probe-034-task.json",
       "result_path": "coordination/collab/results/local45-physics-render-probe-034.json",
       "write_paths": [
@@ -699,7 +699,8 @@
         "configs/local45-cadence-probe.json",
         "tests/test_local45_stepping.py",
         "coordination/collab/results/local45-physics-render-probe-034.json"
-      ]
+      ],
+      "acceptance_record": "CPU implementation received. Root004 actual120 physicsframes/2.000000104s/20renders/3RGB; overall failed independent sensor clock comparison, rear timestamps about27ms future. No main-loop adoption or full performance claim. Further cadence experiments deferred for transport completion."
     }
   ],
   "decisions": [

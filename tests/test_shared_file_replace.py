@@ -4,10 +4,23 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from factory_ops.compat import replace_shared_file
+from factory_ops.compat import replace_shared_file, read_shared_text
 
 
 class SharedFileReplaceTests(unittest.TestCase):
+    def test_reader_retries_only_transient_open_races_and_returns_complete_bytes(self):
+        for conflict in (PermissionError("sharing"), FileNotFoundError("replace race")):
+            with self.subTest(conflict=type(conflict).__name__), \
+                    patch.object(Path, "read_text", side_effect=[conflict, '{"version":2}']) as read:
+                self.assertEqual('{"version":2}', read_shared_text(Path("state.json")))
+                self.assertEqual(2, read.call_count)
+
+    def test_persistent_open_failure_is_not_replaced_by_cached_or_empty_content(self):
+        with patch.object(Path, "read_text", side_effect=PermissionError("denied")), \
+                patch("factory_ops.compat.time.monotonic", side_effect=[1., 1.3]):
+            with self.assertRaises(PermissionError):
+                read_shared_text(Path("state.json"))
+
     def test_transient_permission_conflict_preserves_old_then_publishes_complete_new_file(self):
         with tempfile.TemporaryDirectory() as folder:
             target, source = Path(folder) / "state.json", Path(folder) / "staging.json"

@@ -22,6 +22,7 @@ LOCAL_SOURCE_PINS = BASE_SOURCE_PINS | frozenset({
     "scripts/isaac/nav_scene.py", "scripts/isaac/stage_smoke.py",
     "factory_ops/visual_state.py", "factory_ops/wsl_process_supervisor.py",
     "scripts/isaac/run_local45_fleet_pair.py",
+    "scripts/isaac/windows_job_runner.py",
 })
 
 

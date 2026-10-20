@@ -7,6 +7,8 @@ from pathlib import Path
 import subprocess
 import sys
 import tempfile
+import threading
+import time
 import unittest
 from unittest.mock import patch
 import uuid
@@ -18,7 +20,7 @@ RUNNER = Path(__file__).resolve().parents[1] / "scripts/isaac/windows_job_runner
 
 @unittest.skipUnless(os.name == "nt", "Windows kernel containment test")
 class WindowsJobRunnerTests(unittest.TestCase):
-    def invoke(self, child_code, timeout=3):
+    def invoke(self, child_code, timeout=3, *, request_abort=False):
         with tempfile.TemporaryDirectory() as temporary:
             directory = Path(temporary)
             pid_file = directory / "descendant.pid"
@@ -27,9 +29,25 @@ class WindowsJobRunnerTests(unittest.TestCase):
                 "command": [sys.executable, "-c", child_code, str(pid_file)],
                 "expected_inputs": {str(RUNNER): hashlib.sha256(RUNNER.read_bytes()).hexdigest()}}), encoding="utf-8")
             receipt = directory / "job.json"
-            actual = subprocess.run([sys.executable, str(RUNNER), "--spec", str(spec),
-                "--receipt", str(receipt), "--timeout", str(timeout)],
-                capture_output=True, text=True, timeout=20)
+            abort = directory / "abort.txt"
+            thread = None
+            if request_abort:
+                run_id = json.loads(spec.read_text())["run_id"]
+                def cancel():
+                    deadline = time.monotonic() + 2
+                    while not pid_file.exists() and time.monotonic() < deadline:
+                        time.sleep(.01)
+                    abort.write_text(run_id, encoding="ascii")
+                thread = threading.Thread(target=cancel)
+                thread.start()
+            try:
+                actual = subprocess.run([sys.executable, str(RUNNER), "--spec", str(spec),
+                    "--receipt", str(receipt), "--timeout", str(timeout),
+                    *(["--abort-request", str(abort)] if request_abort else [])],
+                    capture_output=True, text=True, timeout=20)
+            finally:
+                if thread is not None:
+                    thread.join(timeout=3)
             result = json.loads(receipt.read_text(encoding="utf-8"))
             pid = int(pid_file.read_text()) if pid_file.exists() else None
             if pid is not None:
@@ -70,6 +88,18 @@ class WindowsJobRunnerTests(unittest.TestCase):
         actual, result, pid = self.invoke(code, timeout=1)
         self.assertEqual(actual.returncode, 1, actual.stderr)
         self.assertTrue(result["timed_out"])
+        self.assertIn(pid, result["owned_pids_before_cleanup"])
+        self.assertGreaterEqual(len(result["owned_pids_before_cleanup"]), 2)
+
+    def test_cooperative_abort_closes_owned_tree_and_saves_failed_terminal_receipt(self):
+        code = ("import subprocess,sys,time; from pathlib import Path; "
+            "child=subprocess.Popen([sys.executable,'-c','import time; time.sleep(60)']); "
+            "Path(sys.argv[1]).write_text(str(child.pid)); time.sleep(60)")
+        actual, result, pid = self.invoke(code, timeout=5, request_abort=True)
+        self.assertEqual(1, actual.returncode, actual.stderr)
+        self.assertTrue(result["abort_requested"])
+        self.assertFalse(result["timed_out"])
+        self.assertEqual("failed", result["status"])
         self.assertIn(pid, result["owned_pids_before_cleanup"])
         self.assertGreaterEqual(len(result["owned_pids_before_cleanup"]), 2)
 

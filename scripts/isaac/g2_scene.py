@@ -16,7 +16,7 @@ import traceback
 from typing import Any, Callable, Mapping, Sequence, cast
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
-from factory_ops.compat import add_exception_note
+from factory_ops.compat import add_exception_note, read_shared_text
 from factory_ops.drive_profile import DriveProfile
 from factory_ops.footprint import qualify_footprint
 from factory_ops.layout import Layout
@@ -183,7 +183,7 @@ def _read_regular_json(path: Path) -> dict[str, Any] | None:
         return None
     if path.is_symlink() or not path.is_file():
         raise base.SmokeError(f"G2 control input must be a regular file: {path.name}")
-    value = json.loads(path.read_text(encoding="utf-8"))
+    value = json.loads(read_shared_text(path))
     if not isinstance(value, dict):
         raise base.SmokeError(f"G2 control input must be an object: {path.name}")
     return value

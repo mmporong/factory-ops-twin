@@ -42,3 +42,17 @@ def replace_shared_file(source: Path, target: Path, *, timeout_s: float = .2) ->
             if time.monotonic() >= deadline:
                 raise
             time.sleep(.002)
+
+
+def read_shared_text(path: Path, *, encoding: str = "utf-8", timeout_s: float = .2) -> str:
+    """Read a complete file across bounded Windows/DrvFS replacement races."""
+    if isinstance(timeout_s, bool) or not math.isfinite(timeout_s) or not 0 < timeout_s <= 1:
+        raise ValueError("shared-file reading requires a positive bound of at most one second")
+    deadline = time.monotonic() + timeout_s
+    while True:
+        try:
+            return path.read_text(encoding=encoding)
+        except (PermissionError, FileNotFoundError):
+            if time.monotonic() >= deadline:
+                raise
+            time.sleep(.002)

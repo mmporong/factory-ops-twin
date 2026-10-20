@@ -129,12 +129,16 @@ class _SimulationManager:
         self.world: Any = None
         self.ready = False
         self._dt = None
+        self._render_dt = None
 
-    def setup_simulation(self, dt, device="cpu"):
+    def setup_simulation(self, dt, device="cpu", *, rendering_dt=None):
         if isinstance(dt, bool) or not _finite(dt) or dt <= 0 or device != "cpu":
             raise ValueError("SDK4.5 facade requires positive finite dt and CPU PhysX")
+        render_dt = float(dt) if rendering_dt is None else rendering_dt
+        if isinstance(render_dt, bool) or not _finite(render_dt) or float(render_dt) < float(dt):
+            raise ValueError("rendering dt must be finite and at least the physics dt")
         if self.world is not None:
-            if self.ready and self._dt == dt:
+            if self.ready and self._dt == dt and (rendering_dt is None or self._render_dt == render_dt):
                 return self.world
             raise RuntimeError("World already exists or prior setup failed; refusing another reset")
         bindings = self._runtime._bindings
@@ -147,9 +151,10 @@ class _SimulationManager:
         if bindings.World.instance() is not None:
             raise RuntimeError("a foreign World already owns the SDK simulation context")
         scene_path = str(scenes[0].GetPath())
-        self.world = bindings.World(physics_dt=float(dt), rendering_dt=float(dt),
+        self.world = bindings.World(physics_dt=float(dt), rendering_dt=float(render_dt),
             stage_units_in_meters=1., physics_prim_path=scene_path, backend="numpy", device="cpu")
         self._dt = dt
+        self._render_dt = float(render_dt)
         self.world.get_physics_context().enable_gpu_dynamics(False)
         for index, robot in enumerate(self._runtime._robots):
             robot._native = self.world.scene.add(bindings.Robot(prim_path=robot.prim_path,

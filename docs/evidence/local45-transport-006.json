@@ -1,0 +1,100 @@
+{
+  "schema_version": 1,
+  "run_id": "935e401b4eb54f538176e13078e5e0c2",
+  "source_commit": "8bff491f4dc437c1b08af876af714e8dbcf4af6a",
+  "status": "failed_preserved",
+  "primary_sdk_error": "FACTORY_OPS_G2_ERROR=mission: PermissionError: [Errno 13] Permission denied: 'D:\\\\FactoryOpsRuntime\\\\local45-transport-006\\\\results\\\\run\\\\robots\\\\carter2\\\\authorization.json'",
+  "secondary_ros_error": "fresh map pose unavailable for carter1",
+  "scope": "RGB restored and eight sensor/clock progress; reader permission failure stopped odometry, no completed transport proof",
+  "valid_three_camera_captures": 3,
+  "raw_scan_summary": {
+    "/carter1/scan_rear_raw": {
+      "count": 679,
+      "unique_stamps": 114,
+      "last_stamp_s": 13.416698617,
+      "regressions": 0
+    },
+    "/carter4/scan_front_raw": {
+      "count": 678,
+      "unique_stamps": 114,
+      "last_stamp_s": 13.416698617,
+      "regressions": 0
+    },
+    "/carter1/scan_front_raw": {
+      "count": 677,
+      "unique_stamps": 114,
+      "last_stamp_s": 13.416698617,
+      "regressions": 0
+    },
+    "/carter2/scan_front_raw": {
+      "count": 676,
+      "unique_stamps": 114,
+      "last_stamp_s": 13.416698617,
+      "regressions": 0
+    },
+    "/carter2/scan_rear_raw": {
+      "count": 677,
+      "unique_stamps": 114,
+      "last_stamp_s": 13.416698617,
+      "regressions": 0
+    },
+    "/carter3/scan_rear_raw": {
+      "count": 677,
+      "unique_stamps": 114,
+      "last_stamp_s": 13.433365284,
+      "regressions": 0
+    },
+    "/carter3/scan_front_raw": {
+      "count": 113,
+      "unique_stamps": 113,
+      "last_stamp_s": 13.416698617,
+      "regressions": 0
+    },
+    "/carter4/scan_rear_raw": {
+      "count": 676,
+      "unique_stamps": 114,
+      "last_stamp_s": 13.416698617,
+      "regressions": 0
+    }
+  },
+  "clock_summary": {
+    "count": 698,
+    "unique_stamps": 683,
+    "first_stamp_s": 2.233333449,
+    "last_stamp_s": 13.600000709,
+    "max_stamp_s": 13.600000709,
+    "last_receive_clock_s": 13.600000709,
+    "regressions": 0,
+    "last_lag_s": 0.0,
+    "last_samples": [
+      [
+        13.550000706,
+        13.550000706
+      ],
+      [
+        13.566667374,
+        13.566667374
+      ],
+      [
+        13.583334041,
+        13.583334041
+      ],
+      [
+        13.600000709,
+        13.600000709
+      ]
+    ]
+  },
+  "latest_odom_stamp_s": 13.083334016,
+  "bag_bytes": 138833920,
+  "recorder_closed_before_sql": true,
+  "bag_sha256": "88d574ff7445c2080e4f8c67cca7dbbba15b37ff9055f0f3c8b3558c37105587",
+  "linux_closed": true,
+  "windows_job_closure_verified": false,
+  "raw_directory": "D:\\FactoryOpsRuntime\\local45-transport-006",
+  "fixes_pending_native": [
+    "bounded reader open retry and SDK atomic result replacement retry",
+    "cooperative Job cancellation writes final closure receipt before Job handle closes"
+  ],
+  "target_pose_ttl_s_unchanged": 0.5
+}

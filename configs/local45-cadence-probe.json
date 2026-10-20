@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "fleet_config": "configs/local45-fleet-runtime-probe.json",
+  "fleet_config_sha256": "d891d14d1a090a46a3d3d361257b38c3016a976c942cda6344230efeb54c55f8",
+  "physics_dt_s": 0.016666666666666666,
+  "render_every_steps": 6,
+  "rendering_dt_s": 0.1,
+  "warmup_physics_steps": 60,
+  "measurement_physics_steps": 120,
+  "maximum_wall_time_s": 420,
+  "scope": "isolated local SDK4.5 World60Hz/render10Hz clock and buffer experiment; four zero-command robots; no mission/transport qualification"
+}

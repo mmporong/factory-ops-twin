@@ -16,6 +16,7 @@ import traceback
 from typing import Any, Mapping, Sequence
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+from factory_ops.compat import replace_shared_file
 from factory_ops.drive_profile import DriveCommand, DriveLimits, DriveProfile
 from factory_ops.footprint import qualify_footprint
 from factory_ops.layout import Layout
@@ -67,7 +68,7 @@ def _atomic_json(path: Path, value: Any) -> None:
         stream.write(data)
         stream.flush()
         os.fsync(stream.fileno())
-    os.replace(temporary, path)
+    replace_shared_file(temporary, path)
 
 
 def _close_app(app: Any, code: int, output: Path | None, result: dict[str, Any]) -> int:

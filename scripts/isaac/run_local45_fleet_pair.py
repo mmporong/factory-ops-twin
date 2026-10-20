@@ -37,13 +37,22 @@ def close_pair(worker, streams, owner, stage: Path, report: dict, started: float
     if worker is not None:
         try:
             if worker.poll() is None:
-                worker.terminate()
+                abort = stage / "job-abort-request.txt"
+                if not abort.exists():
+                    with abort.open("x", encoding="ascii") as stream:
+                        stream.write(report["run_id"])
+                elif abort.read_text(encoding="ascii") != report["run_id"]:
+                    raise RuntimeError("abort request identity differs")
         except Exception as error:
-            errors.append("windows terminate: " + str(error))
+            errors.append("windows abort request: " + str(error))
         try:
             worker.wait(timeout=10)
         except Exception as error:
             errors.append("windows wait: " + str(error))
+            try:
+                worker.terminate()
+            except Exception as terminate_error:
+                errors.append("windows terminate: " + str(terminate_error))
     for stream in streams:
         try:
             stream.close()
@@ -135,7 +144,8 @@ def run(stage: Path, sdk: Path, bound: int) -> int:
         for label in ("sdk.stdout.log", "sdk.stderr.log"):
             streams.append((stage / label).open("xb"))
         worker = subprocess.Popen([sys.executable, str(source / "scripts/isaac/windows_job_runner.py"),
-            "--spec", str(stage / "job-spec.json"), "--receipt", str(stage / "job.json"), "--timeout", str(bound)],
+            "--spec", str(stage / "job-spec.json"), "--receipt", str(stage / "job.json"), "--timeout", str(bound),
+            "--abort-request", str(stage / "job-abort-request.txt")],
             env=environment, stdout=streams[0], stderr=streams[1], creationflags=subprocess.CREATE_NO_WINDOW)
         report.update(status="running", windows_runner_pid=worker.pid, linux_unit=owner.unit_name)
         save(receipt_path, report)

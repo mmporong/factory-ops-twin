@@ -176,6 +176,16 @@ class RuntimeTests(unittest.TestCase):
         World.existing = object()
         with self.assertRaises(RuntimeError):self.runtime.SimulationManager.setup_simulation(.02)
 
+    def test_render_dt_is_bound_at_world_creation_without_post_reset_reconfiguration(self):
+        manager = self.runtime.SimulationManager
+        world = manager.setup_simulation(1/60, rendering_dt=.1)
+        self.assertEqual(.1, world.kwargs['rendering_dt'])
+        self.assertIs(world, manager.setup_simulation(1/60))
+        self.assertIs(world, manager.setup_simulation(1/60, rendering_dt=.1))
+        with self.assertRaises(RuntimeError):
+            manager.setup_simulation(1/60, rendering_dt=.2)
+        self.assertEqual(1, world.resets)
+
     def test_dt_and_late_registration_do_not_reset_physics(self):
         for dt in (True, 0, -1, float('nan'), float('inf'), None):
             with self.subTest(dt=dt), self.assertRaises(ValueError):self.runtime.SimulationManager.setup_simulation(dt)

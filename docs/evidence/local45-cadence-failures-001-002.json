@@ -1,0 +1,32 @@
+{
+  "scope": "native cadence startup failures, no clock/render qualification",
+  "attempts": [
+    {
+      "attempt": 1,
+      "run_id": "10b015482ff348399a968c586d4be7f5",
+      "status": "failed_invalid_or_missing_result",
+      "native_result_created": false,
+      "host_closed": true,
+      "prelaunch_inputs_verified": true,
+      "source_sha256": "a47c1ee28ca4984f4bf6a3ef02afc18f42db0b67d8c896b92b36db5a1de99bda",
+      "error_sha256": "2f003329a0817e40ceafda7734899615545b3113b08914653a427848e83ea49b",
+      "observed_stack": "first wheel action after suppressed startup",
+      "error_excerpt": "saac-sim-4.5.0\\kit\\python\\lib\\threading.py\", line 1016 in _bootstrap_inner\n  File \"E:\\IsaacSim\\isaac-sim-4.5.0\\kit\\python\\lib\\threading.py\", line 973 in _bootstrap\n\nThread 0x0000efd0 (most recent call first):\n  File \"E:\\IsaacSim\\isaac-sim-4.5.0\\kit\\python\\lib\\concurrent\\futures\\thread.py\", line 81 in _worker\n  File \"E:\\IsaacSim\\isaac-sim-4.5.0\\kit\\python\\lib\\threading.py\", line 953 in run\n  File \"E:\\IsaacSim\\isaac-sim-4.5.0\\kit\\python\\lib\\threading.py\", line 1016 in _bootstrap_inner\n  File \"E:\\IsaacSim\\isaac-sim-4.5.0\\kit\\python\\lib\\threading.py\", line 973 in _bootstrap\n\nCurrent thread 0x0000fc68 (most recent call first):\n  File \"e:/isaacsim/isaac-sim-4.5.0/extsphysics/omni.physics.tensors/omni/physics/tensors/impl/api.py\", line 1669 in get_dof_position_targets\n  File \"e:/isaacsim/isaac-sim-4.5.0/exts/isaacsim.core.prims/isaacsim/core/prims/impl/articulation.py\", line 1747 in get_applied_actions\n  File \"e:/isaacsim/isaac-sim-4.5.0/exts/isaacsim.core.api/isaacsim/core/api/controllers/articulation_controller.py\", line 235 in get_applied_action\n  File \"e:/isaacsim/isaac-sim-4.5.0/exts/isaacsim.core.api/isaacsim/core/api/controllers/articulation_controller.py\", line 49 in apply_action\n  File \"e:/isaacsim/isaac-sim-4.5.0/exts/isaacsim.core.prims/isaacsim/core/prims/impl/single_articulation.py\", line 965 in apply_action\n  File \"e:/isaacsim/isaac-sim-4.5.0/exts/isaacsim.robot.wheeled_robots/isaacsim/robot/wheeled_robots/robots/wheeled_robot.py\", line 181 in apply_wheel_actions\n  File \"C:\\Users\\LIMMM\\factory-ops-twin\\factory_ops\\isaac45_runtime.py\", line 123 in apply_wheel_actions\n  File \"C:\\Users\\LIMMM\\factory-ops-twin\\scripts\\isaac\\local45_cadence_probe.py\", line 262 in main\n  File \"C:\\Users\\LIMMM\\factory-ops-twin\\scripts\\isaac\\local45_cadence_probe.py\", line 405 in <module>\n",
+      "raw_prefix": "C:\\Users\\LIMMM\\factory-ops-twin\\artifacts\\local45\\cadence-001"
+    },
+    {
+      "attempt": 2,
+      "run_id": "1fef15b8541540e89ab35c66858ebdba",
+      "status": "failed_invalid_or_missing_result",
+      "native_result_created": false,
+      "host_closed": true,
+      "prelaunch_inputs_verified": true,
+      "source_sha256": "9645ebb1ef65861643670833dd6ede05d57ab8e44de58b52c1ae398f8311f08d",
+      "error_sha256": "bc3d429257a5926e7a6a87f8f113bc843eda8ddb946389844da022c8aedddc93",
+      "observed_stack": "first manual PhysX simulate after suppressed startup",
+      "error_excerpt": "Sim\\isaac-sim-4.5.0\\kit\\python\\lib\\threading.py\", line 953 in run\n  File \"E:\\IsaacSim\\isaac-sim-4.5.0\\kit\\python\\lib\\threading.py\", line 1016 in _bootstrap_inner\n  File \"E:\\IsaacSim\\isaac-sim-4.5.0\\kit\\python\\lib\\threading.py\", line 973 in _bootstrap\n\nThread 0x0000a1e8 (most recent call first):\n  File \"E:\\IsaacSim\\isaac-sim-4.5.0\\kit\\python\\lib\\concurrent\\futures\\thread.py\", line 81 in _worker\n  File \"E:\\IsaacSim\\isaac-sim-4.5.0\\kit\\python\\lib\\threading.py\", line 953 in run\n  File \"E:\\IsaacSim\\isaac-sim-4.5.0\\kit\\python\\lib\\threading.py\", line 1016 in _bootstrap_inner\n  File \"E:\\IsaacSim\\isaac-sim-4.5.0\\kit\\python\\lib\\threading.py\", line 973 in _bootstrap\n\nThread 0x000110c0 (most recent call first):\n  File \"E:\\IsaacSim\\isaac-sim-4.5.0\\kit\\python\\lib\\concurrent\\futures\\thread.py\", line 81 in _worker\n  File \"E:\\IsaacSim\\isaac-sim-4.5.0\\kit\\python\\lib\\threading.py\", line 953 in run\n  File \"E:\\IsaacSim\\isaac-sim-4.5.0\\kit\\python\\lib\\threading.py\", line 1016 in _bootstrap_inner\n  File \"E:\\IsaacSim\\isaac-sim-4.5.0\\kit\\python\\lib\\threading.py\", line 973 in _bootstrap\n\nCurrent thread 0x0000b200 (most recent call first):\n  File \"e:/isaacsim/isaac-sim-4.5.0/exts/isaacsim.core.api/isaacsim/core/api/physics_context/physics_context.py\", line 561 in _step\n  File \"e:/isaacsim/isaac-sim-4.5.0/exts/isaacsim.core.api/isaacsim/core/api/simulation_context/simulation_context.py\", line 662 in step\n  File \"e:/isaacsim/isaac-sim-4.5.0/exts/isaacsim.core.api/isaacsim/core/api/world/world.py\", line 538 in step\n  File \"C:\\Users\\LIMMM\\factory-ops-twin\\factory_ops\\local45_stepping.py\", line 44 in step\n  File \"C:\\Users\\LIMMM\\factory-ops-twin\\scripts\\isaac\\local45_cadence_probe.py\", line 262 in main\n  File \"C:\\Users\\LIMMM\\factory-ops-twin\\scripts\\isaac\\local45_cadence_probe.py\", line 406 in <module>\n",
+      "raw_prefix": "C:\\Users\\LIMMM\\factory-ops-twin\\artifacts\\local45\\cadence-002"
+    }
+  ],
+  "next_change": "one normal Kit startup update before manual physics, outside measurement interval; current003 pending"
+}

@@ -331,6 +331,18 @@ ROS가 실패 종료한 직후 외부 실행기가 아직 정리 중인 Windows 
 
 통합005는 paused Kit update5회와 추가 zero-delta 갱신 뒤에도 첫 overview 버퍼가 shape(0,)으로 남았다.004·005 모두 유효 이미지 검사를 거절했고 양쪽 프로세스 종료는 확인했다. RGB 중단 방식을 더 반복하지 않고 개발 lifecycle의 중단 override를 제거해003의 연속 RGB 갱신으로 복구했다. 빈 버퍼 검사·원자적 파일 교체 재시도·축소된 개발 기록 정책·실행기 종료 보완은 유지한다. [005 근거](evidence/local45-transport-005.json)에 실패와 제외 결정을 남겼다. 물리60Hz/렌더10Hz 후보는 별도 짧은 시계·센서 시험을 통과한 뒤에만 운송 루프에 적용한다.
 
+## FOT-041 — SDK 승인 JSON 읽기 공유 충돌과 후속 위치 관측 만료
+
+통합006의 SDK stdout에서 carter2 authorization.json 읽기의 PermissionError가 최초 오류로 확인됐다. ROS 임무의 fresh map pose unavailable은 뒤이어 발생했다. 종료된 bag의 시간 대조에서는8개 센서의 원본 시각이 약10Hz로 증가하고 clock 역행은 없었지만, SDK odometry/TF 발행이13.083초에서 끝난 뒤 clock이13.6초까지 진행했다. pose TTL0.5초를 늘려 숨기지 않는다. 공유 교체 중 파일 열기 경합에 짧은 재시도를 추가하고 SDK 결과 JSON 교체도 같은 원자적 재시도를 사용한다. 영구 권한 오류나 잘못된 JSON을 빈 값·캐시로 바꾸지 않는다.
+
+006은3개 카메라의 유효 촬영3시점을 남겨 연속 RGB 복구를 확인했다. raw 스캔별 약6개 메시지가 같은 원본 시각을 반복하는 것도 확인했고, 물리 시계와 렌더 주기 분리 시험의 별도 확인 항목으로 유지한다.006에서도 외부 Job runner 종료 때문에 최종 Windows Job 증명이 빠졌다. 이제 실행기는 run ID가 일치하는 취소 파일을 받아 소유 Job 전체를 정리하고 최종 기록을 저장한 뒤 종료하도록 보완했다. 실제 자식·손자 프로세스를 포함한 취소 검사와 관련8개 검사가 통과했다. [006 근거](evidence/local45-transport-006.json)에 최초 오류와 후속 오류를 분리했다.
+
+## FOT-042 — 수동 PhysX cadence 시험의 첫 native 호출 충돌
+
+분리 시험 cadence001은 첫 wheel action,002는 첫 수동 PhysX simulate에서 native access violation로 종료됐다. 두 실행은 result.json이 없어 거절했고, vendor launcher 종료 코드0을 성공 근거로 사용하지 않았다. Job의 잔여 프로세스가 없는 종료는 확인했다. 물리 장면이 play 상태로 준비되기 전에 render-only 호출로 첫 Kit update를 억제한 순서가 관련됐는지 다음003에서 확인한다.003은 측정 구간 밖에서 정상 Kit update1회를 거친 뒤 수동 스텝을 시작하고 실제 시작 frame/time을 별도로 남긴다. 첫 두 실패에서 시계 정합·성능 향상을 주장하지 않는다. [실패 원본 명세](evidence/local45-cadence-failures-001-002.json)를 보존한다.
+
+분리 시험003도 native 충돌로 종료됐다.004에서는 렌더 간격을 World 생성 때 설정하여 native 충돌 없이 실제 물리120프레임·2.000000104초, 렌더20회와 유효 RGB3개를 얻었다. 다만 두 rear 센서 시각이 World보다 약27ms 앞서 기존 한 물리 tick 허용치를 벗어났다. 원본 시각을 이동하거나 허용치를 늘리지 않았고 전체 시험은 실패로 유지한다. 이 후보는 운송 루프에 적용하지 않으며 후속 최적화 실험을 보류하고 기존 연속 렌더의 운송 구현을 우선한다.
+
 ## 실행 전 확인과 후속 기록
 
 1. 깨끗한 생산자 소스·host commit·설정·실행 ID를 결속한다. 실패한 실행 ID와 원본을 다시 사용하지 않는다.
