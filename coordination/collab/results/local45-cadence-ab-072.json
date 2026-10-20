@@ -1,0 +1,42 @@
+{
+  "task_id": "local45-cadence-ab-072",
+  "attempt": 1,
+  "contract_revision": 72,
+  "ack": true,
+  "status": "implemented_pending_root_review_and_actual031",
+  "self_accepted": false,
+  "source_sha256": {
+    "scripts/isaac/g2_scene.py": "ec97d65f98bd885e70bb96b4f28a34ad884eeca793d1181676e6e66fa3b286e8",
+    "scripts/isaac/local45_fleet4_transport_scene.py": "e8f2c82b45de197854c1d0a76491d425f8289ea185a25ab3b4ae3276db582f5d",
+    "scripts/isaac/run_local45_fleet_pair.py": "cb3fbd174049c24284e45bc73b59ef5c69f80f9b533c8b54ff042557d5430a4d",
+    "tests/test_local45_mission_cadence.py": "ddb50cb676acbafc63b5ae0bdd7554078ddd8bacaf8cde66444e07a15941cbd0"
+  },
+  "wiring": [
+    "Pair CLI --physics-cadence {app_update,owned_step6}, default owned_step6, passes the validated enum in the SDK command line; pair-host.json records requested_physics_cadence.",
+    "SDK entry parses the same flag/default and passes physics_cadence to G2._run, which validates it before SDK work. _setup_mission_stepper accepts the same optional keyword/default.",
+    "Only local45+physx app_update returns no stepper and uses the existing app.update, clock publication, scan eligibility and post-capture path. owned_step6 preserves the current stepper. Legacy RTX/canonical routing remains unchanged.",
+    "Local45 G2 results record requested_physics_cadence. For local45+physx, mission_physics_cadence and physics-cadence.json distinguish requested_mode/mode, shared app.update startup, chosen mission physics/render/scan path and whether the existing post-capture render-only flush applies. app_update explicitly has no native one-step guarantee."
+  ],
+  "root_usage": "Add --physics-cadence app_update to the existing PhysX pair invocation for actual031. Omitting the flag retains owned_step6.",
+  "validation": [
+    {
+      "command": "& './.venv/Scripts/python.exe' -B -m unittest tests.test_local45_mission_cadence -v",
+      "runs": 1,
+      "exit_code": 0,
+      "result": "6 PASS: existing 4 plus explicit app_update routing and invalid enum rejection",
+      "scope": "CPU protocol only; no SDK imports or actual physics claim"
+    },
+    {
+      "command": "PowerShell here-string using ast.parse and hashlib.sha256 on the four source_sha256 paths | & 'E:/IsaacSim/isaac-sim-4.5.0/kit/python/python.exe' -B -S -",
+      "runs": 1,
+      "python": "3.10.15",
+      "exit_code": 0,
+      "result": "4 AST PASS; hashes above; no SDK imports"
+    }
+  ],
+  "limits": [
+    "030 stable executors were insufficient: root reports zero received/rejected commands despite graph publisher count 4. The delivery cause remains unknown. Graph counts are not DDS match proof; unsupported true DDS match remains null.",
+    "No changes to PhysX backend, clock owner, executors, authorization, watchdog, TTL, pose, gains, traffic, capture frequency or startup gates. No one-step proof is added to app_update.",
+    "Only the five allowed paths were written. No SDK/GPU/ROS/WSL/bag/Git/server operations, dependencies, new agents, broad review or additional test modules. Root owns actual031 and acceptance."
+  ]
+}

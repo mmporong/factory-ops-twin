@@ -77,8 +77,10 @@ def _setup_worker_clock(stage: Any, app: Any, manager: Any, *, local_sdk45: bool
 
 
 def _setup_mission_stepper(manager: Any, physics_dt_s: float, *, local_sdk45: bool,
-                           lidar_backend: str) -> Any:
-    if not (local_sdk45 and lidar_backend == "physx_planar"):
+                           lidar_backend: str, physics_cadence: str = "owned_step6") -> Any:
+    if physics_cadence not in {"app_update", "owned_step6"}:
+        raise ValueError("unsupported local45 physics cadence")
+    if not (local_sdk45 and lidar_backend == "physx_planar") or physics_cadence == "app_update":
         return None
     from factory_ops.local45_stepping import Local45Stepper
     return Local45Stepper(manager.world, physics_dt_s, render_every_steps=6)
@@ -1008,11 +1010,14 @@ def _run(
     local_sdk45: bool = False,
     capture_resolution: tuple[int, int] | None = None,
     lidar_backend: str = "rtx_flat_scan",
+    physics_cadence: str = "owned_step6",
 ) -> int:
     if capture_resolution is not None and not local_sdk45:
         raise ValueError("custom transport capture resolution is limited to local45 development")
     if lidar_backend not in {"rtx_flat_scan", "physx_planar"} or (not local_sdk45 and lidar_backend != "rtx_flat_scan"):
         raise ValueError("alternate lidar backend requires explicit local45 development")
+    if physics_cadence not in {"app_update", "owned_step6"}:
+        raise ValueError("unsupported local45 physics cadence")
     render_resolution = capture_resolution or base.RENDER_RESOLUTION
     started = time.monotonic()
     app = rclpy = clock_node = session = timeline = np = rep = None
@@ -1037,6 +1042,8 @@ def _run(
         "status": "running", "stage": phase,
         "ros_executor_mode": executor_mode,
     }
+    if local_sdk45:
+        result["requested_physics_cadence"] = physics_cadence
     try:
         if not re.fullmatch(r"[0-9a-f]{32}", args.run_id):
             raise base.SmokeError("--run-id must be 32 lowercase hexadecimal characters")
@@ -1404,13 +1411,19 @@ def _run(
         start_sim = initial_time
         max_sim = min(float(config["max_sim_time_s"]), float(scenario["max_sim_time_s"]))
         mission_stepper = _setup_mission_stepper(SimulationManager, float(config["physics_dt_s"]),
-            local_sdk45=local_sdk45, lidar_backend=lidar_backend)
-        if mission_stepper is not None:
+            local_sdk45=local_sdk45, lidar_backend=lidar_backend, physics_cadence=physics_cadence)
+        if local_sdk45 and lidar_backend == "physx_planar":
             result["mission_physics_cadence"] = {
-                "physics": "one actual World.step(render=False) per control iteration",
-                "scheduled_render_every_physics_steps": 6,
-                "scan_publication": "only after scheduled render; first interval may include the startup-to-mission phase change",
+                "requested_mode": physics_cadence,
+                "mode": "owned_step6" if mission_stepper is not None else "app_update",
+                "startup_physics": "app.update() for warmup and sensor/start gates in both modes",
+                "physics": ("one actual World.step(render=False) per control iteration" if mission_stepper is not None
+                    else "app.update() per control iteration; no native one-step guarantee"),
+                "scheduled_render_every_physics_steps": 6 if mission_stepper is not None else None,
+                "scan_publication": ("only after scheduled render; first interval may include the startup-to-mission phase change"
+                    if mission_stepper is not None else "after each app.update() through the existing publication path"),
                 "explicit_rgb_capture": "separate paused render with frozen physics validation",
+                "post_capture_render_only_flush": mission_stepper is not None,
                 "native_sensor_timestamp_available": False,
             }
             _atomic_json(output / "physics-cadence.json", {"run_id": args.run_id,

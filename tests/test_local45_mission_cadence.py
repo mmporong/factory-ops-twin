@@ -3,7 +3,7 @@ from types import SimpleNamespace
 import unittest
 from unittest.mock import Mock
 
-from scripts.isaac.g2_scene import _setup_mission_stepper, _update_physics_app
+from scripts.isaac.g2_scene import _run, _setup_mission_stepper, _update_physics_app
 
 
 class World:
@@ -25,12 +25,32 @@ class World:
 class MissionCadenceTests(unittest.TestCase):
     def test_only_local45_physx_selects_explicit_stepper(self):
         for local, backend in ((False, "rtx_flat_scan"), (False, "physx_planar"), (True, "rtx_flat_scan")):
-            self.assertIsNone(_setup_mission_stepper(object(), 1/60,
-                local_sdk45=local, lidar_backend=backend))
+            for cadence in ("owned_step6", "app_update"):
+                self.assertIsNone(_setup_mission_stepper(object(), 1/60,
+                    local_sdk45=local, lidar_backend=backend, physics_cadence=cadence))
         world = World()
         stepper = _setup_mission_stepper(SimpleNamespace(world=world), 1/60,
             local_sdk45=True, lidar_backend="physx_planar")
         self.assertIs(stepper.world, world)
+
+    def test_explicit_app_update_baseline_uses_existing_update_clock_and_scan_path(self):
+        stepper = _setup_mission_stepper(object(), 1/60, local_sdk45=True,
+            lidar_backend="physx_planar", physics_cadence="app_update")
+        self.assertIsNone(stepper)
+        order = []
+        app = SimpleNamespace(update=lambda: order.append("update"))
+        owner = SimpleNamespace(publish=lambda: order.append("clock"))
+        for _ in range(2):
+            self.assertTrue(_update_physics_app(app, owner, stepper=stepper))
+        self.assertEqual(["update", "clock"]*2, order)
+
+    def test_invalid_cadence_is_rejected_before_sdk_or_world_access(self):
+        with self.assertRaisesRegex(ValueError, "physics cadence"):
+            _setup_mission_stepper(object(), 1/60, local_sdk45=True,
+                lidar_backend="physx_planar", physics_cadence="owned_step3")
+        with self.assertRaisesRegex(ValueError, "physics cadence"):
+            _run(SimpleNamespace(), local_sdk45=True, lidar_backend="physx_planar",
+                physics_cadence="owned_step3")
 
     def test_existing_app_path_publishes_clock_after_update_and_keeps_scan_eligibility(self):
         order = []

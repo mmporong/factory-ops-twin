@@ -1,6 +1,6 @@
 {
-  "revision": 71,
-  "updated_at": "2026-10-20T13:24:12.538864+00:00",
+  "revision": 72,
+  "updated_at": "2026-10-20T13:35:17.365933+00:00",
   "scope": {
     "excluded": "실물 로봇 실행, 새 유료 서비스/에셋, 공개 배포",
     "project_root": "C:\\Users\\LIMMM\\factory-ops-twin",
@@ -1321,6 +1321,24 @@
         "coordination/collab/results/local45-command-executors-071.json"
       ],
       "acceptance_record": "Root boundedG2diff/testregions read+2SHA match; stableoneexecutor/node actualcontext beforefirstspin,4zero-time fairrounds, cleanupbeforeownnodes/context; latestRX/rejection/graphcounts separated fromunsupported DDSmatch. Author8CPU+2coldSDKAST once.030 actualdelivery/cause pending; no motion/lease changes."
+    },
+    {
+      "task_id": "local45-cadence-ab-072",
+      "attempt": 1,
+      "contract_revision": 72,
+      "owner": "control",
+      "status": "accepted",
+      "ACK": true,
+      "task_path": "coordination/collab/local45-cadence-ab-072-task.json",
+      "result_path": "coordination/collab/results/local45-cadence-ab-072.json",
+      "write_paths": [
+        "scripts/isaac/g2_scene.py",
+        "scripts/isaac/local45_fleet4_transport_scene.py",
+        "scripts/isaac/run_local45_fleet_pair.py",
+        "tests/test_local45_mission_cadence.py",
+        "coordination/collab/results/local45-cadence-ab-072.json"
+      ],
+      "acceptance_record": "Root one bounded4file diff read/4SHA matched: enumthreaded hostCLI->SDKentry->G2->stepper, defaultpreserved, app_update reportsnoonestepguarantee, RTX/canonicalrouteunchanged. Author6CPU/4coldSDKAST once. Actual031 baseline next."
     }
   ],
   "decisions": [

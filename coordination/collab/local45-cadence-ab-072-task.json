@@ -1,0 +1,23 @@
+{
+  "task_id": "local45-cadence-ab-072",
+  "attempt": 1,
+  "contract_revision": 72,
+  "owner": "control",
+  "reviewer": "root",
+  "write_paths": [
+    "scripts/isaac/g2_scene.py",
+    "scripts/isaac/local45_fleet4_transport_scene.py",
+    "scripts/isaac/run_local45_fleet_pair.py",
+    "tests/test_local45_mission_cadence.py",
+    "coordination/collab/results/local45-cadence-ab-072.json"
+  ],
+  "facts": "030 actualdedicatedexecutors runs successfully, butC1/C2 stillcmdsequence0/rejected0, resolvedtopicscorrect, SDKgraphpublishers4 foreachrobot bysim15..34. Allnativebodytargets0. PrimaryFollowPath105again thenautoownedclosure. Thus stableexecutor NOTsufficient torestorecmd. Need explicitcontrolledApp.update baseline vsowned_step6, samePhysXbackend/clock/executors/config/gates. Existing026 app.update didmove3AMRs. Rootownspreservation030/actual031; noactiveSDK.",
+  "goal": "Add explicit local45 --physics-cadence {app_update,owned_step6} controlledbaseline flag threaded hostpair->SDKentry->_run->_setup_mission_stepper; preservecurrentdefault owned_step6 andlegacyRTX/canonical behavior. Rootwillrun031 app_update to isolate reducedrender/app-event dependence, no newlogic/tolerance changes. Not alone; ownlistedpaths only.",
+  "acceptance": [
+    "ACK072attempt1. Minimalargumentwiring andonebranch, no newmodels/classes/deps/SDK/GPU/ROS/WSL/bag/Git/newagents/broadresearch/reviewchain. ExistingprimarySDKAPI/readinfosufficient. RootactualSDKrun afteronefocusedCPUmodule+affectedcoldAST once.",
+    "_setup_mission_stepper extraoptionalcadence defaultowned_step6; explicitlyapp_update inlocal45PhysX returnsNone andthenexistingupdatepath/scanpub/postcapture path. owned_step6 currentbehavior. Enumvalidate; canonical6.2 untouched andRTX keepsoldapp.update. Do not synthesizeclock/skipphysicsfailures/modifyTTL/poses/gains/traffic/startgates/capturefrequency/executorlogic.",
+    "local45sceneCLI parsesflag/default andpasses G2kwarg. HostpairCLI/run passes exactenum toSDKcommandline andrecordsrequestedmode; sourcepins alreadycoverthesefiles. G2results/physics-cadence.json shouldexplicitly distinguish actualchosenapp_update vsownedstepmode, including startup difference, withoutclaims ofnativeone-step proof forappupdate.",
+    "Extend existing test_local45_mission_cadence module withexplicitbaseline routing andinvalidenumcase asuseful. One small module pass (current4+newcases) +coldAST4files; nooldtests elsewhere. MainCLI/command placementreadonce, no newmirror-string tests. ReturnsmallASCII receipt SHA/limits; rootboundedreview thenoneactual031 baselinefirstcommand gate.",
+    "Stop afterminimumwiring+validation+receipt. Do notrereadwholeG2/SDK docs orprepareanotherindependentreview. TrueDDSmatchedcountAPI remainsunsupportednull; graph4 isnotmatched writer proof. Actual031data willdecidenextstep."
+  ]
+}

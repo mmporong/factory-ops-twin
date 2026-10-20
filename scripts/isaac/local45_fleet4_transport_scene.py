@@ -152,6 +152,7 @@ def main() -> int:
     parser.add_argument("--run-id", required=True)
     parser.add_argument("--capture-resolution", choices=("640x360", "1280x720"), default="640x360")
     parser.add_argument("--lidar-backend", choices=("rtx_flat_scan", "physx_planar"), default="rtx_flat_scan")
+    parser.add_argument("--physics-cadence", choices=("app_update", "owned_step6"), default="owned_step6")
     args = parser.parse_args()
     root = args.bundle.resolve(strict=True)
     compiled = load_bundle(root)
@@ -165,7 +166,7 @@ def main() -> int:
     return g2_scene._run(shared, qualification=QUALIFICATION, scenario_ids={scenario_id},
         result_file=RESULT_FILE, expected_robot_count=4, local_sdk45=True,
         capture_resolution=tuple(int(value) for value in args.capture_resolution.split("x")),
-        lidar_backend=args.lidar_backend,
+        lidar_backend=args.lidar_backend, physics_cadence=args.physics_cadence,
         scene_extension=Local45FleetLifecycle(root, args.run_id, lidar_backend=args.lidar_backend), extra_inputs=extras)
 
 

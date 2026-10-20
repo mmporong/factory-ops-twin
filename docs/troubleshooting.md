@@ -555,6 +555,10 @@ SDK mission-failed는 ROS FollowPath 실패의 후속이다. 양쪽 실행은 �
 
 071은 로컬4.5 PhysX의 첫 spin 전에 각 소유 노드를 해당 context의 고정 SingleThreadedExecutor에 등록한다. 기존4라운드·비차단 호출 예산을 유지하고 노드/context 정리 전에 executor를 정리한다. 기존1시뮬레이션초 체크포인트에서 명령 수신·거절·마지막 거절 사유·정확한 토픽·발행자 정보를 최신 파일로 기록한다. 설치 Humble Subscription에는 공개된 matched publisher 계수 API가 없어 해당 값은null·지원 불가로 남긴다. 제공되는 node.count_publishers 값은graph_publisher_count로 별도 표기하며 실제 DDS match로 바꾸지 않는다. 관련 CPU8개·구문2파일을 한 번 확인했다.029의 최초 원인 해결 여부는030의 실제 수신과 주행으로 확인한다.
 
+030에서는 전용 executor가 동작했으나 최신 수신 진단은 수신0·거절0·토픽별 graph 발행자4를 보였다. 실제 DDS match는 지원 불가로null이며 이를 연결 성공으로 해석하지 않는다. 종료된 bag의 공식 역직렬화 결과 carter1 명령1550건 중1549건, carter2 명령1015건 중1014건이0이 아니고 최대 선속도는0.4m/s였다. 전용 executor만으로는 수신이 복구되지 않았다. FollowPath105가 다시 최초 오류이며 촬영 재개와 물리 스텝 검사는 재발하지 않았다. 보조 live 조회는 실행이 이미 끝났다는 사전 조건에서 중단돼 ROS 노드를 초기화하지 않았다. 종료 후152파일211,127,121바이트를 D·E에 보존했다. [030 근거](evidence/local45-transport-030.json)에 수신 진단과 한계를 남겼다.
+
+072의 명시적 physics-cadence 인자는 동일 센서·시계·executor·허가 조건에서 기존 app_update와 owned_step6를 비교하기 위한 경로다. 기본값은 유지한다. 관련 CPU6개·구문4파일을 한 번 확인했다.031은app_update로 명령 수신과 첫 실제 주행부터 확인해 앱 이벤트 갱신 의존성을 좁힌다. 시각·물리·시작점 허용 기준을 바꾸지 않는다.
+
 ## 실행 전 확인과 후속 기록
 
 1. 깨끗한 생산자 소스·host commit·설정·실행 ID를 결속한다. 실패한 실행 ID와 원본을 다시 사용하지 않는다.
