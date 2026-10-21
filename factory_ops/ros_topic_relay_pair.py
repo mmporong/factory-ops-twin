@@ -44,7 +44,8 @@ class RelayPair:
             "--timeout",str(min(10800,self.bound+30)),"--abort-request",str(self.stage/"relay-job-abort.txt")],
             env={**os.environ,**self.windows_environment,"PYTHONPATH":str(source),"PYTHONDONTWRITEBYTECODE":"1"},
             stdout=self.streams[0],stderr=self.streams[1],creationflags=subprocess.CREATE_NO_WINDOW)
-        shell="\n".join(["set -e","source /opt/ros/jazzy/setup.bash",
+        shell="\n".join(["set -e", "printf 'relay_shell_started\\n'", "source /opt/ros/jazzy/setup.bash",
+            "printf 'relay_ros_environment_ready\\n'",
             *["export "+key+"="+shlex.quote(value) for key,value in self.linux_environment.items()],
             "export PYTHONDONTWRITEBYTECODE=1",
             "export PYTHONPATH="+shlex.quote(linux(source))+':"${PYTHONPATH:-}"',
