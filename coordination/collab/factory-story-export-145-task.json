@@ -1,0 +1,41 @@
+{
+  "task_id": "factory-story-export-145",
+  "attempt": 1,
+  "contract_revision": 127,
+  "owner": "control",
+  "binding": {
+    "session": "default",
+    "pane_id": "w1:p1C",
+    "terminal_id": "term_65e06d27e415810",
+    "agent_session": "01a152aa-24b4-7a31-92e3-a2b620f4feeb"
+  },
+  "project_root": "C:\\Users\\LIMMM\\factory-ops-twin",
+  "write_paths": [
+    "scripts/media/export_factory_story.py",
+    "tests/test_factory_story_media.py",
+    "coordination/collab/results/factory-story-export-145.json"
+  ],
+  "result_path": "C:\\Users\\LIMMM\\factory-ops-twin\\coordination\\collab\\results\\factory-story-export-145.json",
+  "goal": "Publishable whole-factory operation presentation from real046 phase captures, not another isolated junction. CPU exporter implementation only; root sole active046SDK/ROS.",
+  "read_inputs": [
+    "factory_ops/operation_story.py",
+    "scripts/isaac/local45_fleet4_transport_scene.py",
+    "scripts/media/export_junction_hero.py",
+    "configs/factory-fleet4-normal3/render-profile.json",
+    "E:/FactoryOpsRuntime/local45-transport-036/results/run/media/frames.json",
+    "E:/FactoryOpsRuntime/local45-transport-036/results/run/dashboard-state.json"
+  ],
+  "native_run": {
+    "stage": "C:\\Users\\LIMMM\\FactoryOpsRuntime\\local45-transport-046",
+    "run_id": "537e432c90224deab98f24295f268ca6",
+    "source_commit": "581e3f4d480bb80b4c2b1618b9b00643db491e4a"
+  },
+  "acceptance": [
+    "ACK145 attempt1 revision127. You are not alone. Only assigned paths; root owns046 frozen source/runtime, configs, docs, README, board, Git and GPU. No other agent/model/session/cloud/WSL/SDK/ROS/GPU/install/Git or source-archive mutation. You may read regular JSON/source, NEVER running rosbag SQLite or copy inflight data. No new raw dataset.",
+    "Use actual closed run: CLI --stage and --output, output new and outside producer. Require pair-host both OS/Job closed, matching runid and normal mission success by default. Incomplete execution is not a working completed factory. Detect media/frames.json rows visual_state.factory_story with6phase keys supplied by OperationStory. Group chronologically and require real phases; never fabricate missing steps, counts, SOC, poses or time. Validate image hashes and applied visual/material/dashboard snapshot hashes and runids. Existing036 has sparse frames, only use as field-shape reference, not substitute60fps or native046 source.",
+    "White modern operations console composition: full factory as the dominant1280x720 native image (no isolated-corner crop), header brand/run time/recorded source, source-backed stock/shipped/returned/process KPIs, right4AMR task/destination/load/speed/virtualSOC cards, bottom material->CI->process->CO->ship plus empty-return loop. Use legible Korean and restrained blue/teal/amber. Do not show LIVE or fabricate enterprise MES. Native cargo remains ledger-bound visual-only. Mark virtual SOC. GT positions may project small vehicle ID labels for media only, never alter producer movement; use actual camera readback/profile, not invented trajectories.",
+    "Frames already include applied_snapshot, latest_event.signals and native_empty_totes.applied with document/source_snapshot; factory_story.dashboard status observed points to factory-story-state/<sha>.json. Read dashboard only when that archived checkpoint is valid; stale/missing values show 미관측. dashboard sim_time is elapsed; frame sim_time is absolute World; sample.dashboard supplies source_world_time_s and age_s; do not compare unconverted clocks. Inventory/counts from actual applied material and committed visual states, not final state pasted onto prior frames.",
+    "Use Pillow + installed FFmpeg/ffprobe without dependency installation. Host .venv has NO Pillow; installed Isaac SDK Python has Pillow, root will render after closure; keep tests of parsing/time/schema/projection cold-importable. Do not import isaacsim or launch SimulationApp in exporter. No GPU entry. No new generic UI framework or templating engine. Avoid file-per-frame recomposite storage if possible: stream RGB to ffmpeg or temporary isolated workspace with bounded count, cleanup only owned subprocess/files and retain provenance. Max1440captured native rows, at most3s each phase for hero, original60fps MP4 and40fps GIF with20/30ms delays; label chapter cuts and playback speed. No motion interpolation or lowfps upsample claim. Aim GIF<=35MB and prefer readable source-backed content over needless animation.",
+    "Report exact commands/byte hashes/source references per media, source-clock spans, phase order, sparse/partial windows, overlay provenance and decoding/frame delay checks. Save a poster from real source frame. If native phase data not yet available, implement and return pending native export, do not generate fake preview. One focused CPU test set only; no broad suite/review chain. Root will run on actual046 when closed and visually inspect once."
+  ]
+}

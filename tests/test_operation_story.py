@@ -71,18 +71,25 @@ class OperationStoryTests(unittest.TestCase):
             life=Local45FleetLifecycle(bundle,run,lidar_backend="physx_planar")
             life.output=root/"run";life.output.mkdir()
             doc=self.state();doc["run_id"]=run
-            raw=json.dumps(doc).encode();snapshot=life.output/"applied.json";snapshot.write_bytes(raw)
-            life.visuals=SimpleNamespace(applied_sequence=3,last_event={"source_state_snapshot":{
+            from factory_ops.visual_state import canonical_sha256
+            state_hash=canonical_sha256(doc)
+            raw=json.dumps({"schema_version":1,"state_hash":state_hash,"visual_state":doc}).encode();snapshot=life.output/"applied.json";snapshot.write_bytes(raw)
+            life.visuals=SimpleNamespace(applied_sequence=3,applied_state_hash=state_hash,last_event={"source_state_snapshot":{
                 "path":"applied.json","sha256":hashlib.sha256(raw).hexdigest()}})
             life.story_motion={"carter1":(9,True)}
             with patch("scripts.isaac.local45_fleet4_transport_scene.FleetTransportLifecycle.step"), \
+                 patch("scripts.isaac.local45_fleet4_transport_scene.FleetTransportLifecycle.after_control"), \
                  patch("scripts.isaac.local45_fleet4_transport_scene.FleetTransportLifecycle.capture_due",return_value=False), \
                  patch("scripts.isaac.local45_fleet4_transport_scene.FleetTransportLifecycle.capture_metadata",return_value={}):
                 life.step(1.,10)
+                life.after_control("carter1",{"physics_frame":11,"sim_time_s":1.1,
+                    "authorization":{"mode":"navigate","valid":True},
+                    "motion_profile":{"input_command":{"linear_m_s":.2,"angular_rad_s":0.}}})
                 self.assertTrue(life.capture_due())
                 meta=life.capture_metadata()["factory_story"]
                 self.assertEqual(meta["phase"],"material_supply")
-                self.assertEqual(meta["physics_frame"],10)
+                self.assertEqual(meta["physics_frame"],11)
+                self.assertEqual(meta["sim_time_ns"],1_100_000_000)
                 self.assertFalse(life.capture_due())
                 snapshot.write_text("{}",encoding="utf-8")
                 life.visuals.applied_sequence=4

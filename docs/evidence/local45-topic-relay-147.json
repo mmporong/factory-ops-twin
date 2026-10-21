@@ -1,0 +1,396 @@
+{
+  "run_id": "4383539af2d64538aaa5586033583db6",
+  "status": "passed_application_transport_fixture_only",
+  "GPU_started": false,
+  "World_or_actuator_execution": false,
+  "domain_id": 91,
+  "DDS_scope": "Both OS participants confined to their own127.0.0.1 UDP; application CDR travels through run-owned TCP pair.",
+  "message_scope": "4 odometry,8 raw scans,4 transient-local static TF,1 authored clock Windows->Linux;4 authored probe Twist Linux->Windows.44Jazzy+5Humble fixture contexts plus2relay contexts.",
+  "fixtures": {
+    "windows": {
+      "run_id": "4383539af2d64538aaa5586033583db6",
+      "side": "windows",
+      "status": "passed",
+      "odom": {},
+      "command": {
+        "2": 250,
+        "3": 250,
+        "4": 250,
+        "1": 250
+      },
+      "scan": {},
+      "static": {},
+      "late_static": {},
+      "clock_count": 255,
+      "last_clock_ns": 12750000000,
+      "clock_duplicates": 0,
+      "scope": "authored transport vectors on isolated probe topics, no robot/World/GPU",
+      "clock_publisher_count": 1,
+      "cleanup_errors": [],
+      "closed": true
+    },
+    "linux": {
+      "run_id": "4383539af2d64538aaa5586033583db6",
+      "side": "linux",
+      "status": "passed",
+      "odom": {
+        "3": 213,
+        "2": 213,
+        "4": 214,
+        "1": 197
+      },
+      "command": {},
+      "scan": {
+        "2": 424,
+        "3": 424,
+        "4": 424,
+        "1": 394
+      },
+      "static": {
+        "3": 1,
+        "2": 1,
+        "4": 1,
+        "1": 1
+      },
+      "late_static": {
+        "4": 1,
+        "2": 1,
+        "3": 1,
+        "1": 1
+      },
+      "clock_count": 197,
+      "last_clock_ns": 12750000000,
+      "clock_duplicates": 0,
+      "scope": "authored transport vectors on isolated probe topics, no robot/World/GPU",
+      "clock_publisher_count": 1,
+      "cleanup_errors": [],
+      "closed": true
+    }
+  },
+  "relays": {
+    "windows": {
+      "source_sha256": "ff2bb9bb5915651965f7fb07cdde2180187e1ed64b2a9515e310c244ba869426",
+      "sent": {
+        "/clock": 255,
+        "/probe_4383539af2d64538aaa5586033583db6/carter1/odom": 255,
+        "/probe_4383539af2d64538aaa5586033583db6/carter1/tf_static": 1,
+        "/probe_4383539af2d64538aaa5586033583db6/carter1/scan_front_raw": 255,
+        "/probe_4383539af2d64538aaa5586033583db6/carter1/scan_rear_raw": 255,
+        "/probe_4383539af2d64538aaa5586033583db6/carter2/odom": 255,
+        "/probe_4383539af2d64538aaa5586033583db6/carter2/tf_static": 1,
+        "/probe_4383539af2d64538aaa5586033583db6/carter2/scan_front_raw": 255,
+        "/probe_4383539af2d64538aaa5586033583db6/carter2/scan_rear_raw": 255,
+        "/probe_4383539af2d64538aaa5586033583db6/carter3/odom": 255,
+        "/probe_4383539af2d64538aaa5586033583db6/carter3/tf_static": 1,
+        "/probe_4383539af2d64538aaa5586033583db6/carter3/scan_front_raw": 255,
+        "/probe_4383539af2d64538aaa5586033583db6/carter3/scan_rear_raw": 255,
+        "/probe_4383539af2d64538aaa5586033583db6/carter4/odom": 235,
+        "/probe_4383539af2d64538aaa5586033583db6/carter4/scan_front_raw": 235,
+        "/probe_4383539af2d64538aaa5586033583db6/carter4/scan_rear_raw": 235,
+        "/probe_4383539af2d64538aaa5586033583db6/carter4/tf_static": 1
+      },
+      "received": {
+        "/probe_4383539af2d64538aaa5586033583db6/carter2/cmd_vel": 261,
+        "/probe_4383539af2d64538aaa5586033583db6/carter3/cmd_vel": 261,
+        "/probe_4383539af2d64538aaa5586033583db6/carter4/cmd_vel": 261,
+        "/probe_4383539af2d64538aaa5586033583db6/carter1/cmd_vel": 261
+      },
+      "stale_commands_dropped": 0,
+      "closed": true,
+      "cleanup_errors": []
+    },
+    "linux": {
+      "source_sha256": "ff2bb9bb5915651965f7fb07cdde2180187e1ed64b2a9515e310c244ba869426",
+      "sent": {
+        "/probe_4383539af2d64538aaa5586033583db6/carter2/cmd_vel": 261,
+        "/probe_4383539af2d64538aaa5586033583db6/carter3/cmd_vel": 261,
+        "/probe_4383539af2d64538aaa5586033583db6/carter4/cmd_vel": 261,
+        "/probe_4383539af2d64538aaa5586033583db6/carter1/cmd_vel": 261
+      },
+      "received": {
+        "/clock": 255,
+        "/probe_4383539af2d64538aaa5586033583db6/carter1/odom": 255,
+        "/probe_4383539af2d64538aaa5586033583db6/carter1/tf_static": 1,
+        "/probe_4383539af2d64538aaa5586033583db6/carter1/scan_front_raw": 255,
+        "/probe_4383539af2d64538aaa5586033583db6/carter1/scan_rear_raw": 255,
+        "/probe_4383539af2d64538aaa5586033583db6/carter2/odom": 255,
+        "/probe_4383539af2d64538aaa5586033583db6/carter2/tf_static": 1,
+        "/probe_4383539af2d64538aaa5586033583db6/carter2/scan_front_raw": 255,
+        "/probe_4383539af2d64538aaa5586033583db6/carter2/scan_rear_raw": 255,
+        "/probe_4383539af2d64538aaa5586033583db6/carter3/odom": 255,
+        "/probe_4383539af2d64538aaa5586033583db6/carter3/tf_static": 1,
+        "/probe_4383539af2d64538aaa5586033583db6/carter3/scan_front_raw": 255,
+        "/probe_4383539af2d64538aaa5586033583db6/carter3/scan_rear_raw": 255,
+        "/probe_4383539af2d64538aaa5586033583db6/carter4/odom": 235,
+        "/probe_4383539af2d64538aaa5586033583db6/carter4/scan_front_raw": 235,
+        "/probe_4383539af2d64538aaa5586033583db6/carter4/scan_rear_raw": 235,
+        "/probe_4383539af2d64538aaa5586033583db6/carter4/tf_static": 1
+      },
+      "stale_commands_dropped": 0,
+      "closed": true,
+      "cleanup_errors": []
+    }
+  },
+  "closed": {
+    "windows": true,
+    "linux": true,
+    "cleanup_errors": []
+  },
+  "wall_s": 20.57800000003772,
+  "previous_router_fixture": {
+    "run_id": "15d3d9b29d654a9782f97d3be1fd793a",
+    "status": "failed_delivery",
+    "windows_received_twist": {
+      "1": 311,
+      "2": 311,
+      "3": 323,
+      "4": 311
+    },
+    "scope": "DDSRouter3.5.1 fixture did not establish bidirectional delivery. Clock/static callbacks were also mistakenly attached to an unspun passive node, so zero callback counts do not prove wire failure. Router stopped/removed; no GPU started.",
+    "all_owned_resources_closed": true
+  },
+  "archives": {
+    "paths": [
+      "C:\\Users\\LIMMM\\FactoryOpsArtifacts\\transport-147\\checkpoint-001.tar.gz",
+      "E:\\FactoryOpsArtifacts\\transport-147\\checkpoint-001.tar.gz"
+    ],
+    "sha256": "f562512d016e518d6e4a15892e30e7f2f7e782e6eac392fb9c57e69ee6fad8d9",
+    "bytes": 46176,
+    "members": {
+      "local45-routed-dds-146/fastdds-udp-linux.xml": {
+        "sha256": "c32b213b69a17c8435eebc7de7a9cef228369bc9d761d6ac413c22c2c0d1d1f9",
+        "bytes": 836
+      },
+      "local45-routed-dds-146/fastdds-udp-windows.xml": {
+        "sha256": "e5e783bccbb0f0a881e807a822250c3f8f4e60759b0cf47d7f3bb3eeab6c6ab4",
+        "bytes": 835
+      },
+      "local45-routed-dds-146/host.json": {
+        "sha256": "329077f9d67fbcabdd0c6af010ae234ed5db272e8c50d44a032b3ccb53f0119b",
+        "bytes": 11039
+      },
+      "local45-routed-dds-146/job-spec.json": {
+        "sha256": "f89133981f42577664257983e6410a5fe5fd3ed5c0c8a5dd771ab639bc81f4a0",
+        "bytes": 1873
+      },
+      "local45-routed-dds-146/job.json": {
+        "sha256": "a99fd2a2570eaa787d14af079421dd2a5b2e1c3d27e74518a7ad55cefddce228",
+        "bytes": 2336
+      },
+      "local45-routed-dds-146/job.json.gate": {
+        "sha256": "78466057a760ee9b1aa0c798be66056a765811eaa951a4ac544ace2d0b33b648",
+        "bytes": 32
+      },
+      "local45-routed-dds-146/job.json.preflight.json": {
+        "sha256": "9bfb981e250076ae8cdb8ed3f6a078e7504bc92c47b18e83783c50e9ebf68369",
+        "bytes": 1551
+      },
+      "local45-routed-dds-146/linux-ready.json": {
+        "sha256": "aa6c37de7c6b46674a73cdb6beb100d0be8e97f501c9d0723b581d2168cc4a2f",
+        "bytes": 47
+      },
+      "local45-routed-dds-146/linux-result.json": {
+        "sha256": "7bb4baba55bf6fb0c60aba9869f1365c44417b1e324043592ca33ceb41929542",
+        "bytes": 994
+      },
+      "local45-routed-dds-146/linux.log": {
+        "sha256": "680e59eb403b5a769d4f8024544d319c3be15a5cfa54348e0a40d6ef4da4d4bf",
+        "bytes": 13112
+      },
+      "local45-routed-dds-146/linux.sh": {
+        "sha256": "676dd701912e9b672ec43ff797af6119d4ee2364b021e23c7fbc3b97e9190b53",
+        "bytes": 704
+      },
+      "local45-routed-dds-146/router.stderr.log": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "local45-routed-dds-146/router.stdout.log": {
+        "sha256": "b42b9bf94afb64b72c46943eb0c1dd67207951626f7f9ae422d34dda5c59b6ec",
+        "bytes": 58
+      },
+      "local45-routed-dds-146/router.yaml": {
+        "sha256": "c73dbfc0ad598505eb3fe666a171c2d3045aa8df2685768ab3477768ee138529",
+        "bytes": 435
+      },
+      "local45-routed-dds-146/start.json": {
+        "sha256": "8bc206a9fb431a3de9efc9d70564a0f2dc591e46dd766f2a843ad4044bc17df3",
+        "bytes": 48
+      },
+      "local45-routed-dds-146/windows-ready.json": {
+        "sha256": "8bc206a9fb431a3de9efc9d70564a0f2dc591e46dd766f2a843ad4044bc17df3",
+        "bytes": 48
+      },
+      "local45-routed-dds-146/windows-result.json": {
+        "sha256": "7bdc24e4431084b3c7984f1dfbde2350e061939cc98971da596b952d3f4536c6",
+        "bytes": 1142
+      },
+      "local45-routed-dds-146/windows.stderr.log": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "local45-routed-dds-146/windows.stdout.log": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "local45-routed-dds-146/source/factory_ops/isaac45_runtime.py": {
+        "sha256": "0073287ff74c4bd124542c8277b18398ba0206c8d3c719ecd0954730d361a03c",
+        "bytes": 31996
+      },
+      "local45-routed-dds-146/source/factory_ops/__init__.py": {
+        "sha256": "da57bbf586e3c4639fd72b3960ef8dd7a8326b3ba17504836189be26ce5bacb0",
+        "bytes": 103
+      },
+      "local45-routed-dds-146/source/scripts/ros/probe_dds_command_delivery.py": {
+        "sha256": "7390a608fefbfa3263ed8783aba641781fee2041d9c88549fbb27e7659672d8f",
+        "bytes": 13249
+      },
+      "local45-topic-relay-147/fastdds-udp-linux.xml": {
+        "sha256": "d3dd0e4df41b72632294c42202a619af4213c9af5ec5b0dd64072c0cfeb47b73",
+        "bytes": 775
+      },
+      "local45-topic-relay-147/fastdds-udp-windows.xml": {
+        "sha256": "d3dd0e4df41b72632294c42202a619af4213c9af5ec5b0dd64072c0cfeb47b73",
+        "bytes": 775
+      },
+      "local45-topic-relay-147/host.json": {
+        "sha256": "b6fbf21c86378829306f8fbf08add86102af6d123331ee7549cab640274d9362",
+        "bytes": 24288
+      },
+      "local45-topic-relay-147/job-spec.json": {
+        "sha256": "e26a2241df040064af7d7df2f64dfbcc469167fa2d83ee5b047dd0a5cfcc0405",
+        "bytes": 2064
+      },
+      "local45-topic-relay-147/job.json": {
+        "sha256": "6d56e8305bbb174db62a261c29e10d8952d818ae1569e7dac9d63c0311a48225",
+        "bytes": 2555
+      },
+      "local45-topic-relay-147/job.json.gate": {
+        "sha256": "69917c43480e1917de84c8e4e914e275de0be79d5226cdb6ce075e28045e4241",
+        "bytes": 32
+      },
+      "local45-topic-relay-147/job.json.preflight.json": {
+        "sha256": "1e58191300a6965ba7da580c6dbfea3ca20c27a6f2d17cfbeb333e3bc4b49c07",
+        "bytes": 1779
+      },
+      "local45-topic-relay-147/linux-fixture-ready.json": {
+        "sha256": "67c4f1648d87c65d75eace4fed9a96ec63b96f74060b83d189b501b3eb798291",
+        "bytes": 46
+      },
+      "local45-topic-relay-147/linux-fixture.json": {
+        "sha256": "244b1efae479dc341c524105f410517e79b028495a8c213533fb1d5d3857be4c",
+        "bytes": 627
+      },
+      "local45-topic-relay-147/linux-fixture.stderr.log": {
+        "sha256": "326929a3957a80286d4f4e9bcf5415603daaa289f81690e6d847e69a2bdd38a3",
+        "bytes": 13112
+      },
+      "local45-topic-relay-147/linux-fixture.stdout.log": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "local45-topic-relay-147/linux-pair.json": {
+        "sha256": "2ff80e4b198d49462c84ec013f38a7651fdfe7085472e3467a82c1aa55adb789",
+        "bytes": 209
+      },
+      "local45-topic-relay-147/linux-relay.json": {
+        "sha256": "396fd25e91c00c79b1767b35672148e0f174509b45790646ce7e2b30a673df61",
+        "bytes": 5624
+      },
+      "local45-topic-relay-147/linux-relay.stderr.log": {
+        "sha256": "bb339a6b3faa1fb7f46b3363155393f5258dbc4e90d4a9e02c459f013bffe83f",
+        "bytes": 298
+      },
+      "local45-topic-relay-147/linux-relay.stdout.log": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "local45-topic-relay-147/linux.log": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "local45-topic-relay-147/linux.sh": {
+        "sha256": "e669798147996cdeac5146fc5fe8d6b6b496aeffa268bef1283e99db0fb90e8f",
+        "bytes": 800
+      },
+      "local45-topic-relay-147/pair-host.json": {
+        "sha256": "b6fbf21c86378829306f8fbf08add86102af6d123331ee7549cab640274d9362",
+        "bytes": 24288
+      },
+      "local45-topic-relay-147/relay-stop.txt": {
+        "sha256": "69917c43480e1917de84c8e4e914e275de0be79d5226cdb6ce075e28045e4241",
+        "bytes": 32
+      },
+      "local45-topic-relay-147/start.json": {
+        "sha256": "91652d8bd8bb44219bd1d243d45875e65303d860c181650a38949ab55939eaee",
+        "bytes": 48
+      },
+      "local45-topic-relay-147/windows-fixture-ready.json": {
+        "sha256": "67c4f1648d87c65d75eace4fed9a96ec63b96f74060b83d189b501b3eb798291",
+        "bytes": 46
+      },
+      "local45-topic-relay-147/windows-fixture.json": {
+        "sha256": "d2ac46b48618b5d301d3be2e19cc5f4f90057dd399a2206ebf99ff9e53effd91",
+        "bytes": 493
+      },
+      "local45-topic-relay-147/windows-fixture.stderr.log": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "local45-topic-relay-147/windows-fixture.stdout.log": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "local45-topic-relay-147/windows-pair.json": {
+        "sha256": "dea0fb01d0c5990f471a62656746d572c7c465e89a01a7ab52ae362296b429b8",
+        "bytes": 226
+      },
+      "local45-topic-relay-147/windows-relay.json": {
+        "sha256": "44dc14b9cd265af892cab6318b1a99d20357eb6d366055607c2ac198a670cb75",
+        "bytes": 5845
+      },
+      "local45-topic-relay-147/windows-relay.stderr.log": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "local45-topic-relay-147/windows-relay.stdout.log": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "local45-topic-relay-147/windows.stderr.log": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "local45-topic-relay-147/windows.stdout.log": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "local45-topic-relay-147/source/factory_ops/isaac45_runtime.py": {
+        "sha256": "0073287ff74c4bd124542c8277b18398ba0206c8d3c719ecd0954730d361a03c",
+        "bytes": 31996
+      },
+      "local45-topic-relay-147/source/factory_ops/ros_topic_relay.py": {
+        "sha256": "ff2bb9bb5915651965f7fb07cdde2180187e1ed64b2a9515e310c244ba869426",
+        "bytes": 13706
+      },
+      "local45-topic-relay-147/source/factory_ops/__init__.py": {
+        "sha256": "da57bbf586e3c4639fd72b3960ef8dd7a8326b3ba17504836189be26ce5bacb0",
+        "bytes": 103
+      },
+      "local45-topic-relay-147/source/artifacts/local45/topic_relay_fixture_147.py": {
+        "sha256": "5cafe598bd0cf41b9865fdc6b7a5def4996386b95b9ad6b1013a64aa00dc2741",
+        "bytes": 7786
+      },
+      "local45-topic-relay-147/source/artifacts/local45/topic_relay_pair_147.py": {
+        "sha256": "256c23b6c80129db47700ab51f4e6bf867b2e5145b20299845824470b8e7a87b",
+        "bytes": 3078
+      }
+    },
+    "all_member_sha256_verified_both_copies": true
+  },
+  "limitations": [
+    "No native factory startup or full mission claim.",
+    "Probe clock and commands are authored test vectors, never applied to actuators.",
+    "Native transport throughput and whole factory completion remain pending."
+  ]
+}

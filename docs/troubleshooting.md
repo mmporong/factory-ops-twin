@@ -803,3 +803,21 @@ python -B -m unittest tests.test_g2_scene tests.test_g3_scene tests.test_compact
 142는 실제 양보·재개를 보여주지만 자재 공급부터 공정·출하·빈 용기 회수까지의 전체 운영을 보여주지 못했다. 사용자 최신 요구에 따라142는 보조 시험으로 내리고 전체 공장 시연을 우선한다. 다음 normal3 설정은 첫 이동5초 촬영을 끄고, 이미 적용된 원장과 빈 토트 상태에서 자재 이송·공정 처리·완제품 이송·첫 출하·빈 용기 회수·순환 완료를 골라 최대6개·각240프레임만 촬영한다. 관측된 단계만 선택하며 미완료 단계를 영상으로 채우지 않는다.
 
 각 창은 원본 물리 프레임·적용된 상태 스냅샷·실행 ID와 연결한다. 화면용 웹 상태는 원래 임무 시계에 실행 시작점을 더해 World 시계로 대조하고,2초 이내 과거 관측만 보존한다. 누락·오래된 상태는 미관측으로 남기며 운동 권한에 사용하지 않는다. 선택기 관련3개 CPU 검사와 적용 스냅샷 해시·native lifecycle 연결1개 검사를 통과했다.1280×720 전체 공장 촬영과 이 설정의 실제6단계 운영 성공은 아직 미확인이다.
+
+## FOT-095 — Humble·Jazzy 발견 메시지의 Gid 크기 차이
+
+046은 시작 분산5초를 적용했지만 시작 조건에서 실패했다. Windows SDK stderr에 `ParticipantEntitiesInfo`의 Fast CDR/Bad alloc 역직렬화 오류가 반복됐고 WSL 관측 시계가 멈췄다. 실제 설치 소스의 `rmw_dds_common/Gid`는 Windows Humble24바이트, WSL Jazzy16바이트다. [Humble 메시지 정의](https://raw.githubusercontent.com/ros2/rmw_dds_common/humble/rmw_dds_common/msg/Gid.msg)와 [Jazzy 메시지 정의](https://raw.githubusercontent.com/ros2/rmw_dds_common/jazzy/rmw_dds_common/msg/Gid.msg)도 이 차이를 명시한다. 발견 스키마의 불일치는 확인됐지만 모든 과거 lifecycle 실패의 유일한 원인으로 확대하지 않는다.046은 운송0건·운영 촬영 창0개이며 두 OS 종료 후 C/E 원본 보존과 SHA 대조를 마쳤다. [046 결과](evidence/local45-transport-046.json)
+
+146은 무료 DDSRouter3.5.1 컨테이너로 두 발견 영역을 나눈 CPU 시험이다. Linux→Windows Twist 전달은 있었으나 반대 방향 전달은0이었다. Windows에서 시계 publisher가2개여서 기존 단일 발행 조건도 만족하지 못했다. 추가 clock/static callback을 spin하지 않는 passive node에 붙인 시험 코드 오류가 있어 해당 callback0건을 전송 실패 근거로 삼지 않는다. 컨테이너·두 OS 소유 프로세스는 모두 종료했다. 이 후보를 실제 공장 해결로 표시하지 않는다.
+
+## FOT-096 — OS 내부 DDS 격리와 허용 토픽의 응용 계층 전달
+
+147은 각 OS의 DDS 인터페이스·초기 peer를127.0.0.1로 제한하고, 원본 CDR·실행 ID·순번·토픽 타입·SHA를 확인하는 TCP 경로로 센서와 시계만 Windows→Linux, 주행 명령만 Linux→Windows로 전달했다. 서비스·액션·발견 정보는 OS 경계를 넘기지 않는다. 주행 명령을 생성하거나 필드·시계를 바꾸지 않으며, 수신 시점의 관측 시계보다 미래이거나0.3sim 초보다 오래된 Linux 명령 봉투는 버린다. 봉투의 시계는 relay가 명령을 수신한 시각이며 원 생산자의 생성 시각으로 표현하지 않는다. 기존 watchdog·주행 권한·TTL은 유지한다.
+
+비GPU CPU 시험은44Jazzy+5Humble fixture context와2relay context에서 통과했다. 네 차량 채널의 odometry·8개 scan, 정적 TF의 늦은 구독자 수신과 역방향 명령을 확인했다. 양 OS에서 clock publisher1개·역행/중복0건, 종료 정리 오류0건이었다. 실제 World·로봇 동작이나 전체 공장 완료의 증거로 쓰지 않는다. 원본3개 wire 검사와 loopback XML1검사를 통과했다. [147 결과·146/147 원본 보존](evidence/local45-topic-relay-147.json)
+
+## FOT-097 — 운영 촬영의 적용 문서와 실제 RGB 프레임 결속
+
+145 exporter 작성 중 visual snapshot이 `{schema_version,state_hash,visual_state}` wrapper인데 선택기가 wrapper 전체를 flat 원장으로 읽는 연결 오류를 발견했다. 다음 producer는 wrapper의 SHA·state hash·run·sequence를 확인하고 `visual_state`를 선택기에 전달한다. 또한 기존 G2는 적용 상태를 갱신한 뒤 물리를 한 단계 진행하고 RGB를 촬영한다. 촬영 태그를 pre-step에서 만들면 RGB와1물리 프레임 어긋나므로 선택기 관측을 실제 post-step 제어 샘플과 capture_due 경계로 옮겼다. 이 오류들은046의 최초 발견/시작 실패와 별도다.
+
+145의 CPU exporter9검사·Python3.10 AST2검사를 수신했다. 실제 완료된 정상 실행·양 OS 정리·여섯 실제 단계·1280×720 원본과 연속60Hz 물리 프레임을 요구하며 누락 단계를 합성하지 않는다. 화이트 운영 콘솔의 재고·출하·반납·작업 값은 같은 촬영의 적용 원장과 freshness를 통과한 checkpoint에서 읽는다. 실제 미디어 렌더링은 후속 정상 실행 종료 뒤 수행한다.

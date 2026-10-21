@@ -2,6 +2,15 @@
 
 가상 센서 모듈 공장에서 **4대 AMR의 자재 공급·완제품 출하·빈 용기 회수**를 Isaac Sim·ROS 2와 웹 관제로 연결하는 프로젝트입니다.
 
+![자재 보관·공정 셀·출하 구역과 네 AMR로 구성한 전체 생산 구역](docs/images/fleet4-local45-036/overview.png)
+
+**자재 공급 → 공정 처리 → 완제품 이송 → 출하 → 빈 용기 반납**의 전체 운영과 같은 실행의 관제 상태를 보여줍니다. [현재 보존된 전체 업무 영상](docs/images/fleet4-local45-036/operations-business-complete.mp4)은 명목74배속 요약입니다. 해당 실행은 출하3건·빈 토트 반납3건을 기록했으나 최종 기록 종료 검사에 실패했습니다.
+
+여섯 운영 단계의 원속도 촬영과 상태 패널을 묶는 내보내기 도구를 준비했습니다. 전체 공장1280×720 원본 위에 재고·출하·반납 집계와4대의 작업·목적지·속도·가상 SOC를 같은 촬영 시점으로 표시합니다. 새 정상 완료 실행의 촬영·인코딩은 남아 있으며, 전체 디지털 트윈 완성을 주장하지 않습니다.
+
+<details>
+<summary>보조 시연: 교차 통로 양보·통과·재개</summary>
+
 ![공장 물류 운반 중 교차 통로 양보, 선행차 통과, 대기차 재출발과 회전](docs/images/junction-hero-local45-142/logistics-yield-40fps.gif)
 
 [원속도 전체 영상 · 60fps MP4](docs/images/junction-hero-local45-142/logistics-yield-60fps.mp4) · [촬영·변환 출처](docs/images/junction-hero-local45-142/provenance.json) · [실제 실행 결과](docs/evidence/local45-junction-hero-142.json)
@@ -9,6 +18,8 @@
 파란 AMR1이 자재를 운반하는 동안 주황 AMR2가 교차 통로 앞에서 정지·양보합니다. AMR1의 차체가 교차 구간을 벗어나면 AMR2가 재출발하고 회전해 복귀 경로를 이어갑니다. GIF는 이 흐름을 **2배속·40fps**로 보여주며, 파란 사각형은 예약 구간을 표시한 주석입니다.
 
 같은 공장에서4대의 실제 바퀴·엔코더·PhysX 거리 센서를 사용한 SDK 시연입니다.56.65초 동안4대 모두 목적지에 도착했고,60fps 원본3,399장을 촬영했습니다. 주행에는 기존 가감속·회전 제한을 적용했습니다. **교차로 양보·통과·재개를 확인한 범위**이며 동적 우회 경로 생성과 ROS/Nav2 전체 완주를 뜻하지 않습니다. 화물은 비충돌 시각 표시입니다. [시연 제어](factory_ops/junction_demo.py) · [실행 진입점](scripts/isaac/probe_junction_hero.py)
+
+</details>
 
 <details>
 <summary>공장 조감과 별도 적재 주행 시험</summary>

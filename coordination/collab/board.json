@@ -1,6 +1,6 @@
 {
-  "revision": 126,
-  "updated_at": "2026-10-21T09:59:55.725888+00:00",
+  "revision": 128,
+  "updated_at": "2026-10-21T10:40:29.068924+00:00",
   "scope": {
     "excluded": "실물 로봇 실행, 새 유료 서비스/에셋, 공개 배포",
     "project_root": "C:\\Users\\LIMMM\\factory-ops-twin",
@@ -9,7 +9,7 @@
     "side_effects": "기존 승인 Git commit/push; 로컬 설치/실행/검증; GPU는 별도 필요 시 기존 허용 범위",
     "producer_isolation": "Actual producer Git archive and raw commit-object proof; unowned dashboard changes excluded from commits and frozen producer inputs.",
     "current_milestone": "User asks continue until four of eight stages complete; overall completion contract preserved",
-    "current_media": "142 four-AMR actual SDK logistics/yield/resume hero;60fps3399frames;GIF40fps2x; separate from Nav2 completion"
+    "current_media": "Whole-factory6phase operations is main;142junction auxiliary.147CPU isolated transport passed; native factory render pending."
   },
   "orchestrator": {
     "pane_id": "w1:p1D",
@@ -22,7 +22,7 @@
       "role": "dashboard frontend author",
       "name": "control",
       "agent_kind": "codex",
-      "status": "143 received and source hashes matched; no pending delegated output",
+      "status": "145 exporter received; idle, native closed passed run awaits root",
       "session": "default",
       "agent_session": "01a152aa-24b4-7a31-92e3-a2b620f4feeb",
       "terminal_id": "term_65e06d27e415810",
@@ -2053,6 +2053,40 @@
       "source_sha256": {
         "scripts/ros/fleet4.launch.py": "53842a3ae3a22a44b60893a0cee0096365e0151c40e2092d98fb8bbb54bc11a3",
         "tests/test_fleet4_launch.py": "96afdc26fdc2e4077938ad7f9047d98ed8dd2d121fa7b736d1416f0a179e25a5"
+      }
+    },
+    {
+      "task_id": "factory-story-export-145",
+      "attempt": 1,
+      "contract_revision": 127,
+      "owner": "control",
+      "binding": {
+        "session": "default",
+        "pane_id": "w1:p1C",
+        "terminal_id": "term_65e06d27e415810",
+        "agent_session": "01a152aa-24b4-7a31-92e3-a2b620f4feeb"
+      },
+      "status": "accepted_cpu_exporter_native_render_pending",
+      "card_path": "coordination/collab/factory-story-export-145-task.json",
+      "result_path": "coordination/collab/results/factory-story-export-145.json",
+      "write_paths": [
+        "scripts/media/export_factory_story.py",
+        "tests/test_factory_story_media.py",
+        "coordination/collab/results/factory-story-export-145.json"
+      ],
+      "ack": true,
+      "reviewer": "root",
+      "source_sha256": {
+        "scripts/media/export_factory_story.py": "bd3cdd4772260a2bfca6a27a4470a5fe5fa029691a5490b8cae7447012c7876d",
+        "tests/test_factory_story_media.py": "33588b197cf88fa02eddb7d2fd7e4f4f40eb01b42580bf9002fc0148cce886ca"
+      },
+      "acceptance_scope": "Received source hashes match; root read source admission/compositing and author9focused tests. No native movie fabricated. Found applied wrapper mismatch fixed by root for next producer.",
+      "root_followup": {
+        "source_sha256": {
+          "scripts/media/export_factory_story.py": "dcec43fbe1ba9aa835806631cbbf2656270acd9d48ff8532b6a5a98433fc7cbf",
+          "tests/test_factory_story_media.py": "c9b7f8cb6933aad4eb8ac169758b91db1efd641e496067e90fae3b375927481e"
+        },
+        "change": "Match actual G2 scene terminal status validated instead of fixture-only passed;9focused CPU tests passed3.250s after change. Original author receipt preserved."
       }
     }
   ],

@@ -1,0 +1,108 @@
+{
+  "task_id": "factory-story-export-145",
+  "attempt": 1,
+  "contract_revision": 127,
+  "owner": "control",
+  "ack": true,
+  "status": "cpu_exporter_prepared_native_export_pending_future_passed_run",
+  "self_accepted": false,
+  "summary": "전체 공장 조감과 같은 capture의 적용 원장·관측 checkpoint를 결합하는 흰색 운영 콘솔 exporter를 작성했습니다. 1280x720 native 조감을 자르지 않고 4대 AMR 카드, 재고/출하/반납/공정 KPI 및 생산·반납 흐름을 붙입니다. 실제 영상·GIF·poster는 생성하지 않았습니다.",
+  "changed_paths": [
+    "scripts/media/export_factory_story.py",
+    "tests/test_factory_story_media.py",
+    "coordination/collab/results/factory-story-export-145.json"
+  ],
+  "source_sha256": {
+    "scripts/media/export_factory_story.py": "bd3cdd4772260a2bfca6a27a4470a5fe5fa029691a5490b8cae7447012c7876d",
+    "tests/test_factory_story_media.py": "33588b197cf88fa02eddb7d2fd7e4f4f40eb01b42580bf9002fc0148cce886ca"
+  },
+  "readonly_source_sha256": {
+    "factory_ops/operation_story.py": "df8e855c76f9c707fb27dd9c544734803c39a0c70176198c897cbe53451cbeec",
+    "scripts/isaac/local45_fleet4_transport_scene.py": "f4f421099c661e1692af36054ca1791ba6ea7f6ab71d5b343fa19a3d1b4b527a",
+    "scripts/media/export_junction_hero.py": "5331b0f2b49f51221270353881afdf02420c0d76858f7e4b717297416db8880e",
+    "configs/factory-fleet4-normal3/render-profile.json": "5852c4750b5e5c9c5e1aeec75730345e30f8e7f4789b9edccfc3cb5209f7610c",
+    "factory_ops/g3_media_operations.py": "a7008905142ea6cc8529b0c5a4cdc9ba295fa39b2c2a4ad4251b28384d98903d",
+    "factory_ops/material_visual.py": "a242cd6d76f670fdaf73991eaa84b619a79bdc0f45fa10a9b3c225e4a2b6e0fd",
+    "factory_ops/visual_state.py": "9a1f60cc69168032ecce4252329981b4e34d016f1a6b504851291c189601a496",
+    "factory_ops/kit_client.py": "9f9839c859cfee974e5920376d079be841d1f110c463421e5bbbf77faedb7ff2",
+    "scripts/isaac/factory_visuals.py": "25768848d6b035be333d26382b5096b720aafa4782eee8daa894f677721b90db"
+  },
+  "shape_reference_only": {
+    "E:/FactoryOpsRuntime/local45-transport-036/results/run/media/frames.json": "c3f65df240928e5a7295f875969ad645b0de7d84510924db90205eac5d25026c",
+    "E:/FactoryOpsRuntime/local45-transport-036/results/run/dashboard-state.json": "c23776b506e3647890154561193fc33dcdab8b622c83886f63a840826bb0cb10",
+    "scope": "종료된036의 작은 metadata와 적용 snapshot을 필드 형식 확인에만 사용했습니다. 134개 sparse capture 및 마지막 dashboard를60fps 운영 장면이나046의 대체 입력으로 사용하지 않았고 원본 이미지를 복사하지 않았습니다."
+  },
+  "closed_046_update": {
+    "run_id_from_card": "537e432c90224deab98f24295f268ca6",
+    "producer_source_commit_from_card": "581e3f4d480bb80b4c2b1618b9b00643db491e4a",
+    "root_reported_status": "failed, both OS closed",
+    "root_reported_boundary": "ParticipantEntitiesInfo 역직렬화 오류와 시계 정지; Windows Humble24바이트/WSL Jazzy16바이트 Gid 발견 스키마 차이 확인",
+    "worker_scope": "이 최신 원인·종료 정보는 root 전달 사실로 기록하며 별도 조사나 재검증하지 않았습니다. 046 원본·runtime·bag을 읽거나 export하지 않았습니다. 실제 운영 단계 프레임이 없으므로 내보내기 입력에서 제외합니다.",
+    "actual_export_ran": false,
+    "generated_preview_or_media": []
+  },
+  "input_contract": {
+    "entry": "scripts/media/export_factory_story.py --stage <closed-stage> --output <new-absolute-output>",
+    "default_font": "%WINDIR%/Fonts/malgun.ttf; --font로 기존 한글 폰트 지정 가능",
+    "timeout_s": "기본600, 허용30..900; 자체 CPU encoder watchdog 및 exact owned child 정리",
+    "producer_admission": "pair-host passed/양OS closed, Windows Job assignment/kill-on-close/잔여PID없음, Linux cgroup/PID/client closure와 같은 run을 검사합니다. mission 및 scene passed, 정상 factory 시나리오와 완료된 업무/반납 상태, 동결 launch source/run 및 session bytes를 요구합니다. 실패·부분 실행은 정상 공장 결과로 내보내지 않습니다.",
+    "source_refs": "media/frames.json의 factory_story6개 실제 phase만 시간순으로 선택합니다. 최대1440개 story source row, 각 phase 최대240개 원본 중 앞180개(3초)만 사용합니다. chapter 내부 physics frame과60Hz 시간이 연속이어야 하며2개 미만·sparse·누락 phase·다른 run·변조 hash를 거절합니다.",
+    "applied_visual": "기존 g3_media_operations._projection_view를 재사용해 wrapper의 visual_state, state/projection/event hash, ledger seq, source/applied 시각·frame, 실제 displayed payload와 signals를 검증합니다.",
+    "applied_material": "native_empty_totes.applied.document와 material-visual-snapshots의 문서, source_snapshot canonical hash 및 make_material_visual_state 재투영을 대조합니다. 재고는 적용 자재 원장의 on_hand 합, 반납은 같은 원장의 complete empty_trip 수, 출하·공정은 적용 제품 signals만 사용합니다.",
+    "dashboard": "factory_story.dashboard.status=observed인 content-addressed factory-story-state checkpoint만 사용합니다. source_world_time_s=원문 elapsed sim_time_s+mission origin 및 age를 대조합니다. 누락/stale/disconnected/개별 로봇 오래된 관측은 미관측이며 마지막 dashboard-state.json으로 대체하지 않습니다.",
+    "images": "overview 원본의 bytes/hash와1280x720 metadata를 검사하고 실제 렌더링 때 Pillow로 decoded 크기와 hash를 다시 대조합니다. 다른 camera crop이나036 업샘플링으로 대체하지 않습니다."
+  },
+  "presentation_and_outputs": {
+    "console": "1680x1080 흰색/옅은 파랑 화면. 전체1280x720 native image를 원래 크기로 배치하고 우측4AMR 및 상단4KPI, 하단 자재→CI→공정→CO→출하와 빈 토트 회수 흐름을 표시합니다. 한글 Malgun 폰트, 파랑/teal/amber 강조와 실제 run/World 시각/원장 출처를 사용합니다.",
+    "scope_labels": "기록 재생,1배속,구간 사이 시간 생략을 명시합니다. LIVE/MES 연동이나 물리 적재를 주장하지 않습니다. 원천이 virtual인 SOC에 가상 라벨을 붙이며 cargo는 원장 기반 시각 표시로 표시합니다. GT 위치 label 투영은 추가하지 않아 카메라 보정값/경로를 가정하지 않습니다.",
+    "mp4": "factory-operations-60fps.mp4: 입력 row당 RGB 한 장을60fps로 CPU FFmpeg stdin에 전달. 프레임 보간·낮은 fps 원본 복제 없음.",
+    "gif": "factory-operations-40fps.gif: MP4에서40fps로 다운샘플, 전체 콘솔을1280px 폭으로 축소.20/30ms delay와 평균40fps를 ffprobe로 확인하며35MB 초과 시 실패 기록을 남깁니다.",
+    "poster": "factory-operations-poster.png: 실제 finished_goods_transport source frame과 그 시점 overlay의 합성 poster",
+    "proof": "provenance.json에 입력별 실제 byte hash, 선택 row별 source/overlay, phase 순서/원본 clock span/partial window/선택 frame 수, 명령, output hash/bytes/probe/전체 decode 및 GIF delay 검사를 남깁니다. 실패 결과도 보존합니다.",
+    "storage": "합성 frame 파일을 매번 저장하지 않습니다. owned output에 MP4/GIF/poster/log/provenance만 만들고 원본은 쓰지 않습니다."
+  },
+  "validation": {
+    "cwd": "C:/Users/LIMMM/factory-ops-twin",
+    "command": ".\\.venv\\Scripts\\python.exe -B -m unittest tests.test_factory_story_media -v",
+    "final_result": "9 PASS",
+    "final_reported_test_duration_s": 3.387,
+    "embedded_ast": "같은 패스의 test_python310_ast_without_pillow_or_sdk에서 새 source/test2개를 feature_version=(3,10)으로 확인:2 PASS",
+    "initial_failure_preserved": "첫 실행은3PASS/2FAIL/4ERROR였습니다. 테스트 fixture가 LF로 계산한 checkpoint 이름을 Windows 기본 CRLF로 저장해 hash가 달라졌습니다. fixture writer를 newline=LF로 고친 뒤 동일 관련9개만 재검사했습니다. 상품 입력 검증을 느슨하게 만들지 않았습니다.",
+    "coverage": [
+      "Pillow/SDK import와 subprocess 시작 없이 cold prepare 가능",
+      "각 적용 snapshot의 서로 다른 초기/최종 재고·출하·반납 집계; 최종 값을 이전 장면에 붙이지 않음",
+      "같은 run의 UTC가 아닌 original elapsed/World origin 결속과 source age",
+      "누락/stale dashboard 및 오래된 robot speed/SOC를 미관측으로 유지",
+      "양OS/Job/cgroup 잔여 상태와 failed/partial 정상 운영 주장 거절",
+      "누락 phase, sparse physics windows, 잘못된 image size/hash 거절",
+      "visual/material hash 변조·미래 applied state·bool 재고 집계 거절",
+      "구간별3초 선택 상한과 원본 physics frame 순서, partial window 기록",
+      "GIF20/30ms delay 계산 및 output 경로 소유권 검사"
+    ],
+    "synthetic_fixture_limit": "테스트 image 파일은 명시적인 synthetic metadata용 byte 문자열이며 실제 PNG/화면/SDK/물리 근거가 아닙니다. Pillow 렌더링·FFmpeg/ffprobe 호출이나 실제 인코딩 성공을 주장하지 않습니다.",
+    "additional_full_suite_review_or_runtime": false
+  },
+  "upward_source_observation": {
+    "id": "FSE145-INPUT-001",
+    "scope": "읽은 main source 간 연결 불일치, frozen046의 실제 실패 원인 판정 아님",
+    "producer": "scripts/isaac/factory_visuals.py:656는 snapshot을 {schema_version,state_hash,visual_state} wrapper로 저장합니다.",
+    "consumer": "scripts/isaac/local45_fleet4_transport_scene.py:240은 wrapper 전체를 self.story_visual에 넣고245행에서 observe에 넘깁니다. factory_ops/operation_story.py observe는 flat visual.run_id/projection을 요구합니다.",
+    "minimal_handoff": "root 소유의 다음 producer 소스에서 검증된 snapshot['visual_state']를 꺼내 전달하고 wrapper state_hash/sequence/run과 event 결속을 유지해야 합니다. 이 작업자는 해당 소스를 변경하지 않았습니다. exporter는 기존 applied wrapper 검증기를 사용합니다.",
+    "native_causality_limit": "046의 실제 첫 실패는 root가 전달한 discovery schema/clock 경계입니다. 이 소스 관찰로 그 원인을 바꾸거나 현재147 시험의 수정 범위를 넓히지 않습니다."
+  },
+  "root_handoff": {
+    "native_export_ready_condition": "향후 같은 run의 정상 완료·양OS 폐쇄·6개 실제 phase 및60Hz 연속 원본이 확보된 경우에만 사용.046은 사용 금지.",
+    "example_future_command_not_executed": "& 'E:/IsaacSim/isaac-sim-4.5.0/python.bat' 'C:/Users/LIMMM/factory-ops-twin/scripts/media/export_factory_story.py' --stage '<future-passed-closed-stage>' --output '<new-absolute-export-directory>'",
+    "pending": "기존 SDK Python의 Pillow와 설치 FFmpeg로 실제 합성/인코딩/전체 decode/GIF size-delay 확인 및 root의 화면 확인1회가 남았습니다. 새 실행·설치·모델 변경을 요청하지 않습니다."
+  },
+  "scope_preservation": {
+    "producer_runtime_or_archives_changed": false,
+    "sdk_gpu_ros_wsl_cloud_browser_started": false,
+    "inflight_bag_or_sql_opened": false,
+    "dependencies_installed": false,
+    "git_mutation_or_new_agents_or_model_changes": false,
+    "other_authors_changes_reverted": false,
+    "owned_long_running_processes": [],
+    "note": "병행된 root의 ros_topic_relay/test와046 문서, dashboard/board 변경을 보존했습니다. 배정한3개 경로만 작성했으며147 시험이나 다른 실행을 시작하지 않았습니다."
+  }
+}

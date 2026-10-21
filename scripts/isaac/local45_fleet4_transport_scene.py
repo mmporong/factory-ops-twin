@@ -23,7 +23,7 @@ LOCAL_SOURCE_PINS = BASE_SOURCE_PINS | frozenset({
     "factory_ops/operations/model.py", "scripts/isaac/robot_qualification.py",
     "scripts/isaac/nav_scene.py", "scripts/isaac/stage_smoke.py",
     "factory_ops/visual_state.py", "factory_ops/wsl_process_supervisor.py",
-    "factory_ops/material_visual.py",
+    "factory_ops/material_visual.py", "factory_ops/ros_topic_relay.py", "factory_ops/ros_topic_relay_pair.py",
     "factory_ops/planner_guidance.py",
     "scripts/isaac/run_local45_fleet_pair.py",
     "scripts/isaac/windows_job_runner.py",
@@ -110,6 +110,7 @@ class Local45FleetLifecycle(FleetTransportLifecycle):
         self.story_visual = None
         self.story_visual_sequence = None
         self.story_motion = {}
+        self.story_observation = None
         self.story_pending = None
         self.story_event_cursor = 0
         story_profile = json.loads((root/"config.json").read_text(encoding="utf-8")).get("g3_runtime", {}).get("operation_story")
@@ -237,13 +238,17 @@ class Local45FleetLifecycle(FleetTransportLifecycle):
                 raw = snapshot_path.read_bytes()
                 if hashlib.sha256(raw).hexdigest() != record["sha256"]:
                     raise ValueError("story applied snapshot bytes differ")
-                self.story_visual = json.loads(raw)
+                from factory_ops.visual_state import canonical_sha256
+                wrapper = json.loads(raw)
+                document = wrapper["visual_state"]
+                if (wrapper.get("schema_version") != 1
+                        or wrapper.get("state_hash") != self.visuals.applied_state_hash
+                        or canonical_sha256(document) != self.visuals.applied_state_hash
+                        or document.get("run_id") != self.run_id
+                        or document.get("sequence") != self.visuals.applied_sequence):
+                    raise ValueError("story applied snapshot state/run/sequence differs")
+                self.story_visual = document
                 self.story_visual_sequence = self.visuals.applied_sequence
-            material = (self.material_visual.applied["document"]
-                if self.material_visual is not None and self.material_visual.applied is not None else None)
-            moving = any(active and 0 <= physics_frame-frame <= 6 for frame,active in self.story_motion.values())
-            self.operation_story.observe(physics_frame,stamp,self.story_visual,material,moving=moving)
-            self._flush_story_events()
 
     def _flush_story_events(self) -> None:
         if self.operation_story is None:
@@ -260,6 +265,7 @@ class Local45FleetLifecycle(FleetTransportLifecycle):
             active = bool(auth.get("mode") == "navigate" and auth.get("valid") is True
                 and (abs(command.get("linear_m_s",0.)) >= .15 or abs(command.get("angular_rad_s",0.)) >= .15))
             self.story_motion[robot_id] = (sample["physics_frame"],active)
+            self.story_observation = (sample["physics_frame"],round(sample["sim_time_s"]*1_000_000_000))
 
     def before_capture(self, rep: Any) -> None:
         if self.rgb_render_state != "enabled" or self.timeline is None:
@@ -286,7 +292,16 @@ class Local45FleetLifecycle(FleetTransportLifecycle):
 
     def capture_due(self) -> bool:
         due = super().capture_due()
-        if self.operation_story is not None:
+        if self.operation_story is not None and self.story_observation is not None:
+            # G2 applies visual state before physics, then captures after control.
+            # Use that observed post-step frame, which owns the actual RGB capture.
+            frame,stamp = self.story_observation
+            material = (self.material_visual.applied["document"]
+                if self.material_visual is not None and self.material_visual.applied is not None else None)
+            moving = any(active and 0 <= frame-source_frame <= 6
+                for source_frame,active in self.story_motion.values())
+            self.operation_story.observe(frame,stamp,self.story_visual,material,moving=moving)
+            self._flush_story_events()
             sample = self.operation_story.due()
             if sample is not None:
                 self.story_pending = sample

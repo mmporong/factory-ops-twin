@@ -45,7 +45,8 @@ def _validate_dds_interfaces(windows: str | None, linux_interface: str | None) -
 
 
 def prepare_ros_transport(stage: Path, domain_id: int, *, interface: str | None = None,
-                          platform: str = "windows", peers: tuple[str, ...] = ()) -> tuple[Path, dict[str, str]]:
+                          platform: str = "windows", peers: tuple[str, ...] = (),
+                          isolated_loopback: bool = False) -> tuple[Path, dict[str, str]]:
     """Create the run-owned UDP participant profile before ROS processes start."""
     if isinstance(domain_id, bool) or not isinstance(domain_id, int) or not 0 <= domain_id <= 232:
         raise ValueError("bundle ROS domain must be an integer in0..232")
@@ -53,6 +54,8 @@ def prepare_ros_transport(stage: Path, domain_id: int, *, interface: str | None 
         if platform not in {"windows", "linux"} or not isinstance(interface, str):
             raise ValueError("DDS whitelist requires a platform and numeric IPv4 address string")
         interface = str(IPv4Address(interface))
+    if isolated_loopback and (interface != "127.0.0.1" or peers):
+        raise ValueError("isolated DDS requires only the local loopback interface")
     if peers:
         if type(peers) is not tuple or len(peers) != 2 or len(set(peers)) != 2 or interface not in peers:
             raise ValueError("explicit DDS discovery requires the two paired IPv4 interfaces")
@@ -85,6 +88,10 @@ def prepare_ros_transport(stage: Path, domain_id: int, *, interface: str | None 
         text = text.replace("<type>UDPv4</type>", "<type>UDPv4</type><maxInitialPeersRange>120</maxInitialPeersRange>")
         locators = "".join(f"<locator><udpv4><address>{peer}</address></udpv4></locator>" for peer in peers)
         text = text.replace("<rtps>", f"<rtps><builtin><initialPeersList>{locators}</initialPeersList></builtin>")
+    if isolated_loopback:
+        text = text.replace("<type>UDPv4</type>", "<type>UDPv4</type><maxInitialPeersRange>120</maxInitialPeersRange>")
+        text = text.replace("<rtps>", "<rtps><builtin><initialPeersList><locator><udpv4>"
+            "<address>127.0.0.1</address></udpv4></locator></initialPeersList></builtin>")
     with profile.open("x", encoding="utf-8", newline="\n") as stream:
         stream.write(text)
     return profile, {"ROS_DOMAIN_ID": str(domain_id), "RMW_IMPLEMENTATION": "rmw_fastrtps_cpp",
@@ -154,11 +161,12 @@ def wait_for_bootstrap_marker(marker: Path, owner: WslProcessSupervisor, *, star
 
 
 def monitor_pair(worker, owner: WslProcessSupervisor, *, started: float, bound: int,
-                 failure_path: Path | None = None, run_id: str | None = None) -> dict | None:
+                 failure_path: Path | None = None, run_id: str | None = None, relay=None) -> dict | None:
     """Observe client exit, retaining SDK cleanup grace and the pair deadline."""
     exit_seen = None
     exit_record = None
     while worker.poll() is None:
+        if relay is not None:relay.assert_healthy()
         now = time.monotonic()
         if now - started > bound + 35:
             raise TimeoutError("pair owner deadline exceeded")
@@ -187,7 +195,9 @@ def run(stage: Path, sdk: Path, bound: int, *, charge_robot: str | None = None, 
         lidar_backend: str = "rtx_flat_scan", physics_cadence: str = "owned_step6",
         windows_dds_interface: str | None = None, linux_dds_interface: str | None = None,
         live_anchor_controls: bool = False, dds_explicit_peers: bool = False,
-        nav2_startup_stagger_s: float = 0., capture_resolution: str = "640x360") -> int:
+        nav2_startup_stagger_s: float = 0., capture_resolution: str = "640x360",
+        isolated_topic_relay: bool = False, relay_windows_address: str | None = None,
+        relay_linux_address: str | None = None, relay_port: int = 28473) -> int:
     if os.name != "nt" or not 60 <= bound <= 10800:
         raise ValueError("local development requires Windows and an explicit 60..10800s bound")
     if lidar_backend not in {"rtx_flat_scan", "physx_planar"}:
@@ -199,6 +209,15 @@ def run(stage: Path, sdk: Path, bound: int, *, charge_robot: str | None = None, 
     if capture_resolution not in {"640x360", "1280x720"}:
         raise ValueError("unsupported local45 capture resolution")
     _validate_dds_interfaces(windows_dds_interface, linux_dds_interface)
+    if isolated_topic_relay:
+        if dds_explicit_peers or windows_dds_interface is not None:
+            raise ValueError("isolated topic relay cannot share external DDS interfaces/peers")
+        for address in (relay_windows_address,relay_linux_address):
+            if not isinstance(address,str) or not IPv4Address(address).is_private or IPv4Address(address).is_loopback:
+                raise ValueError("relay requires each OS's identified private TCP interface")
+        if relay_windows_address==relay_linux_address or type(relay_port) is not int or not 1024<=relay_port<=65535:
+            raise ValueError("relay endpoints/port differ from contract")
+        windows_dds_interface=linux_dds_interface="127.0.0.1"
     if dds_explicit_peers and windows_dds_interface is None:
         raise ValueError("explicit DDS peers require both interface addresses")
     stage, sdk = stage.resolve(strict=True), sdk.resolve(strict=True)
@@ -231,10 +250,12 @@ def run(stage: Path, sdk: Path, bound: int, *, charge_robot: str | None = None, 
     report["dds_explicit_peers"] = dds_explicit_peers
     report["nav2_startup_stagger_s"] = nav2_startup_stagger_s
     report["capture_resolution"] = capture_resolution
+    report["isolated_topic_relay"] = isolated_topic_relay
     report["virtual_charging_request"] = {"robot_id": charge_robot, "resume_soc": charge_resume_soc}
     save(receipt_path, report)
     owner = WslProcessSupervisor(run_id)
     worker = None
+    relay = None
     streams = []
     started = time.monotonic()
     try:
@@ -244,11 +265,11 @@ def run(stage: Path, sdk: Path, bound: int, *, charge_robot: str | None = None, 
         config = json.loads((stage / "inputs/config.json").read_text(encoding="utf-8"))
         peers = (windows_dds_interface, linux_dds_interface) if dds_explicit_peers else ()
         transport, ros_environment = prepare_ros_transport(stage, config["ros_domain_id"],
-            interface=windows_dds_interface, platform="windows", peers=peers)
+            interface=windows_dds_interface, platform="windows", peers=peers,isolated_loopback=isolated_topic_relay)
         linux_transport = transport
         if linux_dds_interface is not None:
             linux_transport, _ = prepare_ros_transport(stage, config["ros_domain_id"],
-                interface=linux_dds_interface, platform="linux", peers=peers)
+                interface=linux_dds_interface, platform="linux", peers=peers,isolated_loopback=isolated_topic_relay)
         linux_environment = {**ros_environment, "FASTRTPS_DEFAULT_PROFILES_FILE": linux(linux_transport),
                              "FASTDDS_DEFAULT_PROFILES_FILE": linux(linux_transport)}
         report["ros_transport"] = {"profile": str(transport), "sha256": sha(transport),
@@ -259,6 +280,18 @@ def run(stage: Path, sdk: Path, bound: int, *, charge_robot: str | None = None, 
                 "windows": {"address": windows_dds_interface, "profile": str(transport), "sha256": sha(transport)},
                 "linux": {"address": linux_dds_interface, "profile": str(linux_transport), "sha256": sha(linux_transport)}}
         save(receipt_path, report)
+        if isolated_topic_relay:
+            from factory_ops.ros_topic_relay_pair import RelayPair
+            for name in ("factory_ops/ros_topic_relay.py","factory_ops/ros_topic_relay_pair.py"):
+                with tarfile.open(stage/"source.tar") as archive:
+                    member=archive.extractfile(name)
+                    if member is None or hashlib.sha256(member.read()).hexdigest()!=sha(source/name):
+                        raise ValueError("topic relay differs from frozen source archive")
+            relay=RelayPair(stage,sdk,run_id,bound,ros_environment,linux_environment,
+                relay_windows_address,relay_linux_address,relay_port)
+            relay.start(linux,sha,save)
+            report["relay_pair"]=relay.report
+            save(receipt_path,report)
         charging_args = (["--virtual-charging", "--charge-robot", charge_robot,
                           "--charge-resume-soc", str(charge_resume_soc)] if charge_robot else [])
         command = "\n".join([
@@ -309,7 +342,7 @@ def run(stage: Path, sdk: Path, bound: int, *, charge_robot: str | None = None, 
         report["monitor_scope"] = "owned SDK failure checkpoint and foreground client; final owner.stop verifies Linux unit/cgroup/PID closure"
         save(receipt_path, report)
         client_exit = monitor_pair(worker, owner, started=started, bound=bound,
-                                   failure_path=output / "sdk-failure.json", run_id=run_id)
+                                   failure_path=output / "sdk-failure.json", run_id=run_id,relay=relay)
         if client_exit is not None:
             report["ros_foreground_exit"] = client_exit
         report["windows_exit_code"] = worker.returncode
@@ -325,6 +358,10 @@ def run(stage: Path, sdk: Path, bound: int, *, charge_robot: str | None = None, 
         report.update(status="failed", error=f"{type(error).__name__}: {error}", traceback=traceback.format_exc())
     finally:
         close_pair(worker, streams, owner, stage, report, started)
+        if relay is not None:
+            report["relay_pair"]=relay.close(save)
+            if report["relay_pair"]["status"]!="closed":report["status"]="failed"
+            save(receipt_path,report)
     return 0 if report["status"] == "passed" else 1
 
 
@@ -335,6 +372,10 @@ if __name__ == "__main__":
     parser.add_argument("--wall-bound-s", type=int, default=450)
     parser.add_argument("--live-anchor-controls", action="store_true")
     parser.add_argument("--dds-explicit-peers", action="store_true")
+    parser.add_argument("--isolated-topic-relay", action="store_true")
+    parser.add_argument("--relay-windows-address")
+    parser.add_argument("--relay-linux-address")
+    parser.add_argument("--relay-port",type=int,default=28473)
     parser.add_argument("--nav2-startup-stagger-s", type=float, default=0.)
     parser.add_argument("--capture-resolution", choices=("640x360", "1280x720"), default="640x360")
     parser.add_argument("--charge-robot", choices=("carter1", "carter2", "carter3", "carter4"))
@@ -349,4 +390,6 @@ if __name__ == "__main__":
         lidar_backend=options.lidar_backend, physics_cadence=options.physics_cadence,
         windows_dds_interface=options.windows_dds_interface, linux_dds_interface=options.linux_dds_interface,
         live_anchor_controls=options.live_anchor_controls, dds_explicit_peers=options.dds_explicit_peers,
-        nav2_startup_stagger_s=options.nav2_startup_stagger_s, capture_resolution=options.capture_resolution))
+        nav2_startup_stagger_s=options.nav2_startup_stagger_s, capture_resolution=options.capture_resolution,
+        isolated_topic_relay=options.isolated_topic_relay,relay_windows_address=options.relay_windows_address,
+        relay_linux_address=options.relay_linux_address,relay_port=options.relay_port))
