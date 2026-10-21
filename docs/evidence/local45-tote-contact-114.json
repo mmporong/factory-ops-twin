@@ -1,0 +1,476 @@
+{
+  "schema_version": 1,
+  "attempt": "114",
+  "run_id": "a43896d55cfd40d48660de72a124ab04",
+  "producer_source_commit": "0a5eba241b4530bba5ac116481794650b1fea953",
+  "scope": "Isaac Sim4.5 headless fixed-support contact component; no loaded AMR, industrial rating or transport qualification",
+  "status": "passed",
+  "host": {
+    "run_id": "a43896d55cfd40d48660de72a124ab04",
+    "started_at_utc": "2026-10-21T03:48:22.5610116Z",
+    "scope": "native bounded component probe",
+    "timeout_s": 480,
+    "sdk_root": "E:\\IsaacSim\\isaac-sim-4.5.0",
+    "entry_point": "probe_tote_carrier_contact.py",
+    "inputs_directory": "C:\\Users\\LIMMM\\FactoryOpsRuntime\\local45-tote-contact-114.inputs",
+    "launcher_sha256": "ee0290cda90d2e81fe4794a8645086d5a790b9362c965525b6604f142c6f227e",
+    "source_sha256": "332d392d2350df0f0949efeac365d43c9b5faf9bd96258e42c20b7f900617672",
+    "gpu": "NVIDIA GeForce RTX 3060, 12288 MiB, 610.62",
+    "timed_out": false,
+    "remaining_owned_pids": [],
+    "config_sha256": "4e849823f3e0efe4561fd8ce02ef17067b4b9dc606558bab2197ffa4efa46627",
+    "project_source_sha256": {
+      "factory_ops/__init__.py": "da57bbf586e3c4639fd72b3960ef8dd7a8326b3ba17504836189be26ce5bacb0",
+      "factory_ops/carrier_module.py": "ef12b26aa3d7180e7f122324aa0f5e363010d1f3ddf366165b69ac6de1cbfc14"
+    },
+    "closure_scope": "gated worker and descendants contained in an owned Windows Job Object",
+    "job_runner_sha256": "2ad8ed05bfc5f96edd522900f6cd8ff11bafdace8376b68ca4f8dbd4489cbad5",
+    "job_spec_sha256": "ab2e095c3e96ddc95d2f54dcadce99f7f68ab33b8df833338635d93efafef36e",
+    "full_descendant_closure_verified": true,
+    "timeout_full_tree_cleanup_supported": true,
+    "launcher_pid": 29172,
+    "exit_code": 0,
+    "closed": true,
+    "job_identity_matched": true,
+    "job_assignment_confirmed": true,
+    "prelaunch_inputs_verified": true,
+    "owned_pids_at_cleanup": [
+      65140,
+      68436,
+      51012,
+      59900,
+      36040,
+      18588,
+      36652,
+      2436,
+      70016,
+      29060,
+      13200,
+      47628,
+      11920,
+      9440,
+      65260,
+      36704,
+      42736,
+      49428,
+      57404
+    ],
+    "job_status": "passed",
+    "probe_status": "passed",
+    "probe_identity_matched": true,
+    "project_sources_matched": true,
+    "finished_at_utc": "2026-10-21T03:48:44.6036911Z",
+    "wall_time_s": 22.041804
+  },
+  "native_result": {
+    "schema_version": 1,
+    "run_id": "a43896d55cfd40d48660de72a124ab04",
+    "status": "passed",
+    "stage": "fixture_complete",
+    "source_sha256": "332d392d2350df0f0949efeac365d43c9b5faf9bd96258e42c20b7f900617672",
+    "config_sha256": "4e849823f3e0efe4561fd8ce02ef17067b4b9dc606558bab2197ffa4efa46627",
+    "project_source_sha256": {
+      "factory_ops/__init__.py": "da57bbf586e3c4639fd72b3960ef8dd7a8326b3ba17504836189be26ce5bacb0",
+      "factory_ops/carrier_module.py": "ef12b26aa3d7180e7f122324aa0f5e363010d1f3ddf366165b69ac6de1cbfc14"
+    },
+    "manifest_sha256": "406aec0f70fbea4a74f1462d05d53395055b7b5182fb5dcab8749732b55307f4",
+    "started_at_utc": "2026-10-21T03:48:23.052929+00:00",
+    "scope": "simplified fixed-stand fixture with two dynamic compound bodies; no Nova Carter loaded",
+    "robot_integration_verified": false,
+    "transport_verified": false,
+    "charging_verified": false,
+    "industrial_payload_rating_verified": false,
+    "native_measurements": {
+      "samples": 72,
+      "settled_contact_observed": true,
+      "separation_observed": true,
+      "last_world_time_s": 0.6166666988283396,
+      "last_world_frame": 74
+    },
+    "transitions": [
+      {
+        "run_id": "a43896d55cfd40d48660de72a124ab04",
+        "world_time_s": 0.4750000247731805,
+        "world_physics_frame": 57,
+        "phase": "settling",
+        "bodies": {
+          "carrier": {
+            "position_m": [
+              6.109476089477539e-07,
+              2.1818578943566536e-07,
+              -2.384185791015625e-07
+            ],
+            "orientation_wxyz": [
+              1.0,
+              4.024593067697424e-07,
+              -8.119457106658956e-07,
+              2.611615634862119e-08
+            ],
+            "linear_velocity_m_s": [
+              -0.00027153908740729094,
+              -0.0005485425936058164,
+              0.0010471221758052707
+            ],
+            "angular_velocity_rad_s": [
+              0.0018766858847811818,
+              -0.0012681942898780107,
+              0.000223231763811782
+            ]
+          },
+          "tote": {
+            "position_m": [
+              -0.18000295758247375,
+              -2.8898462005599868e-06,
+              0.6999976634979248
+            ],
+            "orientation_wxyz": [
+              1.0,
+              2.1040427782281768e-06,
+              -1.3974163266539108e-06,
+              -1.032032912462455e-07
+            ],
+            "linear_velocity_m_s": [
+              -0.0007209117757156491,
+              -0.0026832304429262877,
+              -0.00029560207622125745
+            ],
+            "angular_velocity_rad_s": [
+              0.0076310476288199425,
+              -0.001976949395611882,
+              -0.0003028644423466176
+            ]
+          }
+        },
+        "contacts": {
+          "carrier": {
+            "sensor_time_s": 0.46666669845581055,
+            "sensor_physics_step": 57,
+            "fresh": true,
+            "force_n": 170.6943817138672,
+            "in_contact": true,
+            "raw_actor_pairs": [
+              [
+                "/World/Carrier",
+                "/World/Stand_0"
+              ]
+            ],
+            "body_pairs": [
+              [
+                "carrier",
+                "stand_0"
+              ]
+            ]
+          },
+          "tote": {
+            "sensor_time_s": 0.46666669845581055,
+            "sensor_physics_step": 57,
+            "fresh": true,
+            "force_n": 58.86116409301758,
+            "in_contact": true,
+            "raw_actor_pairs": [
+              [
+                "/World/Tote",
+                "/World/Carrier"
+              ]
+            ],
+            "body_pairs": [
+              [
+                "carrier",
+                "tote"
+              ]
+            ]
+          },
+          "stand_0": {
+            "sensor_time_s": 0.46666669845581055,
+            "sensor_physics_step": 57,
+            "fresh": true,
+            "force_n": 33.364933013916016,
+            "in_contact": true,
+            "raw_actor_pairs": [
+              [
+                "/World/Carrier",
+                "/World/Stand_0"
+              ]
+            ],
+            "body_pairs": [
+              [
+                "carrier",
+                "stand_0"
+              ]
+            ]
+          },
+          "stand_1": {
+            "sensor_time_s": 0.46666669845581055,
+            "sensor_physics_step": 57,
+            "fresh": true,
+            "force_n": 26.878244400024414,
+            "in_contact": true,
+            "raw_actor_pairs": [
+              [
+                "/World/Carrier",
+                "/World/Stand_1"
+              ]
+            ],
+            "body_pairs": [
+              [
+                "carrier",
+                "stand_1"
+              ]
+            ]
+          },
+          "stand_2": {
+            "sensor_time_s": 0.46666669845581055,
+            "sensor_physics_step": 57,
+            "fresh": true,
+            "force_n": 27.970752716064453,
+            "in_contact": true,
+            "raw_actor_pairs": [
+              [
+                "/World/Carrier",
+                "/World/Stand_2"
+              ]
+            ],
+            "body_pairs": [
+              [
+                "carrier",
+                "stand_2"
+              ]
+            ]
+          },
+          "stand_3": {
+            "sensor_time_s": 0.46666669845581055,
+            "sensor_physics_step": 57,
+            "fresh": true,
+            "force_n": 23.61928367614746,
+            "in_contact": true,
+            "raw_actor_pairs": [
+              [
+                "/World/Carrier",
+                "/World/Stand_3"
+              ]
+            ],
+            "body_pairs": [
+              [
+                "carrier",
+                "stand_3"
+              ]
+            ]
+          }
+        },
+        "support_count": 4,
+        "tote_surface_gap_m": -2.0980834961603634e-06,
+        "stationary": true,
+        "aligned": true,
+        "transition": "supported_stationary_contact_confirmed"
+      },
+      {
+        "transition": "authored_release_velocity_applied",
+        "world_time_s": 0.4750000247731805,
+        "world_physics_frame": 57,
+        "velocity_z_m_s": 2.0
+      },
+      {
+        "run_id": "a43896d55cfd40d48660de72a124ab04",
+        "world_time_s": 0.6166666988283396,
+        "world_physics_frame": 74,
+        "phase": "release",
+        "bodies": {
+          "carrier": {
+            "position_m": [
+              2.9802322387695312e-08,
+              2.2015699485677942e-08,
+              -5.960464477539063e-08
+            ],
+            "orientation_wxyz": [
+              1.0,
+              2.2330912230472677e-08,
+              1.099803248472142e-09,
+              -5.494070087763703e-09
+            ],
+            "linear_velocity_m_s": [
+              -1.764936496329028e-05,
+              -4.8227837396552786e-05,
+              0.001590923871845007
+            ],
+            "angular_velocity_rad_s": [
+              9.692441381048411e-05,
+              -3.6837747757090256e-05,
+              2.243138624180574e-05
+            ]
+          },
+          "tote": {
+            "position_m": [
+              -0.17998386919498444,
+              7.076168549247086e-05,
+              0.8790996670722961
+            ],
+            "orientation_wxyz": [
+              0.9999998807907104,
+              0.0005406128475442529,
+              -0.0001409173128195107,
+              -2.14551455428591e-05
+            ],
+            "linear_velocity_m_s": [
+              0.0,
+              0.0,
+              0.610249400138855
+            ],
+            "angular_velocity_rad_s": [
+              0.007577147334814072,
+              -0.0019632591865956783,
+              -0.0003001647419296205
+            ]
+          }
+        },
+        "contacts": {
+          "carrier": {
+            "sensor_time_s": 0.6083333492279053,
+            "sensor_physics_step": 74,
+            "fresh": true,
+            "force_n": 52.986690521240234,
+            "in_contact": true,
+            "raw_actor_pairs": [
+              [
+                "/World/Carrier",
+                "/World/Stand_0"
+              ]
+            ],
+            "body_pairs": [
+              [
+                "carrier",
+                "stand_0"
+              ]
+            ]
+          },
+          "tote": {
+            "sensor_time_s": 0.6083333492279053,
+            "sensor_physics_step": 74,
+            "fresh": true,
+            "force_n": 0.0,
+            "in_contact": false,
+            "raw_actor_pairs": [],
+            "body_pairs": []
+          },
+          "stand_0": {
+            "sensor_time_s": 0.6083333492279053,
+            "sensor_physics_step": 74,
+            "fresh": true,
+            "force_n": 16.12055778503418,
+            "in_contact": true,
+            "raw_actor_pairs": [
+              [
+                "/World/Carrier",
+                "/World/Stand_0"
+              ]
+            ],
+            "body_pairs": [
+              [
+                "carrier",
+                "stand_0"
+              ]
+            ]
+          },
+          "stand_1": {
+            "sensor_time_s": 0.6083333492279053,
+            "sensor_physics_step": 74,
+            "fresh": true,
+            "force_n": 12.447319030761719,
+            "in_contact": true,
+            "raw_actor_pairs": [
+              [
+                "/World/Carrier",
+                "/World/Stand_1"
+              ]
+            ],
+            "body_pairs": [
+              [
+                "carrier",
+                "stand_1"
+              ]
+            ]
+          },
+          "stand_2": {
+            "sensor_time_s": 0.6083333492279053,
+            "sensor_physics_step": 74,
+            "fresh": true,
+            "force_n": 12.92816162109375,
+            "in_contact": true,
+            "raw_actor_pairs": [
+              [
+                "/World/Carrier",
+                "/World/Stand_2"
+              ]
+            ],
+            "body_pairs": [
+              [
+                "carrier",
+                "stand_2"
+              ]
+            ]
+          },
+          "stand_3": {
+            "sensor_time_s": 0.6083333492279053,
+            "sensor_physics_step": 74,
+            "fresh": true,
+            "force_n": 11.49065113067627,
+            "in_contact": true,
+            "raw_actor_pairs": [
+              [
+                "/World/Carrier",
+                "/World/Stand_3"
+              ]
+            ],
+            "body_pairs": [
+              [
+                "carrier",
+                "stand_3"
+              ]
+            ]
+          }
+        },
+        "support_count": 4,
+        "tote_surface_gap_m": 0.17909972667694085,
+        "stationary": false,
+        "aligned": false,
+        "transition": "authored_release_separation_observed"
+      }
+    ],
+    "media": [
+      {
+        "path": "settled.png",
+        "sha256": "b2c277a953e1fbb0fd21d7a7a391b6fa4db22a7f428e611d8ecae6e91d0cd854",
+        "world_checkpoint_s": 0.4750000247731805,
+        "world_checkpoint_frame": 57,
+        "timing_scope": "read after rendered physics sample; exposure clock not independently validated"
+      },
+      {
+        "path": "separated.png",
+        "sha256": "ad7389cba4ad0b97f8f6a5270f9ad9c6bfc54669695dc68b76b44f725b78ef51",
+        "world_checkpoint_s": 0.6166666988283396,
+        "world_checkpoint_frame": 74,
+        "timing_scope": "read after rendered physics sample; exposure clock not independently validated"
+      }
+    ],
+    "cleanup_errors": [],
+    "requires_host_closure": true,
+    "isaac_version": "4.5.0-rc.36+release.19112.f59b3005.gl",
+    "contact_source": "PhysX ContactSensor raw actor pairs/force/time/physics step",
+    "velocity_source": "PhysX rigid-body velocity, not encoder odometry",
+    "finished_at_utc": "2026-10-21T03:48:43.519675+00:00",
+    "elapsed_wall_s": 20.46899999998277,
+    "app_close_requested": true
+  },
+  "stage2_complete": false,
+  "project_complete": false,
+  "preservation": {
+    "file_count": 20,
+    "original_bytes": 414274,
+    "paths": [
+      "C:\\Users\\LIMMM\\FactoryOpsArtifacts\\carrier-contact-114\\checkpoint-001.tar.gz",
+      "E:\\FactoryOpsArtifacts\\carrier-contact-114\\checkpoint-001.tar.gz"
+    ],
+    "archive_bytes": 158257,
+    "archive_sha256": "71d3ed6004d2697b6934b18a1f9b00a1011e3e2d14d7d25d8580f4020087e325",
+    "all_members_SHA_matched_both_stores": true
+  }
+}

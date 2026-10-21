@@ -1,0 +1,29 @@
+{
+  "run_id": "a43896d55cfd40d48660de72a124ab04",
+  "producer_source_commit": "0a5eba241b4530bba5ac116481794650b1fea953",
+  "native_evidence": "../../evidence/local45-tote-contact-114.json",
+  "images": [
+    {
+      "path": "settled.png",
+      "sha256": "b2c277a953e1fbb0fd21d7a7a391b6fa4db22a7f428e611d8ecae6e91d0cd854",
+      "world_checkpoint_s": 0.4750000247731805,
+      "world_checkpoint_frame": 57,
+      "timing_scope": "read after rendered physics sample; exposure clock not independently validated"
+    },
+    {
+      "path": "separated.png",
+      "sha256": "ad7389cba4ad0b97f8f6a5270f9ad9c6bfc54669695dc68b76b44f725b78ef51",
+      "world_checkpoint_s": 0.6166666988283396,
+      "world_checkpoint_frame": 74,
+      "timing_scope": "read after rendered physics sample; exposure clock not independently validated"
+    }
+  ],
+  "transformation": "Unmodified original640x480 RGB; no generative edits",
+  "scope": "Headless IsaacSim4.5 fixed kinematic stands, dynamic carrier5.4kg and tote6kg; .4s contact dwell then authored2m/s upward release and .12s separation dwell",
+  "limits": [
+    "No AMR asset loaded",
+    "No robot attachment, transport, loading mechanism or payload-rating validation",
+    "RGB read after rendered World checkpoints; exposure clock not independently validated"
+  ],
+  "original_preservation": "C/E FactoryOpsArtifacts/carrier-contact-114/checkpoint-001.tar.gz; all member SHA matched"
+}
