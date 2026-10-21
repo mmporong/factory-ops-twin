@@ -271,6 +271,18 @@ class FactoryStoryMediaTests(unittest.TestCase):
         for path in (PATH,Path(__file__)):
             ast.parse(path.read_text(encoding="utf-8"),feature_version=(3,10))
 
+    def test_media_id_projection_uses_recorded_camera_and_rejects_outside(self):
+        camera={"profile_camera_id":"portfolio_overview","readback_status":"verified","coordinate_frame":"world",
+            "prim_path":"/World/FactoryOverviewCamera","local_transform_row_major":[1.,0.,0.,0.,0.,1.,0.,0.,0.,0.,1.,0.,2.,3.,4.,1.],
+            "focal_length_mm":24.,"horizontal_aperture_mm":24.,"vertical_aperture_mm":13.5}
+        scene={"scene_extension":{"camera_overrides":{"cameras":[camera]}}}
+        observed=MEDIA.overview_readback(scene)
+        self.assertEqual(MEDIA.project_id([2.,3.,-6.],observed),[640.,360.])
+        self.assertEqual(MEDIA.project_id([3.,3.,-6.],observed),[768.,360.])
+        self.assertIsNone(MEDIA.project_id([2.,3.,5.],observed))
+        self.assertIsNone(MEDIA.project_id([100.,3.,-6.],observed))
+        self.assertIsNone(MEDIA.project_id([2.,3.,-6.],None))
+
 
 if __name__ == "__main__":
     unittest.main()

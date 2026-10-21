@@ -34,6 +34,38 @@ SIZE = (1680, 1080)
 UNOBSERVED = "미관측"
 
 
+def overview_readback(scene):
+    records=scene.get("scene_extension",{}).get("camera_overrides",{}).get("cameras",[])
+    found=[r for r in records if r.get("profile_camera_id")=="portfolio_overview"]
+    if not found:return None
+    if len(found)!=1:raise ValueError("overview camera readback is not unique")
+    camera=found[0];matrix=camera.get("local_transform_row_major",[])
+    if (camera.get("readback_status")!="verified" or camera.get("coordinate_frame")!="world"
+            or camera.get("prim_path")!="/World/FactoryOverviewCamera" or len(matrix)!=16
+            or any(type(v) not in (int,float) or not math.isfinite(v) for v in matrix)):
+        raise ValueError("verified world overview camera required for ID projection")
+    for key in ("focal_length_mm","horizontal_aperture_mm","vertical_aperture_mm"):
+        if finite(camera.get(key),key)<=0:raise ValueError("positive camera optics required")
+    for a in range(3):
+        for b in range(3):
+            dot=sum(matrix[a*4+k]*matrix[b*4+k] for k in range(3))
+            if abs(dot-(1 if a==b else 0))>1e-5:raise ValueError("camera basis must be orthonormal")
+    return camera
+
+
+def project_id(position,camera):
+    if camera is None:return None
+    if len(position)!=3 or any(type(v) not in (int,float) or not math.isfinite(v) for v in position):
+        raise ValueError("finite recorded GT position required for media ID")
+    matrix=camera["local_transform_row_major"]
+    delta=[position[k]-matrix[12+k] for k in range(3)]
+    x,y,z=[sum(delta[k]*matrix[axis*4+k] for k in range(3)) for axis in range(3)]
+    if z>=0:return None
+    px=1280*(.5+camera["focal_length_mm"]*x/(-z*camera["horizontal_aperture_mm"]))
+    py=720*(.5-camera["focal_length_mm"]*y/(-z*camera["vertical_aperture_mm"]))
+    return [px,py] if 0<=px<1280 and 0<=py<720 else None
+
+
 def sha(path):
     with Path(path).open("rb") as stream:
         digest = hashlib.sha256()
@@ -234,6 +266,7 @@ def prepare(stage):
     scene = read_json(run_root,"local45-fleet4-transport-scene.json",files,cache)
     session = read_json(stage,"inputs/session.json",files,cache)
     run_id, robots = validate_closed(host,mission,scene,session)
+    camera=overview_readback(scene)
     if mission.get("session_sha256") != files[str(stage/"inputs/session.json")]["sha256"]:
         raise ValueError("mission session input bytes differ")
     launch = read_json(stage,"launch.json",files,cache)
@@ -296,7 +329,9 @@ def prepare(stage):
         row = {"index":count(frame["index"],"capture index"),"world_time_s":world_s,"physics_frame":physics_frame,
             "phase":phase,"image":dict(image),"visual_snapshot":dict(ref),"visual_source":projection["source"],
             "material_source":material_proof,"dashboard_source":dashboard_proof,
-            "overlay":overlay_view(projection,material,dashboard,robots,world_s)}
+            "overlay":overlay_view(projection,material,dashboard,robots,world_s),
+            "robot_id_pixels":{robot:project_id(frame["ground_truth"][robot]["position_xyz_m"],camera)
+                for robot in robots} if camera is not None else {}}
         chapter["rows"].append(row)
         rows.append(row)
         previous_time,previous_frame = world_s,physics_frame
@@ -318,7 +353,9 @@ def prepare(stage):
         "native_overview_size":[1280,720],"canvas_size":list(SIZE),"chapters":chapters,"frames":selected,
         "source_files":list(files.values()),"cargo_scope":"ledger-bound visuals; physical tote contact/loading unverified",
         "dashboard_scope":"archived elapsed clock converted using original mission origin; per-robot freshness checked",
-        "gt_overlay":"not used; no assumed camera calibration or invented trajectory",
+        "camera_readback":camera,
+        "gt_overlay":("actual frame GT positions projected using verified camera readback for media IDs only; no control input"
+            if camera is not None else "unavailable camera readback; no assumed ID projection"),
         "completion_scope":"passed normal development run only; no fullQA/industrial qualification claim"}
 
 
@@ -382,8 +419,17 @@ class ConsoleRenderer:
                 raise ValueError("native decoded overview dimensions differ")
             canvas.paste(original.convert("RGB"),(24,202))
         draw.rectangle((23,201,1304,922),outline="#DCE6F3",width=1)
-        # No GT position label is projected without a verified camera readback.
         colors = (self.blue,self.teal,self.amber,"#7B69BF")
+        for index,robot in enumerate(values["robots"]):
+            pixel=row.get("robot_id_pixels",{}).get(robot["id"])
+            if pixel is None:continue
+            px,py=24+pixel[0],202+pixel[1]
+            color=colors[index]
+            draw.ellipse((px-9,py-5,px+9,py+5),outline=color,width=2)
+            lx=min(max(px-37,26),1227);ly=min(max(py-34,204),894)
+            draw.line((px,py-5,lx+37,ly+24),fill=color,width=2)
+            draw.rounded_rectangle((lx,ly,lx+74,ly+24),radius=6,fill="white",outline=color,width=2)
+            text(lx+8,ly+1,robot["id"],14,color)
         for index,robot in enumerate(values["robots"]):
             x,y = 1328,202+index*184
             panel((x,y,x+328,y+172))
