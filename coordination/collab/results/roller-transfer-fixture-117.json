@@ -1,0 +1,134 @@
+{
+  "task_id": "roller-transfer-fixture-117",
+  "attempt": 1,
+  "contract_revision": 108,
+  "owner": "control",
+  "ack": true,
+  "status": "cpu_source_ready_native_pending_root",
+  "self_accepted": false,
+  "implementation_root": "C:/Users/LIMMM/factory-ops-twin",
+  "summary": "고정된 두 롤러 뱅크 사이에서 자유 동적 6kg 토트를 적재·반납하는 후보를 작성했습니다. 회전 조인트 구동과 개별 롤러·끝단 스토퍼 접촉 관측을 사용합니다. native 실행과 최종 수용은 root 범위입니다.",
+  "changed_paths": [
+    "factory_ops/roller_transfer.py",
+    "configs/vehicles/roller-transfer-v1.json",
+    "scripts/isaac/probe_roller_transfer.py",
+    "tests/test_roller_transfer.py",
+    "coordination/collab/results/roller-transfer-fixture-117.json"
+  ],
+  "source_sha256": {
+    "factory_ops/roller_transfer.py": "3ebff4e74cce2f9aeef952363d8de063762622a01cf85557117da0aef8267d6b",
+    "configs/vehicles/roller-transfer-v1.json": "e9131a94382c8f9a08ccd38746a6f0b9444c408e42a2f512bff0e690951d1159",
+    "scripts/isaac/probe_roller_transfer.py": "eb8ea927bf436d4ab29eb216867fbb235cbead45d39df9b1c58745be0b9bb71b",
+    "tests/test_roller_transfer.py": "a748dbd85877f9ac016de8296751be6d9fcad1cb7bf5ac63ad79bb369256866e"
+  },
+  "input_pins_verified": {
+    "AGENTS.md": "30ed4fb5a723edfac0557111438fa9b6b6a85b6f66ef002b675b5a240d87154d",
+    "factory_ops/carrier_module.py": "ef12b26aa3d7180e7f122324aa0f5e363010d1f3ddf366165b69ac6de1cbfc14",
+    "configs/vehicles/tote-carrier-v1.json": "4e849823f3e0efe4561fd8ce02ef17067b4b9dc606558bab2197ffa4efa46627",
+    "scripts/isaac/probe_tote_carrier_contact.py": "332d392d2350df0f0949efeac365d43c9b5faf9bd96258e42c20b7f900617672",
+    "docs/evidence/local45-tote-contact-114.json": "16d4cafe495334e0942f190b36e9ccf5089d60314f81d98ab02ff6436f1408b2",
+    "scripts/isaac/run-local-contact-probe.ps1": "ee0290cda90d2e81fe4794a8645086d5a790b9362c965525b6604f142c6f227e"
+  },
+  "manifest_sha256": "537b1d500522c98800c190e958bcf45e51f7e72772e9275998e35d27f069ae16",
+  "implementation": {
+    "mechanism": "두 뱅크 각각 7개 동적 원통 롤러. Y축 revolute joint의 force drive가 회전시키며, 토트의 이동은 접촉 마찰에 맡깁니다. 양 끝 스토퍼와 측면 레일은 고정 시험대의 kinematic rigid body입니다.",
+    "controller": "source_ready → loading → load_settling → loaded → unloading → return_settling → returned. 두 개 이상 개별 롤러 접촉, 반대 뱅크 접촉 부재, 측정된 롤러 정지 속도가 0.3초 유지되어야 확인합니다. 이동 방향 변경 전 끝단 스토퍼 접촉을 요구합니다.",
+    "controller_inputs": "World time/frame, 모든 롤러·스토퍼 센서의 time/frame/force/in_contact/actor_pairs, 롤러 각속도, 고정 스토퍼의 collider/kinematic 설정 읽기 결과. 토트 pose·velocity를 update/request에 전달하지 않습니다.",
+    "events": "한 토트 ID와 load/return command ID를 유지합니다. 동일 명령 재요청은 재시작하지 않으며 transfer_loaded와 transfer_returned를 각각 한 번 기록합니다. 원장·소유권·재고 갱신은 없습니다.",
+    "failure": "미확인 actor, 누락·비유한·역행·오래된 관측, 정지/지지 상실과 stage timeout은 fault 및 모터 목표 0입니다. native 오류/전체 sim 예산 종료에서도 0을 요청하고 실패 자료를 보존합니다.",
+    "units": "입력과 컨트롤러는 m/kg/rad/s/N*m. USD angular targetVelocity에는 math.degrees를 사용하며 maxForce는 SI 토크입니다. 구동 damping은 설정의 USD 수치로 저작합니다.",
+    "native_evaluation": "GT는 유한값·시험대 이탈·확인된 뱅크의 지지 범위·정지 평가에만 사용합니다. 평가 실패는 overall failed이며 방향이나 위치 제어 입력으로 쓰지 않습니다.",
+    "provenance": "설정에 기존 carrier profile 전체 사본을 포함했습니다. native는 두 번째 설정을 읽지 않습니다. 기존 solid deck/posts/upward release는 생성하지 않으며 토트 compound geometry/mass만 재사용합니다.",
+    "observation_policy": "120Hz 물리/제어, 최대 20Hz JSONL 및 상태 전이. actual World frame/time과 센서·모터 관측을 기록합니다. loaded/returned 시 실제 640×480 RGB 두 장만 저장하며 노출 시각 동기 검증으로 확대하지 않습니다.",
+    "bounds": {"maximum_sim_time_s": 20, "maximum_wall_time_s": 360, "stage_timeout_s": 8, "physics_hz": 120},
+    "cleanup": "모든 drive 목표 0 요청, RGB detach, RenderProduct destroy, app.close(wait_for_replicator=False). 실제 프로세스 종료와 잔여 PID 검증은 host Job이 담당합니다."
+  },
+  "api": {
+    "build": "build_transfer_manifest(profile: Mapping) -> dict; JSON-safe deterministic manifest",
+    "controller": "TransferController(manifest, run_id32hex)",
+    "update": "update(*, now_s, frame, sensors, motor_rad_s, stoppers_fixed) -> output",
+    "sensor_example": {"time_s": 1.0, "frame": 120, "force_n": 8.0, "in_contact": true, "actor_pairs": [["source_roller_02", "Tote_117"]]},
+    "sensor_example_scope": "형태 설명용 예시이며 측정값이 아닙니다. 모든 14개 롤러 및 source_stop/carrier_stop 키가 필요합니다.",
+    "commands": "request('load', 'load_<run_id>') after source_ready/ready; request('unload', 'return_<run_id>') after loaded/ready",
+    "output": "phase, ready, failure, command_id, tote_id, motor_targets_rad_s, events",
+    "fault": "fail(reason) -> zero-target fault output",
+    "conversion": "motor_degrees(rad_s, maximum_rad_s) -> validated USD degrees/s"
+  },
+  "validation": [
+    {
+      "command": ".venv/Scripts/python.exe -B -m unittest tests.test_roller_transfer -v",
+      "cwd": "C:/Users/LIMMM/factory-ops-twin",
+      "result": "5 tests PASS; 0.162s; one focused CPU suite",
+      "coverage": "적재/반납 접촉 시퀀스·정확히 한 번 사건·중복 명령, 스토퍼만으로 확인 금지, 반대 뱅크 접촉/회전 중 확인 금지, 누락/unknown/stale/future/NaN/bool/역행/stopper/모터 입력 실패, timeout/World reset, 형상·관성·단위·속도 변환"
+    },
+    {
+      "command": "Python ast.parse(..., feature_version=(3,10)) for factory_ops/roller_transfer.py, scripts/isaac/probe_roller_transfer.py, tests/test_roller_transfer.py",
+      "result": "3 files PASS; SDK import/execution 없음"
+    },
+    {
+      "command": "Python ast.parse(..., feature_version=(3,10)) for scripts/isaac/probe_roller_transfer.py",
+      "result": "전체 sim 예산 종료도 controller fault로 남기도록 정리한 해당 스크립트의 최종 AST PASS; CPU suite 반복 없음"
+    },
+    {
+      "command": "bounded source check for pose/body velocity setters, TODO, skipped/only tests",
+      "result": "해당 사용 없음. rg exit1은 일치 없음입니다."
+    }
+  ],
+  "installed_official_sources": [
+    {
+      "path": "E:/IsaacSim/isaac-sim-4.5.0/extscache/omni.usd.libs-1.0.1+d02c707b.wx64.r.cp310/bin/usd/usdPhysics/resources/usdPhysics/schema.usda",
+      "sha256": "675a284faea4bd5312189bf3eec2b540c93098fe9e7567a1858fcdbb91475069",
+      "lines": "785-869",
+      "evidence": "PhysicsDriveAPI는 angular revolute drive, force-limited spring, maxForce와 angular targetVelocity degrees/second를 명시합니다. 이 버전 설치 스키마를 읽었습니다."
+    },
+    {
+      "path": "E:/IsaacSim/isaac-sim-4.5.0/extscache/omni.importer.onshape-0.8.1+106.5.0/omni/importer/onshape/scripts/usd_generator.py",
+      "sha256": "cfba52583f7862b8815012f68023c04e455a8cd982b1174ddc3621d586f46625",
+      "lines": "1280-1300",
+      "evidence": "설치된 공식 importer의 UsdPhysics.RevoluteJoint.Define와 joint 작성 경로 사용을 확인했습니다."
+    },
+    {
+      "path": "E:/IsaacSim/isaac-sim-4.5.0/exts/isaacsim.sensors.physics/isaacsim/sensors/physics/scripts/contact_sensor.py",
+      "sha256": "8ee8e65b88e98297353447dc258b7be7becf543d97f4ef259a1da9d20d128c5c",
+      "lines": "98-151",
+      "evidence": "get_current_frame의 유효 reading, force/time/in_contact, decode된 body0/body1, 실제 physics_num_steps 및 raw contact opt-in을 확인했습니다."
+    },
+    {
+      "path": "E:/IsaacSim/isaac-sim-4.5.0/exts/isaacsim.core.prims/isaacsim/core/prims/impl/single_rigid_prim.py",
+      "sha256": "04b7de5b78c418fa608198035ab59acc2335dc9100e965a6f9d573fb3a2ecde2",
+      "lines": "171-180",
+      "evidence": "공개 get_angular_velocity가 physics rigid view의 실제 각속도를 읽습니다. body velocity setter는 사용하지 않습니다."
+    }
+  ],
+  "root_native_handoff": {
+    "execute_now": false,
+    "entry_point": "scripts/isaac/probe_roller_transfer.py",
+    "config": "configs/vehicles/roller-transfer-v1.json",
+    "cli": "--config <absolute-config> --output <new-absolute-output> --run-id <32-lowercase-hex>",
+    "guard_example_not_executed": "& \"$HOME/factory-ops-twin/scripts/isaac/run-local-contact-probe.ps1\" -SdkPath \"E:/IsaacSim/isaac-sim-4.5.0\" -EntryPoint probe_roller_transfer.py -Config \"$HOME/factory-ops-twin/configs/vehicles/roller-transfer-v1.json\" -OutputDirectory \"$HOME/FactoryOpsRuntime/roller-transfer-117/output\" -RunId <new32hex> -SourceDependency @('factory_ops/__init__.py','factory_ops/carrier_module.py','factory_ops/roller_transfer.py') -TimeoutSec 480",
+    "project_source_sha256": {
+      "factory_ops/__init__.py": "da57bbf586e3c4639fd72b3960ef8dd7a8326b3ba17504836189be26ce5bacb0",
+      "factory_ops/carrier_module.py": "ef12b26aa3d7180e7f122324aa0f5e363010d1f3ddf366165b69ac6de1cbfc14",
+      "factory_ops/roller_transfer.py": "3ebff4e74cce2f9aeef952363d8de063762622a01cf85557117da0aef8267d6b"
+    },
+    "expected_files": ["result.json", "manifest.json", "scene.usda", "observations.jsonl", "loaded.png", "returned.png"],
+    "root_checks": "041 및 다른 GPU 작업 종료 뒤 root가 동결 입력으로 실행합니다. actual World/접촉/모터 읽기, 두 상태별 RGB, app 오류와 host exit/closed/잔여 PID를 대조해야 합니다. 실패한 결과나 부족한 센서를 성공으로 바꾸지 않습니다."
+  },
+  "limits": [
+    "SDK/GPU/native/ROS/WSL 실행을 하지 않았습니다. 실제 토트 이동·정지·양방향 확인·RGB는 아직 검증되지 않았습니다.",
+    "USD drive 변경의 실제 적용, roller contact 안정성, 센서 초기화와 raw actor attribution, 마찰/토크/스토퍼 동작은 root의 native 시험에서 확인해야 합니다.",
+    "world에 고정한 축은 이번 stationary fixture 전용입니다. 향후 동적 AMR에서는 지지체와 joint body0 구조를 별도로 연결해야 하며, 이번 결과로 장착·운송·도킹을 주장할 수 없습니다.",
+    "6kg는 저작된 hollow tote와 rigid ballast 합계이며 제조사 적재 등급이나 산업 인증이 아닙니다.",
+    "전이 사건은 센서 기반 fixture 확인입니다. GT 정지/지지 평가와 전체 native pass는 별도이며 FMS/재고/소유권 거래가 아닙니다.",
+    "114의 고정 스탠드 접촉 및 상향 속도 분리 성공은 117 롤러 적재/반납 성공으로 재사용하지 않았습니다.",
+    "Stage2와 프로젝트 전체 완료는 보류합니다."
+  ],
+  "preserved": ["116 worktree/branch", "041 frozen runtime/processes", "API/Next", "114/115 originals", "all unowned/shared source and dashboard edits"],
+  "sdk_executed": false,
+  "gpu_executed": false,
+  "git_mutated": false,
+  "new_agents": false,
+  "processes_started": [],
+  "stage2_complete": false,
+  "project_complete": false
+}

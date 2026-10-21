@@ -683,6 +683,10 @@ SDK mission-failed는 위 ROS 교착 실패의 후속이다. 양쪽 소유 실�
 
 실제 제어는 다음 예약 정차점에서 네 차량의 새 HOLD·정지 관측을 받은 뒤 ACK하는 fleet stop이다. physics·ROS·MES·가상 충전 시계까지 멈춘다고 표시하지 않도록 UI 문구를 바꾸고, 별도 제어 revision 대신 ledger revision을 상태 표시에 사용했다. 변경 뒤 TypeScript 검사는3.684초에 통과했다. 코드는 격리 브랜치8c963388에 보존했으며 main의 실행 중 API는 유지한다. 실제 ROS 정지→새 정지/HOLD ACK→재개는 아직 확인하지 않았다. [수신·수정 근거](../coordination/collab/results/live-anchor-controls-116-integration.json)
 
+## FOT-082 — 저장소 모듈을 불러오는 수신 도구의 실행 경로
+
+117 수신 도구를 `python artifacts/local45/receive_117.py`로 실행하며 `factory_ops` import가 실패했다. 스크립트 경로로 실행하면 import 시작 경로가 `artifacts/local45`가 되는 보조 도구의 문제이며 SDK·물리 시험 실패가 아니다. 이미 복사한 네 소스의 SHA를 보존한 채 저장소 루트에서 `python -B -m artifacts.local45.receive_117`로 실행해 입력6개·수신4소스·manifest를 대조했다. 프로젝트 모듈을 사용하는 후속 수신 도구는 저장소 루트의 모듈 실행을 사용하며, 실제 import 대상이 해당 저장소인지 확인한다. 제품 소스와041 실행에는 변경이 없다.
+
 ## 실행 전 확인과 후속 기록
 
 1. 깨끗한 생산자 소스·host commit·설정·실행 ID를 결속한다. 실패한 실행 ID와 원본을 다시 사용하지 않는다.

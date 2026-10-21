@@ -45,6 +45,8 @@
 
 헤드리스 Isaac Sim 4.5에서 캐리어 5.4kg·적재 토트 6kg의 접촉을 시험했습니다. 네 지지대의 접촉·힘·센서 시각과 정지·정렬을 확인한 뒤, 토트에 상향 속도를 주어 분리 상태와 RGB 두 장을 기록했습니다. 고정 지지대 위의 구성 시험이며 **AMR 장착·자동 적재·운송·하중 정격 검증은 남아 있습니다.** 별도의 [AMR 장착 시험 코드](scripts/isaac/probe_loaded_carrier.py)는 실제 차체·센서 외곽과 기존 반경을 확인하는 단계부터 준비했습니다. [실제 물리 결과](docs/evidence/local45-tote-contact-114.json) · [이미지 출처](docs/images/tote-contact-local45-114/provenance.json)
 
+[롤러 적재·반납 시험 코드](scripts/isaac/probe_roller_transfer.py)도 준비했습니다. 회전 조인트로 구동하는 두 롤러 뱅크와 접촉 센서로 같은 토트를 싣고 돌려보냅니다. CPU 제어 검사만 통과한 상태이며 실제 이송·RGB와 AMR 장착 확인은 남아 있습니다. [구현·검사 범위](coordination/collab/results/roller-transfer-fixture-117-integration.json)
+
 </details>
 
 ## 가감속·회전·정지

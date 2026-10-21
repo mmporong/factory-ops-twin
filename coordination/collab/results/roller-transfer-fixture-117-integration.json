@@ -1,0 +1,43 @@
+{
+  "task_id": "roller-transfer-fixture-117",
+  "attempt": 1,
+  "contract_revision": 108,
+  "received_at_utc": "2026-10-21T05:43:31.603933+00:00",
+  "status": "accepted_implementation_native_pending",
+  "acceptance_authority": "root",
+  "worker_receipt_sha256": "5b984ec57de49edc450d3e542f7f7aa51b6ae130f18af0620084d5c6f20ed5bd",
+  "received_source_sha256": {
+    "factory_ops/roller_transfer.py": "3ebff4e74cce2f9aeef952363d8de063762622a01cf85557117da0aef8267d6b",
+    "configs/vehicles/roller-transfer-v1.json": "e9131a94382c8f9a08ccd38746a6f0b9444c408e42a2f512bff0e690951d1159",
+    "scripts/isaac/probe_roller_transfer.py": "eb8ea927bf436d4ab29eb216867fbb235cbead45d39df9b1c58745be0b9bb71b",
+    "tests/test_roller_transfer.py": "a748dbd85877f9ac016de8296751be6d9fcad1cb7bf5ac63ad79bb369256866e"
+  },
+  "all_input_pins_and_received_snapshot_SHA_matched": true,
+  "manifest_sha256": "537b1d500522c98800c190e958bcf45e51f7e72772e9275998e35d27f069ae16",
+  "worker_validation_received": [
+    {
+      "command": ".venv/Scripts/python.exe -B -m unittest tests.test_roller_transfer -v",
+      "cwd": "C:/Users/LIMMM/factory-ops-twin",
+      "result": "5 tests PASS; 0.162s; one focused CPU suite",
+      "coverage": "적재/반납 접촉 시퀀스·정확히 한 번 사건·중복 명령, 스토퍼만으로 확인 금지, 반대 뱅크 접촉/회전 중 확인 금지, 누락/unknown/stale/future/NaN/bool/역행/stopper/모터 입력 실패, timeout/World reset, 형상·관성·단위·속도 변환"
+    },
+    {
+      "command": "Python ast.parse(..., feature_version=(3,10)) for factory_ops/roller_transfer.py, scripts/isaac/probe_roller_transfer.py, tests/test_roller_transfer.py",
+      "result": "3 files PASS; SDK import/execution 없음"
+    },
+    {
+      "command": "Python ast.parse(..., feature_version=(3,10)) for scripts/isaac/probe_roller_transfer.py",
+      "result": "전체 sim 예산 종료도 controller fault로 남기도록 정리한 해당 스크립트의 최종 AST PASS; CPU suite 반복 없음"
+    },
+    {
+      "command": "bounded source check for pose/body velocity setters, TODO, skipped/only tests",
+      "result": "해당 사용 없음. rg exit1은 일치 없음입니다."
+    }
+  ],
+  "root_integration": "One content/API/data/cleanup pass: sensor-only controller, native angular drives, separate evaluation, exact-once fixture events, fail-to-zero, self-contained config and no ownership/ledger simulation. No product source edits or repeated CPU suite.",
+  "root_helper_issue": "Initial file-path launch could not import factory_ops because sys.path started in artifacts/local45. Reused the matching received snapshot, executed as python -B -m artifacts.local45.receive_117 from repository root. No SDK/native run or product source change.",
+  "native_pending": true,
+  "stage2_complete": false,
+  "project_complete": false,
+  "next": "After041 and owned Job closure, execute a fresh bounded roller fixture with three imported project source hashes. Preserve actual contact/motor/clock/RGB and native outcome; do not claim AMR mounting or ledger integration."
+}

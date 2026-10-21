@@ -1,0 +1,198 @@
+{
+  "schema_version": 1,
+  "profile_id": "roller-transfer-v1",
+  "tote_id": "Tote_117",
+  "units": {
+    "length": "m",
+    "mass": "kg",
+    "speed": "rad/s",
+    "torque": "N*m"
+  },
+  "carrier_profile": {
+    "schema_version": 1,
+    "profile_id": "tote-carrier-v1",
+    "assumptions": [
+      "Original generic bolted-deck/raised-support candidate, not a manufacturer model, certified payload or finished low-profile lifting AMR.",
+      "All dimensions, masses, uniform material distributions, friction and contact settings are authored development assumptions, not measurements.",
+      "Nova Carter remains the development base. Declared keepouts below are candidate integration constraints, not its measured collider/sensor geometry. Actual robot-frame transform, body/sensor clearance, mount strength, added inertia and navigation footprint need native admission before installation.",
+      "Existing presentation-only cargo is independent. This profile does not change a registry, scene, map, footprint, controller or sensor.",
+      "Probe uses fixed stand pads instead of a robot chassis. Carrier and tote are separate dynamic compound bodies; centred ballast is rigidly included in tote inertia, not loose contents. Separation is an authored upward velocity impulse, not a lift actuator or unloading operation."
+    ],
+    "deck": {
+      "size_m": [
+        0.58,
+        0.46,
+        0.04
+      ],
+      "center_m": [
+        -0.18,
+        0.0,
+        0.68
+      ],
+      "mass_kg": 4.0
+    },
+    "mount": {
+      "post_size_m": [
+        0.04,
+        0.04,
+        0.24
+      ],
+      "post_mass_kg": 0.35,
+      "support_span_m": [
+        0.5,
+        0.4,
+        0.24
+      ],
+      "fit_margin_m": 0.02,
+      "clearance_m": 0.01
+    },
+    "tote": {
+      "outer_size_m": [
+        0.44,
+        0.34,
+        0.18
+      ],
+      "wall_m": 0.02,
+      "empty_mass_kg": 2.0
+    },
+    "payload": {
+      "size_m": [
+        0.34,
+        0.24,
+        0.1
+      ],
+      "mass_kg": 4.0,
+      "maximum_mass_kg": 12.0
+    },
+    "contact": {
+      "static_friction": 0.65,
+      "dynamic_friction": 0.5,
+      "restitution": 0.02,
+      "contact_offset_m": 0.002,
+      "rest_offset_m": 0.0
+    },
+    "compatibility": {
+      "base": "existing Nova Carter development baseline; not modified or loaded by this fixture",
+      "unchanged_footprint_radius_m": 0.6371090915442774,
+      "radius_reference": "configs/factory-fleet4/g3-routing.json collision_radius; robot-root reference only. Candidate-to-loaded-robot transform and loaded footprint MUST be remeasured before integration.",
+      "declared_keepouts": [
+        {
+          "name": "authored_lower_chassis_envelope",
+          "center_m": [
+            -0.18,
+            0.0,
+            0.19
+          ],
+          "size_m": [
+            0.8,
+            0.58,
+            0.38
+          ]
+        },
+        {
+          "name": "authored_forward_tower_envelope",
+          "center_m": [
+            0.28,
+            0.0,
+            0.8
+          ],
+          "size_m": [
+            0.3,
+            0.3,
+            0.8
+          ]
+        },
+        {
+          "name": "front_sensor_clearance",
+          "center_m": [
+            0.2,
+            0.0,
+            0.32
+          ],
+          "size_m": [
+            0.16,
+            0.16,
+            0.16
+          ]
+        },
+        {
+          "name": "rear_sensor_clearance",
+          "center_m": [
+            -0.65,
+            0.0,
+            0.32
+          ],
+          "size_m": [
+            0.16,
+            0.16,
+            0.16
+          ]
+        }
+      ],
+      "sensor_position_reference": "configs/local45-fleet-runtime-probe.json front/rear translations; keepout sizes are authored and do not prove beam/FOV clearance"
+    },
+    "probe": {
+      "physics_dt_s": 0.008333333333333333,
+      "maximum_sim_time_s": 6.0,
+      "maximum_wall_time_s": 360.0,
+      "initial_gap_m": 0.01,
+      "contact_dwell_s": 0.4,
+      "separation_dwell_s": 0.12,
+      "release_velocity_z_m_s": 2.0,
+      "minimum_force_n": 0.1,
+      "stationary_linear_m_s": 0.02,
+      "stationary_angular_rad_s": 0.03,
+      "sensor_freshness_s": 0.025,
+      "maximum_settle_error_m": 0.01,
+      "image_size_px": [
+        640,
+        480
+      ]
+    }
+  },
+  "geometry": {
+    "zone_length_m": 0.58,
+    "transfer_gap_m": 0.02,
+    "roller_top_z_m": 0.65,
+    "initial_vertical_gap_m": 0.004,
+    "rail_inner_y_m": 0.19,
+    "stopper_thickness_m": 0.02,
+    "stopper_height_m": 0.12
+  },
+  "rollers": {
+    "radius_m": 0.035,
+    "length_m": 0.4,
+    "pitch_m": 0.08,
+    "count_per_zone": 7,
+    "mass_kg": 0.25,
+    "speed_rad_s": 5.0,
+    "maximum_rad_s": 7.0,
+    "torque_limit_n_m": 0.25,
+    "usd_damping_n_m_per_deg_s": 0.01
+  },
+  "control": {
+    "physics_dt_s": 0.008333333333333333,
+    "sensor_freshness_s": 0.025,
+    "minimum_force_n": 0.1,
+    "contact_dwell_s": 0.3,
+    "stage_timeout_s": 8.0,
+    "maximum_sim_time_s": 20.0,
+    "maximum_wall_time_s": 360.0,
+    "stopped_rad_s": 0.2,
+    "observation_hz": 20.0,
+    "stationary_linear_m_s": 0.02,
+    "stationary_angular_rad_s": 0.03,
+    "image_size_px": [
+      640,
+      480
+    ]
+  },
+  "assumptions": [
+    "Authored fixed roller coupon, not a manufacturer asset, rated conveyor, mounted Nova Carter or docking qualification.",
+    "Nested carrier_profile is preserved as tote geometry/mass provenance. Its solid deck, posts and upward-release probe are not used here.",
+    "Both banks have world-fixed revolute axles with free dynamic rollers and a free dynamic 6 kg compound tote. No pose or body velocity commands after authoring.",
+    "Fixed kinematic side rails and end stoppers are stationary fixture parts, not a mobile carrier attachment.",
+    "Motor torque/speed, roller inertia, contact friction and all dimensions are development assumptions; native transfer remains unverified.",
+    "Contacts and stopped roller readback control transitions. Ground truth pose/velocity is evaluation-only; completion is not an inventory or ownership transaction."
+  ]
+}
