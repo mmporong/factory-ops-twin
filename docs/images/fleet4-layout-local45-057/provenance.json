@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "run_id": "a1a3cd4f587e4b0db36a0eca5c6e775b",
+  "producer_source_commit": "9e5745ffcaf25fbfc1a5fde379354c87c9a45cb7",
+  "scope": "single startup layout preview only; no transport, charging or whole-run success",
+  "native_status": "failed_before_transport",
+  "source_image": {
+    "bytes": 381732,
+    "height": 720,
+    "path": "media/overview-00000.png",
+    "sha256": "9256a866693a5ac264371b288dbfd84a04d08e58b31f4b7c21014d56e5c438ed",
+    "width": 1280
+  },
+  "published_image": {
+    "path": "overview.png",
+    "sha256": "9256a866693a5ac264371b288dbfd84a04d08e58b31f4b7c21014d56e5c438ed"
+  },
+  "physics_frame": 124,
+  "sim_time_s": 2.0666667744517326,
+  "camera": {
+    "coordinate_frame": "world",
+    "eye_xyz_m": [
+      16,
+      -13,
+      24
+    ],
+    "focal_length_mm": 17.0,
+    "horizontal_aperture_mm": 24.0,
+    "local_transform_row_major": [
+      1.0,
+      0.0,
+      -0.0,
+      0.0,
+      0.0,
+      0.696565923795132,
+      0.7174927970421962,
+      0.0,
+      0.0,
+      -0.7174927970421962,
+      0.696565923795132,
+      0.0,
+      16.0,
+      -13.0,
+      23.999999999999996,
+      1.0
+    ],
+    "prim_path": "/World/FactoryOverviewCamera",
+    "profile_camera_id": "portfolio_overview",
+    "readback_status": "verified",
+    "target_xyz_m": [
+      16,
+      11,
+      0.7
+    ],
+    "vertical_aperture_mm": 13.5
+  },
+  "edited": false,
+  "normal_run_completed": false,
+  "source_capture": "persistent native Replicator RGB annotator; no interpolation"
+}

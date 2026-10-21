@@ -78,19 +78,26 @@ class RelayTests(unittest.TestCase):
         self.assertEqual(opened.call_count,1)
         self.assertNotIn("heartbeat_sequence",report)
 
-    def test_service_wait_is_linux_lifecycle_reply_only(self):
+    def test_service_writer_profiles_cover_exact_linux_lifecycle_requests_and_replies(self):
         from scripts.isaac.run_local45_fleet_pair import prepare_ros_transport
         import xml.etree.ElementTree as ET
         with tempfile.TemporaryDirectory() as directory:
-            path,_=prepare_ros_transport(Path(directory),73,platform="linux",interface="127.0.0.1",
+            path,environment=prepare_ros_transport(Path(directory),73,platform="linux",interface="127.0.0.1",
                 isolated_loopback=True,startup_service_match_wait=True)
             ns={"d":"http://www.eprosima.com/XMLSchemas/fastRTPS_Profiles"}
             publishers=ET.parse(path).getroot().findall("d:publisher",ns)
-            self.assertEqual(len(publishers),64)
+            expected={f"{prefix}/{robot}/{component}/{service}{suffix}"
+                for prefix,suffix in (("rq","Request"),("rr","Reply"))
+                for robot in ("carter1","carter2","carter3","carter4")
+                for component in ("map_server","navigation_map_server","amcl","planner_server",
+                    "controller_server","smoother_server","behavior_server","bt_navigator")
+                for service in ("change_state","get_state")}
+            self.assertEqual(len(publishers),128)
+            self.assertEqual({row.get("profile_name") for row in publishers},expected)
+            self.assertNotIn("RMW_FASTRTPS_USE_QOS_FROM_XML",environment)
             for row in publishers:
-                self.assertTrue(row.get("profile_name").startswith("rr/carter"))
-                self.assertTrue(row.get("profile_name").endswith(("/change_stateReply","/get_stateReply")))
                 self.assertEqual(row.find(".//d:max_blocking_time/d:sec",ns).text,"1")
+                self.assertEqual(row.find(".//d:max_blocking_time/d:nanosec",ns).text,"0")
                 self.assertEqual(row.find(".//d:reliability/d:kind",ns).text,"RELIABLE")
             with self.assertRaises(ValueError):
                 prepare_ros_transport(Path(directory),73,platform="windows",interface="127.0.0.1",

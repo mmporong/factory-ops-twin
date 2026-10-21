@@ -56,7 +56,9 @@
 
 **자재 보관·키팅 → 공정 투입 → 조립·검사 → 완제품 출하**, 소비 후 **빈 토트 회수·재사용**을 연결합니다. 32×22 m의 가상 생산 구역이며 현장 CAD·MES와 동기화한 실공장 복제는 아닙니다.
 
-다음 조감 설정은 공장과 외벽 전체가 화면 안에 들어오도록 조정했습니다. [기록된 카메라 좌표를 이용한 투영 계산](docs/evidence/local45-overview-framing-168.json)을 확인했으며, 새 설정의 실제 렌더와 이미지 갱신은 남아 있습니다. 위 이미지는 보존된 이전 실행의 원본입니다.
+![17mm 카메라로 전체 구역과 외벽을 담은 현재 장면의 기동 미리보기](docs/images/fleet4-layout-local45-057/overview.png)
+
+17mm 조감으로 공장과 외벽 전체를 담고 네 차량에5.4kg 물리 캐리어를 장착했습니다. 위 이미지는 운송 시작 전의 실제 렌더입니다. 해당 실행은 AMR2의 Nav2 기동 오류로 종료됐으며, 앞의036 업무 영상과 다른 실행입니다. [촬영 시각·카메라·원본 해시](docs/images/fleet4-layout-local45-057/provenance.json) · [기동 결과와 남은 통신 문제](docs/evidence/local45-startup-057.json)
 
 | 실행에서 확인한 결과 | 범위 |
 |---|---|
@@ -87,7 +89,7 @@ Nova Carter의 차체 형상·센서 간섭·기존 반경을 확인한 뒤 캐�
 
 같은 장착 구성으로6kg 토트를 싣고 전진·곡선 주행·제자리 회전 후 감속 정지를 확인했습니다. 원본은 실제 물리 프레임에서 촬영한60fps·9.4초이며, GIF는 회전 전후5초를40fps로 보여줍니다. 보간 프레임은 사용하지 않았습니다. 적재 접촉과 상대 위치, 바퀴 응답을 기록했습니다. 자동 적재·도킹·재고 인계의 차량 통합과 하중 정격은 남아 있습니다. [60fps MP4로 보기](docs/images/loaded-mobility-local45-135/loaded-motion-60fps.mp4) · [실제 주행 결과](docs/evidence/local45-loaded-mobility-135.json) · [촬영 출처](docs/images/loaded-mobility-local45-135/provenance.json)
 
-4대 운송 씬에는 [물리 캐리어 연결 옵션](scripts/isaac/carrier_native.py)이 있습니다. 실제 SDK에서 네 차량의 장착 허용과 차량별5.4kg 모듈·고정 조인트 작성을 확인했고, 물품 표시는 각 상판 높이에 맞춥니다. [장착·카메라 기록](docs/evidence/local45-carrier-startup-056.json)의 렌더 변환 경고를 수정했으며, 수정 소스의 물리·렌더 운송과 토트의 적재·하역 통합은 남아 있습니다. [실행 범위와 사용법](docs/operations-guide.md#4대-물리-캐리어-개발-옵션)
+4대 운송 씬에는 [물리 캐리어 연결 옵션](scripts/isaac/carrier_native.py)이 있습니다. 실제 SDK에서 네 차량의 장착 허용과 차량별5.4kg 모듈·고정 조인트 작성을 확인했고, 물품 표시는 각 상판 높이에 맞춥니다. 변환 속성을 수정한 후68초의 물리 기동 구간에서 이전 렌더 경고가 사라졌습니다. [네 차량의 장착·센서와 기동 결과](docs/evidence/local45-startup-057.json)를 보존했으며, 이 구성의 운송 완주와 토트의 적재·하역 통합은 남아 있습니다. [실행 범위와 사용법](docs/operations-guide.md#4대-물리-캐리어-개발-옵션)
 
 | 롤러 적재 완료 | 같은 토트의 반납 완료 |
 |---|---|

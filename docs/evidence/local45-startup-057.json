@@ -1,0 +1,491 @@
+{
+  "schema_version": 1,
+  "run_id": "a1a3cd4f587e4b0db36a0eca5c6e775b",
+  "producer_source_commit": "9e5745ffcaf25fbfc1a5fde379354c87c9a45cb7",
+  "status": "failed_before_transport",
+  "whole_run_passed": false,
+  "transport_started": false,
+  "canonical_carrier_transform_verified": true,
+  "carrier_attachments": [
+    {
+      "body0": [
+        "/World/Carter1/chassis_link"
+      ],
+      "body1": [
+        "/World/CarrierModules/carter1/Carrier"
+      ],
+      "carrier_dynamic_body": true,
+      "carrier_path": "/World/CarrierModules/carter1/Carrier",
+      "center_of_mass_m": [
+        -0.18000000715255737,
+        0.0,
+        0.7055856585502625
+      ],
+      "compound_collider_count": 5,
+      "connected_body_pair_collision_enabled": false,
+      "diagonal_inertia_kg_m2": [
+        0.15429925918579102,
+        0.22739925980567932,
+        0.3265399932861328
+      ],
+      "dynamic_transform_ops": [
+        "xformOp:translate",
+        "xformOp:orient",
+        "xformOp:scale"
+      ],
+      "exclude_from_articulation": true,
+      "joint_enabled": true,
+      "joint_path": "/World/CarrierModules/carter1/ChassisJoint",
+      "local_positions_m": [
+        [
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0
+        ]
+      ],
+      "local_rotations_wxyz": [
+        [
+          1.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          1.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      ],
+      "mass_kg": 5.400000095367432,
+      "principal_axes_wxyz": [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "robot_id": "carter1"
+    },
+    {
+      "body0": [
+        "/World/Carter2/chassis_link"
+      ],
+      "body1": [
+        "/World/CarrierModules/carter2/Carrier"
+      ],
+      "carrier_dynamic_body": true,
+      "carrier_path": "/World/CarrierModules/carter2/Carrier",
+      "center_of_mass_m": [
+        -0.18000000715255737,
+        0.0,
+        0.7055856585502625
+      ],
+      "compound_collider_count": 5,
+      "connected_body_pair_collision_enabled": false,
+      "diagonal_inertia_kg_m2": [
+        0.15429925918579102,
+        0.22739925980567932,
+        0.3265399932861328
+      ],
+      "dynamic_transform_ops": [
+        "xformOp:translate",
+        "xformOp:orient",
+        "xformOp:scale"
+      ],
+      "exclude_from_articulation": true,
+      "joint_enabled": true,
+      "joint_path": "/World/CarrierModules/carter2/ChassisJoint",
+      "local_positions_m": [
+        [
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0
+        ]
+      ],
+      "local_rotations_wxyz": [
+        [
+          1.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          1.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      ],
+      "mass_kg": 5.400000095367432,
+      "principal_axes_wxyz": [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "robot_id": "carter2"
+    },
+    {
+      "body0": [
+        "/World/Carter3/chassis_link"
+      ],
+      "body1": [
+        "/World/CarrierModules/carter3/Carrier"
+      ],
+      "carrier_dynamic_body": true,
+      "carrier_path": "/World/CarrierModules/carter3/Carrier",
+      "center_of_mass_m": [
+        -0.18000000715255737,
+        0.0,
+        0.7055856585502625
+      ],
+      "compound_collider_count": 5,
+      "connected_body_pair_collision_enabled": false,
+      "diagonal_inertia_kg_m2": [
+        0.15429925918579102,
+        0.22739925980567932,
+        0.3265399932861328
+      ],
+      "dynamic_transform_ops": [
+        "xformOp:translate",
+        "xformOp:orient",
+        "xformOp:scale"
+      ],
+      "exclude_from_articulation": true,
+      "joint_enabled": true,
+      "joint_path": "/World/CarrierModules/carter3/ChassisJoint",
+      "local_positions_m": [
+        [
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0
+        ]
+      ],
+      "local_rotations_wxyz": [
+        [
+          1.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          1.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      ],
+      "mass_kg": 5.400000095367432,
+      "principal_axes_wxyz": [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "robot_id": "carter3"
+    },
+    {
+      "body0": [
+        "/World/Carter4/chassis_link"
+      ],
+      "body1": [
+        "/World/CarrierModules/carter4/Carrier"
+      ],
+      "carrier_dynamic_body": true,
+      "carrier_path": "/World/CarrierModules/carter4/Carrier",
+      "center_of_mass_m": [
+        -0.18000000715255737,
+        0.0,
+        0.7055856585502625
+      ],
+      "compound_collider_count": 5,
+      "connected_body_pair_collision_enabled": false,
+      "diagonal_inertia_kg_m2": [
+        0.15429925918579102,
+        0.22739925980567932,
+        0.3265399932861328
+      ],
+      "dynamic_transform_ops": [
+        "xformOp:translate",
+        "xformOp:orient",
+        "xformOp:scale"
+      ],
+      "exclude_from_articulation": true,
+      "joint_enabled": true,
+      "joint_path": "/World/CarrierModules/carter4/ChassisJoint",
+      "local_positions_m": [
+        [
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0
+        ]
+      ],
+      "local_rotations_wxyz": [
+        [
+          1.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          1.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      ],
+      "mass_kg": 5.400000095367432,
+      "principal_axes_wxyz": [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "robot_id": "carter4"
+    }
+  ],
+  "camera_overview": {
+    "coordinate_frame": "world",
+    "eye_xyz_m": [
+      16,
+      -13,
+      24
+    ],
+    "focal_length_mm": 17.0,
+    "horizontal_aperture_mm": 24.0,
+    "local_transform_row_major": [
+      1.0,
+      0.0,
+      -0.0,
+      0.0,
+      0.0,
+      0.696565923795132,
+      0.7174927970421962,
+      0.0,
+      0.0,
+      -0.7174927970421962,
+      0.696565923795132,
+      0.0,
+      16.0,
+      -13.0,
+      23.999999999999996,
+      1.0
+    ],
+    "prim_path": "/World/FactoryOverviewCamera",
+    "profile_camera_id": "portfolio_overview",
+    "readback_status": "verified",
+    "target_xyz_m": [
+      16,
+      11,
+      0.7
+    ],
+    "vertical_aperture_mm": 13.5
+  },
+  "SDK_xform_warning_count": 0,
+  "last_startup_sim_time_s": 68.066670217,
+  "last_startup_observation": {
+    "ready": false,
+    "robots": {
+      "carter1": {
+        "odom_count": 1307,
+        "last_odom_stamp_ns": 68050003549,
+        "scan_counts": {
+          "front_raw": 645,
+          "rear_raw": 645,
+          "front": 645,
+          "rear": 645,
+          "localization_front": 645,
+          "localization_rear": 645
+        },
+        "raw_receipts": {
+          "raw_counts": {
+            "front": 653,
+            "rear": 653
+          },
+          "last_raw_stamp_ns": {
+            "front": 68050003549,
+            "rear": 68050003549
+          },
+          "last_filtered_stamp_ns": {
+            "front": 68050003549,
+            "rear": 68050003549
+          }
+        },
+        "pose": {
+          "x_m": 12.000000000602363,
+          "y_m": 1.5000008991848757,
+          "yaw_rad": 1.5708090213621348,
+          "stamp_s": 68.050003549
+        }
+      },
+      "carter2": {
+        "odom_count": 1307,
+        "last_odom_stamp_ns": 68050003549,
+        "scan_counts": {
+          "front_raw": 645,
+          "rear_raw": 645,
+          "front": 645,
+          "rear": 645,
+          "localization_front": 645,
+          "localization_rear": 645
+        },
+        "raw_receipts": {
+          "raw_counts": {
+            "front": 653,
+            "rear": 654
+          },
+          "last_raw_stamp_ns": {
+            "rear": 68050003549,
+            "front": 68050003549
+          },
+          "last_filtered_stamp_ns": {
+            "front": 68050003549,
+            "rear": 68050003549
+          }
+        },
+        "pose": {
+          "x_m": 11.99999999618497,
+          "y_m": 20.499996038181205,
+          "yaw_rad": -1.5707814258247796,
+          "stamp_s": 68.050003549
+        }
+      },
+      "carter3": {
+        "odom_count": 1307,
+        "last_odom_stamp_ns": 68050003549,
+        "scan_counts": {
+          "front_raw": 645,
+          "rear_raw": 645,
+          "front": 645,
+          "rear": 645,
+          "localization_front": 645,
+          "localization_rear": 645
+        },
+        "raw_receipts": {
+          "raw_counts": {
+            "front": 654,
+            "rear": 654
+          },
+          "last_raw_stamp_ns": {
+            "front": 68050003549,
+            "rear": 68050003549
+          },
+          "last_filtered_stamp_ns": {
+            "front": 68050003549,
+            "rear": 68050003549
+          }
+        },
+        "pose": {
+          "x_m": 17.000000001350227,
+          "y_m": 1.4999998412967255,
+          "yaw_rad": 1.5708005480224982,
+          "stamp_s": 68.050003549
+        }
+      },
+      "carter4": {
+        "odom_count": 1307,
+        "last_odom_stamp_ns": 68050003549,
+        "scan_counts": {
+          "front_raw": 645,
+          "rear_raw": 645,
+          "front": 645,
+          "rear": 645,
+          "localization_front": 645,
+          "localization_rear": 645
+        },
+        "raw_receipts": {
+          "raw_counts": {
+            "front": 654,
+            "rear": 654
+          },
+          "last_raw_stamp_ns": {
+            "front": 68050003549,
+            "rear": 68050003549
+          },
+          "last_filtered_stamp_ns": {
+            "front": 68050003549,
+            "rear": 68050003549
+          }
+        },
+        "pose": {
+          "x_m": 16.999999996099575,
+          "y_m": 20.499997154261926,
+          "yaw_rad": -1.5708017984279037,
+          "stamp_s": 68.050003549
+        }
+      }
+    },
+    "lifecycle_last_polled": {
+      "carter1/planner_server": 3,
+      "carter1/controller_server": 3,
+      "carter1/bt_navigator": 3,
+      "carter2/planner_server": 3,
+      "carter2/controller_server": 3,
+      "carter2/bt_navigator": 2,
+      "carter3/planner_server": 3,
+      "carter3/controller_server": 3,
+      "carter3/bt_navigator": 3,
+      "carter4/planner_server": 3,
+      "carter4/controller_server": 3,
+      "carter4/bt_navigator": 3
+    }
+  },
+  "first_request_send_errors": [
+    {
+      "line": 566,
+      "text": "[lifecycle_manager-18] [ERROR] [1792607133.606382748] [carter2.lifecycle_manager_fleet4]: Failed to change state for node: controller_server. Exception: controller_server/get_state service client: async_send_request failed."
+    }
+  ],
+  "old_XML_profile_counts": {
+    "request": 0,
+    "reply": 64
+  },
+  "diagnosis": {
+    "confirmed": "Lifecycle client request writer failed; old XML authored reply writer profiles only. Carter2 bt_navigator remained inactive while all four robots had odometry, scans and estimated poses.",
+    "not_proven": "Exact Fast DDS write false cause, final DataWriter QoS, history/resource state and publication-match count were not captured. A writer blocking-time expiry is a candidate, not established causation."
+  },
+  "closure": {
+    "SDK_closed": true,
+    "remaining_owned_pids": [],
+    "Nav2_closed": true,
+    "relay_windows_closed": true,
+    "relay_linux_closed": true,
+    "supervisor_cleanup_errors": [],
+    "scene_cleanup_status": "cleanup_failed",
+    "normal_recording_exit_passed": false
+  },
+  "receipt_sha256": {
+    "pair-host.json": "99dccb889b7a9693fbe9ab9c737a00be6ec6371b37b3412856e684ac8c07b0d8",
+    "relay-pair.json": "135c8d025c8c7a0d589b82b82725422839640ec598a8093a3cb4d58d14b2d591",
+    "job.json": "90fcab405c163ab2582dd46155221527a2667e9a77b390e2e3880499ff99a609",
+    "sdk.stdout.log": "f57f23a453545d6188dc46492430015e665668daadf27d4f7a5c890592f609bb",
+    "sdk.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "fastdds-udp-linux.xml": "6a1ec9f1bb67ab2531178e203fa9315bd491700fa96807a52c361940bda208ce",
+    "results/run/nav2.log": "8f41714327eb051569c0f85abc66166867cf4c999ee071cb090bf4f97390d932",
+    "results/run/mission-result.json": "0d5d682340ebe17a5cb5b1a941d741bb8b5e36d22f2dca7c748310ac9aa44761",
+    "results/run/startup-observations.jsonl": "4372038abcea4541253c77b0af25ecf7b1bcb1dda49f3de70ad3cc1cb155b6bf",
+    "results/run/local45-fleet4-transport-scene.json": "76203dd4bc5db683a0267b0c7597ab5e106d0acf688e5ab86c5f53aaa43331ae"
+  },
+  "live_bag_SQL_opened": false,
+  "published_media_scope": "single startup layout preview only; no transport, charging or whole-run success"
+}

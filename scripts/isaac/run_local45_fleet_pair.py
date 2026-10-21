@@ -98,15 +98,17 @@ def prepare_ros_transport(stage: Path, domain_id: int, *, interface: str | None 
         text = text.replace("<rtps>", "<rtps><builtin><initialPeersList><locator><udpv4>"
             "<address>127.0.0.1</address></udpv4></locator></initialPeersList></builtin>")
     if startup_service_match_wait:
-        # RMW8.4.4 uses this exact reply writer QoS before checking the client's
-        # reader GUID match. ROS reliability conversion preserves max_blocking_time.
+        # RMW8.4.4 selects exact DDS topic profiles independently for request and
+        # reply writers. This sets writer QoS; it does not call wait_for_service.
+        # Keep the existing one-second writer budget on both lifecycle directions.
         components=("map_server","navigation_map_server","amcl","planner_server","controller_server",
                     "smoother_server","behavior_server","bt_navigator")
-        profiles="".join('<publisher profile_name="rr/'+robot+'/'+component+'/'+service+'Reply">'
+        profiles="".join('<publisher profile_name="'+prefix+'/'+robot+'/'+component+'/'+service+suffix+'">'
             '<qos><reliability><kind>RELIABLE</kind><max_blocking_time><sec>1</sec><nanosec>0</nanosec>'
             '</max_blocking_time></reliability></qos></publisher>'
             for robot in ("carter1","carter2","carter3","carter4") for component in components
-            for service in ("change_state","get_state"))
+            for service in ("change_state","get_state")
+            for prefix,suffix in (("rq","Request"),("rr","Reply")))
         text=text.replace('</profiles>',profiles+'\n</profiles>')
     with profile.open("x", encoding="utf-8", newline="\n") as stream:
         stream.write(text)
@@ -434,7 +436,8 @@ if __name__ == "__main__":
     parser.add_argument("--live-anchor-controls", action="store_true")
     parser.add_argument("--dds-explicit-peers", action="store_true")
     parser.add_argument("--isolated-topic-relay", action="store_true")
-    parser.add_argument("--startup-service-match-wait", action="store_true")
+    parser.add_argument("--startup-service-match-wait", action="store_true",
+        help="Legacy flag: configure exact Linux lifecycle request/reply writer QoS; not a readiness wait")
     parser.add_argument("--relay-windows-address")
     parser.add_argument("--relay-linux-address")
     parser.add_argument("--relay-port",type=int,default=28473)

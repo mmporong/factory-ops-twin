@@ -967,3 +967,13 @@ CPU 검사4개에서 기존240프레임 입력의180장 선택, 새180프레임 
 056은 네 실제 Carter의 장착 허용과5.4kg 모듈·고정 조인트 속성 readback,17mm 조감 적용을 통과했다. 이후 첫 물리/렌더 단계부터 carrier의 `xformOp:translate/orient`를 찾지 못했다는 경고가 반복됐다. 원래 단일 차량 시험은 `SingleRigidPrim` 생성자가 변환을 정규화했지만,4대 어댑터는 이 객체를 만들지 않고 `AddTransformOp`만 작성했다. 따라서 단일 차량 시험에서 보완됐던 정규화가 누락됐다.
 
 설치 SDK4.5의 XFormPrim `_reset_xform_properties`와 같은 double precision의 translate→orient→scale을 작성하고 초기 world 행렬과 op 순서를 readback으로 대조하도록 수정했다. 차체 위치·모듈 형상·질량·관성·조인트·충돌 정책은 유지한다. SDK3.10 구문 확인은 통과했으며 새 소스의 물리/렌더 단계에서 반복 경고가 사라지는지 확인한다.056은 초기 단계에 감독 종료했고 모든 소유 트리를 정리했다. [실제 장착·카메라 및 종료 근거](evidence/local45-carrier-startup-056.json)
+
+057에서 네 모듈의 translate→orient→scale readback과 World68.07초까지의 물리 기동을 확인했다. 닫힌 SDK stdout/stderr 전체에서 이전 변환 경고는0건이다. 네 차량 모두 오도메트리1,307개·각 scan 채널645개와 추정 위치를 받았다. 다만 아래 Nav2 기동 오류로 운송은 시작되지 않았다. 정상 기록 종료 검사는 통과하지 않았고, 감독자의 SDK Job·Nav2·양 중계 종료는 확인했다. [057 기동 근거](evidence/local45-startup-057.json)
+
+## FOT-117 — lifecycle 요청 writer가 기존 응답 전용 XML의 범위 밖에서 실패
+
+057의 최초 실패는 `carter2/controller_server/get_state service client: async_send_request failed`다. Controller는 activate까지 진행했지만 AMR2의 bt_navigator는 inactive에 남았다. 센서 미수신이나 렌더 경고를 원인으로 재사용하지 않는다. 기존 `--startup-service-match-wait`는 이름과 달리 service readiness를 기다리지 않고 Linux XML의 응답 writer64개에만1초 차단 예산을 작성했다. 요청 writer profile은0개였다.
+
+설치된 rmw_fastrtps8.4.4의 [client 생성 소스](https://raw.githubusercontent.com/ros2/rmw_fastrtps/54d2240637f18e3ec710bb73c51c79abaf91ece4/rmw_fastrtps_cpp/src/rmw_client.cpp)와 [요청 전송 소스](https://raw.githubusercontent.com/ros2/rmw_fastrtps/54d2240637f18e3ec710bb73c51c79abaf91ece4/rmw_fastrtps_shared_cpp/src/rmw_request.cpp)를 대조했다. 요청은 `rq/...Request`, 응답은 `rr/...Reply` writer를 사용하고 서로 다른 profile을 선택한다. 따라서 기존 응답 설정은 실패한 요청 writer에 적용되지 않는다. 다만 실제 writer QoS·match·history와 write 실패 사유가 없어 기본 차단 예산의 만료를 확정 원인으로 적지 않는다.
+
+후속 소스에서는 기존64개 응답 profile을 보존하고 같은4대·8개 component·2개 service의 정확한 요청 profile64개를 추가한다. 범용 client profile, QoS 환경변수, 통신 방식, stagger, 임무 기동 제한은 바꾸지 않는다. 기존1초 writer 예산을 양방향에 작성하며 CLI 설명에 readiness wait이 아님을 명시했다. 관련2검사에서128개 정확한 이름·RELIABLE·1초 값과 기본 profile/환경의 보존을 확인했다. 실제 기동 성공은 후속 실행 결과로 판정한다. 재발하면 상한 증대나 같은 조건 재실행보다 요청 writer의 실제 QoS·match·write 실패 진단을 우선한다.
