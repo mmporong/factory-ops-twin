@@ -103,6 +103,8 @@ Kit 확장 `factory.ops.console`에서 AMR 선택 상세, 주문 생성, 전체 
 
 ## 로컬에서 보기
 
+Isaac Sim 물리 실행은 창 없이 헤드리스로 돌리며, GPU 렌더링으로 카메라 RGB를 저장합니다. 현재 로컬 개발 환경은 Isaac Sim 4.5·RTX 3060입니다. 실시간 작업 상태는 웹3D 관제에서 보고, 공장 렌더 결과는 별도 이미지·영상으로 확인합니다.
+
 CPU 운영 데모는 Python 3.12·uv, 웹은 Node.js·npm을 사용합니다. GPU 시뮬레이션과 별도로 실행합니다. PowerShell 터미널 두 개를 사용합니다.
 
 ```powershell
