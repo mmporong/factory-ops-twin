@@ -14,21 +14,22 @@ RUN_ID = "a"*32
 PROFILE = Path(__file__).resolve().parents[1]/"configs/vehicles/tote-carrier-v1.json"
 
 
-def synthetic_measurement(manifest, frame=None):
+def synthetic_measurement(manifest, frame=None, robot_path=ROBOT_PATH):
     frame = deepcopy(IDENTITY if frame is None else frame)
+    chassis_path = robot_path+"/chassis_link"
     colliders = []
     for index, post in enumerate(b for b in manifest["geometry"] if b["name"].startswith("post_")):
-        colliders.append({"path": CHASSIS_PATH+"/test_mount_%d" % index, "body_path": CHASSIS_PATH,
+        colliders.append({"path": chassis_path+"/test_mount_%d" % index, "body_path": chassis_path,
             "world_aabb_m": transformed_box({"center_m": [*post["center_m"][:2], manifest["mount_plane_z_m"]-.02],
                 "size_m": [.12, .12, .04]}, frame)})
-    colliders.append({"path": CHASSIS_PATH+"/test_lower_body", "body_path": CHASSIS_PATH,
+    colliders.append({"path": chassis_path+"/test_lower_body", "body_path": chassis_path,
         "world_aabb_m": transformed_box({"center_m": [-.1, 0., .15], "size_m": [.8, .5, .3]}, frame)})
     sensor_frame = pose_matrix(transform_point(frame, [.2, 0., 1.2]), [1., 0., 0., 0.])
-    return {"schema_version": 1, "run_id": RUN_ID, "robot_path": ROBOT_PATH, "chassis_path": CHASSIS_PATH,
+    return {"schema_version": 1, "run_id": RUN_ID, "robot_path": robot_path, "chassis_path": chassis_path,
         "asset_relative_path": ASSET_PATH, "meters_per_unit": 1., "up_axis": "Z",
         "robot_world_from_local": frame, "chassis_world_from_local": frame,
-        "articulation_roots": [CHASSIS_PATH], "rigid_bodies": [{"path": CHASSIS_PATH, "enabled": True, "kinematic": False}],
-        "colliders": colliders, "sensors": [{"path": CHASSIS_PATH+"/test_camera", "world_from_local": sensor_frame}]}
+        "articulation_roots": [chassis_path], "rigid_bodies": [{"path": chassis_path, "enabled": True, "kinematic": False}],
+        "colliders": colliders, "sensors": [{"path": chassis_path+"/test_camera", "world_from_local": sensor_frame}]}
 
 
 class CarrierRobotTests(unittest.TestCase):
@@ -59,6 +60,38 @@ class CarrierRobotTests(unittest.TestCase):
         result = assess_mount(self.manifest, synthetic_measurement(self.manifest, matrix), RUN_ID)
         self.assertTrue(result["admitted"])
         self.assertAlmostEqual(result["original_collision_aabb_radius_m"], math.hypot(.5, .25))
+
+    def test_explicit_fleet_roots_bind_every_native_path(self):
+        for robot_path in ("/World/Carter1", "/World/Carter2", "/World/Carter3", "/World/Carter4"):
+            with self.subTest(robot_path=robot_path):
+                measured = synthetic_measurement(self.manifest, robot_path=robot_path)
+                result = assess_mount(self.manifest, measured, RUN_ID, robot_path=robot_path)
+                self.assertTrue(result["admitted"])
+                self.assertEqual(result["robot_path"], robot_path)
+                self.assertEqual(result["chassis_path"], robot_path+"/chassis_link")
+        for robot_path in ("/World/Carter1/Nested", "/World"):
+            with self.subTest(invalid_expected_root=robot_path), self.assertRaises(ValueError):
+                assess_mount(self.manifest, self.measured, RUN_ID, robot_path=robot_path)
+
+        expected = "/World/Carter1"
+        for field, value in (("robot_path", "/World/Carter10"),
+                             ("robot_path", expected+"/nested"),
+                             ("chassis_path", expected+"/nested/chassis_link"),
+                             ("articulation_roots", ["/World/Carter2/chassis_link"])):
+            with self.subTest(field=field):
+                measured = synthetic_measurement(self.manifest, robot_path=expected)
+                measured[field] = value
+                with self.assertRaises(ValueError):
+                    assess_mount(self.manifest, measured, RUN_ID, robot_path=expected)
+        for collection, field, value in (("rigid_bodies", "path", "/World/Carter2/chassis_link"),
+                                         ("colliders", "path", "/World/Carter10/chassis_link/collider"),
+                                         ("colliders", "body_path", "/World/Carter2/chassis_link"),
+                                         ("sensors", "path", "/World/Carter1_extra/camera")):
+            with self.subTest(collection=collection, field=field):
+                measured = synthetic_measurement(self.manifest, robot_path=expected)
+                measured[collection][0][field] = value
+                with self.assertRaises(ValueError):
+                    assess_mount(self.manifest, measured, RUN_ID, robot_path=expected)
 
     def test_native_identity_and_incomplete_geometry_fail_closed(self):
         cases = [("run_id", "b"*32), ("chassis_path", ROBOT_PATH+"/wrong_body"),

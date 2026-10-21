@@ -98,20 +98,24 @@ def _path(value: Any, root: str = ROBOT_PATH) -> str:
     return value
 
 
-def assess_mount(manifest: dict, measured: dict, expected_run_id: str, *, clearance_m: float = .01) -> dict:
+def assess_mount(manifest: dict, measured: dict, expected_run_id: str, *, clearance_m: float = .01,
+                 robot_path: str = ROBOT_PATH) -> dict:
     """Return admission/rejection; malformed identity/frame inputs raise ValueError.
 
     Only identity carrier-to-chassis placement is proposed. Four post bottoms
     must lie above a chassis collision AABB face within the existing clearance.
     No geometry search, collider suppression, radius increase or pose correction.
     """
+    if not isinstance(robot_path, str) or not re.fullmatch(r"/World/[A-Za-z_][A-Za-z0-9_]*", robot_path):
+        raise ValueError("expected robot root must be one prim below /World")
+    chassis_path = robot_path+"/chassis_link"
     if manifest["schema_version"] != 1 or manifest["profile_id"] != "tote-carrier-v1":
         raise ValueError("unexpected carrier manifest identity")
     if (not isinstance(expected_run_id, str) or not re.fullmatch("[0-9a-f]{32}", expected_run_id)
             or measured["run_id"] != expected_run_id or measured["schema_version"] != 1
             or isinstance(measured["schema_version"], bool)):
         raise ValueError("native run/schema identity mismatch")
-    if (measured["robot_path"] != ROBOT_PATH or measured["chassis_path"] != CHASSIS_PATH
+    if (measured["robot_path"] != robot_path or measured["chassis_path"] != chassis_path
             or measured["asset_relative_path"] != ASSET_PATH or measured["up_axis"] != "Z"
             or _finite(measured["meters_per_unit"]) != 1.):
         raise ValueError("native robot, chassis, asset or units mismatch")
@@ -122,28 +126,28 @@ def assess_mount(manifest: dict, measured: dict, expected_run_id: str, *, cleara
     articulation = measured["articulation_roots"]
     if len(articulation) != 1:
         raise ValueError("one unambiguous native articulation root required")
-    _path(articulation[0])
+    _path(articulation[0], robot_path)
     bodies = measured["rigid_bodies"]
-    paths = [_path(b["path"]) for b in bodies]
-    if len(paths) != len(set(paths)) or CHASSIS_PATH not in paths:
+    paths = [_path(b["path"], robot_path) for b in bodies]
+    if len(paths) != len(set(paths)) or chassis_path not in paths:
         raise ValueError("missing or ambiguous chassis rigid body")
-    chassis = bodies[paths.index(CHASSIS_PATH)]
+    chassis = bodies[paths.index(chassis_path)]
     if chassis["enabled"] is not True or chassis["kinematic"] is not False:
         raise ValueError("chassis must be an enabled dynamic body")
     to_chassis, to_robot = inverse_rigid(chassis_matrix), inverse_rigid(robot_matrix)
     colliders, root_boxes, seen = [], [], set()
     for c in measured["colliders"]:
-        path, owner = _path(c["path"]), _path(c["body_path"])
+        path, owner = _path(c["path"], robot_path), _path(c["body_path"], robot_path)
         if path in seen or owner not in paths or not (path == owner or path.startswith(owner+"/")):
             raise ValueError("ambiguous collider ownership")
         seen.add(path)
         colliders.append(dict(transformed_box(c["world_aabb_m"], to_chassis), path=path, body_path=owner))
         root_boxes.append(transformed_box(c["world_aabb_m"], to_robot))
-    if not colliders or not any(c["body_path"] == CHASSIS_PATH for c in colliders):
+    if not colliders or not any(c["body_path"] == chassis_path for c in colliders):
         raise ValueError("native chassis collision geometry is missing")
     sensors, seen = [], set()
     for sensor in measured["sensors"]:
-        path = _path(sensor["path"])
+        path = _path(sensor["path"], robot_path)
         if path in seen:
             raise ValueError("ambiguous native sensor identity")
         seen.add(path)
@@ -177,7 +181,7 @@ def assess_mount(manifest: dict, measured: dict, expected_run_id: str, *, cleara
         faces = []
         for c in colliders:
             lo, hi = _bounds(c)
-            if (c["body_path"] == CHASSIS_PATH and -1e-8 <= low[2]-hi[2] <= clearance
+            if (c["body_path"] == chassis_path and -1e-8 <= low[2]-hi[2] <= clearance
                     and all(low[i] >= lo[i]-1e-8 and high[i] <= hi[i]+1e-8 for i in (0, 1))):
                 faces.append(c["path"])
         mount_faces.append({"post": post["name"], "candidate_chassis_faces": sorted(faces)})
@@ -197,7 +201,7 @@ def assess_mount(manifest: dict, measured: dict, expected_run_id: str, *, cleara
         rejection.append({"code": "unchanged_footprint_exceeded"})
     return {"schema_version": 1, "run_id": expected_run_id, "admitted": not rejection,
         "rejections": rejection, "manifest_sha256": manifest_sha256(manifest),
-        "robot_path": ROBOT_PATH, "chassis_path": CHASSIS_PATH,
+        "robot_path": robot_path, "chassis_path": chassis_path,
         "carrier_from_chassis": deepcopy(IDENTITY), "mount_faces": mount_faces,
         "original_collision_aabb_radius_m": original_radius, "loaded_collision_aabb_radius_m": loaded_radius,
         "unchanged_configured_radius_m": canonical_radius,
