@@ -1,0 +1,12 @@
+{
+  "run_id": "bcf1f7b9613f42cfbe2949a838e13c2e",
+  "source_commit": "0bc008e67d6d53d5eff6344ff3c6a14486038b03",
+  "scope": "CPU scheduling/header fixture from closed038. Authored transform geometry; not actual callback ordering or physical replay.",
+  "failure_clock_ns": 1399550072992,
+  "stale_composed_tf_ns": 1399000072964,
+  "next_recorded_clock_ns": 1399566739660,
+  "newer_recorded_odom_tf_ns": 1399500072990,
+  "ttl_s": 0.5,
+  "bag_sha256": "b3c255098bf9bcf337448ffeb40e4f076acd512f0af2ae51155614590706c01c",
+  "closed_tf_window_sha256": "4b06788a76d3d6d90ff510f9f98428fda9f0ce559b6c1a68bff0ccca6f5dc995"
+}

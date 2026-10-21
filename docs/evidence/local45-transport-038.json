@@ -1,0 +1,2348 @@
+{
+  "run_id": "bcf1f7b9613f42cfbe2949a838e13c2e",
+  "source_commit": "0bc008e67d6d53d5eff6344ff3c6a14486038b03",
+  "status": "closed_milestone_gate_incomplete",
+  "host_status": "failed",
+  "host_wall_s": 6553.3120000000345,
+  "origin_sim_time_s": 9.20000048,
+  "time_scope": "Journal/media sim_time_s uses absolute World time; ledger intent/result times and web mission clock use elapsed time from origin_sim_time_s. No clock correction is applied.",
+  "mission_status": "failed",
+  "scene_status": "running",
+  "normal_transport_passed": false,
+  "four_robot_operational_gate_passed": false,
+  "goal80_complete": false,
+  "business_flow_complete": false,
+  "final_parked_robot_ids": [
+    "carter1",
+    "carter2",
+    "carter3",
+    "carter4"
+  ],
+  "scenario_complete_events": [],
+  "terminal_boundary_failed": false,
+  "stale_recovery_audit": null,
+  "milestone_scope": "Preservation and operation gate only; final80 judgment is separate, not full100 completion.",
+  "experiment": "Separate three-order four-robot input configs/factory-fleet4-normal3;034 four-order failure remains unchanged.",
+  "business_handoff_robot_ids": [
+    "carter1",
+    "carter2",
+    "carter3",
+    "carter4"
+  ],
+  "completed_order_ids": [
+    "F4-001",
+    "F4-002"
+  ],
+  "empty_returns_completed": 2,
+  "material_completed": false,
+  "inventory_conservation": [
+    {
+      "balanced": true,
+      "consumed": 6,
+      "in_totes": 0,
+      "initial": 60,
+      "on_hand": 54,
+      "replenished": 0,
+      "sku": "sensor-kit"
+    }
+  ],
+  "empty_return_states": {
+    "complete": 2,
+    "started": 1
+  },
+  "accepted_product_handoffs": [
+    {
+      "robot_id": "carter2",
+      "sim_time_s": 76.200003974,
+      "intent": {
+        "goal_id": "5477e993-ccde-4265-aa90-5e369916d114",
+        "task_id": "F4-002:in",
+        "order_id": "F4-002",
+        "payload_id": "F4-PAY-002",
+        "stage": "inbound",
+        "robot_id": "carter2",
+        "attempt": 0,
+        "station": "S3",
+        "transition": "pickup",
+        "issued_sim_time": 10.033333855999999,
+        "goal": {
+          "frame_id": "map",
+          "x": 3.5,
+          "y": 17.0,
+          "yaw": 0.0
+        },
+        "deadline": 1810.033333856
+      },
+      "ledger_seq": 2580
+    },
+    {
+      "robot_id": "carter3",
+      "sim_time_s": 125.433339875,
+      "intent": {
+        "goal_id": "bd094384-1a6d-490f-9adc-4f0a034c959d",
+        "task_id": "F4-001:in",
+        "order_id": "F4-001",
+        "payload_id": "F4-PAY-001",
+        "stage": "inbound",
+        "robot_id": "carter3",
+        "attempt": 0,
+        "station": "S1",
+        "transition": "pickup",
+        "issued_sim_time": 0.050000002000000876,
+        "goal": {
+          "frame_id": "map",
+          "x": 3.5,
+          "y": 5.0,
+          "yaw": 0.0
+        },
+        "deadline": 1800.050000002
+      },
+      "ledger_seq": 4229
+    },
+    {
+      "robot_id": "carter2",
+      "sim_time_s": 208.816677557,
+      "intent": {
+        "goal_id": "ecc87898-5c84-4796-9cad-7e1c4167a529",
+        "task_id": "F4-002:in",
+        "order_id": "F4-002",
+        "payload_id": "F4-PAY-002",
+        "stage": "inbound",
+        "robot_id": "carter2",
+        "attempt": 0,
+        "station": "CI",
+        "transition": "drop",
+        "issued_sim_time": 67.000003494,
+        "goal": {
+          "frame_id": "map",
+          "x": 21.5,
+          "y": 8.0,
+          "yaw": 3.141592653589793
+        },
+        "deadline": 1867.0000034939999
+      },
+      "ledger_seq": 6709
+    },
+    {
+      "robot_id": "carter1",
+      "sim_time_s": 293.150015289,
+      "intent": {
+        "goal_id": "ee425740-e652-4f6b-b297-4c8d36939fb0",
+        "task_id": "F4-003:in",
+        "order_id": "F4-003",
+        "payload_id": "F4-PAY-003",
+        "stage": "inbound",
+        "robot_id": "carter1",
+        "attempt": 0,
+        "station": "S2",
+        "transition": "pickup",
+        "issued_sim_time": 199.650010412,
+        "goal": {
+          "frame_id": "map",
+          "x": 3.5,
+          "y": 11.0,
+          "yaw": 0.0
+        },
+        "deadline": 1999.650010412
+      },
+      "ledger_seq": 8698
+    },
+    {
+      "robot_id": "carter3",
+      "sim_time_s": 369.000019245,
+      "intent": {
+        "goal_id": "43ec2af7-52c4-4f46-b71b-738947a2ce17",
+        "task_id": "F4-001:in",
+        "order_id": "F4-001",
+        "payload_id": "F4-PAY-001",
+        "stage": "inbound",
+        "robot_id": "carter3",
+        "attempt": 0,
+        "station": "CI",
+        "transition": "drop",
+        "issued_sim_time": 116.233339395,
+        "goal": {
+          "frame_id": "map",
+          "x": 21.5,
+          "y": 8.0,
+          "yaw": 3.141592653589793
+        },
+        "deadline": 1916.233339395
+      },
+      "ledger_seq": 10089
+    },
+    {
+      "robot_id": "carter2",
+      "sim_time_s": 435.883356066,
+      "intent": {
+        "goal_id": "7263c8b5-2e59-470d-ac38-f46fb8fd51c3",
+        "task_id": "F4-002:out",
+        "order_id": "F4-002",
+        "payload_id": "F4-PAY-002",
+        "stage": "outbound",
+        "robot_id": "carter2",
+        "attempt": 0,
+        "station": "CO",
+        "transition": "pickup",
+        "issued_sim_time": 329.150017166,
+        "goal": {
+          "frame_id": "map",
+          "x": 21.5,
+          "y": 14.0,
+          "yaw": 3.141592653589793
+        },
+        "deadline": 2129.150017166
+      },
+      "ledger_seq": 10914
+    },
+    {
+      "robot_id": "carter2",
+      "sim_time_s": 493.450025735,
+      "intent": {
+        "goal_id": "1bcf6094-98e3-4d83-b64e-41de36a48e53",
+        "task_id": "F4-002:out",
+        "order_id": "F4-002",
+        "payload_id": "F4-PAY-002",
+        "stage": "outbound",
+        "robot_id": "carter2",
+        "attempt": 0,
+        "station": "OUT",
+        "transition": "drop",
+        "issued_sim_time": 426.68335558599995,
+        "goal": {
+          "frame_id": "map",
+          "x": 29.0,
+          "y": 11.0,
+          "yaw": 0.0
+        },
+        "deadline": 2226.683355586
+      },
+      "ledger_seq": 11811
+    },
+    {
+      "robot_id": "carter1",
+      "sim_time_s": 897.383380136,
+      "intent": {
+        "goal_id": "c668c3b0-b444-4506-885f-f20bc03c606c",
+        "task_id": "F4-003:in",
+        "order_id": "F4-003",
+        "payload_id": "F4-PAY-003",
+        "stage": "inbound",
+        "robot_id": "carter1",
+        "attempt": 0,
+        "station": "CI",
+        "transition": "drop",
+        "issued_sim_time": 283.950014809,
+        "goal": {
+          "frame_id": "map",
+          "x": 21.5,
+          "y": 8.0,
+          "yaw": 3.141592653589793
+        },
+        "deadline": 2083.950014809
+      },
+      "ledger_seq": 16374
+    },
+    {
+      "robot_id": "carter2",
+      "sim_time_s": 956.650049893,
+      "intent": {
+        "goal_id": "c9e4be4c-f056-45bd-8e92-f7ff2978ed03",
+        "task_id": "F4-001:out",
+        "order_id": "F4-001",
+        "payload_id": "F4-PAY-001",
+        "stage": "outbound",
+        "robot_id": "carter2",
+        "attempt": 0,
+        "station": "CO",
+        "transition": "pickup",
+        "issued_sim_time": 696.666703,
+        "goal": {
+          "frame_id": "map",
+          "x": 21.5,
+          "y": 14.0,
+          "yaw": 3.141592653589793
+        },
+        "deadline": 2496.666703
+      },
+      "ledger_seq": 16741
+    },
+    {
+      "robot_id": "carter2",
+      "sim_time_s": 1017.166719716,
+      "intent": {
+        "goal_id": "ce14a9e4-4261-4f29-8660-c219df52fafe",
+        "task_id": "F4-001:out",
+        "order_id": "F4-001",
+        "payload_id": "F4-PAY-001",
+        "stage": "outbound",
+        "robot_id": "carter2",
+        "attempt": 0,
+        "station": "OUT",
+        "transition": "drop",
+        "issued_sim_time": 947.450049413,
+        "goal": {
+          "frame_id": "map",
+          "x": 29.0,
+          "y": 11.0,
+          "yaw": 0.0
+        },
+        "deadline": 2747.4500494129998
+      },
+      "ledger_seq": 17147
+    }
+  ],
+  "accepted_empty_handoffs": [
+    {
+      "run_id": "bcf1f7b9613f42cfbe2949a838e13c2e",
+      "scenario_id": "fleet4_transport_normal",
+      "event_seq": 450,
+      "sim_time_s": 590.350030789,
+      "kind": "empty_handoff_commit",
+      "robot_id": "carter4",
+      "intent": {
+        "goal_id": "7c43bb83-d823-4cce-bdbd-416fceee982c",
+        "task_id": "empty:F4-002",
+        "order_id": "F4-002",
+        "payload_id": "F4-TOTE-002",
+        "stage": "inbound",
+        "robot_id": "carter4",
+        "attempt": 0,
+        "station": "CI",
+        "transition": "pickup",
+        "issued_sim_time": 199.66667708,
+        "goal": {
+          "frame_id": "map",
+          "x": 21.5,
+          "y": 8.0,
+          "yaw": 3.141592653589793
+        },
+        "deadline": 1999.66667708
+      },
+      "result": {
+        "result_id": "a64210fb-6ad2-4b7d-b744-a16eb3db1c40",
+        "goal_id": "7c43bb83-d823-4cce-bdbd-416fceee982c",
+        "task_id": "empty:F4-002",
+        "station": "CI",
+        "attempt": 0,
+        "status": 4,
+        "received_sim_time": 581.150030309,
+        "pose": {
+          "frame_id": "map",
+          "x": 21.547279093976123,
+          "y": 8.01117837146155,
+          "yaw": -3.0631593835809308,
+          "stamp": 581.100030307
+        }
+      },
+      "receipt": {
+        "accepted": true,
+        "duplicate": false,
+        "result_id": "a64210fb-6ad2-4b7d-b744-a16eb3db1c40",
+        "goal_id": "7c43bb83-d823-4cce-bdbd-416fceee982c",
+        "committed_transition": "pickup",
+        "material_revision": 12,
+        "scope": "empty tote operational ledger"
+      },
+      "ledger_seq": 13411
+    },
+    {
+      "run_id": "bcf1f7b9613f42cfbe2949a838e13c2e",
+      "scenario_id": "fleet4_transport_normal",
+      "event_seq": 595,
+      "sim_time_s": 860.466711544,
+      "kind": "empty_handoff_commit",
+      "robot_id": "carter4",
+      "intent": {
+        "goal_id": "ae49cf4e-02ef-4f61-b746-b96d0443baf3",
+        "task_id": "empty:F4-002",
+        "order_id": "F4-002",
+        "payload_id": "F4-TOTE-002",
+        "stage": "inbound",
+        "robot_id": "carter4",
+        "attempt": 0,
+        "station": "S3",
+        "transition": "drop",
+        "issued_sim_time": 581.150030309,
+        "goal": {
+          "frame_id": "map",
+          "x": 3.5,
+          "y": 17.0,
+          "yaw": 0.0
+        },
+        "deadline": 2381.150030309
+      },
+      "result": {
+        "result_id": "22dd0fbc-6a82-4ff0-ab75-b5123537cd19",
+        "goal_id": "ae49cf4e-02ef-4f61-b746-b96d0443baf3",
+        "task_id": "empty:F4-002",
+        "station": "S3",
+        "attempt": 0,
+        "status": 4,
+        "received_sim_time": 851.266711064,
+        "pose": {
+          "frame_id": "map",
+          "x": 3.5370127390626322,
+          "y": 17.03802222383215,
+          "yaw": 0.05948440647275467,
+          "stamp": 851.250044396
+        }
+      },
+      "receipt": {
+        "accepted": true,
+        "duplicate": false,
+        "result_id": "22dd0fbc-6a82-4ff0-ab75-b5123537cd19",
+        "goal_id": "ae49cf4e-02ef-4f61-b746-b96d0443baf3",
+        "committed_transition": "drop",
+        "material_revision": 13,
+        "scope": "empty tote operational ledger"
+      },
+      "ledger_seq": 16139
+    },
+    {
+      "run_id": "bcf1f7b9613f42cfbe2949a838e13c2e",
+      "scenario_id": "fleet4_transport_normal",
+      "event_seq": 775,
+      "sim_time_s": 1095.216723787,
+      "kind": "empty_handoff_commit",
+      "robot_id": "carter3",
+      "intent": {
+        "goal_id": "4c652c20-ec4b-40c3-9811-45fea15a1496",
+        "task_id": "empty:F4-001",
+        "order_id": "F4-001",
+        "payload_id": "F4-TOTE-001",
+        "stage": "inbound",
+        "robot_id": "carter3",
+        "attempt": 0,
+        "station": "CI",
+        "transition": "pickup",
+        "issued_sim_time": 446.95002331,
+        "goal": {
+          "frame_id": "map",
+          "x": 21.5,
+          "y": 8.0,
+          "yaw": 3.141592653589793
+        },
+        "deadline": 2246.95002331
+      },
+      "result": {
+        "result_id": "0bf7eb90-195c-49fb-ab19-a91d461d8319",
+        "goal_id": "4c652c20-ec4b-40c3-9811-45fea15a1496",
+        "task_id": "empty:F4-001",
+        "station": "CI",
+        "attempt": 0,
+        "status": 4,
+        "received_sim_time": 1086.0167233070001,
+        "pose": {
+          "frame_id": "map",
+          "x": 21.54939415785806,
+          "y": 7.993796408606748,
+          "yaw": -2.99267488205011,
+          "stamp": 1086.000056639
+        }
+      },
+      "receipt": {
+        "accepted": true,
+        "duplicate": false,
+        "result_id": "0bf7eb90-195c-49fb-ab19-a91d461d8319",
+        "goal_id": "4c652c20-ec4b-40c3-9811-45fea15a1496",
+        "committed_transition": "pickup",
+        "material_revision": 19,
+        "scope": "empty tote operational ledger"
+      },
+      "ledger_seq": 17596
+    },
+    {
+      "run_id": "bcf1f7b9613f42cfbe2949a838e13c2e",
+      "scenario_id": "fleet4_transport_normal",
+      "event_seq": 881,
+      "sim_time_s": 1266.533399388,
+      "kind": "empty_handoff_commit",
+      "robot_id": "carter3",
+      "intent": {
+        "goal_id": "792bf740-7089-42a5-b44f-9a1f1afe1474",
+        "task_id": "empty:F4-001",
+        "order_id": "F4-001",
+        "payload_id": "F4-TOTE-001",
+        "stage": "inbound",
+        "robot_id": "carter3",
+        "attempt": 0,
+        "station": "S1",
+        "transition": "drop",
+        "issued_sim_time": 1086.0167233070001,
+        "goal": {
+          "frame_id": "map",
+          "x": 3.5,
+          "y": 5.0,
+          "yaw": 0.0
+        },
+        "deadline": 2886.016723307
+      },
+      "result": {
+        "result_id": "805b83da-bfc3-4caf-b28f-9a80c87e827c",
+        "goal_id": "792bf740-7089-42a5-b44f-9a1f1afe1474",
+        "task_id": "empty:F4-001",
+        "station": "S1",
+        "attempt": 0,
+        "status": 4,
+        "received_sim_time": 1257.333398908,
+        "pose": {
+          "frame_id": "map",
+          "x": 3.5731277141438493,
+          "y": 4.9350278454612315,
+          "yaw": -0.04374389401842772,
+          "stamp": 1257.300065573
+        }
+      },
+      "receipt": {
+        "accepted": true,
+        "duplicate": false,
+        "result_id": "805b83da-bfc3-4caf-b28f-9a80c87e827c",
+        "goal_id": "792bf740-7089-42a5-b44f-9a1f1afe1474",
+        "committed_transition": "drop",
+        "material_revision": 20,
+        "scope": "empty tote operational ledger"
+      },
+      "ledger_seq": 18501
+    },
+    {
+      "run_id": "bcf1f7b9613f42cfbe2949a838e13c2e",
+      "scenario_id": "fleet4_transport_normal",
+      "event_seq": 914,
+      "sim_time_s": 1305.500068087,
+      "kind": "empty_handoff_commit",
+      "robot_id": "carter4",
+      "intent": {
+        "goal_id": "860f3038-7c15-429e-a59c-3bbb6710469b",
+        "task_id": "empty:F4-003",
+        "order_id": "F4-003",
+        "payload_id": "F4-TOTE-003",
+        "stage": "inbound",
+        "robot_id": "carter4",
+        "attempt": 0,
+        "station": "CI",
+        "transition": "pickup",
+        "issued_sim_time": 989.13338492,
+        "goal": {
+          "frame_id": "map",
+          "x": 21.5,
+          "y": 8.0,
+          "yaw": 3.141592653589793
+        },
+        "deadline": 2789.13338492
+      },
+      "result": {
+        "result_id": "ba8b585e-6c39-4a4f-bcd9-81192aa3ff1b",
+        "goal_id": "860f3038-7c15-429e-a59c-3bbb6710469b",
+        "task_id": "empty:F4-003",
+        "station": "CI",
+        "attempt": 0,
+        "status": 4,
+        "received_sim_time": 1296.300067607,
+        "pose": {
+          "frame_id": "map",
+          "x": 21.555213033370187,
+          "y": 7.991458390607772,
+          "yaw": 3.118018731185707,
+          "stamp": 1296.300067607
+        }
+      },
+      "receipt": {
+        "accepted": true,
+        "duplicate": false,
+        "result_id": "ba8b585e-6c39-4a4f-bcd9-81192aa3ff1b",
+        "goal_id": "860f3038-7c15-429e-a59c-3bbb6710469b",
+        "committed_transition": "pickup",
+        "material_revision": 21,
+        "scope": "empty tote operational ledger"
+      },
+      "ledger_seq": 18697
+    }
+  ],
+  "physical_motion": {
+    "carter1": {
+      "samples": 83875,
+      "maximum_GT_evaluation_displacement_m": 14.516819599007349,
+      "maximum_command_sequence": 14623,
+      "nonzero_wheel_target_samples": 20328,
+      "last_world_time_s": 1399.966739680618
+    },
+    "carter2": {
+      "samples": 83875,
+      "maximum_GT_evaluation_displacement_m": 19.508641955954545,
+      "maximum_command_sequence": 35088,
+      "nonzero_wheel_target_samples": 47452,
+      "last_world_time_s": 1399.966739680618
+    },
+    "carter3": {
+      "samples": 83875,
+      "maximum_GT_evaluation_displacement_m": 14.00698032024966,
+      "maximum_command_sequence": 24981,
+      "nonzero_wheel_target_samples": 30563,
+      "last_world_time_s": 1399.966739680618
+    },
+    "carter4": {
+      "samples": 83875,
+      "maximum_GT_evaluation_displacement_m": 17.505651328723193,
+      "maximum_command_sequence": 21599,
+      "nonzero_wheel_target_samples": 26083,
+      "last_world_time_s": 1399.966739680618
+    }
+  },
+  "GT_scope": "Evaluation only, no GT steering or transform injection.",
+  "virtual_charging_events": [
+    {
+      "run_id": "bcf1f7b9613f42cfbe2949a838e13c2e",
+      "scenario_id": "fleet4_transport_normal",
+      "event_seq": 14,
+      "sim_time_s": 9.250000482,
+      "kind": "virtual_charger_reserved",
+      "robot_id": "carter1",
+      "dock": {
+        "anchor": "P1",
+        "reserved_at_s": 9.250000482,
+        "arrival": null,
+        "virtual_connector_state": "not_engaged",
+        "reason": "awaiting_real_nav2_arrival",
+        "dock_id": "CH1",
+        "phase": "approach",
+        "geometric_dock_confirmed": false,
+        "contact_since_s": null,
+        "last_stamp_s": null,
+        "fault": null,
+        "contact_source": "estimated_pose_geometric_dock",
+        "virtual": true,
+        "hardware_calibrated": false,
+        "physical_contact_verified": false,
+        "body_occupancy_owner": "G3 reservation manager"
+      }
+    },
+    {
+      "run_id": "bcf1f7b9613f42cfbe2949a838e13c2e",
+      "scenario_id": "fleet4_transport_normal",
+      "event_seq": 62,
+      "sim_time_s": 47.666669153,
+      "kind": "virtual_charger_arrived",
+      "robot_id": "carter1",
+      "dock": {
+        "anchor": "P1",
+        "reserved_at_s": 9.250000482,
+        "arrival": {
+          "goal_id": "270ee46e868b4ccc84c53dba8408dcff",
+          "stamp_s": 47.666669153,
+          "anchor": "P1",
+          "navigation_succeeded": true
+        },
+        "virtual_connector_state": "not_engaged",
+        "reason": "awaiting_fresh_geometric_dwell",
+        "dock_id": "CH1",
+        "phase": "contact_pending",
+        "geometric_dock_confirmed": false,
+        "contact_since_s": null,
+        "last_stamp_s": null,
+        "fault": null,
+        "contact_source": "estimated_pose_geometric_dock",
+        "virtual": true,
+        "hardware_calibrated": false,
+        "physical_contact_verified": false,
+        "body_occupancy_owner": "G3 reservation manager"
+      }
+    },
+    {
+      "run_id": "bcf1f7b9613f42cfbe2949a838e13c2e",
+      "scenario_id": "fleet4_transport_normal",
+      "event_seq": 117,
+      "sim_time_s": 101.716671972,
+      "kind": "virtual_charger_released",
+      "robot_id": "carter1",
+      "dock_id": "CH1",
+      "virtual_connector_state": "simulated_disengaged",
+      "charging_reservation_released": true,
+      "body_occupancy_released": false,
+      "contact_source": "estimated_pose_geometric_dock",
+      "virtual": true,
+      "hardware_calibrated": false
+    }
+  ],
+  "stale_rejection_events": [],
+  "recovery_runtime_exercised": false,
+  "planner_method_counts": {
+    "compute_path_through_poses": 133
+  },
+  "capture_count": 108,
+  "timeline": null,
+  "error": {
+    "host": "RuntimeError: SDK failure before cleanup: mission: SmokeError: G2 mission controller ended with failed",
+    "SDK": {
+      "message": "G2 mission controller ended with failed",
+      "traceback": "Traceback (most recent call last):\n  File \"E:\\FactoryOpsRuntime\\local45-transport-038\\source\\scripts\\isaac\\g2_scene.py\", line 1604, in _run\n    raise base.SmokeError(terminal_error)\nscripts.isaac.stage_smoke.SmokeError: G2 mission controller ended with failed\n",
+      "type": "SmokeError"
+    },
+    "mission": {
+      "message": "fresh map pose unavailable for carter1",
+      "traceback": "Traceback (most recent call last):\n  File \"/mnt/e/FactoryOpsRuntime/local45-transport-038/source/scripts/ros/g3_mission.py\", line 1834, in tick\n    pose = localization_payload(transform, now_s=stamp, ttl_s=runtime_config[\"pose_ttl_s\"])\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/mnt/e/FactoryOpsRuntime/local45-transport-038/source/scripts/ros/g3_mission.py\", line 809, in localization_payload\n    raise PoseNotFreshError(f\"map->base_link TF is stale or future: stamp={stamp}, now={now_s}, age={now_s-stamp}, ttl={ttl_s}\")\nscripts.ros.g3_mission.PoseNotFreshError: map->base_link TF is stale or future: stamp=1399.000072964, now=1399.550072992, age=0.5500000279998858, ttl=0.5\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/mnt/e/FactoryOpsRuntime/local45-transport-038/source/scripts/ros/g3_mission.py\", line 2069, in run_mission\n    stamp = tick(require_fresh=True)\n            ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/mnt/e/FactoryOpsRuntime/local45-transport-038/source/scripts/ros/g3_mission.py\", line 1838, in tick\n    raise RuntimeError(f\"fresh map pose unavailable for {robot}\") from error\nRuntimeError: fresh map pose unavailable for carter1\n",
+      "type": "RuntimeError"
+    }
+  },
+  "source_OS_trees_closed": true,
+  "owner_cleanup_errors": [],
+  "mission_cleanup": [
+    {
+      "exit_code": 0,
+      "label": "rosbag",
+      "pid": 44425
+    },
+    {
+      "exit_code": -15,
+      "label": "nav2",
+      "pid": 44426
+    },
+    {
+      "error": "failed to shutdown: rcl_shutdown already called on the given context, at ./src/rcl/init.c:333",
+      "label": "rclpy.shutdown"
+    }
+  ],
+  "SDK_scene_cleanup": null,
+  "malformed_final_action_lines": [],
+  "scope": "Local IsaacSim4.5/PhysX development, not canonical6.2/RTX qualification.",
+  "loading_scope": "Material ledger and noncolliding visual cargo; no contact/lift physics validation.",
+  "charging_scope": "Authored virtual energy and estimated-pose stopped geometric docking; not electrical contact proof.",
+  "RGB_scope": "Sparse original RGB for presentation. FOT068 transition pixel limitation remains; no training label generation.",
+  "new_SDG": false,
+  "bag_SQL_opened_for_postprocessing": true,
+  "closed_tf_diagnostic": {
+    "run_id": "bcf1f7b9613f42cfbe2949a838e13c2e",
+    "scope": "Closed recorder only; recorder receipt is not G3 callback dispatch evidence.",
+    "both_OS_owners_closed": true,
+    "job_closed": true,
+    "remaining_owned_pids": [],
+    "bag": "/mnt/e/FactoryOpsRuntime/local45-transport-038/results/run/rosbag/rosbag_0.db3",
+    "latest_recorded_ns": 1399950073013,
+    "window_s": 2,
+    "rows": [
+      {
+        "message_id": 1487954,
+        "recorded_ns": 1397966739576,
+        "topic": "/clock",
+        "header_ns": 1397966739576
+      },
+      {
+        "message_id": 1487955,
+        "recorded_ns": 1397983406244,
+        "topic": "/clock",
+        "header_ns": 1397983406244
+      },
+      {
+        "message_id": 1487965,
+        "recorded_ns": 1398000072911,
+        "topic": "/clock",
+        "header_ns": 1398000072911
+      },
+      {
+        "message_id": 1487966,
+        "recorded_ns": 1398000072911,
+        "topic": "/carter1/tf",
+        "header_ns": 1398000072911,
+        "parent": "odom",
+        "child": "base_link"
+      },
+      {
+        "message_id": 1487967,
+        "recorded_ns": 1398000072911,
+        "topic": "/carter1/odom",
+        "header_ns": 1398000072911
+      },
+      {
+        "message_id": 1487974,
+        "recorded_ns": 1398016739579,
+        "topic": "/clock",
+        "header_ns": 1398016739579
+      },
+      {
+        "message_id": 1487984,
+        "recorded_ns": 1398033406246,
+        "topic": "/clock",
+        "header_ns": 1398033406246
+      },
+      {
+        "message_id": 1487985,
+        "recorded_ns": 1398050072914,
+        "topic": "/clock",
+        "header_ns": 1398050072914
+      },
+      {
+        "message_id": 1488011,
+        "recorded_ns": 1398050072914,
+        "topic": "/carter1/odom",
+        "header_ns": 1398050072914
+      },
+      {
+        "message_id": 1488012,
+        "recorded_ns": 1398050072914,
+        "topic": "/carter1/tf",
+        "header_ns": 1398050072914,
+        "parent": "odom",
+        "child": "base_link"
+      },
+      {
+        "message_id": 1488046,
+        "recorded_ns": 1398066739582,
+        "topic": "/clock",
+        "header_ns": 1398066739582
+      },
+      {
+        "message_id": 1488056,
+        "recorded_ns": 1398083406249,
+        "topic": "/clock",
+        "header_ns": 1398083406249
+      },
+      {
+        "message_id": 1488066,
+        "recorded_ns": 1398100072917,
+        "topic": "/clock",
+        "header_ns": 1398100072917
+      },
+      {
+        "message_id": 1488067,
+        "recorded_ns": 1398100072917,
+        "topic": "/carter1/odom",
+        "header_ns": 1398100072917
+      },
+      {
+        "message_id": 1488068,
+        "recorded_ns": 1398100072917,
+        "topic": "/carter1/tf",
+        "header_ns": 1398100072917,
+        "parent": "odom",
+        "child": "base_link"
+      },
+      {
+        "message_id": 1488084,
+        "recorded_ns": 1398116739584,
+        "topic": "/clock",
+        "header_ns": 1398116739584
+      },
+      {
+        "message_id": 1488085,
+        "recorded_ns": 1398133406252,
+        "topic": "/clock",
+        "header_ns": 1398133406252
+      },
+      {
+        "message_id": 1488104,
+        "recorded_ns": 1398150072919,
+        "topic": "/clock",
+        "header_ns": 1398150072919
+      },
+      {
+        "message_id": 1488128,
+        "recorded_ns": 1398150072919,
+        "topic": "/carter1/tf",
+        "header_ns": 1398550072914,
+        "parent": "map",
+        "child": "odom"
+      },
+      {
+        "message_id": 1488133,
+        "recorded_ns": 1398150072919,
+        "topic": "/carter1/tf",
+        "header_ns": 1398450072909,
+        "parent": "map",
+        "child": "odom"
+      },
+      {
+        "message_id": 1488142,
+        "recorded_ns": 1398150072919,
+        "topic": "/carter1/tf",
+        "header_ns": 1398550072914,
+        "parent": "map",
+        "child": "odom"
+      },
+      {
+        "message_id": 1488158,
+        "recorded_ns": 1398150072919,
+        "topic": "/carter1/odom",
+        "header_ns": 1398150072919
+      },
+      {
+        "message_id": 1488159,
+        "recorded_ns": 1398150072919,
+        "topic": "/carter1/tf",
+        "header_ns": 1398150072919,
+        "parent": "odom",
+        "child": "base_link"
+      },
+      {
+        "message_id": 1488160,
+        "recorded_ns": 1398150072919,
+        "topic": "/carter1/tf",
+        "header_ns": 1398650072919,
+        "parent": "map",
+        "child": "odom"
+      },
+      {
+        "message_id": 1488161,
+        "recorded_ns": 1398150072919,
+        "topic": "/carter1/tf",
+        "header_ns": 1398650072919,
+        "parent": "map",
+        "child": "odom"
+      },
+      {
+        "message_id": 1488188,
+        "recorded_ns": 1398166739587,
+        "topic": "/clock",
+        "header_ns": 1398166739587
+      },
+      {
+        "message_id": 1488198,
+        "recorded_ns": 1398183406254,
+        "topic": "/clock",
+        "header_ns": 1398183406254
+      },
+      {
+        "message_id": 1488208,
+        "recorded_ns": 1398200072922,
+        "topic": "/clock",
+        "header_ns": 1398200072922
+      },
+      {
+        "message_id": 1488209,
+        "recorded_ns": 1398200072922,
+        "topic": "/carter1/odom",
+        "header_ns": 1398200072922
+      },
+      {
+        "message_id": 1488210,
+        "recorded_ns": 1398200072922,
+        "topic": "/carter1/tf",
+        "header_ns": 1398200072922,
+        "parent": "odom",
+        "child": "base_link"
+      },
+      {
+        "message_id": 1488226,
+        "recorded_ns": 1398216739589,
+        "topic": "/clock",
+        "header_ns": 1398216739589
+      },
+      {
+        "message_id": 1488236,
+        "recorded_ns": 1398233406257,
+        "topic": "/clock",
+        "header_ns": 1398233406257
+      },
+      {
+        "message_id": 1488255,
+        "recorded_ns": 1398250072924,
+        "topic": "/clock",
+        "header_ns": 1398250072924
+      },
+      {
+        "message_id": 1488284,
+        "recorded_ns": 1398250072924,
+        "topic": "/carter1/odom",
+        "header_ns": 1398250072924
+      },
+      {
+        "message_id": 1488285,
+        "recorded_ns": 1398250072924,
+        "topic": "/carter1/tf",
+        "header_ns": 1398250072924,
+        "parent": "odom",
+        "child": "base_link"
+      },
+      {
+        "message_id": 1488310,
+        "recorded_ns": 1398266739592,
+        "topic": "/clock",
+        "header_ns": 1398266739592
+      },
+      {
+        "message_id": 1488320,
+        "recorded_ns": 1398283406259,
+        "topic": "/clock",
+        "header_ns": 1398283406259
+      },
+      {
+        "message_id": 1488330,
+        "recorded_ns": 1398300072927,
+        "topic": "/clock",
+        "header_ns": 1398300072927
+      },
+      {
+        "message_id": 1488331,
+        "recorded_ns": 1398300072927,
+        "topic": "/carter1/odom",
+        "header_ns": 1398300072927
+      },
+      {
+        "message_id": 1488332,
+        "recorded_ns": 1398300072927,
+        "topic": "/carter1/tf",
+        "header_ns": 1398300072927,
+        "parent": "odom",
+        "child": "base_link"
+      },
+      {
+        "message_id": 1488339,
+        "recorded_ns": 1398316739595,
+        "topic": "/clock",
+        "header_ns": 1398316739595
+      },
+      {
+        "message_id": 1488349,
+        "recorded_ns": 1398333406262,
+        "topic": "/clock",
+        "header_ns": 1398333406262
+      },
+      {
+        "message_id": 1488368,
+        "recorded_ns": 1398350072930,
+        "topic": "/clock",
+        "header_ns": 1398350072930
+      },
+      {
+        "message_id": 1488428,
+        "recorded_ns": 1398350072930,
+        "topic": "/carter1/odom",
+        "header_ns": 1398350072930
+      },
+      {
+        "message_id": 1488429,
+        "recorded_ns": 1398350072930,
+        "topic": "/carter1/tf",
+        "header_ns": 1398350072930,
+        "parent": "odom",
+        "child": "base_link"
+      },
+      {
+        "message_id": 1488430,
+        "recorded_ns": 1398350072930,
+        "topic": "/carter1/tf",
+        "header_ns": 1398850072930,
+        "parent": "map",
+        "child": "odom"
+      },
+      {
+        "message_id": 1488431,
+        "recorded_ns": 1398350072930,
+        "topic": "/carter1/tf",
+        "header_ns": 1398850072930,
+        "parent": "map",
+        "child": "odom"
+      },
+      {
+        "message_id": 1488450,
+        "recorded_ns": 1398366739597,
+        "topic": "/clock",
+        "header_ns": 1398366739597
+      },
+      {
+        "message_id": 1488469,
+        "recorded_ns": 1398366739597,
+        "topic": "/clock",
+        "header_ns": 1398383406265
+      },
+      {
+        "message_id": 1488470,
+        "recorded_ns": 1398400072932,
+        "topic": "/clock",
+        "header_ns": 1398400072932
+      },
+      {
+        "message_id": 1488480,
+        "recorded_ns": 1398400072932,
+        "topic": "/carter1/odom",
+        "header_ns": 1398400072932
+      },
+      {
+        "message_id": 1488481,
+        "recorded_ns": 1398400072932,
+        "topic": "/carter1/tf",
+        "header_ns": 1398400072932,
+        "parent": "odom",
+        "child": "base_link"
+      },
+      {
+        "message_id": 1488488,
+        "recorded_ns": 1398416739600,
+        "topic": "/clock",
+        "header_ns": 1398416739600
+      },
+      {
+        "message_id": 1488498,
+        "recorded_ns": 1398433406267,
+        "topic": "/clock",
+        "header_ns": 1398433406267
+      },
+      {
+        "message_id": 1488517,
+        "recorded_ns": 1398450072935,
+        "topic": "/clock",
+        "header_ns": 1398450072935
+      },
+      {
+        "message_id": 1488562,
+        "recorded_ns": 1398450072935,
+        "topic": "/carter1/odom",
+        "header_ns": 1398450072935
+      },
+      {
+        "message_id": 1488563,
+        "recorded_ns": 1398450072935,
+        "topic": "/carter1/tf",
+        "header_ns": 1398450072935,
+        "parent": "odom",
+        "child": "base_link"
+      },
+      {
+        "message_id": 1488579,
+        "recorded_ns": 1398466739602,
+        "topic": "/clock",
+        "header_ns": 1398466739602
+      },
+      {
+        "message_id": 1488589,
+        "recorded_ns": 1398483406270,
+        "topic": "/clock",
+        "header_ns": 1398483406270
+      },
+      {
+        "message_id": 1488600,
+        "recorded_ns": 1398500072937,
+        "topic": "/clock",
+        "header_ns": 1398500072937
+      },
+      {
+        "message_id": 1488601,
+        "recorded_ns": 1398500072937,
+        "topic": "/carter1/tf",
+        "header_ns": 1398500072937,
+        "parent": "odom",
+        "child": "base_link"
+      },
+      {
+        "message_id": 1488602,
+        "recorded_ns": 1398500072937,
+        "topic": "/carter1/odom",
+        "header_ns": 1398500072937
+      },
+      {
+        "message_id": 1488617,
+        "recorded_ns": 1398516739605,
+        "topic": "/clock",
+        "header_ns": 1398516739605
+      },
+      {
+        "message_id": 1488627,
+        "recorded_ns": 1398533406273,
+        "topic": "/clock",
+        "header_ns": 1398533406273
+      },
+      {
+        "message_id": 1488646,
+        "recorded_ns": 1398550072940,
+        "topic": "/clock",
+        "header_ns": 1398550072940
+      },
+      {
+        "message_id": 1488658,
+        "recorded_ns": 1398550072940,
+        "topic": "/carter1/tf",
+        "header_ns": 1398950072935,
+        "parent": "map",
+        "child": "odom"
+      },
+      {
+        "message_id": 1488663,
+        "recorded_ns": 1398550072940,
+        "topic": "/carter1/tf",
+        "header_ns": 1398950072935,
+        "parent": "map",
+        "child": "odom"
+      },
+      {
+        "message_id": 1488713,
+        "recorded_ns": 1398550072940,
+        "topic": "/carter1/odom",
+        "header_ns": 1398550072940
+      },
+      {
+        "message_id": 1488714,
+        "recorded_ns": 1398550072940,
+        "topic": "/carter1/tf",
+        "header_ns": 1398550072940,
+        "parent": "odom",
+        "child": "base_link"
+      },
+      {
+        "message_id": 1488715,
+        "recorded_ns": 1398550072940,
+        "topic": "/carter1/tf",
+        "header_ns": 1399050072940,
+        "parent": "map",
+        "child": "odom"
+      },
+      {
+        "message_id": 1488716,
+        "recorded_ns": 1398550072940,
+        "topic": "/carter1/tf",
+        "header_ns": 1399050072940,
+        "parent": "map",
+        "child": "odom"
+      },
+      {
+        "message_id": 1488732,
+        "recorded_ns": 1398566739608,
+        "topic": "/clock",
+        "header_ns": 1398566739608
+      },
+      {
+        "message_id": 1488742,
+        "recorded_ns": 1398583406275,
+        "topic": "/clock",
+        "header_ns": 1398583406275
+      },
+      {
+        "message_id": 1488743,
+        "recorded_ns": 1398600072943,
+        "topic": "/clock",
+        "header_ns": 1398600072943
+      },
+      {
+        "message_id": 1488744,
+        "recorded_ns": 1398600072943,
+        "topic": "/carter1/odom",
+        "header_ns": 1398600072943
+      },
+      {
+        "message_id": 1488745,
+        "recorded_ns": 1398600072943,
+        "topic": "/carter1/tf",
+        "header_ns": 1398600072943,
+        "parent": "odom",
+        "child": "base_link"
+      },
+      {
+        "message_id": 1488761,
+        "recorded_ns": 1398616739610,
+        "topic": "/clock",
+        "header_ns": 1398616739610
+      },
+      {
+        "message_id": 1488771,
+        "recorded_ns": 1398633406278,
+        "topic": "/clock",
+        "header_ns": 1398633406278
+      },
+      {
+        "message_id": 1488781,
+        "recorded_ns": 1398650072945,
+        "topic": "/clock",
+        "header_ns": 1398650072945
+      },
+      {
+        "message_id": 1488817,
+        "recorded_ns": 1398650072945,
+        "topic": "/carter1/odom",
+        "header_ns": 1398650072945
+      },
+      {
+        "message_id": 1488818,
+        "recorded_ns": 1398650072945,
+        "topic": "/carter1/tf",
+        "header_ns": 1398650072945,
+        "parent": "odom",
+        "child": "base_link"
+      },
+      {
+        "message_id": 1488825,
+        "recorded_ns": 1398666739613,
+        "topic": "/clock",
+        "header_ns": 1398666739613
+      },
+      {
+        "message_id": 1488835,
+        "recorded_ns": 1398683406280,
+        "topic": "/clock",
+        "header_ns": 1398683406280
+      },
+      {
+        "message_id": 1488836,
+        "recorded_ns": 1398700072948,
+        "topic": "/clock",
+        "header_ns": 1398700072948
+      },
+      {
+        "message_id": 1488846,
+        "recorded_ns": 1398700072948,
+        "topic": "/carter1/odom",
+        "header_ns": 1398700072948
+      },
+      {
+        "message_id": 1488847,
+        "recorded_ns": 1398700072948,
+        "topic": "/carter1/tf",
+        "header_ns": 1398700072948,
+        "parent": "odom",
+        "child": "base_link"
+      },
+      {
+        "message_id": 1488854,
+        "recorded_ns": 1398716739615,
+        "topic": "/clock",
+        "header_ns": 1398716739615
+      },
+      {
+        "message_id": 1488864,
+        "recorded_ns": 1398733406283,
+        "topic": "/clock",
+        "header_ns": 1398733406283
+      },
+      {
+        "message_id": 1488875,
+        "recorded_ns": 1398733406283,
+        "topic": "/carter1/tf",
+        "header_ns": 1399150072945,
+        "parent": "map",
+        "child": "odom"
+      },
+      {
+        "message_id": 1488880,
+        "recorded_ns": 1398733406283,
+        "topic": "/carter1/tf",
+        "header_ns": 1399150072945,
+        "parent": "map",
+        "child": "odom"
+      },
+      {
+        "message_id": 1488887,
+        "recorded_ns": 1398750072950,
+        "topic": "/clock",
+        "header_ns": 1398750072950
+      },
+      {
+        "message_id": 1488925,
+        "recorded_ns": 1398750072950,
+        "topic": "/carter1/odom",
+        "header_ns": 1398750072950
+      },
+      {
+        "message_id": 1488926,
+        "recorded_ns": 1398750072950,
+        "topic": "/carter1/tf",
+        "header_ns": 1398750072950,
+        "parent": "odom",
+        "child": "base_link"
+      },
+      {
+        "message_id": 1488927,
+        "recorded_ns": 1398750072950,
+        "topic": "/carter1/tf",
+        "header_ns": 1399250072950,
+        "parent": "map",
+        "child": "odom"
+      },
+      {
+        "message_id": 1488934,
+        "recorded_ns": 1398766739618,
+        "topic": "/clock",
+        "header_ns": 1398766739618
+      },
+      {
+        "message_id": 1488944,
+        "recorded_ns": 1398783406286,
+        "topic": "/clock",
+        "header_ns": 1398783406286
+      },
+      {
+        "message_id": 1488954,
+        "recorded_ns": 1398800072953,
+        "topic": "/clock",
+        "header_ns": 1398800072953
+      },
+      {
+        "message_id": 1488955,
+        "recorded_ns": 1398800072953,
+        "topic": "/carter1/odom",
+        "header_ns": 1398800072953
+      },
+      {
+        "message_id": 1488956,
+        "recorded_ns": 1398800072953,
+        "topic": "/carter1/tf",
+        "header_ns": 1398800072953,
+        "parent": "odom",
+        "child": "base_link"
+      },
+      {
+        "message_id": 1488963,
+        "recorded_ns": 1398816739621,
+        "topic": "/clock",
+        "header_ns": 1398816739621
+      },
+      {
+        "message_id": 1488973,
+        "recorded_ns": 1398833406288,
+        "topic": "/clock",
+        "header_ns": 1398833406288
+      },
+      {
+        "message_id": 1488983,
+        "recorded_ns": 1398850072956,
+        "topic": "/clock",
+        "header_ns": 1398850072956
+      },
+      {
+        "message_id": 1489010,
+        "recorded_ns": 1398850072956,
+        "topic": "/carter1/odom",
+        "header_ns": 1398850072956
+      },
+      {
+        "message_id": 1489011,
+        "recorded_ns": 1398850072956,
+        "topic": "/carter1/tf",
+        "header_ns": 1398850072956,
+        "parent": "odom",
+        "child": "base_link"
+      },
+      {
+        "message_id": 1489027,
+        "recorded_ns": 1398866739623,
+        "topic": "/clock",
+        "header_ns": 1398866739623
+      },
+      {
+        "message_id": 1489037,
+        "recorded_ns": 1398883406291,
+        "topic": "/clock",
+        "header_ns": 1398883406291
+      },
+      {
+        "message_id": 1489038,
+        "recorded_ns": 1398900072958,
+        "topic": "/clock",
+        "header_ns": 1398900072958
+      },
+      {
+        "message_id": 1489039,
+        "recorded_ns": 1398900072958,
+        "topic": "/carter1/odom",
+        "header_ns": 1398900072958
+      },
+      {
+        "message_id": 1489040,
+        "recorded_ns": 1398900072958,
+        "topic": "/carter1/tf",
+        "header_ns": 1398900072958,
+        "parent": "odom",
+        "child": "base_link"
+      },
+      {
+        "message_id": 1489056,
+        "recorded_ns": 1398916739626,
+        "topic": "/clock",
+        "header_ns": 1398916739626
+      },
+      {
+        "message_id": 1489066,
+        "recorded_ns": 1398933406293,
+        "topic": "/clock",
+        "header_ns": 1398933406293
+      },
+      {
+        "message_id": 1489085,
+        "recorded_ns": 1398950072961,
+        "topic": "/clock",
+        "header_ns": 1398950072961
+      },
+      {
+        "message_id": 1489112,
+        "recorded_ns": 1398950072961,
+        "topic": "/carter1/odom",
+        "header_ns": 1398950072961
+      },
+      {
+        "message_id": 1489113,
+        "recorded_ns": 1398950072961,
+        "topic": "/carter1/tf",
+        "header_ns": 1398950072961,
+        "parent": "odom",
+        "child": "base_link"
+      },
+      {
+        "message_id": 1489129,
+        "recorded_ns": 1398966739628,
+        "topic": "/clock",
+        "header_ns": 1398966739628
+      },
+      {
+        "message_id": 1489140,
+        "recorded_ns": 1398966739628,
+        "topic": "/carter1/tf",
+        "header_ns": 1399350072956,
+        "parent": "map",
+        "child": "odom"
+      },
+      {
+        "message_id": 1489143,
+        "recorded_ns": 1398966739628,
+        "topic": "/carter1/tf",
+        "header_ns": 1399250072950,
+        "parent": "map",
+        "child": "odom"
+      },
+      {
+        "message_id": 1489150,
+        "recorded_ns": 1398966739628,
+        "topic": "/carter1/tf",
+        "header_ns": 1399450072961,
+        "parent": "map",
+        "child": "odom"
+      },
+      {
+        "message_id": 1489154,
+        "recorded_ns": 1398966739628,
+        "topic": "/carter1/tf",
+        "header_ns": 1399350072956,
+        "parent": "map",
+        "child": "odom"
+      },
+      {
+        "message_id": 1489158,
+        "recorded_ns": 1398966739628,
+        "topic": "/carter1/tf",
+        "header_ns": 1399450072961,
+        "parent": "map",
+        "child": "odom"
+      },
+      {
+        "message_id": 1489160,
+        "recorded_ns": 1398983406296,
+        "topic": "/clock",
+        "header_ns": 1398983406296
+      },
+      {
+        "message_id": 1489186,
+        "recorded_ns": 1399000072964,
+        "topic": "/clock",
+        "header_ns": 1399000072964
+      },
+      {
+        "message_id": 1489187,
+        "recorded_ns": 1399000072964,
+        "topic": "/carter1/odom",
+        "header_ns": 1399000072964
+      },
+      {
+        "message_id": 1489188,
+        "recorded_ns": 1399000072964,
+        "topic": "/carter1/tf",
+        "header_ns": 1399000072964,
+        "parent": "odom",
+        "child": "base_link"
+      },
+      {
+        "message_id": 1489204,
+        "recorded_ns": 1399016739631,
+        "topic": "/clock",
+        "header_ns": 1399016739631
+      },
+      {
+        "message_id": 1489214,
+        "recorded_ns": 1399033406299,
+        "topic": "/clock",
+        "header_ns": 1399033406299
+      },
+      {
+        "message_id": 1489233,
+        "recorded_ns": 1399050072966,
+        "topic": "/clock",
+        "header_ns": 1399050072966
+      },
+      {
+        "message_id": 1489267,
+        "recorded_ns": 1399050072966,
+        "topic": "/carter1/odom",
+        "header_ns": 1399050072966
+      },
+      {
+        "message_id": 1489268,
+        "recorded_ns": 1399050072966,
+        "topic": "/carter1/tf",
+        "header_ns": 1399050072966,
+        "parent": "odom",
+        "child": "base_link"
+      },
+      {
+        "message_id": 1489302,
+        "recorded_ns": 1399066739634,
+        "topic": "/clock",
+        "header_ns": 1399066739634
+      },
+      {
+        "message_id": 1489312,
+        "recorded_ns": 1399083406301,
+        "topic": "/clock",
+        "header_ns": 1399083406301
+      },
+      {
+        "message_id": 1489313,
+        "recorded_ns": 1399100072969,
+        "topic": "/clock",
+        "header_ns": 1399100072969
+      },
+      {
+        "message_id": 1489323,
+        "recorded_ns": 1399100072969,
+        "topic": "/carter1/tf",
+        "header_ns": 1399100072969,
+        "parent": "odom",
+        "child": "base_link"
+      },
+      {
+        "message_id": 1489324,
+        "recorded_ns": 1399100072969,
+        "topic": "/carter1/odom",
+        "header_ns": 1399100072969
+      },
+      {
+        "message_id": 1489340,
+        "recorded_ns": 1399116739636,
+        "topic": "/clock",
+        "header_ns": 1399116739636
+      },
+      {
+        "message_id": 1489350,
+        "recorded_ns": 1399133406304,
+        "topic": "/clock",
+        "header_ns": 1399133406304
+      },
+      {
+        "message_id": 1489369,
+        "recorded_ns": 1399150072971,
+        "topic": "/clock",
+        "header_ns": 1399150072971
+      },
+      {
+        "message_id": 1489405,
+        "recorded_ns": 1399150072971,
+        "topic": "/carter1/odom",
+        "header_ns": 1399150072971
+      },
+      {
+        "message_id": 1489406,
+        "recorded_ns": 1399150072971,
+        "topic": "/carter1/tf",
+        "header_ns": 1399150072971,
+        "parent": "odom",
+        "child": "base_link"
+      },
+      {
+        "message_id": 1489422,
+        "recorded_ns": 1399166739639,
+        "topic": "/clock",
+        "header_ns": 1399166739639
+      },
+      {
+        "message_id": 1489423,
+        "recorded_ns": 1399166739639,
+        "topic": "/carter1/tf",
+        "header_ns": 1399550072966,
+        "parent": "map",
+        "child": "odom"
+      },
+      {
+        "message_id": 1489425,
+        "recorded_ns": 1399166739639,
+        "topic": "/carter1/tf",
+        "header_ns": 1399550072966,
+        "parent": "map",
+        "child": "odom"
+      },
+      {
+        "message_id": 1489431,
+        "recorded_ns": 1399166739639,
+        "topic": "/carter1/tf",
+        "header_ns": 1399650072971,
+        "parent": "map",
+        "child": "odom"
+      },
+      {
+        "message_id": 1489433,
+        "recorded_ns": 1399166739639,
+        "topic": "/carter1/tf",
+        "header_ns": 1399650072971,
+        "parent": "map",
+        "child": "odom"
+      },
+      {
+        "message_id": 1489452,
+        "recorded_ns": 1399183406306,
+        "topic": "/clock",
+        "header_ns": 1399183406306
+      },
+      {
+        "message_id": 1489468,
+        "recorded_ns": 1399200072974,
+        "topic": "/clock",
+        "header_ns": 1399200072974
+      },
+      {
+        "message_id": 1489469,
+        "recorded_ns": 1399200072974,
+        "topic": "/carter1/tf",
+        "header_ns": 1399200072974,
+        "parent": "odom",
+        "child": "base_link"
+      },
+      {
+        "message_id": 1489470,
+        "recorded_ns": 1399200072974,
+        "topic": "/carter1/odom",
+        "header_ns": 1399200072974
+      },
+      {
+        "message_id": 1489486,
+        "recorded_ns": 1399216739642,
+        "topic": "/clock",
+        "header_ns": 1399216739642
+      },
+      {
+        "message_id": 1489505,
+        "recorded_ns": 1399233406309,
+        "topic": "/clock",
+        "header_ns": 1399233406309
+      },
+      {
+        "message_id": 1489524,
+        "recorded_ns": 1399250072977,
+        "topic": "/clock",
+        "header_ns": 1399250072977
+      },
+      {
+        "message_id": 1489566,
+        "recorded_ns": 1399250072977,
+        "topic": "/carter1/odom",
+        "header_ns": 1399250072977
+      },
+      {
+        "message_id": 1489567,
+        "recorded_ns": 1399250072977,
+        "topic": "/carter1/tf",
+        "header_ns": 1399250072977,
+        "parent": "odom",
+        "child": "base_link"
+      },
+      {
+        "message_id": 1489574,
+        "recorded_ns": 1399266739644,
+        "topic": "/clock",
+        "header_ns": 1399266739644
+      },
+      {
+        "message_id": 1489584,
+        "recorded_ns": 1399283406312,
+        "topic": "/clock",
+        "header_ns": 1399283406312
+      },
+      {
+        "message_id": 1489594,
+        "recorded_ns": 1399300072979,
+        "topic": "/clock",
+        "header_ns": 1399300072979
+      },
+      {
+        "message_id": 1489604,
+        "recorded_ns": 1399300072979,
+        "topic": "/carter1/odom",
+        "header_ns": 1399300072979
+      },
+      {
+        "message_id": 1489605,
+        "recorded_ns": 1399300072979,
+        "topic": "/carter1/tf",
+        "header_ns": 1399300072979,
+        "parent": "odom",
+        "child": "base_link"
+      },
+      {
+        "message_id": 1489621,
+        "recorded_ns": 1399316739647,
+        "topic": "/clock",
+        "header_ns": 1399316739647
+      },
+      {
+        "message_id": 1489631,
+        "recorded_ns": 1399333406314,
+        "topic": "/clock",
+        "header_ns": 1399333406314
+      },
+      {
+        "message_id": 1489659,
+        "recorded_ns": 1399350072982,
+        "topic": "/clock",
+        "header_ns": 1399350072982
+      },
+      {
+        "message_id": 1489685,
+        "recorded_ns": 1399350072982,
+        "topic": "/carter1/tf",
+        "header_ns": 1399750072977,
+        "parent": "map",
+        "child": "odom"
+      },
+      {
+        "message_id": 1489720,
+        "recorded_ns": 1399350072982,
+        "topic": "/carter1/odom",
+        "header_ns": 1399350072982
+      },
+      {
+        "message_id": 1489721,
+        "recorded_ns": 1399350072982,
+        "topic": "/carter1/tf",
+        "header_ns": 1399350072982,
+        "parent": "odom",
+        "child": "base_link"
+      },
+      {
+        "message_id": 1489722,
+        "recorded_ns": 1399350072982,
+        "topic": "/carter1/tf",
+        "header_ns": 1399850072982,
+        "parent": "map",
+        "child": "odom"
+      },
+      {
+        "message_id": 1489723,
+        "recorded_ns": 1399350072982,
+        "topic": "/carter1/tf",
+        "header_ns": 1399850072982,
+        "parent": "map",
+        "child": "odom"
+      },
+      {
+        "message_id": 1489741,
+        "recorded_ns": 1399366739649,
+        "topic": "/clock",
+        "header_ns": 1399366739649
+      },
+      {
+        "message_id": 1489751,
+        "recorded_ns": 1399383406317,
+        "topic": "/clock",
+        "header_ns": 1399383406317
+      },
+      {
+        "message_id": 1489761,
+        "recorded_ns": 1399400072984,
+        "topic": "/clock",
+        "header_ns": 1399400072984
+      },
+      {
+        "message_id": 1489762,
+        "recorded_ns": 1399400072984,
+        "topic": "/carter1/tf",
+        "header_ns": 1399400072984,
+        "parent": "odom",
+        "child": "base_link"
+      },
+      {
+        "message_id": 1489763,
+        "recorded_ns": 1399400072984,
+        "topic": "/carter1/odom",
+        "header_ns": 1399400072984
+      },
+      {
+        "message_id": 1489779,
+        "recorded_ns": 1399416739652,
+        "topic": "/clock",
+        "header_ns": 1399416739652
+      },
+      {
+        "message_id": 1489789,
+        "recorded_ns": 1399433406319,
+        "topic": "/clock",
+        "header_ns": 1399433406319
+      },
+      {
+        "message_id": 1489808,
+        "recorded_ns": 1399450072987,
+        "topic": "/clock",
+        "header_ns": 1399450072987
+      },
+      {
+        "message_id": 1489844,
+        "recorded_ns": 1399450072987,
+        "topic": "/carter1/odom",
+        "header_ns": 1399450072987
+      },
+      {
+        "message_id": 1489845,
+        "recorded_ns": 1399450072987,
+        "topic": "/carter1/tf",
+        "header_ns": 1399450072987,
+        "parent": "odom",
+        "child": "base_link"
+      },
+      {
+        "message_id": 1489861,
+        "recorded_ns": 1399466739655,
+        "topic": "/clock",
+        "header_ns": 1399466739655
+      },
+      {
+        "message_id": 1489871,
+        "recorded_ns": 1399483406322,
+        "topic": "/clock",
+        "header_ns": 1399483406322
+      },
+      {
+        "message_id": 1489881,
+        "recorded_ns": 1399500072990,
+        "topic": "/clock",
+        "header_ns": 1399500072990
+      },
+      {
+        "message_id": 1489882,
+        "recorded_ns": 1399500072990,
+        "topic": "/carter1/odom",
+        "header_ns": 1399500072990
+      },
+      {
+        "message_id": 1489883,
+        "recorded_ns": 1399500072990,
+        "topic": "/carter1/tf",
+        "header_ns": 1399500072990,
+        "parent": "odom",
+        "child": "base_link"
+      },
+      {
+        "message_id": 1489899,
+        "recorded_ns": 1399516739657,
+        "topic": "/clock",
+        "header_ns": 1399516739657
+      },
+      {
+        "message_id": 1489909,
+        "recorded_ns": 1399533406325,
+        "topic": "/clock",
+        "header_ns": 1399533406325
+      },
+      {
+        "message_id": 1489928,
+        "recorded_ns": 1399550072992,
+        "topic": "/clock",
+        "header_ns": 1399550072992
+      },
+      {
+        "message_id": 1489953,
+        "recorded_ns": 1399550072992,
+        "topic": "/carter1/tf",
+        "header_ns": 1399950072987,
+        "parent": "map",
+        "child": "odom"
+      },
+      {
+        "message_id": 1489958,
+        "recorded_ns": 1399550072992,
+        "topic": "/carter1/tf",
+        "header_ns": 1399950072987,
+        "parent": "map",
+        "child": "odom"
+      },
+      {
+        "message_id": 1489978,
+        "recorded_ns": 1399550072992,
+        "topic": "/carter1/odom",
+        "header_ns": 1399550072992
+      },
+      {
+        "message_id": 1489979,
+        "recorded_ns": 1399550072992,
+        "topic": "/carter1/tf",
+        "header_ns": 1399550072992,
+        "parent": "odom",
+        "child": "base_link"
+      },
+      {
+        "message_id": 1489980,
+        "recorded_ns": 1399550072992,
+        "topic": "/carter1/tf",
+        "header_ns": 1400050072992,
+        "parent": "map",
+        "child": "odom"
+      },
+      {
+        "message_id": 1489981,
+        "recorded_ns": 1399550072992,
+        "topic": "/carter1/tf",
+        "header_ns": 1400050072992,
+        "parent": "map",
+        "child": "odom"
+      },
+      {
+        "message_id": 1490001,
+        "recorded_ns": 1399566739660,
+        "topic": "/clock",
+        "header_ns": 1399566739660
+      },
+      {
+        "message_id": 1490011,
+        "recorded_ns": 1399583406327,
+        "topic": "/clock",
+        "header_ns": 1399583406327
+      },
+      {
+        "message_id": 1490021,
+        "recorded_ns": 1399600072995,
+        "topic": "/clock",
+        "header_ns": 1399600072995
+      },
+      {
+        "message_id": 1490031,
+        "recorded_ns": 1399600072995,
+        "topic": "/carter1/odom",
+        "header_ns": 1399600072995
+      },
+      {
+        "message_id": 1490032,
+        "recorded_ns": 1399600072995,
+        "topic": "/carter1/tf",
+        "header_ns": 1399600072995,
+        "parent": "odom",
+        "child": "base_link"
+      },
+      {
+        "message_id": 1490048,
+        "recorded_ns": 1399616739662,
+        "topic": "/clock",
+        "header_ns": 1399616739662
+      },
+      {
+        "message_id": 1490058,
+        "recorded_ns": 1399633406330,
+        "topic": "/clock",
+        "header_ns": 1399633406330
+      },
+      {
+        "message_id": 1490077,
+        "recorded_ns": 1399650072997,
+        "topic": "/clock",
+        "header_ns": 1399650072997
+      },
+      {
+        "message_id": 1490104,
+        "recorded_ns": 1399650072997,
+        "topic": "/carter1/odom",
+        "header_ns": 1399650072997
+      },
+      {
+        "message_id": 1490105,
+        "recorded_ns": 1399650072997,
+        "topic": "/carter1/tf",
+        "header_ns": 1399650072997,
+        "parent": "odom",
+        "child": "base_link"
+      },
+      {
+        "message_id": 1490121,
+        "recorded_ns": 1399666739665,
+        "topic": "/clock",
+        "header_ns": 1399666739665
+      },
+      {
+        "message_id": 1490122,
+        "recorded_ns": 1399683406333,
+        "topic": "/clock",
+        "header_ns": 1399683406333
+      },
+      {
+        "message_id": 1490132,
+        "recorded_ns": 1399700073000,
+        "topic": "/clock",
+        "header_ns": 1399700073000
+      },
+      {
+        "message_id": 1490133,
+        "recorded_ns": 1399700073000,
+        "topic": "/carter1/odom",
+        "header_ns": 1399700073000
+      },
+      {
+        "message_id": 1490134,
+        "recorded_ns": 1399700073000,
+        "topic": "/carter1/tf",
+        "header_ns": 1399700073000,
+        "parent": "odom",
+        "child": "base_link"
+      },
+      {
+        "message_id": 1490150,
+        "recorded_ns": 1399716739668,
+        "topic": "/clock",
+        "header_ns": 1399716739668
+      },
+      {
+        "message_id": 1490160,
+        "recorded_ns": 1399733406335,
+        "topic": "/clock",
+        "header_ns": 1399733406335
+      },
+      {
+        "message_id": 1490170,
+        "recorded_ns": 1399750073003,
+        "topic": "/clock",
+        "header_ns": 1399750073003
+      },
+      {
+        "message_id": 1490206,
+        "recorded_ns": 1399750073003,
+        "topic": "/carter1/odom",
+        "header_ns": 1399750073003
+      },
+      {
+        "message_id": 1490207,
+        "recorded_ns": 1399750073003,
+        "topic": "/carter1/tf",
+        "header_ns": 1399750073003,
+        "parent": "odom",
+        "child": "base_link"
+      },
+      {
+        "message_id": 1490214,
+        "recorded_ns": 1399766739670,
+        "topic": "/clock",
+        "header_ns": 1399766739670
+      },
+      {
+        "message_id": 1490224,
+        "recorded_ns": 1399783406338,
+        "topic": "/clock",
+        "header_ns": 1399783406338
+      },
+      {
+        "message_id": 1490234,
+        "recorded_ns": 1399800073005,
+        "topic": "/clock",
+        "header_ns": 1399800073005
+      },
+      {
+        "message_id": 1490235,
+        "recorded_ns": 1399800073005,
+        "topic": "/carter1/odom",
+        "header_ns": 1399800073005
+      },
+      {
+        "message_id": 1490236,
+        "recorded_ns": 1399800073005,
+        "topic": "/carter1/tf",
+        "header_ns": 1399800073005,
+        "parent": "odom",
+        "child": "base_link"
+      },
+      {
+        "message_id": 1490252,
+        "recorded_ns": 1399816739673,
+        "topic": "/clock",
+        "header_ns": 1399816739673
+      },
+      {
+        "message_id": 1490262,
+        "recorded_ns": 1399833406340,
+        "topic": "/clock",
+        "header_ns": 1399833406340
+      },
+      {
+        "message_id": 1490272,
+        "recorded_ns": 1399850073008,
+        "topic": "/clock",
+        "header_ns": 1399850073008
+      },
+      {
+        "message_id": 1490299,
+        "recorded_ns": 1399850073008,
+        "topic": "/carter1/odom",
+        "header_ns": 1399850073008
+      },
+      {
+        "message_id": 1490300,
+        "recorded_ns": 1399850073008,
+        "topic": "/carter1/tf",
+        "header_ns": 1399850073008,
+        "parent": "odom",
+        "child": "base_link"
+      },
+      {
+        "message_id": 1490316,
+        "recorded_ns": 1399866739675,
+        "topic": "/clock",
+        "header_ns": 1399866739675
+      },
+      {
+        "message_id": 1490326,
+        "recorded_ns": 1399883406343,
+        "topic": "/clock",
+        "header_ns": 1399883406343
+      },
+      {
+        "message_id": 1490327,
+        "recorded_ns": 1399900073010,
+        "topic": "/clock",
+        "header_ns": 1399900073010
+      },
+      {
+        "message_id": 1490328,
+        "recorded_ns": 1399900073010,
+        "topic": "/carter1/odom",
+        "header_ns": 1399900073010
+      },
+      {
+        "message_id": 1490329,
+        "recorded_ns": 1399900073010,
+        "topic": "/carter1/tf",
+        "header_ns": 1399900073010,
+        "parent": "odom",
+        "child": "base_link"
+      },
+      {
+        "message_id": 1490345,
+        "recorded_ns": 1399916739678,
+        "topic": "/clock",
+        "header_ns": 1399916739678
+      },
+      {
+        "message_id": 1490355,
+        "recorded_ns": 1399933406346,
+        "topic": "/clock",
+        "header_ns": 1399933406346
+      },
+      {
+        "message_id": 1490374,
+        "recorded_ns": 1399950073013,
+        "topic": "/clock",
+        "header_ns": 1399950073013
+      }
+    ]
+  },
+  "startup_command_receipt": {
+    "actual_receiver_clock_s": 9.083333807,
+    "baseline": {
+      "carter1": {
+        "cmd_vel": 0,
+        "command_sequence": 0
+      },
+      "carter2": {
+        "cmd_vel": 0,
+        "command_sequence": 0
+      },
+      "carter3": {
+        "cmd_vel": 0,
+        "command_sequence": 0
+      },
+      "carter4": {
+        "cmd_vel": 0,
+        "command_sequence": 0
+      }
+    },
+    "boundary": {
+      "ready": true,
+      "robots": {
+        "carter1": {
+          "at_initial_start": true,
+          "hold_valid": true,
+          "stopped": true
+        },
+        "carter2": {
+          "at_initial_start": true,
+          "hold_valid": true,
+          "stopped": true
+        },
+        "carter3": {
+          "at_initial_start": true,
+          "hold_valid": true,
+          "stopped": true
+        },
+        "carter4": {
+          "at_initial_start": true,
+          "hold_valid": true,
+          "stopped": true
+        }
+      }
+    },
+    "probe_publishers_destroyed": 4,
+    "probe_started_sim_time_s": 6.150000321,
+    "published_per_robot": {
+      "carter1": 254,
+      "carter2": 254,
+      "carter3": 254,
+      "carter4": 254
+    },
+    "qualified_sim_time_s": 9.083333807,
+    "receipt": {
+      "physics_frame": 544,
+      "ready": true,
+      "reason": null,
+      "robots": {
+        "carter1": {
+          "cmd_vel": 67,
+          "command_sequence": 67,
+          "command_sim_time_s": 9.05000047199428,
+          "last_accepted_command": {
+            "angular_rad_s": 0.0,
+            "linear_m_s": 0.0
+          },
+          "reason": null
+        },
+        "carter2": {
+          "cmd_vel": 67,
+          "command_sequence": 67,
+          "command_sim_time_s": 9.05000047199428,
+          "last_accepted_command": {
+            "angular_rad_s": 0.0,
+            "linear_m_s": 0.0
+          },
+          "reason": null
+        },
+        "carter3": {
+          "cmd_vel": 67,
+          "command_sequence": 67,
+          "command_sim_time_s": 9.05000047199428,
+          "last_accepted_command": {
+            "angular_rad_s": 0.0,
+            "linear_m_s": 0.0
+          },
+          "reason": null
+        },
+        "carter4": {
+          "cmd_vel": 67,
+          "command_sequence": 67,
+          "command_sim_time_s": 9.05000047199428,
+          "last_accepted_command": {
+            "angular_rad_s": 0.0,
+            "linear_m_s": 0.0
+          },
+          "reason": null
+        }
+      },
+      "sim_time_s": 9.066667139530182
+    },
+    "run_id": "bcf1f7b9613f42cfbe2949a838e13c2e",
+    "scenario_id": "fleet4_transport_normal",
+    "schema_name": "g3-startup-command-receipt",
+    "schema_version": 1,
+    "scope": "actual accepted zero-command readiness only; no sender attribution or motion qualification",
+    "status": "ready",
+    "wall_deadline_s": 71352.517377291
+  },
+  "postprocessing_scope": "Closed recorder only: last2seconds decoded for TF freshness diagnosis after bothOS/Job closure; no active bag read/copy.",
+  "external_resource_wall_bound_s": 9000,
+  "inflight_bounds_changed": false,
+  "preservation": [
+    "D:/FactoryOpsArtifacts/operations-081/checkpoint-001",
+    "E:/FactoryOpsArtifacts/operations-081/checkpoint-001"
+  ]
+}

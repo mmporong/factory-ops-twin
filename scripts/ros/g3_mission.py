@@ -810,6 +810,53 @@ def localization_payload(transform: Any, *, now_s: float, ttl_s: float) -> dict[
     return {"x_m": values[0], "y_m": values[1], "yaw_rad": math.atan2(2*(q.w*q.z+q.x*q.y), 1-2*(q.y*q.y+q.z*q.z)), "stamp_s": stamp}
 
 
+def sample_localization_batch(robot_ids: Sequence[str], *, drain: Callable[[], Any],
+        read_clock_ns: Callable[[], int], lookup: Callable[[str], Any],
+        cached: Mapping[str, Any], ttl_s: float, require_fresh: bool,
+        max_attempts: int = 1, checkpoint: Callable[[Mapping[str, Any]], None] = lambda _: None,
+        ) -> tuple[int, dict[str, Any]]:
+    """Retry dispatch only; admit no stale pose and commit no partial fleet observation."""
+    if type(max_attempts) is not int or not 1 <= max_attempts <= 3:
+        raise ValueError("localization dispatch requires one through three attempts")
+    history = []
+    previous = -1
+    for attempt in range(1, max_attempts + 1):
+        dispatch = drain()
+        clock_ns = read_clock_ns()
+        if type(clock_ns) is not int or clock_ns < previous or clock_ns < 0:
+            raise ValueError("localization dispatch clock must be actual, nonnegative and monotonic")
+        previous = clock_ns
+        stamp = clock_ns / 1e9
+        poses, missing, observed = {}, [], {}
+        for robot in robot_ids:
+            transform = lookup(robot)
+            pose, reason = None, "missing_transform"
+            if transform is not None:
+                try:
+                    pose = localization_payload(transform, now_s=stamp, ttl_s=ttl_s)
+                    reason = None
+                except PoseNotFreshError as error:
+                    reason = str(error)
+            prior = cached.get(robot)
+            prior_fresh = prior is not None and 0 <= stamp-prior["stamp_s"] <= ttl_s
+            if require_fresh and pose is None and not prior_fresh:
+                missing.append(robot)
+            observed[robot] = {"reason": reason, "cached_pose_fresh": prior_fresh,
+                "accepted_stamp_s": pose["stamp_s"] if pose is not None else None}
+            poses[robot] = pose
+        history.append({"attempt": attempt, "clock_ns": clock_ns, "dispatch": dispatch,
+                        "robots": observed, "missing_fresh_robot_ids": missing})
+        if not missing:
+            if attempt > 1:
+                checkpoint({"status": "recovered", "attempts": history, "ttl_s": ttl_s,
+                            "scope": "actual callback dispatch and clock reread; no stamp or TTL change"})
+            return clock_ns, poses
+        if attempt == max_attempts:
+            checkpoint({"status": "failed", "attempts": history, "ttl_s": ttl_s})
+            raise RuntimeError(f"fresh map pose unavailable for {missing[0]}")
+    raise AssertionError("bounded localization dispatch returned no outcome")
+
+
 def mission_energy_load(mission: FleetMission, material: MaterialFlow | None, robot: str) -> bool:
     """Operational load affects virtual consumption; payload contact is unmeasured."""
     product_loaded = mission.ledger.robots[robot].payload_id is not None
@@ -1809,36 +1856,37 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
 
         tick_clock_ns = 0
 
-        def tick(*, require_fresh: bool, refresh_leases: bool = True) -> float:
-            nonlocal tick_clock_ns
+        def drain_for_localization() -> dict[str, Any]:
             if time.monotonic() > deadline or launch.poll() is not None or bag.poll() is not None:
                 raise RuntimeError("G3 worker wall bound or dependent process failed")
             scene_path = output / scene_result_name
             if scene_path.is_file() and json.loads(scene_path.read_text())["status"] == "failed":
                 raise RuntimeError("G3 scene failed")
-            callback_drain.drain()
+            dispatch = callback_drain.drain()
             if not evidence_subscribers_ready((event_pub, auth_pub, route_pub)) or not named_subscriber_topics_ready(event_node, (*recorded_scan_topics, *service_event_topics), "rosbag2_recorder"):
                 raise RuntimeError("G3 evidence/scan recording subscriptions were lost")
-            tick_clock_ns = event_node.get_clock().now().nanoseconds
+            return dispatch
+
+        def lookup_localization(robot: str) -> Any:
+            try:
+                return robots[robot]["tf"].lookup_transform("map", "base_link", Time())
+            except TransformException:
+                return None
+
+        def tick(*, require_fresh: bool, refresh_leases: bool = True) -> float:
+            nonlocal tick_clock_ns
+            retry_enabled = result.get("startup_command_receipt", {}).get("status") == "ready"
+            tick_clock_ns, poses = sample_localization_batch(robot_ids,
+                drain=drain_for_localization,
+                read_clock_ns=lambda: event_node.get_clock().now().nanoseconds,
+                lookup=lookup_localization, cached={r: rt["pose"] for r, rt in robots.items()},
+                ttl_s=runtime_config["pose_ttl_s"], require_fresh=require_fresh,
+                max_attempts=3 if retry_enabled and require_fresh else 1,
+                checkpoint=lambda state: atomic_json(output / "localization-dispatch-state.json",
+                    {"run_id": args.run_id, "scenario_id": scenario_id, **state}))
             stamp = tick_clock_ns / 1e9
             for robot, rt in robots.items():
-                try:
-                    transform = rt["tf"].lookup_transform("map", "base_link", Time())
-                except TransformException as error:
-                    cached = rt["pose"]
-                    if require_fresh and (cached is None or not 0 <= stamp-cached["stamp_s"] <= runtime_config["pose_ttl_s"]):
-                        raise RuntimeError(f"fresh map pose unavailable for {robot}") from error
-                    transform = None
-                if transform is not None:
-                    try:
-                        pose = localization_payload(transform, now_s=stamp, ttl_s=runtime_config["pose_ttl_s"])
-                    except PoseNotFreshError as error:
-                        cached = rt["pose"]
-                        if require_fresh and (cached is None or not 0 <= stamp-cached["stamp_s"] <= runtime_config["pose_ttl_s"]):
-                            raise RuntimeError(f"fresh map pose unavailable for {robot}") from error
-                        pose = None
-                else:
-                    pose = None
+                pose = poses[robot]
                 if pose is not None:
                     occupied = tiles_at((pose["x_m"], pose["y_m"]), book.planning_radius_m)
                     if rt["generation"] is not None and not occupied.issubset(rt["held_tiles"]):

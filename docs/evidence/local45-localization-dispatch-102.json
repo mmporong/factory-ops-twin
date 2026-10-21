@@ -1,0 +1,37 @@
+{
+  "status": "CPU_and_Python310_AST_passed_native_pending",
+  "source_run038": "bcf1f7b9613f42cfbe2949a838e13c2e",
+  "original038_remains_failed": true,
+  "goal80_complete": false,
+  "implementation_scope": "Only after local45 PhysX4 startup zero-command gate ready; at most3 bounded fair drain calls, each existing64round/.05wall budget. Current actual clock reread each attempt; all robot poses sampled before reservation/lease side effects. Canonical path remains1attempt. No stale/future pose admission, TTL/stamp/clock/mission bound change or new publisher. Persistent absence and invalid transforms/dependency errors fail.",
+  "CPU": {
+    "command": ".venv/Scripts/python.exe -X utf8 -B -m unittest tests.test_localization_dispatch -v",
+    "tests": 8,
+    "wall_s": 0.002,
+    "exit_code": 0,
+    "scope": "Authored header/scheduling fixture using038 closed recorded clock/header values; not native callback ordering/physical replay."
+  },
+  "AST": {
+    "python": "3.10.15",
+    "files": 2,
+    "exit_code": 0
+  },
+  "installed_versions": {
+    "rclpy": "7.1.12-1noble.20260912.162354",
+    "tf2_ros_py": "0.36.23-1noble.20260915.174232"
+  },
+  "installed_source_sha256": {
+    "rclpy/executors.py": "46f052cf43e1fa1040af235f3508a0a8c00d98a2ab59b8dcaed9aceb3921a452",
+    "tf2_ros/buffer.py": "bc93467198a3d1b5807ab9599493b74ab7360a90d6cef327426e6515a7d30631"
+  },
+  "official_upstream": [
+    "https://raw.githubusercontent.com/ros2/geometry2/jazzy/tf2_ros_py/tf2_ros/buffer.py",
+    "https://raw.githubusercontent.com/ros2/rclpy/jazzy/rclpy/rclpy/executors.py"
+  ],
+  "version_scope": "Jazzy upstream semantics checked; installed source SHA/version distinguished from mutable branch. No SDK4.5 support-matrix claim.",
+  "source_sha256": {
+    "scripts/ros/g3_mission.py": "063b2d7fd6869225f75a3fb26261a03ce36f430bf47a3176227f83b9b46bc4af",
+    "tests/test_localization_dispatch.py": "bbe937d3e4405a9fc0c606f311df6cbce3d82567c4f761409221a61498797c04",
+    "tests/fixtures/local45-038-tf-freshness.json": "46aa8a2056a98c92ee502270d6ad349f26e9884975a7c858ae78333349b0857d"
+  }
+}
