@@ -129,7 +129,11 @@ def main() -> int:
             z = manifest["mount_plane_z_m"]
             cube(path, [post["size_m"][0]*2, post["size_m"][1]*2, z],
                  [post["center_m"][0], post["center_m"][1], z/2], "stand_%d" % i, (.55, .59, .66))
-            stand_ids.add("stand_%d" % i)
+            key = "stand_%d" % i
+            stand_ids.add(key)
+            sensors[key] = world.scene.add(ContactSensor(prim_path=path+"/ContactSensor", name=key+"_contact",
+                dt=dt, radius=-1., min_threshold=cfg["minimum_force_n"], max_threshold=1e6))
+            sensors[key].add_raw_contact_data_to_frame()
         UsdLux.DomeLight.Define(stage, "/World/Light").CreateIntensityAttr(1300.)
         # Initialize physics before creating persistent render products.
         world.reset()
@@ -142,7 +146,7 @@ def main() -> int:
         report.update(status="running", stage="settling")
         save(args.output/"result.json", report)
         previous_time, previous_frame = float(world.current_time), int(world.current_time_step_index)
-        last_sensor = {k: (-1., -1) for k in paths}
+        last_sensor = {k: (-1., -1) for k in sensors}
         contact_since = separate_since = None
         settled = released = separated = False
         sample_count = 0
@@ -175,7 +179,8 @@ def main() -> int:
                         raise ValueError("nonfinite native body observation")
                     states[key] = {"position_m": position.tolist(), "orientation_wxyz": rotation.tolist(),
                         "linear_velocity_m_s": linear.tolist(), "angular_velocity_rad_s": angular.tolist()}
-                    raw = sensors[key].get_current_frame()
+                for key, sensor in sensors.items():
+                    raw = sensor.get_current_frame()
                     sensor_time, sensor_frame = float(raw["time"]), int(raw["physics_step"])
                     if (not math.isfinite(sensor_time) or sensor_time < last_sensor[key][0]
                             or sensor_frame < last_sensor[key][1]):
@@ -193,8 +198,10 @@ def main() -> int:
                         "fresh": fresh, "force_n": force, "in_contact": bool(raw.get("in_contact", False)),
                         "raw_actor_pairs": pairs, "body_pairs": mapped}
                     last_sensor[key] = (sensor_time, sensor_frame)
-                supported = {v for pair in contacts["carrier"]["body_pairs"] for v in pair
-                             if "carrier" in pair and v in stand_ids}
+                supported = {key for key in stand_ids
+                    if sorted(["carrier", key]) in contacts[key]["body_pairs"]
+                    and contacts[key]["fresh"] and contacts[key]["in_contact"]
+                    and contacts[key]["force_n"] >= cfg["minimum_force_n"]}
                 tote_pair = ["carrier", "tote"] in contacts["tote"]["body_pairs"]
                 stationary = all(np.linalg.norm(s["linear_velocity_m_s"]) <= cfg["stationary_linear_m_s"]
                     and np.linalg.norm(s["angular_velocity_rad_s"]) <= cfg["stationary_angular_rad_s"] for s in states.values())
