@@ -6,6 +6,7 @@ from dataclasses import asdict, dataclass
 import hashlib
 import json
 import math
+import os
 from pathlib import Path
 import re
 from typing import Any, Mapping, Sequence
@@ -78,8 +79,8 @@ def export_visual_scene(
     """Author a visual-only USD layer and a composition over ``factory-v3.usda``.
 
     The visual layer never authors collision APIs. Equipment geometry remains
-    inside the source obstacle's authored XYZ envelope; the only geometry over
-    free map cells is millimetre-thin floor paint and overhead lighting.
+    inside the source obstacle's authored XYZ envelope. Optional background
+    props occupy measured floor footprints outside all AMR operating regions.
     """
     if isinstance(variant_seed, bool) or not isinstance(variant_seed, int) or not 0 <= variant_seed < 12:
         raise LayoutError("variant_seed must be an integer in [0, 11]")
@@ -148,6 +149,13 @@ def export_visual_scene(
                 source_bounds_xy_m=source_bounds,
                 asset=f"{recipe}/{box.name}",
             ))
+    context = None
+    if config.get("environment", {}).get("fixtures"):
+        from .factory_context import build_factory_context
+        context = build_factory_context(layout, config["environment"], cache_root=Path(
+            os.environ.get("FACTORY_OPS_ASSET_CACHE", str(Path(__file__).resolve().parents[1]/"assets/vendor/simready-context"))))
+        lines.extend(context["lines"])
+        instances.extend(VisualInstance(**item) for item in context["instances"])
     lines.extend(["    }", "}", ""])
     visual_text = "\n".join(lines)
     if "PhysicsCollisionAPI" in visual_text or "physics:collisionEnabled" in visual_text:
@@ -183,7 +191,7 @@ def export_visual_scene(
             "license": config["license"],
             "source": config["source"],
             "asset_source_sha256": config_sha,
-            "external_asset_packages": [],
+            "external_asset_packages": context["packages"] if context else [],
         },
         "semantic_taxonomy": config["required_semantic_taxonomy"],
         "runtime_semantics": config["runtime_semantics"],
@@ -203,6 +211,11 @@ def export_visual_scene(
             "unchanged": ["source obstacle bounds", "physical colliders", "aisles", "stations", "LiDAR reference envelopes", "instance stable IDs"],
         },
     }
+    if context is not None:
+        manifest["physical_invariants"]["source_xyz_invariant_scope"] = "operational equipment instances with a source_obstacle_id; context uses its own measured footprints"
+        manifest["factory_context"] = {"scope": context["scope"], "fixture_count": len(context["instances"]),
+            "placement": "native asset dimensions; outside AMR regions and docking/parking areas with 0.1m clearance",
+            "physics": "background visuals only; original navigation/collision scene remains authoritative"}
     manifest_path = output / "visual-scene-manifest.json"
     manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8", newline="\n")
     result = dict(manifest)
@@ -236,7 +249,7 @@ def _require_regular_file(path: Path, label: str) -> None:
 
 def _validate_config(config: Mapping[str, Any], layout: Layout) -> None:
     required = {"schema_version", "provider", "author", "license", "source", "variant_count", "required_semantic_taxonomy", "runtime_semantics", "obstacle_assets"}
-    if set(config) != required:
+    if not required <= set(config) or not set(config) <= required | {"environment"}:
         raise LayoutError(f"visual asset config keys must be exactly {sorted(required)}")
     if config["schema_version"] != SCHEMA_VERSION or config["variant_count"] != 12:
         raise LayoutError("visual asset config schema or variant count is unsupported")

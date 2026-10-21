@@ -2,8 +2,8 @@
   "schema_version": 1,
   "provider": "factory-ops-twin",
   "author": "factory-ops-twin project",
-  "license": "CC0-1.0",
-  "source": "Generic reference-based semiconductor final-test/pack OpenUSD geometry; not manufacturer CAD. References and authored envelopes are in layout.production_domain.",
+  "license": "CC0-1.0 AND CC-BY-4.0",
+  "source": "Reference-based authored semiconductor process geometry (CC0-1.0) and attributed NVIDIA SimReady service-area props (CC-BY-4.0); not manufacturer CAD or certified ESD equipment.",
   "variant_count": 12,
   "required_semantic_taxonomy": [
     "floor",
@@ -120,5 +120,412 @@
       "semantic_class": "control_cabinet",
       "state_role": "utility, filter and electrical cabinet row"
     }
+  },
+  "environment": {
+    "revision": "524747d9b5e1f21b5b18b56041788c01d745f1a1",
+    "repository": "nvidia/simready-assets",
+    "scope": "Authored static service-area context outside AMR operating regions; no ESD certification or process/robot physics claim",
+    "catalog": {
+      "workbench": {
+        "package": "furniture_workbench_modular_a01",
+        "root_usd": "simready_usd/sm_furniture_workbench_modular_a01_01.usd",
+        "author": "NVIDIA",
+        "license": "CC-BY-4.0",
+        "license_url": "https://huggingface.co/datasets/nvidia/simready-assets/blob/524747d9b5e1f21b5b18b56041788c01d745f1a1/furniture_workbench_modular_a01/.metadata/LICENSE.txt",
+        "source_url": "https://huggingface.co/datasets/nvidia/simready-assets/tree/524747d9b5e1f21b5b18b56041788c01d745f1a1/furniture_workbench_modular_a01"
+      },
+      "cabinet": {
+        "package": "equipment_rolling_workstation_cabinet_c01",
+        "root_usd": "simready_usd/sm_equipment_rolling_workstation_cabinet_c01_01.usd",
+        "author": "NVIDIA",
+        "license": "CC-BY-4.0",
+        "license_url": "https://huggingface.co/datasets/nvidia/simready-assets/blob/524747d9b5e1f21b5b18b56041788c01d745f1a1/equipment_rolling_workstation_cabinet_c01/.metadata/LICENSE.txt",
+        "source_url": "https://huggingface.co/datasets/nvidia/simready-assets/tree/524747d9b5e1f21b5b18b56041788c01d745f1a1/equipment_rolling_workstation_cabinet_c01"
+      },
+      "cart": {
+        "package": "equipment_utility_cart_e01",
+        "root_usd": "simready_usd/sm_equipment_utility_cart_e01_01.usd",
+        "author": "NVIDIA",
+        "license": "CC-BY-4.0",
+        "license_url": "https://huggingface.co/datasets/nvidia/simready-assets/blob/524747d9b5e1f21b5b18b56041788c01d745f1a1/equipment_utility_cart_e01/.metadata/LICENSE.txt",
+        "source_url": "https://huggingface.co/datasets/nvidia/simready-assets/tree/524747d9b5e1f21b5b18b56041788c01d745f1a1/equipment_utility_cart_e01"
+      }
+    },
+    "fixtures": [
+      {
+        "id": "MAINT_TOOL_STORAGE_01",
+        "asset": "workbench",
+        "center_xy": [
+          19.6,
+          0.75
+        ],
+        "yaw_deg": 90,
+        "role": "closed maintenance tool storage; not product storage",
+        "semantic_class": "control_cabinet"
+      },
+      {
+        "id": "MAINT_ROLLING_BENCH_01",
+        "asset": "cabinet",
+        "center_xy": [
+          19.6,
+          2.65
+        ],
+        "yaw_deg": 90,
+        "role": "parked offline maintenance workstation",
+        "semantic_class": "workbench"
+      },
+      {
+        "id": "MAINT_TOOL_STORAGE_02",
+        "asset": "workbench",
+        "center_xy": [
+          21.6,
+          0.75
+        ],
+        "yaw_deg": 90,
+        "role": "closed maintenance tool storage; not product storage",
+        "semantic_class": "control_cabinet"
+      },
+      {
+        "id": "MAINT_ROLLING_BENCH_02",
+        "asset": "cabinet",
+        "center_xy": [
+          21.6,
+          2.65
+        ],
+        "yaw_deg": 90,
+        "role": "parked offline maintenance workstation",
+        "semantic_class": "workbench"
+      },
+      {
+        "id": "MAINT_TOOL_STORAGE_03",
+        "asset": "workbench",
+        "center_xy": [
+          23.6,
+          0.75
+        ],
+        "yaw_deg": 90,
+        "role": "closed maintenance tool storage; not product storage",
+        "semantic_class": "control_cabinet"
+      },
+      {
+        "id": "MAINT_ROLLING_BENCH_03",
+        "asset": "cabinet",
+        "center_xy": [
+          23.6,
+          2.65
+        ],
+        "yaw_deg": 90,
+        "role": "parked offline maintenance workstation",
+        "semantic_class": "workbench"
+      },
+      {
+        "id": "MAINT_TOOL_STORAGE_04",
+        "asset": "workbench",
+        "center_xy": [
+          25.6,
+          0.75
+        ],
+        "yaw_deg": 90,
+        "role": "closed maintenance tool storage; not product storage",
+        "semantic_class": "control_cabinet"
+      },
+      {
+        "id": "MAINT_ROLLING_BENCH_04",
+        "asset": "cabinet",
+        "center_xy": [
+          25.6,
+          2.65
+        ],
+        "yaw_deg": 90,
+        "role": "parked offline maintenance workstation",
+        "semantic_class": "workbench"
+      },
+      {
+        "id": "MAINT_TOOL_STORAGE_05",
+        "asset": "workbench",
+        "center_xy": [
+          27.6,
+          0.75
+        ],
+        "yaw_deg": 90,
+        "role": "closed maintenance tool storage; not product storage",
+        "semantic_class": "control_cabinet"
+      },
+      {
+        "id": "MAINT_ROLLING_BENCH_05",
+        "asset": "cabinet",
+        "center_xy": [
+          27.6,
+          2.65
+        ],
+        "yaw_deg": 90,
+        "role": "parked offline maintenance workstation",
+        "semantic_class": "workbench"
+      },
+      {
+        "id": "MAINT_TOOL_STORAGE_06",
+        "asset": "workbench",
+        "center_xy": [
+          29.6,
+          0.75
+        ],
+        "yaw_deg": 90,
+        "role": "closed maintenance tool storage; not product storage",
+        "semantic_class": "control_cabinet"
+      },
+      {
+        "id": "MAINT_ROLLING_BENCH_06",
+        "asset": "cabinet",
+        "center_xy": [
+          29.6,
+          2.65
+        ],
+        "yaw_deg": 90,
+        "role": "parked offline maintenance workstation",
+        "semantic_class": "workbench"
+      },
+      {
+        "id": "MAINT_PARTS_CART_01",
+        "asset": "cart",
+        "center_xy": [
+          20.6,
+          1.75
+        ],
+        "yaw_deg": 0,
+        "role": "parked maintenance parts cart outside production material flow",
+        "semantic_class": "buffer_fixture"
+      },
+      {
+        "id": "MAINT_PARTS_CART_02",
+        "asset": "cart",
+        "center_xy": [
+          22.6,
+          1.75
+        ],
+        "yaw_deg": 0,
+        "role": "parked maintenance parts cart outside production material flow",
+        "semantic_class": "buffer_fixture"
+      },
+      {
+        "id": "MAINT_PARTS_CART_03",
+        "asset": "cart",
+        "center_xy": [
+          24.6,
+          1.75
+        ],
+        "yaw_deg": 0,
+        "role": "parked maintenance parts cart outside production material flow",
+        "semantic_class": "buffer_fixture"
+      },
+      {
+        "id": "MAINT_PARTS_CART_04",
+        "asset": "cart",
+        "center_xy": [
+          26.6,
+          1.75
+        ],
+        "yaw_deg": 0,
+        "role": "parked maintenance parts cart outside production material flow",
+        "semantic_class": "buffer_fixture"
+      },
+      {
+        "id": "MAINT_PARTS_CART_05",
+        "asset": "cart",
+        "center_xy": [
+          28.6,
+          1.75
+        ],
+        "yaw_deg": 0,
+        "role": "parked maintenance parts cart outside production material flow",
+        "semantic_class": "buffer_fixture"
+      },
+      {
+        "id": "INCOMING_SERVICE_TOOLS",
+        "asset": "workbench",
+        "center_xy": [
+          8.5,
+          0.75
+        ],
+        "yaw_deg": 90,
+        "role": "incoming loadport service tool storage",
+        "semantic_class": "control_cabinet"
+      },
+      {
+        "id": "INCOMING_SERVICE_BENCH",
+        "asset": "cabinet",
+        "center_xy": [
+          9.3,
+          2.35
+        ],
+        "yaw_deg": 90,
+        "role": "offline incoming loadport service bench",
+        "semantic_class": "workbench"
+      },
+      {
+        "id": "INCOMING_SERVICE_CART",
+        "asset": "cart",
+        "center_xy": [
+          8.0,
+          2.35
+        ],
+        "yaw_deg": 90,
+        "role": "parked incoming loadport service cart",
+        "semantic_class": "buffer_fixture"
+      },
+      {
+        "id": "SOUTH_TECH_TOOLS",
+        "asset": "workbench",
+        "center_xy": [
+          14.5,
+          0.95
+        ],
+        "yaw_deg": 0,
+        "role": "south technician tool storage between parking bays",
+        "semantic_class": "control_cabinet"
+      },
+      {
+        "id": "SOUTH_TECH_BENCH",
+        "asset": "cabinet",
+        "center_xy": [
+          14.5,
+          2.7
+        ],
+        "yaw_deg": 90,
+        "role": "parked technician workstation between parking bays",
+        "semantic_class": "workbench"
+      },
+      {
+        "id": "RETURN_SERVICE_TOOLS",
+        "asset": "workbench",
+        "center_xy": [
+          8.5,
+          21.25
+        ],
+        "yaw_deg": 90,
+        "role": "carrier-return loadport service tool storage",
+        "semantic_class": "control_cabinet"
+      },
+      {
+        "id": "RETURN_SERVICE_BENCH",
+        "asset": "cabinet",
+        "center_xy": [
+          9.4,
+          19.7
+        ],
+        "yaw_deg": 90,
+        "role": "offline carrier-return loadport service bench",
+        "semantic_class": "workbench"
+      },
+      {
+        "id": "RETURN_SERVICE_CART",
+        "asset": "cart",
+        "center_xy": [
+          8.0,
+          19.7
+        ],
+        "yaw_deg": 90,
+        "role": "parked return-loadport service cart",
+        "semantic_class": "buffer_fixture"
+      },
+      {
+        "id": "NORTH_TECH_TOOLS",
+        "asset": "workbench",
+        "center_xy": [
+          14.5,
+          21.0
+        ],
+        "yaw_deg": 0,
+        "role": "north technician tool storage between parking bays",
+        "semantic_class": "control_cabinet"
+      },
+      {
+        "id": "NORTH_TECH_BENCH",
+        "asset": "cabinet",
+        "center_xy": [
+          14.5,
+          19.4
+        ],
+        "yaw_deg": 90,
+        "role": "parked north technician workstation",
+        "semantic_class": "workbench"
+      },
+      {
+        "id": "WEST_SERVICE_TOOLS_LOW",
+        "asset": "workbench",
+        "center_xy": [
+          1.0,
+          5.2
+        ],
+        "yaw_deg": 0,
+        "role": "west perimeter maintenance tool storage",
+        "semantic_class": "control_cabinet"
+      },
+      {
+        "id": "WEST_SERVICE_CART_LOW",
+        "asset": "cart",
+        "center_xy": [
+          0.9,
+          3.65
+        ],
+        "yaw_deg": 0,
+        "role": "west perimeter parked maintenance cart",
+        "semantic_class": "buffer_fixture"
+      },
+      {
+        "id": "WEST_SERVICE_TOOLS_MID",
+        "asset": "workbench",
+        "center_xy": [
+          1.0,
+          11.0
+        ],
+        "yaw_deg": 0,
+        "role": "WIP stocker maintenance tool storage",
+        "semantic_class": "control_cabinet"
+      },
+      {
+        "id": "EAST_SERVICE_TOOLS_LOW",
+        "asset": "workbench",
+        "center_xy": [
+          31.4,
+          5.2
+        ],
+        "yaw_deg": 0,
+        "role": "packaging equipment maintenance tool storage",
+        "semantic_class": "control_cabinet"
+      },
+      {
+        "id": "EAST_SERVICE_CART_LOW",
+        "asset": "cart",
+        "center_xy": [
+          31.4,
+          3.65
+        ],
+        "yaw_deg": 90,
+        "role": "parked packaging equipment service cart",
+        "semantic_class": "buffer_fixture"
+      },
+      {
+        "id": "EAST_SERVICE_TOOLS_MID",
+        "asset": "workbench",
+        "center_xy": [
+          31.4,
+          11.0
+        ],
+        "yaw_deg": 0,
+        "role": "outbound loadport service tool storage",
+        "semantic_class": "control_cabinet"
+      },
+      {
+        "id": "EAST_SERVICE_TOOLS_HIGH",
+        "asset": "workbench",
+        "center_xy": [
+          31.4,
+          17.2
+        ],
+        "yaw_deg": 0,
+        "role": "north utility service tool storage",
+        "semantic_class": "control_cabinet"
+      }
+    ]
   }
 }

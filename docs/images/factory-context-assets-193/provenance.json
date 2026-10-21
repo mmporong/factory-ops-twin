@@ -1,0 +1,35 @@
+{
+  "revision": "524747d9b5e1f21b5b18b56041788c01d745f1a1",
+  "records": [
+    {
+      "file": "tool-cabinet.png",
+      "author": "NVIDIA",
+      "license": "CC-BY-4.0",
+      "source_path": "furniture_workbench_modular_a01/simready_usd/.thumbs/256x256/sm_furniture_workbench_modular_a01_01.usd.png",
+      "source_url": "https://huggingface.co/datasets/nvidia/simready-assets/blob/524747d9b5e1f21b5b18b56041788c01d745f1a1/furniture_workbench_modular_a01/simready_usd/.thumbs/256x256/sm_furniture_workbench_modular_a01_01.usd.png",
+      "sha256": "d367b1a56bd724d655cdf756dd6dcd046b493abc62d2ff50aefe96836a029f82",
+      "modifications": "none; byte-identical copy of vendor thumbnail",
+      "scope": "vendor model preview, not project-rendered RGB"
+    },
+    {
+      "file": "rolling-workstation.png",
+      "author": "NVIDIA",
+      "license": "CC-BY-4.0",
+      "source_path": "equipment_rolling_workstation_cabinet_c01/simready_usd/.thumbs/256x256/sm_equipment_rolling_workstation_cabinet_c01_01.usd.png",
+      "source_url": "https://huggingface.co/datasets/nvidia/simready-assets/blob/524747d9b5e1f21b5b18b56041788c01d745f1a1/equipment_rolling_workstation_cabinet_c01/simready_usd/.thumbs/256x256/sm_equipment_rolling_workstation_cabinet_c01_01.usd.png",
+      "sha256": "9fe23b985be9969ee03f6e1e700e184709b18ccac00d7e77783ddb77a4234fd2",
+      "modifications": "none; byte-identical copy of vendor thumbnail",
+      "scope": "vendor model preview, not project-rendered RGB"
+    },
+    {
+      "file": "utility-cart.png",
+      "author": "NVIDIA",
+      "license": "CC-BY-4.0",
+      "source_path": "equipment_utility_cart_e01/simready_usd/.thumbs/256x256/sm_equipment_utility_cart_e01_01.usd.png",
+      "source_url": "https://huggingface.co/datasets/nvidia/simready-assets/blob/524747d9b5e1f21b5b18b56041788c01d745f1a1/equipment_utility_cart_e01/simready_usd/.thumbs/256x256/sm_equipment_utility_cart_e01_01.usd.png",
+      "sha256": "9829ae1f3be2793fcee702ad2a589576e7a21b855b28991219f4e92b300a5758",
+      "modifications": "none; byte-identical copy of vendor thumbnail",
+      "scope": "vendor model preview, not project-rendered RGB"
+    }
+  ]
+}

@@ -14,6 +14,17 @@
 
 위 두 장은 **Isaac Sim4.5에서 촬영한 정지 RGB**입니다. 공개 기능 자료를 참고한 비브랜드 절차형 설비이며, 제조사 CAD나 앞서 생성한 예상 이미지가 아닙니다. AMR 반복 운송이나 공장 처리량의 근거로 사용하지 않습니다. [촬영 소스·시점·카메라·원본 해시·종료 기록](docs/images/semiconductor-layout-local45-188/provenance.json)
 
+<details>
+<summary>지원 구역에 배치한 NVIDIA SimReady 모델 · 새 렌더 촬영 대기</summary>
+
+| 공구 보관 캐비닛 · 15개 | 이동식 정비 작업대 · 10개 | 정비 부품 카트 · 9개 |
+|---|---|---|
+| ![NVIDIA 원본 캐비닛 모델 미리보기](docs/images/factory-context-assets-193/tool-cabinet.png) | ![NVIDIA 원본 이동식 작업대 모델 미리보기](docs/images/factory-context-assets-193/rolling-workstation.png) | ![NVIDIA 원본 정비 카트 모델 미리보기](docs/images/factory-context-assets-193/utility-cart.png) |
+
+NVIDIA 제공 모델 미리보기이며 새 공장 촬영 결과는 아닙니다. 재질·텍스처가 포함된3종을 정비·입고 지원·외곽 서비스 공간에34개 배치했습니다. 실제 USD 합성에서 모델 크기·위치와 AMR 구역의10cm 이격을 확인했습니다. 새 에셋의 Isaac Sim RGB 촬영은 남아 있으며, 위188 촬영과 진행 중인 동결 운송063에는 포함되지 않습니다. 제작자 NVIDIA, CC BY 4.0. [원본·라이선스·변경 내용·캐시 준비법](docs/asset-attribution.md) · [합성 근거](docs/evidence/factory-context-193.json)
+
+</details>
+
 **자재 공급 → 공정 처리 → 완제품 이송 → 출하 → 빈 용기 반납**의 전체 운영과 같은 실행의 관제 상태를 보여줍니다. [현재 보존된 전체 업무 영상](docs/images/fleet4-local45-036/operations-business-complete.mp4)은 명목74배속 요약입니다. 해당 실행은 출하3건·빈 토트 반납3건을 기록했으나 최종 기록 종료 검사에 실패했습니다.
 
 여섯 운영 단계의 원속도 촬영과 상태 패널을 묶는 내보내기 도구를 준비했습니다. 후속 수집 설정은 영상에 사용하는 각3초·180프레임에 맞춰 최대1,080장으로 제한합니다. 전체 공장1280×720 원본에 차량 ID를 표시하고, 재고·출하·반납 집계와4대의 작업·목적지·속도·가상 SOC를 같은 촬영 시점으로 붙입니다. 운송 구간은 해당 화물의 운반 차량이 실제로 이동하거나 회전한 원본만 사용합니다. 새 정상 완료 실행의 촬영·인코딩은 남아 있으며, 전체 디지털 트윈 완성을 주장하지 않습니다.

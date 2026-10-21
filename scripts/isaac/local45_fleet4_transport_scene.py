@@ -23,7 +23,7 @@ LOCAL_SOURCE_PINS = BASE_SOURCE_PINS | frozenset({
     "factory_ops/operations/model.py", "scripts/isaac/robot_qualification.py",
     "scripts/isaac/nav_scene.py", "scripts/isaac/stage_smoke.py",
     "factory_ops/visual_state.py", "factory_ops/wsl_process_supervisor.py",
-    "factory_ops/material_visual.py", "factory_ops/ros_topic_relay.py", "factory_ops/ros_topic_relay_pair.py",
+    "factory_ops/material_visual.py", "factory_ops/factory_context.py", "factory_ops/ros_topic_relay.py", "factory_ops/ros_topic_relay_pair.py",
     "factory_ops/planner_guidance.py",
     "factory_ops/carrier_module.py", "factory_ops/carrier_robot.py",
     "scripts/isaac/carrier_native.py", "configs/vehicles/tote-carrier-carter-v2.json",

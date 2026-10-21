@@ -1,0 +1,471 @@
+{
+  "schema_version": 1,
+  "status": "passed",
+  "scope": "CPU-only USD composition; no native renderer, traffic or material-render qualification",
+  "GPU_started": false,
+  "fixture_count": 34,
+  "collision_count_before": 20,
+  "collision_count_after": 20,
+  "physics_apis_in_context": 0,
+  "clearance_m": 0.1,
+  "fixture_footprint_m2": 24.584370703826696,
+  "sources": {
+    "factory_ops/factory_context.py": "11818f1ea8e65c36a8b1e51342d47397fa88fd876d8bfa7ba2ec97bb9e369153",
+    "factory_ops/visual_scene.py": "2d52799c34ab6ccdd7370e1613ec701712f0a5a1ab1531c76330637ea87c371a",
+    "scripts/assets/prepare_factory_context.py": "534d6326a8dd6a6c781c365490756ee0ad88fbc1e1f06a49cf9816cddb64b57c",
+    "configs/factory-semiconductor/visual-assets.json": "6b22c0c77c9670a7bc7869692345e09ec0c682339f5b688d991f886ce62a0798"
+  },
+  "catalog_revision": "524747d9b5e1f21b5b18b56041788c01d745f1a1",
+  "packages": [
+    {
+      "asset_id": "cabinet",
+      "repository": "nvidia/simready-assets",
+      "revision": "524747d9b5e1f21b5b18b56041788c01d745f1a1",
+      "package": "equipment_rolling_workstation_cabinet_c01",
+      "root_usd": "simready_usd/sm_equipment_rolling_workstation_cabinet_c01_01.usd",
+      "author": "NVIDIA",
+      "license": "CC-BY-4.0",
+      "license_url": "https://huggingface.co/datasets/nvidia/simready-assets/blob/524747d9b5e1f21b5b18b56041788c01d745f1a1/equipment_rolling_workstation_cabinet_c01/.metadata/LICENSE.txt",
+      "source_url": "https://huggingface.co/datasets/nvidia/simready-assets/tree/524747d9b5e1f21b5b18b56041788c01d745f1a1/equipment_rolling_workstation_cabinet_c01",
+      "sha256": "96e0f44e4caf8a887dbbb6dc19515b939ccf81b16ea22e12377c2ba3e9574df5",
+      "scope": "render-only; physics APIs removed"
+    },
+    {
+      "asset_id": "cart",
+      "repository": "nvidia/simready-assets",
+      "revision": "524747d9b5e1f21b5b18b56041788c01d745f1a1",
+      "package": "equipment_utility_cart_e01",
+      "root_usd": "simready_usd/sm_equipment_utility_cart_e01_01.usd",
+      "author": "NVIDIA",
+      "license": "CC-BY-4.0",
+      "license_url": "https://huggingface.co/datasets/nvidia/simready-assets/blob/524747d9b5e1f21b5b18b56041788c01d745f1a1/equipment_utility_cart_e01/.metadata/LICENSE.txt",
+      "source_url": "https://huggingface.co/datasets/nvidia/simready-assets/tree/524747d9b5e1f21b5b18b56041788c01d745f1a1/equipment_utility_cart_e01",
+      "sha256": "db599d75ff917a7d482563f97035006ef20e182581fb9cf43d06de5befa47472",
+      "scope": "render-only; physics APIs removed"
+    },
+    {
+      "asset_id": "workbench",
+      "repository": "nvidia/simready-assets",
+      "revision": "524747d9b5e1f21b5b18b56041788c01d745f1a1",
+      "package": "furniture_workbench_modular_a01",
+      "root_usd": "simready_usd/sm_furniture_workbench_modular_a01_01.usd",
+      "author": "NVIDIA",
+      "license": "CC-BY-4.0",
+      "license_url": "https://huggingface.co/datasets/nvidia/simready-assets/blob/524747d9b5e1f21b5b18b56041788c01d745f1a1/furniture_workbench_modular_a01/.metadata/LICENSE.txt",
+      "source_url": "https://huggingface.co/datasets/nvidia/simready-assets/tree/524747d9b5e1f21b5b18b56041788c01d745f1a1/furniture_workbench_modular_a01",
+      "sha256": "85488dddc3f92efcb9777d58b8b51306eadfcc6aa8287cf0fa1994dca4a5b970",
+      "scope": "render-only; physics APIs removed"
+    }
+  ],
+  "checked": [
+    {
+      "id": "MAINT_TOOL_STORAGE_01",
+      "bounds_xyz_m": [
+        18.877268905541865,
+        0.39302181448929496,
+        0.0,
+        20.322731094458145,
+        1.106978185510705,
+        2.0497918472283345
+      ],
+      "max_delta_m": 3.552713678800501e-15
+    },
+    {
+      "id": "MAINT_ROLLING_BENCH_01",
+      "bounds_xyz_m": [
+        19.09164563417435,
+        2.358042949438096,
+        0.0,
+        20.108354365825654,
+        2.9419570505619057,
+        1.3917119353988865
+      ],
+      "max_delta_m": 8.881784197001252e-16
+    },
+    {
+      "id": "MAINT_TOOL_STORAGE_02",
+      "bounds_xyz_m": [
+        20.877268905541868,
+        0.39302181448929496,
+        0.0,
+        22.32273109445815,
+        1.106978185510705,
+        2.0497918472283345
+      ],
+      "max_delta_m": 7.105427357601002e-15
+    },
+    {
+      "id": "MAINT_ROLLING_BENCH_02",
+      "bounds_xyz_m": [
+        21.091645634174355,
+        2.358042949438096,
+        0.0,
+        22.10835436582566,
+        2.9419570505619057,
+        1.3917119353988865
+      ],
+      "max_delta_m": 7.105427357601002e-15
+    },
+    {
+      "id": "MAINT_TOOL_STORAGE_03",
+      "bounds_xyz_m": [
+        22.87726890554186,
+        0.39302181448929496,
+        0.0,
+        24.322731094458142,
+        1.106978185510705,
+        2.0497918472283345
+      ],
+      "max_delta_m": 2.7755575615628914e-16
+    },
+    {
+      "id": "MAINT_ROLLING_BENCH_03",
+      "bounds_xyz_m": [
+        23.091645634174355,
+        2.358042949438096,
+        0.0,
+        24.10835436582566,
+        2.9419570505619057,
+        1.3917119353988865
+      ],
+      "max_delta_m": 7.105427357601002e-15
+    },
+    {
+      "id": "MAINT_TOOL_STORAGE_04",
+      "bounds_xyz_m": [
+        24.877268905541854,
+        0.39302181448929496,
+        0.0,
+        26.322731094458135,
+        1.106978185510705,
+        2.0497918472283345
+      ],
+      "max_delta_m": 7.105427357601002e-15
+    },
+    {
+      "id": "MAINT_ROLLING_BENCH_04",
+      "bounds_xyz_m": [
+        25.09164563417434,
+        2.358042949438096,
+        0.0,
+        26.108354365825647,
+        2.9419570505619057,
+        1.3917119353988865
+      ],
+      "max_delta_m": 7.105427357601002e-15
+    },
+    {
+      "id": "MAINT_TOOL_STORAGE_05",
+      "bounds_xyz_m": [
+        26.877268905541857,
+        0.39302181448929496,
+        0.0,
+        28.32273109445814,
+        1.106978185510705,
+        2.0497918472283345
+      ],
+      "max_delta_m": 3.552713678800501e-15
+    },
+    {
+      "id": "MAINT_ROLLING_BENCH_05",
+      "bounds_xyz_m": [
+        27.09164563417434,
+        2.358042949438096,
+        0.0,
+        28.108354365825647,
+        2.9419570505619057,
+        1.3917119353988865
+      ],
+      "max_delta_m": 7.105427357601002e-15
+    },
+    {
+      "id": "MAINT_TOOL_STORAGE_06",
+      "bounds_xyz_m": [
+        28.87726890554186,
+        0.39302181448929496,
+        0.0,
+        30.322731094458142,
+        1.106978185510705,
+        2.0497918472283345
+      ],
+      "max_delta_m": 2.7755575615628914e-16
+    },
+    {
+      "id": "MAINT_ROLLING_BENCH_06",
+      "bounds_xyz_m": [
+        29.09164563417435,
+        2.358042949438096,
+        0.0,
+        30.108354365825654,
+        2.9419570505619057,
+        1.3917119353988865
+      ],
+      "max_delta_m": 8.881784197001252e-16
+    },
+    {
+      "id": "MAINT_PARTS_CART_01",
+      "bounds_xyz_m": [
+        20.173016166675673,
+        1.5439220070838928,
+        0.0,
+        21.026983833324326,
+        1.9560779929161072,
+        0.9072148539081388
+      ],
+      "max_delta_m": 3.552713678800501e-15
+    },
+    {
+      "id": "MAINT_PARTS_CART_02",
+      "bounds_xyz_m": [
+        22.173016166675673,
+        1.5439220070838928,
+        0.0,
+        23.026983833324326,
+        1.9560779929161072,
+        0.9072148539081388
+      ],
+      "max_delta_m": 3.552713678800501e-15
+    },
+    {
+      "id": "MAINT_PARTS_CART_03",
+      "bounds_xyz_m": [
+        24.173016166675673,
+        1.5439220070838928,
+        0.0,
+        25.026983833324326,
+        1.9560779929161072,
+        0.9072148539081388
+      ],
+      "max_delta_m": 3.552713678800501e-15
+    },
+    {
+      "id": "MAINT_PARTS_CART_04",
+      "bounds_xyz_m": [
+        26.173016166675673,
+        1.5439220070838928,
+        0.0,
+        27.026983833324326,
+        1.9560779929161072,
+        0.9072148539081388
+      ],
+      "max_delta_m": 3.552713678800501e-15
+    },
+    {
+      "id": "MAINT_PARTS_CART_05",
+      "bounds_xyz_m": [
+        28.173016166675673,
+        1.5439220070838928,
+        0.0,
+        29.026983833324326,
+        1.9560779929161072,
+        0.9072148539081388
+      ],
+      "max_delta_m": 3.552713678800501e-15
+    },
+    {
+      "id": "INCOMING_SERVICE_TOOLS",
+      "bounds_xyz_m": [
+        7.77726890554186,
+        0.39302181448929496,
+        0.0,
+        9.22273109445814,
+        1.106978185510705,
+        2.0497918472283345
+      ],
+      "max_delta_m": 2.7755575615628914e-16
+    },
+    {
+      "id": "INCOMING_SERVICE_BENCH",
+      "bounds_xyz_m": [
+        8.791645634174348,
+        2.058042949438095,
+        0.0,
+        9.808354365825654,
+        2.641957050561905,
+        1.3917119353988865
+      ],
+      "max_delta_m": 0.0
+    },
+    {
+      "id": "INCOMING_SERVICE_CART",
+      "bounds_xyz_m": [
+        7.793922007083895,
+        1.9230161666756729,
+        0.0,
+        8.206077992916107,
+        2.7769838333243273,
+        0.9072148539081388
+      ],
+      "max_delta_m": 1.7763568394002505e-15
+    },
+    {
+      "id": "SOUTH_TECH_TOOLS",
+      "bounds_xyz_m": [
+        14.143021814489295,
+        0.22726890554185952,
+        0.0,
+        14.856978185510703,
+        1.6727310944581404,
+        2.0497918472283345
+      ],
+      "max_delta_m": 1.7763568394002505e-15
+    },
+    {
+      "id": "SOUTH_TECH_BENCH",
+      "bounds_xyz_m": [
+        13.991645634174347,
+        2.408042949438096,
+        0.0,
+        15.008354365825653,
+        2.991957050561906,
+        1.3917119353988865
+      ],
+      "max_delta_m": 8.881784197001252e-16
+    },
+    {
+      "id": "RETURN_SERVICE_TOOLS",
+      "bounds_xyz_m": [
+        7.77726890554186,
+        20.893021814489302,
+        0.0,
+        9.22273109445814,
+        21.606978185510712,
+        2.0497918472283345
+      ],
+      "max_delta_m": 7.105427357601002e-15
+    },
+    {
+      "id": "RETURN_SERVICE_BENCH",
+      "bounds_xyz_m": [
+        8.891645634174347,
+        19.408042949438094,
+        0.0,
+        9.908354365825653,
+        19.991957050561904,
+        1.3917119353988865
+      ],
+      "max_delta_m": 0.0
+    },
+    {
+      "id": "RETURN_SERVICE_CART",
+      "bounds_xyz_m": [
+        7.793922007083895,
+        19.273016166675664,
+        0.0,
+        8.206077992916107,
+        20.126983833324317,
+        0.9072148539081388
+      ],
+      "max_delta_m": 1.0658141036401503e-14
+    },
+    {
+      "id": "NORTH_TECH_TOOLS",
+      "bounds_xyz_m": [
+        14.143021814489295,
+        20.27726890554186,
+        0.0,
+        14.856978185510703,
+        21.72273109445814,
+        2.0497918472283345
+      ],
+      "max_delta_m": 1.7763568394002505e-15
+    },
+    {
+      "id": "NORTH_TECH_BENCH",
+      "bounds_xyz_m": [
+        13.991645634174347,
+        19.108042949438094,
+        0.0,
+        15.008354365825653,
+        19.691957050561903,
+        1.3917119353988865
+      ],
+      "max_delta_m": 0.0
+    },
+    {
+      "id": "WEST_SERVICE_TOOLS_LOW",
+      "bounds_xyz_m": [
+        0.6430218144892952,
+        4.47726890554186,
+        0.0,
+        1.3569781855107048,
+        5.922731094458141,
+        2.0497918472283345
+      ],
+      "max_delta_m": 0.0
+    },
+    {
+      "id": "WEST_SERVICE_CART_LOW",
+      "bounds_xyz_m": [
+        0.4730161666756729,
+        3.4439220070838927,
+        0.0,
+        1.3269838333243271,
+        3.856077992916107,
+        0.9072148539081388
+      ],
+      "max_delta_m": 0.0
+    },
+    {
+      "id": "WEST_SERVICE_TOOLS_MID",
+      "bounds_xyz_m": [
+        0.6430218144892952,
+        10.27726890554186,
+        0.0,
+        1.3569781855107048,
+        11.72273109445814,
+        2.0497918472283345
+      ],
+      "max_delta_m": 0.0
+    },
+    {
+      "id": "EAST_SERVICE_TOOLS_LOW",
+      "bounds_xyz_m": [
+        31.043021814489293,
+        4.47726890554186,
+        0.0,
+        31.756978185510704,
+        5.922731094458141,
+        2.0497918472283345
+      ],
+      "max_delta_m": 0.0
+    },
+    {
+      "id": "EAST_SERVICE_CART_LOW",
+      "bounds_xyz_m": [
+        31.19392200708389,
+        3.2230161666756727,
+        0.0,
+        31.606077992916106,
+        4.076983833324327,
+        0.9072148539081388
+      ],
+      "max_delta_m": 0.0
+    },
+    {
+      "id": "EAST_SERVICE_TOOLS_MID",
+      "bounds_xyz_m": [
+        31.043021814489293,
+        10.27726890554186,
+        0.0,
+        31.756978185510704,
+        11.72273109445814,
+        2.0497918472283345
+      ],
+      "max_delta_m": 0.0
+    },
+    {
+      "id": "EAST_SERVICE_TOOLS_HIGH",
+      "bounds_xyz_m": [
+        31.043021814489293,
+        16.47726890554186,
+        0.0,
+        31.756978185510704,
+        17.92273109445814,
+        2.0497918472283345
+      ],
+      "max_delta_m": 0.0
+    }
+  ],
+  "remaining": "Native Isaac Sim 4.5 RGB capture after the running frozen transport job closes; current run063/README188 do not contain these props"
+}
