@@ -1,0 +1,286 @@
+{
+  "run_id": "87301d9f48274eff9b30519789d74b14",
+  "status": "isolated_explicit_peer_delivery_passed",
+  "GPU_started": false,
+  "scope": "44Linux and5Windows participants, four isolated Twist channels; no robot command topics/factory workload/cause proof",
+  "host": {
+    "run_id": "87301d9f48274eff9b30519789d74b14",
+    "mode": "explicit_peers",
+    "status": "passed",
+    "GPU_started": false,
+    "scope": "Unique probe topics only; four channels and36WSL nodes plus5Windows nodes. Context mode recorded in receipts. No robot topics/motion or firewall/settings changes.",
+    "linux_start": {
+      "unit_name": "factory-ops-87301d9f48274eff9b30519789d74b14-5489a9f27fa445c69c0e4889cbe4308f.service",
+      "run_id": "87301d9f48274eff9b30519789d74b14",
+      "unit_state": {
+        "TimeoutStopUSec": "10s",
+        "RuntimeMaxUSec": "1min 25s",
+        "MainPID": "66452",
+        "Result": "success",
+        "ExecMainStatus": "0",
+        "ControlGroup": "/user.slice/user-1000.slice/user@1000.service/app.slice/factory-ops-87301d9f48274eff9b30519789d74b14-5489a9f27fa445c69c0e4889cbe4308f.service",
+        "WorkingDirectory": "/mnt/c/Users/LIMMM/FactoryOpsRuntime/local45-dds-explicit-133",
+        "StandardOutput": "append",
+        "StandardError": "append",
+        "KillMode": "control-group",
+        "SendSIGKILL": "yes",
+        "Id": "factory-ops-87301d9f48274eff9b30519789d74b14-5489a9f27fa445c69c0e4889cbe4308f.service",
+        "Description": "factory-ops run=87301d9f48274eff9b30519789d74b14 owner=5489a9f27fa445c69c0e4889cbe4308f",
+        "LoadState": "loaded",
+        "ActiveState": "active",
+        "SubState": "running",
+        "Transient": "yes",
+        "InvocationID": "2931162d96664bf4a58a0da8048a0eb6"
+      },
+      "ownership_match": true,
+      "starting_state": {
+        "TimeoutStopUSec": "1min 30s",
+        "RuntimeMaxUSec": "infinity",
+        "MainPID": "0",
+        "Result": "success",
+        "ExecMainStatus": "0",
+        "ControlGroup": "",
+        "WorkingDirectory": "",
+        "StandardOutput": "inherit",
+        "StandardError": "inherit",
+        "KillMode": "control-group",
+        "SendSIGKILL": "yes",
+        "Id": "factory-ops-87301d9f48274eff9b30519789d74b14-5489a9f27fa445c69c0e4889cbe4308f.service",
+        "Description": "factory-ops-87301d9f48274eff9b30519789d74b14-5489a9f27fa445c69c0e4889cbe4308f.service",
+        "LoadState": "not-found",
+        "ActiveState": "inactive",
+        "SubState": "dead",
+        "Transient": "no",
+        "InvocationID": ""
+      },
+      "starting_identity": {
+        "Id": "factory-ops-87301d9f48274eff9b30519789d74b14-5489a9f27fa445c69c0e4889cbe4308f.service",
+        "InvocationID": "2931162d96664bf4a58a0da8048a0eb6",
+        "Description": "factory-ops run=87301d9f48274eff9b30519789d74b14 owner=5489a9f27fa445c69c0e4889cbe4308f",
+        "ControlGroup": "/user.slice/user-1000.slice/user@1000.service/app.slice/factory-ops-87301d9f48274eff9b30519789d74b14-5489a9f27fa445c69c0e4889cbe4308f.service"
+      },
+      "control_group": "/user.slice/user-1000.slice/user@1000.service/app.slice/factory-ops-87301d9f48274eff9b30519789d74b14-5489a9f27fa445c69c0e4889cbe4308f.service",
+      "cgroup_exists": true,
+      "cgroup_populated": true,
+      "cgroup_pids": [
+        66452,
+        66457
+      ],
+      "processes": [
+        {
+          "pid": 66452,
+          "start_ticks": 10408340,
+          "state": "S",
+          "session_id": 66452
+        },
+        {
+          "pid": 66457,
+          "start_ticks": 10408347,
+          "state": "R",
+          "session_id": 66452
+        }
+      ],
+      "live_known_processes": [],
+      "foreground_waiters": [
+        {
+          "pid": 66451,
+          "start_ticks": 10408335,
+          "state": "S",
+          "session_id": 66451
+        }
+      ],
+      "known_processes": {
+        "66452": 10408340,
+        "66457": 10408347,
+        "66451": 10408335
+      },
+      "client": {
+        "started": true,
+        "pid": 49128,
+        "running": true,
+        "returncode": null,
+        "closed": false,
+        "forced_termination": false
+      },
+      "linux_closure_verified": false,
+      "closure_verified": false,
+      "closure_scope": "owned Linux unit/cgroup, observed PID/start-time identities, exact-unit systemd-run waiter and foreground WSL client"
+    },
+    "windows_exit_code": 0,
+    "windows_result": {
+      "run_id": "87301d9f48274eff9b30519789d74b14",
+      "side": "windows",
+      "status": "passed",
+      "GPU_started": false,
+      "motion_topics_used": false,
+      "rclpy_file": "E:\\IsaacSim\\isaac-sim-4.5.0\\exts\\isaacsim.ros2.bridge\\humble\\rclpy\\rclpy\\__init__.py",
+      "DDS_profile": "C:\\Users\\LIMMM\\FactoryOpsRuntime\\local45-dds-explicit-133\\windows.xml",
+      "domain": "73",
+      "passive_participants": 1,
+      "context_mode": "per_node",
+      "sent": {
+        "1": 192,
+        "2": 192,
+        "3": 192,
+        "4": 192
+      },
+      "received": {
+        "1": 180,
+        "2": 179,
+        "3": 177,
+        "4": 179
+      },
+      "last_received_sequence": {
+        "1": 225.0,
+        "3": 225.0,
+        "2": 225.0,
+        "4": 225.0
+      },
+      "participants_closed": true,
+      "participant_count": 5,
+      "node_count": 5,
+      "graph_publishers": {
+        "1": 1,
+        "2": 1,
+        "3": 1,
+        "4": 1
+      },
+      "cleanup_errors": [],
+      "intended_exit_code": 0
+    },
+    "linux_result": {
+      "run_id": "87301d9f48274eff9b30519789d74b14",
+      "side": "linux",
+      "status": "passed",
+      "GPU_started": false,
+      "motion_topics_used": false,
+      "rclpy_file": "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/__init__.py",
+      "DDS_profile": "/mnt/c/Users/LIMMM/FactoryOpsRuntime/local45-dds-explicit-133/linux.xml",
+      "domain": "73",
+      "passive_participants": 40,
+      "context_mode": "per_node",
+      "sent": {
+        "1": 234,
+        "2": 234,
+        "3": 234,
+        "4": 234
+      },
+      "received": {
+        "1": 150,
+        "2": 150,
+        "3": 150,
+        "4": 149
+      },
+      "last_received_sequence": {
+        "1": 192.0,
+        "2": 192.0,
+        "3": 192.0,
+        "4": 192.0
+      },
+      "participants_closed": true,
+      "participant_count": 44,
+      "node_count": 44,
+      "graph_publishers": {
+        "1": 0,
+        "2": 0,
+        "3": 0,
+        "4": 0
+      },
+      "cleanup_errors": [],
+      "intended_exit_code": 0
+    },
+    "linux_end": {
+      "unit_name": "factory-ops-87301d9f48274eff9b30519789d74b14-5489a9f27fa445c69c0e4889cbe4308f.service",
+      "run_id": "87301d9f48274eff9b30519789d74b14",
+      "unit_state": {
+        "TimeoutStopUSec": "1min 30s",
+        "RuntimeMaxUSec": "infinity",
+        "MainPID": "0",
+        "Result": "success",
+        "ExecMainStatus": "0",
+        "ControlGroup": "",
+        "WorkingDirectory": "",
+        "StandardOutput": "inherit",
+        "StandardError": "inherit",
+        "KillMode": "control-group",
+        "SendSIGKILL": "yes",
+        "Id": "factory-ops-87301d9f48274eff9b30519789d74b14-5489a9f27fa445c69c0e4889cbe4308f.service",
+        "Description": "factory-ops-87301d9f48274eff9b30519789d74b14-5489a9f27fa445c69c0e4889cbe4308f.service",
+        "LoadState": "not-found",
+        "ActiveState": "inactive",
+        "SubState": "dead",
+        "Transient": "no",
+        "InvocationID": ""
+      },
+      "ownership_match": true,
+      "starting_state": {
+        "TimeoutStopUSec": "1min 30s",
+        "RuntimeMaxUSec": "infinity",
+        "MainPID": "0",
+        "Result": "success",
+        "ExecMainStatus": "0",
+        "ControlGroup": "",
+        "WorkingDirectory": "",
+        "StandardOutput": "inherit",
+        "StandardError": "inherit",
+        "KillMode": "control-group",
+        "SendSIGKILL": "yes",
+        "Id": "factory-ops-87301d9f48274eff9b30519789d74b14-5489a9f27fa445c69c0e4889cbe4308f.service",
+        "Description": "factory-ops-87301d9f48274eff9b30519789d74b14-5489a9f27fa445c69c0e4889cbe4308f.service",
+        "LoadState": "not-found",
+        "ActiveState": "inactive",
+        "SubState": "dead",
+        "Transient": "no",
+        "InvocationID": ""
+      },
+      "starting_identity": {
+        "Id": "factory-ops-87301d9f48274eff9b30519789d74b14-5489a9f27fa445c69c0e4889cbe4308f.service",
+        "InvocationID": "2931162d96664bf4a58a0da8048a0eb6",
+        "Description": "factory-ops run=87301d9f48274eff9b30519789d74b14 owner=5489a9f27fa445c69c0e4889cbe4308f",
+        "ControlGroup": "/user.slice/user-1000.slice/user@1000.service/app.slice/factory-ops-87301d9f48274eff9b30519789d74b14-5489a9f27fa445c69c0e4889cbe4308f.service"
+      },
+      "control_group": "/user.slice/user-1000.slice/user@1000.service/app.slice/factory-ops-87301d9f48274eff9b30519789d74b14-5489a9f27fa445c69c0e4889cbe4308f.service",
+      "cgroup_exists": false,
+      "cgroup_populated": false,
+      "cgroup_pids": [],
+      "processes": [],
+      "live_known_processes": [],
+      "foreground_waiters": [],
+      "known_processes": {
+        "66452": 10408340,
+        "66457": 10408347,
+        "66451": 10408335
+      },
+      "client": {
+        "started": true,
+        "pid": 49128,
+        "running": false,
+        "returncode": 0,
+        "closed": true,
+        "forced_termination": false,
+        "stdout_tail": "",
+        "stderr_tail": ""
+      },
+      "linux_closure_verified": true,
+      "closure_verified": true,
+      "closure_scope": "owned Linux unit/cgroup, observed PID/start-time identities, exact-unit systemd-run waiter and foreground WSL client"
+    },
+    "wall_s": 16.82799999997951
+  },
+  "both_OS_owned_processes_closed": true,
+  "schema_parse_errors_observed": false,
+  "factory043_cause_confirmed": false,
+  "factory_native_fixed": false,
+  "working_launcher_sha256": "892f4e0a470d55061b1852bb5d52b8e8853ffda5e806f52cfd05e2d71a22570d",
+  "validation": "4affected DDS interface/launch tests passed0.143s; no repeated old suites",
+  "official_reference": "https://fast-dds.docs.eprosima.com/en/2.6.x/fastdds/discovery/simple.html",
+  "preservation": {
+    "paths": [
+      "C:\\Users\\LIMMM\\FactoryOpsArtifacts\\dds-explicit-133\\checkpoint-001.tar.gz",
+      "E:\\FactoryOpsArtifacts\\dds-explicit-133\\checkpoint-001.tar.gz"
+    ],
+    "file_count": 19,
+    "all_member_SHA_matched": true,
+    "archive_sha256": "025573702aba8144bd1053a8d1b2b61385f7026709c660a3d851f5d3df30edff"
+  }
+}

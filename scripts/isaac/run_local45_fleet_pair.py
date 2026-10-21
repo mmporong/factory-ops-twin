@@ -45,7 +45,7 @@ def _validate_dds_interfaces(windows: str | None, linux_interface: str | None) -
 
 
 def prepare_ros_transport(stage: Path, domain_id: int, *, interface: str | None = None,
-                          platform: str = "windows") -> tuple[Path, dict[str, str]]:
+                          platform: str = "windows", peers: tuple[str, ...] = ()) -> tuple[Path, dict[str, str]]:
     """Create the run-owned UDP participant profile before ROS processes start."""
     if isinstance(domain_id, bool) or not isinstance(domain_id, int) or not 0 <= domain_id <= 232:
         raise ValueError("bundle ROS domain must be an integer in0..232")
@@ -53,6 +53,15 @@ def prepare_ros_transport(stage: Path, domain_id: int, *, interface: str | None 
         if platform not in {"windows", "linux"} or not isinstance(interface, str):
             raise ValueError("DDS whitelist requires a platform and numeric IPv4 address string")
         interface = str(IPv4Address(interface))
+    if peers:
+        if type(peers) is not tuple or len(peers) != 2 or len(set(peers)) != 2 or interface not in peers:
+            raise ValueError("explicit DDS discovery requires the two paired IPv4 interfaces")
+        for peer in peers:
+            if not isinstance(peer, str):
+                raise ValueError("DDS peer must be a numeric IPv4 address")
+            address = IPv4Address(peer)
+            if address.is_multicast or address.is_unspecified or address.is_loopback:
+                raise ValueError("DDS peer must be an identified unicast interface")
     profile = stage / ("fastdds-udp.xml" if interface is None else f"fastdds-udp-{platform}.xml")
     text = '''<?xml version="1.0" encoding="UTF-8"?>
 <profiles xmlns="http://www.eprosima.com/XMLSchemas/fastRTPS_Profiles">
@@ -70,6 +79,12 @@ def prepare_ros_transport(stage: Path, domain_id: int, *, interface: str | None 
     if interface is not None:
         text = text.replace("<type>UDPv4</type>", "<type>UDPv4</type>"
             f"<interfaceWhiteList><address>{interface}</address></interfaceWhiteList>")
+    if peers:
+        # Fast DDS2.6 permits unspecified peer ports; cover the authored local
+        # multi-participant topology without depending only on NAT multicast.
+        text = text.replace("<type>UDPv4</type>", "<type>UDPv4</type><maxInitialPeersRange>120</maxInitialPeersRange>")
+        locators = "".join(f"<locator><udpv4><address>{peer}</address></udpv4></locator>" for peer in peers)
+        text = text.replace("<rtps>", f"<rtps><builtin><initialPeersList>{locators}</initialPeersList></builtin>")
     with profile.open("x", encoding="utf-8", newline="\n") as stream:
         stream.write(text)
     return profile, {"ROS_DOMAIN_ID": str(domain_id), "RMW_IMPLEMENTATION": "rmw_fastrtps_cpp",
@@ -171,7 +186,7 @@ def monitor_pair(worker, owner: WslProcessSupervisor, *, started: float, bound: 
 def run(stage: Path, sdk: Path, bound: int, *, charge_robot: str | None = None, charge_resume_soc: float = .8,
         lidar_backend: str = "rtx_flat_scan", physics_cadence: str = "owned_step6",
         windows_dds_interface: str | None = None, linux_dds_interface: str | None = None,
-        live_anchor_controls: bool = False) -> int:
+        live_anchor_controls: bool = False, dds_explicit_peers: bool = False) -> int:
     if os.name != "nt" or not 60 <= bound <= 10800:
         raise ValueError("local development requires Windows and an explicit 60..10800s bound")
     if lidar_backend not in {"rtx_flat_scan", "physx_planar"}:
@@ -179,6 +194,8 @@ def run(stage: Path, sdk: Path, bound: int, *, charge_robot: str | None = None, 
     if physics_cadence not in {"app_update", "owned_step6"}:
         raise ValueError("unsupported local45 physics cadence")
     _validate_dds_interfaces(windows_dds_interface, linux_dds_interface)
+    if dds_explicit_peers and windows_dds_interface is None:
+        raise ValueError("explicit DDS peers require both interface addresses")
     stage, sdk = stage.resolve(strict=True), sdk.resolve(strict=True)
     if charge_robot is not None and charge_robot not in {"carter1", "carter2", "carter3", "carter4"}:
         raise ValueError("charge robot must belong to the four-AMR development fleet")
@@ -206,6 +223,7 @@ def run(stage: Path, sdk: Path, bound: int, *, charge_robot: str | None = None, 
         "status": "starting", "wall_bound_s": bound, "windows_closed": False, "linux_closed": False,
         "lidar_backend": lidar_backend, "requested_physics_cadence": physics_cadence}
     report["live_anchor_controls"] = live_anchor_controls
+    report["dds_explicit_peers"] = dds_explicit_peers
     report["virtual_charging_request"] = {"robot_id": charge_robot, "resume_soc": charge_resume_soc}
     save(receipt_path, report)
     owner = WslProcessSupervisor(run_id)
@@ -217,12 +235,13 @@ def run(stage: Path, sdk: Path, bound: int, *, charge_robot: str | None = None, 
         attestation = json.loads((stage / "build-attestation.json").read_text(encoding="utf-8"))
         installed = linux(Path(attestation["actual_install_directory"]))
         config = json.loads((stage / "inputs/config.json").read_text(encoding="utf-8"))
+        peers = (windows_dds_interface, linux_dds_interface) if dds_explicit_peers else ()
         transport, ros_environment = prepare_ros_transport(stage, config["ros_domain_id"],
-            interface=windows_dds_interface, platform="windows")
+            interface=windows_dds_interface, platform="windows", peers=peers)
         linux_transport = transport
         if linux_dds_interface is not None:
             linux_transport, _ = prepare_ros_transport(stage, config["ros_domain_id"],
-                interface=linux_dds_interface, platform="linux")
+                interface=linux_dds_interface, platform="linux", peers=peers)
         linux_environment = {**ros_environment, "FASTRTPS_DEFAULT_PROFILES_FILE": linux(linux_transport),
                              "FASTDDS_DEFAULT_PROFILES_FILE": linux(linux_transport)}
         report["ros_transport"] = {"profile": str(transport), "sha256": sha(transport),
@@ -307,6 +326,7 @@ if __name__ == "__main__":
     parser.add_argument("--sdk", required=True, type=Path)
     parser.add_argument("--wall-bound-s", type=int, default=450)
     parser.add_argument("--live-anchor-controls", action="store_true")
+    parser.add_argument("--dds-explicit-peers", action="store_true")
     parser.add_argument("--charge-robot", choices=("carter1", "carter2", "carter3", "carter4"))
     parser.add_argument("--charge-resume-soc", type=float, default=.8)
     parser.add_argument("--lidar-backend", choices=("rtx_flat_scan", "physx_planar"), default="rtx_flat_scan")
@@ -317,4 +337,5 @@ if __name__ == "__main__":
     raise SystemExit(run(options.stage, options.sdk, options.wall_bound_s,
         charge_robot=options.charge_robot, charge_resume_soc=options.charge_resume_soc,
         lidar_backend=options.lidar_backend, physics_cadence=options.physics_cadence,
-        windows_dds_interface=options.windows_dds_interface, linux_dds_interface=options.linux_dds_interface, live_anchor_controls=options.live_anchor_controls))
+        windows_dds_interface=options.windows_dds_interface, linux_dds_interface=options.linux_dds_interface,
+        live_anchor_controls=options.live_anchor_controls, dds_explicit_peers=options.dds_explicit_peers))

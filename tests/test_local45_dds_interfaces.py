@@ -13,6 +13,22 @@ NS = {"dds": "http://www.eprosima.com/XMLSchemas/fastRTPS_Profiles"}
 
 
 class DdsInterfaceTests(unittest.TestCase):
+    def test_explicit_peers_preserve_NIC_scope_and_reject_invalid_addresses(self):
+        peers = ("192.0.2.10", "192.0.2.11")
+        with TemporaryDirectory() as temporary:
+            stage = Path(temporary)
+            for platform, address in zip(("windows", "linux"), peers):
+                profile, _ = pair.prepare_ros_transport(stage, 73, interface=address, platform=platform, peers=peers)
+                root = ET.parse(profile).getroot()
+                self.assertEqual([address], [r.text for r in root.findall(".//dds:interfaceWhiteList/dds:address", NS)])
+                self.assertEqual(list(peers), [r.text for r in root.findall(".//dds:initialPeersList/dds:locator/dds:udpv4/dds:address", NS)])
+                self.assertEqual("120", root.findtext(".//dds:maxInitialPeersRange", namespaces=NS))
+                self.assertEqual("false", root.findtext(".//dds:useBuiltinTransports", namespaces=NS))
+            for invalid in ((peers[0],), (peers[0], peers[0]), (peers[0], "bad</address>"),
+                            (peers[0], "127.0.0.1"), (peers[0], "224.0.0.1")):
+                with self.assertRaises(ValueError):
+                    pair.prepare_ros_transport(stage, 73, interface=peers[0], peers=invalid)
+
     def test_default_profile_and_environment_remain_unscoped(self):
         with TemporaryDirectory() as temporary:
             stage = Path(temporary)
