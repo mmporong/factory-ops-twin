@@ -45,6 +45,14 @@ uv run python -m factory_ops.dashboard --config configs/factory-fleet4-normal3 -
 
 [실행051 연결 기록](evidence/local45-live-web-158.json)은 실행 ID·4대 차량·배치 revision이 원천과 일치하고 Next.js 프록시까지 전달됨을 확인한 자료다. 이 실행의 API는 관측 전용이다. 차량 선택 클릭과 실제 정지·재개의 브라우저 통합 완료는 별도 확인이 남아 있다.
 
+## 공장 운영 미디어 촬영
+
+새 로컬4.5 개발 실행의 `scripts/isaac/run_local45_fleet_pair.py`에 `--capture-views overview`를 지정하면 전체 공장 RGB만 수집한다. 기본값 `all`은 기존 overview·carter1·carter2의3시점이다. 선택값은 호스트 영수증과 SDK 미디어 명세에 기록한다.
+
+overview 옵션은 추적 카메라 prim의 보정 정보를 남기되 해당 render product와 RGB annotator를 생성하지 않는다. 프레임별 활성/비활성 전환은 하지 않는다. 모든 차량의 같은 프레임 GT는 평가·미디어용으로 기록하며, 물리·센서·주행 허가·촬영 시각의 동결 검사는 유지한다. 기본3시점을 요구하는 기존 정식 검증에1시점 자료를 대신 제출하지 않는다. Replicator 합성 데이터의 modality·시점 수집 프로필도 이 옵션과 별도다.
+
+관련 CPU 검사9개와 SDK Python3.10.15의5파일 구문 확인을 통과했다. 실제 GPU에서의1시점 실행과 속도 개선은 아직 확인하지 않았다. 실행 중인051은 기존3시점을 유지한다. [공식 Replicator1.11.35 API](https://docs.omniverse.nvidia.com/kit/docs/omni_replicator/1.11.35/source/extensions/omni.replicator.core/docs/API.html) · [Isaac Sim4.5 렌더 제품 수명 관리 예제](https://docs.isaacsim.omniverse.nvidia.com/4.5.0/replicator_tutorials/tutorial_replicator_ur10_palletizing.html)
+
 ## Kit 운영 패널
 
 기존 SDK의 Kit 확장 검색 경로에 저장소의 `extensions/`를 추가하고 `factory.ops.console`을 활성화한다. 기본 API 주소는 `http://127.0.0.1:8765`이며, 실행 전 `FACTORY_OPS_API_URL`로 다른 loopback 주소를 지정할 수 있다. 외부 HTTP 주소·리다이렉트·프록시는 허용하지 않는다.

@@ -790,7 +790,10 @@ def _save_rgb(annotator: Any, path: Path, np: Any, Image: Any) -> dict[str, Any]
 def _capture_frame(
     *, output: Path, session: CaptureSession, second_rgb: Any, robots: Mapping[str, dict[str, Any]],
     SimulationManager: Any, np: Any, Image: Any, index: int,
+    source_names: tuple[str, ...] = ("overview", "carter1", "carter2"),
 ) -> dict[str, Any]:
+    if source_names not in (("overview",), ("overview", "carter1", "carter2")):
+        raise base.SmokeError("unsupported RGB capture source selection")
     before_time = float(SimulationManager.get_simulation_time())
     before_frame = int(SimulationManager.get_num_physics_steps())
     before_poses = {robot_id: _pose(runtime["robot"]) for robot_id, runtime in robots.items()}
@@ -798,6 +801,10 @@ def _capture_frame(
     for name, annotator in (
         ("overview", session.overview_rgb), ("carter1", session.medium_rgb), ("carter2", second_rgb),
     ):
+        if name not in source_names:
+            continue
+        if annotator is None:
+            raise base.SmokeError("requested RGB annotator is missing: " + name)
         relative = Path("media") / f"{name}-{index:05d}.png"
         evidence = _save_rgb(annotator, output / relative, np, Image)
         evidence["path"] = relative.as_posix()
@@ -813,13 +820,14 @@ def _capture_frame(
             robot_id: {"position_xyz_m": pose[0], "orientation_wxyz": pose[1]}
             for robot_id, pose in before_poses.items()
         },
-        "source": "three persistent RGB annotators read at one unchanged physics frame; no interpolation",
+        "source": str(len(sources)) + " persistent RGB annotators read at one unchanged physics frame; no interpolation",
     }
 
 
 def _capture_frame_with_extension(
     *, output: Path, session: CaptureSession, second_rgb: Any, robots: Mapping[str, dict[str, Any]],
     SimulationManager: Any, np: Any, Image: Any, index: int, rep: Any, scene_extension: Any,
+    source_names: tuple[str, ...] = ("overview", "carter1", "carter2"),
 ) -> dict[str, Any]:
     before_hook = getattr(scene_extension, "before_capture", None)
     after_hook = getattr(scene_extension, "after_capture", None)
@@ -827,6 +835,7 @@ def _capture_frame_with_extension(
         return _capture_frame(
             output=output, session=session, second_rgb=second_rgb, robots=robots,
             SimulationManager=SimulationManager, np=np, Image=Image, index=index,
+            source_names=source_names,
         )
     if not callable(before_hook) or not callable(after_hook):
         raise base.SmokeError("industrial render update hooks must provide a before/after pair")
@@ -855,6 +864,7 @@ def _capture_frame_with_extension(
         captured = _capture_frame(
             output=output, session=session, second_rgb=second_rgb, robots=robots,
             SimulationManager=SimulationManager, np=np, Image=Image, index=index,
+            source_names=source_names,
         )
         breadcrumb("rgb_readback_complete")
     except BaseException as error:
@@ -1019,7 +1029,13 @@ def _run(
     capture_resolution: tuple[int, int] | None = None,
     lidar_backend: str = "rtx_flat_scan",
     physics_cadence: str = "owned_step6",
+    capture_views: str = "all",
 ) -> int:
+    if capture_views not in {"all", "overview"} or capture_views != "all" and not local_sdk45:
+        raise ValueError("overview-only capture requires explicit local45 development")
+    source_names = ("overview",) if capture_views == "overview" else ("overview", "carter1", "carter2")
+    if capture_views == "overview" and getattr(scene_extension, "capture_views", None) != "overview":
+        raise ValueError("overview-only capture requires a matching local scene lifecycle")
     if capture_resolution is not None and not local_sdk45:
         raise ValueError("custom transport capture resolution is limited to local45 development")
     if lidar_backend not in {"rtx_flat_scan", "physx_planar"} or (not local_sdk45 and lidar_backend != "rtx_flat_scan"):
@@ -1240,6 +1256,8 @@ def _run(
         capture_options = {"dome_light_factory": runtime45.create_capture_light,
                            "resolution": render_resolution,
                            "stop_before_drain": True} if local_sdk45 else {}
+        if capture_views == "overview":
+            capture_options["capture_medium"] = False
         session = CaptureSession(
             output, app, stage, rep, UsdGeom, Gf, SimulationManager, save_rgb,
             medium_camera=CameraSpec(
@@ -1248,7 +1266,8 @@ def _run(
             ),
             **capture_options,
         )
-        result["load_preview"] = session.capture_load_preview()
+        result["load_preview"] = (session.capture_load_preview() if capture_views == "all"
+                                  else {"status": "not_requested", "capture_views": capture_views})
         result["factory_overview"] = session.capture_factory_overview()
         c2 = robots["carter2"]["definition"]
         second_spec = CameraSpec(
@@ -1259,19 +1278,18 @@ def _run(
             stage, Gf, UsdGeom, second_spec.path, second_spec.eye_xyz, second_spec.target_xyz,
             render_resolution,
         )
-        second_product = session._product(str(second_camera.GetPath()), render_resolution)
-        second_rgb = session._annotator("rgb", second_product)
+        second_product = session._product(str(second_camera.GetPath()), render_resolution) if capture_views == "all" else None
+        second_rgb = session._annotator("rgb", second_product) if second_product is not None else None
         camera_hook = getattr(scene_extension, "configure_cameras", None)
         if callable(camera_hook):
             result["scene_extension"]["camera_overrides"] = camera_hook(stage, session, second_spec, UsdGeom, Gf)
         render_products_hook = getattr(scene_extension, "register_rgb_render_products", None)
         if callable(render_products_hook):
             render_products_registered = True
-            result["scene_extension"]["rgb_render_updates"] = render_products_hook({
-                "portfolio_overview": session.overview_product,
-                "carter1_follow": session.medium_product,
-                "carter2_follow": second_product,
-            })
+            products = {"portfolio_overview": session.overview_product}
+            if capture_views == "all":
+                products.update(carter1_follow=session.medium_product, carter2_follow=second_product)
+            result["scene_extension"]["rgb_render_updates"] = render_products_hook(products)
 
         checkpoint("ros_and_lidars")
         rclpy, clock_node, clock_stamps, world_clock = _setup_worker_clock(
@@ -1589,6 +1607,7 @@ def _run(
                         robots=robots,
                         SimulationManager=SimulationManager, np=np, Image=Image, index=len(frames),
                         rep=rep, scene_extension=scene_extension,
+                        source_names=source_names,
                     ),
                     after_resume=(lambda: _flush_local45_capture_resume(
                         SimulationManager.world, robots, output=output, run_id=args.run_id,
@@ -1621,7 +1640,9 @@ def _run(
         session = None
         checkpoint("terminal_capture_drained")
         result["mission_control"] = mission
-        result["media"] = {"index": MEDIA_INDEX_FILE, "frame_count": len(frames), "same_frame_sources": 3}
+        result["media"] = {"index": MEDIA_INDEX_FILE, "frame_count": len(frames), "same_frame_sources": len(source_names)}
+        if capture_views != "all":
+            result["media"].update(capture_views=capture_views, source_names=list(source_names))
         for robot_id, runtime in robots.items():
             result["robots"][robot_id].update({
                 "trajectory": str(runtime["trajectory_path"].relative_to(output)).replace("\\", "/"),

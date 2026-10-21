@@ -15,6 +15,7 @@ from scripts.isaac.g2_scene import (
     _command_audit_snapshot,
     _control_decision,
     _capture_frame_with_extension,
+    _capture_frame,
     _capture_with_timeline_policy,
     _create_robot,
     _load_inputs,
@@ -28,6 +29,26 @@ from scripts.isaac.stage_smoke import SmokeError
 
 
 class G2SceneTests(unittest.TestCase):
+    def test_overview_only_is_rejected_outside_local_development_before_sdk(self):
+        from scripts.isaac.g2_scene import _run
+        with self.assertRaisesRegex(ValueError, "local45 development"):
+            _run(None, capture_views="overview")
+
+    def test_overview_only_reads_one_rgb_at_the_frozen_frame(self):
+        manager, robots, robot = self._capture_fixture()
+        overview = object()
+        with patch("scripts.isaac.g2_scene._pose", return_value=([1., 2., 0.], [1., 0., 0., 0.])), \
+                patch("scripts.isaac.g2_scene._save_rgb", return_value={"path": "pending"}) as save:
+            frame = _capture_frame(output=Path("unused"),
+                session=SimpleNamespace(overview_rgb=overview, medium_rgb=None), second_rgb=None,
+                robots=robots, SimulationManager=manager, np=object(), Image=object(), index=7,
+                source_names=("overview",))
+        self.assertEqual(set(frame["sources"]), {"overview"})
+        self.assertEqual((frame["physics_frame"], frame["sim_time_s"]), (750, 12.5))
+        self.assertEqual(set(frame["ground_truth"]), set(robots))
+        save.assert_called_once()
+        self.assertIs(save.call_args.args[0], overview)
+
     @staticmethod
     def _capture_fixture():
         class SimulationManager:

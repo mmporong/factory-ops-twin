@@ -222,6 +222,7 @@ def run(stage: Path, sdk: Path, bound: int, *, charge_robot: str | None = None, 
         windows_dds_interface: str | None = None, linux_dds_interface: str | None = None,
         live_anchor_controls: bool = False, dds_explicit_peers: bool = False,
         nav2_startup_stagger_s: float = 0., capture_resolution: str = "640x360",
+        capture_views: str = "all",
         isolated_topic_relay: bool = False, relay_windows_address: str | None = None,
         relay_linux_address: str | None = None, relay_port: int = 28473,
         startup_service_match_wait: bool = False) -> int:
@@ -235,6 +236,8 @@ def run(stage: Path, sdk: Path, bound: int, *, charge_robot: str | None = None, 
         raise ValueError("Nav2 startup stagger must be finite seconds in [0,5]")
     if capture_resolution not in {"640x360", "1280x720"}:
         raise ValueError("unsupported local45 capture resolution")
+    if capture_views not in {"all", "overview"}:
+        raise ValueError("unsupported local45 capture view selection")
     _validate_dds_interfaces(windows_dds_interface, linux_dds_interface)
     if startup_service_match_wait and not isolated_topic_relay:
         raise ValueError("startup service match option requires OS-isolated topic transport")
@@ -279,6 +282,7 @@ def run(stage: Path, sdk: Path, bound: int, *, charge_robot: str | None = None, 
     report["dds_explicit_peers"] = dds_explicit_peers
     report["nav2_startup_stagger_s"] = nav2_startup_stagger_s
     report["capture_resolution"] = capture_resolution
+    report["capture_views"] = capture_views
     report["isolated_topic_relay"] = isolated_topic_relay
     report["startup_service_match_wait"] = startup_service_match_wait
     report["virtual_charging_request"] = {"robot_id": charge_robot, "resume_soc": charge_resume_soc}
@@ -364,7 +368,7 @@ def run(stage: Path, sdk: Path, bound: int, *, charge_robot: str | None = None, 
         launcher = sdk / "python.bat"
         for path in (entry, launcher, output, stage):
             linux(path)  # Same metacharacter restriction protects the vendor cmd launcher.
-        command_line = '"' + str(os.environ["COMSPEC"]) + '" /d /s /c ""' + str(launcher) + '" "' + str(entry) + '" --bundle "' + str(stage / "inputs") + '" --output "' + str(output) + '" --run-id ' + run_id + ' --lidar-backend ' + lidar_backend + ' --physics-cadence ' + physics_cadence + ' --capture-resolution ' + capture_resolution + '"'
+        command_line = '"' + str(os.environ["COMSPEC"]) + '" /d /s /c ""' + str(launcher) + '" "' + str(entry) + '" --bundle "' + str(stage / "inputs") + '" --output "' + str(output) + '" --run-id ' + run_id + ' --lidar-backend ' + lidar_backend + ' --physics-cadence ' + physics_cadence + ' --capture-resolution ' + capture_resolution + ' --capture-views ' + capture_views + '"'
         spec = {"run_id": run_id, "cwd": str(sdk), "command": command_line, "expected_inputs": expected}
         save(stage / "job-spec.json", spec)
         environment = {**os.environ, **ros_environment, "FACTORY_OPS_G3_SOURCE_COMMIT": launch["source_commit"],
@@ -418,6 +422,7 @@ if __name__ == "__main__":
     parser.add_argument("--relay-port",type=int,default=28473)
     parser.add_argument("--nav2-startup-stagger-s", type=float, default=0.)
     parser.add_argument("--capture-resolution", choices=("640x360", "1280x720"), default="640x360")
+    parser.add_argument("--capture-views", choices=("all", "overview"), default="all")
     parser.add_argument("--charge-robot", choices=("carter1", "carter2", "carter3", "carter4"))
     parser.add_argument("--charge-resume-soc", type=float, default=.8)
     parser.add_argument("--lidar-backend", choices=("rtx_flat_scan", "physx_planar"), default="rtx_flat_scan")
@@ -431,6 +436,7 @@ if __name__ == "__main__":
         windows_dds_interface=options.windows_dds_interface, linux_dds_interface=options.linux_dds_interface,
         live_anchor_controls=options.live_anchor_controls, dds_explicit_peers=options.dds_explicit_peers,
         nav2_startup_stagger_s=options.nav2_startup_stagger_s, capture_resolution=options.capture_resolution,
+        capture_views=options.capture_views,
         isolated_topic_relay=options.isolated_topic_relay,relay_windows_address=options.relay_windows_address,
         relay_linux_address=options.relay_linux_address,relay_port=options.relay_port,
         startup_service_match_wait=options.startup_service_match_wait))

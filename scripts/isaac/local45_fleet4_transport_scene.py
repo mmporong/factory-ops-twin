@@ -97,7 +97,10 @@ class EmptyToteGeometry:
 
 
 class Local45FleetLifecycle(FleetTransportLifecycle):
-    def __init__(self, root: Path, run_id: str, *, lidar_backend: str = "rtx_flat_scan") -> None:
+    def __init__(self, root: Path, run_id: str, *, lidar_backend: str = "rtx_flat_scan", capture_views: str = "all") -> None:
+        if capture_views not in {"all", "overview"}:
+            raise ValueError("unsupported local45 RGB capture view selection")
+        self.capture_views = capture_views
         super().__init__(root, run_id)
         if lidar_backend not in {"rtx_flat_scan", "physx_planar"}:
             raise ValueError("unsupported local45 observation backend")
@@ -133,6 +136,16 @@ class Local45FleetLifecycle(FleetTransportLifecycle):
             "factory_ops/flat_scan_observation.py")}
         if self.lidar_backend == "physx_planar":
             self._observer_sources["factory_ops/physx_planar.py"] = g2_scene.base._sha256(project/"factory_ops/physx_planar.py")
+
+    def register_rgb_render_products(self, products_by_role: Mapping[str, Any]) -> dict[str, Any]:
+        if self.capture_views == "all":
+            return super().register_rgb_render_products(products_by_role)
+        if self.rgb_render_state != "unregistered" or set(products_by_role) != {"portfolio_overview"}:
+            raise ValueError("overview-only capture requires exactly one fresh overview render product")
+        self.rgb_render_products = (products_by_role["portfolio_overview"],)
+        self.rgb_render_state = "enabled"
+        return {"roles": ["portfolio_overview"], "requested_state_between_captures": "enabled",
+                "lifecycle": "one persistent overview product; follow RGB products/annotators not created"}
 
     def prepare_worker_paths(self, scene_arg: Path, output_arg: Path) -> tuple[Path, Path]:
         scene, output = super().prepare_worker_paths(scene_arg, output_arg)
@@ -376,6 +389,7 @@ def main() -> int:
     parser.add_argument("--output", required=True, type=Path)
     parser.add_argument("--run-id", required=True)
     parser.add_argument("--capture-resolution", choices=("640x360", "1280x720"), default="640x360")
+    parser.add_argument("--capture-views", choices=("all", "overview"), default="all")
     parser.add_argument("--lidar-backend", choices=("rtx_flat_scan", "physx_planar"), default="rtx_flat_scan")
     parser.add_argument("--physics-cadence", choices=("app_update", "owned_step6"), default="owned_step6")
     args = parser.parse_args()
@@ -391,8 +405,10 @@ def main() -> int:
     return g2_scene._run(shared, qualification=QUALIFICATION, scenario_ids={scenario_id},
         result_file=RESULT_FILE, expected_robot_count=4, local_sdk45=True,
         capture_resolution=tuple(int(value) for value in args.capture_resolution.split("x")),
+        capture_views=args.capture_views,
         lidar_backend=args.lidar_backend, physics_cadence=args.physics_cadence,
-        scene_extension=Local45FleetLifecycle(root, args.run_id, lidar_backend=args.lidar_backend), extra_inputs=extras)
+        scene_extension=Local45FleetLifecycle(root, args.run_id, lidar_backend=args.lidar_backend,
+            capture_views=args.capture_views), extra_inputs=extras)
 
 
 if __name__ == "__main__":

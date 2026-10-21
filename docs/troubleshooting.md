@@ -875,3 +875,9 @@ Microsoft의 [CreateFileW 공유 규칙](https://learn.microsoft.com/en-us/windo
 ## FOT-105 — 중계 자원 종료와 통신 성공의 구분
 
 내보내기 경로에서 `RelayPair.status=closed`가 자원 회수를 뜻하며 각 중계의 통신 성공을 보장하지 않는 조건을 확인했다. 실제051에서 새 실패가 발생했다는 뜻은 아니다. 중계 사용 실행의 미디어를 승인할 때 양쪽 endpoint의 동일 실행 ID·side·`stopped`·`closed=true`와 오류/정리 오류 없음을 추가로 요구한다. 종료되지 않았거나 실패한 endpoint를 가진 합성 영수증은 정상 미디어로 내보내지 않는다. 새 경계 검사와 기존 OS 소유 종료 검사2개를 통과했다. 실행 중인051의 동결 소스·임무·촬영 설정은 바꾸지 않았으며, 원본 종료 후 CPU 내보내기에 적용한다.
+
+## FOT-106 — 전체 공장 영상에 쓰지 않는 추적 RGB 제품의 수집
+
+051은 대표 영상에 overview만 사용하는 동안에도3개의 persistent RGB render product를 유지하고 매 촬영에3개 PNG를 저장한다. 촬영 중 World 진행이 느려지는 것을 관측했으나3시점 렌더만을 전체 지연의 원인으로 확정하지 않는다. 실행 중인 동결 소스·한도·촬영 설정은 바꾸지 않는다.
+
+설치된 Isaac Sim4.5의 Replicator1.11.35와 [공식 API](https://docs.omniverse.nvidia.com/kit/docs/omni_replicator/1.11.35/source/extensions/omni.replicator.core/docs/API.html), [4.5 수명 관리 예제](https://docs.isaacsim.omniverse.nvidia.com/4.5.0/replicator_tutorials/tutorial_replicator_ur10_palletizing.html)를 대조하고 다음 실행용 `--capture-views overview`를 추가했다. 쓰지 않는2개 render product/annotator를 생성하지 않으며 매 프레임 Hydra 전환을 도입하지 않는다. 생성한 제품만 기존 소유자가 detach/destroy한다. 선택값·실제 소스 수·보정된 카메라 정보를 남기고 기존3시점 정식 검증과 구분한다. CPU9검사와 SDK Python3.10.15의5파일 구문 확인을 통과했다. GPU 실행과 RTF·wall time 개선은 미실측이며 다음 실행에서 확인한다.

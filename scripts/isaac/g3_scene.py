@@ -89,7 +89,7 @@ class BarrierLifecycle:
         self.last_media_due_frame: int | None = None
         self.pending_media_sample: dict[str, Any] | None = None
         self.media_journal_opened = False
-        self.rgb_render_products: tuple[Any, Any, Any] | None = None
+        self.rgb_render_products: tuple[Any, ...] | None = None
         self.rgb_render_state = "unregistered"
         self.render_breadcrumb_sequence = 0
         self.render_breadcrumb_opened = False

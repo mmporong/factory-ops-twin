@@ -13,6 +13,27 @@ from tests.test_isaac_stage_smoke import _png_bytes
 
 
 class CaptureResolutionTests(unittest.TestCase):
+    def test_overview_only_creates_and_closes_one_product_without_follow_annotator(self) -> None:
+        with TemporaryDirectory() as folder:
+            rep = _Rep()
+            def save_rgb(_data, path):
+                path.write_bytes(_png_bytes(width=640, height=360))
+            session = capture.CaptureSession(Path(folder), SimpleNamespace(update=lambda: None),
+                object(), rep, MagicMock(), MagicMock(), _SimulationManager, save_rgb,
+                resolution=(640, 360), capture_medium=False)
+            try:
+                self.assertEqual(rep.products, [])
+                self.assertEqual(rep.annotators_created, [])
+                with self.assertRaisesRegex(capture.base.SmokeError, "not requested"):
+                    session.capture_load_preview()
+                session.capture_factory_overview()
+                self.assertEqual(len(rep.products), 1)
+                self.assertEqual(len(rep.annotators_created), 1)
+            finally:
+                session.close()
+            self.assertTrue(rep.products[0].destroyed)
+            self.assertTrue(rep.annotators_created[0].detached)
+
     def test_default_and_selected_resolution_products_aspects_and_saved_checks(self) -> None:
         for selected in (None, (640, 360), (640, 480)):
             with self.subTest(resolution=selected), TemporaryDirectory() as folder:

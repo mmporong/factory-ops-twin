@@ -37,6 +37,22 @@ class Local45LifecycleTests(unittest.TestCase):
                         for observer in self.observers]
         self.timeline = SimpleNamespace(is_playing=lambda: True)
 
+    def test_overview_only_product_is_explicit_and_default_retains_three_roles(self):
+        overview = Local45FleetLifecycle(self.bundle, "a" * 32, capture_views="overview")
+        with self.assertRaises(ValueError):
+            overview.register_rgb_render_products({"portfolio_overview": object(), "carter1_follow": object()})
+        product = object()
+        metadata = overview.register_rgb_render_products({"portfolio_overview": product})
+        self.assertEqual(metadata["roles"], ["portfolio_overview"])
+        self.assertEqual(overview.rgb_render_products, (product,))
+        with self.assertRaises(ValueError):
+            overview.register_rgb_render_products({"portfolio_overview": product})
+        overview.cleanup_render_products()
+        self.assertEqual(overview.rgb_render_state, "closed")
+        with self.assertRaises(ValueError):
+            self.lifecycle.register_rgb_render_products({"portfolio_overview": object()})
+
+
     def test_exact_eight_identities_are_bound_and_closed(self):
         result = self.lifecycle.register_lidar_sensors(self.sensors, self.metadata, self.timeline)
         self.assertEqual(8, result["sensor_count"])

@@ -77,9 +77,10 @@ class CaptureSession:
         *,
         resolution: tuple[int, int] = base.RENDER_RESOLUTION,
         stop_before_drain: bool = False,
+        capture_medium: bool = True,
     ) -> None:
-        if type(stop_before_drain) is not bool:
-            raise ValueError("stop_before_drain must be a plain boolean")
+        if type(stop_before_drain) is not bool or type(capture_medium) is not bool:
+            raise ValueError("capture lifecycle options must be plain booleans")
         if (type(resolution) is not tuple or len(resolution) != 2
                 or any(type(value) is not int or value <= 0 for value in resolution)):
             raise ValueError("capture resolution must be a tuple of two positive plain integers")
@@ -108,8 +109,8 @@ class CaptureSession:
                 stage, Gf, UsdGeom, medium_camera.path,
                 medium_camera.eye_xyz, medium_camera.target_xyz, self.resolution,
             )
-            self.medium_product = self._product(str(medium.GetPath()), self.resolution)
-            self.medium_rgb = self._annotator("rgb", self.medium_product)
+            self.medium_product = self._product(str(medium.GetPath()), self.resolution) if capture_medium else None
+            self.medium_rgb = self._annotator("rgb", self.medium_product) if capture_medium else None
         except BaseException as error:
             try:
                 self.close()
@@ -147,6 +148,8 @@ class CaptureSession:
                 raise base.SmokeError(f"{label} rotated the robot while physics was paused")
 
     def capture_load_preview(self) -> dict[str, Any]:
+        if self.medium_rgb is None:
+            raise base.SmokeError("medium RGB capture was not requested")
         self._frozen_step("G0b persistent load preview")
         path = self.output / "diagnostic-load" / base.IMAGE_FILENAME
         path.parent.mkdir()
