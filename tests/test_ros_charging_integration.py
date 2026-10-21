@@ -5,11 +5,13 @@ import unittest
 from unittest.mock import Mock
 import math
 from pathlib import Path
+import json
+import tempfile
 
 from factory_ops.fleet_execution import make_chunk
 from factory_ops.fleet_routing import RouteBook
 from factory_ops.navigation import GoalPose
-from scripts.ros.g3_mission import navigation_leg_goal, observe_charging_odometry
+from scripts.ros.g3_mission import navigation_leg_goal, observe_charging_odometry, publish_charging_state
 
 
 class ChargingIntegrationTests(unittest.TestCase):
@@ -57,6 +59,59 @@ class ChargingIntegrationTests(unittest.TestCase):
         pose = self.charging.observe.call_args.kwargs["pose"]
         self.assertEqual(("run", "carter4", "map", 9.95),
                          (pose["run_id"], pose["robot_id"], pose["frame_id"], pose["stamp_s"]))
+
+    def test_prior_causal_pose_is_retained_when_latest_pose_is_ahead_of_queued_odometry(self):
+        self.runtime["pose"] = {"x_m":1., "y_m":2., "yaw_rad":0., "stamp_s":9.95}
+        observe_charging_odometry(self.charging, "run", "carter4", self.runtime, {"dock_id":"CH1"}, 9.96)
+        self.runtime["pose"] = {"x_m":1., "y_m":2., "yaw_rad":0., "stamp_s":10.05}
+        observe_charging_odometry(self.charging, "run", "carter4", self.runtime, {"dock_id":"CH1"}, 10.1)
+        pose = self.charging.observe.call_args.kwargs["pose"]
+        self.assertIsNotNone(pose)
+        self.assertEqual(pose["stamp_s"], 9.95)
+
+    def test_delayed_encoder_batch_can_accumulate_observed_geometric_dwell(self):
+        from factory_ops.energy_runtime import EnergyRuntime, GEOMETRIC_CONTACT_SOURCE
+        from factory_ops.ros_charging import RosChargingRuntime
+        profile = json.loads((Path(__file__).resolve().parents[1]/
+            "configs/factory-fleet4/energy-profile.json").read_text())
+        energy = EnergyRuntime("run", profile, {"carter4":.5}, virtual_charging_source=GEOMETRIC_CONTACT_SOURCE)
+        charging = RosChargingRuntime(energy, {"CH1":{"anchor":"P1", "x_m":1., "y_m":2., "yaw_rad":0.}},
+            contact_dwell_s=1., position_tolerance_m=.1, yaw_tolerance_rad=.1, resume_soc=.8)
+        charging.observe("run", "carter4", .8, 0., 0., loaded=False, observed_at_s=.8)
+        reservation = charging.reserve("run", "carter4", carrying_payload=False, observed_at_s=.9)
+        charging.arrived("run", "carter4", dock_id="CH1", anchor="P1", goal_id="1"*32,
+            navigation_succeeded=True, stamp_s=1., observed_at_s=1.)
+        runtime = {"pose":{"x_m":1.,"y_m":2.,"yaw_rad":0.,"stamp_s":.9}, "charging_odom_pending":deque()}
+        observe_charging_odometry(charging, "run", "carter4", runtime, reservation, .9)
+        for index in range(11, 41):
+            now, encoder_stamp = index/10, (index-1)/10
+            runtime["pose"] = {"x_m":1.,"y_m":2.,"yaw_rad":0.,"stamp_s":now}
+            runtime["charging_odom_pending"].append({"stamp_s":encoder_stamp,
+                "linear_m_s":0.,"angular_rad_s":0.,"loaded":False})
+            observe_charging_odometry(charging, "run", "carter4", runtime, reservation, now)
+        self.assertEqual(charging.snapshot("run", observed_at_s=4.)["robots"]["carter4"]["charging"]["phase"], "charging")
+        self.assertGreater(energy.snapshot()["robots"]["carter4"]["charged_wh"], 0.)
+
+    def test_projection_refreshes_soc_without_repeating_lifecycle_events(self):
+        state = {"owners":{}, "robots":{"carter4":{"charging":None,
+            "energy":{"battery_pct":50.,"observed_at_s":1.}}}}
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory)
+            revision, published, changed = publish_charging_state(output, state, 1., None, -math.inf)
+            self.assertTrue(changed)
+            state["robots"]["carter4"]["energy"].update(battery_pct=51., observed_at_s=1.5)
+            revision, published, changed = publish_charging_state(output, state, 1.5, revision, published)
+            self.assertFalse(changed)
+            self.assertEqual(json.loads((output/"charging-state.json").read_text())["robots"]["carter4"]["energy"]["battery_pct"], 50.)
+            state["robots"]["carter4"]["energy"]["observed_at_s"] = 2.
+            revision, published, changed = publish_charging_state(output, state, 2., revision, published)
+            self.assertFalse(changed)
+            fresh = json.loads((output/"charging-state.json").read_text())["robots"]["carter4"]["energy"]
+            self.assertEqual((fresh["battery_pct"], fresh["observed_at_s"]), (51., 2.))
+            state["robots"]["carter4"]["charging"] = {"dock_id":"CH1", "phase":"approach"}
+            revision, published, changed = publish_charging_state(output, state, 2.1, revision, published)
+            self.assertTrue(changed)
+            self.assertEqual(published, 2.1)
 
 
 if __name__ == "__main__":

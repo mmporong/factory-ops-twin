@@ -43,6 +43,8 @@ uv run python -m factory_ops.dashboard --config configs/factory-fleet4-normal3 -
 
 실행 중 bag SQLite에는 조회나 복사용 연결을 열지 않는다. 관측은 JSON/JSONL을 사용하며 bag 분석은 기록기·소유 실행 종료를 확인한 뒤 수행한다.
 
+후속 ROS 소스의 충전 보조 파일은 같은 충전 단계에서도1시뮬레이션 초 간격으로 갱신한다. 충전 단계 변경 사건만 저널에 추가하며 heartbeat를 사건으로 중복 기록하지 않는다. 충전 판정은 큐의 오도메트리보다 미래가 아닌 실제 추정 위치를 기존 신선도 한도 안에서 선택한다. 새 소스의 SDK 확인은 남아 있고 진행 중인054에는 소급 적용하지 않는다. [관측과 수정 범위](evidence/local45-charging-diagnostic-178.json)
+
 [실행051 연결 기록](evidence/local45-live-web-158.json)은 실행 ID·4대 차량·배치 revision이 원천과 일치하고 Next.js 프록시까지 전달됨을 확인한 자료다. 이 실행의 API는 관측 전용이다. 차량 선택 클릭과 실제 정지·재개의 브라우저 통합 완료는 별도 확인이 남아 있다.
 
 ## 공장 운영 미디어 촬영

@@ -1,0 +1,94 @@
+{
+  "schema_version": 1,
+  "run_id": "4dfd2c904a5f40448bafcea51c8e77d1",
+  "producer_source_commit": "a462fdbe3cd05722b03eb50afc058baa433a17dd",
+  "status": "inflight_readonly_diagnostic",
+  "world_time_s": 714.0667039081454,
+  "charging_companion": {
+    "sha256_of_observed_UTF8_document": "eae7c7c2c27c9cf2b9ea897f991bde6963c2b515bcca7b821db5cb80672789a7",
+    "robot": {
+      "charging": {
+        "anchor": "P1",
+        "arrival": {
+          "anchor": "P1",
+          "goal_id": "fd2bd467f1804aedb9bbac34d25690b3",
+          "navigation_succeeded": true,
+          "stamp_s": 160.750008384
+        },
+        "body_occupancy_owner": "G3 reservation manager",
+        "contact_since_s": 713.100037191,
+        "contact_source": "estimated_pose_geometric_dock",
+        "dock_id": "CH1",
+        "fault": null,
+        "geometric_dock_confirmed": true,
+        "hardware_calibrated": false,
+        "last_stamp_s": 714.100037243,
+        "phase": "charging",
+        "physical_contact_verified": false,
+        "reason": "charging",
+        "reserved_at_s": 9.250000482,
+        "virtual": true,
+        "virtual_connector_state": "simulated_engaged"
+      },
+      "energy": {
+        "battery_pct": 83.92199671791016,
+        "battery_source": "authored_virtual_energy_model",
+        "charging_supported": true,
+        "fault": null,
+        "freshness": "fresh",
+        "hardware_calibrated": false,
+        "observation_age_s": 0.0,
+        "observed_at_s": 714.100037243,
+        "observed_sim_time_s": 714.100037243,
+        "robot_id": "carter1",
+        "run_id": "4dfd2c904a5f40448bafcea51c8e77d1",
+        "scope": "odometry-driven authored virtual energy; no hardware battery or charging proof",
+        "virtual": true
+      },
+      "robot_id": "carter1",
+      "run_id": "4dfd2c904a5f40448bafcea51c8e77d1"
+    }
+  },
+  "current_primary_observation": {
+    "id": "carter1",
+    "battery_pct": 83.92772576437896,
+    "battery_source": "authored_virtual_energy_model",
+    "charging_phase": "charging",
+    "destination": "P1",
+    "waiting_reason": "가상 충전 상태 확인"
+  },
+  "latest_estimated_pose": {
+    "run_id": "4dfd2c904a5f40448bafcea51c8e77d1",
+    "robot_id": "carter1",
+    "sim_time_s": 714.350037256,
+    "x_m": 11.992215945520504,
+    "y_m": 1.588342578200254,
+    "yaw_rad": 1.507773263936511,
+    "stamp_s": 714.350037256
+  },
+  "authored_tolerance": {
+    "station_xy_tolerance_m": 0.25,
+    "station_yaw_tolerance_rad": 0.25
+  },
+  "mission_progress": {
+    "elapsed_sim_s": 704.566703412,
+    "completed_orders": 0
+  },
+  "findings": {
+    "lifecycle_only_companion_refresh": "confirmed source defect; energy and observation times omitted from change fingerprint",
+    "causal_pose_loss_under_queued_odometry": "reproduced CPU defect; contribution to this native run remains an inference"
+  },
+  "active_source_modified": false,
+  "live_bag_SQL_opened": false,
+  "GT_used": false,
+  "native_charging_recovery_verified": false,
+  "read_consistency": "sequential observations of separate JSON/JSONL files, not an atomic control snapshot",
+  "earlier_tool_observation": {
+    "scope": "earlier read-only tool output; original full-document hash was not retained",
+    "companion_energy_observed_at_s": 491.300025623,
+    "companion_file_modified_local": "2026-10-22T02:31:06.959523",
+    "primary_file_modified_local": "2026-10-22T02:49:35.629212",
+    "companion_phase": "contact_pending"
+  },
+  "later_native_observation": "The same native run reached virtual charging at714.100037243; no permanent stall or exact queue-loss causation is claimed."
+}

@@ -1032,24 +1032,45 @@ def fresh_guided_compute_request(chunk: Any, pose: Mapping[str, Any], stamp: Any
 
 
 def observe_charging_odometry(charging: RosChargingRuntime, run_id: str, robot_id: str,
-                              runtime: Mapping[str, Any], reservation: Mapping[str, Any] | None,
+                              runtime: dict[str, Any], reservation: Mapping[str, Any] | None,
                               now_s: float) -> dict[str, Any] | None:
-    """Wait for the actual ROS clock; never move future odometry into the present."""
+    """Pair queued encoders with an observed causal pose; never rewrite stamps."""
     pending = runtime["charging_odom_pending"]
     latest = None
     gap = charging.energy.charging_limits["max_observation_gap_s"]
+    history = runtime.setdefault("charging_pose_history", deque(maxlen=64))
+    estimated = runtime["pose"]
+    if estimated is not None and (not history or estimated != history[-1]):
+        history.append(dict(estimated))
+    while history and history[0]["stamp_s"] < now_s-gap:
+        history.popleft()
     while pending and pending[0]["stamp_s"] <= now_s:
         observation = pending.popleft()
-        estimated = runtime["pose"]
         pose = None
-        if (reservation is not None and estimated is not None
-                and 0 <= now_s - estimated["stamp_s"] <= gap
-                and estimated["stamp_s"] <= observation["stamp_s"]):
-            pose = {"run_id": run_id, "robot_id": robot_id, "frame_id": "map", **estimated}
+        if reservation is not None:
+            candidates = [p for p in history if 0 <= now_s-p["stamp_s"] <= gap
+                          and p["stamp_s"] <= observation["stamp_s"]]
+            if candidates:
+                estimated = max(candidates, key=lambda p: p["stamp_s"])
+                pose = {"run_id": run_id, "robot_id": robot_id, "frame_id": "map", **estimated}
         latest = charging.observe(run_id, robot_id, observation["stamp_s"],
             observation["linear_m_s"], observation["angular_rad_s"], loaded=observation["loaded"],
             observed_at_s=now_s, dock_id=reservation["dock_id"] if reservation else None, pose=pose)
     return latest
+
+
+def publish_charging_state(output: Path, state: dict[str, Any], observed_at_s: float,
+                           previous_revision: str | None, previous_publish_s: float) -> tuple[str, float, bool]:
+    """Refresh the observation file at 1 Hz; lifecycle journal entries stay sparse."""
+    fingerprint = canonical_sha256({"owners": state["owners"],
+        "robots": {key: {field: value["charging"].get(field) for field in
+            ("dock_id", "phase", "geometric_dock_confirmed", "virtual_connector_state", "fault")}
+            if value["charging"] is not None else None for key, value in state["robots"].items()}})
+    changed = fingerprint != previous_revision
+    if changed or observed_at_s-previous_publish_s >= 1.:
+        atomic_json(output/"charging-state.json", state)
+        previous_publish_s = observed_at_s
+    return fingerprint, previous_publish_s, changed
 
 
 def mission_energy_assignment(energy: EnergyRuntime | None, book: Any, settings: Mapping[str, Any] | None, *,
@@ -1699,6 +1720,7 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
     charging_reservations: dict[str, dict[str, Any]] = {}
     charging_requests = set(getattr(args, "charge_robot", ()))
     charging_revision: str | None = None
+    charging_published_s = -math.inf
     virtual_charging = getattr(args, "virtual_charging", False)
     charge_resume_soc = getattr(args, "charge_resume_soc", .8)
     if (virtual_charging and not development or charging_requests and not virtual_charging
@@ -2739,15 +2761,11 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
                     new_leg(robot, target)
                     journal("virtual_charger_reserved", {"robot_id": robot, "dock": reservation})
                 charge_state = charging_runtime.snapshot(args.run_id, observed_at_s=stamp)
-                fingerprint = canonical_sha256({"owners": charge_state["owners"],
-                    "robots": {key: {field: value["charging"].get(field) for field in
-                        ("dock_id", "phase", "geometric_dock_confirmed", "virtual_connector_state", "fault")}
-                        if value["charging"] is not None else None for key, value in charge_state["robots"].items()}})
-                if fingerprint != charging_revision:
-                    atomic_json(output / "charging-state.json", charge_state)
+                charging_revision, charging_published_s, lifecycle_changed = publish_charging_state(
+                    output, charge_state, stamp, charging_revision, charging_published_s)
+                if lifecycle_changed:
                     journal("virtual_charging_state", {"owners": charge_state["owners"],
                         "robots": {key: value["charging"] for key, value in charge_state["robots"].items()}})
-                    charging_revision = fingerprint
                 if elapsed >= horizon and (charging_requests or charging_reservations):
                     raise TimeoutError("virtual charging development horizon reached")
             eligible = [robot for robot, rt in robots.items() if rt["phase"] == "idle" and rt["leg"] is None
