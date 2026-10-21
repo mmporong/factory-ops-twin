@@ -172,6 +172,14 @@ def _v4_world_slot_placement(
     layout: Layout, location: str, slot: int, obstacle_id: str, rect: Rect, height: float,
 ) -> dict[str, Any]:
     recipe, support_names = V4_CARGO_SUPPORT[location]
+    domain = layout.data.get("production_domain", {})
+    if domain.get("id") == "semiconductor_final_test_pack":
+        recipe = domain.get("cargo_recipes", {}).get(location, recipe)
+        support_names = {
+            "esd_tray_loadport": ("Worktop",), "tray_stocker": ("ShelfDeck_3",),
+            "semiconductor_handler": ("WorkBed",), "aoi_mark": ("InspectionStage",),
+            "esd_packing": tuple(f"Roller_{index}" for index in range(8)),
+        }.get(recipe, support_names)
     parts = _recipe_boxes(
         recipe, rect, height, 0, obstacle_id,
         geometry_profile=PRODUCTION_BAY_GEOMETRY,

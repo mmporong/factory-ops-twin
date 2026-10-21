@@ -69,6 +69,38 @@ def _positive(value: Any, field: str) -> float:
     return float(value)
 
 
+def expand_lot_stream(profile: Mapping[str, Any]) -> dict[str, Any]:
+    """Compile a finite shift's repeated lot arrivals into auditable identities."""
+    result = deepcopy(dict(profile))
+    stream = result.get("lot_stream")
+    if stream is None:
+        return result
+    required = {"lot_count", "release_interval_s", "source_stations", "sku", "quantity", "scope"}
+    if not isinstance(stream, dict) or set(stream) != required or "orders" in result:
+        raise ValueError("lot_stream must declare a bounded shift without separate orders")
+    count, quantity = stream["lot_count"], stream["quantity"]
+    if type(count) is not int or not 4 <= count <= 120 or type(quantity) is not int or quantity <= 0:
+        raise ValueError("lot stream requires 4..120 lots and positive integer tray quantity")
+    interval = _positive(stream["release_interval_s"], "lot release interval")
+    sources = stream["source_stations"]
+    if (not isinstance(sources, list) or not sources or len(set(sources)) != len(sources)
+            or any(s not in {"S1", "S2", "S3"} for s in sources)
+            or not isinstance(stream["sku"], str) or not stream["sku"]
+            or not isinstance(stream["scope"], str) or not stream["scope"]):
+        raise ValueError("lot stream needs unique source stations, SKU and scope")
+    material = result.get("material_flow")
+    if not isinstance(material, dict) or "materials" in material:
+        raise ValueError("lot stream generates material declarations from finite initial stock")
+    result["orders"], material["materials"] = [], []
+    for i in range(count):
+        identity, source = f"SC-LOT-{i+1:03d}", sources[i % len(sources)]
+        result["orders"].append({"order_id": identity, "payload_id": f"SC-PAY-{i+1:03d}",
+            "source_station": source, "ready_time": i*interval})
+        material["materials"].append({"order_id": identity, "source": source,
+            "sku": stream["sku"], "quantity": quantity, "tote_id": f"SC-CARRIER-{i+1:03d}"})
+    return result
+
+
 def parking_preflight(book: RouteBook, runtime: Mapping[str, Any],
                       parking: Mapping[str, str]) -> dict[str, Any]:
     """Reject overlapping retained holds and parked robots blocking shared lanes."""
@@ -107,7 +139,7 @@ def parking_preflight(book: RouteBook, runtime: Mapping[str, Any],
 
 
 def _compile(root: Path) -> dict[str, Any]:
-    profile = _read(root, "transport-profile.json")
+    profile = expand_lot_stream(_read(root, "transport-profile.json"))
     config = _read(root, "g2.json")
     runtime = _read(root, "g3-runtime.json")
     book = RouteBook.from_files(root / "layout.json", root / "g3-routing.json")
@@ -166,6 +198,15 @@ def _compile(root: Path) -> dict[str, Any]:
     registry = FleetRegistry(config, scenario)
     workload = {"initial_robots": dict(initial), "load": dict(load),
                 "orders": [row.to_dict() for row in orders], "horizon_s": horizon}
+    if "lot_stream" in profile:
+        workload["lot_stream"] = deepcopy(profile["lot_stream"])
+    chaining = runtime.get("post_drop_dispatch")
+    if chaining is not None:
+        if (not isinstance(chaining, dict) or set(chaining) != {"mode", "idle_grace_s"}
+                or chaining["mode"] != "chain_then_park"
+                or type(chaining["idle_grace_s"]) not in (int, float)
+                or not math.isfinite(chaining["idle_grace_s"]) or not 0 < chaining["idle_grace_s"] <= 5):
+            raise ValueError("post-drop dispatch requires chain_then_park with 0..5s idle grace")
     if "material_flow" in profile:
         from .fleet import FleetMission
         from .material_flow import MaterialFlow

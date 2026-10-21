@@ -1,0 +1,124 @@
+{
+  "schema_version": 1,
+  "provider": "factory-ops-twin",
+  "author": "factory-ops-twin project",
+  "license": "CC0-1.0",
+  "source": "Generic reference-based semiconductor final-test/pack OpenUSD geometry; not manufacturer CAD. References and authored envelopes are in layout.production_domain.",
+  "variant_count": 12,
+  "required_semantic_taxonomy": [
+    "floor",
+    "floor_marking",
+    "rack",
+    "workbench",
+    "process_equipment",
+    "control_cabinet",
+    "buffer_fixture",
+    "pallet",
+    "tote",
+    "payload_tote",
+    "amr",
+    "station_marker",
+    "barrier"
+  ],
+  "runtime_semantics": {
+    "amr": "dynamic Nova Carter roots supplied by the Isaac runtime",
+    "payload_tote": "dynamic payload root bound to the mission ledger by the runtime"
+  },
+  "obstacle_assets": {
+    "KIT_BENCH_1": {
+      "recipe": "esd_tray_loadport",
+      "semantic_class": "workbench",
+      "state_role": "incoming ESD tray loadports"
+    },
+    "KIT_BENCH_2": {
+      "recipe": "esd_tray_loadport",
+      "semantic_class": "workbench",
+      "state_role": "carrier return and retest tray loadports"
+    },
+    "RACK_A1": {
+      "recipe": "tray_stocker",
+      "semantic_class": "rack",
+      "state_role": "JEDEC incoming tray stocker"
+    },
+    "RACK_A2": {
+      "recipe": "tray_stocker",
+      "semantic_class": "rack",
+      "state_role": "WIP tray stocker beside S2"
+    },
+    "RACK_B1": {
+      "recipe": "tray_stocker",
+      "semantic_class": "rack",
+      "state_role": "released lot tray stocker"
+    },
+    "RACK_B2": {
+      "recipe": "tray_stocker",
+      "semantic_class": "rack",
+      "state_role": "retest and empty carrier stocker"
+    },
+    "BENCH_A1": {
+      "recipe": "ate_rack",
+      "semantic_class": "workbench",
+      "state_role": "ATE instrumentation cabinets"
+    },
+    "BENCH_A2": {
+      "recipe": "aoi_mark",
+      "semantic_class": "process_equipment",
+      "state_role": "optical inspection and lot scan enclosure"
+    },
+    "BENCH_B1": {
+      "recipe": "esd_packing",
+      "semantic_class": "workbench",
+      "state_role": "ESD tray packaging bench"
+    },
+    "BENCH_B2": {
+      "recipe": "aoi_mark",
+      "semantic_class": "process_equipment",
+      "state_role": "AOI and marking enclosure"
+    },
+    "PROCESS_1": {
+      "recipe": "semiconductor_handler",
+      "semantic_class": "process_equipment",
+      "state_role": "test handler and tray input/output elevators"
+    },
+    "PROCESS_2": {
+      "recipe": "aoi_mark",
+      "semantic_class": "process_equipment",
+      "state_role": "AOI and marking service module"
+    },
+    "PROCESS_3": {
+      "recipe": "esd_packing",
+      "semantic_class": "process_equipment",
+      "state_role": "ESD pack and tray output rollers"
+    },
+    "CELL_CABINET": {
+      "recipe": "ate_rack",
+      "semantic_class": "control_cabinet",
+      "state_role": "ATE mainframe and utility cabinets"
+    },
+    "CI_BUFFER": {
+      "recipe": "buffer_fixture",
+      "semantic_class": "buffer_fixture",
+      "state_role": "cell_input_two_slot"
+    },
+    "CO_BUFFER": {
+      "recipe": "buffer_fixture",
+      "semantic_class": "buffer_fixture",
+      "state_role": "cell_output_two_slot"
+    },
+    "FG_LOW": {
+      "recipe": "esd_packing",
+      "semantic_class": "pallet",
+      "state_role": "ESD finished tray pack and label station"
+    },
+    "FG_HIGH": {
+      "recipe": "esd_packing",
+      "semantic_class": "pallet",
+      "state_role": "sealed finished tray staging"
+    },
+    "SERVICE_CABINET": {
+      "recipe": "cleanroom_utility",
+      "semantic_class": "control_cabinet",
+      "state_role": "utility, filter and electrical cabinet row"
+    }
+  }
+}

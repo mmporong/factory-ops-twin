@@ -1,0 +1,114 @@
+{
+  "schema_version": 1,
+  "renderer": "RTX Real-Time 2.0",
+  "resolution": [
+    1280,
+    720
+  ],
+  "render_settings": {
+    "sdk_renderer": "RealTimePathTracing",
+    "dlss_exec_mode": 2,
+    "rt_subframes": 4
+  },
+  "roof_mode": "cutaway",
+  "cameras": [
+    {
+      "id": "portfolio_overview",
+      "eye_xyz_m": [
+        16,
+        -13,
+        24
+      ],
+      "target_xyz_m": [
+        16,
+        11,
+        0.7
+      ],
+      "focal_length_mm": 17,
+      "purpose": "compact production-bay material-to-shipping flow"
+    },
+    {
+      "id": "west_material_flow",
+      "eye_xyz_m": [
+        0.5,
+        3,
+        7
+      ],
+      "target_xyz_m": [
+        8.5,
+        11,
+        1
+      ],
+      "focal_length_mm": 30,
+      "purpose": "compact tote racks, source stations and modular benches"
+    },
+    {
+      "id": "cell_process",
+      "eye_xyz_m": [
+        14,
+        3.5,
+        7.5
+      ],
+      "target_xyz_m": [
+        20,
+        11,
+        1
+      ],
+      "focal_length_mm": 35,
+      "purpose": "connected assembly, inspection and pack process"
+    },
+    {
+      "id": "east_shipping",
+      "eye_xyz_m": [
+        31.5,
+        4,
+        6.5
+      ],
+      "target_xyz_m": [
+        25,
+        11,
+        0.9
+      ],
+      "focal_length_mm": 32,
+      "purpose": "cell handoff, east AMR spine and shipping staging"
+    },
+    {
+      "id": "carter1_follow",
+      "eye_xyz_m": [
+        -0.6,
+        -0.3,
+        2.4
+      ],
+      "target_xyz_m": [
+        0,
+        0,
+        0.35
+      ],
+      "focal_length_mm": 20,
+      "purpose": "short-boom follow camera inside the AMR clearance in carter1 chassis_link frame"
+    },
+    {
+      "id": "carter2_follow",
+      "eye_xyz_m": [
+        -0.6,
+        0.3,
+        2.4
+      ],
+      "target_xyz_m": [
+        0,
+        0,
+        0.35
+      ],
+      "focal_length_mm": 20,
+      "purpose": "short-boom follow camera inside the AMR clearance in carter2 chassis_link frame"
+    }
+  ],
+  "capture_contract": {
+    "rgb": "PNG, lossless, sRGB",
+    "depth": "32-bit float EXR or NPY with metre units",
+    "semantic": "uint32 NPY raw ID map plus ID-to-class mapping JSON; PNG is preview only",
+    "instance": "uint32 NPY raw ID map plus stable prim path mapping JSON; PNG is preview only",
+    "camera": "intrinsics, camera-to-world matrix, pose and simulation timestamp",
+    "trajectory": "physics frame and simulation timestamp joined without interpolation"
+  }
+}

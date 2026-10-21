@@ -11,7 +11,8 @@ import tempfile
 from factory_ops.fleet_execution import make_chunk
 from factory_ops.fleet_routing import RouteBook
 from factory_ops.navigation import GoalPose
-from scripts.ros.g3_mission import navigation_leg_goal, observe_charging_odometry, publish_charging_state
+from scripts.ros.g3_mission import (navigation_leg_goal, observe_charging_odometry,
+    publish_charging_state, queue_charging_odometry)
 
 
 class ChargingIntegrationTests(unittest.TestCase):
@@ -91,6 +92,28 @@ class ChargingIntegrationTests(unittest.TestCase):
             observe_charging_odometry(charging, "run", "carter4", runtime, reservation, now)
         self.assertEqual(charging.snapshot("run", observed_at_s=4.)["robots"]["carter4"]["charging"]["phase"], "charging")
         self.assertGreater(energy.snapshot()["robots"]["carter4"]["charged_wh"], 0.)
+
+    def test_callback_batch_larger_than_drain_rounds_is_consumed_in_stamp_order(self):
+        self.runtime["charging_odom_pending"].clear()
+        for index in range(96):
+            stamp = index/10
+            queue_charging_odometry(self.charging, "run", "carter4", self.runtime, None,
+                {"stamp_s":stamp, "linear_m_s":.1, "angular_rad_s":0., "loaded":False}, stamp)
+        self.assertEqual([], list(self.runtime["charging_odom_pending"]))
+        self.assertEqual(list(range(96)),
+            [round(call.args[2]*10) for call in self.charging.observe.call_args_list])
+
+    def test_uncausal_callback_batch_keeps_original_samples_and_overflows_at_bound(self):
+        self.runtime["charging_odom_pending"].clear()
+        for index in range(64):
+            queue_charging_odometry(self.charging, "run", "carter4", self.runtime, None,
+                {"stamp_s":10.+index/10, "linear_m_s":.1, "angular_rad_s":0., "loaded":False}, 9.)
+        with self.assertRaisesRegex(RuntimeError, "virtual charging odometry queue overflow"):
+            queue_charging_odometry(self.charging, "run", "carter4", self.runtime, None,
+                {"stamp_s":16.4, "linear_m_s":.1, "angular_rad_s":0., "loaded":False}, 9.)
+        self.charging.observe.assert_not_called()
+        self.assertEqual([10.+index/10 for index in range(64)],
+            [sample["stamp_s"] for sample in self.runtime["charging_odom_pending"]])
 
     def test_projection_refreshes_soc_without_repeating_lifecycle_events(self):
         state = {"owners":{}, "robots":{"carter4":{"charging":None,

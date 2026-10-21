@@ -1031,6 +1031,33 @@ def fresh_guided_compute_request(chunk: Any, pose: Mapping[str, Any], stamp: Any
     return str(uuid4()), guided_request(chunk, dict(pose), stamp, goal_type=goal_type, pose_type=pose_type)
 
 
+def post_drop_action(runtime_config: Mapping[str, Any], runtime: dict[str, Any], now_s: float,
+                     *, new_drop: bool = False, next_intent: bool = False) -> str:
+    """Offer a stopped drop-off robot a new task, then clear it to its pocket."""
+    policy = runtime_config.get("post_drop_dispatch")
+    if policy is None:
+        return "park" if new_drop else "none"
+    if new_drop:
+        runtime["post_drop_wait_since_s"] = now_s
+        return "wait"
+    if next_intent:
+        runtime.pop("post_drop_wait_since_s", None)
+        return "chain"
+    since = runtime.get("post_drop_wait_since_s")
+    if since is None:
+        return "none"
+    if now_s-since < policy["idle_grace_s"]:
+        return "wait"
+    runtime.pop("post_drop_wait_since_s", None)
+    return "park"
+
+
+def chain_pickup_supported(runtime_config: Mapping[str, Any], anchor: str, pickup: str) -> bool:
+    # A new same-station handoff needs its own stationary receipt protocol;
+    # never fabricate a successful Nav2 action for a zero-length route.
+    return "post_drop_dispatch" not in runtime_config or anchor != pickup
+
+
 def observe_charging_odometry(charging: RosChargingRuntime, run_id: str, robot_id: str,
                               runtime: dict[str, Any], reservation: Mapping[str, Any] | None,
                               now_s: float) -> dict[str, Any] | None:
@@ -1057,6 +1084,20 @@ def observe_charging_odometry(charging: RosChargingRuntime, run_id: str, robot_i
             observation["linear_m_s"], observation["angular_rad_s"], loaded=observation["loaded"],
             observed_at_s=now_s, dock_id=reservation["dock_id"] if reservation else None, pose=pose)
     return latest
+
+
+def queue_charging_odometry(charging: RosChargingRuntime, run_id: str, robot_id: str,
+                            runtime: dict[str, Any], reservation: Mapping[str, Any] | None,
+                            observation: Mapping[str, Any], now_s: float) -> dict[str, Any] | None:
+    """Bound the callback queue by consuming only clock-causal observations."""
+    pending = runtime["charging_odom_pending"]
+    max_pending = 64
+    if len(pending) >= max_pending//2:
+        observe_charging_odometry(charging, run_id, robot_id, runtime, reservation, now_s)
+    if len(pending) >= max_pending:
+        raise RuntimeError("virtual charging odometry queue overflow")
+    pending.append(dict(observation))
+    return observe_charging_odometry(charging, run_id, robot_id, runtime, reservation, now_s)
 
 
 def publish_charging_state(output: Path, state: dict[str, Any], observed_at_s: float,
@@ -1937,10 +1978,17 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
                 state["stop_samples"] = state["stop_receiver"].samples
                 if energy_runtime is not None and mission is not None:
                     if charging_runtime is not None:
-                        if len(state["charging_odom_pending"]) >= 64:
-                            raise RuntimeError("virtual charging odometry queue overflow")
-                        state["charging_odom_pending"].append({**state["last_odom"],
-                            "loaded": mission_energy_load(mission, material, robot)})
+                        reservation = charging_reservations.get(robot)
+                        try:
+                            queue_charging_odometry(charging_runtime, args.run_id, robot, state,
+                                reservation, {**state["last_odom"],
+                                    "loaded": mission_energy_load(mission, material, robot)}, robot_now)
+                        except ValueError as error:
+                            if robot not in energy_faults:
+                                journal("virtual_charging_observation_fault", {"robot_id": robot, "error": str(error)})
+                                energy_faults.add(robot)
+                            if reservation is not None:
+                                raise RuntimeError(f"virtual charging observation invalid for {robot}: {error}") from error
                         return
                     try:
                         energy_runtime.observe(args.run_id, robot, stamp,
@@ -2271,6 +2319,7 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
             if live_control is not None and live_control.blocked:
                 rt["live_deferred_leg"] = (target, intent)
                 return
+            rt.pop("post_drop_wait_since_s", None)
             reset_stop_observation(rt)
             plan = book.plan(rt["anchor"], target, closed=current_closed)
             final_goal = navigation_leg_goal(plan, goals,
@@ -2708,7 +2757,8 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
                     journal("empty_handoff_commit" if auxiliary else "handoff_commit", {"robot_id": robot, "intent": intent.to_dict(), "result": evidence.to_dict(), "receipt": receipt_body, "ledger_seq": mission.ledger.ledger_seq})
                     rt["leg"] = None; rt["chunk"] = None; rt["phase"] = "idle"
                     if intent.transition is Transition.DROP:
-                        new_leg(robot, rt["park"])
+                        if post_drop_action(runtime_config, rt, stamp, new_drop=True) == "park":
+                            new_leg(robot, rt["park"])
                 if (rt["phase"] in {"compute_sent", "computing", "follow_sent", "following"}
                         or rt.get("planner_retry_pending") is not None) and stamp-rt["phase_started"] > runtime_config["chunk_timeout_s"]:
                     raise TimeoutError(f"G3 chunk action deadline: {robot}")
@@ -2780,6 +2830,8 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
                 if earliest_empty <= earliest_product:
                     current_reservations = manager.snapshot(now_s=stamp)
                     def empty_cost(robot: str, job: Any) -> float | None:
+                        if not chain_pickup_supported(runtime_config, robots[robot]["anchor"], job.source):
+                            return None
                         assessment = assess_dispatch_route_compatibility(book, robot_id=robot, task_id=job.task_id,
                             current_anchor=robots[robot]["anchor"], pickup_station=job.source, drop_station=job.destination,
                             closed=current_closed, reservation_radius_m=reservation_radius, reservation_snapshot=current_reservations)
@@ -2831,6 +2883,8 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
                             dispatch_pair_fingerprints[key] = fingerprint
 
                 def cost(robot: Any, task: Any) -> float | None:
+                    if not chain_pickup_supported(runtime_config, robots[robot.robot_id]["anchor"], task.pickup_station):
+                        return None
                     assessment = assessments.get((robot.robot_id, task.task_id))
                     if assessment is None or not assessment.compatible:
                         return None
@@ -2855,7 +2909,10 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
             for robot in idle_for_intents if cutoff is None else ():
                 intent = (material.active_intents.get(robot) if material is not None else None) or mission.active_intents.get(robot)
                 if intent is not None:
+                    post_drop_action(runtime_config, robots[robot], stamp, next_intent=True)
                     new_leg(robot, intent.station, intent)
+                elif post_drop_action(runtime_config, robots[robot], stamp) == "park":
+                    new_leg(robot, robots[robot]["park"])
             visual_snapshot = mission.ledger.snapshot()
             material_state = material.snapshot() if material is not None else None
             refresh_live_controls(stamp)

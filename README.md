@@ -1,10 +1,12 @@
 # Factory Ops Twin
 
-가상 센서 모듈 공장에서 **4대 AMR의 자재 공급·완제품 출하·빈 용기 회수**를 Isaac Sim·ROS 2와 웹 관제로 연결하는 프로젝트입니다.
+반도체 후공정의 최종검사·포장 구역에서 **4대 AMR의 트레이 공급·완제품 출하·빈 캐리어 회수**를 Isaac Sim·ROS 2와 웹 관제로 연결하는 프로젝트입니다.
+
+[새 반도체 구역 설정](configs/factory-semiconductor)은 트레이 저장소·테스트 핸들러·ATE·AOI·ESD 포장대의 용도와 배치를 구분합니다. 로트12건을 순차 투입하고 하차 후 다음 작업을 먼저 배차하도록 준비했습니다. 기하·경로와 CPU 운영 검사는 통과했으며, 새 구성의 실제 운송·대표 GIF는 아직 완료하지 않았습니다. [공정·설비·운영 범위](docs/semiconductor-cell.md)
 
 [![전체 공장 물류 운영의 12초 반복 미리보기](docs/images/fleet4-local45-036/operations-preview-smooth.gif)](docs/images/fleet4-local45-036/operations-business-complete.mp4)
 
-첫 화면은 이전 실행의 전체 업무 영상에서 고른 **12초 반복 GIF**입니다. 원본 영상의10fps·명목74배속 요약이며, 이미지를 누르면 전체 MP4로 이동합니다. [GIF 출처·변환 기록](docs/images/fleet4-local45-036/readme-smooth-preview-provenance.json)
+첫 화면은 **이전 센서 모듈 구역 실행**의 전체 업무 영상에서 고른12초 반복 GIF입니다. 새 반도체 구역의 영상과 구분합니다. 원본 영상의10fps·명목74배속 요약이며, 이미지를 누르면 전체 MP4로 이동합니다. [GIF 출처·변환 기록](docs/images/fleet4-local45-036/readme-smooth-preview-provenance.json)
 
 **자재 공급 → 공정 처리 → 완제품 이송 → 출하 → 빈 용기 반납**의 전체 운영과 같은 실행의 관제 상태를 보여줍니다. [현재 보존된 전체 업무 영상](docs/images/fleet4-local45-036/operations-business-complete.mp4)은 명목74배속 요약입니다. 해당 실행은 출하3건·빈 토트 반납3건을 기록했으나 최종 기록 종료 검사에 실패했습니다.
 

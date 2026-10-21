@@ -1,0 +1,738 @@
+{
+  "schema_version": 1,
+  "revision": "amr-production-bay-fleet4-v1",
+  "status": "Authored semiconductor final-test/pack bay; no physical runtime qualification",
+  "units": "m",
+  "frame": "map",
+  "rect_convention": "xmin,ymin,xmax,ymax; grid uses cell centers",
+  "bounds_xy": [
+    0,
+    0,
+    32,
+    22
+  ],
+  "map_resolution_m": 0.05,
+  "grid_rules": {
+    "origin_xy_m": [
+      0,
+      0
+    ],
+    "row_direction": "+y from south; column +x from west",
+    "coordinate_unit": "exact integer millimeters; authored edges are multiples of 50mm",
+    "cell_center_mm": "(50*column+25, 50*row+25)",
+    "coordinate_to_cell": "floor(x_mm/50), floor(y_mm/50); at a boundary choose the +x/+y cell",
+    "rect_rasterization": "half-open [min,max) evaluated at cell centers",
+    "planning_probe": "nominal 0.7m half-extent axis-aligned square; k=ceil(700mm/50mm)=14; all 29x29 cells including boundary must be free; whole-cell cover is 1.45m",
+    "distance": "4-neighbor unit edges; distance_mm=edge_count*50; divide by 1000 only for report",
+    "not_a_carter_footprint": true
+  },
+  "geometry_authority": "Union of amr_allowed_regions minus physical_obstacles. Other floor is AMR keepout, not necessarily solid equipment.",
+  "width_status": "3m low/high mains, west link and east spine; 2.6m centre link; single-lane conflict protection remains required",
+  "amr_allowed_regions": [
+    {
+      "id": "MAIN_LOW",
+      "rect": [
+        2,
+        3.5,
+        30.5,
+        6.5
+      ],
+      "purpose": "3m main transport"
+    },
+    {
+      "id": "MAIN_HIGH",
+      "rect": [
+        2,
+        15.5,
+        30.5,
+        18.5
+      ],
+      "purpose": "3m alternate main transport"
+    },
+    {
+      "id": "WEST_LINK",
+      "rect": [
+        7.5,
+        5,
+        10.5,
+        17
+      ],
+      "purpose": "3m source cross-link"
+    },
+    {
+      "id": "CENTER_LINK",
+      "rect": [
+        13.7,
+        5,
+        16.3,
+        17
+      ],
+      "purpose": "2.6m process cross-link"
+    },
+    {
+      "id": "EAST_SPINE",
+      "rect": [
+        23.5,
+        5,
+        26.5,
+        17
+      ],
+      "purpose": "3m cell and shipping spine"
+    },
+    {
+      "id": "S2_APPROACH",
+      "rect": [
+        3.5,
+        9.5,
+        9,
+        12.5
+      ],
+      "purpose": "source B access"
+    },
+    {
+      "id": "S2_BAY",
+      "rect": [
+        2,
+        9.5,
+        5,
+        12.5
+      ],
+      "purpose": "source B handoff bay"
+    },
+    {
+      "id": "CI_APPROACH",
+      "rect": [
+        20.3,
+        6.7,
+        25,
+        9.3
+      ],
+      "purpose": "cell input access"
+    },
+    {
+      "id": "CI_BAY",
+      "rect": [
+        20.3,
+        6.5,
+        23,
+        9.5
+      ],
+      "purpose": "cell input handoff bay"
+    },
+    {
+      "id": "CO_APPROACH",
+      "rect": [
+        20.3,
+        12.7,
+        25,
+        15.3
+      ],
+      "purpose": "cell output access"
+    },
+    {
+      "id": "CO_BAY",
+      "rect": [
+        20.3,
+        12.5,
+        23,
+        15.5
+      ],
+      "purpose": "cell output handoff bay"
+    },
+    {
+      "id": "OUT_APPROACH",
+      "rect": [
+        25,
+        9.7,
+        29.5,
+        12.3
+      ],
+      "purpose": "shipping access"
+    },
+    {
+      "id": "OUT_BAY",
+      "rect": [
+        27.5,
+        9.5,
+        30.5,
+        12.5
+      ],
+      "purpose": "finished goods handoff bay"
+    },
+    {
+      "id": "P1_POCKET",
+      "rect": [
+        10.5,
+        0,
+        13.5,
+        5
+      ],
+      "purpose": "off-main parking"
+    },
+    {
+      "id": "P2_POCKET",
+      "rect": [
+        10.5,
+        17,
+        13.5,
+        22
+      ],
+      "purpose": "off-main parking"
+    },
+    {
+      "id": "P3_POCKET",
+      "rect": [
+        15.5,
+        0,
+        18.5,
+        5
+      ],
+      "purpose": "off-main south waiting/parking bay"
+    },
+    {
+      "id": "P4_POCKET",
+      "rect": [
+        15.5,
+        17,
+        18.5,
+        22
+      ],
+      "purpose": "off-main north waiting/parking bay"
+    }
+  ],
+  "stations": [
+    {
+      "id": "S1",
+      "xy": [
+        3.5,
+        5
+      ],
+      "role": "incoming packaged-IC tray lot",
+      "physical_payload": false
+    },
+    {
+      "id": "S2",
+      "xy": [
+        3.5,
+        11
+      ],
+      "role": "released WIP tray lot",
+      "physical_payload": false
+    },
+    {
+      "id": "S3",
+      "xy": [
+        3.5,
+        17
+      ],
+      "role": "retest or alternate product-family tray lot",
+      "physical_payload": false
+    },
+    {
+      "id": "CI",
+      "xy": [
+        21.5,
+        8
+      ],
+      "role": "final-test cell inbound handoff",
+      "capacity": 2,
+      "physical_payload": false
+    },
+    {
+      "id": "CO",
+      "xy": [
+        21.5,
+        14
+      ],
+      "role": "tested and packed tray output",
+      "capacity": 2,
+      "physical_payload": false
+    },
+    {
+      "id": "OUT",
+      "xy": [
+        29,
+        11
+      ],
+      "role": "finished lot handoff",
+      "physical_payload": false
+    }
+  ],
+  "pockets": {
+    "P1": [
+      12,
+      1.5
+    ],
+    "P2": [
+      12,
+      20.5
+    ],
+    "P3": [
+      17,
+      1.5
+    ],
+    "P4": [
+      17,
+      20.5
+    ]
+  },
+  "workcell": {
+    "id": "CELL_1",
+    "workers": 1,
+    "input_capacity": 2,
+    "output_capacity": 2,
+    "service_sim_s": 20,
+    "all_visual_equipment_blocks_are_one_logical_cell": true
+  },
+  "visual_zones": [
+    {
+      "id": "MaterialZone",
+      "rect": [
+        0.2,
+        1.2,
+        10.2,
+        20.8
+      ]
+    },
+    {
+      "id": "ProcessZone",
+      "rect": [
+        10.4,
+        6.55,
+        24.8,
+        15.45
+      ]
+    },
+    {
+      "id": "ShippingZone",
+      "rect": [
+        26.7,
+        6.55,
+        31.8,
+        15.45
+      ]
+    }
+  ],
+  "reserved_work_areas": [
+    {
+      "id": "SOURCE_LOW",
+      "rect": [
+        2.5,
+        6.75,
+        7.25,
+        9.5
+      ],
+      "purpose": "compact flow racks"
+    },
+    {
+      "id": "SOURCE_HIGH",
+      "rect": [
+        2.5,
+        12.5,
+        7.25,
+        15.25
+      ],
+      "purpose": "compact flow racks"
+    },
+    {
+      "id": "BENCH_LOW",
+      "rect": [
+        10.75,
+        6.75,
+        13.5,
+        10.5
+      ],
+      "purpose": "modular assembly and inspection benches"
+    },
+    {
+      "id": "BENCH_HIGH",
+      "rect": [
+        10.75,
+        11.5,
+        13.5,
+        15.25
+      ],
+      "purpose": "modular packing and inspection benches"
+    },
+    {
+      "id": "CELL_EQUIPMENT",
+      "rect": [
+        16.6,
+        6.75,
+        20.1,
+        15.25
+      ],
+      "purpose": "one logical production cell"
+    },
+    {
+      "id": "CONTROL",
+      "rect": [
+        20.7,
+        10,
+        22.7,
+        12
+      ],
+      "purpose": "cell control cabinet"
+    },
+    {
+      "id": "SHIPPING_LOW",
+      "rect": [
+        27,
+        6.75,
+        31,
+        9.25
+      ],
+      "purpose": "finished goods"
+    },
+    {
+      "id": "SHIPPING_HIGH",
+      "rect": [
+        27,
+        12.75,
+        31,
+        15.25
+      ],
+      "purpose": "finished goods"
+    },
+    {
+      "id": "SERVICE_EDGE",
+      "rect": [
+        19,
+        19.25,
+        24,
+        20.25
+      ],
+      "purpose": "service cabinets"
+    }
+  ],
+  "physical_obstacles": [
+    {
+      "id": "KIT_BENCH_1",
+      "rect": [
+        1,
+        0.6,
+        7,
+        3
+      ],
+      "height_m": 1.45,
+      "type": "incoming ESD tray loadports"
+    },
+    {
+      "id": "KIT_BENCH_2",
+      "rect": [
+        1,
+        19,
+        7.2,
+        21.3
+      ],
+      "height_m": 1.45,
+      "type": "carrier return and retest tray loadports"
+    },
+    {
+      "id": "RACK_A1",
+      "rect": [
+        0.6,
+        6.8,
+        7.2,
+        8.4
+      ],
+      "height_m": 2.4,
+      "type": "JEDEC incoming tray stocker"
+    },
+    {
+      "id": "RACK_A2",
+      "rect": [
+        0.6,
+        8.6,
+        7.2,
+        9.3
+      ],
+      "height_m": 2.4,
+      "type": "WIP tray stocker beside S2"
+    },
+    {
+      "id": "RACK_B1",
+      "rect": [
+        0.6,
+        12.7,
+        7.2,
+        14
+      ],
+      "height_m": 2.4,
+      "type": "released lot tray stocker"
+    },
+    {
+      "id": "RACK_B2",
+      "rect": [
+        0.6,
+        14.2,
+        7.2,
+        15.3
+      ],
+      "height_m": 2.4,
+      "type": "retest and empty carrier stocker"
+    },
+    {
+      "id": "BENCH_A1",
+      "rect": [
+        10.8,
+        6.9,
+        13.4,
+        9
+      ],
+      "height_m": 2.1,
+      "type": "ATE instrumentation cabinets"
+    },
+    {
+      "id": "BENCH_A2",
+      "rect": [
+        10.8,
+        9.2,
+        13.4,
+        11.3
+      ],
+      "height_m": 2.1,
+      "type": "optical inspection and lot scan enclosure"
+    },
+    {
+      "id": "BENCH_B1",
+      "rect": [
+        10.8,
+        11.5,
+        13.4,
+        13.5
+      ],
+      "height_m": 1.6,
+      "type": "ESD tray packaging bench"
+    },
+    {
+      "id": "BENCH_B2",
+      "rect": [
+        10.8,
+        13.7,
+        13.4,
+        15.3
+      ],
+      "height_m": 2.1,
+      "type": "AOI and marking enclosure"
+    },
+    {
+      "id": "PROCESS_1",
+      "rect": [
+        16.6,
+        6.7,
+        19.95,
+        9.3
+      ],
+      "height_m": 2.4,
+      "type": "test handler and tray input/output elevators"
+    },
+    {
+      "id": "PROCESS_2",
+      "rect": [
+        16.6,
+        9.55,
+        20.1,
+        12.45
+      ],
+      "height_m": 2.4,
+      "type": "AOI and marking service module"
+    },
+    {
+      "id": "PROCESS_3",
+      "rect": [
+        16.6,
+        12.7,
+        19.95,
+        15.3
+      ],
+      "height_m": 1.6,
+      "type": "ESD pack and tray output rollers"
+    },
+    {
+      "id": "CELL_CABINET",
+      "rect": [
+        20.35,
+        9.65,
+        23.2,
+        12.35
+      ],
+      "height_m": 2.2,
+      "type": "ATE mainframe and utility cabinets"
+    },
+    {
+      "id": "CI_BUFFER",
+      "rect": [
+        20,
+        6.7,
+        20.25,
+        9.3
+      ],
+      "height_m": 1.1,
+      "type": "two-lot tester inlet boundary fixture"
+    },
+    {
+      "id": "CO_BUFFER",
+      "rect": [
+        20,
+        12.7,
+        20.25,
+        15.3
+      ],
+      "height_m": 1.1,
+      "type": "two-lot tester outlet boundary fixture"
+    },
+    {
+      "id": "FG_LOW",
+      "rect": [
+        26.8,
+        6.8,
+        31.4,
+        9.3
+      ],
+      "height_m": 1.6,
+      "type": "ESD finished tray pack and label station"
+    },
+    {
+      "id": "FG_HIGH",
+      "rect": [
+        26.8,
+        12.7,
+        31.4,
+        15.3
+      ],
+      "height_m": 1.6,
+      "type": "sealed finished tray staging"
+    },
+    {
+      "id": "SERVICE_CABINET",
+      "rect": [
+        19.1,
+        19,
+        31.3,
+        21.2
+      ],
+      "height_m": 2.5,
+      "type": "utility, filter and electrical cabinet row"
+    }
+  ],
+  "blocked_aisle": {
+    "rect": [
+      18.5,
+      3.5,
+      19.5,
+      6.5
+    ],
+    "height_m": 1.5,
+    "active_sim_s": [
+      0,
+      600
+    ],
+    "observed_by": "LiDAR/costmap; future removal time evaluator only"
+  },
+  "traffic_reference": null,
+  "unchanged_contracts": [
+    "19 obstacle footprints translated +1m in y without scaling",
+    "6 process stations translated +1m in y",
+    "32x20m production arrangement preserved within32x22m bounds",
+    "4 separate off-main parking bays",
+    "conservative reservation holds retained"
+  ],
+  "unperformed_validation": [
+    "four-AMR transport",
+    "physical cargo",
+    "charging",
+    "new scene sensor/map alignment"
+  ],
+  "layout_provenance": {
+    "kind": "authored-not-surveyed",
+    "base": "configs/factory-v4/layout.json",
+    "production_translation_xy_m": [
+      0,
+      1
+    ],
+    "extra_service_depth_m": 2,
+    "reason": "four retained footprint holds need separation from main-lane swept tiles; keep production spacing and obstacle sizes",
+    "pending": "actual asset footprint, four-stack Nav2, sensor/map alignment and transport proof"
+  },
+  "production_domain": {
+    "id": "semiconductor_final_test_pack",
+    "display_name": "Semiconductor Final Test & Pack Bay",
+    "scope": "32x22m authored final-test/pack cell, not a wafer fab or surveyed factory; generic reference-based USD equipment, no vendor CAD",
+    "logical_process": "one aggregate final-test/AOI/packing service cell; individual machine process physics not simulated",
+    "quantity_unit": "JEDEC device trays inside ESD transport carriers; not individual die count",
+    "zone_labels": [
+      {
+        "label": "LOT IN",
+        "origin_xy": [
+          2.1,
+          3.1
+        ],
+        "role": "incoming_tray_lots"
+      },
+      {
+        "label": "WIP",
+        "origin_xy": [
+          5.2,
+          12.7
+        ],
+        "role": "wip_stocker"
+      },
+      {
+        "label": "FINAL TEST",
+        "origin_xy": [
+          17,
+          9.35
+        ],
+        "role": "test_handler"
+      },
+      {
+        "label": "AOI",
+        "origin_xy": [
+          17.1,
+          12.45
+        ],
+        "role": "optical_inspection"
+      },
+      {
+        "label": "PACK",
+        "origin_xy": [
+          27.0,
+          9.35
+        ],
+        "role": "packaging"
+      },
+      {
+        "label": "LOT OUT",
+        "origin_xy": [
+          27,
+          15.3
+        ],
+        "role": "finished_trays"
+      },
+      {
+        "label": "TRAY RETURN",
+        "origin_xy": [
+          1,
+          18.6
+        ],
+        "role": "empty_carrier_return"
+      }
+    ],
+    "cargo_recipes": {
+      "source_S1": "esd_tray_loadport",
+      "source_S2": "tray_stocker",
+      "source_S3": "esd_tray_loadport",
+      "ci": "semiconductor_handler",
+      "cell": "aoi_mark",
+      "co": "esd_packing",
+      "out": "esd_packing"
+    },
+    "reference_urls": [
+      "https://www.advantest.com/en/semiconductor-basics/automated-test-equipment/",
+      "https://www.advantest.com/cn/news/2020/20201130.html",
+      "https://www.besi.com/products-technology/product-details/product/datacon-2200-evo/"
+    ],
+    "dimension_basis": "Authored equipment/service envelopes; vendor illustrations guide components only. No cleanroom/ESD certification or vendor model dimensions claimed."
+  }
+}

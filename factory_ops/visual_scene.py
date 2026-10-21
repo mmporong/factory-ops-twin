@@ -26,6 +26,8 @@ _STENCIL_GLYPHS = {
     "B": ("11110", "10001", "10001", "11110", "10001", "10001", "11110"),
     "C": ("01111", "10000", "10000", "10000", "10000", "10000", "01111"),
     "E": ("11111", "10000", "10000", "11110", "10000", "10000", "11111"),
+    "F": ("11111", "10000", "10000", "11110", "10000", "10000", "10000"),
+    "G": ("01111", "10000", "10000", "10111", "10001", "10001", "01111"),
     "H": ("10001", "10001", "10001", "11111", "10001", "10001", "10001"),
     "I": ("11111", "00100", "00100", "00100", "00100", "00100", "11111"),
     "K": ("10001", "10010", "10100", "11000", "10100", "10010", "10001"),
@@ -38,6 +40,9 @@ _STENCIL_GLYPHS = {
     "S": ("01111", "10000", "10000", "01110", "00001", "00001", "11110"),
     "T": ("11111", "00100", "00100", "00100", "00100", "00100", "00100"),
     "U": ("10001", "10001", "10001", "10001", "10001", "10001", "01110"),
+    "V": ("10001", "10001", "10001", "10001", "10001", "01010", "00100"),
+    "W": ("10001", "10001", "10001", "10101", "10101", "10101", "01010"),
+    "X": ("10001", "10001", "01010", "00100", "01010", "10001", "10001"),
     "Y": ("10001", "10001", "01010", "00100", "00100", "00100", "00100"),
 }
 
@@ -249,7 +254,13 @@ def _validate_config(config: Mapping[str, Any], layout: Layout) -> None:
     assets = config["obstacle_assets"]
     if not isinstance(assets, dict) or set(assets) != obstacle_ids:
         raise LayoutError("visual asset assignments must match all 19 source obstacles exactly")
-    valid_recipes = {"kitting_bench", "flow_rack", "assembly_bench", "inspection_station", "packing_bench", "process_cell", "control_cabinet", "buffer_fixture", "finished_goods", "service_cabinet"}
+    valid_recipes = {
+        "kitting_bench", "flow_rack", "assembly_bench", "inspection_station",
+        "packing_bench", "process_cell", "control_cabinet", "buffer_fixture",
+        "finished_goods", "service_cabinet", "semiconductor_handler", "ate_rack",
+        "tray_stocker", "esd_tray_loadport", "aoi_mark", "esd_packing",
+        "cleanroom_utility",
+    }
     for obstacle_id, value in assets.items():
         if not isinstance(value, dict) or set(value) != {"recipe", "semantic_class", "state_role"}:
             raise LayoutError(f"visual asset assignment {obstacle_id} is invalid")
@@ -397,7 +408,15 @@ def _floor_graphics(layout: Layout, palette: Mapping[str, tuple[float, float, fl
             semantic_roots[f"{root_path}/{_prim_name(box.name)}"] = box.semantic_class
 
     bounds = layout.bounds
-    add_box(_Box("FloorFinish", (bounds.xmin, bounds.ymin, 0.001, bounds.xmax, bounds.ymax, 0.006), "Floor", "floor", "factory_floor"))
+    production_domain = layout.data.get("production_domain")
+    semiconductor_domain = isinstance(production_domain, dict) and production_domain.get("id") == "semiconductor_final_test_pack"
+    add_box(_Box(
+        "FloorFinish",
+        (bounds.xmin, bounds.ymin, 0.001, bounds.xmax, bounds.ymax, 0.006),
+        "White" if semiconductor_domain else "Floor",
+        "floor",
+        "esd_epoxy_floor" if semiconductor_domain else "factory_floor",
+    ))
     configured_zones = layout.data.get("visual_zones")
     if configured_zones is None:
         zones = (
@@ -479,9 +498,44 @@ def _floor_graphics(layout: Layout, palette: Mapping[str, tuple[float, float, fl
                                   for name, xy in {**layout.stations, **layout.pockets}.items()) + tuple(
                 (name, (origin[0], origin[1] + 1.0), role)
                 for name, origin, role in stencil_specs if role == "process_identifier")
+        if semiconductor_domain:
+            stencil_specs = tuple(spec for spec in stencil_specs if spec[2] == "station_identifier")
         for label, origin, role in stencil_specs:
             lines.extend(_floor_stencil_usda(label, origin, role, indent=12))
             semantic_roots[f"{root_path}/Stencil_{_prim_name(label)}"] = "floor_marking"
+    if semiconductor_domain:
+        assert isinstance(production_domain, dict)
+        allowed_domain_keys = {
+            "id", "display_name", "scope", "logical_process", "quantity_unit",
+            "zone_labels", "cargo_recipes", "reference_urls", "dimension_basis",
+        }
+        if (not {"id", "zone_labels"} <= set(production_domain)
+                or not set(production_domain) <= allowed_domain_keys):
+            raise LayoutError("semiconductor production_domain has unsupported keys")
+        zone_labels = production_domain["zone_labels"]
+        if not isinstance(zone_labels, list) or not zone_labels:
+            raise LayoutError("semiconductor production_domain zone_labels must be a non-empty list")
+        seen_labels: set[str] = set()
+        for index, item in enumerate(zone_labels):
+            if not isinstance(item, dict) or set(item) != {"label", "origin_xy", "role"}:
+                raise LayoutError(f"production_domain.zone_labels[{index}] is invalid")
+            label, origin, role = item["label"], item["origin_xy"], item["role"]
+            if not isinstance(label, str) or not label or label in seen_labels:
+                raise LayoutError("semiconductor floor labels must be unique non-empty strings")
+            if (not isinstance(origin, list) or len(origin) != 2
+                    or not all(_is_finite_number(value) for value in origin)):
+                raise LayoutError(f"production_domain.zone_labels[{index}].origin_xy is invalid")
+            if not isinstance(role, str) or not role:
+                raise LayoutError(f"production_domain.zone_labels[{index}].role is invalid")
+            origin_xy = (float(origin[0]), float(origin[1]))
+            _points, _counts, _indices, stencil_bounds = _floor_stencil_geometry(label, origin_xy)
+            if (stencil_bounds[0] < bounds.xmin or stencil_bounds[1] < bounds.ymin
+                    or stencil_bounds[2] > bounds.xmax or stencil_bounds[3] > bounds.ymax):
+                raise LayoutError(f"production_domain.zone_labels[{index}] lies outside layout bounds")
+            domain_prim = f"Zone_{_prim_name(label)}"
+            lines.extend(_floor_stencil_usda(label, origin_xy, role, indent=12, prim_name=domain_prim))
+            semantic_roots[f"{root_path}/Stencil_{domain_prim}"] = "floor_marking"
+            seen_labels.add(label)
     lines.extend(["        }"])
     return lines
 
@@ -489,13 +543,15 @@ def _floor_graphics(layout: Layout, palette: Mapping[str, tuple[float, float, fl
 def _floor_stencil_geometry(
     label: str, origin_xy: tuple[float, float], pixel_m: float = .05,
 ) -> tuple[list[tuple[float, float, float]], list[int], list[int], tuple[float, float, float, float]]:
-    if not label or any(character not in _STENCIL_GLYPHS for character in label):
+    if not label or any(character != " " and character not in _STENCIL_GLYPHS for character in label):
         raise LayoutError(f"unsupported floor stencil label: {label!r}")
     x0, y0 = origin_xy
     points: list[tuple[float, float, float]] = []
     indices: list[int] = []
     advance = 6 * pixel_m
     for character_index, character in enumerate(label):
+        if character == " ":
+            continue
         for row, pixels in enumerate(_STENCIL_GLYPHS[character]):
             for column, enabled in enumerate(pixels):
                 if enabled != "1":
@@ -514,12 +570,13 @@ def _floor_stencil_geometry(
 
 def _floor_stencil_usda(
     label: str, origin_xy: tuple[float, float], role: str, *, indent: int,
+    prim_name: str | None = None,
 ) -> list[str]:
     points, counts, indices, bounds = _floor_stencil_geometry(label, origin_xy)
     pad = " " * indent
     point_values = ", ".join(f"({_num(x)}, {_num(y)}, {_num(z)})" for x, y, z in points)
     return [
-        f'{pad}def Mesh "Stencil_{_prim_name(label)}"',
+        f'{pad}def Mesh "Stencil_{prim_name or _prim_name(label)}"',
         f"{pad}{{",
         f"{pad}    custom string stableId = {_quote(f'floor_stencil:{label}')}",
         f'{pad}    custom string semanticClass = "floor_marking"',
@@ -626,6 +683,153 @@ def _recipe_boxes(
 
     def absolute(name: str, ax0: float, ay0: float, z0: float, ax1: float, ay1: float, z1: float, material: str, semantic: str | None = None, role: str | None = None) -> _Box:
         return _Box(name, (ax0, ay0, z0, ax1, ay1, min(z1, height)), material, semantic, role)
+
+    if recipe == "semiconductor_handler":
+        boxes = [
+            b("Plinth", .03, .04, 0, .97, .96, height * .08, "MachinePaint"),
+            b("CabinetLeft", .03, .12, height * .08, .18, .96, height * .92, "White", "process_equipment", "handler_cabinet"),
+            b("CabinetRight", .82, .12, height * .08, .97, .96, height * .92, "White", "process_equipment", "handler_cabinet"),
+            b("CabinetRear", .18, .86, height * .08, .82, .96, height * .92, "White"),
+            b("Roof", .03, .12, height * .88, .97, .96, height * .96, "White"),
+            b("InspectionBed", .20, .25, height * .31, .80, .82, height * .38, "Steel", "process_equipment", "test_chamber"),
+            b("WorkBed", .28, .31, height * .39, .72, .69, height * .44, "ESD", "workbench", "handler_tray_support"),
+            b("SocketNest", .38, .45, height * .38, .62, .67, height * .43, "Accent", "process_equipment", "device_interface_board"),
+            b("DoorFrameLeft", .17, .08, height * .25, .23, .14, height * .84, "MachinePanel"),
+            b("DoorFrameRight", .77, .08, height * .25, .83, .14, height * .84, "MachinePanel"),
+            b("DoorFrameTop", .17, .08, height * .80, .83, .14, height * .86, "MachinePanel"),
+            b("ChamberWindow", .23, .09, height * .42, .77, .125, height * .79, "Glass", "process_equipment", "handler_chamber_window"),
+            b("DoorHandle", .72, .055, height * .53, .77, .11, height * .69, "Dark"),
+            b("LoadTrayElevator", .05, .01, height * .12, .30, .20, height * .34, "LightSteel", "process_equipment", "load_tray_elevator"),
+            b("UnloadTrayElevator", .70, .01, height * .12, .95, .20, height * .34, "LightSteel", "process_equipment", "unload_tray_elevator"),
+            b("LoadTrayMagazine", .08, .025, height * .20, .27, .17, height * .29, "ESD", "rack", "jedec_tray_magazine"),
+            b("UnloadTrayMagazine", .73, .025, height * .20, .92, .17, height * .29, "ESD", "rack", "jedec_tray_magazine"),
+            b("PassBin", .55, .02, height * .10, .68, .16, height * .24, "Green", "buffer_fixture", "pass_sort_bin"),
+            b("RetestBin", .32, .02, height * .10, .45, .16, height * .24, "SafetyYellow", "buffer_fixture", "retest_sort_bin"),
+            b("HMIArm", .80, .04, height * .56, .87, .13, height * .75, "Steel"),
+            b("HMI", .73, .015, height * .66, .94, .075, height * .83, "Dark", "process_equipment", "handler_hmi"),
+            b("StackLightPost", .91, .78, height * .92, .94, .83, height * .98, "Steel"),
+            b("StackLightGreen", .90, .77, height * .965, .95, .84, height, "Green"),
+            b("StackLightAmber", .90, .77, height * .935, .95, .84, height * .965, "SafetyYellow"),
+        ]
+        for index in range(5):
+            boxes.append(b(f"FrontVent_{index}", .20 + .115 * index, .075, height * .17, .27 + .115 * index, .115, height * .20, "Dark"))
+        return boxes
+
+    if recipe == "ate_rack":
+        boxes = [
+            b("Plinth", .04, .06, 0, .96, .94, height * .08, "MachinePaint"),
+            b("RackLeft", .04, .10, height * .08, .10, .94, height, "White"),
+            b("RackRight", .90, .10, height * .08, .96, .94, height, "White"),
+            b("RackRear", .10, .88, height * .08, .90, .94, height, "MachinePanel"),
+            b("TopCap", .04, .10, height * .94, .96, .94, height, "White"),
+            b("ATE_Mainframe", .12, .18, height * .11, .88, .84, height * .52, "MachinePaint", "process_equipment", "ate_mainframe"),
+            b("ATE_Controller", .12, .18, height * .56, .88, .84, height * .77, "MachinePanel", "process_equipment", "ate_controller"),
+            b("UtilityPatchPanel", .12, .10, height * .80, .88, .22, height * .91, "Dark", "control_cabinet", "socket_utility"),
+            b("HMI", .26, .055, height * .61, .74, .12, height * .73, "Glass", "process_equipment", "ate_hmi"),
+        ]
+        for index in range(6):
+            boxes.append(b(f"MainframeSlot_{index}", .16, .105, height * (.16 + .055 * index), .84, .18, height * (.19 + .055 * index), "LightSteel"))
+        for index in range(5):
+            boxes.append(b(f"SocketUtility_{index}", .18 + .135 * index, .06, height * .83, .25 + .135 * index, .115, height * .88, "Accent" if index % 2 == 0 else "SafetyYellow"))
+        return boxes
+
+    if recipe == "tray_stocker":
+        boxes = [
+            b("PostFL", .03, .04, 0, .075, .12, height, "LightSteel"),
+            b("PostFR", .925, .04, 0, .97, .12, height, "LightSteel"),
+            b("PostBL", .03, .88, 0, .075, .96, height, "LightSteel"),
+            b("PostBR", .925, .88, 0, .97, .96, height, "LightSteel"),
+            b("RearPanel", .075, .91, height * .06, .925, .96, height * .95, "White"),
+            b("HMI", .72, .015, height * .72, .92, .07, height * .86, "Dark", "process_equipment", "stocker_hmi"),
+        ]
+        for level in range(4):
+            z = height * (.10 + .205 * level)
+            boxes.append(b(f"ShelfDeck_{level}", .06, .10, z, .94, .90, z + height * .035, "ESD", "rack", "esd_shelf"))
+            for stack in range(3):
+                fx0 = .10 + .285 * stack
+                boxes.append(b(f"TrayStack_L{level}_{stack}", fx0, .18, z + height * .04, fx0 + .22, .80, z + height * .13, "Accent", "tote", "jedec_tray_stack"))
+        top_z = height * .775
+        for row in range(3):
+            for column in range(5):
+                boxes.append(b(
+                    f"LotPocket_{row}_{column}", .125 + column * .15, .23 + row * .18,
+                    top_z, .19 + column * .15, .34 + row * .18, top_z + height * .025,
+                    "Dark", "tote", "lot_pocket",
+                ))
+        return boxes
+
+    if recipe == "esd_tray_loadport":
+        boxes = [
+            b("Base", .04, .06, 0, .96, .94, height * .12, "MachinePaint"),
+            b("Cabinet", .07, .36, height * .12, .93, .94, height * .72, "White", "process_equipment", "loadport_cabinet"),
+            b("Worktop", .03, .06, height * .70, .97, .94, height * .78, "ESD", "workbench", "tray_transfer_deck"),
+            b("DeckGuideLeft", .06, .55, height * .78, .12, .90, height * .84, "LightSteel"),
+            b("DeckGuideRight", .88, .55, height * .78, .94, .90, height * .84, "LightSteel"),
+            b("TrayMagazine", .17, .60, height * .79, .83, .88, height * .92, "Accent", "tote", "jedec_tray_magazine"),
+            b("MagazineStop", .17, .84, height * .84, .83, .91, height * .96, "SafetyYellow"),
+            b("HMI", .70, .02, height * .42, .91, .08, height * .59, "Dark", "process_equipment", "loadport_hmi"),
+            b("StatusGreen", .10, .02, height * .50, .18, .08, height * .58, "Green"),
+        ]
+        for index in range(5):
+            boxes.append(b(f"TrayLayer_{index}", .20, .62, height * (.80 + .018 * index), .80, .85, height * (.812 + .018 * index), "ESD"))
+        return boxes
+
+    if recipe == "aoi_mark":
+        boxes = [
+            b("Plinth", .04, .05, 0, .96, .95, height * .10, "MachinePaint"),
+            b("ChamberLeft", .04, .12, height * .10, .17, .95, height * .90, "White", "process_equipment", "aoi_chamber"),
+            b("ChamberRight", .83, .12, height * .10, .96, .95, height * .90, "White", "process_equipment", "aoi_chamber"),
+            b("ChamberRear", .17, .88, height * .10, .83, .95, height * .90, "White"),
+            b("ChamberRoof", .04, .12, height * .86, .96, .95, height * .94, "White"),
+            b("InspectionStage", .20, .25, height * .27, .80, .78, height * .34, "ESD", "process_equipment", "tray_inspection_stage"),
+            b("OpticalGantry", .28, .54, height * .34, .72, .67, height * .68, "MachinePanel"),
+            b("OpticalHead", .39, .40, height * .57, .61, .62, height * .75, "Dark", "process_equipment", "aoi_optical_head"),
+            b("Lens", .45, .36, height * .51, .55, .43, height * .60, "Glass"),
+            b("ShadeWindow", .17, .08, height * .38, .83, .13, height * .82, "Glass", "process_equipment", "light_shield_window"),
+            b("PassBuffer", .58, .02, height * .12, .78, .18, height * .27, "Green", "buffer_fixture", "pass_buffer"),
+            b("ReviewBuffer", .80, .02, height * .12, .96, .18, height * .27, "SafetyYellow", "buffer_fixture", "review_buffer"),
+            b("HMI", .08, .015, height * .50, .28, .075, height * .68, "Dark", "process_equipment", "aoi_hmi"),
+        ]
+        return boxes
+
+    if recipe == "esd_packing":
+        top = height * .66
+        boxes = [
+            b("Worktop", .03, .05, top, .97, .95, top + height * .08, "MachinePanel"),
+            b("ESDMat", .18, .14, top + height * .085, .70, .78, top + height * .105, "ESD", "workbench", "esd_pack_surface"),
+            b("LegLeft", .06, .10, 0, .13, .90, top, "LightSteel"),
+            b("LegRight", .87, .10, 0, .94, .90, top, "LightSteel"),
+            b("UnderShelf", .12, .14, height * .16, .88, .86, height * .23, "MachinePaint"),
+            b("LabelPrinter", .70, .42, top + height * .09, .89, .70, top + height * .25, "White", "process_equipment", "label_printer"),
+            b("Scale", .30, .40, top + height * .09, .56, .68, top + height * .13, "Dark", "process_equipment", "packing_scale"),
+            b("CoveredCarrier", .13, .18, top + height * .11, .29, .44, top + height * .25, "Glass", "tote", "covered_esd_carrier"),
+            b("LabelRoll", .77, .23, top + height * .10, .86, .36, top + height * .21, "White"),
+            b("HMI", .12, .80, top + height * .10, .34, .90, top + height * .28, "Dark", "process_equipment", "packing_hmi"),
+        ]
+        for index in range(8):
+            fy = .12 + index * .085
+            boxes.append(b(
+                f"Roller_{index}", .18, fy, top + height * .085,
+                .70, fy + .025, top + height * .12, "LightSteel",
+            ))
+        return boxes
+
+    if recipe == "cleanroom_utility":
+        boxes = [
+            b("Plinth", .03, .05, 0, .97, .95, height * .08, "MachinePaint"),
+            b("UtilityCabinet", .04, .12, height * .08, .96, .95, height, "White", "control_cabinet", "cleanroom_utility"),
+            b("DoorLeft", .06, .07, height * .14, .49, .14, height * .88, "MachinePanel"),
+            b("DoorRight", .51, .07, height * .14, .94, .14, height * .88, "MachinePanel"),
+            b("DoorSeam", .485, .065, height * .14, .515, .14, height * .88, "Dark"),
+            b("HandleLeft", .42, .04, height * .43, .46, .11, height * .64, "Dark"),
+            b("HandleRight", .54, .04, height * .43, .58, .11, height * .64, "Dark"),
+            b("FilterHeader", .08, .16, height * .82, .92, .88, height * .94, "LightSteel", "process_equipment", "filter_header"),
+            b("DistributionPanel", .13, .035, height * .56, .39, .10, height * .75, "Dark", "control_cabinet", "power_distribution"),
+            b("UtilityPanel", .61, .035, height * .56, .87, .10, height * .75, "Accent", "control_cabinet", "facility_utility"),
+        ]
+        for index in range(5):
+            boxes.append(b(f"Vent_{index}", .12 + .155 * index, .055, height * .22, .22 + .155 * index, .115, height * .27, "Dark"))
+        return boxes
 
     if recipe == "flow_rack":
         boxes = [
