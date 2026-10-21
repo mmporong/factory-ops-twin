@@ -34,6 +34,8 @@ class NativeAnchorFlowTests(unittest.TestCase):
         self.readonly = False
         self.change_run = False
         self.idle_only = False
+        self.lost_stop_reads = 0
+        self.paused_reads = 0
 
     def request(self, base, method, path, payload, timeout):
         if method == "POST":
@@ -45,6 +47,10 @@ class NativeAnchorFlowTests(unittest.TestCase):
             self.pending_reads += 1
             if self.settle and self.pending_reads >= 3:
                 self.gate.settle(dict.fromkeys(self.gate.robot_ids, True))
+        if self.gate.phase == "paused":
+            self.paused_reads += 1
+            self.gate.settle({r: not (self.paused_reads <= self.lost_stop_reads and r == "carter4")
+                              for r in self.gate.robot_ids})
         value = live_snapshot(revision=self.gate.revision, phase=self.gate.phase,
                               commands=deepcopy(list(self.gate.receipts.values())))
         value["live_control"] = self.gate.snapshot()
@@ -63,12 +69,13 @@ class NativeAnchorFlowTests(unittest.TestCase):
             value["run_id"] = "another-run"
         return value
 
-    def run_flow(self, timeout=5.):
+    def run_flow(self, timeout=5., resume_from_pause=None):
         def advance(seconds):
             self.now += seconds
         with_client = KitClient(clock=lambda: self.now, request=self.request, executor=ImmediateExecutor(), poll_s=.1)
         try:
             return exercise(with_client, "run-a", self.observations.append, timeout_s=timeout,
+                            resume_from_pause=resume_from_pause,
                             clock=lambda: self.now, sleep=advance)
         finally:
             with_client.close()
@@ -87,6 +94,29 @@ class NativeAnchorFlowTests(unittest.TestCase):
         self.readonly = True
         with self.assertRaisesRegex(ValueError, "refusing commands"):
             self.run_flow()
+        self.assertEqual(self.posts, [])
+
+    def test_applied_pause_waits_for_fresh_stop_proof_before_resuming(self):
+        self.lost_stop_reads = 3
+        result = self.run_flow()
+        self.assertEqual([p["action"] for p in self.posts], ["pause", "resume"])
+        self.assertGreater(self.paused_reads, self.lost_stop_reads)
+        self.assertEqual(result["receipts"]["resume"]["status"], "applied")
+
+    def test_existing_applied_pause_recovery_sends_only_one_fresh_resume(self):
+        self.gate.submit({"command_id": "existing", "run_id": "run-a", "expected_run_id": "run-a",
+            "expected_revision": 0, "action": "pause", "requested_at": datetime.now(timezone.utc).isoformat()},
+            now_s=0., wall_now=datetime.now(timezone.utc))
+        self.gate.settle(dict.fromkeys(self.gate.robot_ids, True))
+        self.lost_stop_reads = 3
+        result = self.run_flow(resume_from_pause="existing")
+        self.assertEqual([p["action"] for p in self.posts], ["resume"])
+        self.assertEqual(result["receipts"]["pause"]["command_id"], "existing")
+        self.assertGreater(self.paused_reads, self.lost_stop_reads)
+
+    def test_resume_recovery_refuses_unknown_applied_pause(self):
+        with self.assertRaisesRegex(ValueError, "matching applied native pause"):
+            self.run_flow(resume_from_pause="missing")
         self.assertEqual(self.posts, [])
 
     def test_pending_pause_does_not_count_as_stopped_or_trigger_resume(self):
