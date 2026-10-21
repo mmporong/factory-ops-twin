@@ -60,7 +60,11 @@ def exercise(client: KitClient, run_id: str, record, *, timeout_s: float,
                 if phase == "connect":
                     if "pause" not in control_capabilities(snapshot) or "pause" not in snapshot["capabilities"]:
                         raise ValueError("native pause unavailable; refusing commands")
-                    if "pause" in state["enabled_actions"]:
+                    moving = any(robot.get("task_id") is not None and robot.get("speed_mps") is not None
+                                 and abs(robot["speed_mps"]) >= .05 for robot in snapshot["robots"])
+                    if moving and "pause" in state["enabled_actions"]:
+                        record({"phase": "pause_requested_during_transport", "run_id": run_id,
+                                "sim_time_s": snapshot["sim_time_s"], "robots": snapshot["robots"]})
                         submitted = client.submit_action("pause")
                         if not submitted["submitted"]:
                             raise RuntimeError(submitted["reason"])

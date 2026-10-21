@@ -33,6 +33,7 @@ class NativeAnchorFlowTests(unittest.TestCase):
         self.settle = True
         self.readonly = False
         self.change_run = False
+        self.idle_only = False
 
     def request(self, base, method, path, payload, timeout):
         if method == "POST":
@@ -49,6 +50,12 @@ class NativeAnchorFlowTests(unittest.TestCase):
         value["live_control"] = self.gate.snapshot()
         value["sim_time_s"] = self.now
         value["capabilities"] = control_capabilities(value)
+        for robot in value["robots"]:
+            robot.update(speed_mps=0. if self.gate.phase == "paused" else .2,
+                         task_id="task-" + robot["id"])
+        if self.idle_only:
+            for robot in value["robots"]:
+                robot.update(speed_mps=0., task_id=None)
         if self.readonly:
             value.pop("live_control")
             value["capabilities"] = []
@@ -73,7 +80,8 @@ class NativeAnchorFlowTests(unittest.TestCase):
         self.assertEqual(self.posts[1]["expected_revision"], 2)
         self.assertEqual(result["receipts"]["pause"]["reason"], "all_robots_stopped_at_reserved_anchors")
         self.assertEqual(result["receipts"]["resume"]["reason"], "dispatch_reopened_at_confirmed_anchors")
-        self.assertTrue(any(row["observed_control"]["phase"] == "pause_pending" for row in self.observations))
+        self.assertTrue(any(row.get("observed_control", {}).get("phase") == "pause_pending" for row in self.observations))
+        self.assertTrue(any(row["phase"] == "pause_requested_during_transport" for row in self.observations))
 
     def test_readonly_native_source_receives_no_command(self):
         self.readonly = True
@@ -92,3 +100,9 @@ class NativeAnchorFlowTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "refusing commands"):
             self.run_flow()
         self.assertEqual([p["action"] for p in self.posts], ["pause"])
+
+    def test_idle_fleet_is_not_used_as_an_in_transit_stop_demonstration(self):
+        self.idle_only = True
+        with self.assertRaises(TimeoutError):
+            self.run_flow(timeout=1.)
+        self.assertEqual(self.posts, [])

@@ -59,7 +59,7 @@ uv run python -m factory_ops.dashboard --config configs/factory-fleet4-normal3 -
 
 정지 요청은 `pending`으로 접수된다. 네 차량이 각자의 예약 지점에 도착하고 새 HOLD 응답과 연속 정지 관측을 충족하면 원천이 `applied`를 발행한다. 물리·ROS·가상 에너지 시계는 계속 흐른다. 재개는 이 상태에서 새 명령 ID와 현재 revision으로 요청한다.
 
-아래 도구는 Kit 패널과 같은 `KitClient`로 정지·재개를 한 번씩 요청하고 원천의 적용 응답을 기록한다. `<실행 ID>`는 해당 새 실행의 ID로 바꾸고 새 출력 파일을 사용한다. 현재 관측 전용 실행051에는 명령을 보내지 않는다.
+아래 도구는 작업 중인 차량의 엔코더 속도를 관측한 뒤 Kit 패널과 같은 `KitClient`로 정지·재개를 한 번씩 요청하고 원천의 적용 응답을 기록한다. 초기 주차 상태를 운송 중 정지 시연으로 사용하지 않는다. `<실행 ID>`는 해당 새 실행의 ID로 바꾸고 새 출력 파일을 사용한다. 현재 관측 전용 실행051에는 명령을 보내지 않는다.
 
 ```powershell
 cd "$HOME/factory-ops-twin"
