@@ -1,6 +1,6 @@
 {
-  "revision": 124,
-  "updated_at": "2026-10-21T09:28:34.378403+00:00",
+  "revision": 126,
+  "updated_at": "2026-10-21T09:59:55.725888+00:00",
   "scope": {
     "excluded": "실물 로봇 실행, 새 유료 서비스/에셋, 공개 배포",
     "project_root": "C:\\Users\\LIMMM\\factory-ops-twin",
@@ -22,7 +22,7 @@
       "role": "dashboard frontend author",
       "name": "control",
       "agent_kind": "codex",
-      "status": "138 deferred by user media priority; no pending delegated output",
+      "status": "143 received and source hashes matched; no pending delegated output",
       "session": "default",
       "agent_session": "01a152aa-24b4-7a31-92e3-a2b620f4feeb",
       "terminal_id": "term_65e06d27e415810",
@@ -2028,6 +2028,32 @@
       "ack": false,
       "blocker": "Selected model at capacity; no138 files/receipt produced. Preserve card. User prioritizes logistics/conflict hero; root implementation.",
       "deferral_ack": "Control confirmed no138 receipt/partial files and preserved session/model; main hero assigned root"
+    },
+    {
+      "task_id": "factory-startup-143",
+      "attempt": 1,
+      "contract_revision": 125,
+      "owner": "control",
+      "binding": {
+        "session": "default",
+        "pane_id": "w1:p1C",
+        "terminal_id": "term_65e06d27e415810",
+        "agent_session": "01a152aa-24b4-7a31-92e3-a2b620f4feeb"
+      },
+      "status": "accepted_optional_next_source_native_pending",
+      "card_path": "coordination/collab/factory-startup-143-task.json",
+      "result_path": "coordination/collab/results/factory-startup-143.json",
+      "write_paths": [
+        "scripts/ros/fleet4.launch.py",
+        "tests/test_fleet4_launch.py",
+        "coordination/collab/results/factory-startup-143.json"
+      ],
+      "ack": true,
+      "reviewer": "root",
+      "source_sha256": {
+        "scripts/ros/fleet4.launch.py": "53842a3ae3a22a44b60893a0cee0096365e0151c40e2092d98fb8bbb54bc11a3",
+        "tests/test_fleet4_launch.py": "96afdc26fdc2e4077938ad7f9047d98ed8dd2d121fa7b736d1416f0a179e25a5"
+      }
     }
   ],
   "decisions": [
@@ -2055,6 +2081,11 @@
       "request_id": "user-logistics-conflict-hero-2026-10-21",
       "applied_revision": 123,
       "decision": "One main GIF: actual factory logistics movement, junction yielding/passing and resumption. Overview/loading auxiliary; no active detour claim without evidence."
+    },
+    {
+      "request_id": "user-whole-factory-flow-2026-10-21",
+      "applied_revision": 125,
+      "decision": "Whole-factory material supply/process/shipments/empty returns with same-clock KPIs is main hero. Isolated142 junction coupon auxiliary, do not fake complete operations."
     }
   ]
 }

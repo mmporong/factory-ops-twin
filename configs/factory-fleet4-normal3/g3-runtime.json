@@ -34,11 +34,18 @@
   },
   "camera_capture_every_steps": 1200,
   "real_time_media": {
-    "profiles": ["development"],
+    "profiles": [],
     "window_s": 5.0,
     "sample_every_physics_steps": 1,
     "minimum_abs_linear_m_s": 0.15,
     "minimum_abs_angular_rad_s": 0.15
+  },
+  "operation_story": {
+    "schema_version": 1,
+    "profiles": ["development"],
+    "window_frames": 240,
+    "sample_every_physics_steps": 1,
+    "maximum_windows": 6
   },
   "reservation_strategy": "full_leg_qualification_with_one_edge_actions_and_retained_stationary_footprints",
   "anchor_yaw_rad": {

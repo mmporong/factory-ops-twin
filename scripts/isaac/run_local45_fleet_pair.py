@@ -186,13 +186,18 @@ def monitor_pair(worker, owner: WslProcessSupervisor, *, started: float, bound: 
 def run(stage: Path, sdk: Path, bound: int, *, charge_robot: str | None = None, charge_resume_soc: float = .8,
         lidar_backend: str = "rtx_flat_scan", physics_cadence: str = "owned_step6",
         windows_dds_interface: str | None = None, linux_dds_interface: str | None = None,
-        live_anchor_controls: bool = False, dds_explicit_peers: bool = False) -> int:
+        live_anchor_controls: bool = False, dds_explicit_peers: bool = False,
+        nav2_startup_stagger_s: float = 0., capture_resolution: str = "640x360") -> int:
     if os.name != "nt" or not 60 <= bound <= 10800:
         raise ValueError("local development requires Windows and an explicit 60..10800s bound")
     if lidar_backend not in {"rtx_flat_scan", "physx_planar"}:
         raise ValueError("unsupported local45 lidar backend")
     if physics_cadence not in {"app_update", "owned_step6"}:
         raise ValueError("unsupported local45 physics cadence")
+    if type(nav2_startup_stagger_s) not in (float,int) or not 0 <= nav2_startup_stagger_s <= 5:
+        raise ValueError("Nav2 startup stagger must be finite seconds in [0,5]")
+    if capture_resolution not in {"640x360", "1280x720"}:
+        raise ValueError("unsupported local45 capture resolution")
     _validate_dds_interfaces(windows_dds_interface, linux_dds_interface)
     if dds_explicit_peers and windows_dds_interface is None:
         raise ValueError("explicit DDS peers require both interface addresses")
@@ -224,6 +229,8 @@ def run(stage: Path, sdk: Path, bound: int, *, charge_robot: str | None = None, 
         "lidar_backend": lidar_backend, "requested_physics_cadence": physics_cadence}
     report["live_anchor_controls"] = live_anchor_controls
     report["dds_explicit_peers"] = dds_explicit_peers
+    report["nav2_startup_stagger_s"] = nav2_startup_stagger_s
+    report["capture_resolution"] = capture_resolution
     report["virtual_charging_request"] = {"robot_id": charge_robot, "resume_soc": charge_resume_soc}
     save(receipt_path, report)
     owner = WslProcessSupervisor(run_id)
@@ -261,6 +268,7 @@ def run(stage: Path, sdk: Path, bound: int, *, charge_robot: str | None = None, 
             "export RMW_IMPLEMENTATION=rmw_fastrtps_cpp ROS_LOCALHOST_ONLY=0 PYTHONDONTWRITEBYTECODE=1",
             *["export " + key + "=" + shlex.quote(value) for key, value in linux_environment.items()],
             "export FACTORY_OPS_G3_SOURCE_COMMIT=" + shlex.quote(launch["source_commit"]),
+            "export FACTORY_OPS_NAV2_STARTUP_STAGGER_S=" + shlex.quote(str(float(nav2_startup_stagger_s))),
             "export FACTORY_OPS_G3_BUILD_ATTESTATION_PATH=" + shlex.quote(root_linux + "/build-attestation.json"),
             "export FACTORY_OPS_G3_BUILD_ATTESTATION_SHA256=" + shlex.quote(launch["build_attestation_sha256"]),
             "exec " + shlex.join(["/usr/bin/python3", root_linux + "/source/scripts/ros/fleet4_mission.py",
@@ -286,7 +294,7 @@ def run(stage: Path, sdk: Path, bound: int, *, charge_robot: str | None = None, 
         launcher = sdk / "python.bat"
         for path in (entry, launcher, output, stage):
             linux(path)  # Same metacharacter restriction protects the vendor cmd launcher.
-        command_line = '"' + str(os.environ["COMSPEC"]) + '" /d /s /c ""' + str(launcher) + '" "' + str(entry) + '" --bundle "' + str(stage / "inputs") + '" --output "' + str(output) + '" --run-id ' + run_id + ' --lidar-backend ' + lidar_backend + ' --physics-cadence ' + physics_cadence + '"'
+        command_line = '"' + str(os.environ["COMSPEC"]) + '" /d /s /c ""' + str(launcher) + '" "' + str(entry) + '" --bundle "' + str(stage / "inputs") + '" --output "' + str(output) + '" --run-id ' + run_id + ' --lidar-backend ' + lidar_backend + ' --physics-cadence ' + physics_cadence + ' --capture-resolution ' + capture_resolution + '"'
         spec = {"run_id": run_id, "cwd": str(sdk), "command": command_line, "expected_inputs": expected}
         save(stage / "job-spec.json", spec)
         environment = {**os.environ, **ros_environment, "FACTORY_OPS_G3_SOURCE_COMMIT": launch["source_commit"],
@@ -327,6 +335,8 @@ if __name__ == "__main__":
     parser.add_argument("--wall-bound-s", type=int, default=450)
     parser.add_argument("--live-anchor-controls", action="store_true")
     parser.add_argument("--dds-explicit-peers", action="store_true")
+    parser.add_argument("--nav2-startup-stagger-s", type=float, default=0.)
+    parser.add_argument("--capture-resolution", choices=("640x360", "1280x720"), default="640x360")
     parser.add_argument("--charge-robot", choices=("carter1", "carter2", "carter3", "carter4"))
     parser.add_argument("--charge-resume-soc", type=float, default=.8)
     parser.add_argument("--lidar-backend", choices=("rtx_flat_scan", "physx_planar"), default="rtx_flat_scan")
@@ -338,4 +348,5 @@ if __name__ == "__main__":
         charge_robot=options.charge_robot, charge_resume_soc=options.charge_resume_soc,
         lidar_backend=options.lidar_backend, physics_cadence=options.physics_cadence,
         windows_dds_interface=options.windows_dds_interface, linux_dds_interface=options.linux_dds_interface,
-        live_anchor_controls=options.live_anchor_controls, dds_explicit_peers=options.dds_explicit_peers))
+        live_anchor_controls=options.live_anchor_controls, dds_explicit_peers=options.dds_explicit_peers,
+        nav2_startup_stagger_s=options.nav2_startup_stagger_s, capture_resolution=options.capture_resolution))

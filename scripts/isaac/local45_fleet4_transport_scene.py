@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 from copy import deepcopy
+import hashlib
 import json
 from pathlib import Path
 import sys
@@ -18,7 +19,7 @@ from scripts.isaac.fleet4_transport_scene import FleetTransportLifecycle, SOURCE
 RESULT_FILE = "local45-fleet4-transport-scene.json"
 LOCAL_SOURCE_PINS = BASE_SOURCE_PINS | frozenset({
     "scripts/isaac/local45_fleet4_transport_scene.py", "factory_ops/isaac45_runtime.py", "factory_ops/wheel_parking_hold.py",
-    "factory_ops/flat_scan_observation.py", "factory_ops/flat_scan_ros.py", "factory_ops/flat_scan_completion.py", "factory_ops/physx_planar.py", "factory_ops/world_clock.py", "factory_ops/local45_stepping.py", "factory_ops/compat.py",
+    "factory_ops/flat_scan_observation.py", "factory_ops/flat_scan_ros.py", "factory_ops/flat_scan_completion.py", "factory_ops/physx_planar.py", "factory_ops/world_clock.py", "factory_ops/local45_stepping.py", "factory_ops/compat.py", "factory_ops/operation_story.py",
     "factory_ops/operations/model.py", "scripts/isaac/robot_qualification.py",
     "scripts/isaac/nav_scene.py", "scripts/isaac/stage_smoke.py",
     "factory_ops/visual_state.py", "factory_ops/wsl_process_supervisor.py",
@@ -105,6 +106,18 @@ class Local45FleetLifecycle(FleetTransportLifecycle):
         self.material_capture = None
         self.last_captured_material_revision = None
         self.last_material_product_sequence = None
+        self.operation_story = None
+        self.story_visual = None
+        self.story_visual_sequence = None
+        self.story_motion = {}
+        self.story_pending = None
+        self.story_event_cursor = 0
+        story_profile = json.loads((root/"config.json").read_text(encoding="utf-8")).get("g3_runtime", {}).get("operation_story")
+        if story_profile is not None:
+            from factory_ops.operation_story import OperationStory
+            if lidar_backend != "physx_planar" or self.session["profile"] != "development" or self.session["primary_evaluation"]:
+                raise ValueError("factory operation story is limited to explicit local45 development")
+            self.operation_story = OperationStory(story_profile, run_id, len(self.session["workload"]["orders"]))
         if lidar_backend == "physx_planar" and "material_flow" in self.session["workload"]:
             from factory_ops.material_visual import AppliedMaterialVisual
             self.material_visual = AppliedMaterialVisual(run_id, self.session["scenario_id"],
@@ -214,6 +227,39 @@ class Local45FleetLifecycle(FleetTransportLifecycle):
                 or stamp-self._native_periodic_ns >= 1_000_000_000):
             self._record_lidar_acquisition("periodic_1hz", sim_time_s, physics_frame)
             self._native_periodic_ns = stamp
+        if self.operation_story is not None and self.visuals is not None:
+            event = self.visuals.last_event
+            if event is not None and self.story_visual_sequence != self.visuals.applied_sequence:
+                record = event["source_state_snapshot"]
+                snapshot_path = self.output/record["path"]
+                if snapshot_path.is_symlink() or not snapshot_path.resolve().is_relative_to(self.output.resolve()):
+                    raise ValueError("story applied source snapshot must stay inside the run")
+                raw = snapshot_path.read_bytes()
+                if hashlib.sha256(raw).hexdigest() != record["sha256"]:
+                    raise ValueError("story applied snapshot bytes differ")
+                self.story_visual = json.loads(raw)
+                self.story_visual_sequence = self.visuals.applied_sequence
+            material = (self.material_visual.applied["document"]
+                if self.material_visual is not None and self.material_visual.applied is not None else None)
+            moving = any(active and 0 <= physics_frame-frame <= 6 for frame,active in self.story_motion.values())
+            self.operation_story.observe(physics_frame,stamp,self.story_visual,material,moving=moving)
+            self._flush_story_events()
+
+    def _flush_story_events(self) -> None:
+        if self.operation_story is None:
+            return
+        for event in self.operation_story.events[self.story_event_cursor:]:
+            g2_scene._append_jsonl(self.output/"factory-story-events.jsonl",event)
+            self.story_event_cursor += 1
+
+    def after_control(self, robot_id: str, sample: dict[str, Any]) -> None:
+        super().after_control(robot_id,sample)
+        if self.operation_story is not None:
+            auth = sample.get("authorization",{})
+            command = sample.get("motion_profile",{}).get("input_command",{})
+            active = bool(auth.get("mode") == "navigate" and auth.get("valid") is True
+                and (abs(command.get("linear_m_s",0.)) >= .15 or abs(command.get("angular_rad_s",0.)) >= .15))
+            self.story_motion[robot_id] = (sample["physics_frame"],active)
 
     def before_capture(self, rep: Any) -> None:
         if self.rgb_render_state != "enabled" or self.timeline is None:
@@ -240,18 +286,62 @@ class Local45FleetLifecycle(FleetTransportLifecycle):
 
     def capture_due(self) -> bool:
         due = super().capture_due()
+        if self.operation_story is not None:
+            sample = self.operation_story.due()
+            if sample is not None:
+                self.story_pending = sample
+                due = True
         applied = self.material_visual.applied if self.material_visual is not None else None
         return due or applied is not None and applied["document"]["material_revision"] != self.last_captured_material_revision
 
     def capture_metadata(self) -> dict[str, Any]:
         metadata = super().capture_metadata()
+        if self.story_pending is not None:
+            self.story_pending["dashboard"] = self._story_dashboard_snapshot(self.story_pending["sim_time_ns"]/1e9)
+            metadata["factory_story"] = self.story_pending
+            self.story_pending = None
         if self.material_visual is not None:
             metadata["native_empty_totes"] = deepcopy(self.material_capture)
             applied = self.material_capture["applied"] if self.material_capture is not None else None
             self.last_captured_material_revision = applied["document"]["material_revision"] if applied else None
         return metadata
 
+    def _story_dashboard_snapshot(self, world_time_s: float) -> dict[str, Any]:
+        """Retain a presentation checkpoint; missing data never grants movement."""
+        path = self.output/"dashboard-state.json"
+        if not path.is_file() or path.is_symlink() or self.origin is None:
+            return {"status":"unavailable"}
+        from factory_ops.compat import read_shared_text
+        try:
+            text = read_shared_text(path)
+            raw = text.encode("utf-8")
+            document = json.loads(text)
+            if document["run_id"] != self.run_id:
+                return {"status":"run_mismatch"}
+            source_world = float(document["sim_time_s"])+self.origin
+            age = world_time_s-source_world
+            if not 0 <= age <= 2.:
+                return {"status":"stale_or_future","source_world_time_s":source_world,"age_s":age}
+            digest = hashlib.sha256(raw).hexdigest()
+            directory = self.output/"factory-story-state"
+            directory.mkdir(exist_ok=True)
+            target = directory/(digest+".json")
+            if target.exists():
+                if target.is_symlink() or target.read_bytes() != raw:
+                    raise ValueError("story checkpoint identity changed")
+            else:
+                with target.open("xb") as stream:
+                    stream.write(raw)
+            return {"status":"observed","path":target.relative_to(self.output).as_posix(),
+                    "sha256":digest,"source_world_time_s":source_world,"age_s":age,
+                    "scope":"read-only dashboard snapshot, original mission clock + authored run origin"}
+        except (OSError,ValueError,TypeError,KeyError) as error:
+            return {"status":"unavailable","reason":type(error).__name__+": "+str(error)}
+
     def cleanup_render_products(self) -> None:
+        if self.operation_story is not None:
+            self.operation_story.close()
+            self._flush_story_events()
         errors = []
         for observer in self._native_observers:
             try:

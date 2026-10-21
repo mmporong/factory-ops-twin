@@ -1,0 +1,128 @@
+{
+  "task_id": "factory-startup-143",
+  "attempt": 1,
+  "contract_revision": 125,
+  "owner": "control",
+  "ack": true,
+  "status": "optional_startup_spacing_cpu_ready_native_effect_unverified",
+  "self_accepted": false,
+  "card_base_commit": "2a3fd7ddab573d05d4931df2f57e4b6223fd0dee",
+  "summary": "공식 Jazzy lifecycle/서비스/launch 소스와 종료된 045 로그를 대조했습니다. 기존 동시 시작을 기본으로 보존하고 선택형 namespace stack 시작 간격만 추가했습니다. 이는 동시 bringup 부하를 줄이는 후보이며 045의 근본원인 규명이나 native 해결 성공을 뜻하지 않습니다.",
+  "changed_paths": [
+    "scripts/ros/fleet4.launch.py",
+    "tests/test_fleet4_launch.py",
+    "coordination/collab/results/factory-startup-143.json"
+  ],
+  "input_source_sha256": {
+    "scripts/ros/fleet4.launch.py": "99fd8143b1c4f8746040b2703106c7101eb9a8a08f7fcca3661dee7a1c667221"
+  },
+  "source_sha256": {
+    "scripts/ros/fleet4.launch.py": "53842a3ae3a22a44b60893a0cee0096365e0151c40e2092d98fb8bbb54bc11a3",
+    "tests/test_fleet4_launch.py": "96afdc26fdc2e4077938ad7f9047d98ed8dd2d121fa7b736d1416f0a179e25a5"
+  },
+  "closed_045_observations": {
+    "run_id": "ad2d76fcf68a4e82bfb6b18b9e60c2c0",
+    "root": "C:/Users/LIMMM/FactoryOpsRuntime/local45-transport-045/results/run",
+    "read_sha256": {
+      "nav2.log": "285044197963e3d68cec12dfa72996438915e4164d6a4ee41af5bdf01f621fdb",
+      "startup-observations.jsonl": "a54fb33f81d61107855fad3bf57ac5990b04e7e617b049b7f96d8bf4a410d613",
+      "mission-result.json": "a811e0a98fb6cf5245fd93f14b98af779798cd871fed52cc21b451798cb2c869"
+    },
+    "first_error": {
+      "log_line": 604,
+      "wall_unix_s": 1792572708.306089002,
+      "node": "carter3.lifecycle_manager_fleet4",
+      "message": "Failed to change state for node: planner_server. Exception: planner_server/get_state service client: async_send_request failed.",
+      "next_log_line": 605,
+      "next_error": "Failed to bring up all requested nodes. Aborting bringup."
+    },
+    "preceding_evidence": [
+      "초기 launch에 namespace별 9개씩 36개 process 시작이 함께 나열됩니다.",
+      "carter3 planner configure는 1792572705.446867009에 시작했고 1792572706.135644625에는 GridBased planner 사용 가능을 기록했습니다.",
+      "다른 세 stack의 configure/plugin 초기화 로그가 같은 구간에 겹칩니다. carter1/4/2의 Managed nodes are active는 각각 1792572719.139485581/2719.259391451/2719.263026362에 기록됐습니다.",
+      "SIGINT는 nav2.log 789행 이후이며 lifecycle 첫 실패 뒤입니다. 이후 종료 오류를 startup 최초 원인으로 보지 않았습니다."
+    ],
+    "last_startup_observation": {
+      "sim_time_s": 77.65000405,
+      "ready": false,
+      "carter3_lifecycle": {"planner_server": 2, "controller_server": 1, "bt_navigator": 1},
+      "other_three_lifecycle": "각 planner/controller/bt_navigator 모두 3",
+      "carter3": {"odom_count": 1495, "raw_receipts_front": 655, "raw_receipts_rear": 647, "filtered_front": 645, "filtered_rear": 637, "pose": null},
+      "meaning": "carter3 센서·odom 수신은 계속됐지만 lifecycle 활성화와 pose가 준비되지 않았습니다. scan/DDS 전체 단절로 해석하지 않습니다."
+    },
+    "mission_result": "G3 planner/controller/TF/odometry/scan startup did not qualify; actions는 빈 목록이며 원래 실패 판정을 유지합니다."
+  },
+  "official_jazzy_sources": [
+    {
+      "url": "https://raw.githubusercontent.com/ros-navigation/navigation2/jazzy/nav2_util/include/nav2_util/service_client.hpp",
+      "lines": "56-81",
+      "evidence": "서비스 발견 후 요청을 보내고 별도 callback-group executor의 future 완료 결과를 확인합니다. SUCCESS가 아니면 pending request를 제거하고 해당 오류를 던집니다. 오류 문구만으로 요청 자체가 송신되지 않았다거나 DDS 내부 원인을 확정할 수 없습니다."
+    },
+    {
+      "url": "https://raw.githubusercontent.com/ros-navigation/navigation2/jazzy/nav2_util/src/lifecycle_service_client.cpp",
+      "lines": "82-91",
+      "evidence": "get_state는 서비스 가용성을 확인한 뒤 같은 timeout으로 서비스 호출 결과를 기다립니다."
+    },
+    {
+      "url": "https://raw.githubusercontent.com/ros-navigation/navigation2/jazzy/nav2_util/include/nav2_util/lifecycle_service_client.hpp",
+      "lines": "51-55",
+      "evidence": "Jazzy get_state의 기본 timeout은 2초입니다. planner 사용 가능 로그 이후 약 2.17초 만의 실패와 부합하지만 정확한 요청 시작/스케줄링 원인은 보존 로그에서 확인되지 않습니다. timeout은 변경하지 않았습니다."
+    },
+    {
+      "url": "https://raw.githubusercontent.com/ros-navigation/navigation2/jazzy/nav2_lifecycle_manager/src/lifecycle_manager.cpp",
+      "lines": "80-97,225-260,289-303",
+      "evidence": "autostart는 wall timer로 startup을 실행합니다. configure와 이후 상태 확인 실패 또는 예외는 전체 bringup 실패로 이어지고 ACTIVE로 승인하지 않습니다. 이 상태 판정이나 autostart 설정은 변경하지 않았습니다."
+    },
+    {
+      "url": "https://raw.githubusercontent.com/ros2/launch/jazzy/launch/launch/actions/timer_action.py",
+      "lines": "49-73,94-101,160-203",
+      "evidence": "TimerAction은 asyncio timeout으로 하위 action 실행을 지연하는 one-shot입니다. ROS simulation clock에 의존하지 않으며 기본 shutdown 취소를 지원합니다. 이번 경로도 cancel_on_shutdown=True를 명시합니다."
+    }
+  ],
+  "evidence_vs_inference": {
+    "confirmed": "carter3 planner get_state future가 정상 완료되지 않아 해당 namespace lifecycle bringup이 중단됐습니다. 3개 stack 활성 상태와 carter3 센서 수신은 별도 사실입니다.",
+    "inference_only": "동시 36-node 생성/서비스 configure 부하가 영향을 주었을 가능성은 있으나 CPU/DDS 스케줄링 원인은 미확정입니다. 선택형 stagger는 이를 줄이는 미래 실행 후보일 뿐 원인 해결로 수용하지 않았습니다.",
+    "version_limit": "공식 upstream jazzy branch를 확인했습니다. 설치된 WSL binary/header의 exact package revision을 조회하거나 실행하지 않았으며 main/다른 배포판의 service_timeout 설정을 Jazzy 근거로 사용하지 않았습니다."
+  },
+  "root_opt_in_contract": {
+    "environment_variable": "FACTORY_OPS_NAV2_STARTUP_STAGGER_S",
+    "type": "유한 숫자를 표현하는 환경변수 문자열, 단위 wall seconds",
+    "default": "0",
+    "allowed_interval_s": [0, 5],
+    "maximum_last_namespace_delay_s": 15,
+    "four_robot_offsets_s": "[0, s, 2*s, 3*s], 기존 namespace 순서 유지",
+    "example_environment_value": "2.5",
+    "example_offsets_s": [0, 2.5, 5, 7.5],
+    "activation": "root가 다음 새 동결 실행의 launcher 선택 인자로 이 변수를 WSL nav-command.sh와 ros2 launch 환경에 전달합니다. 이 작업은 pair runner/현재 환경/기존 실행을 변경하지 않았으며 아직 opt-in하지 않았습니다.",
+    "invalid_input": "음수·5초 초과·NaN/Inf·빈 값·비숫자와 총 지연 15초 초과는 launch plan 작성 단계에서 ValueError로 거절합니다.",
+    "behavior": "첫 namespace는 즉시 실행하고 나머지는 TimerAction으로 전체 9-node stack을 한 번씩 지연합니다. readiness 순차 승인이나 완전 직렬화는 아니며 lifecycle manager의 기존 autostart/실패 처리를 사용합니다.",
+    "preserved": "기본 동시 시작, 8개 managed node 순서, namespace/TF remap/params, use_sim_time, bond_timeout20, source pin 경로와 소유 launch tree를 유지합니다. G3 startup wall 한도·all-active·pose/scan/odom gate·TTL·action/mission/arrival/radius를 변경하지 않습니다. 자동 재실행·respawn 추가·실패 상태 은폐는 없습니다."
+  },
+  "validation": {
+    "cwd": "C:/Users/LIMMM/factory-ops-twin",
+    "command": ".\\.venv\\Scripts\\python.exe -B -m unittest tests.test_fleet4_launch tests.test_fleet_transport_mission.FleetTransportMissionTests.test_launch_uses_only_explicit_namespaces_with_isolated_tf_and_lifecycle -v",
+    "result": "5 PASS",
+    "execution_count": 1,
+    "reported_test_duration_s": 0.016,
+    "coverage": [
+      "미지정과 명시적 0초가 동일한 36-node 즉시 실행 계획",
+      "선택 간격·namespace별 전체 stack 유지·명시적 shutdown 취소",
+      "기존 Node 설정/TF/관리 순서 불변 및 기존 launch 회귀 1개",
+      "잘못된 값과 최대 지연 초과 거절",
+      "같은 패스에 Python3.10 AST 2개 포함, 별도 재검사 없음"
+    ],
+    "embedded_ast_paths": ["scripts/ros/fleet4.launch.py", "tests/test_fleet4_launch.py"],
+    "diff_check_command": "git diff --check -- scripts/ros/fleet4.launch.py tests/test_fleet4_launch.py",
+    "diff_check_result": "PASS, exit0"
+  },
+  "remaining_native_boundary": "CPU 검사는 action plan과 옵션 검증뿐이며 실제 ROS TimerAction 실행·취소·서비스 응답 안정성이나 전체 공장 startup 성공을 증명하지 않습니다. root가 다음 새 동결 실행에서 opt-in 여부를 기록하고 기존 모든 준비 조건으로 실제 결과를 판정해야 합니다. 045 원본 실패와 후속 종료 기록은 보존했습니다.",
+  "scope": {
+    "sdk_gpu_ros_wsl_runtime_started_or_changed": false,
+    "active_bag_sql_opened": false,
+    "git_mutation": false,
+    "new_agents_or_model_changes": false,
+    "unowned_changes_reverted": false,
+    "owned_long_running_processes": [],
+    "note": "전체 공장 운행·source ledger 기반 연속 촬영·미디어·launcher 전달·문서·통합은 root 소유입니다. 배정 3개 경로만 작성했습니다."
+  }
+}

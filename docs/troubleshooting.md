@@ -795,3 +795,11 @@ python -B -m unittest tests.test_g2_scene tests.test_g3_scene tests.test_compact
 ## FOT-093 — 045의 시작 조건 시간 초과
 
 045는 명시적 DDS peer와 공유 파일 일시 오류 재시도 수정 소스로 실행했지만, planner/controller/TF/odometry/scan 시작 조건을 통과하지 못했다. 최초 예외는 ROS의 startup `TimeoutError`이며 SDK의 mission 실패 보고는 후속 결과다. 명시적 peer 설정을 실제 공장 시작 문제의 해결로 판정하지 않는다.60fps 이동 촬영 창은 시작하지 않았다. 양 OS 트리와 Job을 종료한 후160개 파일·원본274,835,019바이트를 C/E의 operations-137 압축본177,902,613바이트로 보존하고 모든 구성 파일 해시를 대조했다. 실행 중 bag SQL 접근·복사는 하지 않았다. [045 결과](evidence/local45-transport-045.json)
+
+143에서 종료된045의 최초 Nav2 오류를 좁혔다. `carter3.lifecycle_manager_fleet4`의 `planner_server/get_state` future가 정상 완료되지 않아 해당 stack의 bringup이 중단됐다. 마지막 관측에서 다른3개 stack의 planner/controller/bt가 active3이었고, carter3의 odometry1,495회와 front/rear scan 수신도 계속됐다. 전체 DDS 또는 센서 단절로 분류하지 않는다. Jazzy [service client](https://raw.githubusercontent.com/ros-navigation/navigation2/jazzy/nav2_util/include/nav2_util/service_client.hpp)와 [lifecycle manager](https://raw.githubusercontent.com/ros-navigation/navigation2/jazzy/nav2_lifecycle_manager/src/lifecycle_manager.cpp)를 대조했으며 정확한 CPU/DDS 원인은 미확정이다. 선택형 `FACTORY_OPS_NAV2_STARTUP_STAGGER_S`는 기존 기본값0을 보존하고 namespace별 전체 stack 시작을 최대5초 간격·마지막 최대15초까지 나눈다. timeout·생명주기 성공 조건·운영 TTL은 바꾸지 않는다. 작성자 관련5개 CPU 검사를 통과했고 실제 효과는 다음 실행에서 확인한다. [143 근거](../coordination/collab/results/factory-startup-143.json)
+
+## FOT-094 — 전체 공장 흐름을 별도 교차로 시험으로 대체한 대표 미디어
+
+142는 실제 양보·재개를 보여주지만 자재 공급부터 공정·출하·빈 용기 회수까지의 전체 운영을 보여주지 못했다. 사용자 최신 요구에 따라142는 보조 시험으로 내리고 전체 공장 시연을 우선한다. 다음 normal3 설정은 첫 이동5초 촬영을 끄고, 이미 적용된 원장과 빈 토트 상태에서 자재 이송·공정 처리·완제품 이송·첫 출하·빈 용기 회수·순환 완료를 골라 최대6개·각240프레임만 촬영한다. 관측된 단계만 선택하며 미완료 단계를 영상으로 채우지 않는다.
+
+각 창은 원본 물리 프레임·적용된 상태 스냅샷·실행 ID와 연결한다. 화면용 웹 상태는 원래 임무 시계에 실행 시작점을 더해 World 시계로 대조하고,2초 이내 과거 관측만 보존한다. 누락·오래된 상태는 미관측으로 남기며 운동 권한에 사용하지 않는다. 선택기 관련3개 CPU 검사와 적용 스냅샷 해시·native lifecycle 연결1개 검사를 통과했다.1280×720 전체 공장 촬영과 이 설정의 실제6단계 운영 성공은 아직 미확인이다.

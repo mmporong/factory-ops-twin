@@ -1,0 +1,31 @@
+{
+  "task_id": "factory-startup-143",
+  "attempt": 1,
+  "contract_revision": 125,
+  "owner": "control",
+  "binding": {
+    "session": "default",
+    "pane_id": "w1:p1C",
+    "terminal_id": "term_65e06d27e415810",
+    "agent_session": "01a152aa-24b4-7a31-92e3-a2b620f4feeb"
+  },
+  "project_root": "C:\\Users\\LIMMM\\factory-ops-twin",
+  "base_commit": "2a3fd7ddab573d05d4931df2f57e4b6223fd0dee",
+  "write_paths": [
+    "scripts/ros/fleet4.launch.py",
+    "tests/test_fleet4_launch.py",
+    "coordination/collab/results/factory-startup-143.json"
+  ],
+  "result_path": "C:\\Users\\LIMMM\\factory-ops-twin\\coordination\\collab\\results\\factory-startup-143.json",
+  "goal": "Remove one concrete startup blocker before a real whole-factory normal3 run. User rejects isolated junction hero and wants complete factory material/process/shipment/return flow.",
+  "inputs": {
+    "run045": "C:\\Users\\LIMMM\\FactoryOpsRuntime\\local45-transport-045\\results\\run",
+    "known_first_failure": "carter3.lifecycle_manager_fleet4 failed planner_server/get_state async_send_request at1792572708; all scan and odom receipt counts healthy, carter3 planner inactive2, other two lifecycle nodes1 and pose null. Other3 stacks active3. Later SIGINT shutdown errors secondary."
+  },
+  "acceptance": [
+    "ACK143 attempt1 revision125. You are not alone; root owns factory media trigger, SDK/ROS execution, config, docs, board, Git. Only listed paths; no new agents/model change/GPU/ROS/WSL/process launches/browser UI/cloud/install/Git. Existing frozen runtime and unowned dashboard4 stay unchanged. Capacity error: report and preserve partial work, no alternate model.",
+    "Read startup045 journal and nav2 log around FIRST carter3 lifecycle error plus current fleet4.launch.py and existing test shape. Consult official/upstream Jazzy Nav2 lifecycle/ROS launch source for actual behavior. Do not call scan/DDS entirely broken; counts were healthy. Separate observations from hypotheses.",
+    "Implement a minimal optional startup admission change if supported by evidence, e.g. bounded stagger of four namespace stacks to avoid simultaneous discovery/bringup burst, preserving current default behavior unless root opts in. Or return concrete supported alternative if stagger not justified. Do not broaden TTL, pose/radius/arrival/action/mission bounds; no masking failed lifecycle states or treating startup failures as success. No automatic full-run retries.",
+    "One focused CPU set for modified launch behavior, Python3.10 AST if touched code. If changing existing tests elsewhere is necessary, request boundary upward first. No full-suite or review chain. Receipt task/revision/ACK, source SHAs, exact command/results, official links, observed first error and remaining native test. Do not self-accept or claim native fix."
+  ]
+}
