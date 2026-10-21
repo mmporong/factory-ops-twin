@@ -1,0 +1,210 @@
+{
+  "schema_version": 1,
+  "profile_id": "tote-carrier-v1",
+  "assumptions": [
+    "Carter static candidate v2: chassis-local deck height derives from measured118 chassis collision AABB top plus an authored2mm mounting gap, existing post height and deck half thickness. This AABB is not a mechanical surface or strength certificate.",
+    "Original generic bolted-deck/raised-support candidate, not a manufacturer model, certified payload or finished low-profile lifting AMR.",
+    "All dimensions, masses, uniform material distributions, friction and contact settings are authored development assumptions, not measurements.",
+    "Nova Carter remains the development base. Declared keepouts below are candidate integration constraints, not its measured collider/sensor geometry. Actual robot-frame transform, body/sensor clearance, mount strength, added inertia and navigation footprint need native admission before installation.",
+    "Existing presentation-only cargo is independent. This profile does not change a registry, scene, map, footprint, controller or sensor.",
+    "Probe uses fixed stand pads instead of a robot chassis. Carrier and tote are separate dynamic compound bodies; centred ballast is rigidly included in tote inertia, not loose contents. Separation is an authored upward velocity impulse, not a lift actuator or unloading operation."
+  ],
+  "deck": {
+    "size_m": [
+      0.58,
+      0.46,
+      0.04
+    ],
+    "center_m": [
+      -0.18,
+      0.0,
+      0.7418819720745087
+    ],
+    "mass_kg": 4.0
+  },
+  "mount": {
+    "post_size_m": [
+      0.04,
+      0.04,
+      0.24
+    ],
+    "post_mass_kg": 0.35,
+    "support_span_m": [
+      0.5,
+      0.4,
+      0.24
+    ],
+    "fit_margin_m": 0.02,
+    "clearance_m": 0.01
+  },
+  "tote": {
+    "outer_size_m": [
+      0.44,
+      0.34,
+      0.18
+    ],
+    "wall_m": 0.02,
+    "empty_mass_kg": 2.0
+  },
+  "payload": {
+    "size_m": [
+      0.34,
+      0.24,
+      0.1
+    ],
+    "mass_kg": 4.0,
+    "maximum_mass_kg": 12.0
+  },
+  "contact": {
+    "static_friction": 0.65,
+    "dynamic_friction": 0.5,
+    "restitution": 0.02,
+    "contact_offset_m": 0.002,
+    "rest_offset_m": 0.0
+  },
+  "compatibility": {
+    "base": "existing Nova Carter development baseline; not modified or loaded by this fixture",
+    "unchanged_footprint_radius_m": 0.6371090915442774,
+    "radius_reference": "configs/factory-fleet4/g3-routing.json collision_radius; robot-root reference only. Candidate-to-loaded-robot transform and loaded footprint MUST be remeasured before integration.",
+    "declared_keepouts": [
+      {
+        "name": "authored_lower_chassis_envelope",
+        "center_m": [
+          -0.18,
+          0.0,
+          0.19
+        ],
+        "size_m": [
+          0.8,
+          0.58,
+          0.38
+        ]
+      },
+      {
+        "name": "authored_forward_tower_envelope",
+        "center_m": [
+          0.28,
+          0.0,
+          0.8
+        ],
+        "size_m": [
+          0.3,
+          0.3,
+          0.8
+        ]
+      },
+      {
+        "name": "front_sensor_clearance",
+        "center_m": [
+          0.2,
+          0.0,
+          0.32
+        ],
+        "size_m": [
+          0.16,
+          0.16,
+          0.16
+        ]
+      },
+      {
+        "name": "rear_sensor_clearance",
+        "center_m": [
+          -0.65,
+          0.0,
+          0.32
+        ],
+        "size_m": [
+          0.16,
+          0.16,
+          0.16
+        ]
+      }
+    ],
+    "sensor_position_reference": "configs/local45-fleet-runtime-probe.json front/rear translations; keepout sizes are authored and do not prove beam/FOV clearance"
+  },
+  "probe": {
+    "physics_dt_s": 0.008333333333333333,
+    "maximum_sim_time_s": 6.0,
+    "maximum_wall_time_s": 360.0,
+    "initial_gap_m": 0.01,
+    "contact_dwell_s": 0.4,
+    "separation_dwell_s": 0.12,
+    "release_velocity_z_m_s": 2.0,
+    "minimum_force_n": 0.1,
+    "stationary_linear_m_s": 0.02,
+    "stationary_angular_rad_s": 0.03,
+    "sensor_freshness_s": 0.025,
+    "maximum_settle_error_m": 0.01,
+    "image_size_px": [
+      640,
+      480
+    ]
+  },
+  "mount_provenance": {
+    "candidate_id": "carter-static-v2",
+    "measurement_run_id": "8c80f7b1e4ee42609cd9e4cd6a280d85",
+    "reference_collider": "/World/NovaCarter/chassis_link/visual",
+    "chassis_local_AABB_top_m": 0.47988197207450867,
+    "authored_mount_gap_m": 0.002,
+    "carrier_origin_relative_to_chassis": "identity; new authored deck/post geometry, no runtime pose adjustment",
+    "map_radius_changed": false
+  },
+  "loaded_motion": {
+    "schema_version": 1,
+    "geometry_source": "fresh_pre_step_wheel_collision_bounds",
+    "maximum_sim_time_s": 20.0,
+    "maximum_wall_time_s": 360.0,
+    "rgb_fps": 20,
+    "maximum_rgb_frames": 240,
+    "maximum_torque_n_m": 80.0,
+    "maximum_tilt_rad": 0.05,
+    "maximum_displacement_m": 1.3,
+    "minimum_forward_m": 0.12,
+    "minimum_curve_yaw_rad": 0.1,
+    "minimum_turn_yaw_rad": 0.18,
+    "drive_limits": {
+      "max_linear_m_s": 0.2,
+      "max_angular_rad_s": 0.4,
+      "linear_accel_m_s2": 0.1,
+      "linear_decel_m_s2": 0.15,
+      "angular_accel_rad_s2": 0.25,
+      "angular_decel_rad_s2": 0.4,
+      "lateral_accel_m_s2": 0.06,
+      "max_wheel_rad_s": 3.0,
+      "wheel_accel_rad_s2": 1.0
+    },
+    "phases": [
+      {
+        "name": "forward",
+        "duration_s": 2.2,
+        "linear_m_s": 0.16,
+        "angular_rad_s": 0.0
+      },
+      {
+        "name": "curve",
+        "duration_s": 2.3,
+        "linear_m_s": 0.12,
+        "angular_rad_s": 0.2
+      },
+      {
+        "name": "brake_before_turn",
+        "duration_s": 1.5,
+        "linear_m_s": 0.0,
+        "angular_rad_s": 0.0
+      },
+      {
+        "name": "in_place",
+        "duration_s": 2.0,
+        "linear_m_s": 0.0,
+        "angular_rad_s": 0.25
+      },
+      {
+        "name": "final_brake",
+        "duration_s": 1.0,
+        "linear_m_s": 0.0,
+        "angular_rad_s": 0.0
+      }
+    ],
+    "scope": "Authored loaded-motion component coupon only; fixed time commands, native wheel targets, GT evaluation only. No docking, Nav2 or industrial payload rating. Original relative payload/contact limits unchanged."
+  }
+}

@@ -205,6 +205,32 @@ class CallbackDrainTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             CallbackDrain((object(),), max_rounds=1, wall_budget_s=0.05)
 
+    def test_critical_prefix_shares_original_round_and_time_budget_with_io(self):
+        order = []
+        critical = FakeExecutor([lambda: order.append("tf")] * 8)
+        bulk = FakeExecutor([lambda i=i: order.append(i) for i in range(8)])
+        drain = CallbackDrain((bulk,), priority_executors=(critical,),
+            max_rounds=4, wall_budget_s=.05, now_wall=lambda: 1.)
+        stats = drain.drain()
+        self.assertEqual(order, ["tf", "tf", "tf", 0, "tf", 1])
+        self.assertEqual(stats["rounds"], 4)
+        self.assertEqual(stats["priority_rounds"], 2)
+        self.assertEqual(stats["spin_attempts"], 6)
+        self.assertEqual([critical.attempts, bulk.attempts], [4, 2])
+        self.assertEqual(drain.snapshot()["max_rounds_per_call"], 4)
+        self.assertEqual(drain.snapshot()["wall_budget_s"], .05)
+
+    def test_slow_critical_callback_still_allows_one_complete_io_round(self):
+        critical, first, second = FakeExecutor(), FakeExecutor(), FakeExecutor()
+        drain = CallbackDrain((first, second), priority_executors=(critical,),
+            max_rounds=64, wall_budget_s=.05, now_wall=WallClock([0., .06, .09]))
+        stats = drain.drain()
+        self.assertEqual([critical.attempts, first.attempts, second.attempts], [2, 1, 1])
+        self.assertEqual(stats["priority_rounds"], 1)
+        self.assertTrue(stats["wall_budget_reached"])
+        with self.assertRaisesRegex(ValueError, "same executor"):
+            CallbackDrain((critical,), priority_executors=(critical,), max_rounds=64, wall_budget_s=.05)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -1,0 +1,38 @@
+{
+  "task_id": "loaded-carrier-motion-126",
+  "attempt": 1,
+  "contract_revision": 114,
+  "status": "accepted_implementation_native_pending",
+  "acceptance_authority": "root",
+  "worker_receipt_sha256": "35d6205fa785039dd501b239c96de4dd95c7b22347d441ae6a2a3639ac1c6655",
+  "received_source_sha256": {
+    "scripts/isaac/probe_loaded_carrier.py": "d3198df58c1ddeb6ed642cc4676d2a9ca9c695605fe27d10ebc65890c4b30f9b",
+    "factory_ops/carrier_mobility.py": "5fea4c467a6be237a3fabd113fd3d7f2d63b08259e702a7c9f2d643bff606819",
+    "configs/vehicles/tote-carrier-loaded-motion-v1.json": "946cf5517d0a1d7680c7026674f3e7922a24accdc6b8b864d8f5eb72598039c8",
+    "tests/test_carrier_mobility.py": "a156920c50cded8b0cf846a2eb889f9b6b73e88bedd46d73d844642fa7eb9cda"
+  },
+  "all_received_SHA_and_input_pins_matched": true,
+  "author_validation_received": [
+    {
+      "command": ".venv/Scripts/python.exe -B -m unittest tests.test_carrier_mobility -v",
+      "cwd": "C:/Users/LIMMM/factory-ops-twin",
+      "result": "6 tests PASS;0.043s; one focused CPU module",
+      "coverage": "static 사본/manifest 불변, 설정·순서·속도·시간·tilt·RGB 상한 거절, synthetic native wheel geometry, 기존 DriveProfile shaping 재사용 및 encoder 흐름, expected-direction 평가·적재 상실·회전 전 정지·최종 dwell, 실제 physics-frame RGB cadence/count"
+    },
+    {
+      "command": ".venv/Scripts/python.exe -B -m unittest tests.test_carrier_mobility.CarrierMobilityTests.test_actual_frame_rgb20fps_and_hard_count_limit -v",
+      "result": "1 affected test PASS;0.001s. RGB 고정 buffer/기록 누락 최종 거절을 추가한 뒤 해당 검사만 확인했습니다. 나머지5개는 반복하지 않았습니다."
+    },
+    {
+      "command": "Python ast.parse(..., feature_version=(3,10)) on probe_loaded_carrier.py/carrier_mobility.py/test_carrier_mobility.py; json.loads(new config)",
+      "result": "최초3AST+JSON PASS, RGB 보강 후 최종3AST PASS. SDK import나 실행 없음."
+    },
+    {
+      "command": "assigned-source diff and input digest comparison",
+      "result": "입력7SHA가 카드와 일치했습니다. 기존 v2 설정·carrier_robot/module·DriveProfile/motion·124 evidence SHA가 유지됐고 변경 파일은 지정 경로뿐입니다. 전체 suite/별도 review chain은 실행하지 않았습니다."
+    }
+  ],
+  "root_content_pass": "One pass of wheel-only control, separate GT evaluation, unchanged load/contact bounds, actual frame RGB cadence and cleanup. No repeat CPU suite.",
+  "native_pending": true,
+  "stage2_complete": false
+}

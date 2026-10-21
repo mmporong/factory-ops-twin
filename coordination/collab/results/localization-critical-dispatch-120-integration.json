@@ -1,0 +1,58 @@
+{
+  "task_id": "localization-critical-dispatch-120",
+  "attempt": 1,
+  "contract_revision": 112,
+  "status": "accepted_implementation_native_pending",
+  "acceptance_authority": "root",
+  "worker_receipt_sha256": "88d671cff338d572a10ba26f911cdcded89b066f2e209f0485daaf337dd39bc0",
+  "received_source_sha256": {
+    "scripts/ros/g3_mission.py": "8fc424a7acb539258d851601fc2baa9fcd9700a5b04358da669741a90abed0fc",
+    "factory_ops/callback_drain.py": "084070e3bd286c6d3d2a4e3b24f6c57500499ab1b7ac569ed501ab5008070ed6",
+    "tests/test_localization_dispatch.py": "408f7873ab3babd38b09a203aeb5671ba2d04ae1da123346e77ffbefee556269",
+    "tests/test_callback_drain.py": "4b8a9cad566229973c67d295e9ba82d5b334820d27a41344f3d100918e17ec1c",
+    "scripts/ros/probe_localization_dispatch.py": "1a7c6966277fd479bfea015bc0b0f64adfad345d52baca31e60301fa933aff16"
+  },
+  "all_received_SHA_and_input_pins_matched": true,
+  "author_validation_received": [
+    {
+      "command": ".venv/Scripts/python.exe -B -m unittest tests.test_localization_dispatch tests.test_callback_drain -v",
+      "cwd": "C:/Users/LIMMM/factory-ops-twin",
+      "result": "22 tests PASS; 0.013s; one focused CPU pass",
+      "coverage": "새 topology와 canonical 동일-node 경로, namespace/remap/ROS-time/부분 소유 정리, critical prefix의 동일 총 round/time 한도 및 IO 진행·순서, 실제041 timestamp-only CPU fixture, persistent stale/future/invalid/deadline 거절 등"
+    },
+    {
+      "command": "Python ast.parse(..., feature_version=(3,10)) on all five changed Python files",
+      "result": "5 PASS; SDK import/실행 없음"
+    },
+    {
+      "command": "wsl.exe -d Ubuntu -- bash -lc 'source /opt/ros/jazzy/setup.bash; set -euo pipefail; cd /mnt/c/Users/LIMMM/factory-ops-twin; exec timeout --signal=TERM --kill-after=5s 110s env -u FASTRTPS_DEFAULT_PROFILES_FILE -u FASTDDS_DEFAULT_PROFILES_FILE -u CYCLONEDDS_URI ROS_LOCALHOST_ONLY=1 RMW_IMPLEMENTATION=rmw_fastrtps_cpp python3 -B -m scripts.ros.probe_localization_dispatch --domain-id 179 --wall-limit-s 90'",
+      "result": "exit0; actual Jazzy component PASS; stdout JSON; no artifact/SQL/daemon/native run",
+      "warning": "ROS_LOCALHOST_ONLY가 deprecated지만 honored라는 설치 rcl 경고를 기록했습니다. OS/전역 네트워크나 DDS 설정은 변경하지 않았습니다."
+    },
+    {
+      "command": "WSL test -e /proc/64843 after the owned probe exited",
+      "result": "owned_probe_pid_64843_absent; exit0"
+    },
+    {
+      "command": "changed-path diff and digest check",
+      "result": "제품/검사 변경은 카드의 지정 경로만. root의 docs/troubleshooting.md, probe_loaded_carrier.py 및 기존 dashboard 변경을 보존했습니다. 별도 리뷰 체인/추가 suite 없음."
+    }
+  ],
+  "root_content_pass": "One topology/fairness/source-gate/clock/cleanup integration pass. Preserved116 controls, critical clock ownership, original total round/time limits and actual TF-loss rejection. No source edits or repeated old suites.",
+  "native_four_robot_pending": true,
+  "stage1_complete": false,
+  "half_project_complete": false,
+  "real_ros_scope": "One-robot loaded ROS component with authored callback load; not full041 replay or proof of its unique root cause",
+  "root_followup": {
+    "change": "Delay live-control checkpoint and outbox directory until SDK ready; preserve exact bootstrap file set.",
+    "regression": "One affected test passed after reproducing bootstrap extra-file regression; no repeat22-test suite.",
+    "paths": [
+      "scripts/ros/g3_mission.py",
+      "tests/test_g3_live_control.py"
+    ],
+    "sha256": {
+      "scripts/ros/g3_mission.py": "abc67ce880520de0f4031bdcbb496ed06dd0f82e0224f248d49414e9f18f7f24",
+      "tests/test_g3_live_control.py": "2c4a91db08311d5816b838c4cbe8efc280a29b57438ebe20fee252b1548e5b3c"
+    }
+  }
+}

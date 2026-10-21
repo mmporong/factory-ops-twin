@@ -1,0 +1,18 @@
+{
+  "run_id": "2ae26925e0d94c1380ab0d09ca80999c",
+  "source_sha256": "6ba6314565fef6dddf1d1238c469d3d26a4a30bbb73f1bb352dbfcc6b48e4355",
+  "config_sha256": "bbcc3e54f3eeeb040787cdf47b736561d268e66a0c0f7aa1afc4f6ca0767b3f4",
+  "files": [
+    {
+      "path": "mounted-settled.png",
+      "sha256": "49d2aba06a086044c02c4cc61c8d07da53211e8d26c5199413af3a52164c610f",
+      "world_checkpoint_s": 0.6000000312924385,
+      "world_checkpoint_frame": 72,
+      "media_clock_sync_verified": false
+    }
+  ],
+  "evidence": "../../evidence/local45-loaded-carrier-124.json",
+  "scope": "Original actual RGB of a static free Carter with fixed carrier and free6kg tote. Static attachment/contact only, not loaded travel or industrial rating.",
+  "image_changes": "none",
+  "exposure_clock_independently_qualified": false
+}

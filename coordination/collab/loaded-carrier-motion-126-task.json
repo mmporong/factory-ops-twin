@@ -1,0 +1,41 @@
+{
+  "task_id": "loaded-carrier-motion-126",
+  "attempt": 1,
+  "contract_revision": 114,
+  "owner": "control",
+  "binding": {
+    "session": "default",
+    "pane_id": "w1:p1C",
+    "terminal_id": "term_65e06d27e415810",
+    "agent_session": "01a152aa-24b4-7a31-92e3-a2b620f4feeb"
+  },
+  "project_root": "C:\\Users\\LIMMM\\factory-ops-twin",
+  "base_commit": "16f49faf47aa47bcabac68f34ccff41e791f5a4b",
+  "input_sha256": {
+    "scripts/isaac/probe_loaded_carrier.py": "6ba6314565fef6dddf1d1238c469d3d26a4a30bbb73f1bb352dbfcc6b48e4355",
+    "factory_ops/carrier_robot.py": "67d90058df40e2be49324ed43c5cf1af4403adae9eecd17b562300e71efb692a",
+    "factory_ops/carrier_module.py": "ef12b26aa3d7180e7f122324aa0f5e363010d1f3ddf366165b69ac6de1cbfc14",
+    "factory_ops/drive_profile.py": "6bba5a51caa5e4a71662339026afc67e1efe1d7370cb04c372cde48eba9d7185",
+    "factory_ops/motion.py": "a8d670ce9e0309093c47a6a63ff70c78182021f6b50496933e29985466ed6cd1",
+    "configs/vehicles/tote-carrier-carter-v2.json": "bbcc3e54f3eeeb040787cdf47b736561d268e66a0c0f7aa1afc4f6ca0767b3f4",
+    "docs/evidence/local45-loaded-carrier-124.json": "46385b4d9b380f47fb8a40a4170f43d19c6fe11ea33b9a4c0e2df92ad9fd435e"
+  },
+  "write_paths": [
+    "scripts/isaac/probe_loaded_carrier.py",
+    "factory_ops/carrier_mobility.py",
+    "configs/vehicles/tote-carrier-loaded-motion-v1.json",
+    "tests/test_carrier_mobility.py",
+    "coordination/collab/results/loaded-carrier-motion-126.json"
+  ],
+  "result_path": "C:\\Users\\LIMMM\\factory-ops-twin\\coordination\\collab\\results\\loaded-carrier-motion-126.json",
+  "goal": "Prepare bounded real loaded Carter forward/curve/in-place/brake test and smooth real20fps RGB using existing DriveProfile; preserve static probe mode.",
+  "acceptance": [
+    "ACK126 attempt1 contract114.120 received once and accepted; no source redo/review. You are not alone; root owns g3_scene/g3_session/TF integration/docs/media/Git/storage and next full4AMR preparation. You own only listed paths. Do not touch root files, current unowned dashboard or frozen/closed originals. No SDK/GPU/WSL/ROS/server/browser/new agent/Git/install/cloud execution. CPU tests only; root native later.",
+    "124 actual static mounted carrier PASS, world.6s,70samples,6kg tote+5.4kg carrier, fixed joint, current wheel readback uses public get_joint_velocities()[wheel_dof_indices] to avoid vendor _wheel_dof_indicies typo. Geometry-computed extents fixed stale100m cache, existing0.6371090915442774 radius unchanged and measured original/loaded0.6339164009. Do not revert these fixes or alter v2 static profile/124 data. Preserve pure static behavior when optional loaded_motion absent.",
+    "Use new self-contained copy of the v2 profile plus explicit loaded_motion section. A fresh20sim/360wall fixture is allowed, original6sim static limits/config remain unchanged. Motion sequence about8-10sim seconds: ramped forward, low-speed curve, brake-to-in-place turn, then final brake/settle. Reuse factory_ops.drive_profile.DriveProfile and motion.DriveGeometry, no second limiter. No teleports/body velocity setters/position corrections/GT driving/waypoint or docking success claims. Native wheel targets only. Geometry is pre-step measured physical wheel radius/separation or explicit authored existing geometry with native readback provenance; controller receives only desired fixed-time commands and real clock/encoder, not GT body pose.",
+    "GT/rigid-body readings are evaluation-only for actual displacement, tilt, carrier/chassis relative pose and tote support/stationarity. Preserve original relative payload position and angle bounds and contact freshness. Separate static drift/yaw checks from intentionally moving phase; do not allow a hidden larger relative tolerance. Fail and zero motors on invalid contact/clock/identity/torque/readback or lost load; do not fake completion. End requires native contact + stationary original dwell/thresholds and actual encoder/GT movement evidence in the expected direction; in-place phase and final brake must be distinguishable in actual command/encoder journals.",
+    "Reuse single native probe lifecycle/physical assembly instead of cloning hundreds of SDK lines. New stdlib carrier_mobility.py may validate phase schedule/drive bounds and evaluate motion state; root SourceDependency hashes must include all imported project modules including drive_profile and motion. Keep default static report scopes honest; loaded-motion true only after actual pass, no factory Nav2/AMR docking/industrial rating claims. Fixed custom prototype is not a manufacturer-rated product.",
+    "Capture a short real20fps motion clip from one persistent640x480 RGB product while physics runs; actual frame data only, no interpolation/generated imagery/pause/GT following that affects physics. Camera may be fixed with enough scene margin. At most240 motion RGB frames plus static/final keyframes; sample only this bounded showcase, no bulk SDG. Record exact World time/frame, source/config/import SHA, image SHA and caveat exposure clock not independently qualified. Keep sparse20Hz operation JSON plus transitions while native safety control remains physics cadence. RGB capture failure must not fabricate a clip.",
+    "Use meaningful few CPU tests for invalid phase/config/bounds, DriveProfile shaping reuse, phase transition/final dwell/lost load evaluator and media count policy. Python3.10 syntax. Return receipt with input/source hashes, actual commands/results, native CLI/dependencies, report/media fields, installed source refs if needed, and limitations. No new approval/review chain. Root does one integration pass then native run."
+  ]
+}

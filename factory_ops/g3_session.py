@@ -138,8 +138,8 @@ def _validate_runtime(runtime: dict[str, Any]) -> None:
     }
     if not isinstance(media, dict) or set(media) != media_fields:
         raise ValueError("G3 real-time media profile fields differ")
-    if media["profiles"] not in ([], ["qualification"]):
-        raise ValueError("G3 real-time media profiles must be disabled or qualification-only")
+    if media["profiles"] not in ([], ["qualification"], ["development"]):
+        raise ValueError("G3 real-time media profiles must be disabled or one explicit qualification/development profile")
     window = media["window_s"]
     if type(window) not in (int, float) or not math.isfinite(window) or not 0 < window <= 30:
         raise ValueError("G3 real-time media window must be finite and at most 30 seconds")

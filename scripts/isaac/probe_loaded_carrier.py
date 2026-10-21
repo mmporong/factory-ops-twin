@@ -1,4 +1,4 @@
-"""Bounded SDK4.5 static mounted-carrier admission; no ROS or transport claim."""
+"""Bounded SDK4.5 mounted-carrier admission, optional time-only loaded motion."""
 from __future__ import annotations
 
 import argparse
@@ -38,12 +38,21 @@ def main() -> int:
     profile = load_profile(args.config)
     manifest = build_manifest(profile)
     cfg, contact = manifest["probe"], manifest["contact"]
+    motion_cfg = None
+    project_sources = ["factory_ops/__init__.py", "factory_ops/carrier_module.py", "factory_ops/carrier_robot.py"]
+    if "loaded_motion" in profile:
+        from factory_ops.carrier_mobility import (MotionEvidence, MotionPlan, RgbCadence,
+            native_drive_geometry, validate_motion)
+        from factory_ops.motion import DriveGeometry
+        motion_cfg = validate_motion(profile["loaded_motion"], cfg)
+        cfg = {**cfg, "maximum_sim_time_s": motion_cfg["maximum_sim_time_s"],
+               "maximum_wall_time_s": motion_cfg["maximum_wall_time_s"]}
+        project_sources += ["factory_ops/carrier_mobility.py", "factory_ops/drive_profile.py", "factory_ops/motion.py"]
     args.output.mkdir(parents=True, exist_ok=False)
     sha = lambda p: hashlib.sha256(p.read_bytes()).hexdigest()
     report = {"schema_version": 1, "run_id": args.run_id, "status": "starting", "stage": "preflight",
         "source_sha256": sha(Path(__file__)), "config_sha256": sha(args.config),
-        "project_source_sha256": {name: sha(root/name) for name in
-            ("factory_ops/__init__.py", "factory_ops/carrier_module.py", "factory_ops/carrier_robot.py")},
+        "project_source_sha256": {name: sha(root/name) for name in project_sources},
         "manifest_sha256": manifest_sha256(manifest), "started_at_utc": datetime.now(timezone.utc).isoformat(),
         "scope": "one free Nova Carter, chassis-fixed carrier and separate free dynamic loaded tote; static admission only",
         "transport_verified": False, "sensor_fov_verified": False, "mount_strength_verified": False,
@@ -51,10 +60,17 @@ def main() -> int:
         "media": [], "cleanup_errors": [], "requires_host_closure": True,
         "profile_assumptions_verbatim": manifest["assumptions"],
         "fixture_scope_difference": "Original profile stand/release wording describes 114 only. This fixture uses a free Nova Carter and chassis fixed joint, no stands and no authored separation. Geometry/mass/material assumptions remain unchanged."}
+    if motion_cfg is not None:
+        report.update(scope="one Nova Carter with chassis-fixed authored carrier and free6kg tote; bounded time-command motion coupon only",
+            loaded_motion_verified=False, loaded_motion_config=motion_cfg,
+            loaded_motion_config_sha256=manifest_sha256(motion_cfg),
+            motion_rgb={"planned_fps": 20, "maximum_frames": 240, "captured_frames": 0,
+                "media_clock_sync_verified": False, "source": "continuous persistent640x480 RGB; every sixth actual120Hz physics frame"})
     (args.output/"manifest.json").write_text(manifest_json(manifest), encoding="utf-8")
     started = time.monotonic()
     deadline = started+cfg["maximum_wall_time_s"]
-    app = rgb = product = None
+    app = rgb = product = robot = None
+    plan = evidence = cadence = None
     code = 1
 
     def phase(name):
@@ -229,6 +245,8 @@ def main() -> int:
         if not admission["admitted"]:
             report.update(status="failed", reason="measured_mount_candidate_rejected")
             return 1
+        if motion_cfg is not None:
+            report["drive_geometry"] = native_drive_geometry(measured)
 
         phase("author_physical_attachment")
         material = UsdShade.Material.Define(stage, "/World/LoadedCarrierMaterial")
@@ -305,7 +323,18 @@ def main() -> int:
             raise RuntimeError("native articulation/wheel handles unavailable")
         if physics.is_gpu_dynamics_enabled():
             raise RuntimeError("fixture requires CPU PhysX, GPU rendering only")
-        camera = rep.create.camera(position=(2., 2., 1.7), look_at=(0., 0., .7))
+        wheel_indices = np.array(robot.wheel_dof_indices, dtype=np.int64)
+        if motion_cfg is not None:
+            if (len(wheel_indices) != 2 or [robot.dof_names[int(i)] for i in wheel_indices] != wheels):
+                raise ValueError("native wheel identity/order mismatch")
+            max_efforts = [float(v) for v in robot.get_articulation_controller().get_max_efforts()[wheel_indices]]
+            if not all(math.isfinite(v) and v > 0 for v in max_efforts):
+                raise ValueError("native wheel effort limits unavailable/invalid")
+            report["wheel_drive_readback"] = {"names": wheels, "indices": wheel_indices.tolist(),
+                "native_maximum_effort_n_m": max_efforts,
+                "geometry_source": "pre-step measured collider bounds; wheel DOF readback before commands; original asset drives unchanged"}
+        camera = rep.create.camera(position=(2.6, 2.8, 2.) if motion_cfg else (2., 2., 1.7),
+                                   look_at=(.35, .1, .7) if motion_cfg else (0., 0., .7))
         product = rep.create.render_product(camera, (width, height))
         rgb = rep.AnnotatorRegistry.get_annotator("rgb")
         rgb.attach([product])
@@ -316,19 +345,41 @@ def main() -> int:
         dwell_since = None
         success = False
         sample_count = 0
+        physics_samples = 0
+        plan = evidence = cadence = motion_origin = None
+        last_written_frame = -1
+        last_motion_phase = None
 
         def angle_between(a, b):
             return math.acos(max(-1., min(1., (sum(a[k][i]*b[k][i] for k in range(3) for i in range(3))-1)/2)))
 
+        def capture(name, stamp, frame, *, motion_frame=False):
+            data = np.asarray(rgb.get_data())
+            if (data.ndim != 3 or data.shape[:2] != (height, width) or data.shape[2] not in (3, 4)
+                    or data.dtype != np.uint8 or float(data[:, :, :3].std()) < 1.):
+                raise RuntimeError("genuine RGB unavailable; no synthetic substitute")
+            image = args.output/name
+            Image.fromarray(data[:, :, :3]).save(image)
+            entry = {"path": image.name, "sha256": sha(image), "world_checkpoint_s": stamp,
+                "world_checkpoint_frame": frame, "media_clock_sync_verified": False}
+            if motion_cfg is not None:
+                entry["role"] = "motion_frame" if motion_frame else "keyframe"
+            report["media"].append(entry)
+            if motion_frame:
+                report["motion_rgb"]["captured_frames"] += 1
+
         with (args.output/"observations.jsonl").open("x", encoding="utf-8") as stream:
             for _ in range(math.ceil(cfg["maximum_sim_time_s"]/dt)):
                 bounded()
-                robot.apply_wheel_actions(ArticulationAction(joint_velocities=np.zeros(2)))
+                command = plan.command(previous_time, dt) if plan is not None else None
+                targets = command["target"]["wheel_targets_rad_s"] if command is not None else [0., 0.]
+                robot.apply_wheel_actions(ArticulationAction(joint_velocities=np.array(targets)))
                 world.step(render=True)
                 bounded()
                 stamp, frame = float(world.current_time), int(world.current_time_step_index)
                 if not math.isfinite(stamp) or frame != previous_frame+1 or stamp <= previous_time or abs(stamp-previous_time-dt) > 1e-6:
                     raise RuntimeError("native World clock/frame mismatch")
+                physics_samples += 1
                 states, matrices = {}, {}
                 for key, body in bodies.items():
                     p, q = body.get_world_pose()
@@ -357,11 +408,12 @@ def main() -> int:
                 tote_error = math.dist(tote_offset, expected)
                 stationary = all(np.linalg.norm(s["linear_velocity_m_s"]) <= cfg["stationary_linear_m_s"]
                     and np.linalg.norm(s["angular_velocity_rad_s"]) <= cfg["stationary_angular_rad_s"] for s in states.values())
-                qualified = (fresh and bool(raw.get("in_contact", False)) and force >= cfg["minimum_force_n"]
-                    and ["carrier", "tote"] in mapped and stationary
+                load_supported = (fresh and bool(raw.get("in_contact", False)) and force >= cfg["minimum_force_n"]
+                    and ["carrier", "tote"] in mapped
                     and module_error <= cfg["maximum_settle_error_m"] and tote_error <= cfg["maximum_settle_error_m"]
                     and angle_between(matrices["carrier"], matrices["chassis"]) <= .05
                     and angle_between(matrices["tote"], matrices["chassis"]) <= .05)
+                qualified = load_supported and stationary
                 sample = {"run_id": args.run_id, "world_time_s": stamp, "world_physics_frame": frame, "bodies": states,
                     "wheel_position_rad": robot.get_wheel_positions(),
                     "wheel_velocity_rad_s": robot.get_joint_velocities()[robot.wheel_dof_indices],
@@ -376,37 +428,93 @@ def main() -> int:
                     sample[field] = [float(v) for v in sample[field]]
                     if len(sample[field]) != 2 or not all(math.isfinite(v) for v in sample[field]):
                         raise ValueError("native wheel readback invalid")
-                stream.write(json.dumps(sample, allow_nan=False)+"\n")
-                stream.flush()
-                sample_count += 1
-                if drift > cfg["maximum_settle_error_m"] or base_angle > .05:
+                if command is None and (drift > cfg["maximum_settle_error_m"] or base_angle > .05):
                     raise RuntimeError("free chassis moved outside static admission bounds; no pose correction applied")
                 if any(pair != ["carrier", "tote"] for pair in mapped):
                     raise RuntimeError("unexpected tote actor contact; diagnostics preserved")
-                dwell_since = (stamp if dwell_since is None else dwell_since) if qualified else None
+                transition = False
+                if command is not None:
+                    wheel_data = plan.observe_wheels(stamp, sample["wheel_position_rad"], sample["wheel_velocity_rad_s"],
+                        [float(v) for v in robot.get_measured_joint_efforts(joint_indices=wheel_indices)], max_efforts)
+                    delta = transform_point(inverse_rigid(motion_origin), states["chassis"]["position_m"])
+                    relative_rotation = [[sum(motion_origin[k][i]*matrices["chassis"][k][j] for k in range(3))
+                        for j in range(3)] for i in range(3)]
+                    yaw = math.atan2(relative_rotation[1][0], relative_rotation[0][0])
+                    tilt = math.acos(max(-1., min(1., relative_rotation[2][2])))
+                    encoder = wheel_data["encoder"]
+                    encoder_stopped = (abs(encoder["linear_m_s"]) <= cfg["stationary_linear_m_s"]
+                        and abs(encoder["angular_rad_s"]) <= cfg["stationary_angular_rad_s"])
+                    done = evidence.observe(command["phase"], stamp, position_m=delta, yaw_rad=yaw, tilt_rad=tilt,
+                        encoder=encoder, wheel_velocity=sample["wheel_velocity_rad_s"],
+                        load_supported=bool(load_supported), stationary=bool(stationary and encoder_stopped),
+                        target_zero=all(v == 0. for v in targets))
+                    sample.update(motion=command, motion_readback=wheel_data, load_supported=bool(load_supported),
+                        evaluation_only={"initial_chassis_relative_position_m": delta, "yaw_rad": yaw, "tilt_rad": tilt})
+                    transition = last_motion_phase != command["phase"]
+                    if transition:
+                        report.setdefault("motion_transitions", []).append({"phase": command["phase"],
+                            "world_time_s": stamp, "world_physics_frame": frame, "drive_phase": command["target"]["phase"]})
+                        last_motion_phase = command["phase"]
+                    if cadence.due(frame):
+                        capture("motion-%04d.png" % (cadence.count-1), stamp, frame, motion_frame=True)
+                    if done:
+                        report["motion_evaluation"] = evidence.result()
+                        if not report["motion_evaluation"]["passed"]:
+                            raise RuntimeError("loaded motion evidence failed: "+repr(report["motion_evaluation"]["failures"]))
+                        report["motion_rgb"]["sequence_readback"] = cadence.validate_records(
+                            [m for m in report["media"] if m.get("role") == "motion_frame"])
+                        capture("mounted-motion-final.png", stamp, frame)
+                        success = True
+                else:
+                    dwell_since = (stamp if dwell_since is None else dwell_since) if qualified else None
+                if (motion_cfg is None or last_written_frame < 0
+                        or frame-last_written_frame >= motion_cfg["rgb_period_physics_frames"] or transition or success):
+                    stream.write(json.dumps(sample, allow_nan=False)+"\n")
+                    stream.flush()
+                    sample_count += 1
+                    last_written_frame = frame
                 previous_time, previous_frame = stamp, frame
                 previous_sensor_time, previous_sensor_frame = sensor_time, sensor_frame
-                if dwell_since is not None and stamp-dwell_since >= cfg["contact_dwell_s"]:
-                    data = np.asarray(rgb.get_data())
-                    if (data.ndim != 3 or data.shape[:2] != (height, width) or data.shape[2] not in (3, 4)
-                            or data.dtype != np.uint8 or float(data[:, :, :3].std()) < 1.):
-                        raise RuntimeError("genuine RGB unavailable; no synthetic substitute")
-                    image = args.output/"mounted-settled.png"
-                    Image.fromarray(data[:, :, :3]).save(image)
-                    report["media"].append({"path": image.name, "sha256": sha(image), "world_checkpoint_s": stamp,
-                        "world_checkpoint_frame": frame, "media_clock_sync_verified": False})
-                    success = True
+                if success:
                     break
-        report.update(status="passed" if success else "failed", stage="static_fixture_complete",
+                if command is None and dwell_since is not None and stamp-dwell_since >= cfg["contact_dwell_s"]:
+                    capture("mounted-settled.png", stamp, frame)
+                    if motion_cfg is None:
+                        success = True
+                        break
+                    phase("loaded_motion")
+                    report["initial_static_dwell_s"] = stamp-dwell_since
+                    geometry = report["drive_geometry"]
+                    plan = MotionPlan(motion_cfg, DriveGeometry(geometry["wheel_radius_m"], geometry["wheel_separation_m"]),
+                        stamp, sample["wheel_position_rad"])
+                    evidence = MotionEvidence(motion_cfg, cfg)
+                    cadence = RgbCadence(frame, motion_cfg["rgb_period_physics_frames"], motion_cfg["maximum_rgb_frames"])
+                    motion_origin = matrices["chassis"]
+                    report["motion_origin"] = {"world_time_s": stamp, "world_physics_frame": frame,
+                        "evaluation_only_chassis_world_from_local": motion_origin}
+        report.update(status="passed" if success else "failed", stage="loaded_motion_complete" if motion_cfg else "static_fixture_complete",
             physical_attachment_verified=success, native_samples=sample_count,
-            static_dwell_s=0. if dwell_since is None else previous_time-dwell_since,
+            static_dwell_s=report.get("initial_static_dwell_s", 0. if dwell_since is None else previous_time-dwell_since),
             velocity_source="native PhysX rigid-body and wheel joint reads, not ROS odometry",
             control_policy="zero wheel velocity targets only; no position/velocity state setters, world anchor, GT driving or tolerance changes")
+        if motion_cfg is not None:
+            report.update(loaded_motion_verified=success, native_control_samples=physics_samples,
+                control_policy="fixed-time commands through existing DriveProfile; native wheel targets only; GT is evaluation-only; relative load bounds unchanged")
+            if evidence is not None:
+                report["motion_evaluation"] = evidence.result()
         code = 0 if success else 1
     except BaseException as error:
         report.update(status="failed", error={"type": type(error).__name__, "message": str(error),
                       "traceback": traceback.format_exc(limit=12)})
+        if evidence is not None:
+            report["motion_evaluation"] = evidence.result()
     finally:
+        if motion_cfg is not None and robot is not None:
+            try:
+                robot.apply_wheel_actions(ArticulationAction(joint_velocities=np.zeros(2)))
+                report["fault_or_final_zero_requested"] = True
+            except BaseException as error:
+                report["cleanup_errors"].append("wheel_zero: "+str(error))
         for label, resource, operation in (("rgb", rgb, "detach"), ("render_product", product, "destroy")):
             if resource is not None:
                 try:
@@ -415,6 +523,8 @@ def main() -> int:
                     report["cleanup_errors"].append(label+": "+str(error))
         if report["cleanup_errors"]:
             report["status"], code = "failed", 1
+            if motion_cfg is not None:
+                report["loaded_motion_verified"] = False
         report.update(finished_at_utc=datetime.now(timezone.utc).isoformat(), elapsed_wall_s=time.monotonic()-started,
                       app_close_requested=app is not None)
         try:

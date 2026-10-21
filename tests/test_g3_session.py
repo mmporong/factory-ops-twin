@@ -118,6 +118,14 @@ class G3SessionTests(unittest.TestCase):
             },
         )
 
+    def test_explicit_development_media_profile_keeps_short_bounded_window(self) -> None:
+        runtime = load(CONFIG / "g3-runtime.json")
+        runtime["real_time_media"].update(profiles=["development"], window_s=5.)
+        _validate_runtime(runtime)
+        runtime["real_time_media"]["profiles"] = ["qualification", "development"]
+        with self.assertRaisesRegex(ValueError, "real-time media"):
+            _validate_runtime(runtime)
+
     def test_real_time_media_profile_rejects_malformed_or_broadened_values(self) -> None:
         runtime = load(CONFIG / "g3-runtime.json")
         mutations = (

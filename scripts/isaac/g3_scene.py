@@ -102,13 +102,16 @@ class BarrierLifecycle:
 
     def _load_real_time_media_profile(self) -> dict[str, Any] | None:
         config_path = self.session_root / "config.json"
-        if (self.session.get("profile") != "qualification"
+        profile_name = self.session.get("profile")
+        eligible = (profile_name == "qualification"
+                    or profile_name == "development" and len(self.expected_robot_ids) == 4)
+        if (not eligible
                 or self.session.get("primary_evaluation") is not False
                 or not config_path.is_file() or config_path.is_symlink()):
             return None
         config = json.loads(config_path.read_text(encoding="utf-8"))
         profile = config.get("g3_runtime", {}).get("real_time_media")
-        if not isinstance(profile, dict) or profile.get("profiles") != ["qualification"]:
+        if not isinstance(profile, dict) or profile.get("profiles") != [profile_name]:
             return None
         return {**profile, "source_profile_sha256": hashlib.sha256(
             json.dumps(profile, sort_keys=True, separators=(",", ":"), allow_nan=False).encode("utf-8")
@@ -154,7 +157,7 @@ class BarrierLifecycle:
                 return
             duration_ns = round(float(profile["window_s"]) * 1_000_000_000)
             self.media_window = {
-                "window_id": "qualification-motion-001",
+                "window_id": str(self.session["profile"])+"-motion-001",
                 "source_profile_sha256": profile["source_profile_sha256"],
                 "trigger_robot_id": robot_id,
                 "trigger_command": {"linear_m_s": float(linear), "angular_rad_s": float(angular)},

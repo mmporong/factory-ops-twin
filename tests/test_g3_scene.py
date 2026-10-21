@@ -143,11 +143,13 @@ class BarrierLifecycleTests(unittest.TestCase):
         self.assertEqual(metadata["industrial_visuals"], self.visual.setup.return_value)
         return lifecycle
 
-    def media_lifecycle(self, *, profile: str = "qualification", primary: bool = False) -> BarrierLifecycle:
+    def media_lifecycle(self, *, profile: str = "qualification", primary: bool = False,
+                        media_profile: str = "qualification", window_s: float = 24.,
+                        robot_ids: tuple[str, ...] = ("carter1", "carter2")) -> BarrierLifecycle:
         folder = Path(tempfile.mkdtemp(dir=self.output))
         runtime_profile = {
-            "profiles": ["qualification"],
-            "window_s": 24.0,
+            "profiles": [media_profile],
+            "window_s": window_s,
             "sample_every_physics_steps": 6,
             "minimum_abs_linear_m_s": 0.15,
             "minimum_abs_angular_rad_s": 0.15,
@@ -156,7 +158,7 @@ class BarrierLifecycleTests(unittest.TestCase):
             json.dumps({"g3_runtime": {"real_time_media": runtime_profile}}), encoding="utf-8"
         )
         session = {**closure_session(), "profile": profile, "primary_evaluation": primary}
-        lifecycle = BarrierLifecycle(session, RUN_ID, folder)
+        lifecycle = BarrierLifecycle(session, RUN_ID, folder, robot_ids=robot_ids)
         lifecycle.output = folder
         lifecycle.visuals = self.visual
         return lifecycle
@@ -487,6 +489,26 @@ class BarrierLifecycleTests(unittest.TestCase):
                   (lifecycle.output / "real-time-media-events.jsonl").read_text().splitlines()]
         self.assertEqual([event["event"] for event in events], ["window_started", "window_ended"])
         self.assertEqual(events[0]["window_id"], events[1]["window_id"])
+
+    def test_explicit_four_robot_development_burst_is_bounded_and_not_restarted(self) -> None:
+        robots = ("carter1", "carter2", "carter3", "carter4")
+        lifecycle = self.media_lifecycle(profile="development", media_profile="development",
+            window_s=5., robot_ids=robots)
+        lifecycle.after_control("carter1", self.media_sample(frame=100, sim_time_s=5.))
+        self.assertTrue(lifecycle.capture_due())
+        first = lifecycle.capture_metadata()["real_time_media"]
+        self.assertEqual(first["window_id"], "development-motion-001")
+        self.assertEqual(first["window_end_sim_time_ns"]-first["window_start_sim_time_ns"], 5_000_000_000)
+        lifecycle.after_control("carter2", self.media_sample(frame=106, sim_time_s=5.1))
+        self.assertTrue(lifecycle.capture_due())
+        self.assertEqual(lifecycle.capture_metadata()["real_time_media"]["sample_index"], 1)
+        for frame, stamp in ((400, 10.), (460, 11.)):
+            lifecycle.after_control("carter1", self.media_sample(frame=frame, sim_time_s=stamp))
+            self.assertFalse(lifecycle.capture_due())
+        for count, primary, media_profile in ((2, False, "development"), (4, True, "development"), (4, False, "qualification")):
+            disabled = self.media_lifecycle(profile="development", media_profile=media_profile,
+                primary=primary, robot_ids=robots[:count])
+            self.assertIsNone(disabled.real_time_media)
 
     def test_real_time_media_is_disabled_for_pilot_and_primary_sessions(self) -> None:
         for profile, primary in (("pilot", False), ("primary", True)):

@@ -34,8 +34,8 @@
   },
   "camera_capture_every_steps": 1200,
   "real_time_media": {
-    "profiles": [],
-    "window_s": 24.0,
+    "profiles": ["development"],
+    "window_s": 5.0,
     "sample_every_physics_steps": 6,
     "minimum_abs_linear_m_s": 0.15,
     "minimum_abs_angular_rad_s": 0.15

@@ -811,6 +811,34 @@ def localization_payload(transform: Any, *, now_s: float, ttl_s: float) -> dict[
     return {"x_m": values[0], "y_m": values[1], "yaw_rad": math.atan2(2*(q.w*q.z+q.x*q.y), 1-2*(q.y*q.y+q.z*q.z)), "stamp_s": stamp}
 
 
+def create_robot_dispatch_nodes(robot_id: str, namespace: str, *, isolated: bool,
+        ros: Any, parameter_type: Any, executor_type: Any,
+        owned_nodes: list[Any], owned_executors: list[tuple[Any, Any]],
+        ) -> tuple[Any, Any, Any, Any]:
+    """Own TF/clock separately from IO on local45; canonical topology unchanged.
+
+    Both nodes keep the original namespace/remaps and ROS-time setting. Runtime
+    clock reads and TF Buffer use the original g3_adapter node; scans, odometry
+    and action clients use the IO node. No threads or listener-owned executors.
+    Append ownership before add_node so partial setup is cleaned by run_mission.
+    """
+    def own(name: str) -> tuple[Any, Any]:
+        node = ros.create_node(name, namespace=namespace,
+            cli_args=["--ros-args", "-r", "/tf:=tf", "-r", "/tf_static:=tf_static"],
+            parameter_overrides=[parameter_type("use_sim_time", value=True)])
+        owned_nodes.append(node)
+        executor = executor_type()
+        owned_executors.append((node, executor))
+        executor.add_node(node)
+        return node, executor
+
+    node, executor = own(f"g3_adapter_{robot_id}")
+    if not isolated:
+        return node, node, executor, executor
+    io_node, io_executor = own(f"g3_io_adapter_{robot_id}")
+    return node, io_node, executor, io_executor
+
+
 def sample_localization_batch(robot_ids: Sequence[str], *, drain: Callable[[], Any],
         read_clock_ns: Callable[[], int], lookup: Callable[[str], Any],
         cached: Mapping[str, Any], ttl_s: float, require_fresh: bool,
@@ -1587,10 +1615,8 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
         raise ValueError("live anchor controls require explicit four-robot non-primary local45 development dashboard")
     scenario_id = session["scenario_id"]
     output = args.output.resolve(strict=True)
-    live_control = LiveControl(args.run_id, tuple(robot_ids), checkpoint=output/"live-control-state.json") if live_enabled else None
+    live_control = None
     commands_dir = output/"commands"
-    if live_enabled:
-        commands_dir.mkdir(exist_ok=True)
     if development and any((output / name).exists() or (output / name).is_symlink()
                            for name in (marker_name, "session-verified.json", "mission-result.json")):
         raise ValueError("preserve existing mission evidence; development output must be new")
@@ -1604,7 +1630,7 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
                        "namespace_by_id": namespaces, **runtime_fields})
     else:
         result.update(primary_trial_identity(session_root, session))
-    if live_control is not None:
+    if live_enabled:
         result["live_control_source_sha256"] = sha(project / "factory_ops/live_control.py")
     launch = bag = ros = mission = callback_drain = None
     dashboard_publisher: DashboardPublisher | None = None
@@ -1624,6 +1650,8 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
     energy_faults: set[str] = set()
     nodes: list[Any] = []
     node_executors: list[tuple[Any, Any]] = []
+    critical_executors: list[Any] = []
+    io_executors: list[Any] = []
     streams: list[Any] = []
     cleanup: list[dict[str, Any]] = []
     origin: float | None = None
@@ -1644,6 +1672,12 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
                 raise RuntimeError("G3 scene failed before ready")
             time.sleep(0.2)
         ready = _load_ready(output / "sim-ready.json", args.run_id, scenario_id, registry=registry)
+        if live_enabled:
+            # Keep the SDK's exact bootstrap file set until it has loaded and
+            # issued its verified ready record. The source owner claims its
+            # exclusive checkpoint and inbox only after that handshake.
+            live_control = LiveControl(args.run_id, tuple(robot_ids), checkpoint=output/"live-control-state.json")
+            commands_dir.mkdir(exist_ok=True)
         physical_map = None
         physical_map_files: dict[str, str] = {}
         if development:
@@ -1716,6 +1750,7 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
         event_executor = SingleThreadedExecutor()
         event_executor.add_node(event_node)
         node_executors.append((event_node, event_executor))
+        critical_executors.append(event_executor)
         event_pub = event_node.create_publisher(String, "/factory/g3/events", 50)
         auth_pub = event_node.create_publisher(String, "/factory/g3/authorizations", 50)
         route_pub = event_node.create_publisher(String, "/factory/g3/reservations", 50)
@@ -1742,24 +1777,22 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
             message = String(); message.data = line; event_pub.publish(message)
 
         for robot_id in robot_ids:
-            node = ros.create_node(f"g3_adapter_{robot_id}", namespace=namespaces[robot_id],
-                 cli_args=["--ros-args", "-r", "/tf:=tf", "-r", "/tf_static:=tf_static"],
-                 parameter_overrides=[Parameter("use_sim_time", value=True)])
-            nodes.append(node)
-            executor = SingleThreadedExecutor()
-            executor.add_node(node)
-            node_executors.append((node, executor))
+            node, io_node, executor, io_executor = create_robot_dispatch_nodes(robot_id, namespaces[robot_id],
+                isolated=local45, ros=ros, parameter_type=Parameter, executor_type=SingleThreadedExecutor,
+                owned_nodes=nodes, owned_executors=node_executors)
+            critical_executors.append(executor)
+            io_executors.append(io_executor)
             buffer = Buffer(node=node)
             stop_gate = StoppedGate(window_s=runtime_config["stopped_window_s"],
                  max_linear_m_s=runtime_config["stopped_linear_m_s"], max_angular_rad_s=runtime_config["stopped_angular_rad_s"],
                  ttl_s=runtime_config["odom_ttl_s"])
-            robots[robot_id] = {"node": node, "tf": buffer, "listener": TransformListener(buffer, node),
-                "compute": ActionClient(node, planner_action, planner_topic),
-                "follow": IntrospectedActionClient(node, FollowPath, "follow_path", cancel_type=CancelGoal,
+            robots[robot_id] = {"node": node, "io_node": io_node, "tf": buffer, "listener": TransformListener(buffer, node),
+                "compute": ActionClient(io_node, planner_action, planner_topic),
+                "follow": IntrospectedActionClient(io_node, FollowPath, "follow_path", cancel_type=CancelGoal,
                     event_qos=qos_profile_services_default, introspection_state=ServiceIntrospectionState.CONTENTS),
-                "load_map": node.create_client(LoadMap, "navigation_map_server/load_map"),
-                "controller_parameters": node.create_client(GetParameters, "controller_server/get_parameters"),
-                "lifecycle": {name: node.create_client(GetState, f"{name}/get_state") for name in ("planner_server", "controller_server", "bt_navigator")},
+                "load_map": io_node.create_client(LoadMap, "navigation_map_server/load_map"),
+                "controller_parameters": io_node.create_client(GetParameters, "controller_server/get_parameters"),
+                "lifecycle": {name: io_node.create_client(GetState, f"{name}/get_state") for name in ("planner_server", "controller_server", "bt_navigator")},
                 "pose": None, "last_observation": -math.inf, "phase": "idle", "anchor": session["workload"]["initial_robots"][robot_id],
                 "park": session["workload"]["initial_robots"][robot_id], "leg": None, "generation": None,
                 "held_tiles": frozenset(), "sequence": 0, "last_lease": -math.inf, "last_request": -math.inf,
@@ -1777,9 +1810,9 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
                 rt["startup_receipts"] = {"raw_counts": {"front": 0, "rear": 0},
                     "last_raw_stamp_ns": {}, "last_filtered_stamp_ns": {}}
             rt["charging_odom_pending"] = deque()
-            front = node.create_publisher(LaserScan, "scan_front", qos_profile_sensor_data)
-            rear = node.create_publisher(LaserScan, "scan_rear", qos_profile_sensor_data)
-            localization = node.create_publisher(LaserScan, "scan_localization", qos_profile_sensor_data)
+            front = io_node.create_publisher(LaserScan, "scan_front", qos_profile_sensor_data)
+            rear = io_node.create_publisher(LaserScan, "scan_rear", qos_profile_sensor_data)
+            localization = io_node.create_publisher(LaserScan, "scan_localization", qos_profile_sensor_data)
 
             def scan(message: Any, robot: str, side: str, publisher: Any, local_pub: Any) -> None:
                 nonlocal raw_stamp_peak
@@ -1800,7 +1833,7 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
                     robots[robot]["scan_counts"][key] += 1
 
             for side, publisher in (("front", front), ("rear", rear)):
-                rt["subscriptions"].append(node.create_subscription(LaserScan, f"scan_{side}_raw",
+                rt["subscriptions"].append(io_node.create_subscription(LaserScan, f"scan_{side}_raw",
                     lambda message, r=robot_id, s=side, p=publisher, lp=localization: scan(message, r, s, p, lp), qos_profile_sensor_data))
 
             def odometry(message: Any, robot: str) -> None:
@@ -1835,13 +1868,20 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
                         if robot not in energy_faults:
                             journal("virtual_energy_observation_fault", {"robot_id": robot, "error": str(error)})
                             energy_faults.add(robot)
-            rt["subscriptions"].append(node.create_subscription(Odometry, "odom", lambda message, r=robot_id: odometry(message, r), qos_profile_sensor_data))
+            rt["subscriptions"].append(io_node.create_subscription(Odometry, "odom", lambda message, r=robot_id: odometry(message, r), qos_profile_sensor_data))
 
         callback_drain = CallbackDrain(
-            (executor for _, executor in node_executors),
+            io_executors if local45 else (executor for _, executor in node_executors),
+            priority_executors=critical_executors if local45 else (),
             max_rounds=runtime_config["callback_drain"]["max_rounds"],
             wall_budget_s=runtime_config["callback_drain"]["wall_budget_s"],
         )
+        result["localization_dispatch_topology"] = {
+            "isolated_tf_clock": local45,
+            "critical_nodes": [event_node.get_fully_qualified_name()]+
+                [rt["node"].get_fully_qualified_name() for rt in robots.values()],
+            "io_nodes": [rt["io_node"].get_fully_qualified_name() for rt in robots.values()],
+            "scope": "local45 TF/clock-only executors first within original total drain bounds; IO keeps FIFO and ROS-time; canonical topology unchanged"}
 
         qos = output / "bag-qos.yaml"
         qos.write_text(bag_qos_overrides(robot_ids, namespace_by_id=namespaces, local45=local45), encoding="utf-8")

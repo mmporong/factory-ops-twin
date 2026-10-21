@@ -4,6 +4,9 @@ from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
 import unittest
+import json
+import tempfile
+from unittest.mock import patch
 
 from factory_ops.fleet_execution import StoppedGate
 from factory_ops.live_control import LiveControl
@@ -16,6 +19,39 @@ RUN = "a"*32
 
 
 class G3LiveControlTests(unittest.TestCase):
+    def test_wait_scene_keeps_exact_SDK_bootstrap_file_set(self):
+        from factory_ops.fleet_transport import _compile, DEFAULT_CONFIG
+        from scripts.isaac.fleet4_transport_scene import BOOTSTRAP_FILES
+        from scripts.ros.g3_mission import run_mission
+        compiled = _compile(DEFAULT_CONFIG)
+        with tempfile.TemporaryDirectory() as temporary:
+            folder = Path(temporary)
+            session = folder/"inputs"
+            output = folder/"run"
+            session.mkdir(); output.mkdir()
+            (session/"session.json").write_text(json.dumps(compiled["session"]), encoding="utf-8")
+            # File-set fixture only; no SDK or source-verification success claim.
+            for name in BOOTSTRAP_FILES-{"fleet-transport-verified.json"}:
+                p = output/name
+                p.parent.mkdir(parents=True, exist_ok=True)
+                p.write_bytes(b"bootstrap file-set fixture")
+            args = SimpleNamespace(output=output, run_id=RUN, dashboard=True,
+                live_anchor_controls=True, runtime_profile="local45_development")
+            observed = []
+            def inspect_before_ready(_):
+                observed.append({p.relative_to(output).as_posix() for p in output.rglob("*") if p.is_file()})
+                raise RuntimeError("bounded unit stop before SDK ready")
+            with patch.dict("os.environ", {"FACTORY_OPS_G3_SOURCE_COMMIT": "c"*40}), \
+                    patch("scripts.ros.g3_mission.time.sleep", side_effect=inspect_before_ready):
+                result = run_mission(args, session_root=session, session=compiled["session"],
+                    config=compiled["config"], book=compiled["book"], registry=compiled["registry"],
+                    bundle_sha256="b"*64)
+            self.assertEqual(result, 1)
+            self.assertEqual(len(observed), 1)
+            self.assertEqual(observed[0], set(BOOTSTRAP_FILES))
+            self.assertFalse((output/"commands").exists())
+            self.assertFalse((output/"live-control-state.json").exists())
+
     def evidence(self):
         receiver = StopOdometryReceiver(StoppedGate(window_s=.5, max_linear_m_s=.02, max_angular_rad_s=.03, ttl_s=.3))
         for stamp in (1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7):

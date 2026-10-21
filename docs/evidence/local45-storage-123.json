@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "operation": "Reversible native NTFS compression of four explicitly closed raw directories",
+  "targets": [
+    {
+      "path": "C:\\Users\\LIMMM\\FactoryOpsRuntime\\local45-transport-041",
+      "run_id": "b73d6ac15f7f42bb8f702ea9eb4717a5",
+      "indexed_files": 469,
+      "logical_bytes": 2762353892,
+      "all_indexed_file_SHA_matched": true
+    },
+    {
+      "path": "C:\\Users\\LIMMM\\FactoryOpsArtifacts\\operations-083\\checkpoint-001",
+      "run_id": "953da380ada943f789d46e55e2c8fe4d",
+      "indexed_files": 493,
+      "logical_bytes": 2708495330,
+      "all_indexed_file_SHA_matched": true
+    },
+    {
+      "path": "C:\\Users\\LIMMM\\FactoryOpsArtifacts\\relocated-106\\operations-081\\checkpoint-001",
+      "run_id": "bcf1f7b9613f42cfbe2949a838e13c2e",
+      "indexed_files": 525,
+      "logical_bytes": 2869986827,
+      "all_indexed_file_SHA_matched": true
+    },
+    {
+      "path": "E:\\FactoryOpsArtifacts\\operations-083\\checkpoint-001",
+      "run_id": "953da380ada943f789d46e55e2c8fe4d",
+      "indexed_files": 493,
+      "logical_bytes": 2708495330,
+      "all_indexed_file_SHA_matched": true
+    }
+  ],
+  "allocation_before": [
+    {
+      "DriveLetter": "E",
+      "SizeRemaining": 2460471296,
+      "FileSystem": "NTFS"
+    },
+    {
+      "DriveLetter": "C",
+      "SizeRemaining": 4288233472,
+      "FileSystem": "NTFS"
+    }
+  ],
+  "allocation_after": [
+    {
+      "DriveLetter": "E",
+      "SizeRemaining": 3888451584,
+      "FileSystem": "NTFS"
+    },
+    {
+      "DriveLetter": "C",
+      "SizeRemaining": 8675164160,
+      "FileSystem": "NTFS"
+    }
+  ],
+  "logical_hashes_matched": true,
+  "deletion_performed": false,
+  "paths_changed": false,
+  "archives_rewritten": false,
+  "scope": "All original indexed payload files under the four named roots checked against pre-existing closed manifests. Compression changes physical allocation, not logical source/data bytes.",
+  "reverse_operation": "compact.exe /U /S:<the_same_named_closed_directory> /Q",
+  "free_space_change_is_snapshot_not_reserved": true
+}

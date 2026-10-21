@@ -1,0 +1,176 @@
+{
+  "task_id": "localization-critical-dispatch-120",
+  "attempt": 1,
+  "contract_revision": 112,
+  "owner": "control",
+  "ack": true,
+  "status": "implemented_focused_cpu_and_real_jazzy_passed",
+  "self_accepted": false,
+  "summary": "local45 G3의 로봇별 TF·시계 노드를 scan/action/odometry IO 노드와 분리했습니다. 기존 drain의 64회·50ms 한도 안에 TF/시계 우선 구간을 배분했습니다. CPU 22개 및 실제 격리 Jazzy 컴포넌트 비교가 통과했으며 최종 공장 실행·통합은 root 범위입니다.",
+  "changed_paths": [
+    "scripts/ros/g3_mission.py",
+    "factory_ops/callback_drain.py",
+    "tests/test_localization_dispatch.py",
+    "tests/test_callback_drain.py",
+    "scripts/ros/probe_localization_dispatch.py",
+    "coordination/collab/results/localization-critical-dispatch-120.json"
+  ],
+  "source_sha256": {
+    "scripts/ros/g3_mission.py": "8fc424a7acb539258d851601fc2baa9fcd9700a5b04358da669741a90abed0fc",
+    "factory_ops/callback_drain.py": "084070e3bd286c6d3d2a4e3b24f6c57500499ab1b7ac569ed501ab5008070ed6",
+    "tests/test_localization_dispatch.py": "408f7873ab3babd38b09a203aeb5671ba2d04ae1da123346e77ffbefee556269",
+    "tests/test_callback_drain.py": "4b8a9cad566229973c67d295e9ba82d5b334820d27a41344f3d100918e17ec1c",
+    "scripts/ros/probe_localization_dispatch.py": "1a7c6966277fd479bfea015bc0b0f64adfad345d52baca31e60301fa933aff16"
+  },
+  "input_pins_verified": {
+    "scripts/ros/g3_mission.py": "664180c0b89acad2a506662fb90032c7d93743b3fbfcaf060a3cc7547c50afe8",
+    "factory_ops/callback_drain.py": "db76cd91b9b268ebab053d0bf8d610e336a2f3d8cb1bd0ce49be45bd198f6d17",
+    "tests/test_localization_dispatch.py": "bbe937d3e4405a9fc0c606f311df6cbce3d82567c4f761409221a61498797c04",
+    "tests/test_callback_drain.py": "2f937860b4b711a6df718e87eacd9d80ce572be98c4f196054c98bb054ccd2da",
+    "docs/evidence/local45-localization-window-121.json": "c6fb86ee60b723cd65d369f98736021bbf83081a5ec74ae7e98d558e64975bca",
+    "docs/evidence/local45-transport-041.json": "4240eb7f5c726df778ac2d0cbcafec172c5b221d3d097aaf2674acdf031b5aab"
+  },
+  "diagnosis": {
+    "confirmed_source_boundary": "기존 로봇 node/executor에서 TransformListener, ROS TimeSource, scan 복사·필터·재발행, odometry, action/service가 함께 처리됐습니다. 설치 Jazzy executor는 ready task 및 waitable/timer를 구독보다 먼저 실행할 수 있고 spin_once는 한 handler만 실행합니다.",
+    "confirmed_closed_evidence": "제공된 121 JSON의 clock1211.766729865와 G3 composed TF1211.200063169, 더 새로운 recorder TF11행을 읽었습니다. bag 수신은 G3 callback 실행이나 Buffer 내용의 증명이 아닙니다.",
+    "inference_limit": "공유 callback 큐의 지연이 이 실패 형태를 만들 수 있음을 실제 컴포넌트에서 확인했습니다. 041의 정확한 내부 원인 또는 DDS 전달 문제의 배제를 확정하지 않았습니다. SQL을 열지 않았습니다."
+  },
+  "architecture": {
+    "scope_gate": "runtime_profile == local45_development일 때만 분리/우선 구간 활성. canonical62는 기존 node/executor 구조와 기존 drain 경로를 유지합니다.",
+    "critical": "기존 g3_adapter_<robot>에 TF Buffer/TransformListener와 ROS 시계를 유지합니다. event node와 네 로봇의 critical executor를 먼저 처리합니다. rt['node']의 모든 기존 시계 읽기와 stop receiver의 FIFO 코드는 유지했습니다.",
+    "io": "새 g3_io_adapter_<robot>로 scan fanout, odometry 구독, ComputePath/FollowPath 및 service clients를 옮겼습니다. namespace, /tf:=tf 및 /tf_static:=tf_static remap, topic/QoS, use_sim_time=True는 유지합니다. IO 자체의 ROS 시계 구독도 유지되며 G3 운영 시계 읽기는 critical node에서 수행합니다.",
+    "drain": "CallbackDrain의 선택형 priority_executors. 기존 max_rounds 중 최대 절반(64일 때32)을 critical-only prefix에 배분하고 기존 wall_budget_s 절반(50ms일 때25ms)에 도달하면 prefix를 끝냅니다. 남은 동일 round/time 한도에서 모든 executor의 완전한 fair round를 수행합니다. IO를 최소 한 번 처리하고 동일 executor 중복 등록은 거절합니다.",
+    "budget_caveat": "기존과 같은 cooperative budget입니다. callback을 선점하지 않으므로 한 완전한 round만큼 초과할 수 있습니다. 실제 실험 drain 약60~71ms를 관측했으며 hard50ms 보장으로 주장하지 않습니다. 설정·전체64회 한도·freshness 재시도3회는 늘리지 않았습니다.",
+    "cleanup": "새 노드/executor도 기존 소유 목록에 넣고 역순 remove_node/shutdown/destroy_node/ros.shutdown 경로로 정리합니다. 부분 초기화 실패도 소유 목록에 남깁니다. 제품에 새 spin thread나 daemon은 없습니다.",
+    "unchanged_gates": "TF의 전체 원문 transform/stamp, 0.5초 freshness, sample_localization_batch 및 최대3회, 예약·radius·정지/도착·lease·horizon·clock 정책, 116 controls. stale/GT 대체나 시각 보정은 없습니다."
+  },
+  "validation": [
+    {
+      "command": ".venv/Scripts/python.exe -B -m unittest tests.test_localization_dispatch tests.test_callback_drain -v",
+      "cwd": "C:/Users/LIMMM/factory-ops-twin",
+      "result": "22 tests PASS; 0.013s; one focused CPU pass",
+      "coverage": "새 topology와 canonical 동일-node 경로, namespace/remap/ROS-time/부분 소유 정리, critical prefix의 동일 총 round/time 한도 및 IO 진행·순서, 실제041 timestamp-only CPU fixture, persistent stale/future/invalid/deadline 거절 등"
+    },
+    {
+      "command": "Python ast.parse(..., feature_version=(3,10)) on all five changed Python files",
+      "result": "5 PASS; SDK import/실행 없음"
+    },
+    {
+      "command": "wsl.exe -d Ubuntu -- bash -lc 'source /opt/ros/jazzy/setup.bash; set -euo pipefail; cd /mnt/c/Users/LIMMM/factory-ops-twin; exec timeout --signal=TERM --kill-after=5s 110s env -u FASTRTPS_DEFAULT_PROFILES_FILE -u FASTDDS_DEFAULT_PROFILES_FILE -u CYCLONEDDS_URI ROS_LOCALHOST_ONLY=1 RMW_IMPLEMENTATION=rmw_fastrtps_cpp python3 -B -m scripts.ros.probe_localization_dispatch --domain-id 179 --wall-limit-s 90'",
+      "result": "exit0; actual Jazzy component PASS; stdout JSON; no artifact/SQL/daemon/native run",
+      "warning": "ROS_LOCALHOST_ONLY가 deprecated지만 honored라는 설치 rcl 경고를 기록했습니다. OS/전역 네트워크나 DDS 설정은 변경하지 않았습니다."
+    },
+    {
+      "command": "WSL test -e /proc/64843 after the owned probe exited",
+      "result": "owned_probe_pid_64843_absent; exit0"
+    },
+    {
+      "command": "changed-path diff and digest check",
+      "result": "제품/검사 변경은 카드의 지정 경로만. root의 docs/troubleshooting.md, probe_loaded_carrier.py 및 기존 dashboard 변경을 보존했습니다. 별도 리뷰 체인/추가 suite 없음."
+    }
+  ],
+  "real_ros_component": {
+    "run_id": "c1093389bc5b45ab9e1d549b806b28d0",
+    "pid": 64843,
+    "actual_domain_id": 179,
+    "factory_domain_id": 73,
+    "status": "passed",
+    "wall_elapsed_s": 2.6598732550046407,
+    "host_command_elapsed_s": 4.9804116,
+    "outer_timeout_s": 110,
+    "messages": "실제 ROS Clock·동적 TFMessage(map→odom→base_link)·3200 ray LaserScan. monotonic wall 경과로 만든 컴포넌트 source 시각을 실제 발행/수신하며 TF Buffer에 수동 삽입하지 않았습니다.",
+    "load": "동일한 scan 복사/production mask 처리와 24개 executor.create_task(각30ms)의 유한 저작 workload. 650ms consumer pause로 실제 수신 큐 backlog를 만들었습니다. 실제 Nav2 action server 또는041 전체 workload 재현은 아닙니다.",
+    "shared": {
+      "namespace": "/dispatch120_c1093389bc5b_shared",
+      "accepted": false,
+      "seed_and_remaining_tf_stamp_ns": 1000000002293,
+      "three_attempt_clock_ns": [1000673549291, 1000736314081, 1000799919750],
+      "three_attempt_tf_age_s": [0.6735469980000062, 0.73631178800008, 0.7999174569999923],
+      "published_tf_count_at_sample": 17,
+      "work_callbacks_at_sample": 6,
+      "scan_callbacks_at_sample": 3,
+      "owned_node_count": 3,
+      "owned_executor_count": 2,
+      "publisher_thread_closed": true,
+      "context_closed": true,
+      "cleanup_errors": [],
+      "owned_resources_closed": true
+    },
+    "isolated": {
+      "namespace": "/dispatch120_c1093389bc5b_isolated",
+      "accepted": true,
+      "clock_ns": 1000713068045,
+      "tf_stamp_s": 1000.681595033,
+      "tf_age_s": 0.031473011999992195,
+      "stamp_is_from_published_tf": true,
+      "published_tf_count_at_sample": 15,
+      "work_callbacks_at_sample": 2,
+      "scan_callbacks_at_sample": 3,
+      "persistent_true_tf_loss_rejected": true,
+      "loss_tf_stamp_s": 1000.734133257,
+      "loss_three_attempt_clock_ns": [1001435187285, 1001507783070, 1001580595938],
+      "loss_three_attempt_tf_age_s": [0.7010540279999304, 0.7736498129999063, 0.8464626809999345],
+      "owned_node_count": 4,
+      "owned_executor_count": 3,
+      "publisher_thread_closed": true,
+      "context_closed": true,
+      "cleanup_errors": [],
+      "owned_resources_closed": true
+    },
+    "process_exited": true,
+    "owned_pid_absent_after_exit": true,
+    "unrelated_units_or_processes_stopped": false
+  },
+  "installed_primary_sources": {
+    "distribution": "existing WSL Ubuntu /opt/ros/jazzy Python3.12",
+    "packages": {
+      "ros-jazzy-rclpy": "7.1.12-1noble.20260912.162354",
+      "ros-jazzy-tf2-ros-py": "0.36.23-1noble.20260915.174232"
+    },
+    "files": [
+      {
+        "path": "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/executors.py",
+        "sha256": "46f052cf43e1fa1040af235f3508a0a8c00d98a2ab59b8dcaed9aceb3921a452",
+        "lines": "241-263, 655-675, 800-846, 895-922",
+        "evidence": "공개 create_task의 ready queue와 entity handler 순서, single-threaded spin_once가 한 handler를 실행하고 exception을 전달함을 확인했습니다."
+      },
+      {
+        "path": "/opt/ros/jazzy/lib/python3.12/site-packages/tf2_ros/transform_listener.py",
+        "sha256": "b2973e41111428a49894f2b17ee2f65c642bee9d2cbf852aeb1cc1cdf56d0385",
+        "lines": "53-162",
+        "evidence": "전달한 node에 /tf·/tf_static subscriptions를 생성합니다. callback은 원문 transform을 Buffer에 전달합니다. spin_thread 기본false를 유지했습니다."
+      },
+      {
+        "path": "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/time_source.py",
+        "sha256": "9aacb85102019116edc6eb74a6993ca7efa3296273bfa53c30cebbb792d446f5",
+        "lines": "79-91, 137-148",
+        "evidence": "ROS 시계는 node-owned /clock subscription callback으로 갱신됩니다. topic/QoS 및 원문 시각은 바꾸지 않았습니다."
+      },
+      {
+        "path": "/opt/ros/jazzy/lib/python3.12/site-packages/tf2_ros/buffer.py",
+        "sha256": "bc93467198a3d1b5807ab9599493b74ab7360a90d6cef327426e6515a7d30631",
+        "lines": "61-105",
+        "evidence": "Buffer(node=...)가 해당 node의 clock 및 time-jump callback을 사용하는 점을 확인했습니다."
+      },
+      {
+        "path": "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/node.py",
+        "sha256": "8b7fe0ea64e0de12cc1d5d01ebf56c202fa6e153251eb71dfff93e35eb5b3c80",
+        "lines": "237-238, 349",
+        "evidence": "node가 TimeSource를 소유하고 자신의 clock을 연결합니다. private clock/context 값을 덮어쓰지 않았습니다."
+      }
+    ]
+  },
+  "limits_and_handoff": [
+    "한 로봇의 격리 ROS 컴포넌트 비교입니다. 4대 실제 Nav2/AMCL/부하·운송 완주 및 IO 처리량은 아직 이 새 소스로 검증하지 않았습니다.",
+    "041 내부 원인·QoS·DDS 원인은 미확정입니다. 제공된 closed JSON과 source만 읽었으며 old SQL이나 bag을 열지 않았습니다.",
+    "G3와 callback_drain의 새 SHA를 root의 다음 동결 source/archive proof에 포함해야 합니다. 기존 실행 입력은 수정하지 않았습니다.",
+    "새 retry/TTL/clock offset·freeze·GT 허용이나 예약/반경 완화가 없습니다. 실제 TF 손실은 실패합니다.",
+    "사용자 목표인 4/8 단계 달성은 이 receipt로 선언하지 않습니다. root가 native/통합 결과에 따라 판단합니다."
+  ],
+  "preserved": ["116 controls/worktree", "all041/118/119 frozen and closed originals", "carrier_robot/probe_loaded_carrier root work", "README/media/docs root work", "dashboard/API/Next changes"],
+  "sdk_executed": false,
+  "gpu_executed": false,
+  "git_mutated": false,
+  "new_agents": false,
+  "remaining_owned_processes": []
+}

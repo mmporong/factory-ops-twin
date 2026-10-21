@@ -13,6 +13,10 @@ class CallbackDrain:
     accounting deliberately describes dispatch attempts rather than callbacks.
     The wall budget is checked only after a complete fair round. A slow callback
     can therefore overrun the authored cooperative budget by one round.
+
+    Optional priority executors own only TF/clock work. Their prefix consumes
+    at most half the configured round/time allowance, followed by complete fair
+    rounds; it does not add another drain budget or a background spin thread.
     """
 
     def __init__(
@@ -22,8 +26,11 @@ class CallbackDrain:
         max_rounds: int,
         wall_budget_s: float,
         now_wall: Callable[[], float] = time.monotonic,
+        priority_executors: Iterable[Any] = (),
     ) -> None:
-        owned = tuple(executors)
+        regular = tuple(executors)
+        priority = tuple(priority_executors)
+        owned = priority + regular
         if not owned:
             raise ValueError("callback drain requires at least one executor")
         if type(max_rounds) is not int or not 1 <= max_rounds <= 256:
@@ -35,7 +42,10 @@ class CallbackDrain:
             raise ValueError("callback drain wall clock must be callable")
         if any(not callable(getattr(executor, "spin_once", None)) for executor in owned):
             raise ValueError("callback drain executors must provide spin_once")
+        if len({id(executor) for executor in owned}) != len(owned):
+            raise ValueError("callback drain cannot own the same executor twice")
         self._executors = owned
+        self._priority = priority
         self.max_rounds = max_rounds
         self.wall_budget_s = float(wall_budget_s)
         self._now_wall = now_wall
@@ -43,6 +53,7 @@ class CallbackDrain:
         self._rounds = 0
         self._spin_attempts = 0
         self._budget_reached_calls = 0
+        self._priority_rounds = 0
         self._last_wall: float | None = None
 
     def _wall(self, previous: float | None = None) -> float:
@@ -64,7 +75,23 @@ class CallbackDrain:
         attempts = 0
         budget_reached = False
         elapsed = 0.0
-        for _ in range(self.max_rounds):
+        priority_rounds = 0
+        # Spend at most half the EXISTING rounds/time on TF+clock-only nodes.
+        # Reserve a complete fair round for every IO executor, including when a
+        # critical callback overruns its cooperative slice. Nothing is preempted.
+        if self._priority:
+            for _ in range(self.max_rounds // 2):
+                for executor in self._priority:
+                    executor.spin_once(timeout_sec=0.0)
+                    attempts += 1
+                rounds += 1
+                priority_rounds += 1
+                boundary = self._wall(previous)
+                previous = boundary
+                elapsed = boundary-start
+                if elapsed >= self.wall_budget_s/2:
+                    break
+        for _ in range(self.max_rounds-rounds):
             for executor in self._executors:
                 executor.spin_once(timeout_sec=0.0)
                 attempts += 1
@@ -79,15 +106,19 @@ class CallbackDrain:
         self._rounds += rounds
         self._spin_attempts += attempts
         self._budget_reached_calls += int(budget_reached)
-        return {
+        self._priority_rounds += priority_rounds
+        result = {
             "rounds": rounds,
             "spin_attempts": attempts,
             "wall_elapsed_s": elapsed,
             "wall_budget_reached": budget_reached,
         }
+        if self._priority:
+            result["priority_rounds"] = priority_rounds
+        return result
 
     def snapshot(self) -> dict[str, Any]:
-        return {
+        result = {
             "executor_count": len(self._executors),
             "max_rounds_per_call": self.max_rounds,
             "wall_budget_s": self.wall_budget_s,
@@ -98,3 +129,7 @@ class CallbackDrain:
             "spin_attempt_semantics": "nonblocking executor attempts; actual callback count is not observable",
             "budget_semantics": "cooperative boundary checked after each complete fair round",
         }
+        if self._priority:
+            result.update(priority_executor_count=len(self._priority), priority_rounds=self._priority_rounds,
+                priority_semantics="TF/clock-only prefix uses at most half existing rounds/time; then complete fair rounds; total bounds unchanged")
+        return result

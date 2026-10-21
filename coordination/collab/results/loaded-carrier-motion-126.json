@@ -1,0 +1,140 @@
+{
+  "task_id": "loaded-carrier-motion-126",
+  "attempt": 1,
+  "contract_revision": 114,
+  "owner": "control",
+  "ack": true,
+  "status": "cpu_prepared_native_pending_root",
+  "self_accepted": false,
+  "summary": "기존 mounted-carrier probe에 선택형 시간 기반 주행과 실제 RGB 프레임 시퀀스 경로를 추가했습니다. 물리 조립 코드는 재사용하고 static profile/124 원본/extent·wheel getter 보정은 보존했습니다. native 실행은 하지 않았습니다.",
+  "changed_paths": [
+    "scripts/isaac/probe_loaded_carrier.py",
+    "factory_ops/carrier_mobility.py",
+    "configs/vehicles/tote-carrier-loaded-motion-v1.json",
+    "tests/test_carrier_mobility.py",
+    "coordination/collab/results/loaded-carrier-motion-126.json"
+  ],
+  "source_sha256": {
+    "scripts/isaac/probe_loaded_carrier.py": "d3198df58c1ddeb6ed642cc4676d2a9ca9c695605fe27d10ebc65890c4b30f9b",
+    "factory_ops/carrier_mobility.py": "5fea4c467a6be237a3fabd113fd3d7f2d63b08259e702a7c9f2d643bff606819",
+    "configs/vehicles/tote-carrier-loaded-motion-v1.json": "946cf5517d0a1d7680c7026674f3e7922a24accdc6b8b864d8f5eb72598039c8",
+    "tests/test_carrier_mobility.py": "a156920c50cded8b0cf846a2eb889f9b6b73e88bedd46d73d844642fa7eb9cda"
+  },
+  "input_pins_verified": {
+    "scripts/isaac/probe_loaded_carrier.py": "6ba6314565fef6dddf1d1238c469d3d26a4a30bbb73f1bb352dbfcc6b48e4355",
+    "factory_ops/carrier_robot.py": "67d90058df40e2be49324ed43c5cf1af4403adae9eecd17b562300e71efb692a",
+    "factory_ops/carrier_module.py": "ef12b26aa3d7180e7f122324aa0f5e363010d1f3ddf366165b69ac6de1cbfc14",
+    "factory_ops/drive_profile.py": "6bba5a51caa5e4a71662339026afc67e1efe1d7370cb04c372cde48eba9d7185",
+    "factory_ops/motion.py": "a8d670ce9e0309093c47a6a63ff70c78182021f6b50496933e29985466ed6cd1",
+    "configs/vehicles/tote-carrier-carter-v2.json": "bbcc3e54f3eeeb040787cdf47b736561d268e66a0c0f7aa1afc4f6ca0767b3f4",
+    "docs/evidence/local45-loaded-carrier-124.json": "46385b4d9b380f47fb8a40a4170f43d19c6fe11ea33b9a4c0e2df92ad9fd435e"
+  },
+  "identities": {
+    "carrier_manifest_sha256": "822f2521dd6477abeed193befbd133cfaf294629340bd47bfc4a5cdb6429d96d",
+    "carrier_manifest_matches_124": true,
+    "validated_loaded_motion_config_sha256": "397ae0ae57539e7b1bddc217624f37f9a067d1fa1f6ae668dd4e4303d7f946b7"
+  },
+  "implementation": {
+    "activation": "설정에 loaded_motion이 있을 때만 새 모듈을 import하고 주행을 활성화합니다. 새 설정은 v2 전체 사본에 loaded_motion만 추가했습니다. 원래 probe.maximum_sim_time_s=6은 보존하며 선택 모드에서만 runtime20sim/360wall 상한을 사용합니다.",
+    "shared_native_path": "기존 asset 로딩·실제 collider 측정·mount admission·chassis fixed joint·자유 동적 tote·접촉 센서·World·RGB lifecycle을 그대로 사용합니다. 별도 SDK 장면 스크립트를 복제하지 않았습니다.",
+    "static_preservation": "loaded_motion이 없으면 원래 zero wheel target, static chassis drift/yaw bounds, dense static samples, stationary dwell/keyframe 및 원래 세 project dependency를 사용합니다. get_joint_velocities()[wheel_dof_indices]와 ComputeExtentFromPlugins extent 계산을 유지했습니다.",
+    "geometry": "현재 pre-step native wheel_left/right의 각3개 고유 collider AABB를 robot frame으로 환산하고 Y축 radial symmetry를 검사해 wheel radius/separation을 계산합니다. root rotation은 identity여야 하며 아닌 경우 거절합니다. 현재 기하 기록과 DOF 이름/순서/effort 상한을 결과에 보존합니다. 0.14/0.4132를 제어기에 하드코딩하지 않았습니다.",
+    "schedule": [
+      {"phase": "forward", "duration_s": 2.2, "desired_linear_m_s": 0.16, "desired_angular_rad_s": 0},
+      {"phase": "curve", "duration_s": 2.3, "desired_linear_m_s": 0.12, "desired_angular_rad_s": 0.2},
+      {"phase": "brake_before_turn", "duration_s": 1.5, "desired_linear_m_s": 0, "desired_angular_rad_s": 0},
+      {"phase": "in_place", "duration_s": 2, "desired_linear_m_s": 0, "desired_angular_rad_s": 0.25},
+      {"phase": "final_brake", "duration_s": 1, "desired_linear_m_s": 0, "desired_angular_rad_s": 0}
+    ],
+    "shaping": "9초 desired command 일정 후 zero final_settle입니다. 기존 DriveProfile/DriveLimits와 DriveGeometry를 사용하며 두 번째 limiter는 없습니다. linear accel/decel0.1/0.15, angular accel/decel0.25/0.4, wheel accel1rad/s² 및 maximum3rad/s는 새 coupon의 저작 envelope입니다.",
+    "control_inputs": "MotionPlan은 실제 World 시각과 native encoder 입력만 받습니다. GT position/yaw/tilt는 별도 MotionEvidence 평가기에만 전달합니다. 초기 배치 후 body pose/velocity setters·teleport·위치 보정·GT steering은 없습니다.",
+    "load_limits": "적재 중에도 기존 상대 위치 오차0.01m, carrier/tote 상대 각도0.05rad, sensor freshness0.025s 및 실제 carrier↔tote actor pair/최소힘 조건을 매 physics sample에 유지합니다. 의도한 이동 중에는 static 절대 XY/yaw drift 조건만 분리하고 상대 적재 한계는 키우지 않았습니다.",
+    "motion_evaluation": "전진·곡선·제자리 회전의 GT 및 encoder 방향 증거를 모두 요구합니다. 회전 전 brake가 실제 정지했는지와 회전 중 측정된 휠의 반대 부호를 구분합니다. 마지막에는 zero target, encoder와 모든 관측 rigid body의 기존 정지 임계값 및0.4초 연속 native contact dwell을 요구합니다.",
+    "wheel_readbacks": "공개 get_measured_joint_efforts(joint_indices=wheel_dof_indices)와 get_articulation_controller().get_max_efforts()를 사용합니다. finite/양수 effort limit, 실제 속도·토크 envelope를 검사합니다. PhysX solver의 joint-axis effort이며 전기적 전류나 제조사 torque rating이 아닙니다. 기존 asset drive를 변경하지 않았습니다.",
+    "failure_cleanup": "invalid clock/contact/actor/encoder/torque, load loss, bounds 또는 RGB 실패는 overall failed입니다. 선택 모드 finally에서 wheel zero target을 요청하며 RGB detach·RenderProduct destroy·app.close(wait_for_replicator=False)를 유지합니다. 실제 프로세스 closure는 root host Job 확인이 필요합니다."
+  },
+  "media_policy": {
+    "planned_source": "한 개의 persistent640x480 RGB product, continuous rendered physics",
+    "nominal_fps": 20,
+    "sampling": "기존120Hz에서 실제 World physics frame6개마다 한 장. frame 도약/중복은 거절하며 보간·catch-up·가짜 프레임을 만들지 않습니다.",
+    "motion_frame_pattern": "motion-%04d.png",
+    "maximum_motion_frames": 240,
+    "additional_keyframes": ["mounted-settled.png", "mounted-motion-final.png"],
+    "planned_schedule_s": 9,
+    "validation_planning_allowance_s": 10.4,
+    "planning_allowance_frames": 208,
+    "finalization": "모든 캡처 기록 수·6-frame 간격과 적어도2개의 다른 실제 image SHA를 요구합니다. 전체가 같은 RGB buffer이면 clip 성공으로 보지 않습니다. 실제 native 종료 시각은 미검증이며240장 상한에 닿으면 실패합니다.",
+    "clock_caveat": "각 이미지에 World time/frame 및 SHA를 기록합니다. RGB exposure clock의 별도 동기 검증은 하지 않습니다.",
+    "delivery_scope": "지금은 소스 준비만입니다. 실제 실행 뒤 PNG 시퀀스가20fps 원본이 되며 root가 필요한 영상/GIF로 묶습니다. 현재 생성한 RGB·영상은 없습니다.",
+    "operation_json": "선택 모드는 최대20Hz 및 phase transition 행. 안전·접촉·휠/GT 평가는120Hz 매 physics sample이며 두 count를 구분합니다."
+  },
+  "validation": [
+    {
+      "command": ".venv/Scripts/python.exe -B -m unittest tests.test_carrier_mobility -v",
+      "cwd": "C:/Users/LIMMM/factory-ops-twin",
+      "result": "6 tests PASS;0.043s; one focused CPU module",
+      "coverage": "static 사본/manifest 불변, 설정·순서·속도·시간·tilt·RGB 상한 거절, synthetic native wheel geometry, 기존 DriveProfile shaping 재사용 및 encoder 흐름, expected-direction 평가·적재 상실·회전 전 정지·최종 dwell, 실제 physics-frame RGB cadence/count"
+    },
+    {
+      "command": ".venv/Scripts/python.exe -B -m unittest tests.test_carrier_mobility.CarrierMobilityTests.test_actual_frame_rgb20fps_and_hard_count_limit -v",
+      "result": "1 affected test PASS;0.001s. RGB 고정 buffer/기록 누락 최종 거절을 추가한 뒤 해당 검사만 확인했습니다. 나머지5개는 반복하지 않았습니다."
+    },
+    {
+      "command": "Python ast.parse(..., feature_version=(3,10)) on probe_loaded_carrier.py/carrier_mobility.py/test_carrier_mobility.py; json.loads(new config)",
+      "result": "최초3AST+JSON PASS, RGB 보강 후 최종3AST PASS. SDK import나 실행 없음."
+    },
+    {
+      "command": "assigned-source diff and input digest comparison",
+      "result": "입력7SHA가 카드와 일치했습니다. 기존 v2 설정·carrier_robot/module·DriveProfile/motion·124 evidence SHA가 유지됐고 변경 파일은 지정 경로뿐입니다. 전체 suite/별도 review chain은 실행하지 않았습니다."
+    }
+  ],
+  "api_and_report": {
+    "module": "factory_ops.carrier_mobility",
+    "validation": "validate_motion(loaded_motion, static_probe) -> validated dict; native_drive_geometry(measured) -> fresh geometry/provenance",
+    "commands": "MotionPlan(config, DriveGeometry, start_s, wheel_positions).command(now_s, dt_s); only fixed-time desired commands through DriveProfile",
+    "readback": "MotionPlan.observe_wheels(stamp, positions, velocities, measured_efforts, native_max_efforts) -> encoder/readbacks",
+    "evaluation": "MotionEvidence.observe(...GT/contact/encoder..., no commands) -> final dwell reached; result() -> phase metrics/failures",
+    "rgb": "RgbCadence(start_frame, period_frames=6, maximum=240).due(actual_frame); validate_records(actual media metadata)",
+    "result_fields": ["loaded_motion_verified", "loaded_motion_config_sha256", "drive_geometry", "wheel_drive_readback", "motion_origin", "motion_transitions", "motion_evaluation", "motion_rgb", "media", "native_control_samples", "native_samples", "fault_or_final_zero_requested", "cleanup_errors"],
+    "per_sample_fields": ["motion.phase/requested/DriveProfile target/issued_world_time_s", "motion_readback.encoder/measured_wheel_velocity_rad_s/measured_wheel_torque_n_m", "contact raw actor pairs/time/frame/force/freshness", "existing relative load errors", "evaluation_only native relative chassis position/yaw/tilt"],
+    "honest_scope": "loaded_motion_verified는 root의 native coupon 성공 뒤에만 true입니다. transport_verified·sensor_fov_verified·mount_strength_verified·industrial_rating_verified·stage2_complete는 자동 승격하지 않습니다."
+  },
+  "root_native_handoff": {
+    "executed": false,
+    "entry_point": "scripts/isaac/probe_loaded_carrier.py",
+    "config": "configs/vehicles/tote-carrier-loaded-motion-v1.json",
+    "cli": "--config <new-config-absolute-path> --output <new-absolute-output> --run-id <32-lowercase-hex>",
+    "guard": "existing scripts/isaac/run-local-contact-probe.ps1 -EntryPoint probe_loaded_carrier.py -TimeoutSec480; native cap20sim/360wall",
+    "source_dependencies": ["factory_ops/__init__.py", "factory_ops/carrier_module.py", "factory_ops/carrier_robot.py", "factory_ops/carrier_mobility.py", "factory_ops/drive_profile.py", "factory_ops/motion.py"],
+    "project_source_sha256": {
+      "factory_ops/__init__.py": "da57bbf586e3c4639fd72b3960ef8dd7a8326b3ba17504836189be26ce5bacb0",
+      "factory_ops/carrier_module.py": "ef12b26aa3d7180e7f122324aa0f5e363010d1f3ddf366165b69ac6de1cbfc14",
+      "factory_ops/carrier_robot.py": "67d90058df40e2be49324ed43c5cf1af4403adae9eecd17b562300e71efb692a",
+      "factory_ops/carrier_mobility.py": "5fea4c467a6be237a3fabd113fd3d7f2d63b08259e702a7c9f2d643bff606819",
+      "factory_ops/drive_profile.py": "6bba5a51caa5e4a71662339026afc67e1efe1d7370cb04c372cde48eba9d7185",
+      "factory_ops/motion.py": "a8d670ce9e0309093c47a6a63ff70c78182021f6b50496933e29985466ed6cd1"
+    },
+    "static_mode_dependencies": "기존3개: factory_ops/__init__.py, carrier_module.py, carrier_robot.py. loaded_motion 키가 없으면 새 주행 모듈을 import하지 않습니다.",
+    "integration_note": "root가 한정 통합 뒤 새 동결 소스·run으로 실행합니다. 기존124 및 다른 frozen 원본은 수정하지 않았습니다. 최종 native image/GT/encoder/contact/effort·host closure를 확인해야 합니다."
+  },
+  "references_reused": [
+    {"path": "factory_ops/drive_profile.py", "evidence": "DriveProfile의 body/wheel slew·curve·brake_before_turn 및 fault-stop 경로를 수정 없이 재사용했습니다."},
+    {"path": "factory_ops/motion.py", "evidence": "DriveGeometry와 측정 joint angle 기반 WheelOdometry를 수정 없이 재사용했습니다."},
+    {"path": "scripts/isaac/local_asset_probe.py", "evidence": "기존 pre-step wheel collider union 측정 방식과 fixed-time/DriveProfile command 분리 패턴을 읽고 현재 probe의 이미 측정된 bounds에 적용했습니다. 이 파일을 import/수정/실행하지 않았습니다."},
+    {"path": "docs/evidence/local45-loaded-carrier-124.json", "evidence": "정적 성공/휠 getter/geometry-computed extent 기준만 사용했습니다.124를 적재 주행·영상 성공으로 확대하지 않았습니다."}
+  ],
+  "limitations": [
+    "SDK/GPU/ROS/WSL 실행은 없었습니다. 새로운 source의 native API readback·동역학·안정 접촉·20fps 영상·정지 증거는 아직 미검증입니다.",
+    "CPU shaping/evaluation fixture는 합성 입력이며 native 궤적·실제 토크·영상 성공의 증명이 아닙니다.",
+    "fixed custom mount와 rigid ballast를 포함한6kg 자유 토트의 작은 coupon입니다. AMR 도킹·공장 Nav2 운송·장착 강도·산업용 적재 등급·느슨한 화물 안정성을 주장하지 않습니다.",
+    "기하 치수는 collision AABB 기반 pre-step 측정이며 타이어 변형/미끄럼 보정·공차 교정이 아닙니다. 고정 카메라의 실제 구도와 노출 시각 동기는 root가 native 결과에서 확인해야 합니다.",
+    "단계2/4개 단계 완료 또는 전체 프로젝트 완료는 이 CPU 산출물로 선언하지 않습니다."
+  ],
+  "preserved": ["124/static v2 profile/original data", "vendor getter and extent fixes", "116 controls/worktree", "TF/G3 burst root edits", "README/media/docs/storage/Git root work", "other dashboard edits"],
+  "sdk_executed": false,
+  "gpu_executed": false,
+  "ros_or_wsl_executed": false,
+  "git_mutated": false,
+  "new_agents": false,
+  "remaining_owned_processes": []
+}
