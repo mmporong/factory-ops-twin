@@ -183,8 +183,15 @@ TEST_F(ConfirmedXyRppTest, ReleasesOnlyUnconfirmedStaleLatchAndPreservesConfirme
   EXPECT_DOUBLE_EQ(0.0, terminal_brake.twist.linear.y);
   EXPECT_DOUBLE_EQ(0.0, terminal_brake.twist.angular.z);
 
-  EXPECT_TRUE(goal_checker.isGoalReached(robotPose(0.93).pose, goalPose(), velocity));
+  EXPECT_FALSE(goal_checker.isGoalReached(robotPose(0.93).pose, goalPose(), velocity));
   EXPECT_FALSE(goal_checker.terminalStopRequested());
+  EXPECT_FALSE(goal_checker.xyConfirmed());
+  transform.transform.translation.x = 0.93;
+  ASSERT_TRUE(tf->setTransform(transform, "test", true));
+  const auto drift_reapproach =
+    confirmed.computeVelocityCommands(robotPose(0.93), velocity, &goal_checker);
+  EXPECT_GT(drift_reapproach.twist.linear.x, 0.0);
+  EXPECT_FALSE(std::get<1>(confirmed.state()));
 
   transform.transform.translation.x = 0.95;
   ASSERT_TRUE(tf->setTransform(transform, "test", true));

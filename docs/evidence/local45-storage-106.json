@@ -1,0 +1,45 @@
+{
+  "scope": "Lossless closed-run archive conversion; no live bag access or new captures",
+  "archive_index_version": 1,
+  "cases": [
+    {
+      "run_id": "bcf1f7b9613f42cfbe2949a838e13c2e",
+      "old_raw_store": "E:\\FactoryOpsArtifacts\\operations-081\\checkpoint-001",
+      "retained_raw_store": "D:\\FactoryOpsArtifacts\\operations-081\\checkpoint-001",
+      "local_compressed_store": "C:\\Users\\LIMMM\\FactoryOpsArtifacts\\compaction-106\\operations-081.tar.gz",
+      "external_compressed_store": "E:\\FactoryOpsArtifacts\\operations-081\\checkpoint-001-lossless-081.tar.gz",
+      "compressed_sha256": "6fac874a57ce5df4b4f02e55b990b2051d1f61ea899139d8e10ef90e36bfb2a5",
+      "manifest_sha256": "e87fab4dad66fd78bcafd154d0b8bdd4df949dcac52e5bf21f2492ccbc76a1e6",
+      "compressed_bytes": 597988966,
+      "original_bytes": 2869986827,
+      "validated_member_count": 526,
+      "other_raw_files_matched": true,
+      "archive_all_member_hashes_matched": true,
+      "relocated_raw_store": "C:\\Users\\LIMMM\\FactoryOpsArtifacts\\relocated-106\\operations-081\\checkpoint-001",
+      "relocated_raw_all_hashes_matched": true
+    },
+    {
+      "run_id": "953da380ada943f789d46e55e2c8fe4d",
+      "old_raw_store": "E:\\FactoryOpsArtifacts\\operations-083\\checkpoint-001",
+      "retained_raw_store": "C:\\Users\\LIMMM\\FactoryOpsArtifacts\\operations-083\\checkpoint-001",
+      "local_compressed_store": "C:\\Users\\LIMMM\\FactoryOpsArtifacts\\compaction-106\\operations-083.tar.gz",
+      "external_compressed_store": "E:\\FactoryOpsArtifacts\\operations-083\\checkpoint-001-lossless-083.tar.gz",
+      "compressed_sha256": "0c4ba7f4372153abb69d0b72a8447c826614bcf77a36e7bec2cd2701c1478142",
+      "manifest_sha256": "766f615a6e98215453e7c8960c6ad12574d7b2d215ec879e4f0fc69703f97e32",
+      "compressed_bytes": 553105854,
+      "original_bytes": 2708495330,
+      "validated_member_count": 494,
+      "other_raw_files_matched": true,
+      "archive_all_member_hashes_matched": true
+    }
+  ],
+  "raw_deletion_performed": false,
+  "raw_relocation_performed": true,
+  "relocation_scope": "Only the verified closed operations081 E raw directory was moved intact to C; independent original D and lossless E compressed copies remain. operations083 raw C/E are unchanged.",
+  "source_loss": false,
+  "available_bytes_after_relocation": {
+    "C:/": 9677090816,
+    "D:/": 1057333248,
+    "E:/": 3174428672
+  }
+}

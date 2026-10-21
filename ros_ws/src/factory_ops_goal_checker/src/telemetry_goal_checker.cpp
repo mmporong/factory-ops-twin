@@ -100,7 +100,6 @@ bool TelemetryGoalChecker::isGoalReached(
   const bool check_xy_before = check_xy_;
   const bool base_result =
     nav2_controller::SimpleGoalChecker::isGoalReached(query_pose, goal_pose, velocity);
-  const bool check_xy_after = check_xy_;
   const double xy_error = std::hypot(
     goal_pose.position.x - query_pose.position.x,
     goal_pose.position.y - query_pose.position.y);
@@ -118,8 +117,13 @@ bool TelemetryGoalChecker::isGoalReached(
   const bool terminal_stop_enabled = terminal_stop_enabled_.load(std::memory_order_acquire);
   const bool terminal_candidate =
     terminal_stop_enabled && base_result && !velocity_stopped;
+  // Brake before reapproaching; keep the XY latch during the yaw maneuver.
+  if (terminal_stop_enabled && base_result && velocity_stopped && !xy_within_tolerance) {
+    check_xy_ = true;
+  }
+  const bool check_xy_after = check_xy_;
   const bool effective_result =
-    base_result && (!terminal_stop_enabled || velocity_stopped);
+    base_result && (!terminal_stop_enabled || (velocity_stopped && pose_within_tolerance));
   xy_confirmed_.store(!check_xy_after, std::memory_order_release);
   xy_within_tolerance_.store(xy_within_tolerance, std::memory_order_release);
   terminal_stop_requested_.store(terminal_candidate, std::memory_order_release);
@@ -184,6 +188,7 @@ void TelemetryGoalChecker::publishGoalTrace(
       kv("angular_z_rad_s", number(velocity.angular.z)), kv("check_xy_before", boolean(check_xy_before)),
       kv("check_xy_after", boolean(check_xy_after)), kv("base_result", boolean(base_result)),
       kv("terminal_stop_enabled", boolean(terminal_stop_enabled)),
+      kv("terminal_pose_recheck", boolean(terminal_stop_enabled)),
       kv("pose_within_tolerance", boolean(pose_within_tolerance)),
       kv("velocity_stopped", boolean(velocity_stopped)),
       kv("terminal_candidate", boolean(terminal_candidate)),

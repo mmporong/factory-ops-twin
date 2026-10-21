@@ -138,7 +138,7 @@ TEST_F(GoalCheckerTest, TelemetryFailureDoesNotChangeSuccessfulBaseResults)
   EXPECT_EQ(expected_velocity, actual_velocity);
 }
 
-TEST_F(GoalCheckerTest, RequiresStoppedVelocityAfterStockAcceptanceAndPreservesStatefulXy)
+TEST_F(GoalCheckerTest, BrakesBeforeRearmingDriftedXyAndRequiresCurrentStoppedPose)
 {
   rclcpp::NodeOptions options;
   options.parameter_overrides({rclcpp::Parameter("goal_checker.stateful", true),
@@ -178,9 +178,17 @@ TEST_F(GoalCheckerTest, RequiresStoppedVelocityAfterStockAcceptanceAndPreservesS
   EXPECT_FALSE(checker.isGoalReached(query, goal, moving));
   EXPECT_TRUE(checker.terminalStopRequested());
   EXPECT_FALSE(checker.xyWithinTolerance());
-  EXPECT_TRUE(checker.isGoalReached(query, goal, stopped));
+  EXPECT_FALSE(checker.isGoalReached(query, goal, stopped));
   EXPECT_FALSE(checker.terminalStopRequested());
   EXPECT_FALSE(checker.xyWithinTolerance());
+  EXPECT_FALSE(checker.xyConfirmed());
+  EXPECT_FALSE(checker.isGoalReached(query, goal, stopped));
+
+  query.position.x -= 0.07;
+  EXPECT_TRUE(checker.isGoalReached(query, goal, stopped));
+  EXPECT_TRUE(checker.xyWithinTolerance());
+  EXPECT_TRUE(checker.xyConfirmed());
+  query.position.x += 0.07;
 
   checker.reset();
   EXPECT_FALSE(checker.terminalStopRequested());
@@ -192,6 +200,32 @@ TEST_F(GoalCheckerTest, RequiresStoppedVelocityAfterStockAcceptanceAndPreservesS
   query.orientation.w = std::cos((-1.6274379802 + 0.16) / 2.0);
   EXPECT_FALSE(checker.isGoalReached(query, goal, moving));
   EXPECT_FALSE(checker.terminalStopRequested());
+}
+
+TEST_F(GoalCheckerTest, RejectsStoppedAnchorDriftThatFitsStationButNotNextPathStart)
+{
+  rclcpp::NodeOptions options;
+  options.parameter_overrides({rclcpp::Parameter("goal_checker.stateful", true),
+    rclcpp::Parameter("goal_checker.xy_goal_tolerance", 0.06),
+    rclcpp::Parameter("goal_checker.yaw_goal_tolerance", 0.15),
+    rclcpp::Parameter("goal_checker.require_stopped_velocity", true)});
+  auto node = std::make_shared<rclcpp_lifecycle::LifecycleNode>("anchor_drift_goal", options);
+  factory_ops_goal_checker::TelemetryGoalChecker checker;
+  checker.initialize(node, "goal_checker", nullptr);
+  geometry_msgs::msg::Twist stopped, moving;
+  moving.angular.z = 0.1;
+  const auto goal = pose(0.0, 0.0);
+  // Authored offset reproduces the .15 departure / .25 station contract gap.
+  EXPECT_FALSE(checker.isGoalReached(pose(0.05, 0.3), goal, moving));
+  ASSERT_TRUE(checker.xyConfirmed());
+  EXPECT_FALSE(checker.isGoalReached(pose(0.16, 0.01), goal, moving));
+  ASSERT_TRUE(checker.terminalStopRequested());
+  ASSERT_TRUE(checker.xyConfirmed());
+  EXPECT_FALSE(checker.isGoalReached(pose(0.16, 0.01), goal, stopped));
+  EXPECT_FALSE(checker.xyConfirmed());
+  EXPECT_FALSE(checker.terminalStopRequested());
+  EXPECT_FALSE(checker.isGoalReached(pose(0.16, 0.01), goal, stopped));
+  EXPECT_TRUE(checker.isGoalReached(pose(0.05, 0.01), goal, stopped));
 }
 
 TEST_F(GoalCheckerTest, StatelessCheckerRejectsCurrentXyOutsideTolerance)

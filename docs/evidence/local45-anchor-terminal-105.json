@@ -1,0 +1,95 @@
+{
+  "schema_version": 1,
+  "run_id": "953da380ada943f789d46e55e2c8fe4d",
+  "producer_source_commit": "34ad84985e576ee60e106fa5e3a4edfdde9482d6",
+  "status": "CPU_actual_plugin_tests_passed_native_followup_pending",
+  "failure_record": {
+    "path": "local45-transport-039/results/run/mission-result.json",
+    "sha256": "660ea75da7bd1f9fb024528e7f8593749ea4ff49a713a55ff038be78173af973"
+  },
+  "robot_id": "carter4",
+  "anchor": "P4",
+  "nominal_anchor_xy": [
+    17.0,
+    20.5
+  ],
+  "arrival_pose": {
+    "stamp_s": 1031.350053789,
+    "x_m": 16.988671150501204,
+    "y_m": 20.337413097332053,
+    "yaw_rad": -1.638712836373397
+  },
+  "arrival_distance_m": 0.1629811147038906,
+  "arrival_station_xy_limit_m": 0.25,
+  "next_path_start_limit_m": 0.15,
+  "next_planner_start": {
+    "stamp_s": 1222.900063779,
+    "x_m": 16.9886715989388,
+    "y_m": 20.337419423417664,
+    "yaw_rad": -1.6387157444800753
+  },
+  "next_start_distance_m": 0.16297477274857033,
+  "next_path_first_pose": {
+    "header": {
+      "frame_id": "map",
+      "nanosec": 50063787,
+      "sec": 1223
+    },
+    "orientation_xyzw": [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ],
+    "position_xyz_m": [
+      17.00000025331974,
+      20.35000030323863,
+      0.0
+    ]
+  },
+  "observed_contract_gap": "Successful stopped station arrival under .25m was retained as a nominal anchor, then departure under .15m failed; stopped pose was already outside .15m at arrival, not a later stationary localization jump.",
+  "fix": "Terminal stop handshake requires current pose within existing .06m XY and .15rad yaw; when stopped outside XY, rearm stateful XY and permit RPP to reapproach under the same reservation. Brake first if still moving. Default checker with terminal handshake disabled preserves stock behavior.",
+  "no_tolerance_clock_or_reservation_widening": true,
+  "cpp_tests": {
+    "groups": [
+      "test_telemetry_goal_checker",
+      "test_confirmed_xy_rpp"
+    ],
+    "passed": true,
+    "wall_s": 0.92,
+    "native_physics_run": false
+  },
+  "python_test": {
+    "name": "tests.test_g3_evidence.G3EvidenceHelperTests.test_controller_trace_decodes_terminal_candidate_and_zero_command_reason",
+    "passed": true,
+    "wall_s": 0.32
+  },
+  "official_reference": "https://raw.githubusercontent.com/ros-navigation/navigation2/jazzy/nav2_controller/plugins/simple_goal_checker.cpp",
+  "reference_scope": "Mutable Jazzy branch; installed plugin dependencies compiled and tested locally. No claim of exact upstream release equivalence.",
+  "039_preservation": "C/E operations-083/checkpoint-001;493 files;2708495330 bytes;SHA matched",
+  "scope_limits": [
+    "No native physical followup yet",
+    "Source of physical/estimated offset during the previous rotation has not been separately isolated",
+    "039 failed original preserved; no relabeling of failure",
+    "The ever-seen parked robot IDs in039 are not proof that every robot was finally parked"
+  ],
+  "plugin_loading_passed": true,
+  "source_files_sha256": {
+    "ros_ws/src/factory_ops_goal_checker/CMakeLists.txt": "f16f607edbd558a9e4a66feacd89733df32337fc0d800318e539683ef45cf2bc",
+    "ros_ws/src/factory_ops_goal_checker/package.xml": "a5755de568a7ea7965393f950688a06a577c381181472c4abae0f284a2b684dc",
+    "ros_ws/src/factory_ops_goal_checker/plugins.xml": "c69fcb838c05902288de39b44a11388d87bf5889c3095dbfa1c150efc532b7ac",
+    "ros_ws/src/factory_ops_goal_checker/src/confirmed_xy_regulated_pure_pursuit_controller.cpp": "30bfda25778870af3df15459effc59d45b622f14f5d650104ea9cfaf94d85de6",
+    "ros_ws/src/factory_ops_goal_checker/src/telemetry_goal_checker.cpp": "126830a51eb215cb2828e9f8cacc385a701de6a9aac05e67aa59045a3dfab97c",
+    "ros_ws/src/factory_ops_goal_checker/src/telemetry_regulated_pure_pursuit_controller.cpp": "4ad59259219d90e7af9c95a14d140bcc380d093c81d504484d14ab4f0982a4a2",
+    "ros_ws/src/factory_ops_goal_checker/test/test_confirmed_xy_rpp.cpp": "b767a23eb5fbec23c8dc6b9a7c8074a619ea08a4423ce33900fe5b8a3f65a0b1",
+    "ros_ws/src/factory_ops_goal_checker/test/test_plugin_loading.cpp": "fdd9800b59b22c1f4470adf325d032e083a8ed426dd7cafaeac3e39bab626aab",
+    "ros_ws/src/factory_ops_goal_checker/test/test_telemetry_goal_checker.cpp": "eda49477c1274528be0889395cb1fa195e72811b64c9d1514b0deec1555029d1",
+    "ros_ws/src/factory_ops_goal_checker/test/test_telemetry_rpp.cpp": "c769837324d148b6757f94d43afc7bf393fecb091df51fd13c17120b6fb06eec",
+    "ros_ws/src/factory_ops_goal_checker/include/factory_ops_goal_checker/confirmed_xy_regulated_pure_pursuit_controller.hpp": "71be95905ec6208cbbaa1c910b861dc7dfe06de52d90f7fc12cc6648cc20f363",
+    "ros_ws/src/factory_ops_goal_checker/include/factory_ops_goal_checker/telemetry_goal_checker.hpp": "e037539d8aa9da7e95f8621e32108770d0a8bd9044edf423722c8d2c720699e8",
+    "ros_ws/src/factory_ops_goal_checker/include/factory_ops_goal_checker/telemetry_regulated_pure_pursuit_controller.hpp": "df6d7872a07be7fd26e2f1fe05dbd84e6accb57054221ff11ed8ca279be9e296",
+    "ros_ws/src/factory_ops_goal_checker/include/factory_ops_goal_checker/trace_contract.hpp": "ee379203dd3dfcb6bb8c7959aeb1d14696507ea59f54ee50471fe8cc2a48ceec"
+  },
+  "installed_library_sha256": "17c538b313e82da2186bad1263e4c88775a74e516caea9932e10f66ec26cc9bb",
+  "build_scope": "Fresh isolated WSL Jazzy CMake build and actual plugin loading; original025 install and039 source unchanged."
+}

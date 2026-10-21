@@ -235,6 +235,8 @@ def decode_controller_trace(
         GOAL_TRACE_CHECK_KEYS if event == "is_goal_reached"
         else GOAL_TRACE_TOLERANCE_KEYS if event == "get_tolerances" else set()
     )) if family == "goal_checker" else RPP_TRACE_KEYS
+    if family == "goal_checker" and event == "is_goal_reached" and "terminal_pose_recheck" in values:
+        expected = expected | {"terminal_pose_recheck"}
     valid_event = (event in {"initialize", "reset", "is_goal_reached", "get_tolerances"}
                    if family == "goal_checker" else event == "compute_velocity_commands")
     expected_level = (0 if family == "goal_checker" or values.get("phase") == "begin"
@@ -281,6 +283,8 @@ def decode_controller_trace(
             "pose_within_tolerance",
             "velocity_stopped", "terminal_candidate", "effective_result",
         }
+        if "terminal_pose_recheck" in values:
+            boolean_names.add("terminal_pose_recheck")
         numeric_names = GOAL_TRACE_CHECK_KEYS - boolean_names
         try:
             numeric = {name: float(values[name]) for name in numeric_names}
@@ -291,6 +295,11 @@ def decode_controller_trace(
                 or any(value not in {"true", "false"} for value in booleans.values())):
             raise ValueError("goal-checker trace check values are non-finite or non-boolean")
         row["check"] = {**numeric, **{name: value == "true" for name, value in booleans.items()}}
+        if (row["check"].get("terminal_pose_recheck") is True
+                and row["check"]["effective_result"] is True
+                and (row["check"]["pose_within_tolerance"] is not True
+                     or row["check"]["velocity_stopped"] is not True)):
+            raise ValueError("rechecked terminal success requires a current stopped pose")
     elif event == "get_tolerances":
         returned = {name: float(values[name]) for name in GOAL_TRACE_TOLERANCE_KEYS - {"base_result"}}
         if (not all(math.isfinite(value) for value in returned.values())

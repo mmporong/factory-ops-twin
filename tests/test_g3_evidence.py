@@ -371,6 +371,15 @@ class G3EvidenceHelperTests(unittest.TestCase):
         self.assertTrue(decoded_goal["check"]["terminal_candidate"])
         self.assertFalse(decoded_goal["check"]["effective_result"])
 
+        rechecked = {**goal, "terminal_pose_recheck": "true"}
+        self.assertTrue(decode(rechecked, event="is_goal_reached", plugin="goal_checker")["check"]["terminal_pose_recheck"])
+        rechecked.update(pose_within_tolerance="false", velocity_stopped="true",
+                         terminal_candidate="false", effective_result="true")
+        with self.assertRaisesRegex(ValueError, "current stopped pose"):
+            decode(rechecked, event="is_goal_reached", plugin="goal_checker")
+        rechecked.update(effective_result="false", check_xy_after="true")
+        self.assertFalse(decode(rechecked, event="is_goal_reached", plugin="goal_checker")["check"]["effective_result"])
+
         rpp = {
             "schema_version": "1", "event": "compute_velocity_commands", "event_sequence": "2",
             "plugin_call_sequence": "1", "plugin_name": "FollowPath", "phase": "end",
