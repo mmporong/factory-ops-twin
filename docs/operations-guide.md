@@ -53,6 +53,21 @@ uv run python -m factory_ops.dashboard --config configs/factory-fleet4-normal3 -
 
 [실제 SDK4.5 시험 화면](evidence/kit-console-004/kit-console.png)과 [명령·촬영·종료 근거](evidence/kit-console-004/summary.json)는 CPU 원장 연결 시험이다. 실제 ROS 운송을 조작하는 통합은 남아 있다.
 
+### 다음 예약 지점에서 정지·재개
+
+로컬4.5 개발 실행에는 선택형 정지·재개 경로가 있다. 새 실행을 시작할 때 실행기와 API 양쪽에 `--live-anchor-controls`를 지정하고, API의 `--commands-dir`을 그 실행의 `results/run/commands`에 연결한다. 원천이4대·개발 프로필·동일 실행 ID·지원 capability를 발행해야 조작이 활성화된다. 이미 진행 중인 관측 전용 실행은 이 옵션으로 전환하지 않는다.
+
+정지 요청은 `pending`으로 접수된다. 네 차량이 각자의 예약 지점에 도착하고 새 HOLD 응답과 연속 정지 관측을 충족하면 원천이 `applied`를 발행한다. 물리·ROS·가상 에너지 시계는 계속 흐른다. 재개는 이 상태에서 새 명령 ID와 현재 revision으로 요청한다.
+
+아래 도구는 Kit 패널과 같은 `KitClient`로 정지·재개를 한 번씩 요청하고 원천의 적용 응답을 기록한다. `<실행 ID>`는 해당 새 실행의 ID로 바꾸고 새 출력 파일을 사용한다. 현재 관측 전용 실행051에는 명령을 보내지 않는다.
+
+```powershell
+cd "$HOME/factory-ops-twin"
+uv run python scripts/demo/native_anchor_flow.py --expected-run-id "<실행 ID>" --output artifacts/native-anchor-flow.json
+```
+
+타임아웃·연결 오류 때 명령을 재전송하거나 실행을 종료하지 않는다. 마지막 적용 상태를 관제에서 확인하고 기존 실행 감독자가 자원을 정리한다. 결과는 API 응답의 근거이며 브라우저 클릭이나 전체 물류 완주의 근거는 아니다. 네 차량의 세부 정지 자료는 같은 실행의 `actions.jsonl`에 있는 `live_control_applied.anchor_evidence`와 함께 확인한다. CPU 프로토콜 검사는 통과했으며 실제4대 정지·재개 실행은 남아 있다.
+
 ## 모의 MES 입력
 
 CPU API의 `POST /api/mes/events`는 모의 주문·재고 입고·설비 관측·heartbeat를 받는다. 같은 이벤트의 재전송을 중복 적용하지 않으며 다른 실행·오래된 시각·역행한 순번의 입력을 거부한다. 설비 관측은 정보로 표시한다. 실제 공장의 MES·설비 제어 연결은 아니다.
