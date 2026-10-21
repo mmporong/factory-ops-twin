@@ -827,3 +827,17 @@ python -B -m unittest tests.test_g2_scene tests.test_g3_scene tests.test_compact
 047은 양 OS relay 연결과4채널 정적 TF·33개 시계 callback까지 진행한 뒤 Windows `windows-relay.tmp`→`windows-relay.json` 교체의 `WinError5`로 실패했다. Linux의 socket EOF는 그 뒤의 결과다. 새 relay의 checkpoint writer가 기존 `compat.replace_shared_file/write_shared_text`를 재사용하지 않고 단일 replace를 호출한 것이 확인됐다.0.2wall 초 한도의 기존 처리로 연결하고, relay 상태 reader와 launcher checkpoint도 같은 유틸리티를 재사용한다. 계속되는 접근 오류·ENOSPC는 실패하며 기록을 성공으로 숨기지 않는다. 관측된 일시 sharing conflict1회 뒤 실제 atomic 교체가 되는 fault injection1검사를 통과했다.
 
 SDK·Nav2·Windows relay·Linux relay의 네 소유 트리는 모두 종료했고 잔여 PID와 정리 오류가 없었다. 운영 이동이나 여섯 단계 촬영은 완료되지 않았다. 원본은 보존하고 C의 전체 입력/결과/동결 소스 압축본과 E의 명시적으로 선별한 상태·초기 이미지·로그를 각각 해시 검증한다. E 선별본을 전체 rosbag 백업으로 표시하지 않는다. [047 오류·종료·보존](evidence/local45-transport-047.json)
+
+## FOT-099 — 048의 같은 OS 안에서 발생한 Nav2 설정 응답 TIMEOUT
+
+048은 공유 파일 수정 소스와 OS별 DDS 격리를 사용했다. Windows–WSL 센서·시계 전달이 시작 제한까지 이어졌고 발견 메시지 역직렬화 오류나 relay 실패가 기록되지 않았다. Nav2 세 stack은 active3으로 올라갔지만 carter2는 planner2/controller1/bt1에 머물렀다. 최초 관련 경고는 `carter2.planner_server/change_state` 응답을 전송하지 못했다는 `rmw_response.cpp:153`의 TIMEOUT이며 client가 응답을 받지 못한다는 내용이다. 모든 차량의 odometry와 앞/뒤 scan은 계속 도착했으며 carter2의 pose만 없었다. 따라서 전체 센서 단절이나 같은 발견 메시지 실패로 묶지 않는다.
+
+기존300wall 초 시작 한도를 유지한 채 실패했고, 운영 이동과 여섯 단계 촬영 창은 시작되지 않았다. SDK·Nav2·두 relay의 네 소유 트리는 모두 종료했고 정리 오류0건을 확인했다. C 전체 입력/결과/동결 소스 압축본225,081,090바이트와 E 선별 상태/미디어3,859,466바이트의 구성 파일 해시를 확인했다. 설치된 Jazzy rmw-fastrtps-cpp8.4.4·FastDDS2.14.7의 서비스 응답 구현을150에서 확인하며, 발행 모드 환경변수가 서비스에도 적용되는지 확인하기 전에는 해결책으로 표시하지 않는다. [048 관측·오류·종료·보존](evidence/local45-transport-048.json)
+
+## FOT-100 — 서비스 응답 reader 매칭의 유한 대기 후보
+
+150은 공식 rmw-fastrtps8.4.4에서 해당 오류가 DDS write 전의 `check_for_subscription` 분기임을 확인했다. 응답 writer QoS의 `reliability.max_blocking_time` 동안 관련 client response-reader GUID 매칭을 확인하지 못하면 MAYBE→TIMEOUT으로 반환한다. publication mode 환경변수는 서비스 writer에도 적용되지만 ASYNCHRONOUS가 이 사전 매칭 대기를 우회하지 않는다. 내부 listener 지연·GUID·discovery 중 어느 원인인지는 미확정이다. [150 공식 근거와 한계](../coordination/collab/results/native-service-response-150.json)
+
+151의 비GPU C++ probe는 실제 설치 FastDDS 라이브러리를 사용해 기존 XML의 기본 writer 대기0초+100,000,000ns와 다음 XML의 정확한 response profile1초+0ns·RELIABLE을 읽었다. Publisher/Participant를 삭제한 뒤 두 probe와 컴파일러가 종료됐다. 이는 XML 적용 값 확인이며 ROS 서비스나 공장 성공 시험이 아니다. [151 실측·소스·보존](evidence/local45-service-qos-151.json) · [실측 probe](../scripts/ros/probe_service_reply_qos.cpp)
+
+다음 실행의 선택형 `--startup-service-match-wait`는 Linux loopback DDS의4대×8구성요소×change_state/get_state 응답64개 profile만 지정한다. Windows·일반 topic writer·발행 모드·메모리 정책을 바꾸지 않으며 XML QoS 전면 활성화도 하지 않는다. 기본 경로는 유지한다. Linux 이외 적용 거절·64개 정확한 응답 이름·RELIABLE·1초 값의 관련1검사를 통과했다. 기존300wall 초 시작 한도와 주행·센서·권한·TTL·반경·임무 기한을 유지하고, 실제 lifecycle 활성화와 완주는 새 동결 실행에서 확인한다.

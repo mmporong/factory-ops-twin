@@ -1,0 +1,89 @@
+{
+  "status": "passed_profile_readback_only",
+  "returncode": 0,
+  "GPU_started": false,
+  "actuator_or_World_started": false,
+  "scope": "Installed FastDDS native QoS profile readback only, no ROS service or factory success claim.",
+  "baseline": {
+    "default_ok": true,
+    "default_max_blocking_sec": 0,
+    "default_max_blocking_nanosec": 100000000,
+    "reply_profile_found": false,
+    "reply_max_blocking_sec": 0,
+    "reply_max_blocking_nanosec": 100000000,
+    "reply_reliable": true
+  },
+  "candidate": {
+    "default_ok": true,
+    "default_max_blocking_sec": 0,
+    "default_max_blocking_nanosec": 100000000,
+    "reply_profile_found": true,
+    "reply_max_blocking_sec": 1,
+    "reply_max_blocking_nanosec": 0,
+    "reply_reliable": true
+  },
+  "shell_environment": {
+    "RMW_FASTRTPS_USE_QOS_FROM_XML": null,
+    "RMW_FASTRTPS_PUBLICATION_MODE": null,
+    "FASTRTPS_DEFAULT_PROFILES_FILE": null,
+    "FASTDDS_DEFAULT_PROFILES_FILE": null
+  },
+  "files": {
+    "baseline.log": {
+      "sha256": "e49b76fe6f2ef23b3aa13663f59458c757c942e988d4fc2f29575bd25bfa9b34",
+      "bytes": 206
+    },
+    "candidate.log": {
+      "sha256": "556d4cf221ab7edf55f67330332378634d64dc92e65dfd0bae9f19d95b92acfd",
+      "bytes": 197
+    },
+    "fastdds-udp-linux.xml": {
+      "sha256": "6a1ec9f1bb67ab2531178e203fa9315bd491700fa96807a52c361940bda208ce",
+      "bytes": 14204
+    },
+    "probe": {
+      "sha256": "7526e5693b2ee654ab58db943581807379a72240cfcf78555deec73ff45487af",
+      "bytes": 203304
+    },
+    "probe.cpp": {
+      "sha256": "8cc62ff4da491e12231f7a29094d947a3d593e54a6b953629b2dbf5995122fe2",
+      "bytes": 1737
+    },
+    "probe.sh": {
+      "sha256": "8b299537a040d6e114fb38e61dd1cc2b8dd200d9fbe74157915118198d3650a2",
+      "bytes": 1128
+    },
+    "shell-environment.json": {
+      "sha256": "e2d1090c38e0d9ff281168117afa348a0e8b2be4515e97a71a900c0c2012b15d",
+      "bytes": 158
+    },
+    "stderr.log": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "stdout.log": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    }
+  },
+  "source_probe_path": "scripts/ros/probe_service_reply_qos.cpp",
+  "source_probe_sha256": "8cc62ff4da491e12231f7a29094d947a3d593e54a6b953629b2dbf5995122fe2",
+  "root_choice": "Linux-only exact64lifecycle reply writer profiles (4robots x8components x change_state/get_state), RELIABLE unchanged, finite1s. Default Windows and all topic writers unchanged. No async flag or XML-wide QoS optin.",
+  "effective_scope": "Native FastDDS library defaults and exact XML profile readback observed. Actual rmw response writer linkage follows official8.4.4 source; native RMW service matching and whole-factory run remain pending.",
+  "official_readonly_advice": "coordination/collab/results/native-service-response-150.json",
+  "archives": [
+    {
+      "path": "C:\\Users\\LIMMM\\FactoryOpsArtifacts\\service-qos-151\\checkpoint-001.tar.gz",
+      "sha256": "3540ceba33d283fe2b87477f5ee3f0609803f57717d208876a021758fdbbfed7",
+      "bytes": 51192,
+      "all_member_sha256_verified": true
+    },
+    {
+      "path": "E:\\FactoryOpsArtifacts\\service-qos-151\\checkpoint-001.tar.gz",
+      "sha256": "3540ceba33d283fe2b87477f5ee3f0609803f57717d208876a021758fdbbfed7",
+      "bytes": 51192,
+      "all_member_sha256_verified": true
+    }
+  ],
+  "closed": "Both finite native QoS probes returned0 after deleting Publisher/Participant. g++ and shell completed; no background units or GPU started."
+}

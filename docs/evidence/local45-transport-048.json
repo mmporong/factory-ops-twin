@@ -1,0 +1,953 @@
+{
+  "run_id": "9e3e246b7d5b47f58d914bed524e1b76",
+  "source_commit": "ebcb59360949f23e4d7aff22d247b882fe26944b",
+  "status": "failed_closed_before_navigation",
+  "host_error": "RuntimeError: SDK failure before cleanup: mission: SmokeError: G2 mission controller ended with failed",
+  "wall_s": 408.90600000001723,
+  "first_transport_error": null,
+  "secondary_linux_relay_error": null,
+  "sensor_connection_scope": "Clock,4odom,8scan andTF channels continued acrossOS boundary; three Nav2 stacks active, carter2 planner inactive after service response write TIMEOUT. No normal navigation or6phase capture claim.",
+  "whole_factory_complete": false,
+  "RGB_scope": "Initial scene preview only; whole factory operations not captured.",
+  "resource_closure": {
+    "SDK_Job": true,
+    "SDK_remaining_pids": [],
+    "Nav2_WSL": true,
+    "Windows_relay_Job": true,
+    "Linux_relay_WSL": true,
+    "errors": []
+  },
+  "archives": [
+    {
+      "path": "C:\\Users\\LIMMM\\FactoryOpsArtifacts\\operations-149\\full-closed.tar.gz",
+      "sha256": "462ba21fa77ce129436edf1bc7048031485909bb3f1c924291c7cc7c99fbf375",
+      "bytes": 225081090,
+      "members": [
+        "build-attestation.json",
+        "fastdds-udp-linux.xml",
+        "fastdds-udp-windows.xml",
+        "inputs/bundle.json",
+        "inputs/config.json",
+        "inputs/energy-profile.json",
+        "inputs/g2.json",
+        "inputs/g3-routing.json",
+        "inputs/g3-runtime.json",
+        "inputs/layout.json",
+        "inputs/nav2-g2.yaml",
+        "inputs/registry.json",
+        "inputs/render-profile.json",
+        "inputs/route-preflight.json",
+        "inputs/scenarios.json",
+        "inputs/scene/factory-v3.usda",
+        "inputs/session.json",
+        "inputs/transport-profile.json",
+        "inputs/visual-assets.json",
+        "job-abort-request.txt",
+        "job-spec.json",
+        "job.json",
+        "job.json.gate",
+        "job.json.preflight.json",
+        "launch.json",
+        "linux-relay.json",
+        "linux-relay.log",
+        "nav-command.sh",
+        "nav.log",
+        "pair-host.json",
+        "prepare.stderr.log",
+        "prepare.stdout.json",
+        "preservation-plan.json",
+        "relay-command.sh",
+        "relay-job-spec.json",
+        "relay-job.json",
+        "relay-job.json.gate",
+        "relay-job.json.preflight.json",
+        "relay-job.stderr.log",
+        "relay-job.stdout.log",
+        "relay-pair.json",
+        "relay-stop-request.txt",
+        "results/run/actions.jsonl",
+        "results/run/amcl-map/keepout.pgm",
+        "results/run/amcl-map/keepout.yaml",
+        "results/run/amcl-map/map.pgm",
+        "results/run/amcl-map/map.yaml",
+        "results/run/authorizations.jsonl",
+        "results/run/bag-qos.yaml",
+        "results/run/capture-resume-state.json",
+        "results/run/command-receipt-state.json",
+        "results/run/diagnostic-load/factory-overview.png",
+        "results/run/factory-overview.png",
+        "results/run/fleet-transport-verified.json",
+        "results/run/local45-fleet4-transport-scene.json",
+        "results/run/localization.jsonl",
+        "results/run/maps/closed/navigation.pgm",
+        "results/run/maps/closed/navigation.yaml",
+        "results/run/maps/open/navigation.pgm",
+        "results/run/maps/open/navigation.yaml",
+        "results/run/maps/provenance.json",
+        "results/run/media/carter1-00000.png",
+        "results/run/media/carter1-00001.png",
+        "results/run/media/carter1-00002.png",
+        "results/run/media/carter2-00000.png",
+        "results/run/media/carter2-00001.png",
+        "results/run/media/carter2-00002.png",
+        "results/run/media/frames.json",
+        "results/run/media/overview-00000.png",
+        "results/run/media/overview-00001.png",
+        "results/run/media/overview-00002.png",
+        "results/run/mission-control.json",
+        "results/run/mission-result.json",
+        "results/run/nav2-g3-params.yaml",
+        "results/run/nav2.log",
+        "results/run/physics-cadence.json",
+        "results/run/physx-planar-observations.jsonl",
+        "results/run/physx-scan-startup.json",
+        "results/run/provenance/fleet-source.json",
+        "results/run/provenance/source-commit.raw",
+        "results/run/provenance/source.tar",
+        "results/run/render-capture-breadcrumbs.jsonl",
+        "results/run/robots/carter1/authorization.json",
+        "results/run/robots/carter1/control-ack.json",
+        "results/run/robots/carter1/trajectory.jsonl",
+        "results/run/robots/carter2/authorization.json",
+        "results/run/robots/carter2/control-ack.json",
+        "results/run/robots/carter2/trajectory.jsonl",
+        "results/run/robots/carter3/authorization.json",
+        "results/run/robots/carter3/control-ack.json",
+        "results/run/robots/carter3/trajectory.jsonl",
+        "results/run/robots/carter4/authorization.json",
+        "results/run/robots/carter4/control-ack.json",
+        "results/run/robots/carter4/trajectory.jsonl",
+        "results/run/ros-contexts.json",
+        "results/run/rosbag.log",
+        "results/run/rosbag/metadata.yaml",
+        "results/run/rosbag/rosbag_0.db3",
+        "results/run/route-events.jsonl",
+        "results/run/scene-events.jsonl",
+        "results/run/scene-state.json",
+        "results/run/sdk-failure.json",
+        "results/run/sim-ready.json",
+        "results/run/startup-observations.jsonl",
+        "results/run/visual-runtime-manifest.json",
+        "results/run/visual-scene/factory-v3.render.usda",
+        "results/run/visual-scene/factory-v3.usda",
+        "results/run/visual-scene/factory-v3.visual.usda",
+        "results/run/visual-scene/session-layer-snapshots/f740a8c275842e1b8acfb7c91e2c99be5051e020d55e8ab77730073e139263fb.usda",
+        "results/run/visual-scene/session-layer.usda",
+        "results/run/visual-scene/visual-scene-manifest.json",
+        "results/run/wheel-parking-startup.json",
+        "results/run/world-clock-startup.json",
+        "results/run/world-clock-state.json",
+        "sdk.stderr.log",
+        "sdk.stdout.log",
+        "source.commit",
+        "source.tar",
+        "windows-relay.json"
+      ],
+      "all_member_sha256_verified": true
+    },
+    {
+      "path": "E:\\FactoryOpsArtifacts\\operations-149\\priority-media-and-state.tar.gz",
+      "sha256": "ec35ead63f5bf363f82cf58c187f9329abbf59a8d00c52cc38ad01cf0127cec1",
+      "bytes": 3859466,
+      "members": [
+        "build-attestation.json",
+        "fastdds-udp-linux.xml",
+        "fastdds-udp-windows.xml",
+        "inputs/bundle.json",
+        "inputs/config.json",
+        "inputs/energy-profile.json",
+        "inputs/g2.json",
+        "inputs/g3-routing.json",
+        "inputs/g3-runtime.json",
+        "inputs/layout.json",
+        "inputs/registry.json",
+        "inputs/render-profile.json",
+        "inputs/route-preflight.json",
+        "inputs/scenarios.json",
+        "inputs/session.json",
+        "inputs/transport-profile.json",
+        "inputs/visual-assets.json",
+        "job-spec.json",
+        "job.json",
+        "job.json.preflight.json",
+        "launch.json",
+        "linux-relay.json",
+        "linux-relay.log",
+        "nav-command.sh",
+        "nav.log",
+        "pair-host.json",
+        "prepare.stderr.log",
+        "prepare.stdout.json",
+        "preservation-plan.json",
+        "relay-command.sh",
+        "relay-job-spec.json",
+        "relay-job.json",
+        "relay-job.json.preflight.json",
+        "relay-job.stderr.log",
+        "relay-job.stdout.log",
+        "relay-pair.json",
+        "results/run/actions.jsonl",
+        "results/run/authorizations.jsonl",
+        "results/run/capture-resume-state.json",
+        "results/run/command-receipt-state.json",
+        "results/run/factory-overview.png",
+        "results/run/fleet-transport-verified.json",
+        "results/run/local45-fleet4-transport-scene.json",
+        "results/run/localization.jsonl",
+        "results/run/maps/provenance.json",
+        "results/run/media/frames.json",
+        "results/run/mission-control.json",
+        "results/run/mission-result.json",
+        "results/run/nav2.log",
+        "results/run/physics-cadence.json",
+        "results/run/physx-planar-observations.jsonl",
+        "results/run/physx-scan-startup.json",
+        "results/run/provenance/fleet-source.json",
+        "results/run/provenance/source-commit.raw",
+        "results/run/render-capture-breadcrumbs.jsonl",
+        "results/run/robots/carter1/authorization.json",
+        "results/run/robots/carter1/control-ack.json",
+        "results/run/robots/carter1/trajectory.jsonl",
+        "results/run/robots/carter2/authorization.json",
+        "results/run/robots/carter2/control-ack.json",
+        "results/run/robots/carter2/trajectory.jsonl",
+        "results/run/robots/carter3/authorization.json",
+        "results/run/robots/carter3/control-ack.json",
+        "results/run/robots/carter3/trajectory.jsonl",
+        "results/run/robots/carter4/authorization.json",
+        "results/run/robots/carter4/control-ack.json",
+        "results/run/robots/carter4/trajectory.jsonl",
+        "results/run/ros-contexts.json",
+        "results/run/rosbag.log",
+        "results/run/route-events.jsonl",
+        "results/run/scene-events.jsonl",
+        "results/run/scene-state.json",
+        "results/run/sdk-failure.json",
+        "results/run/sim-ready.json",
+        "results/run/startup-observations.jsonl",
+        "results/run/visual-runtime-manifest.json",
+        "results/run/visual-scene/visual-scene-manifest.json",
+        "results/run/wheel-parking-startup.json",
+        "results/run/world-clock-startup.json",
+        "results/run/world-clock-state.json",
+        "sdk.stderr.log",
+        "sdk.stdout.log",
+        "windows-relay.json"
+      ],
+      "all_member_sha256_verified": true
+    }
+  ],
+  "original_manifest": {
+    "build-attestation.json": {
+      "sha256": "53abbfa42bfa14ff6acaef7624491f2e0c82a9c24d1322aace10dac88e6f0ad3",
+      "bytes": 3922
+    },
+    "fastdds-udp-linux.xml": {
+      "sha256": "a01d7e78fdaea9c87995abddb62b24cc5e6242c15cefcc49bc7f867320bc8887",
+      "bytes": 763
+    },
+    "fastdds-udp-windows.xml": {
+      "sha256": "a01d7e78fdaea9c87995abddb62b24cc5e6242c15cefcc49bc7f867320bc8887",
+      "bytes": 763
+    },
+    "job-abort-request.txt": {
+      "sha256": "9d2f2801fe3af0204a0d539d663a14fd26f54145573f0fd79f2e335ad6e5dab2",
+      "bytes": 32
+    },
+    "job-spec.json": {
+      "sha256": "066516dea4dd5ba3cb3c92bfe898d2f4f73d7f42863cc85d7ed026e07b7e3bb2",
+      "bytes": 15584
+    },
+    "job.json": {
+      "sha256": "00ad922b570fc7186e3dabe90381c5ea733a0f829b8d576701afafd8a2273410",
+      "bytes": 16175
+    },
+    "job.json.gate": {
+      "sha256": "9d2f2801fe3af0204a0d539d663a14fd26f54145573f0fd79f2e335ad6e5dab2",
+      "bytes": 32
+    },
+    "job.json.preflight.json": {
+      "sha256": "94dda5cad18712a58ebd1d805bce509411eaa74165bc398d61fe75881f6e12f9",
+      "bytes": 15213
+    },
+    "launch.json": {
+      "sha256": "bd4853254167c09d8190969149f551b12c54b61cd8b75c5a28aed31482bfcec2",
+      "bytes": 537
+    },
+    "linux-relay.json": {
+      "sha256": "45a67845b5bc0834968c1af44ba4245e5ae61db47502abb4a8f7946de626784a",
+      "bytes": 3978
+    },
+    "linux-relay.log": {
+      "sha256": "51496940fa26985521fe27d393a64eebbac75e53f13edbe55bfdfbc2fa3cc7e1",
+      "bytes": 298
+    },
+    "nav-command.sh": {
+      "sha256": "3bde36ca3c465b28e48566c68e35f0e51e4996de2caa5751fdd8b4379b4b0203",
+      "bytes": 1510
+    },
+    "nav.log": {
+      "sha256": "bd2c214d8362af63c772f72d819b1fb9fb3107e67687ce008916c1ccb37d8b0e",
+      "bytes": 970
+    },
+    "pair-host.json": {
+      "sha256": "8c4661b3a1c6db31b7e537531cb6d41530db9998a5cca41d047d43359cc99ac5",
+      "bytes": 46217
+    },
+    "prepare.stderr.log": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "prepare.stdout.json": {
+      "sha256": "8362d22d6e4fab8a5e699f9752715be92716c8538de62cce42f0850973d8aae9",
+      "bytes": 754
+    },
+    "preservation-plan.json": {
+      "sha256": "84b6287c85914f368ba220a73b020f8e8d803f0fbf2ffa901714e3cd7d9936e0",
+      "bytes": 1055
+    },
+    "relay-command.sh": {
+      "sha256": "acb3a71291c857c163fe5fe8ebebd1f62fcfa968dff6405cdb4ec70f338e6780",
+      "bytes": 920
+    },
+    "relay-job-spec.json": {
+      "sha256": "99010cd98529144ec89be7761a6cb6847a54c4cf0436cd5fb6788e827fc1d29a",
+      "bytes": 1328
+    },
+    "relay-job.json": {
+      "sha256": "ac79258940baf975129900cdf2734ab7635d93bfacbba1f252479f109f61ab8a",
+      "bytes": 1690
+    },
+    "relay-job.json.gate": {
+      "sha256": "9d2f2801fe3af0204a0d539d663a14fd26f54145573f0fd79f2e335ad6e5dab2",
+      "bytes": 32
+    },
+    "relay-job.json.preflight.json": {
+      "sha256": "53bd11a970c5bef66f681253e64378402fb6a6e40595256201b03f075f76f744",
+      "bytes": 912
+    },
+    "relay-job.stderr.log": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "relay-job.stdout.log": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "relay-pair.json": {
+      "sha256": "96b3cbed2835df551afe93b24d653088a3fa16a966663face23ad11164fb1b36",
+      "bytes": 18447
+    },
+    "relay-stop-request.txt": {
+      "sha256": "9d2f2801fe3af0204a0d539d663a14fd26f54145573f0fd79f2e335ad6e5dab2",
+      "bytes": 32
+    },
+    "sdk.stderr.log": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "sdk.stdout.log": {
+      "sha256": "fff0e2a96dc809c4dd908a89af9845811f4e0dfdd6c383568764b7182cc7c428",
+      "bytes": 38103
+    },
+    "source.commit": {
+      "sha256": "dd1b8c978562ae8274359623696f5950d629541277bc26bc7314a2f3710443d6",
+      "bytes": 280
+    },
+    "source.tar": {
+      "sha256": "6a5d153c4c39d1219b42d4fc3a553c99a783819c55fe7cda303e8e114d2262d0",
+      "bytes": 120678400
+    },
+    "windows-relay.json": {
+      "sha256": "50720b5126fe4241257f55257de55d980e27d3d5397d964c28cf90a2ac768fe3",
+      "bytes": 4199
+    },
+    "inputs/bundle.json": {
+      "sha256": "69f3ae9c23662d9cd64d699bfd883a71ec99e50f1931fdf317d7a8183c7e5ecc",
+      "bytes": 2431
+    },
+    "inputs/config.json": {
+      "sha256": "0ddd1e8061e0a631fc1d1631a16749a2fb39af67ce516593d83779367216f5d3",
+      "bytes": 7487
+    },
+    "inputs/energy-profile.json": {
+      "sha256": "50569a9f18337928c635d94a2e0102dd50d9f9c83d7f0f3c2e01baa42ddd0fe5",
+      "bytes": 718
+    },
+    "inputs/g2.json": {
+      "sha256": "7696219ef029b9dd53b17b01556a1e5c4d0bfa6c68b71ae054f66700ceab61d6",
+      "bytes": 4852
+    },
+    "inputs/g3-routing.json": {
+      "sha256": "9058f96215e68c0eb8c3bd78d8044c0b3341e4f5f7b9dfd1c8ccae434f8303f3",
+      "bytes": 3938
+    },
+    "inputs/g3-runtime.json": {
+      "sha256": "507ba468c302a2cce6b7d20ae921a2c3ee31944612010968da87a5050abec6ef",
+      "bytes": 2277
+    },
+    "inputs/layout.json": {
+      "sha256": "46480d5dc336db761664eb1cacccbdd5e47e4e38b71e07b68c9246ddebc2fd82",
+      "bytes": 11823
+    },
+    "inputs/nav2-g2.yaml": {
+      "sha256": "46da243197437b152552bd139780c498fdf35c7ef293fbd2f152cf608947a5f0",
+      "bytes": 6690
+    },
+    "inputs/registry.json": {
+      "sha256": "818c291224ab3f2263f9ba3cd829d425b2e269d36f1eb41e489b71266f452fd8",
+      "bytes": 5451
+    },
+    "inputs/render-profile.json": {
+      "sha256": "53c16ead3abfb7f793b128c0963c1b7598ba25f96432c43bbd3d7f01912cea4b",
+      "bytes": 2471
+    },
+    "inputs/route-preflight.json": {
+      "sha256": "0b4527d4b3aa7f7108d689915275c461ece5899e53380267b4d42fe09fe9ba44",
+      "bytes": 3248
+    },
+    "inputs/scenarios.json": {
+      "sha256": "e98191d744fe8668e63ba0d646c35d2c089096e240cd1ea7b2b8ec5f8f28d94b",
+      "bytes": 568
+    },
+    "inputs/session.json": {
+      "sha256": "7951ac7c2efbbbcf296ba62e0c7b8d1f17d06d1273aafc49dda84f9af0b1f335",
+      "bytes": 3448
+    },
+    "inputs/transport-profile.json": {
+      "sha256": "4afa18d835947be3ecee2801d646e9b7efec77bfc7c641f0dbf20fdd02b8b100",
+      "bytes": 2220
+    },
+    "inputs/visual-assets.json": {
+      "sha256": "e34c572b7ee570919796d719356e3010bfc75d8eec93d6c22c26e276c1088887",
+      "bytes": 2874
+    },
+    "inputs/scene/factory-v3.usda": {
+      "sha256": "2126f01ecde38e0f36417a827676b09dcbc6c2af523e05ca78851e966e301db7",
+      "bytes": 11669
+    },
+    "results/run/actions.jsonl": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "results/run/authorizations.jsonl": {
+      "sha256": "383928bfb39aa4c7d654f1b6cbcc07ee3ff514ee23723cf6823e41f2b2987ae1",
+      "bytes": 1283345
+    },
+    "results/run/bag-qos.yaml": {
+      "sha256": "74b1c73c6538de2ec48524d1bfb596f3d39736dfad33efe72f06d940f507a582",
+      "bytes": 3368
+    },
+    "results/run/capture-resume-state.json": {
+      "sha256": "8d0b7d5cb5d6bdceeb05339d2e97dacf67efb340d476e3bddffae368243189d9",
+      "bytes": 505
+    },
+    "results/run/command-receipt-state.json": {
+      "sha256": "dc5803db031c70f5e8fdf3650cbd699cdff6e765f4b8692da2f47c7b9bda2028",
+      "bytes": 2586
+    },
+    "results/run/factory-overview.png": {
+      "sha256": "1477f5a990d54fd4f31d81ce151e1fbfacf632d0b2f61d52e8f0bf193a9f5f55",
+      "bytes": 250927
+    },
+    "results/run/fleet-transport-verified.json": {
+      "sha256": "bb693c55b17af8d05f396adcf839be8ba8be4bcb935fe6391e94cd817f939594",
+      "bytes": 1151
+    },
+    "results/run/local45-fleet4-transport-scene.json": {
+      "sha256": "083c2769e404d2cad913388030d1635e8d75fe0825ff571d5781b5da3fa884c3",
+      "bytes": 197144
+    },
+    "results/run/localization.jsonl": {
+      "sha256": "fe3cf10428b6491a21e296180763f033aef74f4eafbbb2009cac2a5d29a19e8e",
+      "bytes": 390359
+    },
+    "results/run/mission-control.json": {
+      "sha256": "69bb8f2164a5e965842d0c9b0c1546b2f5d495c150db46b5c747a7fefb74d0c1",
+      "bytes": 195
+    },
+    "results/run/mission-result.json": {
+      "sha256": "3d9a83713a355b2e0727f9a4af8709487cd24265cfbde2b9d105eeb93690052b",
+      "bytes": 12647
+    },
+    "results/run/nav2-g3-params.yaml": {
+      "sha256": "aa0a2d8d58110e91c4faefe0babcb411249f89a8bf8b1340d2221003ac0049e5",
+      "bytes": 31477
+    },
+    "results/run/nav2.log": {
+      "sha256": "71927fc5f9812a7b8c961373620c6ed78724dd2af278266affe8d1c2c09a8439",
+      "bytes": 126320
+    },
+    "results/run/physics-cadence.json": {
+      "sha256": "28dce70a2197f692993e84bb81de1d567b2ff65bdb97595bda57221c63f520d7",
+      "bytes": 677
+    },
+    "results/run/physx-planar-observations.jsonl": {
+      "sha256": "3e5c6a4cbacf71f1d6793abf84b91f699bb225a6f2b05c66a2f48bef609fc6d3",
+      "bytes": 1023840
+    },
+    "results/run/physx-scan-startup.json": {
+      "sha256": "54637ba2e000e3504584a5e1c5eb63204a3fad0db3d4c41615e52899e6a4e76a",
+      "bytes": 10253
+    },
+    "results/run/render-capture-breadcrumbs.jsonl": {
+      "sha256": "598f804b8c56d83e4858c53891646d91b3f5f0d5c12e64ee75c53ee940b4f846",
+      "bytes": 5372
+    },
+    "results/run/ros-contexts.json": {
+      "sha256": "948fa67e2e79e3bffc6158a23f5b1fd4c1b44f69c8924cca9cf062e3ee183cf0",
+      "bytes": 1635
+    },
+    "results/run/rosbag.log": {
+      "sha256": "d0b6987634e4841941414a78d729a86a7bca74186501954d805d91accfcebaad",
+      "bytes": 16897
+    },
+    "results/run/route-events.jsonl": {
+      "sha256": "0eb7208521841fb2afe6c429a613065f67dd1ef481e0492b4f259d21e3b756b0",
+      "bytes": 369964
+    },
+    "results/run/scene-events.jsonl": {
+      "sha256": "08c1450a6196dbe4ddd6d718a7c6176e93d690cba9ea3db6f214bb5b974f965c",
+      "bytes": 198
+    },
+    "results/run/scene-state.json": {
+      "sha256": "d84a2bbb4ec8511e34fa839b1e3813fdf96de661bfe1aba255097a6a4fad71cd",
+      "bytes": 227
+    },
+    "results/run/sdk-failure.json": {
+      "sha256": "7c2d04de39bfd57e3a485c49918764966646b0b69a4916cd43e72919ae100a10",
+      "bytes": 196462
+    },
+    "results/run/sim-ready.json": {
+      "sha256": "0bdac9c17448ac7121f2343254cda606f1acccd638abcaa0c2960513c31d9c66",
+      "bytes": 43486
+    },
+    "results/run/startup-observations.jsonl": {
+      "sha256": "f7e85ac0742071b9d08e2f5b601019dcd82693598a2e9eac4fd5631369f73f35",
+      "bytes": 167778
+    },
+    "results/run/visual-runtime-manifest.json": {
+      "sha256": "b2e51966888ae3d1a7996a2eafbfce39f41ea12366f0cfd87c33d34cff1a966f",
+      "bytes": 53082
+    },
+    "results/run/wheel-parking-startup.json": {
+      "sha256": "f8365268dcd579607cda80cd24576e5f6d27542136c8cb446c9c871090e2d681",
+      "bytes": 5122
+    },
+    "results/run/world-clock-startup.json": {
+      "sha256": "be73b8d443b8cbb022cc31b980d9c2fd1d1096331bd31c23cc6e1a91c2f2ced3",
+      "bytes": 1581
+    },
+    "results/run/world-clock-state.json": {
+      "sha256": "d3b729d6fa4757426af7bf3975ad47e330bce09e6820a1f16157093aac0aa9c1",
+      "bytes": 1581
+    },
+    "results/run/amcl-map/keepout.pgm": {
+      "sha256": "8d813e8d8e3500ead53ca5158872235c731018f0960691bd4f8851c5532a68f5",
+      "bytes": 281646
+    },
+    "results/run/amcl-map/keepout.yaml": {
+      "sha256": "4f8c1df5dae054b9955aba3bbb5423245a2768b059e0c0b23e30a1d5cab6b4d4",
+      "bytes": 125
+    },
+    "results/run/amcl-map/map.pgm": {
+      "sha256": "e5b96caaa5c67a758d55d74c98957ac52f7e082ffe55b61c4161e1df08abca31",
+      "bytes": 281646
+    },
+    "results/run/amcl-map/map.yaml": {
+      "sha256": "03b2f34f0b62f3346eb7ea5c71a1caba320e56678168f779df19c8b52f47c625",
+      "bytes": 121
+    },
+    "results/run/diagnostic-load/factory-overview.png": {
+      "sha256": "d6fd3635aafb13fb4de6aba5a15673aad4dbae5f9330a98088e8b1278e08df98",
+      "bytes": 528134
+    },
+    "results/run/maps/provenance.json": {
+      "sha256": "0a5044f6cba9f16131a084aa2601325b20a8ee8dd9a955b61ad6e74cd7244f98",
+      "bytes": 6765
+    },
+    "results/run/media/carter1-00000.png": {
+      "sha256": "1f3aa96bcec9627b007afcd3381afd491b621ed7bf9fe4aa511615918c803cbd",
+      "bytes": 557016
+    },
+    "results/run/media/carter1-00001.png": {
+      "sha256": "3237fef0c247c4f436d72e84ef952be7a561516db99532d39170023530383dcf",
+      "bytes": 561502
+    },
+    "results/run/media/carter1-00002.png": {
+      "sha256": "6e819ff64bb642572399c1472a1fb566bf372edae0846021fda0185bf036633e",
+      "bytes": 566427
+    },
+    "results/run/media/carter2-00000.png": {
+      "sha256": "852719c03cac5cfad60cbe05d6445805a0c9f8e4e4ffa3d38222f16eae764d6d",
+      "bytes": 566022
+    },
+    "results/run/media/carter2-00001.png": {
+      "sha256": "8029a91194f2c760d71359c7189da792b9d8ac71fdccc2bb72dfb787833d0fba",
+      "bytes": 569075
+    },
+    "results/run/media/carter2-00002.png": {
+      "sha256": "32016202af378fa209a4eb81340fcdcedf6032b3eed0af3121436f7adde89bb1",
+      "bytes": 574669
+    },
+    "results/run/media/frames.json": {
+      "sha256": "c9ebb2dbc1043146e8906f37c53cce548b9ff44830ab33db93e0cae47f8b311e",
+      "bytes": 10570
+    },
+    "results/run/media/overview-00000.png": {
+      "sha256": "035bb0927b8c6335fe51c579bddf27ed54af76f1faa405628a5fbc5e2a1bf1d1",
+      "bytes": 588372
+    },
+    "results/run/media/overview-00001.png": {
+      "sha256": "afd1a7cb0fc7350c3fc040aec52be40fc2ac16477a6401a64efec0ca936b4535",
+      "bytes": 592304
+    },
+    "results/run/media/overview-00002.png": {
+      "sha256": "ef521378840044bc0487eafc47772e84874aa1e0b5d3b6d1901a6a0a105adb1f",
+      "bytes": 604646
+    },
+    "results/run/provenance/fleet-source.json": {
+      "sha256": "efac65b2bda9b68afd39697fd29fa37b754a9b37e127ce38d3abcfef0015ac8b",
+      "bytes": 39183
+    },
+    "results/run/provenance/source-commit.raw": {
+      "sha256": "dd1b8c978562ae8274359623696f5950d629541277bc26bc7314a2f3710443d6",
+      "bytes": 280
+    },
+    "results/run/provenance/source.tar": {
+      "sha256": "6a5d153c4c39d1219b42d4fc3a553c99a783819c55fe7cda303e8e114d2262d0",
+      "bytes": 120678400
+    },
+    "results/run/rosbag/metadata.yaml": {
+      "sha256": "6c70f91629c210f0d847abe4db1d36b6513e001125e74601d93d516f9a2bc8cf",
+      "bytes": 65594
+    },
+    "results/run/rosbag/rosbag_0.db3": {
+      "sha256": "a6f78848ab27dafd33e27e7534086b8f5825416fcb0ac5e130d333c34414191c",
+      "bytes": 26841088
+    },
+    "results/run/visual-scene/factory-v3.render.usda": {
+      "sha256": "9b9113b6d2ec37d38f4a737d080a66a686fa863a8d3619614d89763207359ef0",
+      "bytes": 1886
+    },
+    "results/run/visual-scene/factory-v3.usda": {
+      "sha256": "2126f01ecde38e0f36417a827676b09dcbc6c2af523e05ca78851e966e301db7",
+      "bytes": 11669
+    },
+    "results/run/visual-scene/factory-v3.visual.usda": {
+      "sha256": "ea9acab704a16ac9106bf05b809c8a6e29b4b8c5370b5e739241177f474cb5f4",
+      "bytes": 789630
+    },
+    "results/run/visual-scene/session-layer.usda": {
+      "sha256": "f740a8c275842e1b8acfb7c91e2c99be5051e020d55e8ab77730073e139263fb",
+      "bytes": 57382
+    },
+    "results/run/visual-scene/visual-scene-manifest.json": {
+      "sha256": "8c79a87f84179dcb7ab484d5fb906593d885a185a023de50f8f17979c61dc437",
+      "bytes": 70283
+    },
+    "results/run/maps/closed/navigation.pgm": {
+      "sha256": "ef5293df97d215edbeec977fb862db590916b2f4ebc89e007b9f1803997d5bd6",
+      "bytes": 281646
+    },
+    "results/run/maps/closed/navigation.yaml": {
+      "sha256": "18633d664fe978d6d76f19c1cbeca5a0769eccb0f4f0f9061e338a9ced8d92bd",
+      "bytes": 128
+    },
+    "results/run/maps/open/navigation.pgm": {
+      "sha256": "8d813e8d8e3500ead53ca5158872235c731018f0960691bd4f8851c5532a68f5",
+      "bytes": 281646
+    },
+    "results/run/maps/open/navigation.yaml": {
+      "sha256": "18633d664fe978d6d76f19c1cbeca5a0769eccb0f4f0f9061e338a9ced8d92bd",
+      "bytes": 128
+    },
+    "results/run/robots/carter1/authorization.json": {
+      "sha256": "b5eb7c257951a46f85f6d7eb0d73b6378ab1396bbf193423647b0bb7e3ff01e0",
+      "bytes": 676
+    },
+    "results/run/robots/carter1/control-ack.json": {
+      "sha256": "a627f0838271e69229c1bc8c1d50182fa02ec417a5d8cc729680f513b2261201",
+      "bytes": 897
+    },
+    "results/run/robots/carter1/trajectory.jsonl": {
+      "sha256": "2a9ea5a1402a9b4e03be0c53f10705cdd567bb3af32607496112e6a635ad2d8b",
+      "bytes": 7212088
+    },
+    "results/run/robots/carter2/authorization.json": {
+      "sha256": "784bb1559393a7dc29d4cffec509e37faa97a9a69577e6b703ebd4eac4efb8eb",
+      "bytes": 676
+    },
+    "results/run/robots/carter2/control-ack.json": {
+      "sha256": "1193d65f5a4556381df9faaadaaee15695f969e0aae2f1ed75d058c49bf92b26",
+      "bytes": 897
+    },
+    "results/run/robots/carter2/trajectory.jsonl": {
+      "sha256": "a1f0fad5f1a731d299c1a858f3d06ba884b36eb946bc3c153e6e85e4f1a3d087",
+      "bytes": 7213435
+    },
+    "results/run/robots/carter3/authorization.json": {
+      "sha256": "026b5dd1d02f483b5e52fb1999ac53292b193f27cbff80945416ce02be450c69",
+      "bytes": 676
+    },
+    "results/run/robots/carter3/control-ack.json": {
+      "sha256": "b33f8c22aea3ccaae90a0171742f472513ebc195af70db31f03037c3cb8bb3aa",
+      "bytes": 897
+    },
+    "results/run/robots/carter3/trajectory.jsonl": {
+      "sha256": "6014cbe8f4fdd55fee25dc5c55681e3dec07554356f31fc3e4c5de6dd193503f",
+      "bytes": 7210527
+    },
+    "results/run/robots/carter4/authorization.json": {
+      "sha256": "9cc1cc8ae694927c3ce0a1e8938ae970a448fd59442c03e45b89254f3298ea46",
+      "bytes": 676
+    },
+    "results/run/robots/carter4/control-ack.json": {
+      "sha256": "17322f80ae3aefe42781da1b480857392929a666787bb43884d348d07b94f2c5",
+      "bytes": 897
+    },
+    "results/run/robots/carter4/trajectory.jsonl": {
+      "sha256": "7614f28c19a1c0f44226a23b8bcfc2908b4df671f5ff407864e57b3f417366b1",
+      "bytes": 7214357
+    },
+    "results/run/visual-scene/session-layer-snapshots/f740a8c275842e1b8acfb7c91e2c99be5051e020d55e8ab77730073e139263fb.usda": {
+      "sha256": "f740a8c275842e1b8acfb7c91e2c99be5051e020d55e8ab77730073e139263fb",
+      "bytes": 57382
+    }
+  },
+  "preservation_scope": "Original stage retained. C includes retained inputs/results/root files including frozen Git source archive; expanded reproducible source is not duplicated. E contains explicitly selected priority state/media/logs and is not a complete bag/source backup.",
+  "source_unchanged_inflight": true,
+  "bag_SQL_opened_or_copied_inflight": false,
+  "mission_error": {
+    "message": "G3 planner/controller/TF/odometry/scan startup did not qualify",
+    "traceback": "Traceback (most recent call last):\n  File \"/mnt/c/Users/LIMMM/FactoryOpsRuntime/local45-transport-048/source/scripts/ros/g3_mission.py\", line 2106, in run_mission\n    raise TimeoutError(\"G3 planner/controller/TF/odometry/scan startup did not qualify\")\nTimeoutError: G3 planner/controller/TF/odometry/scan startup did not qualify\n",
+    "type": "TimeoutError"
+  },
+  "observed_first_service_response_timeout": [
+    "[planner_server-13] [WARN] [1792579785.353859999] [carter2.planner_server.rclcpp]: failed to send response to /carter2/planner_server/change_state (timeout): client will not receive response, at ./src/rmw_response.cpp:153, at ./src/rcl/service.c:400"
+  ],
+  "last_startup_state": {
+    "run_id": "9e3e246b7d5b47f58d914bed524e1b76",
+    "sim_time_s": 57.566669669,
+    "wall_time_unix_s": 1792580094.241952,
+    "ready": false,
+    "ros_context": {
+      "domain_id": 73,
+      "expected_domain_id": 73,
+      "rmw_identifier": "rmw_fastrtps_cpp",
+      "rclpy_file": "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/__init__.py",
+      "configured_transport_profile": "/mnt/c/Users/LIMMM/FactoryOpsRuntime/local45-transport-048/fastdds-udp-linux.xml"
+    },
+    "lifecycle_last_polled": {
+      "carter1/planner_server": 3,
+      "carter1/controller_server": 3,
+      "carter1/bt_navigator": 3,
+      "carter2/planner_server": 2,
+      "carter2/controller_server": 1,
+      "carter2/bt_navigator": 1,
+      "carter3/planner_server": 3,
+      "carter3/controller_server": 3,
+      "carter3/bt_navigator": 3,
+      "carter4/planner_server": 3,
+      "carter4/controller_server": 3,
+      "carter4/bt_navigator": 3
+    },
+    "robots": {
+      "carter1": {
+        "odom_count": 1095,
+        "last_odom_stamp_ns": 57550003001,
+        "scan_counts": {
+          "front_raw": 546,
+          "rear_raw": 546,
+          "front": 546,
+          "rear": 546,
+          "localization_front": 546,
+          "localization_rear": 546
+        },
+        "raw_receipts": {
+          "raw_counts": {
+            "front": 548,
+            "rear": 548
+          },
+          "last_raw_stamp_ns": {
+            "front": 57550003001,
+            "rear": 57550003001
+          },
+          "last_filtered_stamp_ns": {
+            "front": 57550003001,
+            "rear": 57550003001
+          }
+        },
+        "pose": {
+          "x_m": 11.999999998461007,
+          "y_m": 1.500000898761118,
+          "yaw_rad": 1.5708060613475197,
+          "stamp_s": 57.550003001
+        }
+      },
+      "carter2": {
+        "odom_count": 1095,
+        "last_odom_stamp_ns": 57550003001,
+        "scan_counts": {
+          "front_raw": 546,
+          "rear_raw": 546,
+          "front": 546,
+          "rear": 546,
+          "localization_front": 546,
+          "localization_rear": 546
+        },
+        "raw_receipts": {
+          "raw_counts": {
+            "front": 548,
+            "rear": 548
+          },
+          "last_raw_stamp_ns": {
+            "front": 57550003001,
+            "rear": 57550003001
+          },
+          "last_filtered_stamp_ns": {
+            "front": 57550003001,
+            "rear": 57550003001
+          }
+        },
+        "pose": null
+      },
+      "carter3": {
+        "odom_count": 1095,
+        "last_odom_stamp_ns": 57550003001,
+        "scan_counts": {
+          "front_raw": 546,
+          "rear_raw": 546,
+          "front": 546,
+          "rear": 546,
+          "localization_front": 546,
+          "localization_rear": 546
+        },
+        "raw_receipts": {
+          "raw_counts": {
+            "front": 548,
+            "rear": 548
+          },
+          "last_raw_stamp_ns": {
+            "front": 57550003001,
+            "rear": 57550003001
+          },
+          "last_filtered_stamp_ns": {
+            "front": 57550003001,
+            "rear": 57550003001
+          }
+        },
+        "pose": {
+          "x_m": 16.99999999928153,
+          "y_m": 1.4999997317080067,
+          "yaw_rad": 1.5707772002583684,
+          "stamp_s": 57.550003001
+        }
+      },
+      "carter4": {
+        "odom_count": 1095,
+        "last_odom_stamp_ns": 57550003001,
+        "scan_counts": {
+          "front_raw": 546,
+          "rear_raw": 546,
+          "front": 546,
+          "rear": 546,
+          "localization_front": 546,
+          "localization_rear": 546
+        },
+        "raw_receipts": {
+          "raw_counts": {
+            "front": 548,
+            "rear": 548
+          },
+          "last_raw_stamp_ns": {
+            "front": 57550003001,
+            "rear": 57550003001
+          },
+          "last_filtered_stamp_ns": {
+            "front": 57550003001,
+            "rear": 57550003001
+          }
+        },
+        "pose": {
+          "x_m": 17.00000000312732,
+          "y_m": 20.500002141135752,
+          "yaw_rad": -1.5708010680090754,
+          "stamp_s": 57.550003001
+        }
+      }
+    }
+  },
+  "relay_status_counts": {
+    "windows": {
+      "status": "stopped",
+      "sent": {
+        "/carter1/tf_static": 1,
+        "/carter2/tf_static": 1,
+        "/carter3/tf_static": 1,
+        "/carter4/tf_static": 1,
+        "/clock": 3452,
+        "/carter1/scan_front_raw": 556,
+        "/carter1/scan_rear_raw": 556,
+        "/carter2/scan_front_raw": 556,
+        "/carter2/scan_rear_raw": 556,
+        "/carter3/scan_front_raw": 556,
+        "/carter3/scan_rear_raw": 556,
+        "/carter4/scan_front_raw": 556,
+        "/carter1/odom": 1111,
+        "/carter1/tf": 1111,
+        "/carter2/odom": 1111,
+        "/carter2/tf": 1111,
+        "/carter3/odom": 1111,
+        "/carter3/tf": 1111,
+        "/carter4/odom": 1111,
+        "/carter4/scan_rear_raw": 556,
+        "/carter4/tf": 1111
+      },
+      "received": {
+        "/carter1/cmd_vel": 1,
+        "/carter4/cmd_vel": 1,
+        "/carter3/cmd_vel": 1
+      },
+      "stale_commands_dropped": 0,
+      "last_source_clock_ns": 57583336337,
+      "cleanup_errors": [],
+      "closed": true
+    },
+    "linux": {
+      "status": "stopped",
+      "sent": {
+        "/carter1/cmd_vel": 1,
+        "/carter4/cmd_vel": 1,
+        "/carter3/cmd_vel": 1
+      },
+      "received": {
+        "/carter1/tf_static": 1,
+        "/carter2/tf_static": 1,
+        "/carter3/tf_static": 1,
+        "/carter4/tf_static": 1,
+        "/clock": 3452,
+        "/carter1/scan_front_raw": 556,
+        "/carter1/scan_rear_raw": 556,
+        "/carter2/scan_front_raw": 556,
+        "/carter2/scan_rear_raw": 556,
+        "/carter3/scan_front_raw": 556,
+        "/carter3/scan_rear_raw": 556,
+        "/carter4/scan_front_raw": 556,
+        "/carter1/odom": 1111,
+        "/carter1/tf": 1111,
+        "/carter2/odom": 1111,
+        "/carter2/tf": 1111,
+        "/carter3/odom": 1111,
+        "/carter3/tf": 1111,
+        "/carter4/odom": 1111,
+        "/carter4/scan_rear_raw": 556,
+        "/carter4/tf": 1111
+      },
+      "stale_commands_dropped": 0,
+      "last_source_clock_ns": 57583336337,
+      "cleanup_errors": [],
+      "closed": true
+    }
+  }
+}

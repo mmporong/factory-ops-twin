@@ -1,0 +1,31 @@
+{
+  "task_id": "native-service-response-150",
+  "attempt": 1,
+  "contract_revision": 129,
+  "owner": "control",
+  "binding": {
+    "session": "default",
+    "pane_id": "w1:p1C",
+    "terminal_id": "term_65e06d27e415810",
+    "agent_session": "01a152aa-24b4-7a31-92e3-a2b620f4feeb"
+  },
+  "project_root": "C:\\Users\\LIMMM\\factory-ops-twin",
+  "write_paths": [
+    "coordination/collab/results/native-service-response-150.json"
+  ],
+  "goal": "Bounded official/install-version diagnosis of same-OS Jazzy service response write timeout during four-AMR startup. Root solely owns running048 and all code. Read-only research, not a new review round.",
+  "read_inputs": [
+    "C:/Users/LIMMM/FactoryOpsRuntime/local45-transport-048/results/run/nav2.log",
+    "scripts/ros/fleet4.launch.py",
+    "scripts/isaac/run_local45_fleet_pair.py"
+  ],
+  "facts": [
+    "Actual WSL ros-jazzy-fastrtps2.14.7, rmw-fastrtps-cpp8.4.4. WindowsHumble isolatedloopback, WSLJazzyloopback, app relay passed147.",
+    "048 other3stacks active3; carter2planner2/controller1/bt1, no pose. All4 odom/scan arriving, clock advances. nav2.log WARN1792579785.353859999 carter2.planner_server.rclcpp failed to send response to /carter2/planner_server/change_state(timeout): client will not receive response, rmw_response.cpp153."
+  ],
+  "acceptance": [
+    "ACK150 attempt1 revision129. You are not alone. Only result file write, no product/source/config/board/Git/runtime/SDK/GPU/ROS/WSL/shell installs/agent/model changes. No bag SQL/copy. Read regular log/source. No tests/review expansion.",
+    "Use official ros2/rmw_fastrtps Jazzy source and official FastDDS2.14/ROSdocs to identify where TIMEOUT arises and whether RMW_FASTRTPS_PUBLICATION_MODE=ASYNCHRONOUS applies to service response writers, not only topic publishers. Compare other minimal per-run env/XML remedies only if source proves relevant. No blind timeout/horizon/TTL/safety relaxation.",
+    "Return ranked smallest change, exact upstream links/version limits and source-line evidence, evidence vs inference, any unresolved scope. Do not promise native solve. No broad literature collection. Result file includes task identity, readonly input hashes, sources, proposed next-source-only action; no code implementation."
+  ]
+}

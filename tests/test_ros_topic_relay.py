@@ -8,6 +8,23 @@ from factory_ops.ros_topic_relay import Framer,Receiver,catalog
 
 
 class RelayTests(unittest.TestCase):
+    def test_service_wait_is_linux_lifecycle_reply_only(self):
+        from scripts.isaac.run_local45_fleet_pair import prepare_ros_transport
+        import xml.etree.ElementTree as ET
+        with tempfile.TemporaryDirectory() as directory:
+            path,_=prepare_ros_transport(Path(directory),73,platform="linux",interface="127.0.0.1",
+                isolated_loopback=True,startup_service_match_wait=True)
+            ns={"d":"http://www.eprosima.com/XMLSchemas/fastRTPS_Profiles"}
+            publishers=ET.parse(path).getroot().findall("d:publisher",ns)
+            self.assertEqual(len(publishers),64)
+            for row in publishers:
+                self.assertTrue(row.get("profile_name").startswith("rr/carter"))
+                self.assertTrue(row.get("profile_name").endswith(("/change_stateReply","/get_stateReply")))
+                self.assertEqual(row.find(".//d:max_blocking_time/d:sec",ns).text,"1")
+                self.assertEqual(row.find(".//d:reliability/d:kind",ns).text,"RELIABLE")
+            with self.assertRaises(ValueError):
+                prepare_ros_transport(Path(directory),73,platform="windows",interface="127.0.0.1",
+                    isolated_loopback=True,startup_service_match_wait=True)
     def test_checkpoint_retries_transient_windows_sharing_conflict(self):
         from unittest.mock import patch
         import os,json

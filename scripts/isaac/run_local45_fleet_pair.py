@@ -47,7 +47,7 @@ def _validate_dds_interfaces(windows: str | None, linux_interface: str | None) -
 
 def prepare_ros_transport(stage: Path, domain_id: int, *, interface: str | None = None,
                           platform: str = "windows", peers: tuple[str, ...] = (),
-                          isolated_loopback: bool = False) -> tuple[Path, dict[str, str]]:
+                          isolated_loopback: bool = False, startup_service_match_wait: bool = False) -> tuple[Path, dict[str, str]]:
     """Create the run-owned UDP participant profile before ROS processes start."""
     if isinstance(domain_id, bool) or not isinstance(domain_id, int) or not 0 <= domain_id <= 232:
         raise ValueError("bundle ROS domain must be an integer in0..232")
@@ -57,6 +57,8 @@ def prepare_ros_transport(stage: Path, domain_id: int, *, interface: str | None 
         interface = str(IPv4Address(interface))
     if isolated_loopback and (interface != "127.0.0.1" or peers):
         raise ValueError("isolated DDS requires only the local loopback interface")
+    if startup_service_match_wait and (platform!="linux" or not isolated_loopback):
+        raise ValueError("startup service match profile requires isolated Linux DDS")
     if peers:
         if type(peers) is not tuple or len(peers) != 2 or len(set(peers)) != 2 or interface not in peers:
             raise ValueError("explicit DDS discovery requires the two paired IPv4 interfaces")
@@ -93,6 +95,17 @@ def prepare_ros_transport(stage: Path, domain_id: int, *, interface: str | None 
         text = text.replace("<type>UDPv4</type>", "<type>UDPv4</type><maxInitialPeersRange>120</maxInitialPeersRange>")
         text = text.replace("<rtps>", "<rtps><builtin><initialPeersList><locator><udpv4>"
             "<address>127.0.0.1</address></udpv4></locator></initialPeersList></builtin>")
+    if startup_service_match_wait:
+        # RMW8.4.4 uses this exact reply writer QoS before checking the client's
+        # reader GUID match. ROS reliability conversion preserves max_blocking_time.
+        components=("map_server","navigation_map_server","amcl","planner_server","controller_server",
+                    "smoother_server","behavior_server","bt_navigator")
+        profiles="".join('<publisher profile_name="rr/'+robot+'/'+component+'/'+service+'Reply">'
+            '<qos><reliability><kind>RELIABLE</kind><max_blocking_time><sec>1</sec><nanosec>0</nanosec>'
+            '</max_blocking_time></reliability></qos></publisher>'
+            for robot in ("carter1","carter2","carter3","carter4") for component in components
+            for service in ("change_state","get_state"))
+        text=text.replace('</profiles>',profiles+'\n</profiles>')
     with profile.open("x", encoding="utf-8", newline="\n") as stream:
         stream.write(text)
     return profile, {"ROS_DOMAIN_ID": str(domain_id), "RMW_IMPLEMENTATION": "rmw_fastrtps_cpp",
@@ -198,7 +211,8 @@ def run(stage: Path, sdk: Path, bound: int, *, charge_robot: str | None = None, 
         live_anchor_controls: bool = False, dds_explicit_peers: bool = False,
         nav2_startup_stagger_s: float = 0., capture_resolution: str = "640x360",
         isolated_topic_relay: bool = False, relay_windows_address: str | None = None,
-        relay_linux_address: str | None = None, relay_port: int = 28473) -> int:
+        relay_linux_address: str | None = None, relay_port: int = 28473,
+        startup_service_match_wait: bool = False) -> int:
     if os.name != "nt" or not 60 <= bound <= 10800:
         raise ValueError("local development requires Windows and an explicit 60..10800s bound")
     if lidar_backend not in {"rtx_flat_scan", "physx_planar"}:
@@ -210,6 +224,8 @@ def run(stage: Path, sdk: Path, bound: int, *, charge_robot: str | None = None, 
     if capture_resolution not in {"640x360", "1280x720"}:
         raise ValueError("unsupported local45 capture resolution")
     _validate_dds_interfaces(windows_dds_interface, linux_dds_interface)
+    if startup_service_match_wait and not isolated_topic_relay:
+        raise ValueError("startup service match option requires OS-isolated topic transport")
     if isolated_topic_relay:
         if dds_explicit_peers or windows_dds_interface is not None:
             raise ValueError("isolated topic relay cannot share external DDS interfaces/peers")
@@ -252,6 +268,7 @@ def run(stage: Path, sdk: Path, bound: int, *, charge_robot: str | None = None, 
     report["nav2_startup_stagger_s"] = nav2_startup_stagger_s
     report["capture_resolution"] = capture_resolution
     report["isolated_topic_relay"] = isolated_topic_relay
+    report["startup_service_match_wait"] = startup_service_match_wait
     report["virtual_charging_request"] = {"robot_id": charge_robot, "resume_soc": charge_resume_soc}
     save(receipt_path, report)
     owner = WslProcessSupervisor(run_id)
@@ -270,7 +287,8 @@ def run(stage: Path, sdk: Path, bound: int, *, charge_robot: str | None = None, 
         linux_transport = transport
         if linux_dds_interface is not None:
             linux_transport, _ = prepare_ros_transport(stage, config["ros_domain_id"],
-                interface=linux_dds_interface, platform="linux", peers=peers,isolated_loopback=isolated_topic_relay)
+                interface=linux_dds_interface, platform="linux", peers=peers,isolated_loopback=isolated_topic_relay,
+                startup_service_match_wait=startup_service_match_wait)
         linux_environment = {**ros_environment, "FASTRTPS_DEFAULT_PROFILES_FILE": linux(linux_transport),
                              "FASTDDS_DEFAULT_PROFILES_FILE": linux(linux_transport)}
         report["ros_transport"] = {"profile": str(transport), "sha256": sha(transport),
@@ -305,6 +323,10 @@ def run(stage: Path, sdk: Path, bound: int, *, charge_robot: str | None = None, 
             "export FACTORY_OPS_NAV2_STARTUP_STAGGER_S=" + shlex.quote(str(float(nav2_startup_stagger_s))),
             "export FACTORY_OPS_G3_BUILD_ATTESTATION_PATH=" + shlex.quote(root_linux + "/build-attestation.json"),
             "export FACTORY_OPS_G3_BUILD_ATTESTATION_SHA256=" + shlex.quote(launch["build_attestation_sha256"]),
+            "/usr/bin/python3 -c " + shlex.quote("import json,os,sys; "
+                "json.dump({k:os.environ.get(k) for k in ['RMW_FASTRTPS_USE_QOS_FROM_XML',"
+                "'RMW_FASTRTPS_PUBLICATION_MODE','FASTRTPS_DEFAULT_PROFILES_FILE','FASTDDS_DEFAULT_PROFILES_FILE']},"
+                "open(sys.argv[1],'w'))") + " " + shlex.quote(root_linux+"/ros-environment.json"),
             "exec " + shlex.join(["/usr/bin/python3", root_linux + "/source/scripts/ros/fleet4_mission.py",
                 "--bundle", root_linux + "/inputs", "--output", root_linux + "/results/run", "--run-id", run_id,
                 "--runtime-profile", "local45_development", "--dashboard", *charging_args,
@@ -374,6 +396,7 @@ if __name__ == "__main__":
     parser.add_argument("--live-anchor-controls", action="store_true")
     parser.add_argument("--dds-explicit-peers", action="store_true")
     parser.add_argument("--isolated-topic-relay", action="store_true")
+    parser.add_argument("--startup-service-match-wait", action="store_true")
     parser.add_argument("--relay-windows-address")
     parser.add_argument("--relay-linux-address")
     parser.add_argument("--relay-port",type=int,default=28473)
@@ -393,4 +416,5 @@ if __name__ == "__main__":
         live_anchor_controls=options.live_anchor_controls, dds_explicit_peers=options.dds_explicit_peers,
         nav2_startup_stagger_s=options.nav2_startup_stagger_s, capture_resolution=options.capture_resolution,
         isolated_topic_relay=options.isolated_topic_relay,relay_windows_address=options.relay_windows_address,
-        relay_linux_address=options.relay_linux_address,relay_port=options.relay_port))
+        relay_linux_address=options.relay_linux_address,relay_port=options.relay_port,
+        startup_service_match_wait=options.startup_service_match_wait))

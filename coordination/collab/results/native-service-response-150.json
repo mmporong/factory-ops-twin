@@ -1,0 +1,139 @@
+{
+  "task_id": "native-service-response-150",
+  "attempt": 1,
+  "contract_revision": 129,
+  "owner": "control",
+  "ack": true,
+  "status": "bounded_advice_complete_root_decision_pending",
+  "summary": "RMW_FASTRTPS_PUBLICATION_MODE는 서비스 응답 writer에도 적용된다. 그러나 이번 오류 문자열은 응답 DDS write 이전의 특정 client response-reader 매칭 대기 TIMEOUT 경로다. ASYNCHRONOUS가 이 대기를 우회하거나 실제 048 문제를 해결한다는 근거는 없다.",
+  "latest_root_report": {
+    "run": "048",
+    "outcome": "startup 300 wall seconds 제한으로 실패 종료",
+    "closure": "root가 SDK/Nav2/두 relay 소유 트리 종료를 확인함. worker는 프로세스를 조회하거나 조작하지 않음",
+    "observations": "전송과 clock 유지, 다른 3대 active, carter2 change_state 응답 TIMEOUT 1건이 startup을 막음"
+  },
+  "readonly_inputs": [
+    {
+      "path": "C:/Users/LIMMM/FactoryOpsRuntime/local45-transport-048/results/run/nav2.log",
+      "sha256": "71927fc5f9812a7b8c961373620c6ed78724dd2af278266affe8d1c2c09a8439",
+      "read_bytes": 126320,
+      "identity_scope": "검토 시 메모리에 읽은 log bytes의 해시. 당시 실행 중이었으므로 종료된 최종 원본 전체의 해시로 주장하지 않음. 파일 복사 없음"
+    },
+    {
+      "path": "C:/Users/LIMMM/factory-ops-twin/scripts/ros/fleet4.launch.py",
+      "sha256": "53842a3ae3a22a44b60893a0cee0096365e0151c40e2092d98fb8bbb54bc11a3",
+      "identity_scope": "읽은 main 소스. frozen 048 archive와의 동일성은 별도 검증하지 않음"
+    },
+    {
+      "path": "C:/Users/LIMMM/factory-ops-twin/scripts/isaac/run_local45_fleet_pair.py",
+      "sha256": "493b967f7017660f3583a9a022d78dec8a5b79ed091667d5fd751c642b42fb37",
+      "identity_scope": "읽은 main 소스. frozen 048 archive와의 동일성은 별도 검증하지 않음"
+    }
+  ],
+  "observed_log_evidence": [
+    {
+      "lines": "303-316",
+      "fact": "carter2 planner configure 요청 처리와 GridBased 생성/설정이 진행되고 1792579785.214361032에 planners available이 기록됨"
+    },
+    {
+      "lines": "317",
+      "fact": "1792579785.353859999에 /carter2/planner_server/change_state 응답 실패, timeout 및 client will not receive response 기록. 설치 로그 위치는 rmw_response.cpp:153"
+    },
+    {
+      "lines": "344,723,780",
+      "fact": "carter1, carter3, carter4 Managed nodes are active 기록. 검토한 log bytes에서 carter2의 후속 active 기록은 확인되지 않음"
+    }
+  ],
+  "confirmed_source_boundary": {
+    "confidence": "공식 8.4.4 소스의 오류 문자열 및 제어 흐름에 대한 높은 확신. 실제 endpoint 매칭 지연의 내부 원인은 미확정",
+    "path": "__rmw_send_response -> response_writer QoS reliability.max_blocking_time -> check_for_subscription(related response-reader GUID) -> MAYBE -> RMW_RET_TIMEOUT",
+    "meaning": "서버 응답 writer의 publication-matched listener가 해당 client response-reader 매칭을 제한 시간 내 확인하지 못한 분기다. MAYBE는 관련 client endpoint 정보가 존재하지만 응답 reader 매칭을 확인하지 못한 상태이며, client가 사라졌다는 GONE 분기와 구별된다.",
+    "write_boundary": "response_writer_->write는 이 검사 뒤에 있다. 실제 write 실패는 다른 오류 문자열 cannot publish data를 사용한다. 이번 문자열을 DDS write 버퍼 포화로 단정할 수 없다.",
+    "publication_mode_answer": "적용된다. rmw_fastrtps_cpp 8.4.4 rmw_service.cpp의 응답 DataWriter 생성 코드가 participant publishing_mode의 ASYNCHRONOUS/SYNCHRONOUS를 writer QoS에 설정한다. topic 전용 환경변수가 아니다.",
+    "override_condition": "RMW_FASTRTPS_USE_QOS_FROM_XML=1이면 해당 모드 환경변수 적용 분기를 건너뛴다. participant.cpp는 이 경우 RMW_FASTRTPS_PUBLICATION_MODE도 읽지 않는다. 실제 048 상속 환경값은 이번 자료로 확인하지 못했다.",
+    "async_limit": "ASYNCHRONOUS는 write 이후 전송을 background thread로 옮긴다. write 전 check_for_subscription 대기를 제거하지 않는다. 간접적인 스케줄링 개선 가능성은 추론이며 실제 효과는 미확정이다.",
+    "not_proven": "discovery 지연, listener callback 지연/누락, endpoint GUID 결속 또는 QoS 차이 중 어느 것이 실제 원인인지는 확인되지 않았다. 다른 3대 active와 정상 sensor/clock만으로 이 특정 서비스 응답 endpoint의 매칭을 증명할 수 없다. carter2 plugin configure 자체 실패나 과거 Humble/Jazzy 발견 스키마 오류 재발로 단정하지 않는다."
+  },
+  "local_application_boundary": {
+    "launcher": "run_local45_fleet_pair.py:48-101의 run별 XML은 participant UDP/interface/discovery 설정이다. 현재 읽은 코드에는 response publisher profile이나 max_blocking_time 설정이 없다. 양쪽 profiles-file 환경 경로는 274-278, WSL nav-command.sh 환경 전달은 약 297-315행이다.",
+    "launch": "fleet4.launch.py:143 이후 선택 stagger는 기본 0, 각 stack manager는 autostart=True다. 이 자료만으로 stagger 증가를 응답 endpoint 매칭 해결책으로 추천하지 않는다.",
+    "scope": "후보는 root가 선택하는 다음 frozen 실행의 WSL Jazzy 환경 또는 WSL run별 XML에만 적용. Windows Humble loopback/TCP relay/interface/domain 및 다른 writer는 유지. 현재/종료 원본을 수정하지 않음"
+  },
+  "ranked_next_source_only_candidates": [
+    {
+      "rank": 1,
+      "candidate": "정확한 change_state 응답 writer의 매칭 대기 경계만 한정하는 Linux run별 XML 후보",
+      "applicability": "이번 오류가 실제 사용하는 reliability.max_blocking_time에 대응한다. 무조건 timeout 증가를 권고하는 것은 아니며 현재 실효 writer QoS와 환경값이 미관측이라는 한계를 먼저 유지한다.",
+      "target_profile": "rr/carter2/planner_server/change_stateReply",
+      "minimal_change_if_root_selects": "기존 run별 Linux profiles XML에 이 정확한 응답 publisher profile만 추가하고 RELIABLE을 유지한다. 현재 값이 기본 100ms임을 root가 확인하고 단일 시험을 선택한다면 max_blocking_time=1s는 공식 XML 예시를 따른 유한 후보값이다. 1s가 실제 필요한 값이라는 실측 근거는 없으며 무한 대기는 사용하지 않는다.",
+      "environment": "이 QoS 항목만을 위해 RMW_FASTRTPS_USE_QOS_FROM_XML=1을 새로 켤 필요는 없다. 8.4.4 qos.cpp의 ROS reliability 변환은 kind만 덮어쓰고 max_blocking_time은 덮어쓰지 않는다. 기존 publication mode, REALLOC memory 및 data-sharing 동작을 보존한다.",
+      "reason_ranked_first": "특정 서비스 writer 하나와 확인된 실패 분기만 대상으로 하므로 전체 participant publication mode 변경보다 인과 경계가 좁다.",
+      "limits": "XML은 이번 작업에서 작성/로드/실행하지 않았다. 실제 reader 매칭이 영구히 성립하지 않는 원인이면 유한 대기 변경으로 해결되지 않는다. startup 총 300 wall seconds와 모든 G3 TTL/clock/reservation/반경/안전 gate는 그대로 유지해야 한다."
+    },
+    {
+      "rank": 2,
+      "candidate": "WSL 다음 실행에만 RMW_FASTRTPS_PUBLICATION_MODE=ASYNCHRONOUS",
+      "applicability": "공식 8.4.4 소스에서 서비스 응답 writer에도 적용됨이 확인된 작은 환경변수 후보다. 그러나 이번 사전 reader 매칭 TIMEOUT에 대한 인과 적합성은 낮다.",
+      "minimal_change_if_root_selects": "WSL 프로세스 생성 전에만 설정하며 RMW_FASTRTPS_USE_QOS_FROM_XML이 1이 아닌지 함께 기록한다. Windows 또는 전역 환경은 바꾸지 않는다. rank1 XML 변경과 동시에 적용하지 않아 효과를 구별한다.",
+      "limits": "동일 participant의 다른 서비스/topic writer에도 영향을 줄 수 있다. 현재 오류를 우회하지 않으므로 해결 보장은 없다. XML QoS 전면 활성화나 speculative QoS/reliability 변경을 묶지 않는다."
+    }
+  ],
+  "one_future_trial_for_root_choice": {
+    "proposal": "root가 하나만 고른다면 rank1의 정확한 response profile을 사용한 새 frozen startup admission을 조건부 후보로 제시한다. 실효 max_blocking_time을 확인하지 못하면 원인 미확정 상태로 남기며 자동 적용/재실행하지 않는다.",
+    "record": "다음 run의 명시적 환경값, XML digest/정확한 profile, carter2 configure 응답과 4대 lifecycle active 여부. 가능하면 실효 writer QoS를 함께 기록하되 worker는 새 진단기나 실행을 만들지 않는다.",
+    "success_boundary": "기존 startup 한도 안에서 4대 모두 active가 되고 같은 응답 TIMEOUT이 없는지를 확인한다. 이 한 건의 통과로 DDS 내부 원인 확정, 전체 공장 완주 또는 물리 검증을 주장하지 않는다.",
+    "prohibited_shortcuts": "inactive 상태 수용, lifecycle configure 맹목 재전송, service/client 무한 대기, BEST_EFFORT 전환, clock/TTL/horizon/radius 완화 없음"
+  },
+  "official_sources": [
+    {
+      "url": "https://github.com/ros2/rmw_fastrtps/blob/8.4.4/rmw_fastrtps_shared_cpp/src/rmw_response.cpp#L116-L151",
+      "evidence": "L131-141 응답 reader 매칭 대기와 MAYBE TIMEOUT, L144-151 후속 write 및 별도 오류 문자열"
+    },
+    {
+      "url": "https://github.com/ros2/rmw_fastrtps/blob/8.4.4/rmw_fastrtps_shared_cpp/include/rmw_fastrtps_shared_cpp/custom_service_info.hpp#L44-L161",
+      "evidence": "MAYBE/YES/GONE 의미, publication-matched GUID 집합과 condition-variable wait, check_for_subscription"
+    },
+    {
+      "url": "https://github.com/ros2/rmw_fastrtps/blob/8.4.4/rmw_fastrtps_cpp/src/rmw_service.cpp#L320-L359",
+      "evidence": "service/exact response-topic XML profile 적용 후 서비스 응답 writer에도 publishing_mode 설정"
+    },
+    {
+      "url": "https://github.com/ros2/rmw_fastrtps/blob/8.4.4/rmw_fastrtps_shared_cpp/src/participant.cpp#L257-L295",
+      "evidence": "기본 SYNC, USE_QOS_FROM_XML 및 PUBLICATION_MODE 처리와 override 조건"
+    },
+    {
+      "url": "https://github.com/ros2/rmw_fastrtps/blob/8.4.4/rmw_fastrtps_shared_cpp/src/qos.cpp#L49-L163",
+      "evidence": "ROS reliability는 kind를 설정하며 max_blocking_time은 이 변환에서 덮어쓰지 않음"
+    },
+    {
+      "url": "https://github.com/ros2/rmw_fastrtps/blob/8.4.4/README.md",
+      "evidence": "publication mode 및 XML override 설명, Services and clients XML profile 우선순위, rr/add_two_intsReply 명명 예시"
+    },
+    {
+      "url": "https://fast-dds.docs.eprosima.com/en/v2.14.7/fastdds/dds_layer/core/policy/standardQosPolicies.html#reliabilityqospolicy",
+      "evidence": "max_blocking_time 기본 100ms 및 유한 1s XML 예시. 실제 048 실효 QoS의 관측값은 아님"
+    },
+    {
+      "url": "https://fast-dds.docs.eprosima.com/en/v2.14.7/fastdds/dds_layer/core/policy/eprosimaExtensions.html#publishmodeqospolicy",
+      "evidence": "SYNC/ASYNC 전송 의미와 활성화 뒤 policy 변경 불가. ASYNC는 pre-write 매칭 대기 우회가 아님"
+    }
+  ],
+  "version_and_evidence_limits": [
+    "root가 제공한 설치 버전은 ros-jazzy-fastrtps 2.14.7 및 rmw-fastrtps-cpp 8.4.4다. 공식 upstream은 그 exact tag/version으로 한정했다.",
+    "설치 log의 rmw_response.cpp:153과 upstream 8.4.4의 행 번호는 다르다. 고유 오류 문자열과 제어 흐름을 대조했으며 distro patch/build source 또는 설치 binary 동일성을 검증했다고 주장하지 않는다.",
+    "실제 response-reader GUID, 매칭 callback 시각, writer 실효 QoS 및 상속 환경값은 미확인이다. 100ms는 공식 기본값이고 실제 048 측정값은 아니다.",
+    "planner available과 warning의 약 0.1395s 간격은 주변 로그 간격이며 check_for_subscription 자체의 정밀 소요 시간으로 취급하지 않는다.",
+    "root의 종료 보고 외 별도 runtime/ROS 조회는 하지 않았다. 추가 광범위 검색이나 검토 라운드는 수행하지 않았다."
+  ],
+  "execution_and_write_scope": {
+    "product_edits": false,
+    "tests_ast_sdk_gpu_ros_wsl_process_actions": false,
+    "git_or_agent_operations": false,
+    "bag_sql_or_copy": false,
+    "written_paths": [
+      "coordination/collab/results/native-service-response-150.json"
+    ],
+    "acceptance_owner": "root",
+    "native_fix_claimed": false
+  }
+}
