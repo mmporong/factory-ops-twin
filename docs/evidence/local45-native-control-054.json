@@ -1,0 +1,214 @@
+{
+  "schema_version": 1,
+  "run_id": "4dfd2c904a5f40448bafcea51c8e77d1",
+  "producer_source_commit": "a462fdbe3cd05722b03eb50afc058baa433a17dd",
+  "scope": "actual native four-AMR pause/resume through KitClient and same-OS Linux API; transport still running",
+  "status": "operator_pause_resume_passed",
+  "whole_run_passed": false,
+  "browser_click_or_Kit_UI_verified": false,
+  "pause": {
+    "command_id": "6d6f82a7-0027-47b0-872e-49c631a14882",
+    "reason": "all_robots_stopped_at_reserved_anchors",
+    "revision": 2,
+    "run_id": "4dfd2c904a5f40448bafcea51c8e77d1",
+    "status": "applied"
+  },
+  "resume": {
+    "command_id": "8b91ab8e-ef0c-4ecd-b336-62d629288130",
+    "run_id": "4dfd2c904a5f40448bafcea51c8e77d1",
+    "status": "applied",
+    "reason": "dispatch_reopened_at_confirmed_anchors",
+    "revision": 3
+  },
+  "source_event_times_world_s": {
+    "pause_received": 296.366682123,
+    "pause_applied": 307.716682715,
+    "resume_applied": 362.050018882
+  },
+  "source_events": {
+    "pause_received": {
+      "event_seq": 249,
+      "jsonl_line_sha256": "e062de8150b3af2f02d65073bd16fb9d7003b28dab4df0817447d8d54f4174af"
+    },
+    "pause_applied": {
+      "event_seq": 270,
+      "jsonl_line_sha256": "b66b9208c3e7b141b293cc0192599dd208700967cf73f34b6a69296d3ea646ce"
+    },
+    "resume_applied": {
+      "event_seq": 271,
+      "jsonl_line_sha256": "4dc0dec3be431d858959761ffa60a0639ee2307a6d541c2703b9918efac4b52c"
+    }
+  },
+  "four_native_anchor_stops": {
+    "carter1": {
+      "anchor": "P1",
+      "reservation_generation": 22,
+      "estimated_pose": {
+        "x_m": 11.992216012764908,
+        "y_m": 1.5883436107516768,
+        "yaw_rad": 1.5077737486209863,
+        "stamp_s": 307.700016048
+      },
+      "HOLD_ack": {
+        "authorization_seq": 2948,
+        "physics_frame": 18456,
+        "evaluation_sim_time_s": 307.58334937505424,
+        "mode": "hold",
+        "valid": true
+      },
+      "stop_sample_count": 227,
+      "stop_first_stamp_s": 296.400015458,
+      "stop_last_stamp_s": 307.700016048,
+      "source_condition": {
+        "phase": "charging",
+        "anchor": "P1",
+        "generation": 22,
+        "goal_uuid": "fd2bd467-f180-4aed-b9bb-ac34d25690b3",
+        "hold_generation": 22,
+        "hold_parked": true,
+        "hold_accepted_goal_uuid": "fd2bd467-f180-4aed-b9bb-ac34d25690b3",
+        "local_clock_s": 307.716682715,
+        "event_clock_s": 307.716682715,
+        "stop_sample_count": 227,
+        "stop_oldest_stamp_s": 296.400015458,
+        "stop_newest_stamp_s": 307.700016048,
+        "qualified": true,
+        "reason": null
+      }
+    },
+    "carter2": {
+      "anchor": "E_CO",
+      "reservation_generation": 35,
+      "estimated_pose": {
+        "x_m": 24.994415012069656,
+        "y_m": 13.948668998676883,
+        "yaw_rad": 1.5596167351437633,
+        "stamp_s": 307.700016048
+      },
+      "HOLD_ack": {
+        "authorization_seq": 2953,
+        "physics_frame": 18456,
+        "evaluation_sim_time_s": 307.58334937505424,
+        "mode": "hold",
+        "valid": true
+      },
+      "stop_sample_count": 52,
+      "stop_first_stamp_s": 305.05001591,
+      "stop_last_stamp_s": 307.650016045,
+      "source_condition": {
+        "phase": "request",
+        "anchor": "E_CO",
+        "generation": 35,
+        "goal_uuid": "5f5d3986-3569-40ea-b9ab-71697d8c4d2f",
+        "hold_generation": 35,
+        "hold_parked": true,
+        "hold_accepted_goal_uuid": "5f5d3986-3569-40ea-b9ab-71697d8c4d2f",
+        "local_clock_s": 307.716682715,
+        "event_clock_s": 307.716682715,
+        "stop_sample_count": 52,
+        "stop_oldest_stamp_s": 305.05001591,
+        "stop_newest_stamp_s": 307.650016045,
+        "qualified": true,
+        "reason": null
+      }
+    },
+    "carter3": {
+      "anchor": "W_LOW",
+      "reservation_generation": 36,
+      "estimated_pose": {
+        "x_m": 9.052958899971097,
+        "y_m": 5.002533367373883,
+        "yaw_rad": -3.1320446614623836,
+        "stamp_s": 307.700016048
+      },
+      "HOLD_ack": {
+        "authorization_seq": 2949,
+        "physics_frame": 18456,
+        "evaluation_sim_time_s": 307.58334937505424,
+        "mode": "hold",
+        "valid": true
+      },
+      "stop_sample_count": 34,
+      "stop_first_stamp_s": 305.950015957,
+      "stop_last_stamp_s": 307.650016045,
+      "source_condition": {
+        "phase": "request",
+        "anchor": "W_LOW",
+        "generation": 36,
+        "goal_uuid": "481a7558-b97f-4121-909a-aa2477b05ea4",
+        "hold_generation": 36,
+        "hold_parked": true,
+        "hold_accepted_goal_uuid": "481a7558-b97f-4121-909a-aa2477b05ea4",
+        "local_clock_s": 307.716682715,
+        "event_clock_s": 307.716682715,
+        "stop_sample_count": 34,
+        "stop_oldest_stamp_s": 305.950015957,
+        "stop_newest_stamp_s": 307.650016045,
+        "qualified": true,
+        "reason": null
+      }
+    },
+    "carter4": {
+      "anchor": "S1",
+      "reservation_generation": 14,
+      "estimated_pose": {
+        "x_m": 3.571859087355408,
+        "y_m": 4.9495483528984785,
+        "yaw_rad": -0.0673567941657889,
+        "stamp_s": 307.700016048
+      },
+      "HOLD_ack": {
+        "authorization_seq": 2948,
+        "physics_frame": 18456,
+        "evaluation_sim_time_s": 307.58334937505424,
+        "mode": "hold",
+        "valid": true
+      },
+      "stop_sample_count": 224,
+      "stop_first_stamp_s": 296.400015458,
+      "stop_last_stamp_s": 307.650016045,
+      "source_condition": {
+        "phase": "request",
+        "anchor": "S1",
+        "generation": 14,
+        "goal_uuid": "2ec3a1ac-2d0e-4ad6-a315-36453227da67",
+        "hold_generation": 14,
+        "hold_parked": true,
+        "hold_accepted_goal_uuid": "2ec3a1ac-2d0e-4ad6-a315-36453227da67",
+        "local_clock_s": 307.716682715,
+        "event_clock_s": 307.716682715,
+        "stop_sample_count": 224,
+        "stop_oldest_stamp_s": 296.400015458,
+        "stop_newest_stamp_s": 307.650016045,
+        "qualified": true,
+        "reason": null
+      }
+    }
+  },
+  "fresh_resume_source": {
+    "phase": "paused",
+    "all_stopped": true,
+    "elapsed_sim_time_s": 352.85001840200005,
+    "original_pause_command_id": "6d6f82a7-0027-47b0-872e-49c631a14882"
+  },
+  "helper": {
+    "source_sha256": "86cc48731f15690e5cbaedd78858da5cde0e1c7880d51b05119374d93b12719e",
+    "receipt_sha256": "cfdc8ad058f958642da2a8f0c6b899fef4ffa41ff19c632e2ca5491450cdc00f",
+    "mode": "resume-only recovery of the same applied pause; no repeated pause",
+    "source_commit": "4dbfdc9d70f649344a40c7637f11c290763d3de4"
+  },
+  "earlier_attempts": [
+    "two explicit time rejections; physical dispatch remained running",
+    "pause applied through Linux API; first helper rejected a subsequently stale stop observation; no resume sent by it"
+  ],
+  "API_topology": {
+    "API": "WSL Linux loopback8766",
+    "ROS_consumer": "same WSL Linux wall clock",
+    "Next_proxy": "Windows loopback3007 with OPS_API_URL=http://127.0.0.1:8766",
+    "native_source_modified": false,
+    "request_age_policy_modified": false
+  },
+  "live_bag_SQL_opened": false,
+  "GT_used_by_evidence_writer": false,
+  "closure": "not claimed here; native driver and paired API owner remain responsible for closure"
+}

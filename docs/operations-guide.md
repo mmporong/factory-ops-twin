@@ -63,7 +63,7 @@ overview 옵션은 추적 카메라 prim의 보정 정보를 남기되 해당 re
 
 관측된 AMR 목록·작업·목적지·속도·SOC 원천·적재물을 표시하며, 지원 capability가 있는 CPU 모델에서 주문 생성과 전체 일시정지·재개를 제공한다. 실행 ID·revision·명령 ID를 결속하고 접수와 적용 결과를 구분한다. 연결 지연이나 실행 변경을 감지하면 조작을 비활성화한다.
 
-[실제 SDK4.5 시험 화면](evidence/kit-console-004/kit-console.png)과 [명령·촬영·종료 근거](evidence/kit-console-004/summary.json)는 CPU 원장 연결 시험이다. 실제 ROS 운송을 조작하는 통합은 남아 있다.
+[실제 SDK4.5 시험 화면](evidence/kit-console-004/kit-console.png)과 [명령·촬영·종료 근거](evidence/kit-console-004/summary.json)는 CPU 원장 연결 시험이다. 같은 Kit 클라이언트의 네이티브 API 정지·재개는054에서 확인했고, Kit 패널 화면의 실제 ROS 연결은 남아 있다.
 
 ### 다음 예약 지점에서 정지·재개
 
@@ -71,14 +71,43 @@ overview 옵션은 추적 카메라 prim의 보정 정보를 남기되 해당 re
 
 정지 요청은 `pending`으로 접수된다. 네 차량이 각자의 예약 지점에 도착하고 새 HOLD 응답과 연속 정지 관측을 충족하면 원천이 `applied`를 발행한다. 물리·ROS·가상 에너지 시계는 계속 흐른다. 재개는 이 상태에서 새 명령 ID와 현재 revision으로 요청한다.
 
-아래 도구는 작업 중인 차량의 엔코더 속도를 관측한 뒤 Kit 패널과 같은 `KitClient`로 정지·재개를 한 번씩 요청하고 원천의 적용 응답을 기록한다. 초기 주차 상태를 운송 중 정지 시연으로 사용하지 않는다. `<실행 ID>`는 해당 새 실행의 ID로 바꾸고 새 출력 파일을 사용한다. 현재 관측 전용 실행051에는 명령을 보내지 않는다.
+WSL ROS를 조작할 때 API도 같은 WSL에서 실행한다. API가 큐에 넣는 `requested_at`과 ROS 수신기의 wall 시계가 같은 OS에 속하도록 구성한다. 관측 전용 Windows API는 계속 지원한다. 다음 예제의 `<시도>`는 사용 중인 동결 실행 폴더로 바꾼다.
 
 ```powershell
 cd "$HOME/factory-ops-twin"
-uv run python scripts/demo/native_anchor_flow.py --expected-run-id "<실행 ID>" --output artifacts/native-anchor-flow.json
+$stage = Join-Path $HOME "FactoryOpsRuntime/local45-transport-<시도>"
+$linuxStage = (wsl.exe --distribution Ubuntu --exec /usr/bin/wslpath -a $stage).Trim()
+wsl.exe --distribution Ubuntu --cd "$linuxStage/source" --exec /usr/bin/python3 -B -m factory_ops.dashboard `
+  --config "$linuxStage/source/configs/factory-fleet4-normal3" --port 8766 `
+  --source "$linuxStage/results/run/dashboard-state.json" `
+  --charging-source "$linuxStage/results/run/charging-state.json" `
+  --events-source "$linuxStage/results/run/actions.jsonl" `
+  --commands-dir "$linuxStage/results/run/commands" --live-anchor-controls
 ```
 
-타임아웃·연결 오류 때 명령을 재전송하거나 실행을 종료하지 않는다. 마지막 적용 상태를 관제에서 확인하고 기존 실행 감독자가 자원을 정리한다. 결과는 API 응답의 근거이며 브라우저 클릭이나 전체 물류 완주의 근거는 아니다. 네 차량의 세부 정지 자료는 같은 실행의 `actions.jsonl`에 있는 `live_control_applied.anchor_evidence`와 함께 확인한다. CPU 프로토콜 검사는 통과했으며 실제4대 정지·재개 실행은 남아 있다.
+웹은 별도 PowerShell에서 같은 API를 선택한다.
+
+```powershell
+cd "$HOME/factory-ops-twin/dashboard"
+$env:OPS_API_URL = "http://127.0.0.1:8766"
+node node_modules/next/dist/bin/next dev --hostname 127.0.0.1 --port 3007
+```
+
+아래 도구는 배정된 작업에서 차량의 엔코더 이동을 관측한 뒤 Kit 패널과 같은 `KitClient`로 정지·재개를 한 번씩 요청하고 원천의 적용 응답을 기록한다. `<실행 ID>`는 해당 실행의 ID로 바꾸고 새 출력 파일을 사용한다.
+
+```powershell
+cd "$HOME/factory-ops-twin"
+uv run python scripts/demo/native_anchor_flow.py --api http://127.0.0.1:8766 --expected-run-id "<실행 ID>" --output artifacts/native-anchor-flow.json
+```
+
+정지 적용 후 관측 신선도가 잠시 떨어지면 새 정지 증거와 resume capability를 기다린다. 도구가 종료된 뒤에는 원천에서 같은 정지 요청의 `applied`를 확인하고, 그 ID로 재개만 복구할 수 있다.
+
+```powershell
+cd "$HOME/factory-ops-twin"
+uv run python scripts/demo/native_anchor_flow.py --api http://127.0.0.1:8766 --expected-run-id "<실행 ID>" --resume-from-pause "<적용된 정지 명령 ID>" --output artifacts/native-anchor-resume.json
+```
+
+타임아웃·연결 오류 때 명령을 재전송하거나 실행을 종료하지 않는다. 마지막 적용 상태와 원천의 현재 정지 관측을 확인한다. [054의 실제4대 정지·재개 기록](evidence/local45-native-control-054.json)은 같은 실행의 `actions.jsonl`에 있는 `live_control_applied.anchor_evidence`와 요청·적용 event를 결속한다. 이는 네이티브 API의 제어 근거이며 브라우저 클릭·Kit 패널 화면·전체 물류 완주의 확인은 남아 있다.
 
 ## 모의 MES 입력
 

@@ -1,6 +1,7 @@
 """Exercise opt-in native pause/resume through the same client as the Kit panel.
 
-This sends two operator requests. It does not freeze physics, command wheels,
+The normal flow sends pause and resume; recovery sends only a fresh resume.
+It does not freeze physics, command wheels,
 release reservations, or qualify browser interaction or a whole transport run.
 """
 from __future__ import annotations

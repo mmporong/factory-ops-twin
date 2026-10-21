@@ -44,9 +44,9 @@
 
 차량을 선택하면 현재 작업, 목적지, 적재물 ID, 엔코더 속도, 가상 SOC와 통로 대기 원인을 확인합니다. 위 화면의 `carter4`는 빈 토트 `F4-TOTE-002`를 자재 위치로 반납하며 다른 차량의 통로 점유 해제를 기다립니다. [출하 3건·재고 54개를 확인하는 전체 화면](docs/images/fleet4-local45-036/dashboard-all-orders.jpg)도 같은 실행에서 촬영했습니다.
 
-웹은 **Next.js·React Three Fiber·Python 운영 API**로 구성했습니다. 실제 ROS 실행은 기본으로 관측 전용입니다. 로컬 4.5 개발 옵션의 **다음 예약 지점 정지·운행 재개**는 요청과 원천 응답 연결을 준비했으며, 네 차량의 실제 정지·재개 확인은 남아 있습니다. 주문 생성·전체 일시정지·재개와 가상 충전 조작은 별도 CPU 운영 모델에서도 지원합니다. 웹의 차량·물품 형상은 원장 기반 도식입니다. [같은 실행의 원본·해시](docs/images/fleet4-local45-036/provenance.json)
+웹은 **Next.js·React Three Fiber·Python 운영 API**로 구성했습니다. 실제 ROS 실행은 기본으로 관측 전용입니다. 로컬4.5 개발 옵션에서는 네 차량의 **다음 예약 지점 정지·운행 재개를 실제 실행에서 확인**했습니다. 같은 Kit 클라이언트와 Linux API를 사용한 [네 차량의 정지·재개 기록](docs/evidence/local45-native-control-054.json)입니다. 주문 생성·전체 일시정지·재개와 가상 충전 조작은 별도 CPU 운영 모델에서도 지원합니다. 웹의 차량·물품 형상은 원장 기반 도식입니다. [관제 이미지의 원본·해시](docs/images/fleet4-local45-036/provenance.json)
 
-정지·재개 코드는 기본 브랜치에 반영했습니다. 네 차량의 새 정지·HOLD 관측을 받은 뒤 적용 결과를 알리며, 물리·ROS·가상 충전 시계는 계속 흐릅니다. 같은 Kit 클라이언트로 접수·적용·재개 응답을 기록하는 [실행 도구](scripts/demo/native_anchor_flow.py)와 [사용 절차](docs/operations-guide.md#다음-예약-지점에서-정지재개)를 준비했습니다. CPU 프로토콜 검사는 통과했으며 실제 정지·재개 확인은 남아 있습니다. [원천 제어 연결](coordination/collab/results/live-anchor-controls-116-integration.json)
+정지 요청은 네 차량의 새 HOLD 응답과 연속 정지 관측이 모인 뒤 적용됩니다. 재개 전에도 관측 신선도를 확인하며, 물리·ROS·가상 충전 시계는 계속 흐릅니다. [실행 도구](scripts/demo/native_anchor_flow.py)는 같은 요청의 적용 기록을 확인해 재개만 복구하는 모드도 제공합니다. 실제 브라우저·Kit 패널의 클릭 연결과 전체 물류 완주는 남아 있습니다. [사용 절차](docs/operations-guide.md#다음-예약-지점에서-정지재개)
 
 ## 공장과 물류 흐름
 
@@ -138,7 +138,7 @@ Kit 확장 `factory.ops.console`에서 AMR 선택 상세, 주문 생성, 전체 
 |---|---|
 | 1. 4대 운영 안정화 | 업무 운송 관측. 전체 정상 완주·기록 종료 확인 중 |
 | 2. 공장·차량·적재 | 공장 시각 층·지지대/롤러·차량 장착·6kg 적재 주행 시험 통과. 도킹·재고 인계 통합은 남음 |
-| 3. 웹·Kit·운영 입력 | 실제 웹 관측 연결. ROS의 다음 예약 지점 정지·재개 코드는 준비, 실제 적용·Kit 통합은 남음 |
+| 3. 웹·Kit·운영 입력 | 실제 웹 관측과4대 네이티브 API 정지·재개 확인. Kit 화면·운영 입력 통합은 남음 |
 | 4. 혼합 운영·예외 처리 | 최종 구성의 폐쇄/복구·급증·재보충·충전 접촉 확인은 남음 |
 | 5. 병목·정책 비교 | 최종 구성 고정 후 6개 파일럿·60회 비교 예정 |
 | 6. 최종 장면 데이터 | 기존 자료 보존. 최종 장면의 수집·검사는 남음 |
@@ -161,7 +161,7 @@ Isaac Sim 물리 실행은 창 없이 헤드리스로 돌리며, GPU 렌더링�
 
 CPU 운영 데모는 Python 3.12·uv, 웹은 Node.js·npm을 사용합니다. GPU 시뮬레이션과 별도로 실행합니다. PowerShell 터미널 두 개를 사용합니다.
 
-정지·재개 개발 옵션은 새 소스로 준비한 4대 실행기와 관제 API 양쪽에서 `--live-anchor-controls`를 켜고, API의 `--commands-dir`를 해당 실행의 `results/run/commands`에 연결합니다. 요청 접수 후 현재 주행 구간이 끝나고 네 차량의 예약 지점 정지가 확인돼야 적용 완료가 됩니다. 물리·공정·가상 충전 시계는 계속 진행합니다. [예약 대기 중 목표 ID 정합](docs/evidence/local45-native-control-053.json)을 수정했으며, 실제 운행의 정지·재개 적용은 새 실행에서 확인합니다.
+정지·재개 개발 옵션은 새 소스로 준비한4대 실행기와 관제 API 양쪽에서 `--live-anchor-controls`를 켜고, API의 `--commands-dir`를 해당 실행의 `results/run/commands`에 연결합니다. ROS가 WSL에서 실행될 때 조작 API도 같은 WSL에서 실행해 같은 OS 시계로 요청을 큐에 넣습니다. 웹은 `OPS_API_URL`로 이 API를 선택합니다. [실제4대 정지·재개 결과](docs/evidence/local45-native-control-054.json)는 전체 운송 완료와 구분합니다.
 
 ```powershell
 cd "$HOME/factory-ops-twin"
