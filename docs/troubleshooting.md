@@ -871,3 +871,7 @@ Microsoft의 [CreateFileW 공유 규칙](https://learn.microsoft.com/en-us/windo
 050은 중계 연결 중인 heartbeat를 supervisor가 `ready`로 검사해 실패했다. Linux 첫 행은 `connecting`, sequence1, 시계0이었으며 예외는 `relay.start` 안에서 발생했다. 주 임무의 Linux 시작과 SDK Popen 이전이므로 World·GPU 공장·새 촬영은 시작되지 않았다. 두 중계는 정상 종료됐다. 원래 호스트 영수증에는 아직 만들지 않은 Linux unit의 정리 거절과 없는 SDK job 영수증이 정리 오류로 남았다. 원본 영수증은 수정하지 않는다.
 
 주기 관측은 `starting/connecting` 동안 파일·sequence를 만들지 않고, 인증된 `ready`에서 첫 행을 게시하도록 고쳤다. 실행 ID·side·상태·sequence 거절 조건은 유지한다. 주 실행기는 OS별 시작 시도 여부를 기록해 미시작과 실제 종료를 구분하며, 시작을 시도한 자원의 기존 소유권·종료 증명은 계속 요구한다. 관련4검사와 SDK Python3.10.15의2파일 구문 확인을 통과했다. 이전156의 연결 완료 뒤 관측·전달 결과를 초기 연결 분기의 증거로 확대하지 않는다. [050 관측·수정 범위·검사](evidence/local45-relay-startup-157.json)
+
+## FOT-105 — 중계 자원 종료와 통신 성공의 구분
+
+내보내기 경로에서 `RelayPair.status=closed`가 자원 회수를 뜻하며 각 중계의 통신 성공을 보장하지 않는 조건을 확인했다. 실제051에서 새 실패가 발생했다는 뜻은 아니다. 중계 사용 실행의 미디어를 승인할 때 양쪽 endpoint의 동일 실행 ID·side·`stopped`·`closed=true`와 오류/정리 오류 없음을 추가로 요구한다. 종료되지 않았거나 실패한 endpoint를 가진 합성 영수증은 정상 미디어로 내보내지 않는다. 새 경계 검사와 기존 OS 소유 종료 검사2개를 통과했다. 실행 중인051의 동결 소스·임무·촬영 설정은 바꾸지 않았으며, 원본 종료 후 CPU 내보내기에 적용한다.

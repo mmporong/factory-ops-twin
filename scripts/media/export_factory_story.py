@@ -133,6 +133,17 @@ def validate_closed(host, mission, scene, session):
             or linux.get("cgroup_populated") is not False or linux.get("cgroup_pids") != []
             or linux.get("live_known_processes") != [] or linux.get("client",{}).get("closed") is not True):
         raise ValueError("both exact owned OS trees and Windows Job must be closed")
+    if host.get("isolated_topic_relay") is True:
+        relay = host.get("relay_pair", {})
+        endpoints = relay.get("endpoints", {})
+        if (relay.get("run_id") != run or relay.get("status") != "closed"
+                or relay.get("windows_closed") is not True or relay.get("linux_closed") is not True
+                or relay.get("cleanup_errors") != [] or set(endpoints) != {"windows", "linux"}
+                or any(not isinstance(value, dict) or value.get("run_id") != run or value.get("side") != side
+                    or value.get("status") != "stopped" or value.get("closed") is not True
+                    or value.get("error") is not None or value.get("cleanup_errors") != []
+                    for side, value in endpoints.items())):
+            raise ValueError("both relay endpoints must stop successfully before media publication")
     business = mission.get("mission",{})
     material = mission.get("material_flow",{})
     orders = session["workload"]["orders"]

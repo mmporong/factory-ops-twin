@@ -202,6 +202,28 @@ class FactoryStoryMediaTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,"complete normal"):
             MEDIA.prepare(self.stage)
 
+    def test_closed_relay_owner_cannot_hide_failed_endpoint(self):
+        host = json.loads((self.stage/"pair-host.json").read_text())
+        relay = {"run_id": RUN, "status": "closed", "windows_closed": True, "linux_closed": True,
+                 "cleanup_errors": [], "endpoints": {
+                     side: {"run_id": RUN, "side": side, "status": "stopped", "closed": True,
+                            "cleanup_errors": []} for side in ("windows", "linux")}}
+        host.update(isolated_topic_relay=True, relay_pair=relay)
+        write(self.stage,"pair-host.json",host)
+        self.assertEqual(MEDIA.prepare(self.stage)["run_id"], RUN)
+        for field, value in (("status", "failed"), ("closed", False), ("run_id", "foreign"),
+                             ("error", "peer failed"), ("cleanup_errors", ["stop failed"])):
+            changed = deepcopy(host)
+            changed["relay_pair"]["endpoints"]["windows"][field] = value
+            write(self.stage,"pair-host.json",changed)
+            with self.subTest(field=field), self.assertRaisesRegex(ValueError,"relay endpoints"):
+                MEDIA.prepare(self.stage)
+        changed = deepcopy(host)
+        changed["relay_pair"]["endpoints"].pop("linux")
+        write(self.stage,"pair-host.json",changed)
+        with self.assertRaisesRegex(ValueError,"relay endpoints"):
+            MEDIA.prepare(self.stage)
+
     def test_missing_phase_sparse_window_or_wrong_source_image_refused(self):
         original = deepcopy(self.frames)
         self.frames = self.frames[:-4]
