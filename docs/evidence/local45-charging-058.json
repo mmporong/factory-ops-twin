@@ -1,0 +1,177 @@
+{
+  "schema_version": 1,
+  "run_id": "d0552aed02044643b8ee22349012ccd1",
+  "producer_source_commit": "5ebd1d0169ce68fe835db34e6601168cb09dc398",
+  "observed_at_utc": "2026-10-21T18:54:15.400279+00:00",
+  "scope": "live point-in-time startup and virtual charging milestone; not final run qualification",
+  "host_status_at_observation": "running",
+  "whole_run_passed": false,
+  "normal_recording_exit_verified": false,
+  "navigation_ready": {
+    "event_seq": 1,
+    "sim_time_s": 7.216667043,
+    "lifecycle_states": {
+      "carter1/planner_server": 3,
+      "carter1/controller_server": 3,
+      "carter1/bt_navigator": 3,
+      "carter2/planner_server": 3,
+      "carter2/controller_server": 3,
+      "carter2/bt_navigator": 3,
+      "carter3/planner_server": 3,
+      "carter3/controller_server": 3,
+      "carter3/bt_navigator": 3,
+      "carter4/planner_server": 3,
+      "carter4/controller_server": 3,
+      "carter4/bt_navigator": 3
+    },
+    "origin_sim_time_s": 7.216667043
+  },
+  "charging_events": [
+    {
+      "event_seq": 3,
+      "sim_time_s": 7.250000378,
+      "kind": "virtual_charging_state",
+      "source_line_sha256": "e4a36c1c913ed3f2efa89ca01316030227257582e69f7bbac547d188ab0c6b2a"
+    },
+    {
+      "event_seq": 14,
+      "sim_time_s": 7.250000378,
+      "kind": "virtual_charger_reserved",
+      "robot_id": "carter1",
+      "source_line_sha256": "c07f0c1d87f8fb45f5fd8f3c2dbbd53fd2fb7adf1a3e278555215b772d466dff"
+    },
+    {
+      "event_seq": 15,
+      "sim_time_s": 7.250000378,
+      "kind": "virtual_charging_state",
+      "phase": "approach",
+      "dock_id": "CH1",
+      "contact_source": "estimated_pose_geometric_dock",
+      "geometric_dock_confirmed": false,
+      "virtual_connector_state": "not_engaged",
+      "physical_contact_verified": false,
+      "source_line_sha256": "04b096089a70ab89535bc3f49ceae8e528d3e44ef1b4d55b944437de913ebf74"
+    },
+    {
+      "event_seq": 58,
+      "sim_time_s": 45.933335729,
+      "kind": "virtual_charger_arrived",
+      "robot_id": "carter1",
+      "source_line_sha256": "5d0ea1a9af426738aee2cc515d59113073aeec11e407bd9cfcf9bca50e846bb6"
+    },
+    {
+      "event_seq": 60,
+      "sim_time_s": 45.933335729,
+      "kind": "virtual_charging_state",
+      "phase": "contact_pending",
+      "dock_id": "CH1",
+      "contact_source": "estimated_pose_geometric_dock",
+      "geometric_dock_confirmed": false,
+      "virtual_connector_state": "not_engaged",
+      "physical_contact_verified": false,
+      "source_line_sha256": "ec711f8d7a84805fe316aeceaf0003aeb3e4fe1d3dc855f017b16897f5e036de"
+    },
+    {
+      "event_seq": 63,
+      "sim_time_s": 47.000002451,
+      "kind": "virtual_charging_state",
+      "phase": "charging",
+      "dock_id": "CH1",
+      "contact_source": "estimated_pose_geometric_dock",
+      "geometric_dock_confirmed": true,
+      "virtual_connector_state": "simulated_engaged",
+      "physical_contact_verified": false,
+      "source_line_sha256": "40d53009c85bbdd0691b220b1bf391bb301bf47f0dd1f33380ffbfc09ed6a643"
+    },
+    {
+      "event_seq": 86,
+      "sim_time_s": 97.516671753,
+      "kind": "virtual_charging_state",
+      "phase": "undock_pending",
+      "dock_id": "CH1",
+      "contact_source": "estimated_pose_geometric_dock",
+      "geometric_dock_confirmed": false,
+      "virtual_connector_state": "simulated_disengaging",
+      "physical_contact_verified": false,
+      "source_line_sha256": "94f9114b7047ef09fc2b4448830219be544e94993c7b760216726f2d14b66937"
+    },
+    {
+      "event_seq": 87,
+      "sim_time_s": 97.550005088,
+      "kind": "virtual_charger_released",
+      "robot_id": "carter1",
+      "dock_id": "CH1",
+      "charging_reservation_released": true,
+      "body_occupancy_released": false,
+      "source_line_sha256": "88df2e5e8ee611df7d5ac8bfd5ca596c3769827d2e540f0df67cb58ddc43d46c"
+    },
+    {
+      "event_seq": 88,
+      "sim_time_s": 97.550005088,
+      "kind": "virtual_charging_state",
+      "source_line_sha256": "ec179d0d90a266a7b8146128fe16bb6f4b3ba7c38c89ae1638617a76bbce887a"
+    }
+  ],
+  "configured_resume_soc": 0.86,
+  "observed_SOC_samples": [
+    {
+      "sim_time_s": 62.000003234,
+      "battery_pct": 85.18703031806696,
+      "charging_phase": "charging"
+    },
+    {
+      "sim_time_s": 128.500006702,
+      "battery_pct": 85.93591691895315,
+      "charging_phase": null
+    }
+  ],
+  "peak_SOC_sample_recorded": false,
+  "charging_increase_and_release_observed": true,
+  "contact_source": "estimated_pose_geometric_dock",
+  "physical_contact_or_electrical_charging_verified": false,
+  "dashboard": {
+    "run_id": "d0552aed02044643b8ee22349012ccd1",
+    "robot_count": 4,
+    "connection": "connected",
+    "input_sources": {
+      "primary": "/mnt/c/Users/LIMMM/FactoryOpsRuntime/local45-transport-058/results/run/dashboard-state.json",
+      "charging": "/mnt/c/Users/LIMMM/FactoryOpsRuntime/local45-transport-058/results/run/charging-state.json",
+      "projection": "same-run read-only ROS virtual charging"
+    },
+    "browser_click_verified": false
+  },
+  "progress_at_observation": {
+    "completed_orders": 0,
+    "elapsed_sim_s": 121.033339646,
+    "released_orders": 3,
+    "robots": {
+      "carter1": {
+        "anchor": "P1",
+        "generation": 11,
+        "phase": "idle",
+        "target": null
+      },
+      "carter2": {
+        "anchor": "W_HIGH",
+        "generation": 17,
+        "phase": "following",
+        "target": "S1"
+      },
+      "carter3": {
+        "anchor": "P3",
+        "generation": 3,
+        "phase": "idle",
+        "target": null
+      },
+      "carter4": {
+        "anchor": "S3",
+        "generation": 14,
+        "phase": "request",
+        "target": "CI"
+      }
+    },
+    "run_id": "d0552aed02044643b8ee22349012ccd1",
+    "scenario_id": "fleet4_transport_normal"
+  },
+  "active_rosbag_SQL_opened": false
+}
