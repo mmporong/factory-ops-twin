@@ -1,0 +1,40 @@
+{
+  "task_id": "localization-critical-dispatch-120",
+  "attempt": 1,
+  "contract_revision": 112,
+  "owner": "control",
+  "binding": {
+    "session": "default",
+    "pane_id": "w1:p1C",
+    "terminal_id": "term_65e06d27e415810",
+    "agent_session": "01a152aa-24b4-7a31-92e3-a2b620f4feeb"
+  },
+  "project_root": "C:\\Users\\LIMMM\\factory-ops-twin",
+  "base_commit": "fc5b6f7ee90af9478e8ed8ceb195551580ee9128",
+  "goal": "Fix actual G3 TF callback/clock dispatch freshness under scan/action load without relaxing freshness or increasing retry budgets; prepare bounded real Jazzy reproduction when useful.",
+  "write_paths": [
+    "scripts/ros/g3_mission.py",
+    "factory_ops/callback_drain.py",
+    "tests/test_localization_dispatch.py",
+    "tests/test_callback_drain.py",
+    "scripts/ros/probe_localization_dispatch.py",
+    "coordination/collab/results/localization-critical-dispatch-120.json"
+  ],
+  "input_sha256": {
+    "scripts/ros/g3_mission.py": "664180c0b89acad2a506662fb90032c7d93743b3fbfcaf060a3cc7547c50afe8",
+    "factory_ops/callback_drain.py": "db76cd91b9b268ebab053d0bf8d610e336a2f3d8cb1bd0ce49be45bd198f6d17",
+    "tests/test_localization_dispatch.py": "bbe937d3e4405a9fc0c606f311df6cbce3d82567c4f761409221a61498797c04",
+    "tests/test_callback_drain.py": "2f937860b4b711a6df718e87eacd9d80ce572be98c4f196054c98bb054ccd2da",
+    "docs/evidence/local45-localization-window-121.json": "c6fb86ee60b723cd65d369f98736021bbf83081a5ec74ae7e98d558e64975bca",
+    "docs/evidence/local45-transport-041.json": "4240eb7f5c726df778ac2d0cbcafec172c5b221d3d097aaf2674acdf031b5aab"
+  },
+  "result_path": "C:\\Users\\LIMMM\\factory-ops-twin\\coordination\\collab\\results\\localization-critical-dispatch-120.json",
+  "acceptance": [
+    "ACK120 attempt1 contract112. Existing designated control pane only. You are not alone. Preserve116 controls, all unowned dashboard edits and frozen/closed041/118/119 data. Root owns carrier_robot/probe_loaded_carrier/media/docs/Git. No edits to those. No GPU/SDK/Brev/browser/new agents/Git mutations/dependency installs/server daemon.",
+    "User milestone is four of eight stages completed, not a review exercise. One changed-behavior CPU/real-ROS slice only, no whole suite or new review chain. Diagnose and implement a concrete fix; do not return a broad research plan. Source041 localization_dispatch shows3 drains exhausting50ms; C1 composed stamp1211.200063169 vs clock1211.766729865. Closed121 already found11 newer raw TF rows recorded before failure, latest1211.750063198; bag receipt is not proof of G3 callback execution or TF buffer state. Do not repeat closed SQL merely to reconfirm these facts.",
+    "Inspect actual adapter structure: TF Buffer/TransformListener, high-rate scan forwarding, odometry and action callbacks currently share each robot node/executor; event clock and robot clocks also process via callbacks. Separate safety-critical TF/clock processing from expensive scan/action queues or another evidence-supported scheduling boundary if needed. Preserve full original transforms and stop FIFO semantics, namespace/remap, source identity, cleanup and116 controls. No GT control, cached stale acceptance, transform stamp replacement, clock freezing/offset, TTL increase, navigation radius/tolerance/horizon change, extra max_attempts beyond3 or drain budget/round limit increase.",
+    "Use installed Jazzy rclpy/tf2 source as versioned primary references. Bounded WSL ROS experiment is allowed only for this component with own namespace/domain distinct from factory domain73, no SDK/Nav2 full run. All created nodes/executors/processes must close and report no leftovers. ROS setup source before nounset; Windows helper JSON encoding UTF8 explicit, module execution from root. Native scene/GPU remains root-only.",
+    "A small real rclpy TF buffer callback reproduction under scan/action-like load is preferable to repeated full2h missions. It must use real message stamps/clock and realistic shared vs separated node scheduling, preserve rejection of persistent true sensor loss, and record actual scheduling results without asserting replay is full041 reproduction. Keep wall bound<=120s and kill owned process tree if needed; never take ownership of unrelated WSL units. If reproduction cannot safely run report exact blocker and provide meaningful CPU tests.",
+    "Only focused tests proving the changed scheduling/lifecycle/freshness boundary. Keep3.10 syntax for shared files. Return changed paths/SHA, commands/results, source refs, architecture/cleanup details and native uncertainties to result_path. Do not self-accept; root receives once and runs actual scene later."
+  ]
+}

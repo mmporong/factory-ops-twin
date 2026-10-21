@@ -2,11 +2,11 @@
 
 가상 센서 모듈 공장에서 **4대 AMR의 자재 공급·완제품 출하·빈 용기 회수**를 Isaac Sim·ROS 2와 웹 관제로 연결하는 프로젝트입니다.
 
-![4대 AMR의 실제 공장 운송 미리보기](docs/images/fleet4-local45-036/operations-preview.gif)
+![4대 AMR의 실제 공장 운송 미리보기](docs/images/fleet4-local45-036/operations-preview-smooth.gif)
 
-[전체 운송 영상 · 25.4초 MP4](docs/images/fleet4-local45-036/operations-business-complete.mp4) · [공장 원본 이미지](docs/images/fleet4-local45-036/overview.png) · [미디어 출처](docs/images/fleet4-local45-036/readme-preview-provenance.json)
+[전체 운송 영상 · 25.4초 MP4](docs/images/fleet4-local45-036/operations-business-complete.mp4) · [공장 원본 이미지](docs/images/fleet4-local45-036/overview.png) · [미디어 출처](docs/images/fleet4-local45-036/readme-smooth-preview-provenance.json)
 
-실제 RGB의 명목 74배속 타임라인에서 12초를 골랐습니다. 촬영 사이에는 이전 프레임을 유지하며 움직임을 보간하지 않습니다. 이 실행은 **출하 3건·빈 토트 반납 3건·4대 주차를 마쳤지만, 최종 기록 종료 검사에 실패**했습니다. 전체 정상 완주는 아직 확인 중입니다.
+실제 RGB의 명목 74배속 타임라인에서 12초를 골랐습니다. GIF는 원본 영상의 10fps를 유지합니다. 촬영 사이에는 이전 프레임을 유지하며 움직임을 보간하지 않아 긴 촬영 간격의 끊김은 남습니다. 이 실행은 **출하 3건·빈 토트 반납 3건·4대 주차를 마쳤지만, 최종 기록 종료 검사에 실패**했습니다. 전체 정상 완주는 아직 확인 중입니다.
 
 ## AMR을 클릭하면 보이는 운영 상태
 

@@ -123,9 +123,6 @@ def main() -> int:
         if not root_prim.IsValid():
             raise ValueError("expected Nova Carter root is absent")
         transforms = UsdGeom.XformCache(Usd.TimeCode.Default())
-        bounds = UsdGeom.BBoxCache(Usd.TimeCode.Default(),
-            [UsdGeom.Tokens.default_, UsdGeom.Tokens.render, UsdGeom.Tokens.proxy, UsdGeom.Tokens.guide],
-            useExtentsHint=False, ignoreVisibility=True)
 
         def matrix(prim):
             value = transforms.GetLocalToWorldTransform(prim)
@@ -146,9 +143,41 @@ def main() -> int:
             "robot_world_from_local": matrix(root_prim),
             "chassis_world_from_local": matrix(chassis_prim) if chassis_prim.IsValid() else None,
             "rigid_bodies": [], "articulation_roots": [], "colliders": [], "sensors": [], "composition_errors": [],
-            "source": "composed USD bounds/native XformCache before stepping; not cooked hull, ray visibility or mount strength",
+            "source": "geometry-computed local extents transformed by native XformCache before stepping; not cooked hull, ray visibility or mount strength",
             "sensor_keepout_source": "authored 0.16m cube around measured camera/lidar frame candidates; lidar name matches are conservative anchors, not proof of a functioning sensor or FOV"}
         report["native_geometry"] = measured
+        report["usd_version"] = list(Usd.GetVersion())
+
+        def collision_bound(collider):
+            # Authored extent is a cached value, not the shape parameters.
+            # Nova Carter's caster Cylinder has a stale 100m cached extent.
+            # Recompute every geometry leaf and preserve both values without
+            # modifying the asset or silently trusting a malformed cache.
+            combined = Gf.Range3d()
+            leaves = []
+            for leaf in Usd.PrimRange(collider, Usd.TraverseInstanceProxies()):
+                boundable = UsdGeom.Boundable(leaf)
+                if not boundable:
+                    continue
+                computed = UsdGeom.Boundable.ComputeExtentFromPlugins(boundable, Usd.TimeCode.Default())
+                if computed is None or len(computed) != 2:
+                    raise ValueError("no geometry extent computation for collider leaf: "+str(leaf.GetPath()))
+                lo, hi = ([float(v) for v in point] for point in computed)
+                if (not all(math.isfinite(v) for v in lo+hi)
+                        or any(b < a for a, b in zip(lo, hi)) or all(b == a for a, b in zip(lo, hi))):
+                    raise ValueError("invalid geometry-computed collider extent: "+str(leaf.GetPath()))
+                local_range = Gf.Range3d(Gf.Vec3d(*lo), Gf.Vec3d(*hi))
+                leaf_box = Gf.BBox3d(local_range, transforms.GetLocalToWorldTransform(leaf)).ComputeAlignedRange()
+                combined.UnionWith(leaf_box)
+                authored = boundable.GetExtentAttr().Get()
+                leaves.append({"path": str(leaf.GetPath()), "type": leaf.GetTypeName(),
+                    "authored_extent": None if authored is None else [[float(v) for v in p] for p in authored],
+                    "computed_extent": [lo, hi],
+                    "world_aabb_m": {"center_m": list(leaf_box.GetMidpoint()), "size_m": list(leaf_box.GetSize())}})
+            if not leaves or combined.IsEmpty():
+                raise ValueError("enabled collider has no computable geometry leaves: "+str(collider.GetPath()))
+            return combined, leaves
+
         prim_count = 0
         for prim in Usd.PrimRange(root_prim, Usd.TraverseInstanceProxies()):
             bounded()
@@ -164,7 +193,7 @@ def main() -> int:
                 measured["rigid_bodies"].append({"path": path, "enabled": bool(body.GetRigidBodyEnabledAttr().Get()),
                     "kinematic": bool(body.GetKinematicEnabledAttr().Get()), "world_from_local": matrix(prim)})
             if prim.HasAPI(UsdPhysics.CollisionAPI) and UsdPhysics.CollisionAPI(prim).GetCollisionEnabledAttr().Get():
-                box = bounds.ComputeWorldBound(prim).ComputeAlignedRange()
+                box, extent_sources = collision_bound(prim)
                 if box.IsEmpty():
                     raise ValueError("empty enabled collision bound: "+path)
                 parent = prim
@@ -175,8 +204,10 @@ def main() -> int:
                     report["invalid_native_bound"] = {"prim": path, "raw_repr": repr((center, size))}
                     raise ValueError("invalid enabled native collider bound: "+path)
                 measured["colliders"].append({"path": path, "body_path": str(parent.GetPath()) if parent.IsValid() else "",
-                    "shape_type": prim.GetTypeName(), "world_aabb_m": {"center_m": center, "size_m": size}})
-            if (prim.IsA(UsdGeom.Camera) or "lidar" in (prim.GetName()+" "+prim.GetTypeName()+" "+" ".join(prim.GetAppliedSchemas())).lower()):
+                    "shape_type": prim.GetTypeName(), "world_aabb_m": {"center_m": center, "size_m": size},
+                    "extent_sources": extent_sources})
+            if (prim.IsA(UsdGeom.Camera) or (prim.IsA(UsdGeom.Xformable)
+                    and "lidar" in (prim.GetName()+" "+prim.GetTypeName()+" "+" ".join(prim.GetAppliedSchemas())).lower())):
                 measured["sensors"].append({"path": path, "type": prim.GetTypeName(),
                     "applied_schemas": list(prim.GetAppliedSchemas()),
                     "classification": "typed camera" if prim.IsA(UsdGeom.Camera) else "lidar type/schema/name clearance candidate",

@@ -695,6 +695,8 @@ SDK mission-failed는 위 ROS 교착 실패의 후속이다. 양쪽 소유 실�
 
 118은 실제 Nova Carter를 불러온 뒤 네 post 지지면·차체/센서 간섭·기존 반경 검사에서 장착 후보를 거절했다. 물리 장착·운송·RGB 촬영 전 종료다. 특히 composed collision AABB 반경이71.1667m로 계산돼 caster collider의 extent/변환 해석부터 확인해야 한다. 이 값을 실제 로봇 반경으로 확정하거나, 후보를 통과시키기 위해 설정 반경을 넓히지 않는다. 기존 단독 지지대용 후보를 차체 좌표에 그대로 놓는 가정도 실제 측정과 분리해 수정한다. [118 원본](evidence/local45-loaded-carrier-118.json)은19파일·Job 종료·잔여 PID없음과 C/E 보존을 확인했다.
 
+후속 측정은 [OpenUSD Boundable의 geometry extent 계산](https://openusd.org/24.08/api/class_usd_geom_boundable.html)을 사용해 실제 형상 파라미터에서 경계를 다시 계산하며 원래 cached extent와 함께 기록한다. 재질/셰이더 이름에 lidar가 들어가는 경우를 센서 프레임으로 수집하지 않도록 Xformable 조건을 적용한다.118 차체 외곽 상단에 저작된2mm 장착 간격을 더한 새 후보 설정을 별도로 작성했으며, 기존 후보와 반경은 보존한다. 실제 설치 API·새 경계·장착은 후속 native 시험으로 확인한다.
+
 독립적인119 고정 롤러 시험에서는6kg 토트를 실제 회전 조인트와 접촉 마찰로 이동시켜 적재·반납을 확인했다. World9.691667초·198개 희소 관측·RGB2장·정리 오류없음·Job 종료·21파일의 C/E 보존을 통과했다. [119 결과](evidence/local45-roller-transfer-119.json)는 고정 시험대 이송 근거이며118의 장착 거절을 해결한 것으로 표시하지 않는다.
 
 보조 JSON 수신/편집 도구는 `read_text(encoding='utf-8')` 또는 BOM 파일의 `utf-8-sig`를 명시한다. Windows 기본 cp949로 한글 receipt를 읽으며 발생한 decode 오류는 제품·SDK 실패와 구분하고 UTF-8로 다시 읽는다. 파일 경로 실행의 import 문제는 FOT-082의 저장소 루트 모듈 실행을 유지한다.

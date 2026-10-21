@@ -1,0 +1,44 @@
+{
+  "run_id": "e6be8b8845ba47d3a942a7c2867fee2a",
+  "producer_source_commit": "26e19711b1ddf29ad02f2bbe312cee337779b23c",
+  "source": {
+    "path": "operations-business-complete.mp4",
+    "sha256": "edd5fd9cb47f76792b7ea0120c882f0dcea5d9782a9f6915dd15f33b89d01d92",
+    "bytes": 1381689
+  },
+  "output": {
+    "path": "operations-preview-smooth.gif",
+    "sha256": "05fc149838919cce2ce02561fcb68d4342747f18d25806275ac3dc68e425ace9",
+    "bytes": 5255891,
+    "probe": {
+      "programs": [],
+      "stream_groups": [],
+      "streams": [
+        {
+          "width": 800,
+          "height": 450,
+          "nb_frames": "120"
+        }
+      ],
+      "format": {
+        "duration": "12.000000",
+        "size": "5255891"
+      }
+    }
+  },
+  "source_video_excerpt_s": [
+    4,
+    16
+  ],
+  "source_video_fps": 10,
+  "previous_GIF_fps": 4,
+  "output_GIF_fps": 10,
+  "nominal_original_timeline_speedup": 74,
+  "operation": "Actual source video resampled at its original10fps, scaled and GIF palette conversion; no interpolation or generated frames",
+  "source_is_sparse_RGB_timeline": true,
+  "sparse_capture_limit_remains": true,
+  "continuous_real_time_motion": false,
+  "full_run_passed": false,
+  "business_tasks_completed": true,
+  "original_GIF_and_source_preserved": true
+}
