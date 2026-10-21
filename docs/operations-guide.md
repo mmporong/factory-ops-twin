@@ -31,17 +31,19 @@ npm run dev -- --port 3007
 
 ## 실제 ROS 실행의 읽기 전용 관측
 
-ROS 임무의 `--dashboard` 발행기가 같은 실행의 `dashboard-state.json`을 기록한다. API의 `--source`로 이 파일을 읽고, 가상 충전과 운영 사건은 같은 실행의 `charging-state.json`, `actions.jsonl`로 연결한다. `<실행명>`은 관측할 실행 폴더 이름으로 바꾼다.
+ROS 임무의 `--dashboard` 발행기가 같은 실행의 `dashboard-state.json`을 기록한다. API의 `--source`로 이 파일을 읽고, 가상 충전과 운영 사건은 같은 실행의 `charging-state.json`, `actions.jsonl`로 연결한다. `--config`는 시뮬레이션과 같은 배치를 선택한다. 아래는4대 정상 운송 배치의 예이며 `<실행명>`은 관측할 실행 폴더 이름으로 바꾼다.
 
 ```powershell
 cd "$HOME/factory-ops-twin"
 $taskRunRoot = Join-Path $HOME 'FactoryOpsRuntime/<실행명>/results/run'
-uv run python -m factory_ops.dashboard --source "$taskRunRoot/dashboard-state.json" --charging-source "$taskRunRoot/charging-state.json" --events-source "$taskRunRoot/actions.jsonl"
+uv run python -m factory_ops.dashboard --config configs/factory-fleet4-normal3 --source "$taskRunRoot/dashboard-state.json" --charging-source "$taskRunRoot/charging-state.json" --events-source "$taskRunRoot/actions.jsonl"
 ```
 
 `map→base_link` 추정 위치·엔코더 속도·작업 원장을 표시한다. 실제 ROS 원천은 관측 전용이며 웹에서 차량 주행·일시정지·주문을 명령하지 않는다. 관측이 오래되면 stale로 표시하고 원천에 없는 SOC·충전 대기열은 추정해서 채우지 않는다. 웹 임무 경과 시각과 사건의 ROS 원본 시각을 구분한다. 웹 관측을 종료 결과나 학습 데이터 승인으로 사용하지 않는다.
 
 실행 중 bag SQLite에는 조회나 복사용 연결을 열지 않는다. 관측은 JSON/JSONL을 사용하며 bag 분석은 기록기·소유 실행 종료를 확인한 뒤 수행한다.
+
+[실행051 연결 기록](evidence/local45-live-web-158.json)은 실행 ID·4대 차량·배치 revision이 원천과 일치하고 Next.js 프록시까지 전달됨을 확인한 자료다. 이 실행의 API는 관측 전용이다. 차량 선택 클릭과 실제 정지·재개의 브라우저 통합 완료는 별도 확인이 남아 있다.
 
 ## Kit 운영 패널
 
