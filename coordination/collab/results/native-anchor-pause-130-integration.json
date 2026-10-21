@@ -1,0 +1,35 @@
+{
+  "task_id": "native-anchor-pause-130",
+  "attempt": 1,
+  "contract_revision": 116,
+  "acceptance_authority": "root",
+  "status": "accepted_next_source_fix_native_pending",
+  "received_source_sha256": {
+    "scripts/ros/g3_mission.py": "315e0a40fe6e0a9fa6a07e97f5548c5a3ef6536a8940f02c52e2a8ead0ad4b51",
+    "tests/test_g3_live_control.py": "008d1e0b50fe6f6fc6522d4f2fb053960e015323302d3ee666a0e77883c3173c"
+  },
+  "worker_receipt_sha256": "155895e83641b4a1426b94199ffc50dfcc6bcaeed0fbc60efa930bc6c3600117",
+  "all_received_SHA_and_input_pins_matched": true,
+  "root_content_pass": "One parked accepted-goal identity, retained-space, fresh actual stop/pose/ACK and bounded diagnostic pass. No repeated author tests.",
+  "author_validation_received": [
+    {
+      "command": ".venv/Scripts/python.exe -B -m unittest tests.test_g3_live_control.G3LiveControlTests.test_native_parked_accepted_binding_and_bounded_missing_condition_diagnostic tests.test_g3_live_control.G3LiveControlTests.test_all_stop_uses_real_existing_window_pose_hold_and_ack tests.test_g3_live_control.G3LiveControlTests.test_stale_pose_wrong_hold_old_ack_and_moving_odom_cannot_ack -v",
+      "cwd": "C:/Users/LIMMM/factory-ops-twin",
+      "result": "3 focused tests PASS;0.002s; one pass",
+      "coverage": "새 회귀는 실제 RouteReservationManager의 reserve→accepted→finished→shrink 결과를 구성해 accepted UUID 보존을 재현합니다. full/shrunk parked hold를 허용하고, unparked·다른 accepted UUID·generation/tiles·stale/도착 pose·잘못된 ACK·한 개 near-zero 표본은 거절합니다. 진단 clock churn 억제/16행 상한/제어 revision 불변 및 부분 fleet 증거의 pending 유지도 확인했습니다.",
+      "scope": "native042의 UUID와 category를 참고한 구성 CPU 입력입니다. 실제 native stop window 재생이나 applied 성공 증명이 아닙니다."
+    },
+    {
+      "command": "Python ast.parse(..., feature_version=(3,10)) for scripts/ros/g3_mission.py and tests/test_g3_live_control.py",
+      "result": "2 PASS"
+    },
+    {
+      "command": "assigned-path diff and source digest comparison",
+      "result": "live_control.py 및 reservation manager는 읽기 전용으로 유지했습니다. 다른 소스/README/GPU/ROS/WSL/bag/전체 suite/추가 review는 수행하지 않았습니다."
+    }
+  ],
+  "unique_native_cause_claimed": false,
+  "native_pause_resume_success": false,
+  "stage1_complete": false,
+  "stage3_complete": false
+}

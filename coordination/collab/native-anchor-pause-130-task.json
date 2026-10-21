@@ -1,0 +1,32 @@
+{
+  "task_id": "native-anchor-pause-130",
+  "attempt": 1,
+  "contract_revision": 116,
+  "owner": "control",
+  "binding": {
+    "session": "default",
+    "pane_id": "w1:p1C",
+    "terminal_id": "term_65e06d27e415810",
+    "agent_session": "01a152aa-24b4-7a31-92e3-a2b620f4feeb"
+  },
+  "project_root": "C:\\Users\\LIMMM\\factory-ops-twin",
+  "base_commit": "042667ea416099ca49d2e5f2ca7d712875edb643",
+  "input_sha256": {
+    "scripts/ros/g3_mission.py": "abc67ce880520de0f4031bdcbb496ed06dd0f82e0224f248d49414e9f18f7f24",
+    "factory_ops/live_control.py": "c82f5ab3ae2f3b73444ed59a4f950c61542c15af204be702354229740c3ffe46",
+    "tests/test_g3_live_control.py": "2c4a91db08311d5816b838c4cbe8efc280a29b57438ebe20fee252b1548e5b3c"
+  },
+  "write_paths": [
+    "scripts/ros/g3_mission.py",
+    "tests/test_g3_live_control.py",
+    "coordination/collab/results/native-anchor-pause-130.json"
+  ],
+  "result_path": "C:\\Users\\LIMMM\\factory-ops-twin\\coordination\\collab\\results\\native-anchor-pause-130.json",
+  "goal": "Diagnose next-anchor pause native non-ack and fix next-source qualification/diagnostic only if code evidence supports it.",
+  "acceptance": [
+    "ACK130 attempt1 contract116. You are not alone. Root owns actual042 SDK/ROS, GIF/media, config60, API, Git/docs/board. You own only listed main source/test/receipt. No GPU/ROS/WSL commands, no source/archive/checkpoint/inflight edits, no cloud/Git/new agent. Do not touch frozen042 source or active bag. No SDK run.126 native128 PASSED and20fps published; do not redo126.",
+    "Actual042 run3ccadc7823814c86a07568c9ca911a8f, sourceb413b8e. Root submitted one live pause via API. At World140-165 all4 speeds nearzero, carter1charging,carter2idle,carter3request,carter4idle, but live_control.phase remains pause_pending/all_stoppedFalse. This is observed, unique cause not yet established. Read bounded regularJSON/JSONL only in C:/Users/LIMMM/FactoryOpsRuntime/local45-transport-042/results/run and artifacts/local45/042-control. Current source copies are frozen; working source can be repaired for next attempt only.",
+    "Inspect live_anchor_stopped, retained manager hold binding vs rt generation/follow_uuid, live_anchor_goal vs station anchor, StopOdometryReceiver/committed gate. Identify concrete category mismatch or missing native observation. Preserve actual stopped/pose/ACK/freshness thresholds and HOLD/retained tiles semantics. Do not make resume or applied succeed without actual all4stop evidence. No guessed broad relaxation.",
+    "If provable bounded defect, fix next-source and one focused regression with actual or constructed reproduction; no full suite/review chains. Add bounded per-robot missing-condition diagnostic during blocked controls if needed using current published journal, avoiding continuous highvolume arrays. If no proven cause, report exact missing evidence and do not invent fix. Receipt sourceSHA, inputs, command/result, uncertainties. Root receives once and integrates."
+  ]
+}

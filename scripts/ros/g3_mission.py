@@ -1171,32 +1171,89 @@ def dashboard_state(snapshot: Mapping[str, Any], robots: Mapping[str, Any], *,
 
 def live_anchor_stopped(robot: str, rt: Mapping[str, Any], hold: Mapping[str, Any] | None, *,
         goal: Any, now_s: float, pause_after_s: float, run_id: str, scenario_id: str,
-        ack: Any, limits: Mapping[str, Any]) -> bool:
+        ack: Any, limits: Mapping[str, Any], diagnostic: dict[str, Any] | None = None) -> bool:
     """Qualify current reserved anchor; never mutate the navigation stop gate."""
-    if rt["phase"] not in {"idle", "request", "dwell", "charging"} or goal is None or hold is None:
+    def deny(reason: str) -> bool:
+        if diagnostic is not None:
+            diagnostic.update(qualified=False, reason=reason)
         return False
+
+    if diagnostic is not None:
+        diagnostic.update(phase=rt["phase"], anchor=rt.get("anchor"), generation=rt["generation"],
+            goal_uuid=rt.get("follow_uuid"), hold_generation=hold.get("generation") if hold else None,
+            hold_parked=hold.get("parked") if hold else None,
+            hold_accepted_goal_uuid=hold.get("accepted_goal_uuid") if hold else None)
+    if rt["phase"] not in {"idle", "request", "dwell", "charging"}:
+        return deny("navigation_phase_not_anchor_stopped")
+    if goal is None or hold is None:
+        return deny("anchor_goal_or_retained_hold_missing")
     if (hold.get("generation") != rt["generation"] or hold.get("goal_uuid") != rt["follow_uuid"]
-            or hold.get("accepted_goal_uuid") is not None
             or not rt["held_tiles"] or frozenset(map(tuple, hold["tiles"])) != rt["held_tiles"]):
-        return False
+        return deny("retained_hold_binding_or_tiles_mismatch")
+    # mark_goal_finished retains the accepted identity; shrink_hold deliberately
+    # carries it into the new parked generation. It is not an in-flight action
+    # when parked=True, but an unparked/differently bound accepted goal still
+    # cannot qualify a pause.
+    accepted = hold.get("accepted_goal_uuid")
+    if accepted is not None and not (hold.get("parked") is True and accepted == rt["follow_uuid"]):
+        return deny("accepted_goal_not_matching_parked_hold")
     pose = rt.get("pose")
     if pose is None or not 0 <= now_s-pose["stamp_s"] <= limits["pose_ttl_s"]:
-        return False
+        return deny("estimated_pose_missing_stale_or_future")
     try:
         auth = rt["last_authorization"]
         if (auth.get("mode") != "hold" or auth.get("run_id") != run_id
-                or not auth["issued_sim_time_s"] <= now_s <= auth["valid_until_sim_time_s"]
-                or not 0 <= now_s-ack["evaluation_sim_time_s"] <= limits["authorization_ttl_s"]):
-            return False
-        validate_arrival(pose, goal, xy_limit=limits["station_xy_tolerance_m"], yaw_limit=limits["station_yaw_tolerance_rad"])
+                or not auth["issued_sim_time_s"] <= now_s <= auth["valid_until_sim_time_s"]):
+            return deny("current_hold_authorization_missing_or_expired")
+        if not isinstance(ack, Mapping) or not 0 <= now_s-ack["evaluation_sim_time_s"] <= limits["authorization_ttl_s"]:
+            return deny("hold_ack_missing_stale_or_future_in_event_clock")
+        try:
+            validate_arrival(pose, goal, xy_limit=limits["station_xy_tolerance_m"], yaw_limit=limits["station_yaw_tolerance_rad"])
+        except ValueError:
+            return deny("estimated_pose_outside_anchor_arrival_limits")
         local_now = rt["node"].get_clock().now().nanoseconds/1e9
         stopped = committed_stopped_odometry_record(rt["live_stop_receiver"], local_now_s=local_now, event_now_s=now_s)
-        return (stopped is not None and stopped["stop_measurement_start_stamp_s"] > pause_after_s
-            and valid_hold_ack(ack, run_id=run_id, scenario_id=scenario_id, robot_id=robot,
+        if diagnostic is not None:
+            samples = rt["live_stop_receiver"].samples
+            diagnostic.update(local_clock_s=local_now, event_clock_s=now_s, stop_sample_count=len(samples),
+                stop_oldest_stamp_s=samples[0]["stamp_s"] if samples else None,
+                stop_newest_stamp_s=samples[-1]["stamp_s"] if samples else None)
+        if stopped is None:
+            return deny("continuous_stopped_odometry_not_committed_on_both_clocks")
+        if stopped["stop_measurement_start_stamp_s"] <= pause_after_s:
+            return deny("stop_window_not_strictly_after_pause_request")
+        if not valid_hold_ack(ack, run_id=run_id, scenario_id=scenario_id, robot_id=robot,
                 minimum_sequence=rt["live_hold_min_sequence"], generation=rt["generation"],
-                goal_uuid=rt["follow_uuid"], terminal_time_s=pause_after_s, now_s=local_now))
+                goal_uuid=rt["follow_uuid"], terminal_time_s=pause_after_s, now_s=local_now):
+            return deny("hold_ack_identity_sequence_scope_or_local_clock_not_qualified")
+        if diagnostic is not None:
+            diagnostic.update(qualified=True, reason=None)
+        return True
     except (ValueError, KeyError, TypeError):
-        return False
+        return deny("invalid_or_missing_native_stop_evidence")
+
+
+def record_live_anchor_diagnostic(control: LiveControl, robots: Mapping[str, Mapping[str, Any]], *,
+        now_s: float, state: dict[str, Any], journal: Callable[[str, Mapping[str, Any]], None]) -> None:
+    """One small published summary; at most16 changed-condition rows per pause.
+
+    Neither raw odometry arrays nor pose/clock/ACK values enter the change key,
+    so normal incoming samples cannot create journal churn. Diagnostics grant no
+    control evidence and never advance a revision or save an applied receipt.
+    """
+    identity = control.pause_since
+    if state.get("identity") != identity:
+        state.clear()
+        state.update(identity=identity, emitted=0, key=None)
+    summary = {"kind": "anchor_stop_conditions", "observed_sim_time_s": now_s,
+        "control_revision": control.revision, "robots": dict(robots)}
+    control.diagnostics = ([r for r in control.diagnostics if r.get("kind") != "anchor_stop_conditions"]+[summary])[-30:]
+    key = tuple((robot, row.get("phase"), row.get("reason"), row.get("generation"),
+                 row.get("hold_generation"), row.get("hold_parked")) for robot, row in sorted(robots.items()))
+    if key != state["key"] and state["emitted"] < 16:
+        journal("live_control_wait_conditions", summary)
+        state["emitted"] += 1
+    state["key"] = key
 
 
 class DashboardPublisher:
@@ -2217,24 +2274,32 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
                     "generation": binding["generation"], "goal_uuid": binding["goal_uuid"],
                     "candidate_goal_uuid": rt.get("follow_uuid")})
 
+        live_wait_diagnostic: dict[str, Any] = {}
+
         def refresh_live_controls(stamp: float) -> None:
             if live_control is not None and live_control.blocked and live_control.pause_since is not None:
                 retained = manager.snapshot(now_s=stamp)["holds"]
                 evidence = {}
                 anchor_evidence = {}
+                missing_conditions = {}
                 for robot, rt in robots.items():
                     try:
                         ack = read_initial_hold_receipt(output, robot)
                     except (OSError, ValueError):
                         ack = None
+                    condition: dict[str, Any] = {}
                     evidence[robot] = live_anchor_stopped(robot, rt, retained.get(robot),
                         goal=rt.get("live_anchor_goal") or goals.get(rt["anchor"]), now_s=stamp,
                         pause_after_s=live_control.pause_since, run_id=args.run_id, scenario_id=scenario_id,
-                        ack=ack, limits={**runtime_config, "authorization_ttl_s": config["authorization_ttl_s"]})
+                        ack=ack, limits={**runtime_config, "authorization_ttl_s": config["authorization_ttl_s"]},
+                        diagnostic=condition)
+                    missing_conditions[robot] = condition
                     if evidence[robot]:
                         anchor_evidence[robot] = {"anchor": rt["anchor"], "generation": rt["generation"],
                             "pose": copy.deepcopy(rt["pose"]), "hold_ack": ack,
                             "stopped_odometry": rt["live_stop_receiver"].samples}
+                record_live_anchor_diagnostic(live_control, missing_conditions, now_s=stamp,
+                    state=live_wait_diagnostic, journal=journal)
                 old_revision = live_control.revision
                 live_control.settle(evidence)
                 if old_revision != live_control.revision:

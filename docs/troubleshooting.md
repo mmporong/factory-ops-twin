@@ -713,6 +713,12 @@ SDK의 `python.bat -c`에 따옴표가 중첩된 코드를 넘기지 않고 UTF-
 
 128은 실제 바퀴 목표와 기존 DriveProfile로6kg 토트를 운반했다. 전진 구간0.22447m, 곡선 yaw0.23109rad, 제자리 회전 yaw0.30651rad와 엔코더 방향을 확인했다. 적재 접촉·상대 위치·기존 각도 한계는 매 물리 스텝 확인하고 마지막0.4초 정지 dwell을 통과했다. 실제120Hz 물리에서6프레임마다 RGB를 받아 서로 다른188장·20fps·9.4초를 만들었다. 영상 노출 시계의 별도 정합과 공장 도킹·재고 인계는 미검증이다.62.08초 후 정리 오류 없이 Job이 닫혔고214파일의 C/E 보존을 확인했다. [128 결과](evidence/local45-loaded-mobility-128.json)
 
+## FOT-088 — 완료된 주차 예약을 실행 중 승인으로 오인한 정지 판정
+
+042의 실제 정지 요청은600wall 초 안에 applied가 되지 않았다. 관측한 차량 속도는0에 가까웠지만 연속 정지·현재 HOLD·추정 위치 조건의 전체 성공을 단정하지 않았다. 기존 exact-run Job abort로 종료하고 양쪽 OS closure·정리 오류없음·488파일의 C/E 보존을 확인했다. 정상 운행 및 운행 제어는 실패/미완료 상태로 유지한다. [042 원본](evidence/local45-transport-042.json)
+
+예약 관리자는 목표 완료와 hold 축소 후에도 accepted_goal_uuid를 보존하고 parked=True를 둔다. live 정지 판정은 accepted UUID가 있으면 무조건 거절해 완료된 정상 예약도 통과할 수 없었다.130은 같은 UUID에 결속된 parked=True 예약을 기존 pose·연속 정지·ACK 검증으로 넘기며, 미완료/다른 UUID는 거절한다. 실제 예약 관리자의 reserve→accepted→finished→shrink 상태를 사용하는 회귀와 기존 거절 경계3검사를 통과했다. 로봇별 미충족 조건은 정지 요청당 변화16행 이내로 남긴다. 이 결함이042의 유일한 원인이라는 주장과 native 성공 판정은 보류한다. [130 수신](../coordination/collab/results/native-anchor-pause-130-integration.json)
+
 ## 실행 전 확인과 후속 기록
 
 후속120은 local45 개발 실행에서 TF·시계 처리 노드와 scan/odom/action 처리 노드를 나누고, 기존 총64회·50ms 안에서 TF 처리에 먼저 절반을 배정한다. 한 차량의 실제 Jazzy 구성요소 시험에서는 부하 상태의 TF age가 공유 경로0.673초 이상에서 분리 경로0.031473초로 줄었고, 실제 TF 중단은 계속 거절했다. CPU22검사를 통과했으나 네 차량 통합 운행의 해결 근거로 확대하지 않는다. [120 수신](../coordination/collab/results/localization-critical-dispatch-120-integration.json)
@@ -725,9 +731,11 @@ SDK의 `python.bat -c`에 따옴표가 중첩된 코드를 넘기지 않고 UTF-
 
 기존 미리보기는10fps MP4를4fps GIF로 변환해 원본 프레임을 추가로 버렸다. 같은12초 발췌를10fps·120프레임 GIF로 바꾸고 원본 SHA와 변환 조건을 기록했다. 보간 프레임은 사용하지 않았다. 원본 자체의 희소 촬영 간격은 변환으로 복원할 수 없으므로 다음 normal3 개발 실행은 기존4대·관측용 경로에서 실제 이동 명령이 나온 뒤 한 번만5초·10fps를 촬영한다. CPU 관련4검사와 Python3.10 AST를 통과했다. 실제 촬영 결과가 나오기 전에는 새 연속 영상이 있다고 표시하지 않는다.
 
-## FOT-086 — SDK 준비 전 운행 제어 체크포인트 생성
-
 후속042의 별도5초 창은50회·3시점 촬영을 완료했다. 공개한 조감/차량 근접 두 시점은 물리6프레임·0.1초 간격이며 원속도10fps다. 창 종료 이벤트와 원본 SHA를 확인해 필요한100장만 C/E에 보존했다. 실행 중 bag SQL·복사는 하지 않았다. 긴 타임랩스 대신 이 연속 촬영을 대표 미디어로 사용한다. 사용자 추가 요청에 따라 다음 소스의 촬영 주기는 매 물리 프레임, 명목60fps로 바꿨다.4대 `_compile` 검사는 통과했으며 실행 중인042의10fps 동결 소스는 유지한다.60fps 실제 촬영은 미확인이다.2대 전용 `_validate_runtime`을4대 설정에 사용하는 보조 검사 오류는 제품 실패와 구분한다.
+
+GIF 출력 목표는40fps, 원본 MP4는60fps다. [GIF89a 명세](https://www.w3.org/Graphics/GIF/spec-gif89a.txt)는 지연을10ms 단위로 정의한다. [현재 Chromium 구현](https://raw.githubusercontent.com/chromium/chromium/main/third_party/blink/renderer/platform/graphics/deferred_image_decoder.cc)은10ms 이하 프레임을100ms로 바꾸므로60fps GIF의10/20ms 조합은 피한다. 새 원본에서40fps GIF를 만들고 실제 지연이20/30ms·합계5초인지 검사한다.60fps 원본 수집과40fps 출력 성공은 아직 미확인이다.
+
+## FOT-086 — SDK 준비 전 운행 제어 체크포인트 생성
 
 116 운행 제어를 활성화하면 G3가 SDK 준비 이전에 `live-control-state.json`을 만들어 SDK bootstrap의 정확한 파일 집합과 충돌했다. 준비 대기 구간의 실제 파일 목록을 확인하는 회귀 검사로 이 추가 파일을 재현했다. 체크포인트와 명령 디렉터리 생성을 SDK ready 확인 이후로 옮겼다. 같은 검사1건이3.672초에 통과했고 기존 체크포인트 배타 생성 조건은 유지한다. 실제 SDK·ROS 통합 실행의 운행 제어 성공은 아직 미확인이다.
 

@@ -1,5 +1,6 @@
 import ast
 from copy import deepcopy
+from datetime import datetime, timezone
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
@@ -11,7 +12,8 @@ from unittest.mock import patch
 from factory_ops.fleet_execution import StoppedGate
 from factory_ops.live_control import LiveControl
 from factory_ops.navigation import GoalPose
-from scripts.ros.g3_mission import (StopOdometryReceiver, dashboard_state, finish_stopped_goal, live_anchor_stopped)
+from scripts.ros.g3_mission import (StopOdometryReceiver, dashboard_state, finish_stopped_goal,
+    live_anchor_stopped, record_live_anchor_diagnostic)
 from factory_ops.dashboard import DashboardService
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -141,6 +143,83 @@ class G3LiveControlTests(unittest.TestCase):
         closed = dashboard_state(ledger, {}, sim_time_s=2., absolute_sim_time_s=2., pose_ttl_s=.5, control=gate)
         self.assertEqual(closed["connection"], "disconnected")
         self.assertEqual(closed["capabilities"], [])
+
+    def test_native_parked_accepted_binding_and_bounded_missing_condition_diagnostic(self):
+        from factory_ops.route_reservation import RouteReservationManager
+        ids = tuple("carter%d" % i for i in range(1,5))
+        manager = RouteReservationManager(RUN, ids, pose_ttl_s=.5)
+        for i, robot in enumerate(ids):
+            manager.observe(robot, {(1+10*i,1)}, pose_stamp_s=1.7, now_s=1.7)
+        # Native042 C1 goal identity; all timestamps/pose/odometry below are a
+        # constructed CPU regression, not recovered native stop measurements.
+        goal_uuid = "1feb23e1-a3fd-4128-8075-8e49f9fc1beb"
+        grant = manager.reserve("carter1", "native042-parked", goal_uuid, {(1,1),(1,2)}, now_s=1.7)
+        self.assertTrue(grant.granted)
+        self.assertTrue(manager.mark_goal_accepted("carter1", grant.generation, goal_uuid, now_s=1.7).granted)
+        self.assertTrue(manager.mark_goal_finished("carter1", grant.generation, goal_uuid, now_s=1.7).granted)
+        before_shrink = manager.snapshot(now_s=1.7)["holds"]["carter1"]
+        shrunk = manager.shrink_hold("carter1", grant.generation, {(1,1)}, stopped=True, now_s=1.7)
+        self.assertTrue(shrunk.granted)
+        hold = manager.snapshot(now_s=1.7)["holds"]["carter1"]
+        self.assertEqual(hold["accepted_goal_uuid"], goal_uuid)
+        self.assertTrue(hold["parked"])
+        rt, _, ack, limits = self.evidence()
+        rt.update(generation=hold["generation"], follow_uuid=goal_uuid, held_tiles=frozenset({(1,1)}), anchor="P1")
+        ack["scope"].update(reservation_id=hold["generation"], goal_uuid=goal_uuid)
+        untouched = deepcopy(hold)
+        diagnostic = {}
+        self.assertTrue(live_anchor_stopped("carter1", rt, hold, goal=GoalPose("map",1.,1.,0.), now_s=1.7,
+            pause_after_s=1., run_id=RUN, scenario_id="normal", ack=ack, limits=limits, diagnostic=diagnostic))
+        self.assertEqual(diagnostic["reason"], None)
+        self.assertTrue(diagnostic["qualified"])
+        self.assertEqual(hold, untouched)
+        # The finished but unshrunk retained hold must qualify too (C3 case).
+        rt_full = deepcopy(rt)
+        rt_full.update(generation=before_shrink["generation"], held_tiles=frozenset({(1,1),(1,2)}))
+        ack_full = deepcopy(ack); ack_full["scope"]["reservation_id"] = rt_full["generation"]
+        self.assertTrue(self.check(rt_full, before_shrink, ack_full, limits))
+        for defect in ("unparked", "wrong_accepted", "generation", "tiles", "pose", "arrival", "ack", "nearzero_only"):
+            row, retained, receipt = deepcopy(rt), deepcopy(hold), deepcopy(ack)
+            if defect == "unparked": retained["parked"] = False
+            if defect == "wrong_accepted": retained["accepted_goal_uuid"] = "another-goal"
+            if defect == "generation": retained["generation"] += 1
+            if defect == "tiles": retained["tiles"] = [[1,2]]
+            if defect == "pose": row["pose"]["stamp_s"] = 1.
+            if defect == "arrival": row["pose"]["x_m"] = 2.
+            if defect == "ack": receipt["scope"]["goal_uuid"] = "another-goal"
+            if defect == "nearzero_only":
+                row["live_stop_receiver"].reset()
+                row["live_stop_receiver"].observe(0.,0.,stamp_s=1.7,stop_after_s=1.,now_s=1.7)
+            detail = {}
+            self.assertFalse(live_anchor_stopped("carter1", row, retained, goal=GoalPose("map",1.,1.,0.),
+                now_s=1.7, pause_after_s=1., run_id=RUN, scenario_id="normal", ack=receipt, limits=limits,
+                diagnostic=detail), defect)
+            self.assertTrue(detail["reason"], defect)
+
+        control = LiveControl(RUN, ids)
+        wall = datetime.now(timezone.utc)
+        control.submit({"command_id":"pause", "run_id":RUN,"expected_run_id":RUN,"expected_revision":0,
+            "action":"pause","parameters":{},"requested_at":wall.isoformat()}, now_s=1., wall_now=wall)
+        state, journal_rows = {}, []
+        rows = {robot: dict(diagnostic) for robot in ids}
+        for i in range(100):
+            record_live_anchor_diagnostic(control, rows, now_s=1.7+i/1000, state=state,
+                journal=lambda kind, body: journal_rows.append((kind, body)))
+        self.assertEqual(len(journal_rows),1)  # Clock/sample progress creates no churn.
+        for i in range(40):
+            rows["carter2"] = dict(diagnostic, reason="missing" if i%2 else "different", qualified=False)
+            record_live_anchor_diagnostic(control, rows, now_s=1.9+i/1000, state=state,
+                journal=lambda kind, body: journal_rows.append((kind, body)))
+        self.assertEqual(len(journal_rows),16)
+        self.assertEqual(len(control.diagnostics),1)
+        self.assertEqual(control.revision,1)
+        control.settle({robot:robot != "carter2" for robot in ids})
+        self.assertEqual(control.phase,"pause_pending")
+        self.assertEqual(control.receipts["pause"]["status"],"pending")
+        # Only a complete four-robot evidence set can apply the unchanged gate.
+        control.settle({robot:True for robot in ids})
+        self.assertEqual(control.phase,"paused")
+        self.assertEqual(control.receipts["pause"]["status"],"applied")
 
 
 if __name__ == "__main__":

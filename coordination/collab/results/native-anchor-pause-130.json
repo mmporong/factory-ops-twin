@@ -1,0 +1,137 @@
+{
+  "task_id": "native-anchor-pause-130",
+  "attempt": 1,
+  "contract_revision": 116,
+  "owner": "control",
+  "ack": true,
+  "status": "next_source_fixed_focused_cpu_passed_native_pending_root",
+  "self_accepted": false,
+  "summary": "완료된 parked 보유 예약에도 accepted_goal_uuid가 남는 예약 계약과, 그 값이 있으면 무조건 거절하던 live pause 판정의 불일치를 수정했습니다. 동일 UUID에 결속된 parked=True 예약만 허용하며 실제 네 대의 stop/pose/ACK 증거 요건은 유지합니다. 다음 소스 전용 수정입니다.",
+  "changed_paths": [
+    "scripts/ros/g3_mission.py",
+    "tests/test_g3_live_control.py",
+    "coordination/collab/results/native-anchor-pause-130.json"
+  ],
+  "source_sha256": {
+    "scripts/ros/g3_mission.py": "315e0a40fe6e0a9fa6a07e97f5548c5a3ef6536a8940f02c52e2a8ead0ad4b51",
+    "tests/test_g3_live_control.py": "008d1e0b50fe6f6fc6522d4f2fb053960e015323302d3ee666a0e77883c3173c"
+  },
+  "input_pins_verified": {
+    "scripts/ros/g3_mission.py": "abc67ce880520de0f4031bdcbb496ed06dd0f82e0224f248d49414e9f18f7f24",
+    "factory_ops/live_control.py": "c82f5ab3ae2f3b73444ed59a4f950c61542c15af204be702354229740c3ffe46",
+    "tests/test_g3_live_control.py": "2c4a91db08311d5816b838c4cbe8efc280a29b57438ebe20fee252b1548e5b3c"
+  },
+  "readonly_reservation_source": {
+    "path": "factory_ops/route_reservation.py",
+    "sha256": "10a22c7cff44648e8daae65e01b0773d8ec7984f689612ce1195c594daa3b86e",
+    "references": "mark_goal_finished lines281-309, shrink_hold311-364, snapshot421-454",
+    "evidence": "mark_goal_finished는 accepted_goal_uuid를 지우지 않고 parked=True로 바꿉니다. shrink_hold도 같은 accepted UUID를 새 generation에 넘깁니다. 이 소스는 수정하지 않았습니다."
+  },
+  "finding": {
+    "id": "NAP130-001",
+    "severity": "major",
+    "confirmed_code_defect": "live_anchor_stopped의 기존 accepted_goal_uuid is not None 거절은 정상 완료된 parked hold 및 shrink 후 hold도 거절합니다. 물리적 정지나 ACK가 모두 유효해도 그 뒤의 조건에 도달하지 못합니다.",
+    "native_evidence_support": "042 regular route-events JSONL에서 C1/C2 parked_hold_shrunk가 parked=true 및 accepted_goal_uuid를 보존함을 확인했고 C3의 goal_finished_parked_hold_retained도 확인했습니다. 관측된 hold authorization/ACK는 같은 UUID·generation을 사용했습니다.",
+    "minimal_repair": "accepted_goal_uuid가 있으면 hold.parked is True이고 accepted_goal_uuid == rt.follow_uuid인 경우에만 계속 검증합니다. hold goal_uuid·generation·tiles의 runtime 결속 검사는 그대로이며 미완료 accepted goal과 다른 UUID는 거절합니다.",
+    "unique_cause_not_claimed": "042 내부 runtime의 모든 로봇별 odometry window/양쪽 clock/목표/ACK 조건을 같은 tick으로 보존한 자료는 없었습니다. 이 결함이 유일한 원인이나 수정 후 네 대 모두 native applied가 될 것이라고 확정하지 않습니다."
+  },
+  "observed_inputs": {
+    "scope": "허용된 regular JSON/JSONL만 제한 읽기. 관측 당시 파일은 갱신 중이었으므로 아래 digest는 읽은 bytes의 identity이며 최종 보존본 전체 SHA로 주장하지 않습니다.",
+    "run_id": "3ccadc7823814c86a07568c9ca911a8f",
+    "runtime_root": "C:/Users/LIMMM/FactoryOpsRuntime/local45-transport-042/results/run",
+    "pause_request": {
+      "path": "C:/Users/LIMMM/factory-ops-twin/artifacts/local45/042-control/pause-request.json",
+      "sha256": "e78edcbd6eb796a04048f2e5a567a80c4f46fe17bd13c07927a2817d18a2de11",
+      "command_id": "3ccadc7823814c86a07568c9ca911a8f-pause-001"
+    },
+    "captured_pause_pending_wrapper": {
+      "path": "C:/Users/LIMMM/factory-ops-twin/artifacts/local45/042-control/phase-pause_pending.json",
+      "sha256": "a2e04b8a7400a5032e93d645b5d24bae00add5f7062676b2df122298b56443e8"
+    },
+    "dashboard_observation": {
+      "file": "dashboard-state.json",
+      "read_bytes_sha256": "77006f2eee539c40af2d42296a6cb90d663afeb877583c45e372e83c7e4ee441",
+      "world_observed_s": 194.700010154,
+      "phase": "pause_pending",
+      "all_stopped": false,
+      "robot_navigation_phases": {"carter1": "charging", "carter2": "idle", "carter3": "request", "carter4": "idle"},
+      "robot_instantaneous_speed_m_s": {"carter1": 0.000003004073952794791, "carter2": 0.000025534628598755723, "carter3": 0.00016272067244305118, "carter4": -0.00012063038888960281},
+      "limitation": "순간 속도만으로 연속 정지 창의 성립을 증명할 수 없습니다. 이 속도값들을 applied 판정의 대용으로 쓰지 않았습니다."
+    },
+    "route_journal": {
+      "file": "route-events.jsonl",
+      "read_limit_bytes": 3145728,
+      "bytes_read": 2328123,
+      "read_prefix_sha256": "4d4103416e300743508e6b85da9a7fe638c310adf30569d127eed29f740f1e36",
+      "selected_records": [
+        {"event_sequence": 5107, "sim_time_s": 101.683338637, "event_type": "goal_finished_parked_hold_retained", "robot_id": "carter1", "generation": 8, "goal_uuid": "1feb23e1-a3fd-4128-8075-8e49f9fc1beb"},
+        {"event_sequence": 5108, "sim_time_s": 101.683338637, "event_type": "parked_hold_shrunk", "robot_id": "carter1", "successor_generation": 11, "parked": true, "accepted_goal_uuid": "1feb23e1-a3fd-4128-8075-8e49f9fc1beb"},
+        {"event_sequence": 5439, "sim_time_s": 107.266672261, "event_type": "goal_finished_parked_hold_retained", "robot_id": "carter2", "generation": 10, "goal_uuid": "243ceaf8-a08c-4fff-97f5-85bb7a750923"},
+        {"event_sequence": 5440, "sim_time_s": 107.266672261, "event_type": "parked_hold_shrunk", "robot_id": "carter2", "successor_generation": 13, "parked": true, "accepted_goal_uuid": "243ceaf8-a08c-4fff-97f5-85bb7a750923"},
+        {"event_sequence": 5766, "sim_time_s": 114.133339286, "event_type": "goal_finished_parked_hold_retained", "robot_id": "carter3", "generation": 12, "goal_uuid": "65dbf0ff-4169-436e-9fc4-81f1f4018f8e"}
+      ]
+    },
+    "ack_observation": {
+      "per_robot_files": "robots/carter1..4/authorization.json and control-ack.json; each small regular JSON",
+      "evaluation_sim_time_s": 194.7833434920758,
+      "sample_sim_time_s": 194.8000101596117,
+      "physics_frame": 11688,
+      "mode": "hold",
+      "valid": true,
+      "zero_input_command": true,
+      "scope_generation_by_robot": {"carter1": 11, "carter2": 13, "carter3": 12, "carter4": 4},
+      "limitation": "dashboard/ACK JSON는 서로 다른 순간의 읽기입니다. 실제 G3 동일 tick의 fresh ACK/clock/stop window로 재해석하지 않았습니다."
+    }
+  },
+  "diagnostics": {
+    "helper": "live_anchor_stopped(..., diagnostic=optional_dict)",
+    "publication": "dashboard-state.json.live_control.diagnostics의 최신 anchor_stop_conditions 요약 및 기존 actions.jsonl의 live_control_wait_conditions 사건",
+    "bounded": "로봇4대의 scalar 조건·clock·stop sample 개수/첫 stamp/끝 stamp만 저장합니다. raw odometry/tile 배열은 새 진단에 넣지 않습니다. 최신 요약1개를 기존 최대30 diagnostics 목록에 유지하며, 저널은 조건 변화 시 pause당 최대16행입니다. 매 clock/sample 변화만으로 새 행을 만들지 않습니다.",
+    "missing_conditions": ["navigation phase", "anchor goal/retained hold missing", "generation/goal/tiles mismatch", "unparked or wrong accepted goal", "stale/future pose", "HOLD lease", "ACK event freshness", "anchor arrival tolerance", "both-clock committed odometry window", "window strictly after pause", "ACK identity/sequence/scope/local clock"],
+    "authority": "진단 생성은 revision, pending/applied, retained hold, lease, resume 권한을 변경하지 않습니다. 실제 모두의 live_anchor_stopped 결과만 기존 LiveControl.settle에 전달합니다.",
+    "checkpoint_note": "현재 요약은 기존 dashboard publisher/journal 경로에 공개됩니다. live-control-state checkpoint를 진단만으로 강제 저장하거나 새 writer를 만들지 않았습니다."
+  },
+  "validation": [
+    {
+      "command": ".venv/Scripts/python.exe -B -m unittest tests.test_g3_live_control.G3LiveControlTests.test_native_parked_accepted_binding_and_bounded_missing_condition_diagnostic tests.test_g3_live_control.G3LiveControlTests.test_all_stop_uses_real_existing_window_pose_hold_and_ack tests.test_g3_live_control.G3LiveControlTests.test_stale_pose_wrong_hold_old_ack_and_moving_odom_cannot_ack -v",
+      "cwd": "C:/Users/LIMMM/factory-ops-twin",
+      "result": "3 focused tests PASS;0.002s; one pass",
+      "coverage": "새 회귀는 실제 RouteReservationManager의 reserve→accepted→finished→shrink 결과를 구성해 accepted UUID 보존을 재현합니다. full/shrunk parked hold를 허용하고, unparked·다른 accepted UUID·generation/tiles·stale/도착 pose·잘못된 ACK·한 개 near-zero 표본은 거절합니다. 진단 clock churn 억제/16행 상한/제어 revision 불변 및 부분 fleet 증거의 pending 유지도 확인했습니다.",
+      "scope": "native042의 UUID와 category를 참고한 구성 CPU 입력입니다. 실제 native stop window 재생이나 applied 성공 증명이 아닙니다."
+    },
+    {
+      "command": "Python ast.parse(..., feature_version=(3,10)) for scripts/ros/g3_mission.py and tests/test_g3_live_control.py",
+      "result": "2 PASS"
+    },
+    {
+      "command": "assigned-path diff and source digest comparison",
+      "result": "live_control.py 및 reservation manager는 읽기 전용으로 유지했습니다. 다른 소스/README/GPU/ROS/WSL/bag/전체 suite/추가 review는 수행하지 않았습니다."
+    }
+  ],
+  "unchanged_safety": [
+    "실제 pause 이후 연속 정지 창과 원래 선속도/각속도·TTL",
+    "추정 pose의 원래 freshness 및 anchor XY/yaw 한계",
+    "현재 HOLD lease, run/scenario/robot, sequence/generation/goal UUID와 실제 SDK zero-command ACK",
+    "보유 tiles 일치와 예약의 parked 완료 상태",
+    "현재 local/event clock 및 FIFO odometry 소비 정책",
+    "모든4대 증거 전에는 applied/resume 불가; mid-leg cancellation이나 이동 허용 없음"
+  ],
+  "root_runtime_update": {
+    "source": "user/root supplied observation; this worker did not stop processes",
+    "run_id": "3ccadc7823814c86a07568c9ca911a8f",
+    "observation": "pause가600wall초 안에 완료되지 않아 root가 exact-run Job abort로042를 종료했습니다. pair-host Windows/Linux closed, cleanup_errors[], API PID28996 종료. 원본 보존 중이라는 전달을 반영했습니다.",
+    "original_failure_preserved": true,
+    "next_source_only": true
+  },
+  "limitations": [
+    "새 소스의 native pause/resume 성공은 검증하지 않았습니다. root가043 동결 소스에 통합하고 실제 네 대 증거로 판단해야 합니다.",
+    "near-zero dashboard 속도와 SDK HOLD ACK만으로 continuous stop window와 estimated anchor pose의 모든 조건을 증명할 수 없습니다. 다른 미충족 조건은 새 진단으로 구분합니다.",
+    "live_anchor_goal은 기존 마지막 stopped chunk goal과 station fallback 방식을 유지했습니다. 이번 증거로 별도 목표/odometry 원인을 확정하거나 조건을 완화하지 않았습니다.",
+    "현재042 원본/실행 소스/API를 바꾸지 않았고 원래 timeout 결과를 성공으로 재분류하지 않았습니다."
+  ],
+  "sdk_gpu_ros_wsl_executed": false,
+  "active_bag_or_sql_opened": false,
+  "git_mutated": false,
+  "new_agents": false,
+  "remaining_owned_processes": []
+}
