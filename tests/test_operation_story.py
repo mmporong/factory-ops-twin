@@ -46,7 +46,7 @@ class OperationStoryTests(unittest.TestCase):
                (self.state("complete",shipped=2),self.material("returning"),"empty_container_return")]
         frame=0
         for v,m,phase in cases:
-            s.observe(frame,frame*100,v,m,moving_robot_ids={"carter1"})
+            s.observe(frame,frame*100,v,m,moving_robot_ids={"carter1","carter2"})
             self.assertEqual(s.due()["phase"],phase)
             frame+=240
         s.observe(frame,frame*100,self.state("complete",shipped=3),self.material("available"),moving_robot_ids=set())
@@ -70,6 +70,14 @@ class OperationStoryTests(unittest.TestCase):
                 self.assertIsNone(s.due())
                 s.observe(2,20,self.state(state),material,moving_robot_ids={"carter1"})
                 self.assertIsNotNone(s.due())
+
+    def test_after_shipment_waits_for_two_robots_without_adding_a_window(self):
+        s=OperationStory(PROFILE,"r",3)
+        s.observe(1,10,self.state("complete",shipped=1),None,moving_robot_ids={"carter1"})
+        self.assertIsNone(s.due())
+        s.observe(2,20,self.state("complete",shipped=1),None,moving_robot_ids={"carter1","carter2"})
+        self.assertEqual(s.due()["phase"],"first_shipment")
+        self.assertEqual(s.seen,{"first_shipment"})
 
     def test_requested_command_without_measured_motion_does_not_arm_capture(self):
         from scripts.isaac.local45_fleet4_transport_scene import Local45FleetLifecycle

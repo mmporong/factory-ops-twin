@@ -57,7 +57,7 @@ class OperationStory:
             "material_supply": moving_payload("inbound_loaded"),
             "cell_processing": bool(projection["signals"]["cell_processing"]),
             "finished_goods_transport": moving_payload("outbound_loaded"),
-            "first_shipment": 0 < shipped < self.order_count,
+            "first_shipment": 0 < shipped < self.order_count and len(moving_robot_ids) >= 2,
             "empty_container_return": returning,
             "closed_loop_complete": shipped == self.order_count and completed,
         }

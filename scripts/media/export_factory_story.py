@@ -275,7 +275,7 @@ def carrier_ids(phase, projection, material):
     return set()
 
 
-def carrier_motion(rows):
+def carrier_motion(rows, minimum_robots=1):
     """Media-only GT evaluation: another robot's motion cannot qualify cargo flow."""
     traces = {}
     for row in rows:
@@ -291,9 +291,11 @@ def carrier_motion(rows):
         distance = max(math.dist(p[:2],first_p[:2]) for p,q in poses)
         angle = max(2*math.acos(min(1.,abs(sum(a*b for a,b in zip(q,first_q))))) for p,q in poses)
         measured[robot] = {"maximum_translation_from_first_m":distance,"maximum_rotation_from_first_rad":angle}
-    if not any(v["maximum_translation_from_first_m"] >= .1 or v["maximum_rotation_from_first_rad"] >= .15 for v in measured.values()):
+    qualifying = sum(v["maximum_translation_from_first_m"] >= .1 or v["maximum_rotation_from_first_rad"] >= .15 for v in measured.values())
+    if qualifying < minimum_robots:
         raise ValueError("transport chapter has no observed motion of its own loaded carrier")
     return {"source":"recorded frame GT for media evaluation only; never navigation input", "robots":measured,
+            "qualifying_robot_count":qualifying,"minimum_required_robots":minimum_robots,
             "authored_media_thresholds":{"translation_m":.1,"rotation_rad":.15}}
 
 
@@ -369,11 +371,17 @@ def prepare(stage):
         if (image.get("width"),image.get("height")) != (1280,720):
             raise ValueError("full native 1280x720 overview required; no legacy upsample or junction crop")
         record(run_root,image["path"],files,image,maximum=16*1024*1024)
+        parallel = phase == "first_shipment" and len(tag.get("trigger_moving_robot_ids",[])) >= 2
+        ids = set(tag["trigger_moving_robot_ids"]) if parallel else carrier_ids(phase,projection,material)
+        if not ids.issubset(robots):
+            raise ValueError("media motion identity differs from the source fleet")
+        title = "출하 이후 · 병행 물류" if parallel else PHASE_LABELS[phase]
         row = {"index":count(frame["index"],"capture index"),"world_time_s":world_s,"physics_frame":physics_frame,
+            "chapter_title":title,"parallel_flow":parallel,
             "phase":phase,"image":dict(image),"visual_snapshot":dict(ref),"visual_source":projection["source"],
             "material_source":material_proof,"dashboard_source":dashboard_proof,
             "overlay":overlay_view(projection,material,dashboard,robots,world_s),
-            "carrier_poses":{robot:frame["ground_truth"][robot] for robot in carrier_ids(phase,projection,material)},
+            "carrier_poses":{robot:frame["ground_truth"][robot] for robot in ids},
             "robot_id_pixels":{robot:project_id(frame["ground_truth"][robot]["position_xyz_m"],camera)
                 for robot in robots} if camera is not None else {}}
         chapter["rows"].append(row)
@@ -391,6 +399,9 @@ def prepare(stage):
             output_start_frame=len(selected),chapter_number=number)
         if chapter["phase"] in {"material_supply", "finished_goods_transport", "empty_container_return"}:
             chapter["carrier_motion"] = carrier_motion(chapter_rows[:180])
+        elif chapter_rows[0]["parallel_flow"]:
+            chapter["title"] = chapter_rows[0]["chapter_title"]
+            chapter["parallel_motion"] = carrier_motion(chapter_rows[:180], minimum_robots=2)
         for row in chapter_rows:
             row.pop("carrier_poses")
         selected += [{**row,"chapter_number":number} for row in chapter_rows[:180]]
@@ -495,7 +506,7 @@ class ConsoleRenderer:
             text(x+14,y+122,speed+"  /  "+("가상 SOC " if virtual else "SOC ")+battery,16)
             text(x+14,y+147,"대기  "+shown(robot["waiting_reason"]),14,self.muted,width=300)
         panel((24,938,1656,1058))
-        text(40,947,PHASE_LABELS[row["phase"]],22,self.blue,width=800)
+        text(40,947,row.get("chapter_title",PHASE_LABELS[row["phase"]]),22,self.blue,width=800)
         text(990,950,"원장 seq %s · 자재 rev %s" % (row["visual_source"]["ledger_seq"],
             row["material_source"]["revision"] if row["material_source"] else UNOBSERVED),16,self.muted)
         stages = [("자재 공급",shown(values["stock_units"]," 개")),("CI 대기",shown(values["ci_slots_used"]," 슬롯")),

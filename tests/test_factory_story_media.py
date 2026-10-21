@@ -157,6 +157,14 @@ class FactoryStoryMediaTests(unittest.TestCase):
         self.assertEqual(proof["robots"]["carter2"]["maximum_translation_from_first_m"],0.)
         self.assertAlmostEqual(proof["robots"]["carter2"]["maximum_rotation_from_first_rad"],.5)
 
+    def test_parallel_clip_requires_two_observed_moving_robots(self):
+        rows=[{"carrier_poses":{r:{"position_xyz_m":[offset if r == "carter1" else 0.,0.,.1],
+              "orientation_wxyz":[1.,0.,0.,0.]} for r in ("carter1","carter4")}} for offset in (0.,.5)]
+        with self.assertRaisesRegex(ValueError,"observed motion"):
+            MEDIA.carrier_motion(rows, minimum_robots=2)
+        rows[-1]["carrier_poses"]["carter4"]["position_xyz_m"][0]=.5
+        self.assertEqual(MEDIA.carrier_motion(rows, minimum_robots=2)["qualifying_robot_count"],2)
+
     def test_cold_prepare_uses_each_applied_state_and_never_final_values(self):
         with patch.object(MEDIA.subprocess,"Popen",side_effect=AssertionError("no processes allowed")), patch.dict("sys.modules",{"PIL":None,"isaacsim":None}):
             plan = MEDIA.prepare(self.stage)
