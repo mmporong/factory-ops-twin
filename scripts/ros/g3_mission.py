@@ -2307,6 +2307,10 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
                     energy_pair_fingerprints[key] = fingerprint
             return assessment
         visual_projection: dict[str, Any] | None = None
+        source_slots = None
+        if session["workload"].get("lot_stream"):
+            from factory_ops.material_visual import declared_source_slots
+            source_slots = declared_source_slots(session["workload"]["material_flow"]["materials"])
         visual_sequence = 0
         material_revision = -1
         dashboard_publisher = DashboardPublisher(args.dashboard, output, runtime_config["pose_ttl_s"], journal, live_control)
@@ -2928,7 +2932,7 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
                         robot_ids=robot_ids, ci_capacity=load["ci_capacity"])
                     publish_material_visual(output, companion)
                 material_revision = material_state["revision"]
-            projected = project_ledger_state(visual_snapshot, visual_projection)
+            projected = project_ledger_state(visual_snapshot, visual_projection, source_slots=source_slots)
             if visual_projection is None or canonical_sha256(projected) != canonical_sha256(visual_projection):
                 visual_state = make_visual_state(
                     visual_snapshot, projected, sequence=visual_sequence, scenario_id=scenario_id,

@@ -726,7 +726,7 @@
       "ci": "semiconductor_handler",
       "cell": "aoi_mark",
       "co": "esd_packing",
-      "out": "esd_packing"
+      "out": "esd_tray_loadport"
     },
     "reference_urls": [
       "https://www.advantest.com/en/semiconductor-basics/automated-test-equipment/",

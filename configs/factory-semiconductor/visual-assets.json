@@ -111,7 +111,7 @@
       "state_role": "ESD finished tray pack and label station"
     },
     "FG_HIGH": {
-      "recipe": "esd_packing",
+      "recipe": "esd_tray_loadport",
       "semantic_class": "pallet",
       "state_role": "sealed finished tray staging"
     },

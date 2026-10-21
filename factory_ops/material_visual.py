@@ -12,6 +12,16 @@ from .visual_state import canonical_sha256, _atomic_bytes, _canonical_json_bytes
 STATE_FILE = "material-visual-state.json"
 
 
+def declared_source_slots(materials: Sequence[Mapping[str, Any]]) -> dict[str, int]:
+    """Keep one home slot per declared order, including not-yet-released lots."""
+    return {
+        row["order_id"]: index
+        for source in ("S1", "S2", "S3")
+        for index, row in enumerate(sorted(
+            (item for item in materials if item["source"] == source), key=lambda item: item["order_id"]))
+    }
+
+
 def project_empty_totes(snapshot: Mapping[str, Any], materials: Sequence[Mapping[str, Any]],
                         robot_ids: Sequence[str], *, ci_capacity: int) -> list[dict[str, Any]]:
     declared = {row["tote_id"]: row for row in materials}
@@ -46,6 +56,7 @@ def project_empty_totes(snapshot: Mapping[str, Any], materials: Sequence[Mapping
                 or intent.get("station") != (job["source"] if job["state"] == "assigned" else job["destination"])
                 or job["state"] not in ("assigned", "started")):
             raise ValueError("empty trip active intent is inconsistent")
+    source_slots = declared_source_slots(materials)
     rows, occupied = [], set()
     for tote in sorted(totes, key=lambda row: row["tote_id"]):
         key, state, owner, location = (tote[name] for name in ("tote_id", "state", "owner", "location"))
@@ -84,9 +95,11 @@ def project_empty_totes(snapshot: Mapping[str, Any], materials: Sequence[Mapping
                     or tote["request_id"] is not None):
                 raise ValueError("returned empty tote differs from its completed trip")
             display, robot = f"source_{location}", None
-        # Product slots are reserved independently; use the same authored support grid.
+        # A returned carrier uses its own order's vacated source slot. Other
+        # source products retain their slots in the sorted ledger projection.
         base = ci_capacity if display == "ci" else 0
-        slot = 0 if robot else base + sum(row["location"] == display for row in rows)
+        slot = (0 if robot else source_slots[job["order_id"]] if display.startswith("source_")
+                else base + sum(row["location"] == display for row in rows))
         rows.append({"tote_id": key, "state": state, "location": display, "slot": slot,
                      "robot_id": robot, "task_id": job["task_id"]})
     return rows

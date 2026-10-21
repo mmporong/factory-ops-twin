@@ -10,7 +10,9 @@ from factory_ops.fleet import FleetMission, FleetOrder
 from factory_ops.fleet_transport import expand_lot_stream
 from factory_ops.layout import Layout
 from factory_ops.material_flow import MaterialFlow
+from factory_ops.material_visual import declared_source_slots, make_material_visual_state
 from factory_ops.navigation import GoalPose, LocalizationPose, NavigationResult
+from factory_ops.visual_state import project_ledger_state
 from scripts.isaac.factory_visuals import world_slot_placement
 from scripts.ros.g3_mission import chain_pickup_supported, post_drop_action
 
@@ -47,6 +49,9 @@ class SemiconductorWorkloadTests(unittest.TestCase):
         arrivals = {}
         maximum_concurrent = 0
         clock = 0.
+        projection = None
+        source_slots = declared_source_slots(p["material_flow"]["materials"])
+        checked_slots = set()
         for _ in range(1800):
             if not mission.completed:
                 mission.dispatch(clock,
@@ -74,6 +79,19 @@ class SemiconductorWorkloadTests(unittest.TestCase):
                 handoffs[robot] += 1
                 locations[robot] = intent.station
             material.advance()
+            companion = make_material_visual_state(material.snapshot(), run_id=mission.run_id,
+                scenario_id="semiconductor_cpu", source_sim_time_s=clock,
+                materials=p["material_flow"]["materials"], robot_ids=tuple(handoffs), ci_capacity=2)
+            projection = project_ledger_state(mission.ledger.snapshot(), projection, source_slots=source_slots)
+            world_keys = [(row["location"], row["slot"])
+                for row in [*projection["payloads"], *companion["empty_totes"]]
+                if not row["location"].startswith("robot_")]
+            self.assertEqual(len(world_keys), len(set(world_keys)), f"product/empty carrier slot collision: {world_keys}")
+            for row in [*projection["payloads"], *companion["empty_totes"]]:
+                key = row["location"], row["slot"]
+                if not key[0].startswith("robot_") and key not in checked_slots:
+                    world_slot_placement(layout, *key)
+                    checked_slots.add(key)
             if mission.completed and material.completed:
                 break
             clock = max(clock, mission.sim_time)+1.

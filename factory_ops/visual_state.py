@@ -180,7 +180,8 @@ def _atomic_bytes(path: Path, payload: bytes) -> None:
         temporary.unlink(missing_ok=True)
 
 
-def project_ledger_state(snapshot: Mapping[str, Any], previous: Mapping[str, Any] | None = None) -> dict[str, Any]:
+def project_ledger_state(snapshot: Mapping[str, Any], previous: Mapping[str, Any] | None = None, *,
+                         source_slots: Mapping[str, int] | None = None) -> dict[str, Any]:
     """Keep one displayed location per payload, retaining occupied buffer slots."""
     orders, robots = snapshot.get("orders"), snapshot.get("robots")
     if not isinstance(orders, Mapping) or not isinstance(robots, Mapping):
@@ -243,6 +244,15 @@ def project_ledger_state(snapshot: Mapping[str, Any], previous: Mapping[str, Any
     occupied: dict[str, set[int]] = {}
     for row in payloads:
         old = previous_by_payload.get(row["payload_id"])
+        if row["location"].startswith("source_") and source_slots is not None:
+            slot = source_slots.get(row["order_id"])
+            used = occupied.setdefault(row["location"], set())
+            if (type(slot) is not int or slot < 0 or slot in used
+                    or old and old.get("location") == row["location"] and old.get("slot") != slot):
+                raise ValueError("declared source slots are missing, repeated or changed")
+            row["slot"] = slot
+            used.add(slot)
+            continue
         if old and old.get("location") == row["location"]:
             slot = old.get("slot")
             used = occupied.setdefault(row["location"], set())

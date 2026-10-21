@@ -97,7 +97,7 @@ def expand_lot_stream(profile: Mapping[str, Any]) -> dict[str, Any]:
         result["orders"].append({"order_id": identity, "payload_id": f"SC-PAY-{i+1:03d}",
             "source_station": source, "ready_time": i*interval})
         material["materials"].append({"order_id": identity, "source": source,
-            "sku": stream["sku"], "quantity": quantity, "tote_id": f"SC-CARRIER-{i+1:03d}"})
+            "sku": stream["sku"], "quantity": quantity, "tote_id": f"F4-TOTE-SC-{i+1:03d}"})
     return result
 
 
