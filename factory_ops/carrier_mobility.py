@@ -63,8 +63,9 @@ def validate_motion(value: Mapping[str, Any], static_probe: Mapping[str, Any]) -
     finite(p["minimum_curve_yaw_rad"], "curve evidence", .05, .2)
     finite(p["minimum_turn_yaw_rad"], "turn evidence", .1, .4)
     finite(p["maximum_displacement_m"], "fixed camera/ground bound", .8, 1.5)
-    if type(p["rgb_fps"]) is not int or p["rgb_fps"] != 20 or p["maximum_rgb_frames"] != 240 or type(p["maximum_rgb_frames"]) is not int:
-        raise ValueError("only bounded real20fps / maximum240 frames admitted")
+    if (type(p["rgb_fps"]) is not int or type(p["maximum_rgb_frames"]) is not int
+            or (p["rgb_fps"], p["maximum_rgb_frames"]) not in ((20, 240), (60, 660))):
+        raise ValueError("only bounded real20fps/240 or real60fps/660 frames admitted")
     dt = static_probe["physics_dt_s"]
     period = 1/(p["rgb_fps"]*dt)
     if abs(period-round(period)) > 1e-9 or period < 1:
@@ -216,10 +217,10 @@ class MotionEvidence:
 
 
 class RgbCadence:
-    """Every sixth actual120Hz frame; no duplication/interpolation/catch-up."""
+    """Actual physics-frame cadence; no duplication/interpolation/catch-up."""
     def __init__(self, start_frame: int, period_frames: int, maximum: int = 240):
         if (type(start_frame) is not int or start_frame < 0 or type(period_frames) is not int
-                or period_frames < 1 or type(maximum) is not int or not 1 <= maximum <= 240):
+                or period_frames < 1 or type(maximum) is not int or not 1 <= maximum <= 660):
             raise ValueError("invalid native RGB cadence")
         self.last_frame, self.previous_frame = start_frame, start_frame
         self.period, self.maximum, self.count = period_frames, maximum, 0

@@ -131,6 +131,20 @@ class CarrierMobilityTests(unittest.TestCase):
             for frame in range(1,1447): maximum.due(frame)
         self.assertEqual(maximum.count,240)
 
+    def test_native60fps_profile_and_frame_budget_preserve_20fps_limits(self):
+        from copy import deepcopy
+        sixty = deepcopy(self.cfg)
+        sixty.update(rgb_fps=60, maximum_rgb_frames=660)
+        validated = validate_motion(sixty, self.static)
+        self.assertEqual(validated['rgb_period_physics_frames'],2)
+        self.assertEqual(validate_motion(self.cfg,self.static)['maximum_rgb_frames'],240)
+        with self.assertRaisesRegex(ValueError,'bounded real'):
+            validate_motion(dict(sixty,maximum_rgb_frames=240),self.static)
+        cadence=RgbCadence(0,2,660)
+        self.assertEqual(sum(cadence.due(i) for i in range(1,1201)),600)
+        with self.assertRaisesRegex(ValueError,'maximum real RGB'):
+            for i in range(1201,1323):cadence.due(i)
+
 
 if __name__ == '__main__':
     unittest.main()

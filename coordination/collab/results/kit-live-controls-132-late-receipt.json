@@ -1,0 +1,9 @@
+{
+  "task_id": "kit-live-controls-132",
+  "received_at_utc": "2026-10-21T08:13:28.239404+00:00",
+  "status": "same_sources_as_root_completion",
+  "late_worker_receipt_sha256": "dc7a9656094fa04f87f27bbf3dc80743bd4180bcabe995293ac1f365a00aa116",
+  "all_worker_source_SHA_match_root_verified_sources": true,
+  "scope": "Receipt arrived after capacity-related root takeover. Existing root21-test result retained; no code redo or repeated tests.",
+  "native_Kit_pending": true
+}

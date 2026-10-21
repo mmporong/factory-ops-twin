@@ -64,8 +64,8 @@ def main() -> int:
         report.update(scope="one Nova Carter with chassis-fixed authored carrier and free6kg tote; bounded time-command motion coupon only",
             loaded_motion_verified=False, loaded_motion_config=motion_cfg,
             loaded_motion_config_sha256=manifest_sha256(motion_cfg),
-            motion_rgb={"planned_fps": 20, "maximum_frames": 240, "captured_frames": 0,
-                "media_clock_sync_verified": False, "source": "continuous persistent640x480 RGB; every sixth actual120Hz physics frame"})
+            motion_rgb={"planned_fps": motion_cfg["rgb_fps"], "maximum_frames": motion_cfg["maximum_rgb_frames"], "captured_frames": 0,
+                "media_clock_sync_verified": False, "source": "continuous persistent640x480 RGB; actual physics-frame cadence from loaded_motion_config"})
     (args.output/"manifest.json").write_text(manifest_json(manifest), encoding="utf-8")
     started = time.monotonic()
     deadline = started+cfg["maximum_wall_time_s"]
