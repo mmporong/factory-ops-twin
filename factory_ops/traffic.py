@@ -12,7 +12,10 @@ from dataclasses import dataclass, field
 import json
 import math
 from pathlib import Path
-from typing import Iterable, Mapping, Sequence, TypedDict, Unpack
+from typing import TYPE_CHECKING, Iterable, Mapping, Sequence, TypedDict
+
+if TYPE_CHECKING:
+    from typing_extensions import Unpack
 
 
 class TrafficError(ValueError):

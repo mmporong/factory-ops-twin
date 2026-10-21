@@ -1,0 +1,15 @@
+[Script Info]
+ScriptType: v4.00+
+PlayResX: 960
+PlayResY: 620
+[V4+ Styles]
+Format: Name,Fontname,Fontsize,PrimaryColour,SecondaryColour,OutlineColour,BackColour,Bold,Italic,Underline,StrikeOut,ScaleX,ScaleY,Spacing,Angle,BorderStyle,Outline,Shadow,Alignment,MarginL,MarginR,MarginV,Encoding
+Style: State,Malgun Gothic,23,&H00293219,&H00293219,&H00FFFFFF,&H00FFFFFF,0,0,0,0,100,100,0,0,1,0,0,2,16,16,38,1
+Style: Scope,Malgun Gothic,16,&H00666B71,&H00666B71,&H00FFFFFF,&H00FFFFFF,0,0,0,0,100,100,0,0,1,0,0,2,10,10,10,1
+[Events]
+Format: Layer,Start,End,Style,Name,MarginL,MarginR,MarginV,Effect,Text
+Dialogue: 0,0:00:00.00,0:00:03.97,State,,0,0,0,,물류 운반 · 교차 통로 접근
+Dialogue: 0,0:00:03.97,0:00:14.08,State,,0,0,0,,경로 겹침 감지 · AMR2 정지·양보 / AMR1 통과
+Dialogue: 0,0:00:14.08,0:00:28.58,State,,0,0,0,,출구 공간 확보 · AMR2 재출발·회전 / 운반 재개
+Dialogue: 0,0:00:28.58,0:00:56.65,State,,0,0,0,,각 목적지로 운반 · 복귀
+Dialogue: 0,0:00:00.00,0:00:56.65,Scope,,0,0,0,,파랑 AMR1 · 주황 AMR2 | SDK 물리 실행 · 엔코더/거리 센서 · 화물은 시각 표시

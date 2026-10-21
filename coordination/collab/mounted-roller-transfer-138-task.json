@@ -1,0 +1,45 @@
+{
+  "task_id": "mounted-roller-transfer-138",
+  "attempt": 1,
+  "contract_revision": 122,
+  "owner": "control",
+  "binding": {
+    "session": "default",
+    "pane_id": "w1:p1C",
+    "terminal_id": "term_65e06d27e415810",
+    "agent_session": "01a152aa-24b4-7a31-92e3-a2b620f4feeb"
+  },
+  "project_root": "C:\\Users\\LIMMM\\factory-ops-twin",
+  "base_commit": "8e0c4b572bc4af29c9d55dc5335e576667f18c5d",
+  "input_sha256": {
+    "scripts/isaac/probe_loaded_carrier.py": "ae046b2953257b2dc83249910aa1bdb447b25863036a98065bb09c8c931d07d7",
+    "scripts/isaac/probe_roller_transfer.py": "eb8ea927bf436d4ab29eb216867fbb235cbead45d39df9b1c58745be0b9bb71b",
+    "factory_ops/carrier_robot.py": "67d90058df40e2be49324ed43c5cf1af4403adae9eecd17b562300e71efb692a",
+    "factory_ops/carrier_module.py": "ef12b26aa3d7180e7f122324aa0f5e363010d1f3ddf366165b69ac6de1cbfc14",
+    "factory_ops/carrier_mobility.py": "0a242388cb7462dcc190d0f41518ccd063264f09286f5a22dbd0a3405f8b61fe",
+    "factory_ops/drive_profile.py": "6bba5a51caa5e4a71662339026afc67e1efe1d7370cb04c372cde48eba9d7185",
+    "factory_ops/motion.py": "a8d670ce9e0309093c47a6a63ff70c78182021f6b50496933e29985466ed6cd1",
+    "configs/vehicles/tote-carrier-carter-v2.json": "bbcc3e54f3eeeb040787cdf47b736561d268e66a0c0f7aa1afc4f6ca0767b3f4",
+    "configs/vehicles/tote-carrier-loaded-motion-60fps-v1.json": "ff9a01eced0d2281a5325fade1ba8cbecb089d833966746d03c7df8215fbe208"
+  },
+  "write_paths": [
+    "scripts/isaac/probe_mounted_transfer.py",
+    "scripts/isaac/probe_loaded_carrier.py",
+    "factory_ops/native_carrier_fixture.py",
+    "factory_ops/mounted_transfer.py",
+    "configs/vehicles/tote-carrier-mounted-transfer-v1.json",
+    "tests/test_mounted_transfer.py",
+    "coordination/collab/results/mounted-roller-transfer-138.json"
+  ],
+  "result_path": "C:\\Users\\LIMMM\\factory-ops-twin\\coordination\\collab\\results\\mounted-roller-transfer-138.json",
+  "goal": "Prepare next physical component: actual mounted Carter loads one6kg tote by rollers, transports, docks and returns same tote. CPU prep only while root owns045.",
+  "acceptance": [
+    "ACK138 attempt1 contract122.132late receipt received, all3sourceSHA match root completion; do not redo132.135 actual60fps564images loaded motion passed,40fpsGIF published. You are not alone: root owns045 source/ROS/SDK/API/media/sharedIOpatch/docs/Git/board. Only listed main paths; preserve unowned dashboard4 and every frozen/prior runtime. No new agent, SDK/GPU/ROS/WSL/browser/install/Git/cloud actions. Do not switch model; capacity error report partial progress.",
+    "Reuse actual loaded-carrier native assembly and119roller implementation. Factor its reusable native setup into native_carrier_fixture.py only if necessary and reuse it from old/new entry; preserve old static/default20/60 modes, current extent/wheel getter fixes, native source/hash reporting and cleanup. Avoid a second copy of hundreds of assembly lines or a generic plugin engine. Core carrier_robot/module/mobility/drive_profile/motion are readonly.",
+    "New authored component config may add motorized roller deck and fixed source/dock bank. Record added roller/module masses separately;6kg tote identity remains one actual free dynamic body. No manufacturer rating, factory integration or sensorFOV claim. Existing XYplanningradius0.6371090915442774 is a fixed admission limit, not something to widen. Dynamic rollers use joint velocities/effort readbacks, never body velocity or runtime pose setters. Initial authored spawn is allowed. Preserve original load-relative/sensor/stop bounds or refuse unsupported geometry.",
+    "Meaningful state sequence: align/dock -> source roller feeds tote onto vehicle -> support/contact/stopped qualifies loaded -> vehicle backs away with load -> returns to dock using actual range/encoder inputs -> reverse rollers return SAME tote -> source occupied/vehicle empty stable. Source/station transfer motion from actual roller contacts. Vehicle wheel commands through existing DriveProfile. Controller may use physical ray ranges and encoders; GT body matrices/positions are evaluation only, no GT steering, teleports or pose correction after spawn. If a reliable closed-loop docking sensor cannot be implemented, state explicit component scope and missing stage; do not fake a docked receipt.",
+    "Reuse installed native4.5 public APIs and existing ContactSensor pattern with rigid/kinematic parents; station contact identity/force/time/frame must be real. Sender counters/visual overlap cannot qualify transfer. Fail safe zero motors on bad/old contact/ranges/clock/identity, lost load or bounds. No arbitrary tolerance/TTL expansion. All sensors/render products/executors owned and closed. SourceSHA/config/runid identity preserved. Real physics execution belongs to root after045 closes.",
+    "Media: one persistent640x480 RGB product, at most one4second60fps loaded-motion window <=240actualframes and a few state-transition keyframes. No continuous whole-coupon dump, interpolation or newSDG. Physics safety observations every step; operational log sparse20Hz+transitions. Use existing RgbCadence if useful, no second DriveProfile limiter.",
+    "One focused CPU set covering state receipts/identity/stale or missing physical evidence and bounds, plus Python3.10AST. No fullsuite/re-review chain. Receipt actualfiles/SHA/commands/results/remaining native gaps. Do not self-accept or claim native pass. If shared ownership or asset architecture expands beyond card, report concrete proposed boundary to root first."
+  ]
+}

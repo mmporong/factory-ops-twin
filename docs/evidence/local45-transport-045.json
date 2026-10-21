@@ -1,0 +1,138 @@
+{
+  "run_id": "ad2d76fcf68a4e82bfb6b18b9e60c2c0",
+  "source_commit": "8e0c4b572bc4af29c9d55dc5335e576667f18c5d",
+  "status": "closed_milestone_gate_incomplete",
+  "host_status": "failed",
+  "host_wall_s": 379.09399999998277,
+  "origin_sim_time_s": null,
+  "time_scope": "Journal/media sim_time_s uses absolute World time; ledger intent/result times and web mission clock use elapsed time from origin_sim_time_s. No clock correction is applied.",
+  "mission_status": "failed",
+  "scene_status": "running",
+  "normal_transport_passed": false,
+  "four_robot_operational_gate_passed": false,
+  "project_stage": 1,
+  "whole_project_complete": false,
+  "business_flow_complete": false,
+  "robots_with_park_event": [],
+  "terminal_declared_anchor_by_robot": {},
+  "park_event_scope": "Ever-seen parked events are not final parking proof. Passing mission additionally requires all robots idle at assigned park and terminal recording verification.",
+  "scenario_complete_events": [],
+  "terminal_boundary_failed": false,
+  "stale_recovery_audit": null,
+  "milestone_scope": "Project stage1 operation and preservation only; 80percent stop retired, full project completion remains pending.",
+  "experiment": "Separate three-order four-robot input configs/factory-fleet4-normal3;034 four-order failure remains unchanged.",
+  "business_handoff_robot_ids": [],
+  "completed_order_ids": [],
+  "empty_returns_completed": 0,
+  "material_completed": null,
+  "inventory_conservation": [],
+  "empty_return_states": {},
+  "accepted_product_handoffs": [],
+  "accepted_empty_handoffs": [],
+  "physical_motion": {
+    "carter1": {
+      "samples": 4539,
+      "maximum_GT_evaluation_displacement_m": 1.1494273195258281e-05,
+      "maximum_command_sequence": 0,
+      "nonzero_wheel_target_samples": 0,
+      "last_world_time_s": 77.70000405237079
+    },
+    "carter2": {
+      "samples": 4539,
+      "maximum_GT_evaluation_displacement_m": 1.1162471686095834e-05,
+      "maximum_command_sequence": 0,
+      "nonzero_wheel_target_samples": 0,
+      "last_world_time_s": 77.70000405237079
+    },
+    "carter3": {
+      "samples": 4539,
+      "maximum_GT_evaluation_displacement_m": 2.1008248734485905e-05,
+      "maximum_command_sequence": 0,
+      "nonzero_wheel_target_samples": 0,
+      "last_world_time_s": 77.70000405237079
+    },
+    "carter4": {
+      "samples": 4539,
+      "maximum_GT_evaluation_displacement_m": 2.486878358918247e-05,
+      "maximum_command_sequence": 0,
+      "nonzero_wheel_target_samples": 0,
+      "last_world_time_s": 77.70000405237079
+    }
+  },
+  "GT_scope": "Evaluation only, no GT steering or transform injection.",
+  "virtual_charging_events": [],
+  "stale_rejection_events": [],
+  "recovery_runtime_exercised": false,
+  "planner_method_counts": {},
+  "capture_count": 4,
+  "timeline": null,
+  "error": {
+    "host": "RuntimeError: SDK failure before cleanup: mission: SmokeError: G2 mission controller ended with failed",
+    "SDK": {
+      "message": "G2 mission controller ended with failed",
+      "traceback": "Traceback (most recent call last):\n  File \"C:\\Users\\LIMMM\\FactoryOpsRuntime\\local45-transport-045\\source\\scripts\\isaac\\g2_scene.py\", line 1604, in _run\n    raise base.SmokeError(terminal_error)\nscripts.isaac.stage_smoke.SmokeError: G2 mission controller ended with failed\n",
+      "type": "SmokeError"
+    },
+    "mission": {
+      "message": "G3 planner/controller/TF/odometry/scan startup did not qualify",
+      "traceback": "Traceback (most recent call last):\n  File \"/mnt/c/Users/LIMMM/FactoryOpsRuntime/local45-transport-045/source/scripts/ros/g3_mission.py\", line 2106, in run_mission\n    raise TimeoutError(\"G3 planner/controller/TF/odometry/scan startup did not qualify\")\nTimeoutError: G3 planner/controller/TF/odometry/scan startup did not qualify\n",
+      "type": "TimeoutError"
+    }
+  },
+  "source_OS_trees_closed": true,
+  "owner_cleanup_errors": [],
+  "mission_cleanup": [
+    {
+      "exit_code": 0,
+      "label": "rosbag",
+      "pid": 68130
+    },
+    {
+      "exit_code": -15,
+      "label": "nav2",
+      "pid": 68131
+    },
+    {
+      "error": "failed to shutdown: rcl_shutdown already called on the given context, at ./src/rcl/init.c:333",
+      "label": "rclpy.shutdown"
+    }
+  ],
+  "SDK_scene_cleanup": null,
+  "malformed_final_action_lines": [],
+  "scope": "Local IsaacSim4.5/PhysX development, not canonical6.2/RTX qualification.",
+  "loading_scope": "Material ledger and noncolliding visual cargo; no contact/lift physics validation.",
+  "charging_scope": "Authored virtual energy and estimated-pose stopped geometric docking; not electrical contact proof.",
+  "RGB_scope": "Initial RGB only; ROS startup qualification timeout before any navigation and60fps motion burst. No new motion video/SDG.",
+  "new_SDG": false,
+  "bag_SQL_opened_for_postprocessing": false,
+  "localization_dispatch_state": null,
+  "startup_command_receipt": null,
+  "postprocessing_scope": "No extra bag SQL by summarizer; existing terminal closed-recorder validation remains unchanged.",
+  "external_resource_wall_bound_s": 10800,
+  "inflight_bounds_changed": false,
+  "preservation": [
+    "C:\\Users\\LIMMM\\FactoryOpsArtifacts\\operations-137\\checkpoint-001.tar.gz",
+    "E:/FactoryOpsArtifacts/operations-137/checkpoint-001.tar.gz"
+  ],
+  "ROS_foreground_error_log_tail": "[WARN] [1792572698.791630104] [rcl]: ROS_LOCALHOST_ONLY is deprecated but still honored if it is enabled. Use ROS_AUTOMATIC_DISCOVERY_RANGE and ROS_STATIC_PEERS instead.\n[WARN] [1792572698.792439667] [rcl]: 'localhost_only' is disabled, 'automatic_discovery_range' and 'static_peers' will be used.\nFACTORY_OPS_PRIMARY_FAILURE {\"run_id\": \"ad2d76fcf68a4e82bfb6b18b9e60c2c0\", \"stage\": \"startup\", \"error\": {\"type\": \"TimeoutError\", \"message\": \"G3 planner/controller/TF/odometry/scan startup did not qualify\", \"traceback\": \"Traceback (most recent call last):\\n  File \\\"/mnt/c/Users/LIMMM/FactoryOpsRuntime/local45-transport-045/source/scripts/ros/g3_mission.py\\\", line 2106, in run_mission\\n    raise TimeoutError(\\\"G3 planner/controller/TF/odometry/scan startup did not qualify\\\")\\nTimeoutError: G3 planner/controller/TF/odometry/scan startup did not qualify\\n\"}}\nFACTORY_OPS_FLEET4_TRANSPORT=FAIL TimeoutError: G3 planner/controller/TF/odometry/scan startup did not qualify\n",
+  "external_abort": null,
+  "source_live_control": {
+    "contract": "ros-next-anchor-v1",
+    "enabled": true,
+    "run_id": "ad2d76fcf68a4e82bfb6b18b9e60c2c0",
+    "robot_ids": [
+      "carter1",
+      "carter2",
+      "carter3",
+      "carter4"
+    ],
+    "profile": "development",
+    "primary_evaluation": false,
+    "phase": "closed",
+    "revision": 1,
+    "all_stopped": false,
+    "commands": [],
+    "diagnostics": []
+  },
+  "postprocessing_source_sha256": "44e270fec0cb363871e9d838b4efd940538caa87fcf15cf4d6a261bd3cdb3c6f"
+}

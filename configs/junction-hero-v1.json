@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "factory_config": "configs/factory-fleet4-normal3",
+  "physics_dt_s": 0.016666666666666666,
+  "maximum_sim_time_s": 80,
+  "maximum_wall_time_s": 450,
+  "image_size_px": [960, 540],
+  "camera_eye_m": [24, 4, 16],
+  "camera_target_m": [16, 15, 0.1],
+  "camera_focal_length_mm": 24,
+  "scope": "SDK-native encoder and PhysX range guarded junction yield demonstration; separate from ROS/Nav2 factory completion; cargo is visual-only"
+}

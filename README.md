@@ -2,13 +2,24 @@
 
 가상 센서 모듈 공장에서 **4대 AMR의 자재 공급·완제품 출하·빈 용기 회수**를 Isaac Sim·ROS 2와 웹 관제로 연결하는 프로젝트입니다.
 
-| 4대 공장 조감: 실제5초·10fps | 6kg 적재 주행 시험: 실제40fps |
+![공장 물류 운반 중 교차 통로 양보, 선행차 통과, 대기차 재출발과 회전](docs/images/junction-hero-local45-142/logistics-yield-40fps.gif)
+
+[원속도 전체 영상 · 60fps MP4](docs/images/junction-hero-local45-142/logistics-yield-60fps.mp4) · [촬영·변환 출처](docs/images/junction-hero-local45-142/provenance.json) · [실제 실행 결과](docs/evidence/local45-junction-hero-142.json)
+
+파란 AMR1이 자재를 운반하는 동안 주황 AMR2가 교차 통로 앞에서 정지·양보합니다. AMR1의 차체가 교차 구간을 벗어나면 AMR2가 재출발하고 회전해 복귀 경로를 이어갑니다. GIF는 이 흐름을 **2배속·40fps**로 보여주며, 파란 사각형은 예약 구간을 표시한 주석입니다.
+
+같은 공장에서4대의 실제 바퀴·엔코더·PhysX 거리 센서를 사용한 SDK 시연입니다.56.65초 동안4대 모두 목적지에 도착했고,60fps 원본3,399장을 촬영했습니다. 주행에는 기존 가감속·회전 제한을 적용했습니다. **교차로 양보·통과·재개를 확인한 범위**이며 동적 우회 경로 생성과 ROS/Nav2 전체 완주를 뜻하지 않습니다. 화물은 비충돌 시각 표시입니다. [시연 제어](factory_ops/junction_demo.py) · [실행 진입점](scripts/isaac/probe_junction_hero.py)
+
+<details>
+<summary>공장 조감과 별도 적재 주행 시험</summary>
+
+| 공장 조감 · 실제5초·10fps | 별도6kg 적재 주행 · 40fps |
 |---|---|
-| ![실제 공장 연속 주행 촬영](docs/images/fleet4-local45-042/overview-realtime.gif) | ![60fps 실제 촬영에서 만든 곡선·제동·제자리 회전40fps 미리보기](docs/images/loaded-mobility-local45-135/loaded-turn-40fps.gif) |
+| ![공장 조감 연속 촬영](docs/images/fleet4-local45-042/overview-realtime.gif) | ![별도 적재 상태의 곡선·제동·회전 시험](docs/images/loaded-mobility-local45-135/loaded-turn-40fps.gif) |
 
-[적재 주행 원본 · 60fps MP4](docs/images/loaded-mobility-local45-135/loaded-motion-60fps.mp4) · [적재 촬영 출처](docs/images/loaded-mobility-local45-135/provenance.json) · [4대 공장 조감 MP4](docs/images/fleet4-local45-042/overview-realtime.mp4) · [공장 촬영 출처](docs/images/fleet4-local45-042/provenance.json)
+[공장 조감 MP4](docs/images/fleet4-local45-042/overview-realtime.mp4) · [조감 출처](docs/images/fleet4-local45-042/provenance.json) · [적재 주행60fps MP4](docs/images/loaded-mobility-local45-135/loaded-motion-60fps.mp4) · [적재 시험 출처](docs/images/loaded-mobility-local45-135/provenance.json)
 
-왼쪽은4대 공장 실행의5초 연속 촬영이며, 오른쪽은 별도6kg 적재 주행 시험입니다. 적재 주행은 실제60fps 원본에서40fps GIF를 만들었고 움직임을 보간하지 않았습니다. 공장 전체의 정상 완주와 자동 적재·도킹·재고 인계 통합은 확인 중입니다.
+</details>
 
 [전체 업무 흐름 · 이전 실행의25.4초 요약](docs/images/fleet4-local45-036/operations-business-complete.mp4)은 명목74배속 타임라인입니다. 그 실행은 출하3건·빈 토트 반납3건·4대 주차를 마쳤으나 최종 기록 종료 검사에 실패했습니다. 아래 업무 결과와 관제 화면은 해당 실행의 보존 자료입니다.
 

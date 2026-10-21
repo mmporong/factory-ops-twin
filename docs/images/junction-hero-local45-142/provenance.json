@@ -1,0 +1,278 @@
+{
+  "run_id": "12ad2c2b0ee64dfb87aee996c5ec1142",
+  "scope": "SDK-native encoder and PhysX range guarded junction yield demonstration; separate from ROS/Nav2 factory completion; cargo is visual-only",
+  "native_result_sha256": "6ca469e20d92f90c92455afb7100fe1523f0f233b740dfbe6817194181b7ca79",
+  "source_sha256": "0c0fa18a21b8d4521eb34763f2abad5f5313384bb4549d494ef8c7b284c2826c",
+  "config_sha256": "4fb96099e8404a29972850d8706f2972efe9618274de2bbd3dae31b2b98f927a",
+  "project_source_sha256": {
+    "factory_ops/__init__.py": "da57bbf586e3c4639fd72b3960ef8dd7a8326b3ba17504836189be26ce5bacb0",
+    "factory_ops/junction_demo.py": "440f6d10b66c077406bfff630bd67e7337dd9ea48f6dc23512f93c74659b24b4",
+    "factory_ops/motion.py": "a8d670ce9e0309093c47a6a63ff70c78182021f6b50496933e29985466ed6cd1",
+    "factory_ops/drive_profile.py": "6bba5a51caa5e4a71662339026afc67e1efe1d7370cb04c372cde48eba9d7185",
+    "factory_ops/traffic.py": "e3cab53cd56620a7bb1cf27c3f464f6c99d6b92a151fbce5f7609ddd49f916c9",
+    "factory_ops/layout.py": "a6b05cbb0cc63910da07d0c8af0a2c3bbb94473e8f0bd09d2426913bddd8caf9",
+    "factory_ops/usda.py": "233986c3351fa75a6a741278355eb964eee4279fc1ef71e451f423e6868ab67c",
+    "factory_ops/visual_scene.py": "c819158256c3d454cb74caeff3cf69d35e1a6d624763d8f789cc3847a986c8bb",
+    "factory_ops/visual_state.py": "9a1f60cc69168032ecce4252329981b4e34d016f1a6b504851291c189601a496",
+    "factory_ops/physx_planar.py": "634dac24bef78a4afbaf5a1bf16bbb20743184a8a5758102dd6e34648fedb853",
+    "scripts/isaac/factory_visuals.py": "25768848d6b035be333d26382b5096b720aafa4782eee8daa894f677721b90db",
+    "scripts/isaac/local_asset_probe.py": "042e7c3255c339a5d5705a0bb70e377f0b807d2deda5d06fc0cffb0870bf345c"
+  },
+  "source_frames": 3399,
+  "source_distinct_image_sha256": 3399,
+  "source_fps": 60,
+  "gif_fps": 40,
+  "gif_playback_speed": 2,
+  "gif_source_excerpt_s": [
+    0.9666668735444546,
+    28.58333440683782
+  ],
+  "gif_fixed_crop_xywh": [
+    250,
+    0,
+    640,
+    360
+  ],
+  "reservation_overlay": {
+    "source": "authored junction rectangle projected with authored camera; evaluation/media only",
+    "polygon_crop_px": [
+      [
+        144,
+        202
+      ],
+      [
+        266,
+        269
+      ],
+      [
+        350,
+        179
+      ],
+      [
+        232,
+        122
+      ]
+    ]
+  },
+  "gif_delays_ms": {
+    "unique": [
+      20,
+      30
+    ],
+    "total": 13800
+  },
+  "interpolated_or_generated_frames": false,
+  "traffic_sequence": {
+    "all_arrived": true,
+    "yield_clear_resume_observed": true,
+    "wait_start_s": 3.9666668735444546,
+    "priority_clear_s": 14.083334067836404,
+    "waiter_resume_s": 14.083334067836404,
+    "events": [
+      {
+        "robot_id": "carter1",
+        "state": "crossing_granted",
+        "sim_time_s": 0.0
+      },
+      {
+        "robot_id": "carter1",
+        "state": "transport_resumed",
+        "sim_time_s": 0.0
+      },
+      {
+        "robot_id": "carter2",
+        "state": "transporting",
+        "sim_time_s": 0.0
+      },
+      {
+        "robot_id": "carter3",
+        "state": "transporting",
+        "sim_time_s": 0.0
+      },
+      {
+        "robot_id": "carter4",
+        "state": "transporting",
+        "sim_time_s": 0.0
+      },
+      {
+        "robot_id": "carter2",
+        "state": "yield_to_cross_traffic",
+        "sim_time_s": 3.9666668735444546
+      },
+      {
+        "robot_id": "carter3",
+        "state": "turning",
+        "sim_time_s": 12.866667337715626
+      },
+      {
+        "robot_id": "carter4",
+        "state": "turning",
+        "sim_time_s": 12.866667337715626
+      },
+      {
+        "robot_id": "carter1",
+        "state": "junction_cleared",
+        "sim_time_s": 14.083334067836404
+      },
+      {
+        "robot_id": "carter1",
+        "state": "transport_resumed",
+        "sim_time_s": 14.083334067836404
+      },
+      {
+        "robot_id": "carter2",
+        "state": "crossing_granted",
+        "sim_time_s": 14.083334067836404
+      },
+      {
+        "robot_id": "carter2",
+        "state": "transport_resumed",
+        "sim_time_s": 14.083334067836404
+      },
+      {
+        "robot_id": "carter4",
+        "state": "transporting",
+        "sim_time_s": 15.88333416171372
+      },
+      {
+        "robot_id": "carter3",
+        "state": "transporting",
+        "sim_time_s": 15.90000082924962
+      },
+      {
+        "robot_id": "carter2",
+        "state": "turning",
+        "sim_time_s": 20.58333440683782
+      },
+      {
+        "robot_id": "carter2",
+        "state": "transport_resumed",
+        "sim_time_s": 23.600001230835915
+      },
+      {
+        "robot_id": "carter4",
+        "state": "delivery_arrived",
+        "sim_time_s": 24.01666791923344
+      },
+      {
+        "robot_id": "carter1",
+        "state": "delivery_arrived",
+        "sim_time_s": 24.700001288205385
+      },
+      {
+        "robot_id": "carter3",
+        "state": "delivery_arrived",
+        "sim_time_s": 25.833334680646658
+      },
+      {
+        "robot_id": "carter2",
+        "state": "junction_cleared",
+        "sim_time_s": 29.30000152811408
+      },
+      {
+        "robot_id": "carter2",
+        "state": "transport_resumed",
+        "sim_time_s": 29.30000152811408
+      },
+      {
+        "robot_id": "carter2",
+        "state": "turning",
+        "sim_time_s": 39.016668701544404
+      },
+      {
+        "robot_id": "carter2",
+        "state": "transport_resumed",
+        "sim_time_s": 42.0500021930784
+      },
+      {
+        "robot_id": "carter2",
+        "state": "delivery_arrived",
+        "sim_time_s": 55.63333623483777
+      }
+    ],
+    "control_pose_source": "wheel encoders + authored spawn",
+    "active_detour_planning": false,
+    "nav2_integration": false
+  },
+  "GT_control": false,
+  "active_detour_planning": false,
+  "ROS_Nav2_completion_claimed": false,
+  "cargo_physical_loading_claimed": false,
+  "source_OS_tree_closed": true,
+  "commands": [
+    [
+      "ffmpeg",
+      "-hide_banner",
+      "-loglevel",
+      "error",
+      "-threads",
+      "1",
+      "-filter_complex_threads",
+      "1",
+      "-framerate",
+      "60",
+      "-start_number",
+      "0",
+      "-i",
+      "C:\\Users\\LIMMM\\FactoryOpsRuntime\\local45-junction-hero-142\\rgb\\frame-%05d.jpg",
+      "-vf",
+      "pad=960:620:0:0:white,ass=operations.ass",
+      "-c:v",
+      "libx264",
+      "-crf",
+      "20",
+      "-pix_fmt",
+      "yuv420p",
+      "-movflags",
+      "+faststart",
+      "C:\\Users\\LIMMM\\factory-ops-twin\\docs\\images\\junction-hero-local45-142\\logistics-yield-60fps.mp4"
+    ],
+    [
+      "ffmpeg",
+      "-hide_banner",
+      "-loglevel",
+      "error",
+      "-threads",
+      "1",
+      "-filter_complex_threads",
+      "1",
+      "-ss",
+      "0.9666668735444546",
+      "-t",
+      "27.616667533293366",
+      "-i",
+      "C:\\Users\\LIMMM\\factory-ops-twin\\docs\\images\\junction-hero-local45-142\\logistics-yield-60fps.mp4",
+      "-filter_complex",
+      "crop=640:360:250:0,pad=640:440:0:0:white,ass=operations-close.ass,setpts=(PTS-STARTPTS)/2,fps=40,scale=800:-1:flags=lanczos,drawbox=x=10:y=10:w=92:h=31:color=white@0.9:t=fill,drawtext=fontfile='C\\:/Windows/Fonts/arial.ttf':text='2x | 40fps':x=16:y=17:fontsize=16:fontcolor=0x193229,split[a][b];[a]palettegen=max_colors=96:stats_mode=diff[p];[b][p]paletteuse=dither=bayer:bayer_scale=4",
+      "-loop",
+      "0",
+      "-final_delay",
+      "2",
+      "C:\\Users\\LIMMM\\factory-ops-twin\\docs\\images\\junction-hero-local45-142\\logistics-yield-40fps.gif"
+    ]
+  ],
+  "exports": {
+    "logistics-yield-60fps.mp4": {
+      "bytes": 3855584,
+      "sha256": "79a8e3baf1bfa78afcf2abb8f64919cec20e667b336695ecacf47ad02918adca",
+      "probe": {
+        "width": 960,
+        "height": 620,
+        "r_frame_rate": "60/1",
+        "duration": "56.650000",
+        "nb_read_frames": "3399"
+      }
+    },
+    "logistics-yield-40fps.gif": {
+      "bytes": 19730200,
+      "sha256": "032ddfce6359e631923a5ff04489f54f06d453241dc665f2c6c75a058b0dd840",
+      "probe": {
+        "width": 800,
+        "height": 550,
+        "r_frame_rate": "100/1",
+        "duration": "13.800000",
+        "nb_read_frames": "552"
+      }
+    }
+  }
+}
