@@ -92,6 +92,10 @@ def main() -> int:
                 annotator.detach()
             if product is not None:
                 product.destroy()
+            report["app_close_requested"] = app is not None
+            # SDK shutdown can terminate the interpreter before Python resumes.
+            # The outer Job receipt proves process closure after this report.
+            save()
             if app is not None:
                 app.close(wait_for_replicator=False)
         except BaseException as error:
