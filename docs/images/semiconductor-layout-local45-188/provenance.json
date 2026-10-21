@@ -1,0 +1,90 @@
+{
+  "schema_version": 1,
+  "run_id": "c41850e7be3f401294002f9108b95b59",
+  "scope": "Native Isaac Sim 4.5 static layout RGB only; authored semiconductor final-test/pack bay. No robot mission, throughput, physical transfer or full project completion claim.",
+  "source_commit": "43f626a4fef204943e0d362be4fafbefe503ad51",
+  "preview_script_sha256": "cf32d4ecf4e995dae891be15854fe1d86b530b6d3fb672347956e7b8034bc74c",
+  "source_archive_sha256": "260144f85797e707d34dc54529601a5c923749436154b073234091fc0cd14dc6",
+  "input_sha256": {
+    "layout.json": "16d7d50dde9091ff73141ee8d6e6727c3d16115efd42cc6303a43ac7f3f97da1",
+    "visual-assets.json": "fd9ba96f959122f6aded3a10f649986e8797422579f01a2b935358f0cffb3e2c",
+    "render-profile.json": "f986898c9dd8b27fb68032819012203f2767763c247f22b75303cb9a6769111b",
+    "scene/factory-v3.usda": "45c4b8f2decb8ab9ab646315870d6050267e37948c1150a74224c8583bb68b03"
+  },
+  "captures": [
+    {
+      "path": "overview.png",
+      "sha256": "37f6741fd63276c78359c161ee70199410959d3a20d010248fe96e5097db781e",
+      "width": 1280,
+      "height": 720,
+      "camera_eye_xyz_m": [
+        16.0,
+        -13.0,
+        24.0
+      ],
+      "camera_target_xyz_m": [
+        16.0,
+        11.0,
+        0.7
+      ],
+      "focal_length_mm": 17.0,
+      "physics_frame": 2,
+      "sim_time_s": 0.03333333507180214,
+      "source": "native Replicator RGB; no generated image or interpolation"
+    },
+    {
+      "path": "test-handler.png",
+      "sha256": "4c3009e7567116569f4d9eaf582bb9cb928e2b455930cdc5bcca3e1363d46850",
+      "width": 1280,
+      "height": 720,
+      "camera_eye_xyz_m": [
+        26.0,
+        1.0,
+        12.0
+      ],
+      "camera_target_xyz_m": [
+        19.0,
+        10.0,
+        1.0
+      ],
+      "focal_length_mm": 26.0,
+      "physics_frame": 2,
+      "sim_time_s": 0.03333333507180214,
+      "source": "native Replicator RGB; no generated image or interpolation"
+    }
+  ],
+  "equipment": "Generic reference-based procedural USD; not vendor CAD or a surveyed/certified factory",
+  "AI_generated_images": false,
+  "interpolated_frames": false,
+  "capture_status": "passed",
+  "result_receipt_sha256": "1636368f21090f6adea6c177f2aa031652fba38bc8cfe35bf1849c56740f66d5",
+  "closure": {
+    "job_receipt_sha256": "bfca2173ed8c7b38dcaa94bc119aa0af41ae6a98beb97be7896386b85102adfb",
+    "prelaunch_inputs_verified": true,
+    "closed": true,
+    "remaining_owned_pids": [],
+    "cleanup_errors": [],
+    "ROS_started": false,
+    "bag_SQL_opened": false
+  },
+  "renderer_readback": {
+    "status": "requested_but_sdk_setting_unavailable_or_unverified",
+    "requested": {
+      "renderer": "RTX Real-Time 2.0",
+      "launch_renderer": "RealTimePathTracing",
+      "allowed_readbacks": [
+        "RayTracedLighting",
+        "RealTimePathTracing"
+      ],
+      "dlss_mode": "Quality",
+      "dlss_exec_mode": 2
+    },
+    "readback": {
+      "renderer_before": "RaytracedLighting",
+      "renderer_after": "RaytracedLighting",
+      "dlss_before": 0,
+      "dlss_after": 2
+    },
+    "renderer_unchanged": true
+  }
+}

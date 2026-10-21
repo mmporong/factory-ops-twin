@@ -994,3 +994,5 @@ CPU 검사4개에서 기존240프레임 입력의180장 선택, 새180프레임 
 정지 렌더186은 조감 PNG를 만든 뒤 `annotator.detach([product])`에서 `HydraTexture has no attribute split`으로 실패했다. 설치 Replicator1.11.35의 `annotators.py`는 단일 HydraTexture 인수만 경로로 바꾸며 목록 원소를 바꾸지 않는다. 이미 연결한 제품을 모두 해제하는 `detach()`로 수정하고 기존 물리 시험처럼 `app.close(wait_for_replicator=False)`를 사용한다. 뒤의 access violation은 종료 중 후속 오류이며 최초 Python 예외와 구분한다. 감독 Job의 종료 코드0만으로 촬영 성공을 판정하지 않고 결과 JSON의 passed·두 RGB 해시·정리 오류 없음·소유 트리 종료를 함께 확인한다.
 
 187에서는 두 RGB 촬영과 소유 트리 종료를 확인했지만 SDK shutdown 뒤 Python 저장 코드가 실행되지 않아 결과 상태가 starting에 남았다. RGB와 해시는 유효하며 전체 촬영 프로토콜 성공으로 바꾸지 않는다. 기존 물리 시험처럼 `app.close` 전에 최종 결과를 저장하고, 종료 여부는 외부 Job 영수증으로 확인하도록 수정했다. 같은 결과 기록 순서로 후속 촬영을 실행한다.
+
+188에서는 최종 결과 passed, 같은 물리 프레임의1280×720 RGB 두 장, 원본 해시와 cleanup 오류0을 확인했다. 외부 Job의 입력 바이트 검사·종료·남은 소유 PID0도 확인했다. 운송이나 생산 성능이 아닌 정지 장면 촬영의 성공 범위다. [공개 촬영 근거](images/semiconductor-layout-local45-188/provenance.json)
