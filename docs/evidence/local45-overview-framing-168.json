@@ -1,0 +1,107 @@
+{
+  "schema_version": 1,
+  "scope": "CPU pinhole projection of authored shell envelope; not a new GPU render",
+  "baseline_run_id": "4dfd2c904a5f40448bafcea51c8e77d1",
+  "baseline_producer_source_commit": "a462fdbe3cd05722b03eb50afc058baa433a17dd",
+  "baseline_camera_readback": {
+    "coordinate_frame": "world",
+    "eye_xyz_m": [
+      16,
+      -13,
+      24
+    ],
+    "focal_length_mm": 24.0,
+    "horizontal_aperture_mm": 24.0,
+    "local_transform_row_major": [
+      1.0,
+      0.0,
+      -0.0,
+      0.0,
+      0.0,
+      0.696565923795132,
+      0.7174927970421962,
+      0.0,
+      0.0,
+      -0.7174927970421962,
+      0.696565923795132,
+      0.0,
+      16.0,
+      -13.0,
+      23.999999999999996,
+      1.0
+    ],
+    "prim_path": "/World/FactoryOverviewCamera",
+    "profile_camera_id": "portfolio_overview",
+    "readback_status": "verified",
+    "target_xyz_m": [
+      16,
+      11,
+      0.7
+    ],
+    "vertical_aperture_mm": 13.5
+  },
+  "authored_envelope_xyz_m": [
+    -0.12,
+    -0.12,
+    0,
+    32.12,
+    22.12,
+    3.2
+  ],
+  "envelope_source": "factory_ops/visual_scene.py:_factory_shell and fleet4 layout bounds; conservative outer cuboid",
+  "source_image_size": [
+    1280,
+    720
+  ],
+  "projection_candidates": [
+    {
+      "focal_mm": 24.0,
+      "clipped_corners": 4,
+      "pixel_bounds": [
+        120.09064670754114,
+        52.32638303001074,
+        1159.9093532924587,
+        138.80086728289385
+      ]
+    },
+    {
+      "focal_mm": 18.0,
+      "clipped_corners": 2,
+      "pixel_bounds": [
+        43.857392997853566,
+        129.24478727250803,
+        1236.1426070021462,
+        665.0259812050858
+      ]
+    },
+    {
+      "focal_mm": 17.0,
+      "clipped_corners": 0,
+      "pixel_bounds": [
+        24.090116470570138,
+        142.06452131292426,
+        1255.9098835294296,
+        648.0800933603588
+      ]
+    },
+    {
+      "focal_mm": 16.5,
+      "clipped_corners": 0,
+      "pixel_bounds": [
+        42.20511304496519,
+        148.4743883331324,
+        1237.7948869550348,
+        639.6071494379953
+      ]
+    }
+  ],
+  "selected_focal_length_mm": 17,
+  "minimum_frame_margin_px": 24.090116470570138,
+  "configured_profiles_sha256": {
+    "configs/factory-fleet4/render-profile.json": "da3b98ec77bdda6a8c792afa17267862159a1c93099cf003c041d41dffb75b36",
+    "configs/factory-fleet4-normal3/render-profile.json": "da3b98ec77bdda6a8c792afa17267862159a1c93099cf003c041d41dffb75b36"
+  },
+  "active_run_source_or_camera_changed": false,
+  "source_pixels_modified": false,
+  "native_new_framing": "pending next immutable GPU run; no updated image published"
+}
