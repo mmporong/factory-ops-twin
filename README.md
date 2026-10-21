@@ -2,7 +2,9 @@
 
 가상 센서 모듈 공장에서 **4대 AMR의 자재 공급·완제품 출하·빈 용기 회수**를 Isaac Sim·ROS 2와 웹 관제로 연결하는 프로젝트입니다.
 
-![자재 보관·공정 셀·출하 구역과 네 AMR로 구성한 전체 생산 구역](docs/images/fleet4-local45-036/overview.png)
+[![전체 공장 물류 운영의 12초 반복 미리보기](docs/images/fleet4-local45-036/operations-preview-smooth.gif)](docs/images/fleet4-local45-036/operations-business-complete.mp4)
+
+첫 화면은 이전 실행의 전체 업무 영상에서 고른 **12초 반복 GIF**입니다. 원본 영상의10fps·명목74배속 요약이며, 이미지를 누르면 전체 MP4로 이동합니다. [GIF 출처·변환 기록](docs/images/fleet4-local45-036/readme-smooth-preview-provenance.json)
 
 **자재 공급 → 공정 처리 → 완제품 이송 → 출하 → 빈 용기 반납**의 전체 운영과 같은 실행의 관제 상태를 보여줍니다. [현재 보존된 전체 업무 영상](docs/images/fleet4-local45-036/operations-business-complete.mp4)은 명목74배속 요약입니다. 해당 실행은 출하3건·빈 토트 반납3건을 기록했으나 최종 기록 종료 검사에 실패했습니다.
 
