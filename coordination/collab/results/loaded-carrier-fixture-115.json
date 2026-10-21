@@ -1,0 +1,114 @@
+{
+  "task_id": "loaded-carrier-fixture-115",
+  "attempt": 1,
+  "contract_revision": 104,
+  "ack": true,
+  "status": "implementation_ready_native_pending",
+  "acceptance_authority": "root",
+  "api_ready": true,
+  "stage2_complete": false,
+  "sdk_executed": false,
+  "gpu_started": false,
+  "summary": "실제 Nova Carter의 chassis·sensor frame·충돌 AABB를 먼저 읽고 기존 모듈 후보를 대조하는 정적 fixture를 준비했다. 허용된 후보만 chassis fixed joint와 자유 동적 토트를 구성하며, 실제 장착 가능 여부와 물리 결과는 아직 미확인이다.",
+  "input_source_commit_from_card": "000571d4c2e3b252daec8277d49a466b8102da41",
+  "changed_paths_sha256": {
+    "factory_ops/carrier_robot.py": "848fcef7a0787542b39d86d0c75b5a8bf7f5dd24ad4249a6eb8429b9dc616260",
+    "scripts/isaac/probe_loaded_carrier.py": "fe551b662b6883b77a9e5d635fe59d98ceeb7f3de5e2b6b300d18a04da709135",
+    "tests/test_carrier_robot.py": "36bc1de3f789367e6b9142defe4a228efbdeb179a2b2e91de1b3415bf214cfc9"
+  },
+  "other_written_path": "coordination/collab/results/loaded-carrier-fixture-115.json",
+  "input_sha256_verified_at_start": {
+    "AGENTS.md": "30ed4fb5a723edfac0557111438fa9b6b6a85b6f66ef002b675b5a240d87154d",
+    "docs/completion-plan.md": "dee0447fbe3c9fa09b01ba59e7f09e7142d4132d6e4508ba30bec72ec91e054f",
+    "factory_ops/carrier_module.py": "ef12b26aa3d7180e7f122324aa0f5e363010d1f3ddf366165b69ac6de1cbfc14",
+    "configs/vehicles/tote-carrier-v1.json": "4e849823f3e0efe4561fd8ce02ef17067b4b9dc606558bab2197ffa4efa46627",
+    "scripts/isaac/probe_tote_carrier_contact.py": "332d392d2350df0f0949efeac365d43c9b5faf9bd96258e42c20b7f900617672",
+    "scripts/isaac/local_asset_probe.py": "042e7c3255c339a5d5705a0bb70e377f0b807d2deda5d06fc0cffb0870bf345c",
+    "docs/evidence/local45-tote-contact-114.json": "16d4cafe495334e0942f190b36e9ccf5089d60314f81d98ab02ff6436f1408b2"
+  },
+  "114_scope_preserved": "114의 passed는 네 고정 지지대 위 동적 carrier/tote의 접촉·정지 dwell·작성된 분리·실제 RGB와 소유 종료에 한정한다. 실제 로봇 장착·운송·승강·산업용 정격으로 확대하지 않았다. 기존 원본은 읽기만 했다.",
+  "api": {
+    "entry": "assess_mount(manifest, measured, expected_run_id, *, clearance_m=0.01) -> dict",
+    "input_manifest": "수정하지 않은 carrier_module.build_manifest(load_profile(config)) 결과. 기존 5.4kg carrier와 6kg loaded tote의 작성된 형상/물성은 유지한다.",
+    "input_measured": "schema_version/run_id, 정확한 asset_relative_path/robot_path/chassis_path, m/Z-up, robot 및 chassis의 world_from_local 4x4, articulation_roots, rigid_bodies(path/enabled/kinematic), colliders(path/body_path/world_aabb_m), sensors(path/world_from_local). 이 값은 root가 probe를 실행할 때 설치 SDK에서 수집한다.",
+    "matrix_convention": "열벡터·우측 마지막 열 translation·오른손 Z-up·m. probe가 Gf 행벡터 행렬을 전치한다. pose_matrix(position, orientation_wxyz), rigid_matrix, inverse_rigid, transform_point, transformed_box는 stdlib만 사용한다.",
+    "output": "admitted/rejections, 고정된 identity carrier-to-chassis 후보, 실제 bound를 chassis frame으로 옮긴 AABB, post별 후보 face, original/loaded 반경과 manifest SHA. identity/단위/변환/소유 구조 오류는 예외로 실패하며 실제 간섭·지지면·반경 불충족은 admitted=false와 사유를 반환한다.",
+    "geometry_policy": "후보 형상을 옮기거나 확대하지 않는다. 네 post 바닥이 chassis collider AABB의 상단 위 기존 clearance 이내에 놓여야 한다. 그 후보 mount face 외에는 기존 clearance를 유지하고, 실제 원래 외곽 및 설정 반경 중 더 작은 범위를 넘으면 거절한다.",
+    "determinism": "기존 manifest_json으로 결정적 JSON을 내보낼 수 있다. 입력 dict를 변경하지 않는다. native 결과를 생성하는 API가 아니라 입력된 측정치의 기하 판정 API다."
+  },
+  "native_probe": {
+    "cli": "scripts/isaac/probe_loaded_carrier.py --config configs/vehicles/tote-carrier-v1.json --output <new-absolute-directory> --run-id <new-32-lowercase-hex>",
+    "asset_relative_path": "/Isaac/Robots/NVIDIA/Carter/nova_carter/nova_carter.usd",
+    "asset_policy": "기존 local_asset_probe와 같은 설치 resolver/reference만 사용한다. alternate asset은 시도하지 않으며 layer identity와 가능한 local file SHA를 기록한다. URI layer의 원본 bytes SHA는 만들지 않는다.",
+    "robot_path": "/World/NovaCarter",
+    "required_chassis": "/World/NovaCarter/chassis_link",
+    "prephysics": "instance proxy를 포함한 composition/rigid body/collider/sensor transform 측정, 동적 chassis 및 단일 articulation identity 확인, native-geometry.json 저장 후 admit/reject. 불일치하면 토트·carrier 생성 전에 failed와 사유를 남긴다.",
+    "attachment": "설치 RobotAssembler 방식의 UsdPhysics.FixedJoint: chassis body0/독립 carrier body1, identity local anchors, excludeFromArticulation=true. 연결된 두 body의 collision만 joint 설정으로 끄며 전역 마스크·월드 고정·기존 articulation 편집은 하지 않는다. 별도 free dynamic tote와 접촉 센서를 둔다.",
+    "control_and_observations": "0 wheel velocity target만 사용한다. 적재 후 body pose/velocity·joint position state setter나 GT steering은 없다. 실제 World frame/time, PhysX body/wheel readback, tote-carrier raw pair·힘·sensor time/frame freshness, free chassis drift와 relative mount/tote pose·정지 dwell을 관측한다. 이미지 모양만으로 통과하지 않는다.",
+    "budget": "기존 profile의 최대 6 sim s/360 wall s, 120Hz physics·연속 render, asset load 최대 90wall s는 전체 deadline 안에 포함. 실제 RGB 640x480 한 장만 저장한다. blocking native 호출의 상한과 프로세스 종료 증명은 기존 최대 480s Windows Job guard가 맡는다.",
+    "outputs": ["result.json", "manifest.json", "native-geometry.json", "admission.json", "observations.jsonl: 기하 허용 이후", "scene.usda: 물리 구성 이후", "mounted-settled.png: 실제 contact/stop dwell 및 유효 RGB일 때만"],
+    "cleanup": "RGB detach/RenderProduct destroy 실패는 failed로 기록한다. 최종 저장 실패에도 app.close(wait_for_replicator=False)를 시도한다. host closed/잔여 PID 확인을 probe의 close 요청으로 대체하지 않는다.",
+    "project_source_sha256_keys": ["factory_ops/__init__.py", "factory_ops/carrier_module.py", "factory_ops/carrier_robot.py"],
+    "profile_wording": "원래 profile의 지지대·분리 문장은 profile_assumptions_verbatim에 보존하고, fixture_scope_difference에서 이번 시험은 실제 chassis 장착·지지대 없음·분리 없음으로 구분한다."
+  },
+  "validation": [
+    {
+      "command": ".\\.venv\\Scripts\\python.exe -B -m unittest tests.test_carrier_robot -v",
+      "passes": 1,
+      "result": "5 PASS, exit 0, 0.083 s",
+      "scope": "모든 측정 fixture는 명시적인 합성 CPU 입력이다. 변환/yaw/translation·열벡터 규약, 비변경·결정성, run/body/asset/frame/단위/소유/중복 거절, 비유한·bool·비정규 quaternion·scale/shear 거절, 지지면·차체/센서 간섭·변경 없는 반경 거절을 검사했다. native 결과 재현이나 SDK 통과가 아니다."
+    },
+    {
+      "command": "프로젝트 Python ast.parse(..., feature_version=(3,10))",
+      "result": "새 Python 3개 파일 PASS. 마지막 probe 메타데이터 문구 구분 후 해당 파일만 AST 1회 추가 PASS.",
+      "scope": "문법 검사이며 SDK import/binding 실행이 아니다. CPU helper 검사는 SDK 의존성 없는 import도 확인했다. 전체 suite/타입 검사/SDK·ROS·WSL 실행은 수행하지 않았다."
+    },
+    {
+      "method": "소유 새 파일의 미구현 placeholder 및 pose/joint-position/body-velocity setter 패턴을 한정 확인",
+      "result": "해당 패턴 없음. 별도 검수 라운드·새 에이전트·추가 독립 리뷰 없음."
+    }
+  ],
+  "installed_official_sources_consulted": [
+    {
+      "path": "E:/IsaacSim/isaac-sim-4.5.0/exts/isaacsim.robot_setup.assembler/isaacsim/robot_setup/assembler/robot_assembler.py",
+      "sha256": "67fd32e6d9d1dcc3acdb29ccdbb95d3596a0ac28c4007efb221fa982170d22f8",
+      "basis": "create_fixed_joint의 body relation/local position/rotation, 외부 constraint의 excludeFromArticulation=true 방식. attach 객체 이동·global mask·joint state 초기화 동작은 재사용하지 않았다."
+    },
+    {
+      "path": "E:/IsaacSim/isaac-sim-4.5.0/exts/isaacsim.robot.wheeled_robots/isaacsim/robot/wheeled_robots/robots/wheeled_robot.py",
+      "sha256": "1547480036ff9f66291aaaebbf96f53b4f08a0a8621d93aa36252b9c07f9a6f0",
+      "basis": "기존 Nova Carter reference 생성, wheel DOF identity, apply_wheel_actions 및 wheel state 관측 API"
+    },
+    {
+      "path": "scripts/isaac/local_asset_probe.py",
+      "sha256": "042e7c3255c339a5d5705a0bb70e377f0b807d2deda5d06fc0cffb0870bf345c",
+      "basis": "이미 사용한 SDK4.5 asset resolver/path·CPU PhysX World·native composition localErrors·collision bounds·절차와 실제 API 연결을 재사용했다."
+    },
+    {
+      "path": "scripts/isaac/probe_tote_carrier_contact.py",
+      "sha256": "332d392d2350df0f0949efeac365d43c9b5faf9bd96258e42c20b7f900617672",
+      "basis": "114에서 사용한 compound mass/inertia/material/contact sensor·World clock·RGB·cleanup API 패턴을 참고했다. 기존 source는 수정하지 않았다."
+    }
+  ],
+  "limitations_and_native_uncertainties": [
+    "실제 Nova Carter에서 identity chassis-frame 후보가 맞는지 아직 모른다. 실제 측정한 mount face·원래 반경·센서 keepout 중 하나라도 불충족하면 거절하는 것이 정상 동작이다. 자동 위치 탐색이나 geometry/footprint 수정은 하지 않는다.",
+    "상단 AABB의 face 근접은 보수적 후보 검사다. cooked mesh 표면·체결 강도·볼트 접촉·승강 장치·인증 하중을 입증하지 않는다. fixed joint와 정적 접촉 통과도 적재 주행·미끄러짐·낙하·센서 FOV의 검증이 아니다.",
+    "camera 타입 및 lidar 이름/type/schema의 실제 prim transform을 읽고 작성된 0.16m housing keepout을 둔다. 이름 기반 lidar 후보는 보수적인 anchor이며 동작 센서나 beam 가시성으로 해석하지 않는다.",
+    "기존 profile의 질량·균일 분포·관성·마찰·하중 상한은 작성된 가정이다. 114 측정값을 이번 로봇 fixture의 관측값으로 복사하지 않았다.",
+    "설치 API의 native 파싱과 실제 고정 constraint/자유 chassis 정지·토트 접촉은 미실행이다. 적용 경로가 불명확하거나 움직이면 실패와 측정치를 보존한다. 이미 확인한 관측을 맞추기 위한 pose/TTL/반경 보정은 없다.",
+    "041 frozen source/stage/process, 기존 114 원본, 공유 module/config/README/plan/board/dashboard를 변경하지 않았다. Git mutation·설치·다운로드·새 세션/에이전트·GPU/SDK/ROS/WSL 실행 없음."
+  ],
+  "next_root_action": {
+    "precondition": "041과 양쪽 소유 프로세스 종료를 root가 확인한 뒤 새 소스·설정·실행 ID·새 output을 동결한다. 현재 실행은 조회하거나 조작하지 않았다.",
+    "guard_parameters": {
+      "SdkPath": "E:/IsaacSim/isaac-sim-4.5.0",
+      "EntryPoint": "probe_loaded_carrier.py",
+      "Config": "configs/vehicles/tote-carrier-v1.json",
+      "OutputDirectory": "새 절대 경로를 root가 배정",
+      "RunId": "새 32자리 lowercase hex를 root가 배정",
+      "SourceDependency": ["factory_ops/__init__.py", "factory_ops/carrier_module.py", "factory_ops/carrier_robot.py"],
+      "TimeoutSec": 480
+    },
+    "required_result": "최초 geometry 허용/거절과 실제 bound/frame/body identity를 회수한다. 허용된 경우 contact/stop dwell·fixed joint readback·RGB·source/config/import SHA·exit/host closed/잔여 PID를 대조한다. 구간 2 완료나 기존 실패의 사후 통과로 확대하지 않는다."
+  }
+}

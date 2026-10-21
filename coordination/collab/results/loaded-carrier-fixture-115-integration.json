@@ -1,0 +1,30 @@
+{
+  "task_id": "loaded-carrier-fixture-115",
+  "attempt": 1,
+  "contract_revision": 104,
+  "status": "accepted_implementation_native_pending",
+  "acceptance_authority": "root",
+  "stage2_complete": false,
+  "worker_receipt_sha256": "6516ef2e8334fc577c2c661c3a591aa50ff0a6e40c385c2847ea5a2ecb5a709d",
+  "received_source_sha256": {
+    "factory_ops/carrier_robot.py": "848fcef7a0787542b39d86d0c75b5a8bf7f5dd24ad4249a6eb8429b9dc616260",
+    "scripts/isaac/probe_loaded_carrier.py": "fe551b662b6883b77a9e5d635fe59d98ceeb7f3de5e2b6b300d18a04da709135",
+    "tests/test_carrier_robot.py": "36bc1de3f789367e6b9142defe4a228efbdeb179a2b2e91de1b3415bf214cfc9"
+  },
+  "integrated_source_sha256": {
+    "factory_ops/carrier_robot.py": "67d90058df40e2be49324ed43c5cf1af4403adae9eecd17b562300e71efb692a",
+    "scripts/isaac/probe_loaded_carrier.py": "fe551b662b6883b77a9e5d635fe59d98ceeb7f3de5e2b6b300d18a04da709135",
+    "tests/test_carrier_robot.py": "44e1fbc4ae0eb961ec8b77e6ee7e038de18b4d886a76c74ec610cd3e08f419ac"
+  },
+  "checks_received": "Author CPU5 PASS .083s and Python3.10 AST3 PASS; actual SDK not executed",
+  "root_integration": "One source/API/cleanup content pass. Removed1e-8 radius allowance; original source bytes recovered by reversing only root limited patch into snapshot and matched all3worker SHA. Synthetic case with configured radius5e-9 below measured original was admitted before correction.",
+  "focused_check": {
+    "name": "tests.test_carrier_robot.CarrierRobotTests.test_collision_sensor_support_and_radius_rejections_retain_diagnostics",
+    "passed": true,
+    "wall_s": 0.059,
+    "new_case": "Configured radius below measured original is rejected without arithmetic enlargement"
+  },
+  "original_receipt_preserved": true,
+  "native_pending": true,
+  "next": "After041 and owned OS/Job closure, freeze fresh source/config/id; use run-local-contact-probe.ps1 with EntryPoint probe_loaded_carrier.py and3project SourceDependency entries. First collect actual geometry admission/rejection; do not alter candidate or radius to pass."
+}

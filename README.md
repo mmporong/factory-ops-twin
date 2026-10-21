@@ -41,7 +41,7 @@
 |---|---|
 | ![고정 지지대 위 캐리어와 토트의 안착](docs/images/tote-contact-local45-114/settled.png) | ![상향 속도를 준 뒤 관측한 토트 분리](docs/images/tote-contact-local45-114/separated.png) |
 
-헤드리스 Isaac Sim 4.5에서 캐리어 5.4kg·적재 토트 6kg의 접촉을 시험했습니다. 네 지지대의 접촉·힘·센서 시각과 정지·정렬을 확인한 뒤, 토트에 상향 속도를 주어 분리 상태와 RGB 두 장을 기록했습니다. 고정 지지대 위의 구성 시험이며 **AMR 장착·자동 적재·운송·하중 정격 검증은 남아 있습니다.** [실제 물리 결과](docs/evidence/local45-tote-contact-114.json) · [이미지 출처](docs/images/tote-contact-local45-114/provenance.json)
+헤드리스 Isaac Sim 4.5에서 캐리어 5.4kg·적재 토트 6kg의 접촉을 시험했습니다. 네 지지대의 접촉·힘·센서 시각과 정지·정렬을 확인한 뒤, 토트에 상향 속도를 주어 분리 상태와 RGB 두 장을 기록했습니다. 고정 지지대 위의 구성 시험이며 **AMR 장착·자동 적재·운송·하중 정격 검증은 남아 있습니다.** 별도의 [AMR 장착 시험 코드](scripts/isaac/probe_loaded_carrier.py)는 실제 차체·센서 외곽과 기존 반경을 확인하는 단계부터 준비했습니다. [실제 물리 결과](docs/evidence/local45-tote-contact-114.json) · [이미지 출처](docs/images/tote-contact-local45-114/provenance.json)
 
 </details>
 

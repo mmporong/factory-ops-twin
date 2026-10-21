@@ -1,6 +1,6 @@
 {
-  "revision": 104,
-  "updated_at": "2026-10-21T03:55:45.554043+00:00",
+  "revision": 105,
+  "updated_at": "2026-10-21T04:19:37.622639+00:00",
   "scope": {
     "excluded": "실물 로봇 실행, 새 유료 서비스/에셋, 공개 배포",
     "project_root": "C:\\Users\\LIMMM\\factory-ops-twin",
@@ -20,7 +20,7 @@
       "role": "dashboard frontend author",
       "name": "control",
       "agent_kind": "codex",
-      "status": "115 assigned mounted-carrier static native fixture preparation, CPU only;041 GPU owned by root",
+      "status": "115 received and integrated; native static mounted admission pending after041; no active assignment",
       "session": "default",
       "agent_session": "01a152aa-24b4-7a31-92e3-a2b620f4feeb",
       "terminal_id": "term_65e06d27e415810",
@@ -1799,7 +1799,7 @@
         "terminal_id": "term_65e06d27e415810",
         "agent_session": "01a152aa-24b4-7a31-92e3-a2b620f4feeb"
       },
-      "status": "dispatched",
+      "status": "accepted_implementation_native_pending",
       "card_path": "coordination/collab/loaded-carrier-fixture-115-task.json",
       "result_path": "coordination/collab/results/loaded-carrier-fixture-115.json",
       "write_paths": [
@@ -1811,7 +1811,11 @@
       "depends_on": [
         "tote-carrier-module-107"
       ],
-      "review_policy": "one root receipt/content integration; no separate approval chain"
+      "review_policy": "one root receipt/content integration; no separate approval chain",
+      "reviewer": "root",
+      "ack": true,
+      "integration_path": "coordination\\collab\\results\\loaded-carrier-fixture-115-integration.json",
+      "acceptance": "Author CPU5+AST received; three original source hashes matched. Root one integration check and strict-radius focused1 PASS. Native vehicle mount/transport remains pending."
     }
   ],
   "decisions": [
