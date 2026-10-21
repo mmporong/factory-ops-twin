@@ -22,7 +22,7 @@ from uuid import UUID
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from factory_ops.layout import Layout
-from factory_ops.compat import replace_shared_file
+from factory_ops.compat import replace_shared_file, write_shared_text
 from factory_ops.fleet_registry import FleetRegistry
 from factory_ops.traffic import Decision, TrafficController
 from factory_ops.traffic_observation import project_observation
@@ -55,7 +55,7 @@ def fleet_identity(robot_ids: Sequence[str] = ROBOT_IDS,
 
 def atomic_json(path: Path, value: Any) -> None:
     temporary = path.with_name(f".{path.name}.{os.getpid()}.tmp")
-    temporary.write_text(json.dumps(value, indent=2, sort_keys=True, allow_nan=False) + "\n", encoding="utf-8")
+    write_shared_text(temporary, json.dumps(value, indent=2, sort_keys=True, allow_nan=False) + "\n")
     replace_shared_file(temporary, path)
 
 

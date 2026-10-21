@@ -739,6 +739,14 @@ Kit의 기존 요청에는 native next-anchor 계약의 run_id·UTC requested_at
 
 인코딩 도구는 기존 ffmpeg/ffprobe를 사용한다. 호스트 .venv에는 Pillow가 없어 최초 보조 도구의 import가 실패했으며, 새 패키지를 설치하지 않고 ffprobe의 실제 프레임 duration으로 재생 간격을 읽었다. 설치 SDK의 RGB 저장 기능과 이 보조 도구의 실패를 구분한다.
 
+## FOT-091 — 공유 파일 I/O 오류와 결과 저장 오류의 분리
+
+044는 ROS foreground에서 OSError errno5를 보고한 뒤 mission-result 임시 파일을 쓰다가 다시 같은 오류가 났다. 최초 실패의 전체 trace는 결과 파일에 남지 못했다. SDK90초 정리 대기는 ROS 종료 이후의 후속 오류이며, 실제 최초 파일/시스템 원인은 확정하지 않는다. 양쪽 소유 트리 종료·정리 오류없음과156파일 C/E 보존을 확인했다. 명시 peer·공장60fps 촬영 성공은 이 실행으로 입증되지 않았다. [044 원본](evidence/local45-transport-044.json)
+
+136은 WSL native와/mnt/c에서 작은 JSON128회씩 쓰기·원자 교체·읽기를 수행했다. 각각0.07589초·1.12234초, 오류0건으로 실제 장애를 재현하지 못했다. 이를 공장 전체의 속도나 해결 근거로 확대하지 않는다. WSL의 과거 kernel 경고도 현재 오류와 시각 결속이 없어 원인으로 쓰지 않는다. [136 진단](evidence/local45-filesystem-136.json)
+
+공유 checkpoint 읽기·교체의 기존0.2wall 초 한도에서 errno5를 처리하고, 임시 checkpoint 쓰기에도 같은 한도의 일시 오류 처리를 적용했다. append 저널에는 재시도를 넣지 않는다. ENOSPC·다른 영구 오류는 즉시 실패하고 지속 오류는 성공으로 반환하지 않는다. 관련 fault injection2건·기존 공유 파일5건을 통과했다. G3의 최초 예외는stderr와 native 임시 저장소의 run별 JSON에 보존하며 뒤의 파일/로그 실패로 덮어쓰지 않는다. 이 경로1검사와 Python3.10 AST4파일을 통과했다. native 임시 파일은 이후 오류 발생 시 소유 실행 종료 뒤 원본에 함께 수집한다. 새 실제 통합 운행에서 효과를 확인하며 TTL·물리·임무 기한은 유지한다.
+
 ## 실행 전 확인과 후속 기록
 
 후속120은 local45 개발 실행에서 TF·시계 처리 노드와 scan/odom/action 처리 노드를 나누고, 기존 총64회·50ms 안에서 TF 처리에 먼저 절반을 배정한다. 한 차량의 실제 Jazzy 구성요소 시험에서는 부하 상태의 TF age가 공유 경로0.673초 이상에서 분리 경로0.031473초로 줄었고, 실제 TF 중단은 계속 거절했다. CPU22검사를 통과했으나 네 차량 통합 운행의 해결 근거로 확대하지 않는다. [120 수신](../coordination/collab/results/localization-critical-dispatch-120-integration.json)

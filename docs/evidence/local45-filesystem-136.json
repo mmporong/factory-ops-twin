@@ -1,0 +1,35 @@
+{
+  "run_id": "636ee28dac17429280b3bfbdb3546e99",
+  "source_sha256": "81f294f3f2540d611f1369a2631ec9f4fd7bb3431000d792f9916070d5c64640",
+  "scope": "128small single-writer atomicJSON replacements per filesystem, no SDK/ROS/bag; not full factory write load or unique cause proof",
+  "cases": [
+    {
+      "filesystem": "WSL_native",
+      "path": "/home/llroad/FactoryOpsIOProbe136",
+      "success": 128,
+      "errors": [],
+      "wall_s": 0.07589354801166337
+    },
+    {
+      "filesystem": "DrvFS",
+      "path": "/mnt/c/Users/LIMMM/FactoryOpsRuntime/io-probe-136",
+      "success": 128,
+      "errors": [],
+      "wall_s": 1.1223350340005709
+    }
+  ],
+  "status": "small_atomic_write_probe_passed_original_IOError_not_reproduced",
+  "factory_failure_resolved": false,
+  "new_runtime_scope": "Checkpoint-only EIO/sharing retry inside shared-I/O default0.2wall bound; append journals unchanged. Existing runtime/physical deadlines unchanged.",
+  "checks": {
+    "recovery_fault_injection": 2,
+    "existing_shared_file_tests": 5,
+    "native_first_failure_fallback": 1,
+    "python310_AST": 4
+  },
+  "runtime_source_sha256": {
+    "factory_ops/compat.py": "520451dc4a86a5215be83bea1f57270767d973d24294522c1ef08165351b41b2",
+    "scripts/ros/g2_mission.py": "34517f633225efd34ed23d30546c3e373a766d14e86bb29fa7354d80cfe69a70",
+    "scripts/ros/g3_mission.py": "cd50a58a7186c2a24dcb545df8ce3470d8b6efcfe9f6397ccee91ed7e8082788"
+  }
+}

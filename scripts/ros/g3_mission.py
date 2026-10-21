@@ -15,6 +15,7 @@ from pathlib import Path
 import re
 import subprocess
 import sys
+import tempfile
 import time
 import traceback
 from typing import TYPE_CHECKING, Any, Callable, Mapping, Sequence
@@ -2941,6 +2942,10 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
     except BaseException as error:
         reason = failure_reason(error)
         result.update({"status": "failed", "error": {"type": type(error).__name__, "message": reason, "traceback": traceback.format_exc(limit=30)}, "actions": history})
+        from factory_ops.compat import preserve_failure_checkpoint
+        result["primary_failure_diagnostic"] = preserve_failure_checkpoint({"run_id": args.run_id,
+            "stage": result.get("stage"), "error": result["error"]},
+            Path(tempfile.gettempdir()) / "factory-ops-failures", sys.stderr)
         if material is not None:
             result["material_flow"] = material.snapshot()
         if energy_runtime is not None:
