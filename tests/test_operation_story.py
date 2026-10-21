@@ -56,6 +56,25 @@ class OperationStoryTests(unittest.TestCase):
         s.close()
         self.assertEqual(s.events[-1]["event"],"window_terminal_ended")
 
+    def test_three_second_windows_keep_all_six_phases_at_1080_source_frames(self):
+        s=OperationStory({**PROFILE,"window_frames":180},"r",3)
+        cases=[(self.state(),self.material()),
+               (self.state("processing",processing=True),self.material()),
+               (self.state("outbound_loaded"),self.material()),
+               (self.state("complete",shipped=1),self.material()),
+               (self.state("complete",shipped=2),self.material("returning")),
+               (self.state("complete",shipped=3),self.material("available",True))]
+        for phase,(visual,material) in enumerate(cases):
+            for offset in range(180):
+                frame=phase*180+offset
+                s.observe(frame,frame*100,visual,material,moving_robot_ids={"carter1","carter2"})
+                self.assertEqual(s.due()["sample_index"],offset)
+        s.observe(1080,108000,cases[-1][0],cases[-1][1],moving_robot_ids=set())
+        self.assertIsNone(s.due())
+        self.assertEqual((len(s.seen),s.emitted),(6,1080))
+        with self.assertRaises(ValueError):
+            OperationStory({**PROFILE,"window_frames":360},"r",3)
+
     def test_run_mismatch_and_broadened_budget_rejected(self):
         with self.assertRaises(ValueError):OperationStory({**PROFILE,"maximum_windows":20},"r",3)
         s=OperationStory(PROFILE,"r",3);v=self.state();v["run_id"]="other"

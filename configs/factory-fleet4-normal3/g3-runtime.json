@@ -43,7 +43,7 @@
   "operation_story": {
     "schema_version": 1,
     "profiles": ["development"],
-    "window_frames": 240,
+    "window_frames": 180,
     "sample_every_physics_steps": 1,
     "maximum_windows": 6
   },

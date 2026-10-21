@@ -325,7 +325,7 @@ def prepare(stage):
     if index.get("schema_version") != 1 or not isinstance(frames,list) or len(frames) > 5000 or any(not isinstance(f,dict) for f in frames):
         raise ValueError("capture index exceeds bounded frame count")
     tagged = [row for row in frames if row.get("visual_state",{}).get("factory_story") is not None]
-    if not 1 <= len(tagged) <= 1440:
+    if not 1 <= len(tagged) <= story.window_frames*6:
         raise ValueError("no bounded factory-story native frames; sparse legacy captures cannot substitute")
     chapters, seen, rows = [],set(),[]
     previous_time, previous_frame = -1.,-1
@@ -351,7 +351,7 @@ def prepare(stage):
                 "source_visual_sequence":tag["source_visual_sequence"],"source_material_revision":tag.get("source_material_revision")})
         chapter = chapters[-1]
         offset = count(tag.get("sample_index"),"story sample index")
-        if (offset != physics_frame-chapter["start_frame"] or offset != len(chapter["rows"]) or offset >= 240
+        if (offset != physics_frame-chapter["start_frame"] or offset != len(chapter["rows"]) or offset >= story.window_frames
                 or any(tag.get(key) != chapter[key] for key in ("start_frame","start_sim_time_ns","source_visual_sequence","source_material_revision"))
                 or not first and (physics_frame != previous_frame+1 or abs(world_s-previous_time-1/60) > 1e-6)):
             raise ValueError("native story is sparse or not an actual 60Hz consecutive-frame window")
@@ -395,7 +395,7 @@ def prepare(stage):
         if len(chapter_rows) < 2:
             raise ValueError("chapter has fewer than two native frames; cannot substantiate a 60fps window")
         chapter.update(source_frames=len(chapter_rows),selected_frames=min(180,len(chapter_rows)),
-            source_end_world_s=chapter_rows[-1]["world_time_s"],partial_window=len(chapter_rows)<240,
+            source_end_world_s=chapter_rows[-1]["world_time_s"],partial_window=len(chapter_rows)<story.window_frames,
             output_start_frame=len(selected),chapter_number=number)
         if chapter["phase"] in {"material_supply", "finished_goods_transport", "empty_container_return"}:
             chapter["carrier_motion"] = carrier_motion(chapter_rows[:180])
@@ -408,6 +408,7 @@ def prepare(stage):
     return {"schema_version":1,"stage":str(stage),"run_root":str(run_root),"run_id":run_id,
         "producer_source_commit":host["source_commit"],"scenario_id":session["scenario_id"],"robot_ids":robots,
         "mission_origin_sim_time_s":origin,"source_story_frames":len(rows),"source_fps":60,
+        "source_window_frames":story.window_frames,
         "playback_speed":1,"chapter_cuts":True,"interpolated_or_upsampled_motion":False,
         "native_overview_size":[1280,720],"canvas_size":list(SIZE),"chapters":chapters,"frames":selected,
         "source_files":list(files.values()),"cargo_scope":"ledger-bound visuals; physical tote contact/loading unverified",

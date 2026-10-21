@@ -15,10 +15,13 @@ PHASES = ("material_supply", "cell_processing", "finished_goods_transport",
 
 class OperationStory:
     def __init__(self, profile: dict, run_id: str, order_count: int):
-        expected = {"schema_version": 1, "profiles": ["development"], "window_frames": 240,
+        window_frames = profile.get("window_frames")
+        expected = {"schema_version": 1, "profiles": ["development"], "window_frames": window_frames,
                     "sample_every_physics_steps": 1, "maximum_windows": 6}
-        if profile != expected or not run_id or type(order_count) is not int or order_count < 1:
+        if (type(window_frames) is not int or window_frames not in (180, 240)
+                or profile != expected or not run_id or type(order_count) is not int or order_count < 1):
             raise ValueError("operation story requires explicit bounded development profile and orders")
+        self.window_frames = window_frames
         self.profile_hash = hashlib.sha256(json.dumps(profile,sort_keys=True,separators=(",", ":")).encode()).hexdigest()
         self.run_id, self.order_count = run_id, order_count
         self.seen: set[str] = set()
@@ -36,7 +39,7 @@ class OperationStory:
             raise ValueError("story motion requires observed robot identities")
         self.last_frame = frame
         self.current = (frame, sim_time_ns)
-        if self.window is not None and frame >= self.window["start_frame"]+240:
+        if self.window is not None and frame >= self.window["start_frame"]+self.window_frames:
             self.events.append({"event": "window_ended", **self.window, "end_frame": frame, "end_sim_time_ns": sim_time_ns})
             self.window = None
         if self.window is not None or len(self.seen) == 6 or visual is None:
@@ -78,11 +81,11 @@ class OperationStory:
             return None
         frame, stamp = self.current
         offset = frame-self.window["start_frame"]
-        if not 0 <= offset < 240 or frame == self.last_due:
+        if not 0 <= offset < self.window_frames or frame == self.last_due:
             return None
         self.last_due = frame
         self.emitted += 1
-        if self.emitted > 1440:
+        if self.emitted > self.window_frames*6:
             raise ValueError("operation story media budget exceeded")
         return {**deepcopy(self.window), "physics_frame": frame, "sim_time_ns": stamp, "sample_index": offset}
 

@@ -34,7 +34,7 @@ def write(root,relative,value):
     return {"path":relative,"sha256":MEDIA.sha(path),"bytes":path.stat().st_size}
 
 
-def fixture(stage,counts=None,bad_stock=False):
+def fixture(stage,counts=None,bad_stock=False,profile=PROFILE):
     """Write invented metadata for admission tests; overview bytes are NOT PNGs."""
     run = stage/"results/run"
     materials = [{"order_id":"O"+str(i),"tote_id":"F4-TOTE-"+str(i),"source":"S"+str(i),
@@ -43,7 +43,7 @@ def fixture(stage,counts=None,bad_stock=False):
         "workload":{"orders":[{"order_id":m["order_id"]} for m in materials],"initial_robots":dict.fromkeys(ROBOTS,"P1"),
                     "material_flow":{"materials":materials},"load":{"ci_capacity":2}}}
     session_ref = write(stage,"inputs/session.json",session)
-    write(stage,"inputs/config.json",{"g3_runtime":{"operation_story":PROFILE}})
+    write(stage,"inputs/config.json",{"g3_runtime":{"operation_story":profile}})
     write(stage,"launch.json",{"run_id":RUN,"source_commit":"b"*40})
     host = {"status":"passed","run_id":RUN,"source_commit":"b"*40,"windows_closed":True,"linux_closed":True,
         "cleanup_errors":[],"windows_end":{"run_id":RUN,"closed":True,"remaining_owned_pids":[],
@@ -116,7 +116,7 @@ def fixture(stage,counts=None,bad_stock=False):
             image.write_bytes(("CPU metadata only %d" % len(frames)).encode())
             tag = {"run_id":RUN,"window_id":"factory-"+phase,"phase":phase,"start_frame":first_frame,
                 "start_sim_time_ns":round(start*1e9),"physics_frame":frame,"sim_time_ns":round(stamp*1e9),
-                "sample_index":offset,"profile_sha256":OperationStory(PROFILE,RUN,3).profile_hash,
+                "sample_index":offset,"profile_sha256":OperationStory(profile,RUN,3).profile_hash,
                 "source_visual_sequence":i,"source_material_revision":i,
                 "dashboard":{"status":"observed",**dash_ref,"source_world_time_s":start-.01,"age_s":stamp-(start-.01)}}
             gt = {r:{"position_xyz_m":[offset*.05 if r in {"carter1","carter3"} else 0.,0.,.1],
@@ -314,6 +314,18 @@ class FactoryStoryMediaTests(unittest.TestCase):
         self.assertEqual([r["physics_frame"] for r in selected],list(range(6000,6180)))
         self.assertEqual(plan["playback_speed"],1)
         self.assertTrue(plan["chapter_cuts"])
+
+    def test_three_second_source_budget_keeps_every_selected_frame_and_rejects_overrun(self):
+        profile = {**PROFILE,"window_frames":180}
+        fixture(self.stage,counts=[180,4,4,4,4,4],profile=profile)
+        plan = MEDIA.prepare(self.stage)
+        chapter = plan["chapters"][0]
+        self.assertEqual(plan["source_window_frames"],180)
+        self.assertEqual((chapter["source_frames"],chapter["selected_frames"]),(180,180))
+        self.assertFalse(chapter["partial_window"])
+        fixture(self.stage,counts=[181,4,4,4,4,4],profile=profile)
+        with self.assertRaisesRegex(ValueError,"sparse"):
+            MEDIA.prepare(self.stage)
 
     def test_gif_delays_and_output_ownership_without_encoding(self):
         delays = MEDIA.gif_delays([{"duration_time":str(v)} for v in (.02,.03)*20])
