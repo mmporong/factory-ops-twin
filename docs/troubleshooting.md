@@ -988,3 +988,7 @@ CPU 검사4개에서 기존240프레임 입력의180장 선택, 새180프레임 
 ## FOT-119 — 세 주문과 매번 주차하는 시나리오를 반복 공장 운영으로 사용
 
 기존 normal3는0/10/20초의 세 주문만 선언하고 매 DROP 뒤 초기 주차장으로 이동했다. 공정 입구2자리·공정1개·긴 구간 예약도 병행 동작을 제한했다. GIF의 재생이나 차량 수 변경만으로 지속 운영이 되지 않는다. 새 반도체 설정은 유한 근무 시연의12개 lot를 순차 선언하고 하차 후 다음 일감을 먼저 확인한다. 배차되지 않으면2초 뒤 작업장을 비운다. 같은 위치 재인수는 별도 stationary receipt가 없으므로 제외하며 성공 Nav2 결과를 만들지 않는다. CPU 이동/정차 모델에서 네 대 반복 참여·동시4임무·12출하/반납·재고 보존을 확인했다. 이 검사는 실제 Nav2·예약 혼합 운송의 성공을 의미하지 않는다. 새 제조 구역/기능/제약은 [반도체 구역 문서](semiconductor-cell.md)에 기록했다.
+
+## FOT-120 — SDK4.5 RGB annotator 해제에 HydraTexture 목록을 전달
+
+정지 렌더186은 조감 PNG를 만든 뒤 `annotator.detach([product])`에서 `HydraTexture has no attribute split`으로 실패했다. 설치 Replicator1.11.35의 `annotators.py`는 단일 HydraTexture 인수만 경로로 바꾸며 목록 원소를 바꾸지 않는다. 이미 연결한 제품을 모두 해제하는 `detach()`로 수정하고 기존 물리 시험처럼 `app.close(wait_for_replicator=False)`를 사용한다. 뒤의 access violation은 종료 중 후속 오류이며 최초 Python 예외와 구분한다. 감독 Job의 종료 코드0만으로 촬영 성공을 판정하지 않고 결과 JSON의 passed·두 RGB 해시·정리 오류 없음·소유 트리 종료를 함께 확인한다.186 소유 트리는 종료됐으며 두 시점의 정상 촬영은 후속 실행에서 확인한다.

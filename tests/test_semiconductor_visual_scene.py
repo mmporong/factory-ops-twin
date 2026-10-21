@@ -82,7 +82,8 @@ class SemiconductorVisualSceneTests(unittest.TestCase):
         roots: dict[str, str] = {}
         text = "\n".join(_floor_graphics(Layout(data), {}, semantic_roots=roots))
 
-        self.assertIn('rel material:binding = </World/Visuals/Looks/White>', text)
+        self.assertIn('rel material:binding = </World/Visuals/Looks/FloorEpoxy>', text)
+        self.assertIn('rel material:binding = </World/Visuals/Looks/Dark>', text)
         self.assertIn('custom string stateRole = "esd_epoxy_floor"', text)
         self.assertNotIn('def Mesh "Stencil_ASSEMBLY"', text)
         self.assertNotIn('def Mesh "Stencil_MATERIAL"', text)

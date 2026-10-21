@@ -632,9 +632,9 @@
   },
   "traffic_reference": null,
   "unchanged_contracts": [
-    "19 obstacle footprints translated +1m in y without scaling",
+    "19 stable obstacle IDs; semiconductor equipment envelopes resized outside retained routes",
     "6 process stations translated +1m in y",
-    "32x20m production arrangement preserved within32x22m bounds",
+    "32x22m authored semiconductor final-test/pack arrangement",
     "4 separate off-main parking bays",
     "conservative reservation holds retained"
   ],
@@ -646,13 +646,13 @@
   ],
   "layout_provenance": {
     "kind": "authored-not-surveyed",
-    "base": "configs/factory-v4/layout.json",
+    "base": "configs/factory-fleet4/layout.json",
     "production_translation_xy_m": [
       0,
       1
     ],
     "extra_service_depth_m": 2,
-    "reason": "four retained footprint holds need separation from main-lane swept tiles; keep production spacing and obstacle sizes",
+    "reason": "Retain the four-AMR route/parking family while replacing equipment envelopes and models with a denser final-test/pack bay",
     "pending": "actual asset footprint, four-stack Nav2, sensor/map alignment and transport proof"
   },
   "production_domain": {
@@ -673,16 +673,16 @@
       {
         "label": "WIP",
         "origin_xy": [
-          5.2,
-          12.7
+          1.5,
+          11.9
         ],
         "role": "wip_stocker"
       },
       {
         "label": "FINAL TEST",
         "origin_xy": [
-          17,
-          9.35
+          16.8,
+          6.2
         ],
         "role": "test_handler"
       },
@@ -690,7 +690,7 @@
         "label": "AOI",
         "origin_xy": [
           17.1,
-          12.45
+          15.7
         ],
         "role": "optical_inspection"
       },
@@ -698,7 +698,7 @@
         "label": "PACK",
         "origin_xy": [
           27.0,
-          9.35
+          6.2
         ],
         "role": "packaging"
       },

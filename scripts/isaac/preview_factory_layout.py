@@ -80,7 +80,7 @@ def main() -> int:
             report["captures"].append({"path": path.name, "sha256": sha(path), "width": 1280, "height": 720,
                 "camera_eye_xyz_m": eye, "camera_target_xyz_m": target, "focal_length_mm": focal,
                 "physics_frame": frozen[0], "sim_time_s": frozen[1], "source": "native Replicator RGB; no generated image or interpolation"})
-            annotator.detach([product]); annotator = None
+            annotator.detach(); annotator = None
             product.destroy(); product = None
             save()
         report["status"] = "passed"
@@ -89,11 +89,11 @@ def main() -> int:
     finally:
         try:
             if annotator is not None and product is not None:
-                annotator.detach([product])
+                annotator.detach()
             if product is not None:
                 product.destroy()
             if app is not None:
-                app.close()
+                app.close(wait_for_replicator=False)
         except BaseException as error:
             report["cleanup_errors"].append(str(error)); report["status"] = "failed"
         save()

@@ -829,12 +829,13 @@ class FactoryVisualRuntime:
         readbacks: list[dict[str, object]] = []
         color_temperature = 5200.0 + 100.0 * (self.variant_seed % 4)
         assert self.layout is not None
+        semiconductor = self.layout.data.get("production_domain", {}).get("id") == "semiconductor_final_test_pack"
         for index, (x, y) in enumerate(light_positions(self.layout)):
             path = f"/World/Visuals/Lights/Panel_{index}"
             light = UsdLux.RectLight.Define(self.stage, path)
             light.CreateWidthAttr(5.0)
             light.CreateHeightAttr(0.8)
-            light.CreateIntensityAttr(4000.0)
+            light.CreateIntensityAttr(6000.0 if semiconductor else 4000.0)
             light.CreateColorTemperatureAttr(color_temperature)
             light.CreateEnableColorTemperatureAttr(True)
             self.UsdGeom.Xformable(light.GetPrim()).AddTranslateOp().Set(self.Gf.Vec3d(x, y, 5.35))
@@ -850,7 +851,7 @@ class FactoryVisualRuntime:
             })
         dome_path = "/World/Visuals/Lights/Ambient"
         dome = UsdLux.DomeLight.Define(self.stage, dome_path)
-        dome.CreateIntensityAttr(300.0)
+        dome.CreateIntensityAttr(1000.0 if semiconductor else 300.0)
         created.append(dome_path)
         readbacks.append({
             "prim_path": dome_path,

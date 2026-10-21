@@ -100,7 +100,7 @@ def export_visual_scene(
     obstacle_by_id = {str(item["id"]): item for item in layout.data["physical_obstacles"]}
     instances: list[VisualInstance] = []
     lines = _visual_header(variant_seed, palette)
-    lines.extend(_materials(palette))
+    lines.extend(_materials(palette, semiconductor=layout.data.get("production_domain", {}).get("id") == "semiconductor_final_test_pack"))
     lines.extend(_factory_shell(layout, palette))
     floor_semantic_roots: dict[str, str] = {}
     lines.extend(_floor_graphics(layout, palette, semantic_roots=floor_semantic_roots))
@@ -324,7 +324,7 @@ def _visual_header(seed: int, palette: Mapping[str, tuple[float, float, float]])
     ]
 
 
-def _materials(palette: Mapping[str, tuple[float, float, float]]) -> list[str]:
+def _materials(palette: Mapping[str, tuple[float, float, float]], *, semiconductor: bool = False) -> list[str]:
     definitions = {
         "Floor": ((0.32, 0.35, 0.37), 0.0, 0.86, 1.0),
         "Steel": (palette["steel"], 0.72, 0.32, 1.0),
@@ -347,6 +347,12 @@ def _materials(palette: Mapping[str, tuple[float, float, float]]) -> list[str]:
         "ESD": ((0.08, 0.14, 0.18), 0.0, 0.78, 1.0),
         "Wood": ((0.39, 0.22, 0.09), 0.0, 0.74, 1.0),
     }
+    if semiconductor:
+        definitions.update({
+            "FloorEpoxy": ((0.55, 0.74, 0.68), 0.0, 0.58, 1.0),
+            "White": ((0.82, 0.87, 0.89), 0.02, 0.62, 1.0),
+            "MachinePaint": ((0.24, 0.33, 0.38), 0.12, 0.55, 1.0),
+        })
     lines = ['        def Scope "Looks"', "        {"]
     for name, (color, metallic, roughness, opacity) in definitions.items():
         lines.extend([
@@ -413,7 +419,7 @@ def _floor_graphics(layout: Layout, palette: Mapping[str, tuple[float, float, fl
     add_box(_Box(
         "FloorFinish",
         (bounds.xmin, bounds.ymin, 0.001, bounds.xmax, bounds.ymax, 0.006),
-        "White" if semiconductor_domain else "Floor",
+        "FloorEpoxy" if semiconductor_domain else "Floor",
         "floor",
         "esd_epoxy_floor" if semiconductor_domain else "factory_floor",
     ))
@@ -501,7 +507,7 @@ def _floor_graphics(layout: Layout, palette: Mapping[str, tuple[float, float, fl
         if semiconductor_domain:
             stencil_specs = tuple(spec for spec in stencil_specs if spec[2] == "station_identifier")
         for label, origin, role in stencil_specs:
-            lines.extend(_floor_stencil_usda(label, origin, role, indent=12))
+            lines.extend(_floor_stencil_usda(label, origin, role, indent=12, material="Dark" if semiconductor_domain else "White"))
             semantic_roots[f"{root_path}/Stencil_{_prim_name(label)}"] = "floor_marking"
     if semiconductor_domain:
         assert isinstance(production_domain, dict)
@@ -533,7 +539,7 @@ def _floor_graphics(layout: Layout, palette: Mapping[str, tuple[float, float, fl
                     or stencil_bounds[2] > bounds.xmax or stencil_bounds[3] > bounds.ymax):
                 raise LayoutError(f"production_domain.zone_labels[{index}] lies outside layout bounds")
             domain_prim = f"Zone_{_prim_name(label)}"
-            lines.extend(_floor_stencil_usda(label, origin_xy, role, indent=12, prim_name=domain_prim))
+            lines.extend(_floor_stencil_usda(label, origin_xy, role, indent=12, prim_name=domain_prim, material="Dark"))
             semantic_roots[f"{root_path}/Stencil_{domain_prim}"] = "floor_marking"
             seen_labels.add(label)
     lines.extend(["        }"])
@@ -570,7 +576,7 @@ def _floor_stencil_geometry(
 
 def _floor_stencil_usda(
     label: str, origin_xy: tuple[float, float], role: str, *, indent: int,
-    prim_name: str | None = None,
+    prim_name: str | None = None, material: str = "White",
 ) -> list[str]:
     points, counts, indices, bounds = _floor_stencil_geometry(label, origin_xy)
     pad = " " * indent
@@ -586,7 +592,7 @@ def _floor_stencil_usda(
         f"{pad}    int[] faceVertexCounts = [{', '.join(str(value) for value in counts)}]",
         f"{pad}    int[] faceVertexIndices = [{', '.join(str(value) for value in indices)}]",
         f"{pad}    point3f[] points = [{point_values}]",
-        f"{pad}    rel material:binding = </World/Visuals/Looks/White>",
+        f"{pad}    rel material:binding = </World/Visuals/Looks/{material}>",
         f'{pad}    uniform token subdivisionScheme = "none"',
         f"{pad}}}",
     ]
@@ -678,6 +684,15 @@ def _recipe_boxes(
     w, d = x1 - x0, y1 - y0
     if geometry_profile not in {"legacy", PRODUCTION_BAY_GEOMETRY}:
         raise LayoutError(f"unsupported visual geometry profile: {geometry_profile}")
+    if recipe == "cleanroom_utility" and w > 2.6:
+        count = math.ceil(w / 2.2)
+        pitch = w / count
+        modules = []
+        for index in range(count):
+            module = Rect(x0 + index * pitch + .03, y0, x0 + (index + 1) * pitch - .03, y1)
+            for box in _recipe_boxes(recipe, module, height, seed, obstacle_id, geometry_profile=geometry_profile):
+                modules.append(_Box(f"Module_{index}_{box.name}", box.bounds, box.material, box.semantic_class, box.state_role))
+        return modules
     def b(name: str, fx0: float, fy0: float, z0: float, fx1: float, fy1: float, z1: float, material: str, semantic: str | None = None, role: str | None = None) -> _Box:
         return _Box(name, (x0 + w * fx0, y0 + d * fy0, z0, x0 + w * fx1, y0 + d * fy1, min(z1, height)), material, semantic, role)
 
