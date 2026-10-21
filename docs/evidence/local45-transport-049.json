@@ -1,0 +1,111 @@
+{
+  "schema_version": 1,
+  "run_id": "255ec57bb2214acda1f2da31db0fd30e",
+  "source_commit": "8e7073855a49b778ac45d76d0cff1bbebb0125d1",
+  "status": "failed_windows_relay_checkpoint_replace",
+  "normal_transport_passed": false,
+  "business_flow_complete": false,
+  "host_wall_s": 2176.1720000000205,
+  "startup_barrier_status": "ready",
+  "startup_scope": "Four Nav2 stacks activated and fresh sensor/localization barrier passed; not an end-to-end transport pass",
+  "last_elapsed_sim_s": 199.000010379,
+  "completed_orders": 0,
+  "last_stock_units": 56,
+  "factory_story_events": [
+    {
+      "event": "window_started",
+      "phase": "material_supply",
+      "profile_sha256": "26907240268b3ba256ec0b4800a14f1d70580c91b7a3216b0bde39bbb47e2dde",
+      "run_id": "255ec57bb2214acda1f2da31db0fd30e",
+      "source_material_revision": 1,
+      "source_visual_sequence": 4,
+      "start_frame": 4546,
+      "start_sim_time_ns": 75766670618,
+      "window_id": "factory-material_supply"
+    },
+    {
+      "end_frame": 4786,
+      "end_sim_time_ns": 79766670827,
+      "event": "window_ended",
+      "phase": "material_supply",
+      "profile_sha256": "26907240268b3ba256ec0b4800a14f1d70580c91b7a3216b0bde39bbb47e2dde",
+      "run_id": "255ec57bb2214acda1f2da31db0fd30e",
+      "source_material_revision": 1,
+      "source_visual_sequence": 4,
+      "start_frame": 4546,
+      "start_sim_time_ns": 75766670618,
+      "window_id": "factory-material_supply"
+    },
+    {
+      "event": "window_started",
+      "phase": "cell_processing",
+      "profile_sha256": "26907240268b3ba256ec0b4800a14f1d70580c91b7a3216b0bde39bbb47e2dde",
+      "run_id": "255ec57bb2214acda1f2da31db0fd30e",
+      "source_material_revision": 5,
+      "source_visual_sequence": 7,
+      "start_frame": 12377,
+      "start_sim_time_ns": 206283344092,
+      "window_id": "factory-cell_processing"
+    }
+  ],
+  "complete_six_phase_media": false,
+  "partial_media_scope": "Material supply window completed; cell-processing window interrupted; no final full-factory hero exported",
+  "first_observed_failure": {
+    "component": "Windows application-topic relay checkpoint",
+    "type": "PermissionError",
+    "windows_error": 5,
+    "operation": "windows-relay.tmp -> windows-relay.json atomic replacement",
+    "source": "factory_ops/compat.py:41 replace_shared_file",
+    "existing_retry_bound_wall_s": 0.2,
+    "cause_scope": "PermissionError persisted beyond the existing bounded retry. Which reader or OS component held the conflicting handle is unconfirmed; no ENOSPC evidence.",
+    "resolved": false
+  },
+  "secondary_failures": [
+    "Linux relay ConnectionError after peer socket closed",
+    "Mission ExternalShutdownException during supervisor shutdown"
+  ],
+  "closure": {
+    "sdk_windows": true,
+    "nav2_linux": true,
+    "relay_windows": true,
+    "relay_linux": true,
+    "cleanup_errors": [],
+    "remaining_sdk_owned_pids": [],
+    "remaining_relay_owned_pids": []
+  },
+  "raw_retained": "%USERPROFILE%/FactoryOpsRuntime/local45-transport-049",
+  "raw_duplicated_by_cleanup": false,
+  "source_receipts": [
+    {
+      "path": "%USERPROFILE%/FactoryOpsRuntime/local45-transport-049/pair-host.json",
+      "bytes": 49554,
+      "sha256": "27c51a293bc6e4f8ac04d2e625a09e713a5ea83b0942d70ab45e04e6e019bf6c"
+    },
+    {
+      "path": "%USERPROFILE%/FactoryOpsRuntime/local45-transport-049/windows-relay.json",
+      "bytes": 5639,
+      "sha256": "5a43bc0826e5626654ab0a7feb750054c72b5d518b9ba2a2e77e37095d34bebe"
+    },
+    {
+      "path": "%USERPROFILE%/FactoryOpsRuntime/local45-transport-049/linux-relay.json",
+      "bytes": 4407,
+      "sha256": "26fd51369744d6412d3225ccbeb3f4c5ff10cb6b7b0ec9bd6eabf1e4a4fb9d46"
+    },
+    {
+      "path": "%USERPROFILE%/FactoryOpsRuntime/local45-transport-049/relay-pair.json",
+      "bytes": 20654,
+      "sha256": "cad40efaed9521e55132854a9768698bac431853b45bc2be211307d45e910969"
+    },
+    {
+      "path": "%USERPROFILE%/FactoryOpsRuntime/local45-transport-049/job.json",
+      "bytes": 16173,
+      "sha256": "89ca83c3b11b8cedc3358b4038b1c0f90b21960c3d7fa7dd45c340fc824f6543"
+    },
+    {
+      "path": "%USERPROFILE%/FactoryOpsRuntime/local45-transport-049/build-attestation.json",
+      "bytes": 3922,
+      "sha256": "c314608c759323807498185968f4891437332f528d0efbcd464be9800d16d412"
+    }
+  ],
+  "bag_SQL_opened_for_this_report": false
+}

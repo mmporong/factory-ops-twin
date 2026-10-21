@@ -1,0 +1,1969 @@
+{
+  "schema_version": 1,
+  "classification": "project_storage_cleanup_not_project_completion",
+  "recorded_at_utc": "2026-10-21T11:51:54.230467+00:00",
+  "scope": "User-authorized removal of unused project data; unrelated projects, OS files and installed SDK excluded",
+  "status": "completed",
+  "removed_targets": 316,
+  "logical_bytes_removed": 239012422410.0,
+  "measured_volume_free_space_increase_bytes": {
+    "C": 25503936512,
+    "D": 78828150784,
+    "E": 128895234048
+  },
+  "measured_total_free_space_increase_bytes": 233227321344,
+  "measurement_scope": "Sum of before/after free-space observations per batch, including concurrent system writes; logical file sizes differ with compression/allocation",
+  "final_volume_observation": [
+    {
+      "Drive": "C",
+      "FreeBytes": 62933254144
+    },
+    {
+      "Drive": "D",
+      "FreeBytes": 79877595136
+    },
+    {
+      "Drive": "E",
+      "FreeBytes": 131099385856
+    }
+  ],
+  "retained_archives_hash_verified_before_deletion": [
+    {
+      "Path": "D:/FactoryOpsArtifacts/industrial-diagnostics/industrial-g4-render-004-008.tar.gz",
+      "Bytes": 2256485761,
+      "Sha256": "e8f683730c21b4aa7a159f30e956b25a79b26ca699afd36d1b88ff2bb7240749",
+      "Role": "Validated final synthetic dataset canonical archive and disk-separated backup"
+    },
+    {
+      "Path": "E:/FactoryOpsArtifacts/industrial-diagnostics/industrial-g4-render-004-008.tar.gz",
+      "Bytes": 2256485761,
+      "Sha256": "e8f683730c21b4aa7a159f30e956b25a79b26ca699afd36d1b88ff2bb7240749",
+      "Role": "Validated final synthetic dataset canonical archive and disk-separated backup"
+    },
+    {
+      "Path": "%USERPROFILE%/factory-ops-twin/artifacts/brev/g2-all-evidence-20261016T130522Z.tar.gz",
+      "Bytes": 2532190056,
+      "Sha256": "03ab2e89e8530c88fdfb998e961313a2c304fa629b6ecb8d48f830e39f89aca1",
+      "Role": "Archived exact G2 source/results replaces decoded C preview"
+    }
+  ],
+  "selected_raw_and_runtime_kept": [
+    "%USERPROFILE%/FactoryOpsRuntime/local45-transport-049",
+    "%USERPROFILE%/FactoryOpsRuntime/local45-goal-canonical-112",
+    "%USERPROFILE%/FactoryOpsRuntime/local45-junction-hero-142",
+    "%USERPROFILE%/FactoryOpsRuntime/local45-loaded-mobility-135",
+    "%USERPROFILE%/FactoryOpsRuntime/local45-loaded-carrier-124",
+    "%USERPROFILE%/FactoryOpsRuntime/local45-roller-transfer-119",
+    "%USERPROFILE%/FactoryOpsRuntime/local45-tote-contact-114",
+    "E:/FactoryOpsRuntime/local45-transport-036",
+    "D:/FactoryOpsArtifacts/operations-077",
+    "D:/FactoryOpsArtifacts/portfolio-media",
+    "D:/FactoryOpsArtifacts/portfolio-qa",
+    "E:/IsaacSim/isaac-sim-4.5.0"
+  ],
+  "historical_raw_path_expiry": "Old provenance remains historical. Removed raw/restore paths listed here no longer exist. G4 restore-industrial-008 is recoverable from the unchanged, hash-verified final G4 archive; closed failure summaries and public portfolio media remain in Git.",
+  "retention_policy": {
+    "git": "Source, configuration, selected representative media, public provenance and troubleshooting; no multi-GB bags, SDK/vendor assets, credentials or private logs",
+    "local": "Current run, latest actionable failure, selected physical proof and canonical datasets; separate-disk backup for irreplaceable final data",
+    "failed_runs": "Keep compact cause/closure/source receipts; expire superseded bulk bags, repeated decoded previews and redundant archives after selecting necessary proof",
+    "capture": "Existing development profile remains at most six windows of 240 physical samples; no new collection or simulation launched by this cleanup"
+  },
+  "scratch": {
+    "path": "D:/FactoryOpsArtifacts/qa-scratch/q020-reader-001",
+    "logical_bytes": 4896461455.0,
+    "removed": true
+  },
+  "removed": [
+    {
+      "path": "D:/FactoryOpsArtifacts/industrial-diagnostics/industrial-035-q021-canonical-001-proof",
+      "files": 9,
+      "logical_bytes": 371288,
+      "compact_receipt_files_retained_locally": 5
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/industrial-diagnostics/industrial-036-source-controls-001",
+      "files": 6,
+      "logical_bytes": 14749,
+      "compact_receipt_files_retained_locally": 1
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/industrial-diagnostics/industrial-038-q022-canonical-001-proof",
+      "files": 9,
+      "logical_bytes": 349542,
+      "compact_receipt_files_retained_locally": 5
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/industrial-diagnostics/industrial-040-q023-canonical-001-proof",
+      "files": 9,
+      "logical_bytes": 166489,
+      "compact_receipt_files_retained_locally": 6
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/industrial-diagnostics/industrial-041-q024-canonical-001-proof",
+      "files": 9,
+      "logical_bytes": 162078,
+      "compact_receipt_files_retained_locally": 6
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/industrial-diagnostics/industrial-043-q025-canonical-001-proof",
+      "files": 9,
+      "logical_bytes": 155989,
+      "compact_receipt_files_retained_locally": 6
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/industrial-diagnostics/industrial-045-q026-canonical-001-proof",
+      "files": 9,
+      "logical_bytes": 168156,
+      "compact_receipt_files_retained_locally": 6
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/industrial-diagnostics/industrial-047-q027-canonical-001-proof",
+      "files": 9,
+      "logical_bytes": 169850,
+      "compact_receipt_files_retained_locally": 6
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/industrial-diagnostics/industrial-049-q028-canonical-001-proof",
+      "files": 9,
+      "logical_bytes": 245910,
+      "compact_receipt_files_retained_locally": 6
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/industrial-diagnostics/industrial-049-stop-state-001",
+      "files": 11,
+      "logical_bytes": 13095,
+      "compact_receipt_files_retained_locally": 3
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/industrial-diagnostics/industrial-051-q028-observation-supplement-001",
+      "files": 21,
+      "logical_bytes": 54015577,
+      "compact_receipt_files_retained_locally": 3
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/industrial-diagnostics/industrial-local-supplement-010",
+      "files": 22,
+      "logical_bytes": 47589045,
+      "compact_receipt_files_retained_locally": 5
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/industrial-diagnostics/industrial-local-supplement-011",
+      "files": 171,
+      "logical_bytes": 207567928,
+      "compact_receipt_files_retained_locally": 13
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/industrial-diagnostics/industrial-local-supplement-012",
+      "files": 98,
+      "logical_bytes": 86880970,
+      "compact_receipt_files_retained_locally": 15
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/industrial-diagnostics/industrial-local-supplement-013",
+      "files": 130,
+      "logical_bytes": 142814879,
+      "compact_receipt_files_retained_locally": 11
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/industrial-diagnostics/industrial-local-supplement-014",
+      "files": 78,
+      "logical_bytes": 48344153,
+      "compact_receipt_files_retained_locally": 5
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/industrial-diagnostics/industrial-local-supplement-015",
+      "files": 109,
+      "logical_bytes": 49796721,
+      "compact_receipt_files_retained_locally": 13
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/industrial-diagnostics/industrial-local-supplement-016",
+      "files": 111,
+      "logical_bytes": 56683059,
+      "compact_receipt_files_retained_locally": 16
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/industrial-diagnostics/industrial-local-supplement-017",
+      "files": 71,
+      "logical_bytes": 55369006,
+      "compact_receipt_files_retained_locally": 7
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/industrial-diagnostics/industrial-local-supplement-018",
+      "files": 135,
+      "logical_bytes": 49806019,
+      "compact_receipt_files_retained_locally": 20
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/industrial-diagnostics/industrial-local-supplement-019",
+      "files": 634,
+      "logical_bytes": 88725240,
+      "compact_receipt_files_retained_locally": 7
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/industrial-diagnostics/industrial-local-supplement-020",
+      "files": 177,
+      "logical_bytes": 102165387,
+      "compact_receipt_files_retained_locally": 20
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/industrial-diagnostics/industrial-local-supplement-022",
+      "files": 145,
+      "logical_bytes": 57684532,
+      "compact_receipt_files_retained_locally": 25
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/industrial-diagnostics/industrial-local-supplement-023",
+      "files": 65,
+      "logical_bytes": 59122855,
+      "compact_receipt_files_retained_locally": 15
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/industrial-diagnostics/industrial-local-supplement-024",
+      "files": 113,
+      "logical_bytes": 49092878,
+      "compact_receipt_files_retained_locally": 16
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/industrial-diagnostics/industrial-local-supplement-025",
+      "files": 112,
+      "logical_bytes": 48731639,
+      "compact_receipt_files_retained_locally": 18
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/industrial-diagnostics/industrial-local-supplement-026",
+      "files": 96,
+      "logical_bytes": 51929119,
+      "compact_receipt_files_retained_locally": 20
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/industrial-diagnostics/industrial-local-supplement-027",
+      "files": 123,
+      "logical_bytes": 93159211,
+      "compact_receipt_files_retained_locally": 20
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/industrial-diagnostics/industrial-local-supplement-028",
+      "files": 406,
+      "logical_bytes": 202982114,
+      "compact_receipt_files_retained_locally": 40
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/industrial-diagnostics/industrial-local-supplement-029",
+      "files": 449,
+      "logical_bytes": 254734990,
+      "compact_receipt_files_retained_locally": 41
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/industrial-diagnostics/industrial-q014-closed-001",
+      "files": 55,
+      "logical_bytes": 206098374,
+      "compact_receipt_files_retained_locally": 9
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/industrial-diagnostics/industrial-q015-closed-001",
+      "files": 52,
+      "logical_bytes": 209257816,
+      "compact_receipt_files_retained_locally": 9
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/industrial-diagnostics/industrial-q016-closed-001",
+      "files": 8,
+      "logical_bytes": 47767163,
+      "compact_receipt_files_retained_locally": 3
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/industrial-diagnostics/industrial-q017-closed-001",
+      "files": 41,
+      "logical_bytes": 705156334,
+      "compact_receipt_files_retained_locally": 9
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/industrial-diagnostics/industrial-q018-closed-001",
+      "files": 8,
+      "logical_bytes": 44503647,
+      "compact_receipt_files_retained_locally": 3
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/industrial-diagnostics/industrial-q019-closed-001",
+      "files": 28,
+      "logical_bytes": 548101801,
+      "compact_receipt_files_retained_locally": 8
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/industrial-diagnostics/industrial-q020-closed-001",
+      "files": 33,
+      "logical_bytes": 940929254,
+      "compact_receipt_files_retained_locally": 8
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/industrial-diagnostics/postprocessor-source-9d31642-001",
+      "files": 225,
+      "logical_bytes": 92971247,
+      "compact_receipt_files_retained_locally": 1
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/industrial-diagnostics/q010-codec-benchmark-001",
+      "files": 4,
+      "logical_bytes": 5745454086,
+      "compact_receipt_files_retained_locally": 0
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/industrial-diagnostics/q010-png0-dictionary-probe-002",
+      "files": 22,
+      "logical_bytes": 373558360,
+      "compact_receipt_files_retained_locally": 6
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/industrial-diagnostics/q010-png0-solid-probe-001",
+      "files": 12,
+      "logical_bytes": 359238647,
+      "compact_receipt_files_retained_locally": 1
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/industrial-diagnostics/restore-industrial-015",
+      "files": 2536,
+      "logical_bytes": 4876347478,
+      "compact_receipt_files_retained_locally": 20
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/industrial-diagnostics/g4-probe-009-raw-001-verification.json",
+      "files": 1,
+      "logical_bytes": 741,
+      "compact_receipt_files_retained_locally": 1
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/industrial-diagnostics/g4-probe-009-raw-001.tar.gz",
+      "files": 1,
+      "logical_bytes": 50621204,
+      "compact_receipt_files_retained_locally": 0
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/industrial-diagnostics/industrial-035-q021-canonical-001.tar.gz",
+      "files": 1,
+      "logical_bytes": 2724915449,
+      "compact_receipt_files_retained_locally": 0
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/industrial-diagnostics/industrial-035-q021-stop-failure-001.json",
+      "files": 1,
+      "logical_bytes": 1071,
+      "compact_receipt_files_retained_locally": 0
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/industrial-diagnostics/industrial-036-source-preservation-001.json",
+      "files": 1,
+      "logical_bytes": 2498,
+      "compact_receipt_files_retained_locally": 0
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/industrial-diagnostics/industrial-036-source.bundle",
+      "files": 1,
+      "logical_bytes": 51890014,
+      "compact_receipt_files_retained_locally": 0
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/industrial-diagnostics/industrial-037-blocked-audit-001.json",
+      "files": 1,
+      "logical_bytes": 1696,
+      "compact_receipt_files_retained_locally": 0
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/industrial-diagnostics/industrial-038-q022-canonical-001.tar.gz",
+      "files": 1,
+      "logical_bytes": 2121664201,
+      "compact_receipt_files_retained_locally": 0
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/industrial-diagnostics/industrial-040-q023-canonical-001.tar.gz",
+      "files": 1,
+      "logical_bytes": 425740205,
+      "compact_receipt_files_retained_locally": 0
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/industrial-diagnostics/industrial-041-q024-canonical-001.tar.gz",
+      "files": 1,
+      "logical_bytes": 410743192,
+      "compact_receipt_files_retained_locally": 0
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/industrial-diagnostics/industrial-043-q025-canonical-001.tar.gz",
+      "files": 1,
+      "logical_bytes": 370181824,
+      "compact_receipt_files_retained_locally": 0
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/industrial-diagnostics/industrial-045-q026-canonical-001.tar.gz",
+      "files": 1,
+      "logical_bytes": 464685853,
+      "compact_receipt_files_retained_locally": 0
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/industrial-diagnostics/industrial-047-q027-canonical-001.tar.gz",
+      "files": 1,
+      "logical_bytes": 505414763,
+      "compact_receipt_files_retained_locally": 0
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/industrial-diagnostics/industrial-049-q028-canonical-001.tar.gz",
+      "files": 1,
+      "logical_bytes": 2058059710,
+      "compact_receipt_files_retained_locally": 0
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/industrial-diagnostics/industrial-049-stop-complete-001.json",
+      "files": 1,
+      "logical_bytes": 627,
+      "compact_receipt_files_retained_locally": 0
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/industrial-diagnostics/industrial-diagnostics-20261017T181800Z.tar.gz",
+      "files": 1,
+      "logical_bytes": 1152525880,
+      "compact_receipt_files_retained_locally": 0
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/industrial-diagnostics/industrial-diagnostics-20261017T193000Z.tar.gz",
+      "files": 1,
+      "logical_bytes": 2744035014,
+      "compact_receipt_files_retained_locally": 0
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/industrial-diagnostics/industrial-diagnostics-20261017T203000Z.tar.gz",
+      "files": 1,
+      "logical_bytes": 2096103156,
+      "compact_receipt_files_retained_locally": 0
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/industrial-diagnostics/industrial-diagnostics-20261017T211302Z.tar.gz",
+      "files": 1,
+      "logical_bytes": 4535808544,
+      "compact_receipt_files_retained_locally": 0
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/industrial-diagnostics/industrial-g3-q-normal-fifo-011-fatal-013.tar.gz",
+      "files": 1,
+      "logical_bytes": 885249776,
+      "compact_receipt_files_retained_locally": 0
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/industrial-diagnostics/industrial-g3-q-normal-fifo-012-014.tar.gz",
+      "files": 1,
+      "logical_bytes": 1374489367,
+      "compact_receipt_files_retained_locally": 0
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/industrial-diagnostics/industrial-g3-q-normal-fifo-013-015.tar.gz",
+      "files": 1,
+      "logical_bytes": 3010074109,
+      "compact_receipt_files_retained_locally": 0
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/industrial-diagnostics/industrial-g4-render-002-006.tar.gz",
+      "files": 1,
+      "logical_bytes": 574508074,
+      "compact_receipt_files_retained_locally": 0
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/industrial-diagnostics/industrial-g4-render-003-007.tar.gz",
+      "files": 1,
+      "logical_bytes": 643960543,
+      "compact_receipt_files_retained_locally": 0
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/industrial-diagnostics/bundle-build-industrial-038-001.git",
+      "files": 23,
+      "logical_bytes": 51978287,
+      "compact_receipt_files_retained_locally": 0
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/industrial-diagnostics/g4-probe-009-raw-001-restore",
+      "files": 121,
+      "logical_bytes": 143261252,
+      "compact_receipt_files_retained_locally": 9
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/industrial-diagnostics/industrial-035-q021-canonical-001-proof",
+      "files": 9,
+      "logical_bytes": 371288,
+      "compact_receipt_files_retained_locally": 5
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/industrial-diagnostics/industrial-036-source-controls-001",
+      "files": 6,
+      "logical_bytes": 14749,
+      "compact_receipt_files_retained_locally": 1
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/industrial-diagnostics/industrial-038-q022-canonical-001-proof",
+      "files": 9,
+      "logical_bytes": 349542,
+      "compact_receipt_files_retained_locally": 5
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/industrial-diagnostics/industrial-040-q023-canonical-001-proof",
+      "files": 9,
+      "logical_bytes": 166489,
+      "compact_receipt_files_retained_locally": 6
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/industrial-diagnostics/industrial-041-q024-canonical-001-proof",
+      "files": 9,
+      "logical_bytes": 162078,
+      "compact_receipt_files_retained_locally": 6
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/industrial-diagnostics/industrial-043-q025-canonical-001-proof",
+      "files": 9,
+      "logical_bytes": 155989,
+      "compact_receipt_files_retained_locally": 6
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/industrial-diagnostics/industrial-045-q026-canonical-001-proof",
+      "files": 9,
+      "logical_bytes": 168156,
+      "compact_receipt_files_retained_locally": 6
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/industrial-diagnostics/industrial-047-q027-canonical-001-proof",
+      "files": 9,
+      "logical_bytes": 169850,
+      "compact_receipt_files_retained_locally": 6
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/industrial-diagnostics/industrial-049-q028-canonical-001-proof",
+      "files": 9,
+      "logical_bytes": 245910,
+      "compact_receipt_files_retained_locally": 6
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/industrial-diagnostics/industrial-049-stop-state-001",
+      "files": 11,
+      "logical_bytes": 13095,
+      "compact_receipt_files_retained_locally": 3
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/industrial-diagnostics/industrial-051-q028-observation-supplement-001",
+      "files": 21,
+      "logical_bytes": 54015577,
+      "compact_receipt_files_retained_locally": 3
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/industrial-diagnostics/industrial-local-supplement-010",
+      "files": 22,
+      "logical_bytes": 47589045,
+      "compact_receipt_files_retained_locally": 5
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/industrial-diagnostics/industrial-local-supplement-011",
+      "files": 171,
+      "logical_bytes": 207567928,
+      "compact_receipt_files_retained_locally": 13
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/industrial-diagnostics/industrial-local-supplement-012",
+      "files": 98,
+      "logical_bytes": 86880970,
+      "compact_receipt_files_retained_locally": 15
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/industrial-diagnostics/industrial-local-supplement-013",
+      "files": 130,
+      "logical_bytes": 142814879,
+      "compact_receipt_files_retained_locally": 11
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/industrial-diagnostics/industrial-local-supplement-014",
+      "files": 78,
+      "logical_bytes": 48344153,
+      "compact_receipt_files_retained_locally": 5
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/industrial-diagnostics/industrial-local-supplement-015",
+      "files": 109,
+      "logical_bytes": 49796721,
+      "compact_receipt_files_retained_locally": 13
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/industrial-diagnostics/industrial-local-supplement-016",
+      "files": 111,
+      "logical_bytes": 56683059,
+      "compact_receipt_files_retained_locally": 16
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/industrial-diagnostics/industrial-local-supplement-017",
+      "files": 71,
+      "logical_bytes": 55369006,
+      "compact_receipt_files_retained_locally": 7
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/industrial-diagnostics/industrial-local-supplement-018",
+      "files": 135,
+      "logical_bytes": 49806019,
+      "compact_receipt_files_retained_locally": 20
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/industrial-diagnostics/industrial-local-supplement-019",
+      "files": 634,
+      "logical_bytes": 88725240,
+      "compact_receipt_files_retained_locally": 7
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/industrial-diagnostics/industrial-local-supplement-020",
+      "files": 177,
+      "logical_bytes": 102165387,
+      "compact_receipt_files_retained_locally": 20
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/industrial-diagnostics/industrial-local-supplement-022",
+      "files": 145,
+      "logical_bytes": 57684532,
+      "compact_receipt_files_retained_locally": 25
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/industrial-diagnostics/industrial-local-supplement-023",
+      "files": 65,
+      "logical_bytes": 59122855,
+      "compact_receipt_files_retained_locally": 15
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/industrial-diagnostics/industrial-local-supplement-024",
+      "files": 113,
+      "logical_bytes": 49092878,
+      "compact_receipt_files_retained_locally": 16
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/industrial-diagnostics/industrial-local-supplement-025",
+      "files": 112,
+      "logical_bytes": 48731639,
+      "compact_receipt_files_retained_locally": 18
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/industrial-diagnostics/industrial-local-supplement-026",
+      "files": 96,
+      "logical_bytes": 51929119,
+      "compact_receipt_files_retained_locally": 20
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/industrial-diagnostics/industrial-local-supplement-027",
+      "files": 123,
+      "logical_bytes": 93159211,
+      "compact_receipt_files_retained_locally": 20
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/industrial-diagnostics/industrial-local-supplement-028",
+      "files": 406,
+      "logical_bytes": 202982114,
+      "compact_receipt_files_retained_locally": 40
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/industrial-diagnostics/industrial-local-supplement-029",
+      "files": 449,
+      "logical_bytes": 254734990,
+      "compact_receipt_files_retained_locally": 41
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/industrial-diagnostics/industrial-q014-closed-001",
+      "files": 55,
+      "logical_bytes": 206098374,
+      "compact_receipt_files_retained_locally": 9
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/industrial-diagnostics/industrial-q015-closed-001",
+      "files": 52,
+      "logical_bytes": 209257816,
+      "compact_receipt_files_retained_locally": 9
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/industrial-diagnostics/industrial-q016-closed-001",
+      "files": 8,
+      "logical_bytes": 47767163,
+      "compact_receipt_files_retained_locally": 3
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/industrial-diagnostics/industrial-q017-closed-001",
+      "files": 41,
+      "logical_bytes": 705156334,
+      "compact_receipt_files_retained_locally": 9
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/industrial-diagnostics/industrial-q018-closed-001",
+      "files": 8,
+      "logical_bytes": 44503647,
+      "compact_receipt_files_retained_locally": 3
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/industrial-diagnostics/industrial-q019-closed-001",
+      "files": 28,
+      "logical_bytes": 548101801,
+      "compact_receipt_files_retained_locally": 8
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/industrial-diagnostics/industrial-q020-closed-001",
+      "files": 33,
+      "logical_bytes": 940929254,
+      "compact_receipt_files_retained_locally": 8
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/industrial-diagnostics/restore-20261017T171450Z",
+      "files": 818,
+      "logical_bytes": 678995425,
+      "compact_receipt_files_retained_locally": 34
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/industrial-diagnostics/restore-20261017T185200Z",
+      "files": 2037,
+      "logical_bytes": 1577289090,
+      "compact_receipt_files_retained_locally": 82
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/industrial-diagnostics/restore-20261017T194000Z",
+      "files": 3722,
+      "logical_bytes": 3751812786,
+      "compact_receipt_files_retained_locally": 101
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/industrial-diagnostics/restore-industrial-004",
+      "files": 2013,
+      "logical_bytes": 3050495965,
+      "compact_receipt_files_retained_locally": 20
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/industrial-diagnostics/restore-industrial-005",
+      "files": 4195,
+      "logical_bytes": 7903205740,
+      "compact_receipt_files_retained_locally": 32
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/industrial-diagnostics/restore-industrial-006",
+      "files": 3354,
+      "logical_bytes": 3645569024,
+      "compact_receipt_files_retained_locally": 27
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/industrial-diagnostics/restore-industrial-007",
+      "files": 3869,
+      "logical_bytes": 4229139872,
+      "compact_receipt_files_retained_locally": 27
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/industrial-diagnostics/restore-industrial-008",
+      "files": 15905,
+      "logical_bytes": 17755133657,
+      "compact_receipt_files_retained_locally": 45
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/industrial-diagnostics/restore-industrial-013",
+      "files": 1106,
+      "logical_bytes": 1319384365,
+      "compact_receipt_files_retained_locally": 17
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/industrial-diagnostics/restore-industrial-014",
+      "files": 1411,
+      "logical_bytes": 1863857961,
+      "compact_receipt_files_retained_locally": 17
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/industrial-diagnostics/restore-industrial-015",
+      "files": 2536,
+      "logical_bytes": 4876347478,
+      "compact_receipt_files_retained_locally": 20
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/industrial-diagnostics/restore-industrial-035-q021-canonical-001",
+      "files": 1834,
+      "logical_bytes": 7030140727,
+      "compact_receipt_files_retained_locally": 17
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/industrial-diagnostics/restore-industrial-038-q022-canonical-001",
+      "files": 1715,
+      "logical_bytes": 4810849824,
+      "compact_receipt_files_retained_locally": 17
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/industrial-diagnostics/restore-industrial-040-q023-canonical-001",
+      "files": 763,
+      "logical_bytes": 531215148,
+      "compact_receipt_files_retained_locally": 19
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/industrial-diagnostics/restore-industrial-041-q024-canonical-001",
+      "files": 742,
+      "logical_bytes": 501848436,
+      "compact_receipt_files_retained_locally": 22
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/industrial-diagnostics/restore-industrial-043-q025-canonical-001",
+      "files": 710,
+      "logical_bytes": 432155637,
+      "compact_receipt_files_retained_locally": 22
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/industrial-diagnostics/restore-industrial-045-q026-canonical-001",
+      "files": 768,
+      "logical_bytes": 749947134,
+      "compact_receipt_files_retained_locally": 21
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/industrial-diagnostics/restore-industrial-047-q027-canonical-001",
+      "files": 778,
+      "logical_bytes": 901122394,
+      "compact_receipt_files_retained_locally": 22
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/industrial-diagnostics/restore-industrial-049-q028-canonical-001",
+      "files": 1165,
+      "logical_bytes": 6356744956,
+      "compact_receipt_files_retained_locally": 24
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/industrial-diagnostics/source-restore-industrial-036-001.git",
+      "files": 22,
+      "logical_bytes": 51978242,
+      "compact_receipt_files_retained_locally": 0
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/industrial-diagnostics/g4-probe-009-raw-001-verification.json",
+      "files": 1,
+      "logical_bytes": 741,
+      "compact_receipt_files_retained_locally": 1
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/industrial-diagnostics/g4-probe-009-raw-001.tar.gz",
+      "files": 1,
+      "logical_bytes": 50621204,
+      "compact_receipt_files_retained_locally": 0
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/industrial-diagnostics/industrial-035-q021-canonical-001.tar.gz",
+      "files": 1,
+      "logical_bytes": 2724915449,
+      "compact_receipt_files_retained_locally": 0
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/industrial-diagnostics/industrial-035-q021-stop-failure-001.json",
+      "files": 1,
+      "logical_bytes": 1071,
+      "compact_receipt_files_retained_locally": 0
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/industrial-diagnostics/industrial-036-source-preservation-001.json",
+      "files": 1,
+      "logical_bytes": 2498,
+      "compact_receipt_files_retained_locally": 0
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/industrial-diagnostics/industrial-036-source.bundle",
+      "files": 1,
+      "logical_bytes": 51890014,
+      "compact_receipt_files_retained_locally": 0
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/industrial-diagnostics/industrial-037-blocked-audit-001.json",
+      "files": 1,
+      "logical_bytes": 1696,
+      "compact_receipt_files_retained_locally": 0
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/industrial-diagnostics/industrial-038-q022-canonical-001.tar.gz",
+      "files": 1,
+      "logical_bytes": 2121664201,
+      "compact_receipt_files_retained_locally": 0
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/industrial-diagnostics/industrial-040-q023-canonical-001.tar.gz",
+      "files": 1,
+      "logical_bytes": 425740205,
+      "compact_receipt_files_retained_locally": 0
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/industrial-diagnostics/industrial-041-q024-canonical-001.tar.gz",
+      "files": 1,
+      "logical_bytes": 410743192,
+      "compact_receipt_files_retained_locally": 0
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/industrial-diagnostics/industrial-043-q025-canonical-001.tar.gz",
+      "files": 1,
+      "logical_bytes": 370181824,
+      "compact_receipt_files_retained_locally": 0
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/industrial-diagnostics/industrial-045-q026-canonical-001.tar.gz",
+      "files": 1,
+      "logical_bytes": 464685853,
+      "compact_receipt_files_retained_locally": 0
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/industrial-diagnostics/industrial-047-q027-canonical-001.tar.gz",
+      "files": 1,
+      "logical_bytes": 505414763,
+      "compact_receipt_files_retained_locally": 0
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/industrial-diagnostics/industrial-049-q028-canonical-001.tar.gz",
+      "files": 1,
+      "logical_bytes": 2058059710,
+      "compact_receipt_files_retained_locally": 0
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/industrial-diagnostics/industrial-049-stop-complete-001.json",
+      "files": 1,
+      "logical_bytes": 627,
+      "compact_receipt_files_retained_locally": 0
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/industrial-diagnostics/industrial-diagnostics-20261017T171450Z-manifest.json",
+      "files": 1,
+      "logical_bytes": 151993,
+      "compact_receipt_files_retained_locally": 1
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/industrial-diagnostics/industrial-diagnostics-20261017T171450Z-record.json",
+      "files": 1,
+      "logical_bytes": 786,
+      "compact_receipt_files_retained_locally": 1
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/industrial-diagnostics/industrial-diagnostics-20261017T171450Z.tar.gz",
+      "files": 1,
+      "logical_bytes": 458549423,
+      "compact_receipt_files_retained_locally": 0
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/industrial-diagnostics/industrial-diagnostics-20261017T181800Z.tar.gz",
+      "files": 1,
+      "logical_bytes": 1152525880,
+      "compact_receipt_files_retained_locally": 0
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/industrial-diagnostics/industrial-diagnostics-20261017T193000Z.tar.gz",
+      "files": 1,
+      "logical_bytes": 2744035014,
+      "compact_receipt_files_retained_locally": 0
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/industrial-diagnostics/industrial-diagnostics-20261017T203000Z.tar.gz",
+      "files": 1,
+      "logical_bytes": 2096103156,
+      "compact_receipt_files_retained_locally": 0
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/industrial-diagnostics/industrial-diagnostics-20261017T211302Z.tar.gz",
+      "files": 1,
+      "logical_bytes": 4535808544,
+      "compact_receipt_files_retained_locally": 0
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/industrial-diagnostics/industrial-g3-q-normal-fifo-011-fatal-013.tar.gz",
+      "files": 1,
+      "logical_bytes": 885249776,
+      "compact_receipt_files_retained_locally": 0
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/industrial-diagnostics/industrial-g3-q-normal-fifo-012-014.tar.gz",
+      "files": 1,
+      "logical_bytes": 1374489367,
+      "compact_receipt_files_retained_locally": 0
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/industrial-diagnostics/industrial-g3-q-normal-fifo-013-015.tar.gz",
+      "files": 1,
+      "logical_bytes": 3010074109,
+      "compact_receipt_files_retained_locally": 0
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/industrial-diagnostics/industrial-g4-render-002-006.tar.gz",
+      "files": 1,
+      "logical_bytes": 574508074,
+      "compact_receipt_files_retained_locally": 0
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/industrial-diagnostics/industrial-g4-render-003-007.tar.gz",
+      "files": 1,
+      "logical_bytes": 643960543,
+      "compact_receipt_files_retained_locally": 0
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/industrial-diagnostics/industrial-prestop-001.json",
+      "files": 1,
+      "logical_bytes": 421,
+      "compact_receipt_files_retained_locally": 0
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/industrial-diagnostics/industrial-stopped-002.json",
+      "files": 1,
+      "logical_bytes": 425,
+      "compact_receipt_files_retained_locally": 0
+    },
+    {
+      "path": "%USERPROFILE%/FactoryOpsRuntime/local45-transport-039",
+      "files": 1274,
+      "logical_bytes": 2778169553,
+      "compact_receipt_files_retained_locally": 18
+    },
+    {
+      "path": "%USERPROFILE%/FactoryOpsRuntime/local45-transport-040",
+      "files": 949,
+      "logical_bytes": 415462282,
+      "compact_receipt_files_retained_locally": 18
+    },
+    {
+      "path": "%USERPROFILE%/FactoryOpsRuntime/local45-transport-041",
+      "files": 1279,
+      "logical_bytes": 2835262244,
+      "compact_receipt_files_retained_locally": 18
+    },
+    {
+      "path": "%USERPROFILE%/FactoryOpsRuntime/local45-transport-042",
+      "files": 1205,
+      "logical_bytes": 611638243,
+      "compact_receipt_files_retained_locally": 18
+    },
+    {
+      "path": "%USERPROFILE%/FactoryOpsRuntime/local45-transport-043",
+      "files": 995,
+      "logical_bytes": 353380778,
+      "compact_receipt_files_retained_locally": 19
+    },
+    {
+      "path": "%USERPROFILE%/FactoryOpsRuntime/local45-transport-044",
+      "files": 991,
+      "logical_bytes": 302455003,
+      "compact_receipt_files_retained_locally": 18
+    },
+    {
+      "path": "%USERPROFILE%/FactoryOpsRuntime/local45-transport-045",
+      "files": 1009,
+      "logical_bytes": 370329167,
+      "compact_receipt_files_retained_locally": 19
+    },
+    {
+      "path": "%USERPROFILE%/FactoryOpsRuntime/local45-transport-046",
+      "files": 1032,
+      "logical_bytes": 445567565,
+      "compact_receipt_files_retained_locally": 19
+    },
+    {
+      "path": "%USERPROFILE%/FactoryOpsRuntime/local45-transport-047",
+      "files": 993,
+      "logical_bytes": 363413608,
+      "compact_receipt_files_retained_locally": 21
+    },
+    {
+      "path": "%USERPROFILE%/FactoryOpsRuntime/local45-transport-048",
+      "files": 1049,
+      "logical_bytes": 429365881,
+      "compact_receipt_files_retained_locally": 22
+    },
+    {
+      "path": "%USERPROFILE%/FactoryOpsArtifacts/relocated-106",
+      "files": 526,
+      "logical_bytes": 2870097595,
+      "compact_receipt_files_retained_locally": 7
+    },
+    {
+      "path": "%USERPROFILE%/FactoryOpsArtifacts/compaction-106",
+      "files": 3,
+      "logical_bytes": 1151096733,
+      "compact_receipt_files_retained_locally": 1
+    },
+    {
+      "path": "%USERPROFILE%/FactoryOpsArtifacts/operations-083",
+      "files": 494,
+      "logical_bytes": 2708599128,
+      "compact_receipt_files_retained_locally": 11
+    },
+    {
+      "path": "%USERPROFILE%/FactoryOpsArtifacts/operations-085",
+      "files": 1,
+      "logical_bytes": 153337530,
+      "compact_receipt_files_retained_locally": 0
+    },
+    {
+      "path": "%USERPROFILE%/FactoryOpsArtifacts/operations-087",
+      "files": 1,
+      "logical_bytes": 566719474,
+      "compact_receipt_files_retained_locally": 0
+    },
+    {
+      "path": "%USERPROFILE%/FactoryOpsArtifacts/operations-129",
+      "files": 101,
+      "logical_bytes": 259016502,
+      "compact_receipt_files_retained_locally": 0
+    },
+    {
+      "path": "%USERPROFILE%/FactoryOpsArtifacts/operations-131",
+      "files": 1,
+      "logical_bytes": 172550714,
+      "compact_receipt_files_retained_locally": 0
+    },
+    {
+      "path": "%USERPROFILE%/FactoryOpsArtifacts/operations-134",
+      "files": 1,
+      "logical_bytes": 163029158,
+      "compact_receipt_files_retained_locally": 0
+    },
+    {
+      "path": "%USERPROFILE%/FactoryOpsArtifacts/operations-137",
+      "files": 1,
+      "logical_bytes": 177902613,
+      "compact_receipt_files_retained_locally": 0
+    },
+    {
+      "path": "%USERPROFILE%/FactoryOpsArtifacts/operations-144",
+      "files": 1,
+      "logical_bytes": 231285759,
+      "compact_receipt_files_retained_locally": 0
+    },
+    {
+      "path": "%USERPROFILE%/FactoryOpsArtifacts/operations-148",
+      "files": 1,
+      "logical_bytes": 211168031,
+      "compact_receipt_files_retained_locally": 0
+    },
+    {
+      "path": "%USERPROFILE%/FactoryOpsArtifacts/operations-149",
+      "files": 1,
+      "logical_bytes": 225081090,
+      "compact_receipt_files_retained_locally": 0
+    },
+    {
+      "path": "%USERPROFILE%/factory-ops-twin/artifacts/brev/g2-preview",
+      "files": 8121,
+      "logical_bytes": 7087854254,
+      "compact_receipt_files_retained_locally": 46
+    },
+    {
+      "path": "%USERPROFILE%/factory-ops-twin/artifacts/brev/g2-f1-video-preview",
+      "files": 559,
+      "logical_bytes": 309222497,
+      "compact_receipt_files_retained_locally": 2
+    },
+    {
+      "path": "%USERPROFILE%/factory-ops-twin/artifacts/brev/gpu-diagnostics",
+      "files": 677,
+      "logical_bytes": 893935941,
+      "compact_receipt_files_retained_locally": 55
+    },
+    {
+      "path": "%USERPROFILE%/factory-ops-twin/artifacts/brev/motion-preview",
+      "files": 1186,
+      "logical_bytes": 594915989,
+      "compact_receipt_files_retained_locally": 3
+    },
+    {
+      "path": "%USERPROFILE%/factory-ops-twin/artifacts/brev/g0b-003",
+      "files": 126,
+      "logical_bytes": 475224471,
+      "compact_receipt_files_retained_locally": 0
+    },
+    {
+      "path": "%USERPROFILE%/factory-ops-twin/artifacts/brev/g1-008-preview",
+      "files": 683,
+      "logical_bytes": 192037838,
+      "compact_receipt_files_retained_locally": 1
+    },
+    {
+      "path": "%USERPROFILE%/factory-ops-twin/artifacts/brev/g1-009-preview",
+      "files": 397,
+      "logical_bytes": 113867456,
+      "compact_receipt_files_retained_locally": 1
+    },
+    {
+      "path": "%USERPROFILE%/factory-ops-twin/artifacts/brev/industrial-033-q020-closed-001",
+      "files": 33,
+      "logical_bytes": 940929254,
+      "compact_receipt_files_retained_locally": 8
+    },
+    {
+      "path": "%USERPROFILE%/factory-ops-twin/artifacts/brev/industrial-027-q017-closed-001",
+      "files": 40,
+      "logical_bytes": 653915412,
+      "compact_receipt_files_retained_locally": 9
+    },
+    {
+      "path": "%USERPROFILE%/factory-ops-twin/artifacts/brev/industrial-031-q019-closed-001",
+      "files": 28,
+      "logical_bytes": 548101801,
+      "compact_receipt_files_retained_locally": 8
+    },
+    {
+      "path": "%USERPROFILE%/factory-ops-twin/artifacts/brev/industrial-025-q015-closed-001",
+      "files": 51,
+      "logical_bytes": 158036577,
+      "compact_receipt_files_retained_locally": 9
+    },
+    {
+      "path": "%USERPROFILE%/factory-ops-twin/artifacts/brev/industrial-023-q014-closed-001",
+      "files": 54,
+      "logical_bytes": 154859975,
+      "compact_receipt_files_retained_locally": 9
+    },
+    {
+      "path": "%USERPROFILE%/factory-ops-twin/artifacts/brev/g4-render003-failure-001",
+      "files": 64,
+      "logical_bytes": 94626485,
+      "compact_receipt_files_retained_locally": 8
+    },
+    {
+      "path": "%USERPROFILE%/factory-ops-twin/artifacts/brev/g4-render002-failure-001",
+      "files": 64,
+      "logical_bytes": 94537573,
+      "compact_receipt_files_retained_locally": 8
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/operations-025",
+      "files": 415,
+      "logical_bytes": 72822397,
+      "compact_receipt_files_retained_locally": 88
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/operations-033",
+      "files": 211,
+      "logical_bytes": 414776612,
+      "compact_receipt_files_retained_locally": 24
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/operations-035",
+      "files": 405,
+      "logical_bytes": 540323812,
+      "compact_receipt_files_retained_locally": 32
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/operations-037",
+      "files": 204,
+      "logical_bytes": 193357847,
+      "compact_receipt_files_retained_locally": 15
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/operations-038",
+      "files": 84,
+      "logical_bytes": 216403598,
+      "compact_receipt_files_retained_locally": 8
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/operations-040",
+      "files": 70,
+      "logical_bytes": 70610062,
+      "compact_receipt_files_retained_locally": 1
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/operations-041",
+      "files": 199,
+      "logical_bytes": 1017234925,
+      "compact_receipt_files_retained_locally": 8
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/operations-042",
+      "files": 217,
+      "logical_bytes": 400869486,
+      "compact_receipt_files_retained_locally": 15
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/operations-043",
+      "files": 172,
+      "logical_bytes": 737583150,
+      "compact_receipt_files_retained_locally": 8
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/operations-045",
+      "files": 101,
+      "logical_bytes": 157655078,
+      "compact_receipt_files_retained_locally": 9
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/operations-048",
+      "files": 768,
+      "logical_bytes": 840967180,
+      "compact_receipt_files_retained_locally": 8
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/operations-049",
+      "files": 27,
+      "logical_bytes": 49169477,
+      "compact_receipt_files_retained_locally": 7
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/operations-052",
+      "files": 33,
+      "logical_bytes": 61119099,
+      "compact_receipt_files_retained_locally": 7
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/operations-053",
+      "files": 500,
+      "logical_bytes": 366568446,
+      "compact_receipt_files_retained_locally": 8
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/operations-054",
+      "files": 265,
+      "logical_bytes": 383786405,
+      "compact_receipt_files_retained_locally": 8
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/operations-055",
+      "files": 80,
+      "logical_bytes": 2355508,
+      "compact_receipt_files_retained_locally": 4
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/operations-056",
+      "files": 131,
+      "logical_bytes": 166446051,
+      "compact_receipt_files_retained_locally": 8
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/operations-057",
+      "files": 102,
+      "logical_bytes": 130939292,
+      "compact_receipt_files_retained_locally": 9
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/operations-058",
+      "files": 234,
+      "logical_bytes": 1003941854,
+      "compact_receipt_files_retained_locally": 9
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/operations-059",
+      "files": 46,
+      "logical_bytes": 123008156,
+      "compact_receipt_files_retained_locally": 5
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/operations-060",
+      "files": 103,
+      "logical_bytes": 131727245,
+      "compact_receipt_files_retained_locally": 9
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/operations-061",
+      "files": 111,
+      "logical_bytes": 218328153,
+      "compact_receipt_files_retained_locally": 8
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/operations-062",
+      "files": 148,
+      "logical_bytes": 334652941,
+      "compact_receipt_files_retained_locally": 8
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/operations-063",
+      "files": 31,
+      "logical_bytes": 290645,
+      "compact_receipt_files_retained_locally": 5
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/operations-064",
+      "files": 85,
+      "logical_bytes": 126428688,
+      "compact_receipt_files_retained_locally": 9
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/operations-065",
+      "files": 85,
+      "logical_bytes": 126452957,
+      "compact_receipt_files_retained_locally": 9
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/operations-066",
+      "files": 156,
+      "logical_bytes": 211434584,
+      "compact_receipt_files_retained_locally": 9
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/operations-068",
+      "files": 153,
+      "logical_bytes": 211158555,
+      "compact_receipt_files_retained_locally": 9
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/operations-069",
+      "files": 150,
+      "logical_bytes": 239060721,
+      "compact_receipt_files_retained_locally": 9
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/operations-070",
+      "files": 351,
+      "logical_bytes": 1630154485,
+      "compact_receipt_files_retained_locally": 9
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/operations-071",
+      "files": 378,
+      "logical_bytes": 1819734490,
+      "compact_receipt_files_retained_locally": 9
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/operations-072",
+      "files": 94,
+      "logical_bytes": 69183461,
+      "compact_receipt_files_retained_locally": 24
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/operations-073",
+      "files": 21,
+      "logical_bytes": 677142,
+      "compact_receipt_files_retained_locally": 3
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/operations-074",
+      "files": 611,
+      "logical_bytes": 3208685118,
+      "compact_receipt_files_retained_locally": 9
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/operations-075",
+      "files": 2267,
+      "logical_bytes": 198636068,
+      "compact_receipt_files_retained_locally": 18
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/operations-076",
+      "files": 96,
+      "logical_bytes": 134176765,
+      "compact_receipt_files_retained_locally": 9
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/operations-078",
+      "files": 70,
+      "logical_bytes": 71664138,
+      "compact_receipt_files_retained_locally": 15
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/operations-079",
+      "files": 148,
+      "logical_bytes": 222425095,
+      "compact_receipt_files_retained_locally": 7
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/operations-080",
+      "files": 131,
+      "logical_bytes": 2423433,
+      "compact_receipt_files_retained_locally": 37
+    },
+    {
+      "path": "D:/FactoryOpsArtifacts/operations-081",
+      "files": 526,
+      "logical_bytes": 2870097595,
+      "compact_receipt_files_retained_locally": 7
+    },
+    {
+      "path": "D:/FactoryOpsRuntime/local45-transport-001",
+      "files": 548,
+      "logical_bytes": 177295794,
+      "compact_receipt_files_retained_locally": 16
+    },
+    {
+      "path": "D:/FactoryOpsRuntime/local45-transport-002",
+      "files": 560,
+      "logical_bytes": 179196654,
+      "compact_receipt_files_retained_locally": 18
+    },
+    {
+      "path": "D:/FactoryOpsRuntime/local45-transport-004",
+      "files": 604,
+      "logical_bytes": 181049906,
+      "compact_receipt_files_retained_locally": 18
+    },
+    {
+      "path": "D:/FactoryOpsRuntime/local45-transport-005",
+      "files": 606,
+      "logical_bytes": 181049892,
+      "compact_receipt_files_retained_locally": 18
+    },
+    {
+      "path": "D:/FactoryOpsRuntime/local45-transport-007",
+      "files": 675,
+      "logical_bytes": 493580570,
+      "compact_receipt_files_retained_locally": 17
+    },
+    {
+      "path": "D:/FactoryOpsRuntime/local45-transport-008",
+      "files": 666,
+      "logical_bytes": 308005293,
+      "compact_receipt_files_retained_locally": 17
+    },
+    {
+      "path": "D:/FactoryOpsRuntime/local45-transport-010",
+      "files": 635,
+      "logical_bytes": 275435802,
+      "compact_receipt_files_retained_locally": 18
+    },
+    {
+      "path": "D:/FactoryOpsRuntime/local45-transport-011",
+      "files": 609,
+      "logical_bytes": 179915066,
+      "compact_receipt_files_retained_locally": 17
+    },
+    {
+      "path": "D:/FactoryOpsRuntime/local45-transport-012",
+      "files": 671,
+      "logical_bytes": 188048844,
+      "compact_receipt_files_retained_locally": 18
+    },
+    {
+      "path": "D:/FactoryOpsRuntime/local45-transport-013",
+      "files": 758,
+      "logical_bytes": 1076319775,
+      "compact_receipt_files_retained_locally": 17
+    },
+    {
+      "path": "D:/FactoryOpsRuntime/local45-transport-014",
+      "files": 659,
+      "logical_bytes": 198257444,
+      "compact_receipt_files_retained_locally": 17
+    },
+    {
+      "path": "D:/FactoryOpsRuntime/local45-transport-015",
+      "files": 701,
+      "logical_bytes": 322566426,
+      "compact_receipt_files_retained_locally": 17
+    },
+    {
+      "path": "D:/FactoryOpsRuntime/local45-transport-016",
+      "files": 749,
+      "logical_bytes": 797573773,
+      "compact_receipt_files_retained_locally": 17
+    },
+    {
+      "path": "D:/FactoryOpsRuntime/local45-transport-017",
+      "files": 684,
+      "logical_bytes": 217724791,
+      "compact_receipt_files_retained_locally": 18
+    },
+    {
+      "path": "D:/FactoryOpsRuntime/local45-transport-018",
+      "files": 1355,
+      "logical_bytes": 900730024,
+      "compact_receipt_files_retained_locally": 17
+    },
+    {
+      "path": "D:/FactoryOpsRuntime/local45-transport-019",
+      "files": 1110,
+      "logical_bytes": 426784501,
+      "compact_receipt_files_retained_locally": 17
+    },
+    {
+      "path": "D:/FactoryOpsRuntime/local45-transport-020",
+      "files": 879,
+      "logical_bytes": 444000139,
+      "compact_receipt_files_retained_locally": 17
+    },
+    {
+      "path": "D:/FactoryOpsRuntime/local45-transport-021",
+      "files": 762,
+      "logical_bytes": 226924461,
+      "compact_receipt_files_retained_locally": 17
+    },
+    {
+      "path": "D:/FactoryOpsRuntime/local45-transport-022",
+      "files": 743,
+      "logical_bytes": 191483135,
+      "compact_receipt_files_retained_locally": 18
+    },
+    {
+      "path": "D:/FactoryOpsRuntime/local45-transport-023",
+      "files": 863,
+      "logical_bytes": 1063199704,
+      "compact_receipt_files_retained_locally": 17
+    },
+    {
+      "path": "D:/FactoryOpsRuntime/local45-transport-024",
+      "files": 763,
+      "logical_bytes": 192399060,
+      "compact_receipt_files_retained_locally": 18
+    },
+    {
+      "path": "D:/FactoryOpsRuntime/local45-transport-025",
+      "files": 775,
+      "logical_bytes": 279025883,
+      "compact_receipt_files_retained_locally": 17
+    },
+    {
+      "path": "D:/FactoryOpsRuntime/local45-transport-026",
+      "files": 812,
+      "logical_bytes": 395101785,
+      "compact_receipt_files_retained_locally": 17
+    },
+    {
+      "path": "D:/FactoryOpsRuntime/local45-transport-027",
+      "files": 761,
+      "logical_bytes": 187215229,
+      "compact_receipt_files_retained_locally": 18
+    },
+    {
+      "path": "D:/FactoryOpsRuntime/local45-transport-028",
+      "files": 764,
+      "logical_bytes": 187248035,
+      "compact_receipt_files_retained_locally": 18
+    },
+    {
+      "path": "D:/FactoryOpsRuntime/local45-transport-029",
+      "files": 839,
+      "logical_bytes": 272237885,
+      "compact_receipt_files_retained_locally": 18
+    },
+    {
+      "path": "D:/FactoryOpsRuntime/local45-transport-030",
+      "files": 840,
+      "logical_bytes": 271998511,
+      "compact_receipt_files_retained_locally": 18
+    },
+    {
+      "path": "D:/FactoryOpsRuntime/local45-transport-031",
+      "files": 840,
+      "logical_bytes": 299918111,
+      "compact_receipt_files_retained_locally": 18
+    },
+    {
+      "path": "D:/FactoryOpsRuntime/local45-transport-032",
+      "files": 1031,
+      "logical_bytes": 688622233,
+      "compact_receipt_files_retained_locally": 17
+    },
+    {
+      "path": "D:/FactoryOpsRuntime/local45-transport-033",
+      "files": 1065,
+      "logical_bytes": 799961343,
+      "compact_receipt_files_retained_locally": 17
+    },
+    {
+      "path": "D:/FactoryOpsRuntime/local45-transport-034",
+      "files": 1316,
+      "logical_bytes": 1307235690,
+      "compact_receipt_files_retained_locally": 17
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/operations-025",
+      "files": 415,
+      "logical_bytes": 72822397,
+      "compact_receipt_files_retained_locally": 88
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/operations-033",
+      "files": 211,
+      "logical_bytes": 414776612,
+      "compact_receipt_files_retained_locally": 24
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/operations-035",
+      "files": 405,
+      "logical_bytes": 540323812,
+      "compact_receipt_files_retained_locally": 32
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/operations-037",
+      "files": 204,
+      "logical_bytes": 193357847,
+      "compact_receipt_files_retained_locally": 15
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/operations-038",
+      "files": 84,
+      "logical_bytes": 216403598,
+      "compact_receipt_files_retained_locally": 8
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/operations-040",
+      "files": 70,
+      "logical_bytes": 70610062,
+      "compact_receipt_files_retained_locally": 1
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/operations-041",
+      "files": 199,
+      "logical_bytes": 1017234925,
+      "compact_receipt_files_retained_locally": 8
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/operations-042",
+      "files": 217,
+      "logical_bytes": 400869486,
+      "compact_receipt_files_retained_locally": 15
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/operations-043",
+      "files": 172,
+      "logical_bytes": 737583150,
+      "compact_receipt_files_retained_locally": 8
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/operations-045",
+      "files": 101,
+      "logical_bytes": 157655078,
+      "compact_receipt_files_retained_locally": 9
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/operations-048",
+      "files": 768,
+      "logical_bytes": 840967180,
+      "compact_receipt_files_retained_locally": 8
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/operations-049",
+      "files": 27,
+      "logical_bytes": 49169477,
+      "compact_receipt_files_retained_locally": 7
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/operations-052",
+      "files": 33,
+      "logical_bytes": 61119099,
+      "compact_receipt_files_retained_locally": 7
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/operations-053",
+      "files": 500,
+      "logical_bytes": 366568446,
+      "compact_receipt_files_retained_locally": 8
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/operations-054",
+      "files": 265,
+      "logical_bytes": 383786405,
+      "compact_receipt_files_retained_locally": 8
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/operations-055",
+      "files": 80,
+      "logical_bytes": 2355508,
+      "compact_receipt_files_retained_locally": 4
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/operations-056",
+      "files": 131,
+      "logical_bytes": 166446051,
+      "compact_receipt_files_retained_locally": 8
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/operations-057",
+      "files": 102,
+      "logical_bytes": 130939292,
+      "compact_receipt_files_retained_locally": 9
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/operations-058",
+      "files": 234,
+      "logical_bytes": 1003941854,
+      "compact_receipt_files_retained_locally": 9
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/operations-059",
+      "files": 46,
+      "logical_bytes": 123008156,
+      "compact_receipt_files_retained_locally": 5
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/operations-060",
+      "files": 103,
+      "logical_bytes": 131727245,
+      "compact_receipt_files_retained_locally": 9
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/operations-061",
+      "files": 111,
+      "logical_bytes": 218328153,
+      "compact_receipt_files_retained_locally": 8
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/operations-062",
+      "files": 148,
+      "logical_bytes": 334652941,
+      "compact_receipt_files_retained_locally": 8
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/operations-063",
+      "files": 31,
+      "logical_bytes": 290645,
+      "compact_receipt_files_retained_locally": 5
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/operations-064",
+      "files": 85,
+      "logical_bytes": 126428688,
+      "compact_receipt_files_retained_locally": 9
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/operations-065",
+      "files": 85,
+      "logical_bytes": 126452957,
+      "compact_receipt_files_retained_locally": 9
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/operations-066",
+      "files": 156,
+      "logical_bytes": 211434584,
+      "compact_receipt_files_retained_locally": 9
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/operations-068",
+      "files": 153,
+      "logical_bytes": 211158555,
+      "compact_receipt_files_retained_locally": 9
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/operations-069",
+      "files": 150,
+      "logical_bytes": 239060721,
+      "compact_receipt_files_retained_locally": 9
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/operations-070",
+      "files": 351,
+      "logical_bytes": 1630154485,
+      "compact_receipt_files_retained_locally": 9
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/operations-071",
+      "files": 378,
+      "logical_bytes": 1819734490,
+      "compact_receipt_files_retained_locally": 9
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/operations-072",
+      "files": 94,
+      "logical_bytes": 69183461,
+      "compact_receipt_files_retained_locally": 24
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/operations-073",
+      "files": 21,
+      "logical_bytes": 677142,
+      "compact_receipt_files_retained_locally": 3
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/operations-074",
+      "files": 611,
+      "logical_bytes": 3208685118,
+      "compact_receipt_files_retained_locally": 9
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/operations-075",
+      "files": 2267,
+      "logical_bytes": 198636068,
+      "compact_receipt_files_retained_locally": 18
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/operations-076",
+      "files": 96,
+      "logical_bytes": 134176765,
+      "compact_receipt_files_retained_locally": 9
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/operations-077",
+      "files": 637,
+      "logical_bytes": 3559330590,
+      "compact_receipt_files_retained_locally": 9
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/operations-078",
+      "files": 70,
+      "logical_bytes": 71664138,
+      "compact_receipt_files_retained_locally": 15
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/operations-079",
+      "files": 148,
+      "logical_bytes": 222425095,
+      "compact_receipt_files_retained_locally": 7
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/operations-080",
+      "files": 131,
+      "logical_bytes": 2423433,
+      "compact_receipt_files_retained_locally": 37
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/operations-081",
+      "files": 1,
+      "logical_bytes": 597988966,
+      "compact_receipt_files_retained_locally": 0
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/operations-083",
+      "files": 495,
+      "logical_bytes": 3261704982,
+      "compact_receipt_files_retained_locally": 11
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/operations-085",
+      "files": 1,
+      "logical_bytes": 153337530,
+      "compact_receipt_files_retained_locally": 0
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/operations-087",
+      "files": 1,
+      "logical_bytes": 566719474,
+      "compact_receipt_files_retained_locally": 0
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/operations-129",
+      "files": 101,
+      "logical_bytes": 259016502,
+      "compact_receipt_files_retained_locally": 0
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/operations-131",
+      "files": 1,
+      "logical_bytes": 172550714,
+      "compact_receipt_files_retained_locally": 0
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/operations-134",
+      "files": 1,
+      "logical_bytes": 163029158,
+      "compact_receipt_files_retained_locally": 0
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/operations-137",
+      "files": 1,
+      "logical_bytes": 177902613,
+      "compact_receipt_files_retained_locally": 0
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/operations-144",
+      "files": 1,
+      "logical_bytes": 231285759,
+      "compact_receipt_files_retained_locally": 0
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/operations-148",
+      "files": 1,
+      "logical_bytes": 233571,
+      "compact_receipt_files_retained_locally": 0
+    },
+    {
+      "path": "E:/FactoryOpsArtifacts/operations-149",
+      "files": 1,
+      "logical_bytes": 3859466,
+      "compact_receipt_files_retained_locally": 0
+    },
+    {
+      "path": "E:/FactoryOpsRuntime/local45-transport-035",
+      "files": 840,
+      "logical_bytes": 198472330,
+      "compact_receipt_files_retained_locally": 18
+    },
+    {
+      "path": "E:/FactoryOpsRuntime/local45-transport-037",
+      "files": 920,
+      "logical_bytes": 291747827,
+      "compact_receipt_files_retained_locally": 18
+    },
+    {
+      "path": "E:/FactoryOpsRuntime/local45-transport-038",
+      "files": 1306,
+      "logical_bytes": 1235362705,
+      "compact_receipt_files_retained_locally": 18
+    }
+  ],
+  "private_batch_receipts": "%USERPROFILE%/factory-ops-twin/artifacts/local45/storage-cleanup-155"
+}
