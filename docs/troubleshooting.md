@@ -649,9 +649,11 @@ SDK mission-failed는 위 ROS 교착 실패의 후속이다. 양쪽 소유 실�
 
 접촉 시험111은720샘플 중714샘플에서 정지,717샘플에서 정렬을 기록했다. 마지막 토트 접촉 힘은58.8600N이었으나 carrier 센서의 raw actor pair는 Stand_0 한 곳만 보고했고 지지점 수는 최대1이었다. 토트가 놓인 모양이나 합산 힘만으로 네 지지대의 접촉을 성공 처리하지 않았다. 단일 센서 raw pair가 일부만 보고한 정확한 내부 원인은 아직 확정하지 않았다. 설치된4.5 ContactSensor의 raw pair 해석과 센서 생성 시 부모에 PhysxContactReportAPI를 적용하는 코드를 확인했다. 후속에서는 네 지지대 각각에 센서를 추가하고, 알려진 carrier/stand pair·힘·접촉 상태·센서 시각이 모두 유효할 때만 네 지지를 인정한다. 기존 dwell·정지·정렬 한계는 유지한다. [111 원본](evidence/local45-tote-contact-111.json)은 실패 상태로 C/E에 보존했다.
 
+113에서는 정적 collider에 붙인 지지대 센서의 시각·frame이0에 머물렀다. SDK 로그가 네 센서 모두 rigid-body 부모가 없어 생성되지 않았다고 명시했다. 정적 collider에 ContactReportAPI를 붙이는 것만으로4.5 ContactSensor의 부모 조건을 충족하지 않는다. 후속114에서는 지지대를 움직이지 않는 kinematic rigid body로 선언한다. carrier/tote는 기존 동적 body로 유지하며 센서의 invalid 상태를 성공으로 우회하지 않는다. [113 원본](evidence/local45-tote-contact-113.json)을 보존했다.
+
 ## FOT-079 — Windows 작업 파일과 Git 동결본의 줄바꿈 해시 차이
 
-041 준비 시109의 빌드 입력과 Git archive의 `test_telemetry_goal_checker.cpp` SHA가 달라 사전 조건에서 중단했다. 작업 파일의 CRLF와 저장소의 LF 차이였으며 나머지13파일은 같았다. 실패한 준비 폴더와 원본109 빌드는 유지한다. 실제 운행에 사용할112 빌드는041의 Git 동결본을 원본으로 삼아 새 디렉터리에 구성하고 같은 관련 C++3묶음·설치를 수행한다. 빌드 뒤 해시만 바꾸거나 LF 정규화를 동일 바이트 증명으로 대신하지 않는다. 후속 운행은112의 동결 소스/설치 해시와 준비 metadata가 일치할 때 시작한다.
+041 준비 시109의 빌드 입력과 Git archive의 `test_telemetry_goal_checker.cpp` SHA가 달라 사전 조건에서 중단했다. 작업 파일의 CRLF와 저장소의 LF 차이였으며 나머지13파일은 같았다. 실패한 준비 폴더와 원본109 빌드는 유지한다. 실제 운행에 사용할112 빌드는041의 Git 동결본을 원본으로 삼아 새 디렉터리에 구성했다. 관련 C++3묶음·설치가0.97초 검사에 통과했고14소스·설치 해시를 준비 metadata와 연결했다. 빌드 뒤 해시만 바꾸거나 LF 정규화를 동일 바이트 증명으로 대신하지 않았다. [112 근거](evidence/local45-goal-canonical-112.json)를 보존한다.
 
 ## FOT-077 — 토트 모듈의 USD 식별자와 Python 버전별 manifest 차이
 

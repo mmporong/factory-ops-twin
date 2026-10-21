@@ -1,0 +1,100 @@
+{
+  "schema_version": 1,
+  "attempt": "113",
+  "run_id": "eeb6735140a241939983c6adbf771715",
+  "producer_source_commit": "2a7ddd544a9fab1b3ec55636e4d01d270aa95379",
+  "scope": "Isaac Sim4.5 headless fixed-support contact component; no loaded AMR, industrial rating or transport qualification",
+  "status": "failed",
+  "host": {
+    "run_id": "eeb6735140a241939983c6adbf771715",
+    "started_at_utc": "2026-10-21T03:46:13.6395485Z",
+    "scope": "native bounded component probe",
+    "timeout_s": 480,
+    "sdk_root": "E:\\IsaacSim\\isaac-sim-4.5.0",
+    "entry_point": "probe_tote_carrier_contact.py",
+    "inputs_directory": "C:\\Users\\LIMMM\\FactoryOpsRuntime\\local45-tote-contact-113.inputs",
+    "launcher_sha256": "ee0290cda90d2e81fe4794a8645086d5a790b9362c965525b6604f142c6f227e",
+    "source_sha256": "de48f66e48455d08116db948315e0cce5b9056c9238aacc5c936b68c98f4b0fe",
+    "gpu": "NVIDIA GeForce RTX 3060, 12288 MiB, 610.62",
+    "timed_out": false,
+    "remaining_owned_pids": [],
+    "config_sha256": "4e849823f3e0efe4561fd8ce02ef17067b4b9dc606558bab2197ffa4efa46627",
+    "project_source_sha256": {
+      "factory_ops/__init__.py": "da57bbf586e3c4639fd72b3960ef8dd7a8326b3ba17504836189be26ce5bacb0",
+      "factory_ops/carrier_module.py": "ef12b26aa3d7180e7f122324aa0f5e363010d1f3ddf366165b69ac6de1cbfc14"
+    },
+    "closure_scope": "gated worker and descendants contained in an owned Windows Job Object",
+    "job_runner_sha256": "2ad8ed05bfc5f96edd522900f6cd8ff11bafdace8376b68ca4f8dbd4489cbad5",
+    "job_spec_sha256": "592555906c4568c626d62bd88e470c79a265e27a4ef547ab8b61e962a14bad08",
+    "full_descendant_closure_verified": true,
+    "timeout_full_tree_cleanup_supported": true,
+    "launcher_pid": 19860,
+    "exit_code": 0,
+    "closed": true,
+    "job_identity_matched": true,
+    "job_assignment_confirmed": true,
+    "prelaunch_inputs_verified": true,
+    "owned_pids_at_cleanup": [
+      57512,
+      52220,
+      67536,
+      65088,
+      64300
+    ],
+    "job_status": "passed",
+    "probe_status": "failed",
+    "probe_identity_matched": true,
+    "project_sources_matched": true,
+    "finished_at_utc": "2026-10-21T03:46:48.2762556Z",
+    "wall_time_s": 34.6358408
+  },
+  "native_result": {
+    "schema_version": 1,
+    "run_id": "eeb6735140a241939983c6adbf771715",
+    "status": "failed",
+    "stage": "fixture_complete",
+    "source_sha256": "de48f66e48455d08116db948315e0cce5b9056c9238aacc5c936b68c98f4b0fe",
+    "config_sha256": "4e849823f3e0efe4561fd8ce02ef17067b4b9dc606558bab2197ffa4efa46627",
+    "project_source_sha256": {
+      "factory_ops/__init__.py": "da57bbf586e3c4639fd72b3960ef8dd7a8326b3ba17504836189be26ce5bacb0",
+      "factory_ops/carrier_module.py": "ef12b26aa3d7180e7f122324aa0f5e363010d1f3ddf366165b69ac6de1cbfc14"
+    },
+    "manifest_sha256": "406aec0f70fbea4a74f1462d05d53395055b7b5182fb5dcab8749732b55307f4",
+    "started_at_utc": "2026-10-21T03:46:14.153151+00:00",
+    "scope": "simplified fixed-stand fixture with two dynamic compound bodies; no Nova Carter loaded",
+    "robot_integration_verified": false,
+    "transport_verified": false,
+    "charging_verified": false,
+    "industrial_payload_rating_verified": false,
+    "native_measurements": {
+      "samples": 720,
+      "settled_contact_observed": false,
+      "separation_observed": false,
+      "last_world_time_s": 6.016666980460286,
+      "last_world_frame": 722
+    },
+    "transitions": [],
+    "media": [],
+    "cleanup_errors": [],
+    "requires_host_closure": true,
+    "isaac_version": "4.5.0-rc.36+release.19112.f59b3005.gl",
+    "contact_source": "PhysX ContactSensor raw actor pairs/force/time/physics step",
+    "velocity_source": "PhysX rigid-body velocity, not encoder odometry",
+    "finished_at_utc": "2026-10-21T03:46:46.906006+00:00",
+    "elapsed_wall_s": 32.75,
+    "app_close_requested": true
+  },
+  "stage2_complete": false,
+  "project_complete": false,
+  "preservation": {
+    "file_count": 18,
+    "original_bytes": 1691821,
+    "paths": [
+      "C:\\Users\\LIMMM\\FactoryOpsArtifacts\\carrier-contact-113\\checkpoint-001.tar.gz",
+      "E:\\FactoryOpsArtifacts\\carrier-contact-113\\checkpoint-001.tar.gz"
+    ],
+    "archive_bytes": 187765,
+    "archive_sha256": "5c42a371a98b7ca3ee48a51e2a1a8383e4a292f5270578b3496fa74b246e17f5",
+    "all_members_SHA_matched_both_stores": true
+  }
+}

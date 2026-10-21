@@ -127,8 +127,11 @@ def main() -> int:
         for i, post in enumerate(b for b in manifest["geometry"] if b["name"].startswith("post_")):
             path = "/World/Stand_%d" % i
             z = manifest["mount_plane_z_m"]
-            cube(path, [post["size_m"][0]*2, post["size_m"][1]*2, z],
+            stand = cube(path, [post["size_m"][0]*2, post["size_m"][1]*2, z],
                  [post["center_m"][0], post["center_m"][1], z/2], "stand_%d" % i, (.55, .59, .66))
+            support_body = UsdPhysics.RigidBodyAPI.Apply(stand)
+            support_body.CreateRigidBodyEnabledAttr(True)
+            support_body.CreateKinematicEnabledAttr(True)
             key = "stand_%d" % i
             stand_ids.add(key)
             sensors[key] = world.scene.add(ContactSensor(prim_path=path+"/ContactSensor", name=key+"_contact",

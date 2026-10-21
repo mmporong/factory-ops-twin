@@ -1,0 +1,29 @@
+{
+  "status": "actual_canonical_source_build_passed_native_pending",
+  "frozen_producer_commit": "ac81cc0a6c3f83b6f65370c7a584b148f2b3295a",
+  "source_files_sha256": {
+    "ros_ws/src/factory_ops_goal_checker/CMakeLists.txt": "f16f607edbd558a9e4a66feacd89733df32337fc0d800318e539683ef45cf2bc",
+    "ros_ws/src/factory_ops_goal_checker/package.xml": "a5755de568a7ea7965393f950688a06a577c381181472c4abae0f284a2b684dc",
+    "ros_ws/src/factory_ops_goal_checker/plugins.xml": "c69fcb838c05902288de39b44a11388d87bf5889c3095dbfa1c150efc532b7ac",
+    "ros_ws/src/factory_ops_goal_checker/src/confirmed_xy_regulated_pure_pursuit_controller.cpp": "30bfda25778870af3df15459effc59d45b622f14f5d650104ea9cfaf94d85de6",
+    "ros_ws/src/factory_ops_goal_checker/src/telemetry_goal_checker.cpp": "e69ce40520031ab03ec059b7da355b6834fb5ea90ee2109da4ec705b39c5d352",
+    "ros_ws/src/factory_ops_goal_checker/src/telemetry_regulated_pure_pursuit_controller.cpp": "4ad59259219d90e7af9c95a14d140bcc380d093c81d504484d14ab4f0982a4a2",
+    "ros_ws/src/factory_ops_goal_checker/test/test_confirmed_xy_rpp.cpp": "ce98fdd319cd5cc246fb3e83760e93db11ecc77dd6bbba49e89be072197fbf3b",
+    "ros_ws/src/factory_ops_goal_checker/test/test_plugin_loading.cpp": "fdd9800b59b22c1f4470adf325d032e083a8ed426dd7cafaeac3e39bab626aab",
+    "ros_ws/src/factory_ops_goal_checker/test/test_telemetry_goal_checker.cpp": "7cf8c12cc0c278abcb6f9cd2888d8b93cd2a65c4b8010345761b8b12ecca7f40",
+    "ros_ws/src/factory_ops_goal_checker/test/test_telemetry_rpp.cpp": "c769837324d148b6757f94d43afc7bf393fecb091df51fd13c17120b6fb06eec",
+    "ros_ws/src/factory_ops_goal_checker/include/factory_ops_goal_checker/confirmed_xy_regulated_pure_pursuit_controller.hpp": "71be95905ec6208cbbaa1c910b861dc7dfe06de52d90f7fc12cc6648cc20f363",
+    "ros_ws/src/factory_ops_goal_checker/include/factory_ops_goal_checker/telemetry_goal_checker.hpp": "e037539d8aa9da7e95f8621e32108770d0a8bd9044edf423722c8d2c720699e8",
+    "ros_ws/src/factory_ops_goal_checker/include/factory_ops_goal_checker/telemetry_regulated_pure_pursuit_controller.hpp": "df6d7872a07be7fd26e2f1fe05dbd84e6accb57054221ff11ed8ca279be9e296",
+    "ros_ws/src/factory_ops_goal_checker/include/factory_ops_goal_checker/trace_contract.hpp": "ee379203dd3dfcb6bb8c7959aeb1d14696507ea59f54ee50471fe8cc2a48ceec"
+  },
+  "source_count": 14,
+  "installed_library_sha256": "a1c0c397b8109b45a45daeb753fd4db2f39aa1de13b5fe8d69b6dcf78cc81f4c",
+  "test_log_sha256": "0deebceed43e7d37f34660ef3301cbd303db01647c0ab58a392aeef97a0fc824",
+  "test_groups": 3,
+  "test_groups_passed": true,
+  "wall_s": 0.97,
+  "prior_mismatch": "Only test_telemetry_goal_checker.cpp CRLF working bytes vs canonical Git LF; rebuilt from actual frozen source, no post-build hash normalization",
+  "native_run": "local45-transport-041",
+  "native_success": false
+}
