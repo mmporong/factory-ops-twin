@@ -36,7 +36,7 @@
   "real_time_media": {
     "profiles": ["development"],
     "window_s": 5.0,
-    "sample_every_physics_steps": 6,
+    "sample_every_physics_steps": 1,
     "minimum_abs_linear_m_s": 0.15,
     "minimum_abs_angular_rad_s": 0.15
   },

@@ -2,11 +2,15 @@
 
 가상 센서 모듈 공장에서 **4대 AMR의 자재 공급·완제품 출하·빈 용기 회수**를 Isaac Sim·ROS 2와 웹 관제로 연결하는 프로젝트입니다.
 
-![4대 AMR의 실제 공장 운송 미리보기](docs/images/fleet4-local45-036/operations-preview-smooth.gif)
+| 공장 조감: 실제 시간5초 | 차량 근접: 같은5초 |
+|---|---|
+| ![실제 공장 연속 주행 촬영](docs/images/fleet4-local45-042/overview-realtime.gif) | ![같은 실행의 AMR 근접 연속 촬영](docs/images/fleet4-local45-042/carter1-realtime.gif) |
 
-[전체 운송 영상 · 25.4초 MP4](docs/images/fleet4-local45-036/operations-business-complete.mp4) · [공장 원본 이미지](docs/images/fleet4-local45-036/overview.png) · [미디어 출처](docs/images/fleet4-local45-036/readme-smooth-preview-provenance.json)
+[조감 MP4](docs/images/fleet4-local45-042/overview-realtime.mp4) · [차량 근접 MP4](docs/images/fleet4-local45-042/carter1-realtime.mp4) · [연속 촬영 출처](docs/images/fleet4-local45-042/provenance.json)
 
-실제 RGB의 명목 74배속 타임라인에서 12초를 골랐습니다. GIF는 원본 영상의 10fps를 유지합니다. 촬영 사이에는 이전 프레임을 유지하며 움직임을 보간하지 않아 긴 촬영 간격의 끊김은 남습니다. 이 실행은 **출하 3건·빈 토트 반납 3건·4대 주차를 마쳤지만, 최종 기록 종료 검사에 실패**했습니다. 전체 정상 완주는 아직 확인 중입니다.
+실제 물리 시간5초를10fps로 연속 촬영했습니다. 두 시점은 같은 물리 프레임을 사용하며 움직임을 보간하지 않았습니다. 현재4대 통합 실행의 시작 구간이며 전체 운행 결과는 아직 확인 중입니다.
+
+[전체 업무 흐름 · 이전 실행의25.4초 요약](docs/images/fleet4-local45-036/operations-business-complete.mp4)은 명목74배속 타임라인입니다. 그 실행은 출하3건·빈 토트 반납3건·4대 주차를 마쳤으나 최종 기록 종료 검사에 실패했습니다. 아래 업무 결과와 관제 화면은 해당 실행의 보존 자료입니다.
 
 ## AMR을 클릭하면 보이는 운영 상태
 
