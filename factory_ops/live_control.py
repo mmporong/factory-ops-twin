@@ -74,6 +74,7 @@ class LiveControl:
             if self.fingerprints[key] == fingerprint:
                 return deepcopy(self.receipts[key])
             return dict(receipt, reason="command_id_reused_with_different_request")
+        age = None
         try:
             age = (wall_now-datetime.fromisoformat(request["requested_at"])).total_seconds()
             valid_time = math.isfinite(age) and 0 <= age <= 3
@@ -104,6 +105,10 @@ class LiveControl:
             reason = "unsupported_action_or_control_state"
         if reason:
             receipt["reason"] = reason
+        if reason == "request_stale_or_invalid_time":
+            self.diagnostics = (self.diagnostics + [{"kind": "command_time_rejection", "command_id": key,
+                "requested_at": request.get("requested_at") if isinstance(request.get("requested_at"), str) else None,
+                "receiver_wall_at": wall_now.isoformat(), "request_age_s": age if age is not None and math.isfinite(age) else None}])[-30:]
         self.fingerprints[key], self.receipts[key] = fingerprint, receipt
         self._save()
         return deepcopy(receipt)

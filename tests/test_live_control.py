@@ -65,6 +65,22 @@ class LiveControlTests(unittest.TestCase):
         self.assertEqual(gate.receipts["pause"]["status"], "rejected")
         self.assertTrue(gate.blocked)
 
+    def test_rejected_request_time_exposes_age_without_accepting_future_or_old_requests(self):
+        for offset, expected_age in ((.3, -.3), (-4., 4.), (None, None)):
+            with self.subTest(offset=offset):
+                gate = LiveControl(RUN, ROBOTS)
+                value = request()
+                value["requested_at"] = "invalid" if offset is None else (NOW+timedelta(seconds=offset)).isoformat()
+                receipt = gate.submit(value, now_s=10., wall_now=NOW)
+                self.assertEqual(receipt["reason"], "request_stale_or_invalid_time")
+                self.assertEqual(gate.phase, "running")
+                self.assertEqual(gate.revision, 0)
+                diagnostic = gate.snapshot()["diagnostics"][-1]
+                self.assertEqual(diagnostic["command_id"], value["command_id"])
+                self.assertEqual(diagnostic["request_age_s"], expected_age)
+                self.assertEqual(diagnostic["receiver_wall_at"], NOW.isoformat())
+                json.dumps(gate.snapshot(), allow_nan=False)
+
     def test_bounded_outbox_identity_and_owner_restart_refusal(self):
         with tempfile.TemporaryDirectory() as folder:
             base = Path(folder)
