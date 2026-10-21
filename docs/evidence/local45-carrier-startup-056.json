@@ -1,0 +1,308 @@
+{
+  "schema_version": 1,
+  "run_id": "9b53b7a2bb07410f8f23891625615147",
+  "producer_source_commit": "5108f74ab82b37fcbdfb597eecf7c5434ccb85c7",
+  "status": "early_operator_abort_after_renderer_warning",
+  "native_admission_and_USD_authoring_passed": true,
+  "four_robot_loaded_motion_verified": false,
+  "tote_physics_authored": false,
+  "whole_run_passed": false,
+  "attachments": [
+    {
+      "body0": [
+        "/World/Carter1/chassis_link"
+      ],
+      "body1": [
+        "/World/CarrierModules/carter1/Carrier"
+      ],
+      "carrier_dynamic_body": true,
+      "carrier_path": "/World/CarrierModules/carter1/Carrier",
+      "center_of_mass_m": [
+        -0.18000000715255737,
+        0.0,
+        0.7055856585502625
+      ],
+      "compound_collider_count": 5,
+      "connected_body_pair_collision_enabled": false,
+      "diagonal_inertia_kg_m2": [
+        0.15429925918579102,
+        0.22739925980567932,
+        0.3265399932861328
+      ],
+      "exclude_from_articulation": true,
+      "joint_enabled": true,
+      "joint_path": "/World/CarrierModules/carter1/ChassisJoint",
+      "local_positions_m": [
+        [
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0
+        ]
+      ],
+      "local_rotations_wxyz": [
+        [
+          1.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          1.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      ],
+      "mass_kg": 5.400000095367432,
+      "principal_axes_wxyz": [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "robot_id": "carter1"
+    },
+    {
+      "body0": [
+        "/World/Carter2/chassis_link"
+      ],
+      "body1": [
+        "/World/CarrierModules/carter2/Carrier"
+      ],
+      "carrier_dynamic_body": true,
+      "carrier_path": "/World/CarrierModules/carter2/Carrier",
+      "center_of_mass_m": [
+        -0.18000000715255737,
+        0.0,
+        0.7055856585502625
+      ],
+      "compound_collider_count": 5,
+      "connected_body_pair_collision_enabled": false,
+      "diagonal_inertia_kg_m2": [
+        0.15429925918579102,
+        0.22739925980567932,
+        0.3265399932861328
+      ],
+      "exclude_from_articulation": true,
+      "joint_enabled": true,
+      "joint_path": "/World/CarrierModules/carter2/ChassisJoint",
+      "local_positions_m": [
+        [
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0
+        ]
+      ],
+      "local_rotations_wxyz": [
+        [
+          1.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          1.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      ],
+      "mass_kg": 5.400000095367432,
+      "principal_axes_wxyz": [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "robot_id": "carter2"
+    },
+    {
+      "body0": [
+        "/World/Carter3/chassis_link"
+      ],
+      "body1": [
+        "/World/CarrierModules/carter3/Carrier"
+      ],
+      "carrier_dynamic_body": true,
+      "carrier_path": "/World/CarrierModules/carter3/Carrier",
+      "center_of_mass_m": [
+        -0.18000000715255737,
+        0.0,
+        0.7055856585502625
+      ],
+      "compound_collider_count": 5,
+      "connected_body_pair_collision_enabled": false,
+      "diagonal_inertia_kg_m2": [
+        0.15429925918579102,
+        0.22739925980567932,
+        0.3265399932861328
+      ],
+      "exclude_from_articulation": true,
+      "joint_enabled": true,
+      "joint_path": "/World/CarrierModules/carter3/ChassisJoint",
+      "local_positions_m": [
+        [
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0
+        ]
+      ],
+      "local_rotations_wxyz": [
+        [
+          1.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          1.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      ],
+      "mass_kg": 5.400000095367432,
+      "principal_axes_wxyz": [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "robot_id": "carter3"
+    },
+    {
+      "body0": [
+        "/World/Carter4/chassis_link"
+      ],
+      "body1": [
+        "/World/CarrierModules/carter4/Carrier"
+      ],
+      "carrier_dynamic_body": true,
+      "carrier_path": "/World/CarrierModules/carter4/Carrier",
+      "center_of_mass_m": [
+        -0.18000000715255737,
+        0.0,
+        0.7055856585502625
+      ],
+      "compound_collider_count": 5,
+      "connected_body_pair_collision_enabled": false,
+      "diagonal_inertia_kg_m2": [
+        0.15429925918579102,
+        0.22739925980567932,
+        0.3265399932861328
+      ],
+      "exclude_from_articulation": true,
+      "joint_enabled": true,
+      "joint_path": "/World/CarrierModules/carter4/ChassisJoint",
+      "local_positions_m": [
+        [
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0
+        ]
+      ],
+      "local_rotations_wxyz": [
+        [
+          1.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          1.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      ],
+      "mass_kg": 5.400000095367432,
+      "principal_axes_wxyz": [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "robot_id": "carter4"
+    }
+  ],
+  "camera_overview": {
+    "coordinate_frame": "world",
+    "eye_xyz_m": [
+      16,
+      -13,
+      24
+    ],
+    "focal_length_mm": 17.0,
+    "horizontal_aperture_mm": 24.0,
+    "local_transform_row_major": [
+      1.0,
+      0.0,
+      -0.0,
+      0.0,
+      0.0,
+      0.696565923795132,
+      0.7174927970421962,
+      0.0,
+      0.0,
+      -0.7174927970421962,
+      0.696565923795132,
+      0.0,
+      16.0,
+      -13.0,
+      23.999999999999996,
+      1.0
+    ],
+    "prim_path": "/World/FactoryOverviewCamera",
+    "profile_camera_id": "portfolio_overview",
+    "readback_status": "verified",
+    "target_xyz_m": [
+      16,
+      11,
+      0.7
+    ],
+    "vertical_aperture_mm": 13.5
+  },
+  "observed_warning": "cannot find xform op xformOp:translate / xformOp:orient for /World/CarrierModules/carter1/Carrier",
+  "source_issue": "adapter used a matrix-only transform; proven single-carrier probe also constructs SingleRigidPrim which normalizes to SDK translate/orient/scale ops",
+  "fix_reference": {
+    "SDK": "4.5.0",
+    "relative_path": "exts/isaacsim.core.prims/isaacsim/core/prims/impl/xform_prim.py",
+    "sha256": "695568c50d48b4865fe267d1ad28e457f6759eea09bb1a1f124ab65f5c7703df",
+    "method": "_reset_xform_properties: double-precision translate/orient/scale in canonical order"
+  },
+  "closure": {
+    "SDK_closed": true,
+    "Nav2_closed": true,
+    "relay_windows_closed": true,
+    "relay_linux_closed": true,
+    "cleanup_errors": []
+  },
+  "receipt_sha256": {
+    "pair-host.json": "6f716efeed15c389fee532f5b20ae193d8a20106de386a2ba8ac495ccb71cb64",
+    "relay-pair.json": "4620c0bf95d0cf6bc5afba0ee1f7a1d516e73a027a1444e6daeb684859c5748c",
+    "job.json": "646709ef5b2ddc9e737691bc3c4901e36e9daa0ff30f958cddaadbebbe475606",
+    "results/run/local45-fleet4-transport-scene.json": "4baabafcc64865424f580fe6744ceed28762978f4c5be15d00407bff62d83278"
+  },
+  "live_bag_SQL_opened": false,
+  "media_published": false
+}

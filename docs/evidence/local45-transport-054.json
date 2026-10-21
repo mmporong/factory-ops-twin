@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "attempt": "054",
+  "run_id": "4dfd2c904a5f40448bafcea51c8e77d1",
+  "producer_source_commit": "a462fdbe3cd05722b03eb50afc058baa433a17dd",
+  "status": "operator_aborted_partial",
+  "reason": "persistent virtual charging contact_pending with falling SOC; advance to CPU-fixed immutable056 without extending or editing this run",
+  "exact_native_queue_causation_proven": false,
+  "operator_pause_resume_passed": true,
+  "operator_evidence": "local45-native-control-054.json",
+  "business": {
+    "completed_orders": 1,
+    "expected_orders": 3,
+    "elapsed_sim_s": 846.950044172,
+    "stock_units": 54,
+    "empty_returns": 0
+  },
+  "closure": {
+    "SDK_job_closed": true,
+    "abort_requested": true,
+    "timed_out": false,
+    "remaining_owned_pids": [],
+    "Nav2_closure_verified": true,
+    "Nav2_cgroup_populated": false,
+    "relay_windows_closed": true,
+    "relay_linux_closed": true,
+    "relay_endpoints": {
+      "windows": {
+        "status": "stopped",
+        "closed": true,
+        "error": null
+      },
+      "linux": {
+        "status": "stopped",
+        "closed": true,
+        "error": null
+      }
+    },
+    "cleanup_errors": []
+  },
+  "viewing_owner": {
+    "API_closed": true,
+    "Next_closed": true,
+    "cleanup_errors": []
+  },
+  "media": {
+    "whole_factory_hero_exported": false,
+    "reason": "incomplete run; guarded continuation refused export before opening bags or encoding",
+    "completed_capture_windows": [
+      "material_supply",
+      "cell_processing",
+      "finished_goods_transport"
+    ]
+  },
+  "active_source_or_inputs_changed": false,
+  "live_bag_SQL_opened": false,
+  "receipt_sha256": {
+    "pair-host.json": "ea0dcdbccb0220038c8e581202f183cdd367b4920f19ae0e873cb9ac894fa2d8",
+    "relay-pair.json": "1cc88637bc320d018788268bbbc997ed204d4f799a864f77cbc8fbfa0306ff75",
+    "job.json": "e310827308adfa9c3c77a395f735b7f1cb9b532e095211ca2a636466d41abad4",
+    "operator-intervention.json": "21d7590a54673cbdcb3c7a310d7324a7b2d15a3489f9c4656edef152ab537317",
+    "results/run/mission-progress.json": "e41b99ea7d774544fbf2eb1ecff03cbcef3fe228ae56e7ebc889072d6fd1f82b"
+  }
+}

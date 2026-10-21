@@ -87,7 +87,7 @@ Nova Carter의 차체 형상·센서 간섭·기존 반경을 확인한 뒤 캐�
 
 같은 장착 구성으로6kg 토트를 싣고 전진·곡선 주행·제자리 회전 후 감속 정지를 확인했습니다. 원본은 실제 물리 프레임에서 촬영한60fps·9.4초이며, GIF는 회전 전후5초를40fps로 보여줍니다. 보간 프레임은 사용하지 않았습니다. 적재 접촉과 상대 위치, 바퀴 응답을 기록했습니다. 자동 적재·도킹·재고 인계의 차량 통합과 하중 정격은 남아 있습니다. [60fps MP4로 보기](docs/images/loaded-mobility-local45-135/loaded-motion-60fps.mp4) · [실제 주행 결과](docs/evidence/local45-loaded-mobility-135.json) · [촬영 출처](docs/images/loaded-mobility-local45-135/provenance.json)
 
-4대 운송 씬에는 [물리 캐리어 연결 옵션](scripts/isaac/carrier_native.py)을 준비했습니다. 네 차량의 차체·충돌 형상·장착 여유를 모두 확인한 뒤 차량별 모듈과 고정 조인트를 작성하고, 물품 표시는 각 상판 높이에 맞춥니다. 이 옵션의 실제4대 SDK 실행과 토트의 물리 적재·하역 통합은 남아 있습니다. [실행 범위와 사용법](docs/operations-guide.md#4대-물리-캐리어-개발-옵션)
+4대 운송 씬에는 [물리 캐리어 연결 옵션](scripts/isaac/carrier_native.py)이 있습니다. 실제 SDK에서 네 차량의 장착 허용과 차량별5.4kg 모듈·고정 조인트 작성을 확인했고, 물품 표시는 각 상판 높이에 맞춥니다. [장착·카메라 기록](docs/evidence/local45-carrier-startup-056.json)의 렌더 변환 경고를 수정했으며, 수정 소스의 물리·렌더 운송과 토트의 적재·하역 통합은 남아 있습니다. [실행 범위와 사용법](docs/operations-guide.md#4대-물리-캐리어-개발-옵션)
 
 | 롤러 적재 완료 | 같은 토트의 반납 완료 |
 |---|---|

@@ -257,7 +257,17 @@ def _author_one(stage: Any, row: Mapping[str, Any], manifest: Mapping[str, Any],
                                                        sdk.UsdPhysics, sdk.UsdShade)
     UsdGeom.Xform.Define(stage, row["group_path"])
     carrier = UsdGeom.Xform.Define(stage, row["carrier_path"])
-    carrier.AddTransformOp().Set(_gf_matrix_from_column(row["measurement"]["chassis_world_from_local"], Gf))
+    initial = _gf_matrix_from_column(row["measurement"]["chassis_world_from_local"], Gf)
+    # Match SDK4.5 XFormPrim's canonical dynamic-body ops used by PhysX/Hydra.
+    carrier.AddTranslateOp(precision=UsdGeom.XformOp.PrecisionDouble).Set(initial.ExtractTranslation())
+    carrier.AddOrientOp(precision=UsdGeom.XformOp.PrecisionDouble).Set(initial.ExtractRotationQuat())
+    carrier.AddScaleOp(precision=UsdGeom.XformOp.PrecisionDouble).Set(Gf.Vec3d(1.))
+    operations = [op.GetOpName() for op in carrier.GetOrderedXformOps()]
+    readback = UsdGeom.XformCache(sdk.Usd.TimeCode.Default()).GetLocalToWorldTransform(carrier.GetPrim())
+    if (operations != ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
+            or any(abs(float(readback[i][j])-float(initial[i][j])) > 1e-8
+                   for i in range(4) for j in range(4))):
+        raise ValueError("carrier canonical transform ops or initial world pose differ")
     rigid = UsdPhysics.RigidBodyAPI.Apply(carrier.GetPrim())
     rigid.CreateRigidBodyEnabledAttr(True)
     props = manifest["mass_properties"]["carrier"]
@@ -306,6 +316,7 @@ def _author_one(stage: Any, row: Mapping[str, Any], manifest: Mapping[str, Any],
     observed = {"robot_id": row["robot_id"], "carrier_path": row["carrier_path"],
         "joint_path": row["joint_path"], "body0": body0, "body1": body1,
         "carrier_dynamic_body": bool(rigid.GetRigidBodyEnabledAttr().Get()),
+        "dynamic_transform_ops": operations,
         "joint_enabled": bool(joint.GetJointEnabledAttr().Get()),
         "exclude_from_articulation": bool(joint.GetExcludeFromArticulationAttr().Get()),
         "connected_body_pair_collision_enabled": bool(joint.GetCollisionEnabledAttr().Get()),
