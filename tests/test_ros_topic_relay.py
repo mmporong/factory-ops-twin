@@ -8,6 +8,21 @@ from factory_ops.ros_topic_relay import Framer,Receiver,catalog
 
 
 class RelayTests(unittest.TestCase):
+    def test_checkpoint_retries_transient_windows_sharing_conflict(self):
+        from unittest.mock import patch
+        import os,json
+        from factory_ops.ros_topic_relay import write_checkpoint
+        with tempfile.TemporaryDirectory() as directory:
+            target=Path(directory)/"relay.json";target.write_text("old",encoding="utf-8")
+            replace=os.replace;attempts=[]
+            def locked_once(source,destination):
+                attempts.append(1)
+                if len(attempts)==1:raise PermissionError("observed sharing violation")
+                replace(source,destination)
+            with patch("factory_ops.compat.os.replace",side_effect=locked_once):
+                write_checkpoint(target,{"status":"ready"})
+            self.assertEqual(len(attempts),2)
+            self.assertEqual(json.loads(target.read_text(encoding="utf-8")),{"status":"ready"})
     def packet(self,seq=1,topic="/carter1/cmd_vel",stamp=10,raw=b"unchanged CDR"):
         return {"version":1,"run_id":"r","sequence":seq,"topic":topic,"type":"geometry_msgs/msg/Twist",
                 "acquired_clock_ns":stamp,"payload_b64":base64.b64encode(raw).decode(),"payload_sha256":hashlib.sha256(raw).hexdigest()}

@@ -821,3 +821,9 @@ python -B -m unittest tests.test_g2_scene tests.test_g3_scene tests.test_compact
 145 exporter 작성 중 visual snapshot이 `{schema_version,state_hash,visual_state}` wrapper인데 선택기가 wrapper 전체를 flat 원장으로 읽는 연결 오류를 발견했다. 다음 producer는 wrapper의 SHA·state hash·run·sequence를 확인하고 `visual_state`를 선택기에 전달한다. 또한 기존 G2는 적용 상태를 갱신한 뒤 물리를 한 단계 진행하고 RGB를 촬영한다. 촬영 태그를 pre-step에서 만들면 RGB와1물리 프레임 어긋나므로 선택기 관측을 실제 post-step 제어 샘플과 capture_due 경계로 옮겼다. 이 오류들은046의 최초 발견/시작 실패와 별도다.
 
 145의 CPU exporter9검사·Python3.10 AST2검사를 수신했다. 실제 완료된 정상 실행·양 OS 정리·여섯 실제 단계·1280×720 원본과 연속60Hz 물리 프레임을 요구하며 누락 단계를 합성하지 않는다. 화이트 운영 콘솔의 재고·출하·반납·작업 값은 같은 촬영의 적용 원장과 freshness를 통과한 checkpoint에서 읽는다. 실제 미디어 렌더링은 후속 정상 실행 종료 뒤 수행한다.
+
+## FOT-098 — 새 relay checkpoint에 공유 파일 처리 누락
+
+047은 양 OS relay 연결과4채널 정적 TF·33개 시계 callback까지 진행한 뒤 Windows `windows-relay.tmp`→`windows-relay.json` 교체의 `WinError5`로 실패했다. Linux의 socket EOF는 그 뒤의 결과다. 새 relay의 checkpoint writer가 기존 `compat.replace_shared_file/write_shared_text`를 재사용하지 않고 단일 replace를 호출한 것이 확인됐다.0.2wall 초 한도의 기존 처리로 연결하고, relay 상태 reader와 launcher checkpoint도 같은 유틸리티를 재사용한다. 계속되는 접근 오류·ENOSPC는 실패하며 기록을 성공으로 숨기지 않는다. 관측된 일시 sharing conflict1회 뒤 실제 atomic 교체가 되는 fault injection1검사를 통과했다.
+
+SDK·Nav2·Windows relay·Linux relay의 네 소유 트리는 모두 종료했고 잔여 PID와 정리 오류가 없었다. 운영 이동이나 여섯 단계 촬영은 완료되지 않았다. 원본은 보존하고 C의 전체 입력/결과/동결 소스 압축본과 E의 명시적으로 선별한 상태·초기 이미지·로그를 각각 해시 검증한다. E 선별본을 전체 rosbag 백업으로 표시하지 않는다. [047 오류·종료·보존](evidence/local45-transport-047.json)

@@ -1,0 +1,420 @@
+{
+  "run_id": "4225f1a6ee794ba28982c0f8656578c6",
+  "source_commit": "01bd3e6cce37da9c48d0d697fc853ac11b3034ed",
+  "status": "failed_closed_before_navigation",
+  "host_error": "RuntimeError: owned Windows topic relay exited",
+  "wall_s": 113.39100000000326,
+  "first_transport_error": {
+    "type": "PermissionError",
+    "message": "[WinError 5] 액세스가 거부되었습니다: 'C:\\\\Users\\\\LIMMM\\\\FactoryOpsRuntime\\\\local45-transport-047\\\\windows-relay.tmp' -> 'C:\\\\Users\\\\LIMMM\\\\FactoryOpsRuntime\\\\local45-transport-047\\\\windows-relay.json'",
+    "traceback": "Traceback (most recent call last):\n  File \"C:\\Users\\LIMMM\\FactoryOpsRuntime\\local45-transport-047\\source\\factory_ops\\ros_topic_relay.py\", line 226, in main\n    save();next_save=time.monotonic()+1.\n  File \"C:\\Users\\LIMMM\\FactoryOpsRuntime\\local45-transport-047\\source\\factory_ops\\ros_topic_relay.py\", line 123, in save\n    temp=args.output.with_suffix(\".tmp\");temp.write_text(json.dumps(report,indent=2,allow_nan=False)+\"\\n\",encoding=\"utf-8\");temp.replace(args.output)\n  File \"E:\\IsaacSim\\isaac-sim-4.5.0\\kit\\python\\lib\\pathlib.py\", line 1247, in replace\n    self._accessor.replace(self, target)\nPermissionError: [WinError 5] 액세스가 거부되었습니다: 'C:\\\\Users\\\\LIMMM\\\\FactoryOpsRuntime\\\\local45-transport-047\\\\windows-relay.tmp' -> 'C:\\\\Users\\\\LIMMM\\\\FactoryOpsRuntime\\\\local45-transport-047\\\\windows-relay.json'\n"
+  },
+  "secondary_linux_relay_error": {
+    "type": "ConnectionError",
+    "message": "paired relay socket closed",
+    "traceback": "Traceback (most recent call last):\n  File \"/mnt/c/Users/LIMMM/FactoryOpsRuntime/local45-transport-047/source/factory_ops/ros_topic_relay.py\", line 203, in main\n    raise ConnectionError(\"paired relay socket closed\")\nConnectionError: paired relay socket closed\n"
+  },
+  "sensor_connection_scope": "Static TF4channels and33clock callbacks observed by Windows relay before checkpoint sharing failure; no normal navigation or6phase capture claim.",
+  "whole_factory_complete": false,
+  "RGB_scope": "Initial scene preview only; whole factory operations not captured.",
+  "resource_closure": {
+    "SDK_Job": true,
+    "SDK_remaining_pids": [],
+    "Nav2_WSL": true,
+    "Windows_relay_Job": true,
+    "Linux_relay_WSL": true,
+    "errors": []
+  },
+  "archives": [
+    {
+      "path": "C:\\Users\\LIMMM\\FactoryOpsArtifacts\\operations-148\\full-closed.tar.gz",
+      "sha256": "c4b88d4c4e64f262ec32457cb9ae9dcd2c9b229a412b67a9ef2b2ac737662c95",
+      "bytes": 211168031,
+      "members": [
+        "build-attestation.json",
+        "fastdds-udp-linux.xml",
+        "fastdds-udp-windows.xml",
+        "inputs/bundle.json",
+        "inputs/config.json",
+        "inputs/energy-profile.json",
+        "inputs/g2.json",
+        "inputs/g3-routing.json",
+        "inputs/g3-runtime.json",
+        "inputs/layout.json",
+        "inputs/nav2-g2.yaml",
+        "inputs/registry.json",
+        "inputs/render-profile.json",
+        "inputs/route-preflight.json",
+        "inputs/scenarios.json",
+        "inputs/scene/factory-v3.usda",
+        "inputs/session.json",
+        "inputs/transport-profile.json",
+        "inputs/visual-assets.json",
+        "job-abort-request.txt",
+        "job-spec.json",
+        "job.json",
+        "job.json.gate",
+        "job.json.preflight.json",
+        "launch.json",
+        "linux-relay.json",
+        "linux-relay.log",
+        "nav-command.sh",
+        "nav.log",
+        "pair-host.json",
+        "prepare.stderr.log",
+        "prepare.stdout.json",
+        "preservation-plan.json",
+        "relay-command.sh",
+        "relay-job-spec.json",
+        "relay-job.json",
+        "relay-job.json.gate",
+        "relay-job.json.preflight.json",
+        "relay-job.stderr.log",
+        "relay-job.stdout.log",
+        "relay-pair.json",
+        "relay-stop-request.txt",
+        "results/run/diagnostic-load/factory-overview.png",
+        "results/run/factory-overview.png",
+        "results/run/fleet-transport-verified.json",
+        "results/run/local45-fleet4-transport-scene.json",
+        "results/run/provenance/fleet-source.json",
+        "results/run/provenance/source-commit.raw",
+        "results/run/provenance/source.tar",
+        "results/run/ros-contexts.json",
+        "results/run/scene-events.jsonl",
+        "results/run/scene-state.json",
+        "results/run/visual-runtime-manifest.json",
+        "results/run/visual-scene/factory-v3.render.usda",
+        "results/run/visual-scene/factory-v3.usda",
+        "results/run/visual-scene/factory-v3.visual.usda",
+        "results/run/visual-scene/session-layer-snapshots/02057a9d716d6ce09e3a8734f88b69661c58f544b30cd1e6aa2017b291230d91.usda",
+        "results/run/visual-scene/session-layer.usda",
+        "results/run/visual-scene/visual-scene-manifest.json",
+        "sdk.stderr.log",
+        "sdk.stdout.log",
+        "source.commit",
+        "source.tar",
+        "windows-relay.json"
+      ],
+      "all_member_sha256_verified": true
+    },
+    {
+      "path": "E:\\FactoryOpsArtifacts\\operations-148\\priority-media-and-state.tar.gz",
+      "sha256": "238625eac73274e17031426e3fc8d0042e4b52f17a8ca46416cbbe8496401b7d",
+      "bytes": 233571,
+      "members": [
+        "build-attestation.json",
+        "fastdds-udp-linux.xml",
+        "fastdds-udp-windows.xml",
+        "inputs/bundle.json",
+        "inputs/config.json",
+        "inputs/energy-profile.json",
+        "inputs/g2.json",
+        "inputs/g3-routing.json",
+        "inputs/g3-runtime.json",
+        "inputs/layout.json",
+        "inputs/registry.json",
+        "inputs/render-profile.json",
+        "inputs/route-preflight.json",
+        "inputs/scenarios.json",
+        "inputs/session.json",
+        "inputs/transport-profile.json",
+        "inputs/visual-assets.json",
+        "job-spec.json",
+        "job.json",
+        "job.json.preflight.json",
+        "launch.json",
+        "linux-relay.json",
+        "linux-relay.log",
+        "nav-command.sh",
+        "nav.log",
+        "pair-host.json",
+        "prepare.stderr.log",
+        "prepare.stdout.json",
+        "preservation-plan.json",
+        "relay-command.sh",
+        "relay-job-spec.json",
+        "relay-job.json",
+        "relay-job.json.preflight.json",
+        "relay-job.stderr.log",
+        "relay-job.stdout.log",
+        "relay-pair.json",
+        "results/run/factory-overview.png",
+        "results/run/fleet-transport-verified.json",
+        "results/run/local45-fleet4-transport-scene.json",
+        "results/run/provenance/fleet-source.json",
+        "results/run/provenance/source-commit.raw",
+        "results/run/ros-contexts.json",
+        "results/run/scene-events.jsonl",
+        "results/run/scene-state.json",
+        "results/run/visual-runtime-manifest.json",
+        "results/run/visual-scene/visual-scene-manifest.json",
+        "sdk.stderr.log",
+        "sdk.stdout.log",
+        "windows-relay.json"
+      ],
+      "all_member_sha256_verified": true
+    }
+  ],
+  "original_manifest": {
+    "build-attestation.json": {
+      "sha256": "ce5bca853e2abe6fd8ae3bfcf555b9d312b24f7d29ec10cbae50c1f9eccb0f98",
+      "bytes": 3922
+    },
+    "fastdds-udp-linux.xml": {
+      "sha256": "a01d7e78fdaea9c87995abddb62b24cc5e6242c15cefcc49bc7f867320bc8887",
+      "bytes": 763
+    },
+    "fastdds-udp-windows.xml": {
+      "sha256": "a01d7e78fdaea9c87995abddb62b24cc5e6242c15cefcc49bc7f867320bc8887",
+      "bytes": 763
+    },
+    "job-abort-request.txt": {
+      "sha256": "d299983c1eb257e729a08743576230d041aaeaaa551c14c12ade1741fae73ba1",
+      "bytes": 32
+    },
+    "job-spec.json": {
+      "sha256": "4ed8192bdf98b78edf71e9630e605c0643f08070f4c83ea3c87a986743faa398",
+      "bytes": 15584
+    },
+    "job.json": {
+      "sha256": "7ed47d2242ecd499aabce4bd66c376a71e1e81a892760e2651cb70d25a3a73a9",
+      "bytes": 16175
+    },
+    "job.json.gate": {
+      "sha256": "d299983c1eb257e729a08743576230d041aaeaaa551c14c12ade1741fae73ba1",
+      "bytes": 32
+    },
+    "job.json.preflight.json": {
+      "sha256": "53295df2dee187da920b24b144cdd8aa46b6a5d61497e19a1ad90450b6ea17ab",
+      "bytes": 15213
+    },
+    "launch.json": {
+      "sha256": "60fcdc68c545b169062f2b9886aa960ffb4fb8185e753810e5e4fe8e842af276",
+      "bytes": 537
+    },
+    "linux-relay.json": {
+      "sha256": "0fcf025cab751b6f628d757d397aa6ea5ff68a845b01be2d85a38158bdd2c1f5",
+      "bytes": 3778
+    },
+    "linux-relay.log": {
+      "sha256": "245e5ca3d98dde0e6f4e0bcbff2c5c487451d7339e9cf48a4ce99b8cd568c9ba",
+      "bytes": 298
+    },
+    "nav-command.sh": {
+      "sha256": "9061ff95693c6b8fc94424bd253d095787408d957a939e909d8e82a894424c5c",
+      "bytes": 1510
+    },
+    "nav.log": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "pair-host.json": {
+      "sha256": "964c955cb464b46434c569464bbf3852939286badd397e132d03a59ff06212f2",
+      "bytes": 46795
+    },
+    "prepare.stderr.log": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "prepare.stdout.json": {
+      "sha256": "26ef46fdc5247b364ed28f73c195837a307edc754b3b466f62fc2cd18c49f9d9",
+      "bytes": 754
+    },
+    "preservation-plan.json": {
+      "sha256": "f8ace1101315447736350bbe6392ba2c724a82ef6f34496a70286f51ba419b55",
+      "bytes": 1055
+    },
+    "relay-command.sh": {
+      "sha256": "089e4ee3e810e5d7bde745c07800a6d3aa5cf81b6e3763862953404851e0191d",
+      "bytes": 920
+    },
+    "relay-job-spec.json": {
+      "sha256": "6f8e932fd054e52a0e47da242a171d18031e9f2b4d2d2c783f4a5648b240bd4f",
+      "bytes": 1328
+    },
+    "relay-job.json": {
+      "sha256": "6250a79d957d1ddba7288a5c24a773de1dcd29eac00b1d0fc7f1c7eea638cca7",
+      "bytes": 1691
+    },
+    "relay-job.json.gate": {
+      "sha256": "d299983c1eb257e729a08743576230d041aaeaaa551c14c12ade1741fae73ba1",
+      "bytes": 32
+    },
+    "relay-job.json.preflight.json": {
+      "sha256": "ea42f2c0ca3a6242d8496c6ea2028cbfafbf0ef0f8d77d18405037864daeb260",
+      "bytes": 912
+    },
+    "relay-job.stderr.log": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "relay-job.stdout.log": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "relay-pair.json": {
+      "sha256": "6d6aec36dde644eb45fd4f2ade9abfea1f463fb7b62302d3f7a75c51276a6b54",
+      "bytes": 19087
+    },
+    "relay-stop-request.txt": {
+      "sha256": "d299983c1eb257e729a08743576230d041aaeaaa551c14c12ade1741fae73ba1",
+      "bytes": 32
+    },
+    "sdk.stderr.log": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "sdk.stdout.log": {
+      "sha256": "669a84eefc22fec27344189430fd6c554f7102f4195a5f5f81e965a5b46cd4a7",
+      "bytes": 36748
+    },
+    "source.commit": {
+      "sha256": "bdf4a0608314b766cf123d10ebfd88fc275428c3e5fc5e0e18b12aa4b6e61963",
+      "bytes": 302
+    },
+    "source.tar": {
+      "sha256": "0b368bb8d389145ae8f246c368dd651e77f4f01ae910af304056165e2c08ba96",
+      "bytes": 120657920
+    },
+    "windows-relay.json": {
+      "sha256": "fdba9fe6fae5212043e3f5b0c61d426a51e2b326e3b239b417599bc2e6e630b7",
+      "bytes": 4889
+    },
+    "inputs/bundle.json": {
+      "sha256": "69f3ae9c23662d9cd64d699bfd883a71ec99e50f1931fdf317d7a8183c7e5ecc",
+      "bytes": 2431
+    },
+    "inputs/config.json": {
+      "sha256": "0ddd1e8061e0a631fc1d1631a16749a2fb39af67ce516593d83779367216f5d3",
+      "bytes": 7487
+    },
+    "inputs/energy-profile.json": {
+      "sha256": "50569a9f18337928c635d94a2e0102dd50d9f9c83d7f0f3c2e01baa42ddd0fe5",
+      "bytes": 718
+    },
+    "inputs/g2.json": {
+      "sha256": "7696219ef029b9dd53b17b01556a1e5c4d0bfa6c68b71ae054f66700ceab61d6",
+      "bytes": 4852
+    },
+    "inputs/g3-routing.json": {
+      "sha256": "9058f96215e68c0eb8c3bd78d8044c0b3341e4f5f7b9dfd1c8ccae434f8303f3",
+      "bytes": 3938
+    },
+    "inputs/g3-runtime.json": {
+      "sha256": "507ba468c302a2cce6b7d20ae921a2c3ee31944612010968da87a5050abec6ef",
+      "bytes": 2277
+    },
+    "inputs/layout.json": {
+      "sha256": "46480d5dc336db761664eb1cacccbdd5e47e4e38b71e07b68c9246ddebc2fd82",
+      "bytes": 11823
+    },
+    "inputs/nav2-g2.yaml": {
+      "sha256": "46da243197437b152552bd139780c498fdf35c7ef293fbd2f152cf608947a5f0",
+      "bytes": 6690
+    },
+    "inputs/registry.json": {
+      "sha256": "818c291224ab3f2263f9ba3cd829d425b2e269d36f1eb41e489b71266f452fd8",
+      "bytes": 5451
+    },
+    "inputs/render-profile.json": {
+      "sha256": "53c16ead3abfb7f793b128c0963c1b7598ba25f96432c43bbd3d7f01912cea4b",
+      "bytes": 2471
+    },
+    "inputs/route-preflight.json": {
+      "sha256": "0b4527d4b3aa7f7108d689915275c461ece5899e53380267b4d42fe09fe9ba44",
+      "bytes": 3248
+    },
+    "inputs/scenarios.json": {
+      "sha256": "e98191d744fe8668e63ba0d646c35d2c089096e240cd1ea7b2b8ec5f8f28d94b",
+      "bytes": 568
+    },
+    "inputs/session.json": {
+      "sha256": "7951ac7c2efbbbcf296ba62e0c7b8d1f17d06d1273aafc49dda84f9af0b1f335",
+      "bytes": 3448
+    },
+    "inputs/transport-profile.json": {
+      "sha256": "4afa18d835947be3ecee2801d646e9b7efec77bfc7c641f0dbf20fdd02b8b100",
+      "bytes": 2220
+    },
+    "inputs/visual-assets.json": {
+      "sha256": "e34c572b7ee570919796d719356e3010bfc75d8eec93d6c22c26e276c1088887",
+      "bytes": 2874
+    },
+    "inputs/scene/factory-v3.usda": {
+      "sha256": "2126f01ecde38e0f36417a827676b09dcbc6c2af523e05ca78851e966e301db7",
+      "bytes": 11669
+    },
+    "results/run/factory-overview.png": {
+      "sha256": "ddccf86be3c921575510911411f1e76f5566d6548036850e1b777feda35f3dcf",
+      "bytes": 156673
+    },
+    "results/run/fleet-transport-verified.json": {
+      "sha256": "274621d0061a8aa45bacd1d9d692eefb7177993247e5bb850e33d57df400352b",
+      "bytes": 1151
+    },
+    "results/run/local45-fleet4-transport-scene.json": {
+      "sha256": "b023abf48f13fa3198ce186b1781030758fc40abd2a28ab0ba466fbf7679c744",
+      "bytes": 167610
+    },
+    "results/run/ros-contexts.json": {
+      "sha256": "45f1200ca32f72f758d6c5ce7027c3beda72816839f0d79f7948966f01000807",
+      "bytes": 1635
+    },
+    "results/run/scene-events.jsonl": {
+      "sha256": "ffe609364c3efd529ec900a27cab5ae331764a3f42ef5a0c71e0a834c9d77b3d",
+      "bytes": 198
+    },
+    "results/run/scene-state.json": {
+      "sha256": "5113f8fd3de18f1121412a0a777e3a3678771934c1010d9324d914babd38f8d3",
+      "bytes": 227
+    },
+    "results/run/visual-runtime-manifest.json": {
+      "sha256": "df180466236dfbc7f87b98902726616ecce97f0fda9440750d089fb343f66334",
+      "bytes": 53082
+    },
+    "results/run/diagnostic-load/factory-overview.png": {
+      "sha256": "db977c5f884d1ebd418d871745c4a0c3f3358dfae2ba3a0444f4c31c1c75491d",
+      "bytes": 542076
+    },
+    "results/run/provenance/fleet-source.json": {
+      "sha256": "ff3ce706163f29e3fd146d45725c056433b67b436ad106106e75cd6f8026b7b0",
+      "bytes": 39183
+    },
+    "results/run/provenance/source-commit.raw": {
+      "sha256": "bdf4a0608314b766cf123d10ebfd88fc275428c3e5fc5e0e18b12aa4b6e61963",
+      "bytes": 302
+    },
+    "results/run/provenance/source.tar": {
+      "sha256": "0b368bb8d389145ae8f246c368dd651e77f4f01ae910af304056165e2c08ba96",
+      "bytes": 120657920
+    },
+    "results/run/visual-scene/factory-v3.render.usda": {
+      "sha256": "9b9113b6d2ec37d38f4a737d080a66a686fa863a8d3619614d89763207359ef0",
+      "bytes": 1886
+    },
+    "results/run/visual-scene/factory-v3.usda": {
+      "sha256": "2126f01ecde38e0f36417a827676b09dcbc6c2af523e05ca78851e966e301db7",
+      "bytes": 11669
+    },
+    "results/run/visual-scene/factory-v3.visual.usda": {
+      "sha256": "ea9acab704a16ac9106bf05b809c8a6e29b4b8c5370b5e739241177f474cb5f4",
+      "bytes": 789630
+    },
+    "results/run/visual-scene/session-layer.usda": {
+      "sha256": "02057a9d716d6ce09e3a8734f88b69661c58f544b30cd1e6aa2017b291230d91",
+      "bytes": 57382
+    },
+    "results/run/visual-scene/visual-scene-manifest.json": {
+      "sha256": "2609c32449058dc939c0a9f7b8577a7705a1a9a9d685c398a7bad28b5dc2828d",
+      "bytes": 70283
+    },
+    "results/run/visual-scene/session-layer-snapshots/02057a9d716d6ce09e3a8734f88b69661c58f544b30cd1e6aa2017b291230d91.usda": {
+      "sha256": "02057a9d716d6ce09e3a8734f88b69661c58f544b30cd1e6aa2017b291230d91",
+      "bytes": 57382
+    }
+  },
+  "preservation_scope": "Original stage retained. C includes retained inputs/results/root files including frozen Git source archive; expanded reproducible source is not duplicated. E contains explicitly selected priority state/media/logs and is not a complete bag/source backup.",
+  "source_unchanged_inflight": true,
+  "bag_SQL_opened_or_copied_inflight": false
+}

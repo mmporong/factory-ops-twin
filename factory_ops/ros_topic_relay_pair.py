@@ -10,6 +10,7 @@ import sys
 import time
 
 from factory_ops.wsl_process_supervisor import WslProcessSupervisor
+from factory_ops.compat import read_shared_text
 
 
 class RelayPair:
@@ -53,7 +54,7 @@ class RelayPair:
         deadline=time.monotonic()+20
         while True:
             self.assert_healthy()
-            states=[json.loads((self.stage/(side+"-relay.json")).read_text(encoding="utf-8"))
+            states=[json.loads(read_shared_text(self.stage/(side+"-relay.json")))
                     if (self.stage/(side+"-relay.json")).exists() else {} for side in ("windows","linux")]
             if all(s.get("status")=="ready" for s in states):break
             if time.monotonic()>deadline:raise TimeoutError("paired topic relay readiness deadline")
@@ -70,7 +71,7 @@ class RelayPair:
         for side in ("windows","linux"):
             path=self.stage/(side+"-relay.json")
             if path.exists():
-                document=json.loads(path.read_text(encoding="utf-8"))
+                document=json.loads(read_shared_text(path))
                 if document.get("run_id")!=self.run_id or document.get("status")=="failed":
                     raise RuntimeError("topic relay failed: "+side+" "+str(document.get("error")))
 

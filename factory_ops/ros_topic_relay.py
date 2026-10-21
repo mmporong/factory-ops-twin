@@ -22,9 +22,17 @@ import sys
 import time
 import traceback
 
+from factory_ops.compat import replace_shared_file, write_shared_text
+
 MAX_PACKET_BYTES = 1_048_576
 MAX_QUEUED_BYTES = 4_194_304
 COMMAND_AGE_NS = 300_000_000
+
+
+def write_checkpoint(path, report):
+    temporary=path.with_suffix(".tmp")
+    write_shared_text(temporary,json.dumps(report,indent=2,allow_nan=False)+"\n")
+    replace_shared_file(temporary,path)
 
 
 def catalog(robot_ids=("carter1","carter2","carter3","carter4"), *, probe_prefix=None):
@@ -120,7 +128,7 @@ def main():
         "cleanup_errors":[],"closed":False,"command_maximum_acquisition_age_ns":COMMAND_AGE_NS,
         "node_acquisition_clock_is_producer_generation_time":False}
     def save():
-        temp=args.output.with_suffix(".tmp");temp.write_text(json.dumps(report,indent=2,allow_nan=False)+"\n",encoding="utf-8");temp.replace(args.output)
+        write_checkpoint(args.output,report)
     def stopping():
         if args.stop_request.is_file() and not args.stop_request.is_symlink():
             if args.stop_request.read_text(encoding="ascii")!=args.run_id:raise ValueError("relay stop request identity differs")

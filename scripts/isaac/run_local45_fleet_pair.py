@@ -16,12 +16,13 @@ import traceback
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from factory_ops.wsl_process_supervisor import WslProcessSupervisor
+from factory_ops.compat import replace_shared_file, write_shared_text
 
 
 def save(path: Path, value: dict) -> None:
     temporary = path.with_suffix(path.suffix + ".tmp")
-    temporary.write_text(json.dumps(value, indent=2, allow_nan=False) + "\n", encoding="utf-8")
-    temporary.replace(path)
+    write_shared_text(temporary,json.dumps(value, indent=2, allow_nan=False) + "\n")
+    replace_shared_file(temporary,path)
 
 
 def sha(path: Path) -> str:
