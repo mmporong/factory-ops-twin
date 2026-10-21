@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "run_id": "e6be8b8845ba47d3a942a7c2867fee2a",
+  "producer_source_commit": "26e19711b1ddf29ad02f2bbe312cee337779b23c",
+  "source_provenance": "provenance.json",
+  "source": {
+    "path": "operations-business-complete.mp4",
+    "sha256": "edd5fd9cb47f76792b7ea0120c882f0dcea5d9782a9f6915dd15f33b89d01d92",
+    "bytes": 1381689
+  },
+  "output": {
+    "path": "operations-preview.gif",
+    "sha256": "744079b909646089bbc4e2a297dc3d9feaf9adbe137facdf4032cd3fa469aec1",
+    "bytes": 3046514,
+    "probe": {
+      "programs": [],
+      "stream_groups": [],
+      "streams": [
+        {
+          "width": 800,
+          "height": 450,
+          "nb_frames": "48"
+        }
+      ],
+      "format": {
+        "duration": "12.000000",
+        "size": "3046514"
+      }
+    }
+  },
+  "operation": "Deterministic excerpt, scale and GIF palette conversion of actual published RGB timeline; no generated imagery or motion interpolation.",
+  "source_video_excerpt_s": [
+    4,
+    16
+  ],
+  "nominal_original_timeline_speedup": 74,
+  "output_fps": 4,
+  "source_is_sparse_rgb_timeline": true,
+  "original_frames_held_between_captures": true,
+  "continuous_real_time_motion": false,
+  "full_run_passed": false,
+  "business_tasks_completed": true,
+  "limitation": "Business/parking completed but terminal recording failed. This preview does not prove contact/lift physics, electrical charging, final render quality or whole-run success.",
+  "reproduction_command": [
+    "ffmpeg",
+    "-hide_banner",
+    "-loglevel",
+    "error",
+    "-n",
+    "-threads",
+    "1",
+    "-filter_complex_threads",
+    "1",
+    "-ss",
+    "4",
+    "-t",
+    "12",
+    "-i",
+    "docs/images/fleet4-local45-036/operations-business-complete.mp4",
+    "-filter_complex",
+    "fps=4,scale=800:-1:flags=lanczos,split[a][b];[a]palettegen=max_colors=96:stats_mode=diff[p];[b][p]paletteuse=dither=bayer:bayer_scale=4",
+    "-loop",
+    "0",
+    "docs/images/fleet4-local45-036/operations-preview.gif"
+  ],
+  "ffmpeg_version": "ffmpeg version 8.1-full_build-www.gyan.dev Copyright (c) 2000-2026 the FFmpeg developers"
+}
