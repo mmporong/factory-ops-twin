@@ -157,7 +157,7 @@ Isaac Sim 물리 실행은 창 없이 헤드리스로 돌리며, GPU 렌더링�
 
 CPU 운영 데모는 Python 3.12·uv, 웹은 Node.js·npm을 사용합니다. GPU 시뮬레이션과 별도로 실행합니다. PowerShell 터미널 두 개를 사용합니다.
 
-정지·재개 개발 옵션은 새 소스로 준비한 4대 실행기와 관제 API 양쪽에서 `--live-anchor-controls`를 켜고, API의 `--commands-dir`를 해당 실행의 `results/run/commands`에 연결합니다. 요청 접수 후 현재 주행 구간이 끝나고 네 차량의 예약 지점 정지가 확인돼야 적용 완료가 됩니다. 물리·공정·가상 충전 시계는 계속 진행하며, 실제 운행 연결은 후속 실행에서 확인합니다.
+정지·재개 개발 옵션은 새 소스로 준비한 4대 실행기와 관제 API 양쪽에서 `--live-anchor-controls`를 켜고, API의 `--commands-dir`를 해당 실행의 `results/run/commands`에 연결합니다. 요청 접수 후 현재 주행 구간이 끝나고 네 차량의 예약 지점 정지가 확인돼야 적용 완료가 됩니다. 물리·공정·가상 충전 시계는 계속 진행합니다. [예약 대기 중 목표 ID 정합](docs/evidence/local45-native-control-053.json)을 수정했으며, 실제 운행의 정지·재개 적용은 새 실행에서 확인합니다.
 
 ```powershell
 cd "$HOME/factory-ops-twin"

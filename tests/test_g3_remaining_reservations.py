@@ -114,9 +114,13 @@ class RemainingReservationTests(unittest.TestCase):
         denied = self.request(manager, runtime)
         self.assertFalse(denied.granted)
         self.assertEqual("successor_tiles_occupied", denied.reason)
+        self.assertEqual(before["goal_uuid"], runtime["follow_uuid"])
+        candidate = runtime["pending_follow_uuid"]
+        self.assertNotEqual(runtime["follow_uuid"], candidate)
         pending = manager.snapshot(now_s=0)["pending"]
         chunk, goal, tiles = runtime["chunk"], runtime["follow_uuid"], runtime["pending_tiles"]
         self.assertFalse(self.request(manager, runtime).granted)
+        self.assertEqual(candidate, runtime["pending_follow_uuid"])
         self.assertEqual(pending, manager.snapshot(now_s=0)["pending"])
         self.assertIs(chunk, runtime["chunk"])
         self.assertEqual(goal, runtime["follow_uuid"])
@@ -124,6 +128,13 @@ class RemainingReservationTests(unittest.TestCase):
         self.assertEqual(before, manager.snapshot(now_s=0)["holds"]["carter1"])
         self.assertIs(held, runtime["held_tiles"])
         self.assertEqual(before["generation"], runtime["generation"])
+        peer_hold = manager.snapshot(now_s=0)["holds"]["carter2"]
+        cleared = manager.transfer("carter2", peer_hold["generation"], "peer-park", str(uuid4()), self.body("P4"), now_s=0)
+        self.assertTrue(cleared.granted, cleared.reason)
+        granted = self.request(manager, runtime)
+        self.assertTrue(granted.granted, granted.reason)
+        self.assertEqual(candidate, runtime["follow_uuid"])
+        self.assertEqual(candidate, manager.snapshot(now_s=0)["holds"]["carter1"]["goal_uuid"])
 
     def test_remaining_plan_keeps_endpoint_closure_envelope_and_leg_identity(self):
         for anchor, closed in (("M_LOW", False), ("M_LOW", True), ("CI", False)):

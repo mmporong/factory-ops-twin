@@ -25,7 +25,7 @@ class DashboardWaitReasonTests(unittest.TestCase):
 
     def fixture(self):
         plan = self.book.plan("P1", "CI", closed=False)
-        runtime = {"phase": "request", "anchor": "P1", "chunk": None, "generation": 1,
+        runtime = {"phase": "request", "anchor": "P1", "chunk": None, "generation": 1, "follow_uuid": "old-goal",
             "held_tiles": frozenset({(1, 1)}), "leg": {"plan": plan, "target": "CI", "closed": False,
                 "intent": None, "final_goal": GoalPose("map", *self.book.nodes["CI"], 0)}}
         # Denials describe the retained hold, not the requested route. Bind from runtime.

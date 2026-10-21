@@ -1,0 +1,134 @@
+{
+  "schema_version": 1,
+  "attempt": "053",
+  "run_id": "0005e3d4c7e348898c5f31c9733c0dfb",
+  "producer_source_commit": "ef0eb160dcaf68ed342a8f5c856a3fab5d4c000e",
+  "status": "failed",
+  "scope": "opt-in native API integration through KitClient; no browser interaction or whole-run success claim",
+  "termination": "run-matched SDK abort requested after confirmed non-recovering pause binding defect; paired supervisor closed owned trees",
+  "operator": {
+    "status": "failed",
+    "error": {
+      "type": "RuntimeError",
+      "message": "native source closed before the operator flow finished"
+    },
+    "pause_requested": true,
+    "pause_applied": false,
+    "resume_requested": false
+  },
+  "defect": {
+    "retained_initial_goal_uuid": "84052f14-4ef9-44f4-93f6-06d42ec2072e",
+    "ungranted_candidate_overwrote_runtime_goal_uuid": "c638cb32-587f-42b7-a6e1-807b3f7cb1d3",
+    "unchanged_reservation_generation": 3,
+    "last_observed_stop_conditions": {
+      "kind": "anchor_stop_conditions",
+      "observed_sim_time_s": 87.900004584,
+      "control_revision": 1,
+      "robots": {
+        "carter1": {
+          "phase": "charging",
+          "anchor": "P1",
+          "generation": 9,
+          "goal_uuid": "aa16af4f-cbf2-4a2b-9ada-7a7e8f45a7fa",
+          "hold_generation": 9,
+          "hold_parked": true,
+          "hold_accepted_goal_uuid": "aa16af4f-cbf2-4a2b-9ada-7a7e8f45a7fa",
+          "local_clock_s": 87.900004584,
+          "event_clock_s": 87.900004584,
+          "stop_sample_count": 779,
+          "stop_oldest_stamp_s": 49.000002556,
+          "stop_newest_stamp_s": 87.900004584,
+          "qualified": true,
+          "reason": null
+        },
+        "carter2": {
+          "phase": "request",
+          "anchor": "M_HIGH",
+          "generation": 6,
+          "goal_uuid": "6b666023-3e5f-43f9-a73a-e9d46aef3d06",
+          "hold_generation": 6,
+          "hold_parked": true,
+          "hold_accepted_goal_uuid": "6b666023-3e5f-43f9-a73a-e9d46aef3d06",
+          "local_clock_s": 87.900004584,
+          "event_clock_s": 87.900004584,
+          "stop_sample_count": 1145,
+          "stop_oldest_stamp_s": 30.700001601,
+          "stop_newest_stamp_s": 87.900004584,
+          "qualified": true,
+          "reason": null
+        },
+        "carter3": {
+          "phase": "request",
+          "anchor": "P3",
+          "generation": 3,
+          "goal_uuid": "c638cb32-587f-42b7-a6e1-807b3f7cb1d3",
+          "hold_generation": 3,
+          "hold_parked": false,
+          "hold_accepted_goal_uuid": null,
+          "qualified": false,
+          "reason": "retained_hold_binding_or_tiles_mismatch"
+        },
+        "carter4": {
+          "phase": "idle",
+          "anchor": "P4",
+          "generation": 4,
+          "goal_uuid": "0a7d5bd4-3a14-4b09-ba55-8265cfdf160e",
+          "hold_generation": 4,
+          "hold_parked": false,
+          "hold_accepted_goal_uuid": null,
+          "local_clock_s": 87.900004584,
+          "event_clock_s": 87.900004584,
+          "stop_sample_count": 1295,
+          "stop_oldest_stamp_s": 23.20000121,
+          "stop_newest_stamp_s": 87.900004584,
+          "qualified": true,
+          "reason": null
+        }
+      }
+    },
+    "reason": "request_remaining_reservation changed follow_uuid before transfer was granted"
+  },
+  "fix": {
+    "candidate_field": "pending_follow_uuid",
+    "activation": "only after granted successor transfer",
+    "unchanged": [
+      "retained tiles and generation on denial",
+      "pose and stop thresholds",
+      "ACK identity and freshness",
+      "reservation authorization"
+    ],
+    "CPU_checks": {
+      "count": 12,
+      "passed": true,
+      "pre_fix_regression_failed": true
+    },
+    "SDK_syntax": {
+      "python": "3.10.15",
+      "file": "scripts/ros/g3_mission.py",
+      "passed": true
+    },
+    "native_fixed_source_result": "pending new immutable run"
+  },
+  "closure": {
+    "SDK_windows_job_closed": true,
+    "SDK_remaining_owned_pids": [],
+    "Nav2_linux_closure_verified": true,
+    "Nav2_cgroup_populated": false,
+    "relay_windows_tree_closed": true,
+    "relay_linux_tree_closed": true,
+    "both_relay_endpoints_stopped_successfully": true,
+    "cleanup_errors": []
+  },
+  "media": {
+    "published": false,
+    "reason": "failed partial run; no successful operation-story export"
+  },
+  "receipt_sha256": {
+    "pair-host.json": "39b77dc2f9c92f844b479a897c6c3d570dcf728394765450d7b69af2e6c5e7c2",
+    "relay-pair.json": "50be4998bb90b330e66e7fc75e8f27e6bcf71f9e2011d4ed5e7ee3b925bb4986",
+    "job.json": "1d1e8eb2a5980c652e732ba4e3e5bd381422f51708e7db857b5556eaf88530e9",
+    "results/run/live-control-state.json": "68ce3beb7226c03f68284486cc908671dd733fe689134dc7f8c13ca350daf3fc",
+    "results/run/initial-hold-barrier.json": "379979e5021f8f9a04d93c15ab87aab6ef4a4ab645269bf7c4da7441efff64af"
+  },
+  "operator_receipt_sha256": "b0122542210220823ac78d592854dda556aa152fba6025e8558030a90ebe3376"
+}

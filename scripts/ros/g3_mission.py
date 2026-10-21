@@ -923,15 +923,17 @@ def request_remaining_reservation(book: RouteBook, manager: RouteReservationMana
         tiles = swept_tiles(plan.points, reservation_radius_m, tile_size_m=book.tile_size_m,
                             bounds_xy=(bounds.xmin, bounds.ymin, bounds.xmax, bounds.ymax))
         runtime["chunk"], runtime["remaining_plan"], runtime["pending_tiles"] = chunk, plan, tiles
-        runtime["follow_uuid"] = leg["intent"].goal_id if chunk.final and leg["intent"] else str(uuid4())
+        # A denied successor keeps the current HOLD and its goal identity.
+        runtime["pending_follow_uuid"] = leg["intent"].goal_id if chunk.final and leg["intent"] else str(uuid4())
     decision = manager.transfer(robot, runtime["generation"], runtime["chunk"].route_id,
-                                runtime["follow_uuid"], runtime["pending_tiles"], now_s=now_s)
+                                runtime["pending_follow_uuid"], runtime["pending_tiles"], now_s=now_s)
     runtime["last_request"] = now_s
     runtime["dashboard_reservation_wait"] = None if decision.granted else {
         "decision": decision, "stamp_s": now_s, "leg": leg, "route_id": leg["plan"].route_id,
         "chunk": runtime["chunk"], "anchor": runtime["anchor"], "follow_uuid": runtime["follow_uuid"]}
     if decision.granted:
         runtime["generation"], runtime["held_tiles"] = decision.generation, runtime["pending_tiles"]
+        runtime["follow_uuid"] = runtime["pending_follow_uuid"]
     return decision
 
 
