@@ -1,0 +1,112 @@
+{
+  "schema_version": 1,
+  "attempt": "051",
+  "run_id": "18441ed7a43a417f871e08c86b92fb25",
+  "producer_source_commit": "ae37de456e0ece3ac88b578ceda65629388d4c14",
+  "source_archive_sha256": "05bd2c01a3df8571a374ffd5cebd7b431f6850b7b3059a43adbd36ee0acf7a7a",
+  "provenance_sha256": "a2746f5ef302cc9c5b7116a6c253bdd033e95267c6ad8931e32b29312668b38d",
+  "scope": "closed local Isaac Sim4.5 PhysX-planar development run; not a completed normal mission or qualification",
+  "status": "failed",
+  "ground_truth_navigation_input": false,
+  "observed_business": {
+    "completed_orders": 2,
+    "released_orders": 3,
+    "mission_elapsed_sim_s": 1155.7000602750002,
+    "world_time_s": 1164.0667273774743,
+    "material_completed": false,
+    "empty_returns_completed": 1,
+    "empty_returns_expected": 3,
+    "inventory_conservation": [
+      {
+        "balanced": true,
+        "consumed": 6,
+        "in_totes": 0,
+        "initial": 60,
+        "on_hand": 54,
+        "replenished": 0,
+        "sku": "sensor-kit"
+      }
+    ],
+    "virtual_charging": {
+      "contact_source": "estimated_pose_geometric_dock",
+      "enabled": true,
+      "hardware_calibrated": false,
+      "manual_requests": [
+        "carter1"
+      ],
+      "physical_contact_verified": false,
+      "resume_soc": 0.86
+    }
+  },
+  "failure": {
+    "confirmed_primary_event": "Windows relay Job hard timeout; peer reset and ROS shutdown errors followed",
+    "relay_job_timed_out": true,
+    "relay_job_elapsed_wall_s": 10800.04700000002,
+    "host_wall_bound_s": 10800,
+    "host_wall_s": 10806.875,
+    "host_error": "RuntimeError: owned Windows topic relay exited",
+    "linux_relay_error": {
+      "type": "ConnectionResetError",
+      "message": "[Errno 104] Connection reset by peer"
+    },
+    "mission_shutdown_error": {
+      "type": "RCLError",
+      "message": "failed to initialize wait set: the given context is not valid, either rcl_init() was not called or rcl_shutdown() was called., at ./src/rcl/wait.c:130"
+    },
+    "not_established": "No measured GPU/CPU/I/O attribution for total runtime; no circular-deadlock claim"
+  },
+  "closure": {
+    "SDK_windows_job_closed": true,
+    "SDK_remaining_owned_pids": [],
+    "Nav2_linux_closure_verified": true,
+    "Nav2_cgroup_populated": false,
+    "Nav2_live_known_processes": [],
+    "relay_windows_tree_closed": true,
+    "relay_linux_tree_closed": true,
+    "cleanup_errors": [],
+    "relay_endpoint_success": false,
+    "relay_endpoints": {
+      "windows": {
+        "status": "ready",
+        "closed": false
+      },
+      "linux": {
+        "status": "failed",
+        "closed": true
+      }
+    }
+  },
+  "media": {
+    "completed_windows": [
+      "material_supply",
+      "cell_processing",
+      "finished_goods_transport",
+      "first_shipment",
+      "empty_container_return"
+    ],
+    "required_windows": 6,
+    "overview_png_count": 1288,
+    "exported": false,
+    "publication_admitted": false,
+    "reason": "incomplete failed native run; final story exporter was not launched"
+  },
+  "preservation": {
+    "raw_stage": "%USERPROFILE%/FactoryOpsRuntime/local45-transport-051",
+    "retained_once": true,
+    "archive_or_second_disk_backup_claimed": false
+  },
+  "next_run_changes": [
+    "overview-only render product",
+    "same-carrier measured-motion capture trigger",
+    "after-shipment parallel-flow capture",
+    "opt-in pause/resume source receipts"
+  ],
+  "receipt_sha256": {
+    "launch.json": "a21f73d4bc0a4fbe91821d03fa140233ace4a22cced2f1a685d1fe5124d5f4c1",
+    "pair-host.json": "ea5552040e3b8e283d971eab7561e4492265515d3f91a3c41625ac30629cb415",
+    "relay-job.json": "f97867afd6d828482c0d99aaf19bce45109ff8fe1825748ba75324bc4309805b",
+    "relay-pair.json": "ac6638a147f7681f21ba9691a83e4640dad49ed0d9e35c9be7717607a1187766",
+    "results/run/mission-result.json": "b7ccf31182147e43e4531a64e7948b401977c3091d582a6c878bd090929b3edf",
+    "results/run/factory-story-events.jsonl": "cf133b74679dac310d848966a6489f34453b5b5fb65f0c22f96de10c74ed0c6e"
+  }
+}
