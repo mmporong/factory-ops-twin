@@ -18,6 +18,8 @@ class CarrierModuleTests(unittest.TestCase):
     def test_geometry_fit_mass_and_deterministic_export(self):
         manifest = build_manifest(self.profile)
         self.assertEqual(len(manifest["geometry"]), 11)
+        for box in manifest["geometry"]:
+            self.assertRegex(box["name"], r"^[A-Za-z_][A-Za-z0-9_]*$")
         self.assertAlmostEqual(manifest["mass_properties"]["carrier"]["mass_kg"], 5.4)
         self.assertAlmostEqual(manifest["mass_properties"]["tote"]["mass_kg"], 6.)
         self.assertTrue(manifest["declared_clearance_passed"])

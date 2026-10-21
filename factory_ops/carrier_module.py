@@ -38,9 +38,9 @@ def _bounds(box: Mapping[str, Any]) -> tuple[list[float], list[float]]:
 
 def mass_properties(boxes: Sequence[Mapping[str, Any]]) -> dict:
     """Uniform cuboid components, combined about their centre of mass (SI)."""
-    total = sum(b["mass_kg"] for b in boxes)
+    total = math.fsum(b["mass_kg"] for b in boxes)
     _number(total, "assembly mass")
-    com = [sum(b["mass_kg"]*b["center_m"][i] for b in boxes)/total for i in range(3)]
+    com = [math.fsum(b["mass_kg"]*b["center_m"][i] for b in boxes)/total for i in range(3)]
     inertia = [[0.]*3 for _ in range(3)]
     for b in boxes:
         m, size = b["mass_kg"], b["size_m"]
@@ -90,7 +90,7 @@ def build_manifest(profile: Mapping[str, Any]) -> dict:
     module = [_box("deck", "carrier", d, c, _number(deck["mass_kg"], "deck mass"))]
     for x in (-1, 1):
         for y in (-1, 1):
-            module.append(_box("post_%s_%s" % (x, y), "carrier", post,
+            module.append(_box("post_%s_%s" % ("m" if x < 0 else "p", "m" if y < 0 else "p"), "carrier", post,
                 [c[0]+x*span[0]/2, c[1]+y*span[1]/2, c[2]-d[2]/2-post[2]/2],
                 _number(mount["post_mass_kg"], "post mass")))
     outer = _xyz(tote["outer_size_m"], "tote size", size=True)
@@ -107,7 +107,7 @@ def build_manifest(profile: Mapping[str, Any]) -> dict:
                       ([outer[0]-2*wall, wall, outer[2]-wall],
                        [0., sign*(outer[1]-wall)/2, (outer[2]+wall)/2])])
     empty_mass = _number(tote["empty_mass_kg"], "empty tote mass")
-    volume = sum(math.prod(s) for s, _ in parts)
+    volume = math.fsum(math.prod(s) for s, _ in parts)
     cargo = [_box("tote_%d" % i, "tote", s, v, empty_mass*math.prod(s)/volume)
              for i, (s, v) in enumerate(parts)]
     payload_size = _xyz(payload["size_m"], "payload size", size=True)
