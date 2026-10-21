@@ -1,0 +1,129 @@
+{
+  "task_id": "tote-carrier-module-107",
+  "attempt": 1,
+  "contract_revision": 102,
+  "ack": true,
+  "status": "implementation_ready_native_pending",
+  "acceptance_authority": "root",
+  "stage2_complete": false,
+  "api_ready": true,
+  "sdk_executed": false,
+  "gpu_started": false,
+  "summary": "범용 토트 캐리어의 독립 설정·결정적 geometry manifest·동적 접촉 후보와 CPU 검사를 작성했다. 실제 로봇 장착이나 물리 적재 성공을 뜻하지 않으며 구간 2는 미완료다.",
+  "preserved_frozen_execution": {
+    "source_commit_from_card": "e173ef54d3286405c5291ebb82507cd3f6d00099",
+    "run_id_from_card": "b45773f6b08947b9b20ddacbcce96f1b",
+    "runtime_accessed_or_modified": false
+  },
+  "changed_paths_sha256": {
+    "factory_ops/carrier_module.py": "ae45558264f0eed94afbdea1356c8f10a8291b966d5e72d86992d4fb793a7197",
+    "configs/vehicles/tote-carrier-v1.json": "4e849823f3e0efe4561fd8ce02ef17067b4b9dc606558bab2197ffa4efa46627",
+    "scripts/isaac/probe_tote_carrier_contact.py": "9e628fd779cfa1535b7de6007c0969ccdbff6ef5bf63508b8ecdcdd98b5f6a8b",
+    "tests/test_carrier_module.py": "ea9afb52a13473a877cd9ccb528b890069795f41084622392854ab2570127111"
+  },
+  "other_written_path": "coordination/collab/results/tote-carrier-module-107.json",
+  "input_sha256_verified_at_start": {
+    "docs/completion-plan.md": "0b77ecfc732ba3a07d3b5a3507277cf7357d7bc66b1a62c49723170d64711772",
+    "AGENTS.md": "30ed4fb5a723edfac0557111438fa9b6b6a85b6f66ef002b675b5a240d87154d",
+    "scripts/isaac/local_contact_probe.py": "a984ea9f97ad6242d28e405dd404327ee5328c203cd585ff071a97778afd82b4",
+    "scripts/isaac/local_asset_probe.py": "042e7c3255c339a5d5705a0bb70e377f0b807d2deda5d06fc0cffb0870bf345c",
+    "scripts/isaac/factory_visuals.py": "25768848d6b035be333d26382b5096b720aafa4782eee8daa894f677721b90db"
+  },
+  "api": {
+    "load_profile": "load_profile(path) -> dict: JSON 설정을 읽고 형상·수치 조건을 검증한다.",
+    "build_manifest": "build_manifest(profile) -> dict: SDK 없는 11개 cuboid 구성, 두 동적 body의 질량/COM/관성, 지지·장착·접촉 설정을 반환한다.",
+    "coordinates": "모든 길이는 m, 질량은 kg, 관성은 kg*m^2. geometry[].center_m은 해당 body의 로컬 좌표다. carrier body 원점은 작성된 후보 장착 좌표 원점이며 tote body의 지지 시 원점은 tote_rest_origin_m이다. 실제 로봇 좌표 변환은 미검증이다.",
+    "validate_clearance": "validate_clearance(boxes, keepouts, radius_m, clearance_m) -> None: 같은 좌표계의 AABB 금지 영역 간섭과 원형 외곽 초과를 거절한다. 관측한 실제 robot geometry를 입력하기 전에는 선언된 후보 영역 검사에 한정된다.",
+    "export": "manifest_json(manifest) -> str 및 manifest_sha256(manifest) -> str: sort_keys·JSON-safe 규칙의 결정적 출력. python -B -m factory_ops.carrier_module --config configs/vehicles/tote-carrier-v1.json은 stdout에 manifest를 출력한다. 선택 --output은 새 파일만 허용한다.",
+    "probe_cli": "probe_tote_carrier_contact.py --config <profile.json> --output <new-absolute-directory> --run-id <32-lowercase-hex>",
+    "probe_outputs": ["result.json", "manifest.json", "observations.jsonl", "scene.usda", "settled.png 및 separated.png: 실제 RGB가 유효할 때만 생성"],
+    "project_source_sha256_keys": ["factory_ops/__init__.py", "factory_ops/carrier_module.py"]
+  },
+  "cpu_manifest": {
+    "sha256": "fd91872875ce2362d2c304d777c699f1b3179040bab077105ffdcb9dbdf2521d",
+    "geometry_count": 11,
+    "deck_size_m": [0.58, 0.46, 0.04],
+    "deck_center_m": [-0.18, 0.0, 0.68],
+    "mount_plane_z_m": 0.42000000000000004,
+    "tote_outer_size_m": [0.44, 0.34, 0.18],
+    "carrier_mass_kg": 5.4,
+    "empty_tote_mass_kg": 2.0,
+    "rigid_ballast_mass_kg": 4.0,
+    "loaded_tote_mass_kg": 6.0,
+    "authored_payload_bounds_kg": [0.0, 12.0],
+    "declared_clearance_passed": true,
+    "robot_integration_verified": false,
+    "canonical_map_or_footprint_changed": false,
+    "presentation_cargo_replaced": false,
+    "properties_origin": "치수·질량·균일 밀도 분포·관성·마찰·접촉 offset·하중 상한은 모두 작성된 개발 가정이다. 기존 g3-routing의 반경은 참조값만 사용하며 로봇 실측 물성이나 제조사 정격을 만들지 않았다."
+  },
+  "validation": [
+    {
+      "command": ".\\.venv\\Scripts\\python.exe -B -m unittest tests.test_carrier_module -v",
+      "passes": 1,
+      "result": "4 PASS, exit 0, 0.011 s",
+      "coverage": "지지·토트·payload 치수와 하중 상한, 빈 토트, 금지 영역 간섭/footprint 초과, NaN·Inf·bool·음수·0 질량과 접촉/실행 상한 거절, 독립 해석 cuboid 관성식, 결정적 JSON 및 설정 비변경"
+    },
+    {
+      "command": "프로젝트 Python으로 새 Python 3개 파일을 ast.parse(..., feature_version=(3,10)) 처리",
+      "passes": 1,
+      "result": "3 PASS",
+      "limit": "Python 3.10 문법 검사다. SDK를 import하거나 실제 3.10 native binding을 실행한 검사는 아니다. CPU 검사는 SDK 의존성 없는 모듈 import도 포함했다."
+    },
+    {
+      "method": "작성 이후 소유 파일의 API·종료 경로와 placeholder 패턴을 한정 확인",
+      "result": "미구현 stub·skip·TODO placeholder 없음. 별도 독립 리뷰나 추가 검사 라운드는 수행하지 않았다."
+    }
+  ],
+  "installed_official_sources_consulted": [
+    {
+      "path": "E:/IsaacSim/isaac-sim-4.5.0/exts/isaacsim.core.prims/isaacsim/core/prims/impl/single_rigid_prim.py",
+      "sha256": "04b7de5b78c418fa608198035ab59acc2335dc9100e965a6f9d573fb3a2ecde2",
+      "basis": "SingleRigidPrim의 prim_path/position 인자, 실제 pose/velocity 읽기와 작성된 분리 속도 설정 API"
+    },
+    {
+      "path": "E:/IsaacSim/isaac-sim-4.5.0/exts/isaacsim.sensors.physics/isaacsim/sensors/physics/scripts/contact_sensor.py",
+      "sha256": "8ee8e65b88e98297353447dc258b7be7becf543d97f4ef259a1da9d20d128c5c",
+      "basis": "ContactSensor dt/radius/threshold, get_current_frame의 실제 force/time/physics_step 및 raw body0/body1"
+    },
+    {
+      "path": "E:/IsaacSim/isaac-sim-4.5.0/exts/isaacsim.sensors.physics/isaacsim/sensors/physics/scripts/commands.py",
+      "sha256": "2a94262ed940c7d9a3ffa55f8a718d4fccb688c9e6b4f6ba8b9b6ce9d6b73e65",
+      "basis": "센서 생성 시 부모에 PhysxContactReportAPI를 적용하는 설치 코드"
+    },
+    {
+      "path": "E:/IsaacSim/isaac-sim-4.5.0/exts/isaacsim.core.api/isaacsim/core/api/materials/physics_material.py",
+      "sha256": "5840fffa202d2d147a0be66ab61fc0a44c128380944d787d1d5c57fabe558996",
+      "basis": "UsdPhysics.MaterialAPI의 마찰·반발 계수 속성 작성 방식"
+    }
+  ],
+  "native_fixture_design": {
+    "scope": "로봇 자산 대신 고정된 네 지지대가 두 동적 compound body를 받치는 간소화된 support fixture다.",
+    "qualification": "실제 World 시간/프레임 전진, 센서 시간/physics step 신선도·역행, 알려진 actor pair/힘, 네 지지대 접촉, 정지·정렬 dwell, 작성된 상향 속도 적용 뒤 접촉 해제 dwell과 RGB 두 장을 검사한다. 관측 없이 passed 결과를 작성하지 않는다.",
+    "bounds": "120 Hz, 최대 6 sim s, 내부 wall deadline 360 s. native 호출 자체의 hang·프로세스 종료 증명은 root의 기존 최대 480 s Windows Job guard가 맡는다.",
+    "cleanup": "RGB annotator detach와 RenderProduct destroy 실패는 failed로 기록한다. 최종 JSON 저장 실패에도 SimulationApp.close(wait_for_replicator=False)를 시도한다. report의 close 요청은 host의 closed/PID-empty 증거를 대신하지 않는다.",
+    "identity": "실행 스크립트/config/프로젝트 import 2개/CPU manifest SHA와 run_id를 기록한다. 기존 output 디렉터리는 덮어쓰지 않는다."
+  },
+  "limitations": [
+    "SDK/GPU/ROS/WSL 실행·설치·다운로드·약관 수락·Git mutation·새 에이전트·서버 조작은 하지 않았다. 공유 소스·설정·README/plan/보드·기존 dashboard 변경을 수정하지 않았다.",
+    "금지 영역 크기와 후보 장착 좌표는 작성된 제약이다. 실제 Nova Carter의 body/센서 AABB와 좌표 변환, 센서 FOV 및 적재 후 실제 외곽 반경은 후속 native admission에서 확인해야 한다.",
+    "고정 지지대를 실제 chassis/볼트/승강 장치로 해석하지 않는다. 강도·인증·저상 진입·도킹·고정 체결·적재 주행·미끄러짐·낙하·센서 가림과 제어 안정성은 미검증이다.",
+    "ballast는 토트와 같은 rigid body의 질량/충돌 구성이다. 독립 내용물과 토트 사이의 지지·미끄러짐 검증은 아니다. 분리는 작성된 속도 교란이며 실제 승강/하역 성공이 아니다.",
+    "RGB는 렌더된 sample 이후 읽은 실제 buffer만 저장한다. 별도 노출 시계·정확 프레임 동기 품질은 미검증이다.",
+    "구간별 README와 최종 통합/native 실행·수용은 root 소유다. 이번 receipt는 구간 2 완료나 프로젝트 전체 완료를 선언하지 않는다."
+  ],
+  "required_next_native_action": {
+    "owner": "root",
+    "precondition": "040의 양쪽 소유 실행 종료를 확인한 뒤 새 source/config/dependency SHA를 동결하고, 새 run/output으로 간소화된 contact fixture 1회를 실행한다.",
+    "guard_parameters": {
+      "SdkPath": "E:/IsaacSim/isaac-sim-4.5.0",
+      "EntryPoint": "probe_tote_carrier_contact.py",
+      "Config": "configs/vehicles/tote-carrier-v1.json",
+      "OutputDirectory": "새 절대 경로를 root가 배정",
+      "RunId": "새 32자리 lowercase hex를 root가 배정",
+      "SourceDependency": ["factory_ops/__init__.py", "factory_ops/carrier_module.py"],
+      "TimeoutSec": 480
+    },
+    "required_evidence": "기존 run-local-contact-probe.ps1/Windows Job 소유 경계에서 source/config/import SHA, 실제 pair·힘·정지 dwell·분리·RGB, exit code와 host closed/잔여 PID를 대조한다. fixture 통과 후에도 실제 Nova Carter 장착 admission은 별도 물리 범위다."
+  }
+}

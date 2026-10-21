@@ -1,0 +1,45 @@
+{
+  "task_id": "tote-carrier-module-107",
+  "attempt": 1,
+  "contract_revision": 102,
+  "owner": "control",
+  "reviewer": "root",
+  "binding": {
+    "session": "default",
+    "pane_id": "w1:p1C",
+    "terminal_id": "term_65e06d27e415810",
+    "agent_session": "01a152aa-24b4-7a31-92e3-a2b620f4feeb"
+  },
+  "project_root": "C:\\Users\\LIMMM\\factory-ops-twin",
+  "status": "pending",
+  "goal": "Implement stage2 generic tote carrier module/config and prepare a real contact probe without launching GPU; preserve current040 frozen execution.",
+  "inputs": {
+    "source_commit": "e173ef54d3286405c5291ebb82507cd3f6d00099",
+    "current_run": "b45773f6b08947b9b20ddacbcce96f1b"
+  },
+  "inputs_sha256": {
+    "docs/completion-plan.md": "0b77ecfc732ba3a07d3b5a3507277cf7357d7bc66b1a62c49723170d64711772",
+    "AGENTS.md": "30ed4fb5a723edfac0557111438fa9b6b6a85b6f66ef002b675b5a240d87154d",
+    "scripts/isaac/local_contact_probe.py": "a984ea9f97ad6242d28e405dd404327ee5328c203cd585ff071a97778afd82b4",
+    "scripts/isaac/local_asset_probe.py": "042e7c3255c339a5d5705a0bb70e377f0b807d2deda5d06fc0cffb0870bf345c",
+    "scripts/isaac/factory_visuals.py": "25768848d6b035be333d26382b5096b720aafa4782eee8daa894f677721b90db"
+  },
+  "write_paths": [
+    "factory_ops/carrier_module.py",
+    "configs/vehicles/tote-carrier-v1.json",
+    "scripts/isaac/probe_tote_carrier_contact.py",
+    "tests/test_carrier_module.py",
+    "coordination/collab/results/tote-carrier-module-107.json"
+  ],
+  "result_path": "C:\\Users\\LIMMM\\factory-ops-twin\\coordination\\collab\\results\\tote-carrier-module-107.json",
+  "acceptance": [
+    "Ordinary implementation only; current project AGENTS review minimization overrides repeated independent review rounds. No OMX/Conductor/Ralplan/team activation or extra agents. You are not alone: preserve all other edits and the four unowned dashboard files. Do not stage, commit or push; root integrates owned paths.",
+    "Build an authored generic tote carrier module and reproducible configuration for stage2, compatible with the existing Nova Carter development base. Do not claim a manufacturer model, industrial rating, certified payload or finished low-profile AMR. Read the current completion-plan vehicle scope. Use only permitted original/authored geometry; no paid assets, cloud instances, download/install/license acceptance.",
+    "New profile separates dimensions, mount/support geometry, authored mass/inertia/material/contact parameters and payload bounds. Use m/kg units and explicit authored assumptions. Validate finite values, positivity, tote/support fit, no unintended robot-body or sensor overlap; mounting geometry cannot silently change the canonical map/footprint. Existing presentation cargo remains separate.",
+    "Implement stdlib-only deterministic configuration/geometry export and a CPU-checkable manifest. Prepare a headless IsaacSim4.5 contact fixture script using existing local_contact_probe patterns and installed-compatible APIs; consult versioned official/installed sources for unfamiliar APIs. Probe should create a physically supported dynamic tote/module setup, collect actual contact/settling/separation observations and source/config identities, save actual RGB only when run, and close owned resources. Mark simplified support fixture versus full robot integration clearly. Do not fabricate measurement values or success receipts.",
+    "No IsaacSim/ROS/GPU launch while040 runs. No modification of current040 stage, source snapshots, existing ROS/controller/runtime/visual files, current robot registry, shared configs, root README/plan/AGENTS/troubleshooting, board or source evidence. Root owns integration, native fixture execution, main transport and publication.",
+    "Use a few meaningful CPU geometry/parameter tests and Python3.10-compatible syntax. No whole suite, independent review chain, bulk data/media or tests mirroring prose. Return exact changed paths/digests, commands/results, official refs consulted, authored versus measured properties, fixture limitations and required next native action. Stage2 remains incomplete until physical followup.",
+    "ACK task_id/attempt102 contract and write result receipt at the assigned path; completion requires actual files and output. If a source boundary or major API choice blocks implementation, report it without changing shared files."
+  ],
+  "review_policy": "Root checks only delivered behavior/evidence needed for integration; no separate review/approval chain per user."
+}

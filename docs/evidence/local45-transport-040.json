@@ -1,0 +1,266 @@
+{
+  "run_id": "b45773f6b08947b9b20ddacbcce96f1b",
+  "source_commit": "e173ef54d3286405c5291ebb82507cd3f6d00099",
+  "status": "closed_milestone_gate_incomplete",
+  "host_status": "failed",
+  "host_wall_s": 791.9689999999828,
+  "origin_sim_time_s": 54.150002824,
+  "time_scope": "Journal/media sim_time_s uses absolute World time; ledger intent/result times and web mission clock use elapsed time from origin_sim_time_s. No clock correction is applied.",
+  "mission_status": "failed",
+  "scene_status": "running",
+  "normal_transport_passed": false,
+  "four_robot_operational_gate_passed": false,
+  "project_stage": 1,
+  "whole_project_complete": false,
+  "business_flow_complete": false,
+  "final_parked_robot_ids": [
+    "carter1"
+  ],
+  "scenario_complete_events": [],
+  "terminal_boundary_failed": false,
+  "stale_recovery_audit": null,
+  "milestone_scope": "Project stage1 operation and preservation only; 80percent stop retired, full project completion remains pending.",
+  "experiment": "Separate three-order four-robot input configs/factory-fleet4-normal3;034 four-order failure remains unchanged.",
+  "business_handoff_robot_ids": [],
+  "completed_order_ids": [],
+  "empty_returns_completed": 0,
+  "material_completed": false,
+  "inventory_conservation": [
+    {
+      "balanced": true,
+      "consumed": 0,
+      "in_totes": 0,
+      "initial": 60,
+      "on_hand": 60,
+      "replenished": 0,
+      "sku": "sensor-kit"
+    }
+  ],
+  "empty_return_states": {},
+  "accepted_product_handoffs": [],
+  "accepted_empty_handoffs": [],
+  "physical_motion": {
+    "carter1": {
+      "samples": 6780,
+      "maximum_GT_evaluation_displacement_m": 3.423469133356866,
+      "maximum_command_sequence": 3761,
+      "nonzero_wheel_target_samples": 3579,
+      "last_world_time_s": 115.05000600032508
+    },
+    "carter2": {
+      "samples": 6780,
+      "maximum_GT_evaluation_displacement_m": 9.159479266296904,
+      "maximum_command_sequence": 2990,
+      "nonzero_wheel_target_samples": 2954,
+      "last_world_time_s": 115.05000600032508
+    },
+    "carter3": {
+      "samples": 6780,
+      "maximum_GT_evaluation_displacement_m": 2.1008248734485905e-05,
+      "maximum_command_sequence": 84,
+      "nonzero_wheel_target_samples": 0,
+      "last_world_time_s": 115.05000600032508
+    },
+    "carter4": {
+      "samples": 6780,
+      "maximum_GT_evaluation_displacement_m": 2.486878358918247e-05,
+      "maximum_command_sequence": 84,
+      "nonzero_wheel_target_samples": 0,
+      "last_world_time_s": 115.05000600032508
+    }
+  },
+  "GT_scope": "Evaluation only, no GT steering or transform injection.",
+  "virtual_charging_events": [
+    {
+      "run_id": "b45773f6b08947b9b20ddacbcce96f1b",
+      "scenario_id": "fleet4_transport_normal",
+      "event_seq": 4,
+      "sim_time_s": 54.216669494,
+      "kind": "virtual_charger_reserved",
+      "robot_id": "carter1",
+      "dock": {
+        "anchor": "P1",
+        "reserved_at_s": 54.216669494,
+        "arrival": null,
+        "virtual_connector_state": "not_engaged",
+        "reason": "awaiting_real_nav2_arrival",
+        "dock_id": "CH1",
+        "phase": "approach",
+        "geometric_dock_confirmed": false,
+        "contact_since_s": null,
+        "last_stamp_s": null,
+        "fault": null,
+        "contact_source": "estimated_pose_geometric_dock",
+        "virtual": true,
+        "hardware_calibrated": false,
+        "physical_contact_verified": false,
+        "body_occupancy_owner": "G3 reservation manager"
+      }
+    }
+  ],
+  "stale_rejection_events": [],
+  "recovery_runtime_exercised": false,
+  "planner_method_counts": {
+    "compute_path_through_poses": 5
+  },
+  "capture_count": 10,
+  "timeline": null,
+  "error": {
+    "host": "RuntimeError: SDK failure before cleanup: mission: SmokeError: G2 mission controller ended with failed",
+    "SDK": {
+      "message": "G2 mission controller ended with failed",
+      "traceback": "Traceback (most recent call last):\n  File \"C:\\Users\\LIMMM\\FactoryOpsRuntime\\local45-transport-040\\source\\scripts\\isaac\\g2_scene.py\", line 1604, in _run\n    raise base.SmokeError(terminal_error)\nscripts.isaac.stage_smoke.SmokeError: G2 mission controller ended with failed\n",
+      "type": "SmokeError"
+    },
+    "mission": {
+      "message": "FollowPath failed: robot=carter1 goal=79d39a3b-0e57-4c79-9e7b-0e8f105c97ad status=6 error_code=105; full action retained in mission-result.json actions",
+      "traceback": "Traceback (most recent call last):\n  File \"/mnt/c/Users/LIMMM/FactoryOpsRuntime/local45-transport-040/source/scripts/ros/g3_mission.py\", line 2343, in run_mission\n    raise RuntimeError(\nRuntimeError: FollowPath failed: robot=carter1 goal=79d39a3b-0e57-4c79-9e7b-0e8f105c97ad status=6 error_code=105; full action retained in mission-result.json actions\n",
+      "type": "RuntimeError"
+    }
+  },
+  "source_OS_trees_closed": true,
+  "owner_cleanup_errors": [],
+  "mission_cleanup": [
+    {
+      "exit_code": 0,
+      "label": "rosbag",
+      "pid": 60500
+    },
+    {
+      "exit_code": -15,
+      "label": "nav2",
+      "pid": 60501
+    },
+    {
+      "error": "failed to shutdown: rcl_shutdown already called on the given context, at ./src/rcl/init.c:333",
+      "label": "rclpy.shutdown"
+    }
+  ],
+  "SDK_scene_cleanup": null,
+  "malformed_final_action_lines": [],
+  "scope": "Local IsaacSim4.5/PhysX development, not canonical6.2/RTX qualification.",
+  "loading_scope": "Material ledger and noncolliding visual cargo; no contact/lift physics validation.",
+  "charging_scope": "Authored virtual energy and estimated-pose stopped geometric docking; not electrical contact proof.",
+  "RGB_scope": "Sparse original RGB for presentation. FOT068 transition pixel limitation remains; no training label generation.",
+  "new_SDG": false,
+  "bag_SQL_opened_for_postprocessing": false,
+  "localization_dispatch_state": null,
+  "startup_command_receipt": {
+    "actual_receiver_clock_s": 54.083336154,
+    "baseline": {
+      "carter1": {
+        "cmd_vel": 0,
+        "command_sequence": 0
+      },
+      "carter2": {
+        "cmd_vel": 0,
+        "command_sequence": 0
+      },
+      "carter3": {
+        "cmd_vel": 0,
+        "command_sequence": 0
+      },
+      "carter4": {
+        "cmd_vel": 0,
+        "command_sequence": 0
+      }
+    },
+    "boundary": {
+      "ready": true,
+      "robots": {
+        "carter1": {
+          "at_initial_start": true,
+          "hold_valid": true,
+          "stopped": true
+        },
+        "carter2": {
+          "at_initial_start": true,
+          "hold_valid": true,
+          "stopped": true
+        },
+        "carter3": {
+          "at_initial_start": true,
+          "hold_valid": true,
+          "stopped": true
+        },
+        "carter4": {
+          "at_initial_start": true,
+          "hold_valid": true,
+          "stopped": true
+        }
+      }
+    },
+    "probe_publishers_destroyed": 4,
+    "probe_started_sim_time_s": 11.066667244,
+    "published_per_robot": {
+      "carter1": 1877,
+      "carter2": 1877,
+      "carter3": 1877,
+      "carter4": 1877
+    },
+    "qualified_sim_time_s": 54.083336154,
+    "receipt": {
+      "physics_frame": 3244,
+      "ready": true,
+      "reason": null,
+      "robots": {
+        "carter1": {
+          "cmd_vel": 83,
+          "command_sequence": 83,
+          "command_sim_time_s": 54.05000281892717,
+          "last_accepted_command": {
+            "angular_rad_s": 0.0,
+            "linear_m_s": 0.0
+          },
+          "reason": null
+        },
+        "carter2": {
+          "cmd_vel": 83,
+          "command_sequence": 83,
+          "command_sim_time_s": 54.05000281892717,
+          "last_accepted_command": {
+            "angular_rad_s": 0.0,
+            "linear_m_s": 0.0
+          },
+          "reason": null
+        },
+        "carter3": {
+          "cmd_vel": 83,
+          "command_sequence": 83,
+          "command_sim_time_s": 54.05000281892717,
+          "last_accepted_command": {
+            "angular_rad_s": 0.0,
+            "linear_m_s": 0.0
+          },
+          "reason": null
+        },
+        "carter4": {
+          "cmd_vel": 83,
+          "command_sequence": 83,
+          "command_sim_time_s": 54.05000281892717,
+          "last_accepted_command": {
+            "angular_rad_s": 0.0,
+            "linear_m_s": 0.0
+          },
+          "reason": null
+        }
+      },
+      "sim_time_s": 54.06666948646307
+    },
+    "run_id": "b45773f6b08947b9b20ddacbcce96f1b",
+    "scenario_id": "fleet4_transport_normal",
+    "schema_name": "g3-startup-command-receipt",
+    "schema_version": 1,
+    "scope": "actual accepted zero-command readiness only; no sender attribution or motion qualification",
+    "status": "ready",
+    "wall_deadline_s": 87951.722417664
+  },
+  "postprocessing_scope": "No extra bag SQL by summarizer; existing terminal closed-recorder validation remains unchanged.",
+  "external_resource_wall_bound_s": 9000,
+  "inflight_bounds_changed": false,
+  "preservation": [
+    "C:\\Users\\LIMMM\\FactoryOpsArtifacts\\operations-085\\checkpoint-001.tar.gz",
+    "E:/FactoryOpsArtifacts/operations-085/checkpoint-001.tar.gz"
+  ],
+  "postprocessing_source_sha256": "65b8ed6705637a44dd78b9ed2002b4e0bd78cfd7ce79c128ba9f8e20d0dc5624"
+}

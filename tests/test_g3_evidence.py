@@ -380,6 +380,18 @@ class G3EvidenceHelperTests(unittest.TestCase):
         rechecked.update(effective_result="false", check_xy_after="true")
         self.assertFalse(decode(rechecked, event="is_goal_reached", plugin="goal_checker")["check"]["effective_result"])
 
+        bounded = {**rechecked, "terminal_xy_tolerance_m": "0.15",
+                   "terminal_pose_within_tolerance": "true", "xy_error_m": "0.10",
+                   "effective_result": "true", "check_xy_after": "false"}
+        self.assertTrue(decode(bounded, event="is_goal_reached", plugin="goal_checker")["check"]["effective_result"])
+        bounded["terminal_xy_tolerance_m"] = "0.25"
+        with self.assertRaisesRegex(ValueError, "existing departure bound"):
+            decode(bounded, event="is_goal_reached", plugin="goal_checker")
+        bounded.update(terminal_xy_tolerance_m="0.15", xy_error_m="0.16",
+                       terminal_pose_within_tolerance="false")
+        with self.assertRaisesRegex(ValueError, "current stopped pose"):
+            decode(bounded, event="is_goal_reached", plugin="goal_checker")
+
         rpp = {
             "schema_version": "1", "event": "compute_velocity_commands", "event_sequence": "2",
             "plugin_call_sequence": "1", "plugin_name": "FollowPath", "phase": "end",

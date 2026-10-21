@@ -174,7 +174,7 @@ TEST_F(GoalCheckerTest, BrakesBeforeRearmingDriftedXyAndRequiresCurrentStoppedPo
   EXPECT_FALSE(checker.terminalStopRequested());
   EXPECT_FALSE(checker.isGoalReached(query, goal, moving));
   EXPECT_TRUE(checker.terminalStopRequested());
-  query.position.x += 0.07;
+  query.position.x += 0.15;
   EXPECT_FALSE(checker.isGoalReached(query, goal, moving));
   EXPECT_TRUE(checker.terminalStopRequested());
   EXPECT_FALSE(checker.xyWithinTolerance());
@@ -184,18 +184,18 @@ TEST_F(GoalCheckerTest, BrakesBeforeRearmingDriftedXyAndRequiresCurrentStoppedPo
   EXPECT_FALSE(checker.xyConfirmed());
   EXPECT_FALSE(checker.isGoalReached(query, goal, stopped));
 
-  query.position.x -= 0.07;
+  query.position.x -= 0.15;
   EXPECT_TRUE(checker.isGoalReached(query, goal, stopped));
   EXPECT_TRUE(checker.xyWithinTolerance());
   EXPECT_TRUE(checker.xyConfirmed());
-  query.position.x += 0.07;
+  query.position.x += 0.15;
 
   checker.reset();
   EXPECT_FALSE(checker.terminalStopRequested());
   EXPECT_FALSE(checker.isGoalReached(query, goal, stopped));
   EXPECT_FALSE(checker.xyConfirmed());
 
-  query.position.x -= 0.07;
+  query.position.x -= 0.15;
   query.orientation.z = std::sin((-1.6274379802 + 0.16) / 2.0);
   query.orientation.w = std::cos((-1.6274379802 + 0.16) / 2.0);
   EXPECT_FALSE(checker.isGoalReached(query, goal, moving));
@@ -218,6 +218,11 @@ TEST_F(GoalCheckerTest, RejectsStoppedAnchorDriftThatFitsStationButNotNextPathSt
   // Authored offset reproduces the .15 departure / .25 station contract gap.
   EXPECT_FALSE(checker.isGoalReached(pose(0.05, 0.3), goal, moving));
   ASSERT_TRUE(checker.xyConfirmed());
+  EXPECT_FALSE(checker.isGoalReached(pose(0.10, 0.01), goal, moving));
+  EXPECT_TRUE(checker.terminalStopRequested());
+  EXPECT_TRUE(checker.isGoalReached(pose(0.10, 0.01), goal, stopped));
+  EXPECT_TRUE(checker.xyConfirmed());
+  EXPECT_FALSE(checker.xyWithinTolerance());
   EXPECT_FALSE(checker.isGoalReached(pose(0.16, 0.01), goal, moving));
   ASSERT_TRUE(checker.terminalStopRequested());
   ASSERT_TRUE(checker.xyConfirmed());

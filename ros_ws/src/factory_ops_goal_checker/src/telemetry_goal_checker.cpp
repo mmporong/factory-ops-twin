@@ -18,6 +18,8 @@ namespace
 
 constexpr double kStoppedLinearVelocityMps = 0.02;
 constexpr double kStoppedAngularVelocityRadps = 0.02;
+// Existing authored departure bound in factory_ops/fleet_execution.py, metres.
+constexpr double kDeparturePositionLimitM = 0.15;
 
 diagnostic_msgs::msg::KeyValue kv(const std::string & key, const std::string & value)
 {
@@ -109,6 +111,11 @@ bool TelemetryGoalChecker::isGoalReached(
   const bool pose_within_tolerance =
     xy_within_tolerance && std::isfinite(yaw_error) &&
     std::abs(yaw_error) <= yaw_goal_tolerance_;
+  const bool xy_within_departure =
+    std::isfinite(xy_error) && xy_error <= kDeparturePositionLimitM;
+  const bool terminal_pose_within_tolerance =
+    xy_within_departure && std::isfinite(yaw_error) &&
+    std::abs(yaw_error) <= yaw_goal_tolerance_;
   const double linear_speed = std::hypot(velocity.linear.x, velocity.linear.y);
   const bool velocity_stopped =
     std::isfinite(linear_speed) && std::isfinite(velocity.angular.z) &&
@@ -118,12 +125,12 @@ bool TelemetryGoalChecker::isGoalReached(
   const bool terminal_candidate =
     terminal_stop_enabled && base_result && !velocity_stopped;
   // Brake before reapproaching; keep the XY latch during the yaw maneuver.
-  if (terminal_stop_enabled && base_result && velocity_stopped && !xy_within_tolerance) {
+  if (terminal_stop_enabled && base_result && velocity_stopped && !xy_within_departure) {
     check_xy_ = true;
   }
   const bool check_xy_after = check_xy_;
   const bool effective_result =
-    base_result && (!terminal_stop_enabled || (velocity_stopped && pose_within_tolerance));
+    base_result && (!terminal_stop_enabled || (velocity_stopped && terminal_pose_within_tolerance));
   xy_confirmed_.store(!check_xy_after, std::memory_order_release);
   xy_within_tolerance_.store(xy_within_tolerance, std::memory_order_release);
   terminal_stop_requested_.store(terminal_candidate, std::memory_order_release);
@@ -189,6 +196,11 @@ void TelemetryGoalChecker::publishGoalTrace(
       kv("check_xy_after", boolean(check_xy_after)), kv("base_result", boolean(base_result)),
       kv("terminal_stop_enabled", boolean(terminal_stop_enabled)),
       kv("terminal_pose_recheck", boolean(terminal_stop_enabled)),
+      kv("terminal_xy_tolerance_m", number(kDeparturePositionLimitM)),
+      kv("terminal_pose_within_tolerance", boolean(
+        std::hypot(goal_pose.position.x - query_pose.position.x,
+          goal_pose.position.y - query_pose.position.y) <= kDeparturePositionLimitM &&
+        std::abs(yawError(query_yaw, goal_yaw)) <= yaw_goal_tolerance_)),
       kv("pose_within_tolerance", boolean(pose_within_tolerance)),
       kv("velocity_stopped", boolean(velocity_stopped)),
       kv("terminal_candidate", boolean(terminal_candidate)),

@@ -237,6 +237,9 @@ def decode_controller_trace(
     )) if family == "goal_checker" else RPP_TRACE_KEYS
     if family == "goal_checker" and event == "is_goal_reached" and "terminal_pose_recheck" in values:
         expected = expected | {"terminal_pose_recheck"}
+    terminal_bound_keys = {"terminal_xy_tolerance_m", "terminal_pose_within_tolerance"}
+    if family == "goal_checker" and event == "is_goal_reached" and terminal_bound_keys & set(values):
+        expected = expected | terminal_bound_keys | {"terminal_pose_recheck"}
     valid_event = (event in {"initialize", "reset", "is_goal_reached", "get_tolerances"}
                    if family == "goal_checker" else event == "compute_velocity_commands")
     expected_level = (0 if family == "goal_checker" or values.get("phase") == "begin"
@@ -285,7 +288,11 @@ def decode_controller_trace(
         }
         if "terminal_pose_recheck" in values:
             boolean_names.add("terminal_pose_recheck")
+        if "terminal_pose_within_tolerance" in values:
+            boolean_names.add("terminal_pose_within_tolerance")
         numeric_names = GOAL_TRACE_CHECK_KEYS - boolean_names
+        if "terminal_xy_tolerance_m" in values:
+            numeric_names = numeric_names | {"terminal_xy_tolerance_m"}
         try:
             numeric = {name: float(values[name]) for name in numeric_names}
         except (TypeError, ValueError, KeyError) as exc:
@@ -295,9 +302,16 @@ def decode_controller_trace(
                 or any(value not in {"true", "false"} for value in booleans.values())):
             raise ValueError("goal-checker trace check values are non-finite or non-boolean")
         row["check"] = {**numeric, **{name: value == "true" for name, value in booleans.items()}}
+        terminal_pose = row["check"]["pose_within_tolerance"]
+        if "terminal_xy_tolerance_m" in numeric:
+            terminal_pose = (numeric["xy_error_m"] <= .15
+                             and abs(numeric["yaw_error_rad"]) <= parameters["action_yaw_tolerance_rad"])
+            if (numeric["terminal_xy_tolerance_m"] != .15
+                    or row["check"]["terminal_pose_within_tolerance"] != terminal_pose):
+                raise ValueError("terminal pose must preserve the existing departure bound")
         if (row["check"].get("terminal_pose_recheck") is True
                 and row["check"]["effective_result"] is True
-                and (row["check"]["pose_within_tolerance"] is not True
+                and (terminal_pose is not True
                      or row["check"]["velocity_stopped"] is not True)):
             raise ValueError("rechecked terminal success requires a current stopped pose")
     elif event == "get_tolerances":

@@ -1,0 +1,94 @@
+{
+  "schema_version": 1,
+  "status": "actual_CPP_and_parser_tests_passed_native_followup_pending",
+  "failed_run_id": "b45773f6b08947b9b20ddacbcce96f1b",
+  "failed_run_evidence": "local45-transport-040.json",
+  "producer_source_commit_of_failure": "e173ef54d3286405c5291ebb82507cd3f6d00099",
+  "closed_bag_diagnosis": {
+    "sha256": "a5fb603b9dc55875e4977ce2ce5061c8213c39072739ab9a764bd3404c889dc1",
+    "extractor_sha256": "8d4ce6c0006d57f9eb0d38e3064571e9376c9c706ae564cbbec60505b4fc4f2e",
+    "sql_opened_after_both_OS_and_Job_closed": true,
+    "checked_goal_records": 2847,
+    "terminal_candidate_count": 82,
+    "rearm_events": [
+      {
+        "stamp_s": 92.750004837,
+        "xy_error_m": "0.099392306026855712",
+        "yaw_error_rad": "0.053187361334381379",
+        "check_xy_before": "false",
+        "check_xy_after": "true",
+        "base_result": "true",
+        "terminal_stop_enabled": "true",
+        "terminal_pose_recheck": "true",
+        "pose_within_tolerance": "false",
+        "velocity_stopped": "true",
+        "terminal_candidate": "false",
+        "effective_result": "false"
+      },
+      {
+        "stamp_s": 108.250005646,
+        "xy_error_m": "0.061204764984343775",
+        "yaw_error_rad": "0.051495635424106026",
+        "check_xy_before": "false",
+        "check_xy_after": "true",
+        "base_result": "true",
+        "terminal_stop_enabled": "true",
+        "terminal_pose_recheck": "true",
+        "pose_within_tolerance": "false",
+        "velocity_stopped": "true",
+        "terminal_candidate": "false",
+        "effective_result": "false"
+      }
+    ]
+  },
+  "observed_failure": "Stopped yaw-aligned poses at 0.0993923060m and 0.0612047650m were both inside the existing 0.15m departure bound, but105 rearmed the0.06m acquisition latch. Repeated approaches preceded FollowPath FAILED_TO_MAKE_PROGRESS. This does not isolate the original rotation offset cause.",
+  "fix": "Keep stock stateful XY acquisition at0.06m, then require stopped current pose within the existing0.15m departure bound and original0.15rad yaw. Rearm XY only after stopping outside0.15m. Do not broaden acquisition, departure, station, path, reservation, freshness or clock limits.",
+  "cpp_tests": {
+    "groups": [
+      "test_telemetry_goal_checker",
+      "test_confirmed_xy_rpp",
+      "test_plugin_loading"
+    ],
+    "passed": true,
+    "wall_s": 0.87,
+    "log_sha256": "efe0d85129d51b062bf770b7f0ac7ae80095dc1f6db1753d86c87302e9bf3b2f",
+    "scope": "Fresh isolated WSL Jazzy CMake build and actual plugin loading, not a native physics mission"
+  },
+  "python_test": {
+    "name": "tests.test_g3_evidence.G3EvidenceHelperTests.test_controller_trace_decodes_terminal_candidate_and_zero_command_reason",
+    "passed": true,
+    "wall_s": 0.307,
+    "scope": "Legacy,105 current-acquisition semantics and109 bounded-terminal trace contracts; missing/inconsistent fields and broadened terminal bound rejected"
+  },
+  "source_files_sha256": {
+    "ros_ws/src/factory_ops_goal_checker/CMakeLists.txt": "f16f607edbd558a9e4a66feacd89733df32337fc0d800318e539683ef45cf2bc",
+    "ros_ws/src/factory_ops_goal_checker/package.xml": "a5755de568a7ea7965393f950688a06a577c381181472c4abae0f284a2b684dc",
+    "ros_ws/src/factory_ops_goal_checker/plugins.xml": "c69fcb838c05902288de39b44a11388d87bf5889c3095dbfa1c150efc532b7ac",
+    "ros_ws/src/factory_ops_goal_checker/src/confirmed_xy_regulated_pure_pursuit_controller.cpp": "30bfda25778870af3df15459effc59d45b622f14f5d650104ea9cfaf94d85de6",
+    "ros_ws/src/factory_ops_goal_checker/src/telemetry_goal_checker.cpp": "e69ce40520031ab03ec059b7da355b6834fb5ea90ee2109da4ec705b39c5d352",
+    "ros_ws/src/factory_ops_goal_checker/src/telemetry_regulated_pure_pursuit_controller.cpp": "4ad59259219d90e7af9c95a14d140bcc380d093c81d504484d14ab4f0982a4a2",
+    "ros_ws/src/factory_ops_goal_checker/test/test_confirmed_xy_rpp.cpp": "ce98fdd319cd5cc246fb3e83760e93db11ecc77dd6bbba49e89be072197fbf3b",
+    "ros_ws/src/factory_ops_goal_checker/test/test_plugin_loading.cpp": "fdd9800b59b22c1f4470adf325d032e083a8ed426dd7cafaeac3e39bab626aab",
+    "ros_ws/src/factory_ops_goal_checker/test/test_telemetry_goal_checker.cpp": "74739b890ce83b004d120621c8290b6616ebccd38609c0b6c66f2596d75a8852",
+    "ros_ws/src/factory_ops_goal_checker/test/test_telemetry_rpp.cpp": "c769837324d148b6757f94d43afc7bf393fecb091df51fd13c17120b6fb06eec",
+    "ros_ws/src/factory_ops_goal_checker/include/factory_ops_goal_checker/confirmed_xy_regulated_pure_pursuit_controller.hpp": "71be95905ec6208cbbaa1c910b861dc7dfe06de52d90f7fc12cc6648cc20f363",
+    "ros_ws/src/factory_ops_goal_checker/include/factory_ops_goal_checker/telemetry_goal_checker.hpp": "e037539d8aa9da7e95f8621e32108770d0a8bd9044edf423722c8d2c720699e8",
+    "ros_ws/src/factory_ops_goal_checker/include/factory_ops_goal_checker/telemetry_regulated_pure_pursuit_controller.hpp": "df6d7872a07be7fd26e2f1fe05dbd84e6accb57054221ff11ed8ca279be9e296",
+    "ros_ws/src/factory_ops_goal_checker/include/factory_ops_goal_checker/trace_contract.hpp": "ee379203dd3dfcb6bb8c7959aeb1d14696507ea59f54ee50471fe8cc2a48ceec"
+  },
+  "additional_sources_sha256": {
+    "scripts/ros/g3_evidence.py": "412430eac961edfe2e9809cf84ccc997319d9ebac8b2d16a32322b9700b1792f",
+    "tests/test_g3_evidence.py": "c79c9c00fb40f3624ec69ea769b132a125fffe9dc191faae28fdfdba2ca27b03"
+  },
+  "installed_library_sha256": "4ddd38a6e2b2d233e7f3bc6911296ff86b86997ea9c798ace55b35b21cf469d5",
+  "reference": "https://raw.githubusercontent.com/ros-navigation/navigation2/jazzy/nav2_controller/plugins/simple_goal_checker.cpp",
+  "reference_scope": "Jazzy mutable branch; installed dependencies compiled locally. Stock stateful latch is retained; no assertion of exact upstream release equivalence.",
+  "native_followup_passed": false,
+  "stage1_complete": false,
+  "limits": [
+    "040 failed original preserved",
+    "No native followup yet",
+    "No GT steering or stamp correction",
+    "Final parked success and clean terminal recording still required"
+  ]
+}

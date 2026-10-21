@@ -1,0 +1,5 @@
+{
+  "returncode": 0,
+  "stdout": "{\"id\":\"cli:agent:prompt\",\"result\":{\"agent\":{\"agent\":\"codex\",\"agent_session\":{\"agent\":\"codex\",\"kind\":\"id\",\"source\":\"herdr:codex\",\"value\":\"01a152aa-24b4-7a31-92e3-a2b620f4feeb\"},\"agent_status\":\"idle\",\"cwd\":\"C:\\\\Users\\\\LIMMM\",\"focused\":false,\"pane_id\":\"w1:p1C\",\"revision\":3,\"state_change_seq\":6651,\"tab_id\":\"w1:tC\",\"terminal_id\":\"term_65e06d27e415810\",\"terminal_title\":\"control\",\"terminal_title_stripped\":\"control\",\"workspace_id\":\"w1\"},\"type\":\"agent_prompted\"}}\n",
+  "stderr": ""
+}
