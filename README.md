@@ -107,7 +107,7 @@ Kit 확장 `factory.ops.console`에서 AMR 선택 상세, 주문 생성, 전체 
 
 [완료 조건과 구간별 계획](docs/completion-plan.md) · [오류와 재발 방지 기록](docs/troubleshooting.md)
 
-[4대 실행041](docs/evidence/local45-transport-041.json)은 출하 2건·빈 토트 반납 1건 뒤 위치 관측의 신선도 검사에서 실패 종료됐습니다. 원본과 미디어는 두 저장소에 보존했으며 전체 정상 완주는 아직 확인 중입니다. 앞선040의 재접근 반복을 고친 [C++·기록 검사](docs/evidence/local45-terminal-reapproach-109.json)와 [동결 소스 빌드](docs/evidence/local45-goal-canonical-112.json)는 유지합니다. 토트 운반 모듈의 지지대 접촉 시험은 통과했고, [차량 장착 시험118](docs/evidence/local45-loaded-carrier-118.json)은 형상 검사에서 거절돼 측정 경로와 장착 후보를 확인하고 있습니다. 공장 대표 미디어는 보존된 실행036의 자료입니다. 구간 완료와 렌더링 개선 시 현재 기능·한계와 실제 이미지·영상을 함께 갱신합니다.
+[4대 실행041](docs/evidence/local45-transport-041.json)은 출하 2건·빈 토트 반납 1건 뒤 위치 관측의 신선도 검사에서 실패 종료됐습니다. 원본과 미디어는 두 저장소에 보존했으며 전체 정상 완주는 아직 확인 중입니다. 앞선040의 재접근 반복을 고친 [C++·기록 검사](docs/evidence/local45-terminal-reapproach-109.json)와 [동결 소스 빌드](docs/evidence/local45-goal-canonical-112.json)는 유지합니다. 운반 모듈은 지지대 접촉과 롤러 왕복을 통과했고, [새 차량 장착 후보](configs/vehicles/tote-carrier-carter-v2.json)는 실제 형상·센서 간섭·기존 반경 검사를 통과했습니다. [정적 장착 시험122](docs/evidence/local45-loaded-carrier-122.json)은 SDK getter 오류로 종료돼 수정 후 실제 접촉·정지를 확인하고 있습니다. 공장 대표 미디어는 보존된 실행036의 자료입니다. 구간 완료와 렌더링 개선 시 현재 기능·한계와 실제 이미지·영상을 함께 갱신합니다.
 
 ## 로컬에서 보기
 

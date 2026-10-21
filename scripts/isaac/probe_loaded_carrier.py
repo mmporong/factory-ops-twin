@@ -363,7 +363,8 @@ def main() -> int:
                     and angle_between(matrices["carrier"], matrices["chassis"]) <= .05
                     and angle_between(matrices["tote"], matrices["chassis"]) <= .05)
                 sample = {"run_id": args.run_id, "world_time_s": stamp, "world_physics_frame": frame, "bodies": states,
-                    "wheel_position_rad": robot.get_wheel_positions(), "wheel_velocity_rad_s": robot.get_wheel_velocities(),
+                    "wheel_position_rad": robot.get_wheel_positions(),
+                    "wheel_velocity_rad_s": robot.get_joint_velocities()[robot.wheel_dof_indices],
                     "contact": {"sensor_time_s": sensor_time, "sensor_physics_step": sensor_frame, "fresh": fresh,
                         "force_n": force, "in_contact": bool(raw.get("in_contact", False)), "raw_actor_pairs": pairs, "mapped_pairs": mapped},
                     "chassis_xy_drift_m": drift, "chassis_rotation_drift_rad": base_angle,
