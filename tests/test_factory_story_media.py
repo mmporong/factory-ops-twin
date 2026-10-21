@@ -165,6 +165,18 @@ class FactoryStoryMediaTests(unittest.TestCase):
         rows[-1]["carrier_poses"]["carter4"]["position_xyz_m"][0]=.5
         self.assertEqual(MEDIA.carrier_motion(rows, minimum_robots=2)["qualifying_robot_count"],2)
 
+    def test_parallel_source_tag_binds_two_gt_traces_and_the_displayed_title(self):
+        for frame in self.frames:
+            tag=frame["visual_state"]["factory_story"]
+            if tag["phase"] == "first_shipment":
+                tag["trigger_moving_robot_ids"]=["carter1","carter3"]
+        self.replace_index()
+        plan=MEDIA.prepare(self.stage)
+        chapter=next(c for c in plan["chapters"] if c["phase"] == "first_shipment")
+        self.assertEqual(chapter["parallel_motion"]["qualifying_robot_count"],2)
+        self.assertEqual(chapter["title"],"출하 이후 · 병행 물류")
+        self.assertTrue(all(r["chapter_title"] == chapter["title"] for r in plan["frames"] if r["phase"] == "first_shipment"))
+
     def test_cold_prepare_uses_each_applied_state_and_never_final_values(self):
         with patch.object(MEDIA.subprocess,"Popen",side_effect=AssertionError("no processes allowed")), patch.dict("sys.modules",{"PIL":None,"isaacsim":None}):
             plan = MEDIA.prepare(self.stage)
