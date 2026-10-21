@@ -1,0 +1,47 @@
+{
+  "task_id": "roller-transfer-fixture-117",
+  "attempt": 1,
+  "contract_revision": 108,
+  "owner": "control",
+  "binding": {
+    "session": "default",
+    "pane_id": "w1:p1C",
+    "terminal_id": "term_65e06d27e415810",
+    "agent_session": "01a152aa-24b4-7a31-92e3-a2b620f4feeb"
+  },
+  "project_root": "C:\\Users\\LIMMM\\factory-ops-twin",
+  "implementation_root": "C:\\Users\\LIMMM\\factory-ops-twin",
+  "status": "dispatched",
+  "goal": "Prepare physical bidirectional roller transfer fixture: one dynamic tote moves source->carrier deck->source through actuated rollers and real contact sensors, no pose teleport; CPU only now.",
+  "inputs_sha256": {
+    "AGENTS.md": "30ed4fb5a723edfac0557111438fa9b6b6a85b6f66ef002b675b5a240d87154d",
+    "factory_ops/carrier_module.py": "ef12b26aa3d7180e7f122324aa0f5e363010d1f3ddf366165b69ac6de1cbfc14",
+    "configs/vehicles/tote-carrier-v1.json": "4e849823f3e0efe4561fd8ce02ef17067b4b9dc606558bab2197ffa4efa46627",
+    "scripts/isaac/probe_tote_carrier_contact.py": "332d392d2350df0f0949efeac365d43c9b5faf9bd96258e42c20b7f900617672",
+    "docs/evidence/local45-tote-contact-114.json": "16d4cafe495334e0942f190b36e9ccf5089d60314f81d98ab02ff6436f1408b2",
+    "scripts/isaac/run-local-contact-probe.ps1": "ee0290cda90d2e81fe4794a8645086d5a790b9362c965525b6604f142c6f227e"
+  },
+  "write_paths": [
+    "factory_ops/roller_transfer.py",
+    "configs/vehicles/roller-transfer-v1.json",
+    "scripts/isaac/probe_roller_transfer.py",
+    "tests/test_roller_transfer.py",
+    "coordination/collab/results/roller-transfer-fixture-117.json"
+  ],
+  "result_path": "C:\\Users\\LIMMM\\factory-ops-twin\\coordination\\collab\\results\\roller-transfer-fixture-117.json",
+  "depends_on": [
+    "tote-carrier-module-107; root corrected source integrated",
+    "native114 simplified contact passed"
+  ],
+  "acceptance": [
+    "ACK117 attempt1 contract. Work in MAIN only for the NEW owned paths, not the116 worktree. You are not alone. Preserve existing main changes/unowned dashboard files, all frozen041 runtime inputs,114/115 originals,116 candidate branch and existing API/Next. No SDK/GPU/ROS/WSL/server/browser/new agents/Git commit/stage/push or installs/downloads/cloud. Root runs native later under one owned GPU job. No extra review chain.",
+    "116 was received and pushed in isolated branch8c963388; native controls/main merge still pending. Root fixed legacy external outbox regression, API helper hash and fleet-only UI wording. Do not revisit116. This117 is independent stage2 loading-mechanism implementation; actual Nova Carter mounting is not required for the fixture and must not be claimed.",
+    "Prepare a small stationary source conveyor next to a carrier roller deck, with a free dynamic6kg tote from the authored carrier profile. Physically load it onto the deck, stop/confirm, then reverse transfer it back to source and confirm once. Use actual actuated roller revolute joints with authored drive torque/speed and real contact/stopper sensors; consult installed SDK4.5 official APIs including angular drive units. A supported native conveyor surface-velocity API is acceptable only if compatible with a later dynamic mobile carrier and documented, not a kinematic follower that anchors a robot. No set_world_pose/body velocity setters, active body spawning/deletion to mimic transfer, interpolated motion or GT-based actuator steering.",
+    "Separate controller inputs from evaluation. Commands transition from real force/contact sensor freshness and known actuator/stopper states, using a bounded dwell and timeout; body GT pose/velocity may only evaluate support, staying in bounds, stationary settling or diagnose failure, never decide belt direction/position. Do not synthesize contact from body distance or fabricate observations. Fixed support fixture versus actual AMR transport/docking/mount strength must be explicit.",
+    "Reuse carrier_module geometry/mass API where useful without modifying it. Make the new JSON self-contained (a nested copy of the authored carrier profile is acceptable) so native runtime reads no unpinned second config. Separate m/kg/rad-s and USD angular-drive degree units; validate finite values, roller/tote/gap fit, masses/inertia/friction/speed/torque/time bounds and actor identities. Root dependencies list must cover exact imported project Python files. No manufacturer rating or industrial certification claims.",
+    "Implement a small stdlib controller/manifest in roller_transfer.py: source-ready -> loading -> contact settling -> loaded -> unloading -> contact settling -> returned; fault commands motors zero and does not emit a completion/ownership event. Keep command IDs/one tote identity and emit exactly one transfer event per confirmed stage, no separate fake inventory counter or duplicate ledger implementation. Native fixture may issue load/unload test requests when its sensor-driven controller is ready; actual FMS/ledger integration is later.",
+    "CLI must fit existing run-local-contact-probe.ps1: --config path --output new absolute --run-id32hex; SDK4.5 headless with GPU RGB, CPU PhysX, modest maximum20sim s/360wall s under480s host guard. Save source/config/import/manifest identities, actual World frame/time, sensor actor pairs/forces/time freshness, motor target and real readback, failure details and resource cleanup. One or two genuine640x480 RGB at loaded/returned only. Keep recorded observations sparse (e.g20Hz plus transitions with actual frame IDs), while actual physics/controller checks retain120Hz if needed. No bulk data or SDG.",
+    "Follow114 contact/cleanup lessons: contact sensors need a rigid-body parent, use USD-safe names, preserve deterministic cross-Python manifest sums, do not rely on one aggregated sensor to prove every support. Unknown/nonfinite/regressing sensor identity or transfer timeout must stop motors/fail and preserve data, not relax limits. Detach RGB/destroy RenderProduct/app.close(wait_for_replicator=False); host Job closure remains root responsibility.",
+    "Use a few meaningful CPU tests: forward/return contact sequence and exact-once events, stale/unknown/missing sensor or timeout fault without ownership change, invalid geometry/units and motor bounds; Python3.10 syntax. Do not run whole suites/reviews. If installed actuator/physics API cannot support the design, report the concrete boundary before inventing a fake physical substitute. Return result receipt with changed paths/SHA, commands/results, official source refs, API/native CLI and honest native uncertainties. Stage2 stays incomplete."
+  ]
+}

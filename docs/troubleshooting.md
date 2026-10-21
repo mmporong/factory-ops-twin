@@ -677,6 +677,12 @@ SDK mission-failed는 위 ROS 교착 실패의 후속이다. 양쪽 소유 실�
 
 038의 E 비압축 폴더는 원본을 보존하는 이동으로 C의 relocated-106에 옮겼으며525파일의 전체 해시를 다시 대조했다. D의038 원본·E의 압축본과039의 C/E 원본은 유지한다. 변경된 보관 위치는 [106 색인](evidence/local45-storage-106.json)에 남긴다. 후속 보존은 실제 크기를 확인한 C/E 무손실 압축으로 계획하며, 이전 raw 복사 기준이나 과거 E 경로를 현재 위치로 추정하지 않는다. 원본은 기록기·소유 실행 종료 뒤에만 압축한다.
 
+## FOT-081 — 새 운행 제어의 명시적 활성화와 기존 outbox 동작 구분
+
+116의 격리 후보를 수신한 뒤 기존 external-source outbox API 검사에서 pending 대신 rejected가 반환됐다. 새 `live_control` 계약의 opt-in 조건을 모든 외부 outbox에 적용한 회귀였다. 새 계약은 명시적 활성화를 유지하고, 기존 생산자의 설정된 outbox 동작은 보존하도록 고쳤다. 기존 API와 새 계약의 기본 관측 전용 경계2검사는0.583초에 통과했다. 새 모듈을 활성화된 API의 생산자 소스 해시에 포함했다.
+
+실제 제어는 다음 예약 정차점에서 네 차량의 새 HOLD·정지 관측을 받은 뒤 ACK하는 fleet stop이다. physics·ROS·MES·가상 충전 시계까지 멈춘다고 표시하지 않도록 UI 문구를 바꾸고, 별도 제어 revision 대신 ledger revision을 상태 표시에 사용했다. 변경 뒤 TypeScript 검사는3.684초에 통과했다. 코드는 격리 브랜치8c963388에 보존했으며 main의 실행 중 API는 유지한다. 실제 ROS 정지→새 정지/HOLD ACK→재개는 아직 확인하지 않았다. [수신·수정 근거](../coordination/collab/results/live-anchor-controls-116-integration.json)
+
 ## 실행 전 확인과 후속 기록
 
 1. 깨끗한 생산자 소스·host commit·설정·실행 ID를 결속한다. 실패한 실행 ID와 원본을 다시 사용하지 않는다.

@@ -1,0 +1,107 @@
+{
+  "task_id": "live-anchor-controls-116",
+  "attempt": 1,
+  "contract_revision": 106,
+  "ack": true,
+  "status": "implementation_ready_native_pending",
+  "acceptance_authority": "root",
+  "stage3_complete": false,
+  "worktree": "C:/Users/LIMMM/.worktrees/factory-ops-live-controls-116",
+  "base_commit": "e62d268b6e59ec7fd0c89b200e8cdfb9c7a7f50e",
+  "initial_worktree_status": "feat/live-anchor-controls-116, clean",
+  "initial_nine_input_digests_match_card": true,
+  "summary": "격리 worktree에 다음 예약 anchor 정지/재개 gate와 ROS·outbox·웹 ACK를 연결했다. main 소스·041 실행·API8765·Next3007은 수정하거나 조작하지 않았다. 실제 ROS/브라우저 통합은 미실행이며 구간3은 미완료다.",
+  "changed_worktree_paths_sha256": {
+    "factory_ops/live_control.py": "c82f5ab3ae2f3b73444ed59a4f950c61542c15af204be702354229740c3ffe46",
+    "tests/test_live_control.py": "718ccfff146e34a5d4182cef33b4cb998de7e159dcea959019c586e327948cba",
+    "tests/test_dashboard_live_control.py": "d3636107646d8860050f19ac8fd2c5173718e0f2abad44afc608d7627351cb8a",
+    "tests/test_g3_live_control.py": "31b3d4df2fca10b79cbcfa90dc7f352861dac367fb3d2e2e7d404368479ceabb",
+    "factory_ops/dashboard.py": "ecd9702b8a91a6eb2ac6431c798c207e8a2e6566f4b31f8efcdea446d90b314c",
+    "scripts/ros/g3_mission.py": "e460224fd935611d22b433dea4318d63c75c5c9d695dc52171646c5e93956bbd",
+    "scripts/ros/fleet4_mission.py": "94320a93f206da668237a70d086db640da9ab0214f11a7879e72c0daa9a3098a",
+    "scripts/isaac/run_local45_fleet_pair.py": "789f95ae5e1e8e271ce4ff3262a68132c2ea02e30beb949cb02b8d46d418736d",
+    "dashboard/components/Dashboard.tsx": "4f825f394f75a7d7cd66e1441ba55f9947445c69a6e74905faf08f0889029386",
+    "dashboard/components/ObservationPanel.tsx": "6e359bb14080d65a81dd0b19a9c4a925d64c20863b00216058d39ba64fa40577",
+    "dashboard/lib/types.ts": "2245432da0403c942e5d93ba9dc6842a28d5d3928db9a0ce15ea02b5a6a220bd"
+  },
+  "diff_relative_to_base": {
+    "tracked": "7 files, 194 insertions, 28 deletions; git diff --stat e62d268b6e59ec7fd0c89b200e8cdfb9c7a7f50e",
+    "new_untracked_files_not_in_git_diff_stat": {
+      "factory_ops/live_control.py": 153,
+      "tests/test_live_control.py": 113,
+      "tests/test_dashboard_live_control.py": 113,
+      "tests/test_g3_live_control.py": 111
+    },
+    "integration_note": "총11 경로의 파일이 worktree에 남아 있다. 신규4파일은 아직 untracked이며 root가 함께 통합해야 한다. stage/commit/push 또는 index/branch 변경은 수행하지 않았다.",
+    "diff_check": "PASS; Git의 기존 CRLF→LF 정규화 안내 외 whitespace 오류 없음"
+  },
+  "control_contract": {
+    "name": "ros-next-anchor-v1",
+    "source_guard": "fleet4 entry + local45_development + development profile + primary_evaluation=false + 실제4개 robot identity + dashboard + --live-anchor-controls일 때만 생성한다. 기본 canonical62/기존 actual/replay의 capability는 빈 목록이다.",
+    "pause": "running -> pause_pending. 새 leg 생성은 defer하고 신규 reservation/Compute 요청 및 새 업무/충전 배차를 막는다. 요청 이전에 reservation을 승인받고 이미 Compute/Follow pipeline에 들어간 현재 chunk는 기존 planner freshness·FollowPath·terminal HOLD·제동/도착 규칙으로 다음 anchor까지 마친다. 도중 취소/goal 재시작을 추가하지 않았다.",
+    "anchor_ack": "idle/request/dwell/charging에서 현재 generation/goal UUID·보유 tiles·미수락 active goal 상태, 실제 estimated pose의 기존 XY/yaw/TTL, fresh applied HOLD ACK와 현재 lease, 요청 이후 독립 stop receiver의 기존 연속 odometry window가 네 대 모두 맞을 때만 applied다. 기존 navigation stop receiver를 재설정하거나 우회하지 않는다.",
+    "retention": "pause 전용 reservation 해제는 없다. 이미 승인된 action의 정상 mark_goal_finished와 기존 qualified business/parking shrink는 유지한다. 현재 anchor/남은 full-leg hold를 보유하며 이후 요청은 기존 reservation admission을 거친다.",
+    "resume": "paused의 현재 네 대 정지 증거를 같은 tick에서 다시 확인한 뒤 running으로 돌아간다. deferred leg와 아직 새 planner 요청을 하지 않은 leg는 확인된 현재 anchor·현재 폐쇄 상태에서 기존 new_leg/예약 경로로 들어간다. 기존 stale-planner retry의 원래 deadline은 재설정하지 않는다.",
+    "time_and_failure": "물리/ROS/가상 충전/MES 시계·논리 처리·정상 handoff는 계속된다. horizon/host budget/chunk timeout/TTL/radius/lease/progress/현재 실패 조건을 변경하지 않았다. 오래 정지하면 원래 한도로 실패할 수 있으며 시간을 연장하지 않는다.",
+    "terminal": "cutoff/종료/실패 시 미완료 pause를 rejected로 닫고 제어를 비활성화한다. finally에서 가능한 최신 실제 clock으로 닫힌 source ACK를 한 번 발행하며, 읽기/발행 자체가 실패하면 연결 지연/미확정 상태를 applied로 만들지 않는다."
+  },
+  "revision_and_identity": {
+    "stable_revision": "opt-in source의 최상위 revision은 control revision이다. pause 접수·네 대 정지 승인·resume·종료 같은 제어 전이에서만 증가한다. 계속 변하는 원장 번호는 live_control.ledger_revision에 보존한다. 이 opt-in 외의 기존 revision 계약은 유지한다.",
+    "requests": "command_id/run_id/expected_run_id/expected_revision/action 및 빈 parameters를 검사한다. API가 UTC requested_at을 추가하며 source는 기존 source 연결 신선도와 같은 3 wall s 요청 상한을 검사한다. 동일 ID/동일 본문은 같은 receipt, 다른 본문/실행/버전·unknown/malformed/stale 요청은 거절한다.",
+    "owner_restart": "exclusive live-control-state.json 생성으로 같은 output owner 재시작을 거절해 revision0에서 기존 outbox를 재적용하지 않는다. 자동 상태 복구나 source 재시작은 지원하지 않는다.",
+    "bounded_io": "한 poll에서 새 JSON 최대32개·파일64KiB를 읽는다. 일반 명령 budget 끝에서도 이미 정지한 차량의 resume 슬롯을 남긴다. queue append 자체는 항상 pending이다.",
+    "source_proof": "opt-in pair runner는 새 live_control.py가 기존 검증된 source.tar에 있고 실행 source와 SHA가 같은지 ROS 시작 전에 검사한다. Windows Job expected input에도 포함하며 G3 결과에 해당 SHA를 기록한다. root 통합/commit 후 새 frozen archive에 이 파일이 포함돼야 한다."
+  },
+  "api_and_ui": {
+    "api_optin": "DashboardService(..., source=..., outbox=..., live_anchor_controls=True) 또는 --source <run/dashboard-state.json> --commands-dir <run/commands> --live-anchor-controls",
+    "companions": "charging/events companion + outbox는 이 명시적 계약에서만 함께 허용한다. charging의 same-run/4로봇/owner/virtual provenance 검증과 events의 기존 필터는 유지한다. source 계약·실행·신선도·capability가 맞지 않으면 모든 조작이 비활성이다.",
+    "commands": "pause/resume만 지원한다. live order creation/teleport/manual drive는 노출하지 않는다. 기존 command_id/status/reason/revision/run_id receipt를 유지하므로 Kit client가 같은 명령·snapshot 계약을 읽을 수 있다. Kit 파일은 변경하지 않았다.",
+    "ui": "실제 live는 다음 예약 지점에서 차량 정지/차량 운행 재개, pause_pending, 원천 지연/미연결을 표시한다. 접수가 정지 완료가 아님과 시계 계속 진행을 명시한다. CPU 모델의 운영 일시정지 표시는 구분해 유지한다.",
+    "react_check": "react-best-practices의 관련 구조·효과·접근성 항목만 적용했다. 기존 native button/disabled/focus/aria-live를 유지하고 UI 의존성이나 서버를 추가하지 않았다. 브라우저 확인은 미실행이다."
+  },
+  "validation": [
+    {
+      "command": "C:/Users/LIMMM/factory-ops-twin/.venv/Scripts/python.exe -B -m unittest tests.test_live_control tests.test_dashboard_live_control tests.test_g3_live_control -v",
+      "cwd": "C:/Users/LIMMM/.worktrees/factory-ops-live-controls-116",
+      "result": "최초14개 중13 PASS, 테스트 입력 1 ERROR. 같은 odometry stamp에 서로 다른 속도를 넣어 기존 FIFO guard가 거절한 테스트 오류였다. 제품 FIFO/stop guard는 변경하지 않았다.",
+      "import_identity": "factory_ops.dashboard.__file__가 이 worktree 아래인지 assert해 확인했다. main 프로젝트 모듈을 검사한 것으로 표시하지 않았다."
+    },
+    {
+      "command": "C:/Users/LIMMM/factory-ops-twin/.venv/Scripts/python.exe -B -m unittest tests.test_live_control tests.test_g3_live_control -v",
+      "result": "변경 gate·G3 11 PASS, exit0, 0.397s. 잘못된 moving-odom fixture 수정, malformed metadata와 마지막 pause/resume budget 경계 포함. 앞서 통과한 API4개는 반복하지 않았다."
+    },
+    {
+      "command": "C:/Users/LIMMM/factory-ops-twin/.venv/Scripts/python.exe -B -m unittest tests.test_dashboard_live_control.DashboardLiveControlTests.test_source_terminal_rejection_reaches_pending_api_receipt tests.test_g3_live_control.G3LiveControlTests.test_default_readonly_and_opted_in_stable_control_revision -v",
+      "result": "종료 ACK 연결 추가 후 영향받은 2개만 PASS, exit0, 0.753s. 전체 suite 재실행 없음."
+    },
+    {
+      "command": "ast.parse(..., feature_version=(3,10))",
+      "result": "작성한8 Python 파일 PASS. 이후 바뀐 gate/G3/test4개, 종료 경계3개만 추가 문법 확인 PASS. SDK binding/ROS 실행 검사가 아니다."
+    },
+    {
+      "command": ".\\node_modules\\.bin\\tsc.cmd --noEmit --incremental false",
+      "cwd": "C:/Users/LIMMM/.worktrees/factory-ops-live-controls-116/dashboard",
+      "result": "PASS, exit0. 기존 node_modules junction 읽기만 사용. install/Next typegen/build/browser/server 실행이나 main .next 변경 없음."
+    },
+    {
+      "command": "git diff --check 및 git status --short",
+      "result": "PASS. 지정 worktree의7 modified +4 new 경로만 확인했다. 새 stage/commit/push 없음."
+    }
+  ],
+  "runtime_outputs_when_root_runs": [
+    "run/commands/<sha256(command_id)>.json",
+    "run/live-control-state.json",
+    "run/dashboard-state.json: live_control, stable revision, pending/applied/rejected commands",
+    "기존 actions JSONL의 live_control_receipt/live_control_applied: applied 시 네 anchor/generation/pose/HOLD ACK/실제 stop window 포함",
+    "run/mission-result.json: 최종 live_control 및 source SHA"
+  ],
+  "limits_and_next_root_action": [
+    "SDK/GPU/ROS/WSL/server/browser/new agents를 실행하지 않았다. pause→실제 네 대 정지→재개의 물리·UI 성공을 주장하지 않는다. CPU native-like 자료는 합성 fixture이며 G3 nested hook 및 기존 stop gate의 한정 동작 확인이다.",
+    "기존 reservation을 승인받은 Compute pipeline도 현재 chunk 완료 경로에 포함한다. 신규 Compute/reservation은 pause_pending 동안 막지만 이미 시작한 planner/FollowPath의 기존 deadline과 실패 규칙은 유지한다. 긴급 정지나 즉시 world pause가 아니다.",
+    "부하·통로 교착·관측 공백·긴 정지로 기존 failure/horizon을 넘으면 실행은 실패한다. pause를 실패 우회나 예산 연장으로 사용하지 않는다.",
+    "root가11개 경로와 신규4파일을 통합하고 frozen source archive를 만든 뒤, 현재041·다른 native 작업 종료와 단일 GPU 소유를 확인해 다음 run을 배정한다. --live-anchor-controls를 pair runner 또는 fleet4_mission.py에 켜고, 같은 run/result/commands 경로로 API도 명시적으로 opt-in한다.",
+    "최소 실제 확인은 이동 중 pause 요청 pending→기존 current chunk 정상 종료·예약 유지→네 anchor의 fresh HOLD/stop 증거와 applied→같은 run/control revision의 resume→기존 admission을 통한 다음 주행이다. duplicate/run/revision 거절과 최종 원본·양쪽 소유 종료도 원래 경계에서 확인한다.",
+    "source와 API의 outbox는 같은 공유 결과 디렉터리여야 한다. projection 복사본 옆에 별도 outbox를 만들면 ROS consumer와 연결되지 않는다.",
+    "main에는 지정 receipt만 썼다. source/README/plan/보드/기존 서버/041 frozen source·원본·115 후보는 수정하지 않았다. 최종 통합과 native/UI 수용은 root 소유다."
+  ]
+}

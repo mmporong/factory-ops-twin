@@ -1,0 +1,85 @@
+{
+  "task_id": "live-anchor-controls-116",
+  "attempt": 1,
+  "contract_revision": 106,
+  "status": "accepted_candidate_waiting_main_merge",
+  "stage3_complete": false,
+  "acceptance_authority": "root",
+  "branch": "feat/live-anchor-controls-116",
+  "candidate_commit": "8c963388c222efe1545653e39eeba90d7edbbcf9",
+  "remote_SHA_matched": true,
+  "worker_receipt_sha256": "0c5df4b4446550ae795b3105be517cf18e5d7e0d17a15af6750abbda541e130d",
+  "received_original_sha256": {
+    "factory_ops/live_control.py": "c82f5ab3ae2f3b73444ed59a4f950c61542c15af204be702354229740c3ffe46",
+    "tests/test_live_control.py": "718ccfff146e34a5d4182cef33b4cb998de7e159dcea959019c586e327948cba",
+    "tests/test_dashboard_live_control.py": "d3636107646d8860050f19ac8fd2c5173718e0f2abad44afc608d7627351cb8a",
+    "tests/test_g3_live_control.py": "31b3d4df2fca10b79cbcfa90dc7f352861dac367fb3d2e2e7d404368479ceabb",
+    "factory_ops/dashboard.py": "ecd9702b8a91a6eb2ac6431c798c207e8a2e6566f4b31f8efcdea446d90b314c",
+    "scripts/ros/g3_mission.py": "e460224fd935611d22b433dea4318d63c75c5c9d695dc52171646c5e93956bbd",
+    "scripts/ros/fleet4_mission.py": "94320a93f206da668237a70d086db640da9ab0214f11a7879e72c0daa9a3098a",
+    "scripts/isaac/run_local45_fleet_pair.py": "789f95ae5e1e8e271ce4ff3262a68132c2ea02e30beb949cb02b8d46d418736d",
+    "dashboard/components/Dashboard.tsx": "4f825f394f75a7d7cd66e1441ba55f9947445c69a6e74905faf08f0889029386",
+    "dashboard/components/ObservationPanel.tsx": "6e359bb14080d65a81dd0b19a9c4a925d64c20863b00216058d39ba64fa40577",
+    "dashboard/lib/types.ts": "2245432da0403c942e5d93ba9dc6842a28d5d3928db9a0ce15ea02b5a6a220bd"
+  },
+  "candidate_git_tree_sha256": {
+    "factory_ops/live_control.py": "c82f5ab3ae2f3b73444ed59a4f950c61542c15af204be702354229740c3ffe46",
+    "tests/test_live_control.py": "718ccfff146e34a5d4182cef33b4cb998de7e159dcea959019c586e327948cba",
+    "tests/test_dashboard_live_control.py": "d3636107646d8860050f19ac8fd2c5173718e0f2abad44afc608d7627351cb8a",
+    "tests/test_g3_live_control.py": "31b3d4df2fca10b79cbcfa90dc7f352861dac367fb3d2e2e7d404368479ceabb",
+    "factory_ops/dashboard.py": "3d5a09cfdbf06e17fe39b831b5c14cfb5e9e195a9df6ad041dd7f54f3fb6027d",
+    "scripts/ros/g3_mission.py": "664180c0b89acad2a506662fb90032c7d93743b3fbfcaf060a3cc7547c50afe8",
+    "scripts/ros/fleet4_mission.py": "4491f5d54c7db143211bf9e7bbefecc959c5fa89d5e3e57c370ada6535650d61",
+    "scripts/isaac/run_local45_fleet_pair.py": "037601d4ccdc32f0c0a561a8c4e6445e5338e75598382e4266cc2f26c3bdb2b3",
+    "dashboard/components/Dashboard.tsx": "833926e3ab359ac59450b7c83dc6b9fba34adcad074bdfed6e4a7b7069694668",
+    "dashboard/components/ObservationPanel.tsx": "6e359bb14080d65a81dd0b19a9c4a925d64c20863b00216058d39ba64fa40577",
+    "dashboard/lib/types.ts": "2245432da0403c942e5d93ba9dc6842a28d5d3928db9a0ce15ea02b5a6a220bd",
+    "dashboard/components/ChargingPanel.tsx": "d6e1b6ed60f0223c6176c25a8787be7572e47a4367393d9f3c40c850f0f8e88f",
+    "README.md": "8adc7bb07e5454b7071f72812f01d2b6a986bc83a5aaf37a14d51ad8c6b188ac"
+  },
+  "worker_validation_received": [
+    {
+      "command": "C:/Users/LIMMM/factory-ops-twin/.venv/Scripts/python.exe -B -m unittest tests.test_live_control tests.test_dashboard_live_control tests.test_g3_live_control -v",
+      "cwd": "C:/Users/LIMMM/.worktrees/factory-ops-live-controls-116",
+      "result": "최초14개 중13 PASS, 테스트 입력 1 ERROR. 같은 odometry stamp에 서로 다른 속도를 넣어 기존 FIFO guard가 거절한 테스트 오류였다. 제품 FIFO/stop guard는 변경하지 않았다.",
+      "import_identity": "factory_ops.dashboard.__file__가 이 worktree 아래인지 assert해 확인했다. main 프로젝트 모듈을 검사한 것으로 표시하지 않았다."
+    },
+    {
+      "command": "C:/Users/LIMMM/factory-ops-twin/.venv/Scripts/python.exe -B -m unittest tests.test_live_control tests.test_g3_live_control -v",
+      "result": "변경 gate·G3 11 PASS, exit0, 0.397s. 잘못된 moving-odom fixture 수정, malformed metadata와 마지막 pause/resume budget 경계 포함. 앞서 통과한 API4개는 반복하지 않았다."
+    },
+    {
+      "command": "C:/Users/LIMMM/factory-ops-twin/.venv/Scripts/python.exe -B -m unittest tests.test_dashboard_live_control.DashboardLiveControlTests.test_source_terminal_rejection_reaches_pending_api_receipt tests.test_g3_live_control.G3LiveControlTests.test_default_readonly_and_opted_in_stable_control_revision -v",
+      "result": "종료 ACK 연결 추가 후 영향받은 2개만 PASS, exit0, 0.753s. 전체 suite 재실행 없음."
+    },
+    {
+      "command": "ast.parse(..., feature_version=(3,10))",
+      "result": "작성한8 Python 파일 PASS. 이후 바뀐 gate/G3/test4개, 종료 경계3개만 추가 문법 확인 PASS. SDK binding/ROS 실행 검사가 아니다."
+    },
+    {
+      "command": ".\\node_modules\\.bin\\tsc.cmd --noEmit --incremental false",
+      "cwd": "C:/Users/LIMMM/.worktrees/factory-ops-live-controls-116/dashboard",
+      "result": "PASS, exit0. 기존 node_modules junction 읽기만 사용. install/Next typegen/build/browser/server 실행이나 main .next 변경 없음."
+    },
+    {
+      "command": "git diff --check 및 git status --short",
+      "result": "PASS. 지정 worktree의7 modified +4 new 경로만 확인했다. 새 stage/commit/push 없음."
+    }
+  ],
+  "root_changes": [
+    "Preserved legacy explicitly configured external-source outbox behavior; new live_control source still requires explicit opt-in",
+    "Included live_control.py in opted-in API producer source hashes",
+    "Labeled fleet-only stop independently of CPU operation pause and continuing charging; footer uses ledger_revision rather than control revision"
+  ],
+  "root_regression": "Existing tests.test_dashboard.DashboardTest.test_live_source_requires_freshness_and_ack_for_command_success failed on received candidate (.387s, rejected instead of pending); fixed without removing opt-in for new contract.",
+  "root_focused_validation": {
+    "tests": [
+      "tests.test_dashboard.DashboardTest.test_live_source_requires_freshness_and_ack_for_command_success",
+      "tests.test_dashboard_live_control.DashboardLiveControlTests.test_legacy_readonly_and_old_replay_stale_sources_disabled"
+    ],
+    "passed": true,
+    "wall_s": 0.583,
+    "typescript": "tsc --noEmit --incremental false PASS3.684s after root UI changes"
+  },
+  "integration_boundary": "Code/README committed and pushed in isolated branch; MAIN active API/Next and frozen041 remain unchanged. Merge only after current owned run/API source boundary closes. Native pause->fresh all-stop/HOLD ack->resume still required."
+}

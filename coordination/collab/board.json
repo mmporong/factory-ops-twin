@@ -1,6 +1,6 @@
 {
-  "revision": 106,
-  "updated_at": "2026-10-21T04:25:04.970508+00:00",
+  "revision": 108,
+  "updated_at": "2026-10-21T05:28:13.898250+00:00",
   "scope": {
     "excluded": "실물 로봇 실행, 새 유료 서비스/에셋, 공개 배포",
     "project_root": "C:\\Users\\LIMMM\\factory-ops-twin",
@@ -20,7 +20,7 @@
       "role": "dashboard frontend author",
       "name": "control",
       "agent_kind": "codex",
-      "status": "116 isolated-worktree live safe-anchor pause/resume implementation; CPU only;041 remains owned by root",
+      "status": "117 source->carrier->source roller transfer fixture CPU implementation; no native/GPU;116 candidate queued main merge",
       "session": "default",
       "agent_session": "01a152aa-24b4-7a31-92e3-a2b620f4feeb",
       "terminal_id": "term_65e06d27e415810",
@@ -1828,7 +1828,7 @@
         "terminal_id": "term_65e06d27e415810",
         "agent_session": "01a152aa-24b4-7a31-92e3-a2b620f4feeb"
       },
-      "status": "dispatched",
+      "status": "accepted_candidate_waiting_main_merge",
       "worktree": "C:\\Users\\LIMMM\\.worktrees\\factory-ops-live-controls-116",
       "base_commit": "e62d268b6e59ec7fd0c89b200e8cdfb9c7a7f50e",
       "card_path": "coordination/collab/live-anchor-controls-116-task.json",
@@ -1846,7 +1846,35 @@
         "dashboard/components/ObservationPanel.tsx",
         "dashboard/lib/types.ts"
       ],
-      "review_policy": "one root receipt/content integration and changed-behavior checks; no extra approval chain"
+      "review_policy": "one root receipt/content integration and changed-behavior checks; no extra approval chain",
+      "ack": true,
+      "reviewer": "root",
+      "candidate_commit": "8c963388c222efe1545653e39eeba90d7edbbcf9",
+      "integration_path": "coordination\\collab\\results\\live-anchor-controls-116-integration.json",
+      "next": "After041 closes, stop owned API/Next before main source merge; preserve unowned files; native control proof pending."
+    },
+    {
+      "task_id": "roller-transfer-fixture-117",
+      "attempt": 1,
+      "contract_revision": 108,
+      "owner": "control",
+      "binding": {
+        "session": "default",
+        "pane_id": "w1:p1C",
+        "terminal_id": "term_65e06d27e415810",
+        "agent_session": "01a152aa-24b4-7a31-92e3-a2b620f4feeb"
+      },
+      "status": "dispatched",
+      "card_path": "coordination/collab/roller-transfer-fixture-117-task.json",
+      "result_path": "coordination/collab/results/roller-transfer-fixture-117.json",
+      "write_paths": [
+        "factory_ops/roller_transfer.py",
+        "configs/vehicles/roller-transfer-v1.json",
+        "scripts/isaac/probe_roller_transfer.py",
+        "tests/test_roller_transfer.py",
+        "coordination/collab/results/roller-transfer-fixture-117.json"
+      ],
+      "review_policy": "one root receipt/content integration, no independent review chain; native fixture pending"
     }
   ],
   "decisions": [

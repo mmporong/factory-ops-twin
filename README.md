@@ -16,6 +16,8 @@
 
 웹은 **Next.js·React Three Fiber·Python 운영 API**로 구성했습니다. 실제 ROS 실행은 관측 전용입니다. 주문 생성·전체 일시정지·재개와 가상 충전 조작은 별도 CPU 운영 모델에서 지원하며, 실제 차량 조작과 구분합니다. 웹의 차량·물품 형상은 원장 기반 도식입니다. [같은 실행의 원본·해시](docs/images/fleet4-local45-036/provenance.json)
 
+실제 운행을 다음 예약 정차점에서 멈추고 재개하는 코드는 별도 브랜치에 준비했습니다. 네 차량의 새 정지·HOLD 관측을 받은 뒤 적용 결과를 알리며, 물리·ROS·가상 충전 시계는 계속 흐릅니다. 현재 실행에는 활성화하지 않았고 실제 정지·재개 확인은 남아 있습니다. [코드와 관련 검사 상태](coordination/collab/results/live-anchor-controls-116-integration.json)
+
 ## 공장과 물류 흐름
 
 | 실제 공장 RGB | 차량 위 화물 표시 |
