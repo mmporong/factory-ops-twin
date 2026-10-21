@@ -1,0 +1,4803 @@
+{
+  "schema_version": 1,
+  "attempt": "128",
+  "run_id": "ed8c060d046149d9af24216992e9e0a0",
+  "producer_source_commit": "9aa317e6ec993ecbcda415cd8106eada95b95ade",
+  "scope": "Isaac Sim4.5 actual Nova Carter mounted six-kg tote wheel-driven component; not factory Nav2, docking, inventory handoff, sensor FOV or industrial rating qualification",
+  "status": "passed",
+  "host": {
+    "run_id": "ed8c060d046149d9af24216992e9e0a0",
+    "started_at_utc": "2026-10-21T07:09:41.2822413Z",
+    "scope": "native bounded component probe",
+    "timeout_s": 480,
+    "sdk_root": "E:\\IsaacSim\\isaac-sim-4.5.0",
+    "entry_point": "probe_loaded_carrier.py",
+    "inputs_directory": "C:\\Users\\LIMMM\\FactoryOpsRuntime\\local45-loaded-mobility-128.inputs",
+    "launcher_sha256": "ee0290cda90d2e81fe4794a8645086d5a790b9362c965525b6604f142c6f227e",
+    "source_sha256": "d3198df58c1ddeb6ed642cc4676d2a9ca9c695605fe27d10ebc65890c4b30f9b",
+    "gpu": "NVIDIA GeForce RTX 3060, 12288 MiB, 610.62",
+    "timed_out": false,
+    "remaining_owned_pids": [],
+    "config_sha256": "946cf5517d0a1d7680c7026674f3e7922a24accdc6b8b864d8f5eb72598039c8",
+    "project_source_sha256": {
+      "factory_ops/__init__.py": "da57bbf586e3c4639fd72b3960ef8dd7a8326b3ba17504836189be26ce5bacb0",
+      "factory_ops/carrier_module.py": "ef12b26aa3d7180e7f122324aa0f5e363010d1f3ddf366165b69ac6de1cbfc14",
+      "factory_ops/carrier_robot.py": "67d90058df40e2be49324ed43c5cf1af4403adae9eecd17b562300e71efb692a",
+      "factory_ops/carrier_mobility.py": "5fea4c467a6be237a3fabd113fd3d7f2d63b08259e702a7c9f2d643bff606819",
+      "factory_ops/drive_profile.py": "6bba5a51caa5e4a71662339026afc67e1efe1d7370cb04c372cde48eba9d7185",
+      "factory_ops/motion.py": "a8d670ce9e0309093c47a6a63ff70c78182021f6b50496933e29985466ed6cd1"
+    },
+    "closure_scope": "gated worker and descendants contained in an owned Windows Job Object",
+    "job_runner_sha256": "2ad8ed05bfc5f96edd522900f6cd8ff11bafdace8376b68ca4f8dbd4489cbad5",
+    "job_spec_sha256": "3d7687f97cfc555b3d750e7ecd4c60135959d1eb9364ed5f90496cb870e58888",
+    "full_descendant_closure_verified": true,
+    "timeout_full_tree_cleanup_supported": true,
+    "launcher_pid": 72504,
+    "exit_code": 0,
+    "closed": true,
+    "job_identity_matched": true,
+    "job_assignment_confirmed": true,
+    "prelaunch_inputs_verified": true,
+    "owned_pids_at_cleanup": [
+      65024
+    ],
+    "job_status": "passed",
+    "probe_status": "passed",
+    "probe_identity_matched": true,
+    "project_sources_matched": true,
+    "finished_at_utc": "2026-10-21T07:10:45.3553717Z",
+    "wall_time_s": 64.073275
+  },
+  "native_result": {
+    "schema_version": 1,
+    "run_id": "ed8c060d046149d9af24216992e9e0a0",
+    "status": "passed",
+    "stage": "loaded_motion_complete",
+    "source_sha256": "d3198df58c1ddeb6ed642cc4676d2a9ca9c695605fe27d10ebc65890c4b30f9b",
+    "config_sha256": "946cf5517d0a1d7680c7026674f3e7922a24accdc6b8b864d8f5eb72598039c8",
+    "project_source_sha256": {
+      "factory_ops/__init__.py": "da57bbf586e3c4639fd72b3960ef8dd7a8326b3ba17504836189be26ce5bacb0",
+      "factory_ops/carrier_module.py": "ef12b26aa3d7180e7f122324aa0f5e363010d1f3ddf366165b69ac6de1cbfc14",
+      "factory_ops/carrier_robot.py": "67d90058df40e2be49324ed43c5cf1af4403adae9eecd17b562300e71efb692a",
+      "factory_ops/carrier_mobility.py": "5fea4c467a6be237a3fabd113fd3d7f2d63b08259e702a7c9f2d643bff606819",
+      "factory_ops/drive_profile.py": "6bba5a51caa5e4a71662339026afc67e1efe1d7370cb04c372cde48eba9d7185",
+      "factory_ops/motion.py": "a8d670ce9e0309093c47a6a63ff70c78182021f6b50496933e29985466ed6cd1"
+    },
+    "manifest_sha256": "822f2521dd6477abeed193befbd133cfaf294629340bd47bfc4a5cdb6429d96d",
+    "started_at_utc": "2026-10-21T07:09:41.807000+00:00",
+    "scope": "one Nova Carter with chassis-fixed authored carrier and free6kg tote; bounded time-command motion coupon only",
+    "transport_verified": false,
+    "sensor_fov_verified": false,
+    "mount_strength_verified": false,
+    "industrial_rating_verified": false,
+    "stage2_complete": false,
+    "physical_attachment_verified": true,
+    "media": [
+      {
+        "path": "mounted-settled.png",
+        "sha256": "e314412f5e2278f39934ccefc10142fef9895eaf103713dc414b7ef613319220",
+        "world_checkpoint_s": 0.6000000312924385,
+        "world_checkpoint_frame": 72,
+        "media_clock_sync_verified": false,
+        "role": "keyframe"
+      },
+      {
+        "path": "motion-0000.png",
+        "sha256": "e313e605834a281ea5970b2a41725b81edb053eb8f0424ac0917833435053b57",
+        "world_checkpoint_s": 0.6500000339001417,
+        "world_checkpoint_frame": 78,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0001.png",
+        "sha256": "5cb2c952f4ea16d2384d479945291be17e2a5903c5708eb99f07674f961d770f",
+        "world_checkpoint_s": 0.7000000365078449,
+        "world_checkpoint_frame": 84,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0002.png",
+        "sha256": "2516787f65647c2e4c3c35c8bb2c57f7aeea4405dbb90622203faaa9f8e46670",
+        "world_checkpoint_s": 0.7500000391155481,
+        "world_checkpoint_frame": 90,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0003.png",
+        "sha256": "1892424fd2eb8b2a712000f301bf87c3ccd6032d652beb8d9cdb480a5d1e02f8",
+        "world_checkpoint_s": 0.8000000417232513,
+        "world_checkpoint_frame": 96,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0004.png",
+        "sha256": "56311af3c873ef222e6fd39a5869a88c2f7ebf48031574e947c47ddef65cb46e",
+        "world_checkpoint_s": 0.8500000443309546,
+        "world_checkpoint_frame": 102,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0005.png",
+        "sha256": "955847b93031b6b26e4d91d3e9e10b3300266ad151f0724894c20732d2783a8f",
+        "world_checkpoint_s": 0.9000000469386578,
+        "world_checkpoint_frame": 108,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0006.png",
+        "sha256": "6a8840645ddadf1f150b4483dbf98d3a3251a1ff20bacdbc03b03b4fcaedd68e",
+        "world_checkpoint_s": 0.950000049546361,
+        "world_checkpoint_frame": 114,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0007.png",
+        "sha256": "d4b5229ea73c016bc18c5c515af9c35bbd2ae7846d19f0f3b13b562f6456b49f",
+        "world_checkpoint_s": 1.0000000521540642,
+        "world_checkpoint_frame": 120,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0008.png",
+        "sha256": "d9e704ead9bf98f20d84ab536a4d4c9dbc683f06661d185171b4573be77bebc9",
+        "world_checkpoint_s": 1.0500000547617674,
+        "world_checkpoint_frame": 126,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0009.png",
+        "sha256": "36b79b44d49db3ba26fc54ca771618846b8bad39956e6faf66b5d3b1569e92ef",
+        "world_checkpoint_s": 1.1000000573694706,
+        "world_checkpoint_frame": 132,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0010.png",
+        "sha256": "82ad69d9bd9d2179d53b3005739281486d4a4bd9d8c39b01c2647b9c57577b0a",
+        "world_checkpoint_s": 1.1500000599771738,
+        "world_checkpoint_frame": 138,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0011.png",
+        "sha256": "b34b92ee35acd2f77f6ac8e3ddee5d83045e54f2f4adfc757052e46169c091e5",
+        "world_checkpoint_s": 1.200000062584877,
+        "world_checkpoint_frame": 144,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0012.png",
+        "sha256": "78223ad4be314dc566cf909c136233654126e3f02e2b0ddabf54a4233f427e1b",
+        "world_checkpoint_s": 1.2500000651925802,
+        "world_checkpoint_frame": 150,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0013.png",
+        "sha256": "344db046997208bf7266a3a3722a90afc6aac8d0750b6f3b7abaca2280bf410d",
+        "world_checkpoint_s": 1.3000000678002834,
+        "world_checkpoint_frame": 156,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0014.png",
+        "sha256": "228a11dfb7d3f4cef0ee89e59237e2e82b36c9b8084b578ef7353d5b7bfc6da1",
+        "world_checkpoint_s": 1.3500000704079866,
+        "world_checkpoint_frame": 162,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0015.png",
+        "sha256": "b99291d5128cb936f5ea3b5624b394853d8475036c70bed7679553b51bead790",
+        "world_checkpoint_s": 1.4000000730156898,
+        "world_checkpoint_frame": 168,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0016.png",
+        "sha256": "e973c4a4762f12b0b7ce10ddc70684ab430360fef893c15d4f1d603311395fe9",
+        "world_checkpoint_s": 1.450000075623393,
+        "world_checkpoint_frame": 174,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0017.png",
+        "sha256": "2017d69a75c10891ce5bdf8289433b9af51879a49849961b8b4c113b661b1951",
+        "world_checkpoint_s": 1.5000000782310963,
+        "world_checkpoint_frame": 180,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0018.png",
+        "sha256": "91affa500ebd4cceb4e0e3efe7d2e358850537688c5d82759a348f53ab13d00e",
+        "world_checkpoint_s": 1.5500000808387995,
+        "world_checkpoint_frame": 186,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0019.png",
+        "sha256": "e7cf63c9de6020a678fc7bd8dadf3a2ff443c6d5991a4e587ec8c9a01e511b75",
+        "world_checkpoint_s": 1.6000000834465027,
+        "world_checkpoint_frame": 192,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0020.png",
+        "sha256": "ba854271e6c3e355c3fef719510f8a2a32c26891580993dbd945599c778db4bc",
+        "world_checkpoint_s": 1.650000086054206,
+        "world_checkpoint_frame": 198,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0021.png",
+        "sha256": "da3d0b9d9c94000fd7746e0ec3d01d18a542b751e39cd50d05b257bdd389f3d3",
+        "world_checkpoint_s": 1.700000088661909,
+        "world_checkpoint_frame": 204,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0022.png",
+        "sha256": "3066722a80d1aea07fae61b0ac3caeb3e84a28d683821178c8dbebd8c77caa9c",
+        "world_checkpoint_s": 1.7500000912696123,
+        "world_checkpoint_frame": 210,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0023.png",
+        "sha256": "598f38d4d72038786015e8cc2d8de67d23dedd6779d13b5c59bbb7cf5a359290",
+        "world_checkpoint_s": 1.8000000938773155,
+        "world_checkpoint_frame": 216,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0024.png",
+        "sha256": "1786a052cf8466a0a5205365695efd4fa728ed0bf91c6b7cd1e5535a89acb45e",
+        "world_checkpoint_s": 1.8500000964850187,
+        "world_checkpoint_frame": 222,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0025.png",
+        "sha256": "c6084606c880cf1479ea8764b241205a691a50c215d9dee26ea3bcb426adbb32",
+        "world_checkpoint_s": 1.900000099092722,
+        "world_checkpoint_frame": 228,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0026.png",
+        "sha256": "49bc17be70a508bfc5d860754678345eb17cce60b128d1ae3968341d4d13d8df",
+        "world_checkpoint_s": 1.9500001017004251,
+        "world_checkpoint_frame": 234,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0027.png",
+        "sha256": "ff80d69cfb46481a63d4e461f3929ae132bbb4722902336a1881461cc71e32f8",
+        "world_checkpoint_s": 2.0000001043081284,
+        "world_checkpoint_frame": 240,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0028.png",
+        "sha256": "28af5537f83d74a5ebbae821130e59861f6411e7a58e9487fc1953cd005ebf4c",
+        "world_checkpoint_s": 2.0500001069158316,
+        "world_checkpoint_frame": 246,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0029.png",
+        "sha256": "d46566fb69178d6c206ca4d2c95b1118078a5a32e1aaa968636a70bb378f3246",
+        "world_checkpoint_s": 2.1000001095235348,
+        "world_checkpoint_frame": 252,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0030.png",
+        "sha256": "b48815f176f2dbbb4bdfafcb9a0123c2b523e1c5042965d403bc58a608868ffa",
+        "world_checkpoint_s": 2.150000112131238,
+        "world_checkpoint_frame": 258,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0031.png",
+        "sha256": "cb6df2fbaef1cc2e1b5fdb3a2b1dac45a7335a8a68baa50bfaf698391cc6cf18",
+        "world_checkpoint_s": 2.200000114738941,
+        "world_checkpoint_frame": 264,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0032.png",
+        "sha256": "56c4b08b315f39068d3a986505825bdef8e3285ce952becf310c29564a503b72",
+        "world_checkpoint_s": 2.2500001173466444,
+        "world_checkpoint_frame": 270,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0033.png",
+        "sha256": "cafc82707baa144629d5788601d19dedeffcd19794ac66aea2b7c8314af622e6",
+        "world_checkpoint_s": 2.3000001199543476,
+        "world_checkpoint_frame": 276,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0034.png",
+        "sha256": "30ebc911946521913fcd5533e1514709a882d843dec35688387195f4a97f322d",
+        "world_checkpoint_s": 2.350000122562051,
+        "world_checkpoint_frame": 282,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0035.png",
+        "sha256": "89bae4c9d86d1264c3b8b5c8f1c918f0d2b1935054d02694f6529b2978e7d351",
+        "world_checkpoint_s": 2.400000125169754,
+        "world_checkpoint_frame": 288,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0036.png",
+        "sha256": "c009801650c75b9e46dd91387c65fba0021f075f3489370a6e6edb6c27c847d6",
+        "world_checkpoint_s": 2.4500001277774572,
+        "world_checkpoint_frame": 294,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0037.png",
+        "sha256": "be850dd9352aac60e0a398f03530a625c6eb62b147ee5f8a6b84571595a2508a",
+        "world_checkpoint_s": 2.5000001303851604,
+        "world_checkpoint_frame": 300,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0038.png",
+        "sha256": "6ef49fb065318e08f8c9421ec4cf95abcba9333770f20de1366b26eb412b86ee",
+        "world_checkpoint_s": 2.5500001329928637,
+        "world_checkpoint_frame": 306,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0039.png",
+        "sha256": "2ec00abd0e5d05d9461d8e760ec8ae95cd99d5839ba99022ff40348c12f7c3dc",
+        "world_checkpoint_s": 2.600000135600567,
+        "world_checkpoint_frame": 312,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0040.png",
+        "sha256": "f6bec07d9405f3a1c70eb3b1948426f1e9a1458200adbbabd6c16775391a4c7d",
+        "world_checkpoint_s": 2.65000013820827,
+        "world_checkpoint_frame": 318,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0041.png",
+        "sha256": "2980041062270e59fc274e91bccdee2354ec71e2b37b38ff02ff15918979c512",
+        "world_checkpoint_s": 2.7000001408159733,
+        "world_checkpoint_frame": 324,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0042.png",
+        "sha256": "7b318d91f1a1e1ccb60570c54ba6f7413d939d4d363702055b4fb782d567cdd0",
+        "world_checkpoint_s": 2.7500001434236765,
+        "world_checkpoint_frame": 330,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0043.png",
+        "sha256": "2d49d804d22bdf222f286a58c8763d7e99e235ec4f97dd60c02e853c33c85775",
+        "world_checkpoint_s": 2.8000001460313797,
+        "world_checkpoint_frame": 336,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0044.png",
+        "sha256": "80857d6b6c8444dde5930154c79f68bed9b15118c7730a31bcf7eb36c1411140",
+        "world_checkpoint_s": 2.850000148639083,
+        "world_checkpoint_frame": 342,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0045.png",
+        "sha256": "0c3e0953186959d94251b06a4bdf76e0baabe56e73155783b9220d69f365abe2",
+        "world_checkpoint_s": 2.900000151246786,
+        "world_checkpoint_frame": 348,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0046.png",
+        "sha256": "c9ca848ceb7fb3a8bcf529492fa99356cba59f05ed084f7a56f1e254580baf60",
+        "world_checkpoint_s": 2.9500001538544893,
+        "world_checkpoint_frame": 354,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0047.png",
+        "sha256": "8c3f6f45d13e91ea6306f648d75c59f9d24b9b0c0354d762d7a1ab98779da3c3",
+        "world_checkpoint_s": 3.0000001564621925,
+        "world_checkpoint_frame": 360,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0048.png",
+        "sha256": "3da7509379f223685c97de3c70add97d6bff8eddae187f456feefccda3e52e8c",
+        "world_checkpoint_s": 3.0500001590698957,
+        "world_checkpoint_frame": 366,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0049.png",
+        "sha256": "4fbd49972af353e95554fa402b55da31bdc999bce9c821d466d0f58b5cb665fd",
+        "world_checkpoint_s": 3.100000161677599,
+        "world_checkpoint_frame": 372,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0050.png",
+        "sha256": "d3cfa18d28e223ed2d817f863c52574ad9fea4b67ba48106be0fd0c8132accaa",
+        "world_checkpoint_s": 3.150000164285302,
+        "world_checkpoint_frame": 378,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0051.png",
+        "sha256": "6419b26122403dfa7eed0faddf2845d5c9d872740bbfea9db12bc6a2afea4104",
+        "world_checkpoint_s": 3.2000001668930054,
+        "world_checkpoint_frame": 384,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0052.png",
+        "sha256": "ffccbcd511227fad425006d236c2a885b919a84f43741377e3dee4b780821a18",
+        "world_checkpoint_s": 3.2500001695007086,
+        "world_checkpoint_frame": 390,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0053.png",
+        "sha256": "830c3065cf416c7d4f4ff7ab85194b36be8d7df41c993cf9651083fcb48322ac",
+        "world_checkpoint_s": 3.300000172108412,
+        "world_checkpoint_frame": 396,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0054.png",
+        "sha256": "8d3322e5d8490ec7b14c62cd76bffbc74cec0aebee8e030ed8fc88b770596666",
+        "world_checkpoint_s": 3.350000174716115,
+        "world_checkpoint_frame": 402,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0055.png",
+        "sha256": "582318410f58601465f70c4d08f0ea7484460ae8cb823d3c9402abc9588e6b82",
+        "world_checkpoint_s": 3.400000177323818,
+        "world_checkpoint_frame": 408,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0056.png",
+        "sha256": "363dac76526426420b5f1abc88b30c498d81ee66043dcaf5c1c5c5c15d1303ac",
+        "world_checkpoint_s": 3.4500001799315214,
+        "world_checkpoint_frame": 414,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0057.png",
+        "sha256": "77bf8ac384bcc1d9331648b020bc0bbe37f67d583635cae317dedc1f55ecc493",
+        "world_checkpoint_s": 3.5000001825392246,
+        "world_checkpoint_frame": 420,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0058.png",
+        "sha256": "e5ae3b8660313e95c2ccc0fa697cdb648ad101558e53b53b8125cf48ebfb4302",
+        "world_checkpoint_s": 3.550000185146928,
+        "world_checkpoint_frame": 426,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0059.png",
+        "sha256": "7de710d73d92c7f51f3d96e6420cbf15fe3aad6df9ade33c7278883161b14fb2",
+        "world_checkpoint_s": 3.600000187754631,
+        "world_checkpoint_frame": 432,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0060.png",
+        "sha256": "8dbd8f7ee50db55005efc852c4710615523ec7483ba3f5d07aa35a5eec9a4319",
+        "world_checkpoint_s": 3.6500001903623343,
+        "world_checkpoint_frame": 438,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0061.png",
+        "sha256": "9839080f7f898c5125c13de95f91a2ec0be8a08340286dbb5463fba4201b9448",
+        "world_checkpoint_s": 3.7000001929700375,
+        "world_checkpoint_frame": 444,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0062.png",
+        "sha256": "e12b810fe23684d2b3dc789a330d5201ab10f6a640f72c949e3589223e534584",
+        "world_checkpoint_s": 3.7500001955777407,
+        "world_checkpoint_frame": 450,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0063.png",
+        "sha256": "97474c07851e0a558d84d109b317fe7ba7fa372bbae0a48c7bb72882dac5d264",
+        "world_checkpoint_s": 3.800000198185444,
+        "world_checkpoint_frame": 456,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0064.png",
+        "sha256": "77cfd201ab2b470ad58ec12486ca251ba19cdac431aa1c6c25257537bb62f15f",
+        "world_checkpoint_s": 3.850000200793147,
+        "world_checkpoint_frame": 462,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0065.png",
+        "sha256": "ee50afefd78ff123efe824181ecc187f7e3212289ad4a0bb193750b4ee328d13",
+        "world_checkpoint_s": 3.9000002034008503,
+        "world_checkpoint_frame": 468,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0066.png",
+        "sha256": "ba8b5c0e293494775d1ccebfaef999157848a337e04d7b9a85ed83820d66a231",
+        "world_checkpoint_s": 3.9500002060085535,
+        "world_checkpoint_frame": 474,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0067.png",
+        "sha256": "94e90ebc2d0d8732f9c1d4b9a2ca2d19c405ea46695591948d31e17a4d1e7ae5",
+        "world_checkpoint_s": 4.000000208616257,
+        "world_checkpoint_frame": 480,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0068.png",
+        "sha256": "4ec1bd3aa7f9809ed2c6f424ad96245c02692c5f2a88b2a6493f9424186e4bff",
+        "world_checkpoint_s": 4.05000021122396,
+        "world_checkpoint_frame": 486,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0069.png",
+        "sha256": "04f2e0df263c114722e1ca3adef40c24294ae676f46af155bb25bbc9b8b1a0a5",
+        "world_checkpoint_s": 4.100000213831663,
+        "world_checkpoint_frame": 492,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0070.png",
+        "sha256": "7303ee6bdf519b7e3402c66d35592188fa39e5b31d208449a3b28daa6b7859d6",
+        "world_checkpoint_s": 4.150000216439366,
+        "world_checkpoint_frame": 498,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0071.png",
+        "sha256": "ce843902d1a1d334dffa6ac4fbfba51ad7a8161f37d1c9de08a237295f7b350d",
+        "world_checkpoint_s": 4.2000002190470695,
+        "world_checkpoint_frame": 504,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0072.png",
+        "sha256": "2dd21467f381ec3c81a2cb74f972061afb593241d6732f28d81433d75f1cf5e4",
+        "world_checkpoint_s": 4.250000221654773,
+        "world_checkpoint_frame": 510,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0073.png",
+        "sha256": "899b7f28d7db00a4bb3db283fdb989df0a7a3122084a7c69045fde8e5863e845",
+        "world_checkpoint_s": 4.300000224262476,
+        "world_checkpoint_frame": 516,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0074.png",
+        "sha256": "1c282c40ec4188106c2f45b01a5cfb1f30a38e05105163c19dd9a8ace67d0dda",
+        "world_checkpoint_s": 4.350000226870179,
+        "world_checkpoint_frame": 522,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0075.png",
+        "sha256": "9f7524fd629cf38741054679aebda3f3b12bcce6ca2c25c882b85bcef7f330cb",
+        "world_checkpoint_s": 4.400000229477882,
+        "world_checkpoint_frame": 528,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0076.png",
+        "sha256": "995cab5997dc3a863d1361caed66d7fd23e53d931b595b2c918d1ccb1718aacf",
+        "world_checkpoint_s": 4.450000232085586,
+        "world_checkpoint_frame": 534,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0077.png",
+        "sha256": "bb5ccc9212118609c982da92df8702d39dd819d48591ac722813b612d11715ae",
+        "world_checkpoint_s": 4.500000234693289,
+        "world_checkpoint_frame": 540,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0078.png",
+        "sha256": "907366314348db68da875141908ad4de0f5cc3f0bd8c259a1f6b479d291e1884",
+        "world_checkpoint_s": 4.550000237300992,
+        "world_checkpoint_frame": 546,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0079.png",
+        "sha256": "6275947b1c6cdaf5d09817eb28db75947b185497319bb11e31b2d945f773447d",
+        "world_checkpoint_s": 4.600000239908695,
+        "world_checkpoint_frame": 552,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0080.png",
+        "sha256": "e05d4d5f3d4295307c26e890d7ce19679baa70280be2955d494e4e5801732293",
+        "world_checkpoint_s": 4.650000242516398,
+        "world_checkpoint_frame": 558,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0081.png",
+        "sha256": "20e14cbf342657bb5de32002ce0f6bf7225600388f56c6a497d5018809d5efd3",
+        "world_checkpoint_s": 4.700000245124102,
+        "world_checkpoint_frame": 564,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0082.png",
+        "sha256": "aebe054176cf8d7d963fc984428907fb7de571d6da00a95527adca2b35c14de8",
+        "world_checkpoint_s": 4.750000247731805,
+        "world_checkpoint_frame": 570,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0083.png",
+        "sha256": "4c3eb6f61e3c81a328fa802b12f268b578865c40378c5c78157c2d7d89cf65af",
+        "world_checkpoint_s": 4.800000250339508,
+        "world_checkpoint_frame": 576,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0084.png",
+        "sha256": "b8ee0be05fe0da116e614b930678172a8853c4344b61c4b14f566d25be498cf3",
+        "world_checkpoint_s": 4.850000252947211,
+        "world_checkpoint_frame": 582,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0085.png",
+        "sha256": "be188ff49d0d73c00736b732fbde1d8c81741d1a0a416d62a972a2144b0fa8b3",
+        "world_checkpoint_s": 4.9000002555549145,
+        "world_checkpoint_frame": 588,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0086.png",
+        "sha256": "e138f09a8ac0968cb5466d50841d2c8765f3d92d709eb156c967e0e319c541d4",
+        "world_checkpoint_s": 4.950000258162618,
+        "world_checkpoint_frame": 594,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0087.png",
+        "sha256": "6f35fd25ae03c2f3afd999d6cebc8316346da3a1cd2cfc89af558d699e5be158",
+        "world_checkpoint_s": 5.000000260770321,
+        "world_checkpoint_frame": 600,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0088.png",
+        "sha256": "47ffc0f17e3bff83b4c022a7eaf416dacaaf5b8f55e6bc52d6fefb4d5da21865",
+        "world_checkpoint_s": 5.050000263378024,
+        "world_checkpoint_frame": 606,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0089.png",
+        "sha256": "1cc5ce1826fb7d909d4879df2a7e10c093989f39f94cd93db2942ac29ed42bbb",
+        "world_checkpoint_s": 5.100000265985727,
+        "world_checkpoint_frame": 612,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0090.png",
+        "sha256": "95c8fc8a17e4eb83757c46e6398e207dc082f7c193ee5a4fe6977e30e259aefe",
+        "world_checkpoint_s": 5.1500002685934305,
+        "world_checkpoint_frame": 618,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0091.png",
+        "sha256": "f8429ab16e06b04ff1978db4f901da8fd4b2311d846636e2274b8500ea4ca5a1",
+        "world_checkpoint_s": 5.200000271201134,
+        "world_checkpoint_frame": 624,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0092.png",
+        "sha256": "f5b2133705fdb407e5b5edf4bfb984fcc9698f1cda1b7876ca0c291f04d31088",
+        "world_checkpoint_s": 5.250000273808837,
+        "world_checkpoint_frame": 630,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0093.png",
+        "sha256": "85ffd3ddd1bd575bddcd37fdf7224335e23860d2adf15e51129d543e48ad999f",
+        "world_checkpoint_s": 5.30000027641654,
+        "world_checkpoint_frame": 636,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0094.png",
+        "sha256": "8eb223c060a0d988f99feaab033e5ea1dc7c1c84f0624d8ca7ef66cd9af555f9",
+        "world_checkpoint_s": 5.350000279024243,
+        "world_checkpoint_frame": 642,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0095.png",
+        "sha256": "c241e3d4c83b9179109ffa06c8784736d32877d7a07b5cb0e1fe33483f9e6104",
+        "world_checkpoint_s": 5.400000281631947,
+        "world_checkpoint_frame": 648,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0096.png",
+        "sha256": "d06932fabee51f005b3f1b26ff3a89aed292c4f08c1614011407cb07c9c8f4bf",
+        "world_checkpoint_s": 5.45000028423965,
+        "world_checkpoint_frame": 654,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0097.png",
+        "sha256": "0296df04c607f8e252a6b75e590995722d033d8f7c32ee109a428f89c1b5f578",
+        "world_checkpoint_s": 5.500000286847353,
+        "world_checkpoint_frame": 660,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0098.png",
+        "sha256": "ef7772014de921781b4f49e84e1a9d34bbaba197357b7b43e807da1c47a000cb",
+        "world_checkpoint_s": 5.550000289455056,
+        "world_checkpoint_frame": 666,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0099.png",
+        "sha256": "15d860a6abfd4d2e6c53e4fe80a6d11782fc13ab1d5f4baed45e63f8f9706b96",
+        "world_checkpoint_s": 5.600000292062759,
+        "world_checkpoint_frame": 672,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0100.png",
+        "sha256": "ff83c3bbfb9c8c8d570aa0d8369b7b6578164a47da62a6c88be30a7f94ad0766",
+        "world_checkpoint_s": 5.650000294670463,
+        "world_checkpoint_frame": 678,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0101.png",
+        "sha256": "3eec06d1c40483f458a67dd0d91f4ca21725d60fb53aa86290b3dc8b1f980107",
+        "world_checkpoint_s": 5.700000297278166,
+        "world_checkpoint_frame": 684,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0102.png",
+        "sha256": "b087127e9ea4c6f5688e6161b1a4a4f6d53768f5acc39d8bc6b1ec401f65fac9",
+        "world_checkpoint_s": 5.750000299885869,
+        "world_checkpoint_frame": 690,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0103.png",
+        "sha256": "80407819e886be01056731f9fe0c8e883c5ddf98bfafed6d92303d0410cab0f5",
+        "world_checkpoint_s": 5.800000302493572,
+        "world_checkpoint_frame": 696,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0104.png",
+        "sha256": "f531602b7bddf282c07143af5ee2255975524cd2954be41399dad5ed16712ab6",
+        "world_checkpoint_s": 5.850000305101275,
+        "world_checkpoint_frame": 702,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0105.png",
+        "sha256": "936b5a3118596c646f157a278dd01c946ada3af358b998c5f70f629aeeeeccc5",
+        "world_checkpoint_s": 5.900000307708979,
+        "world_checkpoint_frame": 708,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0106.png",
+        "sha256": "cf4d9c326b4e66c62359ae64a3b259994efea4c4b48f7fb9d2b286194ee26252",
+        "world_checkpoint_s": 5.950000310316682,
+        "world_checkpoint_frame": 714,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0107.png",
+        "sha256": "2a2a6b42e602dc671256727e029431621130f13111916ddb14839ac02c64ef8e",
+        "world_checkpoint_s": 6.000000312924385,
+        "world_checkpoint_frame": 720,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0108.png",
+        "sha256": "b0e5e487d26eeaea20846bbb738a92bd1f268f7e8f0b72168bcf8e7b2d9afc77",
+        "world_checkpoint_s": 6.050000315532088,
+        "world_checkpoint_frame": 726,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0109.png",
+        "sha256": "175cf57603054591847653b362e5be4c409a2a136031a215b768f38c811190e6",
+        "world_checkpoint_s": 6.1000003181397915,
+        "world_checkpoint_frame": 732,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0110.png",
+        "sha256": "00412c5ea9561cd34b943d1268015d9b7084b9acb6a3cfda7b048d376b274675",
+        "world_checkpoint_s": 6.150000320747495,
+        "world_checkpoint_frame": 738,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0111.png",
+        "sha256": "39eeb1884fc5dae327dbcd7cdddf000ac8e3887a0687d3828980657098c40a34",
+        "world_checkpoint_s": 6.200000323355198,
+        "world_checkpoint_frame": 744,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0112.png",
+        "sha256": "a3d0affaf8777aaa97986e46d1b6baee0572dc4ba0749eb9d455ceb80ff14f69",
+        "world_checkpoint_s": 6.250000325962901,
+        "world_checkpoint_frame": 750,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0113.png",
+        "sha256": "287cc8a25182b74b3e66e5d6bbb5f717ba032293ef27f3caeee728abbd0a7859",
+        "world_checkpoint_s": 6.300000328570604,
+        "world_checkpoint_frame": 756,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0114.png",
+        "sha256": "c36ba87997fbb5913fb529af93aca57c759257dee72b7a53d77ab8dd48ce27f9",
+        "world_checkpoint_s": 6.3500003311783075,
+        "world_checkpoint_frame": 762,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0115.png",
+        "sha256": "6d95b96e2643417b8d6465adf9b41117736f79876108c85ab5b14f7a24fa2cb1",
+        "world_checkpoint_s": 6.400000333786011,
+        "world_checkpoint_frame": 768,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0116.png",
+        "sha256": "31336afec4447425eff3f834be8955893b09b7cd2c38b4eb841ddbaa0b4e2d20",
+        "world_checkpoint_s": 6.450000336393714,
+        "world_checkpoint_frame": 774,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0117.png",
+        "sha256": "0cb69ada3d2cf9ee21da74c0fce253dd47fa751ade209c64ad64de111d88ef05",
+        "world_checkpoint_s": 6.500000339001417,
+        "world_checkpoint_frame": 780,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0118.png",
+        "sha256": "adc7ac00e4c9bd620e9ea78c56054f499113c2d53a9b20a1c78396c038669394",
+        "world_checkpoint_s": 6.55000034160912,
+        "world_checkpoint_frame": 786,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0119.png",
+        "sha256": "5d29860857071e8fabb997755e36bc10a1dd86ac709d933c60d504a4238fe0e3",
+        "world_checkpoint_s": 6.600000344216824,
+        "world_checkpoint_frame": 792,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0120.png",
+        "sha256": "8c82e4f3e099d0bdc4b057656531360474ec10d0bde324f8acc6d8452bb44744",
+        "world_checkpoint_s": 6.650000346824527,
+        "world_checkpoint_frame": 798,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0121.png",
+        "sha256": "77385aa99cd142d281373fe34e89703766680ba06748251801667200b7deed79",
+        "world_checkpoint_s": 6.70000034943223,
+        "world_checkpoint_frame": 804,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0122.png",
+        "sha256": "d682b3cbc41d83f0273b3d4a80c368c372d4dfab104726b839bd82e5cf5e2b2e",
+        "world_checkpoint_s": 6.750000352039933,
+        "world_checkpoint_frame": 810,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0123.png",
+        "sha256": "4704316071767d0bef7d44dae04eeb220cba78a950e2740c7175eb4877c335a4",
+        "world_checkpoint_s": 6.800000354647636,
+        "world_checkpoint_frame": 816,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0124.png",
+        "sha256": "dc1d8f4e847cfa3ad6535f1176f389c08db888209eaff5961c7f50126d23c944",
+        "world_checkpoint_s": 6.85000035725534,
+        "world_checkpoint_frame": 822,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0125.png",
+        "sha256": "5003dc74895ca80401de8e56a81af539486cfe3ad3ea83b08231be4409cc845a",
+        "world_checkpoint_s": 6.900000359863043,
+        "world_checkpoint_frame": 828,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0126.png",
+        "sha256": "f59fee32e5e5c993d79ff256d31dfad5aff8f302e46dfc3594ee6b06f8ffe1ea",
+        "world_checkpoint_s": 6.950000362470746,
+        "world_checkpoint_frame": 834,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0127.png",
+        "sha256": "188ace1f72c82c9bca19096f8799772803c1e2c193ded145ce2cf7732a57f5d9",
+        "world_checkpoint_s": 7.000000365078449,
+        "world_checkpoint_frame": 840,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0128.png",
+        "sha256": "35b30ae6b6e1aa483f07a4ca42c42323824d867d7cbb25c272b607e429136339",
+        "world_checkpoint_s": 7.0500003676861525,
+        "world_checkpoint_frame": 846,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0129.png",
+        "sha256": "ce655a094c3636beeed840ad45d0bb5aaf245f7d4ac3790d9bbedaaba356995a",
+        "world_checkpoint_s": 7.100000370293856,
+        "world_checkpoint_frame": 852,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0130.png",
+        "sha256": "e5fcf57b3e384ab60f847b643351e55f174b2b55d0c6884084ca8bb5d1e43aa5",
+        "world_checkpoint_s": 7.150000372901559,
+        "world_checkpoint_frame": 858,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0131.png",
+        "sha256": "f6e6933dddfac6c0dc79064c11c78b1acd5079dbccdb868c110843d1246daf82",
+        "world_checkpoint_s": 7.200000375509262,
+        "world_checkpoint_frame": 864,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0132.png",
+        "sha256": "40b6838169ba6fb89513da56f9c1ff601867c1d5ac2e1126d2b48de0dcfa32c3",
+        "world_checkpoint_s": 7.250000378116965,
+        "world_checkpoint_frame": 870,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0133.png",
+        "sha256": "befecee6f89566dc2b90c7e8c756a5d62985f8207587c1e8726d79f7659c7078",
+        "world_checkpoint_s": 7.3000003807246685,
+        "world_checkpoint_frame": 876,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0134.png",
+        "sha256": "2d52e515722393a0a662cdd7bf3fc0b399c2c82e7ba289d6a5701636bf5afd2b",
+        "world_checkpoint_s": 7.350000383332372,
+        "world_checkpoint_frame": 882,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0135.png",
+        "sha256": "681b8a295f9795cdce23370a77e40d6a2779516ac37465603ec44c9045418abc",
+        "world_checkpoint_s": 7.400000385940075,
+        "world_checkpoint_frame": 888,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0136.png",
+        "sha256": "65022ed7a718a623775b8de139c2d0150515e6fb918da35b5b5afd2aefc3e8c9",
+        "world_checkpoint_s": 7.450000388547778,
+        "world_checkpoint_frame": 894,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0137.png",
+        "sha256": "a09d2c2749ee11b13cb638e843a158734f4976e8ff2e7b1d183b0e0678018549",
+        "world_checkpoint_s": 7.500000391155481,
+        "world_checkpoint_frame": 900,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0138.png",
+        "sha256": "6a9e65694893d00962916c5c58114b8b14b2e126560b46aceb630f0a52c182a1",
+        "world_checkpoint_s": 7.5500003937631845,
+        "world_checkpoint_frame": 906,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0139.png",
+        "sha256": "1f512147f2c6a60f5686d53d49af5acedd5aa4e25aa7f377eab203910989bc18",
+        "world_checkpoint_s": 7.600000396370888,
+        "world_checkpoint_frame": 912,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0140.png",
+        "sha256": "504a08aa962ec43b8b5b84f504418e89a211ff177d7664c258939ca546a12cce",
+        "world_checkpoint_s": 7.650000398978591,
+        "world_checkpoint_frame": 918,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0141.png",
+        "sha256": "a7281bdf97e87baf6bf283fc8ed392e32d6f2eae51470cea9dc0591718aa901d",
+        "world_checkpoint_s": 7.700000401586294,
+        "world_checkpoint_frame": 924,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0142.png",
+        "sha256": "dab2285c135287cb9f6af9c5c3972c2dbccfb5c703bc9a0a008db3041bc6a63e",
+        "world_checkpoint_s": 7.750000404193997,
+        "world_checkpoint_frame": 930,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0143.png",
+        "sha256": "850e7e89560fa9bd5443974587aed053ae374edd62f9f246195e9e2153c9f9aa",
+        "world_checkpoint_s": 7.800000406801701,
+        "world_checkpoint_frame": 936,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0144.png",
+        "sha256": "60f71ecf85777f84ddb6d4b5c6e639d1ea91bd2c210217e72ce16c25c6aa679c",
+        "world_checkpoint_s": 7.850000409409404,
+        "world_checkpoint_frame": 942,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0145.png",
+        "sha256": "741176302accba0cfacf24e93d6c1ba6998ac7fd12db22842f508c10f4cb03b9",
+        "world_checkpoint_s": 7.900000412017107,
+        "world_checkpoint_frame": 948,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0146.png",
+        "sha256": "34a8cfc4d7e753501ad72c7d7807c27dec1273edbab6f6648359b6e69078a824",
+        "world_checkpoint_s": 7.95000041462481,
+        "world_checkpoint_frame": 954,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0147.png",
+        "sha256": "ff3f8887c7ced4118c42c544e8bcc4f144ca1974e5169556c5338095951448a6",
+        "world_checkpoint_s": 8.000000417232513,
+        "world_checkpoint_frame": 960,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0148.png",
+        "sha256": "1417f9bfd0442a9a5a00e43ca88712e00a68322683cba828d3ae486d94b59da1",
+        "world_checkpoint_s": 8.050000419840217,
+        "world_checkpoint_frame": 966,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0149.png",
+        "sha256": "d46c027fbaa4c613a2d6f0b5c4b7555345a5aed9862f12b8ae98aa8fbeeedacc",
+        "world_checkpoint_s": 8.10000042244792,
+        "world_checkpoint_frame": 972,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0150.png",
+        "sha256": "b18b883e8094e851e500c9227b86e7c69728f5bb099d30d89d4173e6fe14618c",
+        "world_checkpoint_s": 8.150000425055623,
+        "world_checkpoint_frame": 978,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0151.png",
+        "sha256": "52fff6b38ffd7a8d1d92367d8dcf097d3bdcd416128cc65391e5801324572035",
+        "world_checkpoint_s": 8.200000427663326,
+        "world_checkpoint_frame": 984,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0152.png",
+        "sha256": "3faaaafffd0fe43e80aa5701db4f2346e34c1b78db5209eec7fad81d14b309c3",
+        "world_checkpoint_s": 8.25000043027103,
+        "world_checkpoint_frame": 990,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0153.png",
+        "sha256": "7048c38afe1475050cab849405d453e96264366d43b7d620da4533af97978643",
+        "world_checkpoint_s": 8.300000432878733,
+        "world_checkpoint_frame": 996,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0154.png",
+        "sha256": "2ae226064a2e0643e6a69c00aa0780f03a476317fe4c61cabe7fe4c8b09986ec",
+        "world_checkpoint_s": 8.350000435486436,
+        "world_checkpoint_frame": 1002,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0155.png",
+        "sha256": "3634c9c02290018f9b5cd4415f6bc26cecccb1b9252be51e8886d57c03c15846",
+        "world_checkpoint_s": 8.400000438094139,
+        "world_checkpoint_frame": 1008,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0156.png",
+        "sha256": "ca2f097b70ed49f38cdcfaf3b55461731d64f7cb1e5b1d5db7753feaeb1d4966",
+        "world_checkpoint_s": 8.450000440701842,
+        "world_checkpoint_frame": 1014,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0157.png",
+        "sha256": "1c9071836d0e4d8494ee61433a16247fa69b8f36e9ff4aff0fba0cd5470235a1",
+        "world_checkpoint_s": 8.500000443309546,
+        "world_checkpoint_frame": 1020,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0158.png",
+        "sha256": "e0f48a38db0f1008b18dfea94fadceb9b68acde4fa807344c77af3a6ca9e2cb7",
+        "world_checkpoint_s": 8.550000445917249,
+        "world_checkpoint_frame": 1026,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0159.png",
+        "sha256": "8f8a47bd95ef2f9dfc7fc15784ebbf1911b9595137c51442dc7b28bc074670c7",
+        "world_checkpoint_s": 8.600000448524952,
+        "world_checkpoint_frame": 1032,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0160.png",
+        "sha256": "36820673b15dde5d2b56ef2230f3573fefe3b9e3d7bf6e2ba79afba5023d0cf5",
+        "world_checkpoint_s": 8.650000451132655,
+        "world_checkpoint_frame": 1038,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0161.png",
+        "sha256": "6896312b4adc472bcd7a6b29b7970fa2f950966e42236abcffdf5ebb7ee82f63",
+        "world_checkpoint_s": 8.700000453740358,
+        "world_checkpoint_frame": 1044,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0162.png",
+        "sha256": "030318f55605ecce16fc5720690fda168dd63c90f3cb629fb7fccd7cc6046f57",
+        "world_checkpoint_s": 8.750000456348062,
+        "world_checkpoint_frame": 1050,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0163.png",
+        "sha256": "0a6545698f5568bbcaf4837102d022692b3129566a74873841a59be6f1039402",
+        "world_checkpoint_s": 8.800000458955765,
+        "world_checkpoint_frame": 1056,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0164.png",
+        "sha256": "5608424b852a17b788772e6c7cd2ec2b7efa12e7459825658b7d4b80234ecc08",
+        "world_checkpoint_s": 8.850000461563468,
+        "world_checkpoint_frame": 1062,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0165.png",
+        "sha256": "d35ea894eb81e0e8adff6c56831d4968d2f8dbcf21fd5f8f715b727934bc0969",
+        "world_checkpoint_s": 8.900000464171171,
+        "world_checkpoint_frame": 1068,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0166.png",
+        "sha256": "18c38fe9705214879ec6b2cf78a3b7ba4bf8bd33692863d1239ba3ff9def43e9",
+        "world_checkpoint_s": 8.950000466778874,
+        "world_checkpoint_frame": 1074,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0167.png",
+        "sha256": "872bb13a39d91435a0168ac0f72dcb6802fcf44e4e03a67bb0c9d688c12c03ad",
+        "world_checkpoint_s": 9.000000469386578,
+        "world_checkpoint_frame": 1080,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0168.png",
+        "sha256": "2c0586bf3d09a6320367ac0e84ad3519789fe3f4d850fc5c164401bc55ce8b20",
+        "world_checkpoint_s": 9.05000047199428,
+        "world_checkpoint_frame": 1086,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0169.png",
+        "sha256": "5f65746099ad6fc20d77e9d43d09727a14ab1449e183f34aa801a9ad8ea9bc90",
+        "world_checkpoint_s": 9.100000474601984,
+        "world_checkpoint_frame": 1092,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0170.png",
+        "sha256": "609917e9b8ef74d67e2ce854679605b015b449230a7a1c06d21066c0d819ed52",
+        "world_checkpoint_s": 9.150000477209687,
+        "world_checkpoint_frame": 1098,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0171.png",
+        "sha256": "c942a1cc7c760602603edc2ebd95db1285f55939c0ddf6f1034b69a4145783db",
+        "world_checkpoint_s": 9.20000047981739,
+        "world_checkpoint_frame": 1104,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0172.png",
+        "sha256": "fd0395a39ec98eac48601bbcd9f2f66e0299fb021adbd203106d21f512c4f78e",
+        "world_checkpoint_s": 9.250000482425094,
+        "world_checkpoint_frame": 1110,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0173.png",
+        "sha256": "9516900cf04e42b85cc404bd54c51d37d5086c0a73f7cc5b8d5e7d590eb42dd5",
+        "world_checkpoint_s": 9.300000485032797,
+        "world_checkpoint_frame": 1116,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0174.png",
+        "sha256": "3257721584fa2126adb8333b2df30d7ad92c7f70dfe72d6e24676d4db4b01175",
+        "world_checkpoint_s": 9.3500004876405,
+        "world_checkpoint_frame": 1122,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0175.png",
+        "sha256": "6944bc3cc4ff0333da80b97d2cd7e6668d2ec4aa78b834750ef8906bd4cdc70c",
+        "world_checkpoint_s": 9.400000490248203,
+        "world_checkpoint_frame": 1128,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0176.png",
+        "sha256": "9a221d790a6e231884548df8ec78e0d0352e9a97e9e7e960e1268b762b7dcb26",
+        "world_checkpoint_s": 9.450000492855906,
+        "world_checkpoint_frame": 1134,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0177.png",
+        "sha256": "bbcaa0cb05d03f17417e83edc4705d0291a1f7f7e73828bbc2152af2b6005a49",
+        "world_checkpoint_s": 9.50000049546361,
+        "world_checkpoint_frame": 1140,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0178.png",
+        "sha256": "b582da61b2a9006bcdd194332108ca0c2defc00535677578a0a0910e6064d9f6",
+        "world_checkpoint_s": 9.550000498071313,
+        "world_checkpoint_frame": 1146,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0179.png",
+        "sha256": "6243a3ae56a982b77103420ad16f2abc8c40a31c473e95afd5bdbc1d89420184",
+        "world_checkpoint_s": 9.600000500679016,
+        "world_checkpoint_frame": 1152,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0180.png",
+        "sha256": "f5dbf8d883ea008198ce7e2fed9f146cd7c89f43dd425ae0a0fcb373f13de840",
+        "world_checkpoint_s": 9.65000050328672,
+        "world_checkpoint_frame": 1158,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0181.png",
+        "sha256": "a69ee74e02bd0030f93f4d61e92522e95b5ac7853615351952319cd6e87120a6",
+        "world_checkpoint_s": 9.700000505894423,
+        "world_checkpoint_frame": 1164,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0182.png",
+        "sha256": "c90edd4bcf407afc16ed5624502113322d0950b58e458ccc2a8f1d9f591a58b7",
+        "world_checkpoint_s": 9.750000508502126,
+        "world_checkpoint_frame": 1170,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0183.png",
+        "sha256": "e39bfaa79543f6c9adc1b31ef1bb2223d2b02cc434a828905ab60a83db09c1f4",
+        "world_checkpoint_s": 9.800000511109829,
+        "world_checkpoint_frame": 1176,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0184.png",
+        "sha256": "4af3bf4c562cf931a57d95a4fb267ca2474bebf139c9b9a0062d83b609345e38",
+        "world_checkpoint_s": 9.850000513717532,
+        "world_checkpoint_frame": 1182,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0185.png",
+        "sha256": "3c79eea3f0ae28d201798cb354939fae729d9f96782212bade7048d44259084f",
+        "world_checkpoint_s": 9.900000516325235,
+        "world_checkpoint_frame": 1188,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0186.png",
+        "sha256": "3ceba06f93c47d258ad748cedbd396b37ca3a4201fe8e6cd12ea4ede5a13d27c",
+        "world_checkpoint_s": 9.950000518932939,
+        "world_checkpoint_frame": 1194,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "motion-0187.png",
+        "sha256": "a1e03cbd69dfd02c9de6bbdad713c3f40f7c45a7b23133967aabd5126804aa7a",
+        "world_checkpoint_s": 10.000000521540642,
+        "world_checkpoint_frame": 1200,
+        "media_clock_sync_verified": false,
+        "role": "motion_frame"
+      },
+      {
+        "path": "mounted-motion-final.png",
+        "sha256": "eda27af6fe241c43312d9a8d6b95b2e4a8220e4df1deb4f714da557a7f1092f2",
+        "world_checkpoint_s": 10.008333855308592,
+        "world_checkpoint_frame": 1201,
+        "media_clock_sync_verified": false,
+        "role": "keyframe"
+      }
+    ],
+    "cleanup_errors": [],
+    "requires_host_closure": true,
+    "profile_assumptions_verbatim": [
+      "Carter static candidate v2: chassis-local deck height derives from measured118 chassis collision AABB top plus an authored2mm mounting gap, existing post height and deck half thickness. This AABB is not a mechanical surface or strength certificate.",
+      "Original generic bolted-deck/raised-support candidate, not a manufacturer model, certified payload or finished low-profile lifting AMR.",
+      "All dimensions, masses, uniform material distributions, friction and contact settings are authored development assumptions, not measurements.",
+      "Nova Carter remains the development base. Declared keepouts below are candidate integration constraints, not its measured collider/sensor geometry. Actual robot-frame transform, body/sensor clearance, mount strength, added inertia and navigation footprint need native admission before installation.",
+      "Existing presentation-only cargo is independent. This profile does not change a registry, scene, map, footprint, controller or sensor.",
+      "Probe uses fixed stand pads instead of a robot chassis. Carrier and tote are separate dynamic compound bodies; centred ballast is rigidly included in tote inertia, not loose contents. Separation is an authored upward velocity impulse, not a lift actuator or unloading operation."
+    ],
+    "fixture_scope_difference": "Original profile stand/release wording describes 114 only. This fixture uses a free Nova Carter and chassis fixed joint, no stands and no authored separation. Geometry/mass/material assumptions remain unchanged.",
+    "loaded_motion_verified": true,
+    "loaded_motion_config": {
+      "schema_version": 1,
+      "geometry_source": "fresh_pre_step_wheel_collision_bounds",
+      "maximum_sim_time_s": 20.0,
+      "maximum_wall_time_s": 360.0,
+      "rgb_fps": 20,
+      "maximum_rgb_frames": 240,
+      "maximum_torque_n_m": 80.0,
+      "maximum_tilt_rad": 0.05,
+      "maximum_displacement_m": 1.3,
+      "minimum_forward_m": 0.12,
+      "minimum_curve_yaw_rad": 0.1,
+      "minimum_turn_yaw_rad": 0.18,
+      "drive_limits": {
+        "max_linear_m_s": 0.2,
+        "max_angular_rad_s": 0.4,
+        "linear_accel_m_s2": 0.1,
+        "linear_decel_m_s2": 0.15,
+        "angular_accel_rad_s2": 0.25,
+        "angular_decel_rad_s2": 0.4,
+        "lateral_accel_m_s2": 0.06,
+        "max_wheel_rad_s": 3.0,
+        "wheel_accel_rad_s2": 1.0
+      },
+      "phases": [
+        {
+          "name": "forward",
+          "duration_s": 2.2,
+          "linear_m_s": 0.16,
+          "angular_rad_s": 0.0
+        },
+        {
+          "name": "curve",
+          "duration_s": 2.3,
+          "linear_m_s": 0.12,
+          "angular_rad_s": 0.2
+        },
+        {
+          "name": "brake_before_turn",
+          "duration_s": 1.5,
+          "linear_m_s": 0.0,
+          "angular_rad_s": 0.0
+        },
+        {
+          "name": "in_place",
+          "duration_s": 2.0,
+          "linear_m_s": 0.0,
+          "angular_rad_s": 0.25
+        },
+        {
+          "name": "final_brake",
+          "duration_s": 1.0,
+          "linear_m_s": 0.0,
+          "angular_rad_s": 0.0
+        }
+      ],
+      "scope": "Authored loaded-motion component coupon only; fixed time commands, native wheel targets, GT evaluation only. No docking, Nav2 or industrial payload rating. Original relative payload/contact limits unchanged.",
+      "schedule_duration_s": 9.0,
+      "rgb_period_physics_frames": 6
+    },
+    "loaded_motion_config_sha256": "397ae0ae57539e7b1bddc217624f37f9a067d1fa1f6ae668dd4e4303d7f946b7",
+    "motion_rgb": {
+      "planned_fps": 20,
+      "maximum_frames": 240,
+      "captured_frames": 188,
+      "media_clock_sync_verified": false,
+      "source": "continuous persistent640x480 RGB; every sixth actual120Hz physics frame",
+      "sequence_readback": {
+        "frame_count": 188,
+        "distinct_image_sha256": 188,
+        "first_world_frame": 78,
+        "last_world_frame": 1200
+      }
+    },
+    "isaac_version": "4.5.0-rc.36+release.19112.f59b3005.gl",
+    "asset": {
+      "relative_path": "/Isaac/Robots/NVIDIA/Carter/nova_carter/nova_carter.usd",
+      "resolved_endpoint": "https://omniverse-content-production.s3-us-west-2.amazonaws.com/Assets/Isaac/4.5/Isaac/Robots/NVIDIA/Carter/nova_carter/nova_carter.usd",
+      "resolver": "installed isaacsim.storage.native.get_assets_root_path",
+      "alternate_assets_attempted": 0,
+      "used_layers": [
+        {
+          "identifier": "anon:0000023CB1BAB690:World0.usd",
+          "resolved_path": "",
+          "local_file_sha256": null
+        },
+        {
+          "identifier": "anon:0000023CB1BACB30:World0-session.usda",
+          "resolved_path": "",
+          "local_file_sha256": null
+        },
+        {
+          "identifier": "https://omniverse-content-production.s3-us-west-2.amazonaws.com/Assets/Isaac/4.5/Isaac/Robots/NVIDIA/Carter/nova_carter/Parts/carter_v2_wheel_left.usd",
+          "resolved_path": "https://omniverse-content-production.s3-us-west-2.amazonaws.com/Assets/Isaac/4.5/Isaac/Robots/NVIDIA/Carter/nova_carter/Parts/carter_v2_wheel_left.usd",
+          "local_file_sha256": null
+        },
+        {
+          "identifier": "https://omniverse-content-production.s3-us-west-2.amazonaws.com/Assets/Isaac/4.5/Isaac/Robots/NVIDIA/Carter/nova_carter/Variants/nova_carter_sim_optimized.usd",
+          "resolved_path": "https://omniverse-content-production.s3-us-west-2.amazonaws.com/Assets/Isaac/4.5/Isaac/Robots/NVIDIA/Carter/nova_carter/Variants/nova_carter_sim_optimized.usd",
+          "local_file_sha256": null
+        },
+        {
+          "identifier": "https://omniverse-content-production.s3-us-west-2.amazonaws.com/Assets/Isaac/4.5/Isaac/Sensors/LeopardImaging/Owl/owl.usd",
+          "resolved_path": "https://omniverse-content-production.s3-us-west-2.amazonaws.com/Assets/Isaac/4.5/Isaac/Sensors/LeopardImaging/Owl/owl.usd",
+          "local_file_sha256": null
+        },
+        {
+          "identifier": "https://omniverse-content-production.s3-us-west-2.amazonaws.com/Assets/Isaac/4.5/Isaac/Sensors/LeopardImaging/Owl/materials/materials.usd",
+          "resolved_path": "https://omniverse-content-production.s3-us-west-2.amazonaws.com/Assets/Isaac/4.5/Isaac/Sensors/LeopardImaging/Owl/materials/materials.usd",
+          "local_file_sha256": null
+        },
+        {
+          "identifier": "https://omniverse-content-production.s3-us-west-2.amazonaws.com/Assets/Isaac/4.5/Isaac/Robots/NVIDIA/Carter/nova_carter/Variants/Physics/nova_carter_physics.usd",
+          "resolved_path": "https://omniverse-content-production.s3-us-west-2.amazonaws.com/Assets/Isaac/4.5/Isaac/Robots/NVIDIA/Carter/nova_carter/Variants/Physics/nova_carter_physics.usd",
+          "local_file_sha256": null
+        },
+        {
+          "identifier": "https://omniverse-content-production.s3-us-west-2.amazonaws.com/Assets/Isaac/4.5/Isaac/Robots/NVIDIA/Carter/nova_carter/Variants/Configuration/nova_carter_merged_no_internals.usd",
+          "resolved_path": "https://omniverse-content-production.s3-us-west-2.amazonaws.com/Assets/Isaac/4.5/Isaac/Robots/NVIDIA/Carter/nova_carter/Variants/Configuration/nova_carter_merged_no_internals.usd",
+          "local_file_sha256": null
+        },
+        {
+          "identifier": "https://omniverse-content-production.s3-us-west-2.amazonaws.com/Assets/Isaac/4.5/Isaac/Robots/NVIDIA/Carter/nova_carter/Variants/Sensors/nova_carter_sensors.usd",
+          "resolved_path": "https://omniverse-content-production.s3-us-west-2.amazonaws.com/Assets/Isaac/4.5/Isaac/Robots/NVIDIA/Carter/nova_carter/Variants/Sensors/nova_carter_sensors.usd",
+          "local_file_sha256": null
+        },
+        {
+          "identifier": "https://omniverse-content-production.s3-us-west-2.amazonaws.com/Assets/Isaac/4.5/Isaac/Sensors/LeopardImaging/Hawk/hawk_v1.1_nominal.usd",
+          "resolved_path": "https://omniverse-content-production.s3-us-west-2.amazonaws.com/Assets/Isaac/4.5/Isaac/Sensors/LeopardImaging/Hawk/hawk_v1.1_nominal.usd",
+          "local_file_sha256": null
+        },
+        {
+          "identifier": "https://omniverse-content-production.s3-us-west-2.amazonaws.com/Assets/Isaac/4.5/Isaac/Robots/NVIDIA/Carter/nova_carter/Materials/Materials.usd",
+          "resolved_path": "https://omniverse-content-production.s3-us-west-2.amazonaws.com/Assets/Isaac/4.5/Isaac/Robots/NVIDIA/Carter/nova_carter/Materials/Materials.usd",
+          "local_file_sha256": null
+        },
+        {
+          "identifier": "https://omniverse-content-production.s3-us-west-2.amazonaws.com/Assets/Isaac/4.5/Isaac/Robots/NVIDIA/Carter/nova_carter/nova_carter.usd",
+          "resolved_path": "https://omniverse-content-production.s3-us-west-2.amazonaws.com/Assets/Isaac/4.5/Isaac/Robots/NVIDIA/Carter/nova_carter/nova_carter.usd",
+          "local_file_sha256": null
+        },
+        {
+          "identifier": "https://omniverse-content-production.s3-us-west-2.amazonaws.com/Assets/Isaac/4.5/Isaac/Sensors/Slamtec/RPLidar_S2e.usd",
+          "resolved_path": "https://omniverse-content-production.s3-us-west-2.amazonaws.com/Assets/Isaac/4.5/Isaac/Sensors/Slamtec/RPLidar_S2e.usd",
+          "local_file_sha256": null
+        },
+        {
+          "identifier": "https://omniverse-content-production.s3-us-west-2.amazonaws.com/Assets/Isaac/4.5/Isaac/Sensors/Slamtec/materials/materials.usd",
+          "resolved_path": "https://omniverse-content-production.s3-us-west-2.amazonaws.com/Assets/Isaac/4.5/Isaac/Sensors/Slamtec/materials/materials.usd",
+          "local_file_sha256": null
+        },
+        {
+          "identifier": "https://omniverse-content-production.s3-us-west-2.amazonaws.com/Assets/Isaac/4.5/Isaac/Sensors/HESAI/XT-32.usd",
+          "resolved_path": "https://omniverse-content-production.s3-us-west-2.amazonaws.com/Assets/Isaac/4.5/Isaac/Sensors/HESAI/XT-32.usd",
+          "local_file_sha256": null
+        },
+        {
+          "identifier": "https://omniverse-content-production.s3-us-west-2.amazonaws.com/Assets/Isaac/4.5/Isaac/Sensors/HESAI/materials/materials.usd",
+          "resolved_path": "https://omniverse-content-production.s3-us-west-2.amazonaws.com/Assets/Isaac/4.5/Isaac/Sensors/HESAI/materials/materials.usd",
+          "local_file_sha256": null
+        }
+      ]
+    },
+    "native_geometry": {
+      "schema_version": 1,
+      "run_id": "ed8c060d046149d9af24216992e9e0a0",
+      "robot_path": "/World/NovaCarter",
+      "chassis_path": "/World/NovaCarter/chassis_link",
+      "asset_relative_path": "/Isaac/Robots/NVIDIA/Carter/nova_carter/nova_carter.usd",
+      "meters_per_unit": 1.0,
+      "up_axis": "Z",
+      "robot_world_from_local": [
+        [
+          1.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "chassis_world_from_local": [
+        [
+          1.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0,
+          0.15000000596046448
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "rigid_bodies": [
+        {
+          "path": "/World/NovaCarter/chassis_link",
+          "enabled": true,
+          "kinematic": false,
+          "world_from_local": [
+            [
+              1.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              1.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              1.0,
+              0.15000000596046448
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        },
+        {
+          "path": "/World/NovaCarter/wheel_left",
+          "enabled": true,
+          "kinematic": false,
+          "world_from_local": [
+            [
+              1.0,
+              0.0,
+              0.0,
+              -4.437751968851267e-09
+            ],
+            [
+              0.0,
+              -2.220446049250313e-16,
+              1.0,
+              0.20659999385625127
+            ],
+            [
+              0.0,
+              -1.0,
+              -2.220446049250313e-16,
+              0.13999999687075615
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        },
+        {
+          "path": "/World/NovaCarter/wheel_right",
+          "enabled": true,
+          "kinematic": false,
+          "world_from_local": [
+            [
+              1.0,
+              0.0,
+              0.0,
+              -4.3923499943535754e-09
+            ],
+            [
+              0.0,
+              -2.220446049250313e-16,
+              1.0,
+              -0.20659999385625127
+            ],
+            [
+              0.0,
+              -1.0,
+              -2.220446049250313e-16,
+              0.13999999687075615
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        },
+        {
+          "path": "/World/NovaCarter/caster_frame_base",
+          "enabled": true,
+          "kinematic": false,
+          "world_from_local": [
+            [
+              1.1102230246251565e-16,
+              0.0,
+              -1.0,
+              -0.47195
+            ],
+            [
+              1.0,
+              1.1102230246251565e-16,
+              1.6653345369377348e-16,
+              0.0
+            ],
+            [
+              1.6653345369377348e-16,
+              -1.0,
+              0.0,
+              0.22289
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        },
+        {
+          "path": "/World/NovaCarter/caster_swivel_left",
+          "enabled": true,
+          "kinematic": false,
+          "world_from_local": [
+            [
+              -2.220446049250313e-16,
+              0.0,
+              -1.0,
+              -0.47195
+            ],
+            [
+              0.0,
+              1.0,
+              0.0,
+              0.1323
+            ],
+            [
+              1.0,
+              0.0,
+              -2.220446049250313e-16,
+              0.1917
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        },
+        {
+          "path": "/World/NovaCarter/caster_swivel_right",
+          "enabled": true,
+          "kinematic": false,
+          "world_from_local": [
+            [
+              -2.220446049250313e-16,
+              0.0,
+              -1.0,
+              -0.47195
+            ],
+            [
+              0.0,
+              1.0,
+              0.0,
+              -0.1323
+            ],
+            [
+              1.0,
+              0.0,
+              -2.220446049250313e-16,
+              0.1917
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        },
+        {
+          "path": "/World/NovaCarter/caster_wheel_left",
+          "enabled": true,
+          "kinematic": false,
+          "world_from_local": [
+            [
+              1.0,
+              -3.1889913060320274e-17,
+              -2.1699804382901786e-16,
+              -0.5119490974213263
+            ],
+            [
+              2.1699804382901786e-16,
+              -2.220446049250313e-16,
+              1.0,
+              0.1322499583537975
+            ],
+            [
+              -3.188991306032032e-17,
+              -1.0,
+              -2.220446049250313e-16,
+              0.07630710720401011
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        },
+        {
+          "path": "/World/NovaCarter/caster_wheel_right",
+          "enabled": true,
+          "kinematic": false,
+          "world_from_local": [
+            [
+              1.0,
+              2.9076819872290127e-16,
+              -4.3557325739568764e-16,
+              -0.5119491316986692
+            ],
+            [
+              4.3557325739568764e-16,
+              -2.220446049250313e-16,
+              1.0,
+              -0.13224996706961756
+            ],
+            [
+              2.9076819872290117e-16,
+              -1.0,
+              -2.220446049250313e-16,
+              0.07630710720401011
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        }
+      ],
+      "articulation_roots": [
+        "/World/NovaCarter/chassis_link"
+      ],
+      "colliders": [
+        {
+          "path": "/World/NovaCarter/chassis_link/visual",
+          "body_path": "/World/NovaCarter/chassis_link",
+          "shape_type": "Xform",
+          "world_aabb_m": {
+            "center_m": [
+              -0.23382392153143883,
+              2.60770320892334e-07,
+              0.4279409907758236
+            ],
+            "size_m": [
+              0.7070545628666878,
+              0.47694210708141327,
+              0.4038819745182991
+            ]
+          },
+          "extent_sources": [
+            {
+              "path": "/World/NovaCarter/chassis_link/visual/skirt",
+              "type": "Mesh",
+              "authored_extent": [
+                [
+                  -0.5873512029647827,
+                  -0.23847079277038574,
+                  0.07599999755620956
+                ],
+                [
+                  0.07689887285232544,
+                  0.23847131431102753,
+                  0.2604520916938782
+                ]
+              ],
+              "computed_extent": [
+                [
+                  -0.5873512029647827,
+                  -0.23847079277038574,
+                  0.07599999755620956
+                ],
+                [
+                  0.07689887285232544,
+                  0.23847131431102753,
+                  0.2604520916938782
+                ]
+              ],
+              "world_aabb_m": {
+                "center_m": [
+                  -0.25522616505622864,
+                  2.60770320892334e-07,
+                  0.31822605058550835
+                ],
+                "size_m": [
+                  0.6642500758171082,
+                  0.47694210708141327,
+                  0.1844520941376686
+                ]
+              }
+            },
+            {
+              "path": "/World/NovaCarter/chassis_link/visual/top_body",
+              "type": "Mesh",
+              "authored_extent": [
+                [
+                  -0.5802985429763794,
+                  -0.1680642068386078,
+                  0.2584521174430847
+                ],
+                [
+                  0.11970335990190506,
+                  0.16806060075759888,
+                  0.47988197207450867
+                ]
+              ],
+              "computed_extent": [
+                [
+                  -0.5802985429763794,
+                  -0.1680642068386078,
+                  0.2584521174430847
+                ],
+                [
+                  0.11970335990190506,
+                  0.16806060075759888,
+                  0.47988197207450867
+                ]
+              ],
+              "world_aabb_m": {
+                "center_m": [
+                  -0.23029759153723717,
+                  -1.8030405044555664e-06,
+                  0.5191670507192612
+                ],
+                "size_m": [
+                  0.7000019028782845,
+                  0.33612480759620667,
+                  0.22142985463142395
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "path": "/World/NovaCarter/wheel_left/Colliders/Cylinder",
+          "body_path": "/World/NovaCarter/wheel_left",
+          "shape_type": "Cylinder",
+          "world_aabb_m": {
+            "center_m": [
+              -4.437751971453352e-09,
+              0.20659999385625127,
+              0.13999999687075615
+            ],
+            "size_m": [
+              0.25,
+              0.05999999865889555,
+              0.25
+            ]
+          },
+          "extent_sources": [
+            {
+              "path": "/World/NovaCarter/wheel_left/Colliders/Cylinder",
+              "type": "Cylinder",
+              "authored_extent": [
+                [
+                  -0.125,
+                  -0.125,
+                  -0.029999999329447746
+                ],
+                [
+                  0.125,
+                  0.125,
+                  0.029999999329447746
+                ]
+              ],
+              "computed_extent": [
+                [
+                  -0.125,
+                  -0.125,
+                  -0.029999999329447746
+                ],
+                [
+                  0.125,
+                  0.125,
+                  0.029999999329447746
+                ]
+              ],
+              "world_aabb_m": {
+                "center_m": [
+                  -4.437751971453352e-09,
+                  0.20659999385625127,
+                  0.13999999687075615
+                ],
+                "size_m": [
+                  0.25,
+                  0.05999999865889555,
+                  0.25
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "path": "/World/NovaCarter/wheel_left/Colliders/Cylinder_01",
+          "body_path": "/World/NovaCarter/wheel_left",
+          "shape_type": "Cylinder",
+          "world_aabb_m": {
+            "center_m": [
+              -4.437751971453352e-09,
+              0.20659999385625127,
+              0.13999999687075615
+            ],
+            "size_m": [
+              0.19999998807907104,
+              0.07999999821186071,
+              0.19999998807907104
+            ]
+          },
+          "extent_sources": [
+            {
+              "path": "/World/NovaCarter/wheel_left/Colliders/Cylinder_01",
+              "type": "Cylinder",
+              "authored_extent": [
+                [
+                  -0.09999999403953552,
+                  -0.09999999403953552,
+                  -0.03999999910593033
+                ],
+                [
+                  0.09999999403953552,
+                  0.09999999403953552,
+                  0.03999999910593033
+                ]
+              ],
+              "computed_extent": [
+                [
+                  -0.09999999403953552,
+                  -0.09999999403953552,
+                  -0.03999999910593033
+                ],
+                [
+                  0.09999999403953552,
+                  0.09999999403953552,
+                  0.03999999910593033
+                ]
+              ],
+              "world_aabb_m": {
+                "center_m": [
+                  -4.437751971453352e-09,
+                  0.20659999385625127,
+                  0.13999999687075615
+                ],
+                "size_m": [
+                  0.19999998807907104,
+                  0.07999999821186071,
+                  0.19999998807907104
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "path": "/World/NovaCarter/wheel_left/Colliders/Cylinder_02",
+          "body_path": "/World/NovaCarter/wheel_left",
+          "shape_type": "Cylinder",
+          "world_aabb_m": {
+            "center_m": [
+              -4.437751971453352e-09,
+              0.20659999385625127,
+              0.13999999687075615
+            ],
+            "size_m": [
+              0.2800000011920929,
+              0.01999999955296522,
+              0.2800000011920929
+            ]
+          },
+          "extent_sources": [
+            {
+              "path": "/World/NovaCarter/wheel_left/Colliders/Cylinder_02",
+              "type": "Cylinder",
+              "authored_extent": [
+                [
+                  -0.14000000059604645,
+                  -0.14000000059604645,
+                  -0.009999999776482582
+                ],
+                [
+                  0.14000000059604645,
+                  0.14000000059604645,
+                  0.009999999776482582
+                ]
+              ],
+              "computed_extent": [
+                [
+                  -0.14000000059604645,
+                  -0.14000000059604645,
+                  -0.009999999776482582
+                ],
+                [
+                  0.14000000059604645,
+                  0.14000000059604645,
+                  0.009999999776482582
+                ]
+              ],
+              "world_aabb_m": {
+                "center_m": [
+                  -4.437751971453352e-09,
+                  0.20659999385625127,
+                  0.13999999687075615
+                ],
+                "size_m": [
+                  0.2800000011920929,
+                  0.01999999955296522,
+                  0.2800000011920929
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "path": "/World/NovaCarter/wheel_right/Colliders/Cylinder",
+          "body_path": "/World/NovaCarter/wheel_right",
+          "shape_type": "Cylinder",
+          "world_aabb_m": {
+            "center_m": [
+              -4.392349990667288e-09,
+              -0.20659999385625127,
+              0.13999999687075615
+            ],
+            "size_m": [
+              0.25,
+              0.05999999865889555,
+              0.25
+            ]
+          },
+          "extent_sources": [
+            {
+              "path": "/World/NovaCarter/wheel_right/Colliders/Cylinder",
+              "type": "Cylinder",
+              "authored_extent": [
+                [
+                  -0.125,
+                  -0.125,
+                  -0.029999999329447746
+                ],
+                [
+                  0.125,
+                  0.125,
+                  0.029999999329447746
+                ]
+              ],
+              "computed_extent": [
+                [
+                  -0.125,
+                  -0.125,
+                  -0.029999999329447746
+                ],
+                [
+                  0.125,
+                  0.125,
+                  0.029999999329447746
+                ]
+              ],
+              "world_aabb_m": {
+                "center_m": [
+                  -4.392349990667288e-09,
+                  -0.20659999385625127,
+                  0.13999999687075615
+                ],
+                "size_m": [
+                  0.25,
+                  0.05999999865889555,
+                  0.25
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "path": "/World/NovaCarter/wheel_right/Colliders/Cylinder_01",
+          "body_path": "/World/NovaCarter/wheel_right",
+          "shape_type": "Cylinder",
+          "world_aabb_m": {
+            "center_m": [
+              -4.392349997606182e-09,
+              -0.20659999385625127,
+              0.13999999687075615
+            ],
+            "size_m": [
+              0.19999998807907104,
+              0.07999999821186071,
+              0.19999998807907104
+            ]
+          },
+          "extent_sources": [
+            {
+              "path": "/World/NovaCarter/wheel_right/Colliders/Cylinder_01",
+              "type": "Cylinder",
+              "authored_extent": [
+                [
+                  -0.09999999403953552,
+                  -0.09999999403953552,
+                  -0.03999999910593033
+                ],
+                [
+                  0.09999999403953552,
+                  0.09999999403953552,
+                  0.03999999910593033
+                ]
+              ],
+              "computed_extent": [
+                [
+                  -0.09999999403953552,
+                  -0.09999999403953552,
+                  -0.03999999910593033
+                ],
+                [
+                  0.09999999403953552,
+                  0.09999999403953552,
+                  0.03999999910593033
+                ]
+              ],
+              "world_aabb_m": {
+                "center_m": [
+                  -4.392349997606182e-09,
+                  -0.20659999385625127,
+                  0.13999999687075615
+                ],
+                "size_m": [
+                  0.19999998807907104,
+                  0.07999999821186071,
+                  0.19999998807907104
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "path": "/World/NovaCarter/wheel_right/Colliders/Cylinder_02",
+          "body_path": "/World/NovaCarter/wheel_right",
+          "shape_type": "Cylinder",
+          "world_aabb_m": {
+            "center_m": [
+              -4.392349983728394e-09,
+              -0.20659999385625127,
+              0.13999999687075615
+            ],
+            "size_m": [
+              0.2800000011920929,
+              0.01999999955296522,
+              0.2800000011920929
+            ]
+          },
+          "extent_sources": [
+            {
+              "path": "/World/NovaCarter/wheel_right/Colliders/Cylinder_02",
+              "type": "Cylinder",
+              "authored_extent": [
+                [
+                  -0.14000000059604645,
+                  -0.14000000059604645,
+                  -0.009999999776482582
+                ],
+                [
+                  0.14000000059604645,
+                  0.14000000059604645,
+                  0.009999999776482582
+                ]
+              ],
+              "computed_extent": [
+                [
+                  -0.14000000059604645,
+                  -0.14000000059604645,
+                  -0.009999999776482582
+                ],
+                [
+                  0.14000000059604645,
+                  0.14000000059604645,
+                  0.009999999776482582
+                ]
+              ],
+              "world_aabb_m": {
+                "center_m": [
+                  -4.392349983728394e-09,
+                  -0.20659999385625127,
+                  0.13999999687075615
+                ],
+                "size_m": [
+                  0.2800000011920929,
+                  0.01999999955296522,
+                  0.2800000011920929
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "path": "/World/NovaCarter/caster_frame_base/visual",
+          "body_path": "/World/NovaCarter/caster_frame_base",
+          "shape_type": "Xform",
+          "world_aabb_m": {
+            "center_m": [
+              -0.47195119082700254,
+              4.625165020555322e-05,
+              0.1995071062270007
+            ],
+            "size_m": [
+              0.09950265315177442,
+              0.32800077940751443,
+              0.07976999886670921
+            ]
+          },
+          "extent_sources": [
+            {
+              "path": "/World/NovaCarter/caster_frame_base/visual/Group_1",
+              "type": "Mesh",
+              "authored_extent": [
+                [
+                  0.25366249680519104,
+                  -0.27161121368408203,
+                  0.2161400020122528
+                ],
+                [
+                  0.5816624760627747,
+                  -0.17211119830608368,
+                  0.2959100008010864
+                ]
+              ],
+              "computed_extent": [
+                [
+                  0.25366249680519104,
+                  -0.27161121368408203,
+                  0.2161400020122528
+                ],
+                [
+                  0.5816624760627747,
+                  -0.17211119830608368,
+                  0.2959100008010864
+                ]
+              ],
+              "world_aabb_m": {
+                "center_m": [
+                  -0.47195119082700254,
+                  4.625165020555322e-05,
+                  0.1995071062270007
+                ],
+                "size_m": [
+                  0.09950265315177442,
+                  0.32800077940751443,
+                  0.07976999886670921
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "path": "/World/NovaCarter/caster_swivel_left/Colliders/Cube",
+          "body_path": "/World/NovaCarter/caster_swivel_left",
+          "shape_type": "Mesh",
+          "world_aabb_m": {
+            "center_m": [
+              -0.4941488059840161,
+              0.1323,
+              0.11778569909765091
+            ],
+            "size_m": [
+              0.054999999701976776,
+              0.07999999821186066,
+              0.11500000208616257
+            ]
+          },
+          "extent_sources": [
+            {
+              "path": "/World/NovaCarter/caster_swivel_left/Colliders/Cube",
+              "type": "Mesh",
+              "authored_extent": [
+                [
+                  -0.5,
+                  -0.5,
+                  -0.5
+                ],
+                [
+                  0.5,
+                  0.5,
+                  0.5
+                ]
+              ],
+              "computed_extent": [
+                [
+                  -0.5,
+                  -0.5,
+                  -0.5
+                ],
+                [
+                  0.5,
+                  0.5,
+                  0.5
+                ]
+              ],
+              "world_aabb_m": {
+                "center_m": [
+                  -0.4941488059840161,
+                  0.1323,
+                  0.11778569909765091
+                ],
+                "size_m": [
+                  0.054999999701976776,
+                  0.07999999821186066,
+                  0.11500000208616257
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "path": "/World/NovaCarter/caster_swivel_right/Colliders/Cube",
+          "body_path": "/World/NovaCarter/caster_swivel_right",
+          "shape_type": "Mesh",
+          "world_aabb_m": {
+            "center_m": [
+              -0.4941488059840162,
+              -0.1323,
+              0.11778569909765091
+            ],
+            "size_m": [
+              0.05499999970197683,
+              0.07999999821186066,
+              0.11500000208616257
+            ]
+          },
+          "extent_sources": [
+            {
+              "path": "/World/NovaCarter/caster_swivel_right/Colliders/Cube",
+              "type": "Mesh",
+              "authored_extent": [
+                [
+                  -0.5,
+                  -0.5,
+                  -0.5
+                ],
+                [
+                  0.5,
+                  0.5,
+                  0.5
+                ]
+              ],
+              "computed_extent": [
+                [
+                  -0.5,
+                  -0.5,
+                  -0.5
+                ],
+                [
+                  0.5,
+                  0.5,
+                  0.5
+                ]
+              ],
+              "world_aabb_m": {
+                "center_m": [
+                  -0.4941488059840162,
+                  -0.1323,
+                  0.11778569909765091
+                ],
+                "size_m": [
+                  0.05499999970197683,
+                  0.07999999821186066,
+                  0.11500000208616257
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "path": "/World/NovaCarter/caster_wheel_left/Colliders/Cylinder",
+          "body_path": "/World/NovaCarter/caster_wheel_left",
+          "shape_type": "Cylinder",
+          "world_aabb_m": {
+            "center_m": [
+              -0.5119490974213263,
+              0.1322499583537975,
+              0.07630710720401011
+            ],
+            "size_m": [
+              0.1509999930858612,
+              0.02499999850988399,
+              0.15099999308586123
+            ]
+          },
+          "extent_sources": [
+            {
+              "path": "/World/NovaCarter/caster_wheel_left/Colliders/Cylinder",
+              "type": "Cylinder",
+              "authored_extent": [
+                [
+                  -50.0,
+                  -50.0,
+                  -50.0
+                ],
+                [
+                  50.0,
+                  50.0,
+                  50.0
+                ]
+              ],
+              "computed_extent": [
+                [
+                  -0.0754999965429306,
+                  -0.0754999965429306,
+                  -0.01249999925494194
+                ],
+                [
+                  0.0754999965429306,
+                  0.0754999965429306,
+                  0.01249999925494194
+                ]
+              ],
+              "world_aabb_m": {
+                "center_m": [
+                  -0.5119490974213263,
+                  0.1322499583537975,
+                  0.07630710720401011
+                ],
+                "size_m": [
+                  0.1509999930858612,
+                  0.02499999850988399,
+                  0.15099999308586123
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "path": "/World/NovaCarter/caster_wheel_right/Colliders/Cylinder",
+          "body_path": "/World/NovaCarter/caster_wheel_right",
+          "shape_type": "Cylinder",
+          "world_aabb_m": {
+            "center_m": [
+              -0.5119490974213261,
+              -0.13224996706961756,
+              0.07630710720401016
+            ],
+            "size_m": [
+              0.1509999930858612,
+              0.02499999850988399,
+              0.15099999308586126
+            ]
+          },
+          "extent_sources": [
+            {
+              "path": "/World/NovaCarter/caster_wheel_right/Colliders/Cylinder",
+              "type": "Cylinder",
+              "authored_extent": [
+                [
+                  -50.0,
+                  -50.0,
+                  -50.0
+                ],
+                [
+                  50.0,
+                  50.0,
+                  50.0
+                ]
+              ],
+              "computed_extent": [
+                [
+                  -0.0754999965429306,
+                  -0.0754999965429306,
+                  -0.01249999925494194
+                ],
+                [
+                  0.0754999965429306,
+                  0.0754999965429306,
+                  0.01249999925494194
+                ]
+              ],
+              "world_aabb_m": {
+                "center_m": [
+                  -0.5119490974213261,
+                  -0.13224996706961756,
+                  0.07630710720401016
+                ],
+                "size_m": [
+                  0.1509999930858612,
+                  0.02499999850988399,
+                  0.15099999308586126
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "sensors": [
+        {
+          "path": "/World/NovaCarter/chassis_link/sensors/front_hawk/left/camera_left",
+          "type": "Camera",
+          "applied_schemas": [],
+          "classification": "typed camera",
+          "world_from_local": [
+            [
+              -4.440892098500626e-16,
+              -2.220446049250313e-16,
+              -1.0000000000000002,
+              0.1003
+            ],
+            [
+              -1.0000000000000002,
+              -4.440892098500626e-16,
+              2.220446049250313e-16,
+              0.074998
+            ],
+            [
+              -2.220446049250313e-16,
+              1.0000000000000002,
+              -4.440892098500626e-16,
+              0.49590000596046446
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        },
+        {
+          "path": "/World/NovaCarter/chassis_link/sensors/front_hawk/right/camera_right",
+          "type": "Camera",
+          "applied_schemas": [],
+          "classification": "typed camera",
+          "world_from_local": [
+            [
+              -4.440892098500626e-16,
+              -2.220446049250313e-16,
+              -1.0000000000000002,
+              0.1003
+            ],
+            [
+              -1.0000000000000002,
+              -4.440892098500626e-16,
+              2.220446049250313e-16,
+              -0.075002
+            ],
+            [
+              -2.220446049250313e-16,
+              1.0000000000000002,
+              -4.440892098500626e-16,
+              0.49590000596046446
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        },
+        {
+          "path": "/World/NovaCarter/chassis_link/sensors/left_hawk/left/camera_left",
+          "type": "Camera",
+          "applied_schemas": [],
+          "classification": "typed camera",
+          "world_from_local": [
+            [
+              1.0000000000000002,
+              4.440892098500626e-16,
+              4.930380657631324e-32,
+              -0.43043
+            ],
+            [
+              -2.2204460492503126e-16,
+              -2.220446049250312e-16,
+              -1.0000000000000002,
+              0.15
+            ],
+            [
+              -2.220446049250313e-16,
+              1.0000000000000002,
+              -4.440892098500626e-16,
+              0.49590000596046446
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        },
+        {
+          "path": "/World/NovaCarter/chassis_link/sensors/left_hawk/right/camera_right",
+          "type": "Camera",
+          "applied_schemas": [],
+          "classification": "typed camera",
+          "world_from_local": [
+            [
+              1.0000000000000002,
+              4.440892098500626e-16,
+              4.930380657631324e-32,
+              -0.28042999999999996
+            ],
+            [
+              -2.2204460492503126e-16,
+              -2.220446049250312e-16,
+              -1.0000000000000002,
+              0.15000000000000002
+            ],
+            [
+              -2.220446049250313e-16,
+              1.0000000000000002,
+              -4.440892098500626e-16,
+              0.49590000596046446
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        },
+        {
+          "path": "/World/NovaCarter/chassis_link/sensors/right_hawk/left/camera_left",
+          "type": "Camera",
+          "applied_schemas": [],
+          "classification": "typed camera",
+          "world_from_local": [
+            [
+              -1.0000000000000004,
+              -4.440892098500626e-16,
+              4.440892098500627e-16,
+              -0.28044
+            ],
+            [
+              6.661338147750941e-16,
+              2.2204460492503146e-16,
+              1.0000000000000004,
+              -0.15
+            ],
+            [
+              -2.220446049250313e-16,
+              1.0000000000000002,
+              -4.440892098500626e-16,
+              0.49590000596046446
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        },
+        {
+          "path": "/World/NovaCarter/chassis_link/sensors/right_hawk/right/camera_right",
+          "type": "Camera",
+          "applied_schemas": [],
+          "classification": "typed camera",
+          "world_from_local": [
+            [
+              -1.0000000000000004,
+              -4.440892098500626e-16,
+              4.440892098500627e-16,
+              -0.43044000000000004
+            ],
+            [
+              6.661338147750941e-16,
+              2.2204460492503146e-16,
+              1.0000000000000004,
+              -0.14999999999999997
+            ],
+            [
+              -2.220446049250313e-16,
+              1.0000000000000002,
+              -4.440892098500626e-16,
+              0.49590000596046446
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        },
+        {
+          "path": "/World/NovaCarter/chassis_link/sensors/back_hawk/left/camera_left",
+          "type": "Camera",
+          "applied_schemas": [],
+          "classification": "typed camera",
+          "world_from_local": [
+            [
+              5.66553889764798e-16,
+              2.2204460492503136e-16,
+              1.0000000000000002,
+              -0.5637
+            ],
+            [
+              1.0000000000000002,
+              4.4408920985006257e-16,
+              -3.4450928483976665e-16,
+              -0.074998
+            ],
+            [
+              -2.220446049250313e-16,
+              1.0000000000000002,
+              -4.440892098500626e-16,
+              0.49590000596046446
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        },
+        {
+          "path": "/World/NovaCarter/chassis_link/sensors/back_hawk/right/camera_right",
+          "type": "Camera",
+          "applied_schemas": [],
+          "classification": "typed camera",
+          "world_from_local": [
+            [
+              5.66553889764798e-16,
+              2.2204460492503136e-16,
+              1.0000000000000002,
+              -0.5637
+            ],
+            [
+              1.0000000000000002,
+              4.4408920985006257e-16,
+              -3.4450928483976665e-16,
+              0.075002
+            ],
+            [
+              -2.220446049250313e-16,
+              1.0000000000000002,
+              -4.440892098500626e-16,
+              0.49590000596046446
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        },
+        {
+          "path": "/World/NovaCarter/chassis_link/sensors/front_RPLidar",
+          "type": "Xform",
+          "applied_schemas": [],
+          "classification": "lidar type/schema/name clearance candidate",
+          "world_from_local": [
+            [
+              1.0,
+              0.0,
+              0.0,
+              0.026
+            ],
+            [
+              0.0,
+              1.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              1.0,
+              0.5680000059604644
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        },
+        {
+          "path": "/World/NovaCarter/chassis_link/sensors/front_RPLidar/RPLIDAR_S2E",
+          "type": "Camera",
+          "applied_schemas": [
+            "IsaacRtxLidarSensorAPI"
+          ],
+          "classification": "typed camera",
+          "world_from_local": [
+            [
+              -1.0,
+              -1.2246467991473532e-16,
+              0.0,
+              0.026
+            ],
+            [
+              1.2246467991473532e-16,
+              -1.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              1.0,
+              0.5680000059604644
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        },
+        {
+          "path": "/World/NovaCarter/chassis_link/sensors/front_RPLidar/RPLidar_mesh",
+          "type": "Mesh",
+          "applied_schemas": [],
+          "classification": "lidar type/schema/name clearance candidate",
+          "world_from_local": [
+            [
+              1.0,
+              0.0,
+              0.0,
+              0.026
+            ],
+            [
+              0.0,
+              1.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              1.0,
+              0.5475000059604644
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        },
+        {
+          "path": "/World/NovaCarter/chassis_link/sensors/rear_RPLidar",
+          "type": "Xform",
+          "applied_schemas": [],
+          "classification": "lidar type/schema/name clearance candidate",
+          "world_from_local": [
+            [
+              -1.0,
+              -1.2246467991473532e-16,
+              0.0,
+              -0.4894
+            ],
+            [
+              1.2246467991473532e-16,
+              -1.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              1.0,
+              0.5680000059604644
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        },
+        {
+          "path": "/World/NovaCarter/chassis_link/sensors/rear_RPLidar/RPLIDAR_S2E",
+          "type": "Camera",
+          "applied_schemas": [
+            "IsaacRtxLidarSensorAPI"
+          ],
+          "classification": "typed camera",
+          "world_from_local": [
+            [
+              1.0,
+              2.4492935982947064e-16,
+              0.0,
+              -0.4894
+            ],
+            [
+              -2.4492935982947064e-16,
+              1.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              1.0,
+              0.5680000059604644
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        },
+        {
+          "path": "/World/NovaCarter/chassis_link/sensors/rear_RPLidar/RPLidar_mesh",
+          "type": "Mesh",
+          "applied_schemas": [],
+          "classification": "lidar type/schema/name clearance candidate",
+          "world_from_local": [
+            [
+              -1.0,
+              -1.2246467991473532e-16,
+              0.0,
+              -0.4894
+            ],
+            [
+              1.2246467991473532e-16,
+              -1.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              1.0,
+              0.5475000059604644
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        },
+        {
+          "path": "/World/NovaCarter/chassis_link/sensors/XT_32/PandarXT_32_10hz",
+          "type": "Camera",
+          "applied_schemas": [
+            "IsaacRtxLidarSensorAPI"
+          ],
+          "classification": "typed camera",
+          "world_from_local": [
+            [
+              1.0,
+              0.0,
+              0.0,
+              -0.2317
+            ],
+            [
+              0.0,
+              1.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              1.0,
+              0.6760000059604645
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        },
+        {
+          "path": "/World/NovaCarter/chassis_link/sensors/front_owl/camera",
+          "type": "Camera",
+          "applied_schemas": [],
+          "classification": "typed camera",
+          "world_from_local": [
+            [
+              1.1102230246251565e-16,
+              0.0,
+              -1.0,
+              0.104344
+            ],
+            [
+              -1.0,
+              1.1102230246251565e-16,
+              -1.6653345369377348e-16,
+              0.0
+            ],
+            [
+              1.6653345369377348e-16,
+              1.0,
+              0.0,
+              0.5243900059604645
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        },
+        {
+          "path": "/World/NovaCarter/chassis_link/sensors/left_owl/camera",
+          "type": "Camera",
+          "applied_schemas": [],
+          "classification": "typed camera",
+          "world_from_local": [
+            [
+              -1.0000000000000002,
+              1.1102230246251568e-16,
+              5.551115123125778e-17,
+              -0.231696
+            ],
+            [
+              1.1102230246251563e-16,
+              -2.465190328815662e-32,
+              1.0000000000000002,
+              -0.154101
+            ],
+            [
+              1.6653345369377348e-16,
+              1.0,
+              0.0,
+              0.49439000596046445
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        },
+        {
+          "path": "/World/NovaCarter/chassis_link/sensors/right_owl/camera",
+          "type": "Camera",
+          "applied_schemas": [],
+          "classification": "typed camera",
+          "world_from_local": [
+            [
+              1.0000000000000002,
+              -1.1102230246251568e-16,
+              3.8857805861880484e-16,
+              -0.231696
+            ],
+            [
+              3.3306690738754696e-16,
+              -2.465190328815662e-32,
+              -1.0000000000000002,
+              0.154101
+            ],
+            [
+              1.6653345369377348e-16,
+              1.0,
+              0.0,
+              0.49439000596046445
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        },
+        {
+          "path": "/World/NovaCarter/chassis_link/sensors/back_owl/camera",
+          "type": "Camera",
+          "applied_schemas": [],
+          "classification": "typed camera",
+          "world_from_local": [
+            [
+              1.1442377452219667e-17,
+              -1.359631073446891e-32,
+              1.0,
+              -0.567737
+            ],
+            [
+              1.0,
+              -1.1102230246251565e-16,
+              4.406877377903816e-17,
+              0.0
+            ],
+            [
+              1.6653345369377348e-16,
+              1.0,
+              0.0,
+              0.5243900059604645
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        }
+      ],
+      "composition_errors": [],
+      "source": "geometry-computed local extents transformed by native XformCache before stepping; not cooked hull, ray visibility or mount strength",
+      "sensor_keepout_source": "authored 0.16m cube around measured camera/lidar frame candidates; lidar name matches are conservative anchors, not proof of a functioning sensor or FOV",
+      "prims_inspected": 1837
+    },
+    "usd_version": [
+      0,
+      22,
+      11
+    ],
+    "admission": {
+      "schema_version": 1,
+      "run_id": "ed8c060d046149d9af24216992e9e0a0",
+      "admitted": true,
+      "rejections": [],
+      "manifest_sha256": "822f2521dd6477abeed193befbd133cfaf294629340bd47bfc4a5cdb6429d96d",
+      "robot_path": "/World/NovaCarter",
+      "chassis_path": "/World/NovaCarter/chassis_link",
+      "carrier_from_chassis": [
+        [
+          1.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "mount_faces": [
+        {
+          "post": "post_m_m",
+          "candidate_chassis_faces": [
+            "/World/NovaCarter/chassis_link/visual"
+          ]
+        },
+        {
+          "post": "post_m_p",
+          "candidate_chassis_faces": [
+            "/World/NovaCarter/chassis_link/visual"
+          ]
+        },
+        {
+          "post": "post_p_m",
+          "candidate_chassis_faces": [
+            "/World/NovaCarter/chassis_link/visual"
+          ]
+        },
+        {
+          "post": "post_p_p",
+          "candidate_chassis_faces": [
+            "/World/NovaCarter/chassis_link/visual"
+          ]
+        }
+      ],
+      "original_collision_aabb_radius_m": 0.6339164009342291,
+      "loaded_collision_aabb_radius_m": 0.6339164009342291,
+      "unchanged_configured_radius_m": 0.6371090915442774,
+      "measured_colliders_in_chassis": [
+        {
+          "center_m": [
+            -0.23382392153143883,
+            2.60770320892334e-07,
+            0.2779409848153591
+          ],
+          "size_m": [
+            0.7070545628666878,
+            0.47694210708141327,
+            0.4038819745182991
+          ],
+          "path": "/World/NovaCarter/chassis_link/visual",
+          "body_path": "/World/NovaCarter/chassis_link"
+        },
+        {
+          "center_m": [
+            -4.437751971453352e-09,
+            0.20659999385625127,
+            -0.010000009089708328
+          ],
+          "size_m": [
+            0.25,
+            0.05999999865889555,
+            0.25
+          ],
+          "path": "/World/NovaCarter/wheel_left/Colliders/Cylinder",
+          "body_path": "/World/NovaCarter/wheel_left"
+        },
+        {
+          "center_m": [
+            -4.437751971453352e-09,
+            0.20659999385625127,
+            -0.010000009089708328
+          ],
+          "size_m": [
+            0.19999998807907104,
+            0.07999999821186071,
+            0.19999998807907104
+          ],
+          "path": "/World/NovaCarter/wheel_left/Colliders/Cylinder_01",
+          "body_path": "/World/NovaCarter/wheel_left"
+        },
+        {
+          "center_m": [
+            -4.437751971453352e-09,
+            0.20659999385625127,
+            -0.010000009089708328
+          ],
+          "size_m": [
+            0.2800000011920929,
+            0.01999999955296522,
+            0.2800000011920929
+          ],
+          "path": "/World/NovaCarter/wheel_left/Colliders/Cylinder_02",
+          "body_path": "/World/NovaCarter/wheel_left"
+        },
+        {
+          "center_m": [
+            -4.392349983728394e-09,
+            -0.20659999385625127,
+            -0.010000009089708328
+          ],
+          "size_m": [
+            0.25,
+            0.05999999865889555,
+            0.25
+          ],
+          "path": "/World/NovaCarter/wheel_right/Colliders/Cylinder",
+          "body_path": "/World/NovaCarter/wheel_right"
+        },
+        {
+          "center_m": [
+            -4.392349997606182e-09,
+            -0.20659999385625127,
+            -0.010000009089708328
+          ],
+          "size_m": [
+            0.19999998807907104,
+            0.07999999821186071,
+            0.19999998807907104
+          ],
+          "path": "/World/NovaCarter/wheel_right/Colliders/Cylinder_01",
+          "body_path": "/World/NovaCarter/wheel_right"
+        },
+        {
+          "center_m": [
+            -4.392349983728394e-09,
+            -0.20659999385625127,
+            -0.010000009089708328
+          ],
+          "size_m": [
+            0.2800000011920929,
+            0.01999999955296522,
+            0.2800000011920929
+          ],
+          "path": "/World/NovaCarter/wheel_right/Colliders/Cylinder_02",
+          "body_path": "/World/NovaCarter/wheel_right"
+        },
+        {
+          "center_m": [
+            -0.47195119082700254,
+            4.625165020555322e-05,
+            0.049507100266536236
+          ],
+          "size_m": [
+            0.09950265315177442,
+            0.32800077940751443,
+            0.07976999886670921
+          ],
+          "path": "/World/NovaCarter/caster_frame_base/visual",
+          "body_path": "/World/NovaCarter/caster_frame_base"
+        },
+        {
+          "center_m": [
+            -0.4941488059840161,
+            0.1323,
+            -0.03221430686281357
+          ],
+          "size_m": [
+            0.054999999701976776,
+            0.07999999821186066,
+            0.11500000208616257
+          ],
+          "path": "/World/NovaCarter/caster_swivel_left/Colliders/Cube",
+          "body_path": "/World/NovaCarter/caster_swivel_left"
+        },
+        {
+          "center_m": [
+            -0.4941488059840162,
+            -0.1323,
+            -0.03221430686281357
+          ],
+          "size_m": [
+            0.054999999701976776,
+            0.07999999821186066,
+            0.11500000208616257
+          ],
+          "path": "/World/NovaCarter/caster_swivel_right/Colliders/Cube",
+          "body_path": "/World/NovaCarter/caster_swivel_right"
+        },
+        {
+          "center_m": [
+            -0.5119490974213263,
+            0.1322499583537975,
+            -0.07369289875645436
+          ],
+          "size_m": [
+            0.1509999930858612,
+            0.02499999850988399,
+            0.15099999308586123
+          ],
+          "path": "/World/NovaCarter/caster_wheel_left/Colliders/Cylinder",
+          "body_path": "/World/NovaCarter/caster_wheel_left"
+        },
+        {
+          "center_m": [
+            -0.5119490974213261,
+            -0.13224996706961756,
+            -0.07369289875645432
+          ],
+          "size_m": [
+            0.1509999930858612,
+            0.02499999850988399,
+            0.15099999308586126
+          ],
+          "path": "/World/NovaCarter/caster_wheel_right/Colliders/Cylinder",
+          "body_path": "/World/NovaCarter/caster_wheel_right"
+        }
+      ],
+      "sensor_keepouts_in_chassis": [
+        {
+          "center_m": [
+            0.1003,
+            0.07499800000000001,
+            0.3459
+          ],
+          "size_m": [
+            0.16000000000000014,
+            0.16000000000000014,
+            0.16000000000000014
+          ],
+          "path": "/World/NovaCarter/chassis_link/sensors/front_hawk/left/camera_left"
+        },
+        {
+          "center_m": [
+            0.1003,
+            -0.07500200000000001,
+            0.3459
+          ],
+          "size_m": [
+            0.16000000000000014,
+            0.16000000000000014,
+            0.16000000000000014
+          ],
+          "path": "/World/NovaCarter/chassis_link/sensors/front_hawk/right/camera_right"
+        },
+        {
+          "center_m": [
+            -0.43043,
+            0.15,
+            0.3459
+          ],
+          "size_m": [
+            0.16000000000000014,
+            0.1600000000000001,
+            0.16000000000000014
+          ],
+          "path": "/World/NovaCarter/chassis_link/sensors/left_hawk/left/camera_left"
+        },
+        {
+          "center_m": [
+            -0.28042999999999996,
+            0.15000000000000002,
+            0.3459
+          ],
+          "size_m": [
+            0.16000000000000014,
+            0.16000000000000014,
+            0.16000000000000014
+          ],
+          "path": "/World/NovaCarter/chassis_link/sensors/left_hawk/right/camera_right"
+        },
+        {
+          "center_m": [
+            -0.28044,
+            -0.15,
+            0.3459
+          ],
+          "size_m": [
+            0.16000000000000025,
+            0.1600000000000002,
+            0.16000000000000014
+          ],
+          "path": "/World/NovaCarter/chassis_link/sensors/right_hawk/left/camera_left"
+        },
+        {
+          "center_m": [
+            -0.43044000000000004,
+            -0.14999999999999997,
+            0.3459
+          ],
+          "size_m": [
+            0.16000000000000036,
+            0.16000000000000025,
+            0.16000000000000014
+          ],
+          "path": "/World/NovaCarter/chassis_link/sensors/right_hawk/right/camera_right"
+        },
+        {
+          "center_m": [
+            -0.5637,
+            -0.074998,
+            0.3459
+          ],
+          "size_m": [
+            0.16000000000000014,
+            0.16000000000000017,
+            0.16000000000000014
+          ],
+          "path": "/World/NovaCarter/chassis_link/sensors/back_hawk/left/camera_left"
+        },
+        {
+          "center_m": [
+            -0.5637,
+            0.075002,
+            0.3459
+          ],
+          "size_m": [
+            0.16000000000000014,
+            0.16000000000000017,
+            0.16000000000000014
+          ],
+          "path": "/World/NovaCarter/chassis_link/sensors/back_hawk/right/camera_right"
+        },
+        {
+          "center_m": [
+            0.025999999999999995,
+            0.0,
+            0.4179999999999999
+          ],
+          "size_m": [
+            0.16,
+            0.16,
+            0.15999999999999992
+          ],
+          "path": "/World/NovaCarter/chassis_link/sensors/front_RPLidar"
+        },
+        {
+          "center_m": [
+            0.025999999999999995,
+            0.0,
+            0.4179999999999999
+          ],
+          "size_m": [
+            0.16000000000000003,
+            0.16000000000000003,
+            0.15999999999999992
+          ],
+          "path": "/World/NovaCarter/chassis_link/sensors/front_RPLidar/RPLIDAR_S2E"
+        },
+        {
+          "center_m": [
+            0.025999999999999995,
+            0.0,
+            0.39749999999999996
+          ],
+          "size_m": [
+            0.16,
+            0.16,
+            0.15999999999999992
+          ],
+          "path": "/World/NovaCarter/chassis_link/sensors/front_RPLidar/RPLidar_mesh"
+        },
+        {
+          "center_m": [
+            -0.4894,
+            0.0,
+            0.4179999999999999
+          ],
+          "size_m": [
+            0.16000000000000003,
+            0.16000000000000003,
+            0.15999999999999992
+          ],
+          "path": "/World/NovaCarter/chassis_link/sensors/rear_RPLidar"
+        },
+        {
+          "center_m": [
+            -0.4894,
+            0.0,
+            0.4179999999999999
+          ],
+          "size_m": [
+            0.16000000000000003,
+            0.16000000000000003,
+            0.15999999999999992
+          ],
+          "path": "/World/NovaCarter/chassis_link/sensors/rear_RPLidar/RPLIDAR_S2E"
+        },
+        {
+          "center_m": [
+            -0.4894,
+            0.0,
+            0.39749999999999996
+          ],
+          "size_m": [
+            0.16000000000000003,
+            0.16000000000000003,
+            0.15999999999999992
+          ],
+          "path": "/World/NovaCarter/chassis_link/sensors/rear_RPLidar/RPLidar_mesh"
+        },
+        {
+          "center_m": [
+            -0.2317,
+            0.0,
+            0.526
+          ],
+          "size_m": [
+            0.15999999999999998,
+            0.16,
+            0.15999999999999992
+          ],
+          "path": "/World/NovaCarter/chassis_link/sensors/XT_32/PandarXT_32_10hz"
+        },
+        {
+          "center_m": [
+            0.10434399999999999,
+            0.0,
+            0.37439
+          ],
+          "size_m": [
+            0.16000000000000003,
+            0.16000000000000006,
+            0.16000000000000014
+          ],
+          "path": "/World/NovaCarter/chassis_link/sensors/front_owl/camera"
+        },
+        {
+          "center_m": [
+            -0.231696,
+            -0.154101,
+            0.34439
+          ],
+          "size_m": [
+            0.16000000000000003,
+            0.16000000000000003,
+            0.16000000000000014
+          ],
+          "path": "/World/NovaCarter/chassis_link/sensors/left_owl/camera"
+        },
+        {
+          "center_m": [
+            -0.231696,
+            0.154101,
+            0.34439
+          ],
+          "size_m": [
+            0.16000000000000014,
+            0.1600000000000001,
+            0.16000000000000014
+          ],
+          "path": "/World/NovaCarter/chassis_link/sensors/right_owl/camera"
+        },
+        {
+          "center_m": [
+            -0.567737,
+            0.0,
+            0.37439
+          ],
+          "size_m": [
+            0.15999999999999992,
+            0.16000000000000003,
+            0.16000000000000014
+          ],
+          "path": "/World/NovaCarter/chassis_link/sensors/back_owl/camera"
+        }
+      ],
+      "scope": "composed collision AABB/frame admission only; authored sensor housing boxes, no FOV or mount strength proof",
+      "authored_geometry_changed": false,
+      "map_or_footprint_changed": false,
+      "physical_attachment_verified": false
+    },
+    "drive_geometry": {
+      "wheel_radius_m": 0.14000000059604645,
+      "wheel_separation_m": 0.41319998771250255,
+      "source": "current pre-step ComputeExtentFromPlugins collider bounds; identity root orientation; not GT steering",
+      "native_wheel_unions": {
+        "left": {
+          "center_m": [
+            -4.437751971453352e-09,
+            0.20659999385625127,
+            0.13999999687075615
+          ],
+          "size_m": [
+            0.2800000011920929,
+            0.07999999821186071,
+            0.2800000011920929
+          ]
+        },
+        "right": {
+          "center_m": [
+            -4.392349983728394e-09,
+            -0.20659999385625127,
+            0.13999999687075615
+          ],
+          "size_m": [
+            0.2800000011920929,
+            0.07999999821186071,
+            0.2800000011920929
+          ]
+        }
+      },
+      "native_collision_records": [
+        {
+          "path": "/World/NovaCarter/wheel_left/Colliders/Cylinder",
+          "body_path": "/World/NovaCarter/wheel_left",
+          "shape_type": "Cylinder",
+          "world_aabb_m": {
+            "center_m": [
+              -4.437751971453352e-09,
+              0.20659999385625127,
+              0.13999999687075615
+            ],
+            "size_m": [
+              0.25,
+              0.05999999865889555,
+              0.25
+            ]
+          },
+          "extent_sources": [
+            {
+              "path": "/World/NovaCarter/wheel_left/Colliders/Cylinder",
+              "type": "Cylinder",
+              "authored_extent": [
+                [
+                  -0.125,
+                  -0.125,
+                  -0.029999999329447746
+                ],
+                [
+                  0.125,
+                  0.125,
+                  0.029999999329447746
+                ]
+              ],
+              "computed_extent": [
+                [
+                  -0.125,
+                  -0.125,
+                  -0.029999999329447746
+                ],
+                [
+                  0.125,
+                  0.125,
+                  0.029999999329447746
+                ]
+              ],
+              "world_aabb_m": {
+                "center_m": [
+                  -4.437751971453352e-09,
+                  0.20659999385625127,
+                  0.13999999687075615
+                ],
+                "size_m": [
+                  0.25,
+                  0.05999999865889555,
+                  0.25
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "path": "/World/NovaCarter/wheel_left/Colliders/Cylinder_01",
+          "body_path": "/World/NovaCarter/wheel_left",
+          "shape_type": "Cylinder",
+          "world_aabb_m": {
+            "center_m": [
+              -4.437751971453352e-09,
+              0.20659999385625127,
+              0.13999999687075615
+            ],
+            "size_m": [
+              0.19999998807907104,
+              0.07999999821186071,
+              0.19999998807907104
+            ]
+          },
+          "extent_sources": [
+            {
+              "path": "/World/NovaCarter/wheel_left/Colliders/Cylinder_01",
+              "type": "Cylinder",
+              "authored_extent": [
+                [
+                  -0.09999999403953552,
+                  -0.09999999403953552,
+                  -0.03999999910593033
+                ],
+                [
+                  0.09999999403953552,
+                  0.09999999403953552,
+                  0.03999999910593033
+                ]
+              ],
+              "computed_extent": [
+                [
+                  -0.09999999403953552,
+                  -0.09999999403953552,
+                  -0.03999999910593033
+                ],
+                [
+                  0.09999999403953552,
+                  0.09999999403953552,
+                  0.03999999910593033
+                ]
+              ],
+              "world_aabb_m": {
+                "center_m": [
+                  -4.437751971453352e-09,
+                  0.20659999385625127,
+                  0.13999999687075615
+                ],
+                "size_m": [
+                  0.19999998807907104,
+                  0.07999999821186071,
+                  0.19999998807907104
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "path": "/World/NovaCarter/wheel_left/Colliders/Cylinder_02",
+          "body_path": "/World/NovaCarter/wheel_left",
+          "shape_type": "Cylinder",
+          "world_aabb_m": {
+            "center_m": [
+              -4.437751971453352e-09,
+              0.20659999385625127,
+              0.13999999687075615
+            ],
+            "size_m": [
+              0.2800000011920929,
+              0.01999999955296522,
+              0.2800000011920929
+            ]
+          },
+          "extent_sources": [
+            {
+              "path": "/World/NovaCarter/wheel_left/Colliders/Cylinder_02",
+              "type": "Cylinder",
+              "authored_extent": [
+                [
+                  -0.14000000059604645,
+                  -0.14000000059604645,
+                  -0.009999999776482582
+                ],
+                [
+                  0.14000000059604645,
+                  0.14000000059604645,
+                  0.009999999776482582
+                ]
+              ],
+              "computed_extent": [
+                [
+                  -0.14000000059604645,
+                  -0.14000000059604645,
+                  -0.009999999776482582
+                ],
+                [
+                  0.14000000059604645,
+                  0.14000000059604645,
+                  0.009999999776482582
+                ]
+              ],
+              "world_aabb_m": {
+                "center_m": [
+                  -4.437751971453352e-09,
+                  0.20659999385625127,
+                  0.13999999687075615
+                ],
+                "size_m": [
+                  0.2800000011920929,
+                  0.01999999955296522,
+                  0.2800000011920929
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "path": "/World/NovaCarter/wheel_right/Colliders/Cylinder",
+          "body_path": "/World/NovaCarter/wheel_right",
+          "shape_type": "Cylinder",
+          "world_aabb_m": {
+            "center_m": [
+              -4.392349990667288e-09,
+              -0.20659999385625127,
+              0.13999999687075615
+            ],
+            "size_m": [
+              0.25,
+              0.05999999865889555,
+              0.25
+            ]
+          },
+          "extent_sources": [
+            {
+              "path": "/World/NovaCarter/wheel_right/Colliders/Cylinder",
+              "type": "Cylinder",
+              "authored_extent": [
+                [
+                  -0.125,
+                  -0.125,
+                  -0.029999999329447746
+                ],
+                [
+                  0.125,
+                  0.125,
+                  0.029999999329447746
+                ]
+              ],
+              "computed_extent": [
+                [
+                  -0.125,
+                  -0.125,
+                  -0.029999999329447746
+                ],
+                [
+                  0.125,
+                  0.125,
+                  0.029999999329447746
+                ]
+              ],
+              "world_aabb_m": {
+                "center_m": [
+                  -4.392349990667288e-09,
+                  -0.20659999385625127,
+                  0.13999999687075615
+                ],
+                "size_m": [
+                  0.25,
+                  0.05999999865889555,
+                  0.25
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "path": "/World/NovaCarter/wheel_right/Colliders/Cylinder_01",
+          "body_path": "/World/NovaCarter/wheel_right",
+          "shape_type": "Cylinder",
+          "world_aabb_m": {
+            "center_m": [
+              -4.392349997606182e-09,
+              -0.20659999385625127,
+              0.13999999687075615
+            ],
+            "size_m": [
+              0.19999998807907104,
+              0.07999999821186071,
+              0.19999998807907104
+            ]
+          },
+          "extent_sources": [
+            {
+              "path": "/World/NovaCarter/wheel_right/Colliders/Cylinder_01",
+              "type": "Cylinder",
+              "authored_extent": [
+                [
+                  -0.09999999403953552,
+                  -0.09999999403953552,
+                  -0.03999999910593033
+                ],
+                [
+                  0.09999999403953552,
+                  0.09999999403953552,
+                  0.03999999910593033
+                ]
+              ],
+              "computed_extent": [
+                [
+                  -0.09999999403953552,
+                  -0.09999999403953552,
+                  -0.03999999910593033
+                ],
+                [
+                  0.09999999403953552,
+                  0.09999999403953552,
+                  0.03999999910593033
+                ]
+              ],
+              "world_aabb_m": {
+                "center_m": [
+                  -4.392349997606182e-09,
+                  -0.20659999385625127,
+                  0.13999999687075615
+                ],
+                "size_m": [
+                  0.19999998807907104,
+                  0.07999999821186071,
+                  0.19999998807907104
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "path": "/World/NovaCarter/wheel_right/Colliders/Cylinder_02",
+          "body_path": "/World/NovaCarter/wheel_right",
+          "shape_type": "Cylinder",
+          "world_aabb_m": {
+            "center_m": [
+              -4.392349983728394e-09,
+              -0.20659999385625127,
+              0.13999999687075615
+            ],
+            "size_m": [
+              0.2800000011920929,
+              0.01999999955296522,
+              0.2800000011920929
+            ]
+          },
+          "extent_sources": [
+            {
+              "path": "/World/NovaCarter/wheel_right/Colliders/Cylinder_02",
+              "type": "Cylinder",
+              "authored_extent": [
+                [
+                  -0.14000000059604645,
+                  -0.14000000059604645,
+                  -0.009999999776482582
+                ],
+                [
+                  0.14000000059604645,
+                  0.14000000059604645,
+                  0.009999999776482582
+                ]
+              ],
+              "computed_extent": [
+                [
+                  -0.14000000059604645,
+                  -0.14000000059604645,
+                  -0.009999999776482582
+                ],
+                [
+                  0.14000000059604645,
+                  0.14000000059604645,
+                  0.009999999776482582
+                ]
+              ],
+              "world_aabb_m": {
+                "center_m": [
+                  -4.392349983728394e-09,
+                  -0.20659999385625127,
+                  0.13999999687075615
+                ],
+                "size_m": [
+                  0.2800000011920929,
+                  0.01999999955296522,
+                  0.2800000011920929
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "attachment": {
+      "joint_path": "/World/CarrierChassisJoint",
+      "body0": [
+        "/World/NovaCarter/chassis_link"
+      ],
+      "body1": [
+        "/World/LoadedCarrier"
+      ],
+      "joint_enabled": true,
+      "exclude_from_articulation": true,
+      "connected_body_pair_collision_enabled": false,
+      "local_positions_m": [
+        [
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0
+        ]
+      ],
+      "policy": "external fixed constraint as installed RobotAssembler; no global collision mask, no world anchor or articulation topology change"
+    },
+    "wheel_drive_readback": {
+      "names": [
+        "joint_wheel_left",
+        "joint_wheel_right"
+      ],
+      "indices": [
+        1,
+        2
+      ],
+      "native_maximum_effort_n_m": [
+        10.0,
+        10.0
+      ],
+      "geometry_source": "pre-step measured collider bounds; wheel DOF readback before commands; original asset drives unchanged"
+    },
+    "last_observation": {
+      "run_id": "ed8c060d046149d9af24216992e9e0a0",
+      "world_time_s": 10.008333855308592,
+      "world_physics_frame": 1201,
+      "bodies": {
+        "carrier": {
+          "position_m": [
+            0.5891333818435669,
+            0.04510565847158432,
+            7.152557373046875e-07
+          ],
+          "orientation_wxyz": [
+            0.9348488450050354,
+            0.0002976312243845314,
+            -0.0007786892238073051,
+            0.3550450801849365
+          ],
+          "linear_velocity_m_s": [
+            0.0011644879123196006,
+            0.000277512997854501,
+            -0.00023729895474389195
+          ],
+          "angular_velocity_rad_s": [
+            0.0010716873221099377,
+            3.135936276521534e-05,
+            0.0004632488708011806
+          ]
+        },
+        "tote": {
+          "position_m": [
+            0.4542287290096283,
+            -0.07465722411870956,
+            0.761583149433136
+          ],
+          "orientation_wxyz": [
+            0.9348368048667908,
+            0.00029753847047686577,
+            -0.0007786636124365032,
+            0.3550766408443451
+          ],
+          "linear_velocity_m_s": [
+            0.0010213489877060056,
+            0.0001810737740015611,
+            0.0010432320414111018
+          ],
+          "angular_velocity_rad_s": [
+            0.0004956529010087252,
+            0.00028768432093784213,
+            0.0008856314234435558
+          ]
+        },
+        "chassis": {
+          "position_m": [
+            0.5891343355178833,
+            0.045106641948223114,
+            7.301568984985352e-07
+          ],
+          "orientation_wxyz": [
+            0.9348487854003906,
+            0.000297635851893574,
+            -0.000778946268837899,
+            0.35504528880119324
+          ],
+          "linear_velocity_m_s": [
+            -0.000266691466094926,
+            -0.0002343452797504142,
+            -6.803318683523685e-05
+          ],
+          "angular_velocity_rad_s": [
+            0.0002631845709402114,
+            0.000444455276010558,
+            0.00036798632936552167
+          ]
+        }
+      },
+      "wheel_position_rad": [
+        3.162917375564575,
+        5.32755184173584
+      ],
+      "wheel_velocity_rad_s": [
+        -0.003503949847072363,
+        -0.002815045416355133
+      ],
+      "contact": {
+        "sensor_time_s": 10.000000953674316,
+        "sensor_physics_step": 1201,
+        "fresh": true,
+        "force_n": 59.032779693603516,
+        "in_contact": true,
+        "raw_actor_pairs": [
+          [
+            "/World/LoadedTote",
+            "/World/LoadedCarrier"
+          ]
+        ],
+        "mapped_pairs": [
+          [
+            "carrier",
+            "tote"
+          ]
+        ]
+      },
+      "chassis_xy_drift_m": 0.5908585908945923,
+      "chassis_rotation_drift_rad": 0.7259271186809702,
+      "module_chassis_position_error_m": 1.3700157457581737e-06,
+      "tote_rest_position_error_m": 0.000873941768754918,
+      "stationary": true,
+      "qualified": true,
+      "motion": {
+        "phase": "final_settle",
+        "elapsed_s": 9.400000490248203,
+        "issued_world_time_s": 10.000000521540642,
+        "requested_linear_m_s": 0.0,
+        "requested_angular_rad_s": 0.0,
+        "target": {
+          "linear_m_s": 0.0,
+          "angular_rad_s": 0.0,
+          "wheel_targets_rad_s": [
+            0.0,
+            0.0
+          ],
+          "phase": "normal_stop",
+          "curvature_limited": false,
+          "wheel_speed_limited": false,
+          "emergency_stop": false
+        }
+      },
+      "motion_readback": {
+        "encoder": {
+          "stamp_s": 10.008333855308592,
+          "x_m": 0.5886393850686934,
+          "y_m": 0.045812258944517986,
+          "yaw_rad": 0.7334418527493172,
+          "linear_m_s": 9.012221858384374e-05,
+          "angular_rad_s": -0.00012601794949230788
+        },
+        "measured_wheel_velocity_rad_s": [
+          -0.003503949847072363,
+          -0.002815045416355133
+        ],
+        "measured_wheel_torque_n_m": [
+          0.309780478477478,
+          0.15423357486724854
+        ],
+        "native_maximum_effort_n_m": [
+          10.0,
+          10.0
+        ]
+      },
+      "load_supported": true,
+      "evaluation_only": {
+        "initial_chassis_relative_position_m": [
+          0.5886808457494467,
+          0.045125776600842896,
+          -0.0009316658512962936
+        ],
+        "yaw_rad": 0.7259561277811489,
+        "tilt_rad": 0.0011583326000687805
+      }
+    },
+    "initial_static_dwell_s": 0.40000002086162567,
+    "motion_origin": {
+      "world_time_s": 0.6000000312924385,
+      "world_physics_frame": 72,
+      "evaluation_only_chassis_world_from_local": [
+        [
+          0.9999987493936142,
+          3.1940905620293664e-05,
+          -0.0015811993414439733,
+          0.00045131146907806396
+        ],
+        [
+          -3.19427291488644e-05,
+          0.9999999994891949,
+          -1.128002857861982e-06,
+          -3.3160767998197116e-07
+        ],
+        [
+          0.0015811993046068614,
+          1.1785092619700072e-06,
+          0.9999987499030893,
+          1.519918441772461e-06
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ]
+    },
+    "motion_transitions": [
+      {
+        "phase": "forward",
+        "world_time_s": 0.608333365060389,
+        "world_physics_frame": 73,
+        "drive_phase": "translate"
+      },
+      {
+        "phase": "curve",
+        "world_time_s": 2.8083334797993302,
+        "world_physics_frame": 337,
+        "drive_phase": "curve"
+      },
+      {
+        "phase": "brake_before_turn",
+        "world_time_s": 5.108333599753678,
+        "world_physics_frame": 613,
+        "drive_phase": "normal_stop"
+      },
+      {
+        "phase": "in_place",
+        "world_time_s": 6.608333677984774,
+        "world_physics_frame": 793,
+        "drive_phase": "turn_in_place"
+      },
+      {
+        "phase": "final_brake",
+        "world_time_s": 8.608333782292902,
+        "world_physics_frame": 1033,
+        "drive_phase": "normal_stop"
+      },
+      {
+        "phase": "final_settle",
+        "world_time_s": 9.608333834446967,
+        "world_physics_frame": 1153,
+        "drive_phase": "normal_stop"
+      }
+    ],
+    "motion_evaluation": {
+      "passed": true,
+      "failures": [],
+      "metrics": {
+        "forward": {
+          "forward_m": 0.2244726932632665,
+          "encoder_forward_m": 0.22453883299620533,
+          "native_xy_displacement_m": 0.22447269445748588
+        },
+        "curve": {
+          "yaw_rad": 0.23108690417024755,
+          "encoder_yaw_rad": 0.23734815583664168,
+          "native_xy_displacement_m": 0.2857659875115118
+        },
+        "in_place": {
+          "yaw_rad": 0.30651270142517867,
+          "encoder_yaw_rad": 0.30971037236379306,
+          "native_xy_displacement_m": 0.00844730312283223
+        }
+      },
+      "phases": {
+        "forward": {
+          "first": {
+            "world_time_s": 0.608333365060389,
+            "position_m": [
+              7.285529622347493e-06,
+              -5.841004476987434e-08,
+              -7.267764513817189e-07
+            ],
+            "yaw_rad": -7.650492975854014e-07,
+            "encoder_x_m": 7.3198392367560525e-06,
+            "encoder_yaw_rad": -8.332880545816821e-07
+          },
+          "last": {
+            "world_time_s": 2.8000001460313797,
+            "position_m": [
+              0.22447997879288883,
+              -2.3213091909549286e-05,
+              -0.0003536068965440757
+            ],
+            "yaw_rad": -0.00019880906929652773,
+            "encoder_x_m": 0.2245461528354421,
+            "encoder_yaw_rad": -0.0002018904782374915
+          },
+          "last_stationary": false
+        },
+        "curve": {
+          "first": {
+            "world_time_s": 2.8083334797993302,
+            "position_m": [
+              0.22581383717987627,
+              -2.3469749129950582e-05,
+              -0.00035729551989323647
+            ],
+            "yaw_rad": -0.00020310192644615725,
+            "encoder_x_m": 0.22588085458935306,
+            "encoder_yaw_rad": -0.00020976660049153303
+          },
+          "last": {
+            "world_time_s": 5.100000265985727,
+            "position_m": [
+              0.5107785515323552,
+              0.021361365822825832,
+              -0.0008079221947800228
+            ],
+            "yaw_rad": 0.2308838022438014,
+            "encoder_x_m": 0.5108584548086305,
+            "encoder_yaw_rad": 0.23713838923615013
+          },
+          "last_stationary": false
+        },
+        "brake_before_turn": {
+          "first": {
+            "world_time_s": 5.108333599753678,
+            "position_m": [
+              0.5117554027557975,
+              0.021592899601670552,
+              -0.000809899200266009
+            ],
+            "yaw_rad": 0.2324182231367481,
+            "encoder_x_m": 0.5118373817592832,
+            "encoder_yaw_rad": 0.23867677766903175
+          },
+          "last": {
+            "world_time_s": 6.600000344216824,
+            "position_m": [
+              0.5824844297294076,
+              0.04277223829286234,
+              -0.0009219100002154632
+            ],
+            "yaw_rad": 0.34441540502963885,
+            "encoder_x_m": 0.5825082946425002,
+            "encoder_yaw_rad": 0.34861710440058763
+          },
+          "last_stationary": true
+        },
+        "in_place": {
+          "first": {
+            "world_time_s": 6.608333677984774,
+            "position_m": [
+              0.5824872917962046,
+              0.042773378323884566,
+              -0.0009212290727908868
+            ],
+            "yaw_rad": 0.3444251660458017,
+            "encoder_x_m": 0.5825112591725543,
+            "encoder_yaw_rad": 0.34862704043173887
+          },
+          "last": {
+            "world_time_s": 8.600000448524952,
+            "position_m": [
+              0.5901482732838568,
+              0.04633235186900431,
+              -0.00093300409368754
+            ],
+            "yaw_rad": 0.6509378674709804,
+            "encoder_x_m": 0.5899146172884501,
+            "encoder_yaw_rad": 0.6583374127955319
+          },
+          "last_stationary": false
+        },
+        "final_brake": {
+          "first": {
+            "world_time_s": 8.608333782292902,
+            "position_m": [
+              0.590127349799564,
+              0.04631743141106889,
+              -0.0009347144299025952
+            ],
+            "yaw_rad": 0.6529176261095044,
+            "encoder_x_m": 0.5899004761641292,
+            "encoder_yaw_rad": 0.6603071703857117
+          },
+          "last": {
+            "world_time_s": 9.600000500679016,
+            "position_m": [
+              0.5886807267283239,
+              0.04512579149833692,
+              -0.0009315464536789244
+            ],
+            "yaw_rad": 0.7259546183088028,
+            "encoder_x_m": 0.5886393602653035,
+            "encoder_yaw_rad": 0.7334407218189425
+          },
+          "last_stationary": true
+        },
+        "final_settle": {
+          "first": {
+            "world_time_s": 9.608333834446967,
+            "position_m": [
+              0.5886812044219134,
+              0.045126253450214066,
+              -0.0009309958658996497
+            ],
+            "yaw_rad": 0.7259559903146652,
+            "encoder_x_m": 0.5886398437898925,
+            "encoder_yaw_rad": 0.7334417719685764
+          },
+          "last": {
+            "world_time_s": 10.008333855308592,
+            "position_m": [
+              0.5886808457494467,
+              0.045125776600842896,
+              -0.0009316658512962936
+            ],
+            "yaw_rad": 0.7259561277811489,
+            "encoder_x_m": 0.5886393850686934,
+            "encoder_yaw_rad": 0.7334418527493172
+          },
+          "last_stationary": true
+        }
+      },
+      "final_stationary_dwell_s": 0.40000002086162567,
+      "in_place_encoder_directions_seen": true,
+      "scope": "native component evaluation; no docking, route or industrial payload qualification"
+    },
+    "native_samples": 201,
+    "static_dwell_s": 0.40000002086162567,
+    "velocity_source": "native PhysX rigid-body and wheel joint reads, not ROS odometry",
+    "control_policy": "fixed-time commands through existing DriveProfile; native wheel targets only; GT is evaluation-only; relative load bounds unchanged",
+    "native_control_samples": 1199,
+    "fault_or_final_zero_requested": true,
+    "finished_at_utc": "2026-10-21T07:10:43.873778+00:00",
+    "elapsed_wall_s": 62.07799999997951,
+    "app_close_requested": true
+  },
+  "stage2_complete": false,
+  "project_complete": false,
+  "preservation": {
+    "file_count": 214,
+    "original_bytes": 20673955,
+    "paths": [
+      "C:\\Users\\LIMMM\\FactoryOpsArtifacts\\loaded-mobility-128\\checkpoint-001.tar.gz",
+      "E:\\FactoryOpsArtifacts\\loaded-mobility-128\\checkpoint-001.tar.gz"
+    ],
+    "archive_bytes": 19776426,
+    "archive_sha256": "4b976a5697eafcacf2c522615246b4debe3692ed350f83079433d1cc270c3349",
+    "all_members_SHA_matched_both_stores": true
+  }
+}

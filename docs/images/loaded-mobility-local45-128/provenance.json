@@ -1,0 +1,91 @@
+{
+  "run_id": "ed8c060d046149d9af24216992e9e0a0",
+  "producer_source_commit": "9aa317e6ec993ecbcda415cd8106eada95b95ade",
+  "scope": "Actual mounted Carter six-kg tote component motion; not full factory payload transport",
+  "native_evidence": "docs/evidence/local45-loaded-mobility-128.json",
+  "evidence_sha256": "e3f011228c018954e1d7dc0086025ab6150dca2798b51372dafa0fca7dca1726",
+  "nominal_fps": 20,
+  "source_frames": 188,
+  "distinct_source_images": 188,
+  "source_world_frames": [
+    78,
+    1200
+  ],
+  "source_world_time_and_image_sha_records": "native_evidence.native_result.media",
+  "interpolation": false,
+  "generated_images": false,
+  "replay_speed": "one image every six native120Hz physics frames, played at20fps",
+  "media_clock_sync_verified": false,
+  "commands": [
+    [
+      "ffmpeg",
+      "-hide_banner",
+      "-loglevel",
+      "error",
+      "-threads",
+      "1",
+      "-filter_complex_threads",
+      "1",
+      "-framerate",
+      "20",
+      "-start_number",
+      "0",
+      "-i",
+      "C:\\Users\\LIMMM\\FactoryOpsRuntime\\local45-loaded-mobility-128\\motion-%04d.png",
+      "-c:v",
+      "libx264",
+      "-crf",
+      "20",
+      "-pix_fmt",
+      "yuv420p",
+      "-movflags",
+      "+faststart",
+      "C:\\Users\\LIMMM\\factory-ops-twin\\docs\\images\\loaded-mobility-local45-128\\loaded-motion-20fps.mp4"
+    ],
+    [
+      "ffmpeg",
+      "-hide_banner",
+      "-loglevel",
+      "error",
+      "-threads",
+      "1",
+      "-filter_complex_threads",
+      "1",
+      "-framerate",
+      "20",
+      "-start_number",
+      "0",
+      "-i",
+      "C:\\Users\\LIMMM\\FactoryOpsRuntime\\local45-loaded-mobility-128\\motion-%04d.png",
+      "-filter_complex",
+      "scale=480:-1:flags=lanczos,split[a][b];[a]palettegen=max_colors=96:stats_mode=diff[p];[b][p]paletteuse=dither=bayer:bayer_scale=4",
+      "-loop",
+      "0",
+      "C:\\Users\\LIMMM\\factory-ops-twin\\docs\\images\\loaded-mobility-local45-128\\loaded-motion-20fps.gif"
+    ]
+  ],
+  "exports": {
+    "loaded-motion-20fps.mp4": {
+      "bytes": 214825,
+      "sha256": "9a36e22407663ac14fb72d82952465657cd78811b079a76ff295b28c73e87173",
+      "probe": {
+        "width": 640,
+        "height": 480,
+        "r_frame_rate": "20/1",
+        "duration": "9.400000",
+        "nb_read_frames": "188"
+      }
+    },
+    "loaded-motion-20fps.gif": {
+      "bytes": 5522635,
+      "sha256": "e380edfc34d1a5107369f81c6b0057f31d33b055c591e38fc2ec191fa9098bb9",
+      "probe": {
+        "width": 480,
+        "height": 360,
+        "r_frame_rate": "20/1",
+        "duration": "9.400000",
+        "nb_read_frames": "188"
+      }
+    }
+  }
+}

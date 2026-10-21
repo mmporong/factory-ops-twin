@@ -47,7 +47,11 @@
 
 ![실제 Nova Carter에 정적으로 장착한 캐리어와 6kg 토트](docs/images/loaded-carrier-local45-124/mounted-settled.png)
 
-Nova Carter의 차체 형상·센서 간섭·기존 반경을 확인한 뒤 캐리어를 고정 조인트로 장착했습니다. 자유 동적 토트의 실제 접촉과 정지를 확인했습니다. 위 정적 장착 시험은 통과했으며 **적재 주행·자동 적재/반납의 차량 통합과 하중 정격은 아직 확인하지 않았습니다.** [정적 장착 결과](docs/evidence/local45-loaded-carrier-124.json) · [이미지 출처](docs/images/loaded-carrier-local45-124/provenance.json)
+Nova Carter의 차체 형상·센서 간섭·기존 반경을 확인한 뒤 캐리어를 고정 조인트로 장착했습니다. 자유 동적 토트의 실제 접촉과 정지를 확인했습니다. 위 이미지는 정적 장착 시험이며, 이어지는 영상은 같은 구성의 적재 주행 시험입니다. [정적 장착 결과](docs/evidence/local45-loaded-carrier-124.json) · [이미지 출처](docs/images/loaded-carrier-local45-124/provenance.json)
+
+![6kg 토트를 실은 Carter의 전진·곡선·제자리 회전·정지: 실제20fps](docs/images/loaded-mobility-local45-128/loaded-motion-20fps.gif)
+
+같은 장착 구성으로6kg 토트를 싣고 전진·곡선 주행·제자리 회전 후 감속 정지를 확인했습니다. 영상은 실제 물리 프레임에서 촬영한20fps·9.4초 원본이며 보간하지 않았습니다. 적재 접촉과 상대 위치, 바퀴 응답을 기록했습니다. 자동 적재·도킹·재고 인계의 차량 통합과 하중 정격은 남아 있습니다. [가벼운 MP4로 보기](docs/images/loaded-mobility-local45-128/loaded-motion-20fps.mp4) · [실제 주행 결과](docs/evidence/local45-loaded-mobility-128.json) · [촬영 출처](docs/images/loaded-mobility-local45-128/provenance.json)
 
 | 롤러 적재 완료 | 같은 토트의 반납 완료 |
 |---|---|
@@ -101,7 +105,7 @@ Kit 확장 `factory.ops.console`에서 AMR 선택 상세, 주문 생성, 전체 
 | 구간 | 현재 상태 |
 |---|---|
 | 1. 4대 운영 안정화 | 업무 운송 관측. 전체 정상 완주·기록 종료 확인 중 |
-| 2. 공장·차량·적재 | 공장 시각 층·운반 모듈 접촉·분리 시험 완료. 차량 장착·적재 주행은 남음 |
+| 2. 공장·차량·적재 | 공장 시각 층·지지대/롤러·차량 장착·6kg 적재 주행 시험 통과. 도킹·재고 인계 통합은 남음 |
 | 3. 웹·Kit·운영 입력 | 실제 웹 관측 연결. ROS의 다음 예약 지점 정지·재개 코드는 준비, 실제 적용·Kit 통합은 남음 |
 | 4. 혼합 운영·예외 처리 | 최종 구성의 폐쇄/복구·급증·재보충·충전 접촉 확인은 남음 |
 | 5. 병목·정책 비교 | 최종 구성 고정 후 6개 파일럿·60회 비교 예정 |
@@ -111,7 +115,7 @@ Kit 확장 `factory.ops.console`에서 AMR 선택 상세, 주문 생성, 전체 
 
 [완료 조건과 구간별 계획](docs/completion-plan.md) · [오류와 재발 방지 기록](docs/troubleshooting.md)
 
-[4대 실행041](docs/evidence/local45-transport-041.json)은 출하 2건·빈 토트 반납 1건 뒤 위치 관측의 신선도 검사에서 실패 종료됐습니다. 원본과 미디어는 두 저장소에 보존했으며 전체 정상 완주는 아직 확인 중입니다. 앞선040의 재접근 반복을 고친 [C++·기록 검사](docs/evidence/local45-terminal-reapproach-109.json)와 [동결 소스 빌드](docs/evidence/local45-goal-canonical-112.json)는 유지합니다. 운반 모듈은 지지대 접촉·롤러 왕복·실제 차체의 정적 장착을 통과했고 적재 주행으로 이어갑니다. 공장 대표 미디어는 보존된 실행036의 자료입니다. 구간 완료와 렌더링 개선 시 현재 기능·한계와 실제 이미지·영상을 함께 갱신합니다.
+[4대 실행041](docs/evidence/local45-transport-041.json)은 출하 2건·빈 토트 반납 1건 뒤 위치 관측의 신선도 검사에서 실패 종료됐습니다. 원본과 미디어는 두 저장소에 보존했으며 전체 정상 완주는 아직 확인 중입니다. 앞선040의 재접근 반복을 고친 [C++·기록 검사](docs/evidence/local45-terminal-reapproach-109.json)와 [동결 소스 빌드](docs/evidence/local45-goal-canonical-112.json)는 유지합니다. 운반 모듈은 지지대 접촉·롤러 왕복·실제 차체 장착과6kg 적재 주행을 통과했습니다. 자동 적재·도킹·재고 인계의 통합은 남아 있습니다. 공장 대표 미디어는 보존된 실행036의 자료입니다. 구간 완료와 렌더링 개선 시 현재 기능·한계와 실제 이미지·영상을 함께 갱신합니다.
 
 ## 로컬에서 보기
 

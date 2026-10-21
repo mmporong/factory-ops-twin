@@ -709,6 +709,10 @@ SDK mission-failed는 위 ROS 교착 실패의 후속이다. 양쪽 소유 실�
 
 SDK의 `python.bat -c`에 따옴표가 중첩된 코드를 넘기지 않고 UTF-8 Python 파일 경로를 사용한다. 이 배포의 `pxr`는 SimulationApp 초기화 후 로드하며, 초기화 전 import 실패를 geometry API 실패로 해석하지 않는다. 관련 보조 시도는 앱/물리 시험과 구분한다.
 
+## FOT-087 — 장착 토트의 실제 주행과20fps 촬영
+
+128은 실제 바퀴 목표와 기존 DriveProfile로6kg 토트를 운반했다. 전진 구간0.22447m, 곡선 yaw0.23109rad, 제자리 회전 yaw0.30651rad와 엔코더 방향을 확인했다. 적재 접촉·상대 위치·기존 각도 한계는 매 물리 스텝 확인하고 마지막0.4초 정지 dwell을 통과했다. 실제120Hz 물리에서6프레임마다 RGB를 받아 서로 다른188장·20fps·9.4초를 만들었다. 영상 노출 시계의 별도 정합과 공장 도킹·재고 인계는 미검증이다.62.08초 후 정리 오류 없이 Job이 닫혔고214파일의 C/E 보존을 확인했다. [128 결과](evidence/local45-loaded-mobility-128.json)
+
 ## 실행 전 확인과 후속 기록
 
 후속120은 local45 개발 실행에서 TF·시계 처리 노드와 scan/odom/action 처리 노드를 나누고, 기존 총64회·50ms 안에서 TF 처리에 먼저 절반을 배정한다. 한 차량의 실제 Jazzy 구성요소 시험에서는 부하 상태의 TF age가 공유 경로0.673초 이상에서 분리 경로0.031473초로 줄었고, 실제 TF 중단은 계속 거절했다. CPU22검사를 통과했으나 네 차량 통합 운행의 해결 근거로 확대하지 않는다. [120 수신](../coordination/collab/results/localization-critical-dispatch-120-integration.json)
