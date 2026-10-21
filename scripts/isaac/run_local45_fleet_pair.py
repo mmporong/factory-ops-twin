@@ -11,6 +11,7 @@ import shlex
 import subprocess
 import sys
 import time
+import tarfile
 import traceback
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
@@ -169,7 +170,8 @@ def monitor_pair(worker, owner: WslProcessSupervisor, *, started: float, bound: 
 
 def run(stage: Path, sdk: Path, bound: int, *, charge_robot: str | None = None, charge_resume_soc: float = .8,
         lidar_backend: str = "rtx_flat_scan", physics_cadence: str = "owned_step6",
-        windows_dds_interface: str | None = None, linux_dds_interface: str | None = None) -> int:
+        windows_dds_interface: str | None = None, linux_dds_interface: str | None = None,
+        live_anchor_controls: bool = False) -> int:
     if os.name != "nt" or not 60 <= bound <= 10800:
         raise ValueError("local development requires Windows and an explicit 60..10800s bound")
     if lidar_backend not in {"rtx_flat_scan", "physx_planar"}:
@@ -189,6 +191,12 @@ def run(stage: Path, sdk: Path, bound: int, *, charge_robot: str | None = None, 
     if (sha(metadata) != launch["provenance_sha256"] or sha(stage / "source.tar") != launch["source_archive_sha256"]
             or sha(stage / "build-attestation.json") != launch["build_attestation_sha256"]):
         raise ValueError("prepared launch provenance changed")
+    if live_anchor_controls:
+        # Additional opt-in source must be part of the already proved immutable archive.
+        with tarfile.open(stage / "source.tar") as archive:
+            member = archive.extractfile("factory_ops/live_control.py")
+            if member is None or hashlib.sha256(member.read()).hexdigest() != sha(source / "factory_ops/live_control.py"):
+                raise ValueError("live control source differs from the frozen source archive")
     receipt_path = stage / "pair-host.json"
     if receipt_path.exists() or (stage / "nav.log").exists() or (stage / "job-spec.json").exists():
         raise ValueError("preserve prior attempt; prepared stage must be unused")
@@ -197,6 +205,7 @@ def run(stage: Path, sdk: Path, bound: int, *, charge_robot: str | None = None, 
         "launcher_sha256": sha(Path(__file__)), "wsl_supervisor_sha256": sha(Path(__file__).resolve().parents[2] / "factory_ops/wsl_process_supervisor.py"),
         "status": "starting", "wall_bound_s": bound, "windows_closed": False, "linux_closed": False,
         "lidar_backend": lidar_backend, "requested_physics_cadence": physics_cadence}
+    report["live_anchor_controls"] = live_anchor_controls
     report["virtual_charging_request"] = {"robot_id": charge_robot, "resume_soc": charge_resume_soc}
     save(receipt_path, report)
     owner = WslProcessSupervisor(run_id)
@@ -237,7 +246,8 @@ def run(stage: Path, sdk: Path, bound: int, *, charge_robot: str | None = None, 
             "export FACTORY_OPS_G3_BUILD_ATTESTATION_SHA256=" + shlex.quote(launch["build_attestation_sha256"]),
             "exec " + shlex.join(["/usr/bin/python3", root_linux + "/source/scripts/ros/fleet4_mission.py",
                 "--bundle", root_linux + "/inputs", "--output", root_linux + "/results/run", "--run-id", run_id,
-                "--runtime-profile", "local45_development", "--dashboard", *charging_args]),
+                "--runtime-profile", "local45_development", "--dashboard", *charging_args,
+                *(["--live-anchor-controls"] if live_anchor_controls else [])]),
         ])
         (stage / "nav-command.sh").write_text(command + "\n", encoding="utf-8", newline="\n")
         report["linux_start"] = owner.start(["/bin/bash", linux(stage / "nav-command.sh")],
@@ -246,6 +256,8 @@ def run(stage: Path, sdk: Path, bound: int, *, charge_robot: str | None = None, 
         wait_for_bootstrap_marker(marker, owner, started=started, bound=bound)
         pins = json.loads(metadata.read_text(encoding="utf-8"))["source_files"]
         expected = {str(source / path): digest for path, digest in pins.items()}
+        if live_anchor_controls:
+            expected[str(source / "factory_ops/live_control.py")] = sha(source / "factory_ops/live_control.py")
         expected.update({str(path): sha(path) for path in (stage / "inputs").rglob("*") if path.is_file()})
         expected[str(metadata)] = sha(metadata)
         expected[str(marker)] = sha(marker)
@@ -294,6 +306,7 @@ if __name__ == "__main__":
     parser.add_argument("--stage", required=True, type=Path)
     parser.add_argument("--sdk", required=True, type=Path)
     parser.add_argument("--wall-bound-s", type=int, default=450)
+    parser.add_argument("--live-anchor-controls", action="store_true")
     parser.add_argument("--charge-robot", choices=("carter1", "carter2", "carter3", "carter4"))
     parser.add_argument("--charge-resume-soc", type=float, default=.8)
     parser.add_argument("--lidar-backend", choices=("rtx_flat_scan", "physx_planar"), default="rtx_flat_scan")
@@ -304,4 +317,4 @@ if __name__ == "__main__":
     raise SystemExit(run(options.stage, options.sdk, options.wall_bound_s,
         charge_robot=options.charge_robot, charge_resume_soc=options.charge_resume_soc,
         lidar_backend=options.lidar_backend, physics_cadence=options.physics_cadence,
-        windows_dds_interface=options.windows_dds_interface, linux_dds_interface=options.linux_dds_interface))
+        windows_dds_interface=options.windows_dds_interface, linux_dds_interface=options.linux_dds_interface, live_anchor_controls=options.live_anchor_controls))

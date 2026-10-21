@@ -14,6 +14,7 @@ export default function ObservationPanel({
 }: Props) {
   const number = new Intl.NumberFormat("ko-KR", { maximumFractionDigits: 1 });
   const readOnly = snapshot && !snapshot.capabilities.some((action) => ["pause", "resume", "create_order"].includes(action));
+  const livePhase = snapshot?.mode === "live" && snapshot.live_control?.contract === "ros-next-anchor-v1" ? snapshot.live_control.phase : null;
   const sensorRows = snapshot?.robots.filter((robot) => robot.scan_counts && Object.keys(robot.scan_counts).length) ?? [];
   const scope = snapshot?.mode === "local_model"
     ? snapshot.charging
@@ -32,7 +33,7 @@ export default function ObservationPanel({
           <h2 id="observation-title">시뮬레이션 관측</h2>
         </div>
         <span className={`observation-state ${stale ? "is-stale" : ""}`}>
-          {snapshot ? stale ? "관측 지연" : readOnly ? "읽기 전용 · 관측 수신" : "운영 데이터 수신" : "연결 대기"}
+          {snapshot ? stale ? "관측 지연 · 조작 비활성" : livePhase === "pause_pending" ? "예약 지점 정지 대기" : livePhase === "paused" ? "차량 정지 확인 · 시계 진행" : readOnly ? "읽기 전용 · 관측 수신" : "운영 데이터 수신" : "연결 대기"}
         </span>
       </div>
       <dl className="observation-metrics">

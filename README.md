@@ -14,9 +14,9 @@
 
 차량을 선택하면 현재 작업, 목적지, 적재물 ID, 엔코더 속도, 가상 SOC와 통로 대기 원인을 확인합니다. 위 화면의 `carter4`는 빈 토트 `F4-TOTE-002`를 자재 위치로 반납하며 다른 차량의 통로 점유 해제를 기다립니다. [출하 3건·재고 54개를 확인하는 전체 화면](docs/images/fleet4-local45-036/dashboard-all-orders.jpg)도 같은 실행에서 촬영했습니다.
 
-웹은 **Next.js·React Three Fiber·Python 운영 API**로 구성했습니다. 실제 ROS 실행은 관측 전용입니다. 주문 생성·전체 일시정지·재개와 가상 충전 조작은 별도 CPU 운영 모델에서 지원하며, 실제 차량 조작과 구분합니다. 웹의 차량·물품 형상은 원장 기반 도식입니다. [같은 실행의 원본·해시](docs/images/fleet4-local45-036/provenance.json)
+웹은 **Next.js·React Three Fiber·Python 운영 API**로 구성했습니다. 실제 ROS 실행은 기본으로 관측 전용입니다. 로컬 4.5 개발 옵션의 **다음 예약 지점 정지·운행 재개**는 요청과 원천 응답 연결을 준비했으며, 네 차량의 실제 정지·재개 확인은 남아 있습니다. 주문 생성·전체 일시정지·재개와 가상 충전 조작은 별도 CPU 운영 모델에서도 지원합니다. 웹의 차량·물품 형상은 원장 기반 도식입니다. [같은 실행의 원본·해시](docs/images/fleet4-local45-036/provenance.json)
 
-실제 운행을 다음 예약 정차점에서 멈추고 재개하는 코드는 별도 브랜치에 준비했습니다. 네 차량의 새 정지·HOLD 관측을 받은 뒤 적용 결과를 알리며, 물리·ROS·가상 충전 시계는 계속 흐릅니다. 현재 실행에는 활성화하지 않았고 실제 정지·재개 확인은 남아 있습니다. [코드와 관련 검사 상태](coordination/collab/results/live-anchor-controls-116-integration.json)
+정지·재개 코드는 기본 브랜치에 반영했습니다. 네 차량의 새 정지·HOLD 관측을 받은 뒤 적용 결과를 알리며, 물리·ROS·가상 충전 시계는 계속 흐릅니다. 실제 정지·재개 확인은 남아 있습니다. [코드와 관련 검사 상태](coordination/collab/results/live-anchor-controls-116-integration.json)
 
 ## 공장과 물류 흐름
 
@@ -45,7 +45,11 @@
 
 헤드리스 Isaac Sim 4.5에서 캐리어 5.4kg·적재 토트 6kg의 접촉을 시험했습니다. 네 지지대의 접촉·힘·센서 시각과 정지·정렬을 확인한 뒤, 토트에 상향 속도를 주어 분리 상태와 RGB 두 장을 기록했습니다. 고정 지지대 위의 구성 시험이며 **AMR 장착·자동 적재·운송·하중 정격 검증은 남아 있습니다.** 별도의 [AMR 장착 시험 코드](scripts/isaac/probe_loaded_carrier.py)는 실제 차체·센서 외곽과 기존 반경을 확인하는 단계부터 준비했습니다. [실제 물리 결과](docs/evidence/local45-tote-contact-114.json) · [이미지 출처](docs/images/tote-contact-local45-114/provenance.json)
 
-[롤러 적재·반납 시험 코드](scripts/isaac/probe_roller_transfer.py)도 준비했습니다. 회전 조인트로 구동하는 두 롤러 뱅크와 접촉 센서로 같은 토트를 싣고 돌려보냅니다. CPU 제어 검사만 통과한 상태이며 실제 이송·RGB와 AMR 장착 확인은 남아 있습니다. [구현·검사 범위](coordination/collab/results/roller-transfer-fixture-117-integration.json)
+| 롤러 적재 완료 | 같은 토트의 반납 완료 |
+|---|---|
+| ![접촉 센서로 적재를 확인한 6kg 토트](docs/images/roller-transfer-local45-119/loaded.png) | ![롤러를 반전해 원래 뱅크로 반납한 같은 토트](docs/images/roller-transfer-local45-119/returned.png) |
+
+[롤러 적재·반납 시험](scripts/isaac/probe_roller_transfer.py)은 실제 물리 실행에서 통과했습니다. 회전 조인트로 롤러를 구동하고 접촉 센서와 모터 정지를 확인해 같은 6kg 토트를 싣고 돌려보냈습니다. World 9.69초 동안 왕복을 확인했고 RGB 두 장과 접촉·모터 기록을 보존했습니다. **고정 시험대 결과이며 AMR 장착·도킹·재고 인계 연결은 남아 있습니다.** [실제 결과](docs/evidence/local45-roller-transfer-119.json) · [이미지 출처](docs/images/roller-transfer-local45-119/provenance.json)
 
 </details>
 
@@ -94,7 +98,7 @@ Kit 확장 `factory.ops.console`에서 AMR 선택 상세, 주문 생성, 전체 
 |---|---|
 | 1. 4대 운영 안정화 | 업무 운송 관측. 전체 정상 완주·기록 종료 확인 중 |
 | 2. 공장·차량·적재 | 공장 시각 층·운반 모듈 접촉·분리 시험 완료. 차량 장착·적재 주행은 남음 |
-| 3. 웹·Kit·운영 입력 | 실제 실행의 웹 관측 연결. ROS 조작·Kit 통합은 남음 |
+| 3. 웹·Kit·운영 입력 | 실제 웹 관측 연결. ROS의 다음 예약 지점 정지·재개 코드는 준비, 실제 적용·Kit 통합은 남음 |
 | 4. 혼합 운영·예외 처리 | 최종 구성의 폐쇄/복구·급증·재보충·충전 접촉 확인은 남음 |
 | 5. 병목·정책 비교 | 최종 구성 고정 후 6개 파일럿·60회 비교 예정 |
 | 6. 최종 장면 데이터 | 기존 자료 보존. 최종 장면의 수집·검사는 남음 |
@@ -103,13 +107,15 @@ Kit 확장 `factory.ops.console`에서 AMR 선택 상세, 주문 생성, 전체 
 
 [완료 조건과 구간별 계획](docs/completion-plan.md) · [오류와 재발 방지 기록](docs/troubleshooting.md)
 
-[4대 실행039](docs/evidence/local45-transport-039.json)에서 네 대의 업무 참여·출하 2건·빈 토트 반납 1건을 관측했습니다. 전체 정상 완주는 아직 확인 중입니다. 후속040의 재접근 반복을 분석해, 정지 뒤 기존 출발 허용 범위 안에 있는지 확인하도록 고쳤습니다. [관련 C++·기록 검사](docs/evidence/local45-terminal-reapproach-109.json)와 [동결 소스 빌드](docs/evidence/local45-goal-canonical-112.json)를 마쳤고 후속 4대 실행041을 시작했습니다. 토트 운반 모듈은 위의 지지대 접촉 시험을 통과했으며 차량 장착으로 이어갑니다. 공장 대표 미디어는 보존된 실행036의 자료입니다. 구간 완료와 렌더링 개선 시 현재 기능·한계와 실제 이미지·영상을 함께 갱신합니다.
+[4대 실행041](docs/evidence/local45-transport-041.json)은 출하 2건·빈 토트 반납 1건 뒤 위치 관측의 신선도 검사에서 실패 종료됐습니다. 원본과 미디어는 두 저장소에 보존했으며 전체 정상 완주는 아직 확인 중입니다. 앞선040의 재접근 반복을 고친 [C++·기록 검사](docs/evidence/local45-terminal-reapproach-109.json)와 [동결 소스 빌드](docs/evidence/local45-goal-canonical-112.json)는 유지합니다. 토트 운반 모듈의 지지대 접촉 시험은 통과했고, [차량 장착 시험118](docs/evidence/local45-loaded-carrier-118.json)은 형상 검사에서 거절돼 측정 경로와 장착 후보를 확인하고 있습니다. 공장 대표 미디어는 보존된 실행036의 자료입니다. 구간 완료와 렌더링 개선 시 현재 기능·한계와 실제 이미지·영상을 함께 갱신합니다.
 
 ## 로컬에서 보기
 
 Isaac Sim 물리 실행은 창 없이 헤드리스로 돌리며, GPU 렌더링으로 카메라 RGB를 저장합니다. 현재 로컬 개발 환경은 Isaac Sim 4.5·RTX 3060입니다. 실시간 작업 상태는 웹3D 관제에서 보고, 공장 렌더 결과는 별도 이미지·영상으로 확인합니다.
 
 CPU 운영 데모는 Python 3.12·uv, 웹은 Node.js·npm을 사용합니다. GPU 시뮬레이션과 별도로 실행합니다. PowerShell 터미널 두 개를 사용합니다.
+
+정지·재개 개발 옵션은 새 소스로 준비한 4대 실행기와 관제 API 양쪽에서 `--live-anchor-controls`를 켜고, API의 `--commands-dir`를 해당 실행의 `results/run/commands`에 연결합니다. 요청 접수 후 현재 주행 구간이 끝나고 네 차량의 예약 지점 정지가 확인돼야 적용 완료가 됩니다. 물리·공정·가상 충전 시계는 계속 진행하며, 실제 운행 연결은 후속 실행에서 확인합니다.
 
 ```powershell
 cd "$HOME/factory-ops-twin"

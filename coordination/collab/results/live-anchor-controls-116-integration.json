@@ -2,7 +2,7 @@
   "task_id": "live-anchor-controls-116",
   "attempt": 1,
   "contract_revision": 106,
-  "status": "accepted_candidate_waiting_main_merge",
+  "status": "integrated_main_native_pending",
   "stage3_complete": false,
   "acceptance_authority": "root",
   "branch": "feat/live-anchor-controls-116",
@@ -81,5 +81,7 @@
     "wall_s": 0.583,
     "typescript": "tsc --noEmit --incremental false PASS3.684s after root UI changes"
   },
-  "integration_boundary": "Code/README committed and pushed in isolated branch; MAIN active API/Next and frozen041 remain unchanged. Merge only after current owned run/API source boundary closes. Native pause->fresh all-stop/HOLD ack->resume still required."
+  "integration_boundary": "041 failed and both OS/Job closed; full original preserved. Owned API/Next pair stopped and listener absence checked before applying candidate to main. Native pause->fresh all-stop/HOLD ack->resume still required.",
+  "main_source_boundary_closed": true,
+  "owned_API_Next_stopped": true
 }

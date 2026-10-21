@@ -1,0 +1,225 @@
+{
+  "schema_version": 1,
+  "attempt": "119",
+  "run_id": "104b579dcc774f3e94855ad5012fe34c",
+  "producer_source_commit": "2db9aae6eb7b963e0aa7df923d4c482dad273ba2",
+  "scope": "Isaac Sim4.5 fixed roller transfer fixture; no mounted AMR, docking, inventory integration or industrial rating qualification",
+  "status": "passed",
+  "host": {
+    "run_id": "104b579dcc774f3e94855ad5012fe34c",
+    "started_at_utc": "2026-10-21T06:03:44.2605793Z",
+    "scope": "native bounded component probe",
+    "timeout_s": 480,
+    "sdk_root": "E:\\IsaacSim\\isaac-sim-4.5.0",
+    "entry_point": "probe_roller_transfer.py",
+    "inputs_directory": "C:\\Users\\LIMMM\\FactoryOpsRuntime\\local45-roller-transfer-119.inputs",
+    "launcher_sha256": "ee0290cda90d2e81fe4794a8645086d5a790b9362c965525b6604f142c6f227e",
+    "source_sha256": "eb8ea927bf436d4ab29eb216867fbb235cbead45d39df9b1c58745be0b9bb71b",
+    "gpu": "NVIDIA GeForce RTX 3060, 12288 MiB, 610.62",
+    "timed_out": false,
+    "remaining_owned_pids": [],
+    "config_sha256": "e9131a94382c8f9a08ccd38746a6f0b9444c408e42a2f512bff0e690951d1159",
+    "project_source_sha256": {
+      "factory_ops/__init__.py": "da57bbf586e3c4639fd72b3960ef8dd7a8326b3ba17504836189be26ce5bacb0",
+      "factory_ops/carrier_module.py": "ef12b26aa3d7180e7f122324aa0f5e363010d1f3ddf366165b69ac6de1cbfc14",
+      "factory_ops/roller_transfer.py": "3ebff4e74cce2f9aeef952363d8de063762622a01cf85557117da0aef8267d6b"
+    },
+    "closure_scope": "gated worker and descendants contained in an owned Windows Job Object",
+    "job_runner_sha256": "2ad8ed05bfc5f96edd522900f6cd8ff11bafdace8376b68ca4f8dbd4489cbad5",
+    "job_spec_sha256": "2be7dc03b3752f6e013397bb4e92eb38f86e6809168fda61fb3a3c281fec704b",
+    "full_descendant_closure_verified": true,
+    "timeout_full_tree_cleanup_supported": true,
+    "launcher_pid": 44848,
+    "exit_code": 0,
+    "closed": true,
+    "job_identity_matched": true,
+    "job_assignment_confirmed": true,
+    "prelaunch_inputs_verified": true,
+    "owned_pids_at_cleanup": [
+      51716
+    ],
+    "job_status": "passed",
+    "probe_status": "passed",
+    "probe_identity_matched": true,
+    "project_sources_matched": true,
+    "finished_at_utc": "2026-10-21T06:04:57.3736250Z",
+    "wall_time_s": 73.1122644
+  },
+  "native_result": {
+    "schema_version": 1,
+    "run_id": "104b579dcc774f3e94855ad5012fe34c",
+    "status": "passed",
+    "stage": "fixture_complete",
+    "source_sha256": "eb8ea927bf436d4ab29eb216867fbb235cbead45d39df9b1c58745be0b9bb71b",
+    "config_sha256": "e9131a94382c8f9a08ccd38746a6f0b9444c408e42a2f512bff0e690951d1159",
+    "project_source_sha256": {
+      "factory_ops/__init__.py": "da57bbf586e3c4639fd72b3960ef8dd7a8326b3ba17504836189be26ce5bacb0",
+      "factory_ops/carrier_module.py": "ef12b26aa3d7180e7f122324aa0f5e363010d1f3ddf366165b69ac6de1cbfc14",
+      "factory_ops/roller_transfer.py": "3ebff4e74cce2f9aeef952363d8de063762622a01cf85557117da0aef8267d6b"
+    },
+    "manifest_sha256": "537b1d500522c98800c190e958bcf45e51f7e72772e9275998e35d27f069ae16",
+    "started_at_utc": "2026-10-21T06:03:44.791564+00:00",
+    "scope": "fixed roller/stopper coupon; free dynamic loaded tote; no mounted AMR or inventory integration",
+    "native_transfer_verified": true,
+    "robot_mount_verified": false,
+    "inventory_or_ownership_changed": false,
+    "industrial_rating_verified": false,
+    "stage2_complete": false,
+    "actuator": "UsdPhysics.RevoluteJoint angular force drive; velocity target deg/s, torque N*m",
+    "contact_source": "PhysX ContactSensor force/raw actor pairs/time/physics_step, per roller and stopper",
+    "ground_truth_scope": "evaluation and failure diagnosis only, excluded from controller input",
+    "transitions": [
+      {
+        "phase": "source_ready",
+        "world_time_s": 0.025000001303851604,
+        "world_physics_frame": 3,
+        "command_id": null
+      },
+      {
+        "phase": "loading",
+        "world_time_s": 0.358333352021873,
+        "world_physics_frame": 43,
+        "command_id": "load_104b579dcc774f3e94855ad5012fe34c"
+      },
+      {
+        "phase": "load_settling",
+        "world_time_s": 4.633333574980497,
+        "world_physics_frame": 556,
+        "command_id": "load_104b579dcc774f3e94855ad5012fe34c"
+      },
+      {
+        "phase": "loaded",
+        "world_time_s": 4.941666924394667,
+        "world_physics_frame": 593,
+        "command_id": "load_104b579dcc774f3e94855ad5012fe34c"
+      },
+      {
+        "phase": "unloading",
+        "world_time_s": 4.950000258162618,
+        "world_physics_frame": 594,
+        "command_id": "return_104b579dcc774f3e94855ad5012fe34c"
+      },
+      {
+        "phase": "return_settling",
+        "world_time_s": 9.308333818800747,
+        "world_physics_frame": 1117,
+        "command_id": "return_104b579dcc774f3e94855ad5012fe34c"
+      },
+      {
+        "phase": "returned",
+        "world_time_s": 9.691667172126472,
+        "world_physics_frame": 1163,
+        "command_id": "return_104b579dcc774f3e94855ad5012fe34c"
+      }
+    ],
+    "transfer_events": [
+      {
+        "event": "transfer_loaded",
+        "run_id": "104b579dcc774f3e94855ad5012fe34c",
+        "tote_id": "Tote_117",
+        "command_id": "load_104b579dcc774f3e94855ad5012fe34c",
+        "world_time_s": 4.941666924394667,
+        "world_physics_frame": 593,
+        "source": "native_contact_and_stopped_rollers",
+        "scope": "fixture confirmation; no inventory/ownership mutation"
+      },
+      {
+        "event": "transfer_returned",
+        "run_id": "104b579dcc774f3e94855ad5012fe34c",
+        "tote_id": "Tote_117",
+        "command_id": "return_104b579dcc774f3e94855ad5012fe34c",
+        "world_time_s": 9.691667172126472,
+        "world_physics_frame": 1163,
+        "source": "native_contact_and_stopped_rollers",
+        "scope": "fixture confirmation; no inventory/ownership mutation"
+      }
+    ],
+    "media": [
+      {
+        "path": "loaded.png",
+        "sha256": "24887749c0199a3f8f29d92684bc303a737a88952fd553eddb8d6ccd4b10f9e3",
+        "world_checkpoint_s": 4.941666924394667,
+        "world_physics_frame": 593,
+        "timing_scope": "continuous RGB read at confirmation checkpoint; exposure clock not independently qualified"
+      },
+      {
+        "path": "returned.png",
+        "sha256": "43779f6db35a5c413219483c2570d264b01134630614acac877e1d90de7bcadc",
+        "world_checkpoint_s": 9.691667172126472,
+        "world_physics_frame": 1163,
+        "timing_scope": "continuous RGB read at confirmation checkpoint; exposure clock not independently qualified"
+      }
+    ],
+    "cleanup_errors": [],
+    "requires_host_closure": true,
+    "isaac_version": "4.5.0-rc.36+release.19112.f59b3005.gl",
+    "native_measurements": {
+      "written_samples": 198,
+      "last_world_time_s": 9.691667172126472,
+      "last_world_frame": 1163
+    },
+    "failure": null,
+    "motor_zero_requested": true,
+    "controller_final": {
+      "phase": "returned",
+      "ready": true,
+      "failure": null,
+      "command_id": "return_104b579dcc774f3e94855ad5012fe34c",
+      "tote_id": "Tote_117",
+      "motor_targets_rad_s": {
+        "source_roller_00": 0.0,
+        "source_roller_01": 0.0,
+        "source_roller_02": 0.0,
+        "source_roller_03": 0.0,
+        "source_roller_04": 0.0,
+        "source_roller_05": 0.0,
+        "source_roller_06": 0.0,
+        "carrier_roller_00": 0.0,
+        "carrier_roller_01": 0.0,
+        "carrier_roller_02": 0.0,
+        "carrier_roller_03": 0.0,
+        "carrier_roller_04": 0.0,
+        "carrier_roller_05": 0.0,
+        "carrier_roller_06": 0.0
+      },
+      "events": [
+        {
+          "event": "transfer_loaded",
+          "run_id": "104b579dcc774f3e94855ad5012fe34c",
+          "tote_id": "Tote_117",
+          "command_id": "load_104b579dcc774f3e94855ad5012fe34c",
+          "world_time_s": 4.941666924394667,
+          "world_physics_frame": 593,
+          "source": "native_contact_and_stopped_rollers",
+          "scope": "fixture confirmation; no inventory/ownership mutation"
+        },
+        {
+          "event": "transfer_returned",
+          "run_id": "104b579dcc774f3e94855ad5012fe34c",
+          "tote_id": "Tote_117",
+          "command_id": "return_104b579dcc774f3e94855ad5012fe34c",
+          "world_time_s": 9.691667172126472,
+          "world_physics_frame": 1163,
+          "source": "native_contact_and_stopped_rollers",
+          "scope": "fixture confirmation; no inventory/ownership mutation"
+        }
+      ]
+    },
+    "finished_at_utc": "2026-10-21T06:04:55.470287+00:00",
+    "elapsed_wall_s": 70.67199999996228,
+    "app_close_requested": true
+  },
+  "stage2_complete": false,
+  "project_complete": false,
+  "preservation": {
+    "file_count": 21,
+    "original_bytes": 2028430,
+    "paths": [
+      "C:\\Users\\LIMMM\\FactoryOpsArtifacts\\roller-transfer-119\\checkpoint-001.tar.gz",
+      "E:\\FactoryOpsArtifacts\\roller-transfer-119\\checkpoint-001.tar.gz"
+    ],
+    "archive_bytes": 337236,
+    "archive_sha256": "8a1f49a9ebd22ec1c6f695fec36034ad98559b5af33fc6df371ec67b04dfdc1f",
+    "all_members_SHA_matched_both_stores": true
+  }
+}

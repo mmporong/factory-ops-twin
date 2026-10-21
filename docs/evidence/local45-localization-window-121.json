@@ -1,0 +1,24 @@
+{
+  "run_id": "b73d6ac15f7f42bb8f702ea9eb4717a5",
+  "both_OS_owners_closed": true,
+  "job_closed": true,
+  "SQL_opened_only_after_closure": true,
+  "failure_clock_ns": 1211766729865,
+  "last_G3_composed_TF_stamp_ns": 1211200063169,
+  "newer_odom_base_TF_recorded_before_failure_count": 11,
+  "last_such_record": {
+    "message_id": 1474468,
+    "recorded_ns": 1211750063198,
+    "topic": "/carter1/tf",
+    "header_ns": 1211750063198,
+    "parent": "odom",
+    "child": "base_link"
+  },
+  "sample_window_s": 2,
+  "scope": "Closed recorder timestamps only; not proof of G3 receipt, callback execution order, buffer contents or complete root cause",
+  "interpretation": "A newer raw odom->base_link transform was recorded before failure clock. Actual G3 dispatch/TF buffer behavior still needs diagnosis; do not increase TTL or alter stamps.",
+  "closed_window_sha256": "ad68b9304aee446aa5c0a1bc2b0c1a65c2729a1495dbf887b67ff8c0cb2fe3e0",
+  "query_source_sha256": "b1a4c658678bc6cdcd116d80efdbd1f400aa6e73f7a4dcb5d4b3cbece06be7c7",
+  "original041_archives_unchanged": true,
+  "postprocessing_timing": "Additional read-only diagnosis after original041 preservation; original summarizer SQL=false describes its own scope"
+}

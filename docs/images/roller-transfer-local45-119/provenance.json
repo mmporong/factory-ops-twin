@@ -1,0 +1,28 @@
+{
+  "run_id": "104b579dcc774f3e94855ad5012fe34c",
+  "evidence": "../../evidence/local45-roller-transfer-119.json",
+  "scope": "Original headless RGB from a fixed roller fixture, not an AMR or factory scene",
+  "files": [
+    {
+      "path": "loaded.png",
+      "sha256": "24887749c0199a3f8f29d92684bc303a737a88952fd553eddb8d6ccd4b10f9e3",
+      "world_checkpoint_s": 4.941666924394667,
+      "world_physics_frame": 593,
+      "timing_scope": "continuous RGB read at confirmation checkpoint; exposure clock not independently qualified"
+    },
+    {
+      "path": "returned.png",
+      "sha256": "43779f6db35a5c413219483c2570d264b01134630614acac877e1d90de7bcadc",
+      "world_checkpoint_s": 9.691667172126472,
+      "world_physics_frame": 1163,
+      "timing_scope": "continuous RGB read at confirmation checkpoint; exposure clock not independently qualified"
+    }
+  ],
+  "changes_to_image_bytes": "none",
+  "source_sha256": "eb8ea927bf436d4ab29eb216867fbb235cbead45d39df9b1c58745be0b9bb71b",
+  "config_sha256": "e9131a94382c8f9a08ccd38746a6f0b9444c408e42a2f512bff0e690951d1159",
+  "timing_scope": "World confirmation checkpoint; exposure clock not independently qualified",
+  "native_transfer_verified": true,
+  "AMR_mount_verified": false,
+  "inventory_transaction_verified": false
+}

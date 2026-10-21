@@ -180,7 +180,8 @@ export default function Dashboard() {
     (observationAge !== null && observationAge > 10) ||
     snapshot?.connection !== "connected";
   const can = (action: string) =>
-    !!snapshot?.capabilities.includes(action) && !stale && !sending;
+    !!snapshot?.capabilities.includes(action) && !stale && !sending && command?.status !== "pending";
+  const liveControls = snapshot?.mode === "live" && snapshot.live_control?.contract === "ros-next-anchor-v1";
   const robot =
     selection?.kind === "robot"
       ? snapshot?.robots.find((r) => r.id === selection.id)
@@ -267,7 +268,7 @@ export default function Dashboard() {
                 ? stale
                   ? "연결 지연 · 마지막 수신 상태 유지"
                   : snapshot.paused
-                    ? "운영 일시정지"
+                    ? liveControls ? "차량 운행 정지" : "운영 일시정지"
                     : "운영 상태 수신 중"
                 : "서버에 연결하고 있습니다"}
             </small>
@@ -431,15 +432,15 @@ export default function Dashboard() {
               <span className="eyebrow">OPERATIONS</span>
               <h2>작업 제어</h2>
             </div>
-            {snapshot?.capabilities.includes(
+            {(liveControls || snapshot?.capabilities.includes(
               snapshot.paused ? "resume" : "pause",
-            ) && (
+            )) && snapshot && (
               <button
                 className="secondary"
                 disabled={!can(snapshot.paused ? "resume" : "pause")}
                 onClick={() => send(snapshot.paused ? "resume" : "pause")}
               >
-                {snapshot.paused ? "운영 재개" : "운영 일시정지"}
+                {liveControls ? snapshot.live_control?.phase === "pause_pending" ? "다음 예약 지점 정지 대기 중" : snapshot.paused ? "차량 운행 재개" : "다음 예약 지점에서 차량 정지" : snapshot.paused ? "운영 재개" : "운영 일시정지"}
               </button>
             )}
           </div>
@@ -503,6 +504,7 @@ export default function Dashboard() {
                       ? "조작 결과는 서버 승인 상태로 확인합니다."
                       : "현재 원천은 웹 명령을 지원하지 않습니다. 수신된 운영 상태를 표시합니다.")}
           </div>
+          {liveControls && <p className="readonly-notice">{stale ? "원천 연결이 끊기거나 지연되어 조작할 수 없습니다." : snapshot?.live_control?.phase === "paused" ? "네 차량의 예약 지점 정지를 확인했습니다. 물리·가상 충전 시계는 계속 진행합니다." : "요청 접수는 정지 완료가 아닙니다. 현재 승인된 주행과 제동이 끝난 뒤 네 차량의 정지를 확인합니다."}</p>}
         </section>
         <aside className="detail-panel" aria-label="선택 상세">
           <div className="detail-heading">
@@ -793,7 +795,7 @@ export default function Dashboard() {
       <footer className="page-footer">
         <span>Factory Ops Twin · 4 AMR</span>
         <span>
-          {snapshot ? `원장 revision ${snapshot.revision}` : "원장 미연결"} ·{" "}
+          {snapshot ? `원장 revision ${snapshot.live_control?.ledger_revision ?? snapshot.revision}` : "원장 미연결"} ·{" "}
           {scene?.layout_revision ?? "배치 미연결"} · 실물 / MES 연동 미구현
         </span>
       </footer>

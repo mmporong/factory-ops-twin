@@ -24,7 +24,7 @@ export default function ChargingPanel({ snapshot, stale }: Props) {
             <article className={`charging-slot ${dock.owner ? "occupied" : ""}`} key={dock.id}>
               <div><strong>{dock.id}</strong><small>{dock.anchor}</small></div>
               <span>{robot?.label ?? (rosVirtual ? "예약 없음" : "사용 가능")}</span>
-              <small>{dock.owner && snapshot.paused ? "일시정지 · " : ""}{rosVirtual && dock.phase === "contact_pending" ? "가상 도킹 확인" : readable(dock.phase)}</small>
+              <small>{dock.owner && snapshot.paused && snapshot.live_control?.contract !== "ros-next-anchor-v1" ? "일시정지 · " : ""}{rosVirtual && dock.phase === "contact_pending" ? "가상 도킹 확인" : readable(dock.phase)}</small>
               {robot && robot.battery_pct !== null && (
                 <div className="charge-meter">
                   <meter min={0} max={100} value={robot.battery_pct} aria-label={`${robot.label} ${robot.battery_source.startsWith("authored_") ? "가상 " : ""}배터리`} />

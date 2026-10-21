@@ -29,6 +29,7 @@ if TYPE_CHECKING:
 from factory_ops.energy_dispatch import evaluate_energy_assignment
 from factory_ops.fleet_registry import FleetRegistry
 from factory_ops.callback_drain import CallbackDrain
+from factory_ops.live_control import LiveControl, control_capabilities
 from factory_ops.fleet_execution import FOLLOW_PATH_NORMALIZATION, StaleComputedPathError, StoppedGate, make_chunk, normalize_follow_path_payload, qualify_computed_path, path_content_sha256, path_clock_ready, path_header_stamp_ns
 from factory_ops.fleet_routing import RouteBook, assess_dispatch_route_compatibility, swept_tiles
 from factory_ops.visual_state import canonical_sha256, make_visual_state, project_ledger_state, publish_visual_state
@@ -1070,7 +1071,8 @@ def dashboard_wait_reason(runtime: Mapping[str, Any], robot_id: str, known_robot
 
 def dashboard_state(snapshot: Mapping[str, Any], robots: Mapping[str, Any], *,
                     sim_time_s: float, absolute_sim_time_s: float, pose_ttl_s: float,
-                    material: Mapping[str, Any] | None = None, energy: EnergyRuntime | None = None) -> dict[str, Any]:
+                    material: Mapping[str, Any] | None = None, energy: EnergyRuntime | None = None,
+                    control: LiveControl | None = None) -> dict[str, Any]:
     """Read-only web projection; localization, ledger and odometry retain their sources."""
     rows = []
     for key, logical in snapshot["robots"].items():
@@ -1118,7 +1120,7 @@ def dashboard_state(snapshot: Mapping[str, Any], robots: Mapping[str, Any], *,
         tasks.extend({"id": t["task_id"], "order_id": t["order_id"], "type": "empty_return", "state": t["state"],
             "robot_id": t["robot_id"], "source": t["source"], "destination": t["destination"],
             "payload_id": t["tote_id"], "progress": 1 if t["state"] == "complete" else None} for t in material["empty_trips"])
-    return {"schema_version": 1, "run_id": snapshot["run_id"], "revision": snapshot["ledger_seq"], "mode": "live",
+    result = {"schema_version": 1, "run_id": snapshot["run_id"], "revision": snapshot["ledger_seq"], "mode": "live",
             "sim_time_s": sim_time_s, "observed_at": datetime.now(timezone.utc).isoformat(),
             "connection": "connected", "paused": False, "capabilities": [], "robots": rows, "tasks": tasks,
             "inventory": material["inventory"] if material is not None else {"stock": [], "totes": [], "conservation": []},
@@ -1129,13 +1131,52 @@ def dashboard_state(snapshot: Mapping[str, Any], robots: Mapping[str, Any], *,
             "events": [], "commands": [], "model_scope": "read-only navigation ledger, estimated TF and encoder odometry; "
                 + ("navigation-bound material accounting; payload contact unverified; " if material is not None else "SKU stock unavailable; ")
                 + ("odometry-integrated virtual battery, uncalibrated; charging unconnected" if energy is not None else "battery unavailable")}
+    if control is not None:
+        result["live_control"] = {**control.snapshot(), "ledger_revision": snapshot["ledger_seq"]}
+        result.update(revision=control.revision, paused=control.phase == "paused", commands=control.snapshot()["commands"])
+        result["capabilities"] = control_capabilities(result)
+        if control.phase == "closed":
+            result["connection"] = "disconnected"
+        result["model_scope"] += "; next reserved-anchor fleet stop, physics/virtual clocks continue"
+    return result
+
+
+def live_anchor_stopped(robot: str, rt: Mapping[str, Any], hold: Mapping[str, Any] | None, *,
+        goal: Any, now_s: float, pause_after_s: float, run_id: str, scenario_id: str,
+        ack: Any, limits: Mapping[str, Any]) -> bool:
+    """Qualify current reserved anchor; never mutate the navigation stop gate."""
+    if rt["phase"] not in {"idle", "request", "dwell", "charging"} or goal is None or hold is None:
+        return False
+    if (hold.get("generation") != rt["generation"] or hold.get("goal_uuid") != rt["follow_uuid"]
+            or hold.get("accepted_goal_uuid") is not None
+            or not rt["held_tiles"] or frozenset(map(tuple, hold["tiles"])) != rt["held_tiles"]):
+        return False
+    pose = rt.get("pose")
+    if pose is None or not 0 <= now_s-pose["stamp_s"] <= limits["pose_ttl_s"]:
+        return False
+    try:
+        auth = rt["last_authorization"]
+        if (auth.get("mode") != "hold" or auth.get("run_id") != run_id
+                or not auth["issued_sim_time_s"] <= now_s <= auth["valid_until_sim_time_s"]
+                or not 0 <= now_s-ack["evaluation_sim_time_s"] <= limits["authorization_ttl_s"]):
+            return False
+        validate_arrival(pose, goal, xy_limit=limits["station_xy_tolerance_m"], yaw_limit=limits["station_yaw_tolerance_rad"])
+        local_now = rt["node"].get_clock().now().nanoseconds/1e9
+        stopped = committed_stopped_odometry_record(rt["live_stop_receiver"], local_now_s=local_now, event_now_s=now_s)
+        return (stopped is not None and stopped["stop_measurement_start_stamp_s"] > pause_after_s
+            and valid_hold_ack(ack, run_id=run_id, scenario_id=scenario_id, robot_id=robot,
+                minimum_sequence=rt["live_hold_min_sequence"], generation=rt["generation"],
+                goal_uuid=rt["follow_uuid"], terminal_time_s=pause_after_s, now_s=local_now))
+    except (ValueError, KeyError, TypeError):
+        return False
 
 
 class DashboardPublisher:
     def __init__(self, enabled: bool, output: Path, pose_ttl_s: float,
-                 on_error: Callable[[str, Mapping[str, Any]], None]) -> None:
+                 on_error: Callable[[str, Mapping[str, Any]], None], control: LiveControl | None = None) -> None:
         self.enabled, self.output, self.pose_ttl_s, self.on_error = enabled, output, pose_ttl_s, on_error
         self.last_wall = -math.inf
+        self.control = control
 
     def publish(self, snapshot: Mapping[str, Any], robots: Mapping[str, Any],
                 sim_time_s: float, absolute_sim_time_s: float, *, material: Mapping[str, Any] | None = None,
@@ -1145,7 +1186,8 @@ class DashboardPublisher:
             return
         try:
             atomic_json(self.output / "dashboard-state.json", dashboard_state(snapshot, robots,
-                sim_time_s=sim_time_s, absolute_sim_time_s=absolute_sim_time_s, pose_ttl_s=self.pose_ttl_s, material=material, energy=energy))
+                sim_time_s=sim_time_s, absolute_sim_time_s=absolute_sim_time_s, pose_ttl_s=self.pose_ttl_s,
+                material=material, energy=energy, control=self.control))
         except (OSError, ValueError, TypeError, KeyError) as error:
             # Presentation failure must not grant movement or disrupt the physical mission.
             self.on_error("dashboard_publication_failed", {"error": str(error)})
@@ -1538,8 +1580,17 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
     scene_result_name, runtime_fields = _scene_runtime(development, getattr(args, "runtime_profile", "canonical62"))
     config_dir = session_root if development else config_dir_from_session(session_root)
     runtime_config = config["g3_runtime"]
+    live_enabled = getattr(args, "live_anchor_controls", False)
+    if live_enabled and (not development or len(robot_ids) != 4 or session.get("primary_evaluation") is not False
+            or session.get("profile") != "development" or not args.dashboard
+            or getattr(args, "runtime_profile", "canonical62") != "local45_development"):
+        raise ValueError("live anchor controls require explicit four-robot non-primary local45 development dashboard")
     scenario_id = session["scenario_id"]
     output = args.output.resolve(strict=True)
+    live_control = LiveControl(args.run_id, tuple(robot_ids), checkpoint=output/"live-control-state.json") if live_enabled else None
+    commands_dir = output/"commands"
+    if live_enabled:
+        commands_dir.mkdir(exist_ok=True)
     if development and any((output / name).exists() or (output / name).is_symlink()
                            for name in (marker_name, "session-verified.json", "mission-result.json")):
         raise ValueError("preserve existing mission evidence; development output must be new")
@@ -1553,7 +1604,10 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
                        "namespace_by_id": namespaces, **runtime_fields})
     else:
         result.update(primary_trial_identity(session_root, session))
+    if live_control is not None:
+        result["live_control_source_sha256"] = sha(project / "factory_ops/live_control.py")
     launch = bag = ros = mission = callback_drain = None
+    dashboard_publisher: DashboardPublisher | None = None
     energy_runtime: EnergyRuntime | None = None
     charging_runtime: RosChargingRuntime | None = None
     charging_reservations: dict[str, dict[str, Any]] = {}
@@ -1714,6 +1768,11 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
                 "scan_counts": {key: 0 for key in ("front_raw", "rear_raw", "front", "rear", "localization_front", "localization_rear")},
                 "subscriptions": [], "map_future": None}
             rt = robots[robot_id]
+            if live_control is not None:
+                rt["live_stop_receiver"] = StopOdometryReceiver(StoppedGate(
+                    window_s=runtime_config["stopped_window_s"], max_linear_m_s=runtime_config["stopped_linear_m_s"],
+                    max_angular_rad_s=runtime_config["stopped_angular_rad_s"], ttl_s=runtime_config["odom_ttl_s"]))
+                rt["live_stop_after"] = 0.
             if local45:
                 rt["startup_receipts"] = {"raw_counts": {"front": 0, "rear": 0},
                     "last_raw_stamp_ns": {}, "last_filtered_stamp_ns": {}}
@@ -1753,6 +1812,9 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
                 state["last_odom"] = {"stamp_s": stamp, "linear_m_s": float(message.twist.twist.linear.x),
                                       "angular_rad_s": float(message.twist.twist.angular.z)}
                 robot_now = state["node"].get_clock().now().nanoseconds / 1e9
+                if live_control is not None:
+                    state["live_stop_receiver"].observe(state["last_odom"]["linear_m_s"], state["last_odom"]["angular_rad_s"],
+                        stamp_s=stamp, stop_after_s=state["live_stop_after"], now_s=robot_now)
                 state["stop_receiver"].observe(
                     state["last_odom"]["linear_m_s"], state["last_odom"]["angular_rad_s"],
                     stamp_s=stamp, stop_after_s=state["stop_after"], now_s=robot_now,
@@ -2077,13 +2139,16 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
         visual_projection: dict[str, Any] | None = None
         visual_sequence = 0
         material_revision = -1
-        dashboard_publisher = DashboardPublisher(args.dashboard, output, runtime_config["pose_ttl_s"], journal)
+        dashboard_publisher = DashboardPublisher(args.dashboard, output, runtime_config["pose_ttl_s"], journal, live_control)
         cutoff: dict[str, Any] | None = None
 
         def new_leg(robot: str, target: str, intent: Any = None) -> None:
             if cutoff is not None:
                 raise RuntimeError("new navigation legs are forbidden after evaluation cutoff")
             rt = robots[robot]
+            if live_control is not None and live_control.blocked:
+                rt["live_deferred_leg"] = (target, intent)
+                return
             reset_stop_observation(rt)
             plan = book.plan(rt["anchor"], target, closed=current_closed)
             final_goal = navigation_leg_goal(plan, goals,
@@ -2112,10 +2177,51 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
                     "generation": binding["generation"], "goal_uuid": binding["goal_uuid"],
                     "candidate_goal_uuid": rt.get("follow_uuid")})
 
+        def refresh_live_controls(stamp: float) -> None:
+            if live_control is not None and live_control.blocked and live_control.pause_since is not None:
+                retained = manager.snapshot(now_s=stamp)["holds"]
+                evidence = {}
+                anchor_evidence = {}
+                for robot, rt in robots.items():
+                    try:
+                        ack = read_initial_hold_receipt(output, robot)
+                    except (OSError, ValueError):
+                        ack = None
+                    evidence[robot] = live_anchor_stopped(robot, rt, retained.get(robot),
+                        goal=rt.get("live_anchor_goal") or goals.get(rt["anchor"]), now_s=stamp,
+                        pause_after_s=live_control.pause_since, run_id=args.run_id, scenario_id=scenario_id,
+                        ack=ack, limits={**runtime_config, "authorization_ttl_s": config["authorization_ttl_s"]})
+                    if evidence[robot]:
+                        anchor_evidence[robot] = {"anchor": rt["anchor"], "generation": rt["generation"],
+                            "pose": copy.deepcopy(rt["pose"]), "hold_ack": ack,
+                            "stopped_odometry": rt["live_stop_receiver"].samples}
+                old_revision = live_control.revision
+                live_control.settle(evidence)
+                if old_revision != live_control.revision:
+                    journal("live_control_applied", {**live_control.snapshot(), "anchor_evidence": anchor_evidence})
+
+
         result["stage"] = "orders"
         while True:
             stamp = tick(require_fresh=True)
             elapsed = stamp-origin
+            refresh_live_controls(stamp)
+            if live_control is not None and cutoff is None:
+                previous_phase = live_control.phase
+                for receipt in live_control.poll(commands_dir, now_s=stamp):
+                    journal("live_control_receipt", receipt)
+                if previous_phase == "running" and live_control.blocked:
+                    for rt in robots.values():
+                        rt["live_stop_receiver"].reset()
+                        rt["live_stop_after"] = stamp
+                        rt["live_hold_min_sequence"] = rt["sequence"]
+                elif previous_phase == "paused" and not live_control.blocked:
+                    for robot, rt in robots.items():
+                        deferred = rt.pop("live_deferred_leg", None)
+                        if deferred is not None:
+                            new_leg(robot, *deferred)
+                        elif rt["phase"] == "request" and rt["leg"] is not None and not rt.get("planner_retry_pending"):
+                            new_leg(robot, rt["leg"]["target"], rt["leg"]["intent"])
             horizon = float(session["workload"]["horizon_s"])
             if cutoff is None and elapsed >= horizon and not mission.completed:
                 try:
@@ -2134,6 +2240,8 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
                         retained_holds=retained_holds, robot_ids=robot_ids)
                     cutoff["event_seq"] = event_seq + 1
                     result["cutoff"] = cutoff
+                    if live_control is not None:
+                        live_control.close("mission_horizon_reached")
                     journal("evaluation_cutoff", {key: value for key, value in cutoff.items()
                             if key not in {"mission_state", "terminal_stops"}})
                     for robot, rt in robots.items():
@@ -2181,7 +2289,7 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
                 last_update = elapsed
             for robot, rt in robots.items():
                 phase = rt["phase"]
-                if phase == "request" and maps_ready and stamp-rt["last_request"] >= .2:
+                if phase == "request" and (live_control is None or not live_control.blocked) and maps_ready and stamp-rt["last_request"] >= .2:
                     leg = rt["leg"]
                     retry = rt.get("planner_retry_pending")
                     if retry is not None:
@@ -2385,6 +2493,8 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
                             journal("business_station_hold_shrunk", stopped["business_station_hold_shrink"])
                         reset_stop_observation(rt)
                         rt["anchor"] = rt["chunk"].goal
+                        if live_control is not None:
+                            rt["live_anchor_goal"] = rt["chunk"].goal_pose
                         if cutoff is not None:
                             binding = cutoff["robots"][robot]["retained_hold"]
                             rt["record"]["cutoff_cleanup_finished_sim_time_s"] = stamp
@@ -2492,7 +2602,7 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
                         journal("virtual_charger_released", released)
                         if robots[robot]["anchor"] != robots[robot]["park"]:
                             new_leg(robot, robots[robot]["park"])
-                for robot in sorted(charging_requests):
+                for robot in sorted(charging_requests) if live_control is None or not live_control.blocked else ():
                     rt = robots[robot]
                     if (robot in charging_reservations or rt["phase"] != "idle" or rt["leg"] is not None
                             or robot in mission.active_intents
@@ -2532,7 +2642,8 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
                     charging_revision = fingerprint
                 if elapsed >= horizon and (charging_requests or charging_reservations):
                     raise TimeoutError("virtual charging development horizon reached")
-            eligible = [robot for robot, rt in robots.items() if rt["phase"] == "idle" and rt["leg"] is None]
+            eligible = [robot for robot, rt in robots.items() if rt["phase"] == "idle" and rt["leg"] is None
+                and (live_control is None or not live_control.blocked)]
             idle_for_intents = list(eligible)
             if material is not None and cutoff is None:
                 material.advance()
@@ -2621,6 +2732,7 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
                     new_leg(robot, intent.station, intent)
             visual_snapshot = mission.ledger.snapshot()
             material_state = material.snapshot() if material is not None else None
+            refresh_live_controls(stamp)
             dashboard_publisher.publish(visual_snapshot, robots, elapsed, stamp, material=material_state, energy=energy_runtime)
             if material_state is not None and material_state["revision"] != material_revision:
                 atomic_json(output / "material-state.json", material_state)
@@ -2653,6 +2765,10 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
             if (mission.completed and (material is None or material.completed)
                     and not charging_requests and not charging_reservations
                     and all(rt["phase"] == "idle" and rt["anchor"] == rt["park"] for rt in robots.values())):
+                if live_control is not None:
+                    live_control.close("scenario_complete")
+                    dashboard_publisher.last_wall = -math.inf
+                    dashboard_publisher.publish(visual_snapshot, robots, elapsed, stamp, material=material_state, energy=energy_runtime)
                 break
             if elapsed-last_progress >= 1:
                 atomic_json(output / "mission-progress.json", {"run_id": args.run_id, "scenario_id": scenario_id, "elapsed_sim_s": elapsed,
@@ -2739,6 +2855,18 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
         atomic_json(output / "mission-control.json", {"run_id": args.run_id, "scenario_id": scenario_id, "status": "failed", "reason": reason})
         print(f"{mission_label}=FAIL {type(error).__name__}: {reason}", flush=True)
     finally:
+        if live_control is not None:
+            try:
+                live_control.close("mission_ended_or_failed")
+                result["live_control"] = live_control.snapshot()
+                if dashboard_publisher is not None and mission is not None:
+                    dashboard_publisher.last_wall = -math.inf
+                    close_stamp = now()
+                    dashboard_publisher.publish(mission.ledger.snapshot(), robots, close_stamp-origin, close_stamp,
+                        material=material.snapshot() if material is not None else None, energy=energy_runtime)
+            except (OSError, ValueError, TypeError, KeyError) as error:
+                result["status"] = "failed"
+                result["live_control_close_error"] = str(error)
         for process, label in ((bag, "rosbag"), (launch, "nav2")):
             try:
                 cleanup.append(stop_process(process, label))

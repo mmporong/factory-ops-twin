@@ -52,6 +52,7 @@ export type Stock = {
 };
 export type Command = {
   command_id: string;
+  run_id?: string;
   status: "applied" | "pending" | "rejected";
   reason: string | null;
   revision: number;
@@ -67,6 +68,15 @@ export type Snapshot = {
   model_scope?: string;
   paused: boolean;
   capabilities: string[];
+  live_control?: {
+    contract: string;
+    run_id: string;
+    enabled: boolean;
+    revision: number;
+    ledger_revision: number;
+    phase: "running" | "pause_pending" | "paused" | "closed";
+    all_stopped: boolean;
+  };
   robots: Robot[];
   tasks: Task[];
   inventory: { stock: Stock[]; totes: Tote[]; conservation: unknown[] };

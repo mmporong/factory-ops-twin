@@ -1,0 +1,2123 @@
+{
+  "schema_version": 1,
+  "attempt": "118",
+  "run_id": "8c80f7b1e4ee42609cd9e4cd6a280d85",
+  "producer_source_commit": "2db9aae6eb7b963e0aa7df923d4c482dad273ba2",
+  "scope": "Isaac Sim4.5 actual Nova Carter static mount admission; no loaded motion, sensor FOV, mount strength or industrial rating qualification",
+  "status": "failed",
+  "host": {
+    "run_id": "8c80f7b1e4ee42609cd9e4cd6a280d85",
+    "started_at_utc": "2026-10-21T06:01:31.2040939Z",
+    "scope": "native bounded component probe",
+    "timeout_s": 480,
+    "sdk_root": "E:\\IsaacSim\\isaac-sim-4.5.0",
+    "entry_point": "probe_loaded_carrier.py",
+    "inputs_directory": "C:\\Users\\LIMMM\\FactoryOpsRuntime\\local45-loaded-carrier-118.inputs",
+    "launcher_sha256": "ee0290cda90d2e81fe4794a8645086d5a790b9362c965525b6604f142c6f227e",
+    "source_sha256": "fe551b662b6883b77a9e5d635fe59d98ceeb7f3de5e2b6b300d18a04da709135",
+    "gpu": "NVIDIA GeForce RTX 3060, 12288 MiB, 610.62",
+    "timed_out": false,
+    "remaining_owned_pids": [],
+    "config_sha256": "4e849823f3e0efe4561fd8ce02ef17067b4b9dc606558bab2197ffa4efa46627",
+    "project_source_sha256": {
+      "factory_ops/__init__.py": "da57bbf586e3c4639fd72b3960ef8dd7a8326b3ba17504836189be26ce5bacb0",
+      "factory_ops/carrier_module.py": "ef12b26aa3d7180e7f122324aa0f5e363010d1f3ddf366165b69ac6de1cbfc14",
+      "factory_ops/carrier_robot.py": "67d90058df40e2be49324ed43c5cf1af4403adae9eecd17b562300e71efb692a"
+    },
+    "closure_scope": "gated worker and descendants contained in an owned Windows Job Object",
+    "job_runner_sha256": "2ad8ed05bfc5f96edd522900f6cd8ff11bafdace8376b68ca4f8dbd4489cbad5",
+    "job_spec_sha256": "7344653997f9004079d89fd73032d8c765658813c8e9d1d1d5ebfeb30f5389db",
+    "full_descendant_closure_verified": true,
+    "timeout_full_tree_cleanup_supported": true,
+    "launcher_pid": 37700,
+    "exit_code": 0,
+    "closed": true,
+    "job_identity_matched": true,
+    "job_assignment_confirmed": true,
+    "prelaunch_inputs_verified": true,
+    "owned_pids_at_cleanup": [
+      72644,
+      73416,
+      60072,
+      61252,
+      42704,
+      69836,
+      52624,
+      8604,
+      73120,
+      67980,
+      71292,
+      57168,
+      57140,
+      27404,
+      42784,
+      39800,
+      73044,
+      71924,
+      63352,
+      14728,
+      62196,
+      73052,
+      43384
+    ],
+    "job_status": "passed",
+    "probe_status": "failed",
+    "probe_identity_matched": true,
+    "project_sources_matched": true,
+    "finished_at_utc": "2026-10-21T06:02:11.1247699Z",
+    "wall_time_s": 39.9197323
+  },
+  "native_result": {
+    "schema_version": 1,
+    "run_id": "8c80f7b1e4ee42609cd9e4cd6a280d85",
+    "status": "failed",
+    "stage": "mount_admission",
+    "source_sha256": "fe551b662b6883b77a9e5d635fe59d98ceeb7f3de5e2b6b300d18a04da709135",
+    "config_sha256": "4e849823f3e0efe4561fd8ce02ef17067b4b9dc606558bab2197ffa4efa46627",
+    "project_source_sha256": {
+      "factory_ops/__init__.py": "da57bbf586e3c4639fd72b3960ef8dd7a8326b3ba17504836189be26ce5bacb0",
+      "factory_ops/carrier_module.py": "ef12b26aa3d7180e7f122324aa0f5e363010d1f3ddf366165b69ac6de1cbfc14",
+      "factory_ops/carrier_robot.py": "67d90058df40e2be49324ed43c5cf1af4403adae9eecd17b562300e71efb692a"
+    },
+    "manifest_sha256": "406aec0f70fbea4a74f1462d05d53395055b7b5182fb5dcab8749732b55307f4",
+    "started_at_utc": "2026-10-21T06:01:32.051549+00:00",
+    "scope": "one free Nova Carter, chassis-fixed carrier and separate free dynamic loaded tote; static admission only",
+    "transport_verified": false,
+    "sensor_fov_verified": false,
+    "mount_strength_verified": false,
+    "industrial_rating_verified": false,
+    "stage2_complete": false,
+    "physical_attachment_verified": false,
+    "media": [],
+    "cleanup_errors": [],
+    "requires_host_closure": true,
+    "profile_assumptions_verbatim": [
+      "Original generic bolted-deck/raised-support candidate, not a manufacturer model, certified payload or finished low-profile lifting AMR.",
+      "All dimensions, masses, uniform material distributions, friction and contact settings are authored development assumptions, not measurements.",
+      "Nova Carter remains the development base. Declared keepouts below are candidate integration constraints, not its measured collider/sensor geometry. Actual robot-frame transform, body/sensor clearance, mount strength, added inertia and navigation footprint need native admission before installation.",
+      "Existing presentation-only cargo is independent. This profile does not change a registry, scene, map, footprint, controller or sensor.",
+      "Probe uses fixed stand pads instead of a robot chassis. Carrier and tote are separate dynamic compound bodies; centred ballast is rigidly included in tote inertia, not loose contents. Separation is an authored upward velocity impulse, not a lift actuator or unloading operation."
+    ],
+    "fixture_scope_difference": "Original profile stand/release wording describes 114 only. This fixture uses a free Nova Carter and chassis fixed joint, no stands and no authored separation. Geometry/mass/material assumptions remain unchanged.",
+    "isaac_version": "4.5.0-rc.36+release.19112.f59b3005.gl",
+    "asset": {
+      "relative_path": "/Isaac/Robots/NVIDIA/Carter/nova_carter/nova_carter.usd",
+      "resolved_endpoint": "https://omniverse-content-production.s3-us-west-2.amazonaws.com/Assets/Isaac/4.5/Isaac/Robots/NVIDIA/Carter/nova_carter/nova_carter.usd",
+      "resolver": "installed isaacsim.storage.native.get_assets_root_path",
+      "alternate_assets_attempted": 0,
+      "used_layers": [
+        {
+          "identifier": "anon:0000022931479240:World0-session.usda",
+          "resolved_path": "",
+          "local_file_sha256": null
+        },
+        {
+          "identifier": "anon:00000229314787F0:World0.usd",
+          "resolved_path": "",
+          "local_file_sha256": null
+        },
+        {
+          "identifier": "https://omniverse-content-production.s3-us-west-2.amazonaws.com/Assets/Isaac/4.5/Isaac/Robots/NVIDIA/Carter/nova_carter/Variants/Configuration/nova_carter_merged_no_internals.usd",
+          "resolved_path": "https://omniverse-content-production.s3-us-west-2.amazonaws.com/Assets/Isaac/4.5/Isaac/Robots/NVIDIA/Carter/nova_carter/Variants/Configuration/nova_carter_merged_no_internals.usd",
+          "local_file_sha256": null
+        },
+        {
+          "identifier": "https://omniverse-content-production.s3-us-west-2.amazonaws.com/Assets/Isaac/4.5/Isaac/Sensors/HESAI/XT-32.usd",
+          "resolved_path": "https://omniverse-content-production.s3-us-west-2.amazonaws.com/Assets/Isaac/4.5/Isaac/Sensors/HESAI/XT-32.usd",
+          "local_file_sha256": null
+        },
+        {
+          "identifier": "https://omniverse-content-production.s3-us-west-2.amazonaws.com/Assets/Isaac/4.5/Isaac/Robots/NVIDIA/Carter/nova_carter/Variants/Sensors/nova_carter_sensors.usd",
+          "resolved_path": "https://omniverse-content-production.s3-us-west-2.amazonaws.com/Assets/Isaac/4.5/Isaac/Robots/NVIDIA/Carter/nova_carter/Variants/Sensors/nova_carter_sensors.usd",
+          "local_file_sha256": null
+        },
+        {
+          "identifier": "https://omniverse-content-production.s3-us-west-2.amazonaws.com/Assets/Isaac/4.5/Isaac/Sensors/Slamtec/RPLidar_S2e.usd",
+          "resolved_path": "https://omniverse-content-production.s3-us-west-2.amazonaws.com/Assets/Isaac/4.5/Isaac/Sensors/Slamtec/RPLidar_S2e.usd",
+          "local_file_sha256": null
+        },
+        {
+          "identifier": "https://omniverse-content-production.s3-us-west-2.amazonaws.com/Assets/Isaac/4.5/Isaac/Robots/NVIDIA/Carter/nova_carter/Materials/Materials.usd",
+          "resolved_path": "https://omniverse-content-production.s3-us-west-2.amazonaws.com/Assets/Isaac/4.5/Isaac/Robots/NVIDIA/Carter/nova_carter/Materials/Materials.usd",
+          "local_file_sha256": null
+        },
+        {
+          "identifier": "https://omniverse-content-production.s3-us-west-2.amazonaws.com/Assets/Isaac/4.5/Isaac/Robots/NVIDIA/Carter/nova_carter/nova_carter.usd",
+          "resolved_path": "https://omniverse-content-production.s3-us-west-2.amazonaws.com/Assets/Isaac/4.5/Isaac/Robots/NVIDIA/Carter/nova_carter/nova_carter.usd",
+          "local_file_sha256": null
+        },
+        {
+          "identifier": "https://omniverse-content-production.s3-us-west-2.amazonaws.com/Assets/Isaac/4.5/Isaac/Sensors/Slamtec/materials/materials.usd",
+          "resolved_path": "https://omniverse-content-production.s3-us-west-2.amazonaws.com/Assets/Isaac/4.5/Isaac/Sensors/Slamtec/materials/materials.usd",
+          "local_file_sha256": null
+        },
+        {
+          "identifier": "https://omniverse-content-production.s3-us-west-2.amazonaws.com/Assets/Isaac/4.5/Isaac/Sensors/LeopardImaging/Owl/owl.usd",
+          "resolved_path": "https://omniverse-content-production.s3-us-west-2.amazonaws.com/Assets/Isaac/4.5/Isaac/Sensors/LeopardImaging/Owl/owl.usd",
+          "local_file_sha256": null
+        },
+        {
+          "identifier": "https://omniverse-content-production.s3-us-west-2.amazonaws.com/Assets/Isaac/4.5/Isaac/Robots/NVIDIA/Carter/nova_carter/Parts/carter_v2_wheel_left.usd",
+          "resolved_path": "https://omniverse-content-production.s3-us-west-2.amazonaws.com/Assets/Isaac/4.5/Isaac/Robots/NVIDIA/Carter/nova_carter/Parts/carter_v2_wheel_left.usd",
+          "local_file_sha256": null
+        },
+        {
+          "identifier": "https://omniverse-content-production.s3-us-west-2.amazonaws.com/Assets/Isaac/4.5/Isaac/Sensors/HESAI/materials/materials.usd",
+          "resolved_path": "https://omniverse-content-production.s3-us-west-2.amazonaws.com/Assets/Isaac/4.5/Isaac/Sensors/HESAI/materials/materials.usd",
+          "local_file_sha256": null
+        },
+        {
+          "identifier": "https://omniverse-content-production.s3-us-west-2.amazonaws.com/Assets/Isaac/4.5/Isaac/Sensors/LeopardImaging/Hawk/hawk_v1.1_nominal.usd",
+          "resolved_path": "https://omniverse-content-production.s3-us-west-2.amazonaws.com/Assets/Isaac/4.5/Isaac/Sensors/LeopardImaging/Hawk/hawk_v1.1_nominal.usd",
+          "local_file_sha256": null
+        },
+        {
+          "identifier": "https://omniverse-content-production.s3-us-west-2.amazonaws.com/Assets/Isaac/4.5/Isaac/Sensors/LeopardImaging/Owl/materials/materials.usd",
+          "resolved_path": "https://omniverse-content-production.s3-us-west-2.amazonaws.com/Assets/Isaac/4.5/Isaac/Sensors/LeopardImaging/Owl/materials/materials.usd",
+          "local_file_sha256": null
+        },
+        {
+          "identifier": "https://omniverse-content-production.s3-us-west-2.amazonaws.com/Assets/Isaac/4.5/Isaac/Robots/NVIDIA/Carter/nova_carter/Variants/Physics/nova_carter_physics.usd",
+          "resolved_path": "https://omniverse-content-production.s3-us-west-2.amazonaws.com/Assets/Isaac/4.5/Isaac/Robots/NVIDIA/Carter/nova_carter/Variants/Physics/nova_carter_physics.usd",
+          "local_file_sha256": null
+        },
+        {
+          "identifier": "https://omniverse-content-production.s3-us-west-2.amazonaws.com/Assets/Isaac/4.5/Isaac/Robots/NVIDIA/Carter/nova_carter/Variants/nova_carter_sim_optimized.usd",
+          "resolved_path": "https://omniverse-content-production.s3-us-west-2.amazonaws.com/Assets/Isaac/4.5/Isaac/Robots/NVIDIA/Carter/nova_carter/Variants/nova_carter_sim_optimized.usd",
+          "local_file_sha256": null
+        }
+      ]
+    },
+    "native_geometry": {
+      "schema_version": 1,
+      "run_id": "8c80f7b1e4ee42609cd9e4cd6a280d85",
+      "robot_path": "/World/NovaCarter",
+      "chassis_path": "/World/NovaCarter/chassis_link",
+      "asset_relative_path": "/Isaac/Robots/NVIDIA/Carter/nova_carter/nova_carter.usd",
+      "meters_per_unit": 1.0,
+      "up_axis": "Z",
+      "robot_world_from_local": [
+        [
+          1.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "chassis_world_from_local": [
+        [
+          1.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0,
+          0.15000000596046448
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "rigid_bodies": [
+        {
+          "path": "/World/NovaCarter/chassis_link",
+          "enabled": true,
+          "kinematic": false,
+          "world_from_local": [
+            [
+              1.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              1.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              1.0,
+              0.15000000596046448
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        },
+        {
+          "path": "/World/NovaCarter/wheel_left",
+          "enabled": true,
+          "kinematic": false,
+          "world_from_local": [
+            [
+              1.0,
+              0.0,
+              0.0,
+              -4.437751968851267e-09
+            ],
+            [
+              0.0,
+              -2.220446049250313e-16,
+              1.0,
+              0.20659999385625127
+            ],
+            [
+              0.0,
+              -1.0,
+              -2.220446049250313e-16,
+              0.13999999687075615
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        },
+        {
+          "path": "/World/NovaCarter/wheel_right",
+          "enabled": true,
+          "kinematic": false,
+          "world_from_local": [
+            [
+              1.0,
+              0.0,
+              0.0,
+              -4.3923499943535754e-09
+            ],
+            [
+              0.0,
+              -2.220446049250313e-16,
+              1.0,
+              -0.20659999385625127
+            ],
+            [
+              0.0,
+              -1.0,
+              -2.220446049250313e-16,
+              0.13999999687075615
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        },
+        {
+          "path": "/World/NovaCarter/caster_frame_base",
+          "enabled": true,
+          "kinematic": false,
+          "world_from_local": [
+            [
+              1.1102230246251565e-16,
+              0.0,
+              -1.0,
+              -0.47195
+            ],
+            [
+              1.0,
+              1.1102230246251565e-16,
+              1.6653345369377348e-16,
+              0.0
+            ],
+            [
+              1.6653345369377348e-16,
+              -1.0,
+              0.0,
+              0.22289
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        },
+        {
+          "path": "/World/NovaCarter/caster_swivel_left",
+          "enabled": true,
+          "kinematic": false,
+          "world_from_local": [
+            [
+              -2.220446049250313e-16,
+              0.0,
+              -1.0,
+              -0.47195
+            ],
+            [
+              0.0,
+              1.0,
+              0.0,
+              0.1323
+            ],
+            [
+              1.0,
+              0.0,
+              -2.220446049250313e-16,
+              0.1917
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        },
+        {
+          "path": "/World/NovaCarter/caster_swivel_right",
+          "enabled": true,
+          "kinematic": false,
+          "world_from_local": [
+            [
+              -2.220446049250313e-16,
+              0.0,
+              -1.0,
+              -0.47195
+            ],
+            [
+              0.0,
+              1.0,
+              0.0,
+              -0.1323
+            ],
+            [
+              1.0,
+              0.0,
+              -2.220446049250313e-16,
+              0.1917
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        },
+        {
+          "path": "/World/NovaCarter/caster_wheel_left",
+          "enabled": true,
+          "kinematic": false,
+          "world_from_local": [
+            [
+              1.0,
+              -3.1889913060320274e-17,
+              -2.1699804382901786e-16,
+              -0.5119490974213263
+            ],
+            [
+              2.1699804382901786e-16,
+              -2.220446049250313e-16,
+              1.0,
+              0.1322499583537975
+            ],
+            [
+              -3.188991306032032e-17,
+              -1.0,
+              -2.220446049250313e-16,
+              0.07630710720401011
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        },
+        {
+          "path": "/World/NovaCarter/caster_wheel_right",
+          "enabled": true,
+          "kinematic": false,
+          "world_from_local": [
+            [
+              1.0,
+              2.9076819872290127e-16,
+              -4.3557325739568764e-16,
+              -0.5119491316986692
+            ],
+            [
+              4.3557325739568764e-16,
+              -2.220446049250313e-16,
+              1.0,
+              -0.13224996706961756
+            ],
+            [
+              2.9076819872290117e-16,
+              -1.0,
+              -2.220446049250313e-16,
+              0.07630710720401011
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        }
+      ],
+      "articulation_roots": [
+        "/World/NovaCarter/chassis_link"
+      ],
+      "colliders": [
+        {
+          "path": "/World/NovaCarter/chassis_link/visual",
+          "body_path": "/World/NovaCarter/chassis_link",
+          "shape_type": "Xform",
+          "world_aabb_m": {
+            "center_m": [
+              -0.23382392153143883,
+              2.60770320892334e-07,
+              0.4279409907758236
+            ],
+            "size_m": [
+              0.7070545628666878,
+              0.47694210708141327,
+              0.4038819745182991
+            ]
+          }
+        },
+        {
+          "path": "/World/NovaCarter/wheel_left/Colliders/Cylinder",
+          "body_path": "/World/NovaCarter/wheel_left",
+          "shape_type": "Cylinder",
+          "world_aabb_m": {
+            "center_m": [
+              -4.437751971453352e-09,
+              0.20659999385625127,
+              0.13999999687075615
+            ],
+            "size_m": [
+              0.25,
+              0.05999999865889555,
+              0.25
+            ]
+          }
+        },
+        {
+          "path": "/World/NovaCarter/wheel_left/Colliders/Cylinder_01",
+          "body_path": "/World/NovaCarter/wheel_left",
+          "shape_type": "Cylinder",
+          "world_aabb_m": {
+            "center_m": [
+              -4.437751971453352e-09,
+              0.20659999385625127,
+              0.13999999687075615
+            ],
+            "size_m": [
+              0.19999998807907104,
+              0.07999999821186071,
+              0.19999998807907104
+            ]
+          }
+        },
+        {
+          "path": "/World/NovaCarter/wheel_left/Colliders/Cylinder_02",
+          "body_path": "/World/NovaCarter/wheel_left",
+          "shape_type": "Cylinder",
+          "world_aabb_m": {
+            "center_m": [
+              -4.437751971453352e-09,
+              0.20659999385625127,
+              0.13999999687075615
+            ],
+            "size_m": [
+              0.2800000011920929,
+              0.01999999955296522,
+              0.2800000011920929
+            ]
+          }
+        },
+        {
+          "path": "/World/NovaCarter/wheel_right/Colliders/Cylinder",
+          "body_path": "/World/NovaCarter/wheel_right",
+          "shape_type": "Cylinder",
+          "world_aabb_m": {
+            "center_m": [
+              -4.392349990667288e-09,
+              -0.20659999385625127,
+              0.13999999687075615
+            ],
+            "size_m": [
+              0.25,
+              0.05999999865889555,
+              0.25
+            ]
+          }
+        },
+        {
+          "path": "/World/NovaCarter/wheel_right/Colliders/Cylinder_01",
+          "body_path": "/World/NovaCarter/wheel_right",
+          "shape_type": "Cylinder",
+          "world_aabb_m": {
+            "center_m": [
+              -4.392349997606182e-09,
+              -0.20659999385625127,
+              0.13999999687075615
+            ],
+            "size_m": [
+              0.19999998807907104,
+              0.07999999821186071,
+              0.19999998807907104
+            ]
+          }
+        },
+        {
+          "path": "/World/NovaCarter/wheel_right/Colliders/Cylinder_02",
+          "body_path": "/World/NovaCarter/wheel_right",
+          "shape_type": "Cylinder",
+          "world_aabb_m": {
+            "center_m": [
+              -4.392349983728394e-09,
+              -0.20659999385625127,
+              0.13999999687075615
+            ],
+            "size_m": [
+              0.2800000011920929,
+              0.01999999955296522,
+              0.2800000011920929
+            ]
+          }
+        },
+        {
+          "path": "/World/NovaCarter/caster_frame_base/visual",
+          "body_path": "/World/NovaCarter/caster_frame_base",
+          "shape_type": "Xform",
+          "world_aabb_m": {
+            "center_m": [
+              -0.47195119082700254,
+              4.625165020555322e-05,
+              0.1995071062270007
+            ],
+            "size_m": [
+              0.09950265315177442,
+              0.32800077940751443,
+              0.07976999886670921
+            ]
+          }
+        },
+        {
+          "path": "/World/NovaCarter/caster_swivel_left/Colliders/Cube",
+          "body_path": "/World/NovaCarter/caster_swivel_left",
+          "shape_type": "Mesh",
+          "world_aabb_m": {
+            "center_m": [
+              -0.4941488059840161,
+              0.1323,
+              0.11778569909765091
+            ],
+            "size_m": [
+              0.054999999701976776,
+              0.07999999821186066,
+              0.11500000208616257
+            ]
+          }
+        },
+        {
+          "path": "/World/NovaCarter/caster_swivel_right/Colliders/Cube",
+          "body_path": "/World/NovaCarter/caster_swivel_right",
+          "shape_type": "Mesh",
+          "world_aabb_m": {
+            "center_m": [
+              -0.4941488059840162,
+              -0.1323,
+              0.11778569909765091
+            ],
+            "size_m": [
+              0.05499999970197683,
+              0.07999999821186066,
+              0.11500000208616257
+            ]
+          }
+        },
+        {
+          "path": "/World/NovaCarter/caster_wheel_left/Colliders/Cylinder",
+          "body_path": "/World/NovaCarter/caster_wheel_left",
+          "shape_type": "Cylinder",
+          "world_aabb_m": {
+            "center_m": [
+              -0.5119490974213292,
+              0.13224995835379616,
+              0.07630710720400913
+            ],
+            "size_m": [
+              100.00000000000003,
+              100.00000000000004,
+              100.00000000000003
+            ]
+          }
+        },
+        {
+          "path": "/World/NovaCarter/caster_wheel_right/Colliders/Cylinder",
+          "body_path": "/World/NovaCarter/caster_wheel_right",
+          "shape_type": "Cylinder",
+          "world_aabb_m": {
+            "center_m": [
+              -0.5119490974213292,
+              -0.13224996706961534,
+              0.07630710720400913
+            ],
+            "size_m": [
+              100.00000000000007,
+              100.00000000000006,
+              100.00000000000006
+            ]
+          }
+        }
+      ],
+      "sensors": [
+        {
+          "path": "/World/NovaCarter/Looks/lidar_glass_v2_m",
+          "type": "Material",
+          "applied_schemas": [],
+          "classification": "lidar type/schema/name clearance candidate",
+          "world_from_local": [
+            [
+              1.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              1.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              1.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        },
+        {
+          "path": "/World/NovaCarter/chassis_link/sensors/front_hawk/left/camera_left",
+          "type": "Camera",
+          "applied_schemas": [],
+          "classification": "typed camera",
+          "world_from_local": [
+            [
+              -4.440892098500626e-16,
+              -2.220446049250313e-16,
+              -1.0000000000000002,
+              0.1003
+            ],
+            [
+              -1.0000000000000002,
+              -4.440892098500626e-16,
+              2.220446049250313e-16,
+              0.074998
+            ],
+            [
+              -2.220446049250313e-16,
+              1.0000000000000002,
+              -4.440892098500626e-16,
+              0.49590000596046446
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        },
+        {
+          "path": "/World/NovaCarter/chassis_link/sensors/front_hawk/right/camera_right",
+          "type": "Camera",
+          "applied_schemas": [],
+          "classification": "typed camera",
+          "world_from_local": [
+            [
+              -4.440892098500626e-16,
+              -2.220446049250313e-16,
+              -1.0000000000000002,
+              0.1003
+            ],
+            [
+              -1.0000000000000002,
+              -4.440892098500626e-16,
+              2.220446049250313e-16,
+              -0.075002
+            ],
+            [
+              -2.220446049250313e-16,
+              1.0000000000000002,
+              -4.440892098500626e-16,
+              0.49590000596046446
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        },
+        {
+          "path": "/World/NovaCarter/chassis_link/sensors/left_hawk/left/camera_left",
+          "type": "Camera",
+          "applied_schemas": [],
+          "classification": "typed camera",
+          "world_from_local": [
+            [
+              1.0000000000000002,
+              4.440892098500626e-16,
+              4.930380657631324e-32,
+              -0.43043
+            ],
+            [
+              -2.2204460492503126e-16,
+              -2.220446049250312e-16,
+              -1.0000000000000002,
+              0.15
+            ],
+            [
+              -2.220446049250313e-16,
+              1.0000000000000002,
+              -4.440892098500626e-16,
+              0.49590000596046446
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        },
+        {
+          "path": "/World/NovaCarter/chassis_link/sensors/left_hawk/right/camera_right",
+          "type": "Camera",
+          "applied_schemas": [],
+          "classification": "typed camera",
+          "world_from_local": [
+            [
+              1.0000000000000002,
+              4.440892098500626e-16,
+              4.930380657631324e-32,
+              -0.28042999999999996
+            ],
+            [
+              -2.2204460492503126e-16,
+              -2.220446049250312e-16,
+              -1.0000000000000002,
+              0.15000000000000002
+            ],
+            [
+              -2.220446049250313e-16,
+              1.0000000000000002,
+              -4.440892098500626e-16,
+              0.49590000596046446
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        },
+        {
+          "path": "/World/NovaCarter/chassis_link/sensors/right_hawk/left/camera_left",
+          "type": "Camera",
+          "applied_schemas": [],
+          "classification": "typed camera",
+          "world_from_local": [
+            [
+              -1.0000000000000004,
+              -4.440892098500626e-16,
+              4.440892098500627e-16,
+              -0.28044
+            ],
+            [
+              6.661338147750941e-16,
+              2.2204460492503146e-16,
+              1.0000000000000004,
+              -0.15
+            ],
+            [
+              -2.220446049250313e-16,
+              1.0000000000000002,
+              -4.440892098500626e-16,
+              0.49590000596046446
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        },
+        {
+          "path": "/World/NovaCarter/chassis_link/sensors/right_hawk/right/camera_right",
+          "type": "Camera",
+          "applied_schemas": [],
+          "classification": "typed camera",
+          "world_from_local": [
+            [
+              -1.0000000000000004,
+              -4.440892098500626e-16,
+              4.440892098500627e-16,
+              -0.43044000000000004
+            ],
+            [
+              6.661338147750941e-16,
+              2.2204460492503146e-16,
+              1.0000000000000004,
+              -0.14999999999999997
+            ],
+            [
+              -2.220446049250313e-16,
+              1.0000000000000002,
+              -4.440892098500626e-16,
+              0.49590000596046446
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        },
+        {
+          "path": "/World/NovaCarter/chassis_link/sensors/back_hawk/left/camera_left",
+          "type": "Camera",
+          "applied_schemas": [],
+          "classification": "typed camera",
+          "world_from_local": [
+            [
+              5.66553889764798e-16,
+              2.2204460492503136e-16,
+              1.0000000000000002,
+              -0.5637
+            ],
+            [
+              1.0000000000000002,
+              4.4408920985006257e-16,
+              -3.4450928483976665e-16,
+              -0.074998
+            ],
+            [
+              -2.220446049250313e-16,
+              1.0000000000000002,
+              -4.440892098500626e-16,
+              0.49590000596046446
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        },
+        {
+          "path": "/World/NovaCarter/chassis_link/sensors/back_hawk/right/camera_right",
+          "type": "Camera",
+          "applied_schemas": [],
+          "classification": "typed camera",
+          "world_from_local": [
+            [
+              5.66553889764798e-16,
+              2.2204460492503136e-16,
+              1.0000000000000002,
+              -0.5637
+            ],
+            [
+              1.0000000000000002,
+              4.4408920985006257e-16,
+              -3.4450928483976665e-16,
+              0.075002
+            ],
+            [
+              -2.220446049250313e-16,
+              1.0000000000000002,
+              -4.440892098500626e-16,
+              0.49590000596046446
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        },
+        {
+          "path": "/World/NovaCarter/chassis_link/sensors/front_RPLidar",
+          "type": "Xform",
+          "applied_schemas": [],
+          "classification": "lidar type/schema/name clearance candidate",
+          "world_from_local": [
+            [
+              1.0,
+              0.0,
+              0.0,
+              0.026
+            ],
+            [
+              0.0,
+              1.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              1.0,
+              0.5680000059604644
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        },
+        {
+          "path": "/World/NovaCarter/chassis_link/sensors/front_RPLidar/RPLIDAR_S2E",
+          "type": "Camera",
+          "applied_schemas": [
+            "IsaacRtxLidarSensorAPI"
+          ],
+          "classification": "typed camera",
+          "world_from_local": [
+            [
+              -1.0,
+              -1.2246467991473532e-16,
+              0.0,
+              0.026
+            ],
+            [
+              1.2246467991473532e-16,
+              -1.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              1.0,
+              0.5680000059604644
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        },
+        {
+          "path": "/World/NovaCarter/chassis_link/sensors/front_RPLidar/RPLidar_mesh",
+          "type": "Mesh",
+          "applied_schemas": [],
+          "classification": "lidar type/schema/name clearance candidate",
+          "world_from_local": [
+            [
+              1.0,
+              0.0,
+              0.0,
+              0.026
+            ],
+            [
+              0.0,
+              1.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              1.0,
+              0.5475000059604644
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        },
+        {
+          "path": "/World/NovaCarter/chassis_link/sensors/rear_RPLidar",
+          "type": "Xform",
+          "applied_schemas": [],
+          "classification": "lidar type/schema/name clearance candidate",
+          "world_from_local": [
+            [
+              -1.0,
+              -1.2246467991473532e-16,
+              0.0,
+              -0.4894
+            ],
+            [
+              1.2246467991473532e-16,
+              -1.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              1.0,
+              0.5680000059604644
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        },
+        {
+          "path": "/World/NovaCarter/chassis_link/sensors/rear_RPLidar/RPLIDAR_S2E",
+          "type": "Camera",
+          "applied_schemas": [
+            "IsaacRtxLidarSensorAPI"
+          ],
+          "classification": "typed camera",
+          "world_from_local": [
+            [
+              1.0,
+              2.4492935982947064e-16,
+              0.0,
+              -0.4894
+            ],
+            [
+              -2.4492935982947064e-16,
+              1.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              1.0,
+              0.5680000059604644
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        },
+        {
+          "path": "/World/NovaCarter/chassis_link/sensors/rear_RPLidar/RPLidar_mesh",
+          "type": "Mesh",
+          "applied_schemas": [],
+          "classification": "lidar type/schema/name clearance candidate",
+          "world_from_local": [
+            [
+              -1.0,
+              -1.2246467991473532e-16,
+              0.0,
+              -0.4894
+            ],
+            [
+              1.2246467991473532e-16,
+              -1.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              1.0,
+              0.5475000059604644
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        },
+        {
+          "path": "/World/NovaCarter/chassis_link/sensors/XT_32/PandarXT_32_10hz",
+          "type": "Camera",
+          "applied_schemas": [
+            "IsaacRtxLidarSensorAPI"
+          ],
+          "classification": "typed camera",
+          "world_from_local": [
+            [
+              1.0,
+              0.0,
+              0.0,
+              -0.2317
+            ],
+            [
+              0.0,
+              1.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              1.0,
+              0.6760000059604645
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        },
+        {
+          "path": "/World/NovaCarter/chassis_link/sensors/front_owl/camera",
+          "type": "Camera",
+          "applied_schemas": [],
+          "classification": "typed camera",
+          "world_from_local": [
+            [
+              1.1102230246251565e-16,
+              0.0,
+              -1.0,
+              0.104344
+            ],
+            [
+              -1.0,
+              1.1102230246251565e-16,
+              -1.6653345369377348e-16,
+              0.0
+            ],
+            [
+              1.6653345369377348e-16,
+              1.0,
+              0.0,
+              0.5243900059604645
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        },
+        {
+          "path": "/World/NovaCarter/chassis_link/sensors/left_owl/camera",
+          "type": "Camera",
+          "applied_schemas": [],
+          "classification": "typed camera",
+          "world_from_local": [
+            [
+              -1.0000000000000002,
+              1.1102230246251568e-16,
+              5.551115123125778e-17,
+              -0.231696
+            ],
+            [
+              1.1102230246251563e-16,
+              -2.465190328815662e-32,
+              1.0000000000000002,
+              -0.154101
+            ],
+            [
+              1.6653345369377348e-16,
+              1.0,
+              0.0,
+              0.49439000596046445
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        },
+        {
+          "path": "/World/NovaCarter/chassis_link/sensors/right_owl/camera",
+          "type": "Camera",
+          "applied_schemas": [],
+          "classification": "typed camera",
+          "world_from_local": [
+            [
+              1.0000000000000002,
+              -1.1102230246251568e-16,
+              3.8857805861880484e-16,
+              -0.231696
+            ],
+            [
+              3.3306690738754696e-16,
+              -2.465190328815662e-32,
+              -1.0000000000000002,
+              0.154101
+            ],
+            [
+              1.6653345369377348e-16,
+              1.0,
+              0.0,
+              0.49439000596046445
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        },
+        {
+          "path": "/World/NovaCarter/chassis_link/sensors/back_owl/camera",
+          "type": "Camera",
+          "applied_schemas": [],
+          "classification": "typed camera",
+          "world_from_local": [
+            [
+              1.1442377452219667e-17,
+              -1.359631073446891e-32,
+              1.0,
+              -0.567737
+            ],
+            [
+              1.0,
+              -1.1102230246251565e-16,
+              4.406877377903816e-17,
+              0.0
+            ],
+            [
+              1.6653345369377348e-16,
+              1.0,
+              0.0,
+              0.5243900059604645
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        },
+        {
+          "path": "/World/NovaCarter/wheel_left/visual/Looks/lidar_glass_v2_m",
+          "type": "Material",
+          "applied_schemas": [],
+          "classification": "lidar type/schema/name clearance candidate",
+          "world_from_local": [
+            [
+              1.0,
+              0.0,
+              0.0,
+              -4.437751968851267e-09
+            ],
+            [
+              0.0,
+              -2.220446049250313e-16,
+              1.0,
+              0.20659999385625127
+            ],
+            [
+              0.0,
+              -1.0,
+              -2.220446049250313e-16,
+              0.13999999687075615
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        },
+        {
+          "path": "/World/NovaCarter/wheel_right/visual/Looks/lidar_glass_v2_m",
+          "type": "Material",
+          "applied_schemas": [],
+          "classification": "lidar type/schema/name clearance candidate",
+          "world_from_local": [
+            [
+              1.0,
+              0.0,
+              0.0,
+              -4.3923499943535754e-09
+            ],
+            [
+              0.0,
+              3.4450928483976665e-16,
+              -1.0,
+              -0.20659999385625127
+            ],
+            [
+              0.0,
+              1.0,
+              3.4450928483976665e-16,
+              0.13999999687075615
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        }
+      ],
+      "composition_errors": [],
+      "source": "composed USD bounds/native XformCache before stepping; not cooked hull, ray visibility or mount strength",
+      "sensor_keepout_source": "authored 0.16m cube around measured camera/lidar frame candidates; lidar name matches are conservative anchors, not proof of a functioning sensor or FOV",
+      "prims_inspected": 1837
+    },
+    "admission": {
+      "schema_version": 1,
+      "run_id": "8c80f7b1e4ee42609cd9e4cd6a280d85",
+      "admitted": false,
+      "rejections": [
+        {
+          "code": "unsupported_mount_post",
+          "part": "post_m_m"
+        },
+        {
+          "code": "unsupported_mount_post",
+          "part": "post_m_p"
+        },
+        {
+          "code": "unsupported_mount_post",
+          "part": "post_p_m"
+        },
+        {
+          "code": "unsupported_mount_post",
+          "part": "post_p_p"
+        },
+        {
+          "code": "robot_or_sensor_keepout",
+          "part": "deck",
+          "prim": "/World/NovaCarter/caster_wheel_left/Colliders/Cylinder"
+        },
+        {
+          "code": "robot_or_sensor_keepout",
+          "part": "deck",
+          "prim": "/World/NovaCarter/caster_wheel_right/Colliders/Cylinder"
+        },
+        {
+          "code": "robot_or_sensor_keepout",
+          "part": "post_m_m",
+          "prim": "/World/NovaCarter/chassis_link/visual"
+        },
+        {
+          "code": "robot_or_sensor_keepout",
+          "part": "post_m_m",
+          "prim": "/World/NovaCarter/caster_wheel_left/Colliders/Cylinder"
+        },
+        {
+          "code": "robot_or_sensor_keepout",
+          "part": "post_m_m",
+          "prim": "/World/NovaCarter/caster_wheel_right/Colliders/Cylinder"
+        },
+        {
+          "code": "robot_or_sensor_keepout",
+          "part": "post_m_m",
+          "prim": "/World/NovaCarter/chassis_link/sensors/right_hawk/right/camera_right"
+        },
+        {
+          "code": "robot_or_sensor_keepout",
+          "part": "post_m_p",
+          "prim": "/World/NovaCarter/chassis_link/visual"
+        },
+        {
+          "code": "robot_or_sensor_keepout",
+          "part": "post_m_p",
+          "prim": "/World/NovaCarter/caster_wheel_left/Colliders/Cylinder"
+        },
+        {
+          "code": "robot_or_sensor_keepout",
+          "part": "post_m_p",
+          "prim": "/World/NovaCarter/caster_wheel_right/Colliders/Cylinder"
+        },
+        {
+          "code": "robot_or_sensor_keepout",
+          "part": "post_m_p",
+          "prim": "/World/NovaCarter/chassis_link/sensors/left_hawk/left/camera_left"
+        },
+        {
+          "code": "robot_or_sensor_keepout",
+          "part": "post_p_m",
+          "prim": "/World/NovaCarter/chassis_link/visual"
+        },
+        {
+          "code": "robot_or_sensor_keepout",
+          "part": "post_p_m",
+          "prim": "/World/NovaCarter/caster_wheel_left/Colliders/Cylinder"
+        },
+        {
+          "code": "robot_or_sensor_keepout",
+          "part": "post_p_m",
+          "prim": "/World/NovaCarter/caster_wheel_right/Colliders/Cylinder"
+        },
+        {
+          "code": "robot_or_sensor_keepout",
+          "part": "post_p_p",
+          "prim": "/World/NovaCarter/chassis_link/visual"
+        },
+        {
+          "code": "robot_or_sensor_keepout",
+          "part": "post_p_p",
+          "prim": "/World/NovaCarter/caster_wheel_left/Colliders/Cylinder"
+        },
+        {
+          "code": "robot_or_sensor_keepout",
+          "part": "post_p_p",
+          "prim": "/World/NovaCarter/caster_wheel_right/Colliders/Cylinder"
+        },
+        {
+          "code": "robot_or_sensor_keepout",
+          "part": "tote_0",
+          "prim": "/World/NovaCarter/caster_wheel_left/Colliders/Cylinder"
+        },
+        {
+          "code": "robot_or_sensor_keepout",
+          "part": "tote_0",
+          "prim": "/World/NovaCarter/caster_wheel_right/Colliders/Cylinder"
+        },
+        {
+          "code": "robot_or_sensor_keepout",
+          "part": "tote_1",
+          "prim": "/World/NovaCarter/caster_wheel_left/Colliders/Cylinder"
+        },
+        {
+          "code": "robot_or_sensor_keepout",
+          "part": "tote_1",
+          "prim": "/World/NovaCarter/caster_wheel_right/Colliders/Cylinder"
+        },
+        {
+          "code": "robot_or_sensor_keepout",
+          "part": "tote_2",
+          "prim": "/World/NovaCarter/caster_wheel_left/Colliders/Cylinder"
+        },
+        {
+          "code": "robot_or_sensor_keepout",
+          "part": "tote_2",
+          "prim": "/World/NovaCarter/caster_wheel_right/Colliders/Cylinder"
+        },
+        {
+          "code": "robot_or_sensor_keepout",
+          "part": "tote_3",
+          "prim": "/World/NovaCarter/caster_wheel_left/Colliders/Cylinder"
+        },
+        {
+          "code": "robot_or_sensor_keepout",
+          "part": "tote_3",
+          "prim": "/World/NovaCarter/caster_wheel_right/Colliders/Cylinder"
+        },
+        {
+          "code": "robot_or_sensor_keepout",
+          "part": "tote_4",
+          "prim": "/World/NovaCarter/caster_wheel_left/Colliders/Cylinder"
+        },
+        {
+          "code": "robot_or_sensor_keepout",
+          "part": "tote_4",
+          "prim": "/World/NovaCarter/caster_wheel_right/Colliders/Cylinder"
+        },
+        {
+          "code": "robot_or_sensor_keepout",
+          "part": "rigid_ballast",
+          "prim": "/World/NovaCarter/caster_wheel_left/Colliders/Cylinder"
+        },
+        {
+          "code": "robot_or_sensor_keepout",
+          "part": "rigid_ballast",
+          "prim": "/World/NovaCarter/caster_wheel_right/Colliders/Cylinder"
+        },
+        {
+          "code": "unchanged_footprint_exceeded"
+        }
+      ],
+      "manifest_sha256": "406aec0f70fbea4a74f1462d05d53395055b7b5182fb5dcab8749732b55307f4",
+      "robot_path": "/World/NovaCarter",
+      "chassis_path": "/World/NovaCarter/chassis_link",
+      "carrier_from_chassis": [
+        [
+          1.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "mount_faces": [
+        {
+          "post": "post_m_m",
+          "candidate_chassis_faces": []
+        },
+        {
+          "post": "post_m_p",
+          "candidate_chassis_faces": []
+        },
+        {
+          "post": "post_p_m",
+          "candidate_chassis_faces": []
+        },
+        {
+          "post": "post_p_p",
+          "candidate_chassis_faces": []
+        }
+      ],
+      "original_collision_aabb_radius_m": 71.1667021041529,
+      "loaded_collision_aabb_radius_m": 71.1667021041529,
+      "unchanged_configured_radius_m": 0.6371090915442774,
+      "measured_colliders_in_chassis": [
+        {
+          "center_m": [
+            -0.23382392153143883,
+            2.60770320892334e-07,
+            0.2779409848153591
+          ],
+          "size_m": [
+            0.7070545628666878,
+            0.47694210708141327,
+            0.4038819745182991
+          ],
+          "path": "/World/NovaCarter/chassis_link/visual",
+          "body_path": "/World/NovaCarter/chassis_link"
+        },
+        {
+          "center_m": [
+            -4.437751971453352e-09,
+            0.20659999385625127,
+            -0.010000009089708328
+          ],
+          "size_m": [
+            0.25,
+            0.05999999865889555,
+            0.25
+          ],
+          "path": "/World/NovaCarter/wheel_left/Colliders/Cylinder",
+          "body_path": "/World/NovaCarter/wheel_left"
+        },
+        {
+          "center_m": [
+            -4.437751971453352e-09,
+            0.20659999385625127,
+            -0.010000009089708328
+          ],
+          "size_m": [
+            0.19999998807907104,
+            0.07999999821186071,
+            0.19999998807907104
+          ],
+          "path": "/World/NovaCarter/wheel_left/Colliders/Cylinder_01",
+          "body_path": "/World/NovaCarter/wheel_left"
+        },
+        {
+          "center_m": [
+            -4.437751971453352e-09,
+            0.20659999385625127,
+            -0.010000009089708328
+          ],
+          "size_m": [
+            0.2800000011920929,
+            0.01999999955296522,
+            0.2800000011920929
+          ],
+          "path": "/World/NovaCarter/wheel_left/Colliders/Cylinder_02",
+          "body_path": "/World/NovaCarter/wheel_left"
+        },
+        {
+          "center_m": [
+            -4.392349983728394e-09,
+            -0.20659999385625127,
+            -0.010000009089708328
+          ],
+          "size_m": [
+            0.25,
+            0.05999999865889555,
+            0.25
+          ],
+          "path": "/World/NovaCarter/wheel_right/Colliders/Cylinder",
+          "body_path": "/World/NovaCarter/wheel_right"
+        },
+        {
+          "center_m": [
+            -4.392349997606182e-09,
+            -0.20659999385625127,
+            -0.010000009089708328
+          ],
+          "size_m": [
+            0.19999998807907104,
+            0.07999999821186071,
+            0.19999998807907104
+          ],
+          "path": "/World/NovaCarter/wheel_right/Colliders/Cylinder_01",
+          "body_path": "/World/NovaCarter/wheel_right"
+        },
+        {
+          "center_m": [
+            -4.392349983728394e-09,
+            -0.20659999385625127,
+            -0.010000009089708328
+          ],
+          "size_m": [
+            0.2800000011920929,
+            0.01999999955296522,
+            0.2800000011920929
+          ],
+          "path": "/World/NovaCarter/wheel_right/Colliders/Cylinder_02",
+          "body_path": "/World/NovaCarter/wheel_right"
+        },
+        {
+          "center_m": [
+            -0.47195119082700254,
+            4.625165020555322e-05,
+            0.049507100266536236
+          ],
+          "size_m": [
+            0.09950265315177442,
+            0.32800077940751443,
+            0.07976999886670921
+          ],
+          "path": "/World/NovaCarter/caster_frame_base/visual",
+          "body_path": "/World/NovaCarter/caster_frame_base"
+        },
+        {
+          "center_m": [
+            -0.4941488059840161,
+            0.1323,
+            -0.03221430686281357
+          ],
+          "size_m": [
+            0.054999999701976776,
+            0.07999999821186066,
+            0.11500000208616257
+          ],
+          "path": "/World/NovaCarter/caster_swivel_left/Colliders/Cube",
+          "body_path": "/World/NovaCarter/caster_swivel_left"
+        },
+        {
+          "center_m": [
+            -0.4941488059840162,
+            -0.1323,
+            -0.03221430686281357
+          ],
+          "size_m": [
+            0.054999999701976776,
+            0.07999999821186066,
+            0.11500000208616257
+          ],
+          "path": "/World/NovaCarter/caster_swivel_right/Colliders/Cube",
+          "body_path": "/World/NovaCarter/caster_swivel_right"
+        },
+        {
+          "center_m": [
+            -0.5119490974213292,
+            0.13224995835379616,
+            -0.07369289875645535
+          ],
+          "size_m": [
+            100.00000000000003,
+            100.00000000000004,
+            100.00000000000003
+          ],
+          "path": "/World/NovaCarter/caster_wheel_left/Colliders/Cylinder",
+          "body_path": "/World/NovaCarter/caster_wheel_left"
+        },
+        {
+          "center_m": [
+            -0.5119490974213292,
+            -0.13224996706961178,
+            -0.07369289875645535
+          ],
+          "size_m": [
+            100.00000000000007,
+            100.00000000000006,
+            100.00000000000006
+          ],
+          "path": "/World/NovaCarter/caster_wheel_right/Colliders/Cylinder",
+          "body_path": "/World/NovaCarter/caster_wheel_right"
+        }
+      ],
+      "sensor_keepouts_in_chassis": [
+        {
+          "center_m": [
+            0.0,
+            0.0,
+            -0.15000000596046448
+          ],
+          "size_m": [
+            0.16,
+            0.16,
+            0.16000000000000003
+          ],
+          "path": "/World/NovaCarter/Looks/lidar_glass_v2_m"
+        },
+        {
+          "center_m": [
+            0.1003,
+            0.07499800000000001,
+            0.3459
+          ],
+          "size_m": [
+            0.16000000000000014,
+            0.16000000000000014,
+            0.16000000000000014
+          ],
+          "path": "/World/NovaCarter/chassis_link/sensors/front_hawk/left/camera_left"
+        },
+        {
+          "center_m": [
+            0.1003,
+            -0.07500200000000001,
+            0.3459
+          ],
+          "size_m": [
+            0.16000000000000014,
+            0.16000000000000014,
+            0.16000000000000014
+          ],
+          "path": "/World/NovaCarter/chassis_link/sensors/front_hawk/right/camera_right"
+        },
+        {
+          "center_m": [
+            -0.43043,
+            0.15,
+            0.3459
+          ],
+          "size_m": [
+            0.16000000000000014,
+            0.1600000000000001,
+            0.16000000000000014
+          ],
+          "path": "/World/NovaCarter/chassis_link/sensors/left_hawk/left/camera_left"
+        },
+        {
+          "center_m": [
+            -0.28042999999999996,
+            0.15000000000000002,
+            0.3459
+          ],
+          "size_m": [
+            0.16000000000000014,
+            0.16000000000000014,
+            0.16000000000000014
+          ],
+          "path": "/World/NovaCarter/chassis_link/sensors/left_hawk/right/camera_right"
+        },
+        {
+          "center_m": [
+            -0.28044,
+            -0.15,
+            0.3459
+          ],
+          "size_m": [
+            0.16000000000000025,
+            0.1600000000000002,
+            0.16000000000000014
+          ],
+          "path": "/World/NovaCarter/chassis_link/sensors/right_hawk/left/camera_left"
+        },
+        {
+          "center_m": [
+            -0.43044000000000004,
+            -0.14999999999999997,
+            0.3459
+          ],
+          "size_m": [
+            0.16000000000000036,
+            0.16000000000000025,
+            0.16000000000000014
+          ],
+          "path": "/World/NovaCarter/chassis_link/sensors/right_hawk/right/camera_right"
+        },
+        {
+          "center_m": [
+            -0.5637,
+            -0.074998,
+            0.3459
+          ],
+          "size_m": [
+            0.16000000000000014,
+            0.16000000000000017,
+            0.16000000000000014
+          ],
+          "path": "/World/NovaCarter/chassis_link/sensors/back_hawk/left/camera_left"
+        },
+        {
+          "center_m": [
+            -0.5637,
+            0.075002,
+            0.3459
+          ],
+          "size_m": [
+            0.16000000000000014,
+            0.16000000000000017,
+            0.16000000000000014
+          ],
+          "path": "/World/NovaCarter/chassis_link/sensors/back_hawk/right/camera_right"
+        },
+        {
+          "center_m": [
+            0.025999999999999995,
+            0.0,
+            0.4179999999999999
+          ],
+          "size_m": [
+            0.16,
+            0.16,
+            0.15999999999999992
+          ],
+          "path": "/World/NovaCarter/chassis_link/sensors/front_RPLidar"
+        },
+        {
+          "center_m": [
+            0.025999999999999995,
+            0.0,
+            0.4179999999999999
+          ],
+          "size_m": [
+            0.16000000000000003,
+            0.16000000000000003,
+            0.15999999999999992
+          ],
+          "path": "/World/NovaCarter/chassis_link/sensors/front_RPLidar/RPLIDAR_S2E"
+        },
+        {
+          "center_m": [
+            0.025999999999999995,
+            0.0,
+            0.39749999999999996
+          ],
+          "size_m": [
+            0.16,
+            0.16,
+            0.15999999999999992
+          ],
+          "path": "/World/NovaCarter/chassis_link/sensors/front_RPLidar/RPLidar_mesh"
+        },
+        {
+          "center_m": [
+            -0.4894,
+            0.0,
+            0.4179999999999999
+          ],
+          "size_m": [
+            0.16000000000000003,
+            0.16000000000000003,
+            0.15999999999999992
+          ],
+          "path": "/World/NovaCarter/chassis_link/sensors/rear_RPLidar"
+        },
+        {
+          "center_m": [
+            -0.4894,
+            0.0,
+            0.4179999999999999
+          ],
+          "size_m": [
+            0.16000000000000003,
+            0.16000000000000003,
+            0.15999999999999992
+          ],
+          "path": "/World/NovaCarter/chassis_link/sensors/rear_RPLidar/RPLIDAR_S2E"
+        },
+        {
+          "center_m": [
+            -0.4894,
+            0.0,
+            0.39749999999999996
+          ],
+          "size_m": [
+            0.16000000000000003,
+            0.16000000000000003,
+            0.15999999999999992
+          ],
+          "path": "/World/NovaCarter/chassis_link/sensors/rear_RPLidar/RPLidar_mesh"
+        },
+        {
+          "center_m": [
+            -0.2317,
+            0.0,
+            0.526
+          ],
+          "size_m": [
+            0.15999999999999998,
+            0.16,
+            0.15999999999999992
+          ],
+          "path": "/World/NovaCarter/chassis_link/sensors/XT_32/PandarXT_32_10hz"
+        },
+        {
+          "center_m": [
+            0.10434399999999999,
+            0.0,
+            0.37439
+          ],
+          "size_m": [
+            0.16000000000000003,
+            0.16000000000000006,
+            0.16000000000000014
+          ],
+          "path": "/World/NovaCarter/chassis_link/sensors/front_owl/camera"
+        },
+        {
+          "center_m": [
+            -0.231696,
+            -0.154101,
+            0.34439
+          ],
+          "size_m": [
+            0.16000000000000003,
+            0.16000000000000003,
+            0.16000000000000014
+          ],
+          "path": "/World/NovaCarter/chassis_link/sensors/left_owl/camera"
+        },
+        {
+          "center_m": [
+            -0.231696,
+            0.154101,
+            0.34439
+          ],
+          "size_m": [
+            0.16000000000000014,
+            0.1600000000000001,
+            0.16000000000000014
+          ],
+          "path": "/World/NovaCarter/chassis_link/sensors/right_owl/camera"
+        },
+        {
+          "center_m": [
+            -0.567737,
+            0.0,
+            0.37439
+          ],
+          "size_m": [
+            0.15999999999999992,
+            0.16000000000000003,
+            0.16000000000000014
+          ],
+          "path": "/World/NovaCarter/chassis_link/sensors/back_owl/camera"
+        },
+        {
+          "center_m": [
+            -4.437751971453352e-09,
+            0.20659999385625127,
+            -0.010000009089708328
+          ],
+          "size_m": [
+            0.16,
+            0.16000000000000003,
+            0.16000000000000003
+          ],
+          "path": "/World/NovaCarter/wheel_left/visual/Looks/lidar_glass_v2_m"
+        },
+        {
+          "center_m": [
+            -4.392349997606182e-09,
+            -0.20659999385625127,
+            -0.010000009089708328
+          ],
+          "size_m": [
+            0.16,
+            0.16000000000000003,
+            0.16000000000000003
+          ],
+          "path": "/World/NovaCarter/wheel_right/visual/Looks/lidar_glass_v2_m"
+        }
+      ],
+      "scope": "composed collision AABB/frame admission only; authored sensor housing boxes, no FOV or mount strength proof",
+      "authored_geometry_changed": false,
+      "map_or_footprint_changed": false,
+      "physical_attachment_verified": false
+    },
+    "reason": "measured_mount_candidate_rejected",
+    "finished_at_utc": "2026-10-21T06:02:09.569566+00:00",
+    "elapsed_wall_s": 37.51499999995576,
+    "app_close_requested": true
+  },
+  "stage2_complete": false,
+  "project_complete": false,
+  "preservation": {
+    "file_count": 19,
+    "original_bytes": 222930,
+    "paths": [
+      "C:\\Users\\LIMMM\\FactoryOpsArtifacts\\loaded-carrier-118\\checkpoint-001.tar.gz",
+      "E:\\FactoryOpsArtifacts\\loaded-carrier-118\\checkpoint-001.tar.gz"
+    ],
+    "archive_bytes": 50046,
+    "archive_sha256": "86ac78d9b74667b319d047d006a29a9e7f40fdc536a95039defd6aaefaf3512c",
+    "all_members_SHA_matched_both_stores": true
+  }
+}
