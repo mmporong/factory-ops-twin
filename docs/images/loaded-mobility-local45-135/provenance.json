@@ -1,0 +1,103 @@
+{
+  "run_id": "e6e2cc232e9a4aa786b2e9e2e8ead285",
+  "producer_source_commit": "fae88401d93d923809de0250afbfecdb5479c778",
+  "scope": "One actual Nova Carter with fixed authored carrier and6kg tote; physics motion coupon, not four-AMR factory payload transport",
+  "source_fps": 60,
+  "source_frames": 564,
+  "source_unique_images": 564,
+  "raw_pixel_source": "Actual persistentRGB every second120Hz physics frame; no interpolation/generated images",
+  "native_evidence": "docs/evidence/local45-loaded-mobility-135.json",
+  "native_evidence_sha256": "da0a5ecbbcf6fa8f2440ac7a5cb0d5c84dd11bd7c05344ba88617eef6172198a",
+  "gif_excerpt_s": [
+    3,
+    8
+  ],
+  "gif_frames": 200,
+  "gif_effective_fps": 40,
+  "gif_delays_ms": {
+    "unique": [
+      20,
+      30
+    ],
+    "total": 5000
+  },
+  "GIF_vs_prior10fps_preview_frame_rate_ratio": 4,
+  "perceived_quality_ratio_claimed": false,
+  "media_clock_sync_verified": false,
+  "commands": [
+    [
+      "ffmpeg",
+      "-hide_banner",
+      "-loglevel",
+      "error",
+      "-threads",
+      "1",
+      "-filter_complex_threads",
+      "1",
+      "-framerate",
+      "60",
+      "-start_number",
+      "0",
+      "-i",
+      "C:\\Users\\LIMMM\\FactoryOpsRuntime\\local45-loaded-mobility-135\\motion-%04d.png",
+      "-c:v",
+      "libx264",
+      "-crf",
+      "20",
+      "-pix_fmt",
+      "yuv420p",
+      "-movflags",
+      "+faststart",
+      "C:\\Users\\LIMMM\\factory-ops-twin\\docs\\images\\loaded-mobility-local45-135\\loaded-motion-60fps.mp4"
+    ],
+    [
+      "ffmpeg",
+      "-hide_banner",
+      "-loglevel",
+      "error",
+      "-threads",
+      "1",
+      "-filter_complex_threads",
+      "1",
+      "-ss",
+      "3",
+      "-t",
+      "5",
+      "-i",
+      "C:\\Users\\LIMMM\\factory-ops-twin\\docs\\images\\loaded-mobility-local45-135\\loaded-motion-60fps.mp4",
+      "-filter_complex",
+      "fps=40,scale=480:-1:flags=lanczos,split[a][b];[a]palettegen=max_colors=96:stats_mode=diff[p];[b][p]paletteuse=dither=bayer:bayer_scale=4",
+      "-loop",
+      "0",
+      "-final_delay",
+      "2",
+      "C:\\Users\\LIMMM\\factory-ops-twin\\docs\\images\\loaded-mobility-local45-135\\loaded-turn-40fps.gif"
+    ]
+  ],
+  "exports": {
+    "loaded-motion-60fps.mp4": {
+      "bytes": 257347,
+      "sha256": "88314eef84440ef7177994818f0618aba015b9d0929da696f62edf73629f13e3",
+      "probe": {
+        "width": 640,
+        "height": 480,
+        "r_frame_rate": "60/1",
+        "avg_frame_rate": "60/1",
+        "duration": "9.400000",
+        "nb_read_frames": "564"
+      }
+    },
+    "loaded-turn-40fps.gif": {
+      "bytes": 1630728,
+      "sha256": "83c1bb2b1f40344c26b9d24807907716516ade63147f6f24c7aeb616d974689c",
+      "probe": {
+        "width": 480,
+        "height": 360,
+        "r_frame_rate": "100/1",
+        "avg_frame_rate": "50/1",
+        "duration": "5.000000",
+        "nb_read_frames": "200"
+      }
+    }
+  }
+}

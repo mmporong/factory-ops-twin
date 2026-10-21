@@ -2,13 +2,13 @@
 
 가상 센서 모듈 공장에서 **4대 AMR의 자재 공급·완제품 출하·빈 용기 회수**를 Isaac Sim·ROS 2와 웹 관제로 연결하는 프로젝트입니다.
 
-| 공장 조감: 실제 시간5초 | 차량 근접: 같은5초 |
+| 4대 공장 조감: 실제5초·10fps | 6kg 적재 주행 시험: 실제40fps |
 |---|---|
-| ![실제 공장 연속 주행 촬영](docs/images/fleet4-local45-042/overview-realtime.gif) | ![같은 실행의 AMR 근접 연속 촬영](docs/images/fleet4-local45-042/carter1-realtime.gif) |
+| ![실제 공장 연속 주행 촬영](docs/images/fleet4-local45-042/overview-realtime.gif) | ![60fps 실제 촬영에서 만든 곡선·제동·제자리 회전40fps 미리보기](docs/images/loaded-mobility-local45-135/loaded-turn-40fps.gif) |
 
-[조감 MP4](docs/images/fleet4-local45-042/overview-realtime.mp4) · [차량 근접 MP4](docs/images/fleet4-local45-042/carter1-realtime.mp4) · [연속 촬영 출처](docs/images/fleet4-local45-042/provenance.json)
+[적재 주행 원본 · 60fps MP4](docs/images/loaded-mobility-local45-135/loaded-motion-60fps.mp4) · [적재 촬영 출처](docs/images/loaded-mobility-local45-135/provenance.json) · [4대 공장 조감 MP4](docs/images/fleet4-local45-042/overview-realtime.mp4) · [공장 촬영 출처](docs/images/fleet4-local45-042/provenance.json)
 
-실제 물리 시간5초를10fps로 연속 촬영했습니다. 두 시점은 같은 물리 프레임을 사용하며 움직임을 보간하지 않았습니다. 정지 요청의 적용 확인이 완료되지 않아 종료한4대 개발 실행의 시작 구간입니다. 전체 정상 완주는 아직 확인 중입니다.
+왼쪽은4대 공장 실행의5초 연속 촬영이며, 오른쪽은 별도6kg 적재 주행 시험입니다. 적재 주행은 실제60fps 원본에서40fps GIF를 만들었고 움직임을 보간하지 않았습니다. 공장 전체의 정상 완주와 자동 적재·도킹·재고 인계 통합은 확인 중입니다.
 
 [전체 업무 흐름 · 이전 실행의25.4초 요약](docs/images/fleet4-local45-036/operations-business-complete.mp4)은 명목74배속 타임라인입니다. 그 실행은 출하3건·빈 토트 반납3건·4대 주차를 마쳤으나 최종 기록 종료 검사에 실패했습니다. 아래 업무 결과와 관제 화면은 해당 실행의 보존 자료입니다.
 
@@ -53,9 +53,9 @@
 
 Nova Carter의 차체 형상·센서 간섭·기존 반경을 확인한 뒤 캐리어를 고정 조인트로 장착했습니다. 자유 동적 토트의 실제 접촉과 정지를 확인했습니다. 위 이미지는 정적 장착 시험이며, 이어지는 영상은 같은 구성의 적재 주행 시험입니다. [정적 장착 결과](docs/evidence/local45-loaded-carrier-124.json) · [이미지 출처](docs/images/loaded-carrier-local45-124/provenance.json)
 
-![6kg 토트를 실은 Carter의 전진·곡선·제자리 회전·정지: 실제20fps](docs/images/loaded-mobility-local45-128/loaded-motion-20fps.gif)
+![6kg 토트 적재 상태의 곡선·제동·제자리 회전: 실제40fps](docs/images/loaded-mobility-local45-135/loaded-turn-40fps.gif)
 
-같은 장착 구성으로6kg 토트를 싣고 전진·곡선 주행·제자리 회전 후 감속 정지를 확인했습니다. 영상은 실제 물리 프레임에서 촬영한20fps·9.4초 원본이며 보간하지 않았습니다. 적재 접촉과 상대 위치, 바퀴 응답을 기록했습니다. 자동 적재·도킹·재고 인계의 차량 통합과 하중 정격은 남아 있습니다. [가벼운 MP4로 보기](docs/images/loaded-mobility-local45-128/loaded-motion-20fps.mp4) · [실제 주행 결과](docs/evidence/local45-loaded-mobility-128.json) · [촬영 출처](docs/images/loaded-mobility-local45-128/provenance.json)
+같은 장착 구성으로6kg 토트를 싣고 전진·곡선 주행·제자리 회전 후 감속 정지를 확인했습니다. 원본은 실제 물리 프레임에서 촬영한60fps·9.4초이며, GIF는 회전 전후5초를40fps로 보여줍니다. 보간 프레임은 사용하지 않았습니다. 적재 접촉과 상대 위치, 바퀴 응답을 기록했습니다. 자동 적재·도킹·재고 인계의 차량 통합과 하중 정격은 남아 있습니다. [60fps MP4로 보기](docs/images/loaded-mobility-local45-135/loaded-motion-60fps.mp4) · [실제 주행 결과](docs/evidence/local45-loaded-mobility-135.json) · [촬영 출처](docs/images/loaded-mobility-local45-135/provenance.json)
 
 | 롤러 적재 완료 | 같은 토트의 반납 완료 |
 |---|---|
@@ -67,7 +67,7 @@ Nova Carter의 차체 형상·센서 간섭·기존 반경을 확인한 뒤 캐�
 
 ## 가감속·회전·정지
 
-![실제 렌더로 보는 제동·제자리 회전·재출발](docs/images/amr-turn-transition.gif)
+![명령과 실제 엔코더·차체 응답](docs/images/amr-drive-response.png)
 
 [원속도 주행 영상 · 76초 MP4](docs/images/amr-drive-profile.mp4) · [명령·엔코더·차체 응답 그래프](docs/images/amr-drive-response.png) · [촬영·계측 출처](docs/images/motion-media-provenance.json)
 
@@ -75,7 +75,7 @@ Nova Carter의 차체 형상·센서 간섭·기존 반경을 확인한 뒤 캐�
 
 ## 공유 통로 대기와 복구
 
-![두 AMR의 교착 감지·양보·이탈 확인·재개](docs/images/g2-f3-readme.gif)
+![두 AMR의 교착 감지·양보·이탈 확인·재개 경로](docs/images/g2-f3-recovery-path.png)
 
 [복구 전체 영상](docs/images/g2-f3-timelapse.mp4) · [복구 경로와 소유권 변화](docs/images/g2-f3-recovery-path.png) · [통로 차단 시 명령·정지 기록](docs/images/g2-f2-fault-timeline.png) · [실행 결과](docs/images/g2-results.json)
 

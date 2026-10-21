@@ -731,6 +731,14 @@ Kit의 기존 요청에는 native next-anchor 계약의 run_id·UTC requested_at
 
 관련 Kit 클라이언트21검사·Python3.10 AST4파일을 통과했다. 새로 import하는 live_control.py도 후속 native probe의 소스 해시에 포함했다. 실제 Kit UI 및4대 실행의 적용 성공은 아직 확인하지 않았으며 독립 승인으로 표현하지 않는다. [root 완료 기록](../coordination/collab/results/kit-live-controls-132-root-completion.json)
 
+## FOT-090 — 실제60fps 적재 촬영과40fps GIF 재생 간격
+
+공장043의 명령 미수신과044의 공유 파일 I/O 오류로 공장60fps 촬영은 시작되지 않았다. 통합 운행 실패와 영상 인코딩을 분리해 기존 Windows 단일 SDK의 적재 주행을135에서 촬영했다. 물리·접촉·하중·조인트·정지 한계는 유지하고, 명시적60fps/660장 상한 프로파일만 추가했다. 실제60fps·서로 다른564장과 적재 주행·최종 정지 dwell을74.344wall 초에 통과했다.590파일을 C/E에 보존했다. [135 원본](evidence/local45-loaded-mobility-135.json)
+
+5초 발췌 GIF는200프레임이며 프레임 지연20/30ms·합계5000ms, 유효40fps를 ffprobe로 확인했다. 파일은1,630,728바이트,9.4초 원본60fps MP4는257,347바이트다. 프레임 수 기준 기존10fps의4배이며 체감 품질이4배라는 수치 주장은 하지 않는다. 원본 데이터는 보간하지 않고 표시용 영상의 양자화·해시·변환 명령을 기록했다. 공장 조감 GIF는 기존 실제10fps 창을 유지하며135를 같은 공장 운행으로 표시하지 않는다. [미디어 출처](images/loaded-mobility-local45-135/provenance.json)
+
+인코딩 도구는 기존 ffmpeg/ffprobe를 사용한다. 호스트 .venv에는 Pillow가 없어 최초 보조 도구의 import가 실패했으며, 새 패키지를 설치하지 않고 ffprobe의 실제 프레임 duration으로 재생 간격을 읽었다. 설치 SDK의 RGB 저장 기능과 이 보조 도구의 실패를 구분한다.
+
 ## 실행 전 확인과 후속 기록
 
 후속120은 local45 개발 실행에서 TF·시계 처리 노드와 scan/odom/action 처리 노드를 나누고, 기존 총64회·50ms 안에서 TF 처리에 먼저 절반을 배정한다. 한 차량의 실제 Jazzy 구성요소 시험에서는 부하 상태의 TF age가 공유 경로0.673초 이상에서 분리 경로0.031473초로 줄었고, 실제 TF 중단은 계속 거절했다. CPU22검사를 통과했으나 네 차량 통합 운행의 해결 근거로 확대하지 않는다. [120 수신](../coordination/collab/results/localization-critical-dispatch-120-integration.json)
