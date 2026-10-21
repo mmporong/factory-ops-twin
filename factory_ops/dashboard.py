@@ -18,6 +18,7 @@ from typing import Any
 from .dashboard_model import DashboardModel
 from .dashboard_events import DashboardEventSource
 from .mock_mes import MockMESAdapter
+from .live_control import control_capabilities
 
 
 def atomic_json(path: Path, value: Any) -> None:
@@ -257,12 +258,15 @@ def _join_ros_charging(primary: Any, companion: Any) -> dict[str, Any]:
 class DashboardService:
     def __init__(self, config: Path, *, source: Path | None = None, outbox: Path | None = None,
                  charging_profile: dict[str, Any] | None = None, charging_source: Path | None = None,
-                 events_source: Path | None = None) -> None:
+                 events_source: Path | None = None, live_anchor_controls: bool = False) -> None:
+        if live_anchor_controls and (source is None or outbox is None or charging_profile is not None):
+            raise ValueError("live anchor controls require explicit source/outbox and no CPU profile")
+        self.live_anchor_controls = live_anchor_controls
         if source is not None and charging_profile is not None:
             raise ValueError("CPU charging profile cannot modify a live/replay source")
-        if charging_source is not None and (source is None or outbox is not None or charging_profile is not None):
+        if charging_source is not None and (source is None or outbox is not None and not live_anchor_controls or charging_profile is not None):
             raise ValueError("charging_source requires a read-only primary source without command outbox or CPU charging profile")
-        if events_source is not None and (source is None or outbox is not None or charging_profile is not None):
+        if events_source is not None and (source is None or outbox is not None and not live_anchor_controls or charging_profile is not None):
             raise ValueError("events_source requires a read-only primary source without command outbox or CPU charging profile")
         self.lock = threading.RLock()
         self.scene = json.loads((config / "layout.json").read_text(encoding="utf-8"))
@@ -283,6 +287,9 @@ class DashboardService:
         if self.events_source is not None:
             self.producer_sources["factory_ops/dashboard_events.py"] = hashlib.sha256(
                 (module_root / "dashboard_events.py").read_bytes()).hexdigest()
+        if self.live_anchor_controls:
+            self.producer_sources["factory_ops/live_control.py"] = hashlib.sha256(
+                (module_root / "live_control.py").read_bytes()).hexdigest()
 
     def ingest_mes(self, event: Any) -> dict[str, Any]:
         with self.lock:
@@ -321,7 +328,11 @@ class DashboardService:
                 age = (datetime.now(timezone.utc) - datetime.fromisoformat(result["observed_at"])).total_seconds()
                 if result["mode"] == "live" and (age > 3 or age < -1):
                     result["connection"] = "stale"
-                if result["mode"] == "replay" or self.outbox is None or result["connection"] != "connected":
+                if self.live_anchor_controls:
+                    result["capabilities"] = (control_capabilities(result) if self.outbox is not None
+                        and result["connection"] == "connected" else [])
+                elif ("live_control" in result or result["mode"] == "replay" or self.outbox is None
+                        or result["connection"] != "connected"):
                     result["capabilities"] = []
             acknowledgements = {r["command_id"]: r for r in result["commands"] if isinstance(r, dict) and "command_id" in r}
             for key, receipt in self._receipts.items():
@@ -330,11 +341,13 @@ class DashboardService:
                         receipt.update(status="rejected", reason="실행이 변경되어 이전 요청이 만료됐습니다")
                     continue
                 ack = acknowledgements.get(key)
-                if (receipt["status"] == "pending" and ack and ack.get("run_id", result["run_id"]) == result["run_id"]
+                if (receipt["status"] == "pending" and ack and ack.get("run_id", None if self.live_anchor_controls else result["run_id"]) == result["run_id"]
                     and ack.get("status") in ("applied", "rejected") and type(ack.get("revision")) is int
                     and receipt["revision"] <= ack["revision"] <= result["revision"]):
                     receipt.update(status=ack["status"], reason=ack.get("reason"), revision=ack["revision"])
-            result["commands"] = deepcopy([r for k, r in self._receipts.items() if self._command_runs[k] == result["run_id"]][-30:])
+            merged = ({r["command_id"]: r for r in result["commands"]} if self.live_anchor_controls else {})
+            merged.update({k: r for k, r in self._receipts.items() if self._command_runs[k] == result["run_id"]})
+            result["commands"] = deepcopy(list(merged.values())[-30:])
             if self.mock_mes is not None:
                 result["integrations"] = {"mock_mes": self.mock_mes.snapshot()}
             result["api_producer"] = {"scope": "selected API/model source bytes at service start",
@@ -366,7 +379,7 @@ class DashboardService:
                 return deepcopy(self._receipts[key])
             receipt = {"command_id": key, "run_id": state["run_id"],
                        "status": "rejected", "reason": None, "revision": state["revision"]}
-            if "expected_run_id" in value and value["expected_run_id"] != state["run_id"]:
+            if (self.live_anchor_controls or "expected_run_id" in value) and value.get("expected_run_id") != state["run_id"]:
                 receipt["reason"] = "실행이 변경됐습니다. 최신 실행에서 다시 요청하세요"
             elif type(value.get("expected_revision")) is not int or value["expected_revision"] != state["revision"]:
                 receipt["reason"] = "상태가 변경됐습니다. 최신 상태에서 다시 요청하세요"
@@ -374,6 +387,8 @@ class DashboardService:
                 receipt["reason"] = "현재 연결에서 지원하지 않는 명령입니다"
             elif not isinstance(value.get("parameters", {}), dict):
                 receipt["reason"] = "명령 매개변수 형식이 올바르지 않습니다"
+            elif self.live_anchor_controls and value.get("parameters", {}) != {}:
+                receipt["reason"] = "실제 차량 제어에는 추가 매개변수를 사용할 수 없습니다"
             elif self.model is not None:
                 try:
                     action = value["action"]
@@ -391,6 +406,8 @@ class DashboardService:
                 filename = hashlib.sha256(key.encode()).hexdigest() + ".json"
                 target = self.outbox / filename
                 queued = {**value, "run_id": state["run_id"]}
+                if self.live_anchor_controls:
+                    queued["requested_at"] = datetime.now(timezone.utc).isoformat()
                 if target.exists() and json.loads(target.read_text(encoding="utf-8")) != queued:
                     raise ValueError("대기 중인 명령 ID에 다른 요청이 저장되어 있습니다")
                 atomic_json(target, queued)
@@ -448,26 +465,27 @@ def main() -> None:
     parser.add_argument("--port", type=int, default=8765)
     parser.add_argument("--source", type=Path, help="atomically published live/replay JSON; never rosbag SQLite")
     parser.add_argument("--charging-source", type=Path,
-                        help="optional same-run ROS virtual charger JSON; requires read-only --source")
+                        help="optional same-run ROS virtual charger JSON; controls require explicit opt-in")
     parser.add_argument("--events-source", type=Path,
                         help="optional same-run actions JSONL; bounded read-only business events; requires --source")
     parser.add_argument("--commands-dir", type=Path, help="simulator command outbox; absent means read-only")
+    parser.add_argument("--live-anchor-controls", action="store_true", help="opt-in same-run ROS next-anchor pause/resume only")
     parser.add_argument("--web-charging-profile", type=Path,
                         help="optional authored CPU energy/geometric docking model; never applied to live/replay")
     args = parser.parse_args()
     if args.source is not None and args.web_charging_profile is not None:
         parser.error("--web-charging-profile is available only in the local CPU model")
-    if args.charging_source is not None and (args.source is None or args.commands_dir is not None
+    if args.charging_source is not None and (args.source is None or args.commands_dir is not None and not args.live_anchor_controls
                                             or args.web_charging_profile is not None):
         parser.error("--charging-source requires --source and excludes --commands-dir/--web-charging-profile")
-    if args.events_source is not None and (args.source is None or args.commands_dir is not None
+    if args.events_source is not None and (args.source is None or args.commands_dir is not None and not args.live_anchor_controls
                                           or args.web_charging_profile is not None):
         parser.error("--events-source requires --source and excludes --commands-dir/--web-charging-profile")
     charging_profile = (json.loads(args.web_charging_profile.read_text(encoding="utf-8"))
                         if args.web_charging_profile is not None else None)
     service = DashboardService(args.config, source=args.source, outbox=args.commands_dir,
                                charging_profile=charging_profile, charging_source=args.charging_source,
-                               events_source=args.events_source)
+                               events_source=args.events_source, live_anchor_controls=args.live_anchor_controls)
     server = make_server(service, args.port)
     stopping = threading.Event()
 
