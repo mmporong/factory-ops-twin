@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "status": "cpu_validated_native_pending",
+  "base_source_commit": "bac9f094c6013e120c6e5d94c58135ecc05ef448",
+  "source_files": {
+    "scripts/isaac/carrier_native.py": "5845bdaa9eb8cf781a76f716c5b83a22747f955ec0890b079ad8eaf9ebcf0352",
+    "scripts/isaac/local45_fleet4_transport_scene.py": "67f7908d483ecdf52487f70f3b86780bed7dd22e2e2e3476c03aff4b6cbefd40",
+    "scripts/isaac/run_local45_fleet_pair.py": "eee22310716f439261efa5995a82864af2838b30c1eab05fda7aaf4832cf7284",
+    "scripts/isaac/factory_visuals.py": "0c752b5411d73247e90c7bf85aa523cf1adef4f84f8f520ec5e205a8112241af",
+    "factory_ops/carrier_module.py": "ef12b26aa3d7180e7f122324aa0f5e363010d1f3ddf366165b69ac6de1cbfc14",
+    "factory_ops/carrier_robot.py": "6a73d710770578adc608b0a1dcd4b1536bbdca64d9ec3d4d9c4183a2d887ee91",
+    "configs/vehicles/tote-carrier-carter-v2.json": "bbcc3e54f3eeeb040787cdf47b736561d268e66a0c0f7aa1afc4f6ca0767b3f4"
+  },
+  "scope": "opt-in four-AMR carrier body adapter and scene wiring; tote/payload remain visual-only",
+  "CPU_checks": {
+    "fleet_planning_and_rejection": 5,
+    "scene_integration_and_visual_placement": 4,
+    "frozen_source_and_selected_config_binding": 2
+  },
+  "SDK_syntax": {
+    "python_version": "3.10.15",
+    "AST_files": [
+      "scripts/isaac/carrier_native.py",
+      "scripts/isaac/local45_fleet4_transport_scene.py",
+      "scripts/isaac/run_local45_fleet_pair.py",
+      "scripts/isaac/factory_visuals.py"
+    ],
+    "passed": true
+  },
+  "SDK_authoring_executed": false,
+  "four_robot_physics_verified": false,
+  "physical_loading_or_unloading_verified": false,
+  "inflight_run_modified": false,
+  "live_bag_SQL_opened": false,
+  "new_dependencies": [],
+  "installed_reference": {
+    "SDK": "Isaac Sim4.5.0",
+    "path_relative_to_SDK": "exts/isaacsim.robot_setup.assembler/isaacsim/robot_setup/assembler/robot_assembler.py",
+    "sha256": "67fd32e6d9d1dcc3acdb29ccdbb95d3596a0ac28c4007efb221fa982170d22f8",
+    "confirmed_source_contract": "external fixed joint excludes the attached body from the base articulation; no global collision masking is requested"
+  },
+  "native_pending": [
+    "measured admission and USD readback for four actual composed robots",
+    "PhysX integration, sensor FOV and loaded motion",
+    "physical tote contact and docking/loading/unloading with inventory handoff"
+  ]
+}

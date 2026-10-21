@@ -1,11 +1,12 @@
 """Native observer ownership and identity checks without launching Isaac."""
 from copy import deepcopy
+from contextlib import nullcontext
 import json
 from pathlib import Path
 from types import SimpleNamespace
 import tempfile
 import unittest
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 from factory_ops.fleet_transport import prepare_bundle
 from scripts.isaac.local45_fleet4_transport_scene import Local45FleetLifecycle
@@ -51,6 +52,43 @@ class Local45LifecycleTests(unittest.TestCase):
         self.assertEqual(overview.rgb_render_state, "closed")
         with self.assertRaises(ValueError):
             self.lifecycle.register_rgb_render_products({"portfolio_overview": object()})
+
+    def test_carrier_opt_in_installs_only_after_all_native_admissions(self):
+        life = Local45FleetLifecycle(self.bundle, "a"*32, lidar_backend="physx_planar", carrier_modules=True)
+        life.visuals = SimpleNamespace(after_robots_loaded=Mock(return_value={}), robot_cargo_centers={})
+        stage = object()
+        definitions = {d["robot_id"]: d for d in life.registry.definitions}
+        prepared = {"all_admitted": True}
+        installed = {"carrier_physics_authored": True, "tote_physics_authored": False}
+        with patch("scripts.isaac.carrier_native.prepare_carrier_fleet", return_value=prepared) as prepare, \
+                patch("scripts.isaac.carrier_native.install_carrier_fleet", return_value=installed) as install, \
+                patch("scripts.isaac.factory_visuals._session_edit_target", return_value=nullcontext()):
+            result = life.after_robots_loaded(stage, definitions)
+        prepare.assert_called_once()
+        self.assertIs(prepare.call_args.args[0], stage)
+        self.assertEqual(prepare.call_args.args[1], definitions)
+        install.assert_called_once_with(stage, prepared)
+        self.assertEqual(result["carrier_modules"], installed)
+        self.assertFalse(result["physical_loading_or_unloading_verified"])
+        self.assertEqual(set(life.visuals.robot_cargo_centers), set(definitions))
+        self.assertAlmostEqual(life.visuals.robot_cargo_centers["carter1"][2], .8518819720745087)
+        life.visuals.robot_cargo_centers["carter1"][0] = 99.
+        self.assertEqual(life.visuals.robot_cargo_centers["carter2"][0], -.18)
+
+    def test_carrier_rejection_authors_no_module_and_default_does_not_opt_in(self):
+        definitions = {d["robot_id"]: d for d in self.lifecycle.registry.definitions}
+        self.lifecycle.visuals = SimpleNamespace(after_robots_loaded=Mock(return_value={}), robot_cargo_centers={})
+        with patch("scripts.isaac.carrier_native.prepare_carrier_fleet", side_effect=ValueError("mount rejected")) as prepare, \
+                patch("scripts.isaac.carrier_native.install_carrier_fleet") as install:
+            self.lifecycle.after_robots_loaded(object(), definitions)
+            prepare.assert_not_called()
+            self.lifecycle.carrier_modules = True
+            with self.assertRaisesRegex(ValueError, "mount rejected"):
+                self.lifecycle.after_robots_loaded(object(), definitions)
+            install.assert_not_called()
+        self.assertEqual(self.lifecycle.visuals.robot_cargo_centers, {})
+        with self.assertRaises(ValueError):
+            Local45FleetLifecycle(self.bundle, "a"*32, carrier_modules=True)
 
 
     def test_exact_eight_identities_are_bound_and_closed(self):

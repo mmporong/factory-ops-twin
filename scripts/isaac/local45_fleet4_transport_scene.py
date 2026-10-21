@@ -25,6 +25,8 @@ LOCAL_SOURCE_PINS = BASE_SOURCE_PINS | frozenset({
     "factory_ops/visual_state.py", "factory_ops/wsl_process_supervisor.py",
     "factory_ops/material_visual.py", "factory_ops/ros_topic_relay.py", "factory_ops/ros_topic_relay_pair.py",
     "factory_ops/planner_guidance.py",
+    "factory_ops/carrier_module.py", "factory_ops/carrier_robot.py",
+    "scripts/isaac/carrier_native.py", "configs/vehicles/tote-carrier-carter-v2.json",
     "scripts/isaac/run_local45_fleet_pair.py",
     "scripts/isaac/windows_job_runner.py",
 })
@@ -53,8 +55,9 @@ class EmptyToteGeometry:
                 if (row["location"], 0) in occupied:
                     return None
                 placement = {"parent_path": v.robot_paths[row["robot_id"]] + "/FactoryVisualCargo",
-                    "translate_xyz_m": [0., 0., .52], "size_xyz_m": list(TOTE_SIZE_M),
-                    "scope": "existing authored robot cargo offset; no measured mount/contact claim"}
+                    "translate_xyz_m": list(v.robot_cargo_centers.get(row["robot_id"], [0., 0., .52])),
+                    "size_xyz_m": list(TOTE_SIZE_M),
+                    "scope": "authored visual-only tote center; no physical load or contact claim"}
             suffix = f"{row['location']}_{row['slot']}".replace("-", "_")
             path = f"{placement['parent_path']}/Empty_{row['tote_id'].replace('-', '_')}_{suffix}"
             placements.append({**dict(row), **placement, "prim_path": path})
@@ -97,7 +100,8 @@ class EmptyToteGeometry:
 
 
 class Local45FleetLifecycle(FleetTransportLifecycle):
-    def __init__(self, root: Path, run_id: str, *, lidar_backend: str = "rtx_flat_scan", capture_views: str = "all") -> None:
+    def __init__(self, root: Path, run_id: str, *, lidar_backend: str = "rtx_flat_scan", capture_views: str = "all",
+                 carrier_modules: bool = False) -> None:
         if capture_views not in {"all", "overview"}:
             raise ValueError("unsupported local45 RGB capture view selection")
         self.capture_views = capture_views
@@ -105,6 +109,10 @@ class Local45FleetLifecycle(FleetTransportLifecycle):
         if lidar_backend not in {"rtx_flat_scan", "physx_planar"}:
             raise ValueError("unsupported local45 observation backend")
         self.lidar_backend = lidar_backend
+        if type(carrier_modules) is not bool or (carrier_modules and (lidar_backend != "physx_planar"
+                or self.session["profile"] != "development" or self.session["primary_evaluation"])):
+            raise ValueError("carrier modules require explicit local45 planar development")
+        self.carrier_modules = carrier_modules
         self.material_visual = self.empty_geometry = None
         self.material_capture = None
         self.last_captured_material_revision = None
@@ -300,6 +308,27 @@ class Local45FleetLifecycle(FleetTransportLifecycle):
 
     def after_robots_loaded(self, stage: Any, definitions: dict[str, Any]) -> dict[str, Any]:
         metadata = super().after_robots_loaded(stage, definitions)
+        if self.carrier_modules:
+            from factory_ops.carrier_module import build_manifest, load_profile
+            from scripts.isaac.carrier_native import prepare_carrier_fleet, install_carrier_fleet
+            from scripts.isaac.factory_visuals import TOTE_SIZE_M, _session_edit_target
+
+            profile_path = Path(__file__).resolve().parents[2]/"configs/vehicles/tote-carrier-carter-v2.json"
+            profile = load_profile(profile_path)
+            if tuple(profile["tote"]["outer_size_m"]) != TOTE_SIZE_M:
+                raise ValueError("physical carrier profile and visual tote size differ")
+            manifest = build_manifest(profile)
+            prepared = prepare_carrier_fleet(stage, definitions, manifest, self.run_id,
+                clearance_m=profile["mount"]["clearance_m"])
+            with _session_edit_target(stage):
+                installed = install_carrier_fleet(stage, prepared)
+            center = list(manifest["tote_rest_origin_m"])
+            center[2] += TOTE_SIZE_M[2]/2  # Manifest tote origin is its bottom; markers use their centre.
+            self.visuals.robot_cargo_centers = {robot: list(center) for robot in definitions}
+            metadata["carrier_modules"] = installed
+            metadata["carrier_profile_sha256"] = g2_scene.base._sha256(profile_path)
+            metadata["visual_tote_centers_chassis_m"] = deepcopy(self.visuals.robot_cargo_centers)
+            metadata["physical_loading_or_unloading_verified"] = False
         if self.material_visual is not None:
             self.empty_geometry = EmptyToteGeometry(self.visuals)
             metadata["empty_totes"] = "optional material companion; authored hollow visual-only geometry"
@@ -392,6 +421,7 @@ def main() -> int:
     parser.add_argument("--run-id", required=True)
     parser.add_argument("--capture-resolution", choices=("640x360", "1280x720"), default="640x360")
     parser.add_argument("--capture-views", choices=("all", "overview"), default="all")
+    parser.add_argument("--carrier-modules", action="store_true")
     parser.add_argument("--lidar-backend", choices=("rtx_flat_scan", "physx_planar"), default="rtx_flat_scan")
     parser.add_argument("--physics-cadence", choices=("app_update", "owned_step6"), default="owned_step6")
     args = parser.parse_args()
@@ -410,7 +440,7 @@ def main() -> int:
         capture_views=args.capture_views,
         lidar_backend=args.lidar_backend, physics_cadence=args.physics_cadence,
         scene_extension=Local45FleetLifecycle(root, args.run_id, lidar_backend=args.lidar_backend,
-            capture_views=args.capture_views), extra_inputs=extras)
+            capture_views=args.capture_views, carrier_modules=args.carrier_modules), extra_inputs=extras)
 
 
 if __name__ == "__main__":

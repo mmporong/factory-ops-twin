@@ -79,6 +79,9 @@ class FrozenConfigChoiceTests(unittest.TestCase):
                 target.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copyfile(original, target)
         shutil.copyfile(PROJECT/"scripts/brev/run-fleet4.sh", cls.seed/"scripts/brev/run-fleet4.sh")
+        carrier_profile = Path("configs/vehicles/tote-carrier-carter-v2.json")
+        (cls.seed/carrier_profile).parent.mkdir(parents=True)
+        shutil.copyfile(PROJECT/carrier_profile, cls.seed/carrier_profile)
         for directory in (DEFAULT, SELECTED):
             (cls.seed/directory).mkdir(parents=True)
             for name in SOURCE_FILES:

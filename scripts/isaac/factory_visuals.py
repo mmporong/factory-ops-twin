@@ -254,6 +254,7 @@ def build_payload_visibility_plan(
     layout: Layout,
     projection: Mapping[str, Any],
     robot_paths: Mapping[str, str],
+    robot_cargo_centers: Mapping[str, Sequence[float]] | None = None,
 ) -> list[dict[str, Any]]:
     """Resolve exactly one visible copy path and placement per logical payload."""
     _validate_projection(projection, robot_ids=tuple(robot_paths))
@@ -268,14 +269,19 @@ def build_payload_visibility_plan(
             chassis = robot_paths.get(robot_id)
             if not isinstance(chassis, str) or not chassis.startswith("/World/"):
                 raise ValueError(f"visual cargo robot parent is unavailable: {location}")
+            center = (robot_cargo_centers or {}).get(robot_id, [0.0, 0.0, 0.52])
+            if (not isinstance(center, (list, tuple)) or len(center) != 3
+                    or any(type(v) not in (int, float) or not math.isfinite(v) for v in center)):
+                raise ValueError("visual cargo center must contain three finite chassis-local coordinates")
             placement = {
                 "location": location,
                 "slot": slot,
                 "source_obstacle_id": None,
                 "parent_path": chassis.rstrip("/") + "/FactoryVisualCargo",
-                "translate_xyz_m": [0.0, 0.0, 0.52],
+                "translate_xyz_m": list(center),
                 "size_xyz_m": list(TOTE_SIZE_M),
-                "bounds_xyz_m": [-.22, -.17, .43, .22, .17, .61],
+                "bounds_xyz_m": [center[i]-TOTE_SIZE_M[i]/2 for i in range(3)]
+                    + [center[i]+TOTE_SIZE_M[i]/2 for i in range(3)],
                 "capacity": 1,
             }
         payload_id = str(row["payload_id"])
@@ -319,6 +325,7 @@ class FactoryVisualRuntime:
         self.manifest: dict[str, Any] | None = None
         self.runtime_manifest: dict[str, Any] | None = None
         self.robot_paths: dict[str, str] = {}
+        self.robot_cargo_centers: dict[str, list[float]] = {}
         self.payload_copies: dict[str, dict[str, Any]] = {}
         self.applied_sequence: int | None = None
         self.applied_state_hash: str | None = None
@@ -623,7 +630,7 @@ class FactoryVisualRuntime:
         changes: list[dict[str, object]] = []
         visible_paths: set[str] = set()
         assert self.layout is not None
-        plan = build_payload_visibility_plan(self.layout, projection, self.robot_paths)
+        plan = build_payload_visibility_plan(self.layout, projection, self.robot_paths, self.robot_cargo_centers)
         hidden_paths: list[str] = []
         with _session_edit_target(self.stage):
             for item in plan:

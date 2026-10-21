@@ -385,6 +385,21 @@ class FactoryVisualRuntimeTests(unittest.TestCase):
             "carter2": "/World/Carter2/chassis_link",
         })
 
+    def test_carrier_visual_tote_bottom_matches_deck_and_default_is_preserved(self) -> None:
+        projection = _projection(_row("p1", "robot_carter1", robot="carter1"))
+        paths = {"carter1": "/World/Carter1/chassis_link"}
+        default = build_payload_visibility_plan(self.layout, projection, paths)[0]["placement"]
+        self.assertEqual(default["translate_xyz_m"], [0., 0., .52])
+        center = [-.18, 0., .8518819720745087]
+        mounted = build_payload_visibility_plan(self.layout, projection, paths,
+            {"carter1": center})[0]["placement"]
+        self.assertEqual(mounted["translate_xyz_m"], center)
+        self.assertAlmostEqual(mounted["bounds_xyz_m"][2], .7618819720745087)
+        self.assertEqual(mounted["parent_path"], paths["carter1"]+"/FactoryVisualCargo")
+        for invalid in ([0., 0., float("nan")], [0., True, .8], [0., .8]):
+            with self.subTest(invalid=invalid), self.assertRaises(ValueError):
+                build_payload_visibility_plan(self.layout, projection, paths, {"carter1": invalid})
+
     def test_duplicate_payload_slot_and_signal_mismatch_fail_closed(self) -> None:
         duplicate_payload = _projection(_row("p1", "ci", 0), _row("p1", "co", 0))
         state = _state(duplicate_payload)

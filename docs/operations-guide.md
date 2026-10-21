@@ -51,11 +51,21 @@ uv run python -m factory_ops.dashboard --config configs/factory-fleet4-normal3 -
 
 overview 옵션은 추적 카메라 prim의 보정 정보를 남기되 해당 render product와 RGB annotator를 생성하지 않는다. 프레임별 활성/비활성 전환은 하지 않는다. 모든 차량의 같은 프레임 GT는 평가·미디어용으로 기록하며, 물리·센서·주행 허가·촬영 시각의 동결 검사는 유지한다. 기본3시점을 요구하는 기존 정식 검증에1시점 자료를 대신 제출하지 않는다. Replicator 합성 데이터의 modality·시점 수집 프로필도 이 옵션과 별도다.
 
-관련 CPU 검사9개와 SDK Python3.10.15의5파일 구문 확인을 통과했다. 실제 GPU에서의1시점 실행과 속도 개선은 아직 확인하지 않았다. 실행 중인051은 기존3시점을 유지한다. [공식 Replicator1.11.35 API](https://docs.omniverse.nvidia.com/kit/docs/omni_replicator/1.11.35/source/extensions/omni.replicator.core/docs/API.html) · [Isaac Sim4.5 렌더 제품 수명 관리 예제](https://docs.isaacsim.omniverse.nvidia.com/4.5.0/replicator_tutorials/tutorial_replicator_ur10_palletizing.html)
+관련 CPU 검사9개와 SDK Python3.10.15의5파일 구문 확인을 통과했다.054는1시점 옵션으로 실행 중이며 속도 개선을 확정한 비교는 없다. [공식 Replicator1.11.35 API](https://docs.omniverse.nvidia.com/kit/docs/omni_replicator/1.11.35/source/extensions/omni.replicator.core/docs/API.html) · [Isaac Sim4.5 렌더 제품 수명 관리 예제](https://docs.isaacsim.omniverse.nvidia.com/4.5.0/replicator_tutorials/tutorial_replicator_ur10_palletizing.html)
 
 운송 구간의 시작은 화물·빈 토트의 운반 차량 ID와 같은 차량의 새 주행 허가·명령·엔코더 움직임을 대조한다. 다른 차량의 움직임으로 시작하지 않는다. 내보내기에서는 선택한 원본 구간의 해당 운반 차량 GT로 이동·회전을 확인한다. 이 GT는 미디어 평가용이며 주행에 넣지 않는다. 움직임이 없는 운송 구간을 대표 영상으로 내보내지 않고 원본과 사유를 보존한다. 출하 집계·공정·순환 완료의 정지 장면은 이 운송 조건과 구분한다.
 
 새 실행의 출하 이후 창은 두 차량이 실제로 움직일 때 시작한다. 내보내기도 선택한 원본에서 두 차량의 이동·회전을 요구하고 화면에는 `출하 이후 · 병행 물류`로 표시한다. 기존6개 창 중 하나의 선택 시점을 옮기는 것으로 추가 촬영 창이나 수집량을 늘리지 않는다. 과거 실행의 첫 출하 집계 장면을 병행 물류로 재분류하지 않는다.
+
+## 4대 물리 캐리어 개발 옵션
+
+새로 준비한 로컬4.5·PhysX planar 개발 실행에서 호스트와 SDK 실행기에 `--carrier-modules`를 지정하면 차체에 고정하는 물리 운반 모듈을 작성한다. 기본값은 꺼짐이며 진행 중인 실행에는 추가하지 않는다. 입력은 동결 소스에 포함한 `configs/vehicles/tote-carrier-carter-v2.json`으로 고정한다. 호스트가 소스·프로필의 archive/pin 해시를 확인한다.
+
+SDK의 `after_robots_loaded` 단계에서 네 차량 각각의 실제 차체 변환·rigid body·collision geometry·센서 후보 위치를 측정한다. 캐시된 authored extent 대신 geometry-computed extent를 사용하고 기존 반경·장착 여유를 검사한다. 네 대 모두 통과하고 새 prim 경로가 비어 있어야 별도 dynamic carrier body·질량/관성·compound collider·차체 FixedJoint를 작성한다. 작성 직전 측정을 다시 대조하고 작성 후 속성 readback도 확인한다. 전역 collision mask·주행 한도·지도 반경은 바꾸지 않는다.
+
+제품·빈 토트 표시는 차체 좌표계의 모듈 상판 높이에 맞춘다. 이 표시는 충돌·질량이 없는 시각 모델이며 접촉에 의한 운반이나 자동 하역을 뜻하지 않는다. 옵션의4대 실제 SDK 운송 실행·센서 FOV·물리 토트 인계는 아직 확인하지 않았다. CPU 계획5검사와 scene 연결/시각 위치4검사, SDK Python3.10.15의4파일 구문 확인을 통과했다. 새 SimulationApp은 기존 실행 종료 후 사용한다.
+
+기준 구현은 설치된 SDK4.5의 Robot Assembler 소스와 기존 [단일 차량 적재 주행 도구](../scripts/isaac/probe_loaded_carrier.py)다. 외부 고정 조인트의 `excludeFromArticulation`과 연결된 두 body의 collision 설정을 재사용하며, 산업용 하중 정격·기계 강도는 검증 범위에 넣지 않는다. [설치 소스·프로필·검사 범위](evidence/carrier-fleet-adapter-177.json)
 
 ## Kit 운영 패널
 

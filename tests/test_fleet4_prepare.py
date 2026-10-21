@@ -46,6 +46,9 @@ class Fleet4PreparationTests(unittest.TestCase):
                 shutil.copyfile(original, destination)
         shutil.copyfile(PROJECT / "scripts/brev/run-fleet4.sh", cls.repo / "scripts/brev/run-fleet4.sh")
         shutil.copytree(PROJECT / "configs/factory-fleet4", cls.repo / "configs/factory-fleet4")
+        carrier_profile = Path("configs/vehicles/tote-carrier-carter-v2.json")
+        (cls.repo / carrier_profile).parent.mkdir(parents=True)
+        shutil.copyfile(PROJECT / carrier_profile, cls.repo / carrier_profile)
         cls._git("init", "--initial-branch=main")
         cls._git("config", "user.name", "Temporary Source Fixture")
         cls._git("config", "user.email", "fixture@example.invalid")
@@ -159,7 +162,9 @@ runpy.run_path(sys.argv[0],run_name='__main__')
         metadata = json.loads((self.stage / "results/run/provenance/fleet-source.json").read_text())
         self.assertEqual("local45_development", metadata["runtime_profile"])
         for name in ("scripts/isaac/local45_fleet4_transport_scene.py",
-                     "factory_ops/isaac45_runtime.py", "factory_ops/flat_scan_observation.py"):
+                     "factory_ops/isaac45_runtime.py", "factory_ops/flat_scan_observation.py",
+                     "scripts/isaac/carrier_native.py", "factory_ops/carrier_module.py",
+                     "factory_ops/carrier_robot.py", "configs/vehicles/tote-carrier-carter-v2.json"):
             self.assertEqual(_sha(self.source / name), metadata["source_files"][name])
 
     def test_local45_source_change_rejects_before_preparing(self) -> None:
