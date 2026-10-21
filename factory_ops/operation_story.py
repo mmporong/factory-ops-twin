@@ -29,9 +29,11 @@ class OperationStory:
         self.emitted = 0
         self.last_frame = -1
 
-    def observe(self, frame: int, sim_time_ns: int, visual: dict | None, material: dict | None, *, moving: bool):
+    def observe(self, frame: int, sim_time_ns: int, visual: dict | None, material: dict | None, *, moving_robot_ids: set[str]):
         if type(frame) is not int or type(sim_time_ns) is not int or frame < self.last_frame or sim_time_ns < 0:
             raise ValueError("operation story clock must be monotonic")
+        if not isinstance(moving_robot_ids, set) or any(not isinstance(r, str) or not r for r in moving_robot_ids):
+            raise ValueError("story motion requires observed robot identities")
         self.last_frame = frame
         self.current = (frame, sim_time_ns)
         if self.window is not None and frame >= self.window["start_frame"]+240:
@@ -44,16 +46,19 @@ class OperationStory:
         if material is not None and material.get("run_id") != self.run_id:
             raise ValueError("story material run identity differs")
         projection = visual["projection"]
-        states = {row["state"] for row in projection["payloads"]}
         shipped = projection["signals"]["orders_completed"]
-        returning = material is not None and any(row["state"] == "returning" for row in material["empty_totes"])
+        def moving_payload(state):
+            return any(row["state"] == state and row.get("robot_id") in moving_robot_ids
+                       for row in projection["payloads"])
+        returning = material is not None and any(row["state"] == "returning" and row.get("robot_id") in moving_robot_ids
+                                                for row in material["empty_totes"])
         completed = bool(material is not None and material["source_snapshot"]["completed"])
         conditions = {
-            "material_supply": "inbound_loaded" in states and moving,
+            "material_supply": moving_payload("inbound_loaded"),
             "cell_processing": bool(projection["signals"]["cell_processing"]),
-            "finished_goods_transport": "outbound_loaded" in states and moving,
+            "finished_goods_transport": moving_payload("outbound_loaded"),
             "first_shipment": 0 < shipped < self.order_count,
-            "empty_container_return": returning and moving,
+            "empty_container_return": returning,
             "closed_loop_complete": shipped == self.order_count and completed,
         }
         phase = next((name for name in PHASES if name not in self.seen and conditions[name]), None)
@@ -63,6 +68,8 @@ class OperationStory:
         self.window = {"run_id": self.run_id, "window_id": "factory-"+phase,
             "phase": phase, "start_frame": frame, "start_sim_time_ns": sim_time_ns,
             "profile_sha256": self.profile_hash, "source_visual_sequence": visual["sequence"],
+            "trigger_moving_robot_ids": sorted(moving_robot_ids),
+            "trigger_motion_source": "same robot authorization, input command and measured wheel odometry",
             "source_material_revision": material["material_revision"] if material is not None else None}
         self.events.append({"event": "window_started", **deepcopy(self.window)})
 

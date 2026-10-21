@@ -5,6 +5,7 @@ import ast
 from copy import deepcopy
 import importlib.util
 import json
+import math
 from pathlib import Path
 import tempfile
 import unittest
@@ -118,7 +119,9 @@ def fixture(stage,counts=None,bad_stock=False):
                 "sample_index":offset,"profile_sha256":OperationStory(PROFILE,RUN,3).profile_hash,
                 "source_visual_sequence":i,"source_material_revision":i,
                 "dashboard":{"status":"observed",**dash_ref,"source_world_time_s":start-.01,"age_s":stamp-(start-.01)}}
-            frames.append({"index":len(frames),"sim_time_s":stamp,"physics_frame":frame,"ground_truth":dict.fromkeys(ROBOTS,{}),
+            gt = {r:{"position_xyz_m":[offset*.05 if r in {"carter1","carter3"} else 0.,0.,.1],
+                     "orientation_wxyz":[1.,0.,0.,0.]} for r in ROBOTS}
+            frames.append({"index":len(frames),"sim_time_s":stamp,"physics_frame":frame,"ground_truth":gt,
                 "sources":{"overview":{"path":image.relative_to(run).as_posix(),"sha256":MEDIA.sha(image),"bytes":image.stat().st_size,"width":1280,"height":720}},
                 "visual_state":{"run_id":RUN,"scenario_id":session["scenario_id"],"applied_sequence":i,"applied_state_hash":state_hash,
                     "applied_snapshot":visual_ref,"latest_event":event,"factory_story":tag,
@@ -138,6 +141,21 @@ class FactoryStoryMediaTests(unittest.TestCase):
 
     def replace_index(self):
         write(self.run,"media/frames.json",{"schema_version":1,"frames":self.frames})
+
+    def test_other_moving_robot_cannot_substitute_for_stationary_loaded_carrier(self):
+        for frame in self.frames:
+            if frame["visual_state"]["factory_story"]["phase"] == "finished_goods_transport":
+                frame["ground_truth"]["carter1"]["position_xyz_m"] = [0.,0.,.1]
+        self.replace_index()
+        with self.assertRaisesRegex(ValueError,"own loaded carrier"):
+            MEDIA.prepare(self.stage)
+
+    def test_loaded_in_place_rotation_is_valid_observed_carrier_motion(self):
+        rows=[{"carrier_poses":{"carter2":{"position_xyz_m":[0.,0.,.1],
+              "orientation_wxyz":[math.cos(yaw/2),0.,0.,math.sin(yaw/2)]}}} for yaw in (0.,.5)]
+        proof=MEDIA.carrier_motion(rows)
+        self.assertEqual(proof["robots"]["carter2"]["maximum_translation_from_first_m"],0.)
+        self.assertAlmostEqual(proof["robots"]["carter2"]["maximum_rotation_from_first_rad"],.5)
 
     def test_cold_prepare_uses_each_applied_state_and_never_final_values(self):
         with patch.object(MEDIA.subprocess,"Popen",side_effect=AssertionError("no processes allowed")), patch.dict("sys.modules",{"PIL":None,"isaacsim":None}):

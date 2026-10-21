@@ -275,8 +275,10 @@ class Local45FleetLifecycle(FleetTransportLifecycle):
         if self.operation_story is not None:
             auth = sample.get("authorization",{})
             command = sample.get("motion_profile",{}).get("input_command",{})
+            odometry = sample.get("odometry",{})
             active = bool(auth.get("mode") == "navigate" and auth.get("valid") is True
-                and (abs(command.get("linear_m_s",0.)) >= .15 or abs(command.get("angular_rad_s",0.)) >= .15))
+                and (abs(command.get("linear_m_s",0.)) >= .15 or abs(command.get("angular_rad_s",0.)) >= .15)
+                and (abs(odometry.get("linear_m_s",0.)) >= .05 or abs(odometry.get("angular_rad_s",0.)) >= .05))
             self.story_motion[robot_id] = (sample["physics_frame"],active)
             self.story_observation = (sample["physics_frame"],round(sample["sim_time_s"]*1_000_000_000))
 
@@ -311,9 +313,9 @@ class Local45FleetLifecycle(FleetTransportLifecycle):
             frame,stamp = self.story_observation
             material = (self.material_visual.applied["document"]
                 if self.material_visual is not None and self.material_visual.applied is not None else None)
-            moving = any(active and 0 <= frame-source_frame <= 6
-                for source_frame,active in self.story_motion.values())
-            self.operation_story.observe(frame,stamp,self.story_visual,material,moving=moving)
+            moving = {robot for robot,(source_frame,active) in self.story_motion.items()
+                      if active and 0 <= frame-source_frame <= 6}
+            self.operation_story.observe(frame,stamp,self.story_visual,material,moving_robot_ids=moving)
             self._flush_story_events()
             sample = self.operation_story.due()
             if sample is not None:

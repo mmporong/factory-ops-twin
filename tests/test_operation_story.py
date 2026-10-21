@@ -14,25 +14,25 @@ PROFILE = {"schema_version":1,"profiles":["development"],"window_frames":240,
 
 class OperationStoryTests(unittest.TestCase):
     def state(self, state="inbound_loaded", shipped=0, processing=False):
-        return {"run_id":"r","sequence":3,"projection":{"payloads":[{"state":state}],
+        return {"run_id":"r","sequence":3,"projection":{"payloads":[{"state":state,"robot_id":"carter1"}],
             "signals":{"orders_completed":shipped,"cell_processing":processing}}}
 
     def material(self, state="empty", complete=False):
-        return {"run_id":"r","material_revision":2,"empty_totes":[{"state":state}],
+        return {"run_id":"r","material_revision":2,"empty_totes":[{"state":state,"robot_id":"carter1"}],
                 "source_snapshot":{"completed":complete}}
 
     def test_no_first_motion_coupon_and_exact_bounded_source_frames(self):
         s=OperationStory(PROFILE,"r",3)
-        s.observe(1,10,self.state("source_waiting"),None,moving=True)
+        s.observe(1,10,self.state("source_waiting"),None,moving_robot_ids={"carter1"})
         self.assertIsNone(s.due())
-        s.observe(2,20,self.state(),None,moving=False)
+        s.observe(2,20,self.state(),None,moving_robot_ids=set())
         self.assertIsNone(s.due())
         for frame in range(3,243):
-            s.observe(frame,frame*100,self.state(),None,moving=True)
+            s.observe(frame,frame*100,self.state(),None,moving_robot_ids={"carter1"})
             sample=s.due()
             self.assertEqual(sample["sample_index"],frame-3)
             self.assertIsNone(s.due())
-        s.observe(243,24300,self.state(),None,moving=True)
+        s.observe(243,24300,self.state(),None,moving_robot_ids={"carter1"})
         self.assertIsNone(s.due())
         self.assertEqual(s.emitted,240)
         self.assertEqual([e["event"] for e in s.events],["window_started","window_ended"])
@@ -46,12 +46,12 @@ class OperationStoryTests(unittest.TestCase):
                (self.state("complete",shipped=2),self.material("returning"),"empty_container_return")]
         frame=0
         for v,m,phase in cases:
-            s.observe(frame,frame*100,v,m,moving=True)
+            s.observe(frame,frame*100,v,m,moving_robot_ids={"carter1"})
             self.assertEqual(s.due()["phase"],phase)
             frame+=240
-        s.observe(frame,frame*100,self.state("complete",shipped=3),self.material("available"),moving=False)
+        s.observe(frame,frame*100,self.state("complete",shipped=3),self.material("available"),moving_robot_ids=set())
         self.assertIsNone(s.due())
-        s.observe(frame+1,(frame+1)*100,self.state("complete",shipped=3),self.material("available",True),moving=False)
+        s.observe(frame+1,(frame+1)*100,self.state("complete",shipped=3),self.material("available",True),moving_robot_ids=set())
         self.assertEqual(s.due()["phase"],"closed_loop_complete")
         s.close()
         self.assertEqual(s.events[-1]["event"],"window_terminal_ended")
@@ -59,7 +59,30 @@ class OperationStoryTests(unittest.TestCase):
     def test_run_mismatch_and_broadened_budget_rejected(self):
         with self.assertRaises(ValueError):OperationStory({**PROFILE,"maximum_windows":20},"r",3)
         s=OperationStory(PROFILE,"r",3);v=self.state();v["run_id"]="other"
-        with self.assertRaises(ValueError):s.observe(1,10,v,None,moving=True)
+        with self.assertRaises(ValueError):s.observe(1,10,v,None,moving_robot_ids={"carter1"})
+
+    def test_other_robot_motion_cannot_trigger_loaded_or_empty_transport(self):
+        for state,material in (("inbound_loaded",None),("outbound_loaded",None),
+                               ("complete",self.material("returning"))):
+            with self.subTest(state=state):
+                s=OperationStory(PROFILE,"r",3)
+                s.observe(1,10,self.state(state),material,moving_robot_ids={"carter2"})
+                self.assertIsNone(s.due())
+                s.observe(2,20,self.state(state),material,moving_robot_ids={"carter1"})
+                self.assertIsNotNone(s.due())
+
+    def test_requested_command_without_measured_motion_does_not_arm_capture(self):
+        from scripts.isaac.local45_fleet4_transport_scene import Local45FleetLifecycle
+        life=object.__new__(Local45FleetLifecycle)
+        life.operation_story=True;life.story_motion={}
+        sample={"physics_frame":10,"sim_time_s":1.,"authorization":{"mode":"navigate","valid":True},
+                "motion_profile":{"input_command":{"linear_m_s":.2}},"odometry":{"linear_m_s":0.}}
+        with patch("scripts.isaac.local45_fleet4_transport_scene.FleetTransportLifecycle.after_control"):
+            life.after_control("carter1",sample)
+            self.assertFalse(life.story_motion["carter1"][1])
+            sample["odometry"]["linear_m_s"]=.2
+            life.after_control("carter1",sample)
+            self.assertTrue(life.story_motion["carter1"][1])
 
     def test_local_runtime_tags_only_the_hash_matched_applied_snapshot(self):
         from factory_ops.fleet_transport import prepare_bundle
@@ -84,7 +107,8 @@ class OperationStoryTests(unittest.TestCase):
                 life.step(1.,10)
                 life.after_control("carter1",{"physics_frame":11,"sim_time_s":1.1,
                     "authorization":{"mode":"navigate","valid":True},
-                    "motion_profile":{"input_command":{"linear_m_s":.2,"angular_rad_s":0.}}})
+                    "motion_profile":{"input_command":{"linear_m_s":.2,"angular_rad_s":0.}},
+                    "odometry":{"linear_m_s":.2,"angular_rad_s":0.}})
                 self.assertTrue(life.capture_due())
                 meta=life.capture_metadata()["factory_story"]
                 self.assertEqual(meta["phase"],"material_supply")

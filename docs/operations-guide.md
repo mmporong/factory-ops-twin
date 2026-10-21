@@ -53,6 +53,8 @@ overview 옵션은 추적 카메라 prim의 보정 정보를 남기되 해당 re
 
 관련 CPU 검사9개와 SDK Python3.10.15의5파일 구문 확인을 통과했다. 실제 GPU에서의1시점 실행과 속도 개선은 아직 확인하지 않았다. 실행 중인051은 기존3시점을 유지한다. [공식 Replicator1.11.35 API](https://docs.omniverse.nvidia.com/kit/docs/omni_replicator/1.11.35/source/extensions/omni.replicator.core/docs/API.html) · [Isaac Sim4.5 렌더 제품 수명 관리 예제](https://docs.isaacsim.omniverse.nvidia.com/4.5.0/replicator_tutorials/tutorial_replicator_ur10_palletizing.html)
 
+운송 구간의 시작은 화물·빈 토트의 운반 차량 ID와 같은 차량의 새 주행 허가·명령·엔코더 움직임을 대조한다. 다른 차량의 움직임으로 시작하지 않는다. 내보내기에서는 선택한 원본 구간의 해당 운반 차량 GT로 이동·회전을 확인한다. 이 GT는 미디어 평가용이며 주행에 넣지 않는다. 움직임이 없는 운송 구간을 대표 영상으로 내보내지 않고 원본과 사유를 보존한다. 출하 집계·공정·순환 완료의 정지 장면은 이 운송 조건과 구분한다.
+
 ## Kit 운영 패널
 
 기존 SDK의 Kit 확장 검색 경로에 저장소의 `extensions/`를 추가하고 `factory.ops.console`을 활성화한다. 기본 API 주소는 `http://127.0.0.1:8765`이며, 실행 전 `FACTORY_OPS_API_URL`로 다른 loopback 주소를 지정할 수 있다. 외부 HTTP 주소·리다이렉트·프록시는 허용하지 않는다.

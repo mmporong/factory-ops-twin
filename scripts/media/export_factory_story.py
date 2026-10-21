@@ -265,6 +265,38 @@ def phase_supported(phase, projection, material, orders):
     }[phase]
 
 
+def carrier_ids(phase, projection, material):
+    if phase in {"material_supply", "finished_goods_transport"}:
+        state = "inbound_loaded" if phase == "material_supply" else "outbound_loaded"
+        return {r["robot_id"] for r in projection["payloads"] if r["state"] == state and r.get("robot_id")}
+    if phase == "empty_container_return" and material is not None:
+        returning = {r["tote_id"] for r in material["inventory"]["totes"] if r["state"] == "returning"}
+        return {robot for robot,tote in material["inventory"]["robot_loads"].items() if tote in returning}
+    return set()
+
+
+def carrier_motion(rows):
+    """Media-only GT evaluation: another robot's motion cannot qualify cargo flow."""
+    traces = {}
+    for row in rows:
+        for robot,pose in row["carrier_poses"].items():
+            p,q = pose.get("position_xyz_m",[]),pose.get("orientation_wxyz",[])
+            if (len(p) != 3 or len(q) != 4 or any(type(v) not in (int,float) or not math.isfinite(v) for v in (*p,*q))
+                    or abs(sum(v*v for v in q)-1.) > 1e-3):
+                raise ValueError("finite recorded carrier pose required for media motion")
+            traces.setdefault(robot,[]).append((p,q))
+    measured = {}
+    for robot,poses in traces.items():
+        first_p,first_q = poses[0]
+        distance = max(math.dist(p[:2],first_p[:2]) for p,q in poses)
+        angle = max(2*math.acos(min(1.,abs(sum(a*b for a,b in zip(q,first_q))))) for p,q in poses)
+        measured[robot] = {"maximum_translation_from_first_m":distance,"maximum_rotation_from_first_rad":angle}
+    if not any(v["maximum_translation_from_first_m"] >= .1 or v["maximum_rotation_from_first_rad"] >= .15 for v in measured.values()):
+        raise ValueError("transport chapter has no observed motion of its own loaded carrier")
+    return {"source":"recorded frame GT for media evaluation only; never navigation input", "robots":measured,
+            "authored_media_thresholds":{"translation_m":.1,"rotation_rad":.15}}
+
+
 def prepare(stage):
     """Validate closed files and construct a JSON-safe render plan; no Pillow/processes."""
     stage = Path(stage).resolve(strict=True)
@@ -341,6 +373,7 @@ def prepare(stage):
             "phase":phase,"image":dict(image),"visual_snapshot":dict(ref),"visual_source":projection["source"],
             "material_source":material_proof,"dashboard_source":dashboard_proof,
             "overlay":overlay_view(projection,material,dashboard,robots,world_s),
+            "carrier_poses":{robot:frame["ground_truth"][robot] for robot in carrier_ids(phase,projection,material)},
             "robot_id_pixels":{robot:project_id(frame["ground_truth"][robot]["position_xyz_m"],camera)
                 for robot in robots} if camera is not None else {}}
         chapter["rows"].append(row)
@@ -356,6 +389,10 @@ def prepare(stage):
         chapter.update(source_frames=len(chapter_rows),selected_frames=min(180,len(chapter_rows)),
             source_end_world_s=chapter_rows[-1]["world_time_s"],partial_window=len(chapter_rows)<240,
             output_start_frame=len(selected),chapter_number=number)
+        if chapter["phase"] in {"material_supply", "finished_goods_transport", "empty_container_return"}:
+            chapter["carrier_motion"] = carrier_motion(chapter_rows[:180])
+        for row in chapter_rows:
+            row.pop("carrier_poses")
         selected += [{**row,"chapter_number":number} for row in chapter_rows[:180]]
     return {"schema_version":1,"stage":str(stage),"run_root":str(run_root),"run_id":run_id,
         "producer_source_commit":host["source_commit"],"scenario_id":session["scenario_id"],"robot_ids":robots,

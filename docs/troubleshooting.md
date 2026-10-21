@@ -881,3 +881,9 @@ Microsoft의 [CreateFileW 공유 규칙](https://learn.microsoft.com/en-us/windo
 051은 대표 영상에 overview만 사용하는 동안에도3개의 persistent RGB render product를 유지하고 매 촬영에3개 PNG를 저장한다. 촬영 중 World 진행이 느려지는 것을 관측했으나3시점 렌더만을 전체 지연의 원인으로 확정하지 않는다. 실행 중인 동결 소스·한도·촬영 설정은 바꾸지 않는다.
 
 설치된 Isaac Sim4.5의 Replicator1.11.35와 [공식 API](https://docs.omniverse.nvidia.com/kit/docs/omni_replicator/1.11.35/source/extensions/omni.replicator.core/docs/API.html), [4.5 수명 관리 예제](https://docs.isaacsim.omniverse.nvidia.com/4.5.0/replicator_tutorials/tutorial_replicator_ur10_palletizing.html)를 대조하고 다음 실행용 `--capture-views overview`를 추가했다. 쓰지 않는2개 render product/annotator를 생성하지 않으며 매 프레임 Hydra 전환을 도입하지 않는다. 생성한 제품만 기존 소유자가 detach/destroy한다. 선택값·실제 소스 수·보정된 카메라 정보를 남기고 기존3시점 정식 검증과 구분한다. CPU9검사와 SDK Python3.10.15의5파일 구문 확인을 통과했다. GPU 실행과 RTF·wall time 개선은 미실측이며 다음 실행에서 확인한다.
+
+## FOT-107 — 운반 차량과 다른 차량의 움직임으로 촬영 시작
+
+기존 선택기는 `inbound_loaded/outbound_loaded/returning` 상태와 어느 차량이든 움직이는 조건을 함께 사용했다. 따라서 운반 차량은 기다리고 다른 차량만 움직일 때 운송 촬영이 시작될 수 있었다. 코드의 조건 오류는 확인했으며051의 각 촬영분이 실제로 부적합한지는 종료 후 원본 움직임으로 판정한다. 선속도0만으로 정지라 단정하지 않고 적재 상태의 제자리 회전도 포함한다.
+
+다음 실행의 선택기는 운반 차량 ID와 같은 차량의 신선한 주행 허가·입력 명령·엔코더 이동/회전을 요구한다. 내보내기도 선택한 원본 구간에서 해당 화물·빈 토트의 운반 차량 GT만 평가하고, 다른 차량의 움직임으로 대체하지 않는다. 미디어용 작성 기준은 이동0.1m 또는 회전0.15rad이며 검증 근거에 측정값과 함께 기록한다. GT를 제어에 사용하거나 실패한 원본을 수정하지 않는다. 관련8검사와 SDK Python3.10.15의3파일 구문 확인을 통과했다. 네이티브 운송 완료와 대표 미디어 적합성은 별도로 보고한다.
