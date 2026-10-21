@@ -725,6 +725,12 @@ SDK의 `python.bat -c`에 따옴표가 중첩된 코드를 넘기지 않고 UTF-
 
 예약 관리자는 목표 완료와 hold 축소 후에도 accepted_goal_uuid를 보존하고 parked=True를 둔다. live 정지 판정은 accepted UUID가 있으면 무조건 거절해 완료된 정상 예약도 통과할 수 없었다.130은 같은 UUID에 결속된 parked=True 예약을 기존 pose·연속 정지·ACK 검증으로 넘기며, 미완료/다른 UUID는 거절한다. 실제 예약 관리자의 reserve→accepted→finished→shrink 상태를 사용하는 회귀와 기존 거절 경계3검사를 통과했다. 로봇별 미충족 조건은 정지 요청당 변화16행 이내로 남긴다. 이 결함이042의 유일한 원인이라는 주장과 native 성공 판정은 보류한다. [130 수신](../coordination/collab/results/native-anchor-pause-130-integration.json)
 
+## FOT-089 — Kit 클라이언트의 live 요청 계약과 부분 결과 인수
+
+Kit의 기존 요청에는 native next-anchor 계약의 run_id·UTC requested_at이 없었다.132의 부분 구현을 보존한 뒤 기존 control 페인의 모델 용량 오류·idle을 확인해 root가 이어받았다. 모델 변경이나 새 에이전트는 사용하지 않았다. Kit는 지원 capability·현재 run/revision을 검사해 요청하고 API 접수와 같은 원천의 pending/applied를 구분한다. 실행 변경 시 이전 요청·확인 캐시를 지우며 재전송하지 않는다. UI는 다음 예약 지점 정지와 계속 흐르는 시뮬레이션 시계를 설명한다.
+
+관련 Kit 클라이언트21검사·Python3.10 AST4파일을 통과했다. 새로 import하는 live_control.py도 후속 native probe의 소스 해시에 포함했다. 실제 Kit UI 및4대 실행의 적용 성공은 아직 확인하지 않았으며 독립 승인으로 표현하지 않는다. [root 완료 기록](../coordination/collab/results/kit-live-controls-132-root-completion.json)
+
 ## 실행 전 확인과 후속 기록
 
 후속120은 local45 개발 실행에서 TF·시계 처리 노드와 scan/odom/action 처리 노드를 나누고, 기존 총64회·50ms 안에서 TF 처리에 먼저 절반을 배정한다. 한 차량의 실제 Jazzy 구성요소 시험에서는 부하 상태의 TF age가 공유 경로0.673초 이상에서 분리 경로0.031473초로 줄었고, 실제 TF 중단은 계속 거절했다. CPU22검사를 통과했으나 네 차량 통합 운행의 해결 근거로 확대하지 않는다. [120 수신](../coordination/collab/results/localization-critical-dispatch-120-integration.json)

@@ -1,0 +1,35 @@
+{
+  "task_id": "kit-live-controls-132",
+  "attempt": 1,
+  "contract_revision": 118,
+  "owner": "control",
+  "binding": {
+    "session": "default",
+    "pane_id": "w1:p1C",
+    "terminal_id": "term_65e06d27e415810",
+    "agent_session": "01a152aa-24b4-7a31-92e3-a2b620f4feeb"
+  },
+  "project_root": "C:\\Users\\LIMMM\\factory-ops-twin",
+  "base_commit": "0d903aa0ec9d0d4d92c9cff4ae28ee0ef8482936",
+  "input_sha256": {
+    "factory_ops/kit_client.py": "bfb468b3341b487c0f93ca32baac47a86b9055b21fdf3771d1f93dafa4ddb1d9",
+    "extensions/factory.ops.console/factory_ops_console/extension.py": "b4fd2e4e8d31011f8961225f72cf72806dd9884255009373d7532bd6f27bfbe5",
+    "tests/test_kit_client.py": "42026d07fa689eb610074837761e37a0ee6edd20e02970209e658ffed7540e84",
+    "factory_ops/live_control.py": "c82f5ab3ae2f3b73444ed59a4f950c61542c15af204be702354229740c3ffe46",
+    "factory_ops/dashboard.py": "3d5a09cfdbf06e17fe39b831b5c14cfb5e9e195a9df6ad041dd7f54f3fb6027d"
+  },
+  "write_paths": [
+    "factory_ops/kit_client.py",
+    "extensions/factory.ops.console/factory_ops_console/extension.py",
+    "tests/test_kit_client.py",
+    "coordination/collab/results/kit-live-controls-132.json"
+  ],
+  "result_path": "C:\\Users\\LIMMM\\factory-ops-twin\\coordination\\collab\\results\\kit-live-controls-132.json",
+  "goal": "Align existing Kit HTTP client/operator labels with actual same-run next-anchor controls and capability/pending/applied semantics; CPU only.",
+  "acceptance": [
+    "ACK132 attempt1 contract118.130 receivedonce and committed0d903aa. You are not alone; root owns new043 SDK/ROS/media/API/Git/docs/board. Do not re-review130 or alter G3. Only listed main files/receipt. No SDK/GPU/ROS/WSL/browser/new agent/install/Git/frozenruntime edits. Current043 is immutable and soleGPUjob.",
+    "Read existing KitClient and extension. Native live API pause/resume requires expected_run_id, current expected_revision and requested_at UTC. Ensure Kit submits correct contract for ros-next-anchor-v1 without breaking local_model/replay old behavior, source run switch invalidates queued/cached commands, stale/disconnected/unsupported remain disabled. Do not enable create_order for live if API does not advertise it.",
+    "Display native stop semantics (next reserved anchor; simulation/ROS/MES/virtual charge clocks continue), request pending vs actual source applied, selected AMR task/destination/payload/SOC source/wait reasons. Preserve whiteUI and thread ownership/cleanup. Do not label fleetstop as whole-operation pause. No unsupported hardware control or source capability fabrication.",
+    "Reuse existing contracts/components. One focused affected CPU set, no full suite/repeated review or native claims. Receipt original pins/currentSHA, exact validation, actualKit/043binding stillpending. Root will integrateonce; runtime needed later only after current soleSDK closes."
+  ]
+}

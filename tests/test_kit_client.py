@@ -2,16 +2,21 @@
 from __future__ import annotations
 
 import ast
+from collections import Counter
 from concurrent.futures import Future
 from copy import deepcopy
+from datetime import datetime, timezone
 from http.client import HTTPMessage
 from io import BytesIO
+import math
 from pathlib import Path
+from types import SimpleNamespace
 import unittest
 from urllib.request import Request
 import uuid
 
 from factory_ops.kit_client import KitClient, _NoRedirect, loopback_url
+from factory_ops.live_control import CONTRACT, LiveControl
 
 
 def snapshot(run="run-a", revision=3, **changes):
@@ -25,6 +30,37 @@ def snapshot(run="run-a", revision=3, **changes):
         "events":[],"commands":[],"tasks":[]}
     value.update(changes)
     return value
+
+
+def live_snapshot(run="run-a", revision=0, phase="running", **changes):
+    value = snapshot(run=run, revision=revision, mode="live", paused=phase == "paused")
+    value["robots"] = [dict(value["robots"][0], id="carter" + str(i), label="AMR " + str(i)) for i in range(1,5)]
+    value["live_control"] = {"contract":CONTRACT, "enabled":True, "run_id":run,
+        "revision":revision, "profile":"development", "primary_evaluation":False,
+        "phase":phase, "all_stopped":phase == "paused", "commands":[],
+        "robot_ids":[r["id"] for r in value["robots"]]}
+    value.update(changes)
+    return value
+
+
+def console_projection(client):
+    """Run the actual owner-thread formatter with inert widgets, without importing Kit."""
+    path = Path(__file__).resolve().parents[1]/"extensions/factory.ops.console/factory_ops_console/extension.py"
+    tree = ast.parse(path.read_text(encoding="utf-8"))
+    extension = next(node for node in tree.body if isinstance(node,ast.ClassDef) and node.name == "Extension")
+    functions = [node for node in tree.body if isinstance(node,ast.FunctionDef) and node.name in ("short","format_number")]
+    functions += [node for node in extension.body if isinstance(node,ast.FunctionDef) and node.name == "_refresh"]
+    namespace = {"math":math, "Counter":Counter}
+    exec(compile(ast.Module(body=functions,type_ignores=[]),str(path),"exec"),namespace)
+    ids = tuple(r["id"] for r in client.get_state()["snapshot"]["robots"])
+    labels = {}
+    view = SimpleNamespace(_alive=True,_client=client,_selected=ids[0],_row_ids=ids,
+        _native_contract=CONTRACT,_robot_buttons={rid:SimpleNamespace() for rid in ids},
+        _pause=SimpleNamespace(),_resume=SimpleNamespace(),_order=SimpleNamespace(),
+        _source=SimpleNamespace(),_quantity_field=SimpleNamespace(),
+        _set_label=lambda key,text,raw=None:labels.update({key:(text,raw)}))
+    namespace["_refresh"](view)
+    return view,labels
 
 
 class ManualExecutor:
@@ -139,7 +175,124 @@ class KitClientTests(unittest.TestCase):
         self.assertEqual(payload["expected_run_id"],"run-a")
         self.assertEqual(payload["expected_revision"],3)
         self.assertEqual(payload["parameters"],{"source":"S2","quantity":2})
+        self.assertNotIn("run_id",payload)
+        self.assertNotIn("requested_at",payload)
         self.assertFalse(self.client.submit_action("pause")["submitted"])
+
+    def test_native_request_is_accepted_by_existing_next_anchor_contract(self):
+        self.client.tick()
+        self.deliver(live_snapshot())
+        self.assertEqual(self.client.enabled_actions(),["pause"])
+        before = datetime.now(timezone.utc)
+        result = self.client.submit_action("pause")
+        payload = self.executor.jobs[-1][1][3]
+        self.assertEqual(set(payload),{"command_id","run_id","expected_run_id","expected_revision","action","parameters","requested_at"})
+        self.assertEqual(payload["expected_run_id"],payload["run_id"])
+        self.assertEqual(payload["expected_revision"],0)
+        requested = datetime.fromisoformat(payload["requested_at"])
+        self.assertEqual(requested.tzinfo,timezone.utc)
+        self.assertLessEqual(before,requested)
+        self.assertLessEqual(requested,datetime.now(timezone.utc))
+        control = LiveControl("run-a",tuple("carter" + str(i) for i in range(1,5)))
+        receipt = control.submit(payload,now_s=12.,wall_now=datetime.now(timezone.utc))
+        self.assertEqual((receipt["command_id"],receipt["status"]),(result["command_id"],"pending"))
+
+    def test_live_requires_valid_contract_and_advertised_capability(self):
+        self.client.tick()
+        self.deliver(live_snapshot())
+        invalid = [live_snapshot(live_control=None),live_snapshot(capabilities=[]),
+                   live_snapshot(phase="pause_pending"),live_snapshot(connection="stale"),
+                   live_snapshot(connection="disconnected")]
+        for key,value in (("contract","unknown"),("run_id","old-run"),("revision",99),("enabled",False)):
+            row = live_snapshot()
+            row["live_control"][key] = value
+            invalid.append(row)
+        for row in invalid:
+            with self.subTest(row=row):
+                self.poll(row)
+                self.assertEqual(self.client.enabled_actions(),[])
+                self.assertFalse(self.client.submit_action("create_order",{"source":"S1","quantity":1})["submitted"])
+        self.poll(live_snapshot())
+        self.assertEqual(self.client.enabled_actions(),["pause"])
+        self.poll(live_snapshot(phase="paused"))
+        self.assertEqual(self.client.enabled_actions(),["resume"])
+
+    def test_native_ui_distinguishes_reply_pending_and_source_applied(self):
+        self.client.tick()
+        self.deliver(live_snapshot())
+        command_id = self.client.submit_action("pause")["command_id"]
+        receipt = {"command_id":command_id,"run_id":"run-a","status":"applied","reason":None,"revision":1}
+        self.deliver(receipt)
+        self.assertEqual(self.client.submission_state,"awaiting_snapshot")
+        view,labels = console_projection(self.client)
+        self.assertIn("API reply (unconfirmed): applied",labels["receipt"][0])
+        self.assertFalse(view._resume.enabled)
+        receipt.update(status="pending")
+        self.deliver(live_snapshot(revision=1,phase="pause_pending",commands=[receipt]))
+        view,labels = console_projection(self.client)
+        self.assertEqual(self.client.submission_state,"pending_server")
+        self.assertIn("next reserved anchors",labels["control_scope"][0])
+        self.assertIn("Simulation / ROS / MES / virtual charging clocks continue",labels["control_scope"][0])
+        self.assertIn("Source phase: pause_pending",labels["control_scope"][0])
+        self.assertIn("Pending:",labels["receipt"][0])
+        self.assertIn("SOC: Not connected / source: unavailable",labels["detail"][0])
+        self.assertFalse(view._pause.enabled or view._resume.enabled or view._order.enabled or view._source.enabled or view._quantity_field.enabled)
+        receipt.update(status="applied",revision=2)
+        self.poll(live_snapshot(revision=2,phase="paused",commands=[receipt]))
+        view,labels = console_projection(self.client)
+        self.assertEqual(self.client.submission_state,"confirmed_snapshot")
+        self.assertIn("Source receipt: applied",labels["receipt"][0])
+        self.assertTrue(view._resume.enabled)
+        self.assertFalse(view._order.enabled)
+
+    def test_native_receipt_without_source_run_cannot_confirm(self):
+        self.client.tick()
+        self.deliver(live_snapshot())
+        command_id = self.client.submit_action("pause")["command_id"]
+        receipt = {"command_id":command_id,"status":"applied","revision":1}
+        self.deliver(receipt)
+        self.assertEqual(self.client.submission_state,"delivery_uncertain")
+        self.assertIsNone(self.client.last_receipt)
+        self.deliver(live_snapshot(revision=1,phase="paused",commands=[receipt]))
+        self.assertEqual(self.client.connection,"stale")
+        self.assertIsNone(self.client.last_receipt)
+        self.assertEqual(self.client.enabled_actions(),[])
+
+    def test_native_run_switch_discards_pending_and_confirmed_cache_without_resend(self):
+        self.client.tick()
+        self.deliver(live_snapshot())
+        command_id = self.client.submit_action("pause")["command_id"]
+        self.deliver({"command_id":command_id,"run_id":"run-a","status":"pending","revision":0})
+        self.deliver(live_snapshot(run="run-b"))
+        self.assertEqual(self.client.submission_state,"previous_run")
+        self.assertIsNone(self.client.last_receipt)
+        self.assertIsNone(self.client.receipt_run_id)
+        self.assertIsNone(self.client.receipt_expected_run_id)
+        self.assertEqual(self.client.enabled_actions(),[])
+        self.poll(live_snapshot(run="run-b"))
+        self.assertEqual(self.client.enabled_actions(),["pause"])
+        new_id = self.client.submit_action("pause")["command_id"]
+        self.assertNotEqual(command_id,new_id)
+        receipt = {"command_id":new_id,"run_id":"run-b","status":"applied","revision":1}
+        self.deliver(receipt)
+        self.deliver(live_snapshot(run="run-b",revision=1,phase="paused",commands=[receipt]))
+        self.assertEqual(self.client.submission_state,"confirmed_snapshot")
+        self.poll(live_snapshot(run="run-c"))
+        self.assertIsNone(self.client.last_receipt)
+        self.assertIsNone(self.client.receipt_expected_run_id)
+        self.poll(live_snapshot(run="run-c"))
+        self.assertEqual(self.client.enabled_actions(),["pause"])
+        self.assertEqual(sum(job[1][1]=="POST" for job in self.executor.jobs),2)
+
+    def test_replay_keeps_legacy_capability_and_payload_behavior(self):
+        self.connect(mode="replay",capabilities=[])
+        self.assertEqual(self.client.enabled_actions(),[])
+        self.poll(snapshot(mode="replay",capabilities=["pause"]))
+        self.assertEqual(self.client.enabled_actions(),["pause"])
+        self.assertTrue(self.client.submit_action("pause")["submitted"])
+        payload = self.executor.jobs[-1][1][3]
+        self.assertNotIn("run_id",payload)
+        self.assertNotIn("requested_at",payload)
 
     def test_pending_is_confirmed_only_by_matching_snapshot_receipt(self):
         self.connect()

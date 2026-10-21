@@ -102,7 +102,7 @@ Kit 확장 `factory.ops.console`에서 AMR 선택 상세, 주문 생성, 전체 
 
 </details>
 
-모의 MES의 주문·재고 입고·설비 관측·heartbeat를 운영 원장에 연결합니다. 실행 ID·시각·순번과 중복 입력을 검사합니다. 실제 공장 설비 연결과 실제 ROS 운송을 조작하는 Kit 통합은 남아 있습니다. [HTTP 입력 기록](docs/evidence/mock-mes-024/http-flow.json) · [실행 안내](docs/operations-guide.md)
+모의 MES의 주문·재고 입고·설비 관측·heartbeat를 운영 원장에 연결합니다. 실행 ID·시각·순번과 중복 입력을 검사합니다. Kit 클라이언트는 같은 실행의 정지·재개 요청과 원천 응답을 구분하며, 지원하지 않는 조작은 비활성화합니다. 실제4대 실행을 조작하는 Kit 화면 확인과 실제 공장 설비 연결은 남아 있습니다. [HTTP 입력 기록](docs/evidence/mock-mes-024/http-flow.json) · [실행 안내](docs/operations-guide.md)
 
 ## 현재 진행 구간
 

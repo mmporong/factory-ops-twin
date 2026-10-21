@@ -6,6 +6,7 @@ from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor
 from copy import deepcopy
+from datetime import datetime, timezone
 import ipaddress
 import json
 import math
@@ -13,6 +14,8 @@ import time
 from urllib.parse import urlsplit
 from urllib.request import HTTPRedirectHandler, ProxyHandler, Request, build_opener
 import uuid
+
+from .live_control import control_capabilities
 
 
 ACTIONS = ("pause", "resume", "create_order")
@@ -143,7 +146,10 @@ class KitClient:
     def enabled_actions(self) -> list[str]:
         if self.snapshot is None or self.connection != "connected" or self._future is not None or self._command is not None:
             return []
-        return [a for a in ACTIONS if a in self.snapshot["capabilities"]
+        capabilities = self.snapshot["capabilities"]
+        if self.snapshot["mode"] == "live":
+            capabilities = [a for a in control_capabilities(self.snapshot) if a in capabilities]
+        return [a for a in ACTIONS if a in capabilities
                 and (a != "pause" or not self.snapshot["paused"])
                 and (a != "resume" or self.snapshot["paused"])]
 
@@ -158,7 +164,8 @@ class KitClient:
                 or type(value.get("revision")) is not int or value["revision"] < 0
                 or value.get("reason") is not None and not isinstance(value["reason"], str)):
             raise ValueError("invalid or foreign command receipt")
-        actual_run = value.get("run_id", self._command["expected_run_id"])
+        # Native receipts require an explicit source run; legacy model receipts may omit it.
+        actual_run = value.get("run_id") if "run_id" in self._command else value.get("run_id", self._command["expected_run_id"])
         if (not isinstance(actual_run, str) or not actual_run
                 or actual_run != self._command["expected_run_id"]
                 and not (allow_run_rejection and value["status"] == "rejected")):
@@ -170,13 +177,14 @@ class KitClient:
     def _accept_snapshot(self, value: dict, now: float) -> None:
         incoming = _snapshot(value)
         if self.snapshot and incoming["run_id"] != self.snapshot["run_id"]:
+            if self._command or self.last_receipt:
+                self.submission_state = "previous_run"
+            self._command = self.last_receipt = None
+            self.receipt_run_id = self.receipt_expected_run_id = None
             if self._candidate_run != incoming["run_id"]:
                 self._candidate_run = incoming["run_id"]
                 self._error = "Run changed; retaining previous values until a second matching fetch"
-                if self._command or self.last_receipt:
-                    self.submission_state = "previous_run"
                 return
-            self._command = None
         elif self.snapshot and incoming["revision"] < self.snapshot["revision"]:
             raise ValueError("snapshot revision regressed within the same run")
         self.snapshot, self._last_fetch, self._error, self._candidate_run = incoming, now, None, None
@@ -231,9 +239,11 @@ class KitClient:
                     or type(parameters["quantity"]) is not int or parameters["quantity"] <= 0):
                 return {"submitted": False, "reason": "Order requires S1/S2/S3 and a positive integer quantity"}
         elif parameters:
-            return {"submitted": False, "reason": "Whole-operation pause/resume takes no parameters"}
+            return {"submitted": False, "reason": "Dispatch pause/resume takes no parameters"}
         self._command = {"command_id": str(uuid.uuid4()), "expected_run_id": self.snapshot["run_id"],
                          "expected_revision": self.snapshot["revision"], "action": action, "parameters": parameters}
+        if self.snapshot["mode"] == "live":
+            self._command.update(run_id=self.snapshot["run_id"], requested_at=datetime.now(timezone.utc).isoformat())
         self.last_receipt = None
         self.receipt_run_id = self.snapshot["run_id"]
         self.receipt_expected_run_id = self.snapshot["run_id"]

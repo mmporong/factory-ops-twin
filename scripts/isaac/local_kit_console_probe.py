@@ -41,7 +41,7 @@ def main():
     args.output.mkdir(parents=True)
     started = time.monotonic()
     deadline = started + cfg["maximum_wall_time_s"]
-    project_sources = ["factory_ops/__init__.py", "factory_ops/kit_client.py",
+    project_sources = ["factory_ops/__init__.py", "factory_ops/kit_client.py", "factory_ops/live_control.py",
         "extensions/factory.ops.console/factory_ops_console/__init__.py",
         "extensions/factory.ops.console/factory_ops_console/extension.py"]
     manifest = root / "extensions/factory.ops.console/config/extension.toml"

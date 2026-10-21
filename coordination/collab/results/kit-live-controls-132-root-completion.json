@@ -1,0 +1,28 @@
+{
+  "task_id": "kit-live-controls-132",
+  "attempt": 1,
+  "original_contract_revision": 118,
+  "owner": "root_after_capacity_takeover",
+  "status": "implementation_verified_native_Kit_pending",
+  "worker_receipt_missing": true,
+  "takeover_reason": "Existing control pane model capacity error and idle; partial source pinned at board119, no model change/new child.",
+  "partial_SHA_matched_at_takeover_completion": true,
+  "source_sha256": {
+    "factory_ops/kit_client.py": "9f9839c859cfee974e5920376d079be841d1f110c463421e5bbbf77faedb7ff2",
+    "extensions/factory.ops.console/factory_ops_console/extension.py": "bb3b66f8726474385de3c0c4fce3db532e60c6fd4d55a11770b9c14fe38ecd68",
+    "tests/test_kit_client.py": "1d45d036a06150ec88c53d8a9de0383c16015fe18192150a286e34997dd054b1",
+    "scripts/isaac/local_kit_console_probe.py": "5696818e5f29af539f6a365135debd764aedd76393c87a8ea863e3f722d5d076"
+  },
+  "validation": {
+    "command": ".venv/Scripts/python.exe -B -m unittest tests.test_kit_client -v",
+    "tests": 21,
+    "status": "passed",
+    "wall_reported_by_unittest_s": 0.057,
+    "python310_AST_count": 4
+  },
+  "scope": "Native same-run request identity/time/capability, source confirmation, run-switch invalidation, owner-thread and legacy behavior; no actualKitUI or four-robot success claim",
+  "root_followup": "Include newly imported live_control module in future nativeKit probe source identity.",
+  "independent_approval_claimed": false,
+  "native_stage3_complete": false,
+  "remaining_owned_processes": []
+}

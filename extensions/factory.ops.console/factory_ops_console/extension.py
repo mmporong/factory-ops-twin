@@ -34,8 +34,10 @@ class Extension(omni.ext.IExt):
         if str(project) not in sys.path:
             sys.path.insert(0, str(project))
         from factory_ops.kit_client import KitClient
+        from factory_ops.live_control import CONTRACT
 
         self._alive = True
+        self._native_contract = CONTRACT
         self._selected = None
         self._last_render = 0.
         self._row_ids = None
@@ -90,18 +92,20 @@ class Extension(omni.ext.IExt):
                                 self._label("events_heading", "RECENT EVENTS (8)", 20)
                                 self._label("events", "Not connected", 150)
                         with ui.VStack(height=0, spacing=6):
-                            self._label("actions_heading", "WHOLE OPERATION", 20)
+                            self._label("actions_heading", "SERVER DISPATCH", 20)
+                            self._label("control_scope", "Waiting for source control capabilities", 64)
                             with ui.HStack(height=32, spacing=6):
-                                self._pause = ui.Button("Pause all operations", clicked_fn=lambda: self.submit_action("pause"))
-                                self._resume = ui.Button("Resume all operations", clicked_fn=lambda: self.submit_action("resume"))
+                                self._pause = ui.Button("Pause dispatch", clicked_fn=lambda: self.submit_action("pause"))
+                                self._resume = ui.Button("Resume dispatch", clicked_fn=lambda: self.submit_action("resume"))
                             with ui.HStack(height=32, spacing=6):
                                 self._source = ui.ComboBox(0, "S1", "S2", "S3", width=80)
-                                ui.IntField(model=self._quantity, width=70)
+                                self._quantity_field = ui.IntField(model=self._quantity, width=70)
                                 self._order = ui.Button("Create order", clicked_fn=self._create_order)
-                            self._label("receipt", "No command submitted", 80)
+                            self._label("receipt", "No command submitted", 112)
                         ui.Spacer(height=6)
                     ui.Spacer(width=10)
         self._pause.enabled = self._resume.enabled = self._order.enabled = False
+        self._source.enabled = self._quantity_field.enabled = False
         self._subscription = omni.kit.app.get_app().get_update_event_stream().create_subscription_to_pop(self._on_update)
         _set_instance(self)
 
@@ -207,10 +211,34 @@ class Extension(omni.ext.IExt):
         else:
             mes_text = "MOCK MES / Not connected"
         self._set_label("mes", mes_text, mes)
+        live = snap.get("mode") == "live"
+        control = snap.get("live_control")
+        native = live and isinstance(control, dict) and control.get("contract") == self._native_contract
+        self._set_label("actions_heading", "FLEET / NEXT RESERVED ANCHOR" if native else "LIVE / READ ONLY" if live else "SERVER DISPATCH")
+        self._pause.text = "Stop at next anchor" if native else "Pause dispatch"
+        self._resume.text = "Resume fleet dispatch" if native else "Resume dispatch"
+        if native:
+            scope = ("Finish current legs; stop at next reserved anchors.\n"
+                     "Simulation / ROS / MES / virtual charging clocks continue.\n"
+                     "Source phase: " + short(control.get("phase")))
+        elif live:
+            scope = "Live observation; next-anchor controls are unavailable."
+        else:
+            scope = "Server model dispatch only; see source scope above."
+        self._set_label("control_scope", scope, control if live else snap.get("model_scope"))
         receipt = state["last_receipt"]
-        receipt_text = "Command: " + state["submission_state"]
+        submission = state["submission_state"]
+        receipt_text = {
+            "none": "No command submitted", "sending": "Sending request",
+            "awaiting_snapshot": "API reply received; waiting for source confirmation",
+            "pending_server": "Pending: waiting for source confirmation",
+            "confirmed_snapshot": "Source snapshot confirmed",
+            "delivery_uncertain": "Delivery unknown; waiting for source snapshot",
+            "previous_run": "Run changed; previous command cleared",
+        }.get(submission, "Command: " + submission)
         if receipt:
-            receipt_text += "\n" + short(receipt["status"]) + " / " + short(receipt.get("reason")) + "\nRun: " + short(state["receipt_run_id"]) + "\n" + receipt["command_id"]
+            origin = "Source receipt" if submission in ("pending_server", "confirmed_snapshot") else "API reply (unconfirmed)"
+            receipt_text += "\n" + origin + ": " + short(receipt["status"]) + " / " + short(receipt.get("reason")) + "\nRun: " + short(state["receipt_run_id"]) + "\n" + receipt["command_id"]
         elif state["error"]:
             receipt_text += "\n" + short(state["error"])
         self._set_label("receipt", receipt_text, {"receipt": receipt, "run_id": state["receipt_run_id"], "error": state["error"]})
@@ -218,6 +246,7 @@ class Extension(omni.ext.IExt):
         self._set_label("events", "\n".join(format_number(e.get("sim_time_s")) + "s / " + short(e.get("message"), short(e.get("type")) + " (hover for server text)") for e in reversed(events)) or "No observed events", events)
         enabled = state["enabled_actions"]
         self._pause.enabled, self._resume.enabled, self._order.enabled = (action in enabled for action in ("pause", "resume", "create_order"))
+        self._source.enabled = self._quantity_field.enabled = "create_order" in enabled
 
     def get_probe_state(self):
         state = self._client.get_state()
