@@ -27,12 +27,53 @@ from factory_ops.compat import replace_shared_file, write_shared_text
 MAX_PACKET_BYTES = 1_048_576
 MAX_QUEUED_BYTES = 4_194_304
 COMMAND_AGE_NS = 300_000_000
+MAX_HEARTBEAT_BYTES = 4096
 
 
 def write_checkpoint(path, report):
     temporary=path.with_suffix(".tmp")
     write_shared_text(temporary,json.dumps(report,indent=2,allow_nan=False)+"\n")
     replace_shared_file(temporary,path)
+
+
+def write_heartbeat(path, report):
+    """Append one small observation; never retry a possibly partial append."""
+    row = {"run_id": report["run_id"], "side": report["side"], "status": report["status"],
+           "sequence": report.get("heartbeat_sequence", 0)+1,
+           "last_source_clock_ns": report.get("last_source_clock_ns", 0),
+           "queued_bytes": report.get("queued_bytes", 0),
+           "sent_total": sum(report["sent"].values()),
+           "received_total": sum(report["received"].values()),
+           "stale_commands_dropped": report["stale_commands_dropped"]}
+    raw = (json.dumps(row, separators=(",", ":"), allow_nan=False)+"\n").encode("utf-8")
+    if len(raw)>MAX_HEARTBEAT_BYTES:
+        raise ValueError("relay heartbeat outside size bound")
+    with path.with_suffix(".heartbeat.jsonl").open("ab", buffering=0) as stream:
+        if stream.write(raw)!=len(raw):
+            raise OSError("incomplete relay heartbeat append")
+    report["heartbeat_sequence"] = row["sequence"]
+
+
+def read_heartbeat(path):
+    """Read the last complete bounded row; leave an in-flight final row pending."""
+    try:
+        with path.with_suffix(".heartbeat.jsonl").open("rb") as stream:
+            size = stream.seek(0, 2)
+            stream.seek(max(0, size-2*MAX_HEARTBEAT_BYTES))
+            raw = stream.read(2*MAX_HEARTBEAT_BYTES)
+    except FileNotFoundError:
+        return None
+    rows = raw.split(b"\n")[:-1]
+    if size>2*MAX_HEARTBEAT_BYTES:
+        rows = rows[1:]
+    if not rows:
+        return None
+    if not 1<=len(rows[-1])<=MAX_HEARTBEAT_BYTES:
+        raise ValueError("relay heartbeat row outside size bound")
+    row = json.loads(rows[-1])
+    if not isinstance(row, dict) or type(row.get("sequence")) is not int or row["sequence"]<1:
+        raise ValueError("invalid relay heartbeat identity/sequence")
+    return row
 
 
 def catalog(robot_ids=("carter1","carter2","carter3","carter4"), *, probe_prefix=None):
@@ -126,7 +167,8 @@ def main():
         "scope":"allowlisted ROS application relay, each OS DDS graph isolated; no GT/control synthesis or clock offset",
         "sent":{},"received":{},"stale_commands_dropped":0,"last_source_clock_ns":0,
         "cleanup_errors":[],"closed":False,"command_maximum_acquisition_age_ns":COMMAND_AGE_NS,
-        "node_acquisition_clock_is_producer_generation_time":False}
+        "node_acquisition_clock_is_producer_generation_time":False,
+        "periodic_observation":"bounded-row append heartbeat; full checkpoint at lifecycle transitions and closure"}
     def save():
         write_checkpoint(args.output,report)
     def stopping():
@@ -231,7 +273,7 @@ def main():
                 if not queue[0]:queue.popleft()
             if time.monotonic()>=next_save:
                 report.update(last_source_clock_ns=clock_ns,queued_bytes=queued_bytes,received_sequence=receiver.sequence)
-                save();next_save=time.monotonic()+1.
+                write_heartbeat(args.output,report);next_save=time.monotonic()+1.
         report["status"]="stopped";code=0
     except BaseException as error:
         report.update(status="failed",error={"type":type(error).__name__,"message":str(error),"traceback":traceback.format_exc(limit=8)})

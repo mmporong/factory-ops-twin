@@ -1,0 +1,104 @@
+{
+  "schema_version": 1,
+  "classification": "CPU_only_application_relay_with_held_Windows_checkpoint_reader",
+  "run_id": "604eaff710f54079aa293ea238cf8f72",
+  "status": "passed_native_factory_pending",
+  "wall_s": 24.48399999999674,
+  "GPU_started": false,
+  "robot_or_actuator_topics": false,
+  "World_started": false,
+  "fixture_scope": "44Jazzy+5Humble fixture contexts plus each relay. Authored 20Hz probe clock, odometry, laser scans, transient static TF and reverse commands. No robot actions or World.",
+  "held_reader": "Windows full relay checkpoint kept open throughout paired fixture sampling, then closed before terminal snapshot",
+  "actual_SDK_Python": "3.10.15",
+  "focused_tests": {
+    "passed": 10,
+    "scope": "9 relay tests plus 1 new supervisor identity/heartbeat test; includes real Windows open-reader rename rejection and concurrent journal append success"
+  },
+  "syntax_SDK_Python_files": 2,
+  "periodic_checkpoint": {
+    "format": "small append-only heartbeat JSONL",
+    "maximum_row_bytes": 4096,
+    "cadence_wall_s": 1,
+    "full_checkpoint": "lifecycle transitions, failure and closure",
+    "reader": "bounded tail, only complete newline-terminated row; malformed complete row fails",
+    "write_failures": "no append retry, no ENOSPC suppression; partial write fails",
+    "supervisor": "run/side/state/monotonic sequence checked"
+  },
+  "last_heartbeats": {
+    "windows": {
+      "run_id": "604eaff710f54079aa293ea238cf8f72",
+      "side": "windows",
+      "status": "ready",
+      "sequence": 20,
+      "last_source_clock_ns": 12600000000,
+      "queued_bytes": 0,
+      "sent_total": 3235,
+      "received_total": 1040,
+      "stale_commands_dropped": 0
+    },
+    "linux": {
+      "run_id": "604eaff710f54079aa293ea238cf8f72",
+      "side": "linux",
+      "status": "ready",
+      "sequence": 19,
+      "last_source_clock_ns": 12600000000,
+      "queued_bytes": 0,
+      "sent_total": 1040,
+      "received_total": 3235,
+      "stale_commands_dropped": 0
+    }
+  },
+  "terminal_relays": {
+    "windows": {
+      "status": "stopped",
+      "closed": true,
+      "cleanup_errors": [],
+      "heartbeat_sequence": 20,
+      "stale_commands_dropped": 0
+    },
+    "linux": {
+      "status": "stopped",
+      "closed": true,
+      "cleanup_errors": [],
+      "heartbeat_sequence": 19,
+      "stale_commands_dropped": 0
+    }
+  },
+  "closure": {
+    "windows": true,
+    "linux": true,
+    "cleanup_errors": []
+  },
+  "control_unchanged": [
+    "serialized message fields",
+    "clock values",
+    "clock acquisition age limit 0.3s",
+    "allowlist and sequence checks",
+    "Nav2/sensor freshness gates",
+    "owned process/runtime limits"
+  ],
+  "limits": "The process that caused run049 WinError5 remains unconfirmed. This removes repeated full-checkpoint rename from the transport loop; long native factory completion is still pending.",
+  "official_references": [
+    "https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-createfilew",
+    "https://learn.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-movefileexw",
+    "https://docs.python.org/3.10/library/os.html#os.replace"
+  ],
+  "proofs": [
+    {
+      "path": "C:\\Users\\LIMMM\\FactoryOpsRuntime\\local45-topic-relay-156\\host.json",
+      "sha256": "8f0375261efd3a9cefe450b22e5d8114b98023b9e9e8edc25d5a0a2bb63d0a63"
+    },
+    {
+      "path": "factory_ops/ros_topic_relay.py",
+      "sha256": "092bed3a814cbe1e60bec0b129115308b86e13c56dc15824bdebab5e14aa60f1"
+    },
+    {
+      "path": "factory_ops/ros_topic_relay_pair.py",
+      "sha256": "ff703da653689b4e0c0854063b9831571e46529b39551a962b81d845e1148b6f"
+    },
+    {
+      "path": "tests/test_ros_topic_relay.py",
+      "sha256": "785626505f47b25212fec26bc2c368d712242ad34cd3c2c2c00e8525e86b17d8"
+    }
+  ]
+}

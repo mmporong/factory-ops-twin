@@ -857,3 +857,11 @@ D는 약1.05GB, E는 약2.20GB의 여유 공간만 남았다. 프로젝트 진�
 Linux 중계의 소켓 종료와 임무의 `ExternalShutdownException`은 그 뒤에 기록된 후속 오류다. 공유 충돌을 만든 reader 또는 OS 구성요소는 아직 확인되지 않았으며, 디스크 부족을 뜻하는 ENOSPC 기록은 없다.049는 저장 공간 정리의 보호 대상으로 유지했다. SDK·Nav2·양 중계의 소유 트리 네 개는 종료됐고 잔여 소유 PID와 정리 오류가 없다. 전체 업무나 여섯 단계 대표 영상은 완료로 세지 않는다.
 
 이 오류는 열린 상태로 남긴다. 충돌 핸들과 상태 파일 저장 경로를 확인해 수정한 뒤 후속 실행에 적용하며, 같은 상태로 GPU 전체 실행과 대형 데이터 보관을 반복하지 않는다. [049의 실패·부분 촬영·종료 근거](evidence/local45-transport-049.json)
+
+## FOT-103 — 중계의 주기 관측을 파일 교체에서 추가 기록으로 변경
+
+Microsoft의 [CreateFileW 공유 규칙](https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-createfilew)과 [MoveFileExW](https://learn.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-movefileexw)를 대조했다. 이 PC의 실제 Windows 검사에서 일반 reader가 열린 대상의 `os.replace`가 WinError5로 실패했다. 삭제 공유를 허용하는 reader 후보도 같은 조건에서 실패해 채택하지 않았다.049의 충돌 핸들 소유자는 여전히 미확정이다.
+
+중계는 시작·연결·준비·실패·종료 시 전체 상태를 저장하고, 매초 관측은 행당 최대4096바이트의 작은 JSONL heartbeat에 추가한다. 통신 루프가 주기적으로 같은 전체 JSON을 교체하지 않는다. append는 재시도하지 않고, 부분 쓰기·ENOSPC는 실패로 남긴다. reader는 한정된 끝부분에서 줄바꿈이 끝난 행만 읽고, 완료된 행의 손상·다른 실행 ID·side·상태·역행 sequence는 거절한다. 시계·명령 본문·0.3초 획득 시각 제한·센서/추정 위치 검사·소유 프로세스와 실행 한도는 유지했다.
+
+관련10검사와 설치 SDK Python3.10.15의2파일 구문 확인을 통과했다. CPU 실제 양 OS fixture156에서는 Windows 전체 상태 reader를 샘플링 내내 연 채44Jazzy+5Humble fixture context와 중계를 실행했고, 센서·시계·정적 TF·역방향 명령 전달이 통과했다.24.484wall 초 뒤 양 OS와 중계가 종료됐으며 정리 오류0건이다. 새 heartbeat는 Windows20회·Linux19회 기록됐고 stale drop은0건이었다. GPU·World·로봇 구동은 하지 않았다. 긴 공장 정상 완료의 증거로 확대하지 않고 다음 동결 실행에서 확인한다. [156 실측·소스 해시·공식 근거](evidence/local45-relay-heartbeat-156.json)

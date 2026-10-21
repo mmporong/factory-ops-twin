@@ -11,6 +11,7 @@ import time
 
 from factory_ops.wsl_process_supervisor import WslProcessSupervisor
 from factory_ops.compat import read_shared_text
+from factory_ops.ros_topic_relay import read_heartbeat
 
 
 class RelayPair:
@@ -20,6 +21,7 @@ class RelayPair:
         self.windows_environment,self.linux_environment=windows_environment,linux_environment
         self.address,self.peer,self.port=windows_address,linux_address,port
         self.owner=WslProcessSupervisor(run_id);self.worker=None;self.streams=[]
+        self.heartbeat_sequences={}
         self.report={"run_id":run_id,"status":"starting","windows_closed":False,"linux_closed":False,
             "scope":"allowlisted application transport; ROS discovery/actions/services remain within each OS"}
 
@@ -74,6 +76,14 @@ class RelayPair:
                 document=json.loads(read_shared_text(path))
                 if document.get("run_id")!=self.run_id or document.get("status")=="failed":
                     raise RuntimeError("topic relay failed: "+side+" "+str(document.get("error")))
+                heartbeat=read_heartbeat(path)
+                if heartbeat is not None:
+                    if (heartbeat.get("run_id")!=self.run_id or heartbeat.get("side")!=side
+                            or heartbeat.get("status")!="ready"
+                            or heartbeat["sequence"]<self.heartbeat_sequences.get(side,0)):
+                        raise RuntimeError("topic relay heartbeat identity/state/sequence differs: "+side)
+                    self.heartbeat_sequences[side]=heartbeat["sequence"]
+                    self.report.setdefault("last_heartbeats",{})[side]=heartbeat
 
     def close(self, save):
         errors=[]

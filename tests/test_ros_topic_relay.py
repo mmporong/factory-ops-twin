@@ -8,6 +8,64 @@ from factory_ops.ros_topic_relay import Framer,Receiver,catalog
 
 
 class RelayTests(unittest.TestCase):
+    def test_pair_observes_heartbeat_and_rejects_foreign_run(self):
+        from factory_ops.ros_topic_relay import write_checkpoint, write_heartbeat
+        from factory_ops.ros_topic_relay_pair import RelayPair
+        from unittest.mock import patch
+        with tempfile.TemporaryDirectory() as folder:
+            path=Path(folder)/"windows-relay.json"
+            report={"run_id":"a"*32,"side":"windows","status":"ready","sent":{},"received":{},"stale_commands_dropped":0}
+            write_checkpoint(path,report);write_heartbeat(path,report)
+            pair=RelayPair(Path(folder),Path(folder),"a"*32,60,{}, {},"192.168.0.1","192.168.0.2",28473)
+            with patch.object(pair.owner,"client_state",return_value={"started":False}):
+                pair.assert_healthy()
+                self.assertEqual(pair.report["last_heartbeats"]["windows"]["sequence"],1)
+                write_heartbeat(path,dict(report,run_id="b"*32))
+                with self.assertRaises(RuntimeError):pair.assert_healthy()
+
+    def test_periodic_heartbeat_appends_while_checkpoint_and_journal_readers_are_held(self):
+        from factory_ops.ros_topic_relay import write_checkpoint, write_heartbeat, read_heartbeat
+        import json,os
+        with tempfile.TemporaryDirectory() as folder:
+            path=Path(folder)/"relay.json"
+            report={"run_id":"a"*32,"side":"windows","status":"ready","sent":{},"received":{},
+                    "stale_commands_dropped":0,"last_source_clock_ns":0}
+            write_checkpoint(path,report)
+            write_heartbeat(path,report)
+            with path.open("rb") as checkpoint_reader, path.with_suffix(".heartbeat.jsonl").open("rb"):
+                if os.name=="nt":
+                    probe=Path(folder)/"probe.tmp";probe.write_text("replacement")
+                    with self.assertRaises(PermissionError):os.replace(probe,path)
+                for stamp in range(1,21):
+                    report.update(last_source_clock_ns=stamp, sent={"/clock":stamp})
+                    write_heartbeat(path,report)
+                    self.assertEqual(read_heartbeat(path)["last_source_clock_ns"],stamp)
+                self.assertEqual(json.loads(checkpoint_reader.read())["last_source_clock_ns"],0)
+            self.assertEqual(read_heartbeat(path)["sequence"],21)
+            self.assertEqual(read_heartbeat(path)["sent_total"],20)
+
+    def test_heartbeat_reader_keeps_inflight_partial_row_pending_and_rejects_complete_corruption(self):
+        from factory_ops.ros_topic_relay import read_heartbeat, write_heartbeat
+        with tempfile.TemporaryDirectory() as folder:
+            path=Path(folder)/"relay.json";journal=path.with_suffix(".heartbeat.jsonl")
+            self.assertIsNone(read_heartbeat(path))
+            report={"run_id":"a"*32,"side":"windows","status":"ready","sent":{},"received":{},"stale_commands_dropped":0}
+            write_heartbeat(path,report)
+            with journal.open("ab") as stream:stream.write(b'{"sequence":')
+            self.assertEqual(read_heartbeat(path)["sequence"],1)
+            with journal.open("ab") as stream:stream.write(b'bad}\n')
+            with self.assertRaises(ValueError):read_heartbeat(path)
+
+    def test_heartbeat_append_permanent_error_is_not_retried_or_marked_published(self):
+        from factory_ops.ros_topic_relay import write_heartbeat
+        from unittest.mock import patch
+        import errno
+        report={"run_id":"a"*32,"side":"windows","status":"ready","sent":{},"received":{},"stale_commands_dropped":0}
+        with patch.object(Path,"open",side_effect=OSError(errno.ENOSPC,"full storage")) as opened:
+            with self.assertRaises(OSError):write_heartbeat(Path("relay.json"),report)
+        self.assertEqual(opened.call_count,1)
+        self.assertNotIn("heartbeat_sequence",report)
+
     def test_service_wait_is_linux_lifecycle_reply_only(self):
         from scripts.isaac.run_local45_fleet_pair import prepare_ros_transport
         import xml.etree.ElementTree as ET
