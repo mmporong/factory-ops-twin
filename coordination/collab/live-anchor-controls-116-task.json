@@ -1,0 +1,67 @@
+{
+  "task_id": "live-anchor-controls-116",
+  "attempt": 1,
+  "contract_revision": 106,
+  "owner": "control",
+  "reviewer": "root",
+  "binding": {
+    "session": "default",
+    "pane_id": "w1:p1C",
+    "terminal_id": "term_65e06d27e415810",
+    "agent_session": "01a152aa-24b4-7a31-92e3-a2b620f4feeb"
+  },
+  "project_root": "C:\\Users\\LIMMM\\factory-ops-twin",
+  "implementation_worktree": "C:\\Users\\LIMMM\\.worktrees\\factory-ops-live-controls-116",
+  "base_commit": "e62d268b6e59ec7fd0c89b200e8cdfb9c7a7f50e",
+  "status": "dispatched",
+  "goal": "Opt-in actual ROS fleet pause at next reserved anchor and resume, with same-run web request/physical acknowledgment; CPU implementation while041 stays frozen.",
+  "inputs_sha256": {
+    "AGENTS.md": "30ed4fb5a723edfac0557111438fa9b6b6a85b6f66ef002b675b5a240d87154d",
+    "factory_ops/dashboard.py": "990bfafe21a279a5a6b29a71cf385608881451cd9000290a042468fe7ba0220c",
+    "factory_ops/ros_charging.py": "7dcc67b28028afe15b1621e1e4ea752b5fec53aa9fc735414e217e11a2a91b0b",
+    "scripts/ros/g3_mission.py": "063b2d7fd6869225f75a3fb26261a03ce36f430bf47a3176227f83b9b46bc4af",
+    "scripts/ros/fleet4_mission.py": "7f170ba4a900451ffdcb46801badabd83364a2007c7e1add8253d39c9aa0d9c3",
+    "scripts/isaac/run_local45_fleet_pair.py": "4f8c36530405874d5e867bb4867262b57c897242b01aedf2422340e2ca50337c",
+    "dashboard/components/Dashboard.tsx": "7f758fa5af6a818de50a70517cb36a773c00e69d356c58c248bfa8f3d7c0d18d",
+    "dashboard/components/ObservationPanel.tsx": "dd88abd7d2ffad5fe7919f890b340888bc4ff34a78666532cb6ce0b352a3d3ea",
+    "dashboard/lib/types.ts": "effe4c1f7f42f54f3bfe3ca8ae1dc5dfa48046fd27d1a45ac786b50fc09c21f5"
+  },
+  "read_paths": [
+    "AGENTS.md",
+    "factory_ops/dashboard.py",
+    "factory_ops/ros_charging.py",
+    "scripts/ros/g3_mission.py",
+    "scripts/ros/fleet4_mission.py",
+    "scripts/isaac/run_local45_fleet_pair.py",
+    "dashboard/components/Dashboard.tsx",
+    "dashboard/components/ObservationPanel.tsx",
+    "dashboard/lib/types.ts"
+  ],
+  "write_paths_in_worktree": [
+    "factory_ops/live_control.py",
+    "tests/test_live_control.py",
+    "tests/test_dashboard_live_control.py",
+    "tests/test_g3_live_control.py",
+    "factory_ops/dashboard.py",
+    "scripts/ros/g3_mission.py",
+    "scripts/ros/fleet4_mission.py",
+    "scripts/isaac/run_local45_fleet_pair.py",
+    "dashboard/components/Dashboard.tsx",
+    "dashboard/components/ObservationPanel.tsx",
+    "dashboard/lib/types.ts"
+  ],
+  "result_path": "C:\\Users\\LIMMM\\factory-ops-twin\\coordination\\collab\\results\\live-anchor-controls-116.json",
+  "read_reference_in_main_only": "C:\\Users\\LIMMM\\factory-ops-twin\\docs\\completion-plan.md",
+  "worktree_setup": "Fresh no-checkout index populated with git read-tree -mu HEAD after sparse set; clean verified before dispatch. Source dirs only; docs/media excluded. dashboard/node_modules is a junction to existing main dependencies; do not mutate/remove junction or install dependencies.",
+  "acceptance": [
+    "ACK116 attempt1 contract. You are not alone. Work ONLY in the named isolated worktree, except the assigned result receipt in MAIN. Do not edit main source, active API, frozen041 stage/source/config, 114/115 originals, main README/plan/AGENTS/troubleshooting/board or unowned dashboard files. No GPU/SDK/ROS/WSL/browser/server launch, new agents, installations/downloads/cloud, Git commit/stage/push or OMX/Conductor/Ralplan workflow. Root integrates paths after receipt. Existing main Python/Node processes must keep running.",
+    "115 implementation was integrated; root removed only radius arithmetic allowance and added one boundary case; 5author CPU tests and root1focused PASS received. Native115 remains pending. Current041 actual4AMR transport is still running, its API8765 is readonly and Next3007 stays unchanged. Full goal continues8stages; this is independent stage3 implementation, not review work.",
+    "Implement PAUSE AT NEXT RESERVED ANCHOR semantics, not an emergency stop or world-clock pause. On pause request, admit no NEW legs; let already admitted FollowPath legs finish with existing braking/stop/handoff rules, preserve all reservations and fresh callbacks, and acknowledge applied only when every robot is stationary at a reserved anchor. Waiting/request/idle/charging cases must be handled; virtual battery/MES/physics time may continue. Resume reopens dispatch through existing planning/admission from the confirmed current anchors. Do not cancel/restart a mid-leg goal, bypass progress checks, force cmd_vel/GT poses, release held space early, freeze clocks, widen TTL/radii/horizons or alter budgets.",
+    "Use existing DashboardService outbox, command_id/run_id/revision/idempotency/pending-applied-rejected receipt pipeline where possible. Add a development-only explicit live-control opt-in at source/entry/API. Default remains exactly readonly with capabilities empty for old actual runs/replay and unchanged charging/events behavior. Allow same-run charging/events companion with outbox only under that explicit controlled contract; no blanket removal of read-only guards. Advertise only pause/resume for opted-in four-robot non-primary development session. Never advertise live order creation, teleport, manual driving or other unsupported commands.",
+    "Source consumer must bind run and command identity, reject malformed/stale/unknown/mismatched/replayed requests without applying twice, and publish actual pending/applied/rejected acknowledgments. Queue append is only pending. Physical all-stop completion must use existing fresh estimated pose/odom and measured stop criteria. If telemetry revision changes continuously, preserve a well-defined stable control revision guard and explain it; do not simply ignore version checks. Old-source/disconnected/stale/replay/no-opt-in cases must keep controls disabled. Preserve ledger/inventory and current mission failure semantics; requests cannot extend mission/host limits.",
+    "Minimal UI changes in existing white dashboard: actual-live labels must say next-anchor vehicle stop and resume, and show request pending vs applied/source disconnected. CPU model pause semantics remain distinct. Same status/receipt contract should remain consumable by Kit client without editing extensions in this task. Do not launch a new dev server or browser; root owns later native/UI run.",
+    "Allowed files are listed. Read the current repository before changing integration hooks. If a different shared path or materially different control semantics is necessary, report the boundary before modifying it; avoid new abstractions/dependencies beyond the small command gate/adapter actually required. Use installed/current source contracts as primary reference. No full review chain or broad test suites.",
+    "Run only meaningful focused CPU tests for gate lifecycle, all-stop/freshness, current leg completion, reservation retention, duplicate/run/revision rejection, disabled legacy API, companion identity and command acknowledgment wiring. Existing main .venv/Scripts/python.exe can run with worktree cwd and -B; verify imported project paths resolve to this worktree. If TS changes require a check, use existing node_modules with worktree-local type generation/typecheck, no npm install or main .next mutation. Python3.10-compatible ROS imports/syntax; do not claim native physical or browser success from CPU tests.",
+    "Return receipt with exact worktree paths/SHA and diff relative to base, actual command/results, any unresolved state/anchor/stopping issue, CLI opt-in flags and next minimal native run to prove pause request -> physical all-stop ack -> resume. No repository-wide audit. Stage3 remains incomplete until root runs actual integration."
+  ]
+}
