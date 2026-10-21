@@ -155,6 +155,8 @@ Kit 확장 `factory.ops.console`에서 AMR 선택 상세, 주문 생성, 전체 
 
 Isaac Sim 물리 실행은 창 없이 헤드리스로 돌리며, GPU 렌더링으로 카메라 RGB를 저장합니다. 현재 로컬 개발 환경은 Isaac Sim 4.5·RTX 3060입니다. 실시간 작업 상태는 웹3D 관제에서 보고, 공장 렌더 결과는 별도 이미지·영상으로 확인합니다.
 
+로컬 실행기는 지정한 wall 시간 한도에서 마지막30초를 SDK·ROS·중계 종료에 예약합니다. 작업 기한과 종료 결과는 실행에 사용한 소스·시간 정책과 함께 기록합니다.
+
 준비된4대 로컬 실행기의 OS 격리 옵션은 `--isolated-topic-relay --relay-windows-address <Windows의 WSL NIC 주소> --relay-linux-address <WSL 주소>`입니다. `--startup-service-match-wait`는 이 경로에서 Linux의 시작 서비스 응답 프로필만 사용합니다. 환경과 소스를 고정한 새 실행에 적용하며, 기존 실행의 설정·원본은 바꾸지 않습니다. [실행기](scripts/isaac/run_local45_fleet_pair.py)
 
 CPU 운영 데모는 Python 3.12·uv, 웹은 Node.js·npm을 사용합니다. GPU 시뮬레이션과 별도로 실행합니다. PowerShell 터미널 두 개를 사용합니다.

@@ -86,6 +86,18 @@ class PairMonitorTests(unittest.TestCase):
         sleep.assert_not_called()
         self.client.poll.assert_not_called()
 
+    def test_maximum_budget_reserves_cleanup_before_relay_job_can_expire(self):
+        worker = Mock()
+        worker.poll.return_value = None
+        relay = Mock(spec=["assert_healthy"])
+        relay.assert_healthy.side_effect = RuntimeError("relay hard timeout must not mask the owner budget")
+        with patch("scripts.isaac.run_local45_fleet_pair.time.monotonic", return_value=10770), \
+                self.assertRaisesRegex(TimeoutError, "pair owner deadline"):
+            monitor_pair(worker, self.owner, started=0, bound=10800, relay=relay)
+        relay.assert_healthy.assert_not_called()
+        self.client.poll.assert_not_called()
+        worker.terminate.assert_not_called()
+
     def test_sdk_primary_failure_preempts_a_live_frozen_ros_client(self):
         with tempfile.TemporaryDirectory() as folder:
             marker = Path(folder) / "sdk-failure.json"

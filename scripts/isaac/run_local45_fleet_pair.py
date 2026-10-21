@@ -18,6 +18,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from factory_ops.wsl_process_supervisor import WslProcessSupervisor
 from factory_ops.compat import replace_shared_file, write_shared_text
 
+PAIR_CLEANUP_RESERVE_S = 30
+
 
 def save(path: Path, value: dict) -> None:
     temporary = path.with_suffix(path.suffix + ".tmp")
@@ -176,8 +178,8 @@ def wait_for_bootstrap_marker(marker: Path, owner: WslProcessSupervisor, *, star
     deadline = time.monotonic() + 25
     while True:
         now = time.monotonic()
-        if now - started > bound + 35:
-            raise TimeoutError("pair owner deadline exceeded")
+        if now - started >= bound - PAIR_CLEANUP_RESERVE_S:
+            raise TimeoutError("pair owner deadline exceeded; cleanup time reserved inside the wall budget")
         client = owner.client_state()
         if now > deadline or not client["started"] or not client["running"]:
             raise RuntimeError("ROS mission did not create its verified bootstrap marker with a living foreground client")
@@ -192,10 +194,10 @@ def monitor_pair(worker, owner: WslProcessSupervisor, *, started: float, bound: 
     exit_seen = None
     exit_record = None
     while worker.poll() is None:
-        if relay is not None:relay.assert_healthy()
         now = time.monotonic()
-        if now - started > bound + 35:
-            raise TimeoutError("pair owner deadline exceeded")
+        if now - started >= bound - PAIR_CLEANUP_RESERVE_S:
+            raise TimeoutError("pair owner deadline exceeded; cleanup time reserved inside the wall budget")
+        if relay is not None:relay.assert_healthy()
         if failure_path is not None and failure_path.exists():
             failure = json.loads(failure_path.read_text(encoding="utf-8"))
             if failure.get("run_id") != run_id or failure.get("status") != "failed":
@@ -276,7 +278,9 @@ def run(stage: Path, sdk: Path, bound: int, *, charge_robot: str | None = None, 
     report = {"schema_version": 1, "run_id": run_id, "source_commit": launch["source_commit"],
         "scope": "bounded local45 development integration admission; no qualification or completion claim",
         "launcher_sha256": sha(Path(__file__)), "wsl_supervisor_sha256": sha(Path(__file__).resolve().parents[2] / "factory_ops/wsl_process_supervisor.py"),
-        "status": "starting", "wall_bound_s": bound, "windows_closed": False, "linux_closed": False,
+        "status": "starting", "wall_bound_s": bound,
+        "work_wall_bound_s": bound - PAIR_CLEANUP_RESERVE_S, "cleanup_reserve_s": PAIR_CLEANUP_RESERVE_S,
+        "windows_closed": False, "linux_closed": False,
         "lidar_backend": lidar_backend, "requested_physics_cadence": physics_cadence}
     report["live_anchor_controls"] = live_anchor_controls
     report["dds_explicit_peers"] = dds_explicit_peers
