@@ -141,11 +141,15 @@ Kit 확장 `factory.ops.console`에서 AMR 선택 상세, 주문 생성, 전체 
 
 [완료 조건과 구간별 계획](docs/completion-plan.md) · [오류와 재발 방지 기록](docs/troubleshooting.md)
 
-[최근4대 개발 실행](docs/evidence/local45-transport-044.json)은 Windows·WSL 공유 파일의 I/O 오류로 종료됐습니다. 간헐적 명령 전달·파일 오류를 구분해 기록하고 통신 주소 지정과 공유 파일 오류 처리를 보완했습니다. 정상 완주와 실제 제어 적용은 확인 중이며, 원본과 미디어는 두 저장소에 보존합니다. 앞선040의 재접근 반복을 고친 [C++·기록 검사](docs/evidence/local45-terminal-reapproach-109.json)와 [동결 소스 빌드](docs/evidence/local45-goal-canonical-112.json)는 유지합니다. 운반 모듈은 지지대 접촉·롤러 왕복·실제 차체 장착과6kg 적재 주행을 통과했습니다. 자동 적재·도킹·재고 인계의 통합은 남아 있습니다. 공장 대표 미디어는 보존된 실행036의 자료입니다. 구간 완료와 렌더링 개선 시 현재 기능·한계와 실제 이미지·영상을 함께 갱신합니다.
+현재4대 통합 실행은 Windows Humble·WSL Jazzy의 DDS를 OS 안에 격리하고 센서·시계·주행 토픽을 연결합니다. 센서 전달과 시계 진행을 확인했으나, [네 대 시작 통합](docs/evidence/local45-transport-048.json)에서는 한 차량의 Nav2 설정 응답이 시간 초과됐습니다. 시작 서비스 응답에 한정한 [유한 대기 프로필의 설치 라이브러리 확인](docs/evidence/local45-service-qos-151.json)을 마쳤고 실제 활성화·전체 완주를 확인 중입니다. 공장 전체의 여섯 단계 촬영·운영 콘솔 내보내기는 준비했으며, 새 완료 실행의 대표 미디어 생성은 남아 있습니다.
+
+앞선040의 재접근 반복을 고친 [C++·기록 검사](docs/evidence/local45-terminal-reapproach-109.json)와 [동결 소스 빌드](docs/evidence/local45-goal-canonical-112.json)는 유지합니다. 운반 모듈은 지지대 접촉·롤러 왕복·실제 차체 장착과6kg 적재 주행을 통과했습니다. 자동 적재·도킹·재고 인계의 통합은 남아 있습니다. 원본은 C에 보존하고 E에는 실행별 명세에 따라 전체본 또는 핵심 상태·미디어를 복제합니다. 공장 대표 미디어는 보존된 실행036의 자료입니다.
 
 ## 로컬에서 보기
 
 Isaac Sim 물리 실행은 창 없이 헤드리스로 돌리며, GPU 렌더링으로 카메라 RGB를 저장합니다. 현재 로컬 개발 환경은 Isaac Sim 4.5·RTX 3060입니다. 실시간 작업 상태는 웹3D 관제에서 보고, 공장 렌더 결과는 별도 이미지·영상으로 확인합니다.
+
+준비된4대 로컬 실행기의 OS 격리 옵션은 `--isolated-topic-relay --relay-windows-address <Windows의 WSL NIC 주소> --relay-linux-address <WSL 주소>`입니다. `--startup-service-match-wait`는 이 경로에서 Linux의 시작 서비스 응답 프로필만 사용합니다. 환경과 소스를 고정한 새 실행에 적용하며, 기존 실행의 설정·원본은 바꾸지 않습니다. [실행기](scripts/isaac/run_local45_fleet_pair.py)
 
 CPU 운영 데모는 Python 3.12·uv, 웹은 Node.js·npm을 사용합니다. GPU 시뮬레이션과 별도로 실행합니다. PowerShell 터미널 두 개를 사용합니다.
 
