@@ -113,7 +113,8 @@ def prepare_ros_transport(stage: Path, domain_id: int, *, interface: str | None 
         "FASTDDS_DEFAULT_PROFILES_FILE": str(profile)}
 
 
-def close_pair(worker, streams, owner, stage: Path, report: dict, started: float) -> None:
+def close_pair(worker, streams, owner, stage: Path, report: dict, started: float, *,
+               linux_start_attempted: bool = True, windows_start_attempted: bool = True) -> None:
     errors = []
     if worker is not None:
         try:
@@ -139,18 +140,29 @@ def close_pair(worker, streams, owner, stage: Path, report: dict, started: float
             stream.close()
         except Exception as error:
             errors.append("log close: " + str(error))
+    if linux_start_attempted:
+        try:
+            report["linux_end"] = owner.stop()
+            report["linux_closed"] = report["linux_end"]["closure_verified"]
+        except Exception as error:
+            errors.append("linux stop: " + str(error))
+    else:
+        report["linux_end"] = {"not_started": True, "closure_verified": True}
+        report["linux_closed"] = True
     try:
-        report["linux_end"] = owner.stop()
-        report["linux_closed"] = report["linux_end"]["closure_verified"]
-    except Exception as error:
-        errors.append("linux stop: " + str(error))
-    try:
-        job = json.loads((stage / "job.json").read_text(encoding="utf-8"))
-        report["windows_end"] = job
-        report["windows_closed"] = (job["run_id"] == report["run_id"] and job["closed"]
-                                     and not job["remaining_owned_pids"])
-        if job.get("status") != "passed":
-            report["status"] = "failed"
+        job_path = stage / "job.json"
+        if not windows_start_attempted and worker is None and not job_path.exists():
+            report["windows_end"] = {"not_started": True, "closed": True, "remaining_owned_pids": []}
+            report["windows_closed"] = True
+            job = None
+        else:
+            job = json.loads(job_path.read_text(encoding="utf-8"))
+        if job is not None:
+            report["windows_end"] = job
+            report["windows_closed"] = (job["run_id"] == report["run_id"] and job["closed"]
+                                         and not job["remaining_owned_pids"])
+            if job.get("status") != "passed":
+                report["status"] = "failed"
     except Exception as error:
         errors.append("windows receipt: " + str(error))
     report["wall_s"] = time.monotonic() - started
@@ -275,6 +287,7 @@ def run(stage: Path, sdk: Path, bound: int, *, charge_robot: str | None = None, 
     worker = None
     relay = None
     streams = []
+    linux_start_attempted = windows_start_attempted = False
     started = time.monotonic()
     try:
         root_linux = linux(stage)
@@ -333,6 +346,7 @@ def run(stage: Path, sdk: Path, bound: int, *, charge_robot: str | None = None, 
                 *(["--live-anchor-controls"] if live_anchor_controls else [])]),
         ])
         (stage / "nav-command.sh").write_text(command + "\n", encoding="utf-8", newline="\n")
+        linux_start_attempted = True
         report["linux_start"] = owner.start(["/bin/bash", linux(stage / "nav-command.sh")],
             working_directory=root_linux, log_path=root_linux + "/nav.log", runtime_bound_s=bound + 30)
         marker = output / "fleet-transport-verified.json"
@@ -357,6 +371,7 @@ def run(stage: Path, sdk: Path, bound: int, *, charge_robot: str | None = None, 
             "FACTORY_OPS_FLEET4_PROVENANCE_SHA256": launch["provenance_sha256"], "PYTHONDONTWRITEBYTECODE": "1"}
         for label in ("sdk.stdout.log", "sdk.stderr.log"):
             streams.append((stage / label).open("xb"))
+        windows_start_attempted = True
         worker = subprocess.Popen([sys.executable, str(source / "scripts/isaac/windows_job_runner.py"),
             "--spec", str(stage / "job-spec.json"), "--receipt", str(stage / "job.json"), "--timeout", str(bound),
             "--abort-request", str(stage / "job-abort-request.txt")],
@@ -380,7 +395,8 @@ def run(stage: Path, sdk: Path, bound: int, *, charge_robot: str | None = None, 
     except Exception as error:
         report.update(status="failed", error=f"{type(error).__name__}: {error}", traceback=traceback.format_exc())
     finally:
-        close_pair(worker, streams, owner, stage, report, started)
+        close_pair(worker, streams, owner, stage, report, started,
+                   linux_start_attempted=linux_start_attempted, windows_start_attempted=windows_start_attempted)
         if relay is not None:
             report["relay_pair"]=relay.close(save)
             if report["relay_pair"]["status"]!="closed":report["status"]="failed"

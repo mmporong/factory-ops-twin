@@ -865,3 +865,9 @@ Microsoft의 [CreateFileW 공유 규칙](https://learn.microsoft.com/en-us/windo
 중계는 시작·연결·준비·실패·종료 시 전체 상태를 저장하고, 매초 관측은 행당 최대4096바이트의 작은 JSONL heartbeat에 추가한다. 통신 루프가 주기적으로 같은 전체 JSON을 교체하지 않는다. append는 재시도하지 않고, 부분 쓰기·ENOSPC는 실패로 남긴다. reader는 한정된 끝부분에서 줄바꿈이 끝난 행만 읽고, 완료된 행의 손상·다른 실행 ID·side·상태·역행 sequence는 거절한다. 시계·명령 본문·0.3초 획득 시각 제한·센서/추정 위치 검사·소유 프로세스와 실행 한도는 유지했다.
 
 관련10검사와 설치 SDK Python3.10.15의2파일 구문 확인을 통과했다. CPU 실제 양 OS fixture156에서는 Windows 전체 상태 reader를 샘플링 내내 연 채44Jazzy+5Humble fixture context와 중계를 실행했고, 센서·시계·정적 TF·역방향 명령 전달이 통과했다.24.484wall 초 뒤 양 OS와 중계가 종료됐으며 정리 오류0건이다. 새 heartbeat는 Windows20회·Linux19회 기록됐고 stale drop은0건이었다. GPU·World·로봇 구동은 하지 않았다. 긴 공장 정상 완료의 증거로 확대하지 않고 다음 동결 실행에서 확인한다. [156 실측·소스 해시·공식 근거](evidence/local45-relay-heartbeat-156.json)
+
+## FOT-104 — 인증 전 heartbeat와 미시작 자원 정리의 구분
+
+050은 중계 연결 중인 heartbeat를 supervisor가 `ready`로 검사해 실패했다. Linux 첫 행은 `connecting`, sequence1, 시계0이었으며 예외는 `relay.start` 안에서 발생했다. 주 임무의 Linux 시작과 SDK Popen 이전이므로 World·GPU 공장·새 촬영은 시작되지 않았다. 두 중계는 정상 종료됐다. 원래 호스트 영수증에는 아직 만들지 않은 Linux unit의 정리 거절과 없는 SDK job 영수증이 정리 오류로 남았다. 원본 영수증은 수정하지 않는다.
+
+주기 관측은 `starting/connecting` 동안 파일·sequence를 만들지 않고, 인증된 `ready`에서 첫 행을 게시하도록 고쳤다. 실행 ID·side·상태·sequence 거절 조건은 유지한다. 주 실행기는 OS별 시작 시도 여부를 기록해 미시작과 실제 종료를 구분하며, 시작을 시도한 자원의 기존 소유권·종료 증명은 계속 요구한다. 관련4검사와 SDK Python3.10.15의2파일 구문 확인을 통과했다. 이전156의 연결 완료 뒤 관측·전달 결과를 초기 연결 분기의 증거로 확대하지 않는다. [050 관측·수정 범위·검사](evidence/local45-relay-startup-157.json)

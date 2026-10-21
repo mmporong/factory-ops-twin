@@ -141,7 +141,7 @@ Kit 확장 `factory.ops.console`에서 AMR 선택 상세, 주문 생성, 전체 
 
 [완료 조건과 구간별 계획](docs/completion-plan.md) · [오류와 재발 방지 기록](docs/troubleshooting.md)
 
-현재4대 통합 경로는 Windows Humble·WSL Jazzy의 DDS를 OS 안에 격리하고 센서·시계·주행 토픽을 연결합니다. [실행049](docs/evidence/local45-transport-049.json)에서 네 차량의 Nav2 활성화와 자재 투입을 확인했습니다. 자재 공급 촬영 창을 마쳤으나 공정 처리 촬영 중 중계 상태 파일 교체의 `WinError 5`로 중단됐습니다. 중계의 주기적 상태 관측은 작은 추가 기록 방식으로 바꿨으며, 파일을 열어 둔 조건의 [양 OS 통신 시험](docs/evidence/local45-relay-heartbeat-156.json)을 통과했습니다. 수정 후 공장 전체 완주와 여섯 운영 단계를 묶은 대표 미디어 생성은 남아 있습니다.
+현재4대 통합 경로는 Windows Humble·WSL Jazzy의 DDS를 OS 안에 격리하고 센서·시계·주행 토픽을 연결합니다. [실행049](docs/evidence/local45-transport-049.json)에서 네 차량의 Nav2 활성화와 자재 투입을 확인했습니다. 자재 공급 촬영 창을 마쳤으나 공정 처리 촬영 중 중계 상태 파일 교체의 `WinError 5`로 중단됐습니다. 중계의 주기적 상태 관측은 작은 추가 기록 방식으로 바꿨으며, 파일을 열어 둔 조건의 [양 OS 통신 시험](docs/evidence/local45-relay-heartbeat-156.json)을 통과했습니다. [초기 연결과 자원 미시작 처리](docs/evidence/local45-relay-startup-157.json)도 보완했습니다. 수정 후 공장 전체 완주와 여섯 운영 단계를 묶은 대표 미디어 생성은 남아 있습니다.
 
 앞선040의 재접근 반복을 고친 [C++·기록 검사](docs/evidence/local45-terminal-reapproach-109.json)와 [동결 소스 빌드](docs/evidence/local45-goal-canonical-112.json)는 유지합니다. 운반 모듈은 지지대 접촉·롤러 왕복·실제 차체 장착과6kg 적재 주행을 통과했습니다. 자동 적재·도킹·재고 인계의 통합은 남아 있습니다. 대표 물리 시험과 최신 실행 원본을 선별 보존하며, 공장 대표 미디어는 보존된 실행036의 자료입니다.
 

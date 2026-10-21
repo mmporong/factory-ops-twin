@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "run_id": "a1832a97698149198e5c844cf7746428",
+  "source_commit": "d958d10214e9e70bf53f00bf89fb511ce80a9db4",
+  "status": "failed_before_main_pair_started",
+  "GPU_started": false,
+  "World_started": false,
+  "first_failure": "Supervisor rejected a connecting heartbeat before peer authentication completed.",
+  "confirmed_record": {
+    "run_id": "a1832a97698149198e5c844cf7746428",
+    "side": "linux",
+    "status": "connecting",
+    "sequence": 1,
+    "last_source_clock_ns": 0,
+    "queued_bytes": 0,
+    "sent_total": 0,
+    "received_total": 0,
+    "stale_commands_dropped": 0
+  },
+  "correction": "Periodic observation stays pending in starting/connecting; sequence1 is published only at ready. Run/side/state/sequence checks remain strict.",
+  "original_cleanup_receipt": {
+    "windows_closed": false,
+    "linux_closed": false,
+    "cleanup_errors": [
+      "linux stop: no created unit identity; inspect/stop denied",
+      "windows receipt: [Errno 2] No such file or directory: 'C:\\\\Users\\\\LIMMM\\\\FactoryOpsRuntime\\\\local45-transport-050\\\\job.json'"
+    ]
+  },
+  "main_pair_scope": "Traceback is within relay.start, before main Linux owner.start and before SDK Popen. Their not-started state was incorrectly reported as cleanup failure. Original receipt is unchanged.",
+  "relay_closure": {
+    "windows_closed": true,
+    "linux_closed": true,
+    "cleanup_errors": []
+  },
+  "cleanup_correction": "Record whether each main start was attempted; never-started main resources are reported not_started, while attempted resources still require existing ownership/receipt closure proof.",
+  "focused_tests": {
+    "passed": 4,
+    "scope": "Connecting-to-ready heartbeat boundary plus3cleanup cases, including early relay failure and both existing failure-isolation cases"
+  },
+  "SDK_Python_3_10_15_AST_files": 2,
+  "native_factory_completion": false,
+  "proofs": [
+    {
+      "path": "C:\\Users\\LIMMM\\FactoryOpsRuntime\\local45-transport-050\\pair-host.json",
+      "sha256": "251d0f22b0438d1d7c92656449f54ac4f26d499a257cabb5d5676fe672d534b6"
+    },
+    {
+      "path": "C:\\Users\\LIMMM\\FactoryOpsRuntime\\local45-transport-050\\relay-pair.json",
+      "sha256": "2ae9842356404dd1fa9efc803271f341159cd8c45957212fb81c773c840a0932"
+    }
+  ]
+}

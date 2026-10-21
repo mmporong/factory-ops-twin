@@ -11,6 +11,19 @@ from scripts.isaac.run_local45_fleet_pair import close_pair
 
 
 class PairCleanupTests(unittest.TestCase):
+    def test_relay_start_failure_does_not_stop_or_read_receipts_of_unstarted_main_pair(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            stage=Path(temporary);owner=Mock()
+            owner.stop.side_effect=AssertionError('main pair was never started')
+            report={"run_id":"a"*32,"status":"failed","windows_closed":False,"linux_closed":False}
+            close_pair(None,[],owner,stage,report,time.monotonic(),
+                       linux_start_attempted=False,windows_start_attempted=False)
+            owner.stop.assert_not_called()
+            self.assertTrue(report['windows_closed'] and report['linux_closed'])
+            self.assertTrue(report['linux_end']['not_started'] and report['windows_end']['not_started'])
+            self.assertEqual(report['cleanup_errors'],[])
+            self.assertEqual(report['status'],'failed')
+
     def test_windows_and_log_failures_still_stop_linux_and_write_failed_receipt(self):
         with tempfile.TemporaryDirectory() as temporary:
             stage = Path(temporary)

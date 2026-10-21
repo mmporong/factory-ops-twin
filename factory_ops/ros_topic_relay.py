@@ -38,6 +38,10 @@ def write_checkpoint(path, report):
 
 def write_heartbeat(path, report):
     """Append one small observation; never retry a possibly partial append."""
+    if report["status"] in {"starting", "connecting"}:
+        return False
+    if report["status"]!="ready":
+        raise ValueError("periodic relay heartbeat requires an authenticated ready connection")
     row = {"run_id": report["run_id"], "side": report["side"], "status": report["status"],
            "sequence": report.get("heartbeat_sequence", 0)+1,
            "last_source_clock_ns": report.get("last_source_clock_ns", 0),
@@ -52,6 +56,7 @@ def write_heartbeat(path, report):
         if stream.write(raw)!=len(raw):
             raise OSError("incomplete relay heartbeat append")
     report["heartbeat_sequence"] = row["sequence"]
+    return True
 
 
 def read_heartbeat(path):

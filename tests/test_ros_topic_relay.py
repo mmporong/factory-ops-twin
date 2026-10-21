@@ -8,6 +8,18 @@ from factory_ops.ros_topic_relay import Framer,Receiver,catalog
 
 
 class RelayTests(unittest.TestCase):
+    def test_connecting_heartbeat_stays_pending_until_authenticated_ready(self):
+        from factory_ops.ros_topic_relay import write_heartbeat, read_heartbeat
+        with tempfile.TemporaryDirectory() as folder:
+            path=Path(folder)/"relay.json"
+            report={"run_id":"a"*32,"side":"linux","status":"connecting","sent":{},"received":{},"stale_commands_dropped":0}
+            self.assertFalse(write_heartbeat(path,report))
+            self.assertIsNone(read_heartbeat(path))
+            self.assertNotIn("heartbeat_sequence",report)
+            report['status']='ready'
+            self.assertTrue(write_heartbeat(path,report))
+            self.assertEqual(read_heartbeat(path)['sequence'],1)
+
     def test_pair_observes_heartbeat_and_rejects_foreign_run(self):
         from factory_ops.ros_topic_relay import write_checkpoint, write_heartbeat
         from factory_ops.ros_topic_relay_pair import RelayPair
