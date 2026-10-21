@@ -1,0 +1,54 @@
+{
+  "task_id": "loaded-carrier-fixture-115",
+  "attempt": 1,
+  "contract_revision": 104,
+  "owner": "control",
+  "reviewer": "root",
+  "binding": {
+    "session": "default",
+    "pane_id": "w1:p1C",
+    "terminal_id": "term_65e06d27e415810",
+    "agent_session": "01a152aa-24b4-7a31-92e3-a2b620f4feeb"
+  },
+  "project_root": "C:\\Users\\LIMMM\\factory-ops-twin",
+  "status": "dispatched",
+  "goal": "Prepare standalone headless Nova Carter mounted carrier/tote static admission probe; CPU implementation only while041 runs.",
+  "input_source_commit": "000571d4c2e3b252daec8277d49a466b8102da41",
+  "inputs_sha256": {
+    "AGENTS.md": "30ed4fb5a723edfac0557111438fa9b6b6a85b6f66ef002b675b5a240d87154d",
+    "docs/completion-plan.md": "dee0447fbe3c9fa09b01ba59e7f09e7142d4132d6e4508ba30bec72ec91e054f",
+    "factory_ops/carrier_module.py": "ef12b26aa3d7180e7f122324aa0f5e363010d1f3ddf366165b69ac6de1cbfc14",
+    "configs/vehicles/tote-carrier-v1.json": "4e849823f3e0efe4561fd8ce02ef17067b4b9dc606558bab2197ffa4efa46627",
+    "scripts/isaac/probe_tote_carrier_contact.py": "332d392d2350df0f0949efeac365d43c9b5faf9bd96258e42c20b7f900617672",
+    "scripts/isaac/local_asset_probe.py": "042e7c3255c339a5d5705a0bb70e377f0b807d2deda5d06fc0cffb0870bf345c",
+    "docs/evidence/local45-tote-contact-114.json": "16d4cafe495334e0942f190b36e9ccf5089d60314f81d98ab02ff6436f1408b2"
+  },
+  "read_paths": [
+    "AGENTS.md",
+    "docs/completion-plan.md",
+    "factory_ops/carrier_module.py",
+    "configs/vehicles/tote-carrier-v1.json",
+    "scripts/isaac/probe_tote_carrier_contact.py",
+    "scripts/isaac/local_asset_probe.py",
+    "docs/evidence/local45-tote-contact-114.json"
+  ],
+  "write_paths": [
+    "factory_ops/carrier_robot.py",
+    "scripts/isaac/probe_loaded_carrier.py",
+    "tests/test_carrier_robot.py",
+    "coordination/collab/results/loaded-carrier-fixture-115.json"
+  ],
+  "result_path": "C:\\Users\\LIMMM\\factory-ops-twin\\coordination\\collab\\results\\loaded-carrier-fixture-115.json",
+  "depends_on": [
+    "tote-carrier-module-107"
+  ],
+  "acceptance": [
+    "ACK task115 attempt1 contract revision. You are not alone. Preserve other edits, unowned dashboard files, frozen041 stage/source and existing114 original. Own only listed NEW files. No GPU/SDK/ROS/WSL launch, downloads, installs, cloud, commits/push, shared module/config/README/plan/board edits, new agents or extra review rounds. Root runs native probe later, one GPU job at a time.",
+    "107 was received and integrated. Root fixed USD-safe post names and math.fsum cross-Python manifest; new carrier_module SHA is in inputs. Native114 PASSED: four kinematic fixed-support sensors, dynamic carrier5.4kg/tote6kg contact/settled dwell and authored separation with two real RGB. These are simplified stand results, not robot mounting, transport, lift or industrial rating. Read114 evidence and current probe; use existing authored geometry without relabeling assumptions as measurements.",
+    "Implement a bounded SDK4.5 static loaded-robot fixture using existing local Nova Carter asset/reference and APIs from installed official sources. First inspect actual robot rigid-body/chassis/sensor transforms and collision geometry; validate candidate module-to-robot placement and conservative collision/sensor keepouts and unchanged footprint. If no legal mount can be established, return measured rejection/diagnostics rather than moving through existing body geometry or widening radius. Native measurements must be emitted only when root runs probe, no fabricated data.",
+    "Prepare actual physical carrier attachment to identified chassis rigid body using installed-supported fixed-joint/articulation semantics, separate free dynamic tote, authored mass/inertia/friction and actual contact/stop observations. Chassis remains stationary in this first admission. Do not GT-drive, teleport loaded bodies, reuse presentation cargo as contact proof, claim sensor beam visibility from an AABB, or claim finished industrial vehicle/mount strength/certified load. Articulation/body path uncertainty must fail clearly and preserve measured data.",
+    "Reuse carrier_module API without editing it. New stdlib-only carrier_robot.py should validate native measured mount/frame/body identity and finite/geometry bounds, and produce deterministic admission data with authored vs measured sources. Meaningful focused CPU tests for transform/clearance/identity rejection; no whole suite. Python3.10-compatible probe CLI --config path --output new-absolute --run-id32hex so existing run-local-contact-probe.ps1 can launch it later. Report project import SHA keys for SourceDependency.",
+    "Bound probe to modest sim/wall/render work, capture only one or two genuine RGB if valid, source/config/asset identities, native clock/frame and contact freshness; save failures and detach/destroy resources plus app.close(wait_for_replicator=False). Root WindowsJob guard proves host closure. No auto success on static-looking media, no bulk data/SDG. Stage2 remains incomplete.",
+    "Return receipt with exact changed paths/SHA, CPU commands/results, consulted installed/versioned official sources, API contract, native CLI, unresolved geometry/API uncertainty and next root action. Report boundary blockers upward without modifying shared files. No formal review chain; root performs the one integration receipt/content check."
+  ]
+}

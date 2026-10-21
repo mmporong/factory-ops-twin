@@ -1,6 +1,6 @@
 {
-  "revision": 103,
-  "updated_at": "2026-10-21T03:37:31.279037+00:00",
+  "revision": 104,
+  "updated_at": "2026-10-21T03:55:45.554043+00:00",
   "scope": {
     "excluded": "실물 로봇 실행, 새 유료 서비스/에셋, 공개 배포",
     "project_root": "C:\\Users\\LIMMM\\factory-ops-twin",
@@ -20,7 +20,7 @@
       "role": "dashboard frontend author",
       "name": "control",
       "agent_kind": "codex",
-      "status": "107 implementation received and integrated; native fixture pending; no active assignment",
+      "status": "115 assigned mounted-carrier static native fixture preparation, CPU only;041 GPU owned by root",
       "session": "default",
       "agent_session": "01a152aa-24b4-7a31-92e3-a2b620f4feeb",
       "terminal_id": "term_65e06d27e415810",
@@ -1787,6 +1787,31 @@
       "result_path": "coordination/collab/results/tote-carrier-module-107.json",
       "acceptance": "Delivered four source hashes matched; CPU4 PASS and Python3.10 syntax3 PASS received. Root checked source/API and cleanup scope once. No SDK success or stage2 completion claimed; native fixture is next.",
       "review_policy": "Root checks only delivered behavior/evidence needed for integration; no separate review/approval chain per user."
+    },
+    {
+      "task_id": "loaded-carrier-fixture-115",
+      "attempt": 1,
+      "contract_revision": 104,
+      "owner": "control",
+      "binding": {
+        "session": "default",
+        "pane_id": "w1:p1C",
+        "terminal_id": "term_65e06d27e415810",
+        "agent_session": "01a152aa-24b4-7a31-92e3-a2b620f4feeb"
+      },
+      "status": "dispatched",
+      "card_path": "coordination/collab/loaded-carrier-fixture-115-task.json",
+      "result_path": "coordination/collab/results/loaded-carrier-fixture-115.json",
+      "write_paths": [
+        "factory_ops/carrier_robot.py",
+        "scripts/isaac/probe_loaded_carrier.py",
+        "tests/test_carrier_robot.py",
+        "coordination/collab/results/loaded-carrier-fixture-115.json"
+      ],
+      "depends_on": [
+        "tote-carrier-module-107"
+      ],
+      "review_policy": "one root receipt/content integration; no separate approval chain"
     }
   ],
   "decisions": [
