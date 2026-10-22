@@ -66,6 +66,18 @@ export type Snapshot = {
   observed_at: string;
   connection: string;
   model_scope?: string;
+  replay?: {
+    scenario_id: string;
+    frame_index: number;
+    frame_count: number;
+    source_run_id: string;
+    source_mode: "local_model" | "live";
+    source_revision: number;
+    source_observed_at: string;
+    source_snapshot_sha256: string;
+    scenario_file_sha256: string;
+    scope: string;
+  };
   paused: boolean;
   capabilities: string[];
   live_control?: {

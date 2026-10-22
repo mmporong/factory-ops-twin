@@ -33,7 +33,7 @@ export default function ObservationPanel({
           <h2 id="observation-title">시뮬레이션 관측</h2>
         </div>
         <span className={`observation-state ${stale ? "is-stale" : ""}`}>
-          {snapshot ? stale ? "관측 지연 · 조작 비활성" : livePhase === "pause_pending" ? "예약 지점 정지 대기" : livePhase === "paused" ? "차량 정지 확인 · 시계 진행" : readOnly ? "읽기 전용 · 관측 수신" : "운영 데이터 수신" : "연결 대기"}
+          {snapshot ? snapshot.mode === "replay" ? "저장된 기록 · 조작 비활성" : stale ? "관측 지연 · 조작 비활성" : livePhase === "pause_pending" ? "예약 지점 정지 대기" : livePhase === "paused" ? "차량 정지 확인 · 시계 진행" : readOnly ? "읽기 전용 · 관측 수신" : "운영 데이터 수신" : "연결 대기"}
         </span>
       </div>
       <dl className="observation-metrics">
@@ -46,8 +46,8 @@ export default function ObservationPanel({
           <dd>{snapshot ? <>{number.format(snapshot.sim_time_s)} <span>s</span></> : "미관측"}</dd>
         </div>
         <div>
-          <dt>관측 경과</dt>
-          <dd>{observationAge === null ? "미관측" : <>{number.format(observationAge)} <span>초</span></>}</dd>
+          <dt>{snapshot?.mode === "replay" ? "저장된 관측 시각" : "관측 경과"}</dt>
+          <dd>{snapshot?.mode === "replay" ? new Intl.DateTimeFormat("ko-KR", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit" }).format(new Date(snapshot.observed_at)) : observationAge === null ? "미관측" : <>{number.format(observationAge)} <span>초</span></>}</dd>
         </div>
         <div>
           <dt>공장 배치 · 주차</dt>

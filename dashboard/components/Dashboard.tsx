@@ -2,6 +2,7 @@
 import dynamic from "next/dynamic";
 import ObservationPanel from "./ObservationPanel";
 import ChargingPanel from "./ChargingPanel";
+import ScenarioReplayPanel from "./ScenarioReplayPanel";
 import { inventoryDisplay, stockKey } from "../lib/inventory-display";
 import {
   Component,
@@ -66,9 +67,12 @@ function Pair({ label, children }: { label: string; children: ReactNode }) {
   );
 }
 export default function Dashboard() {
-  const [snapshot, setSnapshot] = useState<Snapshot | null>(null),
+  const [liveSnapshot, setLiveSnapshot] = useState<Snapshot | null>(null),
+    [replaySnapshot, setReplaySnapshot] = useState<Snapshot | null>(null),
     [scene, setScene] = useState<Scene | null>(null),
     [selection, setSelection] = useState<Selection | null>(null);
+  const snapshot = replaySnapshot ?? liveSnapshot;
+  const replaying = snapshot?.mode === "replay";
   const [error, setError] = useState(""),
     [sceneError, setSceneError] = useState(""),
     [received, setReceived] = useState(0),
@@ -89,7 +93,7 @@ export default function Dashboard() {
     const start = performance.now();
     try {
       const s = await getJSON<Snapshot>("/api/snapshot");
-      setSnapshot(s);
+      setLiveSnapshot(s);
       setReceived(Date.now());
       setLatency(Math.round(performance.now() - start));
       setError("");
@@ -147,40 +151,40 @@ export default function Dashboard() {
     return () => clearInterval(timer);
   }, []);
   useEffect(() => {
-    if (snapshot && currentRun.current !== snapshot.run_id) {
-      currentRun.current = snapshot.run_id;
+    if (liveSnapshot && currentRun.current !== liveSnapshot.run_id) {
+      currentRun.current = liveSnapshot.run_id;
       setCommand(null);
       setCommandError("");
       setSelection((current) => {
-        if (current?.kind === "robot" && snapshot.robots.some((r) => r.id === current.id)) return current;
-        return snapshot.robots[0] ? { kind: "robot", id: snapshot.robots[0].id } : null;
+        if (current?.kind === "robot" && liveSnapshot.robots.some((r) => r.id === current.id)) return current;
+        return liveSnapshot.robots[0] ? { kind: "robot", id: liveSnapshot.robots[0].id } : null;
       });
     }
-  }, [snapshot]);
+  }, [liveSnapshot]);
   useEffect(() => {
     if (command?.status === "pending") {
-      const updated = snapshot?.commands.find(
+      const updated = liveSnapshot?.commands.find(
         (c) => c.command_id === command.command_id,
       );
       if (updated) setCommand(updated);
     }
-  }, [snapshot, command]);
+  }, [liveSnapshot, command]);
   const age = received
     ? Math.max(0, Math.round(((now || received) - received) / 1000))
     : null;
-  const observationAge = snapshot
+  const observationAge = liveSnapshot
     ? Math.max(
         0,
-        ((now || Date.now()) - Date.parse(snapshot.observed_at)) / 1000,
+        ((now || Date.now()) - Date.parse(liveSnapshot.observed_at)) / 1000,
       )
     : null;
   const stale =
     !!error ||
     (age !== null && age > 5) ||
     (observationAge !== null && observationAge > 10) ||
-    snapshot?.connection !== "connected";
+    liveSnapshot?.connection !== "connected";
   const can = (action: string) =>
-    !!snapshot?.capabilities.includes(action) && !stale && !sending && command?.status !== "pending";
+    !replaying && !!liveSnapshot?.capabilities.includes(action) && !stale && !sending && command?.status !== "pending";
   const liveControls = snapshot?.mode === "live" && snapshot.live_control?.contract === "ros-next-anchor-v1";
   const robot =
     selection?.kind === "robot"
@@ -258,14 +262,16 @@ export default function Dashboard() {
           </strong>
         </div>
         <div className="connection">
-          <span className={`dot ${stale ? "warning" : ""}`} />
+          <span className={`dot ${!replaying && stale ? "warning" : ""}`} />
           <div>
             <strong>
               {snapshot ? modeNames[snapshot.mode] : "API 연결 대기"}
             </strong>
             <small>
               {snapshot
-                ? stale
+                ? replaying
+                  ? "저장된 관측 · 차량 조작 비활성"
+                  : stale
                   ? "연결 지연 · 마지막 수신 상태 유지"
                   : snapshot.paused
                     ? liveControls ? "차량 운행 정지" : "운영 일시정지"
@@ -311,14 +317,19 @@ export default function Dashboard() {
       <ObservationPanel
         snapshot={snapshot}
         scene={scene}
-        stale={stale}
-        age={age}
-        observationAge={observationAge}
-        latency={latency}
+        stale={replaying ? false : stale}
+        age={replaying ? null : age}
+        observationAge={replaying ? null : observationAge}
+        latency={replaying ? null : latency}
+      />
+      <ScenarioReplayPanel
+        liveSnapshot={stale ? null : liveSnapshot}
+        replaySnapshot={replaySnapshot}
+        onReplay={setReplaySnapshot}
       />
       {error && (
         <div role="status" className="alert">
-          {error} {received > 0 && "마지막 수신 위치와 수치를 유지합니다."}
+          {replaying ? "실시간 연결이 지연되어도 저장된 기록은 계속 확인할 수 있습니다." : `${error} ${received > 0 ? "마지막 수신 위치와 수치를 유지합니다." : ""}`}
         </div>
       )}
       <div className="workspace">
@@ -424,7 +435,7 @@ export default function Dashboard() {
               </button>
             )) ?? <p className="empty">AMR 상태를 기다리고 있습니다.</p>}
           </div>
-          <ChargingPanel snapshot={snapshot} stale={stale} />
+          <ChargingPanel snapshot={snapshot} stale={replaying ? false : stale} />
         </div>
         <section className="command-section" aria-label="운영 조작">
           <div className="section-heading">
@@ -445,7 +456,7 @@ export default function Dashboard() {
             )}
           </div>
           {snapshot && !snapshot.capabilities.some((action) => ["pause", "resume", "create_order"].includes(action)) && (
-            <p className="readonly-notice"><strong>읽기 전용 관측</strong></p>
+            <p className="readonly-notice"><strong>{replaying ? "기록 재생 · 차량 조작 비활성" : "읽기 전용 관측"}</strong></p>
           )}
           {snapshot?.capabilities.includes("create_order") && (
             <form
@@ -493,7 +504,9 @@ export default function Dashboard() {
             </form>
           )}
           <div className="command-result" role="status" aria-live="polite">
-            {sending
+            {replaying
+              ? "저장된 작업·재고·차량 상태를 보고 있습니다. 실시간으로 돌아가면 지원되는 조작을 사용할 수 있습니다."
+              : sending
               ? "서버 처리 결과를 기다리고 있습니다…"
               : commandError ||
                 (command

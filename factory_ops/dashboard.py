@@ -10,6 +10,7 @@ import json
 import math
 import os
 from pathlib import Path
+import re
 import tempfile
 import threading
 import time
@@ -19,6 +20,7 @@ from .dashboard_model import DashboardModel
 from .dashboard_events import DashboardEventSource
 from .mock_mes import MockMESAdapter
 from .live_control import control_capabilities
+from .scenario_replay import ScenarioReplayStore
 
 
 def atomic_json(path: Path, value: Any) -> None:
@@ -258,7 +260,8 @@ def _join_ros_charging(primary: Any, companion: Any) -> dict[str, Any]:
 class DashboardService:
     def __init__(self, config: Path, *, source: Path | None = None, outbox: Path | None = None,
                  charging_profile: dict[str, Any] | None = None, charging_source: Path | None = None,
-                 events_source: Path | None = None, live_anchor_controls: bool = False) -> None:
+                 events_source: Path | None = None, live_anchor_controls: bool = False,
+                 scenario_dir: Path | None = None) -> None:
         if live_anchor_controls and (source is None or outbox is None or charging_profile is not None):
             raise ValueError("live anchor controls require explicit source/outbox and no CPU profile")
         self.live_anchor_controls = live_anchor_controls
@@ -274,6 +277,7 @@ class DashboardService:
         self.source, self.outbox = source, outbox
         self.charging_source = charging_source
         self.events_source = DashboardEventSource(events_source) if events_source is not None else None
+        self.scenarios = ScenarioReplayStore(scenario_dir, validate_snapshot, self.scene) if scenario_dir is not None else None
         self.model = DashboardModel(config, charging_profile=charging_profile) if source is None else None
         self._last: dict[str, Any] | None = None
         self._receipts: dict[str, dict[str, Any]] = {}
@@ -290,6 +294,9 @@ class DashboardService:
         if self.live_anchor_controls:
             self.producer_sources["factory_ops/live_control.py"] = hashlib.sha256(
                 (module_root / "live_control.py").read_bytes()).hexdigest()
+        if self.scenarios is not None:
+            self.producer_sources["factory_ops/scenario_replay.py"] = hashlib.sha256(
+                (module_root / "scenario_replay.py").read_bytes()).hexdigest()
 
     def ingest_mes(self, event: Any) -> dict[str, Any]:
         with self.lock:
@@ -360,7 +367,27 @@ class DashboardService:
                 original_ids = {event["id"] for event in result["events"]}
                 result["events"] = (result["events"] + [event for event in events if event["id"] not in original_ids])[-100:]
                 result["api_producer"]["events_projection"] = provenance
+            if self.scenarios is not None:
+                self.scenarios.observe(result)
             return result
+
+    def save_scenario(self, value: Any) -> dict[str, Any]:
+        if self.scenarios is None:
+            raise ValueError("scenario recording is disabled")
+        with self.lock:
+            return self.scenarios.save(value)
+
+    def list_scenarios(self) -> dict[str, Any]:
+        if self.scenarios is None:
+            raise ValueError("scenario recording is disabled")
+        with self.lock:
+            return self.scenarios.list()
+
+    def replay_frame(self, scenario_id: str, index: int) -> dict[str, Any]:
+        if self.scenarios is None:
+            raise ValueError("scenario recording is disabled")
+        with self.lock:
+            return self.scenarios.frame(scenario_id, index)
 
     def command(self, value: Any) -> dict[str, Any]:
         if not isinstance(value, dict):
@@ -435,13 +462,21 @@ def make_server(service: DashboardService, port: int = 8765) -> ThreadingHTTPSer
                     self._reply(200, service.snapshot())
                 elif self.path == "/api/scene":
                     self._reply(200, service.scene)
+                elif self.path == "/api/scenarios" and service.scenarios is not None:
+                    self._reply(200, service.list_scenarios())
+                elif service.scenarios is not None and (match := re.fullmatch(
+                        r"/api/scenarios/([a-z0-9][a-z0-9-]{0,63}-[0-9a-f]{12})/frames/([0-9]+)", self.path)):
+                    self._reply(200, service.replay_frame(match.group(1), int(match.group(2))))
                 else:
                     self._reply(404, {"error": "unknown endpoint"})
             except ValueError as error:
-                self._reply(503, {"error": str(error)})
+                self._reply(400 if self.path.startswith("/api/scenarios") else 503, {"error": str(error)})
 
         def do_POST(self) -> None:
-            if self.path not in ("/api/commands", "/api/mes/events"):
+            if self.path not in ("/api/commands", "/api/mes/events", "/api/scenarios"):
+                self._reply(404, {"error": "unknown endpoint"})
+                return
+            if self.path == "/api/scenarios" and service.scenarios is None:
                 self._reply(404, {"error": "unknown endpoint"})
                 return
             try:
@@ -449,7 +484,12 @@ def make_server(service: DashboardService, port: int = 8765) -> ThreadingHTTPSer
                 if self.headers.get_content_type() != "application/json" or not 0 < length <= 65536:
                     raise ValueError("JSON command body must be at most 64 KiB")
                 value = json.loads(self.rfile.read(length))
-                self._reply(200, service.ingest_mes(value) if self.path == "/api/mes/events" else service.command(value))
+                if self.path == "/api/mes/events":
+                    self._reply(200, service.ingest_mes(value))
+                elif self.path == "/api/scenarios":
+                    self._reply(201, service.save_scenario(value))
+                else:
+                    self._reply(200, service.command(value))
             except (ValueError, TypeError) as error:
                 self._reply(400, {"error": str(error)})
 
@@ -469,6 +509,8 @@ def main() -> None:
     parser.add_argument("--events-source", type=Path,
                         help="optional same-run actions JSONL; bounded read-only business events; requires --source")
     parser.add_argument("--commands-dir", type=Path, help="simulator command outbox; absent means read-only")
+    parser.add_argument("--scenario-dir", type=Path,
+                        help="operator-saved bounded dashboard snapshots; no simulation rerun")
     parser.add_argument("--live-anchor-controls", action="store_true", help="opt-in same-run ROS next-anchor pause/resume only")
     parser.add_argument("--web-charging-profile", type=Path,
                         help="optional authored CPU energy/geometric docking model; never applied to live/replay")
@@ -485,7 +527,8 @@ def main() -> None:
                         if args.web_charging_profile is not None else None)
     service = DashboardService(args.config, source=args.source, outbox=args.commands_dir,
                                charging_profile=charging_profile, charging_source=args.charging_source,
-                               events_source=args.events_source, live_anchor_controls=args.live_anchor_controls)
+                               events_source=args.events_source, live_anchor_controls=args.live_anchor_controls,
+                               scenario_dir=args.scenario_dir)
     server = make_server(service, args.port)
     stopping = threading.Event()
 
