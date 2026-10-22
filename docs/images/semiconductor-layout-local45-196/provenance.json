@@ -1,0 +1,178 @@
+{
+  "schema_version": 1,
+  "run_id": "9f5db6e6bc2c4cb7b1a17c71b0f12287",
+  "source_commit": "f0510769c50d49dc9b197625bae1d0199399b8dd",
+  "scope": "Native Isaac Sim4.5 static RGB of semiconductor bay with34 attributed NVIDIA service props; no robot mission, throughput or physical transfer qualification",
+  "source_archive_sha256": "96e9e8b4ff29b0386ec0c632ae5d0984dbc9bb624acc01d7f3293cba1d8662b7",
+  "preview_script_sha256": "cf32d4ecf4e995dae891be15854fe1d86b530b6d3fb672347956e7b8034bc74c",
+  "input_sha256": {
+    "layout.json": "91a5a70a0f3736f184778e85881166d923ade62140bde366fe10ad59e5de948a",
+    "visual-assets.json": "6b22c0c77c9670a7bc7869692345e09ec0c682339f5b688d991f886ce62a0798",
+    "render-profile.json": "f986898c9dd8b27fb68032819012203f2767763c247f22b75303cb9a6769111b",
+    "scene/factory-v3.usda": "45c4b8f2decb8ab9ab646315870d6050267e37948c1150a74224c8583bb68b03"
+  },
+  "captures": [
+    {
+      "path": "overview.png",
+      "sha256": "4cb27827d3b988756d654ef594bd7785a0bd6eb06b8943d9d4d24ec1b63f2ee4",
+      "width": 1280,
+      "height": 720,
+      "camera_eye_xyz_m": [
+        16.0,
+        -13.0,
+        24.0
+      ],
+      "camera_target_xyz_m": [
+        16.0,
+        11.0,
+        0.7
+      ],
+      "focal_length_mm": 17.0,
+      "physics_frame": 2,
+      "sim_time_s": 0.03333333507180214,
+      "source": "native Replicator RGB; no generated image or interpolation"
+    },
+    {
+      "path": "test-handler.png",
+      "sha256": "82d8da306cc565299550dd714a1d1fca24af91b3a72c4508766104a9dd47ce50",
+      "width": 1280,
+      "height": 720,
+      "camera_eye_xyz_m": [
+        26.0,
+        1.0,
+        12.0
+      ],
+      "camera_target_xyz_m": [
+        19.0,
+        10.0,
+        1.0
+      ],
+      "focal_length_mm": 26.0,
+      "physics_frame": 2,
+      "sim_time_s": 0.03333333507180214,
+      "source": "native Replicator RGB; no generated image or interpolation"
+    }
+  ],
+  "capture_status": "passed",
+  "AI_generated_images": false,
+  "interpolated_frames": false,
+  "closure": {
+    "job_receipt_sha256": "0c7c05a1df77460275d1955edaf356248428e6debaca7971bea276cdaa3fc28a",
+    "result_receipt_sha256": "4c49ac9c44a275dc655b807a013c146bcf9fc1b2c1b52b50660c332a6404b734",
+    "prelaunch_inputs_verified": true,
+    "closed": true,
+    "remaining_owned_pids": [],
+    "cleanup_errors": [],
+    "ROS_started": false,
+    "bag_SQL_opened": false
+  },
+  "render_log": {
+    "sha256": "5fe70f3351f64a4b5f8c8cb95bd5c012b5a242b17d3a828452392477b109404a",
+    "error_count": 0,
+    "joint_error_count": 0
+  },
+  "renderer_readback": {
+    "status": "requested_but_sdk_setting_unavailable_or_unverified",
+    "requested": {
+      "renderer": "RTX Real-Time 2.0",
+      "launch_renderer": "RealTimePathTracing",
+      "allowed_readbacks": [
+        "RayTracedLighting",
+        "RealTimePathTracing"
+      ],
+      "dlss_mode": "Quality",
+      "dlss_exec_mode": 2
+    },
+    "readback": {
+      "renderer_before": "RaytracedLighting",
+      "renderer_after": "RaytracedLighting",
+      "dlss_before": 0,
+      "dlss_after": 2
+    },
+    "renderer_unchanged": true
+  },
+  "factory_context": {
+    "fixture_count": 34,
+    "original_collider_count": 20,
+    "consumer_preparer_sha256": "ca42b436ea6a166c5eefe542c8750767470c65aff735b602d6e8b26ccfe79f0c",
+    "revision": "524747d9b5e1f21b5b18b56041788c01d745f1a1",
+    "prepared_assets": {
+      "workbench": {
+        "sha256": "5b7395dff838a1c7a38f92851b30920cd3f8b1e1677089a64b25d3dbecf88a16",
+        "bounds_xyz_m": [
+          -0.35697818551070476,
+          -0.7227310944581404,
+          0.0,
+          0.35697818551070476,
+          0.7227310944581404,
+          2.0497918472283345
+        ],
+        "mesh_count": 3,
+        "removed_physics_typed_prims": [
+          "/Asset/Units/Model/Joints/joint_door_02_joint_00",
+          "/Asset/Units/Model/Joints/joint_door_01_joint_00"
+        ],
+        "scope": "render-only; physics APIs and typed prims removed",
+        "source_url": "https://huggingface.co/datasets/nvidia/simready-assets/tree/524747d9b5e1f21b5b18b56041788c01d745f1a1/furniture_workbench_modular_a01",
+        "license": "CC-BY-4.0",
+        "author": "NVIDIA"
+      },
+      "cabinet": {
+        "sha256": "43ebdc24a3fe53af5348cf429dc8b90ccb3f26dcc888a17396085800befb447e",
+        "bounds_xyz_m": [
+          -0.2919570505619049,
+          -0.5083543658256531,
+          0.0,
+          0.2919570505619049,
+          0.5083543658256531,
+          1.3917119353988865
+        ],
+        "mesh_count": 10,
+        "removed_physics_typed_prims": [
+          "/Asset/Units/Model/Joints/joint_door_02_joint_00",
+          "/Asset/Units/Model/Joints/joint_wheel_01_joint_00",
+          "/Asset/Units/Model/Joints/joint_wheelSuppport_01_joint_00",
+          "/Asset/Units/Model/Joints/joint_wheel_03_joint_00",
+          "/Asset/Units/Model/Joints/joint_wheelSuppport_02_joint_00",
+          "/Asset/Units/Model/Joints/joint_drawer_01_joint_00",
+          "/Asset/Units/Model/Joints/joint_door_01_joint_00",
+          "/Asset/Units/Model/Joints/joint_wheel_02_joint_00",
+          "/Asset/Units/Model/Joints/joint_wheel_04_joint_00"
+        ],
+        "scope": "render-only; physics APIs and typed prims removed",
+        "source_url": "https://huggingface.co/datasets/nvidia/simready-assets/tree/524747d9b5e1f21b5b18b56041788c01d745f1a1/equipment_rolling_workstation_cabinet_c01",
+        "license": "CC-BY-4.0",
+        "author": "NVIDIA"
+      },
+      "cart": {
+        "sha256": "b47372f9a7ac671c54e6cadc52878bf7569c2d662b26afe8566dffb896977605",
+        "bounds_xyz_m": [
+          -0.4269838333243271,
+          -0.20607799291610718,
+          0.0,
+          0.4269838333243271,
+          0.20607799291610718,
+          0.9072148539081388
+        ],
+        "mesh_count": 11,
+        "removed_physics_typed_prims": [
+          "/Asset/Units/Model/Joints/joint_wheelA_01_joint_00",
+          "/Asset/Units/Model/Joints/joint_wheelC_01_joint_00",
+          "/Asset/Units/Model/Joints/joint_wheelBaseB_01_joint_00",
+          "/Asset/Units/Model/Joints/joint_wheelB_01_joint_00",
+          "/Asset/Units/Model/Joints/joint_wheelBaseC_01_joint_00",
+          "/Asset/Units/Model/Joints/joint_wheelBaseA_01_joint_00",
+          "/Asset/Units/Model/Joints/joint_wheelBaseD_01_joint_00",
+          "/Asset/Units/Model/Joints/joint_wheelD_01_joint_00",
+          "/Asset/Units/Model/Joints/joint_bin_01_joint_00",
+          "/Asset/Units/Model/Joints/joint_binBig_01_joint_00"
+        ],
+        "scope": "render-only; physics APIs and typed prims removed",
+        "source_url": "https://huggingface.co/datasets/nvidia/simready-assets/tree/524747d9b5e1f21b5b18b56041788c01d745f1a1/equipment_utility_cart_e01",
+        "license": "CC-BY-4.0",
+        "author": "NVIDIA"
+      }
+    }
+  },
+  "original_063": "Failed transport remains unchanged; this is a separate static render and no evidence of a completed transport run"
+}

@@ -12,18 +12,18 @@
 
 | 현재 반도체 구역 · 실제 Isaac Sim 조감 | 테스트 핸들러·ATE·검사 설비 근접 |
 |---|---|
-| ![트레이 저장소와 후공정 설비를 배치한 반도체 최종검사·포장 구역](docs/images/semiconductor-layout-local45-188/overview.png) | ![트레이 승강부·검사 창·HMI와 ATE 캐비닛](docs/images/semiconductor-layout-local45-188/test-handler.png) |
+| ![트레이 저장소와 후공정 설비 및 NVIDIA 정비 에셋34개를 배치한 반도체 최종검사·포장 구역](docs/images/semiconductor-layout-local45-196/overview.png) | ![트레이 승강부·검사 창·HMI와 ATE 캐비닛](docs/images/semiconductor-layout-local45-196/test-handler.png) |
 
-위 두 장은 **Isaac Sim4.5에서 촬영한 정지 RGB**입니다. 공개 기능 자료를 참고한 비브랜드 절차형 설비이며, 제조사 CAD나 앞서 생성한 예상 이미지가 아닙니다. AMR 반복 운송이나 공장 처리량의 근거로 사용하지 않습니다. [촬영 소스·시점·카메라·원본 해시·종료 기록](docs/images/semiconductor-layout-local45-188/provenance.json)
+위 두 장은 **Isaac Sim4.5에서 촬영한 정지 RGB**입니다. 공개 기능 자료를 참고한 비브랜드 절차형 생산 설비와 NVIDIA SimReady 정비·지원 소품34개를 함께 렌더링했습니다. 제공처 원본 모델과 프로젝트의 절차형 장비를 구분하며 AMR 반복 운송이나 공장 처리량의 근거로 사용하지 않습니다. 같은 물리 시점에서 촬영했고 렌더 오류0건·소유 프로세스 종료를 확인했습니다. [촬영 소스·시점·카메라·원본 해시·종료 기록](docs/images/semiconductor-layout-local45-196/provenance.json)
 
 <details>
-<summary>지원 구역에 배치한 NVIDIA SimReady 모델 · 새 렌더 촬영 대기</summary>
+<summary>지원 구역의 NVIDIA SimReady 모델 · 제공처 원본 미리보기</summary>
 
 | 공구 보관 캐비닛 · 15개 | 이동식 정비 작업대 · 10개 | 정비 부품 카트 · 9개 |
 |---|---|---|
 | ![NVIDIA 원본 캐비닛 모델 미리보기](docs/images/factory-context-assets-193/tool-cabinet.png) | ![NVIDIA 원본 이동식 작업대 모델 미리보기](docs/images/factory-context-assets-193/rolling-workstation.png) | ![NVIDIA 원본 정비 카트 모델 미리보기](docs/images/factory-context-assets-193/utility-cart.png) |
 
-NVIDIA 제공 모델 미리보기이며 새 공장 촬영 결과는 아닙니다. 재질·텍스처가 포함된3종을 정비·입고 지원·외곽 서비스 공간에34개 배치했습니다. 실제 USD 합성에서 모델 크기·위치와 AMR 구역의10cm 이격을 확인했습니다. 새 에셋의 Isaac Sim RGB 촬영은 남아 있으며, 위188 촬영과 진행 중인 동결 운송063에는 포함되지 않습니다. 제작자 NVIDIA, CC BY 4.0. [원본·라이선스·변경 내용·캐시 준비법](docs/asset-attribution.md) · [합성 근거](docs/evidence/factory-context-193.json)
+이 표는 NVIDIA 제공 모델 미리보기입니다. 재질·텍스처가 포함된3종을 정비·입고 지원·외곽 서비스 공간에34개 배치했고, 위196 공장 RGB에서 함께 촬영했습니다. 실제 USD 합성에서 모델 크기·위치와 AMR 구역의10cm 이격을 확인했습니다. 실패한 이전 운송063에는 새 소품이 포함되지 않습니다. 제작자 NVIDIA, CC BY 4.0. [원본·라이선스·변경 내용·캐시 준비법](docs/asset-attribution.md) · [합성 근거](docs/evidence/factory-context-196.json)
 
 </details>
 
