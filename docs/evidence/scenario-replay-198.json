@@ -1,0 +1,110 @@
+{
+  "schema_version": 1,
+  "recorded_at": "2026-10-22T10:13:59.705162+00:00",
+  "run_id": "32a8dcc7c1714ef1bf46be8e60ea79fb",
+  "physics_source_commit": "189d0a5ea0a8f9f03ba86785e2d25ca468f210aa",
+  "api_code_commit": "f2ff33d1a238e05b409fdf502ef4a8f633b83a6d",
+  "api_source_archive_sha256": "dd7dcf73116d542512d4665e16bb7072e8138a3fb5211a1d55fcfb504cd2c857",
+  "status": "passed",
+  "scope": "actual live four-robot observations saved and replayed through Next HTTP; no browser click or physics replay claim",
+  "record": {
+    "scenario_id": "ci-44c3fe9c7a43",
+    "name": "초기 트레이 공급 · CI 인계",
+    "created_at": "2026-10-22T10:13:58.709074+00:00",
+    "source_run_id": "32a8dcc7c1714ef1bf46be8e60ea79fb",
+    "frame_count": 3,
+    "scene_sha256": "c740501dd7c315fbf22b5621455e717e9c5c26554f2623b45d91d2591fe4a81c",
+    "scope": "selected dashboard snapshots; no physics simulation rerun",
+    "file_sha256": "9e678e15865d9f457691e8f89292cedadece22ff60e4cd8f64651680deee9670"
+  },
+  "record_bytes": 52839,
+  "frames": [
+    {
+      "index": 0,
+      "sim_time_s": 169.23334216,
+      "observed_at": "2026-10-22T10:12:25.933880+00:00",
+      "source_snapshot_sha256": "c479f31ccb74900f1af7a3207c93be752af56dfea3e19ec833154b059027943c",
+      "robot_ids": [
+        "carter1",
+        "carter2",
+        "carter3",
+        "carter4"
+      ],
+      "capabilities": []
+    },
+    {
+      "index": 2,
+      "sim_time_s": 169.550008843,
+      "observed_at": "2026-10-22T10:13:57.267325+00:00",
+      "source_snapshot_sha256": "6d9306f11812994cf0a5819689d71a0901b2ab0fa36aa7f9bd05a9525d1f9825",
+      "robot_ids": [
+        "carter1",
+        "carter2",
+        "carter3",
+        "carter4"
+      ],
+      "capabilities": []
+    }
+  ],
+  "live_after": {
+    "run_id": "32a8dcc7c1714ef1bf46be8e60ea79fb",
+    "mode": "live",
+    "connection": "connected",
+    "sim_time_s": 169.550008843
+  },
+  "checks": {
+    "same_native_run": true,
+    "four_robots": true,
+    "same_factory_layout": true,
+    "save_list_replay_via_next": true,
+    "original_timestamps_and_hashes": true,
+    "replay_capabilities_empty": true,
+    "live_endpoint_remained_live": true
+  },
+  "vehicle_command_posts": 0,
+  "requests": [
+    {
+      "method": "GET",
+      "path": "snapshot"
+    },
+    {
+      "method": "GET",
+      "path": "scene"
+    },
+    {
+      "method": "GET",
+      "path": "snapshot"
+    },
+    {
+      "method": "GET",
+      "path": "snapshot"
+    },
+    {
+      "method": "GET",
+      "path": "snapshot"
+    },
+    {
+      "method": "POST",
+      "path": "scenarios"
+    },
+    {
+      "method": "GET",
+      "path": "scenarios"
+    },
+    {
+      "method": "GET",
+      "path": "scenarios?scenario_id=ci-44c3fe9c7a43&frame_index=0"
+    },
+    {
+      "method": "GET",
+      "path": "scenarios?scenario_id=ci-44c3fe9c7a43&frame_index=2"
+    },
+    {
+      "method": "GET",
+      "path": "snapshot"
+    }
+  ],
+  "browser_interaction_verified": false,
+  "browser_gap": "CUA inventory returned apps=[] and browsers=[]",
+  "native_result": "still running; whole transport completion unverified"
+}
