@@ -11,7 +11,14 @@ from pathlib import Path
 import re
 from typing import Any, Mapping, Sequence
 
-from .layout import FLEET4_REVISION, V4_REVISION, Layout, LayoutError, Rect
+from .layout import (
+    DUAL_LANE_REVISION,
+    FLEET4_LAYOUT_REVISIONS,
+    PRODUCTION_BAY_REVISIONS,
+    Layout,
+    LayoutError,
+    Rect,
+)
 
 
 SCHEMA_VERSION = 1
@@ -95,7 +102,7 @@ def export_visual_scene(
     render_bytes, render_profile = _load_json_object(render_source, "render profile")
     _validate_config(config, layout)
     _validate_render_profile(render_profile)
-    geometry_profile = PRODUCTION_BAY_GEOMETRY if layout.data.get("revision") in (V4_REVISION, FLEET4_REVISION) else "legacy"
+    geometry_profile = PRODUCTION_BAY_GEOMETRY if layout.data.get("revision") in PRODUCTION_BAY_REVISIONS else "legacy"
 
     palette = _palette(variant_seed)
     obstacle_by_id = {str(item["id"]): item for item in layout.data["physical_obstacles"]}
@@ -390,7 +397,7 @@ def _materials(palette: Mapping[str, tuple[float, float, float]], *, semiconduct
 def _factory_shell(layout: Layout, palette: Mapping[str, tuple[float, float, float]]) -> list[str]:
     light = palette["light"]
     bounds = layout.bounds
-    south_wall_height = .25 if layout.data.get("revision") in (V4_REVISION, FLEET4_REVISION) else 1.2
+    south_wall_height = .25 if layout.data.get("revision") in PRODUCTION_BAY_REVISIONS else 1.2
     lines = ['        def Xform "FactoryShell"', "        {"]
     for name, bounds in (
         ("WestWall", (bounds.xmin - .12, bounds.ymin, 0.0, bounds.xmin, bounds.ymax, 3.2)),
@@ -471,11 +478,41 @@ def _floor_graphics(layout: Layout, palette: Mapping[str, tuple[float, float, fl
             ("East", (x1 - thickness, y0 + thickness, z0, x1, y1 - thickness, z1)),
         ):
             add_box(_Box(f"{name}_{suffix}", border, material, "floor_marking", "zone_boundary"))
-    if layout.data.get("revision") in (V4_REVISION, FLEET4_REVISION):
+    revision = layout.data.get("revision")
+    if revision == DUAL_LANE_REVISION:
+        lane_specs = _dual_lane_specs(layout)
+        boundaries: set[tuple[str, float, float, float]] = set()
+        for lane_id, (x0, y0), (x1, y1) in lane_specs:
+            if math.isclose(y0, y1, abs_tol=1e-9):
+                for y in (y0 - 1.5, y0 + 1.5):
+                    boundaries.add(("horizontal", y, min(x0, x1), max(x0, x1)))
+            else:
+                for x in (x0 - 1.5, x0 + 1.5):
+                    boundaries.add(("vertical", x, min(y0, y1), max(y0, y1)))
+        for index, (axis, offset, start, end) in enumerate(sorted(boundaries)):
+            if axis == "horizontal":
+                bounds_xyz = (start, offset - .025, .011, end, offset + .025, .016)
+            else:
+                bounds_xyz = (offset - .025, start, .011, offset + .025, end, .016)
+            add_box(_Box(
+                f"LaneBoundary_{index}", bounds_xyz, "SafetyYellow",
+                "floor_marking", "directed_lane_boundary",
+            ))
+        for lane_id, start, end in lane_specs:
+            for arrow_index, fraction in enumerate((.25, .5, .75)):
+                center = (
+                    start[0] + (end[0] - start[0]) * fraction,
+                    start[1] + (end[1] - start[1]) * fraction,
+                )
+                arrow_name = f"LaneArrow_{_prim_name(lane_id)}_{arrow_index}"
+                lines.extend(_lane_arrow_usda(arrow_name, center, start, end, indent=12))
+                semantic_roots[f"{root_path}/{arrow_name}"] = "floor_marking"
+        line_specs: tuple[tuple[float, float, float], ...] = ()
+    elif revision in PRODUCTION_BAY_REVISIONS:
         line_specs = ((2.5, bounds.xmin + .4, bounds.xmax - .4), (5.5, bounds.xmin + .4, bounds.xmax - .4),
                       (8.5, 2.0, 9.0), (11.5, 2.0, 9.0),
                       (14.5, bounds.xmin + .4, bounds.xmax - .4), (17.5, bounds.xmin + .4, bounds.xmax - .4))
-        if layout.data.get("revision") == FLEET4_REVISION:
+        if revision in FLEET4_LAYOUT_REVISIONS:
             line_specs = tuple((y + 1.0, x0, x1) for y, x0, x1 in line_specs)
     else:
         line_specs = tuple((y, .4, 39.6) for y in (2.3, 5.7, 10.2, 13.8, 18.3, 21.7))
@@ -496,7 +533,7 @@ def _floor_graphics(layout: Layout, palette: Mapping[str, tuple[float, float, fl
             offset = (chevron - 1) * 0.34
             lines.extend(_box_usda(_Box(f"Chevron_{chevron}", (x - 0.56 + offset, y - 0.035, 0.017, x - 0.34 + offset, y + 0.035, 0.022), "White"), 16))
         lines.append("            }")
-    if layout.data.get("revision") in (V4_REVISION, FLEET4_REVISION):
+    if revision in PRODUCTION_BAY_REVISIONS:
         stencil_specs = (
             ("S1", (3.75, 3.55), "station_identifier"),
             ("S2", (3.75, 9.55), "station_identifier"),
@@ -512,7 +549,7 @@ def _floor_graphics(layout: Layout, palette: Mapping[str, tuple[float, float, fl
             ("PACK", (16.7, 14.6), "process_identifier"),
             ("SHIP", (27.2, 8.8), "process_identifier"),
         )
-        if layout.data.get("revision") == FLEET4_REVISION:
+        if revision in FLEET4_LAYOUT_REVISIONS:
             stencil_specs = tuple((name, (xy[0] - .25, xy[1] - .45), "station_identifier")
                                   for name, xy in {**layout.stations, **layout.pockets}.items()) + tuple(
                 (name, (origin[0], origin[1] + 1.0), role)
@@ -557,6 +594,80 @@ def _floor_graphics(layout: Layout, palette: Mapping[str, tuple[float, float, fl
             seen_labels.add(label)
     lines.extend(["        }"])
     return lines
+
+
+def _dual_lane_specs(
+    layout: Layout,
+) -> tuple[tuple[str, tuple[float, float], tuple[float, float]], ...]:
+    """Validate the authored one-way lane markings consumed by the visual layer."""
+    lanes = layout.data.get("traffic_lanes")
+    if not isinstance(lanes, list) or len(lanes) != 6:
+        raise LayoutError("dual-lane layout traffic_lanes must contain six directed lanes")
+    expected_ids = {"LOW_E", "LOW_W", "HIGH_E", "HIGH_W", "EAST_N", "EAST_S"}
+    seen: set[str] = set()
+    result: list[tuple[str, tuple[float, float], tuple[float, float]]] = []
+    for index, lane in enumerate(lanes):
+        if not isinstance(lane, dict) or set(lane) != {"id", "from_xy", "to_xy"}:
+            raise LayoutError(f"traffic_lanes[{index}] must contain id, from_xy and to_xy")
+        lane_id = lane["id"]
+        if not isinstance(lane_id, str) or lane_id not in expected_ids or lane_id in seen:
+            raise LayoutError(f"traffic_lanes[{index}].id is unsupported or duplicated")
+        points: list[tuple[float, float]] = []
+        for field in ("from_xy", "to_xy"):
+            value = lane[field]
+            if (not isinstance(value, list) or len(value) != 2
+                    or not all(_is_finite_number(number) for number in value)):
+                raise LayoutError(f"traffic_lanes[{index}].{field} must be a finite XY pair")
+            point = (float(value[0]), float(value[1]))
+            if not layout.bounds.contains_point(point):
+                raise LayoutError(f"traffic_lanes[{index}].{field} lies outside layout bounds")
+            points.append(point)
+        start, end = points
+        if (math.isclose(start[0], end[0], abs_tol=1e-9)
+                == math.isclose(start[1], end[1], abs_tol=1e-9)):
+            raise LayoutError(f"traffic_lanes[{index}] must be a nonzero axis-aligned segment")
+        seen.add(lane_id)
+        result.append((lane_id, start, end))
+    if seen != expected_ids:
+        raise LayoutError("dual-lane layout traffic_lanes IDs differ from the visual contract")
+    return tuple(result)
+
+
+def _lane_arrow_usda(
+    name: str,
+    center: tuple[float, float],
+    start: tuple[float, float],
+    end: tuple[float, float],
+    *,
+    indent: int,
+) -> list[str]:
+    dx, dy = end[0] - start[0], end[1] - start[1]
+    length = math.hypot(dx, dy)
+    ux, uy = dx / length, dy / length
+    px, py = -uy, ux
+    cx, cy = center
+    tip = (cx + ux * .55, cy + uy * .55, .018)
+    head_left = (cx + ux * .08 + px * .23, cy + uy * .08 + py * .23, .018)
+    head_right = (cx + ux * .08 - px * .23, cy + uy * .08 - py * .23, .018)
+    tail_left = (cx - ux * .55 + px * .055, cy - uy * .55 + py * .055, .018)
+    tail_right = (cx - ux * .55 - px * .055, cy - uy * .55 - py * .055, .018)
+    neck_left = (cx + ux * .08 + px * .055, cy + uy * .08 + py * .055, .018)
+    neck_right = (cx + ux * .08 - px * .055, cy + uy * .08 - py * .055, .018)
+    pad = " " * indent
+    points = (tip, head_left, head_right, tail_left, tail_right, neck_left, neck_right)
+    return [
+        f'{pad}def Mesh "{_prim_name(name)}"',
+        f"{pad}{{",
+        f'{pad}    custom string semanticClass = "floor_marking"',
+        f'{pad}    custom string stateRole = "directed_lane_arrow"',
+        f'{pad}    custom string stableId = {_quote(name)}',
+        f"{pad}    point3f[] points = [{', '.join(_vec(point) for point in points)}]",
+        f"{pad}    int[] faceVertexCounts = [3, 4]",
+        f"{pad}    int[] faceVertexIndices = [0, 1, 2, 3, 4, 6, 5]",
+        f'{pad}    uniform token subdivisionScheme = "none"',
+        f'{pad}    rel material:binding = </World/Visuals/Looks/White>',
+        f"{pad}}}",
+    ]
 
 
 def _floor_stencil_geometry(

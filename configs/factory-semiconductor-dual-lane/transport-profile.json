@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "scope": "fleet4_transport_development",
+  "policy": "fifo",
+  "condition": "normal",
+  "primary_evaluation": false,
+  "scene_closure": null,
+  "initial_robots": {
+    "carter1": "P1",
+    "carter2": "P2",
+    "carter3": "P3",
+    "carter4": "P4"
+  },
+  "load": {
+    "ci_capacity": 2,
+    "co_capacity": 2,
+    "workers": 1,
+    "service_time_s": 20.0,
+    "nominal_speed_m_s": 0.6,
+    "dwell_s": 5.0
+  },
+  "horizon_s": 1800.0,
+  "limits_provenance": "Authored repeating-lot demonstration shift; arrivals close after12 lots, then drain and park. No measured throughput or actual fab recipe.",
+  "energy": {
+    "initial_soc": {
+      "carter1": 0.85,
+      "carter2": 0.8,
+      "carter3": 0.75,
+      "carter4": 0.7
+    },
+    "dispatch": {
+      "charger_anchors": [
+        "P1",
+        "P2"
+      ],
+      "expected_wait_s": 120.0,
+      "angular_speed_rad_s": 0.4
+    }
+  },
+  "material_flow": {
+    "schema_version": 1,
+    "provenance": "Finite JEDEC tray inventory; quantity is trays, transported in ESD carriers; no physical load/unload claim.",
+    "initial_stock": [
+      {
+        "location": "S1",
+        "sku": "packaged-ic-tray",
+        "quantity": 20
+      },
+      {
+        "location": "S2",
+        "sku": "packaged-ic-tray",
+        "quantity": 20
+      },
+      {
+        "location": "S3",
+        "sku": "packaged-ic-tray",
+        "quantity": 20
+      }
+    ]
+  },
+  "lot_stream": {
+    "lot_count": 12,
+    "release_interval_s": 30.0,
+    "source_stations": [
+      "S1",
+      "S2",
+      "S3"
+    ],
+    "sku": "packaged-ic-tray",
+    "quantity": 2,
+    "scope": "Authored finite demonstration shift with repeated lot arrivals; not a calibrated factory rate or endless workload."
+  }
+}

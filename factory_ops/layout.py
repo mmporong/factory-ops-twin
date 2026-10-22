@@ -18,6 +18,9 @@ from typing import Any, Iterable, Mapping, Sequence
 V3_REVISION = "amr-focus-v3"
 V4_REVISION = "amr-production-bay-v4"
 FLEET4_REVISION = "amr-production-bay-fleet4-v1"
+DUAL_LANE_REVISION = "amr-semiconductor-dual-lane-v1"
+FLEET4_LAYOUT_REVISIONS = frozenset((FLEET4_REVISION, DUAL_LANE_REVISION))
+PRODUCTION_BAY_REVISIONS = frozenset((V4_REVISION, *FLEET4_LAYOUT_REVISIONS))
 V3_STATIONS = {
     "S1": (4.0, 4.0),
     "S2": (4.0, 12.0),
@@ -39,6 +42,12 @@ V4_POCKETS = {"P1": (12.0, 1.5), "P2": (12.0, 18.5)}
 FLEET4_STATIONS = {name: (xy[0], xy[1] + 1.0) for name, xy in V4_STATIONS.items()}
 FLEET4_POCKETS = {"P1": (12.0, 1.5), "P2": (12.0, 20.5),
                   "P3": (17.0, 1.5), "P4": (17.0, 20.5)}
+DUAL_LANE_STATIONS = {
+    "S1": (3.5, 4.5), "S2": (3.5, 13.5), "S3": (3.5, 22.5),
+    "CI": (21.5, 10.5), "CO": (21.5, 16.5), "OUT": (32.5, 13.5),
+}
+DUAL_LANE_POCKETS = {"P1": (12.0, 1.5), "P2": (12.0, 26.0),
+                     "P3": (17.0, 1.5), "P4": (17.0, 26.0)}
 # Compatibility aliases preserve the established V1-V3 mission contracts.
 EXPECTED_STATIONS = V3_STATIONS
 EXPECTED_POCKETS = V3_POCKETS
@@ -163,7 +172,12 @@ class Layout:
         if self.data["units"] != "m" or self.data["frame"] != "map":
             raise LayoutError("layout must use metres in the map frame")
         revision = self.data.get("revision")
-        if revision == FLEET4_REVISION:
+        if revision == DUAL_LANE_REVISION:
+            expected_bounds = (0.0, 0.0, 36.0, 28.0)
+            expected_stations = DUAL_LANE_STATIONS
+            expected_pockets = DUAL_LANE_POCKETS
+            barrier_y = (3.0, 6.0)
+        elif revision == FLEET4_REVISION:
             expected_bounds = (0.0, 0.0, 32.0, 22.0)
             expected_stations = FLEET4_STATIONS
             expected_pockets = FLEET4_POCKETS

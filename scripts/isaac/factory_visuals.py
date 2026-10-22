@@ -14,7 +14,14 @@ import shutil
 from contextlib import contextmanager
 from typing import Any, Mapping, Sequence
 
-from factory_ops.layout import Layout, LayoutError, Rect
+from factory_ops.layout import (
+    DUAL_LANE_REVISION,
+    PRODUCTION_BAY_REVISIONS,
+    V4_REVISION,
+    Layout,
+    LayoutError,
+    Rect,
+)
 from factory_ops.visual_scene import PRODUCTION_BAY_GEOMETRY, _recipe_boxes, export_visual_scene
 from factory_ops.visual_state import (
     SCOPE,
@@ -62,7 +69,7 @@ V4_CARGO_SUPPORT = {
 
 
 def signal_placements(layout: Layout) -> dict[str, tuple[float, float, float]]:
-    if layout.data.get("revision") not in ("amr-production-bay-v4", "amr-production-bay-fleet4-v1"):
+    if layout.data.get("revision") not in PRODUCTION_BAY_REVISIONS:
         return dict(SIGNAL_PLACEMENTS)
     obstacles = {str(item["id"]): item for item in layout.data["physical_obstacles"]}
     ci = Rect.from_value(obstacles["CI_BUFFER"]["rect"], "CI_BUFFER")
@@ -130,7 +137,7 @@ def world_slot_placement(layout: Layout, location: str, slot: int) -> dict[str, 
     if type(slot) is not int or slot < 0:
         raise ValueError("visual cargo slot must be a nonnegative integer")
     obstacle_id = WORLD_LOCATION_OBSTACLE[location]
-    compact = layout.data.get("revision") in ("amr-production-bay-v4", "amr-production-bay-fleet4-v1")
+    compact = layout.data.get("revision") in PRODUCTION_BAY_REVISIONS
     if compact and location == "source_S3":
         obstacle_id = "KIT_BENCH_2"
     source = next((item for item in layout.data["physical_obstacles"] if item["id"] == obstacle_id), None)
@@ -362,12 +369,18 @@ class FactoryVisualRuntime:
         shutil.copyfile(self.base_scene_path, copied_base)
         if _sha_file(copied_base) != base_before or _sha_file(self.base_scene_path) != base_before:
             raise ValueError("visual scene base copy changed source bytes")
-        config_dir = self.config_directory or Path(__file__).resolve().parents[2] / "configs" / (
-            "factory-v4" if self.layout.data.get("revision") == "amr-production-bay-v4" else "factory-v3"
-        )
+        revision = self.layout.data.get("revision")
+        if self.config_directory is not None:
+            config_dir = self.config_directory
+        elif revision == DUAL_LANE_REVISION:
+            config_dir = self.layout_path.parent
+        else:
+            config_dir = Path(__file__).resolve().parents[2] / "configs" / (
+                "factory-v4" if revision == V4_REVISION else "factory-v3"
+            )
         visual_config = config_dir / "visual-assets.json"
         render_profile = config_dir / "render-profile.json"
-        if self.config_directory is not None:
+        if self.config_directory is not None or revision == DUAL_LANE_REVISION:
             _require_regular(visual_config, "explicit visual assets")
             _require_regular(render_profile, "explicit render profile")
         exported = export_visual_scene(

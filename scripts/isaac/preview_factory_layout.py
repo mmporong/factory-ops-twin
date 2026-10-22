@@ -60,9 +60,19 @@ def main() -> int:
         world.reset()
         world.pause()
         frozen = (int(world.current_time_step_index), float(world.current_time))
-        for name, eye, target, focal in (
-                ("overview", (16., -13., 24.), (16., 11., .7), 17.),
-                ("test-handler", (26., 1., 12.), (19., 10., 1.), 26.)):
+        views = (
+            ("overview", (16., -13., 24.), (16., 11., .7), 17.),
+            ("test-handler", (26., 1., 12.), (19., 10., 1.), 26.),
+        )
+        layout = json.loads((args.bundle/"layout.json").read_text(encoding="utf-8"))
+        if layout.get("revision") == "amr-semiconductor-dual-lane-v1":
+            profile = json.loads((args.bundle/"render-profile.json").read_text(encoding="utf-8"))
+            cameras = {camera["id"]: camera for camera in profile["cameras"]}
+            views = tuple((name, cameras[key]["eye_xyz_m"], cameras[key]["target_xyz_m"],
+                           cameras[key]["focal_length_mm"])
+                          for name, key in (("overview", "portfolio_overview"),
+                                            ("test-handler", "cell_process")))
+        for name, eye, target, focal in views:
             camera = rep.create.camera(position=eye, look_at=target, focal_length=focal)
             product = rep.create.render_product(camera, (1280, 720))
             annotator = rep.AnnotatorRegistry.get_annotator("rgb")

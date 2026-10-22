@@ -16,7 +16,7 @@ from typing import Any, Mapping
 from .fleet import FleetOrder
 from .fleet_registry import FleetRegistry
 from .fleet_routing import RouteBook, swept_tiles
-from .layout import FLEET4_REVISION, Layout
+from .layout import FLEET4_LAYOUT_REVISIONS, Layout
 from .usda import export_usda
 from .visual_state import canonical_sha256
 
@@ -143,7 +143,7 @@ def _compile(root: Path) -> dict[str, Any]:
     config = _read(root, "g2.json")
     runtime = _read(root, "g3-runtime.json")
     book = RouteBook.from_files(root / "layout.json", root / "g3-routing.json")
-    if book.base_layout.data.get("revision") != FLEET4_REVISION:
+    if book.base_layout.data.get("revision") not in FLEET4_LAYOUT_REVISIONS:
         raise ValueError("four-AMR transport requires the isolated fleet4 layout revision")
     if (profile.get("schema_version") != 1 or profile.get("scope") != QUALIFICATION
             or profile.get("primary_evaluation") is not False or config.get("qualification") != QUALIFICATION

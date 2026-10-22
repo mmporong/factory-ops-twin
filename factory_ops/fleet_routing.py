@@ -18,7 +18,7 @@ import re
 from typing import Any, Mapping, Sequence
 
 from .footprint import _bad_touched_cells
-from .layout import Layout, LayoutError, Rect
+from .layout import PRODUCTION_BAY_REVISIONS, Layout, LayoutError, Rect
 
 Point = tuple[float, float]
 Tile = tuple[int, int]
@@ -316,9 +316,7 @@ class RouteBook:
                 raise ValueError(f"unknown policy region override: {name}")
             regions[name]["rect"] = list(rectangle)
         revision = base_layout.data.get("revision")
-        variant["revision"] = revision if revision in (
-            "amr-production-bay-v4", "amr-production-bay-fleet4-v1"
-        ) else "amr-focus-v3-g3a"
+        variant["revision"] = revision if revision in PRODUCTION_BAY_REVISIONS else "amr-focus-v3-g3a"
         variant["status"] = "G3a single-robot corridor preflight only; no physical G3 qualification"
         self.layout = Layout(variant, source_sha256=_hash(variant))
         self.base_layout = base_layout
@@ -338,6 +336,23 @@ class RouteBook:
             self.edges.add(key)
             self.adjacency[edge[0]].append(edge[1])
             self.adjacency[edge[1]].append(edge[0])
+        undirected = frozenset(self.edges)
+        directed = self.config.get("directed_edges", [])
+        if not isinstance(directed, list):
+            raise ValueError("directed_edges must be a list of one-way graph edges")
+        self.directed_edges: set[tuple[str, str]] = set()
+        for edge in directed:
+            if (not isinstance(edge, (list, tuple)) or len(edge) != 2
+                    or any(not isinstance(name, str) or name not in self.nodes for name in edge)
+                    or edge[0] == edge[1]):
+                raise ValueError("directed route graph edge references invalid nodes")
+            arc = (edge[0], edge[1])
+            physical = tuple(sorted(arc))
+            if arc in self.directed_edges or physical in undirected:
+                raise ValueError("duplicate or mixed-direction route graph edge")
+            self.directed_edges.add(arc)
+            self.edges.add(physical)
+            self.adjacency[edge[0]].append(edge[1])
         self.closed_edge = tuple(sorted(self.config["closure"]["edge"]))
         if self.closed_edge not in self.edges:
             raise ValueError("closure must refer to a route graph edge")
@@ -429,7 +444,7 @@ class RouteBook:
         preserved = all(self.layout.data[key] == self.base_layout.data[key] for key in ("stations", "pockets", "physical_obstacles"))
         if not preserved:
             raise LayoutError("G3a may only change authored policy passage widths")
-        return {"schema_version": 1, "backend": "authored_route_preflight", "primary_evaluation": False,
+        report: dict[str, Any] = {"schema_version": 1, "backend": "authored_route_preflight", "primary_evaluation": False,
                 "passed": not errors, "errors": errors, "edge_checks": checks, "base_layout_failed_edges": baseline_failures,
                 "planning_radius_m": self.planning_radius_m, "evaluation_radius_m": self.evaluation_radius_m,
                 "sampling_cover_radius_m": radius, "config_sha256": self.config_sha256,
@@ -439,6 +454,12 @@ class RouteBook:
                                 "scope": "Two conservative circular envelopes, each clear of both walls; current corridors require capacity-one conflict protection"},
                 "routes": routes, "route_count": len(routes), "anchors_preserved": preserved,
                 "scope": "Authored geometric route/tile compilation only. No Nav2 path, action, reservation grant, drive performance or GPU execution is asserted."}
+        if self.directed_edges:
+            report["directed_graph"] = {"one_way_edges": len(self.directed_edges),
+                "bidirectional_edges": len(self.edges) - len({tuple(sorted(arc)) for arc in self.directed_edges}),
+                "scope": "one-way authored lane graph; shared junctions and docking branches still require reservation admission"}
+            report["single_lane"]["scope"] = "Circular-envelope width calculation only; directed lanes do not bypass shared junction or docking reservations"
+        return report
 
 
 __all__ = [

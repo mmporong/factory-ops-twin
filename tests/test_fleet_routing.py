@@ -94,6 +94,32 @@ class RouteBookTests(unittest.TestCase):
             with self.subTest(field=name, value=value), self.assertRaises(ValueError):
                 RouteBook(self.base, data)
 
+    def test_one_way_edge_cannot_be_traversed_in_reverse(self):
+        data = deepcopy(self.config)
+        data["edges"].remove(["S1", "W_LOW"])
+        data["directed_edges"] = [["S1", "W_LOW"]]
+        book = RouteBook(self.base, data)
+        self.assertEqual(book.plan("S1", "W_LOW").nodes, ("S1", "W_LOW"))
+        with self.assertRaisesRegex(ValueError, "no currently traversable"):
+            book.plan("W_LOW", "S1")
+
+    def test_one_way_edges_reject_ambiguous_and_invalid_declarations(self):
+        for directed in (
+            [["S1", "W_LOW"]],
+            [["S1", "S1"]],
+            [["S1", "missing"]],
+            "S1->W_LOW",
+        ):
+            data = deepcopy(self.config)
+            data["directed_edges"] = directed
+            with self.subTest(directed=directed), self.assertRaises(ValueError):
+                RouteBook(self.base, data)
+        data = deepcopy(self.config)
+        data["edges"].remove(["S1", "W_LOW"])
+        data["directed_edges"] = [["S1", "W_LOW"], ["S1", "W_LOW"]]
+        with self.assertRaisesRegex(ValueError, "duplicate"):
+            RouteBook(self.base, data)
+
 
 class SweptTileTests(unittest.TestCase):
     def test_exact_distance_handles_crossing_parallel_corner_and_zero_segment(self):

@@ -1,0 +1,478 @@
+{
+  "schema_version": 1,
+  "scope": "four-AMR dual-lane authored route/parking preflight only; no runtime qualification",
+  "base_layout": "configs/factory-semiconductor-dual-lane/layout.json",
+  "policy_region_overrides": {
+    "WEST_LINK": [
+      7.5,
+      4.5,
+      10.5,
+      22.5
+    ],
+    "CENTER_LINK": [
+      13.7,
+      4.5,
+      16.3,
+      22.5
+    ],
+    "EAST_SPINE": [
+      24,
+      3,
+      30,
+      24
+    ]
+  },
+  "override_scope": "Separated directional main/spine lanes plus shared auxiliary, station, dock and parking connectors; runtime qualification remains pending.",
+  "collision_radius": {
+    "value": 0.6371090915442774,
+    "unit": "m",
+    "measured_at": "2026-10-16T12:12:28.178006+00:00",
+    "valid_for": "G2 Nova Carter enabled collider union in the robot root frame; any V4 GPU startup must remeasure the loaded asset",
+    "source_commit": "81befc881466f0e612465ba3987165eec2c9ca4f",
+    "source_run": "g2-f1-004",
+    "source_run_id": "a37e070db5e98c935dc982deb0b5f564",
+    "source_file": "results/g2-f1-004/sim-ready.json#/robots/carter1/footprint/collision_radius_m",
+    "source_archive_sha256": "03ab2e89e8530c88fdfb998e961313a2c304fa629b6ecb8d48f830e39f89aca1"
+  },
+  "authored_allowances": {
+    "evaluation_clearance_m": 0.2,
+    "localization_planning_margin_m": 0.3,
+    "tile_size_m": 1.0,
+    "scope": "Conservative preflight assumptions; not a safety certification",
+    "reservation_radius_including_tracking_m": 1.4371090915442775
+  },
+  "nodes": {
+    "S1": [
+      3.5,
+      4.5
+    ],
+    "S2": [
+      3.5,
+      13.5
+    ],
+    "S3": [
+      3.5,
+      22.5
+    ],
+    "CI": [
+      21.5,
+      10.5
+    ],
+    "CO": [
+      21.5,
+      16.5
+    ],
+    "OUT": [
+      32.5,
+      13.5
+    ],
+    "P1": [
+      12,
+      1.5
+    ],
+    "P2": [
+      12,
+      26
+    ],
+    "P3": [
+      17,
+      1.5
+    ],
+    "P4": [
+      17,
+      26
+    ],
+    "LOW_E_W": [
+      9,
+      4.5
+    ],
+    "LOW_E_P1": [
+      12,
+      4.5
+    ],
+    "LOW_E_C": [
+      15,
+      4.5
+    ],
+    "LOW_E_P3": [
+      17,
+      4.5
+    ],
+    "LOW_E_ES": [
+      25.5,
+      4.5
+    ],
+    "LOW_E_EN": [
+      28.5,
+      4.5
+    ],
+    "LOW_W_EN": [
+      28.5,
+      7.5
+    ],
+    "LOW_W_ES": [
+      25.5,
+      7.5
+    ],
+    "LOW_W_P3": [
+      17,
+      7.5
+    ],
+    "LOW_W_C": [
+      15,
+      7.5
+    ],
+    "LOW_W_P1": [
+      12,
+      7.5
+    ],
+    "LOW_W_W": [
+      9,
+      7.5
+    ],
+    "W_MID": [
+      9,
+      13.5
+    ],
+    "C_MID": [
+      15,
+      13.5
+    ],
+    "HIGH_E_W": [
+      9,
+      19.5
+    ],
+    "HIGH_E_P2": [
+      12,
+      19.5
+    ],
+    "HIGH_E_C": [
+      15,
+      19.5
+    ],
+    "HIGH_E_P4": [
+      17,
+      19.5
+    ],
+    "HIGH_E_ES": [
+      25.5,
+      19.5
+    ],
+    "HIGH_E_EN": [
+      28.5,
+      19.5
+    ],
+    "HIGH_W_EN": [
+      28.5,
+      22.5
+    ],
+    "HIGH_W_ES": [
+      25.5,
+      22.5
+    ],
+    "HIGH_W_P4": [
+      17,
+      22.5
+    ],
+    "HIGH_W_C": [
+      15,
+      22.5
+    ],
+    "HIGH_W_P2": [
+      12,
+      22.5
+    ],
+    "HIGH_W_W": [
+      9,
+      22.5
+    ],
+    "ES_CI": [
+      25.5,
+      10.5
+    ],
+    "EN_CI": [
+      28.5,
+      10.5
+    ],
+    "ES_OUT": [
+      25.5,
+      13.5
+    ],
+    "EN_OUT": [
+      28.5,
+      13.5
+    ],
+    "ES_CO": [
+      25.5,
+      16.5
+    ],
+    "EN_CO": [
+      28.5,
+      16.5
+    ]
+  },
+  "edges": [
+    [
+      "LOW_E_W",
+      "LOW_W_W"
+    ],
+    [
+      "LOW_W_W",
+      "W_MID"
+    ],
+    [
+      "W_MID",
+      "HIGH_E_W"
+    ],
+    [
+      "HIGH_E_W",
+      "HIGH_W_W"
+    ],
+    [
+      "LOW_E_C",
+      "LOW_W_C"
+    ],
+    [
+      "LOW_W_C",
+      "C_MID"
+    ],
+    [
+      "C_MID",
+      "HIGH_E_C"
+    ],
+    [
+      "HIGH_E_C",
+      "HIGH_W_C"
+    ],
+    [
+      "LOW_E_P3",
+      "LOW_W_P3"
+    ],
+    [
+      "HIGH_E_P4",
+      "HIGH_W_P4"
+    ],
+    [
+      "P1",
+      "LOW_E_P1"
+    ],
+    [
+      "P1",
+      "LOW_W_P1"
+    ],
+    [
+      "P3",
+      "LOW_E_P3"
+    ],
+    [
+      "P3",
+      "LOW_W_P3"
+    ],
+    [
+      "P2",
+      "HIGH_E_P2"
+    ],
+    [
+      "P2",
+      "HIGH_W_P2"
+    ],
+    [
+      "P4",
+      "HIGH_E_P4"
+    ],
+    [
+      "P4",
+      "HIGH_W_P4"
+    ],
+    [
+      "S2",
+      "W_MID"
+    ],
+    [
+      "CI",
+      "ES_CI"
+    ],
+    [
+      "ES_CI",
+      "EN_CI"
+    ],
+    [
+      "CO",
+      "ES_CO"
+    ],
+    [
+      "ES_CO",
+      "EN_CO"
+    ],
+    [
+      "ES_OUT",
+      "EN_OUT"
+    ],
+    [
+      "EN_OUT",
+      "OUT"
+    ]
+  ],
+  "closure": {
+    "edge": [
+      "LOW_E_P3",
+      "LOW_E_ES"
+    ],
+    "barrier_source": "configs/factory-semiconductor-dual-lane/layout.json#/blocked_aisle",
+    "policy_input": "current closed boolean only",
+    "scope": "closed-state detour through the x17 lane-change connector and westbound lower lane"
+  },
+  "parking": {
+    "carter1": "P1",
+    "carter2": "P2",
+    "carter3": "P3",
+    "carter4": "P4"
+  },
+  "handover_contract": "Retain occupied tiles. Replace a reservation atomically only after fresh estimated occupancy is contained in both predecessor and successor bundles.",
+  "directed_edges": [
+    [
+      "S1",
+      "LOW_E_W"
+    ],
+    [
+      "LOW_E_W",
+      "LOW_E_P1"
+    ],
+    [
+      "LOW_E_P1",
+      "LOW_E_C"
+    ],
+    [
+      "LOW_E_C",
+      "LOW_E_P3"
+    ],
+    [
+      "LOW_E_P3",
+      "LOW_E_ES"
+    ],
+    [
+      "LOW_E_ES",
+      "LOW_E_EN"
+    ],
+    [
+      "LOW_W_EN",
+      "LOW_W_ES"
+    ],
+    [
+      "LOW_W_ES",
+      "LOW_W_P3"
+    ],
+    [
+      "LOW_W_P3",
+      "LOW_W_C"
+    ],
+    [
+      "LOW_W_C",
+      "LOW_W_P1"
+    ],
+    [
+      "LOW_W_P1",
+      "LOW_W_W"
+    ],
+    [
+      "LOW_W_W",
+      "S1"
+    ],
+    [
+      "S3",
+      "HIGH_E_W"
+    ],
+    [
+      "HIGH_E_W",
+      "HIGH_E_P2"
+    ],
+    [
+      "HIGH_E_P2",
+      "HIGH_E_C"
+    ],
+    [
+      "HIGH_E_C",
+      "HIGH_E_P4"
+    ],
+    [
+      "HIGH_E_P4",
+      "HIGH_E_ES"
+    ],
+    [
+      "HIGH_E_ES",
+      "HIGH_E_EN"
+    ],
+    [
+      "HIGH_W_EN",
+      "HIGH_W_ES"
+    ],
+    [
+      "HIGH_W_ES",
+      "HIGH_W_P4"
+    ],
+    [
+      "HIGH_W_P4",
+      "HIGH_W_C"
+    ],
+    [
+      "HIGH_W_C",
+      "HIGH_W_P2"
+    ],
+    [
+      "HIGH_W_P2",
+      "HIGH_W_W"
+    ],
+    [
+      "HIGH_W_W",
+      "S3"
+    ],
+    [
+      "LOW_E_EN",
+      "LOW_W_EN"
+    ],
+    [
+      "LOW_W_EN",
+      "EN_CI"
+    ],
+    [
+      "EN_CI",
+      "EN_OUT"
+    ],
+    [
+      "EN_OUT",
+      "EN_CO"
+    ],
+    [
+      "EN_CO",
+      "HIGH_E_EN"
+    ],
+    [
+      "HIGH_E_EN",
+      "HIGH_W_EN"
+    ],
+    [
+      "HIGH_W_ES",
+      "HIGH_E_ES"
+    ],
+    [
+      "HIGH_E_ES",
+      "ES_CO"
+    ],
+    [
+      "ES_CO",
+      "ES_OUT"
+    ],
+    [
+      "ES_OUT",
+      "ES_CI"
+    ],
+    [
+      "ES_CI",
+      "LOW_W_ES"
+    ],
+    [
+      "LOW_W_ES",
+      "LOW_E_ES"
+    ]
+  ]
+}
