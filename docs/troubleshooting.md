@@ -1027,7 +1027,9 @@ CPU 검사4개에서 기존240프레임 입력의180장 선택, 새180프레임 
 
 ## FOT-125 — 063의 역방향 운송 배정과 사후 릴레이 종료 확인
 
-063은12 lot 투입·3개 주문 완료 후 `persistent full-leg wait cycle; preserve reservations and fail-stop`으로 종료됐다. S1에서 새 제품을 받은 carter1의 S1→CI와 CI에서 빈 캐리어를 받은 carter3의 CI→S1이 같은 full-leg 타일을 역방향으로 요청했다. 두 차량은 정지 위치의 hold를 유지했고5초 지속된 상호 대기 감지를 통해 안전 중단했다. SDK의 `G2 mission controller ended with failed`는 임무 실패의 후속 오류다. 이 실패를 정상 완주로 바꾸지 않는다. 역방향 작업 배정의 수정과 후속 물리 운송은 진행 중이다.
+063은12 lot 투입·3개 주문 완료 후 `persistent full-leg wait cycle; preserve reservations and fail-stop`으로 종료됐다. S1에서 새 제품을 받은 carter1의 S1→CI와 CI에서 빈 캐리어를 받은 carter3의 CI→S1이 같은 full-leg 타일을 역방향으로 요청했다. 두 차량은 정지 위치의 hold를 유지했고5초 지속된 상호 대기 감지를 통해 안전 중단했다. SDK의 `G2 mission controller ended with failed`는 임무 실패의 후속 오류다. 이 실패를 정상 완주로 바꾸지 않는다.
+
+현재 배정된 제품·빈 캐리어 작업의 pickup/drop 쌍을 함께 읽어, 반대 방향인 새 작업의 배정을 유예한다. 제품과 반납 dispatcher의 cost는 같은 tick에서 앞서 선택된 작업도 매번 다시 읽는다. 새로운 이동 허가나 타일 예약을 만들지 않고, 같은 방향·다른 source·일반 교차 경로는 기존 예약 프로토콜을 따른다. 이 admission 조건과 동일 tick 처리의 CPU3검사는 통과했으며 실제12 lot 완주는 후속 실행에서 확인한다. 기존 hold·TTL·도착·정지·full-leg 및 순환대기 실패 조건은 유지한다.
 
 종료 중 Linux 릴레이의 transient unit이 먼저 사라져 `systemctl stop`이 `Unit ... not loaded`를 반환했다. 원래 종료 기록은 false로 남았고, 이를 기다린 미디어 내보내기도 시간 초과했다. 별도 사후 조회에서는 해당 unit·cgroup·PID/start-time·정확한 unit의 waiter·Windows foreground client가 모두 소멸했음을 확인했다. 원래 기록을 덮지 않고 사후 영수증을 보존한다. supervisor는 이미 제거된 unit이면 소유 foreground client만 join한 뒤 같은 소유권·PID 검사를 다시 수행한다. 다른 invocation/cgroup을 거절하는 보호는 유지하며 관련4검사가 통과했다.
 
@@ -1036,3 +1038,5 @@ CPU 검사4개에서 기존240프레임 입력의180장 선택, 새180프레임 
 SimReady 모델을 붙인194 정지 촬영에서 RGB 두 장과 Job 종료는 성공했지만, PhysX가 `CreateJoint - no bodies defined`를 기록했다. Physics/PhysX API를 제거해도 `PhysicsRevoluteJoint` 등의 typed prim은 남아 있었기 때문이다. 소비용 flatten 레이어에서 물리 typed prim도 제거하고 재개방 시 API·typed prim 모두0개를 요구하도록 고쳤다. 자식이 있는 물리 typed prim은 시각 하위 트리 손실을 피하기 위해 준비를 거절한다.
 
 원본143개 파일과194 입력 색인 사본은 보존했다. 새 CPU 준비에서 모델별 관절2/9/10개를 제거했으며 Mesh3/10/11개와 각 가시 바운딩 박스는 유지됐다. 실제 `PhysicsRevoluteJoint`와 Mesh를 함께 만든 회귀검사가 통과했다. 수정한 소비 모델의 네이티브 재촬영은 별도 실행으로 확인한다.
+
+195 재촬영은 준비 색인의 scope가 새 문구로 바뀌었는데 소비기가 이전 문구와 엄격 비교해 장면 설정에서 거절했다. GPU 촬영 전에 새 준비 결과를 장면 소비기까지 합성하는 확인이 빠진 문제다. 준비·소비의 계약을 맞추고 CPU에서 실제34개 참조·BBox·기존20개 충돌체 보존을 확인했다. 다음 재촬영에는 이 확인을 통과한 소스를 사용한다. [수정 후 합성 근거](evidence/factory-context-196.json)

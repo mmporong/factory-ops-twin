@@ -154,8 +154,8 @@ def _prepared_asset(root: Path, item: Mapping[str, Any], asset_id: str) -> tuple
     measured = hashlib.sha256(path.read_bytes()).hexdigest()
     if measured != expected:
         raise LayoutError(f"prepared asset {asset_id} SHA-256 mismatch")
-    if item.get("scope") != "render-only; physics APIs removed":
-        raise LayoutError(f"prepared asset {asset_id} must be render-only with physics APIs removed")
+    if item.get("scope") != "render-only; physics APIs and typed prims removed":
+        raise LayoutError(f"prepared asset {asset_id} must be render-only with physics APIs and typed prims removed")
     return path, measured
 
 

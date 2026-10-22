@@ -4,6 +4,8 @@
 
 [새 반도체 구역 설정](configs/factory-semiconductor)은 트레이 저장소·테스트 핸들러·ATE·AOI·ESD 포장대의 용도와 배치를 구분합니다. 새 배치의 실제 Isaac Sim 조감·설비 근접 촬영을 마쳤습니다. 로트12건의 순차 투입·연속 배차·재고 보존과 제품/반납 캐리어 표시를 CPU에서 함께 확인했습니다. 실제 운송063은12건 투입·3건 완료 후 S1↔CI의 순환대기 감지로 안전 중단됐습니다. 전체 물류 완주와 새 대표 GIF는 남아 있습니다. [공정·설비·운영 범위](docs/semiconductor-cell.md)
 
+배차는 현재 배정된 제품 운송과 빈 캐리어 반납을 함께 확인해, 같은 두 지점을 역방향으로 오갈 작업의 동시 배정을 유예합니다. 실제 경로 예약과 정지 확인은 유지합니다. 동일 tick의 선택을 반영하는 CPU 회귀는 통과했으며 수정 후 물리 운송 완주는 확인 중입니다.
+
 [![전체 공장 물류 운영의 12초 반복 미리보기](docs/images/fleet4-local45-036/operations-preview-smooth.gif)](docs/images/fleet4-local45-036/operations-business-complete.mp4)
 
 첫 화면은 **이전 센서 모듈 구역 실행**의 전체 업무 영상에서 고른12초 반복 GIF입니다. 새 반도체 구역의 영상과 구분합니다. 원본 영상의10fps·명목74배속 요약이며, 이미지를 누르면 전체 MP4로 이동합니다. [GIF 출처·변환 기록](docs/images/fleet4-local45-036/readme-smooth-preview-provenance.json)

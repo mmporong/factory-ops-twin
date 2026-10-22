@@ -262,6 +262,26 @@ def assess_dispatch_route_compatibility(
     )
 
 
+def opposing_task_blockers(*, robot_id: str, pickup_station: str, drop_station: str,
+                           active_tasks: Mapping[str, tuple[str, str]]) -> tuple[str, ...]:
+    """Defer opposite transport pairs before either pickup commits.
+
+    This is an admission filter over already assigned tasks. It never acquires
+    tiles or changes a physical hold, and overlapping non-opposite traffic
+    remains subject to the normal full-leg reservation protocol.
+    """
+    if not all(isinstance(value, str) and value for value in (robot_id, pickup_station, drop_station)):
+        raise ValueError("transport robot and stations must be nonempty strings")
+    blockers = []
+    for peer, stations in active_tasks.items():
+        if (not isinstance(peer, str) or not peer or not isinstance(stations, (tuple, list))
+                or len(stations) != 2 or not all(isinstance(value, str) and value for value in stations)):
+            raise ValueError("active transports require robot IDs and pickup/drop pairs")
+        if peer != robot_id and tuple(stations) == (drop_station, pickup_station):
+            blockers.append(peer)
+    return tuple(sorted(blockers))
+
+
 class RouteBook:
     """Planning-only routes over a source-pinned authored centerline graph."""
 

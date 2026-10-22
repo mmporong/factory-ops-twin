@@ -32,7 +32,7 @@ from factory_ops.fleet_registry import FleetRegistry
 from factory_ops.callback_drain import CallbackDrain
 from factory_ops.live_control import LiveControl, control_capabilities
 from factory_ops.fleet_execution import FOLLOW_PATH_NORMALIZATION, StaleComputedPathError, StoppedGate, make_chunk, normalize_follow_path_payload, qualify_computed_path, path_content_sha256, path_clock_ready, path_header_stamp_ns
-from factory_ops.fleet_routing import RouteBook, assess_dispatch_route_compatibility, swept_tiles
+from factory_ops.fleet_routing import RouteBook, assess_dispatch_route_compatibility, opposing_task_blockers, swept_tiles
 from factory_ops.visual_state import canonical_sha256, make_visual_state, project_ledger_state, publish_visual_state
 from factory_ops.g3_session import config_dir_from_session, save, sha, verify_session
 from factory_ops.navigation import GoalPose, LocalizationPose, NavigationError, NavigationResult
@@ -1056,6 +1056,20 @@ def chain_pickup_supported(runtime_config: Mapping[str, Any], anchor: str, picku
     # A new same-station handoff needs its own stationary receipt protocol;
     # never fabricate a successful Nav2 action for a zero-length route.
     return "post_drop_dispatch" not in runtime_config or anchor != pickup
+
+
+def active_transport_pairs(mission: FleetMission, material: MaterialFlow | None) -> dict[str, tuple[str, str]]:
+    """Expose only assigned pickup/drop pairs, including their remaining drop leg."""
+    pairs = {robot: (mission.ledger.tasks[intent.task_id].pickup_station,
+                     mission.ledger.tasks[intent.task_id].drop_station)
+             for robot, intent in mission.active_intents.items()}
+    if material is not None:
+        for robot, intent in material.active_intents.items():
+            if robot in pairs:
+                raise RuntimeError("one robot cannot own business and empty transport intents")
+            job = material.jobs[intent.task_id]
+            pairs[robot] = (job.source, job.destination)
+    return pairs
 
 
 def observe_charging_odometry(charging: RosChargingRuntime, run_id: str, robot_id: str,
@@ -2287,6 +2301,27 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
         completed_at: float | None = None
         dispatch_pair_fingerprints: dict[tuple[str, str], str] = {}
         energy_pair_fingerprints: dict[tuple[str, str], str] = {}
+        counterflow_deferred: dict[tuple[str, str], tuple] = {}
+
+        def counterflow_admitted(robot: str, task_id: str, pickup: str, drop: str) -> bool:
+            active = active_transport_pairs(mission, material)
+            blockers = opposing_task_blockers(robot_id=robot, pickup_station=pickup,
+                drop_station=drop, active_tasks=active)
+            key = (robot, task_id)
+            if blockers:
+                fingerprint = (pickup, drop, tuple((peer, *active[peer]) for peer in blockers))
+                if counterflow_deferred.get(key) != fingerprint:
+                    journal("dispatch_counterflow_deferred", {"robot_id": robot, "task_id": task_id,
+                        "pickup_station": pickup, "drop_station": drop,
+                        "blockers": [{"robot_id": peer, "pickup_station": active[peer][0],
+                                      "drop_station": active[peer][1]} for peer in blockers],
+                        "scope": "assigned task admission; physical holds unchanged"})
+                    counterflow_deferred[key] = fingerprint
+                return False
+            if key in counterflow_deferred:
+                counterflow_deferred.pop(key)
+                journal("dispatch_counterflow_cleared", {"robot_id": robot, "task_id": task_id})
+            return True
 
         def assignment_energy(robot: str, task_id: str, pickup: str, drop: str) -> dict[str, Any] | None:
             assessment = mission_energy_assignment(energy_runtime, book, energy_dispatch_settings,
@@ -2836,6 +2871,8 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
                     def empty_cost(robot: str, job: Any) -> float | None:
                         if not chain_pickup_supported(runtime_config, robots[robot]["anchor"], job.source):
                             return None
+                        if not counterflow_admitted(robot, job.task_id, job.source, job.destination):
+                            return None
                         assessment = assess_dispatch_route_compatibility(book, robot_id=robot, task_id=job.task_id,
                             current_anchor=robots[robot]["anchor"], pickup_station=job.source, drop_station=job.destination,
                             closed=current_closed, reservation_radius_m=reservation_radius, reservation_snapshot=current_reservations)
@@ -2888,6 +2925,10 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
 
                 def cost(robot: Any, task: Any) -> float | None:
                     if not chain_pickup_supported(runtime_config, robots[robot.robot_id]["anchor"], task.pickup_station):
+                        return None
+                    # Re-read after every dispatch selection, including empty
+                    # trips assigned earlier in this same simulation tick.
+                    if not counterflow_admitted(robot.robot_id, task.task_id, task.pickup_station, task.drop_station):
                         return None
                     assessment = assessments.get((robot.robot_id, task.task_id))
                     if assessment is None or not assessment.compatible:

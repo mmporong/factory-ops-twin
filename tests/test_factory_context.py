@@ -37,7 +37,7 @@ class FactoryContextTests(unittest.TestCase):
                     "relative_path": "furniture_workbench_modular_a01/simready_usd/factory_renderonly.usda",
                     "sha256": self.prepared_sha,
                     "bounds_xyz_m": [-0.6, -0.3, 0, 0.6, 0.3, 1.1],
-                    "scope": "render-only; physics APIs removed",
+                    "scope": "render-only; physics APIs and typed prims removed",
                     "source_files": [{"path": "simready_usd/source.usd", "sha256": SOURCE_SHA, "size": 31}],
                 }
             },
