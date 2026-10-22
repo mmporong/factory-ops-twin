@@ -1,0 +1,107 @@
+{
+  "schema_version": 1,
+  "recorded_at": "2026-10-22T22:46:44.716422+00:00",
+  "run_id": "32a8dcc7c1714ef1bf46be8e60ea79fb",
+  "source_commit": "189d0a5ea0a8f9f03ba86785e2d25ca468f210aa",
+  "status": "failed",
+  "scope": "final development run observation; no full transport qualification or project completion",
+  "configured_wall_bound_s": 10800,
+  "observed_owner_wall_s": 10778.063000000024,
+  "mission": {
+    "released_orders": 12,
+    "expected_orders": 12,
+    "completed_orders": 2,
+    "last_progress_sim_s": 1407.183406724,
+    "completed": false
+  },
+  "owner_error": "TimeoutError: pair owner deadline exceeded; cleanup time reserved inside the wall budget",
+  "worker_error": "G3 worker wall bound or dependent process failed",
+  "worker_cleanup_errors": [
+    {
+      "error": "Failed to publish: publisher's context is invalid, at ./src/rcl/publisher.c:423",
+      "label": "carter1_fault_stop"
+    },
+    {
+      "error": "Failed to publish: publisher's context is invalid, at ./src/rcl/publisher.c:423",
+      "label": "carter2_fault_stop"
+    },
+    {
+      "error": "Failed to publish: publisher's context is invalid, at ./src/rcl/publisher.c:423",
+      "label": "carter3_fault_stop"
+    },
+    {
+      "error": "Failed to publish: publisher's context is invalid, at ./src/rcl/publisher.c:423",
+      "label": "carter4_fault_stop"
+    },
+    {
+      "error": "failed to shutdown: rcl_shutdown already called on the given context, at ./src/rcl/init.c:333",
+      "label": "rclpy.shutdown"
+    }
+  ],
+  "liveness_root_cause": "open; investigate long transport/reservation waits before rerunning or increasing time limits",
+  "original_relay_linux_closed": false,
+  "original_relay_cleanup_errors": [
+    "Linux relay stop: WSL user-manager command failed: returncode=5; stdout=''; stderr='Failed to stop factory-ops-32a8dcc7c1714ef1bf46be8e60ea79fb-6ffd94ed58de45d0a5a90c9353e5cce7.service: Unit factory-ops-32a8dcc7c1714ef1bf46be8e60ea79fb-6ffd94ed58de45d0a5a90c9353e5cce7.service not loaded.\\n'"
+  ],
+  "posthoc_relay_closure": {
+    "unit_name": "factory-ops-32a8dcc7c1714ef1bf46be8e60ea79fb-6ffd94ed58de45d0a5a90c9353e5cce7.service",
+    "captured_identity": {
+      "Id": "factory-ops-32a8dcc7c1714ef1bf46be8e60ea79fb-6ffd94ed58de45d0a5a90c9353e5cce7.service",
+      "InvocationID": "9156a0e05e0c48deafad35c6215e8db2",
+      "Description": "factory-ops run=32a8dcc7c1714ef1bf46be8e60ea79fb owner=6ffd94ed58de45d0a5a90c9353e5cce7",
+      "ControlGroup": "/user.slice/user-1000.slice/user@1000.service/app.slice/factory-ops-32a8dcc7c1714ef1bf46be8e60ea79fb-6ffd94ed58de45d0a5a90c9353e5cce7.service"
+    },
+    "captured_pid_start_ticks": {
+      "88038": 19457867,
+      "88043": 19457875,
+      "88037": 19457865
+    },
+    "unit_state": {
+      "TimeoutStopUSec": "1min 30s",
+      "RuntimeMaxUSec": "infinity",
+      "MainPID": "0",
+      "Result": "success",
+      "ExecMainStatus": "0",
+      "ControlGroup": "",
+      "WorkingDirectory": "",
+      "StandardOutput": "inherit",
+      "StandardError": "inherit",
+      "KillMode": "control-group",
+      "SendSIGKILL": "yes",
+      "Id": "factory-ops-32a8dcc7c1714ef1bf46be8e60ea79fb-6ffd94ed58de45d0a5a90c9353e5cce7.service",
+      "Description": "factory-ops-32a8dcc7c1714ef1bf46be8e60ea79fb-6ffd94ed58de45d0a5a90c9353e5cce7.service",
+      "LoadState": "not-found",
+      "ActiveState": "inactive",
+      "SubState": "dead",
+      "Transient": "no",
+      "InvocationID": ""
+    },
+    "cgroup_exists": false,
+    "cgroup_populated": false,
+    "cgroup_pids": [],
+    "live_known_processes": [],
+    "foreground_waiters": [],
+    "original_windows_client_pid": 88856,
+    "windows_client_exists": false,
+    "closure_verified": true,
+    "stop_command_issued": false
+  },
+  "closure": {
+    "windows_sdk": true,
+    "linux_nav2": true,
+    "windows_relay": true,
+    "linux_relay_posthoc": true,
+    "api_and_next": true
+  },
+  "original_sha256": {
+    "pair-host.json": "32cb68f406c26638e7395737e2a3072e0f5316fd1c29098b89f2c8d268c90c8f",
+    "results/run/mission-result.json": "26240f050c92e9c6ff334b31defed9b1e6704a3c3fa00ac956771a01d86174bb",
+    "results/run/mission-progress.json": "1110317d930e690fe1c14aebe7435261039fe096b30025fd41ff96fda8878a85",
+    "relay-pair.json": "ea7ada6ddd54e6fcc9bd36129f953207e92cf7d41862869e1d72dc103402e64b"
+  },
+  "media": {
+    "new_factory_story_exported": false,
+    "new_representative_gif": false,
+    "continuation_result": "failed waiting for original relay closure; original receipt unchanged"
+  }
+}

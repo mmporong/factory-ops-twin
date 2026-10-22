@@ -1042,3 +1042,13 @@ SimReady 모델을 붙인194 정지 촬영에서 RGB 두 장과 Job 종료는 �
 195 재촬영은 준비 색인의 scope가 새 문구로 바뀌었는데 소비기가 이전 문구와 엄격 비교해 장면 설정에서 거절했다. GPU 촬영 전에 새 준비 결과를 장면 소비기까지 합성하는 확인이 빠진 문제다. 준비·소비의 계약을 맞추고 CPU에서 실제34개 참조·BBox·기존20개 충돌체 보존을 확인했다. 다음 재촬영에는 이 확인을 통과한 소스를 사용한다. [수정 후 합성 근거](evidence/factory-context-196.json)
 
 후속196은 같은 물리 frame2/time0.033333335초에서1280×720 조감·근접 RGB 두 장을 촬영했다. 소비 모델의34개 배치, 렌더 로그 오류0건·CreateJoint 오류0건, Job closed·잔여 소유 PID0개를 확인했다. 이는 정지 렌더의 성공이며063의 실패나 전체 물류 완주 판정을 바꾸지 않는다. [이미지·소스·종료 기록](images/semiconductor-layout-local45-196/provenance.json)
+
+## FOT-127 — 12lot 물류 실행의 시간 초과와 중계 종료 기록 재발
+
+064는 동결 소스189d0a5에서12lot를 투입했지만2건 출하 상태로10800초 실행 상한에 도달했다. 마지막 임무 진행 관측은1407.183406724시뮬레이션 초다. host의 최초 종료 사유는 `pair owner deadline exceeded`이며 ROS worker의 `G3 worker wall bound or dependent process failed`는 종료 전파 과정에서 기록됐다. 이후 네 차량의 fault-stop 발행은 이미 무효화된 ROS context로 실패했고 shutdown 재호출 오류도 남았다. 이 후속 오류들을 느린 물류 진행의 원인으로 단정하지 않는다.
+
+물류의 장기 대기 원인은 미확정이다. 다음 진단은 닫힌 실행의 배차·예약·작업 원장으로 장기 대기 차량과 점유자를 연결하는 데 한정한다. 같은 설정으로 장시간 재실행하거나 wall bound만 늘리지 않는다. 기존 full-leg 예약·정지 확인·TTL을 완화하지 않는다.
+
+Linux 중계 종료에서는063과 같은 `Unit ... not loaded`가 다시 남았다.140b0b9 수정이 이 실행의 종료 경로 전체를 해결했다고 주장하지 않는다. 소유 unit·호출 ID·cgroup·PID/start-time과 foreground client를 사후 조회해 모두 소멸한 것을 확인했다. 원래 `relay_pair.linux_closed=false`와 실패 JSON은 수정하지 않았고 해시가 유지됐다. Windows SDK·Nav2·Windows 중계·API·Next 종료도 확인했다.
+
+미디어 후속 watcher는 원래 중계 종료 확인을 충족하지 못해 시간 초과했으며 새 운영 영상은 내보내지 않았다. 이는 운송 시간 초과와 별도로 관리한다. 다음 수정은 unit 확인과 stop 호출 사이의 상태 변화 및 context 종료 순서를 좁혀 확인해야 한다. 현재 수정 완료나 재발 방지 통과로 표시하지 않는다. [실행 결과·오류·원본 해시·사후 종료 기록](evidence/local45-transport-064.json)
