@@ -325,6 +325,14 @@ class WslProcessSupervisor:
                 raise RuntimeError("unit invocation changed; refusing to stop another owner's unit")
             if before["closure_verified"]:
                 return before
+            if before["unit_state"].get("LoadState") == "not-found":
+                # A transient unit may be collected after its Linux cgroup and
+                # exact-unit waiter exit but before the foreground wsl.exe
+                # client has been joined. There is then no unit left to stop;
+                # joining only this owned client and re-running the cgroup/PID
+                # identity probe is the remaining safe closure operation.
+                self._join_client()
+                return self.inspect()
             self._checked(["systemctl", "--user", "--no-ask-password", "stop", self._unit])
             deadline = time.monotonic() + self._stop_timeout
             while True:

@@ -1024,3 +1024,15 @@ CPU 검사4개에서 기존240프레임 입력의180장 선택, 새180프레임 
 구현 확인 중 준비 색인을 에셋 하나마다 기록하는 방식에 완료 상태 검사가 없으면 부분 색인을 재사용할 수 있음을 발견했다. 실제 완성 장면의 실패 기록이 아닌 코드에서 확인한 결함이다. 재사용에는 도구·카탈로그 해시, 모든 모델의 존재와 `passed` 상태를 요구하며 부분 준비는 검증된 항목을 이어 쓴다. 캐시 원본 파일 해시도 대조한다.
 
 참조한 모델 루트의 정렬용 translate를 배치용 translate로 덮지 않도록 별도 자식 Xform에 모델을 참조한다. SDK CPU 합성에서34개 실제 월드 바운딩 박스와 선언 위치의 일치, 추가 물리 API0개, 기존 충돌체20개 유지를 확인했다. 관련4검사가 통과했다. 재질의 네이티브 렌더 성공은 아직 확인하지 않았다. [소스 해시·측정 결과](evidence/factory-context-193.json)
+
+## FOT-125 — 063의 역방향 운송 배정과 사후 릴레이 종료 확인
+
+063은12 lot 투입·3개 주문 완료 후 `persistent full-leg wait cycle; preserve reservations and fail-stop`으로 종료됐다. S1에서 새 제품을 받은 carter1의 S1→CI와 CI에서 빈 캐리어를 받은 carter3의 CI→S1이 같은 full-leg 타일을 역방향으로 요청했다. 두 차량은 정지 위치의 hold를 유지했고5초 지속된 상호 대기 감지를 통해 안전 중단했다. SDK의 `G2 mission controller ended with failed`는 임무 실패의 후속 오류다. 이 실패를 정상 완주로 바꾸지 않는다. 역방향 작업 배정의 수정과 후속 물리 운송은 진행 중이다.
+
+종료 중 Linux 릴레이의 transient unit이 먼저 사라져 `systemctl stop`이 `Unit ... not loaded`를 반환했다. 원래 종료 기록은 false로 남았고, 이를 기다린 미디어 내보내기도 시간 초과했다. 별도 사후 조회에서는 해당 unit·cgroup·PID/start-time·정확한 unit의 waiter·Windows foreground client가 모두 소멸했음을 확인했다. 원래 기록을 덮지 않고 사후 영수증을 보존한다. supervisor는 이미 제거된 unit이면 소유 foreground client만 join한 뒤 같은 소유권·PID 검사를 다시 수행한다. 다른 invocation/cgroup을 거절하는 보호는 유지하며 관련4검사가 통과했다.
+
+## FOT-126 — API 제거 후 남은 USD 관절 타입
+
+SimReady 모델을 붙인194 정지 촬영에서 RGB 두 장과 Job 종료는 성공했지만, PhysX가 `CreateJoint - no bodies defined`를 기록했다. Physics/PhysX API를 제거해도 `PhysicsRevoluteJoint` 등의 typed prim은 남아 있었기 때문이다. 소비용 flatten 레이어에서 물리 typed prim도 제거하고 재개방 시 API·typed prim 모두0개를 요구하도록 고쳤다. 자식이 있는 물리 typed prim은 시각 하위 트리 손실을 피하기 위해 준비를 거절한다.
+
+원본143개 파일과194 입력 색인 사본은 보존했다. 새 CPU 준비에서 모델별 관절2/9/10개를 제거했으며 Mesh3/10/11개와 각 가시 바운딩 박스는 유지됐다. 실제 `PhysicsRevoluteJoint`와 Mesh를 함께 만든 회귀검사가 통과했다. 수정한 소비 모델의 네이티브 재촬영은 별도 실행으로 확인한다.

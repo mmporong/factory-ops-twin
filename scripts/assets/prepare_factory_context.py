@@ -89,12 +89,31 @@ def load_usd(sdk: Path):
     library = candidates[0].parents[2]
     handles = [os.add_dll_directory(str(p)) for p in (library/"bin", library/"bin/deps", library/"bin/usd", sdk/"kit") if p.is_dir()]
     sys.path.insert(0, str(library))
-    from pxr import Usd, UsdGeom, Sdf, Gf
-    return Usd, UsdGeom, Sdf, Gf, handles
+    from pxr import Usd, UsdGeom, UsdPhysics, Sdf, Gf
+    return Usd, UsdGeom, UsdPhysics, Sdf, Gf, handles
+
+
+def physics_typed_paths(stage, UsdPhysics) -> list:
+    """Return active or inactive prims whose authored type is physical."""
+    return [prim.GetPath() for prim in stage.TraverseAll()
+        if prim.IsA(UsdPhysics.Joint)
+        or prim.GetTypeName().lower().startswith(("physics", "physx"))]
+
+
+def remove_physics_typed_prims(stage, UsdPhysics) -> list[str]:
+    """Remove leaf physics schema prims from a flattened consumer stage."""
+    paths = physics_typed_paths(stage, UsdPhysics)
+    for path in sorted(paths, key=lambda value: len(str(value)), reverse=True):
+        prim = stage.GetPrimAtPath(path)
+        if list(prim.GetAllChildren()):
+            raise ValueError(f"physics typed prim has children; refusing visual subtree removal: {path}")
+        if not stage.RemovePrim(path) or stage.GetPrimAtPath(path).IsValid():
+            raise ValueError(f"physics typed prim could not be removed from flattened stage: {path}")
+    return [str(path) for path in paths]
 
 
 def prepare_asset(root: Path, asset_id: str, definition: dict, files: list[dict], sdk: Path, preparer: str) -> dict:
-    Usd, UsdGeom, Sdf, Gf, handles = load_usd(sdk)
+    Usd, UsdGeom, UsdPhysics, Sdf, Gf, handles = load_usd(sdk)
     raw = root/definition["package"]/definition["root_usd"]
     source = Usd.Stage.Open(str(raw))
     if source is None or not source.GetDefaultPrim().IsValid():
@@ -146,10 +165,16 @@ def prepare_asset(root: Path, asset_id: str, definition: dict, files: list[dict]
     destination.parent.mkdir(parents=True, exist_ok=True)
     if destination.exists():
         raise ValueError("prepared asset is immutable; use its existing index or a new preparer revision")
-    stage.Flatten().Export(str(destination))
+    flattened = Usd.Stage.Open(stage.Flatten())
+    removed_typed = remove_physics_typed_prims(flattened, UsdPhysics)
+    flattened.GetRootLayer().Export(str(destination))
     check = Usd.Stage.Open(str(destination))
     if any("physics" in s.lower() or "physx" in s.lower() for p in check.Traverse() for s in p.GetAppliedSchemas()):
         raise ValueError("prepared background asset still has physics APIs")
+    remaining_typed = physics_typed_paths(check, UsdPhysics)
+    if remaining_typed:
+        raise ValueError("prepared background asset still has physics typed prims: "
+            + ", ".join(str(path) for path in remaining_typed))
     measured = UsdGeom.BBoxCache(Usd.TimeCode.Default(), ["default", "render"]).ComputeWorldBound(check.GetDefaultPrim()).ComputeAlignedBox()
     bounds = [float(x) for x in measured.GetMin()]+[float(x) for x in measured.GetMax()]
     mesh_count = sum(p.GetTypeName() == "Mesh" for p in check.Traverse())
@@ -158,7 +183,8 @@ def prepare_asset(root: Path, asset_id: str, definition: dict, files: list[dict]
     return {"relative_path": destination.relative_to(root).as_posix(), "sha256": digest(destination),
         "bounds_xyz_m": bounds, "mesh_count": mesh_count, "source_units_m": units, "source_up_axis": up_axis,
         "disabled_variants": variants, "removed_physics_api_count": removed,
-        "scope": "render-only; physics APIs removed", "source_files": files,
+        "removed_physics_typed_prims": removed_typed,
+        "scope": "render-only; physics APIs and typed prims removed", "source_files": files,
         "license": definition["license"], "author": definition["author"], "source_url": definition["source_url"],
         "license_url": definition["license_url"]}
 

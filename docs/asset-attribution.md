@@ -15,7 +15,7 @@
 - 제작자: **NVIDIA**. 데이터셋: [nvidia/simready-assets](https://huggingface.co/datasets/nvidia/simready-assets).
 - 고정 리비전: `524747d9b5e1f21b5b18b56041788c01d745f1a1`.
 - 모델 패키지 라이선스: **CC BY 4.0**. 원본의 라이선스·저작권 파일은 캐시에 함께 보존한다. 패키지별 원문 링크는 [설정의 catalog](../configs/factory-semiconductor/visual-assets.json)에 있다. MDL 등 포함 파일의 별도 고지도 보존한다.
-- 변경: 소비용 USD에 미터·Z-up·바닥 기준 중심 정렬을 적용하고, 정적 배경용으로 Physics/PhysX API를 제거했다. 원본 패키지는 수정하지 않는다. 출처, 파일별 SHA256, 준비 도구 해시는 캐시 색인에 남긴다.
+- 변경: 소비용 USD에 미터·Z-up·바닥 기준 중심 정렬을 적용하고, 정적 배경용으로 Physics/PhysX API와 관절 typed prim을 제거했다. 원본 패키지는 수정하지 않는다. 출처, 파일별 SHA256, 준비 도구 해시는 캐시 색인에 남긴다.
 - 이 페이지와 README의 모델 미리보기 PNG는 NVIDIA가 배포한 원본 썸네일을 변경 없이 복사한 자료다. **프로젝트에서 촬영한 RGB가 아니다.** 파일별 원본 경로·해시는 [미리보기 출처](images/factory-context-assets-193/provenance.json)에 있다.
 
 이 모델의 사용이 NVIDIA의 추천이나 실제 반도체 공장의 ESD·클린룸 인증을 뜻하지 않는다. 정비 소품의 적재·주행·작업 동작을 검증한 범위도 아니다.

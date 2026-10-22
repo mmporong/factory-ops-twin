@@ -2,7 +2,7 @@
 
 반도체 후공정의 최종검사·포장 구역에서 **4대 AMR의 트레이 공급·완제품 출하·빈 캐리어 회수**를 Isaac Sim·ROS 2와 웹 관제로 연결하는 프로젝트입니다.
 
-[새 반도체 구역 설정](configs/factory-semiconductor)은 트레이 저장소·테스트 핸들러·ATE·AOI·ESD 포장대의 용도와 배치를 구분합니다. 새 배치의 실제 Isaac Sim 조감·설비 근접 촬영을 마쳤습니다. 로트12건의 순차 투입·연속 배차·재고 보존과 제품/반납 캐리어 표시를 CPU에서 함께 확인했으며, 실제 운송 완주·대표 GIF는 남아 있습니다. [공정·설비·운영 범위](docs/semiconductor-cell.md)
+[새 반도체 구역 설정](configs/factory-semiconductor)은 트레이 저장소·테스트 핸들러·ATE·AOI·ESD 포장대의 용도와 배치를 구분합니다. 새 배치의 실제 Isaac Sim 조감·설비 근접 촬영을 마쳤습니다. 로트12건의 순차 투입·연속 배차·재고 보존과 제품/반납 캐리어 표시를 CPU에서 함께 확인했습니다. 실제 운송063은12건 투입·3건 완료 후 S1↔CI의 순환대기 감지로 안전 중단됐습니다. 전체 물류 완주와 새 대표 GIF는 남아 있습니다. [공정·설비·운영 범위](docs/semiconductor-cell.md)
 
 [![전체 공장 물류 운영의 12초 반복 미리보기](docs/images/fleet4-local45-036/operations-preview-smooth.gif)](docs/images/fleet4-local45-036/operations-business-complete.mp4)
 

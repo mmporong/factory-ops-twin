@@ -145,6 +145,22 @@ class SupervisorTests(unittest.TestCase):
             self.assertTrue(supervisor.stop()["closure_verified"])
             checked.assert_called_once_with(["systemctl", "--user", "--no-ask-password", "stop", supervisor.unit_name])
 
+    def test_collected_transient_unit_joins_client_then_verifies_closure(self):
+        supervisor = WslProcessSupervisor(RUN)
+        client = _Client()
+        with patch("factory_ops.wsl_process_supervisor.subprocess.Popen", return_value=client):
+            supervisor._launch(["systemd-run", "--wait", "--unit=" + supervisor.unit_name])
+        before = {"ownership_match": True, "closure_verified": False,
+                  "unit_state": {"LoadState": "not-found"}}
+        closed = {"ownership_match": True, "closure_verified": True,
+                  "unit_state": {"LoadState": "not-found"}}
+        with patch.object(supervisor, "inspect", side_effect=[before, closed]), \
+                patch.object(supervisor, "_checked") as checked:
+            result = supervisor.stop()
+        self.assertTrue(result["closure_verified"])
+        self.assertTrue(supervisor._client_state()["closed"])
+        checked.assert_not_called()
+
     def test_admission_polls_and_returns_with_living_foreground_client(self):
         supervisor = WslProcessSupervisor(RUN)
         client = _Client()
