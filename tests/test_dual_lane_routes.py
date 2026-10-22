@@ -50,8 +50,10 @@ class DualLaneRouteTests(unittest.TestCase):
         sizes = lambda rows: {r["id"]: (round(r["rect"][2]-r["rect"][0], 8),
                                        round(r["rect"][3]-r["rect"][1], 8), r["height_m"])
                               for r in rows}
-        self.assertEqual(sizes(prior["physical_obstacles"]),
-                         sizes(self.book.layout.data["physical_obstacles"]))
+        previous = sizes(prior["physical_obstacles"])
+        expected = dict(previous)
+        expected["FG_LOW"] = (*previous["FG_LOW"][:2], 2.4)
+        self.assertEqual(expected, sizes(self.book.layout.data["physical_obstacles"]))
 
     def test_opposing_main_lanes_acquire_disjoint_full_radius_reservations(self):
         self.assertEqual(self.book.tile_size_m, 1.0)

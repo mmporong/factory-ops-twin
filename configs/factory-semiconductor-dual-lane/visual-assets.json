@@ -3,7 +3,7 @@
   "provider": "factory-ops-twin",
   "author": "factory-ops-twin project",
   "license": "CC0-1.0 AND CC-BY-4.0",
-  "source": "Reference-based authored semiconductor process geometry retained in a dual-lane layout (CC0-1.0) and attributed NVIDIA SimReady service-area props (CC-BY-4.0); not manufacturer CAD or certified ESD equipment.",
+  "source": "Reference-based authored semiconductor process geometry retained in a dual-lane layout (CC0-1.0) and attributed NVIDIA SimReady service props and packaging conveyor (CC-BY-4.0); not semiconductor OEM CAD or certified ESD equipment.",
   "variant_count": 12,
   "required_semantic_taxonomy": [
     "floor",
@@ -106,9 +106,9 @@
       "state_role": "cell_output_two_slot"
     },
     "FG_LOW": {
-      "recipe": "esd_packing",
-      "semantic_class": "pallet",
-      "state_role": "ESD finished tray pack and label station"
+      "recipe": "external_asset",
+      "semantic_class": "process_equipment",
+      "state_role": "packaging conveyor and inspection gate geometry; aggregate pack flow, no belt or inspection-sensor physics"
     },
     "FG_HIGH": {
       "recipe": "esd_tray_loadport",
@@ -122,7 +122,7 @@
     }
   },
   "environment": {
-    "revision": "524747d9b5e1f21b5b18b56041788c01d745f1a1",
+    "revision": "653d91e182011f357cf1644013cc94ddf194d349",
     "repository": "nvidia/simready-assets",
     "scope": "Authored static service-area context outside AMR operating regions; no ESD certification or process/robot physics claim",
     "catalog": {
@@ -131,24 +131,32 @@
         "root_usd": "simready_usd/sm_furniture_workbench_modular_a01_01.usd",
         "author": "NVIDIA",
         "license": "CC-BY-4.0",
-        "license_url": "https://huggingface.co/datasets/nvidia/simready-assets/blob/524747d9b5e1f21b5b18b56041788c01d745f1a1/furniture_workbench_modular_a01/.metadata/LICENSE.txt",
-        "source_url": "https://huggingface.co/datasets/nvidia/simready-assets/tree/524747d9b5e1f21b5b18b56041788c01d745f1a1/furniture_workbench_modular_a01"
+        "license_url": "https://huggingface.co/datasets/nvidia/simready-assets/blob/653d91e182011f357cf1644013cc94ddf194d349/furniture_workbench_modular_a01/.metadata/LICENSE.txt",
+        "source_url": "https://huggingface.co/datasets/nvidia/simready-assets/tree/653d91e182011f357cf1644013cc94ddf194d349/furniture_workbench_modular_a01"
       },
       "cabinet": {
         "package": "equipment_rolling_workstation_cabinet_c01",
         "root_usd": "simready_usd/sm_equipment_rolling_workstation_cabinet_c01_01.usd",
         "author": "NVIDIA",
         "license": "CC-BY-4.0",
-        "license_url": "https://huggingface.co/datasets/nvidia/simready-assets/blob/524747d9b5e1f21b5b18b56041788c01d745f1a1/equipment_rolling_workstation_cabinet_c01/.metadata/LICENSE.txt",
-        "source_url": "https://huggingface.co/datasets/nvidia/simready-assets/tree/524747d9b5e1f21b5b18b56041788c01d745f1a1/equipment_rolling_workstation_cabinet_c01"
+        "license_url": "https://huggingface.co/datasets/nvidia/simready-assets/blob/653d91e182011f357cf1644013cc94ddf194d349/equipment_rolling_workstation_cabinet_c01/.metadata/LICENSE.txt",
+        "source_url": "https://huggingface.co/datasets/nvidia/simready-assets/tree/653d91e182011f357cf1644013cc94ddf194d349/equipment_rolling_workstation_cabinet_c01"
       },
       "cart": {
         "package": "equipment_utility_cart_e01",
         "root_usd": "simready_usd/sm_equipment_utility_cart_e01_01.usd",
         "author": "NVIDIA",
         "license": "CC-BY-4.0",
-        "license_url": "https://huggingface.co/datasets/nvidia/simready-assets/blob/524747d9b5e1f21b5b18b56041788c01d745f1a1/equipment_utility_cart_e01/.metadata/LICENSE.txt",
-        "source_url": "https://huggingface.co/datasets/nvidia/simready-assets/tree/524747d9b5e1f21b5b18b56041788c01d745f1a1/equipment_utility_cart_e01"
+        "license_url": "https://huggingface.co/datasets/nvidia/simready-assets/blob/653d91e182011f357cf1644013cc94ddf194d349/equipment_utility_cart_e01/.metadata/LICENSE.txt",
+        "source_url": "https://huggingface.co/datasets/nvidia/simready-assets/tree/653d91e182011f357cf1644013cc94ddf194d349/equipment_utility_cart_e01"
+      },
+      "packing_conveyor": {
+        "package": "conveyor_belt_a61",
+        "root_usd": "simready_usd/sm_conveyor_belt_a61_01.usd",
+        "author": "NVIDIA",
+        "license": "CC-BY-4.0",
+        "license_url": "https://huggingface.co/datasets/nvidia/simready-assets/blob/653d91e182011f357cf1644013cc94ddf194d349/conveyor_belt_a61/.metadata/LICENSE.txt",
+        "source_url": "https://huggingface.co/datasets/nvidia/simready-assets/tree/653d91e182011f357cf1644013cc94ddf194d349/conveyor_belt_a61"
       }
     },
     "fixtures": [
@@ -525,6 +533,18 @@
         "yaw_deg": 0,
         "role": "north utility service tool storage",
         "semantic_class": "control_cabinet"
+      },
+      {
+        "id": "FG_LOW",
+        "source_obstacle_id": "FG_LOW",
+        "asset": "packing_conveyor",
+        "center_xy": [
+          32.6,
+          10.55
+        ],
+        "yaw_deg": 90,
+        "semantic_class": "process_equipment",
+        "role": "packaging conveyor and inspection gate geometry; aggregate pack flow, no belt or inspection-sensor physics"
       }
     ]
   }

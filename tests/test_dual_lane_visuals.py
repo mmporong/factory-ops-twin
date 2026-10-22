@@ -20,9 +20,12 @@ class DualLaneVisualTests(unittest.TestCase):
     def setUp(self) -> None:
         self.layout = Layout.from_file(CONFIG / "layout.json")
 
-    def test_visual_export_uses_authored_lane_directions_and_semiconductor_equipment(self) -> None:
+    def test_authored_parts_use_lane_directions_and_semiconductor_equipment(self) -> None:
         visual_config = json.loads((CONFIG / "visual-assets.json").read_text(encoding="utf-8"))
         visual_config.pop("environment", None)
+        # Isolate authored recipes without requiring the vendor cache in CI.
+        # Actual external geometry and containment have a separate cache test.
+        visual_config["obstacle_assets"]["FG_LOW"]["recipe"] = "esd_packing"
         with tempfile.TemporaryDirectory() as temporary:
             output = Path(temporary)
             config_path = output / "visual-assets.json"

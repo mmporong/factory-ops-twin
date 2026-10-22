@@ -137,13 +137,71 @@ class SupervisorTests(unittest.TestCase):
 
     def test_stop_only_uses_the_exact_unit_and_is_idempotent(self):
         supervisor = WslProcessSupervisor(RUN)
-        live = {"ownership_match": True, "closure_verified": False}
+        live = {"ownership_match": True, "closure_verified": False,
+                "unit_state": {"LoadState": "loaded"}}
         closed = {"ownership_match": True, "closure_verified": True}
         with patch.object(supervisor, "inspect", side_effect=[live, closed, closed]), \
-                patch.object(supervisor, "_checked", return_value="") as checked:
+                patch.object(supervisor, "_call",
+                    return_value=subprocess.CompletedProcess([], 0, "", "")) as call:
             self.assertTrue(supervisor.stop()["closure_verified"])
             self.assertTrue(supervisor.stop()["closure_verified"])
-            checked.assert_called_once_with(["systemctl", "--user", "--no-ask-password", "stop", supervisor.unit_name])
+            call.assert_called_once_with(
+                ["systemctl", "--user", "--no-ask-password", "stop", supervisor.unit_name])
+
+    def test_unit_collected_between_inspect_and_stop_is_reverified(self):
+        supervisor = WslProcessSupervisor(RUN)
+        client = _Client()
+        with patch("factory_ops.wsl_process_supervisor.subprocess.Popen", return_value=client):
+            supervisor._launch(["systemd-run", "--wait", "--unit=" + supervisor.unit_name])
+        live = {"ownership_match": True, "closure_verified": False,
+                "unit_state": {"LoadState": "loaded"}}
+        collected = {"ownership_match": True, "closure_verified": False,
+                     "unit_state": {"LoadState": "not-found"}}
+        closed = {"ownership_match": True, "closure_verified": True,
+                  "unit_state": {"LoadState": "not-found"}}
+        missing = (f"Failed to stop {supervisor.unit_name}: "
+                   f"Unit {supervisor.unit_name} not loaded.\n")
+        with patch.object(supervisor, "inspect", side_effect=[live, collected, closed]), \
+                patch.object(supervisor, "_call",
+                    return_value=subprocess.CompletedProcess([], 5, "", missing)):
+            result = supervisor.stop()
+        self.assertTrue(result["closure_verified"])
+        self.assertTrue(supervisor._client_state()["closed"])
+
+    def test_collected_during_stop_does_not_bypass_closure_safety(self):
+        live = {"ownership_match": True, "closure_verified": False,
+                "unit_state": {"LoadState": "loaded"}}
+        unsafe = [
+            ({"ownership_match": False, "closure_verified": False,
+              "unit_state": {"LoadState": "loaded"}}, True),
+            ({"ownership_match": True, "closure_verified": False,
+              "unit_state": {"LoadState": "not-found"}}, False),
+        ]
+        for after_stop, identity_mismatch in unsafe:
+            with self.subTest(identity_mismatch=identity_mismatch):
+                supervisor = WslProcessSupervisor(RUN)
+                missing = (f"Failed to stop {supervisor.unit_name}: "
+                           f"Unit {supervisor.unit_name} not loaded.\n")
+                inspections = [live, after_stop]
+                if not identity_mismatch:
+                    inspections.append(after_stop)
+                with patch.object(supervisor, "inspect", side_effect=inspections), \
+                        patch.object(supervisor, "_call",
+                            return_value=subprocess.CompletedProcess([], 5, "", missing)):
+                    if identity_mismatch:
+                        with self.assertRaisesRegex(RuntimeError, "invocation changed"):
+                            supervisor.stop()
+                    else:
+                        self.assertFalse(supervisor.stop()["closure_verified"])
+
+        for returncode, stderr in ((1, "Access denied\n"), (5, "Failed for another reason\n")):
+            with self.subTest(returncode=returncode, stderr=stderr):
+                supervisor = WslProcessSupervisor(RUN)
+                with patch.object(supervisor, "inspect", return_value=live), \
+                        patch.object(supervisor, "_call", return_value=
+                            subprocess.CompletedProcess([], returncode, "", stderr)):
+                    with self.assertRaisesRegex(RuntimeError, f"returncode={returncode}"):
+                        supervisor.stop()
 
     def test_collected_transient_unit_joins_client_then_verifies_closure(self):
         supervisor = WslProcessSupervisor(RUN)

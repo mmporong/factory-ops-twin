@@ -68,10 +68,12 @@ def main() -> int:
         if layout.get("revision") == "amr-semiconductor-dual-lane-v1":
             profile = json.loads((args.bundle/"render-profile.json").read_text(encoding="utf-8"))
             cameras = {camera["id"]: camera for camera in profile["cameras"]}
+            selections = [("overview", "portfolio_overview"), ("test-handler", "cell_process")]
+            if "packing_conveyor" in cameras:
+                selections.append(("pack-conveyor", "packing_conveyor"))
             views = tuple((name, cameras[key]["eye_xyz_m"], cameras[key]["target_xyz_m"],
                            cameras[key]["focal_length_mm"])
-                          for name, key in (("overview", "portfolio_overview"),
-                                            ("test-handler", "cell_process")))
+                          for name, key in selections)
         for name, eye, target, focal in views:
             camera = rep.create.camera(position=eye, look_at=target, focal_length=focal)
             product = rep.create.render_product(camera, (1280, 720))

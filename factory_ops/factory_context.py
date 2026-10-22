@@ -56,6 +56,7 @@ def build_factory_context(
     instances: list[dict[str, object]] = []
     packages_by_asset: dict[str, dict[str, object]] = {}
     occupied: list[tuple[str, Rect]] = []
+    mounted_by_obstacle: dict[str, dict[str, object]] = {}
     stable_ids: set[str] = set()
     for ordinal, raw_fixture in enumerate(fixtures):
         fixture = _mapping(raw_fixture, f"environment.fixtures[{ordinal}]")
@@ -86,7 +87,19 @@ def build_factory_context(
         yaw_value = int(yaw)
         world_bounds = _world_bounds(source_bounds, cx, cy, yaw_value)
         footprint = Rect(world_bounds[0], world_bounds[1], world_bounds[3], world_bounds[4])
-        _validate_placement(layout, footprint, stable_id, occupied)
+        source_obstacle_id = fixture.get("source_obstacle_id")
+        if source_obstacle_id is not None:
+            source_obstacle_id = _string(
+                source_obstacle_id, f"fixture {stable_id}.source_obstacle_id",
+            )
+            if source_obstacle_id in mounted_by_obstacle:
+                raise LayoutError(
+                    f"source obstacle {source_obstacle_id!r} has duplicate factory context fixtures"
+                )
+        source_bounds_xy = _validate_placement(
+            layout, world_bounds, stable_id, occupied,
+            source_obstacle_id=source_obstacle_id,
+        )
         occupied.append((stable_id, footprint))
 
         semantic_class = _string(fixture.get("semantic_class"), f"fixture {stable_id}.semantic_class")
@@ -103,6 +116,9 @@ def build_factory_context(
             f"                custom string semanticClass = {_quote(semantic_class)}",
             f"                custom string stateRole = {_quote(state_role)}",
             f"                custom string stableId = {_quote(stable_id)}",
+            *([] if source_obstacle_id is None else [
+                f"                custom string sourceObstacleId = {_quote(source_obstacle_id)}",
+            ]),
             '                def Xform "Model" (',
             "                    instanceable = true",
             f"                    prepend references = @{asset_path}@</Asset>",
@@ -111,16 +127,19 @@ def build_factory_context(
             "                }",
             "            }",
         ])
-        instances.append({
+        instance = {
             "stable_id": stable_id,
             "prim_path": prim_path,
             "semantic_class": semantic_class,
             "state_role": state_role,
-            "source_obstacle_id": None,
+            "source_obstacle_id": source_obstacle_id,
             "bounds_xyz_m": world_bounds,
-            "source_bounds_xy_m": None,
+            "source_bounds_xy_m": source_bounds_xy,
             "asset": f"nvidia:{asset_id}",
-        })
+        }
+        instances.append(instance)
+        if source_obstacle_id is not None:
+            mounted_by_obstacle[source_obstacle_id] = instance
         packages_by_asset.setdefault(
             asset_id,
             _package_record(asset_id, repository, revision, catalog_item, prepared, prepared_path, prepared_sha),
@@ -130,8 +149,9 @@ def build_factory_context(
     return {
         "lines": lines,
         "instances": instances,
+        "mounted_by_obstacle": mounted_by_obstacle,
         "packages": [packages_by_asset[key] for key in sorted(packages_by_asset)],
-        "scope": "render-only factory context; no physics, navigation, or safety claim",
+        "scope": "render-only factory context; mounted assets remain inside source obstacle envelopes; no physics, navigation, or safety claim",
     }
 
 
@@ -159,8 +179,15 @@ def _prepared_asset(root: Path, item: Mapping[str, Any], asset_id: str) -> tuple
     return path, measured
 
 
-def _validate_placement(layout: Layout, footprint: Rect, stable_id: str,
-                        occupied: list[tuple[str, Rect]]) -> None:
+def _validate_placement(
+    layout: Layout,
+    world_bounds: tuple[float, float, float, float, float, float],
+    stable_id: str,
+    occupied: list[tuple[str, Rect]],
+    *,
+    source_obstacle_id: str | None,
+) -> tuple[float, float, float, float] | None:
+    footprint = Rect(world_bounds[0], world_bounds[1], world_bounds[3], world_bounds[4])
     padded = Rect(
         footprint.xmin - _CLEARANCE_M,
         footprint.ymin - _CLEARANCE_M,
@@ -174,12 +201,44 @@ def _validate_placement(layout: Layout, footprint: Rect, stable_id: str,
     for region in layout.allowed_regions:
         if padded.overlaps(region):
             raise LayoutError(f"factory context fixture {stable_id} violates AMR region 0.1m clearance")
-    for obstacle in layout.obstacles:
+    obstacles = {
+        str(item["id"]): item for item in layout.data["physical_obstacles"]
+    }
+    if source_obstacle_id is not None and source_obstacle_id not in obstacles:
+        raise LayoutError(
+            f"factory context fixture {stable_id} references missing source obstacle {source_obstacle_id!r}"
+        )
+    source_bounds_xy = None
+    for raw_obstacle in layout.data["physical_obstacles"]:
+        obstacle_id = str(raw_obstacle["id"])
+        obstacle = Rect.from_value(raw_obstacle["rect"], f"obstacle {obstacle_id}")
+        if obstacle_id == source_obstacle_id:
+            source_bounds = (
+                obstacle.xmin, obstacle.ymin, 0.0,
+                obstacle.xmax, obstacle.ymax, float(raw_obstacle["height_m"]),
+            )
+            if not _contains_bounds(source_bounds, world_bounds):
+                raise LayoutError(
+                    f"factory context fixture {stable_id} exceeds source obstacle "
+                    f"{source_obstacle_id} XYZ envelope"
+                )
+            source_bounds_xy = (obstacle.xmin, obstacle.ymin, obstacle.xmax, obstacle.ymax)
+            continue
         if padded.overlaps(obstacle):
             raise LayoutError(f"factory context fixture {stable_id} violates obstacle 0.1m clearance")
     for other_id, other in occupied:
         if padded.overlaps(other):
             raise LayoutError(f"factory context fixtures {stable_id} and {other_id} overlap")
+    return source_bounds_xy
+
+
+def _contains_bounds(
+    outer: tuple[float, float, float, float, float, float],
+    inner: tuple[float, float, float, float, float, float],
+) -> bool:
+    return all(inner[index] >= outer[index] for index in range(3)) and all(
+        inner[index] <= outer[index] for index in range(3, 6)
+    )
 
 
 def _world_bounds(bounds: tuple[float, float, float, float, float, float], cx: float, cy: float,

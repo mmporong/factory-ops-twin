@@ -333,7 +333,28 @@ class WslProcessSupervisor:
                 # identity probe is the remaining safe closure operation.
                 self._join_client()
                 return self.inspect()
-            self._checked(["systemctl", "--user", "--no-ask-password", "stop", self._unit])
+            stop_args = ["systemctl", "--user", "--no-ask-password", "stop", self._unit]
+            stopped = self._call(stop_args)
+            if stopped.returncode:
+                missing = f"Failed to stop {self._unit}: Unit {self._unit} not loaded."
+                if not (stopped.returncode == 5 and not stopped.stdout.strip()
+                        and stopped.stderr.strip() == missing):
+                    raise RuntimeError("WSL user-manager command failed: " + self._diagnostics(stopped))
+                # The captured transient unit can be collected between the
+                # ownership inspection above and this exact-unit stop. Re-read
+                # all captured identity/cgroup/PID/waiter evidence before
+                # joining the owned foreground client. A replacement unit or
+                # remaining owned Linux process still prevents closure.
+                collected = self.inspect()
+                if not collected["ownership_match"]:
+                    raise RuntimeError("unit invocation changed; refusing to stop another owner's unit")
+                if collected["unit_state"].get("LoadState") != "not-found":
+                    raise RuntimeError("unit stop reported not loaded but the exact unit is still observable")
+                self._join_client()
+                verified = self.inspect()
+                if not verified["ownership_match"]:
+                    raise RuntimeError("unit invocation changed while verifying closure")
+                return verified
             deadline = time.monotonic() + self._stop_timeout
             while True:
                 result = self.inspect()

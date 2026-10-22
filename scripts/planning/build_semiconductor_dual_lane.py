@@ -100,9 +100,13 @@ def build_layout() -> dict[str, Any]:
             )
         elif oid in {"KIT_BENCH_2", "SERVICE_CABINET"}:
             obstacle["rect"] = shift_rect(obstacle["rect"], dy=5.5)
+        if oid == "FG_LOW":
+            obstacle["height_m"] = 2.4
+            obstacle["type"] = "packaging conveyor with inspection-gate geometry; visual-only model, aggregate process logic"
     layout["blocked_aisle"]["rect"] = [18.5, 3, 19.5, 6]
     layout["unchanged_contracts"] = [
-        "19 stable obstacle IDs and unchanged equipment envelope dimensions",
+        "19 stable obstacle IDs and unchanged XY equipment envelope dimensions",
+        "FG_LOW envelope height 2.4m to contain the native-size attributed packaging conveyor",
         "middle equipment rigid translation +2.5m y; north equipment +5.5m y",
         "finished-goods equipment rigid translation +3.5m x",
         "four separate off-main parking bays and conservative reservation holds",
@@ -201,8 +205,23 @@ def build_visual_assets() -> dict[str, Any]:
     assets = copy.deepcopy(load_json("visual-assets.json"))
     assets["source"] = (
         "Reference-based authored semiconductor process geometry retained in a dual-lane layout (CC0-1.0) and "
-        "attributed NVIDIA SimReady service-area props (CC-BY-4.0); not manufacturer CAD or certified ESD equipment."
+        "attributed NVIDIA SimReady service props and packaging conveyor (CC-BY-4.0); "
+        "not semiconductor OEM CAD or certified ESD equipment."
     )
+    revision = "653d91e182011f357cf1644013cc94ddf194d349"
+    assets["environment"]["revision"] = revision
+    for definition in assets["environment"]["catalog"].values():
+        for key in ("source_url", "license_url"):
+            definition[key] = definition[key].replace("524747d9b5e1f21b5b18b56041788c01d745f1a1", revision)
+    package = "conveyor_belt_a61"
+    assets["environment"]["catalog"]["packing_conveyor"] = {
+        "package": package, "root_usd": f"simready_usd/sm_{package}_01.usd", "author": "NVIDIA",
+        "license": "CC-BY-4.0",
+        "license_url": f"https://huggingface.co/datasets/nvidia/simready-assets/blob/{revision}/{package}/.metadata/LICENSE.txt",
+        "source_url": f"https://huggingface.co/datasets/nvidia/simready-assets/tree/{revision}/{package}",
+    }
+    role = "packaging conveyor and inspection gate geometry; aggregate pack flow, no belt or inspection-sensor physics"
+    assets["obstacle_assets"]["FG_LOW"].update(recipe="external_asset", semantic_class="process_equipment", state_role=role)
     north_ids = {"RETURN_SERVICE_TOOLS", "RETURN_SERVICE_BENCH", "RETURN_SERVICE_CART", "NORTH_TECH_TOOLS", "NORTH_TECH_BENCH"}
     middle_ids = {"WEST_SERVICE_TOOLS_MID"}
     east_ids = {"EAST_SERVICE_TOOLS_LOW", "EAST_SERVICE_CART_LOW", "EAST_SERVICE_TOOLS_MID", "EAST_SERVICE_TOOLS_HIGH"}
@@ -226,6 +245,11 @@ def build_visual_assets() -> dict[str, Any]:
             elif fixture["id"] == "EAST_SERVICE_TOOLS_HIGH":
                 y += 2.5
         fixture["center_xy"] = [x, y]
+    assets["environment"]["fixtures"].append({
+        "id": "FG_LOW", "source_obstacle_id": "FG_LOW", "asset": "packing_conveyor",
+        "center_xy": [32.6, 10.55], "yaw_deg": 90,
+        "semantic_class": "process_equipment", "role": role,
+    })
     return assets
 
 
@@ -234,8 +258,12 @@ def build_render_profile() -> dict[str, Any]:
     profile["cameras"][0].update(eye_xyz_m=[18, -15, 30], target_xyz_m=[18, 14, 0.7], focal_length_mm=18,
                                   purpose="dual-lane semiconductor bay and continuous material flow")
     profile["cameras"][1].update(eye_xyz_m=[0.5, 4, 9], target_xyz_m=[9, 14, 1])
-    profile["cameras"][2].update(eye_xyz_m=[14, 5, 9], target_xyz_m=[21, 14, 1])
+    profile["cameras"][2].update(eye_xyz_m=[26, 4, 13], target_xyz_m=[19, 12.5, 1],
+                                  focal_length_mm=26, purpose="test handler, ATE sidecar and tray transfer interfaces")
     profile["cameras"][3].update(eye_xyz_m=[35.5, 6, 8], target_xyz_m=[28, 14, 0.9])
+    profile["cameras"].append({"id": "packing_conveyor", "eye_xyz_m": [37, 6, 6],
+        "target_xyz_m": [32.6, 10.55, 1.1], "focal_length_mm": 30,
+        "purpose": "attributed native-size packaging conveyor and inspection-gate geometry"})
     return profile
 
 

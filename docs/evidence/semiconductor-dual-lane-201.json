@@ -1,0 +1,529 @@
+{
+  "schema_version": 1,
+  "status": "passed",
+  "GPU_started": false,
+  "scope": "CPU authored directional route, map and actual USD composition; no Nav2 drive or factory throughput proof",
+  "layout_revision": "amr-semiconductor-dual-lane-v1",
+  "bounds_xy_m": [
+    0,
+    0,
+    36,
+    28
+  ],
+  "preflight": {
+    "passed": true,
+    "route_count": 180,
+    "edge_count": 61,
+    "parking": {
+      "passed": true,
+      "reservation_radius_m": 1.4371090915442775,
+      "parking_by_robot": {
+        "carter1": "P1",
+        "carter2": "P2",
+        "carter3": "P3",
+        "carter4": "P4"
+      },
+      "hold_tiles": {
+        "carter1": [
+          [
+            10,
+            0
+          ],
+          [
+            10,
+            1
+          ],
+          [
+            10,
+            2
+          ],
+          [
+            11,
+            0
+          ],
+          [
+            11,
+            1
+          ],
+          [
+            11,
+            2
+          ],
+          [
+            12,
+            0
+          ],
+          [
+            12,
+            1
+          ],
+          [
+            12,
+            2
+          ],
+          [
+            13,
+            0
+          ],
+          [
+            13,
+            1
+          ],
+          [
+            13,
+            2
+          ]
+        ],
+        "carter2": [
+          [
+            10,
+            24
+          ],
+          [
+            10,
+            25
+          ],
+          [
+            10,
+            26
+          ],
+          [
+            10,
+            27
+          ],
+          [
+            11,
+            24
+          ],
+          [
+            11,
+            25
+          ],
+          [
+            11,
+            26
+          ],
+          [
+            11,
+            27
+          ],
+          [
+            12,
+            24
+          ],
+          [
+            12,
+            25
+          ],
+          [
+            12,
+            26
+          ],
+          [
+            12,
+            27
+          ],
+          [
+            13,
+            24
+          ],
+          [
+            13,
+            25
+          ],
+          [
+            13,
+            26
+          ],
+          [
+            13,
+            27
+          ]
+        ],
+        "carter3": [
+          [
+            15,
+            0
+          ],
+          [
+            15,
+            1
+          ],
+          [
+            15,
+            2
+          ],
+          [
+            16,
+            0
+          ],
+          [
+            16,
+            1
+          ],
+          [
+            16,
+            2
+          ],
+          [
+            17,
+            0
+          ],
+          [
+            17,
+            1
+          ],
+          [
+            17,
+            2
+          ],
+          [
+            18,
+            0
+          ],
+          [
+            18,
+            1
+          ],
+          [
+            18,
+            2
+          ]
+        ],
+        "carter4": [
+          [
+            15,
+            24
+          ],
+          [
+            15,
+            25
+          ],
+          [
+            15,
+            26
+          ],
+          [
+            15,
+            27
+          ],
+          [
+            16,
+            24
+          ],
+          [
+            16,
+            25
+          ],
+          [
+            16,
+            26
+          ],
+          [
+            16,
+            27
+          ],
+          [
+            17,
+            24
+          ],
+          [
+            17,
+            25
+          ],
+          [
+            17,
+            26
+          ],
+          [
+            17,
+            27
+          ],
+          [
+            18,
+            24
+          ],
+          [
+            18,
+            25
+          ],
+          [
+            18,
+            26
+          ],
+          [
+            18,
+            27
+          ]
+        ]
+      },
+      "scope": "authored geometry and retained tiles only; no Nav2 or physical docking proof"
+    },
+    "layout_sha256": "6fdfb4dab14734f2c43467cf384b72b5e4c471df1e3af7f003a3fca5f4ef6bba",
+    "routing_sha256": "e66286fb17e3845158abeb3e1684df89ae758736c7c77eade2451703bf141d5a",
+    "scope": "authored preflight; not four-robot runtime qualification"
+  },
+  "maps": {
+    "open": {
+      "frame": "map",
+      "width_cells": 720,
+      "height_cells": 560,
+      "resolution_m": 0.05,
+      "origin": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "row_zero": "south in memory; north is first pixel row in PGM",
+      "dynamic_barrier_included": false,
+      "planning_backend": "CPU geometry rasterization; not Nav2",
+      "collision_validation": "not performed",
+      "source_sha256": "6fdfb4dab14734f2c43467cf384b72b5e4c471df1e3af7f003a3fca5f4ef6bba",
+      "files": {
+        "map.pgm": "e18837feaf78dfeda2d8ab542382da881873f2ddaaa40ffa90364ec8f8586728",
+        "keepout.pgm": "ba282d35f1f298ca7a783c0a62ff9e31092acba638520f9b044777659a93b9a0",
+        "map.yaml": "03b2f34f0b62f3346eb7ea5c71a1caba320e56678168f779df19c8b52f47c625",
+        "keepout.yaml": "4f8c1df5dae054b9955aba3bbb5423245a2768b059e0c0b23e30a1d5cab6b4d4"
+      }
+    },
+    "closed": {
+      "frame": "map",
+      "width_cells": 720,
+      "height_cells": 560,
+      "resolution_m": 0.05,
+      "origin": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "row_zero": "south in memory; north is first pixel row in PGM",
+      "dynamic_barrier_included": true,
+      "planning_backend": "CPU geometry rasterization; not Nav2",
+      "collision_validation": "not performed",
+      "source_sha256": "6fdfb4dab14734f2c43467cf384b72b5e4c471df1e3af7f003a3fca5f4ef6bba",
+      "files": {
+        "map.pgm": "6fba66f2bb7c17bc8b65a230427e961fcd44cc841df31fe980ffcc3ae3173d2f",
+        "keepout.pgm": "ba282d35f1f298ca7a783c0a62ff9e31092acba638520f9b044777659a93b9a0",
+        "map.yaml": "03b2f34f0b62f3346eb7ea5c71a1caba320e56678168f779df19c8b52f47c625",
+        "keepout.yaml": "4f8c1df5dae054b9955aba3bbb5423245a2768b059e0c0b23e30a1d5cab6b4d4"
+      }
+    }
+  },
+  "reservation_radius_including_tracking_m": 1.4371090915442775,
+  "tile_size_m": 1.0,
+  "opposing_lanes": [
+    {
+      "lanes": [
+        "LOW_E",
+        "LOW_W"
+      ],
+      "shared_tiles": 0,
+      "tile_counts": [
+        84,
+        84
+      ]
+    },
+    {
+      "lanes": [
+        "HIGH_E",
+        "HIGH_W"
+      ],
+      "shared_tiles": 0,
+      "tile_counts": [
+        84,
+        84
+      ]
+    },
+    {
+      "lanes": [
+        "EAST_N",
+        "EAST_S"
+      ],
+      "shared_tiles": 0,
+      "tile_counts": [
+        63,
+        63
+      ]
+    }
+  ],
+  "source_static_colliders": 20,
+  "composed_static_colliders": 20,
+  "context_instances": 35,
+  "context_max_bounds_error_m": 1.0658141036401503e-14,
+  "context_physics_api_count": 0,
+  "context_joint_count": 0,
+  "visual_direction_arrows": 18,
+  "visual_lane_boundaries": 9,
+  "source_sha256": {
+    "configs/factory-semiconductor-dual-lane/energy-profile.json": "ad3808df78ccaf1f0800d71093e281c336d6d13c2b738e9c0c966c662d0a387a",
+    "configs/factory-semiconductor-dual-lane/g2.json": "6994172e4ae5e536a5b883767fdab05610deca930d2c665deae8b9996f6b9ad3",
+    "configs/factory-semiconductor-dual-lane/g3-routing.json": "e66286fb17e3845158abeb3e1684df89ae758736c7c77eade2451703bf141d5a",
+    "configs/factory-semiconductor-dual-lane/g3-runtime.json": "e7b565df2d1df44c90e698fd79cf7c1c6c380a0ac5e9a745013904cfdbaea1f9",
+    "configs/factory-semiconductor-dual-lane/layout.json": "6fdfb4dab14734f2c43467cf384b72b5e4c471df1e3af7f003a3fca5f4ef6bba",
+    "configs/factory-semiconductor-dual-lane/nav2-g2.yaml": "46da243197437b152552bd139780c498fdf35c7ef293fbd2f152cf608947a5f0",
+    "configs/factory-semiconductor-dual-lane/render-profile.json": "980f3dfb4a218066d4a35454802ca6dff763c132fa7435d6fd9e5ac665ac973d",
+    "configs/factory-semiconductor-dual-lane/transport-profile.json": "976e9d93b76af7f8a3747944eee2440eb28fa6f2335a453a04a8efedeb0766a7",
+    "configs/factory-semiconductor-dual-lane/visual-assets.json": "76b8e37b0bc1ecd0d461d585df442f0bf3b625ab9fd43b896fe7d2c85ac55c79",
+    "factory_ops/factory_context.py": "0e2806528cdcfd15cda7da5ef0d803c28c5c75a1524c1a0865d27ac80568064b",
+    "factory_ops/layout.py": "33e5bce06f3c018bcece17470f3e0b1390436f2322f501de966089e0d1f502c3",
+    "factory_ops/fleet_routing.py": "2bf3d069f0361c6983ba11e7334d0cb187e23c12334d6539f39e13cbfffb9e94",
+    "factory_ops/fleet_transport.py": "eae635d8dfc56a12b98af5334d9c42bbeea25dcdd7a7542bb6b517809e9955c8",
+    "factory_ops/visual_scene.py": "7e95dd0c12b0b528e06af8b6f7c306a54046b023783d6b41b6c8edc6e52dd007",
+    "scripts/isaac/factory_visuals.py": "2cbd50cec561b1f2247239a4794debf26101c87260b49352a796b96ec1bb3b97",
+    "scripts/isaac/preview_factory_layout.py": "b50ea753611af492f40221844b537da1e3c67af6736db645c200289cd327c9aa",
+    "scripts/planning/build_semiconductor_dual_lane.py": "2e232aba096b2b5c6e7e24d8eafda653fdd269b888ea49399f8a2d9cd66cbe62",
+    "tests/test_dual_lane_routes.py": "f3c054551b69ee71e8e0419df2f1f1fdf08598a4913edeb5efad613df0ba8ec9",
+    "tests/test_dual_lane_visuals.py": "d1b0adac1376c2fcff654a146d8909d2fc1e579706574cf5fdb897602ef3b63f"
+  },
+  "runtime_remaining": [
+    "new layout four-AMR transport",
+    "physical/sensor/map alignment",
+    "charging",
+    "valid final-scene SDG and operating media"
+  ],
+  "external_assets": {
+    "repository": "nvidia/simready-assets",
+    "revision": "653d91e182011f357cf1644013cc94ddf194d349",
+    "preparer_sha256": "ca42b436ea6a166c5eefe542c8750767470c65aff735b602d6e8b26ccfe79f0c",
+    "index_sha256": "35401d396c7e111ef62cfa9ff5353ee0a855dabf577ef99aa12691131b89f560",
+    "packages": {
+      "workbench": {
+        "sha256": "15f4cb39bbbfcdb1168f9c2ea1d07497a8f90d777baf4178fe0a84c65dc542ec",
+        "bounds_xyz_m": [
+          -0.35697818551070476,
+          -0.7227310944581404,
+          0.0,
+          0.35697818551070476,
+          0.7227310944581404,
+          2.0497918472283345
+        ],
+        "mesh_count": 3,
+        "removed_physics_typed_prims": [
+          "/Asset/Units/Model/Joints/joint_door_02_joint_00",
+          "/Asset/Units/Model/Joints/joint_door_01_joint_00"
+        ],
+        "scope": "render-only; physics APIs and typed prims removed",
+        "license": "CC-BY-4.0",
+        "author": "NVIDIA",
+        "source_url": "https://huggingface.co/datasets/nvidia/simready-assets/tree/653d91e182011f357cf1644013cc94ddf194d349/furniture_workbench_modular_a01"
+      },
+      "cabinet": {
+        "sha256": "00ee423c14930acb15c5f2048a959242199fd6fcf57aaf93bc04a311de54731a",
+        "bounds_xyz_m": [
+          -0.2919570505619049,
+          -0.5083543658256531,
+          0.0,
+          0.2919570505619049,
+          0.5083543658256531,
+          1.3917119353988865
+        ],
+        "mesh_count": 10,
+        "removed_physics_typed_prims": [
+          "/Asset/Units/Model/Joints/joint_door_02_joint_00",
+          "/Asset/Units/Model/Joints/joint_wheel_01_joint_00",
+          "/Asset/Units/Model/Joints/joint_wheelSuppport_01_joint_00",
+          "/Asset/Units/Model/Joints/joint_wheel_03_joint_00",
+          "/Asset/Units/Model/Joints/joint_wheelSuppport_02_joint_00",
+          "/Asset/Units/Model/Joints/joint_drawer_01_joint_00",
+          "/Asset/Units/Model/Joints/joint_door_01_joint_00",
+          "/Asset/Units/Model/Joints/joint_wheel_02_joint_00",
+          "/Asset/Units/Model/Joints/joint_wheel_04_joint_00"
+        ],
+        "scope": "render-only; physics APIs and typed prims removed",
+        "license": "CC-BY-4.0",
+        "author": "NVIDIA",
+        "source_url": "https://huggingface.co/datasets/nvidia/simready-assets/tree/653d91e182011f357cf1644013cc94ddf194d349/equipment_rolling_workstation_cabinet_c01"
+      },
+      "cart": {
+        "sha256": "d664cfe64e12a14ff2e9be7b9c78e146355ea4d5edab90ab7ba4ae09cc5c3d58",
+        "bounds_xyz_m": [
+          -0.4269838333243271,
+          -0.20607799291610718,
+          0.0,
+          0.4269838333243271,
+          0.20607799291610718,
+          0.9072148539081388
+        ],
+        "mesh_count": 11,
+        "removed_physics_typed_prims": [
+          "/Asset/Units/Model/Joints/joint_wheelA_01_joint_00",
+          "/Asset/Units/Model/Joints/joint_wheelC_01_joint_00",
+          "/Asset/Units/Model/Joints/joint_wheelBaseB_01_joint_00",
+          "/Asset/Units/Model/Joints/joint_wheelB_01_joint_00",
+          "/Asset/Units/Model/Joints/joint_wheelBaseC_01_joint_00",
+          "/Asset/Units/Model/Joints/joint_wheelBaseA_01_joint_00",
+          "/Asset/Units/Model/Joints/joint_wheelBaseD_01_joint_00",
+          "/Asset/Units/Model/Joints/joint_wheelD_01_joint_00",
+          "/Asset/Units/Model/Joints/joint_bin_01_joint_00",
+          "/Asset/Units/Model/Joints/joint_binBig_01_joint_00"
+        ],
+        "scope": "render-only; physics APIs and typed prims removed",
+        "license": "CC-BY-4.0",
+        "author": "NVIDIA",
+        "source_url": "https://huggingface.co/datasets/nvidia/simready-assets/tree/653d91e182011f357cf1644013cc94ddf194d349/equipment_utility_cart_e01"
+      },
+      "packing_conveyor": {
+        "sha256": "ce7a46cd8f98c325196dc116450b7a17c057a3be899640f9a82bab72690c883e",
+        "bounds_xyz_m": [
+          -0.771225094795227,
+          -2.000061333179474,
+          0.0,
+          0.771225094795227,
+          2.000061333179474,
+          2.3109521865844727
+        ],
+        "mesh_count": 44,
+        "removed_physics_typed_prims": [
+          "/Asset/Units/Model/Joints/joint_sm_roller10_a61_joint_00",
+          "/Asset/Units/Model/Joints/joint_sm_button05_a61_joint_00",
+          "/Asset/Units/Model/Joints/joint_sm_roller30_a61_joint_00",
+          "/Asset/Units/Model/Joints/joint_sm_roller32_a61_joint_00",
+          "/Asset/Units/Model/Joints/joint_sm_button06_a61_joint_00",
+          "/Asset/Units/Model/Joints/joint_sm_roller04_a61_joint_00",
+          "/Asset/Units/Model/Joints/joint_sm_roller17_a61_joint_00",
+          "/Asset/Units/Model/Joints/joint_sm_roller18_a61_joint_00",
+          "/Asset/Units/Model/Joints/joint_sm_roller33_a61_joint_00",
+          "/Asset/Units/Model/Joints/joint_sm_roller16_a61_joint_00",
+          "/Asset/Units/Model/Joints/joint_sm_roller03_a61_joint_00",
+          "/Asset/Units/Model/Joints/joint_sm_roller20_a61_joint_00",
+          "/Asset/Units/Model/Joints/joint_sm_roller02_a61_joint_00",
+          "/Asset/Units/Model/Joints/joint_sm_roller31_a61_joint_00",
+          "/Asset/Units/Model/Joints/joint_sm_roller07_a61_joint_00",
+          "/Asset/Units/Model/Joints/joint_sm_roller23_a61_joint_00",
+          "/Asset/Units/Model/Joints/joint_sm_roller11_a61_joint_00",
+          "/Asset/Units/Model/Joints/joint_sm_button04_a61_joint_00",
+          "/Asset/Units/Model/Joints/joint_sm_roller28_a61_joint_00",
+          "/Asset/Units/Model/Joints/joint_sm_button03_a61_joint_00",
+          "/Asset/Units/Model/Joints/joint_sm_roller12_a61_joint_00",
+          "/Asset/Units/Model/Joints/joint_sm_roller26_a61_joint_00",
+          "/Asset/Units/Model/Joints/joint_sm_roller08_a61_joint_00",
+          "/Asset/Units/Model/Joints/joint_sm_roller14_a61_joint_00",
+          "/Asset/Units/Model/Joints/joint_sm_roller06_a61_joint_00",
+          "/Asset/Units/Model/Joints/joint_sm_roller25_a61_joint_00",
+          "/Asset/Units/Model/Joints/joint_sm_roller27_a61_joint_00",
+          "/Asset/Units/Model/Joints/joint_sm_roller13_a61_joint_00",
+          "/Asset/Units/Model/Joints/joint_sm_roller01_a61_joint_00",
+          "/Asset/Units/Model/Joints/joint_sm_roller09_a61_joint_00",
+          "/Asset/Units/Model/Joints/joint_sm_roller05_a61_joint_00",
+          "/Asset/Units/Model/Joints/joint_sm_roller19_a61_joint_00",
+          "/Asset/Units/Model/Joints/joint_sm_roller24_a61_joint_00",
+          "/Asset/Units/Model/Joints/joint_sm_roller22_a61_joint_00",
+          "/Asset/Units/Model/Joints/joint_sm_roller36_a61_joint_00",
+          "/Asset/Units/Model/Joints/joint_sm_roller21_a61_joint_00",
+          "/Asset/Units/Model/Joints/joint_sm_roller35_a61_joint_00",
+          "/Asset/Units/Model/Joints/joint_sm_button02_a61_joint_00",
+          "/Asset/Units/Model/Joints/joint_sm_roller29_a61_joint_00",
+          "/Asset/Units/Model/Joints/joint_sm_roller34_a61_joint_00",
+          "/Asset/Units/Model/Joints/joint_sm_button01_a61_joint_00",
+          "/Asset/Units/Model/Joints/joint_sm_roller15_a61_joint_00",
+          "/Asset/Units/Model/Joints/joint_sm_conveyor_belt_a61_joint_00",
+          "/Asset/Units/Model/Joints/joint_sm_glass_a61_joint_00"
+        ],
+        "scope": "render-only; physics APIs and typed prims removed",
+        "license": "CC-BY-4.0",
+        "author": "NVIDIA",
+        "source_url": "https://huggingface.co/datasets/nvidia/simready-assets/tree/653d91e182011f357cf1644013cc94ddf194d349/conveyor_belt_a61"
+      }
+    }
+  }
+}

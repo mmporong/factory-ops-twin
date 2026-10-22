@@ -590,8 +590,8 @@
         34.9,
         11.8
       ],
-      "height_m": 1.6,
-      "type": "ESD finished tray pack and label station"
+      "height_m": 2.4,
+      "type": "packaging conveyor with inspection-gate geometry; visual-only model, aggregate process logic"
     },
     {
       "id": "FG_HIGH",
@@ -632,7 +632,8 @@
   },
   "traffic_reference": null,
   "unchanged_contracts": [
-    "19 stable obstacle IDs and unchanged equipment envelope dimensions",
+    "19 stable obstacle IDs and unchanged XY equipment envelope dimensions",
+    "FG_LOW envelope height 2.4m to contain the native-size attributed packaging conveyor",
     "middle equipment rigid translation +2.5m y; north equipment +5.5m y",
     "finished-goods equipment rigid translation +3.5m x",
     "four separate off-main parking bays and conservative reservation holds"

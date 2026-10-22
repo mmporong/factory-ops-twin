@@ -104,6 +104,13 @@ def export_visual_scene(
     _validate_render_profile(render_profile)
     geometry_profile = PRODUCTION_BAY_GEOMETRY if layout.data.get("revision") in PRODUCTION_BAY_REVISIONS else "legacy"
 
+    context = None
+    if config.get("environment", {}).get("fixtures"):
+        from .factory_context import build_factory_context
+        context = build_factory_context(layout, config["environment"], cache_root=Path(
+            os.environ.get("FACTORY_OPS_ASSET_CACHE", str(Path(__file__).resolve().parents[1]/"assets/vendor/simready-context"))))
+    external_by_obstacle = _external_asset_mapping(config, context)
+
     palette = _palette(variant_seed)
     obstacle_by_id = {str(item["id"]): item for item in layout.data["physical_obstacles"]}
     instances: list[VisualInstance] = []
@@ -125,6 +132,8 @@ def export_visual_scene(
         recipe = str(assignment["recipe"])
         semantic_class = str(assignment["semantic_class"])
         state_role = str(assignment["state_role"])
+        if obstacle_id in external_by_obstacle:
+            continue
         prim_path = f"/World/Visuals/{_prim_name(obstacle_id)}"
         instances.append(VisualInstance(
             stable_id=obstacle_id,
@@ -156,11 +165,7 @@ def export_visual_scene(
                 source_bounds_xy_m=source_bounds,
                 asset=f"{recipe}/{box.name}",
             ))
-    context = None
-    if config.get("environment", {}).get("fixtures"):
-        from .factory_context import build_factory_context
-        context = build_factory_context(layout, config["environment"], cache_root=Path(
-            os.environ.get("FACTORY_OPS_ASSET_CACHE", str(Path(__file__).resolve().parents[1]/"assets/vendor/simready-context"))))
+    if context is not None:
         lines.extend(context["lines"])
         instances.extend(VisualInstance(**item) for item in context["instances"])
     lines.extend(["    }", "}", ""])
@@ -219,10 +224,10 @@ def export_visual_scene(
         },
     }
     if context is not None:
-        manifest["physical_invariants"]["source_xyz_invariant_scope"] = "operational equipment instances with a source_obstacle_id; context uses its own measured footprints"
+        manifest["physical_invariants"]["source_xyz_invariant_scope"] = "all visual instances with a source_obstacle_id, including mounted external assets, remain inside source XYZ envelopes"
         manifest["factory_context"] = {"scope": context["scope"], "fixture_count": len(context["instances"]),
-            "placement": "native asset dimensions; outside AMR regions and docking/parking areas with 0.1m clearance",
-            "physics": "background visuals only; original navigation/collision scene remains authoritative"}
+            "placement": "native asset dimensions; mounted assets inside source XYZ envelopes; all fixtures preserve 0.1m AMR and unrelated obstacle clearance",
+            "physics": "render-only references; source obstacle collision geometry remains authoritative"}
     manifest_path = output / "visual-scene-manifest.json"
     manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8", newline="\n")
     result = dict(manifest)
@@ -279,7 +284,7 @@ def _validate_config(config: Mapping[str, Any], layout: Layout) -> None:
         "packing_bench", "process_cell", "control_cabinet", "buffer_fixture",
         "finished_goods", "service_cabinet", "semiconductor_handler", "ate_rack",
         "tray_stocker", "esd_tray_loadport", "aoi_mark", "esd_packing",
-        "cleanroom_utility",
+        "cleanroom_utility", "external_asset",
     }
     for obstacle_id, value in assets.items():
         if not isinstance(value, dict) or set(value) != {"recipe", "semantic_class", "state_role"}:
@@ -288,6 +293,41 @@ def _validate_config(config: Mapping[str, Any], layout: Layout) -> None:
             raise LayoutError(f"visual asset assignment {obstacle_id} has an unsupported recipe or class")
         if not isinstance(value["state_role"], str) or not value["state_role"]:
             raise LayoutError(f"visual asset assignment {obstacle_id} state_role is invalid")
+
+
+def _external_asset_mapping(
+    config: Mapping[str, Any], context: Mapping[str, object] | None,
+) -> Mapping[str, Mapping[str, object]]:
+    assignments = config["obstacle_assets"]
+    assert isinstance(assignments, Mapping)
+    expected = {
+        str(obstacle_id): value for obstacle_id, value in assignments.items()
+        if isinstance(value, Mapping) and value.get("recipe") == "external_asset"
+    }
+    mounted: Mapping[str, Mapping[str, object]] = {}
+    if context is not None:
+        raw_mounted = context.get("mounted_by_obstacle")
+        if not isinstance(raw_mounted, Mapping) or not all(
+            isinstance(key, str) and isinstance(value, Mapping)
+            for key, value in raw_mounted.items()
+        ):
+            raise LayoutError("factory context mounted asset mapping is invalid")
+        mounted = raw_mounted  # type: ignore[assignment]
+    if set(mounted) != set(expected):
+        missing = sorted(set(expected) - set(mounted))
+        unexpected = sorted(set(mounted) - set(expected))
+        raise LayoutError(
+            f"external asset fixtures must match external_asset assignments exactly; "
+            f"missing={missing}, unexpected={unexpected}"
+        )
+    for obstacle_id, instance in mounted.items():
+        assignment = expected[obstacle_id]
+        if (instance.get("semantic_class") != assignment.get("semantic_class")
+                or instance.get("state_role") != assignment.get("state_role")):
+            raise LayoutError(
+                f"external asset fixture for {obstacle_id} semantic_class/state_role mismatch"
+            )
+    return mounted
 
 
 def _validate_render_profile(profile: Mapping[str, Any]) -> None:

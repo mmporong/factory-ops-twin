@@ -45,17 +45,17 @@
     {
       "id": "cell_process",
       "eye_xyz_m": [
-        14,
-        5,
-        9
+        26,
+        4,
+        13
       ],
       "target_xyz_m": [
-        21,
-        14,
+        19,
+        12.5,
         1
       ],
-      "focal_length_mm": 35,
-      "purpose": "connected assembly, inspection and pack process"
+      "focal_length_mm": 26,
+      "purpose": "test handler, ATE sidecar and tray transfer interfaces"
     },
     {
       "id": "east_shipping",
@@ -101,6 +101,21 @@
       ],
       "focal_length_mm": 20,
       "purpose": "short-boom follow camera inside the AMR clearance in carter2 chassis_link frame"
+    },
+    {
+      "id": "packing_conveyor",
+      "eye_xyz_m": [
+        37,
+        6,
+        6
+      ],
+      "target_xyz_m": [
+        32.6,
+        10.55,
+        1.1
+      ],
+      "focal_length_mm": 30,
+      "purpose": "attributed native-size packaging conveyor and inspection-gate geometry"
     }
   ],
   "capture_contract": {
