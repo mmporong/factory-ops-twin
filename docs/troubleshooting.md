@@ -1049,6 +1049,8 @@ SimReady 모델을 붙인194 정지 촬영에서 RGB 두 장과 Job 종료는 �
 
 물류의 장기 대기 원인은 미확정이다. 다음 진단은 닫힌 실행의 배차·예약·작업 원장으로 장기 대기 차량과 점유자를 연결하는 데 한정한다. 같은 설정으로 장시간 재실행하거나 wall bound만 늘리지 않는다. 기존 full-leg 예약·정지 확인·TTL을 완화하지 않는다.
 
+닫힌 `route-events.jsonl`에서 carter3의 같은 요청(pending_sequence5·동일 fingerprint)이 ROS시각394.883353928부터1417.050073905까지 예약 대기로 기록됐다. 두 관측의 간격은1022.166719977시뮬레이션 초이며 시작·마지막 blocker는 carter2/carter4다. carter4의 다른 같은 요청도245.733346149초 간격의 대기 관측이 있고 blocker는 그 사이 바뀌었다. 이는 긴 대기와 full-leg 점유/후속 경로 충돌을 좁힐 근거다. 전체 진행성 원인이나 GPU·최대 대수의 한계를 확정한 자료는 아니다. [선택 사건·시각·원본 저널 해시](evidence/local45-transport-064-waits.json)
+
 Linux 중계 종료에서는063과 같은 `Unit ... not loaded`가 다시 남았다.140b0b9 수정이 이 실행의 종료 경로 전체를 해결했다고 주장하지 않는다. 소유 unit·호출 ID·cgroup·PID/start-time과 foreground client를 사후 조회해 모두 소멸한 것을 확인했다. 원래 `relay_pair.linux_closed=false`와 실패 JSON은 수정하지 않았고 해시가 유지됐다. Windows SDK·Nav2·Windows 중계·API·Next 종료도 확인했다.
 
 미디어 후속 watcher는 원래 중계 종료 확인을 충족하지 못해 시간 초과했으며 새 운영 영상은 내보내지 않았다. 이는 운송 시간 초과와 별도로 관리한다. 다음 수정은 unit 확인과 stop 호출 사이의 상태 변화 및 context 종료 순서를 좁혀 확인해야 한다. 현재 수정 완료나 재발 방지 통과로 표시하지 않는다. [실행 결과·오류·원본 해시·사후 종료 기록](evidence/local45-transport-064.json)

@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "recorded_at": "2026-10-22T23:11:01.687560+00:00",
+  "run_id": "32a8dcc7c1714ef1bf46be8e60ea79fb",
+  "source_commit": "189d0a5ea0a8f9f03ba86785e2d25ca468f210aa",
+  "source_journal": "results/run/route-events.jsonl",
+  "source_journal_sha256": "6d50b685034f0b2b53f3ed6eec68f4c2fbb5ff785c9e485692b168d51a69ef87",
+  "clock": "absolute ROS simulation clock; spans are timestamp differences, not wall time",
+  "scope": "selected same-request reservation-wait observations; not a complete liveness root-cause proof or scaling benchmark",
+  "wait_spans": [
+    {
+      "robot_id": "carter3",
+      "first": {
+        "request_fingerprint": "54448c40ee320a1c76ac1dfbf3838ab0f319e29763906e09a48120156b600c20",
+        "blockers": [
+          "carter2",
+          "carter4"
+        ],
+        "sim_time": 394.883353928,
+        "event_type": "reservation_wait",
+        "pending_sequence": 5,
+        "event_sequence": 22590,
+        "robot_id": "carter3"
+      },
+      "last": {
+        "request_fingerprint": "54448c40ee320a1c76ac1dfbf3838ab0f319e29763906e09a48120156b600c20",
+        "blockers": [
+          "carter2",
+          "carter4"
+        ],
+        "sim_time": 1417.050073905,
+        "event_type": "reservation_wait",
+        "pending_sequence": 5,
+        "event_sequence": 77912,
+        "robot_id": "carter3"
+      },
+      "span_between_wait_observations_sim_s": 1022.1667199770001
+    },
+    {
+      "robot_id": "carter4",
+      "first": {
+        "request_fingerprint": "b4050083fe2c643be811245fdea92b6266591e98b2c12130eb1e77a2c2f1f4c5",
+        "blockers": [
+          "carter2"
+        ],
+        "sim_time": 893.816713283,
+        "event_type": "reservation_wait",
+        "pending_sequence": 12,
+        "event_sequence": 50054,
+        "robot_id": "carter4"
+      },
+      "last": {
+        "request_fingerprint": "b4050083fe2c643be811245fdea92b6266591e98b2c12130eb1e77a2c2f1f4c5",
+        "blockers": [
+          "carter1"
+        ],
+        "sim_time": 1139.550059432,
+        "event_type": "reservation_wait",
+        "pending_sequence": 12,
+        "event_sequence": 62200,
+        "robot_id": "carter4"
+      },
+      "span_between_wait_observations_sim_s": 245.73334614899989
+    }
+  ],
+  "interpretation": {
+    "long_reservation_wait_observed": true,
+    "gpu_capacity_limit_measured": false,
+    "maximum_fleet_size_measured": false,
+    "whole_run_completion": false,
+    "source_modified": false
+  }
+}

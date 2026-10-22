@@ -6,6 +6,8 @@
 
 배차는 현재 배정된 제품 운송과 빈 캐리어 반납을 함께 확인해, 같은 두 지점을 역방향으로 오갈 작업의 동시 배정을 유예합니다. 실제 경로 예약과 정지 확인은 유지합니다. 동일 tick의 선택을 반영하는 CPU 회귀는 통과했으며 수정 후 물리 운송 완주는 확인 중입니다.
 
+운영 목표는4대가 요청 큐의 자재 공급·출하·빈 캐리어 회수·충전을 반복하고, 하차 후 다음 작업을 이어받는 흐름입니다. 차량별 대기 원인과 플릿의 누적 출하·재고 변화를 함께 보여줍니다. 현재는 [같은 예약 요구의 장기 대기](docs/evidence/local45-transport-064-waits.json)가 관측돼, 교통·배차 병목 해결과12lot 완주를 우선합니다. 지원 가능한 최대 대수는 측정 전입니다.
+
 [![전체 공장 물류 운영의 12초 반복 미리보기](docs/images/fleet4-local45-036/operations-preview-smooth.gif)](docs/images/fleet4-local45-036/operations-business-complete.mp4)
 
 첫 화면은 **이전 센서 모듈 구역 실행**의 전체 업무 영상에서 고른12초 반복 GIF입니다. 새 반도체 구역의 영상과 구분합니다. 원본 영상의10fps·명목74배속 요약이며, 이미지를 누르면 전체 MP4로 이동합니다. [GIF 출처·변환 기록](docs/images/fleet4-local45-036/readme-smooth-preview-provenance.json)
