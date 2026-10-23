@@ -107,20 +107,20 @@ $launcherArguments = @(
   -FilePath $hostPython -ArgumentList $launcherArguments -WaitTimeoutSeconds 1800
 ```
 
-`run_operations_replay.py`는 현재 `--help`와 Python 구문 검사까지만 확인했다. 실행228은 같은 입력 고정·Windows Job 소유·receipt 검사를 사용한 동등한 수동 Job 경로로 만들었으며, 새 launcher의 실제 GPU 통과 근거로 소급하지 않는다. 실행228은 5,400개 1Hz snapshot 중1980초부터30초를 pose 보간해900프레임·30fps·8배속으로 표시했다. 재생 동안 PhysX는 멈춰 있었고 접촉 물리 결과가 아니다. [228 내보내기 출처](images/operations-local45-228/export-manifest.json)
+`run_operations_replay.py`는 현재 `--help`와 Python 구문 검사까지만 확인했다. 실행228은 같은 입력 고정·Windows Job 소유·receipt 검사를 사용한 동등한 수동 Job 경로로 만들었으며, 새 launcher의 실제 GPU 통과 근거로 소급하지 않는다. 실행228은 5,400개 1Hz snapshot 중1980–2220초의240초 구간을 pose 보간해900프레임·30fps·8배속의30초 영상으로 표시했다. 재생 동안 PhysX는 멈춰 있었고 접촉 물리 결과가 아니다. [228 내보내기 출처](images/operations-local45-228/provenance.json)
 
-GPU 프로세스가 종료되고 receipt의 `remaining_owned_pids`가 빈 배열인 것을 확인한 뒤, MP4·GIF 내보내기는 CPU에서 실행한다.
+GPU 프로세스가 종료되고 receipt의 `remaining_owned_pids`가 빈 배열인 것을 확인한 뒤, MP4·GIF 내보내기는 CPU에서 실행한다. 이 단계에는 Pillow가 있는 Python과 PATH의 FFmpeg가 필요하다. 운영 모델 전용 uv 환경에는 Pillow가 포함되지 않는다. 아래 `python`은 현재 PC에서 Pillow가 설치된 인터프리터를 가리킨다.
 
 ```powershell
 cd "$HOME/factory-ops-twin"
 $mediaOutput = "artifacts/operations/export-$runLabel"
-uv run python scripts/media/export_operations_replay.py `
+python scripts/media/export_operations_replay.py `
   --render-dir "$gpuOutput/render" `
   --host-receipt "$gpuOutput/host/receipt.json" `
   --output $mediaOutput --gif --gif-fps 25 --start-frame 0 --count 900
 ```
 
-내보내기 도구는 renderer 결과·프레임 해시·run ID·Job 종료 receipt를 대조한다. HUD는 원본 metadata만 사용하고 새 측정값을 만들지 않는다. GPU lease는 작업이 끝나면 반환하며 다른 세션의 프로세스를 종료하지 않는다.
+내보내기 도구는 renderer 결과·프레임 해시·run ID·Job 종료 receipt를 대조한다. HUD는 원본 metadata만 사용하고 새 측정값을 만들지 않는다. 완성 MP4를 입력으로960px·64색·25fps GIF를 순차 생성하며 전송용 GIF에만 노이즈 억제를 적용한다. GPU lease는 렌더 작업이 끝나면 반환하고 CPU 인코딩 동안 보유하지 않는다.
 
 ## 실제 ROS 실행의 읽기 전용 관측
 

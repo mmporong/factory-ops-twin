@@ -1247,3 +1247,11 @@ WEST_LINK와 CENTER_LINK는 진입 구간부터 작성된 첫 출구 앵커까�
 - 수정: 과거 raw-aperture 주석만 영상 중심 기준으로 유효 비율에 맞춘다. 새 renderer는 유효 aperture와 `horizontal_fit_square_pixels` 표식을 기록해 중복 보정을 방지한다. 실제 RGB·원본 운행 기록·판정은 변경하지 않는다. SDK4.5 설치 소스와 [Camera API](https://docs.isaacsim.omniverse.nvidia.com/latest/py/source/deprecated/isaacsim.sensors.camera/docs/index.html)를 대조했으며, 최신 문서의 버전을4.5 실행 근거로 대체하지 않았다.
 - 전송용 GIF: CPU 후보3개 중960px·25fps·64색 palette와 약한 시공간 노이즈 억제를 선택했다. 보정 MP4에서 생성한 최종 GIF는750프레임·40ms 간격·30초·12,775,674바이트다. 약86.6% 용량 감소는 이번 복합 설정의 결과이며 개별 필터 하나의 효과로 분리하지 않는다. MP4에는 이 GIF용 노이즈 억제를 적용하지 않는다. GIF는 관측·학습 원본으로 사용하지 않는다.
 - 근거: [MP4 export](images/operations-local45-228/export-manifest.json), [GIF 변환과 전체 인자](images/operations-local45-228/gif-manifest.json). 투영 수학 검사를 포함한 exporter 표적 검사와 대표 프레임 육안 확인을 수행했다. GPU 원본은228로 유지하며 미래 renderer의 새 투영 필드는 다음 GPU 실행에서 확인한다.
+
+## FOT-151 — 브라우저 도구의 커널 초기화 실패
+
+2026-10-23 기존 `http://127.0.0.1:3007` 관제 화면에 연결하려던 브라우저 도구가 `failed to write kernel assets: 지정된 경로를 찾을 수 없습니다. (os error 3)`를 반환했다. 페이지에 접근하기 전 도구 초기화에서 실패한 것으로, 웹 제품의 JavaScript 오류나 서버 장애로 분류하지 않는다. 커널 경로의 정확한 원인은 미확인이다. 이전 새 서버 실행의 자동 승인 거절을 우회하거나 사용자 관제 프로세스를 재시작하지 않았다. 최신 웹 조합의 브라우저 확인은 열린 항목으로 유지한다.
+
+## FOT-152 — 서로 다른 실행기의 결과 파일 위치를 일괄 추정한 백업 실패
+
+선별 백업의 첫 작성은 Kit229 결과를 루트 `result.json`으로 가정해 중단됐다. 실제 위치는 `native/result.json`이고 호스트 요약은 `launcher-result.json`이다. 실패한 부분 ZIP만 제거하고, 원본 경로 전체의 존재를 쓰기 전에 확인하도록 순서를 고쳤다. 완성 ZIP은102개 항목을 다시 읽어 개별 SHA를 대조했다. 원본·실행 결과는 변경하지 않았다. [백업 해시와 보존 범위](evidence/operations-storage-230.json)

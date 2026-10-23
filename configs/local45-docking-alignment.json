@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "qualification": "encoder_docking_alignment_baseline",
+  "physics_dt_s": 0.016666666666666666,
+  "warmup_steps": 120,
+  "maximum_sim_time_s": 45.0,
+  "maximum_wall_time_s": 600.0,
+  "capture_every_physics_steps": 15,
+  "image_size_px": [640, 480],
+  "spawn_xyz_m": [0.0, 0.0, 0.15],
+  "unloaded": true,
+  "drive_geometry": {
+    "wheel_radius_m": 0.14,
+    "wheel_separation_m": 0.4132
+  },
+  "drive_limits": {
+    "max_linear_m_s": 0.15,
+    "max_angular_rad_s": 0.4,
+    "linear_accel_m_s2": 0.18,
+    "linear_decel_m_s2": 0.25,
+    "angular_accel_rad_s2": 0.4,
+    "angular_decel_rad_s2": 0.6,
+    "lateral_accel_m_s2": 0.05,
+    "max_wheel_rad_s": 3.0,
+    "wheel_accel_rad_s2": 4.0
+  },
+  "target_pose_odom": {
+    "x_m": 1.48,
+    "y_m": 0.08,
+    "yaw_rad": 0.18
+  },
+  "controller": {
+    "cruise_linear_m_s": 0.14,
+    "heading_gain": 1.6,
+    "yaw_gain": 1.8,
+    "heading_gate_rad": 0.25,
+    "position_tolerance_m": 0.025,
+    "yaw_tolerance_rad": 0.035,
+    "stop_linear_m_s": 0.01,
+    "stop_angular_rad_s": 0.015,
+    "stationary_dwell_s": 1.0,
+    "post_stop_observation_s": 1.0
+  },
+  "evaluation": {
+    "maximum_endpoint_error_m": 0.06,
+    "maximum_yaw_error_rad": 0.08,
+    "maximum_post_stop_motion_m": 0.01,
+    "maximum_tilt_rad": 0.35,
+    "maximum_actual_linear_m_s": 0.15,
+    "maximum_actual_angular_rad_s": 0.4
+  },
+  "scope": "one unloaded Nova Carter encoder-only low-speed approach, yaw alignment and stationary dwell at an authored pad; ground truth is post-run evaluation only; no payload, electrical contact, physical contact sensor, ChargingFleet, motor calibration or real charging claim"
+}

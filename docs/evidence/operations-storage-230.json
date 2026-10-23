@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "scope": "selected operations 223 / physical baseline 226 / render 228 / Kit 229 release preservation; unrelated historical runs unchanged",
+  "backup": {
+    "schema_version": 1,
+    "path": "D:\\FactoryOpsPortfolio\\operations-release-230.zip",
+    "bytes": 22564153,
+    "sha256": "07761c7a2b36449395ca4390b8afe28af52bef79d6ee15b59a310b7dd90c6b36",
+    "verified_entries": 102,
+    "all_entry_hashes_match": true,
+    "public_commit": "e2dc3d9e0a5ecbf39c726452d11ba039260b89a0"
+  },
+  "pruning": {
+    "schema_version": 1,
+    "status": "complete",
+    "scope": "Only superseded operations render 227 RGB and delivery encoding candidates",
+    "old_rgb_path": "E:\\factory-ops-runs\\operations-render-227\\rgb",
+    "old_rgb_count": 900,
+    "old_rgb_bytes": 528815383.0,
+    "old_frame_journal_sha256": "cef2066e88a2aa290ae9f1f070e2ea2aacc61377ed444e79f1c972fdb4c182cf",
+    "selected_rgb": [
+      {
+        "path": "E:\\factory-ops-runs\\operations-render-227\\rgb-selected\\00000.png",
+        "sha256": "0b7b843a429fd1ed0483989d819945e63e11d4b59e9ee546a821f54f9e163b42"
+      },
+      {
+        "path": "E:\\factory-ops-runs\\operations-render-227\\rgb-selected\\00053.png",
+        "sha256": "1067e6450596f34909abda4f8e7cebc6f724eef25ebf9ad79535a4e2af7650f0"
+      },
+      {
+        "path": "E:\\factory-ops-runs\\operations-render-227\\rgb-selected\\00899.png",
+        "sha256": "a518d0f002256484a4304c2fe70b375f2cb4a2887bdee3d8af325c13c9e11e1d"
+      }
+    ],
+    "files": [
+      {
+        "path": "E:\\factory-ops-runs\\operations-render-228\\first-export-superseded\\operations-replay.gif",
+        "bytes": 95505010,
+        "sha256": "325e8c1aef5d7eb4410992a20e682b27c590b2bd628ecf741dc2312cf1d4aa54"
+      },
+      {
+        "path": "C:\\Users\\LIMMM\\factory-ops-twin\\artifacts\\operations\\gif-228-candidates\\candidate-1-960w-25fps-64c.gif",
+        "bytes": 12700024,
+        "sha256": "2a075847fa084ae94c9c5984270931ad7910e42f5298b8519e1d8b823f78564d"
+      },
+      {
+        "path": "C:\\Users\\LIMMM\\factory-ops-twin\\artifacts\\operations\\gif-228-candidates\\candidate-2-960w-25fps-q60.webp",
+        "bytes": 9838596,
+        "sha256": "27f2bfa98d07486e68dd9df775d68c58362c2c85f97a1697837ac7ff2026c0ce"
+      },
+      {
+        "path": "C:\\Users\\LIMMM\\factory-ops-twin\\artifacts\\operations\\gif-228-candidates\\candidate-3-768w-25fps-64c.gif",
+        "bytes": 7691221,
+        "sha256": "950f07c8572d59281e3a98d19efb9036b753ed322140174d56bcc170b9cf98d9"
+      }
+    ],
+    "kept": "228 raw RGB and metadata; 227 metadata/frozen sources/3 RGB; candidate manifests and selected frames; final GitHub media and D backup",
+    "completed_at": "2026-10-23T19:51:44.7900112+09:00"
+  },
+  "current_raw_roots": [
+    "artifacts/operations/recording-223-normal",
+    "E:/factory-ops-runs/path-baseline-226",
+    "E:/factory-ops-runs/operations-render-228",
+    "E:/factory-ops-runs/kit-229"
+  ],
+  "public_media": "docs/images/operations-local45-228",
+  "public_replay": "docs/data/operations-normal-223",
+  "retention_limits": [
+    "D archive is a second local drive copy, not an offsite backup.",
+    "Raw render 228 RGB is retained only under E; selected state records, frozen source and final media are also archived on D.",
+    "Render 227 full RGB and pre-alignment delivery GIF candidates expired; historical receipts/hashes remain valid records but are not claims that every old file remains."
+  ]
+}
