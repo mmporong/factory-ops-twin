@@ -1,0 +1,659 @@
+{
+  "schema_version": 1,
+  "run_id": "d405198c467840548c4ed482ab97d0e4",
+  "source_commit": "2a4831cbef443c3b766799921962e80e2fabb101",
+  "status": "failed",
+  "scope": "Interrupted four-AMR development transport; first shipment and empty return, not a 12-lot completion",
+  "wall_s": 4033.3910000000033,
+  "latest_progress": {
+    "completed_orders": 1,
+    "elapsed_sim_s": 834.6500435300001,
+    "released_orders": 12,
+    "robots": {
+      "carter1": {
+        "anchor": "S2",
+        "generation": 70,
+        "phase": "request",
+        "target": "CI"
+      },
+      "carter2": {
+        "anchor": "EN_CO",
+        "generation": 102,
+        "phase": "following",
+        "target": "CO"
+      },
+      "carter3": {
+        "anchor": "CI",
+        "generation": 101,
+        "phase": "idle",
+        "target": null
+      },
+      "carter4": {
+        "anchor": "LOW_E_W",
+        "generation": 100,
+        "phase": "following",
+        "target": "P4"
+      }
+    },
+    "run_id": "d405198c467840548c4ed482ab97d0e4",
+    "scenario_id": "fleet4_transport_normal"
+  },
+  "termination": {
+    "owner_abort_requested": true,
+    "reason": "All four virtual energy observations faulted and latched; new assignments require fresh non-faulted energy. Stop after the first empty return to correct callback delivery.",
+    "original_mission_error": {
+      "type": "RuntimeError",
+      "message": "G3 worker wall bound or dependent process failed"
+    },
+    "owner_wall_timeout": false
+  },
+  "material": {
+    "completed": false,
+    "revision": 15,
+    "conservation": [
+      {
+        "balanced": true,
+        "consumed": 6,
+        "in_totes": 2,
+        "initial": 60,
+        "on_hand": 52,
+        "replenished": 0,
+        "sku": "packaged-ic-tray"
+      }
+    ],
+    "empty_trips": [
+      {
+        "destination": "S1",
+        "order_id": "SC-LOT-001",
+        "ready_time_s": 249.41667967499998,
+        "robot_id": "carter4",
+        "source": "CI",
+        "state": "complete",
+        "task_id": "empty:SC-LOT-001",
+        "tote_id": "F4-TOTE-SC-001"
+      },
+      {
+        "destination": "S2",
+        "order_id": "SC-LOT-002",
+        "ready_time_s": 446.85002330500004,
+        "robot_id": null,
+        "source": "CI",
+        "state": "ready",
+        "task_id": "empty:SC-LOT-002",
+        "tote_id": "F4-TOTE-SC-002"
+      },
+      {
+        "destination": "S3",
+        "order_id": "SC-LOT-003",
+        "ready_time_s": 834.6500435300001,
+        "robot_id": null,
+        "source": "CI",
+        "state": "ready",
+        "task_id": "empty:SC-LOT-003",
+        "tote_id": "F4-TOTE-SC-003"
+      }
+    ]
+  },
+  "robots_with_accepted_material_handoffs": [
+    "carter1",
+    "carter2",
+    "carter3",
+    "carter4"
+  ],
+  "selected_events": [
+    {
+      "kind": "handoff_commit",
+      "event_seq": 66,
+      "sim_time_s": 98.433338467,
+      "robot_id": "carter3",
+      "intent": {
+        "goal_id": "a0d6edb2-ea25-4e3c-8f3b-0e21121dffbf",
+        "task_id": "SC-LOT-001:in",
+        "order_id": "SC-LOT-001",
+        "payload_id": "SC-PAY-001",
+        "stage": "inbound",
+        "robot_id": "carter3",
+        "attempt": 0,
+        "station": "S1",
+        "transition": "pickup",
+        "issued_sim_time": 0.03333333500000002,
+        "goal": {
+          "frame_id": "map",
+          "x": 3.5,
+          "y": 4.5,
+          "yaw": 0.0
+        },
+        "deadline": 1800.033333335
+      },
+      "receipt": {
+        "accepted": true,
+        "duplicate": false,
+        "result_id": "663e8638-36ec-4628-b075-77576c26beeb",
+        "goal_id": "a0d6edb2-ea25-4e3c-8f3b-0e21121dffbf",
+        "committed_transition": "pickup",
+        "ledger_seq": 3252
+      }
+    },
+    {
+      "kind": "handoff_commit",
+      "event_seq": 121,
+      "sim_time_s": 183.516676238,
+      "robot_id": "carter1",
+      "intent": {
+        "goal_id": "f114695b-cfa7-4932-9616-493f19251047",
+        "task_id": "SC-LOT-002:in",
+        "order_id": "SC-LOT-002",
+        "payload_id": "SC-PAY-002",
+        "stage": "inbound",
+        "robot_id": "carter1",
+        "attempt": 0,
+        "station": "S2",
+        "transition": "pickup",
+        "issued_sim_time": 30.050001567000002,
+        "goal": {
+          "frame_id": "map",
+          "x": 3.5,
+          "y": 13.5,
+          "yaw": 0.0
+        },
+        "deadline": 1830.050001567
+      },
+      "receipt": {
+        "accepted": true,
+        "duplicate": false,
+        "result_id": "b86885e4-b509-44bd-a5af-0f86006f5b57",
+        "goal_id": "f114695b-cfa7-4932-9616-493f19251047",
+        "committed_transition": "pickup",
+        "ledger_seq": 5916
+      }
+    },
+    {
+      "kind": "handoff_commit",
+      "event_seq": 160,
+      "sim_time_s": 258.616680155,
+      "robot_id": "carter3",
+      "intent": {
+        "goal_id": "78aaf3e3-5fd7-444a-b080-b93c69997307",
+        "task_id": "SC-LOT-001:in",
+        "order_id": "SC-LOT-001",
+        "payload_id": "SC-PAY-001",
+        "stage": "inbound",
+        "robot_id": "carter3",
+        "attempt": 0,
+        "station": "CI",
+        "transition": "drop",
+        "issued_sim_time": 89.233337987,
+        "goal": {
+          "frame_id": "map",
+          "x": 21.5,
+          "y": 10.5,
+          "yaw": 3.141592653589793
+        },
+        "deadline": 1889.233337987
+      },
+      "receipt": {
+        "accepted": true,
+        "duplicate": false,
+        "result_id": "8ab10620-8394-482e-a066-22e0155f5461",
+        "goal_id": "78aaf3e3-5fd7-444a-b080-b93c69997307",
+        "committed_transition": "drop",
+        "ledger_seq": 7892
+      }
+    },
+    {
+      "kind": "empty_trip_dispatched",
+      "event_seq": 193,
+      "sim_time_s": 258.666680157,
+      "robot_id": "carter4",
+      "intent": {
+        "goal_id": "8ff4815b-c395-4b1f-8505-0b24e29e3a3a",
+        "task_id": "empty:SC-LOT-001",
+        "order_id": "SC-LOT-001",
+        "payload_id": "F4-TOTE-SC-001",
+        "stage": "inbound",
+        "robot_id": "carter4",
+        "attempt": 0,
+        "station": "CI",
+        "transition": "pickup",
+        "issued_sim_time": 249.46667967699997,
+        "goal": {
+          "frame_id": "map",
+          "x": 21.5,
+          "y": 10.5,
+          "yaw": 3.141592653589793
+        },
+        "deadline": 2049.466679677
+      }
+    },
+    {
+      "kind": "handoff_commit",
+      "event_seq": 338,
+      "sim_time_s": 442.650023086,
+      "robot_id": "carter3",
+      "intent": {
+        "goal_id": "3ca67956-c3a4-463d-a926-fe7d0fdc8bfe",
+        "task_id": "SC-LOT-003:in",
+        "order_id": "SC-LOT-003",
+        "payload_id": "SC-PAY-003",
+        "stage": "inbound",
+        "robot_id": "carter3",
+        "attempt": 0,
+        "station": "S3",
+        "transition": "pickup",
+        "issued_sim_time": 249.41667967499998,
+        "goal": {
+          "frame_id": "map",
+          "x": 3.5,
+          "y": 22.5,
+          "yaw": 0.0
+        },
+        "deadline": 2049.416679675
+      },
+      "receipt": {
+        "accepted": true,
+        "duplicate": false,
+        "result_id": "9631dacd-2263-4ff0-bf82-fde5d947f35d",
+        "goal_id": "3ca67956-c3a4-463d-a926-fe7d0fdc8bfe",
+        "committed_transition": "pickup",
+        "ledger_seq": 11790
+      }
+    },
+    {
+      "kind": "handoff_commit",
+      "event_seq": 344,
+      "sim_time_s": 456.050023785,
+      "robot_id": "carter1",
+      "intent": {
+        "goal_id": "e1558523-09d8-43c7-8165-7665c37334d3",
+        "task_id": "SC-LOT-002:in",
+        "order_id": "SC-LOT-002",
+        "payload_id": "SC-PAY-002",
+        "stage": "inbound",
+        "robot_id": "carter1",
+        "attempt": 0,
+        "station": "CI",
+        "transition": "drop",
+        "issued_sim_time": 174.316675758,
+        "goal": {
+          "frame_id": "map",
+          "x": 21.5,
+          "y": 10.5,
+          "yaw": 3.141592653589793
+        },
+        "deadline": 1974.316675758
+      },
+      "receipt": {
+        "accepted": true,
+        "duplicate": false,
+        "result_id": "97679da5-5447-439a-9a53-55ff5f2f57e0",
+        "goal_id": "e1558523-09d8-43c7-8165-7665c37334d3",
+        "committed_transition": "drop",
+        "ledger_seq": 12023
+      }
+    },
+    {
+      "kind": "handoff_commit",
+      "event_seq": 436,
+      "sim_time_s": 546.633361842,
+      "robot_id": "carter2",
+      "intent": {
+        "goal_id": "4cd57c0d-9c3d-485d-8d5d-e7405ed9f6c9",
+        "task_id": "SC-LOT-001:out",
+        "order_id": "SC-LOT-001",
+        "payload_id": "SC-PAY-001",
+        "stage": "outbound",
+        "robot_id": "carter2",
+        "attempt": 0,
+        "station": "CO",
+        "transition": "pickup",
+        "issued_sim_time": 269.53334739,
+        "goal": {
+          "frame_id": "map",
+          "x": 21.5,
+          "y": 16.5,
+          "yaw": 3.141592653589793
+        },
+        "deadline": 2069.53334739
+      },
+      "receipt": {
+        "accepted": true,
+        "duplicate": false,
+        "result_id": "70511624-018f-43af-886e-5f671bee9647",
+        "goal_id": "4cd57c0d-9c3d-485d-8d5d-e7405ed9f6c9",
+        "committed_transition": "pickup",
+        "ledger_seq": 12882
+      }
+    },
+    {
+      "kind": "handoff_commit",
+      "event_seq": 474,
+      "sim_time_s": 614.550032051,
+      "robot_id": "carter1",
+      "intent": {
+        "goal_id": "f3a1ed7a-3721-4662-9aa2-7d271dafdf2e",
+        "task_id": "SC-LOT-005:in",
+        "order_id": "SC-LOT-005",
+        "payload_id": "SC-PAY-005",
+        "stage": "inbound",
+        "robot_id": "carter1",
+        "attempt": 0,
+        "station": "S2",
+        "transition": "pickup",
+        "issued_sim_time": 446.85002330500004,
+        "goal": {
+          "frame_id": "map",
+          "x": 3.5,
+          "y": 13.5,
+          "yaw": 0.0
+        },
+        "deadline": 2246.850023305
+      },
+      "receipt": {
+        "accepted": true,
+        "duplicate": false,
+        "result_id": "a5e329fa-2ffc-494c-8157-c28537cddac4",
+        "goal_id": "f3a1ed7a-3721-4662-9aa2-7d271dafdf2e",
+        "committed_transition": "pickup",
+        "ledger_seq": 13458
+      }
+    },
+    {
+      "kind": "empty_handoff_commit",
+      "event_seq": 503,
+      "sim_time_s": 656.450034237,
+      "robot_id": "carter4",
+      "intent": {
+        "goal_id": "8ff4815b-c395-4b1f-8505-0b24e29e3a3a",
+        "task_id": "empty:SC-LOT-001",
+        "order_id": "SC-LOT-001",
+        "payload_id": "F4-TOTE-SC-001",
+        "stage": "inbound",
+        "robot_id": "carter4",
+        "attempt": 0,
+        "station": "CI",
+        "transition": "pickup",
+        "issued_sim_time": 249.46667967699997,
+        "goal": {
+          "frame_id": "map",
+          "x": 21.5,
+          "y": 10.5,
+          "yaw": 3.141592653589793
+        },
+        "deadline": 2049.466679677
+      },
+      "receipt": {
+        "accepted": true,
+        "duplicate": false,
+        "result_id": "8db00f2c-9d19-4d36-ad3e-3ec38b8612a1",
+        "goal_id": "8ff4815b-c395-4b1f-8505-0b24e29e3a3a",
+        "committed_transition": "pickup",
+        "material_revision": 11,
+        "scope": "empty tote operational ledger"
+      }
+    },
+    {
+      "kind": "handoff_commit",
+      "event_seq": 540,
+      "sim_time_s": 706.050036823,
+      "robot_id": "carter2",
+      "intent": {
+        "goal_id": "7fc28697-3929-4828-b6dd-e15b8deebd8e",
+        "task_id": "SC-LOT-001:out",
+        "order_id": "SC-LOT-001",
+        "payload_id": "SC-PAY-001",
+        "stage": "outbound",
+        "robot_id": "carter2",
+        "attempt": 0,
+        "station": "OUT",
+        "transition": "drop",
+        "issued_sim_time": 537.433361362,
+        "goal": {
+          "frame_id": "map",
+          "x": 32.5,
+          "y": 13.5,
+          "yaw": 0.0
+        },
+        "deadline": 2337.433361362
+      },
+      "receipt": {
+        "accepted": true,
+        "duplicate": false,
+        "result_id": "343d66d8-2bbb-46a9-84f2-123937c4d7a7",
+        "goal_id": "7fc28697-3929-4828-b6dd-e15b8deebd8e",
+        "committed_transition": "drop",
+        "ledger_seq": 14163
+      }
+    },
+    {
+      "kind": "virtual_energy_observation_fault",
+      "event_seq": 612,
+      "sim_time_s": 805.63337535,
+      "robot_id": "carter4",
+      "error": "energy observation fault for carter4: energy observation is backward, conflicting or stale"
+    },
+    {
+      "kind": "virtual_energy_observation_fault",
+      "event_seq": 613,
+      "sim_time_s": 805.63337535,
+      "robot_id": "carter3",
+      "error": "energy observation fault for carter3: energy observation is backward, conflicting or stale"
+    },
+    {
+      "kind": "empty_handoff_commit",
+      "event_seq": 622,
+      "sim_time_s": 813.083375739,
+      "robot_id": "carter4",
+      "intent": {
+        "goal_id": "a8080a51-125d-49e8-b790-af05c77a0287",
+        "task_id": "empty:SC-LOT-001",
+        "order_id": "SC-LOT-001",
+        "payload_id": "F4-TOTE-SC-001",
+        "stage": "inbound",
+        "robot_id": "carter4",
+        "attempt": 0,
+        "station": "S1",
+        "transition": "drop",
+        "issued_sim_time": 647.250033757,
+        "goal": {
+          "frame_id": "map",
+          "x": 3.5,
+          "y": 4.5,
+          "yaw": 0.0
+        },
+        "deadline": 2447.250033757
+      },
+      "receipt": {
+        "accepted": true,
+        "duplicate": false,
+        "result_id": "ac0e4b99-ab71-48b3-815d-8a581a5f1174",
+        "goal_id": "a8080a51-125d-49e8-b790-af05c77a0287",
+        "committed_transition": "drop",
+        "material_revision": 13,
+        "scope": "empty tote operational ledger"
+      }
+    },
+    {
+      "kind": "virtual_energy_observation_fault",
+      "event_seq": 635,
+      "sim_time_s": 824.550043004,
+      "robot_id": "carter1",
+      "error": "energy observation fault for carter1: energy observation is backward, conflicting or stale"
+    },
+    {
+      "kind": "virtual_energy_observation_fault",
+      "event_seq": 636,
+      "sim_time_s": 824.550043004,
+      "robot_id": "carter2",
+      "error": "energy observation fault for carter2: energy observation is backward, conflicting or stale"
+    },
+    {
+      "kind": "handoff_commit",
+      "event_seq": 658,
+      "sim_time_s": 843.85004401,
+      "robot_id": "carter3",
+      "intent": {
+        "goal_id": "bd0426fb-de69-474b-a88a-423f51455295",
+        "task_id": "SC-LOT-003:in",
+        "order_id": "SC-LOT-003",
+        "payload_id": "SC-PAY-003",
+        "stage": "inbound",
+        "robot_id": "carter3",
+        "attempt": 0,
+        "station": "CI",
+        "transition": "drop",
+        "issued_sim_time": 433.45002260599995,
+        "goal": {
+          "frame_id": "map",
+          "x": 21.5,
+          "y": 10.5,
+          "yaw": 3.141592653589793
+        },
+        "deadline": 2233.450022606
+      },
+      "receipt": {
+        "accepted": true,
+        "duplicate": false,
+        "result_id": "9258e767-9973-4a43-8c57-14dce092ae53",
+        "goal_id": "bd0426fb-de69-474b-a88a-423f51455295",
+        "committed_transition": "drop",
+        "ledger_seq": 15117
+      }
+    }
+  ],
+  "action_kind_counts": {
+    "navigation_ready": 1,
+    "mission_started": 1,
+    "energy_assignment_evaluated": 29,
+    "dispatch_pair_evaluated": 48,
+    "dispatch_pair_selected": 6,
+    "leg_requested": 14,
+    "visual_state_published": 25,
+    "planner_goal_sent": 87,
+    "action_accepted": 174,
+    "follow_goal_sent": 87,
+    "action_terminal": 85,
+    "edge_stopped": 85,
+    "business_station_hold_shrunk": 11,
+    "handoff_commit": 9,
+    "empty_trip_dispatched": 1,
+    "dispatch_counterflow_deferred": 3,
+    "empty_handoff_commit": 2,
+    "virtual_energy_observation_fault": 4
+  },
+  "virtual_energy_faults": {
+    "carter1": {
+      "battery_source": "authored_virtual_energy_model",
+      "charged_wh": 0.0,
+      "charging_supported": false,
+      "consumed_wh": 16.23346969138143,
+      "energy_wh": 493.7665303086184,
+      "fault": {
+        "code": "invalid_observation",
+        "reason": "energy observation is backward, conflicting or stale"
+      },
+      "hardware_calibrated": false,
+      "observed_sim_time_s": 824.000042975,
+      "robot_id": "carter1",
+      "virtual": true
+    },
+    "carter2": {
+      "battery_source": "authored_virtual_energy_model",
+      "charged_wh": 0.0,
+      "charging_supported": false,
+      "consumed_wh": 12.91784610370667,
+      "energy_wh": 467.0821538962926,
+      "fault": {
+        "code": "invalid_observation",
+        "reason": "energy observation is backward, conflicting or stale"
+      },
+      "hardware_calibrated": false,
+      "observed_sim_time_s": 823.950042972,
+      "robot_id": "carter2",
+      "virtual": true
+    },
+    "carter3": {
+      "battery_source": "authored_virtual_energy_model",
+      "charged_wh": 0.0,
+      "charging_supported": false,
+      "consumed_wh": 18.130914280241424,
+      "energy_wh": 431.8690857197582,
+      "fault": {
+        "code": "invalid_observation",
+        "reason": "energy observation is backward, conflicting or stale"
+      },
+      "hardware_calibrated": false,
+      "observed_sim_time_s": 805.100041989,
+      "robot_id": "carter3",
+      "virtual": true
+    },
+    "carter4": {
+      "battery_source": "authored_virtual_energy_model",
+      "charged_wh": 0.0,
+      "charging_supported": false,
+      "consumed_wh": 13.754260657112853,
+      "energy_wh": 406.24573934289043,
+      "fault": {
+        "code": "invalid_observation",
+        "reason": "energy observation is backward, conflicting or stale"
+      },
+      "hardware_calibrated": false,
+      "observed_sim_time_s": 805.100041989,
+      "robot_id": "carter4",
+      "virtual": true
+    }
+  },
+  "closed_bag_observation": {
+    "recorder_closed_before_query": true,
+    "scope": "Bounded original-stamp odometry around the final accepted sample; recorder delivery does not establish mission callback delivery",
+    "robots": {
+      "carter1": {
+        "last_energy_accepted_stamp_s": 824.000042975,
+        "recorded_samples": 23,
+        "maximum_recorded_adjacent_stamp_gap_s": 0.050000003000036486
+      },
+      "carter2": {
+        "last_energy_accepted_stamp_s": 823.950042972,
+        "recorded_samples": 23,
+        "maximum_recorded_adjacent_stamp_gap_s": 0.050000003000036486
+      },
+      "carter3": {
+        "last_energy_accepted_stamp_s": 805.100041989,
+        "recorded_samples": 23,
+        "maximum_recorded_adjacent_stamp_gap_s": 0.050000003000036486
+      },
+      "carter4": {
+        "last_energy_accepted_stamp_s": 805.100041989,
+        "recorded_samples": 23,
+        "maximum_recorded_adjacent_stamp_gap_s": 0.050000003000036486
+      }
+    },
+    "private_diagnosis_sha256": "45f30a1825596b674a31f570d098378293abb544e97f38af68b1471a69b43c3d"
+  },
+  "operation_story": {
+    "collection_status": "disabled_by_request",
+    "enabled": false,
+    "requested_mode": "off"
+  },
+  "SDK_sensor_failure_recorded": false,
+  "closure": {
+    "windows_closed": true,
+    "linux_closed": true,
+    "relay_closed": true,
+    "job_closed": true,
+    "remaining_owned_pids": [],
+    "cleanup_errors": []
+  },
+  "original_sha256": {
+    "pair-host.json": "ca7d0a665207af0b513b4488450416359864c9b0c3479327afed94c403ac91af",
+    "job.json": "20bf4437b57a26d890c5b1a9e4c9626ed3228c155893c6bb48aa7b11e7644a39",
+    "relay-pair.json": "153e3dfc3dda7f229b5df1eda1b7f5cc5b61cf6b92274220d5fe7e19040fdc40",
+    "job-abort-request.txt": "16480627d41ca89fce720a00abb566cb62ac07fc2dbbec2cca034f42e4295956",
+    "results/run/mission-progress.json": "923d88397e6238449dfe299f9c6eca659c40308122ae03bfd839faca83ea53db",
+    "results/run/mission-result.json": "06660854fc527890ed5d2101fcc242d4b4587b267049bdb608d4f9c69104f9e8",
+    "results/run/material-state.json": "bb3959168ef8ad6ef81df4608eb327870aee0c6e28026ff630b94b16b8507864",
+    "results/run/local45-fleet4-transport-scene.json": "87703ce1c164673a1ee050e3f80731438ed1c675784931b606b0e8b26bd8ae4a",
+    "results/run/actions.jsonl": "eb4be0d1e161d2aeafdf54ba37a38e6dc9754609f2e56bea78790d781d403dd7",
+    "results/run/rosbag/metadata.yaml": "7a14b74a9882bd6921bde43eedc128ba2d944605c3dd83d5af9780a2e1086653"
+  },
+  "interpretation": "The corrected empty-return gate admitted and completed one return in the mixed physical-navigation run. Payload handoffs are navigation-bound bookkeeping; physical tote contact is not proved. The four energy faults prevent qualification. Closed-bag samples remain continuous; mission subscription history loss is a candidate mechanism tested separately, not a proven complete GPU correction."
+}

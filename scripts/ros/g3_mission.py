@@ -49,6 +49,19 @@ from scripts.ros.g2_mission import (
 
 
 _SHA256 = re.compile(r"^[0-9a-f]{64}$")
+
+
+def mission_odometry_qos() -> Any:
+    """Retain the relay's bounded odometry history for accounting callbacks.
+
+    Stop/HOLD receivers still reject stale samples using the current ROS clock.
+    Energy integrates original stamps and retains its existing gap/fault rules.
+    """
+    from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy
+    return QoSProfile(depth=50, reliability=ReliabilityPolicy.RELIABLE,
+                      durability=DurabilityPolicy.VOLATILE)
+
+
 RPP_OBSERVATION_TYPES = {
     "lookahead_point": "geometry_msgs/msg/PointStamped",
     "is_rotating_to_heading": "std_msgs/msg/Bool",
@@ -2012,7 +2025,7 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
                         if robot not in energy_faults:
                             journal("virtual_energy_observation_fault", {"robot_id": robot, "error": str(error)})
                             energy_faults.add(robot)
-            rt["subscriptions"].append(io_node.create_subscription(Odometry, "odom", lambda message, r=robot_id: odometry(message, r), qos_profile_sensor_data))
+            rt["subscriptions"].append(io_node.create_subscription(Odometry, "odom", lambda message, r=robot_id: odometry(message, r), mission_odometry_qos()))
 
         callback_drain = CallbackDrain(
             io_executors if local45 else (executor for _, executor in node_executors),
