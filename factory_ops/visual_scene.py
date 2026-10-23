@@ -557,6 +557,9 @@ def _semiconductor_facility_boxes(layout: Layout) -> list[_Box]:
             "Steel", "equipment_service_riser")
         add(f"EquipmentRiserBand_{index}", (x-.075, y-.075, 2.7, x+.075, y+.075, 2.76),
             "Accent", "equipment_service_identifier")
+        tray_x = 12.95 if x < 16 else 19.60
+        add(f"EquipmentBranch_{index}", (min(x, tray_x)-.06, y-.06, 2.82,
+            max(x, tray_x)+.06, y+.06, 2.90), "Steel", "equipment_service_branch")
     for box in boxes:
         footprint = Rect(box.bounds[0], box.bounds[1], box.bounds[3], box.bounds[4])
         if box.bounds[2] < 2.7 and any(footprint.overlaps(Rect.from_value(region["rect"], region["id"]))
