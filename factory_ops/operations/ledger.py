@@ -54,6 +54,10 @@ class Ledger:
         self._ledger_seq = 0
         self._sim_time = 0.0
         self._system_producer_seq = 0
+        self._equipment_available = True
+        self._equipment_reason: str | None = None
+        self._paused_order_id: str | None = None
+        self._remaining_service: float | None = None
 
     @property
     def sim_time(self) -> float:
@@ -326,7 +330,11 @@ class Ledger:
                     self.apply(self._system_command(processing, processing.service_end, Stage.PROCESS, Transition.PROCESS_COMPLETE))
                 )
                 continue
-            if processing is None and self._output_used() < self.config.output_capacity:
+            if (
+                self._equipment_available
+                and processing is None
+                and self._output_used() < self.config.output_capacity
+            ):
                 waiting = sorted(
                     (o for o in self.orders.values() if o.state is OrderState.INPUT_WAITING),
                     key=lambda item: (self.tasks[f"{item.order_id}:in"].ready_time, item.order_id),
@@ -340,6 +348,109 @@ class Ledger:
             self._record_setup("clock_advanced", {"target_sim_time": sim_time})
         return results
 
+    def set_equipment_availability(
+        self,
+        event_id: EventId,
+        *,
+        sim_time: float,
+        available: bool,
+        reason: str | None = None,
+    ) -> ApplyResult:
+        """Change CELL1 availability while preserving in-flight service time.
+
+        Advancing to ``sim_time`` first commits any service that finished before
+        the availability change. A failure pauses an active service; repairing
+        the cell schedules only its remaining duration.
+        """
+        if event_id.run_id != self.run_id:
+            raise LedgerError("event run_id does not match ledger")
+        if event_id.producer_id == "cell":
+            raise LedgerError("producer_id 'cell' is reserved for internal process events")
+        if type(available) is not bool:
+            raise LedgerError("available must be a boolean")
+        event_key = event_id.as_tuple()
+        request_body = {
+            "kind": "equipment_availability",
+            "run_id": self.run_id,
+            "producer_id": event_id.producer_id,
+            "producer_seq": event_id.producer_seq,
+            "sim_time": sim_time,
+            "station_id": "CELL1",
+            "available": available,
+            "reason": reason,
+        }
+        request_fingerprint = self._fingerprint(request_body)
+        duplicate = self._seen_event.get(event_key)
+        if duplicate is not None:
+            if self._event_fingerprint[event_key] != request_fingerprint:
+                self._quarantine.append(
+                    {
+                        "event_id": event_key,
+                        "event_type": "equipment.availability_changed",
+                        "reason": "event_id reused with different request",
+                    }
+                )
+                raise LedgerError("event_id reused with different request")
+            return ApplyResult(
+                False,
+                True,
+                duplicate.ledger_seq,
+                duplicate.state_version,
+                deepcopy(duplicate.event),
+            )
+
+        self._validate_time(sim_time)
+        highwater = self._producer_highwater.get(event_id.producer_id, -1)
+        if event_id.producer_seq <= highwater:
+            raise LedgerError(f"producer_seq must increase: {event_id.producer_seq} <= {highwater}")
+        self.advance(sim_time)
+
+        if available is self._equipment_available:
+            event = {**request_body, "event_type": "equipment.availability_changed", "no_op": True}
+            result = ApplyResult(False, True, self._ledger_seq, 0, deepcopy(event))
+            self._seen_event[event_key] = result
+            self._event_fingerprint[event_key] = request_fingerprint
+            return result
+
+        processing = next(
+            (order for order in self.orders.values() if order.state is OrderState.PROCESSING),
+            None,
+        )
+        if not available and processing is not None:
+            if processing.service_end is None:
+                raise LedgerError("active service has no completion time")
+            self._paused_order_id = processing.order_id
+            self._remaining_service = processing.service_end - sim_time
+            processing.service_end = None
+        elif available and processing is not None:
+            if self._paused_order_id != processing.order_id or self._remaining_service is None:
+                raise LedgerError("paused service state is inconsistent")
+            processing.service_end = sim_time + self._remaining_service
+            self._paused_order_id = None
+            self._remaining_service = None
+
+        self._equipment_available = available
+        self._equipment_reason = None if available else reason
+        new_seq = self._ledger_seq + 1
+        event = {
+            **request_body,
+            "event_type": "equipment.availability_changed",
+            "paused_order_id": self._paused_order_id,
+            "remaining_service": self._remaining_service,
+            "ledger_seq": new_seq,
+            "config": asdict(self.config),
+        }
+        self._seal_event(event)
+        result = ApplyResult(True, False, new_seq, 0, deepcopy(event))
+        self._ledger_seq = new_seq
+        self._events.append(event)
+        self._seen_event[event_key] = result
+        self._event_fingerprint[event_key] = request_fingerprint
+        self._producer_highwater[event_id.producer_id] = event_id.producer_seq
+        if event_id.producer_id == "cell":
+            self._system_producer_seq = max(self._system_producer_seq, event_id.producer_seq)
+        return result
+
     def snapshot(self) -> dict[str, Any]:
         return {
             "run_id": self.run_id,
@@ -349,6 +460,14 @@ class Ledger:
             "orders": {key: value.to_dict() for key, value in sorted(self.orders.items())},
             "tasks": {key: value.to_dict() for key, value in sorted(self.tasks.items())},
             "robots": {key: value.to_dict() for key, value in sorted(self.robots.items())},
+            "equipment": {
+                "station_id": "CELL1",
+                "available": self._equipment_available,
+                "status": "available" if self._equipment_available else "down",
+                "reason": self._equipment_reason,
+                "paused_order_id": self._paused_order_id,
+                "remaining_service": self._remaining_service,
+            },
             "counts": {
                 "ci_input": sum(o.state is OrderState.INPUT_WAITING for o in self.orders.values()),
                 "ci_reserved_or_input": self.input_slots_used,
@@ -389,6 +508,13 @@ class Ledger:
                     expected_state_version=event["expected_state_version"],
                     reason=event["reason"],
                 )
+            elif event_type == "equipment.availability_changed":
+                ledger.set_equipment_availability(
+                    EventId(event["run_id"], event["producer_id"], event["producer_seq"]),
+                    sim_time=event["sim_time"],
+                    available=event["available"],
+                    reason=event.get("reason"),
+                )
             else:
                 ledger.apply(cls._command_from_dict(event))
         if ledger.events != events:
@@ -427,6 +553,8 @@ class Ledger:
             self._drop(order, OrderState.INBOUND_LOADED, OrderState.INPUT_WAITING, task, robot, command, "CI")
             order.owner = "CI"
         elif pair == (Stage.PROCESS, Transition.PROCESS_START):
+            if not self._equipment_available:
+                raise LedgerError("process start requires available equipment")
             if order.state is not OrderState.INPUT_WAITING:
                 raise LedgerError("process start requires input waiting")
             if any(o.state is OrderState.PROCESSING for o in self.orders.values() if o.order_id != order.order_id):
