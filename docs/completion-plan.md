@@ -51,6 +51,8 @@ Kit 운영 시험229는 네이티브 Isaac Sim4.5 패널에서 pause, resume, �
 
 도킹 정렬231은 RL 완료 인계 후 공용 lease 안에서 실행했다. 엔코더 기준 저속 접근·yaw 정렬·1초 정지 dwell 이후 독립 GT6항목을 통과했다.1002개 물리 표본과 실제 RGB66장을 남겼고, native40.98초 후 Job 잔여PID0을 확인했다.20:14:11 KST에 GPU를 반환했다. 전기 접촉·실제 충전과4대 전체 물리 운송은 이 결과에 포함하지 않는다. [설정·한계와 측정](motion-baseline.md) · [231 근거](evidence/local45-docking-alignment-231.json)
 
+남은 구간5의 최신 웹 확인은 브라우저 도구 초기화 오류와 최신 빌드 제공 경로 부재로 차단돼 있다. 기존3007의 `.next`는 최신 소스보다 오래됐고, 새 서버 실행은 자동 승인 검토에서 거절됐다. 기존8765/3007을 유지하며, 과거 화면이나 Node 단위 검사를 최신 브라우저 성공으로 대체하지 않는다. [열린 오류와 재개 조건](troubleshooting.md#fot-151--브라우저-도구의-커널-초기화-실패)
+
 ### 주행 제어·강화학습 확장 후보
 
 2026-10-23 [나비프라 MotionControl & PathPlanning 공고](https://career.rememberapp.co.kr/job/posting/339346)를 확인했다. 단일 로봇 Navi-Core의 경로 추종·속도/회전·회피, 기구학, PID/Pure Pursuit/MPC와 강화학습, C++, 시뮬레이션 및 실물 검증을 요구한다. 다중 로봇 관제 Navi-Brain과 담당 역할을 구분한다. 학사3년 이상 또는 석사 신입 가능이라는 본문 조건은 포트폴리오로 대체하지 않는다.
