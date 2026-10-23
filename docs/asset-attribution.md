@@ -38,7 +38,7 @@ $env:FACTORY_OPS_ASSET_CACHE = $factoryAssetCache
 
 ## 최신 카탈로그와 공장 형상 기준
 
-핸들러·ATE·AOI와 나머지 생산 설비는 공개 기능 자료를 참고한 절차형 모델이다. 최신 카탈로그의 모든 생산 장비를 이미 사용한다고 표현하지 않는다. 사용자가 제시한 [Caleb의 게시물](https://x.com/calebfahlgren/status/2113308155270541536)은 Hugging Face Hub의 OpenUSD 지원과 NVIDIA SimReady 자산 공개·자연어 검색을 소개한다. 공식 oEmbed로 본문을 확인했으며 첨부 영상의 세부 구성은 확인하지 않았다.
+핸들러·ATE·AOI와 나머지 생산 설비는 공개 기능 자료를 참고한 절차형 모델이다. NVIDIA SimReady는 정비·포장 소품4종에 사용하며, 모든 생산 장비가 제공처의 고품질 CAD인 것은 아니다. 사용자가 제시한 [Caleb의 게시물](https://x.com/calebfahlgren/status/2113308155270541536)을 계기로 아래 OpenUSD 카탈로그를 확인했다. 첨부 영상의 사용 모델·렌더러와 현재 프로젝트의 구성이 같다고 확인한 것은 아니다. SimReady 표기는 목적별 메타데이터·검증 근거를 확인하기 위한 체계이며 시각 품질이나 최신 버전의 보증으로 사용하지 않는다.
 
 [SimReady Central 공식 문서](https://docs.omniverse.nvidia.com/simready/latest/simready-central.html)는 모델별 profile·검증 근거·라이선스를 확인하고, 고정 revision과 재질·텍스처 의존성을 함께 보존하도록 안내한다. 새 후보는 `nvidia/simready-assets`의 `653d91e182011f357cf1644013cc94ddf194d349`에서 확인했다. 아래 수치는 선택 다운로드에 포함되는 런타임 파일 합계다. 얇은 USD 진입 파일의 크기만으로 설치 용량을 계산하지 않는다.
 

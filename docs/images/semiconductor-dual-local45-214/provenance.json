@@ -1,0 +1,102 @@
+{
+  "schema_version": 1,
+  "run_id": "9698b8fe798d45f5a4a3df92d3945985",
+  "source_commit": "0e74e3823448dfcb80b5ce861ce770488eb21a5b",
+  "scope": "Selected actual static Isaac Sim4.5 RGB; no AMR transport, production throughput, belt actuation or inspection sensor qualification",
+  "source_archive_sha256": "740f91e0a3b2b5024b063317bc745832ae5dcbe2e33fdeb7b3a00b9d869ecdaa",
+  "preview_script_sha256": "2e8f3660358b5f9ab1e37062b447e28ae93f4951ba2d9d8495fc14951862ce68",
+  "input_sha256": {
+    "layout.json": "e7d0b9cdf0c8bdbc201e81dc5062446651b6abb5c52ea40cba6949ef62670887",
+    "visual-assets.json": "7c9780e11636ece178f21d19b9259e33d6f674d26db007160466a6ea68344c09",
+    "render-profile.json": "a40b963a033c04b5bf23fc880bb658570dd4463245408b1152a837c01f2ca4b4",
+    "scene/factory-v3.usda": "db9288417573eb0a1fd71544bf5f8b811bd1400d73dc556cc5ab4b616a0c8211"
+  },
+  "captures": [
+    {
+      "path": "test-handler.png",
+      "sha256": "1d97b39efc3708feeb1b61adcc6cdee738d582ed535b828fb122c83f2a7942ed",
+      "width": 1280,
+      "height": 720,
+      "rgb_spatial_standard_deviation_max": 51.20391959332563,
+      "camera_eye_xyz_m": [
+        26,
+        4,
+        13
+      ],
+      "camera_target_xyz_m": [
+        19,
+        12.5,
+        1
+      ],
+      "focal_length_mm": 26,
+      "physics_frame": 2,
+      "sim_time_s": 0.03333333507180214,
+      "source": "native Replicator RGB; no generated image or interpolation",
+      "accepted": true,
+      "signalstats": {
+        "YMIN": 23,
+        "YMAX": 213,
+        "UMIN": 58,
+        "UMAX": 158,
+        "VMIN": 67,
+        "VMAX": 155
+      }
+    }
+  ],
+  "rejected_captures": [],
+  "original_producer_status": "passed",
+  "portfolio_selection_status": "passed",
+  "AI_generated_images": false,
+  "interpolated_frames": false,
+  "closure": {
+    "closed": true,
+    "remaining_owned_pids": [],
+    "cleanup_errors": [],
+    "job_receipt_sha256": "5eebc0c95a54eb27f81b3983ef7afc42df839cec7a93e6978128f78f30b768f9",
+    "result_receipt_sha256": "90198d3bfaa61428f746c6480b13b84ad969c801c01f739b8ecfa4fbf52d2fec",
+    "prelaunch_inputs_verified": true,
+    "ROS_started": false,
+    "bag_SQL_opened": false
+  },
+  "render_log": {
+    "sha256": "a9e00bcf1ac70637b3c85d4915ae6a05e01facdb0dba729f3b994643131fd87f",
+    "error_count": 0,
+    "joint_error_count": 0
+  },
+  "renderer_readback": {
+    "status": "requested_but_sdk_setting_unavailable_or_unverified",
+    "requested": {
+      "renderer": "RTX Real-Time 2.0",
+      "launch_renderer": "RealTimePathTracing",
+      "allowed_readbacks": [
+        "RayTracedLighting",
+        "RealTimePathTracing"
+      ],
+      "dlss_mode": "Quality",
+      "dlss_exec_mode": 2
+    },
+    "readback": {
+      "renderer_before": "RaytracedLighting",
+      "renderer_after": "RaytracedLighting",
+      "dlss_before": 0,
+      "dlss_after": 2
+    },
+    "renderer_unchanged": true
+  },
+  "facility_services": {
+    "component_count": 167,
+    "scope": "authored wall finishes, door facades, overhead cable trays and utility feeds; render-only",
+    "minimum_overhead_height_m": 2.7,
+    "ground_clearance": "all components below 2.7m remain outside authored AMR regions",
+    "certified_cleanroom": false,
+    "physical_utility_or_door_operation": false
+  },
+  "factory_context": {
+    "fixture_count": 35,
+    "support_props": 34,
+    "mounted_production_assets": 1,
+    "catalog_revision": "653d91e182011f357cf1644013cc94ddf194d349",
+    "physics": "render-only external meshes;20 source colliders authoritative"
+  },
+  "remaining": "four-AMR full logistics, final-scene SDG and operational media remain unqualified"
+}

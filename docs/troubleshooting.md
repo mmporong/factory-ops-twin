@@ -1116,3 +1116,5 @@ Linux 중계 종료에서는063과 같은 `Unit ... not loaded`가 다시 남았
 210 정지 촬영은 `facility_structure`를 설정에 추가했으나, 시각 장면의 taxonomy 검사가 기존13종만 허용해 `visual semantic taxonomy is incomplete or duplicated`로 실패했다. 촬영0장이며 원본 결과를 보존한다. SDK는 예외를 결과에 저장하고 종료해 외부 Job은passed였으므로 렌더 생산자 결과를 별도로 확인한다. Job 종료·잔여 PID0을 확인했다.
 
 이중 차로 배치에만 새 클래스를 필수로 허용하고 이전 배치의13종 계약은 유지했다. 설정 수용·누락 거절 검사를 추가했다. 정지 촬영기도 GPU 초기화 전에 배치·taxonomy·render profile을 검사해 같은 불일치로 GPU를 다시 켜지 않게 했다. 실제 후속 촬영은 별도 소스와 실행 ID로 기록한다.
+
+213 조감과214 검사 셀은 같은 소스 커밋을 프로세스당 한 시점으로 촬영해 각각 통과했다.167개 건물 서비스 구성요소와35개 제공처 모델을 포함하며 기존 정적 충돌체20개를 유지한다. 원본 RGB·설정·소스·렌더 읽기값·Job 종료 해시는 각 촬영 영수증에 기록했다.211의 원래 실패 결과는 바꾸지 않았다. [213 조감](images/semiconductor-dual-local45-213/provenance.json) · [214 검사 셀](images/semiconductor-dual-local45-214/provenance.json)

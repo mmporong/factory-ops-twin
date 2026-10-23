@@ -2,11 +2,11 @@
 
 반도체 후공정의 최종검사·포장 구역에서 **4대 AMR의 트레이 공급·완제품 출하·빈 캐리어 회수**를 Isaac Sim·ROS 2와 웹 관제로 연결하는 프로젝트입니다.
 
-[반도체 구역의 기존 기준선](configs/factory-semiconductor)은 트레이 저장소·테스트 핸들러·ATE·AOI·ESD 포장대의 용도와 배치를 구분합니다. 로트12건의 순차 투입·연속 배차·재고 보존과 제품/반납 캐리어 표시를 CPU에서 함께 확인했습니다. 새 배치의 [물리 운송066](docs/evidence/local45-transport-066.json)은2건 투입·0건 출하 상태에서 후방 센서의30.011854m 반환값을30m 상한 검사로 거절했고, 소유 프로세스는 모두 종료됐습니다. 전체 물류 완주와 새 대표 GIF는 남아 있습니다. [공정·설비·운영 범위](docs/semiconductor-cell.md)
+[반도체 구역의 기존 기준선](configs/factory-semiconductor)은 트레이 저장소·테스트 핸들러·ATE·AOI·ESD 포장대의 용도와 배치를 구분합니다. 로트12건의 순차 투입·연속 배차·재고 보존과 제품/반납 캐리어 표시를 CPU에서 함께 확인했습니다. 새 배치의 [물리 운송067](docs/evidence/local45-transport-067.json)은 별도50m PhysX 개발 프로필로 이전 센서 오류 시점을 지나 첫 공정 인계까지 진행했으나, 실행 시간 한도에 도달해9건 투입·0건 출하로 종료됐습니다. 소유 프로세스는 모두 종료됐고 전체 물류 완주와 새 대표 GIF는 남아 있습니다. [공정·설비·운영 범위](docs/semiconductor-cell.md)
 
 [이중 차로 배치](configs/factory-semiconductor-dual-lane)는36×28m 구역의 남·북 주통로와 동쪽 통로를 방향별로 나눕니다.19개 생산 설비의 평면 외곽을 유지하고, 정비 소품34개와 상태등·트레이 표시를 이동한 설비에 맞췄습니다. 출하 포장대 하나는 최신 고정 카탈로그의 NVIDIA 컨베이어로 교체하고, 실제 높이에 맞춰 충돌 외곽도 갱신했습니다. CPU 검사에서180개 정상/폐쇄 경로, 맞은편 차로의 예약 분리와 교차 경로의 대기,35개 제공처 모델의 실제 USD 합성을 확인했습니다. 웹 관제도 같은 배치의6개 방향 차로를 읽어 화살표로 표시합니다. **새 배치의4대 물류 완주는 아직 확인되지 않았습니다.** [합성·지도·에셋 근거](docs/evidence/semiconductor-dual-lane-201.json) · [설계도 · 실제 렌더 아님](docs/images/semiconductor-dual-lane-plan/layout.svg)
 
-생산 설비에는 트레이 투입 도크·매거진, 서비스 도어·벤트, ATE 인터페이스와 유틸리티 연결 형상을 추가했습니다. 큰 케이싱은 모서리 표현이 있는 메시로 렌더링합니다. 장비별 역할을 보이기 위한 형상이며, 기존 적재 지원면·충돌 외곽과 AMR 차로는 유지합니다. 아래 사진에 이 형상을 반영했습니다. [형상과 제조사 기능 참조](docs/semiconductor-cell.md)
+생산 설비에는 트레이 투입 도크·매거진, 수직 테스트 헤드 인터페이스와 서비스 패널을 구분했습니다. 벽면 구획·출입문·환기구, 북측 덕트와 설비 열의 케이블 트레이·서비스 연결도 함께 렌더링합니다. 통로를 지나는 상부 서비스는 설계 높이2.7m 이상에 두고, 바닥 가까운 부품은 AMR 이동 구역을 침범하지 않게 배치했습니다. 장비 본체는 공개 기능 자료를 참고한 절차형 모델이며 제조사 CAD·인증 공장 복제는 아닙니다. [형상과 제조사 기능 참조](docs/semiconductor-cell.md)
 
 배차는 현재 배정된 제품 운송과 빈 캐리어 반납을 함께 확인해, 같은 두 지점을 역방향으로 오갈 작업의 동시 배정을 유예합니다. 실제 경로 예약과 정지 확인은 유지합니다. 동일 tick의 선택을 반영하는 CPU 회귀는 통과했으며 수정 후 물리 운송 완주는 확인 중입니다.
 
@@ -18,9 +18,9 @@
 
 | 이중 차로 반도체 구역 · 실제 Isaac Sim 조감 | 테스트 핸들러·ATE·검사 설비 근접 |
 |---|---|
-| ![방향별 통로와 후공정 셀 및 NVIDIA 포장 컨베이어를 배치한 반도체 최종검사·포장 구역](docs/images/semiconductor-dual-local45-208/overview.png) | ![트레이 도크·매거진·서비스 패널·벤트와 ATE 인터페이스를 보강한 검사 셀](docs/images/semiconductor-dual-local45-208/test-handler.png) |
+| ![벽면 구획·출입문·덕트와 설비 상부 케이블 트레이를 배치한 반도체 최종검사·포장 구역](docs/images/semiconductor-dual-local45-213/overview.png) | ![상부 서비스 트레이·장비 입상 연결과 테스트 헤드 인터페이스를 보강한 검사 셀](docs/images/semiconductor-dual-local45-214/test-handler.png) |
 
-위 두 장은 **Isaac Sim4.5의 같은 정지 물리 시점에서 촬영한 RGB**입니다. 공개 기능 자료를 참고한 비브랜드 절차형 생산 설비, NVIDIA 정비 소품34개와 포장 컨베이어1개를 함께 렌더링했습니다. 추가 포장 시점 한 장은 실제 구도가 설정과 달라 제외했고, 원본과 제외 사유는 보존했습니다. 촬영 프로세스는 모두 종료됐습니다. AMR 반복 운송이나 공장 처리량의 근거로 사용하지 않습니다. [촬영 소스·시점·카메라·원본 해시·종료·선택 기록](docs/images/semiconductor-dual-local45-208/provenance.json)
+위 두 장은 **같은 장면 소스의 조감과 검사 셀을 별도 프로세스로 촬영한 Isaac Sim4.5 RGB**입니다. 비브랜드 절차형 생산 설비와 건물 서비스 형상, NVIDIA 정비 소품34개와 포장 컨베이어1개를 포함합니다. 정지 촬영이며 AMR 반복 운송이나 처리량의 근거로 사용하지 않습니다. 두 촬영 프로세스는 종료됐습니다. [조감 출처·해시·종료](docs/images/semiconductor-dual-local45-213/provenance.json) · [검사 셀 출처·해시·종료](docs/images/semiconductor-dual-local45-214/provenance.json)
 
 ![실제 크기의 NVIDIA 포장 컨베이어를 출하 구역에서 촬영한 별도 Isaac Sim RGB](docs/images/semiconductor-dual-local45-203/pack-conveyor.png)
 
@@ -33,7 +33,7 @@
 |---|---|---|
 | ![NVIDIA 원본 캐비닛 모델 미리보기](docs/images/factory-context-assets-193/tool-cabinet.png) | ![NVIDIA 원본 이동식 작업대 모델 미리보기](docs/images/factory-context-assets-193/rolling-workstation.png) | ![NVIDIA 원본 정비 카트 모델 미리보기](docs/images/factory-context-assets-193/utility-cart.png) |
 
-이 표는 NVIDIA 제공 모델 미리보기입니다. 재질·텍스처가 포함된3종을 정비·입고 지원·외곽 서비스 공간에34개 배치했고, 위 공장 RGB에서 함께 촬영했습니다. 실제 USD 합성에서 모델 크기·위치와 AMR 구역의10cm 이격을 확인했습니다. 실패한 이전 운송063에는 새 소품이 포함되지 않습니다. 제작자 NVIDIA, CC BY 4.0. [원본·라이선스·변경 내용·캐시 준비법](docs/asset-attribution.md) · [현재 촬영 근거](docs/images/semiconductor-dual-local45-208/provenance.json)
+이 표는 NVIDIA 제공 모델 미리보기입니다. 재질·텍스처가 포함된3종을 정비·입고 지원·외곽 서비스 공간에34개 배치했고, 위 공장 RGB에서 함께 촬영했습니다. 실제 USD 합성에서 모델 크기·위치와 AMR 구역의10cm 이격을 확인했습니다. 실패한 이전 운송063에는 새 소품이 포함되지 않습니다. 제작자 NVIDIA, CC BY 4.0. [원본·라이선스·변경 내용·캐시 준비법](docs/asset-attribution.md) · [현재 촬영 근거](docs/images/semiconductor-dual-local45-213/provenance.json)
 
 </details>
 
