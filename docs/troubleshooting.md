@@ -1083,6 +1083,10 @@ Linux 중계 종료에서는063과 같은 `Unit ... not loaded`가 다시 남았
 
 [설치 버전의 PhysX 센서 설명](https://docs.isaacsim.omniverse.nvidia.com/4.5.0/sensors/isaacsim_sensors_physx.html)과 설치된 command 코드는 설정을 USD에 작성하지만 반환 배열의 경계 clipping을 보장하지 않는다. [ROS LaserScan 정의](https://github.com/ros2/common_interfaces/blob/rolling/sensor_msgs/msg/LaserScan.msg)는 범위 밖 값을 discard 대상으로 명시한다. 이 기록만으로 수용 범위를 넓히거나 hit를 no-hit/무한대로 바꾸지 않는다.
 
+진단을 보강한066에서 carter1/rear·beam321·World56.25000293366611초/frame3375의 반환값을 확인했다. 충돌 prim은 `/World/Obstacles/FG_LOW`, 정확한 값은30.01185417175293m(`0x1.e0308e0000000p+4`)다. SDK에서 받은 hit를 새 발행값으로 바꾸지 않았고, 30m 프로필의 범위 검사에서 거절했다. 양 OS·Job 종료와 정리 오류0건·잔여 PID0을 확인했다. 065의 구체적인 빔은 여전히 미확정이다. [066 식별 결과·원본 해시](evidence/local45-transport-066.json)
+
+후속 구성은36×28m 장면의 대각 길이 약45.61m를 포함하는 별도의50m PhysX 개발 프로필을 SDK에 작성한다. 생성 파라미터·프로필 해시·발행 헤더·검증·관측 범위가 같은 값을 사용해야 한다. 이는 장면 범위에 맞춘 새 센서 설정이며, 기존30m 원본의 통과 처리나 RPLIDAR/실물 센서의 정격 변경이 아니다. 근거리 조건의 원시값·형상·유한값과 새50m 상한은 계속 검사한다. AMCL의30m 사용 상한과 장애물 검출12m·raytrace15m는 바꾸지 않는다. 새 설정의 실제 관측과 물류 완주는 후속 실행에서 확인한다.
+
 ## FOT-132 — 정지 촬영기의 외부 에셋 캐시 경로 전달 누락
 
 206은 실행 명령에서 `FACTORY_OPS_ASSET_CACHE`를 넘기지 않아 `cache_root must be a directory`로 실패했다. 준비 명세는 외부 캐시 파일 해시를 검사했지만, 소비기의 경로는 존재하지 않는 기본 디렉터리로 해석됐다. 촬영0장·렌더 결과failed를 보존했다. 외부 Job은 SDK 종료 코드0 때문에passed를 기록했으므로 Job 상태만으로 촬영 성공을 판정하지 않는다.

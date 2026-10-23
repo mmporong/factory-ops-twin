@@ -1,12 +1,16 @@
 from __future__ import annotations
 
 import copy
+from collections import Counter
+import math
 from pathlib import Path
 import unittest
 
 from factory_ops.layout import Layout, Rect
 from factory_ops.visual_scene import (
     PRODUCTION_BAY_GEOMETRY,
+    _chamfered_box_geometry,
+    _equipment_root,
     _floor_graphics,
     _recipe_boxes,
     _validate_boxes,
@@ -18,6 +22,51 @@ FLEET_LAYOUT = ROOT / "configs" / "factory-fleet4" / "layout.json"
 
 
 class SemiconductorVisualSceneTests(unittest.TestCase):
+    def test_chamfered_casing_mesh_is_closed_right_handed_and_keeps_exact_bounds(self) -> None:
+        bounds = (2.0, 3.0, .2, 4.4, 5.2, 2.0)
+        points, faces = _chamfered_box_geometry(bounds, .02)
+        self.assertEqual((24, 26), (len(points), len(faces)))
+        self.assertTrue(all(math.isfinite(value) for point in points for value in point))
+        self.assertEqual(bounds[:3], tuple(min(point[axis] for point in points) for axis in range(3)))
+        self.assertEqual(bounds[3:], tuple(max(point[axis] for point in points) for axis in range(3)))
+
+        edges = Counter()
+        centre = tuple((bounds[axis] + bounds[axis + 3]) / 2 for axis in range(3))
+        for face in faces:
+            self.assertIn(len(face), (3, 4))
+            for index, start in enumerate(face):
+                edges[tuple(sorted((start, face[(index + 1) % len(face)])))] += 1
+            a, b, c = (points[index] for index in face[:3])
+            ab = tuple(b[axis] - a[axis] for axis in range(3))
+            ac = tuple(c[axis] - a[axis] for axis in range(3))
+            normal = (ab[1] * ac[2] - ab[2] * ac[1],
+                      ab[2] * ac[0] - ab[0] * ac[2],
+                      ab[0] * ac[1] - ab[1] * ac[0])
+            face_centre = tuple(sum(points[index][axis] for index in face) / len(face) for axis in range(3))
+            self.assertGreater(sum(normal[axis] * (face_centre[axis] - centre[axis]) for axis in range(3)), 0)
+        self.assertEqual({2}, set(edges.values()))
+
+    def test_only_large_final_test_casings_use_render_chamfer_meshes(self) -> None:
+        rect = Rect(2.0, 3.0, 4.4, 5.2)
+        expected = {
+            "semiconductor_handler": {"CabinetLeft", "CabinetRight", "CabinetRear", "Roof"},
+            "ate_rack": {"RackLeft", "RackRight", "RackRear", "TopCap", "ATE_Mainframe", "ATE_Controller"},
+            "aoi_mark": {"ChamberLeft", "ChamberRight", "ChamberRear", "ChamberRoof"},
+        }
+        for recipe, expected_names in expected.items():
+            with self.subTest(recipe=recipe):
+                boxes = _recipe_boxes(recipe, rect, 2.2, 0, recipe.upper(), geometry_profile=PRODUCTION_BAY_GEOMETRY)
+                chamfered = {box.name for box in boxes if box.render_style == "chamfered_box"}
+                self.assertEqual(expected_names, chamfered)
+                self.assertTrue(all(box.render_chamfer_m == .02 for box in boxes if box.name in chamfered))
+                self.assertTrue(all(box.render_style == "cube" for box in boxes if box.name not in chamfered))
+                text = "\n".join(_equipment_root("CELL", "process_equipment", "final_test", recipe, boxes, indent=0))
+                self.assertEqual(len(chamfered), text.count('geometryStyle = "edge_chamfered_render_mesh"'))
+                self.assertIn('def Cube "WorkBed"' if recipe == "semiconductor_handler" else
+                              'def Cube "InspectionStage"' if recipe == "aoi_mark" else
+                              'def Cube "MainframeSlot_0"', text)
+                self.assertNotIn("PhysicsCollisionAPI", text)
+
     def test_semiconductor_recipes_are_detailed_and_stay_inside_obstacle_envelopes(self) -> None:
         rect = Rect(2.0, 3.0, 4.4, 5.2)
         height = 2.2

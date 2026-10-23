@@ -332,6 +332,41 @@ class RuntimeTests(unittest.TestCase):
             for handle in products:handle.destroy.assert_called_once_with()
             for handle in writers:handle.detach.assert_called_once_with()
 
+    def test_physx_development_factory_profile_authors_and_reports_one_parameter_source(self):
+        from factory_ops.physx_planar import LIDAR_PARAMETERS, PROFILE_NAME, PROFILE_SHA256
+
+        world = self.runtime.SimulationManager.setup_simulation(.02)
+        path = "/World/Carter/chassis_link/lidar_front"
+        sensor_prim = Prim(path)
+        schema = SimpleNamespace(GetPath=lambda: path, GetPrim=lambda: sensor_prim)
+        commands = SimpleNamespace(execute=Mock(return_value=(True, schema)))
+        extension = SimpleNamespace(enable_extension=Mock())
+        interface = object()
+        ranges = SimpleNamespace(acquire_lidar_sensor_interface=Mock(return_value=interface))
+        modules = {
+            "isaacsim.core.utils.extensions": extension,
+            "isaacsim.sensors.physx._range_sensor": ranges,
+            "omni.kit.commands": commands,
+        }
+        definition = {"robot_id": "carter1", "namespace": "carter1"}
+        lidar = {"name": "front", "frame_id": "front_scan", "translation_xyz_m": [.2, 0., .32], "yaw_rad": 0.}
+        specs = [(definition, lidar, "/World/Carter/chassis_link", path, "/carter1/scan_front_raw")]
+        self.stage.prims[path] = sensor_prim
+        with patch.object(facade.importlib, "import_module", side_effect=modules.__getitem__):
+            sensors, metadata = self.runtime._setup_physx_planar(
+                specs, {"lidar_profile": "ignored_for_physx"}, self.stage,
+                object(), object(), object(), Mock(), Mock(return_value={"parent_frame": "base_link"}),
+            )
+
+        authored = commands.execute.call_args.kwargs
+        self.assertEqual("RangeSensorCreateLidar", commands.execute.call_args.args[0])
+        self.assertEqual(dict(LIDAR_PARAMETERS), {key: authored[key] for key in LIDAR_PARAMETERS})
+        self.assertEqual((PROFILE_NAME, PROFILE_SHA256, .1, 50.0),
+            (metadata[0]["profile"], metadata[0]["profile_sha256"],
+             metadata[0]["near_range_m"], metadata[0]["far_range_m"]))
+        self.assertEqual(dict(LIDAR_PARAMETERS), metadata[0]["authored_parameters"])
+        self.assertIs(world, sensors[0]._world)
+
     def test_world_reset_precedes_rtx_graph_creation_and_is_not_repeated(self):
         with tempfile.TemporaryDirectory() as directory:
             cfg, robots, modules, _, _, _ = self.lidar_fixture(directory)

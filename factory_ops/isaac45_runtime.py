@@ -515,7 +515,8 @@ class Runtime45:
 
     def _setup_physx_planar(self, specs, config, stage, Usd, UsdGeom, Gf, author_mount, verify_mount):
         from factory_ops.physx_planar import (
-            LIDAR_PARAMETERS, PROFILE_SHA256, PUBLICATION_HZ, SENSOR_BACKEND, PhysxPlanarSensor,
+            LIDAR_PARAMETERS, PROFILE_BASIS, PROFILE_NAME, PROFILE_SHA256, PUBLICATION_HZ,
+            SENSOR_BACKEND, PhysxPlanarSensor,
         )
 
         importlib.import_module("isaacsim.core.utils.extensions").enable_extension("isaacsim.sensors.physx")
@@ -543,18 +544,19 @@ class Runtime45:
                 metadata.append({"robot_id": definition["robot_id"], "name": lidar["name"],
                     "namespace": definition["namespace"], "prim_path": path, "topic": topic,
                     "frame_id": lidar["frame_id"], "translation_xyz_m": list(lidar["translation_xyz_m"]),
-                    "yaw_rad": float(lidar["yaw_rad"]), "profile": "authored_physx_planar_v1",
+                    "yaw_rad": float(lidar["yaw_rad"]), "profile": PROFILE_NAME,
                     "requested_profile": config.get("lidar_profile"),
                     "profile_path": str(Path(__file__).with_name("physx_planar.py")),
                     "profile_sha256": PROFILE_SHA256, "authored_parameters": dict(LIDAR_PARAMETERS),
                     "sensor_backend": SENSOR_BACKEND, "rotation_frequency_hz": PUBLICATION_HZ,
                     "rotation_rate_hz": 0.0, "report_rate_hz": PUBLICATION_HZ,
                     "publication_cadence_source": "authored minimum6actualWorldframes",
-                    "near_range_m": 0.1, "far_range_m": 30.0, "horizontal_resolution_deg": 0.5,
+                    "near_range_m": LIDAR_PARAMETERS["min_range"],
+                    "far_range_m": LIDAR_PARAMETERS["max_range"], "horizontal_resolution_deg": 0.5,
                     "writer": "authored_PhysX_planar_to_rclpy_LaserScan", "native_publication_annotator": None,
                     "clock_source": "authored_world_acquisition", "native_absolute_timestamp_available": False,
                     "physics_plugin_current_step_sequence_verified": False,
-                    "parameter_source": "authored canonical JSON of factory_ops.physx_planar.LIDAR_PARAMETERS",
+                    "parameter_source": PROFILE_BASIS,
                     "runtime": "SDK4.5 explicit collision-ray backend; no RTX/RPLIDAR/GMO equivalence"})
             self.app.update()
             for row, (_, lidar, chassis, path, _) in zip(metadata, specs):

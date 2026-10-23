@@ -1,5 +1,6 @@
 """CPU contracts only; no SDK sensor or native execution success is implied."""
 from copy import deepcopy
+import hashlib
 import math
 import struct
 from types import SimpleNamespace
@@ -7,6 +8,7 @@ import unittest
 from unittest.mock import Mock
 
 from factory_ops.physx_planar import (
+    LIDAR_PARAMETERS, PROFILE_BYTES, PROFILE_NAME, PROFILE_SHA256, RANGE_MAX_M, RANGE_MIN_M,
     SCHEMA_NAME, SENSOR_BACKEND, TIME_SOURCE, PhysxPlanarPublisher, PhysxPlanarRangeRejection,
     PhysxPlanarSensor,
 )
@@ -38,6 +40,21 @@ def interface_for(payload):
 
 
 class PhysxPlanarTests(unittest.TestCase):
+    def test_development_factory_profile_drives_validation_and_ros_bounds(self):
+        self.assertEqual("development_factory_physx_planar_v2", PROFILE_NAME)
+        self.assertEqual((RANGE_MIN_M, RANGE_MAX_M),
+            (LIDAR_PARAMETERS["min_range"], LIDAR_PARAMETERS["max_range"]))
+        self.assertEqual(PROFILE_SHA256, hashlib.sha256(PROFILE_BYTES).hexdigest())
+        payload = fixture()
+        payload["linear_depth_data"][0][0] = f32(30.011854)
+        payload["linear_depth_data"][1][0] = f32(RANGE_MAX_M)
+        callback = Mock()
+        PhysxPlanarPublisher(callback, "front_scan").publish(payload)
+        fields = callback.call_args.args[0]
+        self.assertEqual((RANGE_MIN_M, RANGE_MAX_M), (fields["range_min"], fields["range_max"]))
+        self.assertEqual(f32(30.011854), fields["ranges"][0])
+        self.assertEqual(f32(RANGE_MAX_M), fields["ranges"][1])
+
     def test_native_order_preserved_measured_sort_body_hit_and_nohit_policy(self):
         payload = fixture()
         payload["linear_depth_data"][360][0] = f32(.1)
@@ -112,10 +129,11 @@ class PhysxPlanarTests(unittest.TestCase):
             payload[key] = value
             with self.subTest(key=key, value=repr(value)[:40]), self.assertRaises(ValueError):
                 PhysxPlanarPublisher(Mock(), "front_scan").publish(payload)
-        payload = fixture()
-        payload["linear_depth_data"][0][0] = float("inf")  # hit255, not no-hit
-        with self.assertRaises(ValueError):
-            PhysxPlanarPublisher(Mock(), "front_scan").publish(payload)
+        for value in (-.001, f32(50.0001), float("inf"), float("nan")):
+            payload = fixture()
+            payload["linear_depth_data"][0][0] = value  # hit255, not no-hit
+            with self.subTest(hit_range=value), self.assertRaises(PhysxPlanarRangeRejection):
+                PhysxPlanarPublisher(Mock(), "front_scan").publish(payload)
 
     def test_callback_failure_does_not_consume_snapshot_and_retry_is_not_duplicate(self):
         callback = Mock(side_effect=[OSError("transport failure"), None])
@@ -135,7 +153,9 @@ class PhysxPlanarTests(unittest.TestCase):
         payload, world = fixture(), SimpleNamespace(current_time=0., current_time_step_index=0)
         interface, remove = interface_for(payload), Mock()
         sensor = PhysxPlanarSensor(interface, "/World/Carter1/chassis_link/lidar_front", world, remove)
-        observer = sensor.open_native_observer({"prim_path": sensor.prim_path}, .1, 30.)
+        with self.assertRaisesRegex(ValueError, "observer bounds"):
+            sensor.open_native_observer({"prim_path": sensor.prim_path}, RANGE_MIN_M, 30.)
+        observer = sensor.open_native_observer({"prim_path": sensor.prim_path}, RANGE_MIN_M, RANGE_MAX_M)
         self.assertIsNone(sensor.read_planar_snapshot())
         self.assertEqual("warmup", observer.read()["status"])
         interface.get_linear_depth_data.assert_not_called()
@@ -187,7 +207,7 @@ class PhysxPlanarTests(unittest.TestCase):
         world.current_time, world.current_time_step_index = .1, 6
         accepted = sensor.read_planar_snapshot()
 
-        rejected_value = f32(30.0001)
+        rejected_value = f32(50.0001)
         payload["linear_depth_data"][17][0] = rejected_value
         payload["prim_paths"][17] = "/World/Carter1/body/collision"
         world.current_time, world.current_time_step_index = .2, 12
@@ -223,7 +243,7 @@ class PhysxPlanarTests(unittest.TestCase):
                 payload["prim_paths"][360] = "/World/Carter1/body/collision"
             world = SimpleNamespace(current_time=0., current_time_step_index=0)
             sensor = PhysxPlanarSensor(interface_for(payload), "/World/Carter1/chassis_link/lidar_front", world, Mock())
-            observer = sensor.open_native_observer({"prim_path": sensor.prim_path}, .1, 30.)
+            observer = sensor.open_native_observer({"prim_path": sensor.prim_path}, RANGE_MIN_M, RANGE_MAX_M)
             world.current_time, world.current_time_step_index = .1, 6
             sensor.read_planar_snapshot()
             row = observer.read(read_at_sim_time_s=.2)

@@ -22,8 +22,8 @@ class PhysxIntegrationTests(unittest.TestCase):
     def test_acquisition_rejection_identifies_robot_side_sensor_and_world_clock(self):
         error = PhysxPlanarRangeRejection(
             beam_index=17,
-            raw_range=30.000099182128906,
-            normalized_range=30.000099182128906,
+            raw_range=50.000099182128906,
+            normalized_range=50.000099182128906,
             prim_path="/World/Carter1/body/collision",
             stamp=60.0666697994,
             frame=3604,
@@ -90,7 +90,7 @@ class PhysxIntegrationTests(unittest.TestCase):
             metadata=[dict(robot_id=d['robot_id'],name=side,
                 prim_path=d['prim_path']+'/chassis_link/lidar_'+side,
                 topic='/'+d['namespace']+'/scan_'+side+'_raw',frame_id=side+'_scan',
-                sensor_backend=SENSOR_BACKEND,profile_sha256='b'*64,near_range_m=.1,far_range_m=30.)
+                sensor_backend=SENSOR_BACKEND,profile_sha256='b'*64,near_range_m=.1,far_range_m=50.)
                 for d in lifecycle.registry.definitions for side in ('front','rear')]
             sensors=[SimpleNamespace(open_native_observer=Mock(return_value=SimpleNamespace(
                 read=Mock(return_value={'schema_name':'local45-physx-planar-observation','time_source':TIME_SOURCE}),close=Mock()))) for _ in metadata]

@@ -1,4 +1,4 @@
-"""Bounded SDK4.5 range-boundary diagnosis; no robot motion or transport claim."""
+"""Bounded SDK4.5 range/scene-envelope diagnosis; no robot motion or transport claim."""
 from __future__ import annotations
 
 import argparse
@@ -22,6 +22,7 @@ def main() -> int:
     root = Path(__file__).resolve().parents[2]
     sys.path.insert(0, str(root))
     from factory_ops.physx_planar import LIDAR_PARAMETERS
+    minimum, maximum = float(LIDAR_PARAMETERS["min_range"]), float(LIDAR_PARAMETERS["max_range"])
 
     started = time.monotonic()
     report = dict(status="starting", scope=__doc__, cases=[], cleanup_errors=[],
@@ -82,7 +83,7 @@ def main() -> int:
 
         # These are authored diagnostic placements, not reconstructed robot poses.
         origins = ((0., 0., 1.), (3.6093505457687947, 4.564174283606593, 1.))
-        distances = (.05, .099, .1, .10000001, .101, .25, 1., 29.99, 30., 30.01)
+        distances = (.05, .099, .1, .10000001, .101, .25, 1., 29.99, 30., 30.01, 45.61, 46.)
         first_rejection = False
         for origin in origins:
             for yaw in (0., .5339742290318825, -2.6076184245579106):
@@ -113,7 +114,7 @@ def main() -> int:
                     # Python compares actual float32 values to exact authored limits.
                     invalid = [(i, j) for i in range(720) for j in (0,)
                                if int(intensity[i, j]) == 255 and
-                               (not math.isfinite(float(depth[i, j])) or not .1 <= float(depth[i, j]) <= 30.)]
+                               (not math.isfinite(float(depth[i, j])) or not minimum <= float(depth[i, j]) <= maximum)]
                     row = dict(origin_m=origin, yaw_rad=yaw, target_face_distance_m=distance,
                         world_time_s=float(world.current_time), physics_frame=int(world.current_time_step_index),
                         shapes={k: list(v.shape) for k, v in arrays.items()},

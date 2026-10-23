@@ -1,0 +1,75 @@
+{
+  "schema_version": 1,
+  "run_id": "36bbe949ff8744e49af4c3a74e66d5fe",
+  "source_commit": "e5373efa32d7e5e4d300f9a15ebbb4ea050ef8c8",
+  "status": "failed",
+  "scope": "bounded recurrence diagnosis; not logistics completion",
+  "primary_error": {
+    "type": "ValueError",
+    "message": "physx_planar scan carter1/rear sensor_path='/World/Carter1/chassis_link/lidar_rear' acquired_world_time_s=56.25000293366611: native hit range outside authored0.1..30m: beam_index=321 raw_range_repr=30.011854 range_float_hex=0x1.e0308e0000000p+4 prim_path='/World/Obstacles/FG_LOW' acquired_world_time_s=56.25000293366611 acquired_physics_frame=3375 sensor_path='/World/Carter1/chassis_link/lidar_rear'"
+  },
+  "rejected_beam": {
+    "robot_id": "carter1",
+    "side": "rear",
+    "sensor_path": "/World/Carter1/chassis_link/lidar_rear",
+    "prim_path": "/World/Obstacles/FG_LOW",
+    "raw_range_repr": "30.011854",
+    "range_float_hex": "0x1.e0308e0000000p+4",
+    "beam_index": 321,
+    "acquired_physics_frame": 3375,
+    "acquired_world_time_s": 56.25000293366611,
+    "range_exact_float64": 30.01185417175293
+  },
+  "authored_range_m": [
+    0.1,
+    30.0
+  ],
+  "latest_progress": {
+    "completed_orders": 0,
+    "elapsed_sim_s": 47.000002451,
+    "released_orders": 2,
+    "robots": {
+      "carter1": {
+        "anchor": "LOW_W_W",
+        "generation": 8,
+        "phase": "following",
+        "target": "S1"
+      },
+      "carter2": {
+        "anchor": "HIGH_W_P2",
+        "generation": 9,
+        "phase": "following",
+        "target": "S2"
+      },
+      "carter3": {
+        "anchor": "P3",
+        "generation": 3,
+        "phase": "idle",
+        "target": null
+      },
+      "carter4": {
+        "anchor": "P4",
+        "generation": 4,
+        "phase": "idle",
+        "target": null
+      }
+    },
+    "run_id": "36bbe949ff8744e49af4c3a74e66d5fe",
+    "scenario_id": "fleet4_transport_normal"
+  },
+  "closure": {
+    "windows_closed": true,
+    "linux_closed": true,
+    "job_closed": true,
+    "remaining_owned_pids": [],
+    "cleanup_errors": []
+  },
+  "original_sha256": {
+    "pair-host.json": "9c677e4d0065e111031f728823de202157fc1196ae747396a89e860448c6677d",
+    "relay-pair.json": "4df4f3da8be2ef11329683fe9d8ec5f04664c002350534a034ba88ea5df757f8",
+    "job.json": "152776c4a1363b4c0ee253d54d235b234578d52c0e4c28aaf98bd702497c37ca",
+    "results/run/sdk-failure.json": "f503f94fc7c2f05461d57e945dde0ff6bd136c6049aad03f357499c324b8140b",
+    "results/run/mission-progress.json": "f4332e8695f457c5d8a0f4d9dfd883b5475248225a051a0149f745d76b6a112a"
+  },
+  "interpretation": "066 identifies an out-of-range finite FG_LOW hit. 065 did not record its rejected value; do not assign this exact value to065."
+}

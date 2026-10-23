@@ -21,11 +21,16 @@ SENSOR_BACKEND = "physx_collision_planar"
 TIME_SOURCE = "authored_world_acquisition"
 PUBLICATION_FRAMES = 6
 PUBLICATION_HZ = 10.0
-LIDAR_PARAMETERS = MappingProxyType(dict(min_range=0.1, max_range=30.0,
+PROFILE_NAME = "development_factory_physx_planar_v2"
+PROFILE_BASIS = "authored collision-ray coverage exceeds the configured development-factory layout diagonal"
+RANGE_MIN_M = 0.1
+RANGE_MAX_M = 50.0
+LIDAR_PARAMETERS = MappingProxyType(dict(min_range=RANGE_MIN_M, max_range=RANGE_MAX_M,
     draw_points=False, draw_lines=False, horizontal_fov=360.0, vertical_fov=2.0,
     horizontal_resolution=0.5, vertical_resolution=1.0, rotation_rate=0.0,
     high_lod=False, yaw_offset=0.0, enable_semantics=True))
-PROFILE_BYTES = json.dumps(dict(LIDAR_PARAMETERS), sort_keys=True, separators=(",", ":"), allow_nan=False).encode("utf-8")
+PROFILE_BYTES = json.dumps({"name": PROFILE_NAME, "basis": PROFILE_BASIS, "parameters": dict(LIDAR_PARAMETERS)},
+    sort_keys=True, separators=(",", ":"), allow_nan=False).encode("utf-8")
 PROFILE_SHA256 = hashlib.sha256(PROFILE_BYTES).hexdigest()
 
 
@@ -47,7 +52,7 @@ class PhysxPlanarRangeRejection(ValueError):
         )
         self.details = MappingProxyType(details)
         super().__init__(
-            "native hit range outside authored0.1..30m: "
+            f"native hit range outside authored{RANGE_MIN_M:g}..{RANGE_MAX_M:g}m: "
             f"beam_index={beam_index} raw_range_repr={raw_repr} "
             f"range_float_hex={details['range_float_hex']} prim_path={prim_path!r} "
             f"acquired_world_time_s={stamp!r} acquired_physics_frame={frame} "
@@ -148,7 +153,7 @@ def _validate(snapshot: Mapping[str, Any]) -> dict[str, Any]:
         hit = intensity[i][0]
         if isinstance(hit, bool) or not isinstance(hit, Integral) or hit not in (0, 255):
             raise ValueError("intensity must retain native0/255 integer values")
-        if hit == 255 and (not math.isfinite(ranges[i]) or not 0.1 <= ranges[i] <= 30.0):
+        if hit == 255 and (not math.isfinite(ranges[i]) or not RANGE_MIN_M <= ranges[i] <= RANGE_MAX_M):
             sensor_path = snapshot.get("sensor_prim_path")
             raise PhysxPlanarRangeRejection(
                 beam_index=i,
@@ -235,7 +240,7 @@ class PhysxPlanarPublisher:
         angles = data["sorted_angles"]
         fields = dict(frame_id=self.frame_id, stamp_sec=seconds, stamp_nanosec=nanoseconds,
             angle_min=angles[0], angle_max=angles[-1], angle_increment=(angles[-1] - angles[0]) / 719,
-            time_increment=0.0, scan_time=actual_interval, range_min=0.1, range_max=30.0,
+            time_increment=0.0, scan_time=actual_interval, range_min=RANGE_MIN_M, range_max=RANGE_MAX_M,
             ranges=[data["ranges"][i] if data["hits"][i] == 255 else float("inf") for i in data["order"]])
         self._publish(fields)
         self._published = data
@@ -316,7 +321,8 @@ class PhysxPlanarSensor:
     def open_native_observer(self, identity: Mapping[str, Any], range_min_m: float, range_max_m: float):
         if self._closed or self._observer is not None:
             raise RuntimeError("sensor is closed or already owns an observer")
-        if _real(range_min_m, "minimum") != 0.1 or _real(range_max_m, "maximum") != 30.0:
+        if (_real(range_min_m, "minimum") != LIDAR_PARAMETERS["min_range"]
+                or _real(range_max_m, "maximum") != LIDAR_PARAMETERS["max_range"]):
             raise ValueError("observer bounds differ from authored PhysX parameters")
         self._observer = _PlanarObserver(self, identity)
         return self._observer

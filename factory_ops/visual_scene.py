@@ -74,6 +74,8 @@ class _Box:
     material: str
     semantic_class: str | None = None
     state_role: str | None = None
+    render_style: str = "cube"
+    render_chamfer_m: float = 0.0
 
 
 def export_visual_scene(
@@ -855,10 +857,16 @@ def _recipe_boxes(
         for index in range(count):
             module = Rect(x0 + index * pitch + .03, y0, x0 + (index + 1) * pitch - .03, y1)
             for box in _recipe_boxes(recipe, module, height, seed, obstacle_id, geometry_profile=geometry_profile):
-                modules.append(_Box(f"Module_{index}_{box.name}", box.bounds, box.material, box.semantic_class, box.state_role))
+                modules.append(_Box(
+                    f"Module_{index}_{box.name}", box.bounds, box.material,
+                    box.semantic_class, box.state_role, box.render_style, box.render_chamfer_m,
+                ))
         return modules
-    def b(name: str, fx0: float, fy0: float, z0: float, fx1: float, fy1: float, z1: float, material: str, semantic: str | None = None, role: str | None = None) -> _Box:
-        return _Box(name, (x0 + w * fx0, y0 + d * fy0, z0, x0 + w * fx1, y0 + d * fy1, min(z1, height)), material, semantic, role)
+    def b(name: str, fx0: float, fy0: float, z0: float, fx1: float, fy1: float, z1: float, material: str, semantic: str | None = None, role: str | None = None, *, chamfer: bool = False) -> _Box:
+        return _Box(
+            name, (x0 + w * fx0, y0 + d * fy0, z0, x0 + w * fx1, y0 + d * fy1, min(z1, height)),
+            material, semantic, role, "chamfered_box" if chamfer else "cube", .02 if chamfer else 0.0,
+        )
 
     def absolute(name: str, ax0: float, ay0: float, z0: float, ax1: float, ay1: float, z1: float, material: str, semantic: str | None = None, role: str | None = None) -> _Box:
         return _Box(name, (ax0, ay0, z0, ax1, ay1, min(z1, height)), material, semantic, role)
@@ -866,10 +874,10 @@ def _recipe_boxes(
     if recipe == "semiconductor_handler":
         boxes = [
             b("Plinth", .03, .04, 0, .97, .96, height * .08, "MachinePaint"),
-            b("CabinetLeft", .03, .12, height * .08, .18, .96, height * .92, "White", "process_equipment", "handler_cabinet"),
-            b("CabinetRight", .82, .12, height * .08, .97, .96, height * .92, "White", "process_equipment", "handler_cabinet"),
-            b("CabinetRear", .18, .86, height * .08, .82, .96, height * .92, "White"),
-            b("Roof", .03, .12, height * .88, .97, .96, height * .96, "White"),
+            b("CabinetLeft", .03, .12, height * .08, .18, .96, height * .92, "White", "process_equipment", "handler_cabinet", chamfer=True),
+            b("CabinetRight", .82, .12, height * .08, .97, .96, height * .92, "White", "process_equipment", "handler_cabinet", chamfer=True),
+            b("CabinetRear", .18, .86, height * .08, .82, .96, height * .92, "White", chamfer=True),
+            b("Roof", .03, .12, height * .88, .97, .96, height * .96, "White", chamfer=True),
             b("InspectionBed", .20, .25, height * .31, .80, .82, height * .38, "Steel", "process_equipment", "test_chamber"),
             b("WorkBed", .28, .31, height * .39, .72, .69, height * .44, "ESD", "workbench", "handler_tray_support"),
             b("SocketNest", .38, .45, height * .38, .62, .67, height * .43, "Accent", "process_equipment", "device_interface_board"),
@@ -920,12 +928,12 @@ def _recipe_boxes(
     if recipe == "ate_rack":
         boxes = [
             b("Plinth", .04, .06, 0, .96, .94, height * .08, "MachinePaint"),
-            b("RackLeft", .04, .10, height * .08, .10, .94, height, "White"),
-            b("RackRight", .90, .10, height * .08, .96, .94, height, "White"),
-            b("RackRear", .10, .88, height * .08, .90, .94, height, "MachinePanel"),
-            b("TopCap", .04, .10, height * .94, .96, .94, height, "White"),
-            b("ATE_Mainframe", .12, .18, height * .11, .88, .84, height * .52, "MachinePaint", "process_equipment", "ate_mainframe"),
-            b("ATE_Controller", .12, .18, height * .56, .88, .84, height * .77, "MachinePanel", "process_equipment", "ate_controller"),
+            b("RackLeft", .04, .10, height * .08, .10, .94, height, "White", chamfer=True),
+            b("RackRight", .90, .10, height * .08, .96, .94, height, "White", chamfer=True),
+            b("RackRear", .10, .88, height * .08, .90, .94, height, "MachinePanel", chamfer=True),
+            b("TopCap", .04, .10, height * .94, .96, .94, height, "White", chamfer=True),
+            b("ATE_Mainframe", .12, .18, height * .11, .88, .84, height * .52, "MachinePaint", "process_equipment", "ate_mainframe", chamfer=True),
+            b("ATE_Controller", .12, .18, height * .56, .88, .84, height * .77, "MachinePanel", "process_equipment", "ate_controller", chamfer=True),
             b("UtilityPatchPanel", .12, .10, height * .80, .88, .22, height * .91, "Dark", "control_cabinet", "socket_utility"),
             b("HMI", .26, .055, height * .61, .74, .12, height * .73, "Glass", "process_equipment", "ate_hmi"),
             b("ControllerDoorLeft", .12, .105, height * .55, .49, .19, height * .78, "MachinePanel"),
@@ -993,10 +1001,10 @@ def _recipe_boxes(
     if recipe == "aoi_mark":
         boxes = [
             b("Plinth", .04, .05, 0, .96, .95, height * .10, "MachinePaint"),
-            b("ChamberLeft", .04, .12, height * .10, .17, .95, height * .90, "White", "process_equipment", "aoi_chamber"),
-            b("ChamberRight", .83, .12, height * .10, .96, .95, height * .90, "White", "process_equipment", "aoi_chamber"),
-            b("ChamberRear", .17, .88, height * .10, .83, .95, height * .90, "White"),
-            b("ChamberRoof", .04, .12, height * .86, .96, .95, height * .94, "White"),
+            b("ChamberLeft", .04, .12, height * .10, .17, .95, height * .90, "White", "process_equipment", "aoi_chamber", chamfer=True),
+            b("ChamberRight", .83, .12, height * .10, .96, .95, height * .90, "White", "process_equipment", "aoi_chamber", chamfer=True),
+            b("ChamberRear", .17, .88, height * .10, .83, .95, height * .90, "White", chamfer=True),
+            b("ChamberRoof", .04, .12, height * .86, .96, .95, height * .94, "White", chamfer=True),
             b("InspectionStage", .20, .25, height * .27, .80, .78, height * .34, "ESD", "process_equipment", "tray_inspection_stage"),
             b("OpticalGantry", .28, .54, height * .34, .72, .67, height * .68, "MachinePanel"),
             b("OpticalHead", .39, .40, height * .57, .61, .62, height * .75, "Dark", "process_equipment", "aoi_optical_head"),
@@ -1290,6 +1298,64 @@ def _validate_boxes(obstacle_id: str, boxes: Sequence[_Box], source: tuple[float
             raise LayoutError(f"visual component {obstacle_id}/{box.name} exceeds its source obstacle envelope")
 
 
+def _chamfered_box_geometry(
+    bounds: tuple[float, float, float, float, float, float],
+    chamfer_m: float,
+) -> tuple[tuple[tuple[float, float, float], ...], tuple[tuple[int, ...], ...]]:
+    """Return a closed, right-handed render mesh with the exact source bounds."""
+    x0, y0, z0, x1, y1, z1 = bounds
+    dimensions = (x1 - x0, y1 - y0, z1 - z0)
+    if (not all(math.isfinite(value) for value in (*bounds, chamfer_m))
+            or not all(value > 0 for value in dimensions)
+            or not 0 < chamfer_m < min(dimensions) / 2):
+        raise LayoutError("render chamfer must be finite, positive and smaller than every half-extent")
+    points: list[tuple[float, float, float]] = []
+    index: dict[tuple[str, int, int, int], int] = {}
+    for sx in (-1, 1):
+        for sy in (-1, 1):
+            for sz in (-1, 1):
+                x_face, y_face, z_face = (x0 if sx < 0 else x1), (y0 if sy < 0 else y1), (z0 if sz < 0 else z1)
+                x_inset = x0 + chamfer_m if sx < 0 else x1 - chamfer_m
+                y_inset = y0 + chamfer_m if sy < 0 else y1 - chamfer_m
+                z_inset = z0 + chamfer_m if sz < 0 else z1 - chamfer_m
+                authored = {
+                    "x": (x_face, y_inset, z_inset),
+                    "y": (x_inset, y_face, z_inset),
+                    "z": (x_inset, y_inset, z_face),
+                }
+                for axis in ("x", "y", "z"):
+                    index[(axis, sx, sy, sz)] = len(points)
+                    points.append(authored[axis])
+
+    def face(keys: Sequence[tuple[str, int, int, int]], outward: tuple[int, int, int]) -> tuple[int, ...]:
+        authored = tuple(index[key] for key in keys)
+        a, b, c = (points[authored[position]] for position in range(3))
+        ab, ac = tuple(b[i] - a[i] for i in range(3)), tuple(c[i] - a[i] for i in range(3))
+        normal = (ab[1] * ac[2] - ab[2] * ac[1], ab[2] * ac[0] - ab[0] * ac[2], ab[0] * ac[1] - ab[1] * ac[0])
+        return authored if sum(normal[i] * outward[i] for i in range(3)) > 0 else tuple(reversed(authored))
+
+    faces: list[tuple[int, ...]] = []
+    for sx in (-1, 1):
+        faces.append(face([("x", sx, -1, -1), ("x", sx, 1, -1), ("x", sx, 1, 1), ("x", sx, -1, 1)], (sx, 0, 0)))
+    for sy in (-1, 1):
+        faces.append(face([("y", -1, sy, -1), ("y", -1, sy, 1), ("y", 1, sy, 1), ("y", 1, sy, -1)], (0, sy, 0)))
+    for sz in (-1, 1):
+        faces.append(face([("z", -1, -1, sz), ("z", 1, -1, sz), ("z", 1, 1, sz), ("z", -1, 1, sz)], (0, 0, sz)))
+    for sx in (-1, 1):
+        for sy in (-1, 1):
+            faces.append(face([("x", sx, sy, -1), ("y", sx, sy, -1), ("y", sx, sy, 1), ("x", sx, sy, 1)], (sx, sy, 0)))
+        for sz in (-1, 1):
+            faces.append(face([("x", sx, -1, sz), ("z", sx, -1, sz), ("z", sx, 1, sz), ("x", sx, 1, sz)], (sx, 0, sz)))
+    for sy in (-1, 1):
+        for sz in (-1, 1):
+            faces.append(face([("y", -1, sy, sz), ("z", -1, sy, sz), ("z", 1, sy, sz), ("y", 1, sy, sz)], (0, sy, sz)))
+    for sx in (-1, 1):
+        for sy in (-1, 1):
+            for sz in (-1, 1):
+                faces.append(face([("x", sx, sy, sz), ("y", sx, sy, sz), ("z", sx, sy, sz)], (sx, sy, sz)))
+    return tuple(points), tuple(faces)
+
+
 def _box_usda(
     box: _Box,
     indent: int,
@@ -1303,15 +1369,30 @@ def _box_usda(
     sx, sy, sz = (x1 - x0) / 2, (y1 - y0) / 2, (z1 - z0) / 2
     pad = " " * indent
     lines = [
-        f'{pad}def Cube "{_prim_name(box.name)}"',
+        f'{pad}def {"Mesh" if box.render_style == "chamfered_box" else "Cube"} "{_prim_name(box.name)}"',
         f"{pad}{{",
         f"{pad}    custom string stableId = {_quote(stable_id or box.name)}",
         f"{pad}    rel material:binding = </World/Visuals/Looks/{box.material}>",
-        f"{pad}    double size = 2",
-        f"{pad}    double3 xformOp:scale = ({_num(sx)}, {_num(sy)}, {_num(sz)})",
-        f"{pad}    double3 xformOp:translate = ({_num(cx)}, {_num(cy)}, {_num(cz)})",
-        f'{pad}    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]',
     ]
+    if box.render_style == "chamfered_box":
+        points, faces = _chamfered_box_geometry(box.bounds, box.render_chamfer_m)
+        lines.extend([
+            f'{pad}    custom string geometryStyle = "edge_chamfered_render_mesh"',
+            f"{pad}    custom float renderEdgeChamferM = {_num(box.render_chamfer_m)}",
+            f"{pad}    float3[] extent = [({_num(x0)}, {_num(y0)}, {_num(z0)}), ({_num(x1)}, {_num(y1)}, {_num(z1)})]",
+            f"{pad}    int[] faceVertexCounts = [{', '.join(str(len(face)) for face in faces)}]",
+            f"{pad}    int[] faceVertexIndices = [{', '.join(str(index) for face in faces for index in face)}]",
+            f"{pad}    point3f[] points = [{', '.join(f'({_num(x)}, {_num(y)}, {_num(z)})' for x, y, z in points)}]",
+            f'{pad}    uniform token orientation = "rightHanded"',
+            f'{pad}    uniform token subdivisionScheme = "none"',
+        ])
+    else:
+        lines.extend([
+            f"{pad}    double size = 2",
+            f"{pad}    double3 xformOp:scale = ({_num(sx)}, {_num(sy)}, {_num(sz)})",
+            f"{pad}    double3 xformOp:translate = ({_num(cx)}, {_num(cy)}, {_num(cz)})",
+            f'{pad}    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]',
+        ])
     if box.semantic_class is not None:
         lines.append(f"{pad}    custom string semanticClass = {_quote(box.semantic_class)}")
     if box.state_role is not None:
