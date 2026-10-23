@@ -1465,17 +1465,34 @@ def _run(
                 "start_physics_frame": int(SimulationManager.get_num_physics_steps()),
                 "start_world_time_s": float(SimulationManager.get_simulation_time()),
                 **result["mission_physics_cadence"]})
+        loop_costs: dict[str, dict[str, float | int]] = {}
+        last_cost_report_wall = time.monotonic()
+
+        def record_cost(phase: str, elapsed_wall_s: float) -> None:
+            row = loop_costs.setdefault(phase, {"calls": 0, "wall_s": 0.0, "maximum_call_wall_s": 0.0})
+            row["calls"] += 1
+            row["wall_s"] += elapsed_wall_s
+            row["maximum_call_wall_s"] = max(row["maximum_call_wall_s"], elapsed_wall_s)
+
+        def measured(phase: str, callback: Any, *values: Any, **keywords: Any) -> Any:
+            began = time.perf_counter()
+            try:
+                return callback(*values, **keywords)
+            finally:
+                record_cost(phase, time.perf_counter() - began)
+
         while True:
+            loop_began = time.perf_counter()
             now = float(SimulationManager.get_simulation_time())
             if scene_extension is not None:
-                scene_extension.step(now, int(SimulationManager.get_num_physics_steps()))
+                measured("scene_extension", scene_extension.step, now, int(SimulationManager.get_num_physics_steps()))
             if now - start_sim > max_sim:
                 raise base.OperationTimeout("G2 scenario exceeded configured simulation time")
             if time.monotonic() - started > float(config["max_wall_time_s"]):
                 raise base.OperationTimeout("G2 scenario exceeded configured wall time")
             for runtime in robots.values():
                 runtime["ros"]["latest_sim_time"] = now
-            _spin_nodes(rclpy, [clock_node, *robot_nodes])
+            measured("sdk_ros_dispatch", _spin_nodes, rclpy, [clock_node, *robot_nodes])
             control = _read_mission(output / CONTROL_FILE, args.run_id, args.scenario)
             terminal_error: str | None = None
             if control is not None and mission is None:
@@ -1531,10 +1548,10 @@ def _run(
                     "requested_angular": requested_angular, "stop_reason": stop_reason,
                     "command_audit": command_audit,
                 }
-            rendered = _update_physics_app(app, world_clock, stepper=mission_stepper)
+            rendered = measured("physics_app_update", lambda: _update_physics_app(app, world_clock, stepper=mission_stepper))
             if rendered:
-                publish_native_scans()
-            _spin_nodes(rclpy, [clock_node, *robot_nodes])
+                measured("scan_read_validate_publish", publish_native_scans)
+            measured("sdk_ros_dispatch", _spin_nodes, rclpy, [clock_node, *robot_nodes])
             step += 1
             stamp = float(SimulationManager.get_simulation_time())
             physics_frame = int(SimulationManager.get_num_physics_steps())
@@ -1609,7 +1626,7 @@ def _run(
             if callable(extension_capture_due) and extension_capture_due():
                 capture_due = True
             if capture_due:
-                captured = _capture_with_timeline_policy(
+                captured = measured("explicit_rgb_capture", _capture_with_timeline_policy,
                     timeline, scene_extension, lambda: _capture_frame_with_extension(
                         output=output, session=cast(CaptureSession, session), second_rgb=second_rgb,
                         robots=robots,
@@ -1627,6 +1644,14 @@ def _run(
                     captured["visual_state"] = capture_metadata_hook()
                 frames.append(captured)
                 _atomic_json(output / MEDIA_INDEX_FILE, {"schema_version": 1, "frames": frames})
+            record_cost("complete_control_loop", time.perf_counter() - loop_began)
+            if time.monotonic() - last_cost_report_wall >= 15.0:
+                _atomic_json(output / "runtime-costs.json", {"run_id": args.run_id,
+                    "physics_frame": physics_frame, "world_time_s": stamp,
+                    "completed_control_loops": step, "phases": loop_costs,
+                    "native_stepper": mission_stepper.wall_costs() if mission_stepper is not None else None,
+                    "scope": "inclusive wall costs; physics_app_update overlaps native_stepper and complete_control_loop contains other phases; not operational qualification"})
+                last_cost_report_wall = time.monotonic()
             if terminal_error is not None:
                 raise base.SmokeError(terminal_error)
             if settle_remaining == 0:

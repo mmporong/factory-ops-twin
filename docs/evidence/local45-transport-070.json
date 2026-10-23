@@ -1,0 +1,248 @@
+{
+  "schema_version": 1,
+  "run_id": "1ad2186b6fb64105b23d8ec1c8047036",
+  "source_commit": "2a7f7efc05f882a23accf093c9b51e13a7d6727f",
+  "status": "failed",
+  "scope": "Four-AMR development run; owner deadline, not a 12-lot completion or final media qualification",
+  "wall_s": 5376.343999999983,
+  "termination": {
+    "primary_owner_error": "TimeoutError: pair owner deadline exceeded; cleanup time reserved inside the wall budget",
+    "original_mission_error": {
+      "type": "RuntimeError",
+      "message": "G3 worker wall bound or dependent process failed"
+    },
+    "job_abort_requested": true,
+    "manual_stop_requested_by_agent": false
+  },
+  "latest_progress": {
+    "completed_orders": 1,
+    "elapsed_sim_s": 773.650040349,
+    "released_orders": 12,
+    "robots": {
+      "carter1": {
+        "anchor": "CI",
+        "generation": 107,
+        "phase": "stopping",
+        "target": "S1"
+      },
+      "carter2": {
+        "anchor": "S2",
+        "generation": 78,
+        "phase": "request",
+        "target": "CI"
+      },
+      "carter3": {
+        "anchor": "LOW_E_P3",
+        "generation": 106,
+        "phase": "stopping",
+        "target": "P3"
+      },
+      "carter4": {
+        "anchor": "ES_OUT",
+        "generation": 108,
+        "phase": "following",
+        "target": "OUT"
+      }
+    },
+    "run_id": "1ad2186b6fb64105b23d8ec1c8047036",
+    "scenario_id": "fleet4_transport_normal"
+  },
+  "material": {
+    "completed": false,
+    "revision": 16,
+    "conservation": [
+      {
+        "balanced": true,
+        "consumed": 6,
+        "in_totes": 2,
+        "initial": 60,
+        "on_hand": 52,
+        "replenished": 0,
+        "sku": "packaged-ic-tray"
+      }
+    ],
+    "empty_trips": [
+      {
+        "destination": "S1",
+        "order_id": "SC-LOT-001",
+        "ready_time_s": 210.41667764099998,
+        "robot_id": "carter3",
+        "source": "CI",
+        "state": "complete",
+        "task_id": "empty:SC-LOT-001",
+        "tote_id": "F4-TOTE-SC-001"
+      },
+      {
+        "destination": "S2",
+        "order_id": "SC-LOT-002",
+        "ready_time_s": 402.616687665,
+        "robot_id": null,
+        "source": "CI",
+        "state": "ready",
+        "task_id": "empty:SC-LOT-002",
+        "tote_id": "F4-TOTE-SC-002"
+      },
+      {
+        "destination": "S3",
+        "order_id": "SC-LOT-003",
+        "ready_time_s": 753.433372628,
+        "robot_id": null,
+        "source": "CI",
+        "state": "ready",
+        "task_id": "empty:SC-LOT-003",
+        "tote_id": "F4-TOTE-SC-003"
+      }
+    ]
+  },
+  "robots_with_accepted_material_handoffs": [
+    "carter1",
+    "carter2",
+    "carter3",
+    "carter4"
+  ],
+  "energy": {
+    "fault_events": [],
+    "robots": {
+      "carter1": {
+        "battery_source": "authored_virtual_energy_model",
+        "charged_wh": 0.0,
+        "charging_supported": false,
+        "consumed_wh": 18.33478544923929,
+        "energy_wh": 491.66521455076304,
+        "fault": null,
+        "hardware_calibrated": false,
+        "observed_sim_time_s": 782.600040816,
+        "robot_id": "carter1",
+        "virtual": true
+      },
+      "carter2": {
+        "battery_source": "authored_virtual_energy_model",
+        "charged_wh": 0.0,
+        "charging_supported": false,
+        "consumed_wh": 15.712877291136019,
+        "energy_wh": 464.287122708864,
+        "fault": null,
+        "hardware_calibrated": false,
+        "observed_sim_time_s": 782.650040818,
+        "robot_id": "carter2",
+        "virtual": true
+      },
+      "carter3": {
+        "battery_source": "authored_virtual_energy_model",
+        "charged_wh": 0.0,
+        "charging_supported": false,
+        "consumed_wh": 14.240881499712568,
+        "energy_wh": 435.75911850028825,
+        "fault": null,
+        "hardware_calibrated": false,
+        "observed_sim_time_s": 782.500040811,
+        "robot_id": "carter3",
+        "virtual": true
+      },
+      "carter4": {
+        "battery_source": "authored_virtual_energy_model",
+        "charged_wh": 0.0,
+        "charging_supported": false,
+        "consumed_wh": 13.33136824737983,
+        "energy_wh": 406.6686317526201,
+        "fault": null,
+        "hardware_calibrated": false,
+        "observed_sim_time_s": 782.3000408,
+        "robot_id": "carter4",
+        "virtual": true
+      }
+    },
+    "interpretation": "No latched energy fault in this run; mission duration is shorter than the 805.63 s fault point in 069, so this is not a same-duration recovery proof."
+  },
+  "callback_dispatch": {
+    "budget_semantics": "cooperative boundary checked after each complete fair round",
+    "calls": 18551,
+    "executor_count": 9,
+    "max_rounds_per_call": 64,
+    "priority_executor_count": 5,
+    "priority_rounds": 383644,
+    "priority_semantics": "TF/clock-only prefix uses at most half existing rounds/time; then complete fair rounds; total bounds unchanged",
+    "rounds": 549405,
+    "spin_attempt_semantics": "nonblocking executor attempts; actual callback count is not observable",
+    "spin_attempts": 3410069,
+    "wall_budget_reached_calls": 18551,
+    "wall_budget_s": 0.05
+  },
+  "reservation_wait_reasons": {
+    "successor_tiles_occupied": 4521
+  },
+  "action_kind_counts": {
+    "navigation_ready": 1,
+    "mission_started": 1,
+    "energy_assignment_evaluated": 29,
+    "dispatch_pair_evaluated": 45,
+    "visual_state_published": 28,
+    "dispatch_pair_selected": 7,
+    "leg_requested": 16,
+    "planner_goal_sent": 92,
+    "action_accepted": 184,
+    "follow_goal_sent": 92,
+    "action_terminal": 91,
+    "edge_stopped": 89,
+    "business_station_hold_shrunk": 12,
+    "handoff_commit": 10,
+    "empty_trip_dispatched": 1,
+    "dispatch_counterflow_deferred": 3,
+    "empty_handoff_commit": 2
+  },
+  "closure": {
+    "windows_closed": true,
+    "linux_closed": true,
+    "relay_closed": true,
+    "job_closed": true,
+    "remaining_owned_pids": [],
+    "owner_cleanup_errors": [],
+    "relay_cleanup_errors": [],
+    "mission_cleanup": [
+      {
+        "error": "Failed to publish: publisher's context is invalid, at ./src/rcl/publisher.c:423",
+        "label": "carter1_fault_stop"
+      },
+      {
+        "error": "Failed to publish: publisher's context is invalid, at ./src/rcl/publisher.c:423",
+        "label": "carter2_fault_stop"
+      },
+      {
+        "error": "Failed to publish: publisher's context is invalid, at ./src/rcl/publisher.c:423",
+        "label": "carter3_fault_stop"
+      },
+      {
+        "error": "Failed to publish: publisher's context is invalid, at ./src/rcl/publisher.c:423",
+        "label": "carter4_fault_stop"
+      },
+      {
+        "exit_code": 0,
+        "label": "rosbag",
+        "pid": 96164
+      },
+      {
+        "exit_code": -15,
+        "label": "nav2",
+        "pid": 96165
+      },
+      {
+        "error": "failed to shutdown: rcl_shutdown already called on the given context, at ./src/rcl/init.c:333",
+        "label": "rclpy.shutdown"
+      }
+    ]
+  },
+  "sdk_sensor_failure_recorded": false,
+  "original_sha256": {
+    "pair-host.json": "840b03cb25093afbcc1576acd5a16569c25247cba09662b9789e4ab9c680a419",
+    "job.json": "addf8e9c9c379498e5dee125338273063a93deac7f3dea4895a0b6e347cbc2f2",
+    "relay-pair.json": "6ef2b01b3087a26a440393a2b9ec34312069b1f9827aad7319a902d0c041b547",
+    "results/run/mission-result.json": "0c88379c5ef9f2983e41b111df8fa93c2e4ac0470a2df15561aac2ff8b42d8bd",
+    "results/run/mission-progress.json": "f82cee7a36cb67b556f4c45e4a0c1d2c66df63eda9f1a5f29c0eb552bcfa32cb",
+    "results/run/material-state.json": "dce816cd10fc31bb96a8d6cf424d87bf1c366480365db4213400e05e32ea3a47",
+    "results/run/actions.jsonl": "b359d2ae5100ecfd80be296e7be6e402dd9d2556251e42d46bbd05fb7ac3f4b2",
+    "results/run/route-events.jsonl": "3f0c6691e9110b23a52a5ecdbee20203605d1db7e72b58f452ee6c51e5958658",
+    "results/run/world-clock-state.json": "f822264a08f47783f6b6c0cca1a00576a41345638cfc9d5fa377abb94863b177",
+    "results/run/rosbag/metadata.yaml": "9a4586716ef12edf24e488f2c4306a492a8cb8af0792e5b0507041d859abba28"
+  },
+  "interpretation": "Continuous progress and the first empty return were recorded, but throughput and wall speed are insufficient for this bounded run. Existing holds and safety contracts remain. Do not raise the timeout or repeat unchanged settings as a substitute for diagnosing cost and waiting."
+}
