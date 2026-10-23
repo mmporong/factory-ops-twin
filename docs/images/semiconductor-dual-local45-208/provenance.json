@@ -71,7 +71,9 @@
         "VMIN": 68,
         "VMAX": 155
       }
-    },
+    }
+  ],
+  "rejected_captures": [
     {
       "path": "pack-conveyor.png",
       "sha256": "869a294577f09406a50daaafedadff6a73bb471578088a4a73cd87e313ee7b95",
@@ -92,7 +94,7 @@
       "physics_frame": 2,
       "sim_time_s": 0.03333333507180214,
       "source": "native Replicator RGB; no generated image or interpolation",
-      "accepted": true,
+      "accepted": false,
       "signalstats": {
         "YMIN": 19,
         "YMAX": 212,
@@ -100,12 +102,12 @@
         "UMAX": 159,
         "VMIN": 74,
         "VMAX": 148
-      }
+      },
+      "reason": "Visual composition shows west/source racks and empty field rather than the declared east packing conveyor. Cause unconfirmed; original retained."
     }
   ],
-  "rejected_captures": [],
   "original_producer_status": "passed",
-  "portfolio_selection_status": "passed",
+  "portfolio_selection_status": "partial",
   "AI_generated_images": false,
   "interpolated_frames": false,
   "closure": {
@@ -150,5 +152,6 @@
     "catalog_revision": "653d91e182011f357cf1644013cc94ddf194d349",
     "physics": "render-only external meshes;20 source colliders authoritative"
   },
-  "remaining": "four-AMR full logistics, final-scene SDG and operational media remain unqualified"
+  "remaining": "four-AMR full logistics, final-scene SDG and operational media remain unqualified",
+  "composition_check": "Overview and handler retained after visual inspection; the third view is excluded despite nonuniform pixels and producer passed."
 }

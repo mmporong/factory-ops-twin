@@ -78,10 +78,12 @@ def main() -> int:
             profile = json.loads((args.bundle/"render-profile.json").read_text(encoding="utf-8"))
             cameras = {camera["id"]: camera for camera in profile["cameras"]}
             selections = [("overview", "portfolio_overview"), ("test-handler", "cell_process")]
-            if "packing_conveyor" in cameras:
+            if args.camera_id is not None and "packing_conveyor" in cameras:
                 selections.append(("pack-conveyor", "packing_conveyor"))
             if args.camera_id is not None:
                 selections = [(name, key) for name, key in selections if key == args.camera_id]
+                if not selections:
+                    raise ValueError("selected preview camera is absent from the profile")
             views = tuple((name, cameras[key]["eye_xyz_m"], cameras[key]["target_xyz_m"],
                            cameras[key]["focal_length_mm"])
                           for name, key in selections)

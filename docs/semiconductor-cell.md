@@ -42,6 +42,6 @@
 
 ## 현재 구현 상태
 
-현재 설정은 `configs/factory-semiconductor-dual-lane/`에 있고, `configs/factory-semiconductor/`와 normal3 자료는 이전 배치·실행의 근거로 보존한다. 새 배치의19개 설비 외곽,180개 경로 및4개 초기 주차 점유를 CPU에서 확인했다. [실제 Isaac Sim4.5 조감·근접·컨베이어 RGB](images/semiconductor-dual-local45-208/provenance.json)는 같은 정지 물리 시점의 세 촬영 결과이며, 추가한 매거진·도크·벤트·인터페이스 형상을 포함한다. 촬영의 소유 프로세스 종료를 확인했으며 제조사 CAD나 AI 생성 예상도를 실행 증거로 쓰지 않는다.
+현재 설정은 `configs/factory-semiconductor-dual-lane/`에 있고, `configs/factory-semiconductor/`와 normal3 자료는 이전 배치·실행의 근거로 보존한다. 새 배치의19개 설비 외곽,180개 경로 및4개 초기 주차 점유를 CPU에서 확인했다. [실제 Isaac Sim4.5 조감·근접 RGB](images/semiconductor-dual-local45-208/provenance.json)는 같은 정지 물리 시점의 두 촬영 결과이며, 추가한 매거진·도크·벤트·인터페이스 형상을 포함한다. 세 번째 포장 시점은 구도 불일치로 제외했다. [컨베이어 전용 RGB](images/semiconductor-dual-local45-203/provenance.json)는 앞선 별도 촬영이다. 촬영의 소유 프로세스 종료를 확인했으며 제조사 CAD나 AI 생성 예상도를 실행 증거로 쓰지 않는다.
 
 새 구성의 원속도 물류 GIF와 실제 혼합 운송 완주는 후속 실행에서 확인해야 한다. 기존 캐리어는 실제 Carter 장착 옵션을 재사용하지만, 트레이의 자동 적재·하역은 현재 원장·시각 표현이며 접촉 기반 자동 이송의 완료를 뜻하지 않는다.

@@ -20,11 +20,11 @@
 |---|---|
 | ![방향별 통로와 후공정 셀 및 NVIDIA 포장 컨베이어를 배치한 반도체 최종검사·포장 구역](docs/images/semiconductor-dual-local45-208/overview.png) | ![트레이 도크·매거진·서비스 패널·벤트와 ATE 인터페이스를 보강한 검사 셀](docs/images/semiconductor-dual-local45-208/test-handler.png) |
 
-위 두 장과 아래 컨베이어 사진은 **Isaac Sim4.5의 같은 정지 물리 시점에서 촬영한 RGB**입니다. 공개 기능 자료를 참고한 비브랜드 절차형 생산 설비, NVIDIA 정비 소품34개와 포장 컨베이어1개를 함께 렌더링했습니다.3개 시점의 실제 형상·재질과 단색 여부를 확인했고, 촬영 프로세스는 모두 종료됐습니다. AMR 반복 운송이나 공장 처리량의 근거로 사용하지 않습니다. [촬영 소스·시점·카메라·원본 해시·종료 기록](docs/images/semiconductor-dual-local45-208/provenance.json)
+위 두 장은 **Isaac Sim4.5의 같은 정지 물리 시점에서 촬영한 RGB**입니다. 공개 기능 자료를 참고한 비브랜드 절차형 생산 설비, NVIDIA 정비 소품34개와 포장 컨베이어1개를 함께 렌더링했습니다. 추가 포장 시점 한 장은 실제 구도가 설정과 달라 제외했고, 원본과 제외 사유는 보존했습니다. 촬영 프로세스는 모두 종료됐습니다. AMR 반복 운송이나 공장 처리량의 근거로 사용하지 않습니다. [촬영 소스·시점·카메라·원본 해시·종료·선택 기록](docs/images/semiconductor-dual-local45-208/provenance.json)
 
-![실제 크기의 NVIDIA 포장 컨베이어를 새 출하 구역에서 촬영한 Isaac Sim RGB](docs/images/semiconductor-dual-local45-208/pack-conveyor.png)
+![실제 크기의 NVIDIA 포장 컨베이어를 출하 구역에서 촬영한 별도 Isaac Sim RGB](docs/images/semiconductor-dual-local45-203/pack-conveyor.png)
 
-컨베이어의 프레임·롤러·배선·게이트 형상과 재질을 확인한 근접 촬영입니다. 제공처 모델을 실제 크기로 배치했으며, 벨트 구동·검사 센서·자동 선별을 구현한 영상은 아닙니다. 단색 RGB를 거르는 검사와 소유 프로세스 종료를 확인했습니다. [촬영 출처](docs/images/semiconductor-dual-local45-208/provenance.json) · [모델·라이선스·사용 범위](docs/asset-attribution.md)
+이 사진은 위 두 장보다 앞선 별도 실행의 컨베이어 전용 촬영입니다. 프레임·롤러·배선·게이트 형상과 재질을 확인했고, 같은 모델을 실제 크기로 배치했습니다. 벨트 구동·검사 센서·자동 선별을 구현한 영상은 아닙니다. [별도 촬영 출처](docs/images/semiconductor-dual-local45-203/provenance.json) · [모델·라이선스·사용 범위](docs/asset-attribution.md)
 
 <details>
 <summary>지원 구역의 NVIDIA SimReady 모델 · 제공처 원본 미리보기</summary>
