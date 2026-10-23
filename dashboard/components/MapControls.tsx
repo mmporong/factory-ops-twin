@@ -14,7 +14,7 @@ type Props = {
 const layerNames: [keyof Layers, string][] = [
   ["zones", "공정 구역 색"],
   ["parking", "대기면·충전대"],
-  ["routes", "선택 AMR 경로"],
+  ["routes", "진행 경로"],
   ["inventory", "원장 재고 도식"],
 ];
 

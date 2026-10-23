@@ -61,3 +61,32 @@ test("status tones, clock and unobserved selections", () => {
   const scene = { stations: [], physical_obstacles: [], bounds_xy: [0, 0, 1, 1] };
   assert.equal(selectionPoint(scene, snapshot([], [{ id: "amr-1", pose: null }]), { kind: "robot", id: "amr-1" }), null);
 });
+
+const { pathAhead, routeChange } = load("ops-view");
+const p = (x, y) => ({ x_m: x, y_m: y });
+const round = (points) => plain(points).map((q) => [Math.round(q.x_m * 100) / 100, Math.round(q.y_m * 100) / 100]);
+
+test("path ahead covers only the stretch in front of the body, around corners", () => {
+  // 0.7 m hidden under the body, then 3 m along an L-shaped route.
+  assert.deepEqual(round(pathAhead(p(0, 0), [p(2, 0), p(2, 5)], 3, 0.7)), [[0.7, 0], [2, 0], [2, 1.7]]);
+  // The route ends before the look-ahead does.
+  assert.deepEqual(round(pathAhead(p(0, 0), [p(1.5, 0)], 3, 0.7)), [[0.7, 0], [1.5, 0]]);
+  // Already at the goal, or a duplicate first waypoint.
+  assert.deepEqual(plain(pathAhead(p(1, 1), [p(1, 1)], 3, 0.7)), []);
+  assert.deepEqual(round(pathAhead(p(0, 0), [p(0, 0), p(0, 4)], 2)), [[0, 0], [0, 2]]);
+});
+
+test("route progress is not reported as a change, a new goal or detour is", () => {
+  const plan = [p(5, 4), p(15, 4), p(15, 10)];
+  // Passing a waypoint drops it from the front.
+  assert.equal(routeChange(plan, [p(15, 4), p(15, 10)], p(6, 4)), null);
+  assert.equal(routeChange(plan, plan, p(2, 4)), null);
+  // Reaching the old goal and taking the next leg is ordinary progress.
+  assert.equal(routeChange([p(15, 10)], [p(15, 4), p(3, 4)], p(15, 9.5)), null);
+  // Same goal by another way, and a new goal mid-trip.
+  assert.equal(routeChange(plan, [p(5, 8), p(15, 8), p(15, 10)], p(4, 4)), "replanned");
+  assert.equal(routeChange(plan, [p(5, 4), p(5, 12)], p(4, 4)), "redirected");
+  // Nothing to compare when either side has no route.
+  assert.equal(routeChange([], plan, p(0, 0)), null);
+  assert.equal(routeChange(plan, [], p(0, 0)), null);
+});

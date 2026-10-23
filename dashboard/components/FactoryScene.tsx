@@ -12,12 +12,22 @@ import {
   RoundedBox,
   useCursor,
 } from "@react-three/drei";
-import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
+import type { Line2, LineSegments2, OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import type { Scene, Snapshot, Selection, Rect, Robot } from "../lib/types";
 import { readable, stationNames } from "../lib/types";
 import { inventoryDisplay } from "../lib/inventory-display";
 import { laneArrows } from "../lib/traffic-lanes";
-import { equipmentLabel, robotState, selectionPoint, toneOf, zoneColor, type Tone } from "../lib/ops-view";
+import {
+  equipmentLabel,
+  pathAhead,
+  robotState,
+  routeChange,
+  selectionPoint,
+  toneOf,
+  zoneColor,
+  type RouteChange,
+  type Tone,
+} from "../lib/ops-view";
 import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
 import {
   memo,
@@ -31,7 +41,10 @@ import {
 } from "react";
 import {
   BoxGeometry,
+  BufferGeometry,
   CanvasTexture,
+  DoubleSide,
+  Float32BufferAttribute,
   NeutralToneMapping,
   PCFSoftShadowMap,
   SRGBColorSpace,
@@ -87,6 +100,10 @@ const reducedMotion = () =>
 
 const cargoPartGeometry = new BoxGeometry(1, 1, 1);
 const cartonGeometry = new RoundedBoxGeometry(0.41, 0.3, 0.31, 2, 0.012);
+// Flat chevron lying on the floor, tip at the origin pointing along +x.
+const chevronGeometry = new BufferGeometry();
+chevronGeometry.setAttribute("position", new Float32BufferAttribute([0, 0, 0, -0.58, 0, -0.34, -0.38, 0, 0, -0.58, 0, 0.34], 3));
+chevronGeometry.setIndex([0, 1, 2, 0, 2, 3]);
 
 function CargoPart({ size, position, color }: { size: [number, number, number]; position: [number, number, number]; color: string }) {
   return <mesh geometry={cargoPartGeometry} scale={size} position={position} castShadow receiveShadow><meshStandardMaterial color={color} roughness={0.65} /></mesh>;
@@ -521,15 +538,103 @@ const Equipment = memo(function Equipment({
   );
 });
 
+type MapPoint = Robot["route"][number];
+type RouteShift = { kind: RouteChange; from: MapPoint[]; to: MapPoint[]; at: number };
+const AHEAD_M = 3.2; // about one and a half floor grid cells past the bumper
+const BODY_M = 0.7;
+const SHIFT_MS = 3200;
+const shiftLabel: Record<RouteChange, string> = { replanned: "경로 재계획", redirected: "목적지 변경" };
+const linePlaceholder: [number, number, number][] = [[0, 0, 0], [0, 0, 0.01]];
+const toWorld = (points: MapPoint[], y: number) => points.map((p) => [p.x_m, y, -p.y_m] as [number, number, number]);
+
+/** Marching dashed arrow over the next stretch of the route, starting at the body's tweened position. */
+function PathAhead({
+  body,
+  pose,
+  route,
+  moving,
+}: {
+  body: MutableRefObject<Group | null>;
+  pose: MapPoint;
+  route: MapPoint[];
+  moving: boolean;
+}) {
+  const line = useRef<Line2 | LineSegments2>(null);
+  const head = useRef<Group>(null);
+  const invalidate = useThree((s) => s.invalidate);
+  const drawn = useRef<{ x: number; z: number; route: MapPoint[] | null }>({ x: NaN, z: NaN, route: null });
+  useEffect(() => invalidate(), [route, moving, invalidate]);
+  useFrame((_, delta) => {
+    const g = body.current;
+    const l = line.current;
+    const h = head.current;
+    if (!g || !l || !h) return;
+    const { x, z } = g.position;
+    if (x !== drawn.current.x || z !== drawn.current.z || route !== drawn.current.route) {
+      drawn.current = { x, z, route };
+      // The body tweens toward the observed pose, so the path runs through that pose first.
+      const points = pathAhead({ x_m: x, y_m: -z }, [pose, ...route], AHEAD_M, BODY_M);
+      l.visible = h.visible = points.length > 1;
+      if (points.length > 1) {
+        l.geometry.setPositions(toWorld(points, 0.11).flat());
+        l.computeLineDistances();
+        const [a, b] = points.slice(-2);
+        h.position.set(b.x_m, 0.11, -b.y_m);
+        h.rotation.y = Math.atan2(b.y_m - a.y_m, b.x_m - a.x_m);
+      }
+    }
+    if (moving && !reducedMotion()) {
+      l.material.dashOffset = (l.material.dashOffset - Math.min(delta, 0.1) * 1.4) % 0.7;
+      invalidate();
+    }
+  });
+  const color = moving ? palette.accent : toneColor.gray;
+  return (
+    <>
+      <Line ref={line} points={linePlaceholder} color={color} lineWidth={4} dashed dashSize={0.42} gapSize={0.28} />
+      <group ref={head}>
+        <mesh geometry={chevronGeometry} raycast={() => null}>
+          <meshBasicMaterial color={color} side={DoubleSide} toneMapped={false} />
+        </mesh>
+      </group>
+    </>
+  );
+}
+
+/** For a few seconds after an observed route change, the old route fades out under the new one. */
+function RouteTrail({ shift }: { shift: RouteShift }) {
+  const old = useRef<Line2 | LineSegments2>(null);
+  const fresh = useRef<Line2 | LineSegments2>(null);
+  const invalidate = useThree((s) => s.invalidate);
+  const from = useMemo(() => toWorld(shift.from, 0.085), [shift]);
+  const to = useMemo(() => toWorld(shift.to, 0.095), [shift]);
+  useFrame(() => {
+    if (reducedMotion()) return;
+    // Hold both routes for the first 40 % of the window, then let the old one fade out.
+    const fade = Math.min(1, Math.max(0, (1 - (performance.now() - shift.at) / SHIFT_MS) / 0.6));
+    if (old.current) old.current.material.opacity = 0.85 * fade;
+    if (fresh.current) fresh.current.material.opacity = 0.3 + 0.7 * fade;
+    if (fade > 0) invalidate();
+  });
+  return (
+    <>
+      <Line ref={old} points={from} color="#6f7891" lineWidth={3.2} dashed dashSize={0.22} gapSize={0.22} transparent opacity={0.85} />
+      <Line ref={fresh} points={to} color={toneColor.amber} lineWidth={3.6} transparent opacity={1} />
+    </>
+  );
+}
+
 const RobotUnit = memo(function RobotUnit({
   robot,
   selected,
+  showPath,
   onSelect,
   hover,
   label,
 }: {
   robot: Robot;
   selected: boolean;
+  showPath: boolean;
   onSelect: (s: Selection) => void;
   hover: HoverHandlers;
   label: Texture;
@@ -541,6 +646,23 @@ const RobotUnit = memo(function RobotUnit({
   const state = robotState(robot);
   const tone = toneOf(state);
   const key = `robot:${robot.id}`;
+  const [shift, setShift] = useState<RouteShift | null>(null);
+  const seen = useRef<{ route: MapPoint[]; pose: MapPoint } | null>(null);
+
+  useEffect(() => {
+    const prev = seen.current;
+    seen.current = { route: robot.route, pose };
+    // A jump (replay seek, reconnect) is a new observation, not a change of plan.
+    if (!prev || Math.hypot(prev.pose.x_m - pose.x_m, prev.pose.y_m - pose.y_m) > 4) return;
+    const kind = routeChange(prev.route, robot.route, pose);
+    if (kind) setShift({ kind, from: [pose, ...prev.route], to: [pose, ...robot.route], at: performance.now() });
+  }, [robot.route, pose]);
+
+  useEffect(() => {
+    if (!shift) return;
+    const timer = setTimeout(() => setShift(null), SHIFT_MS);
+    return () => clearTimeout(timer);
+  }, [shift]);
 
   useLayoutEffect(() => {
     const g = group.current;
@@ -574,56 +696,62 @@ const RobotUnit = memo(function RobotUnit({
   });
 
   return (
-    <group
-      ref={group}
-      onClick={(e) => {
-        e.stopPropagation();
-        onSelect({ kind: "robot", id: robot.id });
-      }}
-      onPointerOver={(e) => {
-        e.stopPropagation();
-        hover.onOver(key);
-      }}
-      onPointerOut={() => hover.onOut(key)}
-    >
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.012, 0]} raycast={() => null}>
-        <ringGeometry args={[0.84, selected ? 1.04 : 0.95, 48]} />
-        <meshBasicMaterial color={selected ? palette.select : tone === "gray" ? "#b9c2da" : toneColor[tone]} />
-      </mesh>
-      <SoftBox size={[1.08, 0.18, 0.8]} position={[0, 0.13, 0]} color="#262d40" radius={0.08} roughness={0.6} />
-      <SoftBox size={[1.14, 0.38, 0.86]} position={[0, 0.36, 0]} color={palette.amr} radius={0.17} roughness={0.35} />
-      <SoftBox size={[0.96, 0.08, 0.74]} position={[0, 0.58, 0]} color="#ffffff" radius={0.04} roughness={0.4} />
-      <SoftBox size={[0.07, 0.09, 0.5]} position={[0.56, 0.34, 0]} color="#262d40" radius={0.03} />
-      <mesh position={[-0.52, 0.42, 0]}>
-        <boxGeometry args={[0.05, 0.08, 0.36]} />
-        <meshBasicMaterial color={toneColor[tone]} toneMapped={false} />
-      </mesh>
-      {[-0.42, 0.42].flatMap((x) =>
-        [-0.37, 0.37].map((z) => (
-          <mesh key={`${x}-${z}`} position={[x, 0.14, z]} rotation={[Math.PI / 2, 0, 0]} castShadow>
-            <cylinderGeometry args={[0.13, 0.13, 0.1, 20]} />
-            <meshStandardMaterial color="#1c2232" roughness={0.75} />
-          </mesh>
-        )),
+    <>
+      <group
+        ref={group}
+        onClick={(e) => {
+          e.stopPropagation();
+          onSelect({ kind: "robot", id: robot.id });
+        }}
+        onPointerOver={(e) => {
+          e.stopPropagation();
+          hover.onOver(key);
+        }}
+        onPointerOut={() => hover.onOut(key)}
+      >
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.012, 0]} raycast={() => null}>
+          <ringGeometry args={[0.84, selected ? 1.04 : 0.95, 48]} />
+          <meshBasicMaterial color={selected ? palette.select : tone === "gray" ? "#b9c2da" : toneColor[tone]} />
+        </mesh>
+        <SoftBox size={[1.08, 0.18, 0.8]} position={[0, 0.13, 0]} color="#262d40" radius={0.08} roughness={0.6} />
+        <SoftBox size={[1.14, 0.38, 0.86]} position={[0, 0.36, 0]} color={palette.amr} radius={0.17} roughness={0.35} />
+        <SoftBox size={[0.96, 0.08, 0.74]} position={[0, 0.58, 0]} color="#ffffff" radius={0.04} roughness={0.4} />
+        <SoftBox size={[0.07, 0.09, 0.5]} position={[0.56, 0.34, 0]} color="#262d40" radius={0.03} />
+        <mesh position={[-0.52, 0.42, 0]}>
+          <boxGeometry args={[0.05, 0.08, 0.36]} />
+          <meshBasicMaterial color={toneColor[tone]} toneMapped={false} />
+        </mesh>
+        {[-0.42, 0.42].flatMap((x) =>
+          [-0.37, 0.37].map((z) => (
+            <mesh key={`${x}-${z}`} position={[x, 0.14, z]} rotation={[Math.PI / 2, 0, 0]} castShadow>
+              <cylinderGeometry args={[0.13, 0.13, 0.1, 20]} />
+              <meshStandardMaterial color="#1c2232" roughness={0.75} />
+            </mesh>
+          )),
+        )}
+        <mesh position={[0.32, 0.7, 0]} castShadow>
+          <cylinderGeometry args={[0.11, 0.13, 0.16, 24]} />
+          <meshStandardMaterial color="#262d40" roughness={0.3} />
+        </mesh>
+        {robot.payload_id && (
+          <group position={[-0.08, 0.86, 0]}>
+            {robot.payload_id.startsWith("LOT") ? <group scale={1.9}><Carton label={label} selected={false} /></group> : <ToteShape color="#3d68ee" />}
+          </group>
+        )}
+        {selected && <SelectionBox size={[1.55, 1.5, 1.25]} y={0.75} />}
+        <Tag
+          position={[0, robot.payload_id ? 1.85 : 1.35, 0]}
+          title={robot.label}
+          note={shift ? shiftLabel[shift.kind] : readable(state)}
+          tone={shift ? "amber" : tone}
+          selected={selected}
+        />
+      </group>
+      {showPath && robot.route.length > 0 && (
+        <PathAhead body={group} pose={pose} route={robot.route} moving={robot.status === "moving"} />
       )}
-      <mesh position={[0.32, 0.7, 0]} castShadow>
-        <cylinderGeometry args={[0.11, 0.13, 0.16, 24]} />
-        <meshStandardMaterial color="#262d40" roughness={0.3} />
-      </mesh>
-      {robot.payload_id && (
-        <group position={[-0.08, 0.86, 0]}>
-          {robot.payload_id.startsWith("LOT") ? <group scale={1.9}><Carton label={label} selected={false} /></group> : <ToteShape color="#3d68ee" />}
-        </group>
-      )}
-      {selected && <SelectionBox size={[1.55, 1.5, 1.25]} y={0.75} />}
-      <Tag
-        position={[0, robot.payload_id ? 1.85 : 1.35, 0]}
-        title={robot.label}
-        note={readable(state)}
-        tone={tone}
-        selected={selected}
-      />
-    </group>
+      {showPath && shift && <RouteTrail shift={shift} />}
+    </>
   );
 });
 
@@ -848,6 +976,7 @@ export default memo(function FactoryScene({ scene, snapshot, selection, onSelect
             key={r.id}
             robot={r}
             selected={selection?.kind === "robot" && selection.id === r.id}
+            showPath={layers.routes}
             onSelect={select}
             hover={hover}
             label={packagingLabel}
@@ -856,9 +985,9 @@ export default memo(function FactoryScene({ scene, snapshot, selection, onSelect
       )}
       {layers.routes && selectedRobot?.pose && selectedRobot.route.length > 0 && (
         <Line
-          points={[selectedRobot.pose, ...selectedRobot.route].map((p) => [p.x_m, 0.09, -p.y_m] as [number, number, number])}
-          color={palette.accent}
-          lineWidth={3.2}
+          points={toWorld([selectedRobot.pose, ...selectedRobot.route], 0.09)}
+          color="#93a9f4"
+          lineWidth={2.6}
           dashed
           dashSize={0.35}
           gapSize={0.22}

@@ -205,3 +205,49 @@ export function searchItems(scene: Scene | null, snapshot: Snapshot | null): Sea
   });
   return items;
 }
+
+type MapPoint = { x_m: number; y_m: number };
+const near = (a: MapPoint, b: MapPoint, tolerance: number) => Math.hypot(a.x_m - b.x_m, a.y_m - b.y_m) <= tolerance;
+
+/** Stretch of `route` from `start` lying between `skip` and `skip + length` metres along the path. */
+export function pathAhead(start: MapPoint, route: MapPoint[], length: number, skip = 0): MapPoint[] {
+  const out: MapPoint[] = [];
+  const end = skip + length;
+  let prev = start;
+  let walked = 0;
+  for (const point of route) {
+    const seg = Math.hypot(point.x_m - prev.x_m, point.y_m - prev.y_m);
+    if (seg < 1e-6) continue;
+    const from = prev;
+    const at = (d: number) => ({
+      x_m: from.x_m + ((point.x_m - from.x_m) * (d - walked)) / seg,
+      y_m: from.y_m + ((point.y_m - from.y_m) * (d - walked)) / seg,
+    });
+    if (!out.length && walked + seg > skip) out.push(at(Math.max(skip, walked)));
+    if (walked + seg >= end) {
+      if (out.length) out.push(at(end));
+      return out;
+    }
+    if (out.length) out.push(point);
+    walked += seg;
+    prev = point;
+  }
+  return out.length > 1 ? out : [];
+}
+
+export type RouteChange = "replanned" | "redirected";
+
+/**
+ * How the remaining route changed between two observations. Dropping passed
+ * waypoints and starting the next leg after reaching the old goal are progress,
+ * not changes; a different goal is "redirected", the same goal by another way "replanned".
+ */
+export function routeChange(prev: MapPoint[], next: MapPoint[], pose: MapPoint | null): RouteChange | null {
+  if (!prev.length || !next.length) return null;
+  const prevGoal = prev[prev.length - 1];
+  if (pose && near(pose, prevGoal, 1)) return null;
+  for (let k = 0; k <= prev.length - next.length; k++) {
+    if (next.every((p, i) => near(p, prev[k + i], 0.15))) return null;
+  }
+  return near(prevGoal, next[next.length - 1], 0.5) ? "replanned" : "redirected";
+}

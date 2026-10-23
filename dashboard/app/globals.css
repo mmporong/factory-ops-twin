@@ -621,6 +621,8 @@ ol {
   font-weight: 700;
 }
 .layer-panel label {
+  /* A flex row avoids the floated legend; clearing puts the first row under it. */
+  clear: both;
   display: flex;
   align-items: center;
   gap: 10px;
