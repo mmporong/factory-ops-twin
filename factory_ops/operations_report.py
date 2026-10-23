@@ -98,6 +98,72 @@ def _validate_matrix(document: Mapping[str, Any]) -> tuple[list[Mapping[str, Any
     return cases, {"condition": condition, "sources_sha256": dict(bindings[0])}
 
 
+def _frozen_source_summary(
+    input_path: Path, document: Mapping[str, Any], cases: list[Mapping[str, Any]],
+) -> dict[str, Any] | None:
+    manifest_path = input_path.parent / "frozen-source" / "manifest.json"
+    declared = document.get("frozen_source")
+    if not manifest_path.is_file():
+        if declared is not None:
+            raise ValueError("matrix declares frozen source metadata but the sibling manifest is absent")
+        return None
+    raw = manifest_path.read_bytes()
+    manifest = json.loads(raw.decode("utf-8"))
+    if not isinstance(manifest, Mapping) or not isinstance(manifest.get("files"), list):
+        raise ValueError("frozen source manifest is invalid")
+    expected_binding = _mapping(
+        _mapping(cases[0].get("case_identity"), "case_identity").get("spec"), "case_identity.spec",
+    ).get("source_binding_sha256")
+    if manifest.get("source_binding_sha256") != expected_binding:
+        raise ValueError("frozen source manifest binding differs from the matrix cases")
+    expected_sources = _mapping(
+        _mapping(cases[0].get("provenance"), "case.provenance").get("sources_before_sha256"),
+        "case.provenance.sources_before_sha256",
+    )
+    expected_records = {
+        (kind, str(key)): digest
+        for kind in ("config", "producer")
+        for key, digest in _mapping(expected_sources.get(kind), f"sources.{kind}").items()
+    }
+    observed_records: dict[tuple[str, str], Any] = {}
+    frozen_root = manifest_path.parent.resolve()
+    for index, record in enumerate(manifest["files"]):
+        row = _mapping(record, f"frozen manifest files[{index}]")
+        relative = row.get("frozen_path")
+        digest = row.get("sha256")
+        kind, source_key = row.get("kind"), row.get("source_key")
+        if (kind not in ("config", "producer") or not isinstance(source_key, str)
+                or not isinstance(relative, str) or not relative or not isinstance(digest, str)):
+            raise ValueError("frozen source manifest file record is invalid")
+        record_key = (kind, source_key)
+        if record_key in observed_records:
+            raise ValueError("frozen source manifest contains a duplicate source record")
+        observed_records[record_key] = digest
+        relative_path = Path(relative)
+        if relative_path.is_absolute() or ".." in relative_path.parts:
+            raise ValueError("frozen source manifest contains an unsafe path")
+        frozen_file = (frozen_root / relative_path).resolve()
+        if frozen_root not in frozen_file.parents or not frozen_file.is_file():
+            raise ValueError("frozen source manifest references a missing file")
+        if _sha_bytes(frozen_file.read_bytes()) != digest:
+            raise ValueError("frozen source file hash differs from its manifest")
+    if observed_records != expected_records:
+        raise ValueError("frozen source manifest records differ from the matrix source pins")
+    manifest_sha = _sha_bytes(raw)
+    if declared is not None:
+        declared_map = _mapping(declared, "matrix.frozen_source")
+        if (declared_map.get("manifest_sha256") != manifest_sha
+                or declared_map.get("source_binding_sha256") != expected_binding):
+            raise ValueError("matrix frozen source metadata differs from the sibling manifest")
+    return {
+        "relative_path": "frozen-source",
+        "manifest_relative_path": "frozen-source/manifest.json",
+        "manifest_sha256": manifest_sha,
+        "source_binding_sha256": expected_binding,
+        "file_count": len(manifest["files"]),
+    }
+
+
 def _case_summary(case: Mapping[str, Any]) -> dict[str, Any]:
     metrics = _mapping(case.get("metrics"), "case.metrics")
     final = _mapping(case.get("final_snapshot"), "case.final_snapshot")
@@ -256,6 +322,7 @@ def build_report(input_path: Path, output_dir: Path) -> dict[str, Path]:
     if not isinstance(document, Mapping):
         raise ValueError("matrix root must be an object")
     cases, comparison = _validate_matrix(document)
+    frozen_source = _frozen_source_summary(input_path, document, cases)
     condensed = [_case_summary(case) for case in cases]
     summary: dict[str, Any] = {
         "schema_version": 1,
@@ -281,6 +348,8 @@ def build_report(input_path: Path, output_dir: Path) -> dict[str, Path]:
         },
         "cases": condensed,
     }
+    if frozen_source is not None:
+        summary["frozen_source"] = frozen_source
     output_dir = output_dir.resolve()
     output_dir.mkdir(parents=True, exist_ok=True)
     outputs = {

@@ -1,11 +1,19 @@
 """Bounded operational experiment evidence tests."""
 from __future__ import annotations
 
+import json
 from pathlib import Path
 import tempfile
 import unittest
+from unittest.mock import patch
 
-from factory_ops.operations_experiment import MAX_REPRESENTATIVE_SNAPSHOTS, run_case
+from factory_ops.operations_experiment import (
+    MAX_REPRESENTATIVE_SNAPSHOTS,
+    _config_pins,
+    _producer_pins,
+    main,
+    run_case,
+)
 
 
 CONFIG = Path(__file__).resolve().parents[1] / "configs/factory-fleet4"
@@ -74,6 +82,27 @@ class _AdvanceFails(_FakeOperationsModel):
         super().advance(dt)
 
 
+class _MutatesConfig(_FakeOperationsModel):
+    def __init__(self, config: Path, **kwargs: object) -> None:
+        super().__init__(config, **kwargs)
+        self.config = config
+        self.mutated = False
+
+    def advance(self, dt: float) -> None:
+        if not self.mutated:
+            (self.config / "g2.json").write_text('{"changed":true}\n', encoding="utf-8")
+            self.mutated = True
+        super().advance(dt)
+
+
+def _write_minimal_config(root: Path) -> Path:
+    config = root / "config"
+    config.mkdir()
+    for index, name in enumerate(("layout.json", "g2.json", "g3-routing.json", "transport-profile.json")):
+        (config / name).write_text(json.dumps({"fixture": index}) + "\n", encoding="utf-8")
+    return config
+
+
 class OperationsExperimentTest(unittest.TestCase):
     def test_rejects_invalid_inputs_before_running(self) -> None:
         for field, value in (("scenario", "fire"), ("policy", "random")):
@@ -134,6 +163,88 @@ class OperationsExperimentTest(unittest.TestCase):
         self.assertTrue(provenance["source_stable_during_run"])
         self.assertIn("g2.json", provenance["sources_before_sha256"]["config"])
         self.assertIn("factory_ops/operations/ledger.py", provenance["sources_before_sha256"]["producer"])
+
+    def test_source_change_during_run_marks_case_invalid(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            config = _write_minimal_config(Path(directory))
+            result = run_case(config, scenario="normal", policy="fifo", horizon_s=2, dt_s=1,
+                              model_factory=_MutatesConfig)
+        self.assertEqual("invalid", result["status"])
+        self.assertFalse(result["provenance"]["source_stable_during_run"])
+        self.assertNotEqual(result["provenance"]["sources_before_sha256"],
+                            result["provenance"]["sources_after_sha256"])
+
+    def test_snapshot_observer_receives_isolated_copies_only_after_advance(self) -> None:
+        observed: list[dict[str, object]] = []
+
+        def capture(snapshot: object) -> None:
+            assert isinstance(snapshot, dict)
+            observed.append(snapshot)
+            snapshot["sim_time_s"] = -999
+            snapshot["robots"] = []
+
+        result = run_case(CONFIG, scenario="normal", policy="fifo", horizon_s=2, dt_s=1,
+                          model_factory=_FakeOperationsModel, snapshot_observer=capture)
+        self.assertGreaterEqual(len(observed), 2)
+        self.assertTrue(all(frame["sim_time_s"] == -999 for frame in observed))
+        self.assertGreater(result["final_snapshot"]["sim_time_s"], 0)
+        self.assertEqual(4, len(result["final_snapshot"]["robots"]))
+        self.assertEqual(len(observed), result["snapshot_observer"]["calls_completed"])
+        self.assertEqual("deepcopy", result["snapshot_observer"]["copy_mode"])
+
+    def test_snapshot_observer_error_uses_partial_failure_report(self) -> None:
+        def fail(_: object) -> None:
+            raise RuntimeError("capture failed")
+
+        result = run_case(CONFIG, scenario="normal", policy="eta", horizon_s=10, dt_s=1,
+                          model_factory=_FakeOperationsModel, snapshot_observer=fail)
+        self.assertEqual("failed", result["status"])
+        self.assertEqual("capture failed", result["error"]["message"])
+        self.assertEqual(0, result["snapshot_observer"]["calls_completed"])
+        self.assertFalse(result["metrics"]["experiment_complete"])
+
+    def test_cli_freezes_explicit_sources_and_records_verified_manifest(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            config = _write_minimal_config(root)
+            output = root / "attempt" / "matrix.json"
+
+            def fake_case(selected: Path, **_: object) -> dict[str, object]:
+                return {
+                    "status": "incomplete",
+                    "provenance": {"sources_before_sha256": {
+                        "config": _config_pins(selected), "producer": _producer_pins(),
+                    }},
+                }
+
+            with patch("factory_ops.operations_experiment.run_case", side_effect=fake_case):
+                self.assertEqual(0, main(["--config", str(config), "--output", str(output),
+                                          "--horizon", "1", "--dt", "1"]))
+
+            document = json.loads(output.read_text(encoding="utf-8"))
+            frozen = root / "attempt" / "frozen-source"
+            manifest = json.loads((frozen / "manifest.json").read_text(encoding="utf-8"))
+            self.assertTrue(document["provenance"]["frozen_source"]["binding_matches_case_start"])
+            self.assertEqual(document["frozen_source"]["file_count"], len(manifest["files"]))
+            self.assertEqual((config / "g2.json").read_bytes(), (frozen / "config" / "g2.json").read_bytes())
+            self.assertEqual(
+                (Path(__file__).resolve().parents[1] / "factory_ops" / "operations_experiment.py").read_bytes(),
+                (frozen / "factory_ops" / "operations_experiment.py").read_bytes(),
+            )
+            self.assertFalse((frozen / ".env").exists())
+
+    def test_cli_rejects_existing_output_before_execution(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            config = _write_minimal_config(root)
+            output = root / "matrix.json"
+            output.write_text("preserve\n", encoding="utf-8")
+            with patch("factory_ops.operations_experiment.run_case") as execute:
+                with self.assertRaises(FileExistsError):
+                    main(["--config", str(config), "--output", str(output),
+                          "--horizon", "1", "--dt", "1"])
+                execute.assert_not_called()
+            self.assertEqual("preserve\n", output.read_text(encoding="utf-8"))
 
 
 if __name__ == "__main__":

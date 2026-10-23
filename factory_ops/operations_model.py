@@ -11,7 +11,7 @@ from functools import lru_cache
 import json
 import math
 from pathlib import Path
-from typing import Any
+from typing import Any, Mapping
 from uuid import NAMESPACE_URL, uuid5
 
 from .dashboard_model import DashboardModel
@@ -19,13 +19,17 @@ from .drive_profile import DriveLimits
 from .fleet_routing import swept_tiles
 from .motion import DriveGeometry
 from .operations import Transition
+from .operations_corridor import OperationsCorridors
+from .operations_charging import OperationsCharging, SCOPE as OPERATIONS_CHARGING_SCOPE
 from .operations_motion import PathMotion
+from .operations_replan import anchor_at_pose, find_alternative_route
 from .route_reservation import RouteReservationManager
 
 
 class OperationsModel(DashboardModel):
     def __init__(self, config: Path, *, policy: str = "fifo", initial_orders: int = 4,
-                 run_id: str | None = None) -> None:
+                 run_id: str | None = None,
+                 operations_charging_profile: Mapping[str, Any] | None = None) -> None:
         if policy not in ("fifo", "eta"):
             raise ValueError("operations policy must be fifo or eta")
         self.closed = False
@@ -37,6 +41,7 @@ class OperationsModel(DashboardModel):
         self.geometry = DriveGeometry(**{k: v for k, v in drive["drive_geometry"].items() if k != "provenance"})
         self.limits = DriveLimits(**{k: v for k, v in drive["drive_profile"].items() if k != "provenance"})
         self.motions = {r: PathMotion(self.limits, self.geometry) for r in self.ledger.robots}
+        self.corridors = OperationsCorridors(self.book.config)
         self.homes = {r: f"P{i}" for i, r in enumerate(self.ledger.robots, 1)}
         self.radius = self.book.config["authored_allowances"].get("reservation_radius_including_tracking_m", self.book.planning_radius_m)
         self.collision_radius = self.book.config["collision_radius"]["value"]
@@ -52,15 +57,29 @@ class OperationsModel(DashboardModel):
         self._jobs: dict[str, tuple[str, str]] = {}
         self._chunks: dict[str, dict[str, Any]] = {}
         self._chunk_seq = {r: 0 for r in self.ledger.robots}
+        self._alignment_seq = {r: 0 for r in self.ledger.robots}
         self._max_segment_m = max(math.dist(self.book.nodes[a], self.book.nodes[b]) for a, b in self.book.edges)
         self.min_clearance_m: float | None = None
         self.peak_moving_robots = 0
+        self.wait_cycle: tuple[str, ...] | None = None
+        self.wait_cycle_episodes = 0
+        self._last_cycle_check_s = -1.0
+        self._replans: dict[str, dict[str, Any]] = {}
+        self._replan_examined: set[tuple[Any, ...]] = set()
+        self.replan_attempt_count = 0
+        self.replan_applied_count = 0
+        self.replan_unavailable_count = 0
+        self.last_replan_reason: str | None = None
         self._observe_all()
         for robot in self.ledger.robots:
             point = self.book.nodes[self.homes[robot]]
             if not self._claim(robot, "initial-park", self._tiles((point,))):
                 raise ValueError("initial parking footprints conflict")
             self._park_hold(robot)
+        profile_path = config / "operations-charging.json"
+        profile = (operations_charging_profile if operations_charging_profile is not None
+                   else json.loads(profile_path.read_text(encoding="utf-8")) if profile_path.is_file() else None)
+        self.operations_charging = OperationsCharging(self, profile) if profile is not None else None
 
     def _route(self, start: str, goal: str):
         return self.book.plan(start, goal, closed=self.closed).points
@@ -120,14 +139,21 @@ class OperationsModel(DashboardModel):
         self._observe_all()
         self._release_station_gates()
         draining = self.requested_closed != self.closed
-        if draining and not self._trips and all(self._locations[r] == self.homes[r] for r in self.homes):
+        charging_idle = (self.operations_charging is None
+                         or not self.operations_charging.queue
+                         and not self.operations_charging.aux
+                         and not self.operations_charging.relocating
+                         and not self.operations_charging.faults)
+        if (draining and charging_idle and not self._trips
+                and all(self._locations[r] == self.homes[r] for r in self.homes)):
             self.closed = self.requested_closed
             self._event("aisle_closure_applied", "계획 통로 폐쇄 적용" if self.closed else "통로 재개방 적용", None)
             draining = False
         self._waiting = {r: w for r, w in self._waiting.items() if r in self._trips}
         while not draining:
             available = [r for r, state in self.ledger.robots.items()
-                         if r not in self._trips and state.available and state.task_id is None and state.payload_id is None]
+                         if r not in self._trips and state.available and state.task_id is None and state.payload_id is None
+                         and (self.operations_charging is None or self.operations_charging.available(r))]
             jobs = [(t.ready_time, t.task_id, "order", t.pickup_station, t.drop_station, t)
                     for t in self.ledger.ready_tasks if self.ledger.can_assign(t)]
             jobs.extend((t["ready_time_s"], t["id"], "empty_return", t["source"], t["destination"], t)
@@ -142,6 +168,9 @@ class OperationsModel(DashboardModel):
                     pairs.append((rank, robot, identity, kind, task, pickup, destination))
             assigned = False
             for _, robot, identity, kind, task, pickup, destination in sorted(pairs, key=lambda p: p[0]):
+                if (self.operations_charging is not None
+                        and not self.operations_charging.can_assign(self, robot, pickup, destination)):
+                    continue
                 blockers = sorted({self._station_owners[s] for s in (pickup, destination)
                                    if s in self._station_owners and self._station_owners[s] != robot})
                 if blockers:
@@ -163,14 +192,128 @@ class OperationsModel(DashboardModel):
         for robot in self.ledger.robots:
             if robot in self._trips or self._locations[robot] == self.homes[robot]:
                 continue
+            if self.operations_charging is not None and not self.operations_charging.can_park(robot):
+                continue
             # Vacate an idle handover without claiming a completed parking move.
             if draining or self.sim_time - self._idle_since[robot] >= 2.0:
                 self._trip(robot, {}, self._locations[robot], self.homes[robot], "parking", kind="parking")
                 self._waiting.pop(robot, None)
 
     def _trip(self, robot_id, task, start, goal, phase, *, kind="order") -> None:
+        self._replans.pop(robot_id, None)
         super()._trip(robot_id, task, start, goal, phase, kind=kind)
+        if hasattr(self, "operations_charging") and self.operations_charging is not None:
+            self.operations_charging.denied.discard(robot_id)
         self._waiting.pop(robot_id, None)
+
+    def _align_at_hold(self, robot: str, yaw_rad: float, dt: float) -> bool:
+        motion = self.motions[robot]
+        if motion.stopped:
+            self._alignment_seq[robot] += 1
+            if not self._claim(
+                robot,
+                f"dock-align-{self._alignment_seq[robot]}",
+                self._footprint(robot),
+            ):
+                raise RuntimeError("dock alignment could not retain its current footprint")
+        lease = self._leases[robot]
+        if not self.reservations.permission(
+            robot, lease["generation"], lease["goal"], now_s=self.sim_time,
+        ):
+            raise RuntimeError("dock alignment lost its reservation")
+        aligned = motion.rotate_to(self._poses[robot], yaw_rad, dt)
+        if not self._footprint(robot).issubset(lease["tiles"]):
+            raise RuntimeError("dock alignment escaped its retained footprint")
+        if aligned:
+            self._observe_all()
+            self._park_hold(robot)
+        return aligned
+
+    def _schedule_cycle_replan(self, cycle: tuple[str, ...]) -> None:
+        if any(robot in self._replans for robot in cycle):
+            return
+        signature = (
+            cycle,
+            tuple((robot, self._poses[robot]["x_m"], self._poses[robot]["y_m"],
+                   self._trips.get(robot, {}).get("goal")) for robot in cycle),
+        )
+        if signature in self._replan_examined:
+            return
+        self._replan_examined.add(signature)
+        self.replan_attempt_count += 1
+        self.last_replan_reason = "persistent_reservation_wait_cycle"
+        reservation = self.reservations.snapshot(now_s=self.sim_time)
+        observations = reservation["observations"]
+        candidates = []
+        for robot in cycle:
+            trip = self._trips.get(robot)
+            if (trip is None or robot in self._chunks or not self.motions[robot].stopped
+                    or not trip["points"]):
+                continue
+            start = anchor_at_pose(self.book.nodes, self._poses[robot])
+            if start is None:
+                continue
+            peer_tiles = frozenset(
+                tuple(tile)
+                for peer, observation in observations.items() if peer != robot
+                for tile in observation["tiles"]
+            )
+            alternative = find_alternative_route(
+                self.book,
+                start=start,
+                goal=trip["goal"],
+                closed=self.closed,
+                reservation_radius_m=self.radius,
+                peer_footprint_tiles=peer_tiles,
+                existing_points=tuple(trip["points"]),
+            )
+            if alternative is not None:
+                candidates.append((alternative.distance_m, robot, start, alternative))
+        if not candidates:
+            self.replan_unavailable_count += 1
+            self._event(
+                "traffic_replan_unavailable",
+                f"순환 대기 대체 경로 없음: {', '.join(cycle)}",
+                None,
+                reason=self.last_replan_reason,
+                cycle=list(cycle),
+            )
+            return
+        _, robot, start, alternative = min(candidates, key=lambda item: (item[0], item[1]))
+        self._replans[robot] = {
+            "points": alternative.points[1:],
+            "nodes": alternative.nodes,
+            "start": start,
+            "reason": self.last_replan_reason,
+            "cycle": cycle,
+            "attempt": self.replan_attempt_count,
+        }
+        self._event(
+            "traffic_replan_selected",
+            f"{robot} 순환 대기 우회 선택 · {start}→{self._trips[robot]['goal']}",
+            robot,
+            reason=self.last_replan_reason,
+            cycle=list(cycle),
+            route_nodes=list(alternative.nodes),
+        )
+
+    @staticmethod
+    def _consume_chunk_route(pose, trip, chunk) -> None:
+        """Remove authored waypoints as the active kinematic chunk passes them."""
+        if chunk["corridor"] is not None:
+            reached = chunk["count"] - len(chunk["points"])
+        else:
+            travelled = math.dist(chunk["start"], (pose["x_m"], pose["y_m"]))
+            route_points = list(trip["points"])
+            reached = chunk["consumed"]
+            while reached < chunk["count"]:
+                candidate = route_points[reached - chunk["consumed"]]
+                if math.dist(chunk["start"], candidate) > travelled + 1e-9:
+                    break
+                reached += 1
+        while chunk["consumed"] < reached:
+            trip["points"].popleft()
+            chunk["consumed"] += 1
 
     def _move_trip(self, robot_id, trip, dt) -> None:
         if not trip["points"]:
@@ -179,19 +322,52 @@ class OperationsModel(DashboardModel):
         if chunk is None:
             pose = self._poses[robot_id]
             start = (pose["x_m"], pose["y_m"])
-            end = trip["points"][0]
-            count = 1
-            dx, dy = end[0] - start[0], end[1] - start[1]
-            for candidate in list(trip["points"])[1:]:
-                cx, cy = candidate[0] - start[0], candidate[1] - start[1]
-                if abs(dx * cy - dy * cx) > 1e-8 or dx * cx + dy * cy <= 0 or math.hypot(cx, cy) > self._max_segment_m + 1e-9:
-                    break
-                end, count = candidate, count + 1
+            replan = self._replans.get(robot_id)
+            route_points = tuple(replan["points"] if replan is not None else trip["points"])
+            corridor = self.corridors.atomic_span(start, route_points)
+            if corridor is not None:
+                selected = corridor.points
+                identity = f"corridor-{corridor.corridor_id}"
+            else:
+                end = route_points[0]
+                count = 1
+                dx, dy = end[0] - start[0], end[1] - start[1]
+                for candidate in route_points[1:]:
+                    cx, cy = candidate[0] - start[0], candidate[1] - start[1]
+                    if (abs(dx * cy - dy * cx) > 1e-8 or dx * cx + dy * cy <= 0
+                            or math.hypot(cx, cy) > self._max_segment_m + 1e-9):
+                        break
+                    end, count = candidate, count + 1
+                selected = route_points[:count]
+                identity = "segment"
             sequence = self._chunk_seq[robot_id] + 1
-            if not self._claim(robot_id, f"segment-{sequence}", self._tiles((start, end))):
+            route_kind = f"replan-{replan['attempt']}-" if replan is not None else ""
+            if not self._claim(
+                robot_id, f"{route_kind}{identity}-{sequence}", self._tiles((start, *selected)),
+            ):
                 return
+            if replan is not None:
+                trip["points"] = deque(route_points)
+                self.replan_applied_count += 1
+                self._event(
+                    "traffic_replan_applied",
+                    f"{robot_id} 순환 대기 우회 적용 · {replan['start']}→{trip['goal']}",
+                    robot_id,
+                    reason=replan["reason"],
+                    cycle=list(replan["cycle"]),
+                    route_nodes=list(replan["nodes"]),
+                    reservation_generation=self._leases[robot_id]["generation"],
+                )
+                del self._replans[robot_id]
             self._chunk_seq[robot_id] = sequence
-            chunk = {"points": deque([end]), "count": count}
+            chunk = {
+                "points": deque(selected if corridor is not None else (selected[-1],)),
+                "count": len(selected),
+                "consumed": 0,
+                "start": start,
+                "end": selected[-1],
+                "corridor": corridor.corridor_id if corridor is not None else None,
+            }
             self._chunks[robot_id] = chunk
         lease = self._leases[robot_id]
         if not self.reservations.permission(robot_id, lease["generation"], lease["goal"], now_s=self.sim_time):
@@ -199,9 +375,10 @@ class OperationsModel(DashboardModel):
         self.motions[robot_id].advance(self._poses[robot_id], chunk["points"], dt)
         if not self._footprint(robot_id).issubset(lease["tiles"]):
             raise RuntimeError("operations movement escaped reserved footprint")
+        self._consume_chunk_route(self._poses[robot_id], trip, chunk)
         if not chunk["points"]:
-            for _ in range(chunk["count"]):
-                trip["points"].popleft()
+            if chunk["consumed"] != chunk["count"]:
+                raise RuntimeError("operations route snapshot did not consume the completed chunk")
             del self._chunks[robot_id]
             self._observe_all()
             self._park_hold(robot_id)
@@ -209,7 +386,10 @@ class OperationsModel(DashboardModel):
     def _arrive_trip(self, robot_id, trip) -> None:
         if not self.motions[robot_id].stopped:
             raise RuntimeError("handover attempted before kinematic stop")
-        if trip["kind"] == "parking":
+        if self.operations_charging is not None and self.operations_charging.arrive(self, robot_id, trip):
+            self._observe_all()
+            self._park_hold(robot_id)
+        elif trip["kind"] == "parking":
             self._locations[robot_id] = trip["goal"]
             del self._trips[robot_id]
             self._observe_all()
@@ -222,6 +402,19 @@ class OperationsModel(DashboardModel):
             super()._arrive_trip(robot_id, trip)
         self._idle_since[robot_id] = self.sim_time
 
+    def _advance_auxiliary(self, dt, before) -> None:
+        if self.operations_charging is None:
+            return
+        self.operations_charging.record(self, dt)
+        if self.operations_charging.faults:
+            robots = ", ".join(sorted(self.operations_charging.faults))
+            raise RuntimeError(f"operations charging observation fault: {robots}")
+        self.operations_charging.prepare(self)
+
+    def _prepare_auxiliary(self) -> None:
+        # Operations charging admission already ran immediately before dispatch.
+        return
+
     def _advance_step(self, dt) -> None:
         before = {r: (p["x_m"], p["y_m"]) for r, p in self._poses.items()}
         super()._advance_step(dt)
@@ -232,6 +425,15 @@ class OperationsModel(DashboardModel):
                 self._wait_s[robot] += dt
         moving = sum(not motion.stopped for motion in self.motions.values())
         self.peak_moving_robots = max(self.peak_moving_robots, moving)
+        if self.sim_time - self._last_cycle_check_s >= 1.0:
+            cycle = self.reservations.detect_wait_cycle(now_s=self.sim_time)
+            if cycle is not None and cycle != self.wait_cycle:
+                self.wait_cycle_episodes += 1
+                self._event("traffic_wait_cycle", f"지속 순환 대기: {', '.join(cycle)}", None)
+            if cycle is not None:
+                self._schedule_cycle_replan(cycle)
+            self.wait_cycle = cycle
+            self._last_cycle_check_s = self.sim_time
         ids = list(self._poses)
         for i, a in enumerate(ids):
             for b in ids[i + 1:]:
@@ -263,17 +465,30 @@ class OperationsModel(DashboardModel):
     def snapshot(self) -> dict[str, Any]:
         result = super().snapshot()
         result.update(execution_mode="operations", dispatch_policy=self.dispatch_policy,
-                      model_scope="Kinematic operations with bounded segment reservations and station gates; no ROS, contact physics or calibrated real factory")
+                      model_scope="Kinematic operations with bounded segments, atomic shared-corridor reservations and station gates; no ROS, contact physics or calibrated real factory")
         result["capabilities"].append("set_aisle_closed")
         result["traffic"] = {
-            "reservation_policy": "bounded_segment_with_station_gates", "closed": self.closed,
+            "reservation_policy": "bounded_segment_with_atomic_shared_corridors_and_station_gates",
+            "closed": self.closed,
             "requested_closed": self.requested_closed, "closure_pending": self.closed != self.requested_closed,
             "wait_s": dict(self._wait_s), "travel_m": dict(self._travel_m),
             "assignments": dict(self._assignments), "deliveries": dict(self._deliveries),
             "observed_min_clearance_m": self.min_clearance_m, "peak_moving_robots": self.peak_moving_robots,
             "reservation_radius_m": self.radius, "motion_model": "quintic_rest_to_rest",
-            "quiescent": not self._trips and all(self._locations[r] == self.homes[r] for r in self.homes),
+            "quiescent": (not self._trips and all(self._locations[r] == self.homes[r] for r in self.homes)
+                          and (self.operations_charging is None
+                               or not self.operations_charging.queue
+                               and not self.operations_charging.aux
+                               and not self.operations_charging.relocating
+                               and not self.operations_charging.faults)),
             "station_owners": dict(self._station_owners),
+            "reservation_wait_cycle": list(self.wait_cycle) if self.wait_cycle else None,
+            "reservation_wait_cycle_episodes": self.wait_cycle_episodes,
+            "replan_attempt_count": self.replan_attempt_count,
+            "replan_applied_count": self.replan_applied_count,
+            "replan_unavailable_count": self.replan_unavailable_count,
+            "last_replan_reason": self.last_replan_reason,
+            "pending_replans": sorted(self._replans),
         }
         for row in result["robots"]:
             robot = row["id"]
@@ -282,6 +497,22 @@ class OperationsModel(DashboardModel):
                        angular_speed_rad_s=0.0 if self.paused else motion.angular_rad_s,
                        navigation_phase=motion.phase, pose_source="kinematic_operations",
                        reservation_generation=self._leases[robot]["generation"])
+            if self.operations_charging is not None:
+                row.update(self.operations_charging.robot_snapshot(robot))
+                phase = row["charging_phase"]
+                auxiliary = self.operations_charging.aux.get(robot)
+                if phase is not None:
+                    trip = self._trips.get(robot)
+                    slot = self.operations_charging.slots[auxiliary["dock_id"]] if auxiliary else None
+                    destination = (trip["goal"] if trip and trip["kind"] == "charging"
+                                   else slot["exit_anchor"] if auxiliary and phase == "exit_dwell"
+                                   else slot["anchor"] if slot else self.homes[robot])
+                    row.update(
+                        task_id=f"charge:{robot}", task_type="charging",
+                        task_label="운영 가상 충전", destination=destination,
+                        status="paused" if self.paused else "moving" if not motion.stopped else "waiting",
+                        waiting_reason="작업 일시정지" if self.paused else f"운영 충전: {phase}",
+                    )
             if robot in self._waiting and motion.stopped:
                 wait = self._waiting[robot]
                 row.update(status="waiting", waiting_reason=f"교통 예약 대기: {wait['reason']}", blockers=wait["blockers"])
@@ -289,4 +520,28 @@ class OperationsModel(DashboardModel):
                 row.update(status="waiting", waiting_reason="통로 변경 전 승인된 운송 종료 대기")
         result["kpis"].update(traffic_wait_s=sum(self._wait_s.values()),
                               peak_moving_robots=self.peak_moving_robots)
+        if self.operations_charging is not None:
+            charging_tasks = []
+            for robot in self.operations_charging.queue:
+                charging_tasks.append({
+                    "id": f"charge:{robot}", "order_id": "", "type": "charging", "state": "queued",
+                    "robot_id": robot, "source": self._locations[robot], "destination": self.homes[robot],
+                    "payload_id": None, "progress": None,
+                })
+            for robot, auxiliary in self.operations_charging.aux.items():
+                trip = self._trips.get(robot)
+                slot = self.operations_charging.slots[auxiliary["dock_id"]]
+                destination = (trip["goal"] if trip and trip["kind"] == "charging"
+                               else slot["exit_anchor"] if auxiliary["phase"] == "exit_dwell"
+                               else slot["anchor"])
+                charging_tasks.append({
+                    "id": f"charge:{robot}", "order_id": "", "type": "charging",
+                    "state": auxiliary["phase"], "robot_id": robot, "source": self._locations[robot],
+                    "destination": destination, "payload_id": None, "progress": None,
+                })
+            result["tasks"].extend(charging_tasks)
+            result["charging"] = self.operations_charging.snapshot()
+            result["kpis"]["active_robots"] = len(set(self._trips) | set(self.operations_charging.aux))
+            result["kpis"]["pending_tasks"] = sum(t["state"] != "complete" for t in result["tasks"])
+            result["model_scope"] += "; " + OPERATIONS_CHARGING_SCOPE
         return result

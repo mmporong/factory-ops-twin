@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import argparse
 from collections import Counter
+from copy import deepcopy
 import hashlib
 import json
 import math
@@ -28,6 +29,17 @@ TESTER_DOWN_START_S = 120.0
 TESTER_DOWN_END_S = 300.0
 MAX_REPRESENTATIVE_SNAPSHOTS = 120
 MAX_EVENT_EXAMPLES = 24
+CONFIG_PIN_NAMES = (
+    "layout.json", "g2.json", "g3-routing.json", "transport-profile.json",
+    "operations-charging.json",
+)
+PRODUCER_PIN_NAMES = (
+    "charging.py", "dashboard_model.py", "drive_profile.py", "energy.py",
+    "fleet_routing.py", "motion.py", "operations_charging.py",
+    "operations_experiment.py", "operations_model.py", "operations_motion.py",
+    "operations_corridor.py", "operations_replan.py", "route_reservation.py", "operations/inventory.py",
+    "operations/ledger.py", "operations/model.py",
+)
 
 
 def _finite_number(value: Any, label: str, *, positive: bool = False) -> float:
@@ -53,19 +65,108 @@ def _file_sha256(path: Path) -> str:
 
 
 def _config_pins(config: Path) -> dict[str, str]:
-    names = ("layout.json", "g2.json", "g3-routing.json", "transport-profile.json")
-    return {name: _file_sha256(config / name) for name in names if (config / name).is_file()}
+    return {name: _file_sha256(config / name) for name in CONFIG_PIN_NAMES if (config / name).is_file()}
 
 
 def _producer_pins() -> dict[str, str]:
     package = Path(__file__).resolve().parent
-    names = (
-        "dashboard_model.py", "drive_profile.py", "fleet_routing.py", "motion.py",
-        "operations_experiment.py", "operations_model.py", "operations_motion.py",
-        "route_reservation.py", "operations/inventory.py", "operations/ledger.py",
-        "operations/model.py",
-    )
-    return {f"factory_ops/{name}": _file_sha256(package / name) for name in names if (package / name).is_file()}
+    return {f"factory_ops/{name}": _file_sha256(package / name)
+            for name in PRODUCER_PIN_NAMES if (package / name).is_file()}
+
+
+def _freeze_sources(config: Path, output: Path) -> dict[str, Any]:
+    """Copy only the explicit experiment inputs before a CLI run begins."""
+    output = output.resolve()
+    if output.exists():
+        raise FileExistsError(f"experiment output already exists: {output}")
+    frozen = output.parent / "frozen-source"
+    if frozen.exists():
+        raise FileExistsError(f"frozen source already exists: {frozen}")
+    package = Path(__file__).resolve().parent
+    selected: list[tuple[str, Path, Path]] = []
+    for name in CONFIG_PIN_NAMES:
+        source = config / name
+        if source.is_file():
+            selected.append(("config", source, Path("config") / name))
+    for name in PRODUCER_PIN_NAMES:
+        source = package / name
+        if source.is_file():
+            selected.append(("producer", source, Path("factory_ops") / name))
+    if not selected:
+        raise ValueError("no explicit experiment source files are available to freeze")
+
+    frozen.mkdir(parents=True)
+    records = []
+    binding: dict[str, dict[str, str]] = {"config": {}, "producer": {}}
+    for kind, source, relative in selected:
+        data = source.read_bytes()
+        digest = _sha_bytes(data)
+        target = frozen / relative
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(data)
+        if _file_sha256(target) != digest:
+            raise OSError(f"frozen source verification failed: {relative.as_posix()}")
+        pin_key = source.name if kind == "config" else relative.as_posix()
+        binding[kind][pin_key] = digest
+        records.append({
+            "kind": kind,
+            "source_key": pin_key,
+            "frozen_path": relative.as_posix(),
+            "sha256": digest,
+            "bytes": len(data),
+        })
+    manifest = {
+        "schema_version": 1,
+        "scope": "explicit operations experiment production modules and selected config; no directory-wide copy",
+        "source_binding_sha256": _canonical_sha256(binding),
+        "files": records,
+    }
+    manifest_path = frozen / "manifest.json"
+    manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    return {
+        "relative_path": "frozen-source",
+        "manifest_relative_path": "frozen-source/manifest.json",
+        "manifest_sha256": _file_sha256(manifest_path),
+        "source_binding_sha256": manifest["source_binding_sha256"],
+        "file_count": len(records),
+        "binding": binding,
+    }
+
+
+def _sha_bytes(data: bytes) -> str:
+    return hashlib.sha256(data).hexdigest()
+
+
+def _attach_frozen_source(payload: dict[str, Any], frozen: Mapping[str, Any]) -> None:
+    cases = payload.get("cases")
+    rows = cases if isinstance(cases, list) else [payload]
+    reference = frozen["binding"]
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        provenance = row.get("provenance")
+        if not isinstance(provenance, dict):
+            provenance = {}
+            row["provenance"] = provenance
+        matches = provenance.get("sources_before_sha256") == reference
+        provenance["frozen_source"] = {
+            "relative_path": frozen["relative_path"],
+            "manifest_relative_path": frozen["manifest_relative_path"],
+            "manifest_sha256": frozen["manifest_sha256"],
+            "source_binding_sha256": frozen["source_binding_sha256"],
+            "binding_matches_case_start": matches,
+        }
+        if not matches:
+            row["status"] = "invalid"
+            errors = row.setdefault("validation_errors", [])
+            if isinstance(errors, list):
+                errors.append("case source binding differs from the pre-run frozen source")
+    payload["frozen_source"] = {
+        key: frozen[key] for key in (
+            "relative_path", "manifest_relative_path", "manifest_sha256",
+            "source_binding_sha256", "file_count",
+        )
+    }
 
 
 def _fleet_quiescence(snapshot: Mapping[str, Any]) -> tuple[bool, str]:
@@ -140,7 +241,8 @@ def _compact_snapshot(snapshot: Mapping[str, Any]) -> dict[str, Any]:
             if not isinstance(row, Mapping):
                 continue
             robot_rows.append({key: row.get(key) for key in (
-                "id", "status", "task_id", "task_type", "destination", "waiting_reason", "pose"
+                "id", "status", "task_id", "task_type", "destination", "waiting_reason", "pose",
+                "blockers", "navigation_phase", "speed_mps"
             )})
     equipment = snapshot.get("equipment")
     traffic = snapshot.get("traffic")
@@ -247,6 +349,7 @@ def run_case(
     horizon_s: float = 3600.0,
     dt_s: float = 0.1,
     model_factory: Callable[..., Any] = OperationsModel,
+    snapshot_observer: Callable[[Mapping[str, Any]], None] | None = None,
 ) -> dict[str, Any]:
     """Run one authored workload and return bounded comparison evidence."""
     if scenario not in SCENARIOS:
@@ -259,6 +362,8 @@ def run_case(
     dt_s = _finite_number(dt_s, "dt_s", positive=True)
     if dt_s > 1:
         raise ValueError("dt_s must be at most one second")
+    if snapshot_observer is not None and not callable(snapshot_observer):
+        raise ValueError("snapshot_observer must be callable or null")
     config = Path(config).resolve()
     if not config.is_dir():
         raise ValueError("config must be an existing directory")
@@ -286,6 +391,7 @@ def run_case(
     next_capture = 0.0
     down_applied = False
     recovery_applied = False
+    observer_calls = 0
 
     snapshot: Mapping[str, Any] = {}
     failure: dict[str, Any] | None = None
@@ -315,6 +421,9 @@ def run_case(
             peak_wip = max(peak_wip, current_wip)
             model.advance(step)
             snapshot = model.snapshot()
+            if snapshot_observer is not None:
+                snapshot_observer(deepcopy(snapshot))
+                observer_calls += 1
             observed_time = float(snapshot.get("sim_time_s", now + step))
             _completion_times(snapshot, completion_times, observed_time)
             traffic_wait_s = max(traffic_wait_s, _traffic_wait(snapshot))
@@ -391,6 +500,15 @@ def run_case(
             "maximum_event_examples": MAX_EVENT_EXAMPLES,
             "event_counts_cover_all_unique_events": True,
         },
+        "snapshot_observer": {
+            "enabled": snapshot_observer is not None,
+            "calls_completed": observer_calls,
+            "copy_mode": "deepcopy" if snapshot_observer is not None else "none",
+            "scope": (
+                "optional read-only same-run capture hook; media/capture performance is separate from "
+                "operations metrics and its wall cost is not a policy performance claim"
+            ),
+        },
         "metrics": metrics,
         "events": _event_summary(events),
         "representative_snapshots": representative[:MAX_REPRESENTATIVE_SNAPSHOTS],
@@ -422,6 +540,8 @@ def run_matrix(config: Path, *, seed: int, horizon_s: float, dt_s: float) -> dic
 
 def _write_json(path: Path, payload: Mapping[str, Any]) -> None:
     path = path.resolve()
+    if path.exists():
+        raise FileExistsError(f"experiment output already exists: {path}")
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_name(f".{path.name}.tmp")
     temporary.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
@@ -443,11 +563,22 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main(argv: Sequence[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
-    payload = (run_matrix(args.config, seed=args.seed, horizon_s=args.horizon, dt_s=args.dt)
-               if args.all else run_case(args.config, scenario=args.scenario, policy=args.policy,
+    config = args.config.resolve()
+    output = args.output.resolve()
+    if not config.is_dir():
+        raise ValueError("config must be an existing directory")
+    _finite_number(args.horizon, "horizon_s", positive=True)
+    dt_s = _finite_number(args.dt, "dt_s", positive=True)
+    if dt_s > 1:
+        raise ValueError("dt_s must be at most one second")
+    frozen = _freeze_sources(config, output)
+    payload = (run_matrix(config, seed=args.seed, horizon_s=args.horizon, dt_s=args.dt)
+               if args.all else run_case(config, scenario=args.scenario, policy=args.policy,
                                          seed=args.seed, horizon_s=args.horizon, dt_s=args.dt))
-    _write_json(args.output, payload)
-    print(json.dumps({"output": str(args.output.resolve()), "cases": len(payload.get("cases", [payload]))}))
+    _attach_frozen_source(payload, frozen)
+    _write_json(output, payload)
+    print(json.dumps({"output": str(output), "cases": len(payload.get("cases", [payload])),
+                      "frozen_source_manifest_sha256": frozen["manifest_sha256"]}))
     return 0
 
 

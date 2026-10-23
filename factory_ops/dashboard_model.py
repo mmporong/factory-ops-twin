@@ -287,6 +287,18 @@ class DashboardModel:
         self._locations[robot_id] = task.drop_station
         self._event("drop", f"{robot_id} {task.drop_station} 인계 확인", robot_id)
 
+    def _advance_auxiliary(self, dt: float, before: Mapping[str, Mapping[str, float]]) -> None:
+        """Advance optional preview-only adapters after route arrivals."""
+        if self.charging is not None:
+            self.charging.move(self, dt)
+            self.charging.record(self, dt, before)
+            self.charging.prepare(self)
+
+    def _prepare_auxiliary(self) -> None:
+        """Give preview adapters a second admission pass after dispatch."""
+        if self.charging is not None:
+            self.charging.prepare(self)
+
     def _advance_step(self, dt: float) -> None:
         before = {r: dict(p) for r, p in self._poses.items()} if self.charging is not None else {}
         self.sim_time += dt
@@ -310,13 +322,9 @@ class DashboardModel:
             if trip["points"]:
                 continue
             self._arrive_trip(robot_id, trip)
-        if self.charging is not None:
-            self.charging.move(self, dt)
-            self.charging.record(self, dt, before)
-            self.charging.prepare(self)
+        self._advance_auxiliary(dt, before)
         self._dispatch()
-        if self.charging is not None:
-            self.charging.prepare(self)
+        self._prepare_auxiliary()
 
     def snapshot(self) -> dict[str, Any]:
         stock = cast(dict[str, Any], self.inventory.snapshot())
@@ -328,6 +336,9 @@ class DashboardModel:
             payload_id = stock["robot_loads"].get(robot_id, robot.payload_id)
             if trip and trip["kind"] == "parking":
                 task_id, task_type, task_label = f"park:{robot_id}", "parking", "주차 이동"
+                payload_id = None
+            elif trip and trip["kind"] == "charging":
+                task_id, task_type, task_label = f"charge:{robot_id}", "charging", "운영 가상 충전"
                 payload_id = None
             elif trip and trip["kind"] == "empty_return":
                 return_task = trip["task"]

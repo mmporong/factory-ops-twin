@@ -20,7 +20,10 @@ def _canonical(value: object) -> str:
 
 
 def _matrix() -> dict[str, object]:
-    sources = {"config": {"g2.json": "a" * 64}, "producer": {"factory_ops/a.py": "b" * 64}}
+    sources = {
+        "config": {"g2.json": sha256(b"config\n").hexdigest()},
+        "producer": {"factory_ops/a.py": sha256(b"producer\n").hexdigest()},
+    }
     binding = sha256(_canonical(sources).encode("utf-8")).hexdigest()
     cases = []
     for index, (scenario, policy) in enumerate(
@@ -87,6 +90,35 @@ class OperationsReportTest(unittest.TestCase):
             source.write_text(json.dumps(document), encoding="utf-8")
             with self.assertRaisesRegex(ValueError, "bindings differ"):
                 build_report(source, root / "report")
+
+    def test_binds_verified_sibling_frozen_source_manifest(self) -> None:
+        document = _matrix()
+        binding = document["cases"][0]["case_identity"]["spec"]["source_binding_sha256"]
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "matrix.json"
+            source.write_text(json.dumps(document), encoding="utf-8")
+            frozen = root / "frozen-source"
+            (frozen / "config").mkdir(parents=True)
+            (frozen / "factory_ops").mkdir()
+            (frozen / "config" / "g2.json").write_bytes(b"config\n")
+            (frozen / "factory_ops" / "a.py").write_bytes(b"producer\n")
+            manifest = {
+                "schema_version": 1,
+                "source_binding_sha256": binding,
+                "files": [
+                    {"kind": "config", "source_key": "g2.json", "frozen_path": "config/g2.json",
+                     "sha256": sha256(b"config\n").hexdigest()},
+                    {"kind": "producer", "source_key": "factory_ops/a.py",
+                     "frozen_path": "factory_ops/a.py", "sha256": sha256(b"producer\n").hexdigest()},
+                ],
+            }
+            raw_manifest = json.dumps(manifest).encode("utf-8")
+            (frozen / "manifest.json").write_bytes(raw_manifest)
+            outputs = build_report(source, root / "report")
+            summary = json.loads(outputs["json"].read_text(encoding="utf-8"))
+            self.assertEqual(sha256(raw_manifest).hexdigest(), summary["frozen_source"]["manifest_sha256"])
+            self.assertEqual(2, summary["frozen_source"]["file_count"])
 
     def test_rejects_condition_mismatch_and_preserves_failed_error(self) -> None:
         document = _matrix()

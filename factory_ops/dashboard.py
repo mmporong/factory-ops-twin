@@ -328,8 +328,13 @@ class DashboardService:
                          "operations/ledger.py", "operations/inventory.py", "operations/model.py", "compat.py")}
         if execution_mode == "operations":
             for name in ("operations_model.py", "operations_motion.py", "drive_profile.py", "motion.py",
-                         "fleet_routing.py", "route_reservation.py"):
+                         "fleet_routing.py", "route_reservation.py", "operations_charging.py",
+                         "energy.py", "charging.py", "operations_corridor.py", "operations_replan.py"):
                 self.producer_sources[f"factory_ops/{name}"] = hashlib.sha256((module_root / name).read_bytes()).hexdigest()
+            operations_charging = config / "operations-charging.json"
+            if operations_charging.is_file():
+                self.producer_sources["config/operations-charging.json"] = hashlib.sha256(
+                    operations_charging.read_bytes()).hexdigest()
         if self.events_source is not None:
             self.producer_sources["factory_ops/dashboard_events.py"] = hashlib.sha256(
                 (module_root / "dashboard_events.py").read_bytes()).hexdigest()

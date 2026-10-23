@@ -2,7 +2,7 @@
 import type { ReactNode } from "react";
 import Icon, { type IconName } from "./Icon";
 import { inventoryDisplay, stockKey } from "../lib/inventory-display";
-import { equipmentLabel, robotState, skuName, taskLabel, toneOf, type Tone } from "../lib/ops-view";
+import { batterySourceLabel, equipmentLabel, replanReasonLabel, robotState, skuName, taskLabel, toneOf, type Tone } from "../lib/ops-view";
 import { readable, sceneSize, stationNames, type Scene, type Selection, type Snapshot } from "../lib/types";
 
 type Props = {
@@ -107,6 +107,12 @@ export default function Inspector({ scene, snapshot, selection, canFocus, onSele
     const robots = snapshot?.robots ?? [];
     const working = robots.filter((r) => r.task_id).length;
     const lead = robots.find((r) => r.task_id) ?? robots[0];
+    const traffic = snapshot?.traffic;
+    const hasReplanRecord = traffic && (
+      traffic.replan_attempt_count !== undefined
+      || traffic.replan_applied_count !== undefined
+      || traffic.reservation_wait_cycle_episodes !== undefined
+    );
     return (
       <section className="card inspector" aria-labelledby="inspector-title">
         <Head
@@ -187,6 +193,20 @@ export default function Inspector({ scene, snapshot, selection, canFocus, onSele
             <p className="empty">AMR 상태를 기다리고 있습니다.</p>
           )}
         </div>
+        {hasReplanRecord && (
+          <details className="insp-more">
+            <summary>교통 재계획 기록</summary>
+            <dl className="kv-list">
+              <Row label="기록된 재계획">적용 {traffic.replan_applied_count ?? 0}회 · 시도 {traffic.replan_attempt_count ?? 0}회</Row>
+              <Row label="대체 경로 없음">{traffic.replan_unavailable_count ?? 0}회</Row>
+              <Row label="마지막 사유">{replanReasonLabel(traffic.last_replan_reason)}</Row>
+              <Row label="순환 대기">{traffic.reservation_wait_cycle?.length ? traffic.reservation_wait_cycle.join(" → ") : "현재 없음"}</Row>
+              <Row label="순환 대기 발생">{traffic.reservation_wait_cycle_episodes ?? 0}회</Row>
+              {traffic.pending_replans?.length ? <Row label="적용 대기">{traffic.pending_replans.join(", ")}</Row> : null}
+            </dl>
+            <p className="insp-note">API에 기록된 교통 재계획 집계입니다. 화면에서 감지한 단순 경로 변경 횟수와 구분합니다.</p>
+          </details>
+        )}
       </section>
     );
   }
@@ -228,13 +248,7 @@ export default function Inspector({ scene, snapshot, selection, canFocus, onSele
           <summary>배터리·경로 원천</summary>
           <dl className="kv-list">
             <Row label="배터리 원천">
-              {robot.battery_source === "unavailable"
-                ? "미연결"
-                : robot.battery_source === "authored_virtual_energy_model"
-                  ? "엔코더 기반 가상 에너지 · 실물 보정 전"
-                  : robot.battery_source === "authored_cpu_virtual_energy_model"
-                    ? "CPU 이동 기반 가상 에너지 · 물리 검증 전"
-                    : robot.battery_source}
+              {batterySourceLabel(robot.battery_source)}
             </Row>
             {robot.charging_phase && <Row label={robot.status === "paused" ? "정지 전 충전 단계" : "충전 단계"}>{readable(robot.charging_phase)}</Row>}
             {robot.charging_dock && <Row label="충전대">{robot.charging_dock}</Row>}

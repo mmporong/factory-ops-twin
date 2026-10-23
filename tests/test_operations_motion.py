@@ -14,6 +14,48 @@ class PathMotionTests(unittest.TestCase):
         self.limits = DriveLimits()
         self.geometry = DriveGeometry(0.14, 0.4132)
 
+    def test_dock_alignment_keeps_position_and_respects_angular_envelope(self):
+        motion = PathMotion(self.limits, self.geometry)
+        pose = {"x_m": 12.0, "y_m": 1.5, "yaw_rad": 0.0}
+        previous = 0.0
+        dt = 0.001
+        for _ in range(20000):
+            done = motion.rotate_to(pose, -math.pi / 2, dt)
+            self.assertEqual((pose["x_m"], pose["y_m"]), (12.0, 1.5))
+            self.assertLessEqual(abs(motion.angular_rad_s), self.limits.max_angular_rad_s + 1e-9)
+            self.assertLessEqual(abs(motion.angular_rad_s - previous) / dt,
+                                 min(self.limits.angular_accel_rad_s2, self.limits.angular_decel_rad_s2) + 1e-6)
+            previous = motion.angular_rad_s
+            if done:
+                break
+        self.assertTrue(done)
+        self.assertAlmostEqual(pose["yaw_rad"], -math.pi / 2)
+        self.assertEqual(motion.angular_rad_s, 0)
+        points = deque([(12.0, 4.5)])
+        motion.advance(pose, points, 0.1)
+        with self.assertRaises(ValueError):
+            motion.rotate_to(pose, 0, 0.1)
+
+    def test_alignment_target_is_fixed_and_time_estimate_covers_waypoint_motion(self):
+        motion = PathMotion(self.limits, self.geometry)
+        pose = {"x_m": 0.0, "y_m": 0.0, "yaw_rad": 0.0}
+        motion.rotate_to(pose, math.pi / 2, 0.1)
+        with self.assertRaises(ValueError):
+            motion.rotate_to(pose, 0, 0.1)
+        with self.assertRaises(ValueError):
+            motion.advance(pose, deque(), 0.1)
+        path = ((0.0, 0.0), (0.08, 0.0), (0.08, 0.07))
+        motion = PathMotion(self.limits, self.geometry)
+        estimate = motion.estimated_duration(path, 0)
+        pose = {"x_m": 0.0, "y_m": 0.0, "yaw_rad": 0.0}
+        points = deque(path)
+        elapsed = 0.0
+        while points:
+            motion.advance(pose, points, 0.001)
+            elapsed += 0.001
+        self.assertLessEqual(elapsed, estimate + 0.001)
+        self.assertGreaterEqual(elapsed, estimate - 0.001)
+
     def run_path(self, dt_s: float) -> tuple[dict[str, float], PathMotion]:
         pose = {"x_m": 0.0, "y_m": 0.0, "yaw_rad": 0.0}
         points = deque([(0.0, 0.0), (0.08, 0.0), (0.08, 0.07)])

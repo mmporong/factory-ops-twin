@@ -73,6 +73,7 @@ class PathMotion:
         self._start_yaw_rad = 0.0
         self._distance = 0.0
         self._heading_rad = 0.0
+        self._alignment_target: float | None = None
 
         wheel_linear_m_s = limits.max_wheel_rad_s * geometry.wheel_radius_m
         wheel_linear_accel_m_s2 = limits.wheel_accel_rad_s2 * geometry.wheel_radius_m
@@ -99,6 +100,57 @@ class PathMotion:
     @property
     def stopped(self) -> bool:
         return self.phase == "stopped"
+
+    def rotate_to(self, pose: dict[str, float], yaw_rad: float, dt: float) -> bool:
+        """Align at a retained circular footprint with the same wheel/body limits."""
+        self._validate_inputs(pose, deque(), dt)
+        if not _finite_number(yaw_rad):
+            raise ValueError("alignment yaw must be finite")
+        if self.phase not in ("stopped", "align"):
+            raise ValueError("alignment requires a completed path segment")
+        if self.phase == "align" and yaw_rad != self._alignment_target:
+            raise ValueError("alignment target cannot change during motion")
+        if self.stopped:
+            rotation = _shortest_angle(yaw_rad - pose["yaw_rad"])
+            if abs(rotation) <= _ANGLE_EPS_RAD:
+                return True
+            self._alignment_target = yaw_rad
+            self._start_yaw_rad = pose["yaw_rad"]
+            self._distance = rotation
+            self._elapsed_s = 0.0
+            self._duration_s = _duration(abs(rotation), self._max_angular_rad_s, self._max_angular_accel_rad_s2)
+            self.phase = "align"
+        self._elapsed_s = min(self._duration_s, self._elapsed_s + dt)
+        position, derivative = _quintic(self._elapsed_s / self._duration_s)
+        pose["yaw_rad"] = self._start_yaw_rad + self._distance * position
+        self.linear_m_s = 0.0
+        self.angular_rad_s = self._distance * derivative / self._duration_s
+        if self._elapsed_s >= self._duration_s:
+            self.phase = "stopped"
+            self.angular_rad_s = 0.0
+            self._alignment_target = None
+        return self.stopped
+
+    def estimated_duration(self, points: tuple[tuple[float, float], ...], yaw_rad: float,
+                           final_yaw_rad: float | None = None) -> float:
+        """Conservative travel-only duration, stopping at every authored waypoint."""
+        if not _finite_number(yaw_rad) or final_yaw_rad is not None and not _finite_number(final_yaw_rad):
+            raise ValueError("planning headings must be finite")
+        self._validate_inputs({"x_m": 0.0, "y_m": 0.0, "yaw_rad": yaw_rad}, deque(points), 1.0)
+        total = 0.0
+        for start, end in zip(points, points[1:]):
+            distance = math.dist(start, end)
+            if distance <= _POSITION_EPS_M:
+                continue
+            heading = math.atan2(end[1] - start[1], end[0] - start[0])
+            rotation = abs(_shortest_angle(heading - yaw_rad))
+            total += _duration(rotation, self._max_angular_rad_s, self._max_angular_accel_rad_s2)
+            total += _duration(distance, self._max_linear_m_s, self._max_linear_accel_m_s2)
+            yaw_rad = heading
+        if final_yaw_rad is not None:
+            total += _duration(abs(_shortest_angle(final_yaw_rad - yaw_rad)),
+                               self._max_angular_rad_s, self._max_angular_accel_rad_s2)
+        return total
 
     @staticmethod
     def _validate_inputs(
@@ -220,6 +272,8 @@ class PathMotion:
     ) -> None:
         """Advance ``pose`` and consume reached ``points`` in place."""
 
+        if self.phase == "align":
+            raise ValueError("finish alignment before starting a path")
         x_m, y_m, yaw_rad, snapshot = self._validate_inputs(pose, points, dt)
         self._accept_route(points, snapshot)
         pose["x_m"], pose["y_m"], pose["yaw_rad"] = x_m, y_m, yaw_rad

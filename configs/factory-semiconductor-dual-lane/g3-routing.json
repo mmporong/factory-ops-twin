@@ -313,6 +313,18 @@
       "OUT"
     ]
   ],
+  "operations_bottlenecks": [
+    {
+      "id": "west-shared-link",
+      "region_id": "WEST_LINK",
+      "release_policy": "first_route_point_outside_region"
+    },
+    {
+      "id": "center-shared-link",
+      "region_id": "CENTER_LINK",
+      "release_policy": "first_route_point_outside_region"
+    }
+  ],
   "closure": {
     "edge": [
       "LOW_E_P3",

@@ -23,6 +23,7 @@ const tones: Record<string, Tone> = {
   approach: "blue",
   aligning: "blue",
   undocking: "blue",
+  exiting: "blue",
   busy: "green",
   complete: "green",
   completed: "green",
@@ -37,6 +38,7 @@ const tones: Record<string, Tone> = {
   queued: "amber",
   contact_pending: "amber",
   undock_pending: "amber",
+  exit_dwell: "amber",
   pause_pending: "amber",
   fault: "red",
   rejected: "red",
@@ -48,6 +50,19 @@ export const toneOf = (state: string | null | undefined): Tone =>
 /** Status a robot is shown with: a pause overrides the charging phase. */
 export const robotState = (robot: { status: string; charging_phase?: string | null }) =>
   robot.status === "paused" ? robot.status : robot.charging_phase ?? robot.status;
+
+export const batterySourceLabel = (source: string) => {
+  const labels: Record<string, string> = {
+    unavailable: "미연결",
+    authored_virtual_energy_model: "엔코더 기반 가상 에너지 · 실물 보정 전",
+    authored_cpu_virtual_energy_model: "CPU 이동 기반 가상 에너지 · 물리 검증 전",
+    authored_operations_virtual_energy_model: "운영 기구학 기반 가상 에너지 · 물리·실물 보정 전",
+  };
+  return labels[source] ?? source;
+};
+
+export const replanReasonLabel = (reason: string | null | undefined) =>
+  reason === "persistent_reservation_wait_cycle" ? "지속 예약 순환 대기" : reason ?? "기록 없음";
 
 /** Live sources may send the raw task type as the label; show the Korean task name then. */
 export const taskLabel = (robot: { task_label: string | null; task_type: string | null }) =>

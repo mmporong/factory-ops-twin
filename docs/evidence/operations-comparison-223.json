@@ -1,0 +1,206 @@
+{
+  "schema_version": 1,
+  "input": {
+    "path": "C:\\Users\\LIMMM\\factory-ops-twin\\artifacts\\operations\\experiment-223\\matrix.json",
+    "sha256": "25727b03b5e73c5107fc8926a87d7889904ae49851ae2561b81b6d1de31018ff"
+  },
+  "comparison": {
+    "condition": {
+      "seed": 17,
+      "seed_role": "identity_only_no_stochastic_inputs",
+      "workload": {
+        "order_count": 12,
+        "release_interval_s": 30.0,
+        "sources": [
+          "S1",
+          "S3",
+          "S2",
+          "S1",
+          "S2",
+          "S3",
+          "S1",
+          "S3",
+          "S2",
+          "S1",
+          "S2",
+          "S3"
+        ],
+        "due_offset_s": 240.0
+      },
+      "simulation": {
+        "horizon_s": 5400.0,
+        "dt_s": 0.1
+      }
+    },
+    "condition_sha256": "bae34ab1381aacf49f92e97e6346c36cee6e3a5c28e4d2511cb3380a882c8977",
+    "sources_sha256": {
+      "config": {
+        "layout.json": "6fdfb4dab14734f2c43467cf384b72b5e4c471df1e3af7f003a3fca5f4ef6bba",
+        "g2.json": "6994172e4ae5e536a5b883767fdab05610deca930d2c665deae8b9996f6b9ad3",
+        "g3-routing.json": "1d2b4aa5287bdc27527f1b13bc6955736a836bc4d62dbe1298db0f1d786abd13",
+        "transport-profile.json": "976e9d93b76af7f8a3747944eee2440eb28fa6f2335a453a04a8efedeb0766a7",
+        "operations-charging.json": "44ed915a72e317f68a7a36a88f8af17f91e3a88d0773039330b753c8606fc327"
+      },
+      "producer": {
+        "factory_ops/charging.py": "8a207ac2844a94f299f88d2f0bb5960b4cfcb927128d4b4b32e1288f59a5ffb5",
+        "factory_ops/dashboard_model.py": "eaee38c789249f924afed7e280b5469d8d9d0b67c0a0fd90f1de072626a546da",
+        "factory_ops/drive_profile.py": "6bba5a51caa5e4a71662339026afc67e1efe1d7370cb04c372cde48eba9d7185",
+        "factory_ops/energy.py": "89689894565e850ef3ef3242fceb636afcf14fc330b083a8080d372d4f6d3be1",
+        "factory_ops/fleet_routing.py": "2bf3d069f0361c6983ba11e7334d0cb187e23c12334d6539f39e13cbfffb9e94",
+        "factory_ops/motion.py": "a8d670ce9e0309093c47a6a63ff70c78182021f6b50496933e29985466ed6cd1",
+        "factory_ops/operations_charging.py": "4ef4b1ce36da5d4ff2061e1b40c62ba12565072d23fa8215651beceb2f943349",
+        "factory_ops/operations_experiment.py": "05fabd1458a011c9e957dceeba0f30551d499cd30484ccb49386e41de2df9e0d",
+        "factory_ops/operations_model.py": "4a4b5f1f44fe3964819e91a41098aca28f54f11df0a218c4525d58a63a352c24",
+        "factory_ops/operations_motion.py": "1df674a4e61158122743144a177f20cdcc42df73032a46243d7b034106713066",
+        "factory_ops/operations_corridor.py": "f3f99b3852079958d0b7405bf02250fde38f85662570cef6cef000b1e763d813",
+        "factory_ops/operations_replan.py": "b5c156fa68cf48b8d73ef165ee9611fdc5d6d1a09fe07d1b9c8c94c0be57f237",
+        "factory_ops/route_reservation.py": "08a183ea04d913b2f64fca165d28921c112455661a5afac85938a76fe672c027",
+        "factory_ops/operations/inventory.py": "1114b23fcdb3520de0b12f2e246680e5a0fbdcb945ac2ed9b3de0a2f9a5972f4",
+        "factory_ops/operations/ledger.py": "532ee11e9cf0431b4ce95204ac832913df0bc6e875901ca13afa3b73a8f604e6",
+        "factory_ops/operations/model.py": "17b90c1436b78f436d88b325adb27d1531440b63ef0cf169aece1d6070bfb38e"
+      }
+    },
+    "case_count": 6,
+    "wall_clock_policy": "context_only_external_load_sensitive_no_improvement_claim",
+    "metric_definitions": {
+      "mean_wip": "time-average equipment process WIP across input, processing and output buffers; excludes the full unreleased/pre-input order queue and shipping backlog",
+      "traffic_wait_s": "sum of per-robot traffic waiting time; it may exceed the simulation horizon",
+      "incomplete": "unfinished at the authored horizon; this report does not classify it as a deadlock"
+    }
+  },
+  "cases": [
+    {
+      "scenario": "normal",
+      "dispatch_policy": "fifo",
+      "run_id": "operations-normal-fifo-a418a2d74edbcbb1-30d5129ac8be",
+      "status": "complete",
+      "error": null,
+      "source_stable_during_run": true,
+      "scope": "authored deterministic CPU operations comparison; no physics or calibrated production claim",
+      "metrics": {
+        "completed_cycles": 12,
+        "empty_returns_completed": 12,
+        "mean_wip": 0.255074,
+        "traffic_wait_s": 8256.3,
+        "total_tardiness_lower_bound_s": 17420.9,
+        "observed_min_clearance_m": 1.7257818169114452,
+        "peak_moving_robots": 4
+      },
+      "business_finished": true,
+      "fleet_quiescent": true,
+      "execution_elapsed_wall_s_context_only": 109.268615
+    },
+    {
+      "scenario": "normal",
+      "dispatch_policy": "eta",
+      "run_id": "operations-normal-eta-13b5cf02963534bc-3995585611fc",
+      "status": "complete",
+      "error": null,
+      "source_stable_during_run": true,
+      "scope": "authored deterministic CPU operations comparison; no physics or calibrated production claim",
+      "metrics": {
+        "completed_cycles": 12,
+        "empty_returns_completed": 12,
+        "mean_wip": 0.295148,
+        "traffic_wait_s": 4780.1,
+        "total_tardiness_lower_bound_s": 16317.9,
+        "observed_min_clearance_m": 1.7257818169114452,
+        "peak_moving_robots": 4
+      },
+      "business_finished": true,
+      "fleet_quiescent": true,
+      "execution_elapsed_wall_s_context_only": 69.062439
+    },
+    {
+      "scenario": "tester_down",
+      "dispatch_policy": "fifo",
+      "run_id": "operations-tester_down-fifo-a17dcb2d042c7443-9ff6159288c7",
+      "status": "complete",
+      "error": null,
+      "source_stable_during_run": true,
+      "scope": "authored deterministic CPU operations comparison; no physics or calibrated production claim",
+      "metrics": {
+        "completed_cycles": 12,
+        "empty_returns_completed": 12,
+        "mean_wip": 0.280315,
+        "traffic_wait_s": 8121.1,
+        "total_tardiness_lower_bound_s": 18079.2,
+        "observed_min_clearance_m": 1.7257818169114452,
+        "peak_moving_robots": 4
+      },
+      "business_finished": true,
+      "fleet_quiescent": true,
+      "execution_elapsed_wall_s_context_only": 99.448325
+    },
+    {
+      "scenario": "tester_down",
+      "dispatch_policy": "eta",
+      "run_id": "operations-tester_down-eta-400e7211865a3c5f-bb8cb10fb6d9",
+      "status": "complete",
+      "error": null,
+      "source_stable_during_run": true,
+      "scope": "authored deterministic CPU operations comparison; no physics or calibrated production claim",
+      "metrics": {
+        "completed_cycles": 12,
+        "empty_returns_completed": 12,
+        "mean_wip": 0.314815,
+        "traffic_wait_s": 4290.3,
+        "total_tardiness_lower_bound_s": 17635.8,
+        "observed_min_clearance_m": 1.7257818169114452,
+        "peak_moving_robots": 4
+      },
+      "business_finished": true,
+      "fleet_quiescent": true,
+      "execution_elapsed_wall_s_context_only": 62.794568
+    },
+    {
+      "scenario": "aisle_closed",
+      "dispatch_policy": "fifo",
+      "run_id": "operations-aisle_closed-fifo-16d8a2f2b4ab2a5c-d07c7f07910c",
+      "status": "complete",
+      "error": null,
+      "source_stable_during_run": true,
+      "scope": "authored deterministic CPU operations comparison; no physics or calibrated production claim",
+      "metrics": {
+        "completed_cycles": 12,
+        "empty_returns_completed": 12,
+        "mean_wip": 0.26613,
+        "traffic_wait_s": 10137.1,
+        "total_tardiness_lower_bound_s": 19069.9,
+        "observed_min_clearance_m": 1.7257818169114452,
+        "peak_moving_robots": 4
+      },
+      "business_finished": true,
+      "fleet_quiescent": true,
+      "execution_elapsed_wall_s_context_only": 117.607107
+    },
+    {
+      "scenario": "aisle_closed",
+      "dispatch_policy": "eta",
+      "run_id": "operations-aisle_closed-eta-68fe7a60caa18645-1b8101bb477e",
+      "status": "complete",
+      "error": null,
+      "source_stable_during_run": true,
+      "scope": "authored deterministic CPU operations comparison; no physics or calibrated production claim",
+      "metrics": {
+        "completed_cycles": 12,
+        "empty_returns_completed": 12,
+        "mean_wip": 0.394704,
+        "traffic_wait_s": 6655.5,
+        "total_tardiness_lower_bound_s": 21097.5,
+        "observed_min_clearance_m": 1.7257818169114452,
+        "peak_moving_robots": 4
+      },
+      "business_finished": true,
+      "fleet_quiescent": true,
+      "execution_elapsed_wall_s_context_only": 93.636976
+    }
+  ],
+  "frozen_source": {
+    "relative_path": "frozen-source",
+    "manifest_relative_path": "frozen-source/manifest.json",
+    "manifest_sha256": "b48ec2671eeb782af3e7fb68da9b65e7efcd7bb65528ffa5d3af714ce1b2e660",
+    "source_binding_sha256": "efc32c982a4110fae49d44cff93dbf3f36fc6ebbb37372dd3605aae3e3c5a64f",
+    "file_count": 21
+  }
+}

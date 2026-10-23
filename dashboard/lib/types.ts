@@ -122,6 +122,13 @@ export type Snapshot = {
     motion_model: string;
     quiescent: boolean;
     station_owners: Record<string, string>;
+    reservation_wait_cycle?: string[] | null;
+    reservation_wait_cycle_episodes?: number;
+    replan_attempt_count?: number;
+    replan_applied_count?: number;
+    replan_unavailable_count?: number;
+    last_replan_reason?: string | null;
+    pending_replans?: string[];
   };
   kpis: {
     active_robots: number;
@@ -229,6 +236,8 @@ export const statusNames: Record<string, string> = {
   contact_pending: "접촉 확인",
   undock_pending: "분리 준비",
   undocking: "충전대 이탈",
+  exiting: "충전 구역 이탈",
+  exit_dwell: "출차 안정화 대기",
   ready_to_leave: "출차 준비",
   fault: "확인 필요",
 };

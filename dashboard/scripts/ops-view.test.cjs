@@ -15,7 +15,7 @@ function load(name) {
   vm.runInNewContext(code, { module, exports: module.exports, require: (path) => load(path.replace("./", "")) });
   return module.exports;
 }
-const { orderFlows, taskLabel, toneOf, formatClock, selectionPoint } = load("ops-view");
+const { batterySourceLabel, orderFlows, replanReasonLabel, taskLabel, toneOf, formatClock, selectionPoint } = load("ops-view");
 // Values built inside the vm context carry its own Array prototype.
 const plain = (value) => JSON.parse(JSON.stringify(value));
 
@@ -60,6 +60,17 @@ test("status tones, clock and unobserved selections", () => {
   assert.equal(formatClock(65), "01:05");
   const scene = { stations: [], physical_obstacles: [], bounds_xy: [0, 0, 1, 1] };
   assert.equal(selectionPoint(scene, snapshot([], [{ id: "amr-1", pose: null }]), { kind: "robot", id: "amr-1" }), null);
+});
+
+test("operations energy and recorded traffic replan labels stay explicit", () => {
+  assert.equal(
+    batterySourceLabel("authored_operations_virtual_energy_model"),
+    "운영 기구학 기반 가상 에너지 · 물리·실물 보정 전",
+  );
+  assert.equal(replanReasonLabel("persistent_reservation_wait_cycle"), "지속 예약 순환 대기");
+  assert.equal(replanReasonLabel(null), "기록 없음");
+  assert.equal(toneOf("exiting"), "blue");
+  assert.equal(toneOf("exit_dwell"), "amber");
 });
 
 const { pathAhead, routeChange } = load("ops-view");
