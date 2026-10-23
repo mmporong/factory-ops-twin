@@ -7,7 +7,8 @@ import unittest
 from unittest.mock import Mock
 
 from factory_ops.physx_planar import (
-    SCHEMA_NAME, SENSOR_BACKEND, TIME_SOURCE, PhysxPlanarPublisher, PhysxPlanarSensor,
+    SCHEMA_NAME, SENSOR_BACKEND, TIME_SOURCE, PhysxPlanarPublisher, PhysxPlanarRangeRejection,
+    PhysxPlanarSensor,
 )
 
 
@@ -177,6 +178,32 @@ class PhysxPlanarTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "World advanced"):
             sensor.read_planar_snapshot()
         self.assertIsNone(sensor.cached_snapshot)
+
+    def test_rejected_native_hit_preserves_bounded_sample_identity_without_cache_commit(self):
+        payload, world = fixture(), SimpleNamespace(current_time=0., current_time_step_index=0)
+        payload["prim_paths"] = ["/World/Wall"] * 720
+        interface = interface_for(payload)
+        sensor = PhysxPlanarSensor(interface, "/World/Carter1/chassis_link/lidar_front", world, Mock())
+        world.current_time, world.current_time_step_index = .1, 6
+        accepted = sensor.read_planar_snapshot()
+
+        rejected_value = f32(30.0001)
+        payload["linear_depth_data"][17][0] = rejected_value
+        payload["prim_paths"][17] = "/World/Carter1/body/collision"
+        world.current_time, world.current_time_step_index = .2, 12
+        with self.assertRaises(PhysxPlanarRangeRejection) as raised:
+            sensor.read_planar_snapshot()
+
+        details = dict(raised.exception.details)
+        self.assertEqual(17, details["beam_index"])
+        self.assertEqual(repr(rejected_value), details["raw_range_repr"])
+        self.assertEqual(float(rejected_value).hex(), details["range_float_hex"])
+        self.assertEqual("/World/Carter1/body/collision", details["prim_path"])
+        self.assertEqual("/World/Carter1/chassis_link/lidar_front", details["sensor_path"])
+        self.assertEqual((.2, 12),
+            (details["acquired_world_time_s"], details["acquired_physics_frame"]))
+        self.assertIs(accepted, sensor.cached_snapshot)
+        self.assertNotIn("linear_depth_data", str(raised.exception))
 
     def test_sensor_detects_resets_and_inconsistent_same_frame_time_on_cached_reads(self):
         for stamp, frame in ((.05, 3), (.09, 6), (.11, 6), (.1, 7), (float("nan"), 7)):

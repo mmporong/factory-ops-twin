@@ -10,13 +10,43 @@ import unittest
 from unittest.mock import Mock, patch
 
 from factory_ops.fleet_transport import prepare_bundle
-from factory_ops.physx_planar import SCHEMA_NAME, SENSOR_BACKEND, TIME_SOURCE
+from factory_ops.physx_planar import (
+    SCHEMA_NAME, SENSOR_BACKEND, TIME_SOURCE, PhysxPlanarRangeRejection,
+)
 from scripts.isaac.g2_scene import _setup_native_lidar_publication
 from scripts.isaac.local45_fleet4_transport_scene import Local45FleetLifecycle
 from tests.test_native_scan_publication import fake_ros_modules
 
 
 class PhysxIntegrationTests(unittest.TestCase):
+    def test_acquisition_rejection_identifies_robot_side_sensor_and_world_clock(self):
+        error = PhysxPlanarRangeRejection(
+            beam_index=17,
+            raw_range=30.000099182128906,
+            normalized_range=30.000099182128906,
+            prim_path="/World/Carter1/body/collision",
+            stamp=60.0666697994,
+            frame=3604,
+            sensor_path="/World/Carter1/chassis_link/lidar_front",
+        )
+        sensor = SimpleNamespace(
+            prim_path="/World/Carter1/chassis_link/lidar_front",
+            read_planar_snapshot=Mock(side_effect=error),
+        )
+        robots = {"carter1": {"node": SimpleNamespace(create_publisher=Mock(return_value=Mock())),
+                              "ros": {"resources": []}}}
+        metadata = [{"robot_id": "carter1", "name": "front", "frame_id": "front_scan"}]
+        with patch.dict(sys.modules, fake_ros_modules()):
+            publish = _setup_native_lidar_publication([sensor], metadata, robots, backend="physx_planar")
+            with self.assertRaisesRegex(
+                    ValueError,
+                    r"physx_planar scan carter1/front sensor_path='/World/Carter1/chassis_link/lidar_front' "
+                    r"acquired_world_time_s=60\.0666697994: native hit range") as raised:
+                publish()
+        details = getattr(raised.exception, "details")
+        self.assertEqual(("carter1", "front", 17, 3604), tuple(details[key] for key in
+            ("robot_id", "side", "beam_index", "acquired_physics_frame")))
+
     def test_eight_ros_publishers_use_world_snapshot_and_instantaneous_timing(self):
         snapshot = dict(schema_name=SCHEMA_NAME, sensor_backend=SENSOR_BACKEND, time_source=TIME_SOURCE,
             native_timestamp=None, acquired_world_time_s=12.345, acquired_physics_frame=738,

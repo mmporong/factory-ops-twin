@@ -11,6 +11,7 @@ import {
 import type { Scene, Snapshot, Selection, Rect } from "../lib/types";
 import { stationNames } from "../lib/types";
 import { inventoryDisplay } from "../lib/inventory-display";
+import { laneArrows } from "../lib/traffic-lanes";
 import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
 import { memo, useEffect, useMemo } from "react";
 import {
@@ -479,6 +480,7 @@ export default memo(function FactoryScene({
   useEffect(() => () => packagingLabel.dispose(), [packagingLabel]);
   return (
     <Canvas
+      aria-label={scene.traffic_lanes?.length ? "공장 관제 지도. 바닥 화살표는 지정된 차로 진행 방향입니다." : "공장 관제 지도"}
       shadows
       dpr={[1, 1.6]}
       frameloop="demand"
@@ -572,6 +574,9 @@ export default memo(function FactoryScene({
       ))}
       {scene.amr_allowed_regions.filter((z) => z.id === "MAIN_LOW" || z.id === "MAIN_HIGH").map((z) => (
         <Line key={`guide-${z.id}`} points={[[z.rect[0] + 0.3, 0.028, -(z.rect[1] + z.rect[3]) / 2], [z.rect[2] - 0.3, 0.028, -(z.rect[1] + z.rect[3]) / 2]]} color="#edf4f3" lineWidth={1.5} dashed dashSize={0.55} gapSize={0.45} />
+      ))}
+      {laneArrows(scene.traffic_lanes).map((arrow) => (
+        <Line key={`lane-${arrow.id}`} points={arrow.points} color="#365b75" lineWidth={2.3} />
       ))}
       {scene.reserved_work_areas.map((area) => (
         <WorkAreaMark key={area.id} rect={area.rect} />

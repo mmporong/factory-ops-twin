@@ -886,12 +886,35 @@ def _recipe_boxes(
             b("RetestBin", .32, .02, height * .10, .45, .16, height * .24, "SafetyYellow", "buffer_fixture", "retest_sort_bin"),
             b("HMIArm", .80, .04, height * .56, .87, .13, height * .75, "Steel"),
             b("HMI", .73, .015, height * .66, .94, .075, height * .83, "Dark", "process_equipment", "handler_hmi"),
+            b("LoadDockFace", .045, .005, height * .11, .305, .055, height * .35, "MachinePanel", "process_equipment", "front_load_tray_dock"),
+            b("UnloadDockFace", .695, .005, height * .11, .955, .055, height * .35, "MachinePanel", "process_equipment", "front_unload_tray_dock"),
+            b("LoadMagazineGuideLeft", .065, .002, height * .18, .09, .19, height * .32, "LightSteel"),
+            b("LoadMagazineGuideRight", .26, .002, height * .18, .285, .19, height * .32, "LightSteel"),
+            b("UnloadMagazineGuideLeft", .715, .002, height * .18, .74, .19, height * .32, "LightSteel"),
+            b("UnloadMagazineGuideRight", .91, .002, height * .18, .935, .19, height * .32, "LightSteel"),
+            b("LowerAccessPanelLeft", .045, .075, height * .40, .175, .125, height * .73, "MachinePanel"),
+            b("LowerAccessPanelRight", .825, .075, height * .40, .955, .125, height * .73, "MachinePanel"),
+            b("AccessHandleLeft", .135, .045, height * .51, .16, .10, height * .64, "Dark"),
+            b("AccessHandleRight", .84, .045, height * .51, .865, .10, height * .64, "Dark"),
+            b("TesterDockPlate", .38, .925, height * .47, .62, .975, height * .69, "MachinePanel", "process_equipment", "tester_interface_dock"),
+            b("TesterDockSignal", .43, .918, height * .54, .48, .97, height * .61, "Accent"),
+            b("TesterDockUtility", .52, .918, height * .54, .57, .97, height * .61, "SafetyYellow"),
+            b("UtilityTrunk", .57, .90, height * .57, .84, .945, height * .62, "Dark", "process_equipment", "handler_tester_utility_link"),
             b("StackLightPost", .91, .78, height * .92, .94, .83, height * .98, "Steel"),
             b("StackLightGreen", .90, .77, height * .965, .95, .84, height, "Green"),
             b("StackLightAmber", .90, .77, height * .935, .95, .84, height * .965, "SafetyYellow"),
         ]
+        for side, fx0 in (("Load", .09), ("Unload", .74)):
+            for layer in range(4):
+                boxes.append(b(
+                    f"{side}MagazineTray_{layer}", fx0, .012, height * (.205 + .026 * layer),
+                    fx0 + .17, .18, height * (.216 + .026 * layer), "ESD",
+                ))
         for index in range(5):
             boxes.append(b(f"FrontVent_{index}", .20 + .115 * index, .075, height * .17, .27 + .115 * index, .115, height * .20, "Dark"))
+        for index in range(4):
+            boxes.append(b(f"SideVentLeft_{index}", .025, .34 + .12 * index, height * .76, .07, .42 + .12 * index, height * .79, "Dark"))
+            boxes.append(b(f"SideVentRight_{index}", .93, .34 + .12 * index, height * .76, .975, .42 + .12 * index, height * .79, "Dark"))
         return boxes
 
     if recipe == "ate_rack":
@@ -905,11 +928,25 @@ def _recipe_boxes(
             b("ATE_Controller", .12, .18, height * .56, .88, .84, height * .77, "MachinePanel", "process_equipment", "ate_controller"),
             b("UtilityPatchPanel", .12, .10, height * .80, .88, .22, height * .91, "Dark", "control_cabinet", "socket_utility"),
             b("HMI", .26, .055, height * .61, .74, .12, height * .73, "Glass", "process_equipment", "ate_hmi"),
+            b("ControllerDoorLeft", .12, .105, height * .55, .49, .19, height * .78, "MachinePanel"),
+            b("ControllerDoorRight", .51, .105, height * .55, .88, .19, height * .78, "MachinePanel"),
+            b("ControllerDoorSeam", .49, .08, height * .56, .51, .20, height * .77, "Dark"),
+            b("ControllerHandleLeft", .43, .055, height * .62, .46, .12, height * .70, "Dark"),
+            b("ControllerHandleRight", .54, .055, height * .62, .57, .12, height * .70, "Dark"),
+            b("TesterInterfaceDock", .76, .04, height * .79, .94, .105, height * .93, "MachinePanel", "process_equipment", "tester_interface_dock"),
+            b("InterfaceSignalPort", .79, .025, height * .83, .84, .08, height * .88, "Accent"),
+            b("InterfaceUtilityPort", .86, .025, height * .83, .91, .08, height * .88, "SafetyYellow"),
+            b("UtilityUmbilicalDrop", .91, .035, height * .38, .95, .085, height * .83, "Dark", "process_equipment", "tester_utility_umbilical"),
+            b("UtilityUmbilicalBridge", .84, .035, height * .36, .95, .085, height * .41, "Dark"),
         ]
         for index in range(6):
             boxes.append(b(f"MainframeSlot_{index}", .16, .105, height * (.16 + .055 * index), .84, .18, height * (.19 + .055 * index), "LightSteel"))
         for index in range(5):
             boxes.append(b(f"SocketUtility_{index}", .18 + .135 * index, .06, height * .83, .25 + .135 * index, .115, height * .88, "Accent" if index % 2 == 0 else "SafetyYellow"))
+        for index in range(5):
+            boxes.append(b(f"LowerVent_{index}", .18 + .13 * index, .075, height * .115, .27 + .13 * index, .125, height * .14, "Dark"))
+        for index in range(4):
+            boxes.append(b(f"SideVent_{index}", .035, .26 + .14 * index, height * .20, .085, .35 + .14 * index, height * .24, "Dark"))
         return boxes
 
     if recipe == "tray_stocker":
@@ -968,7 +1005,25 @@ def _recipe_boxes(
             b("PassBuffer", .58, .02, height * .12, .78, .18, height * .27, "Green", "buffer_fixture", "pass_buffer"),
             b("ReviewBuffer", .80, .02, height * .12, .96, .18, height * .27, "SafetyYellow", "buffer_fixture", "review_buffer"),
             b("HMI", .08, .015, height * .50, .28, .075, height * .68, "Dark", "process_equipment", "aoi_hmi"),
+            b("InputMagazineDock", .18, .02, height * .12, .42, .18, height * .29, "MachinePanel", "process_equipment", "inspection_tray_input"),
+            b("InputGuideLeft", .18, .012, height * .12, .205, .19, height * .31, "LightSteel"),
+            b("InputGuideRight", .395, .012, height * .12, .42, .19, height * .31, "LightSteel"),
+            b("LotReader", .44, .025, height * .14, .55, .12, height * .28, "Dark", "process_equipment", "lot_id_reader"),
+            b("ServicePanelLeft", .045, .075, height * .18, .165, .135, height * .42, "MachinePanel"),
+            b("ServicePanelRight", .835, .075, height * .34, .955, .135, height * .62, "MachinePanel"),
+            b("ServiceHandleLeft", .13, .045, height * .25, .155, .105, height * .35, "Dark"),
+            b("ServiceHandleRight", .85, .045, height * .43, .875, .105, height * .55, "Dark"),
+            b("MarkingUtilityPlate", .84, .90, height * .48, .96, .97, height * .66, "MachinePanel", "process_equipment", "marking_utility_interface"),
+            b("MarkingUtilityLink", .72, .91, height * .54, .86, .955, height * .59, "Dark"),
         ]
+        for layer in range(4):
+            boxes.append(b(
+                f"InputMagazineTray_{layer}", .205, .025, height * (.16 + .026 * layer),
+                .395, .175, height * (.172 + .026 * layer), "ESD",
+            ))
+        for index in range(4):
+            boxes.append(b(f"AOIVentLeft_{index}", .025, .35 + .12 * index, height * .72, .07, .43 + .12 * index, height * .75, "Dark"))
+            boxes.append(b(f"AOIVentRight_{index}", .93, .35 + .12 * index, height * .72, .975, .43 + .12 * index, height * .75, "Dark"))
         return boxes
 
     if recipe == "esd_packing":

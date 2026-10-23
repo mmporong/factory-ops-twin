@@ -1,0 +1,1228 @@
+{
+  "schema_version": 1,
+  "run_id": "4dce60407f7341b486b5dacf4da24d68",
+  "status": "observed_out_of_range",
+  "scope": "Bounded SDK4.5 range-boundary diagnosis; no robot motion or transport claim.",
+  "parameters": {
+    "min_range": 0.1,
+    "max_range": 30.0,
+    "draw_points": false,
+    "draw_lines": false,
+    "horizontal_fov": 360.0,
+    "vertical_fov": 2.0,
+    "horizontal_resolution": 0.5,
+    "vertical_resolution": 1.0,
+    "rotation_rate": 0.0,
+    "high_lod": false,
+    "yaw_offset": 0.0,
+    "enable_semantics": true
+  },
+  "sdk_version": "4.5.0-rc.36+release.19112.f59b3005.gl",
+  "source_sha256": {
+    "scripts/isaac/probe_physx_planar_ranges.py": "c6641fff68a79a38900208b7a4ba1548ade2038c6398f0e11aa8e7739cfd1400",
+    "factory_ops/physx_planar.py": "634dac24bef78a4afbaf5a1bf16bbb20743184a8a5758102dd6e34648fedb853"
+  },
+  "parameters_source_commit": "8939df3927264e75fa80ea1244dc40193a68ad73",
+  "elapsed_wall_s": 19.98499999998603,
+  "physics_steps": 240,
+  "case_count": 60,
+  "invalid_case_count": 18,
+  "minimum_observed_hit_m": 0.10000000149011612,
+  "maximum_observed_hit_m": 30.020286560058594,
+  "invalid_cases": [
+    {
+      "origin_m": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "yaw_rad": 0.0,
+      "target_face_distance_m": 29.99,
+      "world_time_s": 0.5666666962206364,
+      "physics_frame": 34,
+      "shapes": {
+        "depth": [
+          720,
+          1
+        ],
+        "intensity": [
+          720,
+          1
+        ],
+        "azimuth": [
+          720
+        ],
+        "zenith": [
+          1
+        ]
+      },
+      "dtypes": {
+        "depth": "float32",
+        "intensity": "uint8",
+        "azimuth": "float32",
+        "zenith": "float32"
+      },
+      "hit_count": 7,
+      "hit_min_m": 29.989999771118164,
+      "hit_max_m": 30.00027847290039,
+      "invalid_count": 2,
+      "invalid_samples": [
+        {
+          "beam_index": 357,
+          "value_repr": "30.00027847290039",
+          "float64_hex": "0x1.e001240000000p+4"
+        },
+        {
+          "beam_index": 363,
+          "value_repr": "30.00027847290039",
+          "float64_hex": "0x1.e001240000000p+4"
+        }
+      ],
+      "raw_files": {
+        "depth": {
+          "file": "first-invalid-depth.npy",
+          "sha256": "e46c0bb8964d0b1dabeb1ed5d8318ea64da54bfa71587731d01e5922547373a2"
+        },
+        "intensity": {
+          "file": "first-invalid-intensity.npy",
+          "sha256": "bb0d4c0c73ceef29c29705fc803046a41aa7d49c80c5c60732cef64b32f9ff9a"
+        },
+        "azimuth": {
+          "file": "first-invalid-azimuth.npy",
+          "sha256": "efea75ea67dd139ad84627d04e4e3007b61ad10a8044dada743fdfc679d85090"
+        },
+        "zenith": {
+          "file": "first-invalid-zenith.npy",
+          "sha256": "579f4fc9e240b80aade6941d3fba86534d9e959a8520066318b52ed266243e65"
+        }
+      }
+    },
+    {
+      "origin_m": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "yaw_rad": 0.0,
+      "target_face_distance_m": 30.0,
+      "world_time_s": 0.6333333663642406,
+      "physics_frame": 38,
+      "shapes": {
+        "depth": [
+          720,
+          1
+        ],
+        "intensity": [
+          720,
+          1
+        ],
+        "azimuth": [
+          720
+        ],
+        "zenith": [
+          1
+        ]
+      },
+      "dtypes": {
+        "depth": "float32",
+        "intensity": "uint8",
+        "azimuth": "float32",
+        "zenith": "float32"
+      },
+      "hit_count": 7,
+      "hit_min_m": 30.0,
+      "hit_max_m": 30.010282516479492,
+      "invalid_count": 6,
+      "invalid_samples": [
+        {
+          "beam_index": 357,
+          "value_repr": "30.010282516479492",
+          "float64_hex": "0x1.e02a1e0000000p+4"
+        },
+        {
+          "beam_index": 358,
+          "value_repr": "30.004568099975586",
+          "float64_hex": "0x1.e012b60000000p+4"
+        },
+        {
+          "beam_index": 359,
+          "value_repr": "30.001140594482422",
+          "float64_hex": "0x1.e004ac0000000p+4"
+        },
+        {
+          "beam_index": 361,
+          "value_repr": "30.001140594482422",
+          "float64_hex": "0x1.e004ac0000000p+4"
+        },
+        {
+          "beam_index": 362,
+          "value_repr": "30.004568099975586",
+          "float64_hex": "0x1.e012b60000000p+4"
+        },
+        {
+          "beam_index": 363,
+          "value_repr": "30.010282516479492",
+          "float64_hex": "0x1.e02a1e0000000p+4"
+        }
+      ]
+    },
+    {
+      "origin_m": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "yaw_rad": 0.0,
+      "target_face_distance_m": 30.01,
+      "world_time_s": 0.7000000365078449,
+      "physics_frame": 42,
+      "shapes": {
+        "depth": [
+          720,
+          1
+        ],
+        "intensity": [
+          720,
+          1
+        ],
+        "azimuth": [
+          720
+        ],
+        "zenith": [
+          1
+        ]
+      },
+      "dtypes": {
+        "depth": "float32",
+        "intensity": "uint8",
+        "azimuth": "float32",
+        "zenith": "float32"
+      },
+      "hit_count": 7,
+      "hit_min_m": 30.010000228881836,
+      "hit_max_m": 30.02028465270996,
+      "invalid_count": 7,
+      "invalid_samples": [
+        {
+          "beam_index": 357,
+          "value_repr": "30.02028465270996",
+          "float64_hex": "0x1.e053160000000p+4"
+        },
+        {
+          "beam_index": 358,
+          "value_repr": "30.014570236206055",
+          "float64_hex": "0x1.e03bae0000000p+4"
+        },
+        {
+          "beam_index": 359,
+          "value_repr": "30.011140823364258",
+          "float64_hex": "0x1.e02da20000000p+4"
+        },
+        {
+          "beam_index": 360,
+          "value_repr": "30.010000228881836",
+          "float64_hex": "0x1.e028f60000000p+4"
+        },
+        {
+          "beam_index": 361,
+          "value_repr": "30.011140823364258",
+          "float64_hex": "0x1.e02da20000000p+4"
+        },
+        {
+          "beam_index": 362,
+          "value_repr": "30.014570236206055",
+          "float64_hex": "0x1.e03bae0000000p+4"
+        },
+        {
+          "beam_index": 363,
+          "value_repr": "30.02028465270996",
+          "float64_hex": "0x1.e053160000000p+4"
+        }
+      ]
+    },
+    {
+      "origin_m": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "yaw_rad": 0.5339742290318825,
+      "target_face_distance_m": 29.99,
+      "world_time_s": 1.2333333976566792,
+      "physics_frame": 74,
+      "shapes": {
+        "depth": [
+          720,
+          1
+        ],
+        "intensity": [
+          720,
+          1
+        ],
+        "azimuth": [
+          720
+        ],
+        "zenith": [
+          1
+        ]
+      },
+      "dtypes": {
+        "depth": "float32",
+        "intensity": "uint8",
+        "azimuth": "float32",
+        "zenith": "float32"
+      },
+      "hit_count": 7,
+      "hit_min_m": 29.990001678466797,
+      "hit_max_m": 30.000282287597656,
+      "invalid_count": 2,
+      "invalid_samples": [
+        {
+          "beam_index": 357,
+          "value_repr": "30.00027847290039",
+          "float64_hex": "0x1.e001240000000p+4"
+        },
+        {
+          "beam_index": 363,
+          "value_repr": "30.000282287597656",
+          "float64_hex": "0x1.e001280000000p+4"
+        }
+      ]
+    },
+    {
+      "origin_m": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "yaw_rad": 0.5339742290318825,
+      "target_face_distance_m": 30.0,
+      "world_time_s": 1.3000000678002834,
+      "physics_frame": 78,
+      "shapes": {
+        "depth": [
+          720,
+          1
+        ],
+        "intensity": [
+          720,
+          1
+        ],
+        "azimuth": [
+          720
+        ],
+        "zenith": [
+          1
+        ]
+      },
+      "dtypes": {
+        "depth": "float32",
+        "intensity": "uint8",
+        "azimuth": "float32",
+        "zenith": "float32"
+      },
+      "hit_count": 7,
+      "hit_min_m": 30.0,
+      "hit_max_m": 30.010286331176758,
+      "invalid_count": 6,
+      "invalid_samples": [
+        {
+          "beam_index": 357,
+          "value_repr": "30.010282516479492",
+          "float64_hex": "0x1.e02a1e0000000p+4"
+        },
+        {
+          "beam_index": 358,
+          "value_repr": "30.00457191467285",
+          "float64_hex": "0x1.e012ba0000000p+4"
+        },
+        {
+          "beam_index": 359,
+          "value_repr": "30.001140594482422",
+          "float64_hex": "0x1.e004ac0000000p+4"
+        },
+        {
+          "beam_index": 361,
+          "value_repr": "30.001144409179688",
+          "float64_hex": "0x1.e004b00000000p+4"
+        },
+        {
+          "beam_index": 362,
+          "value_repr": "30.004568099975586",
+          "float64_hex": "0x1.e012b60000000p+4"
+        },
+        {
+          "beam_index": 363,
+          "value_repr": "30.010286331176758",
+          "float64_hex": "0x1.e02a220000000p+4"
+        }
+      ]
+    },
+    {
+      "origin_m": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "yaw_rad": 0.5339742290318825,
+      "target_face_distance_m": 30.01,
+      "world_time_s": 1.3666667379438877,
+      "physics_frame": 82,
+      "shapes": {
+        "depth": [
+          720,
+          1
+        ],
+        "intensity": [
+          720,
+          1
+        ],
+        "azimuth": [
+          720
+        ],
+        "zenith": [
+          1
+        ]
+      },
+      "dtypes": {
+        "depth": "float32",
+        "intensity": "uint8",
+        "azimuth": "float32",
+        "zenith": "float32"
+      },
+      "hit_count": 7,
+      "hit_min_m": 30.01000213623047,
+      "hit_max_m": 30.020286560058594,
+      "invalid_count": 7,
+      "invalid_samples": [
+        {
+          "beam_index": 357,
+          "value_repr": "30.02028465270996",
+          "float64_hex": "0x1.e053160000000p+4"
+        },
+        {
+          "beam_index": 358,
+          "value_repr": "30.014572143554688",
+          "float64_hex": "0x1.e03bb00000000p+4"
+        },
+        {
+          "beam_index": 359,
+          "value_repr": "30.011140823364258",
+          "float64_hex": "0x1.e02da20000000p+4"
+        },
+        {
+          "beam_index": 360,
+          "value_repr": "30.01000213623047",
+          "float64_hex": "0x1.e028f80000000p+4"
+        },
+        {
+          "beam_index": 361,
+          "value_repr": "30.011140823364258",
+          "float64_hex": "0x1.e02da20000000p+4"
+        },
+        {
+          "beam_index": 362,
+          "value_repr": "30.014570236206055",
+          "float64_hex": "0x1.e03bae0000000p+4"
+        },
+        {
+          "beam_index": 363,
+          "value_repr": "30.020286560058594",
+          "float64_hex": "0x1.e053180000000p+4"
+        }
+      ]
+    },
+    {
+      "origin_m": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "yaw_rad": -2.6076184245579106,
+      "target_face_distance_m": 29.99,
+      "world_time_s": 1.900000099092722,
+      "physics_frame": 114,
+      "shapes": {
+        "depth": [
+          720,
+          1
+        ],
+        "intensity": [
+          720,
+          1
+        ],
+        "azimuth": [
+          720
+        ],
+        "zenith": [
+          1
+        ]
+      },
+      "dtypes": {
+        "depth": "float32",
+        "intensity": "uint8",
+        "azimuth": "float32",
+        "zenith": "float32"
+      },
+      "hit_count": 7,
+      "hit_min_m": 29.99000358581543,
+      "hit_max_m": 30.000282287597656,
+      "invalid_count": 2,
+      "invalid_samples": [
+        {
+          "beam_index": 357,
+          "value_repr": "30.000282287597656",
+          "float64_hex": "0x1.e001280000000p+4"
+        },
+        {
+          "beam_index": 363,
+          "value_repr": "30.00027847290039",
+          "float64_hex": "0x1.e001240000000p+4"
+        }
+      ]
+    },
+    {
+      "origin_m": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "yaw_rad": -2.6076184245579106,
+      "target_face_distance_m": 30.0,
+      "world_time_s": 1.9666667692363262,
+      "physics_frame": 118,
+      "shapes": {
+        "depth": [
+          720,
+          1
+        ],
+        "intensity": [
+          720,
+          1
+        ],
+        "azimuth": [
+          720
+        ],
+        "zenith": [
+          1
+        ]
+      },
+      "dtypes": {
+        "depth": "float32",
+        "intensity": "uint8",
+        "azimuth": "float32",
+        "zenith": "float32"
+      },
+      "hit_count": 7,
+      "hit_min_m": 30.000001907348633,
+      "hit_max_m": 30.010284423828125,
+      "invalid_count": 7,
+      "invalid_samples": [
+        {
+          "beam_index": 357,
+          "value_repr": "30.010284423828125",
+          "float64_hex": "0x1.e02a200000000p+4"
+        },
+        {
+          "beam_index": 358,
+          "value_repr": "30.00457191467285",
+          "float64_hex": "0x1.e012ba0000000p+4"
+        },
+        {
+          "beam_index": 359,
+          "value_repr": "30.001136779785156",
+          "float64_hex": "0x1.e004a80000000p+4"
+        },
+        {
+          "beam_index": 360,
+          "value_repr": "30.000001907348633",
+          "float64_hex": "0x1.e000020000000p+4"
+        },
+        {
+          "beam_index": 361,
+          "value_repr": "30.001142501831055",
+          "float64_hex": "0x1.e004ae0000000p+4"
+        },
+        {
+          "beam_index": 362,
+          "value_repr": "30.00457191467285",
+          "float64_hex": "0x1.e012ba0000000p+4"
+        },
+        {
+          "beam_index": 363,
+          "value_repr": "30.010282516479492",
+          "float64_hex": "0x1.e02a1e0000000p+4"
+        }
+      ]
+    },
+    {
+      "origin_m": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "yaw_rad": -2.6076184245579106,
+      "target_face_distance_m": 30.01,
+      "world_time_s": 2.0333334393799305,
+      "physics_frame": 122,
+      "shapes": {
+        "depth": [
+          720,
+          1
+        ],
+        "intensity": [
+          720,
+          1
+        ],
+        "azimuth": [
+          720
+        ],
+        "zenith": [
+          1
+        ]
+      },
+      "dtypes": {
+        "depth": "float32",
+        "intensity": "uint8",
+        "azimuth": "float32",
+        "zenith": "float32"
+      },
+      "hit_count": 7,
+      "hit_min_m": 30.010000228881836,
+      "hit_max_m": 30.02028465270996,
+      "invalid_count": 7,
+      "invalid_samples": [
+        {
+          "beam_index": 357,
+          "value_repr": "30.02028465270996",
+          "float64_hex": "0x1.e053160000000p+4"
+        },
+        {
+          "beam_index": 358,
+          "value_repr": "30.014570236206055",
+          "float64_hex": "0x1.e03bae0000000p+4"
+        },
+        {
+          "beam_index": 359,
+          "value_repr": "30.01113510131836",
+          "float64_hex": "0x1.e02d9c0000000p+4"
+        },
+        {
+          "beam_index": 360,
+          "value_repr": "30.010000228881836",
+          "float64_hex": "0x1.e028f60000000p+4"
+        },
+        {
+          "beam_index": 361,
+          "value_repr": "30.011140823364258",
+          "float64_hex": "0x1.e02da20000000p+4"
+        },
+        {
+          "beam_index": 362,
+          "value_repr": "30.014570236206055",
+          "float64_hex": "0x1.e03bae0000000p+4"
+        },
+        {
+          "beam_index": 363,
+          "value_repr": "30.02028465270996",
+          "float64_hex": "0x1.e053160000000p+4"
+        }
+      ]
+    },
+    {
+      "origin_m": [
+        3.6093505457687947,
+        4.564174283606593,
+        1.0
+      ],
+      "yaw_rad": 0.0,
+      "target_face_distance_m": 29.99,
+      "world_time_s": 2.5666668005287647,
+      "physics_frame": 154,
+      "shapes": {
+        "depth": [
+          720,
+          1
+        ],
+        "intensity": [
+          720,
+          1
+        ],
+        "azimuth": [
+          720
+        ],
+        "zenith": [
+          1
+        ]
+      },
+      "dtypes": {
+        "depth": "float32",
+        "intensity": "uint8",
+        "azimuth": "float32",
+        "zenith": "float32"
+      },
+      "hit_count": 7,
+      "hit_min_m": 29.990001678466797,
+      "hit_max_m": 30.000280380249023,
+      "invalid_count": 2,
+      "invalid_samples": [
+        {
+          "beam_index": 357,
+          "value_repr": "30.000280380249023",
+          "float64_hex": "0x1.e001260000000p+4"
+        },
+        {
+          "beam_index": 363,
+          "value_repr": "30.000280380249023",
+          "float64_hex": "0x1.e001260000000p+4"
+        }
+      ]
+    },
+    {
+      "origin_m": [
+        3.6093505457687947,
+        4.564174283606593,
+        1.0
+      ],
+      "yaw_rad": 0.0,
+      "target_face_distance_m": 30.0,
+      "world_time_s": 2.633333470672369,
+      "physics_frame": 158,
+      "shapes": {
+        "depth": [
+          720,
+          1
+        ],
+        "intensity": [
+          720,
+          1
+        ],
+        "azimuth": [
+          720
+        ],
+        "zenith": [
+          1
+        ]
+      },
+      "dtypes": {
+        "depth": "float32",
+        "intensity": "uint8",
+        "azimuth": "float32",
+        "zenith": "float32"
+      },
+      "hit_count": 7,
+      "hit_min_m": 30.0,
+      "hit_max_m": 30.010282516479492,
+      "invalid_count": 6,
+      "invalid_samples": [
+        {
+          "beam_index": 357,
+          "value_repr": "30.010282516479492",
+          "float64_hex": "0x1.e02a1e0000000p+4"
+        },
+        {
+          "beam_index": 358,
+          "value_repr": "30.004568099975586",
+          "float64_hex": "0x1.e012b60000000p+4"
+        },
+        {
+          "beam_index": 359,
+          "value_repr": "30.001140594482422",
+          "float64_hex": "0x1.e004ac0000000p+4"
+        },
+        {
+          "beam_index": 361,
+          "value_repr": "30.001140594482422",
+          "float64_hex": "0x1.e004ac0000000p+4"
+        },
+        {
+          "beam_index": 362,
+          "value_repr": "30.004568099975586",
+          "float64_hex": "0x1.e012b60000000p+4"
+        },
+        {
+          "beam_index": 363,
+          "value_repr": "30.010282516479492",
+          "float64_hex": "0x1.e02a1e0000000p+4"
+        }
+      ]
+    },
+    {
+      "origin_m": [
+        3.6093505457687947,
+        4.564174283606593,
+        1.0
+      ],
+      "yaw_rad": 0.0,
+      "target_face_distance_m": 30.01,
+      "world_time_s": 2.7000001408159733,
+      "physics_frame": 162,
+      "shapes": {
+        "depth": [
+          720,
+          1
+        ],
+        "intensity": [
+          720,
+          1
+        ],
+        "azimuth": [
+          720
+        ],
+        "zenith": [
+          1
+        ]
+      },
+      "dtypes": {
+        "depth": "float32",
+        "intensity": "uint8",
+        "azimuth": "float32",
+        "zenith": "float32"
+      },
+      "hit_count": 7,
+      "hit_min_m": 30.009998321533203,
+      "hit_max_m": 30.020282745361328,
+      "invalid_count": 7,
+      "invalid_samples": [
+        {
+          "beam_index": 357,
+          "value_repr": "30.020282745361328",
+          "float64_hex": "0x1.e053140000000p+4"
+        },
+        {
+          "beam_index": 358,
+          "value_repr": "30.014568328857422",
+          "float64_hex": "0x1.e03bac0000000p+4"
+        },
+        {
+          "beam_index": 359,
+          "value_repr": "30.011138916015625",
+          "float64_hex": "0x1.e02da00000000p+4"
+        },
+        {
+          "beam_index": 360,
+          "value_repr": "30.009998321533203",
+          "float64_hex": "0x1.e028f40000000p+4"
+        },
+        {
+          "beam_index": 361,
+          "value_repr": "30.011138916015625",
+          "float64_hex": "0x1.e02da00000000p+4"
+        },
+        {
+          "beam_index": 362,
+          "value_repr": "30.014568328857422",
+          "float64_hex": "0x1.e03bac0000000p+4"
+        },
+        {
+          "beam_index": 363,
+          "value_repr": "30.020282745361328",
+          "float64_hex": "0x1.e053140000000p+4"
+        }
+      ]
+    },
+    {
+      "origin_m": [
+        3.6093505457687947,
+        4.564174283606593,
+        1.0
+      ],
+      "yaw_rad": 0.5339742290318825,
+      "target_face_distance_m": 29.99,
+      "world_time_s": 3.2333335019648075,
+      "physics_frame": 194,
+      "shapes": {
+        "depth": [
+          720,
+          1
+        ],
+        "intensity": [
+          720,
+          1
+        ],
+        "azimuth": [
+          720
+        ],
+        "zenith": [
+          1
+        ]
+      },
+      "dtypes": {
+        "depth": "float32",
+        "intensity": "uint8",
+        "azimuth": "float32",
+        "zenith": "float32"
+      },
+      "hit_count": 7,
+      "hit_min_m": 29.990001678466797,
+      "hit_max_m": 30.000282287597656,
+      "invalid_count": 2,
+      "invalid_samples": [
+        {
+          "beam_index": 357,
+          "value_repr": "30.00027847290039",
+          "float64_hex": "0x1.e001240000000p+4"
+        },
+        {
+          "beam_index": 363,
+          "value_repr": "30.000282287597656",
+          "float64_hex": "0x1.e001280000000p+4"
+        }
+      ]
+    },
+    {
+      "origin_m": [
+        3.6093505457687947,
+        4.564174283606593,
+        1.0
+      ],
+      "yaw_rad": 0.5339742290318825,
+      "target_face_distance_m": 30.0,
+      "world_time_s": 3.300000172108412,
+      "physics_frame": 198,
+      "shapes": {
+        "depth": [
+          720,
+          1
+        ],
+        "intensity": [
+          720,
+          1
+        ],
+        "azimuth": [
+          720
+        ],
+        "zenith": [
+          1
+        ]
+      },
+      "dtypes": {
+        "depth": "float32",
+        "intensity": "uint8",
+        "azimuth": "float32",
+        "zenith": "float32"
+      },
+      "hit_count": 7,
+      "hit_min_m": 30.0,
+      "hit_max_m": 30.010286331176758,
+      "invalid_count": 6,
+      "invalid_samples": [
+        {
+          "beam_index": 357,
+          "value_repr": "30.010282516479492",
+          "float64_hex": "0x1.e02a1e0000000p+4"
+        },
+        {
+          "beam_index": 358,
+          "value_repr": "30.00457191467285",
+          "float64_hex": "0x1.e012ba0000000p+4"
+        },
+        {
+          "beam_index": 359,
+          "value_repr": "30.001140594482422",
+          "float64_hex": "0x1.e004ac0000000p+4"
+        },
+        {
+          "beam_index": 361,
+          "value_repr": "30.001144409179688",
+          "float64_hex": "0x1.e004b00000000p+4"
+        },
+        {
+          "beam_index": 362,
+          "value_repr": "30.004568099975586",
+          "float64_hex": "0x1.e012b60000000p+4"
+        },
+        {
+          "beam_index": 363,
+          "value_repr": "30.010286331176758",
+          "float64_hex": "0x1.e02a220000000p+4"
+        }
+      ]
+    },
+    {
+      "origin_m": [
+        3.6093505457687947,
+        4.564174283606593,
+        1.0
+      ],
+      "yaw_rad": 0.5339742290318825,
+      "target_face_distance_m": 30.01,
+      "world_time_s": 3.366666842252016,
+      "physics_frame": 202,
+      "shapes": {
+        "depth": [
+          720,
+          1
+        ],
+        "intensity": [
+          720,
+          1
+        ],
+        "azimuth": [
+          720
+        ],
+        "zenith": [
+          1
+        ]
+      },
+      "dtypes": {
+        "depth": "float32",
+        "intensity": "uint8",
+        "azimuth": "float32",
+        "zenith": "float32"
+      },
+      "hit_count": 7,
+      "hit_min_m": 30.01000213623047,
+      "hit_max_m": 30.020286560058594,
+      "invalid_count": 7,
+      "invalid_samples": [
+        {
+          "beam_index": 357,
+          "value_repr": "30.02028465270996",
+          "float64_hex": "0x1.e053160000000p+4"
+        },
+        {
+          "beam_index": 358,
+          "value_repr": "30.014572143554688",
+          "float64_hex": "0x1.e03bb00000000p+4"
+        },
+        {
+          "beam_index": 359,
+          "value_repr": "30.011138916015625",
+          "float64_hex": "0x1.e02da00000000p+4"
+        },
+        {
+          "beam_index": 360,
+          "value_repr": "30.01000213623047",
+          "float64_hex": "0x1.e028f80000000p+4"
+        },
+        {
+          "beam_index": 361,
+          "value_repr": "30.011140823364258",
+          "float64_hex": "0x1.e02da20000000p+4"
+        },
+        {
+          "beam_index": 362,
+          "value_repr": "30.014570236206055",
+          "float64_hex": "0x1.e03bae0000000p+4"
+        },
+        {
+          "beam_index": 363,
+          "value_repr": "30.020286560058594",
+          "float64_hex": "0x1.e053180000000p+4"
+        }
+      ]
+    },
+    {
+      "origin_m": [
+        3.6093505457687947,
+        4.564174283606593,
+        1.0
+      ],
+      "yaw_rad": -2.6076184245579106,
+      "target_face_distance_m": 29.99,
+      "world_time_s": 3.9000002034008503,
+      "physics_frame": 234,
+      "shapes": {
+        "depth": [
+          720,
+          1
+        ],
+        "intensity": [
+          720,
+          1
+        ],
+        "azimuth": [
+          720
+        ],
+        "zenith": [
+          1
+        ]
+      },
+      "dtypes": {
+        "depth": "float32",
+        "intensity": "uint8",
+        "azimuth": "float32",
+        "zenith": "float32"
+      },
+      "hit_count": 7,
+      "hit_min_m": 29.990001678466797,
+      "hit_max_m": 30.000282287597656,
+      "invalid_count": 2,
+      "invalid_samples": [
+        {
+          "beam_index": 357,
+          "value_repr": "30.000282287597656",
+          "float64_hex": "0x1.e001280000000p+4"
+        },
+        {
+          "beam_index": 363,
+          "value_repr": "30.00027847290039",
+          "float64_hex": "0x1.e001240000000p+4"
+        }
+      ]
+    },
+    {
+      "origin_m": [
+        3.6093505457687947,
+        4.564174283606593,
+        1.0
+      ],
+      "yaw_rad": -2.6076184245579106,
+      "target_face_distance_m": 30.0,
+      "world_time_s": 3.9666668735444546,
+      "physics_frame": 238,
+      "shapes": {
+        "depth": [
+          720,
+          1
+        ],
+        "intensity": [
+          720,
+          1
+        ],
+        "azimuth": [
+          720
+        ],
+        "zenith": [
+          1
+        ]
+      },
+      "dtypes": {
+        "depth": "float32",
+        "intensity": "uint8",
+        "azimuth": "float32",
+        "zenith": "float32"
+      },
+      "hit_count": 7,
+      "hit_min_m": 30.000001907348633,
+      "hit_max_m": 30.010284423828125,
+      "invalid_count": 7,
+      "invalid_samples": [
+        {
+          "beam_index": 357,
+          "value_repr": "30.010284423828125",
+          "float64_hex": "0x1.e02a200000000p+4"
+        },
+        {
+          "beam_index": 358,
+          "value_repr": "30.00457000732422",
+          "float64_hex": "0x1.e012b80000000p+4"
+        },
+        {
+          "beam_index": 359,
+          "value_repr": "30.001136779785156",
+          "float64_hex": "0x1.e004a80000000p+4"
+        },
+        {
+          "beam_index": 360,
+          "value_repr": "30.000001907348633",
+          "float64_hex": "0x1.e000020000000p+4"
+        },
+        {
+          "beam_index": 361,
+          "value_repr": "30.001144409179688",
+          "float64_hex": "0x1.e004b00000000p+4"
+        },
+        {
+          "beam_index": 362,
+          "value_repr": "30.00457191467285",
+          "float64_hex": "0x1.e012ba0000000p+4"
+        },
+        {
+          "beam_index": 363,
+          "value_repr": "30.010282516479492",
+          "float64_hex": "0x1.e02a1e0000000p+4"
+        }
+      ]
+    },
+    {
+      "origin_m": [
+        3.6093505457687947,
+        4.564174283606593,
+        1.0
+      ],
+      "yaw_rad": -2.6076184245579106,
+      "target_face_distance_m": 30.01,
+      "world_time_s": 4.033333543688059,
+      "physics_frame": 242,
+      "shapes": {
+        "depth": [
+          720,
+          1
+        ],
+        "intensity": [
+          720,
+          1
+        ],
+        "azimuth": [
+          720
+        ],
+        "zenith": [
+          1
+        ]
+      },
+      "dtypes": {
+        "depth": "float32",
+        "intensity": "uint8",
+        "azimuth": "float32",
+        "zenith": "float32"
+      },
+      "hit_count": 7,
+      "hit_min_m": 30.010000228881836,
+      "hit_max_m": 30.020286560058594,
+      "invalid_count": 7,
+      "invalid_samples": [
+        {
+          "beam_index": 357,
+          "value_repr": "30.020286560058594",
+          "float64_hex": "0x1.e053180000000p+4"
+        },
+        {
+          "beam_index": 358,
+          "value_repr": "30.014572143554688",
+          "float64_hex": "0x1.e03bb00000000p+4"
+        },
+        {
+          "beam_index": 359,
+          "value_repr": "30.01113510131836",
+          "float64_hex": "0x1.e02d9c0000000p+4"
+        },
+        {
+          "beam_index": 360,
+          "value_repr": "30.010000228881836",
+          "float64_hex": "0x1.e028f60000000p+4"
+        },
+        {
+          "beam_index": 361,
+          "value_repr": "30.011140823364258",
+          "float64_hex": "0x1.e02da20000000p+4"
+        },
+        {
+          "beam_index": 362,
+          "value_repr": "30.014570236206055",
+          "float64_hex": "0x1.e03bae0000000p+4"
+        },
+        {
+          "beam_index": 363,
+          "value_repr": "30.02028465270996",
+          "float64_hex": "0x1.e053160000000p+4"
+        }
+      ]
+    }
+  ],
+  "closure": {
+    "job_closed": true,
+    "remaining_owned_pids": [],
+    "sdk_close_returned": false,
+    "cleanup_errors": [],
+    "note": "SDK shutdown terminated the interpreter before the post-close flag was written. Outer Job proves process closure."
+  },
+  "interpretation": "Authored box placements reproduce finite hit255 beyond30m. This is not proof of the rejected065 beam or transport success.",
+  "original_sha256": {
+    "output/result.json": "2a66fda3232cba8ff33a596094ea9cecab98f1b8f6b79e38d4b0cfce7c83bff3",
+    "job.json": "512e3b4282d5d169f9087f6a5264540dacda6099bcd986e3f92b99d02230a919",
+    "spec.json": "f09afc0a5f28aebe0f83a272844774805a8e746180dc07cb1984b345d8073dd1",
+    "preparation.json": "92c91d9a28f7f9e586fe7e8c84d0ca13b2b8484534f4bf9ced2f7d618b4e09df"
+  }
+}

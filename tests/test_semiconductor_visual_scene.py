@@ -24,12 +24,19 @@ class SemiconductorVisualSceneTests(unittest.TestCase):
         required_parts = {
             "semiconductor_handler": {
                 "WorkBed", "ChamberWindow", "LoadTrayElevator", "UnloadTrayElevator",
-                "PassBin", "RetestBin", "HMI", "StackLightGreen",
+                "PassBin", "RetestBin", "HMI", "StackLightGreen", "LoadDockFace",
+                "LoadMagazineTray_3", "TesterDockPlate", "UtilityTrunk", "SideVentRight_3",
             },
-            "ate_rack": {"ATE_Mainframe", "ATE_Controller", "UtilityPatchPanel", "SocketUtility_4"},
+            "ate_rack": {
+                "ATE_Mainframe", "ATE_Controller", "UtilityPatchPanel", "SocketUtility_4",
+                "ControllerDoorSeam", "TesterInterfaceDock", "UtilityUmbilicalDrop", "LowerVent_4",
+            },
             "tray_stocker": {"ShelfDeck_3", "TrayStack_L3_2", "LotPocket_2_4", "HMI"},
             "esd_tray_loadport": {"Worktop", "DeckGuideLeft", "TrayMagazine", "TrayLayer_4"},
-            "aoi_mark": {"InspectionStage", "OpticalHead", "ShadeWindow", "PassBuffer", "ReviewBuffer"},
+            "aoi_mark": {
+                "InspectionStage", "OpticalHead", "ShadeWindow", "PassBuffer", "ReviewBuffer",
+                "InputMagazineDock", "InputMagazineTray_3", "LotReader", "MarkingUtilityPlate",
+            },
             "esd_packing": {"Worktop", "ESDMat", "LabelPrinter", "Scale", "CoveredCarrier", "Roller_7"},
             "cleanroom_utility": {"FilterHeader", "DistributionPanel", "UtilityPanel", "Vent_4"},
         }
@@ -44,6 +51,41 @@ class SemiconductorVisualSceneTests(unittest.TestCase):
                 names = {box.name for box in boxes}
                 self.assertTrue(expected_names <= names)
                 self.assertGreaterEqual(len(boxes), len(expected_names) + 3)
+
+    def test_final_test_details_have_distinct_roles_without_moving_runtime_supports(self) -> None:
+        rect = Rect(2.0, 3.0, 4.4, 5.2)
+        height = 2.2
+        expected = {
+            "semiconductor_handler": {
+                "roles": {"front_load_tray_dock", "front_unload_tray_dock", "tester_interface_dock",
+                          "handler_tester_utility_link"},
+                "support": (2.672, 3.682, .858, 3.728, 4.518, .968),
+                "support_name": "WorkBed",
+            },
+            "ate_rack": {
+                "roles": {"ate_mainframe", "ate_controller", "tester_interface_dock",
+                          "tester_utility_umbilical"},
+                "support": None,
+                "support_name": None,
+            },
+            "aoi_mark": {
+                "roles": {"tray_inspection_stage", "inspection_tray_input", "lot_id_reader",
+                          "marking_utility_interface"},
+                "support": (2.48, 3.55, .594, 3.92, 4.716, .748),
+                "support_name": "InspectionStage",
+            },
+        }
+        for profile in ("legacy", PRODUCTION_BAY_GEOMETRY):
+            for recipe, contract in expected.items():
+                with self.subTest(profile=profile, recipe=recipe):
+                    boxes = _recipe_boxes(recipe, rect, height, 0, recipe.upper(), geometry_profile=profile)
+                    _validate_boxes(recipe, boxes, (rect.xmin, rect.ymin, 0.0, rect.xmax, rect.ymax, height))
+                    roles = {box.state_role for box in boxes if box.state_role is not None}
+                    self.assertTrue(contract["roles"] <= roles)
+                    if contract["support_name"] is not None:
+                        support = next(box for box in boxes if box.name == contract["support_name"])
+                        for actual, authored in zip(support.bounds, contract["support"]):
+                            self.assertAlmostEqual(authored, actual)
 
     def test_runtime_support_component_names_have_finite_load_surfaces(self) -> None:
         rect = Rect(1.0, 1.0, 3.4, 3.2)

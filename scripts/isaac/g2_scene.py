@@ -687,9 +687,10 @@ def _setup_native_lidar_publication(
 
     def publish_available() -> None:
         for sensor, converter, states, side, robot_id in bindings:
-            payload = (sensor.read_planar_snapshot() if backend == "physx_planar"
-                       else sensor.read_native_scan())
+            payload = None
             try:
+                payload = (sensor.read_planar_snapshot() if backend == "physx_planar"
+                           else sensor.read_native_scan())
                 if admission is None or backend == "physx_planar":
                     states[side] = converter.publish(payload)
                 else:
@@ -697,10 +698,17 @@ def _setup_native_lidar_publication(
                         observed_sim_time_s=admission["simulation_time"](),
                         physics_frame=admission["physics_frame"]())
             except ValueError as error:
-                stamp = payload.get("acquired_world_time_s" if backend == "physx_planar" else "timeStamp") if isinstance(payload, Mapping) else None
-                label = (f"physx_planar scan {robot_id}/{side} acquired_world_time_s={stamp!r}"
+                details = getattr(error, "details", {})
+                stamp = (payload.get("acquired_world_time_s" if backend == "physx_planar" else "timeStamp")
+                         if isinstance(payload, Mapping) else details.get("acquired_world_time_s"))
+                sensor_path = details.get("sensor_path") or getattr(sensor, "prim_path", None)
+                label = (f"physx_planar scan {robot_id}/{side} sensor_path={sensor_path!r} "
+                         f"acquired_world_time_s={stamp!r}"
                          if backend == "physx_planar" else f"native scan {robot_id}/{side} timeStamp={stamp!r}")
-                raise ValueError(f"{label}: {error}") from error
+                wrapped = ValueError(f"{label}: {error}")
+                if backend == "physx_planar" and isinstance(details, Mapping):
+                    setattr(wrapped, "details", {**dict(details), "robot_id": robot_id, "side": side})
+                raise wrapped from error
 
     return publish_available
 

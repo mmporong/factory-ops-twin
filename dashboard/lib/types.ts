@@ -126,6 +126,7 @@ export type Scene = {
   units?: string;
   map_resolution_m?: number;
   bounds_xy: Rect;
+  traffic_lanes?: { id: string; from_xy: [number, number]; to_xy: [number, number] }[];
   stations: { id: string; xy: [number, number]; role: string }[];
   pockets: Record<string, [number, number]>;
   physical_obstacles: {

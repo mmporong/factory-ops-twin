@@ -29,6 +29,32 @@ PROFILE_BYTES = json.dumps(dict(LIDAR_PARAMETERS), sort_keys=True, separators=("
 PROFILE_SHA256 = hashlib.sha256(PROFILE_BYTES).hexdigest()
 
 
+class PhysxPlanarRangeRejection(ValueError):
+    """A bounded copy of one rejected native hit; the full raw arrays stay out of logs."""
+
+    def __init__(self, *, beam_index: int, raw_range: Any, normalized_range: float,
+                 prim_path: str | None, stamp: float, frame: int, sensor_path: str | None):
+        raw_repr = repr(raw_range)
+        details = dict(
+            beam_index=beam_index,
+            raw_range_repr=raw_repr,
+            raw_range_type=type(raw_range).__name__,
+            range_float_hex=normalized_range.hex(),
+            prim_path=prim_path,
+            acquired_world_time_s=stamp,
+            acquired_physics_frame=frame,
+            sensor_path=sensor_path,
+        )
+        self.details = MappingProxyType(details)
+        super().__init__(
+            "native hit range outside authored0.1..30m: "
+            f"beam_index={beam_index} raw_range_repr={raw_repr} "
+            f"range_float_hex={details['range_float_hex']} prim_path={prim_path!r} "
+            f"acquired_world_time_s={stamp!r} acquired_physics_frame={frame} "
+            f"sensor_path={sensor_path!r}"
+        )
+
+
 def _real(value: Any, name: str, *, finite: bool = True) -> float:
     if isinstance(value, bool) or not isinstance(value, Real):
         raise ValueError(name + " must be a real scalar, not bool/string")
@@ -85,6 +111,21 @@ def _prim_paths(value: Any) -> tuple[str, ...] | None:
     return paths if all(isinstance(path, str) for path in paths) else None
 
 
+def _diagnostic_prim_path(value: Any, beam_index: int) -> str | None:
+    """Read at most one already-owned path without replacing the primary range rejection."""
+    try:
+        shape = _shape(value)
+        if shape == (720, 1):
+            path = value[beam_index][0]
+        elif shape == (720,):
+            path = value[beam_index]
+        else:
+            return None
+    except (IndexError, TypeError, ValueError):
+        return None
+    return path if isinstance(path, str) else None
+
+
 def _validate(snapshot: Mapping[str, Any]) -> dict[str, Any]:
     if (snapshot.get("schema_name") != SCHEMA_NAME or snapshot.get("sensor_backend") != SENSOR_BACKEND
             or snapshot.get("time_source") != TIME_SOURCE or snapshot.get("native_timestamp") is not None):
@@ -108,7 +149,16 @@ def _validate(snapshot: Mapping[str, Any]) -> dict[str, Any]:
         if isinstance(hit, bool) or not isinstance(hit, Integral) or hit not in (0, 255):
             raise ValueError("intensity must retain native0/255 integer values")
         if hit == 255 and (not math.isfinite(ranges[i]) or not 0.1 <= ranges[i] <= 30.0):
-            raise ValueError("native hit range outside authored0.1..30m")
+            sensor_path = snapshot.get("sensor_prim_path")
+            raise PhysxPlanarRangeRejection(
+                beam_index=i,
+                raw_range=depth[i][0],
+                normalized_range=ranges[i],
+                prim_path=_diagnostic_prim_path(snapshot.get("prim_paths"), i),
+                stamp=stamp,
+                frame=frame,
+                sensor_path=sensor_path if isinstance(sensor_path, str) else None,
+            )
         hits.append(int(hit))
     ticks = snapshot["num_cols_ticked"]
     if isinstance(ticks, bool) or not isinstance(ticks, Integral) or ticks != 720:
@@ -252,6 +302,7 @@ class PhysxPlanarSensor:
         snapshot = dict(schema_name=SCHEMA_NAME, schema_version=1, sensor_backend=SENSOR_BACKEND, time_source=TIME_SOURCE,
             acquired_world_time_s=now[0], acquired_physics_frame=now[1], num_cols_ticked=ticks,
             native_timestamp=None, physics_plugin_current_step_sequence_verified=False,
+            sensor_prim_path=self.prim_path,
             prim_path_error=prim_path_error,
             raw_shapes=MappingProxyType({name: _shape(fields[name]) for name in raw_names}),
             raw_dtypes=MappingProxyType({name: str(getattr(fields[name], "dtype", "python_owned_sequence")) for name in raw_names}),

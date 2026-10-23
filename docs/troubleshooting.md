@@ -1072,3 +1072,13 @@ Linux 중계 종료에서는063과 같은 `Unit ... not loaded`가 다시 남았
 재발 방지를 위해 채널별 공간 표준편차가 모두1미만인 RGB를 거부하고 카메라 생성 뒤 네 번의 app update로 장면 반영을 기다린다. 물리 프레임·시각은 계속 고정이어야 한다. 컨베이어 시점은 실내 위치로 옮기고 그 카메라 하나만 선택해 재촬영하는 옵션을 추가했다. 조감과 전체 물류를 다시 실행할 필요는 없다. 재촬영 결과는 별도 실행 ID로 기록한다.
 
 203에서 수정된 카메라 하나의 실제 RGB와 공간 표준편차 검사가 통과했다.1280×720 실제 모델 형상·재질을 확인하고 렌더 오류0건·외부 Job 종료·소유 PID0을 확인했다.202의 조감·핸들러 두 장만 공개했으며, 제외한 단색 원본의 FFmpeg 신호 범위는YMIN=YMAX=212·UMIN=UMAX=128·VMIN=VMAX=128이다. 원래 producer의 passed와 사후 선택 검사의 부분 통과를 구분한다. [202 선택·제외 근거](images/semiconductor-dual-local45-202/provenance.json) · [203 재촬영](images/semiconductor-dual-local45-203/provenance.json)
+
+## FOT-131 — PhysX hit 거리 범위 거절과 진단 정보 누락
+
+이중 차로065는 임무51.016669327초·2lot 투입·0출하 상태에서 `native hit range outside authored0.1..30m`으로 종료됐다. 센서 배열 획득 검사가 발행 함수의 try 범위 밖에 있어 차량·센서·빔·거절 거리값이 오류에 남지 않았다. 이 실행의 값이 최솟값 아래인지 최댓값 위인지는 확인할 수 없다. 양 OS·Job의 종료와 정리 오류0건·잔여 소유 PID0을 확인했다. [065 원본 해시와 종료 근거](evidence/local45-transport-065.json)
+
+한 빔의 원시 repr·float hex·충돌 prim·World 시각/프레임·센서 경로를 담는 예외를 추가하고, 획득 오류에도 차량/센서 이름을 결속했다. 정상 캐시 갱신과 범위 검사·ROS 발행 조건은 유지한다. 관련17개 CPU 검사가 통과했으며 진단 정보가 붙은 실제 재현은 다음 실행에서 확인한다.
+
+별도205 시험은 같은 SDK4.5·0.1~30m 설정의 단일 센서와 소유 상자만 사용했다.60개 배치 중18개에서30m 밖의 finite hit255가 반환됐다. 예를 들어 상자 앞면29.99m에서30.00027847290039m, 앞면30.01m에서30.02028465270996m를 관측했다. 이는 단순 한 ULP 오차가 아니며065에서 거절된 빔의 값이나 같은 원인을 입증하지 않는다. 첫 이상 배열과 해시는 로컬에 보존했고 모든 프로세스는 종료됐다. SDK shutdown 후 Python 복귀 플래그는 기록되지 않았으므로 외부 Job의 closed·PID0을 종료 근거로 사용한다. [205 선택 관측·원시 파일 해시](evidence/local45-planar-range-205.json)
+
+[설치 버전의 PhysX 센서 설명](https://docs.isaacsim.omniverse.nvidia.com/4.5.0/sensors/isaacsim_sensors_physx.html)과 설치된 command 코드는 설정을 USD에 작성하지만 반환 배열의 경계 clipping을 보장하지 않는다. [ROS LaserScan 정의](https://github.com/ros2/common_interfaces/blob/rolling/sensor_msgs/msg/LaserScan.msg)는 범위 밖 값을 discard 대상으로 명시한다. 이 기록만으로 수용 범위를 넓히거나 hit를 no-hit/무한대로 바꾸지 않는다.

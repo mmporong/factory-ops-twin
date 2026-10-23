@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "run_id": "5e434a78f3b54cfab378e8487ce170df",
+  "source_commit": "8939df3927264e75fa80ea1244dc40193a68ad73",
+  "status": "failed",
+  "layout": "factory-semiconductor-dual-lane",
+  "primary_error": {
+    "type": "ValueError",
+    "message": "native hit range outside authored0.1..30m"
+  },
+  "failure_stage": "mission",
+  "mission_summary": {
+    "elapsed_sim_s": 51.016669326999995,
+    "released_orders": 2,
+    "completed_orders": 0
+  },
+  "closure": {
+    "windows_closed": true,
+    "linux_closed": true,
+    "cleanup_errors": [],
+    "job_closed": true,
+    "remaining_owned_pids": []
+  },
+  "diagnosis": "Exact rejected beam/value was not recorded by source065; do not infer its value from later probes.",
+  "original_sha256": {
+    "pair-host.json": "8e93f770821f9db10173a4440c6c54237e1e17ad568785a1a61b36bbd6e98f48",
+    "relay-pair.json": "722ebd6b1a6048c407286e64278e22f8d0e3e1ef05b6e8e4636ad99c45745dbc",
+    "job.json": "81de2135d6c466a2c4d614887dd32c8534d68e6c1906174a17a540c641f36227",
+    "results/run/sdk-failure.json": "6386a82421277b19f1f8c8b617818309b57fa637847797a1201c8d45971fed5f",
+    "results/run/mission-progress.json": "0d0213e2b4cad4d699526b7b116ede98c14878539b993f99c7cee7689e7e628d"
+  },
+  "transport_complete": false,
+  "final_media_created": false
+}
