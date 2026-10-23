@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import copy
 import json
+import os
 from pathlib import Path
 import tempfile
 import unittest
@@ -538,6 +539,60 @@ class FactoryVisualRuntimeTests(unittest.TestCase):
                     runtime.step(0.0, 0)
                     runtime.step(0.0, 1)
                     self.assertEqual(1, apply.call_count)
+
+    def test_stream_reads_bytes_each_poll_but_parses_only_new_states(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            output = Path(temporary)
+            projection = _projection(_row("p1", "source_S1"))
+            publish_visual_state(output, _state(projection, sequence=0, emitted_ns=2_000_000_000))
+            runtime = FactoryVisualRuntime(LAYOUT_PATH, ROOT / "README.md", output, 0, "run-1", "normal")
+            runtime.stage, runtime.layout = object(), self.layout
+            original_read = Path.read_bytes
+            with patch("scripts.isaac.factory_visuals.json.loads", wraps=json.loads) as parse, \
+                    patch.object(Path, "read_bytes", autospec=True, side_effect=original_read) as read, \
+                    patch.object(runtime, "_apply_state") as apply:
+                runtime.step(1.0, 60)
+                self.assertEqual(1, parse.call_count)
+                runtime.step(1.0, 61)
+                self.assertEqual(1, parse.call_count)
+                self.assertEqual(2, read.call_count)
+                apply.assert_not_called()
+                publish_visual_state(output, _state(projection, sequence=1, emitted_ns=2_000_000_000))
+                parse.reset_mock()
+                runtime.step(2.0, 120)
+                self.assertEqual(1, parse.call_count)
+                self.assertEqual([0, 1], [call.args[0]["sequence"] for call in apply.call_args_list])
+
+    def test_cached_stream_rejects_same_length_rewrite_with_preserved_mtime(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            output = Path(temporary)
+            projection = _projection(_row("p1", "source_S1"))
+            record = publish_visual_state(output, _state(projection, sequence=0, emitted_ns=0))
+            runtime = FactoryVisualRuntime(LAYOUT_PATH, ROOT / "README.md", output, 0, "run-1", "normal")
+            runtime.stage, runtime.layout = object(), self.layout
+            with patch.object(runtime, "_apply_state"):
+                runtime.step(0.0, 0)
+                path = output / record["path"]
+                before = path.stat()
+                source = path.read_bytes()
+                rewritten = source.replace(b'"ledger_seq":9', b'"ledger_seq":8')
+                self.assertNotEqual(source, rewritten)
+                path.write_bytes(rewritten)
+                os.utime(path, ns=(before.st_atime_ns, before.st_mtime_ns))
+                self.assertEqual(before.st_size, path.stat().st_size)
+                self.assertEqual(before.st_mtime_ns, path.stat().st_mtime_ns)
+                with self.assertRaisesRegex(ValueError, "history were rewritten"):
+                    runtime.step(0.0, 1)
+
+    def test_cached_stream_is_revalidated_when_identity_changes(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            output = Path(temporary)
+            publish_visual_state(output, _state(_projection(_row("p1", "source_S1")), sequence=0, emitted_ns=0))
+            runtime = FactoryVisualRuntime(LAYOUT_PATH, ROOT / "README.md", output, 0, "run-1", "normal")
+            runtime._observe_stream(output / STATE_STREAM_DIR)
+            runtime.run_id = "other-run"
+            with self.assertRaisesRegex(ValueError, "identity"):
+                runtime._observe_stream(output / STATE_STREAM_DIR)
 
     def test_stream_missing_or_tampered_entry_fails_closed(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

@@ -348,6 +348,8 @@ class FactoryVisualRuntime:
         self.pending_hash: str | None = None
         self.pending_queue: list[tuple[dict[str, Any], str]] = []
         self.stream_sequence_hashes: dict[int, str] = {}
+        self.stream_validated_bytes: dict[int, bytes] = {}
+        self.stream_validation_context: tuple[object, ...] | None = None
         self.stream_selected = False
         self.last_observed_file_sha: str | None = None
         self.last_sim_time_ns: int | None = None
@@ -525,14 +527,28 @@ class FactoryVisualRuntime:
         """Validate the immutable stream and enqueue every newly published state."""
         if stream_path.is_symlink() or not stream_path.is_dir():
             raise ValueError("visual state stream must be a regular directory")
-        rows: dict[int, tuple[dict[str, Any], str]] = {}
+        context = (self.run_id, self.scenario_id, tuple(self.robot_paths))
+        if context != self.stream_validation_context:
+            self.stream_validated_bytes.clear()
+            self.stream_validation_context = context
+        rows: dict[int, tuple[dict[str, Any] | None, str]] = {}
+        validated_sources: dict[int, bytes] = {}
         for path in stream_path.iterdir():
             match = STATE_STREAM_PATTERN.fullmatch(path.name)
             if match is None:
                 raise ValueError(f"visual state stream contains an unexpected entry: {path.name}")
+            declared_sequence = int(match.group("sequence"))
+            if declared_sequence in rows:
+                raise ValueError("visual state stream contains duplicate sequences")
             _require_regular(path, "visual state stream entry")
+            source = path.read_bytes()
+            if declared_sequence in self.stream_validated_bytes:
+                expected_hash = self.stream_sequence_hashes[declared_sequence]
+                if source != self.stream_validated_bytes[declared_sequence] or match.group("state_hash") != expected_hash:
+                    raise ValueError("visual state stream canonical bytes/history were rewritten")
+                rows[declared_sequence] = (None, expected_hash)
+                continue
             try:
-                source = path.read_bytes()
                 raw = json.loads(source)
             except (UnicodeDecodeError, json.JSONDecodeError) as exc:
                 raise ValueError(f"visual state stream is not valid UTF-8 JSON: {exc}") from exc
@@ -551,6 +567,7 @@ class FactoryVisualRuntime:
             if sequence in rows:
                 raise ValueError("visual state stream contains duplicate sequences")
             rows[sequence] = (document, state_hash)
+            validated_sources[sequence] = source
         if sorted(rows) != list(range(len(rows))):
             raise ValueError("visual state stream sequence is not contiguous")
         if len(rows) < len(self.stream_sequence_hashes):
@@ -560,8 +577,10 @@ class FactoryVisualRuntime:
                 raise ValueError("visual state stream history was rewritten")
         for sequence in range(len(self.stream_sequence_hashes), len(rows)):
             document, state_hash = rows[sequence]
+            assert document is not None
             self._accept_candidate(document, state_hash, require_contiguous=True)
             self.stream_sequence_hashes[sequence] = state_hash
+        self.stream_validated_bytes.update(validated_sources)
 
     def capture_metadata(self) -> dict[str, object]:
         files: dict[str, dict[str, object]] = {}

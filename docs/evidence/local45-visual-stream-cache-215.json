@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "scope": "CPU-only closed-stream read/validation observation; not an end-to-end fleet throughput benchmark",
+  "input_run_id": "27fcdf0eb6d54caa8deae18744eab0f4",
+  "before": {
+    "source_sha256": "2cbd50cec561b1f2247239a4794debf26101c87260b49352a796b96ec1bb3b97",
+    "stream_files": 14,
+    "stream_bytes": 19824,
+    "calls": 200,
+    "median_wall_ms": 6.434500013710931,
+    "max_wall_ms": 22.202500025741756,
+    "total_wall_s": 1.4172259996994399,
+    "original_stream_unchanged": true
+  },
+  "after": {
+    "source_sha256": "1381b054c50074d0dcb64b22b79c6719c39f868fef64995bd7762ed1413bcf7f",
+    "stream_files": 14,
+    "stream_bytes": 19824,
+    "calls": 200,
+    "median_wall_ms": 2.9821000061929226,
+    "max_wall_ms": 5.441499990411103,
+    "total_wall_s": 0.6222926001064479,
+    "original_stream_unchanged": true
+  },
+  "measurement_sha256": [
+    "f843031646266851bfdee391b5265b0982ae58bbd1551043e222d5bfd2124daf",
+    "0730a4b0cfce076c4d2c069182f6b8dcde5115212df8c7903c924a5341aead68"
+  ],
+  "invariants": [
+    "Read all current bytes and regular-file/directory identity on each poll",
+    "Compare cached bytes exactly; do not trust size or mtime as content identity",
+    "Reject deletion, duplicate/gapped sequences and filename/content history changes",
+    "Validate each new state and retain due-time/order behavior",
+    "Invalidate parse cache if run/scenario/robot identity changes"
+  ],
+  "limitations": [
+    "Two observations, 200 repeated calls each on the same 14-file closed stream",
+    "Another SDK run was active; wall observations are not a controlled whole-system speedup",
+    "Live068 source is frozen before this optimization; do not attribute its RTF to this change"
+  ]
+}
