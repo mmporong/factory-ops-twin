@@ -2,7 +2,7 @@
 
 반도체 후공정의 최종검사·포장 구역에서 **4대 AMR의 트레이 공급·완제품 출하·빈 캐리어 회수**를 Isaac Sim·ROS 2와 웹 관제로 연결하는 프로젝트입니다.
 
-[새 반도체 구역 설정](configs/factory-semiconductor)은 트레이 저장소·테스트 핸들러·ATE·AOI·ESD 포장대의 용도와 배치를 구분합니다. 새 배치의 실제 Isaac Sim 조감·설비 근접 촬영을 마쳤습니다. 로트12건의 순차 투입·연속 배차·재고 보존과 제품/반납 캐리어 표시를 CPU에서 함께 확인했습니다. 최신 [물리 운송064](docs/evidence/local45-transport-064.json)은12건 투입·2건 출하 후3시간 실행 상한으로 종료됐습니다. 장기 운송·예약 대기의 원인 분석, 전체 물류 완주와 새 대표 GIF는 남아 있습니다. [공정·설비·운영 범위](docs/semiconductor-cell.md)
+[반도체 구역의 기존 기준선](configs/factory-semiconductor)은 트레이 저장소·테스트 핸들러·ATE·AOI·ESD 포장대의 용도와 배치를 구분합니다. 로트12건의 순차 투입·연속 배차·재고 보존과 제품/반납 캐리어 표시를 CPU에서 함께 확인했습니다. 최신 [물리 운송064](docs/evidence/local45-transport-064.json)은12건 투입·2건 출하 후3시간 실행 상한으로 종료됐습니다. 장기 운송·예약 대기의 원인 분석, 전체 물류 완주와 새 대표 GIF는 남아 있습니다. [공정·설비·운영 범위](docs/semiconductor-cell.md)
 
 [이중 차로 배치](configs/factory-semiconductor-dual-lane)는36×28m 구역의 남·북 주통로와 동쪽 통로를 방향별로 나눕니다.19개 생산 설비의 평면 외곽을 유지하고, 정비 소품34개와 상태등·트레이 표시를 이동한 설비에 맞췄습니다. 출하 포장대 하나는 최신 고정 카탈로그의 NVIDIA 컨베이어로 교체하고, 실제 높이에 맞춰 충돌 외곽도 갱신했습니다. CPU 검사에서180개 정상/폐쇄 경로, 맞은편 차로의 예약 분리와 교차 경로의 대기,35개 제공처 모델의 실제 USD 합성을 확인했습니다. **새 배치의 실제4대 운송은 아직 검증 전입니다.** [합성·지도·에셋 근거](docs/evidence/semiconductor-dual-lane-201.json) · [설계도 · 실제 렌더 아님](docs/images/semiconductor-dual-lane-plan/layout.svg)
 
@@ -14,11 +14,15 @@
 
 첫 화면은 **이전 센서 모듈 구역 실행**의 전체 업무 영상에서 고른12초 반복 GIF입니다. 새 반도체 구역의 영상과 구분합니다. 원본 영상의10fps·명목74배속 요약이며, 이미지를 누르면 전체 MP4로 이동합니다. [GIF 출처·변환 기록](docs/images/fleet4-local45-036/readme-smooth-preview-provenance.json)
 
-| 현재 반도체 구역 · 실제 Isaac Sim 조감 | 테스트 핸들러·ATE·검사 설비 근접 |
+| 이중 차로 반도체 구역 · 실제 Isaac Sim 조감 | 테스트 핸들러·ATE·검사 설비 근접 |
 |---|---|
-| ![트레이 저장소와 후공정 설비 및 NVIDIA 정비 에셋34개를 배치한 반도체 최종검사·포장 구역](docs/images/semiconductor-layout-local45-196/overview.png) | ![트레이 승강부·검사 창·HMI와 ATE 캐비닛](docs/images/semiconductor-layout-local45-196/test-handler.png) |
+| ![방향별 통로와 후공정 셀 및 NVIDIA 포장 컨베이어를 배치한 반도체 최종검사·포장 구역](docs/images/semiconductor-dual-local45-202/overview.png) | ![새 배치의 트레이 승강부·검사 창·HMI와 ATE 캐비닛](docs/images/semiconductor-dual-local45-202/test-handler.png) |
 
-위 두 장은 **Isaac Sim4.5에서 촬영한 정지 RGB**입니다. 공개 기능 자료를 참고한 비브랜드 절차형 생산 설비와 NVIDIA SimReady 정비·지원 소품34개를 함께 렌더링했습니다. 제공처 원본 모델과 프로젝트의 절차형 장비를 구분하며 AMR 반복 운송이나 공장 처리량의 근거로 사용하지 않습니다. 같은 물리 시점에서 촬영했고 렌더 오류0건·소유 프로세스 종료를 확인했습니다. [촬영 소스·시점·카메라·원본 해시·종료 기록](docs/images/semiconductor-layout-local45-196/provenance.json)
+위 두 장은 **Isaac Sim4.5에서 촬영한 정지 RGB**입니다. 공개 기능 자료를 참고한 비브랜드 절차형 생산 설비, NVIDIA 정비 소품34개와 포장 컨베이어1개를 함께 렌더링했습니다. 같은 물리 시점의 실제 이미지이며 AMR 반복 운송이나 공장 처리량의 근거로 사용하지 않습니다. 단색으로 나온 추가 시점 한 장은 제외했고, 원래 결과와 제외 사유를 보존했습니다. [촬영 소스·시점·카메라·원본 해시·종료·제외 기록](docs/images/semiconductor-dual-local45-202/provenance.json)
+
+![실제 크기의 NVIDIA 포장 컨베이어를 새 출하 구역에서 촬영한 Isaac Sim RGB](docs/images/semiconductor-dual-local45-203/pack-conveyor.png)
+
+컨베이어의 프레임·롤러·배선·게이트 형상과 재질을 확인한 별도 근접 촬영입니다. 제공처 모델을 실제 크기로 배치했으며, 벨트 구동·검사 센서·자동 선별을 구현한 영상은 아닙니다. 단색 RGB를 거르는 검사와 소유 프로세스 종료를 확인했습니다. [별도 재촬영 출처](docs/images/semiconductor-dual-local45-203/provenance.json) · [모델·라이선스·사용 범위](docs/asset-attribution.md)
 
 <details>
 <summary>지원 구역의 NVIDIA SimReady 모델 · 제공처 원본 미리보기</summary>

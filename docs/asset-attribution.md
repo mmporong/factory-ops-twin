@@ -6,6 +6,18 @@
 
 이 구성의4종·35개 모델은 고정 revision `653d91e182011f357cf1644013cc94ddf194d349`를 사용한다. 전체 선택 런타임은1,341,514,263B이며, 이전 캐시와 해시가 같은147개 파일을 재사용해 추가 다운로드를494,707,812B로 줄였다. 이전 캐시를 수정하지 않는다. 장비에 배치하는 모델도 물리 API·관절 typed prim을 제거한 시각 전용이다. 기존 설비 충돌체가 물리·센서 외곽의 권위이며 모델의 실제 XYZ 형상이 그 외곽 안에 있어야 한다. 같은 revision의3종 지원 소품34개도 새 통로 밖에 재배치한다.
 
+[실제 USD 합성](evidence/semiconductor-dual-lane-201.json)에서35개 월드 외곽, 정적 충돌체20개 보존, 추가 물리 API·관절0개를 확인했다. [202 조감·핸들러 RGB](images/semiconductor-dual-local45-202/provenance.json)와 [203 컨베이어 근접 RGB](images/semiconductor-dual-local45-203/provenance.json)를 SDK4.5에서 촬영했다.202의 단색 추가 프레임은 제외했으며 원본을 성공 이미지로 바꾸지 않았다.203은 수정된 카메라 하나의 재촬영으로, 두 실행을 하나의 운영 시각으로 합치지 않는다. 렌더 오류0건과 각 Job의 종료·남은 소유 PID0을 확인했다.
+
+현재 구성의 캐시는 아래 명령으로 준비한다. 제공처 원본은 Git에 넣지 않는다.
+
+```powershell
+cd "$HOME/factory-ops-twin"
+$factorySdk = 'E:/IsaacSim/isaac-sim-4.5.0'
+$factoryAssetCache = 'E:/FactoryOpsAssets/simready-context'
+& "$factorySdk/kit/python/python.exe" -B scripts/assets/prepare_factory_context.py --config configs/factory-semiconductor-dual-lane/visual-assets.json --cache-root $factoryAssetCache --sdk $factorySdk
+$env:FACTORY_OPS_ASSET_CACHE = $factoryAssetCache
+```
+
 | 용도 | NVIDIA 원본 패키지 | 준비된 형상 크기 X×Y×Z | 배치 수 |
 |---|---|---|---:|
 | 공구 보관 캐비닛 | [furniture_workbench_modular_a01](https://huggingface.co/datasets/nvidia/simready-assets/tree/524747d9b5e1f21b5b18b56041788c01d745f1a1/furniture_workbench_modular_a01) | 0.714×1.445×2.050m | 15 |

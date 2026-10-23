@@ -1,0 +1,153 @@
+{
+  "schema_version": 1,
+  "run_id": "f86987801ac64e458d550f3ba5e91382",
+  "source_commit": "a3ee36b29d333a14689ab3349445b7df43346b56",
+  "scope": "Selected actual static Isaac Sim4.5 RGB; no AMR transport, production throughput, belt actuation or inspection sensor qualification",
+  "source_archive_sha256": "989695b40eaa7e9400c85c2014992cac7a96fd2a3bbfc152d8f254f912815aec",
+  "preview_script_sha256": "b50ea753611af492f40221844b537da1e3c67af6736db645c200289cd327c9aa",
+  "input_sha256": {
+    "layout.json": "e7d0b9cdf0c8bdbc201e81dc5062446651b6abb5c52ea40cba6949ef62670887",
+    "visual-assets.json": "097a7cad07810088424953ba2ec44daab104e318390213ec6d137960b2a4766e",
+    "render-profile.json": "9316ace098cd9d567e514c8e47ad63cbc49351a279e0379c3b09fe76aad61c71",
+    "scene/factory-v3.usda": "db9288417573eb0a1fd71544bf5f8b811bd1400d73dc556cc5ab4b616a0c8211"
+  },
+  "captures": [
+    {
+      "path": "overview.png",
+      "sha256": "cd4729421253f8088f3a52905beb11233750e0604d263f4dc3cd7db444cbd0c4",
+      "width": 1280,
+      "height": 720,
+      "camera_eye_xyz_m": [
+        18,
+        -15,
+        30
+      ],
+      "camera_target_xyz_m": [
+        18,
+        14,
+        0.7
+      ],
+      "focal_length_mm": 18,
+      "physics_frame": 2,
+      "sim_time_s": 0.03333333507180214,
+      "source": "native Replicator RGB; no generated image or interpolation",
+      "accepted": true,
+      "signalstats": {
+        "YMIN": 19,
+        "YMAX": 212,
+        "UMIN": 59,
+        "UMAX": 178,
+        "VMIN": 69,
+        "VMAX": 187
+      }
+    },
+    {
+      "path": "test-handler.png",
+      "sha256": "58f2aa7bc90a4b3a4edc4084d1131a4311a29753304cdb3303a1fe3bd1a1ed79",
+      "width": 1280,
+      "height": 720,
+      "camera_eye_xyz_m": [
+        26,
+        4,
+        13
+      ],
+      "camera_target_xyz_m": [
+        19,
+        12.5,
+        1
+      ],
+      "focal_length_mm": 26,
+      "physics_frame": 2,
+      "sim_time_s": 0.03333333507180214,
+      "source": "native Replicator RGB; no generated image or interpolation",
+      "accepted": true,
+      "signalstats": {
+        "YMIN": 22,
+        "YMAX": 211,
+        "UMIN": 58,
+        "UMAX": 159,
+        "VMIN": 69,
+        "VMAX": 155
+      }
+    }
+  ],
+  "rejected_captures": [
+    {
+      "path": "pack-conveyor.png",
+      "sha256": "04e40913895dda5759c6c8a78774dba9820cda399dcf37c500ef4d133d8057d9",
+      "width": 1280,
+      "height": 720,
+      "camera_eye_xyz_m": [
+        37,
+        6,
+        6
+      ],
+      "camera_target_xyz_m": [
+        32.6,
+        10.55,
+        1.1
+      ],
+      "focal_length_mm": 30,
+      "physics_frame": 2,
+      "sim_time_s": 0.03333333507180214,
+      "source": "native Replicator RGB; no generated image or interpolation",
+      "accepted": false,
+      "reason": "uniform RGB; original producer passed its weaker check",
+      "signalstats": {
+        "YMIN": 212,
+        "YMAX": 212,
+        "UMIN": 128,
+        "UMAX": 128,
+        "VMIN": 128,
+        "VMAX": 128
+      }
+    }
+  ],
+  "original_producer_status": "passed",
+  "portfolio_selection_status": "partial",
+  "AI_generated_images": false,
+  "interpolated_frames": false,
+  "closure": {
+    "closed": true,
+    "remaining_owned_pids": [],
+    "cleanup_errors": [],
+    "job_receipt_sha256": "5513f1245e5f86b0a1306192c07fecae5c6aacbc439acde4e3b97a194b128325",
+    "result_receipt_sha256": "638de7bb6bc403429bf619463ebe8cb0350c147710b1e11a9092d581eb5bfd64",
+    "prelaunch_inputs_verified": true,
+    "ROS_started": false,
+    "bag_SQL_opened": false
+  },
+  "render_log": {
+    "sha256": "4de3884bcea0eb2330d8308dbc3bd46e010202a5841aee02e00d1ac9bde121eb",
+    "error_count": 0,
+    "joint_error_count": 0
+  },
+  "renderer_readback": {
+    "status": "requested_but_sdk_setting_unavailable_or_unverified",
+    "requested": {
+      "renderer": "RTX Real-Time 2.0",
+      "launch_renderer": "RealTimePathTracing",
+      "allowed_readbacks": [
+        "RayTracedLighting",
+        "RealTimePathTracing"
+      ],
+      "dlss_mode": "Quality",
+      "dlss_exec_mode": 2
+    },
+    "readback": {
+      "renderer_before": "RaytracedLighting",
+      "renderer_after": "RaytracedLighting",
+      "dlss_before": 0,
+      "dlss_after": 2
+    },
+    "renderer_unchanged": true
+  },
+  "factory_context": {
+    "fixture_count": 35,
+    "support_props": 34,
+    "mounted_production_assets": 1,
+    "catalog_revision": "653d91e182011f357cf1644013cc94ddf194d349",
+    "physics": "render-only external meshes;20 source colliders authoritative"
+  },
+  "remaining": "four-AMR full logistics, final-scene SDG and operational media remain unqualified"
+}
