@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "qualification": "encoder_path_following_baseline",
+  "physics_dt_s": 0.016666666666666666,
+  "warmup_steps": 120,
+  "maximum_sim_time_s": 45.0,
+  "maximum_wall_time_s": 600.0,
+  "capture_every_physics_steps": 15,
+  "image_size_px": [
+    640,
+    480
+  ],
+  "spawn_xyz_m": [
+    0.0,
+    0.0,
+    0.15
+  ],
+  "drive_geometry": {
+    "wheel_radius_m": 0.14,
+    "wheel_separation_m": 0.4132
+  },
+  "drive_limits": {
+    "max_linear_m_s": 0.6,
+    "max_angular_rad_s": 1.2,
+    "linear_accel_m_s2": 0.25,
+    "linear_decel_m_s2": 0.35,
+    "angular_accel_rad_s2": 0.5,
+    "angular_decel_rad_s2": 0.7,
+    "lateral_accel_m_s2": 0.2,
+    "max_wheel_rad_s": 6.0,
+    "wheel_accel_rad_s2": 4.0
+  },
+  "path": {
+    "straight_length_m": 2.0,
+    "quarter_arc_radius_m": 2.0,
+    "sample_spacing_m": 0.05
+  },
+  "controller": {
+    "lookahead_m": 0.6,
+    "cruise_linear_m_s": 0.59,
+    "yaw_gain": 0.35,
+    "final_yaw_gain": 1.5,
+    "position_tolerance_m": 0.08,
+    "yaw_tolerance_rad": 0.05,
+    "stop_linear_m_s": 0.02,
+    "stop_angular_rad_s": 0.03,
+    "stationary_dwell_s": 0.5,
+    "post_stop_observation_s": 0.5
+  },
+  "evaluation": {
+    "maximum_rms_cross_track_m": 0.18,
+    "maximum_cross_track_m": 0.4,
+    "maximum_endpoint_error_m": 0.18,
+    "maximum_heading_error_rad": 0.65,
+    "maximum_post_stop_motion_m": 0.03,
+    "maximum_tilt_rad": 0.35,
+    "maximum_actual_linear_m_s": 0.6,
+    "maximum_actual_angular_rad_s": 1.2
+  },
+  "scope": "one unloaded Nova Carter encoder-controlled component baseline; no Nav2, fleet, payload, docking, transport, motor calibration or industrial rating"
+}

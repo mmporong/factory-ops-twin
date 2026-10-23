@@ -1,0 +1,191 @@
+{
+  "schema_version": 1,
+  "evidence_id": "local45-path-baseline-226",
+  "status": "passed",
+  "run_id": "e88c77915f7d4e8eb1ef90328b36a047",
+  "scope": "one unloaded Nova Carter encoder-controlled component baseline; no Nav2, fleet, payload, docking, transport, motor calibration or industrial rating",
+  "control_boundary": "wheel encoder odometry and authored path only; simulator truth is evaluation only",
+  "clock": {
+    "started_at_utc": "2026-10-23T10:07:02.169528+00:00",
+    "finished_at_utc": "2026-10-23T10:07:39.492651+00:00",
+    "probe_elapsed_wall_s": 37.32799999997951,
+    "host_elapsed_wall_s": 38.883377699996345,
+    "observation_first_sim_time_s": 2.65000013820827,
+    "observation_last_sim_time_s": 16.68333420343697,
+    "controlled_observation_duration_s": 14.0333340652287,
+    "first_physics_frame": 159,
+    "last_physics_frame": 1001,
+    "physics_hz": 60
+  },
+  "path": {
+    "kind": "2 m straight followed by tangent 2 m-radius quarter arc",
+    "reference_length_m": 5.141592653589793,
+    "controller": "monotonic pure pursuit with terminal braking, final yaw alignment and stationary dwell",
+    "lookahead_m": 0.6,
+    "cruise_command_m_s": 0.59
+  },
+  "encoder_goal": {
+    "position_error_m": 0.03251164915664747,
+    "yaw_error_rad": 0.047694902754749746,
+    "stationary_since_s": 15.666667483747005,
+    "accepted_from_encoder": true
+  },
+  "independent_ground_truth_evaluation": {
+    "passed": true,
+    "checks": {
+      "rms_cross_track": true,
+      "maximum_cross_track": true,
+      "heading": true,
+      "endpoint": true,
+      "post_stop_motion": true,
+      "tilt": true,
+      "actual_linear_speed": true,
+      "actual_angular_speed": true
+    },
+    "metrics": {
+      "rms_cross_track_m": 0.04759226458389848,
+      "maximum_cross_track_m": 0.0764841618254688,
+      "maximum_heading_error_rad": 0.19996155068381283,
+      "endpoint_error_m": 0.07122135271996279,
+      "post_stop_motion_m": 1.0024927158557234e-05,
+      "maximum_tilt_rad": 0.00030379154276670883,
+      "maximum_actual_linear_m_s": 0.591455388309952,
+      "maximum_actual_angular_rad_s": 0.3284912109375
+    },
+    "truth_usage": "independent evaluation only; never controller or goal-acceptance input"
+  },
+  "bounds": {
+    "authored_drive_limits": {
+      "max_linear_m_s": 0.6,
+      "max_angular_rad_s": 1.2,
+      "linear_accel_m_s2": 0.25,
+      "linear_decel_m_s2": 0.35,
+      "angular_accel_rad_s2": 0.5,
+      "angular_decel_rad_s2": 0.7,
+      "lateral_accel_m_s2": 0.2,
+      "max_wheel_rad_s": 6.0,
+      "wheel_accel_rad_s2": 4.0,
+      "provenance": "current G2 authored simulation command envelope"
+    },
+    "evaluation": {
+      "maximum_rms_cross_track_m": 0.18,
+      "maximum_cross_track_m": 0.4,
+      "maximum_endpoint_error_m": 0.18,
+      "maximum_heading_error_rad": 0.65,
+      "maximum_post_stop_motion_m": 0.03,
+      "maximum_tilt_rad": 0.35,
+      "maximum_actual_linear_m_s": 0.6,
+      "maximum_actual_angular_rad_s": 1.2
+    }
+  },
+  "data": {
+    "observation_rows": 843,
+    "maximum_rows": 10000,
+    "rgb_frames": 56,
+    "maximum_rgb_frames": 180,
+    "rgb_graph_warmup": {
+      "shape": [
+        480,
+        640,
+        4
+      ],
+      "dtype": "uint8",
+      "spatial_std_rgb": 5.416352327950096,
+      "expected_shape_yx": [
+        480,
+        640
+      ],
+      "expected_dtype": "uint8"
+    },
+    "last_rgb_diagnostic": {
+      "shape": [
+        480,
+        640,
+        4
+      ],
+      "dtype": "uint8",
+      "spatial_std_rgb": 3.9041898700643247,
+      "expected_shape_yx": [
+        480,
+        640
+      ],
+      "expected_dtype": "uint8"
+    },
+    "plot": "local45-path-baseline-226.svg"
+  },
+  "host_closure": {
+    "containment": "Windows Job Object; assignment before worker gate opens; no breakaway",
+    "assignment_confirmed": true,
+    "timed_out": false,
+    "worker_exit_code": 0,
+    "closed": true,
+    "remaining_owned_pids": []
+  },
+  "launch_pins": {
+    "prelaunch_inputs_verified": true,
+    "inputs_sha256": {
+      "C:\\Users\\LIMMM\\factory-ops-twin\\factory_ops\\path_following_baseline.py": "19b5cca2806d06b8e384d97515b09498a2e43ee7ff937d0709434350f85791de",
+      "C:\\Users\\LIMMM\\factory-ops-twin\\factory_ops\\drive_profile.py": "6bba5a51caa5e4a71662339026afc67e1efe1d7370cb04c372cde48eba9d7185",
+      "C:\\Users\\LIMMM\\factory-ops-twin\\factory_ops\\motion.py": "a8d670ce9e0309093c47a6a63ff70c78182021f6b50496933e29985466ed6cd1",
+      "C:\\Users\\LIMMM\\factory-ops-twin\\scripts\\isaac\\probe_path_following_baseline.py": "da97078ad5a2a2bd858eb6334a9a54745024bec3b6e9e2a372edde5882456e61",
+      "C:\\Users\\LIMMM\\factory-ops-twin\\configs\\local45-path-following-baseline.json": "bc83d7d2b997fc180fe0d75fbf0596fd9238a2afef2aa6807dff8d81143f452b"
+    },
+    "frozen_source": {
+      "path": "E:/factory-ops-runs/path-baseline-226/frozen-source",
+      "manifest_sha256": "0278f0d61d9160e66149307afe1808e450245e33efd7b69861935d72a068bd3f",
+      "file_count": 5
+    }
+  },
+  "raw_artifacts": {
+    "result": {
+      "path": "E:/factory-ops-runs/path-baseline-226/result.json",
+      "sha256": "95209f8176db3012205b291dbab87c6bbbe763637dc1a91bd64b8e54b669d05e"
+    },
+    "observations": {
+      "path": "E:/factory-ops-runs/path-baseline-226/observations.jsonl",
+      "sha256": "33059cb1e601b26605d66fb9c168c1d1b845b48a47c245dafd710a94f962a50c"
+    },
+    "host_receipt": {
+      "path": "artifacts/operations/path-baseline-226-host/receipt.json",
+      "sha256": "dde278d8df46adb6482fe20fbd62e214901017838ced01fe75adb3c8cca44016"
+    },
+    "host_spec": {
+      "path": "artifacts/operations/path-baseline-226-host/spec.json",
+      "sha256": "8d68fe9a31cb01ab2cbda8ea7837c7a5a08e2022c1bb6086af73e431eda51b28"
+    },
+    "frozen_manifest": {
+      "path": "E:/factory-ops-runs/path-baseline-226/frozen-source/manifest.json",
+      "sha256": "0278f0d61d9160e66149307afe1808e450245e33efd7b69861935d72a068bd3f"
+    }
+  },
+  "predecessor_failures_preserved": {
+    "224": {
+      "status": "failed",
+      "stage": "encoder_path_following",
+      "result_sha256": "58ef9b0fd10f8664b2cf126464fbc7cc7fc0162865746d11f7e8d5f2ac96f5ee",
+      "error": "genuine RGB frame unavailable",
+      "ground_truth_metrics": null
+    },
+    "225": {
+      "status": "failed",
+      "stage": "complete",
+      "result_sha256": "52743b00f196c6b8be8cd0940c8d588350f7ce8b4328ba63d66133a06ae47e62",
+      "error": "independent ground-truth path evaluation failed",
+      "ground_truth_metrics": {
+        "rms_cross_track_m": 0.04898351276931381,
+        "maximum_cross_track_m": 0.07760555464265868,
+        "maximum_heading_error_rad": 0.1963983447071511,
+        "endpoint_error_m": 0.07378820098763408,
+        "post_stop_motion_m": 1.2636184692393904e-05,
+        "maximum_tilt_rad": 0.0002950022194149549,
+        "maximum_actual_linear_m_s": 0.6014760090021434,
+        "maximum_actual_angular_rad_s": 0.3376730680465698
+      }
+    }
+  },
+  "limitations": [
+    "One unloaded Nova Carter component run in Isaac Sim 4.5.",
+    "No payload/contact, Nav2, fleet traffic, docking, factory transport, motor calibration or industrial rating was verified.",
+    "Simulator ground truth was excluded from control and encoder goal acceptance; it was used only for independent evaluation."
+  ]
+}

@@ -1218,3 +1218,11 @@ WEST_LINK와 CENTER_LINK는 진입 구간부터 작성된 첫 출구 앵커까�
 운영 재생223b는 Nova Carter에 이미 존재하는 `xformOp:orient`가 `quatd`인데 기본 `AddOrientOp()`가 float 정밀도를 요청해 USD 예외로 종료됐다. `ClearXformOpOrder()`는 기존 속성을 삭제하지 않으므로 같은 이름으로 op를 다시 만들면 타입 충돌이 남는다. 촬영0장과 종료 PID0을 보존했다.
 
 재생 전용 `Replay` suffix의 translate/orient op를 한 번 만들고, 두 op의 정밀도를double로 고정했다. 이후 프레임에서는 op를 추가하지 않고 값만 갱신한다.223c에서1280×720 RGB3장, 동결 타임라인·생산자passed·Job closed·소유 PID0을 확인했다. 이는 운영 상태의 시각 재생이며 바퀴 구동 물리의 성공 근거가 아니다.
+
+## FOT-147 — 경로 추종 기준선의 RGB graph 준비와 엄격한 실제 속도 한계
+
+224는 카메라·render product·annotator를 기존 물리 warmup 뒤에 만들고 첫 예약 프레임에서 RGB를 읽었다. `encoder_path_following` 단계에서 `genuine RGB frame unavailable`로 종료됐으며 당시 shape·dtype·공간 표준편차는 기록되지 않았다. 원본 실패 결과를 유지했다. 카메라 graph를 만든 뒤 바퀴 목표를0으로 유지하며36회 `World.step(render=True)`를 수행하고, 그 다음 엔코더 odometry zero와 GT 평가 원점을 잡도록 순서를 바꿨다. 기존 통과 probe와 같은 `world.step(render=True) → rgb.get_data()` 경로를 사용하며 warmup과 각 촬영의 shape·dtype·RGB 공간 표준편차를 결과에 남긴다. 이 변경은 미디어 기동 시간을 제어 구간에 포함하지 않는다.
+
+225는 RGB480×640×4·uint8을 확보하고 엔코더 goal을 수락했지만 독립 GT의 실제 최대 전진 속도가0.601476009m/s로 작성된0.6m/s 한계를 넘었다. 횡오차·heading·종점·정지 후 이동·tilt·각속도 검사는 통과했어도 선속도 검사를 완화하지 않고 전체 결과를failed로 보존했다. DriveProfile의 한계와 GT 평가 임계값0.6m/s는 유지하고 cruise 요청만0.60m/s에서0.59m/s로 낮췄다.
+
+226은843개 표본·14.033334초 제어 구간에서 엔코더 goal을 위치 오차0.032512m·yaw 오차0.047695rad로 수락했다. 독립 GT의 실제 최대 전진 속도는0.591455388m/s, 횡오차 RMS0.047592m·최대0.076484m, 종점 오차0.071221m, 정지 후 이동0.000010m였고8개 검사가 모두 통과했다. RGB56장은 실제480×640×4·uint8 frame이며 보간하지 않았다. Windows Job은exit0으로 닫혔고 잔여 소유 PID는0이다. 실행 전 고정한5개 파일은 영수증과 같은 해시로 `E:/factory-ops-runs/path-baseline-226/frozen-source`에 보존했다. 이 결과는 무적재 Nova Carter 한 대의 엔코더 제어 component 기준선이며135의 적재 접촉 물리, Nav2, fleet 회피, 도킹, 공장 운송 성공과 결합해 표시하지 않는다. [226 결과·원본 해시·범위](evidence/local45-path-baseline-226.json) · [궤적·속도·횡오차](evidence/local45-path-baseline-226.svg)
