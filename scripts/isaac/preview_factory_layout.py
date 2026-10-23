@@ -19,8 +19,8 @@ def main() -> int:
     parser.add_argument("--bundle", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--run-id", required=True)
-    parser.add_argument("--camera-id", choices=("packing_conveyor",),
-                        help="capture just one declared profile view for a bounded camera repair")
+    parser.add_argument("--camera-id", choices=("portfolio_overview", "cell_process", "packing_conveyor"),
+                        default="portfolio_overview", help="capture one declared view in an isolated process")
     args = parser.parse_args()
     if args.output.exists() or len(args.run_id) != 32:
         raise ValueError("new output and 32-character preview identity required")
@@ -38,7 +38,7 @@ def main() -> int:
     report = {"run_id": args.run_id, "status": "starting", "scope": "authored layout RGB preview; no robot mission or factory throughput proof",
         "source_sha256": sha(__file__), "input_sha256": {n: sha(args.bundle/n) for n in
             ("layout.json", "visual-assets.json", "render-profile.json", "scene/factory-v3.usda")},
-        "captures": [], "ROS_started": False, "bag_SQL_opened": False, "cleanup_errors": [],
+        "captures": [], "capture_checks": [], "ROS_started": False, "bag_SQL_opened": False, "cleanup_errors": [],
         "asset_cache_root": str(cache_root)}
     app = None
     annotator = product = None
@@ -81,18 +81,18 @@ def main() -> int:
         if layout.get("revision") == "amr-semiconductor-dual-lane-v1":
             profile = json.loads((args.bundle/"render-profile.json").read_text(encoding="utf-8"))
             cameras = {camera["id"]: camera for camera in profile["cameras"]}
-            selections = [("overview", "portfolio_overview"), ("test-handler", "cell_process")]
-            if args.camera_id is not None and "packing_conveyor" in cameras:
-                selections.append(("pack-conveyor", "packing_conveyor"))
-            if args.camera_id is not None:
-                selections = [(name, key) for name, key in selections if key == args.camera_id]
-                if not selections:
-                    raise ValueError("selected preview camera is absent from the profile")
+            selections = [(name, key) for name, key in (("overview", "portfolio_overview"),
+                ("test-handler", "cell_process"), ("pack-conveyor", "packing_conveyor"))
+                if key == args.camera_id and key in cameras]
+            if not selections:
+                raise ValueError("selected preview camera is absent from the profile")
             views = tuple((name, cameras[key]["eye_xyz_m"], cameras[key]["target_xyz_m"],
                            cameras[key]["focal_length_mm"])
                           for name, key in selections)
-        elif args.camera_id is not None:
+        elif args.camera_id != "portfolio_overview":
             raise ValueError("camera selection requires the dual-lane profile")
+        else:
+            views = views[:1]
         for name, eye, target, focal in views:
             camera = rep.create.camera(position=eye, look_at=target, focal_length=focal)
             product = rep.create.render_product(camera, (1280, 720))
@@ -104,6 +104,12 @@ def main() -> int:
             rep.orchestrator.step(delta_time=0., rt_subframes=8)
             rep.orchestrator.wait_until_complete()
             data = np.asarray(annotator.get_data())
+            check = {"camera": name, "shape": list(data.shape), "finite": bool(np.isfinite(data).all()),
+                "physics_before": list(frozen), "physics_after": [int(world.current_time_step_index), float(world.current_time)]}
+            if data.ndim == 3 and data.shape[2] >= 3:
+                check["rgb_spatial_standard_deviation_max"] = float(np.max(np.std(data[:, :, :3], axis=(0, 1))))
+            report["capture_checks"].append(check)
+            save()
             if (data.ndim != 3 or data.shape[:2] != (720, 1280) or data.shape[2] < 3
                     or not np.isfinite(data).all() or not np.any(data[:, :, :3])
                     or float(np.max(np.std(data[:, :, :3], axis=(0, 1)))) < 1.
