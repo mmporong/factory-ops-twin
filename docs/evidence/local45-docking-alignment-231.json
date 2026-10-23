@@ -1,0 +1,272 @@
+{
+  "schema_version": 1,
+  "evidence_id": "local45-docking-alignment-231",
+  "status": "passed",
+  "run_id": "234602e8b2c04b4c8937dcf7c1e1e9ca",
+  "scope": "one unloaded Nova Carter encoder-only low-speed approach, yaw alignment and stationary dwell at an authored pad; ground truth is post-run evaluation only; no payload, electrical contact, physical contact sensor, ChargingFleet, motor calibration or real charging claim",
+  "control_boundary": "wheel encoder odometry and authored pad pose only; simulator truth is evaluation only",
+  "clock": {
+    "started_at_utc": "2026-10-23T11:12:53.215046+00:00",
+    "finished_at_utc": "2026-10-23T11:13:34.207460+00:00",
+    "probe_elapsed_wall_s": 40.98499999998603,
+    "host_elapsed_wall_s": 42.35899999999674,
+    "observation_first_sim_time_s": 2.65000013820827,
+    "observation_last_sim_time_s": 19.33333434164524,
+    "controlled_observation_duration_s": 16.68333420343697,
+    "first_physics_frame": 159,
+    "last_physics_frame": 1160,
+    "physics_hz": 60
+  },
+  "docking": {
+    "vehicle": "one unloaded Nova Carter",
+    "target_pose_odom": {
+      "x_m": 1.48,
+      "y_m": 0.08,
+      "yaw_rad": 0.18
+    },
+    "controller": "encoder odometry low-speed approach, yaw alignment and stationary dwell",
+    "phase_sample_counts": {
+      "approach": 652,
+      "yaw_alignment": 223,
+      "stationary_dwell": 66,
+      "complete": 61
+    },
+    "stationary_dwell_s": 1.0,
+    "post_stop_observation_s": 1.0,
+    "authored_pad_alignment": {
+      "target_pose_odom": {
+        "x_m": 1.48,
+        "y_m": 0.08,
+        "yaw_rad": 0.18
+      },
+      "computed_world_pose": {
+        "x_m": 1.481069009948379,
+        "y_m": 0.07998242132366469,
+        "z_m": 0.015,
+        "yaw_rad": 0.17998806970031683
+      },
+      "usd_world_transform_readback": {
+        "x_m": 1.481069009948379,
+        "y_m": 0.07998242132366469,
+        "z_m": 0.015,
+        "yaw_rad": 0.179988077797324,
+        "matrix_row_major": [
+          0.5903075197437482,
+          0.1074107105656344,
+          0.0,
+          0.0,
+          -0.08055802758907832,
+          0.4427306104869206,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.029999999329447746,
+          0.0,
+          1.481069009948379,
+          0.07998242132366469,
+          0.015,
+          1.0
+        ]
+      },
+      "use": "scene visualization and post-run truth alignment only; never controller input"
+    }
+  },
+  "encoder_goal": {
+    "phase": "complete",
+    "control_input": "wheel_encoder_odometry_only",
+    "encoder_pose": {
+      "x_m": 1.4756093320305768,
+      "y_m": 0.07881700747375178,
+      "yaw_rad": 0.146204240855446,
+      "linear_m_s": 0.0005447387411209107,
+      "angular_rad_s": 0.0008045761117148011
+    },
+    "target_pose_odom": {
+      "x_m": 1.48,
+      "y_m": 0.08,
+      "yaw_rad": 0.18
+    },
+    "position_error_m": 0.004547244938957896,
+    "yaw_error_rad": 0.03379575914455399,
+    "stationary_since_s": 17.31666756980121,
+    "accepted_from_encoder": true,
+    "command": {
+      "linear_m_s": 0.0,
+      "angular_rad_s": 0.0,
+      "wheel_targets_rad_s": [
+        0.0,
+        0.0
+      ],
+      "phase": "normal_stop",
+      "curvature_limited": false,
+      "wheel_speed_limited": false,
+      "emergency_stop": false
+    }
+  },
+  "independent_ground_truth_evaluation": {
+    "passed": true,
+    "checks": {
+      "endpoint": true,
+      "yaw": true,
+      "post_stop_motion": true,
+      "tilt": true,
+      "actual_linear_speed": true,
+      "actual_angular_speed": true
+    },
+    "metrics": {
+      "endpoint_error_m": 0.0041868414214304055,
+      "yaw_error_rad": 0.03498340204651104,
+      "post_stop_motion_m": 0.0005772538894104527,
+      "maximum_tilt_rad": 8.886926314188983e-05,
+      "maximum_actual_linear_m_s": 0.14093816301042425,
+      "maximum_actual_angular_rad_s": 0.041603438556194305
+    },
+    "truth_usage": "independent post-run evaluation only; never controller or dwell input",
+    "physical_contact_verified": false,
+    "electrical_contact_verified": false
+  },
+  "bounds": {
+    "authored_drive_limits": {
+      "max_linear_m_s": 0.15,
+      "max_angular_rad_s": 0.4,
+      "linear_accel_m_s2": 0.18,
+      "linear_decel_m_s2": 0.25,
+      "angular_accel_rad_s2": 0.4,
+      "angular_decel_rad_s2": 0.6,
+      "lateral_accel_m_s2": 0.05,
+      "max_wheel_rad_s": 3.0,
+      "wheel_accel_rad_s2": 4.0,
+      "provenance": "current G2 authored simulation command envelope"
+    },
+    "encoder_acceptance": {
+      "maximum_position_error_m": 0.025,
+      "maximum_yaw_error_rad": 0.035,
+      "maximum_stationary_linear_m_s": 0.01,
+      "maximum_stationary_angular_rad_s": 0.015,
+      "stationary_dwell_s": 1.0
+    },
+    "independent_ground_truth_evaluation": {
+      "maximum_endpoint_error_m": 0.06,
+      "maximum_yaw_error_rad": 0.08,
+      "maximum_post_stop_motion_m": 0.01,
+      "maximum_tilt_rad": 0.35,
+      "maximum_actual_linear_m_s": 0.15,
+      "maximum_actual_angular_rad_s": 0.4
+    }
+  },
+  "data": {
+    "observation_rows": 1002,
+    "maximum_rows": 3000,
+    "rgb_frames": 66,
+    "maximum_rgb_frames": 180,
+    "rgb_capture_rate_fps": 4.0,
+    "rgb_source": "actual Isaac Sim RGB frames; no interpolation or duplication",
+    "rgb_graph_warmup": {
+      "shape": [
+        480,
+        640,
+        4
+      ],
+      "dtype": "uint8",
+      "spatial_std_rgb": 8.650767527138488,
+      "expected_shape_yx": [
+        480,
+        640
+      ],
+      "expected_dtype": "uint8"
+    },
+    "last_rgb_diagnostic": {
+      "shape": [
+        480,
+        640,
+        4
+      ],
+      "dtype": "uint8",
+      "spatial_std_rgb": 8.9731227588219,
+      "expected_shape_yx": [
+        480,
+        640
+      ],
+      "expected_dtype": "uint8"
+    },
+    "plot": "local45-docking-alignment-231.svg",
+    "rgb_frame_manifest": {
+      "algorithm": "sha256 of canonical JSON for ordered raw result media.frames",
+      "sha256": "3e179f2841fce0ea3e2f9f198d34c40a28c5477fa4889966db0980e295d12f72",
+      "frame_count": 66,
+      "first_frame": {
+        "path": "media/frame-0000.png",
+        "sha256": "a1c208a52a45c80b2917b133ba3d6925d57cc1ce2c1ae4b0a082c3e42d070efc",
+        "physics_frame": 173,
+        "sim_time_s": 2.883333483710885
+      },
+      "last_frame": {
+        "path": "media/frame-0065.png",
+        "sha256": "cf5693a1f45eeaf0c90affaaff0263a85bed7262f9b22ea23359bc10f73fb4b4",
+        "physics_frame": 1148,
+        "sim_time_s": 19.133334331214428
+      }
+    }
+  },
+  "verification_boundaries": {
+    "unloaded": true,
+    "goal_acceptance_input": "wheel encoder odometry only",
+    "physical_contact_verified": false,
+    "electrical_contact_verified": false,
+    "virtual_charging_applied": false,
+    "nav2_verified": false
+  },
+  "host_closure": {
+    "containment": "Windows Job Object; assignment before worker gate opens; no breakaway",
+    "assignment_confirmed": true,
+    "timed_out": false,
+    "worker_exit_code": 0,
+    "closed": true,
+    "remaining_owned_pids": []
+  },
+  "launch_pins": {
+    "prelaunch_inputs_verified": true,
+    "inputs_sha256": {
+      "C:\\Users\\LIMMM\\factory-ops-twin\\factory_ops\\docking_baseline.py": "58e8de36bcbc43d944c6432e67405ab9ae9481d70ee476af054a5273bafb1122",
+      "C:\\Users\\LIMMM\\factory-ops-twin\\factory_ops\\drive_profile.py": "6bba5a51caa5e4a71662339026afc67e1efe1d7370cb04c372cde48eba9d7185",
+      "C:\\Users\\LIMMM\\factory-ops-twin\\factory_ops\\motion.py": "a8d670ce9e0309093c47a6a63ff70c78182021f6b50496933e29985466ed6cd1",
+      "C:\\Users\\LIMMM\\factory-ops-twin\\scripts\\isaac\\probe_docking_alignment.py": "c5b67354309ba1ef2d3f6e98ac6fa9588f549dbd3db89c4615e217686c9ebdf4",
+      "C:\\Users\\LIMMM\\factory-ops-twin\\configs\\local45-docking-alignment.json": "1fbf0d3ddda4d717ac41b9677a6c07d735d9005e3818d0f47684fe01f649d7ba"
+    },
+    "frozen_source": {
+      "path": "E:/factory-ops-runs/docking-alignment-231/frozen-source",
+      "manifest_sha256": "9aef6b19994055fcc7d3c54eb70093818a9d860acd15fb959b01b074b787ee6e",
+      "file_count": 5,
+      "frozen_before_execution": true
+    }
+  },
+  "raw_artifacts": {
+    "result": {
+      "path": "E:/factory-ops-runs/docking-alignment-231/result.json",
+      "sha256": "8a3cc0dd3229eee2aaeecf9e0bee690d89ce9dd9aef0db3b363f405285f60a58"
+    },
+    "observations": {
+      "path": "E:/factory-ops-runs/docking-alignment-231/observations.jsonl",
+      "sha256": "2bb7de0cfc3c57577cbb6cf80432f1f2618ad51272263f1ac88cc3266ead21c3"
+    },
+    "host_receipt": {
+      "path": "artifacts/operations/docking-231-host/receipt.json",
+      "sha256": "53f5188dc679942ceb68394a86984f31883f38b26c3eca3aa73aedd746cfc10f"
+    },
+    "host_spec": {
+      "path": "artifacts/operations/docking-231-host/spec.json",
+      "sha256": "2f5255715413569e16d6a379bc0a591162678a6ce74dace1c0d2043e59085277"
+    },
+    "frozen_manifest": {
+      "path": "E:/factory-ops-runs/docking-alignment-231/frozen-source/manifest.json",
+      "sha256": "9aef6b19994055fcc7d3c54eb70093818a9d860acd15fb959b01b074b787ee6e"
+    }
+  },
+  "limitations": [
+    "One unloaded Nova Carter component run in Isaac Sim 4.5.",
+    "No physical-contact sensor, electrical contact, charging power, payload, Nav2, fleet traffic, automatic loading or industrial rating was verified.",
+    "Simulator ground truth was excluded from control and encoder goal acceptance; it was used only for independent post-run evaluation.",
+    "The authored pad is a visual pose marker, not a verified charger or contact surface."
+  ]
+}

@@ -1,0 +1,457 @@
+{
+  "schema_version": 1,
+  "run_id": "234602e8b2c04b4c8937dcf7c1e1e9ca",
+  "scope": "supporting component trial; actual 4fps RGB at nominal real-time playback, no interpolation or generated frames",
+  "source_result_sha256": "8a3cc0dd3229eee2aaeecf9e0bee690d89ce9dd9aef0db3b363f405285f60a58",
+  "host_receipt_sha256": "53f5188dc679942ceb68394a86984f31883f38b26c3eca3aa73aedd746cfc10f",
+  "source_frame_count": 66,
+  "source_frames_verified": true,
+  "source_sim_time_s": [
+    2.883333483710885,
+    19.133334331214428
+  ],
+  "nominal_sample_interval_s": 0.25,
+  "duration_convention": "N frames / 4fps, final frame occupies one 0.25s display interval",
+  "frames": [
+    {
+      "path": "media/frame-0000.png",
+      "sha256": "a1c208a52a45c80b2917b133ba3d6925d57cc1ce2c1ae4b0a082c3e42d070efc",
+      "physics_frame": 173,
+      "sim_time_s": 2.883333483710885
+    },
+    {
+      "path": "media/frame-0001.png",
+      "sha256": "4962f5e62506782b225002cc23239831e3f00c9dcff797053b1911641dbb9b23",
+      "physics_frame": 188,
+      "sim_time_s": 3.133333496749401
+    },
+    {
+      "path": "media/frame-0002.png",
+      "sha256": "48bf8fe4847e9b57acc7ecb842c350c92d2c8f4795b641f739188625ce8bb81e",
+      "physics_frame": 203,
+      "sim_time_s": 3.383333509787917
+    },
+    {
+      "path": "media/frame-0003.png",
+      "sha256": "dafeadbc84fdecfbc5d05c65deddfed473da06c847ac5ad7f2c0f158724f7d86",
+      "physics_frame": 218,
+      "sim_time_s": 3.633333522826433
+    },
+    {
+      "path": "media/frame-0004.png",
+      "sha256": "9226b7a2a3008b36fdb4a40eb1f4105e30957abf367921534c1f7a898a69b920",
+      "physics_frame": 233,
+      "sim_time_s": 3.8833335358649492
+    },
+    {
+      "path": "media/frame-0005.png",
+      "sha256": "567eec27705e88be32c6d538edfeb589f74c12a7930f0abf1dd00747e4a6c4cd",
+      "physics_frame": 248,
+      "sim_time_s": 4.133333548903465
+    },
+    {
+      "path": "media/frame-0006.png",
+      "sha256": "9bbffa9f1d9d9062ba0f9cd7dffe3f4e2a8e4f5e19b4e3159a5941226dc189d5",
+      "physics_frame": 263,
+      "sim_time_s": 4.383333561941981
+    },
+    {
+      "path": "media/frame-0007.png",
+      "sha256": "7775194c75851aba51ccd8d6bc5ddc19cffe53b4e46b7c2840e3e79d3802d010",
+      "physics_frame": 278,
+      "sim_time_s": 4.633333574980497
+    },
+    {
+      "path": "media/frame-0008.png",
+      "sha256": "db35bc0c52d68aedbbebb071f9fd2e55294a5461c0ed81afacc68ed2562dc97a",
+      "physics_frame": 293,
+      "sim_time_s": 4.883333588019013
+    },
+    {
+      "path": "media/frame-0009.png",
+      "sha256": "4726b658354ea44fc3ffc2e39d4654a7686fb2afb7222ea0f8af7f9e9f71a6ff",
+      "physics_frame": 308,
+      "sim_time_s": 5.1333336010575294
+    },
+    {
+      "path": "media/frame-0010.png",
+      "sha256": "251ad8a15d97e2abdac1521dcb344aa3731e858c657ae266f356cb4800ed9df0",
+      "physics_frame": 323,
+      "sim_time_s": 5.3833336140960455
+    },
+    {
+      "path": "media/frame-0011.png",
+      "sha256": "871a2807859dc544d8b5fd0f767a3452348dd4f9a065ab3eb2dcfeaddc1d2c83",
+      "physics_frame": 338,
+      "sim_time_s": 5.6333336271345615
+    },
+    {
+      "path": "media/frame-0012.png",
+      "sha256": "37e6e44e6f755ad5cf56da8b7372c699dfb5fe6ca52cfd284627e4bfbe32546a",
+      "physics_frame": 353,
+      "sim_time_s": 5.883333640173078
+    },
+    {
+      "path": "media/frame-0013.png",
+      "sha256": "162555deede1a30c94b81b4664523d48168b90189087df6425925b4d97542ae7",
+      "physics_frame": 368,
+      "sim_time_s": 6.133333653211594
+    },
+    {
+      "path": "media/frame-0014.png",
+      "sha256": "62cb512537280f1294a90ca32c2be73dcd57c3ecd8b4685a75830591a574cd25",
+      "physics_frame": 383,
+      "sim_time_s": 6.38333366625011
+    },
+    {
+      "path": "media/frame-0015.png",
+      "sha256": "7c6a492ce50fd235541e2c27032bc20383ddd1534f6f4a2f98acae3d7751f17b",
+      "physics_frame": 398,
+      "sim_time_s": 6.633333679288626
+    },
+    {
+      "path": "media/frame-0016.png",
+      "sha256": "0d5b263ea2426e9d86aeab4959f9adc882b058067deb2d5ae8229d66539b7333",
+      "physics_frame": 413,
+      "sim_time_s": 6.883333692327142
+    },
+    {
+      "path": "media/frame-0017.png",
+      "sha256": "84347a7f2c86f33c37131b1efba7ff2d248e29ff5b772ad002438a1aeebaf470",
+      "physics_frame": 428,
+      "sim_time_s": 7.133333705365658
+    },
+    {
+      "path": "media/frame-0018.png",
+      "sha256": "49d530b5e235abf805643e7f2a64c5761336b77c26679cbaeb1e8d92ee725e80",
+      "physics_frame": 443,
+      "sim_time_s": 7.383333718404174
+    },
+    {
+      "path": "media/frame-0019.png",
+      "sha256": "95a0d6b6eb7f3a21798b9f29aed2f00fbd071b37ae0bd06d5703ad82c449c6d4",
+      "physics_frame": 458,
+      "sim_time_s": 7.63333373144269
+    },
+    {
+      "path": "media/frame-0020.png",
+      "sha256": "90c7743af090ba13c3903696be28abd56f97294051e53504dbcaae863b59c89d",
+      "physics_frame": 473,
+      "sim_time_s": 7.883333744481206
+    },
+    {
+      "path": "media/frame-0021.png",
+      "sha256": "2523cd70a61fc796f64b41e4735491cbc649f67475ca797614fd33db4efa671a",
+      "physics_frame": 488,
+      "sim_time_s": 8.133333757519722
+    },
+    {
+      "path": "media/frame-0022.png",
+      "sha256": "b049c1d4f5a0f64f444485bb292cfa22de182a6457f093850e3ad0463e38ebac",
+      "physics_frame": 503,
+      "sim_time_s": 8.383333770558238
+    },
+    {
+      "path": "media/frame-0023.png",
+      "sha256": "19591879b2e5aa94fb51b0443034f6fcd2a91a5b29869d280088f93dc97eb77e",
+      "physics_frame": 518,
+      "sim_time_s": 8.633333783596754
+    },
+    {
+      "path": "media/frame-0024.png",
+      "sha256": "15d7565dc840873c8a6a68fcc6883a49fa30dc93a245f4cb99ba3e367c827e53",
+      "physics_frame": 533,
+      "sim_time_s": 8.88333379663527
+    },
+    {
+      "path": "media/frame-0025.png",
+      "sha256": "f2b50903c19ccec60fb0a820d463de3663906c5f48039d03560bb91329c073bd",
+      "physics_frame": 548,
+      "sim_time_s": 9.133333809673786
+    },
+    {
+      "path": "media/frame-0026.png",
+      "sha256": "97937e938024efb4509a1319d3d8d0f53fcd4e8833f9a4ee3d5b60cb1c2ac3fb",
+      "physics_frame": 563,
+      "sim_time_s": 9.383333822712302
+    },
+    {
+      "path": "media/frame-0027.png",
+      "sha256": "262eece6318703fabc2945bd0c07e74bcc36ebec45033a9f1b04effbf08fe874",
+      "physics_frame": 578,
+      "sim_time_s": 9.633333835750818
+    },
+    {
+      "path": "media/frame-0028.png",
+      "sha256": "31ae9a8f86e39ed5f442843752ffcc4122de94818967ca4de3c45945e39581e2",
+      "physics_frame": 593,
+      "sim_time_s": 9.883333848789334
+    },
+    {
+      "path": "media/frame-0029.png",
+      "sha256": "c9f334df4bdc242358c1cad8527989597e97473f1a708038f10b4f40d0649467",
+      "physics_frame": 608,
+      "sim_time_s": 10.13333386182785
+    },
+    {
+      "path": "media/frame-0030.png",
+      "sha256": "1babd234f4aedf3c13c9327be9861c6563c2e71535bf35c832b03a8e0b2bf37c",
+      "physics_frame": 623,
+      "sim_time_s": 10.383333874866366
+    },
+    {
+      "path": "media/frame-0031.png",
+      "sha256": "89fc2353d321b8151a4b36ef132fc6eff0cda3f183efc93e245b4e6dcce2b8b4",
+      "physics_frame": 638,
+      "sim_time_s": 10.633333887904882
+    },
+    {
+      "path": "media/frame-0032.png",
+      "sha256": "00bc27b5dbbb06f3b3685260bfab18c9bc6b0b947aa064abfca0ccdd2d727155",
+      "physics_frame": 653,
+      "sim_time_s": 10.883333900943398
+    },
+    {
+      "path": "media/frame-0033.png",
+      "sha256": "f6e1352f9d3db9beb7488de3637f35bd86acdce5b060ab1f842920275a1c5dce",
+      "physics_frame": 668,
+      "sim_time_s": 11.133333913981915
+    },
+    {
+      "path": "media/frame-0034.png",
+      "sha256": "1d4b64f839b0a59fa0292b9c91c6e53a18f6b33c86978ec0c3c54052dc6f7dad",
+      "physics_frame": 683,
+      "sim_time_s": 11.38333392702043
+    },
+    {
+      "path": "media/frame-0035.png",
+      "sha256": "081381b73c372bdaf1f3ead8990e8a9bb07afa1208eea4a83ac531514a4aa519",
+      "physics_frame": 698,
+      "sim_time_s": 11.633333940058947
+    },
+    {
+      "path": "media/frame-0036.png",
+      "sha256": "feca5a9729023d7b05522a35135f00616c8f0c49dcfd30f039a1a2b6512401ba",
+      "physics_frame": 713,
+      "sim_time_s": 11.883333953097463
+    },
+    {
+      "path": "media/frame-0037.png",
+      "sha256": "82566b46960e2491d49f8d29c1944d16b361ee60ae9b176d70bbeabaa5e2f63f",
+      "physics_frame": 728,
+      "sim_time_s": 12.133333966135979
+    },
+    {
+      "path": "media/frame-0038.png",
+      "sha256": "b807981049a86637c953c71959272adbbf5c144da915bb4af7f624611d91d95b",
+      "physics_frame": 743,
+      "sim_time_s": 12.383333979174495
+    },
+    {
+      "path": "media/frame-0039.png",
+      "sha256": "3098ae9f2142bc401e8d6a9d6a6e09c30433e2ccafc5f6e41abe1954170c595c",
+      "physics_frame": 758,
+      "sim_time_s": 12.63333399221301
+    },
+    {
+      "path": "media/frame-0040.png",
+      "sha256": "f9b681f5b296e841531ce910c1a17524ee76a3a56a91ee591776642d11b2d02c",
+      "physics_frame": 773,
+      "sim_time_s": 12.883334005251527
+    },
+    {
+      "path": "media/frame-0041.png",
+      "sha256": "1da01dd38e6b5d43c36b77068ebf17167a1a06734766ad9f99bb98235b52ac85",
+      "physics_frame": 788,
+      "sim_time_s": 13.133334018290043
+    },
+    {
+      "path": "media/frame-0042.png",
+      "sha256": "5a48174d44a93128d4c06f86d384dfd75032319deb2ea0d8752cc59cee792213",
+      "physics_frame": 803,
+      "sim_time_s": 13.383334031328559
+    },
+    {
+      "path": "media/frame-0043.png",
+      "sha256": "c818f9e8adf7461555b4f2167cd428c2f67d64eb44558d53e565f0d60aebf4bd",
+      "physics_frame": 818,
+      "sim_time_s": 13.633334044367075
+    },
+    {
+      "path": "media/frame-0044.png",
+      "sha256": "cbbedd69be9ace5bbe7d39215f29eb2789741159e049e7a00d4fe6a6825a3956",
+      "physics_frame": 833,
+      "sim_time_s": 13.883334057405591
+    },
+    {
+      "path": "media/frame-0045.png",
+      "sha256": "a7363e1519376d90b0be65bb0a0a69d32d701d493366a9d030b1d04fe4da8800",
+      "physics_frame": 848,
+      "sim_time_s": 14.133334070444107
+    },
+    {
+      "path": "media/frame-0046.png",
+      "sha256": "a1d2ea1fa50d18279c206d97db7d60b57eb6c5743958b85c54646a464e2e3fd5",
+      "physics_frame": 863,
+      "sim_time_s": 14.383334083482623
+    },
+    {
+      "path": "media/frame-0047.png",
+      "sha256": "9b298d2c2cceb681cc82eca2fa4ce847134c581f6df0a56b3210fa9474df2e4e",
+      "physics_frame": 878,
+      "sim_time_s": 14.63333409652114
+    },
+    {
+      "path": "media/frame-0048.png",
+      "sha256": "fb96816aafc96e1d669ca623dc5a7df85a695a6aaf8f3b326b35d2bfc19c06e7",
+      "physics_frame": 893,
+      "sim_time_s": 14.883334109559655
+    },
+    {
+      "path": "media/frame-0049.png",
+      "sha256": "0f099a4055725c3dff443f05a84b1a5a8175325f597d574b1c70d2167120ad25",
+      "physics_frame": 908,
+      "sim_time_s": 15.133334122598171
+    },
+    {
+      "path": "media/frame-0050.png",
+      "sha256": "385698385f2ec641e11edaee9f39e94811f60d6ee5db305c5c88a30ce0b2e811",
+      "physics_frame": 923,
+      "sim_time_s": 15.383334135636687
+    },
+    {
+      "path": "media/frame-0051.png",
+      "sha256": "2dee40949099e7c51fcb42047fea7da7aa477a27031fd074c522b8ce915f4114",
+      "physics_frame": 938,
+      "sim_time_s": 15.633334148675203
+    },
+    {
+      "path": "media/frame-0052.png",
+      "sha256": "463b42ef0124b3f1bcafd3c04a5ee32125bd5885a9f46de6bc3e9cd922d711ab",
+      "physics_frame": 953,
+      "sim_time_s": 15.88333416171372
+    },
+    {
+      "path": "media/frame-0053.png",
+      "sha256": "b67e818cc244d6efc8ef2ad3a350bf7675cdf202ab3dc3b96b17621f630bb10d",
+      "physics_frame": 968,
+      "sim_time_s": 16.133334174752235
+    },
+    {
+      "path": "media/frame-0054.png",
+      "sha256": "84995d41b2525c4274372b55b8294ccb2c225951dd6d515f4f14d47281e24d87",
+      "physics_frame": 983,
+      "sim_time_s": 16.38333418779075
+    },
+    {
+      "path": "media/frame-0055.png",
+      "sha256": "e41f5979960c645d5ac720ef0d16959dc4068e92f40c6ea123f3108e21c62957",
+      "physics_frame": 998,
+      "sim_time_s": 16.633334200829268
+    },
+    {
+      "path": "media/frame-0056.png",
+      "sha256": "b5abbb2589311799719f4840195f3fd04bc93d93997387edb8098c49dda10a1a",
+      "physics_frame": 1013,
+      "sim_time_s": 16.883334213867784
+    },
+    {
+      "path": "media/frame-0057.png",
+      "sha256": "d8ce31e8a094ffe1737d1cd4f3bc6ebce81ca9e0b28d693bbe2c60d6f4a9c4ef",
+      "physics_frame": 1028,
+      "sim_time_s": 17.1333342269063
+    },
+    {
+      "path": "media/frame-0058.png",
+      "sha256": "81165e09498b141c09874540ede2b0272737da428a9514b78cf548db88a8a8d1",
+      "physics_frame": 1043,
+      "sim_time_s": 17.383334239944816
+    },
+    {
+      "path": "media/frame-0059.png",
+      "sha256": "109b0efa7c89617f7dfc1fb58a9d7491af48874b3e3ebad1de242c8973b2d4d4",
+      "physics_frame": 1058,
+      "sim_time_s": 17.63333425298333
+    },
+    {
+      "path": "media/frame-0060.png",
+      "sha256": "cc11b19a897ea536abcc27f1f6a5171ce09976ed865c7a79f9338406708b33d6",
+      "physics_frame": 1073,
+      "sim_time_s": 17.883334266021848
+    },
+    {
+      "path": "media/frame-0061.png",
+      "sha256": "958de48446a6c93f44dfaaa2935328be1dbff7aaedb4f9e3b9b70384a74faa3a",
+      "physics_frame": 1088,
+      "sim_time_s": 18.133334279060364
+    },
+    {
+      "path": "media/frame-0062.png",
+      "sha256": "f6f800288984c4eac8cbe5be3b99ca3e12c9f7c51797ecd791e8341a5b710f58",
+      "physics_frame": 1103,
+      "sim_time_s": 18.38333429209888
+    },
+    {
+      "path": "media/frame-0063.png",
+      "sha256": "84a6e7d49b1180a16d312b944620fbe1c720d9ac05fbc1ecc4be4521607d1ac9",
+      "physics_frame": 1118,
+      "sim_time_s": 18.633334305137396
+    },
+    {
+      "path": "media/frame-0064.png",
+      "sha256": "6200acc02bdc5286183cea2c424daf82004ce9fe7f7482f4597c58b7e8c3ba55",
+      "physics_frame": 1133,
+      "sim_time_s": 18.883334318175912
+    },
+    {
+      "path": "media/frame-0065.png",
+      "sha256": "cf5693a1f45eeaf0c90affaaff0263a85bed7262f9b22ea23359bc10f73fb4b4",
+      "physics_frame": 1148,
+      "sim_time_s": 19.133334331214428
+    }
+  ],
+  "ffmpeg_args": [
+    "-hide_banner",
+    "-loglevel",
+    "error",
+    "-n",
+    "-framerate",
+    "4",
+    "-i",
+    "E:\\factory-ops-runs\\docking-alignment-231\\media\\frame-%04d.png",
+    "-frames:v",
+    "66",
+    "-an",
+    "-c:v",
+    "libx264",
+    "-threads",
+    "2",
+    "-crf",
+    "18",
+    "-pix_fmt",
+    "yuv420p",
+    "-movflags",
+    "+faststart",
+    "docs\\images\\docking-alignment-local45-231\\docking-alignment-4fps.mp4"
+  ],
+  "outputs": {
+    "docking-alignment-4fps.mp4": {
+      "bytes": 267640,
+      "sha256": "da642820511076e89df8bd0d4cc6ede3cd7dd5a633a1e7a734ec66ab47a19243"
+    },
+    "docked.png": {
+      "bytes": 104988,
+      "sha256": "cf5693a1f45eeaf0c90affaaff0263a85bed7262f9b22ea23359bc10f73fb4b4"
+    }
+  },
+  "ffprobe": {
+    "codec_name": "h264",
+    "width": 640,
+    "height": 480,
+    "avg_frame_rate": "4/1",
+    "duration": "16.500000",
+    "nb_frames": "66"
+  },
+  "physical_contact_verified": false,
+  "electrical_contact_verified": false
+}
