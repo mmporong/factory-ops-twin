@@ -1,0 +1,424 @@
+{
+  "schema_version": 1,
+  "scope": "Two short native SDK observations with identical selected runtime/layout inputs; external host load not controlled; no full-mission throughput claim",
+  "runs": {
+    "071": {
+      "run_id": "ef8acff1c8f7401e8053520095ef3d10",
+      "source_commit": "53927e75fcdd779ef7379dc4a96e78891ee5e051",
+      "producer_status": "failed",
+      "wall_s": 282.01600000000326,
+      "scope": "intentionally interrupted short cost diagnosis, not mission qualification",
+      "sample_a": {
+        "completed_control_loops": 847,
+        "native_stepper": {
+          "physics_calls": 847,
+          "physics_wall_s": 14.40874950075522,
+          "render_calls": 141,
+          "render_wall_s": 11.537143000401556
+        },
+        "phases": {
+          "complete_control_loop": {
+            "calls": 847,
+            "maximum_call_wall_s": 0.6089136999798939,
+            "wall_s": 75.36832189973211
+          },
+          "explicit_rgb_capture": {
+            "calls": 3,
+            "maximum_call_wall_s": 0.4598808000446297,
+            "wall_s": 1.2720120000303723
+          },
+          "physics_app_update": {
+            "calls": 847,
+            "maximum_call_wall_s": 0.17089300003135577,
+            "wall_s": 26.29161519947229
+          },
+          "scan_read_validate_publish": {
+            "calls": 141,
+            "maximum_call_wall_s": 0.3402416000026278,
+            "wall_s": 25.095937699778005
+          },
+          "scene_extension": {
+            "calls": 847,
+            "maximum_call_wall_s": 0.15662779996637255,
+            "wall_s": 2.859599499788601
+          },
+          "sdk_ros_dispatch": {
+            "calls": 1694,
+            "maximum_call_wall_s": 0.019279100000858307,
+            "wall_s": 11.484258300915826
+          }
+        },
+        "physics_frame": 970,
+        "run_id": "ef8acff1c8f7401e8053520095ef3d10",
+        "scope": "inclusive wall costs; physics_app_update overlaps native_stepper and complete_control_loop contains other phases; not operational qualification",
+        "world_time_s": 16.166667509824038
+      },
+      "sample_b": {
+        "completed_control_loops": 1981,
+        "native_stepper": {
+          "physics_calls": 1981,
+          "physics_wall_s": 31.12592450081138,
+          "render_calls": 330,
+          "render_wall_s": 25.58287060057046
+        },
+        "phases": {
+          "complete_control_loop": {
+            "calls": 1981,
+            "maximum_call_wall_s": 0.7907601000042632,
+            "wall_s": 165.37358119996497
+          },
+          "explicit_rgb_capture": {
+            "calls": 4,
+            "maximum_call_wall_s": 0.4598808000446297,
+            "wall_s": 1.6884817000245675
+          },
+          "physics_app_update": {
+            "calls": 1981,
+            "maximum_call_wall_s": 0.17089300003135577,
+            "wall_s": 57.46369459858397
+          },
+          "scan_read_validate_publish": {
+            "calls": 330,
+            "maximum_call_wall_s": 0.3402416000026278,
+            "wall_s": 54.219885899394285
+          },
+          "scene_extension": {
+            "calls": 1981,
+            "maximum_call_wall_s": 0.15662779996637255,
+            "wall_s": 7.598912400309928
+          },
+          "sdk_ros_dispatch": {
+            "calls": 3962,
+            "maximum_call_wall_s": 0.08942239999305457,
+            "wall_s": 25.45261940167984
+          }
+        },
+        "physics_frame": 2104,
+        "run_id": "ef8acff1c8f7401e8053520095ef3d10",
+        "scope": "inclusive wall costs; physics_app_update overlaps native_stepper and complete_control_loop contains other phases; not operational qualification",
+        "world_time_s": 35.06666849553585
+      },
+      "delta_phase_costs": {
+        "complete_control_loop": {
+          "calls": 1134,
+          "wall_s": 90.00525930023286,
+          "ms_per_call": 79.36971719597254
+        },
+        "explicit_rgb_capture": {
+          "calls": 1,
+          "wall_s": 0.41646969999419525,
+          "ms_per_call": 416.46969999419525
+        },
+        "physics_app_update": {
+          "calls": 1134,
+          "wall_s": 31.17207939911168,
+          "ms_per_call": 27.488606172056155
+        },
+        "scan_read_validate_publish": {
+          "calls": 189,
+          "wall_s": 29.12394819961628,
+          "ms_per_call": 154.09496401913376
+        },
+        "scene_extension": {
+          "calls": 1134,
+          "wall_s": 4.739312900521327,
+          "ms_per_call": 4.179288272064662
+        },
+        "sdk_ros_dispatch": {
+          "calls": 2268,
+          "wall_s": 13.968361100764014,
+          "ms_per_call": 6.158889374234574
+        }
+      },
+      "native_observer": {
+        "rows": 344,
+        "identities": [
+          [
+            "carter1",
+            "/World/Carter1/chassis_link/lidar_front",
+            "/carter1/scan_front_raw"
+          ],
+          [
+            "carter1",
+            "/World/Carter1/chassis_link/lidar_rear",
+            "/carter1/scan_rear_raw"
+          ],
+          [
+            "carter2",
+            "/World/Carter2/chassis_link/lidar_front",
+            "/carter2/scan_front_raw"
+          ],
+          [
+            "carter2",
+            "/World/Carter2/chassis_link/lidar_rear",
+            "/carter2/scan_rear_raw"
+          ],
+          [
+            "carter3",
+            "/World/Carter3/chassis_link/lidar_front",
+            "/carter3/scan_front_raw"
+          ],
+          [
+            "carter3",
+            "/World/Carter3/chassis_link/lidar_rear",
+            "/carter3/scan_rear_raw"
+          ],
+          [
+            "carter4",
+            "/World/Carter4/chassis_link/lidar_front",
+            "/carter4/scan_front_raw"
+          ],
+          [
+            "carter4",
+            "/World/Carter4/chassis_link/lidar_rear",
+            "/carter4/scan_rear_raw"
+          ]
+        ],
+        "statuses": {
+          "observed": 344
+        },
+        "SDK_sensor_failure_recorded": false,
+        "all_observed_range_counts_720": true,
+        "sensor_quality_verified_claimed": false
+      },
+      "closure": {
+        "windows_closed": true,
+        "linux_closed": true,
+        "relay_closed": true,
+        "job_closed": true,
+        "remaining_owned_pids": []
+      },
+      "input_sha256": {
+        "layout.json": "e7d0b9cdf0c8bdbc201e81dc5062446651b6abb5c52ea40cba6949ef62670887",
+        "g3-runtime.json": "e30d104957cf04c990e3c4cd66d08e824bef065b6f1c67ec40e0a2675314b99f",
+        "g3-routing.json": "3e0ed930f82f4b18e94c685094d64f28357e0b6e424fd1e2cddaea7fc8e5cf77",
+        "nav2-g2.yaml": "46da243197437b152552bd139780c498fdf35c7ef293fbd2f152cf608947a5f0",
+        "energy-profile.json": "50569a9f18337928c635d94a2e0102dd50d9f9c83d7f0f3c2e01baa42ddd0fe5",
+        "transport-profile.json": "5f029d1ca85361e7aa0f6f32a74df206b3d4ce0c4c4b38ce9d234f6af925621e",
+        "render-profile.json": "a40b963a033c04b5bf23fc880bb658570dd4463245408b1152a837c01f2ca4b4",
+        "visual-assets.json": "7c9780e11636ece178f21d19b9259e33d6f674d26db007160466a6ea68344c09"
+      },
+      "original_sha256": {
+        "pair-host.json": "df6f95a77ca7139152113e4df40171850479ee5d8a87da5ccc986c67689651ef",
+        "job.json": "20c0911cdf9345d4e296fa2556f2fc0e7eb9494b591ecf7c773f3f7ad9b70244",
+        "relay-pair.json": "a517f195ebfca130bd1537ee74d8953a682cb25e2f7bceb036b553db3e72c83c",
+        "results/run/runtime-costs.json": "b45f814bf25a5c84b5fdfcffa1ee09442175594b0a9f80822466e39141cfc526",
+        "results/run/physx-planar-observations.jsonl": "589c26c71d72b4192d7b492029beb05e05226e3656579a0a5e93b7a1a058655a"
+      },
+      "sample_sha256": {
+        "cost-071-001.json": "284a0f9445d4d78525ec1ea914c53684a76925b499bc940528fa9dd510a79cd8",
+        "cost-071-002.json": "b45f814bf25a5c84b5fdfcffa1ee09442175594b0a9f80822466e39141cfc526"
+      }
+    },
+    "072": {
+      "run_id": "8a1bcd6d36944ca2a6109795e7e347dc",
+      "source_commit": "486889074d5c2487a808f53fb348a460923c36a3",
+      "producer_status": "failed",
+      "wall_s": 218.51600000000326,
+      "scope": "intentionally interrupted short cost diagnosis, not mission qualification",
+      "sample_a": {
+        "completed_control_loops": 852,
+        "native_stepper": {
+          "physics_calls": 852,
+          "physics_wall_s": 11.959422499581706,
+          "render_calls": 142,
+          "render_wall_s": 9.895781399449334
+        },
+        "phases": {
+          "complete_control_loop": {
+            "calls": 852,
+            "maximum_call_wall_s": 0.35754329996416345,
+            "wall_s": 45.08143669919809
+          },
+          "explicit_rgb_capture": {
+            "calls": 3,
+            "maximum_call_wall_s": 0.24940099997911602,
+            "wall_s": 0.6783837999682873
+          },
+          "physics_app_update": {
+            "calls": 852,
+            "maximum_call_wall_s": 0.11716550000710413,
+            "wall_s": 22.149733099795412
+          },
+          "scan_read_validate_publish": {
+            "calls": 142,
+            "maximum_call_wall_s": 0.05508600000757724,
+            "wall_s": 4.558334200002719
+          },
+          "scene_extension": {
+            "calls": 852,
+            "maximum_call_wall_s": 0.08184120000805706,
+            "wall_s": 1.216517299239058
+          },
+          "sdk_ros_dispatch": {
+            "calls": 1704,
+            "maximum_call_wall_s": 0.015458600013516843,
+            "wall_s": 9.584022500668652
+          }
+        },
+        "physics_frame": 975,
+        "run_id": "8a1bcd6d36944ca2a6109795e7e347dc",
+        "scope": "inclusive wall costs; physics_app_update overlaps native_stepper and complete_control_loop contains other phases; not operational qualification",
+        "world_time_s": 16.250000847503543
+      },
+      "sample_b": {
+        "completed_control_loops": 2259,
+        "native_stepper": {
+          "physics_calls": 2259,
+          "physics_wall_s": 31.10665650147712,
+          "render_calls": 376,
+          "render_wall_s": 26.41520709975157
+        },
+        "phases": {
+          "complete_control_loop": {
+            "calls": 2259,
+            "maximum_call_wall_s": 0.36672149994410574,
+            "wall_s": 120.22010009927908
+          },
+          "explicit_rgb_capture": {
+            "calls": 4,
+            "maximum_call_wall_s": 0.24940099997911602,
+            "wall_s": 0.8984250999637879
+          },
+          "physics_app_update": {
+            "calls": 2259,
+            "maximum_call_wall_s": 0.11716550000710413,
+            "wall_s": 58.28673570067622
+          },
+          "scan_read_validate_publish": {
+            "calls": 376,
+            "maximum_call_wall_s": 0.05581920000258833,
+            "wall_s": 12.123832200129982
+          },
+          "scene_extension": {
+            "calls": 2259,
+            "maximum_call_wall_s": 0.08184120000805706,
+            "wall_s": 5.160436998237856
+          },
+          "sdk_ros_dispatch": {
+            "calls": 4518,
+            "maximum_call_wall_s": 0.015458600013516843,
+            "wall_s": 25.248198799788952
+          }
+        },
+        "physics_frame": 2382,
+        "run_id": "8a1bcd6d36944ca2a6109795e7e347dc",
+        "scope": "inclusive wall costs; physics_app_update overlaps native_stepper and complete_control_loop contains other phases; not operational qualification",
+        "world_time_s": 39.70000207051635
+      },
+      "delta_phase_costs": {
+        "complete_control_loop": {
+          "calls": 1407,
+          "wall_s": 75.13866340008099,
+          "ms_per_call": 53.403456574329056
+        },
+        "explicit_rgb_capture": {
+          "calls": 1,
+          "wall_s": 0.2200412999955006,
+          "ms_per_call": 220.0412999955006
+        },
+        "physics_app_update": {
+          "calls": 1407,
+          "wall_s": 36.137002600880805,
+          "ms_per_call": 25.6837260844924
+        },
+        "scan_read_validate_publish": {
+          "calls": 234,
+          "wall_s": 7.565498000127263,
+          "ms_per_call": 32.331188034731895
+        },
+        "scene_extension": {
+          "calls": 1407,
+          "wall_s": 3.9439196989987977,
+          "ms_per_call": 2.8030701485421448
+        },
+        "sdk_ros_dispatch": {
+          "calls": 2814,
+          "wall_s": 15.6641762991203,
+          "ms_per_call": 5.566516097768408
+        }
+      },
+      "native_observer": {
+        "rows": 376,
+        "identities": [
+          [
+            "carter1",
+            "/World/Carter1/chassis_link/lidar_front",
+            "/carter1/scan_front_raw"
+          ],
+          [
+            "carter1",
+            "/World/Carter1/chassis_link/lidar_rear",
+            "/carter1/scan_rear_raw"
+          ],
+          [
+            "carter2",
+            "/World/Carter2/chassis_link/lidar_front",
+            "/carter2/scan_front_raw"
+          ],
+          [
+            "carter2",
+            "/World/Carter2/chassis_link/lidar_rear",
+            "/carter2/scan_rear_raw"
+          ],
+          [
+            "carter3",
+            "/World/Carter3/chassis_link/lidar_front",
+            "/carter3/scan_front_raw"
+          ],
+          [
+            "carter3",
+            "/World/Carter3/chassis_link/lidar_rear",
+            "/carter3/scan_rear_raw"
+          ],
+          [
+            "carter4",
+            "/World/Carter4/chassis_link/lidar_front",
+            "/carter4/scan_front_raw"
+          ],
+          [
+            "carter4",
+            "/World/Carter4/chassis_link/lidar_rear",
+            "/carter4/scan_rear_raw"
+          ]
+        ],
+        "statuses": {
+          "observed": 376
+        },
+        "SDK_sensor_failure_recorded": false,
+        "all_observed_range_counts_720": true,
+        "sensor_quality_verified_claimed": false
+      },
+      "closure": {
+        "windows_closed": true,
+        "linux_closed": true,
+        "relay_closed": true,
+        "job_closed": true,
+        "remaining_owned_pids": []
+      },
+      "input_sha256": {
+        "layout.json": "e7d0b9cdf0c8bdbc201e81dc5062446651b6abb5c52ea40cba6949ef62670887",
+        "g3-runtime.json": "e30d104957cf04c990e3c4cd66d08e824bef065b6f1c67ec40e0a2675314b99f",
+        "g3-routing.json": "3e0ed930f82f4b18e94c685094d64f28357e0b6e424fd1e2cddaea7fc8e5cf77",
+        "nav2-g2.yaml": "46da243197437b152552bd139780c498fdf35c7ef293fbd2f152cf608947a5f0",
+        "energy-profile.json": "50569a9f18337928c635d94a2e0102dd50d9f9c83d7f0f3c2e01baa42ddd0fe5",
+        "transport-profile.json": "5f029d1ca85361e7aa0f6f32a74df206b3d4ce0c4c4b38ce9d234f6af925621e",
+        "render-profile.json": "a40b963a033c04b5bf23fc880bb658570dd4463245408b1152a837c01f2ca4b4",
+        "visual-assets.json": "7c9780e11636ece178f21d19b9259e33d6f674d26db007160466a6ea68344c09"
+      },
+      "original_sha256": {
+        "pair-host.json": "8fa964c3ac0ae32b15b1fcfeb93d70117fc102192b4a61583050b6f708d337a9",
+        "job.json": "43f21a17099f85edc273fc5059766c7b8418b581d868f6835a26ef6c313cd836",
+        "relay-pair.json": "f1ccd56932f7daa0ad798cbb18603741d39420004928b76cebf29f84305c7c76",
+        "results/run/runtime-costs.json": "3292f42e971d39aed34677bf069cdac5f41b8c580dce753a5295a14e56a5df7f",
+        "results/run/physx-planar-observations.jsonl": "1dec492c1bbf4642613ecc1a478d88b01b9a83c73cfb70ee05dd4cc302fdcf90"
+      },
+      "sample_sha256": {
+        "cost-072-001.json": "ebe554e70056b93406e49a5ac42f8abfb10e96c5974694bd973c37d469e62bd3",
+        "cost-072-002.json": "3292f42e971d39aed34677bf069cdac5f41b8c580dce753a5295a14e56a5df7f"
+      }
+    }
+  },
+  "selected_inputs_identical": true,
+  "interpretation": "Eight-sensor read/validate/publish costs are normalized by actual completed calls. Control loop costs include other phases. Differences are observations, not a guarantee for loaded four-AMR logistics. Original values, range bounds, timing, hash, no-hit and fail-closed rules remain unchanged."
+}

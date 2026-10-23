@@ -1164,3 +1164,5 @@ Linux 중계 종료에서는063과 같은 `Unit ... not loaded`가 다시 남았
 NumPy를 새로 설치하지 않았으며 SDK ndarray 입력일 때만 사용한다. [공식astype 문서](https://numpy.org/doc/1.26/reference/generated/numpy.ndarray.astype.html)와 [tolist 문서](https://numpy.org/doc/1.26/reference/generated/numpy.ndarray.tolist.html)를 참조했다. 값·정렬·signature·입력 불변·float32/64·byte order·no-hit NaN·같은 프레임 변조·잘못된hit/범위의 기존 오류와 새 경로 동등성을 SDK Python에서 확인했다. 관련CPU13개·SDK NumPy3개 검사가 통과했다.
 
 원래071 소스와 수정 함수를 같은 합성720빔 입력으로 번갈아200회 측정한 중앙값은4.72945ms와0.46425ms였다. 모든 반환 값과signature가 같았다. 이는 검증 함수의 CPU 관측치이며 실제 scan 발행·전체 물류·하드웨어 LiDAR 품질의 개선율이 아니다. 후속 짧은 SDK 실행에서 센서 구간 비용과 실제 관측을 확인한다.
+
+후속072는 같은 선택 입력·주기·해상도·자산으로 짧게 계측했다.071의189회·072의234회 센서 발행 구간을 각 호출 수로 정규화한 평균은154.094964ms와32.331188ms였다. 제어 루프 평균도79.369717ms와53.403457ms로 관측됐다. 외부 CPU 부하·운송 상태를 통제한 장기 A/B는 아니므로 전체 처리량 개선율로 확장하지 않는다. 각 실행의8개 센서에 대해344개·376개 acquisition 기록이 모두observed/720개 범위 값으로 남았으며, 최종sensor_quality_verified=false는 유지한다. SDK 센서 오류 파일은 없었다. 두 실행은 표본 확보 후owner 중단으로 종료했고 양 OS·중계·Job·잔여 소유 PID0을 확인했다. 새12lot 완주는 여전히 남아 있다. [두 원본·구간별 비용·입력 동일성·종료](evidence/local45-planar-vector-cost-217.json)
