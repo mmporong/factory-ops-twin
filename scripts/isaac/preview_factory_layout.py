@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 from pathlib import Path
 import sys
 import time
@@ -23,12 +24,18 @@ def main() -> int:
     args = parser.parse_args()
     if args.output.exists() or len(args.run_id) != 32:
         raise ValueError("new output and 32-character preview identity required")
+    assets = json.loads((args.bundle / "visual-assets.json").read_text(encoding="utf-8-sig"))
+    environment = assets.get("environment", {})
+    cache_root = Path(os.environ.get("FACTORY_OPS_ASSET_CACHE", str(ROOT / "assets/vendor/simready-context")))
+    if environment.get("fixtures") and not (cache_root / environment["revision"] / "prepared-index.json").is_file():
+        parser.error("prepared asset index is absent; set FACTORY_OPS_ASSET_CACHE before starting the GPU preview")
     args.output.mkdir(parents=True)
     sha = lambda p: hashlib.sha256(Path(p).read_bytes()).hexdigest()
     report = {"run_id": args.run_id, "status": "starting", "scope": "authored layout RGB preview; no robot mission or factory throughput proof",
         "source_sha256": sha(__file__), "input_sha256": {n: sha(args.bundle/n) for n in
             ("layout.json", "visual-assets.json", "render-profile.json", "scene/factory-v3.usda")},
-        "captures": [], "ROS_started": False, "bag_SQL_opened": False, "cleanup_errors": []}
+        "captures": [], "ROS_started": False, "bag_SQL_opened": False, "cleanup_errors": [],
+        "asset_cache_root": str(cache_root)}
     app = None
     annotator = product = None
 

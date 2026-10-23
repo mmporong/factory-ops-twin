@@ -1082,3 +1082,9 @@ Linux 중계 종료에서는063과 같은 `Unit ... not loaded`가 다시 남았
 별도205 시험은 같은 SDK4.5·0.1~30m 설정의 단일 센서와 소유 상자만 사용했다.60개 배치 중18개에서30m 밖의 finite hit255가 반환됐다. 예를 들어 상자 앞면29.99m에서30.00027847290039m, 앞면30.01m에서30.02028465270996m를 관측했다. 이는 단순 한 ULP 오차가 아니며065에서 거절된 빔의 값이나 같은 원인을 입증하지 않는다. 첫 이상 배열과 해시는 로컬에 보존했고 모든 프로세스는 종료됐다. SDK shutdown 후 Python 복귀 플래그는 기록되지 않았으므로 외부 Job의 closed·PID0을 종료 근거로 사용한다. [205 선택 관측·원시 파일 해시](evidence/local45-planar-range-205.json)
 
 [설치 버전의 PhysX 센서 설명](https://docs.isaacsim.omniverse.nvidia.com/4.5.0/sensors/isaacsim_sensors_physx.html)과 설치된 command 코드는 설정을 USD에 작성하지만 반환 배열의 경계 clipping을 보장하지 않는다. [ROS LaserScan 정의](https://github.com/ros2/common_interfaces/blob/rolling/sensor_msgs/msg/LaserScan.msg)는 범위 밖 값을 discard 대상으로 명시한다. 이 기록만으로 수용 범위를 넓히거나 hit를 no-hit/무한대로 바꾸지 않는다.
+
+## FOT-132 — 정지 촬영기의 외부 에셋 캐시 경로 전달 누락
+
+206은 실행 명령에서 `FACTORY_OPS_ASSET_CACHE`를 넘기지 않아 `cache_root must be a directory`로 실패했다. 준비 명세는 외부 캐시 파일 해시를 검사했지만, 소비기의 경로는 존재하지 않는 기본 디렉터리로 해석됐다. 촬영0장·렌더 결과failed를 보존했다. 외부 Job은 SDK 종료 코드0 때문에passed를 기록했으므로 Job 상태만으로 촬영 성공을 판정하지 않는다.
+
+207에는 고정 색인의 존재를 확인한 뒤 캐시 상위 경로를 명시했다. 같은 소스의 조감·핸들러·컨베이어 RGB3장을 같은 물리frame2/time0.033333335초에서 촬영했고, 형상·재질·비단색·소유 프로세스 종료를 확인했다. 재발 방지로 정지 촬영기도 GPU import와 출력 폴더 생성 전에 해당 revision의 색인 존재를 검사한다. 경로가 빠진 CPU 호출은 exit2로 종료됐으며 SDK나 출력 폴더가 시작되지 않았다. [207 촬영과206 실패 해시](images/semiconductor-dual-local45-207/provenance.json)
