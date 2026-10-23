@@ -18,6 +18,8 @@ def main() -> int:
     parser.add_argument("--bundle", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--run-id", required=True)
+    parser.add_argument("--camera-id", choices=("packing_conveyor",),
+                        help="capture just one declared profile view for a bounded camera repair")
     args = parser.parse_args()
     if args.output.exists() or len(args.run_id) != 32:
         raise ValueError("new output and 32-character preview identity required")
@@ -71,25 +73,33 @@ def main() -> int:
             selections = [("overview", "portfolio_overview"), ("test-handler", "cell_process")]
             if "packing_conveyor" in cameras:
                 selections.append(("pack-conveyor", "packing_conveyor"))
+            if args.camera_id is not None:
+                selections = [(name, key) for name, key in selections if key == args.camera_id]
             views = tuple((name, cameras[key]["eye_xyz_m"], cameras[key]["target_xyz_m"],
                            cameras[key]["focal_length_mm"])
                           for name, key in selections)
+        elif args.camera_id is not None:
+            raise ValueError("camera selection requires the dual-lane profile")
         for name, eye, target, focal in views:
             camera = rep.create.camera(position=eye, look_at=target, focal_length=focal)
             product = rep.create.render_product(camera, (1280, 720))
             annotator = rep.AnnotatorRegistry.get_annotator("rgb")
             annotator.attach([product])
             rep.orchestrator.set_capture_on_play(False)
+            for _ in range(4):
+                app.update()
             rep.orchestrator.step(delta_time=0., rt_subframes=8)
             rep.orchestrator.wait_until_complete()
             data = np.asarray(annotator.get_data())
             if (data.ndim != 3 or data.shape[:2] != (720, 1280) or data.shape[2] < 3
                     or not np.isfinite(data).all() or not np.any(data[:, :, :3])
+                    or float(np.max(np.std(data[:, :, :3], axis=(0, 1)))) < 1.
                     or frozen != (int(world.current_time_step_index), float(world.current_time))):
                 raise RuntimeError("native RGB/frozen physics validation failed")
             path = args.output/(name+".png")
             Image.fromarray(data[:, :, :3].astype(np.uint8)).save(path)
             report["captures"].append({"path": path.name, "sha256": sha(path), "width": 1280, "height": 720,
+                "rgb_spatial_standard_deviation_max": float(np.max(np.std(data[:, :, :3], axis=(0, 1)))),
                 "camera_eye_xyz_m": eye, "camera_target_xyz_m": target, "focal_length_mm": focal,
                 "physics_frame": frozen[0], "sim_time_s": frozen[1], "source": "native Replicator RGB; no generated image or interpolation"})
             annotator.detach(); annotator = None

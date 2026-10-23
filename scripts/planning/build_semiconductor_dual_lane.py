@@ -261,7 +261,7 @@ def build_render_profile() -> dict[str, Any]:
     profile["cameras"][2].update(eye_xyz_m=[26, 4, 13], target_xyz_m=[19, 12.5, 1],
                                   focal_length_mm=26, purpose="test handler, ATE sidecar and tray transfer interfaces")
     profile["cameras"][3].update(eye_xyz_m=[35.5, 6, 8], target_xyz_m=[28, 14, 0.9])
-    profile["cameras"].append({"id": "packing_conveyor", "eye_xyz_m": [37, 6, 6],
+    profile["cameras"].append({"id": "packing_conveyor", "eye_xyz_m": [28, 5, 6.8],
         "target_xyz_m": [32.6, 10.55, 1.1], "focal_length_mm": 30,
         "purpose": "attributed native-size packaging conveyor and inspection-gate geometry"})
     return profile

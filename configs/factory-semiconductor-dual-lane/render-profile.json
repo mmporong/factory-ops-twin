@@ -105,9 +105,9 @@
     {
       "id": "packing_conveyor",
       "eye_xyz_m": [
-        37,
-        6,
-        6
+        28,
+        5,
+        6.8
       ],
       "target_xyz_m": [
         32.6,
