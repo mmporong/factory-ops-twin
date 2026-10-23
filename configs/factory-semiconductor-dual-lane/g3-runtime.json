@@ -49,7 +49,8 @@
     "sample_every_physics_steps": 1,
     "maximum_windows": 6
   },
-  "reservation_strategy": "full_leg_qualification_with_one_edge_actions_and_retained_stationary_footprints",
+  "reservation_strategy": "full_leg_qualification_with_bounded_collinear_actions_and_retained_stationary_footprints",
+  "chunk_policy": "bounded_collinear",
   "anchor_yaw_rad": {
     "S1": 0.0,
     "S2": 0.0,

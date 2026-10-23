@@ -14,6 +14,7 @@ from .navigation import GoalPose
 
 
 CHUNK_SCOPE = "g3b_authored_first_edge_planning_chunk_v1"
+COLLINEAR_CHUNK_SCOPE = "g3b_authored_bounded_collinear_planning_chunk_v1"
 PATH_SCOPE = "g3b_computed_path_geometry_only_not_ros_or_physical_evidence"
 FOLLOW_PATH_NORMALIZATION = "final_pose_header_stamp_zero_latest_tf"
 
@@ -130,6 +131,7 @@ class RouteChunk:
     target: str
     closed: bool
     final_goal: GoalPose
+    policy: str = "first_edge"
 
     def to_dict(self) -> dict[str, Any]:
         value = asdict(self)
@@ -137,6 +139,8 @@ class RouteChunk:
         value["tiles"] = _tile_list(self.tiles)
         value["goal_pose"] = self.goal_pose.to_dict()
         value["final_goal"] = self.final_goal.to_dict()
+        if self.policy == "first_edge":
+            value.pop("policy")
         return value
 
 
@@ -147,12 +151,20 @@ def make_chunk(
     *,
     closed: bool,
     final_goal: GoalPose,
+    policy: str = "first_edge",
 ) -> RouteChunk:
-    """Compile the first currently traversable authored edge into one chunk."""
+    """Compile one edge, or a straight prefix bounded by the graph's longest edge.
+
+    The optional prefix retains every authored point and stops before a bend.
+    Its length cannot exceed an existing single-edge action in this RouteBook.
+    Reservation ownership and the final station orientation are unchanged.
+    """
     if not isinstance(book, RouteBook):
         raise ValueError("book must be a RouteBook")
     if not isinstance(final_goal, GoalPose):
         raise ValueError("final_goal must be a GoalPose")
+    if policy not in ("first_edge", "bounded_collinear"):
+        raise ValueError("unsupported route chunk policy")
     plan = book.plan(start, target, closed=closed)
     target_xy = book.nodes[target]
     if math.dist((final_goal.x, final_goal.y), target_xy) > 1e-9:
@@ -164,8 +176,26 @@ def make_chunk(
         final = True
         yaw = final_goal.yaw
     else:
-        chunk_goal = plan.nodes[1]
-        points = (plan.points[0], plan.points[1])
+        end = 1
+        if policy == "bounded_collinear":
+            lengths = [math.dist(a, b) for a, b in zip(plan.points, plan.points[1:])]
+            limit = max(math.dist(book.nodes[a], book.nodes[b]) for a, b in book.edges)
+            distance = lengths[0]
+            direction = (plan.points[1][0] - plan.points[0][0],
+                         plan.points[1][1] - plan.points[0][1])
+            while end + 1 < len(plan.points):
+                following = (plan.points[end + 1][0] - plan.points[end][0],
+                             plan.points[end + 1][1] - plan.points[end][1])
+                product = direction[0] * following[0] + direction[1] * following[1]
+                cross = direction[0] * following[1] - direction[1] * following[0]
+                scale = math.hypot(*direction) * lengths[end]
+                if (product <= 0 or abs(cross) > 1e-10 * scale
+                        or distance + lengths[end] > limit + 1e-9):
+                    break
+                distance += lengths[end]
+                end += 1
+        chunk_goal = plan.nodes[end]
+        points = tuple(plan.points[:end + 1])
         final = chunk_goal == target
         yaw = final_goal.yaw if final else math.atan2(
             points[1][1] - points[0][1], points[1][0] - points[0][0]
@@ -180,7 +210,7 @@ def make_chunk(
                    book.layout.bounds.xmax, book.layout.bounds.ymax),
     )
     identity = {
-        "scope": CHUNK_SCOPE,
+        "scope": CHUNK_SCOPE if policy == "first_edge" else COLLINEAR_CHUNK_SCOPE,
         "config_sha256": book.config_sha256,
         "variant_layout_sha256": book.layout.source_sha256,
         "base_layout_sha256": book.base_layout.source_sha256,
@@ -198,7 +228,7 @@ def make_chunk(
     }
     return RouteChunk(
         _hash(identity), start, chunk_goal, points, tiles, goal_pose, final,
-        target, closed, final_goal,
+        target, closed, final_goal, policy,
     )
 
 
@@ -222,6 +252,7 @@ def qualify_computed_path(
         chunk.target,
         closed=chunk.closed,
         final_goal=chunk.final_goal,
+        policy=chunk.policy,
     )
     if chunk != canonical:
         raise ValueError("route chunk differs from the current authored RouteBook compilation")

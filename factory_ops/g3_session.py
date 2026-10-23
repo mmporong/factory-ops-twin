@@ -79,6 +79,8 @@ def _validate_runtime(runtime: dict[str, Any]) -> None:
     if (runtime.get("schema_version") != 2
             or runtime.get("qualification") != "g3_two_robot_orders" or runtime.get("scope") != SCOPE):
         raise ValueError("G3 runtime scope differs")
+    if runtime.get("chunk_policy", "first_edge") not in ("first_edge", "bounded_collinear"):
+        raise ValueError("unsupported route chunk policy")
     for name in (
         "max_wall_time_s", "startup_sim_allowance_s", "chunk_timeout_s", "pose_ttl_s",
         "path_ttl_s", "path_clock_wait_wall_s", "terminal_recording_wait_wall_s",

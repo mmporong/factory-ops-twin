@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "scope": "CPU route compilation and reservation boundary checks; no native speed or throughput claim",
+  "source_sha256": {
+    "factory_ops/fleet_execution.py": "a7376b5ef18112f7013869dad6a0fb332aed948c7585e6f124d001ebb5ef941f",
+    "factory_ops/g3_session.py": "bc5f0b5af56328f02fe4a1c310f7848232f03f2014664c93dbdb98cbc7b6ae61",
+    "scripts/ros/g3_mission.py": "0278f23e3414298d439c59f6f3eaeb08147b2d486d6d3c8a705644ca4737c9c9",
+    "configs/factory-semiconductor-dual-lane/g3-runtime.json": "8d42b83418db8de65e8348aac2bf25ec4a62c9583775886988df8ba5914f1f9b"
+  },
+  "layout_sha256": "6fdfb4dab14734f2c43467cf384b72b5e4c471df1e3af7f003a3fca5f4ef6bba",
+  "routing_sha256": "e66286fb17e3845158abeb3e1684df89ae758736c7c77eade2451703bf141d5a",
+  "default_compatibility": {
+    "route_cases": 180,
+    "identical_to_previous_dict_and_route_id": 180,
+    "baseline_sha256": "1e1befa8e5d4898952e220de71a4716ee6eafd9adc588abb372a91f46923302a"
+  },
+  "bounded_collinear": {
+    "route_cases": 180,
+    "maximum_action_distance_m": 8.5,
+    "previous_single_edge_actions": 1250,
+    "bounded_collinear_actions": 948,
+    "same_authored_route_points": true,
+    "all_corners_remain_stop_boundaries": true,
+    "all_final_orientations_preserved": true,
+    "all_chunks_pass_current_geometry_qualification": true
+  },
+  "reservation_contract": {
+    "full_remaining_route_tiles_unchanged": true,
+    "denied_successor_retains_predecessor": true,
+    "station_stop_and_arrival_limits_unchanged": true,
+    "existing_horizon_and_physics_sensor_rates_unchanged": true
+  },
+  "tests": {
+    "command": "python -B -m unittest tests.test_collinear_chunks tests.test_fleet_execution tests.test_g3_remaining_reservations tests.test_planner_guidance -q",
+    "passed": 39
+  },
+  "native_validation": {
+    "applied_to_073": false,
+    "verified": false,
+    "note": "073 is frozen to d417d7f and retains first-edge actions; its stop-confirmation timeout is separate and remains open"
+  }
+}

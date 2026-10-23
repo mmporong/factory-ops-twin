@@ -920,7 +920,8 @@ def navigation_leg_goal(plan: Any, authored_goals: Mapping[str, GoalPose], *, al
 
 def request_remaining_reservation(book: RouteBook, manager: RouteReservationManager,
                                   robot: str, runtime: dict[str, Any], *,
-                                  reservation_radius_m: float, now_s: float) -> ReservationDecision:
+                                  reservation_radius_m: float, now_s: float,
+                                  chunk_policy: str = "first_edge") -> ReservationDecision:
     """Request at the qualified stopped boundary; retain the hold on denial."""
     if runtime["phase"] != "request":
         raise RuntimeError("remaining route transfer requires the stopped request boundary")
@@ -931,13 +932,15 @@ def request_remaining_reservation(book: RouteBook, manager: RouteReservationMana
             raise RuntimeError("remaining route transfer cannot replace an active goal")
         plan = book.plan(runtime["anchor"], leg["target"], closed=leg["closed"])
         chunk = make_chunk(book, runtime["anchor"], leg["target"],
-                           closed=leg["closed"], final_goal=leg["final_goal"])
+                           closed=leg["closed"], final_goal=leg["final_goal"], policy=chunk_policy)
         bounds = book.layout.bounds
         tiles = swept_tiles(plan.points, reservation_radius_m, tile_size_m=book.tile_size_m,
                             bounds_xy=(bounds.xmin, bounds.ymin, bounds.xmax, bounds.ymax))
         runtime["chunk"], runtime["remaining_plan"], runtime["pending_tiles"] = chunk, plan, tiles
         # A denied successor keeps the current HOLD and its goal identity.
         runtime["pending_follow_uuid"] = leg["intent"].goal_id if chunk.final and leg["intent"] else str(uuid4())
+    elif runtime["chunk"].policy != chunk_policy:
+        raise RuntimeError("pending route chunk policy changed")
     decision = manager.transfer(robot, runtime["generation"], runtime["chunk"].route_id,
                                 runtime["pending_follow_uuid"], runtime["pending_tiles"], now_s=now_s)
     runtime["last_request"] = now_s
@@ -2530,7 +2533,8 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
                             raise RuntimeError("planner retry full-leg ownership changed before fresh request")
                     else:
                         decision = request_remaining_reservation(book, manager, robot, rt,
-                            reservation_radius_m=reservation_radius, now_s=stamp)
+                            reservation_radius_m=reservation_radius, now_s=stamp,
+                            chunk_policy=runtime_config.get("chunk_policy", "first_edge"))
                         if not decision.granted:
                             continue
                     chunk = rt["chunk"]
