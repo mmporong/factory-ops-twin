@@ -1,0 +1,632 @@
+{
+  "schema_version": 1,
+  "run_id": "6f8b443d21d043668d69304758eaab6f",
+  "source_commit": "f7365dd1cb4bda1ad9f095af5df741603ce95a78",
+  "status": "no_out_of_range_in_authored_cases",
+  "scope": "Actual single PhysX sensor with authored boxes; not fleet, localization or SDG qualification",
+  "profile_name": "development_factory_physx_planar_v2",
+  "profile_sha256": "d2baca56860cdbaea32374d439b422cc40e8b9b8214470876e466cd06b78c118",
+  "authored_parameters": {
+    "min_range": 0.1,
+    "max_range": 50.0,
+    "draw_points": false,
+    "draw_lines": false,
+    "horizontal_fov": 360.0,
+    "vertical_fov": 2.0,
+    "horizontal_resolution": 0.5,
+    "vertical_resolution": 1.0,
+    "rotation_rate": 0.0,
+    "high_lod": false,
+    "yaw_offset": 0.0,
+    "enable_semantics": true
+  },
+  "geometry_basis": {
+    "layout_revision": "amr-semiconductor-dual-lane-v1",
+    "bounds_xy_m": [
+      0,
+      0,
+      36,
+      28
+    ],
+    "diagonal_m": 45.60701700396552,
+    "authored_range_max_m": 50.0,
+    "hardware_range_claim": false
+  },
+  "case_count": 72,
+  "invalid_case_count": 0,
+  "physics_steps": 288,
+  "elapsed_wall_s": 20.21899999998277,
+  "sdk_version": "4.5.0-rc.36+release.19112.f59b3005.gl",
+  "hit_min_m": 0.10000000149011612,
+  "hit_max_m": 46.00701141357422,
+  "selected_cases": [
+    {
+      "origin_m": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "yaw_rad": 0.0,
+      "target_face_distance_m": 29.99,
+      "world_time_s": 0.5666666962206364,
+      "physics_frame": 34,
+      "shapes": {
+        "depth": [
+          720,
+          1
+        ],
+        "intensity": [
+          720,
+          1
+        ],
+        "azimuth": [
+          720
+        ],
+        "zenith": [
+          1
+        ]
+      },
+      "dtypes": {
+        "depth": "float32",
+        "intensity": "uint8",
+        "azimuth": "float32",
+        "zenith": "float32"
+      },
+      "hit_count": 7,
+      "hit_min_m": 29.989999771118164,
+      "hit_max_m": 30.00027847290039,
+      "invalid_count": 0,
+      "invalid_samples": []
+    },
+    {
+      "origin_m": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "yaw_rad": 0.0,
+      "target_face_distance_m": 30.0,
+      "world_time_s": 0.6333333663642406,
+      "physics_frame": 38,
+      "shapes": {
+        "depth": [
+          720,
+          1
+        ],
+        "intensity": [
+          720,
+          1
+        ],
+        "azimuth": [
+          720
+        ],
+        "zenith": [
+          1
+        ]
+      },
+      "dtypes": {
+        "depth": "float32",
+        "intensity": "uint8",
+        "azimuth": "float32",
+        "zenith": "float32"
+      },
+      "hit_count": 7,
+      "hit_min_m": 30.0,
+      "hit_max_m": 30.010282516479492,
+      "invalid_count": 0,
+      "invalid_samples": []
+    },
+    {
+      "origin_m": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "yaw_rad": 0.0,
+      "target_face_distance_m": 30.01,
+      "world_time_s": 0.7000000365078449,
+      "physics_frame": 42,
+      "shapes": {
+        "depth": [
+          720,
+          1
+        ],
+        "intensity": [
+          720,
+          1
+        ],
+        "azimuth": [
+          720
+        ],
+        "zenith": [
+          1
+        ]
+      },
+      "dtypes": {
+        "depth": "float32",
+        "intensity": "uint8",
+        "azimuth": "float32",
+        "zenith": "float32"
+      },
+      "hit_count": 7,
+      "hit_min_m": 30.010000228881836,
+      "hit_max_m": 30.02028465270996,
+      "invalid_count": 0,
+      "invalid_samples": []
+    },
+    {
+      "origin_m": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "yaw_rad": 0.0,
+      "target_face_distance_m": 45.61,
+      "world_time_s": 0.7666667066514492,
+      "physics_frame": 46,
+      "shapes": {
+        "depth": [
+          720,
+          1
+        ],
+        "intensity": [
+          720,
+          1
+        ],
+        "azimuth": [
+          720
+        ],
+        "zenith": [
+          1
+        ]
+      },
+      "dtypes": {
+        "depth": "float32",
+        "intensity": "uint8",
+        "azimuth": "float32",
+        "zenith": "float32"
+      },
+      "hit_count": 5,
+      "hit_min_m": 45.61000061035156,
+      "hit_max_m": 45.616943359375,
+      "invalid_count": 0,
+      "invalid_samples": []
+    },
+    {
+      "origin_m": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "yaw_rad": 0.0,
+      "target_face_distance_m": 46.0,
+      "world_time_s": 0.8333333767950535,
+      "physics_frame": 50,
+      "shapes": {
+        "depth": [
+          720,
+          1
+        ],
+        "intensity": [
+          720,
+          1
+        ],
+        "azimuth": [
+          720
+        ],
+        "zenith": [
+          1
+        ]
+      },
+      "dtypes": {
+        "depth": "float32",
+        "intensity": "uint8",
+        "azimuth": "float32",
+        "zenith": "float32"
+      },
+      "hit_count": 5,
+      "hit_min_m": 46.0,
+      "hit_max_m": 46.00700378417969,
+      "invalid_count": 0,
+      "invalid_samples": []
+    },
+    {
+      "origin_m": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "yaw_rad": 0.5339742290318825,
+      "target_face_distance_m": 45.61,
+      "world_time_s": 1.5666667483747005,
+      "physics_frame": 94,
+      "shapes": {
+        "depth": [
+          720,
+          1
+        ],
+        "intensity": [
+          720,
+          1
+        ],
+        "azimuth": [
+          720
+        ],
+        "zenith": [
+          1
+        ]
+      },
+      "dtypes": {
+        "depth": "float32",
+        "intensity": "uint8",
+        "azimuth": "float32",
+        "zenith": "float32"
+      },
+      "hit_count": 5,
+      "hit_min_m": 45.61000061035156,
+      "hit_max_m": 45.616947174072266,
+      "invalid_count": 0,
+      "invalid_samples": []
+    },
+    {
+      "origin_m": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "yaw_rad": 0.5339742290318825,
+      "target_face_distance_m": 46.0,
+      "world_time_s": 1.6333334185183048,
+      "physics_frame": 98,
+      "shapes": {
+        "depth": [
+          720,
+          1
+        ],
+        "intensity": [
+          720,
+          1
+        ],
+        "azimuth": [
+          720
+        ],
+        "zenith": [
+          1
+        ]
+      },
+      "dtypes": {
+        "depth": "float32",
+        "intensity": "uint8",
+        "azimuth": "float32",
+        "zenith": "float32"
+      },
+      "hit_count": 5,
+      "hit_min_m": 46.0,
+      "hit_max_m": 46.00700759887695,
+      "invalid_count": 0,
+      "invalid_samples": []
+    },
+    {
+      "origin_m": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "yaw_rad": -2.6076184245579106,
+      "target_face_distance_m": 45.61,
+      "world_time_s": 2.366666790097952,
+      "physics_frame": 142,
+      "shapes": {
+        "depth": [
+          720,
+          1
+        ],
+        "intensity": [
+          720,
+          1
+        ],
+        "azimuth": [
+          720
+        ],
+        "zenith": [
+          1
+        ]
+      },
+      "dtypes": {
+        "depth": "float32",
+        "intensity": "uint8",
+        "azimuth": "float32",
+        "zenith": "float32"
+      },
+      "hit_count": 5,
+      "hit_min_m": 45.61000061035156,
+      "hit_max_m": 45.616947174072266,
+      "invalid_count": 0,
+      "invalid_samples": []
+    },
+    {
+      "origin_m": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "yaw_rad": -2.6076184245579106,
+      "target_face_distance_m": 46.0,
+      "world_time_s": 2.433333460241556,
+      "physics_frame": 146,
+      "shapes": {
+        "depth": [
+          720,
+          1
+        ],
+        "intensity": [
+          720,
+          1
+        ],
+        "azimuth": [
+          720
+        ],
+        "zenith": [
+          1
+        ]
+      },
+      "dtypes": {
+        "depth": "float32",
+        "intensity": "uint8",
+        "azimuth": "float32",
+        "zenith": "float32"
+      },
+      "hit_count": 5,
+      "hit_min_m": 46.0,
+      "hit_max_m": 46.00700378417969,
+      "invalid_count": 0,
+      "invalid_samples": []
+    },
+    {
+      "origin_m": [
+        3.6093505457687947,
+        4.564174283606593,
+        1.0
+      ],
+      "yaw_rad": 0.0,
+      "target_face_distance_m": 45.61,
+      "world_time_s": 3.1666668318212032,
+      "physics_frame": 190,
+      "shapes": {
+        "depth": [
+          720,
+          1
+        ],
+        "intensity": [
+          720,
+          1
+        ],
+        "azimuth": [
+          720
+        ],
+        "zenith": [
+          1
+        ]
+      },
+      "dtypes": {
+        "depth": "float32",
+        "intensity": "uint8",
+        "azimuth": "float32",
+        "zenith": "float32"
+      },
+      "hit_count": 5,
+      "hit_min_m": 45.61000061035156,
+      "hit_max_m": 45.616943359375,
+      "invalid_count": 0,
+      "invalid_samples": []
+    },
+    {
+      "origin_m": [
+        3.6093505457687947,
+        4.564174283606593,
+        1.0
+      ],
+      "yaw_rad": 0.0,
+      "target_face_distance_m": 46.0,
+      "world_time_s": 3.2333335019648075,
+      "physics_frame": 194,
+      "shapes": {
+        "depth": [
+          720,
+          1
+        ],
+        "intensity": [
+          720,
+          1
+        ],
+        "azimuth": [
+          720
+        ],
+        "zenith": [
+          1
+        ]
+      },
+      "dtypes": {
+        "depth": "float32",
+        "intensity": "uint8",
+        "azimuth": "float32",
+        "zenith": "float32"
+      },
+      "hit_count": 5,
+      "hit_min_m": 46.0,
+      "hit_max_m": 46.00700378417969,
+      "invalid_count": 0,
+      "invalid_samples": []
+    },
+    {
+      "origin_m": [
+        3.6093505457687947,
+        4.564174283606593,
+        1.0
+      ],
+      "yaw_rad": 0.5339742290318825,
+      "target_face_distance_m": 45.61,
+      "world_time_s": 3.9666668735444546,
+      "physics_frame": 238,
+      "shapes": {
+        "depth": [
+          720,
+          1
+        ],
+        "intensity": [
+          720,
+          1
+        ],
+        "azimuth": [
+          720
+        ],
+        "zenith": [
+          1
+        ]
+      },
+      "dtypes": {
+        "depth": "float32",
+        "intensity": "uint8",
+        "azimuth": "float32",
+        "zenith": "float32"
+      },
+      "hit_count": 5,
+      "hit_min_m": 45.61000061035156,
+      "hit_max_m": 45.61695098876953,
+      "invalid_count": 0,
+      "invalid_samples": []
+    },
+    {
+      "origin_m": [
+        3.6093505457687947,
+        4.564174283606593,
+        1.0
+      ],
+      "yaw_rad": 0.5339742290318825,
+      "target_face_distance_m": 46.0,
+      "world_time_s": 4.033333543688059,
+      "physics_frame": 242,
+      "shapes": {
+        "depth": [
+          720,
+          1
+        ],
+        "intensity": [
+          720,
+          1
+        ],
+        "azimuth": [
+          720
+        ],
+        "zenith": [
+          1
+        ]
+      },
+      "dtypes": {
+        "depth": "float32",
+        "intensity": "uint8",
+        "azimuth": "float32",
+        "zenith": "float32"
+      },
+      "hit_count": 5,
+      "hit_min_m": 46.0,
+      "hit_max_m": 46.00701141357422,
+      "invalid_count": 0,
+      "invalid_samples": []
+    },
+    {
+      "origin_m": [
+        3.6093505457687947,
+        4.564174283606593,
+        1.0
+      ],
+      "yaw_rad": -2.6076184245579106,
+      "target_face_distance_m": 45.61,
+      "world_time_s": 4.766666915267706,
+      "physics_frame": 286,
+      "shapes": {
+        "depth": [
+          720,
+          1
+        ],
+        "intensity": [
+          720,
+          1
+        ],
+        "azimuth": [
+          720
+        ],
+        "zenith": [
+          1
+        ]
+      },
+      "dtypes": {
+        "depth": "float32",
+        "intensity": "uint8",
+        "azimuth": "float32",
+        "zenith": "float32"
+      },
+      "hit_count": 5,
+      "hit_min_m": 45.61000061035156,
+      "hit_max_m": 45.61695098876953,
+      "invalid_count": 0,
+      "invalid_samples": []
+    },
+    {
+      "origin_m": [
+        3.6093505457687947,
+        4.564174283606593,
+        1.0
+      ],
+      "yaw_rad": -2.6076184245579106,
+      "target_face_distance_m": 46.0,
+      "world_time_s": 4.83333358541131,
+      "physics_frame": 290,
+      "shapes": {
+        "depth": [
+          720,
+          1
+        ],
+        "intensity": [
+          720,
+          1
+        ],
+        "azimuth": [
+          720
+        ],
+        "zenith": [
+          1
+        ]
+      },
+      "dtypes": {
+        "depth": "float32",
+        "intensity": "uint8",
+        "azimuth": "float32",
+        "zenith": "float32"
+      },
+      "hit_count": 5,
+      "hit_min_m": 46.0,
+      "hit_max_m": 46.00700759887695,
+      "invalid_count": 0,
+      "invalid_samples": []
+    }
+  ],
+  "source_sha256": {
+    "scripts/isaac/probe_physx_planar_ranges.py": "091d5514abedf7fbc1e332feba8468933ffcf95eedab08a8e3fa89d8ffa49b3c",
+    "factory_ops/physx_planar.py": "010b244f513f0714678c8d0578c04bb9fcb66b969a1a5e5ee778a3becc1320b3"
+  },
+  "closure": {
+    "job_closed": true,
+    "remaining_owned_pids": [],
+    "cleanup_errors": [],
+    "sdk_close_requested": true,
+    "sdk_close_returned": false
+  },
+  "original_sha256": {
+    "output/result.json": "b95487f5072ce67576fc70d9921db286dc283fd78dd5274c440e15841908418c",
+    "job.json": "77b532861b6afbffc9a7169f2b93789046bf951a183dae33c69d031ca4f4e29a",
+    "spec.json": "20da984bad03a659db4295d3abea5942fda7ecdf911cd15a9cc793c8b17b711b",
+    "preparation.json": "87847161a287978b4472628781564a351ac5284d324e3d659cf0df06abdfbcab"
+  },
+  "limits": "Only sampled authored placements passed. Out-of-range hits remain rejected; 065/066 failures are unchanged. Fleet trial remains required."
+}

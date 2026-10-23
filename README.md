@@ -6,7 +6,7 @@
 
 [이중 차로 배치](configs/factory-semiconductor-dual-lane)는36×28m 구역의 남·북 주통로와 동쪽 통로를 방향별로 나눕니다.19개 생산 설비의 평면 외곽을 유지하고, 정비 소품34개와 상태등·트레이 표시를 이동한 설비에 맞췄습니다. 출하 포장대 하나는 최신 고정 카탈로그의 NVIDIA 컨베이어로 교체하고, 실제 높이에 맞춰 충돌 외곽도 갱신했습니다. CPU 검사에서180개 정상/폐쇄 경로, 맞은편 차로의 예약 분리와 교차 경로의 대기,35개 제공처 모델의 실제 USD 합성을 확인했습니다. 웹 관제도 같은 배치의6개 방향 차로를 읽어 화살표로 표시합니다. **새 배치의4대 물류 완주는 아직 확인되지 않았습니다.** [합성·지도·에셋 근거](docs/evidence/semiconductor-dual-lane-201.json) · [설계도 · 실제 렌더 아님](docs/images/semiconductor-dual-lane-plan/layout.svg)
 
-생산 설비에는 트레이 투입 도크·매거진, 서비스 도어·벤트, ATE 인터페이스와 유틸리티 연결 형상을 추가했습니다. 장비별 역할을 보이기 위한 렌더 전용 세부 형상이며, 기존 적재 지원면·충돌 외곽과 AMR 차로는 유지합니다. 아래 사진에 이 형상을 반영했습니다. [형상과 제조사 기능 참조](docs/semiconductor-cell.md)
+생산 설비에는 트레이 투입 도크·매거진, 서비스 도어·벤트, ATE 인터페이스와 유틸리티 연결 형상을 추가했습니다. 큰 케이싱은 모서리 표현이 있는 메시로 렌더링합니다. 장비별 역할을 보이기 위한 형상이며, 기존 적재 지원면·충돌 외곽과 AMR 차로는 유지합니다. 아래 사진에 이 형상을 반영했습니다. [형상과 제조사 기능 참조](docs/semiconductor-cell.md)
 
 배차는 현재 배정된 제품 운송과 빈 캐리어 반납을 함께 확인해, 같은 두 지점을 역방향으로 오갈 작업의 동시 배정을 유예합니다. 실제 경로 예약과 정지 확인은 유지합니다. 동일 tick의 선택을 반영하는 CPU 회귀는 통과했으며 수정 후 물리 운송 완주는 확인 중입니다.
 
@@ -18,13 +18,13 @@
 
 | 이중 차로 반도체 구역 · 실제 Isaac Sim 조감 | 테스트 핸들러·ATE·검사 설비 근접 |
 |---|---|
-| ![방향별 통로와 후공정 셀 및 NVIDIA 포장 컨베이어를 배치한 반도체 최종검사·포장 구역](docs/images/semiconductor-dual-local45-207/overview.png) | ![트레이 도크·매거진·서비스 패널·벤트와 ATE 인터페이스를 보강한 검사 셀](docs/images/semiconductor-dual-local45-207/test-handler.png) |
+| ![방향별 통로와 후공정 셀 및 NVIDIA 포장 컨베이어를 배치한 반도체 최종검사·포장 구역](docs/images/semiconductor-dual-local45-208/overview.png) | ![트레이 도크·매거진·서비스 패널·벤트와 ATE 인터페이스를 보강한 검사 셀](docs/images/semiconductor-dual-local45-208/test-handler.png) |
 
-위 두 장과 아래 컨베이어 사진은 **Isaac Sim4.5의 같은 정지 물리 시점에서 촬영한 RGB**입니다. 공개 기능 자료를 참고한 비브랜드 절차형 생산 설비, NVIDIA 정비 소품34개와 포장 컨베이어1개를 함께 렌더링했습니다.3개 시점의 실제 형상·재질과 단색 여부를 확인했고, 촬영 프로세스는 모두 종료됐습니다. AMR 반복 운송이나 공장 처리량의 근거로 사용하지 않습니다. [촬영 소스·시점·카메라·원본 해시·종료 기록](docs/images/semiconductor-dual-local45-207/provenance.json)
+위 두 장과 아래 컨베이어 사진은 **Isaac Sim4.5의 같은 정지 물리 시점에서 촬영한 RGB**입니다. 공개 기능 자료를 참고한 비브랜드 절차형 생산 설비, NVIDIA 정비 소품34개와 포장 컨베이어1개를 함께 렌더링했습니다.3개 시점의 실제 형상·재질과 단색 여부를 확인했고, 촬영 프로세스는 모두 종료됐습니다. AMR 반복 운송이나 공장 처리량의 근거로 사용하지 않습니다. [촬영 소스·시점·카메라·원본 해시·종료 기록](docs/images/semiconductor-dual-local45-208/provenance.json)
 
-![실제 크기의 NVIDIA 포장 컨베이어를 새 출하 구역에서 촬영한 Isaac Sim RGB](docs/images/semiconductor-dual-local45-207/pack-conveyor.png)
+![실제 크기의 NVIDIA 포장 컨베이어를 새 출하 구역에서 촬영한 Isaac Sim RGB](docs/images/semiconductor-dual-local45-208/pack-conveyor.png)
 
-컨베이어의 프레임·롤러·배선·게이트 형상과 재질을 확인한 근접 촬영입니다. 제공처 모델을 실제 크기로 배치했으며, 벨트 구동·검사 센서·자동 선별을 구현한 영상은 아닙니다. 단색 RGB를 거르는 검사와 소유 프로세스 종료를 확인했습니다. [촬영 출처](docs/images/semiconductor-dual-local45-207/provenance.json) · [모델·라이선스·사용 범위](docs/asset-attribution.md)
+컨베이어의 프레임·롤러·배선·게이트 형상과 재질을 확인한 근접 촬영입니다. 제공처 모델을 실제 크기로 배치했으며, 벨트 구동·검사 센서·자동 선별을 구현한 영상은 아닙니다. 단색 RGB를 거르는 검사와 소유 프로세스 종료를 확인했습니다. [촬영 출처](docs/images/semiconductor-dual-local45-208/provenance.json) · [모델·라이선스·사용 범위](docs/asset-attribution.md)
 
 <details>
 <summary>지원 구역의 NVIDIA SimReady 모델 · 제공처 원본 미리보기</summary>
@@ -33,7 +33,7 @@
 |---|---|---|
 | ![NVIDIA 원본 캐비닛 모델 미리보기](docs/images/factory-context-assets-193/tool-cabinet.png) | ![NVIDIA 원본 이동식 작업대 모델 미리보기](docs/images/factory-context-assets-193/rolling-workstation.png) | ![NVIDIA 원본 정비 카트 모델 미리보기](docs/images/factory-context-assets-193/utility-cart.png) |
 
-이 표는 NVIDIA 제공 모델 미리보기입니다. 재질·텍스처가 포함된3종을 정비·입고 지원·외곽 서비스 공간에34개 배치했고, 위196 공장 RGB에서 함께 촬영했습니다. 실제 USD 합성에서 모델 크기·위치와 AMR 구역의10cm 이격을 확인했습니다. 실패한 이전 운송063에는 새 소품이 포함되지 않습니다. 제작자 NVIDIA, CC BY 4.0. [원본·라이선스·변경 내용·캐시 준비법](docs/asset-attribution.md) · [합성 근거](docs/evidence/factory-context-196.json)
+이 표는 NVIDIA 제공 모델 미리보기입니다. 재질·텍스처가 포함된3종을 정비·입고 지원·외곽 서비스 공간에34개 배치했고, 위 공장 RGB에서 함께 촬영했습니다. 실제 USD 합성에서 모델 크기·위치와 AMR 구역의10cm 이격을 확인했습니다. 실패한 이전 운송063에는 새 소품이 포함되지 않습니다. 제작자 NVIDIA, CC BY 4.0. [원본·라이선스·변경 내용·캐시 준비법](docs/asset-attribution.md) · [현재 촬영 근거](docs/images/semiconductor-dual-local45-208/provenance.json)
 
 </details>
 
@@ -198,7 +198,7 @@ Isaac Sim 물리 실행은 창 없이 헤드리스로 돌리며, GPU 렌더링�
 
 외부 NVIDIA 모델을 쓰는 장면은 준비된 캐시의 상위 디렉터리를 `FACTORY_OPS_ASSET_CACHE` 환경변수로 전달해야 합니다. 경로는 `<캐시 상위>/<고정 revision>/prepared-index.json` 형태입니다. 정지 촬영기는 이 색인이 없으면 GPU를 시작하기 전에 종료합니다. [자산 준비·캐시 설정](docs/asset-attribution.md)
 
-로컬 PhysX 개발 프로필v2는36×28m 장면의 대각 길이 약45.61m를 포함하도록 SDK에0.1~50m를 작성하며, 같은 범위를 검사·발행·관측에 사용합니다. 원시 hit를 clamp하거나 no-hit로 바꾸지 않습니다. AMCL의 사용 상한30m와 장애물 검출12m·raytrace15m는 유지합니다. 이 설정은 실물 라이다의 정격이나 최종 RTX 센서 구성의 검증을 뜻하지 않습니다.
+로컬 PhysX 개발 프로필v2는36×28m 장면의 대각 길이 약45.61m를 포함하도록 SDK에0.1~50m를 작성하며, 같은 범위를 검사·발행·관측에 사용합니다. 원시 hit를 clamp하거나 no-hit로 바꾸지 않습니다. [실제 단일 센서 시험](docs/evidence/local45-planar-range-209.json)의72개 조건에서 범위 밖 hit0건을 확인했습니다. AMCL의 사용 상한30m와 장애물 검출12m·raytrace15m는 유지합니다. 이 시험은4대 물류 완주, 실물 라이다의 정격이나 최종 RTX 센서 구성의 검증을 뜻하지 않습니다.
 
 로컬 실행기는 지정한 wall 시간 한도에서 마지막30초를 SDK·ROS·중계 종료에 예약합니다. 작업 기한과 종료 결과는 실행에 사용한 소스·시간 정책과 함께 기록합니다.
 
