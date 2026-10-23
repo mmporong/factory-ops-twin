@@ -1,0 +1,13 @@
+{
+  "image": "dashboard-live-carter1.jpg",
+  "image_sha256": "806ac7348d0fe3d4cfcfa888bf8000cdc0f41c0995e353d57e46296e9eaeb4f2",
+  "source_png_sha256": "331c55d8cc5ed1c31f1579ba75cedbc84270f53a29747a508da7842485eeb361",
+  "captured_at": "2026-10-23T13:31:36+09:00",
+  "run_id": "1ad2186b6fb64105b23d8ec1c8047036",
+  "run_source_commit": "2a7f7efc05f882a23accf093c9b51e13a7d6727f",
+  "run_state_at_capture": "in progress; mid-run observation, not a completed or validated transport run",
+  "dashboard_scope": "Web console redesign rendering actual live observations of the same run. The API read only dashboard-state.json and actions.jsonl without --commands-dir, so no run control was available or used. Vehicle, cargo and inventory shapes are ledger-based schematics; robot motion between 1.5 s polls is tweened for display only.",
+  "api": "python -m factory_ops.dashboard --config configs/factory-semiconductor-dual-lane --source <run>/results/run/dashboard-state.json --events-source <run>/results/run/actions.jsonl",
+  "renderer": "headless Chromium 1208 with SwiftShader WebGL, viewport 1440x900, deviceScaleFactor 1; PNG converted to JPEG (ffmpeg -q:v 3)",
+  "selection": "carter1 selected from the vehicle list; camera moved by the list click"
+}
