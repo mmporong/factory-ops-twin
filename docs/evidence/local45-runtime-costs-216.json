@@ -1,0 +1,154 @@
+{
+  "schema_version": 1,
+  "run_id": "ef8acff1c8f7401e8053520095ef3d10",
+  "producer_source_commit": "53927e75fcdd779ef7379dc4a96e78891ee5e051",
+  "scope": "Short cost diagnosis with intentionally interrupted transport; no completed logistics or final-media qualification",
+  "status": "failed",
+  "wall_s": 282.01600000000326,
+  "termination": {
+    "owner_abort_requested": true,
+    "reason": "Sufficient phase-cost samples collected; agent owner stop, not the 600 s wall limit",
+    "owner_error": null
+  },
+  "sample_a": {
+    "completed_control_loops": 847,
+    "native_stepper": {
+      "physics_calls": 847,
+      "physics_wall_s": 14.40874950075522,
+      "render_calls": 141,
+      "render_wall_s": 11.537143000401556
+    },
+    "phases": {
+      "complete_control_loop": {
+        "calls": 847,
+        "maximum_call_wall_s": 0.6089136999798939,
+        "wall_s": 75.36832189973211
+      },
+      "explicit_rgb_capture": {
+        "calls": 3,
+        "maximum_call_wall_s": 0.4598808000446297,
+        "wall_s": 1.2720120000303723
+      },
+      "physics_app_update": {
+        "calls": 847,
+        "maximum_call_wall_s": 0.17089300003135577,
+        "wall_s": 26.29161519947229
+      },
+      "scan_read_validate_publish": {
+        "calls": 141,
+        "maximum_call_wall_s": 0.3402416000026278,
+        "wall_s": 25.095937699778005
+      },
+      "scene_extension": {
+        "calls": 847,
+        "maximum_call_wall_s": 0.15662779996637255,
+        "wall_s": 2.859599499788601
+      },
+      "sdk_ros_dispatch": {
+        "calls": 1694,
+        "maximum_call_wall_s": 0.019279100000858307,
+        "wall_s": 11.484258300915826
+      }
+    },
+    "physics_frame": 970,
+    "run_id": "ef8acff1c8f7401e8053520095ef3d10",
+    "scope": "inclusive wall costs; physics_app_update overlaps native_stepper and complete_control_loop contains other phases; not operational qualification",
+    "world_time_s": 16.166667509824038
+  },
+  "sample_b": {
+    "completed_control_loops": 1981,
+    "native_stepper": {
+      "physics_calls": 1981,
+      "physics_wall_s": 31.12592450081138,
+      "render_calls": 330,
+      "render_wall_s": 25.58287060057046
+    },
+    "phases": {
+      "complete_control_loop": {
+        "calls": 1981,
+        "maximum_call_wall_s": 0.7907601000042632,
+        "wall_s": 165.37358119996497
+      },
+      "explicit_rgb_capture": {
+        "calls": 4,
+        "maximum_call_wall_s": 0.4598808000446297,
+        "wall_s": 1.6884817000245675
+      },
+      "physics_app_update": {
+        "calls": 1981,
+        "maximum_call_wall_s": 0.17089300003135577,
+        "wall_s": 57.46369459858397
+      },
+      "scan_read_validate_publish": {
+        "calls": 330,
+        "maximum_call_wall_s": 0.3402416000026278,
+        "wall_s": 54.219885899394285
+      },
+      "scene_extension": {
+        "calls": 1981,
+        "maximum_call_wall_s": 0.15662779996637255,
+        "wall_s": 7.598912400309928
+      },
+      "sdk_ros_dispatch": {
+        "calls": 3962,
+        "maximum_call_wall_s": 0.08942239999305457,
+        "wall_s": 25.45261940167984
+      }
+    },
+    "physics_frame": 2104,
+    "run_id": "ef8acff1c8f7401e8053520095ef3d10",
+    "scope": "inclusive wall costs; physics_app_update overlaps native_stepper and complete_control_loop contains other phases; not operational qualification",
+    "world_time_s": 35.06666849553585
+  },
+  "delta": {
+    "completed_control_loops": 1134,
+    "sim_s": 18.900000985711813,
+    "inclusive_phase_wall_s": {
+      "complete_control_loop": 90.00525930023286,
+      "explicit_rgb_capture": 0.41646969999419525,
+      "physics_app_update": 31.17207939911168,
+      "scan_read_validate_publish": 29.12394819961628,
+      "scene_extension": 4.739312900521327,
+      "sdk_ros_dispatch": 13.968361100764014
+    },
+    "interpretation": "physics_app_update overlaps native_stepper; complete_control_loop contains other phases. Do not sum overlapping costs or infer final mission throughput."
+  },
+  "cpu_validation_comparison": {
+    "scope": "alternating CPU validation of one synthetic 720-beam NumPy fixture; not whole-run speed or native sensor quality",
+    "numpy_version": "1.26.0",
+    "iterations_each": 200,
+    "values_and_signature_equal": true,
+    "fixture_array_sha256": {
+      "linear_depth_data": "d8b10f942018c153b32df5f066b607e776f6bb28a316026d87408166c5404a67",
+      "intensity_data": "c7cb2daf2491b13bc4e1340b99b7750d6e75e766e2639c4737880e0186cc295a",
+      "azimuth_rad": "c52aa98755b7e5c5af36467f03931989f20d8eac755ac0f0cb7de082096b8f19",
+      "zenith_rad": "df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119"
+    },
+    "source_sha256": {
+      "before": "010b244f513f0714678c8d0578c04bb9fcb66b969a1a5e5ee778a3becc1320b3",
+      "after": "acac873cd87acda3e4cacbc26b70369e0f221151183a439bd69bbd239970c998"
+    },
+    "median_ms": {
+      "before": 4.72945,
+      "after": 0.46425
+    }
+  },
+  "closure": {
+    "windows_closed": true,
+    "linux_closed": true,
+    "relay_closed": true,
+    "job_closed": true,
+    "remaining_owned_pids": []
+  },
+  "original_sha256": {
+    "pair-host.json": "df6f95a77ca7139152113e4df40171850479ee5d8a87da5ccc986c67689651ef",
+    "job.json": "20c0911cdf9345d4e296fa2556f2fc0e7eb9494b591ecf7c773f3f7ad9b70244",
+    "relay-pair.json": "a517f195ebfca130bd1537ee74d8953a682cb25e2f7bceb036b553db3e72c83c",
+    "results/run/runtime-costs.json": "b45f814bf25a5c84b5fdfcffa1ee09442175594b0a9f80822466e39141cfc526"
+  },
+  "sample_sha256": {
+    "cost-071-001.json": "284a0f9445d4d78525ec1ea914c53684a76925b499bc940528fa9dd510a79cd8",
+    "cost-071-002.json": "b45f814bf25a5c84b5fdfcffa1ee09442175594b0a9f80822466e39141cfc526"
+  },
+  "next": "Native cost comparison after vector validation; CPU synthetic fixture improvement is not a whole-run or native sensor quality result."
+}

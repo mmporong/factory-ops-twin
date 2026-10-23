@@ -1154,3 +1154,13 @@ Linux 중계 종료에서는063과 같은 `Unit ... not loaded`가 다시 남았
 예약 저널의 대기4521건은 모두 `successor_tiles_occupied`다. 이 기록만으로 허위 점유·전체 직렬 실행·교착을 확정하지 않는다. 마지막까지 인계·경로 진행이 있었으며 원본 예약·정지·발자국 계약은 유지한다. 임무 callback drain은18551회 모두0.05초 협력 예산에 도달했지만 이 지표만으로 전체 속도의 주된 원인이라고 단정하지 않는다.
 
 후속 SDK 루프는 물리 step·예약된 render·센서 읽기/검사/발행·ROS dispatch·scene extension·명시적 RGB 촬영의 누적 벽시계 비용을15초마다 `runtime-costs.json` 한 파일에 갱신한다. 부모 루프와 native stepper 비용은 포함 관계이므로 합산하지 않는다. 물리 주기·렌더 주기·센서 원본·관측 TTL·예약 조건·촬영 예산은 바꾸지 않는다. 관련 stepper8개와G2 scene17개 검사가 통과했고, 짧은 GPU 계측에서 주된 비용을 확인한 뒤 해당 경로만 수정한다. 계측 추가 자체를 속도 개선이나 운송 성공으로 표시하지 않는다.
+
+## FOT-140 — planar 센서의 개별 수치 검사 비용
+
+짧은071 계측의 두 누적 표본 사이에서1134개 물리 제어 반복·18.90초 시뮬레이션이90.01초 벽시계 동안 진행됐다. 물리·렌더 갱신은31.17초, 센서 읽기/검사/발행은29.12초, SDK ROS dispatch는13.97초, scene extension은4.74초였다. 이 구간은 전체12lot 처리량 시험이 아니며 부모 루프·native stepper의 포함 비용을 합산하지 않는다. 충분한 표본을 확보해 owner 중단으로 종료했고 양 OS·중계·Job 및 잔여 소유 PID0을 확인했다. [계측·종료·원본 해시](evidence/local45-runtime-costs-216.json)
+
+센서와 발행기는 각 snapshot의720개 값에 Python scalar 검사를 수행했다. SDK에 이미 포함된 NumPy1.26.0의 유한 ndarray 입력에 한해 배열 전체의 유한성·정수 hit0/255·hit 거리 범위를 검사하고 Python double 값으로 변환한다. 범위 비교도double로 수행해float32의 스칼라 승격이 경계 판정을 바꾸지 않게 한다. 일반 sequence·미지원dtype·잘못된hit·범위 위반·NaN/inf는 기존 scalar 경로를 거쳐 같은 원본 수치·빔·경로 오류를 남긴다. 캐시로 검사를 생략하거나 범위·거리·no-hit 정책을 바꾸지 않는다. 같은 signature의 개별 double packing은 같은 바이트의 일괄 packing으로 바꿨다.
+
+NumPy를 새로 설치하지 않았으며 SDK ndarray 입력일 때만 사용한다. [공식astype 문서](https://numpy.org/doc/1.26/reference/generated/numpy.ndarray.astype.html)와 [tolist 문서](https://numpy.org/doc/1.26/reference/generated/numpy.ndarray.tolist.html)를 참조했다. 값·정렬·signature·입력 불변·float32/64·byte order·no-hit NaN·같은 프레임 변조·잘못된hit/범위의 기존 오류와 새 경로 동등성을 SDK Python에서 확인했다. 관련CPU13개·SDK NumPy3개 검사가 통과했다.
+
+원래071 소스와 수정 함수를 같은 합성720빔 입력으로 번갈아200회 측정한 중앙값은4.72945ms와0.46425ms였다. 모든 반환 값과signature가 같았다. 이는 검증 함수의 CPU 관측치이며 실제 scan 발행·전체 물류·하드웨어 LiDAR 품질의 개선율이 아니다. 후속 짧은 SDK 실행에서 센서 구간 비용과 실제 관측을 확인한다.

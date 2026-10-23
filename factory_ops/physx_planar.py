@@ -131,6 +131,31 @@ def _diagnostic_prim_path(value: Any, beam_index: int) -> str | None:
     return path if isinstance(path, str) else None
 
 
+def _numpy_vectors(depth: Any, intensity: Any, azimuth: Any) -> tuple[Any, Any, Any] | None:
+    """Batch-check finite native arrays; other inputs retain scalar diagnostics.
+
+    This imports no optional package for ordinary Python sequence inputs. NaN,
+    infinity, invalid hits and unsupported dtypes take the original scalar path.
+    """
+    if any(type(value).__module__ != "numpy" or type(value).__name__ != "ndarray"
+           for value in (depth, intensity, azimuth)):
+        return None
+    import numpy as np
+    if (any(value.dtype.kind not in "fiu" or value.dtype.itemsize > 8
+            for value in (depth, azimuth))
+            or intensity.dtype.kind not in "iu" or intensity.dtype.itemsize > 8):
+        return None
+    if (not np.isfinite(depth).all() or not np.isfinite(azimuth).all()
+            or ((intensity != 0) & (intensity != 255)).any()):
+        return None
+    hits = intensity[:, 0]
+    ranges = depth[:, 0].astype(np.float64, copy=False)
+    if ((hits == 255) & ((ranges < RANGE_MIN_M) | (ranges > RANGE_MAX_M))).any():
+        return None
+    return (tuple(azimuth.astype(np.float64, copy=False).tolist()),
+            tuple(ranges.tolist()), hits.tolist())
+
+
 def _validate(snapshot: Mapping[str, Any]) -> dict[str, Any]:
     if (snapshot.get("schema_name") != SCHEMA_NAME or snapshot.get("sensor_backend") != SENSOR_BACKEND
             or snapshot.get("time_source") != TIME_SOURCE or snapshot.get("native_timestamp") is not None):
@@ -146,25 +171,29 @@ def _validate(snapshot: Mapping[str, Any]) -> dict[str, Any]:
         raise ValueError("actual arrays must be depth/intensity720x1, azimuth720, zenith1")
     if abs(_real(zenith[0], "zenith_rad[0]")) > 1e-6:
         raise ValueError("observed horizontal elevation must be zenith0")
-    angles = tuple(_real(azimuth[i], "azimuth_rad") for i in range(720))
-    ranges = tuple(_real(depth[i][0], "linear_depth_data", finite=False) for i in range(720))
-    hits = []
-    for i in range(720):
-        hit = intensity[i][0]
-        if isinstance(hit, bool) or not isinstance(hit, Integral) or hit not in (0, 255):
-            raise ValueError("intensity must retain native0/255 integer values")
-        if hit == 255 and (not math.isfinite(ranges[i]) or not RANGE_MIN_M <= ranges[i] <= RANGE_MAX_M):
-            sensor_path = snapshot.get("sensor_prim_path")
-            raise PhysxPlanarRangeRejection(
-                beam_index=i,
-                raw_range=depth[i][0],
-                normalized_range=ranges[i],
-                prim_path=_diagnostic_prim_path(snapshot.get("prim_paths"), i),
-                stamp=stamp,
-                frame=frame,
-                sensor_path=sensor_path if isinstance(sensor_path, str) else None,
-            )
-        hits.append(int(hit))
+    vectors = _numpy_vectors(depth, intensity, azimuth)
+    if vectors is None:
+        angles = tuple(_real(azimuth[i], "azimuth_rad") for i in range(720))
+        ranges = tuple(_real(depth[i][0], "linear_depth_data", finite=False) for i in range(720))
+        hits = []
+        for i in range(720):
+            hit = intensity[i][0]
+            if isinstance(hit, bool) or not isinstance(hit, Integral) or hit not in (0, 255):
+                raise ValueError("intensity must retain native0/255 integer values")
+            if hit == 255 and (not math.isfinite(ranges[i]) or not RANGE_MIN_M <= ranges[i] <= RANGE_MAX_M):
+                sensor_path = snapshot.get("sensor_prim_path")
+                raise PhysxPlanarRangeRejection(
+                    beam_index=i,
+                    raw_range=depth[i][0],
+                    normalized_range=ranges[i],
+                    prim_path=_diagnostic_prim_path(snapshot.get("prim_paths"), i),
+                    stamp=stamp,
+                    frame=frame,
+                    sensor_path=sensor_path if isinstance(sensor_path, str) else None,
+                )
+            hits.append(int(hit))
+    else:
+        angles, ranges, hits = vectors
     ticks = snapshot["num_cols_ticked"]
     if isinstance(ticks, bool) or not isinstance(ticks, Integral) or ticks != 720:
         raise ValueError("get_num_cols_ticked must be720 for this populated frame")
@@ -177,8 +206,7 @@ def _validate(snapshot: Mapping[str, Any]) -> dict[str, Any]:
     signature = hashlib.sha256()
     signature.update(struct.pack(">dq", stamp, frame))
     for values in (ranges, tuple(hits), angles, (_real(zenith[0], "zenith"),)):
-        for number in values:
-            signature.update(struct.pack(">d", number))
+        signature.update(struct.pack(">" + str(len(values)) + "d", *values))
     paths = _prim_paths(snapshot.get("prim_paths"))
     signature.update(repr(paths).encode("utf-8"))
     for field in ("raw_shapes", "raw_dtypes"):
