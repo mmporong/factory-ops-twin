@@ -1,0 +1,11 @@
+{
+  "frame": 53,
+  "source_time_s": 1994.1333333333334,
+  "source_state_time_s": 1994.0999999992819,
+  "render_run_id": "4f5937e1abec4020acb86002026aab78",
+  "source_run_id": "operations-normal-eta-13b5cf02963534bc-ea817f1064d0",
+  "raw_rgb_sha256": "001f4668fae84e945510205cde050a480443a057ad4fea6f1a29c31a3a576c60",
+  "overview_sha256": "bc3592f2f9365b6f5c42ea39d349eefc1dd6b7828ffb617fc0c8b528d7b9e4bb",
+  "selection": "highest observed moving-vehicle/payload/process score within the chosen continuous clip; no scene edits",
+  "annotation_correction": "legacy raw-aperture labels fitted to horizontal-fit square-pixel raster"
+}

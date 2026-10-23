@@ -1,0 +1,187 @@
+{
+  "schema_version": 1,
+  "run_id": "07e0a96784c64ac684f4783f2a092969",
+  "status": "passed",
+  "scope": "Native Isaac Sim 4.5 Kit operator console against an isolated kinematic operations API; equipment fault/recovery and command receipts, no ROS, contact physics or hardware control",
+  "started_at_utc": "2026-10-23T10:27:33.757415+00:00",
+  "finished_at_utc": "2026-10-23T10:28:11.892218+00:00",
+  "isaac_version": "4.5.0-rc.36+release.19112.f59b3005.gl",
+  "python": "3.10.15 (tags/v3.10.15-dirty:ffee63f, Oct  8 2024, 11:54:31) [MSC v.1912 64 bit (AMD64)]",
+  "execution": {
+    "mode": "operations",
+    "business_run_id": "web-local-model-8183b513-a452-4eb5-ad17-1109c52b9059",
+    "launcher_native_contract": {
+      "result_present": true,
+      "status_passed": true,
+      "request_run_matches": true,
+      "business_run_matches": true
+    },
+    "launcher_elapsed_wall_s": 38.13482470001327,
+    "native_elapsed_wall_s": 34.70300000003772,
+    "uses_existing_operator_ports": false
+  },
+  "native_commands": {
+    "count": 5,
+    "all_applied": true,
+    "all_same_business_run": true,
+    "operations": [
+      {
+        "label": "pause",
+        "action": "pause",
+        "command_id": "3633ffec-7f39-4e29-82b1-5a5c5579e079",
+        "status": "applied",
+        "receipt_run_id": "web-local-model-8183b513-a452-4eb5-ad17-1109c52b9059",
+        "revision": 1,
+        "api_paused": true,
+        "equipment_available": true
+      },
+      {
+        "label": "resume",
+        "action": "resume",
+        "command_id": "2a3fc42e-8dc5-44a0-b7bf-defb29b91f53",
+        "status": "applied",
+        "receipt_run_id": "web-local-model-8183b513-a452-4eb5-ad17-1109c52b9059",
+        "revision": 2,
+        "api_paused": false,
+        "equipment_available": true
+      },
+      {
+        "label": "create_order",
+        "action": "create_order",
+        "command_id": "c28abdb9-5191-4aaf-947d-327387ff0709",
+        "status": "applied",
+        "receipt_run_id": "web-local-model-8183b513-a452-4eb5-ad17-1109c52b9059",
+        "revision": 3,
+        "api_paused": false,
+        "equipment_available": true
+      },
+      {
+        "label": "equipment_fault",
+        "action": "set_equipment_availability",
+        "command_id": "f1dfb3bc-cb1b-412e-b322-63dde003ec66",
+        "status": "applied",
+        "receipt_run_id": "web-local-model-8183b513-a452-4eb5-ad17-1109c52b9059",
+        "revision": 4,
+        "api_paused": false,
+        "equipment_available": false
+      },
+      {
+        "label": "equipment_recover",
+        "action": "set_equipment_availability",
+        "command_id": "258c53d7-14f5-4db0-be5e-d2ca7c9403c2",
+        "status": "applied",
+        "receipt_run_id": "web-local-model-8183b513-a452-4eb5-ad17-1109c52b9059",
+        "revision": 5,
+        "api_paused": false,
+        "equipment_available": true
+      }
+    ],
+    "actual_native_scope": "pause, resume, create_order, CELL1 fault and CELL1 recovery",
+    "aisle_control_scope": "CPU tests only; close/open buttons were not exercised by native run 229"
+  },
+  "media": {
+    "published": {
+      "path": "kit-console.png",
+      "sha256": "76801b497dda679633727f7f74366328a0e1b00ad06215ba9c6f7dba3d7ae8c7",
+      "bytes": 194487,
+      "image_size_px": [
+        1100,
+        900
+      ],
+      "source": "native Isaac Sim 4.5 Kit renderer swapchain"
+    },
+    "post_disable_raw": {
+      "path": "E:\\factory-ops-runs\\kit-229\\native\\kit-console-disabled.png",
+      "sha256": "460306f7ccb0e669cd4515281950f9f9f4653be9a1ea038388e1801eacd775ec",
+      "bytes": 215207,
+      "published": false
+    }
+  },
+  "visual_review": {
+    "passed": true,
+    "observed": [
+      "white scrollable Factory Operations panel",
+      "equipment control buttons visible"
+    ],
+    "limitation": "The selected AMR detail and equipment metrics are below the captured scroll position, so one frame does not prove that every field was simultaneously visible."
+  },
+  "cleanup": {
+    "extension_shutdown": {
+      "manager_disabled": true,
+      "active_instance_removed": true,
+      "owned_window_hidden": true,
+      "hide_callback_observed": true
+    },
+    "workspace_handle_diagnostic": {
+      "present": true,
+      "visible": true,
+      "use": "diagnostic; Workspace may retain a destroyed ImGui window handle"
+    },
+    "launcher_api_threads_closed": true,
+    "launcher_sdk_child_closed": true,
+    "job_assignment_confirmed": true,
+    "job_closed": true,
+    "job_remaining_owned_pids": [],
+    "job_worker_exit_code": 0,
+    "gpu_lease": {
+      "lease_id": "bd00ed5f-d286-47b3-be3b-6ffe9fb5cc4c",
+      "state": "completed",
+      "exit_code": 0,
+      "lease_available_after": true,
+      "blocking_unmanaged_gpu_processes_after": []
+    }
+  },
+  "source_freeze": {
+    "path": "E:\\factory-ops-runs\\kit-229\\frozen-source",
+    "file_count": 31,
+    "all_sha256_match_host_spec": true,
+    "pins_sha256": {
+      "configs/factory-semiconductor-dual-lane/g2.json": "6994172e4ae5e536a5b883767fdab05610deca930d2c665deae8b9996f6b9ad3",
+      "configs/factory-semiconductor-dual-lane/g3-routing.json": "1d2b4aa5287bdc27527f1b13bc6955736a836bc4d62dbe1298db0f1d786abd13",
+      "configs/factory-semiconductor-dual-lane/layout.json": "6fdfb4dab14734f2c43467cf384b72b5e4c471df1e3af7f003a3fca5f4ef6bba",
+      "configs/factory-semiconductor-dual-lane/operations-charging.json": "44ed915a72e317f68a7a36a88f8af17f91e3a88d0773039330b753c8606fc327",
+      "extensions/factory.ops.console/config/extension.toml": "295cacaa636e7e1fdbf524189f9dd58e0201a8c155c1b253f6cf968660915d47",
+      "extensions/factory.ops.console/factory_ops_console/__init__.py": "6e5f6dede02cd956b94f93b558fe7b1a725ca16bf574c5e83d53496d0245af2e",
+      "extensions/factory.ops.console/factory_ops_console/extension.py": "0875d27ca8978aff1f7899eb62133cabbe380da5ef99c0ae793d00366f31032d",
+      "factory_ops/charging.py": "8a207ac2844a94f299f88d2f0bb5960b4cfcb927128d4b4b32e1288f59a5ffb5",
+      "factory_ops/compat.py": "e98fe8107420545536322962e74db8c7cffeada074df607c00766ede767c4bc0",
+      "factory_ops/dashboard.py": "a4d900886cd3b4584d29742da4193e8d3261ecf5a2615380420336530524a2c0",
+      "factory_ops/dashboard_charging.py": "d04c4357d755cfcf834e890978e67a98bba5e57dc8d125a0ade16e7f4e694446",
+      "factory_ops/dashboard_model.py": "eaee38c789249f924afed7e280b5469d8d9d0b67c0a0fd90f1de072626a546da",
+      "factory_ops/drive_profile.py": "6bba5a51caa5e4a71662339026afc67e1efe1d7370cb04c372cde48eba9d7185",
+      "factory_ops/energy.py": "89689894565e850ef3ef3242fceb636afcf14fc330b083a8080d372d4f6d3be1",
+      "factory_ops/fleet_routing.py": "2bf3d069f0361c6983ba11e7334d0cb187e23c12334d6539f39e13cbfffb9e94",
+      "factory_ops/kit_client.py": "edf337ec0ff4d5b5dfc9631377c21dfbb043bedbb99beb6c94e2b59f3e21e1cb",
+      "factory_ops/live_control.py": "1116eb4e54440ebe87131075ea542c69978ba138ac59f6f53cebb063fb5d846d",
+      "factory_ops/mock_mes.py": "dcfd587b137875bc3a3029e8328c4fb3cf8220660b507792184fc66a9dfde7d2",
+      "factory_ops/motion.py": "a8d670ce9e0309093c47a6a63ff70c78182021f6b50496933e29985466ed6cd1",
+      "factory_ops/operations/inventory.py": "1114b23fcdb3520de0b12f2e246680e5a0fbdcb945ac2ed9b3de0a2f9a5972f4",
+      "factory_ops/operations/ledger.py": "532ee11e9cf0431b4ce95204ac832913df0bc6e875901ca13afa3b73a8f604e6",
+      "factory_ops/operations/model.py": "17b90c1436b78f436d88b325adb27d1531440b63ef0cf169aece1d6070bfb38e",
+      "factory_ops/operations_charging.py": "4ef4b1ce36da5d4ff2061e1b40c62ba12565072d23fa8215651beceb2f943349",
+      "factory_ops/operations_corridor.py": "f3f99b3852079958d0b7405bf02250fde38f85662570cef6cef000b1e763d813",
+      "factory_ops/operations_model.py": "4a4b5f1f44fe3964819e91a41098aca28f54f11df0a218c4525d58a63a352c24",
+      "factory_ops/operations_motion.py": "1df674a4e61158122743144a177f20cdcc42df73032a46243d7b034106713066",
+      "factory_ops/operations_replan.py": "b5c156fa68cf48b8d73ef165ee9611fdc5d6d1a09fe07d1b9c8c94c0be57f237",
+      "factory_ops/route_reservation.py": "08a183ea04d913b2f64fca165d28921c112455661a5afac85938a76fe672c027",
+      "factory_ops/scenario_replay.py": "fb12ce316bdb8cceb52021d4988a8796bddf5da237daa4e64bb0236746aa6ef8",
+      "scripts/isaac/local_kit_console_probe.py": "2413905a4432a8452af6a63d64879cd3290b20ef0e2b3dd8fc46669abb8913a9",
+      "scripts/isaac/run_operations_kit_probe.py": "3e26ec39a7bc2c9a6ddcf009775eb8bf26967e2c5422859934d1ba0c0efb96a1"
+    }
+  },
+  "raw_evidence_sha256": {
+    "launcher_result": "5d380b8dd6c3f35653c015784202a870c90d95d4e08d414de75aaf1efa66d005",
+    "native_result": "5cb5f85d02169ca19699225893e5176c5cee56c0114ccd5533eef243d07c1efd",
+    "native_console": "76801b497dda679633727f7f74366328a0e1b00ad06215ba9c6f7dba3d7ae8c7",
+    "native_console_disabled": "460306f7ccb0e669cd4515281950f9f9f4653be9a1ea038388e1801eacd775ec",
+    "host_spec": "baf4d59572cf3b80d0c3041b8acda611fb693afa9757baad0bfd1943a35b5e5c",
+    "host_receipt": "c1557a6aa969a5cc530013bbbca9506645b4d3e50e3c7c9d1e26867318df0a80",
+    "gpu_status_before": "63d05f27d895e91575a043bfa80b4d9d96af208d3944ec4912694915b7a70716",
+    "gpu_status_after": "2e34cbd8f9e37680de4f05f32eb59a4eebf61541a25b169ab69ac858d0dce5f9"
+  },
+  "limits": [
+    "Kinematic operations API and native Kit UI evidence; no ROS, contact physics or hardware control.",
+    "Four-AMR physics, sensors and physical charging are not verified by this run.",
+    "Aisle close/open behavior is covered by CPU tests and was not part of the five native actions."
+  ]
+}

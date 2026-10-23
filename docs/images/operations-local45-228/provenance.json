@@ -1,0 +1,122 @@
+{
+  "schema_version": 1,
+  "scope": "operations presentation; not contact-physics transport evidence",
+  "source_run_id": "operations-normal-eta-13b5cf02963534bc-ea817f1064d0",
+  "render_run_id": "4f5937e1abec4020acb86002026aab78",
+  "source_recording": {
+    "manifest_sha256": "ab06339e3cfdd826ff363b0e93c6692abce87574cab11fd2725402b459833e19",
+    "gzip_sha256": "96d248a3c565d9de197cf3219503e6b4ad590886924f65b07cc51c84e487ffe1",
+    "uncompressed_sha256": "40a24501966e43ccf7b5be2106451a1df35f7e622642b0c42d085f4339e1fa30",
+    "frames": 5400,
+    "raw_bytes": 124128557
+  },
+  "source_case": {
+    "scenario": "normal",
+    "policy": "eta",
+    "horizon_s": 5400.0,
+    "completed_shipments": 12,
+    "completed_empty_returns": 12,
+    "parked_robots": 4,
+    "fleet_quiescent": true,
+    "case_sha256": "3d15b6141b820c91fb58738b83dc9378cebe3f4b6fe32fc14a6cd3b2b33937b8"
+  },
+  "excerpt": {
+    "requested_window_s": [
+      1980,
+      2220
+    ],
+    "first_presentation_time_s": 1980.0,
+    "last_presentation_time_s": 2219.733333333333,
+    "first_observed_state_time_s": 1979.0999999992955,
+    "last_observed_state_time_s": 2219.099999999077,
+    "shipments_before_after": [
+      7,
+      8
+    ],
+    "empty_returns_before_after": [
+      6,
+      8
+    ],
+    "frames_with_active_process": 75
+  },
+  "render": {
+    "sdk": "Isaac Sim 4.5",
+    "status": "passed",
+    "physics": "frozen timeline",
+    "raw_rgb_size_px": [
+      1280,
+      720
+    ],
+    "captured_frames": 900,
+    "playback_speed": 8.0,
+    "source_snapshot_hz": 1,
+    "discrete_state": "last observed snapshot held",
+    "pose": "interpolated between recorded snapshots; not a new measurement",
+    "result_sha256": "e6f8d546322b343b790c4feb99af015b0e49c4dcdc64030c105a13b3f9931e51",
+    "frames_jsonl_sha256": "57c1def9f73c2602a14d908493069b2770e887b4fe6742a402741e939c5ca169",
+    "renderer_source_sha256": "9393a06eda9f591936175045f484bb84fa00d216042b66930739eaabce7d6fc4",
+    "factory_input_sha256": {
+      "layout.json": "6fdfb4dab14734f2c43467cf384b72b5e4c471df1e3af7f003a3fca5f4ef6bba",
+      "visual-assets.json": "09faf692b3aed32076d08327fe1c3b617ee90a8588b290b2bcd0d47f3bbe58d8",
+      "render-profile.json": "c5ab1df0d245faefdf368c9c20dcc52287365381aa8409b6861f9c8c262180fd"
+    },
+    "frozen_source_directory": "E:/factory-ops-runs/operations-render-228/frozen-source"
+  },
+  "host": {
+    "status": "passed",
+    "closed": true,
+    "remaining_owned_pids": [],
+    "worker_exit_code": 0,
+    "elapsed_wall_s": 437.62748070003,
+    "receipt_sha256": "f306e020446bfda29422cd6802b7ced4b36001e13360066098ead81b1dbbe0d3"
+  },
+  "annotation_correction": {
+    "stage": "CPU export only; original RGB/metadata unchanged",
+    "method": "legacy y fitted around raster center using raw_vertical / (horizontal * height / width)",
+    "source": "installed Isaac Sim 4.5 isaacsim.sensors.camera camera.py get_vertical_aperture/get_intrinsics_matrix",
+    "validation": "projection unit test and selected frame visual inspection; not sensor calibration"
+  },
+  "media": {
+    "mp4": {
+      "path": "operations-replay.mp4",
+      "sha256": "79ab0f16a706cbe9c812d6b1a99c83f4bbe31725f4d28ce7b43e4b249f45efe3",
+      "bytes": 4858634,
+      "ffprobe": {
+        "codec_name": "h264",
+        "width": 1280,
+        "height": 860,
+        "avg_frame_rate": "30/1",
+        "duration": "30.000000",
+        "nb_frames": "900"
+      }
+    },
+    "gif": {
+      "path": "operations-replay.gif",
+      "sha256": "96d4bd45fcecd66b902278da53ff2024596cb7987b0bb0e00aa84bd754cd5674",
+      "bytes": 12775674,
+      "codec": "gif",
+      "width_px": 960,
+      "height_px": 646,
+      "fps": 25,
+      "frame_interval_ms": 40,
+      "frames": 750,
+      "duration_s": 30.0,
+      "loop": 0
+    },
+    "mp4_manifest": "export-manifest.json",
+    "gif_recipe_and_manifest": "gif-manifest.json",
+    "overview_manifest": "overview.json"
+  },
+  "limits": [
+    "Single modeled processing cell; 18 other production machines provide visual and collision context.",
+    "Charging was not triggered in this high-SOC case; low-SOC integration evidence is separate.",
+    "Presentation-only pallet attachment and inventory projection; no physical lift or roller transfer.",
+    "GIF denoising and palette reduction are delivery transforms, not training/sensor data."
+  ],
+  "gpu_handoff": {
+    "released_at": "2026-10-23T19:29:11.6811547+09:00",
+    "gpu_batch_complete": true,
+    "owned_processes_gone": true,
+    "next_gpu_work_pending": false
+  }
+}

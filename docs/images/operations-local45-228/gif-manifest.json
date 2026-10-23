@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "scope": "README delivery GIF from the aligned verified operations replay MP4; CPU post-process only, no interpolation or generated frames",
+  "input": {
+    "path": "operations-replay.mp4",
+    "sha256": "79ab0f16a706cbe9c812d6b1a99c83f4bbe31725f4d28ce7b43e4b249f45efe3",
+    "bytes": 4858634,
+    "codec": "h264",
+    "width_px": 1280,
+    "height_px": 860,
+    "fps": 30,
+    "frames": 900,
+    "duration_s": 30.0
+  },
+  "output": {
+    "path": "operations-replay.gif",
+    "sha256": "96d4bd45fcecd66b902278da53ff2024596cb7987b0bb0e00aa84bd754cd5674",
+    "bytes": 12775674,
+    "codec": "gif",
+    "width_px": 960,
+    "height_px": 646,
+    "fps": 25,
+    "frame_interval_ms": 40,
+    "frames": 750,
+    "duration_s": 30.0,
+    "loop": 0
+  },
+  "ffmpeg": {
+    "threads": 2,
+    "filter_threads": 1,
+    "args": [
+      "-hide_banner",
+      "-loglevel",
+      "error",
+      "-n",
+      "-threads",
+      "2",
+      "-filter_threads",
+      "1",
+      "-i",
+      "operations-replay.mp4",
+      "-filter_complex",
+      "fps=25,scale=960:-2:flags=lanczos,hqdn3d=1.5:1.5:6:6,split[s0][s1];[s0]palettegen=max_colors=64:stats_mode=diff[p];[s1][p]paletteuse=dither=bayer:bayer_scale=5:diff_mode=rectangle",
+      "-loop",
+      "0",
+      "operations-replay.gif"
+    ]
+  },
+  "filter_recipe": "fps=25,scale=960:-2:flags=lanczos,hqdn3d=1.5:1.5:6:6; palettegen=max_colors=64:stats_mode=diff; paletteuse=dither=bayer:bayer_scale=5:diff_mode=rectangle"
+}

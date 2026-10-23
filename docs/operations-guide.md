@@ -2,17 +2,19 @@
 
 대표 이미지·영상과 현재 구간은 [README](../README.md), 전체 완료 조건은 [완성 계획](completion-plan.md)에 있다. 아래 CPU 모델은 실제 Isaac Sim·Nav2 주행과 별도 결과다. 이미 API·웹 서버가 실행 중이면 같은 포트에 중복 실행하지 않는다.
 
-## CPU 웹 운영 모델
+## CPU 운영 모드
 
 Python 3.12·uv를 사용하며 Python 런타임 의존 패키지는 없다. PowerShell에서 API를 실행한다.
 
 ```powershell
 cd "$HOME/factory-ops-twin"
 uv sync --locked
-uv run python -m factory_ops.dashboard
+uv run python -m factory_ops.dashboard --config configs/factory-semiconductor-dual-lane --execution-mode operations --dispatch-policy eta --scenario-dir runs/operator-scenarios
 ```
 
-가상 에너지·충전 운영을 보려면 위 API 명령 대신 아래 명령을 사용한다.
+이 모드는4대의 가감속·회전·구간 예약·점유·정지 앵커 우회와 가상 에너지·충전을 계산한다. 초기 주문4건을 배정하며 추가 주문은 관제에서 만든다. 운영 패널의 설비 고장·복구는 CELL1의 남은 처리시간을 보존한다. 계획 통로 변경은 승인된 운송이 통로를 비운 뒤 적용되므로 요청 접수와 적용 완료를 구분한다. 웹과 Kit은 같은 API의 실행 ID·정책·시각·명령 receipt를 읽는다.
+
+기존 경로 보간 미리보기와 별도 충전 모델은 다음 명령으로 실행한다. 운영 모드의 교통 결과와 합치지 않는다.
 
 ```powershell
 cd "$HOME/factory-ops-twin"
@@ -27,7 +29,7 @@ npm ci
 npm run dev -- --port 3007
 ```
 
-주소는 `http://127.0.0.1:3007`, 기본 API는 `http://127.0.0.1:8765`다. CPU 모델은 공용 차량에 자재 공급·출하·빈 토트 회수를 배정하며 유한 재고와 용기 재사용을 연결한다. 웹 이동은 작성된 경로의 보간이다. 선택형 충전 모델은 작성된 에너지 계수·두 충전대 예약·정렬·기하 접촉 대기·가상 충전·이탈을 사용하며 물리 접촉 센서나 전기 충전 결과가 아니다.
+주소는 `http://127.0.0.1:3007`, 기본 API는 `http://127.0.0.1:8765`다. 웹은 수신 표본 사이의 표시 좌표를 보간한다. 운영 모델의 계산과 화면 보간은 별개다. 가상 충전은 작성된 에너지 계수·충전대 예약·정렬·대기·SOC 증가·이탈을 사용하며 물리 접촉 센서나 전기 충전 결과가 아니다.
 
 ## 운영 기록 저장·재생
 
@@ -35,7 +37,7 @@ API에 `--scenario-dir`를 지정하면 웹에 기록 저장·재생 기능이 �
 
 ```powershell
 cd "$HOME/factory-ops-twin"
-uv run python -m factory_ops.dashboard --config configs/factory-semiconductor --scenario-dir runs/operator-scenarios
+uv run python -m factory_ops.dashboard --config configs/factory-semiconductor-dual-lane --execution-mode operations --scenario-dir runs/operator-scenarios
 ```
 
 1. 웹에서 운영 상태를 확인한 뒤 기록 이름을 입력하고 `최근 관측 저장`을 누른다. API가 수신한 최근120개 이내의 관측만 저장한다. 버튼을 누르기 전에는 RAM에만 두며 같은 revision·시뮬레이션 시각의 중복 표본은 제외한다.
@@ -45,7 +47,80 @@ uv run python -m factory_ops.dashboard --config configs/factory-semiconductor --
 
 기록에는 원래 실행 ID·관측 시각·표본 해시·공장 배치 해시를 보존한다. 다른 배치나 손상된 파일의 재생은 거부한다. 한 파일의 상한은16MiB이며 기존 파일을 덮어쓰지 않는다. 이 기록은 관제 상태의 선택 보존이며 RGB·라벨 데이터셋·rosbag·물리 재현 증거와 별도로 관리한다. 실제 ROS 관측 API에도 같은 옵션을 사용할 수 있으며 저장소는 실행별 경로로 분리한다. 물리 실행의 동결 소스·원장·명령 경로는 바꾸지 않는다.
 
-[064의 실제4대 관측 기록](evidence/scenario-replay-198.json)은 Next.js 프록시로 저장·목록·처음/마지막 표본 재생을 확인했다. 원래 시각·실행·공장 배치·파일 해시와 빈 재생 명령 권한을 대조했고, 저장 뒤에도 live 원천이 유지됐다. 브라우저에 연결된 표면이 없어 실제 클릭·반응형 화면 캡처는 미확인이다. 이 기록은 전체 물류 완주의 증거로 사용하지 않는다.
+완료된 정상 운영의1980–2220초 구간에서 고른120개 원본 표본을 [공개 재생 패키지](data/operations-normal-223/README.md)로 제공한다. 압축 해제한 scenario를 위 저장소에 두면 같은 공장 배치의 웹에서 불러올 수 있다. 기록은 읽기 전용이다. 전체 실행은12회 출하·12회 반납·4대 주차를 완료했고, 선택 구간에서는 출하가1회·반납이2회 늘었다. 발췌 구간만으로 전체 완료를 입증하지 않는다.
+
+[064의 실제4대 관측 기록](evidence/scenario-replay-198.json)은 Next.js 프록시로 저장·목록·처음/마지막 표본 재생을 확인했다. 원래 시각·실행·공장 배치·파일 해시와 빈 재생 명령 권한을 대조했고, 저장 뒤에도 live 원천이 유지됐다. 웹 타입 검사와 빌드는 코드 정합성 증거다. [실행070 화면](images/web-console-070/dashboard-live-carter1.jpg)은 기존 읽기 전용 관측이며, 최신 운영 명령·receipt·재생 조합의 새 브라우저 클릭 확인은 아직 수행하지 않았다. 이 자료를 전체 물류 완주의 증거로 사용하지 않는다.
+
+### CPU 기록에서 GPU 재생 미디어까지
+
+다음 순서는 운영 모델의 원본 snapshot 기록, 웹/Kit용 읽기 전용 scenario 가져오기, 공용 GPU lease 안의 Isaac Sim 재생, CPU 미디어 내보내기를 분리한다. 같은 PowerShell에서 순서대로 실행한다. 모든 출력 폴더는 실행 전에 없어야 하며 기존 원본을 덮어쓰지 않는다.
+
+먼저 정상 ETA 운영을1Hz로 기록한다. 이 단계는 CPU에서 실행하며 이미지를 만들지 않는다.
+
+```powershell
+cd "$HOME/factory-ops-twin"
+$runLabel = Get-Date -Format "yyyyMMdd-HHmmss"
+$recording = "artifacts/operations/recording-$runLabel"
+uv run python -m factory_ops.operations_recording `
+  --config configs/factory-semiconductor-dual-lane --case normal --policy eta `
+  --horizon 5400 --window-start 0 --window-duration 5400 --sample-hz 1 `
+  --output-dir $recording
+```
+
+웹과 Kit에서 읽을 구간은 원본 snapshot 그대로 별도 scenario 저장소로 가져온다. 아래 예제는1980–2220초에서 최대120개를 고르며 보간하지 않는다.
+
+```powershell
+cd "$HOME/factory-ops-twin"
+$scenarioImport = "artifacts/operations/replay-$runLabel-import"
+uv run python scripts/demo/import_operations_recording.py `
+  --recording $recording --config configs/factory-semiconductor-dual-lane `
+  --start 1980 --end 2220 --output-dir $scenarioImport `
+  --name "normal operations 1980-2220"
+```
+
+GPU 재생은 공용 `Use-GpuLease.ps1` 안에서 새 launcher를 실행한다. Isaac Sim과 준비된 에셋 캐시의 설치 위치는 현재 PC에 맞게 바꾼다. launcher는 입력 해시를 고정한 뒤 내부 Windows Job으로 SDK 자손을 소유하고, 종료 receipt에 남은 PID가 없어야 성공으로 판정한다.
+
+```powershell
+cd "$HOME/factory-ops-twin"
+& "$HOME/CodexSignals/Get-GpuLeaseStatus.ps1"
+
+$hostPython = (Resolve-Path ".venv/Scripts/python.exe").Path
+$sdkPythonBat = "E:\IsaacSim\isaac-sim-4.5.0\python.bat"
+$assetCache = "E:\FactoryOpsAssets\simready-context"
+$recordingAbsolute = (Resolve-Path $recording).Path
+$factoryAbsolute = (Resolve-Path "configs/factory-semiconductor-dual-lane").Path
+$gpuOutput = "E:\factory-ops-runs\operations-render-$runLabel"
+
+$launcherArguments = @(
+  "scripts/isaac/run_operations_replay.py",
+  "--sdk-python-bat", $sdkPythonBat,
+  "--recording", $recordingAbsolute,
+  "--factory", $factoryAbsolute,
+  "--asset-cache", $assetCache,
+  "--output", $gpuOutput,
+  "--start", "1980", "--duration", "30", "--speed", "8",
+  "--fps", "30", "--width", "1280", "--height", "720",
+  "--subframes", "2", "--maximum-wall-time", "1500"
+)
+& "$HOME/CodexSignals/Use-GpuLease.ps1" `
+  -Owner "factory-ops-replay-$runLabel" `
+  -FilePath $hostPython -ArgumentList $launcherArguments -WaitTimeoutSeconds 1800
+```
+
+`run_operations_replay.py`는 현재 `--help`와 Python 구문 검사까지만 확인했다. 실행228은 같은 입력 고정·Windows Job 소유·receipt 검사를 사용한 동등한 수동 Job 경로로 만들었으며, 새 launcher의 실제 GPU 통과 근거로 소급하지 않는다. 실행228은 5,400개 1Hz snapshot 중1980초부터30초를 pose 보간해900프레임·30fps·8배속으로 표시했다. 재생 동안 PhysX는 멈춰 있었고 접촉 물리 결과가 아니다. [228 내보내기 출처](images/operations-local45-228/export-manifest.json)
+
+GPU 프로세스가 종료되고 receipt의 `remaining_owned_pids`가 빈 배열인 것을 확인한 뒤, MP4·GIF 내보내기는 CPU에서 실행한다.
+
+```powershell
+cd "$HOME/factory-ops-twin"
+$mediaOutput = "artifacts/operations/export-$runLabel"
+uv run python scripts/media/export_operations_replay.py `
+  --render-dir "$gpuOutput/render" `
+  --host-receipt "$gpuOutput/host/receipt.json" `
+  --output $mediaOutput --gif --gif-fps 25 --start-frame 0 --count 900
+```
+
+내보내기 도구는 renderer 결과·프레임 해시·run ID·Job 종료 receipt를 대조한다. HUD는 원본 metadata만 사용하고 새 측정값을 만들지 않는다. GPU lease는 작업이 끝나면 반환하며 다른 세션의 프로세스를 종료하지 않는다.
 
 ## 실제 ROS 실행의 읽기 전용 관측
 
@@ -97,7 +172,7 @@ SDK의 `after_robots_loaded` 단계에서 네 차량 각각의 실제 차체 변
 
 관측된 AMR 목록·작업·목적지·속도·SOC 원천·적재물을 표시하며, 지원 capability가 있는 CPU 모델에서 주문 생성과 전체 일시정지·재개를 제공한다. 실행 ID·revision·명령 ID를 결속하고 접수와 적용 결과를 구분한다. 연결 지연이나 실행 변경을 감지하면 조작을 비활성화한다.
 
-[실제 SDK4.5 시험 화면](evidence/kit-console-004/kit-console.png)과 [명령·촬영·종료 근거](evidence/kit-console-004/summary.json)는 CPU 원장 연결 시험이다. 같은 Kit 클라이언트의 네이티브 API 정지·재개는054에서 확인했고, Kit 패널 화면의 실제 ROS 연결은 남아 있다.
+[실행229의 실제 SDK4.5 화면](evidence/kit-operations-229/kit-console.png)과 [명령·촬영·종료 근거](evidence/kit-operations-229/summary.json)는 CPU 운영 API 연결 시험이다. pause, resume, 주문 생성, `CELL1` 고장, 복구의5개 명령이 같은 business run에 적용됐고 종료 뒤 소유 PID는0개였다. aisle close/open 버튼은229에서 실행하지 않았으며 CPU 검사 범위로 남는다. 화면 뒤 빈 viewport는 연결 시험 배경이므로 공장 전체 렌더로 해석하지 않는다. 같은 Kit 클라이언트의 네이티브 API 정지·재개는054에서 확인했고, Kit 패널 화면의 실제 ROS 연결은 별도 범위다.
 
 ### 다음 예약 지점에서 정지·재개
 

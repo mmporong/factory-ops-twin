@@ -1226,3 +1226,24 @@ WEST_LINK와 CENTER_LINK는 진입 구간부터 작성된 첫 출구 앵커까�
 225는 RGB480×640×4·uint8을 확보하고 엔코더 goal을 수락했지만 독립 GT의 실제 최대 전진 속도가0.601476009m/s로 작성된0.6m/s 한계를 넘었다. 횡오차·heading·종점·정지 후 이동·tilt·각속도 검사는 통과했어도 선속도 검사를 완화하지 않고 전체 결과를failed로 보존했다. DriveProfile의 한계와 GT 평가 임계값0.6m/s는 유지하고 cruise 요청만0.60m/s에서0.59m/s로 낮췄다.
 
 226은843개 표본·14.033334초 제어 구간에서 엔코더 goal을 위치 오차0.032512m·yaw 오차0.047695rad로 수락했다. 독립 GT의 실제 최대 전진 속도는0.591455388m/s, 횡오차 RMS0.047592m·최대0.076484m, 종점 오차0.071221m, 정지 후 이동0.000010m였고8개 검사가 모두 통과했다. RGB56장은 실제480×640×4·uint8 frame이며 보간하지 않았다. Windows Job은exit0으로 닫혔고 잔여 소유 PID는0이다. 실행 전 고정한5개 파일은 영수증과 같은 해시로 `E:/factory-ops-runs/path-baseline-226/frozen-source`에 보존했다. 이 결과는 무적재 Nova Carter 한 대의 엔코더 제어 component 기준선이며135의 적재 접촉 물리, Nav2, fleet 회피, 도킹, 공장 운송 성공과 결합해 표시하지 않는다. [226 결과·원본 해시·범위](evidence/local45-path-baseline-226.json) · [궤적·속도·횡오차](evidence/local45-path-baseline-226.svg)
+
+## FOT-148 — 운영 재생의 설비 상태등이 가공 상태를 구분하지 못함
+
+- 관찰: 재생227은900장 촬영과 Job 종료를 마쳤지만, 상태등 입력이 `equipment.status == "processing"`을 사용했다. 실제 API의 이 필드는 `available`/`down`이고 가공 중 여부는 `active_order_id`로 표현한다.
+- 수정: 원래 가동 가능 여부와 진행 LOT를 함께 읽어 `cell_processing`을 결정한다. HUD도 같은 필드 의미를 사용한다.227 소스와 결과는 보존하고 새 촬영228을 만든다.
+- 결과:228의900프레임 촬영과 호스트 종료를 확인했다. 원본 영상·메타데이터의 성공 판정은 유지하되227은 대표 미디어로 공개하지 않는다.
+
+## FOT-149 — 프로젝트별 Job 관리만으로 공용 GPU 배타 실행을 보장할 수 없음
+
+- 관찰:2026-10-23 RL Triage가 외부 Kit 감지로 RL 결과를 invalid 보존했다고 알렸다. RL 저장소나 결과를 이 세션에서 조사하지 않았으므로 해당 결과의 세부 판정은 전달받은 사실로 남긴다. FactoryOps228 실행 중 공용 상태 조회에서는 lease가 available인 동시에 소유 Kit PID51732가 비래핑 GPU 작업으로 관측됐다.
+- 원인 범위: 기존 FactoryOps 실행은 Windows Job Object 안에 있었지만 공용 `Use-GpuLease.ps1` 밖에서 시작했다. Job은 자손 프로세스의 수명만 관리하므로 다른 프로젝트와의 상호 배제를 제공하지 않는다.
+- 조치: 사용자 합의대로 진행 중 렌더228을 유지하고, 다음 Kit 시험은 공용 lease로 감싸 실행한다. 이후 소유 프로세스 종료를 확인한 인계 신호를 남기고 RL 작업이 끝나기 전 새 GPU 배치를 시작하지 않는다. 다른 세션의 저장소·프로세스는 변경하지 않는다.
+- 결과: Kit229는 공용 lease `bd00ed5f-d286-47b3-be3b-6ffe9fb5cc4c` 안에서 완료됐고, 호스트 Job 잔여 PID0과 lease completed를 확인했다. 19:29:11 KST에 완료 신호를 기록했다. RL은 19:37:55 KST에 다음 lease를 획득했다고 회신했으며 FactoryOps는 CPU 인코딩·문서 작업만 이어간다.
+
+## FOT-150 — 영상의 차량 배지 높이와 GIF 전송 용량
+
+- 관찰: 렌더228의 RGB와 차량 위치 기록은 확보됐지만 화면 주석의 Y좌표가 전경 차량에서 벗어났다. 첫 GIF는 30초·25fps에95,505,010바이트였다. 원본 RGB와 첫 export manifest를 보존하고 GPU 재촬영 없이 표시 단계에서 수정했다.
+- 좌표 원인: 주석 투영은 USD의 원시 수직 aperture15.2908mm를 사용했다. 설치된 Isaac Sim4.5 `isaacsim.sensors.camera/camera.py`의 `get_vertical_aperture()`와 `get_intrinsics_matrix()`는 정사각형 픽셀을 전제로 수평 aperture와 영상 종횡비에서 수직값을 계산한다. 1280×720, 수평20.955mm에서는 유효 수직값이11.7871875mm다. 이 차이가 세로 투영 오차를 만든다.
+- 수정: 과거 raw-aperture 주석만 영상 중심 기준으로 유효 비율에 맞춘다. 새 renderer는 유효 aperture와 `horizontal_fit_square_pixels` 표식을 기록해 중복 보정을 방지한다. 실제 RGB·원본 운행 기록·판정은 변경하지 않는다. SDK4.5 설치 소스와 [Camera API](https://docs.isaacsim.omniverse.nvidia.com/latest/py/source/deprecated/isaacsim.sensors.camera/docs/index.html)를 대조했으며, 최신 문서의 버전을4.5 실행 근거로 대체하지 않았다.
+- 전송용 GIF: CPU 후보3개 중960px·25fps·64색 palette와 약한 시공간 노이즈 억제를 선택했다. 보정 MP4에서 생성한 최종 GIF는750프레임·40ms 간격·30초·12,775,674바이트다. 약86.6% 용량 감소는 이번 복합 설정의 결과이며 개별 필터 하나의 효과로 분리하지 않는다. MP4에는 이 GIF용 노이즈 억제를 적용하지 않는다. GIF는 관측·학습 원본으로 사용하지 않는다.
+- 근거: [MP4 export](images/operations-local45-228/export-manifest.json), [GIF 변환과 전체 인자](images/operations-local45-228/gif-manifest.json). 투영 수학 검사를 포함한 exporter 표적 검사와 대표 프레임 육안 확인을 수행했다. GPU 원본은228로 유지하며 미래 renderer의 새 투영 필드는 다음 GPU 실행에서 확인한다.

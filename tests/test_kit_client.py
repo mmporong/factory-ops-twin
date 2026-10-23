@@ -22,11 +22,16 @@ from factory_ops.live_control import CONTRACT, LiveControl
 def snapshot(run="run-a", revision=3, **changes):
     value = {"schema_version":1, "run_id":run, "revision":revision, "mode":"local_model",
         "sim_time_s":12., "connection":"connected", "paused":False,
-        "capabilities":["pause","resume","create_order"],
+        "capabilities":["pause","resume","create_order","set_equipment_availability","set_aisle_closed"],
         "robots":[{"id":"amr-1","label":"AMR 01","status":"idle","task_id":None,
             "destination":None,"speed_mps":0.,"battery_pct":None,"battery_source":"unavailable",
             "payload_id":None,"waiting_reason":None}],
         "inventory":{"stock":[],"totes":[]},"kpis":{"stock_units":None},
+        "equipment":{"station_id":"CELL1","label":"검사 CELL1","available":True,"status":"available",
+            "reason":None,"active_order_id":"ORD-0001","remaining_service_s":12.,
+            "input_waiting_orders":1,"output_waiting_orders":0,"wip_orders":2},
+        "traffic":{"closed":False,"requested_closed":False,"closure_pending":False},
+        "execution_mode":"operations","dispatch_policy":"fifo",
         "events":[],"commands":[],"tasks":[]}
     value.update(changes)
     return value
@@ -57,6 +62,8 @@ def console_projection(client):
     view = SimpleNamespace(_alive=True,_client=client,_selected=ids[0],_row_ids=ids,
         _native_contract=CONTRACT,_robot_buttons={rid:SimpleNamespace() for rid in ids},
         _pause=SimpleNamespace(),_resume=SimpleNamespace(),_order=SimpleNamespace(),
+        _fault=SimpleNamespace(),_recover=SimpleNamespace(),
+        _close_aisle=SimpleNamespace(),_open_aisle=SimpleNamespace(),
         _source=SimpleNamespace(),_quantity_field=SimpleNamespace(),
         _set_label=lambda key,text,raw=None:labels.update({key:(text,raw)}))
     namespace["_refresh"](view)
@@ -179,6 +186,46 @@ class KitClientTests(unittest.TestCase):
         self.assertNotIn("requested_at",payload)
         self.assertFalse(self.client.submit_action("pause")["submitted"])
 
+    def test_operations_equipment_and_aisle_commands_use_same_run_receipts(self):
+        self.connect()
+        fault = self.client.submit_action("set_equipment_availability",
+            {"available":False,"reason":"  검사기 온도 상한  "})
+        self.assertTrue(fault["submitted"])
+        payload = self.executor.jobs[-1][1][3]
+        self.assertEqual(payload["expected_run_id"],"run-a")
+        self.assertEqual(payload["expected_revision"],3)
+        self.assertEqual(payload["parameters"],{"available":False,"reason":"검사기 온도 상한"})
+        receipt = {"command_id":fault["command_id"],"run_id":"run-a","status":"applied",
+                   "reason":None,"revision":4}
+        self.deliver(receipt)
+        self.assertEqual(self.client.submission_state,"awaiting_snapshot")
+        down = deepcopy(snapshot(revision=4,commands=[receipt]))
+        down["equipment"].update(available=False,status="down",reason="검사기 온도 상한")
+        self.deliver(down)
+        self.assertEqual(self.client.submission_state,"confirmed_snapshot")
+        self.assertIn("set_aisle_closed",self.client.enabled_actions())
+        close = self.client.submit_action("set_aisle_closed",{"closed":True})
+        queued = {"command_id":close["command_id"],"run_id":"run-a","status":"queued",
+                  "reason":"승인된 운송과 통로 이탈 후 적용합니다","revision":4}
+        self.deliver(queued)
+        self.deliver(dict(down,commands=[receipt,queued]))
+        self.assertEqual(self.client.submission_state,"pending_server")
+        self.assertEqual(self.observed_receipt["status"],"queued")
+
+    def test_operations_command_parameter_gates(self):
+        self.connect()
+        invalid = [
+            ("set_equipment_availability",{}),
+            ("set_equipment_availability",{"available":0}),
+            ("set_equipment_availability",{"available":False,"reason":" "}),
+            ("set_equipment_availability",{"available":False,"station_id":"CELL1"}),
+            ("set_aisle_closed",{}),
+            ("set_aisle_closed",{"closed":1}),
+        ]
+        for action,parameters in invalid:
+            with self.subTest(action=action,parameters=parameters):
+                self.assertFalse(self.client.submit_action(action,parameters)["submitted"])
+
     def test_native_request_is_accepted_by_existing_next_anchor_contract(self):
         self.client.tick()
         self.deliver(live_snapshot())
@@ -284,15 +331,23 @@ class KitClientTests(unittest.TestCase):
         self.assertEqual(self.client.enabled_actions(),["pause"])
         self.assertEqual(sum(job[1][1]=="POST" for job in self.executor.jobs),2)
 
-    def test_replay_keeps_legacy_capability_and_payload_behavior(self):
+    def test_replay_is_read_only_and_shows_recorded_equipment_receipt(self):
         self.connect(mode="replay",capabilities=[])
         self.assertEqual(self.client.enabled_actions(),[])
-        self.poll(snapshot(mode="replay",capabilities=["pause"]))
-        self.assertEqual(self.client.enabled_actions(),["pause"])
-        self.assertTrue(self.client.submit_action("pause")["submitted"])
-        payload = self.executor.jobs[-1][1][3]
-        self.assertNotIn("run_id",payload)
-        self.assertNotIn("requested_at",payload)
+        recorded = {"command_id":"cell-down","run_id":"run-a","status":"applied",
+                    "reason":None,"revision":3}
+        replay = snapshot(mode="replay",capabilities=list(snapshot()["capabilities"]),commands=[recorded])
+        replay["equipment"].update(available=False,status="down",reason="검사기 온도 상한")
+        self.poll(replay)
+        self.assertEqual(self.client.enabled_actions(),[])
+        self.assertFalse(self.client.submit_action("pause")["submitted"])
+        view,labels = console_projection(self.client)
+        self.assertIn("RECORDED / READ ONLY",labels["actions_heading"][0])
+        self.assertIn("Recorded command (read only): applied",labels["receipt"][0])
+        self.assertIn("State: down",labels["equipment"][0])
+        self.assertIn("검사기 온도 상한",str(labels["equipment"][1]))
+        self.assertFalse(view._fault.enabled or view._recover.enabled
+                         or view._close_aisle.enabled or view._open_aisle.enabled)
 
     def test_pending_is_confirmed_only_by_matching_snapshot_receipt(self):
         self.connect()

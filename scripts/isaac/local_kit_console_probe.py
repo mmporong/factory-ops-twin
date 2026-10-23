@@ -85,8 +85,11 @@ def main():
     phase("sdk_startup")
     try:
         initial = snapshot()
-        if initial["mode"] != "local_model" or initial["connection"] != "connected" or initial["paused"]:
-            raise ValueError("native console probe requires a connected, running local CPU model")
+        if (initial["mode"] != "local_model" or initial.get("execution_mode") != "operations"
+                or initial["connection"] != "connected" or initial["paused"]):
+            raise ValueError("native console probe requires a connected, running operations CPU model")
+        if not isinstance(initial.get("equipment"), dict) or type(initial["equipment"].get("available")) is not bool:
+            raise ValueError("operations probe requires observed equipment state")
         report["business_run_id"] = initial["run_id"]
         report["initial_api_snapshot"] = initial
         os.environ["FACTORY_OPS_API_URL"] = api
@@ -113,8 +116,12 @@ def main():
         if not console.select_robot("amr-3") or console.get_probe_state()["selected_robot"] != "amr-3":
             raise RuntimeError("observed AMR selection failed")
         report["selected_state"] = console.get_probe_state()
-        for action, parameters in [("pause", None), ("resume", None),
-                                   ("create_order", {"source": "S3", "quantity": 1})]:
+        for action, parameters, expected_equipment in [
+                ("pause", None, None), ("resume", None, None),
+                ("create_order", {"source": "S3", "quantity": 1}, None),
+                ("set_equipment_availability", {"available": False,
+                    "reason": "Kit operator fault scenario"}, False),
+                ("set_equipment_availability", {"available": True}, True)]:
             phase("action_" + action)
             until(lambda s: action in s["enabled_actions"], "action unavailable: " + action)
             submitted = console.submit_action(action, parameters)
@@ -128,9 +135,12 @@ def main():
                 raise RuntimeError("console operation did not apply to the observed run")
             if action in ("pause", "resume") and actual["paused"] != (action == "pause"):
                 raise RuntimeError("API pause state differs from console receipt")
+            if expected_equipment is not None and actual["equipment"]["available"] is not expected_equipment:
+                raise RuntimeError("API equipment state differs from console receipt")
             report["operations"].append({"action": action, "submission": submitted,
                 "receipt": state["last_receipt"], "api_revision": actual["revision"],
-                "api_paused": actual["paused"], "mode": actual["mode"]})
+                "api_paused": actual["paused"], "equipment_available": actual["equipment"]["available"],
+                "mode": actual["mode"], "execution_mode": actual.get("execution_mode")})
         until(lambda s: s["revision"] >= report["operations"][-1]["api_revision"],
               "console did not observe the applied order revision")
         observed = snapshot()
@@ -228,6 +238,19 @@ def main():
                         report["operator_restore_receipt"] = json.load(response)
             except Exception as error:
                 report["operator_restore_error"] = str(error)
+        if report["status"] == "failed" and initial is not None and initial.get("equipment", {}).get("available") is True:
+            try:
+                current = snapshot()
+                if current["run_id"] == initial["run_id"] and not current.get("equipment", {}).get("available", True):
+                    restore = {"command_id": "kit-probe-equipment-restore-" + args.run_id,
+                        "expected_revision": current["revision"], "expected_run_id": current["run_id"],
+                        "action": "set_equipment_availability", "parameters": {"available": True}}
+                    req = Request(api + "/api/commands", json.dumps(restore).encode(),
+                                  headers={"Content-Type": "application/json"})
+                    with opener.open(req, timeout=2) as response:
+                        report["equipment_restore_receipt"] = json.load(response)
+            except Exception as error:
+                report["equipment_restore_error"] = str(error)
         report["finished_at_utc"] = datetime.now(timezone.utc).isoformat()
         save(args.output / "result.json", report)
         print("LOCAL_KIT_CONSOLE_RESULT", report["status"], flush=True)

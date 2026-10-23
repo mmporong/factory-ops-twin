@@ -18,7 +18,7 @@ import uuid
 from .live_control import control_capabilities
 
 
-ACTIONS = ("pause", "resume", "create_order")
+ACTIONS = ("pause", "resume", "create_order", "set_equipment_availability", "set_aisle_closed")
 
 
 def loopback_url(value: str) -> str:
@@ -80,6 +80,31 @@ def _snapshot(value: dict) -> dict:
         if (not isinstance(charging, dict) or not isinstance(charging.get("docks"), list)
                 or not isinstance(charging.get("queue"), list) or any(not isinstance(r, dict) for r in charging["docks"])):
             raise ValueError("invalid charging summary")
+    if "equipment" in value:
+        equipment = value["equipment"]
+        required = {"station_id", "label", "available", "status", "reason", "active_order_id",
+                    "remaining_service_s", "input_waiting_orders", "output_waiting_orders", "wip_orders"}
+        if (not isinstance(equipment, dict) or not required.issubset(equipment)
+                or type(equipment["available"]) is not bool
+                or equipment["status"] not in ("available", "down")
+                or equipment["available"] != (equipment["status"] == "available")
+                or any(not isinstance(equipment[key], str) or not equipment[key]
+                       for key in ("station_id", "label"))
+                or any(equipment[key] is not None and not isinstance(equipment[key], str)
+                       for key in ("reason", "active_order_id"))
+                or any(type(equipment[key]) is not int or equipment[key] < 0
+                       for key in ("input_waiting_orders", "output_waiting_orders", "wip_orders"))):
+            raise ValueError("invalid equipment summary")
+        remaining = equipment["remaining_service_s"]
+        if remaining is not None and (type(remaining) not in (int, float)
+                or not math.isfinite(remaining) or remaining < 0):
+            raise ValueError("invalid equipment service time")
+    if "traffic" in value:
+        traffic = value["traffic"]
+        if (not isinstance(traffic, dict) or type(traffic.get("closed")) is not bool
+                or type(traffic.get("requested_closed")) is not bool
+                or type(traffic.get("closure_pending")) is not bool):
+            raise ValueError("invalid traffic summary")
     integrations = value.get("integrations", {})
     if not isinstance(integrations, dict):
         raise ValueError("invalid integrations")
@@ -146,6 +171,8 @@ class KitClient:
     def enabled_actions(self) -> list[str]:
         if self.snapshot is None or self.connection != "connected" or self._future is not None or self._command is not None:
             return []
+        if self.snapshot["mode"] == "replay":
+            return []
         capabilities = self.snapshot["capabilities"]
         if self.snapshot["mode"] == "live":
             capabilities = [a for a in control_capabilities(self.snapshot) if a in capabilities]
@@ -160,7 +187,7 @@ class KitClient:
     def _receipt(self, value: dict, *, allow_run_rejection=False) -> dict:
         if (not isinstance(value, dict) or self._command is None
                 or value.get("command_id") != self._command["command_id"]
-                or value.get("status") not in ("pending", "applied", "rejected")
+                or value.get("status") not in ("pending", "queued", "applied", "rejected")
                 or type(value.get("revision")) is not int or value["revision"] < 0
                 or value.get("reason") is not None and not isinstance(value["reason"], str)):
             raise ValueError("invalid or foreign command receipt")
@@ -238,6 +265,18 @@ class KitClient:
             if (set(parameters) != {"source", "quantity"} or parameters["source"] not in ("S1", "S2", "S3")
                     or type(parameters["quantity"]) is not int or parameters["quantity"] <= 0):
                 return {"submitted": False, "reason": "Order requires S1/S2/S3 and a positive integer quantity"}
+        elif action == "set_equipment_availability":
+            if (set(parameters) - {"available", "reason"} or "available" not in parameters
+                    or type(parameters["available"]) is not bool):
+                return {"submitted": False, "reason": "Equipment control requires an available boolean and optional reason"}
+            reason = parameters.get("reason")
+            if reason is not None and (not isinstance(reason, str) or not reason.strip() or len(reason.strip()) > 160):
+                return {"submitted": False, "reason": "Equipment reason must be 1-160 visible characters or null"}
+            if isinstance(reason, str):
+                parameters["reason"] = reason.strip()
+        elif action == "set_aisle_closed":
+            if set(parameters) != {"closed"} or type(parameters["closed"]) is not bool:
+                return {"submitted": False, "reason": "Aisle control requires a closed boolean"}
         elif parameters:
             return {"submitted": False, "reason": "Dispatch pause/resume takes no parameters"}
         self._command = {"command_id": str(uuid.uuid4()), "expected_run_id": self.snapshot["run_id"],

@@ -87,6 +87,8 @@ class Extension(omni.ext.IExt):
                                 self._robot_frame = ui.Frame(height=0)
                                 self._label("detail", "Select an observed vehicle", 132)
                                 self._label("inventory", "Inventory / totes: not connected", 76)
+                                self._label("equipment", "Equipment: not connected", 112)
+                                self._label("traffic", "Traffic: not connected", 74)
                                 self._label("charging", "Charging: not connected", 72)
                                 self._label("mes", "Mock MES: not connected", 86)
                                 self._label("events_heading", "RECENT EVENTS (8)", 20)
@@ -101,10 +103,22 @@ class Extension(omni.ext.IExt):
                                 self._source = ui.ComboBox(0, "S1", "S2", "S3", width=80)
                                 self._quantity_field = ui.IntField(model=self._quantity, width=70)
                                 self._order = ui.Button("Create order", clicked_fn=self._create_order)
+                            with ui.HStack(height=32, spacing=6):
+                                self._fault = ui.Button("CELL1 fault", clicked_fn=lambda: self.submit_action(
+                                    "set_equipment_availability", {"available": False, "reason": "Kit operator fault scenario"}))
+                                self._recover = ui.Button("CELL1 recover", clicked_fn=lambda: self.submit_action(
+                                    "set_equipment_availability", {"available": True}))
+                            with ui.HStack(height=32, spacing=6):
+                                self._close_aisle = ui.Button("Close aisle", clicked_fn=lambda: self.submit_action(
+                                    "set_aisle_closed", {"closed": True}))
+                                self._open_aisle = ui.Button("Open aisle", clicked_fn=lambda: self.submit_action(
+                                    "set_aisle_closed", {"closed": False}))
                             self._label("receipt", "No command submitted", 112)
                         ui.Spacer(height=6)
                     ui.Spacer(width=10)
         self._pause.enabled = self._resume.enabled = self._order.enabled = False
+        self._fault.enabled = self._recover.enabled = False
+        self._close_aisle.enabled = self._open_aisle.enabled = False
         self._source.enabled = self._quantity_field.enabled = False
         self._subscription = omni.kit.app.get_app().get_update_event_stream().create_subscription_to_pop(self._on_update)
         _set_instance(self)
@@ -196,6 +210,29 @@ class Extension(omni.ext.IExt):
         states = Counter(short(t.get("state")) for t in totes if isinstance(t, dict))
         self._set_label("inventory", "INVENTORY / TOTES\n" + ("\n".join(stock_lines) if stock else "Not connected")
                         + "\nTotes: " + (str(dict(states)) if totes else "Not connected"), inventory)
+        equipment = snap.get("equipment")
+        if isinstance(equipment, dict):
+            remaining = equipment.get("remaining_service_s")
+            equipment_text = ("EQUIPMENT / " + short(equipment.get("label"), "Equipment label (hover)")
+                + "\nState: " + ("available" if equipment.get("available") else "down")
+                + " / active lot: " + short(equipment.get("active_order_id"))
+                + "\nRemaining: " + ("-" if remaining is None else format_number(remaining) + " s")
+                + " / WIP: " + str(equipment.get("wip_orders", "?"))
+                + "\nInput/output wait: " + str(equipment.get("input_waiting_orders", "?"))
+                + "/" + str(equipment.get("output_waiting_orders", "?")))
+            if not equipment.get("available"):
+                equipment_text += "\nReason: " + short(equipment.get("reason"), "Equipment reason (hover)")
+        else:
+            equipment_text = "EQUIPMENT / Not connected"
+        self._set_label("equipment", equipment_text, equipment)
+        traffic = snap.get("traffic")
+        if isinstance(traffic, dict):
+            traffic_text = ("TRAFFIC / " + ("closed" if traffic.get("closed") else "open")
+                + "\nRequested: " + ("closed" if traffic.get("requested_closed") else "open")
+                + " / pending: " + str(bool(traffic.get("closure_pending"))))
+        else:
+            traffic_text = "TRAFFIC / Not connected"
+        self._set_label("traffic", traffic_text, traffic)
         charging = snap.get("charging")
         charge_lines = [f"{short(d.get('id'))}: {short(d.get('phase'))} / owner {short(d.get('owner'))}"
                         for d in (charging or {}).get("docks", []) if isinstance(d, dict)]
@@ -214,7 +251,10 @@ class Extension(omni.ext.IExt):
         live = snap.get("mode") == "live"
         control = snap.get("live_control")
         native = live and isinstance(control, dict) and control.get("contract") == self._native_contract
-        self._set_label("actions_heading", "FLEET / NEXT RESERVED ANCHOR" if native else "LIVE / READ ONLY" if live else "SERVER DISPATCH")
+        replay = snap.get("mode") == "replay"
+        operations = snap.get("execution_mode") == "operations"
+        self._set_label("actions_heading", "FLEET / NEXT RESERVED ANCHOR" if native else "LIVE / READ ONLY" if live
+                        else "RECORDED / READ ONLY" if replay else "OPERATIONS DISPATCH" if operations else "SERVER DISPATCH")
         self._pause.text = "Stop at next anchor" if native else "Pause dispatch"
         self._resume.text = "Resume fleet dispatch" if native else "Resume dispatch"
         if native:
@@ -223,6 +263,10 @@ class Extension(omni.ext.IExt):
                      "Source phase: " + short(control.get("phase")))
         elif live:
             scope = "Live observation; next-anchor controls are unavailable."
+        elif replay:
+            scope = "Recorded source snapshot; commands are disabled."
+        elif operations:
+            scope = "Kinematic operations dispatch; no contact physics or hardware control."
         else:
             scope = "Server model dispatch only; see source scope above."
         self._set_label("control_scope", scope, control if live else snap.get("model_scope"))
@@ -239,6 +283,11 @@ class Extension(omni.ext.IExt):
         if receipt:
             origin = "Source receipt" if submission in ("pending_server", "confirmed_snapshot") else "API reply (unconfirmed)"
             receipt_text += "\n" + origin + ": " + short(receipt["status"]) + " / " + short(receipt.get("reason")) + "\nRun: " + short(state["receipt_run_id"]) + "\n" + receipt["command_id"]
+        elif replay and snap.get("commands"):
+            recorded = snap["commands"][-1]
+            receipt_text = ("Recorded command (read only): " + short(recorded.get("status"))
+                + " / " + short(recorded.get("reason")) + "\nRun: " + short(snap.get("run_id"))
+                + "\n" + short(recorded.get("command_id")))
         elif state["error"]:
             receipt_text += "\n" + short(state["error"])
         self._set_label("receipt", receipt_text, {"receipt": receipt, "run_id": state["receipt_run_id"], "error": state["error"]})
@@ -247,6 +296,12 @@ class Extension(omni.ext.IExt):
         enabled = state["enabled_actions"]
         self._pause.enabled, self._resume.enabled, self._order.enabled = (action in enabled for action in ("pause", "resume", "create_order"))
         self._source.enabled = self._quantity_field.enabled = "create_order" in enabled
+        equipment_enabled = "set_equipment_availability" in enabled and isinstance(equipment, dict)
+        self._fault.enabled = equipment_enabled and bool(equipment.get("available"))
+        self._recover.enabled = equipment_enabled and not bool(equipment.get("available"))
+        traffic_enabled = "set_aisle_closed" in enabled and isinstance(traffic, dict) and not traffic.get("closure_pending")
+        self._close_aisle.enabled = traffic_enabled and not bool(traffic.get("closed"))
+        self._open_aisle.enabled = traffic_enabled and bool(traffic.get("closed"))
 
     def get_probe_state(self):
         state = self._client.get_state()

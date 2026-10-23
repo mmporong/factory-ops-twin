@@ -1,241 +1,121 @@
 # Factory Ops Twin
 
-반도체 후공정의 최종검사·포장 구역에서 **4대 AMR의 운영 설계·가상시운전과 장애 재현**을 만드는 프로젝트입니다. 트레이 공급·완제품 출하·빈 캐리어 회수를 연결하고, 테스터 고장이나 통로 폐쇄가 WIP·출하 지연·차량 대기에 미치는 영향을 비교하는 것이 목표입니다.
+반도체 후공정의 검사·포장 구역을 대상으로 4대 AMR의 자재 공급, 완제품 출하, 빈 토트 반납, 충전을 하나의 운영 원장과 관제 화면으로 연결한 디지털 트윈 포트폴리오입니다. CPU 운영 비교와 Isaac Sim 물리 시험을 분리해 기록하고, 각 결과가 증명하는 범위를 미디어와 함께 공개합니다.
 
-운영 모델의 시나리오 비교와 Isaac Sim·ROS 2의 물리 주행 시험을 나눠 개발합니다. CPU 운영 모드는4대의 가감속·회전·구간 예약·인계소 점유를 계산하고, FIFO 또는 이동 거리 기반 ETA로 배차합니다. 기존 경로 보간은 미리보기로 유지하며, 웹에는 실행 모드·run ID·시각·정책을 표시합니다. 운영 모드에는 가상 에너지·충전 슬롯 예약·패드 정렬·충전·이탈을 연결했습니다. 물리 주행의 적용 범위는 별도 시험으로 확인합니다. 강화학습 주행은 확장 후보로, 아직 학습된 정책이나 비교 결과는 없습니다. [현재 범위·구간별 완료 조건](docs/completion-plan.md)
+[![4대 AMR 반도체 후공정 운영 재생](docs/images/operations-local45-228/operations-replay.gif)](docs/images/operations-local45-228/operations-replay.mp4)
 
-운영 원장은 단일 테스터의 고장·복구를 처리합니다. 고장 중에는 새 가공을 시작하지 않고 진행 중 작업의 남은 시간을 보존하며, 복구 후 처리를 이어갑니다. 출구 버퍼가 차면 다음 작업은 기다립니다. 웹에서 설비 고장·복구와 계획 통로 폐쇄를 요청할 수 있으며, 통로 변경은 승인된 운송과 통로 이탈이 끝난 뒤 적용됩니다. 요청 대기와 적용 완료를 구분하고 공정·교통 상태를 재생에 보존합니다. 복수 설비 공정과 새 UI의 브라우저 실행 확인은 남아 있습니다. [공정 원장](factory_ops/operations/ledger.py) · [관제·재생 검사](tests/test_operations_dashboard.py)
+위 미디어는 CPU 운영 모델이 1Hz로 남긴 원본 snapshot과 pose 사이를 표시용으로 보간해 Isaac Sim 4.5에서 재생한 결과입니다. 30초 분량의 MP4는 8배속·30fps, GIF는 25fps·12.8MB이며 이미지를 누르면 MP4가 열립니다. 재생 중 PhysX는 멈춰 있으므로 4대의 접촉 물리 운송 성공을 뜻하지 않습니다. 전체 원본 실행은 출하 12건·빈 토트 반납 12건·4대 주차를 완료했고, 1980~2220초 발췌 구간에서는 출하가 1건, 반납이 2건 늘었습니다. [미디어 출처와 해시](docs/images/operations-local45-228/provenance.json)
 
-[반도체 구역의 기존 기준선](configs/factory-semiconductor)은 트레이 저장소·테스트 핸들러·ATE·AOI·ESD 포장대의 용도와 배치를 구분합니다. 로트12건의 순차 투입·연속 배차·재고 보존과 제품/반납 캐리어 표시를 CPU에서 함께 확인했습니다. 새 배치의 [물리 운송070](docs/evidence/local45-transport-070.json)은4대 모두의 인계 참여·출하1건·빈 캐리어 반납1건과 재고 보존을 기록했습니다. 가상 배터리 오류는 발생하지 않았지만 실행 시간 상한에 도달해 종료했으며,12lot 완주와 새 대표 GIF는 남아 있습니다. 운반물 인계는 주행 도착에 연결한 원장 기록이며 실제 토트 접촉·이송 검증과 구분합니다. [공정·설비·운영 범위](docs/semiconductor-cell.md)
+## 구현 범위
 
-[이중 차로 배치](configs/factory-semiconductor-dual-lane)는36×28m 구역의 남·북 주통로와 동쪽 통로를 방향별로 나눕니다.19개 생산 설비의 평면 외곽을 유지하고, 정비 소품34개와 상태등·트레이 표시를 이동한 설비에 맞췄습니다. 출하 포장대 하나는 최신 고정 카탈로그의 NVIDIA 컨베이어로 교체하고, 실제 높이에 맞춰 충돌 외곽도 갱신했습니다. CPU 검사에서180개 정상/폐쇄 경로, 맞은편 차로의 예약 분리와 교차 경로의 대기,35개 제공처 모델의 실제 USD 합성을 확인했습니다. 웹 관제도 같은 배치의6개 방향 차로를 읽어 화살표로 표시합니다. **새 배치의 CPU 운영 모드는12lot 공급·출하·반납·주차를 완료했으며, 같은 배치의 전체 물리 운송 완주는 남아 있습니다.** [합성·지도·에셋 근거](docs/evidence/semiconductor-dual-lane-201.json) · [설계도 · 실제 렌더 아님](docs/images/semiconductor-dual-lane-plan/layout.svg)
+- **운영 모델:** 유한 재고와 WIP, 공정 처리, 출하, 빈 용기 회수, FIFO·ETA 배차, 구간 예약, 통로 폐쇄, 설비 고장·복구를 계산합니다.
+- **4대 AMR:** 작성된 가감속·회전 한도와 정지 지점을 따라 움직이며, 충전 수요·대기열·패드 정렬·가상 충전·이탈을 운영 흐름에 포함합니다.
+- **관제:** Next.js·React Three Fiber 화면에서 작업, 목적지, 적재물, 속도, SOC 원천, 예약 경로, 대기 이유, 재고와 사건을 함께 봅니다.
+- **재현:** 같은 조건의 정책 비교, 읽기 전용 관측 재생, 명령 receipt, 원본 해시와 실행 ID를 보존합니다.
+- **검증 경계:** CPU 운영, Isaac Sim 물리, ROS 관측, 웹 표시용 보간을 서로 다른 증거로 관리합니다.
 
-생산 설비에는 트레이 투입 도크·매거진, 수직 테스트 헤드 인터페이스와 서비스 패널을 구분했습니다. 벽면 구획·출입문·환기구, 북측 덕트와 설비 열의 케이블 트레이·서비스 연결도 함께 렌더링합니다. 통로를 지나는 상부 서비스는 설계 높이2.7m 이상에 두고, 바닥 가까운 부품은 AMR 이동 구역을 침범하지 않게 배치했습니다. 장비 본체는 공개 기능 자료를 참고한 절차형 모델이며 제조사 CAD·인증 공장 복제는 아닙니다. [형상과 제조사 기능 참조](docs/semiconductor-cell.md)
+[현재 범위와 완료 조건](docs/completion-plan.md) · [설계와 제어 경계](docs/architecture.md) · [공정 모델](docs/semiconductor-cell.md)
 
-배차는 현재 배정된 제품 운송과 빈 캐리어 반납을 함께 확인해, 같은 두 지점을 역방향으로 오갈 작업의 동시 배정을 유예합니다. 실제 경로 예약과 정지 확인은 유지합니다. 동일 tick의 선택을 반영하는 CPU 회귀는 통과했으며 수정 후 물리 운송 완주는 확인 중입니다.
+## 반도체 후공정 장면
 
-이중 차로 개발 설정에는 같은 방향의 직선 앵커를 묶는 주행 정책을 넣었습니다. 한 작업의 길이는 지도에서 이미 허용한 가장 긴 단일 구간 이내로 제한하고, 코너와 인계 지점에서는 정지를 확인합니다. 잔여 전체 경로의 예약과 원래 도착·신선도 조건은 유지합니다. [CPU 경로 비교](docs/evidence/route-chunk-collinear-218.json)에서 기존 경로와 정지 경계를 확인했으며, 실제 운송 시간의 개선 여부는 후속 실행에서 확인합니다.
-
-빈 캐리어 배차의 우선순위는 현재 원장에서 배정 가능한 제품 작업과 비교합니다. CI 용량 때문에 배정할 수 없는 제품이 앞에 있어도 빈 반납의 배차 검토는 진행하며, 경로·역방향·에너지 조건을 통과한 차량에만 배정합니다. CPU 인계·배차 검사와 실제069의 첫 빈 반납을 확인했습니다. 반복 반납과 전체 혼합 물류 완주는 남아 있습니다.
-
-가상 배터리는 엔코더 odometry의 원래 시각과 속도로 계산합니다. 임무 구독에는 중계와 같은 reliable·50개 이력을 사용해 관측을 보존합니다. [운송073](docs/evidence/local45-transport-073.json)에서는 차량이 정지하고 ACK도 도착했지만, 스캔과 공유한 콜백 처리 지연으로 최신 정지 관측을 제때 반영하지 못했습니다. 후속 수정은 이력을 유지하면서 odometry를 시계·TF와 같은 우선 처리 노드로 옮깁니다. [실제 ROS 4대 부하 시험](docs/evidence/odometry-priority-dispatch-219.json)에서 네 대 모두 원래의 정지 조건을 통과했습니다. 관측 간격0.3초·신선도·오류 고정과 전체 처리 예산은 유지하며, 수정 후 공장 물류 완주는 남아 있습니다. [원인·수정·재발 방지](docs/troubleshooting.md#fot-141--주행-작업-종료-후-정지-확인-시간-초과)
-
-시각 상태는 원장 순서와 시뮬레이션 시각에 맞춰 적용합니다. 반복 수신에서는 파일의 현재 바이트를 대조해 삭제·변조를 검사하면서, 이미 확인한 같은 내용의 JSON 해석을 생략합니다. [CPU 읽기 비용 측정](docs/evidence/local45-visual-stream-cache-215.json)은 이 소비기만 비교한 결과이며 전체 플릿의 속도 개선으로 해석하지 않습니다.
-
-운영 목표는4대가 요청 큐의 자재 공급·출하·빈 캐리어 회수·충전을 반복하고, 하차 후 다음 작업을 이어받는 흐름입니다. 차량별 대기 원인과 플릿의 누적 출하·재고 변화를 함께 보여줍니다. CPU 운영 모델은 공유 연결로 예약과 정지 앵커의 우회로 탐색을 적용해12lot 순환을 완료했습니다. 과거 물리 실행의 [같은 예약 요구의 장기 대기](docs/evidence/local45-transport-064-waits.json)는 별도 실패 기록으로 보존합니다. 지원 가능한 최대 대수는 측정 전입니다.
-
-[![전체 공장 물류 운영의 12초 반복 미리보기](docs/images/fleet4-local45-036/operations-preview-smooth.gif)](docs/images/fleet4-local45-036/operations-business-complete.mp4)
-
-첫 화면은 **이전 센서 모듈 구역 실행**의 전체 업무 영상에서 고른12초 반복 GIF입니다. 새 반도체 구역의 영상과 구분합니다. 원본 영상의10fps·명목74배속 요약이며, 이미지를 누르면 전체 MP4로 이동합니다. [GIF 출처·변환 기록](docs/images/fleet4-local45-036/readme-smooth-preview-provenance.json)
-
-| 이중 차로 반도체 구역 · 실제 Isaac Sim 조감 | 테스트 핸들러·ATE·검사 설비 근접 |
+| 36×28m 전체 구역 | 검사 셀 근접 장면 |
 |---|---|
-| ![벽면 구획·출입문·덕트와 설비 상부 케이블 트레이를 배치한 반도체 최종검사·포장 구역](docs/images/semiconductor-dual-local45-213/overview.png) | ![상부 서비스 트레이·장비 입상 연결과 테스트 헤드 인터페이스를 보강한 검사 셀](docs/images/semiconductor-dual-local45-214/test-handler.png) |
+| ![이중 차로와 생산 설비를 배치한 반도체 후공정 구역](docs/images/semiconductor-dual-local45-213/overview.png) | ![테스트 헤드와 상부 서비스 설비가 있는 검사 셀](docs/images/semiconductor-dual-local45-214/test-handler.png) |
 
-위 두 장은 **같은 장면 소스의 조감과 검사 셀을 별도 프로세스로 촬영한 Isaac Sim4.5 RGB**입니다. 비브랜드 절차형 생산 설비와 건물 서비스 형상, NVIDIA 정비 소품34개와 포장 컨베이어1개를 포함합니다. 정지 촬영이며 AMR 반복 운송이나 처리량의 근거로 사용하지 않습니다. 두 촬영 프로세스는 종료됐습니다. [조감 출처·해시·종료](docs/images/semiconductor-dual-local45-213/provenance.json) · [검사 셀 출처·해시·종료](docs/images/semiconductor-dual-local45-214/provenance.json)
+남·북 주통로와 동쪽 연결 통로를 방향별로 나누고, 19개 시각 생산 설비와 35개 제공처 모델을 배치했습니다. 제공처 모델은 정비 캐비닛·작업대·카트 34개와 NVIDIA 포장 컨베이어 1개입니다. 생산 장비 본체와 건물 서비스 형상은 기능 자료를 참고한 절차형 모델이며 제조사 CAD나 인증 공장의 복제물이 아닙니다.
 
-![실제 크기의 NVIDIA 포장 컨베이어를 출하 구역에서 촬영한 별도 Isaac Sim RGB](docs/images/semiconductor-dual-local45-203/pack-conveyor.png)
+현재 공정 계산은 `CELL1` 한 곳에서 수행합니다. 나머지 18개 생산 설비는 공장 맥락과 동선 제약을 만드는 시각·충돌 구성입니다. 복수 공정 셀의 생산 능력을 계산하는 모델로 해석하지 않습니다. [장면 합성 근거](docs/evidence/semiconductor-dual-lane-201.json) · [에셋과 라이선스](docs/asset-attribution.md)
 
-이 사진은 위 두 장보다 앞선 별도 실행의 컨베이어 전용 촬영입니다. 프레임·롤러·배선·게이트 형상과 재질을 확인했고, 같은 모델을 실제 크기로 배치했습니다. 벨트 구동·검사 센서·자동 선별을 구현한 영상은 아닙니다. [별도 촬영 출처](docs/images/semiconductor-dual-local45-203/provenance.json) · [모델·라이선스·사용 범위](docs/asset-attribution.md)
+## 운영 정책 비교
+
+![정상·테스터 고장·통로 폐쇄에서 FIFO와 ETA를 비교한 12lot 운영 결과](docs/evidence/operations-comparison-223.svg)
+
+정상, 테스터 고장, 통로 폐쇄에 FIFO와 ETA를 조합한 6개 조건을 5,400초 지평에서 실행했습니다. 모든 조건에서 출하 12건, 빈 토트 반납 12건, 4대 주차가 완료됐습니다. 같은 seed는 확률 표본이 아니라 실행 조건 식별자로 사용했으며, 반복 통계나 실공장 성능을 뜻하지 않습니다.
+
+- 정상 조건에서 ETA의 누적 교통 대기는 FIFO보다 **42.1% 적었습니다.**
+- 통로 폐쇄 조건에서 ETA의 누적 출하 지연은 FIFO보다 **10.6% 많았습니다.**
+- 거리 중심 ETA가 정상 흐름에는 유리했지만 통로 제약까지 포함하면 항상 우세하지 않았습니다.
+- 납기 여유와 처리시간은 작성 가정이며, 최소 여유 1.73m는 원형 외곽 기반 CPU 관측값입니다.
+
+[조건·실행 ID·원본 수치](docs/evidence/operations-comparison-223.md) · [기계 판독 결과](docs/evidence/operations-comparison-223.json)
+
+## 물리 주행 기준선
+
+![무적재 Nova Carter의 참조·엔코더·GT 궤적과 속도·횡오차](docs/evidence/local45-path-baseline-226.svg)
+
+Isaac Sim 4.5에서 무적재 Nova Carter 한 대가 2m 직선과 반지름 2m의 1/4 원호를 추종했습니다. 제어와 도착 판정에는 휠 엔코더만 사용했고, 시뮬레이터 GT는 독립 평가에만 사용했습니다.
+
+| 지표 | 결과 |
+|---|---:|
+| 경로 횡오차 RMS | 4.76cm |
+| 종점 위치 오차 | 7.12cm |
+| 실제 최고 선속도 | 0.5915m/s |
+| 정지 후 이동 | 0.01mm |
+
+이 결과는 무적재 단일 차량의 구성요소 시험입니다. Nav2, 플릿 교통, 적재 접촉, 도킹, 공장 전체 운송 성능을 포함하지 않습니다. [실행·원본·프로세스 종료 근거](docs/evidence/local45-path-baseline-226.json) · [제어 기준선 설명](docs/motion-baseline.md)
 
 <details>
-<summary>지원 구역의 NVIDIA SimReady 모델 · 제공처 원본 미리보기</summary>
+<summary>보조 물리 영상: 6kg 적재 주행과 교차 통로 양보</summary>
 
-| 공구 보관 캐비닛 · 15개 | 이동식 정비 작업대 · 10개 | 정비 부품 카트 · 9개 |
+| 6kg 적재 곡선·제동·회전 | 두 AMR의 양보·통과·재개 |
+|---|---|
+| ![6kg 토트를 올린 Nova Carter의 곡선과 제동 시험](docs/images/loaded-mobility-local45-135/loaded-turn-40fps.gif) | ![교차 통로에서 선행 차량을 보낸 뒤 재출발하는 두 AMR](docs/images/junction-hero-local45-142/logistics-yield-40fps.gif) |
+
+[적재 주행 60fps MP4](docs/images/loaded-mobility-local45-135/loaded-motion-60fps.mp4)는 한 대의 적재 안정성·가감속·회전을 확인한 시험이며 자동 적재나 도킹 시험이 아닙니다. [결과](docs/evidence/local45-loaded-mobility-135.json)
+
+[교차 통로 60fps MP4](docs/images/junction-hero-local45-142/logistics-yield-60fps.mp4)는 4대가 있는 장면에서 두 차량의 정지·양보·재출발을 확인한 시연입니다. 동적 우회 경로 생성이나 전체 ROS/Nav2 운송 완주를 뜻하지 않으며 화물은 비충돌 시각 표시입니다. [결과](docs/evidence/local45-junction-hero-142.json)
+
+</details>
+
+## 웹 관제와 운영 기록
+
+![실행070을 읽기 전용으로 관측한 웹 관제 화면](docs/images/web-console-070/dashboard-live-carter1.jpg)
+
+위 이미지는 실행070의 기존 관측 화면입니다. 차량을 고르면 작업·목적지·적재물·엔코더 속도·SOC 원천·대기 이유와 남은 경로를 확인합니다. 현재 코드에는 CPU 운영 명령, 명령 receipt, 최근 120개 관측의 저장·읽기 전용 재생이 연결돼 있습니다. 이 최신 조합의 새 브라우저 클릭 확인은 아직 수행하지 않았습니다. [이미지 출처](docs/images/web-console-070/provenance.json) · [운영 화면 사용법](docs/operations-guide.md)
+
+선별한 정상 운영 기록 120개는 작은 공개 패키지로 제공합니다. 원본 JSON을 보간하지 않고 gzip으로 보존했으며, 복원 SHA와 전체 실행·발췌 구간의 차이를 함께 기록했습니다. [데이터 내려받기와 재생 방법](docs/data/operations-normal-223/README.md) · [공개 출처](docs/data/operations-normal-223/provenance.json)
+
+<details>
+<summary>Isaac Sim 4.5 Kit 운영 패널: 실행229</summary>
+
+![Isaac Sim 4.5에서 실행한 Factory Operations 패널](docs/evidence/kit-operations-229/kit-console.png)
+
+네이티브 Kit 패널에서 일시정지, 재개, 주문 생성, `CELL1` 고장, `CELL1` 복구의 5개 명령을 같은 business run에 적용하고 receipt를 확인했습니다. 종료 후 Job에 남은 소유 PID는 0개였습니다. 배경은 공장 전체 장면이 아닌 빈 viewport 연결 시험이며 ROS, 접촉 물리, 하드웨어 제어의 증거가 아닙니다. [실행 요약·해시·종료 기록](docs/evidence/kit-operations-229/summary.json)
+
+</details>
+
+<details>
+<summary>기존 40×24m 정적 장면의 합성데이터</summary>
+
+![RGB·깊이·semantic·instance·bbox를 묶은 기존 정적 데이터](docs/images/g4-render-004/g4-dataset-modalities.png)
+
+Isaac Sim Replicator로 12개 시각 구성, 30시점, 3카메라에서 RGB 1,080장과 깊이·semantic·instance·bbox·카메라 정보를 만들었습니다. 기존 40×24m 정적 장면의 데이터이며 현재 36×28m 장면의 학습 데이터나 학습 성능 결과가 아닙니다. [데이터 검사](docs/images/g4-render-004/dataset-validation-report.json) · [데이터 계약](docs/dataset-contract.md)
+
+</details>
+
+## 현재 진행 상태
+
+| 구간 | 확보한 증거 | 남은 확인·확장 |
 |---|---|---|
-| ![NVIDIA 원본 캐비닛 모델 미리보기](docs/images/factory-context-assets-193/tool-cabinet.png) | ![NVIDIA 원본 이동식 작업대 모델 미리보기](docs/images/factory-context-assets-193/rolling-workstation.png) | ![NVIDIA 원본 정비 카트 모델 미리보기](docs/images/factory-context-assets-193/utility-cart.png) |
+| 1. 공정·원장 | 유한 재고·WIP, `CELL1` 고장·복구, 출하·빈 토트 반납 | 복수 생산 셀 계산은 후속 확장 |
+| 2. 4대 CPU 운영 | 6개 조건의 12건 출하·12건 반납·4대 주차, 별도 저SOC 충전·이탈 | 현장 자료 보정은 후속 확장 |
+| 3. 물리 주행 기준선 | 엔코더 제어 단일 차량226, 적재135, 교차 양보142 | 선정된 물리 도킹 시험은 미완료 |
+| 4. 운영 비교·원인 추적 | 동일 수요의 6개 조건, 대기·출하 지연·교착 우회 기록 | 반복 통계와 실공장 성능으로 확장하지 않음 |
+| 5. 관제·재현·미디어 | 실행070 관측, 공개 120표본 재생, Kit229 명령, 운영 재생228 | 최신 웹 조합의 새 브라우저 실행 확인 |
+| 6. 포트폴리오 마감 | 영상·비교·물리 기준선·공개 입력과 해시 | 위 잔여 확인 이후 최종 설명과 보존 색인 마감 |
 
-이 표는 NVIDIA 제공 모델 미리보기입니다. 재질·텍스처가 포함된3종을 정비·입고 지원·외곽 서비스 공간에34개 배치했고, 위 공장 RGB에서 함께 촬영했습니다. 실제 USD 합성에서 모델 크기·위치와 AMR 구역의10cm 이격을 확인했습니다. 실패한 이전 운송063에는 새 소품이 포함되지 않습니다. 제작자 NVIDIA, CC BY 4.0. [원본·라이선스·변경 내용·캐시 준비법](docs/asset-attribution.md) · [현재 촬영 근거](docs/images/semiconductor-dual-local45-213/provenance.json)
+4대 전체의 접촉 물리 운송과 전기 접촉 충전은 후속 확장입니다. 현재 목표는 운영 비교와 선정된 물리 구성요소 시험을 각각 재현할 수 있게 만드는 것입니다.
 
-</details>
+실패 원인과 재발 방지는 [트러블슈팅 기록](docs/troubleshooting.md)에 남깁니다. 현재 구현과 장기 완료 기준은 [완성 계획](docs/completion-plan.md)에서 관리합니다.
 
-**자재 공급 → 공정 처리 → 완제품 이송 → 출하 → 빈 용기 반납**의 전체 운영과 같은 실행의 관제 상태를 보여줍니다. [현재 보존된 전체 업무 영상](docs/images/fleet4-local45-036/operations-business-complete.mp4)은 명목74배속 요약입니다. 해당 실행은 출하3건·빈 토트 반납3건을 기록했으나 최종 기록 종료 검사에 실패했습니다.
+## 로컬 실행
 
-여섯 운영 단계의 원속도 촬영과 상태 패널을 묶는 내보내기 도구를 준비했습니다. 후속 수집 설정은 영상에 사용하는 각3초·180프레임에 맞춰 최대1,080장으로 제한합니다. 전체 공장1280×720 원본에 차량 ID를 표시하고, 재고·출하·반납 집계와4대의 작업·목적지·속도·가상 SOC를 같은 촬영 시점으로 붙입니다. 운송 구간은 해당 화물의 운반 차량이 실제로 이동하거나 회전한 원본만 사용합니다. 새 정상 완료 실행의 촬영·인코딩은 남아 있으며, 전체 디지털 트윈 완성을 주장하지 않습니다.
-
-로컬4.5의 새 개발 실행에서는 `--capture-views overview`로 전체 공장 시점만 촬영할 수 있습니다. 추적 시점의 렌더 제품과 RGB 수집을 생략하는 옵션이며, 실제 속도 개선 측정은 남아 있습니다. 기본3시점 촬영과 합성 데이터 수집은 유지합니다. [촬영 범위 안내](docs/operations-guide.md#공장-운영-미디어-촬영)
-
-운송 로직을 확인할 때는 `--operation-story off`로 여섯 단계의 연속 촬영을 끌 수 있습니다. 간헐 RGB·운영 원장·관측은 유지하며, 이 모드의 기록은 대표 영상 촬영 완료로 세지 않습니다. 운송 완주 후 연속 촬영을 켜서 같은 실행 시점의 운영 영상을 만듭니다.
-
-실행 비용은 `results/run/runtime-costs.json` 한 파일에 누적합니다. 물리·주기 렌더·센서 읽기/검사/발행·SDK ROS 처리·시각 상태 갱신·RGB 촬영의 벽시계 비용을 기록하며, 시뮬레이션 주기와 제어 조건은 유지합니다. 일부 계측은 서로 포함되므로 합산해 처리량이나 개선율로 표시하지 않습니다. SDK의 유한 수치 배열은 같은 검사 조건으로 묶어서 처리하고, 원본 값·해시·오류 진단을 보존합니다. [CPU 검증 함수 비교](docs/evidence/local45-runtime-costs-216.json)에 이어 [실제 SDK의 짧은 관측](docs/evidence/local45-planar-vector-cost-217.json)에서8개 센서의 한 차례 읽기·검사·발행 평균 비용은154.1ms에서32.3ms로 줄었습니다. 외부 부하를 통제한 장기 시험은 아니며12lot 처리량 개선과 구분합니다.
-
-출하 이후에는 두 차량이 움직이는 병행 물류 구간을 선택합니다. 재생할 원본에서 두 차량의 움직임을 확인하고, 같은6개 촬영 구간 안에 자재 공급과 빈 토트 반납이 겹치는 공장 흐름을 담습니다. 새 조건의 실제 촬영은 남아 있습니다.
-
-<details>
-<summary>보조 시연: 교차 통로 양보·통과·재개</summary>
-
-![공장 물류 운반 중 교차 통로 양보, 선행차 통과, 대기차 재출발과 회전](docs/images/junction-hero-local45-142/logistics-yield-40fps.gif)
-
-[원속도 전체 영상 · 60fps MP4](docs/images/junction-hero-local45-142/logistics-yield-60fps.mp4) · [촬영·변환 출처](docs/images/junction-hero-local45-142/provenance.json) · [실제 실행 결과](docs/evidence/local45-junction-hero-142.json)
-
-파란 AMR1이 자재를 운반하는 동안 주황 AMR2가 교차 통로 앞에서 정지·양보합니다. AMR1의 차체가 교차 구간을 벗어나면 AMR2가 재출발하고 회전해 복귀 경로를 이어갑니다. GIF는 이 흐름을 **2배속·40fps**로 보여주며, 파란 사각형은 예약 구간을 표시한 주석입니다.
-
-같은 공장에서4대의 실제 바퀴·엔코더·PhysX 거리 센서를 사용한 SDK 시연입니다.56.65초 동안4대 모두 목적지에 도착했고,60fps 원본3,399장을 촬영했습니다. 주행에는 기존 가감속·회전 제한을 적용했습니다. **교차로 양보·통과·재개를 확인한 범위**이며 동적 우회 경로 생성과 ROS/Nav2 전체 완주를 뜻하지 않습니다. 화물은 비충돌 시각 표시입니다. [시연 제어](factory_ops/junction_demo.py) · [실행 진입점](scripts/isaac/probe_junction_hero.py)
-
-</details>
-
-<details>
-<summary>공장 조감과 별도 적재 주행 시험</summary>
-
-| 공장 조감 · 실제5초·10fps | 별도6kg 적재 주행 · 40fps |
-|---|---|
-| ![공장 조감 연속 촬영](docs/images/fleet4-local45-042/overview-realtime.gif) | ![별도 적재 상태의 곡선·제동·회전 시험](docs/images/loaded-mobility-local45-135/loaded-turn-40fps.gif) |
-
-[공장 조감 MP4](docs/images/fleet4-local45-042/overview-realtime.mp4) · [조감 출처](docs/images/fleet4-local45-042/provenance.json) · [적재 주행60fps MP4](docs/images/loaded-mobility-local45-135/loaded-motion-60fps.mp4) · [적재 시험 출처](docs/images/loaded-mobility-local45-135/provenance.json)
-
-</details>
-
-[전체 업무 흐름 · 이전 실행의25.4초 요약](docs/images/fleet4-local45-036/operations-business-complete.mp4)은 명목74배속 타임라인입니다. 그 실행은 출하3건·빈 토트 반납3건·4대 주차를 마쳤으나 최종 기록 종료 검사에 실패했습니다. 아래 업무 결과와 관제 화면은 해당 실행의 보존 자료입니다.
-
-## AMR을 클릭하면 보이는 운영 상태
-
-![진행 중인 실행070 관측: carter1의 작업·목적지·가상 SOC·이동 경로와 네 차량 목록](docs/images/web-console-070/dashboard-live-carter1.jpg)
-
-관제 화면은 공장 3D를 화면 전체에 두고 검색·운영 지표·선택 상세·주문 단계 추적·차량/작업/충전대/이벤트 목록을 떠 있는 패널로 배치합니다. 목록·검색·3D에서 차량을 선택하면 현재 작업, 목적지, 적재물 ID, 엔코더 속도, 가상 SOC와 통로 대기 원인을 확인하고, 카메라가 그 차량으로 이동해 경로와 목적지 핀을 표시합니다. 모든 차량 앞에는 수신한 경로의 다음 약3m를 흐르는 점선 화살표로 그립니다. 지나간 경유점이 빠지는 진행이 아니라 수신한 남은 경로 자체가 바뀌면, 이전 경로를 흐리게 남긴 채 새 경로와 `목적지 변경`·`경로 재계획` 표시를 약3초 보여 줍니다. 위 화면은 진행 중인 실행070을 읽기 전용으로 연결한 관측이며 완주 결과가 아닙니다. 이전 화면 구성의 [carter4 빈 토트 회수 상세](docs/images/fleet4-local45-036/empty-tote-carrier-detail.jpg)와 [출하 3건·재고 54개 전체 화면](docs/images/fleet4-local45-036/dashboard-all-orders.jpg)은 실행036의 보존 자료입니다.
-
-웹은 **Next.js·React Three Fiber·Python 운영 API**로 구성했습니다. 실제 ROS 실행은 기본으로 관측 전용입니다. 로컬4.5 개발 옵션에서는 네 차량의 **다음 예약 지점 정지·운행 재개를 실제 실행에서 확인**했습니다. 같은 Kit 클라이언트와 Linux API를 사용한 [네 차량의 정지·재개 기록](docs/evidence/local45-native-control-054.json)입니다. 주문 생성·전체 일시정지·재개와 가상 충전 조작은 별도 CPU 운영 모델에서도 지원합니다. 운영 제어·기록 재생·관측 근거는 운영 패널에 모았고, 조작 권한이 없는 읽기 전용 원천에서는 운행 조작을 표시하지 않습니다. 웹의 차량·물품 형상은 원장 기반 도식이며, 1.5초 간격 관측 사이의 차량 이동은 표시용으로 보간합니다. [실행070 관제 이미지 출처](docs/images/web-console-070/provenance.json) · [실행036 관제 이미지의 원본·해시](docs/images/fleet4-local45-036/provenance.json)
-
-정지 요청은 네 차량의 새 HOLD 응답과 연속 정지 관측이 모인 뒤 적용됩니다. 재개 전에도 관측 신선도를 확인하며, 물리·ROS·가상 충전 시계는 계속 흐릅니다. [실행 도구](scripts/demo/native_anchor_flow.py)는 같은 요청의 적용 기록을 확인해 재개만 복구하는 모드도 제공합니다. 실제 브라우저·Kit 패널의 클릭 연결과 전체 물류 완주는 남아 있습니다. [사용 절차](docs/operations-guide.md#다음-예약-지점에서-정지재개)
-
-웹의 **운영 기록 저장·재생**은 필요한 구간의 차량·작업·재고 상태를 다시 보여줍니다. 저장 버튼을 눌렀을 때 최근 관측 최대120개만 파일로 보존하고, 재생 중에도 실시간 수신은 유지합니다. 재생 화면에서는 차량 명령을 비활성화합니다. 원래 실행·시각·내용 해시와 공장 배치를 대조하며, 다른 배치나 변조된 기록은 거부합니다. [실제4대 관측의 웹 프록시 저장·재생](docs/evidence/scenario-replay-198.json)과 CPU HTTP 검사·웹 타입·빌드는 통과했습니다. CPU 운영 모델에서 헤드리스 Chromium으로 저장→불러오기→다음 표본→실시간 복귀 클릭을 확인했습니다. 실제 실행 기록의 브라우저 재생 확인과 전체 운송 완주는 남아 있습니다. [기록 사용법](docs/operations-guide.md#운영-기록-저장재생)
-
-## 공장과 물류 흐름
-
-| 실제 공장 RGB | 차량 위 화물 표시 |
-|---|---|
-| ![32×22 m 생산 구역](docs/images/fleet4-local45-036/overview.png) | ![Nova Carter 위의 원장 기반 화물 표시](docs/images/fleet4-local45-036/loaded-carrier.png) |
-
-**자재 보관·키팅 → 공정 투입 → 조립·검사 → 완제품 출하**, 소비 후 **빈 토트 회수·재사용**을 연결합니다. 32×22 m의 가상 생산 구역이며 현장 CAD·MES와 동기화한 실공장 복제는 아닙니다.
-
-![17mm 카메라로 전체 구역과 외벽을 담은 현재 장면의 기동 미리보기](docs/images/fleet4-layout-local45-057/overview.png)
-
-17mm 조감으로 공장과 외벽 전체를 담고 네 차량에5.4kg 물리 캐리어를 장착했습니다. 위 이미지는 운송 시작 전의 실제 렌더입니다. 해당 실행은 AMR2의 Nav2 기동 오류로 종료됐으며, 앞의036 업무 영상과 다른 실행입니다. [촬영 시각·카메라·원본 해시](docs/images/fleet4-layout-local45-057/provenance.json) · [기동 결과와 남은 통신 문제](docs/evidence/local45-startup-057.json)
-
-| 실행에서 확인한 결과 | 범위 |
-|---|---|
-| 4대 모두 실제 운송 인계 참여 | 제품 인계 12회 + 빈 토트 인계 6회 |
-| 주문 3건 출하·빈 토트 3건 반납 | 마지막에 4대 모두 주차 |
-| 유한 재고와 공정 소비 | 초기 60개 = 잔량 54개 + 소비 6개 |
-| 가상 충전 예약·도착·해제 | 추정 위치·오도메트리의 원래 시각과 정지 확인, 작성된 에너지 모델 사용 |
-| 같은 실행의 웹 관제 | 작업·화물·재고·속도·가상 SOC 관측 |
-
-위 결과는 [로컬 Isaac Sim 4.5·PhysX 실행036](docs/evidence/local45-transport-036.json)의 업무 기록입니다. 산업용 저상 차량의 접촉·승강·하중 운반, 충전 접촉 센서와 전기 충전, 최종 6.2·RTX 구성은 남아 있습니다. 현재 화물은 원장과 연결한 비충돌 시각 표현입니다.
-
-개발 소스는 지연된 오도메트리를 신선한 과거 추정 위치와 결합하고, 충전 단계가 같아도 SOC 관측 파일을 갱신합니다. 새4대 SDK 실행에서도 **충전 위치 도착 → 정지·기하 정렬 확인 → 가상 SOC 증가 → 충전 예약 해제·배차 대기 복귀**를 확인했습니다. 웹도 같은 실행의4대 상태를 표시합니다. [충전·웹 관측 근거](docs/evidence/local45-charging-058.json)는 실행 중의 부분 결과이며 전체 물류 완주나 접촉 센서·전기 충전의 검증을 뜻하지 않습니다.
-
-<details>
-<summary>운반 모듈의 접촉·분리 시험 보기</summary>
-
-| 네 지지점 접촉·정지 | 토트 분리 |
-|---|---|
-| ![고정 지지대 위 캐리어와 토트의 안착](docs/images/tote-contact-local45-114/settled.png) | ![상향 속도를 준 뒤 관측한 토트 분리](docs/images/tote-contact-local45-114/separated.png) |
-
-헤드리스 Isaac Sim 4.5에서 캐리어 5.4kg·적재 토트 6kg의 접촉을 시험했습니다. 네 지지대의 접촉·힘·센서 시각과 정지·정렬을 확인한 뒤, 토트에 상향 속도를 주어 분리 상태와 RGB 두 장을 기록했습니다. 위 자료는 고정 지지대 시험입니다. [실제 물리 결과](docs/evidence/local45-tote-contact-114.json) · [이미지 출처](docs/images/tote-contact-local45-114/provenance.json)
-
-![실제 Nova Carter에 정적으로 장착한 캐리어와 6kg 토트](docs/images/loaded-carrier-local45-124/mounted-settled.png)
-
-Nova Carter의 차체 형상·센서 간섭·기존 반경을 확인한 뒤 캐리어를 고정 조인트로 장착했습니다. 자유 동적 토트의 실제 접촉과 정지를 확인했습니다. 위 이미지는 정적 장착 시험이며, 이어지는 영상은 같은 구성의 적재 주행 시험입니다. [정적 장착 결과](docs/evidence/local45-loaded-carrier-124.json) · [이미지 출처](docs/images/loaded-carrier-local45-124/provenance.json)
-
-![6kg 토트 적재 상태의 곡선·제동·제자리 회전: 실제40fps](docs/images/loaded-mobility-local45-135/loaded-turn-40fps.gif)
-
-같은 장착 구성으로6kg 토트를 싣고 전진·곡선 주행·제자리 회전 후 감속 정지를 확인했습니다. 원본은 실제 물리 프레임에서 촬영한60fps·9.4초이며, GIF는 회전 전후5초를40fps로 보여줍니다. 보간 프레임은 사용하지 않았습니다. 적재 접촉과 상대 위치, 바퀴 응답을 기록했습니다. 자동 적재·도킹·재고 인계의 차량 통합과 하중 정격은 남아 있습니다. [60fps MP4로 보기](docs/images/loaded-mobility-local45-135/loaded-motion-60fps.mp4) · [실제 주행 결과](docs/evidence/local45-loaded-mobility-135.json) · [촬영 출처](docs/images/loaded-mobility-local45-135/provenance.json)
-
-4대 운송 씬에는 [물리 캐리어 연결 옵션](scripts/isaac/carrier_native.py)이 있습니다. 실제 SDK에서 네 차량의 장착 허용과 차량별5.4kg 모듈·고정 조인트 작성을 확인했고, 물품 표시는 각 상판 높이에 맞춥니다. 변환 속성을 수정한 후68초의 물리 기동 구간에서 이전 렌더 경고가 사라졌습니다. [네 차량의 장착·센서와 기동 결과](docs/evidence/local45-startup-057.json)를 보존했으며, 이 구성의 운송 완주와 토트의 적재·하역 통합은 남아 있습니다. [실행 범위와 사용법](docs/operations-guide.md#4대-물리-캐리어-개발-옵션)
-
-| 롤러 적재 완료 | 같은 토트의 반납 완료 |
-|---|---|
-| ![접촉 센서로 적재를 확인한 6kg 토트](docs/images/roller-transfer-local45-119/loaded.png) | ![롤러를 반전해 원래 뱅크로 반납한 같은 토트](docs/images/roller-transfer-local45-119/returned.png) |
-
-[롤러 적재·반납 시험](scripts/isaac/probe_roller_transfer.py)은 실제 물리 실행에서 통과했습니다. 회전 조인트로 롤러를 구동하고 접촉 센서와 모터 정지를 확인해 같은 6kg 토트를 싣고 돌려보냈습니다. World 9.69초 동안 왕복을 확인했고 RGB 두 장과 접촉·모터 기록을 보존했습니다. **고정 시험대 결과이며 AMR 장착·도킹·재고 인계 연결은 남아 있습니다.** [실제 결과](docs/evidence/local45-roller-transfer-119.json) · [이미지 출처](docs/images/roller-transfer-local45-119/provenance.json)
-
-</details>
-
-## 가감속·회전·정지
-
-![무적재 Nova Carter의 참조 경로·엔코더·PhysX 궤적, 속도와 횡오차](docs/evidence/local45-path-baseline-226.svg)
-
-현재 주행 한도로 실행한 **엔코더 기반 직선·곡선 추종 시험**에서 경로 오차 RMS4.76cm, 도착 위치 오차7.12cm, 실제 최고속도0.5915m/s를 기록했습니다. 제어와 도착 판정에는 휠 엔코더만 사용하고 PhysX 차체 위치는 사후 평가에 사용했습니다.0.6m/s 상한을 넘었던 앞선 결과를 실패로 남긴 뒤 명령 순항속도를0.59m/s로 조정했습니다. 무적재 한 대의 구성요소 시험이며, 적재·장애물 회피·Nav2·공장 전체 운송 결과와 구분합니다. [실행·원본·종료 근거](docs/evidence/local45-path-baseline-226.json) · [운영 모델과 물리 시험의 범위](docs/motion-baseline.md)
-
-![명령과 실제 엔코더·차체 응답](docs/images/amr-drive-response.png)
-
-[원속도 주행 영상 · 76초 MP4](docs/images/amr-drive-profile.mp4) · [명령·엔코더·차체 응답 그래프](docs/images/amr-drive-response.png) · [촬영·계측 출처](docs/images/motion-media-provenance.json)
-
-정상 가감속, 곡선 감속, 회전 전 제동과 회전 후 출발, 휠 속도·가속도 제한을 물리 주행 루프에 적용했습니다. 주행 명령과 실제 차체·엔코더 응답을 구분해 기록하며, 명령이 끊기면 watchdog이 정지시킵니다. 위 영상은 별도 주행 시험이며 현재 4대 운송 실행과 같은 촬영으로 합치지 않습니다.
-
-## 공유 통로 대기와 복구
-
-![두 AMR의 교착 감지·양보·이탈 확인·재개 경로](docs/images/g2-f3-recovery-path.png)
-
-[복구 전체 영상](docs/images/g2-f3-timelapse.mp4) · [복구 경로와 소유권 변화](docs/images/g2-f3-recovery-path.png) · [통로 차단 시 명령·정지 기록](docs/images/g2-f2-fault-timeline.png) · [실행 결과](docs/images/g2-results.json)
-
-이전 2대 배치의 실제 복구 시험입니다. 대기 관계 감지, 주행 취소, 양보 위치 이동, 이탈 확인, 대기 차량 재개의 순서를 기록했습니다. 관측이 오래되면 점유를 유지하며, 다음 예약이 승인되기 전에 기존 점유를 해제하지 않습니다. 최종 4대 구성의 폐쇄·복구 검증은 남아 있습니다.
-
-## 합성데이터: RGB와 라벨을 함께 확인
-
-![동일 프레임의 RGB·깊이·semantic·instance·bbox](docs/images/g4-render-004/g4-dataset-modalities.png)
-
-[조감 RGB](docs/images/g4-render-004/rgb-overhead.png) · [통로 RGB](docs/images/g4-render-004/rgb-aisle.png) · [차량 근접 RGB](docs/images/g4-render-004/rgb-amr_follow.png) · [데이터 검사 결과](docs/images/g4-render-004/dataset-validation-report.json) · [출처 명세](docs/images/g4-render-004/g4-media-provenance.json)
-
-Isaac Sim Replicator로 기존 40×24 m 장면의 **12개 시각 구성 × 30시점 × 3카메라, RGB 1,080장**과 대응 깊이·semantic·instance·bbox·카메라 정보를 수집했습니다. 프레임·좌표·분할·파일 해시 검사와 대표 자료의 별도 AI 시각 검수를 기록했습니다.
-
-이 자료는 기존 정적 장면의 데이터입니다. 현재 4대 운송 장면의 학습 데이터나 실제 로봇 학습 성능으로 해석하지 않습니다. 최종 공장·차량을 고정한 뒤 새 장면에서 수집하며, 웹에서 GPU 촬영을 실행하는 기능은 아직 없습니다. [데이터 계약](docs/dataset-contract.md)
-
-## Kit 운영 패널과 모의 MES
-
-<details>
-<summary>Isaac Sim 안의 운영 패널 보기</summary>
-
-![Isaac Sim 4.5에서 실행한 Kit 운영 패널](docs/evidence/kit-console-004/kit-console.png)
-
-Kit 확장 `factory.ops.console`에서 AMR 선택 상세, 주문 생성, 전체 일시정지·재개를 같은 CPU 운영 API에 연결했습니다. 실제 SDK에서 명령 적용과 확장 창 종료를 확인했습니다. 이 화면의 배경은 연결 시험용 빈 뷰포트이며 공장 렌더 결과가 아닙니다. [명령·촬영 근거](docs/evidence/kit-console-004/summary.json)
-
-</details>
-
-모의 MES의 주문·재고 입고·설비 관측·heartbeat를 운영 원장에 연결합니다. 실행 ID·시각·순번과 중복 입력을 검사합니다. Kit 클라이언트는 같은 실행의 정지·재개 요청과 원천 응답을 구분하며, 지원하지 않는 조작은 비활성화합니다. 실제4대 실행을 조작하는 Kit 화면 확인과 실제 공장 설비 연결은 남아 있습니다. [HTTP 입력 기록](docs/evidence/mock-mes-024/http-flow.json) · [실행 안내](docs/operations-guide.md)
-
-## 현재 진행 구간
-
-![12lot 운영 비교: 정상·테스터 고장·통로 폐쇄에서 FIFO와 ETA의 출하·반납·공정 WIP·교통 대기](docs/evidence/operations-comparison-223.svg)
-
-같은12lot·5,400초·30초 투입 간격의 **6개 조건 모두12건 출하·12건 빈 캐리어 반납·4대 주차**를 완료했습니다. 네 차량이 모두 작업에 참여했고 최대 동시 이동은4대였습니다. 설비 고장 ETA 조건에서는 순환 대기를 감지한 뒤 정지 앵커에서 대체 경로를 한 번 예약해 운행을 이어갔습니다. 원형 외곽의 관측 최소 여유는1.73m이며 접촉 물리나 실공장 안전 인증 수치가 아닙니다.
-
-같은 실행 조건에서 거리 기반 ETA는 정상 FIFO보다 교통 대기가42.1% 적었습니다. 통로 폐쇄에서는 ETA의 누적 출하 지연이 FIFO보다10.6% 많았습니다. 따라서 거리만 줄이는 배차가 모든 운영 조건에서 유리하지는 않습니다. 납기 여유240초 등 입력은 작성 가정이며, 반복 통계나 실공장 성능으로 일반화하지 않습니다. 가상 에너지는 연결됐고, 저SOC의 실제 충전 단계 전환은 별도 통합 시험으로 확인했습니다. [비교 표·조건·실행 ID](docs/evidence/operations-comparison-223.md) · [소스 동결·요약 데이터](docs/evidence/operations-comparison-223.json) · [보존한 이전 미완료 결과222](docs/evidence/operations-comparison-222.json)
-
-| 구간 | 현재 상태 |
-|---|---|
-| 1. 공정·장애 | 단일 테스터 고장·복구, 남은 처리시간, 유한 버퍼·WIP와 관제 입력 구현. 복수 설비 공정은 남음 |
-| 2. 4대 운영 모드 |12lot 공급·출하·반납·주차 완료. 가감속·회전·연결로 예약·점유·정지 우회와 가상 충전 연결 |
-| 3. 물리 주행 기준선 | 엔코더 기반 직선·곡선 추종226 통과. 경로 오차 RMS4.76cm·도착 오차7.12cm. 별도 적재·회전·제동·교차로 시험과 적용 범위 구분 |
-| 4. 운영 비교·원인 추적 | 정상/테스터 고장/통로 폐쇄·FIFO/ETA 6개 조건 완료. 실패 재현·우회 적용·정책별 대기와 지연 차이 기록 |
-| 5. 관제·재현·미디어 | 공정·통로 명령 receipt, 실행 출처·정책 표시와 재생 연결. 현재 구성의 대표 미디어는 남음 |
-| 6. 포트폴리오 마감 | 기존 대표 미디어·출처·원본 보존. 새 운영 결과·실행법·한계 반영 중 |
-
-[완료 조건과 구간별 계획](docs/completion-plan.md) · [오류와 재발 방지 기록](docs/troubleshooting.md)
-
-현재4대 통합 경로는 Windows Humble·WSL Jazzy의 DDS를 OS 안에 격리하고 센서·시계·주행 토픽을 연결합니다. 중계 상태 파일의 공유 충돌은 추가 기록 방식으로 바꿨으며, 파일을 열어 둔 조건의 [양 OS 통신 시험](docs/evidence/local45-relay-heartbeat-156.json)을 통과했습니다. 수정 후 [실행051](docs/evidence/local45-transport-051.json)은 자재 공급·공정 처리·출하·빈 토트 회수까지 진행했지만 제한 시간 안에 완주하지 못했습니다. 출하와 반납의 일부가 남았고, 중계 Job이 시간 초과로 종료됐습니다. 소유 프로세스는 모두 정리했습니다. 후속 실행은 조감 카메라만 사용하고 운반 중인 차량의 실제 움직임에 맞춰 촬영합니다. 공장 전체 완주와 여섯 운영 단계를 묶은 대표 미디어 생성은 남아 있습니다.
-
-앞선040의 재접근 반복을 고친 [C++·기록 검사](docs/evidence/local45-terminal-reapproach-109.json)와 [동결 소스 빌드](docs/evidence/local45-goal-canonical-112.json)는 유지합니다. 운반 모듈은 지지대 접촉·롤러 왕복·실제 차체 장착과6kg 적재 주행을 통과했습니다. 자동 적재·도킹·재고 인계의 통합은 남아 있습니다. 대표 물리 시험과 최신 실행 원본을 선별 보존하며, 공장 대표 미디어는 보존된 실행036의 자료입니다.
-
-## 로컬에서 보기
-
-Isaac Sim 물리 실행은 창 없이 헤드리스로 돌리며, GPU 렌더링으로 카메라 RGB를 저장합니다. 현재 로컬 개발 환경은 Isaac Sim 4.5·RTX 3060입니다. 실시간 작업 상태는 웹3D 관제에서 보고, 공장 렌더 결과는 별도 이미지·영상으로 확인합니다.
-
-외부 NVIDIA 모델을 쓰는 장면은 준비된 캐시의 상위 디렉터리를 `FACTORY_OPS_ASSET_CACHE` 환경변수로 전달해야 합니다. 경로는 `<캐시 상위>/<고정 revision>/prepared-index.json` 형태입니다. 정지 촬영기는 이 색인이 없으면 GPU를 시작하기 전에 종료합니다. [자산 준비·캐시 설정](docs/asset-attribution.md)
-
-로컬 PhysX 개발 프로필v2는36×28m 장면의 대각 길이 약45.61m를 포함하도록 SDK에0.1~50m를 작성하며, 같은 범위를 검사·발행·관측에 사용합니다. 원시 hit를 clamp하거나 no-hit로 바꾸지 않습니다. [실제 단일 센서 시험](docs/evidence/local45-planar-range-209.json)의72개 조건에서 범위 밖 hit0건을 확인했습니다. AMCL의 사용 상한30m와 장애물 검출12m·raytrace15m는 유지합니다. 이 시험은4대 물류 완주, 실물 라이다의 정격이나 최종 RTX 센서 구성의 검증을 뜻하지 않습니다.
-
-로컬 실행기는 지정한 wall 시간 한도에서 마지막30초를 SDK·ROS·중계 종료에 예약합니다. 작업 기한과 종료 결과는 실행에 사용한 소스·시간 정책과 함께 기록합니다.
-
-준비된4대 로컬 실행기의 OS 격리 옵션은 `--isolated-topic-relay --relay-windows-address <Windows의 WSL NIC 주소> --relay-linux-address <WSL 주소>`입니다. `--startup-service-match-wait`는 이 경로에서 Linux의 시작 서비스 응답 프로필만 사용합니다. 환경과 소스를 고정한 새 실행에 적용하며, 기존 실행의 설정·원본은 바꾸지 않습니다. [실행기](scripts/isaac/run_local45_fleet_pair.py)
-
-CPU 운영 데모는 Python 3.12·uv, 웹은 Node.js·npm을 사용합니다. GPU 시뮬레이션과 별도로 실행합니다. PowerShell 터미널 두 개를 사용합니다.
-
-정지·재개 개발 옵션은 새 소스로 준비한4대 실행기와 관제 API 양쪽에서 `--live-anchor-controls`를 켜고, API의 `--commands-dir`를 해당 실행의 `results/run/commands`에 연결합니다. ROS가 WSL에서 실행될 때 조작 API도 같은 WSL에서 실행해 같은 OS 시계로 요청을 큐에 넣습니다. 웹은 `OPS_API_URL`로 이 API를 선택합니다. [실제4대 정지·재개 결과](docs/evidence/local45-native-control-054.json)는 전체 운송 완료와 구분합니다.
+CPU 운영과 웹은 Python 3.12·uv, Node.js·npm을 사용합니다. 물리·렌더 시험 환경은 Isaac Sim 4.5와 RTX 3060이며 헤드리스로 실행했습니다. 같은 포트의 API나 웹이 이미 실행 중이면 프로세스를 중복으로 띄우지 않습니다.
 
 ```powershell
 cd "$HOME/factory-ops-twin"
 uv sync --locked
-uv run python -m factory_ops.dashboard --config configs/factory-semiconductor-dual-lane --execution-mode operations --dispatch-policy fifo
+uv run python -m factory_ops.dashboard --config configs/factory-semiconductor-dual-lane --execution-mode operations --dispatch-policy eta --scenario-dir runs/operator-scenarios --port 8765
 ```
 
 ```powershell
@@ -244,31 +124,23 @@ npm ci
 npm run dev -- --port 3007
 ```
 
-`http://127.0.0.1:3007`에서 운영 모드의 주문·차량·재고·테스터와 통로 상태를 볼 수 있습니다. 이미 같은 포트의 관제 서버가 실행 중이면 기존 서버를 사용합니다. 미리보기의 가상 충전은 `--execution-mode preview --web-charging-profile configs/web-charging-model.json`으로 별도 실행하며 운영 모드 충전 검증으로 세지 않습니다. 실제 ROS 관측 연결, Kit 활성화, 모의 MES와 재현용 CPU 보고서는 [운영·실행 안내](docs/operations-guide.md), GPU 실행은 [GPU 연동 안내](docs/gpu-handoff.md)를 참고합니다.
+웹 주소는 `http://127.0.0.1:3007`입니다. 기존 API가 다른 옵션으로 실행 중이라면 사용 중인 작업을 마친 뒤 해당 API만 종료하고 위 설정으로 다시 시작합니다. API 주소가 같으면 웹을 다시 시작할 필요가 없습니다.
 
-12개 로트와 동일한 시간 범위의 CPU 비교는 다음 명령으로 실행합니다. 대표 상태는 실행당 최대120개만 남기며, 미완료 수요·오류·출처 변경도 결과에 포함합니다. 현재 seed는 식별용이며 확률 변동을 넣지 않습니다.
+6개 운영 조건 비교는 다음 명령으로 재현합니다.
 
 ```powershell
 cd "$HOME/factory-ops-twin"
 uv run python -m factory_ops.operations_experiment --config configs/factory-semiconductor-dual-lane --output artifacts/operations/my-comparison/matrix.json --all --horizon 5400
 ```
 
-같은 웹에 실제 실행을 연결하면4대의 추정 위치·작업·적재물·목적지와 원천이 명시된 가상 SOC를 표시합니다. 실행과 같은 공장 배치를 `--config`로 선택하고, 같은 실행 폴더의 관측·충전·사건 파일을 함께 연결합니다. [실행051의 API·웹 프록시 연결 근거](docs/evidence/local45-live-web-158.json)는 실행 중 관측이며 정상 운송 완료나 웹 정지·재개 검증을 뜻하지 않습니다.
+## 저장소 구조와 한계
 
-## 구성과 증거의 경계
-
-| 구성 | 역할 |
+| 경로 | 역할 |
 |---|---|
-| `configs/` | 공장 배치·지도·주문·주행·에너지·촬영 설정 |
-| `factory_ops/` | 재고·운영 원장·배차·예약·관제 API·평가와 원본 검사 |
-| `scripts/isaac/`, `scripts/ros/` | 물리 주행·센서·Nav2·action과 운송 확정 연결 |
-| `dashboard/`, `extensions/` | 웹3D 관제와 Kit 운영 패널 |
-| `scripts/media/`, `docs/images/` | 실제 원본 기반 미디어와 출처 |
+| `configs/` | 공장 배치, 경로, 주문, 주행, 에너지 설정 |
+| `factory_ops/` | 공정 원장, 재고, 배차, 예약, 충전, 관제 API, 평가 |
+| `scripts/isaac/`, `scripts/ros/` | Isaac Sim 물리 시험, 센서, ROS 2·Nav2 연결 |
+| `dashboard/`, `extensions/` | 웹 3D 관제와 Kit 운영 패널 |
+| `docs/images/`, `docs/evidence/`, `docs/data/` | 미디어, 실행 근거, 공개 재생 데이터 |
 
-Nav2·배차·예약은 추정 위치와 센서·현재 상태를 사용합니다. 시뮬레이터 GT는 사후 평가·라벨·미디어에만 사용합니다. CPU 논리 모델·웹 도식·실제 물리 실행의 결과를 구분하며, 실물 Sim-to-Real 검증이나 공장 전체의 안전 인증을 주장하지 않습니다. [설계와 제어 경계](docs/architecture.md)
-
-공장 설비의 시각 층은 자체 작성했으며 로봇은 NVIDIA 제공 Nova Carter를 참조합니다. 원본 로봇 에셋은 Git에 포함하지 않고 제공처 이용 조건을 따릅니다. 코드·설정·문서·대표 미디어는 Git으로 관리합니다. 대형 원본과 최종 데이터셋은 로컬에 선별 보관하고, 최종 합성데이터 압축본은 해시를 확인한 뒤 별도 드라이브에도 남깁니다.
-
-반복 미리보기·압축 해제본·종료된 실패 실행의 대형 중복 자료는 정리했습니다. 오류·종료 기록과 공개 미디어는 유지하며, 예전 출처 문서에 적힌 일부 로컬 원본 경로는 만료됐습니다. 최종 합성데이터는 보존한 압축본에서 복원할 수 있습니다. [현재 보존 위치·만료 경로·정리 결과](docs/evidence/local45-storage-155.json)
-
-웹 화면 구성은 [Dilum Sanjaya의 창고 운영 데모](https://x.com/DilumSanjaya/status/2106426962738880879)를 참고했습니다. 구현과 운영 원장은 이 저장소에서 관리합니다.
+시뮬레이터 GT는 제어 입력이 아니라 사후 평가·라벨·미디어에 사용합니다. 현재 결과는 실물 Sim-to-Real 검증, 산업 안전 인증, 처리량 보증을 포함하지 않습니다. 로봇은 NVIDIA Nova Carter를 참조하며 원본 에셋은 저장소에 넣지 않습니다. 외부 모델의 출처와 변경 내용은 [에셋 표기](docs/asset-attribution.md), GPU 실행과 원본 보존 방식은 [GPU 안내](docs/gpu-handoff.md)에서 확인할 수 있습니다.

@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "scope": "presentation export of verified operations replay RGB; HUD uses source metadata only",
+  "render_run_id": "4f5937e1abec4020acb86002026aab78",
+  "source_run_id": "operations-normal-eta-13b5cf02963534bc-ea817f1064d0",
+  "frame_count": 900,
+  "source_fps": 30,
+  "gif_fps": null,
+  "playback_speed": 8.0,
+  "excerpt": {
+    "start_frame": 0,
+    "count": 900
+  },
+  "inputs": {
+    "result_sha256": "e6f8d546322b343b790c4feb99af015b0e49c4dcdc64030c105a13b3f9931e51",
+    "frames_jsonl_sha256": "57c1def9f73c2602a14d908493069b2770e887b4fe6742a402741e939c5ca169",
+    "host_receipt_sha256": "f306e020446bfda29422cd6802b7ced4b36001e13360066098ead81b1dbbe0d3",
+    "selected_frame_records_sha256": "83c99bba544a5501a67e3481e232a233f4d1e36252b19d8060d13d348c008931"
+  },
+  "outputs": {
+    "mp4": {
+      "path": "operations-replay.mp4",
+      "sha256": "79ab0f16a706cbe9c812d6b1a99c83f4bbe31725f4d28ce7b43e4b249f45efe3",
+      "bytes": 4858634
+    }
+  },
+  "hud": {
+    "height_px": 140,
+    "source_metadata_only": true,
+    "vehicle_badges": "robots[].screen_xy_px, fitted to square-pixel raster using camera readback for legacy raw-aperture projections",
+    "presentation_interpolation": "owned by renderer metadata; exporter creates no measurements"
+  },
+  "frame_conversion": {
+    "mp4": "one encoded frame per selected source frame",
+    "gif": null
+  },
+  "exporter_source_sha256": "211bb656059c0f29be2e2d97d11e92995684b3fe0b774d49d59e60f742f629eb"
+}
