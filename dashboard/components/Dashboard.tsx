@@ -161,7 +161,7 @@ export default function Dashboard() {
     }
   }, [liveSnapshot]);
   useEffect(() => {
-    if (command?.status === "pending") {
+    if (command?.status === "pending" || command?.status === "queued") {
       const updated = liveSnapshot?.commands.find((c) => c.command_id === command.command_id);
       if (updated) setCommand(updated);
     }

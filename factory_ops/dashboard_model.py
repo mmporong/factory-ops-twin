@@ -18,9 +18,23 @@ from .operations.inventory import InventoryLedger
 class DashboardModel:
     """Reuse the operation ledger; route motion is illustrative CPU interpolation."""
 
-    def __init__(self, config: Path, *, charging_profile: Mapping[str, Any] | None = None) -> None:
+    def __init__(
+        self,
+        config: Path,
+        *,
+        charging_profile: Mapping[str, Any] | None = None,
+        initial_orders: int = 4,
+        run_id: str | None = None,
+        robot_stations: tuple[str, str, str, str] = ("S1", "S2", "S3", "OUT"),
+    ) -> None:
+        if type(initial_orders) is not int or initial_orders < 0:
+            raise ValueError("initial_orders must be a nonnegative integer")
+        if run_id is not None and (not isinstance(run_id, str) or not run_id.strip()):
+            raise ValueError("run_id must be a non-empty string or null")
         self.book = RouteBook.from_files(config / "layout.json", config / "g3-routing.json")
-        self.ledger = Ledger(f"web-local-model-{uuid4()}")
+        if len(robot_stations) != 4 or len(set(robot_stations)) != 4 or any(s not in self.book.nodes for s in robot_stations):
+            raise ValueError("four distinct authored robot stations are required")
+        self.ledger = Ledger(run_id.strip() if run_id is not None else f"web-local-model-{uuid4()}")
         tote_ids = [f"T{i:03}" for i in range(1, 17)]
         self.inventory = InventoryLedger({(s, "sensor-kit"): 20 for s in ("S1", "S2", "S3")},
                                          tote_ids, tote_locations={
@@ -30,6 +44,7 @@ class DashboardModel:
         self.revision = 0
         self._seq = 0
         self._event_seq = 0
+        self._equipment_seq = 0
         self._order_seq = 0
         self._trips: dict[str, dict[str, Any]] = {}
         self._return_tasks: dict[str, dict[str, Any]] = {}
@@ -39,14 +54,15 @@ class DashboardModel:
         self._poses: dict[str, dict[str, float]] = {}
         self._consumed: set[str] = set()
         self._events: deque[dict[str, Any]] = deque(maxlen=80)
-        for i, station in enumerate(("S1", "S2", "S3", "OUT"), 1):
+        for i, station in enumerate(robot_stations, 1):
             key = f"amr-{i}"
             self.ledger.add_robot(key, station)
             self._locations[key] = station
             x, y = self.book.plan(station, station).points[0]
             self._poses[key] = {"x_m": x, "y_m": y, "yaw_rad": 0.0}
-        for source in ("S1", "S2", "S3", "S1"):
-            self.create_order({"source": source})
+        sources = ("S1", "S2", "S3")
+        for index in range(initial_orders):
+            self.create_order({"source": sources[index % len(sources)]})
         self.charging = DashboardCharging(self, charging_profile) if charging_profile is not None else None
 
     @lru_cache(maxsize=128)
@@ -75,10 +91,68 @@ class DashboardModel:
         self._event("order_created", f"{order} 자재 공급 요청", None)
         return order
 
-    def _event(self, kind: str, message: str, robot: str | None) -> None:
+    def _event(self, kind: str, message: str, robot: str | None, **details: Any) -> None:
         self._event_seq += 1
         self._events.append({"id": f"event-{self._event_seq}",
-                             "sim_time_s": self.sim_time, "type": kind, "message": message, "robot_id": robot})
+                             "sim_time_s": self.sim_time, "type": kind, "message": message,
+                             "robot_id": robot, **details})
+
+    def set_equipment_availability(self, parameters: Mapping[str, Any]) -> dict[str, Any]:
+        """Apply a CELL1 operator override through the replayable ledger."""
+        unexpected = set(parameters) - {"available", "reason"}
+        if unexpected:
+            raise ValueError(f"지원하지 않는 설비 매개변수입니다: {', '.join(sorted(unexpected))}")
+        available = parameters.get("available")
+        if type(available) is not bool:
+            raise ValueError("설비 가동 여부는 available 불리언으로 지정하세요")
+        reason = parameters.get("reason")
+        if reason is not None and (not isinstance(reason, str) or not reason.strip() or len(reason.strip()) > 160):
+            raise ValueError("설비 중단 사유는 1~160자 문자열 또는 null이어야 합니다")
+        reason = reason.strip() if isinstance(reason, str) else None
+
+        self._equipment_seq += 1
+        result = self.ledger.set_equipment_availability(
+            EventId(self.ledger.run_id, "web-equipment", self._equipment_seq),
+            sim_time=self.sim_time,
+            available=available,
+            reason=reason,
+        )
+        equipment = self._equipment_snapshot()
+        event_type = "equipment_recovered" if available else "equipment_down"
+        message = "CELL1 설비 복구" if available else f"CELL1 설비 중단{f': {reason}' if reason else ''}"
+        self._event(
+            event_type,
+            message,
+            None,
+            station_id="CELL1",
+            available=available,
+            reason=reason,
+            active_order_id=equipment["active_order_id"],
+            remaining_service_s=equipment["remaining_service_s"],
+            no_op=result.duplicate,
+        )
+        return dict(result.event)
+
+    def _equipment_snapshot(self) -> dict[str, Any]:
+        ledger = self.ledger.snapshot()
+        equipment = ledger["equipment"]
+        processing = next((order for order in ledger["orders"].values()
+                           if order["state"] == OrderState.PROCESSING.value), None)
+        remaining = equipment["remaining_service"]
+        if remaining is None and processing is not None and processing["service_end"] is not None:
+            remaining = max(0.0, processing["service_end"] - self.sim_time)
+        return {
+            "station_id": equipment["station_id"],
+            "label": "반도체 후공정 검사 CELL1",
+            "available": equipment["available"],
+            "status": equipment["status"],
+            "reason": equipment["reason"],
+            "active_order_id": processing["order_id"] if processing is not None else None,
+            "remaining_service_s": remaining,
+            "input_waiting_orders": ledger["counts"]["ci_input"],
+            "output_waiting_orders": ledger["counts"]["co_output"],
+            "wip_orders": ledger["counts"]["wip"],
+        }
 
     def _apply(self, task: Any, robot_id: str, transition: Transition) -> None:
         self._seq += 1
@@ -163,6 +237,56 @@ class DashboardModel:
             for _ in range(steps):
                 self._advance_step(dt / steps)
 
+    def _move_trip(self, robot_id: str, trip: dict[str, Any], dt: float) -> None:
+        """Advance one authored route leg; specialized operating models may override it."""
+        pose = self._poses[robot_id]
+        distance_left = 0.65 * dt  # Authored CPU display speed, not a measured AMR response.
+        if self.charging is not None:
+            move_path(
+                pose,
+                trip["points"],
+                dt,
+                self.charging.profile["speed_m_s"],
+                self.charging.profile["angular_speed_rad_s"],
+            )
+            distance_left = 0
+        while trip["points"] and distance_left > 0:
+            x, y = trip["points"][0]
+            dx, dy = x - pose["x_m"], y - pose["y_m"]
+            distance = math.hypot(dx, dy)
+            if distance > 0:
+                pose["yaw_rad"] = math.atan2(dy, dx)
+            if distance <= distance_left:
+                pose.update(x_m=x, y_m=y)
+                distance_left -= distance
+                trip["points"].popleft()
+            else:
+                pose["x_m"] += dx / distance * distance_left
+                pose["y_m"] += dy / distance * distance_left
+                distance_left = 0
+
+    def _arrive_trip(self, robot_id: str, trip: dict[str, Any]) -> None:
+        """Commit one completed route leg; specialized models may handle extra trip kinds."""
+        if trip["kind"] == "empty_return":
+            self._finish_return_leg(robot_id, trip)
+            return
+        task = trip["task"]
+        if trip["phase"] == "pickup":
+            if task.stage is Stage.INBOUND:
+                self.inventory.pickup(f"pickup:{task.order_id}", task.order_id, robot_id)
+            self._apply(task, robot_id, Transition.PICKUP)
+            self._trip(robot_id, task, task.pickup_station, task.drop_station, "drop")
+            self._event("pickup", f"{robot_id} {task.payload_id} 적재 확인", robot_id)
+            return
+        self._apply(task, robot_id, Transition.DROP)
+        if task.stage is Stage.INBOUND:
+            self.inventory.deliver(f"deliver:{task.order_id}", task.order_id, "CI")
+        else:
+            self._apply(task, robot_id, Transition.ORDER_COMPLETE)
+        del self._trips[robot_id]
+        self._locations[robot_id] = task.drop_station
+        self._event("drop", f"{robot_id} {task.drop_station} 인계 확인", robot_id)
+
     def _advance_step(self, dt: float) -> None:
         before = {r: dict(p) for r, p in self._poses.items()} if self.charging is not None else {}
         self.sim_time += dt
@@ -182,46 +306,10 @@ class DashboardModel:
         for robot_id, trip in list(self._trips.items()):
             if self.charging is not None and robot_id in self.charging.faults:
                 continue
-            pose = self._poses[robot_id]
-            distance_left = 0.65 * dt  # Authored CPU display speed, not a measured AMR response.
-            if self.charging is not None:
-                move_path(pose, trip["points"], dt, self.charging.profile["speed_m_s"], self.charging.profile["angular_speed_rad_s"])
-                distance_left = 0
-            while trip["points"] and distance_left > 0:
-                x, y = trip["points"][0]
-                dx, dy = x - pose["x_m"], y - pose["y_m"]
-                distance = math.hypot(dx, dy)
-                if distance > 0:
-                    pose["yaw_rad"] = math.atan2(dy, dx)
-                if distance <= distance_left:
-                    pose.update(x_m=x, y_m=y)
-                    distance_left -= distance
-                    trip["points"].popleft()
-                else:
-                    pose["x_m"] += dx / distance * distance_left
-                    pose["y_m"] += dy / distance * distance_left
-                    distance_left = 0
+            self._move_trip(robot_id, trip, dt)
             if trip["points"]:
                 continue
-            if trip["kind"] == "empty_return":
-                self._finish_return_leg(robot_id, trip)
-                continue
-            task = trip["task"]
-            if trip["phase"] == "pickup":
-                if task.stage is Stage.INBOUND:
-                    self.inventory.pickup(f"pickup:{task.order_id}", task.order_id, robot_id)
-                self._apply(task, robot_id, Transition.PICKUP)
-                self._trip(robot_id, task, task.pickup_station, task.drop_station, "drop")
-                self._event("pickup", f"{robot_id} {task.payload_id} 적재 확인", robot_id)
-            else:
-                self._apply(task, robot_id, Transition.DROP)
-                if task.stage is Stage.INBOUND:
-                    self.inventory.deliver(f"deliver:{task.order_id}", task.order_id, "CI")
-                else:
-                    self._apply(task, robot_id, Transition.ORDER_COMPLETE)
-                del self._trips[robot_id]
-                self._locations[robot_id] = task.drop_station
-                self._event("drop", f"{robot_id} {task.drop_station} 인계 확인", robot_id)
+            self._arrive_trip(robot_id, trip)
         if self.charging is not None:
             self.charging.move(self, dt)
             self.charging.record(self, dt, before)
@@ -232,12 +320,16 @@ class DashboardModel:
 
     def snapshot(self) -> dict[str, Any]:
         stock = cast(dict[str, Any], self.inventory.snapshot())
+        equipment = self._equipment_snapshot()
         robots = []
         for robot_id, robot in self.ledger.robots.items():
             trip = self._trips.get(robot_id)
             task = trip["task"] if trip else None
             payload_id = stock["robot_loads"].get(robot_id, robot.payload_id)
-            if trip and trip["kind"] == "empty_return":
+            if trip and trip["kind"] == "parking":
+                task_id, task_type, task_label = f"park:{robot_id}", "parking", "주차 이동"
+                payload_id = None
+            elif trip and trip["kind"] == "empty_return":
                 return_task = trip["task"]
                 task_id, task_type, task_label = return_task["id"], "empty_return", "빈 토트 반납"
                 payload_id = return_task["payload_id"] if trip["phase"] == "drop" else None
@@ -255,6 +347,16 @@ class DashboardModel:
                            "waiting_reason": "작업 일시정지" if self.paused and trip else None,
                            "route": [{"x_m": x, "y_m": y} for x, y in trip["points"]] if trip else [],
                            "observed_sim_time_s": self.sim_time})
+            if trip is None and not equipment["available"] and equipment["wip_orders"]:
+                if equipment["active_order_id"] is not None:
+                    robots[-1]["waiting_reason"] = (
+                        f"CELL1 중단 · {equipment['active_order_id']} 공정 잔여 "
+                        f"{equipment['remaining_service_s']:.1f}초"
+                    )
+                else:
+                    robots[-1]["waiting_reason"] = (
+                        f"CELL1 중단 · 입력 공정 대기 {equipment['input_waiting_orders']}건"
+                    )
             if self.charging is not None:
                 row = robots[-1]
                 row.update(self.charging.robot_snapshot(robot_id))
@@ -282,10 +384,12 @@ class DashboardModel:
                           "state": t["phase"], "robot_id": r, "source": self._locations[r], "destination": t["goal"],
                           "payload_id": None, "progress": None} for r, t in self.charging.aux.items())
         result = {"schema_version": 1, "run_id": self.ledger.run_id, "revision": self.revision,
-                "mode": "local_model", "sim_time_s": self.sim_time,
+                "mode": "local_model", "execution_mode": "preview", "sim_time_s": self.sim_time,
                 "observed_at": datetime.now(timezone.utc).isoformat(), "connection": "connected",
-                "paused": self.paused, "capabilities": ["pause", "resume", "create_order"],
+                "paused": self.paused,
+                "capabilities": ["pause", "resume", "create_order", "set_equipment_availability"],
                 "robots": robots, "tasks": tasks, "inventory": stock,
+                "equipment": equipment,
                 "kpis": {"active_robots": len(self._trips), "total_robots": len(robots),
                          "completed_orders": sum(o.state is OrderState.COMPLETE for o in self.ledger.orders.values()),
                          "pending_tasks": sum(t["state"] != "complete" for t in tasks),

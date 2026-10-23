@@ -51,6 +51,10 @@ def validate_snapshot(value: Any) -> dict[str, Any]:
         raise ValueError("snapshot revision is invalid")
     if value.get("mode") not in ("local_model", "live", "replay"):
         raise ValueError("snapshot source mode is invalid")
+    if "execution_mode" in value and value["execution_mode"] not in ("preview", "operations", "physics"):
+        raise ValueError("snapshot execution mode is invalid")
+    if "dispatch_policy" in value and value["dispatch_policy"] not in ("fifo", "eta"):
+        raise ValueError("snapshot dispatch policy is invalid")
     if value.get("connection") not in ("connected", "disconnected", "stale"):
         raise ValueError("snapshot connection state is invalid")
     stamp = datetime.fromisoformat(value["observed_at"])
@@ -133,6 +137,29 @@ def validate_snapshot(value: Any) -> dict[str, Any]:
                 raise ValueError("robot charging dock does not match slot ownership")
     elif any(robot.get("charging_dock") is not None for robot in value["robots"]):
         raise ValueError("robot charging ownership requires a dock projection")
+    if "equipment" in value:
+        equipment = value["equipment"]
+        if not isinstance(equipment, dict):
+            raise ValueError("equipment projection must be an object")
+        required = {"station_id", "label", "available", "status", "reason", "active_order_id",
+                    "remaining_service_s", "input_waiting_orders", "output_waiting_orders", "wip_orders"}
+        if not required.issubset(equipment):
+            raise ValueError("equipment fields are missing")
+        if (any(not isinstance(equipment[key], str) or not equipment[key]
+                for key in ("station_id", "label", "status"))
+                or type(equipment["available"]) is not bool):
+            raise ValueError("equipment identity or availability is invalid")
+        if equipment["status"] not in ("available", "down") or (
+                equipment["available"] != (equipment["status"] == "available")):
+            raise ValueError("equipment status differs from availability")
+        if any(equipment[key] is not None and not isinstance(equipment[key], str)
+               for key in ("reason", "active_order_id")):
+            raise ValueError("equipment reason or active order is invalid")
+        if not _finite(equipment["remaining_service_s"], nullable=True, nonnegative=True):
+            raise ValueError("equipment remaining service is invalid")
+        if any(type(equipment[key]) is not int or equipment[key] < 0
+               for key in ("input_waiting_orders", "output_waiting_orders", "wip_orders")):
+            raise ValueError("equipment queue counts are invalid")
     for key in ("tasks", "events", "commands", "capabilities"):
         if not isinstance(value.get(key), list):
             raise ValueError(f"snapshot {key} must be a list")
@@ -165,7 +192,7 @@ def validate_snapshot(value: Any) -> dict[str, Any]:
     if any(not isinstance(capability, str) for capability in value["capabilities"]):
         raise ValueError("capabilities must be strings")
     for receipt in value["commands"]:
-        if not isinstance(receipt, dict) or not isinstance(receipt.get("command_id"), str) or receipt.get("status") not in ("pending", "applied", "rejected"):
+        if not isinstance(receipt, dict) or not isinstance(receipt.get("command_id"), str) or receipt.get("status") not in ("pending", "queued", "applied", "rejected"):
             raise ValueError("command receipt is invalid")
         if type(receipt.get("revision")) is not int or receipt["revision"] < 0 or "reason" not in receipt or receipt["reason"] is not None and not isinstance(receipt["reason"], str):
             raise ValueError("command receipt revision or reason is invalid")
@@ -261,7 +288,12 @@ class DashboardService:
     def __init__(self, config: Path, *, source: Path | None = None, outbox: Path | None = None,
                  charging_profile: dict[str, Any] | None = None, charging_source: Path | None = None,
                  events_source: Path | None = None, live_anchor_controls: bool = False,
-                 scenario_dir: Path | None = None) -> None:
+                 scenario_dir: Path | None = None, execution_mode: str = "preview",
+                 dispatch_policy: str = "fifo") -> None:
+        if execution_mode not in ("preview", "operations"):
+            raise ValueError("local execution mode must be preview or operations")
+        if execution_mode == "operations" and (source is not None or charging_profile is not None):
+            raise ValueError("operations mode excludes source and preview charging profile")
         if live_anchor_controls and (source is None or outbox is None or charging_profile is not None):
             raise ValueError("live anchor controls require explicit source/outbox and no CPU profile")
         self.live_anchor_controls = live_anchor_controls
@@ -278,7 +310,13 @@ class DashboardService:
         self.charging_source = charging_source
         self.events_source = DashboardEventSource(events_source) if events_source is not None else None
         self.scenarios = ScenarioReplayStore(scenario_dir, validate_snapshot, self.scene) if scenario_dir is not None else None
-        self.model = DashboardModel(config, charging_profile=charging_profile) if source is None else None
+        self.model = None
+        if execution_mode == "operations":
+            from .operations_model import OperationsModel
+            self.model = OperationsModel(config, policy=dispatch_policy)
+        elif source is None:
+            self.model = DashboardModel(config, charging_profile=charging_profile)
+        self._local_closure_requests: dict[str, bool] = {}
         self._last: dict[str, Any] | None = None
         self._receipts: dict[str, dict[str, Any]] = {}
         self._fingerprints: dict[str, str] = {}
@@ -288,6 +326,10 @@ class DashboardService:
         self.producer_sources = {"factory_ops/" + name: hashlib.sha256((module_root / name).read_bytes()).hexdigest()
             for name in ("dashboard.py", "dashboard_model.py", "mock_mes.py", "dashboard_charging.py",
                          "operations/ledger.py", "operations/inventory.py", "operations/model.py", "compat.py")}
+        if execution_mode == "operations":
+            for name in ("operations_model.py", "operations_motion.py", "drive_profile.py", "motion.py",
+                         "fleet_routing.py", "route_reservation.py"):
+                self.producer_sources[f"factory_ops/{name}"] = hashlib.sha256((module_root / name).read_bytes()).hexdigest()
         if self.events_source is not None:
             self.producer_sources["factory_ops/dashboard_events.py"] = hashlib.sha256(
                 (module_root / "dashboard_events.py").read_bytes()).hexdigest()
@@ -313,6 +355,15 @@ class DashboardService:
         with self.lock:
             if self.model is not None:
                 result = self.model.snapshot()
+                for command_id, target in self._local_closure_requests.items():
+                    receipt = self._receipts.get(command_id)
+                    if receipt is None or receipt["status"] != "queued":
+                        continue
+                    traffic = result.get("traffic", {})
+                    if traffic.get("requested_closed") != target:
+                        receipt.update(status="rejected", reason="다음 통로 변경 요청으로 대체됐습니다")
+                    elif traffic.get("closed") == target and not traffic.get("closure_pending"):
+                        receipt.update(status="applied", reason=None, revision=result["revision"])
             else:
                 try:
                     assert self.source is not None
@@ -421,10 +472,18 @@ class DashboardService:
                     action = value["action"]
                     if action == "create_order":
                         self.model.create_order(value.get("parameters", {}))
+                    elif action == "set_equipment_availability":
+                        self.model.set_equipment_availability(value.get("parameters", {}))
+                    elif action == "set_aisle_closed":
+                        effect = self.model.set_aisle_closed(value.get("parameters", {}))
+                        self._local_closure_requests[key] = effect["requested_closed"]
+                        receipt["effect"] = effect
                     else:
                         self.model.paused = action == "pause"
                     self.model.revision += 1
                     receipt.update(status="applied", revision=self.model.revision)
+                    if action == "set_aisle_closed" and effect["status"] == "draining":
+                        receipt.update(status="queued", reason="승인된 운송과 통로 이탈 후 적용합니다")
                 except ValueError as error:
                     receipt["reason"] = str(error)
             else:
@@ -503,6 +562,8 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--config", type=Path, default=Path("configs/factory-v4"))
     parser.add_argument("--port", type=int, default=8765)
+    parser.add_argument("--execution-mode", choices=("preview", "operations"), default="preview")
+    parser.add_argument("--dispatch-policy", choices=("fifo", "eta"), default="fifo")
     parser.add_argument("--source", type=Path, help="atomically published live/replay JSON; never rosbag SQLite")
     parser.add_argument("--charging-source", type=Path,
                         help="optional same-run ROS virtual charger JSON; controls require explicit opt-in")
@@ -515,6 +576,8 @@ def main() -> None:
     parser.add_argument("--web-charging-profile", type=Path,
                         help="optional authored CPU energy/geometric docking model; never applied to live/replay")
     args = parser.parse_args()
+    if args.execution_mode == "operations" and (args.source is not None or args.web_charging_profile is not None):
+        parser.error("--execution-mode operations excludes source and preview charging profile")
     if args.source is not None and args.web_charging_profile is not None:
         parser.error("--web-charging-profile is available only in the local CPU model")
     if args.charging_source is not None and (args.source is None or args.commands_dir is not None and not args.live_anchor_controls
@@ -528,7 +591,8 @@ def main() -> None:
     service = DashboardService(args.config, source=args.source, outbox=args.commands_dir,
                                charging_profile=charging_profile, charging_source=args.charging_source,
                                events_source=args.events_source, live_anchor_controls=args.live_anchor_controls,
-                               scenario_dir=args.scenario_dir)
+                               scenario_dir=args.scenario_dir, execution_mode=args.execution_mode,
+                               dispatch_policy=args.dispatch_policy)
     server = make_server(service, args.port)
     stopping = threading.Event()
 

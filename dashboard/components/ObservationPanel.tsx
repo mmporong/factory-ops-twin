@@ -1,4 +1,5 @@
-import { modeNames, sceneSize, type Scene, type Snapshot } from "../lib/types";
+import { sceneSize, type Scene, type Snapshot } from "../lib/types";
+import { connectionSource, dispatchPolicy, executionSource, shortRunId } from "../lib/equipment-view";
 
 type Props = {
   snapshot: Snapshot | null;
@@ -13,23 +14,37 @@ export default function ObservationPanel({
   snapshot, scene, stale, age, observationAge, latency,
 }: Props) {
   const number = new Intl.NumberFormat("ko-KR", { maximumFractionDigits: 1 });
-  const readOnly = snapshot && !snapshot.capabilities.some((action) => ["pause", "resume", "create_order"].includes(action));
+  const readOnly = snapshot && !snapshot.capabilities.some((action) =>
+    ["pause", "resume", "create_order", "set_equipment_availability", "set_aisle_closed"].includes(action));
   const livePhase = snapshot?.mode === "live" && snapshot.live_control?.contract === "ros-next-anchor-v1" ? snapshot.live_control.phase : null;
   const sensorRows = snapshot?.robots.filter((robot) => robot.scan_counts && Object.keys(robot.scan_counts).length) ?? [];
-  const scope = snapshot?.mode === "local_model"
-    ? snapshot.charging
-      ? "CPU 운영·가상 배터리·기하 도킹 모델 · 물리 주행·접촉 센서 검증 미연결"
-      : "CPU 운영 원장과 경로 보간 · 물리 주행·센서 검증 미연결"
-    : snapshot?.mode === "replay"
-      ? "저장된 관측 재생 · 현재 실행 상태와 구분해 확인하세요."
-      : snapshot
-        ? "실행 원천의 관측 수신 · 센서·종료 검증은 별도 증거가 필요합니다."
-        : "운영 원천에 연결하고 있습니다.";
+  const scope = snapshot?.mode === "replay"
+    ? "저장된 관측 재생 · 현재 실행 상태와 구분해 확인하세요."
+    : snapshot?.execution_mode === "operations"
+      ? "기구학 기반 AMR 운영·예약·배차 모델 · ROS·접촉 물리·실공장 보정 미연결"
+      : snapshot?.execution_mode === "preview"
+        ? snapshot.charging
+          ? "CPU 경로 미리보기·가상 배터리·기하 도킹 모델 · 물리 주행·접촉 센서 검증 미연결"
+          : "CPU 운영 원장과 경로 미리보기 · 물리 주행·센서 검증 미연결"
+        : snapshot?.execution_mode === "physics"
+          ? "물리 시뮬레이션 관측 · 실물 동등성과 실공장 보정은 별도 증거가 필요합니다."
+          : snapshot
+            ? "실행 원천의 관측 수신 · 센서·종료 검증은 별도 증거가 필요합니다."
+            : "운영 원천에 연결하고 있습니다.";
+  const eyebrow = snapshot?.mode === "replay"
+    ? "저장 실행 기록"
+    : snapshot?.execution_mode === "operations"
+      ? "AMR 운영 모델"
+      : snapshot?.execution_mode === "preview"
+        ? "CPU 경로 미리보기"
+        : snapshot?.execution_mode === "physics"
+          ? "ISAAC SIM · ROS 2"
+          : "실행 출처 확인 중";
   return (
     <section className="observation-panel" aria-labelledby="observation-title">
       <div className="observation-heading">
         <div>
-          <span className="eyebrow">ISAAC SIM · ROS 2</span>
+          <span className="eyebrow">{eyebrow}</span>
           <h2 id="observation-title">시뮬레이션 관측</h2>
         </div>
         <span className={`observation-state ${stale ? "is-stale" : ""}`}>
@@ -38,12 +53,16 @@ export default function ObservationPanel({
       </div>
       <dl className="observation-metrics">
         <div>
-          <dt>데이터 원천</dt>
-          <dd>{snapshot ? modeNames[snapshot.mode] : "미연결"}</dd>
+          <dt>실행 출처</dt>
+          <dd>{snapshot ? executionSource(snapshot) : "미연결"}{snapshot && <small>{connectionSource(snapshot)} · {dispatchPolicy(snapshot)}</small>}</dd>
         </div>
         <div>
           <dt>시뮬레이션 시계</dt>
           <dd>{snapshot ? <>{number.format(snapshot.sim_time_s)} <span>s</span></> : "미관측"}</dd>
+        </div>
+        <div>
+          <dt>실행 ID</dt>
+          <dd title={snapshot?.run_id}>{snapshot ? shortRunId(snapshot.run_id) : "미연결"}</dd>
         </div>
         <div>
           <dt>{snapshot?.mode === "replay" ? "저장된 관측 시각" : "관측 경과"}</dt>

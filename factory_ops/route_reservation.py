@@ -82,6 +82,7 @@ class RouteReservationManager:
         *,
         pose_ttl_s: float = 0.5,
         cycle_persistence_s: float = 5.0,
+        record_pose_events: bool = True,
     ) -> None:
         robots = tuple(robot_ids)
         if not run_id:
@@ -96,6 +97,7 @@ class RouteReservationManager:
         self.robot_ids = tuple(sorted(robots))
         self.pose_ttl_s = ttl
         self.cycle_persistence_s = persistence
+        self.record_pose_events = record_pose_events
         self._now = 0.0
         self._generation = 0
         self._pending_sequence = 0
@@ -143,7 +145,8 @@ class RouteReservationManager:
         tiles = self._tiles(occupied_tiles, "occupied_tiles")
         self._commit_time(now)
         self._observations[robot_id] = _Observation(tiles, stamp, now)
-        self._event(now, "footprint_observed", robot_id, tile_hash=self._tile_hash(tiles))
+        if self.record_pose_events:
+            self._event(now, "footprint_observed", robot_id, tile_hash=self._tile_hash(tiles))
 
     def reserve(
         self,

@@ -1,0 +1,157 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="1000" viewBox="0 0 1400 1000">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<style>text{font-family:Arial,sans-serif;fill:#172033}.title{font-size:26px;font-weight:700}.label{font-size:15px;font-weight:700}.small{font-size:12px}.warn{fill:#b42318}</style>
+<text x="40" y="42" class="title">AMR Operations Comparison</text>
+<text x="40" y="66" class="small">Wall-clock elapsed time is context only and is not a policy performance claim.</text>
+<text x="40" y="84" class="small">Authored assumptions: 3600.0 s horizon; 12 lots; 30.0 s release interval; 240.0 s due offset.</text>
+<text x="40" y="102" class="small">Mean process WIP covers equipment input, processing and output buffers; it excludes the full pre-input queue and shipping backlog.</text>
+<text x="40" y="120" class="small">Traffic wait is summed across robots and may exceed the horizon. Incomplete means unfinished at horizon, not a deadlock classification.</text>
+<rect x="40" y="140" width="660" height="188" rx="10" fill="#f8fafc" stroke="#dce3ec"/>
+<text x="56" y="164" class="label">Completed cycles</text>
+<line x1="190.00" y1="176" x2="190.00" y2="314" stroke="#94a3b8"/>
+<text x="52" y="194" class="small">N-FIFO</text>
+<rect x="190.00" y="183" width="430.00" height="14" rx="3" fill="#2563eb" opacity="0.35"/>
+<text x="632" y="194" class="small">12</text>
+<text x="52" y="216" class="small">N-ETA</text>
+<rect x="190.00" y="205" width="430.00" height="14" rx="3" fill="#f59e0b" opacity="0.35"/>
+<text x="632" y="216" class="small">12</text>
+<text x="52" y="238" class="small">T-FIFO</text>
+<rect x="190.00" y="227" width="430.00" height="14" rx="3" fill="#2563eb" opacity="0.35"/>
+<text x="632" y="238" class="small">12</text>
+<text x="52" y="260" class="small">T-ETA</text>
+<rect x="190.00" y="249" width="430.00" height="14" rx="3" fill="#f59e0b" opacity="0.9"/>
+<text x="632" y="260" class="small">12</text>
+<text x="52" y="282" class="small">A-FIFO</text>
+<rect x="190.00" y="271" width="394.17" height="14" rx="3" fill="#2563eb" opacity="0.35"/>
+<text x="632" y="282" class="small">11</text>
+<text x="52" y="304" class="small">A-ETA</text>
+<rect x="190.00" y="293" width="143.33" height="14" rx="3" fill="#f59e0b" opacity="0.35"/>
+<text x="632" y="304" class="small">4</text>
+<rect x="730" y="140" width="660" height="188" rx="10" fill="#f8fafc" stroke="#dce3ec"/>
+<text x="746" y="164" class="label">Empty returns</text>
+<line x1="880.00" y1="176" x2="880.00" y2="314" stroke="#94a3b8"/>
+<text x="742" y="194" class="small">N-FIFO</text>
+<rect x="880.00" y="183" width="143.33" height="14" rx="3" fill="#2563eb" opacity="0.35"/>
+<text x="1322" y="194" class="small">4</text>
+<text x="742" y="216" class="small">N-ETA</text>
+<rect x="880.00" y="205" width="430.00" height="14" rx="3" fill="#f59e0b" opacity="0.35"/>
+<text x="1322" y="216" class="small">12</text>
+<text x="742" y="238" class="small">T-FIFO</text>
+<rect x="880.00" y="227" width="143.33" height="14" rx="3" fill="#2563eb" opacity="0.35"/>
+<text x="1322" y="238" class="small">4</text>
+<text x="742" y="260" class="small">T-ETA</text>
+<rect x="880.00" y="249" width="430.00" height="14" rx="3" fill="#f59e0b" opacity="0.9"/>
+<text x="1322" y="260" class="small">12</text>
+<text x="742" y="282" class="small">A-FIFO</text>
+<rect x="880.00" y="271" width="71.67" height="14" rx="3" fill="#2563eb" opacity="0.35"/>
+<text x="1322" y="282" class="small">2</text>
+<text x="742" y="304" class="small">A-ETA</text>
+<rect x="880.00" y="293" width="107.50" height="14" rx="3" fill="#f59e0b" opacity="0.35"/>
+<text x="1322" y="304" class="small">3</text>
+<rect x="40" y="345" width="660" height="188" rx="10" fill="#f8fafc" stroke="#dce3ec"/>
+<text x="56" y="369" class="label">Mean process WIP</text>
+<line x1="190.00" y1="381" x2="190.00" y2="519" stroke="#94a3b8"/>
+<text x="52" y="399" class="small">N-FIFO</text>
+<rect x="190.00" y="388" width="372.48" height="14" rx="3" fill="#2563eb" opacity="0.35"/>
+<text x="632" y="399" class="small">0.38</text>
+<text x="52" y="421" class="small">N-ETA</text>
+<rect x="190.00" y="410" width="421.15" height="14" rx="3" fill="#f59e0b" opacity="0.35"/>
+<text x="632" y="421" class="small">0.43</text>
+<text x="52" y="443" class="small">T-FIFO</text>
+<rect x="190.00" y="432" width="410.74" height="14" rx="3" fill="#2563eb" opacity="0.35"/>
+<text x="632" y="443" class="small">0.42</text>
+<text x="52" y="465" class="small">T-ETA</text>
+<rect x="190.00" y="454" width="430.00" height="14" rx="3" fill="#f59e0b" opacity="0.9"/>
+<text x="632" y="465" class="small">0.44</text>
+<text x="52" y="487" class="small">A-FIFO</text>
+<rect x="190.00" y="476" width="380.79" height="14" rx="3" fill="#2563eb" opacity="0.35"/>
+<text x="632" y="487" class="small">0.39</text>
+<text x="52" y="509" class="small">A-ETA</text>
+<rect x="190.00" y="498" width="147.53" height="14" rx="3" fill="#f59e0b" opacity="0.35"/>
+<text x="632" y="509" class="small">0.15</text>
+<rect x="730" y="345" width="660" height="188" rx="10" fill="#f8fafc" stroke="#dce3ec"/>
+<text x="746" y="369" class="label">Traffic wait (s)</text>
+<line x1="880.00" y1="381" x2="880.00" y2="519" stroke="#94a3b8"/>
+<text x="742" y="399" class="small">N-FIFO</text>
+<rect x="880.00" y="388" width="259.98" height="14" rx="3" fill="#2563eb" opacity="0.35"/>
+<text x="1322" y="399" class="small">6939.70</text>
+<text x="742" y="421" class="small">N-ETA</text>
+<rect x="880.00" y="410" width="178.67" height="14" rx="3" fill="#f59e0b" opacity="0.35"/>
+<text x="1322" y="421" class="small">4769.40</text>
+<text x="742" y="443" class="small">T-FIFO</text>
+<rect x="880.00" y="432" width="247.36" height="14" rx="3" fill="#2563eb" opacity="0.35"/>
+<text x="1322" y="443" class="small">6603.00</text>
+<text x="742" y="465" class="small">T-ETA</text>
+<rect x="880.00" y="454" width="135.72" height="14" rx="3" fill="#f59e0b" opacity="0.9"/>
+<text x="1322" y="465" class="small">3622.80</text>
+<text x="742" y="487" class="small">A-FIFO</text>
+<rect x="880.00" y="476" width="275.39" height="14" rx="3" fill="#2563eb" opacity="0.35"/>
+<text x="1322" y="487" class="small">7351.20</text>
+<text x="742" y="509" class="small">A-ETA</text>
+<rect x="880.00" y="498" width="430.00" height="14" rx="3" fill="#f59e0b" opacity="0.35"/>
+<text x="1322" y="509" class="small">11478.20</text>
+<rect x="40" y="550" width="660" height="188" rx="10" fill="#f8fafc" stroke="#dce3ec"/>
+<text x="56" y="574" class="label">Tardiness lower bound (s)</text>
+<line x1="190.00" y1="586" x2="190.00" y2="724" stroke="#94a3b8"/>
+<text x="52" y="604" class="small">N-FIFO</text>
+<rect x="190.00" y="593" width="273.94" height="14" rx="3" fill="#2563eb" opacity="0.35"/>
+<text x="632" y="604" class="small">17355.70</text>
+<text x="52" y="626" class="small">N-ETA</text>
+<rect x="190.00" y="615" width="275.11" height="14" rx="3" fill="#f59e0b" opacity="0.35"/>
+<text x="632" y="626" class="small">17429.40</text>
+<text x="52" y="648" class="small">T-FIFO</text>
+<rect x="190.00" y="637" width="285.80" height="14" rx="3" fill="#2563eb" opacity="0.35"/>
+<text x="632" y="648" class="small">18106.80</text>
+<text x="52" y="670" class="small">T-ETA</text>
+<rect x="190.00" y="659" width="236.64" height="14" rx="3" fill="#f59e0b" opacity="0.9"/>
+<text x="632" y="670" class="small">14992.40</text>
+<text x="52" y="692" class="small">A-FIFO</text>
+<rect x="190.00" y="681" width="298.28" height="14" rx="3" fill="#2563eb" opacity="0.35"/>
+<text x="632" y="692" class="small">18897.20</text>
+<text x="52" y="714" class="small">A-ETA</text>
+<rect x="190.00" y="703" width="430.00" height="14" rx="3" fill="#f59e0b" opacity="0.35"/>
+<text x="632" y="714" class="small">27242.60</text>
+<rect x="730" y="550" width="660" height="188" rx="10" fill="#f8fafc" stroke="#dce3ec"/>
+<text x="746" y="574" class="label">Minimum clearance (m)</text>
+<line x1="880.00" y1="586" x2="880.00" y2="724" stroke="#94a3b8"/>
+<text x="742" y="604" class="small">N-FIFO</text>
+<rect x="880.00" y="593" width="430.00" height="14" rx="3" fill="#2563eb" opacity="0.35"/>
+<text x="1322" y="604" class="small">1.73</text>
+<text x="742" y="626" class="small">N-ETA</text>
+<rect x="880.00" y="615" width="430.00" height="14" rx="3" fill="#f59e0b" opacity="0.35"/>
+<text x="1322" y="626" class="small">1.73</text>
+<text x="742" y="648" class="small">T-FIFO</text>
+<rect x="880.00" y="637" width="430.00" height="14" rx="3" fill="#2563eb" opacity="0.35"/>
+<text x="1322" y="648" class="small">1.73</text>
+<text x="742" y="670" class="small">T-ETA</text>
+<rect x="880.00" y="659" width="430.00" height="14" rx="3" fill="#f59e0b" opacity="0.9"/>
+<text x="1322" y="670" class="small">1.73</text>
+<text x="742" y="692" class="small">A-FIFO</text>
+<rect x="880.00" y="681" width="430.00" height="14" rx="3" fill="#2563eb" opacity="0.35"/>
+<text x="1322" y="692" class="small">1.73</text>
+<text x="742" y="714" class="small">A-ETA</text>
+<rect x="880.00" y="703" width="430.00" height="14" rx="3" fill="#f59e0b" opacity="0.35"/>
+<text x="1322" y="714" class="small">1.73</text>
+<rect x="40" y="755" width="660" height="188" rx="10" fill="#f8fafc" stroke="#dce3ec"/>
+<text x="56" y="779" class="label">Peak moving robots</text>
+<line x1="190.00" y1="791" x2="190.00" y2="929" stroke="#94a3b8"/>
+<text x="52" y="809" class="small">N-FIFO</text>
+<rect x="190.00" y="798" width="430.00" height="14" rx="3" fill="#2563eb" opacity="0.35"/>
+<text x="632" y="809" class="small">4</text>
+<text x="52" y="831" class="small">N-ETA</text>
+<rect x="190.00" y="820" width="430.00" height="14" rx="3" fill="#f59e0b" opacity="0.35"/>
+<text x="632" y="831" class="small">4</text>
+<text x="52" y="853" class="small">T-FIFO</text>
+<rect x="190.00" y="842" width="430.00" height="14" rx="3" fill="#2563eb" opacity="0.35"/>
+<text x="632" y="853" class="small">4</text>
+<text x="52" y="875" class="small">T-ETA</text>
+<rect x="190.00" y="864" width="430.00" height="14" rx="3" fill="#f59e0b" opacity="0.9"/>
+<text x="632" y="875" class="small">4</text>
+<text x="52" y="897" class="small">A-FIFO</text>
+<rect x="190.00" y="886" width="430.00" height="14" rx="3" fill="#2563eb" opacity="0.35"/>
+<text x="632" y="897" class="small">4</text>
+<text x="52" y="919" class="small">A-ETA</text>
+<rect x="190.00" y="908" width="430.00" height="14" rx="3" fill="#f59e0b" opacity="0.35"/>
+<text x="632" y="919" class="small">4</text>
+<text x="730" y="975" class="small warn">Non-complete or unstable: normal/fifo:incomplete, normal/eta:incomplete, tester_down/fifo:incomplete, aisle_closed/fifo:incomplete, aisle_closed/eta:incomplete</text>
+</svg>

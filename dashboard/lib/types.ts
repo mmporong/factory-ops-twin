@@ -53,9 +53,21 @@ export type Stock = {
 export type Command = {
   command_id: string;
   run_id?: string;
-  status: "applied" | "pending" | "rejected";
+  status: "applied" | "pending" | "queued" | "rejected";
   reason: string | null;
   revision: number;
+};
+export type EquipmentState = {
+  station_id: string;
+  label: string;
+  available: boolean;
+  status: "available" | "down";
+  reason: string | null;
+  active_order_id: string | null;
+  remaining_service_s: number | null;
+  input_waiting_orders: number;
+  output_waiting_orders: number;
+  wip_orders: number;
 };
 export type Snapshot = {
   schema_version: number;
@@ -66,6 +78,8 @@ export type Snapshot = {
   observed_at: string;
   connection: string;
   model_scope?: string;
+  execution_mode?: "operations" | "preview" | "physics";
+  dispatch_policy?: "fifo" | "eta";
   replay?: {
     scenario_id: string;
     frame_index: number;
@@ -92,6 +106,23 @@ export type Snapshot = {
   robots: Robot[];
   tasks: Task[];
   inventory: { stock: Stock[]; totes: Tote[]; conservation: unknown[] };
+  equipment?: EquipmentState;
+  traffic?: {
+    reservation_policy: string;
+    closed: boolean;
+    requested_closed: boolean;
+    closure_pending: boolean;
+    wait_s: Record<string, number>;
+    travel_m: Record<string, number>;
+    assignments: Record<string, number>;
+    deliveries: Record<string, number>;
+    observed_min_clearance_m: number | null;
+    peak_moving_robots: number;
+    reservation_radius_m: number;
+    motion_model: string;
+    quiescent: boolean;
+    station_owners: Record<string, string>;
+  };
   kpis: {
     active_robots: number;
     total_robots: number;

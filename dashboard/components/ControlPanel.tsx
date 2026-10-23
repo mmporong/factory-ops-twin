@@ -1,7 +1,16 @@
 "use client";
 import { readable, type Command, type Scene, type Snapshot } from "../lib/types";
+import {
+  equipmentCommand,
+  equipmentStatus,
+  operatingChips,
+  remainingService,
+  totalTrafficWait,
+  trafficCommand,
+  trafficStatus,
+} from "../lib/equipment-view";
 
-const commandNames = { applied: "적용됨", pending: "승인 대기", rejected: "거절됨" };
+const commandNames = { applied: "적용됨", pending: "승인 대기", queued: "적용 대기", rejected: "거절됨" };
 
 type Props = {
   snapshot: Snapshot | null;
@@ -31,7 +40,15 @@ export function pauseLabel(snapshot: Snapshot, liveControls: boolean) {
 export default function ControlPanel(p: Props) {
   const { snapshot } = p;
   const pauseAction = snapshot?.paused ? "resume" : "pause";
-  const commandable = snapshot?.capabilities.some((a) => ["pause", "resume", "create_order"].includes(a));
+  const commandable = snapshot?.capabilities.some((a) =>
+    ["pause", "resume", "create_order", equipmentCommand, trafficCommand].includes(a));
+  const equipment = snapshot?.equipment;
+  const equipmentControl = !!snapshot?.capabilities.includes(equipmentCommand);
+  const equipmentState = equipment ? equipmentStatus(equipment) : null;
+  const chips = snapshot ? operatingChips(snapshot) : [];
+  const traffic = snapshot?.traffic;
+  const trafficState = snapshot ? trafficStatus(snapshot) : null;
+  const trafficControl = !!snapshot?.capabilities.includes(trafficCommand);
   return (
     <div className="control-panel">
       {snapshot && (snapshot.capabilities.includes(pauseAction) || (p.liveControls && snapshot.capabilities.length > 0)) && (
@@ -53,6 +70,91 @@ export default function ControlPanel(p: Props) {
       )}
       {snapshot && !commandable && (
         <p className="drawer-note strong">{p.replaying ? "기록 재생 · 차량 조작 비활성" : "읽기 전용 관측"}</p>
+      )}
+      {snapshot && equipment && equipmentState && (
+        <section className="drawer-block equipment-control" aria-labelledby="control-equipment">
+          <div className="equipment-heading">
+            <div>
+              <h3 id="control-equipment">{equipment.label}</h3>
+              <span>{equipment.station_id}</span>
+            </div>
+            <strong className={`equipment-state ${equipmentState.tone}`}>{equipmentState.label}</strong>
+          </div>
+          {chips.length > 0 && (
+            <div className="equipment-chips" aria-label="운영 모델 설정">
+              {chips.map((chip) => <span key={chip}>{chip}</span>)}
+            </div>
+          )}
+          <dl className="equipment-metrics">
+            <div><dt>진행 LOT</dt><dd>{equipment.active_order_id ?? "없음"}</dd></div>
+            <div><dt>남은 공정</dt><dd>{remainingService(equipment)}</dd></div>
+            <div><dt>WIP</dt><dd>{equipment.wip_orders}건</dd></div>
+            <div><dt>입력 / 출력 대기</dt><dd>{equipment.input_waiting_orders} / {equipment.output_waiting_orders}</dd></div>
+          </dl>
+          {!equipment.available && (
+            <p className="equipment-reason"><span>중단 사유</span>{equipment.reason ?? "사유 미입력"}</p>
+          )}
+          <div className="equipment-actions" aria-label="CELL1 설비 제어">
+            <button
+              type="button"
+              className="secondary danger"
+              disabled={!equipment.available || !p.can(equipmentCommand)}
+              onClick={() => p.send(equipmentCommand, { available: false, reason: "운영자 장애 시나리오" })}
+            >
+              CELL1 고장 발생
+            </button>
+            <button
+              type="button"
+              className="primary"
+              disabled={equipment.available || !p.can(equipmentCommand)}
+              onClick={() => p.send(equipmentCommand, { available: true })}
+            >
+              CELL1 복구
+            </button>
+          </div>
+          {!equipmentControl && (
+            <p className="drawer-note">현재 원천은 설비 조작을 지원하지 않아 상태만 표시합니다.</p>
+          )}
+        </section>
+      )}
+      {snapshot && traffic && trafficState && (
+        <section className="drawer-block equipment-control" aria-labelledby="control-traffic">
+          <div className="equipment-heading">
+            <div>
+              <h3 id="control-traffic">계획 통로 제어</h3>
+              <span>배차 경로 변경</span>
+            </div>
+            <strong className={`equipment-state ${trafficState.tone}`}>{trafficState.label}</strong>
+          </div>
+          <p className="drawer-note">{trafficState.detail}</p>
+          <dl className="equipment-metrics">
+            <div><dt>현재 통로</dt><dd>{traffic.closed ? "폐쇄" : "개방"}</dd></div>
+            <div><dt>요청 상태</dt><dd>{traffic.requested_closed ? "폐쇄" : "개방"}</dd></div>
+            <div><dt>교통 대기 누계</dt><dd>{new Intl.NumberFormat("ko-KR", { maximumFractionDigits: 1 }).format(totalTrafficWait(snapshot))}초</dd></div>
+            <div><dt>동시 이동 최대</dt><dd>{traffic.peak_moving_robots}대</dd></div>
+          </dl>
+          <div className="equipment-actions" aria-label="계획 통로 제어">
+            <button
+              type="button"
+              className="secondary danger"
+              disabled={traffic.requested_closed || !p.can(trafficCommand)}
+              onClick={() => p.send(trafficCommand, { closed: true })}
+            >
+              계획 통로 폐쇄
+            </button>
+            <button
+              type="button"
+              className="primary"
+              disabled={!traffic.requested_closed || !p.can(trafficCommand)}
+              onClick={() => p.send(trafficCommand, { closed: false })}
+            >
+              통로 재개 요청
+            </button>
+          </div>
+          {!trafficControl && (
+            <p className="drawer-note">현재 원천은 통로 계획 변경을 지원하지 않아 상태만 표시합니다.</p>
+          )}
+        </section>
       )}
       {snapshot?.capabilities.includes("create_order") && (
         <section className="drawer-block" aria-labelledby="control-order">

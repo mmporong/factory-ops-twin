@@ -1,0 +1,193 @@
+{
+  "schema_version": 1,
+  "input": {
+    "path": "C:\\Users\\LIMMM\\factory-ops-twin\\artifacts\\operations\\experiment-221\\matrix.json",
+    "sha256": "7f7e43ba3233c9b6a8bf8fb4ce5bdacb220763c67b8b777b43a9c091692ec4e3"
+  },
+  "comparison": {
+    "condition": {
+      "seed": 17,
+      "seed_role": "identity_only_no_stochastic_inputs",
+      "workload": {
+        "order_count": 12,
+        "release_interval_s": 30.0,
+        "sources": [
+          "S1",
+          "S3",
+          "S2",
+          "S1",
+          "S2",
+          "S3",
+          "S1",
+          "S3",
+          "S2",
+          "S1",
+          "S2",
+          "S3"
+        ],
+        "due_offset_s": 240.0
+      },
+      "simulation": {
+        "horizon_s": 3600.0,
+        "dt_s": 0.1
+      }
+    },
+    "condition_sha256": "a6fb01cfa6e8d8bbe69382a6cf3408fb50cf6fb4c2a5ed10ede45cad30da2d1f",
+    "sources_sha256": {
+      "config": {
+        "layout.json": "6fdfb4dab14734f2c43467cf384b72b5e4c471df1e3af7f003a3fca5f4ef6bba",
+        "g2.json": "6994172e4ae5e536a5b883767fdab05610deca930d2c665deae8b9996f6b9ad3",
+        "g3-routing.json": "e66286fb17e3845158abeb3e1684df89ae758736c7c77eade2451703bf141d5a",
+        "transport-profile.json": "976e9d93b76af7f8a3747944eee2440eb28fa6f2335a453a04a8efedeb0766a7"
+      },
+      "producer": {
+        "factory_ops/dashboard_model.py": "5772c78936988a2ad103daf409435f56a0651b6ad6776328d5a284a1c83eae6c",
+        "factory_ops/drive_profile.py": "6bba5a51caa5e4a71662339026afc67e1efe1d7370cb04c372cde48eba9d7185",
+        "factory_ops/fleet_routing.py": "2bf3d069f0361c6983ba11e7334d0cb187e23c12334d6539f39e13cbfffb9e94",
+        "factory_ops/motion.py": "a8d670ce9e0309093c47a6a63ff70c78182021f6b50496933e29985466ed6cd1",
+        "factory_ops/operations_experiment.py": "3059b2f813088959f30c8aa3eceabbbba1c555b5d45cee1613fa5ad06ef6ef39",
+        "factory_ops/operations_model.py": "6432bc96b7652ec0189607b5d7f3ef21388f761d26ecb5b976fa7116b5ca8137",
+        "factory_ops/operations_motion.py": "2a5ab1bf151d7acec7c66322b2a052c8e142006779b356a866ddd115aa1b53d2",
+        "factory_ops/route_reservation.py": "08a183ea04d913b2f64fca165d28921c112455661a5afac85938a76fe672c027",
+        "factory_ops/operations/inventory.py": "1114b23fcdb3520de0b12f2e246680e5a0fbdcb945ac2ed9b3de0a2f9a5972f4",
+        "factory_ops/operations/ledger.py": "532ee11e9cf0431b4ce95204ac832913df0bc6e875901ca13afa3b73a8f604e6",
+        "factory_ops/operations/model.py": "17b90c1436b78f436d88b325adb27d1531440b63ef0cf169aece1d6070bfb38e"
+      }
+    },
+    "case_count": 6,
+    "wall_clock_policy": "context_only_external_load_sensitive_no_improvement_claim",
+    "metric_definitions": {
+      "mean_wip": "time-average equipment process WIP across input, processing and output buffers; excludes the full unreleased/pre-input order queue and shipping backlog",
+      "traffic_wait_s": "sum of per-robot traffic waiting time; it may exceed the simulation horizon",
+      "incomplete": "unfinished at the authored horizon; this report does not classify it as a deadlock"
+    }
+  },
+  "cases": [
+    {
+      "scenario": "normal",
+      "dispatch_policy": "fifo",
+      "run_id": "operations-normal-fifo-c9760353ca0ab704-723b492b5fa5",
+      "status": "incomplete",
+      "error": null,
+      "source_stable_during_run": true,
+      "scope": "authored deterministic CPU operations comparison; no physics or calibrated production claim",
+      "metrics": {
+        "completed_cycles": 12,
+        "empty_returns_completed": 4,
+        "mean_wip": 0.382444,
+        "traffic_wait_s": 6939.7,
+        "total_tardiness_lower_bound_s": 17355.7,
+        "observed_min_clearance_m": 1.7257818169114452,
+        "peak_moving_robots": 4
+      },
+      "business_finished": false,
+      "fleet_quiescent": false,
+      "execution_elapsed_wall_s_context_only": 32.948786
+    },
+    {
+      "scenario": "normal",
+      "dispatch_policy": "eta",
+      "run_id": "operations-normal-eta-ca529073a0d8e850-79ed3ea87c4f",
+      "status": "incomplete",
+      "error": null,
+      "source_stable_during_run": true,
+      "scope": "authored deterministic CPU operations comparison; no physics or calibrated production claim",
+      "metrics": {
+        "completed_cycles": 12,
+        "empty_returns_completed": 12,
+        "mean_wip": 0.432417,
+        "traffic_wait_s": 4769.4,
+        "total_tardiness_lower_bound_s": 17429.4,
+        "observed_min_clearance_m": 1.7257818169114452,
+        "peak_moving_robots": 4
+      },
+      "business_finished": true,
+      "fleet_quiescent": false,
+      "execution_elapsed_wall_s_context_only": 39.61936
+    },
+    {
+      "scenario": "tester_down",
+      "dispatch_policy": "fifo",
+      "run_id": "operations-tester_down-fifo-a5443fd2166f17f7-3474c64f610c",
+      "status": "incomplete",
+      "error": null,
+      "source_stable_during_run": true,
+      "scope": "authored deterministic CPU operations comparison; no physics or calibrated production claim",
+      "metrics": {
+        "completed_cycles": 12,
+        "empty_returns_completed": 4,
+        "mean_wip": 0.421722,
+        "traffic_wait_s": 6603.0,
+        "total_tardiness_lower_bound_s": 18106.8,
+        "observed_min_clearance_m": 1.7257818169114452,
+        "peak_moving_robots": 4
+      },
+      "business_finished": false,
+      "fleet_quiescent": false,
+      "execution_elapsed_wall_s_context_only": 31.91567
+    },
+    {
+      "scenario": "tester_down",
+      "dispatch_policy": "eta",
+      "run_id": "operations-tester_down-eta-5250a101d44fe3a5-c7193d0cc3de",
+      "status": "complete",
+      "error": null,
+      "source_stable_during_run": true,
+      "scope": "authored deterministic CPU operations comparison; no physics or calibrated production claim",
+      "metrics": {
+        "completed_cycles": 12,
+        "empty_returns_completed": 12,
+        "mean_wip": 0.4415,
+        "traffic_wait_s": 3622.8,
+        "total_tardiness_lower_bound_s": 14992.4,
+        "observed_min_clearance_m": 1.7257818169114452,
+        "peak_moving_robots": 4
+      },
+      "business_finished": true,
+      "fleet_quiescent": true,
+      "execution_elapsed_wall_s_context_only": 37.721665
+    },
+    {
+      "scenario": "aisle_closed",
+      "dispatch_policy": "fifo",
+      "run_id": "operations-aisle_closed-fifo-c4d9fd2a968604cd-44d01bd80e02",
+      "status": "incomplete",
+      "error": null,
+      "source_stable_during_run": true,
+      "scope": "authored deterministic CPU operations comparison; no physics or calibrated production claim",
+      "metrics": {
+        "completed_cycles": 11,
+        "empty_returns_completed": 2,
+        "mean_wip": 0.390972,
+        "traffic_wait_s": 7351.2,
+        "total_tardiness_lower_bound_s": 18897.2,
+        "observed_min_clearance_m": 1.7257818169114452,
+        "peak_moving_robots": 4
+      },
+      "business_finished": false,
+      "fleet_quiescent": false,
+      "execution_elapsed_wall_s_context_only": 56.666355
+    },
+    {
+      "scenario": "aisle_closed",
+      "dispatch_policy": "eta",
+      "run_id": "operations-aisle_closed-eta-08af6a76f08099cf-a5c9aaa15abe",
+      "status": "incomplete",
+      "error": null,
+      "source_stable_during_run": true,
+      "scope": "authored deterministic CPU operations comparison; no physics or calibrated production claim",
+      "metrics": {
+        "completed_cycles": 4,
+        "empty_returns_completed": 3,
+        "mean_wip": 0.151472,
+        "traffic_wait_s": 11478.2,
+        "total_tardiness_lower_bound_s": 27242.6,
+        "observed_min_clearance_m": 1.7257818169114452,
+        "peak_moving_robots": 4
+      },
+      "business_finished": false,
+      "fleet_quiescent": false,
+      "execution_elapsed_wall_s_context_only": 37.4677
+    }
+  ]
+}

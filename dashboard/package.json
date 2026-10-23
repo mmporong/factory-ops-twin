@@ -8,7 +8,7 @@
     "start": "next start --hostname 127.0.0.1",
     "typecheck": "tsc --noEmit",
     "test:inventory": "node --test scripts/inventory-display.test.cjs",
-    "test": "node --test scripts/inventory-display.test.cjs scripts/traffic-lanes.test.cjs scripts/ops-view.test.cjs"
+    "test": "node --test scripts/inventory-display.test.cjs scripts/traffic-lanes.test.cjs scripts/ops-view.test.cjs scripts/equipment-view.test.cjs"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.0",
