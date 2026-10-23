@@ -1,0 +1,103 @@
+{
+  "schema_version": 1,
+  "run_id": "11022116d8bf447880d5ade0eba99fe7",
+  "source_commit": "0cc6402c9d7c008021219d9c701aee73dd376e70",
+  "status": "failed",
+  "scope": "Interrupted development transport; no complete shipment/empty-return or final-media qualification",
+  "termination": {
+    "owner_abort_requested": true,
+    "reason": "Stop to apply the confirmed empty-return priority gate correction; not an owner wall timeout",
+    "original_mission_error": {
+      "type": "RuntimeError",
+      "message": "G3 worker wall bound or dependent process failed"
+    }
+  },
+  "wall_s": 1904.9060000000172,
+  "latest_progress": {
+    "completed_orders": 0,
+    "elapsed_sim_s": 369.750019284,
+    "released_orders": 12,
+    "robots": {
+      "carter1": {
+        "anchor": "HIGH_W_W",
+        "generation": 45,
+        "phase": "following",
+        "target": "S3"
+      },
+      "carter2": {
+        "anchor": "ES_OUT",
+        "generation": 46,
+        "phase": "following",
+        "target": "CI"
+      },
+      "carter3": {
+        "anchor": "P3",
+        "generation": 3,
+        "phase": "idle",
+        "target": null
+      },
+      "carter4": {
+        "anchor": "P4",
+        "generation": 47,
+        "phase": "following",
+        "target": "CO"
+      }
+    },
+    "run_id": "11022116d8bf447880d5ade0eba99fe7",
+    "scenario_id": "fleet4_transport_normal"
+  },
+  "final_material_revision": 4,
+  "conservation": [
+    {
+      "balanced": true,
+      "consumed": 2,
+      "in_totes": 2,
+      "initial": 60,
+      "on_hand": 56,
+      "replenished": 0,
+      "sku": "packaged-ic-tray"
+    }
+  ],
+  "empty_trips": [
+    {
+      "destination": "S1",
+      "order_id": "SC-LOT-001",
+      "ready_time_s": 209.400010921,
+      "robot_id": null,
+      "source": "CI",
+      "state": "ready",
+      "task_id": "empty:SC-LOT-001",
+      "tote_id": "F4-TOTE-SC-001"
+    }
+  ],
+  "operation_story": {
+    "requested_mode": "off",
+    "actual_enabled": false,
+    "final_media_status": "not_collected"
+  },
+  "SDK_sensor_failure_recorded": false,
+  "observed_concurrent_following": [
+    "carter1",
+    "carter2",
+    "carter4"
+  ],
+  "closure": {
+    "windows_closed": true,
+    "linux_closed": true,
+    "job_closed": true,
+    "remaining_owned_pids": [],
+    "cleanup_errors": []
+  },
+  "original_sha256": {
+    "pair-host.json": "8d6b2f97c62de2cb265751d2beb03ed2bc63eaf1e9651891a18ffe75bb520ac4",
+    "job.json": "f8cc9b26cc73989dc35e12b3a8a0ccf8697853035efcf3c950b7f35b9d76d0ff",
+    "relay-pair.json": "9f8ec3fb0e6368f798ce89e89a92ea1bbd30991514fe049512afeb4ecfe05880",
+    "job-abort-request.txt": "24dcd811055abf275906fee42c32e6d065c1b3accc6b0986ea69fa9171423a65",
+    "results/run/mission-progress.json": "763cbeae2b8a9941b7dd12026048a3a81948c026ae9668e662600314529a8a0d",
+    "results/run/material-state.json": "72dea5901f65ae081df8fcb3d8bcc50f2e6a1af8c4847e893a360a075e0cabb5",
+    "results/run/mission-result.json": "fd9795ba5893dabb0883e14a2f1de0b734cb725b786cf7d287cca00c4e79c4dd",
+    "results/run/local45-fleet4-transport-scene.json": "6d0abe5fa58d49233ac76b9a379e0593d17c048e73afc8238be45dbf039eb470",
+    "results/run/physx-scan-startup.json": "42d19a8397581f6b96e5a722311506ae04fe5188efb46c066a909b708463ae9c"
+  },
+  "interpretation": "The first CI delivery/consumption and three simultaneous following phases were observed. carter3 remained idle with a ready empty trip. The old priority gate includes capacity-blocked products, but this evidence does not attribute every wait to that gate. New source corrections are not part of this frozen run."
+}
