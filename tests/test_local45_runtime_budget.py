@@ -40,6 +40,27 @@ class RuntimeBudgetTests(unittest.TestCase):
                     pair.run(Path("unused"), Path("unused"), bound)
                 resolve.assert_not_called()
 
+    def test_invalid_operation_story_mode_is_rejected_before_resolving_paths(self):
+        with patch.object(Path, "resolve") as resolve:
+            with self.assertRaisesRegex(ValueError, "operation story mode"):
+                pair.run(Path("unused"), Path("unused"), 60, operation_story_mode="invalid")
+            resolve.assert_not_called()
+
+    def test_operation_story_receipt_never_claims_disabled_or_unvalidated_media_complete(self):
+        off = pair._operation_story_receipt({"scene_extension": {"operation_story": {
+            "requested_mode": "off", "enabled": False}}}, "off")
+        self.assertEqual(off, {"requested_mode": "off", "actual_enabled": False,
+            "final_media_status": "not_collected"})
+        on = pair._operation_story_receipt({"scene_extension": {"operation_story": {
+            "requested_mode": "on", "enabled": True}}}, "on")
+        self.assertEqual("collection_enabled_not_validated", on["final_media_status"])
+        with self.assertRaisesRegex(ValueError, "differs from the pair request"):
+            pair._operation_story_receipt({"scene_extension": {"operation_story": {
+                "requested_mode": "off", "enabled": True}}}, "off")
+        with self.assertRaisesRegex(ValueError, "differs from the pair request"):
+            pair._operation_story_receipt({"scene_extension": {"operation_story": {
+                "requested_mode": "on", "enabled": False}}}, "off")
+
     def test_job_invalid_bounds_and_existing_receipts_never_create_owned_artifacts(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)

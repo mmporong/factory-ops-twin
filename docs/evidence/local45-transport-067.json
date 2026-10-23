@@ -1,0 +1,133 @@
+{
+  "schema_version": 1,
+  "run_id": "27fcdf0eb6d54caa8deae18744eab0f4",
+  "source_commit": "cb5764822da22038f9ad102da89e4653a7150e9f",
+  "status": "failed",
+  "scope": "bounded development transport; no logistics completion claim",
+  "primary_error": "TimeoutError: pair owner deadline exceeded; cleanup time reserved inside the wall budget",
+  "wall_s": 1773.4220000000205,
+  "latest_progress": {
+    "completed_orders": 0,
+    "elapsed_sim_s": 240.05001252,
+    "released_orders": 9,
+    "robots": {
+      "carter1": {
+        "anchor": "ES_CI",
+        "generation": 27,
+        "phase": "following",
+        "target": "S3"
+      },
+      "carter2": {
+        "anchor": "S2",
+        "generation": 19,
+        "phase": "request",
+        "target": "CI"
+      },
+      "carter3": {
+        "anchor": "P3",
+        "generation": 3,
+        "phase": "idle",
+        "target": null
+      },
+      "carter4": {
+        "anchor": "P4",
+        "generation": 4,
+        "phase": "request",
+        "target": "CO"
+      }
+    },
+    "run_id": "27fcdf0eb6d54caa8deae18744eab0f4",
+    "scenario_id": "fleet4_transport_normal"
+  },
+  "SDK_sensor_failure_recorded": false,
+  "authored_sensor_profile": {
+    "name": "development_factory_physx_planar_v2",
+    "range_m": [
+      0.1,
+      50.0
+    ]
+  },
+  "closure": {
+    "windows_closed": true,
+    "linux_closed": true,
+    "job_closed": true,
+    "remaining_owned_pids": [],
+    "cleanup_errors": []
+  },
+  "capture_cost_observation": {
+    "phase": "material_supply",
+    "frames": 180,
+    "simulation_duration_s": 2.983333489,
+    "first_file": "overview-00010.png",
+    "last_file": "overview-00189.png",
+    "approximate_file_timestamp_wall_s": 152,
+    "PNG_bytes": 73798992,
+    "scope": "file timestamp observation, not an instrumented render benchmark"
+  },
+  "resource_observations": [
+    {
+      "path": "artifacts\\local45\\resource-observation-067\\sample-20261023T0114590864107Z.json",
+      "sha256": "dedea95055f62ef56242368ac136a92ec3ed9282a1dcab236dc05e4e082e912b",
+      "value": {
+        "schema_version": 1,
+        "run_id": "27fcdf0eb6d54caa8deae18744eab0f4",
+        "sample_started_at_utc": "2026-10-23T01:14:59.0864107+00:00",
+        "sample_ended_at_utc": "2026-10-23T01:15:00.0107434+00:00",
+        "world_time_s": 179.0666760057211,
+        "physics_frame": 10744,
+        "windows_working_set_sum_bytes": 6870327296.0,
+        "windows_cumulative_cpu_s": 2152.375,
+        "gpu_query_raw": [
+          "NVIDIA GeForce RTX 3060, 6515, 3"
+        ],
+        "scope": "Two or more in-flight snapshots only. GPU values are host-wide; Windows working sets include shared pages and omit Linux memory. Not whole-run peaks or six-pilot calibration."
+      }
+    },
+    {
+      "path": "artifacts\\local45\\resource-observation-067\\sample-20261023T0117202132082Z.json",
+      "sha256": "a5f7964931a84a67f21093538f1e923165b5e96279c630edefb22cfc8b0ffe05",
+      "value": {
+        "schema_version": 1,
+        "run_id": "27fcdf0eb6d54caa8deae18744eab0f4",
+        "sample_started_at_utc": "2026-10-23T01:17:20.2132082+00:00",
+        "sample_ended_at_utc": "2026-10-23T01:17:20.9893635+00:00",
+        "world_time_s": 207.0666774660349,
+        "physics_frame": 12424,
+        "windows_working_set_sum_bytes": 6879485952.0,
+        "windows_cumulative_cpu_s": 2381.140625,
+        "gpu_query_raw": [
+          "NVIDIA GeForce RTX 3060, 6515, 1"
+        ],
+        "scope": "Two or more in-flight snapshots only. GPU values are host-wide; Windows working sets include shared pages and omit Linux memory. Not whole-run peaks or six-pilot calibration."
+      }
+    },
+    {
+      "path": "artifacts\\local45\\resource-observation-067\\sample-20261023T0120130587699Z.json",
+      "sha256": "f30ab6cec47bcafa9a7b4f2b0a95537e8a0f2fc2340de255273c0d6e7d6a461c",
+      "value": {
+        "schema_version": 1,
+        "run_id": "27fcdf0eb6d54caa8deae18744eab0f4",
+        "sample_started_at_utc": "2026-10-23T01:20:13.0587699+00:00",
+        "sample_ended_at_utc": "2026-10-23T01:20:13.7905627+00:00",
+        "world_time_s": 218.0666780397296,
+        "physics_frame": 13084,
+        "windows_working_set_sum_bytes": 6888255488.0,
+        "windows_cumulative_cpu_s": 2627.171875,
+        "gpu_query_raw": [
+          "NVIDIA GeForce RTX 3060, 6537, 12"
+        ],
+        "scope": "Two or more in-flight snapshots only. GPU values are host-wide; Windows working sets include shared pages and omit Linux memory. Not whole-run peaks or six-pilot calibration."
+      }
+    }
+  ],
+  "original_sha256": {
+    "pair-host.json": "9e09a387ac6fa880f10265f27f770c913785955ed4e19e9120b01d0823db7bf3",
+    "job.json": "92c3b45617987735f88fad68ac84e2fac7b636723679f486867d4c4a8fa413eb",
+    "relay-pair.json": "a6e9859b42c622df44df421f02f631e50073a1fd22f873706ed50e56405b9bbd",
+    "results/run/mission-progress.json": "4b07cf3018a1561a67c2d47b53b12b6c0dbf91e7efc39bbf0d7ca6605efe1108",
+    "results/run/mission-result.json": "2549964776a4d2c5c8fb350d33d7107b4094ca4a40faec0ca12877d441ab5d89",
+    "results/run/material-state.json": "759d0d583caaf941c1a1c7b485cae56c718ad11993b169eb3049832f8803e2f6",
+    "results/run/physx-scan-startup.json": "42477f31c89e1c664532576bc923bc4286eeeeb4d03b6a8e4fc17856cbf86935"
+  },
+  "interpretation": "Previous 30m failure boundary was passed. The owner wall deadline ended this run at 9 released/0 shipped; no full transport or four-robot repeated-operation proof. Dense capture cost is observed, but is not established as the only runtime bottleneck."
+}

@@ -53,6 +53,23 @@ class Local45LifecycleTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.lifecycle.register_rgb_render_products({"portfolio_overview": object()})
 
+    def test_operation_story_mode_is_explicit_and_does_not_change_control_configuration(self):
+        enabled = Local45FleetLifecycle(self.bundle, "a" * 32, operation_story_mode="on")
+        disabled = Local45FleetLifecycle(self.bundle, "a" * 32, operation_story_mode="off")
+        self.assertEqual(enabled.session, disabled.session)
+        self.assertEqual(enabled.real_time_media, disabled.real_time_media)
+        self.assertEqual("on", enabled.operation_story_mode)
+        self.assertEqual("off", disabled.operation_story_mode)
+        self.assertEqual(enabled.operation_story_profile_present, disabled.operation_story_profile_present)
+        self.assertIsNone(disabled.operation_story)
+        with patch("scripts.isaac.local45_fleet4_transport_scene.FleetTransportLifecycle.setup",
+                   return_value={"kind": "test"}):
+            metadata = disabled.setup(object(), object(), object(), object(), self.root)
+        self.assertEqual(metadata["operation_story"], {"requested_mode": "off", "enabled": False,
+            "collection_status": "disabled_by_request"})
+        with self.assertRaisesRegex(ValueError, "operation story mode"):
+            Local45FleetLifecycle(self.bundle, "a" * 32, operation_story_mode="invalid")
+
     def test_carrier_opt_in_installs_only_after_all_native_admissions(self):
         life = Local45FleetLifecycle(self.bundle, "a"*32, lidar_backend="physx_planar", carrier_modules=True)
         life.visuals = SimpleNamespace(after_robots_loaded=Mock(return_value={}), robot_cargo_centers={})

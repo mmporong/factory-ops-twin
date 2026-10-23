@@ -69,6 +69,8 @@ uv run python -m factory_ops.dashboard --config configs/factory-fleet4-normal3 -
 
 새 로컬4.5 개발 실행의 `scripts/isaac/run_local45_fleet_pair.py`에 `--capture-views overview`를 지정하면 전체 공장 RGB만 수집한다. 기본값 `all`은 기존 overview·carter1·carter2의3시점이다. 선택값은 호스트 영수증과 SDK 미디어 명세에 기록한다.
 
+운송 로직 개발에서는 `--operation-story off`로 여섯 단계의 매 물리 프레임 연속 촬영만 끌 수 있다. 기본값은 `on`이다. `off`에서도 물리·제어·원장·관측, 1200-step 간헐 RGB와 자재 revision 기록은 유지된다. 요청값과 실제 활성 여부는 호스트·장면 영수증에 남으며, 꺼진 촬영은 `not_collected`로 표시한다. 대표 운영 영상에 필요한 여섯 구간의 촬영을 완료한 것으로 세지 않는다. 운송 흐름을 확인한 뒤 `on`으로 별도 촬영한다.
+
 overview 옵션은 추적 카메라 prim의 보정 정보를 남기되 해당 render product와 RGB annotator를 생성하지 않는다. 프레임별 활성/비활성 전환은 하지 않는다. 모든 차량의 같은 프레임 GT는 평가·미디어용으로 기록하며, 물리·센서·주행 허가·촬영 시각의 동결 검사는 유지한다. 기본3시점을 요구하는 기존 정식 검증에1시점 자료를 대신 제출하지 않는다. Replicator 합성 데이터의 modality·시점 수집 프로필도 이 옵션과 별도다.
 
 관련 CPU 검사9개와 SDK Python3.10.15의5파일 구문 확인을 통과했다.054는1시점 옵션으로 실행 중이며 속도 개선을 확정한 비교는 없다. [공식 Replicator1.11.35 API](https://docs.omniverse.nvidia.com/kit/docs/omni_replicator/1.11.35/source/extensions/omni.replicator.core/docs/API.html) · [Isaac Sim4.5 렌더 제품 수명 관리 예제](https://docs.isaacsim.omniverse.nvidia.com/4.5.0/replicator_tutorials/tutorial_replicator_ur10_palletizing.html)

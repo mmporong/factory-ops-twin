@@ -13,6 +13,7 @@ import sys
 import time
 import tarfile
 import traceback
+from typing import Any
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from factory_ops.wsl_process_supervisor import WslProcessSupervisor
@@ -221,12 +222,21 @@ def monitor_pair(worker, owner: WslProcessSupervisor, *, started: float, bound: 
     return exit_record
 
 
+def _operation_story_receipt(scene_result: dict[str, Any], requested_mode: str) -> dict[str, Any]:
+    story = scene_result.get("scene_extension", {}).get("operation_story", {})
+    if (story.get("requested_mode") != requested_mode or type(story.get("enabled")) is not bool
+            or (requested_mode == "off" and story["enabled"])):
+        raise ValueError("scene operation story mode/result differs from the pair request")
+    return {"requested_mode": requested_mode, "actual_enabled": story["enabled"],
+        "final_media_status": "collection_enabled_not_validated" if story["enabled"] else "not_collected"}
+
+
 def run(stage: Path, sdk: Path, bound: int, *, charge_robot: str | None = None, charge_resume_soc: float = .8,
         lidar_backend: str = "rtx_flat_scan", physics_cadence: str = "owned_step6",
         windows_dds_interface: str | None = None, linux_dds_interface: str | None = None,
         live_anchor_controls: bool = False, dds_explicit_peers: bool = False,
         nav2_startup_stagger_s: float = 0., capture_resolution: str = "640x360",
-        capture_views: str = "all",
+        capture_views: str = "all", operation_story_mode: str = "on",
         carrier_modules: bool = False,
         isolated_topic_relay: bool = False, relay_windows_address: str | None = None,
         relay_linux_address: str | None = None, relay_port: int = 28473,
@@ -243,6 +253,8 @@ def run(stage: Path, sdk: Path, bound: int, *, charge_robot: str | None = None, 
         raise ValueError("unsupported local45 capture resolution")
     if capture_views not in {"all", "overview"}:
         raise ValueError("unsupported local45 capture view selection")
+    if operation_story_mode not in {"on", "off"}:
+        raise ValueError("unsupported local45 operation story mode")
     if type(carrier_modules) is not bool or (carrier_modules and lidar_backend != "physx_planar"):
         raise ValueError("carrier modules require explicit local45 planar development")
     _validate_dds_interfaces(windows_dds_interface, linux_dds_interface)
@@ -302,6 +314,8 @@ def run(stage: Path, sdk: Path, bound: int, *, charge_robot: str | None = None, 
     report["nav2_startup_stagger_s"] = nav2_startup_stagger_s
     report["capture_resolution"] = capture_resolution
     report["capture_views"] = capture_views
+    report["operation_story"] = {"requested_mode": operation_story_mode, "actual_enabled": None,
+        "final_media_status": "not_evaluated"}
     report["carrier_modules"] = carrier_modules
     report["isolated_topic_relay"] = isolated_topic_relay
     report["startup_service_match_wait"] = startup_service_match_wait
@@ -388,7 +402,7 @@ def run(stage: Path, sdk: Path, bound: int, *, charge_robot: str | None = None, 
         launcher = sdk / "python.bat"
         for path in (entry, launcher, output, stage):
             linux(path)  # Same metacharacter restriction protects the vendor cmd launcher.
-        command_line = '"' + str(os.environ["COMSPEC"]) + '" /d /s /c ""' + str(launcher) + '" "' + str(entry) + '" --bundle "' + str(stage / "inputs") + '" --output "' + str(output) + '" --run-id ' + run_id + ' --lidar-backend ' + lidar_backend + ' --physics-cadence ' + physics_cadence + ' --capture-resolution ' + capture_resolution + ' --capture-views ' + capture_views + (' --carrier-modules' if carrier_modules else '') + '"'
+        command_line = '"' + str(os.environ["COMSPEC"]) + '" /d /s /c ""' + str(launcher) + '" "' + str(entry) + '" --bundle "' + str(stage / "inputs") + '" --output "' + str(output) + '" --run-id ' + run_id + ' --lidar-backend ' + lidar_backend + ' --physics-cadence ' + physics_cadence + ' --capture-resolution ' + capture_resolution + ' --capture-views ' + capture_views + ' --operation-story ' + operation_story_mode + (' --carrier-modules' if carrier_modules else '') + '"'
         spec = {"run_id": run_id, "cwd": str(sdk), "command": command_line, "expected_inputs": expected}
         save(stage / "job-spec.json", spec)
         environment = {**os.environ, **ros_environment, "FACTORY_OPS_G3_SOURCE_COMMIT": launch["source_commit"],
@@ -412,8 +426,10 @@ def run(stage: Path, sdk: Path, bound: int, *, charge_robot: str | None = None, 
         scene_path = output / "local45-fleet4-transport-scene.json"
         report["mission_status"] = (json.loads(mission_path.read_text(encoding="utf-8")).get("status")
                                     if mission_path.exists() else "missing")
-        report["scene_status"] = (json.loads(scene_path.read_text(encoding="utf-8")).get("status")
-                                  if scene_path.exists() else "missing")
+        scene_result = json.loads(scene_path.read_text(encoding="utf-8")) if scene_path.exists() else None
+        report["scene_status"] = scene_result.get("status") if scene_result is not None else "missing"
+        if scene_result is not None:
+            report["operation_story"] = _operation_story_receipt(scene_result, operation_story_mode)
         report["status"] = ("passed" if worker.returncode == 0
             and report["mission_status"] == "passed" and report["scene_status"] == "validated" else "failed")
     except Exception as error:
@@ -444,6 +460,7 @@ if __name__ == "__main__":
     parser.add_argument("--nav2-startup-stagger-s", type=float, default=0.)
     parser.add_argument("--capture-resolution", choices=("640x360", "1280x720"), default="640x360")
     parser.add_argument("--capture-views", choices=("all", "overview"), default="all")
+    parser.add_argument("--operation-story", choices=("on", "off"), default="on")
     parser.add_argument("--carrier-modules", action="store_true")
     parser.add_argument("--charge-robot", choices=("carter1", "carter2", "carter3", "carter4"))
     parser.add_argument("--charge-resume-soc", type=float, default=.8)
@@ -458,7 +475,7 @@ if __name__ == "__main__":
         windows_dds_interface=options.windows_dds_interface, linux_dds_interface=options.linux_dds_interface,
         live_anchor_controls=options.live_anchor_controls, dds_explicit_peers=options.dds_explicit_peers,
         nav2_startup_stagger_s=options.nav2_startup_stagger_s, capture_resolution=options.capture_resolution,
-        capture_views=options.capture_views,
+        capture_views=options.capture_views, operation_story_mode=options.operation_story,
         carrier_modules=options.carrier_modules,
         isolated_topic_relay=options.isolated_topic_relay,relay_windows_address=options.relay_windows_address,
         relay_linux_address=options.relay_linux_address,relay_port=options.relay_port,

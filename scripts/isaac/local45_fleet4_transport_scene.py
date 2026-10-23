@@ -101,10 +101,13 @@ class EmptyToteGeometry:
 
 class Local45FleetLifecycle(FleetTransportLifecycle):
     def __init__(self, root: Path, run_id: str, *, lidar_backend: str = "rtx_flat_scan", capture_views: str = "all",
-                 carrier_modules: bool = False) -> None:
+                 carrier_modules: bool = False, operation_story_mode: str = "on") -> None:
         if capture_views not in {"all", "overview"}:
             raise ValueError("unsupported local45 RGB capture view selection")
+        if operation_story_mode not in {"on", "off"}:
+            raise ValueError("unsupported local45 operation story mode")
         self.capture_views = capture_views
+        self.operation_story_mode = operation_story_mode
         super().__init__(root, run_id)
         if lidar_backend not in {"rtx_flat_scan", "physx_planar"}:
             raise ValueError("unsupported local45 observation backend")
@@ -125,7 +128,8 @@ class Local45FleetLifecycle(FleetTransportLifecycle):
         self.story_pending = None
         self.story_event_cursor = 0
         story_profile = json.loads((root/"config.json").read_text(encoding="utf-8")).get("g3_runtime", {}).get("operation_story")
-        if story_profile is not None:
+        self.operation_story_profile_present = story_profile is not None
+        if story_profile is not None and operation_story_mode == "on":
             from factory_ops.operation_story import OperationStory
             if lidar_backend != "physx_planar" or self.session["profile"] != "development" or self.session["primary_evaluation"]:
                 raise ValueError("factory operation story is limited to explicit local45 development")
@@ -144,6 +148,18 @@ class Local45FleetLifecycle(FleetTransportLifecycle):
             "factory_ops/flat_scan_observation.py")}
         if self.lidar_backend == "physx_planar":
             self._observer_sources["factory_ops/physx_planar.py"] = g2_scene.base._sha256(project/"factory_ops/physx_planar.py")
+
+    def setup(self, stage: Any, UsdGeom: Any, UsdPhysics: Any, Gf: Any, output: Path) -> dict[str, Any]:
+        metadata = super().setup(stage, UsdGeom, UsdPhysics, Gf, output)
+        enabled = self.operation_story is not None
+        metadata["operation_story"] = {
+            "requested_mode": self.operation_story_mode,
+            "enabled": enabled,
+            "collection_status": ("enabled_not_yet_validated" if enabled else
+                                  "disabled_by_request" if self.operation_story_mode == "off" else
+                                  "profile_unavailable"),
+        }
+        return metadata
 
     def register_rgb_render_products(self, products_by_role: Mapping[str, Any]) -> dict[str, Any]:
         if self.capture_views == "all":
@@ -421,6 +437,7 @@ def main() -> int:
     parser.add_argument("--run-id", required=True)
     parser.add_argument("--capture-resolution", choices=("640x360", "1280x720"), default="640x360")
     parser.add_argument("--capture-views", choices=("all", "overview"), default="all")
+    parser.add_argument("--operation-story", choices=("on", "off"), default="on")
     parser.add_argument("--carrier-modules", action="store_true")
     parser.add_argument("--lidar-backend", choices=("rtx_flat_scan", "physx_planar"), default="rtx_flat_scan")
     parser.add_argument("--physics-cadence", choices=("app_update", "owned_step6"), default="owned_step6")
@@ -440,7 +457,8 @@ def main() -> int:
         capture_views=args.capture_views,
         lidar_backend=args.lidar_backend, physics_cadence=args.physics_cadence,
         scene_extension=Local45FleetLifecycle(root, args.run_id, lidar_backend=args.lidar_backend,
-            capture_views=args.capture_views, carrier_modules=args.carrier_modules), extra_inputs=extras)
+            capture_views=args.capture_views, carrier_modules=args.carrier_modules,
+            operation_story_mode=args.operation_story), extra_inputs=extras)
 
 
 if __name__ == "__main__":

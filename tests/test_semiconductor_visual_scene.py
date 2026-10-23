@@ -13,6 +13,7 @@ from factory_ops.visual_scene import (
     _equipment_root,
     _floor_graphics,
     _recipe_boxes,
+    _semiconductor_facility_boxes,
     _validate_boxes,
 )
 
@@ -22,6 +23,28 @@ FLEET_LAYOUT = ROOT / "configs" / "factory-fleet4" / "layout.json"
 
 
 class SemiconductorVisualSceneTests(unittest.TestCase):
+    def test_facility_services_preserve_floor_routes_and_open_roof(self) -> None:
+        layout = Layout.from_file(ROOT / "configs/factory-semiconductor-dual-lane/layout.json")
+        boxes = _semiconductor_facility_boxes(layout)
+        self.assertGreater(len(boxes), 100)
+        self.assertEqual(len(boxes), len({box.name for box in boxes}))
+        for box in boxes:
+            self.assertTrue(all(math.isfinite(value) for value in box.bounds), box.name)
+            self.assertTrue(all(box.bounds[i] < box.bounds[i+3] for i in range(3)), box.name)
+            self.assertEqual("facility_structure", box.semantic_class)
+            if box.bounds[2] < 2.7:
+                footprint = Rect(box.bounds[0], box.bounds[1], box.bounds[3], box.bounds[4])
+                for region in layout.data["amr_allowed_regions"]:
+                    self.assertFalse(footprint.overlaps(Rect.from_value(region["rect"], region["id"])), box.name)
+        self.assertEqual([], _semiconductor_facility_boxes(Layout.from_file(FLEET_LAYOUT)))
+
+    def test_facility_services_reject_routing_intrusion(self) -> None:
+        layout = Layout.from_file(ROOT / "configs/factory-semiconductor-dual-lane/layout.json")
+        data = copy.deepcopy(layout.data)
+        data["amr_allowed_regions"].append({"id": "EXPANDED_ROUTE", "rect": [0, 2, .1, 3]})
+        with self.assertRaisesRegex(ValueError, "facility fixture intrudes"):
+            _semiconductor_facility_boxes(Layout(data))
+
     def test_chamfered_casing_mesh_is_closed_right_handed_and_keeps_exact_bounds(self) -> None:
         bounds = (2.0, 3.0, .2, 4.4, 5.2, 2.0)
         points, faces = _chamfered_box_geometry(bounds, .02)

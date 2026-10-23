@@ -18,7 +18,8 @@
     "payload_tote",
     "amr",
     "station_marker",
-    "barrier"
+    "barrier",
+    "facility_structure"
   ],
   "runtime_semantics": {
     "amr": "dynamic Nova Carter roots supplied by the Isaac runtime",

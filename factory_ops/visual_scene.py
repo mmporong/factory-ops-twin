@@ -119,6 +119,19 @@ def export_visual_scene(
     lines = _visual_header(variant_seed, palette)
     lines.extend(_materials(palette, semiconductor=layout.data.get("production_domain", {}).get("id") == "semiconductor_final_test_pack"))
     lines.extend(_factory_shell(layout, palette))
+    facility = _semiconductor_facility_boxes(layout)
+    if facility:
+        lines.extend(['        def Xform "FacilityServices"', "        {",
+                      '            custom string scope = "authored render-only building services; no facility certification or utility simulation"'])
+        for box in facility:
+            stable_id = f"facility:{box.name}"
+            lines.extend(_box_usda(box, 12, stable_id=stable_id))
+            instances.append(VisualInstance(
+                stable_id, f"/World/Visuals/FacilityServices/{box.name}",
+                str(box.semantic_class), str(box.state_role), None, box.bounds, None,
+                "authored_facility_services",
+            ))
+        lines.append("        }")
     floor_semantic_roots: dict[str, str] = {}
     lines.extend(_floor_graphics(layout, palette, semantic_roots=floor_semantic_roots))
     assignments = config["obstacle_assets"]
@@ -230,6 +243,15 @@ def export_visual_scene(
         manifest["factory_context"] = {"scope": context["scope"], "fixture_count": len(context["instances"]),
             "placement": "native asset dimensions; mounted assets inside source XYZ envelopes; all fixtures preserve 0.1m AMR and unrelated obstacle clearance",
             "physics": "render-only references; source obstacle collision geometry remains authoritative"}
+    if facility:
+        manifest["facility_services"] = {
+            "component_count": len(facility),
+            "scope": "authored wall finishes, door facades, overhead cable trays and utility feeds; render-only",
+            "minimum_overhead_height_m": 2.7,
+            "ground_clearance": "all components below 2.7m remain outside authored AMR regions",
+            "certified_cleanroom": False,
+            "physical_utility_or_door_operation": False,
+        }
     manifest_path = output / "visual-scene-manifest.json"
     manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8", newline="\n")
     result = dict(manifest)
@@ -455,6 +477,90 @@ def _factory_shell(layout: Layout, palette: Mapping[str, tuple[float, float, flo
         "        }",
     ])
     return lines
+
+
+def _semiconductor_facility_boxes(layout: Layout) -> list[_Box]:
+    """Building-service cutaway for the authored 36x28m bay, not OEM CAD.
+
+    All dimensions are visual design values in metres. Low wall fixtures avoid
+    the operating regions; the services crossing an aisle start at 2.7m.
+    """
+    if layout.data.get("revision") != DUAL_LANE_REVISION:
+        return []
+    boxes: list[_Box] = []
+
+    def add(name: str, bounds: tuple[float, float, float, float, float, float],
+            material: str = "LightSteel", role: str = "facility_utility") -> None:
+        boxes.append(_Box(name, bounds, material, "facility_structure", role))
+
+    for index, y in enumerate(range(2, 28, 2)):
+        for side, x0, x1 in (("West", .005, .035), ("East", 35.965, 35.995)):
+            add(f"{side}PanelJoint_{index}", (x0, y-.012, .18, x1, y+.012, 3.16),
+                "MachinePanel", "wall_panel_joint")
+    for index, x in enumerate(range(2, 36, 2)):
+        if 10.35 < x < 18.65:  # North parking pockets reach the wall.
+            continue
+        add(f"NorthPanelJoint_{index}", (x-.012, 27.965, .18, x+.012, 27.995, 3.16),
+            "MachinePanel", "wall_panel_joint")
+    for side, x0, x1 in (("West", .01, .09), ("East", 35.91, 35.99)):
+        add(f"{side}Skirting", (x0, .1, .08, x1, 27.9, .22), "MachinePaint", "wall_protection")
+    for index, (x0, x1) in enumerate(((.1, 10.3), (18.7, 35.9))):
+        add(f"NorthSkirting_{index}", (x0, 27.91, .08, x1, 27.99, .22),
+            "MachinePaint", "wall_protection")
+
+    for index, x in enumerate((8.6, 33.4)):
+        add(f"DoorFrame_{index}", (x-.88, 27.82, .01, x+.88, 27.99, 2.45),
+            "LightSteel", "personnel_door_facade")
+        add(f"DoorLeaf_{index}", (x-.78, 27.78, .04, x+.78, 27.83, 2.33),
+            "White", "personnel_door_facade")
+        add(f"DoorWindow_{index}", (x-.45, 27.755, 1.05, x+.45, 27.78, 1.95),
+            "Glass", "door_vision_panel")
+        add(f"DoorPushBar_{index}", (x-.58, 27.69, .88, x+.58, 27.755, .93),
+            "Steel", "door_hardware")
+        add(f"DoorAccessPanel_{index}", (x+.91, 27.76, 1.15, x+1.04, 27.98, 1.39),
+            "Dark", "access_panel_facade")
+        add(f"DoorExitSign_{index}", (x-.35, 27.77, 2.53, x+.35, 27.99, 2.76),
+            "Green", "exit_sign_facade")
+    for index, x in enumerate((3.6, 23.4, 29.0)):
+        add(f"ReturnAirFrame_{index}", (x-.65, 27.84, 2.1, x+.65, 27.99, 2.65),
+            "MachinePanel", "wall_return_air_facade")
+        for slat in range(5):
+            z = 2.15 + .09*slat
+            add(f"ReturnAirSlat_{index}_{slat}", (x-.57, 27.80, z, x+.57, 27.84, z+.035),
+                "Dark", "wall_return_air_facade")
+
+    # A rear distribution header feeds the two equipment rows. The roof stays
+    # open so the production and AMR flow remain visible from the overview.
+    add("RearDistributionDuct", (.5, 27.15, 2.78, 35.5, 27.68, 3.15), "MachinePanel", "hvac_header_facade")
+    for index, x in enumerate(range(2, 36, 2)):
+        add(f"DuctJoint_{index}", (x-.018, 27.13, 2.765, x+.018, 27.70, 3.165),
+            "Steel", "duct_panel_joint")
+    for row, x in enumerate((12.95, 19.60)):
+        for side, dx in (("L", -.27), ("R", .23)):
+            add(f"CableTray_{row}_{side}", (x+dx, 9.55, 2.88, x+dx+.04, 27.1, 3.02),
+                "Steel", "overhead_cable_tray")
+        for rung in range(25):
+            y = 9.65 + .7*rung
+            add(f"CableTrayRung_{row}_{rung}", (x-.25, y, 2.88, x+.25, y+.035, 2.92),
+                "LightSteel", "overhead_cable_tray")
+        add(f"PowerCable_{row}", (x-.12, 9.7, 2.93, x-.055, 27.04, 2.975), "Dark", "overhead_power_cable")
+        add(f"UtilityFeed_{row}", (x+.075, 9.7, 2.96, x+.125, 27.04, 3.01), "Accent", "overhead_utility_feed")
+
+    for index, obstacle_id in enumerate(("BENCH_A1", "BENCH_A2", "BENCH_B2", "PROCESS_1", "PROCESS_2", "CELL_CABINET")):
+        obstacle = next(item for item in layout.data["physical_obstacles"] if item["id"] == obstacle_id)
+        x0, y0, x1, y1 = obstacle["rect"]
+        x, y = x1-.18, y1-.18
+        # The low section is contained by the existing equipment envelope.
+        add(f"EquipmentRiser_{index}", (x-.06, y-.06, .18, x+.06, y+.06, 2.88),
+            "Steel", "equipment_service_riser")
+        add(f"EquipmentRiserBand_{index}", (x-.075, y-.075, 2.7, x+.075, y+.075, 2.76),
+            "Accent", "equipment_service_identifier")
+    for box in boxes:
+        footprint = Rect(box.bounds[0], box.bounds[1], box.bounds[3], box.bounds[4])
+        if box.bounds[2] < 2.7 and any(footprint.overlaps(Rect.from_value(region["rect"], region["id"]))
+                                      for region in layout.data["amr_allowed_regions"]):
+            raise LayoutError(f"facility fixture intrudes into AMR operating region: {box.name}")
+    return boxes
 
 
 def _floor_graphics(layout: Layout, palette: Mapping[str, tuple[float, float, float]], *,
@@ -892,6 +998,11 @@ def _recipe_boxes(
             b("UnloadTrayMagazine", .73, .025, height * .20, .92, .17, height * .29, "ESD", "rack", "jedec_tray_magazine"),
             b("PassBin", .55, .02, height * .10, .68, .16, height * .24, "Green", "buffer_fixture", "pass_sort_bin"),
             b("RetestBin", .32, .02, height * .10, .45, .16, height * .24, "SafetyYellow", "buffer_fixture", "retest_sort_bin"),
+            b("TestHeadInterface", .84, .36, height * .42, .995, .72, height * .77, "MachinePaint", "process_equipment", "vertical_test_head_interface"),
+            b("TestHeadDock", .82, .40, height * .47, .90, .68, height * .72, "LightSteel", "process_equipment", "test_head_dock"),
+            b("ThermalServiceModule", .60, .86, height * .35, .91, .99, height * .70, "MachinePanel", "process_equipment", "thermal_service_facade"),
+            b("EmergencyStopPlate", .005, .10, height * .56, .04, .20, height * .65, "SafetyYellow", "process_equipment", "emergency_stop_facade"),
+            b("EmergencyStopButton", .002, .12, height * .58, .025, .18, height * .63, "SafetyRed"),
             b("HMIArm", .80, .04, height * .56, .87, .13, height * .75, "Steel"),
             b("HMI", .73, .015, height * .66, .94, .075, height * .83, "Dark", "process_equipment", "handler_hmi"),
             b("LoadDockFace", .045, .005, height * .11, .305, .055, height * .35, "MachinePanel", "process_equipment", "front_load_tray_dock"),

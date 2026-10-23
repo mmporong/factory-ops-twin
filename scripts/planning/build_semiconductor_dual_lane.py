@@ -203,6 +203,7 @@ def build_routing() -> dict[str, Any]:
 
 def build_visual_assets() -> dict[str, Any]:
     assets = copy.deepcopy(load_json("visual-assets.json"))
+    assets["required_semantic_taxonomy"].append("facility_structure")
     assets["source"] = (
         "Reference-based authored semiconductor process geometry retained in a dual-lane layout (CC0-1.0) and "
         "attributed NVIDIA SimReady service props and packaging conveyor (CC-BY-4.0); "

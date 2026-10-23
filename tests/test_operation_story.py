@@ -146,5 +146,22 @@ class OperationStoryTests(unittest.TestCase):
                 life.visuals.applied_sequence=4
                 with self.assertRaisesRegex(ValueError,"bytes differ"):life.step(1.1,11)
 
+    def test_disabled_story_keeps_base_and_material_revision_capture_due(self):
+        from factory_ops.fleet_transport import prepare_bundle
+        from scripts.isaac.local45_fleet4_transport_scene import Local45FleetLifecycle
+        with tempfile.TemporaryDirectory() as folder:
+            bundle=Path(folder)/"bundle"
+            prepare_bundle(bundle,config_dir=Path(__file__).resolve().parents[1]/"configs/factory-fleet4-normal3")
+            life=Local45FleetLifecycle(bundle,"a"*32,lidar_backend="physx_planar",operation_story_mode="off")
+            self.assertIsNone(life.operation_story)
+            with patch("scripts.isaac.local45_fleet4_transport_scene.FleetTransportLifecycle.capture_due",return_value=False):
+                self.assertFalse(life.capture_due())
+                life.material_visual=SimpleNamespace(applied={"document":{"material_revision":2}})
+                life.last_captured_material_revision=1
+                self.assertTrue(life.capture_due())
+            life.material_visual=None
+            with patch("scripts.isaac.local45_fleet4_transport_scene.FleetTransportLifecycle.capture_due",return_value=True):
+                self.assertTrue(life.capture_due())
+
 
 if __name__ == "__main__":unittest.main()
