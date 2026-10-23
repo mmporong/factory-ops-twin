@@ -1,0 +1,85 @@
+{
+  "schema_version": 1,
+  "scope": "closed local45 development transport; not full fleet qualification",
+  "run_id": "7ca80b7c6a924a2a88f8d97b6a6f46fc",
+  "source_commit": "78b059a6e2e2a36640165b388ac0d0eee9f738ee",
+  "status": "failed",
+  "wall_s": 1116.5780000000377,
+  "mission": {
+    "sim_time": 127.250006637,
+    "released_order_count": 5,
+    "completed_order_count": 0,
+    "expected_order_count": 12,
+    "completed": false,
+    "failed": true
+  },
+  "primary_error": {
+    "message": "[Errno 13] Permission denied: '/mnt/e/FactoryOpsRuntime/local45-transport-074/results/run/robots/carter4/.authorization.json.100261.tmp' -> '/mnt/e/FactoryOpsRuntime/local45-transport-074/results/run/robots/carter4/authorization.json'",
+    "traceback": "Traceback (most recent call last):\n  File \"/mnt/e/FactoryOpsRuntime/local45-transport-074/source/scripts/ros/g3_mission.py\", line 2440, in run_mission\n    stamp = tick(require_fresh=True)\n            ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/mnt/e/FactoryOpsRuntime/local45-transport-074/source/scripts/ros/g3_mission.py\", line 2172, in tick\n    lease(robot)\n  File \"/mnt/e/FactoryOpsRuntime/local45-transport-074/source/scripts/ros/g3_mission.py\", line 2109, in lease\n    atomic_json(output / \"robots\" / robot / \"authorization.json\", payload)\n  File \"/mnt/e/FactoryOpsRuntime/local45-transport-074/source/scripts/ros/g2_mission.py\", line 59, in atomic_json\n    replace_shared_file(temporary, path)\n  File \"/mnt/e/FactoryOpsRuntime/local45-transport-074/source/factory_ops/compat.py\", line 41, in replace_shared_file\n    os.replace(source, target)\nPermissionError: [Errno 13] Permission denied: '/mnt/e/FactoryOpsRuntime/local45-transport-074/results/run/robots/carter4/.authorization.json.100261.tmp' -> '/mnt/e/FactoryOpsRuntime/local45-transport-074/results/run/robots/carter4/authorization.json'\n",
+    "type": "PermissionError"
+  },
+  "confirmed_failure_boundary": "atomic os.replace of carter4 authorization.json on shared /mnt/e output exceeded existing bounded retry; locking process/root cause unknown",
+  "error_is_not": [
+    "owner wall deadline",
+    "a new proof of prior073 stop-timeout recurrence"
+  ],
+  "bounded_collinear_action_count": 11,
+  "all_chunks_bounded_collinear": true,
+  "edge_stopped_count": 10,
+  "energy_faults": {
+    "carter1": null,
+    "carter2": null,
+    "carter3": null,
+    "carter4": null
+  },
+  "material_conservation": [
+    {
+      "balanced": true,
+      "consumed": 0,
+      "in_totes": 4,
+      "initial": 60,
+      "on_hand": 56,
+      "replenished": 0,
+      "sku": "packaged-ic-tray"
+    }
+  ],
+  "cleanup": {
+    "windows_closed": true,
+    "linux_closed": true,
+    "owner_cleanup_errors": [],
+    "sdk_job_closed": true,
+    "sdk_remaining_owned_pids": [],
+    "relay_windows_closed": true,
+    "relay_linux_closed": true,
+    "relay_job_closed": true,
+    "relay_remaining_owned_pids": [],
+    "mission_process_cleanup": [
+      {
+        "exit_code": 0,
+        "label": "rosbag",
+        "pid": 100302
+      },
+      {
+        "exit_code": 0,
+        "label": "nav2",
+        "pid": 100303
+      }
+    ]
+  },
+  "original_sha256": {
+    "pair-host.json": "691c25b5d3ad271bd906c288751df736992f8ed84b4cea96c40d10352800cf38",
+    "job.json": "40fe816339b7b987be1e8060a8d28779398cb0b530776c8ebdfa0b99576337a9",
+    "relay-pair.json": "44844b9429ec94562f613266b9277d1d07b9c815479520b66950d6681241f236",
+    "relay-job.json": "c7ecdaaaf9e5cdcd460a6d53fa6bf2dc806df0abe63e0b0f3176d70075096c22",
+    "results/run/mission-result.json": "42723ee15994235d9dcd02501c737b2409459ab6818c108eb3ded0e15eb19a45",
+    "results/run/actions.jsonl": "a6a0de770a666b75e59a7642ef62f6738f23e21257c2ea764bcc770c942a247c",
+    "results/run/sdk-failure.json": "1d82944ea859b8a380556040722d3106aff1e2ce203c7a1e87c0725cc409e24f"
+  },
+  "media": {
+    "overview_pngs": 16,
+    "scope": "intermittent development RGB, no final media claim"
+  },
+  "physical_payload_transfer_verified": false,
+  "sensor_quality_verified": false,
+  "native073_regression_fixed": false
+}
