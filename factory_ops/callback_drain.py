@@ -14,7 +14,7 @@ class CallbackDrain:
     The wall budget is checked only after a complete fair round. A slow callback
     can therefore overrun the authored cooperative budget by one round.
 
-    Optional priority executors own only TF/clock work. Their prefix consumes
+    Optional priority executors own TF/clock and time-sensitive odometry. Their prefix consumes
     at most half the configured round/time allowance, followed by complete fair
     rounds; it does not add another drain budget or a background spin thread.
     """
@@ -76,7 +76,7 @@ class CallbackDrain:
         budget_reached = False
         elapsed = 0.0
         priority_rounds = 0
-        # Spend at most half the EXISTING rounds/time on TF+clock-only nodes.
+        # Spend at most half the EXISTING rounds/time on priority observation nodes.
         # Reserve a complete fair round for every IO executor, including when a
         # critical callback overruns its cooperative slice. Nothing is preempted.
         if self._priority:
@@ -131,5 +131,5 @@ class CallbackDrain:
         }
         if self._priority:
             result.update(priority_executor_count=len(self._priority), priority_rounds=self._priority_rounds,
-                priority_semantics="TF/clock-only prefix uses at most half existing rounds/time; then complete fair rounds; total bounds unchanged")
+                priority_semantics="TF/clock/odometry prefix uses at most half existing rounds/time; then complete fair rounds; total bounds unchanged")
         return result

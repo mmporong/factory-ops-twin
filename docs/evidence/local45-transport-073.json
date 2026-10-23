@@ -1,0 +1,256 @@
+{
+  "schema_version": 1,
+  "scope": "closed local45 development transport; original failure retained; not full fleet qualification",
+  "run_id": "0581b5d355e7489585078989eb402652",
+  "source_commit": "d417d7fae7def6fd783f993529715de5afe371ee",
+  "status": "failed",
+  "wall_s": 2691.3279999999795,
+  "mission": {
+    "sim_time": 705.800036811,
+    "released_order_count": 12,
+    "completed_order_count": 1,
+    "expected_order_count": 12,
+    "completed": false,
+    "failed": true
+  },
+  "primary_error": {
+    "message": "post-terminal hold acknowledgment / fresh odometry stop failed",
+    "traceback": "Traceback (most recent call last):\n  File \"/mnt/e/FactoryOpsRuntime/local45-transport-073/source/scripts/ros/g3_mission.py\", line 2712, in run_mission\n    raise TimeoutError(\"post-terminal hold acknowledgment / fresh odometry stop failed\")\nTimeoutError: post-terminal hold acknowledgment / fresh odometry stop failed\n",
+    "type": "TimeoutError"
+  },
+  "failure_robot": "carter1",
+  "failure_condition": "fresh continuous stopped odometry",
+  "accepted_handoffs_by_robot": {
+    "carter1": 3,
+    "carter2": 3,
+    "carter4": 3,
+    "carter3": 1
+  },
+  "material": {
+    "empty_trips": [
+      {
+        "destination": "S1",
+        "order_id": "SC-LOT-001",
+        "ready_time_s": 209.850010945,
+        "robot_id": "carter3",
+        "source": "CI",
+        "state": "started",
+        "task_id": "empty:SC-LOT-001",
+        "tote_id": "F4-TOTE-SC-001"
+      },
+      {
+        "destination": "S2",
+        "order_id": "SC-LOT-002",
+        "ready_time_s": 403.51668771199996,
+        "robot_id": null,
+        "source": "CI",
+        "state": "ready",
+        "task_id": "empty:SC-LOT-002",
+        "tote_id": "F4-TOTE-SC-002"
+      }
+    ],
+    "conservation": [
+      {
+        "balanced": true,
+        "consumed": 4,
+        "in_totes": 4,
+        "initial": 60,
+        "on_hand": 52,
+        "replenished": 0,
+        "sku": "packaged-ic-tray"
+      }
+    ],
+    "completed": false
+  },
+  "energy_faults": {
+    "carter1": null,
+    "carter2": null,
+    "carter3": null,
+    "carter4": null
+  },
+  "cleanup": {
+    "windows_closed": true,
+    "linux_closed": true,
+    "owner_cleanup_errors": [],
+    "sdk_job_closed": true,
+    "sdk_remaining_owned_pids": [],
+    "relay_windows_closed": true,
+    "relay_linux_closed": true,
+    "relay_job_closed": true,
+    "relay_remaining_owned_pids": [],
+    "mission_process_cleanup": [
+      {
+        "exit_code": 0,
+        "label": "rosbag",
+        "pid": 98878
+      },
+      {
+        "exit_code": -15,
+        "label": "nav2",
+        "pid": 98879
+      },
+      {
+        "error": "failed to shutdown: rcl_shutdown already called on the given context, at ./src/rcl/init.c:333",
+        "label": "rclpy.shutdown"
+      }
+    ]
+  },
+  "diagnostic": {
+    "conclusion": {
+      "first_timeout_robot": "carter1",
+      "failed_condition": "fresh continuous stopped odometry",
+      "acknowledgment_qualified": true,
+      "physical_odometry_was_within_stop_limits": true,
+      "pose_was_fresh_and_within_arrival_limits": true,
+      "clock_was_advancing": true,
+      "root_cause": "The single RELIABLE depth-50 odometry subscription shared the regular IO executor with scan and action work. Its callbacks fell behind the advancing ROS/event clock, so StoppedGate rejected delivered samples as older than the 0.3 second odometry TTL and never committed the otherwise stationary window.",
+      "confidence": "high",
+      "status": "diagnosed_not_fixed_in_frozen_run"
+    },
+    "raw_observations": {
+      "failure": {
+        "mission_origin_sim_time_s": 11.233333919,
+        "mission_failure_elapsed_sim_time_s": 705.800036811,
+        "absolute_failure_sim_time_s": 717.03337073,
+        "absolute_time_derivation": "mission_origin_sim_time_s + mission_failure_elapsed_sim_time_s",
+        "stage": "orders",
+        "status": "failed",
+        "message": "post-terminal hold acknowledgment / fresh odometry stop failed"
+      },
+      "carter1_action": {
+        "actions_index": 70,
+        "generation": 85,
+        "follow_action_uuid": "5048fde0-d1dd-44b5-8f48-28a6760351d1",
+        "terminal_sim_time_s": 687.033369165,
+        "failure_minus_terminal_s": 30.000001565,
+        "status": 4,
+        "error_code": 0,
+        "stopped_odometry_present": false
+      },
+      "carter1_hold_ack": {
+        "authorization_seq": 5640,
+        "evaluation_sim_time_s": 687.0500358324498,
+        "sample_sim_time_s": 687.0667024999857,
+        "mode": "hold",
+        "valid": true,
+        "input_command": {
+          "linear_m_s": 0.0,
+          "angular_rad_s": 0.0
+        },
+        "physics_frame": 41224,
+        "reservation_id": 85,
+        "goal_uuid": "5048fde0-d1dd-44b5-8f48-28a6760351d1",
+        "qualification_basis": "run, scenario, robot, mode, valid flag, minimum sequence, reservation generation, goal UUID, physics frame, post-terminal evaluation time and zero command all match valid_hold_ack"
+      },
+      "carter1_pose_at_failure": {
+        "pose_stamp_s": 717.000037394,
+        "failure_clock_age_s": 0.033333336,
+        "pose": {
+          "x_m": 8.954278347471348,
+          "y_m": 19.52677590014169,
+          "yaw_rad": -0.6307032450489298
+        },
+        "chunk_goal": {
+          "x_m": 9.0,
+          "y_m": 19.5,
+          "yaw_rad": -0.4993467216801301
+        },
+        "xy_error_m": 0.052985076562637214,
+        "yaw_error_rad": 0.13135652336879972,
+        "xy_limit_m": 0.25,
+        "yaw_limit_rad": 0.25
+      },
+      "closed_bag_car1_stop_window": {
+        "topic": "/carter1/odom",
+        "selection": "decoded CDR messages with header stamp strictly greater than ACK evaluation 687.0500358324498 and bag timestamp at or before absolute failure 717.033370730",
+        "message_count": 599,
+        "first_header_stamp_s": 687.100035835,
+        "last_header_stamp_s": 717.000037394,
+        "maximum_gap_s": 0.050000003000036486,
+        "maximum_absolute_linear_m_s": 0.0007079600948753057,
+        "maximum_absolute_angular_rad_s": 0.002723926446718347,
+        "configured_maximum_linear_m_s": 0.02,
+        "configured_maximum_angular_rad_s": 0.02,
+        "threshold_violation_count": 0
+      },
+      "closed_bag_clock_window": {
+        "topic": "/clock",
+        "selection_start_s": 716.5,
+        "selection_end_s": 717.1,
+        "message_count": 36,
+        "first_stamp_s": 716.500037368,
+        "last_stamp_s": 717.083370732,
+        "maximum_gap_s": 0.016666668000084428
+      },
+      "callback_dispatch": {
+        "calls": 11737,
+        "wall_budget_reached_calls": 11737,
+        "wall_budget_s": 0.05,
+        "max_rounds_per_call": 64,
+        "priority_executor_count": 5,
+        "executor_count": 9,
+        "priority_rounds": 293498,
+        "rounds": 423996,
+        "measurement_limit": "spin_once attempts are counted; executed callback identity and callback sequence are not recorded"
+      },
+      "dashboard_snapshot": {
+        "sim_time_s": 705.800036811,
+        "carter1_navigation_phase": "stopping",
+        "carter1_pose_observed_sim_time_s": 717.000037394,
+        "carter1_odom_count": 14167,
+        "carter1_speed_mps": null,
+        "snapshot_timing": "The final dashboard snapshot is published in the failure finally path after live control is closed. It uses the retained robot callback state and close_stamp, so its odom_count and null speed are evidence of stale retained odometry but are not a per-callback trace captured at the exact exception instruction."
+      },
+      "energy_snapshot": {
+        "carter1_observed_sim_time_s": 714.650037272,
+        "carter3_observed_sim_time_s": 714.650037272,
+        "failure_clock_minus_carter1_observation_s": 2.383333458,
+        "capture_timing": "energy_runtime.snapshot() is captured in the exception handler before emergency authorization and cleanup; mission-result.json is serialized later in finally after cleanup. The observed_sim_time_s value is therefore an independent retained-runtime observation near the exception, while the JSON file write time is later and must not be treated as the observation time."
+      }
+    },
+    "derived_and_replayed_evidence": {
+      "deterministic_gate_replay": {
+        "source_samples": "the 599 decoded carter1 odometry messages in closed_bag_car1_stop_window",
+        "stale_replay": {
+          "assumed_constant_delivery_lag_s": 5.133333602,
+          "committed_stopped_odometry_record": null,
+          "retained_stop_sample_count": 0,
+          "interpretation": "With delivery older than the 0.3 second TTL, the production gate clears every otherwise stationary sample. The assumed lag comes from the FIFO alignment estimate below and is not a recorded callback timestamp."
+        },
+        "fresh_replay": {
+          "committed": true,
+          "stop_measurement_start_stamp_s": 687.100035835,
+          "retained_stop_sample_count": 599,
+          "interpretation": "The same recorded velocities and stamps qualify when evaluated against a fresh clock, isolating freshness from ACK, motion and pose content."
+        }
+      },
+      "fifo_alignment_estimate": {
+        "classification": "inference_not_raw_callback_trace",
+        "method": "Align dashboard carter1 odom_count 14167 with the 14167th bag message ordered by bag timestamp, then compare that ordinal stamp with the absolute failure clock.",
+        "estimated_processed_odom_stamp_s": 711.900037128,
+        "estimated_failure_clock_lag_s": 5.133333602,
+        "bag_message_count_at_failure": 14269,
+        "estimated_backlog_message_count": 102,
+        "limitation": "The runtime does not record a source sequence ID for each executed odometry callback. DDS queue replacement, delivery loss or callback ordering can break an exact ordinal correspondence, so these values are supporting estimates and not direct measurements."
+      }
+    },
+    "private_diagnostic_sha256": "d9bae477379662d12b017104731b4eb0accb734424485044ab97ececf8f9b1e8"
+  },
+  "original_sha256": {
+    "pair-host.json": "0b6a38c3e2d0e39076439f2927e8ec06d99db679bc686db73baef4ace5a911da",
+    "job.json": "c147df434310eadc06b2eb1e2ab501df23e866a26734714a9299f67544865a51",
+    "relay-pair.json": "e800b6db9cb15bd1a574506a5672cce6fb81eab8dab1bb6b6b3363f57b90d037",
+    "relay-job.json": "43d99dd65c154477a11946e4e35c852dfae4e0b02317a9748f95f2b8284df49c",
+    "results/run/mission-result.json": "2a565b487a4a1d8931732ea39ef03b09199fbc71a00f99553e6a331a255afae8",
+    "results/run/sdk-failure.json": "3de514b93e5d359f38ee096118fcd6566786a7befe835bc6d3a3cd63075ff09c",
+    "results/run/material-state.json": "62dd75351acd1e8f5793abcbd889ac22226b412152dcdc52d459dd8ad3b96869",
+    "results/run/dashboard-state.json": "e7930c2fd39d905fa05e62571db5cf65996c9727fab850792c902ceeae2820a9"
+  },
+  "media": {
+    "overview_pngs": 70,
+    "scope": "intermittent development RGB; no final GIF or story claim"
+  },
+  "sensor_quality_verified": false,
+  "physical_payload_transfer_verified": false,
+  "bounded_collinear_applied": false
+}

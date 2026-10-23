@@ -1171,7 +1171,11 @@ NumPy를 새로 설치하지 않았으며 SDK ndarray 입력일 때만 사용한
 
 073은 임무705.80초에 `post-terminal hold acknowledgment / fresh odometry stop failed`로 종료됐다. 첫 출하1건을 기록했지만 빈 반납과12lot 전체 완주는 미완료다. 가상 배터리의 네 차량 오류는 모두null이었다. 이후 SDK의 `G2 mission controller ended with failed`는 임무 실패를 전달한 후속 현상이며, 소유자 시간 상한을 최초 원인으로 기록하지 않는다. ROS 기록기는exit0으로 닫혔고 양 OS·중계·Job의 종료와 잔여 소유 PID0을 확인했다. 임무 정리의 중복`rcl_shutdown` 오류는 별도 후속 현상으로 보존한다.
 
-정지 ACK·연속 정지 odometry·양쪽 시계·도착 위치 중 실제로 성립하지 않은 조건을 닫힌 원본에서 확인 중이다. 이 확인 전에는 정지·도착·신선도 한계를 늘리거나 같은 입력으로 재실행하지 않는다.073의 동결 소스는d417d7f이며 아래 직선 연결 정책은 적용되지 않았다.
+최초 실패 차량은carter1이다. 닫힌 원본에서 목표 UUID와 세대가 일치하는HOLD ACK, 정지 이후599개 odometry의 속도 한계 통과, 신선한TF·도착 오차를 확인했다. 그러나 임무의 에너지 관측 시각은 실패 시계보다2.383초 뒤처져 있었고, 콜백 처리11,737회가 모두50ms 예산을 소진했다. 스캔/작업과 같은 IO 실행기에 둔 FIFO odometry가 밀려0.3초 신선도 조건을 만족하지 못했다. 수신 개수와 bag 순서를 맞춘5.133초 지연은 원본 콜백 추적이 아닌 추론으로 구분한다. 실제 정지 표본을 최신 시계로 재생하면 원래 정지 조건을 통과했다. [073 원본 요약·관측/추론·종료](evidence/local45-transport-073.json)
+
+수정은RELIABLE·50개 FIFO 이력의 단일 구독을 기존 시계/TF 우선 노드로 옮긴다. 전체64라운드·50ms 예산, IO 공정 처리, 정지 창0.5초와 선속도/각속도0.02 한계, odometry TTL0.3초를 유지한다. 관련CPU29개 검사와 실제Jazzy4대 부하 시험을 통과했다. 같은 유한 부하에서 기존 IO 구독은 네 대 모두1.817초 지연으로 정지 확인에 실패했고, 우선 구독은0.01675초 지연으로 모두 통과했다. 에너지 오류는null이고 모든 소유 자원은 닫혔다. 이 부하는 작성한30ms 작업 큐이며073 전체 재생이나 실제 콜백 비용 측정은 아니다. [설정 해시·조건·대조 결과](evidence/odometry-priority-dispatch-219.json)
+
+정리에는 설치된Jazzy의`try_shutdown()`을 사용해 이미 종료된 컨텍스트의 중복 종료를 피한다. 실제`init → shutdown → try_shutdown` 실행을 통과했고 최초 실패는 그대로 보존한다. 공식[실행기 설명](https://github.com/ros2/ros2_documentation/blob/jazzy/source/Concepts/Intermediate/About-Executors.rst)과[rclpy Jazzy 소스](https://github.com/ros2/rclpy/blob/jazzy/rclpy/rclpy/__init__.py), 설치본 함수를 대조했다.073의 동결 소스는d417d7f이며 이번 수정과 아래 직선 연결 정책은 적용되지 않았다. 수정 후 전체 물리 운송 성공은 후속 실행에서 확인한다.
 
 ## FOT-142 — 직선 앵커마다 반복되는 정지·재출발
 

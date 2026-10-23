@@ -1,0 +1,736 @@
+{
+  "schema_version": 1,
+  "scope": "actual Jazzy rclpy/DDS topology under authored finite 30 ms queued work; not native callback timing and not a complete073 replay",
+  "status": "passed",
+  "run_id": "0b1b82f18ccf427cb6643aa14598bcf9",
+  "source_sha256": "f6d5f15decec7c8ecdbac16f0f622f2377ec6b679a7cac065caef4a2ceb2b55b",
+  "source_files": {
+    "callback_drain_sha256": "735b106d25b5a3f7b4d7bac4507d0741639b8bf6cfcef6fff5c3cf70af4e76a3",
+    "g3_mission_sha256": "5cca024ee1ac7bff3aa0b4120f33b32c2ff9c29e3ab23b551259c1a23063c0a8",
+    "runtime_config_sha256": "8d42b83418db8de65e8348aac2bf25ec4a62c9583775886988df8ba5914f1f9b"
+  },
+  "runtime_config_sha256": "8d42b83418db8de65e8348aac2bf25ec4a62c9583775886988df8ba5914f1f9b",
+  "limits": {
+    "callback_max_rounds": 64,
+    "callback_wall_budget_s": 0.05,
+    "consumer_pause_s": 0.65,
+    "odom_ttl_s": 0.3,
+    "post_hold_stream_s": 1.05,
+    "priority_prefix_fraction": 0.5,
+    "queued_work_per_robot": 16,
+    "queued_work_s": 0.03,
+    "stop_window_s": 0.5,
+    "stopped_angular_rad_s": 0.02,
+    "stopped_linear_m_s": 0.02,
+    "tf_ttl_s": 0.5
+  },
+  "rates_hz": {
+    "clock": 60.0,
+    "odom": 20.0,
+    "scan_front": 20.0,
+    "scan_rear": 20.0,
+    "tf": 20.0
+  },
+  "qos": {
+    "odom": "RELIABLE",
+    "odom_depth": 50
+  },
+  "cases": [
+    {
+      "odom_owner": "io_node",
+      "status": "completed",
+      "robots": {
+        "carter1": {
+          "energy_fault": null,
+          "energy_freshness": "stale",
+          "last_odom_stamp_s": 1000.10182633,
+          "local_now_s": 1001.918676071,
+          "odom_age_s": 1.8168497410000555,
+          "published_odom_total": 41,
+          "queued_work_callbacks": 9,
+          "received_odom_since_load": 0,
+          "received_odom_total": 3,
+          "scan_counts_since_load": {
+            "front": 0,
+            "rear": 0
+          },
+          "stop_qualified": false,
+          "stop_record": null,
+          "tf_age_s": 0.017572526000094513,
+          "tf_stamp_s": 1001.901103545
+        },
+        "carter2": {
+          "energy_fault": null,
+          "energy_freshness": "stale",
+          "last_odom_stamp_s": 1000.10182633,
+          "local_now_s": 1001.918676071,
+          "odom_age_s": 1.8168497410000555,
+          "published_odom_total": 41,
+          "queued_work_callbacks": 9,
+          "received_odom_since_load": 0,
+          "received_odom_total": 3,
+          "scan_counts_since_load": {
+            "front": 0,
+            "rear": 0
+          },
+          "stop_qualified": false,
+          "stop_record": null,
+          "tf_age_s": 0.017572526000094513,
+          "tf_stamp_s": 1001.901103545
+        },
+        "carter3": {
+          "energy_fault": null,
+          "energy_freshness": "stale",
+          "last_odom_stamp_s": 1000.10182633,
+          "local_now_s": 1001.918676071,
+          "odom_age_s": 1.8168497410000555,
+          "published_odom_total": 41,
+          "queued_work_callbacks": 9,
+          "received_odom_since_load": 0,
+          "received_odom_total": 3,
+          "scan_counts_since_load": {
+            "front": 0,
+            "rear": 0
+          },
+          "stop_qualified": false,
+          "stop_record": null,
+          "tf_age_s": 0.017572526000094513,
+          "tf_stamp_s": 1001.901103545
+        },
+        "carter4": {
+          "energy_fault": null,
+          "energy_freshness": "stale",
+          "last_odom_stamp_s": 1000.10182633,
+          "local_now_s": 1001.918676071,
+          "odom_age_s": 1.8168497410000555,
+          "published_odom_total": 41,
+          "queued_work_callbacks": 9,
+          "received_odom_since_load": 0,
+          "received_odom_total": 3,
+          "scan_counts_since_load": {
+            "front": 0,
+            "rear": 0
+          },
+          "stop_qualified": false,
+          "stop_record": null,
+          "tf_age_s": 0.017572526000094513,
+          "tf_stamp_s": 1001.901103545
+        }
+      },
+      "dispatch": {
+        "budget_semantics": "cooperative boundary checked after each complete fair round",
+        "calls": 11,
+        "executor_count": 8,
+        "max_rounds_per_call": 64,
+        "priority_executor_count": 4,
+        "priority_rounds": 352,
+        "priority_semantics": "TF/clock/odometry prefix uses at most half existing rounds/time; then complete fair rounds; total bounds unchanged",
+        "rounds": 417,
+        "spin_attempt_semantics": "nonblocking executor attempts; actual callback count is not observable",
+        "spin_attempts": 1928,
+        "wall_budget_reached_calls": 11,
+        "wall_budget_s": 0.05
+      },
+      "io_fair_round_received": true,
+      "publisher_thread_closed": true,
+      "owned_resources_closed": true,
+      "context_closed": true,
+      "cleanup_errors": []
+    },
+    {
+      "odom_owner": "priority_node",
+      "status": "completed",
+      "robots": {
+        "carter1": {
+          "energy_fault": null,
+          "energy_freshness": "fresh",
+          "last_odom_stamp_s": 1001.901762733,
+          "local_now_s": 1001.918512012,
+          "odom_age_s": 0.016749278999895978,
+          "published_odom_total": 42,
+          "queued_work_callbacks": 9,
+          "received_odom_since_load": 36,
+          "received_odom_total": 39,
+          "scan_counts_since_load": {
+            "front": 0,
+            "rear": 0
+          },
+          "stop_qualified": true,
+          "stop_record": {
+            "stop_measurement_start_stamp_s": 1000.801040805,
+            "stopped_odometry": [
+              {
+                "angular_rad_s": 0.0,
+                "linear_m_s": 0.0,
+                "stamp_s": 1000.801040805
+              },
+              {
+                "angular_rad_s": 0.0,
+                "linear_m_s": 0.0,
+                "stamp_s": 1000.8514059
+              },
+              {
+                "angular_rad_s": 0.0,
+                "linear_m_s": 0.0,
+                "stamp_s": 1000.901996764
+              },
+              {
+                "angular_rad_s": 0.0,
+                "linear_m_s": 0.0,
+                "stamp_s": 1000.951365051
+              },
+              {
+                "angular_rad_s": 0.0,
+                "linear_m_s": 0.0,
+                "stamp_s": 1001.001751587
+              },
+              {
+                "angular_rad_s": 0.0,
+                "linear_m_s": 0.0,
+                "stamp_s": 1001.051788273
+              },
+              {
+                "angular_rad_s": 0.0,
+                "linear_m_s": 0.0,
+                "stamp_s": 1001.100274589
+              },
+              {
+                "angular_rad_s": 0.0,
+                "linear_m_s": 0.0,
+                "stamp_s": 1001.150685795
+              },
+              {
+                "angular_rad_s": 0.0,
+                "linear_m_s": 0.0,
+                "stamp_s": 1001.201088151
+              },
+              {
+                "angular_rad_s": 0.0,
+                "linear_m_s": 0.0,
+                "stamp_s": 1001.251723244
+              },
+              {
+                "angular_rad_s": 0.0,
+                "linear_m_s": 0.0,
+                "stamp_s": 1001.30199151
+              },
+              {
+                "angular_rad_s": 0.0,
+                "linear_m_s": 0.0,
+                "stamp_s": 1001.350252879
+              },
+              {
+                "angular_rad_s": 0.0,
+                "linear_m_s": 0.0,
+                "stamp_s": 1001.400299846
+              },
+              {
+                "angular_rad_s": 0.0,
+                "linear_m_s": 0.0,
+                "stamp_s": 1001.450685632
+              },
+              {
+                "angular_rad_s": 0.0,
+                "linear_m_s": 0.0,
+                "stamp_s": 1001.500087117
+              },
+              {
+                "angular_rad_s": 0.0,
+                "linear_m_s": 0.0,
+                "stamp_s": 1001.550394588
+              },
+              {
+                "angular_rad_s": 0.0,
+                "linear_m_s": 0.0,
+                "stamp_s": 1001.600996698
+              },
+              {
+                "angular_rad_s": 0.0,
+                "linear_m_s": 0.0,
+                "stamp_s": 1001.650376675
+              },
+              {
+                "angular_rad_s": 0.0,
+                "linear_m_s": 0.0,
+                "stamp_s": 1001.701086941
+              },
+              {
+                "angular_rad_s": 0.0,
+                "linear_m_s": 0.0,
+                "stamp_s": 1001.750413996
+              },
+              {
+                "angular_rad_s": 0.0,
+                "linear_m_s": 0.0,
+                "stamp_s": 1001.801199182
+              },
+              {
+                "angular_rad_s": 0.0,
+                "linear_m_s": 0.0,
+                "stamp_s": 1001.851474005
+              },
+              {
+                "angular_rad_s": 0.0,
+                "linear_m_s": 0.0,
+                "stamp_s": 1001.901762733
+              }
+            ],
+            "stopped_sim_time_s": 1001.918512012
+          },
+          "tf_age_s": 0.016749278999895978,
+          "tf_stamp_s": 1001.901762733
+        },
+        "carter2": {
+          "energy_fault": null,
+          "energy_freshness": "fresh",
+          "last_odom_stamp_s": 1001.901762733,
+          "local_now_s": 1001.918512012,
+          "odom_age_s": 0.016749278999895978,
+          "published_odom_total": 42,
+          "queued_work_callbacks": 9,
+          "received_odom_since_load": 36,
+          "received_odom_total": 39,
+          "scan_counts_since_load": {
+            "front": 0,
+            "rear": 0
+          },
+          "stop_qualified": true,
+          "stop_record": {
+            "stop_measurement_start_stamp_s": 1000.801040805,
+            "stopped_odometry": [
+              {
+                "angular_rad_s": 0.0,
+                "linear_m_s": 0.0,
+                "stamp_s": 1000.801040805
+              },
+              {
+                "angular_rad_s": 0.0,
+                "linear_m_s": 0.0,
+                "stamp_s": 1000.8514059
+              },
+              {
+                "angular_rad_s": 0.0,
+                "linear_m_s": 0.0,
+                "stamp_s": 1000.901996764
+              },
+              {
+                "angular_rad_s": 0.0,
+                "linear_m_s": 0.0,
+                "stamp_s": 1000.951365051
+              },
+              {
+                "angular_rad_s": 0.0,
+                "linear_m_s": 0.0,
+                "stamp_s": 1001.001751587
+              },
+              {
+                "angular_rad_s": 0.0,
+                "linear_m_s": 0.0,
+                "stamp_s": 1001.051788273
+              },
+              {
+                "angular_rad_s": 0.0,
+                "linear_m_s": 0.0,
+                "stamp_s": 1001.100274589
+              },
+              {
+                "angular_rad_s": 0.0,
+                "linear_m_s": 0.0,
+                "stamp_s": 1001.150685795
+              },
+              {
+                "angular_rad_s": 0.0,
+                "linear_m_s": 0.0,
+                "stamp_s": 1001.201088151
+              },
+              {
+                "angular_rad_s": 0.0,
+                "linear_m_s": 0.0,
+                "stamp_s": 1001.251723244
+              },
+              {
+                "angular_rad_s": 0.0,
+                "linear_m_s": 0.0,
+                "stamp_s": 1001.30199151
+              },
+              {
+                "angular_rad_s": 0.0,
+                "linear_m_s": 0.0,
+                "stamp_s": 1001.350252879
+              },
+              {
+                "angular_rad_s": 0.0,
+                "linear_m_s": 0.0,
+                "stamp_s": 1001.400299846
+              },
+              {
+                "angular_rad_s": 0.0,
+                "linear_m_s": 0.0,
+                "stamp_s": 1001.450685632
+              },
+              {
+                "angular_rad_s": 0.0,
+                "linear_m_s": 0.0,
+                "stamp_s": 1001.500087117
+              },
+              {
+                "angular_rad_s": 0.0,
+                "linear_m_s": 0.0,
+                "stamp_s": 1001.550394588
+              },
+              {
+                "angular_rad_s": 0.0,
+                "linear_m_s": 0.0,
+                "stamp_s": 1001.600996698
+              },
+              {
+                "angular_rad_s": 0.0,
+                "linear_m_s": 0.0,
+                "stamp_s": 1001.650376675
+              },
+              {
+                "angular_rad_s": 0.0,
+                "linear_m_s": 0.0,
+                "stamp_s": 1001.701086941
+              },
+              {
+                "angular_rad_s": 0.0,
+                "linear_m_s": 0.0,
+                "stamp_s": 1001.750413996
+              },
+              {
+                "angular_rad_s": 0.0,
+                "linear_m_s": 0.0,
+                "stamp_s": 1001.801199182
+              },
+              {
+                "angular_rad_s": 0.0,
+                "linear_m_s": 0.0,
+                "stamp_s": 1001.851474005
+              },
+              {
+                "angular_rad_s": 0.0,
+                "linear_m_s": 0.0,
+                "stamp_s": 1001.901762733
+              }
+            ],
+            "stopped_sim_time_s": 1001.918512012
+          },
+          "tf_age_s": 0.016749278999895978,
+          "tf_stamp_s": 1001.901762733
+        },
+        "carter3": {
+          "energy_fault": null,
+          "energy_freshness": "fresh",
+          "last_odom_stamp_s": 1001.901762733,
+          "local_now_s": 1001.918512012,
+          "odom_age_s": 0.016749278999895978,
+          "published_odom_total": 42,
+          "queued_work_callbacks": 9,
+          "received_odom_since_load": 36,
+          "received_odom_total": 39,
+          "scan_counts_since_load": {
+            "front": 0,
+            "rear": 0
+          },
+          "stop_qualified": true,
+          "stop_record": {
+            "stop_measurement_start_stamp_s": 1000.801040805,
+            "stopped_odometry": [
+              {
+                "angular_rad_s": 0.0,
+                "linear_m_s": 0.0,
+                "stamp_s": 1000.801040805
+              },
+              {
+                "angular_rad_s": 0.0,
+                "linear_m_s": 0.0,
+                "stamp_s": 1000.8514059
+              },
+              {
+                "angular_rad_s": 0.0,
+                "linear_m_s": 0.0,
+                "stamp_s": 1000.901996764
+              },
+              {
+                "angular_rad_s": 0.0,
+                "linear_m_s": 0.0,
+                "stamp_s": 1000.951365051
+              },
+              {
+                "angular_rad_s": 0.0,
+                "linear_m_s": 0.0,
+                "stamp_s": 1001.001751587
+              },
+              {
+                "angular_rad_s": 0.0,
+                "linear_m_s": 0.0,
+                "stamp_s": 1001.051788273
+              },
+              {
+                "angular_rad_s": 0.0,
+                "linear_m_s": 0.0,
+                "stamp_s": 1001.100274589
+              },
+              {
+                "angular_rad_s": 0.0,
+                "linear_m_s": 0.0,
+                "stamp_s": 1001.150685795
+              },
+              {
+                "angular_rad_s": 0.0,
+                "linear_m_s": 0.0,
+                "stamp_s": 1001.201088151
+              },
+              {
+                "angular_rad_s": 0.0,
+                "linear_m_s": 0.0,
+                "stamp_s": 1001.251723244
+              },
+              {
+                "angular_rad_s": 0.0,
+                "linear_m_s": 0.0,
+                "stamp_s": 1001.30199151
+              },
+              {
+                "angular_rad_s": 0.0,
+                "linear_m_s": 0.0,
+                "stamp_s": 1001.350252879
+              },
+              {
+                "angular_rad_s": 0.0,
+                "linear_m_s": 0.0,
+                "stamp_s": 1001.400299846
+              },
+              {
+                "angular_rad_s": 0.0,
+                "linear_m_s": 0.0,
+                "stamp_s": 1001.450685632
+              },
+              {
+                "angular_rad_s": 0.0,
+                "linear_m_s": 0.0,
+                "stamp_s": 1001.500087117
+              },
+              {
+                "angular_rad_s": 0.0,
+                "linear_m_s": 0.0,
+                "stamp_s": 1001.550394588
+              },
+              {
+                "angular_rad_s": 0.0,
+                "linear_m_s": 0.0,
+                "stamp_s": 1001.600996698
+              },
+              {
+                "angular_rad_s": 0.0,
+                "linear_m_s": 0.0,
+                "stamp_s": 1001.650376675
+              },
+              {
+                "angular_rad_s": 0.0,
+                "linear_m_s": 0.0,
+                "stamp_s": 1001.701086941
+              },
+              {
+                "angular_rad_s": 0.0,
+                "linear_m_s": 0.0,
+                "stamp_s": 1001.750413996
+              },
+              {
+                "angular_rad_s": 0.0,
+                "linear_m_s": 0.0,
+                "stamp_s": 1001.801199182
+              },
+              {
+                "angular_rad_s": 0.0,
+                "linear_m_s": 0.0,
+                "stamp_s": 1001.851474005
+              },
+              {
+                "angular_rad_s": 0.0,
+                "linear_m_s": 0.0,
+                "stamp_s": 1001.901762733
+              }
+            ],
+            "stopped_sim_time_s": 1001.918512012
+          },
+          "tf_age_s": 0.016749278999895978,
+          "tf_stamp_s": 1001.901762733
+        },
+        "carter4": {
+          "energy_fault": null,
+          "energy_freshness": "fresh",
+          "last_odom_stamp_s": 1001.901762733,
+          "local_now_s": 1001.918512012,
+          "odom_age_s": 0.016749278999895978,
+          "published_odom_total": 42,
+          "queued_work_callbacks": 9,
+          "received_odom_since_load": 36,
+          "received_odom_total": 39,
+          "scan_counts_since_load": {
+            "front": 0,
+            "rear": 0
+          },
+          "stop_qualified": true,
+          "stop_record": {
+            "stop_measurement_start_stamp_s": 1000.801040805,
+            "stopped_odometry": [
+              {
+                "angular_rad_s": 0.0,
+                "linear_m_s": 0.0,
+                "stamp_s": 1000.801040805
+              },
+              {
+                "angular_rad_s": 0.0,
+                "linear_m_s": 0.0,
+                "stamp_s": 1000.8514059
+              },
+              {
+                "angular_rad_s": 0.0,
+                "linear_m_s": 0.0,
+                "stamp_s": 1000.901996764
+              },
+              {
+                "angular_rad_s": 0.0,
+                "linear_m_s": 0.0,
+                "stamp_s": 1000.951365051
+              },
+              {
+                "angular_rad_s": 0.0,
+                "linear_m_s": 0.0,
+                "stamp_s": 1001.001751587
+              },
+              {
+                "angular_rad_s": 0.0,
+                "linear_m_s": 0.0,
+                "stamp_s": 1001.051788273
+              },
+              {
+                "angular_rad_s": 0.0,
+                "linear_m_s": 0.0,
+                "stamp_s": 1001.100274589
+              },
+              {
+                "angular_rad_s": 0.0,
+                "linear_m_s": 0.0,
+                "stamp_s": 1001.150685795
+              },
+              {
+                "angular_rad_s": 0.0,
+                "linear_m_s": 0.0,
+                "stamp_s": 1001.201088151
+              },
+              {
+                "angular_rad_s": 0.0,
+                "linear_m_s": 0.0,
+                "stamp_s": 1001.251723244
+              },
+              {
+                "angular_rad_s": 0.0,
+                "linear_m_s": 0.0,
+                "stamp_s": 1001.30199151
+              },
+              {
+                "angular_rad_s": 0.0,
+                "linear_m_s": 0.0,
+                "stamp_s": 1001.350252879
+              },
+              {
+                "angular_rad_s": 0.0,
+                "linear_m_s": 0.0,
+                "stamp_s": 1001.400299846
+              },
+              {
+                "angular_rad_s": 0.0,
+                "linear_m_s": 0.0,
+                "stamp_s": 1001.450685632
+              },
+              {
+                "angular_rad_s": 0.0,
+                "linear_m_s": 0.0,
+                "stamp_s": 1001.500087117
+              },
+              {
+                "angular_rad_s": 0.0,
+                "linear_m_s": 0.0,
+                "stamp_s": 1001.550394588
+              },
+              {
+                "angular_rad_s": 0.0,
+                "linear_m_s": 0.0,
+                "stamp_s": 1001.600996698
+              },
+              {
+                "angular_rad_s": 0.0,
+                "linear_m_s": 0.0,
+                "stamp_s": 1001.650376675
+              },
+              {
+                "angular_rad_s": 0.0,
+                "linear_m_s": 0.0,
+                "stamp_s": 1001.701086941
+              },
+              {
+                "angular_rad_s": 0.0,
+                "linear_m_s": 0.0,
+                "stamp_s": 1001.750413996
+              },
+              {
+                "angular_rad_s": 0.0,
+                "linear_m_s": 0.0,
+                "stamp_s": 1001.801199182
+              },
+              {
+                "angular_rad_s": 0.0,
+                "linear_m_s": 0.0,
+                "stamp_s": 1001.851474005
+              },
+              {
+                "angular_rad_s": 0.0,
+                "linear_m_s": 0.0,
+                "stamp_s": 1001.901762733
+              }
+            ],
+            "stopped_sim_time_s": 1001.918512012
+          },
+          "tf_age_s": 0.016749278999895978,
+          "tf_stamp_s": 1001.901762733
+        }
+      },
+      "dispatch": {
+        "budget_semantics": "cooperative boundary checked after each complete fair round",
+        "calls": 11,
+        "executor_count": 8,
+        "max_rounds_per_call": 64,
+        "priority_executor_count": 4,
+        "priority_rounds": 352,
+        "priority_semantics": "TF/clock/odometry prefix uses at most half existing rounds/time; then complete fair rounds; total bounds unchanged",
+        "rounds": 412,
+        "spin_attempt_semantics": "nonblocking executor attempts; actual callback count is not observable",
+        "spin_attempts": 1888,
+        "wall_budget_reached_calls": 11,
+        "wall_budget_s": 0.05
+      },
+      "io_fair_round_received": true,
+      "publisher_thread_closed": true,
+      "owned_resources_closed": true,
+      "context_closed": true,
+      "cleanup_errors": []
+    }
+  ],
+  "baseline_stale_stop_rejection_reproduced": true,
+  "priority_acceptance": true,
+  "io_fairness_verified": true,
+  "cleanup": {
+    "all_owned_resources_closed": true
+  },
+  "wall_elapsed_s": 4.3628436219878495,
+  "raw_result_sha256": "82c7860d49325617c4234095261f8bdefa89f99659693a9208dab3ecdd530946",
+  "native_transport_fixed": false,
+  "cpu_regressions": {
+    "passed": 29,
+    "command": "python -B -m unittest tests.test_callback_drain tests.test_localization_dispatch tests.test_g3_mission_origin -q"
+  },
+  "repeated_shutdown_smoke_passed": true
+}

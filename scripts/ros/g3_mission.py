@@ -829,11 +829,11 @@ def create_robot_dispatch_nodes(robot_id: str, namespace: str, *, isolated: bool
         ros: Any, parameter_type: Any, executor_type: Any,
         owned_nodes: list[Any], owned_executors: list[tuple[Any, Any]],
         ) -> tuple[Any, Any, Any, Any]:
-    """Own TF/clock separately from IO on local45; canonical topology unchanged.
+    """Own TF/clock/odometry separately from IO on local45; canonical unchanged.
 
     Both nodes keep the original namespace/remaps and ROS-time setting. Runtime
-    clock reads and TF Buffer use the original g3_adapter node; scans, odometry
-    and action clients use the IO node. No threads or listener-owned executors.
+    clock reads, TF Buffer and FIFO odometry use the original g3_adapter node;
+    scans and action clients use the IO node. No listener-owned spin threads.
     Append ownership before add_node so partial setup is cleaned by run_mission.
     """
     def own(name: str) -> tuple[Any, Any]:
@@ -2028,7 +2028,7 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
                         if robot not in energy_faults:
                             journal("virtual_energy_observation_fault", {"robot_id": robot, "error": str(error)})
                             energy_faults.add(robot)
-            rt["subscriptions"].append(io_node.create_subscription(Odometry, "odom", lambda message, r=robot_id: odometry(message, r), mission_odometry_qos()))
+            rt["subscriptions"].append(node.create_subscription(Odometry, "odom", lambda message, r=robot_id: odometry(message, r), mission_odometry_qos()))
 
         callback_drain = CallbackDrain(
             io_executors if local45 else (executor for _, executor in node_executors),
@@ -2041,7 +2041,7 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
             "critical_nodes": [event_node.get_fully_qualified_name()]+
                 [rt["node"].get_fully_qualified_name() for rt in robots.values()],
             "io_nodes": [rt["io_node"].get_fully_qualified_name() for rt in robots.values()],
-            "scope": "local45 TF/clock-only executors first within original total drain bounds; IO keeps FIFO and ROS-time; canonical topology unchanged"}
+            "scope": "local45 TF/clock/odometry executors first within original total drain bounds; scan/action IO keeps FIFO and ROS-time; canonical topology unchanged"}
 
         qos = output / "bag-qos.yaml"
         qos.write_text(bag_qos_overrides(robot_ids, namespace_by_id=namespaces, local45=local45), encoding="utf-8")
@@ -3136,7 +3136,7 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
                 cleanup.append({"label": "destroy_node", "error": str(error)}); result["status"] = "failed"
         if ros is not None:
             try:
-                ros.shutdown()
+                ros.try_shutdown()
             except BaseException as error:
                 cleanup.append({"label": "rclpy.shutdown", "error": str(error)}); result["status"] = "failed"
         for stream in streams:
