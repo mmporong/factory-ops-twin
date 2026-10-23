@@ -293,6 +293,8 @@ def _validate_config(config: Mapping[str, Any], layout: Layout) -> None:
         if not isinstance(config[key], str) or not config[key]:
             raise LayoutError(f"visual asset config {key} must be a non-empty string")
     expected_taxonomy = {"floor", "floor_marking", "rack", "workbench", "process_equipment", "control_cabinet", "buffer_fixture", "pallet", "tote", "payload_tote", "amr", "station_marker", "barrier"}
+    if layout.data.get("revision") == DUAL_LANE_REVISION:
+        expected_taxonomy.add("facility_structure")
     taxonomy = config["required_semantic_taxonomy"]
     if not isinstance(taxonomy, list) or set(taxonomy) != expected_taxonomy or len(taxonomy) != len(expected_taxonomy):
         raise LayoutError("visual semantic taxonomy is incomplete or duplicated")

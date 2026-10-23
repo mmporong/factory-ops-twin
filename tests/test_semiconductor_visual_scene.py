@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import copy
+import json
 from collections import Counter
 import math
 from pathlib import Path
@@ -15,6 +16,7 @@ from factory_ops.visual_scene import (
     _recipe_boxes,
     _semiconductor_facility_boxes,
     _validate_boxes,
+    _validate_config,
 )
 
 
@@ -23,6 +25,15 @@ FLEET_LAYOUT = ROOT / "configs" / "factory-fleet4" / "layout.json"
 
 
 class SemiconductorVisualSceneTests(unittest.TestCase):
+    def test_dual_lane_config_declares_facility_semantics_before_renderer_launch(self) -> None:
+        config = ROOT / "configs/factory-semiconductor-dual-lane"
+        layout = Layout.from_file(config / "layout.json")
+        assets = json.loads((config / "visual-assets.json").read_text())
+        _validate_config(assets, layout)
+        assets["required_semantic_taxonomy"].remove("facility_structure")
+        with self.assertRaisesRegex(ValueError, "semantic taxonomy"):
+            _validate_config(assets, layout)
+
     def test_facility_services_preserve_floor_routes_and_open_roof(self) -> None:
         layout = Layout.from_file(ROOT / "configs/factory-semiconductor-dual-lane/layout.json")
         boxes = _semiconductor_facility_boxes(layout)

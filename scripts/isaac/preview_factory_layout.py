@@ -25,6 +25,10 @@ def main() -> int:
     if args.output.exists() or len(args.run_id) != 32:
         raise ValueError("new output and 32-character preview identity required")
     assets = json.loads((args.bundle / "visual-assets.json").read_text(encoding="utf-8-sig"))
+    from factory_ops.layout import Layout
+    from factory_ops.visual_scene import _validate_config, _validate_render_profile
+    _validate_config(assets, Layout.from_file(args.bundle / "layout.json"))
+    _validate_render_profile(json.loads((args.bundle / "render-profile.json").read_text(encoding="utf-8-sig")))
     environment = assets.get("environment", {})
     cache_root = Path(os.environ.get("FACTORY_OPS_ASSET_CACHE", str(ROOT / "assets/vendor/simready-context")))
     if environment.get("fixtures") and not (cache_root / environment["revision"] / "prepared-index.json").is_file():
