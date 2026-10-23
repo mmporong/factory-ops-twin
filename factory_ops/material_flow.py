@@ -100,6 +100,14 @@ class MaterialFlow:
             self.consumed.add(order.order_id)
             self.sequence += 1
 
+    def empty_dispatch_due(self) -> bool:
+        """Compare ready returns with product work the ledger can assign now."""
+        earliest_empty = min((job.ready_time_s for job in self.jobs.values()
+                              if job.state == "ready" and job.ready_time_s <= self.mission.sim_time), default=math.inf)
+        earliest_product = min((task.ready_time for task in self.mission.ledger.ready_tasks
+                                if self.mission.ledger.can_assign(task)), default=math.inf)
+        return earliest_empty < math.inf and earliest_empty <= earliest_product
+
     def dispatch(self, eligible: Sequence[str], *, sim_time_s: float,
                  cost: Callable[[str, EmptyTrip], float | None]) -> list[NavigationIntent]:
         if not math.isfinite(sim_time_s) or sim_time_s < self.mission.sim_time:

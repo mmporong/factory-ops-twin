@@ -2864,9 +2864,7 @@ def run_mission(args: argparse.Namespace, *, session_root: Path, session: Mappin
                 material.advance()
                 if elapsed >= horizon and not material.completed:
                     raise TimeoutError("material and empty-return development horizon reached")
-                earliest_product = min((task.ready_time for task in mission.ledger.ready_tasks), default=math.inf)
-                earliest_empty = min((job.ready_time_s for job in material.jobs.values() if job.state == "ready"), default=math.inf)
-                if earliest_empty <= earliest_product:
+                if material.empty_dispatch_due():
                     current_reservations = manager.snapshot(now_s=stamp)
                     def empty_cost(robot: str, job: Any) -> float | None:
                         if not chain_pickup_supported(runtime_config, robots[robot]["anchor"], job.source):

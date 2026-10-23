@@ -3,12 +3,13 @@ from __future__ import annotations
 
 from pathlib import Path
 import unittest
+from uuid import uuid4
 
 from factory_ops.fleet import FleetMission, FleetOrder
 from factory_ops.fleet_routing import opposing_task_blockers
 from factory_ops.layout import Layout
 from factory_ops.material_flow import EmptyTrip, MaterialFlow
-from factory_ops.navigation import GoalPose
+from factory_ops.navigation import GoalPose, LocalizationPose, NavigationResult
 from factory_ops.route_reservation import RouteReservationManager
 from scripts.ros.g3_mission import active_transport_pairs
 
@@ -68,6 +69,34 @@ def admit(robot: str, pickup: str, drop: str, mission: FleetMission, material: M
 
 
 class SemiconductorCounterflowTests(unittest.TestCase):
+    def test_full_ci_does_not_hide_ready_empty_return_behind_unassignable_product(self):
+        mission, material = make_flow("S1", "S2", "S3", "S1")
+        mission.dispatch(0.0, lambda robot, task: 0.0, eligible_robot_ids=["carter1"])
+        for _ in range(2):
+            intent = mission.active_intents["carter1"]
+            stamp = mission.sim_time + 1.0
+            result = NavigationResult(str(uuid4()), intent.goal_id, intent.task_id, intent.station, 0, 4,
+                stamp, LocalizationPose("map", intent.goal.x, intent.goal.y, intent.goal.yaw, stamp))
+            receipt = mission.submit_result("carter1", result, error_code=0)
+            material.business_handoff(intent, receipt)
+        mission.dispatch(mission.sim_time, lambda robot, task: 0.0, eligible_robot_ids=[])
+        material.advance()
+        self.assertEqual(["empty:O1"], list(material.jobs))
+        self.assertFalse(material.empty_dispatch_due(), "older assignable product still has priority")
+
+        mission.dispatch(mission.sim_time, lambda robot, task: 0.0,
+            eligible_robot_ids=["carter1", "carter2"])
+        self.assertEqual(2, mission.ledger.input_slots_used)
+        self.assertTrue(mission.ledger.ready_tasks)
+        self.assertTrue(all(not mission.ledger.can_assign(task) for task in mission.ledger.ready_tasks))
+        self.assertTrue(material.empty_dispatch_due())
+        self.assertEqual([], material.dispatch(["carter3"], sim_time_s=mission.sim_time,
+            cost=lambda robot, job: None), "priority must not bypass the route/energy callback")
+        issued = material.dispatch(["carter3"], sim_time_s=mission.sim_time, cost=lambda robot, job: 0.0)
+        self.assertEqual(["empty:O1"], [intent.task_id for intent in issued])
+        self.assertEqual("carter3", issued[0].robot_id)
+        self.assertFalse(material.empty_dispatch_due(), "assigned empty return is not offered again")
+
     def test_only_exact_reverse_pair_blocks_and_reservations_are_unchanged(self):
         active = {
             "carter1": ("S1", "CI"),
