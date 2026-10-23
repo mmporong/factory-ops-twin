@@ -1,27 +1,90 @@
 "use client";
-import { Canvas, useThree } from "@react-three/fiber";
+import { Canvas, useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
 import {
+  Billboard,
+  Edges,
+  Environment,
+  Grid,
+  Html,
+  Lightformer,
   Line,
   OrbitControls,
-  OrthographicCamera,
   RoundedBox,
-  Environment,
-  Lightformer,
+  useCursor,
 } from "@react-three/drei";
-import type { Scene, Snapshot, Selection, Rect } from "../lib/types";
-import { stationNames } from "../lib/types";
+import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
+import type { Scene, Snapshot, Selection, Rect, Robot } from "../lib/types";
+import { readable, stationNames } from "../lib/types";
 import { inventoryDisplay } from "../lib/inventory-display";
 import { laneArrows } from "../lib/traffic-lanes";
+import { equipmentLabel, robotState, selectionPoint, toneOf, zoneColor, type Tone } from "../lib/ops-view";
 import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
-import { memo, useEffect, useMemo } from "react";
 import {
-  ACESFilmicToneMapping,
+  memo,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type MutableRefObject,
+} from "react";
+import {
   BoxGeometry,
   CanvasTexture,
+  NeutralToneMapping,
   PCFSoftShadowMap,
   SRGBColorSpace,
+  Spherical,
+  Vector3,
+  type Group,
+  type PerspectiveCamera,
   type Texture,
 } from "three";
+
+export type CameraApi = {
+  zoom: (factor: number) => void;
+  rotate: (radians: number) => void;
+  home: () => void;
+  focusOn: (selection: Selection) => boolean;
+};
+export type Layers = { zones: boolean; parking: boolean; routes: boolean; inventory: boolean };
+export type Insets = { top: number; right: number; bottom: number; left: number };
+
+type Props = {
+  scene: Scene;
+  snapshot: Snapshot | null;
+  selection: Selection | null;
+  onSelect: (s: Selection | null) => void;
+  layers: Layers;
+  insets: Insets;
+  cameraRef: MutableRefObject<CameraApi | null>;
+};
+
+const palette = {
+  ground: "#e4e8f3",
+  slab: "#f3f4f9",
+  floor: "#eef0f6",
+  aisle: "#dde2ef",
+  wall: "#f9fafd",
+  accent: "#2f5bea",
+  steel: "#39445e",
+  amr: "#f4b42c",
+  select: "#2f5bea",
+};
+const toneColor: Record<Tone, string> = {
+  blue: "#2f5bea",
+  green: "#17a06b",
+  amber: "#e8920f",
+  gray: "#8a93a8",
+  red: "#e0453a",
+};
+const HOME_THETA = 0.72;
+const HOME_PHI = 0.9;
+const wrapAngle = (a: number) => Math.atan2(Math.sin(a), Math.cos(a));
+const reducedMotion = () =>
+  typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
 const cargoPartGeometry = new BoxGeometry(1, 1, 1);
 const cartonGeometry = new RoundedBoxGeometry(0.41, 0.3, 0.31, 2, 0.012);
 
@@ -29,24 +92,13 @@ function CargoPart({ size, position, color }: { size: [number, number, number]; 
   return <mesh geometry={cargoPartGeometry} scale={size} position={position} castShadow receiveShadow><meshStandardMaterial color={color} roughness={0.65} /></mesh>;
 }
 
-type Props = {
-  scene: Scene;
-  snapshot: Snapshot | null;
-  selection: Selection | null;
-  onSelect: (s: Selection) => void;
-  showZones: boolean;
-  showParking: boolean;
-  showRoutes: boolean;
-  showInventory: boolean;
-  viewRequest: { version: number; focus: boolean };
-};
 function SoftBox({
   size,
   position,
   color,
   radius = 0.12,
-  roughness = 0.4,
-  metalness = 0.08,
+  roughness = 0.45,
+  metalness = 0.05,
 }: {
   size: [number, number, number];
   position: [number, number, number];
@@ -65,115 +117,232 @@ function SoftBox({
       castShadow
       receiveShadow
     >
-      <meshPhysicalMaterial
-        color={color}
-        roughness={roughness}
-        metalness={metalness}
-        clearcoat={0.24}
-        clearcoatRoughness={0.4}
-      />
+      <meshPhysicalMaterial color={color} roughness={roughness} metalness={metalness} clearcoat={0.18} clearcoatRoughness={0.45} />
     </RoundedBox>
   );
 }
-function MapLabel({
-  text,
+
+/** Screen-space status tag that follows a 3D anchor; list rows carry the accessible copy. */
+function Tag({
   position,
+  title,
+  note,
+  tone = "gray",
   selected = false,
-  accent = "#43799c",
+  small = false,
 }: {
-  text: string;
   position: [number, number, number];
+  title: string;
+  note?: string;
+  tone?: Tone;
   selected?: boolean;
-  accent?: string;
+  small?: boolean;
 }) {
-  const texture = useMemo(() => {
-    const canvas = document.createElement("canvas");
-    canvas.width = 512;
-    canvas.height = 128;
-    const context = canvas.getContext("2d");
-    if (context) {
-      context.shadowColor = "#203e6426";
-      context.shadowBlur = 9;
-      context.shadowOffsetY = 4;
-      context.fillStyle = selected ? "#2866e5" : "#ffffff";
-      context.beginPath();
-      context.roundRect(8, 12, 496, 104, 32);
-      context.fill();
-      context.shadowBlur = 0;
-      context.shadowOffsetY = 0;
-      context.strokeStyle = selected ? "#2866e5" : "#d3dfec";
-      context.lineWidth = 2;
-      context.stroke();
-      context.fillStyle = selected ? "#ffffff" : accent;
-      context.beginPath();
-      context.roundRect(24, 32, 9, 64, 4);
-      context.fill();
-      context.fillStyle = selected ? "#ffffff" : "#254b72";
-      context.font = '600 42px Arial, "Malgun Gothic", sans-serif';
-      context.textAlign = "center";
-      context.textBaseline = "middle";
-      context.fillText(text, 256, 66, 470);
-    }
-    const result = new CanvasTexture(canvas);
-    result.colorSpace = SRGBColorSpace;
-    return result;
-  }, [text, selected, accent]);
-  useEffect(() => () => texture.dispose(), [texture]);
   return (
-    <sprite position={position} scale={[2.7, 0.675, 1]} renderOrder={10}>
-      <spriteMaterial
-        map={texture}
-        transparent
-        depthTest={false}
-        depthWrite={false}
-        toneMapped={false}
-      />
-    </sprite>
+    <Html position={position} center zIndexRange={[8, 0]} style={{ pointerEvents: "none" }}>
+      <div aria-hidden="true" className={`map-tag tone-${tone}${selected ? " is-selected" : ""}${small ? " is-small" : ""}`}>
+        <i />
+        <strong>{title}</strong>
+        {note && <span>{note}</span>}
+      </div>
+    </Html>
   );
 }
-function Camera({ cx, cy, width, depth, focused }: { cx: number; cy: number; width: number; depth: number; focused: boolean }) {
-  const { size } = useThree();
+
+function SelectionBox({ size, y }: { size: [number, number, number]; y: number }) {
   return (
-    <>
-      <OrthographicCamera
-        makeDefault
-        position={[cx + 27, 32, -cy + 32]}
-        zoom={Math.min(size.width / ((width + depth) * 0.81), (size.height - 105) / ((width + depth) * 0.46)) * 1.08 * (focused ? 3.2 : 1)}
-        near={0.1}
-        far={200}
-      />
-      <OrbitControls
-        target={[cx, 0, -cy]}
-        minZoom={4}
-        maxZoom={90}
-        maxPolarAngle={Math.PI / 2.3}
-        minPolarAngle={0.2}
-        enableDamping={false}
-      />
-    </>
-  );
-}
-function FloorRect({
-  rect,
-  color,
-  y = 0,
-}: {
-  rect: Rect;
-  color: string;
-  y?: number;
-}) {
-  const [a, b, c, d] = rect;
-  return (
-    <mesh
-      rotation={[-Math.PI / 2, 0, 0]}
-      position={[(a + c) / 2, y, -(b + d) / 2]}
-      receiveShadow
-    >
-      <planeGeometry args={[c - a, d - b]} />
-      <meshStandardMaterial color={color} roughness={0.82} />
+    <mesh position={[0, y, 0]} raycast={() => null}>
+      <boxGeometry args={size} />
+      <meshBasicMaterial color={palette.select} transparent opacity={0.08} depthWrite={false} />
+      <Edges color={palette.select} lineWidth={1.6} />
     </mesh>
   );
 }
+
+function Pin({ x, y, scale = 1 }: { x: number; y: number; scale?: number }) {
+  return (
+    <group position={[x, 0, -y]} scale={scale}>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.035, 0]} raycast={() => null}>
+        <ringGeometry args={[0.55, 0.7, 48]} />
+        <meshBasicMaterial color={palette.accent} transparent opacity={0.6} depthWrite={false} />
+      </mesh>
+      <mesh position={[0, 1.95, 0]} rotation={[Math.PI, 0, 0]} castShadow raycast={() => null}>
+        <coneGeometry args={[0.31, 0.78, 32]} />
+        <meshStandardMaterial color={palette.accent} roughness={0.35} />
+      </mesh>
+      <mesh position={[0, 2.42, 0]} castShadow raycast={() => null}>
+        <sphereGeometry args={[0.38, 32, 16]} />
+        <meshStandardMaterial color={palette.accent} roughness={0.35} />
+      </mesh>
+      <Billboard position={[0, 2.44, 0]}>
+        <mesh position={[0, 0, 0.385]} raycast={() => null}>
+          <circleGeometry args={[0.15, 24]} />
+          <meshBasicMaterial color="#ffffff" />
+        </mesh>
+      </Billboard>
+    </group>
+  );
+}
+
+function CameraRig({
+  scene,
+  snapshot,
+  insets,
+  apiRef,
+}: {
+  scene: Scene;
+  snapshot: Snapshot | null;
+  insets: Insets;
+  apiRef: MutableRefObject<CameraApi | null>;
+}) {
+  const camera = useThree((s) => s.camera) as PerspectiveCamera;
+  const controls = useThree((s) => s.controls) as OrbitControlsImpl | null;
+  const size = useThree((s) => s.size);
+  const invalidate = useThree((s) => s.invalidate);
+  const goal = useRef<{ target: Vector3; radius: number; theta: number; phi: number } | null>(null);
+  const moved = useRef(false);
+  const snapshotRef = useRef(snapshot);
+  snapshotRef.current = snapshot;
+  const [a, b, c, d] = scene.bounds_xy;
+
+  const home = useCallback(() => {
+    const w = c - a;
+    const h = d - b;
+    const freeW = Math.max(260, size.width - insets.left - insets.right) / size.width;
+    const freeH = Math.max(220, size.height - insets.top - insets.bottom) / size.height;
+    const tanV = Math.tan((camera.fov * Math.PI) / 360);
+    const tanH = tanV * (size.width / Math.max(1, size.height));
+    const ex = w * Math.abs(Math.cos(HOME_THETA)) + h * Math.abs(Math.sin(HOME_THETA));
+    const ey = (w * Math.abs(Math.sin(HOME_THETA)) + h * Math.abs(Math.cos(HOME_THETA))) * Math.cos(HOME_PHI) + 3 * Math.sin(HOME_PHI);
+    // With floating side panels the far corners may run under them; a stacked layout shows the whole floor.
+    const radius = Math.max(ex / (2 * tanH * freeW), ey / (2 * tanV * freeH)) * (insets.right > 0 ? 0.84 : 1.02);
+    return { target: new Vector3((a + c) / 2, 0, -(b + d) / 2), radius, theta: HOME_THETA, phi: HOME_PHI };
+  }, [a, b, c, d, camera.fov, size.width, size.height, insets.left, insets.right, insets.top, insets.bottom]);
+
+  const current = useCallback(() => {
+    if (goal.current) return { ...goal.current, target: goal.current.target.clone() };
+    const target = controls ? controls.target.clone() : new Vector3();
+    const s = new Spherical().setFromVector3(camera.position.clone().sub(target));
+    return { target, radius: s.radius, theta: s.theta, phi: s.phi };
+  }, [camera, controls]);
+
+  const place = useCallback(
+    (g: { target: Vector3; radius: number; theta: number; phi: number }) => {
+      if (!controls) return;
+      controls.target.copy(g.target);
+      camera.position.copy(g.target).add(new Vector3().setFromSpherical(new Spherical(g.radius, g.phi, g.theta)));
+      camera.lookAt(g.target);
+      controls.update();
+      invalidate();
+    },
+    [camera, controls, invalidate],
+  );
+
+  const animate = useCallback(
+    (g: { target: Vector3; radius: number; theta: number; phi: number }) => {
+      if (reducedMotion()) {
+        goal.current = null;
+        place(g);
+      } else {
+        goal.current = g;
+        invalidate();
+      }
+    },
+    [invalidate, place],
+  );
+
+  useLayoutEffect(() => {
+    camera.setViewOffset(
+      size.width,
+      size.height,
+      (insets.right - insets.left) / 2,
+      (insets.bottom - insets.top) / 2,
+      size.width,
+      size.height,
+    );
+    camera.updateProjectionMatrix();
+    invalidate();
+  }, [camera, size.width, size.height, insets.top, insets.right, insets.bottom, insets.left, invalidate]);
+
+  useEffect(() => {
+    if (!controls) return;
+    if (!moved.current) place(home());
+    const stop = () => {
+      moved.current = true;
+      goal.current = null;
+    };
+    controls.addEventListener("start", stop);
+    return () => controls.removeEventListener("start", stop);
+  }, [controls, home, place]);
+
+  useEffect(() => {
+    apiRef.current = {
+      zoom: (factor) => {
+        const now = current();
+        moved.current = true;
+        animate({ ...now, radius: Math.min(home().radius * 1.8, Math.max(5, now.radius * factor)) });
+      },
+      rotate: (radians) => {
+        const now = current();
+        moved.current = true;
+        animate({ ...now, theta: now.theta + radians });
+      },
+      home: () => {
+        moved.current = false;
+        animate(home());
+      },
+      focusOn: (selection) => {
+        const point = selectionPoint(scene, snapshotRef.current, selection);
+        if (!point) return false;
+        const now = current();
+        moved.current = true;
+        animate({
+          target: new Vector3(point[0], 0.5, -point[1]),
+          radius: Math.max(9, Math.min(now.radius, home().radius * 0.42)),
+          theta: now.theta,
+          phi: Math.min(now.phi, 0.98),
+        });
+        return true;
+      },
+    };
+    return () => {
+      apiRef.current = null;
+    };
+  }, [apiRef, animate, current, home, scene]);
+
+  useFrame((_, delta) => {
+    const g = goal.current;
+    if (!g || !controls) return;
+    const k = 1 - Math.exp(-Math.min(delta, 0.1) * 5.5);
+    const s = new Spherical().setFromVector3(camera.position.clone().sub(controls.target));
+    controls.target.lerp(g.target, k);
+    s.radius += (g.radius - s.radius) * k;
+    s.theta += wrapAngle(g.theta - s.theta) * k;
+    s.phi += (g.phi - s.phi) * k;
+    camera.position.copy(controls.target).add(new Vector3().setFromSpherical(s));
+    camera.lookAt(controls.target);
+    const settled =
+      controls.target.distanceTo(g.target) < 0.01 &&
+      Math.abs(g.radius - s.radius) < 0.02 &&
+      Math.abs(wrapAngle(g.theta - s.theta)) < 0.001 &&
+      Math.abs(g.phi - s.phi) < 0.001;
+    if (settled) goal.current = null;
+    controls.update();
+    invalidate();
+  });
+  return null;
+}
+
+function FloorRect({ rect, color, y = 0, onClick }: { rect: Rect; color: string; y?: number; onClick?: (e: ThreeEvent<MouseEvent>) => void }) {
+  const [a, b, c, d] = rect;
+  return (
+    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[(a + c) / 2, y, -(b + d) / 2]} receiveShadow onClick={onClick}>
+      <planeGeometry args={[c - a, d - b]} />
+      <meshStandardMaterial color={color} roughness={0.9} />
+    </mesh>
+  );
+}
+
 function WorkAreaMark({ rect }: { rect: Rect }) {
   const [a, b, c, d] = rect;
   const inset = 0.06;
@@ -185,23 +354,22 @@ function WorkAreaMark({ rect }: { rect: Rect }) {
         [c - inset, b + inset, -1, 1],
         [a + inset, d - inset, 1, -1],
         [c - inset, d - inset, -1, -1],
-      ].map(([x, y, dx, dy], i) => {
-        return (
-          <Line
-            key={i}
-            points={[
-              [x + dx * length, 0.035, -y],
-              [x, 0.035, -y],
-              [x, 0.035, -(y + dy * length)],
-            ]}
-            color="#daa32a"
-            lineWidth={2.2}
-          />
-        );
-      })}
+      ].map(([x, y, dx, dy], i) => (
+        <Line
+          key={i}
+          points={[
+            [x + dx * length, 0.035, -y],
+            [x, 0.035, -y],
+            [x, 0.035, -(y + dy * length)],
+          ]}
+          color="#e7ad2f"
+          lineWidth={2.2}
+        />
+      ))}
     </>
   );
 }
+
 const ToteShape = memo(function ToteShape({ color }: { color: string }) {
   return (
     <>
@@ -211,47 +379,56 @@ const ToteShape = memo(function ToteShape({ color }: { color: string }) {
         <CargoPart size={[0.035, 0.42, 0.45]} position={[side * 0.3, 0.015, 0]} color={color} />
         <CargoPart size={[0.68, 0.055, 0.05]} position={[0, 0.235, side * 0.25]} color={color} />
         <CargoPart size={[0.05, 0.055, 0.49]} position={[side * 0.32, 0.235, 0]} color={color} />
-        <CargoPart size={[0.21, 0.05, 0.01]} position={[0, 0.14, side * 0.252]} color="#203d49" />
+        <CargoPart size={[0.21, 0.05, 0.01]} position={[0, 0.14, side * 0.252]} color="#1d2a55" />
         {[-0.23, -0.1, 0.1, 0.23].map((x) => <CargoPart key={x} size={[0.02, 0.26, 0.018]} position={[x, -0.03, side * 0.252]} color={color} />)}
       </group>)}
-      <CargoPart size={[0.54, 0.015, 0.39]} position={[0, -0.16, 0]} color="#34515a" />
+      <CargoPart size={[0.54, 0.015, 0.39]} position={[0, -0.16, 0]} color="#22306a" />
     </>
   );
 });
+
 const Carton = memo(function Carton({ label, selected, variant = 0 }: { label: Texture; selected: boolean; variant?: number }) {
-  const color = selected ? "#71a1d9" : ["#bd955f", "#ccaa76", "#ad8557", "#d5b789"][variant % 4];
+  const color = selected ? "#7d9cf5" : ["#c99a5f", "#d6ad73", "#b98a55", "#ddb983"][variant % 4];
   return <>
     <mesh geometry={cartonGeometry} castShadow receiveShadow><meshStandardMaterial color={color} roughness={0.9} /></mesh>
     <mesh position={[0, 0.152, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-      <planeGeometry args={[0.045, 0.3]} /><meshStandardMaterial color="#e3c89c" roughness={0.75} />
+      <planeGeometry args={[0.045, 0.3]} /><meshStandardMaterial color="#ead2a6" roughness={0.75} />
     </mesh>
     <mesh position={[0.08, -0.005, 0.157]}>
       <planeGeometry args={[0.18, 0.105]} /><meshBasicMaterial map={label} toneMapped={false} />
     </mesh>
-    <mesh position={[-0.1, 0.06, 0.157]}>
-      <planeGeometry args={[0.04, 0.05]} /><meshStandardMaterial color="#526d7b" roughness={0.85} />
-    </mesh>
   </>;
 });
+
+type HoverHandlers = {
+  onOver: (key: string) => void;
+  onOut: (key: string) => void;
+};
+
 const Equipment = memo(function Equipment({
   item,
   selected,
+  hovered,
   onSelect,
+  hover,
 }: {
   item: Scene["physical_obstacles"][number];
   selected: boolean;
+  hovered: boolean;
   onSelect: (s: Selection) => void;
+  hover: HoverHandlers;
 }) {
   const [a, b, c, d] = item.rect,
     w = c - a,
     z = d - b,
     h = item.height_m;
+  const key = `equipment:${item.id}`;
   const rack = item.id.startsWith("RACK"),
     machine = item.id.startsWith("PROCESS"),
     fg = item.id.startsWith("FG"),
     bench = item.id.startsWith("BENCH") || item.id.startsWith("KIT");
-  const trim = item.id === "PROCESS_2" ? "#38749b" : item.id === "PROCESS_3" ? "#cc9137" : "#157e7d";
-  const frame = selected ? "#2563eb" : "#354f63";
+  const trim = item.id === "PROCESS_2" ? "#119c88" : item.id === "PROCESS_3" ? "#f29b2f" : palette.accent;
+  const frame = selected ? "#1d3fb8" : palette.accent;
   const surface = h > 1.3 ? h * 0.56 : h - 0.12;
   return (
     <group
@@ -260,506 +437,447 @@ const Equipment = memo(function Equipment({
         e.stopPropagation();
         onSelect({ kind: "equipment", id: item.id });
       }}
+      onPointerOver={(e) => {
+        e.stopPropagation();
+        hover.onOver(key);
+      }}
+      onPointerOut={() => hover.onOut(key)}
     >
       {rack ? (
         <>
           {[-w / 2 + 0.06, w / 2 - 0.06].flatMap((x) =>
             [-z / 2 + 0.06, z / 2 - 0.06].map((v) => (
-              <SoftBox
-                key={`${x}-${v}`}
-                size={[0.1, h, 0.1]}
-                position={[x, h / 2, v]}
-                color={frame}
-                radius={0.035}
-                metalness={0.45}
-              />
+              <SoftBox key={`${x}-${v}`} size={[0.1, h, 0.1]} position={[x, h / 2, v]} color={frame} radius={0.035} metalness={0.3} />
             )),
           )}
           {[0.18, h * 0.41, h * 0.73, h - 0.06].map((y) => (
             <group key={y}>
-              <SoftBox size={[w - 0.12, 0.055, z - 0.08]} position={[0, y, 0]} color="#b6c4c9" radius={0.02} metalness={0.5} />
+              <SoftBox size={[w - 0.12, 0.055, z - 0.08]} position={[0, y, 0]} color="#d5dbe8" radius={0.02} metalness={0.3} />
               {[-1, 1].map((side) => (
-                <SoftBox key={side} size={[w, 0.1, 0.075]} position={[0, y - 0.03, side * (z / 2 - 0.04)]} color="#e4a135" radius={0.022} roughness={0.5} />
+                <SoftBox key={side} size={[w, 0.1, 0.075]} position={[0, y - 0.03, side * (z / 2 - 0.04)]} color="#f29b2f" radius={0.022} roughness={0.5} />
               ))}
             </group>
-          ))}
-          {[-1, 1].map((side) => (
-            <Line key={side} points={[[side * (w / 2 - 0.04), 0.25, -z / 2 + 0.08], [side * (w / 2 - 0.04), h - 0.15, z / 2 - 0.08]]} color="#78909e" lineWidth={1.6} />
           ))}
         </>
       ) : bench ? (
         <>
-          <SoftBox
-            size={[w, 0.2, z]}
-            position={[0, surface - 0.1, 0]}
-            radius={0.09}
-            color={selected ? "#547fc2" : "#376c69"}
-          />
-          <SoftBox
-            size={[w * 0.93, 0.07, z * 0.91]}
-            position={[0, surface - 0.22, 0]}
-            radius={0.03}
-            color="#e4e9e4"
-          />
+          <SoftBox size={[w, 0.2, z]} position={[0, surface - 0.1, 0]} radius={0.09} color={selected ? "#dbe5ff" : "#f7f8fc"} />
+          <SoftBox size={[w * 0.93, 0.07, z * 0.91]} position={[0, surface - 0.22, 0]} radius={0.03} color="#e3e7f0" />
           {[-w / 2 + 0.16, w / 2 - 0.16].flatMap((x) =>
             [-z / 2 + 0.12, z / 2 - 0.12].map((v) => (
-              <SoftBox
-                key={`${x}-${v}`}
-                size={[0.15, surface - 0.2, 0.15]}
-                position={[x, (surface - 0.2) / 2, v]}
-                color={frame}
-                radius={0.045}
-                metalness={0.4}
-              />
+              <SoftBox key={`${x}-${v}`} size={[0.15, surface - 0.2, 0.15]} position={[x, (surface - 0.2) / 2, v]} color={palette.steel} radius={0.045} metalness={0.3} />
             )),
           )}
-          {h > 1.3 && (
-            <SoftBox
-              size={[w * 0.75, h * 0.36, 0.12]}
-              position={[0, h * 0.79, -z * 0.36]}
-              color="#b2c5c5"
-              radius={0.05}
-            />
-          )}
-          <SoftBox size={[w * 0.28, 0.07, z * 0.34]} position={[-w * 0.24, surface + 0.025, 0]} color="#cad3d2" radius={0.025} metalness={0.6} />
-          <SoftBox size={[w * 0.14, 0.09, z * 0.2]} position={[w * 0.27, surface + 0.035, 0]} color="#344e5b" radius={0.025} />
+          {h > 1.3 && <SoftBox size={[w * 0.75, h * 0.36, 0.12]} position={[0, h * 0.79, -z * 0.36]} color="#cfd7ea" radius={0.05} />}
+          <SoftBox size={[w * 0.28, 0.07, z * 0.34]} position={[-w * 0.24, surface + 0.025, 0]} color="#c8d0e0" radius={0.025} metalness={0.5} />
+          <SoftBox size={[w * 0.14, 0.09, z * 0.2]} position={[w * 0.27, surface + 0.035, 0]} color={palette.accent} radius={0.025} />
         </>
       ) : fg ? (
         <>
-          <SoftBox size={[w, 0.18, z]} position={[0, h * 0.55, 0]} color={frame} radius={0.06} metalness={0.4} />
+          <SoftBox size={[w, 0.18, z]} position={[0, h * 0.55, 0]} color={selected ? "#1d3fb8" : palette.steel} radius={0.06} metalness={0.3} />
           {[-1, 1].map((side) => (
             <group key={side}>
-              <SoftBox size={[w, 0.13, 0.1]} position={[0, h * 0.76, side * (z / 2 - 0.07)]} color="#b0c4c9" radius={0.035} metalness={0.6} />
+              <SoftBox size={[w, 0.13, 0.1]} position={[0, h * 0.76, side * (z / 2 - 0.07)]} color={palette.accent} radius={0.035} />
               {[-w / 2 + 0.18, w / 2 - 0.18].map((x) => (
-                <SoftBox key={x} size={[0.18, h * 0.55, 0.18]} position={[x, h * 0.275, side * (z / 2 - 0.18)]} color="#4c6574" radius={0.04} />
+                <SoftBox key={x} size={[0.18, h * 0.55, 0.18]} position={[x, h * 0.275, side * (z / 2 - 0.18)]} color={palette.steel} radius={0.04} />
               ))}
             </group>
           ))}
           {Array.from({ length: Math.max(3, Math.floor(w / 0.3)) }, (_, i) => (
             <mesh key={i} position={[-w / 2 + 0.2 + i * (w - 0.4) / Math.max(2, Math.floor(w / 0.3) - 1), h * 0.65, 0]} rotation={[Math.PI / 2, 0, 0]} castShadow>
               <cylinderGeometry args={[0.075, 0.075, z - 0.3, 12]} />
-              <meshStandardMaterial color="#b8c9ce" metalness={0.65} roughness={0.32} />
+              <meshStandardMaterial color="#c9d0dd" metalness={0.55} roughness={0.32} />
             </mesh>
           ))}
-          <SoftBox size={[w * 0.22, 0.13, 0.08]} position={[w * 0.27, h * 0.54, z / 2 - 0.025]} color="#c89439" radius={0.025} />
         </>
       ) : (
         <>
-          <SoftBox
-            size={[w, h - 0.2, z]}
-            position={[0, h / 2 - 0.02, 0]}
-            color={
-              selected
-                ? "#b7cce9"
-                : "#e0e6e2"
-            }
-            radius={machine ? 0.14 : 0.09}
-            roughness={0.44}
-          />
-          <SoftBox
-            size={[w * 0.91, 0.15, z * 0.89]}
-            position={[0, 0.075, 0]}
-            color="#3d5362"
-            radius={0.065}
-            metalness={0.25}
-          />
-          <SoftBox
-            size={[w * 0.98, 0.2, z * 0.98]}
-            position={[0, h - 0.1, 0]}
-            color={machine ? trim : "#496b7b"}
-            radius={0.065}
-          />
+          <SoftBox size={[w, h - 0.2, z]} position={[0, h / 2 - 0.02, 0]} color={selected ? "#dbe5ff" : "#f6f7fb"} radius={machine ? 0.14 : 0.09} roughness={0.5} />
+          <SoftBox size={[w * 0.91, 0.15, z * 0.89]} position={[0, 0.075, 0]} color={palette.steel} radius={0.065} metalness={0.2} />
+          <SoftBox size={[w * 0.98, 0.2, z * 0.98]} position={[0, h - 0.1, 0]} color={machine ? trim : "#9aa6c0"} radius={0.065} />
           {machine && (
             <>
-              <SoftBox
-                size={[w * 0.69, h * 0.56, 0.1]}
-                position={[-w * 0.09, h * 0.55, z / 2 - 0.055]}
-                color="#637d85"
-                radius={0.045}
-              />
-              <SoftBox
-                size={[w * 0.61, h * 0.48, 0.055]}
-                position={[-w * 0.09, h * 0.55, z / 2 - 0.025]}
-                color="#233e49"
-                radius={0.046}
-                roughness={0.16}
-                metalness={0.42}
-              />
-              <SoftBox
-                size={[w * 0.5, 0.055, 0.045]}
-                position={[-w * 0.09, h * 0.46, z / 2 - 0.013]}
-                color="#8babb3"
-                radius={0.024}
-              />
-              <SoftBox
-                size={[w * 0.76, 0.08, 0.06]}
-                position={[0, h * 0.2, z / 2 - 0.025]}
-                color={trim}
-                radius={0.025}
-              />
-              <SoftBox
-                size={[w * 0.13, h * 0.2, 0.055]}
-                position={[w * 0.35, h * 0.66, z / 2 - 0.025]}
-                color="#243f50"
-                radius={0.035}
-              />
-              <SoftBox size={[w * 0.09, h * 0.11, 0.018]} position={[w * 0.35, h * 0.68, z / 2 - 0.015]} color="#7aa7b6" radius={0.015} />
-              <SoftBox size={[0.08, h * 0.25, 0.045]} position={[w * 0.23, h * 0.52, z / 2 - 0.025]} color="#b0c0c2" radius={0.025} metalness={0.7} />
+              <SoftBox size={[w * 0.69, h * 0.56, 0.1]} position={[-w * 0.09, h * 0.55, z / 2 - 0.055]} color="#c9d1e3" radius={0.045} />
+              <SoftBox size={[w * 0.61, h * 0.48, 0.055]} position={[-w * 0.09, h * 0.55, z / 2 - 0.025]} color="#1f2a44" radius={0.046} roughness={0.16} metalness={0.4} />
+              <SoftBox size={[w * 0.76, 0.08, 0.06]} position={[0, h * 0.2, z / 2 - 0.025]} color={trim} radius={0.025} />
+              <SoftBox size={[w * 0.13, h * 0.2, 0.055]} position={[w * 0.35, h * 0.66, z / 2 - 0.025]} color="#1f2a44" radius={0.035} />
+              <SoftBox size={[w * 0.09, h * 0.11, 0.018]} position={[w * 0.35, h * 0.68, z / 2 - 0.015]} color="#7fa2ff" radius={0.015} />
               {[-0.42, 0.42].map((x) => (
-                <SoftBox key={x} size={[0.14, h * 0.18, 0.1]} position={[w * x, h * 0.15, z / 2 - 0.055]} color="#dca632" radius={0.035} />
+                <SoftBox key={x} size={[0.14, h * 0.18, 0.1]} position={[w * x, h * 0.15, z / 2 - 0.055]} color="#f2b02f" radius={0.035} />
               ))}
             </>
           )}
-          {!machine && (
-            <>
-              {[-0.25, 0.25].map((x) => (
-                <group key={x}>
-                  <SoftBox size={[w * 0.46, h * 0.72, 0.04]} position={[w * x, h * 0.5, z / 2 - 0.03]} color="#c3d0cd" radius={0.04} metalness={0.22} />
-                  <SoftBox size={[0.045, h * 0.18, 0.055]} position={[w * (x + 0.14), h * 0.56, z / 2 - 0.03]} color="#415c65" radius={0.015} />
-                  {[0.23, 0.28, 0.33].map((y) => (
-                    <SoftBox key={y} size={[w * 0.25, 0.028, 0.025]} position={[w * x, h * y, z / 2 - 0.02]} color="#6f8b94" radius={0.008} />
-                  ))}
-                </group>
-              ))}
-            </>
-          )}
+          {!machine && [-0.25, 0.25].map((x) => (
+            <group key={x}>
+              <SoftBox size={[w * 0.46, h * 0.72, 0.04]} position={[w * x, h * 0.5, z / 2 - 0.03]} color="#e4e8f1" radius={0.04} />
+              <SoftBox size={[0.045, h * 0.18, 0.055]} position={[w * (x + 0.14), h * 0.56, z / 2 - 0.03]} color={palette.steel} radius={0.015} />
+            </group>
+          ))}
         </>
       )}
-      {selected && (
-        <>
-          <Line points={[[-w / 2, 0.055, -z / 2], [w / 2, 0.055, -z / 2], [w / 2, 0.055, z / 2], [-w / 2, 0.055, z / 2], [-w / 2, 0.055, -z / 2]]} color="#2563eb" lineWidth={2.5} />
-          <MapLabel position={[0, h + 0.5, 0]} text={item.id} selected />
-        </>
-      )}
+      {selected && <SelectionBox size={[w + 0.3, h + 0.3, z + 0.3]} y={(h + 0.3) / 2} />}
+      {(selected || hovered) && <Tag position={[0, h + 0.55, 0]} title={equipmentLabel(item)} note={item.id} selected={selected} tone="blue" />}
     </group>
   );
 });
-export default memo(function FactoryScene({
-  scene,
-  snapshot,
-  selection,
+
+const RobotUnit = memo(function RobotUnit({
+  robot,
+  selected,
   onSelect,
-  showZones,
-  showParking,
-  showRoutes,
-  showInventory,
-  viewRequest,
-}: Props) {
+  hover,
+  label,
+}: {
+  robot: Robot;
+  selected: boolean;
+  onSelect: (s: Selection) => void;
+  hover: HoverHandlers;
+  label: Texture;
+}) {
+  const group = useRef<Group>(null);
+  const invalidate = useThree((s) => s.invalidate);
+  const motion = useRef({ from: new Vector3(), to: new Vector3(), yawFrom: 0, yawTo: 0, t: 1, placed: false });
+  const pose = robot.pose!;
+  const state = robotState(robot);
+  const tone = toneOf(state);
+  const key = `robot:${robot.id}`;
+
+  useLayoutEffect(() => {
+    const g = group.current;
+    if (!g) return;
+    const m = motion.current;
+    const to = new Vector3(pose.x_m, 0.05, -pose.y_m);
+    m.from.copy(g.position);
+    m.yawFrom = g.rotation.y;
+    m.to.copy(to);
+    m.yawTo = pose.yaw_rad;
+    // Short observed hops are tweened between polls; long jumps and reduced motion snap.
+    if (!m.placed || m.from.distanceTo(to) > 4 || reducedMotion()) {
+      g.position.copy(to);
+      g.rotation.y = pose.yaw_rad;
+      m.t = 1;
+      m.placed = true;
+    } else {
+      m.t = 0;
+    }
+    invalidate();
+  }, [pose.x_m, pose.y_m, pose.yaw_rad, invalidate]);
+
+  useFrame((_, delta) => {
+    const g = group.current;
+    const m = motion.current;
+    if (!g || m.t >= 1) return;
+    m.t = Math.min(1, m.t + Math.min(delta, 0.1) / 1.35);
+    g.position.lerpVectors(m.from, m.to, m.t);
+    g.rotation.y = m.yawFrom + wrapAngle(m.yawTo - m.yawFrom) * Math.min(1, m.t * 2.5);
+    invalidate();
+  });
+
+  return (
+    <group
+      ref={group}
+      onClick={(e) => {
+        e.stopPropagation();
+        onSelect({ kind: "robot", id: robot.id });
+      }}
+      onPointerOver={(e) => {
+        e.stopPropagation();
+        hover.onOver(key);
+      }}
+      onPointerOut={() => hover.onOut(key)}
+    >
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.012, 0]} raycast={() => null}>
+        <ringGeometry args={[0.84, selected ? 1.04 : 0.95, 48]} />
+        <meshBasicMaterial color={selected ? palette.select : tone === "gray" ? "#b9c2da" : toneColor[tone]} />
+      </mesh>
+      <SoftBox size={[1.08, 0.18, 0.8]} position={[0, 0.13, 0]} color="#262d40" radius={0.08} roughness={0.6} />
+      <SoftBox size={[1.14, 0.38, 0.86]} position={[0, 0.36, 0]} color={palette.amr} radius={0.17} roughness={0.35} />
+      <SoftBox size={[0.96, 0.08, 0.74]} position={[0, 0.58, 0]} color="#ffffff" radius={0.04} roughness={0.4} />
+      <SoftBox size={[0.07, 0.09, 0.5]} position={[0.56, 0.34, 0]} color="#262d40" radius={0.03} />
+      <mesh position={[-0.52, 0.42, 0]}>
+        <boxGeometry args={[0.05, 0.08, 0.36]} />
+        <meshBasicMaterial color={toneColor[tone]} toneMapped={false} />
+      </mesh>
+      {[-0.42, 0.42].flatMap((x) =>
+        [-0.37, 0.37].map((z) => (
+          <mesh key={`${x}-${z}`} position={[x, 0.14, z]} rotation={[Math.PI / 2, 0, 0]} castShadow>
+            <cylinderGeometry args={[0.13, 0.13, 0.1, 20]} />
+            <meshStandardMaterial color="#1c2232" roughness={0.75} />
+          </mesh>
+        )),
+      )}
+      <mesh position={[0.32, 0.7, 0]} castShadow>
+        <cylinderGeometry args={[0.11, 0.13, 0.16, 24]} />
+        <meshStandardMaterial color="#262d40" roughness={0.3} />
+      </mesh>
+      {robot.payload_id && (
+        <group position={[-0.08, 0.86, 0]}>
+          {robot.payload_id.startsWith("LOT") ? <group scale={1.9}><Carton label={label} selected={false} /></group> : <ToteShape color="#3d68ee" />}
+        </group>
+      )}
+      {selected && <SelectionBox size={[1.55, 1.5, 1.25]} y={0.75} />}
+      <Tag
+        position={[0, robot.payload_id ? 1.85 : 1.35, 0]}
+        title={robot.label}
+        note={readable(state)}
+        tone={tone}
+        selected={selected}
+      />
+    </group>
+  );
+});
+
+function Walls({ bounds }: { bounds: Rect }) {
+  const [a, b, c, d] = bounds;
+  const t = 0.28;
+  const h = 0.72;
+  const w = c - a;
+  const depth = d - b;
+  const segments: { size: [number, number, number]; position: [number, number, number] }[] = [
+    { size: [w + 2 * t, h, t], position: [(a + c) / 2, h / 2, -b + t / 2] },
+    { size: [w + 2 * t, h, t], position: [(a + c) / 2, h / 2, -d - t / 2] },
+    { size: [t, h, depth], position: [a - t / 2, h / 2, -(b + d) / 2] },
+    { size: [t, h, depth], position: [c + t / 2, h / 2, -(b + d) / 2] },
+  ];
+  return (
+    <>
+      {segments.map((s, i) => (
+        <group key={i}>
+          <SoftBox size={s.size} position={s.position} color={palette.wall} radius={0.06} roughness={0.6} />
+          <SoftBox
+            size={[s.size[0] + 0.02, 0.09, s.size[2] + 0.02]}
+            position={[s.position[0], h + 0.02, s.position[2]]}
+            color={palette.accent}
+            radius={0.03}
+          />
+        </group>
+      ))}
+    </>
+  );
+}
+
+export default memo(function FactoryScene({ scene, snapshot, selection, onSelect, layers, insets, cameraRef }: Props) {
   const [a, b, c, d] = scene.bounds_xy,
     cx = (a + c) / 2,
     cy = (b + d) / 2;
   const inventory = useMemo(() => inventoryDisplay(scene, snapshot), [scene, snapshot]);
-  let focusX = cx, focusY = cy;
-  if (viewRequest.focus && selection) {
-    if (selection.kind === "robot") {
-      const pose = snapshot?.robots.find((r) => r.id === selection.id)?.pose;
-      if (pose) { focusX = pose.x_m; focusY = pose.y_m; }
-    } else if (selection.kind === "station") {
-      const xy = scene.stations.find((s) => s.id === selection.id)?.xy;
-      if (xy) [focusX, focusY] = xy;
-    } else if (selection.kind === "equipment") {
-      const rect = scene.physical_obstacles.find((e) => e.id === selection.id)?.rect;
-      if (rect) { focusX = (rect[0] + rect[2]) / 2; focusY = (rect[1] + rect[3]) / 2; }
-    } else {
-      const symbol = inventory.find((item) => item.kind === selection.kind && item.id === selection.id);
-      if (symbol) { focusX = symbol.position[0]; focusY = -symbol.position[2]; }
-    }
-  }
+  const [hovered, setHovered] = useState<string | null>(null);
+  useCursor(hovered !== null);
+  const hover = useMemo<HoverHandlers>(
+    () => ({ onOver: (key) => setHovered(key), onOut: (key) => setHovered((h) => (h === key ? null : h)) }),
+    [],
+  );
+  const select = useCallback((s: Selection) => onSelect(s), [onSelect]);
+  const clearOnClick = useCallback(
+    (e: ThreeEvent<MouseEvent>) => {
+      if (e.delta < 5) onSelect(null);
+    },
+    [onSelect],
+  );
+  const selectedRobot = selection?.kind === "robot" ? snapshot?.robots.find((r) => r.id === selection.id) : undefined;
+  const destination = selectedRobot?.destination ? scene.stations.find((s) => s.id === selectedRobot.destination) : undefined;
+  // Every station some robot is currently heading to gets a small pin; the selected robot's is large.
+  const activeDestinations = scene.stations.filter(
+    (s) => s.id !== destination?.id && snapshot?.robots.some((r) => r.task_id && r.destination === s.id),
+  );
   const packagingLabel = useMemo(() => {
     const canvas = document.createElement("canvas");
-    canvas.width = 128; canvas.height = 64;
+    canvas.width = 128;
+    canvas.height = 64;
     const ctx = canvas.getContext("2d");
     if (ctx) {
       ctx.fillStyle = "#f6f4e9"; ctx.fillRect(0, 0, 128, 64);
-      ctx.fillStyle = "#40525a"; ctx.font = "bold 14px Arial"; ctx.fillText("PARTS", 8, 19);
+      ctx.fillStyle = "#40525a"; ctx.font = "bold 14px Arial"; ctx.fillText("LOT", 8, 19);
       for (let i = 0; i < 30; i++) ctx.fillRect(8 + i * 3, 28, i % 3 === 0 ? 2 : 1, 23);
-      ctx.fillStyle = "#c2c5be"; ctx.fillRect(8, 57, 90, 2);
     }
-    const texture = new CanvasTexture(canvas); texture.colorSpace = SRGBColorSpace; return texture;
+    const texture = new CanvasTexture(canvas);
+    texture.colorSpace = SRGBColorSpace;
+    return texture;
   }, []);
   useEffect(() => () => packagingLabel.dispose(), [packagingLabel]);
   return (
     <Canvas
       aria-label={scene.traffic_lanes?.length ? "공장 관제 지도. 바닥 화살표는 지정된 차로 진행 방향입니다." : "공장 관제 지도"}
       shadows
-      dpr={[1, 1.6]}
+      dpr={[1, 1.75]}
       frameloop="demand"
-      gl={{ antialias: true, alpha: false, powerPreference: "default" }}
+      camera={{ fov: 30, near: 0.5, far: 700, position: [cx + 60, 50, -cy + 60] }}
+      gl={{ antialias: true, powerPreference: "high-performance" }}
       onCreated={({ gl }) => {
-        gl.setClearColor("#eaf0f4");
-        gl.toneMapping = ACESFilmicToneMapping;
+        gl.toneMapping = NeutralToneMapping;
         gl.toneMappingExposure = 1;
         gl.shadowMap.type = PCFSoftShadowMap;
       }}
-      fallback={
-        <div className="scene-fallback">
-          3D 표시를 사용할 수 없습니다. 아래 목록에서 상태를 확인하세요.
-        </div>
-      }
+      fallback={<div className="scene-fallback">3D 표시를 사용할 수 없습니다. 목록에서 상태를 확인하세요.</div>}
     >
-      <Camera key={viewRequest.version} cx={focusX} cy={focusY} width={c-a} depth={d-b} focused={viewRequest.focus} />
-      <ambientLight intensity={0.35} />
-      <hemisphereLight args={["#f4f8fa", "#889b9c", 0.55]} />
-      <Environment resolution={64} frames={1} environmentIntensity={0.25}>
-        <Lightformer
-          form="rect"
-          intensity={3}
-          color="#ffffff"
-          position={[0, 14, 0]}
-          rotation={[Math.PI / 2, 0, 0]}
-          scale={[24, 16, 1]}
-        />
-        <Lightformer
-          form="rect"
-          intensity={2}
-          color="#d9eaff"
-          position={[-16, 8, 5]}
-          rotation={[0, Math.PI / 2, 0]}
-          scale={[12, 14, 1]}
-        />
-        <Lightformer
-          form="rect"
-          intensity={1.5}
-          color="#ffffff"
-          position={[12, 6, -18]}
-          scale={[16, 10, 1]}
-        />
+      <color attach="background" args={[palette.ground]} />
+      <fog attach="fog" args={[palette.ground, 140, 340]} />
+      <OrbitControls
+        makeDefault
+        enableDamping
+        dampingFactor={0.12}
+        minDistance={5}
+        maxDistance={220}
+        minPolarAngle={0.3}
+        maxPolarAngle={1.3}
+      />
+      <CameraRig scene={scene} snapshot={snapshot} insets={insets} apiRef={cameraRef} />
+      <ambientLight intensity={0.25} />
+      <hemisphereLight args={["#ffffff", "#c6cde3", 1.05]} />
+      <Environment resolution={64} frames={1} environmentIntensity={0.35}>
+        <Lightformer form="rect" intensity={3} color="#ffffff" position={[0, 14, 0]} rotation={[Math.PI / 2, 0, 0]} scale={[24, 16, 1]} />
+        <Lightformer form="rect" intensity={1.6} color="#dfe7ff" position={[-16, 8, 5]} rotation={[0, Math.PI / 2, 0]} scale={[12, 14, 1]} />
       </Environment>
       <directionalLight
-        position={[cx - 10, 28, -cy + 12]}
+        position={[cx - 16, 38, -cy + 20]}
         target-position={[cx, 0, -cy]}
-        intensity={1.5}
-        color="#fffaf4"
+        intensity={1.9}
+        color="#fffaf2"
         castShadow
         shadow-mapSize={[2048, 2048]}
-        shadow-camera-left={-40}
-        shadow-camera-right={40}
-        shadow-camera-top={40}
-        shadow-camera-bottom={-40}
+        shadow-camera-left={-34}
+        shadow-camera-right={34}
+        shadow-camera-top={34}
+        shadow-camera-bottom={-34}
         shadow-bias={-0.0005}
         shadow-normalBias={0.035}
-        shadow-radius={4}
+        shadow-radius={5}
         onUpdate={(light) => light.target.updateMatrixWorld()}
       />
-      <directionalLight
-        position={[cx + 18, 16, -cy - 18]}
-        intensity={0.65}
-        color="#d8eaff"
-      />
-      <mesh
-        rotation={[-Math.PI / 2, 0, 0]}
-        position={[cx, -0.56, -cy]}
-        receiveShadow
-      >
-        <planeGeometry args={[200, 200]} />
-        <shadowMaterial color="#7195bb" opacity={0.16} transparent />
+      <directionalLight position={[cx + 20, 18, -cy - 20]} intensity={0.45} color="#dbe4ff" />
+
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[cx, -0.3, -cy]} receiveShadow onClick={clearOnClick}>
+        <planeGeometry args={[700, 700]} />
+        <meshStandardMaterial color={palette.ground} roughness={1} />
       </mesh>
-      <SoftBox
-        size={[c - a + 0.5, 0.5, d - b + 0.5]}
-        position={[cx, -0.28, -cy]}
-        radius={0.22}
-        color="#879da9"
-        roughness={0.65}
+      <Grid
+        position={[cx, -0.29, -cy]}
+        args={[400, 400]}
+        cellSize={2}
+        sectionSize={10}
+        cellThickness={0.6}
+        sectionThickness={1}
+        cellColor="#d3d9ea"
+        sectionColor="#c3cbe0"
+        fadeDistance={150}
+        fadeStrength={1.6}
+        infiniteGrid
       />
-      <FloorRect rect={scene.bounds_xy} color="#e1e6e3" y={-0.01} />
-      {showZones && scene.visual_zones.map((z) => (
+      <SoftBox size={[c - a + 0.9, 0.3, d - b + 0.9]} position={[cx, -0.15, -cy]} radius={0.12} color={palette.slab} roughness={0.8} />
+      <FloorRect rect={scene.bounds_xy} color={palette.floor} y={0.002} onClick={clearOnClick} />
+      <Walls bounds={scene.bounds_xy} />
+      {layers.zones && scene.visual_zones.map((z) => (
         <FloorRect
           key={z.id}
           rect={z.rect}
-          color={z.id === "MaterialZone" ? "#c2baa0" : z.id === "ProcessZone" ? "#8eb9aa" : "#a0b6c9"}
+          y={0.006}
+          onClick={clearOnClick}
+          color={z.id === "MaterialZone" ? "#f5ead6" : z.id === "ProcessZone" ? "#dcefeb" : "#e1e7fb"}
         />
       ))}
       {scene.amr_allowed_regions.map((z) => (
-        <FloorRect key={z.id} rect={z.rect} color="#91b2c8" y={0.012} />
+        <FloorRect key={z.id} rect={z.rect} color={palette.aisle} y={0.01} onClick={clearOnClick} />
       ))}
       {scene.amr_allowed_regions.filter((z) => z.id === "MAIN_LOW" || z.id === "MAIN_HIGH").map((z) => (
-        <Line key={`guide-${z.id}`} points={[[z.rect[0] + 0.3, 0.028, -(z.rect[1] + z.rect[3]) / 2], [z.rect[2] - 0.3, 0.028, -(z.rect[1] + z.rect[3]) / 2]]} color="#edf4f3" lineWidth={1.5} dashed dashSize={0.55} gapSize={0.45} />
+        <Line key={`guide-${z.id}`} points={[[z.rect[0] + 0.3, 0.028, -(z.rect[1] + z.rect[3]) / 2], [z.rect[2] - 0.3, 0.028, -(z.rect[1] + z.rect[3]) / 2]]} color="#ffffff" lineWidth={1.6} dashed dashSize={0.6} gapSize={0.45} />
       ))}
       {laneArrows(scene.traffic_lanes).map((arrow) => (
-        <Line key={`lane-${arrow.id}`} points={arrow.points} color="#365b75" lineWidth={2.3} />
+        <Line key={`lane-${arrow.id}`} points={arrow.points} color="#ffffff" lineWidth={2.6} />
       ))}
       {scene.reserved_work_areas.map((area) => (
         <WorkAreaMark key={area.id} rect={area.rect} />
       ))}
-      <Line points={[[a + 0.15, 0.025, -b - 0.15], [c - 0.15, 0.025, -b - 0.15], [c - 0.15, 0.025, -d + 0.15], [a + 0.15, 0.025, -d + 0.15], [a + 0.15, 0.025, -b - 0.15]]} color="#8d9d9a" lineWidth={1} />
-      {showParking && Object.entries(scene.pockets).map(([id, xy]) => {
+      {layers.parking && Object.entries(scene.pockets).map(([id, xy]) => {
         const dock = snapshot?.charging?.docks.find((item) => item.anchor === id);
         return (
           <group key={id} position={[xy[0], 0.04, -xy[1]]}>
-            <Line points={[[-0.65, 0, -0.7], [-0.65, 0, 0.7], [0.65, 0, 0.7], [0.65, 0, -0.7]]} color={dock ? "#56a188" : "#edf4f3"} lineWidth={2} />
+            <Line points={[[-0.7, 0, -0.75], [-0.7, 0, 0.75], [0.7, 0, 0.75], [0.7, 0, -0.75], [-0.7, 0, -0.75]]} color={dock ? "#17a06b" : "#efb43a"} lineWidth={2.2} />
             {dock && <>
-              <CargoPart size={[0.22, 0.72, 0.22]} position={[0.88, 0.36, 0]} color="#647a82" />
-              <CargoPart size={[0.23, 0.06, 0.23]} position={[0.88, 0.76, 0]} color={dock.owner ? "#62d3a1" : "#c5d6d2"} />
+              <CargoPart size={[0.22, 0.72, 0.22]} position={[0.92, 0.36, 0]} color={palette.steel} />
+              <CargoPart size={[0.23, 0.06, 0.23]} position={[0.92, 0.76, 0]} color={dock.owner ? "#2fd38f" : "#cfd8ea"} />
             </>}
-            <MapLabel position={[0, 0.15, -0.9]} text={dock ? `${dock.id} ${dock.owner ? "사용 중" : "충전대"}` : `${id} 대기`} accent={dock ? "#3c7a65" : "#657d8b"} />
+            <Tag position={[0, 0.25, -1.05]} small title={dock ? dock.id : id} note={dock ? (dock.owner ? "충전 중" : "충전대") : undefined} tone={dock ? (dock.owner ? "green" : "gray") : "gray"} />
           </group>
         );
       })}
-      {Array.from({ length: Math.floor(c - a) + 1 }, (_, i) => (
-        <Line
-          key={`x${i}`}
-          points={[
-            [a + i, 0.02, -b],
-            [a + i, 0.02, -d],
-          ]}
-          color="#7c989f"
-          transparent
-          opacity={0.11}
-          lineWidth={0.5}
-        />
-      ))}
-      {Array.from({ length: Math.floor(d - b) + 1 }, (_, i) => (
-        <Line
-          key={`y${i}`}
-          points={[
-            [a, 0.02, -b - i],
-            [c, 0.02, -b - i],
-          ]}
-          color="#7c989f"
-          transparent
-          opacity={0.11}
-          lineWidth={0.5}
-        />
-      ))}
       {scene.physical_obstacles.map((item) => (
         <Equipment
           key={item.id}
           item={item}
           selected={selection?.kind === "equipment" && selection.id === item.id}
-          onSelect={onSelect}
+          hovered={hovered === `equipment:${item.id}`}
+          onSelect={select}
+          hover={hover}
         />
       ))}
-      {scene.stations.map((s) => (
+      {scene.stations.map((s) => {
+        const active = selection?.kind === "station" && selection.id === s.id;
+        // A robot standing on the station already carries a tag; keep one label per spot.
+        const occupied = snapshot?.robots.some((r) => r.pose && Math.hypot(r.pose.x_m - s.xy[0], r.pose.y_m - s.xy[1]) < 1.4);
+        return (
+          <group
+            key={s.id}
+            position={[s.xy[0], 0.04, -s.xy[1]]}
+            onClick={(e) => {
+              e.stopPropagation();
+              onSelect({ kind: "station", id: s.id });
+            }}
+            onPointerOver={(e) => {
+              e.stopPropagation();
+              hover.onOver(`station:${s.id}`);
+            }}
+            onPointerOut={() => hover.onOut(`station:${s.id}`)}
+          >
+            <mesh rotation={[-Math.PI / 2, 0, 0]}>
+              <circleGeometry args={[0.66, 40]} />
+              <meshBasicMaterial color={active ? palette.select : zoneColor(s.id)} transparent opacity={active ? 0.22 : 0.14} depthWrite={false} />
+            </mesh>
+            <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.002, 0]}>
+              <ringGeometry args={[0.56, 0.66, 40]} />
+              <meshBasicMaterial color={active ? palette.select : zoneColor(s.id)} />
+            </mesh>
+            {(active || !occupied) && <Tag position={[0, 0.3, -0.95]} small title={stationNames[s.id] ?? s.id} selected={active} tone="gray" />}
+          </group>
+        );
+      })}
+      {destination && <Pin x={destination.xy[0]} y={destination.xy[1]} />}
+      {activeDestinations.map((s) => <Pin key={s.id} x={s.xy[0]} y={s.xy[1]} scale={0.85} />)}
+      {snapshot?.robots.map((r) =>
+        r.pose ? (
+          <RobotUnit
+            key={r.id}
+            robot={r}
+            selected={selection?.kind === "robot" && selection.id === r.id}
+            onSelect={select}
+            hover={hover}
+            label={packagingLabel}
+          />
+        ) : null,
+      )}
+      {layers.routes && selectedRobot?.pose && selectedRobot.route.length > 0 && (
+        <Line
+          points={[selectedRobot.pose, ...selectedRobot.route].map((p) => [p.x_m, 0.09, -p.y_m] as [number, number, number])}
+          color={palette.accent}
+          lineWidth={3.2}
+          dashed
+          dashSize={0.35}
+          gapSize={0.22}
+        />
+      )}
+      {layers.inventory && inventory.map((item, index) => (
         <group
-          key={s.id}
-          position={[s.xy[0], 0.04, -s.xy[1]]}
+          key={item.key}
+          position={item.position}
           onClick={(e) => {
             e.stopPropagation();
-            onSelect({ kind: "station", id: s.id });
+            onSelect({ kind: item.kind, id: item.id });
           }}
         >
-          <mesh rotation={[-Math.PI / 2, 0, 0]}>
-            <ringGeometry args={[0.56, 0.64, 32]} />
-            <meshBasicMaterial
-              color={selection?.id === s.id ? "#174fe2" : s.id.startsWith("S") ? "#a77429" : s.id === "OUT" ? "#426e9c" : "#177e7c"}
-            />
-          </mesh>
-          <MapLabel
-            position={[0, 0.2, -0.8]}
-            text={stationNames[s.id] ?? s.id}
-            selected={selection?.kind === "station" && selection.id === s.id}
-            accent={s.id.startsWith("S") ? "#a77429" : s.id === "OUT" ? "#426e9c" : "#177e7c"}
-          />
+          {item.kind === "tote"
+            ? <group scale={0.55}><ToteShape color={selection?.kind === "tote" && selection.id === item.id ? "#7d9cf5" : "#3d68ee"} /></group>
+            : <Carton label={packagingLabel} selected={selection?.kind === "stock" && selection.id === item.id} variant={index} />}
         </group>
       ))}
-      {snapshot?.robots.map(
-        (r) =>
-          r.pose && (
-            <group
-              key={r.id}
-              position={[r.pose.x_m, 0.05, -r.pose.y_m]}
-              rotation={[0, r.pose.yaw_rad, 0]}
-              onClick={(e) => {
-                e.stopPropagation();
-                onSelect({ kind: "robot", id: r.id });
-              }}
-            >
-              <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, 0]}>
-                <ringGeometry
-                  args={[0.88, selection?.id === r.id ? 1.02 : 0.92, 64]}
-                />
-                <meshBasicMaterial
-                  color={selection?.id === r.id ? "#2166f3" : "#8babca"}
-                />
-              </mesh>
-              <SoftBox
-                size={[1.08, 0.17, 0.78]}
-                position={[0, 0.12, 0]}
-                color="#263d4d"
-                radius={0.075}
-                roughness={0.6}
-              />
-              <SoftBox
-                size={[1.15, 0.42, 0.85]}
-                position={[0, 0.33, 0]}
-                color={selection?.id === r.id ? "#245fda" : "#3579bb"}
-                radius={0.18}
-                roughness={0.28}
-                metalness={0.12}
-              />
-              <SoftBox
-                size={[0.92, 0.14, 0.71]}
-                position={[0, 0.57, 0]}
-                color="#f1f7fc"
-                radius={0.06}
-                roughness={0.3}
-              />
-              <SoftBox
-                size={[0.06, 0.085, 0.48]}
-                position={[0.535, 0.33, 0]}
-                color="#e7b94b"
-                radius={0.028}
-                roughness={0.24}
-              />
-              {[-0.44, 0.44].flatMap((x) =>
-                [-0.36, 0.36].map((z) => (
-                  <mesh
-                    key={`${x}-${z}`}
-                    position={[x, 0.15, z]}
-                    rotation={[Math.PI / 2, 0, 0]}
-                    castShadow
-                  >
-                    <cylinderGeometry args={[0.13, 0.13, 0.1, 24]} />
-                    <meshStandardMaterial color="#354b64" roughness={0.75} />
-                  </mesh>
-                )),
-              )}
-              <mesh position={[-0.35, 0.75, 0]}>
-                <cylinderGeometry args={[0.12, 0.14, 0.18, 32]} />
-                <meshPhysicalMaterial
-                  color="#3b5878"
-                  roughness={0.25}
-                  metalness={0.2}
-                  clearcoat={0.3}
-                />
-              </mesh>
-              {r.payload_id && (
-                <group position={[0.08, 0.9, 0]}>
-                  {r.payload_id.startsWith("LOT") ? <group scale={2}><Carton label={packagingLabel} selected={selection?.kind === "robot" && selection.id === r.id} /></group> : <ToteShape color="#4f9095" />}
-                </group>
-              )}
-              <MapLabel
-                position={[0, 1.5, 0]}
-                text={r.label}
-                selected={selection?.kind === "robot" && selection.id === r.id}
-              />
-            </group>
-          ),
-      )}
-      {showRoutes && snapshot?.robots
-        .filter(
-          (r) =>
-            selection?.kind === "robot" &&
-            selection.id === r.id &&
-            r.pose &&
-            r.route.length > 0,
-        )
-        .map((r) => (
-          <Line
-            key={r.id}
-            points={[r.pose!, ...r.route].map((p) => [p.x_m, 0.09, -p.y_m])}
-            color="#2267ef"
-            lineWidth={3}
-            dashed
-            dashSize={0.3}
-            gapSize={0.2}
-          />
-        ))}
-      {showInventory && inventory.map((item, index) => <group key={item.key} position={item.position} onClick={(e) => {
-        e.stopPropagation(); onSelect({ kind: item.kind, id: item.id });
-      }}>
-        {item.kind === "tote" ? <group scale={0.55}><ToteShape color={selection?.kind === "tote" && selection.id === item.id ? "#397bdd" : "#4f9095"} /></group> : <Carton label={packagingLabel} selected={selection?.kind === "stock" && selection.id === item.id} variant={index} />}
-      </group>)}
     </Canvas>
   );
 });
