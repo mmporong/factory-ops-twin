@@ -55,6 +55,10 @@
       "logistics_pose_distance_m": 89.6061,
       "distinct_moving_logistics_robots": 2,
       "evidence_kind": "transcribed agent console result; no rerun"
+    },
+    "boundary_regressions": {
+      "single_sample_window": "Second offer must not remove a nonexistent edge or retain distance from a discarded sample.",
+      "traffic_yield_projection": "Exclude movement_purpose=traffic_yield even when LineOperationsModel preserves the original logistics task ID/type."
     }
   },
   "sources": {

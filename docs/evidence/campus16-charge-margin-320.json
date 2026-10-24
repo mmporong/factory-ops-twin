@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "status": "implemented_targeted_checks_passed_comparison_running",
+  "scope": "Authored virtual charging policy; no native contact charging, calibrated pack behavior or measured productivity claim.",
+  "source": {
+    "worktree_commit": "27320a44ec3ac84368f8d525eaf924c3ee14f6db",
+    "main_commit": "ace7e3f"
+  },
+  "problem": "When dynamic job funding exceeded the ordinary resume SOC, departure targeted that exact funding threshold. Exit consumption or another job could therefore request another top-up with no hysteresis margin.",
+  "policy": {
+    "departure_target": "max(resume_soc, min(1, required_wh / capacity_wh + (resume_soc - trigger_soc)))",
+    "campus_existing_band_fraction": 0.15,
+    "new_tuned_constants": 0,
+    "capacity_or_reserve_reduced": false,
+    "requirement_above_capacity": "departure remains disallowed",
+    "unchanged_inputs": [
+      "600Wh capacity",
+      "15 percent safety reserve",
+      "45W idle power",
+      "600W charger and90 percent efficiency",
+      "20 percent trigger /35 percent resume profile",
+      "route and occupancy guards"
+    ]
+  },
+  "validation": {
+    "targeted_test_module": "tests.test_operations_charging_adapter",
+    "passed_tests": 14,
+    "evidence_kind": "Agent reported actual targeted test output, py_compile and diff-check PASS; no independent approval or full-suite claim.",
+    "covered_boundaries": [
+      "hold below dynamic target including margin",
+      "depart after target/dwell",
+      "ordinary resume at low requirement",
+      "target saturation at100 percent",
+      "impossible requirement above capacity remains held"
+    ]
+  },
+  "comparison": {
+    "baseline_case": "campus16-pilot-319",
+    "candidate_case": "campus16-pilot-320",
+    "lots": 48,
+    "horizon_sim_s": 120000,
+    "max_wall_s": 5400,
+    "baseline_source_commit": "4eecf49",
+    "candidate_source_commit": "27320a44ec3ac84368f8d525eaf924c3ee14f6db",
+    "candidate_recording": "--record-best-window",
+    "different_observation_modes": "319 fixed media window;320 automatic bounded selection. Compare simulation operations metrics, not raw wall-clock speed.",
+    "final_results_pending": true
+  },
+  "interpretation_limits": [
+    "Cumulative charged_wh is supplied energy, not a count of charging sessions.",
+    "A larger departure margin is a policy candidate; no throughput or fleet concurrency improvement is claimed before final comparison.",
+    "Running cases use separate frozen worktrees and do not change each other."
+  ]
+}
