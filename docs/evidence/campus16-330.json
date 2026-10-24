@@ -2,7 +2,7 @@
   "schema_version": 1,
   "case": "campus16-pilot-330",
   "run_id": "process-line-65b446a6-b228-4132-b235-946bb81218ed",
-  "status": "running",
+  "status": "failed",
   "execution_mode": "authored_CPU_operations",
   "source_commit": "0b616c5e796d992891539c16d06c619cd3ab2e9f",
   "components": {
@@ -47,12 +47,135 @@
     "deliveries": 34,
     "peak_material_tasks": 9
   },
-  "verification_scope": "Launch and43 frozen input files verified. No closed full result, peak16 approval, or final media.",
+  "verification_scope": "Failed closed source-stable CPU run. Last successful state and source/recording hashes verified for diagnosis only; not final rendering, whole-run completion or native transport proof.",
   "success_flags": {
     "all48_shipped_and_returned_verified": false,
     "quiescent_verified": false,
     "peak16_material_tasks_verified": false,
     "native_physics_transport_verified": false,
     "final_render_eligible": false
-  }
+  },
+  "stop_reason": "runtime_error",
+  "error": {
+    "type": "ValueError",
+    "message": "route enters D_center-shared-link+D_west-shared-link+campus-d-low-w-trunk+campus-h-cd-reservation without an authored safe exit"
+  },
+  "source_stable_during_run": true,
+  "final_recorded_sim_time_s": 14307.000000034517,
+  "elapsed_wall_s": 341.594141800073,
+  "last_successful_snapshot": {
+    "shipments": 4,
+    "returns": 1,
+    "deliveries": 47,
+    "deliveries_by_robot": {
+      "amr-1": 3,
+      "amr-2": 2,
+      "amr-3": 2,
+      "amr-4": 1,
+      "amr-5": 7,
+      "amr-6": 3,
+      "amr-7": 1,
+      "amr-8": 3,
+      "amr-9": 6,
+      "amr-10": 1,
+      "amr-11": 2,
+      "amr-12": 1,
+      "amr-13": 8,
+      "amr-14": 4,
+      "amr-15": 2,
+      "amr-16": 1
+    },
+    "minimum_deliveries_each": 1,
+    "peak_material_tasks": 15,
+    "peak_material_moving": 7,
+    "yield_selected": 6,
+    "yield_completed": 6,
+    "bridge_cycle": null,
+    "quiescent": false,
+    "interpretation": "Last successful snapshot before the failed transition; not a newly recovered post-exception model state. Do not infer post-error atomicity or final inventory state."
+  },
+  "recording": {
+    "frames": 300,
+    "selection": {
+      "scope": "authored process-line snapshots; selection only, not case validity, physics, sensors, throughput, or completion proof",
+      "sample_hz": 1,
+      "configured_sample_count": 300,
+      "selected_sample_count": 300,
+      "first": {
+        "sim_time_s": 801.0000000001136,
+        "shipments_completed": 0,
+        "returns_completed": 0,
+        "transports_completed": 8
+      },
+      "last": {
+        "sim_time_s": 1100.000000000095,
+        "shipments_completed": 0,
+        "returns_completed": 0,
+        "transports_completed": 15
+      },
+      "score": {
+        "shipment_and_return_both_increased": false,
+        "minimum_shipment_return_delta": 0,
+        "completed_transport_delta": 7,
+        "logistics_pose_distance_m": 302.4140123593502,
+        "distinct_moving_logistics_robots": 5,
+        "priority_order": [
+          "shipment_and_return_both_increased",
+          "minimum_shipment_return_delta",
+          "completed_transport_delta",
+          "logistics_pose_distance_m",
+          "distinct_moving_logistics_robots"
+        ]
+      },
+      "movement_scope": {
+        "included_task_types": [
+          "empty_return",
+          "process_input",
+          "product_move"
+        ],
+        "excluded_task_types": [
+          "traffic_yield",
+          "parking",
+          "charging"
+        ],
+        "payload_required": false,
+        "task_id_change_edges": "excluded"
+      }
+    },
+    "final_render_eligible": false
+  },
+  "closure": {
+    "result_sha256": "1e6a7abb3363a3aff02aa0439f06d731622d2f4113b3051e7676eaa239b96401",
+    "manifest_sha256": "103d91e5582248109afde3bf61d67c4bf70fbd08b3e46521a7c39ff6a033044e",
+    "gzip_sha256": "50bf4e71610b8354a27245b1423fad91c042f1b7eae822d5f0e1f374246e081f",
+    "frozen_source_manifest_sha256": "9a3a66827e600c4f9d61ea9c18596393fb2a2137aad8b6e2b8c7a43dbde0bbf2",
+    "raw_sha256": "0057af7d63f00c09a703b9a7520e34364e8233331d19bbb34961668c94cd10c3",
+    "raw_bytes": 30615046,
+    "closed_manifest_raw_gzip_and_43_frozen_verified": true,
+    "owned_processes_check_pending": false,
+    "owned_launch_pids_checked": [
+      103684,
+      95000,
+      70192
+    ],
+    "owned_processes_remaining": []
+  },
+  "media_completion_contract": {
+    "fleet": 16,
+    "lots": 48,
+    "minimum_deliveries_per_robot": 2,
+    "checks": {
+      "case_complete": false,
+      "source_stable": true,
+      "fleet_matches": true,
+      "workload_matches": true,
+      "all_lots_shipped": false,
+      "all_carriers_returned": false,
+      "quiescent": false,
+      "all_robots_repeated_material_deliveries": false,
+      "requested_material_concurrency": false
+    },
+    "passed": false
+  },
+  "next_action": "Reproduce the exact D-region route span that lacks an authored safe exit. Repair only the optional wide geometry and relevant rolling-window boundaries; retain original330 and all admission guards, with no identical full retry."
 }

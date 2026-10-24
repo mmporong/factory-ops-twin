@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "status": "implemented_targeted_and_main_integration_passed_full_run_pending",
+  "status": "component_tests_passed_full330_failed_D_local_safe_exit_span",
   "execution_scope": "Authored CPU geometry, kinematic route windows and guards; no native physics/sensor or final-render claim.",
   "config": "configs/factory-semiconductor-campus16-wide-bridges",
   "source_worker_commit": "e5d98867eebd4020beac7815f9c4e5ead064f05f",
@@ -178,7 +178,16 @@
     "native_physics_transport": false,
     "final_GPU_render": false
   },
-  "next_action": "Freeze330 with this optional geometry and the holdable-yield lifecycle fix; use original FIFO/least-assigned policy. Judge complete-run liveness and actual concurrency from closed results.",
+  "next_action": "Reproduce exact D local/mixed route-span boundary; repair the optional geometry and verify related rolling-window routes before any fresh full run.",
   "new_holdable_nodes_count": 45,
-  "original_holdable_nodes_count": 44
+  "original_holdable_nodes_count": 44,
+  "full_followup": {
+    "case": "campus16-pilot-330",
+    "status": "failed",
+    "error": "route enters D_center-shared-link+D_west-shared-link+campus-d-low-w-trunk+campus-h-cd-reservation without an authored safe exit",
+    "last_successful_snapshot_peak_material_tasks": 15,
+    "last_successful_snapshot_shipments": 4,
+    "last_successful_snapshot_returns": 1,
+    "scope": "These are pre-exception observations; no whole-run completion or isolated capacity improvement."
+  }
 }

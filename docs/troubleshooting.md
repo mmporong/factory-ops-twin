@@ -1695,3 +1695,9 @@ shipping product_move 완료 뒤 같은lot·carrier·origin의 준비된 empty_r
 기본 AB/CD는 방향별 경로가 있어도 중심 간격1.5m가 예약 지름2.874218m보다 작아 반대 방향 전체 창이 각각44·53타일 겹쳤다. 자원 ID만 나누어도 기존 tile 가드가 두 번째 차량을 차단했다. 예약 반경이나 타일 폭을 낮추는 방식으로 통행을 열지 않는다.
 
 선택 wide-bridges는 실제 중심선을3m 간격으로 옮기고6m 도로 허용영역·진입부·CD 동쪽 출구를 함께 맞췄다. 양방향 queue→safe-exit 전체 창 중첩0과 두 차량 진행, 동일 차로 차단, 경로의 장애물/grid/다른 holdable 정지 차체 비충돌을 확인했다. 설비·장애물 이동/제거 없이 기본 캠퍼스를 보존하며 AC/BD의 단일 자원도 유지한다. 구성 요소 검사 통과를16대 완주·네이티브 물리·새 렌더로 확대하지 않고330의 동결 운영에서 후속 확인한다. [기하·수치·확인 범위](evidence/campus16-wide-bridges.json)
+
+## FOT-215 — wide 차로의 다른 D 로컬 경로에서 안전 출구 누락
+
+330은 sim14307초의 마지막 정상 상태(출하4·반납1·운송47·물류 동시 최고15개) 뒤 `route enters D_center-shared-link+D_west-shared-link+campus-d-low-w-trunk+campus-h-cd-reservation without an authored safe exit`로 실패했다. AB/CD의 반대 방향 queue→safe-exit 검사는 통과했지만, 그 검사로 모든 D 로컬·혼합 OD의 rolling window 경계를 확인한 것은 아니었다.
+
+원본330의 소스43개·닫힌300개 기록·해시·소유 PID0은 보존했다. final_snapshot은 예외 전 마지막 정상 관측이며 오류 도중 상태의 재고 원자성이나 최종 운송 계수의 근거로 쓰지 않는다. 같은 전체 입력을 반복하기 전에 실제 실패 경로와 인접 경로의 authored safe exit/holdable 절단 위치를 재현한다. 선택 wide 생성함수·설정에 한정해 고치며 safe-exit 요구·차체 반경·예약 타일·정지 보호는 유지한다. 원인은 아직 확인 중이고 수정본의 전체 성공은 미확인이다. [실패·원본 해시·기록 범위](evidence/campus16-330.json)
