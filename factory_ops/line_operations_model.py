@@ -5,11 +5,13 @@ from __future__ import annotations
 from copy import deepcopy
 from dataclasses import dataclass
 import json
+import math
 from pathlib import Path
 from typing import Any, Mapping
 
 from .operations import Stage
 from .operations_model import OperationsModel
+from .operations_replan import anchor_at_pose
 from .process_line import ProcessLine, TransportRequest
 from .process_network import ProcessNetwork
 
@@ -158,6 +160,9 @@ class LineOperationsModel(OperationsModel):
         if network_path.is_file():
             network = json.loads(network_path.read_text(encoding="utf-8"))
             self.line = ProcessNetwork(self.ledger.run_id, network)
+            station_gate_acquisition = network.get("station_gate_acquisition", "dispatch")
+            if station_gate_acquisition not in {"dispatch", "service_window"}:
+                raise ValueError("process network station_gate_acquisition is unsupported")
             dispatch_mode = network.get("dispatch_mode")
             supported_dispatch_modes = {
                 "downstream_wip_drain_least_assigned",
@@ -180,11 +185,13 @@ class LineOperationsModel(OperationsModel):
                 shipping_stations=self.line.shipping_stations)
             self._line_dispatch_mode = dispatch_mode
             self._coverage_deliveries_per_robot = coverage
+            self._station_gate_acquisition = station_gate_acquisition
         else:
             self.line = ProcessLine(self.ledger.run_id, json.loads((config / "process-line.json").read_text(encoding="utf-8")))
             self.inventory = _LineInventory(shipping_stations=frozenset({self.line.shipping_station}))
             self._line_dispatch_mode = "legacy_fifo_eta"
             self._coverage_deliveries_per_robot = None
+            self._station_gate_acquisition = "dispatch"
         self._peak_transport_active = 0
         self._peak_transport_moving = 0
         self._transport_moving_s = {robot: 0.0 for robot in self.ledger.robots}
@@ -219,6 +226,73 @@ class LineOperationsModel(OperationsModel):
         cell = self.line.cells[cell_id]
         return len(cell.input_lots) + cell.reserved_inputs < cell.spec.input_capacity
 
+    def _service_window_dispatch_ready(self, robot_id: str) -> bool:
+        if self._station_gate_acquisition != "service_window":
+            return True
+        if robot_id in self._trips:
+            anchor = self._withdrawable_home_parking_anchor(robot_id)
+        else:
+            if (robot_id in self._chunks or not self.motions[robot_id].stopped
+                    or self.bridges.has_window(robot_id) or self.bridges.held(robot_id)):
+                return False
+            anchor = anchor_at_pose(self.book.nodes, self._poses[robot_id])
+        return (
+            anchor is not None
+            and anchor not in self.bridges.queue_nodes
+            and anchor not in self.bridges.safe_exit_nodes.values()
+        )
+
+    def _service_window_station(
+        self, trip: Mapping[str, Any], window: Mapping[str, Any],
+    ) -> str | None:
+        if (self._station_gate_acquisition != "service_window"
+                or trip.get("kind") != "process_line"
+                or trip.get("phase") not in {"pickup", "drop"}):
+            return None
+        goal = trip.get("goal")
+        return goal if goal in window["nodes"] else None
+
+    def _station_gate_window_blockers(
+        self, robot_id: str, trip: Mapping[str, Any], window: Mapping[str, Any],
+    ) -> tuple[str, ...]:
+        station = self._service_window_station(trip, window)
+        if station is None:
+            return ()
+        owner = self._station_owners.get(station)
+        return () if owner in {None, robot_id} else (owner,)
+
+    def _commit_station_gate_window(
+        self, robot_id: str, trip: Mapping[str, Any], window: Mapping[str, Any],
+    ) -> None:
+        station = self._service_window_station(trip, window)
+        if station is None:
+            return
+        blockers = self._station_gate_window_blockers(robot_id, trip, window)
+        if blockers:
+            raise RuntimeError("station gate changed owner during movement admission")
+        self._station_owners[station] = robot_id
+
+    def _acquire_arrival_station_gate(self, robot_id: str, trip: Mapping[str, Any]) -> bool:
+        if (self._station_gate_acquisition != "service_window"
+                or trip.get("kind") != "process_line"
+                or trip.get("phase") not in {"pickup", "drop"}):
+            return True
+        station = trip["goal"]
+        pose = self._poses[robot_id]
+        if math.dist((pose["x_m"], pose["y_m"]), self.book.nodes[station]) > 1e-8:
+            raise RuntimeError("line handover reached service without its authored station pose")
+        owner = self._station_owners.get(station)
+        if owner not in {None, robot_id}:
+            self.bridges.record_wait(robot_id, (owner,))
+            self._waiting[robot_id] = {
+                "reason": "handover_station_occupied", "blockers": [owner],
+            }
+            return False
+        self._station_owners[station] = robot_id
+        self.bridges.record_wait(robot_id, ())
+        self._waiting.pop(robot_id, None)
+        return True
+
     def _line_task_priority(self, task: TransportRequest) -> tuple[Any, ...]:
         if self._line_dispatch_mode == "legacy_fifo_eta":
             return task.created_sim_time_s, task.task_id
@@ -247,6 +321,7 @@ class LineOperationsModel(OperationsModel):
         while True:
             available = [robot for robot, state in self.ledger.robots.items()
                          if (robot not in self._trips or self._can_withdraw_queued_parking(robot))
+                         and self._service_window_dispatch_ready(robot)
                          and state.available and state.task_id is None
                          and state.payload_id is None and robot not in self.inventory.robot_loads
                          and (self.operations_charging is None or self.operations_charging.available(robot))]
@@ -255,21 +330,27 @@ class LineOperationsModel(OperationsModel):
                 if not self._line_can_assign(task):
                     continue
                 for robot in available:
-                    blockers = sorted({self._station_owners[station] for station in (task.origin, task.destination)
-                                       if station in self._station_owners and self._station_owners[station] != robot})
+                    blockers = ([] if self._station_gate_acquisition == "service_window" else sorted({
+                        self._station_owners[station]
+                        for station in (task.origin, task.destination)
+                        if station in self._station_owners
+                        and self._station_owners[station] != robot
+                    }))
                     if blockers:
                         continue
                     pickup_route = self.book.plan(
                         self._dispatch_origin(robot), task.origin, closed=self.closed,
                     )
                     loaded_route = self.book.plan(task.origin, task.destination, closed=self.closed)
-                    if self._prospective_trip_blockers(
+                    prospective_blockers = self._prospective_trip_blockers(
                         robot,
                         task.origin,
                         task.destination,
                         pickup_route=pickup_route,
                         loaded_route=loaded_route,
-                    ):
+                    )
+                    if (prospective_blockers
+                            and self._station_gate_acquisition != "service_window"):
                         continue
                     first = pickup_route.distance_m
                     total = first + loaded_route.distance_m
@@ -301,7 +382,8 @@ class LineOperationsModel(OperationsModel):
             if robot in self._trips and not self._withdraw_queued_parking(robot):
                 raise RuntimeError("selected queued parking trip is no longer preemptible")
             assigned = self.line.assign(task.task_id, robot)
-            self._station_owners.update({assigned.origin: robot, assigned.destination: robot})
+            if self._station_gate_acquisition == "dispatch":
+                self._station_owners.update({assigned.origin: robot, assigned.destination: robot})
             self._jobs[robot] = (assigned.origin, assigned.destination)
             adapter = _TripTask.from_request(assigned)
             self._trip(robot, adapter, self._locations[robot], assigned.origin, "pickup", kind="process_line")
@@ -355,12 +437,15 @@ class LineOperationsModel(OperationsModel):
         )
         if candidate is None or not self._line_can_assign(candidate):
             return False
-        blockers = sorted({
+        if (self._station_gate_acquisition == "service_window"
+                and self._station_owners.get(station) != robot_id):
+            return False
+        blockers = ([] if self._station_gate_acquisition == "service_window" else sorted({
             self._station_owners[claimed]
             for claimed in (candidate.origin, candidate.destination)
             if claimed in self._station_owners
             and self._station_owners[claimed] != robot_id
-        })
+        }))
         if blockers:
             return False
         adapter = _TripTask.from_request(candidate)
@@ -410,10 +495,11 @@ class LineOperationsModel(OperationsModel):
             if blockers:
                 return False
         assigned = self.line.assign(candidate.task_id, robot_id)
-        self._station_owners.update({
-            assigned.origin: robot_id,
-            assigned.destination: robot_id,
-        })
+        if self._station_gate_acquisition == "dispatch":
+            self._station_owners.update({
+                assigned.origin: robot_id,
+                assigned.destination: robot_id,
+            })
         self._jobs[robot_id] = (assigned.origin, assigned.destination)
         adapter = _TripTask.from_request(assigned)
         self._pickup_line_task(robot_id, adapter)
@@ -447,6 +533,8 @@ class LineOperationsModel(OperationsModel):
             return
         if not self.motions[robot_id].stopped:
             raise RuntimeError("line handover attempted before kinematic stop")
+        if not self._acquire_arrival_station_gate(robot_id, trip):
+            return
         task: _TripTask = trip["task"]
         staging = (self._service_exit_after_drop(robot_id, task.drop_station)
                    if trip["phase"] != "pickup" else None)

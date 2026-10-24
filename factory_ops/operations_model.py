@@ -166,6 +166,17 @@ class OperationsModel(DashboardModel):
             if math.dist((pose["x_m"], pose["y_m"]), self.book.nodes[station]) > 2 * self.radius + self.book.tile_size_m:
                 del self._station_owners[station]
 
+    def _station_gate_window_blockers(
+        self, robot_id: str, trip: Mapping[str, Any], window: Mapping[str, Any],
+    ) -> tuple[str, ...]:
+        """Return physical handover blockers before movement admission."""
+        return ()
+
+    def _commit_station_gate_window(
+        self, robot_id: str, trip: Mapping[str, Any], window: Mapping[str, Any],
+    ) -> None:
+        """Commit a physical handover gate after bridge and tile admission."""
+
     def _dispatch(self) -> None:
         self._observe_all()
         self._release_station_gates()
@@ -782,6 +793,19 @@ class OperationsModel(DashboardModel):
             window = self._window_for_trip(
                 start, route_points, route_nodes, trip, robot_id=robot_id,
             )
+            station_blockers = self._station_gate_window_blockers(robot_id, trip, window)
+            if station_blockers:
+                self.bridges.record_wait(robot_id, station_blockers)
+                self.reservations.withdraw_pending(
+                    robot_id,
+                    now_s=self.sim_time,
+                    reason="handover_station_occupied",
+                )
+                self._waiting[robot_id] = {
+                    "reason": "handover_station_occupied",
+                    "blockers": list(station_blockers),
+                }
+                return
             exit_blockers = self._safe_exit_lookahead_blockers(
                 robot_id, trip, window["queue_barrier"],
             )
@@ -886,6 +910,7 @@ class OperationsModel(DashboardModel):
                     reservation_generation=self._leases[robot_id]["generation"],
                 )
                 del self._replans[robot_id]
+            self._commit_station_gate_window(robot_id, trip, window)
             self._chunk_seq[robot_id] = sequence
             chunk = {
                 "points": deque(window["points"] if window["corridor"] is not None
