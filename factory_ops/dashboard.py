@@ -338,7 +338,8 @@ class DashboardService:
         if execution_mode in ("operations", "process-line"):
             for name in ("operations_model.py", "operations_motion.py", "drive_profile.py", "motion.py",
                          "fleet_routing.py", "route_reservation.py", "operations_charging.py",
-                         "energy.py", "charging.py", "operations_corridor.py", "operations_replan.py"):
+                         "energy.py", "charging.py", "operations_corridor.py", "operations_replan.py",
+                         "operations_bridge.py"):
                 self.producer_sources[f"factory_ops/{name}"] = hashlib.sha256((module_root / name).read_bytes()).hexdigest()
             operations_charging = config / "operations-charging.json"
             if operations_charging.is_file():

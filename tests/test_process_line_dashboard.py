@@ -21,6 +21,8 @@ class ProcessLineDashboardTest(unittest.TestCase):
         self.assertEqual(["L1", "L2", "L3", "L4"], initial["production_line"]["line_ids"])
         self.assertEqual([], initial["capabilities"])
         self.assertNotIn("integrations", initial)
+        self.assertIn("factory_ops/operations_bridge.py",
+                      initial["api_producer"]["selected_modules_sha256"])
         service.tick(.25)
         advanced = validate_snapshot(service.snapshot())
         self.assertEqual(.25, advanced["sim_time_s"])
