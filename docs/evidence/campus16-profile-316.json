@@ -1,0 +1,58 @@
+{
+  "schema_version": "factory-ops-campus16-profile-v1",
+  "case_id": "campus16-profile-316",
+  "source_commit": "6357315f1a9b3049638d5caf21dec3cf7f10c696",
+  "workload": {
+    "lots": 48,
+    "policy": "fifo",
+    "warmup_end_sim_s": 20280.0,
+    "profile_sim_s": 5.0,
+    "internal_tick_s": 0.1,
+    "effective_dispatch_mode": "downstream_wip_drain_least_assigned",
+    "policy_note": "fifo is the caller argument; the process-network dispatch_mode is selected by the frozen config."
+  },
+  "matched_state": {
+    "completed_lots": 5,
+    "returned": 4,
+    "completed_transport_deliveries": 66
+  },
+  "measurement": {
+    "profile_elapsed_wall_s": 55.988776500103995,
+    "function_calls": 230363537,
+    "primitive_calls": 189455679
+  },
+  "root_cause": {
+    "caller": "factory_ops/operations_model.py:323 _schedule_cycle_replan",
+    "hot_boundary": "factory_ops/route_reservation.py:451 snapshot",
+    "unneeded_work": "snapshot copied the complete reservation event journal although the replanner only consumed observations",
+    "snapshot_calls": 4,
+    "snapshot_cumulative_s": 51.417,
+    "snapshot_share_pct": 91.84,
+    "deepcopy_calls": 40614054,
+    "deepcopy_cumulative_s": 51.543,
+    "charging_departure_requirement_calls": 50,
+    "charging_departure_requirement_cumulative_s": 0.051
+  },
+  "fix_boundary": "read current reservation observations through an event-free snapshot; preserve the public full snapshot and events API",
+  "files": {
+    "profile.pstats": "160840168e4425f0920f40faad0f6068bb292226e1e4e1e629a855c7629ffd6e",
+    "profile-cumulative.txt": "e8b12ba0dad53d51b3a9caf8cbbdd1bc9b8487846856cae44f1130f490fe5ad3",
+    "profile-tottime.txt": "df66486982a1f82404d197dcb6959d3ad1533f327b2b759d69b38395a31644c4",
+    "receipt.json": "8ca100141d4dadc40f56485d3aa5f343cd62537b57a5b4054b836927511b8ac2"
+  },
+  "summary_source_sha256": "e697bcf4941f69d1227dc73c5bb572b7ec71125217ab7675f43134d7fc2dd6b9",
+  "implementation": {
+    "worktree_commit": "3b283e2bcd6fd6bf1827de7e15c7fe1013563421",
+    "main_commit": "d2a5cd5",
+    "changed_boundary": "RouteReservationManager.observation_snapshot; the cycle replanner consumes current observations without the event journal.",
+    "public_snapshot_and_events_preserved": true,
+    "targeted_tests_passed": 26,
+    "targeted_tests_elapsed_s": 1.79,
+    "post_fix_long_run": "campus16-pilot-317 pending"
+  },
+  "scope": "One instrumented CPU hotspot window from the matched 48-lot authored operations state; not an uninstrumented speed benchmark, factory throughput, native physics or completion proof.",
+  "references": [
+    "https://docs.python.org/3.12/library/profile.html",
+    "https://docs.python.org/3.12/library/copy.html"
+  ]
+}

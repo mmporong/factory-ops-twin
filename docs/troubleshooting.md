@@ -1543,3 +1543,11 @@ World가 없을 때 기존 `SimulationManager.setup_simulation`을 호출하고,
 315는 최종 sim20,430초·벽시계865.19초·출하5·반납4·운송66·동시 물류 최고13개에서 진단 중단했다. 소스42개는 동결 상태였고 소유 PID는0개지만 result·recording manifest는 생성되지 않았다. 미완료 기록을 최종 렌더 입력으로 사용하지 않는다.316은 실행 파일·설정까지 linked worktree로 격리한다. [315 진단 영수증](evidence/campus16-315.json) · [계산 재사용 확인](evidence/campus16-departure-cache-316.json)
 
 316도 sim20,430초·벽시계962.20초·출하5·반납4·운송66에서 저속 상태가 이어져 진단 중단했다.20,340→20,400초의 실제 속도는 약0.505배였고 소스42개 동결·소유 PID0을 확인했다. 후보 최솟값 캐시 수정만으로 장시간 회귀가 해결됐다고 판단하지 않는다. 충전 접근 중인 이동 차량에도 이탈 요구량을 매 tick 계산한다는 가설은 phase=approach의 조기 return 때문에 기각했다. 다음 수정 전 동일 소스의 짧은 구간을 cProfile로 측정한다.316 역시 result·recording manifest가 없어 최종 촬영 원본으로 사용하지 않는다. [316 진단](evidence/campus16-316.json)
+
+## FOT-196 — 재계획 관측이 전체 예약 사건 원장을 깊은 복사함
+
+동결316을 sim20,280초까지 재현하자 출하5·반납4·운송66으로 본선과 같았다. 이후 실제 측정 구간20,281→20,286초의 cProfile은 벽시계55.99초·함수 호출230,363,537회를 기록했다. `_schedule_cycle_replan`이 필요한 observations를 얻으려고 공개 `reservations.snapshot()`을 호출했고, 네 번의 snapshot이 사용하지 않는 `_events` 전체를 복사하는 데 누적51.417초를 썼다. 전체 deepcopy 재귀 호출은40,614,054회였다. 충전 이탈 요구량50회는0.051초여서 후속 저속 상태를 충전 계산으로만 설명한 가설은 기각한다.
+
+`RouteReservationManager.observation_snapshot(now_s=...)`에 현재 차량 점유·타일 해시·pose 시각·fresh 상태만 반환하는 경계를 추가했다. 재계획 호출 한 곳을 이 경계로 바꾸고, 공개 full snapshot과 events의 복사·독립성 계약은 유지했다. 원장 객체가 deepcopy를 거부해도 재계획 관측이 가능하고 공개 관측과 같은 값을 반환하는 회귀를 포함해 관련26검사가 통과했다. 실제 장시간 성능과 물류 진전은317에서 확인하며 새 전체 warmup을 성능 비교용으로 반복하지 않는다.
+
+해석은 [Python3.12 profiler 공식 문서](https://docs.python.org/3.12/library/profile.html)의 누적 시간·호출 수 구분과 계측 overhead 경계를 따른다.51.417초는 이 계측 구간의 수치이며 전체 운영 속도 개선 배수로 환산하지 않는다. [copy 공식 문서](https://docs.python.org/3.12/library/copy.html)의 재귀적 복사 동작과 설치 소스·pstats 호출 경로를 대조했다. [측정 요약·원본 해시·수정 범위](evidence/campus16-profile-316.json)
