@@ -1396,6 +1396,8 @@ RGB249의 첫 report는 runtime·클래스 수를 추가하며 같은 경로로 
 
 각 베이에 SOURCE/CELL/PACK 대기 공간을 두고 실제 하차28곳에 로컬 이탈점을 명시했다. 경로 끝의 pose뿐 아니라 서비스 지점부터 이탈점까지의 전체 swept tiles를 홈·다른 stage·교량 queue와 비교한다.288에서는 안전한 endpoint만 확인하고 그곳까지의 이탈 경로가 주차 차량과 겹친 문제가 드러나 좌표와 연결을 수정했다.289에서는 교량 후 다음 holdable을 고르는 연장이 다시 반대 queue까지 이어졌다.8개 방향의 queue→safe exit를 명시하고, queue에서 전체 출구 경로를 확보한 뒤 출발해 exit에서 정지·해제하도록 바꿨다. 출구가 점유 중이면 진입 전에 기다린다. 이 수정의 완주 결과는 후속 실행으로 판정하며 기존 미완료를 성공으로 바꾸지 않는다. [288](evidence/campus16-288.json) · [289](evidence/campus16-289.json)
 
+290은 명시한 출구의 stop/release 계약이 적용됐지만 출하3·반납0·운송43건 뒤 종료됐다. 일반 서비스 stage를 bridge safe exit로 재사용해 CD_W_QUEUE→C_PACK_WAIT→CD_E_QUEUE→D_SOURCE_WAIT→D_CELL_WAIT→CD_W_QUEUE의 점유 순환이 생겼다. 전용 출구 버퍼를 분리하는 작업과 함께 모든 holdable에서 다음 작업·queue까지의 전체 경로도 비교한다. bridge prefix와 drop tail만의 분리 검사를 전체 진행 가능성으로 해석하지 않는다. [290 원본·순환 근거](evidence/campus16-290.json)
+
 ## FOT-176 — 상위 교량 대기가 기존 재계획기로 전달되지 않은 회귀
 
 교량 진입을 거절할 때 하위 reservation pending을 회수한 변경 뒤, 기존 ETA 순환 우회 시험이 실패했다. 교량 waiters에는 차량1/3/4의 순환이 있었지만 재계획 조건은 하위 reservation cycle만 읽었다.6000초의 CPU 재현에서도 완료10/12와 누적 이동이 멈춰 있었으므로 오래된 시험의 기대값 문제로 처리하지 않았다.

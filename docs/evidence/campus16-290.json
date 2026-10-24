@@ -1,0 +1,86 @@
+{
+  "schema_version": 1,
+  "scope": "Closed authored CPU rolling-window traffic attempt; preserved incomplete liveness evidence, not a throughput completion claim",
+  "run_id": "process-line-39d52828-87c9-4459-b92c-c16601398df9",
+  "status": "incomplete",
+  "error": null,
+  "stop_reason": "no_motion_or_process_progress",
+  "elapsed_wall_s": 202.87735860003158,
+  "sim_time_s": 8918.000000014912,
+  "source_stable_during_run": true,
+  "owned_processes_gone": true,
+  "workload": {
+    "lots": 48,
+    "policy": "fifo"
+  },
+  "cumulative_shipped_lots": 3,
+  "cumulative_returned_lots": 0,
+  "actual_completed_transport_deliveries": 43,
+  "configured_robots": 16,
+  "assignment_participants": 16,
+  "repeat_assignment_participants": 15,
+  "delivery_participants": 15,
+  "repeat_delivery_participants": 10,
+  "minimum_assignments_per_robot": 1,
+  "minimum_completed_deliveries_per_robot": 0,
+  "peak_material_tasks": 13,
+  "peak_material_moving": 8,
+  "peak_all_moving": 8,
+  "observed_min_circular_clearance_m": 1.7257818169114452,
+  "quiescent": false,
+  "goal_met": false,
+  "recorded_frames": 120,
+  "final_bridge_state": {
+    "owners": {},
+    "protected_route_tile_counts": {},
+    "wait_cycle": [
+      "amr-1",
+      "amr-11",
+      "amr-15",
+      "amr-5",
+      "amr-6"
+    ],
+    "replan_attempt_count": 3,
+    "replan_applied_count": 1,
+    "replan_unavailable_count": 1,
+    "pending_replans": []
+  },
+  "critical_wait_ring": [
+    {
+      "robot": "amr-1",
+      "pose_node": "CD_W_QUEUE",
+      "blocked_by": "amr-15",
+      "occupied_target": "C_PACK_WAIT"
+    },
+    {
+      "robot": "amr-15",
+      "pose_node": "C_PACK_WAIT",
+      "blocked_by": "amr-6",
+      "occupied_target": "CD_E_QUEUE"
+    },
+    {
+      "robot": "amr-6",
+      "pose_node": "CD_E_QUEUE",
+      "blocked_by": "amr-11",
+      "occupied_target": "D_SOURCE_WAIT"
+    },
+    {
+      "robot": "amr-11",
+      "pose_node": "D_SOURCE_WAIT",
+      "blocked_by": "amr-5",
+      "occupied_target": "D_CELL_WAIT"
+    },
+    {
+      "robot": "amr-5",
+      "pose_node": "D_CELL_WAIT",
+      "blocked_by": "amr-1",
+      "occupied_target": "CD_W_QUEUE"
+    }
+  ],
+  "failure_boundary": "Direction-specific safe-exit routing worked, but the exits reused general service staging nodes. Business and parking traffic could therefore occupy a required post-bridge exit before a crossing began, producing a circular buffer dependency among queues and service stages.",
+  "required_contract_repair": "Use dedicated post-bridge exit buffers that are excluded from service staging, home parking and task destinations, while preserving stopped-pose and full swept-window admission.",
+  "result_sha256": "848c3ee4053de089e562f90f2d06dc7c0ce746751d274c23b1cfbdb53709c49c",
+  "frozen_source_manifest_sha256": "e5f063a118f0ca97523675ff520f65572fa265c8985fa5568233ccb0b8f63d41",
+  "source_binding_sha256": "c31924af273fdc9b01f86d578f34dfbf1446d72dc122509ef5c1789bca7be18e",
+  "recording_manifest_sha256": "81278aafc105ae83e9d0b9da90397196694843ecc50985828d0fcfefb18da215"
+}
