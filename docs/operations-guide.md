@@ -47,6 +47,8 @@ uv run python scripts/demo/run_process_line.py --config configs/factory-semicond
 
 Ctrl+C는 `incomplete / diagnostic_interrupt`로 마감하고 가능한 최종 snapshot·결과·닫힌 촬영 스트림·매니페스트를 남긴다. 실제 owned 터미널에서 이 경로와5프레임 보존·해시 일치·소유 Python0을 확인했다. 중단된 기록은 최종 미디어 입력으로 사용하지 않는다. 촬영용1Hz 기록은 `--record-start <시뮬레이션 초> --record-duration <최대300초>`로 선택하며, 원본 종료 뒤 내용과 해시를 확인한다. [표적 검사·중단 실행 범위](evidence/process-line-runner-lifecycle.json)
 
+대표 미디어의 시점을 미리 정하기 어려우면 배치 명령에 `--record-best-window`를 추가한다.1Hz 관측의 최근300개와 최고 후보300개만 메모리에 보관하고 마감 때 선택한 창 하나를 저장한다. 출하·반납의 동시 증가, 두 증가량의 최솟값, 완료 운송, 같은 물류 task의 pose 이동 거리·참여 차량 순으로 고른다. 주차·충전과 `movement_purpose=traffic_yield`, task ID 전환 구간의 위치 차이는 이동 점수에서 제외한다. payload 없는 실제 집하 접근은 포함한다. 고정 `--record-duration`과 함께 사용할 수 없고 이 모드에서는 `--record-start`를 사용하지 않는다.300표본보다 일찍 끝나면 가용 표본만 저장하며 채워 넣지 않는다. 상태 파일·결과·기록 매니페스트의 `recording_selection`/`selection`에 시각·누계·선택 점수가 남는다. 선택 점수는 영상 편집용이며 전체 운영의 유효성이나 물리 이동 성공을 판정하지 않는다. 최종 렌더 입력은 별도로 완주·소스 안정·해시를 확인한다. [표적 검사·실제 소량 연결 범위](evidence/operations-clip-selection.json)
+
 ## 16대 캠퍼스의 설비 고장·복구
 
 `process-line` API의 기본값은 읽기 전용이다. 다음처럼 명령을 켠 로컬 실행에서는 관제의 운영 패널에서12개 설비 중 대상을 선택해 고장·복구를 요청한다. 기존 API와 포트가 겹치지 않는지 확인한다.

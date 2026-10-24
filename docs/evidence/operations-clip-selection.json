@@ -1,0 +1,76 @@
+{
+  "schema_version": 1,
+  "status": "implemented_targeted_checks_passed_full_run_selection_pending",
+  "scope": "Bounded presentation-window selection from authored CPU snapshots. No new GPU launch, RGB, native motion, full workload completion or final media claim.",
+  "source_commits": {
+    "selector_worktree": "9063c78b4faeb8c36440e06abdf83bb91e63fd71",
+    "boundary_fix_worktree": "d660a26c74b34dadf5529281a20f13224a206e4a",
+    "selector_main": "e5904a6",
+    "boundary_fix_main": "29e029d"
+  },
+  "flag": "--record-best-window",
+  "default_enabled": false,
+  "selected_sample_cap": 300,
+  "sample_hz": 1,
+  "retained_snapshot_references_cap": 600,
+  "historical_window_storage": "none; only current and best windows are held",
+  "priority": [
+    "shipments and returns both increase",
+    "minimum of the two increases",
+    "completed transports",
+    "stable logistics-task pose distance",
+    "distinct moving logistics robots"
+  ],
+  "movement_scope": {
+    "included_task_types": [
+      "process_input",
+      "product_move",
+      "empty_return"
+    ],
+    "excluded": [
+      "parking",
+      "charging",
+      "movement_purpose=traffic_yield",
+      "task ID transition edges"
+    ],
+    "payload_required": false,
+    "native_physics_claim": false
+  },
+  "validation": {
+    "selector_targeted_tests_passed": 9,
+    "runner_targeted_tests_passed": 3,
+    "runner_test_elapsed_s": 19.604,
+    "runner_checks": [
+      "real model5-sample partial selection, source binding and closed gzip/manifest",
+      "injected writer failure closes failed recording",
+      "existing fixed-window KeyboardInterrupt finalization regression"
+    ],
+    "existing_data_stream_check": {
+      "source_case": "campus16-pilot-318",
+      "scope": "Authored CPU data; incomplete case remains ineligible as final portfolio source. Stream check occurred before the single-sample/yield-purpose boundary patch.",
+      "accepted_samples": 300,
+      "selected_samples": 300,
+      "first_sim_s": 17550.000000025106,
+      "last_sim_s": 17849.000000020755,
+      "logistics_pose_distance_m": 89.6061,
+      "distinct_moving_logistics_robots": 2,
+      "evidence_kind": "transcribed agent console result; no rerun"
+    }
+  },
+  "sources": {
+    "factory_ops/operations_clip_selection.py": {
+      "bytes": 11610,
+      "sha256": "12d672f03bf55f61e3c8cd612d091a65eda098c3f767cb6f17a4807dde6b6d62"
+    },
+    "scripts/demo/run_process_line.py": {
+      "bytes": 14681,
+      "sha256": "b368052f9959db56b3a6232932c8d1a3b6dc8e61a162351f8dc61f9b7b858e12"
+    }
+  },
+  "limits": [
+    "Movement scores are authored snapshot pose proxies, not native measurements.",
+    "300 samples at1Hz span approximately299s; short partial windows may be too short for final render.",
+    "Whole-case automatic selection is not yet exercised in a full48-lot case.",
+    "Source/config remain frozen in running319; this option is available for later runs."
+  ]
+}

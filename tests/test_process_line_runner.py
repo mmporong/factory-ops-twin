@@ -116,6 +116,52 @@ class ProcessLineRunnerTests(unittest.TestCase):
             self.assertGreater(sum(result["final_snapshot"]["traffic"]["travel_m"].values()), 0)
             self.assertLess(result["final_snapshot"]["sim_time_s"], 60)
 
+    def test_best_window_exports_partial_observations_with_bound_source(self):
+        config = runner.ROOT / "configs/factory-semiconductor-campus16"
+        with tempfile.TemporaryDirectory(prefix="factoryops-best-window-") as folder:
+            output = Path(folder) / "run"
+            argv = ["run_process_line", "--config", str(config), "--output-dir", str(output),
+                    "--lots", "1", "--horizon", "5", "--max-wall-seconds", "30",
+                    "--record-best-window"]
+            with patch.object(sys, "argv", argv):
+                self.assertEqual(runner.main(), 2)
+            result_bytes = (output / "result.json").read_bytes()
+            result = json.loads(result_bytes)
+            manifest = json.loads((output / "recording-manifest.json").read_text())
+            bindings = json.loads((output / "frozen-source/manifest.json").read_text())
+            with gzip.open(output / "snapshots.jsonl.gz", "rt", encoding="utf-8") as stream:
+                rows = [json.loads(row) for row in stream]
+            self.assertIsNone(result["error"])
+            self.assertTrue(result["source_stable_during_run"])
+            self.assertEqual(result["status"], "incomplete")
+            self.assertEqual(manifest["selection"], result["recording_selection"])
+            self.assertEqual(manifest["selection"]["selected_sample_count"], 5)
+            self.assertEqual(manifest["frame_count"], len(rows))
+            self.assertEqual(len(rows), 5)
+            self.assertAlmostEqual(rows[0]["sim_time_s"], 1)
+            self.assertAlmostEqual(rows[-1]["sim_time_s"], 5)
+            self.assertEqual(manifest["case_report"]["sha256"], hashlib.sha256(result_bytes).hexdigest())
+            self.assertIn("factory_ops/operations_clip_selection.py", {row["path"] for row in bindings})
+
+    def test_best_window_write_failure_closes_failed_recording(self):
+        config = runner.ROOT / "configs/factory-semiconductor-campus16"
+        with tempfile.TemporaryDirectory(prefix="factoryops-best-window-error-") as folder:
+            output = Path(folder) / "run"
+            argv = ["run_process_line", "--config", str(config), "--output-dir", str(output),
+                    "--lots", "1", "--horizon", "2", "--max-wall-seconds", "30",
+                    "--record-best-window"]
+            with patch.object(sys, "argv", argv), patch.object(
+                    runner.SnapshotRecorder, "__call__", side_effect=RuntimeError("writer failure")):
+                self.assertEqual(runner.main(), 1)
+            result = json.loads((output / "result.json").read_text(encoding="utf-8"))
+            manifest = json.loads((output / "recording-manifest.json").read_text())
+            self.assertEqual(result["status"], "failed")
+            self.assertEqual(result["stop_reason"], "recording_error")
+            self.assertEqual(result["error"]["phase"], "selected_window_export")
+            self.assertEqual(manifest["case_status"], "failed")
+            with gzip.open(output / "snapshots.jsonl.gz", "rt", encoding="utf-8") as stream:
+                self.assertEqual(list(stream), [])
+
 
 if __name__ == "__main__":
     unittest.main()

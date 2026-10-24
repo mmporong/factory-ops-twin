@@ -19,6 +19,7 @@ from factory_ops.compat import replace_shared_file, write_shared_text
 from factory_ops.line_operations_model import LineOperationsModel
 from factory_ops.operations_experiment import PRODUCER_PIN_NAMES
 from factory_ops.operations_recording import SnapshotRecorder
+from factory_ops.operations_clip_selection import OperationsClipSelector
 
 
 def digest(data: bytes) -> str:
@@ -74,8 +75,11 @@ def main() -> int:
     parser.add_argument("--cycle-stall-timeout", type=float, default=0,
                         help="optional simulation seconds with an unchanged stationary wait cycle; 0 disables")
     parser.add_argument("--record-start", type=float, default=600)
-    parser.add_argument("--record-duration", type=float, default=0,
-                        help="optional observed 1Hz media window, up to 300 simulation seconds")
+    capture = parser.add_mutually_exclusive_group()
+    capture.add_argument("--record-duration", type=float, default=0,
+                         help="optional observed 1Hz media window, up to 300 simulation seconds")
+    capture.add_argument("--record-best-window", action="store_true",
+                         help="retain the best bounded 300-sample logistics window at 1Hz; record-start is unused")
     args = parser.parse_args()
     if args.lots not in range(1, 65) or any(
         not math.isfinite(value) or value <= 0 for value in (args.horizon, args.max_wall_seconds, args.stall_timeout)
@@ -93,7 +97,7 @@ def main() -> int:
         "__init__.py", "dashboard.py", "dashboard_charging.py", "dashboard_events.py",
         "mock_mes.py", "live_control.py", "scenario_replay.py", "layout.py", "footprint.py",
         "operations/__init__.py", "operations/dispatch.py", "process_line.py", "line_operations_model.py", "process_network.py",
-        "operations_recording.py", "operations_bridge.py", "compat.py",
+        "operations_recording.py", "operations_clip_selection.py", "operations_bridge.py", "compat.py",
     }
     selected = [(path, Path("config") / path.name) for path in sorted(config.glob("*.json"))]
     selected += [(ROOT / "factory_ops" / name, Path("factory_ops") / name) for name in sorted(producers)]
@@ -132,6 +136,7 @@ def main() -> int:
     last_cycle_signature = None
     last_cycle_progress_s = 0.0
     stationary_cycle = None
+    clip_selector = OperationsClipSelector() if args.record_best_window else None
     recorder = (SnapshotRecorder(output / "snapshots.jsonl.gz", start_s=args.record_start,
                                 duration_s=args.record_duration, sample_hz=1)
                 if args.record_duration else None)
@@ -155,6 +160,8 @@ def main() -> int:
                 last_cycle_signature = cycle_signature
             if recorder is not None:
                 recorder(state)
+            if clip_selector is not None:
+                clip_selector.offer(state)
             if model.sim_time >= next_capture and len(snapshots) < 80:
                 snapshots.append(state)
                 next_capture += max(1.0, args.horizon / 79)
@@ -169,6 +176,8 @@ def main() -> int:
                             "returned": state["production_line"]["returned"],
                             "traffic": state["traffic"],
                             "operations": progress_observation(state)}
+                if clip_selector is not None:
+                    progress["recording_selection"] = clip_selector.evidence()
                 temporary = output / ".progress.tmp"
                 write_shared_text(temporary, json.dumps(progress, ensure_ascii=True))
                 replace_shared_file(temporary, output / "progress.json")
@@ -198,6 +207,20 @@ def main() -> int:
         status = "failed"
         stop_reason = "runtime_error"
     finally:
+        if clip_selector is not None:
+            try:
+                chosen = clip_selector.best_snapshots()
+                first_s = chosen[0]["sim_time_s"] if chosen else 0.0
+                duration_s = max(1.0, chosen[-1]["sim_time_s"] - first_s + 0.25) if chosen else 1.0
+                recorder = SnapshotRecorder(output / "snapshots.jsonl.gz", start_s=first_s,
+                                            duration_s=duration_s, sample_hz=1)
+                for sample in chosen:
+                    recorder(sample)
+            except Exception as failure:
+                status = "failed"
+                stop_reason = "recording_error"
+                error = {"type": type(failure).__name__, "message": str(failure),
+                         "phase": "selected_window_export"}
         if recorder is not None:
             recorder.close()
     stable = all(path.is_file() and digest(path.read_bytes()) == digest(data) for path, _, data in sources)
@@ -211,6 +234,7 @@ def main() -> int:
                    "stall_timeout_s": args.stall_timeout,
                    "cycle_stall_timeout_s": args.cycle_stall_timeout},
         "stationary_cycle": stationary_cycle,
+        "recording_selection": clip_selector.evidence() if clip_selector is not None else None,
         "elapsed_wall_s": time.perf_counter() - started,
         "source_stable_during_run": stable, "representative_snapshots": snapshots, "final_snapshot": state,
     }
@@ -232,6 +256,8 @@ def main() -> int:
                         },
                     },
                     "scope": "observed CPU operations snapshots; no interpolation or physics claim"}
+        if clip_selector is not None:
+            manifest["selection"] = clip_selector.evidence()
         (output / "recording-manifest.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
     print(json.dumps({"run_id": run_id, "status": status, "output": str(output), "error": error}, ensure_ascii=True))
     return 0 if status == "complete" else 2 if status == "incomplete" else 1
