@@ -22,15 +22,21 @@ class LineOperationsModelTests(unittest.TestCase):
         )
         robot = "amr-16"
         pickup = model.book.plan(model._locations[robot], task.pickup_station)
-        loaded = model.book.plan(task.pickup_station, task.drop_station)
-        egress = model.book.plan(task.drop_station, "C_PACK_WAIT")
-
         model._trip(
             robot, task, model._locations[robot], task.pickup_station,
             "pickup", kind="process_line",
         )
-        expected = model._tiles(tuple(pickup.points + loaded.points[1:] + egress.points[1:]))
-        self.assertEqual(expected, model._trips[robot]["admission_tiles"])
+        window = model._next_route_window(pickup.points[0], pickup.points[1:], pickup.nodes[1:])
+        self.assertEqual(window["tiles"], model._trips[robot]["admission_tiles"])
+
+        drop = model.book.plan(task.pickup_station, task.drop_station)
+        staging = model.book.plan(task.drop_station, "C_PACK_WAIT")
+        drop_window = model._window_for_trip(
+            drop.points[-2], drop.points[-1:], drop.nodes[-1:],
+            {"kind": "process_line", "phase": "drop", "goal": task.drop_station, "task": task},
+        )
+        self.assertTrue(drop_window["retain_at_handover"])
+        self.assertTrue(model._tiles(staging.points).issubset(drop_window["tiles"]))
 
         model._poses[robot].update(
             x_m=model.book.nodes["C_PACK_IN"][0], y_m=model.book.nodes["C_PACK_IN"][1],

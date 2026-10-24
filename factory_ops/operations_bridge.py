@@ -1,9 +1,9 @@
-"""Conservative route-leg admission for authored inter-bay bridges.
+"""Rolling route-window admission for authored inter-bay bridges.
 
 Admission is an additional dispatch gate, never a motion permission. Tile
 reservations and the stopped-pose footprint remain authoritative for movement.
-All bridges on a leg are acquired together and retained until arrival, avoiding
-opposing vehicles waiting at the two gates of a single-lane connector.
+Only the next atomic corridor span or bounded local segment is acquired.  The
+window is retained until the vehicle stops at its authored safe endpoint.
 """
 from __future__ import annotations
 
@@ -19,15 +19,25 @@ class BridgeAdmission:
         if (not isinstance(raw, Mapping) or raw.get("policy") != "atomic_route_leg_resources"
                 or not isinstance(raw.get("resources"), Mapping)):
             raise ValueError("bridge admission requires atomic route-leg resources")
+        queue_nodes = raw.get("queue_nodes", [])
+        if (not isinstance(queue_nodes, list)
+                or any(not isinstance(node, str) or node not in routing["nodes"]
+                       for node in queue_nodes)
+                or len(queue_nodes) != len(set(queue_nodes))):
+            raise ValueError("bridge admission queue_nodes must uniquely name existing route nodes")
+        self.queue_nodes = frozenset(queue_nodes)
         self.resources: dict[str, frozenset[str]] = {}
         for name, nodes in raw["resources"].items():
             if (not isinstance(name, str) or not name or not isinstance(nodes, list) or not nodes
                     or any(not isinstance(node, str) or node not in routing["nodes"] for node in nodes)):
                 raise ValueError("bridge admission resource must name existing route nodes")
+            if self.queue_nodes.intersection(nodes):
+                raise ValueError("bridge admission queue nodes must remain outside bridge resources")
             self.resources[name] = frozenset(nodes)
         self.owners: dict[str, str] = {}
         self.waiters: dict[str, tuple[str, ...]] = {}
         self._protected_tiles: dict[str, frozenset[Tile]] = {}
+        self._handover_protected: set[str] = set()
 
     def required(self, route_nodes: Iterable[str]) -> frozenset[str]:
         route = frozenset(route_nodes)
@@ -35,6 +45,9 @@ class BridgeAdmission:
 
     def held(self, robot: str) -> frozenset[str]:
         return frozenset(name for name, owner in self.owners.items() if owner == robot)
+
+    def has_window(self, robot: str) -> bool:
+        return robot in self._protected_tiles
 
     def blockers(
         self,
@@ -56,8 +69,8 @@ class BridgeAdmission:
                 owner for owner, tiles in self._protected_tiles.items()
                 if owner != robot and not protected.isdisjoint(tiles)
             )
-        already_holds = bool(self.held(robot))
-        if required and protected and not already_holds and observed_tiles is not None:
+        already_holds = self.has_window(robot)
+        if protected and not already_holds and observed_tiles is not None:
             blockers.update(
                 peer for peer, tiles in observed_tiles.items()
                 if peer != robot and not protected.isdisjoint(tiles)
@@ -71,9 +84,18 @@ class BridgeAdmission:
         *,
         route_tiles: Iterable[Tile] = (),
         observed_tiles: Mapping[str, Iterable[Tile]] | None = None,
+        handover_protected: bool = False,
     ) -> tuple[str, ...]:
         route_nodes = tuple(route_nodes)
         protected = frozenset(route_tiles)
+        active = self._protected_tiles.get(robot)
+        if active is not None:
+            if active != protected or self.held(robot) != self.required(route_nodes):
+                raise RuntimeError("admission window cannot change before a stopped release")
+            self.waiters.pop(robot, None)
+            if handover_protected:
+                self._handover_protected.add(robot)
+            return ()
         blockers = self.blockers(
             robot,
             route_nodes,
@@ -85,8 +107,10 @@ class BridgeAdmission:
             return blockers
         required = self.required(route_nodes)
         self.owners.update((name, robot) for name in required)
-        if required and protected:
+        if protected:
             self._protected_tiles[robot] = protected
+        if handover_protected:
+            self._handover_protected.add(robot)
         self.waiters.pop(robot, None)
         return ()
 
@@ -96,6 +120,31 @@ class BridgeAdmission:
         for name in self.held(robot):
             del self.owners[name]
         self._protected_tiles.pop(robot, None)
+        self._handover_protected.discard(robot)
+        self.waiters.pop(robot, None)
+
+    def retarget(
+        self,
+        robot: str,
+        route_nodes: Iterable[str],
+        *,
+        route_tiles: Iterable[Tile],
+        stopped: bool,
+    ) -> None:
+        """Narrow a retained handover window after stopping at its waypoint."""
+        if not stopped:
+            raise RuntimeError("admission window cannot retarget before a kinematic stop")
+        active = self._protected_tiles.get(robot)
+        protected = frozenset(route_tiles)
+        required = self.required(route_nodes)
+        held = self.held(robot)
+        if active is None or not protected or not protected.issubset(active):
+            raise RuntimeError("retargeted admission must be a nonempty subset of the active window")
+        if not required.issubset(held):
+            raise RuntimeError("retargeted admission cannot acquire a new bridge resource")
+        for name in held - required:
+            del self.owners[name]
+        self._protected_tiles[robot] = protected
         self.waiters.pop(robot, None)
 
     def withdraw_waiter(self, robot: str) -> bool:
@@ -106,14 +155,17 @@ class BridgeAdmission:
         committed to a protected route and cannot be withdrawn through this
         narrow API.
         """
-        if self.held(robot):
+        if self.held(robot) or self.has_window(robot):
             return False
         return self.waiters.pop(robot, None) is not None
 
     def snapshot(self) -> dict[str, Any]:
-        return {"policy": "atomic_route_leg_resources", "owners": dict(sorted(self.owners.items())),
+        return {"policy": "atomic_route_leg_resources", "window_policy": "rolling_atomic_next_span",
+                "queue_nodes": sorted(self.queue_nodes),
+                "owners": dict(sorted(self.owners.items())),
                 "waiters": {robot: list(peers) for robot, peers in sorted(self.waiters.items())},
                 "protected_route_tile_counts": {
                     robot: len(tiles) for robot, tiles in sorted(self._protected_tiles.items())
                 },
-                "scope": "conservative full-leg bridge and conflict-route admission; tile reservations still required"}
+                "handover_protected": sorted(self._handover_protected),
+                "scope": "next atomic corridor span or bounded local segment; tile reservations still required"}

@@ -1,0 +1,292 @@
+{
+  "schema_version": 1,
+  "scope": "Closed authored CPU rolling-window traffic attempts; no physics, sensor or measured factory performance claim",
+  "counting_contract": "production_line.completed_lots is the cumulative count of completed shipping product_move transports; returned is the cumulative count of completed empty-return transports",
+  "attempts": [
+    {
+      "attempt": 269,
+      "artifact_dir": "artifacts/operations/campus16-pilot-269",
+      "run_id": "process-line-cbe986f0-3f54-45c3-9286-41f610113e25",
+      "status": "incomplete",
+      "error": null,
+      "stop_reason": "no_motion_or_process_progress",
+      "elapsed_wall_s": 79.87303889996838,
+      "sim_time_s": 3229.999999998158,
+      "source_stable_during_run": true,
+      "owned_processes_gone": true,
+      "workload": {
+        "lots": 48,
+        "release": "all at simulation start",
+        "policy": "fifo"
+      },
+      "configured_robots": 16,
+      "participants": 15,
+      "repeat_participants": 11,
+      "assignments": {
+        "amr-1": 6,
+        "amr-2": 4,
+        "amr-3": 2,
+        "amr-4": 5,
+        "amr-5": 7,
+        "amr-6": 3,
+        "amr-7": 1,
+        "amr-8": 3,
+        "amr-9": 5,
+        "amr-10": 1,
+        "amr-11": 0,
+        "amr-12": 3,
+        "amr-13": 6,
+        "amr-14": 1,
+        "amr-15": 3,
+        "amr-16": 1
+      },
+      "deliveries": {
+        "amr-1": 5,
+        "amr-2": 3,
+        "amr-3": 1,
+        "amr-4": 4,
+        "amr-5": 7,
+        "amr-6": 2,
+        "amr-7": 0,
+        "amr-8": 2,
+        "amr-9": 4,
+        "amr-10": 0,
+        "amr-11": 0,
+        "amr-12": 2,
+        "amr-13": 5,
+        "amr-14": 1,
+        "amr-15": 2,
+        "amr-16": 1
+      },
+      "created_transports": 82,
+      "complete_transports": 39,
+      "cumulative_shipped_lots": 4,
+      "cumulative_returned_lots": 0,
+      "peak_material_tasks": 13,
+      "peak_material_moving": 10,
+      "peak_all_moving": 10,
+      "observed_min_circular_clearance_m": 1.7257818169114452,
+      "micro_wait_cycle_episodes": 0,
+      "quiescent": false,
+      "bridge_queue_nodes": [],
+      "final_bridge_owners": {},
+      "final_protected_route_tile_counts": {},
+      "final_waiters": {
+        "amr-1": [
+          "amr-12"
+        ],
+        "amr-10": [
+          "amr-12"
+        ],
+        "amr-12": [
+          "amr-10"
+        ],
+        "amr-13": [
+          "amr-6"
+        ],
+        "amr-14": [
+          "amr-10",
+          "amr-9"
+        ],
+        "amr-15": [
+          "amr-10",
+          "amr-9"
+        ],
+        "amr-16": [
+          "amr-9"
+        ],
+        "amr-2": [
+          "amr-3"
+        ],
+        "amr-3": [
+          "amr-8"
+        ],
+        "amr-4": [
+          "amr-7"
+        ],
+        "amr-6": [
+          "amr-10",
+          "amr-12"
+        ],
+        "amr-7": [
+          "amr-1"
+        ],
+        "amr-8": [
+          "amr-3"
+        ],
+        "amr-9": [
+          "amr-10"
+        ]
+      },
+      "terminal_blocker": {
+        "kind": "opposing_connector_gate_pose_cycle",
+        "evidence": [
+          "amr-3 at BD_S_GATE versus amr-8 at D_LOW_E_EN",
+          "amr-12 at AC_S_GATE versus amr-10 at C_LOW_E_EN"
+        ],
+        "disposition": "Preserved; mandatory pre-gate queue geometry and queue barrier were added before attempt274"
+      },
+      "result_sha256": "c3aca5d3a31988e5f2a4613b11814b6b2b174365e9af6587b27faa3510eb7606",
+      "frozen_source_manifest_sha256": "9536ad7b1497c433fe6b8b3bb097bd8d5be41a54d7b62d8bb8fa7485238510fa",
+      "recording": {
+        "manifest_sha256": "92874a3718062848483ec385ccc7d26224e4e96f28815a8e18074941169eb7fd",
+        "frames": 120,
+        "observed_sim_time_s": [
+          3000.999999998366,
+          3119.999999998258
+        ],
+        "gzip_bytes": 1932257,
+        "gzip_sha256": "b471c1836c91229f73a532c98194be2663a07d94022cbe212fb800a1f5c158bc",
+        "scope": "observed CPU operations snapshots; no interpolation or physics claim"
+      },
+      "goal_met": false
+    },
+    {
+      "attempt": 274,
+      "artifact_dir": "artifacts/operations/campus16-pilot-274",
+      "run_id": "process-line-db8ef997-749c-46a1-9abb-b0d558922692",
+      "status": "incomplete",
+      "error": null,
+      "stop_reason": "no_motion_or_process_progress",
+      "elapsed_wall_s": 117.36738509999122,
+      "sim_time_s": 4559.999999999058,
+      "source_stable_during_run": true,
+      "owned_processes_gone": true,
+      "workload": {
+        "lots": 48,
+        "release": "all at simulation start",
+        "policy": "fifo"
+      },
+      "configured_robots": 16,
+      "participants": 15,
+      "repeat_participants": 12,
+      "assignments": {
+        "amr-1": 8,
+        "amr-2": 1,
+        "amr-3": 6,
+        "amr-4": 6,
+        "amr-5": 6,
+        "amr-6": 3,
+        "amr-7": 2,
+        "amr-8": 3,
+        "amr-9": 7,
+        "amr-10": 1,
+        "amr-11": 0,
+        "amr-12": 2,
+        "amr-13": 6,
+        "amr-14": 2,
+        "amr-15": 3,
+        "amr-16": 1
+      },
+      "deliveries": {
+        "amr-1": 8,
+        "amr-2": 1,
+        "amr-3": 6,
+        "amr-4": 6,
+        "amr-5": 5,
+        "amr-6": 2,
+        "amr-7": 2,
+        "amr-8": 2,
+        "amr-9": 7,
+        "amr-10": 0,
+        "amr-11": 0,
+        "amr-12": 1,
+        "amr-13": 5,
+        "amr-14": 1,
+        "amr-15": 2,
+        "amr-16": 0
+      },
+      "created_transports": 83,
+      "complete_transports": 48,
+      "cumulative_shipped_lots": 3,
+      "cumulative_returned_lots": 1,
+      "peak_material_tasks": 13,
+      "peak_material_moving": 10,
+      "peak_all_moving": 10,
+      "observed_min_circular_clearance_m": 1.7257818169114452,
+      "micro_wait_cycle_episodes": 0,
+      "quiescent": false,
+      "bridge_queue_nodes": [
+        "AC_N_QUEUE",
+        "AC_S_QUEUE",
+        "BD_N_QUEUE",
+        "BD_S_QUEUE"
+      ],
+      "final_bridge_owners": {},
+      "final_protected_route_tile_counts": {},
+      "final_waiters": {
+        "amr-10": [
+          "amr-14"
+        ],
+        "amr-12": [
+          "amr-10"
+        ],
+        "amr-13": [
+          "amr-6"
+        ],
+        "amr-14": [
+          "amr-10",
+          "amr-12"
+        ],
+        "amr-15": [
+          "amr-10",
+          "amr-12"
+        ],
+        "amr-16": [
+          "amr-10",
+          "amr-12",
+          "amr-14"
+        ],
+        "amr-5": [
+          "amr-12"
+        ],
+        "amr-6": [
+          "amr-10",
+          "amr-14"
+        ],
+        "amr-7": [
+          "amr-15"
+        ],
+        "amr-8": [
+          "amr-16"
+        ]
+      },
+      "terminal_blocker": {
+        "kind": "pack_wait_pose_intersects_main_route_windows",
+        "evidence": [
+          "amr-14 at C_PACK_WAIT(27,33.5)",
+          "amr-10 at C_LOW_E_EN(28.5,36.5)",
+          "amr-12 at C_LOW_E_ES(25.5,36.5)"
+        ],
+        "disposition": "Preserved; PACK_WAIT relocation required before another full run"
+      },
+      "result_sha256": "a990184c88f654249dc22087573c125561bb4c77edab6d0ad82e662ddd90d99d",
+      "frozen_source_manifest_sha256": "5e34bb3dcd60b8b16830bf8c983d3fbbc4e598b0d87388bbc8d648995ff8d400",
+      "recording": {
+        "manifest_sha256": "750125ae1294c20f1be3cdafe27682bfac43bf46dc9f2124e5e45d200e08d417",
+        "frames": 120,
+        "observed_sim_time_s": [
+          3000.999999998366,
+          3119.999999998258
+        ],
+        "gzip_bytes": 2003046,
+        "gzip_sha256": "f6c433adc439ecfce0bd2b198d34721066e73438d28d02ffb4fa089dbd29aeb5",
+        "scope": "observed CPU operations snapshots; no interpolation or physics claim"
+      },
+      "goal_met": false
+    }
+  ],
+  "tests_checked": {
+    "rolling_handover_and_legacy_regressions": "6 passed in 22.011s",
+    "bridge_corridor_route_regressions": "15 passed in 5.669s",
+    "mandatory_queue_model_regressions": "6 passed in 11.344s",
+    "queue_geometry_context_before_attempt274": "100 fixtures passed and 12 campus tests passed (reported by geometry owner)"
+  },
+  "conclusion": {
+    "maximum_observed_peak_material_tasks": 13,
+    "maximum_observed_peak_material_moving": 10,
+    "all_48_shipped_returned_quiescent_demonstrated": false,
+    "all_16_repeat_participation_demonstrated": false,
+    "next_required_change": "Move C/D PACK_WAIT and egress tails outside the main-lane swept reservation tiles while remaining disjoint from AC_N_QUEUE and BD_N_QUEUE; rerun only after geometry checks pass."
+  }
+}

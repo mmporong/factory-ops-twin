@@ -9,11 +9,71 @@ from pathlib import Path
 import sys
 import time
 import traceback
+from types import SimpleNamespace
+from typing import Any, Callable
 from uuid import uuid4
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 from factory_ops.operations_render import load_recording, sha
+
+
+_CAMPUS_BAY_OFFSETS = {"A": (0.0, 0.0), "B": (42.0, 0.0), "C": (0.0, 32.0), "D": (42.0, 32.0)}
+_WORLD_SLOT_NAMES = ("source_S1", "source_S2", "source_S3", "ci", "cell", "co", "out")
+
+
+def replay_slot_placement(
+    layout: Any, location: str, slot: int,
+    placement_fn: Callable[[Any, str, int], dict[str, Any]],
+) -> dict[str, Any]:
+    """Resolve legacy or prefixed campus presentation slots without changing scene geometry."""
+    if layout.data.get("revision") != "amr-semiconductor-campus16-v1":
+        return placement_fn(layout, location, slot)
+    bay, separator, local_location = location.partition("_")
+    if not separator or bay not in _CAMPUS_BAY_OFFSETS or local_location not in _WORLD_SLOT_NAMES:
+        raise ValueError(f"campus world cargo location is unsupported: {location}")
+    dx, dy = _CAMPUS_BAY_OFFSETS[bay]
+    prefix = f"{bay}_"
+    obstacles = []
+    for row in layout.data["physical_obstacles"]:
+        if str(row["id"]).startswith(prefix):
+            copied = dict(row)
+            copied["id"] = str(row["id"])[len(prefix):]
+            copied["rect"] = [row["rect"][0] - dx, row["rect"][1] - dy,
+                              row["rect"][2] - dx, row["rect"][3] - dy]
+            obstacles.append(copied)
+    stations = {
+        str(row["id"])[len(prefix):]: (row["xy"][0] - dx, row["xy"][1] - dy)
+        for row in layout.data["stations"] if str(row["id"]).startswith(prefix)
+    }
+    bay_view = SimpleNamespace(data={
+        "revision": "amr-semiconductor-dual-lane-v1",
+        "physical_obstacles": obstacles,
+        "production_domain": layout.data.get("production_domain", {}),
+    }, stations=stations)
+    placement = dict(placement_fn(bay_view, local_location, slot))
+    placement["location"] = location
+    placement["source_obstacle_id"] = prefix + str(placement["source_obstacle_id"])
+    placement["parent_path"] = f"/World/Visuals/CargoSlots/{bay}_{local_location}"
+    placement["translate_xyz_m"] = [placement["translate_xyz_m"][0] + dx,
+                                     placement["translate_xyz_m"][1] + dy,
+                                     placement["translate_xyz_m"][2]]
+    bounds = placement["bounds_xyz_m"]
+    placement["bounds_xyz_m"] = [bounds[0] + dx, bounds[1] + dy, bounds[2],
+                                  bounds[3] + dx, bounds[4] + dy, bounds[5]]
+    if "support_bounds_xyz_m" in placement:
+        support = placement["support_bounds_xyz_m"]
+        placement["support_bounds_xyz_m"] = [support[0] + dx, support[1] + dy, support[2],
+                                               support[3] + dx, support[4] + dy, support[5]]
+    return placement
+
+
+def replay_slot_capacities(layout: Any, placement_fn: Callable[[Any, str, int], dict[str, Any]]) -> dict[str, int]:
+    if layout.data.get("revision") == "amr-semiconductor-campus16-v1":
+        locations = tuple(f"{bay}_{name}" for bay in _CAMPUS_BAY_OFFSETS for name in _WORLD_SLOT_NAMES)
+    else:
+        locations = _WORLD_SLOT_NAMES
+    return {name: replay_slot_placement(layout, name, 0, placement_fn)["capacity"] for name in locations}
 
 
 def main() -> int:
@@ -135,8 +195,12 @@ def main() -> int:
         transforms, loads = {}, {}
         world_cargo = {}
         previous_materials = ()
-        slot_capacities = {name: world_slot_placement(layout, name, 0)["capacity"]
-                           for name in ("source_S1", "source_S2", "source_S3", "ci", "cell", "co", "out")}
+        slot_capacities = replay_slot_capacities(layout, world_slot_placement)
+        campus_replay = layout.data.get("revision") == "amr-semiconductor-campus16-v1"
+        report["operational_signals"] = (
+            "omitted for four-line campus replay; the legacy visual signal widget represents one aggregate cell"
+            if campus_replay else "legacy single-line aggregate"
+        )
         report["material_projection_source_sha256"] = sha(ROOT / "factory_ops/operations_material_projection.py")
 
         def box(path, center, size, color):
@@ -211,7 +275,7 @@ def main() -> int:
                 for item in material["world_items"]:
                     key = (item["kind"], item["id"], item["location"], item["slot"])
                     if key not in world_cargo:
-                        placement = world_slot_placement(layout, item["location"], item["slot"])
+                        placement = replay_slot_placement(layout, item["location"], item["slot"], world_slot_placement)
                         group_path = "/World/ReplayMaterials/Item_" + str(len(world_cargo))
                         group = UsdGeom.Xform.Define(stage, group_path)
                         center = list(placement["translate_xyz_m"])
@@ -235,10 +299,11 @@ def main() -> int:
                 equipment, kpis = snapshot["equipment"], dict(snapshot["kpis"])
                 kpis["empty_returns_completed"] = sum(task["type"] == "empty_return" and task["state"] == "complete"
                                                       for task in snapshot["tasks"])
-                visuals._update_signals({"ci_slots_used": equipment["input_waiting_orders"],
-                    "co_slots_used": equipment["output_waiting_orders"],
-                    "cell_processing": equipment["available"] and equipment["active_order_id"] is not None,
-                    "orders_completed": kpis["completed_orders"]})
+                if not campus_replay:
+                    visuals._update_signals({"ci_slots_used": equipment["input_waiting_orders"],
+                        "co_slots_used": equipment["output_waiting_orders"],
+                        "cell_processing": equipment["available"] and equipment["active_order_id"] is not None,
+                        "orders_completed": kpis["completed_orders"]})
                 rep.orchestrator.step(delta_time=0., rt_subframes=args.subframes, pause_timeline=True)
                 rep.orchestrator.wait_until_complete()
                 if timeline.is_playing() or abs(timeline.get_current_time() - frozen_time) > 1e-8:

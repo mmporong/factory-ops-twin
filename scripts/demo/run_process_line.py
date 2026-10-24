@@ -15,6 +15,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from factory_ops.dashboard import validate_snapshot
+from factory_ops.compat import replace_shared_file, write_shared_text
 from factory_ops.line_operations_model import LineOperationsModel
 from factory_ops.operations_experiment import PRODUCER_PIN_NAMES
 from factory_ops.operations_recording import SnapshotRecorder
@@ -52,7 +53,7 @@ def main() -> int:
         "__init__.py", "dashboard.py", "dashboard_charging.py", "dashboard_events.py",
         "mock_mes.py", "live_control.py", "scenario_replay.py", "layout.py", "footprint.py",
         "operations/__init__.py", "operations/dispatch.py", "process_line.py", "line_operations_model.py", "process_network.py",
-        "operations_recording.py", "operations_bridge.py",
+        "operations_recording.py", "operations_bridge.py", "compat.py",
     }
     selected = [(path, Path("config") / path.name) for path in sorted(config.glob("*.json"))]
     selected += [(ROOT / "factory_ops" / name, Path("factory_ops") / name) for name in sorted(producers)]
@@ -112,8 +113,8 @@ def main() -> int:
                             "returned": state["production_line"]["returned"],
                             "traffic": state["traffic"]}
                 temporary = output / ".progress.tmp"
-                temporary.write_text(json.dumps(progress, ensure_ascii=True), encoding="utf-8")
-                temporary.replace(output / "progress.json")
+                write_shared_text(temporary, json.dumps(progress, ensure_ascii=True))
+                replace_shared_file(temporary, output / "progress.json")
             if model.sim_time - last_progress_s >= args.stall_timeout:
                 stop_reason = "no_motion_or_process_progress"
                 break

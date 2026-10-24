@@ -20,15 +20,17 @@
 
 | 4개 베이 전체 장면 | 검사 셀 근접 장면 |
 |---|---|
-| ![78×60m 캠퍼스의 실제 정적 GPU 렌더](docs/images/campus16-static-265/portfolio_overview.png) | ![절차형 핸들러·테스터와 트레이 인계대의 실제 정적 GPU 렌더](docs/images/campus16-static-265/cell_process.png) |
+| ![78×60m 캠퍼스의 실제 정적 GPU 렌더](docs/images/campus16-static-277/portfolio_overview.png) | ![절차형 핸들러·테스터와 트레이 인계대의 실제 정적 GPU 렌더](docs/images/campus16-static-277/cell_process.png) |
 
-위 이미지는 Isaac Sim4.5에서 촬영한 **정적 GPU 렌더**입니다. 물리 시간을 멈췄으며 차량을 스폰하지 않았습니다. 78×60m 안에 생산 설비76개, 출처가 있는 SimReady 배치104개, 차량 홈16개, 가상 충전 도크8개와 PACK 대기점4개를 구성했습니다. 생산 장비 본체는 절차형 모델이며 제조사 CAD가 아닙니다. OpenUSD 파싱에서8,435개 prim·충돌체77개와 오류0개를 확인했고, 16대 물리·센서 운용은 남아 있습니다. [실제 촬영·해시·종료 근거](docs/images/campus16-static-265/provenance.json) · [파싱 결과](docs/evidence/campus-usd-257.json) · [교통 경로 배치도](docs/images/campus16-layout-254/campus-layout.png)
+위 이미지는 Isaac Sim4.5에서 촬영한 **정적 GPU 렌더**입니다. 물리 시간을 멈췄으며 차량을 스폰하지 않았습니다. 78×60m 안에 생산 설비76개, 출처가 있는 SimReady 배치100개, 차량 홈16개, 가상 충전 도크8개를 구성했습니다. PACK 이탈 대기점과 교량 진입 대기점은 각각4개입니다. 생산 장비 본체는 절차형 모델이며 제조사 CAD가 아닙니다. 생산 충돌체77개를 유지했고16대 물리·센서 운용은 남아 있습니다. [촬영·해시·종료 근거](docs/images/campus16-static-277/provenance.json) · [배치 조건](docs/evidence/campus16-276.json) · [교통 경로 배치도](docs/images/campus16-layout-276/campus-layout.png)
 
 주차장만 늘린 이전 `scale12/16`과 달리 `factory-semiconductor-campus16`은 4개 TEST→AOI→PACK 라인을 베이 사이로 연결합니다. 유한 재고 240개와 캐리어 64개를 사용하고 출하 뒤 원래 저장소로 빈 용기를 돌려보냅니다. 입력·출력 버퍼와 설비 고장, 전역 배차, 가감속·회전, 구간 점유와 가상 충전을 같은 운영 모델에서 계산합니다. 공정 시간·배치는 작성 가정입니다.
 
 캠퍼스의 배차는 `downstream_wip_drain_least_assigned`입니다. 예약 가능한 후보 중 반납·출하·후단 WIP를 먼저 처리하고 운송 배정이 적은 차량을 우선합니다. snapshot의 `production_line.dispatch_mode`로 정책을 확인합니다. 기존 단일 라인의 FIFO/ETA 비교와 같은 정책으로 해석하지 않습니다.
 
-16대 모두의 반복 운송은 CPU 실행255에서 확인했습니다. 차량별 운송5~11회, 전체 운송94건, 누적 출하13건·빈 용기 반납6건을 기록했습니다. 900초 실행 한도에서48lot 전체 완료 전 종료했으며 오류나 진전 없음 감지로 중단된 것은 아닙니다. 물류 임무·이동 동시 수는 각각 최대6대여서16개 동시 임무 목표는 남아 있습니다. 픽업부터 적재·하차 후 이탈까지 경로 전체를 보호하는 보수적 진입 정책이 배정을 제한하며, 이 수치는 GPU 성능이나 물리적 수용 상한이 아닙니다. [운영 결과와 집계 기준](docs/evidence/campus16-255.json)
+CPU 실행275에서 **16개 물류 임무의 동시 진행**을 확인했습니다. 전16대가 각각2회 이상 임무를 배정받았고, 차량별 완료 운송은1~8회였습니다. 실제 이동은 최대10대이며 공정·인계·교통 대기를 물류 임무와 구분합니다. 출하6건·빈 용기 반납3건 뒤 진행 파일 교체의 Windows 접근 오류로 종료돼48lot 완주는 남아 있습니다. [275 실행·원본·오류](docs/evidence/campus16-275.json) · [전체 경로 보호 기준선255](docs/evidence/campus16-255.json)
+
+현재 진입 정책은 다음 구간을 보호하는 rolling window입니다. 교량과 맞닿은 교차로는 한 묶음으로 예약하고, 통로 밖 대기점에서 진입 권한을 기다립니다. 픽업·PACK 하차와 통로 이탈 사이에는 보호가 끊기지 않게 했습니다. 차량의 정지 점유·안전 반경·타일 크기는 유지했습니다. [교통 경계와 수정 전 실행](docs/evidence/campus16-rolling-274.json)
 
 하차 후 PACK 대기점으로 통로를 비우는 동작과 아직 시작하지 않은 귀가 이동의 업무 우선 배정을 추가했습니다. 이전253의 PACK 귀가 정체는 수정 전 근거로 보존합니다. 주차·하차 후 이탈은 물류 동시성에서 제외하고, 누적 출하는 출하 인계 사건으로 집계합니다. [253 결과](docs/evidence/campus16-253.json) · [1lot 통합 기준선](docs/evidence/process-line-235.json)
 
@@ -135,7 +137,11 @@ Isaac Sim Replicator로 12개 시각 구성, 30시점, 3카메라에서 RGB 1,08
 
 공식 RGB ZIP을 받아 사진5,097장과 박스151,428개의 메타데이터를 대조했습니다. 모두 디코딩·해상도가 맞았고 분할 간 동일 파일/픽셀·pHash 거리6 이하 후보는0건이었습니다. 촬영 환경·시퀀스 감사는 남아 있습니다. LOCO에는 AMR 클래스가 없고, 소형 적재함이 없는 초기 튜닝 후보도 수정했습니다. [RGB 감사](docs/evidence/loco-rgb-249.json) · [분할·해시 index](docs/data/loco-eval-v1/README.md)
 
-현재 반도체 장면의 트레이·매거진을 팔레트·적재함으로 잘못 학습하지 않도록 에셋 허용 목록과 거절 검사를 구현했습니다. 별도의 NVIDIA 팔레트·크레이트 원본68파일을 확보해 해시와 CPU USD 외곽을 확인했으며, 최대16장 RGB·라벨 probe를 준비했습니다. 학습 파일럿은512장, Cosmos는10클립부터 시작합니다. 변환본의 객체·라벨 정합을 확인하기 전에는 원본 라벨을 복사하지 않습니다. [에셋 검사·후보](docs/evidence/loco-asset-map-266.json) · [비교 조건·GPU·비용과 확대 기준](docs/synthetic-to-real-plan.md)
+반도체 장면의 트레이·매거진을 팔레트·적재함으로 잘못 학습하지 않도록 에셋 허용 목록과 거절 검사를 구현했습니다. 별도의 NVIDIA 팔레트·크레이트 후보를 사용한 소량 촬영은4개 seed·16장 RGB를 생성했고, **60개 객체의 자동 박스가 각 객체 semantic 마스크 외곽과 일치**했습니다. 원본 에셋의 기본 라벨은 소비용 사본에서 분리했고 class/object_id를 연결해 보존했습니다. 얕은 크레이트의 클래스 적합성은 미승인으로 남겨둡니다. [촬영·라벨 근거](docs/evidence/perception-probe-278.json) · [에셋 후보](docs/evidence/loco-asset-map-266.json)
+
+![native RGB와 객체별 자동 박스를 대조한 소량 지각 데이터](docs/images/perception-probe-278/label-probe.png)
+
+위 자료는 단순 바닥 위 후보 에셋의 export 확인용입니다. 학습 준비가 완료된 공장 데이터로 보지 않습니다. 후속 학습 파일럿은512장, Cosmos는10클립부터 시작하며 변환본의 객체·라벨 정합을 확인하기 전에는 원본 라벨을 복사하지 않습니다. [비교 조건·GPU·비용과 확대 기준](docs/synthetic-to-real-plan.md)
 
 ## 현재 진행 상태
 

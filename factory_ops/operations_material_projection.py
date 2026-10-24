@@ -18,6 +18,18 @@ _WORLD_LOCATIONS = {
     "CI": "ci",
 }
 _TASK_STATES = {"ready", "assigned", "started", "complete"}
+_CAMPUS_LOCATION_ALIASES = {
+    "S1": "source_S1",
+    "S2": "source_S2",
+    "S3": "source_S3",
+    "CI": "ci",
+    "CO": "co",
+    "OUT": "out",
+    "AOI_IN": "cell",
+    "AOI_OUT": "cell",
+    "PACK_IN": "out",
+    "PACK_OUT": "out",
+}
 
 
 def project_operations_materials(
@@ -62,11 +74,25 @@ def project_operations_materials(
     candidates: list[dict[str, Any]] = []
     hidden: list[dict[str, Any]] = []
     unsupported: list[dict[str, Any]] = []
-    _project_carriers(inventory["totes"], robot_payloads, candidates, hidden, unsupported)
-    outbound_complete_lots = _project_products(
-        tasks, equipment.get("active_order_id"), robot_payloads,
-        candidates, hidden, unsupported,
+    production_line = snapshot.get("production_line")
+    campus_network = (
+        isinstance(production_line, Mapping)
+        and isinstance(production_line.get("line_ids"), list)
+        and len(production_line["line_ids"]) > 1
     )
+    if campus_network:
+        _project_carriers(
+            inventory["totes"], robot_payloads, candidates, hidden, unsupported,
+            location_resolver=_campus_world_location,
+        )
+        completed_lots = production_line.get("completed_lots")
+        outbound_complete_lots = completed_lots if type(completed_lots) is int and completed_lots >= 0 else 0
+    else:
+        _project_carriers(inventory["totes"], robot_payloads, candidates, hidden, unsupported)
+        outbound_complete_lots = _project_products(
+            tasks, equipment.get("active_order_id"), robot_payloads,
+            candidates, hidden, unsupported,
+        )
 
     world_items: list[dict[str, Any]] = []
     occupied: dict[str, set[int]] = {}
@@ -153,7 +179,9 @@ def _project_carriers(
     totes: list[object], robot_payloads: Mapping[str, str | None],
     candidates: list[dict[str, Any]], hidden: list[dict[str, Any]],
     unsupported: list[dict[str, Any]],
+    *, location_resolver: Any = None,
 ) -> None:
+    resolve_location = _WORLD_LOCATIONS.get if location_resolver is None else location_resolver
     seen: set[str] = set()
     for raw in totes:
         if not isinstance(raw, Mapping) or not isinstance(raw.get("tote_id"), str):
@@ -173,7 +201,7 @@ def _project_carriers(
             else:
                 unsupported.append({"id": tote_id, "kind": "carrier", "reason": "ambiguous_robot_ownership"})
             continue
-        location = _WORLD_LOCATIONS.get(source_location) if isinstance(source_location, str) else None
+        location = resolve_location(source_location) if isinstance(source_location, str) else None
         if state not in {"filled", "available", "empty"} or location is None:
             unsupported.append({"id": tote_id, "kind": "carrier", "reason": "unsupported_tote_state_or_location"})
             continue
@@ -181,6 +209,14 @@ def _project_carriers(
             "id": tote_id, "kind": "carrier", "location": location,
             "filled": state == "filled", "order_id": order_id,
         })
+
+
+def _campus_world_location(location: str) -> str | None:
+    bay, separator, suffix = location.partition("_")
+    alias = _CAMPUS_LOCATION_ALIASES.get(suffix)
+    if separator and bay in {"A", "B", "C", "D"} and alias is not None:
+        return f"{bay}_{alias}"
+    return None
 
 
 def _project_products(

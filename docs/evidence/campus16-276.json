@@ -1,0 +1,143 @@
+{
+  "schema_version": 1,
+  "scope": "Authored mandatory bridge queues, pose-clear C/D PACK waits and CPU USD export; final16fleet completion is a separate run",
+  "production_footprints": 76,
+  "homes": 16,
+  "operational_staging": [
+    {
+      "id": "A_PACK_WAIT",
+      "xy": [
+        27.0,
+        1.5
+      ],
+      "purpose": "post-drop egress wait outside PACK_IN; not a fleet home or process-capacity station"
+    },
+    {
+      "id": "B_PACK_WAIT",
+      "xy": [
+        69.0,
+        1.5
+      ],
+      "purpose": "post-drop egress wait outside PACK_IN; not a fleet home or process-capacity station"
+    },
+    {
+      "id": "C_PACK_WAIT",
+      "xy": [
+        27.0,
+        30.5
+      ],
+      "purpose": "post-drop egress wait outside PACK_IN; not a fleet home or process-capacity station"
+    },
+    {
+      "id": "D_PACK_WAIT",
+      "xy": [
+        69.0,
+        30.5
+      ],
+      "purpose": "post-drop egress wait outside PACK_IN; not a fleet home or process-capacity station"
+    }
+  ],
+  "bridge_queues": [
+    {
+      "id": "AC_S_QUEUE",
+      "xy": [
+        33.5,
+        19.5
+      ],
+      "purpose": "mandatory off-route stop before vertical bridge admission; floor marker only"
+    },
+    {
+      "id": "AC_N_QUEUE",
+      "xy": [
+        31.5,
+        30.5
+      ],
+      "purpose": "mandatory off-route stop before vertical bridge admission; floor marker only"
+    },
+    {
+      "id": "BD_S_QUEUE",
+      "xy": [
+        75.5,
+        19.5
+      ],
+      "purpose": "mandatory off-route stop before vertical bridge admission; floor marker only"
+    },
+    {
+      "id": "BD_N_QUEUE",
+      "xy": [
+        73.5,
+        30.5
+      ],
+      "purpose": "mandatory off-route stop before vertical bridge admission; floor marker only"
+    }
+  ],
+  "bounds_xy_m": [
+    0,
+    0,
+    78,
+    60
+  ],
+  "fixture_count": 100,
+  "excluded_fixture_count": 40,
+  "staging_contract": "PACK_IN -> PACK_EGRESS -> PACK_WAIT with continuous handover reservation; A/B6m tail, C/D9m tail",
+  "queue_contract": "4 off-route stops mandatory before gate/atomic bridge admission; no queue membership in bridge resources",
+  "geometry_checks": {
+    "wait_vs_both_main_lanes_tiles_disjoint": true,
+    "wait_vs_vertical_full_crossings_tiles_disjoint": true,
+    "wait_and_tail_vs_bridge_queues_disjoint": true,
+    "queue_vs_opposing_full_crossings_disjoint": true,
+    "native_context_instances_validated": 100,
+    "targeted_campus_tests_passed": 12,
+    "native_asset_clearance_m": 0.1,
+    "safety_radii_and_tile_size_unchanged": true
+  },
+  "visual_export": {
+    "base": {
+      "path": "C:\\Users\\LIMMM\\factory-ops-twin\\artifacts\\campus-visual-276\\factory-v3.usda",
+      "sha256": "919247cd704e98632b1780966513295cc5adc236a849473fa8563708718d8c3f",
+      "default_prim": "World",
+      "up_axis": "Z",
+      "meters_per_unit": 1,
+      "static_collider_count": 77,
+      "obstacle_collider_count": 76,
+      "floor_collision_geometry": "invisible static Z-axis Plane at z=0; infinite physics surface",
+      "floor_visual_geometry": "non-colliding 78x60x0.1 m Cube slab ending at z=0",
+      "bounded_operations_scope": "78x60 m authored occupancy map; the physics plane is intentionally infinite",
+      "non_colliding_marker_count": 40,
+      "robot_assets": 0,
+      "validation": "OpenUSD text authored; pxr/Isaac Sim parsing and collision behavior not validated"
+    },
+    "invariants": {
+      "source_obstacle_count": 76,
+      "source_static_collider_count": 77,
+      "source_marker_count": 40,
+      "visual_collision_api_count": 0,
+      "layout_bounds_xy_m": [
+        0.0,
+        0.0,
+        78.0,
+        60.0
+      ],
+      "visual_equipment_contained_by_source_xyz_envelopes": true,
+      "station_centres_free_of_visual_payload_geometry": true,
+      "source_xyz_invariant_scope": "all visual instances with a source_obstacle_id, including mounted external assets, remain inside source XYZ envelopes"
+    },
+    "fixtures": 100,
+    "visual_instances": 1148,
+    "manifest_sha256": "e22b34bb7d19f927d7005ddb18092c8cbab6dc7a8b1ff3e6200f39f7c3457968",
+    "config_sha256": {
+      "fleet-profile.json": "5bdaa74cba0c8df54951b5e69cfa6de45c680b91e2d8f71f138f0afad32f18d5",
+      "g2.json": "b2e3385db604b33c94ce4f8dfbc41926a1e21b4f2e60a4340b114c1f124849ab",
+      "g3-routing.json": "a9617c4ea2d753716691dd0146984e2da51e29a43630cfe7fe4daf7abdb21441",
+      "layout.json": "cd11a42ddbf7ded42d98c4cfb3be59e12fe19f1c9aa8fca852af5ebdf8846c8e",
+      "operations-charging.json": "113f7d1fffd0567d57e8ba9afb3e795e79c9246d03486334c8ef7046b9be5d43",
+      "process-network.json": "ef4d3dd35612426c5b284413a9cb180c91dcbdad929eb1bcabed170e8beed12b",
+      "render-profile.json": "1474dcb23b6c8a89b4cd4bf686b106d6083c6ef8d3326451d38cce436bc6d560",
+      "visual-assets.json": "264d1f2e377339b597c8aa6f06b8cb49baed71a724df2ea4efd2e498c3c97904"
+    },
+    "gpu_render_done": false
+  },
+  "static_render": "docs/images/campus16-static-277/provenance.json",
+  "diagram": "docs/images/campus16-layout-276/provenance.json",
+  "runtime_boundary": "275 reached16 active material tasks and all16 repeat assignments but failed on Windows progress I/O;279 is a separate run"
+}

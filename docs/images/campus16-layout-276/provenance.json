@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "scope": "static layout diagram from authored JSON and CPU-generated USD manifest; no runtime or GPU render",
+  "config_sha256": {
+    "fleet-profile.json": "5bdaa74cba0c8df54951b5e69cfa6de45c680b91e2d8f71f138f0afad32f18d5",
+    "g2.json": "b2e3385db604b33c94ce4f8dfbc41926a1e21b4f2e60a4340b114c1f124849ab",
+    "g3-routing.json": "a9617c4ea2d753716691dd0146984e2da51e29a43630cfe7fe4daf7abdb21441",
+    "layout.json": "cd11a42ddbf7ded42d98c4cfb3be59e12fe19f1c9aa8fca852af5ebdf8846c8e",
+    "operations-charging.json": "113f7d1fffd0567d57e8ba9afb3e795e79c9246d03486334c8ef7046b9be5d43",
+    "process-network.json": "ef4d3dd35612426c5b284413a9cb180c91dcbdad929eb1bcabed170e8beed12b",
+    "render-profile.json": "1474dcb23b6c8a89b4cd4bf686b106d6083c6ef8d3326451d38cce436bc6d560",
+    "visual-assets.json": "264d1f2e377339b597c8aa6f06b8cb49baed71a724df2ea4efd2e498c3c97904"
+  },
+  "visual_manifest_sha256": "e22b34bb7d19f927d7005ddb18092c8cbab6dc7a8b1ff3e6200f39f7c3457968",
+  "outputs": {
+    "campus-layout.png": "95a310a56897c2a4acd6cbe10249e53812cf74e3bd8a593539c371f868c231b9",
+    "campus-layout.svg": "8a372717750672e244b0eb2583bd0fcc2899a9987616aa2803294de8a3166790"
+  }
+}

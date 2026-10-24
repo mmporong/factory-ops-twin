@@ -731,6 +731,29 @@ def _floor_graphics(layout: Layout, palette: Mapping[str, tuple[float, float, fl
         lines.extend(_floor_stencil_usda(label, (x - 1.0, y - .2), "post_drop_staging",
                                          indent=12, prim_name=prim, material="Dark"))
         semantic_roots[f"{root_path}/{prim}"] = "floor_marking"
+    bridge_queues = layout.data.get("bridge_queues", [])
+    if not isinstance(bridge_queues, list):
+        raise LayoutError("bridge_queues must be a list")
+    for item in bridge_queues:
+        if (not isinstance(item, dict) or not isinstance(item.get("id"), str)
+                or not isinstance(item.get("xy"), list) or len(item["xy"]) != 2
+                or not all(_is_finite_number(value) for value in item["xy"])):
+            raise LayoutError("bridge_queues requires a stable id and finite xy")
+        marker_id, (x, y) = item["id"], item["xy"]
+        for suffix, rectangle in (
+            ("L", (x - 1.1, y - 1.0, x - 1.05, y + 1.0)),
+            ("R", (x + 1.05, y - 1.0, x + 1.1, y + 1.0)),
+            ("B", (x - 1.1, y - 1.0, x + 1.1, y - .95)),
+            ("T", (x - 1.1, y + .95, x + 1.1, y + 1.0)),
+        ):
+            x0, y0, x1, y1 = rectangle
+            add_box(_Box(f"BridgeQueue_{marker_id}_{suffix}", (x0, y0, .017, x1, y1, .022),
+                         "White", "floor_marking", "bridge_admission_queue"))
+        prim = f"BridgeQueueStencil_{_prim_name(marker_id)}"
+        lines.extend(_floor_stencil_usda(marker_id.replace("_QUEUE", " WAIT").replace("_", " "),
+                                         (x - 1.0, y - .2), "bridge_admission_queue",
+                                         indent=12, prim_name=prim, material="Dark"))
+        semantic_roots[f"{root_path}/{prim}"] = "floor_marking"
     if revision in PRODUCTION_BAY_REVISIONS:
         stencil_specs = (
             ("S1", (3.75, 3.55), "station_identifier"),

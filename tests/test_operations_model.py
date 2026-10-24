@@ -33,7 +33,10 @@ class OperationsModelTest(unittest.TestCase):
         self.assertNotIn(robot, model._chunks)
 
     def test_snapshot_route_drops_collinear_waypoints_already_passed(self):
-        trip = {"points": deque(((2.0, 0.0), (4.0, 0.0), (6.0, 0.0)))}
+        trip = {
+            "points": deque(((2.0, 0.0), (4.0, 0.0), (6.0, 0.0))),
+            "nodes": deque(("N1", "N2", "N3")),
+        }
         chunk = {
             "points": deque(((6.0, 0.0),)), "count": 3, "consumed": 0,
             "start": (0.0, 0.0), "end": (6.0, 0.0), "corridor": None,
@@ -42,6 +45,7 @@ class OperationsModelTest(unittest.TestCase):
             {"x_m": 4.5, "y_m": 0.0, "yaw_rad": 0.0}, trip, chunk,
         )
         self.assertEqual(tuple(trip["points"]), ((6.0, 0.0),))
+        self.assertEqual(tuple(trip["nodes"]), ("N3",))
         self.assertEqual(chunk["consumed"], 2)
 
         OperationsModel._consume_chunk_route(
@@ -55,24 +59,65 @@ class OperationsModelTest(unittest.TestCase):
             {"x_m": 6.0, "y_m": 0.0, "yaw_rad": 0.0}, trip, chunk,
         )
         self.assertFalse(trip["points"])
+        self.assertFalse(trip["nodes"])
         self.assertEqual(chunk["consumed"], 3)
 
-    def test_bridge_admission_observes_earlier_route_intent_and_later_pose_only(self):
+    def test_trip_preview_is_only_the_next_stoppable_window(self):
+        campus = Path(__file__).resolve().parents[1] / "configs" / "factory-semiconductor-campus16"
+        model = OperationsModel(campus, initial_orders=0, run_id="rolling-window-preview")
+        robot = "amr-16"
+        model._trip(robot, {}, "D_P4", "A_PACK_IN", "parking", kind="parking")
+        trip = model._trips[robot]
+        route = model.book.plan("D_P4", "A_PACK_IN")
+        window = model._next_route_window(route.points[0], route.points[1:], route.nodes[1:])
+
+        self.assertEqual(window["nodes"], trip["admission_nodes"])
+        self.assertEqual(window["tiles"], trip["admission_tiles"])
+        self.assertLess(len(trip["admission_nodes"]), len(route.nodes) - 1)
+
+    def test_mandatory_queue_truncates_before_atomic_corridor_input(self):
+        model = OperationsModel(CONFIG, initial_orders=0, run_id="mandatory-queue-barrier")
+        model.bridges.queue_nodes = frozenset({"P2"})
+        start = model.book.nodes["P1"]
+        points = (model.book.nodes["P2"], model.book.nodes["P3"])
+        with patch.object(model.corridors, "atomic_span", return_value=None) as atomic_span:
+            window = model._next_route_window(start, points, ("P2", "P3"))
+
+        self.assertEqual(((model.book.nodes["P2"]),), atomic_span.call_args.args[1])
+        self.assertEqual(("P2",), window["nodes"])
+        self.assertEqual("P2", window["queue_barrier"])
+
+        with patch.object(model.corridors, "atomic_span", return_value=None) as after_queue:
+            model._next_route_window(model.book.nodes["P2"], (model.book.nodes["P3"],), ("P3",))
+        self.assertEqual((model.book.nodes["P3"],), after_queue.call_args.args[1])
+
+    def test_bridge_admission_observes_poses_without_unacquired_preview_cycles(self):
         model = OperationsModel(CONFIG, initial_orders=0, run_id="operations-admission-order")
         model._trip("amr-1", {}, "P1", "P3", "parking", kind="parking")
         model._trip("amr-2", {}, "P2", "P4", "parking", kind="parking")
         first = model._trips["amr-1"]
         second = model._trips["amr-2"]
+        shared_preview = frozenset({(20, 20), (21, 20)})
+        first.update(admission_nodes=(), admission_tiles=shared_preview)
+        second.update(admission_nodes=(), admission_tiles=shared_preview)
+        poses = {robot: frozenset({(index, 0)})
+                 for index, robot in enumerate(model.ledger.robots)}
+        with patch.object(model, "_footprint", side_effect=lambda robot: poses[robot]):
+            first_view = model._admission_observations("amr-1", first)
+            second_view = model._admission_observations("amr-2", second)
 
-        first_view = model._admission_observations("amr-1", first)
-        second_view = model._admission_observations("amr-2", second)
-
-        self.assertEqual(first_view["amr-2"], model._footprint("amr-2"))
-        self.assertTrue(first["admission_tiles"].issubset(second_view["amr-1"]))
-
-        model._chunks["amr-2"] = {}
-        in_flight_view = model._admission_observations("amr-1", first)
-        self.assertTrue(second["admission_tiles"].issubset(in_flight_view["amr-2"]))
+        self.assertEqual(first_view["amr-2"], poses["amr-2"])
+        self.assertEqual(second_view["amr-1"], poses["amr-1"])
+        self.assertTrue(shared_preview.isdisjoint(first_view["amr-2"] | second_view["amr-1"]))
+        self.assertEqual((), model.bridges.admit(
+            "amr-1", (), route_tiles=shared_preview, observed_tiles=first_view,
+        ))
+        self.assertEqual(
+            ("amr-1",),
+            model.bridges.blockers(
+                "amr-2", (), route_tiles=shared_preview, observed_tiles=second_view,
+            ),
+        )
 
     def test_four_robots_complete_material_cycle_with_retained_clearance(self):
         model = OperationsModel(CONFIG, initial_orders=4, run_id="operations-cycle-test")

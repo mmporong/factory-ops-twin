@@ -40,11 +40,13 @@ LOCO 라이선스는 [CC0-1.0](https://github.com/tum-fml/loco/blob/b460ab8c37f0
 
 ## 현재 에셋 대응과 소량 촬영 준비
 
-CPU 매핑 검사기는 현재 캠퍼스의 시각 인스턴스1,152개를 읽고, 팔레트 이름의4개와 적재함 이름의452개를 모두 거절했다. ESD 로드포트·트레이·매거진을 물류 팔레트나 소형 적재함으로 자동 변환하지 않는다. 승인 에셋과 root/leaf·bbox export 근거가 없으면 `training_ready=false`를 반환한다. [매핑 설정](../configs/perception/loco-asset-map-v1.json) · [검사와 후보 근거](evidence/loco-asset-map-266.json)
+CPU 매핑 검사기는 배치254의 시각 인스턴스1,152개를 읽고, 팔레트 이름의4개와 적재함 이름의452개를 모두 거절했다. ESD 로드포트·트레이·매거진을 물류 팔레트나 소형 적재함으로 자동 변환하지 않는다. 승인 에셋과 root/leaf·bbox export 근거가 없으면 `training_ready=false`를 반환한다. 후속 공장 배치의 전체 인스턴스 수와 이 고정 감사의 입력을 혼용하지 않는다. [매핑 설정](../configs/perception/loco-asset-map-v1.json) · [검사와 후보 근거](evidence/loco-asset-map-266.json)
 
 별도 지각 실험용으로 NVIDIA의 `pallet_block_a01`과 `crate_gray_a20` 원본68파일·43,484,400바이트를 확보했다. 라이선스는 CC-BY-4.0이며 모든 파일의 크기·해시를 대조했다. 기존 CPU 준비 도구로 물리 API를 제거한 소비용 USD를 만들었고 각각 가시 mesh1개, 미터·Z-up의 유한 외곽을 확인했다. 치수는 팔레트 약1.000×1.200×0.120m, 얕은 크레이트 약0.612×0.412×0.090m다. 제조사 정격이나 KLT 규격 인증이 아니라 USD의 가시 형상 외곽이다. 두 모델은 현재 운용 공장에 추가된 물건이 아니라 새 데이터 fixture의 후보이며, 다운로드·파싱을 라벨 승인으로 세지 않는다.
 
-다음 촬영은 4개 scene seed×4시점, 최대16장의 매핑 probe다. native 에셋의 RGB·원시 bbox/label map·semantic uint32 map·카메라·객체 pose·입력 해시를 남기고, 객체 수·클래스·박스 범위를 확인한다. 이 소량 자료는 512장 학습 파일럿에 앞선 export 확인이며 통과해도 학습 준비 완료나 실사 성능으로 공개하지 않는다.
+실행270은 원본 의미 속성을 제거한 지각 전용 사본을 작성하고 비의미 USD 계약·형상·재질 보존을 확인했다. 원본과 범용 사본은 유지한다. 실행278은4개 scene seed×4시점의16장과 원시 bbox/label map·semantic uint32 map·카메라·객체 pose·입력 해시를 남겼다. 별도 사후 감사에서60개 객체의 raw tight bbox가 class/object_id별 semantic 마스크의 inclusive min/max와 모두 일치했다. 원래 dataset.json은 수정하지 않고 사후 근거를 분리했다. [사본 준비](evidence/perception-prepare-270.json) · [촬영·라벨·종료 근거](evidence/perception-probe-278.json)
+
+이 자료는 단순 바닥 위 후보 에셋의 export 확인이며 공장 운영 데이터가 아니다. 얕은 크레이트가 LOCO 적재함의 어떤 하위 유형을 대표하는지, 가림·복잡한 배경·크기별 support와 촬영 그룹 분리를 고정한 뒤512장으로 확대한다. `training_ready=false`, `mapping_approved=false`를 유지하며 검출기 학습·실사 성능은 아직 없다.
 
 ## 순서와 확대 조건
 

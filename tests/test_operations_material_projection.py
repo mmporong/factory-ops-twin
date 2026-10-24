@@ -1,9 +1,13 @@
 from __future__ import annotations
 
 from copy import deepcopy
+from pathlib import Path
 import unittest
 
 from factory_ops.operations_material_projection import project_operations_materials
+from factory_ops.layout import Layout
+from scripts.isaac.factory_visuals import world_slot_placement
+from scripts.isaac.render_operations_replay import replay_slot_capacities, replay_slot_placement
 
 
 CAPACITIES = {"source_S1": 8, "source_S2": 8, "source_S3": 8,
@@ -158,6 +162,58 @@ class OperationsMaterialProjectionTest(unittest.TestCase):
         ]
         with self.assertRaisesRegex(ValueError, "slots collide"):
             project_operations_materials(value, CAPACITIES, previous)
+
+    def test_four_line_campus_uses_prefixed_bay_slots_without_product_duplicates(self) -> None:
+        value = {
+            "inventory": {"totes": [
+                {"tote_id": "TA", "state": "available", "location": "A_S1", "owner": None,
+                 "request_id": None},
+                {"tote_id": "TB1", "state": "filled", "location": "B_AOI_IN", "owner": None,
+                 "request_id": "LOT-B1"},
+                {"tote_id": "TB2", "state": "filled", "location": "B_AOI_OUT", "owner": None,
+                 "request_id": "LOT-B2"},
+                {"tote_id": "TD", "state": "filled", "location": "D_PACK_IN", "owner": None,
+                 "request_id": "LOT-D"},
+                {"tote_id": "TC", "state": "filled", "location": "IN_TRANSIT", "owner": "amr-1",
+                 "request_id": "LOT-C"},
+            ]},
+            "tasks": [{"order_id": "LOT-B1", "type": "product_move", "state": "complete",
+                       "payload_id": "TB1"}],
+            "robots": [{"id": "amr-1", "payload_id": "TC"}],
+            "equipment": {"active_order_id": "LOT-B1"},
+            "production_line": {"line_ids": ["L1", "L2", "L3", "L4"], "completed_lots": 7},
+        }
+        capacities = {"A_source_S1": 2, "B_cell": 3, "D_out": 2}
+        projected = self.project(value, capacities)
+        self.assertEqual(
+            {("TA", "A_source_S1", 0), ("TB1", "B_cell", 0),
+             ("TB2", "B_cell", 1), ("TD", "D_out", 0)},
+            {(row["id"], row["location"], row["slot"]) for row in projected["world_items"]},
+        )
+        self.assertEqual({"TA", "TB1", "TB2", "TD"},
+                         {row["id"] for row in projected["world_items"]})
+        self.assertEqual("represented_by_robot_payload", projected["hidden"][0]["reason"])
+        self.assertEqual(7, projected["counts"]["outbound_complete_lots"])
+
+    def test_campus_replay_slots_translate_each_bay_and_keep_legacy_geometry(self) -> None:
+        root = Path(__file__).resolve().parents[1]
+        campus = Layout.from_file(root / "configs" / "factory-semiconductor-campus16" / "layout.json")
+        capacities = replay_slot_capacities(campus, world_slot_placement)
+        self.assertEqual(28, len(capacities))
+        self.assertEqual(capacities["A_cell"], capacities["D_cell"])
+
+        a = replay_slot_placement(campus, "A_cell", 0, world_slot_placement)
+        d = replay_slot_placement(campus, "D_cell", 0, world_slot_placement)
+        self.assertEqual("A_PROCESS_2", a["source_obstacle_id"])
+        self.assertEqual("D_PROCESS_2", d["source_obstacle_id"])
+        self.assertAlmostEqual(42.0, d["translate_xyz_m"][0] - a["translate_xyz_m"][0])
+        self.assertAlmostEqual(32.0, d["translate_xyz_m"][1] - a["translate_xyz_m"][1])
+
+        legacy = Layout.from_file(root / "configs" / "factory-semiconductor-dual-lane" / "layout.json")
+        self.assertEqual(
+            world_slot_placement(legacy, "ci", 0),
+            replay_slot_placement(legacy, "ci", 0, world_slot_placement),
+        )
 
 
 if __name__ == "__main__":

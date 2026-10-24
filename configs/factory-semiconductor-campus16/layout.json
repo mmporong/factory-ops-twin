@@ -563,7 +563,7 @@
       "id": "C_PACK_STAGING_SPUR",
       "rect": [
         25.4,
-        32.1,
+        28.8,
         28.6,
         41.0
       ],
@@ -743,7 +743,7 @@
       "id": "D_PACK_STAGING_SPUR",
       "rect": [
         67.4,
-        32.1,
+        28.8,
         70.6,
         41.0
       ],
@@ -853,21 +853,81 @@
       "id": "CAMPUS_V_AC_RESERVATION",
       "rect": [
         33.0,
-        24.0,
+        23.4,
         35.8,
-        36.0
+        36.6
       ],
-      "purpose": "atomic shared bridge reservation overlay"
+      "purpose": "atomic shared bridge reservation overlay including both gate approaches"
     },
     {
       "id": "CAMPUS_V_BD_RESERVATION",
       "rect": [
         75.0,
-        24.0,
+        23.4,
         77.8,
-        36.0
+        36.6
       ],
-      "purpose": "atomic shared bridge reservation overlay"
+      "purpose": "atomic shared bridge reservation overlay including both gate approaches"
+    },
+    {
+      "id": "CAMPUS_C_LOWER_JUNCTION",
+      "rect": [
+        28.4,
+        36.4,
+        33.1,
+        39.6
+      ],
+      "purpose": "atomic shared-junction policy overlay"
+    },
+    {
+      "id": "CAMPUS_D_LOW_W_TRUNK",
+      "rect": [
+        56.9,
+        39.4,
+        67.6,
+        39.6
+      ],
+      "purpose": "atomic shared-junction policy overlay"
+    },
+    {
+      "id": "CAMPUS_D_EAST_CI_TURN",
+      "rect": [
+        67.4,
+        39.4,
+        67.6,
+        42.6
+      ],
+      "purpose": "atomic shared-junction policy overlay"
+    },
+    {
+      "id": "CAMPUS_D_EAST_SPINE_TURN",
+      "rect": [
+        70.4,
+        36.4,
+        70.6,
+        39.6
+      ],
+      "purpose": "atomic shared-junction policy overlay"
+    },
+    {
+      "id": "CAMPUS_AC_N_QUEUE_ACCESS",
+      "rect": [
+        28.3,
+        28.8,
+        33.2,
+        35.2
+      ],
+      "purpose": "off-route vertical bridge queue access envelope"
+    },
+    {
+      "id": "CAMPUS_BD_N_QUEUE_ACCESS",
+      "rect": [
+        70.3,
+        28.8,
+        75.2,
+        35.2
+      ],
+      "purpose": "off-route vertical bridge queue access envelope"
     }
   ],
   "stations": [
@@ -2783,7 +2843,7 @@
       "id": "C_PACK_WAIT",
       "xy": [
         27.0,
-        33.5
+        30.5
       ],
       "purpose": "post-drop egress wait outside PACK_IN; not a fleet home or process-capacity station"
     },
@@ -2791,9 +2851,43 @@
       "id": "D_PACK_WAIT",
       "xy": [
         69.0,
-        33.5
+        30.5
       ],
       "purpose": "post-drop egress wait outside PACK_IN; not a fleet home or process-capacity station"
+    }
+  ],
+  "bridge_queues": [
+    {
+      "id": "AC_S_QUEUE",
+      "xy": [
+        33.5,
+        19.5
+      ],
+      "purpose": "mandatory off-route stop before vertical bridge admission; floor marker only"
+    },
+    {
+      "id": "AC_N_QUEUE",
+      "xy": [
+        31.5,
+        30.5
+      ],
+      "purpose": "mandatory off-route stop before vertical bridge admission; floor marker only"
+    },
+    {
+      "id": "BD_S_QUEUE",
+      "xy": [
+        75.5,
+        19.5
+      ],
+      "purpose": "mandatory off-route stop before vertical bridge admission; floor marker only"
+    },
+    {
+      "id": "BD_N_QUEUE",
+      "xy": [
+        73.5,
+        30.5
+      ],
+      "purpose": "mandatory off-route stop before vertical bridge admission; floor marker only"
     }
   ]
 }

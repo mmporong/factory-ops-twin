@@ -1350,6 +1350,8 @@ RGB249의 첫 report는 runtime·클래스 수를 추가하며 같은 경로로 
 
 264는 물류 동시 임무13·이동12를 기록했지만, C/D 교량과 east-spine의 공유 junction을 별개 종료점으로 취급해 다시 정체했다. 출하2·반납0·source_stable=true이며 진전 없음으로 종료했다. 충돌 여유를 줄이거나 차량 우선순위만 바꾸지 않고, 해당 junction을 기존 교량과 연쇄 원자 예약하도록 좁은 정책 영역을 작성했다. PACK_IN 중심이 영역 밖이라는 이유로 pose-clear 종료점으로 단정하지 않으며 PACK_WAIT까지 인계 보호를 유지한다. 원본256/261/264는 수정 전 근거로 보존하고 새 입력의 결과로 판정한다.
 
+269는 반대 방향 교량 gate의 실제 정지 pose가 서로 출구를 막았다. 통로 밖 queue4개를 추가하고 queue 도착을 필수 정지 경계로 만들어 진입 전 교량·junction window를 획득한다. queue는 교량 resource 점유에 포함하지 않는다.274는 C_PACK_WAIT가 두 차로의 예약 타일과 겹쳐 삼각 대기했다. C/D WAIT의 y를33.5→30.5로 옮기고 인계 후 tail을 연장했다. 반대 차로 전체 swept tiles·bridge queue·홈과의 분리, 실제 native 외곽 여유를 확인했으며 설비76개·fixture100개·안전 반경·타일 크기를 유지했다. [닫힌269·274 근거](evidence/campus16-rolling-274.json)
+
 ## FOT-169 — 정적 카메라 전환과 SDK 종료 코드
 
 259는 첫 조감 촬영 뒤 render product를 새로 만들 때 다음 RGB 버퍼가 비었다. product와 annotator의 수명을 유지하도록 바꿨다.260에서는 장면에 이미 있는 카메라를 제외하지 않은 식별 검사로 중단했다.262는 이미지3장이 생성됐지만 요청한 근접 pose 대신 같은 조감 정렬에서 초점거리만 달라진 모습이었다. 당시 world transform을 기록하지 않아 정확한 이전 pose는 단정하지 않는다. 원래 passed 보고서를 수정하지 않고 별도 adjudication으로 요청한 시점의 증거에서 제외했다.
@@ -1363,3 +1365,11 @@ RGB249의 첫 report는 runtime·클래스 수를 추가하며 같은 경로로 
 `scripts/assets/prepare_perception_assets.py`는 고정267 결과를 입력으로 새 `.perception/<script hash>/` 사본만 작성한다. 실행270에서 pallet의 의미 속성10개와 crate의8개를 제거했고 의미·물리 상태 잔존0, 형상 외곽·mesh 수·재질 및 비의미 USD 계약의 해시 보존을 확인했다. CPU OpenUSD 작업이며 Kit 촬영이나 학습 성공을 뜻하지 않는다. 촬영 시 하위 의미 라벨 거부 검사는 유지하고 프로젝트 object root에만 새 라벨을 붙인다. 사본도 `mapping_approved=false`, `training_ready=false`다.
 
 후속271은 bbox 라벨의 object_id 누락으로0장에서 중단됐다. SDK4.5의 Replicator1.11.35 소스에서 semantic segmentation의 semanticTypes가 전역 instance-mapping 필터를 덮어쓰는 것을 확인했다. bbox만 class/object_id로 설정하고 segmentation을 class만 설정하면 bbox idToLabels에서도 object_id가 빠졌다. 두 annotator가 같은 `PROBE_SEMANTIC_TYPES`를 사용하도록 맞추고 객체 식별 거부 검사는 유지했다. SDK의 복수 semantic type bbox 검사도 참조했다. [공식 semanticTypes·idToLabels API](https://docs.omniverse.nvidia.com/kit/docs/omni_replicator/latest/source/extensions/omni.replicator.core/docs/API.html)
+
+278은16장 촬영과60개 bbox 객체를 통과했다. 사후 객체별 semantic 마스크의 min/max와60개 raw tight bbox가 모두 일치해 이 실행에서 inclusive endpoint 처리를 확인했다. 원래 보고서의 global pixel 검사와 별도 사후 mask 검사를 구분한다. [촬영과 사후 근거](evidence/perception-probe-278.json)
+
+## FOT-171 — CPU 진행 파일의 Windows 교체 실패
+
+275는16개 동시 물류 임무를 기록한 뒤 `.progress.tmp`를 `progress.json`으로 교체할 때 WinError5로 종료됐다. 원본 오류·부분 결과·닫힌 기록을 보존한다. 동시 읽기와 Windows sharing 충돌은 가능한 설명이며 어떤 프로세스가 잠갔는지는 확인하지 않았다. 모델 교착이나 성공 완주로 재해석하지 않는다.
+
+기존 `compat.write_shared_text`와 `replace_shared_file`을 runner에서 재사용한다. 공유 I/O 오류만 최대0.2초 재시도하고 디스크 부족 등 영구 오류는 그대로 드러낸다. compat.py도 frozen producer 입력에 넣었다. 기존 transient/recovery 검사의8개 통과를 확인했으며 새 실행은 별도 출력 폴더를 사용한다. [275 원본·부분 지표](evidence/campus16-275.json)

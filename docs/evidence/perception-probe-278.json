@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "run_id": "perception-probe-278",
+  "status": "candidate_probe_passed",
+  "capture_count": 16,
+  "image_size_px": [
+    768,
+    512
+  ],
+  "scene_seeds": [
+    101,
+    211,
+    307,
+    401
+  ],
+  "source_pin": {
+    "capture_script_sha256": "3b1306ccd267ae5e966624601881b554fecb3b12f79556e6822cd8301cacdc36",
+    "prepared_assets": {
+      "nvidia:crate_gray_a20": "1184bf226c6e7522b43d0900892f38dae5ac16a8ba436fe0587f05f3d6a6977b",
+      "nvidia:pallet_block_a01": "d3bda6d4716fcc5ab420eedfb229c1bbd5baf9aa170c6849cf0a05fe6b59500a"
+    },
+    "prepared_result_path": "C:\\Users\\LIMMM\\factory-ops-twin\\artifacts\\perception-prepare-270\\result.json",
+    "prepared_result_sha256": "2d1ef3c0e566794460779c1d9dd8076d151d6839609ca1896260f003e0ec0518",
+    "source_commit": "d648fa62b12d6e00a6dd5e554a87d48992b483ef",
+    "source_receipt_sha256": "6e37fa400745d4acf86c2140882aa1524ef9fcacdafb7c0f5095a516cd00ca94"
+  },
+  "dataset_sha256": "ca60ebb12245d6087085b9b4f58e2e57a404026c6fd2cb72e699dce3d3ea6a93",
+  "bbox_mask_audit_sha256": "ce06efa163ef188df8f088edc256acc0a9564339a7e3547431995a78f7647c15",
+  "object_box_count": 60,
+  "exact_bbox_mask_pairs": 60,
+  "bbox_maximum_convention": "Inclusive integer pixel maxima verified on these 60 raw tight-box/semantic object-mask pairs",
+  "validation": {
+    "bbox_class_object_provenance_binding": "passed",
+    "bbox_object_coverage": "passed",
+    "bbox_pixel_extent_and_area": "passed",
+    "per_object_bbox_mask_equality": "passed in separate closed-data audit; original dataset.json unchanged",
+    "root_leaf_semantics": "root-only authored; leaf source semantics absent",
+    "semantic_pixel_presence": "global target-class presence only",
+    "timeline": "stopped during all captures"
+  },
+  "post_capture_audit": {
+    "per_object_semantic_mask_vs_raw_bbox": "60/60 exact; class and object_id selected from each modality idToLabels independently",
+    "RGB_semantic_bbox_visual_review": "two representative RGB/bbox views inspected; not a production or full-dataset human approval"
+  },
+  "host_receipt_sha256": "ebe5f16f7dae575816ef92da8ba6ac0c9317b68b0c1fc8e67c252ad1be4c2a0f",
+  "host": {
+    "status": "passed",
+    "closed": true,
+    "remaining_owned_pids": []
+  },
+  "scope": {
+    "Cosmos_used": false,
+    "candidate_probe_only": true,
+    "mapping_approved": false,
+    "model_training_performed": false,
+    "training_ready": false
+  },
+  "limits": [
+    "Simple candidate-asset floor scene; not factory operations or AMR sensor data",
+    "Shallow native crate is not a certified KLT/ESD carrier; class mapping remains unapproved",
+    "No Cosmos transform, detector training, held-out real-image metric or label-cost saving claim"
+  ],
+  "outputs": {
+    "label-probe.png": "eebced147a34b30a55afaa0cda85b4dd200cd154e20747825b0aaf8a2d060fc7",
+    "scene-1-rgb.png": "52b06a28e7f96a342e1f3bc8a0709f99ba1d1017de0a5a20ddb2d45a3d1b662b",
+    "scene-2-rgb.png": "381bcab107237caeb9e89edc59a8b7def4056577acbdecdb4ecd0e26868f5b26"
+  }
+}

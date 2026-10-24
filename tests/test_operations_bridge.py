@@ -63,6 +63,50 @@ class BridgeAdmissionTest(unittest.TestCase):
         gate.release("crossing", stopped=True)
         self.assertEqual((), gate.admit("local", [], route_tiles={(3, 2), (4, 2)}))
 
+    def test_local_window_is_owned_until_stopped_release(self):
+        gate = BridgeAdmission(self.routing)
+        self.assertEqual((), gate.admit("local", [], route_tiles={(3, 2), (4, 2)}))
+        self.assertTrue(gate.has_window("local"))
+        self.assertEqual(
+            ("local",),
+            gate.admit("follower", [], route_tiles={(4, 2), (5, 2)}),
+        )
+        self.assertFalse(gate.withdraw_waiter("local"))
+        with self.assertRaises(RuntimeError):
+            gate.release("local", stopped=False)
+        gate.release("local", stopped=True)
+        self.assertFalse(gate.has_window("local"))
+        self.assertEqual((), gate.admit("follower", [], route_tiles={(4, 2), (5, 2)}))
+
+    def test_stopped_handover_can_only_narrow_an_active_window(self):
+        gate = BridgeAdmission(self.routing)
+        gate.admit(
+            "carrier", ["N", "E"], route_tiles={(1, 1), (2, 1), (3, 1)},
+            handover_protected=True,
+        )
+        self.assertEqual(["carrier"], gate.snapshot()["handover_protected"])
+        with self.assertRaises(RuntimeError):
+            gate.retarget("carrier", ["E"], route_tiles={(2, 1), (3, 1)}, stopped=False)
+        gate.retarget("carrier", ["E"], route_tiles={(2, 1), (3, 1)}, stopped=True)
+        self.assertEqual(frozenset({"AB"}), gate.held("carrier"))
+        with self.assertRaises(RuntimeError):
+            gate.retarget(
+                "carrier", ["E"], route_tiles={(2, 1), (3, 1), (4, 1)}, stopped=True,
+            )
+
+    def test_queue_nodes_are_validated_and_excluded_from_bridge_resources(self):
+        routing = {"nodes": dict.fromkeys(("Q", "G", "X")), "bridge_admission": {
+            "policy": "atomic_route_leg_resources", "queue_nodes": ["Q"],
+            "resources": {"bridge": ["G", "X"]},
+        }}
+        gate = BridgeAdmission(routing)
+        self.assertEqual(frozenset({"Q"}), gate.queue_nodes)
+        self.assertEqual(["Q"], gate.snapshot()["queue_nodes"])
+
+        routing["bridge_admission"]["resources"]["bridge"].append("Q")
+        with self.assertRaisesRegex(ValueError, "outside bridge resources"):
+            BridgeAdmission(routing)
+
     def test_unowned_waiter_can_withdraw_but_route_owner_cannot(self):
         gate = BridgeAdmission(self.routing)
         gate.admit("owner", ["N"], route_tiles={(1, 1)})

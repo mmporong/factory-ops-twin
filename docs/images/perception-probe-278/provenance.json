@@ -1,0 +1,23 @@
+{
+  "run_id": "perception-probe-278",
+  "evidence": "../../evidence/perception-probe-278.json",
+  "source_dataset_sha256": "ca60ebb12245d6087085b9b4f58e2e57a404026c6fd2cb72e699dce3d3ea6a93",
+  "selection": [
+    {
+      "image_id": 1,
+      "rgb": "scene-01/view-01/rgb.png",
+      "rgb_sha256": "52b06a28e7f96a342e1f3bc8a0709f99ba1d1017de0a5a20ddb2d45a3d1b662b"
+    },
+    {
+      "image_id": 16,
+      "rgb": "scene-04/view-04/rgb.png",
+      "rgb_sha256": "381bcab107237caeb9e89edc59a8b7def4056577acbdecdb4ecd0e26868f5b26"
+    }
+  ],
+  "display": "RGB pixels unchanged; label panel adds rectangles from raw bbox; no generative image edit",
+  "outputs": {
+    "label-probe.png": "eebced147a34b30a55afaa0cda85b4dd200cd154e20747825b0aaf8a2d060fc7",
+    "scene-1-rgb.png": "52b06a28e7f96a342e1f3bc8a0709f99ba1d1017de0a5a20ddb2d45a3d1b662b",
+    "scene-2-rgb.png": "381bcab107237caeb9e89edc59a8b7def4056577acbdecdb4ecd0e26868f5b26"
+  }
+}

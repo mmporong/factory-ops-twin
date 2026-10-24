@@ -50,11 +50,11 @@ class CampusVisualSceneTests(unittest.TestCase):
         obstacle_ids = {str(item["id"]) for item in layout.data["physical_obstacles"]}
         fixtures = config["environment"]["fixtures"]
         self.assertEqual(76, len(obstacle_ids))
-        self.assertEqual(104, len(fixtures))
+        self.assertEqual(100, len(fixtures))
         self.assertEqual(len(fixtures), config["environment"]["fixture_count"])
-        self.assertEqual(36, len(config["environment"]["excluded_fixtures"]))
+        self.assertEqual(40, len(config["environment"]["excluded_fixtures"]))
         self.assertTrue(all(item["id"].split("_", 1)[0] in {"A", "B", "C", "D"} for item in fixtures))
-        self.assertEqual({"A": 26, "B": 26, "C": 27, "D": 25}, {
+        self.assertEqual({"A": 26, "B": 26, "C": 25, "D": 23}, {
             bay: sum(item["id"].startswith(f"{bay}_") for item in fixtures)
             for bay in ("A", "B", "C", "D")
         })
@@ -95,6 +95,10 @@ class CampusVisualSceneTests(unittest.TestCase):
                 self.assertIn(f'custom string stableId = "floor_stencil:{label}"', visual)
             for bay in "ABCD":
                 self.assertIn(f'custom string stableId = "floor_stencil:{bay} WAIT"', visual)
+            for queue in layout.data["bridge_queues"]:
+                label = queue["id"].replace("_QUEUE", " WAIT").replace("_", " ")
+                self.assertIn(f'custom string stableId = "floor_stencil:{label}"', visual)
+            self.assertIn('custom string stateRole = "bridge_admission_queue"', visual)
 
 
 if __name__ == "__main__":

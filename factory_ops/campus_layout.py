@@ -18,8 +18,30 @@ CAMPUS_REVISION = "amr-semiconductor-campus16-v1"
 BAY_OFFSETS = {"A": (0.0, 0.0), "B": (42.0, 0.0), "C": (0.0, 32.0), "D": (42.0, 32.0)}
 CAMPUS_BOUNDS = [0, 0, 78, 60]
 PACK_EGRESS_LOCAL = [27.0, 4.5]
-PACK_WAIT_LOCAL = [27.0, 1.5]
+PACK_WAIT_POINTS = {
+    "A": [27.0, 1.5],
+    "B": [69.0, 1.5],
+    "C": [27.0, 30.5],
+    "D": [69.0, 30.5],
+}
 PACK_STAGING_SPUR_LOCAL = [25.4, 0.1, 28.6, 9.0]
+PACK_STAGING_SPUR_NORTH_LOCAL = [25.4, -3.2, 28.6, 9.0]
+SHARED_JUNCTION_REGIONS = {
+    "CAMPUS_C_LOWER_JUNCTION": [28.4, 36.4, 33.1, 39.6],
+    "CAMPUS_D_LOW_W_TRUNK": [56.9, 39.4, 67.6, 39.6],
+    "CAMPUS_D_EAST_CI_TURN": [67.4, 39.4, 67.6, 42.6],
+    "CAMPUS_D_EAST_SPINE_TURN": [70.4, 36.4, 70.6, 39.6],
+}
+BRIDGE_QUEUES = {
+    "AC_S_QUEUE": [33.5, 19.5],
+    "AC_N_QUEUE": [31.5, 30.5],
+    "BD_S_QUEUE": [75.5, 19.5],
+    "BD_N_QUEUE": [73.5, 30.5],
+}
+BRIDGE_QUEUE_ACCESS_REGIONS = {
+    "CAMPUS_AC_N_QUEUE_ACCESS": [28.3, 28.8, 33.2, 35.2],
+    "CAMPUS_BD_N_QUEUE_ACCESS": [70.3, 28.8, 75.2, 35.2],
+}
 
 
 def _read(path: Path) -> dict[str, Any]:
@@ -64,7 +86,10 @@ def build_campus_layout(base: Mapping[str, Any]) -> dict[str, Any]:
             result["amr_allowed_regions"].append(item)
         result["amr_allowed_regions"].append({
             "id": f"{bay}_PACK_STAGING_SPUR",
-            "rect": _shift_rect(PACK_STAGING_SPUR_LOCAL, offset),
+            "rect": _shift_rect(
+                PACK_STAGING_SPUR_LOCAL if bay in {"A", "B"} else PACK_STAGING_SPUR_NORTH_LOCAL,
+                offset,
+            ),
             "purpose": "post-drop PACK_IN egress and wait spur outside the main eastbound intersection",
         })
         for station in source["stations"]:
@@ -109,9 +134,17 @@ def build_campus_layout(base: Mapping[str, Any]) -> dict[str, Any]:
     result["amr_allowed_regions"].extend([
         {"id": "CAMPUS_H_AB_RESERVATION", "rect": [32.0, 5.0, 47.0, 8.8], "purpose": "atomic shared bridge reservation overlay"},
         {"id": "CAMPUS_H_CD_RESERVATION", "rect": [32.0, 37.0, 47.0, 40.8], "purpose": "atomic shared bridge reservation overlay"},
-        {"id": "CAMPUS_V_AC_RESERVATION", "rect": [33.0, 24.0, 35.8, 36.0], "purpose": "atomic shared bridge reservation overlay"},
-        {"id": "CAMPUS_V_BD_RESERVATION", "rect": [75.0, 24.0, 77.8, 36.0], "purpose": "atomic shared bridge reservation overlay"},
+        {"id": "CAMPUS_V_AC_RESERVATION", "rect": [33.0, 23.4, 35.8, 36.6], "purpose": "atomic shared bridge reservation overlay including both gate approaches"},
+        {"id": "CAMPUS_V_BD_RESERVATION", "rect": [75.0, 23.4, 77.8, 36.6], "purpose": "atomic shared bridge reservation overlay including both gate approaches"},
     ])
+    result["amr_allowed_regions"].extend(
+        {"id": name, "rect": deepcopy(rect), "purpose": "atomic shared-junction policy overlay"}
+        for name, rect in SHARED_JUNCTION_REGIONS.items()
+    )
+    result["amr_allowed_regions"].extend(
+        {"id": name, "rect": deepcopy(rect), "purpose": "off-route vertical bridge queue access envelope"}
+        for name, rect in BRIDGE_QUEUE_ACCESS_REGIONS.items()
+    )
     result["blocked_aisles"] = blocked_aisles
     result["blocked_aisle"] = deepcopy(blocked_aisles[0])
     result["blocked_aisle"]["compatibility_scope"] = "A-bay compatibility view; blocked_aisles is authoritative for the campus"
@@ -123,10 +156,18 @@ def build_campus_layout(base: Mapping[str, Any]) -> dict[str, Any]:
     result["operational_staging"] = [
         {
             "id": f"{bay}_PACK_WAIT",
-            "xy": _shift_point(PACK_WAIT_LOCAL, offset),
+            "xy": deepcopy(PACK_WAIT_POINTS[bay]),
             "purpose": "post-drop egress wait outside PACK_IN; not a fleet home or process-capacity station",
         }
         for bay, offset in BAY_OFFSETS.items()
+    ]
+    result["bridge_queues"] = [
+        {
+            "id": queue_id,
+            "xy": deepcopy(point),
+            "purpose": "mandatory off-route stop before vertical bridge admission; floor marker only",
+        }
+        for queue_id, point in BRIDGE_QUEUES.items()
     ]
     result["unperformed_validation"] = [
         "16-AMR RouteBook and reservation runtime",
@@ -218,7 +259,7 @@ def build_campus_routing(base: Mapping[str, Any]) -> dict[str, Any]:
         egress = f"{bay}_PACK_EGRESS"
         wait = f"{bay}_PACK_WAIT"
         result["nodes"][egress] = _shift_point(PACK_EGRESS_LOCAL, offset)
-        result["nodes"][wait] = _shift_point(PACK_WAIT_LOCAL, offset)
+        result["nodes"][wait] = deepcopy(PACK_WAIT_POINTS[bay])
         result["directed_edges"].remove([east_start, east_end])
         result["directed_edges"].extend([
             [east_start, egress],
@@ -234,8 +275,9 @@ def build_campus_routing(base: Mapping[str, Any]) -> dict[str, Any]:
     bridge_regions = {
         "CAMPUS_H_AB_RESERVATION": [32.0, 5.0, 47.0, 8.8],
         "CAMPUS_H_CD_RESERVATION": [32.0, 37.0, 47.0, 40.8],
-        "CAMPUS_V_AC_RESERVATION": [33.0, 24.0, 35.8, 36.0],
-        "CAMPUS_V_BD_RESERVATION": [75.0, 24.0, 77.8, 36.0],
+        "CAMPUS_V_AC_RESERVATION": [33.0, 23.4, 35.8, 36.6],
+        "CAMPUS_V_BD_RESERVATION": [75.0, 23.4, 77.8, 36.6],
+        **deepcopy(SHARED_JUNCTION_REGIONS),
     }
     result["policy_region_overrides"].update(bridge_regions)
     for region_id in bridge_regions:
@@ -258,6 +300,7 @@ def build_campus_routing(base: Mapping[str, Any]) -> dict[str, Any]:
         "AC_N_IN": [34.5, 35.0], "AC_N_GATE": [33.0, 36.5],
         "BD_S_GATE": [75.0, 23.5], "BD_S_IN": [76.5, 25.0],
         "BD_N_IN": [76.5, 35.0], "BD_N_GATE": [75.0, 36.5],
+        **deepcopy(BRIDGE_QUEUES),
     }
     result["nodes"].update(connector_nodes)
     connector_paths = {
@@ -265,17 +308,19 @@ def build_campus_routing(base: Mapping[str, Any]) -> dict[str, Any]:
         "AB_W": ["B_LOW_W_W", "AB_W_E_GATE", "AB_W_E_IN", "AB_W_W_IN", "AB_W_W_GATE", "A_LOW_W_EN"],
         "CD_E": ["C_LOW_E_EN", "CD_E_W_GATE", "CD_E_W_IN", "CD_E_E_IN", "CD_E_E_GATE", "D_LOW_E_W"],
         "CD_W": ["D_LOW_W_W", "CD_W_E_GATE", "CD_W_E_IN", "CD_W_W_IN", "CD_W_W_GATE", "C_LOW_W_EN"],
-        "AC_N": ["A_HIGH_E_EN", "AC_S_GATE", "AC_S_IN", "AC_N_IN", "AC_N_GATE", "C_LOW_E_EN"],
-        "AC_S": ["C_LOW_W_EN", "AC_N_GATE", "AC_N_IN", "AC_S_IN", "AC_S_GATE", "A_HIGH_W_EN"],
-        "BD_N": ["B_HIGH_E_EN", "BD_S_GATE", "BD_S_IN", "BD_N_IN", "BD_N_GATE", "D_LOW_E_EN"],
-        "BD_S": ["D_LOW_W_EN", "BD_N_GATE", "BD_N_IN", "BD_S_IN", "BD_S_GATE", "B_HIGH_W_EN"],
+        "AC_N": ["A_HIGH_E_EN", "AC_S_QUEUE", "AC_S_GATE", "AC_S_IN", "AC_N_IN", "AC_N_GATE", "C_LOW_E_EN"],
+        "AC_S": ["C_LOW_W_EN", "AC_N_QUEUE", "AC_N_GATE", "AC_N_IN", "AC_S_IN", "AC_S_GATE", "A_HIGH_W_EN"],
+        "BD_N": ["B_HIGH_E_EN", "BD_S_QUEUE", "BD_S_GATE", "BD_S_IN", "BD_N_IN", "BD_N_GATE", "D_LOW_E_EN"],
+        "BD_S": ["D_LOW_W_EN", "BD_N_QUEUE", "BD_N_GATE", "BD_N_IN", "BD_S_IN", "BD_S_GATE", "B_HIGH_W_EN"],
     }
     for path in connector_paths.values():
         result["directed_edges"].extend([list(edge) for edge in zip(path, path[1:])])
     result["bridge_admission"] = {
         "policy": "atomic_route_leg_resources",
-        "resources": {link: sorted(node for node in connector_nodes if node.startswith(link + "_"))
+        "resources": {link: sorted(node for node in connector_nodes
+                                    if node.startswith(link + "_") and node not in BRIDGE_QUEUES)
                       for link in ("AB", "CD", "AC", "BD")},
+        "queue_nodes": list(BRIDGE_QUEUES),
     }
     result["operations_bottleneck_policy"] = "merge_adjacent_route_spans"
     result["inter_bay_connections"] = {
@@ -408,16 +453,25 @@ def build_visual_assets(base: Mapping[str, Any]) -> dict[str, Any]:
         "MAINT_TOOL_STORAGE_05", "MAINT_ROLLING_BENCH_05",
         "MAINT_PARTS_CART_04", "MAINT_PARTS_CART_05",
     }
+    queue_access_conflicts = {
+        "C": {"MAINT_TOOL_STORAGE_06", "MAINT_ROLLING_BENCH_06"},
+        "D": {"MAINT_TOOL_STORAGE_06", "MAINT_ROLLING_BENCH_06"},
+    }
     excluded = []
     for bay, offset in BAY_OFFSETS.items():
         for fixture in source["environment"]["fixtures"]:
-            if fixture["id"] in excluded_local[bay] or fixture["id"] in pack_spur_conflicts:
+            if (fixture["id"] in excluded_local[bay] or fixture["id"] in pack_spur_conflicts
+                    or fixture["id"] in queue_access_conflicts.get(bay, set())):
                 excluded.append({
                     "id": _prefix(fixture["id"], bay),
                     "reason": (
                         "translated native fixture bounds plus 0.1m clearance intersect an authored campus bridge"
                         if fixture["id"] in excluded_local[bay]
-                        else "translated native fixture bounds plus 0.1m clearance intersect the PACK staging spur"
+                        else (
+                            "translated native fixture bounds plus 0.1m clearance intersect the PACK staging spur"
+                            if fixture["id"] in pack_spur_conflicts
+                            else "translated native fixture bounds plus 0.1m clearance intersect vertical bridge queue access"
+                        )
                     ),
                 })
                 continue

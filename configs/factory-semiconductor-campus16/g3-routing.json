@@ -781,7 +781,7 @@
     ],
     "C_PACK_WAIT": [
       27.0,
-      33.5
+      30.5
     ],
     "D_PACK_EGRESS": [
       69.0,
@@ -789,7 +789,7 @@
     ],
     "D_PACK_WAIT": [
       69.0,
-      33.5
+      30.5
     ],
     "AB_E_W_GATE": [
       31.0,
@@ -886,6 +886,22 @@
     "BD_N_GATE": [
       75.0,
       36.5
+    ],
+    "AC_S_QUEUE": [
+      33.5,
+      19.5
+    ],
+    "AC_N_QUEUE": [
+      31.5,
+      30.5
+    ],
+    "BD_S_QUEUE": [
+      75.5,
+      19.5
+    ],
+    "BD_N_QUEUE": [
+      73.5,
+      30.5
     ]
   },
   "edges": [
@@ -2061,6 +2077,10 @@
     ],
     [
       "A_HIGH_E_EN",
+      "AC_S_QUEUE"
+    ],
+    [
+      "AC_S_QUEUE",
       "AC_S_GATE"
     ],
     [
@@ -2081,6 +2101,10 @@
     ],
     [
       "C_LOW_W_EN",
+      "AC_N_QUEUE"
+    ],
+    [
+      "AC_N_QUEUE",
       "AC_N_GATE"
     ],
     [
@@ -2101,6 +2125,10 @@
     ],
     [
       "B_HIGH_E_EN",
+      "BD_S_QUEUE"
+    ],
+    [
+      "BD_S_QUEUE",
       "BD_S_GATE"
     ],
     [
@@ -2121,6 +2149,10 @@
     ],
     [
       "D_LOW_W_EN",
+      "BD_N_QUEUE"
+    ],
+    [
+      "BD_N_QUEUE",
       "BD_N_GATE"
     ],
     [
@@ -2227,15 +2259,39 @@
     ],
     "CAMPUS_V_AC_RESERVATION": [
       33.0,
-      24.0,
+      23.4,
       35.8,
-      36.0
+      36.6
     ],
     "CAMPUS_V_BD_RESERVATION": [
       75.0,
-      24.0,
+      23.4,
       77.8,
-      36.0
+      36.6
+    ],
+    "CAMPUS_C_LOWER_JUNCTION": [
+      28.4,
+      36.4,
+      33.1,
+      39.6
+    ],
+    "CAMPUS_D_LOW_W_TRUNK": [
+      56.9,
+      39.4,
+      67.6,
+      39.6
+    ],
+    "CAMPUS_D_EAST_CI_TURN": [
+      67.4,
+      39.4,
+      67.6,
+      42.6
+    ],
+    "CAMPUS_D_EAST_SPINE_TURN": [
+      70.4,
+      36.4,
+      70.6,
+      39.6
     ]
   },
   "operations_bottlenecks": [
@@ -2297,6 +2353,26 @@
     {
       "id": "campus-v-bd-reservation",
       "region_id": "CAMPUS_V_BD_RESERVATION",
+      "release_policy": "first_route_point_outside_region"
+    },
+    {
+      "id": "campus-c-lower-junction",
+      "region_id": "CAMPUS_C_LOWER_JUNCTION",
+      "release_policy": "first_route_point_outside_region"
+    },
+    {
+      "id": "campus-d-low-w-trunk",
+      "region_id": "CAMPUS_D_LOW_W_TRUNK",
+      "release_policy": "first_route_point_outside_region"
+    },
+    {
+      "id": "campus-d-east-ci-turn",
+      "region_id": "CAMPUS_D_EAST_CI_TURN",
+      "release_policy": "first_route_point_outside_region"
+    },
+    {
+      "id": "campus-d-east-spine-turn",
+      "region_id": "CAMPUS_D_EAST_SPINE_TURN",
       "release_policy": "first_route_point_outside_region"
     }
   ],
@@ -2493,7 +2569,13 @@
         "BD_S_GATE",
         "BD_S_IN"
       ]
-    }
+    },
+    "queue_nodes": [
+      "AC_S_QUEUE",
+      "AC_N_QUEUE",
+      "BD_S_QUEUE",
+      "BD_N_QUEUE"
+    ]
   },
   "operations_bottleneck_policy": "merge_adjacent_route_spans",
   "inter_bay_connections": {
@@ -2543,6 +2625,7 @@
         "id": "AC",
         "northbound": [
           "A_HIGH_E_EN",
+          "AC_S_QUEUE",
           "AC_S_GATE",
           "AC_S_IN",
           "AC_N_IN",
@@ -2552,6 +2635,7 @@
         ],
         "southbound": [
           "C_LOW_W_EN",
+          "AC_N_QUEUE",
           "AC_N_GATE",
           "AC_N_IN",
           "AC_S_IN",
@@ -2564,6 +2648,7 @@
         "id": "BD",
         "northbound": [
           "B_HIGH_E_EN",
+          "BD_S_QUEUE",
           "BD_S_GATE",
           "BD_S_IN",
           "BD_N_IN",
@@ -2573,6 +2658,7 @@
         ],
         "southbound": [
           "D_LOW_W_EN",
+          "BD_N_QUEUE",
           "BD_N_GATE",
           "BD_N_IN",
           "BD_S_IN",
