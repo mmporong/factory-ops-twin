@@ -473,7 +473,7 @@
         "asset": "workbench",
         "center_xy": [
           29.6,
-          8.75
+          7.5
         ],
         "yaw_deg": 90,
         "role": "closed maintenance tool storage; not product storage",
@@ -483,7 +483,7 @@
         "id": "A_MAINT_ROLLING_BENCH_06",
         "asset": "cabinet",
         "center_xy": [
-          29.6,
+          29.3,
           10.45
         ],
         "yaw_deg": 90,

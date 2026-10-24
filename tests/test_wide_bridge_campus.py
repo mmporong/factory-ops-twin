@@ -4,7 +4,9 @@ from pathlib import Path
 import unittest
 
 from factory_ops.campus_layout import build_campus_bundle, build_wide_bridge_campus_bundle
+from factory_ops.factory_context import build_factory_context
 from factory_ops.fleet_routing import RouteBook, _bad_touched_cells
+from factory_ops.layout import Layout
 from factory_ops.operations_model import OperationsModel
 from factory_ops.route_reservation import RouteReservationManager
 
@@ -13,6 +15,12 @@ ROOT = Path(__file__).resolve().parents[1]
 BASE = ROOT / "configs" / "factory-semiconductor-dual-lane"
 TARGET = ROOT / "configs" / "factory-semiconductor-campus16-wide-bridges"
 ORIGINAL = ROOT / "configs" / "factory-semiconductor-campus16"
+WIDE_VARIANTS = (
+    TARGET,
+    ROOT / "configs" / "factory-semiconductor-campus16-wide-bridges-coverage-eta",
+    ROOT / "configs" / "factory-semiconductor-campus16-wide-bridges-handoff-admission",
+)
+ASSET_CACHE = Path("E:/FactoryOpsAssets/simready-context")
 
 
 class WideBridgeCampusTest(unittest.TestCase):
@@ -147,9 +155,16 @@ class WideBridgeCampusTest(unittest.TestCase):
         base_before = build_campus_bundle(BASE)
         variant = build_wide_bridge_campus_bundle(BASE)
         self.assertEqual(base_before, build_campus_bundle(BASE))
-        for name in set(base_before) - {"layout.json", "g3-routing.json"}:
+        for name in set(base_before) - {"layout.json", "g3-routing.json", "visual-assets.json"}:
             self.assertEqual(base_before[name], variant[name], name)
             self.assertEqual((ORIGINAL / name).read_bytes(), (TARGET / name).read_bytes(), name)
+
+        fixtures = {
+            item["id"]: item
+            for item in variant["visual-assets.json"]["environment"]["fixtures"]
+        }
+        self.assertEqual([29.6, 7.5], fixtures["A_MAINT_TOOL_STORAGE_06"]["center_xy"])
+        self.assertEqual([29.3, 10.45], fixtures["A_MAINT_ROLLING_BENCH_06"]["center_xy"])
 
         original = base_before["g3-routing.json"]
         routing = variant["g3-routing.json"]
@@ -176,6 +191,22 @@ class WideBridgeCampusTest(unittest.TestCase):
         for name, value in generated.items():
             self.assertEqual(value, json.loads((TARGET / name).read_text(encoding="utf-8")))
         RouteBook.from_files(TARGET / "layout.json", TARGET / "g3-routing.json")
+
+    @unittest.skipUnless(ASSET_CACHE.is_dir(), "prepared SimReady cache unavailable")
+    def test_wide_variants_clear_actual_prepared_fixture_bounds(self):
+        generated = build_wide_bridge_campus_bundle(BASE)
+        for config in WIDE_VARIANTS:
+            self.assertEqual(
+                generated["visual-assets.json"],
+                json.loads((config / "visual-assets.json").read_text(encoding="utf-8")),
+                config.name,
+            )
+            context = build_factory_context(
+                Layout(json.loads((config / "layout.json").read_text(encoding="utf-8"))),
+                generated["visual-assets.json"]["environment"],
+                cache_root=ASSET_CACHE,
+            )
+            self.assertEqual(88, len(context["instances"]), config.name)
 
 
 if __name__ == "__main__":

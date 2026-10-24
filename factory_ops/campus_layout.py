@@ -762,6 +762,12 @@ def build_wide_bridge_campus_bundle(base_dir: str | Path) -> dict[str, dict[str,
     result = build_campus_bundle(root)
     result["layout.json"] = build_wide_bridge_layout(_read(root / "layout.json"))
     result["g3-routing.json"] = build_wide_bridge_routing(_read(root / "g3-routing.json"))
+    fixtures = {
+        fixture["id"]: fixture
+        for fixture in result["visual-assets.json"]["environment"]["fixtures"]
+    }
+    fixtures["A_MAINT_TOOL_STORAGE_06"]["center_xy"] = [29.6, 7.5]
+    fixtures["A_MAINT_ROLLING_BENCH_06"]["center_xy"] = [29.3, 10.45]
     return result
 
 
