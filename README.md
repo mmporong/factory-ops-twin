@@ -29,7 +29,9 @@ cd "$HOME/factory-ops-twin"
 
 출력 경로는 새 경로를 사용합니다. `scale16` 구성도 같은 명령의 `--config`로 선택할 수 있으며, 위 파일럿 수치는12대 실행에만 해당합니다.
 
-Brev 상위 환경의 생성·SDK 초기화·Stop 도구는 `scripts/brev/bootstrap_scale.py`입니다. 기본 실행은 사전 확인만 수행하고 `--execute`가 있을 때 AWS의 새 RTX PRO 6000 환경1개를 생성합니다. 첫 작업은6시간·40달러 상한으로 제한하며 기존L40S를 보존합니다.12·16대 센서/물리 실행의 성공 근거는 아직 없습니다.
+Brev 상위 환경의 생성·SDK 초기화·Stop 도구는 `scripts/brev/bootstrap_scale.py`입니다. 기본 실행은 사전 확인이며 `--execute`가 있을 때 선택한 환경1개를 생성합니다. AWS RTX PRO 6000 시도233은 SSH·Stop 서버 오류로 실패해 새 빈 VM을 삭제했습니다. Stop 가능한 Nebius L40S2장 구성을 `--profile nebius-l40s-pair`로 준비하며, 기존L40S는 보존합니다. 첫 작업 묶음은6시간·40달러 상한이고12·16대 센서/물리 실행의 성공 근거는 아직 없습니다.
+
+확장 공정 원장은 TEST→AOI→PACK 처리, 유한 버퍼, 설비 고장·복구, 운송체 원출발지 반납과 재사용을 계산합니다. 핵심 검사5개를 통과했으며, 차량 동선·실제 장비 좌표와의 통합은 진행 중입니다. [작성한 공정 설정](configs/semiconductor-process-line.json)
 
 ## 반도체 후공정 장면
 

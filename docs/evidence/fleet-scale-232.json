@@ -117,7 +117,15 @@
       "release_interval_s": 30.0,
       "source_binding_sha256": "a4d61e8c7625d655da182a27776c2affb0e0056108f2317633952f44d3fc5e77"
     },
-    "source_stability": null
+    "source_stability": true,
+    "frozen_source": {
+      "relative_path": "frozen-source",
+      "manifest_relative_path": "frozen-source/manifest.json",
+      "manifest_sha256": "969c592b97ad6652144185ad0a9edf855173db74360d193ac411a82be4cb80d2",
+      "source_binding_sha256": "a4d61e8c7625d655da182a27776c2affb0e0056108f2317633952f44d3fc5e77",
+      "file_count": 21
+    },
+    "git_normalization_note": "Git normalizes CRLF to LF. Execution byte identity is bound to the exact frozen-source capsule, not inferred from Git blob hashes."
   },
   "tests": {
     "configured_fleet_and_replay": "5 passed",
@@ -130,5 +138,13 @@
     "current web browser integration",
     "12/16-AMR contact physics and sensors",
     "Brev bootstrap"
-  ]
+  ],
+  "backup": {
+    "path": "D:\\FactoryOpsPortfolio\\fleet-scale-232.zip",
+    "bytes": 116855,
+    "sha256": "8517f205cd4cfbc4ad740e76adf7237f22bfe2524bdcdeaa7b5eab1a53f24acb",
+    "verified_entries": 24,
+    "all_entry_hashes_match": true,
+    "scope": "Closed CPU pilot and exact frozen bytes; local second drive, not offsite backup"
+  }
 }

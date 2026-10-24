@@ -1257,3 +1257,13 @@ WEST_LINK와 CENTER_LINK는 진입 구간부터 작성된 첫 출구 앵커까�
 ## FOT-152 — 서로 다른 실행기의 결과 파일 위치를 일괄 추정한 백업 실패
 
 선별 백업의 첫 작성은 Kit229 결과를 루트 `result.json`으로 가정해 중단됐다. 실제 위치는 `native/result.json`이고 호스트 요약은 `launcher-result.json`이다. 실패한 부분 ZIP만 제거하고, 원본 경로 전체의 존재를 쓰기 전에 확인하도록 순서를 고쳤다. 완성 ZIP은102개 항목을 다시 읽어 개별 SHA를 대조했다. 원본·실행 결과는 변경하지 않았다. [백업 해시와 보존 범위](evidence/operations-storage-230.json)
+
+## FOT-153 — 상위 AWS VM의 생성 Ready와 SSH 준비 상태 불일치
+
+2026-10-24 새 `factory-ops-scale-233` 생성 명령은 Ready와 exit0을 반환했지만 실제 목록은 RUNNING/BUILDING/NOT READY였다. SSH는 WSL과 Windows TCP22 모두 시간 초과였으며, SDK bootstrap 명령은 SSH 단계에서 종료했다. Brev 백엔드 healthcheck는 Healthy였으나 Stop2회는 Internal Server Error였다. 원격 프로젝트 전송·SDK 설치·GPU 실행의 성공 근거는 없다. 기존L40S와 다른 프로젝트 VM은 유지하고, 생성한 새 빈 VM만 이름·ID를 대조한 뒤 삭제했다. 최종 목록에서 대상 부재와 기존L40S의 STOPPED를 확인했다. 원인을 AWS 자격증명이나 GPU 용량으로 단정하지 않는다. [233 실패·정리 근거](evidence/brev-scale-bootstrap-233.json)
+
+후속 실행기는 create 출력 대신 목록의 RUNNING/COMPLETED/READY를 확인한 뒤에만 SSH bootstrap을 시작한다. 준비 대기는15분으로 제한하며 예산의 Stop 여유를 보존한다. Brev 공식 [SSH 진단](https://docs.nvidia.com/brev/troubleshooting/common-issues)과 [인스턴스 관리](https://docs.nvidia.com/brev/cli/instance-management)를 대조했다. 같은 AWS 경로의 생성은 서비스 오류 해소 근거 없이 반복하지 않는다.
+
+## FOT-154 — Windows 콘솔 인코딩이 원래 SSH 오류 출력을 가림
+
+233의 SSH 오류에 포함된 CLI spinner 문자를 cp949 표준 출력으로 보낼 때 UnicodeEncodeError가 추가로 발생했다. finally의 Stop 시도와 UTF-8 호스트 기록은 실행됐지만 마지막 콘솔 요약이 누락됐다. 원래 SSH/Stop 오류와 별개인 출력 오류다. 전체 CLI 로그는 UTF-8 파일로 보존하고, 오류 요약만 ASCII escape로 출력하도록 고쳤다. 원격 실패를 인코딩 오류로 대체하지 않는다.

@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "scope": "Authored CPU ledger for TEST to AOI to PACK logistics; no station coordinates, robot motion, physical payload or measured process-time claim",
+  "cells": [
+    {
+      "id": "TEST",
+      "input_station": "TEST_IN",
+      "output_station": "TEST_OUT",
+      "processing_time_s": 30.0,
+      "input_capacity": 1,
+      "output_capacity": 1
+    },
+    {
+      "id": "AOI",
+      "input_station": "AOI_IN",
+      "output_station": "AOI_OUT",
+      "processing_time_s": 20.0,
+      "input_capacity": 1,
+      "output_capacity": 1
+    },
+    {
+      "id": "PACK",
+      "input_station": "PACK_IN",
+      "output_station": "PACK_OUT",
+      "processing_time_s": 15.0,
+      "input_capacity": 1,
+      "output_capacity": 1
+    }
+  ],
+  "transport_contract": [
+    "source->TEST_IN",
+    "TEST_OUT->AOI_IN",
+    "AOI_OUT->PACK_IN",
+    "PACK_OUT->OUT",
+    "OUT->original_source_empty_carrier_return"
+  ],
+  "provenance": {
+    "kind": "authored-not-calibrated",
+    "domain": "semiconductor final-test, optical inspection and packing demonstration",
+    "capacity_meaning": "finite logical input/output slots; not vendor equipment specifications",
+    "integration_boundary": "station coordinates, OperationsModel dispatch and robot navigation receipts are supplied by a later adapter"
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "scope": "Cloud hardware provisioning attempt only; SDK and fleet execution did not start",
+  "instance_type": "g7e.8xlarge",
+  "gpu_catalog": "RTX PRO Server 6000 96GB",
+  "outcome": "failed_before_ssh",
+  "observations": [
+    "create CLI returned Ready, actual row was BUILDING/NOT READY",
+    "SSH TCP22 timed out from WSL and Windows",
+    "Brev healthcheck Healthy; Stop twice Internal Server Error",
+    "Only the newly created empty VM was deleted after logs were preserved"
+  ],
+  "cleanup": {
+    "new_vm_absent": true,
+    "preserved_l40s_stopped": true,
+    "confirmed_at": "2026-10-24T02:15:51.425472+00:00"
+  },
+  "source_commit": "13b846f11afab96da9ce3ee94be0030f98e58aa4",
+  "receipts_sha256": {
+    "bootstrap.log": "6fcece30dd01bff3676b3f1524ff6d3fc831091f5f726b502b12ed5a21a51d7a",
+    "bootstrap.sh": "fd84dabce36d5adbcca64778e009ce834d5397bb180eb7d936b1122e3dadc1e8",
+    "create.log": "374cafe87408a2362716e3e0aa2bb2f9b72bc8f542d12c7772e3eb9e20eb16e0",
+    "host.json": "8f171ec636b61213c108434e7098b3587b1f6adafbdee888baafc9e1a0b46a9a",
+    "rollback.json": "ddaae4475bd1fa84772ac14f5dcf79b6b5299f94e76523e69a4ebae756b306cd"
+  },
+  "limitations": [
+    "No driver, actual device-memory, SDK, render, fleet or settled billing success claim"
+  ]
+}
