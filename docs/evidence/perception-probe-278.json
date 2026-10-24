@@ -64,5 +64,12 @@
     "label-probe.png": "eebced147a34b30a55afaa0cda85b4dd200cd154e20747825b0aaf8a2d060fc7",
     "scene-1-rgb.png": "52b06a28e7f96a342e1f3bc8a0709f99ba1d1017de0a5a20ddb2d45a3d1b662b",
     "scene-2-rgb.png": "381bcab107237caeb9e89edc59a8b7def4056577acbdecdb4ecd0e26868f5b26"
+  },
+  "backup": {
+    "archive": "D:\\FactoryOpsPortfolio\\campus279-and-perception278.zip",
+    "bytes": 69902214,
+    "sha256": "5ef82e5c1fda3cf552f03156326e09ad84c7f95aa58a3f8a9e3701ed6215b79c",
+    "entries": 587,
+    "all_entry_hashes_verified": true
   }
 }

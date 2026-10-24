@@ -5,12 +5,14 @@ import json
 from collections import Counter
 import math
 from pathlib import Path
+import re
 import unittest
 
 from factory_ops.layout import Layout, Rect
 from factory_ops.visual_scene import (
     PRODUCTION_BAY_GEOMETRY,
     _chamfered_box_geometry,
+    _box_usda,
     _equipment_root,
     _floor_graphics,
     _recipe_boxes,
@@ -100,6 +102,28 @@ class SemiconductorVisualSceneTests(unittest.TestCase):
                               'def Cube "InspectionStage"' if recipe == "aoi_mark" else
                               'def Cube "MainframeSlot_0"', text)
                 self.assertNotIn("PhysicsCollisionAPI", text)
+
+    def test_chamfered_mesh_uses_local_float_geometry_and_double_world_translation(self) -> None:
+        rect = Rect(1002.0, 2003.0, 1004.4, 2005.2)
+        box = next(item for item in _recipe_boxes(
+            "ate_rack", rect, 2.2, 0, "ATE", geometry_profile=PRODUCTION_BAY_GEOMETRY,
+        ) if item.name == "ATE_Mainframe")
+        text = "\n".join(_box_usda(box, 0))
+        extent = re.search(r"float3\[\] extent = \[\(([^)]+)\), \(([^)]+)\)\]", text)
+        translate = re.search(r"double3 xformOp:translate = \(([^)]+)\)", text)
+        self.assertIsNotNone(extent)
+        self.assertIsNotNone(translate)
+        local_min = tuple(float(value) for value in extent.group(1).split(", "))
+        local_max = tuple(float(value) for value in extent.group(2).split(", "))
+        centre = tuple(float(value) for value in translate.group(1).split(", "))
+        expected_centre = tuple((box.bounds[axis] + box.bounds[axis + 3]) / 2 for axis in range(3))
+        expected_half = tuple((box.bounds[axis + 3] - box.bounds[axis]) / 2 for axis in range(3))
+        for axis in range(3):
+            self.assertAlmostEqual(-expected_half[axis], local_min[axis])
+            self.assertAlmostEqual(expected_half[axis], local_max[axis])
+            self.assertAlmostEqual(expected_centre[axis], centre[axis])
+        self.assertIn('uniform token[] xformOpOrder = ["xformOp:translate"]', text)
+        self.assertNotIn("1002", next(line for line in text.splitlines() if "point3f[] points" in line))
 
     def test_semiconductor_recipes_are_detailed_and_stay_inside_obstacle_envelopes(self) -> None:
         rect = Rect(2.0, 3.0, 4.4, 5.2)

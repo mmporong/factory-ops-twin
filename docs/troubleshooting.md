@@ -1383,3 +1383,9 @@ RGB249의 첫 report는 runtime·클래스 수를 추가하며 같은 경로로 
 ## FOT-173 — 공정 기록과 GPU 재생의 소스 형식 차이
 
 공정 runner는 frozen 파일 목록을 보존했지만 초기 recording manifest에는 기존4대 replay가 기대하는 config/producer pin 구조가 없었다. 원본 manifest를 고쳐 통과시키지 않고, 중앙 load_recording에서 동결 manifest·파일 크기/해시·case report와 안정성을 검증해 별도 verified_source_pins를 반환한다. 두 replay가 이 검증 결과를 함께 사용하며 새 runner는 source binding도 내보낸다.279의120프레임·동결42파일과 기존223의101프레임 로드를 확인했고 실패275의 재생 거부는 유지했다.
+
+## FOT-174 — 대형 월드 좌표 메시의 float 정밀도
+
+280은 장면 생성 뒤 B_BENCH_A1:ATE_Mainframe의 외곽 검사에서0프레임으로 중단했다.281의 native OpenUSD CPU 감사에서 source-bound1052개 중21개가 기존1e-6m 허용치를 넘었고 최대 초과는 약1.71e-6m였다. 모두 world 좌표를 point3f/float3 extent로 작성한 chamfer mesh였고 위치 transform이 없었다.
+
+해당 메시를 로컬 float 좌표로 작성하고 월드 중심은 double3 translate로 분리했다. 안전 반경·충돌 형상·선언 외곽·허용치는 유지했다.283의 동일 범위 감사에서 초과0개, 최대 수치 차이는 약3.24e-8m였으며 소유 Job 종료·잔여 PID0을 확인했다. 이전280/281은 덮어쓰지 않는다. [수정 전후 근거](evidence/campus-visual-bounds-283.json)

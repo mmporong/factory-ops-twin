@@ -1562,16 +1562,19 @@ def _box_usda(
         f"{pad}    rel material:binding = </World/Visuals/Looks/{box.material}>",
     ]
     if box.render_style == "chamfered_box":
-        points, faces = _chamfered_box_geometry(box.bounds, box.render_chamfer_m)
+        local_bounds = (-sx, -sy, -sz, sx, sy, sz)
+        points, faces = _chamfered_box_geometry(local_bounds, box.render_chamfer_m)
         lines.extend([
             f'{pad}    custom string geometryStyle = "edge_chamfered_render_mesh"',
             f"{pad}    custom float renderEdgeChamferM = {_num(box.render_chamfer_m)}",
-            f"{pad}    float3[] extent = [({_num(x0)}, {_num(y0)}, {_num(z0)}), ({_num(x1)}, {_num(y1)}, {_num(z1)})]",
+            f"{pad}    float3[] extent = [({_num(-sx)}, {_num(-sy)}, {_num(-sz)}), ({_num(sx)}, {_num(sy)}, {_num(sz)})]",
             f"{pad}    int[] faceVertexCounts = [{', '.join(str(len(face)) for face in faces)}]",
             f"{pad}    int[] faceVertexIndices = [{', '.join(str(index) for face in faces for index in face)}]",
             f"{pad}    point3f[] points = [{', '.join(f'({_num(x)}, {_num(y)}, {_num(z)})' for x, y, z in points)}]",
             f'{pad}    uniform token orientation = "rightHanded"',
             f'{pad}    uniform token subdivisionScheme = "none"',
+            f"{pad}    double3 xformOp:translate = ({_num(cx)}, {_num(cy)}, {_num(cz)})",
+            f'{pad}    uniform token[] xformOpOrder = ["xformOp:translate"]',
         ])
     else:
         lines.extend([

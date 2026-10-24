@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "scope": "Native CPU OpenUSD BBoxCache audit of source-bound visual geometry; no Kit, robot motion or sensor claim",
+  "before": {
+    "run_id": "replay-bounds-281",
+    "result_sha256": "565018b756f9b9b7dd0c31f3db3a52585d011aef1701eeff6516cf0a8e5c8e59",
+    "checked": 1052,
+    "threshold_m": 1e-06,
+    "out_of_bounds_at_threshold": 21,
+    "maximum_outside_error_m": 1.7089843780127012e-06
+  },
+  "after": {
+    "run_id": "replay-bounds-283",
+    "result_sha256": "57c22b5e71bcddb3677a64d7f86b3cdf85d2aff603414ae0c254b264c4318a21",
+    "checked": 1052,
+    "threshold_m": 1e-06,
+    "out_of_bounds_at_threshold": 0,
+    "maximum_outside_error_m": 3.2424928519958485e-08
+  },
+  "fix": "Chamfer meshes use local float points/extent and double world translation; declared bounds, strict threshold and physical geometry unchanged",
+  "visual_scene_source_sha256": "2f9e33a615f3113dbf9f2c8452563c18bd50834e58e52083f7926bf50e12d089",
+  "host_receipt_sha256": "d73b74f8d2d75c1cc2f13b59e005b76556884a10428a433ebd535f839e14bcdd",
+  "host": {
+    "status": "passed",
+    "closed": true,
+    "remaining_owned_pids": []
+  },
+  "original_failed_replay": "campus-replay-280:0frames, job closed; original result preserved"
+}
