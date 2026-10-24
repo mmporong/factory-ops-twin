@@ -43,6 +43,8 @@ uv run python scripts/demo/run_process_line.py --config configs/factory-semicond
 
 `--stall-timeout`은 이동·공정·충전 진전이 모두 없는 시뮬레이션 시간이며 기본600초다. 별도 `--cycle-stall-timeout`은 기본0으로 꺼져 있다. 켜면 같은 순환 대기 구성원의 pose·task·payload·완료 운송·누적 충전에 변화가 없는 시간을 센다. 다른 차량의 이동은 이 시계를 리셋하지 않는다. 기준에 도달하면 `incomplete / stationary_wait_cycle`과 최종 상태를 기록하며, 교통 문제를 해결했다고 판정하지 않는다.
 
+실행 중에는 출력 경로의 `progress.json`만 읽는다.30시뮬레이션 초마다 교체하는 단일 파일이며 `operations.robots`에는 현재 pose·속도·작업·대기 이유·배터리·충전 상태, `operations.equipment_cells`에는12개 설비 WIP, `operations.charging`에는 도크 예약·접근/이탈 보류 이유가 들어간다. 경로 전체·이벤트 이력·촬영 자료는 복제하지 않는다. 새 상태 요약은 새 실행부터 발행되므로 구버전 실행에서 필드 부재를 빈 작업 상태로 해석하지 않는다. 원인 확인을 위해 진행 중인 gzip·SQLite를 열지 않는다.
+
 Ctrl+C는 `incomplete / diagnostic_interrupt`로 마감하고 가능한 최종 snapshot·결과·닫힌 촬영 스트림·매니페스트를 남긴다. 실제 owned 터미널에서 이 경로와5프레임 보존·해시 일치·소유 Python0을 확인했다. 중단된 기록은 최종 미디어 입력으로 사용하지 않는다. 촬영용1Hz 기록은 `--record-start <시뮬레이션 초> --record-duration <최대300초>`로 선택하며, 원본 종료 뒤 내용과 해시를 확인한다. [표적 검사·중단 실행 범위](evidence/process-line-runner-lifecycle.json)
 
 ## 16대 캠퍼스의 설비 고장·복구

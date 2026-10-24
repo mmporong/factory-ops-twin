@@ -40,6 +40,27 @@ def stationary_cycle_signature(state: dict) -> tuple | None:
     )
 
 
+def progress_observation(state: dict) -> dict:
+    """Expose current causes without copying routes, histories or recorder data."""
+    robot_fields = (
+        "id", "status", "pose", "speed_mps", "angular_speed_rad_s",
+        "task_id", "task_type", "payload_id", "destination", "waiting_reason",
+        "movement_purpose", "charging_phase", "charging_dock", "battery_pct",
+        "energy_wh", "consumed_wh", "charged_wh",
+    )
+    charging = state.get("charging", {})
+    return {
+        "scope": "current authored CPU operations; no physics or hardware observation",
+        "robots": [{key: robot.get(key) for key in robot_fields} for robot in state["robots"]],
+        "equipment_cells": state.get("equipment_cells", []),
+        "active_transport_by_robot": state["production_line"]["active_by_robot"],
+        "charging": {key: charging.get(key) for key in (
+            "queue", "docks", "faults", "approach_deferred", "departure_deferred",
+            "authored_assignment_wait_budget_s", "observed_traffic_wait_budget_s",
+        )},
+    }
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--config", type=Path, required=True)
@@ -146,7 +167,8 @@ def main() -> int:
                             "elapsed_wall_s": time.perf_counter() - started,
                             "completed_lots": state["production_line"]["completed_lots"],
                             "returned": state["production_line"]["returned"],
-                            "traffic": state["traffic"]}
+                            "traffic": state["traffic"],
+                            "operations": progress_observation(state)}
                 temporary = output / ".progress.tmp"
                 write_shared_text(temporary, json.dumps(progress, ensure_ascii=True))
                 replace_shared_file(temporary, output / "progress.json")
