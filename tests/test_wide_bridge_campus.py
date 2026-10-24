@@ -115,6 +115,34 @@ class WideBridgeCampusTest(unittest.TestCase):
                         (queue, safe_exit, point),
                     )
 
+    def test_cd_east_safe_exit_resumes_the_d_local_delivery_window(self):
+        model = OperationsModel(TARGET, initial_orders=0, run_id="wide-cd-east-d-local")
+        goal = "D_S1"
+        full_od = model.book.plan("A_OUT", goal)
+        self.assertIn("AC_S_QUEUE", full_od.nodes)
+        self.assertIn("CD_E_QUEUE", full_od.nodes)
+        trip = {"goal": goal, "kind": "process_line", "phase": "drop"}
+        direct = model.book.plan("CD_E_QUEUE", goal)
+        points, nodes, safe_exit = model._route_via_safe_exit(
+            direct.points[0], trip, direct.points[1:], direct.nodes[1:],
+        )
+        first = model._next_route_window(direct.points[0], points, nodes, allow_terminal=True)
+        self.assertEqual("D_LOW_E_P1", safe_exit)
+        self.assertEqual(safe_exit, first["nodes"][-1])
+
+        resumed = model.book.plan(safe_exit, goal)
+        second = model._next_route_window(
+            resumed.points[0], resumed.points[1:], resumed.nodes[1:], allow_terminal=True,
+        )
+        self.assertEqual(goal, second["nodes"][-1])
+        self.assertIn("D_center-shared-link", second["corridor"])
+        self.assertIn("D_west-shared-link", second["corridor"])
+        xmin, ymin, xmax, ymax = model.book.config["policy_region_overrides"][
+            "CAMPUS_H_CD_RESERVATION"
+        ]
+        x, y = model.book.nodes[goal]
+        self.assertFalse(xmin <= x <= xmax and ymin <= y <= ymax)
+
     def test_variant_preserves_base_bundle_and_shared_vertical_bridges(self):
         base_before = build_campus_bundle(BASE)
         variant = build_wide_bridge_campus_bundle(BASE)

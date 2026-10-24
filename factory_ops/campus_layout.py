@@ -491,15 +491,8 @@ def build_wide_bridge_layout(base: Mapping[str, Any]) -> dict[str, Any]:
             "RouteBook preflight passed, renderer and physical runtime qualification pending"
         ),
     )
-    reservations = {
-        "CAMPUS_H_AB_RESERVATION": [28.5, 11.0, 51.0, 17.0],
-        "CAMPUS_H_CD_RESERVATION": [28.5, 43.0, 51.0, 49.0],
-    }
     for region in result["amr_allowed_regions"]:
-        if region["id"] in reservations:
-            region["rect"] = deepcopy(reservations[region["id"]])
-            region["purpose"] = "full-width paired bridge reservation envelope"
-        elif region["id"] == "CAMPUS_AB_E_QUEUE_ACCESS":
+        if region["id"] == "CAMPUS_AB_E_QUEUE_ACCESS":
             region["rect"] = [30.0, 8.0, 33.5, 12.5]
             region["purpose"] = "widened queue-to-eastbound-lane approach envelope"
     result["traffic_lanes"].extend([
@@ -541,10 +534,6 @@ def build_wide_bridge_routing(base: Mapping[str, Any]) -> dict[str, Any]:
     for node in ("CD_E_W_GATE", "CD_E_W_IN", "CD_E_E_IN", "CD_E_E_GATE"):
         result["nodes"][node][1] = 44.5
 
-    result["policy_region_overrides"].update({
-        "CAMPUS_H_AB_RESERVATION": [28.5, 11.0, 51.0, 17.0],
-        "CAMPUS_H_CD_RESERVATION": [28.5, 43.0, 51.0, 49.0],
-    })
     admission = result["bridge_admission"]
     admission["safe_exit_nodes"]["CD_E_QUEUE"] = "D_LOW_E_P1"
     admission["holdable_nodes"].append("D_LOW_E_P1")
