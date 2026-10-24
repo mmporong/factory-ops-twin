@@ -20,17 +20,17 @@
 
 | 4개 베이 전체 장면 | 검사 셀 근접 장면 |
 |---|---|
-| ![78×60m 캠퍼스의 실제 정적 GPU 렌더](docs/images/campus16-static-277/portfolio_overview.png) | ![절차형 핸들러·테스터와 트레이 인계대의 실제 정적 GPU 렌더](docs/images/campus16-static-277/cell_process.png) |
+| ![82×76m 캠퍼스의 실제 정적 GPU 렌더](docs/images/campus16-static-294/portfolio_overview.png) | ![절차형 핸들러·테스터와 트레이 인계대의 실제 정적 GPU 렌더](docs/images/campus16-static-294/cell_process.png) |
 
-위 이미지는 Isaac Sim4.5에서 촬영한 **정적 GPU 렌더**입니다. 물리 시간을 멈췄으며 차량을 스폰하지 않았습니다. 78×60m 안에 생산 설비76개, 출처가 있는 SimReady 배치100개, 차량 홈16개, 가상 충전 도크8개를 구성했습니다. PACK 이탈 대기점과 교량 진입 대기점은 각각4개입니다. 생산 장비 본체는 절차형 모델이며 제조사 CAD가 아닙니다. 생산 충돌체77개를 유지했고16대 물리·센서 운용은 남아 있습니다. [촬영·해시·종료 근거](docs/images/campus16-static-277/provenance.json) · [배치 조건](docs/evidence/campus16-276.json) · [교통 경로 배치도](docs/images/campus16-layout-276/campus-layout.png)
+위 이미지는 Isaac Sim4.5에서 촬영한 **정적 GPU 렌더**입니다. 물리 시간을 멈췄으며 차량을 스폰하지 않았습니다. 82×76m 안에 생산 설비76개, 출처가 있는 SimReady 배치88개, 차량 홈16개와 가상 충전 도크8개를 구성했습니다. 서비스 대기점12개·교량 진입 대기점8개·전용 출구8개를 배치했고, 출구 접근로와 겹친 소품12개를 이전 배치에서 제외했습니다. 생산 장비 본체는 절차형 모델이며 제조사 CAD가 아닙니다. 생산 충돌체77개를 유지했고16대 물리·센서 운용은 남아 있습니다. [촬영·해시·종료 근거](docs/images/campus16-static-294/provenance.json) · [배치 조건](docs/evidence/campus16-layout-292.json) · [교통 경로 배치도](docs/images/campus16-layout-292/campus-layout.png)
 
 주차장만 늘린 이전 `scale12/16`과 달리 `factory-semiconductor-campus16`은 4개 TEST→AOI→PACK 라인을 베이 사이로 연결합니다. 유한 재고 240개와 캐리어 64개를 사용하고 출하 뒤 원래 저장소로 빈 용기를 돌려보냅니다. 입력·출력 버퍼와 설비 고장, 전역 배차, 가감속·회전, 구간 점유와 가상 충전을 같은 운영 모델에서 계산합니다. 공정 시간·배치는 작성 가정입니다.
 
 캠퍼스의 배차는 `downstream_wip_drain_least_assigned`입니다. 예약 가능한 후보 중 반납·출하·후단 WIP를 먼저 처리하고 운송 배정이 적은 차량을 우선합니다. snapshot의 `production_line.dispatch_mode`로 정책을 확인합니다. 기존 단일 라인의 FIFO/ETA 비교와 같은 정책으로 해석하지 않습니다.
 
-CPU 실행279에서 **16개 물류 임무의 동시 진행**을 확인했습니다. 전16대가 각각2회 이상 임무를 배정받았고, 완료 운송은 총71건입니다. 실제 이동은 최대10대이며 공정·인계·교통 대기를 물류 임무와 구분합니다. 출하9건·빈 용기 반납5건 뒤 공유 구간의 정지 차량들이 서로 출구를 막아 종료했습니다. 후속290은 명시한 출구까지의 예약을 연결했지만, 출구를 일반 공정 대기점과 공유해 출하3·반납0에서 순환 대기했습니다. 전용 교량 출구와 대기점 이탈 경로를 분리하는 수정 및48lot 완주가 남아 있습니다. [279 실행](docs/evidence/campus16-279.json) · [290 버퍼 순환](docs/evidence/campus16-290.json) · [전체 경로 보호 기준선255](docs/evidence/campus16-255.json)
+CPU 실행279에서 **16개 물류 임무의 동시 진행**을 확인했습니다. 전16대가 각각2회 이상 임무를 배정받았고 완료 운송은 총71건입니다. 실제 이동은 최대10대이며 공정·인계·교통 대기를 구분합니다. v1의 출하9·반납5 이후 교착과 공유 버퍼290의 출하3·반납0을 보존합니다. 전용 출구를 둔 v2의291은 출하5·반납4·운송61건 뒤 멈췄습니다. 픽업 경로에 연결한 적재 경로의 queue 경계를 상위 window에 전달하지 않아 출구 사전 확인을 건너뛴 문제를 수정했으며,48lot 완주는 아직 남아 있습니다. [279](docs/evidence/campus16-279.json) · [공유 버퍼290](docs/evidence/campus16-290.json) · [인계 경계291](docs/evidence/campus16-291.json) · [전체 경로 보호 기준선255](docs/evidence/campus16-255.json)
 
-현재 진입 정책은 다음 구간을 보호하는 rolling window입니다. 교량 진입 대기점8개와 베이별 SOURCE/CELL/PACK 대기점12개를 두고, 홈을 포함한36개 지점을 정지 가능한 곳으로 지정했습니다. 교량의8개 진입 방향은 건넌 뒤 도달할 안전 출구를 명시하며 픽업·하차·로컬 이탈 사이의 보호를 유지합니다. 전체 swept path를 다른 대기점·주차 점유와 비교하고, 차체 반경과 예약 타일 크기는 유지했습니다. 이 계약의48lot 완주는 확인 중입니다. 위 정적 렌더277은 변경 전4개 교량 대기점 배치입니다. [종료286](docs/evidence/campus16-286.json) · [전체 이탈 경로의 차단288](docs/evidence/campus16-288.json) · [교량 출구 차단289](docs/evidence/campus16-289.json)
+현재 v2 배치는 **82×76m**입니다. 기존 설비의 상대 위치를 유지하면서 베이를 북쪽으로8m 옮겨 물류 포켓을 확보했습니다. 교량 진입 대기점8개, SOURCE/CELL/PACK 대기점12개와 전용 교량 출구8개를 두며, 홈16개를 포함해44곳에서 정지할 수 있습니다. 일반 대기 공간과 교량 출구를 분리했고 출구가 막히면 진입 대기점에 들어가기 전부터 기다립니다. 아직 일부 서비스 경로는 다른 stage·queue의 정지 점유와 겹치므로 실제 전체 window가 비어 있을 때만 출발합니다. 안전 반경과 예약 타일 크기는 유지했으며48lot 완주가 남아 있습니다. [현재 배치도](docs/images/campus16-layout-292/campus-layout.png) · [이탈 경로 차단288](docs/evidence/campus16-288.json) · [교량 출구 차단289](docs/evidence/campus16-289.json)
 
 ![16대 차량의 상태와 공정 셀·재고를 표시한 재생 미리보기](docs/images/campus16-replay-285/preview.png)
 

@@ -55,6 +55,7 @@ class CampusLayoutTests(unittest.TestCase):
         self.assertEqual(16, len(layout["pockets"]))
         self.assertEqual(12, len(layout["operational_staging"]))
         self.assertEqual(8, len(layout["bridge_queues"]))
+        self.assertEqual(8, len(layout["bridge_safe_exits"]))
         self.assertEqual(16, len(profile["robot_stations"]))
         self.assertEqual(16, len(set(profile["robot_stations"])))
         self.assertEqual(profile["robot_stations"], list(generated["g3-routing.json"]["parking"].values()))
@@ -294,14 +295,14 @@ class CampusLayoutTests(unittest.TestCase):
         layout = bundle["layout.json"]
         routing = bundle["g3-routing.json"]
         queues = {
-            "AB_E_QUEUE": [32.0, 1.5],
-            "AB_W_QUEUE": [60.0, 7.5],
-            "CD_E_QUEUE": [30.5, 33.5],
-            "CD_W_QUEUE": [60.0, 37.5],
-            "AC_S_QUEUE": [33.5, 19.5],
-            "AC_N_QUEUE": [31.5, 30.5],
-            "BD_S_QUEUE": [75.5, 19.5],
-            "BD_N_QUEUE": [73.5, 30.5],
+            "AB_E_QUEUE": [32.0, 9.5],
+            "AB_W_QUEUE": [60.0, 15.5],
+            "CD_E_QUEUE": [30.5, 41.5],
+            "CD_W_QUEUE": [60.0, 45.5],
+            "AC_S_QUEUE": [33.5, 27.5],
+            "AC_N_QUEUE": [31.5, 38.5],
+            "BD_S_QUEUE": [75.5, 27.5],
+            "BD_N_QUEUE": [73.5, 38.5],
         }
         self.assertEqual(queues, {item["id"]: item["xy"] for item in layout["bridge_queues"]})
         self.assertEqual(queues, {name: routing["nodes"][name] for name in queues})
@@ -315,18 +316,19 @@ class CampusLayoutTests(unittest.TestCase):
             *(f"{bay}_PACK_WAIT" for bay in BAY_OFFSETS),
             *(f"{bay}_{name}" for bay in BAY_OFFSETS for name in ("SOURCE_WAIT", "CELL_WAIT")),
             *queues,
+            *(item["id"] for item in layout["bridge_safe_exits"]),
         ]
         self.assertEqual(expected_holdable, routing["bridge_admission"]["holdable_nodes"])
-        self.assertEqual(36, len(routing["bridge_admission"]["holdable_nodes"]))
+        self.assertEqual(44, len(routing["bridge_admission"]["holdable_nodes"]))
         expected_safe_exits = {
-            "AB_E_QUEUE": "B_PACK_WAIT",
-            "AB_W_QUEUE": "A_PACK_WAIT",
-            "CD_E_QUEUE": "D_SOURCE_WAIT",
-            "CD_W_QUEUE": "C_PACK_WAIT",
-            "AC_S_QUEUE": "C_CELL_WAIT",
-            "AC_N_QUEUE": "A_CELL_WAIT",
-            "BD_S_QUEUE": "D_CELL_WAIT",
-            "BD_N_QUEUE": "B_CELL_WAIT",
+            "AB_E_QUEUE": "B_AB_E_SAFE_EXIT",
+            "AB_W_QUEUE": "A_AB_W_SAFE_EXIT",
+            "CD_E_QUEUE": "D_CD_E_SAFE_EXIT",
+            "CD_W_QUEUE": "C_CD_W_SAFE_EXIT",
+            "AC_S_QUEUE": "C_AC_S_SAFE_EXIT",
+            "AC_N_QUEUE": "A_AC_N_SAFE_EXIT",
+            "BD_S_QUEUE": "D_BD_S_SAFE_EXIT",
+            "BD_N_QUEUE": "B_BD_N_SAFE_EXIT",
         }
         self.assertEqual(expected_safe_exits, routing["bridge_admission"]["safe_exit_nodes"])
         self.assertTrue(set(expected_safe_exits.values()).issubset(expected_holdable))
@@ -442,6 +444,7 @@ class CampusLayoutTests(unittest.TestCase):
             **layout["pockets"],
             **{item["id"]: item["xy"] for item in layout["bridge_queues"]},
             **{item["id"]: item["xy"] for item in layout["operational_staging"]},
+            **{item["id"]: item["xy"] for item in layout["bridge_safe_exits"]},
         }
         all_stopped_tiles = {
             name: swept_tiles([point], radius, tile_size_m=1.0, bounds_xy=bounds)
@@ -460,7 +463,7 @@ class CampusLayoutTests(unittest.TestCase):
                  if name not in {queue, safe_exit} and path_tiles & tiles],
                 (queue, safe_exit, plan.nodes),
             )
-        self.assertLessEqual(max(safe_exit_distances.values()), 51.36)
+        self.assertLessEqual(max(safe_exit_distances.values()), 79.55)
 
         planning_radius = book.planning_radius_m + book.layout.resolution_m / 2
         queue_edges = [
@@ -514,10 +517,10 @@ class CampusLayoutTests(unittest.TestCase):
         routing = bundle["g3-routing.json"]
         corridors = OperationsCorridors(routing)
         overlays = {
-            "CAMPUS_C_LOWER_JUNCTION": [28.4, 36.4, 33.1, 39.6],
-            "CAMPUS_D_LOW_W_TRUNK": [56.9, 39.4, 67.6, 39.6],
-            "CAMPUS_D_EAST_CI_TURN": [67.4, 39.4, 67.6, 42.6],
-            "CAMPUS_D_EAST_SPINE_TURN": [70.4, 36.4, 70.6, 39.6],
+            "CAMPUS_C_LOWER_JUNCTION": [28.4, 44.4, 33.1, 47.6],
+            "CAMPUS_D_LOW_W_TRUNK": [56.9, 47.4, 67.6, 47.6],
+            "CAMPUS_D_EAST_CI_TURN": [67.4, 47.4, 67.6, 50.6],
+            "CAMPUS_D_EAST_SPINE_TURN": [70.4, 44.4, 70.6, 47.6],
         }
         self.assertEqual(
             overlays,
@@ -623,7 +626,7 @@ class CampusLayoutTests(unittest.TestCase):
             for bay in BAY_OFFSETS
         }
         self.assertEqual(
-            {"A": [27.0, 1.5], "B": [69.0, 1.5], "C": [27.0, 30.5], "D": [69.0, 30.5]},
+            {"A": [27.0, 9.5], "B": [69.0, 9.5], "C": [27.0, 38.5], "D": [69.0, 38.5]},
             {bay: routing["nodes"][f"{bay}_PACK_WAIT"] for bay in BAY_OFFSETS},
         )
         book = RouteBook.from_files(TARGET / "layout.json", TARGET / "g3-routing.json")
@@ -703,8 +706,8 @@ class CampusLayoutTests(unittest.TestCase):
         bundle = build_campus_bundle(BASE)
         environment = bundle["visual-assets.json"]["environment"]
         excluded = environment["excluded_fixtures"]
-        self.assertEqual(40, len(excluded))
-        self.assertEqual(100, environment["fixture_count"])
+        self.assertEqual(52, len(excluded))
+        self.assertEqual(88, environment["fixture_count"])
         pack_spur_local = {
             "MAINT_TOOL_STORAGE_04", "MAINT_ROLLING_BENCH_04",
             "MAINT_TOOL_STORAGE_05", "MAINT_ROLLING_BENCH_05",
@@ -721,6 +724,9 @@ class CampusLayoutTests(unittest.TestCase):
             },
             {item["id"] for item in excluded if "vertical bridge queue access" in item["reason"]},
         )
+        self.assertEqual(12, sum(
+            "dedicated bridge safe-exit access" in item["reason"] for item in excluded
+        ))
         self.assertEqual(environment["fixture_count"], len(environment["fixtures"]))
         self.assertEqual(76, len(bundle["layout.json"]["physical_obstacles"]))
         fixture_ids = {item["id"] for item in environment["fixtures"]}
@@ -734,7 +740,7 @@ class CampusLayoutTests(unittest.TestCase):
             bundle["visual-assets.json"]["environment"],
             cache_root=Path("E:/FactoryOpsAssets/simready-context"),
         )
-        self.assertEqual(100, len(context["instances"]))
+        self.assertEqual(88, len(context["instances"]))
 
 
 if __name__ == "__main__":

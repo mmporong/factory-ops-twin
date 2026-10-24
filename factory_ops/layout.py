@@ -22,8 +22,10 @@ DUAL_LANE_REVISION = "amr-semiconductor-dual-lane-v1"
 FLEET_SCALE12_REVISION = "amr-semiconductor-scale12-v1"
 FLEET_SCALE16_REVISION = "amr-semiconductor-scale16-v1"
 CAMPUS16_REVISION = "amr-semiconductor-campus16-v1"
+CAMPUS16_BUFFERED_REVISION = "amr-semiconductor-campus16-v2"
+CAMPUS_LAYOUT_REVISIONS = frozenset((CAMPUS16_REVISION, CAMPUS16_BUFFERED_REVISION))
 FLEET_SCALE_LAYOUT_REVISIONS = frozenset((FLEET_SCALE12_REVISION, FLEET_SCALE16_REVISION))
-FLEET4_LAYOUT_REVISIONS = frozenset((FLEET4_REVISION, DUAL_LANE_REVISION, CAMPUS16_REVISION, *FLEET_SCALE_LAYOUT_REVISIONS))
+FLEET4_LAYOUT_REVISIONS = frozenset((FLEET4_REVISION, DUAL_LANE_REVISION, *CAMPUS_LAYOUT_REVISIONS, *FLEET_SCALE_LAYOUT_REVISIONS))
 PRODUCTION_BAY_REVISIONS = frozenset((V4_REVISION, *FLEET4_LAYOUT_REVISIONS))
 V3_STATIONS = {
     "S1": (4.0, 4.0),
@@ -64,6 +66,14 @@ FLEET_SCALE16_POCKETS = {
         ((52.0, 1.5), (52.0, 26.0), (56.0, 1.5), (56.0, 26.0)), 13)},
 }
 CAMPUS_BAY_OFFSETS = {"A": (0.0, 0.0), "B": (42.0, 0.0), "C": (0.0, 32.0), "D": (42.0, 32.0)}
+CAMPUS_BAY_OFFSETS_BY_REVISION = {
+    CAMPUS16_REVISION: CAMPUS_BAY_OFFSETS,
+    CAMPUS16_BUFFERED_REVISION: {bay: (dx, dy + 8.0) for bay, (dx, dy) in CAMPUS_BAY_OFFSETS.items()},
+}
+CAMPUS_BOUNDS_BY_REVISION = {
+    CAMPUS16_REVISION: (0.0, 0.0, 78.0, 60.0),
+    CAMPUS16_BUFFERED_REVISION: (0.0, 0.0, 82.0, 76.0),
+}
 CAMPUS_STATIONS = {f"{bay}_{name}": (point[0] + dx, point[1] + dy)
                    for bay, (dx, dy) in CAMPUS_BAY_OFFSETS.items() for name, point in DUAL_LANE_STATIONS.items()}
 CAMPUS_POCKETS = {f"{bay}_{name}": (point[0] + dx, point[1] + dy)
@@ -194,11 +204,18 @@ class Layout:
         if self.data["units"] != "m" or self.data["frame"] != "map":
             raise LayoutError("layout must use metres in the map frame")
         revision = self.data.get("revision")
-        if revision == CAMPUS16_REVISION:
-            expected_bounds = (0.0, 0.0, 78.0, 60.0)
-            expected_stations = CAMPUS_STATIONS
-            expected_pockets = CAMPUS_POCKETS
-            barrier_y = (3.0, 6.0)
+        if revision in CAMPUS_LAYOUT_REVISIONS:
+            bay_offsets = CAMPUS_BAY_OFFSETS_BY_REVISION[revision]
+            expected_bounds = CAMPUS_BOUNDS_BY_REVISION[revision]
+            expected_stations = {
+                f"{bay}_{name}": (point[0] + dx, point[1] + dy)
+                for bay, (dx, dy) in bay_offsets.items() for name, point in DUAL_LANE_STATIONS.items()
+            }
+            expected_pockets = {
+                f"{bay}_{name}": (point[0] + dx, point[1] + dy)
+                for bay, (dx, dy) in bay_offsets.items() for name, point in DUAL_LANE_POCKETS.items()
+            }
+            barrier_y = (3.0 + bay_offsets["A"][1], 6.0 + bay_offsets["A"][1])
         elif revision == FLEET_SCALE12_REVISION:
             expected_bounds = (0.0, 0.0, 51.0, 28.0)
             expected_stations = DUAL_LANE_STATIONS
@@ -238,7 +255,7 @@ class Layout:
 
         allowed = self._validated_named_rects(self.data["amr_allowed_regions"], "amr_allowed_regions", bounds)
         obstacles = self._validated_named_rects(self.data["physical_obstacles"], "physical_obstacles", bounds)
-        expected_obstacle_count = 76 if revision == CAMPUS16_REVISION else 19
+        expected_obstacle_count = 76 if revision in CAMPUS_LAYOUT_REVISIONS else 19
         if len(obstacles) != expected_obstacle_count:
             raise LayoutError(f"physical_obstacles must contain {expected_obstacle_count} authored footprints")
         for allowed_id, allowed_rect in allowed.items():
@@ -277,16 +294,16 @@ class Layout:
             raise LayoutError("blocked_aisle must close the full upper aisle width")
         if _finite_number(self.data["blocked_aisle"].get("height_m"), "blocked_aisle.height_m") <= 0:
             raise LayoutError("blocked_aisle height must be positive")
-        if revision == CAMPUS16_REVISION:
+        if revision in CAMPUS_LAYOUT_REVISIONS:
             barriers = self.data.get("blocked_aisles")
             if not isinstance(barriers, list) or {row.get("id") for row in barriers} != {
-                f"{bay}_BLOCKED_AISLE" for bay in CAMPUS_BAY_OFFSETS
+                f"{bay}_BLOCKED_AISLE" for bay in bay_offsets
             }:
                 raise LayoutError("campus requires four uniquely identified closure barriers")
             for row in barriers:
                 rect = Rect.from_value(row.get("rect"), "campus blocked aisle")
                 _validate_rect_in_bounds(rect, bounds, "campus blocked aisle")
-                offset_y = CAMPUS_BAY_OFFSETS[row["id"].split("_")[0]][1]
+                offset_y = bay_offsets[row["id"].split("_")[0]][1]
                 if (rect.ymin, rect.ymax) != (3.0 + offset_y, 6.0 + offset_y):
                     raise LayoutError("campus closure must retain its authored lane width")
                 if _finite_number(row.get("height_m"), "campus barrier height") <= 0:

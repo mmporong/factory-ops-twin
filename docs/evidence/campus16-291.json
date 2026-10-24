@@ -1,0 +1,112 @@
+{
+  "schema_version": 1,
+  "scope": "Closed authored CPU rolling-window traffic attempt; preserved incomplete liveness evidence, not a throughput completion claim",
+  "run_id": "process-line-a0a224f3-9f33-4cc1-8d46-b7e2771ba5fd",
+  "status": "incomplete",
+  "error": null,
+  "stop_reason": "no_motion_or_process_progress",
+  "elapsed_wall_s": 374.79085189988837,
+  "sim_time_s": 18228.00000001524,
+  "source_stable_during_run": true,
+  "owned_processes_gone": true,
+  "workload": {
+    "lots": 48,
+    "policy": "fifo"
+  },
+  "cumulative_shipped_lots": 5,
+  "cumulative_returned_lots": 4,
+  "actual_completed_transport_deliveries": 61,
+  "configured_robots": 16,
+  "assignment_participants": 16,
+  "repeat_assignment_participants": 15,
+  "delivery_participants": 15,
+  "repeat_delivery_participants": 15,
+  "minimum_assignments_per_robot": 1,
+  "minimum_completed_deliveries_per_robot": 0,
+  "peak_material_tasks": 13,
+  "peak_material_moving": 7,
+  "peak_all_moving": 7,
+  "observed_min_circular_clearance_m": 1.7257818169114452,
+  "quiescent": false,
+  "goal_met": false,
+  "recorded_frames": 120,
+  "reported_final_wait_state": {
+    "bridge_wait_cycle": null,
+    "reservation_wait_cycle": null,
+    "bridge_waiters": {
+      "amr-14": [
+        "amr-6"
+      ],
+      "amr-3": [
+        "amr-10"
+      ],
+      "amr-4": [
+        "amr-1"
+      ],
+      "amr-6": [
+        "amr-15"
+      ],
+      "amr-9": [
+        "amr-6"
+      ]
+    },
+    "owners": {},
+    "protected_route_tile_counts": {
+      "amr-15": 106,
+      "amr-5": 90
+    },
+    "handover_protected": [
+      "amr-15",
+      "amr-5"
+    ],
+    "replan_attempt_count": 0,
+    "replan_applied_count": 0,
+    "replan_unavailable_count": 0,
+    "pending_replans": []
+  },
+  "manual_wait_graph_reconstruction": {
+    "boundary": "The recorded snapshot reported no cycle because safe-exit lookahead blockers were stored in OperationsModel._waiting but were not present in BridgeAdmission.waiters.",
+    "active_window_reconstruction": [
+      {
+        "robot": "amr-5",
+        "route": "A_CO->AB_E_QUEUE",
+        "calculated_tiles": 90,
+        "snapshot_tiles": 90
+      },
+      {
+        "robot": "amr-15",
+        "route": "C_OUT->AC_N_QUEUE",
+        "calculated_tiles": 106,
+        "snapshot_tiles": 106
+      }
+    ],
+    "strongly_connected_component": [
+      "amr-10",
+      "amr-3",
+      "amr-5"
+    ],
+    "edges": [
+      {
+        "waiter": "amr-3",
+        "blocked_by": "amr-10",
+        "source": "recorded bridge admission waiter"
+      },
+      {
+        "waiter": "amr-10",
+        "blocked_by": "amr-5",
+        "source": "AB_W queue-to-dedicated-exit lookahead versus retained A_CO-to-AB_E_QUEUE window"
+      },
+      {
+        "waiter": "amr-5",
+        "blocked_by": "amr-3",
+        "source": "AB_E queue-to-dedicated-exit lookahead versus actual stopped pose"
+      }
+    ]
+  },
+  "failure_boundary": "The final pickup handover appended the loaded first window through AB_E_QUEUE but did not propagate that extension queue_barrier. Safe-exit lookahead therefore did not run before the retained A_CO-to-AB_E_QUEUE window was acquired, allowing that window to participate in an opposing-direction wait ring.",
+  "minimal_repair": "Propagate the appended loaded or service-egress queue_barrier to the outer retained window so safe-exit availability is checked before the handover window is acquired; record lookahead blockers in the same wait-for graph without changing resource ownership or protected tiles.",
+  "result_sha256": "97db1bd830f6bdacf1bec6e31312abf8af11f20e561b62c05f255ed2527aa4d9",
+  "frozen_source_manifest_sha256": "63657608a7a6b3e2f54a363ce97fec6c40bb51edde734e720d8c82667cce9e84",
+  "source_binding_sha256": "f93bbb49996933506212fa394c2a85f3831fa5360d0240146724bba1aa1a2b69",
+  "recording_manifest_sha256": "e8661ddfaf0cdc86b3ff63cfac2250dc28274520e6dd477a2ed302f7a589e33c"
+}

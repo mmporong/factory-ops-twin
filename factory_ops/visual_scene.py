@@ -12,7 +12,8 @@ import re
 from typing import Any, Mapping, Sequence
 
 from .layout import (
-    CAMPUS16_REVISION,
+    CAMPUS_BAY_OFFSETS_BY_REVISION,
+    CAMPUS_LAYOUT_REVISIONS,
     DUAL_LANE_REVISION,
     FLEET4_LAYOUT_REVISIONS,
     PRODUCTION_BAY_REVISIONS,
@@ -292,7 +293,7 @@ def _validate_config(config: Mapping[str, Any], layout: Layout) -> None:
     if config["schema_version"] != SCHEMA_VERSION or config["variant_count"] != 12:
         raise LayoutError("visual asset config schema or variant count is unsupported")
     campus_transform = config.get("campus_transform")
-    if layout.data.get("revision") == CAMPUS16_REVISION:
+    if layout.data.get("revision") in CAMPUS_LAYOUT_REVISIONS:
         if (not isinstance(campus_transform, dict)
                 or set(campus_transform) != {"bay_offsets_xy_m", "scope"}
                 or not isinstance(campus_transform.get("scope"), str)
@@ -304,13 +305,19 @@ def _validate_config(config: Mapping[str, Any], layout: Layout) -> None:
                        or not all(_is_finite_number(item) for item in value)
                        for value in offsets.values())):
             raise LayoutError("campus visual asset bay offsets are invalid")
+        expected_offsets = {
+            bay: list(point)
+            for bay, point in CAMPUS_BAY_OFFSETS_BY_REVISION[layout.data["revision"]].items()
+        }
+        if offsets != expected_offsets:
+            raise LayoutError("campus visual asset bay offsets do not match the layout revision")
     elif campus_transform is not None:
         raise LayoutError("campus_transform is only supported by the campus layout")
     for key in ("provider", "author", "license", "source"):
         if not isinstance(config[key], str) or not config[key]:
             raise LayoutError(f"visual asset config {key} must be a non-empty string")
     expected_taxonomy = {"floor", "floor_marking", "rack", "workbench", "process_equipment", "control_cabinet", "buffer_fixture", "pallet", "tote", "payload_tote", "amr", "station_marker", "barrier"}
-    if layout.data.get("revision") in {DUAL_LANE_REVISION, CAMPUS16_REVISION}:
+    if layout.data.get("revision") in {DUAL_LANE_REVISION, *CAMPUS_LAYOUT_REVISIONS}:
         expected_taxonomy.add("facility_structure")
     taxonomy = config["required_semantic_taxonomy"]
     if not isinstance(taxonomy, list) or set(taxonomy) != expected_taxonomy or len(taxonomy) != len(expected_taxonomy):
@@ -731,29 +738,33 @@ def _floor_graphics(layout: Layout, palette: Mapping[str, tuple[float, float, fl
         lines.extend(_floor_stencil_usda(label, (x - 1.0, y - .2), "post_drop_staging",
                                          indent=12, prim_name=prim, material="Dark"))
         semantic_roots[f"{root_path}/{prim}"] = "floor_marking"
-    bridge_queues = layout.data.get("bridge_queues", [])
-    if not isinstance(bridge_queues, list):
-        raise LayoutError("bridge_queues must be a list")
-    for item in bridge_queues:
-        if (not isinstance(item, dict) or not isinstance(item.get("id"), str)
-                or not isinstance(item.get("xy"), list) or len(item["xy"]) != 2
-                or not all(_is_finite_number(value) for value in item["xy"])):
-            raise LayoutError("bridge_queues requires a stable id and finite xy")
-        marker_id, (x, y) = item["id"], item["xy"]
-        for suffix, rectangle in (
-            ("L", (x - 1.1, y - 1.0, x - 1.05, y + 1.0)),
-            ("R", (x + 1.05, y - 1.0, x + 1.1, y + 1.0)),
-            ("B", (x - 1.1, y - 1.0, x + 1.1, y - .95)),
-            ("T", (x - 1.1, y + .95, x + 1.1, y + 1.0)),
-        ):
-            x0, y0, x1, y1 = rectangle
-            add_box(_Box(f"BridgeQueue_{marker_id}_{suffix}", (x0, y0, .017, x1, y1, .022),
-                         "White", "floor_marking", "bridge_admission_queue"))
-        prim = f"BridgeQueueStencil_{_prim_name(marker_id)}"
-        lines.extend(_floor_stencil_usda(marker_id.replace("_QUEUE", " WAIT").replace("_", " "),
-                                         (x - 1.0, y - .2), "bridge_admission_queue",
-                                         indent=12, prim_name=prim, material="Dark"))
-        semantic_roots[f"{root_path}/{prim}"] = "floor_marking"
+    for field, role, marker_prefix, label_from, label_to in (
+        ("bridge_queues", "bridge_admission_queue", "BridgeQueue", "_QUEUE", " WAIT"),
+        ("bridge_safe_exits", "bridge_release_buffer", "BridgeExit", "_SAFE_EXIT", " EXIT"),
+    ):
+        markers = layout.data.get(field, [])
+        if not isinstance(markers, list):
+            raise LayoutError(f"{field} must be a list")
+        for item in markers:
+            if (not isinstance(item, dict) or not isinstance(item.get("id"), str)
+                    or not isinstance(item.get("xy"), list) or len(item["xy"]) != 2
+                    or not all(_is_finite_number(value) for value in item["xy"])):
+                raise LayoutError(f"{field} requires a stable id and finite xy")
+            marker_id, (x, y) = item["id"], item["xy"]
+            for suffix, rectangle in (
+                ("L", (x - 1.1, y - 1.0, x - 1.05, y + 1.0)),
+                ("R", (x + 1.05, y - 1.0, x + 1.1, y + 1.0)),
+                ("B", (x - 1.1, y - 1.0, x + 1.1, y - .95)),
+                ("T", (x - 1.1, y + .95, x + 1.1, y + 1.0)),
+            ):
+                x0, y0, x1, y1 = rectangle
+                add_box(_Box(f"{marker_prefix}_{marker_id}_{suffix}", (x0, y0, .017, x1, y1, .022),
+                             "White", "floor_marking", role))
+            prim = f"{marker_prefix}Stencil_{_prim_name(marker_id)}"
+            lines.extend(_floor_stencil_usda(marker_id.replace(label_from, label_to).replace("_", " "),
+                                             (x - 1.0, y - .2), role,
+                                             indent=12, prim_name=prim, material="Dark"))
+            semantic_roots[f"{root_path}/{prim}"] = "floor_marking"
     if revision in PRODUCTION_BAY_REVISIONS:
         stencil_specs = (
             ("S1", (3.75, 3.55), "station_identifier"),
@@ -772,7 +783,7 @@ def _floor_graphics(layout: Layout, palette: Mapping[str, tuple[float, float, fl
         )
         if revision in FLEET4_LAYOUT_REVISIONS:
             stencil_specs = tuple((
-                name.replace("_", " ") if revision == CAMPUS16_REVISION else name,
+                name.replace("_", " ") if revision in CAMPUS_LAYOUT_REVISIONS else name,
                 (xy[0] - .25, xy[1] - .45),
                 "station_identifier",
             ) for name, xy in {**layout.stations, **layout.pockets}.items()) + tuple(

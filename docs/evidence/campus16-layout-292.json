@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "scope": "CPU-authored USD and layout diagram inputs; no runtime or GPU validation",
+  "source_recording": "campus16-pilot-291",
+  "layout_revision": "amr-semiconductor-campus16-v2",
+  "base": {
+    "path": "C:\\Users\\LIMMM\\factory-ops-twin\\artifacts\\campus-visual-292\\factory-v3.usda",
+    "sha256": "04919419d0f9b29c32485d745a580a99cfc0b632d2e1be3e9f4181551b1df899",
+    "default_prim": "World",
+    "up_axis": "Z",
+    "meters_per_unit": 1,
+    "static_collider_count": 77,
+    "obstacle_collider_count": 76,
+    "floor_collision_geometry": "invisible static Z-axis Plane at z=0; infinite physics surface",
+    "floor_visual_geometry": "non-colliding 82x76x0.1 m Cube slab ending at z=0",
+    "bounded_operations_scope": "82x76 m authored occupancy map; the physics plane is intentionally infinite",
+    "non_colliding_marker_count": 40,
+    "robot_assets": 0,
+    "validation": "OpenUSD text authored; pxr/Isaac Sim parsing and collision behavior not validated"
+  },
+  "invariants": {
+    "source_obstacle_count": 76,
+    "source_static_collider_count": 77,
+    "source_marker_count": 40,
+    "visual_collision_api_count": 0,
+    "layout_bounds_xy_m": [
+      0.0,
+      0.0,
+      82.0,
+      76.0
+    ],
+    "visual_equipment_contained_by_source_xyz_envelopes": true,
+    "station_centres_free_of_visual_payload_geometry": true,
+    "source_xyz_invariant_scope": "all visual instances with a source_obstacle_id, including mounted external assets, remain inside source XYZ envelopes"
+  },
+  "fixtures": 88,
+  "visual_instances": 1136,
+  "manifest_sha256": "3349cde524eef29a6147bceddb176fdedca3862665d229a2c6f9d92c9798da00",
+  "config_sha256": {
+    "fleet-profile.json": "5bdaa74cba0c8df54951b5e69cfa6de45c680b91e2d8f71f138f0afad32f18d5",
+    "g2.json": "b2e3385db604b33c94ce4f8dfbc41926a1e21b4f2e60a4340b114c1f124849ab",
+    "g3-routing.json": "aebb0d68d34796e64d4d7dfeeb7a2e6f3aedecb20bd3ad87fffbccf2dedae0e9",
+    "layout.json": "db6b936ec81f6176810dd78df40685d5702ca3bdf30287b5d9545dabd1477e23",
+    "operations-charging.json": "113f7d1fffd0567d57e8ba9afb3e795e79c9246d03486334c8ef7046b9be5d43",
+    "process-network.json": "ef4d3dd35612426c5b284413a9cb180c91dcbdad929eb1bcabed170e8beed12b",
+    "render-profile.json": "db026143c18ac59400736e72941b915eefa117a60f56a6270c693bc71be1688a",
+    "visual-assets.json": "daf8b6665f9c2e278ccb8dcb1e739a2bd321edfc32e9bd6be6ed947f2274a362"
+  },
+  "usd_producer_sha256": {
+    "factory_ops/layout.py": "f94b53876e480853e382e78fdba364f9b3523794e3c9980c594fc114b5751cb3",
+    "factory_ops/usda.py": "8d9056da2aae21226aeb9abba4b1aa3c3931f91537741a3f6ab1398eb3d8de9d",
+    "factory_ops/visual_scene.py": "9c6747b8567c8a735c73754c78dc8e1a8b69c254079634c55e6c96cdf01df2d2",
+    "factory_ops/factory_context.py": "0e2806528cdcfd15cda7da5ef0d803c28c5c75a1524c1a0865d27ac80568064b"
+  },
+  "counts": {
+    "bounds_xy_m": [
+      0,
+      0,
+      82,
+      76
+    ],
+    "production_footprints": 76,
+    "native_fixtures": 88,
+    "homes": 16,
+    "virtual_charging_docks": 8,
+    "service_stages": 12,
+    "bridge_entry_queues": 8,
+    "dedicated_bridge_exits": 8
+  },
+  "gpu_capture_evidence": "../images/campus16-static-294/provenance.json",
+  "gpu_render_done_at_export": false
+}

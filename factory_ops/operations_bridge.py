@@ -187,6 +187,14 @@ class BridgeAdmission:
             return False
         return self.waiters.pop(robot, None) is not None
 
+    def record_wait(self, robot: str, blockers: Iterable[str]) -> None:
+        """Expose a read-only lookahead dependency without changing ownership."""
+        normalized = tuple(sorted({peer for peer in blockers if peer != robot}))
+        if normalized:
+            self.waiters[robot] = normalized
+        else:
+            self.waiters.pop(robot, None)
+
     def wait_cycle(self) -> tuple[str, ...] | None:
         """Return one canonical strongly connected wait component, if present."""
         graph = {

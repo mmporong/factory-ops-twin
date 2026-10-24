@@ -14,15 +14,14 @@ from typing import Any, Mapping
 from .process_line_layout import add_process_line_routing
 
 
-CAMPUS_REVISION = "amr-semiconductor-campus16-v1"
-BAY_OFFSETS = {"A": (0.0, 0.0), "B": (42.0, 0.0), "C": (0.0, 32.0), "D": (42.0, 32.0)}
-CAMPUS_BOUNDS = [0, 0, 78, 60]
+CAMPUS_REVISION = "amr-semiconductor-campus16-v2"
+CAMPUS_Y_OFFSET = 8.0
+BAY_OFFSETS = {"A": (0.0, 8.0), "B": (42.0, 8.0), "C": (0.0, 40.0), "D": (42.0, 40.0)}
+CAMPUS_BOUNDS = [0, 0, 82, 76]
 PACK_EGRESS_LOCAL = [27.0, 4.5]
 PACK_WAIT_POINTS = {
-    "A": [27.0, 1.5],
-    "B": [69.0, 1.5],
-    "C": [27.0, 30.5],
-    "D": [69.0, 30.5],
+    bay: [27.0 + offset[0], (1.5 if bay in {"A", "B"} else -1.5) + offset[1]]
+    for bay, offset in BAY_OFFSETS.items()
 }
 PACK_STAGING_SPUR_LOCAL = [25.4, 0.1, 28.6, 9.0]
 PACK_STAGING_SPUR_NORTH_LOCAL = [25.4, -3.2, 28.6, 9.0]
@@ -31,25 +30,50 @@ LOCAL_STAGING_POINTS = {
     "CELL_WAIT": [24.5, 10.5],
 }
 SHARED_JUNCTION_REGIONS = {
-    "CAMPUS_C_LOWER_JUNCTION": [28.4, 36.4, 33.1, 39.6],
-    "CAMPUS_D_LOW_W_TRUNK": [56.9, 39.4, 67.6, 39.6],
-    "CAMPUS_D_EAST_CI_TURN": [67.4, 39.4, 67.6, 42.6],
-    "CAMPUS_D_EAST_SPINE_TURN": [70.4, 36.4, 70.6, 39.6],
+    "CAMPUS_C_LOWER_JUNCTION": [28.4, 44.4, 33.1, 47.6],
+    "CAMPUS_D_LOW_W_TRUNK": [56.9, 47.4, 67.6, 47.6],
+    "CAMPUS_D_EAST_CI_TURN": [67.4, 47.4, 67.6, 50.6],
+    "CAMPUS_D_EAST_SPINE_TURN": [70.4, 44.4, 70.6, 47.6],
 }
 BRIDGE_QUEUES = {
-    "AB_E_QUEUE": [32.0, 1.5],
-    "AB_W_QUEUE": [60.0, 7.5],
-    "CD_E_QUEUE": [30.5, 33.5],
-    "CD_W_QUEUE": [60.0, 37.5],
-    "AC_S_QUEUE": [33.5, 19.5],
-    "AC_N_QUEUE": [31.5, 30.5],
-    "BD_S_QUEUE": [75.5, 19.5],
-    "BD_N_QUEUE": [73.5, 30.5],
+    "AB_E_QUEUE": [32.0, 9.5],
+    "AB_W_QUEUE": [60.0, 15.5],
+    "CD_E_QUEUE": [30.5, 41.5],
+    "CD_W_QUEUE": [60.0, 45.5],
+    "AC_S_QUEUE": [33.5, 27.5],
+    "AC_N_QUEUE": [31.5, 38.5],
+    "BD_S_QUEUE": [75.5, 27.5],
+    "BD_N_QUEUE": [73.5, 38.5],
 }
 BRIDGE_QUEUE_ACCESS_REGIONS = {
-    "CAMPUS_AB_E_QUEUE_ACCESS": [30.45, 0.0, 33.5, 4.5],
-    "CAMPUS_AC_N_QUEUE_ACCESS": [28.3, 28.8, 37.0, 37.0],
-    "CAMPUS_BD_N_QUEUE_ACCESS": [70.3, 28.8, 75.2, 35.2],
+    "CAMPUS_AB_E_QUEUE_ACCESS": [30.45, 8.0, 33.5, 12.5],
+    "CAMPUS_AC_N_QUEUE_ACCESS": [28.3, 36.8, 37.0, 45.0],
+    "CAMPUS_BD_N_QUEUE_ACCESS": [70.3, 36.8, 75.2, 43.2],
+}
+BRIDGE_SAFE_EXITS = {
+    "A_AB_W_SAFE_EXIT": [15.0, 3.0],
+    "A_AC_N_SAFE_EXIT": [27.0, 3.0],
+    "B_AB_E_SAFE_EXIT": [80.0, 12.5],
+    "B_BD_N_SAFE_EXIT": [80.0, 30.5],
+    "C_CD_W_SAFE_EXIT": [31.0, 73.0],
+    "C_AC_S_SAFE_EXIT": [41.0, 73.0],
+    "D_CD_E_SAFE_EXIT": [74.0, 73.0],
+    "D_BD_S_SAFE_EXIT": [80.0, 73.0],
+}
+BRIDGE_SAFE_EXIT_REGIONS = {
+    "CAMPUS_A_SAFE_ENTRY": [19.5, 14.0, 30.0, 17.0],
+    "CAMPUS_A_SAFE_VERTICAL": [19.5, 4.0, 22.5, 17.0],
+    "CAMPUS_A_SAFE_BRANCHES": [13.0, 1.0, 29.0, 7.0],
+    "CAMPUS_B_AB_SAFE_SPUR": [70.4, 11.0, 82.0, 14.0],
+    "CAMPUS_B_BD_SAFE_SPUR": [70.4, 29.0, 82.0, 32.0],
+    "CAMPUS_C_SAFE_ENTRY": [28.4, 46.0, 38.0, 49.0],
+    "CAMPUS_C_SAFE_VERTICAL": [35.0, 47.0, 38.0, 71.5],
+    "CAMPUS_C_SAFE_BRANCHES": [29.0, 68.5, 42.0, 76.0],
+    "CAMPUS_D_CD_SAFE_VERTICAL": [49.5, 43.0, 52.5, 61.5],
+    "CAMPUS_D_SAFE_CROSS": [49.5, 58.5, 80.0, 61.5],
+    "CAMPUS_D_BD_SAFE_ENTRY": [69.0, 43.0, 80.0, 46.0],
+    "CAMPUS_D_SAFE_VERTICAL": [77.1, 43.0, 80.0, 71.5],
+    "CAMPUS_D_SAFE_BRANCHES": [72.0, 68.5, 82.0, 76.0],
 }
 
 
@@ -77,7 +101,7 @@ def build_campus_layout(base: Mapping[str, Any]) -> dict[str, Any]:
     result = deepcopy(source)
     result.update(
         revision=CAMPUS_REVISION,
-        status="Authored four-bay 16-AMR campus; RouteBook, renderer and physical runtime qualification pending",
+        status="Authored four-bay 16-AMR v2 campus; RouteBook preflight passed, renderer and physical runtime qualification pending",
         bounds_xy=deepcopy(CAMPUS_BOUNDS),
     )
     result["amr_allowed_regions"] = []
@@ -125,26 +149,26 @@ def build_campus_layout(base: Mapping[str, Any]) -> dict[str, Any]:
             result["traffic_lanes"].append(item)
 
     bridges = [
-        ("H_AB", [28.5, 3.0, 51.0, 9.0], "east/west paired lanes between south bays"),
-        ("H_CD", [28.5, 35.0, 51.0, 41.0], "east/west paired lanes between north bays"),
-        ("V_AC", [31.4, 22.5, 36.0, 36.5], "single-reservation north/south link on the clear east perimeter"),
-        ("V_BD", [73.4, 22.5, 78.0, 36.5], "single-reservation north/south link on the clear east perimeter"),
+        ("H_AB", [28.5, 11.0, 51.0, 17.0], "east/west paired lanes between south bays"),
+        ("H_CD", [28.5, 43.0, 51.0, 49.0], "east/west paired lanes between north bays"),
+        ("V_AC", [31.4, 30.5, 36.0, 44.5], "single-reservation north/south link on the clear east perimeter"),
+        ("V_BD", [73.4, 30.5, 78.0, 44.5], "single-reservation north/south link on the clear east perimeter"),
     ]
     result["amr_allowed_regions"].extend(
         {"id": f"CAMPUS_{name}", "rect": rect, "purpose": purpose}
         for name, rect, purpose in bridges
     )
     result["amr_allowed_regions"].extend([
-        {"id": "CAMPUS_V_AC_S_APPROACH", "rect": [28.5, 18.0, 36.0, 24.4], "purpose": "clear south-bay east-spine bridge approach"},
-        {"id": "CAMPUS_V_AC_N_APPROACH", "rect": [28.5, 35.0, 36.0, 41.0], "purpose": "clear north-bay east-spine bridge approach"},
-        {"id": "CAMPUS_V_BD_S_APPROACH", "rect": [70.5, 18.0, 78.0, 24.4], "purpose": "clear south-bay east-spine bridge approach"},
-        {"id": "CAMPUS_V_BD_N_APPROACH", "rect": [70.5, 35.0, 78.0, 41.0], "purpose": "clear north-bay east-spine bridge approach"},
+        {"id": "CAMPUS_V_AC_S_APPROACH", "rect": [28.5, 26.0, 36.0, 32.4], "purpose": "clear south-bay east-spine bridge approach"},
+        {"id": "CAMPUS_V_AC_N_APPROACH", "rect": [28.5, 43.0, 36.0, 49.0], "purpose": "clear north-bay east-spine bridge approach"},
+        {"id": "CAMPUS_V_BD_S_APPROACH", "rect": [70.5, 26.0, 78.0, 32.4], "purpose": "clear south-bay east-spine bridge approach"},
+        {"id": "CAMPUS_V_BD_N_APPROACH", "rect": [70.5, 43.0, 78.0, 49.0], "purpose": "clear north-bay east-spine bridge approach"},
     ])
     result["amr_allowed_regions"].extend([
-        {"id": "CAMPUS_H_AB_RESERVATION", "rect": [32.0, 5.0, 47.0, 8.8], "purpose": "atomic shared bridge reservation overlay"},
-        {"id": "CAMPUS_H_CD_RESERVATION", "rect": [32.0, 37.0, 47.0, 40.8], "purpose": "atomic shared bridge reservation overlay"},
-        {"id": "CAMPUS_V_AC_RESERVATION", "rect": [33.0, 23.4, 35.8, 36.6], "purpose": "atomic shared bridge reservation overlay including both gate approaches"},
-        {"id": "CAMPUS_V_BD_RESERVATION", "rect": [75.0, 23.4, 77.8, 36.6], "purpose": "atomic shared bridge reservation overlay including both gate approaches"},
+        {"id": "CAMPUS_H_AB_RESERVATION", "rect": [32.0, 13.0, 47.0, 16.8], "purpose": "atomic shared bridge reservation overlay"},
+        {"id": "CAMPUS_H_CD_RESERVATION", "rect": [32.0, 45.0, 47.0, 48.8], "purpose": "atomic shared bridge reservation overlay"},
+        {"id": "CAMPUS_V_AC_RESERVATION", "rect": [33.0, 31.4, 35.8, 44.6], "purpose": "atomic shared bridge reservation overlay including both gate approaches"},
+        {"id": "CAMPUS_V_BD_RESERVATION", "rect": [75.0, 31.4, 77.8, 44.6], "purpose": "atomic shared bridge reservation overlay including both gate approaches"},
     ])
     result["amr_allowed_regions"].extend(
         {"id": name, "rect": deepcopy(rect), "purpose": "atomic shared-junction policy overlay"}
@@ -153,6 +177,10 @@ def build_campus_layout(base: Mapping[str, Any]) -> dict[str, Any]:
     result["amr_allowed_regions"].extend(
         {"id": name, "rect": deepcopy(rect), "purpose": "off-route vertical bridge queue access envelope"}
         for name, rect in BRIDGE_QUEUE_ACCESS_REGIONS.items()
+    )
+    result["amr_allowed_regions"].extend(
+        {"id": name, "rect": deepcopy(rect), "purpose": "dedicated post-bridge safe-exit access envelope"}
+        for name, rect in BRIDGE_SAFE_EXIT_REGIONS.items()
     )
     result["blocked_aisles"] = blocked_aisles
     result["blocked_aisle"] = deepcopy(blocked_aisles[0])
@@ -187,6 +215,14 @@ def build_campus_layout(base: Mapping[str, Any]) -> dict[str, Any]:
         }
         for queue_id, point in BRIDGE_QUEUES.items()
     ]
+    result["bridge_safe_exits"] = [
+        {
+            "id": exit_id,
+            "xy": deepcopy(point),
+            "purpose": "dedicated post-bridge release buffer; excluded from process staging, fleet homes and task destinations",
+        }
+        for exit_id, point in BRIDGE_SAFE_EXITS.items()
+    ]
     result["unperformed_validation"] = [
         "16-AMR RouteBook and reservation runtime",
         "four-bay USD scene transformation, asset placement and sensor/map alignment",
@@ -198,11 +234,11 @@ def build_campus_layout(base: Mapping[str, Any]) -> dict[str, Any]:
         "bay_offsets_xy_m": {bay: list(offset) for bay, offset in BAY_OFFSETS.items()},
         "campus_bounds_xy_m": deepcopy(CAMPUS_BOUNDS),
         "geometry_rule": "four immutable 36x28m bays on 42m x 32m centres with clear directional bridge corridors",
-        "pending": "RouteBook preflight, USD scene transformation, renderer coverage and multi-robot physical evidence",
+        "pending": "USD scene transformation, renderer coverage and multi-robot physical evidence",
     }
     result["production_domain"] = deepcopy(source["production_domain"])
     result["production_domain"]["scope"] = (
-        "Four authored semiconductor final-test/inspection/pack bays in a 78x60m campus; "
+        "Four authored semiconductor final-test/inspection/pack bays in an 82x76m v2 campus; "
         "planning geometry only, not surveyed CAD or process certification"
     )
     result["production_domain"]["zone_labels"] = [
@@ -306,10 +342,10 @@ def build_campus_routing(base: Mapping[str, Any]) -> dict[str, Any]:
         })
 
     bridge_regions = {
-        "CAMPUS_H_AB_RESERVATION": [32.0, 5.0, 47.0, 8.8],
-        "CAMPUS_H_CD_RESERVATION": [32.0, 37.0, 47.0, 40.8],
-        "CAMPUS_V_AC_RESERVATION": [33.0, 23.4, 35.8, 36.6],
-        "CAMPUS_V_BD_RESERVATION": [75.0, 23.4, 77.8, 36.6],
+        "CAMPUS_H_AB_RESERVATION": [32.0, 13.0, 47.0, 16.8],
+        "CAMPUS_H_CD_RESERVATION": [32.0, 45.0, 47.0, 48.8],
+        "CAMPUS_V_AC_RESERVATION": [33.0, 31.4, 35.8, 44.6],
+        "CAMPUS_V_BD_RESERVATION": [75.0, 31.4, 77.8, 44.6],
         **deepcopy(SHARED_JUNCTION_REGIONS),
     }
     result["policy_region_overrides"].update(bridge_regions)
@@ -321,28 +357,28 @@ def build_campus_routing(base: Mapping[str, Any]) -> dict[str, Any]:
         })
 
     connector_nodes = {
-        "AB_E_ACCESS": [32.0, 4.5],
+        "AB_E_ACCESS": [32.0, 12.5],
         "AB_E_QUEUE": deepcopy(BRIDGE_QUEUES["AB_E_QUEUE"]),
-        "AB_E_W_GATE": [31.0, 6.0], "AB_E_W_IN": [33.0, 6.0],
-        "AB_E_E_IN": [46.0, 6.0], "AB_E_E_GATE": [48.0, 6.0],
-        "AB_W_E_GATE": [48.0, 7.5], "AB_W_E_IN": [46.0, 7.5],
-        "AB_W_W_IN": [33.0, 7.5], "AB_W_W_GATE": [31.0, 7.5],
+        "AB_E_W_GATE": [31.0, 14.0], "AB_E_W_IN": [33.0, 14.0],
+        "AB_E_E_IN": [46.0, 14.0], "AB_E_E_GATE": [48.0, 14.0],
+        "AB_W_E_GATE": [48.0, 15.5], "AB_W_E_IN": [46.0, 15.5],
+        "AB_W_W_IN": [33.0, 15.5], "AB_W_W_GATE": [31.0, 15.5],
         "AB_W_QUEUE": deepcopy(BRIDGE_QUEUES["AB_W_QUEUE"]),
-        "AB_W_RETURN": [57.0, 7.5], "AB_W_P1": [54.0, 7.5], "AB_W_ENTRY": [51.0, 7.5],
+        "AB_W_RETURN": [57.0, 15.5], "AB_W_P1": [54.0, 15.5], "AB_W_ENTRY": [51.0, 15.5],
         "CD_E_QUEUE": deepcopy(BRIDGE_QUEUES["CD_E_QUEUE"]),
-        "CD_E_ACCESS": [27.0, 33.5],
-        "CD_E_ENTRY": [28.5, 36.5],
-        "CD_E_W_GATE": [31.0, 38.0], "CD_E_W_IN": [33.0, 38.0],
-        "CD_E_E_IN": [46.0, 38.0], "CD_E_E_GATE": [48.0, 38.0],
-        "CD_W_E_GATE": [48.0, 39.5], "CD_W_E_IN": [46.0, 39.5],
-        "CD_W_W_IN": [33.0, 39.5], "CD_W_W_GATE": [31.0, 39.5],
+        "CD_E_ACCESS": [27.0, 41.5],
+        "CD_E_ENTRY": [28.5, 44.5],
+        "CD_E_W_GATE": [31.0, 46.0], "CD_E_W_IN": [33.0, 46.0],
+        "CD_E_E_IN": [46.0, 46.0], "CD_E_E_GATE": [48.0, 46.0],
+        "CD_W_E_GATE": [48.0, 47.5], "CD_W_E_IN": [46.0, 47.5],
+        "CD_W_W_IN": [33.0, 47.5], "CD_W_W_GATE": [31.0, 47.5],
         "CD_W_QUEUE": deepcopy(BRIDGE_QUEUES["CD_W_QUEUE"]),
-        "CD_W_RETURN": [57.0, 39.5], "CD_W_P1": [54.0, 39.5], "CD_W_ENTRY": [51.0, 39.5],
-        "AC_S_GATE": [33.0, 23.5], "AC_S_IN": [34.5, 25.0],
-        "AC_N_IN": [34.5, 35.0], "AC_N_GATE": [33.0, 36.5],
-        "AC_N_ACCESS": [35.5, 30.5],
-        "BD_S_GATE": [75.0, 23.5], "BD_S_IN": [76.5, 25.0],
-        "BD_N_IN": [76.5, 35.0], "BD_N_GATE": [75.0, 36.5],
+        "CD_W_RETURN": [57.0, 47.5], "CD_W_P1": [54.0, 47.5], "CD_W_ENTRY": [51.0, 47.5],
+        "AC_S_GATE": [33.0, 31.5], "AC_S_IN": [34.5, 33.0],
+        "AC_N_IN": [34.5, 43.0], "AC_N_GATE": [33.0, 44.5],
+        "AC_N_ACCESS": [35.5, 38.5],
+        "BD_S_GATE": [75.0, 31.5], "BD_S_IN": [76.5, 33.0],
+        "BD_N_IN": [76.5, 43.0], "BD_N_GATE": [75.0, 44.5],
         **{name: deepcopy(point) for name, point in BRIDGE_QUEUES.items() if name.startswith(("AC_", "BD_"))},
     }
     result["nodes"].update(connector_nodes)
@@ -359,11 +395,46 @@ def build_campus_routing(base: Mapping[str, Any]) -> dict[str, Any]:
     for path in connector_paths.values():
         result["directed_edges"].extend([list(edge) for edge in zip(path, path[1:])])
     result["directed_edges"].append(["AC_N_GATE", "CD_E_ACCESS"])
+
+    safe_exit_access_nodes = {
+        "A_SAFE_ENTRY": [21.0, 15.5],
+        "A_SAFE_HUB": [21.0, 5.5],
+        "C_SAFE_ENTRY": [36.5, 47.5],
+        "C_SAFE_HUB": [36.5, 70.0],
+        "D_CD_E_SAFE_ENTRY": [51.0, 60.0],
+        "D_CD_E_SAFE_TOP": [75.0, 60.0],
+        "D_CD_E_SAFE_BRANCH": [75.0, 70.0],
+        "D_BD_S_SAFE_ENTRY": [80.0, 44.5],
+        "D_BD_S_SAFE_BRANCH": [80.0, 70.0],
+    }
+    result["nodes"].update(safe_exit_access_nodes)
+    result["nodes"].update(deepcopy(BRIDGE_SAFE_EXITS))
+    result["edges"].extend([
+        ["A_HIGH_W_EN", "A_LOW_W_EN"],
+        ["A_LOW_W_EN", "A_SAFE_ENTRY"],
+        ["A_SAFE_ENTRY", "A_SAFE_HUB"],
+        ["A_SAFE_HUB", "A_AB_W_SAFE_EXIT"],
+        ["A_SAFE_HUB", "A_AC_N_SAFE_EXIT"],
+        ["B_LOW_E_EN", "B_AB_E_SAFE_EXIT"],
+        ["B_HIGH_W_EN", "B_BD_N_SAFE_EXIT"],
+        ["C_LOW_W_EN", "C_SAFE_ENTRY"],
+        ["C_SAFE_ENTRY", "C_SAFE_HUB"],
+        ["C_SAFE_HUB", "C_CD_W_SAFE_EXIT"],
+        ["C_SAFE_HUB", "C_AC_S_SAFE_EXIT"],
+        ["D_LOW_E_W", "D_CD_E_SAFE_ENTRY"],
+        ["D_CD_E_SAFE_ENTRY", "D_CD_E_SAFE_TOP"],
+        ["D_CD_E_SAFE_TOP", "D_CD_E_SAFE_BRANCH"],
+        ["D_CD_E_SAFE_BRANCH", "D_CD_E_SAFE_EXIT"],
+        ["D_LOW_E_EN", "D_BD_S_SAFE_ENTRY"],
+        ["D_BD_S_SAFE_ENTRY", "D_BD_S_SAFE_BRANCH"],
+        ["D_BD_S_SAFE_BRANCH", "D_BD_S_SAFE_EXIT"],
+    ])
     holdable_nodes = [
         *(f"{bay}_P{slot}" for bay in BAY_OFFSETS for slot in range(1, 5)),
         *(f"{bay}_PACK_WAIT" for bay in BAY_OFFSETS),
         *(f"{bay}_{name}" for bay in BAY_OFFSETS for name in LOCAL_STAGING_POINTS),
         *BRIDGE_QUEUES,
+        *BRIDGE_SAFE_EXITS,
     ]
     resource_exclusions = {*BRIDGE_QUEUES, "AB_E_ACCESS", "CD_E_ACCESS"}
     result["bridge_admission"] = {
@@ -374,14 +445,14 @@ def build_campus_routing(base: Mapping[str, Any]) -> dict[str, Any]:
         "queue_nodes": list(BRIDGE_QUEUES),
         "holdable_nodes": holdable_nodes,
         "safe_exit_nodes": {
-            "AB_E_QUEUE": "B_PACK_WAIT",
-            "AB_W_QUEUE": "A_PACK_WAIT",
-            "CD_E_QUEUE": "D_SOURCE_WAIT",
-            "CD_W_QUEUE": "C_PACK_WAIT",
-            "AC_S_QUEUE": "C_CELL_WAIT",
-            "AC_N_QUEUE": "A_CELL_WAIT",
-            "BD_S_QUEUE": "D_CELL_WAIT",
-            "BD_N_QUEUE": "B_CELL_WAIT",
+            "AB_E_QUEUE": "B_AB_E_SAFE_EXIT",
+            "AB_W_QUEUE": "A_AB_W_SAFE_EXIT",
+            "CD_E_QUEUE": "D_CD_E_SAFE_EXIT",
+            "CD_W_QUEUE": "C_CD_W_SAFE_EXIT",
+            "AC_S_QUEUE": "C_AC_S_SAFE_EXIT",
+            "AC_N_QUEUE": "A_AC_N_SAFE_EXIT",
+            "BD_S_QUEUE": "D_BD_S_SAFE_EXIT",
+            "BD_N_QUEUE": "B_BD_N_SAFE_EXIT",
         },
     }
     result["operations_bottleneck_policy"] = "merge_adjacent_route_spans"
@@ -519,11 +590,22 @@ def build_visual_assets(base: Mapping[str, Any]) -> dict[str, Any]:
         "C": {"MAINT_TOOL_STORAGE_06", "MAINT_ROLLING_BENCH_06"},
         "D": {"MAINT_TOOL_STORAGE_06", "MAINT_ROLLING_BENCH_06"},
     }
+    safe_exit_conflicts = {
+        "A": {
+            "MAINT_TOOL_STORAGE_01", "MAINT_ROLLING_BENCH_01",
+            "MAINT_TOOL_STORAGE_02", "MAINT_ROLLING_BENCH_02",
+            "MAINT_PARTS_CART_01", "MAINT_PARTS_CART_02",
+        },
+        "B": {"EAST_SERVICE_TOOLS_LOW", "EAST_SERVICE_CART_LOW"},
+        "C": {"EAST_SERVICE_TOOLS_MID", "EAST_SERVICE_TOOLS_HIGH"},
+        "D": {"EAST_SERVICE_TOOLS_MID", "EAST_SERVICE_TOOLS_HIGH"},
+    }
     excluded = []
     for bay, offset in BAY_OFFSETS.items():
         for fixture in source["environment"]["fixtures"]:
             if (fixture["id"] in excluded_local[bay] or fixture["id"] in pack_spur_conflicts
-                    or fixture["id"] in queue_access_conflicts.get(bay, set())):
+                    or fixture["id"] in queue_access_conflicts.get(bay, set())
+                    or fixture["id"] in safe_exit_conflicts.get(bay, set())):
                 excluded.append({
                     "id": _prefix(fixture["id"], bay),
                     "reason": (
@@ -532,7 +614,11 @@ def build_visual_assets(base: Mapping[str, Any]) -> dict[str, Any]:
                         else (
                             "translated native fixture bounds plus 0.1m clearance intersect the PACK staging spur"
                             if fixture["id"] in pack_spur_conflicts
-                            else "translated native fixture bounds plus 0.1m clearance intersect vertical bridge queue access"
+                            else (
+                                "translated native fixture bounds plus 0.1m clearance intersect vertical bridge queue access"
+                                if fixture["id"] in queue_access_conflicts.get(bay, set())
+                                else "translated native fixture bounds plus 0.1m clearance intersect dedicated bridge safe-exit access"
+                            )
                         )
                     ),
                 })
@@ -555,14 +641,21 @@ def build_visual_assets(base: Mapping[str, Any]) -> dict[str, Any]:
 
 def build_render_profile(base: Mapping[str, Any]) -> dict[str, Any]:
     result = deepcopy(dict(base))
+    for camera in result["cameras"]:
+        if camera["id"] in {"west_material_flow", "cell_process", "east_shipping", "packing_conveyor"}:
+            for key in ("eye_xyz_m", "target_xyz_m"):
+                camera[key][0] += BAY_OFFSETS["A"][0]
+                camera[key][1] += BAY_OFFSETS["A"][1]
     overview = next(camera for camera in result["cameras"] if camera["id"] == "portfolio_overview")
     overview.update(
-        eye_xyz_m=[39.0, -35.0, 72.0],
-        target_xyz_m=[39.0, 30.0, 0.7],
+        eye_xyz_m=[41.0, -37.0, 82.0],
+        target_xyz_m=[41.0, 38.0, 0.7],
         focal_length_mm=22,
         purpose="four-bay semiconductor campus and 16-AMR material flow; authored camera, capture pending",
     )
-    result["campus_scope"] = "Camera authoring only; four-bay USD transform and successful GPU render pending"
+    result["campus_scope"] = (
+        "Camera authoring for the 82x76m v2 campus and 16-AMR flow; successful GPU capture remains pending"
+    )
     return result
 
 

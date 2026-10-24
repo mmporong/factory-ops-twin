@@ -1,0 +1,9 @@
+{
+  "schema_version": 1,
+  "scope": "Unmodified v1 layout from closed incomplete CPU290, retained for v1/v2 coordinate compatibility tests. No successful48-lot completion claim.",
+  "source_run_id": "process-line-39d52828-87c9-4459-b92c-c16601398df9",
+  "source_case_status": "incomplete",
+  "source_case_result_sha256": "848c3ee4053de089e562f90f2d06dc7c0ce746751d274c23b1cfbdb53709c49c",
+  "source_frozen_manifest_sha256": "e5f063a118f0ca97523675ff520f65572fa265c8985fa5568233ccb0b8f63d41",
+  "layout_sha256": "72b48db9c9029d8f4180229d9223f6244435759e8b8290c428f874b8c274b1a0"
+}

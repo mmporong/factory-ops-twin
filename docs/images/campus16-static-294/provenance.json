@@ -1,0 +1,128 @@
+{
+  "schema_version": 1,
+  "scope": "Actual Isaac Sim4.5 static GPU stills of campus16-v2. Timeline stopped, no robot spawn, transport, sensor or physical motion evidence.",
+  "layout_revision": "amr-semiconductor-campus16-v2",
+  "source_geometry": "Frozen CPU291 layout/assets/routing bytes; CPU291 is incomplete and is not claimed as a successful factory operation.",
+  "status": "passed",
+  "image_size_px": [
+    1280,
+    720
+  ],
+  "sdk_renderer": "RayTracedLighting",
+  "captures": [
+    {
+      "path": "portfolio_overview.png",
+      "sha256": "7d398c00b73ed9c86cc990b8e06ae21562114f01638278799967d1ba119b26a2",
+      "camera": {
+        "id": "portfolio_overview",
+        "eye_xyz_m": [
+          41.0,
+          -37.0,
+          82.0
+        ],
+        "target_xyz_m": [
+          41.0,
+          38.0,
+          0.7
+        ],
+        "focal_length_mm": 18,
+        "purpose": "four-bay semiconductor campus and 16-AMR material flow; authored camera, capture pending"
+      },
+      "camera_world_eye_m": [
+        41.0,
+        -37.00000000000001,
+        82.00000000000001
+      ],
+      "buffer_attempts": 1
+    },
+    {
+      "path": "cell_process.png",
+      "sha256": "8de3e83ab94c6ba46058ade6e756e3704fa436c24c330eb9db18a3cc0f8f0e0c",
+      "camera": {
+        "id": "cell_process",
+        "eye_xyz_m": [
+          26,
+          12.0,
+          13
+        ],
+        "target_xyz_m": [
+          19,
+          20.5,
+          1
+        ],
+        "focal_length_mm": 26,
+        "purpose": "test handler, ATE sidecar and tray transfer interfaces"
+      },
+      "camera_world_eye_m": [
+        25.999999999999996,
+        11.999999999999995,
+        12.999999999999998
+      ],
+      "buffer_attempts": 1
+    },
+    {
+      "path": "west_material_flow.png",
+      "sha256": "37eaf3c81aaa88b9f30ba1ea10fc92f4a26889f2d057a7c612158d93c8c4ca3c",
+      "camera": {
+        "id": "west_material_flow",
+        "eye_xyz_m": [
+          0.5,
+          12.0,
+          9
+        ],
+        "target_xyz_m": [
+          9,
+          22.0,
+          1
+        ],
+        "focal_length_mm": 30,
+        "purpose": "compact tote racks, source stations and modular benches"
+      },
+      "camera_world_eye_m": [
+        0.4999999999999992,
+        12.000000000000004,
+        9.0
+      ],
+      "buffer_attempts": 1
+    }
+  ],
+  "input_sha256": {
+    "factory-v3.render.usda": "7bee6ff54503b9d8ce2565fac3a55e2517b7654019e8dbe25fa5b9d4698b3bb0",
+    "factory-v3.usda": "04919419d0f9b29c32485d745a580a99cfc0b632d2e1be3e9f4181551b1df899",
+    "factory-v3.visual.usda": "7aea2b75b7fba709173612a80594ce52a9d8e7e6e88d2e2920af779dbdea69e8",
+    "layout.json": "db6b936ec81f6176810dd78df40685d5702ca3bdf30287b5d9545dabd1477e23",
+    "render-profile.json": "9c039a71cdf4aa43ba73596d83caad0bdb57a28211677d84abfb258804dd233b"
+  },
+  "renderer_source_sha256": "8d53f73168cc8f7fbf0077489633d139c43baa1fdcd30c4f25528dd1733eb872",
+  "camera_variant": {
+    "scope": "Render-only camera correction. Operational layout/routing/assets identical to frozen CPU291.",
+    "source_render_profile_sha256": "db026143c18ac59400736e72941b915eefa117a60f56a6270c693bc71be1688a",
+    "correction": "A-bay cell_process and west_material_flow world eye/target y+8m, matching v2 bay translation."
+  },
+  "host": {
+    "status": "passed",
+    "closed": true,
+    "remaining_owned_pids": []
+  },
+  "result_sha256": "f3fa3f154063100a2467678cda0011432684d2af60259948856429dcfc9f38cf",
+  "host_receipt_sha256": "c082895e7a1a40cdb67913395e95d3e85d76c364f0c4858a400584a815ebf941",
+  "counts": {
+    "bounds_xy_m": [
+      0,
+      0,
+      82,
+      76
+    ],
+    "production_footprints": 76,
+    "native_fixtures": 88,
+    "homes": 16,
+    "virtual_charging_docks": 8,
+    "service_stages": 12,
+    "bridge_entry_queues": 8,
+    "dedicated_bridge_exits": 8
+  },
+  "limits": [
+    "Render294 uses corrected A-bay closeup world camera coordinates; operational inputs match CPU291.",
+    "Three static stills; no16-AMR physics, sensor, loading or charging success claim."
+  ]
+}

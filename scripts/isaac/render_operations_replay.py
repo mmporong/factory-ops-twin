@@ -16,9 +16,9 @@ from uuid import uuid4
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 from factory_ops.operations_render import load_recording, sha
+from factory_ops.layout import CAMPUS_BAY_OFFSETS_BY_REVISION, CAMPUS_LAYOUT_REVISIONS
 
 
-_CAMPUS_BAY_OFFSETS = {"A": (0.0, 0.0), "B": (42.0, 0.0), "C": (0.0, 32.0), "D": (42.0, 32.0)}
 _WORLD_SLOT_NAMES = ("source_S1", "source_S2", "source_S3", "ci", "cell", "co", "out")
 
 
@@ -27,12 +27,13 @@ def replay_slot_placement(
     placement_fn: Callable[[Any, str, int], dict[str, Any]],
 ) -> dict[str, Any]:
     """Resolve legacy or prefixed campus presentation slots without changing scene geometry."""
-    if layout.data.get("revision") != "amr-semiconductor-campus16-v1":
+    if layout.data.get("revision") not in CAMPUS_LAYOUT_REVISIONS:
         return placement_fn(layout, location, slot)
+    bay_offsets = CAMPUS_BAY_OFFSETS_BY_REVISION[layout.data["revision"]]
     bay, separator, local_location = location.partition("_")
-    if not separator or bay not in _CAMPUS_BAY_OFFSETS or local_location not in _WORLD_SLOT_NAMES:
+    if not separator or bay not in bay_offsets or local_location not in _WORLD_SLOT_NAMES:
         raise ValueError(f"campus world cargo location is unsupported: {location}")
-    dx, dy = _CAMPUS_BAY_OFFSETS[bay]
+    dx, dy = bay_offsets[bay]
     prefix = f"{bay}_"
     obstacles = []
     for row in layout.data["physical_obstacles"]:
@@ -69,8 +70,9 @@ def replay_slot_placement(
 
 
 def replay_slot_capacities(layout: Any, placement_fn: Callable[[Any, str, int], dict[str, Any]]) -> dict[str, int]:
-    if layout.data.get("revision") == "amr-semiconductor-campus16-v1":
-        locations = tuple(f"{bay}_{name}" for bay in _CAMPUS_BAY_OFFSETS for name in _WORLD_SLOT_NAMES)
+    if layout.data.get("revision") in CAMPUS_LAYOUT_REVISIONS:
+        locations = tuple(f"{bay}_{name}" for bay in CAMPUS_BAY_OFFSETS_BY_REVISION[layout.data["revision"]]
+                          for name in _WORLD_SLOT_NAMES)
     else:
         locations = _WORLD_SLOT_NAMES
     return {name: replay_slot_placement(layout, name, 0, placement_fn)["capacity"] for name in locations}
@@ -142,9 +144,9 @@ def main() -> int:
     render_profile = json.loads((factory / "render-profile.json").read_text(encoding="utf-8"))
     camera_config = dict(next(row for row in render_profile["cameras"] if row["id"] == args.camera))
     layout_revision = json.loads((factory / "layout.json").read_text(encoding="utf-8")).get("revision")
-    if layout_revision == "amr-semiconductor-campus16-v1" and args.camera == "portfolio_overview":
+    if layout_revision in CAMPUS_LAYOUT_REVISIONS and args.camera == "portfolio_overview":
         camera_config["focal_length_mm"] = 18
-        camera_config["override_reason"] = "Retain full78x60m campus margins, matching the bounded static capture"
+        camera_config["override_reason"] = "Retain campus margins with the selected revision's authored camera pose"
     if "follow" in args.camera:
         parser.error("this replay renderer currently accepts world cameras only")
     # Scene/layout bytes must match the recording's operations geometry.
@@ -227,7 +229,7 @@ def main() -> int:
         world_cargo = {}
         previous_materials = ()
         slot_capacities = replay_slot_capacities(layout, world_slot_placement)
-        campus_replay = layout.data.get("revision") == "amr-semiconductor-campus16-v1"
+        campus_replay = layout.data.get("revision") in CAMPUS_LAYOUT_REVISIONS
         report["operational_signals"] = (
             "omitted for four-line campus replay; the legacy visual signal widget represents one aggregate cell"
             if campus_replay else "legacy single-line aggregate"

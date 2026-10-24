@@ -1252,6 +1252,8 @@ WEST_LINK와 CENTER_LINK는 진입 구간부터 작성된 첫 출구 앵커까�
 
 2026-10-23 기존 `http://127.0.0.1:3007` 관제 화면에 연결하려던 브라우저 도구가 `failed to write kernel assets: 지정된 경로를 찾을 수 없습니다. (os error 3)`를 반환했다. 페이지에 접근하기 전 도구 초기화에서 실패한 것으로, 웹 제품의 JavaScript 오류나 서버 장애로 분류하지 않는다. 커널 경로의 정확한 원인은 미확인이다. 도킹231 이후 도구 커널을 한 번 초기화했으나 같은 오류가 반복됐다. 같은 연결을 반복하거나 이전 새 서버 실행의 자동 승인 거절을 우회하지 않고, 사용자 관제 프로세스도 유지했다. 최신 웹 조합의 브라우저 확인은 열린 항목으로 유지한다.
 
+2026-10-24에는 백그라운드 IAB 탭으로 같은 관제 URL에 연결을 시도했으나 페이지 접근 전 동일한 커널 오류가 재현됐다. 기존 API8765·웹3007은 유지했고 새 상주 프로세스는 시작하지 않았다. HTTP287의16대 조회 성공과 브라우저 미확인 상태를 구분하며 같은 초기화 호출을 반복하지 않는다.
+
 대체 검사 경로를 살펴봤으나 저장소에는 실제 브라우저를 구동하는 Playwright 실행기가 없고, `npm test`는 순수 표시 로직 검사다. 로컬 `.next` 산출물은15:01경인 반면 일부 소스는18:06~18:47에 변경돼, 기존 프로덕션 빌드를 열어도 최신 코드 확인을 대신하지 못한다. 새3008 서버 실행의 자동 승인 거절은 사유가 제공되지 않았다. 도구 연결과 최신 코드 제공 경로가 모두 준비돼야 남은 웹 동작을 확인할 수 있다. 기존8765/3007은 재시작하지 않았다.
 
 ## FOT-152 — 서로 다른 실행기의 결과 파일 위치를 일괄 추정한 백업 실패
@@ -1403,3 +1405,25 @@ RGB249의 첫 report는 runtime·클래스 수를 추가하며 같은 경로로 
 교량 진입을 거절할 때 하위 reservation pending을 회수한 변경 뒤, 기존 ETA 순환 우회 시험이 실패했다. 교량 waiters에는 차량1/3/4의 순환이 있었지만 재계획 조건은 하위 reservation cycle만 읽었다.6000초의 CPU 재현에서도 완료10/12와 누적 이동이 멈춰 있었으므로 오래된 시험의 기대값 문제로 처리하지 않았다.
 
 BridgeAdmission의 실제 wait-for graph에서 순환을 구하고 기존 cycle persistence 이후 같은 재계획기에 전달했다. 예약의 순환 판정을 우선하며 정지 anchor·점유·폐쇄 경로 조건을 유지했다. 기존 시험의 경로와 전진 조건을 바꾸지 않고 우회1회·실제 전진을 확인했고 관련 bridge 검사와 함께11개를 통과했다. 이 수정은 후보 경로가 없는 배치의 교착을 자동으로 해결한다는 보장은 아니다.
+
+후속 재계획에서는 pickup 경로만 비어 있어도 loaded handover·drop tail이 막힌 후보를 선택하던 빈칸을 보강했다. 실제 보호 window 전체가 점유 중이면 후보를 거절하며, 방향별 safe exit를 따라야 하는 queue anchor는 일반 우회 후보에서 제외한다. queue로 이동하기 전에도 queue→safe exit의 전체 경로를 실제 pose·활성 window·resource owner와 비교한다. 이미 획득한 보호 window를 이 검사로 중간 해제하지 않는다.
+
+## FOT-177 — 전용 출구 공간과 캠퍼스 좌표 revision의 분리
+
+76개 생산 설비와 기존 홈을 보존한 v1에서는 A베이의 전용 출구2곳을 기존 통과 경로와 분리할 공간이 없었다. v2는 베이 전체를 y+8m 옮기고82×76m 범위에 일반 stage와 별개인 교량 출구8개를 추가했다. 새 출구 접근로와 겹치는 SimReady fixture12개를 더 제외해88개를 유지하며, 생산 설비76개·홈16개·차량 외곽과 예약 타일은 유지했다.
+
+기존 `campus16-v1` 상수를 치환하지 않고 revision별 좌표·bounds를 함께 지원한다. 장면 transform도 해당 revision의 좌표와 일치해야 하며, v1 원본 fixture와 v2의 world cargo가 y축으로8m 차이 나는 회귀를 확인했다. 과거277/284 이미지는 새 배치의 촬영 결과로 바꾸지 않는다.
+
+전용 queue→exit8개 경로는 다른 holder의 실제 정지 footprint와 분리됐다. 전체 pickup atlas1,584개 중345개, 확장 이동 atlas3,507개 중684개는 다른 일반 stage/queue와 교차한다. 이 수치를 전체 진행 가능성 PASS로 표현하지 않으며 actual-pose admission gate의 안전 차단과 별도로 운영 완주를 확인한다. [v2 배치도와 입력 해시](images/campus16-layout-292/provenance.json)
+
+## FOT-178 — 베이 이동 후 근접 촬영 카메라의 이전 좌표 유지
+
+정적293은 SDK 촬영3장·요청 pose readback·Job 종료를 통과했지만 A베이가 북쪽으로8m 이동한 뒤에도 근접 world 카메라의 eye/target은 이전 위치였다. 조감만 새 중심을 사용했다. 원본 passed 보고서는 유지하고 별도 selection-adjudication에서 근접2장을 포트폴리오 뷰로 채택하지 않았다.
+
+294는 운영 중인 CPU291의 입력을 바꾸지 않고 별도 촬영용 profile에서 해당2개 카메라만 y+8m 보정했다. layout·routing·visual-assets bytes는 동결291과 같으며 정적3장과 소유 PID0을 확인했다. CPU291 종료 후 생성기의 A베이 고정 world 카메라도 이동시켰고, follow 카메라의 로봇 상대 좌표는 유지했다. v1/v2 좌표 및 근접 카메라 위치를 확인하는 기존 표적 회귀를 보강했다. [채택한294 촬영](images/campus16-static-294/provenance.json)
+
+## FOT-179 — 인계 window의 queue 경계와 lookahead 대기 관측 누락
+
+291은 출하5·반납4·운송61건 뒤 진전 없음으로 종료됐다. snapshot의 reservation/bridge SCC는0이었지만 실제 의존을 복원하면 amr3→amr10→amr5→amr3의 순환이었다. pickup 접근과 loaded 첫 구간을 합칠 때 loaded 쪽 `queue_barrier`를 상위 window에 전달하지 않아, queue로 이어지는 인계 window를 확보하기 전의 출구 가용성 검사가 실행되지 않았다. amr5의 retained90타일이 반대 방향 출구를 막은 상태를 원본과 대조했다. [291 종료·수동 복원 근거](evidence/campus16-291.json)
+
+인계 extension의 queue 경계를 전파하고 표적 회귀를 추가했다. lookahead로 막힌 의존도 `BridgeAdmission.record_wait`로 같은 wait-for graph에 관측하며, owner/resource/protected tiles는 바꾸지 않는다. admit 성공·release·명시 clear에서 대기를 지운다. 295는 이 수정의 별도 동결 실행이며 관측된 순환과 실제 복구를 구분해 판정한다.

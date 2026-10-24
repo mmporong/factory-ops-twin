@@ -447,55 +447,11 @@
     },
     "fixtures": [
       {
-        "id": "A_MAINT_TOOL_STORAGE_01",
-        "asset": "workbench",
-        "center_xy": [
-          19.6,
-          0.75
-        ],
-        "yaw_deg": 90,
-        "role": "closed maintenance tool storage; not product storage",
-        "semantic_class": "control_cabinet"
-      },
-      {
-        "id": "A_MAINT_ROLLING_BENCH_01",
-        "asset": "cabinet",
-        "center_xy": [
-          19.6,
-          2.45
-        ],
-        "yaw_deg": 90,
-        "role": "parked offline maintenance workstation",
-        "semantic_class": "workbench"
-      },
-      {
-        "id": "A_MAINT_TOOL_STORAGE_02",
-        "asset": "workbench",
-        "center_xy": [
-          21.6,
-          0.75
-        ],
-        "yaw_deg": 90,
-        "role": "closed maintenance tool storage; not product storage",
-        "semantic_class": "control_cabinet"
-      },
-      {
-        "id": "A_MAINT_ROLLING_BENCH_02",
-        "asset": "cabinet",
-        "center_xy": [
-          21.6,
-          2.45
-        ],
-        "yaw_deg": 90,
-        "role": "parked offline maintenance workstation",
-        "semantic_class": "workbench"
-      },
-      {
         "id": "A_MAINT_TOOL_STORAGE_03",
         "asset": "workbench",
         "center_xy": [
           23.6,
-          0.75
+          8.75
         ],
         "yaw_deg": 90,
         "role": "closed maintenance tool storage; not product storage",
@@ -506,7 +462,7 @@
         "asset": "cabinet",
         "center_xy": [
           23.6,
-          2.45
+          10.45
         ],
         "yaw_deg": 90,
         "role": "parked offline maintenance workstation",
@@ -517,7 +473,7 @@
         "asset": "workbench",
         "center_xy": [
           29.6,
-          0.75
+          8.75
         ],
         "yaw_deg": 90,
         "role": "closed maintenance tool storage; not product storage",
@@ -528,40 +484,18 @@
         "asset": "cabinet",
         "center_xy": [
           29.6,
-          2.45
+          10.45
         ],
         "yaw_deg": 90,
         "role": "parked offline maintenance workstation",
         "semantic_class": "workbench"
       },
       {
-        "id": "A_MAINT_PARTS_CART_01",
-        "asset": "cart",
-        "center_xy": [
-          20.6,
-          1.75
-        ],
-        "yaw_deg": 0,
-        "role": "parked maintenance parts cart outside production material flow",
-        "semantic_class": "buffer_fixture"
-      },
-      {
-        "id": "A_MAINT_PARTS_CART_02",
-        "asset": "cart",
-        "center_xy": [
-          22.6,
-          1.75
-        ],
-        "yaw_deg": 0,
-        "role": "parked maintenance parts cart outside production material flow",
-        "semantic_class": "buffer_fixture"
-      },
-      {
         "id": "A_MAINT_PARTS_CART_03",
         "asset": "cart",
         "center_xy": [
           24.6,
-          1.75
+          9.75
         ],
         "yaw_deg": 0,
         "role": "parked maintenance parts cart outside production material flow",
@@ -572,7 +506,7 @@
         "asset": "workbench",
         "center_xy": [
           8.5,
-          0.75
+          8.75
         ],
         "yaw_deg": 90,
         "role": "incoming loadport service tool storage",
@@ -583,7 +517,7 @@
         "asset": "cabinet",
         "center_xy": [
           9.3,
-          2.35
+          10.35
         ],
         "yaw_deg": 90,
         "role": "offline incoming loadport service bench",
@@ -594,7 +528,7 @@
         "asset": "cart",
         "center_xy": [
           8.0,
-          2.35
+          10.35
         ],
         "yaw_deg": 90,
         "role": "parked incoming loadport service cart",
@@ -605,7 +539,7 @@
         "asset": "workbench",
         "center_xy": [
           14.5,
-          0.95
+          8.95
         ],
         "yaw_deg": 0,
         "role": "south technician tool storage between parking bays",
@@ -616,7 +550,7 @@
         "asset": "cabinet",
         "center_xy": [
           14.5,
-          2.45
+          10.45
         ],
         "yaw_deg": 90,
         "role": "parked technician workstation between parking bays",
@@ -627,7 +561,7 @@
         "asset": "workbench",
         "center_xy": [
           8.5,
-          26.75
+          34.75
         ],
         "yaw_deg": 90,
         "role": "carrier-return loadport service tool storage",
@@ -638,7 +572,7 @@
         "asset": "cabinet",
         "center_xy": [
           9.4,
-          25.2
+          33.2
         ],
         "yaw_deg": 90,
         "role": "offline carrier-return loadport service bench",
@@ -649,7 +583,7 @@
         "asset": "cart",
         "center_xy": [
           8.0,
-          25.2
+          33.2
         ],
         "yaw_deg": 90,
         "role": "parked return-loadport service cart",
@@ -660,7 +594,7 @@
         "asset": "workbench",
         "center_xy": [
           14.5,
-          26.5
+          34.5
         ],
         "yaw_deg": 0,
         "role": "north technician tool storage between parking bays",
@@ -671,7 +605,7 @@
         "asset": "cabinet",
         "center_xy": [
           14.5,
-          24.9
+          32.9
         ],
         "yaw_deg": 90,
         "role": "parked north technician workstation",
@@ -682,7 +616,7 @@
         "asset": "workbench",
         "center_xy": [
           1.0,
-          5.2
+          13.2
         ],
         "yaw_deg": 0,
         "role": "west perimeter maintenance tool storage",
@@ -693,7 +627,7 @@
         "asset": "cart",
         "center_xy": [
           0.9,
-          3.65
+          11.65
         ],
         "yaw_deg": 0,
         "role": "west perimeter parked maintenance cart",
@@ -704,7 +638,7 @@
         "asset": "workbench",
         "center_xy": [
           1.0,
-          13.5
+          21.5
         ],
         "yaw_deg": 0,
         "role": "WIP stocker maintenance tool storage",
@@ -715,7 +649,7 @@
         "asset": "workbench",
         "center_xy": [
           35.0,
-          13.5
+          21.5
         ],
         "yaw_deg": 0,
         "role": "outbound loadport service tool storage",
@@ -727,7 +661,7 @@
         "asset": "packing_conveyor",
         "center_xy": [
           32.6,
-          10.55
+          18.55
         ],
         "yaw_deg": 90,
         "semantic_class": "process_equipment",
@@ -738,7 +672,7 @@
         "asset": "workbench",
         "center_xy": [
           61.6,
-          0.75
+          8.75
         ],
         "yaw_deg": 90,
         "role": "closed maintenance tool storage; not product storage",
@@ -749,7 +683,7 @@
         "asset": "cabinet",
         "center_xy": [
           61.6,
-          2.45
+          10.45
         ],
         "yaw_deg": 90,
         "role": "parked offline maintenance workstation",
@@ -760,7 +694,7 @@
         "asset": "workbench",
         "center_xy": [
           63.6,
-          0.75
+          8.75
         ],
         "yaw_deg": 90,
         "role": "closed maintenance tool storage; not product storage",
@@ -771,7 +705,7 @@
         "asset": "cabinet",
         "center_xy": [
           63.6,
-          2.45
+          10.45
         ],
         "yaw_deg": 90,
         "role": "parked offline maintenance workstation",
@@ -782,7 +716,7 @@
         "asset": "workbench",
         "center_xy": [
           65.6,
-          0.75
+          8.75
         ],
         "yaw_deg": 90,
         "role": "closed maintenance tool storage; not product storage",
@@ -793,7 +727,7 @@
         "asset": "cabinet",
         "center_xy": [
           65.6,
-          2.45
+          10.45
         ],
         "yaw_deg": 90,
         "role": "parked offline maintenance workstation",
@@ -804,7 +738,7 @@
         "asset": "workbench",
         "center_xy": [
           71.6,
-          0.75
+          8.75
         ],
         "yaw_deg": 90,
         "role": "closed maintenance tool storage; not product storage",
@@ -815,7 +749,7 @@
         "asset": "cabinet",
         "center_xy": [
           71.6,
-          2.45
+          10.45
         ],
         "yaw_deg": 90,
         "role": "parked offline maintenance workstation",
@@ -826,7 +760,7 @@
         "asset": "cart",
         "center_xy": [
           62.6,
-          1.75
+          9.75
         ],
         "yaw_deg": 0,
         "role": "parked maintenance parts cart outside production material flow",
@@ -837,7 +771,7 @@
         "asset": "cart",
         "center_xy": [
           64.6,
-          1.75
+          9.75
         ],
         "yaw_deg": 0,
         "role": "parked maintenance parts cart outside production material flow",
@@ -848,7 +782,7 @@
         "asset": "cart",
         "center_xy": [
           66.6,
-          1.75
+          9.75
         ],
         "yaw_deg": 0,
         "role": "parked maintenance parts cart outside production material flow",
@@ -859,7 +793,7 @@
         "asset": "workbench",
         "center_xy": [
           50.5,
-          0.75
+          8.75
         ],
         "yaw_deg": 90,
         "role": "incoming loadport service tool storage",
@@ -870,7 +804,7 @@
         "asset": "cabinet",
         "center_xy": [
           51.3,
-          2.35
+          10.35
         ],
         "yaw_deg": 90,
         "role": "offline incoming loadport service bench",
@@ -881,7 +815,7 @@
         "asset": "cart",
         "center_xy": [
           50.0,
-          2.35
+          10.35
         ],
         "yaw_deg": 90,
         "role": "parked incoming loadport service cart",
@@ -892,7 +826,7 @@
         "asset": "workbench",
         "center_xy": [
           56.5,
-          0.95
+          8.95
         ],
         "yaw_deg": 0,
         "role": "south technician tool storage between parking bays",
@@ -903,7 +837,7 @@
         "asset": "cabinet",
         "center_xy": [
           56.5,
-          2.45
+          10.45
         ],
         "yaw_deg": 90,
         "role": "parked technician workstation between parking bays",
@@ -914,7 +848,7 @@
         "asset": "workbench",
         "center_xy": [
           50.5,
-          26.75
+          34.75
         ],
         "yaw_deg": 90,
         "role": "carrier-return loadport service tool storage",
@@ -925,7 +859,7 @@
         "asset": "cabinet",
         "center_xy": [
           51.4,
-          25.2
+          33.2
         ],
         "yaw_deg": 90,
         "role": "offline carrier-return loadport service bench",
@@ -936,7 +870,7 @@
         "asset": "cart",
         "center_xy": [
           50.0,
-          25.2
+          33.2
         ],
         "yaw_deg": 90,
         "role": "parked return-loadport service cart",
@@ -947,7 +881,7 @@
         "asset": "workbench",
         "center_xy": [
           56.5,
-          26.5
+          34.5
         ],
         "yaw_deg": 0,
         "role": "north technician tool storage between parking bays",
@@ -958,7 +892,7 @@
         "asset": "cabinet",
         "center_xy": [
           56.5,
-          24.9
+          32.9
         ],
         "yaw_deg": 90,
         "role": "parked north technician workstation",
@@ -969,40 +903,18 @@
         "asset": "workbench",
         "center_xy": [
           43.0,
-          13.5
+          21.5
         ],
         "yaw_deg": 0,
         "role": "WIP stocker maintenance tool storage",
         "semantic_class": "control_cabinet"
       },
       {
-        "id": "B_EAST_SERVICE_TOOLS_LOW",
-        "asset": "workbench",
-        "center_xy": [
-          77.0,
-          5.2
-        ],
-        "yaw_deg": 0,
-        "role": "packaging equipment maintenance tool storage",
-        "semantic_class": "control_cabinet"
-      },
-      {
-        "id": "B_EAST_SERVICE_CART_LOW",
-        "asset": "cart",
-        "center_xy": [
-          77.0,
-          3.65
-        ],
-        "yaw_deg": 90,
-        "role": "parked packaging equipment service cart",
-        "semantic_class": "buffer_fixture"
-      },
-      {
         "id": "B_EAST_SERVICE_TOOLS_MID",
         "asset": "workbench",
         "center_xy": [
           77.0,
-          13.5
+          21.5
         ],
         "yaw_deg": 0,
         "role": "outbound loadport service tool storage",
@@ -1014,7 +926,7 @@
         "asset": "packing_conveyor",
         "center_xy": [
           74.6,
-          10.55
+          18.55
         ],
         "yaw_deg": 90,
         "semantic_class": "process_equipment",
@@ -1025,7 +937,7 @@
         "asset": "workbench",
         "center_xy": [
           19.6,
-          32.75
+          40.75
         ],
         "yaw_deg": 90,
         "role": "closed maintenance tool storage; not product storage",
@@ -1036,7 +948,7 @@
         "asset": "cabinet",
         "center_xy": [
           19.6,
-          34.45
+          42.45
         ],
         "yaw_deg": 90,
         "role": "parked offline maintenance workstation",
@@ -1047,7 +959,7 @@
         "asset": "workbench",
         "center_xy": [
           21.6,
-          32.75
+          40.75
         ],
         "yaw_deg": 90,
         "role": "closed maintenance tool storage; not product storage",
@@ -1058,7 +970,7 @@
         "asset": "cabinet",
         "center_xy": [
           21.6,
-          34.45
+          42.45
         ],
         "yaw_deg": 90,
         "role": "parked offline maintenance workstation",
@@ -1069,7 +981,7 @@
         "asset": "workbench",
         "center_xy": [
           23.6,
-          32.75
+          40.75
         ],
         "yaw_deg": 90,
         "role": "closed maintenance tool storage; not product storage",
@@ -1080,7 +992,7 @@
         "asset": "cabinet",
         "center_xy": [
           23.6,
-          34.45
+          42.45
         ],
         "yaw_deg": 90,
         "role": "parked offline maintenance workstation",
@@ -1091,7 +1003,7 @@
         "asset": "cart",
         "center_xy": [
           20.6,
-          33.75
+          41.75
         ],
         "yaw_deg": 0,
         "role": "parked maintenance parts cart outside production material flow",
@@ -1102,7 +1014,7 @@
         "asset": "cart",
         "center_xy": [
           22.6,
-          33.75
+          41.75
         ],
         "yaw_deg": 0,
         "role": "parked maintenance parts cart outside production material flow",
@@ -1113,7 +1025,7 @@
         "asset": "cart",
         "center_xy": [
           24.6,
-          33.75
+          41.75
         ],
         "yaw_deg": 0,
         "role": "parked maintenance parts cart outside production material flow",
@@ -1124,7 +1036,7 @@
         "asset": "workbench",
         "center_xy": [
           8.5,
-          32.75
+          40.75
         ],
         "yaw_deg": 90,
         "role": "incoming loadport service tool storage",
@@ -1135,7 +1047,7 @@
         "asset": "cabinet",
         "center_xy": [
           9.3,
-          34.35
+          42.35
         ],
         "yaw_deg": 90,
         "role": "offline incoming loadport service bench",
@@ -1146,7 +1058,7 @@
         "asset": "cart",
         "center_xy": [
           8.0,
-          34.35
+          42.35
         ],
         "yaw_deg": 90,
         "role": "parked incoming loadport service cart",
@@ -1157,7 +1069,7 @@
         "asset": "workbench",
         "center_xy": [
           14.5,
-          32.95
+          40.95
         ],
         "yaw_deg": 0,
         "role": "south technician tool storage between parking bays",
@@ -1168,7 +1080,7 @@
         "asset": "cabinet",
         "center_xy": [
           14.5,
-          34.45
+          42.45
         ],
         "yaw_deg": 90,
         "role": "parked technician workstation between parking bays",
@@ -1179,7 +1091,7 @@
         "asset": "workbench",
         "center_xy": [
           8.5,
-          58.75
+          66.75
         ],
         "yaw_deg": 90,
         "role": "carrier-return loadport service tool storage",
@@ -1190,7 +1102,7 @@
         "asset": "cabinet",
         "center_xy": [
           9.4,
-          57.2
+          65.2
         ],
         "yaw_deg": 90,
         "role": "offline carrier-return loadport service bench",
@@ -1201,7 +1113,7 @@
         "asset": "cart",
         "center_xy": [
           8.0,
-          57.2
+          65.2
         ],
         "yaw_deg": 90,
         "role": "parked return-loadport service cart",
@@ -1212,7 +1124,7 @@
         "asset": "workbench",
         "center_xy": [
           14.5,
-          58.5
+          66.5
         ],
         "yaw_deg": 0,
         "role": "north technician tool storage between parking bays",
@@ -1223,7 +1135,7 @@
         "asset": "cabinet",
         "center_xy": [
           14.5,
-          56.9
+          64.9
         ],
         "yaw_deg": 90,
         "role": "parked north technician workstation",
@@ -1234,7 +1146,7 @@
         "asset": "workbench",
         "center_xy": [
           1.0,
-          37.2
+          45.2
         ],
         "yaw_deg": 0,
         "role": "west perimeter maintenance tool storage",
@@ -1245,7 +1157,7 @@
         "asset": "cart",
         "center_xy": [
           0.9,
-          35.65
+          43.65
         ],
         "yaw_deg": 0,
         "role": "west perimeter parked maintenance cart",
@@ -1256,32 +1168,10 @@
         "asset": "workbench",
         "center_xy": [
           1.0,
-          45.5
+          53.5
         ],
         "yaw_deg": 0,
         "role": "WIP stocker maintenance tool storage",
-        "semantic_class": "control_cabinet"
-      },
-      {
-        "id": "C_EAST_SERVICE_TOOLS_MID",
-        "asset": "workbench",
-        "center_xy": [
-          35.0,
-          45.5
-        ],
-        "yaw_deg": 0,
-        "role": "outbound loadport service tool storage",
-        "semantic_class": "control_cabinet"
-      },
-      {
-        "id": "C_EAST_SERVICE_TOOLS_HIGH",
-        "asset": "workbench",
-        "center_xy": [
-          35.0,
-          51.7
-        ],
-        "yaw_deg": 0,
-        "role": "north utility service tool storage",
         "semantic_class": "control_cabinet"
       },
       {
@@ -1290,7 +1180,7 @@
         "asset": "packing_conveyor",
         "center_xy": [
           32.6,
-          42.55
+          50.55
         ],
         "yaw_deg": 90,
         "semantic_class": "process_equipment",
@@ -1301,7 +1191,7 @@
         "asset": "workbench",
         "center_xy": [
           61.6,
-          32.75
+          40.75
         ],
         "yaw_deg": 90,
         "role": "closed maintenance tool storage; not product storage",
@@ -1312,7 +1202,7 @@
         "asset": "cabinet",
         "center_xy": [
           61.6,
-          34.45
+          42.45
         ],
         "yaw_deg": 90,
         "role": "parked offline maintenance workstation",
@@ -1323,7 +1213,7 @@
         "asset": "workbench",
         "center_xy": [
           63.6,
-          32.75
+          40.75
         ],
         "yaw_deg": 90,
         "role": "closed maintenance tool storage; not product storage",
@@ -1334,7 +1224,7 @@
         "asset": "cabinet",
         "center_xy": [
           63.6,
-          34.45
+          42.45
         ],
         "yaw_deg": 90,
         "role": "parked offline maintenance workstation",
@@ -1345,7 +1235,7 @@
         "asset": "workbench",
         "center_xy": [
           65.6,
-          32.75
+          40.75
         ],
         "yaw_deg": 90,
         "role": "closed maintenance tool storage; not product storage",
@@ -1356,7 +1246,7 @@
         "asset": "cabinet",
         "center_xy": [
           65.6,
-          34.45
+          42.45
         ],
         "yaw_deg": 90,
         "role": "parked offline maintenance workstation",
@@ -1367,7 +1257,7 @@
         "asset": "cart",
         "center_xy": [
           62.6,
-          33.75
+          41.75
         ],
         "yaw_deg": 0,
         "role": "parked maintenance parts cart outside production material flow",
@@ -1378,7 +1268,7 @@
         "asset": "cart",
         "center_xy": [
           64.6,
-          33.75
+          41.75
         ],
         "yaw_deg": 0,
         "role": "parked maintenance parts cart outside production material flow",
@@ -1389,7 +1279,7 @@
         "asset": "cart",
         "center_xy": [
           66.6,
-          33.75
+          41.75
         ],
         "yaw_deg": 0,
         "role": "parked maintenance parts cart outside production material flow",
@@ -1400,7 +1290,7 @@
         "asset": "workbench",
         "center_xy": [
           50.5,
-          32.75
+          40.75
         ],
         "yaw_deg": 90,
         "role": "incoming loadport service tool storage",
@@ -1411,7 +1301,7 @@
         "asset": "cabinet",
         "center_xy": [
           51.3,
-          34.35
+          42.35
         ],
         "yaw_deg": 90,
         "role": "offline incoming loadport service bench",
@@ -1422,7 +1312,7 @@
         "asset": "cart",
         "center_xy": [
           50.0,
-          34.35
+          42.35
         ],
         "yaw_deg": 90,
         "role": "parked incoming loadport service cart",
@@ -1433,7 +1323,7 @@
         "asset": "workbench",
         "center_xy": [
           56.5,
-          32.95
+          40.95
         ],
         "yaw_deg": 0,
         "role": "south technician tool storage between parking bays",
@@ -1444,7 +1334,7 @@
         "asset": "cabinet",
         "center_xy": [
           56.5,
-          34.45
+          42.45
         ],
         "yaw_deg": 90,
         "role": "parked technician workstation between parking bays",
@@ -1455,7 +1345,7 @@
         "asset": "workbench",
         "center_xy": [
           50.5,
-          58.75
+          66.75
         ],
         "yaw_deg": 90,
         "role": "carrier-return loadport service tool storage",
@@ -1466,7 +1356,7 @@
         "asset": "cabinet",
         "center_xy": [
           51.4,
-          57.2
+          65.2
         ],
         "yaw_deg": 90,
         "role": "offline carrier-return loadport service bench",
@@ -1477,7 +1367,7 @@
         "asset": "cart",
         "center_xy": [
           50.0,
-          57.2
+          65.2
         ],
         "yaw_deg": 90,
         "role": "parked return-loadport service cart",
@@ -1488,7 +1378,7 @@
         "asset": "workbench",
         "center_xy": [
           56.5,
-          58.5
+          66.5
         ],
         "yaw_deg": 0,
         "role": "north technician tool storage between parking bays",
@@ -1499,7 +1389,7 @@
         "asset": "cabinet",
         "center_xy": [
           56.5,
-          56.9
+          64.9
         ],
         "yaw_deg": 90,
         "role": "parked north technician workstation",
@@ -1510,32 +1400,10 @@
         "asset": "workbench",
         "center_xy": [
           43.0,
-          45.5
+          53.5
         ],
         "yaw_deg": 0,
         "role": "WIP stocker maintenance tool storage",
-        "semantic_class": "control_cabinet"
-      },
-      {
-        "id": "D_EAST_SERVICE_TOOLS_MID",
-        "asset": "workbench",
-        "center_xy": [
-          77.0,
-          45.5
-        ],
-        "yaw_deg": 0,
-        "role": "outbound loadport service tool storage",
-        "semantic_class": "control_cabinet"
-      },
-      {
-        "id": "D_EAST_SERVICE_TOOLS_HIGH",
-        "asset": "workbench",
-        "center_xy": [
-          77.0,
-          51.7
-        ],
-        "yaw_deg": 0,
-        "role": "north utility service tool storage",
         "semantic_class": "control_cabinet"
       },
       {
@@ -1544,7 +1412,7 @@
         "asset": "packing_conveyor",
         "center_xy": [
           74.6,
-          42.55
+          50.55
         ],
         "yaw_deg": 90,
         "semantic_class": "process_equipment",
@@ -1552,6 +1420,22 @@
       }
     ],
     "excluded_fixtures": [
+      {
+        "id": "A_MAINT_TOOL_STORAGE_01",
+        "reason": "translated native fixture bounds plus 0.1m clearance intersect dedicated bridge safe-exit access"
+      },
+      {
+        "id": "A_MAINT_ROLLING_BENCH_01",
+        "reason": "translated native fixture bounds plus 0.1m clearance intersect dedicated bridge safe-exit access"
+      },
+      {
+        "id": "A_MAINT_TOOL_STORAGE_02",
+        "reason": "translated native fixture bounds plus 0.1m clearance intersect dedicated bridge safe-exit access"
+      },
+      {
+        "id": "A_MAINT_ROLLING_BENCH_02",
+        "reason": "translated native fixture bounds plus 0.1m clearance intersect dedicated bridge safe-exit access"
+      },
       {
         "id": "A_MAINT_TOOL_STORAGE_04",
         "reason": "translated native fixture bounds plus 0.1m clearance intersect the PACK staging spur"
@@ -1567,6 +1451,14 @@
       {
         "id": "A_MAINT_ROLLING_BENCH_05",
         "reason": "translated native fixture bounds plus 0.1m clearance intersect the PACK staging spur"
+      },
+      {
+        "id": "A_MAINT_PARTS_CART_01",
+        "reason": "translated native fixture bounds plus 0.1m clearance intersect dedicated bridge safe-exit access"
+      },
+      {
+        "id": "A_MAINT_PARTS_CART_02",
+        "reason": "translated native fixture bounds plus 0.1m clearance intersect dedicated bridge safe-exit access"
       },
       {
         "id": "A_MAINT_PARTS_CART_04",
@@ -1621,6 +1513,14 @@
         "reason": "translated native fixture bounds plus 0.1m clearance intersect an authored campus bridge"
       },
       {
+        "id": "B_EAST_SERVICE_TOOLS_LOW",
+        "reason": "translated native fixture bounds plus 0.1m clearance intersect dedicated bridge safe-exit access"
+      },
+      {
+        "id": "B_EAST_SERVICE_CART_LOW",
+        "reason": "translated native fixture bounds plus 0.1m clearance intersect dedicated bridge safe-exit access"
+      },
+      {
         "id": "B_EAST_SERVICE_TOOLS_HIGH",
         "reason": "translated native fixture bounds plus 0.1m clearance intersect an authored campus bridge"
       },
@@ -1663,6 +1563,14 @@
       {
         "id": "C_EAST_SERVICE_CART_LOW",
         "reason": "translated native fixture bounds plus 0.1m clearance intersect an authored campus bridge"
+      },
+      {
+        "id": "C_EAST_SERVICE_TOOLS_MID",
+        "reason": "translated native fixture bounds plus 0.1m clearance intersect dedicated bridge safe-exit access"
+      },
+      {
+        "id": "C_EAST_SERVICE_TOOLS_HIGH",
+        "reason": "translated native fixture bounds plus 0.1m clearance intersect dedicated bridge safe-exit access"
       },
       {
         "id": "D_MAINT_TOOL_STORAGE_04",
@@ -1711,27 +1619,35 @@
       {
         "id": "D_EAST_SERVICE_CART_LOW",
         "reason": "translated native fixture bounds plus 0.1m clearance intersect an authored campus bridge"
+      },
+      {
+        "id": "D_EAST_SERVICE_TOOLS_MID",
+        "reason": "translated native fixture bounds plus 0.1m clearance intersect dedicated bridge safe-exit access"
+      },
+      {
+        "id": "D_EAST_SERVICE_TOOLS_HIGH",
+        "reason": "translated native fixture bounds plus 0.1m clearance intersect dedicated bridge safe-exit access"
       }
     ],
-    "fixture_count": 100
+    "fixture_count": 88
   },
   "campus_transform": {
     "bay_offsets_xy_m": {
       "A": [
         0.0,
-        0.0
+        8.0
       ],
       "B": [
         42.0,
-        0.0
+        8.0
       ],
       "C": [
         0.0,
-        32.0
+        40.0
       ],
       "D": [
         42.0,
-        32.0
+        40.0
       ]
     },
     "scope": "Authored JSON placement only; scene generation and successful render are pending"

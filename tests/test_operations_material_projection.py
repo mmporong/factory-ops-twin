@@ -210,6 +210,11 @@ class OperationsMaterialProjectionTest(unittest.TestCase):
         self.assertAlmostEqual(32.0, d["translate_xyz_m"][1] - a["translate_xyz_m"][1])
 
         legacy = Layout.from_file(root / "configs" / "factory-semiconductor-dual-lane" / "layout.json")
+        original = Layout.from_file(root / "tests/fixtures/campus16-v1-layout-290.json")
+        original_a = replay_slot_placement(original, "A_cell", 0, world_slot_placement)
+        self.assertAlmostEqual(0.0, a["translate_xyz_m"][0] - original_a["translate_xyz_m"][0])
+        self.assertAlmostEqual(8.0, a["translate_xyz_m"][1] - original_a["translate_xyz_m"][1])
+        self.assertEqual(28, len(replay_slot_capacities(original, world_slot_placement)))
         self.assertEqual(
             world_slot_placement(legacy, "ci", 0),
             replay_slot_placement(legacy, "ci", 0, world_slot_placement),

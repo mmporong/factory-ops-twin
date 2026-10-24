@@ -153,6 +153,20 @@ class BridgeAdmissionTest(unittest.TestCase):
         self.assertTrue(gate.withdraw_waiter("amr-5"))
         self.assertIsNone(gate.snapshot()["wait_cycle"])
 
+    def test_lookahead_wait_is_observable_without_changing_active_ownership(self):
+        gate = BridgeAdmission(self.routing)
+        self.assertEqual((), gate.admit("owner", ["N"], route_tiles={(1, 1)}))
+        gate.record_wait("owner", ("peer",))
+        gate.record_wait("peer", ("owner",))
+
+        self.assertEqual({"BD": "owner"}, gate.owners)
+        self.assertEqual({"owner": 1}, gate.snapshot()["protected_route_tile_counts"])
+        self.assertEqual(("owner", "peer"), gate.wait_cycle())
+
+        gate.record_wait("owner", ())
+        self.assertNotIn("owner", gate.waiters)
+        self.assertEqual({"BD": "owner"}, gate.owners)
+
 
 if __name__ == "__main__":
     unittest.main()

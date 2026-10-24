@@ -1,5 +1,6 @@
 from collections import deque
 from pathlib import Path
+from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 
@@ -100,11 +101,112 @@ class OperationsModelTest(unittest.TestCase):
         )
         window = model._next_route_window(route.points[0], points, nodes)
 
-        self.assertEqual("D_SOURCE_WAIT", safe_exit)
-        self.assertEqual("D_SOURCE_WAIT", window["nodes"][-1])
+        expected_exit = model.bridges.safe_exit_nodes["CD_E_QUEUE"]
+        self.assertEqual(expected_exit, safe_exit)
+        self.assertEqual(expected_exit, window["nodes"][-1])
         self.assertTrue(window["tiles"].isdisjoint(
             model._tiles((model.book.nodes["CD_W_QUEUE"],))
         ))
+
+    def test_queue_entry_waits_until_full_safe_exit_path_is_available(self):
+        campus = Path(__file__).resolve().parents[1] / "configs" / "factory-semiconductor-campus16"
+        model = OperationsModel(campus, initial_orders=0, run_id="safe-exit-lookahead")
+        robot = "amr-1"
+        model._trip(robot, {}, "A_P1", "B_PACK_IN", "parking", kind="parking")
+        trip = model._trips[robot]
+        original_pose = dict(model._poses[robot])
+
+        with patch.object(
+            model, "_safe_exit_lookahead_blockers", return_value=("amr-5",),
+        ), patch.object(model.bridges, "admit", wraps=model.bridges.admit) as admit:
+            model._move_trip(robot, trip, 0.1)
+
+        self.assertFalse(admit.called)
+        self.assertNotIn(robot, model._chunks)
+        self.assertEqual(original_pose, model._poses[robot])
+        self.assertEqual("safe_exit_lookahead_occupied", model._waiting[robot]["reason"])
+        self.assertEqual(["amr-5"], model._waiting[robot]["blockers"])
+
+    def test_pickup_handover_propagates_loaded_queue_lookahead(self):
+        campus = Path(__file__).resolve().parents[1] / "configs" / "factory-semiconductor-campus16"
+        model = OperationsModel(campus, initial_orders=0, run_id="pickup-exit-lookahead")
+        route = model.book.plan("A_CELL_WAIT", "A_CO")
+        trip = {
+            "kind": "process_line",
+            "phase": "pickup",
+            "goal": "A_CO",
+            "task": SimpleNamespace(drop_station="B_AOI_IN"),
+        }
+
+        window = model._window_for_trip(
+            route.points[0], route.points[1:], route.nodes[1:], trip, robot_id="amr-1",
+        )
+
+        self.assertTrue(window["retain_at_handover"])
+        self.assertEqual("AB_E_QUEUE", window["nodes"][-1])
+        self.assertEqual("AB_E_QUEUE", window["queue_barrier"])
+
+    def test_safe_exit_lookahead_checks_pose_and_active_window_occupancy(self):
+        campus = Path(__file__).resolve().parents[1] / "configs" / "factory-semiconductor-campus16"
+        model = OperationsModel(campus, initial_orders=0, run_id="safe-exit-occupancy")
+        robot, peer, queue = "amr-1", "amr-5", "AB_E_QUEUE"
+        model._trip(robot, {}, "A_P1", "B_PACK_IN", "parking", kind="parking")
+        trip = model._trips[robot]
+        route = model.book.plan(queue, model.bridges.safe_exit_nodes[queue])
+        protected = model._tiles(route.points)
+        empty = {candidate: frozenset() for candidate in model.ledger.robots}
+        occupied = dict(empty)
+        occupied[peer] = model._tiles((model.book.nodes[model.bridges.safe_exit_nodes[queue]],))
+
+        with patch.object(model, "_footprint", side_effect=lambda candidate: occupied[candidate]):
+            self.assertIn(peer, model._safe_exit_lookahead_blockers(robot, trip, queue))
+
+        tile = next(iter(protected))
+        self.assertEqual((), model.bridges.admit(peer, (), route_tiles=(tile,)))
+        with patch.object(model, "_footprint", side_effect=lambda candidate: empty[candidate]):
+            self.assertIn(peer, model._safe_exit_lookahead_blockers(robot, trip, queue))
+        model.bridges.release(peer, stopped=True)
+        with patch.object(model, "_footprint", side_effect=lambda candidate: empty[candidate]):
+            self.assertEqual((), model._safe_exit_lookahead_blockers(robot, trip, queue))
+
+    def test_cycle_replan_never_replaces_mandatory_queue_exit(self):
+        model = OperationsModel(CONFIG, initial_orders=0, run_id="queue-replan-excluded")
+        robot = "amr-1"
+        model._trip(robot, {}, "P1", "P3", "parking", kind="parking")
+        model.bridges.queue_nodes = frozenset({"P1"})
+
+        with patch("factory_ops.operations_model.find_alternative_route") as find:
+            model._schedule_cycle_replan((robot,))
+
+        self.assertFalse(find.called)
+        self.assertNotIn(robot, model._replans)
+        self.assertEqual(1, model.replan_unavailable_count)
+
+    def test_cycle_replan_rejects_blocked_full_trip_window(self):
+        model = OperationsModel(CONFIG, initial_orders=0, run_id="full-window-replan-check")
+        robot = "amr-1"
+        model._trip(robot, {}, "P1", "P3", "parking", kind="parking")
+        trip = model._trips[robot]
+        alternative = model.book.plan("P1", "P3")
+        full_window = {
+            "nodes": ("LOADED_HANDOVER", "DROP_TAIL", "SAFE_EXIT"),
+            "tiles": frozenset({(90, 90), (91, 90)}),
+        }
+
+        with patch(
+            "factory_ops.operations_model.find_alternative_route", return_value=alternative,
+        ), patch.object(
+            model, "_window_for_trip", return_value=full_window,
+        ) as window_for_trip, patch.object(
+            model.bridges, "blockers", return_value=("amr-2",),
+        ) as blockers:
+            model._schedule_cycle_replan((robot,))
+
+        self.assertIs(window_for_trip.call_args.args[3], trip)
+        self.assertEqual(full_window["nodes"], blockers.call_args.args[1])
+        self.assertEqual(full_window["tiles"], blockers.call_args.kwargs["route_tiles"])
+        self.assertNotIn(robot, model._replans)
+        self.assertEqual(1, model.replan_unavailable_count)
 
     def test_bridge_admission_observes_poses_without_unacquired_preview_cycles(self):
         model = OperationsModel(CONFIG, initial_orders=0, run_id="operations-admission-order")

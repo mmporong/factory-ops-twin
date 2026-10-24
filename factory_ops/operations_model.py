@@ -303,6 +303,11 @@ class OperationsModel(DashboardModel):
             start = anchor_at_pose(self.book.nodes, self._poses[robot])
             if start is None:
                 continue
+            # A queue anchor has one authored way out: its direction-specific
+            # safe exit.  A generic shortest-path replan can look clear while
+            # silently dropping that mandatory handover contract.
+            if start in self.bridges.queue_nodes:
+                continue
             peer_tiles = frozenset(
                 tuple(tile)
                 for peer, observation in observations.items() if peer != robot
@@ -317,8 +322,20 @@ class OperationsModel(DashboardModel):
                 peer_footprint_tiles=peer_tiles,
                 existing_points=tuple(trip["points"]),
             )
-            if alternative is not None:
-                candidates.append((alternative.distance_m, robot, start, alternative))
+            if alternative is None:
+                continue
+            window = self._window_for_trip(
+                alternative.points[0], alternative.points[1:], alternative.nodes[1:], trip,
+                robot_id=robot,
+            )
+            if self.bridges.blockers(
+                robot,
+                window["nodes"],
+                route_tiles=window["tiles"],
+                observed_tiles=self._admission_observations(robot, trip),
+            ):
+                continue
+            candidates.append((alternative.distance_m, robot, start, alternative))
         if not candidates:
             self.replan_unavailable_count += 1
             self._event(
@@ -469,6 +486,7 @@ class OperationsModel(DashboardModel):
         extension_points: tuple[tuple[float, float], ...] = ()
         extension_nodes: tuple[str, ...] = ()
         extension_tiles = frozenset()
+        extension_queue_barrier = None
         if trip["kind"] == "process_line" and trip["phase"] == "pickup":
             loaded = self.book.plan(trip["goal"], trip["task"].drop_station, closed=self.closed)
             if len(loaded.points) > 1:
@@ -480,6 +498,7 @@ class OperationsModel(DashboardModel):
                 extension_points = next_loaded["points"]
                 extension_nodes = next_loaded["nodes"]
                 extension_tiles = next_loaded["tiles"]
+                extension_queue_barrier = next_loaded["queue_barrier"]
         elif trip["kind"] == "process_line" and trip["phase"] == "drop":
             staging = self._service_exit_after_drop(robot_id, trip["goal"])
             if staging is not None:
@@ -491,6 +510,7 @@ class OperationsModel(DashboardModel):
                 extension_points = next_egress["points"]
                 extension_nodes = next_egress["nodes"]
                 extension_tiles = next_egress["tiles"]
+                extension_queue_barrier = next_egress["queue_barrier"]
         elif (trip["kind"] == "parking" and trip.get("purpose") == "staging"
               and window["queue_barrier"] is None and self.bridges.holdable_nodes is None):
             # The complete authored spur ends at an off-corridor wait pocket.
@@ -501,6 +521,7 @@ class OperationsModel(DashboardModel):
         if extension_points:
             window["nodes"] = window["nodes"] + extension_nodes
             window["tiles"] = window["tiles"] | extension_tiles
+            window["queue_barrier"] = extension_queue_barrier
             window["retain_at_handover"] = True
         return window
 
@@ -523,6 +544,32 @@ class OperationsModel(DashboardModel):
         if len(points) != len(nodes) or not points or safe_exit not in nodes:
             raise RuntimeError("safe exit route must preserve node and point mapping")
         return points, nodes, safe_exit
+
+    def _safe_exit_lookahead_blockers(
+        self, robot_id: str, trip: Mapping[str, Any], queue: str | None,
+    ) -> tuple[str, ...]:
+        """Check the complete queue-to-exit path before occupying the queue."""
+        if queue is None or queue not in self.bridges.safe_exit_nodes:
+            return ()
+        safe_exit = self.bridges.safe_exit_nodes[queue]
+        route = self.book.plan(queue, safe_exit, closed=self.closed)
+        if route.nodes[0] != queue or route.nodes[-1] != safe_exit:
+            raise RuntimeError("safe exit lookahead must connect its queue to its exit")
+        protected = self._tiles(route.points)
+        blockers = set(self.bridges.blockers(
+            robot_id,
+            route.nodes[1:],
+            route_tiles=protected,
+            observed_tiles=self._admission_observations(robot_id, trip),
+        ))
+        # BridgeAdmission skips pose checks for a robot that already owns a
+        # retained window.  Lookahead still has to see every peer's current
+        # footprint; it must not release or retarget that owned window.
+        blockers.update(
+            peer for peer in self.ledger.robots
+            if peer != robot_id and not protected.isdisjoint(self._footprint(peer))
+        )
+        return tuple(sorted(blockers))
 
     def _refresh_admission_preview(self, robot_id: str, trip: dict[str, Any]) -> None:
         if not trip["points"]:
@@ -561,6 +608,21 @@ class OperationsModel(DashboardModel):
             window = self._window_for_trip(
                 start, route_points, route_nodes, trip, robot_id=robot_id,
             )
+            exit_blockers = self._safe_exit_lookahead_blockers(
+                robot_id, trip, window["queue_barrier"],
+            )
+            if exit_blockers:
+                self.bridges.record_wait(robot_id, exit_blockers)
+                self.reservations.withdraw_pending(
+                    robot_id,
+                    now_s=self.sim_time,
+                    reason="safe_exit_lookahead_occupied",
+                )
+                self._waiting[robot_id] = {
+                    "reason": "safe_exit_lookahead_occupied",
+                    "blockers": list(exit_blockers),
+                }
+                return
             blockers = self.bridges.admit(
                 robot_id,
                 window["nodes"],
