@@ -1623,3 +1623,9 @@ Job receipt는passed·workerexit0였지만 failure.json 존재와 완성 dataset
 같은v3 입력을 재실행하지 않았다. 다음 소스는 검증 실패 시 RGB/semantic/depth·raw label map·camera·expected object·recipe 한 세트를 별도 진단 경로에 남겨 원인을 확인할 수 있게 한다. 진단 프레임은 유효 데이터나 COCO에 포함하지 않는다. 레시피를 고치거나 visibility 정책을 정하기 전 반복512 촬영·학습 승인을 하지 않는다. [실행·부분 미디어·원본 해시](evidence/perception-pilot-323.json)
 
 후속dfdd198은 실패 프레임의 RGB/semantic/depth·label map·camera·expected objects·recipe·입력 pin 한 세트를 진단 전용으로 보존하고 scene/frame/view·완료 유효 프레임 수를 failure.json에 기록한다. 표적1검사를 통과했고 GPU를 다시 실행하지 않았다.323의 원본 실패 프레임이 복구된 것은 아니다. 별도CPU 투영에서는 대상AABB의8모서리가 화면 안에 있고 moderate occluder가 대상 투영bbox 전체를 덮으며 중심 시선과 교차했다. 완전가림을 지지하는 기하 후보지만 실제 mesh/raster 증거와 구분한다.
+
+## FOT-206 — 새 프로필의 CRLF와 Git LF pin 불일치
+
+v4의 실제 main pin 확인이 GPU 시작 전에 실패했다. 새 profile의 worktree 원본은CRLF395개·8805바이트·SHAf9ba0109...였지만 Git blob과 main은LF·8410바이트·SHAe99a0fbf...였다. FOT199의 SVG 줄바꿈 문제가 source profile hash에서도 재발한 사례다. recipe의 객체·카메라·소품 값은 바뀌지 않았다.
+
+프로필과 생성기 소스에CR이 있으면 manifest 생성을 거절하는 검사와 표적 회귀를 추가하고 manifest writer의newline을LF로 명시했다. 원본 prepared receipt/asset의 raw hash는 그대로 유지한다. 새v4-v2는 profile/generator의 working bytes·Git blob·manifest pin이 일치하며 main의 실제 recipe·asset pin 확인도 통과했다. 기존099c... 초안은 GPU 미실행으로 보존했고 새manifest는7194b0a...·recipe는같은432fc14a...다. 관련 생성기6검사·capture계약1검사가 통과했다. 실제 촬영 성공은 별도 결과로 판정한다. [입력·재발 방지 범위](evidence/perception-pilot-v4-preparation.json) · [Python newline](https://docs.python.org/3.14/library/pathlib.html#pathlib.Path.write_text) · [Git 줄바꿈 정규화](https://git-scm.com/docs/gitattributes#_end_of_line_conversion)

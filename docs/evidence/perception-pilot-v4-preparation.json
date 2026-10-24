@@ -1,0 +1,88 @@
+{
+  "schema_version": 1,
+  "status": "implemented_main_pin_preflight_passed_GPU_validation_pending",
+  "source_main_commits": [
+    "8a88d7c",
+    "99c2950"
+  ],
+  "input": {
+    "manifest_sha256": "7194b0a263f952a2cdb7dc04a8af95cc607c51aa2e0f6de23ceaa7439bcb8b6a",
+    "bytes": 633160,
+    "recipe_sha256": "432fc14abe5c1bdefcb1f081223652304c618a63c13d30326be554196577ba9a",
+    "scene_count": 128,
+    "frame_count": 512,
+    "gray_blue_scenes_each": 64,
+    "all_object_recipes_unchanged_from_v3": true
+  },
+  "CPU_proxy": {
+    "fully_offscreen_target_AABBs": 0,
+    "context_occluder_proxy_conflicts": 0,
+    "camera_frames_adjusted": 48,
+    "camera_attempts_total": 135,
+    "context_occluders_adjusted": 47,
+    "occluder_attempts_total": 83,
+    "failing_frame9_camera_unchanged": true,
+    "failing_frame9_moderate_occluder_center_before_m": [
+      -1.4,
+      -0.2,
+      0.65
+    ],
+    "failing_frame9_moderate_occluder_center_after_m": [
+      -1.4599343813,
+      1.6398195584,
+      0.65
+    ],
+    "scope": "Authored AABB/pinhole proxy, not mesh/raster visibility proof. Camera target attenuation/distance and seeded context relocation are bounded design assumptions. Partial edge clipping is allowed; no target or occluder is silently removed."
+  },
+  "profile": {
+    "path": "configs/perception/loco-pallet-rigid-crate-pilot-v4.json",
+    "sha256": "e99a0fbf53122d9b0edbda74fea2866e3839495a5a5240bdc471ebe835dbf36b",
+    "camera_projection_guard": {
+      "model": "authored_oriented_asset_aabb_pinhole_proxy",
+      "require_positive_area_image_intersection": true,
+      "partial_frame_clipping_allowed": true,
+      "maximum_resample_attempts": 64,
+      "edge_crop_offset_decay_per_attempt": 0.08,
+      "eye_target_distance_growth_per_attempt": 0.04,
+      "maximum_eye_target_distance_scale": 2.5,
+      "mesh_or_raster_visibility_measured": false,
+      "scope": "CPU AABB proxy only; positive projected overlap is an authored assumption, not measured visibility"
+    },
+    "context_occlusion_guard": {
+      "model": "authored_oriented_asset_aabb_and_context_cube_aabb_pinhole_proxy",
+      "horizontal_aperture_mm": 24.0,
+      "require_target_projection_intersects_image": true,
+      "reject_full_target_projection_coverage": true,
+      "reject_target_center_sight_intersection": true,
+      "maximum_resample_attempts": 64,
+      "resample_xy_radius_m": 3.0,
+      "mesh_or_raster_visibility_measured": false,
+      "scope": "CPU AABB proxy only; partial visibility is an authored assumption, not measured visibility"
+    }
+  },
+  "generator": {
+    "path": "scripts/perception/prepare_pilot_manifest.py",
+    "sha256": "b234fe6593e3e8a2f3ed66f9ace7e92e8d2c19de17af706bb031b8e1a5d329e7"
+  },
+  "validation": {
+    "generator_targeted_tests": 6,
+    "capture_manifest_contract_targeted_tests": 1,
+    "main_recipe_asset_pin_preflight": "PASS",
+    "working_Git_blob_pin_identity": "PASS for profile/generator LF bytes",
+    "CRLF_rejection_regression": "PASS",
+    "GPU_capture": "pending"
+  },
+  "legacy_manifest_status": {
+    "value": "pilot_manifest_prepared_exporter_extension_required",
+    "scope": "Legacy preparation metadata; this recipe is consumed by the separate implemented pilot exporter. It does not imply generated data or GPU approval."
+  },
+  "scope_flags": {
+    "training_ready": false,
+    "mapping_approved": false,
+    "complete_dataset_generated": false,
+    "GPU_capture_performed": false,
+    "Cosmos_used": false,
+    "heldout_LOCO_RGB_read": false
+  },
+  "earlier_failed_case": "perception-pilot-323.json"
+}
