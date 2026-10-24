@@ -81,6 +81,37 @@ class OperationsChargingAdapterTests(unittest.TestCase):
         adapter = OperationsCharging(model, profile)
         return model, adapter
 
+    def departure_observation(self, required_wh, soc):
+        model = FakeOperationsModel()
+        adapter = OperationsCharging(model, self.profile())
+        robot = "amr-4"
+        adapter.aux[robot] = {"dock_id": "CH1", "phase": "charging", "stationary_since": None}
+        adapter.energy.batteries[robot].energy_wh = 600.0 * soc
+        model.departure_requirement = {"required_wh": required_wh, "task_id": "next-transport"}
+        with patch.object(adapter, "pad_contact", return_value=True), patch.object(
+                adapter.docks, "observe",
+                return_value={"phase": "charging", "contact_confirmed": True}) as observe:
+            adapter._dock_observation(model, robot, 0.1)
+        return adapter, observe.call_args.kwargs
+
+    def test_dynamic_departure_target_retains_hysteresis_above_mission_energy(self):
+        adapter, observation = self.departure_observation(300.0, 0.649)
+        self.assertAlmostEqual(0.65, observation["departure_soc"])
+        self.assertTrue(observation["departure_allowed"])
+        self.assertEqual("observed_traffic_funding", adapter.departure_deferred["amr-4"]["reason"])
+
+    def test_departure_target_keeps_resume_floor_and_capacity_guards(self):
+        cases = (
+            (60.0, 0.35, True),
+            (570.0, 1.0, True),
+            (601.0, 1.0, False),
+        )
+        for required_wh, target, allowed in cases:
+            with self.subTest(required_wh=required_wh):
+                _, observation = self.departure_observation(required_wh, 1.0)
+                self.assertAlmostEqual(target, observation["departure_soc"])
+                self.assertIs(allowed, observation["departure_allowed"])
+
     def test_dock_home_is_exchanged_and_actual_occupant_must_vacate_before_reservation(self):
         model, adapter = self.low_third_robot()
         self.assertEqual(["amr-3"], adapter.queue)
@@ -256,6 +287,9 @@ class OperationsChargingAdapterTests(unittest.TestCase):
         # Bounded fixture override keeps the lifecycle test short; charging still
         # requires two confirmed stationary contact samples in EnergyFleet.
         model.departure_requirement = {"required_wh": 300.0, "task_id": "next-transport"}
+        departure_soc = 300.0 / 600.0 + (
+            adapter.profile["resume_soc"] - adapter.profile["trigger_soc"]
+        )
         adapter.energy.batteries["amr-3"].energy_wh = 600.0 * adapter.profile["resume_soc"] - 0.01
         for _ in range(10):
             model.sim_time += 0.1
@@ -263,7 +297,7 @@ class OperationsChargingAdapterTests(unittest.TestCase):
         self.assertNotEqual("exiting", adapter.aux["amr-3"]["phase"])
         self.assertEqual("observed_traffic_funding", adapter.snapshot()["departure_deferred"]["amr-3"]["reason"])
 
-        adapter.energy.batteries["amr-3"].energy_wh = 300.0 - 0.01
+        adapter.energy.batteries["amr-3"].energy_wh = 600.0 * departure_soc - 0.01
         for _ in range(10):
             model.sim_time += 0.1
             adapter.record(model, 0.1)

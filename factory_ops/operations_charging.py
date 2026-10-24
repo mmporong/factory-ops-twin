@@ -540,7 +540,11 @@ class OperationsCharging:
         if requirement is not None:
             required_wh = float(requirement["required_wh"])
             capacity_wh = float(self.profile["energy"]["capacity_wh"])
-            departure_soc = max(departure_soc, min(1.0, required_wh / capacity_wh))
+            hysteresis_soc = self.profile["resume_soc"] - self.profile["trigger_soc"]
+            departure_soc = max(
+                departure_soc,
+                min(1.0, required_wh / capacity_wh + hysteresis_soc),
+            )
             departure_allowed = required_wh <= capacity_wh
             deferred = {
                 "reason": ("observed_traffic_funding" if departure_allowed
