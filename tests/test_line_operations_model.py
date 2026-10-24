@@ -83,7 +83,7 @@ class LineOperationsModelTests(unittest.TestCase):
         self.assertEqual(("staging", "post_drop_staging"),
                          (row["task_type"], row["movement_purpose"]))
 
-    def test_only_unstarted_home_parking_is_preemptible_for_business_work(self):
+    def test_home_parking_is_preemptible_at_unstarted_or_intermediate_safe_hold(self):
         model = LineOperationsModel(
             CONFIGS / "factory-semiconductor-line16", initial_lots=0, run_id="line-park-preempt",
         )
@@ -99,6 +99,24 @@ class LineOperationsModelTests(unittest.TestCase):
         model._trips[robot]["purpose"] = "home"
         model._chunks[robot] = {"already_started": True}
         self.assertFalse(model._can_withdraw_queued_parking(robot))
+
+        del model._chunks[robot]
+        route = model.book.plan(start, "P1")
+        intermediate_hold = route.nodes[2]
+        x, y = model.book.nodes[intermediate_hold]
+        model._poses[robot].update(x_m=x, y_m=y)
+        self.assertNotEqual(intermediate_hold, model._locations[robot])
+        self.assertTrue(model._can_withdraw_queued_parking(robot))
+        self.assertEqual(intermediate_hold, model._dispatch_origin(robot))
+        charging = model.operations_charging
+        assert charging is not None
+        with patch.object(model.book, "plan", wraps=model.book.plan) as plan:
+            charging._assignment_required_wh(model, robot, "S1", "CI")
+        self.assertEqual(intermediate_hold, plan.call_args_list[0].args[0])
+        self.assertTrue(model._withdraw_queued_parking(robot))
+        self.assertEqual(intermediate_hold, model._locations[robot])
+        self.assertNotIn(robot, model._trips)
+
     def test_conflicting_full_trip_is_not_assigned_before_admission(self):
         model = LineOperationsModel(
             CONFIGS / "factory-semiconductor-line16", initial_lots=1, run_id="line-dispatch-gate",

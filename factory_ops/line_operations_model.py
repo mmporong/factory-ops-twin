@@ -245,7 +245,9 @@ class LineOperationsModel(OperationsModel):
                                        if station in self._station_owners and self._station_owners[station] != robot})
                     if blockers:
                         continue
-                    pickup_route = self.book.plan(self._locations[robot], task.origin, closed=self.closed)
+                    pickup_route = self.book.plan(
+                        self._dispatch_origin(robot), task.origin, closed=self.closed,
+                    )
                     loaded_route = self.book.plan(task.origin, task.destination, closed=self.closed)
                     if self._prospective_trip_blockers(
                         robot,

@@ -167,9 +167,11 @@ class OperationsCharging:
         self, model: OperationsModelLike, robot: str, pickup: str, destination: str,
     ) -> float:
         pose = model._poses[robot]
+        dispatch_origin = getattr(model, "_dispatch_origin", None)
+        origin = dispatch_origin(robot) if callable(dispatch_origin) else model._locations[robot]
         cache_key = (
             robot,
-            model._locations[robot],
+            origin,
             round(pose["x_m"], 12),
             round(pose["y_m"], 12),
             round(pose["yaw_rad"], 12),
@@ -181,7 +183,7 @@ class OperationsCharging:
         cached = self._assignment_requirement_cache.get(cache_key)
         if cached is not None:
             return cached + self.energy.profile["idle_power_w"] * self.traffic_wait_budget_s / 3600.0
-        first = self._plan(model, model._locations[robot], pickup)
+        first = self._plan(model, origin, pickup)
         loaded = self._plan(model, pickup, destination)
         distance = first.distance_m + loaded.distance_m
         initial_yaw = pose["yaw_rad"]

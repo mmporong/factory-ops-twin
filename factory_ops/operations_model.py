@@ -1017,19 +1017,30 @@ class OperationsModel(DashboardModel):
             "charge_approach", kind="charging",
         )
 
-    def _can_withdraw_queued_parking(self, robot_id: str) -> bool:
+    def _withdrawable_home_parking_anchor(self, robot_id: str) -> str | None:
         trip = self._trips.get(robot_id)
         if (trip is None or trip["kind"] != "parking" or trip.get("purpose", "home") != "home"
                 or robot_id in self._chunks or not self.motions[robot_id].stopped
-                or self.bridges.has_window(robot_id)):
-            return False
-        anchor = self.book.nodes[self._locations[robot_id]]
-        pose = self._poses[robot_id]
-        return math.dist(anchor, (pose["x_m"], pose["y_m"])) <= 1e-9
+                or self.bridges.has_window(robot_id) or self.bridges.held(robot_id)):
+            return None
+        anchor = anchor_at_pose(self.book.nodes, self._poses[robot_id])
+        if (anchor is None
+                or anchor in self.bridges.queue_nodes
+                or (self.bridges.holdable_nodes is not None
+                    and anchor not in self.bridges.holdable_nodes)):
+            return None
+        return anchor
+
+    def _can_withdraw_queued_parking(self, robot_id: str) -> bool:
+        return self._withdrawable_home_parking_anchor(robot_id) is not None
+
+    def _dispatch_origin(self, robot_id: str) -> str:
+        return self._withdrawable_home_parking_anchor(robot_id) or self._locations[robot_id]
 
     def _withdraw_queued_parking(self, robot_id: str) -> bool:
         """Make an unstarted home trip available for higher-priority work."""
-        if not self._can_withdraw_queued_parking(robot_id):
+        anchor = self._withdrawable_home_parking_anchor(robot_id)
+        if anchor is None:
             return False
         self.reservations.withdraw_pending(
             robot_id,
@@ -1040,7 +1051,13 @@ class OperationsModel(DashboardModel):
         self._waiting.pop(robot_id, None)
         self._replans.pop(robot_id, None)
         del self._trips[robot_id]
-        self._event("parking_preempted", f"{robot_id} 업무 우선 배정을 위해 귀가 대기 철회", robot_id)
+        self._locations[robot_id] = anchor
+        self._event(
+            "parking_preempted",
+            f"{robot_id} 업무 우선 배정을 위해 귀가 대기 철회",
+            robot_id,
+            anchor=anchor,
+        )
         return True
 
     def _withdraw_parking_for_charge(self, robot_id: str) -> bool:
