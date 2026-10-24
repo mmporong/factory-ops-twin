@@ -1,0 +1,114 @@
+{
+  "schema_version": 1,
+  "status": "failed",
+  "run_id": "campus-complete-preview-337",
+  "failure_stage": "scene_generation_before_rgb",
+  "confirmed_error": "LayoutError: factory context fixture A_MAINT_TOOL_STORAGE_06 violates AMR region 0.1m clearance",
+  "gpu_render_attempt_count": 1,
+  "retry_performed": false,
+  "source_commit": "097decab035ec7e9c5ce7ef83411c00d3b238e31",
+  "source_run_id": "process-line-fd4c24df-7f25-44de-977c-db2d0dded4b8",
+  "source_sim_time_s": 92038.00000086943,
+  "expected_frames": 1,
+  "captured_frames": 0,
+  "render_result_sha256": "2eadefdfdb394b190d6f02a95a17e027eb7e427860d9c3c2f53d332dc253e8b4",
+  "factory_usda_sha256": "04919419d0f9b29c32485d745a580a99cfc0b632d2e1be3e9f4181551b1df899",
+  "spec_sha256": "a704921381c54470c4a982e9c514debcd97f86729577a95c276fabf055c88bd1",
+  "host_job_receipt_sha256": "3a05948d8f17b933b885e6be664fad0d1e09f7427d47ed71779b905530101410",
+  "job_status": "passed",
+  "worker_exit_code": 0,
+  "owned_processes_gone": true,
+  "lease_released": true,
+  "lease_id": "a19a6371-813a-40a2-9a67-2caecdc52510",
+  "lease_state": "completed",
+  "lease_exit_code": 0,
+  "observed_gpu_total_used_mib": 2787,
+  "observed_gpu_total_mib": 12288,
+  "per_process_vram_measured": false,
+  "vram_note": "Windows WDDM returned N/A per process; total device usage was sampled while the owned Kit was running.",
+  "source": {
+    "commit": "097decab035ec7e9c5ce7ef83411c00d3b238e31",
+    "closed_recording_run_id": "process-line-fd4c24df-7f25-44de-977c-db2d0dded4b8",
+    "result_sha256": "5d5c55512e3a1167de363979a1270afef7e4cd7f092d7732095b6612b64bb351",
+    "recording_manifest_sha256": "9572cc539ee916ff889ad65ab11b7af0186260bec7bd5aa53cc907c56413cba6",
+    "snapshots_gzip_sha256": "4ff0bc6ae0a611b1f25715a3b287efab2221528fd5c97025e8798bf88643d83c",
+    "frozen_source_manifest_sha256": "3bb51f01e62ea351659451fe839ccd03dd6d35b254e22d5778a4d75ee9694353",
+    "frozen_source_binding_sha256": "9ca77d7e9cb4389071fd8b9a9f8f05c355055391787adf1c620e10524b529882",
+    "first_valid_sim_time_s": 92038.00000086943
+  },
+  "final_render_eligible": false,
+  "final_video": false,
+  "selector_bypassed": false,
+  "peak_actual_material_concurrency": 12,
+  "required_peak_actual_material_concurrency": 16,
+  "attempt_history": [
+    {
+      "stage": "cpu_launcher",
+      "gpu_started": false,
+      "error": "PowerShell reserved variable $Host",
+      "resolution": "renamed launcher variable to $hostRoot"
+    },
+    {
+      "stage": "cpu_launcher",
+      "gpu_started": false,
+      "error": "Windows PowerShell 5.1 failed parsing the 10 MB UTF-8 JSON",
+      "resolution": "ran the same launcher with PowerShell 7"
+    },
+    {
+      "stage": "gpu_renderer",
+      "gpu_started": true,
+      "error": "LayoutError: factory context fixture A_MAINT_TOOL_STORAGE_06 violates AMR region 0.1m clearance",
+      "resolution": "no retry; preserved output"
+    }
+  ],
+  "diagnosed_overlap": {
+    "fixture_id": "A_MAINT_TOOL_STORAGE_06",
+    "fixture_center_xy_m": [
+      29.6,
+      8.75
+    ],
+    "asset": "workbench",
+    "asset_bounds_xyz_m": [
+      -0.35697818551070476,
+      -0.7227310944581404,
+      0.0,
+      0.35697818551070476,
+      0.7227310944581404,
+      2.0497918472283345
+    ],
+    "yaw_deg": 90,
+    "fixture_xy_bounds_m": [
+      28.877268905489295,
+      8.393021814489297,
+      30.322731094510704,
+      9.106978185510705
+    ],
+    "clearance_xy_bounds_m": [
+      28.777268905489294,
+      8.293021814489297,
+      30.422731094510706,
+      9.206978185510705
+    ],
+    "overlapping_amr_region": "CAMPUS_AB_E_QUEUE_ACCESS",
+    "amr_region_rect_m": [
+      30.0,
+      8.0,
+      33.5,
+      12.5
+    ],
+    "diagnosis": "The 0.1 m padded fixture footprint overlaps the AMR queue access region; scene validation stops before camera capture."
+  },
+  "host_receipt": {
+    "path": "artifacts/campus-complete-preview-337-host/host-result.json",
+    "sha256": "3e2362d656c97eec5c2869e812b1d314bcc75d9348a97b177bac39ce213000ea"
+  },
+  "source_binding": {
+    "producer_pin_count": 35,
+    "config_pin_count": 8,
+    "frozen_manifest_sha256": "3bb51f01e62ea351659451fe839ccd03dd6d35b254e22d5778a4d75ee9694353"
+  },
+  "repair": {
+    "status": "in_progress",
+    "scope": "Reposition non-production context prop outside unchanged AMR regions; preserve operations recordings and safety. Renderer input compatibility is being checked before any new GPU execution."
+  }
+}

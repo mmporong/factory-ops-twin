@@ -1729,3 +1729,13 @@ shipping product_move 완료 뒤 같은lot·carrier·origin의 준비된 empty_r
 확인된 원인은 `_release_station_gates`의 기존 pickup 조건이 station ID와 무관하게 그 차량의 모든 이전 gate를 보존하는 경계다. amr12는 C_CI 하차 후 새 D_AOI_OUT 집하를 받아 A_AC_N_SAFE_EXIT(27,3)까지 이동했는데47.817m 떨어진 C_CI owner가 남았다. T019를 실은 amr6는 C_S1에서 C_CI gate를 기다리고, amr12는 amr6 footprint가 걸린 safe-exit lookahead를 기다렸다. 과거321의 출발 gate 이탈 진단과 달리 이번에는 새 업무 뒤 이전 drop gate의 잔류를 확인했다.
 
 수정 e53ba60은 service_window에 한해 현재 pickup/drop 목표 또는 중단 집하 목표와 station이 일치할 때만 명시 보존한다. 다른 이전 gate도 기존 차체 이탈 거리 조건을 충족해야 해제하며, 기본 dispatch의 full-pair 보존·자재/버퍼/에너지·교량/타일/정지 가드는 그대로다. 실제 두 차량 상태에서 C_CI blocker 유지→해제→amr6 gate 접근 가능과 legacy 보존을 표적1검사(12.40초)로 확인했다. 통과한 다른 검사를 반복하거나 같은334를 재실행하지 않았으며 전체 수정본은 별도335에서 확인한다. [334 마감·수정·해시](evidence/campus16-334.json)
+
+## FOT-219 — 확장 차로 접근 영역과 제공처 작업대 외곽의 간섭
+
+닫힌 정상333 기록의 현재 공장 전체 이미지1장을 요청한337은 scene 생성에서 `A_MAINT_TOOL_STORAGE_06 violates AMR region 0.1m clearance`로 마감했다. 작업대 center(29.6,8.75)m·yaw90도의 실제 prototype 외곽에0.1m 여유를 더하면 xmax30.4227m인데, wide의 CAMPUS_AB_E_QUEUE_ACCESS는 xmin30m다. CPU 통행 영역을 넓힌 뒤 제공처 소품의 실제 회전 외곽을 새 영역과 함께 확인하지 못한 경계다. 생산 충돌체77개·도로/차량 영역·여유 폭을 줄이지 않고 비생산 소품 배치를 수정한다. 활성335의 동결 소스/설정이나 원본333·337은 바꾸지 않는다.
+
+GPU 시도1회·captured_frames0·RGB/RGBA없음이며 source/result/scene/spec해시·Jobowned0·lease반환을 확인했다. Job/lease exit0은 호스트 종료를 뜻하며 render 성공으로 쓰지 않는다. 같은 입력을 반복하지 않고 새 시각 소스의 핀과 기존 운영 기록의 연결 계약부터 확인한다. [337 오류·실제 외곽·마감 근거](evidence/campus-complete-preview-337.json)
+
+## FOT-220 — PowerShell 자동 변수와 실행기 버전의 준비 단계 오류
+
+337 launcher는 `$Host`에 작업 경로를 할당하려다 읽기 전용 자동 변수 충돌로 GPU/Job/lease 생성 전에 종료됐다. 변수명을 `$hostRoot`로 바꿨다. 이어 Windows PowerShell5.1에서 큰 UTF-8 JSON의 파싱이 거절됐고 같은 launcher를 PowerShell7에서 실행해 CPU 사전 확인을 통과했다. 파서 거절의 세부 내부 원인은 확정하지 않으며 새 launcher는 `pwsh`를 명시한다. 두 준비 오류는 렌더 입력 재시도와 구분하고 실제 GPU 시도는1회로 기록한다. [단계별 실행 이력](evidence/campus-complete-preview-337.json)
