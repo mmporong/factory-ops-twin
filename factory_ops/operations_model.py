@@ -93,6 +93,9 @@ class OperationsModel(DashboardModel):
         self.replan_applied_count = 0
         self.replan_unavailable_count = 0
         self.last_replan_reason: str | None = None
+        self.traffic_yield_count = 0
+        self.traffic_yield_completed_count = 0
+        self._charging_parking_resume: dict[str, str] = {}
         self._observe_all()
         for robot in self.ledger.robots:
             point = self.book.nodes[self.homes[robot]]
@@ -220,11 +223,23 @@ class OperationsModel(DashboardModel):
                 continue
             # Vacate an idle handover without claiming a completed parking move.
             if draining or self.sim_time - self._idle_since[robot] >= 2.0:
+                interrupted_goal = self._charging_parking_resume.get(robot)
                 self._trip(
                     robot, {}, self._locations[robot], self.homes[robot], "parking",
                     kind="parking", purpose="home",
                 )
                 self._waiting.pop(robot, None)
+                if (interrupted_goal is not None and self.operations_charging is not None
+                        and robot not in self.operations_charging.queue
+                        and robot not in self.operations_charging.aux):
+                    del self._charging_parking_resume[robot]
+                    self._event(
+                        "charge_parking_resumed",
+                        f"{robot} 충전 후 주차 복귀 재개",
+                        robot,
+                        interrupted_goal=interrupted_goal,
+                        resume_goal=self.homes[robot],
+                    )
 
     def _dispatch_extra_jobs(self, draining: bool) -> None:
         """Admit specialized production jobs before sending idle vehicles home."""
@@ -335,8 +350,14 @@ class OperationsModel(DashboardModel):
                 observed_tiles=self._admission_observations(robot, trip),
             ):
                 continue
+            if self._safe_exit_lookahead_blockers(
+                robot, trip, window.get("queue_barrier"),
+            ):
+                continue
             candidates.append((alternative.distance_m, robot, start, alternative))
         if not candidates:
+            if self._schedule_traffic_yield(cycle, observations):
+                return
             self.replan_unavailable_count += 1
             self._event(
                 "traffic_replan_unavailable",
@@ -363,6 +384,105 @@ class OperationsModel(DashboardModel):
             cycle=list(cycle),
             route_nodes=list(alternative.nodes),
         )
+
+    def _schedule_traffic_yield(
+        self, cycle: tuple[str, ...], observations: Mapping[str, Any],
+    ) -> bool:
+        """Move one empty pickup vehicle to a clear same-bay parking refuge."""
+
+        candidates = []
+        safe_exits = frozenset(self.bridges.safe_exit_nodes.values())
+        inventory_loads = getattr(self.inventory, "robot_loads", {})
+        for robot in cycle:
+            trip = self._trips.get(robot)
+            state = self.ledger.robots[robot]
+            if (trip is None or trip["kind"] == "parking" or trip["phase"] != "pickup"
+                    or robot in self._chunks or not self.motions[robot].stopped
+                    or self.bridges.has_window(robot) or self.bridges.held(robot)
+                    or state.payload_id is not None
+                    or robot in inventory_loads or not trip["points"]):
+                continue
+            start = anchor_at_pose(self.book.nodes, self._poses[robot])
+            if start is None or start in self.bridges.queue_nodes:
+                continue
+            bay = start.split("_", 1)[0]
+            if not bay:
+                continue
+            peer_tiles = frozenset(
+                tuple(tile)
+                for peer, observation in observations.items() if peer != robot
+                for tile in observation["tiles"]
+            )
+            for refuge in sorted(set(self.homes.values())):
+                if not refuge.startswith(f"{bay}_"):
+                    continue
+                alternative = find_alternative_route(
+                    self.book,
+                    start=start,
+                    goal=refuge,
+                    closed=self.closed,
+                    reservation_radius_m=self.radius,
+                    peer_footprint_tiles=peer_tiles,
+                    existing_points=(),
+                )
+                if alternative is None or any(
+                    node in self.bridges.queue_nodes or node in safe_exits
+                    or not node.startswith(f"{bay}_")
+                    for node in alternative.nodes[1:]
+                ):
+                    continue
+                yield_trip = {
+                    "kind": "parking", "phase": "pickup", "goal": refuge,
+                    "purpose": "traffic_yield",
+                }
+                window = self._window_for_trip(
+                    alternative.points[0], alternative.points[1:], alternative.nodes[1:],
+                    yield_trip, robot_id=robot,
+                )
+                if len(window["nodes"]) != len(alternative.nodes) - 1:
+                    continue
+                if self.bridges.blockers(
+                    robot,
+                    window["nodes"],
+                    route_tiles=window["tiles"],
+                    observed_tiles=self._admission_observations(robot, yield_trip),
+                ):
+                    continue
+                candidates.append((alternative.distance_m, robot, start, refuge, trip, alternative))
+        if not candidates:
+            return False
+        distance, robot, start, refuge, resume, alternative = min(
+            candidates, key=lambda item: (item[0], item[1], item[3]),
+        )
+        self.reservations.withdraw_pending(
+            robot,
+            now_s=self.sim_time,
+            reason="persistent_cycle_traffic_yield",
+        )
+        self.bridges.withdraw_waiter(robot)
+        self._waiting.pop(robot, None)
+        self._trip(
+            robot, {}, start, refuge, "pickup",
+            kind="parking", purpose="traffic_yield",
+        )
+        yield_trip = self._trips[robot]
+        yield_trip["points"] = deque(alternative.points[1:])
+        yield_trip["nodes"] = deque(alternative.nodes[1:])
+        yield_trip["traffic_yield_resume"] = resume
+        self._refresh_admission_preview(robot, yield_trip)
+        self.traffic_yield_count += 1
+        self._event(
+            "traffic_yield_selected",
+            f"{robot} 순환 대기 양보 이동 · {start}→{refuge}",
+            robot,
+            reason=self.last_replan_reason,
+            cycle=list(cycle),
+            start=start,
+            refuge=refuge,
+            distance_m=distance,
+            route_nodes=list(alternative.nodes),
+        )
+        return True
 
     @staticmethod
     def _consume_chunk_route(pose, trip, chunk) -> None:
@@ -754,6 +874,41 @@ class OperationsModel(DashboardModel):
         self._event("parking_preempted", f"{robot_id} 업무 우선 배정을 위해 귀가 대기 철회", robot_id)
         return True
 
+    def _withdraw_parking_for_charge(self, robot_id: str) -> bool:
+        """Interrupt a home trip only at a stopped, unowned authored hold."""
+
+        trip = self._trips.get(robot_id)
+        if (trip is None or trip["kind"] != "parking" or trip.get("purpose", "home") != "home"
+                or robot_id in self._chunks or not self.motions[robot_id].stopped
+                or self.bridges.has_window(robot_id) or self.bridges.held(robot_id)):
+            return False
+        anchor = anchor_at_pose(self.book.nodes, self._poses[robot_id])
+        if (anchor is None
+                or (self.bridges.holdable_nodes is not None
+                    and anchor not in self.bridges.holdable_nodes)
+                or anchor in self.bridges.queue_nodes):
+            return False
+        self.reservations.withdraw_pending(
+            robot_id,
+            now_s=self.sim_time,
+            reason="queued_home_parking_preempted_for_charge",
+        )
+        self.bridges.withdraw_waiter(robot_id)
+        self._waiting.pop(robot_id, None)
+        self._replans.pop(robot_id, None)
+        interrupted_goal = trip["goal"]
+        del self._trips[robot_id]
+        self._locations[robot_id] = anchor
+        self._charging_parking_resume[robot_id] = interrupted_goal
+        self._event(
+            "charge_parking_preempted",
+            f"{robot_id} 정지 주차 경로 철회 · 충전 접근 우선",
+            robot_id,
+            anchor=anchor,
+            interrupted_goal=interrupted_goal,
+        )
+        return True
+
     def _arrive_trip(self, robot_id, trip) -> None:
         if not self.motions[robot_id].stopped:
             raise RuntimeError("handover attempted before kinematic stop")
@@ -761,6 +916,28 @@ class OperationsModel(DashboardModel):
         if self.operations_charging is not None and self.operations_charging.arrive(self, robot_id, trip):
             self._observe_all()
             self._park_hold(robot_id)
+        elif trip["kind"] == "parking" and trip.get("purpose") == "traffic_yield":
+            resume = trip.get("traffic_yield_resume")
+            if not isinstance(resume, dict) or resume.get("phase") != "pickup":
+                raise RuntimeError("traffic yield must resume one pickup trip")
+            refuge = trip["goal"]
+            self._locations[robot_id] = refuge
+            self._trip(
+                robot_id,
+                resume["task"],
+                refuge,
+                resume["goal"],
+                resume["phase"],
+                kind=resume["kind"],
+            )
+            self.traffic_yield_completed_count += 1
+            self._event(
+                "traffic_yield_completed",
+                f"{robot_id} 양보 지점 도착 · 원래 픽업 재개",
+                robot_id,
+                refuge=refuge,
+                pickup=resume["goal"],
+            )
         elif trip["kind"] == "parking":
             self._locations[robot_id] = trip["goal"]
             del self._trips[robot_id]
@@ -879,6 +1056,12 @@ class OperationsModel(DashboardModel):
             "replan_unavailable_count": self.replan_unavailable_count,
             "last_replan_reason": self.last_replan_reason,
             "pending_replans": sorted(self._replans),
+            "traffic_yield_count": self.traffic_yield_count,
+            "traffic_yield_completed_count": self.traffic_yield_completed_count,
+            "traffic_yield_robots": sorted(
+                robot for robot, trip in self._trips.items()
+                if trip["kind"] == "parking" and trip.get("purpose") == "traffic_yield"
+            ),
         }
         for row in result["robots"]:
             robot = row["id"]
@@ -893,6 +1076,18 @@ class OperationsModel(DashboardModel):
                 row.update(
                     task_id=f"stage:{robot}", task_type="staging",
                     task_label="하차 후 통로 비움", movement_purpose="post_drop_staging",
+                )
+            elif (trip is not None and trip["kind"] == "parking"
+                  and trip.get("purpose") == "traffic_yield"):
+                resume_task = trip["traffic_yield_resume"]["task"]
+                resume_task_id = (
+                    resume_task.get("id") if isinstance(resume_task, Mapping)
+                    else resume_task.task_id
+                )
+                row.update(
+                    task_id=resume_task_id,
+                    task_label="교통 양보 후 픽업 재개",
+                    movement_purpose="traffic_yield",
                 )
             if self.operations_charging is not None:
                 row.update(self.operations_charging.robot_snapshot(robot))

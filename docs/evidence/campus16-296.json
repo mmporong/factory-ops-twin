@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "scope": "Closed authored CPU campus16-v2 traffic-yield attempt; preserved failed charging evidence, no completed-throughput or physical-runtime claim",
+  "run_id": "process-line-46f83dd8-69f3-4117-9e93-27777d96bb9a",
+  "status": "failed",
+  "error": {
+    "type": "RuntimeError",
+    "message": "operations charging observation fault: amr-11"
+  },
+  "recorded_stop_reason": "horizon_or_wall_limit",
+  "stop_reason_boundary": "The frozen runner retained its default stop reason on exceptions. The recorded status and error identify a charging runtime failure; the post-run runner repair records future exceptions as runtime_error.",
+  "elapsed_wall_s": 816.9373271999648,
+  "sim_time_s": 29341.99999985351,
+  "source_stable_during_run": true,
+  "owned_processes_gone": true,
+  "workload": {
+    "lots": 48,
+    "release": "all at simulation start",
+    "policy": "fifo"
+  },
+  "limits": {
+    "horizon_s": 30000.0,
+    "wall_s": 1800.0,
+    "snapshot_count": 80,
+    "stall_timeout_s": 600.0
+  },
+  "cumulative_shipped_lots": 7,
+  "cumulative_returned_lots": 6,
+  "actual_completed_transport_deliveries": 72,
+  "configured_robots": 16,
+  "assignment_participants": 16,
+  "repeat_assignment_participants": 16,
+  "delivery_participants": 16,
+  "repeat_delivery_participants": 16,
+  "minimum_assignments_per_robot": 2,
+  "minimum_completed_deliveries_per_robot": 2,
+  "peak_material_tasks": 14,
+  "peak_material_moving": 7,
+  "peak_all_moving": 7,
+  "observed_min_circular_clearance_m": 1.7257818169114452,
+  "quiescent": false,
+  "goal_met": false,
+  "recorded_frames": 120,
+  "traffic_yield": {
+    "selected": 7,
+    "completed": 6,
+    "active_at_last_valid_snapshot": [
+      "amr-4"
+    ],
+    "replan_attempts": 7,
+    "generic_replans_applied": 0,
+    "unavailable_recoveries": 0,
+    "final_bridge_wait_cycle": null,
+    "final_reservation_wait_cycle": null,
+    "boundary": "The yield prefix recovered repeated observed wait cycles and material flow continued, but the run failed before all 48 lots shipped and returned. This is not completion evidence."
+  },
+  "charging_failure": {
+    "robot": "amr-11",
+    "phase": "queued",
+    "pose_anchor": "A_AB_W_SAFE_EXIT",
+    "parking_destination": "C_P3",
+    "waiting_reason": "safe_exit_lookahead_occupied",
+    "blockers": [
+      "amr-4"
+    ],
+    "battery_pct_at_last_valid_snapshot": 0.0016896348445246117,
+    "energy_wh_at_last_valid_snapshot": 0.01013780906714767,
+    "idle_power_w": 45.0,
+    "unpowered_idle_time_remaining_s": 0.8110247253718136,
+    "available_docks_at_last_valid_snapshot": 8,
+    "queue_length": 8,
+    "root_cause": "A queued robot with an accepted ordinary home-parking trip was excluded from charge approach preparation until that trip completed. The trip remained stopped behind traffic while the virtual idle load continued, so the battery exhausted before geometric dock contact.",
+    "post_run_repair_boundary": "The later repair detects charge demand during home parking, withdraws only at a stopped authored hold with no active chunk or bridge ownership, retains the current reservation footprint, and resumes home parking after charge release. It is not part of this frozen run."
+  },
+  "result_sha256": "76c6691630ba279ddb3fda902f5be31963f940d31b5a5ae3d5e0142c9860c386",
+  "frozen_source_manifest_sha256": "34cc6b4875a689705758c18e13ca5c2fd980469ad08546237dfcb9bd463d7301",
+  "source_binding_sha256": "39b4e23cb3149d43786d905e351ecdd3dd46662db4f363a9060b86ecb99a76ef",
+  "recording_manifest_sha256": "ea9b85bdbaaa887f880f11bf1074c6417c02682681d1d21eb1337a4566a1747a"
+}

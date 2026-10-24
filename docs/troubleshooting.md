@@ -1427,3 +1427,19 @@ BridgeAdmission의 실제 wait-for graph에서 순환을 구하고 기존 cycle 
 291은 출하5·반납4·운송61건 뒤 진전 없음으로 종료됐다. snapshot의 reservation/bridge SCC는0이었지만 실제 의존을 복원하면 amr3→amr10→amr5→amr3의 순환이었다. pickup 접근과 loaded 첫 구간을 합칠 때 loaded 쪽 `queue_barrier`를 상위 window에 전달하지 않아, queue로 이어지는 인계 window를 확보하기 전의 출구 가용성 검사가 실행되지 않았다. amr5의 retained90타일이 반대 방향 출구를 막은 상태를 원본과 대조했다. [291 종료·수동 복원 근거](evidence/campus16-291.json)
 
 인계 extension의 queue 경계를 전파하고 표적 회귀를 추가했다. lookahead로 막힌 의존도 `BridgeAdmission.record_wait`로 같은 wait-for graph에 관측하며, owner/resource/protected tiles는 바꾸지 않는다. admit 성공·release·명시 clear에서 대기를 지운다. 295는 이 수정의 별도 동결 실행이며 관측된 순환과 실제 복구를 구분해 판정한다.
+
+## FOT-180 — 출구가 막힌 재계획 후보와 원래 임무를 보존하는 양보 복구
+
+295는 출하4·반납1·운송49건 뒤 진전 없음으로 종료됐다. 이전에 누락됐던 lookahead 의존은 관측됐으며, 최종 bridge SCC는 amr11→amr5→amr7→amr11이었다. 일반 우회 후보의 첫 window만 검사해 다음 queue→safe-exit 경로가 막힌 후보가 선택 대기 상태로 남았다. 실제 정지 상태에서 세 차량은 모두 무적재 pickup 접근 중이었고 소유한 bridge window는 없었다. [295 종료·소스 근거](evidence/campus16-295.json)
+
+후속 재계획은 같은 출구 lookahead를 검사한다. 목적지로 가는 유효한 우회가 없으면 순환 안의 정지·무적재 pickup 차량 한 대가 같은 베이의 빈 홈으로 이동한 뒤 원래 임무를 재개한다. 양보 전체 경로에서 다른 차량의 실제 외곽·활성 window와의 겹침을 거부하며 queue·전용 출구·다른 베이를 통과하지 않는다. 원래 task·lot·재고·station claim을 유지하고 주차·양보 이동을 운송 완료나 물류 동시성에 넣지 않는다.296은7회 선택 중6회 양보 완료 후 출하7·반납6·운송72건까지 전진했지만 이후 충전 오류로 실패했다. [296](evidence/campus16-296.json)
+
+296 종료 후 코드에서 선택한 `AlternativeRoute` 대신 일반 최단 경로로 yield trip을 다시 만드는 결함도 확인했다. 보존된296 사건5건의 거리에서는 차이가 없었으며, 이 결함이296의 종료 원인이라고 주장하지 않는다. 선택한 points/nodes를 실제 trip에 보존하고 admission preview를 다시 계산하도록 수정했다. 일반 경로와 다른 detour의 실제 trip 일치·원래 임무 재개·claim 보존을 포함한 표적5검사가 통과했다. 후속 실행은 이 수정의 별도 동결 소스를 사용한다.
+
+## FOT-181 — 충전 대기 차량이 귀가 이동에 묶여 도크를 배정받지 못함
+
+296은 sim29342초·벽시계816.94초에 `operations charging observation fault: amr-11`로 실패했다. 직전 snapshot에서 amr11은 충전 queue 선두였지만 일반 귀가 trip을 가진 채 `A_AB_W_SAFE_EXIT`에서 출구 lookahead를 기다렸고, 도크8개는 모두 available이었다. `OperationsCharging.prepare`가 `_trips`를 가진 queue 차량을 건너뛰어 충전 접근으로 전환하지 못했다. 마지막 SOC는0.0016896%, 잔여 약0.01014Wh였다. 가상 idle45W를 유지하면 약0.81초 뒤 소진하는 값이며 다음0.1초 에너지 표본의 exhaustion이 관측 fault로 전달됐다. 원본 결과의 `stop_reason=horizon_or_wall_limit`는 예외 시 기본값이 남은 보고 오류이며 실제 horizon 도달로 해석하지 않는다.
+
+설정 SOC·에너지 소모·예약 반경을 완화하지 않고 정지한 일반 귀가 이동의 안전한 선점과 충전 접근을 연결한다. 보유한 window·실제 점유·업무 claim을 보존하고, 충전 후 이탈·재배차와 장시간 운영은 후속 실행에서 확인한다.296 원본은 수정하지 않으며 충전 접촉·실물 배터리 보정 근거로 사용하지 않는다.
+
+수정 후 home parking 중에도 충전 수요를 queue에 등록한다. active chunk·bridge window가 없고 authored hold에 정지했을 때만 pending 요청·waiter를 철회하며, 현재 점유와 원래 귀가 목적지는 보존한다. pad에 있는 peer의 이동을 기다리는 동안에는 경로를 매 tick 철회·재생성하지 않는다. 충전 adapter·integration11검사와 traffic-yield·재계획5검사가 통과했다. 실제 campus16의 C베이 차량을 기존 deterministic A_CH1에 연결한 소량 시험에서는 sim8.3초에 approach 예약, sim943.0초에 슬롯 반납, 이동149.84m·fault0을 기록했다. 이 시험은 장거리 도크 접근의 단일 사례이며 전체48lot 진행성의 근거는 후속297에서 별도로 확보한다. runner는 이후 예외의 종료 이유를 `runtime_error`로 기록한다.

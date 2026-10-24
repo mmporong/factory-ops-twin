@@ -93,6 +93,68 @@ class OperationsChargingIntegrationTests(unittest.TestCase):
                 self.assertEqual(1, state["traffic"]["assignments"][robot])
                 self.assertIsNone(next(row for row in state["robots"] if row["id"] == robot)["charging_phase"])
 
+    def test_charge_queue_preempts_home_parking_only_at_safe_stop(self):
+        model = OperationsModel(
+            CONFIG, initial_orders=0, run_id="operations-charge-parking-preempt",
+            operations_charging_profile=self.profile("amr-3"),
+        )
+        charging = model.operations_charging
+        assert charging is not None
+        model._locations["amr-1"] = "P3"
+        model._poses["amr-1"].update(
+            x_m=model.book.nodes["P3"][0], y_m=model.book.nodes["P3"][1],
+        )
+        model._trip("amr-3", {}, "P3", "P1", "parking", kind="parking", purpose="home")
+        parking = model._trips["amr-3"]
+        retained_lease = dict(model._leases["amr-3"])
+        model._chunks["amr-3"] = {"in_flight": True}
+
+        charging.prepare(model)
+
+        self.assertIs(parking, model._trips["amr-3"])
+        self.assertEqual(["amr-3"], charging.queue)
+        self.assertEqual(["amr-3"], charging.snapshot()["parking_preempt_deferred"])
+        deferred = [event for event in model._events
+                    if event["type"] == "charge_parking_preempt_deferred"]
+        self.assertEqual(1, len(deferred))
+
+        del model._chunks["amr-3"]
+        charging.prepare(model)
+
+        self.assertEqual("charging", model._trips["amr-3"]["kind"])
+        self.assertEqual("charge_approach", model._trips["amr-3"]["phase"])
+        self.assertEqual("P1", model._trips["amr-3"]["goal"])
+        self.assertEqual(retained_lease, model._leases["amr-3"])
+        self.assertEqual({"amr-3": "P1"}, model._charging_parking_resume)
+        self.assertFalse(charging.snapshot()["parking_preempt_deferred"])
+        self.assertTrue(any(event["type"] == "charge_parking_preempted"
+                            for event in model._events))
+
+    def test_home_parking_resumes_after_charge_release(self):
+        model = OperationsModel(
+            CONFIG, initial_orders=0, run_id="operations-charge-parking-resume",
+            operations_charging_profile=self.profile("amr-1"),
+        )
+        charging = model.operations_charging
+        assert charging is not None
+        charging.queue.clear()
+        charging.aux.clear()
+        charging.relocating.clear()
+        model._trips.pop("amr-1", None)
+        model._locations["amr-1"] = "LOW_E_P1"
+        model._charging_parking_resume["amr-1"] = "P1"
+        model._idle_since["amr-1"] = -3.0
+
+        model._dispatch()
+
+        trip = model._trips["amr-1"]
+        self.assertEqual("parking", trip["kind"])
+        self.assertEqual("home", trip["purpose"])
+        self.assertEqual(model.homes["amr-1"], trip["goal"])
+        self.assertNotIn("amr-1", model._charging_parking_resume)
+        self.assertTrue(any(event["type"] == "charge_parking_resumed"
+                            for event in model._events))
+
 
 if __name__ == "__main__":
     unittest.main()

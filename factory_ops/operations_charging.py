@@ -90,6 +90,7 @@ class OperationsCharging:
         self.faults: dict[str, str] = {}
         self.relocating: dict[str, str] = {}
         self.home_swaps: list[dict[str, str]] = []
+        self.parking_preempt_deferred: set[str] = set()
         for robot in robots:
             self.energy.observe(robot, model.sim_time, 0.0, 0.0, loaded=False)
 
@@ -214,7 +215,11 @@ class OperationsCharging:
                 model._event("charge_home_relocated", f"{robot} 교환 주차 위치 도착", robot,
                              parking_anchor=destination)
         for robot in model.ledger.robots:
-            if robot in model._trips or robot in self.faults or self._loaded(model, robot):
+            trip = model._trips.get(robot)
+            parking_home = (trip is not None and trip.get("kind") == "parking"
+                            and trip.get("purpose", "home") == "home")
+            if ((trip is not None and not parking_home)
+                    or robot in self.faults or self._loaded(model, robot)):
                 continue
             soc = self.energy.snapshot(robot)["battery_pct"] / 100.0
             needs_charge = soc <= self.profile["trigger_soc"] or (robot in self.denied and soc < self.profile["resume_soc"])
@@ -224,13 +229,36 @@ class OperationsCharging:
 
         for robot in list(self.queue):
             # Queue members may use the ordinary reserved parking path. Never
-            # replace that accepted route with a charge approach in flight.
-            if robot in model._trips or self._loaded(model, robot):
+            # replace that accepted route in flight.  A stopped home-parking
+            # route may be withdrawn by the operations model at an authored
+            # hold while retaining its current reservation footprint.
+            if self._loaded(model, robot):
                 continue
             free_dock = next((dock for dock in sorted(self.slots) if dock not in self.docks.owners), None)
             if free_dock is None:
                 break
             slot = self.slots[free_dock]
+            # A home swap relocates the current pad occupant first.  Keep the
+            # accepted parking route while that peer is still on the pad;
+            # withdrawing and recreating it every tick cannot improve access.
+            if (robot in model._trips
+                    and self._pad_occupied_by_peer(model, robot, slot["anchor"]) is not None):
+                continue
+            if robot not in model._trips:
+                self.parking_preempt_deferred.discard(robot)
+            if robot in model._trips:
+                withdraw = getattr(model, "_withdraw_parking_for_charge", None)
+                if not callable(withdraw) or not withdraw(robot):
+                    if robot not in self.parking_preempt_deferred:
+                        self.parking_preempt_deferred.add(robot)
+                        model._event(
+                            "charge_parking_preempt_deferred",
+                            f"{robot} 충전 접근 전환 대기 · 안전 정지점 미확보",
+                            robot,
+                            reason="parking_in_motion_or_owned_stop",
+                        )
+                    continue
+                self.parking_preempt_deferred.discard(robot)
             if not self._prepare_home_swap(model, robot, slot["anchor"]):
                 continue
             # The sorted free dock above must match ChargingFleet's deterministic choice.
@@ -392,5 +420,6 @@ class OperationsCharging:
             "faults": dict(self.faults),
             "relocating": dict(self.relocating),
             "home_swaps": deepcopy(self.home_swaps),
+            "parking_preempt_deferred": sorted(self.parking_preempt_deferred),
             "hardware_calibrated": False,
         }

@@ -6,6 +6,7 @@ from unittest.mock import patch
 
 from factory_ops.dashboard import validate_snapshot
 from factory_ops.operations_model import OperationsModel
+from factory_ops.operations_replan import find_alternative_route
 
 
 CONFIG = Path(__file__).resolve().parents[1] / "configs" / "factory-semiconductor-dual-lane"
@@ -207,6 +208,100 @@ class OperationsModelTest(unittest.TestCase):
         self.assertEqual(full_window["tiles"], blockers.call_args.kwargs["route_tiles"])
         self.assertNotIn(robot, model._replans)
         self.assertEqual(1, model.replan_unavailable_count)
+
+    def test_cycle_replan_rejects_candidate_with_blocked_safe_exit(self):
+        model = OperationsModel(CONFIG, initial_orders=0, run_id="replan-safe-exit-check")
+        robot = "amr-1"
+        model._trip(robot, {}, "P1", "P3", "parking", kind="parking")
+        alternative = model.book.plan("P1", "P3")
+        window = {
+            "nodes": alternative.nodes[1:],
+            "tiles": model._tiles(alternative.points),
+            "queue_barrier": "Q",
+        }
+
+        with patch(
+            "factory_ops.operations_model.find_alternative_route", return_value=alternative,
+        ), patch.object(
+            model, "_window_for_trip", return_value=window,
+        ), patch.object(
+            model.bridges, "blockers", return_value=(),
+        ), patch.object(
+            model, "_safe_exit_lookahead_blockers", return_value=("amr-2",),
+        ) as lookahead:
+            model._schedule_cycle_replan((robot,))
+
+        lookahead.assert_called_once_with(robot, model._trips[robot], "Q")
+        self.assertNotIn(robot, model._replans)
+        self.assertEqual(1, model.replan_unavailable_count)
+
+    def test_empty_pickup_traffic_yield_preserves_task_and_station_claims(self):
+        campus = Path(__file__).resolve().parents[1] / "configs" / "factory-semiconductor-campus16"
+        model = OperationsModel(campus, initial_orders=0, run_id="cycle-traffic-yield")
+        robot = "amr-1"
+        task = SimpleNamespace(
+            task_id="LOT-YIELD:process_input:1",
+            order_id="LOT-YIELD",
+            payload_id="T-YIELD",
+            pickup_station="A_S1",
+            drop_station="A_CI",
+        )
+        model._station_owners.update(A_S1=robot, A_CI=robot)
+        model._jobs[robot] = ("A_S1", "A_CI")
+        model._trip(robot, task, "A_P1", "A_S1", "pickup", kind="process_line")
+        resume = model._trips[robot]
+        base_refuge_route = model.book.plan("A_P1", "A_P2")
+        refuge_route = find_alternative_route(
+            model.book,
+            start="A_P1",
+            goal="A_P2",
+            closed=False,
+            reservation_radius_m=model.radius,
+            peer_footprint_tiles=(),
+            existing_points=base_refuge_route.points[1:],
+        )
+        self.assertIsNotNone(refuge_route)
+        observations = model.reservations.snapshot(now_s=model.sim_time)["observations"]
+
+        def alternative(*args, **kwargs):
+            return refuge_route if kwargs["goal"] == "A_P2" else None
+
+        with patch(
+            "factory_ops.operations_model.find_alternative_route", side_effect=alternative,
+        ), patch.object(model.bridges, "blockers", return_value=()):
+            self.assertTrue(model._schedule_traffic_yield((robot,), observations))
+
+        yield_trip = model._trips[robot]
+        self.assertEqual("parking", yield_trip["kind"])
+        self.assertEqual("traffic_yield", yield_trip["purpose"])
+        self.assertEqual("pickup", yield_trip["phase"])
+        self.assertIs(resume, yield_trip["traffic_yield_resume"])
+        self.assertNotEqual(base_refuge_route.nodes, refuge_route.nodes)
+        self.assertEqual(refuge_route.nodes[1:], tuple(yield_trip["nodes"]))
+        self.assertEqual(refuge_route.points[1:], tuple(yield_trip["points"]))
+        self.assertEqual({"A_S1": robot, "A_CI": robot}, model._station_owners)
+        self.assertEqual(0, model._assignments[robot])
+        self.assertEqual(0, model._deliveries[robot])
+        row = next(row for row in model.snapshot()["robots"] if row["id"] == robot)
+        self.assertEqual(task.task_id, row["task_id"])
+        self.assertEqual("traffic_yield", row["movement_purpose"])
+
+        model._poses[robot].update(
+            x_m=model.book.nodes["A_P2"][0], y_m=model.book.nodes["A_P2"][1],
+        )
+        model._arrive_trip(robot, yield_trip)
+
+        resumed = model._trips[robot]
+        self.assertEqual("process_line", resumed["kind"])
+        self.assertEqual("pickup", resumed["phase"])
+        self.assertIs(task, resumed["task"])
+        self.assertEqual("A_S1", resumed["goal"])
+        self.assertEqual("A_P2", model._locations[robot])
+        self.assertEqual({"A_S1": robot, "A_CI": robot}, model._station_owners)
+        self.assertEqual(1, model.traffic_yield_count)
+        self.assertEqual(1, model.traffic_yield_completed_count)
+        self.assertEqual(0, model._assignments[robot])
+        self.assertEqual(0, model._deliveries[robot])
 
     def test_bridge_admission_observes_poses_without_unacquired_preview_cycles(self):
         model = OperationsModel(CONFIG, initial_orders=0, run_id="operations-admission-order")

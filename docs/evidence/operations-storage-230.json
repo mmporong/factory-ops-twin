@@ -69,7 +69,12 @@
     "artifacts/operations/campus16-pilot-289",
     "artifacts/perception-probe-278",
     "artifacts/campus-replay-284",
-    "artifacts/process-line-api-287"
+    "artifacts/process-line-api-287",
+    "artifacts/operations/campus16-pilot-290",
+    "artifacts/operations/campus16-pilot-291",
+    "artifacts/operations/campus16-pilot-295",
+    "artifacts/campus-visual-292",
+    "artifacts/campus-render-294"
   ],
   "public_media": "docs/images/operations-local45-228",
   "public_replay": "docs/data/operations-normal-223",
@@ -77,7 +82,7 @@
     "D archive is a second local drive copy, not an offsite backup.",
     "Raw render 228 RGB is retained only under E; selected state records, frozen source and final media are also archived on D.",
     "Render 227 full RGB and pre-alignment delivery GIF candidates expired; historical receipts/hashes remain valid records but are not claims that every old file remains.",
-    "Campus286/288/289 preserve distinct closed traffic failures with frozen inputs; no live290 files were included in these archives.",
+    "Archive campus286-289-traffic-contract.zip preserves closed286/288/289. The later campus-v2-static294-and-failures295.zip also preserves closed290/291/295.",
     "Perception278 remains a16-image class/mask probe, not an approved training dataset; replay284 is a3-frame probe from incomplete279."
   ],
   "supplemental_backups": [
@@ -115,6 +120,14 @@
       "verified_entries": 147,
       "all_entry_hashes_match": true,
       "scope": "Closed CPU286/288/289 failures with frozen inputs and HTTP287; preserves traffic contract counterexamples. No live290 files, SDK or source asset copies."
+    },
+    {
+      "path": "D:\\FactoryOpsPortfolio\\campus-v2-static294-and-failures295.zip",
+      "bytes": 10987124,
+      "sha256": "944a2f99eeed3eea8623b38819bed5d692b5c60b8f75738ac83769b2a7cb8fd0",
+      "verified_entries": 188,
+      "all_entry_hashes_match": true,
+      "scope": "Closed CPU290/291/295 failures, frozen inputs, v2 USD292/diagram, camera293 adjudication and selected3-still294; excludes live296, SDK and source vendor asset copies."
     }
   ]
 }

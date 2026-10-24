@@ -131,6 +131,7 @@ def main() -> int:
     except Exception as failure:
         error = {"type": type(failure).__name__, "message": str(failure)}
         status = "failed"
+        stop_reason = "runtime_error"
     finally:
         if recorder is not None:
             recorder.close()
