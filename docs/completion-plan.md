@@ -57,7 +57,7 @@ a46bea1은 기존retarget을 유지하면서 정지한handover의 새window를 �
 
 334는6d1ec42의 service-window/fifo·같은48lot/상한으로 실행해 sim4239초·wall140.160초에 stationary_wait_cycle로 자연 마감했다. 물류 최고16·이동6이지만 출하0·반납0·총21운송·차량별최소0으로 미완료다. amr12는 새 D_AOI_OUT 집하 중 이전 C_CI gate를47.817m 밖에서도 보존했고, C_S1에서 적재한 amr6의 C_CI 접근을 막았다. amr12는 반대로 amr6의 safe-exit 점유를 기다렸다. e53ba60은 service_window에서만 현재 pickup/drop 목표와 station을 비교해 이전 gate를 기존 차체 이탈 조건으로 해제한다. 실제 두 차량 상태의 표적1검사가 통과했고 기본 dispatch는 보존한다. 소스43·300기록/원본해시·재고240=221+19+0·owned0을 확인하며 원본334를 수정하지 않는다.333은 기존 소스를 유지하고 수정본 전체 성공은335에서 판정한다. [334 마감·원인·수정 범위](evidence/campus16-334.json)
 
-335는 e53ba60의 새 clean worktree/43동결입력에서 같은 service-window/fifo/48lot·상한으로 시작했다. 초기 peak16 물류를 재관측했지만 반복 완료·전량 출하/반납·quiescent는 마감 후 판정한다. 원본334와 active333은 변경하지 않으며 GPU/새 클라우드는 사용하지 않았다. [335 입력·진행 범위](evidence/campus16-335.json)
+335는 e53ba60의 새 clean worktree/43동결입력에서 같은 service-window/fifo/48lot·상한으로 시작했다. 초기 peak16 물류를 재관측했고 sim31140초에 전16대 최소2회 실제 운송을 완료했다. 전량 출하/반납·quiescent와 최종 렌더 적격 여부는 마감 후 판정한다. 원본334와 active333은 변경하지 않으며 GPU/새 클라우드는 사용하지 않았다. [335 입력·진행 범위](evidence/campus16-335.json)
 
 48lot 일괄 투입·빈 WIP에서 시작해 전량 출하/회수/정지하는 결과는 유한 배치의 완주다. 정상상태 평균 처리량이나 실공장 생산성으로 확장하지 않는다. 초기 WIP를 넣는 warm start는 운영 시점의 lot·설비·carrier 상태와 투입 계획을 정의하는 별도 실험이므로 현재16대 완료 조건을 대체하지 않는다. [종료형·정상상태 출력 분석(WSC2006)](https://informs-sim.org/wsc06papers/004.pdf) · [반도체 초기 운영상태 모델링(WSC2022)](https://informs-sim.org/wsc22papers/350.pdf)
 

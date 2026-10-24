@@ -54,7 +54,38 @@
     "all16_min2_deliveries_verified": false,
     "peak16_material_tasks_live_observed": true,
     "native_physics_transport_verified": false,
-    "final_render_eligible": false
+    "final_render_eligible": false,
+    "all16_min2_deliveries_live_observed": true
   },
-  "verification_scope": "Launch and frozen-source binding checked. Running CPU case; only progress.json monitored. Component regression is not full-run success, native physics, statistical throughput gain, or final media approval."
+  "verification_scope": "Launch and frozen-source binding checked. Running CPU case; only progress.json monitored. Component regression is not full-run success, native physics, statistical throughput gain, or final media approval.",
+  "repeat_milestone": {
+    "scope": "Live authored CPU observation; full case still running",
+    "run_id": "process-line-7212997c-f488-4c6a-9f91-9c9fc5d57272",
+    "sim_time_s": 32039.99999981425,
+    "elapsed_wall_s": 1426.0274233999662,
+    "shipments": 14,
+    "returns": 10,
+    "deliveries_by_robot": {
+      "amr-1": 6,
+      "amr-2": 5,
+      "amr-3": 3,
+      "amr-4": 8,
+      "amr-5": 4,
+      "amr-6": 3,
+      "amr-7": 7,
+      "amr-8": 7,
+      "amr-9": 4,
+      "amr-10": 5,
+      "amr-11": 5,
+      "amr-12": 4,
+      "amr-13": 10,
+      "amr-14": 5,
+      "amr-15": 2,
+      "amr-16": 5
+    },
+    "peak_material_tasks": 16,
+    "progress_sha256": "cd6a5e1d53a7771a6fc41ca4a4bee2bf45f3bde2939a310b9b19fd1e152b515a",
+    "observation_path": "artifacts/operations/campus16-pilot-335-all16-repeat-observation.json",
+    "observation_sha256": "93451cfb0b19acb35b8e8369ac9eec4357652ec82134dbc2d7ed02647ed51b55"
+  }
 }
