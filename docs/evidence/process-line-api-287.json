@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "status": "passed",
+  "scope": "Actual ephemeral loopback HTTP server with LineOperationsModel; no browser, GPU or completed factory run claim",
+  "http_paths": [
+    "GET /api/snapshot",
+    "GET /api/scene",
+    "POST /api/commands (read-only rejection)"
+  ],
+  "robots": 16,
+  "lines": [
+    "L1",
+    "L2",
+    "L3",
+    "L4"
+  ],
+  "cells": 12,
+  "initial_lots": 48,
+  "capabilities": [],
+  "snapshot_mode": "operations",
+  "layout_revision": "amr-semiconductor-campus16-v1",
+  "advanced_sim_time_s": 0.25,
+  "command_status": "rejected",
+  "command_reason": "현재 연결에서 지원하지 않는 명령입니다",
+  "input_sha256": {
+    "factory_ops/dashboard.py": "0f1f7797815adc9145104586640f701e84c963b171ebbe3d820c411c69ba8a2f",
+    "factory_ops/line_operations_model.py": "6df99d06b6a6c684e4e589168e93dfb95e947fdaac8c853056aba4bc45bc7ab8",
+    "configs/factory-semiconductor-campus16/fleet-profile.json": "5bdaa74cba0c8df54951b5e69cfa6de45c680b91e2d8f71f138f0afad32f18d5",
+    "configs/factory-semiconductor-campus16/g2.json": "b2e3385db604b33c94ce4f8dfbc41926a1e21b4f2e60a4340b114c1f124849ab",
+    "configs/factory-semiconductor-campus16/g3-routing.json": "a6445639efc35cee4e60c90c7c941b7c3e447815d1faa47230d451e6cb6f78c5",
+    "configs/factory-semiconductor-campus16/layout.json": "413cafa8cf659947dd737491b980ee1c701fe5bcf0875670ee05a38c5c6a1187",
+    "configs/factory-semiconductor-campus16/operations-charging.json": "113f7d1fffd0567d57e8ba9afb3e795e79c9246d03486334c8ef7046b9be5d43",
+    "configs/factory-semiconductor-campus16/process-network.json": "ef4d3dd35612426c5b284413a9cb180c91dcbdad929eb1bcabed170e8beed12b",
+    "configs/factory-semiconductor-campus16/render-profile.json": "1474dcb23b6c8a89b4cd4bf686b106d6083c6ef8d3326451d38cce436bc6d560",
+    "configs/factory-semiconductor-campus16/visual-assets.json": "264d1f2e377339b597c8aa6f06b8cb49baed71a724df2ea4efd2e498c3c97904"
+  },
+  "server_thread_stopped": true,
+  "original_result_sha256": "4ca6d058f1e1f195e3d1d4cf1bd508f518aec48ee99a7a18b3aee00bd3d00c12",
+  "probe_sha256": "8f91aecd9e8f3860380b5e87aaa874ff87990f0484e1b384fc16f1d51052b92a",
+  "limits": [
+    "Input hashes identify the source bytes used by this closed probe, not later working-tree changes.",
+    "HTTP model binding only; no browser rendering, completed 48-lot operation, GPU or physical motion claim.",
+    "Read-only process-line API; operator commands are rejected."
+  ]
+}

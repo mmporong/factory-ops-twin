@@ -289,14 +289,19 @@ class DashboardService:
                  charging_profile: dict[str, Any] | None = None, charging_source: Path | None = None,
                  events_source: Path | None = None, live_anchor_controls: bool = False,
                  scenario_dir: Path | None = None, execution_mode: str = "preview",
-                 dispatch_policy: str = "fifo") -> None:
-        if execution_mode not in ("preview", "operations"):
-            raise ValueError("local execution mode must be preview or operations")
-        if execution_mode == "operations" and (source is not None or charging_profile is not None):
-            raise ValueError("operations mode excludes source and preview charging profile")
+                 dispatch_policy: str = "fifo", lots: int = 12) -> None:
+        if execution_mode not in ("preview", "operations", "process-line"):
+            raise ValueError("local execution mode must be preview, operations or process-line")
+        if type(lots) is not int or not 1 <= lots <= 64:
+            raise ValueError("process-line lots must be an integer from 1 to 64")
+        if execution_mode in ("operations", "process-line") and (source is not None or charging_profile is not None):
+            raise ValueError(f"{execution_mode} mode excludes source and preview charging profile")
+        if execution_mode == "process-line" and outbox is not None:
+            raise ValueError("process-line mode is read-only and excludes a command outbox")
         if live_anchor_controls and (source is None or outbox is None or charging_profile is not None):
             raise ValueError("live anchor controls require explicit source/outbox and no CPU profile")
         self.live_anchor_controls = live_anchor_controls
+        self.execution_mode = execution_mode
         if source is not None and charging_profile is not None:
             raise ValueError("CPU charging profile cannot modify a live/replay source")
         if charging_source is not None and (source is None or outbox is not None and not live_anchor_controls or charging_profile is not None):
@@ -314,6 +319,9 @@ class DashboardService:
         if execution_mode == "operations":
             from .operations_model import OperationsModel
             self.model = OperationsModel(config, policy=dispatch_policy)
+        elif execution_mode == "process-line":
+            from .line_operations_model import LineOperationsModel
+            self.model = LineOperationsModel(config, policy=dispatch_policy, initial_lots=lots)
         elif source is None:
             self.model = DashboardModel(config, charging_profile=charging_profile)
         self._local_closure_requests: dict[str, bool] = {}
@@ -321,12 +329,13 @@ class DashboardService:
         self._receipts: dict[str, dict[str, Any]] = {}
         self._fingerprints: dict[str, str] = {}
         self._command_runs: dict[str, str] = {}
-        self.mock_mes = MockMESAdapter(self.model) if self.model is not None else None
+        self.mock_mes = (MockMESAdapter(self.model)
+                         if self.model is not None and execution_mode != "process-line" else None)
         module_root = Path(__file__).resolve().parent
         self.producer_sources = {"factory_ops/" + name: hashlib.sha256((module_root / name).read_bytes()).hexdigest()
             for name in ("dashboard.py", "dashboard_model.py", "mock_mes.py", "dashboard_charging.py",
                          "operations/ledger.py", "operations/inventory.py", "operations/model.py", "compat.py")}
-        if execution_mode == "operations":
+        if execution_mode in ("operations", "process-line"):
             for name in ("operations_model.py", "operations_motion.py", "drive_profile.py", "motion.py",
                          "fleet_routing.py", "route_reservation.py", "operations_charging.py",
                          "energy.py", "charging.py", "operations_corridor.py", "operations_replan.py"):
@@ -335,6 +344,13 @@ class DashboardService:
             if operations_charging.is_file():
                 self.producer_sources["config/operations-charging.json"] = hashlib.sha256(
                     operations_charging.read_bytes()).hexdigest()
+        if execution_mode == "process-line":
+            for name in ("line_operations_model.py", "process_line.py", "process_network.py"):
+                self.producer_sources[f"factory_ops/{name}"] = hashlib.sha256((module_root / name).read_bytes()).hexdigest()
+            for name in ("process-network.json", "process-line.json"):
+                path = config / name
+                if path.is_file():
+                    self.producer_sources[f"config/{name}"] = hashlib.sha256(path.read_bytes()).hexdigest()
         if self.events_source is not None:
             self.producer_sources["factory_ops/dashboard_events.py"] = hashlib.sha256(
                 (module_root / "dashboard_events.py").read_bytes()).hexdigest()
@@ -413,6 +429,8 @@ class DashboardService:
             result["commands"] = deepcopy(list(merged.values())[-30:])
             if self.mock_mes is not None:
                 result["integrations"] = {"mock_mes": self.mock_mes.snapshot()}
+            if self.execution_mode == "process-line":
+                result["capabilities"] = []
             result["api_producer"] = {"scope": "selected API/model source bytes at service start",
                                       "selected_modules_sha256": dict(self.producer_sources)}
             if self.charging_source is not None:
@@ -567,8 +585,9 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--config", type=Path, default=Path("configs/factory-v4"))
     parser.add_argument("--port", type=int, default=8765)
-    parser.add_argument("--execution-mode", choices=("preview", "operations"), default="preview")
+    parser.add_argument("--execution-mode", choices=("preview", "operations", "process-line"), default="preview")
     parser.add_argument("--dispatch-policy", choices=("fifo", "eta"), default="fifo")
+    parser.add_argument("--lots", type=int, default=12, help="initial process-line lots, 1..64")
     parser.add_argument("--source", type=Path, help="atomically published live/replay JSON; never rosbag SQLite")
     parser.add_argument("--charging-source", type=Path,
                         help="optional same-run ROS virtual charger JSON; controls require explicit opt-in")
@@ -581,8 +600,12 @@ def main() -> None:
     parser.add_argument("--web-charging-profile", type=Path,
                         help="optional authored CPU energy/geometric docking model; never applied to live/replay")
     args = parser.parse_args()
-    if args.execution_mode == "operations" and (args.source is not None or args.web_charging_profile is not None):
-        parser.error("--execution-mode operations excludes source and preview charging profile")
+    if not 1 <= args.lots <= 64:
+        parser.error("--lots must be from 1 to 64")
+    if args.execution_mode in ("operations", "process-line") and (args.source is not None or args.web_charging_profile is not None):
+        parser.error(f"--execution-mode {args.execution_mode} excludes source and preview charging profile")
+    if args.execution_mode == "process-line" and args.commands_dir is not None:
+        parser.error("--execution-mode process-line is read-only and excludes --commands-dir")
     if args.source is not None and args.web_charging_profile is not None:
         parser.error("--web-charging-profile is available only in the local CPU model")
     if args.charging_source is not None and (args.source is None or args.commands_dir is not None and not args.live_anchor_controls
@@ -597,7 +620,7 @@ def main() -> None:
                                charging_profile=charging_profile, charging_source=args.charging_source,
                                events_source=args.events_source, live_anchor_controls=args.live_anchor_controls,
                                scenario_dir=args.scenario_dir, execution_mode=args.execution_mode,
-                               dispatch_policy=args.dispatch_policy)
+                               dispatch_policy=args.dispatch_policy, lots=args.lots)
     server = make_server(service, args.port)
     stopping = threading.Event()
 
