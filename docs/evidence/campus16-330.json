@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "case": "campus16-pilot-330",
+  "run_id": "process-line-65b446a6-b228-4132-b235-946bb81218ed",
+  "status": "running",
+  "execution_mode": "authored_CPU_operations",
+  "source_commit": "0b616c5e796d992891539c16d06c619cd3ab2e9f",
+  "components": {
+    "final_quiescence_fix": "0c42abb01d718b2f2bc97e28a64a71c9043e9e09",
+    "holdable_refuge_yield": "b102144442641da769661c69b4655abb03df0077",
+    "actual_wide_bridge_geometry": "0b616c5e796d992891539c16d06c619cd3ab2e9f"
+  },
+  "objective": "Same48lots shipped and carriers returned; quiescent; all16robots repeat material transport; peak16 actual material tasks. Parking/charging/yield excluded.",
+  "workload": {
+    "lots": 48,
+    "policy": "fifo",
+    "config": "configs/factory-semiconductor-campus16-wide-bridges",
+    "dispatch_mode": "downstream_wip_drain_least_assigned",
+    "release": "all at simulation start"
+  },
+  "limits": {
+    "horizon_s": 240000,
+    "wall_s": 10800,
+    "stall_timeout_s": 600,
+    "cycle_stall_timeout_s": 600,
+    "record_best_window_samples": 300
+  },
+  "comparison_scope": "Combined liveness and capacity followup: holdable refuge, actual AB/CD geometry and original FIFO-based ranking. Not an isolated ETA, layout, or throughput comparison with329 or327. Fleet, material capacity, energy and safety limits preserved.",
+  "frozen_source": {
+    "file_count": 43,
+    "manifest_sha256": "9a3a66827e600c4f9d61ea9c18596393fb2a2137aad8b6e2b8c7a43dbde0bbf2",
+    "files_checked_at_launch": true
+  },
+  "launch_processes": {
+    "session": 1836,
+    "shell_pid": 103684,
+    "wrapper_pid": 95000,
+    "python_pid": 70192,
+    "retention_reason": "Authorized bounded48-lot completion run supervised from an isolated frozen source worktree.",
+    "stop_method": "Ctrl+C to the owned execution session; runner finalizes result/recording. Do not terminate unrelated Python/Kit/server processes."
+  },
+  "initial_observed_progress": {
+    "sim_time_s": 5010.000000000695,
+    "elapsed_wall_s": 109.74095979996491,
+    "shipments": 2,
+    "returns": 0,
+    "deliveries": 34,
+    "peak_material_tasks": 9
+  },
+  "verification_scope": "Launch and43 frozen input files verified. No closed full result, peak16 approval, or final media.",
+  "success_flags": {
+    "all48_shipped_and_returned_verified": false,
+    "quiescent_verified": false,
+    "peak16_material_tasks_verified": false,
+    "native_physics_transport_verified": false,
+    "final_render_eligible": false
+  }
+}

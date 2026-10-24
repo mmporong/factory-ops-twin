@@ -1,0 +1,184 @@
+{
+  "schema_version": 1,
+  "status": "implemented_targeted_and_main_integration_passed_full_run_pending",
+  "execution_scope": "Authored CPU geometry, kinematic route windows and guards; no native physics/sensor or final-render claim.",
+  "config": "configs/factory-semiconductor-campus16-wide-bridges",
+  "source_worker_commit": "e5d98867eebd4020beac7815f9c4e5ead064f05f",
+  "source_main_commit": "0b616c5e796d992891539c16d06c619cd3ab2e9f",
+  "baseline_limitation": {
+    "lane_center_separation_m": 1.5,
+    "reservation_radius_m": 1.4371090915442775,
+    "reservation_diameter_m": 2.874218183088555,
+    "opposing_window_overlap_tiles": {
+      "AB": 44,
+      "CD": 53
+    },
+    "interpretation": "Splitting resource IDs alone cannot allow opposing vehicles; the existing geometry has overlapping protected route tiles."
+  },
+  "new_geometry": {
+    "road_envelope_width_m": 6.0,
+    "lane_center_separation_m": 3.0,
+    "minimum_center_separation_m": 2.874218183088555,
+    "reservation_radius_m": 1.4371090915442775,
+    "tile_size_m": 1.0,
+    "directional_resources": [
+      "AB_E",
+      "AB_W",
+      "CD_E",
+      "CD_W"
+    ],
+    "shared_resources_unchanged": [
+      "AC",
+      "BD"
+    ],
+    "safe_exit_overrides": {
+      "CD_E_QUEUE": {
+        "node": "D_LOW_E_P1",
+        "xy": [
+          54.0,
+          44.5
+        ]
+      }
+    },
+    "scope": "selection candidate; safety guards and vehicle envelope are unchanged"
+  },
+  "layout_metadata": {
+    "road_envelope_width_m": 6.0,
+    "lane_center_separation_m": 3.0,
+    "endpoint_connectors": {
+      "AB_E": [
+        [
+          28.5,
+          12.5
+        ],
+        [
+          51.0,
+          12.5
+        ]
+      ],
+      "AB_W": [
+        [
+          51.0,
+          15.5
+        ],
+        [
+          28.5,
+          15.5
+        ]
+      ],
+      "CD_E": [
+        [
+          28.5,
+          44.5
+        ],
+        [
+          51.0,
+          44.5
+        ]
+      ],
+      "CD_W": [
+        [
+          51.0,
+          47.5
+        ],
+        [
+          28.5,
+          47.5
+        ]
+      ]
+    },
+    "approach_overrides": {
+      "AB_E_QUEUE": [
+        30.0,
+        8.0,
+        33.5,
+        12.5
+      ]
+    },
+    "safe_exit_overrides": {
+      "CD_E_QUEUE": {
+        "node": "D_LOW_E_P1",
+        "xy": [
+          54.0,
+          44.5
+        ]
+      }
+    },
+    "scope": "authored selectable geometry variant; no throughput or physical-runtime claim"
+  },
+  "safety_preserved": [
+    "vehicle reservation radius and tracking allowance",
+    "1m reservation tiles",
+    "full rolling window and all peer actual poses",
+    "safe-exit lookahead",
+    "single-lane owner exclusivity",
+    "AC/BD single bridge resources",
+    "motion limits",
+    "finite stock/carriers and2-slot cell buffers",
+    "virtual charging energy profile"
+  ],
+  "fixture_or_obstacle_removed": 0,
+  "fixture_or_obstacle_moved": 0,
+  "campus_bounds_unchanged": true,
+  "config_sha256": {
+    "fleet-profile.json": "f49254f37ffb154f7c113e004a70e9c43f131d60eb2a7408434d30f36a16c9aa",
+    "g2.json": "f1f0edd538ac61d21ab45dc2ae02d40f560f418025b938ea1a2d7c9362195bed",
+    "g3-routing.json": "39b396c4e96b7e8e3c7b37791240ce9c1ac6bc88bbc4f6fb99049bdafedab9e0",
+    "layout.json": "457a6643c5e9b746707d946cd1eb4a967ea893b07b6143203bbbc1f285df1cc6",
+    "operations-charging.json": "b1a7d2e0d24a70d5d6796e024de85086f6db5b65ab82ff67c11d84ac1f226e02",
+    "process-network.json": "5a406e3880996c543afe7f49b104a7d94d4dd33319b782c891a26cb0996a3a8d",
+    "render-profile.json": "1ed3a6b259062a399e2f39af5dbf2a5d9b8b133a55a0f04c6c1ff7c9c5ce9187",
+    "visual-assets.json": "f066f1d4d620a11521c82f9375c81b8423fa5ed4ab3a77ce0f4b81a5d622a230"
+  },
+  "six_files_byte_identical_to_original": [
+    "fleet-profile.json",
+    "g2.json",
+    "operations-charging.json",
+    "process-network.json",
+    "render-profile.json",
+    "visual-assets.json"
+  ],
+  "component_evidence": {
+    "opposing_full_queue_to_safe_exit_overlap_tiles": {
+      "AB": 0,
+      "CD": 0
+    },
+    "current_pose_guard_passed": true,
+    "both_vehicles_progressed": true,
+    "local_movement_test_steps": 100,
+    "local_movement_test_dt_s": 0.1,
+    "native_physics": false,
+    "same_lane_second_owner_rejected": true,
+    "sampled_path_step_m": 0.05,
+    "path_obstacle_grid_conflicts": 0,
+    "other_authored_holdable_footprint_conflicts": 0
+  },
+  "validation": {
+    "worker_targeted_tests": {
+      "passed": 3,
+      "elapsed_s": 22.238,
+      "provenance": "Completed agent command report, not a new root full rerun."
+    },
+    "main_opposing_window_test": {
+      "passed": true,
+      "tests": 1,
+      "elapsed_s": 12.394
+    },
+    "main_LineOperationsModel_constructor_and_validate_snapshot": {
+      "passed": true,
+      "robots": 16,
+      "initial_lots": 0
+    },
+    "py_compile": "PASS",
+    "diff_check": "PASS"
+  },
+  "qualification": {
+    "whole48_48_complete": false,
+    "whole_run_peak16_material": false,
+    "native_physics_transport": false,
+    "final_GPU_render": false
+  },
+  "next_action": "Freeze330 with this optional geometry and the holdable-yield lifecycle fix; use original FIFO/least-assigned policy. Judge complete-run liveness and actual concurrency from closed results.",
+  "new_holdable_nodes_count": 45,
+  "original_holdable_nodes_count": 44
+}

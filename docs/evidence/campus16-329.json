@@ -283,5 +283,41 @@
     },
     "passed": false
   },
-  "next_action": "Preserve this source-bound result. Diagnose exact five-robot blockers and legal yield/recovery in a separate source; no identical full retry. Prepare actual wide-bridge geometry independently with the same safety radius and reservation tiles."
+  "next_action": "Freeze330 with holdable-yield repair and actual wide-bridge geometry; use FIFO/least-assigned. Do not claim an isolated ETA or geometry improvement from different sources.",
+  "diagnosis_and_repair": {
+    "receipt_sha256": "c403302ac9e8a680866994f45709987ef08539d251509d0898c92bd33a12a6c2",
+    "wait_ring": [
+      "amr-10",
+      "amr-9",
+      "amr-5",
+      "amr-7",
+      "amr-4",
+      "amr-10"
+    ],
+    "root_cause": "Yield refuge search considered only dynamic homes; all16 home positions were actually occupied, leaving no candidate even when authored same-bay staging holdables were clear.",
+    "exact_closed_state_clear_refuge_routes": [
+      {
+        "start": "A_P3",
+        "refuge": "A_PACK_WAIT",
+        "distance_m": 16.0
+      },
+      {
+        "start": "A_P3",
+        "refuge": "A_SOURCE_WAIT",
+        "distance_m": 31.5
+      }
+    ],
+    "implementation_worker_commit": "700dfaae5126ca080d8ab9294738ab5211c1852f",
+    "implementation_main_commit": "b102144442641da769661c69b4655abb03df0077",
+    "repair": "Add authored same-bay holdables to refuge search. Exclude queues, safe exits, owned charging pads and another active trip goal; retain full-route observed footprint and bridge guards. Resume the original unloaded pickup or home trip without changing task/station/inventory or delivery counters.",
+    "charge_approach_is_still_excluded_from_yield": true,
+    "targeted_tests": {
+      "reported_passed": 3,
+      "elapsed_s": 19.573,
+      "main_new_regression_passed": true,
+      "main_elapsed_s": 6.503
+    },
+    "original_result_reclassified": false,
+    "full_followup_success_verified": false
+  }
 }

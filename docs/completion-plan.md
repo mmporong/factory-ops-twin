@@ -39,6 +39,10 @@ a46bea1은 기존retarget을 유지하면서 정지한handover의 새window를 �
 
 329는sim36174초·wall1513.691초에 출하10·반납6·운송85·전16대최소3회·peak13/이동7로stationary_wait_cycle 마감됐다. amr4귀가·amr5적재반납·amr7/9충전접근·amr10무적재집하의5대관계가601sim초고정됐다. 소스43개·닫힌300기록해시·유한재고보존·owned0을확인했고동일입력을재실행하지않는다. 실제blocker/양보복구는별도소스에서수정하며,새AB/CD선택variant는예약반경/타일폭을유지한실제차로기하확장을준비한다. [329 마감](evidence/campus16-329.json)
 
+329의 wait ring은10→9→5→7→4→10이었다. 전16홈이실제pose로점유돼 homes만찾던양보후보가0이었고,같은bay의A_PACK_WAIT16m/A_SOURCE_WAIT31.5m경로는기존footprint/bridge가드아래clear였다. b102144는authored holdable을후보에추가하되queue/safe-exit/예약도크/다른tripgoal을제외한다. 충전접근은양보차량으로열지않고빈집하/귀가만기존작업·계수를보존해복귀한다. 관련3검사+main새회귀1검사를통과했다. [329 원인·수정](evidence/campus16-329.json)
+
+0b616c5의선택wide-bridges는AB/CD실제차로를3m간격·6m도로영역으로작성하고방향별자원을분리했다. 예약지름2.874218m·타일1m·peerpose·lookahead·동일차로차단을유지하며반대방향전체창중첩0과두차량진행을확인했다. CD_E출구는D_LOW_E_P1로옮기고AB_E접근허용영역을0.45m넓혔으며설비/장애물/전체bounds는그대로다. 관련3검사·main실제진행1검사·16대constructor/snapshot계약PASS후330을동결시작했다. 같은48lot·FIFO·240000sim/10800wall·정체/SCC600·자동300기록이며완주/16동시성/GPU렌더는마감뒤판정한다. [기하·확인범위](evidence/campus16-wide-bridges.json) · [330 실행계약](evidence/campus16-330.json)
+
 4. 기존 Nebius 환경234의 재사용239는 `UNHEALTHY`로 SDK 시작 전 실패했고 실제 `STOPPED`로 보존했다. 로컬 RTX3060의307/312에서16대 무적재 바퀴·조인트·정지와32개 ROS/RTX 라이다 토픽을7초·420 physics step 동안 확인했다. 최대 GPU 메모리는6,536/12,288MiB이며 장시간 물류·Nav2·RTF 상한의 근거는 아니다. 이후 클라우드 실행이 필요하면 독립 Stop 복구·실제 GPU/SDK 초기화를 확인하고 기존 첫 묶음6시간·40달러 범위를 유지한다. 중지 후 디스크 비용과 공급자 Stop 실패 가능성은 남는다. [16대 수용 근거](evidence/campus-capacity-307-312.json)
 5. 같은 실행의 웹 장애 주입·운영 영향·복구와 공장 전체 물류 미디어를 만든다. 기본 읽기 전용을 유지하며 명시한 로컬 process-line 실행에서12개 설비 선택·고장/복구 명령·receipt·상태 재생을 연결했다. 관련 API9검사와 UI 타입 검사는 통과했다. 동결314의48lot·9,000초 정상/고장 비교는 HTTP로 L2.TEST를300초 정지·복구하고 잔여 처리시간 보존과 대상 lot의299.9초 완료 지연을 확인했다. 출하는 양쪽2건으로 전체 생산량 감소를 주장하지 않는다. 선택한 마감 baseline과 격리 fault의 모델·설정이 같으며, 공유 소스가 바뀐 세션은 제외했다. 브라우저 조작·48lot 정상 완주·대표16대 미디어는 남아 있다. 대표 README·실행법·한계·오류 기록과 선별 원본을 보존하고 원격 SHA·소유 프로세스 정리·Brev 실제 중지를 확인한다. [명령 확인 범위](evidence/campus-equipment-controls.json) · [설비 비교 결과](evidence/campus-equipment-comparison.json)
 
