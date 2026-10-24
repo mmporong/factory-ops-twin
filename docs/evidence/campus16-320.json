@@ -1,0 +1,472 @@
+{
+  "schema_version": 1,
+  "run_id": "process-line-c71df966-7336-44e0-9787-ffccf29e2318",
+  "status": "incomplete",
+  "stop_reason": "no_motion_or_process_progress",
+  "error": null,
+  "scope": "authored CPU process line and kinematic reservations; no physics, sensors or measured factory times",
+  "source_commit": "27320a44ec3ac84368f8d525eaf924c3ee14f6db",
+  "source_stable_during_run": true,
+  "frozen_file_count": 43,
+  "workload": {
+    "lots": 48,
+    "release": "all at simulation start",
+    "policy": "fifo"
+  },
+  "limits": {
+    "horizon_s": 120000.0,
+    "wall_s": 5400.0,
+    "snapshot_count": 80,
+    "stall_timeout_s": 600.0,
+    "cycle_stall_timeout_s": 600.0
+  },
+  "final_sim_time_s": 16733.000000036995,
+  "elapsed_wall_s": 402.89545870001893,
+  "business": {
+    "shipped_lots": 4,
+    "returned_carriers": 1,
+    "deliveries_by_robot": {
+      "amr-1": 4,
+      "amr-2": 3,
+      "amr-3": 3,
+      "amr-4": 3,
+      "amr-5": 8,
+      "amr-6": 3,
+      "amr-7": 2,
+      "amr-8": 3,
+      "amr-9": 6,
+      "amr-10": 3,
+      "amr-11": 2,
+      "amr-12": 0,
+      "amr-13": 6,
+      "amr-14": 2,
+      "amr-15": 3,
+      "amr-16": 0
+    },
+    "deliveries_total": 51,
+    "robots_with_deliveries": 14,
+    "peak_transport_active": 13,
+    "peak_transport_moving": 7,
+    "active_by_robot": {
+      "amr-2": "LOT-0001:empty_return:5",
+      "amr-14": "LOT-0027:process_input:1",
+      "amr-3": "LOT-0003:product_move:3",
+      "amr-5": "LOT-0015:product_move:2",
+      "amr-9": "LOT-0016:product_move:2",
+      "amr-13": "LOT-0004:empty_return:5",
+      "amr-7": "LOT-0006:product_move:3",
+      "amr-16": "LOT-0007:product_move:3",
+      "amr-12": "LOT-0008:product_move:2",
+      "amr-1": "LOT-0012:product_move:2",
+      "amr-10": "LOT-0011:empty_return:5"
+    },
+    "quiescent": false
+  },
+  "traffic_diagnosis": {
+    "status": "root_cause_reproduced_safe_home_trip_retarget_implemented_run321_pending",
+    "bridge_owners": {},
+    "bridge_waiters": {
+      "amr-1": [
+        "amr-14"
+      ],
+      "amr-10": [
+        "amr-2"
+      ],
+      "amr-12": [
+        "amr-16"
+      ],
+      "amr-13": [
+        "amr-14"
+      ],
+      "amr-14": [
+        "amr-16"
+      ],
+      "amr-16": [
+        "amr-6"
+      ],
+      "amr-2": [
+        "amr-14"
+      ],
+      "amr-3": [
+        "amr-1"
+      ],
+      "amr-4": [
+        "amr-16"
+      ],
+      "amr-5": [
+        "amr-6"
+      ],
+      "amr-6": [
+        "amr-8"
+      ],
+      "amr-7": [
+        "amr-3"
+      ],
+      "amr-9": [
+        "amr-2"
+      ]
+    },
+    "bridge_wait_cycle": null,
+    "reservation_wait_cycle": null,
+    "relocating": {
+      "amr-6": "B_P4"
+    },
+    "robots": [
+      {
+        "id": "amr-1",
+        "status": "waiting",
+        "pose": {
+          "x_m": 69.0,
+          "y_m": 38.5,
+          "yaw_rad": -1.5707963267948966
+        },
+        "task_id": "LOT-0012:product_move:2",
+        "task_type": "product_move",
+        "destination": "D_CO",
+        "payload_id": null,
+        "charging_phase": null,
+        "battery_pct": 44.65147369585729,
+        "waiting_reason": "교통 예약 대기: safe_exit_lookahead_occupied"
+      },
+      {
+        "id": "amr-2",
+        "status": "waiting",
+        "pose": {
+          "x_m": 74.0,
+          "y_m": 73.0,
+          "yaw_rad": 1.892546881191539
+        },
+        "task_id": "LOT-0001:empty_return:5",
+        "task_type": "empty_return",
+        "destination": "D_OUT",
+        "payload_id": null,
+        "charging_phase": null,
+        "battery_pct": 37.96880149540654,
+        "waiting_reason": "교통 예약 대기: safe_exit_lookahead_occupied"
+      },
+      {
+        "id": "amr-3",
+        "status": "waiting",
+        "pose": {
+          "x_m": 80.0,
+          "y_m": 73.0,
+          "yaw_rad": 1.5707963267948966
+        },
+        "task_id": "LOT-0003:product_move:3",
+        "task_type": "product_move",
+        "destination": "D_PACK_IN",
+        "payload_id": "T003",
+        "charging_phase": null,
+        "battery_pct": 30.227667136118793,
+        "waiting_reason": "교통 예약 대기: bridge_admission_occupied"
+      },
+      {
+        "id": "amr-4",
+        "status": "waiting",
+        "pose": {
+          "x_m": 27.0,
+          "y_m": 38.5,
+          "yaw_rad": -1.5707963267948966
+        },
+        "task_id": "park:amr-4",
+        "task_type": "parking",
+        "destination": "A_P4",
+        "payload_id": null,
+        "charging_phase": null,
+        "battery_pct": 26.859346860016004,
+        "waiting_reason": "교통 예약 대기: safe_exit_lookahead_occupied"
+      },
+      {
+        "id": "amr-5",
+        "status": "waiting",
+        "pose": {
+          "x_m": 15.0,
+          "y_m": 3.0,
+          "yaw_rad": 3.536383773289554
+        },
+        "task_id": "LOT-0015:product_move:2",
+        "task_type": "product_move",
+        "destination": "A_CO",
+        "payload_id": null,
+        "charging_phase": null,
+        "battery_pct": 37.89262286363058,
+        "waiting_reason": "교통 예약 대기: safe_exit_lookahead_occupied"
+      },
+      {
+        "id": "amr-6",
+        "status": "waiting",
+        "pose": {
+          "x_m": 80.0,
+          "y_m": 12.5,
+          "yaw_rad": -6.283185307179586
+        },
+        "task_id": "park:amr-6",
+        "task_type": "parking",
+        "destination": "B_P2",
+        "payload_id": null,
+        "charging_phase": null,
+        "battery_pct": 37.87914292378713,
+        "waiting_reason": "교통 예약 대기: bridge_admission_occupied"
+      },
+      {
+        "id": "amr-7",
+        "status": "waiting",
+        "pose": {
+          "x_m": 54.0,
+          "y_m": 9.5,
+          "yaw_rad": -1.5707963267948966
+        },
+        "task_id": "LOT-0006:product_move:3",
+        "task_type": "product_move",
+        "destination": "D_AOI_OUT",
+        "payload_id": null,
+        "charging_phase": null,
+        "battery_pct": 53.91549924227756,
+        "waiting_reason": "교통 예약 대기: safe_exit_lookahead_occupied"
+      },
+      {
+        "id": "amr-8",
+        "status": "idle",
+        "pose": {
+          "x_m": 54.0,
+          "y_m": 34.0,
+          "yaw_rad": 1.5707963267948966
+        },
+        "task_id": null,
+        "task_type": null,
+        "destination": null,
+        "payload_id": null,
+        "charging_phase": null,
+        "battery_pct": 55.541978812821675,
+        "waiting_reason": null
+      },
+      {
+        "id": "amr-9",
+        "status": "waiting",
+        "pose": {
+          "x_m": 12.0,
+          "y_m": 41.5,
+          "yaw_rad": 4.71238898038469
+        },
+        "task_id": "LOT-0016:product_move:2",
+        "task_type": "product_move",
+        "destination": "B_CO",
+        "payload_id": null,
+        "charging_phase": null,
+        "battery_pct": 42.3493121216387,
+        "waiting_reason": "교통 예약 대기: safe_exit_lookahead_occupied"
+      },
+      {
+        "id": "amr-10",
+        "status": "waiting",
+        "pose": {
+          "x_m": 41.0,
+          "y_m": 73.0,
+          "yaw_rad": 0.5880026035475675
+        },
+        "task_id": "LOT-0011:empty_return:5",
+        "task_type": "empty_return",
+        "destination": "D_S2",
+        "payload_id": "T011",
+        "charging_phase": null,
+        "battery_pct": 40.20071204174608,
+        "waiting_reason": "교통 예약 대기: safe_exit_lookahead_occupied"
+      },
+      {
+        "id": "amr-11",
+        "status": "idle",
+        "pose": {
+          "x_m": 17.0,
+          "y_m": 41.5,
+          "yaw_rad": -1.5707963267948966
+        },
+        "task_id": null,
+        "task_type": null,
+        "destination": null,
+        "payload_id": null,
+        "charging_phase": null,
+        "battery_pct": 29.738966412219863,
+        "waiting_reason": null
+      },
+      {
+        "id": "amr-12",
+        "status": "waiting",
+        "pose": {
+          "x_m": 17.0,
+          "y_m": 66.0,
+          "yaw_rad": 0.0
+        },
+        "task_id": "LOT-0008:product_move:2",
+        "task_type": "product_move",
+        "destination": "C_CO",
+        "payload_id": null,
+        "charging_phase": null,
+        "battery_pct": 35.13958333276008,
+        "waiting_reason": "교통 예약 대기: safe_exit_lookahead_occupied"
+      },
+      {
+        "id": "amr-13",
+        "status": "waiting",
+        "pose": {
+          "x_m": 54.0,
+          "y_m": 41.5,
+          "yaw_rad": -1.5707963267948966
+        },
+        "task_id": "LOT-0004:empty_return:5",
+        "task_type": "empty_return",
+        "destination": "C_OUT",
+        "payload_id": null,
+        "charging_phase": null,
+        "battery_pct": 40.39408297895687,
+        "waiting_reason": "교통 예약 대기: safe_exit_lookahead_occupied"
+      },
+      {
+        "id": "amr-14",
+        "status": "waiting",
+        "pose": {
+          "x_m": 31.0,
+          "y_m": 73.0,
+          "yaw_rad": 2.642245931909663
+        },
+        "task_id": "LOT-0027:process_input:1",
+        "task_type": "process_input",
+        "destination": "A_S3",
+        "payload_id": null,
+        "charging_phase": null,
+        "battery_pct": 40.601154966377564,
+        "waiting_reason": "교통 예약 대기: safe_exit_lookahead_occupied"
+      },
+      {
+        "id": "amr-15",
+        "status": "idle",
+        "pose": {
+          "x_m": 59.0,
+          "y_m": 41.5,
+          "yaw_rad": 4.71238898038469
+        },
+        "task_id": null,
+        "task_type": null,
+        "destination": null,
+        "payload_id": null,
+        "charging_phase": null,
+        "battery_pct": 30.63088493395477,
+        "waiting_reason": null
+      },
+      {
+        "id": "amr-16",
+        "status": "waiting",
+        "pose": {
+          "x_m": 27.0,
+          "y_m": 3.0,
+          "yaw_rad": -0.39479111969976155
+        },
+        "task_id": "LOT-0007:product_move:3",
+        "task_type": "product_move",
+        "destination": "A_AOI_OUT",
+        "payload_id": null,
+        "charging_phase": null,
+        "battery_pct": 33.31810293564891,
+        "waiting_reason": "교통 예약 대기: safe_exit_lookahead_occupied"
+      }
+    ],
+    "root_cause": {
+      "terminal_blocker": "idle amr-8 at B_P2",
+      "affected_robot": "amr-6",
+      "stopped_anchor": "B_BD_N_SAFE_EXIT",
+      "stale_parking_goal": "B_P2",
+      "new_home_and_relocation_target": "B_P4",
+      "mechanism": "Charging home swap changed ownership and relocation target but retained the active home-parking trip to the old occupied home."
+    },
+    "repair": {
+      "worktree_commit": "3a7a8d2f5ce0b105f09fd77fc5feafcea1fcaf78",
+      "main_commit": "0651580",
+      "guard": "stopped at holdable nonqueue anchor; no active chunk, bridge window or held bridge",
+      "action": "Withdraw pending requests and retarget home-parking to relocation home from the current anchor. Preserve actual pose occupancy and route/window guards.",
+      "targeted_tests_passed": 3,
+      "targeted_tests_wall_s": 2.944,
+      "closed_pose_probe": "B_BD_N_SAFE_EXIT old B_P2 -> new B_P4 PASS",
+      "syntax_and_diff_check": "PASS",
+      "evidence_kind": "Agent actual targeted test/probe output, no independent approval or full-suite claim.",
+      "followup_case": "campus16-pilot-321",
+      "followup_source": "3a7a8d2f5ce0b105f09fd77fc5feafcea1fcaf78",
+      "full_case_complete": false
+    }
+  },
+  "charging": {
+    "owned_docks": 0,
+    "queue": [],
+    "faults": {},
+    "cumulative_supplied_wh": 284.17500000104184,
+    "scope": "Supplied virtual energy is not a charging-cycle count."
+  },
+  "recording": {
+    "path": "snapshots.jsonl.gz",
+    "frames": 300,
+    "first_observed_sim_time_s": 801.0000000001136,
+    "last_observed_sim_time_s": 1100.000000000095,
+    "uncompressed_bytes": 30616542,
+    "gzip_bytes": 3354308,
+    "uncompressed_sha256": "5292b91c966acfdc7585aa833c8c5c93564ffce449fa8627867902b0fdbe919b",
+    "gzip_sha256": "099ecbaf60ac29c8db0828fa9f9822d01caa0f5e78d8cbfcab8f45cb2ad4bc2a",
+    "frame_cap": 20000,
+    "uncompressed_byte_cap": 268435456
+  },
+  "selection": {
+    "scope": "authored process-line snapshots; selection only, not case validity, physics, sensors, throughput, or completion proof",
+    "sample_hz": 1,
+    "configured_sample_count": 300,
+    "selected_sample_count": 300,
+    "first": {
+      "sim_time_s": 801.0000000001136,
+      "shipments_completed": 0,
+      "returns_completed": 0,
+      "transports_completed": 8
+    },
+    "last": {
+      "sim_time_s": 1100.000000000095,
+      "shipments_completed": 0,
+      "returns_completed": 0,
+      "transports_completed": 15
+    },
+    "score": {
+      "shipment_and_return_both_increased": false,
+      "minimum_shipment_return_delta": 0,
+      "completed_transport_delta": 7,
+      "logistics_pose_distance_m": 302.4142411782973,
+      "distinct_moving_logistics_robots": 5,
+      "priority_order": [
+        "shipment_and_return_both_increased",
+        "minimum_shipment_return_delta",
+        "completed_transport_delta",
+        "logistics_pose_distance_m",
+        "distinct_moving_logistics_robots"
+      ]
+    },
+    "movement_scope": {
+      "included_task_types": [
+        "empty_return",
+        "process_input",
+        "product_move"
+      ],
+      "excluded_task_types": [
+        "traffic_yield",
+        "parking",
+        "charging"
+      ],
+      "payload_required": false,
+      "task_id_change_edges": "excluded"
+    }
+  },
+  "source_result_and_gzip_hashes_match": true,
+  "final_media_source_eligible": false,
+  "cleanup": {
+    "remaining_owned_python_count": 0,
+    "evidence": "Owner observed PTY completion and no owned Python process."
+  },
+  "hashes": {
+    "result.json": "7f95b61822559d69f548c45a9aff4caf617b71ada15c443d03c0e2d3f03f571c",
+    "recording-manifest.json": "162d00fa518a3d0b7402e840c77b9ab9f0966df160627c4b4c10570eb4994480",
+    "snapshots.jsonl.gz": "099ecbaf60ac29c8db0828fa9f9822d01caa0f5e78d8cbfcab8f45cb2ad4bc2a",
+    "frozen-source/manifest.json": "c7ac79765cdc306ef80e589ccbaecc7cf684f99a1134d219f737e00f1296a4f6"
+  }
+}

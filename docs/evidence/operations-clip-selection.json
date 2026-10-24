@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "status": "implemented_targeted_checks_passed_full_run_selection_pending",
+  "status": "implemented_long_case_diagnostic_capture_passed_valid_complete_case_pending",
   "scope": "Bounded presentation-window selection from authored CPU snapshots. No new GPU launch, RGB, native motion, full workload completion or final media claim.",
   "source_commits": {
     "selector_worktree": "9063c78b4faeb8c36440e06abdf83bb91e63fd71",
@@ -59,6 +59,61 @@
     "boundary_regressions": {
       "single_sample_window": "Second offer must not remove a nonexistent edge or retain distance from a discarded sample.",
       "traffic_yield_projection": "Exclude movement_purpose=traffic_yield even when LineOperationsModel preserves the original logistics task ID/type."
+    },
+    "automatic_long_case": {
+      "case": "campus16-pilot-320",
+      "source_commit": "27320a44ec3ac84368f8d525eaf924c3ee14f6db",
+      "case_status": "incomplete",
+      "observed_until_sim_s": 16733.000000036995,
+      "selected_samples": 300,
+      "result_and_gzip_hashes_match": true,
+      "selection": {
+        "scope": "authored process-line snapshots; selection only, not case validity, physics, sensors, throughput, or completion proof",
+        "sample_hz": 1,
+        "configured_sample_count": 300,
+        "selected_sample_count": 300,
+        "first": {
+          "sim_time_s": 801.0000000001136,
+          "shipments_completed": 0,
+          "returns_completed": 0,
+          "transports_completed": 8
+        },
+        "last": {
+          "sim_time_s": 1100.000000000095,
+          "shipments_completed": 0,
+          "returns_completed": 0,
+          "transports_completed": 15
+        },
+        "score": {
+          "shipment_and_return_both_increased": false,
+          "minimum_shipment_return_delta": 0,
+          "completed_transport_delta": 7,
+          "logistics_pose_distance_m": 302.4142411782973,
+          "distinct_moving_logistics_robots": 5,
+          "priority_order": [
+            "shipment_and_return_both_increased",
+            "minimum_shipment_return_delta",
+            "completed_transport_delta",
+            "logistics_pose_distance_m",
+            "distinct_moving_logistics_robots"
+          ]
+        },
+        "movement_scope": {
+          "included_task_types": [
+            "empty_return",
+            "process_input",
+            "product_move"
+          ],
+          "excluded_task_types": [
+            "traffic_yield",
+            "parking",
+            "charging"
+          ],
+          "payload_required": false,
+          "task_id_change_edges": "excluded"
+        }
+      },
+      "render_eligible": false
     }
   },
   "sources": {
@@ -74,7 +129,7 @@
   "limits": [
     "Movement scores are authored snapshot pose proxies, not native measurements.",
     "300 samples at1Hz span approximately299s; short partial windows may be too short for final render.",
-    "Whole-case automatic selection is not yet exercised in a full48-lot case.",
-    "Source/config remain frozen in running319; this option is available for later runs."
+    "Source/config remain frozen in running319; this option is available for later runs.",
+    "Automatic selection ran through an incomplete16,733s diagnostic case; a valid complete48-lot case and final media remain pending."
   ]
 }
