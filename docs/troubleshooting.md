@@ -1575,3 +1575,11 @@ sim20,341초 재현은 출하5·반납4·운송66과 amr13→amr6→amr9→amr13
 설비 비교 도표의 Windows 생성본은84,115바이트였지만 Git에 정규화된 SVG는81,580바이트였다. 원인은 CRLF와 LF 차이였으며, 원본 수치 JSON과 producer 소스는 작업 파일·Git blob이 같았다. 화면이나 실험 수치는 달라지지 않았지만 생성 직후 해시를 그대로 공개하면 clone한 SVG와 맞지 않았다.
 
 도표 exporter가 UTF-8·LF로 마감한 뒤 해시를 계산하도록 바꾸고, 같은 입력으로 재생성한 SVG81,580바이트와 기존 Git blob의 바이트 일치를 확인했다. 수정 SHA는423a2ead0cd6b1f9cf2a7802f87baf6a030454a7b2f88bc6e0434a956a58faa5다. 출처 영수증도 갱신했다. 재발 방지는 파생 텍스트 미디어의 줄바꿈을 명시하고 공개 파일 해시를 정규화 이후에 계산하는 것이다. [Python3.14 Path.write_text](https://docs.python.org/3.14/library/pathlib.html#pathlib.Path.write_text) · [Git 줄바꿈 정규화](https://git-scm.com/docs/gitattributes#_end_of_line_conversion) · [도표 출처](evidence/campus-equipment-comparison-figure.json)
+
+## FOT-200 — 비물류 대기의 충전 예산 혼입과 35% 이상 차량의 업무·충전 공백
+
+318은 이전 고정 순환 구간을 통과했고 귀가 양보의 실제 선택·대피·원래 주차 재개도 관측했다. 그러나 sim42,217.7초에 출하6·반납4·운송73, ready 작업30개·활성 물류 임무0개가 남았다. 이동 누계는 늘었지만 물류가 충분히 진행되지 않아 지원된 Ctrl+C로 진단 마감했다. 결과는 incomplete/diagnostic_interrupt·error=null, 소스42개 안정·매니페스트/닫힌 gzip 해시 일치·소유 Python0이며 완주가 아니다.
+
+관찰된 대기 예산11,947.8초는45W 기준149.35Wh를 매 배차 에너지에 더했다. 일반 `_wait_s`는 주차·충전 접근의 정지 대기도 세는데 `_update_traffic_wait_budget`가 이를 물류 대기로 읽었다. 충전 이탈 요구량은303.33~308.67Wh(용량600Wh의50.55~51.44%)였다. 한편 에너지 거절 차량의 충전 요청에는 `soc < resume_soc`가 붙어, SOC36.28~50.26%의 idle8대는 작업도 충전도 시작하지 못했다. 예약 대기 순환만 관찰해서는 이 상태를 찾기 어려웠다.
+
+실제 물류 trip의 정지 대기만 `_transport_wait_s`에 누적하고 일반 KPI를 보존했다. 업무 에너지 거절은 resume35%와 관계없이 충전 수요로 유지한다. 충전 adapter와 물류 대기/귀가 양보14검사·라인 이탈 에너지1검사, 총15개가 통과했다. 기존 전력·용량·안전 예비량·경로 점유 검사는 완화하지 않았다.319는 동결 소스로 후속 실행하며 상태 요약에서 물류·충전·주차를 구분한다.48lot 완주·16개 물류 임무 동시성은 여전히 남아 있다. [실행 마감·원인·수정·원본 해시](evidence/campus16-318.json)

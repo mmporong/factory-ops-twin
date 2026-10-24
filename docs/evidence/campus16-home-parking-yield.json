@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "status": "implemented_targeted_checks_passed_full_run_pending",
+  "status": "implemented_home_parking_yield_observed_full_workload_incomplete",
   "scope": "Matched CPU diagnostic state, controlled lifecycle regression and a transcribed cycle-local refuge probe. All-16 pose admission and liveness are evaluated by run318, not established by the local probe.",
   "source_commit": "3b283e2bcd6fd6bf1827de7e15c7fe1013563421",
   "diagnostic_state": {
@@ -124,7 +124,25 @@
     ],
     "targeted_tests_passed": 4,
     "new_home_parking_test_uses_controlled_alternative_and_blocker_mocks": true,
-    "long_run": "campus16-pilot-318 in progress; no completion claim"
+    "long_run": "318 closed incomplete after observing home-parking yield; see campus16-318.json"
   },
-  "original_report_public_path": "docs/data/campus16-scc-317/report.json"
+  "original_report_public_path": "docs/data/campus16-scc-317/report.json",
+  "observed_run318": {
+    "run_id": "process-line-6bfe58eb-e8b9-4c42-ab98-34d00987a5a4",
+    "result_sha256": "8926864e43a0894e8011e9e96fa8a922eed4f50f3df50326a006b6d43f11288c",
+    "completed_home_resume_events": [
+      {
+        "id": "event-267",
+        "sim_time_s": 11037.500000022623,
+        "type": "traffic_yield_completed",
+        "message": "amr-11 양보 지점 도착 · 원래 주차 재개",
+        "robot_id": "amr-11",
+        "refuge": "B_P3",
+        "pickup": null,
+        "resume_goal": "C_P3",
+        "resume_phase": "parking"
+      }
+    ],
+    "completion_claim": false
+  }
 }

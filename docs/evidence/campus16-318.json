@@ -1,0 +1,182 @@
+{
+  "schema_version": 1,
+  "run_id": "process-line-6bfe58eb-e8b9-4c42-ab98-34d00987a5a4",
+  "status": "incomplete",
+  "stop_reason": "diagnostic_interrupt",
+  "error": null,
+  "scope": "authored CPU process line and kinematic reservations; no physics, sensors or measured factory times",
+  "source_commit": "0cf244a28260bc84d045eed7372f0a3fce2a8012",
+  "workload": {
+    "lots": 48,
+    "release": "all at simulation start",
+    "policy": "fifo"
+  },
+  "limits": {
+    "horizon_s": 120000.0,
+    "wall_s": 5400.0,
+    "snapshot_count": 80,
+    "stall_timeout_s": 600.0,
+    "cycle_stall_timeout_s": 600.0
+  },
+  "final_sim_time_s": 42217.69999966615,
+  "elapsed_wall_s": 3000.1676828000927,
+  "source_stable_during_run": true,
+  "frozen_file_count": 42,
+  "business": {
+    "shipped_lots": 6,
+    "returned_carriers": 4,
+    "deliveries_by_robot": {
+      "amr-1": 6,
+      "amr-2": 5,
+      "amr-3": 4,
+      "amr-4": 5,
+      "amr-5": 10,
+      "amr-6": 3,
+      "amr-7": 2,
+      "amr-8": 6,
+      "amr-9": 8,
+      "amr-10": 4,
+      "amr-11": 3,
+      "amr-12": 1,
+      "amr-13": 7,
+      "amr-14": 3,
+      "amr-15": 4,
+      "amr-16": 2
+    },
+    "deliveries_total": 73,
+    "minimum_robot_deliveries": 1,
+    "peak_transport_active": 13,
+    "peak_transport_moving": 7,
+    "quiescent": false,
+    "ready_tasks": 30,
+    "active_transport_count": 0
+  },
+  "diagnosis": {
+    "observed_transport_budget_uses_general_wait_counter": true,
+    "observed_traffic_wait_budget_s": 11947.800000025934,
+    "authored_assignment_wait_budget_s": 4366.930970976335,
+    "idle_robots": [
+      {
+        "id": "amr-2",
+        "battery_pct": 36.284918139280734
+      },
+      {
+        "id": "amr-5",
+        "battery_pct": 42.52543375064091
+      },
+      {
+        "id": "amr-6",
+        "battery_pct": 38.261853253590985
+      },
+      {
+        "id": "amr-7",
+        "battery_pct": 50.26477844064084
+      },
+      {
+        "id": "amr-8",
+        "battery_pct": 43.448130798610116
+      },
+      {
+        "id": "amr-11",
+        "battery_pct": 39.98328955069166
+      },
+      {
+        "id": "amr-13",
+        "battery_pct": 45.90846271046964
+      },
+      {
+        "id": "amr-14",
+        "battery_pct": 40.871547722322994
+      }
+    ],
+    "departure_deferred": {
+      "amr-9": {
+        "reason": "observed_traffic_funding",
+        "required_wh": 308.6663548924766,
+        "departure_soc": 0.5144439248207943,
+        "task_id": "LOT-0017:product_move:2",
+        "traffic_wait_budget_s": 11947.800000025934
+      },
+      "amr-16": {
+        "reason": "observed_traffic_funding",
+        "required_wh": 303.3294945181882,
+        "departure_soc": 0.5055491575303137,
+        "task_id": "LOT-0037:process_input:1",
+        "traffic_wait_budget_s": 11947.800000025934
+      }
+    },
+    "capacity_wh": 600,
+    "resume_soc": 0.35,
+    "observed_wait_idle_energy_wh": 149.34750000032417,
+    "explanation": "Parking and charging approach waits entered the transport energy budget. Energy-denied idle robots above 35 percent SOC did not request charging."
+  },
+  "home_parking_yield": {
+    "selected_count": 2,
+    "completed_count": 2,
+    "observed_completed_home_resume_events": [
+      {
+        "id": "event-267",
+        "sim_time_s": 11037.500000022623,
+        "type": "traffic_yield_completed",
+        "message": "amr-11 양보 지점 도착 · 원래 주차 재개",
+        "robot_id": "amr-11",
+        "refuge": "B_P3",
+        "pickup": null,
+        "resume_goal": "C_P3",
+        "resume_phase": "parking"
+      }
+    ],
+    "scope": "Real all-fleet operations event for empty home-parking yield; not full-workload completion."
+  },
+  "repair": {
+    "worktree_commit": "80731ce",
+    "main_commit": "0869d17",
+    "changes": {
+      "commit": "80731ce",
+      "transport_wait_counter": "Only stopped non-parking/non-charging trips increase _transport_wait_s; _wait_s remains the general traffic KPI.",
+      "denied_charge_demand": "Energy denial requests charging independent of resume_soc; energy reserve, power, collision and route guards are unchanged."
+    },
+    "targeted_validation": [
+      {
+        "command": "python -m unittest tests.test_operations_charging_adapter tests.test_operations_model.OperationsModelTest.test_transport_wait_excludes_parking_and_charging_stops tests.test_operations_model.OperationsModelTest.test_empty_home_parking_yields_to_unreserved_home_then_resumes",
+        "result": "14 PASS",
+        "elapsed_s": 10.948
+      },
+      {
+        "command": "python -m unittest tests.test_line_operations_model.LineOperationsModelTests.test_departure_funding_includes_ready_line_work_and_observed_traffic_wait",
+        "result": "1 PASS",
+        "elapsed_s": 6.32
+      },
+      {
+        "command": "python -m py_compile changed Python files and git diff --check",
+        "result": "PASS"
+      }
+    ],
+    "receipt": "artifacts/operations/campus16-energy-boundary-318/fix-receipt.json",
+    "receipt_sha256": "38a0e33da252dae6f0017b3cc4f5893b7d3a91c93eba0339f15a5f481569ae9c",
+    "follow_up_case": "campus16-pilot-319 in progress; no completion claim"
+  },
+  "recording": {
+    "path": "snapshots.jsonl.gz",
+    "frames": 300,
+    "first_observed_sim_time_s": 17550.000000025106,
+    "last_observed_sim_time_s": 17849.000000020755,
+    "uncompressed_bytes": 52118765,
+    "gzip_bytes": 5928731,
+    "uncompressed_sha256": "3ddb3755f5671ed01532360882d717c9213b05664c40abbb51d46fb0022599a4",
+    "gzip_sha256": "9694027776c950fc9fc714e084b3e471bd74b5e0c4471dad1606b4b76a60b3af",
+    "frame_cap": 20000,
+    "uncompressed_byte_cap": 268435456
+  },
+  "cleanup": {
+    "remaining_owned_python_count": 0,
+    "evidence": "Owner confirmed process exit after graceful diagnostic interrupt."
+  },
+  "final_media_source_eligible": false,
+  "hashes": {
+    "result.json": "8926864e43a0894e8011e9e96fa8a922eed4f50f3df50326a006b6d43f11288c",
+    "recording-manifest.json": "cfd8a0e3ec3af9d54e7c27713a3c6571305dd21e4c7a702cfa922c9f1019b08d",
+    "snapshots.jsonl.gz": "9694027776c950fc9fc714e084b3e471bd74b5e0c4471dad1606b4b76a60b3af",
+    "frozen-source/manifest.json": "c1e99578cddb2ced13d4f5241bb9ddf037e62a34e667b51ecf3b7a7d1d85155a"
+  }
+}
