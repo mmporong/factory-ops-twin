@@ -153,6 +153,8 @@ Isaac Sim Replicator로 12개 시각 구성, 30시점, 3카메라에서 RGB 1,08
 
 위 자료는 단순 바닥 위 후보 에셋의 export 확인용입니다. [청색 적재함 원본 RGB](docs/images/perception-blue-probe-302/deep-blue-bins.png) · [팔레트 혼합 원본 RGB](docs/images/perception-blue-probe-302/pallet-and-bins.png). 학습 준비가 완료된 공장 데이터로 보지 않습니다. 후속 학습 파일럿은512장, Cosmos는10클립부터 시작하며 변환본의 객체·라벨 정합을 확인하기 전에는 원본 라벨을 복사하지 않습니다. [비교 조건·GPU·비용과 확대 기준](docs/synthetic-to-real-plan.md)
 
+실제 LOCO 학습용 사진6장과 합성 후보를 비교해 적층·가림·원거리 소형 객체·현장 배경의 차이를 정리했습니다. 평가용 sub1은 열지 않았습니다. 기존 용기를 제한된 외형의 baseline으로 사용하되, 단일 청색 용기가 전체 소형 적재함 클래스를 대표한다고 해석하지 않습니다. [실사·합성 비교 이미지와 준비 범위](docs/synthetic-to-real-plan.md#실제-학습-사진과-합성-후보의-차이)
+
 ## 현재 진행 상태
 
 | 구간 | 확보한 증거 | 남은 확인·확장 |

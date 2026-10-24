@@ -1,0 +1,204 @@
+{
+  "schema_version": 1,
+  "status": "candidate_proxy_not_class_approved",
+  "decision": {
+    "include_as_training_label_candidate": true,
+    "scope": "Only as one rigid open-top plastic crate appearance mode within the broad LOCO small_load_carrier class.",
+    "mapping_approved": false,
+    "training_ready": false,
+    "reason": "The blue crate resembles the rigid red tote examples, but the six train-only observations also include shallow black bins, yellow trays, dense stacked/nested crates and tall collapsible carriers that one blue asset does not cover.",
+    "label_scope_note": "A supported asset may be labeled as a small_load_carrier subtype without representing every appearance in the broad real class. Class-wide appearance coverage is a domain-gap measurement, not a requirement to reproduce every subtype before a limited baseline."
+  },
+  "access_boundary": {
+    "opened_metadata": [
+      "loco-sub2-v1-train.json",
+      "loco-sub5-v1-train.json"
+    ],
+    "opened_rgb_count": 6,
+    "opened_rgb_partitions": [
+      "sub2",
+      "sub5"
+    ],
+    "sub1_test_opened": false,
+    "new_downloads_or_installs": false,
+    "model_training_or_gpu": false
+  },
+  "observed_real_variation": [
+    "Rigid red open-top totes with handholds and labels appear close to the blue-crate geometry.",
+    "The class also includes shallow black bins, yellow shallow trays, tall red collapsible lattice carriers, and dense rack or pallet stacks.",
+    "Object count ranges from2 to168 in the selected images; close objects can fill over14% of the image while distant boxes fall below0.01%.",
+    "Observed backgrounds include worktables, people, racks, pallets, pallet trucks, shrink-wrapped loads, labels and long warehouse aisles.",
+    "Occlusion, truncation, nesting, stacking, repeated texture and very small distant instances are common in the selected examples."
+  ],
+  "synthetic_302": {
+    "captures": 16,
+    "small_load_carrier_boxes": 32,
+    "boxes_per_image_min": 1,
+    "boxes_per_image_max": 3,
+    "bbox_area_fraction_min": 0.008056640625,
+    "bbox_area_fraction_median": 0.0112457275390625,
+    "bbox_area_fraction_max": 0.023907979329427082,
+    "reported_occlusion_ratios": [
+      0.0
+    ],
+    "visual_conditions": "clean light-gray floor/background, one blue rigid crate asset, one to three crates per image, no racks, stacking, nesting, labels, people or warehouse clutter"
+  },
+  "coverage_gaps_before_512": [
+    {
+      "priority": 1,
+      "gap": "shape modes",
+      "needed": "Add or explicitly exclude shallow trays/bins and tall collapsible carriers; do not make crate_blue_a02 represent the entire class."
+    },
+    {
+      "priority": 2,
+      "gap": "density and arrangement",
+      "needed": "Include isolated, shelf, pallet/dolly, stacked, nested and dense repeated layouts, with a declared per-image count distribution."
+    },
+    {
+      "priority": 3,
+      "gap": "scale and visibility",
+      "needed": "Add small distant boxes, edge truncation, partial occlusion and overlaps; preserve bbox/semantic consistency checks."
+    },
+    {
+      "priority": 4,
+      "gap": "background/domain",
+      "needed": "Use racks, worktables, pallets, conveyors, labels, mixed packaging and warehouse lighting instead of an empty neutral floor only."
+    },
+    {
+      "priority": 5,
+      "gap": "appearance",
+      "needed": "Vary red/blue/black/yellow/gray colors, surface wear, labels and materials without changing the target object boundary."
+    }
+  ],
+  "pilot_gate": {
+    "512_generation_started": false,
+    "next_small_step": "Use a declared limited-appearance baseline with existing gray shallow and blue rigid crates; add stacking, occlusion, scale and warehouse background variation before rendering. Keep unsupported shapes as an explicit domain gap; do not add a requirement for complete class appearance coverage.",
+    "candidate_class_label": "small_load_carrier",
+    "broad_class_equivalence_proven": false,
+    "primary_priority": "Complete the 16-AMR finite-demand operations run."
+  },
+  "inputs": {
+    "local_report_sha256": "e91dd1953875628a420c4d4ba3e22b054f170bb664a6d09e8968691bb5abcca3",
+    "local_selection_sha256": "b6031aa2ddaeabea9f0d0132d6dccf561647b9bdd63e855330fb45938590acbd",
+    "contact_sheet": "docs/images/perception-class-readiness/contact-sheet.jpg",
+    "contact_sheet_sha256": "a7e2a77fc5537d7cdff402a9db3a1cf2ed674884924c5c86e2fda1d5b22ba513",
+    "probe302_dataset_sha256": "1eb8abf595636c26da28b0274ae21c9cade08a185efdabb690037dc0da7ab89b",
+    "loco_upstream_commit": "b460ab8c37f09162f0613c7546948c496e1b1628",
+    "loco_license": "CC0-1.0",
+    "loco_source": "https://github.com/tum-fml/loco/tree/b460ab8c37f09162f0613c7546948c496e1b1628",
+    "synthetic_assets_license": "CC-BY-4.0, NVIDIA; see docs/asset-attribution.md"
+  },
+  "selection": {
+    "schema_version": 1,
+    "status": "reviewed_candidate_only",
+    "scope": "Six train-only LOCO examples from sub2/sub5 plus two existing302 synthetic reference views; sub1 test not opened",
+    "source_archive_sha256": "f3629d989071b824edc63e000f45ccc5826cfbb201a338f16ed87ab3e10bcdcf",
+    "selection_rule": "Per split: large-object low-count, maximum-count dense, and smallest-median-area small-load-carrier examples selected before visual review.",
+    "selected": [
+      {
+        "metadata_file": "loco-sub2-v1-train.json",
+        "image_id": 14995,
+        "file_name": "1574681833.467182.jpg",
+        "archive_member": "dataset/subset-2/2019-11-25_6/sjcam/1574681833.467182.jpg",
+        "width": 1280,
+        "height": 720,
+        "image_sha256": "5d118e7a5dd2cbd78bd3832e111cdf19977a1aaacf98f1b1347519b93c9a9a76",
+        "small_load_carrier_boxes": 2,
+        "all_boxes": 13,
+        "small_bbox_area_fraction": {
+          "min": 0.015407986111111112,
+          "median": 0.02138671875,
+          "max": 0.02736545138888889
+        }
+      },
+      {
+        "metadata_file": "loco-sub2-v1-train.json",
+        "image_id": 14687,
+        "file_name": "1574675774.0367694.jpg",
+        "archive_member": "dataset/subset-2/2019-11-25_6/sjcam/1574675774.0367694.jpg",
+        "width": 1280,
+        "height": 720,
+        "image_sha256": "342f68df2a12d5774e197fe9f43e4b796e5ac2d123b5cf80e9a004ebe704ec58",
+        "small_load_carrier_boxes": 168,
+        "all_boxes": 169,
+        "small_bbox_area_fraction": {
+          "min": 0.0003146701388888889,
+          "median": 0.0004920789930555555,
+          "max": 0.0033854166666666668
+        }
+      },
+      {
+        "metadata_file": "loco-sub2-v1-train.json",
+        "image_id": 14939,
+        "file_name": "1574675040.7550929.jpg",
+        "archive_member": "dataset/subset-2/2019-11-25_6/sjcam/1574675040.7550929.jpg",
+        "width": 1280,
+        "height": 720,
+        "image_sha256": "40dd7978f64df63a2a7400107286a4c933298bf6121be9a212ad74662fc3dff2",
+        "small_load_carrier_boxes": 53,
+        "all_boxes": 136,
+        "small_bbox_area_fraction": {
+          "min": 6.510416666666667e-05,
+          "median": 0.00018446180555555555,
+          "max": 0.0028862847222222224
+        }
+      },
+      {
+        "metadata_file": "loco-sub5-v1-train.json",
+        "image_id": 25231,
+        "file_name": "1583417570.583258.jpg",
+        "archive_member": "dataset/subset-5/2020-03-05_3/logitech/1583417570.583258.jpg",
+        "width": 1280,
+        "height": 960,
+        "image_sha256": "11810edfc5befa1a0a44ec764d8136ca1f6ed11029bea692091cd47ce3c895db",
+        "small_load_carrier_boxes": 4,
+        "all_boxes": 5,
+        "small_bbox_area_fraction": {
+          "min": 0.0405078125,
+          "median": 0.09734130859375001,
+          "max": 0.140283203125
+        }
+      },
+      {
+        "metadata_file": "loco-sub5-v1-train.json",
+        "image_id": 24301,
+        "file_name": "1623632,3854.jpg",
+        "archive_member": "dataset/subset-5/2020-03-05_1/Kinect/color/1623632,3854.jpg",
+        "width": 1920,
+        "height": 1080,
+        "image_sha256": "55c822f7d9d9dac7eb4fea6818401978aa5ee0317055d2d926404d3ebc8692e5",
+        "small_load_carrier_boxes": 116,
+        "all_boxes": 120,
+        "small_bbox_area_fraction": {
+          "min": 0.00030864197530864197,
+          "median": 0.008069299768518518,
+          "max": 0.03394675925925926
+        }
+      },
+      {
+        "metadata_file": "loco-sub5-v1-train.json",
+        "image_id": 24360,
+        "file_name": "1000736,6303.jpg",
+        "archive_member": "dataset/subset-5/2020-03-05_1/Kinect/color/1000736,6303.jpg",
+        "width": 1920,
+        "height": 1080,
+        "image_sha256": "24df29ccd1ded945dd908b621d23bec49581830b528d5e0a20f00bb761b54f07",
+        "small_load_carrier_boxes": 33,
+        "all_boxes": 47,
+        "small_bbox_area_fraction": {
+          "min": 8.198302469135803e-05,
+          "median": 0.00020929783950617283,
+          "max": 0.0003689236111111111
+        }
+      }
+    ],
+    "synthetic_reference": [
+      "artifacts/perception-blue-probe-302/dataset/scene-01/view-01/rgb.png",
+      "artifacts/perception-blue-probe-302/dataset/scene-04/view-04/rgb.png"
+    ],
+    "contact_sheet": "contact-sheet.jpg",
+    "mapping_approved": false,
+    "training_ready": false,
+    "visual_review_completed": true
+  }
+}
