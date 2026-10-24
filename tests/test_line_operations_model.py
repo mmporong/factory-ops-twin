@@ -36,7 +36,7 @@ class LineOperationsModelTests(unittest.TestCase):
 
             charging.traffic_wait_budget_s = 9588.8
             congested = model._charging_departure_requirement("amr-1")
-            self.assertGreater(calculate.call_count, first_count)
+            self.assertEqual(first_count, calculate.call_count)
         expected_extra = charging.energy.profile["idle_power_w"] * 9588.8 / 3600.0
         self.assertEqual(task.task_id, congested["task_id"])
         self.assertAlmostEqual(base["required_wh"] + expected_extra, congested["required_wh"])
