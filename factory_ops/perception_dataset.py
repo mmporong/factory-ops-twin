@@ -240,3 +240,64 @@ def validate_capture(
             },
         },
     }
+
+
+def validate_distance_to_camera(
+    *,
+    width: int,
+    height: int,
+    distance: Any,
+    semantic: Any,
+    capture_validation: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Validate Replicator's radial depth without accepting invalid target pixels.
+
+    Isaac Sim 4.5 documents ``distance_to_camera`` as a two-dimensional
+    float32 array. Positive infinity is permitted for background rays, while
+    every visible labelled object pixel must contain a finite positive range.
+    """
+    import numpy as np
+
+    values = np.asarray(distance)
+    if values.shape != (height, width):
+        raise PerceptionDatasetError(
+            f"distance_to_camera shape differs from capture: {values.shape} != {(height, width)}"
+        )
+    if values.dtype != np.float32:
+        raise PerceptionDatasetError(f"distance_to_camera dtype differs from SDK contract: {values.dtype}")
+    if np.isnan(values).any() or np.isneginf(values).any():
+        raise PerceptionDatasetError("distance_to_camera contains NaN or negative infinity")
+    finite = np.isfinite(values)
+    if not np.any(finite & (values > 0)):
+        raise PerceptionDatasetError("distance_to_camera contains no finite positive ranges")
+    semantic_values = np.asarray(semantic)
+    if semantic_values.shape != (height, width):
+        raise PerceptionDatasetError("semantic shape differs while validating distance_to_camera")
+    checks = capture_validation.get("object_mask_checks")
+    objects = checks.get("objects") if isinstance(checks, Mapping) else None
+    if not isinstance(objects, Mapping) or not objects:
+        raise PerceptionDatasetError("capture validation has no per-object semantic identities")
+    object_ranges = {}
+    for object_id, document in objects.items():
+        if not isinstance(document, Mapping) or type(document.get("semantic_id")) is not int:
+            raise PerceptionDatasetError(f"capture validation has no semantic ID for object: {object_id}")
+        mask = semantic_values == document["semantic_id"]
+        object_depth = values[mask]
+        if object_depth.size != document.get("pixel_count"):
+            raise PerceptionDatasetError(f"distance/object pixel count differs: {object_id}")
+        if object_depth.size == 0 or not np.all(np.isfinite(object_depth) & (object_depth > 0)):
+            raise PerceptionDatasetError(
+                f"distance_to_camera is not finite and positive on visible object: {object_id}"
+            )
+        object_ranges[str(object_id)] = {
+            "pixel_count": int(object_depth.size),
+            "min_m": float(object_depth.min()),
+            "max_m": float(object_depth.max()),
+        }
+    return {
+        "shape": [height, width],
+        "dtype": "float32",
+        "finite_pixel_count": int(finite.sum()),
+        "positive_infinity_background_pixel_count": int(np.isposinf(values).sum()),
+        "objects": object_ranges,
+    }

@@ -2,7 +2,12 @@ import unittest
 
 import numpy as np
 
-from factory_ops.perception_dataset import PerceptionDatasetError, usd_safe_identifier, validate_capture
+from factory_ops.perception_dataset import (
+    PerceptionDatasetError,
+    usd_safe_identifier,
+    validate_capture,
+    validate_distance_to_camera,
+)
 from scripts.isaac.capture_perception_probe import (
     LEGACY_ASSETS,
     PROBE_SEMANTIC_TYPES,
@@ -181,6 +186,40 @@ class PerceptionDatasetTests(unittest.TestCase):
             validate_capture(
                 width=5, height=4, semantic=self.semantic, semantic_info=class_only,
                 bbox_rows=self.rows, bbox_info=self.bbox_info, expected_objects=self.expected,
+            )
+
+    def test_distance_allows_infinite_background_but_requires_finite_object_ranges(self) -> None:
+        capture = validate_capture(
+            width=5, height=4, semantic=self.semantic, semantic_info=self.semantic_info,
+            bbox_rows=self.rows, bbox_info=self.bbox_info, expected_objects=self.expected,
+        )
+        distance = np.full((4, 5), np.inf, dtype=np.float32)
+        distance[self.semantic == 1] = 2.5
+        distance[self.semantic == 2] = 3.5
+        result = validate_distance_to_camera(
+            width=5, height=4, distance=distance, semantic=self.semantic,
+            capture_validation=capture,
+        )
+        self.assertEqual(result["shape"], [4, 5])
+        self.assertEqual(result["positive_infinity_background_pixel_count"], 11)
+        self.assertEqual(result["objects"]["pallet-01"]["min_m"], 2.5)
+
+    def test_distance_rejects_wrong_shape_and_nonfinite_object_pixels(self) -> None:
+        capture = validate_capture(
+            width=5, height=4, semantic=self.semantic, semantic_info=self.semantic_info,
+            bbox_rows=self.rows, bbox_info=self.bbox_info, expected_objects=self.expected,
+        )
+        with self.assertRaisesRegex(PerceptionDatasetError, "shape differs"):
+            validate_distance_to_camera(
+                width=5, height=4, distance=np.ones((4, 5, 1), dtype=np.float32),
+                semantic=self.semantic, capture_validation=capture,
+            )
+        distance = np.ones((4, 5), dtype=np.float32)
+        distance[0, 1] = np.inf
+        with self.assertRaisesRegex(PerceptionDatasetError, "visible object"):
+            validate_distance_to_camera(
+                width=5, height=4, distance=distance, semantic=self.semantic,
+                capture_validation=capture,
             )
 
 
