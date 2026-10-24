@@ -1,0 +1,84 @@
+{
+  "schema_version": 1,
+  "scope": "Closed authored CPU campus16-v2 traffic-recovery attempt; preserved liveness failure evidence, no completed-throughput or physical-runtime claim",
+  "run_id": "process-line-52e2a51b-e9eb-4556-81cf-663400a9527e",
+  "status": "incomplete",
+  "error": null,
+  "stop_reason": "no_motion_or_process_progress",
+  "elapsed_wall_s": 509.3749095000094,
+  "sim_time_s": 22521.999999952754,
+  "source_stable_during_run": true,
+  "owned_processes_gone": true,
+  "workload": {
+    "lots": 48,
+    "release": "all at simulation start",
+    "policy": "fifo"
+  },
+  "limits": {
+    "horizon_s": 120000.0,
+    "wall_s": 5400.0,
+    "snapshot_count": 80,
+    "stall_timeout_s": 600.0
+  },
+  "cumulative_shipped_lots": 6,
+  "cumulative_returned_lots": 2,
+  "actual_completed_transport_deliveries": 65,
+  "configured_robots": 16,
+  "assignment_participants": 16,
+  "repeat_assignment_participants": 16,
+  "delivery_participants": 16,
+  "repeat_delivery_participants": 16,
+  "minimum_assignments_per_robot": 2,
+  "minimum_completed_deliveries_per_robot": 2,
+  "peak_material_tasks": 15,
+  "peak_material_moving": 7,
+  "peak_all_moving": 7,
+  "observed_min_circular_clearance_m": 1.7257818169114452,
+  "quiescent": false,
+  "goal_met": false,
+  "recorded_frames": 0,
+  "traffic_recovery": {
+    "traffic_yield_selected": 2,
+    "traffic_yield_completed": 2,
+    "replan_attempts": 3,
+    "generic_replans_applied": 0,
+    "replan_unavailable": 1,
+    "final_bridge_wait_cycle": [
+      "amr-11",
+      "amr-13"
+    ],
+    "final_reservation_wait_cycle": null,
+    "first_final_cycle_unavailable_sim_s": 18726.000000007993,
+    "root_cause": "The examined-replan cache key included only cycle-member poses and goals. After the first unavailable result, peer robots changed occupancy and opened legal same-bay yield routes, but the unchanged cycle-member key suppressed reevaluation.",
+    "closed_state_reproduction": {
+      "amr-11": {
+        "start": "C_AC_S_SAFE_EXIT",
+        "clear_refuges": [
+          "C_P3",
+          "C_P4"
+        ]
+      },
+      "amr-13": {
+        "start": "A_AC_N_SAFE_EXIT",
+        "clear_refuges": [
+          "A_P1",
+          "A_P3",
+          "A_P4"
+        ]
+      }
+    },
+    "post_run_repair_boundary": "The later repair adds all current robot footprint tiles to the examined signature, so an unchanged cycle is retried only after occupancy changes. It is not part of this frozen run."
+  },
+  "charging": {
+    "faults": {},
+    "queued": [
+      "amr-16",
+      "amr-7"
+    ],
+    "note": "Charging remained fault-free; queued approaches were blocked by the same traffic occupancy and are not counted as the stop cause."
+  },
+  "result_sha256": "9a9899747d03718f4ad515bbc6268dbead88e511def8b9558e8fdd30b2bd3d54",
+  "frozen_source_manifest_sha256": "b124a4145f4830d5ce0ffb436271cadab17c76d068ae34b6c8625a211e099da6",
+  "source_binding_sha256": "50f96839e210864d2275d809d85c5814bf33fed73ce53ec54c42d7595f5da23c",
+  "recording_manifest_sha256": "d3813991e1023a20ec28eccecd37b99f6d6a85231dcd22d264f81ecb8b641e81"
+}

@@ -301,6 +301,10 @@ class OperationsModel(DashboardModel):
             cycle,
             tuple((robot, self._poses[robot]["x_m"], self._poses[robot]["y_m"],
                    self._trips.get(robot, {}).get("goal")) for robot in cycle),
+            tuple(
+                (robot, tuple(sorted(self._footprint(robot))))
+                for robot in sorted(self.ledger.robots)
+            ),
         )
         if signature in self._replan_examined:
             return

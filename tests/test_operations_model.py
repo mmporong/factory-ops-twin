@@ -235,6 +235,30 @@ class OperationsModelTest(unittest.TestCase):
         self.assertNotIn(robot, model._replans)
         self.assertEqual(1, model.replan_unavailable_count)
 
+    def test_cycle_replan_retries_after_peer_footprint_moves(self):
+        model = OperationsModel(CONFIG, initial_orders=0, run_id="replan-peer-moved")
+        robot, peer = "amr-1", "amr-2"
+        model._trip(robot, {}, "P1", "P3", "parking", kind="parking")
+        alternative = model.book.plan("P1", "P3")
+
+        with patch(
+            "factory_ops.operations_model.find_alternative_route", return_value=None,
+        ) as find:
+            model._schedule_cycle_replan((robot,))
+            self.assertEqual(1, find.call_count)
+            self.assertNotIn(robot, model._replans)
+
+            model._poses[peer].update(
+                x_m=model.book.nodes["P4"][0], y_m=model.book.nodes["P4"][1],
+            )
+            model._observe_all()
+            find.return_value = alternative
+            model._schedule_cycle_replan((robot,))
+
+        self.assertEqual(2, find.call_count)
+        self.assertIn(robot, model._replans)
+        self.assertEqual(2, model.replan_attempt_count)
+
     def test_empty_pickup_traffic_yield_preserves_task_and_station_claims(self):
         campus = Path(__file__).resolve().parents[1] / "configs" / "factory-semiconductor-campus16"
         model = OperationsModel(campus, initial_orders=0, run_id="cycle-traffic-yield")

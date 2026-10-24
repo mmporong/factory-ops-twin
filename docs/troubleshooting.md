@@ -1461,3 +1461,9 @@ BridgeAdmission의 실제 wait-for graph에서 순환을 구하고 기존 cycle 
 청색 적재함 probe301은 RGB·semantic·bbox16개 세트를 촬영했지만 최종 `dataset.json` 작성에서 실패했다. 준비300의 영수증 해시는 `inputs.source_receipt.sha256`에 있었는데 촬영기는 legacy 최상위 `source_receipt_sha256`만 조회했다. CPU 사후 감사에서 객체60개의 bbox·자기 semantic mask와 class/asset/hash가 일치해도, 최종화가 끝나지 않은301의 전체 판정은 `failed_after_payload_capture`로 보존한다. worker exit0·Job closed는 원본 데이터셋 생성 성공을 입증하지 않는다.
 
 준비 입력의 영수증 스키마와 명시적 `probe_contract.class_asset_ids`를 GPU 시작 전 검증하도록 수정했다. 기존270의 gray 계약도 보존하며 모르는 ID·class·hash·원본 semantic 잔존을 거부한다. 표적8검사가 통과했다. 수정 소스의 새302는16개 RGB/semantic/provenance·`dataset.json` 최종화·객체60개 mask/bbox 정합과101개 매니페스트 파일을 통과했다. Job 종료·소유PID0·공용 GPU lease 반환을 확인했다.301은 덮어쓰지 않았고302도 후보 촬영 범위다. LOCO 매핑·학습 준비·실사 검출 성능을 완료로 승격하지 않는다. [302 근거](evidence/perception-blue-probe-302.json)
+
+## FOT-184 — 재계획 불가 캐시가 주변 차량의 점유 변화를 놓침
+
+299는 sim22522초·벽시계509초에 진전 없음으로 종료됐다. 운송65건·출하6·반납2·전16대 최소2운송·물류 임무 최고15개·이동 최고7대를 기록했으며 충전 fault는 없었다. amr11↔amr13 순환에서 첫 `replan_unavailable`는 sim18726초에 기록됐다. `_replan_examined` 키는 SCC 차량의 pose·goal만 포함해, 이후 다른 차량이 이동해도 같은 순환의 후보를 재평가하지 않았다. 종료 상태를 재현하면 amr11→C_P3/C_P4와 amr13→A_P1/A_P3/A_P4에 blocker0의 합법적인 같은 베이 양보 경로가 있었다. [299 종료·재현 근거](evidence/campus16-299.json)
+
+키에 전 차량 실제 footprint tile의 정렬된 fingerprint를 포함했다. 점유가 같으면 중복 평가를 막고, 주변 점유가 바뀌면 같은 SCC도 다시 검사한다. 새 회귀와 기존 queue·전체 window·safe exit·task claim 검사5개가 통과했다. 안전·에너지·임무 집계는 바꾸지 않았으며 새 동결 실행303에서 전체 진행성을 확인한다.
