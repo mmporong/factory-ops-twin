@@ -3,7 +3,7 @@
   "case": "campus16-pilot-335",
   "run_id": "process-line-7212997c-f488-4c6a-9f91-9c9fc5d57272",
   "execution_mode": "authored_CPU_operations",
-  "status": "running",
+  "status": "complete",
   "source_commit": "e53ba606047373ef56c74c2488f78911b45a9590",
   "workload": {
     "lots": 48,
@@ -25,15 +25,20 @@
   "frozen_source": {
     "file_count": 43,
     "manifest_sha256": "d634a9409462cd3f73c7ff4a15a5787563e17c64f58499b16937ed1a6968a660",
-    "worker_verified_all_file_hashes": true
+    "worker_verified_all_file_hashes": true,
+    "source_binding_sha256": "38c3f11485f8bc34a16a7ca26f5464db45a164bfbea5ee16b2f0a3baf82ffc32",
+    "original_hashes_reference": "../campus16-pilot-335/recording-manifest.json#/sources/config_and_producer_sha256",
+    "original_hash_count": 43,
+    "original_hash_mismatches": []
   },
   "launch_processes": {
     "session": 54708,
     "shell_pid": 30320,
     "venv_python_pid": 72248,
     "runtime_python_pid": 16672,
-    "retention_reason": "Authorized bounded followup after actual334 gate-release repair;333 source unchanged.",
-    "stop_method": "Ctrl+C to owned session54708; preserve runner closure and unrelated services."
+    "retention_reason": "Naturally completed; owned launch chain30320/72248/16672 is gone.",
+    "stop_method": "Ctrl+C to owned session54708; preserve runner closure and unrelated services.",
+    "remaining_owned_pids": []
   },
   "components": {
     "service_window_assignment": "6d1ec423ac113a2a99ab7644ec78cea009b8d57b",
@@ -49,15 +54,16 @@
     "peak_material_tasks": 16
   },
   "success_flags": {
-    "all48_shipped_and_returned_verified": false,
-    "quiescent_verified": false,
-    "all16_min2_deliveries_verified": false,
+    "all48_shipped_and_returned_verified": true,
+    "quiescent_verified": true,
+    "all16_min2_deliveries_verified": true,
     "peak16_material_tasks_live_observed": true,
     "native_physics_transport_verified": false,
-    "final_render_eligible": false,
-    "all16_min2_deliveries_live_observed": true
+    "final_render_eligible": true,
+    "all16_min2_deliveries_live_observed": true,
+    "peak16_material_tasks_verified": true
   },
-  "verification_scope": "Launch and frozen-source binding checked. Running CPU case; only progress.json monitored. Component regression is not full-run success, native physics, statistical throughput gain, or final media approval.",
+  "verification_scope": "Closed authored CPU cold-start finite batch:48 shipped/48 returned/240 transports/quiescent/all16>=9; peak material tasks16, actual material moving peak6. Inventory balanced;43 frozen files and300 selected samples hashed;owned0. This is neither16 robots simultaneously moving nor native contact-physics transport, real factory throughput, or statistical policy superiority.",
   "repeat_milestone": {
     "scope": "Live authored CPU observation; full case still running",
     "run_id": "process-line-7212997c-f488-4c6a-9f91-9c9fc5d57272",
@@ -87,5 +93,86 @@
     "progress_sha256": "cd6a5e1d53a7771a6fc41ca4a4bee2bf45f3bde2939a310b9b19fd1e152b515a",
     "observation_path": "artifacts/operations/campus16-pilot-335-all16-repeat-observation.json",
     "observation_sha256": "93451cfb0b19acb35b8e8369ac9eec4357652ec82134dbc2d7ed02647ed51b55"
+  },
+  "error": null,
+  "stop_reason": "all_lots_returned_and_quiescent",
+  "final_sim_time_s": 133914.00000330692,
+  "elapsed_wall_s": 6527.119571099989,
+  "source_stable_during_run": true,
+  "final_observation": {
+    "shipments": 48,
+    "returns": 48,
+    "pending_tasks": 0,
+    "active_robots": 0,
+    "quiescent": true,
+    "deliveries": 240,
+    "deliveries_by_robot": {
+      "amr-1": 13,
+      "amr-2": 20,
+      "amr-3": 9,
+      "amr-4": 14,
+      "amr-5": 13,
+      "amr-6": 10,
+      "amr-7": 20,
+      "amr-8": 20,
+      "amr-9": 11,
+      "amr-10": 15,
+      "amr-11": 17,
+      "amr-12": 16,
+      "amr-13": 21,
+      "amr-14": 16,
+      "amr-15": 11,
+      "amr-16": 14
+    },
+    "min_deliveries": 9,
+    "max_deliveries": 21,
+    "peak_material_tasks": 16,
+    "peak_material_moving": 6,
+    "peak_moving_including_nonmaterial": 9,
+    "yield_count": 65,
+    "yield_completed": 65,
+    "wait_cycle": null
+  },
+  "inventory": {
+    "initial": 240,
+    "replenished": 0,
+    "on_hand": 192,
+    "in_totes": 0,
+    "consumed": 48,
+    "balanced": true,
+    "carrier_count": 64,
+    "carrier_states": {
+      "available": 64
+    }
+  },
+  "closed_recording": {
+    "frame_count": 300,
+    "first_sim_time_s": 17533.000000025353,
+    "last_sim_time_s": 17832.000000021002,
+    "result_sha256": "1916ba564b0639fde1ca5c350186d558cdb1fb968332815b28b63c041ded01d7",
+    "manifest_sha256": "280370d930ad3247aa16870e0375a7d10f5948b26bb7a4a201c21218b2ae6755",
+    "gzip_sha256": "fc6a169a102639884afc858ae06188778e47353ec5c64f455fcf62fc5bb39fba",
+    "raw_uncompressed_sha256": "25af51bc561fd4b8b6d067b987426b66a14b44cbdb7462bf9c0d9dd983c877d5",
+    "raw_uncompressed_bytes": 53199459,
+    "raw_line_count": 300
+  },
+  "closure_receipt": {
+    "path": "artifacts/operations/campus16-pilot-335-closure/receipt.json",
+    "sha256": "d8a72bd0168458a0ed174663651a21c5918966659ad2f3e1233932e109157372",
+    "owned_processes_gone": true
+  },
+  "selected_public_data": {
+    "path": "docs/data/campus16-335/completed-transports.csv",
+    "sha256": "c782e6be418e99d989d41c7fd1c99d69de74b9371f7af5acad71c6c89afb5aee",
+    "rows": 16,
+    "sum_completed_material_transports": 240,
+    "source_result_sha256": "1916ba564b0639fde1ca5c350186d558cdb1fb968332815b28b63c041ded01d7"
+  },
+  "excerpt_selection": {
+    "path": "artifacts/campus-final-render-preparation/campus16-335-excerpt.json",
+    "sha256": "686dd10eaeb2a4d09e4977ffdf4069d892b8fd7572a4f8d0e082fb115827bdb9",
+    "contract_passed": true,
+    "render_status": "running",
+    "render_case": "campus16-final-339"
   }
 }
