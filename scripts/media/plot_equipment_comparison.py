@@ -86,6 +86,8 @@ def main() -> None:
         "Date": None, "Creator": "Factory Ops Twin / Matplotlib",
         "Description": f"Comparison source SHA-256: {sha256(source).hexdigest()}",
     })
+    # Keep exported bytes equal to the repository's LF-normalized SVG blob.
+    args.output.write_text(args.output.read_text(encoding="utf-8"), encoding="utf-8", newline="\n")
     if args.preview is not None:
         args.preview.parent.mkdir(parents=True, exist_ok=True)
         fig.savefig(args.preview, facecolor="white", dpi=160)

@@ -1569,3 +1569,9 @@ sim20,341초 재현은 출하5·반납4·운송66과 amr13→amr6→amr9→amr13
 추가 기하 probe에서 peer 두 위치를 하나의 swept polyline으로 넣어 대각선 전체를 막은 진단 실수가 있었다. 이를 개별 footprint union으로 고치자 cycle-local B_P4 24.5m, B_P1 47m, B_P2 29.5m 후보가 생겼고 B_P3는 amr9 점유로 불가했다. 공장 기하 보강이 필수라는 중간 결론은 폐기했다. production replanner는 원래부터 각 peer의 observation tiles를 개별 union하며 이 오용이 없었다. 수정된 probe는 기존 콘솔 결과 전사이고 전체16대의 현재 점유 승인을 입증하지 않는다.
 
 정지·무적재·active chunk/보유 bridge window 없음 조건의 home-parking도 기존 traffic_yield에 들어가도록 확장했다. ChargingFleet이 배타 예약한 충전대 anchor는 대피 후보에서 제외한다. 예약되지 않은 홈은 기존 실제 pose·full-window 안전 검사를 통과해야 한다. 대피 도착 뒤 원래 귀가를 재개하고 양보 조치 자체는 homes 매핑·assignment·delivery를 바꾸지 않는다. lifecycle의 controlled alternative/blocker 회귀와 관련3검사, 총4검사를 통과했다. 전체16대에서 이 순환이 해소되는지는318로 확인한다. [전사 probe·구현·검사 범위](evidence/campus16-home-parking-yield.json)
+
+## FOT-199 — SVG 줄바꿈 변환과 공개 해시 불일치
+
+설비 비교 도표의 Windows 생성본은84,115바이트였지만 Git에 정규화된 SVG는81,580바이트였다. 원인은 CRLF와 LF 차이였으며, 원본 수치 JSON과 producer 소스는 작업 파일·Git blob이 같았다. 화면이나 실험 수치는 달라지지 않았지만 생성 직후 해시를 그대로 공개하면 clone한 SVG와 맞지 않았다.
+
+도표 exporter가 UTF-8·LF로 마감한 뒤 해시를 계산하도록 바꾸고, 같은 입력으로 재생성한 SVG81,580바이트와 기존 Git blob의 바이트 일치를 확인했다. 수정 SHA는423a2ead0cd6b1f9cf2a7802f87baf6a030454a7b2f88bc6e0434a956a58faa5다. 출처 영수증도 갱신했다. 재발 방지는 파생 텍스트 미디어의 줄바꿈을 명시하고 공개 파일 해시를 정규화 이후에 계산하는 것이다. [Python3.14 Path.write_text](https://docs.python.org/3.14/library/pathlib.html#pathlib.Path.write_text) · [Git 줄바꿈 정규화](https://git-scm.com/docs/gitattributes#_end_of_line_conversion) · [도표 출처](evidence/campus-equipment-comparison-figure.json)

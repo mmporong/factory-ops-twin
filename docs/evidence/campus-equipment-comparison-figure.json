@@ -8,12 +8,12 @@
       "sha256": "c97eb6aa78bac73d5a92961d8afab56c472440b0a966bf158034dfb3abae8c40"
     },
     "scripts/media/plot_equipment_comparison.py": {
-      "bytes": 4866,
-      "sha256": "b849d1f289cce5bda7a9f4c4d8accfb8e7101eb524a4ae3fefd27eb697739d3e"
+      "bytes": 5042,
+      "sha256": "def068e6324766b0af29886e4b0974814552b862bb82813822026c4b04910475"
     },
     "docs/evidence/campus-equipment-comparison.svg": {
-      "bytes": 84115,
-      "sha256": "36783c9f2eea7f9a32463ca4cbf1b1096ff27085f80b00888c68652038cd6bb3"
+      "bytes": 81580,
+      "sha256": "423a2ead0cd6b1f9cf2a7802f87baf6a030454a7b2f88bc6e0434a956a58faa5"
     }
   },
   "plotter": {
@@ -41,5 +41,6 @@
     "docs/evidence/campus-equipment-comparison.json",
     "--output",
     "docs/evidence/campus-equipment-comparison.svg"
-  ]
+  ],
+  "svg_line_endings": "LF; regenerated working file and committed SVG blob are byte-identical"
 }
