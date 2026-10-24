@@ -395,6 +395,74 @@ class OperationsModelTest(unittest.TestCase):
         self.assertEqual(0, model._deliveries[robot])
         self.assertEqual(homes_before, model.homes)
 
+    def test_empty_pickup_yields_to_unclaimed_holdable_when_all_homes_are_occupied(self):
+        campus = Path(__file__).resolve().parents[1] / "configs" / "factory-semiconductor-campus16"
+        model = OperationsModel(campus, initial_orders=0, run_id="holdable-cycle-traffic-yield")
+        charging = model.operations_charging
+        assert charging is not None
+        charging.queue.clear()
+        charging.aux.clear()
+        charging.relocating.clear()
+        charging.faults.clear()
+        charging.docks.owners.clear()
+        model._trips.clear()
+        model._chunks.clear()
+        model._waiting.clear()
+
+        robot = "amr-3"
+        task = SimpleNamespace(
+            task_id="LOT-HOLDABLE:process_input:1",
+            order_id="LOT-HOLDABLE",
+            payload_id="T-HOLDABLE",
+            pickup_station="A_S1",
+            drop_station="A_CI",
+        )
+        model._station_owners.update(A_S1=robot, A_CI=robot)
+        model._jobs[robot] = ("A_S1", "A_CI")
+        model._trip(robot, task, "A_P3", "A_S1", "pickup", kind="process_line")
+        resume = model._trips[robot]
+        charging_robot = "amr-7"
+        model._trip(
+            charging_robot, {}, model._locations[charging_robot], "A_P1",
+            "charge_approach", kind="charging",
+        )
+        charge_approach = model._trips[charging_robot]
+        model._observe_all()
+        observations = model.reservations.observation_snapshot(now_s=model.sim_time)
+
+        self.assertTrue(model._schedule_traffic_yield((charging_robot, robot), observations))
+
+        yield_trip = model._trips[robot]
+        self.assertIs(charge_approach, model._trips[charging_robot])
+        self.assertEqual("charge_approach", model._trips[charging_robot]["phase"])
+        self.assertEqual("traffic_yield", yield_trip["purpose"])
+        self.assertEqual("A_PACK_WAIT", yield_trip["goal"])
+        self.assertNotIn(yield_trip["goal"], model.homes.values())
+        self.assertIs(resume, yield_trip["traffic_yield_resume"])
+        self.assertTrue(all(node.startswith("A_") for node in yield_trip["nodes"]))
+        self.assertFalse(set(yield_trip["nodes"]) & model.bridges.queue_nodes)
+        self.assertFalse(set(yield_trip["nodes"]) & set(model.bridges.safe_exit_nodes.values()))
+        self.assertEqual({"A_S1": robot, "A_CI": robot}, model._station_owners)
+        self.assertEqual(0, model._assignments[robot])
+        self.assertEqual(0, model._deliveries[robot])
+
+        model._poses[robot].update(
+            x_m=model.book.nodes["A_PACK_WAIT"][0],
+            y_m=model.book.nodes["A_PACK_WAIT"][1],
+        )
+        model._arrive_trip(robot, yield_trip)
+
+        resumed = model._trips[robot]
+        self.assertEqual("process_line", resumed["kind"])
+        self.assertEqual("pickup", resumed["phase"])
+        self.assertIs(task, resumed["task"])
+        self.assertEqual("A_S1", resumed["goal"])
+        self.assertEqual("A_PACK_WAIT", model._locations[robot])
+        self.assertEqual(1, model.traffic_yield_count)
+        self.assertEqual(1, model.traffic_yield_completed_count)
+        self.assertEqual(0, model._assignments[robot])
+        self.assertEqual(0, model._deliveries[robot])
+
     def test_transport_wait_excludes_parking_and_charging_stops(self):
         model = OperationsModel(CONFIG, initial_orders=0, run_id="transport-wait-boundary")
         robot = "amr-1"

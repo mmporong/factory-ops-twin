@@ -422,6 +422,8 @@ class OperationsModel(DashboardModel):
 
         candidates = []
         safe_exits = frozenset(self.bridges.safe_exit_nodes.values())
+        refuge_nodes = set(self.homes.values())
+        refuge_nodes.update(self.bridges.holdable_nodes or ())
         inventory_loads = getattr(self.inventory, "robot_loads", {})
         reserved_dock_anchors = frozenset(
             self.operations_charging.slots[dock_id]["anchor"]
@@ -450,13 +452,20 @@ class OperationsModel(DashboardModel):
             bay = start.split("_", 1)[0]
             if not bay:
                 continue
+            claimed_goals = {
+                peer_trip["goal"]
+                for peer, peer_trip in self._trips.items()
+                if peer != robot and peer_trip.get("goal") is not None
+            }
             peer_tiles = frozenset(
                 tuple(tile)
                 for peer, observation in observations.items() if peer != robot
                 for tile in observation["tiles"]
             )
-            for refuge in sorted(set(self.homes.values())):
-                if not refuge.startswith(f"{bay}_") or refuge in reserved_dock_anchors:
+            for refuge in sorted(refuge_nodes):
+                if (not refuge.startswith(f"{bay}_")
+                        or refuge in reserved_dock_anchors
+                        or refuge in claimed_goals):
                     continue
                 alternative = find_alternative_route(
                     self.book,
