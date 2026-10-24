@@ -113,17 +113,37 @@ class LineOperationsModelTests(unittest.TestCase):
         charging = model.operations_charging
         assert charging is not None
 
+        original_drop = model.line.drop
+
+        def drop_with_successor_window(*args, **kwargs):
+            original_drop(*args, **kwargs)
+            candidate = next(task for task in model.line.ready_transports
+                             if task.kind == "empty_return" and task.lot_id == lot_id)
+            adapter = _TripTask.from_request(candidate)
+            route = model.book.plan(candidate.origin, candidate.destination, closed=model.closed)
+            successor = model._window_for_trip(
+                route.points[0], route.points[1:], route.nodes[1:],
+                {"kind": "process_line", "phase": "drop",
+                 "goal": candidate.destination, "task": adapter},
+                robot_id=robot,
+            )
+            self.assertEqual((), model.bridges.admit(
+                robot, successor["nodes"], route_tiles=successor["tiles"],
+                handover_protected=True,
+            ))
+
         with (
             patch.object(charging, "can_assign", return_value=True),
-            patch.object(model.bridges, "blockers", return_value=()) as blockers,
+            patch.object(model.line, "drop", side_effect=drop_with_successor_window),
         ):
             model._arrive_trip(robot, model._trips[robot])
 
         chained = model._trips[robot]
         self.assertEqual(("process_line", "drop", "D_S1"),
                          (chained["kind"], chained["phase"], chained["goal"]))
-        self.assertEqual(tuple(chained["admission_nodes"]), blockers.call_args.args[1])
-        self.assertEqual(chained["admission_tiles"], blockers.call_args.kwargs["route_tiles"])
+        self.assertTrue(model.bridges.can_retarget(
+            robot, chained["admission_nodes"], route_tiles=chained["admission_tiles"],
+        ))
         state = model.line.snapshot()
         self.assertEqual((1, 0, 1),
                          (state["completed_lots"], state["returned"], model._deliveries[robot]))
@@ -133,6 +153,9 @@ class LineOperationsModelTests(unittest.TestCase):
         self.assertEqual(("same_station", True),
                          (event["handoff"], event["avoided_staging_reapproach"]))
 
+        # This focused test jumps to the destination instead of advancing the
+        # rolling windows that would release the retained route in production.
+        model.bridges.release(robot, stopped=True)
         model._poses[robot].update(
             x_m=model.book.nodes["D_S1"][0], y_m=model.book.nodes["D_S1"][1],
         )
@@ -153,14 +176,18 @@ class LineOperationsModelTests(unittest.TestCase):
             "product_move",
         )
         model._trip(
-            robot, delivered, model._locations[robot], delivered.pickup_station,
-            "pickup", kind="process_line",
+            robot, delivered, delivered.pickup_station, delivered.drop_station,
+            "drop", kind="process_line",
         )
         model._poses[robot].update(
             x_m=model.book.nodes["A_OUT"][0], y_m=model.book.nodes["A_OUT"][1],
         )
-        model._trips[robot].update(
-            phase="drop", start=delivered.pickup_station, goal=delivered.drop_station,
+        old_window = frozenset(model._trips[robot]["admission_tiles"])
+        model.bridges.admit(
+            robot,
+            model._trips[robot]["admission_nodes"],
+            route_tiles=old_window,
+            handover_protected=True,
         )
         model._station_owners.update({"A_PACK_OUT": robot, "A_OUT": robot})
         model._jobs[robot] = ("A_PACK_OUT", "A_OUT")
@@ -168,6 +195,18 @@ class LineOperationsModelTests(unittest.TestCase):
             "LOT-X:empty_return:5", "LOT-X", "T999", "empty_return",
             "A_OUT", "A_S1", model.sim_time,
         )
+        adapter = _TripTask.from_request(ready)
+        route = model.book.plan(ready.origin, ready.destination, closed=model.closed)
+        successor = model._window_for_trip(
+            route.points[0], route.points[1:], route.nodes[1:],
+            {"kind": "process_line", "phase": "drop",
+             "goal": ready.destination, "task": adapter},
+            robot_id=robot,
+        )
+        self.assertFalse(successor["tiles"].issubset(old_window))
+        self.assertFalse(model.bridges.can_retarget(
+            robot, successor["nodes"], route_tiles=successor["tiles"],
+        ))
 
         with (
             patch.object(type(model.line), "ready_transports", new_callable=PropertyMock,
@@ -175,12 +214,12 @@ class LineOperationsModelTests(unittest.TestCase):
             patch.object(model.line, "drop"),
             patch.object(model.line, "assign") as assign,
             patch.object(model.inventory, "product_drop"),
-            patch.object(model.bridges, "blockers", return_value=("amr-2",)),
         ):
             model._arrive_trip(robot, model._trips[robot])
 
         staged = model._trips[robot]
         self.assertEqual(("parking", "staging"), (staged["kind"], staged["purpose"]))
+        self.assertTrue(staged["admission_tiles"].issubset(old_window))
         assign.assert_not_called()
 
     def test_home_parking_is_preemptible_at_unstarted_or_intermediate_safe_hold(self):

@@ -175,6 +175,24 @@ class BridgeAdmission:
         self._protected_tiles[robot] = protected
         self.waiters.pop(robot, None)
 
+    def can_retarget(
+        self,
+        robot: str,
+        route_nodes: Iterable[str],
+        *,
+        route_tiles: Iterable[Tile],
+    ) -> bool:
+        """Report whether a retained window can narrow to one already-protected successor."""
+        active = self._protected_tiles.get(robot)
+        protected = frozenset(route_tiles)
+        required = self.required(route_nodes)
+        return (
+            active is not None
+            and bool(protected)
+            and protected.issubset(active)
+            and required.issubset(self.held(robot))
+        )
+
     def withdraw_waiter(self, robot: str) -> bool:
         """Withdraw only an unowned admission wait.
 

@@ -85,10 +85,19 @@ class BridgeAdmissionTest(unittest.TestCase):
             handover_protected=True,
         )
         self.assertEqual(["carrier"], gate.snapshot()["handover_protected"])
+        self.assertTrue(gate.can_retarget(
+            "carrier", ["E"], route_tiles={(2, 1), (3, 1)},
+        ))
+        self.assertFalse(gate.can_retarget(
+            "carrier", ["E"], route_tiles={(2, 1), (3, 1), (4, 1)},
+        ))
         with self.assertRaises(RuntimeError):
             gate.retarget("carrier", ["E"], route_tiles={(2, 1), (3, 1)}, stopped=False)
         gate.retarget("carrier", ["E"], route_tiles={(2, 1), (3, 1)}, stopped=True)
         self.assertEqual(frozenset({"AB"}), gate.held("carrier"))
+        self.assertFalse(gate.can_retarget(
+            "carrier", ["N"], route_tiles={(2, 1), (3, 1)},
+        ))
         with self.assertRaises(RuntimeError):
             gate.retarget(
                 "carrier", ["E"], route_tiles={(2, 1), (3, 1), (4, 1)}, stopped=True,
