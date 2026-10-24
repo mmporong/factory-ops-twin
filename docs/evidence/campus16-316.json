@@ -1,0 +1,56 @@
+{
+  "schema_version": "factory-ops-campus16-diagnostic-v1",
+  "case_id": "campus16-pilot-316",
+  "run_id": "process-line-ee7a9800-1a21-4e5b-89e6-f25483b74d0a",
+  "status": "incomplete",
+  "stop_reason": "performance_regression_diagnostic_stop",
+  "completion_claim": false,
+  "source_stable_during_run": true,
+  "source_mismatches": [],
+  "final_progress": {
+    "sim_time_s": 20429.999999983196,
+    "elapsed_wall_s": 962.1979826999595,
+    "completed_lots": 5,
+    "returned": 4,
+    "completed_transport_deliveries": 66,
+    "min_assignments": 1,
+    "min_deliveries": 1,
+    "peak_transport_active": 13,
+    "peak_transport_moving": 7,
+    "traffic_yield_selected": 3,
+    "traffic_yield_completed": 3,
+    "observed_min_clearance_m": 1.7257818169114456
+  },
+  "performance_observation": {
+    "intervals": [
+      {
+        "sim_start": 20100.0,
+        "sim_end": 20340.0,
+        "wall_start": 641.83,
+        "wall_end": 797.7473140999209,
+        "rate_x": 1.5392774137078455
+      },
+      {
+        "sim_start": 20340.0,
+        "sim_end": 20400.0,
+        "wall_start": 797.7473140999209,
+        "wall_end": 916.4824674999109,
+        "rate_x": 0.5053263358145885
+      }
+    ],
+    "finding": "post-warmup slowdown reproduced after the model-level wait-energy cache change; exact hot function remains pending cProfile evidence",
+    "discarded_hypothesis": "charging departure requirement is not called for moving approach robots; operations_charging.py returns early for phase=approach"
+  },
+  "artifact_boundary": {
+    "result_json_present": false,
+    "recording_window_entered": true,
+    "recording_manifest_present": false,
+    "snapshot_gzip_bytes": 6062218,
+    "owned_processes_gone": true
+  },
+  "hashes": {
+    "progress_sha256": "4e7f24b3440f43b2101f10f8e722d450a27854a8f5173a2d79c9c39195a346ca",
+    "frozen_manifest_sha256": "0cfe80cb32a6d3aa70bd1ecda16343fb19028b7664781a5608f8404e37bdc76b",
+    "snapshot_gzip_sha256": "ae8a2e5ad71b8e4e03c1cd27b009bb2e4db4f5a5bbc7325eac73feb3cb6dd83c"
+  }
+}
