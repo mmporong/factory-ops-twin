@@ -1645,3 +1645,11 @@ v5는 동일 검사를 모든 불투명 절차형 컨텍스트 상자로 확장�
 shipping product_move 완료 뒤 같은lot·carrier·origin의 준비된 empty_return을 찾는 연속 인계를 추가했다. 목적지 용량·station owner·새 전체 적재window와 실제pose/활성window·충전can_assign을 통과한 경우에만 같은 차량이 기존 인계 보호를 새trip으로 전환한다. 하나라도 불가하면 기존staging 이탈이다. 반환source의 후속 투입까지 확대하지 않는다.
 
 실제ProcessNetwork와inventory를 쓰는 회귀에서 출하 직후 completed1/returned0/deliveries1, 반납source 도착 후 returned1/deliveries2를 확인했다. 차단된window의fallback을 포함한 표적5검사·구문·diff 확인이 통과했다. 배정만으로 반납/완료 운송을 올리지 않으며 이벤트에 handoff=same_station을 남긴다. 기존321/322/324는 변경하지 않았고 전체 효과는 새326에서 확인한다. [원인·구현·계수 보존과 미확인 범위](evidence/campus16-station-handoff.json)
+
+## FOT-209 — 연속 인계의 새 경로와 활성window 부분집합 계약 충돌
+
+326은sim4938초 부근·벽시계124.563초에 `retargeted admission must be a nonempty subset of the active window`로 실패했다. 출하 지점에서 새 반납trip을 만들면서 현재활성window 밖의 경로로 retarget하려 했고 기존불변식이 거절했다. 수정 전 표적검사 통과를 실제 활성window 전환 성공으로 확대 해석할 수 없는 사례다. 원본과43개 동결소스를 보존하며 동일 소스를 재실행하지 않는다.
+
+다음 수정은 실제 활성window를 둔 상태에서 확인한다. 현재pose/차체 보호와station capacity·energy admission을 유지하고, 승인 불가능하면 line.assign/pickup 등 상태변경 전에 기존staging 경로로 복귀한다. 기존retarget 부분집합 조건은 완화하지 않는다. 별도 소스의 수정과 실제 후속 운영은 아직 진행 중이다.
+
+326 결과의 final_snapshot은 실패한 전이 직전 마지막 정상snapshot이며 출하0/반납0/운송29를 담는다. 예외 후 모델을 다시 snapshot한 상태가 아니므로 오류 도중 inventory 원자성이나 최종출하 계수의 근거로 사용하지 않는다. 미완료300표본도 최종대표영상에 사용하지 않는다. [실패·해시·기록 경계](evidence/campus16-326.json)

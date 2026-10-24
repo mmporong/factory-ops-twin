@@ -1,0 +1,108 @@
+{
+  "schema_version": 1,
+  "run_id": "process-line-324b899f-0c43-4bef-9510-4c36bf056e0a",
+  "status": "failed",
+  "error": {
+    "type": "RuntimeError",
+    "message": "retargeted admission must be a nonempty subset of the active window"
+  },
+  "stop_reason": "runtime_error",
+  "scope": "authored CPU process line and kinematic reservations; no physics, sensors or measured factory times",
+  "source_commit": "8cfc58f3c17343a17424db1039396cdea0969532",
+  "workload": {
+    "lots": 48,
+    "release": "all at simulation start",
+    "policy": "fifo"
+  },
+  "limits": {
+    "horizon_s": 120000.0,
+    "wall_s": 5400.0,
+    "snapshot_count": 80,
+    "stall_timeout_s": 600.0,
+    "cycle_stall_timeout_s": 600.0
+  },
+  "source_stable_during_run": true,
+  "elapsed_wall_s": 124.56270140002016,
+  "last_successful_snapshot": {
+    "sim_time_s": 4938.000000000433,
+    "shipments": 0,
+    "returns": 0,
+    "deliveries_total": 29,
+    "active_material_tasks": 8,
+    "peak_material_tasks": 8,
+    "scope": "Last snapshot completed before the failing transition. The runner does not recover a post-exception model snapshot; these counters are not an atomic inventory state after the exception."
+  },
+  "confirmed_failure_boundary": "New shipping-to-empty-return trip attempted an admission retarget outside its existing active bridge window. The existing nonempty-subset invariant rejected it.",
+  "repair_status": "Separate-source fix in progress; no identical-source rerun. Preserve active window, footprint, capacity and energy guards; fallback before line.assign/pickup when continuation cannot be admitted.",
+  "frozen_source": {
+    "relative_path": "frozen-source",
+    "manifest_relative_path": "frozen-source/manifest.json",
+    "manifest_sha256": "c1f4b9521a9aa162dcbb6c26679658af12bc04087157cf97b269b01d2d506678",
+    "source_binding_sha256": "0a98adf32216a4c1acb55838cfb0bbafd7a259f2bfb4f64190bedad0b4a38cd5",
+    "file_count": 43
+  },
+  "recording": {
+    "frames": 300,
+    "selection": {
+      "scope": "authored process-line snapshots; selection only, not case validity, physics, sensors, throughput, or completion proof",
+      "sample_hz": 1,
+      "configured_sample_count": 300,
+      "selected_sample_count": 300,
+      "first": {
+        "sim_time_s": 801.0000000001136,
+        "shipments_completed": 0,
+        "returns_completed": 0,
+        "transports_completed": 8
+      },
+      "last": {
+        "sim_time_s": 1100.000000000095,
+        "shipments_completed": 0,
+        "returns_completed": 0,
+        "transports_completed": 15
+      },
+      "score": {
+        "shipment_and_return_both_increased": false,
+        "minimum_shipment_return_delta": 0,
+        "completed_transport_delta": 7,
+        "logistics_pose_distance_m": 302.4142411782973,
+        "distinct_moving_logistics_robots": 5,
+        "priority_order": [
+          "shipment_and_return_both_increased",
+          "minimum_shipment_return_delta",
+          "completed_transport_delta",
+          "logistics_pose_distance_m",
+          "distinct_moving_logistics_robots"
+        ]
+      },
+      "movement_scope": {
+        "included_task_types": [
+          "empty_return",
+          "process_input",
+          "product_move"
+        ],
+        "excluded_task_types": [
+          "traffic_yield",
+          "parking",
+          "charging"
+        ],
+        "payload_required": false,
+        "task_id_change_edges": "excluded"
+      }
+    },
+    "final_render_eligible": false
+  },
+  "closure": {
+    "result_sha256": "a18695abb88534a219b7489a03f5c6328626de02c101532672f269ee4dec0267",
+    "manifest_sha256": "e98dfe688f8187385a82de302d0534d3e1a792615f59510c969fda2f7befa8d9",
+    "gzip_sha256": "a067dc45b0dce6a2df744f2781c341d239c2c02140c13d4a3de31d627f1ea4af",
+    "closed_manifest_hashes_match": true,
+    "frozen_files_hashes_match": true,
+    "owned_process_check": "Root process inventory: no python.exe matching run_process_line.py and campus16-pilot-326.",
+    "owned_python_processes": 0
+  },
+  "success_flags": {
+    "full48_48_completed": false,
+    "peak16_material_tasks_verified": false,
+    "native_physics_transport_verified": false
+  }
+}

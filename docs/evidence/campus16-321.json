@@ -176,7 +176,7 @@
     "charging_faults": {},
     "charging_relocating": {},
     "departure_deferred": {},
-    "interpretation": "At this observed peak13 sample, every ready task is excluded by a claimed station or full input buffer. This is not evidence of a global cap13 or GPU exhaustion. Origin-owner lifetime is a follow-up candidate, not a proven full-run cause."
+    "interpretation": "At this observed peak13 sample, every ready task is excluded by a claimed station or full input buffer. No global cap13 or GPU exhaustion is established. Existing origin owner release already occurs after actual footprint departure; sampled loaded robot amr15 had only destination D_S1 claimed. Other12 active jobs were still awaiting pickup, so origin serialization there is intentional."
   },
   "closure": {
     "result_sha256": "875424038df95360525d9b526f80b4ec729d9dc595260c1284210e36fbd6d5dd",
@@ -204,7 +204,8 @@
       "case": "campus16-pilot-326",
       "change": "same-OUT shipping-to-empty-return handoff",
       "policy": "fifo",
-      "state": "running"
+      "state": "failed_runtime_error",
+      "evidence": "campus16-326.json"
     }
   ]
 }
