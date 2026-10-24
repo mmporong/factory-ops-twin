@@ -1,0 +1,77 @@
+{
+  "schema_version": 1,
+  "execution_mode": "authored_CPU_operations",
+  "status": "implemented_targeted_tests_passed_full_run_pending",
+  "source_main_commit": "6d1ec423ac113a2a99ab7644ec78cea009b8d57b",
+  "source_worker_commits": [
+    "4209ca229a5724ca3371158d622426b5b31ecf68",
+    "cde14747167a582a1d2e207581e7a7ac7681be9d"
+  ],
+  "source_sha256": {
+    "factory_ops/operations_model.py": "b8bafcc6946d49f937d42a2fe599a693db19741c8de09abf0cfa6adc8fcec1f7",
+    "factory_ops/line_operations_model.py": "13b647d67716cbab99a63c8f239a1cbbba8958d947124ff5585f5cf2c1350bb5",
+    "tests/test_line_station_admission.py": "cc8d835c2cfac519699c2b07fd55a64ca3ffb866f30277adf675d1164197557e"
+  },
+  "config": {
+    "path": "configs/factory-semiconductor-campus16-wide-bridges-handoff-admission",
+    "identical_config_files": [
+      "fleet-profile.json",
+      "g2.json",
+      "g3-routing.json",
+      "layout.json",
+      "operations-charging.json",
+      "render-profile.json",
+      "visual-assets.json"
+    ],
+    "only_network_change": {
+      "station_gate_acquisition": [
+        null,
+        "service_window"
+      ]
+    },
+    "network_sha256": "873a1a6b4069deb872e813ec518c1f4432739afc7fc6329f63d25f56eff1a24a"
+  },
+  "behavior": {
+    "default": "dispatch mode unchanged; unsupported mode rejected",
+    "assignment": "Unique lot/carrier and destination reserved_inputs credit remain at line.assign; capacity stays2.",
+    "safe_wait": "A stopped idle or legally preemptible home-parking robot at an authored safe anchor may accept valid work while its first movement window is temporarily blocked; queue/safe-exit/active movement excluded.",
+    "movement": "Existing bridge/tile/current-pose/charging-dock guards still decide actual movement; blocked admission records reason and blocker IDs without pickup/material transition.",
+    "station_gate": "Preflight other owner before final service window; commit after bridge and tile approval before movement. Exact-pose zero-distance arrival also requires gate before material commit.",
+    "release": "Existing handoff observations and footprint-clear release retained; same-station shipping return keeps current gate.",
+    "unchanged": [
+      "snapshot/scene API shape",
+      "initial WIP0",
+      "48 lots",
+      "stock240",
+      "carriers64",
+      "input capacity2",
+      "energy limits",
+      "vehicle radius",
+      "acceleration/turning",
+      "existing protected-window transition guards"
+    ]
+  },
+  "validation": {
+    "worker_new_behavior_tests": 7,
+    "worker_followup_first_window_wait_test": {
+      "passed": 1,
+      "elapsed_wall_s": 6.12
+    },
+    "worker_existing_affected_tests_passed": 8,
+    "constructor_snapshot_shape": "PASS",
+    "zero_distance_gate": "PASS",
+    "worker_py_compile": "PASS",
+    "worker_diff_check": "PASS",
+    "root_integration": "Source/test/config bytes match final worker commit cde1474; no conflicts; diff check PASS. Passed worker checks not repeated."
+  },
+  "full_run": {
+    "case": "campus16-pilot-334",
+    "source_commit": "6d1ec423ac113a2a99ab7644ec78cea009b8d57b",
+    "policy": "fifo",
+    "lots": 48,
+    "full_completion_verified": false,
+    "peak16_material_tasks_verified": false,
+    "final_render_eligible": false
+  },
+  "scope": "Component behavior only until new334 closes. No measured throughput gain, native physics transport, collision-free whole-run claim, or final media approval."
+}

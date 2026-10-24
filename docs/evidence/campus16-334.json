@@ -1,0 +1,82 @@
+{
+  "schema_version": 1,
+  "case": "campus16-pilot-334",
+  "run_id": "process-line-dff1a325-bffa-40e2-b6a6-de08a822ba76",
+  "status": "running",
+  "execution_mode": "authored_CPU_operations",
+  "source_commit": "6d1ec423ac113a2a99ab7644ec78cea009b8d57b",
+  "workload": {
+    "lots": 48,
+    "initial_WIP_before_release": 0,
+    "finite_stock": 240,
+    "carriers": 64,
+    "policy": "fifo",
+    "config": "configs/factory-semiconductor-campus16-wide-bridges-handoff-admission",
+    "station_gate_acquisition": "service_window",
+    "release": "all at simulation start"
+  },
+  "limits": {
+    "horizon_s": 240000,
+    "wall_s": 10800,
+    "stall_timeout_s": 600,
+    "cycle_stall_timeout_s": 600,
+    "record_best_window_samples": 300
+  },
+  "frozen_source": {
+    "file_count": 43,
+    "manifest_sha256": "f5df035015f38355a91f2e03a440c313fa9ffe097d85ca07c24c7265f295b5bd",
+    "worker_verified_all_file_hashes": true,
+    "includes_generic_replan_repair_f09a5e7": true
+  },
+  "launch_processes": {
+    "session": 91512,
+    "shell_pid": 2292,
+    "venv_python_pid": 63172,
+    "runtime_python_pid": 3596,
+    "exec_host_excluded": 102308,
+    "retention_reason": "Authorized bounded CPU48-lot run; continue until natural close or diagnostic limit.",
+    "stop_method": "Ctrl+C to owned session91512; do not terminate unrelated services."
+  },
+  "observed_concurrency": {
+    "sim_time_s": 2699.99999999864,
+    "current_material_tasks": 16,
+    "current_material_moving": 1,
+    "different_task_ids": 16,
+    "task_types": [
+      "process_input",
+      "product_move"
+    ],
+    "robot_ids": [
+      "amr-1",
+      "amr-2",
+      "amr-3",
+      "amr-4",
+      "amr-5",
+      "amr-6",
+      "amr-7",
+      "amr-8",
+      "amr-9",
+      "amr-10",
+      "amr-11",
+      "amr-12",
+      "amr-13",
+      "amr-14",
+      "amr-15",
+      "amr-16"
+    ],
+    "observation_path": "artifacts/operations/campus16-pilot-334-first16-observation.json",
+    "observation_sha256": "1afb31a323426bb4fea8b27a6e66909bab9a4b49464ae57685fad81ccb79fc5b",
+    "progress_sha256": "802a8319f07d7be29003a6523eaa1701f55b8ae418a825af0f0c4b9caa61cac7",
+    "scope": "Observed16 concurrent assigned material tasks; includes traffic waiting. Does not mean16 robots moving or repeated transports completed."
+  },
+  "success_flags": {
+    "all48_shipped_and_returned_verified": false,
+    "quiescent_verified": false,
+    "all16_min2_deliveries_verified": false,
+    "peak16_material_tasks_live_observed": true,
+    "native_physics_transport_verified": false,
+    "final_render_eligible": false
+  },
+  "comparison_scope": "New producer includes both f09a5e7 replan repair and optional station admission policy. Not an isolated throughput-effect experiment. Same cold-start48-lot workload and physical/energy/buffer limits.333 frozen source unchanged.",
+  "verification_scope": "Launch and live16-material concurrency observed. Closed complete/error-free/stable result, final inventory conservation, per-robot repeated transport, hash closure and owned-process shutdown remain pending. No GPU/cloud job started."
+}

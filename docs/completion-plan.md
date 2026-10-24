@@ -51,7 +51,9 @@ a46bea1은 기존retarget을 유지하면서 정지한handover의 새window를 �
 
 333은 fc25c93의 wide-bridges-coverage-eta/eta 후보를 독립 CPU에서 실행한다.332를 중단/수정하지 않고 기존 coverage ETA 배차와 actual wide 차로를 결합하며43동결파일 중42개(생산자35·설정7)가332와바이트동일하다. process-network의mode/quota2만바뀌며48lot·안전·에너지·설비와상한은같다. 실제정책전체의진행·대기·충전과동일완료조건을비교하고개별ETA효과나병렬wall성능우월성을주장하지않는다. 신규GPU/클라우드/의존성은없고추가비교실행은두지않는다. [333 입력·통제 범위](evidence/campus16-333.json)
 
-다음 선택 정책은 자재 예약과 물리 인계점 점유를 분리하는 service-window admission이다. 현재는 배차 때 origin/destination을 함께 선점하고, 별도로 cell input capacity2도 예약한다. 새 후보는 unique lot/carrier와 destination buffer credit을 유지하되 실제 서비스 goal을 포함하는 마지막 정지 가능 window에서 gate를 확인하고, bridge/tile 허가 뒤 이동 전에 소유를 확정한다. 기존 handoff 관측·정지·차체 이탈 전 해제 금지·충전 도크·원자 window 전환은 유지한다. 기본 모드와 기존 설정은 바꾸지 않는다. 초기 WIP0·48lot·재고240·캐리어64와 집계 기준을 유지하며 신규 policy의 전체 성공/동시성은 미측정이다.
+선택 정책 service-window admission을6d1ec42에 통합했다. unique lot/carrier와 destination input capacity2의 credit은 배차 때 예약하고, 실제 서비스 goal을 포함하는 마지막 정지 가능 window에서 gate를 확인해 bridge/tile 허가 뒤 이동 전에 소유를 확정한다. 안전 정지 idle/합법 귀가 선점에서는 일시적인 첫 window 충돌이 있어도 유효 업무를 배정하고 실제 admission에서 기다린다. 기존 handoff 관측·정지·차체 이탈 전 해제 금지·충전 도크·원자 window 전환은 유지한다. 신규 행동8개와 기존 영향8개 검사, constructor/snapshot 형태 확인이 통과했다. 기본 모드와 기존 설정·초기 WIP0·48lot·재고240·캐리어64·집계는 바꾸지 않으며 신규 policy의 전체 성공/동시성은334의 마감 뒤 판정한다. [구현·검사 범위](evidence/campus16-service-window-admission.json)
+
+334는6d1ec42의 새 clean worktree에서 service-window/fifo·같은48lot·240000sim/10800wall·정체/SCC600·자동300표본으로 시작했다. f09a5e7 재계획 수정도 포함하며43동결입력을 확인했다. live sim2700초에서 서로 다른16개 물류 task를 확인했으며 당시 물류 이동은1대이고 나머지는 대기 상태였다. 초기 배정 동시성과 전16대 반복 완료·48/48·최종 정지를 구분하며, 신규 정책의 전체 완주는 아직 확인 중이다.333은 기존 소스를 유지한다. [334 실행·관측 범위](evidence/campus16-334.json)
 
 48lot 일괄 투입·빈 WIP에서 시작해 전량 출하/회수/정지하는 결과는 유한 배치의 완주다. 정상상태 평균 처리량이나 실공장 생산성으로 확장하지 않는다. 초기 WIP를 넣는 warm start는 운영 시점의 lot·설비·carrier 상태와 투입 계획을 정의하는 별도 실험이므로 현재16대 완료 조건을 대체하지 않는다. [종료형·정상상태 출력 분석(WSC2006)](https://informs-sim.org/wsc06papers/004.pdf) · [반도체 초기 운영상태 모델링(WSC2022)](https://informs-sim.org/wsc22papers/350.pdf)
 

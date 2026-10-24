@@ -55,6 +55,16 @@ Ctrl+C는 `incomplete / diagnostic_interrupt`로 마감하고 가능한 최종 s
 
 선택 차로 확장은 `--config configs/factory-semiconductor-campus16-wide-bridges --policy fifo`로 실행한다. AB/CD의 실제3m 차로와 방향별 예약을 사용하며 AC/BD·버퍼·재고·에너지·차체 반경은 유지한다. 지정 대기점 양보도 같은 모델에서 적용한다. 구성 요소 검사는 통과했지만330에서 도로와 독점 예약 영역의 잘못된 확장을 확인해 경계를 수정했다. 실제 반납 경로 회귀는 통과했다.331의 충전 도크와 적재 차량 순환 대기는 예약 도크의 경로 보호로 수정했으며 후속332는 예약 창 전환 오류로 종료돼 완주는 남아 있다. [기하와 확인 범위](evidence/campus16-wide-bridges.json) 기존 coverage ETA를 같은 차로에 결합하려면 `--config configs/factory-semiconductor-campus16-wide-bridges-coverage-eta --policy eta`를 사용한다. 운송2회 미만 차량의 참여를 우선하고 이후 명목 ETA 순으로 고른다.332/333은 같은 물류 입력의 정책전체 비교이며 병렬 wall time은 처리속도 비교로 쓰지 않는다. [입력 동일성·진행 범위](evidence/campus16-333.json)
 
+선택 정책 `service_window`는 자재 배정과 물리 인계점 예약을 분리한다. 다음 명령은 초기 WIP0·48lot·입력 버퍼2와 기존 안전/에너지 설정을 유지한다. 기본 정책의 배차 즉시 origin/destination 선점과 구분하며, 다른 설정에는 적용되지 않는다.
+
+```powershell
+cd "$HOME/factory-ops-twin"
+$handoffLabel = Get-Date -Format "yyyyMMdd-HHmmss"
+uv run python scripts/demo/run_process_line.py --config configs/factory-semiconductor-campus16-wide-bridges-handoff-admission --policy fifo --lots 48 --horizon 240000 --max-wall-seconds 10800 --stall-timeout 600 --cycle-stall-timeout 600 --record-best-window --output-dir "artifacts/operations/handoff-$handoffLabel"
+```
+
+lot·캐리어·목적지 버퍼 credit은 배차 때 확정한다. 안전 정지 위치의 차량은 첫 구간의 일시 충돌을 기다릴 수 있지만, 실제 bridge/tile 승인 전에는 이동하지 않는다. 서비스 goal을 포함한 마지막 정지 가능 window에서 다른 인계점 소유자를 확인하고, 통행 승인 후 이동 전에 gate를 확보한다. 적재/하역 확인과 차체 이탈 후 해제 조건은 유지한다. 새 행동8개·기존 영향8개 검사와 snapshot API 형태 확인을 통과했으며, 전체 완주·16동시성은334에서 별도로 판정한다. [확인 범위](evidence/campus16-service-window-admission.json)
+
 ## 16대 캠퍼스의 설비 고장·복구
 
 `process-line` API의 기본값은 읽기 전용이다. 다음처럼 명령을 켠 로컬 실행에서는 관제의 운영 패널에서12개 설비 중 대상을 선택해 고장·복구를 요청한다. 기존 API와 포트가 겹치지 않는지 확인한다.
