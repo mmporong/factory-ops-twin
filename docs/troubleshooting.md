@@ -1701,3 +1701,11 @@ shipping product_move 완료 뒤 같은lot·carrier·origin의 준비된 empty_r
 330은 sim14307초의 마지막 정상 상태(출하4·반납1·운송47·물류 동시 최고15개) 뒤 `route enters D_center-shared-link+D_west-shared-link+campus-d-low-w-trunk+campus-h-cd-reservation without an authored safe exit`로 실패했다. AB/CD의 반대 방향 queue→safe-exit 검사는 통과했지만, 그 검사로 모든 D 로컬·혼합 OD의 rolling window 경계를 확인한 것은 아니었다.
 
 원본330의 소스43개·닫힌300개 기록·해시·소유 PID0은 보존했다. final_snapshot은 예외 전 마지막 정상 관측이며 오류 도중 상태의 재고 원자성이나 최종 운송 계수의 근거로 쓰지 않는다. 같은 전체 입력을 반복하기 전에 실제 실패 경로와 인접 경로의 authored safe exit/holdable 절단 위치를 재현한다. 선택 wide 생성함수·설정에 한정해 고치며 safe-exit 요구·차체 반경·예약 타일·정지 보호는 유지한다. 원인은 H_AB/H_CD atomic policy overlay를 실제6m 도로 전체로 넓혀 정거장 D_S1/B_S1을 병목 내부로 포함한 것이었다. 수정1af29dd는 atomic 경계만 원본으로 복원하고3m 차로·방향 자원·CD 출구·AB 진입부는 유지한다. 실제 amr9/T010/A_OUT→D_S1의 CD 출구 이후 drop 회귀와 영향4검사, main 재현1검사를 통과했다.77×77 운영 노드 OD에서 해당 safe-exit 오류만13→0이며 전체 오류 종류 감사는 아니다. 기존330 판정은 보존하고 수정본 전체 성공은331에서 확인한다. [실패·원본 해시·기록 범위](evidence/campus16-330.json)
+
+## FOT-216 — 예약 충전 도크에 일반 적재 차량이 진입한 뒤 순환 대기
+
+331은 sim50088초·wall1805.842초에 amr4↔amr9의 고정 대기로 자연 마감했다. 출하19·반납15·운송114·16대 최소3회·동시 물류 최고15개이며 오류 예외는 없었다. amr4는 D_CH1 예약 후 D_LOW_E_P1에서 D_P1 진입을 기다리고, T022를 싣고 반납하던 amr9는 D_P1에서 D_S1 이탈을 기다렸다. amr9의 외부 차단자에는 귀가 amr1도 있었다. 충전 재배정 후보는 실제 점유에 막혀 보류됐다.
+
+확인된 구현 경계는 `ChargingFleet.owners`의 도크 소유권을 일반 `_admission_observations`가 읽지 않는 것이다. 실제 pose와 bridge window는 보호하지만 아직 도착하지 않은 예약 도크 anchor는 일반 물류가 통과할 수 있었다. 수정은 예약 anchor의 차체 외곽을 소유 차량의 점유에 합치되 자기 충전 접근에는 적용하지 않는 방향으로 진행한다. 도크 전체 후보를 미리 점유하거나 실제 pose를 가상 위치로 대체하지 않는다. 예약 전 기존 pose/승인 창 보호, 홈 교환을 위한 이탈, 소유 차량 접근, 예약 해제 후 보호 해제를 표적 회귀에서 확인한다. 아직 전체 후속 실행 성공으로 취급하지 않는다.
+
+원본43개·300개 선택 표본·압축/원본 해시·결과·재고 보존과 소유 PID0을 확인했다. 이미 닫힌 실행을 같은 입력으로 반복하거나 미완료 selector를 우회해 최종 영상을 만들지 않는다. [331 상태·대기 관계·마감 해시](evidence/campus16-331.json)

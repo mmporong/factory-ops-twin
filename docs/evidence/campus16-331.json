@@ -25,7 +25,7 @@
   },
   "case": "campus16-pilot-331",
   "run_id": "process-line-53b58e53-caad-4b89-946f-f1397c2fa524",
-  "status": "running",
+  "status": "incomplete",
   "source_commit": "1af29dd5f52cba4cb9308141050aaab4ad44d351",
   "components": {
     "final_quiescence_fix": "0c42abb01d718b2f2bc97e28a64a71c9043e9e09",
@@ -44,7 +44,7 @@
     "shell_pid": 50532,
     "wrapper_pid": 110648,
     "python_pid": 50320,
-    "retention_reason": "Authorized bounded48-lot completion run supervised from an isolated clean source worktree.",
+    "retention_reason": "Closed naturally; launch-owned processes are gone.",
     "stop_method": "Ctrl+C to the owned execution session; runner finalizes result and recording. Do not terminate unrelated processes."
   },
   "initial_observed_progress": {
@@ -55,5 +55,166 @@
     "deliveries": 31,
     "peak_material_tasks": 9
   },
-  "verification_scope": "Only launch and43 frozen source/config hashes verified. Full completion, actual16 material concurrency and final media remain unverified."
+  "verification_scope": "Closed source-stable CPU diagnosis: 300 samples, compressed/raw bytes, result and43 frozen files verified; stock240=205 on hand+16 in carriers+19 consumed. All16 repeated deliveries verified, but48/48, quiescence and peak16 were not reached. Ineligible for final rendering.",
+  "stop_reason": "stationary_wait_cycle",
+  "error": null,
+  "source_stable_during_run": true,
+  "final_recorded_sim_time_s": 50087.99999955162,
+  "elapsed_wall_s": 1805.8424826000119,
+  "final_snapshot": {
+    "shipments": 19,
+    "returns": 15,
+    "deliveries": 114,
+    "deliveries_by_robot": {
+      "amr-1": 5,
+      "amr-2": 9,
+      "amr-3": 6,
+      "amr-4": 4,
+      "amr-5": 11,
+      "amr-6": 7,
+      "amr-7": 3,
+      "amr-8": 9,
+      "amr-9": 10,
+      "amr-10": 4,
+      "amr-11": 7,
+      "amr-12": 3,
+      "amr-13": 15,
+      "amr-14": 10,
+      "amr-15": 8,
+      "amr-16": 3
+    },
+    "minimum_deliveries_each": 3,
+    "peak_material_tasks": 15,
+    "peak_material_moving": 7,
+    "yield_selected": 14,
+    "yield_completed": 14,
+    "bridge_cycle": [
+      "amr-4",
+      "amr-9"
+    ],
+    "reservation_cycle": null,
+    "quiescent": false,
+    "inventory_conservation": [
+      {
+        "sku": "packaged-ic-tray",
+        "initial": 240,
+        "replenished": 0,
+        "on_hand": 205,
+        "in_totes": 16,
+        "consumed": 19,
+        "balanced": true
+      }
+    ]
+  },
+  "stationary_cycle": {
+    "members": [
+      "amr-4",
+      "amr-9"
+    ],
+    "unchanged_since_sim_s": 49486.999999560365,
+    "elapsed_sim_s": 600.9999999912543
+  },
+  "recording": {
+    "frames": 300,
+    "selection": {
+      "scope": "authored process-line snapshots; selection only, not case validity, physics, sensors, throughput, or completion proof",
+      "sample_hz": 1,
+      "configured_sample_count": 300,
+      "selected_sample_count": 300,
+      "first": {
+        "sim_time_s": 25575.999999908312,
+        "shipments_completed": 8,
+        "returns_completed": 4,
+        "transports_completed": 69
+      },
+      "last": {
+        "sim_time_s": 25874.99999990396,
+        "shipments_completed": 9,
+        "returns_completed": 5,
+        "transports_completed": 72
+      },
+      "score": {
+        "shipment_and_return_both_increased": true,
+        "minimum_shipment_return_delta": 1,
+        "completed_transport_delta": 3,
+        "logistics_pose_distance_m": 186.87921491989988,
+        "distinct_moving_logistics_robots": 5,
+        "priority_order": [
+          "shipment_and_return_both_increased",
+          "minimum_shipment_return_delta",
+          "completed_transport_delta",
+          "logistics_pose_distance_m",
+          "distinct_moving_logistics_robots"
+        ]
+      },
+      "movement_scope": {
+        "included_task_types": [
+          "empty_return",
+          "process_input",
+          "product_move"
+        ],
+        "excluded_task_types": [
+          "traffic_yield",
+          "parking",
+          "charging"
+        ],
+        "payload_required": false,
+        "task_id_change_edges": "excluded"
+      }
+    },
+    "final_render_eligible": false
+  },
+  "closure": {
+    "result_sha256": "04da43e69d7a8b476264e60f8c29ea65d5f675046ff686086bb94834ff95b4b3",
+    "manifest_sha256": "ddcaaf2a3c67714cdb53fa98a2f1a07ea1a35901f959a5687bbb4020c7a3690b",
+    "gzip_sha256": "417e4c56a21da637961cc4e14c94118f42537d9973e5d013f86b424980765064",
+    "raw_sha256": "7c28dc62704306bec206a9d270978317b4965814ba98513c5c3ed215ec98855d",
+    "raw_bytes": 58608555,
+    "frozen_source_manifest_sha256": "ddc164bf206e64b0b7ea8f4ee85b264f61b83bd9b789959c718865fd06472181",
+    "closed_manifest_raw_gzip_and_43_frozen_verified": true,
+    "owned_launch_pids_checked": [
+      50532,
+      110648,
+      50320
+    ],
+    "owned_processes_remaining": []
+  },
+  "media_completion_contract": {
+    "fleet": 16,
+    "lots": 48,
+    "minimum_deliveries_per_robot": 2,
+    "checks": {
+      "case_complete": false,
+      "source_stable": true,
+      "fleet_matches": true,
+      "workload_matches": true,
+      "all_lots_shipped": false,
+      "all_carriers_returned": false,
+      "quiescent": false,
+      "all_robots_repeated_material_deliveries": true,
+      "requested_material_concurrency": false
+    },
+    "passed": false
+  },
+  "failure_diagnosis": {
+    "confirmed_boundary": "Charging dock ownership is not included in ordinary route admission; another loaded vehicle can occupy the reserved anchor before the approaching owner arrives.",
+    "cycle_members": {
+      "amr-4": {
+        "phase": "charge_approach",
+        "dock": "D_CH1",
+        "at": "D_LOW_E_P1",
+        "goal": "D_P1",
+        "payload": null
+      },
+      "amr-9": {
+        "phase": "loaded_empty_return",
+        "payload": "T022",
+        "at": "D_P1",
+        "goal": "D_S1"
+      }
+    },
+    "external_blocker": "amr-1 parking",
+    "guard_repair_status": "targeted reproduction and repair in progress; no new whole run launched",
+    "preserved_scope": "Actual poses, active windows, safe exits, radius, energy and material capacity remain enforced."
+  }
 }
