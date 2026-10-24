@@ -25,6 +25,21 @@ def digest(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
 
 
+def stationary_cycle_signature(state: dict) -> tuple | None:
+    """Track progress within the wait cycle, independent of other robots."""
+    cycle = state["traffic"].get("bridge_admission", {}).get("wait_cycle")
+    if not cycle:
+        return None
+    robots = {robot["id"]: robot for robot in state["robots"]}
+    deliveries = state["traffic"]["deliveries"]
+    return tuple(
+        (robot_id, tuple(robots[robot_id]["pose"][key] for key in ("x_m", "y_m", "yaw_rad")),
+         robots[robot_id].get("task_id"), robots[robot_id].get("payload_id"),
+         deliveries.get(robot_id, 0), robots[robot_id].get("charged_wh", 0.0))
+        for robot_id in sorted(set(cycle))
+    )
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--config", type=Path, required=True)
@@ -35,6 +50,8 @@ def main() -> int:
     parser.add_argument("--max-wall-seconds", type=float, default=300)
     parser.add_argument("--stall-timeout", type=float, default=600,
                         help="stop incomplete after this many simulation seconds without motion or process progress")
+    parser.add_argument("--cycle-stall-timeout", type=float, default=0,
+                        help="optional simulation seconds with an unchanged stationary wait cycle; 0 disables")
     parser.add_argument("--record-start", type=float, default=600)
     parser.add_argument("--record-duration", type=float, default=0,
                         help="optional observed 1Hz media window, up to 300 simulation seconds")
@@ -46,6 +63,8 @@ def main() -> int:
     if (not math.isfinite(args.record_start) or args.record_start < 0
             or not math.isfinite(args.record_duration) or not 0 <= args.record_duration <= 300):
         parser.error("record start must be nonnegative; duration must be 0..300 seconds")
+    if not math.isfinite(args.cycle_stall_timeout) or args.cycle_stall_timeout < 0:
+        parser.error("cycle stall timeout must be finite and nonnegative")
     config, output = args.config.resolve(), args.output_dir.resolve()
     if not config.is_dir():
         parser.error("config must exist")
@@ -89,6 +108,9 @@ def main() -> int:
     stop_reason = "horizon_or_wall_limit"
     last_progress_s = 0.0
     last_signature = None
+    last_cycle_signature = None
+    last_cycle_progress_s = 0.0
+    stationary_cycle = None
     recorder = (SnapshotRecorder(output / "snapshots.jsonl.gz", start_s=args.record_start,
                                 duration_s=args.record_duration, sample_hz=1)
                 if args.record_duration else None)
@@ -106,6 +128,10 @@ def main() -> int:
             )
             if signature != last_signature:
                 last_progress_s, last_signature = model.sim_time, signature
+            cycle_signature = stationary_cycle_signature(state)
+            if cycle_signature is None or cycle_signature != last_cycle_signature:
+                last_cycle_progress_s = model.sim_time
+                last_cycle_signature = cycle_signature
             if recorder is not None:
                 recorder(state)
             if model.sim_time >= next_capture and len(snapshots) < 80:
@@ -127,7 +153,24 @@ def main() -> int:
             if model.sim_time - last_progress_s >= args.stall_timeout:
                 stop_reason = "no_motion_or_process_progress"
                 break
+            if (args.cycle_stall_timeout and cycle_signature is not None
+                    and model.sim_time - last_cycle_progress_s >= args.cycle_stall_timeout):
+                stop_reason = "stationary_wait_cycle"
+                stationary_cycle = {"members": [row[0] for row in cycle_signature],
+                                    "unchanged_since_sim_s": last_cycle_progress_s,
+                                    "elapsed_sim_s": model.sim_time - last_cycle_progress_s}
+                break
         state = validate_snapshot(model.snapshot())
+    except KeyboardInterrupt:
+        status = "incomplete"
+        stop_reason = "diagnostic_interrupt"
+        if model is not None:
+            try:
+                state = validate_snapshot(model.snapshot())
+            except Exception as failure:
+                status = "failed"
+                error = {"type": type(failure).__name__, "message": str(failure),
+                         "phase": "snapshot_after_interrupt"}
     except Exception as failure:
         error = {"type": type(failure).__name__, "message": str(failure)}
         status = "failed"
@@ -143,7 +186,9 @@ def main() -> int:
         "scope": "authored CPU process line and kinematic reservations; no physics, sensors or measured factory times",
         "workload": {"lots": args.lots, "release": "all at simulation start", "policy": args.policy},
         "limits": {"horizon_s": args.horizon, "wall_s": args.max_wall_seconds, "snapshot_count": 80,
-                   "stall_timeout_s": args.stall_timeout},
+                   "stall_timeout_s": args.stall_timeout,
+                   "cycle_stall_timeout_s": args.cycle_stall_timeout},
+        "stationary_cycle": stationary_cycle,
         "elapsed_wall_s": time.perf_counter() - started,
         "source_stable_during_run": stable, "representative_snapshots": snapshots, "final_snapshot": state,
     }
