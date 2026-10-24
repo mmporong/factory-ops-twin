@@ -316,7 +316,12 @@ class OperationsCharging:
             trip = model._trips.get(robot)
             parking_home = (trip is not None and trip.get("kind") == "parking"
                             and trip.get("purpose", "home") == "home")
-            if ((trip is not None and not parking_home)
+            pickup_preemptible = (
+                trip is not None
+                and callable(getattr(model, "_can_withdraw_pickup_for_charge", None))
+                and model._can_withdraw_pickup_for_charge(robot)
+            )
+            if ((trip is not None and not parking_home and not pickup_preemptible)
                     or robot in self.faults or self._loaded(model, robot)):
                 continue
             soc = self.energy.snapshot(robot)["battery_pct"] / 100.0
@@ -372,7 +377,7 @@ class OperationsCharging:
             if robot not in model._trips:
                 self.parking_preempt_deferred.discard(robot)
             if robot in model._trips:
-                withdraw = getattr(model, "_withdraw_parking_for_charge", None)
+                withdraw = getattr(model, "_withdraw_trip_for_charge", None)
                 if not callable(withdraw) or not withdraw(robot):
                     if robot not in self.parking_preempt_deferred:
                         self.parking_preempt_deferred.add(robot)

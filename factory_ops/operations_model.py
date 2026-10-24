@@ -96,6 +96,7 @@ class OperationsModel(DashboardModel):
         self.traffic_yield_count = 0
         self.traffic_yield_completed_count = 0
         self._charging_parking_resume: dict[str, str] = {}
+        self._charging_task_resume: dict[str, dict[str, Any]] = {}
         self._observe_all()
         for robot in self.ledger.robots:
             point = self.book.nodes[self.homes[robot]]
@@ -154,7 +155,9 @@ class OperationsModel(DashboardModel):
         for station, robot in list(self._station_owners.items()):
             job = self._jobs.get(robot)
             trip = self._trips.get(robot)
-            if job and (station == job[1] or (trip and trip["phase"] == "pickup")):
+            interrupted = self._charging_task_resume.get(robot)
+            if job and (station == job[1] or (trip and trip["phase"] == "pickup")
+                        or (interrupted and interrupted["phase"] == "pickup")):
                 continue
             pose = self._poses[robot]
             # Keep a full pair of reservation envelopes between arrivals/departures.
@@ -164,6 +167,28 @@ class OperationsModel(DashboardModel):
     def _dispatch(self) -> None:
         self._observe_all()
         self._release_station_gates()
+        for robot, interrupted in list(self._charging_task_resume.items()):
+            if (robot in self._trips or self.operations_charging is None
+                    or robot in self.operations_charging.queue
+                    or robot in self.operations_charging.aux
+                    or robot in self.operations_charging.faults):
+                continue
+            start = self._locations[robot]
+            self._trip(
+                robot,
+                interrupted["task"],
+                start,
+                interrupted["goal"],
+                interrupted["phase"],
+                kind=interrupted["kind"],
+            )
+            del self._charging_task_resume[robot]
+            self._event(
+                "charge_task_resumed",
+                f"{robot} 충전 후 기존 픽업 재개",
+                robot,
+                pickup=interrupted["goal"],
+            )
         draining = self.requested_closed != self.closed
         charging_idle = (self.operations_charging is None
                          or not self.operations_charging.queue
@@ -977,6 +1002,54 @@ class OperationsModel(DashboardModel):
             robot_id,
             anchor=anchor,
             interrupted_goal=interrupted_goal,
+        )
+        return True
+
+    def _can_withdraw_pickup_for_charge(self, robot_id: str) -> bool:
+        """Allow only one stopped, empty pickup to retain its work across charging."""
+
+        trip = self._trips.get(robot_id)
+        if (trip is None or trip["kind"] in {"parking", "charging"}
+                or trip["phase"] != "pickup" or robot_id in self._chunks
+                or not self.motions[robot_id].stopped
+                or self.bridges.has_window(robot_id) or self.bridges.held(robot_id)
+                or robot_id in self._charging_task_resume):
+            return False
+        anchor = anchor_at_pose(self.book.nodes, self._poses[robot_id])
+        return bool(
+            anchor is not None
+            and anchor not in self.bridges.queue_nodes
+            and (self.bridges.holdable_nodes is None or anchor in self.bridges.holdable_nodes)
+        )
+
+    def _withdraw_trip_for_charge(self, robot_id: str) -> bool:
+        """Preempt a safe home or empty pickup trip without releasing its task claims."""
+
+        trip = self._trips.get(robot_id)
+        if trip is not None and trip["kind"] == "parking":
+            return self._withdraw_parking_for_charge(robot_id)
+        if not self._can_withdraw_pickup_for_charge(robot_id):
+            return False
+        anchor = anchor_at_pose(self.book.nodes, self._poses[robot_id])
+        if anchor is None:
+            raise RuntimeError("charge pickup preemption lost its authored hold")
+        self.reservations.withdraw_pending(
+            robot_id,
+            now_s=self.sim_time,
+            reason="stopped_pickup_preempted_for_charge",
+        )
+        self.bridges.withdraw_waiter(robot_id)
+        self._waiting.pop(robot_id, None)
+        self._replans.pop(robot_id, None)
+        self._charging_task_resume[robot_id] = trip
+        del self._trips[robot_id]
+        self._locations[robot_id] = anchor
+        self._event(
+            "charge_task_preempted",
+            f"{robot_id} 정지 무적재 픽업 보류 · 충전 접근 우선",
+            robot_id,
+            anchor=anchor,
+            pickup=trip["goal"],
         )
         return True
 

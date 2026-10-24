@@ -1,0 +1,82 @@
+{
+  "schema_version": 1,
+  "scope": "Closed authored CPU campus16-v2 charging-preemption attempt; preserved runtime fault and traffic-recovery evidence, no completed-throughput or physical-runtime claim",
+  "run_id": "process-line-ee581ba1-7535-4d7c-b936-a547e9d4fff9",
+  "status": "failed",
+  "error": {
+    "type": "RuntimeError",
+    "message": "operations charging observation fault: amr-4"
+  },
+  "stop_reason": "runtime_error",
+  "elapsed_wall_s": 1305.1457855000626,
+  "sim_time_s": 33449.999999793734,
+  "source_stable_during_run": true,
+  "owned_processes_gone": true,
+  "workload": {
+    "lots": 48,
+    "release": "all at simulation start",
+    "policy": "fifo"
+  },
+  "limits": {
+    "horizon_s": 120000.0,
+    "wall_s": 5400.0,
+    "snapshot_count": 80,
+    "stall_timeout_s": 600.0
+  },
+  "cumulative_shipped_lots": 10,
+  "cumulative_returned_lots": 6,
+  "actual_completed_transport_deliveries": 85,
+  "configured_robots": 16,
+  "assignment_participants": 16,
+  "repeat_assignment_participants": 16,
+  "delivery_participants": 16,
+  "repeat_delivery_participants": 16,
+  "minimum_assignments_per_robot": 3,
+  "minimum_completed_deliveries_per_robot": 3,
+  "peak_material_tasks": 15,
+  "peak_material_moving": 7,
+  "peak_all_moving": 7,
+  "observed_min_circular_clearance_m": 1.7257818169114452,
+  "quiescent": false,
+  "goal_met": false,
+  "recorded_frames": 300,
+  "traffic_recovery": {
+    "traffic_yield_selected": 13,
+    "traffic_yield_completed": 13,
+    "replan_attempts": 187,
+    "generic_replans_applied": 2,
+    "replan_unavailable": 172,
+    "final_bridge_wait_cycle": null,
+    "final_reservation_wait_cycle": null,
+    "recovered_cycle": [
+      "amr-11",
+      "amr-13"
+    ],
+    "note": "The run299 cycle recurred and was cleared after peer-footprint change caused reevaluation and a completed yield."
+  },
+  "charging_failure": {
+    "robot": "amr-4",
+    "phase": "active_pickup_wait",
+    "task_id": "LOT-0022:product_move:2",
+    "pickup": "D_CO",
+    "pose_anchor": "D_CD_E_SAFE_EXIT",
+    "pose_m": [
+      74.0,
+      73.0
+    ],
+    "waiting_reason": "safe_exit_lookahead_occupied",
+    "blockers": [
+      "amr-3"
+    ],
+    "payload_id": null,
+    "battery_pct_at_last_valid_snapshot": 0.00038588360273450776,
+    "energy_wh_at_last_valid_snapshot": 0.0023153016164070466,
+    "charged_wh_before_failure": 67.88999999900926,
+    "root_cause": "OperationsCharging.prepare excluded every active non-home trip. A stopped, unloaded pickup retained its task while traffic wait exceeded the assignment energy estimate, but it could never enter the charge queue before virtual idle load exhausted the battery.",
+    "post_run_repair_boundary": "The later repair permits only stopped, unloaded pickup trips at non-queue authored safe holds with no active bridge ownership to pause for charging. The original task and station claims remain owned and the same pickup resumes after dock release. It is not part of this frozen run."
+  },
+  "result_sha256": "1df85a4cfab665b6e9d1a3c7161f6f4816b36a1c5aef23a64b1404799c22ee67",
+  "frozen_source_manifest_sha256": "9b7d2bed0a78e25debdbc4f1e38e90cab279e662d68f29f40572fe3eb2c50d56",
+  "source_binding_sha256": "23e80b6b12c1f5c8cf96d4b597d15d9aa12c8f7f8df83b5e0e8c9a0b5363bd55",
+  "recording_manifest_sha256": "d8877a562b15f8f36006a4bdc785db3fe7f9726f29878d7c13fd7150642618b1"
+}

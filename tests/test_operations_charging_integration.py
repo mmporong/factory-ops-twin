@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 import unittest
 from unittest.mock import patch
+from types import SimpleNamespace
 
 from factory_ops.dashboard import validate_snapshot
 from factory_ops.operations_model import OperationsModel
@@ -154,6 +155,57 @@ class OperationsChargingIntegrationTests(unittest.TestCase):
         self.assertEqual(model.homes["amr-1"], trip["goal"])
         self.assertNotIn("amr-1", model._charging_parking_resume)
         self.assertTrue(any(event["type"] == "charge_parking_resumed"
+                            for event in model._events))
+
+    def test_stopped_empty_pickup_charges_then_resumes_with_station_claims(self):
+        model = OperationsModel(
+            CONFIG, initial_orders=0, run_id="operations-charge-pickup-resume",
+            operations_charging_profile=self.base_profile,
+        )
+        charging = model.operations_charging
+        assert charging is not None
+        robot = "amr-3"
+        task = SimpleNamespace(
+            task_id="LOT-CHARGE:process_input:1",
+            order_id="LOT-CHARGE",
+            payload_id="T-CHARGE",
+            pickup_station="S1",
+            drop_station="CI",
+        )
+        model._locations["amr-1"] = "P4"
+        model._poses["amr-1"].update(
+            x_m=model.book.nodes["P4"][0], y_m=model.book.nodes["P4"][1],
+        )
+        model._station_owners.update(S1=robot, CI=robot)
+        model._jobs[robot] = ("S1", "CI")
+        model._trip(robot, task, "P3", "S1", "pickup", kind="process_line")
+        interrupted = model._trips[robot]
+        charging.energy.batteries[robot].energy_wh = (
+            charging.energy.profile["capacity_wh"] * 0.19
+        )
+
+        charging.prepare(model)
+
+        self.assertIs(interrupted, model._charging_task_resume[robot])
+        self.assertEqual("charging", model._trips[robot]["kind"])
+        self.assertEqual({"S1": robot, "CI": robot}, model._station_owners)
+        self.assertTrue(any(event["type"] == "charge_task_preempted"
+                            for event in model._events))
+
+        charging.docks.cancel_approach(robot)
+        charging.aux.clear()
+        model._trips.pop(robot)
+        model._locations[robot] = "LOW_E_P1"
+        model._dispatch()
+
+        resumed = model._trips[robot]
+        self.assertIs(task, resumed["task"])
+        self.assertEqual("process_line", resumed["kind"])
+        self.assertEqual("pickup", resumed["phase"])
+        self.assertEqual("S1", resumed["goal"])
+        self.assertEqual({"S1": robot, "CI": robot}, model._station_owners)
+        self.assertNotIn(robot, model._charging_task_resume)
+        self.assertTrue(any(event["type"] == "charge_task_resumed"
                             for event in model._events))
 
     def test_blocked_precontact_approach_reassigns_to_clear_preferred_dock(self):

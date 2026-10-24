@@ -1469,3 +1469,9 @@ BridgeAdmission의 실제 wait-for graph에서 순환을 구하고 기존 cycle 
 299는 sim22522초·벽시계509초에 진전 없음으로 종료됐다. 운송65건·출하6·반납2·전16대 최소2운송·물류 임무 최고15개·이동 최고7대를 기록했으며 충전 fault는 없었다. amr11↔amr13 순환에서 첫 `replan_unavailable`는 sim18726초에 기록됐다. `_replan_examined` 키는 SCC 차량의 pose·goal만 포함해, 이후 다른 차량이 이동해도 같은 순환의 후보를 재평가하지 않았다. 종료 상태를 재현하면 amr11→C_P3/C_P4와 amr13→A_P1/A_P3/A_P4에 blocker0의 합법적인 같은 베이 양보 경로가 있었다. [299 종료·재현 근거](evidence/campus16-299.json)
 
 키에 전 차량 실제 footprint tile의 정렬된 fingerprint를 포함했다. 점유가 같으면 중복 평가를 막고, 주변 점유가 바뀌면 같은 SCC도 다시 검사한다. 새 회귀와 기존 queue·전체 window·safe exit·task claim 검사5개가 통과했다. 안전·에너지·임무 집계는 바꾸지 않았으며 새 동결 실행303에서 전체 진행성을 확인한다.
+
+## FOT-185 — 활성 무적재 픽업의 충전 선점·재개 누락
+
+303은 기존 순환을 재평가해 양보13회 완료·운송85건·출하10·반납6·전16대 최소3운송까지 진행했다. 이후 sim33450초에 amr4의 charging fault로 실패했다. amr4는 무적재 `LOT-0022:product_move:2`의 D_CO pickup을 기다렸고 `(74,73)`의 `D_CD_E_SAFE_EXIT`에서 amr3의 점유에 막혔다. 마지막 SOC0.000386%까지 내려가도 `charge_queued` 사건은 없었다. `prepare`가 일반 귀가 이외의 활성 trip을 모두 제외해, 실제 교통 대기가 배차 때 예상한 에너지 대기 예산을 넘었을 때 충전으로 전환할 경로가 없었다. 이전 충전량67.89Wh가 있어도 이번 활성 임무의 선점 누락은 해결되지 않았다. [303 종료·동결 근거](evidence/campus16-303.json)
+
+정지·무적재·pickup·queue 외 authored hold·active chunk 및 bridge window/resource 소유 없음 조건에서만 픽업을 충전으로 선점한다. 원래 task·`_jobs`·pickup/drop station claim을 보존하고 pending/wait/replan만 철회하며, 도크 반납 후 같은 pickup을 재개한다. 새 claim 보존·재개 회귀를 포함한 charging28·traffic5검사가 통과했다. 에너지·안전 조건은 바꾸지 않았으며 실제 전체 운영 결과는 새 동결 실행309에서 확인한다.303은 소유PID0·source stable의 실패 원본으로 보존한다.
