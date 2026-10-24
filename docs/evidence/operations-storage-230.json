@@ -76,7 +76,13 @@
     "artifacts/campus-visual-292",
     "artifacts/campus-render-294",
     "artifacts/operations/campus16-pilot-296",
-    "artifacts/operations/campus16-charge-preflight-297"
+    "artifacts/operations/campus16-charge-preflight-297",
+    "artifacts/operations/campus16-pilot-297",
+    "artifacts/operations/campus16-pilot-299",
+    "artifacts/operations/campus16-charge-preflight-299",
+    "artifacts/perception-asset-suitability-298",
+    "artifacts/perception-blue-crate-prepare-300",
+    "artifacts/perception-blue-probe-302"
   ],
   "public_media": "docs/images/operations-local45-228",
   "public_replay": "docs/data/operations-normal-223",
@@ -85,7 +91,8 @@
     "Raw render 228 RGB is retained only under E; selected state records, frozen source and final media are also archived on D.",
     "Render 227 full RGB and pre-alignment delivery GIF candidates expired; historical receipts/hashes remain valid records but are not claims that every old file remains.",
     "Archive campus286-289-traffic-contract.zip preserves closed286/288/289. The later campus-v2-static294-and-failures295.zip also preserves closed290/291/295.",
-    "Perception278 remains a16-image class/mask probe, not an approved training dataset; replay284 is a3-frame probe from incomplete279."
+    "Perception278 remains a16-image class/mask probe, not an approved training dataset; replay284 is a3-frame probe from incomplete279.",
+    "Archive perception-blue-probe302-and-inputs.zip retains all302 data;301 is a failed metadata finalization attempt and only selected failure/label records plus one RGB are in that archive. Mapping/training remain unapproved."
   ],
   "supplemental_backups": [
     {
@@ -138,6 +145,22 @@
       "verified_entries": 50,
       "all_entry_hashes_match": true,
       "scope": "Closed failed CPU296 and frozen sources; charging preflight transcribed receipt; no live297 data, SDK or vendor copies"
+    },
+    {
+      "path": "D:\\FactoryOpsPortfolio\\campus297-299-charging-and-cache.zip",
+      "bytes": 7109869,
+      "sha256": "84fd790ea877b75a8e675d18b527383176a87f36e065e4f368d66f4020a618f0",
+      "verified_entries": 99,
+      "all_entry_hashes_match": true,
+      "scope": "Closed failed CPU297 and incomplete299 with original frozen inputs and post-run charging preflight receipts; excludes live303, SDK and vendor source packages"
+    },
+    {
+      "path": "D:\\FactoryOpsPortfolio\\perception-blue-probe302-and-inputs.zip",
+      "bytes": 14925224,
+      "sha256": "a5ecf94584d81c42c2cc579824f1be75c73e8781571147e40a16edb313e47e2e",
+      "verified_entries": 183,
+      "all_entry_hashes_match": true,
+      "scope": "Closed16-image302 data, inputs298/300, selected301 failure/label records with one RGB, pinned NVIDIA blue source/license and two prepared USD; no live303 files"
     }
   ]
 }

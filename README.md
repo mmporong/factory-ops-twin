@@ -145,7 +145,7 @@ Isaac Sim Replicator로 12개 시각 구성, 30시점, 3카메라에서 RGB 1,08
 
 ![팔레트와 깊은 청색 적재함의4개 seed·16장 실제 GPU 촬영](docs/images/perception-blue-probe-302/contact-sheet.png)
 
-위 자료는 단순 바닥 위 후보 에셋의 export 확인용입니다. 학습 준비가 완료된 공장 데이터로 보지 않습니다. 후속 학습 파일럿은512장, Cosmos는10클립부터 시작하며 변환본의 객체·라벨 정합을 확인하기 전에는 원본 라벨을 복사하지 않습니다. [비교 조건·GPU·비용과 확대 기준](docs/synthetic-to-real-plan.md)
+위 자료는 단순 바닥 위 후보 에셋의 export 확인용입니다. [청색 적재함 원본 RGB](docs/images/perception-blue-probe-302/deep-blue-bins.png) · [팔레트 혼합 원본 RGB](docs/images/perception-blue-probe-302/pallet-and-bins.png). 학습 준비가 완료된 공장 데이터로 보지 않습니다. 후속 학습 파일럿은512장, Cosmos는10클립부터 시작하며 변환본의 객체·라벨 정합을 확인하기 전에는 원본 라벨을 복사하지 않습니다. [비교 조건·GPU·비용과 확대 기준](docs/synthetic-to-real-plan.md)
 
 ## 현재 진행 상태
 
