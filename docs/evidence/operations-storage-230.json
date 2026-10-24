@@ -191,6 +191,16 @@
       "receipt_path": "artifacts/backup-campus-equipment-comparison.json",
       "receipt_sha256": "7ecfec18c1829c19c8f6dbc77fb3014e0e3bbc9cdfc94708ca0239c6a0a345c4",
       "scope": "Valid sealed baseline plus isolated fault comparison, source stability, HTTP receipts,10 boundary states, event/source pins, executed/primary scripts and frozen config8; selected small failure/source-mix receipts only; no snapshots, RGB, database, SDK or duplicate invalid fault case."
+    },
+    {
+      "path": "D:\\FactoryOpsPortfolio\\campus16-diagnostic-318.zip",
+      "bytes": 6469753,
+      "sha256": "ef85403976e82c25be2b4a24911f386248153caf779a3d3415f29569a4a82071",
+      "verified_entries": 49,
+      "all_entry_hashes_match": true,
+      "receipt_path": "artifacts/backup-campus16-diagnostic-318.json",
+      "receipt_sha256": "d91946ec15e9bb0bab09cd82b5f952fdf0bd0f6baae8435511d49ed596555462",
+      "scope": "Selected latest incomplete318 diagnostic: closed result/recording and frozen source, fix receipt and public summary. No RGB, SDK, vendor assets or duplicate historical failures. This second local disk is not offsite backup."
     }
   ]
 }
