@@ -3,3 +3,4 @@
 # 해시로 결속한 미디어와 검수 자료는 원본 줄바꿈을 보존한다
 docs/images/g4-render-004/** -text
 docs/images/g4-render-004/qa/ai-review-a-001.json whitespace=cr-at-eol
+tests/fixtures/campus16-v1-layout-290.json -text
