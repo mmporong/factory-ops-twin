@@ -104,43 +104,50 @@ class LineOperationsModelTests(unittest.TestCase):
         model.inventory.product_drop(lot_id, carrier, robot, "A_PACK_OUT")
         model.inventory.product_pickup(lot_id, carrier, robot, "A_PACK_OUT")
         delivered = _TripTask.from_request(assigned_shipping)
-        model._trip(robot, delivered, model._locations[robot], "A_OUT", "drop", kind="process_line")
+        model._trip(
+            robot, delivered, delivered.pickup_station, delivered.drop_station,
+            "drop", kind="process_line",
+        )
         model._poses[robot].update(
             x_m=model.book.nodes["A_OUT"][0], y_m=model.book.nodes["A_OUT"][1],
         )
+        old_window = frozenset(model._trips[robot]["admission_tiles"])
+        model.bridges.admit(
+            robot,
+            model._trips[robot]["admission_nodes"],
+            route_tiles=old_window,
+            handover_protected=True,
+        )
+        old_resources = model.bridges.held(robot)
         model._station_owners.update({"A_PACK_OUT": robot, "A_OUT": robot})
         model._jobs[robot] = ("A_PACK_OUT", "A_OUT")
         charging = model.operations_charging
         assert charging is not None
 
-        original_drop = model.line.drop
-
-        def drop_with_successor_window(*args, **kwargs):
-            original_drop(*args, **kwargs)
-            candidate = next(task for task in model.line.ready_transports
-                             if task.kind == "empty_return" and task.lot_id == lot_id)
-            adapter = _TripTask.from_request(candidate)
-            route = model.book.plan(candidate.origin, candidate.destination, closed=model.closed)
-            successor = model._window_for_trip(
-                route.points[0], route.points[1:], route.nodes[1:],
-                {"kind": "process_line", "phase": "drop",
-                 "goal": candidate.destination, "task": adapter},
-                robot_id=robot,
-            )
-            self.assertEqual((), model.bridges.admit(
-                robot, successor["nodes"], route_tiles=successor["tiles"],
-                handover_protected=True,
-            ))
-
         with (
             patch.object(charging, "can_assign", return_value=True),
-            patch.object(model.line, "drop", side_effect=drop_with_successor_window),
+            patch.object(model, "_admission_observations",
+                         return_value={robot: model._footprint(robot)}),
+            patch.object(
+                model, "_safe_exit_lookahead_blockers",
+                wraps=model._safe_exit_lookahead_blockers,
+            ) as lookahead,
         ):
             model._arrive_trip(robot, model._trips[robot])
 
         chained = model._trips[robot]
         self.assertEqual(("process_line", "drop", "D_S1"),
                          (chained["kind"], chained["phase"], chained["goal"]))
+        self.assertFalse(chained["admission_tiles"].issubset(old_window))
+        self.assertEqual(frozenset({"AC", "CD"}), model.bridges.required(
+            model.book.plan("A_OUT", "D_S1", closed=model.closed).nodes,
+        ))
+        self.assertEqual("AC_S_QUEUE", lookahead.call_args.args[2])
+        self.assertEqual(old_resources, model.bridges.held(robot))
+        self.assertEqual(
+            model.bridges.required(chained["admission_nodes"]),
+            model.bridges.held(robot),
+        )
         self.assertTrue(model.bridges.can_retarget(
             robot, chained["admission_nodes"], route_tiles=chained["admission_tiles"],
         ))
@@ -214,6 +221,13 @@ class LineOperationsModelTests(unittest.TestCase):
             patch.object(model.line, "drop"),
             patch.object(model.line, "assign") as assign,
             patch.object(model.inventory, "product_drop"),
+            patch.object(model.inventory, "empty_pickup") as empty_pickup,
+            patch.object(model.operations_charging, "can_assign", return_value=True),
+            patch.object(model, "_safe_exit_lookahead_blockers", return_value=()),
+            patch.object(
+                model, "_admission_observations",
+                return_value={robot: model._footprint(robot), "amr-2": successor["tiles"]},
+            ),
         ):
             model._arrive_trip(robot, model._trips[robot])
 
@@ -221,6 +235,7 @@ class LineOperationsModelTests(unittest.TestCase):
         self.assertEqual(("parking", "staging"), (staged["kind"], staged["purpose"]))
         self.assertTrue(staged["admission_tiles"].issubset(old_window))
         assign.assert_not_called()
+        empty_pickup.assert_not_called()
 
     def test_home_parking_is_preemptible_at_unstarted_or_intermediate_safe_hold(self):
         model = LineOperationsModel(

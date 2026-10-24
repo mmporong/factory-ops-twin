@@ -103,6 +103,53 @@ class BridgeAdmissionTest(unittest.TestCase):
                 "carrier", ["E"], route_tiles={(2, 1), (3, 1), (4, 1)}, stopped=True,
             )
 
+    def test_stopped_handover_replacement_is_atomic_and_pose_safe(self):
+        gate = BridgeAdmission(self.routing)
+        gate.admit(
+            "carrier", ["N"], route_tiles={(1, 1), (2, 1)},
+            handover_protected=True,
+        )
+        before = (dict(gate.owners), dict(gate._protected_tiles), dict(gate.waiters))
+        with self.assertRaisesRegex(RuntimeError, "kinematic stop"):
+            gate.replace_handover(
+                "carrier", ["E"], route_tiles={(1, 1), (3, 1)},
+                current_pose_tiles={(1, 1)}, observed_tiles={}, stopped=False,
+            )
+        self.assertEqual(before, (gate.owners, gate._protected_tiles, gate.waiters))
+        with self.assertRaisesRegex(RuntimeError, "current pose"):
+            gate.replace_handover(
+                "carrier", ["E"], route_tiles={(3, 1), (4, 1)},
+                current_pose_tiles={(1, 1)}, observed_tiles={}, stopped=True,
+            )
+        self.assertEqual(before, (gate.owners, gate._protected_tiles, gate.waiters))
+
+        self.assertEqual((), gate.replace_handover(
+            "carrier", ["E"], route_tiles={(1, 1), (3, 1)},
+            current_pose_tiles={(1, 1)}, observed_tiles={"carrier": {(1, 1)}},
+            stopped=True,
+        ))
+        self.assertEqual({"AB": "carrier"}, gate.owners)
+        self.assertEqual(frozenset({(1, 1), (3, 1)}), gate._protected_tiles["carrier"])
+        self.assertEqual(["carrier"], gate.snapshot()["handover_protected"])
+
+    def test_handover_replacement_conflict_preserves_the_old_window(self):
+        gate = BridgeAdmission(self.routing)
+        gate.admit(
+            "carrier", ["N"], route_tiles={(1, 1), (2, 1)},
+            handover_protected=True,
+        )
+        gate.admit("peer", ["E"], route_tiles={(3, 1), (4, 1)})
+        gate.record_wait("waiting", ("carrier",))
+        before = (dict(gate.owners), dict(gate._protected_tiles), dict(gate.waiters))
+
+        self.assertEqual(("parked", "peer"), gate.replace_handover(
+            "carrier", ["E"], route_tiles={(1, 1), (3, 1)},
+            current_pose_tiles={(1, 1)},
+            observed_tiles={"parked": {(3, 1)}, "carrier": {(1, 1)}},
+            stopped=True,
+        ))
+        self.assertEqual(before, (gate.owners, gate._protected_tiles, gate.waiters))
+
     def test_queue_nodes_are_validated_and_excluded_from_bridge_resources(self):
         routing = {"nodes": dict.fromkeys(("Q", "G", "X")), "bridge_admission": {
             "policy": "atomic_route_leg_resources", "queue_nodes": ["Q"],

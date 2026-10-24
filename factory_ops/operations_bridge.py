@@ -193,6 +193,51 @@ class BridgeAdmission:
             and required.issubset(self.held(robot))
         )
 
+    def replace_handover(
+        self,
+        robot: str,
+        route_nodes: Iterable[str],
+        *,
+        route_tiles: Iterable[Tile],
+        current_pose_tiles: Iterable[Tile],
+        observed_tiles: Mapping[str, Iterable[Tile]],
+        stopped: bool,
+    ) -> tuple[str, ...]:
+        """Atomically replace one stopped retained handover with a clear successor."""
+        if not stopped:
+            raise RuntimeError("handover admission cannot change before a kinematic stop")
+        active = self._protected_tiles.get(robot)
+        if active is None or robot not in self._handover_protected:
+            raise RuntimeError("handover replacement requires a retained active window")
+        protected = frozenset(route_tiles)
+        pose = frozenset(current_pose_tiles)
+        if not protected or not pose or not pose.issubset(protected):
+            raise RuntimeError("replacement admission must protect the current pose footprint")
+        required = self.required(route_nodes)
+        blockers = {
+            self.owners[name]
+            for name in required
+            if name in self.owners and self.owners[name] != robot
+        }
+        blockers.update(
+            owner for owner, tiles in self._protected_tiles.items()
+            if owner != robot and not protected.isdisjoint(tiles)
+        )
+        blockers.update(
+            peer for peer, tiles in observed_tiles.items()
+            if peer != robot and not protected.isdisjoint(frozenset(tiles))
+        )
+        if blockers:
+            return tuple(sorted(blockers))
+
+        held = self.held(robot)
+        self.owners.update((name, robot) for name in required)
+        for name in held - required:
+            del self.owners[name]
+        self._protected_tiles[robot] = protected
+        self.waiters.pop(robot, None)
+        return ()
+
     def withdraw_waiter(self, robot: str) -> bool:
         """Withdraw only an unowned admission wait.
 

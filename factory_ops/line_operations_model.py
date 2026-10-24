@@ -354,13 +354,31 @@ class LineOperationsModel(OperationsModel):
             loaded_route.points[0], loaded_route.points[1:], loaded_route.nodes[1:],
             loaded_trip, robot_id=robot_id,
         )
+        if self._safe_exit_lookahead_blockers(
+            robot_id, loaded_trip, window["queue_barrier"],
+        ):
+            return False
+        if (self.operations_charging is not None
+                and not self.operations_charging.can_assign(
+                    self, robot_id, candidate.origin, candidate.destination,
+                )):
+            return False
         if self.bridges.has_window(robot_id):
             if not self.bridges.can_retarget(
                 robot_id,
                 window["nodes"],
                 route_tiles=window["tiles"],
             ):
-                return False
+                blockers = self.bridges.replace_handover(
+                    robot_id,
+                    window["nodes"],
+                    route_tiles=window["tiles"],
+                    current_pose_tiles=self._footprint(robot_id),
+                    observed_tiles=self._admission_observations(robot_id, loaded_trip),
+                    stopped=self.motions[robot_id].stopped,
+                )
+                if blockers:
+                    return False
         else:
             blockers = self.bridges.blockers(
                 robot_id,
@@ -370,11 +388,6 @@ class LineOperationsModel(OperationsModel):
             )
             if blockers:
                 return False
-        if (self.operations_charging is not None
-                and not self.operations_charging.can_assign(
-                    self, robot_id, candidate.origin, candidate.destination,
-                )):
-            return False
         assigned = self.line.assign(candidate.task_id, robot_id)
         self._station_owners.update({
             assigned.origin: robot_id,
