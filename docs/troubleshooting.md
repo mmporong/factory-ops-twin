@@ -1355,3 +1355,9 @@ RGB249의 첫 report는 runtime·클래스 수를 추가하며 같은 경로로 
 259는 첫 조감 촬영 뒤 render product를 새로 만들 때 다음 RGB 버퍼가 비었다. product와 annotator의 수명을 유지하도록 바꿨다.260에서는 장면에 이미 있는 카메라를 제외하지 않은 식별 검사로 중단했다.262는 이미지3장이 생성됐지만 요청한 근접 pose 대신 같은 조감 정렬에서 초점거리만 달라진 모습이었다. 당시 world transform을 기록하지 않아 정확한 이전 pose는 단정하지 않는다. 원래 passed 보고서를 수정하지 않고 별도 adjudication으로 요청한 시점의 증거에서 제외했다.
 
 265는 기존 G4와 같은 UsdGeom.Camera를 작성하고, persistent render product와 카메라별 world-eye readback을 사용했다. 요청 위치와 일치한3장, 멈춘 timeline, 소유 Job 종료·잔여 PID0을 확인했다. 범용 Job 영수증이 passed여도 SDK 결과 파일이 failed이면 촬영 성공으로 처리하지 않는다. 새 호스트는 두 조건을 함께 확인한다. [현재 촬영 근거](images/campus16-static-265/provenance.json)
+
+## FOT-170 — 원본 SimReady 의미 라벨과 프로젝트 라벨의 혼합
+
+지각 실험268은 첫 RGB 생성 전에 pallet 원본의 하위 mesh에 남은 wikidata 의미 속성을 감지해 중단했다. 생성0장, 소유 Job 종료·잔여 PID0이며 실패 자료를 학습 입력으로 사용하지 않는다. 원본과 범용267 사본은 수정하지 않았다.
+
+`scripts/assets/prepare_perception_assets.py`는 고정267 결과를 입력으로 새 `.perception/<script hash>/` 사본만 작성한다. 실행270에서 두 에셋의 의미 속성 각8개를 제거했고 의미·물리 상태 잔존0, 형상 외곽·mesh 수·재질 및 비의미 USD 계약의 해시 보존을 확인했다. CPU OpenUSD 작업이며 Kit 촬영이나 학습 성공을 뜻하지 않는다. 촬영 시 하위 의미 라벨 거부 검사는 유지하고 프로젝트 object root에만 새 라벨을 붙인다. 사본도 `mapping_approved=false`, `training_ready=false`다.
