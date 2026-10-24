@@ -1,0 +1,15 @@
+{
+  "schema_version": "factory-ops-departure-cache-probe-v1",
+  "run_id": "departure-cache-probe-316",
+  "lots": 48,
+  "robot_id": "amr-1",
+  "continuous_wait_updates": 100,
+  "first_scan_assignment_calls": 48,
+  "additional_assignment_calls": 0,
+  "first_required_wh": 153.93638153939597,
+  "last_required_wh": 155.18638153939597,
+  "expected_wait_delta_wh": 1.25,
+  "actual_wait_delta_wh": 1.25,
+  "elapsed_s": 0.03625769994687289,
+  "boundary": "actual campus config CPU cache probe; no production completion claim"
+}

@@ -1,0 +1,54 @@
+{
+  "schema_version": "factory-ops-campus16-diagnostic-v1",
+  "case_id": "campus16-pilot-315",
+  "run_id": "process-line-08445a54-0cdc-42b3-bd15-f43602f4a8aa",
+  "status": "incomplete",
+  "stop_reason": "performance_regression_diagnostic_stop",
+  "completion_claim": false,
+  "source_stable_during_run": true,
+  "final_progress": {
+    "sim_time_s": 20429.999999983196,
+    "elapsed_wall_s": 865.1856313999742,
+    "completed_lots": 5,
+    "returned": 4,
+    "completed_transport_deliveries": 66,
+    "min_assignments": 1,
+    "min_deliveries": 1,
+    "peak_transport_active": 13,
+    "peak_transport_moving": 7,
+    "traffic_yield_selected": 3,
+    "traffic_yield_completed": 3,
+    "observed_min_clearance_m": 1.7257818169114456
+  },
+  "performance_observation": {
+    "intervals": [
+      {
+        "sim_start": 20280,
+        "sim_end": 20340,
+        "wall_start": 643.1375788,
+        "wall_end": 746.5201936,
+        "rate_x": 0.5803683735033566
+      },
+      {
+        "sim_start": 20340,
+        "sim_end": 20400,
+        "wall_start": 746.5201936,
+        "wall_end": 831.4837151,
+        "rate_x": 0.706185418644635
+      }
+    ],
+    "finding": "continuous wait budget invalidated the model-level minimum ready-work scan every tick; central route cache alone did not bound this scan"
+  },
+  "artifact_boundary": {
+    "result_json_present": false,
+    "recording_window_entered": true,
+    "recording_manifest_present": false,
+    "snapshot_gzip_bytes": 5790395,
+    "owned_processes_gone": true
+  },
+  "hashes": {
+    "progress_sha256": "754955a6e10b396b3d096de3be129f43061be0d1fc4e50f1a9eb1807925786ac",
+    "frozen_manifest_sha256": "ea9598e3be5fe15d65cf5370345f5fa47860d9b2354507fea87da4134e3a033e",
+    "snapshot_gzip_sha256": "75607ff51384b11f00210837b955eba267052505600de56aec724dd6d246afbc"
+  }
+}
