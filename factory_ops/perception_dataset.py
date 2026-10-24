@@ -128,6 +128,39 @@ def validate_capture(
         class_name = document.get("class")
         if class_name in semantic_class_ids:
             semantic_class_ids[class_name].add(int(raw_id))
+    object_masks: dict[str, dict[str, Any]] = {}
+    for object_id, expected_class in expected_objects.items():
+        matches = [
+            (int(raw_id), document)
+            for raw_id, document in semantic_labels.items()
+            if document.get("object_id") == object_id
+        ]
+        if len(matches) != 1:
+            raise PerceptionDatasetError(
+                f"semantic identity count differs for object: {object_id}: {len(matches)}"
+            )
+        semantic_id, document = matches[0]
+        if document.get("class") != expected_class:
+            raise PerceptionDatasetError(
+                f"semantic class/object binding differs from provenance: {object_id} -> {document.get('class')}"
+            )
+        mask = semantic == semantic_id
+        try:
+            ys, xs = mask.nonzero()
+        except (AttributeError, TypeError, ValueError) as error:
+            raise PerceptionDatasetError("semantic map does not support a two-dimensional mask lookup") from error
+        if len(xs) <= 0:
+            raise PerceptionDatasetError(
+                f"semantic mask has no visible pixels for object: {object_id}"
+            )
+        object_masks[object_id] = {
+            "semantic_id": semantic_id,
+            "pixel_count": int(len(xs)),
+            "extent_inclusive": [
+                int(xs.min()), int(ys.min()), int(xs.max()), int(ys.max()),
+            ],
+        }
+
     class_pixel_counts = {}
     for class_name in set(expected_objects.values()):
         ids = semantic_class_ids[class_name]
@@ -163,6 +196,12 @@ def validate_capture(
         x0, y0, x1, y1 = values
         if not (0 <= x0 <= x1 < width and 0 <= y0 <= y1 < height):
             raise PerceptionDatasetError(f"bbox extent is outside the RGB frame: {object_id}: {values}")
+        mask_extent = object_masks[object_id]["extent_inclusive"]
+        if values != mask_extent:
+            raise PerceptionDatasetError(
+                f"bbox extent differs from the same object's semantic mask: "
+                f"{object_id}: bbox={values}, mask={mask_extent}"
+            )
         # The repository's G4 capture contract compares raw bbox maxima with
         # mask xs.max()/ys.max(), so this probe preserves that inclusive-endpoint
         # normalization when exporting the candidate COCO document.
@@ -191,4 +230,13 @@ def validate_capture(
         "class_pixel_counts": class_pixel_counts,
         "bbox_object_count": len(annotations),
         "semantic_classes": sorted(class_pixel_counts),
+        "object_mask_checks": {
+            "matched_object_count": len(object_masks),
+            "endpoint_convention": "inclusive_min_max",
+            "fully_hidden_object_policy": "reject_no_visible_semantic_pixels",
+            "objects": {
+                object_id: object_masks[object_id]
+                for object_id in sorted(object_masks)
+            },
+        },
     }

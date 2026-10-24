@@ -23,8 +23,8 @@ class PerceptionDatasetTests(unittest.TestCase):
         ], dtype=np.uint32)
         self.semantic_info = {"idToLabels": {
             "0": {"class": "BACKGROUND"},
-            "1": {"class": "pallet"},
-            "2": {"class": "small_load_carrier"},
+            "1": {"class": "pallet", "object_id": "pallet-01"},
+            "2": {"class": "small_load_carrier", "object_id": "crate-01"},
         }}
         self.bbox_info = {"idToLabels": {
             "11": {"class": "pallet", "object_id": "pallet-01"},
@@ -47,6 +47,11 @@ class PerceptionDatasetTests(unittest.TestCase):
         pallet = next(item for item in result["annotations"] if item["object_id"] == "pallet-01")
         self.assertEqual(pallet["bbox"], [1, 0, 2, 2])
         self.assertEqual(pallet["area"], 4)
+        self.assertEqual(result["object_mask_checks"]["matched_object_count"], 2)
+        self.assertEqual(
+            result["object_mask_checks"]["objects"]["crate-01"]["extent_inclusive"],
+            [3, 1, 4, 3],
+        )
 
     def test_usd_identifier_is_safe_without_changing_semantic_source(self) -> None:
         object_id = "pallet-01-01"
@@ -124,6 +129,58 @@ class PerceptionDatasetTests(unittest.TestCase):
             validate_capture(
                 width=5, height=4, semantic=self.semantic, semantic_info=self.semantic_info,
                 bbox_rows=outside, bbox_info=self.bbox_info, expected_objects=self.expected,
+            )
+
+    def test_bbox_must_equal_same_object_semantic_mask_extent(self) -> None:
+        wider = [dict(self.rows[0], x_min=0), self.rows[1]]
+        with self.assertRaisesRegex(PerceptionDatasetError, "same object's semantic mask"):
+            validate_capture(
+                width=5, height=4, semantic=self.semantic, semantic_info=self.semantic_info,
+                bbox_rows=wider, bbox_info=self.bbox_info, expected_objects=self.expected,
+            )
+
+    def test_fully_hidden_object_fails_closed(self) -> None:
+        hidden = self.semantic.copy()
+        hidden[hidden == 2] = 0
+        with self.assertRaisesRegex(PerceptionDatasetError, "no visible pixels for object: crate-01"):
+            validate_capture(
+                width=5, height=4, semantic=hidden, semantic_info=self.semantic_info,
+                bbox_rows=self.rows, bbox_info=self.bbox_info, expected_objects=self.expected,
+            )
+
+    def test_clipped_frame_edge_uses_inclusive_min_and_max(self) -> None:
+        semantic = np.array([
+            [1, 1, 0],
+            [0, 0, 0],
+            [0, 0, 0],
+        ], dtype=np.uint32)
+        result = validate_capture(
+            width=3,
+            height=3,
+            semantic=semantic,
+            semantic_info={"idToLabels": {
+                "0": {"class": "BACKGROUND"},
+                "1": {"class": "pallet", "object_id": "edge-pallet"},
+            }},
+            bbox_rows=[{"semanticId": 7, "x_min": 0, "y_min": 0, "x_max": 1, "y_max": 0}],
+            bbox_info={"idToLabels": {
+                "7": {"class": "pallet", "object_id": "edge-pallet"},
+            }},
+            expected_objects={"edge-pallet": "pallet"},
+        )
+        self.assertEqual(result["annotations"][0]["bbox"], [0, 0, 2, 1])
+        self.assertEqual(result["object_mask_checks"]["endpoint_convention"], "inclusive_min_max")
+
+    def test_class_only_semantic_label_no_longer_passes_object_export(self) -> None:
+        class_only = {"idToLabels": {
+            "0": {"class": "BACKGROUND"},
+            "1": {"class": "pallet"},
+            "2": {"class": "small_load_carrier"},
+        }}
+        with self.assertRaisesRegex(PerceptionDatasetError, "semantic identity count differs"):
+            validate_capture(
+                width=5, height=4, semantic=self.semantic, semantic_info=class_only,
+                bbox_rows=self.rows, bbox_info=self.bbox_info, expected_objects=self.expected,
             )
 
 

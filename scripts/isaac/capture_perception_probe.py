@@ -448,8 +448,9 @@ def main() -> int:
             "validation": {
                 "bbox_pixel_extent_and_area": "passed",
                 "bbox_class_object_provenance_binding": "passed", "bbox_object_coverage": "passed",
-                "semantic_pixel_presence": "global target-class presence only",
-                "per_object_bbox_mask_equality": "not measured; instance segmentation is outside this probe",
+                "semantic_pixel_presence": "global target-class and per-object visible-pixel presence passed",
+                "per_object_bbox_mask_equality": "passed using object_id and inclusive min/max endpoints",
+                "fully_hidden_object_policy": "rejected because no visible semantic tight bbox can be exported",
                 "root_leaf_semantics": "root-only authored; leaf source semantics absent",
                 "timeline": "stopped during all captures",
             },
