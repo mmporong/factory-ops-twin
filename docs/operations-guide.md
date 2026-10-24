@@ -31,6 +31,20 @@ npm run dev -- --port 3007
 
 주소는 `http://127.0.0.1:3007`, 기본 API는 `http://127.0.0.1:8765`다. 웹은 수신 표본 사이의 표시 좌표를 보간한다. 운영 모델의 계산과 화면 보간은 별개다. 가상 충전은 작성된 에너지 계수·충전대 예약·정렬·대기·SOC 증가·이탈을 사용하며 물리 접촉 센서나 전기 충전 결과가 아니다.
 
+## 16대 CPU 배치와 진단 종료
+
+전체 운영의 유한 수요·출하·반납·최종 정지를 확인하는 배치는 다음처럼 별도 출력 경로에 실행한다. 설정과 생산자 소스를 시작할 때 동결하며 GPU나 RGB를 사용하지 않는다. 아래 지평·벽시계 값은 실행 상한이다.
+
+```powershell
+cd "$HOME/factory-ops-twin"
+$pilotLabel = Get-Date -Format "yyyyMMdd-HHmmss"
+uv run python scripts/demo/run_process_line.py --config configs/factory-semiconductor-campus16 --output-dir "artifacts/operations/campus-$pilotLabel" --lots 48 --horizon 120000 --max-wall-seconds 5400 --cycle-stall-timeout 600
+```
+
+`--stall-timeout`은 이동·공정·충전 진전이 모두 없는 시뮬레이션 시간이며 기본600초다. 별도 `--cycle-stall-timeout`은 기본0으로 꺼져 있다. 켜면 같은 순환 대기 구성원의 pose·task·payload·완료 운송·누적 충전에 변화가 없는 시간을 센다. 다른 차량의 이동은 이 시계를 리셋하지 않는다. 기준에 도달하면 `incomplete / stationary_wait_cycle`과 최종 상태를 기록하며, 교통 문제를 해결했다고 판정하지 않는다.
+
+Ctrl+C는 `incomplete / diagnostic_interrupt`로 마감하고 가능한 최종 snapshot·결과·닫힌 촬영 스트림·매니페스트를 남긴다. 실제 owned 터미널에서 이 경로와5프레임 보존·해시 일치·소유 Python0을 확인했다. 중단된 기록은 최종 미디어 입력으로 사용하지 않는다. 촬영용1Hz 기록은 `--record-start <시뮬레이션 초> --record-duration <최대300초>`로 선택하며, 원본 종료 뒤 내용과 해시를 확인한다. [표적 검사·중단 실행 범위](evidence/process-line-runner-lifecycle.json)
+
 ## 16대 캠퍼스의 설비 고장·복구
 
 `process-line` API의 기본값은 읽기 전용이다. 다음처럼 명령을 켠 로컬 실행에서는 관제의 운영 패널에서12개 설비 중 대상을 선택해 고장·복구를 요청한다. 기존 API와 포트가 겹치지 않는지 확인한다.

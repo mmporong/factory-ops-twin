@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "status": "passed_targeted_lifecycle_checks",
+  "scope": "CPU pilot monitoring and diagnostic finalization only; no claim of cycle recovery, 16-way material concurrency or 48-lot completion.",
+  "cycle_watchdog": {
+    "flag": "--cycle-stall-timeout",
+    "default_sim_s": 0,
+    "opt_in": true,
+    "time_unit": "simulation seconds",
+    "witness": [
+      "sorted component members",
+      "member pose",
+      "member task/payload",
+      "member completed deliveries",
+      "member cumulative charged_wh"
+    ],
+    "external_motion_does_not_reset": true,
+    "internal_motion_or_charging_resets": true,
+    "legacy_mechanical_stall_preserved": true
+  },
+  "targeted_checks": {
+    "test_file": "tests/test_process_line_runner.py",
+    "passed_tests": 5,
+    "execution": "Four tests passed in the first targeted run; the added cycle-timeout branch passed after correcting its fixture to wait for actual external motion. No full-suite rerun.",
+    "injected_interrupt_uses_real_model": true,
+    "cycle_timeout_uses_controlled_component_witness": true
+  },
+  "actual_terminal_interrupt": {
+    "run_id": "process-line-8193eede-4c29-45da-aa5a-87b06fcfe543",
+    "output": "artifacts/operations/runner-interrupt-smoke",
+    "signal_path": "Ctrl+C sent to the owned exec PTY",
+    "status": "incomplete",
+    "stop_reason": "diagnostic_interrupt",
+    "final_sim_time_s": 1079.100000000114,
+    "recorded_frames": 5,
+    "source_stable": true,
+    "closed_gzip_decoded_frames": 5,
+    "case_report_hash_matches": true,
+    "parent_powershell_exit_code": 1,
+    "remaining_owned_python_count": 0,
+    "gpu_launches": 0
+  },
+  "hashes": {
+    "runner_source_sha256": "8f3de7fdd6a6885875ac37a8ac4417549ea95d9b8a4d2ed408be67b42986f3aa",
+    "result_sha256": "39f1f495668599f342ae7393b56eb62c50733d8c7aba4cfffe7efeba4c31d4f5",
+    "recording_manifest_sha256": "249b82d3d2fdf86b197360b68e4591aeade47ca07518fc961e2110fad1bbf328",
+    "snapshots_gzip_sha256": "a73162a8319842739b460f122878be2559c7e5bd7cbba56a756ab33354c58fb7"
+  },
+  "limits": [
+    "Ctrl+C evidence covers this owned Python/PowerShell terminal path; it does not cover forced termination or disk-write failure.",
+    "Incomplete or interrupted records are diagnostic and are not eligible as final portfolio render sources."
+  ]
+}

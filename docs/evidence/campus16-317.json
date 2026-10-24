@@ -1,0 +1,92 @@
+{
+  "schema_version": "factory-ops-campus16-diagnostic-v1",
+  "case_id": "campus16-pilot-317",
+  "run_id": "process-line-b4bf8af3-3417-4da1-af71-6b3cda427efc",
+  "status": "incomplete",
+  "stop_reason": "fixed_bridge_scc_without_business_progress",
+  "completion_claim": false,
+  "source_stable_during_run": true,
+  "source_mismatches": [],
+  "final_progress": {
+    "sim_time_s": 22229.999999957003,
+    "elapsed_wall_s": 1172.134800999891,
+    "completed_lots": 5,
+    "returned": 4,
+    "completed_transport_deliveries": 66,
+    "min_assignments": 1,
+    "min_deliveries": 1,
+    "peak_transport_active": 13,
+    "peak_transport_moving": 7,
+    "traffic_yield_selected": 3,
+    "traffic_yield_completed": 3,
+    "observed_min_clearance_m": 1.7257818169114456
+  },
+  "performance_repair_observation": {
+    "interval": {
+      "sim_start": 20340.0,
+      "sim_end": 20520.0,
+      "wall_start": 659.0297324999701,
+      "wall_end": 693.3941141999094,
+      "rate_x": 5.237981627945838
+    },
+    "previous_case_interval": {
+      "case_id": "campus16-pilot-316",
+      "sim_start": 20340.0,
+      "sim_end": 20400.0,
+      "wall_start": 797.7473140999209,
+      "wall_end": 916.4824674999109,
+      "rate_x": 0.5053263358145885
+    },
+    "claim": "event-journal copy hotspot removed; intervals differ and are reported separately"
+  },
+  "liveness_observation": {
+    "business_no_progress_sim_start": 20340.0,
+    "business_no_progress_sim_end": 22229.999999957003,
+    "completed_lots": 5,
+    "returned": 4,
+    "deliveries": 66,
+    "bridge_wait_cycle": [
+      "amr-13",
+      "amr-6",
+      "amr-9"
+    ],
+    "bridge_owners": {
+      "AB": "amr-12"
+    },
+    "bridge_waiters": {
+      "amr-10": [
+        "amr-12"
+      ],
+      "amr-13": [
+        "amr-6"
+      ],
+      "amr-5": [
+        "amr-13"
+      ],
+      "amr-6": [
+        "amr-12",
+        "amr-9"
+      ],
+      "amr-9": [
+        "amr-13"
+      ]
+    },
+    "replan_attempt_count": 1239,
+    "replan_applied_count": 0,
+    "replan_unavailable_count": 1236,
+    "total_travel_m": 16411.697977287407,
+    "runner_stall_boundary": "all travel_m changes reset the stall timer, so surrounding motion can mask zero business completion"
+  },
+  "artifact_boundary": {
+    "result_json_present": false,
+    "recording_window_entered": true,
+    "recording_manifest_present": false,
+    "snapshot_gzip_bytes": 6072923,
+    "owned_processes_gone": true
+  },
+  "hashes": {
+    "progress_sha256": "c6fe791489fdc7a1441ab8177b2af3b3600514ec450fa3876cb7434028e3450e",
+    "frozen_manifest_sha256": "5042ec7d7018451ad8b0821094efb0e1133ef4cb3b095db71b58fef8339a1206",
+    "snapshot_gzip_sha256": "eb1f245e861f765bed6c95f5004b3e815fca2c7aece4fc7598fc238d3329086d"
+  }
+}

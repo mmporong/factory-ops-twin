@@ -1551,3 +1551,13 @@ World가 없을 때 기존 `SimulationManager.setup_simulation`을 호출하고,
 `RouteReservationManager.observation_snapshot(now_s=...)`에 현재 차량 점유·타일 해시·pose 시각·fresh 상태만 반환하는 경계를 추가했다. 재계획 호출 한 곳을 이 경계로 바꾸고, 공개 full snapshot과 events의 복사·독립성 계약은 유지했다. 원장 객체가 deepcopy를 거부해도 재계획 관측이 가능하고 공개 관측과 같은 값을 반환하는 회귀를 포함해 관련26검사가 통과했다. 실제 장시간 성능과 물류 진전은317에서 확인하며 새 전체 warmup을 성능 비교용으로 반복하지 않는다.
 
 해석은 [Python3.12 profiler 공식 문서](https://docs.python.org/3.12/library/profile.html)의 누적 시간·호출 수 구분과 계측 overhead 경계를 따른다.51.417초는 이 계측 구간의 수치이며 전체 운영 속도 개선 배수로 환산하지 않는다. [copy 공식 문서](https://docs.python.org/3.12/library/copy.html)의 재귀적 복사 동작과 설치 소스·pstats 호출 경로를 대조했다. [측정 요약·원본 해시·수정 범위](evidence/campus16-profile-316.json)
+
+317은20,340→20,520초를 벽시계34.36초에 처리해 복사 병목의 회복을 확인했다.316의 기존 비교창은20,340→20,400초로 길이가 다르므로 두 속도의 비율을 정확한 동일 구간 개선 배수로 주장하지 않는다.317은 별도의 고정SCC[amr13,amr6,amr9]와 대안불가1,236회·운송66을 남겨 sim22,230초에 진단 종료했다. 성능 수정과 교통 진행성의 미해결을 구분한다. [317](evidence/campus16-317.json)
+
+## FOT-197 — CPU 배치의 중단 상태 누락과 외부 이동에 가려진 순환 정체
+
+315~317은 Ctrl+C로 진단 종료했지만 기존 runner의 `except Exception`은 `KeyboardInterrupt`를 처리하지 않아 result·recording manifest를 쓰기 전에 빠져나갔다. [Python3.12 공식 예외 문서](https://docs.python.org/3.12/library/exceptions.html#KeyboardInterrupt)의 BaseException 상속을 설치 소스와 대조했다. 별도 중단 경로에서 가능한 최종 snapshot을 검증하고 `incomplete / diagnostic_interrupt`로 결과·닫힌 기록·해시 매니페스트를 마감한다. 중단 자료를 정상 완주나 최종 미디어 원본으로 승격하지 않는다.
+
+기존 stall 감시는 모든 차량의 travel을 사용했다.317에서 SCC3대가 멈춰도 다른 차량의 이동이 시간을 리셋했다. 기존 기본 감시는 유지하고 opt-in `--cycle-stall-timeout`에 같은SCC 구성원의 pose·task·payload·완료 운송·charged_wh만 사용했다. 외부 이동은 무시하고 구성원의 실제 이동·충전은 진전으로 인정한다. 이 한도와 기존 stall은 wall이 아닌 sim초다.
+
+관련5검사를 통과했다. 실제 owned 터미널의 Ctrl+C에서도 최종sim1079.1·기록5프레임·case_report 해시 일치·소유Python0을 확인했다. 부모 PowerShell은 중단으로exit1을 반환했으며 결과의 `incomplete`·오류 없음과 마감 파일을 별도로 확인했다. 강제 종료나 임의 시점의 중단까지 정상 물류 상태라고 보장하지 않는다. [표적 검사·실제 중단 근거](evidence/process-line-runner-lifecycle.json)
