@@ -10,6 +10,7 @@ from scripts.perception.prepare_pilot_manifest import (
     _guard_context,
     build_manifest,
     occluder_conflicts,
+    source_digest,
 )
 
 
@@ -162,6 +163,13 @@ class PreparePerceptionPilotTests(unittest.TestCase):
         self.assertEqual(1, counts["adjusted_frames"])
         self.assertGreater(guarded[0]["eye_xyz_m"][1] * -1, 4.0)
         _guard_context(0, 1, [target], guarded, assets, [], set(), profile)
+
+    def test_rejects_crlf_in_pinned_profile_and_generator_sources(self):
+        for name in ("profile.json", "generator.py"):
+            path = self.root / name
+            path.write_bytes(b"first\r\nsecond\r\n")
+            with self.subTest(name=name), self.assertRaisesRegex(PilotManifestError, "LF line endings"):
+                source_digest(path, name)
 
 
 if __name__ == "__main__":

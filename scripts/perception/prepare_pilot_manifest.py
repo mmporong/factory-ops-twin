@@ -26,6 +26,13 @@ def digest(path: Path) -> str:
     return result.hexdigest()
 
 
+def source_digest(path: Path, label: str) -> str:
+    payload = path.read_bytes()
+    if b"\r" in payload:
+        raise PilotManifestError(f"{label} must use LF line endings")
+    return sha256(payload).hexdigest()
+
+
 def canonical_digest(value: Any) -> str:
     return sha256(json.dumps(value, sort_keys=True, separators=(",", ":"), allow_nan=False).encode()).hexdigest()
 
@@ -395,6 +402,9 @@ def _guard_context(scene_index: int, seed: int, objects: list[dict[str, Any]], f
 
 
 def build_manifest(profile_path: Path, repo_root: Path, cache_root: Path) -> dict[str, Any]:
+    profile_sha256 = source_digest(profile_path, "pilot profile")
+    generator_path = Path(__file__).resolve()
+    generator_sha256 = source_digest(generator_path, "pilot manifest generator")
     profile = json.loads(profile_path.read_text(encoding="utf-8"))
     validate_profile(profile)
     assets, prepared_pins = load_assets(profile, repo_root, cache_root)
@@ -523,10 +533,10 @@ def build_manifest(profile_path: Path, repo_root: Path, cache_root: Path) -> dic
         "schema_version": 1,
         "status": "pilot_manifest_prepared_exporter_extension_required",
         "profile_id": profile["profile_id"],
-        "profile_sha256": digest(profile_path),
+        "profile_sha256": profile_sha256,
         "generator": {
             "path": "scripts/perception/prepare_pilot_manifest.py",
-            "sha256": digest(Path(__file__).resolve()),
+            "sha256": generator_sha256,
         },
         "prepared_inputs": prepared_pins,
         "cache_root": str(cache_root),
@@ -591,7 +601,8 @@ def main() -> int:
     )
     output.parent.mkdir(parents=True, exist_ok=True)
     temporary = output.with_name(f".{output.name}.tmp")
-    temporary.write_text(json.dumps(manifest, indent=2, sort_keys=True, allow_nan=False) + "\n", encoding="utf-8")
+    with temporary.open("w", encoding="utf-8", newline="\n") as stream:
+        stream.write(json.dumps(manifest, indent=2, sort_keys=True, allow_nan=False) + "\n")
     temporary.replace(output)
     print(json.dumps({"status": manifest["status"], "scenes": 128, "frames": 512,
                       "recipe_sha256": manifest["recipe_sha256"], "output": str(output)}))
