@@ -119,5 +119,12 @@
       "scope": "Tight bbox uses SemanticBoundingBox2DExtentTightSDhostPtr/SemanticOcclusionSDhostPtr; semantic segmentation uses instance_segmentation_fast via a separate SemanticSegmentation node."
     }
   ],
-  "next_minimum_diagnostic": "When GPU diagnosis is resumed, use only the fixed frame102 with loose bbox and instance segmentation to distinguish camera-boundary/instance/semantic mapping cases. Do not restart the full512 capture as a diagnostic."
+  "next_minimum_diagnostic": "Completed as fixed-frame336; tight and loose target boxes match, semantic and instance target masks both have0pixels. Renderer/clipping cause remains unconfirmed; keep full512 and training paused.",
+  "fixed_frame_followup": {
+    "evidence": "perception-frame102-336.json",
+    "run_id": "perception-frame102-336",
+    "counts_as_valid_capture": false,
+    "training_ready": false,
+    "original328_unchanged": true
+  }
 }

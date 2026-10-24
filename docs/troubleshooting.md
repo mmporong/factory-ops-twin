@@ -1666,6 +1666,8 @@ shipping product_move 완료 뒤 같은lot·carrier·origin의 준비된 empty_r
 
 공식Replicator1.11.35 계약과 설치된annotators_default.py를 대조했다. tight bbox와semantic segmentation은 별도노드이며 동일객체집합/동일수치ID를 보장하는 계약은없다. 프로젝트는object_id 라벨로 교차확인하는 더엄격한 품질gate를 사용한다. frame102 누락대상의 raw bbox는x=0..0/y=388..389이며 프로젝트inclusive규칙으로1열×2행의좌측경계박스다. semantic mask픽셀은0이고 occlusionRatio0.0만으로 가시성을확정하지않는다. 다음재현이필요할때는고정frame102한장에loose bbox·instance segmentation을함께남겨경계/FOV/semantic경로를구분하며 전체512촬영을진단으로반복하지않는다. [같은버전공식annotator계약](https://docs.omniverse.nvidia.com/kit/docs/omni_replicator/1.11.35/source/extensions/omni.replicator.core/docs/API.html)
 
+고정 프레임102의 단일 진단336을 수행했다. 같은 recipe/camera에서 tight와 loose bbox가 모두[0,388,0,389]이며 semantic과instance mask에는 모두ID/픽셀이 없었다. 다른4객체의bbox와두마스크화소는 일치하므로 단순semantic label-map 누락만의 문제는 아니다. viewport clipping/renderer/annotator 경계 중 원인은 미확정이며 occlusionRatio0.0을 물리 가림 근거로 사용하지 않는다.76.552초·4.95MB·15파일/24입력의해시·실제저장카메라·ownedKit0/lease반환을 확인했다. 전체512재촬영이나 학습 gate완화는 없고 실패프레임의유효자료 승격도 하지 않았다. [단일진단·원본비교·확인한계](evidence/perception-frame102-336.json)
+
 ## FOT-211 — LF 속성이 있어도 남아 있던 기존worktree CRLF
 
 새coverage ETA bundle의 main통합 byte동일성 검사가 fleet-profile에서거절됐다. 새bundle과양쪽Git blob은LF였으나 root의기존campus16 JSON8개만CRLF가남아있었다. Git status의정규화후동일판정과실행시raw바이트동일성은다르며, FOT-206의신규profile pin전환과구분한다. 모델/새장기실행전에확인돼추가실행은없었다.

@@ -1,0 +1,16 @@
+{
+  "scope": "Measured diagnostic figure; no generated scenery or altered labels",
+  "run_id": "perception-frame102-336",
+  "result_sha256": "83d6e799481b3fdb609e4b4bf2bac76b48b1612c2e3b26b7f7fbe02f94599a6c",
+  "rgb_sha256": "364be366ac2c893ecce20ba8e96416e53111bd95b00c4083a198d0968bc49a94",
+  "instance_sha256": "d368a79cbc82a64544b15ec5abbd36c4f90ce6e019b3a73c6200e61de674fe61",
+  "semantic_sha256": "66a57e89887ded5a5a46ffb97f4c1532ab1e399888910b9150f4d02c1ee1604b",
+  "figure_sha256": "976506033076bd2a3b4c1dc446d8c1db3aec49901d9233ce87b0a7439946ae77",
+  "figure_size": [
+    1616,
+    950
+  ],
+  "inputs": "One raw same-input frame336 and its reported object table. Rectangles and callout are display annotations; raw masks are unchanged.",
+  "training_ready": false,
+  "cause_confirmed": false
+}

@@ -1,0 +1,239 @@
+{
+  "schema_version": 1,
+  "run_id": "perception-frame102-336",
+  "status": "passed_single_frame_diagnostic",
+  "source_main_commit": "e432025dbd1e4985d1c194cc04e2baedb6df54d2",
+  "source_worker_commits": [
+    "ebdd18217bf7b4dd915cf003c3f1ea76b2f72358",
+    "449c73ae4fa7260a6496b880738791758cd48383"
+  ],
+  "source": {
+    "commit": "449c73ae4fa7260a6496b880738791758cd48383",
+    "diagnostic_script_sha256": "84b083f8c13204caf4ba391b72151e1f7ab4608a72d3ac8445d31c78046ed0a3",
+    "spec_sha256": "5af817ea9c2c0e04e755fd899d255e8a9ccb111f84f5c00a8cfcb2de716c7952",
+    "manifest_sha256": "9430580f16e55decdc15da4e82f3789e03574b3f3022eb670d15a679ad83d28b",
+    "recipe_sha256": "e47c42f4c213f724f2e9392c2861b1e0f8ce536562cc2676f9bfe471ee44904e",
+    "prelaunch_input_count": 24,
+    "prelaunch_inputs_verified": true
+  },
+  "job": {
+    "receipt_sha256": "53d596395e427db365c1a9164ab284036740f91cbd8eedbafb180b5298e362cb",
+    "preflight_receipt_sha256": "167c7f767620e9268c676ae374bf829e4666fcb7bbd671b50e81ce873910b007",
+    "status": "passed",
+    "worker_exit_code": 0,
+    "elapsed_wall_seconds": 76.55201809993014,
+    "timed_out": false,
+    "abort_requested": false,
+    "assignment_confirmed": true,
+    "closed": true,
+    "remaining_owned_pids": [],
+    "owned_kit_processes_after_close": []
+  },
+  "lease": {
+    "owner": "FactoryOps-perception-frame102-336",
+    "lease_id": "e355371c-899d-4126-941a-dc3fcd8e9aed",
+    "acquired_utc": "2026-10-24T21:19:25.3789638Z",
+    "completed_utc": "2026-10-24T21:20:42.1150933Z",
+    "state": "completed",
+    "exit_code": 0,
+    "available_after_run": true,
+    "blocking_unmanaged_gpu_processes_after_run": [],
+    "verified_utc": "2026-10-24T21:21:26.8876426Z"
+  },
+  "output": {
+    "all_output_bytes": 4949184,
+    "maximum_output_bytes": 33554432,
+    "file_manifest_entry_count": 14,
+    "file_manifest_entries_verified": true,
+    "file_manifest_recorded_bytes": 4946966,
+    "file_manifest_recomputed_bytes": 4946966,
+    "files": {
+      "bbox-loose.raw.json": "9af12c34f1604c3a65a77b48585839510b8edd166e9c96f8c326f0888a0e1421",
+      "bbox-tight.raw.json": "9af12c34f1604c3a65a77b48585839510b8edd166e9c96f8c326f0888a0e1421",
+      "camera.raw.json": "46e3ec2adbd388b172c371d619af3ed1353faf8895708e4bb91cb7c08e114c35",
+      "expected-objects.json": "85dff416430a524d7ce32e5f1eb29c1e397dd38caa382c905d4f4713454a56b5",
+      "file-manifest.json": "f568efca50d648fedaaca77545dd45955c50899f53f101cfc1e49795c43e571c",
+      "frame-recipe.json": "d0885e22009729f4a269ddcbd6c67cc5ed68e080c7a398a49112978abfe5cb18",
+      "instance-info.raw.json": "5aed9d55e1cb7d8357e05deab2ba8881307c228d04dc925d054b1fe40f525dd8",
+      "instance.raw.npy": "d368a79cbc82a64544b15ec5abbd36c4f90ce6e019b3a73c6200e61de674fe61",
+      "result.json": "83d6e799481b3fdb609e4b4bf2bac76b48b1612c2e3b26b7f7fbe02f94599a6c",
+      "rgb.png": "364be366ac2c893ecce20ba8e96416e53111bd95b00c4083a198d0968bc49a94",
+      "rgb.raw.npy": "8dcf02dd6bb420d0c9b97d3db18d5f68b540d18c05e7d469a29ef20601655955",
+      "scene-recipe.json": "c99305902629a8940389224ab522a6066517b168e046fc6b1010254c0193d892",
+      "scene.usda": "0783e1ca7391a78589a3d532537965a8b60d51e9709da51cf48b9803671782cb",
+      "semantic-info.raw.json": "05ef88258b7badd6bd7ee00b1fbe8d85862a4c9de64cf36d38c90c2f73c232ea",
+      "semantic.raw.npy": "66a57e89887ded5a5a46ffb97f4c1532ab1e399888910b9150f4d02c1ee1604b"
+    }
+  },
+  "modalities": {
+    "rgb": {
+      "shape": [
+        512,
+        768,
+        4
+      ],
+      "dtype": "uint8"
+    },
+    "semantic": {
+      "shape": [
+        512,
+        768
+      ],
+      "dtype": "uint32",
+      "unique_id_count": 6
+    },
+    "instance": {
+      "shape": [
+        512,
+        768
+      ],
+      "dtype": "uint32",
+      "unique_id_count": 7
+    },
+    "tight_bbox_object_count": 5,
+    "loose_bbox_object_count": 5
+  },
+  "object_cross_table": {
+    "pallet-026-01": {
+      "tight": [
+        652,
+        214,
+        767,
+        288
+      ],
+      "loose": [
+        652,
+        214,
+        767,
+        288
+      ],
+      "semantic_pixels": 7675,
+      "instance_pixels": 7675
+    },
+    "pallet-026-02": {
+      "tight": [
+        443,
+        325,
+        670,
+        460
+      ],
+      "loose": [
+        443,
+        325,
+        670,
+        460
+      ],
+      "semantic_pixels": 19230,
+      "instance_pixels": 19230
+    },
+    "small_load_carrier-026-01": {
+      "tight": [
+        24,
+        225,
+        140,
+        288
+      ],
+      "loose": [
+        24,
+        225,
+        140,
+        288
+      ],
+      "semantic_pixels": 3713,
+      "instance_pixels": 3713
+    },
+    "small_load_carrier-026-02": {
+      "tight": [
+        26,
+        191,
+        133,
+        254
+      ],
+      "loose": [
+        26,
+        191,
+        133,
+        254
+      ],
+      "semantic_pixels": 4605,
+      "instance_pixels": 4605
+    },
+    "small_load_carrier-026-03": {
+      "tight": [
+        0,
+        388,
+        0,
+        389
+      ],
+      "loose": [
+        0,
+        388,
+        0,
+        389
+      ],
+      "semantic_pixels": 0,
+      "instance_pixels": 0
+    }
+  },
+  "baseline_comparison": {
+    "scene_recipe_byte_identical": true,
+    "frame_recipe_byte_identical": true,
+    "expected_objects_byte_identical": true,
+    "camera_document_byte_identical": true,
+    "tight_bbox_payload_byte_identical": true,
+    "visible_semantic_object_extents_and_pixel_counts_identical": true,
+    "target_tight_bbox_identical": true,
+    "target_semantic_pixel_count_identical": true,
+    "rgb_byte_identical": false,
+    "rgb_mean_absolute_channel_difference": 0.8887519836425781,
+    "rgb_max_absolute_channel_difference": 86,
+    "scope": "RTX RGB samples differed slightly; recipe, camera, bbox output, and per-object semantic geometry remained the same."
+  },
+  "saved_camera": {
+    "recipe_eye_to_saved_pose_max_abs_delta_m": 8.881784197001252e-16,
+    "recipe_to_saved_focal_length_abs_delta_mm": 2.8146860842070964e-07,
+    "scene_usda_contains_perception_pilot_pose": true,
+    "scene_usda_translation_xyz_m": [
+      0.285644182046281,
+      -7.617027112551852,
+      3.1905034793733993
+    ],
+    "camera_document_matches_baseline_sha256": true
+  },
+  "conclusion": {
+    "confirmed": [
+      "The same fixed input reproduced the target's one-column/two-row left-border bbox.",
+      "Tight and loose bbox annotators both emitted the same target extent [0,388,0,389].",
+      "Neither semantic nor instance segmentation emitted an ID or pixel for the target; the failure is not limited to the semantic label map.",
+      "The other four objects have matching tight/loose extents and matching semantic/instance pixel counts."
+    ],
+    "not_confirmed": [
+      "The diagnostic does not distinguish viewport-edge bbox clipping behavior from a renderer or annotator defect.",
+      "The diagnostic does not prove physical occlusion; the target bbox reports occlusionRatio 0.0.",
+      "The failed target remains excluded from valid captures and COCO output."
+    ]
+  },
+  "scope": {
+    "counts_as_valid_capture": false,
+    "counts_toward_coco": false,
+    "training_ready": false,
+    "mapping_approved": false,
+    "retry_performed": false,
+    "scene_camera_seed_or_geometry_changed": false
+  },
+  "verification": {
+    "worker_cpu_contract_tests_passed": 3,
+    "worker_py_compile": "PASS",
+    "root_code_byte_identity": "Diagnostic script equals GPU-pinned SHA84b083f8; tests/source imported unchanged. Passed checks not repeated.",
+    "verification_receipt_sha256": "a93cd3a5eaf1c977db1b08b549983208574219fc55a6c590e2dffdcacdf09091",
+    "verification_receipt_path": "artifacts/perception-frame102-336-host/verification-receipt.json",
+    "root_result_hash_checked": true,
+    "root_data_figure_visually_inspected": true
+  },
+  "media": {
+    "figure": "../images/perception-frame102-336/diagnostic.png",
+    "provenance": "../images/perception-frame102-336/provenance.json",
+    "asset_attribution": "../asset-attribution.md"
+  },
+  "next_action": "Keep full512 capture and training paused. Define a separate camera-edge diagnostic only if needed; do not infer bbox-raster equivalence, silently drop labels, or relax training approval from this single-frame result."
+}

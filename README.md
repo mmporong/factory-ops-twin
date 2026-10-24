@@ -202,7 +202,16 @@ Isaac Sim Replicator로 12개 시각 구성, 30시점, 3카메라에서 RGB 1,08
 
 실제 LOCO 학습용 사진6장과 합성 후보를 비교해 적층·가림·원거리 소형 객체·현장 배경의 차이를 정리했습니다. 평가용 sub1은 열지 않았습니다. 기존 용기를 제한된 외형의 baseline으로 사용하되, 단일 청색 용기가 전체 소형 적재함 클래스를 대표한다고 해석하지 않습니다. [실사·합성 비교 이미지와 준비 범위](docs/synthetic-to-real-plan.md#실제-학습-사진과-합성-후보의-차이)
 
-512장 파일럿은 회색·청색 용기의 적층·가림·배경·크기·시점 변형을 고정하고 객체별 박스·마스크와 깊이를 검사합니다. v5 입력의 촬영328은 **유효101장·객체545건의 박스/마스크·깊이 일치**를 확인했습니다.102번째 프레임은 박스가 발행된 객체의 semantic ID가 없어 거절했고 RGB·라벨·깊이를 진단용으로 보존했습니다. 원인은 아직 미확정이며 추가 촬영은 보류했습니다. **512장 완성 데이터와 검출기 학습 성과는 아직 없습니다.** [328 부분 결과·원본 해시·종료 근거](docs/evidence/perception-pilot-328.json) · [v5 입력과 확인 경계](docs/evidence/perception-pilot-v5-preparation.json) · [촬영 구현](docs/evidence/perception-pilot-512-preparation.json)
+512장 파일럿은 회색·청색 용기의 적층·가림·배경·크기·시점 변형을 고정하고 객체별 박스·마스크와 깊이를 검사합니다. v5 입력의 촬영328은 **유효101장·객체545건의 박스/마스크·깊이 일치**를 확인했습니다.102번째 프레임은 박스가 발행된 객체의 semantic ID가 없어 거절했고 RGB·라벨·깊이를 진단용으로 보존했습니다. 한 장 진단336에서 동일 입력의 tight·loose 박스가 모두1×2픽셀로 재현됐지만 의미·인스턴스 마스크에는 해당 객체의 픽셀이 없었습니다. 화면 경계의 박스/래스터 불일치까지 확인했고 정확한 처리 원인은 미확정입니다. 대량 촬영과 학습은 보류합니다. **512장 완성 데이터와 검출기 학습 성과는 아직 없습니다.** [328 부분 결과·원본 해시·종료 근거](docs/evidence/perception-pilot-328.json) · [v5 입력과 확인 경계](docs/evidence/perception-pilot-v5-preparation.json) · [촬영 구현](docs/evidence/perception-pilot-512-preparation.json)
+
+<details>
+<summary>한 프레임으로 재현한 박스·마스크 경계 불일치</summary>
+
+![같은 프레임의 RGB·인스턴스 마스크와 다섯 객체의 박스/화소 수 비교](docs/images/perception-frame102-336/diagnostic.png)
+
+프레임102의 장면·카메라·객체를 고정해 한 번 촬영한 진단입니다. 실패 객체는 유효 학습 자료에 포함하지 않았습니다. [실행·해시·종료 근거](docs/evidence/perception-frame102-336.json) · [이미지 출처](docs/images/perception-frame102-336/provenance.json) · [에셋 라이선스](docs/asset-attribution.md)
+
+</details>
 
 <details>
 <summary>합성 파일럿328의 유효101장 중 대표10장</summary>

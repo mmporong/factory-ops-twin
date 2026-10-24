@@ -127,3 +127,9 @@ v5는 같은 검사를 모든 불투명 절차형 컨텍스트 상자로 확장�
 원본745파일·342,849,517바이트와실패진단을 보존하고 dataset.json은 작성하지 않았다. Job닫힘·owned0·lease반환·입력13개불변을 확인했다. 실패프레임은 유효자료/COCO에서 제외하고, 같은입력을 재시도하거나 GPU를 추가로 실행하지 않는다. 데이터는 export 계약 진단용 부분자료이며 클래스 매핑/학습 승인·512장 완성·실사mAP·Cosmos 결과로 사용하지 않는다. [328 마감·대표10장·원본 해시](evidence/perception-pilot-328.json)
 
 객체별bbox/semantic 집합일치는 공식SDK가보장하는동등성이 아니라 프로젝트의추가품질gate다. frame102의누락대상은raw x=0..0/y=388..389, inclusive1×2픽셀의화면좌측경계사례다. numeric ID를같다고가정하지않고 object_id라벨로대조하며, occlusionRatio0.0을가시성보증으로사용하지않는다. 이후진단은고정1프레임의loose bbox·instance segmentation으로범위를좁히고, 결과를보기전전체촬영을반복하지않는다. [공식Replicator1.11.35 API](https://docs.omniverse.nvidia.com/kit/docs/omni_replicator/1.11.35/source/extensions/omni.replicator.core/docs/API.html)
+
+### 고정 프레임102의 단일 진단336
+
+장면25·aisle_low의 recipe/camera/seed/5객체를 바꾸지 않고 한 프레임을 촬영했다. tight와 loose bbox는 모두 `[0,388,0,389]`를 재현했고 문제 객체의 semantic/instance mask는 모두0픽셀이었다. 다른4객체의 두 마스크 화소 수와 bbox는 서로 일치했고, 원본328의 카메라 문서와 bbox도 동일했다. semantic label-map만의 누락은 아니며 viewport 경계 clipping과 renderer/annotator 결함 중 원인은 확정하지 않는다.
+
+공용 lease/Windows Job으로76.552초·4.95MB의 진단만 남겼고 입력24개·출력15개 해시와 Kit/owned0·lease반환을 확인했다. scene.usda는 실제 카메라 자세 설정 후 저장한다. 학습/COCO/mapping 승인은 false이고 전체512촬영·Cosmos·검출기 학습은 재개하지 않았다. [다섯 객체 비교 도판](images/perception-frame102-336/diagnostic.png) · [실행·해시·관측 한계](evidence/perception-frame102-336.json)
