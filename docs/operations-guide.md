@@ -41,6 +41,8 @@ $pilotLabel = Get-Date -Format "yyyyMMdd-HHmmss"
 uv run python scripts/demo/run_process_line.py --config configs/factory-semiconductor-campus16 --output-dir "artifacts/operations/campus-$pilotLabel" --lots 48 --horizon 120000 --max-wall-seconds 5400 --cycle-stall-timeout 600
 ```
 
+배차 후보를 선택할 때는 위 명령의 설정을 `configs/factory-semiconductor-campus16-coverage-eta`로 바꾸고 `--policy eta`를 명시한다. 이 설정은 실제 완료 운송2회 미만의 가용 차량을 먼저 고른 뒤 명목 ETA를 우선한다. 전 차량이2회를 채우면 ETA가 배정 수보다 앞선다. `fifo`와 함께 쓰면 거절하며, 기존 설정은 원래 배정 수 우선 정책을 유지한다. 다른7개 설정 파일은 기준선과 바이트가 같고 process-network는 배차 모드·반복 완료 기준 외 값이 같다. 가감속·회전·예약·점유·에너지·버퍼를 완화하지 않는다. 표적 검사와 main의 실제 snapshot 계약 확인은 통과했지만 전체 비교 실행은 아직 없다. [설정 해시·확인 범위](evidence/campus16-coverage-eta.json)
+
 `--stall-timeout`은 이동·공정·충전 진전이 모두 없는 시뮬레이션 시간이며 기본600초다. 별도 `--cycle-stall-timeout`은 기본0으로 꺼져 있다. 켜면 같은 순환 대기 구성원의 pose·task·payload·완료 운송·누적 충전에 변화가 없는 시간을 센다. 다른 차량의 이동은 이 시계를 리셋하지 않는다. 기준에 도달하면 `incomplete / stationary_wait_cycle`과 최종 상태를 기록하며, 교통 문제를 해결했다고 판정하지 않는다.
 
 실행 중에는 출력 경로의 `progress.json`만 읽는다.30시뮬레이션 초마다 교체하는 단일 파일이며 `operations.robots`에는 현재 pose·속도·작업·대기 이유·배터리·충전 상태, `operations.equipment_cells`에는12개 설비 WIP, `operations.charging`에는 도크 예약·접근/이탈 보류 이유가 들어간다. 경로 전체·이벤트 이력·촬영 자료는 복제하지 않는다. 새 상태 요약은 새 실행부터 발행되므로 구버전 실행에서 필드 부재를 빈 작업 상태로 해석하지 않는다. 원인 확인을 위해 진행 중인 gzip·SQLite를 열지 않는다.

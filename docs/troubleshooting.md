@@ -1665,3 +1665,9 @@ shipping product_move 완료 뒤 같은lot·carrier·origin의 준비된 empty_r
 유효자료101장과실패진단은구분했다. dataset.json은없고 training_ready/mapping_approved는false다. source13개불변·745파일해시·Job마감·소유PID0·lease반환을확인했다. v5 CPU AABB 대리 검사 통과를 실제화소/annotator일치로 확대하지 않으며, identity누락과bbox발행경계가 해소되기 전 같은v5 촬영을 반복하지 않는다. 추가GPU/대량생성/학습은보류한다. [실행·부분자료·진단이미지](evidence/perception-pilot-328.json)
 
 공식Replicator1.11.35 계약과 설치된annotators_default.py를 대조했다. tight bbox와semantic segmentation은 별도노드이며 동일객체집합/동일수치ID를 보장하는 계약은없다. 프로젝트는object_id 라벨로 교차확인하는 더엄격한 품질gate를 사용한다. frame102 누락대상의 raw bbox는x=0..0/y=388..389이며 프로젝트inclusive규칙으로1열×2행의좌측경계박스다. semantic mask픽셀은0이고 occlusionRatio0.0만으로 가시성을확정하지않는다. 다음재현이필요할때는고정frame102한장에loose bbox·instance segmentation을함께남겨경계/FOV/semantic경로를구분하며 전체512촬영을진단으로반복하지않는다. [같은버전공식annotator계약](https://docs.omniverse.nvidia.com/kit/docs/omni_replicator/1.11.35/source/extensions/omni.replicator.core/docs/API.html)
+
+## FOT-211 — LF 속성이 있어도 남아 있던 기존worktree CRLF
+
+새coverage ETA bundle의 main통합 byte동일성 검사가 fleet-profile에서거절됐다. 새bundle과양쪽Git blob은LF였으나 root의기존campus16 JSON8개만CRLF가남아있었다. Git status의정규화후동일판정과실행시raw바이트동일성은다르며, FOT-206의신규profile pin전환과구분한다. 모델/새장기실행전에확인돼추가실행은없었다.
+
+각원본을CRLF→LF했을때만HEAD blob과완전히일치하는지확인한뒤 해당root작업파일만Git정본바이트로맞췄다. 의미/수치/순서의변경은없고 기존327의격리worktree는건드리지않았다. 다른7개설정의working/Git/raw SHA일치와network의두배차필드외동일성, 실제새모드constructor/snapshot계약이통과했다. 비교입력의raw동일성을주장하기전양쪽working bytes와Git blob을함께확인한다. [전후해시·확인범위](evidence/campus16-coverage-eta.json) · [Git 줄바꿈속성](https://git-scm.com/docs/gitattributes#_end_of_line_conversion)

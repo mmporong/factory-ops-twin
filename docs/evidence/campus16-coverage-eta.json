@@ -1,0 +1,130 @@
+{
+  "schema_version": 1,
+  "status": "implemented_targeted_tests_and_main_snapshot_passed_full_run_not_started",
+  "source_main_commit": "55445d2e9663a5f6fd0b5c7d579dd4d69a774bce",
+  "source_worker_commit": "7578d2cc1e8f02a5fb1ae511cebd9faf6163d423",
+  "config": "configs/factory-semiconductor-campus16-coverage-eta",
+  "dispatch_mode": "downstream_wip_drain_eta_after_coverage",
+  "required_cli_policy": "eta",
+  "coverage_deliveries_per_robot": 2,
+  "ranking": [
+    "existing downstream WIP task stage/creation/task-id priority",
+    "available candidate robot has completed fewer than2 material deliveries",
+    "nominal pickup+loaded route distance divided by max linear speed",
+    "assignments count",
+    "robot ID"
+  ],
+  "ETA_scope": "Nominal distance/speed surrogate, not measured or acceleration/turn-aware arrival time. Actual PathMotion acceleration/rotation and all existing admission guards remain unchanged.",
+  "coverage_source": "Completed material deliveries, not assignments, parking, yield, charging or queued intent.",
+  "unchanged": [
+    "existing least-assigned/legacy dispatch branches",
+    "station ownership",
+    "input/output capacity",
+    "full-window reservation and current-pose gates",
+    "charging feasibility",
+    "fleet count and geometry",
+    "source inventory and carrier count",
+    "motion and energy profiles"
+  ],
+  "config_identity": {
+    "seven_other_files_byte_identical": {
+      "fleet-profile.json": "f49254f37ffb154f7c113e004a70e9c43f131d60eb2a7408434d30f36a16c9aa",
+      "g2.json": "f1f0edd538ac61d21ab45dc2ae02d40f560f418025b938ea1a2d7c9362195bed",
+      "g3-routing.json": "b8a2831901da53980c865e6243b6b5d026cd599c76a0238e0c5300771f7b9f4f",
+      "layout.json": "0c895320de20db3441dfd73a26610cb2029a7b90fbe3e249b3d58060a97ce891",
+      "operations-charging.json": "b1a7d2e0d24a70d5d6796e024de85086f6db5b65ab82ff67c11d84ac1f226e02",
+      "render-profile.json": "1ed3a6b259062a399e2f39af5dbf2a5d9b8b133a55a0f04c6c1ff7c9c5ce9187",
+      "visual-assets.json": "f066f1d4d620a11521c82f9375c81b8423fa5ed4ab3a77ce0f4b81a5d622a230"
+    },
+    "network_changed_fields": [
+      "dispatch_mode",
+      "coverage_deliveries_per_robot"
+    ],
+    "remaining_network_semantics_identical": true,
+    "main_candidate_working_Git_blob_LF_identity": true
+  },
+  "validation": {
+    "agent_targeted_tests": 4,
+    "elapsed_wall_s": 40.304,
+    "cases": [
+      "delivery quota priority even with high assignment count",
+      "nearer vehicle after quota; old least-assigned mode preserved",
+      "capacity/reservation/energy and fifo-policy rejection",
+      "bundle identity"
+    ],
+    "py_compile": "PASS",
+    "main_actual_constructor_snapshot_contract": "PASS",
+    "diff_check": "PASS"
+  },
+  "integration_EOL": {
+    "issue": "Root baseline working tree still hadCRLF although attributes andHEAD blob specifiedLF; candidate was already canonicalLF. Initial byte-equality preflight rejected before any new run.",
+    "files": [
+      {
+        "path": "configs/factory-semiconductor-campus16/fleet-profile.json",
+        "before_sha256": "5bdaa74cba0c8df54951b5e69cfa6de45c680b91e2d8f71f138f0afad32f18d5",
+        "before_CR_count": 27,
+        "canonical_sha256": "f49254f37ffb154f7c113e004a70e9c43f131d60eb2a7408434d30f36a16c9aa",
+        "only_newline_difference": true
+      },
+      {
+        "path": "configs/factory-semiconductor-campus16/g2.json",
+        "before_sha256": "b2e3385db604b33c94ce4f8dfbc41926a1e21b4f2e60a4340b114c1f124849ab",
+        "before_CR_count": 191,
+        "canonical_sha256": "f1f0edd538ac61d21ab45dc2ae02d40f560f418025b938ea1a2d7c9362195bed",
+        "only_newline_difference": true
+      },
+      {
+        "path": "configs/factory-semiconductor-campus16/g3-routing.json",
+        "before_sha256": "aebb0d68d34796e64d4d7dfeeb7a2e6f3aedecb20bd3ad87fffbccf2dedae0e9",
+        "before_CR_count": 3131,
+        "canonical_sha256": "b8a2831901da53980c865e6243b6b5d026cd599c76a0238e0c5300771f7b9f4f",
+        "only_newline_difference": true
+      },
+      {
+        "path": "configs/factory-semiconductor-campus16/layout.json",
+        "before_sha256": "db6b936ec81f6176810dd78df40685d5702ca3bdf30287b5d9545dabd1477e23",
+        "before_CR_count": 3195,
+        "canonical_sha256": "0c895320de20db3441dfd73a26610cb2029a7b90fbe3e249b3d58060a97ce891",
+        "only_newline_difference": true
+      },
+      {
+        "path": "configs/factory-semiconductor-campus16/operations-charging.json",
+        "before_sha256": "113f7d1fffd0567d57e8ba9afb3e795e79c9246d03486334c8ef7046b9be5d43",
+        "before_CR_count": 101,
+        "canonical_sha256": "b1a7d2e0d24a70d5d6796e024de85086f6db5b65ab82ff67c11d84ac1f226e02",
+        "only_newline_difference": true
+      },
+      {
+        "path": "configs/factory-semiconductor-campus16/process-network.json",
+        "before_sha256": "ef4d3dd35612426c5b284413a9cb180c91dcbdad929eb1bcabed170e8beed12b",
+        "before_CR_count": 167,
+        "canonical_sha256": "5a406e3880996c543afe7f49b104a7d94d4dd33319b782c891a26cb0996a3a8d",
+        "only_newline_difference": true
+      },
+      {
+        "path": "configs/factory-semiconductor-campus16/render-profile.json",
+        "before_sha256": "8249ea4143c92c6779cbee254b47fa090ec9d824ad99c6663a0a0e148860a596",
+        "before_CR_count": 130,
+        "canonical_sha256": "1ed3a6b259062a399e2f39af5dbf2a5d9b8b133a55a0f04c6c1ff7c9c5ce9187",
+        "only_newline_difference": true
+      },
+      {
+        "path": "configs/factory-semiconductor-campus16/visual-assets.json",
+        "before_sha256": "daf8b6665f9c2e278ccb8dcb1e739a2bd321edfc32e9bd6be6ed947f2274a362",
+        "before_CR_count": 1655,
+        "canonical_sha256": "f066f1d4d620a11521c82f9375c81b8423fa5ed4ab3a77ce0f4b81a5d622a230",
+        "only_newline_difference": true
+      }
+    ],
+    "repair": "Rewrite only baseline bytes whose sole difference fromHEAD isCRLF; keepGit content unchanged and active327 worktree untouched.",
+    "frozen_active327_modified": false
+  },
+  "execution": {
+    "full_candidate_run_performed": false,
+    "extra_CPU_GPU_batch_started": false,
+    "run327_source_unchanged": true,
+    "dispatch_performance_improvement_measured": false,
+    "full48_48_completed": false,
+    "peak16_material_tasks_verified": false
+  }
+}
