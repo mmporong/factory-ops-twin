@@ -1,10 +1,11 @@
 import json
 from pathlib import Path
 import unittest
-from unittest.mock import patch
+from unittest.mock import PropertyMock, patch
 
 from factory_ops.dashboard import validate_snapshot
 from factory_ops.line_operations_model import LineOperationsModel, _TripTask
+from factory_ops.process_line import TransportRequest
 from factory_ops.process_line_layout import build_line_bundle
 
 
@@ -82,6 +83,105 @@ class LineOperationsModelTests(unittest.TestCase):
         row = next(row for row in model.snapshot()["robots"] if row["id"] == robot)
         self.assertEqual(("staging", "post_drop_staging"),
                          (row["task_type"], row["movement_purpose"]))
+
+    def test_shipping_drop_chains_ready_return_without_vacating_the_station(self):
+        model = LineOperationsModel(
+            CONFIGS / "factory-semiconductor-campus16", initial_lots=0,
+            run_id="line-same-station-handoff",
+        )
+        robot = "amr-16"
+        lot_id = model.create_order({"source": "D_S1", "quantity": 1})
+        line = model.line.lines["L4"]
+        lot = line.lots[lot_id]
+        carrier = lot.carrier_id
+        for task in line.tasks.values():
+            task.state = "complete"
+        line.cells["PACK"].output_lots.append(lot_id)
+        shipping = line._new_task(lot, "product_move", "A_PACK_OUT", "A_OUT")
+        assigned_shipping = line.assign(shipping.task_id, robot)
+        line.pickup(model.ledger.run_id, shipping.task_id, robot, "shipping-pickup", model.sim_time)
+        model.inventory.source_pickup(lot_id, robot)
+        model.inventory.product_drop(lot_id, carrier, robot, "A_PACK_OUT")
+        model.inventory.product_pickup(lot_id, carrier, robot, "A_PACK_OUT")
+        delivered = _TripTask.from_request(assigned_shipping)
+        model._trip(robot, delivered, model._locations[robot], "A_OUT", "drop", kind="process_line")
+        model._poses[robot].update(
+            x_m=model.book.nodes["A_OUT"][0], y_m=model.book.nodes["A_OUT"][1],
+        )
+        model._station_owners.update({"A_PACK_OUT": robot, "A_OUT": robot})
+        model._jobs[robot] = ("A_PACK_OUT", "A_OUT")
+        charging = model.operations_charging
+        assert charging is not None
+
+        with (
+            patch.object(charging, "can_assign", return_value=True),
+            patch.object(model.bridges, "blockers", return_value=()) as blockers,
+        ):
+            model._arrive_trip(robot, model._trips[robot])
+
+        chained = model._trips[robot]
+        self.assertEqual(("process_line", "drop", "D_S1"),
+                         (chained["kind"], chained["phase"], chained["goal"]))
+        self.assertEqual(tuple(chained["admission_nodes"]), blockers.call_args.args[1])
+        self.assertEqual(chained["admission_tiles"], blockers.call_args.kwargs["route_tiles"])
+        state = model.line.snapshot()
+        self.assertEqual((1, 0, 1),
+                         (state["completed_lots"], state["returned"], model._deliveries[robot]))
+        self.assertEqual(carrier, model.inventory.robot_loads[robot])
+        event = next(row for row in model.snapshot()["events"]
+                     if row["type"] == "line_transport_assigned")
+        self.assertEqual(("same_station", True),
+                         (event["handoff"], event["avoided_staging_reapproach"]))
+
+        model._poses[robot].update(
+            x_m=model.book.nodes["D_S1"][0], y_m=model.book.nodes["D_S1"][1],
+        )
+        model._arrive_trip(robot, model._trips[robot])
+        state = model.line.snapshot()
+        self.assertEqual((1, 1, 2),
+                         (state["completed_lots"], state["returned"], model._deliveries[robot]))
+        self.assertNotIn(robot, model.inventory.robot_loads)
+
+    def test_shipping_drop_vacates_to_staging_when_next_loaded_window_is_blocked(self):
+        model = LineOperationsModel(
+            CONFIGS / "factory-semiconductor-campus16", initial_lots=0,
+            run_id="line-same-station-blocked",
+        )
+        robot = "amr-16"
+        delivered = _TripTask(
+            "LOT-X:product_move:4", "LOT-X", "T999", "A_PACK_OUT", "A_OUT",
+            "product_move",
+        )
+        model._trip(
+            robot, delivered, model._locations[robot], delivered.pickup_station,
+            "pickup", kind="process_line",
+        )
+        model._poses[robot].update(
+            x_m=model.book.nodes["A_OUT"][0], y_m=model.book.nodes["A_OUT"][1],
+        )
+        model._trips[robot].update(
+            phase="drop", start=delivered.pickup_station, goal=delivered.drop_station,
+        )
+        model._station_owners.update({"A_PACK_OUT": robot, "A_OUT": robot})
+        model._jobs[robot] = ("A_PACK_OUT", "A_OUT")
+        ready = TransportRequest(
+            "LOT-X:empty_return:5", "LOT-X", "T999", "empty_return",
+            "A_OUT", "A_S1", model.sim_time,
+        )
+
+        with (
+            patch.object(type(model.line), "ready_transports", new_callable=PropertyMock,
+                         return_value=(ready,)),
+            patch.object(model.line, "drop"),
+            patch.object(model.line, "assign") as assign,
+            patch.object(model.inventory, "product_drop"),
+            patch.object(model.bridges, "blockers", return_value=("amr-2",)),
+        ):
+            model._arrive_trip(robot, model._trips[robot])
+
+        staged = model._trips[robot]
+        self.assertEqual(("parking", "staging"), (staged["kind"], staged["purpose"]))
+        assign.assert_not_called()
 
     def test_home_parking_is_preemptible_at_unstarted_or_intermediate_safe_hold(self):
         model = LineOperationsModel(

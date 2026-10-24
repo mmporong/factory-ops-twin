@@ -300,6 +300,104 @@ class LineOperationsModel(OperationsModel):
             if carrier["location"] != task.origin:
                 self.inventory.process_release(task.lot_id, task.carrier_id, task.origin)
 
+    def _pickup_line_task(self, robot_id: str, task: _TripTask) -> None:
+        self.line.pickup(
+            self.ledger.run_id,
+            task.task_id,
+            robot_id,
+            self._observation_id("pickup", task.task_id),
+            self.sim_time,
+        )
+        if task.kind == "process_input":
+            self.inventory.source_pickup(task.order_id, robot_id)
+        elif task.kind == "empty_return":
+            self.inventory.empty_pickup(task.payload_id, robot_id)
+        else:
+            self.inventory.product_pickup(
+                task.order_id, task.payload_id, robot_id, task.pickup_station,
+            )
+
+    def _chain_ready_shipping_return(self, robot_id: str, delivered: _TripTask) -> bool:
+        """Pick an empty carrier at its shipping handover without vacating first."""
+        station = delivered.drop_station
+        if (self._line_dispatch_mode == "legacy_fifo_eta"
+                or delivered.kind != "product_move"
+                or station not in self.line.shipping_stations):
+            return False
+        candidate = next(
+            (task for task in self.line.ready_transports
+             if task.kind == "empty_return"
+             and task.lot_id == delivered.order_id
+             and task.carrier_id == delivered.payload_id
+             and task.origin == station),
+            None,
+        )
+        if candidate is None or not self._line_can_assign(candidate):
+            return False
+        blockers = sorted({
+            self._station_owners[claimed]
+            for claimed in (candidate.origin, candidate.destination)
+            if claimed in self._station_owners
+            and self._station_owners[claimed] != robot_id
+        })
+        if blockers:
+            return False
+        adapter = _TripTask.from_request(candidate)
+        loaded_route = self.book.plan(candidate.origin, candidate.destination, closed=self.closed)
+        loaded_trip = {
+            "kind": "process_line",
+            "phase": "drop",
+            "goal": candidate.destination,
+            "task": adapter,
+        }
+        window = self._window_for_trip(
+            loaded_route.points[0], loaded_route.points[1:], loaded_route.nodes[1:],
+            loaded_trip, robot_id=robot_id,
+        )
+        if self.bridges.blockers(
+            robot_id,
+            window["nodes"],
+            route_tiles=window["tiles"],
+            observed_tiles=self._admission_observations(robot_id, loaded_trip),
+        ):
+            return False
+        if (self.operations_charging is not None
+                and not self.operations_charging.can_assign(
+                    self, robot_id, candidate.origin, candidate.destination,
+                )):
+            return False
+        assigned = self.line.assign(candidate.task_id, robot_id)
+        self._station_owners.update({
+            assigned.origin: robot_id,
+            assigned.destination: robot_id,
+        })
+        self._jobs[robot_id] = (assigned.origin, assigned.destination)
+        adapter = _TripTask.from_request(assigned)
+        self._pickup_line_task(robot_id, adapter)
+        self._trip(
+            robot_id, adapter, assigned.origin, assigned.destination, "drop",
+            kind="process_line",
+        )
+        self._assignments[robot_id] += 1
+        self._event(
+            "line_transport_assigned",
+            f"{robot_id} {assigned.task_id} 연속 인계",
+            robot_id,
+            task_id=assigned.task_id,
+            lot_id=assigned.lot_id,
+            handoff="same_station",
+            avoided_staging_reapproach=True,
+        )
+        self._event(
+            "line_pickup",
+            f"{robot_id} {adapter.payload_id} 적재",
+            robot_id,
+            task_id=adapter.task_id,
+            station=adapter.pickup_station,
+            handoff="same_station",
+        )
+        return True
+
     def _arrive_trip(self, robot_id: str, trip: dict[str, Any]) -> None:
         if trip["kind"] != "process_line":
             super()._arrive_trip(robot_id, trip)
@@ -314,14 +412,7 @@ class LineOperationsModel(OperationsModel):
         self.line.advance(self.sim_time)
         self._sync_process_outputs()
         if trip["phase"] == "pickup":
-            self.line.pickup(self.ledger.run_id, task.task_id, robot_id,
-                             self._observation_id("pickup", task.task_id), self.sim_time)
-            if task.kind == "process_input":
-                self.inventory.source_pickup(task.order_id, robot_id)
-            elif task.kind == "empty_return":
-                self.inventory.empty_pickup(task.payload_id, robot_id)
-            else:
-                self.inventory.product_pickup(task.order_id, task.payload_id, robot_id, task.pickup_station)
+            self._pickup_line_task(robot_id, task)
             self._trip(robot_id, task, task.pickup_station, task.drop_station, "drop", kind="process_line")
             self._event("line_pickup", f"{robot_id} {task.payload_id} 적재", robot_id,
                         task_id=task.task_id, station=task.pickup_station)
@@ -338,7 +429,8 @@ class LineOperationsModel(OperationsModel):
             del self._trips[robot_id]
             self._event("line_drop", f"{robot_id} {task.drop_station} 인계", robot_id,
                         task_id=task.task_id, station=task.drop_station)
-            if staging is not None:
+            if (staging is not None
+                    and not self._chain_ready_shipping_return(robot_id, task)):
                 # The business handover is complete, but the vehicle retains
                 # bridge protection until its footprint clears the spur mouth.
                 self._trip(
