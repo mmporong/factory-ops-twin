@@ -28,13 +28,22 @@ $env:FACTORY_OPS_ASSET_CACHE = $factoryAssetCache
 
 `furniture_workbench_modular_a01`의 선택된 모델은 높은 양문 캐비닛 형상이다. 패키지 이름과 장면의 역할을 구분한다. 치수는 공개 CAD의 실측 사양이 아닌, 내려받은 USD의 가시 형상을 미터·Z축 위 방향으로 정리한 뒤 측정한 바운딩 박스다. 배치할 때 축을 돌릴 수 있지만 임의로 확대하지 않는다.
 
+## 합성 인식 실험용 후보
+
+다음 두 모델은 운용 공장의 배치와 별도로 확보한 지각 실험 후보다. 제작자는 NVIDIA, 고정 리비전은 `524747d9b5e1f21b5b18b56041788c01d745f1a1`, 라이선스는 각 패키지의 CC-BY-4.0이다. 원본은 변경하지 않고, 소비용 USD에서 미터·Z-up·바닥 기준 정렬과 물리 API 제거를 적용했다. 외곽은 USD 가시 형상의 계산값이며 실물 정격·KLT 규격 보증이 아니다. [파일 해시와 준비 근거](evidence/loco-asset-map-266.json)
+
+| 후보 | USD 외곽 | 출처·라이선스 |
+|---|---|---|
+| 목재 팔레트 `pallet_block_a01` | 약1.000×1.200×0.120m | [원본](https://huggingface.co/datasets/nvidia/simready-assets/tree/524747d9b5e1f21b5b18b56041788c01d745f1a1/pallet_block_a01) · [라이선스](https://huggingface.co/datasets/nvidia/simready-assets/blob/524747d9b5e1f21b5b18b56041788c01d745f1a1/pallet_block_a01/.metadata/LICENSE.txt) |
+| 얕은 회색 크레이트 `crate_gray_a20` | 약0.612×0.412×0.090m | [원본](https://huggingface.co/datasets/nvidia/simready-assets/tree/524747d9b5e1f21b5b18b56041788c01d745f1a1/crate_gray_a20) · [라이선스](https://huggingface.co/datasets/nvidia/simready-assets/blob/524747d9b5e1f21b5b18b56041788c01d745f1a1/crate_gray_a20/.metadata/LICENSE.txt) |
+
 ## 출처와 이용 조건
 
 - 제작자: **NVIDIA**. 데이터셋: [nvidia/simready-assets](https://huggingface.co/datasets/nvidia/simready-assets).
 - 이전196 촬영의 고정 리비전: `524747d9b5e1f21b5b18b56041788c01d745f1a1`. 현재 이중 차로의4종 구성은 위에 적은 `653d91e182011f357cf1644013cc94ddf194d349`를 사용한다.
 - 모델 패키지 라이선스: **CC BY 4.0**. 원본의 라이선스·저작권 파일은 캐시에 함께 보존한다. 패키지별 원문 링크는 [설정의 catalog](../configs/factory-semiconductor/visual-assets.json)에 있다. MDL 등 포함 파일의 별도 고지도 보존한다.
 - 변경: 소비용 USD에 미터·Z-up·바닥 기준 중심 정렬을 적용하고, 정적 배경용으로 Physics/PhysX API와 관절 typed prim을 제거했다. 원본 패키지는 수정하지 않는다. 출처, 파일별 SHA256, 준비 도구 해시는 캐시 색인에 남긴다.
-- 이 페이지와 README의 모델 미리보기 PNG는 NVIDIA가 배포한 원본 썸네일을 변경 없이 복사한 자료다. **프로젝트에서 촬영한 RGB가 아니다.** 파일별 원본 경로·해시는 [미리보기 출처](images/factory-context-assets-193/provenance.json)에 있다.
+- `factory-context-assets-193`의 모델 미리보기 PNG는 NVIDIA가 배포한 원본 썸네일을 변경 없이 복사한 자료다. **프로젝트에서 촬영한 RGB가 아니다.** 파일별 원본 경로·해시는 [미리보기 출처](images/factory-context-assets-193/provenance.json)에 있다. 캠퍼스265 이미지는 별도의 프로젝트 GPU 촬영이며 [촬영 출처](images/campus16-static-265/provenance.json)로 구분한다.
 
 이 모델의 사용이 NVIDIA의 추천이나 실제 반도체 공장의 ESD·클린룸 인증을 뜻하지 않는다. 정비 소품의 적재·주행·작업 동작을 검증한 범위도 아니다.
 

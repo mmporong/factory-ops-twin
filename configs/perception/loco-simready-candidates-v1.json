@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "profile_id": "loco-simready-candidates-v1",
+  "status": "downloaded_candidates_pending_geometry_validation",
+  "repository": "nvidia/simready-assets",
+  "revision": "524747d9b5e1f21b5b18b56041788c01d745f1a1",
+  "license": "CC-BY-4.0",
+  "author": "NVIDIA",
+  "assets": {
+    "nvidia:pallet_block_a01": {
+      "target_class": "pallet",
+      "package": "pallet_block_a01",
+      "root_usd": "simready_usd/sm_pallet_block_a01_01.usd",
+      "thumbnail": "simready_usd/.thumbs/256x256/sm_pallet_block_a01_01.usd.png",
+      "source_url": "https://huggingface.co/datasets/nvidia/simready-assets/tree/524747d9b5e1f21b5b18b56041788c01d745f1a1/pallet_block_a01",
+      "license_url": "https://huggingface.co/datasets/nvidia/simready-assets/blob/524747d9b5e1f21b5b18b56041788c01d745f1a1/pallet_block_a01/.metadata/LICENSE.txt",
+      "mapping_status": "candidate"
+    },
+    "nvidia:crate_gray_a20": {
+      "target_class": "small_load_carrier",
+      "package": "crate_gray_a20",
+      "root_usd": "simready_usd/sm_crate_gray_a20_01.usd",
+      "thumbnail": "simready_usd/.thumbs/256x256/sm_crate_gray_a20_01.usd.png",
+      "source_url": "https://huggingface.co/datasets/nvidia/simready-assets/tree/524747d9b5e1f21b5b18b56041788c01d745f1a1/crate_gray_a20",
+      "license_url": "https://huggingface.co/datasets/nvidia/simready-assets/blob/524747d9b5e1f21b5b18b56041788c01d745f1a1/crate_gray_a20/.metadata/LICENSE.txt",
+      "mapping_status": "candidate",
+      "qualification_note": "The package name and thumbnail show a logistics crate, but KLT dimensional or standards compliance is not established."
+    }
+  },
+  "readiness": {
+    "download_is_approval": false,
+    "geometry_validation_required": true,
+    "root_leaf_semantic_boundary_validation_required": true,
+    "bbox_export_validation_required": true,
+    "training_ready": false
+  }
+}

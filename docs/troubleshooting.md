@@ -1343,3 +1343,15 @@ RGB249의 첫 report는 runtime·클래스 수를 추가하며 같은 경로로 
 255의 progress에서 completed_lots가13→12로 줄었다. 빈 용기 pickup도 lot 상태를 in_transport로 바꾸는데 snapshot은 product_delivered/waiting_empty_return/returned 상태만 완료로 세어, 이미 출하한 lot을 반납 이동 중에 제외한 집계 오류다.255의 누적 출하13건·반납6건은 각각 해당 transport_dropped 사건의 고유 lot 수로 확인했다. 원본 결과·progress·동결 소스는 수정하지 않았다.
 
 후속 snapshot은 완료된 product_move 운송 중 목적지가 해당 라인의 shipping_station인 고유 lot을 집계한다. 보존 기간이 제한될 수 있는 사건 목록이나 일시 상태에 의존하지 않는다. 출하 직후(완료1/반납0)→빈 용기 이동 중(1/0)→반납 완료(1/1)의 회귀와 기존 관련 검사2개가 통과했다. 업무 상태·예약·경로·사건 생성은 바꾸지 않았고, 전체255를 수정된 생산자 실행처럼 표현하지 않는다.
+
+## FOT-168 — 다음 구간 예약의 관측·인계·교차로 경계
+
+전체 운송 경로 선점을 다음 atomic window로 바꾸는 개발 실행에서 서로 다른 세 경계가 드러났다.256은 아직 획득하지 않은 next-window preview를 점유처럼 취급해 대칭 대기했다. 실제 pose와 획득된 window만 권한으로 남겼다.261은 PACK 하차 순간 window가 해제돼 staging 출구 차량과 접근 차량이 서로 막았다. pickup→loaded 첫 구간과 PACK drop→전체 staging 이탈을 release gap 없는 handover window로 묶었다.
+
+264는 물류 동시 임무13·이동12를 기록했지만, C/D 교량과 east-spine의 공유 junction을 별개 종료점으로 취급해 다시 정체했다. 출하2·반납0·source_stable=true이며 진전 없음으로 종료했다. 충돌 여유를 줄이거나 차량 우선순위만 바꾸지 않고, 해당 junction을 기존 교량과 연쇄 원자 예약하도록 좁은 정책 영역을 작성했다. PACK_IN 중심이 영역 밖이라는 이유로 pose-clear 종료점으로 단정하지 않으며 PACK_WAIT까지 인계 보호를 유지한다. 원본256/261/264는 수정 전 근거로 보존하고 새 입력의 결과로 판정한다.
+
+## FOT-169 — 정적 카메라 전환과 SDK 종료 코드
+
+259는 첫 조감 촬영 뒤 render product를 새로 만들 때 다음 RGB 버퍼가 비었다. product와 annotator의 수명을 유지하도록 바꿨다.260에서는 장면에 이미 있는 카메라를 제외하지 않은 식별 검사로 중단했다.262는 이미지3장이 생성됐지만 요청한 근접 pose 대신 같은 조감 정렬에서 초점거리만 달라진 모습이었다. 당시 world transform을 기록하지 않아 정확한 이전 pose는 단정하지 않는다. 원래 passed 보고서를 수정하지 않고 별도 adjudication으로 요청한 시점의 증거에서 제외했다.
+
+265는 기존 G4와 같은 UsdGeom.Camera를 작성하고, persistent render product와 카메라별 world-eye readback을 사용했다. 요청 위치와 일치한3장, 멈춘 timeline, 소유 Job 종료·잔여 PID0을 확인했다. 범용 Job 영수증이 passed여도 SDK 결과 파일이 failed이면 촬영 성공으로 처리하지 않는다. 새 호스트는 두 조건을 함께 확인한다. [현재 촬영 근거](images/campus16-static-265/provenance.json)

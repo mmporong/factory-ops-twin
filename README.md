@@ -18,9 +18,11 @@
 
 ### 16대 연결 캠퍼스: 구축 중
 
-![4개 생산 베이와 16개 초기 홈을 표시한 작성 배치도](docs/images/campus16-layout-254/campus-layout.png)
+| 4개 베이 전체 장면 | 검사 셀 근접 장면 |
+|---|---|
+| ![78×60m 캠퍼스의 실제 정적 GPU 렌더](docs/images/campus16-static-265/portfolio_overview.png) | ![절차형 핸들러·테스터와 트레이 인계대의 실제 정적 GPU 렌더](docs/images/campus16-static-265/cell_process.png) |
 
-위 그림은 설정과 USD manifest에서 만든 **정적 배치도**입니다. GPU 렌더나 16대 운송 성공 영상이 아닙니다. 78×60m 안에 기존 생산 설비 76개, 출처가 있는 SimReady 배치 104개, 차량 홈 16개, 가상 충전 도크 8개와 하차 후 통로를 비우는 PACK 대기점 4개를 구성했습니다. CPU에서 시각 USD 생성과 에셋 외곽 검사를 마쳤으며, OpenUSD/Isaac Sim 파싱과 새 장면 촬영은 남아 있습니다. [배치도 출처](docs/images/campus16-layout-254/provenance.json) · [생성·배치 근거](docs/evidence/campus16-254.json)
+위 이미지는 Isaac Sim4.5에서 촬영한 **정적 GPU 렌더**입니다. 물리 시간을 멈췄으며 차량을 스폰하지 않았습니다. 78×60m 안에 생산 설비76개, 출처가 있는 SimReady 배치104개, 차량 홈16개, 가상 충전 도크8개와 PACK 대기점4개를 구성했습니다. 생산 장비 본체는 절차형 모델이며 제조사 CAD가 아닙니다. OpenUSD 파싱에서8,435개 prim·충돌체77개와 오류0개를 확인했고, 16대 물리·센서 운용은 남아 있습니다. [실제 촬영·해시·종료 근거](docs/images/campus16-static-265/provenance.json) · [파싱 결과](docs/evidence/campus-usd-257.json) · [교통 경로 배치도](docs/images/campus16-layout-254/campus-layout.png)
 
 주차장만 늘린 이전 `scale12/16`과 달리 `factory-semiconductor-campus16`은 4개 TEST→AOI→PACK 라인을 베이 사이로 연결합니다. 유한 재고 240개와 캐리어 64개를 사용하고 출하 뒤 원래 저장소로 빈 용기를 돌려보냅니다. 입력·출력 버퍼와 설비 고장, 전역 배차, 가감속·회전, 구간 점유와 가상 충전을 같은 운영 모델에서 계산합니다. 공정 시간·배치는 작성 가정입니다.
 
@@ -131,7 +133,9 @@ Isaac Sim Replicator로 12개 시각 구성, 30시점, 3카메라에서 RGB 1,08
 
 기존 Replicator RGB 1,080장의 생성·검사 기록을 바탕으로, 실제 물류 사진에서 검출 성능과 실제 라벨 예산 곡선을 비교하는 보조 실험을 준비하고 있습니다. **검출기 학습과 실사 mAP 결과는 아직 없습니다.**
 
-공식 RGB ZIP을 받아 사진 5,097장과 박스 151,428개의 메타데이터를 대조했습니다. 모두 디코딩·해상도가 맞았고 분할 간 동일 파일/픽셀·pHash 거리6 이하 후보는0건이었습니다. 촬영 환경·시퀀스 감사와 팔레트·소형 적재함 에셋 매핑은 남아 있습니다. LOCO에는 AMR 클래스가 없고, 소형 적재함이 없는 초기 튜닝 후보도 수정했습니다. 다음 단계는 소량 합성 데이터와 Cosmos 10클립 파일럿입니다. 변환본의 객체·라벨 정합을 확인하기 전에는 원본 라벨을 복사하지 않습니다. [RGB 감사](docs/evidence/loco-rgb-249.json) · [분할·해시 index](docs/data/loco-eval-v1/README.md) · [비교 조건·GPU·비용과 확대 기준](docs/synthetic-to-real-plan.md)
+공식 RGB ZIP을 받아 사진5,097장과 박스151,428개의 메타데이터를 대조했습니다. 모두 디코딩·해상도가 맞았고 분할 간 동일 파일/픽셀·pHash 거리6 이하 후보는0건이었습니다. 촬영 환경·시퀀스 감사는 남아 있습니다. LOCO에는 AMR 클래스가 없고, 소형 적재함이 없는 초기 튜닝 후보도 수정했습니다. [RGB 감사](docs/evidence/loco-rgb-249.json) · [분할·해시 index](docs/data/loco-eval-v1/README.md)
+
+현재 반도체 장면의 트레이·매거진을 팔레트·적재함으로 잘못 학습하지 않도록 에셋 허용 목록과 거절 검사를 구현했습니다. 별도의 NVIDIA 팔레트·크레이트 원본68파일을 확보해 해시와 CPU USD 외곽을 확인했으며, 최대16장 RGB·라벨 probe를 준비했습니다. 학습 파일럿은512장, Cosmos는10클립부터 시작합니다. 변환본의 객체·라벨 정합을 확인하기 전에는 원본 라벨을 복사하지 않습니다. [에셋 검사·후보](docs/evidence/loco-asset-map-266.json) · [비교 조건·GPU·비용과 확대 기준](docs/synthetic-to-real-plan.md)
 
 ## 현재 진행 상태
 

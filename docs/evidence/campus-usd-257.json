@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "scope": "Read-only OpenUSD parsing and composition using installed Isaac Sim4.5 libraries; no SimulationApp, rendering or physics",
+  "status": "passed",
+  "usd_version": [0, 22, 11],
+  "default_prim": "/World",
+  "up_axis": "Z",
+  "meters_per_unit": 1.0,
+  "prim_count": 8435,
+  "used_layer_count": 8,
+  "collision_api_count": 77,
+  "usd_errors": [],
+  "elapsed_wall_s": 8.17581110005267,
+  "host_closed": true,
+  "remaining_owned_pids": [],
+  "input_sha256": {
+    "factory-v3.usda": "919247cd704e98632b1780966513295cc5adc236a849473fa8563708718d8c3f",
+    "factory-v3.visual.usda": "2e5f9aa92d1e16bb04fe8907ec5cfbee9130ea3e2cabea2e1250b8a9bc3f2708",
+    "factory-v3.render.usda": "7bee6ff54503b9d8ce2565fac3a55e2517b7654019e8dbe25fa5b9d4698b3bb0"
+  },
+  "subsequent_static_capture": "../images/campus16-static-265/provenance.json"
+}

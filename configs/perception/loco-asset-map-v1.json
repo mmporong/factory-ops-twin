@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "profile_id": "loco-asset-map-v1",
+  "status": "candidate_mapping_pending",
+  "source_geometry_manifest": {
+    "path": "artifacts/campus-visual-254/visual-scene-manifest.json",
+    "sha256": "49d2f27611e26d73c442ee35e8bd621b0ebc1403405317c5ec8d1565158f44bb"
+  },
+  "training_readiness_gates": {
+    "approved_asset_required_for_each_primary_class": true,
+    "root_leaf_semantic_boundary_validation": null,
+    "bbox_export_validation": null
+  },
+  "target_classes": {
+    "pallet": {
+      "source_semantic_classes": ["pallet"],
+      "approved_asset_ids": [],
+      "candidate_asset_ids": ["finished_goods_pallet", "nvidia:pallet_block_a01"],
+      "rejected_asset_prefixes": {
+        "esd_packing": "ESD packing equipment is not a logistics pallet.",
+        "esd_tray_loadport": "An ESD tray load port is process equipment, not a logistics pallet."
+      }
+    },
+    "small_load_carrier": {
+      "source_semantic_classes": ["tote"],
+      "approved_asset_ids": [],
+      "candidate_asset_ids": ["inventory_tote", "finished_goods_tote", "nvidia:crate_gray_a20"],
+      "rejected_asset_prefixes": {
+        "esd_packing": "Covered ESD carriers are not automatically equivalent to a KLT-style small load carrier.",
+        "esd_tray_loadport": "JEDEC tray magazines are not automatically equivalent to a KLT-style small load carrier.",
+        "tray_stocker": "JEDEC tray stacks, pockets, and magazines are not automatically equivalent to a KLT-style small load carrier."
+      }
+    }
+  },
+  "decision_policy": {
+    "unknown_assets": "reject",
+    "candidate_assets_are_training_labels": false,
+    "semantic_class_alone_is_sufficient": false,
+    "automatic_class_mapping": false
+  }
+}
