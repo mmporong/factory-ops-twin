@@ -1,0 +1,50 @@
+{
+  "schema_version": "factory-ops-campus16-diagnostic-v1",
+  "run_id": "process-line-0ad19b87-1217-4c40-b6e7-701426aff52b",
+  "case_id": "campus16-pilot-313",
+  "status": "incomplete",
+  "stop_reason": "performance_regression_diagnostic_stop",
+  "completion_claim": false,
+  "source_stable_during_run": true,
+  "final_progress": {
+    "sim_time_s": 14910.00000003671,
+    "elapsed_wall_s": 437.5593020999804,
+    "completed_lots": 4,
+    "returned": 1,
+    "completed_transport_deliveries": 53,
+    "min_assignments": 1,
+    "min_deliveries": 0,
+    "peak_transport_active": 13,
+    "peak_transport_moving": 7,
+    "traffic_yield_selected": 1,
+    "traffic_yield_completed": 1,
+    "observed_min_clearance_m": 1.7257818169114452
+  },
+  "performance_observation": {
+    "initial": {
+      "sim_time_s": 14490.000000035183,
+      "elapsed_wall_s": 321.3664032999659,
+      "cumulative_rate_x": 45.08872069775789
+    },
+    "interval_1": {
+      "sim_delta_s": 180.0,
+      "wall_delta_s": 53.18917329993565,
+      "rate_x": 3.3841473524127466
+    },
+    "interval_2": {
+      "sim_delta_s": 210.0,
+      "wall_delta_s": 54.80595060007181,
+      "rate_x": 3.831700713165348
+    },
+    "finding": "first charging-era interval reproduced the 311 order-of-magnitude slowdown; run stopped after the requested additional observation"
+  },
+  "artifact_boundary": {
+    "result_json_present": false,
+    "recording_started": false,
+    "owned_processes_gone": true
+  },
+  "frozen_source": {
+    "manifest_sha256": "eaf4aa73b3463dc60c09e58bf9cb7474db172eba564316cd6642d64e3d1dfaa4",
+    "progress_sha256": "333f4845125860c404c5cdaa610422b14ffc79121d204495af8ffed190d5e5a2"
+  }
+}

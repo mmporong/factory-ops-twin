@@ -1505,3 +1505,9 @@ World가 없을 때 기존 `SimulationManager.setup_simulation`을 호출하고,
 후속 수정은 robot/location·ready-work signature·관측 교통 대기 예산으로 충전 이탈 요구량을 재사용한다. 임무나 예산이 바뀌면 무효화하고 SOC 변화만으로 경로를 재탐색하지 않는다. 에너지 요구량·충전 threshold·reserve를 낮추는 최적화가 아니며 수정 소스는 새313으로 구분한다.
 
 관련36검사가 통과했고 실제 campus48의100회 호출 probe에서 첫48개 임무 계산 뒤99회는 재사용했다. 같은 CPU 표본의 전체 호출은0.09128초였으며 완료된 콘솔 출력의 전사 영수증으로 보존한다. 이는 실제 장시간 운영의 속도나 완주를 증명하지 않으며313의 첫 충전 이후 관측을 별도로 확인한다. [호출·입력 경계](evidence/campus16-energy-cache-313.json)
+
+## FOT-190 — 충전 이탈 캐시가 배차의 동일 경로 계산을 포함하지 못함
+
+313도 첫 충전 구간에서180sim초/53.19wall초·210/54.81로 느려져 sim14910초·벽시계437.56초·53운송·출하4·반납1에서 진단 중단했다. 동결 소스42개와 소유PID0을 확인했고 성공 판정은 하지 않았다. FOT-189의 probe는 dock callback만 반복했으며, `_dispatch_extra_jobs→can_assign→_assignment_required_wh`의 반복 후보 계산은 포함하지 않았다. 초기 약47배 속도 회복도 이 호출 지점의 해소 근거가 아니었다. [313 진단 근거](evidence/campus16-313.json)
+
+배차·충전 이탈이 공유하는 assignment requirement 함수에 pickup/destination·차량 location/pose/yaw·폐쇄 상태·작성/관측 대기 예산을 key로 재사용을 적용했다. SOC만 변하면 같은 필요 에너지를 사용하고 경로 입력이 바뀌면 다시 계산한다. 관련37검사가 통과했다. actual campus48·SOC40%·관측 대기20,000초의 실제 dispatch probe에서는 첫 tick 경로 계획1,920회 뒤 다음20tick 추가 계산0회를 확인했다. 단일 helper의 반복 시험을 전체 호출 경로의 성능 근거로 확대하지 않으며 다음 전체 실행은314로 구분한다. [dispatch 경계 probe](evidence/campus16-dispatch-cache-314.json)

@@ -7,6 +7,7 @@ import json
 from pathlib import Path
 from types import SimpleNamespace
 import unittest
+from unittest.mock import patch
 
 from factory_ops.drive_profile import DriveLimits
 from factory_ops.fleet_routing import RouteBook
@@ -125,6 +126,30 @@ class OperationsChargingAdapterTests(unittest.TestCase):
         self.assertAlmostEqual(base + expected_extra, required)
         adapter.energy.batteries["amr-4"].energy_wh = required - 0.01
         self.assertFalse(adapter.can_assign(model, "amr-4", "S1", "CI"))
+
+    def test_assignment_requirement_cache_tracks_route_inputs_without_soc_churn(self):
+        model = FakeOperationsModel()
+        adapter = OperationsCharging(model, self.profile())
+
+        with patch.object(adapter, "_plan", wraps=adapter._plan) as plan:
+            base = adapter._assignment_required_wh(model, "amr-4", "S1", "CI")
+            first_count = plan.call_count
+
+            adapter.energy.batteries["amr-4"].energy_wh -= 1.0
+            self.assertEqual(base, adapter._assignment_required_wh(model, "amr-4", "S1", "CI"))
+            self.assertEqual(first_count, plan.call_count)
+
+            adapter.traffic_wait_budget_s = 30.0
+            waited = adapter._assignment_required_wh(model, "amr-4", "S1", "CI")
+            self.assertGreater(waited, base)
+            self.assertGreater(plan.call_count, first_count)
+            wait_count = plan.call_count
+
+            model._locations["amr-4"] = "P3"
+            x, y = model.book.nodes["P3"]
+            model._poses["amr-4"].update(x_m=x, y_m=y)
+            adapter._assignment_required_wh(model, "amr-4", "S1", "CI")
+            self.assertGreater(plan.call_count, wait_count)
 
     def test_queued_parking_trip_is_not_replaced_by_charge_approach(self):
         model, adapter = self.low_third_robot()

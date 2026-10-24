@@ -100,6 +100,7 @@ class OperationsCharging:
         self.approach_deferred: dict[str, dict[str, Any]] = {}
         self.departure_deferred: dict[str, dict[str, Any]] = {}
         self.traffic_wait_budget_s = 0.0
+        self._assignment_requirement_cache: dict[tuple[Any, ...], float] = {}
         waits = getattr(model, "_wait_s", {})
         deliveries = getattr(model, "_deliveries", {})
         self._traffic_delivery_samples = {
@@ -165,10 +166,26 @@ class OperationsCharging:
     def _assignment_required_wh(
         self, model: OperationsModelLike, robot: str, pickup: str, destination: str,
     ) -> float:
+        pose = model._poses[robot]
+        cache_key = (
+            robot,
+            model._locations[robot],
+            round(pose["x_m"], 12),
+            round(pose["y_m"], 12),
+            round(pose["yaw_rad"], 12),
+            model.closed,
+            pickup,
+            destination,
+            round(self.wait_budget_s, 9),
+            round(self.traffic_wait_budget_s, 9),
+        )
+        cached = self._assignment_requirement_cache.get(cache_key)
+        if cached is not None:
+            return cached
         first = self._plan(model, model._locations[robot], pickup)
         loaded = self._plan(model, pickup, destination)
         distance = first.distance_m + loaded.distance_m
-        initial_yaw = model._poses[robot]["yaw_rad"]
+        initial_yaw = pose["yaw_rad"]
         requirements = []
         for dock_id in sorted(self.slots):
             slot = self.slots[dock_id]
@@ -192,7 +209,9 @@ class OperationsCharging:
                 loaded=True,
                 expected_rotation_rad=rotation,
             ))
-        return min(requirements)
+        required_wh = min(requirements)
+        self._assignment_requirement_cache[cache_key] = required_wh
+        return required_wh
 
     def can_assign(self, model: OperationsModelLike, robot: str, pickup: str, destination: str) -> bool:
         if not self.available(robot):
