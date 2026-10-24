@@ -1,0 +1,101 @@
+{
+  "schema_version": 1,
+  "scope": "Authored 16-AMR virtual energy model with two geometric docks per bay; no electrical or physical claim",
+  "energy": {
+    "capacity_wh": 600.0,
+    "idle_power_w": 45.0,
+    "translation_wh_per_m": 0.05,
+    "rotation_wh_per_rad": 0.015,
+    "loaded_factor": 1.35,
+    "charger_power_w": 600.0,
+    "charger_efficiency": 0.9,
+    "reserve_fraction": 0.15,
+    "max_observation_gap_s": 0.3,
+    "charging_stopped_linear_m_s": 0.02,
+    "charging_stopped_angular_rad_s": 0.02,
+    "provenance": {
+      "kind": "authored_virtual_model",
+      "inputs": "operations-mode kinematic velocity, elapsed simulation time, payload state and authored dock geometry",
+      "hardware_calibrated": false
+    }
+  },
+  "initial_soc": {
+    "amr-1": 0.85,
+    "amr-2": 0.8,
+    "amr-3": 0.75,
+    "amr-4": 0.7,
+    "amr-5": 0.85,
+    "amr-6": 0.8,
+    "amr-7": 0.75,
+    "amr-8": 0.7,
+    "amr-9": 0.85,
+    "amr-10": 0.8,
+    "amr-11": 0.75,
+    "amr-12": 0.7,
+    "amr-13": 0.85,
+    "amr-14": 0.8,
+    "amr-15": 0.75,
+    "amr-16": 0.7
+  },
+  "trigger_soc": 0.2,
+  "resume_soc": 0.35,
+  "max_step_s": 0.1,
+  "assignment_wait_s": 30.0,
+  "contact_dwell_s": 0.5,
+  "exit_dwell_s": 0.3,
+  "pad_radius_m": 0.2,
+  "yaw_tolerance_rad": 0.05,
+  "docks": {
+    "A_CH1": {
+      "anchor": "A_P1",
+      "exit_anchor": "A_LOW_E_P1",
+      "yaw_rad": -1.5707963267948966
+    },
+    "A_CH2": {
+      "anchor": "A_P2",
+      "exit_anchor": "A_HIGH_W_P2",
+      "yaw_rad": 1.5707963267948966
+    },
+    "B_CH1": {
+      "anchor": "B_P1",
+      "exit_anchor": "B_LOW_E_P1",
+      "yaw_rad": -1.5707963267948966
+    },
+    "B_CH2": {
+      "anchor": "B_P2",
+      "exit_anchor": "B_HIGH_W_P2",
+      "yaw_rad": 1.5707963267948966
+    },
+    "C_CH1": {
+      "anchor": "C_P1",
+      "exit_anchor": "C_LOW_E_P1",
+      "yaw_rad": -1.5707963267948966
+    },
+    "C_CH2": {
+      "anchor": "C_P2",
+      "exit_anchor": "C_HIGH_W_P2",
+      "yaw_rad": 1.5707963267948966
+    },
+    "D_CH1": {
+      "anchor": "D_P1",
+      "exit_anchor": "D_LOW_E_P1",
+      "yaw_rad": -1.5707963267948966
+    },
+    "D_CH2": {
+      "anchor": "D_P2",
+      "exit_anchor": "D_HIGH_W_P2",
+      "yaw_rad": 1.5707963267948966
+    }
+  },
+  "queue_stations": [
+    "A_P3",
+    "A_P4",
+    "B_P3",
+    "B_P4",
+    "C_P3",
+    "C_P4",
+    "D_P3",
+    "D_P4"
+  ],
+  "queue_scope": "Authored per-bay charger waiting homes; queue scheduling and throughput remain unvalidated"
+}
