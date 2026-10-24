@@ -10,11 +10,12 @@
     "record_best_window_samples": 300
   },
   "success_flags": {
-    "all48_shipped_and_returned_verified": false,
-    "quiescent_verified": false,
+    "all48_shipped_and_returned_verified": true,
+    "quiescent_verified": true,
     "peak16_material_tasks_verified": false,
     "native_physics_transport_verified": false,
-    "final_render_eligible": false
+    "final_render_eligible": false,
+    "all16_min2_deliveries_verified": true
   },
   "components": {
     "final_quiescence_fix": "0c42abb01d718b2f2bc97e28a64a71c9043e9e09",
@@ -25,7 +26,7 @@
   },
   "case": "campus16-pilot-333",
   "run_id": "process-line-fd4c24df-7f25-44de-977c-db2d0dded4b8",
-  "status": "running",
+  "status": "complete",
   "source_commit": "fc25c93f82163e29a53eae0404e5af5fb6fcab2e",
   "workload": {
     "lots": 48,
@@ -63,7 +64,7 @@
     "session": 22445,
     "python_pid": 104320,
     "observed_parent_pid": 91152,
-    "retention_reason": "Authorized bounded48-lot alternative dispatch run from an isolated clean source worktree;332 is preserved.",
+    "retention_reason": "Naturally completed; owned runtime104320 and shell91152 are gone.",
     "stop_method": "Ctrl+C to the owned execution session; runner finalizes result and recording. Do not terminate unrelated processes.",
     "shell_pid": 91152,
     "runtime_pid": 104320,
@@ -78,5 +79,70 @@
     "deliveries": 36,
     "peak_material_tasks": 10
   },
-  "verification_scope": "Launch and43 frozen source/config hashes verified. Live monitoring uses progress.json. Full completion, actual16 material concurrency and final media remain unverified."
+  "verification_scope": "Closed complete CPU batch:48 shipped/48 returned/240 transports/quiescent/all16>=10; inventory balanced,43 frozen files and300 recording samples hashed, owned0. Peak material12 fails the current16-concurrent requirement; not eligible final16 media. Native physics transport and throughput superiority are not claimed.",
+  "error": null,
+  "stop_reason": "all_lots_returned_and_quiescent",
+  "final_sim_time_s": 107331.0000017596,
+  "elapsed_wall_s": 4327.514057199936,
+  "source_stable_during_run": true,
+  "final_observation": {
+    "shipments": 48,
+    "returns": 48,
+    "pending_tasks": 0,
+    "active_robots": 0,
+    "quiescent": true,
+    "deliveries": 240,
+    "deliveries_by_robot": {
+      "amr-1": 18,
+      "amr-2": 15,
+      "amr-3": 13,
+      "amr-4": 15,
+      "amr-5": 14,
+      "amr-6": 10,
+      "amr-7": 15,
+      "amr-8": 15,
+      "amr-9": 18,
+      "amr-10": 13,
+      "amr-11": 19,
+      "amr-12": 11,
+      "amr-13": 18,
+      "amr-14": 16,
+      "amr-15": 16,
+      "amr-16": 14
+    },
+    "min_deliveries": 10,
+    "max_deliveries": 19,
+    "peak_material_tasks": 12,
+    "peak_material_moving": 7,
+    "yield_count": 43,
+    "yield_completed": 43,
+    "wait_cycle": null
+  },
+  "inventory": {
+    "initial": 240,
+    "on_hand": 192,
+    "in_totes": 0,
+    "consumed": 48,
+    "balanced": true
+  },
+  "recording": {
+    "frame_count": 300,
+    "result_sha256": "5d5c55512e3a1167de363979a1270afef7e4cd7f092d7732095b6612b64bb351",
+    "manifest_sha256": "9572cc539ee916ff889ad65ab11b7af0186260bec7bd5aa53cc907c56413cba6",
+    "path": "snapshots.jsonl.gz",
+    "frames": 300,
+    "first_observed_sim_time_s": 92038.00000086943,
+    "last_observed_sim_time_s": 92337.00000088684,
+    "uncompressed_bytes": 107867504,
+    "gzip_bytes": 11584575,
+    "uncompressed_sha256": "f135c15c9ff8d20184a7858b270a2cc7969317fc252445a71cadc6ef0846b81e",
+    "gzip_sha256": "4ff0bc6ae0a611b1f25715a3b287efab2221528fd5c97025e8798bf88643d83c",
+    "frame_cap": 20000,
+    "uncompressed_byte_cap": 268435456
+  },
+  "closure_validation": {
+    "worker_verified_gzip_raw300_and_frozen43": true,
+    "owned_remaining": [],
+    "root_checked_closed_result_and_case_hash": true
+  }
 }
