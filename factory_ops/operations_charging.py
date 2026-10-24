@@ -36,6 +36,10 @@ class OperationsModelLike(Protocol):
 
     def _event(self, kind: str, message: str, robot: str | None, **details: Any) -> None: ...
 
+    def _charging_approach_option(self, robot_id: str, goal: str) -> dict[str, Any] | None: ...
+
+    def _reassign_charging_approach(self, robot_id: str, goal: str) -> None: ...
+
 
 def _angle(value: float) -> float:
     return math.atan2(math.sin(value), math.cos(value))
@@ -91,6 +95,7 @@ class OperationsCharging:
         self.relocating: dict[str, str] = {}
         self.home_swaps: list[dict[str, str]] = []
         self.parking_preempt_deferred: set[str] = set()
+        self.approach_deferred: dict[str, dict[str, Any]] = {}
         for robot in robots:
             self.energy.observe(robot, model.sim_time, 0.0, 0.0, loaded=False)
 
@@ -208,6 +213,99 @@ class OperationsCharging:
                      dock_anchor=anchor, relocating_robot=peer, relocation_home=old_home)
         return False
 
+    def _approach_candidates(
+        self, model: OperationsModelLike, robot: str, docks: list[str],
+    ) -> tuple[list[dict[str, Any]], dict[str, list[str]]]:
+        inspect = getattr(model, "_charging_approach_option", None)
+        candidates: list[dict[str, Any]] = []
+        blocked: dict[str, list[str]] = {}
+        for dock_id in docks:
+            slot = self.slots[dock_id]
+            if callable(inspect):
+                option = inspect(robot, slot["anchor"])
+                if option is None:
+                    blocked[dock_id] = ["unsafe_or_moving_hold"]
+                    continue
+                blockers = list(option["blockers"])
+                if blockers:
+                    blocked[dock_id] = blockers
+                    continue
+                distance_m = float(option["distance_m"])
+            else:
+                distance_m = float(self._plan(model, model._locations[robot], slot["anchor"]).distance_m)
+            candidates.append({"dock_id": dock_id, "distance_m": distance_m})
+        # Keep the two-dock legacy adapter deterministic. Multi-bay campuses
+        # rank only startable candidates by the authored route distance.
+        if len(self.slots) > 2:
+            candidates.sort(key=lambda row: (row["distance_m"], row["dock_id"]))
+        else:
+            candidates.sort(key=lambda row: row["dock_id"])
+        return candidates, blocked
+
+    def _record_approach_deferred(
+        self, model: OperationsModelLike, robot: str, *, dock_id: str | None,
+        blockers: Mapping[str, list[str]], reason: str,
+    ) -> None:
+        state = {"dock_id": dock_id, "reason": reason, "blockers": deepcopy(dict(blockers))}
+        if self.approach_deferred.get(robot) == state:
+            return
+        self.approach_deferred[robot] = state
+        model._event(
+            "charge_approach_deferred",
+            f"{robot} 충전 접근 대기 · 안전한 도크 경로 없음",
+            robot,
+            dock_id=dock_id,
+            reason=reason,
+            blockers=deepcopy(dict(blockers)),
+        )
+
+    def _reassign_blocked_approaches(self, model: OperationsModelLike) -> None:
+        inspect = getattr(model, "_charging_approach_option", None)
+        reassign = getattr(model, "_reassign_charging_approach", None)
+        if not callable(inspect) or not callable(reassign):
+            return
+        for robot, state in list(self.aux.items()):
+            if state["phase"] != "approach":
+                continue
+            current_dock = state["dock_id"]
+            current = inspect(robot, self.slots[current_dock]["anchor"])
+            if current is None or not current["blockers"]:
+                self.approach_deferred.pop(robot, None)
+                continue
+            free = [dock for dock in sorted(self.slots) if dock not in self.docks.owners]
+            candidates, blocked = self._approach_candidates(model, robot, free)
+            if not candidates:
+                self._record_approach_deferred(
+                    model,
+                    robot,
+                    dock_id=current_dock,
+                    blockers={current_dock: list(current["blockers"]), **blocked},
+                    reason="reserved_approach_and_free_alternatives_blocked",
+                )
+                continue
+            alternative = candidates[0]
+            new_dock = alternative["dock_id"]
+            if not self._prepare_home_swap(model, robot, self.slots[new_dock]["anchor"]):
+                continue
+            old_dock = self.docks.cancel_approach(robot)
+            reserved = self.docks.reserve(
+                robot, carrying_payload=False, preferred_dock=new_dock,
+            )
+            if reserved != new_dock:
+                raise RuntimeError("charging approach reassignment lost its selected free dock")
+            state["dock_id"] = new_dock
+            reassign(robot, self.slots[new_dock]["anchor"])
+            self.approach_deferred.pop(robot, None)
+            model._event(
+                "charge_reassigned",
+                f"{robot} 정지 충전 접근 재배정 · {old_dock}→{new_dock}",
+                robot,
+                old_dock_id=old_dock,
+                dock_id=new_dock,
+                prior_blockers=list(current["blockers"]),
+                distance_m=alternative["distance_m"],
+            )
+
     def prepare(self, model: OperationsModelLike) -> None:
         for robot, destination in list(self.relocating.items()):
             if robot not in model._trips and model._locations[robot] == destination:
@@ -227,6 +325,8 @@ class OperationsCharging:
                 self.queue.append(robot)
                 model._event("charge_queued", f"{robot} 운영 가상 충전 대기", robot)
 
+        self._reassign_blocked_approaches(model)
+
         for robot in list(self.queue):
             # Queue members may use the ordinary reserved parking path. Never
             # replace that accepted route in flight.  A stopped home-parking
@@ -234,9 +334,34 @@ class OperationsCharging:
             # hold while retaining its current reservation footprint.
             if self._loaded(model, robot):
                 continue
-            free_dock = next((dock for dock in sorted(self.slots) if dock not in self.docks.owners), None)
-            if free_dock is None:
+            free = [dock for dock in sorted(self.slots) if dock not in self.docks.owners]
+            if not free:
                 break
+            candidates, blocked = self._approach_candidates(model, robot, free)
+            if not candidates:
+                unsafe_hold = blocked and all(
+                    values == ["unsafe_or_moving_hold"] for values in blocked.values()
+                )
+                if robot in model._trips and unsafe_hold:
+                    if robot not in self.parking_preempt_deferred:
+                        self.parking_preempt_deferred.add(robot)
+                        model._event(
+                            "charge_parking_preempt_deferred",
+                            f"{robot} 충전 접근 전환 대기 · 안전 정지점 미확보",
+                            robot,
+                            reason="parking_in_motion_or_owned_stop",
+                        )
+                    self.approach_deferred.pop(robot, None)
+                    continue
+                self._record_approach_deferred(
+                    model,
+                    robot,
+                    dock_id=None,
+                    blockers=blocked,
+                    reason="free_approaches_blocked_or_not_at_safe_hold",
+                )
+                continue
+            free_dock = candidates[0]["dock_id"]
             slot = self.slots[free_dock]
             # A home swap relocates the current pad occupant first.  Keep the
             # accepted parking route while that peer is still on the pad;
@@ -261,12 +386,17 @@ class OperationsCharging:
                 self.parking_preempt_deferred.discard(robot)
             if not self._prepare_home_swap(model, robot, slot["anchor"]):
                 continue
-            # The sorted free dock above must match ChargingFleet's deterministic choice.
-            dock_id = self.docks.reserve(robot, carrying_payload=self._loaded(model, robot))
+            # The explicit choice must match ChargingFleet's exclusive owner state.
+            dock_id = self.docks.reserve(
+                robot,
+                carrying_payload=self._loaded(model, robot),
+                preferred_dock=free_dock,
+            )
             if dock_id != free_dock:
                 raise RuntimeError("charging slot selection diverged from the exclusive dock state")
             self.aux[robot] = {"dock_id": dock_id, "phase": "approach", "stationary_since": None}
             self.queue.remove(robot)
+            self.approach_deferred.pop(robot, None)
             model._trip(robot, {}, model._locations[robot], slot["anchor"], "charge_approach", kind="charging")
             model._event("charge_reserved", f"{robot} {dock_id} 운영 충전 슬롯 예약", robot,
                          dock_id=dock_id, anchor=slot["anchor"])
@@ -284,6 +414,7 @@ class OperationsCharging:
                 raise RuntimeError("charging approach arrived at a different anchor")
             model._locations[robot] = expected
             del model._trips[robot]
+            self.approach_deferred.pop(robot, None)
             state.update(phase="aligning", stationary_since=None)
             model._event("charge_aligning", f"{robot} 충전 패드 정렬", robot, dock_id=state["dock_id"])
             return True
@@ -421,5 +552,6 @@ class OperationsCharging:
             "relocating": dict(self.relocating),
             "home_swaps": deepcopy(self.home_swaps),
             "parking_preempt_deferred": sorted(self.parking_preempt_deferred),
+            "approach_deferred": deepcopy(self.approach_deferred),
             "hardware_calibrated": False,
         }

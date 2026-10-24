@@ -5,6 +5,7 @@ from copy import deepcopy
 import json
 from pathlib import Path
 import unittest
+from unittest.mock import patch
 
 from factory_ops.dashboard import validate_snapshot
 from factory_ops.operations_model import OperationsModel
@@ -102,7 +103,7 @@ class OperationsChargingIntegrationTests(unittest.TestCase):
         assert charging is not None
         model._locations["amr-1"] = "P3"
         model._poses["amr-1"].update(
-            x_m=model.book.nodes["P3"][0], y_m=model.book.nodes["P3"][1],
+            x_m=1.0, y_m=1.0,
         )
         model._trip("amr-3", {}, "P3", "P1", "parking", kind="parking", purpose="home")
         parking = model._trips["amr-3"]
@@ -154,6 +155,46 @@ class OperationsChargingIntegrationTests(unittest.TestCase):
         self.assertNotIn("amr-1", model._charging_parking_resume)
         self.assertTrue(any(event["type"] == "charge_parking_resumed"
                             for event in model._events))
+
+    def test_blocked_precontact_approach_reassigns_to_clear_preferred_dock(self):
+        model = OperationsModel(
+            CONFIG, initial_orders=0, run_id="operations-charge-reassign",
+            operations_charging_profile=self.base_profile,
+        )
+        charging = model.operations_charging
+        assert charging is not None
+        robot = "amr-3"
+        model._locations["amr-2"] = "P4"
+        model._poses["amr-2"].update(
+            x_m=model.book.nodes["P4"][0], y_m=model.book.nodes["P4"][1],
+        )
+        self.assertEqual(
+            "CH1", charging.docks.reserve(
+                robot, carrying_payload=False, preferred_dock="CH1",
+            ),
+        )
+        charging.aux[robot] = {"dock_id": "CH1", "phase": "approach", "stationary_since": None}
+        model._trip(robot, {}, "P3", "P1", "charge_approach", kind="charging")
+
+        def option(_robot, goal):
+            return {
+                "start": "P3",
+                "goal": goal,
+                "distance_m": 8.0 if goal == "P2" else 9.0,
+                "blockers": () if goal == "P2" else ("amr-1",),
+                "window_nodes": (goal,),
+            }
+
+        with patch.object(model, "_charging_approach_option", side_effect=option):
+            charging.prepare(model)
+
+        self.assertNotIn("CH1", charging.docks.owners)
+        self.assertEqual(robot, charging.docks.owners["CH2"])
+        self.assertEqual("CH2", charging.aux[robot]["dock_id"])
+        self.assertEqual("P2", model._trips[robot]["goal"])
+        event = next(event for event in model._events if event["type"] == "charge_reassigned")
+        self.assertEqual("CH1", event["old_dock_id"])
+        self.assertEqual("CH2", event["dock_id"])
 
 
 if __name__ == "__main__":

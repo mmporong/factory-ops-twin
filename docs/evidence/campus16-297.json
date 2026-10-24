@@ -1,0 +1,87 @@
+{
+  "schema_version": 1,
+  "scope": "Closed authored CPU campus16-v2 charging-recovery attempt; preserved failed approach evidence, no completed-throughput or physical-runtime claim",
+  "run_id": "process-line-25aa9f43-39f4-4c1b-9df5-254cdad91a37",
+  "status": "failed",
+  "error": {
+    "type": "RuntimeError",
+    "message": "operations charging observation fault: amr-7"
+  },
+  "stop_reason": "runtime_error",
+  "elapsed_wall_s": 688.7309551000362,
+  "sim_time_s": 31148.999999827214,
+  "source_stable_during_run": true,
+  "owned_processes_gone": true,
+  "workload": {
+    "lots": 48,
+    "release": "all at simulation start",
+    "policy": "fifo"
+  },
+  "limits": {
+    "horizon_s": 120000.0,
+    "wall_s": 5400.0,
+    "snapshot_count": 80,
+    "stall_timeout_s": 600.0
+  },
+  "cumulative_shipped_lots": 8,
+  "cumulative_returned_lots": 5,
+  "actual_completed_transport_deliveries": 77,
+  "configured_robots": 16,
+  "assignment_participants": 16,
+  "repeat_assignment_participants": 16,
+  "delivery_participants": 16,
+  "repeat_delivery_participants": 16,
+  "minimum_assignments_per_robot": 3,
+  "minimum_completed_deliveries_per_robot": 2,
+  "peak_material_tasks": 14,
+  "peak_material_moving": 7,
+  "peak_all_moving": 7,
+  "observed_min_circular_clearance_m": 1.7257818169114452,
+  "quiescent": false,
+  "goal_met": false,
+  "recorded_frames": 300,
+  "traffic_yield": {
+    "selected": 6,
+    "completed": 6,
+    "replan_attempts": 7,
+    "generic_replans_applied": 1,
+    "final_bridge_wait_cycle": null,
+    "final_reservation_wait_cycle": null
+  },
+  "charging_failure": {
+    "robot": "amr-7",
+    "phase": "approach",
+    "reserved_dock": "A_CH2",
+    "pose_anchor": "A_AB_W_SAFE_EXIT",
+    "destination": "A_P2",
+    "waiting_reason": "bridge_admission_occupied",
+    "blockers": [
+      "amr-3",
+      "amr-8"
+    ],
+    "battery_pct_at_last_valid_snapshot": 0.0014174780001244124,
+    "energy_wh_at_last_valid_snapshot": 0.008504868000746475,
+    "idle_power_w": 45.0,
+    "unpowered_idle_time_remaining_s": 0.680389440059718,
+    "waiting_s": 26904.49999988898,
+    "first_representative_reserved_snapshot_sim_s": 25822.999999904718,
+    "battery_pct_at_first_representative_reserved_snapshot": 11.097250811182958,
+    "same_pose_representative_snapshots": [
+      25822.999999904718,
+      27341.999999882613,
+      28860.99999986051,
+      30379.999999838405
+    ],
+    "free_docks_at_last_valid_snapshot": [
+      "A_CH1",
+      "C_CH2",
+      "D_CH2"
+    ],
+    "root_cause": "The pre-contact A_CH2 reservation stayed bound to an immobile approach while other docks later became free. Operations charging neither gated initial reservation on the first protected route window nor reselected an accessible free dock before contact, so virtual idle load exhausted the battery at the safe hold.",
+    "post_run_repair_boundary": "The later repair ranks actually startable free approaches for campus fleets and permits cancellation/reselection only while stopped before contact, retaining pose, bridge and contact lifecycle guards. It is not part of this frozen run."
+  },
+  "result_sha256": "a4215a1f23685d0615becdf35dbca2d19a7ff00e759d22054124a80b01bbb7ec",
+  "frozen_source_manifest_sha256": "ce94540566f43f96fd28877c18359b93d6853477631c4a1a11a2e2fdc4423893",
+  "source_binding_sha256": "4b2233ccf0156a5d605098f326d7e5f563a7b5cbb42a1f19a63b2b5db17f160d",
+  "recording_manifest_sha256": "88be3dbb3f93a2a7b76f7d29d6ef0392edd97cc6f34e64b2627befe9ca69035b"
+}

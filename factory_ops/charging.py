@@ -50,17 +50,36 @@ class ChargingFleet:
         self.states: dict[str, DockState] = {}
         self.owners: dict[str, str] = {}
 
-    def reserve(self, robot_id: str, *, carrying_payload: bool) -> str | None:
+    def reserve(self, robot_id: str, *, carrying_payload: bool,
+                preferred_dock: str | None = None) -> str | None:
         if not robot_id or type(carrying_payload) is not bool:
             raise ValueError("robot identity and explicit load state are required")
         if carrying_payload:
             raise ValueError("complete payload delivery before charging")
         if robot_id in self.states:
             return self.states[robot_id].dock_id
-        dock_id = next((key for key in sorted(self.docks) if key not in self.owners), None)
+        if preferred_dock is not None and preferred_dock not in self.docks:
+            raise ValueError("preferred charging slot is not authored")
+        dock_id = (preferred_dock if preferred_dock is not None and preferred_dock not in self.owners
+                   else None if preferred_dock is not None
+                   else next((key for key in sorted(self.docks) if key not in self.owners), None))
         if dock_id is not None:
             self.owners[dock_id] = robot_id
             self.states[robot_id] = DockState(robot_id, dock_id)
+        return dock_id
+
+    def cancel_approach(self, robot_id: str) -> str:
+        """Release only a dock that has not entered contact confirmation."""
+
+        state = self.states[robot_id]
+        if (state.phase != "approach" or state.last_stamp_s is not None
+                or state.contact_since_s is not None or state.contact_confirmed):
+            raise RuntimeError("only a pre-contact charging approach may be cancelled")
+        if self.owners.get(state.dock_id) != robot_id:
+            raise RuntimeError("charging approach owner differs from the dock state")
+        dock_id = state.dock_id
+        del self.owners[dock_id]
+        del self.states[robot_id]
         return dock_id
 
     def arrived(self, robot_id: str, *, run_id: str, anchor: str, navigation_succeeded: bool) -> None:

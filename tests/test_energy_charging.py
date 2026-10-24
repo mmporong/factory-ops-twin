@@ -95,6 +95,22 @@ class ChargingTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.docks.reserve("r3", carrying_payload=True)
 
+    def test_preferred_slot_can_be_cancelled_only_before_contact(self):
+        docks = ChargingFleet("run1", {"CH1": "P1", "CH2": "P2"}, max_gap_s=0.3,
+            contact_dwell_s=0.5, stopped_linear_m_s=0.02,
+            stopped_angular_rad_s=0.02, resume_soc=0.8)
+        self.assertEqual(
+            "CH2", docks.reserve("r1", carrying_payload=False, preferred_dock="CH2"),
+        )
+        self.assertEqual("CH2", docks.cancel_approach("r1"))
+        self.assertFalse(docks.owners)
+        self.assertEqual(
+            "CH1", docks.reserve("r1", carrying_payload=False, preferred_dock="CH1"),
+        )
+        docks.arrived("r1", run_id="run1", anchor="P1", navigation_succeeded=True)
+        with self.assertRaises(RuntimeError):
+            docks.cancel_approach("r1")
+
     def test_nav_success_alone_never_confirms_contact(self):
         self.reserve_and_arrive()
         state = self.observation(0, contact=False)

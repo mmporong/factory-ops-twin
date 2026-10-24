@@ -848,6 +848,73 @@ class OperationsModel(DashboardModel):
             observed_tiles=observations,
         )
 
+    def _charging_approach_option(self, robot_id: str, goal: str) -> dict[str, Any] | None:
+        """Describe one dock approach that can start from the current safe hold."""
+
+        if (robot_id in self._chunks or not self.motions[robot_id].stopped
+                or self.bridges.has_window(robot_id) or self.bridges.held(robot_id)):
+            return None
+        start = anchor_at_pose(self.book.nodes, self._poses[robot_id])
+        if start is None:
+            return None
+        route = self.book.plan(start, goal, closed=self.closed)
+        if len(route.points) == 1:
+            return {
+                "start": start,
+                "goal": goal,
+                "distance_m": 0.0,
+                "blockers": (),
+                "window_nodes": (),
+            }
+        trip = {"kind": "charging", "phase": "charge_approach", "goal": goal}
+        route_points, route_nodes, _ = self._route_via_safe_exit(
+            route.points[0], trip, route.points[1:], route.nodes[1:],
+        )
+        window = self._window_for_trip(
+            route.points[0], route_points, route_nodes, trip, robot_id=robot_id,
+        )
+        blockers = set(self._safe_exit_lookahead_blockers(
+            robot_id, trip, window["queue_barrier"],
+        ))
+        blockers.update(self.bridges.blockers(
+            robot_id,
+            window["nodes"],
+            route_tiles=window["tiles"],
+            observed_tiles=self._admission_observations(robot_id, trip),
+        ))
+        distance_m = sum(
+            math.dist(start_point, end_point)
+            for start_point, end_point in zip((route.points[0], *route_points), route_points)
+        )
+        return {
+            "start": start,
+            "goal": goal,
+            "distance_m": distance_m,
+            "blockers": tuple(sorted(blockers)),
+            "window_nodes": tuple(window["nodes"]),
+        }
+
+    def _reassign_charging_approach(self, robot_id: str, goal: str) -> None:
+        """Replace one stopped pre-contact approach without releasing pose occupancy."""
+
+        trip = self._trips.get(robot_id)
+        if (trip is None or trip.get("kind") != "charging"
+                or trip.get("phase") != "charge_approach"
+                or self._charging_approach_option(robot_id, goal) is None):
+            raise RuntimeError("charging approach reassignment requires one stopped safe hold")
+        self.reservations.withdraw_pending(
+            robot_id,
+            now_s=self.sim_time,
+            reason="charging_approach_reassigned",
+        )
+        self.bridges.withdraw_waiter(robot_id)
+        self._waiting.pop(robot_id, None)
+        self._replans.pop(robot_id, None)
+        self._trip(
+            robot_id, {}, self._locations[robot_id], goal,
+            "charge_approach", kind="charging",
+        )
+
     def _can_withdraw_queued_parking(self, robot_id: str) -> bool:
         trip = self._trips.get(robot_id)
         if (trip is None or trip["kind"] != "parking" or trip.get("purpose", "home") != "home"
