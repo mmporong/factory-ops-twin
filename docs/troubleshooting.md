@@ -1653,3 +1653,5 @@ shipping product_move 완료 뒤 같은lot·carrier·origin의 준비된 empty_r
 다음 수정은 실제 활성window를 둔 상태에서 확인한다. 현재pose/차체 보호와station capacity·energy admission을 유지하고, 승인 불가능하면 line.assign/pickup 등 상태변경 전에 기존staging 경로로 복귀한다. 기존retarget 부분집합 조건은 완화하지 않는다. 별도 소스의 수정과 실제 후속 운영은 아직 진행 중이다.
 
 326 결과의 final_snapshot은 실패한 전이 직전 마지막 정상snapshot이며 출하0/반납0/운송29를 담는다. 예외 후 모델을 다시 snapshot한 상태가 아니므로 오류 도중 inventory 원자성이나 최종출하 계수의 근거로 사용하지 않는다. 미완료300표본도 최종대표영상에 사용하지 않는다. [실패·해시·기록 경계](evidence/campus16-326.json)
+
+후속2a23e41은 read-only can_retarget으로 새window의 기존보호부분집합/자원조건을 상태변경전에 확인한다. 실제활성window가있는 기존보호후속경로 성공과 캠퍼스A_OUT→A_S1의 non-subset fallback, 계수지연을 포함한 관련5검사가 통과했다. retarget 불변식은 유지한다. 이는 runtime_error 제거와 기존staging 복구이며, 캠퍼스 전체의 처리량 개선이나 더 넓은 새window의 인계 승인까지 입증한 것은 아니다.

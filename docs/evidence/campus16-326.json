@@ -33,7 +33,7 @@
     "scope": "Last snapshot completed before the failing transition. The runner does not recover a post-exception model snapshot; these counters are not an atomic inventory state after the exception."
   },
   "confirmed_failure_boundary": "New shipping-to-empty-return trip attempted an admission retarget outside its existing active bridge window. The existing nonempty-subset invariant rejected it.",
-  "repair_status": "Separate-source fix in progress; no identical-source rerun. Preserve active window, footprint, capacity and energy guards; fallback before line.assign/pickup when continuation cannot be admitted.",
+  "repair_status": "can_retarget preflight implemented; non-subset successor falls back before assignment/pickup. Actual broader-window handoff remains unimplemented in this repair.",
   "frozen_source": {
     "relative_path": "frozen-source",
     "manifest_relative_path": "frozen-source/manifest.json",
@@ -104,5 +104,18 @@
     "full48_48_completed": false,
     "peak16_material_tasks_verified": false,
     "native_physics_transport_verified": false
+  },
+  "repair": {
+    "source_main_commit": "2a23e41da395a107cfaf5f17436c48a64a1886da",
+    "source_worker_commit": "5ca2d0d67cdd8582730f54cf5936a57ead4ae3de",
+    "targeted_tests": 5,
+    "actual_active_window_regressions": [
+      "successor already included in active window may chain",
+      "campus A_OUT to A_S1 outside old shipping/staging window falls back",
+      "return counters increment only at source arrival"
+    ],
+    "existing_retarget_subset_resource_invariants": "unchanged",
+    "full_run_after_repair_performed": false,
+    "scope": "Runtime-error prevention and original staging fallback restored, not measured campus throughput improvement."
   }
 }
