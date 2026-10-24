@@ -120,6 +120,20 @@ class RouteReservationManager:
             raise RouteReservationError("event cursor must be an existing nonnegative sequence")
         return deepcopy(self._events[cursor:])
 
+    def observation_snapshot(self, *, now_s: float) -> dict[str, dict[str, Any]]:
+        """Return current pose occupancy without copying the event journal."""
+        now = self._validate_now(now_s)
+        self._commit_time(now)
+        return {
+            robot: {
+                "tiles": self._tile_list(value.tiles),
+                "tile_hash": self._tile_hash(value.tiles),
+                "pose_stamp_s": value.pose_stamp_s,
+                "fresh": self._fresh(robot, now),
+            }
+            for robot, value in sorted(self._observations.items())
+        }
+
     def observe(
         self,
         robot_id: str,
@@ -460,15 +474,7 @@ class RouteReservationManager:
             "sim_time": now,
             "pose_ttl_s": self.pose_ttl_s,
             "cycle_persistence_s": self.cycle_persistence_s,
-            "observations": {
-                robot: {
-                    "tiles": self._tile_list(value.tiles),
-                    "tile_hash": self._tile_hash(value.tiles),
-                    "pose_stamp_s": value.pose_stamp_s,
-                    "fresh": self._fresh(robot, now),
-                }
-                for robot, value in sorted(self._observations.items())
-            },
+            "observations": self.observation_snapshot(now_s=now),
             "holds": {
                 robot: {
                     "route_id": hold.route_id,

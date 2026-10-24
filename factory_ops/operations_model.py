@@ -337,8 +337,7 @@ class OperationsModel(DashboardModel):
         self._replan_examined.add(signature)
         self.replan_attempt_count += 1
         self.last_replan_reason = "persistent_reservation_wait_cycle"
-        reservation = self.reservations.snapshot(now_s=self.sim_time)
-        observations = reservation["observations"]
+        observations = self.reservations.observation_snapshot(now_s=self.sim_time)
         candidates = []
         for robot in cycle:
             trip = self._trips.get(robot)

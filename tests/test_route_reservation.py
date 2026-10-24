@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import math
 import unittest
+from unittest.mock import PropertyMock, patch
 from uuid import uuid4
 
 from factory_ops.route_reservation import RouteReservationError, RouteReservationManager
@@ -61,6 +62,21 @@ class RouteReservationManagerTest(unittest.TestCase):
         for cursor in (-1, True, 999):
             with self.subTest(cursor=cursor), self.assertRaises(RouteReservationError):
                 manager.events_since(cursor)
+
+    def test_observation_snapshot_does_not_read_or_expose_event_journal(self) -> None:
+        manager = self.manager(r1=((1, 2),), r2=((8, 9),))
+        with patch.object(
+            type(manager), "events", new_callable=PropertyMock,
+            side_effect=AssertionError("event journal must not be copied"),
+        ):
+            observations = manager.observation_snapshot(now_s=0.0)
+        self.assertEqual([[1, 2]], observations[self.R1]["tiles"])
+        observations[self.R1]["tiles"].append([99, 99])
+        observations = manager.observation_snapshot(now_s=0.0)
+        self.assertEqual([[1, 2]], observations[self.R1]["tiles"])
+        full = manager.snapshot(now_s=0.0)
+        self.assertEqual(observations, full["observations"])
+        self.assertEqual(2, len(full["events"]))
 
     def test_stale_global_observation_holds_ownership_and_blocks_permission(self) -> None:
         manager = self.manager()

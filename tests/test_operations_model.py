@@ -183,6 +183,20 @@ class OperationsModelTest(unittest.TestCase):
         self.assertNotIn(robot, model._replans)
         self.assertEqual(1, model.replan_unavailable_count)
 
+    def test_cycle_replan_reads_observations_without_full_reservation_snapshot(self):
+        model = OperationsModel(CONFIG, initial_orders=0, run_id="cycle-replan-observations-only")
+        robot = "amr-1"
+        model._trip(robot, {}, "P1", "P3", "parking", kind="parking")
+
+        with patch.object(
+            model.reservations, "snapshot", side_effect=AssertionError("full event journal copied"),
+        ), patch(
+            "factory_ops.operations_model.find_alternative_route", return_value=None,
+        ):
+            model._schedule_cycle_replan((robot,))
+
+        self.assertEqual(1, model.replan_unavailable_count)
+
     def test_cycle_replan_rejects_blocked_full_trip_window(self):
         model = OperationsModel(CONFIG, initial_orders=0, run_id="full-window-replan-check")
         robot = "amr-1"
