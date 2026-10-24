@@ -1,0 +1,191 @@
+{
+  "schema_version": 1,
+  "physics_dt_s": 0.016666666666666666,
+  "encoder_publish_every_steps": 3,
+  "command_timeout_s": 0.5,
+  "max_linear_m_s": 0.6,
+  "max_angular_rad_s": 1.2,
+  "max_linear_accel_m_s2": 0.25,
+  "max_angular_accel_rad_s2": 0.5,
+  "drive_profile": {
+    "max_linear_m_s": 0.6,
+    "max_angular_rad_s": 1.2,
+    "linear_accel_m_s2": 0.25,
+    "linear_decel_m_s2": 0.35,
+    "angular_accel_rad_s2": 0.5,
+    "angular_decel_rad_s2": 0.7,
+    "lateral_accel_m_s2": 0.2,
+    "max_wheel_rad_s": 6.0,
+    "wheel_accel_rad_s2": 4.0,
+    "provenance": {
+      "kind": "authored-not-motor-calibrated",
+      "description": "simulation command envelope; not measured motor dynamics",
+      "application": "single normal-motion profile owner in the 60 Hz Isaac physics loop",
+      "validation": "requested and applied body commands, wheel targets, limiting flags, and stop phase are recorded per physics step"
+    }
+  },
+  "drive_geometry": {
+    "wheel_radius_m": 0.14,
+    "wheel_separation_m": 0.4132,
+    "provenance": {
+      "kind": "expected_asset_collision_geometry; remeasured and enforced on every run",
+      "source": "Isaac/Robots/NVIDIA/NovaCarter/nova_carter.usd",
+      "method": "enabled drive-wheel collider union in Carter root coordinates"
+    }
+  },
+  "localization_planning_margin_m": 0.3,
+  "localization_planning_margin_provenance": {
+    "kind": "authored planning-only localization uncertainty allowance",
+    "application": "added to the qualified evaluation radius only for Nav2 robot_radius",
+    "evaluation_contract": "the 0.2 m footprint clearance remains unchanged"
+  },
+  "control_limit_provenance": {
+    "kind": "authored qualification limits; not motor calibration",
+    "purpose": "bound the G2 two-robot qualification command envelope"
+  },
+  "nav2_rotation_command_provenance": {
+    "kind": "authored controller request-profile calibration; not motor calibration",
+    "max_angular_accel_rad_s2": 2.0,
+    "basis": "10 Hz RPP first heading request is 0.2 rad/s; prior actual asset test showed little yaw response at 0.08 rad/s, without identifying a single mechanical cause",
+    "unchanged_limits": "RPP target 0.5 rad/s, bridge acceleration 0.5 rad/s2 and yaw goal tolerance"
+  },
+  "nav2_goal_tolerance_provenance": {
+    "kind": "authored estimated-pose acceptance tolerance; not a measured docking accuracy",
+    "xy_goal_tolerance_m": 0.05,
+    "yaw_goal_tolerance_rad": 0.15,
+    "basis": "F1-001 Nav2 success failed independent goal evaluation; reserve more position-error budget for localization",
+    "evaluation_contract": "independent physics goal limits remain 0.35 m and 0.35 rad; simulator truth never feeds goal acceptance"
+  },
+  "qualification": "campus16_configuration_declaration",
+  "ros_domain_id": 73,
+  "camera_capture_every_steps": 1200,
+  "warmup_steps": 120,
+  "max_sim_time_s": 2100,
+  "max_wall_time_s": 10800,
+  "authorization_ttl_s": 0.5,
+  "authorization_publish_hz": 10,
+  "lidar_profile": "Example_Rotary_2D",
+  "robots": [
+    {
+      "robot_id": "carter1",
+      "namespace": "carter1",
+      "prim_path": "/World/Carter1"
+    },
+    {
+      "robot_id": "carter2",
+      "namespace": "carter2",
+      "prim_path": "/World/Carter2"
+    },
+    {
+      "robot_id": "carter3",
+      "namespace": "carter3",
+      "prim_path": "/World/Carter3"
+    },
+    {
+      "robot_id": "carter4",
+      "namespace": "carter4",
+      "prim_path": "/World/Carter4"
+    },
+    {
+      "robot_id": "carter5",
+      "namespace": "carter5",
+      "prim_path": "/World/Carter5"
+    },
+    {
+      "robot_id": "carter6",
+      "namespace": "carter6",
+      "prim_path": "/World/Carter6"
+    },
+    {
+      "robot_id": "carter7",
+      "namespace": "carter7",
+      "prim_path": "/World/Carter7"
+    },
+    {
+      "robot_id": "carter8",
+      "namespace": "carter8",
+      "prim_path": "/World/Carter8"
+    },
+    {
+      "robot_id": "carter9",
+      "namespace": "carter9",
+      "prim_path": "/World/Carter9"
+    },
+    {
+      "robot_id": "carter10",
+      "namespace": "carter10",
+      "prim_path": "/World/Carter10"
+    },
+    {
+      "robot_id": "carter11",
+      "namespace": "carter11",
+      "prim_path": "/World/Carter11"
+    },
+    {
+      "robot_id": "carter12",
+      "namespace": "carter12",
+      "prim_path": "/World/Carter12"
+    },
+    {
+      "robot_id": "carter13",
+      "namespace": "carter13",
+      "prim_path": "/World/Carter13"
+    },
+    {
+      "robot_id": "carter14",
+      "namespace": "carter14",
+      "prim_path": "/World/Carter14"
+    },
+    {
+      "robot_id": "carter15",
+      "namespace": "carter15",
+      "prim_path": "/World/Carter15"
+    },
+    {
+      "robot_id": "carter16",
+      "namespace": "carter16",
+      "prim_path": "/World/Carter16"
+    }
+  ],
+  "lidars": [
+    {
+      "name": "front",
+      "frame_id": "front_scan",
+      "translation_xyz_m": [
+        0.2,
+        0,
+        0.32
+      ],
+      "yaw_rad": 0.0
+    },
+    {
+      "name": "rear",
+      "frame_id": "rear_scan",
+      "translation_xyz_m": [
+        -0.65,
+        0,
+        0.32
+      ],
+      "yaw_rad": 3.141592653589793
+    }
+  ],
+  "scope": {
+    "simulator_truth": "evaluation and media only; never localization, routing, reservations or steering",
+    "scan_filter": "static sensor-frame forward half-plane; no truth-based self/peer filtering",
+    "localization_scan_fan_in": {
+      "topic": "per-robot scan_localization",
+      "inputs": [
+        "front_scan",
+        "rear_scan"
+      ],
+      "message_contract": "filtered LaserScan frame_id, timestamp, angles, ranges and intensities are preserved; AMCL resolves each sensor extrinsic through TF",
+      "implementation": "nav2_amcl 1.3.13 multi-laser subscription behavior",
+      "primary_reference": "https://github.com/ros-navigation/navigation2/blob/1.3.13/nav2_amcl/src/amcl_node.cpp#L585-L810",
+      "source_commit": "f4108e5b1c2bce804a1aa0c7be6673a8eb4a1501"
+    },
+    "authorization": "short-lived dispatcher permission for the accepted goal and reservation; Twist has no goal UUID",
+    "training_eligible": false,
+    "fault": "F2 isolates traffic observation/authorization only, not the full DDS graph",
+    "fleet_scale": "16 declared robot identities with inherited front/rear sensor definitions; configuration only, no USD spawn, sensor or physical runtime claim"
+  }
+}

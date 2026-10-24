@@ -14,6 +14,12 @@ CONFIGS = ROOT / "configs"
 
 
 class LineOperationsModelTests(unittest.TestCase):
+    @staticmethod
+    def _keep_only_available(model, *robot_ids):
+        selected = set(robot_ids)
+        for robot_id, state in model.ledger.robots.items():
+            state.available = robot_id in selected
+
     def test_departure_funding_includes_ready_line_work_and_observed_traffic_wait(self):
         model = LineOperationsModel(
             CONFIGS / "factory-semiconductor-campus16", initial_lots=1,
@@ -308,6 +314,79 @@ class LineOperationsModelTests(unittest.TestCase):
         self.assertEqual("legacy_fifo_eta", LineOperationsModel(
             CONFIGS / "factory-semiconductor-line16", initial_lots=0, run_id="legacy-priority",
         )._line_dispatch_mode)
+
+    def test_coverage_eta_prefers_incomplete_delivery_quota_then_nearest_robot(self):
+        coverage_config = CONFIGS / "factory-semiconductor-campus16-coverage-eta"
+        model = LineOperationsModel(
+            coverage_config, policy="eta", initial_lots=1, run_id="coverage-quota",
+        )
+        self._keep_only_available(model, "amr-1", "amr-3")
+        model._deliveries.update({"amr-1": 2, "amr-3": 1})
+        model._assignments.update({"amr-1": 0, "amr-3": 99})
+        model._dispatch_extra_jobs(False)
+        assigned = next(task for task in model.line.snapshot()["transports"]
+                        if task["state"] == "assigned")
+        self.assertEqual("amr-3", assigned["robot_id"])
+
+        coverage = LineOperationsModel(
+            coverage_config, policy="eta", initial_lots=1, run_id="coverage-complete",
+        )
+        self._keep_only_available(coverage, "amr-1", "amr-3")
+        coverage._deliveries.update({"amr-1": 2, "amr-3": 2})
+        coverage._assignments.update({"amr-1": 99, "amr-3": 0})
+        coverage._dispatch_extra_jobs(False)
+        assigned = next(task for task in coverage.line.snapshot()["transports"]
+                        if task["state"] == "assigned")
+        self.assertEqual("amr-1", assigned["robot_id"])
+
+        existing = LineOperationsModel(
+            CONFIGS / "factory-semiconductor-campus16", policy="eta", initial_lots=1,
+            run_id="existing-least-assigned",
+        )
+        self._keep_only_available(existing, "amr-1", "amr-3")
+        existing._assignments.update({"amr-1": 99, "amr-3": 0})
+        existing._dispatch_extra_jobs(False)
+        assigned = next(task for task in existing.line.snapshot()["transports"]
+                        if task["state"] == "assigned")
+        self.assertEqual("amr-3", assigned["robot_id"])
+
+    def test_coverage_eta_keeps_capacity_reservation_energy_and_policy_gates(self):
+        config = CONFIGS / "factory-semiconductor-campus16-coverage-eta"
+        with self.assertRaisesRegex(ValueError, "requires eta policy"):
+            LineOperationsModel(config, policy="fifo", initial_lots=0, run_id="coverage-fifo")
+
+        model = LineOperationsModel(config, policy="eta", initial_lots=1, run_id="coverage-gates")
+        self._keep_only_available(model, "amr-1")
+        with patch.object(model, "_line_can_assign", return_value=False):
+            model._dispatch_extra_jobs(False)
+        self.assertFalse(model._trips)
+
+        with patch.object(model, "_prospective_trip_blockers", return_value=("amr-2",)):
+            model._dispatch_extra_jobs(False)
+        self.assertFalse(model._trips)
+
+        charging = model.operations_charging
+        assert charging is not None
+        with patch.object(charging, "can_assign", return_value=False) as can_assign:
+            model._dispatch_extra_jobs(False)
+        self.assertTrue(can_assign.called)
+        self.assertFalse(model._trips)
+
+    def test_coverage_eta_bundle_only_changes_dispatch_contract(self):
+        baseline = CONFIGS / "factory-semiconductor-campus16"
+        candidate = CONFIGS / "factory-semiconductor-campus16-coverage-eta"
+        for path in baseline.iterdir():
+            if path.name != "process-network.json":
+                self.assertEqual(path.read_bytes(), (candidate / path.name).read_bytes())
+        base_network = json.loads((baseline / "process-network.json").read_text(encoding="utf-8"))
+        candidate_network = json.loads(
+            (candidate / "process-network.json").read_text(encoding="utf-8"),
+        )
+        self.assertEqual("downstream_wip_drain_eta_after_coverage",
+                         candidate_network.pop("dispatch_mode"))
+        self.assertEqual(2, candidate_network.pop("coverage_deliveries_per_robot"))
+        base_network.pop("dispatch_mode")
+        self.assertEqual(base_network, candidate_network)
 
     def test_one_lot_completes_five_kinematic_transports_and_returns_its_carrier(self):
         model = LineOperationsModel(

@@ -1,0 +1,3195 @@
+{
+  "schema_version": 1,
+  "revision": "amr-semiconductor-campus16-v2",
+  "status": "Authored four-bay 16-AMR v2 campus; RouteBook preflight passed, renderer and physical runtime qualification pending",
+  "units": "m",
+  "frame": "map",
+  "rect_convention": "xmin,ymin,xmax,ymax; grid uses cell centers",
+  "bounds_xy": [
+    0,
+    0,
+    82,
+    76
+  ],
+  "map_resolution_m": 0.05,
+  "grid_rules": {
+    "origin_xy_m": [
+      0,
+      0
+    ],
+    "row_direction": "+y from south; column +x from west",
+    "coordinate_unit": "exact integer millimeters; authored edges are multiples of 50mm",
+    "cell_center_mm": "(50*column+25, 50*row+25)",
+    "coordinate_to_cell": "floor(x_mm/50), floor(y_mm/50); at a boundary choose the +x/+y cell",
+    "rect_rasterization": "half-open [min,max) evaluated at cell centers",
+    "planning_probe": "nominal 0.7m half-extent axis-aligned square; k=ceil(700mm/50mm)=14; all 29x29 cells including boundary must be free; whole-cell cover is 1.45m",
+    "distance": "4-neighbor unit edges; distance_mm=edge_count*50; divide by 1000 only for report",
+    "not_a_carter_footprint": true
+  },
+  "geometry_authority": "Union of amr_allowed_regions minus physical_obstacles. Other floor is AMR keepout, not necessarily solid equipment.",
+  "width_status": "6m low/high mains and east spine with separated directional centrelines; 3m west and 2.6m centre auxiliary cross-links remain shared access regions",
+  "amr_allowed_regions": [
+    {
+      "id": "A_MAIN_LOW",
+      "rect": [
+        2.0,
+        11.0,
+        30.0,
+        17.0
+      ],
+      "purpose": "6m two-lane main transport"
+    },
+    {
+      "id": "A_MAIN_HIGH",
+      "rect": [
+        2.0,
+        26.0,
+        30.0,
+        32.0
+      ],
+      "purpose": "6m two-lane alternate main transport"
+    },
+    {
+      "id": "A_WEST_LINK",
+      "rect": [
+        7.5,
+        12.5,
+        10.5,
+        30.5
+      ],
+      "purpose": "3m shared source cross-link"
+    },
+    {
+      "id": "A_CENTER_LINK",
+      "rect": [
+        13.7,
+        12.5,
+        16.3,
+        30.5
+      ],
+      "purpose": "2.6m shared process cross-link"
+    },
+    {
+      "id": "A_EAST_SPINE",
+      "rect": [
+        24.0,
+        11.0,
+        30.0,
+        32.0
+      ],
+      "purpose": "6m two-lane cell and shipping spine"
+    },
+    {
+      "id": "A_S2_APPROACH",
+      "rect": [
+        3.5,
+        20.0,
+        9.0,
+        23.0
+      ],
+      "purpose": "source B access"
+    },
+    {
+      "id": "A_S2_BAY",
+      "rect": [
+        2.0,
+        20.0,
+        5.0,
+        23.0
+      ],
+      "purpose": "source B handoff bay"
+    },
+    {
+      "id": "A_CI_APPROACH",
+      "rect": [
+        20.3,
+        17.2,
+        25.5,
+        19.8
+      ],
+      "purpose": "cell input access"
+    },
+    {
+      "id": "A_CI_BAY",
+      "rect": [
+        20.3,
+        17.0,
+        23.0,
+        20.0
+      ],
+      "purpose": "cell input handoff bay"
+    },
+    {
+      "id": "A_CO_APPROACH",
+      "rect": [
+        20.3,
+        23.2,
+        25.5,
+        25.8
+      ],
+      "purpose": "cell output access"
+    },
+    {
+      "id": "A_CO_BAY",
+      "rect": [
+        20.3,
+        23.0,
+        23.0,
+        26.0
+      ],
+      "purpose": "cell output handoff bay"
+    },
+    {
+      "id": "A_OUT_APPROACH",
+      "rect": [
+        28.5,
+        20.2,
+        33.0,
+        22.8
+      ],
+      "purpose": "shipping access"
+    },
+    {
+      "id": "A_OUT_BAY",
+      "rect": [
+        31.0,
+        20.0,
+        34.0,
+        23.0
+      ],
+      "purpose": "finished goods handoff bay"
+    },
+    {
+      "id": "A_P1_POCKET",
+      "rect": [
+        10.5,
+        8.0,
+        13.5,
+        12.5
+      ],
+      "purpose": "off-main parking"
+    },
+    {
+      "id": "A_P2_POCKET",
+      "rect": [
+        10.5,
+        30.5,
+        13.5,
+        36.0
+      ],
+      "purpose": "off-main parking"
+    },
+    {
+      "id": "A_P3_POCKET",
+      "rect": [
+        15.5,
+        8.0,
+        18.5,
+        12.5
+      ],
+      "purpose": "off-main south waiting/parking bay"
+    },
+    {
+      "id": "A_P4_POCKET",
+      "rect": [
+        15.5,
+        30.5,
+        18.5,
+        36.0
+      ],
+      "purpose": "off-main north waiting/parking bay"
+    },
+    {
+      "id": "A_PACK_STAGING_SPUR",
+      "rect": [
+        25.4,
+        8.1,
+        28.6,
+        17.0
+      ],
+      "purpose": "post-drop PACK_IN egress and wait spur outside the main eastbound intersection"
+    },
+    {
+      "id": "B_MAIN_LOW",
+      "rect": [
+        44.0,
+        11.0,
+        72.0,
+        17.0
+      ],
+      "purpose": "6m two-lane main transport"
+    },
+    {
+      "id": "B_MAIN_HIGH",
+      "rect": [
+        44.0,
+        26.0,
+        72.0,
+        32.0
+      ],
+      "purpose": "6m two-lane alternate main transport"
+    },
+    {
+      "id": "B_WEST_LINK",
+      "rect": [
+        49.5,
+        12.5,
+        52.5,
+        30.5
+      ],
+      "purpose": "3m shared source cross-link"
+    },
+    {
+      "id": "B_CENTER_LINK",
+      "rect": [
+        55.7,
+        12.5,
+        58.3,
+        30.5
+      ],
+      "purpose": "2.6m shared process cross-link"
+    },
+    {
+      "id": "B_EAST_SPINE",
+      "rect": [
+        66.0,
+        11.0,
+        72.0,
+        32.0
+      ],
+      "purpose": "6m two-lane cell and shipping spine"
+    },
+    {
+      "id": "B_S2_APPROACH",
+      "rect": [
+        45.5,
+        20.0,
+        51.0,
+        23.0
+      ],
+      "purpose": "source B access"
+    },
+    {
+      "id": "B_S2_BAY",
+      "rect": [
+        44.0,
+        20.0,
+        47.0,
+        23.0
+      ],
+      "purpose": "source B handoff bay"
+    },
+    {
+      "id": "B_CI_APPROACH",
+      "rect": [
+        62.3,
+        17.2,
+        67.5,
+        19.8
+      ],
+      "purpose": "cell input access"
+    },
+    {
+      "id": "B_CI_BAY",
+      "rect": [
+        62.3,
+        17.0,
+        65.0,
+        20.0
+      ],
+      "purpose": "cell input handoff bay"
+    },
+    {
+      "id": "B_CO_APPROACH",
+      "rect": [
+        62.3,
+        23.2,
+        67.5,
+        25.8
+      ],
+      "purpose": "cell output access"
+    },
+    {
+      "id": "B_CO_BAY",
+      "rect": [
+        62.3,
+        23.0,
+        65.0,
+        26.0
+      ],
+      "purpose": "cell output handoff bay"
+    },
+    {
+      "id": "B_OUT_APPROACH",
+      "rect": [
+        70.5,
+        20.2,
+        75.0,
+        22.8
+      ],
+      "purpose": "shipping access"
+    },
+    {
+      "id": "B_OUT_BAY",
+      "rect": [
+        73.0,
+        20.0,
+        76.0,
+        23.0
+      ],
+      "purpose": "finished goods handoff bay"
+    },
+    {
+      "id": "B_P1_POCKET",
+      "rect": [
+        52.5,
+        8.0,
+        55.5,
+        12.5
+      ],
+      "purpose": "off-main parking"
+    },
+    {
+      "id": "B_P2_POCKET",
+      "rect": [
+        52.5,
+        30.5,
+        55.5,
+        36.0
+      ],
+      "purpose": "off-main parking"
+    },
+    {
+      "id": "B_P3_POCKET",
+      "rect": [
+        57.5,
+        8.0,
+        60.5,
+        12.5
+      ],
+      "purpose": "off-main south waiting/parking bay"
+    },
+    {
+      "id": "B_P4_POCKET",
+      "rect": [
+        57.5,
+        30.5,
+        60.5,
+        36.0
+      ],
+      "purpose": "off-main north waiting/parking bay"
+    },
+    {
+      "id": "B_PACK_STAGING_SPUR",
+      "rect": [
+        67.4,
+        8.1,
+        70.6,
+        17.0
+      ],
+      "purpose": "post-drop PACK_IN egress and wait spur outside the main eastbound intersection"
+    },
+    {
+      "id": "C_MAIN_LOW",
+      "rect": [
+        2.0,
+        43.0,
+        30.0,
+        49.0
+      ],
+      "purpose": "6m two-lane main transport"
+    },
+    {
+      "id": "C_MAIN_HIGH",
+      "rect": [
+        2.0,
+        58.0,
+        30.0,
+        64.0
+      ],
+      "purpose": "6m two-lane alternate main transport"
+    },
+    {
+      "id": "C_WEST_LINK",
+      "rect": [
+        7.5,
+        44.5,
+        10.5,
+        62.5
+      ],
+      "purpose": "3m shared source cross-link"
+    },
+    {
+      "id": "C_CENTER_LINK",
+      "rect": [
+        13.7,
+        44.5,
+        16.3,
+        62.5
+      ],
+      "purpose": "2.6m shared process cross-link"
+    },
+    {
+      "id": "C_EAST_SPINE",
+      "rect": [
+        24.0,
+        43.0,
+        30.0,
+        64.0
+      ],
+      "purpose": "6m two-lane cell and shipping spine"
+    },
+    {
+      "id": "C_S2_APPROACH",
+      "rect": [
+        3.5,
+        52.0,
+        9.0,
+        55.0
+      ],
+      "purpose": "source B access"
+    },
+    {
+      "id": "C_S2_BAY",
+      "rect": [
+        2.0,
+        52.0,
+        5.0,
+        55.0
+      ],
+      "purpose": "source B handoff bay"
+    },
+    {
+      "id": "C_CI_APPROACH",
+      "rect": [
+        20.3,
+        49.2,
+        25.5,
+        51.8
+      ],
+      "purpose": "cell input access"
+    },
+    {
+      "id": "C_CI_BAY",
+      "rect": [
+        20.3,
+        49.0,
+        23.0,
+        52.0
+      ],
+      "purpose": "cell input handoff bay"
+    },
+    {
+      "id": "C_CO_APPROACH",
+      "rect": [
+        20.3,
+        55.2,
+        25.5,
+        57.8
+      ],
+      "purpose": "cell output access"
+    },
+    {
+      "id": "C_CO_BAY",
+      "rect": [
+        20.3,
+        55.0,
+        23.0,
+        58.0
+      ],
+      "purpose": "cell output handoff bay"
+    },
+    {
+      "id": "C_OUT_APPROACH",
+      "rect": [
+        28.5,
+        52.2,
+        33.0,
+        54.8
+      ],
+      "purpose": "shipping access"
+    },
+    {
+      "id": "C_OUT_BAY",
+      "rect": [
+        31.0,
+        52.0,
+        34.0,
+        55.0
+      ],
+      "purpose": "finished goods handoff bay"
+    },
+    {
+      "id": "C_P1_POCKET",
+      "rect": [
+        10.5,
+        40.0,
+        13.5,
+        44.5
+      ],
+      "purpose": "off-main parking"
+    },
+    {
+      "id": "C_P2_POCKET",
+      "rect": [
+        10.5,
+        62.5,
+        13.5,
+        68.0
+      ],
+      "purpose": "off-main parking"
+    },
+    {
+      "id": "C_P3_POCKET",
+      "rect": [
+        15.5,
+        40.0,
+        18.5,
+        44.5
+      ],
+      "purpose": "off-main south waiting/parking bay"
+    },
+    {
+      "id": "C_P4_POCKET",
+      "rect": [
+        15.5,
+        62.5,
+        18.5,
+        68.0
+      ],
+      "purpose": "off-main north waiting/parking bay"
+    },
+    {
+      "id": "C_PACK_STAGING_SPUR",
+      "rect": [
+        25.4,
+        36.8,
+        28.6,
+        49.0
+      ],
+      "purpose": "post-drop PACK_IN egress and wait spur outside the main eastbound intersection"
+    },
+    {
+      "id": "D_MAIN_LOW",
+      "rect": [
+        44.0,
+        43.0,
+        72.0,
+        49.0
+      ],
+      "purpose": "6m two-lane main transport"
+    },
+    {
+      "id": "D_MAIN_HIGH",
+      "rect": [
+        44.0,
+        58.0,
+        72.0,
+        64.0
+      ],
+      "purpose": "6m two-lane alternate main transport"
+    },
+    {
+      "id": "D_WEST_LINK",
+      "rect": [
+        49.5,
+        44.5,
+        52.5,
+        62.5
+      ],
+      "purpose": "3m shared source cross-link"
+    },
+    {
+      "id": "D_CENTER_LINK",
+      "rect": [
+        55.7,
+        44.5,
+        58.3,
+        62.5
+      ],
+      "purpose": "2.6m shared process cross-link"
+    },
+    {
+      "id": "D_EAST_SPINE",
+      "rect": [
+        66.0,
+        43.0,
+        72.0,
+        64.0
+      ],
+      "purpose": "6m two-lane cell and shipping spine"
+    },
+    {
+      "id": "D_S2_APPROACH",
+      "rect": [
+        45.5,
+        52.0,
+        51.0,
+        55.0
+      ],
+      "purpose": "source B access"
+    },
+    {
+      "id": "D_S2_BAY",
+      "rect": [
+        44.0,
+        52.0,
+        47.0,
+        55.0
+      ],
+      "purpose": "source B handoff bay"
+    },
+    {
+      "id": "D_CI_APPROACH",
+      "rect": [
+        62.3,
+        49.2,
+        67.5,
+        51.8
+      ],
+      "purpose": "cell input access"
+    },
+    {
+      "id": "D_CI_BAY",
+      "rect": [
+        62.3,
+        49.0,
+        65.0,
+        52.0
+      ],
+      "purpose": "cell input handoff bay"
+    },
+    {
+      "id": "D_CO_APPROACH",
+      "rect": [
+        62.3,
+        55.2,
+        67.5,
+        57.8
+      ],
+      "purpose": "cell output access"
+    },
+    {
+      "id": "D_CO_BAY",
+      "rect": [
+        62.3,
+        55.0,
+        65.0,
+        58.0
+      ],
+      "purpose": "cell output handoff bay"
+    },
+    {
+      "id": "D_OUT_APPROACH",
+      "rect": [
+        70.5,
+        52.2,
+        75.0,
+        54.8
+      ],
+      "purpose": "shipping access"
+    },
+    {
+      "id": "D_OUT_BAY",
+      "rect": [
+        73.0,
+        52.0,
+        76.0,
+        55.0
+      ],
+      "purpose": "finished goods handoff bay"
+    },
+    {
+      "id": "D_P1_POCKET",
+      "rect": [
+        52.5,
+        40.0,
+        55.5,
+        44.5
+      ],
+      "purpose": "off-main parking"
+    },
+    {
+      "id": "D_P2_POCKET",
+      "rect": [
+        52.5,
+        62.5,
+        55.5,
+        68.0
+      ],
+      "purpose": "off-main parking"
+    },
+    {
+      "id": "D_P3_POCKET",
+      "rect": [
+        57.5,
+        40.0,
+        60.5,
+        44.5
+      ],
+      "purpose": "off-main south waiting/parking bay"
+    },
+    {
+      "id": "D_P4_POCKET",
+      "rect": [
+        57.5,
+        62.5,
+        60.5,
+        68.0
+      ],
+      "purpose": "off-main north waiting/parking bay"
+    },
+    {
+      "id": "D_PACK_STAGING_SPUR",
+      "rect": [
+        67.4,
+        36.8,
+        70.6,
+        49.0
+      ],
+      "purpose": "post-drop PACK_IN egress and wait spur outside the main eastbound intersection"
+    },
+    {
+      "id": "CAMPUS_H_AB",
+      "rect": [
+        28.5,
+        11.0,
+        51.0,
+        17.0
+      ],
+      "purpose": "east/west paired lanes between south bays"
+    },
+    {
+      "id": "CAMPUS_H_CD",
+      "rect": [
+        28.5,
+        43.0,
+        51.0,
+        49.0
+      ],
+      "purpose": "east/west paired lanes between north bays"
+    },
+    {
+      "id": "CAMPUS_V_AC",
+      "rect": [
+        31.4,
+        30.5,
+        36.0,
+        44.5
+      ],
+      "purpose": "single-reservation north/south link on the clear east perimeter"
+    },
+    {
+      "id": "CAMPUS_V_BD",
+      "rect": [
+        73.4,
+        30.5,
+        78.0,
+        44.5
+      ],
+      "purpose": "single-reservation north/south link on the clear east perimeter"
+    },
+    {
+      "id": "CAMPUS_V_AC_S_APPROACH",
+      "rect": [
+        28.5,
+        26.0,
+        36.0,
+        32.4
+      ],
+      "purpose": "clear south-bay east-spine bridge approach"
+    },
+    {
+      "id": "CAMPUS_V_AC_N_APPROACH",
+      "rect": [
+        28.5,
+        43.0,
+        36.0,
+        49.0
+      ],
+      "purpose": "clear north-bay east-spine bridge approach"
+    },
+    {
+      "id": "CAMPUS_V_BD_S_APPROACH",
+      "rect": [
+        70.5,
+        26.0,
+        78.0,
+        32.4
+      ],
+      "purpose": "clear south-bay east-spine bridge approach"
+    },
+    {
+      "id": "CAMPUS_V_BD_N_APPROACH",
+      "rect": [
+        70.5,
+        43.0,
+        78.0,
+        49.0
+      ],
+      "purpose": "clear north-bay east-spine bridge approach"
+    },
+    {
+      "id": "CAMPUS_H_AB_RESERVATION",
+      "rect": [
+        32.0,
+        13.0,
+        47.0,
+        16.8
+      ],
+      "purpose": "atomic shared bridge reservation overlay"
+    },
+    {
+      "id": "CAMPUS_H_CD_RESERVATION",
+      "rect": [
+        32.0,
+        45.0,
+        47.0,
+        48.8
+      ],
+      "purpose": "atomic shared bridge reservation overlay"
+    },
+    {
+      "id": "CAMPUS_V_AC_RESERVATION",
+      "rect": [
+        33.0,
+        31.4,
+        35.8,
+        44.6
+      ],
+      "purpose": "atomic shared bridge reservation overlay including both gate approaches"
+    },
+    {
+      "id": "CAMPUS_V_BD_RESERVATION",
+      "rect": [
+        75.0,
+        31.4,
+        77.8,
+        44.6
+      ],
+      "purpose": "atomic shared bridge reservation overlay including both gate approaches"
+    },
+    {
+      "id": "CAMPUS_C_LOWER_JUNCTION",
+      "rect": [
+        28.4,
+        44.4,
+        33.1,
+        47.6
+      ],
+      "purpose": "atomic shared-junction policy overlay"
+    },
+    {
+      "id": "CAMPUS_D_LOW_W_TRUNK",
+      "rect": [
+        56.9,
+        47.4,
+        67.6,
+        47.6
+      ],
+      "purpose": "atomic shared-junction policy overlay"
+    },
+    {
+      "id": "CAMPUS_D_EAST_CI_TURN",
+      "rect": [
+        67.4,
+        47.4,
+        67.6,
+        50.6
+      ],
+      "purpose": "atomic shared-junction policy overlay"
+    },
+    {
+      "id": "CAMPUS_D_EAST_SPINE_TURN",
+      "rect": [
+        70.4,
+        44.4,
+        70.6,
+        47.6
+      ],
+      "purpose": "atomic shared-junction policy overlay"
+    },
+    {
+      "id": "CAMPUS_AB_E_QUEUE_ACCESS",
+      "rect": [
+        30.45,
+        8.0,
+        33.5,
+        12.5
+      ],
+      "purpose": "off-route vertical bridge queue access envelope"
+    },
+    {
+      "id": "CAMPUS_AC_N_QUEUE_ACCESS",
+      "rect": [
+        28.3,
+        36.8,
+        37.0,
+        45.0
+      ],
+      "purpose": "off-route vertical bridge queue access envelope"
+    },
+    {
+      "id": "CAMPUS_BD_N_QUEUE_ACCESS",
+      "rect": [
+        70.3,
+        36.8,
+        75.2,
+        43.2
+      ],
+      "purpose": "off-route vertical bridge queue access envelope"
+    },
+    {
+      "id": "CAMPUS_A_SAFE_ENTRY",
+      "rect": [
+        19.5,
+        14.0,
+        30.0,
+        17.0
+      ],
+      "purpose": "dedicated post-bridge safe-exit access envelope"
+    },
+    {
+      "id": "CAMPUS_A_SAFE_VERTICAL",
+      "rect": [
+        19.5,
+        4.0,
+        22.5,
+        17.0
+      ],
+      "purpose": "dedicated post-bridge safe-exit access envelope"
+    },
+    {
+      "id": "CAMPUS_A_SAFE_BRANCHES",
+      "rect": [
+        13.0,
+        1.0,
+        29.0,
+        7.0
+      ],
+      "purpose": "dedicated post-bridge safe-exit access envelope"
+    },
+    {
+      "id": "CAMPUS_B_AB_SAFE_SPUR",
+      "rect": [
+        70.4,
+        11.0,
+        82.0,
+        14.0
+      ],
+      "purpose": "dedicated post-bridge safe-exit access envelope"
+    },
+    {
+      "id": "CAMPUS_B_BD_SAFE_SPUR",
+      "rect": [
+        70.4,
+        29.0,
+        82.0,
+        32.0
+      ],
+      "purpose": "dedicated post-bridge safe-exit access envelope"
+    },
+    {
+      "id": "CAMPUS_C_SAFE_ENTRY",
+      "rect": [
+        28.4,
+        46.0,
+        38.0,
+        49.0
+      ],
+      "purpose": "dedicated post-bridge safe-exit access envelope"
+    },
+    {
+      "id": "CAMPUS_C_SAFE_VERTICAL",
+      "rect": [
+        35.0,
+        47.0,
+        38.0,
+        71.5
+      ],
+      "purpose": "dedicated post-bridge safe-exit access envelope"
+    },
+    {
+      "id": "CAMPUS_C_SAFE_BRANCHES",
+      "rect": [
+        29.0,
+        68.5,
+        42.0,
+        76.0
+      ],
+      "purpose": "dedicated post-bridge safe-exit access envelope"
+    },
+    {
+      "id": "CAMPUS_D_CD_SAFE_VERTICAL",
+      "rect": [
+        49.5,
+        43.0,
+        52.5,
+        61.5
+      ],
+      "purpose": "dedicated post-bridge safe-exit access envelope"
+    },
+    {
+      "id": "CAMPUS_D_SAFE_CROSS",
+      "rect": [
+        49.5,
+        58.5,
+        80.0,
+        61.5
+      ],
+      "purpose": "dedicated post-bridge safe-exit access envelope"
+    },
+    {
+      "id": "CAMPUS_D_BD_SAFE_ENTRY",
+      "rect": [
+        69.0,
+        43.0,
+        80.0,
+        46.0
+      ],
+      "purpose": "dedicated post-bridge safe-exit access envelope"
+    },
+    {
+      "id": "CAMPUS_D_SAFE_VERTICAL",
+      "rect": [
+        77.1,
+        43.0,
+        80.0,
+        71.5
+      ],
+      "purpose": "dedicated post-bridge safe-exit access envelope"
+    },
+    {
+      "id": "CAMPUS_D_SAFE_BRANCHES",
+      "rect": [
+        72.0,
+        68.5,
+        82.0,
+        76.0
+      ],
+      "purpose": "dedicated post-bridge safe-exit access envelope"
+    }
+  ],
+  "stations": [
+    {
+      "id": "A_S1",
+      "xy": [
+        3.5,
+        12.5
+      ],
+      "role": "incoming packaged-IC tray lot",
+      "physical_payload": false
+    },
+    {
+      "id": "A_S2",
+      "xy": [
+        3.5,
+        21.5
+      ],
+      "role": "released WIP tray lot",
+      "physical_payload": false
+    },
+    {
+      "id": "A_S3",
+      "xy": [
+        3.5,
+        30.5
+      ],
+      "role": "retest or alternate product-family tray lot",
+      "physical_payload": false
+    },
+    {
+      "id": "A_CI",
+      "xy": [
+        21.5,
+        18.5
+      ],
+      "role": "final-test cell inbound handoff",
+      "capacity": 2,
+      "physical_payload": false
+    },
+    {
+      "id": "A_CO",
+      "xy": [
+        21.5,
+        24.5
+      ],
+      "role": "tested and packed tray output",
+      "capacity": 2,
+      "physical_payload": false
+    },
+    {
+      "id": "A_OUT",
+      "xy": [
+        32.5,
+        21.5
+      ],
+      "role": "finished lot handoff",
+      "physical_payload": false
+    },
+    {
+      "id": "B_S1",
+      "xy": [
+        45.5,
+        12.5
+      ],
+      "role": "incoming packaged-IC tray lot",
+      "physical_payload": false
+    },
+    {
+      "id": "B_S2",
+      "xy": [
+        45.5,
+        21.5
+      ],
+      "role": "released WIP tray lot",
+      "physical_payload": false
+    },
+    {
+      "id": "B_S3",
+      "xy": [
+        45.5,
+        30.5
+      ],
+      "role": "retest or alternate product-family tray lot",
+      "physical_payload": false
+    },
+    {
+      "id": "B_CI",
+      "xy": [
+        63.5,
+        18.5
+      ],
+      "role": "final-test cell inbound handoff",
+      "capacity": 2,
+      "physical_payload": false
+    },
+    {
+      "id": "B_CO",
+      "xy": [
+        63.5,
+        24.5
+      ],
+      "role": "tested and packed tray output",
+      "capacity": 2,
+      "physical_payload": false
+    },
+    {
+      "id": "B_OUT",
+      "xy": [
+        74.5,
+        21.5
+      ],
+      "role": "finished lot handoff",
+      "physical_payload": false
+    },
+    {
+      "id": "C_S1",
+      "xy": [
+        3.5,
+        44.5
+      ],
+      "role": "incoming packaged-IC tray lot",
+      "physical_payload": false
+    },
+    {
+      "id": "C_S2",
+      "xy": [
+        3.5,
+        53.5
+      ],
+      "role": "released WIP tray lot",
+      "physical_payload": false
+    },
+    {
+      "id": "C_S3",
+      "xy": [
+        3.5,
+        62.5
+      ],
+      "role": "retest or alternate product-family tray lot",
+      "physical_payload": false
+    },
+    {
+      "id": "C_CI",
+      "xy": [
+        21.5,
+        50.5
+      ],
+      "role": "final-test cell inbound handoff",
+      "capacity": 2,
+      "physical_payload": false
+    },
+    {
+      "id": "C_CO",
+      "xy": [
+        21.5,
+        56.5
+      ],
+      "role": "tested and packed tray output",
+      "capacity": 2,
+      "physical_payload": false
+    },
+    {
+      "id": "C_OUT",
+      "xy": [
+        32.5,
+        53.5
+      ],
+      "role": "finished lot handoff",
+      "physical_payload": false
+    },
+    {
+      "id": "D_S1",
+      "xy": [
+        45.5,
+        44.5
+      ],
+      "role": "incoming packaged-IC tray lot",
+      "physical_payload": false
+    },
+    {
+      "id": "D_S2",
+      "xy": [
+        45.5,
+        53.5
+      ],
+      "role": "released WIP tray lot",
+      "physical_payload": false
+    },
+    {
+      "id": "D_S3",
+      "xy": [
+        45.5,
+        62.5
+      ],
+      "role": "retest or alternate product-family tray lot",
+      "physical_payload": false
+    },
+    {
+      "id": "D_CI",
+      "xy": [
+        63.5,
+        50.5
+      ],
+      "role": "final-test cell inbound handoff",
+      "capacity": 2,
+      "physical_payload": false
+    },
+    {
+      "id": "D_CO",
+      "xy": [
+        63.5,
+        56.5
+      ],
+      "role": "tested and packed tray output",
+      "capacity": 2,
+      "physical_payload": false
+    },
+    {
+      "id": "D_OUT",
+      "xy": [
+        74.5,
+        53.5
+      ],
+      "role": "finished lot handoff",
+      "physical_payload": false
+    }
+  ],
+  "pockets": {
+    "A_P1": [
+      12.0,
+      9.5
+    ],
+    "A_P2": [
+      12.0,
+      34.0
+    ],
+    "A_P3": [
+      17.0,
+      9.5
+    ],
+    "A_P4": [
+      17.0,
+      34.0
+    ],
+    "B_P1": [
+      54.0,
+      9.5
+    ],
+    "B_P2": [
+      54.0,
+      34.0
+    ],
+    "B_P3": [
+      59.0,
+      9.5
+    ],
+    "B_P4": [
+      59.0,
+      34.0
+    ],
+    "C_P1": [
+      12.0,
+      41.5
+    ],
+    "C_P2": [
+      12.0,
+      66.0
+    ],
+    "C_P3": [
+      17.0,
+      41.5
+    ],
+    "C_P4": [
+      17.0,
+      66.0
+    ],
+    "D_P1": [
+      54.0,
+      41.5
+    ],
+    "D_P2": [
+      54.0,
+      66.0
+    ],
+    "D_P3": [
+      59.0,
+      41.5
+    ],
+    "D_P4": [
+      59.0,
+      66.0
+    ]
+  },
+  "workcell": {
+    "id": "CELL_1",
+    "workers": 1,
+    "input_capacity": 2,
+    "output_capacity": 2,
+    "service_sim_s": 20,
+    "all_visual_equipment_blocks_are_one_logical_cell": true
+  },
+  "visual_zones": [
+    {
+      "id": "MaterialZone",
+      "rect": [
+        0.2,
+        1.2,
+        10.2,
+        26.8
+      ]
+    },
+    {
+      "id": "ProcessZone",
+      "rect": [
+        10.4,
+        9.05,
+        24.8,
+        17.95
+      ]
+    },
+    {
+      "id": "ShippingZone",
+      "rect": [
+        30.2,
+        9.05,
+        35.3,
+        17.95
+      ]
+    }
+  ],
+  "reserved_work_areas": [
+    {
+      "id": "SOURCE_LOW",
+      "rect": [
+        2.5,
+        9.25,
+        7.25,
+        12.0
+      ],
+      "purpose": "compact flow racks"
+    },
+    {
+      "id": "SOURCE_HIGH",
+      "rect": [
+        2.5,
+        15.0,
+        7.25,
+        17.75
+      ],
+      "purpose": "compact flow racks"
+    },
+    {
+      "id": "BENCH_LOW",
+      "rect": [
+        10.75,
+        9.25,
+        13.5,
+        13.0
+      ],
+      "purpose": "modular assembly and inspection benches"
+    },
+    {
+      "id": "BENCH_HIGH",
+      "rect": [
+        10.75,
+        14.0,
+        13.5,
+        17.75
+      ],
+      "purpose": "modular packing and inspection benches"
+    },
+    {
+      "id": "CELL_EQUIPMENT",
+      "rect": [
+        16.6,
+        9.25,
+        20.1,
+        17.75
+      ],
+      "purpose": "one logical production cell"
+    },
+    {
+      "id": "CONTROL",
+      "rect": [
+        20.7,
+        12.5,
+        22.7,
+        14.5
+      ],
+      "purpose": "cell control cabinet"
+    },
+    {
+      "id": "SHIPPING_LOW",
+      "rect": [
+        30.5,
+        9.25,
+        34.5,
+        11.75
+      ],
+      "purpose": "finished goods"
+    },
+    {
+      "id": "SHIPPING_HIGH",
+      "rect": [
+        30.5,
+        15.25,
+        34.5,
+        17.75
+      ],
+      "purpose": "finished goods"
+    },
+    {
+      "id": "SERVICE_EDGE",
+      "rect": [
+        19.0,
+        24.75,
+        24.0,
+        25.75
+      ],
+      "purpose": "service cabinets"
+    }
+  ],
+  "physical_obstacles": [
+    {
+      "id": "A_KIT_BENCH_1",
+      "rect": [
+        1.0,
+        8.6,
+        7.0,
+        11.0
+      ],
+      "height_m": 1.45,
+      "type": "incoming ESD tray loadports"
+    },
+    {
+      "id": "A_KIT_BENCH_2",
+      "rect": [
+        1.0,
+        32.5,
+        7.2,
+        34.8
+      ],
+      "height_m": 1.45,
+      "type": "carrier return and retest tray loadports"
+    },
+    {
+      "id": "A_RACK_A1",
+      "rect": [
+        0.6,
+        17.3,
+        7.2,
+        18.9
+      ],
+      "height_m": 2.4,
+      "type": "JEDEC incoming tray stocker"
+    },
+    {
+      "id": "A_RACK_A2",
+      "rect": [
+        0.6,
+        19.1,
+        7.2,
+        19.8
+      ],
+      "height_m": 2.4,
+      "type": "WIP tray stocker beside S2"
+    },
+    {
+      "id": "A_RACK_B1",
+      "rect": [
+        0.6,
+        23.2,
+        7.2,
+        24.5
+      ],
+      "height_m": 2.4,
+      "type": "released lot tray stocker"
+    },
+    {
+      "id": "A_RACK_B2",
+      "rect": [
+        0.6,
+        24.7,
+        7.2,
+        25.8
+      ],
+      "height_m": 2.4,
+      "type": "retest and empty carrier stocker"
+    },
+    {
+      "id": "A_BENCH_A1",
+      "rect": [
+        10.8,
+        17.4,
+        13.4,
+        19.5
+      ],
+      "height_m": 2.1,
+      "type": "ATE instrumentation cabinets"
+    },
+    {
+      "id": "A_BENCH_A2",
+      "rect": [
+        10.8,
+        19.7,
+        13.4,
+        21.8
+      ],
+      "height_m": 2.1,
+      "type": "optical inspection and lot scan enclosure"
+    },
+    {
+      "id": "A_BENCH_B1",
+      "rect": [
+        10.8,
+        22.0,
+        13.4,
+        24.0
+      ],
+      "height_m": 1.6,
+      "type": "ESD tray packaging bench"
+    },
+    {
+      "id": "A_BENCH_B2",
+      "rect": [
+        10.8,
+        24.2,
+        13.4,
+        25.8
+      ],
+      "height_m": 2.1,
+      "type": "AOI and marking enclosure"
+    },
+    {
+      "id": "A_PROCESS_1",
+      "rect": [
+        16.6,
+        17.2,
+        19.95,
+        19.8
+      ],
+      "height_m": 2.4,
+      "type": "test handler and tray input/output elevators"
+    },
+    {
+      "id": "A_PROCESS_2",
+      "rect": [
+        16.6,
+        20.05,
+        20.1,
+        22.95
+      ],
+      "height_m": 2.4,
+      "type": "AOI and marking service module"
+    },
+    {
+      "id": "A_PROCESS_3",
+      "rect": [
+        16.6,
+        23.2,
+        19.95,
+        25.8
+      ],
+      "height_m": 1.6,
+      "type": "ESD pack and tray output rollers"
+    },
+    {
+      "id": "A_CELL_CABINET",
+      "rect": [
+        20.35,
+        20.15,
+        23.2,
+        22.85
+      ],
+      "height_m": 2.2,
+      "type": "ATE mainframe and utility cabinets"
+    },
+    {
+      "id": "A_CI_BUFFER",
+      "rect": [
+        20.0,
+        17.2,
+        20.25,
+        19.8
+      ],
+      "height_m": 1.1,
+      "type": "two-lot tester inlet boundary fixture"
+    },
+    {
+      "id": "A_CO_BUFFER",
+      "rect": [
+        20.0,
+        23.2,
+        20.25,
+        25.8
+      ],
+      "height_m": 1.1,
+      "type": "two-lot tester outlet boundary fixture"
+    },
+    {
+      "id": "A_FG_LOW",
+      "rect": [
+        30.3,
+        17.3,
+        34.9,
+        19.8
+      ],
+      "height_m": 2.4,
+      "type": "packaging conveyor with inspection-gate geometry; visual-only model, aggregate process logic"
+    },
+    {
+      "id": "A_FG_HIGH",
+      "rect": [
+        30.3,
+        23.2,
+        34.9,
+        25.8
+      ],
+      "height_m": 1.6,
+      "type": "sealed finished tray staging"
+    },
+    {
+      "id": "A_SERVICE_CABINET",
+      "rect": [
+        19.1,
+        32.5,
+        31.3,
+        34.7
+      ],
+      "height_m": 2.5,
+      "type": "utility, filter and electrical cabinet row"
+    },
+    {
+      "id": "B_KIT_BENCH_1",
+      "rect": [
+        43.0,
+        8.6,
+        49.0,
+        11.0
+      ],
+      "height_m": 1.45,
+      "type": "incoming ESD tray loadports"
+    },
+    {
+      "id": "B_KIT_BENCH_2",
+      "rect": [
+        43.0,
+        32.5,
+        49.2,
+        34.8
+      ],
+      "height_m": 1.45,
+      "type": "carrier return and retest tray loadports"
+    },
+    {
+      "id": "B_RACK_A1",
+      "rect": [
+        42.6,
+        17.3,
+        49.2,
+        18.9
+      ],
+      "height_m": 2.4,
+      "type": "JEDEC incoming tray stocker"
+    },
+    {
+      "id": "B_RACK_A2",
+      "rect": [
+        42.6,
+        19.1,
+        49.2,
+        19.8
+      ],
+      "height_m": 2.4,
+      "type": "WIP tray stocker beside S2"
+    },
+    {
+      "id": "B_RACK_B1",
+      "rect": [
+        42.6,
+        23.2,
+        49.2,
+        24.5
+      ],
+      "height_m": 2.4,
+      "type": "released lot tray stocker"
+    },
+    {
+      "id": "B_RACK_B2",
+      "rect": [
+        42.6,
+        24.7,
+        49.2,
+        25.8
+      ],
+      "height_m": 2.4,
+      "type": "retest and empty carrier stocker"
+    },
+    {
+      "id": "B_BENCH_A1",
+      "rect": [
+        52.8,
+        17.4,
+        55.4,
+        19.5
+      ],
+      "height_m": 2.1,
+      "type": "ATE instrumentation cabinets"
+    },
+    {
+      "id": "B_BENCH_A2",
+      "rect": [
+        52.8,
+        19.7,
+        55.4,
+        21.8
+      ],
+      "height_m": 2.1,
+      "type": "optical inspection and lot scan enclosure"
+    },
+    {
+      "id": "B_BENCH_B1",
+      "rect": [
+        52.8,
+        22.0,
+        55.4,
+        24.0
+      ],
+      "height_m": 1.6,
+      "type": "ESD tray packaging bench"
+    },
+    {
+      "id": "B_BENCH_B2",
+      "rect": [
+        52.8,
+        24.2,
+        55.4,
+        25.8
+      ],
+      "height_m": 2.1,
+      "type": "AOI and marking enclosure"
+    },
+    {
+      "id": "B_PROCESS_1",
+      "rect": [
+        58.6,
+        17.2,
+        61.95,
+        19.8
+      ],
+      "height_m": 2.4,
+      "type": "test handler and tray input/output elevators"
+    },
+    {
+      "id": "B_PROCESS_2",
+      "rect": [
+        58.6,
+        20.05,
+        62.1,
+        22.95
+      ],
+      "height_m": 2.4,
+      "type": "AOI and marking service module"
+    },
+    {
+      "id": "B_PROCESS_3",
+      "rect": [
+        58.6,
+        23.2,
+        61.95,
+        25.8
+      ],
+      "height_m": 1.6,
+      "type": "ESD pack and tray output rollers"
+    },
+    {
+      "id": "B_CELL_CABINET",
+      "rect": [
+        62.35,
+        20.15,
+        65.2,
+        22.85
+      ],
+      "height_m": 2.2,
+      "type": "ATE mainframe and utility cabinets"
+    },
+    {
+      "id": "B_CI_BUFFER",
+      "rect": [
+        62.0,
+        17.2,
+        62.25,
+        19.8
+      ],
+      "height_m": 1.1,
+      "type": "two-lot tester inlet boundary fixture"
+    },
+    {
+      "id": "B_CO_BUFFER",
+      "rect": [
+        62.0,
+        23.2,
+        62.25,
+        25.8
+      ],
+      "height_m": 1.1,
+      "type": "two-lot tester outlet boundary fixture"
+    },
+    {
+      "id": "B_FG_LOW",
+      "rect": [
+        72.3,
+        17.3,
+        76.9,
+        19.8
+      ],
+      "height_m": 2.4,
+      "type": "packaging conveyor with inspection-gate geometry; visual-only model, aggregate process logic"
+    },
+    {
+      "id": "B_FG_HIGH",
+      "rect": [
+        72.3,
+        23.2,
+        76.9,
+        25.8
+      ],
+      "height_m": 1.6,
+      "type": "sealed finished tray staging"
+    },
+    {
+      "id": "B_SERVICE_CABINET",
+      "rect": [
+        61.1,
+        32.5,
+        73.3,
+        34.7
+      ],
+      "height_m": 2.5,
+      "type": "utility, filter and electrical cabinet row"
+    },
+    {
+      "id": "C_KIT_BENCH_1",
+      "rect": [
+        1.0,
+        40.6,
+        7.0,
+        43.0
+      ],
+      "height_m": 1.45,
+      "type": "incoming ESD tray loadports"
+    },
+    {
+      "id": "C_KIT_BENCH_2",
+      "rect": [
+        1.0,
+        64.5,
+        7.2,
+        66.8
+      ],
+      "height_m": 1.45,
+      "type": "carrier return and retest tray loadports"
+    },
+    {
+      "id": "C_RACK_A1",
+      "rect": [
+        0.6,
+        49.3,
+        7.2,
+        50.9
+      ],
+      "height_m": 2.4,
+      "type": "JEDEC incoming tray stocker"
+    },
+    {
+      "id": "C_RACK_A2",
+      "rect": [
+        0.6,
+        51.1,
+        7.2,
+        51.8
+      ],
+      "height_m": 2.4,
+      "type": "WIP tray stocker beside S2"
+    },
+    {
+      "id": "C_RACK_B1",
+      "rect": [
+        0.6,
+        55.2,
+        7.2,
+        56.5
+      ],
+      "height_m": 2.4,
+      "type": "released lot tray stocker"
+    },
+    {
+      "id": "C_RACK_B2",
+      "rect": [
+        0.6,
+        56.7,
+        7.2,
+        57.8
+      ],
+      "height_m": 2.4,
+      "type": "retest and empty carrier stocker"
+    },
+    {
+      "id": "C_BENCH_A1",
+      "rect": [
+        10.8,
+        49.4,
+        13.4,
+        51.5
+      ],
+      "height_m": 2.1,
+      "type": "ATE instrumentation cabinets"
+    },
+    {
+      "id": "C_BENCH_A2",
+      "rect": [
+        10.8,
+        51.7,
+        13.4,
+        53.8
+      ],
+      "height_m": 2.1,
+      "type": "optical inspection and lot scan enclosure"
+    },
+    {
+      "id": "C_BENCH_B1",
+      "rect": [
+        10.8,
+        54.0,
+        13.4,
+        56.0
+      ],
+      "height_m": 1.6,
+      "type": "ESD tray packaging bench"
+    },
+    {
+      "id": "C_BENCH_B2",
+      "rect": [
+        10.8,
+        56.2,
+        13.4,
+        57.8
+      ],
+      "height_m": 2.1,
+      "type": "AOI and marking enclosure"
+    },
+    {
+      "id": "C_PROCESS_1",
+      "rect": [
+        16.6,
+        49.2,
+        19.95,
+        51.8
+      ],
+      "height_m": 2.4,
+      "type": "test handler and tray input/output elevators"
+    },
+    {
+      "id": "C_PROCESS_2",
+      "rect": [
+        16.6,
+        52.05,
+        20.1,
+        54.95
+      ],
+      "height_m": 2.4,
+      "type": "AOI and marking service module"
+    },
+    {
+      "id": "C_PROCESS_3",
+      "rect": [
+        16.6,
+        55.2,
+        19.95,
+        57.8
+      ],
+      "height_m": 1.6,
+      "type": "ESD pack and tray output rollers"
+    },
+    {
+      "id": "C_CELL_CABINET",
+      "rect": [
+        20.35,
+        52.15,
+        23.2,
+        54.85
+      ],
+      "height_m": 2.2,
+      "type": "ATE mainframe and utility cabinets"
+    },
+    {
+      "id": "C_CI_BUFFER",
+      "rect": [
+        20.0,
+        49.2,
+        20.25,
+        51.8
+      ],
+      "height_m": 1.1,
+      "type": "two-lot tester inlet boundary fixture"
+    },
+    {
+      "id": "C_CO_BUFFER",
+      "rect": [
+        20.0,
+        55.2,
+        20.25,
+        57.8
+      ],
+      "height_m": 1.1,
+      "type": "two-lot tester outlet boundary fixture"
+    },
+    {
+      "id": "C_FG_LOW",
+      "rect": [
+        30.3,
+        49.3,
+        34.9,
+        51.8
+      ],
+      "height_m": 2.4,
+      "type": "packaging conveyor with inspection-gate geometry; visual-only model, aggregate process logic"
+    },
+    {
+      "id": "C_FG_HIGH",
+      "rect": [
+        30.3,
+        55.2,
+        34.9,
+        57.8
+      ],
+      "height_m": 1.6,
+      "type": "sealed finished tray staging"
+    },
+    {
+      "id": "C_SERVICE_CABINET",
+      "rect": [
+        19.1,
+        64.5,
+        31.3,
+        66.7
+      ],
+      "height_m": 2.5,
+      "type": "utility, filter and electrical cabinet row"
+    },
+    {
+      "id": "D_KIT_BENCH_1",
+      "rect": [
+        43.0,
+        40.6,
+        49.0,
+        43.0
+      ],
+      "height_m": 1.45,
+      "type": "incoming ESD tray loadports"
+    },
+    {
+      "id": "D_KIT_BENCH_2",
+      "rect": [
+        43.0,
+        64.5,
+        49.2,
+        66.8
+      ],
+      "height_m": 1.45,
+      "type": "carrier return and retest tray loadports"
+    },
+    {
+      "id": "D_RACK_A1",
+      "rect": [
+        42.6,
+        49.3,
+        49.2,
+        50.9
+      ],
+      "height_m": 2.4,
+      "type": "JEDEC incoming tray stocker"
+    },
+    {
+      "id": "D_RACK_A2",
+      "rect": [
+        42.6,
+        51.1,
+        49.2,
+        51.8
+      ],
+      "height_m": 2.4,
+      "type": "WIP tray stocker beside S2"
+    },
+    {
+      "id": "D_RACK_B1",
+      "rect": [
+        42.6,
+        55.2,
+        49.2,
+        56.5
+      ],
+      "height_m": 2.4,
+      "type": "released lot tray stocker"
+    },
+    {
+      "id": "D_RACK_B2",
+      "rect": [
+        42.6,
+        56.7,
+        49.2,
+        57.8
+      ],
+      "height_m": 2.4,
+      "type": "retest and empty carrier stocker"
+    },
+    {
+      "id": "D_BENCH_A1",
+      "rect": [
+        52.8,
+        49.4,
+        55.4,
+        51.5
+      ],
+      "height_m": 2.1,
+      "type": "ATE instrumentation cabinets"
+    },
+    {
+      "id": "D_BENCH_A2",
+      "rect": [
+        52.8,
+        51.7,
+        55.4,
+        53.8
+      ],
+      "height_m": 2.1,
+      "type": "optical inspection and lot scan enclosure"
+    },
+    {
+      "id": "D_BENCH_B1",
+      "rect": [
+        52.8,
+        54.0,
+        55.4,
+        56.0
+      ],
+      "height_m": 1.6,
+      "type": "ESD tray packaging bench"
+    },
+    {
+      "id": "D_BENCH_B2",
+      "rect": [
+        52.8,
+        56.2,
+        55.4,
+        57.8
+      ],
+      "height_m": 2.1,
+      "type": "AOI and marking enclosure"
+    },
+    {
+      "id": "D_PROCESS_1",
+      "rect": [
+        58.6,
+        49.2,
+        61.95,
+        51.8
+      ],
+      "height_m": 2.4,
+      "type": "test handler and tray input/output elevators"
+    },
+    {
+      "id": "D_PROCESS_2",
+      "rect": [
+        58.6,
+        52.05,
+        62.1,
+        54.95
+      ],
+      "height_m": 2.4,
+      "type": "AOI and marking service module"
+    },
+    {
+      "id": "D_PROCESS_3",
+      "rect": [
+        58.6,
+        55.2,
+        61.95,
+        57.8
+      ],
+      "height_m": 1.6,
+      "type": "ESD pack and tray output rollers"
+    },
+    {
+      "id": "D_CELL_CABINET",
+      "rect": [
+        62.35,
+        52.15,
+        65.2,
+        54.85
+      ],
+      "height_m": 2.2,
+      "type": "ATE mainframe and utility cabinets"
+    },
+    {
+      "id": "D_CI_BUFFER",
+      "rect": [
+        62.0,
+        49.2,
+        62.25,
+        51.8
+      ],
+      "height_m": 1.1,
+      "type": "two-lot tester inlet boundary fixture"
+    },
+    {
+      "id": "D_CO_BUFFER",
+      "rect": [
+        62.0,
+        55.2,
+        62.25,
+        57.8
+      ],
+      "height_m": 1.1,
+      "type": "two-lot tester outlet boundary fixture"
+    },
+    {
+      "id": "D_FG_LOW",
+      "rect": [
+        72.3,
+        49.3,
+        76.9,
+        51.8
+      ],
+      "height_m": 2.4,
+      "type": "packaging conveyor with inspection-gate geometry; visual-only model, aggregate process logic"
+    },
+    {
+      "id": "D_FG_HIGH",
+      "rect": [
+        72.3,
+        55.2,
+        76.9,
+        57.8
+      ],
+      "height_m": 1.6,
+      "type": "sealed finished tray staging"
+    },
+    {
+      "id": "D_SERVICE_CABINET",
+      "rect": [
+        61.1,
+        64.5,
+        73.3,
+        66.7
+      ],
+      "height_m": 2.5,
+      "type": "utility, filter and electrical cabinet row"
+    }
+  ],
+  "blocked_aisle": {
+    "rect": [
+      18.5,
+      11.0,
+      19.5,
+      14.0
+    ],
+    "height_m": 1.5,
+    "active_sim_s": [
+      0,
+      600
+    ],
+    "observed_by": "LiDAR/costmap; future removal time evaluator only",
+    "id": "A_BLOCKED_AISLE",
+    "compatibility_scope": "A-bay compatibility view; blocked_aisles is authoritative for the campus"
+  },
+  "traffic_reference": null,
+  "unchanged_contracts": [
+    "each bay preserves all 19 source equipment footprints and the original AMR lane geometry",
+    "collision, evaluation, localization and reservation radii are unchanged",
+    "inter-bay links use gated main/east-spine continuations and do not cross a raw-material station centre"
+  ],
+  "unperformed_validation": [
+    "16-AMR RouteBook and reservation runtime",
+    "four-bay USD scene transformation, asset placement and sensor/map alignment",
+    "physical cargo, charging, process timing and safety certification"
+  ],
+  "layout_provenance": {
+    "kind": "authored-not-surveyed",
+    "base": "configs/factory-semiconductor-dual-lane/layout.json",
+    "bay_offsets_xy_m": {
+      "A": [
+        0.0,
+        8.0
+      ],
+      "B": [
+        42.0,
+        8.0
+      ],
+      "C": [
+        0.0,
+        40.0
+      ],
+      "D": [
+        42.0,
+        40.0
+      ]
+    },
+    "campus_bounds_xy_m": [
+      0,
+      0,
+      82,
+      76
+    ],
+    "geometry_rule": "four immutable 36x28m bays on 42m x 32m centres with clear directional bridge corridors",
+    "pending": "USD scene transformation, renderer coverage and multi-robot physical evidence"
+  },
+  "production_domain": {
+    "id": "semiconductor_final_test_pack",
+    "display_name": "Semiconductor Final Test & Pack Bay",
+    "scope": "Four authored semiconductor final-test/inspection/pack bays in an 82x76m v2 campus; planning geometry only, not surveyed CAD or process certification",
+    "logical_process": "one aggregate final-test/AOI/packing service cell; individual machine process physics not simulated",
+    "quantity_unit": "JEDEC device trays inside ESD transport carriers; not individual die count",
+    "zone_labels": [
+      {
+        "label": "A LOT IN",
+        "origin_xy": [
+          2.1,
+          11.1
+        ],
+        "role": "incoming_tray_lots"
+      },
+      {
+        "label": "A WIP",
+        "origin_xy": [
+          1.5,
+          22.4
+        ],
+        "role": "wip_stocker"
+      },
+      {
+        "label": "A FINAL TEST",
+        "origin_xy": [
+          16.8,
+          16.7
+        ],
+        "role": "test_handler"
+      },
+      {
+        "label": "A AOI",
+        "origin_xy": [
+          17.1,
+          26.2
+        ],
+        "role": "optical_inspection"
+      },
+      {
+        "label": "A PACK",
+        "origin_xy": [
+          30.5,
+          16.7
+        ],
+        "role": "packaging"
+      },
+      {
+        "label": "A LOT OUT",
+        "origin_xy": [
+          30.5,
+          25.8
+        ],
+        "role": "finished_trays"
+      },
+      {
+        "label": "A TRAY RETURN",
+        "origin_xy": [
+          1.0,
+          32.1
+        ],
+        "role": "empty_carrier_return"
+      },
+      {
+        "label": "B LOT IN",
+        "origin_xy": [
+          44.1,
+          11.1
+        ],
+        "role": "incoming_tray_lots"
+      },
+      {
+        "label": "B WIP",
+        "origin_xy": [
+          43.5,
+          22.4
+        ],
+        "role": "wip_stocker"
+      },
+      {
+        "label": "B FINAL TEST",
+        "origin_xy": [
+          58.8,
+          16.7
+        ],
+        "role": "test_handler"
+      },
+      {
+        "label": "B AOI",
+        "origin_xy": [
+          59.1,
+          26.2
+        ],
+        "role": "optical_inspection"
+      },
+      {
+        "label": "B PACK",
+        "origin_xy": [
+          72.5,
+          16.7
+        ],
+        "role": "packaging"
+      },
+      {
+        "label": "B LOT OUT",
+        "origin_xy": [
+          72.5,
+          25.8
+        ],
+        "role": "finished_trays"
+      },
+      {
+        "label": "B TRAY RETURN",
+        "origin_xy": [
+          43.0,
+          32.1
+        ],
+        "role": "empty_carrier_return"
+      },
+      {
+        "label": "C LOT IN",
+        "origin_xy": [
+          2.1,
+          43.1
+        ],
+        "role": "incoming_tray_lots"
+      },
+      {
+        "label": "C WIP",
+        "origin_xy": [
+          1.5,
+          54.4
+        ],
+        "role": "wip_stocker"
+      },
+      {
+        "label": "C FINAL TEST",
+        "origin_xy": [
+          16.8,
+          48.7
+        ],
+        "role": "test_handler"
+      },
+      {
+        "label": "C AOI",
+        "origin_xy": [
+          17.1,
+          58.2
+        ],
+        "role": "optical_inspection"
+      },
+      {
+        "label": "C PACK",
+        "origin_xy": [
+          30.5,
+          48.7
+        ],
+        "role": "packaging"
+      },
+      {
+        "label": "C LOT OUT",
+        "origin_xy": [
+          30.5,
+          57.8
+        ],
+        "role": "finished_trays"
+      },
+      {
+        "label": "C TRAY RETURN",
+        "origin_xy": [
+          1.0,
+          64.1
+        ],
+        "role": "empty_carrier_return"
+      },
+      {
+        "label": "D LOT IN",
+        "origin_xy": [
+          44.1,
+          43.1
+        ],
+        "role": "incoming_tray_lots"
+      },
+      {
+        "label": "D WIP",
+        "origin_xy": [
+          43.5,
+          54.4
+        ],
+        "role": "wip_stocker"
+      },
+      {
+        "label": "D FINAL TEST",
+        "origin_xy": [
+          58.8,
+          48.7
+        ],
+        "role": "test_handler"
+      },
+      {
+        "label": "D AOI",
+        "origin_xy": [
+          59.1,
+          58.2
+        ],
+        "role": "optical_inspection"
+      },
+      {
+        "label": "D PACK",
+        "origin_xy": [
+          72.5,
+          48.7
+        ],
+        "role": "packaging"
+      },
+      {
+        "label": "D LOT OUT",
+        "origin_xy": [
+          72.5,
+          57.8
+        ],
+        "role": "finished_trays"
+      },
+      {
+        "label": "D TRAY RETURN",
+        "origin_xy": [
+          43.0,
+          64.1
+        ],
+        "role": "empty_carrier_return"
+      }
+    ],
+    "cargo_recipes": {
+      "source_S1": "esd_tray_loadport",
+      "source_S2": "tray_stocker",
+      "source_S3": "esd_tray_loadport",
+      "ci": "semiconductor_handler",
+      "cell": "aoi_mark",
+      "co": "esd_packing",
+      "out": "esd_tray_loadport"
+    },
+    "reference_urls": [
+      "https://www.advantest.com/en/semiconductor-basics/automated-test-equipment/",
+      "https://www.advantest.com/cn/news/2020/20201130.html",
+      "https://www.besi.com/products-technology/product-details/product/datacon-2200-evo/"
+    ],
+    "dimension_basis": "Authored equipment/service envelopes; vendor illustrations guide components only. No cleanroom/ESD certification or vendor model dimensions claimed."
+  },
+  "traffic_lanes": [
+    {
+      "id": "A_LOW_E",
+      "from_xy": [
+        3.5,
+        12.5
+      ],
+      "to_xy": [
+        28.5,
+        12.5
+      ]
+    },
+    {
+      "id": "A_LOW_W",
+      "from_xy": [
+        28.5,
+        15.5
+      ],
+      "to_xy": [
+        3.5,
+        15.5
+      ]
+    },
+    {
+      "id": "A_HIGH_E",
+      "from_xy": [
+        3.5,
+        27.5
+      ],
+      "to_xy": [
+        28.5,
+        27.5
+      ]
+    },
+    {
+      "id": "A_HIGH_W",
+      "from_xy": [
+        28.5,
+        30.5
+      ],
+      "to_xy": [
+        3.5,
+        30.5
+      ]
+    },
+    {
+      "id": "A_EAST_N",
+      "from_xy": [
+        28.5,
+        12.5
+      ],
+      "to_xy": [
+        28.5,
+        30.5
+      ]
+    },
+    {
+      "id": "A_EAST_S",
+      "from_xy": [
+        25.5,
+        30.5
+      ],
+      "to_xy": [
+        25.5,
+        12.5
+      ]
+    },
+    {
+      "id": "B_LOW_E",
+      "from_xy": [
+        45.5,
+        12.5
+      ],
+      "to_xy": [
+        70.5,
+        12.5
+      ]
+    },
+    {
+      "id": "B_LOW_W",
+      "from_xy": [
+        70.5,
+        15.5
+      ],
+      "to_xy": [
+        45.5,
+        15.5
+      ]
+    },
+    {
+      "id": "B_HIGH_E",
+      "from_xy": [
+        45.5,
+        27.5
+      ],
+      "to_xy": [
+        70.5,
+        27.5
+      ]
+    },
+    {
+      "id": "B_HIGH_W",
+      "from_xy": [
+        70.5,
+        30.5
+      ],
+      "to_xy": [
+        45.5,
+        30.5
+      ]
+    },
+    {
+      "id": "B_EAST_N",
+      "from_xy": [
+        70.5,
+        12.5
+      ],
+      "to_xy": [
+        70.5,
+        30.5
+      ]
+    },
+    {
+      "id": "B_EAST_S",
+      "from_xy": [
+        67.5,
+        30.5
+      ],
+      "to_xy": [
+        67.5,
+        12.5
+      ]
+    },
+    {
+      "id": "C_LOW_E",
+      "from_xy": [
+        3.5,
+        44.5
+      ],
+      "to_xy": [
+        28.5,
+        44.5
+      ]
+    },
+    {
+      "id": "C_LOW_W",
+      "from_xy": [
+        28.5,
+        47.5
+      ],
+      "to_xy": [
+        3.5,
+        47.5
+      ]
+    },
+    {
+      "id": "C_HIGH_E",
+      "from_xy": [
+        3.5,
+        59.5
+      ],
+      "to_xy": [
+        28.5,
+        59.5
+      ]
+    },
+    {
+      "id": "C_HIGH_W",
+      "from_xy": [
+        28.5,
+        62.5
+      ],
+      "to_xy": [
+        3.5,
+        62.5
+      ]
+    },
+    {
+      "id": "C_EAST_N",
+      "from_xy": [
+        28.5,
+        44.5
+      ],
+      "to_xy": [
+        28.5,
+        62.5
+      ]
+    },
+    {
+      "id": "C_EAST_S",
+      "from_xy": [
+        25.5,
+        62.5
+      ],
+      "to_xy": [
+        25.5,
+        44.5
+      ]
+    },
+    {
+      "id": "D_LOW_E",
+      "from_xy": [
+        45.5,
+        44.5
+      ],
+      "to_xy": [
+        70.5,
+        44.5
+      ]
+    },
+    {
+      "id": "D_LOW_W",
+      "from_xy": [
+        70.5,
+        47.5
+      ],
+      "to_xy": [
+        45.5,
+        47.5
+      ]
+    },
+    {
+      "id": "D_HIGH_E",
+      "from_xy": [
+        45.5,
+        59.5
+      ],
+      "to_xy": [
+        70.5,
+        59.5
+      ]
+    },
+    {
+      "id": "D_HIGH_W",
+      "from_xy": [
+        70.5,
+        62.5
+      ],
+      "to_xy": [
+        45.5,
+        62.5
+      ]
+    },
+    {
+      "id": "D_EAST_N",
+      "from_xy": [
+        70.5,
+        44.5
+      ],
+      "to_xy": [
+        70.5,
+        62.5
+      ]
+    },
+    {
+      "id": "D_EAST_S",
+      "from_xy": [
+        67.5,
+        62.5
+      ],
+      "to_xy": [
+        67.5,
+        44.5
+      ]
+    }
+  ],
+  "blocked_aisles": [
+    {
+      "rect": [
+        18.5,
+        11.0,
+        19.5,
+        14.0
+      ],
+      "height_m": 1.5,
+      "active_sim_s": [
+        0,
+        600
+      ],
+      "observed_by": "LiDAR/costmap; future removal time evaluator only",
+      "id": "A_BLOCKED_AISLE"
+    },
+    {
+      "rect": [
+        60.5,
+        11.0,
+        61.5,
+        14.0
+      ],
+      "height_m": 1.5,
+      "active_sim_s": [
+        0,
+        600
+      ],
+      "observed_by": "LiDAR/costmap; future removal time evaluator only",
+      "id": "B_BLOCKED_AISLE"
+    },
+    {
+      "rect": [
+        18.5,
+        43.0,
+        19.5,
+        46.0
+      ],
+      "height_m": 1.5,
+      "active_sim_s": [
+        0,
+        600
+      ],
+      "observed_by": "LiDAR/costmap; future removal time evaluator only",
+      "id": "C_BLOCKED_AISLE"
+    },
+    {
+      "rect": [
+        60.5,
+        43.0,
+        61.5,
+        46.0
+      ],
+      "height_m": 1.5,
+      "active_sim_s": [
+        0,
+        600
+      ],
+      "observed_by": "LiDAR/costmap; future removal time evaluator only",
+      "id": "D_BLOCKED_AISLE"
+    }
+  ],
+  "operational_staging": [
+    {
+      "id": "A_PACK_WAIT",
+      "xy": [
+        27.0,
+        9.5
+      ],
+      "purpose": "post-drop egress wait outside PACK_IN; not a fleet home or process-capacity station"
+    },
+    {
+      "id": "B_PACK_WAIT",
+      "xy": [
+        69.0,
+        9.5
+      ],
+      "purpose": "post-drop egress wait outside PACK_IN; not a fleet home or process-capacity station"
+    },
+    {
+      "id": "C_PACK_WAIT",
+      "xy": [
+        27.0,
+        38.5
+      ],
+      "purpose": "post-drop egress wait outside PACK_IN; not a fleet home or process-capacity station"
+    },
+    {
+      "id": "D_PACK_WAIT",
+      "xy": [
+        69.0,
+        38.5
+      ],
+      "purpose": "post-drop egress wait outside PACK_IN; not a fleet home or process-capacity station"
+    },
+    {
+      "id": "A_SOURCE_WAIT",
+      "xy": [
+        3.5,
+        27.5
+      ],
+      "purpose": "shared local post-drop standby; degree-one route endpoint, not a fleet home"
+    },
+    {
+      "id": "A_CELL_WAIT",
+      "xy": [
+        24.5,
+        18.5
+      ],
+      "purpose": "shared local post-drop standby; degree-one route endpoint, not a fleet home"
+    },
+    {
+      "id": "B_SOURCE_WAIT",
+      "xy": [
+        45.5,
+        27.5
+      ],
+      "purpose": "shared local post-drop standby; degree-one route endpoint, not a fleet home"
+    },
+    {
+      "id": "B_CELL_WAIT",
+      "xy": [
+        66.5,
+        18.5
+      ],
+      "purpose": "shared local post-drop standby; degree-one route endpoint, not a fleet home"
+    },
+    {
+      "id": "C_SOURCE_WAIT",
+      "xy": [
+        3.5,
+        59.5
+      ],
+      "purpose": "shared local post-drop standby; degree-one route endpoint, not a fleet home"
+    },
+    {
+      "id": "C_CELL_WAIT",
+      "xy": [
+        24.5,
+        50.5
+      ],
+      "purpose": "shared local post-drop standby; degree-one route endpoint, not a fleet home"
+    },
+    {
+      "id": "D_SOURCE_WAIT",
+      "xy": [
+        45.5,
+        59.5
+      ],
+      "purpose": "shared local post-drop standby; degree-one route endpoint, not a fleet home"
+    },
+    {
+      "id": "D_CELL_WAIT",
+      "xy": [
+        66.5,
+        50.5
+      ],
+      "purpose": "shared local post-drop standby; degree-one route endpoint, not a fleet home"
+    }
+  ],
+  "bridge_queues": [
+    {
+      "id": "AB_E_QUEUE",
+      "xy": [
+        32.0,
+        9.5
+      ],
+      "purpose": "mandatory off-route stop before inter-bay bridge admission; floor marker only"
+    },
+    {
+      "id": "AB_W_QUEUE",
+      "xy": [
+        60.0,
+        15.5
+      ],
+      "purpose": "mandatory off-route stop before inter-bay bridge admission; floor marker only"
+    },
+    {
+      "id": "CD_E_QUEUE",
+      "xy": [
+        30.5,
+        41.5
+      ],
+      "purpose": "mandatory off-route stop before inter-bay bridge admission; floor marker only"
+    },
+    {
+      "id": "CD_W_QUEUE",
+      "xy": [
+        60.0,
+        45.5
+      ],
+      "purpose": "mandatory off-route stop before inter-bay bridge admission; floor marker only"
+    },
+    {
+      "id": "AC_S_QUEUE",
+      "xy": [
+        33.5,
+        27.5
+      ],
+      "purpose": "mandatory off-route stop before inter-bay bridge admission; floor marker only"
+    },
+    {
+      "id": "AC_N_QUEUE",
+      "xy": [
+        31.5,
+        38.5
+      ],
+      "purpose": "mandatory off-route stop before inter-bay bridge admission; floor marker only"
+    },
+    {
+      "id": "BD_S_QUEUE",
+      "xy": [
+        75.5,
+        27.5
+      ],
+      "purpose": "mandatory off-route stop before inter-bay bridge admission; floor marker only"
+    },
+    {
+      "id": "BD_N_QUEUE",
+      "xy": [
+        73.5,
+        38.5
+      ],
+      "purpose": "mandatory off-route stop before inter-bay bridge admission; floor marker only"
+    }
+  ],
+  "bridge_safe_exits": [
+    {
+      "id": "A_AB_W_SAFE_EXIT",
+      "xy": [
+        15.0,
+        3.0
+      ],
+      "purpose": "dedicated post-bridge release buffer; excluded from process staging, fleet homes and task destinations"
+    },
+    {
+      "id": "A_AC_N_SAFE_EXIT",
+      "xy": [
+        27.0,
+        3.0
+      ],
+      "purpose": "dedicated post-bridge release buffer; excluded from process staging, fleet homes and task destinations"
+    },
+    {
+      "id": "B_AB_E_SAFE_EXIT",
+      "xy": [
+        80.0,
+        12.5
+      ],
+      "purpose": "dedicated post-bridge release buffer; excluded from process staging, fleet homes and task destinations"
+    },
+    {
+      "id": "B_BD_N_SAFE_EXIT",
+      "xy": [
+        80.0,
+        30.5
+      ],
+      "purpose": "dedicated post-bridge release buffer; excluded from process staging, fleet homes and task destinations"
+    },
+    {
+      "id": "C_CD_W_SAFE_EXIT",
+      "xy": [
+        31.0,
+        73.0
+      ],
+      "purpose": "dedicated post-bridge release buffer; excluded from process staging, fleet homes and task destinations"
+    },
+    {
+      "id": "C_AC_S_SAFE_EXIT",
+      "xy": [
+        41.0,
+        73.0
+      ],
+      "purpose": "dedicated post-bridge release buffer; excluded from process staging, fleet homes and task destinations"
+    },
+    {
+      "id": "D_CD_E_SAFE_EXIT",
+      "xy": [
+        74.0,
+        73.0
+      ],
+      "purpose": "dedicated post-bridge release buffer; excluded from process staging, fleet homes and task destinations"
+    },
+    {
+      "id": "D_BD_S_SAFE_EXIT",
+      "xy": [
+        80.0,
+        73.0
+      ],
+      "purpose": "dedicated post-bridge release buffer; excluded from process staging, fleet homes and task destinations"
+    }
+  ]
+}

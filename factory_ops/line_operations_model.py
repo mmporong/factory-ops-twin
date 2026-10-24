@@ -159,18 +159,32 @@ class LineOperationsModel(OperationsModel):
             network = json.loads(network_path.read_text(encoding="utf-8"))
             self.line = ProcessNetwork(self.ledger.run_id, network)
             dispatch_mode = network.get("dispatch_mode")
-            if dispatch_mode != "downstream_wip_drain_least_assigned":
-                raise ValueError("process network requires downstream_wip_drain_least_assigned dispatch")
+            supported_dispatch_modes = {
+                "downstream_wip_drain_least_assigned",
+                "downstream_wip_drain_eta_after_coverage",
+            }
+            if dispatch_mode not in supported_dispatch_modes:
+                raise ValueError("process network dispatch_mode is unsupported")
+            coverage = network.get("coverage_deliveries_per_robot")
+            if dispatch_mode == "downstream_wip_drain_eta_after_coverage":
+                if policy != "eta":
+                    raise ValueError("downstream_wip_drain_eta_after_coverage requires eta policy")
+                if type(coverage) is not int or coverage <= 0:
+                    raise ValueError("coverage_deliveries_per_robot must be a positive integer")
+            elif coverage is not None:
+                raise ValueError("coverage_deliveries_per_robot requires coverage ETA dispatch")
             inventory = network.get("inventory", {})
             self.inventory = _LineInventory(tuple(self.line.source_to_line),
                 stock_per_source=inventory.get("stock_per_source", 20),
                 carrier_count=inventory.get("carrier_count", 64),
                 shipping_stations=self.line.shipping_stations)
             self._line_dispatch_mode = dispatch_mode
+            self._coverage_deliveries_per_robot = coverage
         else:
             self.line = ProcessLine(self.ledger.run_id, json.loads((config / "process-line.json").read_text(encoding="utf-8")))
             self.inventory = _LineInventory(shipping_stations=frozenset({self.line.shipping_station}))
             self._line_dispatch_mode = "legacy_fifo_eta"
+            self._coverage_deliveries_per_robot = None
         self._peak_transport_active = 0
         self._peak_transport_moving = 0
         self._transport_moving_s = {robot: 0.0 for robot in self.ledger.robots}
@@ -264,12 +278,19 @@ class LineOperationsModel(OperationsModel):
                                 if self.dispatch_policy == "fifo"
                                 else (total / self.limits.max_linear_m_s, task.created_sim_time_s,
                                       self._assignments[robot], task.task_id, robot))
-                    else:
+                    elif self._line_dispatch_mode == "downstream_wip_drain_least_assigned":
                         task_priority = self._line_task_priority(task)
                         rank = ((*task_priority, self._assignments[robot], first, robot)
                                 if self.dispatch_policy == "fifo"
                                 else (*task_priority, self._assignments[robot],
                                       total / self.limits.max_linear_m_s, robot))
+                    else:
+                        task_priority = self._line_task_priority(task)
+                        quota = self._coverage_deliveries_per_robot
+                        assert quota is not None
+                        rank = (*task_priority, self._deliveries[robot] >= quota,
+                                total / self.limits.max_linear_m_s,
+                                self._assignments[robot], robot)
                     candidates.append((rank, robot, task))
             selected = next((candidate for candidate in sorted(candidates, key=lambda row: row[0])
                              if self.operations_charging is None or self.operations_charging.can_assign(
