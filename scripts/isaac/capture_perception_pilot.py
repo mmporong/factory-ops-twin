@@ -46,6 +46,10 @@ EXPECTED_ASSETS = {
     "nvidia:crate_gray_a20",
     "nvidia:crate_blue_a02",
 }
+PROFILE_PATHS = {
+    "loco-pallet-rigid-crate-pilot-v1": "configs/perception/loco-pallet-rigid-crate-pilot-v1.json",
+    "loco-pallet-rigid-crate-pilot-v4": "configs/perception/loco-pallet-rigid-crate-pilot-v4.json",
+}
 TOP_LEVEL_KEYS = {
     "schema_version", "status", "profile_id", "profile_sha256", "generator", "prepared_inputs",
     "cache_root", "assets", "scene_count", "frame_count", "scene_seeds", "scenes", "frames",
@@ -251,7 +255,10 @@ def verify_source_pins(manifest: Mapping[str, Any], manifest_path: Path, repo_ro
                        cache_root: Path, expected_manifest_sha256: str) -> None:
     if digest(manifest_path) != expected_manifest_sha256:
         raise PilotCaptureError("pilot manifest SHA-256 differs")
-    profile_path = repo_root / "configs/perception/loco-pallet-rigid-crate-pilot-v1.json"
+    profile_relative = PROFILE_PATHS.get(manifest.get("profile_id"))
+    if profile_relative is None:
+        raise PilotCaptureError("pilot profile ID is not in the source allowlist")
+    profile_path = repo_root / profile_relative
     generator = manifest["generator"]
     generator_path = repo_root / safe_relative(generator.get("path"), "generator path")
     if not profile_path.is_file() or digest(profile_path) != manifest["profile_sha256"]:

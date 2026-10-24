@@ -4,11 +4,18 @@ from pathlib import Path
 import tempfile
 import unittest
 
-from scripts.perception.prepare_pilot_manifest import PilotManifestError, build_manifest
+from scripts.perception.prepare_pilot_manifest import (
+    PilotManifestError,
+    _guard_camera_frames,
+    _guard_context,
+    build_manifest,
+    occluder_conflicts,
+)
 
 
 ROOT = Path(__file__).resolve().parents[1]
 PROFILE = ROOT / "configs/perception/loco-pallet-rigid-crate-pilot-v1.json"
+PROFILE_V4 = ROOT / "configs/perception/loco-pallet-rigid-crate-pilot-v4.json"
 
 
 class PreparePerceptionPilotTests(unittest.TestCase):
@@ -89,6 +96,72 @@ class PreparePerceptionPilotTests(unittest.TestCase):
         self.profile_path.write_text(json.dumps(promoted), encoding="utf-8")
         with self.assertRaisesRegex(PilotManifestError, "candidate-only"):
             build_manifest(self.profile_path, self.root, self.cache)
+
+    def test_frame_009_occluder_proxy_rejects_original_and_accepts_seeded_resample(self):
+        profile = json.loads(PROFILE_V4.read_text(encoding="utf-8"))
+        target = {
+            "asset_id": "nvidia:crate_gray_a20", "class": "small_load_carrier",
+            "object_id": "small_load_carrier-003-02",
+            "rotation_z_deg": 9.753641814818714,
+            "translation_xyz_m": [-2.176223415256911, 0.18632263742472838, 0.0],
+            "uniform_scale": 1.0950239519029386,
+        }
+        assets = {"nvidia:crate_gray_a20": {"bounds_xyz_m": [
+            -0.30583518743515015, -0.20579081773757935, 0.0,
+            0.30583518743515015, 0.20579081773757935, 0.09034392349713016,
+        ]}}
+        frame = {
+            "eye_xyz_m": [5.840359046041419, -7.07835881635652, 6.176416810110922],
+            "focal_length_mm": 32.30203031732612, "frame_id": 9,
+            "target_xyz_m": [0.0522773562445005, 0.0698466528497668, 0.3753347168011776],
+        }
+        occluder = {
+            "center_xyz_m": [-1.4, -0.2, 0.65], "id": "moderate-occluder", "primitive": "cube",
+            "rgb": [0.38, 0.42, 0.46], "size_xyz_m": [0.5, 1.4, 1.3],
+        }
+        original = occluder_conflicts([target], [frame], assets, occluder, [768, 512], 24.0)
+        self.assertEqual(1, len(original))
+        self.assertTrue(original[0]["full_projection_cover"])
+        self.assertTrue(original[0]["center_sight_intersection"])
+
+        first, counts = _guard_context(
+            2, 1234, [target], [frame], assets, [occluder], {"moderate-occluder"}, profile,
+        )
+        second, _ = _guard_context(
+            2, 1234, [target], [frame], assets, [occluder], {"moderate-occluder"}, profile,
+        )
+        self.assertEqual(first, second)
+        self.assertNotEqual(occluder["center_xyz_m"], first[0]["center_xyz_m"])
+        self.assertEqual(1, counts["resampled_occluders"])
+        self.assertEqual([], occluder_conflicts([target], [frame], assets, first[0], [768, 512], 24.0))
+
+    def test_v4_fails_closed_when_a_target_projection_is_outside_the_image(self):
+        profile = json.loads(PROFILE_V4.read_text(encoding="utf-8"))
+        target = {
+            "asset_id": "asset", "class": "pallet", "object_id": "outside",
+            "rotation_z_deg": 0.0, "translation_xyz_m": [100.0, 100.0, 0.0], "uniform_scale": 1.0,
+        }
+        frame = {"eye_xyz_m": [0.0, -7.0, 3.0], "target_xyz_m": [0.0, 0.0, 0.0],
+                 "focal_length_mm": 35.0, "frame_id": 1}
+        with self.assertRaisesRegex(PilotManifestError, "target projection is outside"):
+            _guard_context(0, 1, [target], [frame], {"asset": {"bounds_xyz_m": [-.5, -.5, 0, .5, .5, 1]}},
+                           [], set(), profile)
+
+    def test_camera_guard_keeps_partial_clipping_but_recovers_fully_offscreen_target(self):
+        profile = json.loads(PROFILE_V4.read_text(encoding="utf-8"))
+        target = {
+            "asset_id": "asset", "class": "pallet", "object_id": "edge-target",
+            "rotation_z_deg": 0.0, "translation_xyz_m": [3.3, 0.0, 0.0], "uniform_scale": 1.0,
+        }
+        frame = {"eye_xyz_m": [0.0, -4.0, 2.0], "target_xyz_m": [0.0, 0.0, 0.0],
+                 "focal_length_mm": 35.0, "frame_id": 1}
+        assets = {"asset": {"bounds_xyz_m": [-.5, -.5, 0, .5, .5, 1]}}
+        guarded, counts = _guard_camera_frames(
+            0, [target], [frame], [[0.0, 0.0, 0.0]], assets, profile, False,
+        )
+        self.assertEqual(1, counts["adjusted_frames"])
+        self.assertGreater(guarded[0]["eye_xyz_m"][1] * -1, 4.0)
+        _guard_context(0, 1, [target], guarded, assets, [], set(), profile)
 
 
 if __name__ == "__main__":

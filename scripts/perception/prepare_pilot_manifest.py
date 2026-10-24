@@ -90,6 +90,39 @@ def validate_profile(profile: Mapping[str, Any]) -> None:
             or set(context.get("occluders", {})) != set(variation.get("occlusion_targets", []))
             or context.get("context_semantics") != "unlabelled"):
         raise PilotManifestError("procedural context recipes differ from the variation allowlists")
+    guard = profile.get("context_occlusion_guard")
+    if guard is not None:
+        if (not isinstance(guard, Mapping)
+                or guard.get("model") != "authored_oriented_asset_aabb_and_context_cube_aabb_pinhole_proxy"
+                or guard.get("require_target_projection_intersects_image") is not True
+                or guard.get("reject_full_target_projection_coverage") is not True
+                or guard.get("reject_target_center_sight_intersection") is not True
+                or guard.get("mesh_or_raster_visibility_measured") is not False):
+            raise PilotManifestError("context occlusion guard contract differs")
+        attempts = guard.get("maximum_resample_attempts")
+        radius = guard.get("resample_xy_radius_m")
+        aperture = guard.get("horizontal_aperture_mm")
+        if (type(attempts) is not int or not 1 <= attempts <= 256
+                or type(radius) not in (int, float) or not 0 < radius <= 5
+                or type(aperture) not in (int, float) or not 0 < aperture <= 100):
+            raise PilotManifestError("context occlusion guard bounds differ")
+    camera_guard = profile.get("camera_projection_guard")
+    if camera_guard is not None:
+        if (not isinstance(camera_guard, Mapping)
+                or camera_guard.get("model") != "authored_oriented_asset_aabb_pinhole_proxy"
+                or camera_guard.get("require_positive_area_image_intersection") is not True
+                or camera_guard.get("partial_frame_clipping_allowed") is not True
+                or camera_guard.get("mesh_or_raster_visibility_measured") is not False):
+            raise PilotManifestError("camera projection guard contract differs")
+        attempts = camera_guard.get("maximum_resample_attempts")
+        decay = camera_guard.get("edge_crop_offset_decay_per_attempt")
+        growth = camera_guard.get("eye_target_distance_growth_per_attempt")
+        maximum = camera_guard.get("maximum_eye_target_distance_scale")
+        if (type(attempts) is not int or not 1 <= attempts <= 256
+                or any(type(value) not in (int, float) or not math.isfinite(value) or value <= 0
+                       for value in (decay, growth, maximum))
+                or decay > 1 or growth > 1 or not 1 < maximum <= 5):
+            raise PilotManifestError("camera projection guard bounds differ")
 
 
 def load_assets(profile: Mapping[str, Any], repo_root: Path, cache_root: Path) -> tuple[dict[str, Any], list[dict[str, Any]]]:
@@ -151,6 +184,216 @@ def jitter_vector(rng: random.Random, values: list[Any], amount: float) -> list[
     return [float(value) + rng.uniform(-amount, amount) for value in values]
 
 
+def _normalize(vector: tuple[float, float, float]) -> tuple[float, float, float]:
+    length = math.sqrt(sum(value * value for value in vector))
+    if length <= 1e-12:
+        raise PilotManifestError("camera basis vector is degenerate")
+    return tuple(value / length for value in vector)
+
+
+def _cross(first: tuple[float, float, float], second: tuple[float, float, float]) -> tuple[float, float, float]:
+    return (
+        first[1] * second[2] - first[2] * second[1],
+        first[2] * second[0] - first[0] * second[2],
+        first[0] * second[1] - first[1] * second[0],
+    )
+
+
+def _object_aabb_corners(recipe: Mapping[str, Any], bounds: list[float]) -> list[tuple[float, float, float]]:
+    scale = float(recipe["uniform_scale"])
+    angle = math.radians(float(recipe["rotation_z_deg"]))
+    cosine, sine = math.cos(angle), math.sin(angle)
+    translation = recipe["translation_xyz_m"]
+    return [
+        (float(translation[0]) + scale * (cosine * x - sine * y),
+         float(translation[1]) + scale * (sine * x + cosine * y),
+         float(translation[2]) + scale * z)
+        for x in (float(bounds[0]), float(bounds[3]))
+        for y in (float(bounds[1]), float(bounds[4]))
+        for z in (float(bounds[2]), float(bounds[5]))
+    ]
+
+
+def _cube_corners(recipe: Mapping[str, Any]) -> list[tuple[float, float, float]]:
+    center, size = recipe["center_xyz_m"], recipe["size_xyz_m"]
+    return [
+        tuple(float(center[index]) + sign[index] * float(size[index]) / 2.0 for index in range(3))
+        for sign in ((-1, -1, -1), (-1, -1, 1), (-1, 1, -1), (-1, 1, 1),
+                     (1, -1, -1), (1, -1, 1), (1, 1, -1), (1, 1, 1))
+    ]
+
+
+def _projected_bounds(points: list[tuple[float, float, float]], frame: Mapping[str, Any],
+                      resolution: list[int], horizontal_aperture_mm: float) -> dict[str, float | bool]:
+    eye = tuple(float(value) for value in frame["eye_xyz_m"])
+    target = tuple(float(value) for value in frame["target_xyz_m"])
+    forward = _normalize(tuple(target[index] - eye[index] for index in range(3)))
+    right = _normalize(_cross(forward, (0.0, 0.0, 1.0)))
+    up = _cross(right, forward)
+    width, height = resolution
+    focal = float(frame["focal_length_mm"])
+    vertical_aperture = horizontal_aperture_mm * height / width
+    projected = []
+    for point in points:
+        delta = tuple(point[index] - eye[index] for index in range(3))
+        x = sum(delta[index] * right[index] for index in range(3))
+        y = sum(delta[index] * up[index] for index in range(3))
+        z = sum(delta[index] * forward[index] for index in range(3))
+        if z <= 1e-9:
+            return {"in_front": False, "intersects_image": False}
+        projected.append((width * (0.5 + focal * x / (z * horizontal_aperture_mm)),
+                          height * (0.5 - focal * y / (z * vertical_aperture)), z))
+    minimum_u, minimum_v = min(row[0] for row in projected), min(row[1] for row in projected)
+    maximum_u, maximum_v = max(row[0] for row in projected), max(row[1] for row in projected)
+    return {
+        "in_front": True,
+        "intersection_area_px2": max(0.0, min(maximum_u, width - 1) - max(minimum_u, 0.0))
+        * max(0.0, min(maximum_v, height - 1) - max(minimum_v, 0.0)),
+        "intersects_image": (min(maximum_u, width - 1) - max(minimum_u, 0.0) > 0
+                             and min(maximum_v, height - 1) - max(minimum_v, 0.0) > 0),
+        "min_u": minimum_u, "min_v": minimum_v, "max_u": maximum_u, "max_v": maximum_v,
+        "min_z": min(row[2] for row in projected), "max_z": max(row[2] for row in projected),
+    }
+
+
+def _segment_intersects_cube(start: tuple[float, float, float], end: tuple[float, float, float],
+                             cube: Mapping[str, Any]) -> bool:
+    center, size = cube["center_xyz_m"], cube["size_xyz_m"]
+    lower = [float(center[index]) - float(size[index]) / 2.0 for index in range(3)]
+    upper = [float(center[index]) + float(size[index]) / 2.0 for index in range(3)]
+    near, far = 0.0, 1.0
+    for index in range(3):
+        delta = end[index] - start[index]
+        if abs(delta) <= 1e-12:
+            if start[index] < lower[index] or start[index] > upper[index]:
+                return False
+            continue
+        first, second = (lower[index] - start[index]) / delta, (upper[index] - start[index]) / delta
+        near, far = max(near, min(first, second)), min(far, max(first, second))
+        if near > far:
+            return False
+    return True
+
+
+def occluder_conflicts(objects: list[Mapping[str, Any]], frames: list[Mapping[str, Any]],
+                       assets: Mapping[str, Any], occluder: Mapping[str, Any],
+                       resolution: list[int], horizontal_aperture_mm: float) -> list[dict[str, Any]]:
+    """Return conservative AABB proxy conflicts; this does not measure rendered visibility."""
+    conflicts = []
+    occluder_corners = _cube_corners(occluder)
+    for frame in frames:
+        blocker = _projected_bounds(occluder_corners, frame, resolution, horizontal_aperture_mm)
+        for recipe in objects:
+            corners = _object_aabb_corners(recipe, assets[recipe["asset_id"]]["bounds_xyz_m"])
+            target = _projected_bounds(corners, frame, resolution, horizontal_aperture_mm)
+            if not target["intersects_image"]:
+                continue
+            center = tuple(sum(point[index] for point in corners) / len(corners) for index in range(3))
+            full_cover = bool(
+                blocker.get("in_front") and blocker.get("min_z", math.inf) < target["min_z"]
+                and blocker["min_u"] <= target["min_u"] and blocker["min_v"] <= target["min_v"]
+                and blocker["max_u"] >= target["max_u"] and blocker["max_v"] >= target["max_v"]
+            )
+            center_sight = _segment_intersects_cube(tuple(frame["eye_xyz_m"]), center, occluder)
+            if full_cover or center_sight:
+                conflicts.append({"frame_id": frame["frame_id"], "object_id": recipe["object_id"],
+                                  "full_projection_cover": full_cover, "center_sight_intersection": center_sight})
+    return conflicts
+
+
+def _guard_camera_frames(scene_index: int, objects: list[dict[str, Any]], frames: list[dict[str, Any]],
+                         base_targets: list[list[float]], assets: Mapping[str, Any],
+                         profile: Mapping[str, Any], edge_crop: bool) -> tuple[list[dict[str, Any]], dict[str, int]]:
+    guard = profile.get("camera_projection_guard")
+    if guard is None:
+        return frames, {"adjusted_frames": 0, "camera_resample_attempts": 0}
+    resolution = profile["resolution"]
+    aperture = float(profile["context_occlusion_guard"]["horizontal_aperture_mm"])
+    edge_offset = profile["procedural_context"]["edge_crop_target_offset_xy_m"] if edge_crop else [0.0, 0.0]
+    adjusted = attempts_used = 0
+    result = []
+    for frame, base_target in zip(frames, base_targets):
+        original_eye = list(frame["eye_xyz_m"])
+        original_target = list(frame["target_xyz_m"])
+        view_vector = [original_eye[index] - original_target[index] for index in range(3)]
+        for attempt in range(int(guard["maximum_resample_attempts"]) + 1):
+            offset_scale = max(0.0, 1.0 - float(guard["edge_crop_offset_decay_per_attempt"]) * attempt)
+            distance_scale = min(
+                float(guard["maximum_eye_target_distance_scale"]),
+                1.0 + float(guard["eye_target_distance_growth_per_attempt"]) * attempt,
+            )
+            candidate = dict(frame)
+            candidate["target_xyz_m"] = [
+                base_target[0] + float(edge_offset[0]) * offset_scale,
+                base_target[1] + float(edge_offset[1]) * offset_scale,
+                base_target[2],
+            ]
+            candidate["eye_xyz_m"] = [
+                candidate["target_xyz_m"][index] + view_vector[index] * distance_scale
+                for index in range(3)
+            ]
+            if all(_projected_bounds(
+                    _object_aabb_corners(recipe, assets[recipe["asset_id"]]["bounds_xyz_m"]),
+                    candidate, resolution, aperture,
+            )["intersects_image"] for recipe in objects):
+                result.append(candidate)
+                if attempt:
+                    adjusted += 1
+                    attempts_used += attempt
+                break
+        else:
+            raise PilotManifestError(
+                f"camera has no bounded target projection solution: scene {scene_index}, frame {frame['frame_id']}"
+            )
+    return result, {"adjusted_frames": adjusted, "camera_resample_attempts": attempts_used}
+
+
+def _guard_context(scene_index: int, seed: int, objects: list[dict[str, Any]], frames: list[dict[str, Any]],
+                   assets: Mapping[str, Any], context_primitives: list[dict[str, Any]],
+                   occluder_ids: set[str], profile: Mapping[str, Any]) -> tuple[list[dict[str, Any]], dict[str, int]]:
+    guard = profile.get("context_occlusion_guard")
+    if guard is None:
+        return context_primitives, {"resampled_occluders": 0, "resample_attempts": 0}
+    resolution, aperture = profile["resolution"], float(guard["horizontal_aperture_mm"])
+    for frame in frames:
+        for recipe in objects:
+            projection = _projected_bounds(
+                _object_aabb_corners(recipe, assets[recipe["asset_id"]]["bounds_xyz_m"]), frame,
+                resolution, aperture,
+            )
+            if not projection["intersects_image"]:
+                raise PilotManifestError(
+                    f"target projection is outside the image: scene {scene_index}, frame {frame['frame_id']}, "
+                    f"object {recipe['object_id']}"
+                )
+    updated = []
+    resampled = attempts_used = 0
+    for primitive in context_primitives:
+        candidate = {key: list(value) if isinstance(value, list) else value for key, value in primitive.items()}
+        if candidate["id"] in occluder_ids and occluder_conflicts(
+                objects, frames, assets, candidate, resolution, aperture):
+            original = list(candidate["center_xyz_m"])
+            rng_seed = int.from_bytes(
+                sha256(f"{profile['seed_namespace']}:{seed}:{candidate['id']}:occluder-v4".encode()).digest()[:8],
+                "big",
+            )
+            rng = random.Random(rng_seed)
+            for attempt in range(1, int(guard["maximum_resample_attempts"]) + 1):
+                radius = float(guard["resample_xy_radius_m"])
+                candidate["center_xyz_m"] = [original[0] + rng.uniform(-radius, radius),
+                                             original[1] + rng.uniform(-radius, radius), original[2]]
+                if not occluder_conflicts(objects, frames, assets, candidate, resolution, aperture):
+                    resampled += 1
+                    attempts_used += attempt
+                    break
+            else:
+                raise PilotManifestError(
+                    f"context occluder has no bounded proxy-safe placement: scene {scene_index}, {candidate['id']}"
+                )
+        updated.append(candidate)
+    return updated, {"resampled_occluders": resampled, "resample_attempts": attempts_used}
+
+
 def build_manifest(profile_path: Path, repo_root: Path, cache_root: Path) -> dict[str, Any]:
     profile = json.loads(profile_path.read_text(encoding="utf-8"))
     validate_profile(profile)
@@ -164,6 +407,7 @@ def build_manifest(profile_path: Path, repo_root: Path, cache_root: Path) -> dic
     scenes = []
     frames = []
     crate_counts: Counter[str] = Counter()
+    guard_totals: Counter[str] = Counter()
     for index, seed in enumerate(seeds):
         rng = random.Random(seed)
         crate_asset = "nvidia:crate_gray_a20" if index % 2 == 0 else "nvidia:crate_blue_a02"
@@ -211,6 +455,13 @@ def build_manifest(profile_path: Path, repo_root: Path, cache_root: Path) -> dic
             stacked["translation_xyz_m"] = [*support["translation_xyz_m"][:2], height]
             stacked["support_object_id"] = support["object_id"]
         background = variation["background_variants"][index % len(variation["background_variants"])]
+        context_primitives = [
+            {key: list(value) if isinstance(value, list) else value for key, value in primitive.items()}
+            for primitive in [
+                *profile["procedural_context"]["backgrounds"][background],
+                *profile["procedural_context"]["occluders"][occlusion],
+            ]
+        ]
         scene = {
             "scene_index": index,
             "seed": seed,
@@ -221,24 +472,25 @@ def build_manifest(profile_path: Path, repo_root: Path, cache_root: Path) -> dic
             "floor_rgb": [rng.uniform(low, high) for low, high in zip(*variation["floor_rgb_range"])],
             "dome_intensity": rng.uniform(*variation["dome_intensity_range"]),
             "key_intensity": rng.uniform(*variation["key_intensity_range"]),
-            "context_primitives": [
-                *profile["procedural_context"]["backgrounds"][background],
-                *profile["procedural_context"]["occluders"][occlusion],
-            ],
+            "context_primitives": context_primitives,
             "context_semantics": profile["procedural_context"]["context_semantics"],
             "objects": objects,
         }
         scene_frames = []
+        scene_frame_rows = []
+        base_targets = []
         for view_index, view in enumerate(profile["views"]):
             view_rng = random.Random(seed ^ ((view_index + 1) * 0x9E3779B97F4A7C15))
             frame_id = index * profile["views_per_scene"] + view_index + 1
+            eye = jitter_vector(view_rng, view["eye_xyz_m"], profile["camera_jitter"]["eye_m"])
+            base_target = jitter_vector(view_rng, view["target_xyz_m"], profile["camera_jitter"]["target_m"])
             frame = {
                 "frame_id": frame_id,
                 "scene_index": index,
                 "view_index": view_index,
                 "view_id": view["id"],
-                "eye_xyz_m": jitter_vector(view_rng, view["eye_xyz_m"], profile["camera_jitter"]["eye_m"]),
-                "target_xyz_m": jitter_vector(view_rng, view["target_xyz_m"], profile["camera_jitter"]["target_m"]),
+                "eye_xyz_m": eye,
+                "target_xyz_m": list(base_target),
                 "focal_length_mm": view["focal_length_mm"] + view_rng.uniform(
                     -profile["camera_jitter"]["focal_length_mm"],
                     profile["camera_jitter"]["focal_length_mm"],
@@ -247,9 +499,21 @@ def build_manifest(profile_path: Path, repo_root: Path, cache_root: Path) -> dic
             if occlusion == "edge_crop":
                 frame["target_xyz_m"][0] += profile["procedural_context"]["edge_crop_target_offset_xy_m"][0]
                 frame["target_xyz_m"][1] += profile["procedural_context"]["edge_crop_target_offset_xy_m"][1]
-            frames.append(frame)
+            scene_frame_rows.append(frame)
+            base_targets.append(base_target)
             scene_frames.append(frame_id)
+        scene_frame_rows, camera_counts = _guard_camera_frames(
+            index, objects, scene_frame_rows, base_targets, assets, profile, occlusion == "edge_crop"
+        )
+        frames.extend(scene_frame_rows)
+        guard_totals.update(camera_counts)
         scene["frame_ids"] = scene_frames
+        scene["context_primitives"], guard_counts = _guard_context(
+            index, seed, objects, scene_frame_rows, assets,
+            context_primitives,
+            {item["id"] for item in profile["procedural_context"]["occluders"][occlusion]}, profile,
+        )
+        guard_totals.update(guard_counts)
         scenes.append(scene)
     if len(scenes) != 128 or len(frames) != 512 or len({row["frame_id"] for row in frames}) != 512:
         raise PilotManifestError("generated pilot cardinality differs")
@@ -294,6 +558,14 @@ def build_manifest(profile_path: Path, repo_root: Path, cache_root: Path) -> dic
                 "distance_to_camera output and 512-capture finalization",
             ],
             "required_validation": "reuse per-object object_id semantic-mask/tight-bbox equality for every visible object",
+            "context_occlusion_guard": {
+                "enabled": profile.get("context_occlusion_guard") is not None,
+                "resampled_occluders": guard_totals["resampled_occluders"],
+                "resample_attempts": guard_totals["resample_attempts"],
+                "adjusted_camera_frames": guard_totals["adjusted_frames"],
+                "camera_resample_attempts": guard_totals["camera_resample_attempts"],
+                "visibility_basis": "authored AABB pinhole proxy; mesh and raster visibility were not measured",
+            },
         },
     }
     manifest["recipe_sha256"] = canonical_digest({"scenes": scenes, "frames": frames, "assets": assets})
