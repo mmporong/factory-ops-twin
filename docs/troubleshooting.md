@@ -1561,3 +1561,11 @@ World가 없을 때 기존 `SimulationManager.setup_simulation`을 호출하고,
 기존 stall 감시는 모든 차량의 travel을 사용했다.317에서 SCC3대가 멈춰도 다른 차량의 이동이 시간을 리셋했다. 기존 기본 감시는 유지하고 opt-in `--cycle-stall-timeout`에 같은SCC 구성원의 pose·task·payload·완료 운송·charged_wh만 사용했다. 외부 이동은 무시하고 구성원의 실제 이동·충전은 진전으로 인정한다. 이 한도와 기존 stall은 wall이 아닌 sim초다.
 
 관련5검사를 통과했다. 실제 owned 터미널의 Ctrl+C에서도 최종sim1079.1·기록5프레임·case_report 해시 일치·소유Python0을 확인했다. 부모 PowerShell은 중단으로exit1을 반환했으며 결과의 `incomplete`·오류 없음과 마감 파일을 별도로 확인했다. 강제 종료나 임의 시점의 중단까지 정상 물류 상태라고 보장하지 않는다. [표적 검사·실제 중단 근거](evidence/process-line-runner-lifecycle.json)
+
+## FOT-198 — 빈 귀가 차량이 교통 양보 후보에서 빠짐
+
+sim20,341초 재현은 출하5·반납4·운송66과 amr13→amr6→amr9→amr13 순환이 같았다. amr13은 D_BD_S_SAFE_EXIT에서 B_P2 충전 접근, amr6은 B_BD_N_SAFE_EXIT에서 B_P3 귀가, amr9는 B_P3에서 B_CO 집하를 기다렸다. 이 초기 순환의 외부 blocker는 없었다. amr6의 ledger location은 이전 출발지 D_P1이므로 현재 pose anchor와 구분한다. 기존 양보는 pickup만 허용해 빈 귀가 차량을 제외했다. [원래 진단 상태](data/campus16-scc-317/report.json)
+
+추가 기하 probe에서 peer 두 위치를 하나의 swept polyline으로 넣어 대각선 전체를 막은 진단 실수가 있었다. 이를 개별 footprint union으로 고치자 cycle-local B_P4 24.5m, B_P1 47m, B_P2 29.5m 후보가 생겼고 B_P3는 amr9 점유로 불가했다. 공장 기하 보강이 필수라는 중간 결론은 폐기했다. production replanner는 원래부터 각 peer의 observation tiles를 개별 union하며 이 오용이 없었다. 수정된 probe는 기존 콘솔 결과 전사이고 전체16대의 현재 점유 승인을 입증하지 않는다.
+
+정지·무적재·active chunk/보유 bridge window 없음 조건의 home-parking도 기존 traffic_yield에 들어가도록 확장했다. ChargingFleet이 배타 예약한 충전대 anchor는 대피 후보에서 제외한다. 예약되지 않은 홈은 기존 실제 pose·full-window 안전 검사를 통과해야 한다. 대피 도착 뒤 원래 귀가를 재개하고 양보 조치 자체는 homes 매핑·assignment·delivery를 바꾸지 않는다. lifecycle의 controlled alternative/blocker 회귀와 관련3검사, 총4검사를 통과했다. 전체16대에서 이 순환이 해소되는지는318로 확인한다. [전사 probe·구현·검사 범위](evidence/campus16-home-parking-yield.json)

@@ -1,0 +1,130 @@
+{
+  "schema_version": 1,
+  "status": "implemented_targeted_checks_passed_full_run_pending",
+  "scope": "Matched CPU diagnostic state, controlled lifecycle regression and a transcribed cycle-local refuge probe. All-16 pose admission and liveness are evaluated by run318, not established by the local probe.",
+  "source_commit": "3b283e2bcd6fd6bf1827de7e15c7fe1013563421",
+  "diagnostic_state": {
+    "sim_time_s": 20340.99999998449,
+    "completed_lots": 5,
+    "returned": 4,
+    "completed_transport_deliveries": 66,
+    "cycle": [
+      "amr-13",
+      "amr-6",
+      "amr-9"
+    ],
+    "external_blockers": []
+  },
+  "robots": [
+    {
+      "id": "amr-13",
+      "physical_anchor": "D_BD_S_SAFE_EXIT",
+      "ledger_location": "D_BD_S_SAFE_EXIT",
+      "motion_stopped": true,
+      "has_active_chunk": false,
+      "payload_id": null,
+      "inventory_load": null,
+      "trip": {
+        "kind": "charging",
+        "phase": "charge_approach",
+        "purpose": null,
+        "goal": "B_P2"
+      },
+      "previous_yield_eligibility": false,
+      "previous_rejection_reasons": [
+        "not_pickup_phase"
+      ],
+      "generic_replan_status": "no_collision_free_alternative_route"
+    },
+    {
+      "id": "amr-6",
+      "physical_anchor": "B_BD_N_SAFE_EXIT",
+      "ledger_location": "D_P1",
+      "motion_stopped": true,
+      "has_active_chunk": false,
+      "payload_id": null,
+      "inventory_load": null,
+      "trip": {
+        "kind": "parking",
+        "phase": "parking",
+        "purpose": "home",
+        "goal": "B_P3"
+      },
+      "previous_yield_eligibility": false,
+      "previous_rejection_reasons": [
+        "parking_trip",
+        "not_pickup_phase"
+      ],
+      "generic_replan_status": "no_collision_free_alternative_route"
+    },
+    {
+      "id": "amr-9",
+      "physical_anchor": "B_P3",
+      "ledger_location": "B_P3",
+      "motion_stopped": true,
+      "has_active_chunk": false,
+      "payload_id": null,
+      "inventory_load": null,
+      "trip": {
+        "kind": "process_line",
+        "phase": "pickup",
+        "purpose": null,
+        "goal": "B_CO"
+      },
+      "previous_yield_eligibility": true,
+      "previous_rejection_reasons": [],
+      "generic_replan_status": "blocked"
+    }
+  ],
+  "corrected_probe": {
+    "schema_version": 1,
+    "evidence_kind": "transcribed_console_probe",
+    "source_report": "report.json",
+    "source_report_sha256": "5717bfcb900879edd335e583accf70bc2b86bfc114bf2556e1e2b00caf3b1e16",
+    "note": "No rerun. Corrects the diagnostic-only mistake that treated two peer poses as one swept polyline instead of a union of separate reservation footprints.",
+    "robot": "amr-6",
+    "start": "B_BD_N_SAFE_EXIT",
+    "candidates": [
+      {
+        "refuge": "B_P1",
+        "distance_m": 47.0,
+        "route_available": true
+      },
+      {
+        "refuge": "B_P2",
+        "distance_m": 29.5,
+        "route_available": true
+      },
+      {
+        "refuge": "B_P3",
+        "distance_m": null,
+        "route_available": false,
+        "reason": "occupied_by_amr-9"
+      },
+      {
+        "refuge": "B_P4",
+        "distance_m": 24.5,
+        "route_available": true
+      }
+    ],
+    "production_boundary": "OperationsModel unions each peer observation tile set; actual route admission remains subject to full-window and pose blockers."
+  },
+  "original_report_sha256": "5717bfcb900879edd335e583accf70bc2b86bfc114bf2556e1e2b00caf3b1e16",
+  "corrected_probe_sha256": "733843886298754f5dc3070352b52d1ea5e1ece6d425ae33f1ed69a845f93bc6",
+  "implementation": {
+    "worktree_commit": "a10c566bbb449c1fa438801019667b2d15e026b0",
+    "main_commit": "f387f74",
+    "boundary": "Stopped unloaded home-parking trips may use the existing traffic-yield route and resume their original home.",
+    "preserved": [
+      "active-window and actual-pose admission",
+      "ChargingFleet exclusive dock reservations",
+      "home ownership mapping: the yield action does not mutate it",
+      "original home goal",
+      "assignment/delivery counters"
+    ],
+    "targeted_tests_passed": 4,
+    "new_home_parking_test_uses_controlled_alternative_and_blocker_mocks": true,
+    "long_run": "campus16-pilot-318 in progress; no completion claim"
+  },
+  "original_report_public_path": "docs/data/campus16-scc-317/report.json"
+}
