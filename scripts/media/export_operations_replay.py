@@ -17,6 +17,8 @@ except ModuleNotFoundError:  # Input validation remains usable in the project's 
 
 HUD_HEIGHT = 140
 GIF_WIDTH = 960
+GIF_WIDTHS = (960, 1280)
+SOURCE_WIDTHS = (1280, 1920, 2560, 3840)
 GIF_FPS = (20, 25, 30)
 TASK_COLORS = {
     "inbound": "#2563eb", "outbound": "#16a34a", "empty_return": "#f59e0b",
@@ -139,10 +141,14 @@ def compose_frame(image_path: Path, record: Mapping[str, Any], result: Mapping[s
         raise RuntimeError("Pillow is required for replay export")
     with Image.open(image_path) as source:
         scene = source.convert("RGB")
-    if scene.size != (1280, 720):
-        raise ValueError(f"source frame must be 1280x720, got {scene.size}")
-    canvas = Image.new("RGB", (1280, 720 + HUD_HEIGHT), "#f7f9fc")
-    canvas.paste(scene, (0, 0))
+    width, height = scene.size
+    if width not in SOURCE_WIDTHS or width * 9 != height * 16:
+        raise ValueError(f"source frame must be a supported native 16:9 size, got {scene.size}")
+    if result.get("image_size_px", [1280, 720]) != [width, height]:
+        raise ValueError("source frame size differs from renderer metadata")
+    scale = width / 1280
+    # Scale presentation graphics separately so native scene pixels are retained.
+    canvas = Image.new("RGBA", (1280, 720 + HUD_HEIGHT), (0, 0, 0, 0))
     draw = ImageDraw.Draw(canvas)
     regular, small, bold = _font(15), _font(13), _font(17, bold=True)
     robots = record.get("robots") if isinstance(record.get("robots"), list) else []
@@ -153,6 +159,7 @@ def compose_frame(image_path: Path, record: Mapping[str, Any], result: Mapping[s
         if not isinstance(xy, list) or len(xy) != 2 or not all(isinstance(v, (int, float)) for v in xy):
             continue
         x, y = badge_screen_xy(xy, result)
+        x, y = x / scale, y / scale
         if not 0 <= x < 1280 or not 0 <= y < 720:
             continue
         color = TASK_COLORS.get(robot.get("task_type"), "#64748b")
@@ -219,16 +226,21 @@ def compose_frame(image_path: Path, record: Mapping[str, Any], result: Mapping[s
             mission = _text(task, _text(status, "idle")).replace("_", " ")
             state = f"/{status}" if status and status != task else ""
             draw.text((x + 12, y), f"{robot_id} {soc_text} {mission}{state}"[:24], font=fleet_font, fill="#263246")
-    return canvas
+    output_size = (width, height + round(HUD_HEIGHT * scale))
+    overlay = canvas if scale == 1 else canvas.resize(output_size, Image.Resampling.LANCZOS)
+    output = Image.new("RGB", output_size, "#f7f9fc")
+    output.paste(scene, (0, 0))
+    output.paste(overlay, (0, 0), overlay)
+    return output
 
 
 def _ffmpeg_process(command: list[str]) -> subprocess.Popen[bytes]:
     return subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
 
 
-def _gif_command(mp4_path: Path, gif_path: Path, fps: float) -> tuple[list[str], str]:
+def _gif_command(mp4_path: Path, gif_path: Path, fps: float, width: int = GIF_WIDTH) -> tuple[list[str], str]:
     filter_graph = (
-        f"fps={fps:g},scale={GIF_WIDTH}:-2:flags=lanczos,hqdn3d=1.5:1.5:6:6,split[a][b];"
+        f"fps={fps:g},scale={width}:-2:flags=lanczos,hqdn3d=1.5:1.5:6:6,split[a][b];"
         "[a]palettegen=max_colors=64:stats_mode=diff[p];"
         "[b][p]paletteuse=dither=bayer:bayer_scale=5:diff_mode=rectangle"
     )
@@ -242,9 +254,12 @@ def _gif_command(mp4_path: Path, gif_path: Path, fps: float) -> tuple[list[str],
 def export_replay(
     render_dir: Path, receipt_path: Path, output_dir: Path, *, gif: bool = False,
     gif_fps: int = 25, start_frame: int = 0, count: int | None = None,
+    gif_width: int = GIF_WIDTH,
 ) -> dict[str, Path]:
     if gif_fps not in GIF_FPS:
         raise ValueError("gif_fps must be 20, 25 or 30")
+    if type(gif_width) is not int or gif_width not in GIF_WIDTHS:
+        raise ValueError("gif_width must be 960 or 1280")
     result, records = validate_inputs(render_dir, receipt_path)
     if type(start_frame) is not int or start_frame < 0 or start_frame >= len(records):
         raise ValueError("start_frame is outside the frame sequence")
@@ -258,9 +273,10 @@ def export_replay(
     source_fps = result.get("fps")
     if type(source_fps) not in (int, float) or source_fps <= 0:
         raise ValueError("renderer source fps is invalid")
+    first_frame = compose_frame(render_dir.resolve() / str(selected[0]["rgb"]), selected[0], result)
     output_dir.mkdir(parents=True)
     mp4_path, gif_path = output_dir / "operations-replay.mp4", output_dir / "operations-replay.gif"
-    size = "1280x860"
+    size = f"{first_frame.width}x{first_frame.height}"
     mp4 = _ffmpeg_process([
         "ffmpeg", "-hide_banner", "-loglevel", "error", "-n", "-f", "rawvideo", "-pix_fmt", "rgb24",
         "-s", size, "-r", str(source_fps), "-i", "-", "-an", "-c:v", "libx264", "-preset", "medium",
@@ -269,9 +285,9 @@ def export_replay(
     effective_gif_fps = min(float(source_fps), float(gif_fps))
     processes = [mp4]
     try:
-        for record in selected:
+        for index, record in enumerate(selected):
             image_path = render_dir.resolve() / str(record["rgb"])
-            frame = compose_frame(image_path, record, result)
+            frame = first_frame if index == 0 else compose_frame(image_path, record, result)
             raw = frame.tobytes()
             for process in processes:
                 assert process.stdin is not None
@@ -290,7 +306,7 @@ def export_replay(
             raise RuntimeError("; ".join(errors))
         gif_filter = None
         if gif:
-            gif_command, gif_filter = _gif_command(mp4_path, gif_path, effective_gif_fps)
+            gif_command, gif_filter = _gif_command(mp4_path, gif_path, effective_gif_fps, gif_width)
             completed = subprocess.run(gif_command, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
             if completed.returncode != 0:
                 message = completed.stderr.decode("utf-8", errors="replace")
@@ -299,6 +315,7 @@ def export_replay(
         for process in processes:
             if process.poll() is None:
                 process.kill()
+            process.wait()
         raise
 
     result_path, frames_path = render_dir.resolve() / "result.json", render_dir.resolve() / "frames.jsonl"
@@ -326,7 +343,9 @@ def export_replay(
         "outputs": {key: {"path": path.name, "sha256": _sha(path), "bytes": path.stat().st_size}
                     for key, path in outputs.items()},
         "hud": {
-            "height_px": HUD_HEIGHT, "source_metadata_only": True,
+            "height_px": round(HUD_HEIGHT * first_frame.width / 1280), "source_metadata_only": True,
+            "output_size_px": list(first_frame.size),
+            "native_scene_pixels_preserved": True,
             "vehicle_badges": "robots[].screen_xy_px, fitted to square-pixel raster using camera readback for legacy raw-aperture projections",
             "presentation_interpolation": "owned by renderer metadata; exporter creates no measurements",
         },
@@ -335,7 +354,7 @@ def export_replay(
             "gif": ({
                 "requested_fps": gif_fps,
                 "effective_fps": effective_gif_fps,
-                "width_px": GIF_WIDTH,
+                "width_px": gif_width,
                 "input_mp4_sha256": mp4_sha,
                 "filter_recipe": gif_filter,
                 "method": "sequential CPU post-process of the completed MP4; ffmpeg fps sampling by timestamps; no exporter interpolation",
@@ -362,6 +381,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--output", required=True, type=Path)
     parser.add_argument("--gif", action="store_true")
     parser.add_argument("--gif-fps", type=int, choices=GIF_FPS, default=25)
+    parser.add_argument("--gif-width", type=int, choices=GIF_WIDTHS, default=GIF_WIDTH)
     parser.add_argument("--start-frame", type=int, default=0)
     parser.add_argument("--count", type=int)
     return parser
@@ -371,7 +391,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     outputs = export_replay(
         args.render_dir, args.host_receipt, args.output, gif=args.gif, gif_fps=args.gif_fps,
-        start_frame=args.start_frame, count=args.count,
+        start_frame=args.start_frame, count=args.count, gif_width=args.gif_width,
     )
     print(json.dumps({key: str(path) for key, path in outputs.items()}, ensure_ascii=False))
     return 0

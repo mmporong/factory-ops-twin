@@ -133,6 +133,8 @@ python scripts/media/export_operations_replay.py `
 
 내보내기 도구는 renderer 결과·프레임 해시·run ID·Job 종료 receipt를 대조한다. HUD는 원본 metadata만 사용하고 새 측정값을 만들지 않는다. 완성 MP4를 입력으로960px·64색·25fps GIF를 순차 생성하며 전송용 GIF에만 노이즈 억제를 적용한다. GPU lease는 렌더 작업이 끝나면 반환하고 CPU 인코딩 동안 보유하지 않는다.
 
+고해상도 촬영은 renderer의 크기를1920×1080으로 지정한다. 내보내기는 원본 장면 픽셀을 유지하고 차량 번호·HUD만 크기에 맞춰 합성하며 결과 MP4는1920×1290이다.1280·1920·2560·3840px 폭의16:9 원본을 지원하고 매니페스트와 실제 크기가 다르면 거부한다.720p 원본을 고해상도 촬영으로 표시하지 않는다. `--gif-width 1280`으로 더 큰 GIF를 선택할 수 있고 기본960px는 유지한다. 현재 대표228은 기존720p 촬영 결과이며 새16대 대표 영상은 완주 기록에서 교체한다. [원본 크기 보존·인코딩 확인 범위](evidence/replay-native-resolution.json)
+
 ## 실제 ROS 실행의 읽기 전용 관측
 
 ROS 임무의 `--dashboard` 발행기가 같은 실행의 `dashboard-state.json`을 기록한다. API의 `--source`로 이 파일을 읽고, 가상 충전과 운영 사건은 같은 실행의 `charging-state.json`, `actions.jsonl`로 연결한다. `--config`는 시뮬레이션과 같은 배치를 선택한다. 아래는4대 정상 운송 배치의 예이며 `<실행명>`은 관측할 실행 폴더 이름으로 바꾼다.

@@ -159,6 +159,32 @@ class ExportOperationsReplayTest(unittest.TestCase):
             self.assertNotEqual((255, 255, 255), image.getpixel((100, 74)))
             self.assertNotEqual((255, 255, 255), image.getpixel((10, 800)))
 
+    @unittest.skipIf(exporter.Image is None, "Pillow is unavailable in this interpreter")
+    def test_native_1080p_scene_is_not_resized_and_badges_follow_native_coordinates(self) -> None:
+        assert exporter.Image is not None
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "native.png"
+            source = exporter.Image.new("RGB", (1920, 1080), "#ffffff")
+            source.putpixel((1918, 1078), (12, 34, 56))
+            source.save(path)
+            record = {"robots": [{"id": "amr-16", "screen_xy_px": [150, 150],
+                                   "task_type": "product_move"}]}
+            image = exporter.compose_frame(path, record, {"image_size_px": [1920, 1080]})
+            self.assertEqual((1920, 1290), image.size)
+            self.assertEqual("RGB", image.mode)
+            self.assertEqual((12, 34, 56), image.getpixel((1918, 1078)))
+            self.assertNotEqual((255, 255, 255), image.getpixel((150, 111)))
+            with self.assertRaisesRegex(ValueError, "renderer metadata"):
+                exporter.compose_frame(path, record, {"image_size_px": [1280, 720]})
+
+    def test_gif_width_cli_reaches_encoding_recipe(self) -> None:
+        args = exporter.build_parser().parse_args([
+            "--render-dir", "render", "--host-receipt", "receipt", "--output", "out",
+            "--gif", "--gif-width", "1280",
+        ])
+        _, recipe = exporter._gif_command(Path("in.mp4"), Path("out.gif"), args.gif_fps, args.gif_width)
+        self.assertIn("scale=1280:-2", recipe)
+
 
 if __name__ == "__main__":
     unittest.main()
