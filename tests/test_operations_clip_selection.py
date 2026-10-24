@@ -22,6 +22,15 @@ def snapshot(stamp, *, shipped=0, returned=0, deliveries=0, robots=()):
 
 
 class OperationsClipSelectorTests(unittest.TestCase):
+    def test_single_sample_window_never_retains_an_edge(self):
+        selector = OperationsClipSelector(sample_count=1)
+        selector.offer(snapshot(0, robots=(("amr-1", "move-1", "product_move", "T1", 0, 0),)))
+        selector.offer(snapshot(1, deliveries=1,
+                                robots=(("amr-1", "move-1", "product_move", "T1", 5, 0),)))
+        self.assertEqual(1, len(selector.best_snapshots()))
+        self.assertEqual(0.0, selector.evidence()["score"]["logistics_pose_distance_m"])
+        self.assertEqual(0, selector.evidence()["score"]["distinct_moving_logistics_robots"])
+
     def test_window_with_both_shipment_and_return_wins(self):
         selector = OperationsClipSelector(sample_count=3)
         rows = [
@@ -61,6 +70,21 @@ class OperationsClipSelectorTests(unittest.TestCase):
         score = selector.evidence()["score"]
         self.assertEqual(0.0, score["logistics_pose_distance_m"])
         self.assertEqual(0, score["distinct_moving_logistics_robots"])
+
+    def test_projected_logistics_task_during_traffic_yield_is_excluded(self):
+        for yield_endpoint in (0, 1):
+            with self.subTest(yield_endpoint=yield_endpoint):
+                selector = OperationsClipSelector(sample_count=2)
+                rows = [
+                    snapshot(0, robots=(("amr-1", "task-a", "product_move", "T1", 0, 0),)),
+                    snapshot(1, robots=(("amr-1", "task-a", "product_move", "T1", 30, 40),)),
+                ]
+                rows[yield_endpoint]["robots"][0]["movement_purpose"] = "traffic_yield"
+                selector.offer(rows[0])
+                selector.offer(rows[1])
+                score = selector.evidence()["score"]
+                self.assertEqual(0.0, score["logistics_pose_distance_m"])
+                self.assertEqual(0, score["distinct_moving_logistics_robots"])
 
     def test_buffer_and_best_window_never_exceed_300_samples(self):
         selector = OperationsClipSelector(sample_count=300)

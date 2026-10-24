@@ -97,7 +97,9 @@ def _edge(previous: Mapping[str, Any], current: Mapping[str, Any]) -> _Edge:
         if (not isinstance(task_id, str) or not task_id
                 or right.get("task_id") != task_id
                 or left.get("task_type") not in LOGISTICS_TASK_TYPES
-                or right.get("task_type") not in LOGISTICS_TASK_TYPES):
+                or right.get("task_type") not in LOGISTICS_TASK_TYPES
+                or left.get("movement_purpose") == "traffic_yield"
+                or right.get("movement_purpose") == "traffic_yield"):
             continue
         x0, y0 = _pose(left, robot_id)
         x1, y1 = _pose(right, robot_id)
@@ -157,15 +159,20 @@ class OperationsClipSelector:
                 new_deliveries[key] < value for key, value in old_deliveries.items()
             ):
                 raise ClipSelectionError("per-robot delivery counters must retain keys and not decrease")
-            edge = _edge(self._samples[-1], snapshot)
-            if len(self._samples) == self.sample_count:
+            if self.sample_count == 1:
                 self._samples.popleft()
                 self._sample_times.popleft()
                 self._sample_counters.popleft()
-                removed = self._edges.popleft()
-                self._remove_edge(removed)
-            self._edges.append(edge)
-            self._add_edge(edge)
+            else:
+                edge = _edge(self._samples[-1], snapshot)
+                if len(self._samples) == self.sample_count:
+                    self._samples.popleft()
+                    self._sample_times.popleft()
+                    self._sample_counters.popleft()
+                    removed = self._edges.popleft()
+                    self._remove_edge(removed)
+                self._edges.append(edge)
+                self._add_edge(edge)
 
         self._samples.append(snapshot)
         self._sample_times.append(stamp)
