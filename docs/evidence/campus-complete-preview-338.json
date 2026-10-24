@@ -1,0 +1,172 @@
+{
+  "schema_version": 1,
+  "status": "passed_with_host_postcheck_correction",
+  "run_id": "campus-complete-preview-338",
+  "render_status": "passed",
+  "job_status": "passed",
+  "launcher_exit_code": 1,
+  "launcher_postcheck": {
+    "status": "false_negative",
+    "observed": "renderer wrote rgb/00000.png as declared by frames.jsonl",
+    "incorrect_expected_path": "rgb/frame-00000.png",
+    "retry_performed": false
+  },
+  "image": {
+    "mode": "RGB",
+    "width_px": 1920,
+    "height_px": 1080,
+    "bytes": 831461,
+    "sha256": "94035694bd63930d79576c1d92bfcd01899d2de4b645fe11a7d48b7f9d50e2b0"
+  },
+  "render_result_sha256": "eab3480e75e82d3e4562b0d2288d70d085e601fcf3bad07a8c320ce29eddde41",
+  "frames_manifest_sha256": "e91801b68b9d53772f3ac6559c9f35e9055e5148abad14577503ec757dd383a9",
+  "factory_usda_sha256": "04919419d0f9b29c32485d745a580a99cfc0b632d2e1be3e9f4181551b1df899",
+  "visual_runtime_manifest_sha256": "d0c7c5ccf03799c5e30a01a700f784650a68ac4e2c7dede0f32ac481599c46f2",
+  "visual_scene_manifest_sha256": "76c275a8232227139c01b4b320a54b15d43dc8e42bbb2c13c4ccb11d66720110",
+  "host_receipt_sha256": "61321d6b4c0e199f2c5dfc1c3edf63e7dfc4ec455f028c80fcc66cfe271b1102",
+  "spec_sha256": "90850d0983ee0040e28c652ee53ce6d1833bb3ec33d12a79ff1c8b00dff67775",
+  "captured_frames": 1,
+  "expected_frames": 1,
+  "source_sim_time_s": 92038.00000086943,
+  "last_source_time_s": 92038.00000086943,
+  "frozen_timeline_s": 0.0,
+  "cleanup_errors": [],
+  "output_bytes": 9328404,
+  "owned_processes_gone": true,
+  "powershell_jobs_gone": true,
+  "lease_released": true,
+  "lease_id": "7b53b5f4-d070-43c7-982b-39f155a15471",
+  "lease_exit_code": 0,
+  "gpu_observation": {
+    "total_device_sample": "RTX 3060: 2959 MiB / 12288 MiB, 9% utilization",
+    "per_process_vram": "not available from WDDM; not estimated"
+  },
+  "original_case_config_pins": {
+    "fleet-profile.json": "f49254f37ffb154f7c113e004a70e9c43f131d60eb2a7408434d30f36a16c9aa",
+    "g2.json": "f1f0edd538ac61d21ab45dc2ae02d40f560f418025b938ea1a2d7c9362195bed",
+    "g3-routing.json": "89c433cd39e38ae5116a0dd265f26062619094f4a96e658fcd0821784cd9c2a0",
+    "layout.json": "43c5510de10fd9c220f95ad563fb4ca99428f9fbb8b99d568c3163fdeb41454f",
+    "operations-charging.json": "b1a7d2e0d24a70d5d6796e024de85086f6db5b65ab82ff67c11d84ac1f226e02",
+    "process-network.json": "b86b10682c25a806b868088d774554118560329fa3a8efc03d61484358428018",
+    "render-profile.json": "1ed3a6b259062a399e2f39af5dbf2a5d9b8b133a55a0f04c6c1ff7c9c5ce9187",
+    "visual-assets.json": "f066f1d4d620a11521c82f9375c81b8423fa5ed4ab3a77ce0f4b81a5d622a230"
+  },
+  "render_config_pins": {
+    "fleet-profile.json": "f49254f37ffb154f7c113e004a70e9c43f131d60eb2a7408434d30f36a16c9aa",
+    "g2.json": "f1f0edd538ac61d21ab45dc2ae02d40f560f418025b938ea1a2d7c9362195bed",
+    "g3-routing.json": "89c433cd39e38ae5116a0dd265f26062619094f4a96e658fcd0821784cd9c2a0",
+    "layout.json": "43c5510de10fd9c220f95ad563fb4ca99428f9fbb8b99d568c3163fdeb41454f",
+    "operations-charging.json": "b1a7d2e0d24a70d5d6796e024de85086f6db5b65ab82ff67c11d84ac1f226e02",
+    "process-network.json": "b86b10682c25a806b868088d774554118560329fa3a8efc03d61484358428018",
+    "render-profile.json": "1ed3a6b259062a399e2f39af5dbf2a5d9b8b133a55a0f04c6c1ff7c9c5ce9187",
+    "visual-assets.json": "beea6efd1e8d48c9565872ba193f5423aa8f7191666bfe58593ea5c2fd081e3f"
+  },
+  "config_comparison": [
+    {
+      "name": "fleet-profile.json",
+      "original_sha256": "f49254f37ffb154f7c113e004a70e9c43f131d60eb2a7408434d30f36a16c9aa",
+      "render_sha256": "f49254f37ffb154f7c113e004a70e9c43f131d60eb2a7408434d30f36a16c9aa",
+      "same": true
+    },
+    {
+      "name": "g2.json",
+      "original_sha256": "f1f0edd538ac61d21ab45dc2ae02d40f560f418025b938ea1a2d7c9362195bed",
+      "render_sha256": "f1f0edd538ac61d21ab45dc2ae02d40f560f418025b938ea1a2d7c9362195bed",
+      "same": true
+    },
+    {
+      "name": "g3-routing.json",
+      "original_sha256": "89c433cd39e38ae5116a0dd265f26062619094f4a96e658fcd0821784cd9c2a0",
+      "render_sha256": "89c433cd39e38ae5116a0dd265f26062619094f4a96e658fcd0821784cd9c2a0",
+      "same": true
+    },
+    {
+      "name": "layout.json",
+      "original_sha256": "43c5510de10fd9c220f95ad563fb4ca99428f9fbb8b99d568c3163fdeb41454f",
+      "render_sha256": "43c5510de10fd9c220f95ad563fb4ca99428f9fbb8b99d568c3163fdeb41454f",
+      "same": true
+    },
+    {
+      "name": "operations-charging.json",
+      "original_sha256": "b1a7d2e0d24a70d5d6796e024de85086f6db5b65ab82ff67c11d84ac1f226e02",
+      "render_sha256": "b1a7d2e0d24a70d5d6796e024de85086f6db5b65ab82ff67c11d84ac1f226e02",
+      "same": true
+    },
+    {
+      "name": "process-network.json",
+      "original_sha256": "b86b10682c25a806b868088d774554118560329fa3a8efc03d61484358428018",
+      "render_sha256": "b86b10682c25a806b868088d774554118560329fa3a8efc03d61484358428018",
+      "same": true
+    },
+    {
+      "name": "render-profile.json",
+      "original_sha256": "1ed3a6b259062a399e2f39af5dbf2a5d9b8b133a55a0f04c6c1ff7c9c5ce9187",
+      "render_sha256": "1ed3a6b259062a399e2f39af5dbf2a5d9b8b133a55a0f04c6c1ff7c9c5ce9187",
+      "same": true
+    },
+    {
+      "name": "visual-assets.json",
+      "original_sha256": "f066f1d4d620a11521c82f9375c81b8423fa5ed4ab3a77ce0f4b81a5d622a230",
+      "render_sha256": "beea6efd1e8d48c9565872ba193f5423aa8f7191666bfe58593ea5c2fd081e3f",
+      "same": false
+    }
+  ],
+  "visual_hash_definition_correction": {
+    "actual_raw_lf_sha256": "beea6efd1e8d48c9565872ba193f5423aa8f7191666bfe58593ea5c2fd081e3f",
+    "actual_raw_bytes": 49590,
+    "non_source_crlf_transformation_sha256": "257720774f41bab5e14a3070ece3d553119986695270f8a126272f3d9b31c1b7",
+    "non_source_crlf_transformation_bytes": 51245,
+    "meaning": "257720... is only the digest obtained by mechanically replacing LF with CRLF; it is neither the checked-out raw file pin nor a canonical JSON digest. No render input used it."
+  },
+  "factory_context_validation_scope": {
+    "source": "factory_ops/factory_context.py:197-231",
+    "statement": "Placement validation covers layout bounds, every AMR allowed region, every physical obstacle except its declared mounting envelope, the declared source-obstacle XYZ envelope, and overlap against every previously accepted fixture."
+  },
+  "final_render_eligible": false,
+  "final_video": false,
+  "selector_bypassed": false,
+  "peak_actual_material_concurrency": 12,
+  "required_peak_actual_material_concurrency": 16,
+  "note": "Closed case evidence remains 48 shipments, 48 returns, quiescent, and all 16 robots with at least 10 tasks. This first-recording-time overview is not final-video qualification.",
+  "completed_at": "2026-10-24T21:59:42.100509+00:00",
+  "source_main_commit": "b291f188d1816c07100494934522a7be1b177509",
+  "original_closed_case_evidence": "campus16-333.json",
+  "host_result_sha256": "ba11dd7bef5f38bc944b96b8f480dc1db08eec7b50cba796c09c5ad6e3b195f6",
+  "root_validation": {
+    "existing_export_validate_inputs": "PASS; actual frames.jsonl RGB path/hash and closed Job receipt used, avoiding hardcoded filename",
+    "rgb_and_hud_visually_inspected": true,
+    "hud_robot_count": 16,
+    "hud_kpis_at_source_time": {
+      "shipments": 40,
+      "returns": 39,
+      "stock": 192
+    },
+    "source_recording_unchanged": true,
+    "fleet_activity": {
+      "material": 7,
+      "moving": 4,
+      "waiting": 3,
+      "charging": 3
+    },
+    "activity_classification_unittest": "PASS1; turns included, parking/yield/charging excluded from material missions",
+    "activity_unittest_command": "python -m unittest tests.test_export_operations_replay.ExportOperationsReplayTest.test_activity_counts_separate_material_turns_waits_and_nonmaterial_motion -v",
+    "test_runtime": "Default venv has no pytest; standard-library unittest ran1targeted test, PASS, no install."
+  },
+  "media": {
+    "overview": "../images/campus-complete-preview-338/overview.png",
+    "raw_rgb": "../images/campus-complete-preview-338/overview-raw.png",
+    "provenance": "../images/campus-complete-preview-338/provenance.json"
+  },
+  "final_render_preparation": {
+    "template_sha256": "35f353c4306e0bef0e2faaf18d1e4010c54fb828c728941ba6186463dec62afe",
+    "visual_config_override": "Only visual-assets.json may differ; all7otherconfig bytes including layout match recorded input. Original recording immutable.",
+    "powershell_parser": "PASS",
+    "visual_only_materialization_without_gpu": "PASS; original f066f1d4... / render beea6efd... pinned separately",
+    "peak12_final_launch_rejected_before_host_or_gpu": "PASS",
+    "final335_launch_pending": true,
+    "current_renderer_sha256": "675e23b0109972b2eceb3e6d8265413e30da9b91e0cb34ae28ad0d48f3f674d4",
+    "materialization_check_spec_is_not_launch_spec": true,
+    "fresh_spec_required_after335_close": true
+  },
+  "postprocess_main_commit": "05cd4980591fb3042ab09e56d819f196487c6a6c"
+}

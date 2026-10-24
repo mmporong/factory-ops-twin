@@ -59,7 +59,7 @@ a46bea1은 기존retarget을 유지하면서 정지한handover의 새window를 �
 
 335는 e53ba60의 새 clean worktree/43동결입력에서 같은 service-window/fifo/48lot·상한으로 시작했다. 초기 peak16 물류를 재관측했고 sim31140초에 전16대 최소2회 실제 운송을 완료했다. 전량 출하/반납·quiescent와 최종 렌더 적격 여부는 마감 후 판정한다. 원본334와 active333은 변경하지 않으며 GPU/새 클라우드는 사용하지 않았다. [335 입력·진행 범위](evidence/campus16-335.json)
 
-정상333의 상태를 새 차로로 촬영하는337 단일 overview는 제공처 작업대의 회전 외곽이 넓힌 AMR 접근 영역과 겹쳐 RGB 생성 전 실패했다. 안전/차량 영역을 보존하고 소품의 시각 배치와 운영 기록의 입력 핀 계약을 수정하며,335는 동결 진행한다.337은 Job/lease exit0이어도 captured_frames0인 실패로 보존하고 같은 입력은 반복하지 않는다. [337 렌더 경계](evidence/campus-complete-preview-337.json)
+정상333의 상태를 새 차로로 촬영하는337 단일 overview는 제공처 작업대의 회전 외곽이 넓힌 AMR 접근 영역과 겹쳐 RGB 생성 전 실패했다. b291f18은 소품 두 개를 이동하고 세 variant/88제공처 외곽의 표적2검사를 통과했다. 운영 layout/나머지7입력을 보존하고 새시각입력을 별도pin한338의GPU1프레임이PASS했으며,335는 동결 진행한다.337은 Job/lease exit0이어도 captured_frames0인 실패로 보존하고 같은 입력은 반복하지 않는다. [337 렌더 경계](evidence/campus-complete-preview-337.json) · [338 이미지·정리](evidence/campus-complete-preview-338.json)
 
 48lot 일괄 투입·빈 WIP에서 시작해 전량 출하/회수/정지하는 결과는 유한 배치의 완주다. 정상상태 평균 처리량이나 실공장 생산성으로 확장하지 않는다. 초기 WIP를 넣는 warm start는 운영 시점의 lot·설비·carrier 상태와 투입 계획을 정의하는 별도 실험이므로 현재16대 완료 조건을 대체하지 않는다. [종료형·정상상태 출력 분석(WSC2006)](https://informs-sim.org/wsc06papers/004.pdf) · [반도체 초기 운영상태 모델링(WSC2022)](https://informs-sim.org/wsc22papers/350.pdf)
 

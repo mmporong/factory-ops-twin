@@ -1736,6 +1736,12 @@ shipping product_move 완료 뒤 같은lot·carrier·origin의 준비된 empty_r
 
 GPU 시도1회·captured_frames0·RGB/RGBA없음이며 source/result/scene/spec해시·Jobowned0·lease반환을 확인했다. Job/lease exit0은 호스트 종료를 뜻하며 render 성공으로 쓰지 않는다. 같은 입력을 반복하지 않고 새 시각 소스의 핀과 기존 운영 기록의 연결 계약부터 확인한다. [337 오류·실제 외곽·마감 근거](evidence/campus-complete-preview-337.json)
 
+수정 b291f18은 wide생성기와 세 visual-assets에서 작업대 두 개만 이동했다. 실제 prepared prototype bounds로 세 variant의88소품을 모두 검사했고 AMR/장애물/이웃 소품 overlap을 포함하는 표적2검사를 통과했다. layout와 나머지7config raw bytes를 보존하고 새visual raw SHA beea6efd…를 별도 pin해338을 한 번 촬영했다. renderer/Job1/1 PASS·소유PID0·lease반환을 확인했다. 기존335 운영은 재실행하지 않았다. 준비문서의257720…은 실제입력이 아닌 CRLF변환 digest여서 source hash로 쓰지 않았고 raw/canonical/변환값 정의를338근거에서 정정했다. [수정 후 이미지·핀·종료](evidence/campus-complete-preview-338.json)
+
 ## FOT-220 — PowerShell 자동 변수와 실행기 버전의 준비 단계 오류
 
 337 launcher는 `$Host`에 작업 경로를 할당하려다 읽기 전용 자동 변수 충돌로 GPU/Job/lease 생성 전에 종료됐다. 변수명을 `$hostRoot`로 바꿨다. 이어 Windows PowerShell5.1에서 큰 UTF-8 JSON의 파싱이 거절됐고 같은 launcher를 PowerShell7에서 실행해 CPU 사전 확인을 통과했다. 파서 거절의 세부 내부 원인은 확정하지 않으며 새 launcher는 `pwsh`를 명시한다. 두 준비 오류는 렌더 입력 재시도와 구분하고 실제 GPU 시도는1회로 기록한다. [단계별 실행 이력](evidence/campus-complete-preview-337.json)
+
+## FOT-221 — 실제 RGB 파일명과 달랐던 호스트 후검사
+
+338의 renderer와 Job은1920×1080 RGB1/1을 정상 마감했지만 launcher는 `rgb/frame-00000.png`를 기대해 exit1이었다. 실제 `frames.jsonl`에는 `rgb/00000.png`와 해시가 있었고 파일/해상도/해시가 모두 일치했다. 입력을 다시 렌더하지 않고 기존 export의 `validate_inputs`로 manifest가 가리키는 상대 경로와 hash·Job 마감을 확인해 표시용 이미지를 생성했다. 원래 launcher exit1은 보존하고 host 상태는 `passed_with_host_postcheck_correction`으로 구분했다. 다음 내보내기도 파일명을 추정하지 않고 frames manifest를 사용한다. [원본·후검사 정정·CPU화면](evidence/campus-complete-preview-338.json)

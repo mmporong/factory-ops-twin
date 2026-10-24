@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "scope": "One current-state overview from completed authored CPU333; frozen PhysX display replay, not final16 video or native transport proof",
+  "source_run_id": "process-line-fd4c24df-7f25-44de-977c-db2d0dded4b8",
+  "render_run_id": "campus-complete-preview-338",
+  "source_time_s": 92038.00000086943,
+  "render_result_sha256": "eab3480e75e82d3e4562b0d2288d70d085e601fcf3bad07a8c320ce29eddde41",
+  "frames_sha256": "e91801b68b9d53772f3ac6559c9f35e9055e5148abad14577503ec757dd383a9",
+  "job_receipt_sha256": "61321d6b4c0e199f2c5dfc1c3edf63e7dfc4ec455f028c80fcc66cfe271b1102",
+  "raw_rgb_sha256": "94035694bd63930d79576c1d92bfcd01899d2de4b645fe11a7d48b7f9d50e2b0",
+  "hud_png_sha256": "cb199b99a1cc3c7013e9bef79d2f75b6061cd20771c000f83219cf1fa635e251",
+  "hud_size_px": [
+    1920,
+    1290
+  ],
+  "hud_generator_sha256": "4339692f2ab8205a42103cec1a9063b6a7f04e72f2f830c1f97fa2b1f375b793",
+  "render_factory_inputs": {
+    "layout.json": "43c5510de10fd9c220f95ad563fb4ca99428f9fbb8b99d568c3163fdeb41454f",
+    "visual-assets.json": "beea6efd1e8d48c9565872ba193f5423aa8f7191666bfe58593ea5c2fd081e3f",
+    "render-profile.json": "1ed3a6b259062a399e2f39af5dbf2a5d9b8b133a55a0f04c6c1ff7c9c5ce9187"
+  },
+  "original_case_modified": false,
+  "robot_count": 16,
+  "kpis_at_this_time": {
+    "active_robots": 11,
+    "completed_orders": 40,
+    "peak_moving_robots": 7,
+    "pending_tasks": 12,
+    "returned_carriers": 39,
+    "stock_units": 192,
+    "total_robots": 16,
+    "traffic_wait_s": 957609.7999906627,
+    "empty_returns_completed": 39
+  },
+  "material_counts": {
+    "world_items": 62,
+    "hidden": 2,
+    "unsupported": 0,
+    "hidden_by_reason": {
+      "represented_by_robot_payload": 2
+    },
+    "unsupported_by_reason": {},
+    "outbound_complete_lots": 40
+  },
+  "fixed_fixture_ids": [
+    "A_MAINT_TOOL_STORAGE_06",
+    "A_MAINT_ROLLING_BENCH_06"
+  ],
+  "visual_revision_scope": "Only visual-assets differs; seven other config bytes including layout match recorded source. Context bounds/AMR/obstacle/neighbor guards retained.",
+  "final_render_eligible": false,
+  "reason": "Completed333 has peak12 material tasks, below current16-concurrent final-video requirement.",
+  "asset_attribution": "../../asset-attribution.md",
+  "fleet_activity": {
+    "material": 7,
+    "moving": 4,
+    "waiting": 3,
+    "charging": 3
+  },
+  "fleet_activity_scope": "Recorded mission/state counts; moving includes turning. Charge tasks include approach/wait; new render records preserve movement-purpose tags to exclude yield from material counts.",
+  "postprocess_main_commit": "05cd4980591fb3042ab09e56d819f196487c6a6c"
+}

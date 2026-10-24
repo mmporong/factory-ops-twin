@@ -108,7 +108,40 @@
     "frozen_manifest_sha256": "3bb51f01e62ea351659451fe839ccd03dd6d35b254e22d5778a4d75ee9694353"
   },
   "repair": {
-    "status": "in_progress",
-    "scope": "Reposition non-production context prop outside unchanged AMR regions; preserve operations recordings and safety. Renderer input compatibility is being checked before any new GPU execution."
+    "status": "implemented_targeted_passed_new_visual_render338_passed",
+    "source_main_commit": "b291f188d1816c07100494934522a7be1b177509",
+    "source_worker_commit": "3d60fd9d1e2cb0f914d205a6375b0a22ab349443",
+    "changed_fixtures": {
+      "A_MAINT_TOOL_STORAGE_06": [
+        [
+          29.6,
+          8.75
+        ],
+        [
+          29.6,
+          7.5
+        ]
+      ],
+      "A_MAINT_ROLLING_BENCH_06": [
+        [
+          29.6,
+          10.45
+        ],
+        [
+          29.3,
+          10.45
+        ]
+      ]
+    },
+    "variants": 3,
+    "actual_prepared_instances_per_variant": 88,
+    "targeted_tests_passed": 2,
+    "targeted_tests_wall_s": 20.499,
+    "layout_sha256": "43c5510de10fd9c220f95ad563fb4ca99428f9fbb8b99d568c3163fdeb41454f",
+    "render_visual_assets_raw_sha256": "beea6efd1e8d48c9565872ba193f5423aa8f7191666bfe58593ea5c2fd081e3f",
+    "operational_or_safety_changes": false,
+    "renderer_contract": "Recorded layout SHA must match; visual-assets is separately pinned. 7nonvisual config files raw-identical to recorded333. No full operations rerun.",
+    "next_evidence": "campus-complete-preview-338.json",
+    "original337_unchanged": true
   }
 }
