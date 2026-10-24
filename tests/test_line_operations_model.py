@@ -22,12 +22,21 @@ class LineOperationsModelTests(unittest.TestCase):
         assert charging is not None
         task = model.line.ready_transports[0]
 
-        base = model._charging_departure_requirement("amr-1")
-        self.assertIsNotNone(base)
-        self.assertEqual(task.task_id, base["task_id"])
+        with patch.object(
+            charging, "_assignment_required_wh", wraps=charging._assignment_required_wh,
+        ) as calculate:
+            base = model._charging_departure_requirement("amr-1")
+            self.assertIsNotNone(base)
+            self.assertEqual(task.task_id, base["task_id"])
+            first_count = calculate.call_count
 
-        charging.traffic_wait_budget_s = 9588.8
-        congested = model._charging_departure_requirement("amr-1")
+            charging.energy.batteries["amr-1"].energy_wh -= 1.0
+            self.assertEqual(base, model._charging_departure_requirement("amr-1"))
+            self.assertEqual(first_count, calculate.call_count)
+
+            charging.traffic_wait_budget_s = 9588.8
+            congested = model._charging_departure_requirement("amr-1")
+            self.assertGreater(calculate.call_count, first_count)
         expected_extra = charging.energy.profile["idle_power_w"] * 9588.8 / 3600.0
         self.assertEqual(task.task_id, congested["task_id"])
         self.assertAlmostEqual(base["required_wh"] + expected_extra, congested["required_wh"])

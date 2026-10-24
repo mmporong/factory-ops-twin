@@ -1,0 +1,23 @@
+{
+  "schema_version": "factory-ops-energy-cache-preflight-v1",
+  "recorded_from": "completed console microprobe",
+  "config": "configs/factory-semiconductor-campus16",
+  "robot_id": "amr-1",
+  "calls": 100,
+  "ready_jobs": 48,
+  "assignment_required_wh_calls": 48,
+  "initial_misses": 1,
+  "cache_hits": 99,
+  "elapsed_s": 0.09128,
+  "cache_key_inputs": [
+    "robot_location",
+    "pose_x_y_yaw",
+    "model_closed",
+    "observed_traffic_wait_budget_s",
+    "ready_work_tuple"
+  ],
+  "excluded_from_key": [
+    "soc_percent"
+  ],
+  "interpretation": "SOC-only changes reuse route-energy requirements; ready work, location, pose, closure, or wait budget changes invalidate."
+}

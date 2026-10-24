@@ -97,6 +97,7 @@ class OperationsModel(DashboardModel):
         self.traffic_yield_completed_count = 0
         self._charging_parking_resume: dict[str, str] = {}
         self._charging_task_resume: dict[str, dict[str, Any]] = {}
+        self._charging_requirement_cache: dict[str, tuple[tuple[Any, ...], dict[str, Any] | None]] = {}
         self._observe_all()
         for robot in self.ledger.robots:
             point = self.book.nodes[self.homes[robot]]
@@ -941,17 +942,34 @@ class OperationsModel(DashboardModel):
 
         if self.operations_charging is None:
             return None
+        jobs = self._charging_ready_jobs()
+        pose = self._poses[robot_id]
+        signature = (
+            self._locations[robot_id],
+            round(pose["x_m"], 12),
+            round(pose["y_m"], 12),
+            round(pose["yaw_rad"], 12),
+            self.closed,
+            round(self.operations_charging.traffic_wait_budget_s, 9),
+            tuple(jobs),
+        )
+        cached = self._charging_requirement_cache.get(robot_id)
+        if cached is not None and cached[0] == signature:
+            return cached[1]
         candidates = [
             (
                 self.operations_charging._assignment_required_wh(self, robot_id, pickup, destination),
                 task_id,
             )
-            for task_id, pickup, destination in self._charging_ready_jobs()
+            for task_id, pickup, destination in jobs
         ]
         if not candidates:
+            self._charging_requirement_cache[robot_id] = (signature, None)
             return None
         required_wh, task_id = min(candidates)
-        return {"required_wh": required_wh, "task_id": task_id}
+        result = {"required_wh": required_wh, "task_id": task_id}
+        self._charging_requirement_cache[robot_id] = (signature, result)
+        return result
 
     def _reassign_charging_approach(self, robot_id: str, goal: str) -> None:
         """Replace one stopped pre-contact approach without releasing pose occupancy."""

@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "run_id": "process-line-22dfb054-8996-4818-a5d4-fa54264cf67e",
+  "status": "terminated_diagnostic",
+  "complete": false,
+  "stop_reason": "operator_stopped_confirmed_per_step_requirement_recomputation_regression",
+  "sim_time_s": 15180.000000037693,
+  "elapsed_wall_s": 534.4113497000653,
+  "source_stable_during_run": true,
+  "owned_processes_gone": true,
+  "progress": {
+    "cumulative_shipped_lots": 4,
+    "cumulative_returned_lots": 1,
+    "completed_transport_deliveries": 54,
+    "minimum_assignments_per_robot": 1,
+    "minimum_completed_deliveries_per_robot": 1,
+    "peak_material_tasks": 13,
+    "peak_material_moving": 7,
+    "traffic_yield_selected": 1,
+    "traffic_yield_completed": 1
+  },
+  "reproduction": {
+    "initial_sim_per_wall_approx": 45.0,
+    "slow_intervals": [
+      {
+        "sim_from": 14550.0,
+        "sim_to": 14730.0,
+        "wall_delta_s": 60.0
+      },
+      {
+        "sim_from": 14730.0,
+        "sim_to": 14940.0,
+        "wall_delta_s": 54.0
+      },
+      {
+        "sim_from": 14940.0,
+        "sim_to": 15150.0,
+        "wall_delta_s": 71.0
+      }
+    ],
+    "root_stack": [
+      "factory_ops/operations_charging.py:515 OperationsCharging._dock_observation",
+      "factory_ops/operations_model.py:946 OperationsModel._charging_departure_requirement",
+      "factory_ops/operations_charging.py:183 OperationsCharging._assignment_required_wh",
+      "factory_ops/operations_motion.py:146 PathMotion.estimated_duration"
+    ],
+    "root_cause": "Each 0.1 second confirmed-dock observation recomputed every ready task across every dock even when ready work, robot location and the observed traffic-wait budget were unchanged.",
+    "repair_boundary": "Cache the departure requirement by robot location, ready-work signature and observed traffic-wait budget; SOC changes must not invalidate route-energy work. Any ready-work or budget change must invalidate it."
+  },
+  "runner_result_written": false,
+  "gzip_closed_valid": true,
+  "recorded_frames": 0,
+  "progress_sha256": "585c45c8b1074000081cc7191005ba1bc489b9975a6f993c4e7afa61056f9de7",
+  "snapshots_sha256": "ac73670af3abed54ac6fb4695131f4099be9fbe39d6076c5d0264a6bbdae9d83",
+  "frozen_source_manifest_sha256": "8f5bee8472a1603de208c1744031324b7f9fbf9da4331548488ce3a724f26715",
+  "source_binding_sha256": "465e07408b0dff44f51ae84b3da6668789a9d386801d2d8d397e94a6a84e59b4"
+}
