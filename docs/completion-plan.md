@@ -31,6 +31,10 @@ a46bea1은 기존retarget을 유지하면서 정지한handover의 새window를 �
 
 327이 동결운영되는 동안 별도 선택정책 downstream_wip_drain_eta_after_coverage를 준비했다. 실제완료운송2회미만의가용차량 우선→명목ETA→배정수→ID를 사용하고 기존후단WIP·capacity/station/window/energy조건은유지한다. 기존설정은그대로이며 새bundle은두배차필드외동일하다. 관련4검사·main실제constructor/snapshot 계약이통과했다. 전체새비교는실행하지않았고327결과뒤에필요할때선택한다. [후보와확인경계](evidence/campus16-coverage-eta.json)
 
+327은sim139121초·wall4670.208초에 출하48·반납48·운송240·전16대최소4회로마감했다. 유한재고240=192잔여+48소비와carrier64가용·43파일안정·닫힌300기록의해시·owned0을확인했다. 그러나16대모두idle/활성물류0/교량owner·window·waiter0인데quiescent=false가남아 no_motion_or_process_progress로미완료판정됐다. 137개home_swap재생후16대가모두현재동적home에있음을확인했다. 이전relocation2건이새충전home교환뒤남은원인을고쳤고main0c42abb에통합했다. 관련9검사와main재현1검사가통과했으며기존327의판정/원본은고치지않는다. peak물류13/이동7로16동시목표도남아최종렌더입력은아니다. 다음329에서종료수정과coverage ETA 후보를함께확인하므로배차단독개선율로해석하지않는다. [327 마감·조건별판정](evidence/campus16-327.json)
+
+닫힌321의정거장매칭진단에서peak13시점은active13고정추가matching0·가상재배치capacity보존상한13이었다. C/D TEST입력2/2와당시stage/WIP가제약이며capacity를무시해도station상한15다. 이후대표시점의station/capacity상한16은충전·주차·차량가용성·실제경로/window/에너지를무시한추상상한이다. 버퍼수나안전조건을숫자만바꿔16동시성으로세지않는다. [321 진단범위](evidence/campus16-321.json)
+
 4. 기존 Nebius 환경234의 재사용239는 `UNHEALTHY`로 SDK 시작 전 실패했고 실제 `STOPPED`로 보존했다. 로컬 RTX3060의307/312에서16대 무적재 바퀴·조인트·정지와32개 ROS/RTX 라이다 토픽을7초·420 physics step 동안 확인했다. 최대 GPU 메모리는6,536/12,288MiB이며 장시간 물류·Nav2·RTF 상한의 근거는 아니다. 이후 클라우드 실행이 필요하면 독립 Stop 복구·실제 GPU/SDK 초기화를 확인하고 기존 첫 묶음6시간·40달러 범위를 유지한다. 중지 후 디스크 비용과 공급자 Stop 실패 가능성은 남는다. [16대 수용 근거](evidence/campus-capacity-307-312.json)
 5. 같은 실행의 웹 장애 주입·운영 영향·복구와 공장 전체 물류 미디어를 만든다. 기본 읽기 전용을 유지하며 명시한 로컬 process-line 실행에서12개 설비 선택·고장/복구 명령·receipt·상태 재생을 연결했다. 관련 API9검사와 UI 타입 검사는 통과했다. 동결314의48lot·9,000초 정상/고장 비교는 HTTP로 L2.TEST를300초 정지·복구하고 잔여 처리시간 보존과 대상 lot의299.9초 완료 지연을 확인했다. 출하는 양쪽2건으로 전체 생산량 감소를 주장하지 않는다. 선택한 마감 baseline과 격리 fault의 모델·설정이 같으며, 공유 소스가 바뀐 세션은 제외했다. 브라우저 조작·48lot 정상 완주·대표16대 미디어는 남아 있다. 대표 README·실행법·한계·오류 기록과 선별 원본을 보존하고 원격 SHA·소유 프로세스 정리·Brev 실제 중지를 확인한다. [명령 확인 범위](evidence/campus-equipment-controls.json) · [설비 비교 결과](evidence/campus-equipment-comparison.json)
 

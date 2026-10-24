@@ -224,5 +224,228 @@
     ],
     "carrier_count": 64,
     "scope": "Authored finite inventory ledger; not physical payload sensing."
+  },
+  "station_capacity_matching_diagnostic": {
+    "artifact_sha256": "49996a722fb8cdf6ec977f318d24e7918b011812a5512b4b6e0209d86260bbaa",
+    "scope": "Closed CPU321 representative snapshots only; theoretical station-disjoint material-task matching",
+    "method": {
+      "material_task_kinds": [
+        "process_input",
+        "product_move",
+        "empty_return"
+      ],
+      "active_states": [
+        "assigned",
+        "picked"
+      ],
+      "station_occupancy": "Use traffic.station_owners from each snapshot. An assigned task owns origin and destination. A picked task uses its observed ownership: normally destination only after origin release, while three of 79 representative snapshots still retain the origin during safe exit.",
+      "forced_active_upper": "Keep all active tasks and their observed station owners, then add an exact maximum cardinality matching of ready task origin/destination edges whose destination cell still has input capacity.",
+      "redispatch_upper": "Keep picked tasks and their observed owners fixed, release unpicked assignments and their input reservations, then exactly match assigned plus ready edges subject to remaining input capacity.",
+      "raw_station_upper": "Same hypothetical redispatch, but ignore cell input capacity to isolate stage/WIP saturation.",
+      "matching": "Exact bipartite augmenting-path matching after duplicate station pairs are collapsed; all 79 observed task graphs were bipartite.",
+      "excluded": [
+        "route reachability",
+        "full-window and bridge admission",
+        "safe-exit lookahead",
+        "robot availability",
+        "charging and energy",
+        "distance and travel time",
+        "kinematic motion"
+      ]
+    },
+    "peak_13_snapshot": {
+      "representative_index": 7,
+      "sim_time_s": 10633.000000019652,
+      "active": 13,
+      "assigned": 12,
+      "picked": 1,
+      "observed_station_owners": 25,
+      "ready": 25,
+      "ready_after_station_owner_filter": 9,
+      "ready_after_station_and_capacity_filter": 0,
+      "forced_active_additional_matching": 0,
+      "forced_active_total_upper": 13,
+      "hypothetical_redispatch_capacity_upper": 13,
+      "hypothetical_redispatch_raw_station_upper": 15,
+      "picked_origin_release": {
+        "task_id": "LOT-0010:empty_return:5",
+        "origin": "A_OUT",
+        "destination": "D_S1",
+        "owned_stations": [
+          "D_S1"
+        ]
+      },
+      "station_free_ready_breakdown": {
+        "L3.TEST": {
+          "destination": "C_CI",
+          "ready_process_inputs": 6,
+          "input_lots": 2,
+          "reserved_inputs": 0,
+          "input_capacity": 2
+        },
+        "L4.TEST": {
+          "destination": "D_CI",
+          "ready_process_inputs": 3,
+          "input_lots": 2,
+          "reserved_inputs": 0,
+          "input_capacity": 2
+        }
+      },
+      "diagnosis": "At the observed peak, the exact capacity-preserving redispatch upper equals the 13 active tasks. The missing three-way concurrency is not a greedy station-matching loss at this instant; C/D TEST input saturation and the current stage/WIP distribution impose the bound. Even after capacity is ignored, the station graph reaches 15 rather than 16."
+    },
+    "neighbor_comparison": [
+      {
+        "representative_index": 6,
+        "sim_time_s": 9114.000000004811,
+        "active": 11,
+        "ready": 26,
+        "forced_active_total_upper": 11,
+        "hypothetical_redispatch_capacity_upper": 11,
+        "hypothetical_redispatch_raw_station_upper": 14
+      },
+      {
+        "representative_index": 7,
+        "sim_time_s": 10633.000000019652,
+        "active": 13,
+        "ready": 25,
+        "forced_active_total_upper": 13,
+        "hypothetical_redispatch_capacity_upper": 13,
+        "hypothetical_redispatch_raw_station_upper": 15
+      },
+      {
+        "representative_index": 8,
+        "sim_time_s": 12152.000000034493,
+        "active": 12,
+        "ready": 26,
+        "forced_active_total_upper": 12,
+        "hypothetical_redispatch_capacity_upper": 12,
+        "hypothetical_redispatch_raw_station_upper": 15
+      }
+    ],
+    "station_capacity_16_examples": [
+      {
+        "representative_index": 24,
+        "sim_time_s": 36455.99999910778,
+        "active": 7,
+        "ready": 27,
+        "additional_matching": 9,
+        "forced_active_total_upper": 16,
+        "vehicle_state_counts": {
+          "visible_material_task_type": 6,
+          "material_moving": 2,
+          "material_waiting": 4,
+          "parking": 3,
+          "staging": 0,
+          "traffic_yield": 0,
+          "charging_or_queue": 5,
+          "charging_phase": {
+            "queued": 2,
+            "approach": 1,
+            "charging": 2
+          },
+          "idle": 2,
+          "suspended_line_assignment_during_charging": 1
+        },
+        "active_count_note": "The production-line graph has seven assigned/picked tasks, but amr-8 is executing a charging task while its process-input assignment remains reserved. Only six robot rows expose a material task type at this instant.",
+        "matching_witness": [
+          [
+            "A_S2",
+            "A_CI"
+          ],
+          [
+            "A_CO",
+            "B_AOI_IN"
+          ],
+          [
+            "B_S1",
+            "B_CI"
+          ],
+          [
+            "C_CO",
+            "A_AOI_IN"
+          ],
+          [
+            "C_PACK_OUT",
+            "C_OUT"
+          ],
+          [
+            "B_CO",
+            "D_AOI_IN"
+          ],
+          [
+            "D_AOI_OUT",
+            "C_PACK_IN"
+          ],
+          [
+            "D_CO",
+            "C_AOI_IN"
+          ],
+          [
+            "D_S1",
+            "D_CI"
+          ]
+        ]
+      },
+      {
+        "representative_index": 25,
+        "sim_time_s": 37974.99999907045,
+        "active": 8,
+        "ready": 26,
+        "additional_matching": 8,
+        "forced_active_total_upper": 16,
+        "vehicle_state_counts": {
+          "visible_material_task_type": 7,
+          "material_moving": 0,
+          "material_waiting": 7,
+          "parking": 4,
+          "staging": 1,
+          "traffic_yield": 0,
+          "charging_or_queue": 3,
+          "charging_phase": {
+            "queued": 0,
+            "approach": 2,
+            "charging": 1
+          },
+          "idle": 1,
+          "suspended_line_assignment_during_charging": 1
+        },
+        "active_count_note": "The production-line graph has eight assigned/picked tasks, but amr-8 is charging while its process-input assignment remains reserved. Seven robot rows expose a material task type, and all seven are waiting.",
+        "matching_witness": [
+          [
+            "D_OUT",
+            "A_S2"
+          ],
+          [
+            "A_S3",
+            "A_CI"
+          ],
+          [
+            "B_S1",
+            "B_CI"
+          ],
+          [
+            "C_CO",
+            "A_AOI_IN"
+          ],
+          [
+            "B_CO",
+            "D_AOI_IN"
+          ],
+          [
+            "D_AOI_OUT",
+            "C_PACK_IN"
+          ],
+          [
+            "D_CO",
+            "C_AOI_IN"
+          ],
+          [
+            "D_S1",
+            "D_CI"
+          ]
+        ]
+      }
+    ],
+    "interpretation": "The observed peak13 is not a recoverable greedy matching loss at that instant. Later station/capacity upper bounds of16 ignore robot availability, charging, route/energy/window admission and do not prove16 actual concurrent material tasks."
   }
 }

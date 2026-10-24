@@ -1671,3 +1671,13 @@ shipping product_move 완료 뒤 같은lot·carrier·origin의 준비된 empty_r
 새coverage ETA bundle의 main통합 byte동일성 검사가 fleet-profile에서거절됐다. 새bundle과양쪽Git blob은LF였으나 root의기존campus16 JSON8개만CRLF가남아있었다. Git status의정규화후동일판정과실행시raw바이트동일성은다르며, FOT-206의신규profile pin전환과구분한다. 모델/새장기실행전에확인돼추가실행은없었다.
 
 각원본을CRLF→LF했을때만HEAD blob과완전히일치하는지확인한뒤 해당root작업파일만Git정본바이트로맞췄다. 의미/수치/순서의변경은없고 기존327의격리worktree는건드리지않았다. 다른7개설정의working/Git/raw SHA일치와network의두배차필드외동일성, 실제새모드constructor/snapshot계약이통과했다. 비교입력의raw동일성을주장하기전양쪽working bytes와Git blob을함께확인한다. [전후해시·확인범위](evidence/campus16-coverage-eta.json) · [Git 줄바꿈속성](https://git-scm.com/docs/gitattributes#_end_of_line_conversion)
+
+## FOT-212 — 물류48/48 이후 모든 차량 idle인데 종료 조건 false
+
+327은 출하48·반납48·완료 운송240을 달성했지만 sim139121초에 no_motion_or_process_progress로 미완료 마감됐다. 마지막 관측은16대 모두 idle·line active0·station owner0·bridge owner/window/waiter0·충전 queue/fault/occupied dock0·캐리어64개 모두 가용이었다. 움직이는 차량의 주차 교착으로 단정하지 않고 최종 종료 조건을 분리했다.
+
+원본의137개 home_swap을 순서대로 재생하면16대의 pose가 모두 현재 동적 home과 일치한다. 잔여 조건은 charging.relocating의 amr13→B_P3, amr14→D_P4 두 건이었다. 이전 교환의 이동 대상이 다음 교환에서 충전 차량이 되면 home은 새 도크로 바뀌지만 옛 relocation이 남는 경계를 재현했다. amr13은 swap77→80, amr14는135→136의 연쇄이며 실제 최종 home은 각각 C_P2와 A_P1이다.
+
+수정0c42abb는 home·도크 점유·중복 검사를 통과한 새 교환에서 충전 차량의 이전 relocation만 해제한다. 상대 차량의 새 relocation과 고유 home·실제 점유 조건은 유지하고 이전 목적지를 사건으로 남긴다. 관련 충전 통합9검사와 main의 중첩 교환 재현1검사를 통과했다.137개 이력 재생은 닫힌 상태의 원인 진단이며 수정본 전체 운영 성공을 뜻하지 않는다. 다음329는 별도 소스에서 확인한다.
+
+기존327 result와300개 기록·43개 소스·마감 해시는 보존하고 status를 소급 수정하지 않는다. 이전326의 예약 전환 예외는 이번 실행에 없었다. 물류 완료·차량 정지 관측·최종 종료 판정·16개 동시 물류는 서로 다른 검사이며, 최종 렌더 selector의 미완료 거절을 우회하지 않는다. [실제 종료·원인·수정 범위](evidence/campus16-327.json)

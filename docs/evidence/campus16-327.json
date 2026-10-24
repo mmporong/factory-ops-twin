@@ -2,7 +2,7 @@
   "schema_version": 1,
   "case": "campus16-pilot-327",
   "run_id": "process-line-8aef7bfb-7dfa-4b93-b508-306e10814455",
-  "status": "running",
+  "status": "incomplete",
   "execution_mode": "authored_CPU_operations",
   "source_commit": "8f6b6987019b430c09ff33e477505b25be5c023c",
   "component_implementation_commit": "a46bea170424c18f7ad174fdc99fc2a1aa0f49fe",
@@ -41,11 +41,194 @@
     "deliveries": 27,
     "peak_material_tasks": 8
   },
-  "verification_scope": "Only frozen input integrity and current progress verified. No closed final result or final media approval yet.",
+  "verification_scope": "Closed CPU run, frozen source, recording hashes and finite-inventory conservation verified. Full final quiescence and peak16 material concurrency were not achieved. No final render or native physics transport claim.",
   "success_flags": {
     "all48_48_complete_verified": false,
     "peak16_material_tasks_verified": false,
     "native_physics_transport_verified": false,
+    "final_render_eligible": false,
+    "all48_shipped_and_returned_verified": true
+  },
+  "stop_reason": "no_motion_or_process_progress",
+  "error": null,
+  "source_stable_during_run": true,
+  "final_sim_time_s": 139121.00000361,
+  "elapsed_wall_s": 4670.207893599989,
+  "business": {
+    "shipped_lots": 48,
+    "returned_carriers": 48,
+    "deliveries_total": 240,
+    "deliveries_by_robot": {
+      "amr-1": 4,
+      "amr-2": 18,
+      "amr-3": 13,
+      "amr-4": 16,
+      "amr-5": 16,
+      "amr-6": 13,
+      "amr-7": 11,
+      "amr-8": 18,
+      "amr-9": 20,
+      "amr-10": 18,
+      "amr-11": 14,
+      "amr-12": 14,
+      "amr-13": 14,
+      "amr-14": 15,
+      "amr-15": 19,
+      "amr-16": 17
+    },
+    "minimum_deliveries_each": 4,
+    "peak_material_tasks": 13,
+    "peak_material_moving": 7,
+    "quiescent": false
+  },
+  "inventory": {
+    "conservation": [
+      {
+        "sku": "packaged-ic-tray",
+        "initial": 240,
+        "replenished": 0,
+        "on_hand": 192,
+        "in_totes": 0,
+        "consumed": 48,
+        "balanced": true
+      }
+    ],
+    "carrier_count": 64,
+    "available_carriers": 64,
+    "robot_loads": {}
+  },
+  "final_observation": {
+    "idle_robot_count": 16,
+    "active_line_assignments": {},
+    "station_owners": {},
+    "bridge_owners": {},
+    "bridge_waiters": {},
+    "bridge_wait_cycle": null,
+    "protected_route_tile_counts": {},
+    "charging_queue": [],
+    "charging_faults": {},
+    "charging_occupied_docks": [],
+    "interpretation": "All16 observed poses equal their current dynamic home after replaying137 home swaps. The only residual final-quiescence condition is two superseded charging relocation entries; this is not a moving-vehicle deadlock."
+  },
+  "recording": {
+    "frames": 300,
+    "selection": {
+      "scope": "authored process-line snapshots; selection only, not case validity, physics, sensors, throughput, or completion proof",
+      "sample_hz": 1,
+      "configured_sample_count": 300,
+      "selected_sample_count": 300,
+      "first": {
+        "sim_time_s": 42020.99999966901,
+        "shipments_completed": 14,
+        "returns_completed": 11,
+        "transports_completed": 102
+      },
+      "last": {
+        "sim_time_s": 42319.99999966466,
+        "shipments_completed": 16,
+        "returns_completed": 12,
+        "transports_completed": 106
+      },
+      "score": {
+        "shipment_and_return_both_increased": true,
+        "minimum_shipment_return_delta": 1,
+        "completed_transport_delta": 4,
+        "logistics_pose_distance_m": 157.5749969619847,
+        "distinct_moving_logistics_robots": 5,
+        "priority_order": [
+          "shipment_and_return_both_increased",
+          "minimum_shipment_return_delta",
+          "completed_transport_delta",
+          "logistics_pose_distance_m",
+          "distinct_moving_logistics_robots"
+        ]
+      },
+      "movement_scope": {
+        "included_task_types": [
+          "empty_return",
+          "process_input",
+          "product_move"
+        ],
+        "excluded_task_types": [
+          "traffic_yield",
+          "parking",
+          "charging"
+        ],
+        "payload_required": false,
+        "task_id_change_edges": "excluded"
+      }
+    },
     "final_render_eligible": false
+  },
+  "closure": {
+    "result_sha256": "7f666963120dca588ef934bd644adb9a954e079c77f1b32c4ab1c105a4f2af0e",
+    "manifest_sha256": "2891b6de920473e2e64b785b814ac1440bf651e4707675ff2ca6b508f549e1b9",
+    "gzip_sha256": "703b596ab71d3dc36dd1ef948f784648770512a51ff11832b5adeecca4c9afa0",
+    "uncompressed_sha256": "97ab3ad24cb5a6226958d54591de0fa3fc5b4f02aad4c7ae6573176893c1d138",
+    "frozen_source_manifest_sha256": "ea7ca9f07c60bcab88ab37cb8854a7da701fa937a3040c32404bf75808e78572",
+    "closed_manifest_and_frozen_files_verified_by_load_recording": true,
+    "verified_frozen_file_count": 43,
+    "owned_launch_pids_checked": [
+      83120,
+      77424,
+      74632
+    ],
+    "owned_processes_remaining": []
+  },
+  "media_completion_contract": {
+    "fleet": 16,
+    "lots": 48,
+    "minimum_deliveries_per_robot": 2,
+    "checks": {
+      "case_complete": false,
+      "source_stable": true,
+      "fleet_matches": true,
+      "workload_matches": true,
+      "all_lots_shipped": true,
+      "all_carriers_returned": true,
+      "quiescent": false,
+      "all_robots_repeated_material_deliveries": true,
+      "requested_material_concurrency": false
+    },
+    "passed": false
+  },
+  "next_action": "Run329 from the repaired frozen source with the optional Coverage ETA candidate. Final completion and peak16 remain unverified; preserve the original327 incomplete classification.",
+  "diagnosis_and_repair": {
+    "receipt_sha256": "b7e2cf041cd0a00becaf10d4a338b59eb73e87c35b62d40dcac4e9328d56c780",
+    "home_swaps_replayed": 137,
+    "robots_at_current_home": 16,
+    "stale_relocations": {
+      "amr-13": "B_P3",
+      "amr-14": "D_P4"
+    },
+    "evidence_chains": {
+      "amr-13": {
+        "earlier_relocation_swap_index": 77,
+        "charger_swap_index": 80,
+        "new_home": "C_P2"
+      },
+      "amr-14": {
+        "earlier_relocation_swap_index": 135,
+        "charger_swap_index": 136,
+        "new_home": "A_P1"
+      }
+    },
+    "root_cause": "A relocating robot later becomes the charging robot in another successful home swap. Its old relocation entry survives even though the dynamic home changes; arrival at the new home cannot satisfy the old target.",
+    "implementation_worker_commit": "5840508e8cec65add7ef5a81e6499caec32c2a40",
+    "implementation_main_commit": "0c42abb01d718b2f2bc97e28a64a71c9043e9e09",
+    "repair": "On a successful home swap, remove only the charging robot's superseded relocation; keep peer relocation and all pre-swap home/dock/occupancy guards. Emit the prior relocation and new charging home in an event.",
+    "targeted_integration_suite": {
+      "reported_passed": 9,
+      "elapsed_s": 5.09,
+      "provenance": "Agent completed command; transcribed receipt, not an independent full run."
+    },
+    "main_regression": {
+      "passed": true,
+      "tests": 1,
+      "elapsed_s": 0.366,
+      "case": "test_relocated_robot_that_later_charges_drops_superseded_relocation"
+    },
+    "original_result_reclassified": false,
+    "full_followup_run_complete": false
   }
 }
