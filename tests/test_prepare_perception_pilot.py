@@ -17,6 +17,7 @@ from scripts.perception.prepare_pilot_manifest import (
 ROOT = Path(__file__).resolve().parents[1]
 PROFILE = ROOT / "configs/perception/loco-pallet-rigid-crate-pilot-v1.json"
 PROFILE_V4 = ROOT / "configs/perception/loco-pallet-rigid-crate-pilot-v4.json"
+PROFILE_V5 = ROOT / "configs/perception/loco-pallet-rigid-crate-pilot-v5.json"
 
 
 class PreparePerceptionPilotTests(unittest.TestCase):
@@ -170,6 +171,39 @@ class PreparePerceptionPilotTests(unittest.TestCase):
             path.write_bytes(b"first\r\nsecond\r\n")
             with self.subTest(name=name), self.assertRaisesRegex(PilotManifestError, "LF line endings"):
                 source_digest(path, name)
+
+    def test_frame_013_background_cube_proxy_is_guarded_in_v5(self):
+        profile = json.loads(PROFILE_V5.read_text(encoding="utf-8"))
+        target = {
+            "asset_id": "nvidia:crate_blue_a02", "class": "small_load_carrier",
+            "object_id": "small_load_carrier-004-01", "rotation_z_deg": -29.121634186202563,
+            "translation_xyz_m": [2.5754634442357274, 0.8504036759595714, 0.0],
+            "uniform_scale": 0.9576020810716301,
+        }
+        assets = {"nvidia:crate_blue_a02": {"bounds_xyz_m": [
+            -0.3058352768421173, -0.20579081773757935, 0.0,
+            0.3058352768421173, 0.20579081773757935, 0.24034841294269427,
+        ]}}
+        frame = {
+            "eye_xyz_m": [5.770314163573657, -6.926508101658061, 5.960911187850195],
+            "focal_length_mm": 30.393323753783914, "frame_id": 13,
+            "target_xyz_m": [1.3122302916348811, 0.3293097251899591, 0.2806965363521828],
+        }
+        wall = {"center_xyz_m": [3.4, 0.6, 1.2], "id": "staging-wall", "primitive": "cube",
+                "rgb": [0.3, 0.34, 0.38], "size_xyz_m": [0.3, 4.6, 2.4]}
+        original = occluder_conflicts([target], [frame], assets, wall, [768, 512], 24.0)
+        self.assertEqual(1, len(original))
+        self.assertTrue(original[0]["full_projection_cover"])
+        self.assertTrue(original[0]["center_sight_intersection"])
+        first, counts = _guard_context(
+            3, 10298168634482162042, [target], [frame], assets, [wall], {"staging-wall"}, profile,
+        )
+        second, _ = _guard_context(
+            3, 10298168634482162042, [target], [frame], assets, [wall], {"staging-wall"}, profile,
+        )
+        self.assertEqual(first, second)
+        self.assertEqual(1, counts["resampled_occluders"])
+        self.assertEqual([], occluder_conflicts([target], [frame], assets, first[0], [768, 512], 24.0))
 
 
 if __name__ == "__main__":

@@ -113,6 +113,12 @@ def validate_profile(profile: Mapping[str, Any]) -> None:
                 or type(radius) not in (int, float) or not 0 < radius <= 5
                 or type(aperture) not in (int, float) or not 0 < aperture <= 100):
             raise PilotManifestError("context occlusion guard bounds differ")
+        context_scope = guard.get("context_cube_scope")
+        seed_suffix = guard.get("placement_seed_suffix")
+        if context_scope is not None and (
+                context_scope != "all_opaque_procedural_cube_primitives"
+                or not isinstance(seed_suffix, str) or not seed_suffix):
+            raise PilotManifestError("context cube scope differs")
     camera_guard = profile.get("camera_projection_guard")
     if camera_guard is not None:
         if (not isinstance(camera_guard, Mapping)
@@ -381,7 +387,8 @@ def _guard_context(scene_index: int, seed: int, objects: list[dict[str, Any]], f
                 objects, frames, assets, candidate, resolution, aperture):
             original = list(candidate["center_xyz_m"])
             rng_seed = int.from_bytes(
-                sha256(f"{profile['seed_namespace']}:{seed}:{candidate['id']}:occluder-v4".encode()).digest()[:8],
+                sha256(f"{profile['seed_namespace']}:{seed}:{candidate['id']}:"
+                       f"{guard.get('placement_seed_suffix', 'occluder-v4')}".encode()).digest()[:8],
                 "big",
             )
             rng = random.Random(rng_seed)
@@ -518,10 +525,15 @@ def build_manifest(profile_path: Path, repo_root: Path, cache_root: Path) -> dic
         frames.extend(scene_frame_rows)
         guard_totals.update(camera_counts)
         scene["frame_ids"] = scene_frames
+        guarded_ids = (
+            {item["id"] for item in context_primitives if item["primitive"] == "cube"}
+            if profile.get("context_occlusion_guard", {}).get("context_cube_scope")
+            == "all_opaque_procedural_cube_primitives"
+            else {item["id"] for item in profile["procedural_context"]["occluders"][occlusion]}
+        )
         scene["context_primitives"], guard_counts = _guard_context(
             index, seed, objects, scene_frame_rows, assets,
-            context_primitives,
-            {item["id"] for item in profile["procedural_context"]["occluders"][occlusion]}, profile,
+            context_primitives, guarded_ids, profile,
         )
         guard_totals.update(guard_counts)
         scenes.append(scene)
@@ -571,6 +583,7 @@ def build_manifest(profile_path: Path, repo_root: Path, cache_root: Path) -> dic
             "context_occlusion_guard": {
                 "enabled": profile.get("context_occlusion_guard") is not None,
                 "resampled_occluders": guard_totals["resampled_occluders"],
+                "resampled_context_cubes": guard_totals["resampled_occluders"],
                 "resample_attempts": guard_totals["resample_attempts"],
                 "adjusted_camera_frames": guard_totals["adjusted_frames"],
                 "camera_resample_attempts": guard_totals["camera_resample_attempts"],

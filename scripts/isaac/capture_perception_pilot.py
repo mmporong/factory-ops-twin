@@ -49,6 +49,7 @@ EXPECTED_ASSETS = {
 PROFILE_PATHS = {
     "loco-pallet-rigid-crate-pilot-v1": "configs/perception/loco-pallet-rigid-crate-pilot-v1.json",
     "loco-pallet-rigid-crate-pilot-v4": "configs/perception/loco-pallet-rigid-crate-pilot-v4.json",
+    "loco-pallet-rigid-crate-pilot-v5": "configs/perception/loco-pallet-rigid-crate-pilot-v5.json",
 }
 TOP_LEVEL_KEYS = {
     "schema_version", "status", "profile_id", "profile_sha256", "generator", "prepared_inputs",
