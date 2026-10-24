@@ -2,7 +2,7 @@
   "schema_version": 1,
   "case": "campus16-pilot-329",
   "run_id": "process-line-724f1a90-0425-4aba-9a91-c1febf177e50",
-  "status": "running",
+  "status": "incomplete",
   "execution_mode": "authored_CPU_operations",
   "source_commit": "0c42abb01d718b2f2bc97e28a64a71c9043e9e09",
   "components": {
@@ -47,12 +47,241 @@
     "deliveries": 29,
     "peak_material_tasks": 8
   },
-  "verification_scope": "Launch and frozen input integrity only. No closed followup result or final media approval yet.",
+  "verification_scope": "Closed incomplete CPU run: all16robots repeated transport, inventory and recording/source hashes verified. Fixed five-robot wait cycle stopped the run. No whole-run completion, isolated ETA improvement, final render or native transport claim.",
   "success_flags": {
     "all48_shipped_and_returned_verified": false,
     "quiescent_verified": false,
     "peak16_material_tasks_verified": false,
     "native_physics_transport_verified": false,
     "final_render_eligible": false
-  }
+  },
+  "stop_reason": "stationary_wait_cycle",
+  "error": null,
+  "source_stable_during_run": true,
+  "final_sim_time_s": 36173.999999754094,
+  "elapsed_wall_s": 1513.691361000063,
+  "business": {
+    "shipped_lots": 10,
+    "returned_carriers": 6,
+    "deliveries_total": 85,
+    "deliveries_by_robot": {
+      "amr-1": 7,
+      "amr-2": 6,
+      "amr-3": 4,
+      "amr-4": 5,
+      "amr-5": 6,
+      "amr-6": 3,
+      "amr-7": 3,
+      "amr-8": 7,
+      "amr-9": 8,
+      "amr-10": 3,
+      "amr-11": 9,
+      "amr-12": 3,
+      "amr-13": 7,
+      "amr-14": 5,
+      "amr-15": 4,
+      "amr-16": 5
+    },
+    "minimum_deliveries_each": 3,
+    "peak_material_tasks": 13,
+    "peak_material_moving": 7,
+    "quiescent": false
+  },
+  "inventory": {
+    "conservation": [
+      {
+        "sku": "packaged-ic-tray",
+        "initial": 240,
+        "replenished": 0,
+        "on_hand": 207,
+        "in_totes": 23,
+        "consumed": 10,
+        "balanced": true
+      }
+    ],
+    "carrier_count": 64
+  },
+  "stationary_cycle": {
+    "members": [
+      "amr-10",
+      "amr-4",
+      "amr-5",
+      "amr-7",
+      "amr-9"
+    ],
+    "unchanged_since_sim_s": 35572.99999976284,
+    "elapsed_sim_s": 600.9999999912543
+  },
+  "cycle_observation": [
+    {
+      "id": "amr-4",
+      "status": "waiting",
+      "task_type": "parking",
+      "task_id": "park:amr-4",
+      "payload_id": null,
+      "pose": {
+        "x_m": 15.0,
+        "y_m": 3.0,
+        "yaw_rad": 3.536383773289554
+      },
+      "destination": "A_P3",
+      "waiting_reason": "교통 예약 대기: bridge_admission_occupied",
+      "charging_phase": null
+    },
+    {
+      "id": "amr-5",
+      "status": "waiting",
+      "task_type": "empty_return",
+      "task_id": "LOT-0006:empty_return:5",
+      "payload_id": "T006",
+      "pose": {
+        "x_m": 74.0,
+        "y_m": 73.0,
+        "yaw_rad": 8.175732188371125
+      },
+      "destination": "B_S3",
+      "waiting_reason": "교통 예약 대기: safe_exit_lookahead_occupied",
+      "charging_phase": null
+    },
+    {
+      "id": "amr-7",
+      "status": "waiting",
+      "task_type": "charging",
+      "task_id": "charge:amr-7",
+      "payload_id": null,
+      "pose": {
+        "x_m": 80.0,
+        "y_m": 30.5,
+        "yaw_rad": -6.283185307179586
+      },
+      "destination": "A_P1",
+      "waiting_reason": "교통 예약 대기: safe_exit_lookahead_occupied",
+      "charging_phase": "approach"
+    },
+    {
+      "id": "amr-9",
+      "status": "waiting",
+      "task_type": "charging",
+      "task_id": "charge:amr-9",
+      "payload_id": null,
+      "pose": {
+        "x_m": 41.0,
+        "y_m": 73.0,
+        "yaw_rad": 0.5880026035475675
+      },
+      "destination": "D_P2",
+      "waiting_reason": "교통 예약 대기: safe_exit_lookahead_occupied",
+      "charging_phase": "approach"
+    },
+    {
+      "id": "amr-10",
+      "status": "waiting",
+      "task_type": "product_move",
+      "task_id": "LOT-0024:product_move:3",
+      "payload_id": null,
+      "pose": {
+        "x_m": 17.0,
+        "y_m": 9.5,
+        "yaw_rad": 4.71238898038469
+      },
+      "destination": "C_AOI_OUT",
+      "waiting_reason": "교통 예약 대기: safe_exit_lookahead_occupied",
+      "charging_phase": null
+    }
+  ],
+  "traffic": {
+    "yield_selected": 9,
+    "yield_completed": 9,
+    "bridge_admission_wait_cycle": [
+      "amr-10",
+      "amr-4",
+      "amr-5",
+      "amr-7",
+      "amr-9"
+    ],
+    "reservation_wait_cycle": null
+  },
+  "recording": {
+    "frames": 300,
+    "selection": {
+      "scope": "authored process-line snapshots; selection only, not case validity, physics, sensors, throughput, or completion proof",
+      "sample_hz": 1,
+      "configured_sample_count": 300,
+      "selected_sample_count": 300,
+      "first": {
+        "sim_time_s": 801.0000000001136,
+        "shipments_completed": 0,
+        "returns_completed": 0,
+        "transports_completed": 8
+      },
+      "last": {
+        "sim_time_s": 1100.000000000095,
+        "shipments_completed": 0,
+        "returns_completed": 0,
+        "transports_completed": 15
+      },
+      "score": {
+        "shipment_and_return_both_increased": false,
+        "minimum_shipment_return_delta": 0,
+        "completed_transport_delta": 7,
+        "logistics_pose_distance_m": 302.4142411782973,
+        "distinct_moving_logistics_robots": 5,
+        "priority_order": [
+          "shipment_and_return_both_increased",
+          "minimum_shipment_return_delta",
+          "completed_transport_delta",
+          "logistics_pose_distance_m",
+          "distinct_moving_logistics_robots"
+        ]
+      },
+      "movement_scope": {
+        "included_task_types": [
+          "empty_return",
+          "process_input",
+          "product_move"
+        ],
+        "excluded_task_types": [
+          "traffic_yield",
+          "parking",
+          "charging"
+        ],
+        "payload_required": false,
+        "task_id_change_edges": "excluded"
+      }
+    },
+    "final_render_eligible": false
+  },
+  "closure": {
+    "result_sha256": "1e2027bb6650b6c78b744196763489a952282c6e7f493dcd02d9422f073a1b9c",
+    "manifest_sha256": "5ef839de26fc544bc574a0d3de2d22661ce17310fb61b63df9f033dfcf603d96",
+    "gzip_sha256": "dbcd2bc53d676b882198b711ec9cb987fcafcec6af8c6ee641e663bc50eea36a",
+    "frozen_source_manifest_sha256": "074b29e90f8c5bb4863b072df7a54d9f47cfb75554d2d0afa3600e743c0c7ca1",
+    "verified_frozen_files": 43,
+    "closed_manifest_raw_gzip_and_frozen_verified": true,
+    "owned_processes_check_pending": false,
+    "owned_launch_pids_checked": [
+      63440,
+      97328,
+      39388
+    ],
+    "owned_processes_remaining": []
+  },
+  "media_completion_contract": {
+    "fleet": 16,
+    "lots": 48,
+    "minimum_deliveries_per_robot": 2,
+    "checks": {
+      "case_complete": false,
+      "source_stable": true,
+      "fleet_matches": true,
+      "workload_matches": true,
+      "all_lots_shipped": false,
+      "all_carriers_returned": false,
+      "quiescent": false,
+      "all_robots_repeated_material_deliveries": true,
+      "requested_material_concurrency": false
+    },
+    "passed": false
+  },
+  "next_action": "Preserve this source-bound result. Diagnose exact five-robot blockers and legal yield/recovery in a separate source; no identical full retry. Prepare actual wide-bridge geometry independently with the same safety radius and reservation tiles."
 }
