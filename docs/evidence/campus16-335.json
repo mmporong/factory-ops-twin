@@ -163,10 +163,12 @@
   },
   "selected_public_data": {
     "path": "docs/data/campus16-335/completed-transports.csv",
-    "sha256": "c782e6be418e99d989d41c7fd1c99d69de74b9371f7af5acad71c6c89afb5aee",
+    "sha256": "d9cbc911590be6f5ad4fdde78f60d6a70f86406147e37f08568204f8549a9762",
     "rows": 16,
     "sum_completed_material_transports": 240,
-    "source_result_sha256": "1916ba564b0639fde1ca5c350186d558cdb1fb968332815b28b63c041ded01d7"
+    "source_result_sha256": "1916ba564b0639fde1ca5c350186d558cdb1fb968332815b28b63c041ded01d7",
+    "line_endings": "LF",
+    "hash_scope": "raw repository file bytes; working tree and Git blob identical"
   },
   "excerpt_selection": {
     "path": "artifacts/campus-final-render-preparation/campus16-335-excerpt.json",

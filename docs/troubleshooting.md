@@ -1745,3 +1745,7 @@ GPU 시도1회·captured_frames0·RGB/RGBA없음이며 source/result/scene/spec�
 ## FOT-221 — 실제 RGB 파일명과 달랐던 호스트 후검사
 
 338의 renderer와 Job은1920×1080 RGB1/1을 정상 마감했지만 launcher는 `rgb/frame-00000.png`를 기대해 exit1이었다. 실제 `frames.jsonl`에는 `rgb/00000.png`와 해시가 있었고 파일/해상도/해시가 모두 일치했다. 입력을 다시 렌더하지 않고 기존 export의 `validate_inputs`로 manifest가 가리키는 상대 경로와 hash·Job 마감을 확인해 표시용 이미지를 생성했다. 원래 launcher exit1은 보존하고 host 상태는 `passed_with_host_postcheck_correction`으로 구분했다. 다음 내보내기도 파일명을 추정하지 않고 frames manifest를 사용한다. [원본·후검사 정정·CPU화면](evidence/campus-complete-preview-338.json)
+
+## FOT-222 — 공개 CSV의 작업트리와 Git blob 줄바꿈 해시 불일치
+
+335의 차량별 운송 CSV를 기본 `csv.writer`로 작성해 작업트리에는 CRLF가 생겼지만 Git은 LF로 저장했다. 수치16행·합계240은 같아도 공개 근거의 작업트리 SHA가 원격 CSV와 달랐다. 파일을 LF로 맞추고 공개 SHA를 Git blob 바이트의 `d9cbc911…`로 정정했다. 원본 운영 기록이나 판정은 변경하지 않았다. 이후 공개 CSV는 `lineterminator="\n"`으로 작성하고 스테이징된 blob과 작업트리 바이트를 비교한 뒤 그 바이트의 해시를 기록한다. [수정한 공개 근거](evidence/campus16-335.json)
