@@ -1,0 +1,1655 @@
+{
+  "schema_version": 1,
+  "provider": "factory-ops-twin",
+  "author": "factory-ops-twin project",
+  "license": "CC0-1.0 AND CC-BY-4.0",
+  "source": "Reference-based authored semiconductor process geometry retained in a dual-lane layout (CC0-1.0) and attributed NVIDIA SimReady service props and packaging conveyor (CC-BY-4.0); not semiconductor OEM CAD or certified ESD equipment. Four-bay placement is an authored translation pending an actual campus render.",
+  "variant_count": 12,
+  "required_semantic_taxonomy": [
+    "floor",
+    "floor_marking",
+    "rack",
+    "workbench",
+    "process_equipment",
+    "control_cabinet",
+    "buffer_fixture",
+    "pallet",
+    "tote",
+    "payload_tote",
+    "amr",
+    "station_marker",
+    "barrier",
+    "facility_structure"
+  ],
+  "runtime_semantics": {
+    "amr": "dynamic Nova Carter roots supplied by the Isaac runtime",
+    "payload_tote": "dynamic payload root bound to the mission ledger by the runtime"
+  },
+  "obstacle_assets": {
+    "A_KIT_BENCH_1": {
+      "recipe": "esd_tray_loadport",
+      "semantic_class": "workbench",
+      "state_role": "incoming ESD tray loadports"
+    },
+    "A_KIT_BENCH_2": {
+      "recipe": "esd_tray_loadport",
+      "semantic_class": "workbench",
+      "state_role": "carrier return and retest tray loadports"
+    },
+    "A_RACK_A1": {
+      "recipe": "tray_stocker",
+      "semantic_class": "rack",
+      "state_role": "JEDEC incoming tray stocker"
+    },
+    "A_RACK_A2": {
+      "recipe": "tray_stocker",
+      "semantic_class": "rack",
+      "state_role": "WIP tray stocker beside S2"
+    },
+    "A_RACK_B1": {
+      "recipe": "tray_stocker",
+      "semantic_class": "rack",
+      "state_role": "released lot tray stocker"
+    },
+    "A_RACK_B2": {
+      "recipe": "tray_stocker",
+      "semantic_class": "rack",
+      "state_role": "retest and empty carrier stocker"
+    },
+    "A_BENCH_A1": {
+      "recipe": "ate_rack",
+      "semantic_class": "workbench",
+      "state_role": "ATE instrumentation cabinets"
+    },
+    "A_BENCH_A2": {
+      "recipe": "aoi_mark",
+      "semantic_class": "process_equipment",
+      "state_role": "optical inspection and lot scan enclosure"
+    },
+    "A_BENCH_B1": {
+      "recipe": "esd_packing",
+      "semantic_class": "workbench",
+      "state_role": "ESD tray packaging bench"
+    },
+    "A_BENCH_B2": {
+      "recipe": "aoi_mark",
+      "semantic_class": "process_equipment",
+      "state_role": "AOI and marking enclosure"
+    },
+    "A_PROCESS_1": {
+      "recipe": "semiconductor_handler",
+      "semantic_class": "process_equipment",
+      "state_role": "test handler and tray input/output elevators"
+    },
+    "A_PROCESS_2": {
+      "recipe": "aoi_mark",
+      "semantic_class": "process_equipment",
+      "state_role": "AOI and marking service module"
+    },
+    "A_PROCESS_3": {
+      "recipe": "esd_packing",
+      "semantic_class": "process_equipment",
+      "state_role": "ESD pack and tray output rollers"
+    },
+    "A_CELL_CABINET": {
+      "recipe": "ate_rack",
+      "semantic_class": "control_cabinet",
+      "state_role": "ATE mainframe and utility cabinets"
+    },
+    "A_CI_BUFFER": {
+      "recipe": "buffer_fixture",
+      "semantic_class": "buffer_fixture",
+      "state_role": "cell_input_two_slot"
+    },
+    "A_CO_BUFFER": {
+      "recipe": "buffer_fixture",
+      "semantic_class": "buffer_fixture",
+      "state_role": "cell_output_two_slot"
+    },
+    "A_FG_LOW": {
+      "recipe": "external_asset",
+      "semantic_class": "process_equipment",
+      "state_role": "packaging conveyor and inspection gate geometry; aggregate pack flow, no belt or inspection-sensor physics"
+    },
+    "A_FG_HIGH": {
+      "recipe": "esd_tray_loadport",
+      "semantic_class": "pallet",
+      "state_role": "sealed finished tray staging"
+    },
+    "A_SERVICE_CABINET": {
+      "recipe": "cleanroom_utility",
+      "semantic_class": "control_cabinet",
+      "state_role": "utility, filter and electrical cabinet row"
+    },
+    "B_KIT_BENCH_1": {
+      "recipe": "esd_tray_loadport",
+      "semantic_class": "workbench",
+      "state_role": "incoming ESD tray loadports"
+    },
+    "B_KIT_BENCH_2": {
+      "recipe": "esd_tray_loadport",
+      "semantic_class": "workbench",
+      "state_role": "carrier return and retest tray loadports"
+    },
+    "B_RACK_A1": {
+      "recipe": "tray_stocker",
+      "semantic_class": "rack",
+      "state_role": "JEDEC incoming tray stocker"
+    },
+    "B_RACK_A2": {
+      "recipe": "tray_stocker",
+      "semantic_class": "rack",
+      "state_role": "WIP tray stocker beside S2"
+    },
+    "B_RACK_B1": {
+      "recipe": "tray_stocker",
+      "semantic_class": "rack",
+      "state_role": "released lot tray stocker"
+    },
+    "B_RACK_B2": {
+      "recipe": "tray_stocker",
+      "semantic_class": "rack",
+      "state_role": "retest and empty carrier stocker"
+    },
+    "B_BENCH_A1": {
+      "recipe": "ate_rack",
+      "semantic_class": "workbench",
+      "state_role": "ATE instrumentation cabinets"
+    },
+    "B_BENCH_A2": {
+      "recipe": "aoi_mark",
+      "semantic_class": "process_equipment",
+      "state_role": "optical inspection and lot scan enclosure"
+    },
+    "B_BENCH_B1": {
+      "recipe": "esd_packing",
+      "semantic_class": "workbench",
+      "state_role": "ESD tray packaging bench"
+    },
+    "B_BENCH_B2": {
+      "recipe": "aoi_mark",
+      "semantic_class": "process_equipment",
+      "state_role": "AOI and marking enclosure"
+    },
+    "B_PROCESS_1": {
+      "recipe": "semiconductor_handler",
+      "semantic_class": "process_equipment",
+      "state_role": "test handler and tray input/output elevators"
+    },
+    "B_PROCESS_2": {
+      "recipe": "aoi_mark",
+      "semantic_class": "process_equipment",
+      "state_role": "AOI and marking service module"
+    },
+    "B_PROCESS_3": {
+      "recipe": "esd_packing",
+      "semantic_class": "process_equipment",
+      "state_role": "ESD pack and tray output rollers"
+    },
+    "B_CELL_CABINET": {
+      "recipe": "ate_rack",
+      "semantic_class": "control_cabinet",
+      "state_role": "ATE mainframe and utility cabinets"
+    },
+    "B_CI_BUFFER": {
+      "recipe": "buffer_fixture",
+      "semantic_class": "buffer_fixture",
+      "state_role": "cell_input_two_slot"
+    },
+    "B_CO_BUFFER": {
+      "recipe": "buffer_fixture",
+      "semantic_class": "buffer_fixture",
+      "state_role": "cell_output_two_slot"
+    },
+    "B_FG_LOW": {
+      "recipe": "external_asset",
+      "semantic_class": "process_equipment",
+      "state_role": "packaging conveyor and inspection gate geometry; aggregate pack flow, no belt or inspection-sensor physics"
+    },
+    "B_FG_HIGH": {
+      "recipe": "esd_tray_loadport",
+      "semantic_class": "pallet",
+      "state_role": "sealed finished tray staging"
+    },
+    "B_SERVICE_CABINET": {
+      "recipe": "cleanroom_utility",
+      "semantic_class": "control_cabinet",
+      "state_role": "utility, filter and electrical cabinet row"
+    },
+    "C_KIT_BENCH_1": {
+      "recipe": "esd_tray_loadport",
+      "semantic_class": "workbench",
+      "state_role": "incoming ESD tray loadports"
+    },
+    "C_KIT_BENCH_2": {
+      "recipe": "esd_tray_loadport",
+      "semantic_class": "workbench",
+      "state_role": "carrier return and retest tray loadports"
+    },
+    "C_RACK_A1": {
+      "recipe": "tray_stocker",
+      "semantic_class": "rack",
+      "state_role": "JEDEC incoming tray stocker"
+    },
+    "C_RACK_A2": {
+      "recipe": "tray_stocker",
+      "semantic_class": "rack",
+      "state_role": "WIP tray stocker beside S2"
+    },
+    "C_RACK_B1": {
+      "recipe": "tray_stocker",
+      "semantic_class": "rack",
+      "state_role": "released lot tray stocker"
+    },
+    "C_RACK_B2": {
+      "recipe": "tray_stocker",
+      "semantic_class": "rack",
+      "state_role": "retest and empty carrier stocker"
+    },
+    "C_BENCH_A1": {
+      "recipe": "ate_rack",
+      "semantic_class": "workbench",
+      "state_role": "ATE instrumentation cabinets"
+    },
+    "C_BENCH_A2": {
+      "recipe": "aoi_mark",
+      "semantic_class": "process_equipment",
+      "state_role": "optical inspection and lot scan enclosure"
+    },
+    "C_BENCH_B1": {
+      "recipe": "esd_packing",
+      "semantic_class": "workbench",
+      "state_role": "ESD tray packaging bench"
+    },
+    "C_BENCH_B2": {
+      "recipe": "aoi_mark",
+      "semantic_class": "process_equipment",
+      "state_role": "AOI and marking enclosure"
+    },
+    "C_PROCESS_1": {
+      "recipe": "semiconductor_handler",
+      "semantic_class": "process_equipment",
+      "state_role": "test handler and tray input/output elevators"
+    },
+    "C_PROCESS_2": {
+      "recipe": "aoi_mark",
+      "semantic_class": "process_equipment",
+      "state_role": "AOI and marking service module"
+    },
+    "C_PROCESS_3": {
+      "recipe": "esd_packing",
+      "semantic_class": "process_equipment",
+      "state_role": "ESD pack and tray output rollers"
+    },
+    "C_CELL_CABINET": {
+      "recipe": "ate_rack",
+      "semantic_class": "control_cabinet",
+      "state_role": "ATE mainframe and utility cabinets"
+    },
+    "C_CI_BUFFER": {
+      "recipe": "buffer_fixture",
+      "semantic_class": "buffer_fixture",
+      "state_role": "cell_input_two_slot"
+    },
+    "C_CO_BUFFER": {
+      "recipe": "buffer_fixture",
+      "semantic_class": "buffer_fixture",
+      "state_role": "cell_output_two_slot"
+    },
+    "C_FG_LOW": {
+      "recipe": "external_asset",
+      "semantic_class": "process_equipment",
+      "state_role": "packaging conveyor and inspection gate geometry; aggregate pack flow, no belt or inspection-sensor physics"
+    },
+    "C_FG_HIGH": {
+      "recipe": "esd_tray_loadport",
+      "semantic_class": "pallet",
+      "state_role": "sealed finished tray staging"
+    },
+    "C_SERVICE_CABINET": {
+      "recipe": "cleanroom_utility",
+      "semantic_class": "control_cabinet",
+      "state_role": "utility, filter and electrical cabinet row"
+    },
+    "D_KIT_BENCH_1": {
+      "recipe": "esd_tray_loadport",
+      "semantic_class": "workbench",
+      "state_role": "incoming ESD tray loadports"
+    },
+    "D_KIT_BENCH_2": {
+      "recipe": "esd_tray_loadport",
+      "semantic_class": "workbench",
+      "state_role": "carrier return and retest tray loadports"
+    },
+    "D_RACK_A1": {
+      "recipe": "tray_stocker",
+      "semantic_class": "rack",
+      "state_role": "JEDEC incoming tray stocker"
+    },
+    "D_RACK_A2": {
+      "recipe": "tray_stocker",
+      "semantic_class": "rack",
+      "state_role": "WIP tray stocker beside S2"
+    },
+    "D_RACK_B1": {
+      "recipe": "tray_stocker",
+      "semantic_class": "rack",
+      "state_role": "released lot tray stocker"
+    },
+    "D_RACK_B2": {
+      "recipe": "tray_stocker",
+      "semantic_class": "rack",
+      "state_role": "retest and empty carrier stocker"
+    },
+    "D_BENCH_A1": {
+      "recipe": "ate_rack",
+      "semantic_class": "workbench",
+      "state_role": "ATE instrumentation cabinets"
+    },
+    "D_BENCH_A2": {
+      "recipe": "aoi_mark",
+      "semantic_class": "process_equipment",
+      "state_role": "optical inspection and lot scan enclosure"
+    },
+    "D_BENCH_B1": {
+      "recipe": "esd_packing",
+      "semantic_class": "workbench",
+      "state_role": "ESD tray packaging bench"
+    },
+    "D_BENCH_B2": {
+      "recipe": "aoi_mark",
+      "semantic_class": "process_equipment",
+      "state_role": "AOI and marking enclosure"
+    },
+    "D_PROCESS_1": {
+      "recipe": "semiconductor_handler",
+      "semantic_class": "process_equipment",
+      "state_role": "test handler and tray input/output elevators"
+    },
+    "D_PROCESS_2": {
+      "recipe": "aoi_mark",
+      "semantic_class": "process_equipment",
+      "state_role": "AOI and marking service module"
+    },
+    "D_PROCESS_3": {
+      "recipe": "esd_packing",
+      "semantic_class": "process_equipment",
+      "state_role": "ESD pack and tray output rollers"
+    },
+    "D_CELL_CABINET": {
+      "recipe": "ate_rack",
+      "semantic_class": "control_cabinet",
+      "state_role": "ATE mainframe and utility cabinets"
+    },
+    "D_CI_BUFFER": {
+      "recipe": "buffer_fixture",
+      "semantic_class": "buffer_fixture",
+      "state_role": "cell_input_two_slot"
+    },
+    "D_CO_BUFFER": {
+      "recipe": "buffer_fixture",
+      "semantic_class": "buffer_fixture",
+      "state_role": "cell_output_two_slot"
+    },
+    "D_FG_LOW": {
+      "recipe": "external_asset",
+      "semantic_class": "process_equipment",
+      "state_role": "packaging conveyor and inspection gate geometry; aggregate pack flow, no belt or inspection-sensor physics"
+    },
+    "D_FG_HIGH": {
+      "recipe": "esd_tray_loadport",
+      "semantic_class": "pallet",
+      "state_role": "sealed finished tray staging"
+    },
+    "D_SERVICE_CABINET": {
+      "recipe": "cleanroom_utility",
+      "semantic_class": "control_cabinet",
+      "state_role": "utility, filter and electrical cabinet row"
+    }
+  },
+  "environment": {
+    "revision": "653d91e182011f357cf1644013cc94ddf194d349",
+    "repository": "nvidia/simready-assets",
+    "scope": "Four translated authored service-area sets; actual USD campus transformation, renderer coverage and collision review pending",
+    "catalog": {
+      "workbench": {
+        "package": "furniture_workbench_modular_a01",
+        "root_usd": "simready_usd/sm_furniture_workbench_modular_a01_01.usd",
+        "author": "NVIDIA",
+        "license": "CC-BY-4.0",
+        "license_url": "https://huggingface.co/datasets/nvidia/simready-assets/blob/653d91e182011f357cf1644013cc94ddf194d349/furniture_workbench_modular_a01/.metadata/LICENSE.txt",
+        "source_url": "https://huggingface.co/datasets/nvidia/simready-assets/tree/653d91e182011f357cf1644013cc94ddf194d349/furniture_workbench_modular_a01"
+      },
+      "cabinet": {
+        "package": "equipment_rolling_workstation_cabinet_c01",
+        "root_usd": "simready_usd/sm_equipment_rolling_workstation_cabinet_c01_01.usd",
+        "author": "NVIDIA",
+        "license": "CC-BY-4.0",
+        "license_url": "https://huggingface.co/datasets/nvidia/simready-assets/blob/653d91e182011f357cf1644013cc94ddf194d349/equipment_rolling_workstation_cabinet_c01/.metadata/LICENSE.txt",
+        "source_url": "https://huggingface.co/datasets/nvidia/simready-assets/tree/653d91e182011f357cf1644013cc94ddf194d349/equipment_rolling_workstation_cabinet_c01"
+      },
+      "cart": {
+        "package": "equipment_utility_cart_e01",
+        "root_usd": "simready_usd/sm_equipment_utility_cart_e01_01.usd",
+        "author": "NVIDIA",
+        "license": "CC-BY-4.0",
+        "license_url": "https://huggingface.co/datasets/nvidia/simready-assets/blob/653d91e182011f357cf1644013cc94ddf194d349/equipment_utility_cart_e01/.metadata/LICENSE.txt",
+        "source_url": "https://huggingface.co/datasets/nvidia/simready-assets/tree/653d91e182011f357cf1644013cc94ddf194d349/equipment_utility_cart_e01"
+      },
+      "packing_conveyor": {
+        "package": "conveyor_belt_a61",
+        "root_usd": "simready_usd/sm_conveyor_belt_a61_01.usd",
+        "author": "NVIDIA",
+        "license": "CC-BY-4.0",
+        "license_url": "https://huggingface.co/datasets/nvidia/simready-assets/blob/653d91e182011f357cf1644013cc94ddf194d349/conveyor_belt_a61/.metadata/LICENSE.txt",
+        "source_url": "https://huggingface.co/datasets/nvidia/simready-assets/tree/653d91e182011f357cf1644013cc94ddf194d349/conveyor_belt_a61"
+      }
+    },
+    "fixtures": [
+      {
+        "id": "A_MAINT_TOOL_STORAGE_03",
+        "asset": "workbench",
+        "center_xy": [
+          23.6,
+          8.75
+        ],
+        "yaw_deg": 90,
+        "role": "closed maintenance tool storage; not product storage",
+        "semantic_class": "control_cabinet"
+      },
+      {
+        "id": "A_MAINT_ROLLING_BENCH_03",
+        "asset": "cabinet",
+        "center_xy": [
+          23.6,
+          10.45
+        ],
+        "yaw_deg": 90,
+        "role": "parked offline maintenance workstation",
+        "semantic_class": "workbench"
+      },
+      {
+        "id": "A_MAINT_TOOL_STORAGE_06",
+        "asset": "workbench",
+        "center_xy": [
+          29.6,
+          8.75
+        ],
+        "yaw_deg": 90,
+        "role": "closed maintenance tool storage; not product storage",
+        "semantic_class": "control_cabinet"
+      },
+      {
+        "id": "A_MAINT_ROLLING_BENCH_06",
+        "asset": "cabinet",
+        "center_xy": [
+          29.6,
+          10.45
+        ],
+        "yaw_deg": 90,
+        "role": "parked offline maintenance workstation",
+        "semantic_class": "workbench"
+      },
+      {
+        "id": "A_MAINT_PARTS_CART_03",
+        "asset": "cart",
+        "center_xy": [
+          24.6,
+          9.75
+        ],
+        "yaw_deg": 0,
+        "role": "parked maintenance parts cart outside production material flow",
+        "semantic_class": "buffer_fixture"
+      },
+      {
+        "id": "A_INCOMING_SERVICE_TOOLS",
+        "asset": "workbench",
+        "center_xy": [
+          8.5,
+          8.75
+        ],
+        "yaw_deg": 90,
+        "role": "incoming loadport service tool storage",
+        "semantic_class": "control_cabinet"
+      },
+      {
+        "id": "A_INCOMING_SERVICE_BENCH",
+        "asset": "cabinet",
+        "center_xy": [
+          9.3,
+          10.35
+        ],
+        "yaw_deg": 90,
+        "role": "offline incoming loadport service bench",
+        "semantic_class": "workbench"
+      },
+      {
+        "id": "A_INCOMING_SERVICE_CART",
+        "asset": "cart",
+        "center_xy": [
+          8.0,
+          10.35
+        ],
+        "yaw_deg": 90,
+        "role": "parked incoming loadport service cart",
+        "semantic_class": "buffer_fixture"
+      },
+      {
+        "id": "A_SOUTH_TECH_TOOLS",
+        "asset": "workbench",
+        "center_xy": [
+          14.5,
+          8.95
+        ],
+        "yaw_deg": 0,
+        "role": "south technician tool storage between parking bays",
+        "semantic_class": "control_cabinet"
+      },
+      {
+        "id": "A_SOUTH_TECH_BENCH",
+        "asset": "cabinet",
+        "center_xy": [
+          14.5,
+          10.45
+        ],
+        "yaw_deg": 90,
+        "role": "parked technician workstation between parking bays",
+        "semantic_class": "workbench"
+      },
+      {
+        "id": "A_RETURN_SERVICE_TOOLS",
+        "asset": "workbench",
+        "center_xy": [
+          8.5,
+          34.75
+        ],
+        "yaw_deg": 90,
+        "role": "carrier-return loadport service tool storage",
+        "semantic_class": "control_cabinet"
+      },
+      {
+        "id": "A_RETURN_SERVICE_BENCH",
+        "asset": "cabinet",
+        "center_xy": [
+          9.4,
+          33.2
+        ],
+        "yaw_deg": 90,
+        "role": "offline carrier-return loadport service bench",
+        "semantic_class": "workbench"
+      },
+      {
+        "id": "A_RETURN_SERVICE_CART",
+        "asset": "cart",
+        "center_xy": [
+          8.0,
+          33.2
+        ],
+        "yaw_deg": 90,
+        "role": "parked return-loadport service cart",
+        "semantic_class": "buffer_fixture"
+      },
+      {
+        "id": "A_NORTH_TECH_TOOLS",
+        "asset": "workbench",
+        "center_xy": [
+          14.5,
+          34.5
+        ],
+        "yaw_deg": 0,
+        "role": "north technician tool storage between parking bays",
+        "semantic_class": "control_cabinet"
+      },
+      {
+        "id": "A_NORTH_TECH_BENCH",
+        "asset": "cabinet",
+        "center_xy": [
+          14.5,
+          32.9
+        ],
+        "yaw_deg": 90,
+        "role": "parked north technician workstation",
+        "semantic_class": "workbench"
+      },
+      {
+        "id": "A_WEST_SERVICE_TOOLS_LOW",
+        "asset": "workbench",
+        "center_xy": [
+          1.0,
+          13.2
+        ],
+        "yaw_deg": 0,
+        "role": "west perimeter maintenance tool storage",
+        "semantic_class": "control_cabinet"
+      },
+      {
+        "id": "A_WEST_SERVICE_CART_LOW",
+        "asset": "cart",
+        "center_xy": [
+          0.9,
+          11.65
+        ],
+        "yaw_deg": 0,
+        "role": "west perimeter parked maintenance cart",
+        "semantic_class": "buffer_fixture"
+      },
+      {
+        "id": "A_WEST_SERVICE_TOOLS_MID",
+        "asset": "workbench",
+        "center_xy": [
+          1.0,
+          21.5
+        ],
+        "yaw_deg": 0,
+        "role": "WIP stocker maintenance tool storage",
+        "semantic_class": "control_cabinet"
+      },
+      {
+        "id": "A_EAST_SERVICE_TOOLS_MID",
+        "asset": "workbench",
+        "center_xy": [
+          35.0,
+          21.5
+        ],
+        "yaw_deg": 0,
+        "role": "outbound loadport service tool storage",
+        "semantic_class": "control_cabinet"
+      },
+      {
+        "id": "A_FG_LOW",
+        "source_obstacle_id": "A_FG_LOW",
+        "asset": "packing_conveyor",
+        "center_xy": [
+          32.6,
+          18.55
+        ],
+        "yaw_deg": 90,
+        "semantic_class": "process_equipment",
+        "role": "packaging conveyor and inspection gate geometry; aggregate pack flow, no belt or inspection-sensor physics"
+      },
+      {
+        "id": "B_MAINT_TOOL_STORAGE_01",
+        "asset": "workbench",
+        "center_xy": [
+          61.6,
+          8.75
+        ],
+        "yaw_deg": 90,
+        "role": "closed maintenance tool storage; not product storage",
+        "semantic_class": "control_cabinet"
+      },
+      {
+        "id": "B_MAINT_ROLLING_BENCH_01",
+        "asset": "cabinet",
+        "center_xy": [
+          61.6,
+          10.45
+        ],
+        "yaw_deg": 90,
+        "role": "parked offline maintenance workstation",
+        "semantic_class": "workbench"
+      },
+      {
+        "id": "B_MAINT_TOOL_STORAGE_02",
+        "asset": "workbench",
+        "center_xy": [
+          63.6,
+          8.75
+        ],
+        "yaw_deg": 90,
+        "role": "closed maintenance tool storage; not product storage",
+        "semantic_class": "control_cabinet"
+      },
+      {
+        "id": "B_MAINT_ROLLING_BENCH_02",
+        "asset": "cabinet",
+        "center_xy": [
+          63.6,
+          10.45
+        ],
+        "yaw_deg": 90,
+        "role": "parked offline maintenance workstation",
+        "semantic_class": "workbench"
+      },
+      {
+        "id": "B_MAINT_TOOL_STORAGE_03",
+        "asset": "workbench",
+        "center_xy": [
+          65.6,
+          8.75
+        ],
+        "yaw_deg": 90,
+        "role": "closed maintenance tool storage; not product storage",
+        "semantic_class": "control_cabinet"
+      },
+      {
+        "id": "B_MAINT_ROLLING_BENCH_03",
+        "asset": "cabinet",
+        "center_xy": [
+          65.6,
+          10.45
+        ],
+        "yaw_deg": 90,
+        "role": "parked offline maintenance workstation",
+        "semantic_class": "workbench"
+      },
+      {
+        "id": "B_MAINT_TOOL_STORAGE_06",
+        "asset": "workbench",
+        "center_xy": [
+          71.6,
+          8.75
+        ],
+        "yaw_deg": 90,
+        "role": "closed maintenance tool storage; not product storage",
+        "semantic_class": "control_cabinet"
+      },
+      {
+        "id": "B_MAINT_ROLLING_BENCH_06",
+        "asset": "cabinet",
+        "center_xy": [
+          71.6,
+          10.45
+        ],
+        "yaw_deg": 90,
+        "role": "parked offline maintenance workstation",
+        "semantic_class": "workbench"
+      },
+      {
+        "id": "B_MAINT_PARTS_CART_01",
+        "asset": "cart",
+        "center_xy": [
+          62.6,
+          9.75
+        ],
+        "yaw_deg": 0,
+        "role": "parked maintenance parts cart outside production material flow",
+        "semantic_class": "buffer_fixture"
+      },
+      {
+        "id": "B_MAINT_PARTS_CART_02",
+        "asset": "cart",
+        "center_xy": [
+          64.6,
+          9.75
+        ],
+        "yaw_deg": 0,
+        "role": "parked maintenance parts cart outside production material flow",
+        "semantic_class": "buffer_fixture"
+      },
+      {
+        "id": "B_MAINT_PARTS_CART_03",
+        "asset": "cart",
+        "center_xy": [
+          66.6,
+          9.75
+        ],
+        "yaw_deg": 0,
+        "role": "parked maintenance parts cart outside production material flow",
+        "semantic_class": "buffer_fixture"
+      },
+      {
+        "id": "B_INCOMING_SERVICE_TOOLS",
+        "asset": "workbench",
+        "center_xy": [
+          50.5,
+          8.75
+        ],
+        "yaw_deg": 90,
+        "role": "incoming loadport service tool storage",
+        "semantic_class": "control_cabinet"
+      },
+      {
+        "id": "B_INCOMING_SERVICE_BENCH",
+        "asset": "cabinet",
+        "center_xy": [
+          51.3,
+          10.35
+        ],
+        "yaw_deg": 90,
+        "role": "offline incoming loadport service bench",
+        "semantic_class": "workbench"
+      },
+      {
+        "id": "B_INCOMING_SERVICE_CART",
+        "asset": "cart",
+        "center_xy": [
+          50.0,
+          10.35
+        ],
+        "yaw_deg": 90,
+        "role": "parked incoming loadport service cart",
+        "semantic_class": "buffer_fixture"
+      },
+      {
+        "id": "B_SOUTH_TECH_TOOLS",
+        "asset": "workbench",
+        "center_xy": [
+          56.5,
+          8.95
+        ],
+        "yaw_deg": 0,
+        "role": "south technician tool storage between parking bays",
+        "semantic_class": "control_cabinet"
+      },
+      {
+        "id": "B_SOUTH_TECH_BENCH",
+        "asset": "cabinet",
+        "center_xy": [
+          56.5,
+          10.45
+        ],
+        "yaw_deg": 90,
+        "role": "parked technician workstation between parking bays",
+        "semantic_class": "workbench"
+      },
+      {
+        "id": "B_RETURN_SERVICE_TOOLS",
+        "asset": "workbench",
+        "center_xy": [
+          50.5,
+          34.75
+        ],
+        "yaw_deg": 90,
+        "role": "carrier-return loadport service tool storage",
+        "semantic_class": "control_cabinet"
+      },
+      {
+        "id": "B_RETURN_SERVICE_BENCH",
+        "asset": "cabinet",
+        "center_xy": [
+          51.4,
+          33.2
+        ],
+        "yaw_deg": 90,
+        "role": "offline carrier-return loadport service bench",
+        "semantic_class": "workbench"
+      },
+      {
+        "id": "B_RETURN_SERVICE_CART",
+        "asset": "cart",
+        "center_xy": [
+          50.0,
+          33.2
+        ],
+        "yaw_deg": 90,
+        "role": "parked return-loadport service cart",
+        "semantic_class": "buffer_fixture"
+      },
+      {
+        "id": "B_NORTH_TECH_TOOLS",
+        "asset": "workbench",
+        "center_xy": [
+          56.5,
+          34.5
+        ],
+        "yaw_deg": 0,
+        "role": "north technician tool storage between parking bays",
+        "semantic_class": "control_cabinet"
+      },
+      {
+        "id": "B_NORTH_TECH_BENCH",
+        "asset": "cabinet",
+        "center_xy": [
+          56.5,
+          32.9
+        ],
+        "yaw_deg": 90,
+        "role": "parked north technician workstation",
+        "semantic_class": "workbench"
+      },
+      {
+        "id": "B_WEST_SERVICE_TOOLS_MID",
+        "asset": "workbench",
+        "center_xy": [
+          43.0,
+          21.5
+        ],
+        "yaw_deg": 0,
+        "role": "WIP stocker maintenance tool storage",
+        "semantic_class": "control_cabinet"
+      },
+      {
+        "id": "B_EAST_SERVICE_TOOLS_MID",
+        "asset": "workbench",
+        "center_xy": [
+          77.0,
+          21.5
+        ],
+        "yaw_deg": 0,
+        "role": "outbound loadport service tool storage",
+        "semantic_class": "control_cabinet"
+      },
+      {
+        "id": "B_FG_LOW",
+        "source_obstacle_id": "B_FG_LOW",
+        "asset": "packing_conveyor",
+        "center_xy": [
+          74.6,
+          18.55
+        ],
+        "yaw_deg": 90,
+        "semantic_class": "process_equipment",
+        "role": "packaging conveyor and inspection gate geometry; aggregate pack flow, no belt or inspection-sensor physics"
+      },
+      {
+        "id": "C_MAINT_TOOL_STORAGE_01",
+        "asset": "workbench",
+        "center_xy": [
+          19.6,
+          40.75
+        ],
+        "yaw_deg": 90,
+        "role": "closed maintenance tool storage; not product storage",
+        "semantic_class": "control_cabinet"
+      },
+      {
+        "id": "C_MAINT_ROLLING_BENCH_01",
+        "asset": "cabinet",
+        "center_xy": [
+          19.6,
+          42.45
+        ],
+        "yaw_deg": 90,
+        "role": "parked offline maintenance workstation",
+        "semantic_class": "workbench"
+      },
+      {
+        "id": "C_MAINT_TOOL_STORAGE_02",
+        "asset": "workbench",
+        "center_xy": [
+          21.6,
+          40.75
+        ],
+        "yaw_deg": 90,
+        "role": "closed maintenance tool storage; not product storage",
+        "semantic_class": "control_cabinet"
+      },
+      {
+        "id": "C_MAINT_ROLLING_BENCH_02",
+        "asset": "cabinet",
+        "center_xy": [
+          21.6,
+          42.45
+        ],
+        "yaw_deg": 90,
+        "role": "parked offline maintenance workstation",
+        "semantic_class": "workbench"
+      },
+      {
+        "id": "C_MAINT_TOOL_STORAGE_03",
+        "asset": "workbench",
+        "center_xy": [
+          23.6,
+          40.75
+        ],
+        "yaw_deg": 90,
+        "role": "closed maintenance tool storage; not product storage",
+        "semantic_class": "control_cabinet"
+      },
+      {
+        "id": "C_MAINT_ROLLING_BENCH_03",
+        "asset": "cabinet",
+        "center_xy": [
+          23.6,
+          42.45
+        ],
+        "yaw_deg": 90,
+        "role": "parked offline maintenance workstation",
+        "semantic_class": "workbench"
+      },
+      {
+        "id": "C_MAINT_PARTS_CART_01",
+        "asset": "cart",
+        "center_xy": [
+          20.6,
+          41.75
+        ],
+        "yaw_deg": 0,
+        "role": "parked maintenance parts cart outside production material flow",
+        "semantic_class": "buffer_fixture"
+      },
+      {
+        "id": "C_MAINT_PARTS_CART_02",
+        "asset": "cart",
+        "center_xy": [
+          22.6,
+          41.75
+        ],
+        "yaw_deg": 0,
+        "role": "parked maintenance parts cart outside production material flow",
+        "semantic_class": "buffer_fixture"
+      },
+      {
+        "id": "C_MAINT_PARTS_CART_03",
+        "asset": "cart",
+        "center_xy": [
+          24.6,
+          41.75
+        ],
+        "yaw_deg": 0,
+        "role": "parked maintenance parts cart outside production material flow",
+        "semantic_class": "buffer_fixture"
+      },
+      {
+        "id": "C_INCOMING_SERVICE_TOOLS",
+        "asset": "workbench",
+        "center_xy": [
+          8.5,
+          40.75
+        ],
+        "yaw_deg": 90,
+        "role": "incoming loadport service tool storage",
+        "semantic_class": "control_cabinet"
+      },
+      {
+        "id": "C_INCOMING_SERVICE_BENCH",
+        "asset": "cabinet",
+        "center_xy": [
+          9.3,
+          42.35
+        ],
+        "yaw_deg": 90,
+        "role": "offline incoming loadport service bench",
+        "semantic_class": "workbench"
+      },
+      {
+        "id": "C_INCOMING_SERVICE_CART",
+        "asset": "cart",
+        "center_xy": [
+          8.0,
+          42.35
+        ],
+        "yaw_deg": 90,
+        "role": "parked incoming loadport service cart",
+        "semantic_class": "buffer_fixture"
+      },
+      {
+        "id": "C_SOUTH_TECH_TOOLS",
+        "asset": "workbench",
+        "center_xy": [
+          14.5,
+          40.95
+        ],
+        "yaw_deg": 0,
+        "role": "south technician tool storage between parking bays",
+        "semantic_class": "control_cabinet"
+      },
+      {
+        "id": "C_SOUTH_TECH_BENCH",
+        "asset": "cabinet",
+        "center_xy": [
+          14.5,
+          42.45
+        ],
+        "yaw_deg": 90,
+        "role": "parked technician workstation between parking bays",
+        "semantic_class": "workbench"
+      },
+      {
+        "id": "C_RETURN_SERVICE_TOOLS",
+        "asset": "workbench",
+        "center_xy": [
+          8.5,
+          66.75
+        ],
+        "yaw_deg": 90,
+        "role": "carrier-return loadport service tool storage",
+        "semantic_class": "control_cabinet"
+      },
+      {
+        "id": "C_RETURN_SERVICE_BENCH",
+        "asset": "cabinet",
+        "center_xy": [
+          9.4,
+          65.2
+        ],
+        "yaw_deg": 90,
+        "role": "offline carrier-return loadport service bench",
+        "semantic_class": "workbench"
+      },
+      {
+        "id": "C_RETURN_SERVICE_CART",
+        "asset": "cart",
+        "center_xy": [
+          8.0,
+          65.2
+        ],
+        "yaw_deg": 90,
+        "role": "parked return-loadport service cart",
+        "semantic_class": "buffer_fixture"
+      },
+      {
+        "id": "C_NORTH_TECH_TOOLS",
+        "asset": "workbench",
+        "center_xy": [
+          14.5,
+          66.5
+        ],
+        "yaw_deg": 0,
+        "role": "north technician tool storage between parking bays",
+        "semantic_class": "control_cabinet"
+      },
+      {
+        "id": "C_NORTH_TECH_BENCH",
+        "asset": "cabinet",
+        "center_xy": [
+          14.5,
+          64.9
+        ],
+        "yaw_deg": 90,
+        "role": "parked north technician workstation",
+        "semantic_class": "workbench"
+      },
+      {
+        "id": "C_WEST_SERVICE_TOOLS_LOW",
+        "asset": "workbench",
+        "center_xy": [
+          1.0,
+          45.2
+        ],
+        "yaw_deg": 0,
+        "role": "west perimeter maintenance tool storage",
+        "semantic_class": "control_cabinet"
+      },
+      {
+        "id": "C_WEST_SERVICE_CART_LOW",
+        "asset": "cart",
+        "center_xy": [
+          0.9,
+          43.65
+        ],
+        "yaw_deg": 0,
+        "role": "west perimeter parked maintenance cart",
+        "semantic_class": "buffer_fixture"
+      },
+      {
+        "id": "C_WEST_SERVICE_TOOLS_MID",
+        "asset": "workbench",
+        "center_xy": [
+          1.0,
+          53.5
+        ],
+        "yaw_deg": 0,
+        "role": "WIP stocker maintenance tool storage",
+        "semantic_class": "control_cabinet"
+      },
+      {
+        "id": "C_FG_LOW",
+        "source_obstacle_id": "C_FG_LOW",
+        "asset": "packing_conveyor",
+        "center_xy": [
+          32.6,
+          50.55
+        ],
+        "yaw_deg": 90,
+        "semantic_class": "process_equipment",
+        "role": "packaging conveyor and inspection gate geometry; aggregate pack flow, no belt or inspection-sensor physics"
+      },
+      {
+        "id": "D_MAINT_TOOL_STORAGE_01",
+        "asset": "workbench",
+        "center_xy": [
+          61.6,
+          40.75
+        ],
+        "yaw_deg": 90,
+        "role": "closed maintenance tool storage; not product storage",
+        "semantic_class": "control_cabinet"
+      },
+      {
+        "id": "D_MAINT_ROLLING_BENCH_01",
+        "asset": "cabinet",
+        "center_xy": [
+          61.6,
+          42.45
+        ],
+        "yaw_deg": 90,
+        "role": "parked offline maintenance workstation",
+        "semantic_class": "workbench"
+      },
+      {
+        "id": "D_MAINT_TOOL_STORAGE_02",
+        "asset": "workbench",
+        "center_xy": [
+          63.6,
+          40.75
+        ],
+        "yaw_deg": 90,
+        "role": "closed maintenance tool storage; not product storage",
+        "semantic_class": "control_cabinet"
+      },
+      {
+        "id": "D_MAINT_ROLLING_BENCH_02",
+        "asset": "cabinet",
+        "center_xy": [
+          63.6,
+          42.45
+        ],
+        "yaw_deg": 90,
+        "role": "parked offline maintenance workstation",
+        "semantic_class": "workbench"
+      },
+      {
+        "id": "D_MAINT_TOOL_STORAGE_03",
+        "asset": "workbench",
+        "center_xy": [
+          65.6,
+          40.75
+        ],
+        "yaw_deg": 90,
+        "role": "closed maintenance tool storage; not product storage",
+        "semantic_class": "control_cabinet"
+      },
+      {
+        "id": "D_MAINT_ROLLING_BENCH_03",
+        "asset": "cabinet",
+        "center_xy": [
+          65.6,
+          42.45
+        ],
+        "yaw_deg": 90,
+        "role": "parked offline maintenance workstation",
+        "semantic_class": "workbench"
+      },
+      {
+        "id": "D_MAINT_PARTS_CART_01",
+        "asset": "cart",
+        "center_xy": [
+          62.6,
+          41.75
+        ],
+        "yaw_deg": 0,
+        "role": "parked maintenance parts cart outside production material flow",
+        "semantic_class": "buffer_fixture"
+      },
+      {
+        "id": "D_MAINT_PARTS_CART_02",
+        "asset": "cart",
+        "center_xy": [
+          64.6,
+          41.75
+        ],
+        "yaw_deg": 0,
+        "role": "parked maintenance parts cart outside production material flow",
+        "semantic_class": "buffer_fixture"
+      },
+      {
+        "id": "D_MAINT_PARTS_CART_03",
+        "asset": "cart",
+        "center_xy": [
+          66.6,
+          41.75
+        ],
+        "yaw_deg": 0,
+        "role": "parked maintenance parts cart outside production material flow",
+        "semantic_class": "buffer_fixture"
+      },
+      {
+        "id": "D_INCOMING_SERVICE_TOOLS",
+        "asset": "workbench",
+        "center_xy": [
+          50.5,
+          40.75
+        ],
+        "yaw_deg": 90,
+        "role": "incoming loadport service tool storage",
+        "semantic_class": "control_cabinet"
+      },
+      {
+        "id": "D_INCOMING_SERVICE_BENCH",
+        "asset": "cabinet",
+        "center_xy": [
+          51.3,
+          42.35
+        ],
+        "yaw_deg": 90,
+        "role": "offline incoming loadport service bench",
+        "semantic_class": "workbench"
+      },
+      {
+        "id": "D_INCOMING_SERVICE_CART",
+        "asset": "cart",
+        "center_xy": [
+          50.0,
+          42.35
+        ],
+        "yaw_deg": 90,
+        "role": "parked incoming loadport service cart",
+        "semantic_class": "buffer_fixture"
+      },
+      {
+        "id": "D_SOUTH_TECH_TOOLS",
+        "asset": "workbench",
+        "center_xy": [
+          56.5,
+          40.95
+        ],
+        "yaw_deg": 0,
+        "role": "south technician tool storage between parking bays",
+        "semantic_class": "control_cabinet"
+      },
+      {
+        "id": "D_SOUTH_TECH_BENCH",
+        "asset": "cabinet",
+        "center_xy": [
+          56.5,
+          42.45
+        ],
+        "yaw_deg": 90,
+        "role": "parked technician workstation between parking bays",
+        "semantic_class": "workbench"
+      },
+      {
+        "id": "D_RETURN_SERVICE_TOOLS",
+        "asset": "workbench",
+        "center_xy": [
+          50.5,
+          66.75
+        ],
+        "yaw_deg": 90,
+        "role": "carrier-return loadport service tool storage",
+        "semantic_class": "control_cabinet"
+      },
+      {
+        "id": "D_RETURN_SERVICE_BENCH",
+        "asset": "cabinet",
+        "center_xy": [
+          51.4,
+          65.2
+        ],
+        "yaw_deg": 90,
+        "role": "offline carrier-return loadport service bench",
+        "semantic_class": "workbench"
+      },
+      {
+        "id": "D_RETURN_SERVICE_CART",
+        "asset": "cart",
+        "center_xy": [
+          50.0,
+          65.2
+        ],
+        "yaw_deg": 90,
+        "role": "parked return-loadport service cart",
+        "semantic_class": "buffer_fixture"
+      },
+      {
+        "id": "D_NORTH_TECH_TOOLS",
+        "asset": "workbench",
+        "center_xy": [
+          56.5,
+          66.5
+        ],
+        "yaw_deg": 0,
+        "role": "north technician tool storage between parking bays",
+        "semantic_class": "control_cabinet"
+      },
+      {
+        "id": "D_NORTH_TECH_BENCH",
+        "asset": "cabinet",
+        "center_xy": [
+          56.5,
+          64.9
+        ],
+        "yaw_deg": 90,
+        "role": "parked north technician workstation",
+        "semantic_class": "workbench"
+      },
+      {
+        "id": "D_WEST_SERVICE_TOOLS_MID",
+        "asset": "workbench",
+        "center_xy": [
+          43.0,
+          53.5
+        ],
+        "yaw_deg": 0,
+        "role": "WIP stocker maintenance tool storage",
+        "semantic_class": "control_cabinet"
+      },
+      {
+        "id": "D_FG_LOW",
+        "source_obstacle_id": "D_FG_LOW",
+        "asset": "packing_conveyor",
+        "center_xy": [
+          74.6,
+          50.55
+        ],
+        "yaw_deg": 90,
+        "semantic_class": "process_equipment",
+        "role": "packaging conveyor and inspection gate geometry; aggregate pack flow, no belt or inspection-sensor physics"
+      }
+    ],
+    "excluded_fixtures": [
+      {
+        "id": "A_MAINT_TOOL_STORAGE_01",
+        "reason": "translated native fixture bounds plus 0.1m clearance intersect dedicated bridge safe-exit access"
+      },
+      {
+        "id": "A_MAINT_ROLLING_BENCH_01",
+        "reason": "translated native fixture bounds plus 0.1m clearance intersect dedicated bridge safe-exit access"
+      },
+      {
+        "id": "A_MAINT_TOOL_STORAGE_02",
+        "reason": "translated native fixture bounds plus 0.1m clearance intersect dedicated bridge safe-exit access"
+      },
+      {
+        "id": "A_MAINT_ROLLING_BENCH_02",
+        "reason": "translated native fixture bounds plus 0.1m clearance intersect dedicated bridge safe-exit access"
+      },
+      {
+        "id": "A_MAINT_TOOL_STORAGE_04",
+        "reason": "translated native fixture bounds plus 0.1m clearance intersect the PACK staging spur"
+      },
+      {
+        "id": "A_MAINT_ROLLING_BENCH_04",
+        "reason": "translated native fixture bounds plus 0.1m clearance intersect the PACK staging spur"
+      },
+      {
+        "id": "A_MAINT_TOOL_STORAGE_05",
+        "reason": "translated native fixture bounds plus 0.1m clearance intersect the PACK staging spur"
+      },
+      {
+        "id": "A_MAINT_ROLLING_BENCH_05",
+        "reason": "translated native fixture bounds plus 0.1m clearance intersect the PACK staging spur"
+      },
+      {
+        "id": "A_MAINT_PARTS_CART_01",
+        "reason": "translated native fixture bounds plus 0.1m clearance intersect dedicated bridge safe-exit access"
+      },
+      {
+        "id": "A_MAINT_PARTS_CART_02",
+        "reason": "translated native fixture bounds plus 0.1m clearance intersect dedicated bridge safe-exit access"
+      },
+      {
+        "id": "A_MAINT_PARTS_CART_04",
+        "reason": "translated native fixture bounds plus 0.1m clearance intersect the PACK staging spur"
+      },
+      {
+        "id": "A_MAINT_PARTS_CART_05",
+        "reason": "translated native fixture bounds plus 0.1m clearance intersect the PACK staging spur"
+      },
+      {
+        "id": "A_EAST_SERVICE_TOOLS_LOW",
+        "reason": "translated native fixture bounds plus 0.1m clearance intersect an authored campus bridge"
+      },
+      {
+        "id": "A_EAST_SERVICE_CART_LOW",
+        "reason": "translated native fixture bounds plus 0.1m clearance intersect an authored campus bridge"
+      },
+      {
+        "id": "A_EAST_SERVICE_TOOLS_HIGH",
+        "reason": "translated native fixture bounds plus 0.1m clearance intersect an authored campus bridge"
+      },
+      {
+        "id": "B_MAINT_TOOL_STORAGE_04",
+        "reason": "translated native fixture bounds plus 0.1m clearance intersect the PACK staging spur"
+      },
+      {
+        "id": "B_MAINT_ROLLING_BENCH_04",
+        "reason": "translated native fixture bounds plus 0.1m clearance intersect the PACK staging spur"
+      },
+      {
+        "id": "B_MAINT_TOOL_STORAGE_05",
+        "reason": "translated native fixture bounds plus 0.1m clearance intersect the PACK staging spur"
+      },
+      {
+        "id": "B_MAINT_ROLLING_BENCH_05",
+        "reason": "translated native fixture bounds plus 0.1m clearance intersect the PACK staging spur"
+      },
+      {
+        "id": "B_MAINT_PARTS_CART_04",
+        "reason": "translated native fixture bounds plus 0.1m clearance intersect the PACK staging spur"
+      },
+      {
+        "id": "B_MAINT_PARTS_CART_05",
+        "reason": "translated native fixture bounds plus 0.1m clearance intersect the PACK staging spur"
+      },
+      {
+        "id": "B_WEST_SERVICE_TOOLS_LOW",
+        "reason": "translated native fixture bounds plus 0.1m clearance intersect an authored campus bridge"
+      },
+      {
+        "id": "B_WEST_SERVICE_CART_LOW",
+        "reason": "translated native fixture bounds plus 0.1m clearance intersect an authored campus bridge"
+      },
+      {
+        "id": "B_EAST_SERVICE_TOOLS_LOW",
+        "reason": "translated native fixture bounds plus 0.1m clearance intersect dedicated bridge safe-exit access"
+      },
+      {
+        "id": "B_EAST_SERVICE_CART_LOW",
+        "reason": "translated native fixture bounds plus 0.1m clearance intersect dedicated bridge safe-exit access"
+      },
+      {
+        "id": "B_EAST_SERVICE_TOOLS_HIGH",
+        "reason": "translated native fixture bounds plus 0.1m clearance intersect an authored campus bridge"
+      },
+      {
+        "id": "C_MAINT_TOOL_STORAGE_04",
+        "reason": "translated native fixture bounds plus 0.1m clearance intersect the PACK staging spur"
+      },
+      {
+        "id": "C_MAINT_ROLLING_BENCH_04",
+        "reason": "translated native fixture bounds plus 0.1m clearance intersect the PACK staging spur"
+      },
+      {
+        "id": "C_MAINT_TOOL_STORAGE_05",
+        "reason": "translated native fixture bounds plus 0.1m clearance intersect the PACK staging spur"
+      },
+      {
+        "id": "C_MAINT_ROLLING_BENCH_05",
+        "reason": "translated native fixture bounds plus 0.1m clearance intersect the PACK staging spur"
+      },
+      {
+        "id": "C_MAINT_TOOL_STORAGE_06",
+        "reason": "translated native fixture bounds plus 0.1m clearance intersect vertical bridge queue access"
+      },
+      {
+        "id": "C_MAINT_ROLLING_BENCH_06",
+        "reason": "translated native fixture bounds plus 0.1m clearance intersect vertical bridge queue access"
+      },
+      {
+        "id": "C_MAINT_PARTS_CART_04",
+        "reason": "translated native fixture bounds plus 0.1m clearance intersect the PACK staging spur"
+      },
+      {
+        "id": "C_MAINT_PARTS_CART_05",
+        "reason": "translated native fixture bounds plus 0.1m clearance intersect the PACK staging spur"
+      },
+      {
+        "id": "C_EAST_SERVICE_TOOLS_LOW",
+        "reason": "translated native fixture bounds plus 0.1m clearance intersect an authored campus bridge"
+      },
+      {
+        "id": "C_EAST_SERVICE_CART_LOW",
+        "reason": "translated native fixture bounds plus 0.1m clearance intersect an authored campus bridge"
+      },
+      {
+        "id": "C_EAST_SERVICE_TOOLS_MID",
+        "reason": "translated native fixture bounds plus 0.1m clearance intersect dedicated bridge safe-exit access"
+      },
+      {
+        "id": "C_EAST_SERVICE_TOOLS_HIGH",
+        "reason": "translated native fixture bounds plus 0.1m clearance intersect dedicated bridge safe-exit access"
+      },
+      {
+        "id": "D_MAINT_TOOL_STORAGE_04",
+        "reason": "translated native fixture bounds plus 0.1m clearance intersect the PACK staging spur"
+      },
+      {
+        "id": "D_MAINT_ROLLING_BENCH_04",
+        "reason": "translated native fixture bounds plus 0.1m clearance intersect the PACK staging spur"
+      },
+      {
+        "id": "D_MAINT_TOOL_STORAGE_05",
+        "reason": "translated native fixture bounds plus 0.1m clearance intersect the PACK staging spur"
+      },
+      {
+        "id": "D_MAINT_ROLLING_BENCH_05",
+        "reason": "translated native fixture bounds plus 0.1m clearance intersect the PACK staging spur"
+      },
+      {
+        "id": "D_MAINT_TOOL_STORAGE_06",
+        "reason": "translated native fixture bounds plus 0.1m clearance intersect vertical bridge queue access"
+      },
+      {
+        "id": "D_MAINT_ROLLING_BENCH_06",
+        "reason": "translated native fixture bounds plus 0.1m clearance intersect vertical bridge queue access"
+      },
+      {
+        "id": "D_MAINT_PARTS_CART_04",
+        "reason": "translated native fixture bounds plus 0.1m clearance intersect the PACK staging spur"
+      },
+      {
+        "id": "D_MAINT_PARTS_CART_05",
+        "reason": "translated native fixture bounds plus 0.1m clearance intersect the PACK staging spur"
+      },
+      {
+        "id": "D_WEST_SERVICE_TOOLS_LOW",
+        "reason": "translated native fixture bounds plus 0.1m clearance intersect an authored campus bridge"
+      },
+      {
+        "id": "D_WEST_SERVICE_CART_LOW",
+        "reason": "translated native fixture bounds plus 0.1m clearance intersect an authored campus bridge"
+      },
+      {
+        "id": "D_EAST_SERVICE_TOOLS_LOW",
+        "reason": "translated native fixture bounds plus 0.1m clearance intersect an authored campus bridge"
+      },
+      {
+        "id": "D_EAST_SERVICE_CART_LOW",
+        "reason": "translated native fixture bounds plus 0.1m clearance intersect an authored campus bridge"
+      },
+      {
+        "id": "D_EAST_SERVICE_TOOLS_MID",
+        "reason": "translated native fixture bounds plus 0.1m clearance intersect dedicated bridge safe-exit access"
+      },
+      {
+        "id": "D_EAST_SERVICE_TOOLS_HIGH",
+        "reason": "translated native fixture bounds plus 0.1m clearance intersect dedicated bridge safe-exit access"
+      }
+    ],
+    "fixture_count": 88
+  },
+  "campus_transform": {
+    "bay_offsets_xy_m": {
+      "A": [
+        0.0,
+        8.0
+      ],
+      "B": [
+        42.0,
+        8.0
+      ],
+      "C": [
+        0.0,
+        40.0
+      ],
+      "D": [
+        42.0,
+        40.0
+      ]
+    },
+    "scope": "Authored JSON placement only; scene generation and successful render are pending"
+  }
+}

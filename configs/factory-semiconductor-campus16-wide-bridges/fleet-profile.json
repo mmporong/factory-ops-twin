@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "fleet_count": 16,
+  "robot_stations": [
+    "A_P1",
+    "A_P2",
+    "A_P3",
+    "A_P4",
+    "B_P1",
+    "B_P2",
+    "B_P3",
+    "B_P4",
+    "C_P1",
+    "C_P2",
+    "C_P3",
+    "C_P4",
+    "D_P1",
+    "D_P2",
+    "D_P3",
+    "D_P4"
+  ],
+  "scope": "Authored four-bay fleet start contract; no 16-AMR physical runtime claim",
+  "provenance": {
+    "kind": "authored_campus_candidate",
+    "pending": "RouteBook, reservation, sensor and physics evidence"
+  }
+}

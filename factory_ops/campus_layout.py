@@ -481,6 +481,101 @@ def build_campus_routing(base: Mapping[str, Any]) -> dict[str, Any]:
     return result
 
 
+def build_wide_bridge_layout(base: Mapping[str, Any]) -> dict[str, Any]:
+    """Use the full authored AB/CD road envelopes for separated opposing lanes."""
+    result = build_campus_layout(base)
+    result.update(
+        revision=CAMPUS_REVISION,
+        status=(
+            "Authored four-bay 16-AMR campus with 6m AB/CD paired-road envelopes; "
+            "RouteBook preflight passed, renderer and physical runtime qualification pending"
+        ),
+    )
+    reservations = {
+        "CAMPUS_H_AB_RESERVATION": [28.5, 11.0, 51.0, 17.0],
+        "CAMPUS_H_CD_RESERVATION": [28.5, 43.0, 51.0, 49.0],
+    }
+    for region in result["amr_allowed_regions"]:
+        if region["id"] in reservations:
+            region["rect"] = deepcopy(reservations[region["id"]])
+            region["purpose"] = "full-width paired bridge reservation envelope"
+        elif region["id"] == "CAMPUS_AB_E_QUEUE_ACCESS":
+            region["rect"] = [30.0, 8.0, 33.5, 12.5]
+            region["purpose"] = "widened queue-to-eastbound-lane approach envelope"
+    result["traffic_lanes"].extend([
+        {"id": "CAMPUS_AB_E", "from_xy": [28.5, 12.5], "to_xy": [51.0, 12.5]},
+        {"id": "CAMPUS_AB_W", "from_xy": [51.0, 15.5], "to_xy": [28.5, 15.5]},
+        {"id": "CAMPUS_CD_E", "from_xy": [28.5, 44.5], "to_xy": [51.0, 44.5]},
+        {"id": "CAMPUS_CD_W", "from_xy": [51.0, 47.5], "to_xy": [28.5, 47.5]},
+    ])
+    result["wide_bridge_geometry"] = {
+        "road_envelope_width_m": 6.0,
+        "lane_center_separation_m": 3.0,
+        "endpoint_connectors": {
+            "AB_E": [[28.5, 12.5], [51.0, 12.5]],
+            "AB_W": [[51.0, 15.5], [28.5, 15.5]],
+            "CD_E": [[28.5, 44.5], [51.0, 44.5]],
+            "CD_W": [[51.0, 47.5], [28.5, 47.5]],
+        },
+        "approach_overrides": {"AB_E_QUEUE": [30.0, 8.0, 33.5, 12.5]},
+        "safe_exit_overrides": {"CD_E_QUEUE": {"node": "D_LOW_E_P1", "xy": [54.0, 44.5]}},
+        "scope": "authored selectable geometry variant; no throughput or physical-runtime claim",
+    }
+    result["layout_provenance"]["geometry_rule"] = (
+        "four immutable bays with AB/CD opposing centerlines separated by 3m inside existing 6m road envelopes"
+    )
+    return result
+
+
+def build_wide_bridge_routing(base: Mapping[str, Any]) -> dict[str, Any]:
+    """Split AB/CD resources only after giving each direction a separate swept corridor."""
+    result = build_campus_routing(base)
+    result["scope"] = (
+        "Four-bay 16-AMR authored route graph with separated AB/CD opposing lanes; "
+        "reservation and physical runtime qualification pending"
+    )
+    result["base_layout"] = "configs/factory-semiconductor-campus16-wide-bridges/layout.json"
+
+    for node in ("AB_E_W_GATE", "AB_E_W_IN", "AB_E_E_IN", "AB_E_E_GATE"):
+        result["nodes"][node][1] = 12.5
+    for node in ("CD_E_W_GATE", "CD_E_W_IN", "CD_E_E_IN", "CD_E_E_GATE"):
+        result["nodes"][node][1] = 44.5
+
+    result["policy_region_overrides"].update({
+        "CAMPUS_H_AB_RESERVATION": [28.5, 11.0, 51.0, 17.0],
+        "CAMPUS_H_CD_RESERVATION": [28.5, 43.0, 51.0, 49.0],
+    })
+    admission = result["bridge_admission"]
+    admission["safe_exit_nodes"]["CD_E_QUEUE"] = "D_LOW_E_P1"
+    admission["holdable_nodes"].append("D_LOW_E_P1")
+    shared_resources = {
+        link: admission["resources"][link] for link in ("AC", "BD")
+    }
+    resources = {}
+    excluded = set(admission["queue_nodes"]) | {"AB_E_ACCESS", "CD_E_ACCESS"}
+    for link in ("AB_E", "AB_W", "CD_E", "CD_W"):
+        resources[link] = sorted(
+            node for node in result["nodes"]
+            if node.startswith(link + "_") and node not in excluded
+        )
+    resources.update(shared_resources)
+    admission["resources"] = resources
+    radius = result["authored_allowances"]["reservation_radius_including_tracking_m"]
+    tile_size = result["authored_allowances"]["tile_size_m"]
+    result["wide_bridge_geometry"] = {
+        "road_envelope_width_m": 6.0,
+        "lane_center_separation_m": 3.0,
+        "minimum_center_separation_m": 2 * radius,
+        "reservation_radius_m": radius,
+        "tile_size_m": tile_size,
+        "directional_resources": ["AB_E", "AB_W", "CD_E", "CD_W"],
+        "shared_resources_unchanged": ["AC", "BD"],
+        "safe_exit_overrides": {"CD_E_QUEUE": {"node": "D_LOW_E_P1", "xy": [54.0, 44.5]}},
+        "scope": "selection candidate; safety guards and vehicle envelope are unchanged",
+    }
+    return result
+
+
 def build_fleet_profile() -> dict[str, Any]:
     homes = [f"{bay}_P{slot}" for bay in BAY_OFFSETS for slot in range(1, 5)]
     return {
@@ -673,8 +768,18 @@ def build_campus_bundle(base_dir: str | Path) -> dict[str, dict[str, Any]]:
     }
 
 
+def build_wide_bridge_campus_bundle(base_dir: str | Path) -> dict[str, dict[str, Any]]:
+    root = Path(base_dir)
+    result = build_campus_bundle(root)
+    result["layout.json"] = build_wide_bridge_layout(_read(root / "layout.json"))
+    result["g3-routing.json"] = build_wide_bridge_routing(_read(root / "g3-routing.json"))
+    return result
+
+
 __all__ = [
-    "BAY_OFFSETS", "CAMPUS_BOUNDS", "CAMPUS_REVISION", "build_campus_bundle", "build_campus_layout",
+    "BAY_OFFSETS", "CAMPUS_BOUNDS", "CAMPUS_REVISION",
+    "build_campus_bundle", "build_campus_layout", "build_wide_bridge_campus_bundle",
+    "build_wide_bridge_layout", "build_wide_bridge_routing",
     "build_campus_routing", "build_charging", "build_fleet_profile", "build_g2", "build_process_network",
     "build_render_profile", "build_visual_assets",
 ]

@@ -1,0 +1,167 @@
+{
+  "schema_version": 1,
+  "scope": "Authored four-line campus process network; timings and capacities are simulation inputs, not measured factory performance",
+  "dispatch_mode": "downstream_wip_drain_least_assigned",
+  "inventory": {
+    "stock_per_source": 20,
+    "carrier_count": 64
+  },
+  "lines": [
+    {
+      "id": "L1",
+      "source_locations": [
+        "A_S1",
+        "A_S2",
+        "A_S3"
+      ],
+      "config": {
+        "schema_version": 1,
+        "shipping_station": "D_OUT",
+        "cells": [
+          {
+            "id": "TEST",
+            "input_station": "A_CI",
+            "output_station": "A_CO",
+            "processing_time_s": 30,
+            "input_capacity": 2,
+            "output_capacity": 2
+          },
+          {
+            "id": "AOI",
+            "input_station": "B_AOI_IN",
+            "output_station": "B_AOI_OUT",
+            "processing_time_s": 20,
+            "input_capacity": 2,
+            "output_capacity": 2
+          },
+          {
+            "id": "PACK",
+            "input_station": "D_PACK_IN",
+            "output_station": "D_PACK_OUT",
+            "processing_time_s": 15,
+            "input_capacity": 2,
+            "output_capacity": 2
+          }
+        ]
+      }
+    },
+    {
+      "id": "L2",
+      "source_locations": [
+        "B_S1",
+        "B_S2",
+        "B_S3"
+      ],
+      "config": {
+        "schema_version": 1,
+        "shipping_station": "C_OUT",
+        "cells": [
+          {
+            "id": "TEST",
+            "input_station": "B_CI",
+            "output_station": "B_CO",
+            "processing_time_s": 30,
+            "input_capacity": 2,
+            "output_capacity": 2
+          },
+          {
+            "id": "AOI",
+            "input_station": "D_AOI_IN",
+            "output_station": "D_AOI_OUT",
+            "processing_time_s": 20,
+            "input_capacity": 2,
+            "output_capacity": 2
+          },
+          {
+            "id": "PACK",
+            "input_station": "C_PACK_IN",
+            "output_station": "C_PACK_OUT",
+            "processing_time_s": 15,
+            "input_capacity": 2,
+            "output_capacity": 2
+          }
+        ]
+      }
+    },
+    {
+      "id": "L3",
+      "source_locations": [
+        "C_S1",
+        "C_S2",
+        "C_S3"
+      ],
+      "config": {
+        "schema_version": 1,
+        "shipping_station": "B_OUT",
+        "cells": [
+          {
+            "id": "TEST",
+            "input_station": "C_CI",
+            "output_station": "C_CO",
+            "processing_time_s": 30,
+            "input_capacity": 2,
+            "output_capacity": 2
+          },
+          {
+            "id": "AOI",
+            "input_station": "A_AOI_IN",
+            "output_station": "A_AOI_OUT",
+            "processing_time_s": 20,
+            "input_capacity": 2,
+            "output_capacity": 2
+          },
+          {
+            "id": "PACK",
+            "input_station": "B_PACK_IN",
+            "output_station": "B_PACK_OUT",
+            "processing_time_s": 15,
+            "input_capacity": 2,
+            "output_capacity": 2
+          }
+        ]
+      }
+    },
+    {
+      "id": "L4",
+      "source_locations": [
+        "D_S1",
+        "D_S2",
+        "D_S3"
+      ],
+      "config": {
+        "schema_version": 1,
+        "shipping_station": "A_OUT",
+        "cells": [
+          {
+            "id": "TEST",
+            "input_station": "D_CI",
+            "output_station": "D_CO",
+            "processing_time_s": 30,
+            "input_capacity": 2,
+            "output_capacity": 2
+          },
+          {
+            "id": "AOI",
+            "input_station": "C_AOI_IN",
+            "output_station": "C_AOI_OUT",
+            "processing_time_s": 20,
+            "input_capacity": 2,
+            "output_capacity": 2
+          },
+          {
+            "id": "PACK",
+            "input_station": "A_PACK_IN",
+            "output_station": "A_PACK_OUT",
+            "processing_time_s": 15,
+            "input_capacity": 2,
+            "output_capacity": 2
+          }
+        ]
+      }
+    }
+  ],
+  "provenance": {
+    "kind": "authored_candidate",
+    "pending": "global dispatch, RouteBook, physics and throughput evidence"
+  }
+}

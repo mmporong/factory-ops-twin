@@ -1,0 +1,3163 @@
+{
+  "schema_version": 1,
+  "scope": "Four-bay 16-AMR authored route graph with separated AB/CD opposing lanes; reservation and physical runtime qualification pending",
+  "base_layout": "configs/factory-semiconductor-campus16-wide-bridges/layout.json",
+  "override_scope": "Separated directional main/spine lanes plus shared auxiliary, station, dock and parking connectors; runtime qualification remains pending.",
+  "collision_radius": {
+    "value": 0.6371090915442774,
+    "unit": "m",
+    "measured_at": "2026-10-16T12:12:28.178006+00:00",
+    "valid_for": "G2 Nova Carter enabled collider union in the robot root frame; any V4 GPU startup must remeasure the loaded asset",
+    "source_commit": "81befc881466f0e612465ba3987165eec2c9ca4f",
+    "source_run": "g2-f1-004",
+    "source_run_id": "a37e070db5e98c935dc982deb0b5f564",
+    "source_file": "results/g2-f1-004/sim-ready.json#/robots/carter1/footprint/collision_radius_m",
+    "source_archive_sha256": "03ab2e89e8530c88fdfb998e961313a2c304fa629b6ecb8d48f830e39f89aca1"
+  },
+  "authored_allowances": {
+    "evaluation_clearance_m": 0.2,
+    "localization_planning_margin_m": 0.3,
+    "tile_size_m": 1.0,
+    "scope": "Conservative preflight assumptions; not a safety certification",
+    "reservation_radius_including_tracking_m": 1.4371090915442775
+  },
+  "handover_contract": "Retain occupied tiles. Replace a reservation atomically only after fresh estimated occupancy is contained in both predecessor and successor bundles.",
+  "nodes": {
+    "A_S1": [
+      3.5,
+      12.5
+    ],
+    "A_S2": [
+      3.5,
+      21.5
+    ],
+    "A_S3": [
+      3.5,
+      30.5
+    ],
+    "A_CI": [
+      21.5,
+      18.5
+    ],
+    "A_CO": [
+      21.5,
+      24.5
+    ],
+    "A_OUT": [
+      32.5,
+      21.5
+    ],
+    "A_P1": [
+      12.0,
+      9.5
+    ],
+    "A_P2": [
+      12.0,
+      34.0
+    ],
+    "A_P3": [
+      17.0,
+      9.5
+    ],
+    "A_P4": [
+      17.0,
+      34.0
+    ],
+    "A_LOW_E_W": [
+      9.0,
+      12.5
+    ],
+    "A_LOW_E_P1": [
+      12.0,
+      12.5
+    ],
+    "A_LOW_E_C": [
+      15.0,
+      12.5
+    ],
+    "A_LOW_E_P3": [
+      17.0,
+      12.5
+    ],
+    "A_LOW_E_ES": [
+      25.5,
+      12.5
+    ],
+    "A_LOW_E_EN": [
+      28.5,
+      12.5
+    ],
+    "A_LOW_W_EN": [
+      28.5,
+      15.5
+    ],
+    "A_LOW_W_ES": [
+      25.5,
+      15.5
+    ],
+    "A_LOW_W_P3": [
+      17.0,
+      15.5
+    ],
+    "A_LOW_W_C": [
+      15.0,
+      15.5
+    ],
+    "A_LOW_W_P1": [
+      12.0,
+      15.5
+    ],
+    "A_LOW_W_W": [
+      9.0,
+      15.5
+    ],
+    "A_W_MID": [
+      9.0,
+      21.5
+    ],
+    "A_C_MID": [
+      15.0,
+      21.5
+    ],
+    "A_HIGH_E_W": [
+      9.0,
+      27.5
+    ],
+    "A_HIGH_E_P2": [
+      12.0,
+      27.5
+    ],
+    "A_HIGH_E_C": [
+      15.0,
+      27.5
+    ],
+    "A_HIGH_E_P4": [
+      17.0,
+      27.5
+    ],
+    "A_HIGH_E_ES": [
+      25.5,
+      27.5
+    ],
+    "A_HIGH_E_EN": [
+      28.5,
+      27.5
+    ],
+    "A_HIGH_W_EN": [
+      28.5,
+      30.5
+    ],
+    "A_HIGH_W_ES": [
+      25.5,
+      30.5
+    ],
+    "A_HIGH_W_P4": [
+      17.0,
+      30.5
+    ],
+    "A_HIGH_W_C": [
+      15.0,
+      30.5
+    ],
+    "A_HIGH_W_P2": [
+      12.0,
+      30.5
+    ],
+    "A_HIGH_W_W": [
+      9.0,
+      30.5
+    ],
+    "A_ES_CI": [
+      25.5,
+      18.5
+    ],
+    "A_EN_CI": [
+      28.5,
+      18.5
+    ],
+    "A_ES_OUT": [
+      25.5,
+      21.5
+    ],
+    "A_EN_OUT": [
+      28.5,
+      21.5
+    ],
+    "A_ES_CO": [
+      25.5,
+      24.5
+    ],
+    "A_EN_CO": [
+      28.5,
+      24.5
+    ],
+    "A_AOI_IN": [
+      4.0,
+      21.5
+    ],
+    "A_AOI_OUT": [
+      7.0,
+      21.5
+    ],
+    "A_PACK_IN": [
+      27.0,
+      15.5
+    ],
+    "A_PACK_OUT": [
+      27.0,
+      27.5
+    ],
+    "B_S1": [
+      45.5,
+      12.5
+    ],
+    "B_S2": [
+      45.5,
+      21.5
+    ],
+    "B_S3": [
+      45.5,
+      30.5
+    ],
+    "B_CI": [
+      63.5,
+      18.5
+    ],
+    "B_CO": [
+      63.5,
+      24.5
+    ],
+    "B_OUT": [
+      74.5,
+      21.5
+    ],
+    "B_P1": [
+      54.0,
+      9.5
+    ],
+    "B_P2": [
+      54.0,
+      34.0
+    ],
+    "B_P3": [
+      59.0,
+      9.5
+    ],
+    "B_P4": [
+      59.0,
+      34.0
+    ],
+    "B_LOW_E_W": [
+      51.0,
+      12.5
+    ],
+    "B_LOW_E_P1": [
+      54.0,
+      12.5
+    ],
+    "B_LOW_E_C": [
+      57.0,
+      12.5
+    ],
+    "B_LOW_E_P3": [
+      59.0,
+      12.5
+    ],
+    "B_LOW_E_ES": [
+      67.5,
+      12.5
+    ],
+    "B_LOW_E_EN": [
+      70.5,
+      12.5
+    ],
+    "B_LOW_W_EN": [
+      70.5,
+      15.5
+    ],
+    "B_LOW_W_ES": [
+      67.5,
+      15.5
+    ],
+    "B_LOW_W_P3": [
+      59.0,
+      15.5
+    ],
+    "B_LOW_W_C": [
+      57.0,
+      15.5
+    ],
+    "B_LOW_W_P1": [
+      54.0,
+      15.5
+    ],
+    "B_LOW_W_W": [
+      51.0,
+      15.5
+    ],
+    "B_W_MID": [
+      51.0,
+      21.5
+    ],
+    "B_C_MID": [
+      57.0,
+      21.5
+    ],
+    "B_HIGH_E_W": [
+      51.0,
+      27.5
+    ],
+    "B_HIGH_E_P2": [
+      54.0,
+      27.5
+    ],
+    "B_HIGH_E_C": [
+      57.0,
+      27.5
+    ],
+    "B_HIGH_E_P4": [
+      59.0,
+      27.5
+    ],
+    "B_HIGH_E_ES": [
+      67.5,
+      27.5
+    ],
+    "B_HIGH_E_EN": [
+      70.5,
+      27.5
+    ],
+    "B_HIGH_W_EN": [
+      70.5,
+      30.5
+    ],
+    "B_HIGH_W_ES": [
+      67.5,
+      30.5
+    ],
+    "B_HIGH_W_P4": [
+      59.0,
+      30.5
+    ],
+    "B_HIGH_W_C": [
+      57.0,
+      30.5
+    ],
+    "B_HIGH_W_P2": [
+      54.0,
+      30.5
+    ],
+    "B_HIGH_W_W": [
+      51.0,
+      30.5
+    ],
+    "B_ES_CI": [
+      67.5,
+      18.5
+    ],
+    "B_EN_CI": [
+      70.5,
+      18.5
+    ],
+    "B_ES_OUT": [
+      67.5,
+      21.5
+    ],
+    "B_EN_OUT": [
+      70.5,
+      21.5
+    ],
+    "B_ES_CO": [
+      67.5,
+      24.5
+    ],
+    "B_EN_CO": [
+      70.5,
+      24.5
+    ],
+    "B_AOI_IN": [
+      46.0,
+      21.5
+    ],
+    "B_AOI_OUT": [
+      49.0,
+      21.5
+    ],
+    "B_PACK_IN": [
+      69.0,
+      15.5
+    ],
+    "B_PACK_OUT": [
+      69.0,
+      27.5
+    ],
+    "C_S1": [
+      3.5,
+      44.5
+    ],
+    "C_S2": [
+      3.5,
+      53.5
+    ],
+    "C_S3": [
+      3.5,
+      62.5
+    ],
+    "C_CI": [
+      21.5,
+      50.5
+    ],
+    "C_CO": [
+      21.5,
+      56.5
+    ],
+    "C_OUT": [
+      32.5,
+      53.5
+    ],
+    "C_P1": [
+      12.0,
+      41.5
+    ],
+    "C_P2": [
+      12.0,
+      66.0
+    ],
+    "C_P3": [
+      17.0,
+      41.5
+    ],
+    "C_P4": [
+      17.0,
+      66.0
+    ],
+    "C_LOW_E_W": [
+      9.0,
+      44.5
+    ],
+    "C_LOW_E_P1": [
+      12.0,
+      44.5
+    ],
+    "C_LOW_E_C": [
+      15.0,
+      44.5
+    ],
+    "C_LOW_E_P3": [
+      17.0,
+      44.5
+    ],
+    "C_LOW_E_ES": [
+      25.5,
+      44.5
+    ],
+    "C_LOW_E_EN": [
+      28.5,
+      44.5
+    ],
+    "C_LOW_W_EN": [
+      28.5,
+      47.5
+    ],
+    "C_LOW_W_ES": [
+      25.5,
+      47.5
+    ],
+    "C_LOW_W_P3": [
+      17.0,
+      47.5
+    ],
+    "C_LOW_W_C": [
+      15.0,
+      47.5
+    ],
+    "C_LOW_W_P1": [
+      12.0,
+      47.5
+    ],
+    "C_LOW_W_W": [
+      9.0,
+      47.5
+    ],
+    "C_W_MID": [
+      9.0,
+      53.5
+    ],
+    "C_C_MID": [
+      15.0,
+      53.5
+    ],
+    "C_HIGH_E_W": [
+      9.0,
+      59.5
+    ],
+    "C_HIGH_E_P2": [
+      12.0,
+      59.5
+    ],
+    "C_HIGH_E_C": [
+      15.0,
+      59.5
+    ],
+    "C_HIGH_E_P4": [
+      17.0,
+      59.5
+    ],
+    "C_HIGH_E_ES": [
+      25.5,
+      59.5
+    ],
+    "C_HIGH_E_EN": [
+      28.5,
+      59.5
+    ],
+    "C_HIGH_W_EN": [
+      28.5,
+      62.5
+    ],
+    "C_HIGH_W_ES": [
+      25.5,
+      62.5
+    ],
+    "C_HIGH_W_P4": [
+      17.0,
+      62.5
+    ],
+    "C_HIGH_W_C": [
+      15.0,
+      62.5
+    ],
+    "C_HIGH_W_P2": [
+      12.0,
+      62.5
+    ],
+    "C_HIGH_W_W": [
+      9.0,
+      62.5
+    ],
+    "C_ES_CI": [
+      25.5,
+      50.5
+    ],
+    "C_EN_CI": [
+      28.5,
+      50.5
+    ],
+    "C_ES_OUT": [
+      25.5,
+      53.5
+    ],
+    "C_EN_OUT": [
+      28.5,
+      53.5
+    ],
+    "C_ES_CO": [
+      25.5,
+      56.5
+    ],
+    "C_EN_CO": [
+      28.5,
+      56.5
+    ],
+    "C_AOI_IN": [
+      4.0,
+      53.5
+    ],
+    "C_AOI_OUT": [
+      7.0,
+      53.5
+    ],
+    "C_PACK_IN": [
+      27.0,
+      47.5
+    ],
+    "C_PACK_OUT": [
+      27.0,
+      59.5
+    ],
+    "D_S1": [
+      45.5,
+      44.5
+    ],
+    "D_S2": [
+      45.5,
+      53.5
+    ],
+    "D_S3": [
+      45.5,
+      62.5
+    ],
+    "D_CI": [
+      63.5,
+      50.5
+    ],
+    "D_CO": [
+      63.5,
+      56.5
+    ],
+    "D_OUT": [
+      74.5,
+      53.5
+    ],
+    "D_P1": [
+      54.0,
+      41.5
+    ],
+    "D_P2": [
+      54.0,
+      66.0
+    ],
+    "D_P3": [
+      59.0,
+      41.5
+    ],
+    "D_P4": [
+      59.0,
+      66.0
+    ],
+    "D_LOW_E_W": [
+      51.0,
+      44.5
+    ],
+    "D_LOW_E_P1": [
+      54.0,
+      44.5
+    ],
+    "D_LOW_E_C": [
+      57.0,
+      44.5
+    ],
+    "D_LOW_E_P3": [
+      59.0,
+      44.5
+    ],
+    "D_LOW_E_ES": [
+      67.5,
+      44.5
+    ],
+    "D_LOW_E_EN": [
+      70.5,
+      44.5
+    ],
+    "D_LOW_W_EN": [
+      70.5,
+      47.5
+    ],
+    "D_LOW_W_ES": [
+      67.5,
+      47.5
+    ],
+    "D_LOW_W_P3": [
+      59.0,
+      47.5
+    ],
+    "D_LOW_W_C": [
+      57.0,
+      47.5
+    ],
+    "D_LOW_W_P1": [
+      54.0,
+      47.5
+    ],
+    "D_LOW_W_W": [
+      51.0,
+      47.5
+    ],
+    "D_W_MID": [
+      51.0,
+      53.5
+    ],
+    "D_C_MID": [
+      57.0,
+      53.5
+    ],
+    "D_HIGH_E_W": [
+      51.0,
+      59.5
+    ],
+    "D_HIGH_E_P2": [
+      54.0,
+      59.5
+    ],
+    "D_HIGH_E_C": [
+      57.0,
+      59.5
+    ],
+    "D_HIGH_E_P4": [
+      59.0,
+      59.5
+    ],
+    "D_HIGH_E_ES": [
+      67.5,
+      59.5
+    ],
+    "D_HIGH_E_EN": [
+      70.5,
+      59.5
+    ],
+    "D_HIGH_W_EN": [
+      70.5,
+      62.5
+    ],
+    "D_HIGH_W_ES": [
+      67.5,
+      62.5
+    ],
+    "D_HIGH_W_P4": [
+      59.0,
+      62.5
+    ],
+    "D_HIGH_W_C": [
+      57.0,
+      62.5
+    ],
+    "D_HIGH_W_P2": [
+      54.0,
+      62.5
+    ],
+    "D_HIGH_W_W": [
+      51.0,
+      62.5
+    ],
+    "D_ES_CI": [
+      67.5,
+      50.5
+    ],
+    "D_EN_CI": [
+      70.5,
+      50.5
+    ],
+    "D_ES_OUT": [
+      67.5,
+      53.5
+    ],
+    "D_EN_OUT": [
+      70.5,
+      53.5
+    ],
+    "D_ES_CO": [
+      67.5,
+      56.5
+    ],
+    "D_EN_CO": [
+      70.5,
+      56.5
+    ],
+    "D_AOI_IN": [
+      46.0,
+      53.5
+    ],
+    "D_AOI_OUT": [
+      49.0,
+      53.5
+    ],
+    "D_PACK_IN": [
+      69.0,
+      47.5
+    ],
+    "D_PACK_OUT": [
+      69.0,
+      59.5
+    ],
+    "A_PACK_EGRESS": [
+      27.0,
+      12.5
+    ],
+    "A_PACK_WAIT": [
+      27.0,
+      9.5
+    ],
+    "A_SOURCE_WAIT": [
+      3.5,
+      27.5
+    ],
+    "A_CELL_WAIT": [
+      24.5,
+      18.5
+    ],
+    "B_PACK_EGRESS": [
+      69.0,
+      12.5
+    ],
+    "B_PACK_WAIT": [
+      69.0,
+      9.5
+    ],
+    "B_SOURCE_WAIT": [
+      45.5,
+      27.5
+    ],
+    "B_CELL_WAIT": [
+      66.5,
+      18.5
+    ],
+    "C_PACK_EGRESS": [
+      27.0,
+      44.5
+    ],
+    "C_PACK_WAIT": [
+      27.0,
+      38.5
+    ],
+    "C_SOURCE_WAIT": [
+      3.5,
+      59.5
+    ],
+    "C_CELL_WAIT": [
+      24.5,
+      50.5
+    ],
+    "D_PACK_EGRESS": [
+      69.0,
+      44.5
+    ],
+    "D_PACK_WAIT": [
+      69.0,
+      38.5
+    ],
+    "D_SOURCE_WAIT": [
+      45.5,
+      59.5
+    ],
+    "D_CELL_WAIT": [
+      66.5,
+      50.5
+    ],
+    "AB_E_ACCESS": [
+      32.0,
+      12.5
+    ],
+    "AB_E_QUEUE": [
+      32.0,
+      9.5
+    ],
+    "AB_E_W_GATE": [
+      31.0,
+      12.5
+    ],
+    "AB_E_W_IN": [
+      33.0,
+      12.5
+    ],
+    "AB_E_E_IN": [
+      46.0,
+      12.5
+    ],
+    "AB_E_E_GATE": [
+      48.0,
+      12.5
+    ],
+    "AB_W_E_GATE": [
+      48.0,
+      15.5
+    ],
+    "AB_W_E_IN": [
+      46.0,
+      15.5
+    ],
+    "AB_W_W_IN": [
+      33.0,
+      15.5
+    ],
+    "AB_W_W_GATE": [
+      31.0,
+      15.5
+    ],
+    "AB_W_QUEUE": [
+      60.0,
+      15.5
+    ],
+    "AB_W_RETURN": [
+      57.0,
+      15.5
+    ],
+    "AB_W_P1": [
+      54.0,
+      15.5
+    ],
+    "AB_W_ENTRY": [
+      51.0,
+      15.5
+    ],
+    "CD_E_QUEUE": [
+      30.5,
+      41.5
+    ],
+    "CD_E_ACCESS": [
+      27.0,
+      41.5
+    ],
+    "CD_E_ENTRY": [
+      28.5,
+      44.5
+    ],
+    "CD_E_W_GATE": [
+      31.0,
+      44.5
+    ],
+    "CD_E_W_IN": [
+      33.0,
+      44.5
+    ],
+    "CD_E_E_IN": [
+      46.0,
+      44.5
+    ],
+    "CD_E_E_GATE": [
+      48.0,
+      44.5
+    ],
+    "CD_W_E_GATE": [
+      48.0,
+      47.5
+    ],
+    "CD_W_E_IN": [
+      46.0,
+      47.5
+    ],
+    "CD_W_W_IN": [
+      33.0,
+      47.5
+    ],
+    "CD_W_W_GATE": [
+      31.0,
+      47.5
+    ],
+    "CD_W_QUEUE": [
+      60.0,
+      45.5
+    ],
+    "CD_W_RETURN": [
+      57.0,
+      47.5
+    ],
+    "CD_W_P1": [
+      54.0,
+      47.5
+    ],
+    "CD_W_ENTRY": [
+      51.0,
+      47.5
+    ],
+    "AC_S_GATE": [
+      33.0,
+      31.5
+    ],
+    "AC_S_IN": [
+      34.5,
+      33.0
+    ],
+    "AC_N_IN": [
+      34.5,
+      43.0
+    ],
+    "AC_N_GATE": [
+      33.0,
+      44.5
+    ],
+    "AC_N_ACCESS": [
+      35.5,
+      38.5
+    ],
+    "BD_S_GATE": [
+      75.0,
+      31.5
+    ],
+    "BD_S_IN": [
+      76.5,
+      33.0
+    ],
+    "BD_N_IN": [
+      76.5,
+      43.0
+    ],
+    "BD_N_GATE": [
+      75.0,
+      44.5
+    ],
+    "AC_S_QUEUE": [
+      33.5,
+      27.5
+    ],
+    "AC_N_QUEUE": [
+      31.5,
+      38.5
+    ],
+    "BD_S_QUEUE": [
+      75.5,
+      27.5
+    ],
+    "BD_N_QUEUE": [
+      73.5,
+      38.5
+    ],
+    "A_SAFE_ENTRY": [
+      21.0,
+      15.5
+    ],
+    "A_SAFE_HUB": [
+      21.0,
+      5.5
+    ],
+    "C_SAFE_ENTRY": [
+      36.5,
+      47.5
+    ],
+    "C_SAFE_HUB": [
+      36.5,
+      70.0
+    ],
+    "D_CD_E_SAFE_ENTRY": [
+      51.0,
+      60.0
+    ],
+    "D_CD_E_SAFE_TOP": [
+      75.0,
+      60.0
+    ],
+    "D_CD_E_SAFE_BRANCH": [
+      75.0,
+      70.0
+    ],
+    "D_BD_S_SAFE_ENTRY": [
+      80.0,
+      44.5
+    ],
+    "D_BD_S_SAFE_BRANCH": [
+      80.0,
+      70.0
+    ],
+    "A_AB_W_SAFE_EXIT": [
+      15.0,
+      3.0
+    ],
+    "A_AC_N_SAFE_EXIT": [
+      27.0,
+      3.0
+    ],
+    "B_AB_E_SAFE_EXIT": [
+      80.0,
+      12.5
+    ],
+    "B_BD_N_SAFE_EXIT": [
+      80.0,
+      30.5
+    ],
+    "C_CD_W_SAFE_EXIT": [
+      31.0,
+      73.0
+    ],
+    "C_AC_S_SAFE_EXIT": [
+      41.0,
+      73.0
+    ],
+    "D_CD_E_SAFE_EXIT": [
+      74.0,
+      73.0
+    ],
+    "D_BD_S_SAFE_EXIT": [
+      80.0,
+      73.0
+    ]
+  },
+  "edges": [
+    [
+      "A_LOW_E_W",
+      "A_LOW_W_W"
+    ],
+    [
+      "A_LOW_W_W",
+      "A_W_MID"
+    ],
+    [
+      "A_W_MID",
+      "A_HIGH_E_W"
+    ],
+    [
+      "A_HIGH_E_W",
+      "A_HIGH_W_W"
+    ],
+    [
+      "A_LOW_E_C",
+      "A_LOW_W_C"
+    ],
+    [
+      "A_LOW_W_C",
+      "A_C_MID"
+    ],
+    [
+      "A_C_MID",
+      "A_HIGH_E_C"
+    ],
+    [
+      "A_HIGH_E_C",
+      "A_HIGH_W_C"
+    ],
+    [
+      "A_LOW_E_P3",
+      "A_LOW_W_P3"
+    ],
+    [
+      "A_HIGH_E_P4",
+      "A_HIGH_W_P4"
+    ],
+    [
+      "A_P1",
+      "A_LOW_E_P1"
+    ],
+    [
+      "A_P1",
+      "A_LOW_W_P1"
+    ],
+    [
+      "A_P3",
+      "A_LOW_E_P3"
+    ],
+    [
+      "A_P3",
+      "A_LOW_W_P3"
+    ],
+    [
+      "A_P2",
+      "A_HIGH_E_P2"
+    ],
+    [
+      "A_P2",
+      "A_HIGH_W_P2"
+    ],
+    [
+      "A_P4",
+      "A_HIGH_E_P4"
+    ],
+    [
+      "A_P4",
+      "A_HIGH_W_P4"
+    ],
+    [
+      "A_S2",
+      "A_W_MID"
+    ],
+    [
+      "A_CI",
+      "A_ES_CI"
+    ],
+    [
+      "A_ES_CI",
+      "A_EN_CI"
+    ],
+    [
+      "A_CO",
+      "A_ES_CO"
+    ],
+    [
+      "A_ES_CO",
+      "A_EN_CO"
+    ],
+    [
+      "A_ES_OUT",
+      "A_EN_OUT"
+    ],
+    [
+      "A_EN_OUT",
+      "A_OUT"
+    ],
+    [
+      "A_S2",
+      "A_AOI_IN"
+    ],
+    [
+      "A_S2",
+      "A_AOI_OUT"
+    ],
+    [
+      "B_LOW_E_W",
+      "B_LOW_W_W"
+    ],
+    [
+      "B_LOW_W_W",
+      "B_W_MID"
+    ],
+    [
+      "B_W_MID",
+      "B_HIGH_E_W"
+    ],
+    [
+      "B_HIGH_E_W",
+      "B_HIGH_W_W"
+    ],
+    [
+      "B_LOW_E_C",
+      "B_LOW_W_C"
+    ],
+    [
+      "B_LOW_W_C",
+      "B_C_MID"
+    ],
+    [
+      "B_C_MID",
+      "B_HIGH_E_C"
+    ],
+    [
+      "B_HIGH_E_C",
+      "B_HIGH_W_C"
+    ],
+    [
+      "B_LOW_E_P3",
+      "B_LOW_W_P3"
+    ],
+    [
+      "B_HIGH_E_P4",
+      "B_HIGH_W_P4"
+    ],
+    [
+      "B_P1",
+      "B_LOW_E_P1"
+    ],
+    [
+      "B_P1",
+      "B_LOW_W_P1"
+    ],
+    [
+      "B_P3",
+      "B_LOW_E_P3"
+    ],
+    [
+      "B_P3",
+      "B_LOW_W_P3"
+    ],
+    [
+      "B_P2",
+      "B_HIGH_E_P2"
+    ],
+    [
+      "B_P2",
+      "B_HIGH_W_P2"
+    ],
+    [
+      "B_P4",
+      "B_HIGH_E_P4"
+    ],
+    [
+      "B_P4",
+      "B_HIGH_W_P4"
+    ],
+    [
+      "B_S2",
+      "B_W_MID"
+    ],
+    [
+      "B_CI",
+      "B_ES_CI"
+    ],
+    [
+      "B_ES_CI",
+      "B_EN_CI"
+    ],
+    [
+      "B_CO",
+      "B_ES_CO"
+    ],
+    [
+      "B_ES_CO",
+      "B_EN_CO"
+    ],
+    [
+      "B_ES_OUT",
+      "B_EN_OUT"
+    ],
+    [
+      "B_EN_OUT",
+      "B_OUT"
+    ],
+    [
+      "B_S2",
+      "B_AOI_IN"
+    ],
+    [
+      "B_S2",
+      "B_AOI_OUT"
+    ],
+    [
+      "C_LOW_E_W",
+      "C_LOW_W_W"
+    ],
+    [
+      "C_LOW_W_W",
+      "C_W_MID"
+    ],
+    [
+      "C_W_MID",
+      "C_HIGH_E_W"
+    ],
+    [
+      "C_HIGH_E_W",
+      "C_HIGH_W_W"
+    ],
+    [
+      "C_LOW_E_C",
+      "C_LOW_W_C"
+    ],
+    [
+      "C_LOW_W_C",
+      "C_C_MID"
+    ],
+    [
+      "C_C_MID",
+      "C_HIGH_E_C"
+    ],
+    [
+      "C_HIGH_E_C",
+      "C_HIGH_W_C"
+    ],
+    [
+      "C_LOW_E_P3",
+      "C_LOW_W_P3"
+    ],
+    [
+      "C_HIGH_E_P4",
+      "C_HIGH_W_P4"
+    ],
+    [
+      "C_P1",
+      "C_LOW_E_P1"
+    ],
+    [
+      "C_P1",
+      "C_LOW_W_P1"
+    ],
+    [
+      "C_P3",
+      "C_LOW_E_P3"
+    ],
+    [
+      "C_P3",
+      "C_LOW_W_P3"
+    ],
+    [
+      "C_P2",
+      "C_HIGH_E_P2"
+    ],
+    [
+      "C_P2",
+      "C_HIGH_W_P2"
+    ],
+    [
+      "C_P4",
+      "C_HIGH_E_P4"
+    ],
+    [
+      "C_P4",
+      "C_HIGH_W_P4"
+    ],
+    [
+      "C_S2",
+      "C_W_MID"
+    ],
+    [
+      "C_CI",
+      "C_ES_CI"
+    ],
+    [
+      "C_ES_CI",
+      "C_EN_CI"
+    ],
+    [
+      "C_CO",
+      "C_ES_CO"
+    ],
+    [
+      "C_ES_CO",
+      "C_EN_CO"
+    ],
+    [
+      "C_ES_OUT",
+      "C_EN_OUT"
+    ],
+    [
+      "C_EN_OUT",
+      "C_OUT"
+    ],
+    [
+      "C_S2",
+      "C_AOI_IN"
+    ],
+    [
+      "C_S2",
+      "C_AOI_OUT"
+    ],
+    [
+      "D_LOW_E_W",
+      "D_LOW_W_W"
+    ],
+    [
+      "D_LOW_W_W",
+      "D_W_MID"
+    ],
+    [
+      "D_W_MID",
+      "D_HIGH_E_W"
+    ],
+    [
+      "D_HIGH_E_W",
+      "D_HIGH_W_W"
+    ],
+    [
+      "D_LOW_E_C",
+      "D_LOW_W_C"
+    ],
+    [
+      "D_LOW_W_C",
+      "D_C_MID"
+    ],
+    [
+      "D_C_MID",
+      "D_HIGH_E_C"
+    ],
+    [
+      "D_HIGH_E_C",
+      "D_HIGH_W_C"
+    ],
+    [
+      "D_LOW_E_P3",
+      "D_LOW_W_P3"
+    ],
+    [
+      "D_HIGH_E_P4",
+      "D_HIGH_W_P4"
+    ],
+    [
+      "D_P1",
+      "D_LOW_E_P1"
+    ],
+    [
+      "D_P1",
+      "D_LOW_W_P1"
+    ],
+    [
+      "D_P3",
+      "D_LOW_E_P3"
+    ],
+    [
+      "D_P3",
+      "D_LOW_W_P3"
+    ],
+    [
+      "D_P2",
+      "D_HIGH_E_P2"
+    ],
+    [
+      "D_P2",
+      "D_HIGH_W_P2"
+    ],
+    [
+      "D_P4",
+      "D_HIGH_E_P4"
+    ],
+    [
+      "D_P4",
+      "D_HIGH_W_P4"
+    ],
+    [
+      "D_S2",
+      "D_W_MID"
+    ],
+    [
+      "D_CI",
+      "D_ES_CI"
+    ],
+    [
+      "D_ES_CI",
+      "D_EN_CI"
+    ],
+    [
+      "D_CO",
+      "D_ES_CO"
+    ],
+    [
+      "D_ES_CO",
+      "D_EN_CO"
+    ],
+    [
+      "D_ES_OUT",
+      "D_EN_OUT"
+    ],
+    [
+      "D_EN_OUT",
+      "D_OUT"
+    ],
+    [
+      "D_S2",
+      "D_AOI_IN"
+    ],
+    [
+      "D_S2",
+      "D_AOI_OUT"
+    ],
+    [
+      "A_PACK_EGRESS",
+      "A_PACK_WAIT"
+    ],
+    [
+      "A_HIGH_E_W",
+      "A_SOURCE_WAIT"
+    ],
+    [
+      "A_CI",
+      "A_CELL_WAIT"
+    ],
+    [
+      "B_PACK_EGRESS",
+      "B_PACK_WAIT"
+    ],
+    [
+      "B_HIGH_E_W",
+      "B_SOURCE_WAIT"
+    ],
+    [
+      "B_CI",
+      "B_CELL_WAIT"
+    ],
+    [
+      "C_PACK_EGRESS",
+      "C_PACK_WAIT"
+    ],
+    [
+      "C_HIGH_E_W",
+      "C_SOURCE_WAIT"
+    ],
+    [
+      "C_CI",
+      "C_CELL_WAIT"
+    ],
+    [
+      "D_PACK_EGRESS",
+      "D_PACK_WAIT"
+    ],
+    [
+      "D_HIGH_E_W",
+      "D_SOURCE_WAIT"
+    ],
+    [
+      "D_CI",
+      "D_CELL_WAIT"
+    ],
+    [
+      "A_HIGH_W_EN",
+      "A_LOW_W_EN"
+    ],
+    [
+      "A_LOW_W_EN",
+      "A_SAFE_ENTRY"
+    ],
+    [
+      "A_SAFE_ENTRY",
+      "A_SAFE_HUB"
+    ],
+    [
+      "A_SAFE_HUB",
+      "A_AB_W_SAFE_EXIT"
+    ],
+    [
+      "A_SAFE_HUB",
+      "A_AC_N_SAFE_EXIT"
+    ],
+    [
+      "B_LOW_E_EN",
+      "B_AB_E_SAFE_EXIT"
+    ],
+    [
+      "B_HIGH_W_EN",
+      "B_BD_N_SAFE_EXIT"
+    ],
+    [
+      "C_LOW_W_EN",
+      "C_SAFE_ENTRY"
+    ],
+    [
+      "C_SAFE_ENTRY",
+      "C_SAFE_HUB"
+    ],
+    [
+      "C_SAFE_HUB",
+      "C_CD_W_SAFE_EXIT"
+    ],
+    [
+      "C_SAFE_HUB",
+      "C_AC_S_SAFE_EXIT"
+    ],
+    [
+      "D_LOW_E_W",
+      "D_CD_E_SAFE_ENTRY"
+    ],
+    [
+      "D_CD_E_SAFE_ENTRY",
+      "D_CD_E_SAFE_TOP"
+    ],
+    [
+      "D_CD_E_SAFE_TOP",
+      "D_CD_E_SAFE_BRANCH"
+    ],
+    [
+      "D_CD_E_SAFE_BRANCH",
+      "D_CD_E_SAFE_EXIT"
+    ],
+    [
+      "D_LOW_E_EN",
+      "D_BD_S_SAFE_ENTRY"
+    ],
+    [
+      "D_BD_S_SAFE_ENTRY",
+      "D_BD_S_SAFE_BRANCH"
+    ],
+    [
+      "D_BD_S_SAFE_BRANCH",
+      "D_BD_S_SAFE_EXIT"
+    ]
+  ],
+  "directed_edges": [
+    [
+      "A_S1",
+      "A_LOW_E_W"
+    ],
+    [
+      "A_LOW_E_W",
+      "A_LOW_E_P1"
+    ],
+    [
+      "A_LOW_E_P1",
+      "A_LOW_E_C"
+    ],
+    [
+      "A_LOW_E_C",
+      "A_LOW_E_P3"
+    ],
+    [
+      "A_LOW_E_P3",
+      "A_LOW_E_ES"
+    ],
+    [
+      "A_LOW_W_EN",
+      "A_PACK_IN"
+    ],
+    [
+      "A_PACK_IN",
+      "A_LOW_W_ES"
+    ],
+    [
+      "A_LOW_W_ES",
+      "A_LOW_W_P3"
+    ],
+    [
+      "A_LOW_W_P3",
+      "A_LOW_W_C"
+    ],
+    [
+      "A_LOW_W_C",
+      "A_LOW_W_P1"
+    ],
+    [
+      "A_LOW_W_P1",
+      "A_LOW_W_W"
+    ],
+    [
+      "A_LOW_W_W",
+      "A_S1"
+    ],
+    [
+      "A_S3",
+      "A_HIGH_E_W"
+    ],
+    [
+      "A_HIGH_E_W",
+      "A_HIGH_E_P2"
+    ],
+    [
+      "A_HIGH_E_P2",
+      "A_HIGH_E_C"
+    ],
+    [
+      "A_HIGH_E_C",
+      "A_HIGH_E_P4"
+    ],
+    [
+      "A_HIGH_E_P4",
+      "A_HIGH_E_ES"
+    ],
+    [
+      "A_HIGH_E_ES",
+      "A_PACK_OUT"
+    ],
+    [
+      "A_PACK_OUT",
+      "A_HIGH_E_EN"
+    ],
+    [
+      "A_HIGH_W_EN",
+      "A_HIGH_W_ES"
+    ],
+    [
+      "A_HIGH_W_ES",
+      "A_HIGH_W_P4"
+    ],
+    [
+      "A_HIGH_W_P4",
+      "A_HIGH_W_C"
+    ],
+    [
+      "A_HIGH_W_C",
+      "A_HIGH_W_P2"
+    ],
+    [
+      "A_HIGH_W_P2",
+      "A_HIGH_W_W"
+    ],
+    [
+      "A_HIGH_W_W",
+      "A_S3"
+    ],
+    [
+      "A_LOW_E_EN",
+      "A_LOW_W_EN"
+    ],
+    [
+      "A_LOW_W_EN",
+      "A_EN_CI"
+    ],
+    [
+      "A_EN_CI",
+      "A_EN_OUT"
+    ],
+    [
+      "A_EN_OUT",
+      "A_EN_CO"
+    ],
+    [
+      "A_EN_CO",
+      "A_HIGH_E_EN"
+    ],
+    [
+      "A_HIGH_E_EN",
+      "A_HIGH_W_EN"
+    ],
+    [
+      "A_HIGH_W_ES",
+      "A_HIGH_E_ES"
+    ],
+    [
+      "A_HIGH_E_ES",
+      "A_ES_CO"
+    ],
+    [
+      "A_ES_CO",
+      "A_ES_OUT"
+    ],
+    [
+      "A_ES_OUT",
+      "A_ES_CI"
+    ],
+    [
+      "A_ES_CI",
+      "A_LOW_W_ES"
+    ],
+    [
+      "A_LOW_W_ES",
+      "A_LOW_E_ES"
+    ],
+    [
+      "B_S1",
+      "B_LOW_E_W"
+    ],
+    [
+      "B_LOW_E_W",
+      "B_LOW_E_P1"
+    ],
+    [
+      "B_LOW_E_P1",
+      "B_LOW_E_C"
+    ],
+    [
+      "B_LOW_E_C",
+      "B_LOW_E_P3"
+    ],
+    [
+      "B_LOW_E_P3",
+      "B_LOW_E_ES"
+    ],
+    [
+      "B_LOW_W_EN",
+      "B_PACK_IN"
+    ],
+    [
+      "B_PACK_IN",
+      "B_LOW_W_ES"
+    ],
+    [
+      "B_LOW_W_ES",
+      "B_LOW_W_P3"
+    ],
+    [
+      "B_LOW_W_P3",
+      "B_LOW_W_C"
+    ],
+    [
+      "B_LOW_W_C",
+      "B_LOW_W_P1"
+    ],
+    [
+      "B_LOW_W_P1",
+      "B_LOW_W_W"
+    ],
+    [
+      "B_LOW_W_W",
+      "B_S1"
+    ],
+    [
+      "B_S3",
+      "B_HIGH_E_W"
+    ],
+    [
+      "B_HIGH_E_W",
+      "B_HIGH_E_P2"
+    ],
+    [
+      "B_HIGH_E_P2",
+      "B_HIGH_E_C"
+    ],
+    [
+      "B_HIGH_E_C",
+      "B_HIGH_E_P4"
+    ],
+    [
+      "B_HIGH_E_P4",
+      "B_HIGH_E_ES"
+    ],
+    [
+      "B_HIGH_E_ES",
+      "B_PACK_OUT"
+    ],
+    [
+      "B_PACK_OUT",
+      "B_HIGH_E_EN"
+    ],
+    [
+      "B_HIGH_W_EN",
+      "B_HIGH_W_ES"
+    ],
+    [
+      "B_HIGH_W_ES",
+      "B_HIGH_W_P4"
+    ],
+    [
+      "B_HIGH_W_P4",
+      "B_HIGH_W_C"
+    ],
+    [
+      "B_HIGH_W_C",
+      "B_HIGH_W_P2"
+    ],
+    [
+      "B_HIGH_W_P2",
+      "B_HIGH_W_W"
+    ],
+    [
+      "B_HIGH_W_W",
+      "B_S3"
+    ],
+    [
+      "B_LOW_E_EN",
+      "B_LOW_W_EN"
+    ],
+    [
+      "B_LOW_W_EN",
+      "B_EN_CI"
+    ],
+    [
+      "B_EN_CI",
+      "B_EN_OUT"
+    ],
+    [
+      "B_EN_OUT",
+      "B_EN_CO"
+    ],
+    [
+      "B_EN_CO",
+      "B_HIGH_E_EN"
+    ],
+    [
+      "B_HIGH_E_EN",
+      "B_HIGH_W_EN"
+    ],
+    [
+      "B_HIGH_W_ES",
+      "B_HIGH_E_ES"
+    ],
+    [
+      "B_HIGH_E_ES",
+      "B_ES_CO"
+    ],
+    [
+      "B_ES_CO",
+      "B_ES_OUT"
+    ],
+    [
+      "B_ES_OUT",
+      "B_ES_CI"
+    ],
+    [
+      "B_ES_CI",
+      "B_LOW_W_ES"
+    ],
+    [
+      "B_LOW_W_ES",
+      "B_LOW_E_ES"
+    ],
+    [
+      "C_S1",
+      "C_LOW_E_W"
+    ],
+    [
+      "C_LOW_E_W",
+      "C_LOW_E_P1"
+    ],
+    [
+      "C_LOW_E_P1",
+      "C_LOW_E_C"
+    ],
+    [
+      "C_LOW_E_C",
+      "C_LOW_E_P3"
+    ],
+    [
+      "C_LOW_E_P3",
+      "C_LOW_E_ES"
+    ],
+    [
+      "C_LOW_W_EN",
+      "C_PACK_IN"
+    ],
+    [
+      "C_PACK_IN",
+      "C_LOW_W_ES"
+    ],
+    [
+      "C_LOW_W_ES",
+      "C_LOW_W_P3"
+    ],
+    [
+      "C_LOW_W_P3",
+      "C_LOW_W_C"
+    ],
+    [
+      "C_LOW_W_C",
+      "C_LOW_W_P1"
+    ],
+    [
+      "C_LOW_W_P1",
+      "C_LOW_W_W"
+    ],
+    [
+      "C_LOW_W_W",
+      "C_S1"
+    ],
+    [
+      "C_S3",
+      "C_HIGH_E_W"
+    ],
+    [
+      "C_HIGH_E_W",
+      "C_HIGH_E_P2"
+    ],
+    [
+      "C_HIGH_E_P2",
+      "C_HIGH_E_C"
+    ],
+    [
+      "C_HIGH_E_C",
+      "C_HIGH_E_P4"
+    ],
+    [
+      "C_HIGH_E_P4",
+      "C_HIGH_E_ES"
+    ],
+    [
+      "C_HIGH_E_ES",
+      "C_PACK_OUT"
+    ],
+    [
+      "C_PACK_OUT",
+      "C_HIGH_E_EN"
+    ],
+    [
+      "C_HIGH_W_EN",
+      "C_HIGH_W_ES"
+    ],
+    [
+      "C_HIGH_W_ES",
+      "C_HIGH_W_P4"
+    ],
+    [
+      "C_HIGH_W_P4",
+      "C_HIGH_W_C"
+    ],
+    [
+      "C_HIGH_W_C",
+      "C_HIGH_W_P2"
+    ],
+    [
+      "C_HIGH_W_P2",
+      "C_HIGH_W_W"
+    ],
+    [
+      "C_HIGH_W_W",
+      "C_S3"
+    ],
+    [
+      "C_LOW_E_EN",
+      "C_LOW_W_EN"
+    ],
+    [
+      "C_LOW_W_EN",
+      "C_EN_CI"
+    ],
+    [
+      "C_EN_CI",
+      "C_EN_OUT"
+    ],
+    [
+      "C_EN_OUT",
+      "C_EN_CO"
+    ],
+    [
+      "C_EN_CO",
+      "C_HIGH_E_EN"
+    ],
+    [
+      "C_HIGH_E_EN",
+      "C_HIGH_W_EN"
+    ],
+    [
+      "C_HIGH_W_ES",
+      "C_HIGH_E_ES"
+    ],
+    [
+      "C_HIGH_E_ES",
+      "C_ES_CO"
+    ],
+    [
+      "C_ES_CO",
+      "C_ES_OUT"
+    ],
+    [
+      "C_ES_OUT",
+      "C_ES_CI"
+    ],
+    [
+      "C_ES_CI",
+      "C_LOW_W_ES"
+    ],
+    [
+      "C_LOW_W_ES",
+      "C_LOW_E_ES"
+    ],
+    [
+      "D_S1",
+      "D_LOW_E_W"
+    ],
+    [
+      "D_LOW_E_W",
+      "D_LOW_E_P1"
+    ],
+    [
+      "D_LOW_E_P1",
+      "D_LOW_E_C"
+    ],
+    [
+      "D_LOW_E_C",
+      "D_LOW_E_P3"
+    ],
+    [
+      "D_LOW_E_P3",
+      "D_LOW_E_ES"
+    ],
+    [
+      "D_LOW_W_EN",
+      "D_PACK_IN"
+    ],
+    [
+      "D_PACK_IN",
+      "D_LOW_W_ES"
+    ],
+    [
+      "D_LOW_W_ES",
+      "D_LOW_W_P3"
+    ],
+    [
+      "D_LOW_W_P3",
+      "D_LOW_W_C"
+    ],
+    [
+      "D_LOW_W_C",
+      "D_LOW_W_P1"
+    ],
+    [
+      "D_LOW_W_P1",
+      "D_LOW_W_W"
+    ],
+    [
+      "D_LOW_W_W",
+      "D_S1"
+    ],
+    [
+      "D_S3",
+      "D_HIGH_E_W"
+    ],
+    [
+      "D_HIGH_E_W",
+      "D_HIGH_E_P2"
+    ],
+    [
+      "D_HIGH_E_P2",
+      "D_HIGH_E_C"
+    ],
+    [
+      "D_HIGH_E_C",
+      "D_HIGH_E_P4"
+    ],
+    [
+      "D_HIGH_E_P4",
+      "D_HIGH_E_ES"
+    ],
+    [
+      "D_HIGH_E_ES",
+      "D_PACK_OUT"
+    ],
+    [
+      "D_PACK_OUT",
+      "D_HIGH_E_EN"
+    ],
+    [
+      "D_HIGH_W_EN",
+      "D_HIGH_W_ES"
+    ],
+    [
+      "D_HIGH_W_ES",
+      "D_HIGH_W_P4"
+    ],
+    [
+      "D_HIGH_W_P4",
+      "D_HIGH_W_C"
+    ],
+    [
+      "D_HIGH_W_C",
+      "D_HIGH_W_P2"
+    ],
+    [
+      "D_HIGH_W_P2",
+      "D_HIGH_W_W"
+    ],
+    [
+      "D_HIGH_W_W",
+      "D_S3"
+    ],
+    [
+      "D_LOW_E_EN",
+      "D_LOW_W_EN"
+    ],
+    [
+      "D_LOW_W_EN",
+      "D_EN_CI"
+    ],
+    [
+      "D_EN_CI",
+      "D_EN_OUT"
+    ],
+    [
+      "D_EN_OUT",
+      "D_EN_CO"
+    ],
+    [
+      "D_EN_CO",
+      "D_HIGH_E_EN"
+    ],
+    [
+      "D_HIGH_E_EN",
+      "D_HIGH_W_EN"
+    ],
+    [
+      "D_HIGH_W_ES",
+      "D_HIGH_E_ES"
+    ],
+    [
+      "D_HIGH_E_ES",
+      "D_ES_CO"
+    ],
+    [
+      "D_ES_CO",
+      "D_ES_OUT"
+    ],
+    [
+      "D_ES_OUT",
+      "D_ES_CI"
+    ],
+    [
+      "D_ES_CI",
+      "D_LOW_W_ES"
+    ],
+    [
+      "D_LOW_W_ES",
+      "D_LOW_E_ES"
+    ],
+    [
+      "A_LOW_E_ES",
+      "A_PACK_EGRESS"
+    ],
+    [
+      "A_PACK_EGRESS",
+      "A_LOW_E_EN"
+    ],
+    [
+      "A_PACK_IN",
+      "A_PACK_EGRESS"
+    ],
+    [
+      "B_LOW_E_ES",
+      "B_PACK_EGRESS"
+    ],
+    [
+      "B_PACK_EGRESS",
+      "B_LOW_E_EN"
+    ],
+    [
+      "B_PACK_IN",
+      "B_PACK_EGRESS"
+    ],
+    [
+      "C_LOW_E_ES",
+      "C_PACK_EGRESS"
+    ],
+    [
+      "C_PACK_EGRESS",
+      "C_LOW_E_EN"
+    ],
+    [
+      "C_PACK_IN",
+      "C_PACK_EGRESS"
+    ],
+    [
+      "D_LOW_E_ES",
+      "D_PACK_EGRESS"
+    ],
+    [
+      "D_PACK_EGRESS",
+      "D_LOW_E_EN"
+    ],
+    [
+      "D_PACK_IN",
+      "D_PACK_EGRESS"
+    ],
+    [
+      "A_LOW_E_EN",
+      "AB_E_ACCESS"
+    ],
+    [
+      "AB_E_ACCESS",
+      "AB_E_QUEUE"
+    ],
+    [
+      "AB_E_QUEUE",
+      "AB_E_W_GATE"
+    ],
+    [
+      "AB_E_W_GATE",
+      "AB_E_W_IN"
+    ],
+    [
+      "AB_E_W_IN",
+      "AB_E_E_IN"
+    ],
+    [
+      "AB_E_E_IN",
+      "AB_E_E_GATE"
+    ],
+    [
+      "AB_E_E_GATE",
+      "B_LOW_E_W"
+    ],
+    [
+      "B_LOW_W_C",
+      "AB_W_QUEUE"
+    ],
+    [
+      "AB_W_QUEUE",
+      "AB_W_RETURN"
+    ],
+    [
+      "AB_W_RETURN",
+      "AB_W_P1"
+    ],
+    [
+      "AB_W_P1",
+      "AB_W_ENTRY"
+    ],
+    [
+      "AB_W_ENTRY",
+      "AB_W_E_GATE"
+    ],
+    [
+      "AB_W_E_GATE",
+      "AB_W_E_IN"
+    ],
+    [
+      "AB_W_E_IN",
+      "AB_W_W_IN"
+    ],
+    [
+      "AB_W_W_IN",
+      "AB_W_W_GATE"
+    ],
+    [
+      "AB_W_W_GATE",
+      "A_LOW_W_EN"
+    ],
+    [
+      "C_PACK_EGRESS",
+      "CD_E_ACCESS"
+    ],
+    [
+      "CD_E_ACCESS",
+      "CD_E_QUEUE"
+    ],
+    [
+      "CD_E_QUEUE",
+      "CD_E_ENTRY"
+    ],
+    [
+      "CD_E_ENTRY",
+      "CD_E_W_GATE"
+    ],
+    [
+      "CD_E_W_GATE",
+      "CD_E_W_IN"
+    ],
+    [
+      "CD_E_W_IN",
+      "CD_E_E_IN"
+    ],
+    [
+      "CD_E_E_IN",
+      "CD_E_E_GATE"
+    ],
+    [
+      "CD_E_E_GATE",
+      "D_LOW_E_W"
+    ],
+    [
+      "D_LOW_W_C",
+      "CD_W_QUEUE"
+    ],
+    [
+      "CD_W_QUEUE",
+      "CD_W_RETURN"
+    ],
+    [
+      "CD_W_RETURN",
+      "CD_W_P1"
+    ],
+    [
+      "CD_W_P1",
+      "CD_W_ENTRY"
+    ],
+    [
+      "CD_W_ENTRY",
+      "CD_W_E_GATE"
+    ],
+    [
+      "CD_W_E_GATE",
+      "CD_W_E_IN"
+    ],
+    [
+      "CD_W_E_IN",
+      "CD_W_W_IN"
+    ],
+    [
+      "CD_W_W_IN",
+      "CD_W_W_GATE"
+    ],
+    [
+      "CD_W_W_GATE",
+      "C_LOW_W_EN"
+    ],
+    [
+      "A_HIGH_E_EN",
+      "AC_S_QUEUE"
+    ],
+    [
+      "AC_S_QUEUE",
+      "AC_S_GATE"
+    ],
+    [
+      "AC_S_GATE",
+      "AC_S_IN"
+    ],
+    [
+      "AC_S_IN",
+      "AC_N_IN"
+    ],
+    [
+      "AC_N_IN",
+      "AC_N_GATE"
+    ],
+    [
+      "AC_N_GATE",
+      "C_LOW_E_EN"
+    ],
+    [
+      "C_LOW_W_EN",
+      "AC_N_QUEUE"
+    ],
+    [
+      "AC_N_QUEUE",
+      "AC_N_ACCESS"
+    ],
+    [
+      "AC_N_ACCESS",
+      "AC_N_GATE"
+    ],
+    [
+      "AC_N_GATE",
+      "AC_N_IN"
+    ],
+    [
+      "AC_N_IN",
+      "AC_S_IN"
+    ],
+    [
+      "AC_S_IN",
+      "AC_S_GATE"
+    ],
+    [
+      "AC_S_GATE",
+      "A_HIGH_W_EN"
+    ],
+    [
+      "B_HIGH_E_EN",
+      "BD_S_QUEUE"
+    ],
+    [
+      "BD_S_QUEUE",
+      "BD_S_GATE"
+    ],
+    [
+      "BD_S_GATE",
+      "BD_S_IN"
+    ],
+    [
+      "BD_S_IN",
+      "BD_N_IN"
+    ],
+    [
+      "BD_N_IN",
+      "BD_N_GATE"
+    ],
+    [
+      "BD_N_GATE",
+      "D_LOW_E_EN"
+    ],
+    [
+      "D_LOW_W_EN",
+      "BD_N_QUEUE"
+    ],
+    [
+      "BD_N_QUEUE",
+      "BD_N_GATE"
+    ],
+    [
+      "BD_N_GATE",
+      "BD_N_IN"
+    ],
+    [
+      "BD_N_IN",
+      "BD_S_IN"
+    ],
+    [
+      "BD_S_IN",
+      "BD_S_GATE"
+    ],
+    [
+      "BD_S_GATE",
+      "B_HIGH_W_EN"
+    ],
+    [
+      "AC_N_GATE",
+      "CD_E_ACCESS"
+    ]
+  ],
+  "policy_region_overrides": {
+    "A_WEST_LINK": [
+      7.5,
+      12.5,
+      10.5,
+      30.5
+    ],
+    "A_CENTER_LINK": [
+      13.7,
+      12.5,
+      16.3,
+      30.5
+    ],
+    "A_EAST_SPINE": [
+      24.0,
+      11.0,
+      30.0,
+      32.0
+    ],
+    "B_WEST_LINK": [
+      49.5,
+      12.5,
+      52.5,
+      30.5
+    ],
+    "B_CENTER_LINK": [
+      55.7,
+      12.5,
+      58.3,
+      30.5
+    ],
+    "B_EAST_SPINE": [
+      66.0,
+      11.0,
+      72.0,
+      32.0
+    ],
+    "C_WEST_LINK": [
+      7.5,
+      44.5,
+      10.5,
+      62.5
+    ],
+    "C_CENTER_LINK": [
+      13.7,
+      44.5,
+      16.3,
+      62.5
+    ],
+    "C_EAST_SPINE": [
+      24.0,
+      43.0,
+      30.0,
+      64.0
+    ],
+    "D_WEST_LINK": [
+      49.5,
+      44.5,
+      52.5,
+      62.5
+    ],
+    "D_CENTER_LINK": [
+      55.7,
+      44.5,
+      58.3,
+      62.5
+    ],
+    "D_EAST_SPINE": [
+      66.0,
+      43.0,
+      72.0,
+      64.0
+    ],
+    "CAMPUS_H_AB_RESERVATION": [
+      28.5,
+      11.0,
+      51.0,
+      17.0
+    ],
+    "CAMPUS_H_CD_RESERVATION": [
+      28.5,
+      43.0,
+      51.0,
+      49.0
+    ],
+    "CAMPUS_V_AC_RESERVATION": [
+      33.0,
+      31.4,
+      35.8,
+      44.6
+    ],
+    "CAMPUS_V_BD_RESERVATION": [
+      75.0,
+      31.4,
+      77.8,
+      44.6
+    ],
+    "CAMPUS_C_LOWER_JUNCTION": [
+      28.4,
+      44.4,
+      33.1,
+      47.6
+    ],
+    "CAMPUS_D_LOW_W_TRUNK": [
+      56.9,
+      47.4,
+      67.6,
+      47.6
+    ],
+    "CAMPUS_D_EAST_CI_TURN": [
+      67.4,
+      47.4,
+      67.6,
+      50.6
+    ],
+    "CAMPUS_D_EAST_SPINE_TURN": [
+      70.4,
+      44.4,
+      70.6,
+      47.6
+    ]
+  },
+  "operations_bottlenecks": [
+    {
+      "id": "A_west-shared-link",
+      "region_id": "A_WEST_LINK",
+      "release_policy": "first_route_point_outside_region"
+    },
+    {
+      "id": "A_center-shared-link",
+      "region_id": "A_CENTER_LINK",
+      "release_policy": "first_route_point_outside_region"
+    },
+    {
+      "id": "B_west-shared-link",
+      "region_id": "B_WEST_LINK",
+      "release_policy": "first_route_point_outside_region"
+    },
+    {
+      "id": "B_center-shared-link",
+      "region_id": "B_CENTER_LINK",
+      "release_policy": "first_route_point_outside_region"
+    },
+    {
+      "id": "C_west-shared-link",
+      "region_id": "C_WEST_LINK",
+      "release_policy": "first_route_point_outside_region"
+    },
+    {
+      "id": "C_center-shared-link",
+      "region_id": "C_CENTER_LINK",
+      "release_policy": "first_route_point_outside_region"
+    },
+    {
+      "id": "D_west-shared-link",
+      "region_id": "D_WEST_LINK",
+      "release_policy": "first_route_point_outside_region"
+    },
+    {
+      "id": "D_center-shared-link",
+      "region_id": "D_CENTER_LINK",
+      "release_policy": "first_route_point_outside_region"
+    },
+    {
+      "id": "campus-h-ab-reservation",
+      "region_id": "CAMPUS_H_AB_RESERVATION",
+      "release_policy": "first_route_point_outside_region"
+    },
+    {
+      "id": "campus-h-cd-reservation",
+      "region_id": "CAMPUS_H_CD_RESERVATION",
+      "release_policy": "first_route_point_outside_region"
+    },
+    {
+      "id": "campus-v-ac-reservation",
+      "region_id": "CAMPUS_V_AC_RESERVATION",
+      "release_policy": "first_route_point_outside_region"
+    },
+    {
+      "id": "campus-v-bd-reservation",
+      "region_id": "CAMPUS_V_BD_RESERVATION",
+      "release_policy": "first_route_point_outside_region"
+    },
+    {
+      "id": "campus-c-lower-junction",
+      "region_id": "CAMPUS_C_LOWER_JUNCTION",
+      "release_policy": "first_route_point_outside_region"
+    },
+    {
+      "id": "campus-d-low-w-trunk",
+      "region_id": "CAMPUS_D_LOW_W_TRUNK",
+      "release_policy": "first_route_point_outside_region"
+    },
+    {
+      "id": "campus-d-east-ci-turn",
+      "region_id": "CAMPUS_D_EAST_CI_TURN",
+      "release_policy": "first_route_point_outside_region"
+    },
+    {
+      "id": "campus-d-east-spine-turn",
+      "region_id": "CAMPUS_D_EAST_SPINE_TURN",
+      "release_policy": "first_route_point_outside_region"
+    }
+  ],
+  "closures": [
+    {
+      "edge": [
+        "A_LOW_E_P3",
+        "A_LOW_E_ES"
+      ],
+      "barrier_source": "configs/factory-semiconductor-campus16/layout.json#/blocked_aisles/A",
+      "policy_input": "current closed boolean only",
+      "scope": "closed-state detour through the x17 lane-change connector and westbound lower lane"
+    },
+    {
+      "edge": [
+        "B_LOW_E_P3",
+        "B_LOW_E_ES"
+      ],
+      "barrier_source": "configs/factory-semiconductor-campus16/layout.json#/blocked_aisles/B",
+      "policy_input": "current closed boolean only",
+      "scope": "closed-state detour through the x17 lane-change connector and westbound lower lane"
+    },
+    {
+      "edge": [
+        "C_LOW_E_P3",
+        "C_LOW_E_ES"
+      ],
+      "barrier_source": "configs/factory-semiconductor-campus16/layout.json#/blocked_aisles/C",
+      "policy_input": "current closed boolean only",
+      "scope": "closed-state detour through the x17 lane-change connector and westbound lower lane"
+    },
+    {
+      "edge": [
+        "D_LOW_E_P3",
+        "D_LOW_E_ES"
+      ],
+      "barrier_source": "configs/factory-semiconductor-campus16/layout.json#/blocked_aisles/D",
+      "policy_input": "current closed boolean only",
+      "scope": "closed-state detour through the x17 lane-change connector and westbound lower lane"
+    }
+  ],
+  "process_line_routing": {
+    "A": {
+      "scope": "Authored functional TEST/AOI/PACK handoff anchors; no equipment certification or robot runtime claim",
+      "TEST_IN": {
+        "anchor": "A_CI",
+        "equipment_context": "PROCESS_1 test handler input buffer"
+      },
+      "TEST_OUT": {
+        "anchor": "A_CO",
+        "equipment_context": "PROCESS_1/PROCESS_2 logical test output"
+      },
+      "AOI_IN": {
+        "anchor": "A_AOI_IN",
+        "equipment_context": "S2 side handoff bay feeding the authored BENCH_A2/BENCH_B2 logical AOI stage"
+      },
+      "AOI_OUT": {
+        "anchor": "A_AOI_OUT",
+        "equipment_context": "S2 side handoff bay releasing the authored logical AOI/marking stage"
+      },
+      "PACK_IN": {
+        "anchor": "A_PACK_IN",
+        "equipment_context": "FG_LOW packaging approach from the east-spine lower westbound lane"
+      },
+      "PACK_OUT": {
+        "anchor": "A_PACK_OUT",
+        "equipment_context": "FG_HIGH finished tray release to the east-spine upper eastbound lane"
+      },
+      "geometry_reason": "AOI stops use the S2 side bay outside the west shared-corridor boundary; PACK anchors split existing east-spine arcs and avoid the occupied parking annex without changing collision or reservation radii"
+    },
+    "B": {
+      "scope": "Authored functional TEST/AOI/PACK handoff anchors; no equipment certification or robot runtime claim",
+      "TEST_IN": {
+        "anchor": "B_CI",
+        "equipment_context": "PROCESS_1 test handler input buffer"
+      },
+      "TEST_OUT": {
+        "anchor": "B_CO",
+        "equipment_context": "PROCESS_1/PROCESS_2 logical test output"
+      },
+      "AOI_IN": {
+        "anchor": "B_AOI_IN",
+        "equipment_context": "S2 side handoff bay feeding the authored BENCH_A2/BENCH_B2 logical AOI stage"
+      },
+      "AOI_OUT": {
+        "anchor": "B_AOI_OUT",
+        "equipment_context": "S2 side handoff bay releasing the authored logical AOI/marking stage"
+      },
+      "PACK_IN": {
+        "anchor": "B_PACK_IN",
+        "equipment_context": "FG_LOW packaging approach from the east-spine lower westbound lane"
+      },
+      "PACK_OUT": {
+        "anchor": "B_PACK_OUT",
+        "equipment_context": "FG_HIGH finished tray release to the east-spine upper eastbound lane"
+      },
+      "geometry_reason": "AOI stops use the S2 side bay outside the west shared-corridor boundary; PACK anchors split existing east-spine arcs and avoid the occupied parking annex without changing collision or reservation radii"
+    },
+    "C": {
+      "scope": "Authored functional TEST/AOI/PACK handoff anchors; no equipment certification or robot runtime claim",
+      "TEST_IN": {
+        "anchor": "C_CI",
+        "equipment_context": "PROCESS_1 test handler input buffer"
+      },
+      "TEST_OUT": {
+        "anchor": "C_CO",
+        "equipment_context": "PROCESS_1/PROCESS_2 logical test output"
+      },
+      "AOI_IN": {
+        "anchor": "C_AOI_IN",
+        "equipment_context": "S2 side handoff bay feeding the authored BENCH_A2/BENCH_B2 logical AOI stage"
+      },
+      "AOI_OUT": {
+        "anchor": "C_AOI_OUT",
+        "equipment_context": "S2 side handoff bay releasing the authored logical AOI/marking stage"
+      },
+      "PACK_IN": {
+        "anchor": "C_PACK_IN",
+        "equipment_context": "FG_LOW packaging approach from the east-spine lower westbound lane"
+      },
+      "PACK_OUT": {
+        "anchor": "C_PACK_OUT",
+        "equipment_context": "FG_HIGH finished tray release to the east-spine upper eastbound lane"
+      },
+      "geometry_reason": "AOI stops use the S2 side bay outside the west shared-corridor boundary; PACK anchors split existing east-spine arcs and avoid the occupied parking annex without changing collision or reservation radii"
+    },
+    "D": {
+      "scope": "Authored functional TEST/AOI/PACK handoff anchors; no equipment certification or robot runtime claim",
+      "TEST_IN": {
+        "anchor": "D_CI",
+        "equipment_context": "PROCESS_1 test handler input buffer"
+      },
+      "TEST_OUT": {
+        "anchor": "D_CO",
+        "equipment_context": "PROCESS_1/PROCESS_2 logical test output"
+      },
+      "AOI_IN": {
+        "anchor": "D_AOI_IN",
+        "equipment_context": "S2 side handoff bay feeding the authored BENCH_A2/BENCH_B2 logical AOI stage"
+      },
+      "AOI_OUT": {
+        "anchor": "D_AOI_OUT",
+        "equipment_context": "S2 side handoff bay releasing the authored logical AOI/marking stage"
+      },
+      "PACK_IN": {
+        "anchor": "D_PACK_IN",
+        "equipment_context": "FG_LOW packaging approach from the east-spine lower westbound lane"
+      },
+      "PACK_OUT": {
+        "anchor": "D_PACK_OUT",
+        "equipment_context": "FG_HIGH finished tray release to the east-spine upper eastbound lane"
+      },
+      "geometry_reason": "AOI stops use the S2 side bay outside the west shared-corridor boundary; PACK anchors split existing east-spine arcs and avoid the occupied parking annex without changing collision or reservation radii"
+    }
+  },
+  "staging_after_drop": {
+    "A_S1": "A_SOURCE_WAIT",
+    "A_S2": "A_SOURCE_WAIT",
+    "A_S3": "A_SOURCE_WAIT",
+    "A_CI": "A_CELL_WAIT",
+    "A_AOI_IN": "A_CELL_WAIT",
+    "A_OUT": "A_CELL_WAIT",
+    "A_PACK_IN": "A_PACK_WAIT",
+    "B_S1": "B_SOURCE_WAIT",
+    "B_S2": "B_SOURCE_WAIT",
+    "B_S3": "B_SOURCE_WAIT",
+    "B_CI": "B_CELL_WAIT",
+    "B_AOI_IN": "B_CELL_WAIT",
+    "B_OUT": "B_CELL_WAIT",
+    "B_PACK_IN": "B_PACK_WAIT",
+    "C_S1": "C_SOURCE_WAIT",
+    "C_S2": "C_SOURCE_WAIT",
+    "C_S3": "C_SOURCE_WAIT",
+    "C_CI": "C_CELL_WAIT",
+    "C_AOI_IN": "C_CELL_WAIT",
+    "C_OUT": "C_CELL_WAIT",
+    "C_PACK_IN": "C_PACK_WAIT",
+    "D_S1": "D_SOURCE_WAIT",
+    "D_S2": "D_SOURCE_WAIT",
+    "D_S3": "D_SOURCE_WAIT",
+    "D_CI": "D_CELL_WAIT",
+    "D_AOI_IN": "D_CELL_WAIT",
+    "D_OUT": "D_CELL_WAIT",
+    "D_PACK_IN": "D_PACK_WAIT"
+  },
+  "bridge_admission": {
+    "policy": "atomic_route_leg_resources",
+    "resources": {
+      "AB_E": [
+        "AB_E_E_GATE",
+        "AB_E_E_IN",
+        "AB_E_W_GATE",
+        "AB_E_W_IN"
+      ],
+      "AB_W": [
+        "AB_W_ENTRY",
+        "AB_W_E_GATE",
+        "AB_W_E_IN",
+        "AB_W_P1",
+        "AB_W_RETURN",
+        "AB_W_W_GATE",
+        "AB_W_W_IN"
+      ],
+      "CD_E": [
+        "CD_E_ENTRY",
+        "CD_E_E_GATE",
+        "CD_E_E_IN",
+        "CD_E_W_GATE",
+        "CD_E_W_IN"
+      ],
+      "CD_W": [
+        "CD_W_ENTRY",
+        "CD_W_E_GATE",
+        "CD_W_E_IN",
+        "CD_W_P1",
+        "CD_W_RETURN",
+        "CD_W_W_GATE",
+        "CD_W_W_IN"
+      ],
+      "AC": [
+        "AC_N_ACCESS",
+        "AC_N_GATE",
+        "AC_N_IN",
+        "AC_S_GATE",
+        "AC_S_IN"
+      ],
+      "BD": [
+        "BD_N_GATE",
+        "BD_N_IN",
+        "BD_S_GATE",
+        "BD_S_IN"
+      ]
+    },
+    "queue_nodes": [
+      "AB_E_QUEUE",
+      "AB_W_QUEUE",
+      "CD_E_QUEUE",
+      "CD_W_QUEUE",
+      "AC_S_QUEUE",
+      "AC_N_QUEUE",
+      "BD_S_QUEUE",
+      "BD_N_QUEUE"
+    ],
+    "holdable_nodes": [
+      "A_P1",
+      "A_P2",
+      "A_P3",
+      "A_P4",
+      "B_P1",
+      "B_P2",
+      "B_P3",
+      "B_P4",
+      "C_P1",
+      "C_P2",
+      "C_P3",
+      "C_P4",
+      "D_P1",
+      "D_P2",
+      "D_P3",
+      "D_P4",
+      "A_PACK_WAIT",
+      "B_PACK_WAIT",
+      "C_PACK_WAIT",
+      "D_PACK_WAIT",
+      "A_SOURCE_WAIT",
+      "A_CELL_WAIT",
+      "B_SOURCE_WAIT",
+      "B_CELL_WAIT",
+      "C_SOURCE_WAIT",
+      "C_CELL_WAIT",
+      "D_SOURCE_WAIT",
+      "D_CELL_WAIT",
+      "AB_E_QUEUE",
+      "AB_W_QUEUE",
+      "CD_E_QUEUE",
+      "CD_W_QUEUE",
+      "AC_S_QUEUE",
+      "AC_N_QUEUE",
+      "BD_S_QUEUE",
+      "BD_N_QUEUE",
+      "A_AB_W_SAFE_EXIT",
+      "A_AC_N_SAFE_EXIT",
+      "B_AB_E_SAFE_EXIT",
+      "B_BD_N_SAFE_EXIT",
+      "C_CD_W_SAFE_EXIT",
+      "C_AC_S_SAFE_EXIT",
+      "D_CD_E_SAFE_EXIT",
+      "D_BD_S_SAFE_EXIT",
+      "D_LOW_E_P1"
+    ],
+    "safe_exit_nodes": {
+      "AB_E_QUEUE": "B_AB_E_SAFE_EXIT",
+      "AB_W_QUEUE": "A_AB_W_SAFE_EXIT",
+      "CD_E_QUEUE": "D_LOW_E_P1",
+      "CD_W_QUEUE": "C_CD_W_SAFE_EXIT",
+      "AC_S_QUEUE": "C_AC_S_SAFE_EXIT",
+      "AC_N_QUEUE": "A_AC_N_SAFE_EXIT",
+      "BD_S_QUEUE": "D_BD_S_SAFE_EXIT",
+      "BD_N_QUEUE": "B_BD_N_SAFE_EXIT"
+    }
+  },
+  "operations_bottleneck_policy": "merge_adjacent_route_spans",
+  "inter_bay_connections": {
+    "scope": "Directional gated links; every shared bridge has an authored outside gate and no connector segment crosses a raw-material station centre",
+    "links": [
+      {
+        "id": "AB",
+        "eastbound": [
+          "A_LOW_E_EN",
+          "AB_E_ACCESS",
+          "AB_E_QUEUE",
+          "AB_E_W_GATE",
+          "AB_E_W_IN",
+          "AB_E_E_IN",
+          "AB_E_E_GATE",
+          "B_LOW_E_W",
+          "B_LOW_E_P1"
+        ],
+        "westbound": [
+          "B_LOW_W_C",
+          "AB_W_QUEUE",
+          "AB_W_RETURN",
+          "AB_W_P1",
+          "AB_W_ENTRY",
+          "AB_W_E_GATE",
+          "AB_W_E_IN",
+          "AB_W_W_IN",
+          "AB_W_W_GATE",
+          "A_LOW_W_EN"
+        ]
+      },
+      {
+        "id": "CD",
+        "eastbound": [
+          "C_PACK_EGRESS",
+          "CD_E_ACCESS",
+          "CD_E_QUEUE",
+          "CD_E_ENTRY",
+          "CD_E_W_GATE",
+          "CD_E_W_IN",
+          "CD_E_E_IN",
+          "CD_E_E_GATE",
+          "D_LOW_E_W",
+          "D_LOW_E_P1"
+        ],
+        "westbound": [
+          "D_LOW_W_C",
+          "CD_W_QUEUE",
+          "CD_W_RETURN",
+          "CD_W_P1",
+          "CD_W_ENTRY",
+          "CD_W_E_GATE",
+          "CD_W_E_IN",
+          "CD_W_W_IN",
+          "CD_W_W_GATE",
+          "C_LOW_W_EN"
+        ]
+      },
+      {
+        "id": "AC",
+        "northbound": [
+          "A_HIGH_E_EN",
+          "AC_S_QUEUE",
+          "AC_S_GATE",
+          "AC_S_IN",
+          "AC_N_IN",
+          "AC_N_GATE",
+          "C_LOW_E_EN",
+          "C_LOW_W_EN"
+        ],
+        "southbound": [
+          "C_LOW_W_EN",
+          "AC_N_QUEUE",
+          "AC_N_ACCESS",
+          "AC_N_GATE",
+          "AC_N_IN",
+          "AC_S_IN",
+          "AC_S_GATE",
+          "A_HIGH_W_EN",
+          "A_HIGH_W_ES"
+        ]
+      },
+      {
+        "id": "BD",
+        "northbound": [
+          "B_HIGH_E_EN",
+          "BD_S_QUEUE",
+          "BD_S_GATE",
+          "BD_S_IN",
+          "BD_N_IN",
+          "BD_N_GATE",
+          "D_LOW_E_EN",
+          "D_LOW_W_EN"
+        ],
+        "southbound": [
+          "D_LOW_W_EN",
+          "BD_N_QUEUE",
+          "BD_N_GATE",
+          "BD_N_IN",
+          "BD_S_IN",
+          "BD_S_GATE",
+          "B_HIGH_W_EN",
+          "B_HIGH_W_ES"
+        ]
+      }
+    ]
+  },
+  "closure": {
+    "edge": [
+      "A_LOW_E_P3",
+      "A_LOW_E_ES"
+    ],
+    "barrier_source": "configs/factory-semiconductor-campus16/layout.json#/blocked_aisles/A",
+    "policy_input": "current closed boolean only",
+    "scope": "closed-state detour through the x17 lane-change connector and westbound lower lane",
+    "compatibility_scope": "A-bay compatibility view; closures is authoritative for the campus"
+  },
+  "parking": {
+    "amr-1": "A_P1",
+    "amr-2": "A_P2",
+    "amr-3": "A_P3",
+    "amr-4": "A_P4",
+    "amr-5": "B_P1",
+    "amr-6": "B_P2",
+    "amr-7": "B_P3",
+    "amr-8": "B_P4",
+    "amr-9": "C_P1",
+    "amr-10": "C_P2",
+    "amr-11": "C_P3",
+    "amr-12": "C_P4",
+    "amr-13": "D_P1",
+    "amr-14": "D_P2",
+    "amr-15": "D_P3",
+    "amr-16": "D_P4"
+  },
+  "parking_provenance": {
+    "kind": "authored_geometry",
+    "assignment": "four unique off-main homes per bay",
+    "runtime_validated": false
+  },
+  "wide_bridge_geometry": {
+    "road_envelope_width_m": 6.0,
+    "lane_center_separation_m": 3.0,
+    "minimum_center_separation_m": 2.874218183088555,
+    "reservation_radius_m": 1.4371090915442775,
+    "tile_size_m": 1.0,
+    "directional_resources": [
+      "AB_E",
+      "AB_W",
+      "CD_E",
+      "CD_W"
+    ],
+    "shared_resources_unchanged": [
+      "AC",
+      "BD"
+    ],
+    "safe_exit_overrides": {
+      "CD_E_QUEUE": {
+        "node": "D_LOW_E_P1",
+        "xy": [
+          54.0,
+          44.5
+        ]
+      }
+    },
+    "scope": "selection candidate; safety guards and vehicle envelope are unchanged"
+  }
+}
