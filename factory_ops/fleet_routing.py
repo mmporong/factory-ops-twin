@@ -354,7 +354,11 @@ class RouteBook:
             self.edges.add(physical)
             self.adjacency[edge[0]].append(edge[1])
         self.closed_edge = tuple(sorted(self.config["closure"]["edge"]))
-        if self.closed_edge not in self.edges:
+        closures = self.config.get("closures", [self.config["closure"]])
+        if not isinstance(closures, list) or not closures:
+            raise ValueError("closures must contain authored route edges")
+        self.closed_edges = frozenset(tuple(sorted(item["edge"])) for item in closures)
+        if self.closed_edge not in self.closed_edges or not self.closed_edges.issubset(self.edges):
             raise ValueError("closure must refer to a route graph edge")
         self._routes: dict[tuple[str, str, bool], RoutePlan] = {}
 
@@ -390,7 +394,7 @@ class RouteBook:
                 self._routes[key] = result
                 return result
             for neighbor in sorted(self.adjacency[node]):
-                if closed and tuple(sorted((node, neighbor))) == self.closed_edge:
+                if closed and tuple(sorted((node, neighbor))) in self.closed_edges:
                     continue
                 candidate = (distance + math.dist(self.nodes[node], self.nodes[neighbor]), (*names, neighbor))
                 if neighbor not in best or candidate < best[neighbor]:
@@ -431,14 +435,15 @@ class RouteBook:
                            "base_passed": baseline_bad is None, "sample_count": count + 1})
         routes = []
         anchors = sorted({**self.layout.stations, **self.layout.pockets})
-        barrier = self.layout.blocked_aisle
+        barriers = self.layout.blocked_aisles
         for closed in (False, True):
             for start in anchors:
                 for goal in anchors:
                     if start == goal:
                         continue
                     route = self.plan(start, goal, closed=closed)
-                    if closed and any(segment_rectangle_distance(a, b, barrier) <= radius for a, b in zip(route.points, route.points[1:])):
+                    if closed and any(segment_rectangle_distance(a, b, barrier) <= radius
+                                      for a, b in zip(route.points, route.points[1:]) for barrier in barriers):
                         errors.append({"route_id": route.route_id, "error": "closed-state route envelope touches barrier"})
                     routes.append(route.to_dict())
         preserved = all(self.layout.data[key] == self.base_layout.data[key] for key in ("stations", "pockets", "physical_obstacles"))

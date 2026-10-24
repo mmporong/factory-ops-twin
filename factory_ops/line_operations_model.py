@@ -11,6 +11,7 @@ from typing import Any, Mapping
 from .operations import Stage
 from .operations_model import OperationsModel
 from .process_line import ProcessLine, TransportRequest
+from .process_network import ProcessNetwork
 
 
 @dataclass(frozen=True)
@@ -31,17 +32,25 @@ class _TripTask:
 class _LineInventory:
     """Small finite inventory projection used by charging and the dashboard."""
 
-    def __init__(self) -> None:
-        self.initial_stock = {source: 20 for source in ("S1", "S2", "S3")}
+    def __init__(self, sources: tuple[str, ...] = ("S1", "S2", "S3"), *,
+                 stock_per_source: int = 20, carrier_count: int = 16,
+                 shipping_stations: frozenset[str] = frozenset({"OUT"})) -> None:
+        if not sources or len(set(sources)) != len(sources) or any(
+            type(value) is not int or value <= 0 for value in (stock_per_source, carrier_count)
+        ):
+            raise ValueError("inventory requires distinct sources and positive stock/carrier counts")
+        self.sources = sources
+        self.shipping_stations = shipping_stations
+        self.initial_stock = {source: stock_per_source for source in sources}
         self.stock = dict(self.initial_stock)
         self.consumed = 0
         self.requests: dict[str, dict[str, Any]] = {}
         self.carriers = {
             f"T{index:03}": {
                 "tote_id": f"T{index:03}", "state": "available",
-                "location": f"S{(index - 1) % 3 + 1}", "owner": None, "request_id": None,
+                "location": sources[(index - 1) % len(sources)], "owner": None, "request_id": None,
             }
-            for index in range(1, 17)
+            for index in range(1, carrier_count + 1)
         }
         self.robot_loads: dict[str, str] = {}
 
@@ -86,7 +95,7 @@ class _LineInventory:
         self._unload(carrier_id, robot, destination)
         request = self.requests[lot_id]
         request["destination"] = destination
-        if destination == "OUT":
+        if destination in self.shipping_stations:
             request["state"] = "consumed"
             self.consumed += request["quantity"]
             self.carriers[carrier_id]["state"] = "empty"
@@ -117,7 +126,7 @@ class _LineInventory:
 
     def snapshot(self) -> dict[str, Any]:
         stock = []
-        for source in ("S1", "S2", "S3"):
+        for source in self.sources:
             reserved = sum(row["quantity"] for row in self.requests.values()
                            if row["source"] == source and row["state"] == "reserved")
             stock.append({"location": source, "sku": "packaged-ic-tray", "on_hand": self.stock[source],
@@ -130,10 +139,10 @@ class _LineInventory:
             "requests": [deepcopy(row) for row in self.requests.values()],
             "totes": [deepcopy(row) for row in self.carriers.values()],
             "robot_loads": dict(self.robot_loads),
-            "conservation": [{"sku": "packaged-ic-tray", "initial": 60, "replenished": 0,
+            "conservation": [{"sku": "packaged-ic-tray", "initial": sum(self.initial_stock.values()), "replenished": 0,
                               "on_hand": sum(self.stock.values()), "in_totes": in_carriers,
                               "consumed": self.consumed,
-                              "balanced": 60 == sum(self.stock.values()) + in_carriers + self.consumed}],
+                              "balanced": sum(self.initial_stock.values()) == sum(self.stock.values()) + in_carriers + self.consumed}],
         }
 
 
@@ -145,20 +154,38 @@ class LineOperationsModel(OperationsModel):
         if type(initial_lots) is not int or initial_lots < 0:
             raise ValueError("initial_lots must be a nonnegative integer")
         super().__init__(config, policy=policy, initial_orders=0, run_id=run_id)
-        self.line = ProcessLine(self.ledger.run_id, json.loads((config / "process-line.json").read_text(encoding="utf-8")))
-        self.inventory = _LineInventory()
+        network_path = config / "process-network.json"
+        if network_path.is_file():
+            network = json.loads(network_path.read_text(encoding="utf-8"))
+            self.line = ProcessNetwork(self.ledger.run_id, network)
+            dispatch_mode = network.get("dispatch_mode")
+            if dispatch_mode != "downstream_wip_drain_least_assigned":
+                raise ValueError("process network requires downstream_wip_drain_least_assigned dispatch")
+            inventory = network.get("inventory", {})
+            self.inventory = _LineInventory(tuple(self.line.source_to_line),
+                stock_per_source=inventory.get("stock_per_source", 20),
+                carrier_count=inventory.get("carrier_count", 64),
+                shipping_stations=self.line.shipping_stations)
+            self._line_dispatch_mode = dispatch_mode
+        else:
+            self.line = ProcessLine(self.ledger.run_id, json.loads((config / "process-line.json").read_text(encoding="utf-8")))
+            self.inventory = _LineInventory(shipping_stations=frozenset({self.line.shipping_station}))
+            self._line_dispatch_mode = "legacy_fifo_eta"
+        self._peak_transport_active = 0
+        self._peak_transport_moving = 0
+        self._transport_moving_s = {robot: 0.0 for robot in self.ledger.robots}
         self._line_observation_seq = 0
         self._cell_reasons = {cell_id: None for cell_id in self.line.cells}
         for index in range(initial_lots):
-            self.create_order({"source": ("S1", "S2", "S3")[index % 3]})
+            self.create_order({"source": self.inventory.sources[index % len(self.inventory.sources)]})
 
     def create_order(self, parameters: dict[str, Any]) -> str:
         if not isinstance(parameters, dict) or set(parameters) - {"source", "quantity"}:
             raise ValueError("line lot accepts only source and quantity")
-        source = parameters.get("source", ("S1", "S2", "S3")[self._order_seq % 3])
+        source = parameters.get("source", self.inventory.sources[self._order_seq % len(self.inventory.sources)])
         quantity = parameters.get("quantity", 1)
-        if source not in ("S1", "S2", "S3") or type(quantity) is not int or quantity <= 0:
-            raise ValueError("source must be S1/S2/S3 and quantity must be positive")
+        if source not in self.inventory.sources or type(quantity) is not int or quantity <= 0:
+            raise ValueError("source must be authored and quantity must be positive")
         carrier = self.inventory.available_carrier(source)
         if carrier is None:
             raise ValueError(f"{source} has no returned carrier available")
@@ -178,9 +205,21 @@ class LineOperationsModel(OperationsModel):
         cell = self.line.cells[cell_id]
         return len(cell.input_lots) + cell.reserved_inputs < cell.spec.input_capacity
 
-    def _dispatch(self) -> None:
-        super()._dispatch()
-        if self.requested_closed != self.closed:
+    def _line_task_priority(self, task: TransportRequest) -> tuple[Any, ...]:
+        if self._line_dispatch_mode == "legacy_fifo_eta":
+            return task.created_sim_time_s, task.task_id
+        if task.kind == "empty_return":
+            stage = 0
+        elif task.destination in self.line.shipping_stations:
+            stage = 1
+        else:
+            cell_id = self.line.input_to_cell.get(task.destination)
+            suffix = cell_id.rsplit(".", 1)[-1] if cell_id is not None else ""
+            stage = {"PACK": 2, "AOI": 3, "TEST": 4}.get(suffix, 5)
+        return stage, task.created_sim_time_s, task.task_id
+
+    def _dispatch_extra_jobs(self, draining: bool) -> None:
+        if draining:
             return
         while True:
             available = [robot for robot, state in self.ledger.robots.items()
@@ -192,21 +231,40 @@ class LineOperationsModel(OperationsModel):
                 if not self._line_can_assign(task):
                     continue
                 for robot in available:
-                    if (self.operations_charging is not None
-                            and not self.operations_charging.can_assign(self, robot, task.origin, task.destination)):
-                        continue
                     blockers = sorted({self._station_owners[station] for station in (task.origin, task.destination)
                                        if station in self._station_owners and self._station_owners[station] != robot})
                     if blockers:
                         continue
-                    first = self.book.plan(self._locations[robot], task.origin, closed=self.closed).distance_m
-                    total = first + self.book.plan(task.origin, task.destination, closed=self.closed).distance_m
-                    rank = ((task.created_sim_time_s, task.task_id, first, robot) if self.dispatch_policy == "fifo"
-                            else (total / self.limits.max_linear_m_s, task.created_sim_time_s, task.task_id, robot))
+                    pickup_route = self.book.plan(self._locations[robot], task.origin, closed=self.closed)
+                    loaded_route = self.book.plan(task.origin, task.destination, closed=self.closed)
+                    if self._prospective_trip_blockers(
+                        robot,
+                        task.origin,
+                        task.destination,
+                        pickup_route=pickup_route,
+                        loaded_route=loaded_route,
+                    ):
+                        continue
+                    first = pickup_route.distance_m
+                    total = first + loaded_route.distance_m
+                    if self._line_dispatch_mode == "legacy_fifo_eta":
+                        rank = ((task.created_sim_time_s, task.task_id, first, self._assignments[robot], robot)
+                                if self.dispatch_policy == "fifo"
+                                else (total / self.limits.max_linear_m_s, task.created_sim_time_s,
+                                      self._assignments[robot], task.task_id, robot))
+                    else:
+                        task_priority = self._line_task_priority(task)
+                        rank = ((*task_priority, self._assignments[robot], first, robot)
+                                if self.dispatch_policy == "fifo"
+                                else (*task_priority, self._assignments[robot],
+                                      total / self.limits.max_linear_m_s, robot))
                     candidates.append((rank, robot, task))
-            if not candidates:
+            selected = next((candidate for candidate in sorted(candidates, key=lambda row: row[0])
+                             if self.operations_charging is None or self.operations_charging.can_assign(
+                                 self, candidate[1], candidate[2].origin, candidate[2].destination)), None)
+            if selected is None:
                 return
-            _, robot, task = min(candidates, key=lambda row: row[0])
+            _, robot, task = selected
             assigned = self.line.assign(task.task_id, robot)
             self._station_owners.update({assigned.origin: robot, assigned.destination: robot})
             self._jobs[robot] = (assigned.origin, assigned.destination)
@@ -234,6 +292,8 @@ class LineOperationsModel(OperationsModel):
             return
         if not self.motions[robot_id].stopped:
             raise RuntimeError("line handover attempted before kinematic stop")
+        if trip["phase"] != "pickup":
+            self.bridges.release(robot_id, stopped=True)
         self.line.advance(self.sim_time)
         self._sync_process_outputs()
         task: _TripTask = trip["task"]
@@ -268,11 +328,17 @@ class LineOperationsModel(OperationsModel):
         self.line.advance(self.sim_time)
         self._sync_process_outputs()
         super()._advance_auxiliary(dt, before)
+        active = [robot for robot, trip in self._trips.items() if trip["kind"] == "process_line"]
+        moving = [robot for robot in active if not self.motions[robot].stopped]
+        self._peak_transport_active = max(self._peak_transport_active, len(active))
+        self._peak_transport_moving = max(self._peak_transport_moving, len(moving))
+        for robot in moving:
+            self._transport_moving_s[robot] += dt
 
     def set_equipment_availability(self, parameters: Mapping[str, Any]) -> dict[str, Any]:
         if set(parameters) - {"cell_id", "available", "reason"}:
             raise ValueError("line equipment accepts cell_id, available and reason")
-        cell_id = parameters.get("cell_id", "TEST")
+        cell_id = parameters.get("cell_id", self.line.cell_order[0])
         available = parameters.get("available")
         reason = parameters.get("reason")
         if cell_id not in self.line.cells or type(available) is not bool:
@@ -291,7 +357,7 @@ class LineOperationsModel(OperationsModel):
         cell = self.line.cells[cell_id]
         return {
             "station_id": cell_id,
-            "label": {"TEST": "반도체 최종 검사", "AOI": "광학 검사·마킹", "PACK": "ESD 포장"}[cell_id],
+            "label": {"TEST": "반도체 최종 검사", "AOI": "광학 검사·마킹", "PACK": "ESD 포장"}[cell_id.rsplit(".", 1)[-1]],
             "available": cell.available,
             "status": "available" if cell.available else "down",
             "reason": self._cell_reasons[cell_id],
@@ -303,7 +369,7 @@ class LineOperationsModel(OperationsModel):
         }
 
     def _equipment_snapshot(self) -> dict[str, Any]:
-        return self._cell_snapshot("TEST")
+        return self._cell_snapshot(self.line.cell_order[0])
 
     def snapshot(self) -> dict[str, Any]:
         result = super().snapshot()
@@ -327,6 +393,7 @@ class LineOperationsModel(OperationsModel):
         result["equipment"] = self._equipment_snapshot()
         result["equipment_cells"] = [self._cell_snapshot(cell_id) for cell_id in self.line.cell_order]
         result["production_line"] = line
+        result["production_line"]["dispatch_mode"] = self._line_dispatch_mode
         result["kpis"].update(
             completed_orders=line["completed_lots"],
             returned_carriers=line["returned"],
@@ -337,6 +404,11 @@ class LineOperationsModel(OperationsModel):
             result["traffic"]["quiescent"]
             and line["returned"] == len(line["lots"])
             and all(task["state"] == "complete" for task in line["transports"])
+        )
+        result["traffic"].update(
+            peak_transport_active=self._peak_transport_active,
+            peak_transport_moving=self._peak_transport_moving,
+            transport_moving_s=dict(self._transport_moving_s),
         )
         result["model_scope"] += (
             "; ProcessLine TEST/AOI/PACK production authority with finite authored inventory; "

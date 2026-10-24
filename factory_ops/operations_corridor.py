@@ -88,6 +88,10 @@ class OperationsCorridors:
         if len({item.corridor_id for item in corridors}) != len(corridors):
             raise ValueError("operations bottleneck IDs must be unique")
         self._corridors = tuple(corridors)
+        policy = routing.get("operations_bottleneck_policy", "single_region_span")
+        if policy not in ("single_region_span", "merge_adjacent_route_spans"):
+            raise ValueError("unknown operations bottleneck policy")
+        self._merge_adjacent = policy == "merge_adjacent_route_spans"
 
     def atomic_span(self, start: Sequence[float], remaining: Sequence[Sequence[float]]) -> CorridorSpan | None:
         origin = _finite_point(start)
@@ -96,6 +100,8 @@ class OperationsCorridors:
             return None
         matches = [corridor for corridor in self._corridors
                    if corridor.contains(origin) or corridor.intersects(origin, points[0])]
+        if matches and self._merge_adjacent:
+            return self._merged_span(origin, points, matches)
         if len(matches) > 1:
             raise ValueError("a route approach intersects multiple operations bottlenecks")
         if not matches:
@@ -109,3 +115,25 @@ class OperationsCorridors:
                 return CorridorSpan(corridor.corridor_id, points[:index + 1])
             previous = point
         raise ValueError(f"route enters {corridor.corridor_id} without an authored safe exit")
+
+    def _merged_span(self, origin: Point, points: tuple[Point, ...],
+                     matches: list[_Corridor]) -> CorridorSpan:
+        """Do not stop in the short gap between two shared approaches.
+
+        One atomic tile claim covers the adjoining spans, including every turn.
+        A vehicle denied that claim stays before the first bottleneck. This is
+        an opt-in campus rule; legacy single-region contracts are unchanged.
+        """
+        visited = {item.corridor_id: item for item in matches}
+        previous = origin
+        for index, point in enumerate(points):
+            visited.update((item.corridor_id, item) for item in self._corridors
+                           if item.intersects(previous, point))
+            if not any(item.contains(point) for item in visited.values()):
+                following = ([item for item in self._corridors if item.intersects(point, points[index + 1])]
+                             if index + 1 < len(points) else [])
+                if not following:
+                    return CorridorSpan("+".join(sorted(visited)), points[:index + 1])
+                visited.update((item.corridor_id, item) for item in following)
+            previous = point
+        raise ValueError(f"route enters {'+'.join(sorted(visited))} without an authored safe exit")

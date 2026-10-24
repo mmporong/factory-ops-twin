@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "profile_id": "loco-eval-v1",
+  "status": "candidate_mapping_pending",
+  "dataset": "LOCO RGB annotated archive",
+  "pinned_revision": "b460ab8c37f09162f0613c7546948c496e1b1628",
+  "role_override_contract": "This profile replaces the earlier candidate roles in the metadata and RGB audit reports for future experiments that explicitly select loco-eval-v1.",
+  "inputs": {
+    "rgb_audit_report": {
+      "path": "artifacts/data/loco-rgb-249/report.json",
+      "sha256": "89bfec2545dc3033453191912f11cb2694cdd643775c0cf111557c31e174d3c0"
+    },
+    "rgb_image_index": {
+      "path": "artifacts/data/loco-rgb-249/image-index.csv",
+      "sha256": "b4d37151cb5fc481b8bcf8ad389fc7d9dc372d47911c8ce25d4350ce00ba53eb"
+    },
+    "metadata_dir": "artifacts/data/loco-metadata-242",
+    "metadata_sha256": {
+      "loco-sub1-v1-val.json": "3d26a0381794c2ab7d7b4e6843655029e459c5116287a43fa509b5db7934cb20",
+      "loco-sub2-v1-train.json": "938f9b5915852df43d0c27c79dd059856ebb9e6cc27ea67378b6b9bb25c9b33d",
+      "loco-sub3-v1-train.json": "456db71791f356e929125ba636673769bda78fb4a8b77c0293bad4fceab8fa52",
+      "loco-sub4-v1-val.json": "e9e076f08cecba205c70cec9752e7415e73689aed04a64584c4f8428db5c73da",
+      "loco-sub5-v1-train.json": "88a374a39f4ed5ae125223fb6111522672ae70337a29b97570cdcb8c3b0daf23"
+    }
+  },
+  "split_roles": {
+    "train": [
+      "loco-sub2-v1-train.json",
+      "loco-sub5-v1-train.json"
+    ],
+    "tuning_validation": [
+      "loco-sub3-v1-train.json",
+      "loco-sub4-v1-val.json"
+    ],
+    "final_fixed_test": [
+      "loco-sub1-v1-val.json"
+    ]
+  },
+  "primary_classes": [
+    "pallet",
+    "small_load_carrier"
+  ],
+  "asset_mapping": {
+    "status": "pending",
+    "pallet": null,
+    "small_load_carrier": null
+  },
+  "model": {
+    "architecture": null,
+    "pretrained_checkpoint": null
+  },
+  "planned_training_candidates": {
+    "real_label_image_budgets": [10, 25, 50, 100],
+    "seeds": [17, 29, 43],
+    "frozen_for_training": false
+  },
+  "leakage_candidate_policy": {
+    "exact_file_sha256": true,
+    "exact_decoded_pixel_sha256": true,
+    "phash64_hamming_threshold": 6,
+    "automatic_image_removal": false,
+    "camera_location_sequence_grouping_resolved": false
+  }
+}

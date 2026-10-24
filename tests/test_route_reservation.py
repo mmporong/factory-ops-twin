@@ -245,6 +245,36 @@ class RouteReservationManagerTest(unittest.TestCase):
         granted = manager.reserve(self.R1, "r1-wait", first_goal, ((0, 0), (1, 0)), now_s=0)
         self.assertTrue(granted.granted)
 
+    def test_withdraw_pending_preserves_active_hold_and_observation(self) -> None:
+        manager = self.manager(r1=((0, 0),), r2=((2, 0),))
+        second_goal = self.goal()
+        second = manager.reserve(self.R2, "r2-old", second_goal, ((1, 0), (2, 0)), now_s=0)
+        assert second.generation is not None
+        waiting = manager.reserve(self.R1, "r1-wait", self.goal(), ((0, 0), (1, 0)), now_s=0)
+        self.assertFalse(waiting.granted)
+        before = manager.snapshot(now_s=0)
+
+        self.assertTrue(manager.withdraw_pending(
+            self.R1, now_s=0, reason="macro bridge admission denied",
+        ))
+        after = manager.snapshot(now_s=0)
+
+        self.assertEqual(before["holds"], after["holds"])
+        self.assertEqual(before["observations"], after["observations"])
+        self.assertNotIn(self.R1, after["waits"])
+        self.assertFalse(any(row["robot_id"] == self.R1 for row in after["pending"]))
+        event = manager.events[-1]
+        self.assertEqual("pending_request_withdrawn", event["event_type"])
+        self.assertEqual("macro bridge admission denied", event["reason"])
+        self.assertFalse(manager.withdraw_pending(
+            self.R1, now_s=0, reason="already withdrawn",
+        ))
+
+        moved = manager.transfer(
+            self.R2, second.generation, "r2-away", self.goal(), ((2, 0), (3, 0)), now_s=0,
+        )
+        self.assertTrue(moved.granted)
+
     def test_persistent_one_way_wait_is_not_a_self_cycle(self) -> None:
         manager = self.manager(r1=((0, 0),), r2=((2, 0),))
         manager.reserve(self.R1, "moving", self.goal(), ((0, 0), (1, 0)), now_s=0)

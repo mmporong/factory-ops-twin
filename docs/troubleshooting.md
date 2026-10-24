@@ -1279,3 +1279,55 @@ Verda의 [Shutdown 전용 문서](https://docs.verda.com/cpu-and-gpu-instances/s
 ## FOT-156 — 복수 공정 인계점과 기존 교통 점유 충돌
 
 공정 통합에서 초기 AOI 후보점은 west shared corridor 내부 정지여서 atomic safe-exit이 허용하지 않았고, PACK 후보점은 P5 주차 차량의 예약 점유와 충돌했다. 회피 반경이나 정지 점유를 줄이지 않고 AOI 인계점을 S2 측면 bay에, PACK 인계점을 동쪽 spine의 기존 방향 차로에 배치했다. 기존 scale12/16 구성은 보존하고 line12/16만 별도로 생성한다. 작성한 인계점은 제조사 장비 실측 좌표가 아니다. 표적 검사2개와235의1lot 실제 CPU 주행에서5운송·출하·빈 캐리어 반납·최종 정지를 확인했다. [235 결과](evidence/process-line-235.json)
+
+## FOT-157 — 차량 수 확대와 실제 작업 병렬성의 차이
+
+단일 생산 라인의16대·16lot 비교236은180초 CPU 벽시계 한도에서 출하2·반납2, 참여7대에 머물렀다. 등록 대수나 주차 이동을 실제 물류 병렬성으로 해석하지 않는다.4개 생산 베이·교차 TEST/AOI/PACK 라인·48lot로 수요와 공정 위치를 분산하고, 물류 임무 동시 수와 물류 이동 동시 수·차량별 참여·운송 시간을 별도로 계측한다. 작업 배차 후보마다 충전 상태의 전체 캐리어 snapshot을 반복 복사하던 경로도 줄였다. GPU가 더 크면 해결된다는 결론은 이 CPU 관측에서 나오지 않는다.
+
+## FOT-158 — 캠퍼스 교량 게이트·교차로의 순환 대기
+
+- 238: 한 접근 구간이 기존 두 bottleneck을 가로질러 `a route approach intersects multiple operations bottlenecks`로 중단됐다. 별도 게이트와 분할 경로를 작성했다.
+- 240/241: 주차 P2와 교량 접근의 보수적 예약 타일이 겹쳤고, 이후 반대 차량이 양쪽 게이트를 동시에 차지했다. 게이트 점만 주차점과 떨어뜨리는 수정은 전체 bridge span의 점유를 보장하지 못했다.
+- 243: AB의 첫 외부점(48,6)에 정지한 amr4와 B 서쪽 접근의 amr5(54,7.5)가 서로 막혔다. AC 전체 span도 정지한 A_P2의 타일을 포함했다.16개 초기 홈과 전체 connector swept tiles를 비교하는 검사로 범위를 넓혔다.
+- 수정 후보: AC/BD를 동쪽 외곽으로 옮기고, 연결된 bridge→junction span을 한 번의 tile transfer로 잡는 campus 전용 정책과 픽업·적재 leg의 교량 사전 진입을 추가했다. 기존 기본 배치의 단일 region 동작과 안전 반경·타일 크기는 유지했다.
+- 244: 수정 후에도 AC/CD가 만나는 C 동쪽 교차로에서 amr12/16의 순환 대기와 다른 베이로 돌아가는 주차 이동의 의존성이 남았다. 출하0·반납0에서 진전 없음 감지로 `incomplete` 종료했다. 이를16대 운영 성공으로 공개하지 않는다. 전체 원본·동결 소스·대기 pose를 보존하고, 이어지는 교통 수정의 회귀 입력으로 사용한다. [244 근거](evidence/campus16-244.json)
+
+## FOT-159 — WSL systemd timer의 `--wait` 조합 오류
+
+237의 Stop 감시 준비는 VM 시작 전에 `--wait may not be combined with path, socket or timer operations`로 거절됐다. 설치된 systemd255의 소량 로컬 실행으로 재현했다. `systemd-run --on-active`에서 `--wait`를 제거하고, timer/service 속성의 대상 명령을 따로 확인한다. 호스트 Python이 사라져도 WSL 사용자 서비스가 유지되도록 소유 keepalive를 추가하고 PID·명령·종료 영수증을 남긴다. 감시 확인 실패 시 start를 호출하지 않는 검사와239의 실제 timer arm 기록을 확보했다. 이 구조도 호스트 전원 종료나 WSL 강제 종료까지 보장하지는 않는다.
+
+## FOT-160 — 기존 Nebius 재시작의 UNHEALTHY와 지연된 Stop
+
+239는 기존 중지 환경을 대조하고 독립 Stop timer를 먼저 확인한 뒤 시작했다. 목록이 `UNHEALTHY / COMPLETED / READY`가 되어 RUNNING/COMPLETED/READY 계약을 충족하지 못했다. SDK·원격 공장 실행은 시작하지 않았다. UNHEALTHY의 공급자 원인은 미확인이다. 명령 수락만 성공 처리하지 않고 Stop을 요청했으나 최초5분 조회에서는 STOPPING이었고,10초 간격 조회 중 rate limit도 한 번 발생했다.
+
+12:02 KST 사후 조회에서 실제 STOPPED를 확인했다. 그 뒤 timer/service의 inactive/not-found와 소유 WSL keepalive 소멸을 확인했고, 최초 host 기록은 변경하지 않았다. 다음 Stop 상태 조회는30초 간격으로 늘렸다. 감시 실패·중지 불확인 상태에서 정리를 완료했다고 보고하지 않는 검사와 실제 회복 기록을 구분한다. 같은 상태의 무근거 재시작은 하지 않는다. [239 요약·해시](evidence/brev-scale-reuse-239.json) · [공식 인스턴스 관리](https://docs.nvidia.com/brev/cli/instance-management)
+
+## FOT-161 — 텍스트 장면 검사와 실제 native 에셋 배치 검사의 차이
+
+동쪽 교량으로 옮긴134 fixture 후보는 환경을 생략한 텍스트 USD 검사에서 통과했지만 실제 prepared cache를 적용한244 export가 `A_EAST_SERVICE_TOOLS_LOW violates AMR region 0.1m clearance`로 실패했다. bridge 본체만 고려한 제외 목록에 진입부 allowed region 합집합이 빠져 있었다. 제공처 native 변환 외곽과 전체 통로의0.1m 여유를 검사해 충돌12개를 제외한128 fixture 구성을 작성했다.76개 생산 충돌 외곽은 보존했다.
+
+244b 실제 CPU export는77개 정적 충돌체·40마커·시각 인스턴스1176개, 시각 layer 추가 collision API0개를 기록했다. 이 검사는 OpenUSD 파싱이나 GPU 렌더 결과가 아니다. 기존241의120 fixture 산출물과 실패244를 새 성공 export로 덮어쓰지 않는다. [현재 생성 근거](evidence/campus16-244.json)
+
+## FOT-162 — LOCO 클래스·발표 수치·실제 메타데이터의 범위
+
+공식 LOCO의5,593은 수동 라벨 이미지 수이며 시퀀스 수가 아니다. 총37,988장과 이번5개 RGB JSON의5,097행을 같은 라벨 범위로 비교하지 않는다. 단계0의 초안 보고서에 있던 `sequences`를 수정하고, 원본 audit는 보존한 채 corrected-audit를 새로 작성했다. 수동 라벨 이미지 차이496장·어노테이션 차이993개의 릴리스 범위 원인은 미확인이다.
+
+LOCO에 AMR 클래스는 없고 stillage는 일반 랙이 아니다. sub1 test 후보에는 forklift 박스가5개뿐이다. 에셋·라벨 교집합과 클래스별 support를 확인하고, ID/파일명 중복 없음과 RGB 내용 누출 검증을 구분한다. 기존 G4의 대표 review RGB36개도 전체1,080장의 고유 이미지 수로 해석하지 않는다. Cosmos 모델 카드의 객체 변형·소실 제한 때문에 변환본에 원본 bbox를 무조건 복사하지 않는다. [감사 근거](evidence/loco-metadata-242.json) · [실험 계약과 공식 참조](synthetic-to-real-plan.md)
+
+후속249의 실제 ZIP에는5,593장이 있고, 고정 메타데이터5,097장은 모두 단일 매칭됐다.496장은 미참조 원본으로 보존하며 라벨 없는 음성 예로 사용하지 않는다. sub4 튜닝 후보에 소형 적재함 박스가0개인 것도 확인했다. 학습 점수를 보기 전에 train2/5·tuning3/4·test1 후보로 바꾸고 기존 index만으로 새 역할의 해시/pHash를 계산했다. 두 주 클래스가 세 역할 모두에서 지원된다. 촬영 그룹·에셋 매핑 검증은 여전히 남아 있다. [RGB](evidence/loco-rgb-249.json) · [새 분할](evidence/loco-split-251.json)
+
+## FOT-163 — 상위 진입 대기와 하위 FIFO의 오래된 요청 교착
+
+247은 교량 권한을 가진 amr4가 micro tile 예약의 `older_conflicting_request`에 막혔고, 그 오래된 요청의 amr1은 macro 교량 권한 때문에 기다렸다. 상위 interlock이 시도를 막은 동안에도 하위 FIFO 우선순위가 남은 예약 계층의 계약 오류다. `withdraw_pending` API로 pending·wait 기록만 철회하고, 활성 lease·관측·정지 점유는 유지한다. 상위 진입 거부 시 이 API를 호출하며 이유·요청 sequence를 이벤트에 남긴다. 표적 회귀에서 기존 보유 점유 보존과 후속 요청의 진입을 확인했다.
+
+248에서는 교량 소유자가 없어도 이미 배정한 전체 경로 intent와 정차 pose가 서로 막았다. 따라서 픽업·적재 경로의 비변경 admission 검사를 사업 배정 전에 수행한다. 불가능한 운송을 배정한 뒤 통로에서 기다리게 하지 않고, 기존 idle/주차 흐름이 공간을 비우게 한다.250은4,081초까지40개 운송이 끝났으며 소스가 고정됐고 순환 대기 관측은0회였다. 출하·반납은0/0으로 여전히 미완료다. 대기 순환0회만으로 플릿 완료를 선언하지 않는다.
+
+## FOT-164 — 후단 WIP 배차와 최종 감속의 경계
+
+250의 FIFO는 오래된 초기 입력을 후단 WIP보다 우선했다. 캠퍼스 전용 `downstream_wip_drain_least_assigned`로 반납·출하·후단 공정을 앞세우고 같은 후보에서 운송 배정이 적은 차량을 선택한다. snapshot에 새 정책명을 표시하고 기존 단일 라인의 FIFO/ETA는 유지한다.
+
+252는 최종 목표가 좌표 허용오차1e-9 안에 들어온 시점에 trip의 마지막 waypoint를 먼저 지워, PathMotion의 quintic 감속이 끝나기 전에 인계를 시도했다. 위치 근접을 정지 승인으로 해석한 경계 오류다. 실제 motion deque가 완료될 때까지 마지막 waypoint를 남기는 수정과 해당 회귀를 추가했다. 후속253은 별도 소스 동결 실행이며 최종 결과를 기준으로 판정한다.
+
+## FOT-165 — 완료 보고 이후 감사 파일의 덮어쓰기
+
+RGB249의 첫 report는 runtime·클래스 수를 추가하며 같은 경로로 재실행해 보존되지 않았다. 두 번째 report의 해시·실행 시간을 현재 근거로 사용하고 첫 report를 복원한 것처럼 취급하지 않는다. 두 실행의 이미지 index 해시는 같다. 완료 보고한 파일은 통합 확인 때까지 보존하고, 보조 정보는 새 영수증으로 추가한다. 재실행은 새 출력 폴더를 사용한다.

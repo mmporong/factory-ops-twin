@@ -1,0 +1,450 @@
+{
+  "schema_version": 1,
+  "dataset": "LOCO RGB COCO metadata",
+  "repository": "https://github.com/tum-fml/loco",
+  "license": "CC0-1.0",
+  "pinned_revision": "b460ab8c37f09162f0613c7546948c496e1b1628",
+  "scope": {
+    "metadata_only": true,
+    "rgb_downloaded": false,
+    "model_weights_downloaded": false,
+    "phash_evaluated": false,
+    "camera_or_location_leakage_resolved": false,
+    "amr_class_present": false,
+    "stillage_is_not_rack": true
+  },
+  "split_policy_candidate": {
+    "train": [
+      "loco-sub2-v1-train.json",
+      "loco-sub3-v1-train.json",
+      "loco-sub5-v1-train.json"
+    ],
+    "tuning_validation": [
+      "loco-sub4-v1-val.json"
+    ],
+    "final_fixed_test": [
+      "loco-sub1-v1-val.json"
+    ],
+    "policy_status": "candidate_pending_root_documentation"
+  },
+  "totals": {
+    "images": 5097,
+    "annotations": 151428,
+    "bytes": 103438944,
+    "class_counts": [
+      {
+        "category_id": 10,
+        "name": "stillage",
+        "annotations": 5407
+      },
+      {
+        "category_id": 11,
+        "name": "pallet_truck",
+        "annotations": 2827
+      },
+      {
+        "category_id": 3,
+        "name": "small_load_carrier",
+        "annotations": 22151
+      },
+      {
+        "category_id": 5,
+        "name": "forklift",
+        "annotations": 598
+      },
+      {
+        "category_id": 7,
+        "name": "pallet",
+        "annotations": 120445
+      }
+    ]
+  },
+  "published_reference": {
+    "total_images": 37988,
+    "manually_annotated_images": 5593,
+    "annotations": 152421
+  },
+  "published_reference_comparison": {
+    "rgb_metadata_image_rows": 5097,
+    "total_image_count_delta": -32891,
+    "manually_annotated_image_count_delta": -496,
+    "annotation_count_delta": -993,
+    "interpretation": "The five pinned RGB COCO files contain 5,097 image rows, which is 496 fewer than the 5,593 manually annotated images stated in the repository README and 32,891 fewer than its 37,988 total images. Metadata-only audit does not reconcile the release-scope difference."
+  },
+  "candidate_split_leakage": {
+    "status": "no_id_or_filename_overlap_detected",
+    "pair_count": 0,
+    "pairs": [],
+    "rgb_content_leakage": "unresolved_without_rgb_bytes"
+  },
+  "category_definition_consistent_across_partitions": true,
+  "status": "valid",
+  "source_report": {
+    "path": "artifacts/data/loco-metadata-242/corrected-audit.json",
+    "sha256": "75e748e75bdcdf2e9256a81f2481a690f12de41404f294190e8debf1e8c08d78"
+  },
+  "partitions": [
+    {
+      "file": "loco-sub1-v1-val.json",
+      "source_url": "https://raw.githubusercontent.com/tum-fml/loco/b460ab8c37f09162f0613c7546948c496e1b1628/rgb/loco-sub1-v1-val.json",
+      "bytes": 16883984,
+      "sha256": "3d26a0381794c2ab7d7b4e6843655029e459c5116287a43fa509b5db7934cb20",
+      "status": "valid",
+      "counts": {
+        "images": 1075,
+        "annotations": 24763,
+        "categories": 5
+      },
+      "class_counts": [
+        {
+          "category_id": 10,
+          "name": "stillage",
+          "annotations": 1978
+        },
+        {
+          "category_id": 11,
+          "name": "pallet_truck",
+          "annotations": 594
+        },
+        {
+          "category_id": 3,
+          "name": "small_load_carrier",
+          "annotations": 8911
+        },
+        {
+          "category_id": 5,
+          "name": "forklift",
+          "annotations": 5
+        },
+        {
+          "category_id": 7,
+          "name": "pallet",
+          "annotations": 13275
+        }
+      ],
+      "bbox": {
+        "invalid_count": 0,
+        "outside_image_count": 0,
+        "clip_needed_for_consumers": false,
+        "source_annotations_modified": false
+      },
+      "references": {
+        "unknown_image_count": 0,
+        "unknown_category_count": 0
+      },
+      "duplicates": {
+        "image_ids": {
+          "value_count": 1075,
+          "duplicate_value_count": 0,
+          "examples": {},
+          "extra_records": 0,
+          "conflicting_record_count": 0
+        },
+        "annotation_ids": {
+          "value_count": 24763,
+          "duplicate_value_count": 0,
+          "examples": {}
+        },
+        "file_names": {
+          "value_count": 1075,
+          "duplicate_value_count": 0,
+          "examples": {},
+          "extra_records": 0,
+          "conflicting_record_count": 0
+        }
+      }
+    },
+    {
+      "file": "loco-sub2-v1-train.json",
+      "source_url": "https://raw.githubusercontent.com/tum-fml/loco/b460ab8c37f09162f0613c7546948c496e1b1628/rgb/loco-sub2-v1-train.json",
+      "bytes": 28364217,
+      "sha256": "938f9b5915852df43d0c27c79dd059856ebb9e6cc27ea67378b6b9bb25c9b33d",
+      "status": "valid",
+      "counts": {
+        "images": 1070,
+        "annotations": 41681,
+        "categories": 5
+      },
+      "class_counts": [
+        {
+          "category_id": 10,
+          "name": "stillage",
+          "annotations": 2997
+        },
+        {
+          "category_id": 11,
+          "name": "pallet_truck",
+          "annotations": 231
+        },
+        {
+          "category_id": 3,
+          "name": "small_load_carrier",
+          "annotations": 4299
+        },
+        {
+          "category_id": 5,
+          "name": "forklift",
+          "annotations": 138
+        },
+        {
+          "category_id": 7,
+          "name": "pallet",
+          "annotations": 34016
+        }
+      ],
+      "bbox": {
+        "invalid_count": 0,
+        "outside_image_count": 0,
+        "clip_needed_for_consumers": false,
+        "source_annotations_modified": false
+      },
+      "references": {
+        "unknown_image_count": 0,
+        "unknown_category_count": 0
+      },
+      "duplicates": {
+        "image_ids": {
+          "value_count": 1070,
+          "duplicate_value_count": 0,
+          "examples": {},
+          "extra_records": 0,
+          "conflicting_record_count": 0
+        },
+        "annotation_ids": {
+          "value_count": 41681,
+          "duplicate_value_count": 0,
+          "examples": {}
+        },
+        "file_names": {
+          "value_count": 1070,
+          "duplicate_value_count": 0,
+          "examples": {},
+          "extra_records": 0,
+          "conflicting_record_count": 0
+        }
+      }
+    },
+    {
+      "file": "loco-sub3-v1-train.json",
+      "source_url": "https://raw.githubusercontent.com/tum-fml/loco/b460ab8c37f09162f0613c7546948c496e1b1628/rgb/loco-sub3-v1-train.json",
+      "bytes": 18224041,
+      "sha256": "456db71791f356e929125ba636673769bda78fb4a8b77c0293bad4fceab8fa52",
+      "status": "valid",
+      "counts": {
+        "images": 873,
+        "annotations": 26627,
+        "categories": 5
+      },
+      "class_counts": [
+        {
+          "category_id": 10,
+          "name": "stillage",
+          "annotations": 402
+        },
+        {
+          "category_id": 11,
+          "name": "pallet_truck",
+          "annotations": 308
+        },
+        {
+          "category_id": 3,
+          "name": "small_load_carrier",
+          "annotations": 2281
+        },
+        {
+          "category_id": 5,
+          "name": "forklift",
+          "annotations": 188
+        },
+        {
+          "category_id": 7,
+          "name": "pallet",
+          "annotations": 23448
+        }
+      ],
+      "bbox": {
+        "invalid_count": 0,
+        "outside_image_count": 0,
+        "clip_needed_for_consumers": false,
+        "source_annotations_modified": false
+      },
+      "references": {
+        "unknown_image_count": 0,
+        "unknown_category_count": 0
+      },
+      "duplicates": {
+        "image_ids": {
+          "value_count": 873,
+          "duplicate_value_count": 0,
+          "examples": {},
+          "extra_records": 0,
+          "conflicting_record_count": 0
+        },
+        "annotation_ids": {
+          "value_count": 26627,
+          "duplicate_value_count": 0,
+          "examples": {}
+        },
+        "file_names": {
+          "value_count": 873,
+          "duplicate_value_count": 0,
+          "examples": {},
+          "extra_records": 0,
+          "conflicting_record_count": 0
+        }
+      }
+    },
+    {
+      "file": "loco-sub4-v1-val.json",
+      "source_url": "https://raw.githubusercontent.com/tum-fml/loco/b460ab8c37f09162f0613c7546948c496e1b1628/rgb/loco-sub4-v1-val.json",
+      "bytes": 27155785,
+      "sha256": "e9e076f08cecba205c70cec9752e7415e73689aed04a64584c4f8428db5c73da",
+      "status": "valid",
+      "counts": {
+        "images": 1202,
+        "annotations": 39729,
+        "categories": 5
+      },
+      "class_counts": [
+        {
+          "category_id": 10,
+          "name": "stillage",
+          "annotations": 29
+        },
+        {
+          "category_id": 11,
+          "name": "pallet_truck",
+          "annotations": 559
+        },
+        {
+          "category_id": 3,
+          "name": "small_load_carrier",
+          "annotations": 0
+        },
+        {
+          "category_id": 5,
+          "name": "forklift",
+          "annotations": 119
+        },
+        {
+          "category_id": 7,
+          "name": "pallet",
+          "annotations": 39022
+        }
+      ],
+      "bbox": {
+        "invalid_count": 0,
+        "outside_image_count": 0,
+        "clip_needed_for_consumers": false,
+        "source_annotations_modified": false
+      },
+      "references": {
+        "unknown_image_count": 0,
+        "unknown_category_count": 0
+      },
+      "duplicates": {
+        "image_ids": {
+          "value_count": 1202,
+          "duplicate_value_count": 0,
+          "examples": {},
+          "extra_records": 0,
+          "conflicting_record_count": 0
+        },
+        "annotation_ids": {
+          "value_count": 39729,
+          "duplicate_value_count": 0,
+          "examples": {}
+        },
+        "file_names": {
+          "value_count": 1202,
+          "duplicate_value_count": 0,
+          "examples": {},
+          "extra_records": 0,
+          "conflicting_record_count": 0
+        }
+      }
+    },
+    {
+      "file": "loco-sub5-v1-train.json",
+      "source_url": "https://raw.githubusercontent.com/tum-fml/loco/b460ab8c37f09162f0613c7546948c496e1b1628/rgb/loco-sub5-v1-train.json",
+      "bytes": 12810917,
+      "sha256": "88a374a39f4ed5ae125223fb6111522672ae70337a29b97570cdcb8c3b0daf23",
+      "status": "valid",
+      "counts": {
+        "images": 877,
+        "annotations": 18628,
+        "categories": 5
+      },
+      "class_counts": [
+        {
+          "category_id": 10,
+          "name": "stillage",
+          "annotations": 1
+        },
+        {
+          "category_id": 11,
+          "name": "pallet_truck",
+          "annotations": 1135
+        },
+        {
+          "category_id": 3,
+          "name": "small_load_carrier",
+          "annotations": 6660
+        },
+        {
+          "category_id": 5,
+          "name": "forklift",
+          "annotations": 148
+        },
+        {
+          "category_id": 7,
+          "name": "pallet",
+          "annotations": 10684
+        }
+      ],
+      "bbox": {
+        "invalid_count": 0,
+        "outside_image_count": 0,
+        "clip_needed_for_consumers": false,
+        "source_annotations_modified": false
+      },
+      "references": {
+        "unknown_image_count": 0,
+        "unknown_category_count": 0
+      },
+      "duplicates": {
+        "image_ids": {
+          "value_count": 877,
+          "duplicate_value_count": 0,
+          "examples": {},
+          "extra_records": 0,
+          "conflicting_record_count": 0
+        },
+        "annotation_ids": {
+          "value_count": 18628,
+          "duplicate_value_count": 0,
+          "examples": {}
+        },
+        "file_names": {
+          "value_count": 877,
+          "duplicate_value_count": 0,
+          "examples": {},
+          "extra_records": 0,
+          "conflicting_record_count": 0
+        }
+      }
+    }
+  ],
+  "all_ten_pairwise_overlaps_zero": true,
+  "interpretation": {
+    "benchmark_scope": "real logistics object detection; no AMR class or real factory control validation",
+    "primary_class_candidates": [
+      "pallet",
+      "small_load_carrier"
+    ],
+    "mapping_validated": false,
+    "sub1_forklift_boxes": 5,
+    "detector_training_done": false,
+    "cosmos_transfer_done": false
+  }
+}

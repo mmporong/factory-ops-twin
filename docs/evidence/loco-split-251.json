@@ -1,0 +1,163 @@
+{
+  "schema_version": 1,
+  "profile_id": "loco-eval-v1",
+  "status": "candidate_mapping_pending",
+  "role_override_contract": "This profile replaces the earlier candidate roles in the metadata and RGB audit reports for future experiments that explicitly select loco-eval-v1.",
+  "scope": {
+    "source_images_decoded_or_downloaded": false,
+    "source_images_deleted": false,
+    "model_training_performed": false,
+    "model_or_checkpoint_selected": false,
+    "asset_mapping_status": "pending",
+    "camera_location_sequence_grouping_resolved": false
+  },
+  "primary_classes": [
+    "pallet",
+    "small_load_carrier"
+  ],
+  "roles": {
+    "train": {
+      "metadata_files": [
+        "loco-sub2-v1-train.json",
+        "loco-sub5-v1-train.json"
+      ],
+      "images": 1947,
+      "class_support": {
+        "forklift": {
+          "images_with_class": 182,
+          "annotations": 286
+        },
+        "pallet": {
+          "images_with_class": 1696,
+          "annotations": 44700
+        },
+        "pallet_truck": {
+          "images_with_class": 676,
+          "annotations": 1366
+        },
+        "small_load_carrier": {
+          "images_with_class": 327,
+          "annotations": 10959
+        },
+        "stillage": {
+          "images_with_class": 439,
+          "annotations": 2998
+        }
+      },
+      "primary_classes_supported": true
+    },
+    "tuning_validation": {
+      "metadata_files": [
+        "loco-sub3-v1-train.json",
+        "loco-sub4-v1-val.json"
+      ],
+      "images": 2075,
+      "class_support": {
+        "forklift": {
+          "images_with_class": 262,
+          "annotations": 307
+        },
+        "pallet": {
+          "images_with_class": 2033,
+          "annotations": 62470
+        },
+        "pallet_truck": {
+          "images_with_class": 423,
+          "annotations": 867
+        },
+        "small_load_carrier": {
+          "images_with_class": 337,
+          "annotations": 2281
+        },
+        "stillage": {
+          "images_with_class": 144,
+          "annotations": 431
+        }
+      },
+      "primary_classes_supported": true
+    },
+    "final_fixed_test": {
+      "metadata_files": [
+        "loco-sub1-v1-val.json"
+      ],
+      "images": 1075,
+      "class_support": {
+        "forklift": {
+          "images_with_class": 5,
+          "annotations": 5
+        },
+        "pallet": {
+          "images_with_class": 998,
+          "annotations": 13275
+        },
+        "pallet_truck": {
+          "images_with_class": 403,
+          "annotations": 594
+        },
+        "small_load_carrier": {
+          "images_with_class": 438,
+          "annotations": 8911
+        },
+        "stillage": {
+          "images_with_class": 528,
+          "annotations": 1978
+        }
+      },
+      "primary_classes_supported": true
+    }
+  },
+  "cross_split_checks_from_existing_index": {
+    "exact_file_sha256": {
+      "cross_split_group_count": 0,
+      "groups": [],
+      "groups_truncated": 0
+    },
+    "exact_decoded_pixel_sha256": {
+      "cross_split_group_count": 0,
+      "groups": [],
+      "groups_truncated": 0
+    },
+    "near_phash64": {
+      "algorithm": "existing DCT pHash 64-bit values",
+      "threshold_bits": 6,
+      "candidate_pair_count": 0,
+      "examples": [],
+      "examples_truncated": 0,
+      "confirmed_leakage": false
+    }
+  },
+  "planned_training_candidates": {
+    "real_label_image_budgets": [
+      10,
+      25,
+      50,
+      100
+    ],
+    "seeds": [
+      17,
+      29,
+      43
+    ],
+    "frozen_for_training": false
+  },
+  "inputs_sha256": {
+    "config": "60f3d5046dc7600f760a055701338b72ba5a8da6c2782c58c5f9adbc9c7fd549",
+    "rgb_audit_report": "89bfec2545dc3033453191912f11cb2694cdd643775c0cf111557c31e174d3c0",
+    "rgb_image_index": "b4d37151cb5fc481b8bcf8ad389fc7d9dc372d47911c8ce25d4350ce00ba53eb"
+  },
+  "metadata_sha256": {
+    "loco-sub1-v1-val.json": "3d26a0381794c2ab7d7b4e6843655029e459c5116287a43fa509b5db7934cb20",
+    "loco-sub2-v1-train.json": "938f9b5915852df43d0c27c79dd059856ebb9e6cc27ea67378b6b9bb25c9b33d",
+    "loco-sub3-v1-train.json": "456db71791f356e929125ba636673769bda78fb4a8b77c0293bad4fceab8fa52",
+    "loco-sub4-v1-val.json": "e9e076f08cecba205c70cec9752e7415e73689aed04a64584c4f8428db5c73da",
+    "loco-sub5-v1-train.json": "88a374a39f4ed5ae125223fb6111522672ae70337a29b97570cdcb8c3b0daf23"
+  },
+  "retained_source_manifest_sha256": "62aab1df226f55f2fc9ed3c97d31ea3f8fdc19e1c4b7747cd6df8267b47341a8",
+  "public_image_index": {
+    "path": "../data/loco-eval-v1/image-index.csv.gz",
+    "compressed_bytes": 593127,
+    "compressed_sha256": "a967f0489e694baa621239f68176bdcfad4b4974e45944b4fb137a832c3b5a1a",
+    "restored_sha256": "537966dc9dd41531aecc05fca534db5fd92b144786b202c8f8d6b0bdda448298",
+    "contains_rgb_pixels": false
+  }
+}

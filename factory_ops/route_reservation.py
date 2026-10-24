@@ -365,6 +365,33 @@ class RouteReservationManager:
         self._shrink_receipts[(robot_id, predecessor)] = (body_hash, hold.generation)
         return self._decision(True, "parked_hold_shrunk", "parked_hold", robot_id, hold)
 
+    def withdraw_pending(self, robot_id: str, *, now_s: float, reason: str) -> bool:
+        """Withdraw only a queued request that cannot currently be attempted.
+
+        Active ownership and the latest observed footprint remain unchanged.
+        This lets a higher-level interlock relinquish stale FIFO priority while
+        it holds the robot before entry.
+        """
+        self._robot(robot_id)
+        now = self._validate_now(now_s)
+        if not isinstance(reason, str) or not reason.strip():
+            raise RouteReservationError("withdraw reason must be a non-empty string")
+        self._commit_time(now)
+        pending = self._pending.pop(robot_id, None)
+        self._waits.pop(robot_id, None)
+        if pending is None:
+            return False
+        self._event(
+            now,
+            "pending_request_withdrawn",
+            robot_id,
+            reason=reason.strip(),
+            pending_sequence=pending.sequence,
+            route_id=pending.route_id,
+            requested_since_s=pending.since_s,
+        )
+        return True
+
     def detect_wait_cycle(self, *, now_s: float) -> tuple[str, ...] | None:
         """Report a persistent wait-for cycle without changing any hold."""
         now = self._validate_now(now_s)

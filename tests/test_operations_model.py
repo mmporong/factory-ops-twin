@@ -44,6 +44,36 @@ class OperationsModelTest(unittest.TestCase):
         self.assertEqual(tuple(trip["points"]), ((6.0, 0.0),))
         self.assertEqual(chunk["consumed"], 2)
 
+        OperationsModel._consume_chunk_route(
+            {"x_m": 6.0, "y_m": 0.0, "yaw_rad": 0.0}, trip, chunk,
+        )
+        self.assertEqual(tuple(trip["points"]), ((6.0, 0.0),))
+        self.assertEqual(chunk["consumed"], 2)
+
+        chunk["points"].clear()
+        OperationsModel._consume_chunk_route(
+            {"x_m": 6.0, "y_m": 0.0, "yaw_rad": 0.0}, trip, chunk,
+        )
+        self.assertFalse(trip["points"])
+        self.assertEqual(chunk["consumed"], 3)
+
+    def test_bridge_admission_observes_earlier_route_intent_and_later_pose_only(self):
+        model = OperationsModel(CONFIG, initial_orders=0, run_id="operations-admission-order")
+        model._trip("amr-1", {}, "P1", "P3", "parking", kind="parking")
+        model._trip("amr-2", {}, "P2", "P4", "parking", kind="parking")
+        first = model._trips["amr-1"]
+        second = model._trips["amr-2"]
+
+        first_view = model._admission_observations("amr-1", first)
+        second_view = model._admission_observations("amr-2", second)
+
+        self.assertEqual(first_view["amr-2"], model._footprint("amr-2"))
+        self.assertTrue(first["admission_tiles"].issubset(second_view["amr-1"]))
+
+        model._chunks["amr-2"] = {}
+        in_flight_view = model._admission_observations("amr-1", first)
+        self.assertTrue(second["admission_tiles"].issubset(in_flight_view["amr-2"]))
+
     def test_four_robots_complete_material_cycle_with_retained_clearance(self):
         model = OperationsModel(CONFIG, initial_orders=4, run_id="operations-cycle-test")
         for _ in range(2500):

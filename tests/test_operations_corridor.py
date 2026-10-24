@@ -64,6 +64,19 @@ class OperationsCorridorTest(unittest.TestCase):
         self.assertEqual(after, before)
         self.assertEqual(after["tiles"], [[4, 0]])
 
+    def test_campus_claim_does_not_end_in_bridge_to_junction_gap(self) -> None:
+        corridors = OperationsCorridors({
+            "operations_bottleneck_policy": "merge_adjacent_route_spans",
+            "policy_region_overrides": {"BRIDGE": [32, 5, 47, 8.8], "WEST": [49.5, 4.5, 52.5, 22.5]},
+            "operations_bottlenecks": [
+                {"id": name, "region_id": name, "release_policy": "first_route_point_outside_region"}
+                for name in ("BRIDGE", "WEST")],
+        })
+        route = ((33, 6), (46, 6), (48, 6), (51, 4.5), (51, 7.5), (51, 13.5), (45.5, 13.5), (46, 13.5))
+        span = corridors.atomic_span((31, 6), route)
+        self.assertEqual(span.points, route[:-1])
+        self.assertEqual(span.corridor_id, "BRIDGE+WEST")
+
 
 if __name__ == "__main__":
     unittest.main()

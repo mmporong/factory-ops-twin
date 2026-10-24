@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "scope": "static layout diagram from authored JSON and CPU-generated USD manifest; no runtime or GPU render",
+  "config_sha256": {
+    "fleet-profile.json": "5bdaa74cba0c8df54951b5e69cfa6de45c680b91e2d8f71f138f0afad32f18d5",
+    "g2.json": "b2e3385db604b33c94ce4f8dfbc41926a1e21b4f2e60a4340b114c1f124849ab",
+    "g3-routing.json": "6401e271b07cf2a28e938e34ea49c174d420855b1d4ad87671a18146b5157507",
+    "layout.json": "021c83d2ca7fac8808b140ea64b4d7b12d064877eda5e1a92faa820ba0ef8c1a",
+    "operations-charging.json": "113f7d1fffd0567d57e8ba9afb3e795e79c9246d03486334c8ef7046b9be5d43",
+    "process-network.json": "d52a99aa42da8441d4bab85a1061916371f2c5ff44fa7089286269914e3cf4be",
+    "render-profile.json": "1474dcb23b6c8a89b4cd4bf686b106d6083c6ef8d3326451d38cce436bc6d560",
+    "visual-assets.json": "a344efdf8092cc3a737f1960b8c07d30d87deb1737fd98b166d2efcd043c5b07"
+  },
+  "visual_manifest_sha256": "45a8745862e67866355ee78f08eb76831604f4e74ee6445f2b5ebd72d63188e9",
+  "outputs": {
+    "campus-layout.png": "35a1fd08b9e97be399bbfafcda9058c392a469f401a0d4a610fa7a887df9e0d7",
+    "campus-layout.svg": "c1e6f4fdd1b622326a0ebe873f824e749ac2d07ec5084cda80e4d0d61c5f1887"
+  },
+  "svg_serialization": "trailing whitespace removed after matplotlib export; geometry and PNG unchanged"
+}

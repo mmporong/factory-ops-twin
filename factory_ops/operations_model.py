@@ -20,6 +20,7 @@ from .fleet_routing import swept_tiles
 from .motion import DriveGeometry
 from .operations import Transition
 from .operations_corridor import OperationsCorridors
+from .operations_bridge import BridgeAdmission
 from .operations_charging import OperationsCharging, SCOPE as OPERATIONS_CHARGING_SCOPE
 from .operations_motion import PathMotion
 from .operations_replan import anchor_at_pose, find_alternative_route
@@ -53,6 +54,7 @@ class OperationsModel(DashboardModel):
         self.limits = DriveLimits(**{k: v for k, v in drive["drive_profile"].items() if k != "provenance"})
         self.motions = {r: PathMotion(self.limits, self.geometry) for r in self.ledger.robots}
         self.corridors = OperationsCorridors(self.book.config)
+        self.bridges = BridgeAdmission(self.book.config)
         self.homes = dict(zip(self.ledger.robots, stations))
         self.radius = self.book.config["authored_allowances"].get("reservation_radius_including_tracking_m", self.book.planning_radius_m)
         self.collision_radius = self.book.config["collision_radius"]["value"]
@@ -67,6 +69,7 @@ class OperationsModel(DashboardModel):
         self._station_owners: dict[str, str] = {}
         self._jobs: dict[str, tuple[str, str]] = {}
         self._chunks: dict[str, dict[str, Any]] = {}
+        self._admission_seq = 0
         self._chunk_seq = {r: 0 for r in self.ledger.robots}
         self._alignment_seq = {r: 0 for r in self.ledger.robots}
         self._max_segment_m = max(math.dist(self.book.nodes[a], self.book.nodes[b]) for a, b in self.book.edges)
@@ -200,6 +203,7 @@ class OperationsModel(DashboardModel):
                 break
             if not assigned:
                 break
+        self._dispatch_extra_jobs(draining)
         for robot in self.ledger.robots:
             if robot in self._trips or self._locations[robot] == self.homes[robot]:
                 continue
@@ -210,9 +214,24 @@ class OperationsModel(DashboardModel):
                 self._trip(robot, {}, self._locations[robot], self.homes[robot], "parking", kind="parking")
                 self._waiting.pop(robot, None)
 
+    def _dispatch_extra_jobs(self, draining: bool) -> None:
+        """Admit specialized production jobs before sending idle vehicles home."""
+
     def _trip(self, robot_id, task, start, goal, phase, *, kind="order") -> None:
         self._replans.pop(robot_id, None)
         super()._trip(robot_id, task, start, goal, phase, kind=kind)
+        route = self.book.plan(start, goal, closed=self.closed)
+        route_nodes = route.nodes
+        admission_points = route.points
+        if kind == "process_line" and phase == "pickup":
+            # Acquire the loaded leg's bridges before occupying its pickup bay.
+            loaded = self.book.plan(goal, task.drop_station, closed=self.closed)
+            route_nodes += loaded.nodes
+            admission_points += loaded.points[1:]
+        self._admission_seq += 1
+        self._trips[robot_id]["route_nodes"] = route_nodes
+        self._trips[robot_id]["admission_tiles"] = self._tiles(tuple(admission_points))
+        self._trips[robot_id]["admission_seq"] = self._admission_seq
         if hasattr(self, "operations_charging") and self.operations_charging is not None:
             self.operations_charging.denied.discard(robot_id)
         self._waiting.pop(robot_id, None)
@@ -278,7 +297,8 @@ class OperationsModel(DashboardModel):
                 peer_footprint_tiles=peer_tiles,
                 existing_points=tuple(trip["points"]),
             )
-            if alternative is not None:
+            if (alternative is not None
+                    and self.bridges.required(alternative.nodes).issubset(self.bridges.held(robot))):
                 candidates.append((alternative.distance_m, robot, start, alternative))
         if not candidates:
             self.replan_unavailable_count += 1
@@ -322,12 +342,30 @@ class OperationsModel(DashboardModel):
                 if math.dist(chunk["start"], candidate) > travelled + 1e-9:
                     break
                 reached += 1
+            # The endpoint may be within numeric tolerance while PathMotion is
+            # still finishing its quintic deceleration. Retain that final
+            # waypoint until the motion deque confirms completion.
+            reached = min(reached, chunk["count"] - len(chunk["points"]))
         while chunk["consumed"] < reached:
             trip["points"].popleft()
             chunk["consumed"] += 1
 
     def _move_trip(self, robot_id, trip, dt) -> None:
         if not trip["points"]:
+            return
+        blockers = self.bridges.admit(
+            robot_id,
+            trip["route_nodes"],
+            route_tiles=trip["admission_tiles"],
+            observed_tiles=self._admission_observations(robot_id, trip),
+        )
+        if blockers:
+            self.reservations.withdraw_pending(
+                robot_id,
+                now_s=self.sim_time,
+                reason="macro_bridge_admission_denied",
+            )
+            self._waiting[robot_id] = {"reason": "bridge_admission_occupied", "blockers": list(blockers)}
             return
         chunk = self._chunks.get(robot_id)
         if chunk is None:
@@ -394,9 +432,56 @@ class OperationsModel(DashboardModel):
             self._observe_all()
             self._park_hold(robot_id)
 
+    def _admission_observations(self, robot_id: str, trip: Mapping[str, Any]) -> dict[str, frozenset]:
+        """Include earlier route intent so a bridge grant cannot strand it later.
+
+        The monotonically assigned sequence breaks simultaneous intent ties. An
+        earlier trip clears first; a later bridge request waits before entering.
+        Current footprints are always included, independent of that priority.
+        """
+        observations = {}
+        for peer in self.ledger.robots:
+            tiles = self._footprint(peer)
+            peer_trip = self._trips.get(peer)
+            if (peer != robot_id and peer_trip is not None
+                    and (peer in self._chunks or not self.motions[peer].stopped
+                         or peer_trip["admission_seq"] < trip["admission_seq"])):
+                tiles = tiles | peer_trip["admission_tiles"]
+            observations[peer] = tiles
+        return observations
+
+    def _prospective_trip_blockers(
+        self,
+        robot_id: str,
+        pickup: str,
+        destination: str,
+        *,
+        pickup_route: Any | None = None,
+        loaded_route: Any | None = None,
+    ) -> tuple[str, ...]:
+        """Check a complete pickup/drop intent before business assignment."""
+        first = pickup_route or self.book.plan(self._locations[robot_id], pickup, closed=self.closed)
+        loaded = loaded_route or self.book.plan(pickup, destination, closed=self.closed)
+        nodes = first.nodes + loaded.nodes
+        tiles = self._tiles(tuple(first.points + loaded.points[1:]))
+        observations = {}
+        for peer in self.ledger.robots:
+            occupied = self._footprint(peer)
+            peer_trip = self._trips.get(peer)
+            if peer != robot_id and peer_trip is not None:
+                occupied = occupied | peer_trip["admission_tiles"]
+            observations[peer] = occupied
+        return self.bridges.blockers(
+            robot_id,
+            nodes,
+            route_tiles=tiles,
+            observed_tiles=observations,
+        )
+
     def _arrive_trip(self, robot_id, trip) -> None:
         if not self.motions[robot_id].stopped:
             raise RuntimeError("handover attempted before kinematic stop")
+        self.bridges.release(robot_id, stopped=True)
         if self.operations_charging is not None and self.operations_charging.arrive(self, robot_id, trip):
             self._observe_all()
             self._park_hold(robot_id)
@@ -493,6 +578,7 @@ class OperationsModel(DashboardModel):
                                and not self.operations_charging.relocating
                                and not self.operations_charging.faults)),
             "station_owners": dict(self._station_owners),
+            "bridge_admission": self.bridges.snapshot(),
             "reservation_wait_cycle": list(self.wait_cycle) if self.wait_cycle else None,
             "reservation_wait_cycle_episodes": self.wait_cycle_episodes,
             "replan_attempt_count": self.replan_attempt_count,

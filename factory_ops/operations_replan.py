@@ -74,7 +74,7 @@ def find_alternative_route(
                 if excluded_arc == (node, neighbor):
                     continue
                 edge = tuple(sorted((node, neighbor)))
-                if closed and edge == book.closed_edge:
+                if closed and edge in book.closed_edges:
                     continue
                 edge_tiles = swept_tiles(
                     (book.nodes[node], book.nodes[neighbor]),

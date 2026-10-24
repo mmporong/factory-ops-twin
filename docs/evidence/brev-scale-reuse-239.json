@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "scope": "Existing Nebius 2xL40S reuse failed before SDK; actual Stop recovered",
+  "instance_type": "gpu-l40s-d.2gpu-64vcpu-384gb",
+  "start_attempted": true,
+  "readiness": "UNHEALTHY / COMPLETED / READY",
+  "error": "ValueError: unexpected target lifecycle state: UNHEALTHY",
+  "host_record_actual_stopped": false,
+  "recovery_actual_stopped": true,
+  "confirmed_at": "2026-10-24T12:02:11.628618+09:00",
+  "sdk_started": false,
+  "environment_preserved": true,
+  "watchdog": {
+    "timer_active_before_start": true,
+    "target_stop_verified": true,
+    "independent_of_python_launcher": true,
+    "inactive_after_recovery": true,
+    "keepalive_gone": true,
+    "limitation": "Host power loss or premature WSL termination can prevent user-systemd timer execution"
+  },
+  "budget": {
+    "hard_stop_seconds": 7200,
+    "hourly_search_estimate_usd": 5.48,
+    "estimated_envelope_usd": 11.0,
+    "settled_billing_verified": false
+  },
+  "rate_limit_observed": true,
+  "next_launcher_change": "Stop status polling changed from 10s to 30s; no new start in this change",
+  "receipts_sha256": {
+    "artifacts/brev/scale-reuse-239/host.json": "9996dfc10d1f8f0c5e5c051e8e1df8203b6bf1ea2747268d6b7b6adc89462437",
+    "artifacts/brev/scale-reuse-239/recovery.json": "a67ebed5ba5400f30da3edb2e78623ff828d3c983a32058236dfb5b4cfcbf9a3"
+  },
+  "references": [
+    "https://docs.nvidia.com/brev/concepts/gpu-instances",
+    "https://docs.nvidia.com/brev/cli/instance-management"
+  ]
+}

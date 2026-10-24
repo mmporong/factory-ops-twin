@@ -1,6 +1,7 @@
 import json
 from pathlib import Path
 import unittest
+from unittest.mock import patch
 
 from factory_ops.dashboard import validate_snapshot
 from factory_ops.line_operations_model import LineOperationsModel
@@ -12,6 +13,44 @@ CONFIGS = ROOT / "configs"
 
 
 class LineOperationsModelTests(unittest.TestCase):
+    def test_conflicting_full_trip_is_not_assigned_before_admission(self):
+        model = LineOperationsModel(
+            CONFIGS / "factory-semiconductor-line16", initial_lots=1, run_id="line-dispatch-gate",
+        )
+        with patch.object(model, "_prospective_trip_blockers", return_value=("amr-2",)) as gate:
+            model._dispatch_extra_jobs(False)
+        self.assertTrue(gate.called)
+        task = model.line.ready_transports[0]
+        self.assertEqual("ready", task.state)
+        self.assertIsNone(task.robot_id)
+        self.assertFalse(model._trips)
+
+        with patch.object(model, "_prospective_trip_blockers", return_value=()):
+            model._dispatch_extra_jobs(False)
+        assigned = next(task for task in model.line.snapshot()["transports"] if task["state"] == "assigned")
+        self.assertIsNotNone(assigned["robot_id"])
+        self.assertEqual(1, len(model._trips))
+
+    def test_network_dispatch_drains_downstream_wip_and_uses_least_assigned_tie_break(self):
+        model = LineOperationsModel(
+            CONFIGS / "factory-semiconductor-campus16", initial_lots=0, run_id="campus-priority",
+        )
+        tasks = [
+            type("Task", (), {"kind": "process_input", "destination": "A_TEST_IN",
+                               "created_sim_time_s": 0.0, "task_id": "input"})(),
+            type("Task", (), {"kind": "product_move", "destination": "B_AOI_IN",
+                               "created_sim_time_s": 1.0, "task_id": "aoi"})(),
+            type("Task", (), {"kind": "product_move", "destination": "D_OUT",
+                               "created_sim_time_s": 2.0, "task_id": "ship"})(),
+            type("Task", (), {"kind": "empty_return", "destination": "A_S1",
+                               "created_sim_time_s": 3.0, "task_id": "return"})(),
+        ]
+        ordered = [task.task_id for task in sorted(tasks, key=model._line_task_priority)]
+        self.assertEqual(["return", "ship", "aoi", "input"], ordered)
+        self.assertEqual("legacy_fifo_eta", LineOperationsModel(
+            CONFIGS / "factory-semiconductor-line16", initial_lots=0, run_id="legacy-priority",
+        )._line_dispatch_mode)
+
     def test_one_lot_completes_five_kinematic_transports_and_returns_its_carrier(self):
         model = LineOperationsModel(
             CONFIGS / "factory-semiconductor-line12", initial_lots=1, run_id="line-one-lot",

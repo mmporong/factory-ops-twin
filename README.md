@@ -1,6 +1,6 @@
 # Factory Ops Twin
 
-반도체 후공정의 검사·포장 구역을 대상으로 4대 AMR의 자재 공급, 완제품 출하, 빈 토트 반납, 충전을 하나의 운영 원장과 관제 화면으로 연결한 디지털 트윈 포트폴리오입니다. CPU 운영 비교와 Isaac Sim 물리 시험을 분리해 기록하고, 각 결과가 증명하는 범위를 미디어와 함께 공개합니다.
+반도체 후공정의 검사·포장 구역에서 AMR의 자재 공급, 완제품 출하, 빈 토트 반납, 충전을 운영 원장과 관제 화면으로 연결하는 디지털 트윈 포트폴리오입니다. 4대 운영 비교를 기준선으로 보존하고, 현재는 4개 생산 베이를 연결한 16대 운영을 구축하고 있습니다. CPU 운영 비교와 Isaac Sim 물리 시험, 합성 데이터의 실사 전이 실험은 각각의 실행 근거로 구분합니다.
 
 [![4대 AMR 반도체 후공정 운영 재생](docs/images/operations-local45-228/operations-replay.gif)](docs/images/operations-local45-228/operations-replay.mp4)
 
@@ -16,29 +16,26 @@
 
 [현재 범위와 완료 조건](docs/completion-plan.md) · [설계와 제어 경계](docs/architecture.md) · [공정 모델](docs/semiconductor-cell.md)
 
-### 12대 기본·16대 확장 구성
+### 16대 연결 캠퍼스: 구축 중
 
-현재 공개 대표 시연은 위4대 기준선입니다. 확장용 코드는 차량 수를 설정에서 읽으며, 기존36×28m 생산 구역 동쪽에 주차·충전 대기 별동을 추가했습니다.12대는51×28m,16대는59×28m 배치이고 각 차량의 홈·예약 점유·전후방 LiDAR 식별자를 분리했습니다. 초기 배치·충전 설정·정지 점유와16대 기록 재생 검사를 통과했습니다.
+![4개 생산 베이와 16개 초기 홈을 표시한 작성 배치도](docs/images/campus16-layout-244/campus-layout.png)
 
-12대의600초 CPU 파일럿은 예외 없이 끝났지만 물류는 미완료입니다.12건 중1건 출하·1건 반납, 작업 참여4대를 기록했습니다. 복수 공정과 배차를 확장할 비교 자료이며,12대 물리 운송·센서 성공을 뜻하지 않습니다. [배치·파일럿 근거와 한계](docs/evidence/fleet-scale-232.json)
+위 그림은 설정과 USD manifest에서 만든 **정적 배치도**입니다. GPU 렌더나 16대 운송 성공 영상이 아닙니다. 78×60m 안에 기존 생산 설비 76개, 출처가 있는 SimReady 배치 128개, 차량 홈 16개, 가상 충전 도크 8개를 구성했습니다. CPU에서 시각 USD 생성과 에셋 외곽 검사를 마쳤으며, OpenUSD/Isaac Sim 파싱과 새 장면 촬영은 남아 있습니다. [배치도 출처](docs/images/campus16-layout-244/provenance.json) · [생성·실행 근거](docs/evidence/campus16-244.json)
 
-```powershell
-cd "$HOME/factory-ops-twin"
-.venv/Scripts/python.exe -m factory_ops.operations_experiment --config configs/factory-semiconductor-scale12 --scenario normal --policy eta --horizon 600 --dt 1 --output artifacts/operations/my-scale12-pilot/result.json
-```
+주차장만 늘린 이전 `scale12/16`과 달리 `factory-semiconductor-campus16`은 4개 TEST→AOI→PACK 라인을 베이 사이로 연결합니다. 유한 재고 240개와 캐리어 64개를 사용하고 출하 뒤 원래 저장소로 빈 용기를 돌려보냅니다. 입력·출력 버퍼와 설비 고장, 전역 배차, 가감속·회전, 구간 점유와 가상 충전을 같은 운영 모델에서 계산합니다. 공정 시간·배치는 작성 가정입니다.
 
-출력 경로는 새 경로를 사용합니다. `scale16` 구성도 같은 명령의 `--config`로 선택할 수 있으며, 위 파일럿 수치는12대 실행에만 해당합니다.
+캠퍼스의 배차는 `downstream_wip_drain_least_assigned`입니다. 예약 가능한 후보 중 반납·출하·후단 WIP를 먼저 처리하고 운송 배정이 적은 차량을 우선합니다. snapshot의 `production_line.dispatch_mode`로 정책을 확인합니다. 기존 단일 라인의 FIFO/ETA 비교와 같은 정책으로 해석하지 않습니다.
 
-Brev 상위 개발 환경은 Nebius L40S 2장 구성으로 보존돼 있으며, 실제 `STOPPED` 상태를 확인했습니다. 기존 L40S 환경도 중지 상태로 보존합니다. 환경의 생성·SDK 초기화·Stop 도구는 `scripts/brev/bootstrap_scale.py`이고, 기본 실행은 사전 확인입니다. 이미 있는 환경은 이 도구로 다시 생성하지 않습니다. 첫 작업 묶음의 상한은 6시간·40달러이며, SDK와 12·16대 센서·물리 실행은 아직 확인하지 못했습니다. [환경 상태와 중지 근거](docs/evidence/brev-scale-bootstrap-234.json)
-
-확장 공정 원장은 TEST→AOI→PACK 처리와 유한 버퍼, 설비 고장·복구, 캐리어 반납·재사용을 계산합니다. `LineOperationsModel`이 이를 기존 가감속·회전·교통 예약·가상 충전에 연결합니다. 12대 구성에서 1개 lot가 다섯 운송을 거쳐 출하되고, 빈 캐리어가 원래 저장소로 돌아오는 CPU 파일럿을 완료했습니다. 참여 차량은 2대이며, 12·16대 동시 처리량과 물리 주행은 후속 실행 대상입니다. [공정 통합 결과와 한계](docs/evidence/process-line-235.json)
+16대의 반복 운송과 전체 완료는 아직 확보하지 못했습니다. 48lot 파일럿에서 교량 양 끝과 진입 교차로의 순환 대기를 확인했고, 안전 반경을 유지한 채 진입 예약과 동선을 수정하고 있습니다. 주차 이동, 물류 임무 동시 수와 실제 물류 이동 동시 수는 별도로 집계합니다. 이전 1lot 공정 통합 시험은 다섯 운송·출하·빈 캐리어 반납·최종 정지를 완료했지만 참여 차량은 2대였습니다. [1lot 통합 기준선](docs/evidence/process-line-235.json)
 
 ```powershell
 cd "$HOME/factory-ops-twin"
-.venv/Scripts/python.exe scripts/demo/run_process_line.py --config configs/factory-semiconductor-line12 --lots 1 --horizon 1500 --output-dir artifacts/operations/my-process-line-pilot
+uv run python scripts/demo/run_process_line.py --config configs/factory-semiconductor-campus16 --lots 48 --horizon 18000 --max-wall-seconds 600 --output-dir artifacts/operations/my-campus16-pilot
 ```
 
-실행기는 새 출력 폴더에 선택한 소스·설정의 원본 바이트, 최종 상태와 최대 80개 대표 snapshot을 남깁니다. `--lots 12` 또는 `factory-semiconductor-line16`으로 부하 조건을 바꿀 수 있습니다. 위 완료 결과는 1개 lot 조건에 해당하며, 새 공정 배치의 렌더와 웹 표시 확인은 남아 있습니다.
+새 출력 폴더에 소스·설정 원본, 해시, 최종 상태와 최대 80개 대표 snapshot을 남깁니다. 진전이 없는 실행은 `incomplete`로 중단합니다. `--record-start 900 --record-duration 120`으로 최대 300초의 1Hz 관측 창을 추가할 수 있습니다. 이 기록은 CPU 운영이며 접촉 물리·센서 검증을 대신하지 않습니다.
+
+Brev의 기존 Nebius 2×L40S 환경을 재사용했지만 `UNHEALTHY` 상태여서 SDK 실행 전 중단했습니다. 사후 조회에서 실제 `STOPPED`를 확인했고, 독립 Stop 타이머와 keepalive도 정리했습니다. 기존 L40S 환경은 중지 상태로 보존합니다. 재사용 도구는 `scripts/brev/reuse_scale.py`이며 기본값은 사전 확인입니다. 첫 묶음 상한은 6시간·$40이고 실제 정산 비용이나 16대 센서·물리 성공은 확인되지 않았습니다. [재사용 실패·중지 근거](docs/evidence/brev-scale-reuse-239.json)
 
 ## 반도체 후공정 장면
 
@@ -48,7 +45,7 @@ cd "$HOME/factory-ops-twin"
 
 남·북 주통로와 동쪽 연결 통로를 방향별로 나누고, 19개 시각 생산 설비와 35개 제공처 모델을 배치했습니다. 제공처 모델은 정비 캐비닛·작업대·카트 34개와 NVIDIA 포장 컨베이어 1개입니다. 생산 장비 본체와 건물 서비스 형상은 기능 자료를 참고한 절차형 모델이며 제조사 CAD나 인증 공장의 복제물이 아닙니다.
 
-현재 공정 계산은 `CELL1` 한 곳에서 수행합니다. 나머지 18개 생산 설비는 공장 맥락과 동선 제약을 만드는 시각·충돌 구성입니다. 복수 공정 셀의 생산 능력을 계산하는 모델로 해석하지 않습니다. [장면 합성 근거](docs/evidence/semiconductor-dual-lane-201.json) · [에셋과 라이선스](docs/asset-attribution.md)
+위 36×28m 기준선은 `CELL1` 한 곳에서 공정을 계산하고 나머지 18개 설비는 시각·충돌 맥락을 만듭니다. 새 캠퍼스의 12개 논리 공정 셀과 구분하며, 76개 시각 설비 모두의 생산 능력을 계산한다는 뜻은 아닙니다. [장면 합성 근거](docs/evidence/semiconductor-dual-lane-201.json) · [에셋과 라이선스](docs/asset-attribution.md)
 
 ## 운영 정책 비교
 
@@ -128,18 +125,24 @@ Isaac Sim Replicator로 12개 시각 구성, 30시점, 3카메라에서 RGB 1,08
 
 </details>
 
+## 합성 데이터가 실제 사진에서도 통하는가
+
+기존 Replicator RGB 1,080장의 생성·검사 기록을 바탕으로, 실제 물류 사진에서 검출 성능과 실제 라벨 예산 곡선을 비교하는 보조 실험을 준비하고 있습니다. **검출기 학습과 실사 mAP 결과는 아직 없습니다.**
+
+공식 RGB ZIP을 받아 사진 5,097장과 박스 151,428개의 메타데이터를 대조했습니다. 모두 디코딩·해상도가 맞았고 분할 간 동일 파일/픽셀·pHash 거리6 이하 후보는0건이었습니다. 촬영 환경·시퀀스 감사와 팔레트·소형 적재함 에셋 매핑은 남아 있습니다. LOCO에는 AMR 클래스가 없고, 소형 적재함이 없는 초기 튜닝 후보도 수정했습니다. 다음 단계는 소량 합성 데이터와 Cosmos 10클립 파일럿입니다. 변환본의 객체·라벨 정합을 확인하기 전에는 원본 라벨을 복사하지 않습니다. [RGB 감사](docs/evidence/loco-rgb-249.json) · [분할·해시 index](docs/data/loco-eval-v1/README.md) · [비교 조건·GPU·비용과 확대 기준](docs/synthetic-to-real-plan.md)
+
 ## 현재 진행 상태
 
 | 구간 | 확보한 증거 | 남은 확인·확장 |
 |---|---|---|
-| 1. 공정·원장 | 유한 재고·WIP, `CELL1` 고장·복구, 출하·빈 토트 반납 | 복수 생산 셀 계산은 후속 확장 |
-| 2. 4대 CPU 운영 | 6개 조건의 12건 출하·12건 반납·4대 주차, 별도 저SOC 충전·이탈 | 현장 자료 보정은 후속 확장 |
+| 1. 공정·원장 | 1lot TEST→AOI→PACK·출하·반납, 4개 라인·12개 논리 셀 구성 | 16대·48lot 반복 운영 완주 |
+| 2. CPU 운영 | 4대 6조건 완주, 16대 캠퍼스·교량/교차로 진입 예약 | 16대 참여·동시 임무·교통 교착 해소 |
 | 3. 물리 주행 기준선 | 경로 추종226, 적재135, 교차 양보142, 도킹 정렬231 | 전기 접촉 충전·실물 검증은 후속 확장 |
 | 4. 운영 비교·원인 추적 | 동일 수요의 6개 조건, 대기·출하 지연·교착 우회 기록 | 반복 통계와 실공장 성능으로 확장하지 않음 |
 | 5. 관제·재현·미디어 | 실행070 관측, 공개 120표본 재생, Kit229 명령, 운영 재생228 | 최신 웹 조합의 새 브라우저 실행 확인 |
-| 6. 포트폴리오 마감 | 영상·비교·물리 기준선·공개 입력과 해시 | 위 잔여 확인 이후 최종 설명과 보존 색인 마감 |
+| 6. 포트폴리오·데이터 | 영상·비교·물리 기준선·LOCO RGB/분할 감사 | 16대 새 미디어, 합성→실사 파일럿·선별 보존 |
 
-4대 전체의 접촉 물리 운송과 전기 접촉 충전은 후속 확장입니다. 현재 목표는 운영 비교와 선정된 물리 구성요소 시험을 각각 재현할 수 있게 만드는 것입니다.
+현재 본체의 목표는 16대 반복 물류 운영과 장애 대응을 같은 기록으로 재현하는 것입니다. 기존 4대 운영·단일 차량 물리 시험의 성과는 유지하며, 16대 물리·센서 수용성은 별도 확인합니다. 합성→실사 실험은 본체와 병행하는 보조 트랙입니다.
 
 실패 원인과 재발 방지는 [트러블슈팅 기록](docs/troubleshooting.md)에 남깁니다. 현재 구현과 장기 완료 기준은 [완성 계획](docs/completion-plan.md), 선별 원본·별도 드라이브 백업·만료된 후보 파일은 [보존 색인](docs/evidence/operations-storage-230.json)에서 관리합니다.
 

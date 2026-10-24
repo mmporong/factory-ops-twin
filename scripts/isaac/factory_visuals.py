@@ -93,6 +93,15 @@ def light_positions(layout: Layout) -> tuple[tuple[float, float], ...]:
     return tuple((x, y) for y in ys for x in xs)
 
 
+def _expected_source_stage_counts(layout: Layout) -> dict[str, int]:
+    obstacles = len(layout.data["physical_obstacles"])
+    return {
+        "obstacles": obstacles,
+        "colliders": obstacles + 1,
+        "markers": len(layout.stations) + len(layout.pockets),
+    }
+
+
 def _signal_color(name: str, active: bool) -> tuple[float, float, float]:
     if not active:
         return (.22, .24, .27)
@@ -412,13 +421,20 @@ class FactoryVisualRuntime:
             if previous_target is not None:
                 stage.SetEditTarget(previous_target)
         after = self._stage_contract()
+        expected = _expected_source_stage_counts(self.layout)
+        expected_obstacles = expected["obstacles"]
+        expected_colliders = expected["colliders"]
         if (before["collider_paths"] != after["collider_paths"]
                 or before["collision_enabled_readbacks"] != after["collision_enabled_readbacks"]
                 or before["collider_geometry_readbacks"] != after["collider_geometry_readbacks"]
-                or after["collider_count"] != 20):
-            raise ValueError("visual setup changed the 20 source collider paths, transforms, bounds or enabled values")
-        expected_markers = len(self.layout.stations) + len(self.layout.pockets)
-        if (before["obstacle_count"] != 19 or after["obstacle_count"] != 19
+                or after["collider_count"] != expected_colliders):
+            raise ValueError(
+                f"visual setup changed the {expected_colliders} source collider paths, transforms, "
+                "bounds or enabled values"
+            )
+        expected_markers = expected["markers"]
+        if (before["obstacle_count"] != expected_obstacles
+                or after["obstacle_count"] != expected_obstacles
                 or before["marker_count"] != expected_markers or after["marker_count"] != expected_markers):
             raise ValueError("visual setup changed source obstacle or marker counts")
         bbox = self._validate_visual_bounds()

@@ -21,8 +21,9 @@ FLEET4_REVISION = "amr-production-bay-fleet4-v1"
 DUAL_LANE_REVISION = "amr-semiconductor-dual-lane-v1"
 FLEET_SCALE12_REVISION = "amr-semiconductor-scale12-v1"
 FLEET_SCALE16_REVISION = "amr-semiconductor-scale16-v1"
+CAMPUS16_REVISION = "amr-semiconductor-campus16-v1"
 FLEET_SCALE_LAYOUT_REVISIONS = frozenset((FLEET_SCALE12_REVISION, FLEET_SCALE16_REVISION))
-FLEET4_LAYOUT_REVISIONS = frozenset((FLEET4_REVISION, DUAL_LANE_REVISION, *FLEET_SCALE_LAYOUT_REVISIONS))
+FLEET4_LAYOUT_REVISIONS = frozenset((FLEET4_REVISION, DUAL_LANE_REVISION, CAMPUS16_REVISION, *FLEET_SCALE_LAYOUT_REVISIONS))
 PRODUCTION_BAY_REVISIONS = frozenset((V4_REVISION, *FLEET4_LAYOUT_REVISIONS))
 V3_STATIONS = {
     "S1": (4.0, 4.0),
@@ -62,6 +63,11 @@ FLEET_SCALE16_POCKETS = {
     **{f"P{index}": (x, y) for index, (x, y) in enumerate(
         ((52.0, 1.5), (52.0, 26.0), (56.0, 1.5), (56.0, 26.0)), 13)},
 }
+CAMPUS_BAY_OFFSETS = {"A": (0.0, 0.0), "B": (42.0, 0.0), "C": (0.0, 32.0), "D": (42.0, 32.0)}
+CAMPUS_STATIONS = {f"{bay}_{name}": (point[0] + dx, point[1] + dy)
+                   for bay, (dx, dy) in CAMPUS_BAY_OFFSETS.items() for name, point in DUAL_LANE_STATIONS.items()}
+CAMPUS_POCKETS = {f"{bay}_{name}": (point[0] + dx, point[1] + dy)
+                  for bay, (dx, dy) in CAMPUS_BAY_OFFSETS.items() for name, point in DUAL_LANE_POCKETS.items()}
 # Compatibility aliases preserve the established V1-V3 mission contracts.
 EXPECTED_STATIONS = V3_STATIONS
 EXPECTED_POCKETS = V3_POCKETS
@@ -159,6 +165,8 @@ class Layout:
             for index, item in enumerate(self.data["physical_obstacles"])
         )
         self.blocked_aisle = Rect.from_value(self.data["blocked_aisle"]["rect"], "blocked_aisle.rect")
+        self.blocked_aisles = tuple(Rect.from_value(item["rect"], "blocked_aisles.rect")
+                                   for item in self.data.get("blocked_aisles", [self.data["blocked_aisle"]]))
         self.stations = {item["id"]: _point(item["xy"], f"station {item['id']}") for item in self.data["stations"]}
         self.pockets = {key: _point(value, f"pocket {key}") for key, value in self.data["pockets"].items()}
         self._raw_normal = self._make_raw_mask()
@@ -186,7 +194,12 @@ class Layout:
         if self.data["units"] != "m" or self.data["frame"] != "map":
             raise LayoutError("layout must use metres in the map frame")
         revision = self.data.get("revision")
-        if revision == FLEET_SCALE12_REVISION:
+        if revision == CAMPUS16_REVISION:
+            expected_bounds = (0.0, 0.0, 78.0, 60.0)
+            expected_stations = CAMPUS_STATIONS
+            expected_pockets = CAMPUS_POCKETS
+            barrier_y = (3.0, 6.0)
+        elif revision == FLEET_SCALE12_REVISION:
             expected_bounds = (0.0, 0.0, 51.0, 28.0)
             expected_stations = DUAL_LANE_STATIONS
             expected_pockets = FLEET_SCALE12_POCKETS
@@ -225,8 +238,9 @@ class Layout:
 
         allowed = self._validated_named_rects(self.data["amr_allowed_regions"], "amr_allowed_regions", bounds)
         obstacles = self._validated_named_rects(self.data["physical_obstacles"], "physical_obstacles", bounds)
-        if len(obstacles) != 19:
-            raise LayoutError("physical_obstacles must contain the 19 authored footprints")
+        expected_obstacle_count = 76 if revision == CAMPUS16_REVISION else 19
+        if len(obstacles) != expected_obstacle_count:
+            raise LayoutError(f"physical_obstacles must contain {expected_obstacle_count} authored footprints")
         for allowed_id, allowed_rect in allowed.items():
             for obstacle_id, obstacle_rect in obstacles.items():
                 if allowed_rect.overlaps(obstacle_rect):
@@ -263,6 +277,20 @@ class Layout:
             raise LayoutError("blocked_aisle must close the full upper aisle width")
         if _finite_number(self.data["blocked_aisle"].get("height_m"), "blocked_aisle.height_m") <= 0:
             raise LayoutError("blocked_aisle height must be positive")
+        if revision == CAMPUS16_REVISION:
+            barriers = self.data.get("blocked_aisles")
+            if not isinstance(barriers, list) or {row.get("id") for row in barriers} != {
+                f"{bay}_BLOCKED_AISLE" for bay in CAMPUS_BAY_OFFSETS
+            }:
+                raise LayoutError("campus requires four uniquely identified closure barriers")
+            for row in barriers:
+                rect = Rect.from_value(row.get("rect"), "campus blocked aisle")
+                _validate_rect_in_bounds(rect, bounds, "campus blocked aisle")
+                offset_y = CAMPUS_BAY_OFFSETS[row["id"].split("_")[0]][1]
+                if (rect.ymin, rect.ymax) != (3.0 + offset_y, 6.0 + offset_y):
+                    raise LayoutError("campus closure must retain its authored lane width")
+                if _finite_number(row.get("height_m"), "campus barrier height") <= 0:
+                    raise LayoutError("campus barrier height must be positive")
         return self
 
     @staticmethod
@@ -331,7 +359,7 @@ class Layout:
     def _planning_mask(self, blocked: bool) -> bytearray:
         if not blocked:
             return self._planning_normal
-        return self._erode_for_probe(self._make_raw_mask((self.blocked_aisle,)))
+        return self._erode_for_probe(self._make_raw_mask(self.blocked_aisles))
 
     def shortest_path(
         self,

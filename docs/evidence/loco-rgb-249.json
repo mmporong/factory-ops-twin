@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "dataset": "LOCO annotated RGB archive",
+  "source": "https://go.mytum.de/239870",
+  "license": "CC0-1.0 per https://github.com/tum-fml/loco",
+  "archive": {
+    "bytes": 769055500,
+    "sha256": "f3629d989071b824edc63e000f45ccc5826cfbb201a338f16ed87ab3e10bcdcf",
+    "download_elapsed_wall_s": 194.92675709992182,
+    "central_entries": 5689,
+    "image_members": 5593,
+    "unsafe_paths": 0,
+    "duplicate_member_names": 0
+  },
+  "metadata_matching": {
+    "images": 5097,
+    "unique_basename_matches": 5097,
+    "missing": 0,
+    "ambiguous": 0,
+    "decoded_and_dimensions_match": 5097,
+    "unreferenced_archive_images": 496,
+    "unreferenced_images_automatically_removed": false
+  },
+  "original_candidate_split_check": {
+    "train": [2, 3, 5],
+    "tuning": [4],
+    "test": [1],
+    "cross_split_same_file_sha_groups": 0,
+    "cross_split_same_rgb_pixel_sha_groups": 0,
+    "cross_split_dct_phash64_hamming_at_most_6_pairs": 0,
+    "camera_location_sequence_leakage_resolved": false,
+    "policy_limit": "Sub4 has no small_load_carrier annotations; a new support-aware split is required before two-class training"
+  },
+  "runtime": {
+    "Pillow": "12.1.1",
+    "NumPy": "2.3.5",
+    "SciPy_used": false,
+    "archive_extracted": false,
+    "model_training_performed": false,
+    "audit_elapsed_wall_s": 63.946566200000234
+  },
+  "artifacts": {
+    "report_path": "artifacts/data/loco-rgb-249/report.json",
+    "report_sha256": "89bfec2545dc3033453191912f11cb2694cdd643775c0cf111557c31e174d3c0",
+    "image_index_path": "artifacts/data/loco-rgb-249/image-index.csv",
+    "image_index_bytes": 1614342,
+    "image_index_sha256": "b4d37151cb5fc481b8bcf8ad389fc7d9dc372d47911c8ce25d4350ce00ba53eb",
+    "provenance_note": "This is the second audit. The first report was not retained when runtime/class fields were added; both image-index hashes matched. The retained report is the one hashed above."
+  }
+}

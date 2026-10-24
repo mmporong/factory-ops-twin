@@ -37,7 +37,7 @@ PRODUCER_PIN_NAMES = (
     "charging.py", "dashboard_model.py", "drive_profile.py", "energy.py",
     "fleet_routing.py", "motion.py", "operations_charging.py",
     "operations_experiment.py", "operations_model.py", "operations_motion.py",
-    "operations_corridor.py", "operations_replan.py", "route_reservation.py", "operations/inventory.py",
+    "operations_corridor.py", "operations_bridge.py", "operations_replan.py", "route_reservation.py", "operations/inventory.py",
     "operations/ledger.py", "operations/model.py",
 )
 

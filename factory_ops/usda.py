@@ -56,14 +56,15 @@ def export_usda(layout: Layout, output_path: str | Path) -> dict[str, object]:
     lines.append("")
     text = "\n".join(lines)
     output.write_text(text, encoding="utf-8", newline="\n")
+    obstacle_count = len(layout.data["physical_obstacles"])
     return {
         "path": str(output),
         "sha256": hashlib.sha256(output.read_bytes()).hexdigest(),
         "default_prim": "World",
         "up_axis": "Z",
         "meters_per_unit": 1,
-        "static_collider_count": 20,
-        "obstacle_collider_count": 19,
+        "static_collider_count": obstacle_count + 1,
+        "obstacle_collider_count": obstacle_count,
         "floor_collision_geometry": "invisible static Z-axis Plane at z=0; infinite physics surface",
         "floor_visual_geometry": f"non-colliding {_num(bounds.xmax - bounds.xmin)}x{_num(bounds.ymax - bounds.ymin)}x0.1 m Cube slab ending at z=0",
         "bounded_operations_scope": f"{_num(bounds.xmax - bounds.xmin)}x{_num(bounds.ymax - bounds.ymin)} m authored occupancy map; the physics plane is intentionally infinite",

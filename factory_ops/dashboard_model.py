@@ -351,7 +351,7 @@ class DashboardModel:
                 task_id = task.task_id if task else None
                 task_type = task.stage.value if task else None
                 task_label = ("자재 공급" if task.stage is Stage.INBOUND else "완제품 출하") if task else None
-            robots.append({"id": robot_id, "label": f"AMR {robot_id[-1].zfill(2)}",
+            robots.append({"id": robot_id, "label": f"AMR {robot_id.rsplit('-', 1)[-1].zfill(2)}",
                            "status": "paused" if self.paused and trip else "moving" if trip else "idle",
                            "pose": dict(self._poses[robot_id]), "speed_mps": 0.65 if trip and not self.paused else 0,
                            "battery_pct": None, "battery_source": "unavailable",

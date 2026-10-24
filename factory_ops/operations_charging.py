@@ -119,8 +119,10 @@ class OperationsCharging:
         return model.book.plan(start, goal, closed=model.closed)
 
     def _loaded(self, model: OperationsModelLike, robot: str) -> bool:
-        inventory = cast(dict[str, Any], model.inventory.snapshot())
-        return model.ledger.robots[robot].payload_id is not None or robot in inventory["robot_loads"]
+        loads = getattr(model.inventory, "robot_loads", None)
+        if not isinstance(loads, Mapping):
+            loads = cast(dict[str, Any], model.inventory.snapshot())["robot_loads"]
+        return model.ledger.robots[robot].payload_id is not None or robot in loads
 
     def available(self, robot: str) -> bool:
         return (robot not in self.queue and self.docks.can_dispatch(robot)

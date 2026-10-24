@@ -12,6 +12,7 @@ import re
 from typing import Any, Mapping, Sequence
 
 from .layout import (
+    CAMPUS16_REVISION,
     DUAL_LANE_REVISION,
     FLEET4_LAYOUT_REVISIONS,
     PRODUCTION_BAY_REVISIONS,
@@ -33,6 +34,7 @@ _STENCIL_GLYPHS = {
     "A": ("01110", "10001", "10001", "11111", "10001", "10001", "10001"),
     "B": ("11110", "10001", "10001", "11110", "10001", "10001", "11110"),
     "C": ("01111", "10000", "10000", "10000", "10000", "10000", "01111"),
+    "D": ("11110", "10001", "10001", "10001", "10001", "10001", "11110"),
     "E": ("11111", "10000", "10000", "11110", "10000", "10000", "11111"),
     "F": ("11111", "10000", "10000", "11110", "10000", "10000", "10000"),
     "G": ("01111", "10000", "10000", "10111", "10001", "10001", "01111"),
@@ -225,8 +227,8 @@ def export_visual_scene(
         "floor_semantic_roots": dict(sorted(floor_semantic_roots.items())),
         "instances": [_instance_document(instance) for instance in instances],
         "physical_invariants": {
-            "source_obstacle_count": 19,
-            "source_static_collider_count": 20,
+            "source_obstacle_count": len(obstacle_by_id),
+            "source_static_collider_count": len(obstacle_by_id) + 1,
             "source_marker_count": len(layout.stations) + len(layout.pockets),
             "visual_collision_api_count": 0,
             "layout_bounds_xy_m": [layout.bounds.xmin, layout.bounds.ymin, layout.bounds.xmax, layout.bounds.ymax],
@@ -285,15 +287,30 @@ def _require_regular_file(path: Path, label: str) -> None:
 
 def _validate_config(config: Mapping[str, Any], layout: Layout) -> None:
     required = {"schema_version", "provider", "author", "license", "source", "variant_count", "required_semantic_taxonomy", "runtime_semantics", "obstacle_assets"}
-    if not required <= set(config) or not set(config) <= required | {"environment"}:
+    if not required <= set(config) or not set(config) <= required | {"environment", "campus_transform"}:
         raise LayoutError(f"visual asset config keys must be exactly {sorted(required)}")
     if config["schema_version"] != SCHEMA_VERSION or config["variant_count"] != 12:
         raise LayoutError("visual asset config schema or variant count is unsupported")
+    campus_transform = config.get("campus_transform")
+    if layout.data.get("revision") == CAMPUS16_REVISION:
+        if (not isinstance(campus_transform, dict)
+                or set(campus_transform) != {"bay_offsets_xy_m", "scope"}
+                or not isinstance(campus_transform.get("scope"), str)
+                or not campus_transform["scope"]):
+            raise LayoutError("campus visual asset config requires authored transform provenance")
+        offsets = campus_transform["bay_offsets_xy_m"]
+        if (not isinstance(offsets, dict) or set(offsets) != {"A", "B", "C", "D"}
+                or any(not isinstance(value, list) or len(value) != 2
+                       or not all(_is_finite_number(item) for item in value)
+                       for value in offsets.values())):
+            raise LayoutError("campus visual asset bay offsets are invalid")
+    elif campus_transform is not None:
+        raise LayoutError("campus_transform is only supported by the campus layout")
     for key in ("provider", "author", "license", "source"):
         if not isinstance(config[key], str) or not config[key]:
             raise LayoutError(f"visual asset config {key} must be a non-empty string")
     expected_taxonomy = {"floor", "floor_marking", "rack", "workbench", "process_equipment", "control_cabinet", "buffer_fixture", "pallet", "tote", "payload_tote", "amr", "station_marker", "barrier"}
-    if layout.data.get("revision") == DUAL_LANE_REVISION:
+    if layout.data.get("revision") in {DUAL_LANE_REVISION, CAMPUS16_REVISION}:
         expected_taxonomy.add("facility_structure")
     taxonomy = config["required_semantic_taxonomy"]
     if not isinstance(taxonomy, list) or set(taxonomy) != expected_taxonomy or len(taxonomy) != len(expected_taxonomy):
@@ -304,7 +321,9 @@ def _validate_config(config: Mapping[str, Any], layout: Layout) -> None:
     obstacle_ids = {str(item["id"]) for item in layout.data["physical_obstacles"]}
     assets = config["obstacle_assets"]
     if not isinstance(assets, dict) or set(assets) != obstacle_ids:
-        raise LayoutError("visual asset assignments must match all 19 source obstacles exactly")
+        raise LayoutError(
+            f"visual asset assignments must match all {len(obstacle_ids)} source obstacles exactly"
+        )
     valid_recipes = {
         "kitting_bench", "flow_rack", "assembly_bench", "inspection_station",
         "packing_bench", "process_cell", "control_cabinet", "buffer_fixture",
@@ -358,8 +377,11 @@ def _external_asset_mapping(
 
 def _validate_render_profile(profile: Mapping[str, Any]) -> None:
     required = {"schema_version", "renderer", "resolution", "render_settings", "roof_mode", "cameras", "capture_contract"}
-    if set(profile) != required or profile["schema_version"] != 1:
+    if (not required <= set(profile) or not set(profile) <= required | {"campus_scope"}
+            or profile["schema_version"] != 1):
         raise LayoutError("render profile keys or schema are invalid")
+    if "campus_scope" in profile and (not isinstance(profile["campus_scope"], str) or not profile["campus_scope"]):
+        raise LayoutError("render profile campus_scope must be a non-empty string")
     if profile["roof_mode"] != "cutaway":
         raise LayoutError("render profile must preserve the roof cutaway")
     if profile["render_settings"] != {"sdk_renderer": "RealTimePathTracing", "dlss_exec_mode": 2, "rt_subframes": 4}:
@@ -679,7 +701,7 @@ def _floor_graphics(layout: Layout, palette: Mapping[str, tuple[float, float, fl
             f'            def Xform "Station_{root}"',
             "            {",
             '                custom string semanticClass = "station_marker"',
-            f"                custom string stateRole = {_quote('parking_pocket' if marker_id.startswith('P') else 'mission_station')}",
+            f"                custom string stateRole = {_quote('parking_pocket' if marker_id in layout.pockets else 'mission_station')}",
             f"                custom string stableId = {_quote(marker_id)}",
         ])
         for chevron in range(3):
@@ -703,8 +725,11 @@ def _floor_graphics(layout: Layout, palette: Mapping[str, tuple[float, float, fl
             ("SHIP", (27.2, 8.8), "process_identifier"),
         )
         if revision in FLEET4_LAYOUT_REVISIONS:
-            stencil_specs = tuple((name, (xy[0] - .25, xy[1] - .45), "station_identifier")
-                                  for name, xy in {**layout.stations, **layout.pockets}.items()) + tuple(
+            stencil_specs = tuple((
+                name.replace("_", " ") if revision == CAMPUS16_REVISION else name,
+                (xy[0] - .25, xy[1] - .45),
+                "station_identifier",
+            ) for name, xy in {**layout.stations, **layout.pockets}.items()) + tuple(
                 (name, (origin[0], origin[1] + 1.0), role)
                 for name, origin, role in stencil_specs if role == "process_identifier")
         if semiconductor_domain:

@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "scope": "Authored CPU campus configuration, visual USD text export and incomplete process-network pilot; no 16-AMR physical success",
+  "campus": {
+    "bounds_xy_m": [0, 0, 78, 60],
+    "fleet": 16,
+    "production_footprints": 76,
+    "attributed_visual_placements": 128,
+    "virtual_docks": 8,
+    "process_lines": 4,
+    "logical_cells": 12,
+    "finite_stock": 240,
+    "carriers": 64
+  },
+  "visual_export": {
+    "artifact": "artifacts/campus-visual-244b",
+    "base_usda_sha256": "919247cd704e98632b1780966513295cc5adc236a849473fa8563708718d8c3f",
+    "manifest_sha256": "45a8745862e67866355ee78f08eb76831604f4e74ee6445f2b5ebd72d63188e9",
+    "source_static_colliders": 77,
+    "non_colliding_markers": 40,
+    "visual_instances": 1176,
+    "added_visual_collision_apis": 0,
+    "native_asset_clearance_m": 0.1,
+    "usd_parser_available": false,
+    "gpu_render_done": false,
+    "robots_in_static_usd": 0
+  },
+  "pilot": {
+    "artifact": "artifacts/operations/campus16-pilot-244",
+    "run_id": "process-line-c0cfa98d-df57-43f6-9704-df2c83406ef3",
+    "result_sha256": "4ecf241c9bb69ebc020e6276aff47b2c0aa7663ac9891d9ca6196c4c7ca5bca4",
+    "status": "incomplete",
+    "stop_reason": "no_motion_or_process_progress",
+    "elapsed_wall_s": 94.70518749998882,
+    "sim_time_s": 4285.999999998061,
+    "source_stable_during_run": true,
+    "lots": 48,
+    "completed_lots": 0,
+    "returned": 0,
+    "final_wait_cycle": ["amr-12", "amr-16"],
+    "interpretation": "Cross-bay junction and parked-return dependencies remain; this is not a GPU capacity failure or a completed fleet demo"
+  },
+  "safety_limits_unchanged": true,
+  "selected_backup": {
+    "archive_name": "campus16-and-loco-244.zip",
+    "bytes": 11690317,
+    "entries": 77,
+    "sha256": "bcaa6a56656398022988bd9b2c598a28cf7a018e085a1caec0741988bc0c389f",
+    "all_entry_hashes_verified": true,
+    "includes": "Closed244 frozen source/result, latest CPU USD, LOCO metadata, Brev failure/Stop receipts",
+    "excludes": "Vendor assets, SDK, active later pilots, credentials",
+    "receipt": "artifacts/campus-visual-244b/backup-receipt.json"
+  },
+  "layout_diagram": "docs/images/campus16-layout-244/provenance.json"
+}

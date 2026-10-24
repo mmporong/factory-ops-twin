@@ -82,6 +82,10 @@ class ProcessLine:
         names = [value for spec in specs for value in (spec.cell_id, spec.input_station, spec.output_station)]
         if len(names) != len(set(names)):
             raise ValueError("cell and station identifiers must be unique")
+        shipping = config.get("shipping_station", "OUT")
+        if not isinstance(shipping, str) or not shipping or shipping in names:
+            raise ValueError("shipping_station must be a distinct non-empty station")
+        self.shipping_station = shipping
         self.run_id = run_id
         self.scope = config.get("scope", "authored CPU process ledger")
         self.cells = {spec.cell_id: CellState(spec) for spec in specs}
@@ -227,9 +231,9 @@ class ProcessLine:
             cell.reserved_inputs -= 1
             cell.input_lots.append(task.lot_id)
             lot.state = f"queued_{destination_cell_id.lower()}"
-        elif task.destination == "OUT":
+        elif task.destination == self.shipping_station:
             lot.state = "product_delivered"
-            self._new_task(lot, "empty_return", "OUT", lot.source)
+            self._new_task(lot, "empty_return", self.shipping_station, lot.source)
         elif task.kind == "empty_return" and task.destination == lot.source:
             lot.state = "returned"
             lot.returned = True
@@ -266,7 +270,7 @@ class ProcessLine:
                 cell.remaining_s = None
                 cell.output_lots.append(lot_id)
                 lot = self.lots[lot_id]
-                destination = "OUT" if index == len(self.cell_order) - 1 else self.cells[self.cell_order[index + 1]].spec.input_station
+                destination = self.shipping_station if index == len(self.cell_order) - 1 else self.cells[self.cell_order[index + 1]].spec.input_station
                 task = self._new_task(lot, "product_move", cell.spec.output_station, destination)
                 self._event("cell_completed", cell_id=cell_id, lot_id=lot_id, task_id=task.task_id)
             if cell.available and cell.active_lot is None and cell.input_lots:
