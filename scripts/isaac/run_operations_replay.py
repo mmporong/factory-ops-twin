@@ -89,7 +89,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     }
     if not all(path.is_file() for path in factory_files.values()):
         parser.error("--factory must contain layout.json, visual-assets.json and render-profile.json")
-    source_pins = source["manifest"].get("sources", {}).get("config_and_producer_sha256", {})
+    source_pins = source["verified_source_pins"]
     expected_layout = source_pins.get("config", {}).get("layout.json")
     if not isinstance(expected_layout, str) or sha(factory_files["layout.json"]) != expected_layout:
         parser.error("recording layout hash does not match --factory")

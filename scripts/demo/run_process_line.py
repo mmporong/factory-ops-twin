@@ -67,9 +67,18 @@ def main() -> int:
         frozen.parent.mkdir(parents=True, exist_ok=True)
         frozen.write_bytes(data)
         bindings.append({"path": relative.as_posix(), "sha256": digest(data), "bytes": len(data)})
-    (output / "frozen-source/manifest.json").write_text(
-        json.dumps(bindings, indent=2) + "\n", encoding="utf-8",
-    )
+    frozen_manifest_path = output / "frozen-source/manifest.json"
+    frozen_manifest_path.write_text(json.dumps(bindings, indent=2) + "\n", encoding="utf-8")
+    source_pins = {"config": {}, "producer": {}}
+    for binding in bindings:
+        parts = Path(binding["path"]).parts
+        if len(parts) == 2 and parts[0] == "config":
+            source_pins["config"][parts[1]] = binding["sha256"]
+        else:
+            source_pins["producer"][binding["path"]] = binding["sha256"]
+    source_binding_sha256 = digest(json.dumps(
+        source_pins, ensure_ascii=False, sort_keys=True, separators=(",", ":"),
+    ).encode("utf-8"))
     run_id = f"process-line-{uuid4()}"
     snapshots, error = [], None
     next_capture = 0.0
@@ -143,6 +152,17 @@ def main() -> int:
         manifest = {"schema_version": 1, "run_id": run_id, "case_status": status,
                     "frame_count": recording["frames"], "snapshots": recording,
                     "case_report": {"path": "result.json", "sha256": digest((output / "result.json").read_bytes())},
+                    "sources": {
+                        "config_and_producer_sha256": source_pins,
+                        "source_stable_during_run": stable,
+                        "frozen_source": {
+                            "relative_path": "frozen-source",
+                            "manifest_relative_path": "frozen-source/manifest.json",
+                            "manifest_sha256": digest(frozen_manifest_path.read_bytes()),
+                            "source_binding_sha256": source_binding_sha256,
+                            "file_count": len(bindings),
+                        },
+                    },
                     "scope": "observed CPU operations snapshots; no interpolation or physics claim"}
         (output / "recording-manifest.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
     print(json.dumps({"run_id": run_id, "status": status, "output": str(output), "error": error}, ensure_ascii=True))

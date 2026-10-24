@@ -117,7 +117,7 @@ def main() -> int:
     if "follow" in args.camera:
         parser.error("this replay renderer currently accepts world cameras only")
     # Scene/layout bytes must match the recording's operations geometry.
-    source_pins = source["manifest"].get("sources", {}).get("config_and_producer_sha256", {})
+    source_pins = source["verified_source_pins"]
     expected_layout = source_pins.get("config", {}).get("layout.json")
     if expected_layout is None or sha(factory / "layout.json") != expected_layout:
         raise ValueError("recorded operations and rendered layout hashes must match")

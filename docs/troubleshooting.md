@@ -1373,3 +1373,13 @@ RGB249의 첫 report는 runtime·클래스 수를 추가하며 같은 경로로 
 275는16개 동시 물류 임무를 기록한 뒤 `.progress.tmp`를 `progress.json`으로 교체할 때 WinError5로 종료됐다. 원본 오류·부분 결과·닫힌 기록을 보존한다. 동시 읽기와 Windows sharing 충돌은 가능한 설명이며 어떤 프로세스가 잠갔는지는 확인하지 않았다. 모델 교착이나 성공 완주로 재해석하지 않는다.
 
 기존 `compat.write_shared_text`와 `replace_shared_file`을 runner에서 재사용한다. 공유 I/O 오류만 최대0.2초 재시도하고 디스크 부족 등 영구 오류는 그대로 드러낸다. compat.py도 frozen producer 입력에 넣었다. 기존 transient/recovery 검사의8개 통과를 확인했으며 새 실행은 별도 출력 폴더를 사용한다. [275 원본·부분 지표](evidence/campus16-275.json)
+
+## FOT-172 — 구간 중심선 이탈을 안전한 정지점으로 간주한 문제
+
+279는 진행 파일 오류 없이 출하9·반납5까지 갔지만 실제 정지 차량4/5/9의 순환 대기로 종료했다. BridgeAdmission 소유 window는 비어 있었고, amr9의 pose와 반대 방향 amr5 window가8개 예약 타일에서 겹쳤다. 기존 atomic span은 중심선이 영역 밖으로 나간 첫 route point를 종료점으로 삼았다. 그 지점의 차체가 반대 경로 출구와 분리됐다는 보장은 없었다. B_S2 같은 작업 station도 통과 window 끝으로 사용됐다.
+
+수평 queue 후보4개는 현 정체를 분리하지만 전체 해결로 간주하지 않는다. 구간별 정지 가능점·안전 출구·통과 차로와 인계점의 분리 계약을 보강한 뒤 재실행한다. 안전 반경·타일을 줄이거나 정지 점유를 무시해 통과시키지 않는다. 하위 예약만 보는 cycle 관측과 상위 bridge waiters의 실제 순환도 구분한다. [279 실제 상태와 해시](evidence/campus16-279.json)
+
+## FOT-173 — 공정 기록과 GPU 재생의 소스 형식 차이
+
+공정 runner는 frozen 파일 목록을 보존했지만 초기 recording manifest에는 기존4대 replay가 기대하는 config/producer pin 구조가 없었다. 원본 manifest를 고쳐 통과시키지 않고, 중앙 load_recording에서 동결 manifest·파일 크기/해시·case report와 안정성을 검증해 별도 verified_source_pins를 반환한다. 두 replay가 이 검증 결과를 함께 사용하며 새 runner는 source binding도 내보낸다.279의120프레임·동결42파일과 기존223의101프레임 로드를 확인했고 실패275의 재생 거부는 유지했다.

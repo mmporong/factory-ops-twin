@@ -7,8 +7,9 @@ import gzip
 import hashlib
 import json
 import math
-from pathlib import Path
-from typing import Any
+from pathlib import Path, PurePosixPath
+import re
+from typing import Any, Mapping
 
 
 def sha(path: Path) -> str:
@@ -17,6 +18,141 @@ def sha(path: Path) -> str:
         for block in iter(lambda: stream.read(1024 * 1024), b""):
             digest.update(block)
     return digest.hexdigest()
+
+
+def _canonical_sha(value: Any) -> str:
+    payload = json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
+def _safe_file(root: Path, relative: Any, label: str) -> Path:
+    if not isinstance(relative, str) or "\\" in relative:
+        raise ValueError(f"{label} path is not a canonical relative POSIX path")
+    pure = PurePosixPath(relative)
+    if pure.is_absolute() or not pure.parts or any(part in ("", ".", "..") for part in pure.parts):
+        raise ValueError(f"{label} path escapes its recording root")
+    target = root.joinpath(*pure.parts)
+    if any(path.is_symlink() for path in (root, *target.parents) if path == root or root in path.parents):
+        raise ValueError(f"{label} path traverses a symlink")
+    if target.is_symlink() or not target.is_file() or not target.resolve().is_relative_to(root.resolve()):
+        raise ValueError(f"{label} file is missing, linked or outside its recording root")
+    return target
+
+
+def _validated_pin_map(value: Any) -> dict[str, dict[str, str]]:
+    if not isinstance(value, Mapping) or set(value) != {"config", "producer"}:
+        raise ValueError("recording source pins must contain config and producer maps")
+    result: dict[str, dict[str, str]] = {"config": {}, "producer": {}}
+    for kind in result:
+        rows = value[kind]
+        if not isinstance(rows, Mapping) or not rows:
+            raise ValueError(f"recording {kind} source pins must be a nonempty object")
+        for key, digest in rows.items():
+            if (not isinstance(key, str) or not key or "\\" in key
+                    or PurePosixPath(key).is_absolute() or ".." in PurePosixPath(key).parts
+                    or not isinstance(digest, str) or re.fullmatch(r"[0-9a-f]{64}", digest) is None):
+                raise ValueError(f"recording {kind} source pin is invalid")
+            result[kind][key] = digest
+    return result
+
+
+def _frozen_source_pins(folder: Path) -> tuple[dict[str, dict[str, str]], dict[str, Any]]:
+    frozen = folder / "frozen-source"
+    manifest_path = _safe_file(folder, "frozen-source/manifest.json", "frozen source manifest")
+    raw = manifest_path.read_bytes()
+    if len(raw) > 4 * 1024 * 1024:
+        raise ValueError("frozen source manifest exceeds its bounded size")
+    document = json.loads(raw)
+    records = document.get("files") if isinstance(document, Mapping) else document
+    if not isinstance(records, list) or not records or len(records) > 512:
+        raise ValueError("frozen source manifest has no bounded file inventory")
+    pins: dict[str, dict[str, str]] = {"config": {}, "producer": {}}
+    seen: set[str] = set()
+    for record in records:
+        if not isinstance(record, Mapping):
+            raise ValueError("frozen source manifest record is not an object")
+        relative = record.get("frozen_path", record.get("path"))
+        target = _safe_file(frozen, relative, "frozen source")
+        if relative in seen:
+            raise ValueError("frozen source manifest contains a duplicate path")
+        seen.add(relative)
+        expected = record.get("sha256")
+        size = record.get("bytes")
+        if (not isinstance(expected, str) or re.fullmatch(r"[0-9a-f]{64}", expected) is None
+                or not isinstance(size, int) or isinstance(size, bool) or size < 0
+                or target.stat().st_size != size or sha(target) != expected):
+            raise ValueError(f"frozen source file differs from manifest: {relative}")
+        if isinstance(document, Mapping):
+            kind, key = record.get("kind"), record.get("source_key")
+            if kind not in pins or not isinstance(key, str) or not key:
+                raise ValueError("frozen source binding identity is invalid")
+        else:
+            parts = PurePosixPath(relative).parts
+            if len(parts) == 2 and parts[0] == "config":
+                kind, key = "config", parts[1]
+            else:
+                kind, key = "producer", relative
+        if key in pins[kind]:
+            raise ValueError("frozen source manifest contains a duplicate binding key")
+        pins[kind][key] = expected
+    pins = _validated_pin_map(pins)
+    binding_sha = _canonical_sha(pins)
+    if isinstance(document, Mapping) and document.get("source_binding_sha256") != binding_sha:
+        raise ValueError("frozen source binding hash differs from its verified files")
+    return pins, {
+        "origin": "verified_frozen_source",
+        "manifest_relative_path": "frozen-source/manifest.json",
+        "manifest_sha256": hashlib.sha256(raw).hexdigest(),
+        "source_binding_sha256": binding_sha,
+        "file_count": len(records),
+    }
+
+
+def _case_report(folder: Path, manifest: Mapping[str, Any]) -> dict[str, Any] | None:
+    binding = manifest.get("case_report")
+    if binding is None:
+        return None
+    if not isinstance(binding, Mapping):
+        raise ValueError("recording case report binding is invalid")
+    path = _safe_file(folder, binding.get("path"), "case report")
+    expected = binding.get("sha256")
+    if not isinstance(expected, str) or sha(path) != expected:
+        raise ValueError("recording case report hash differs from manifest")
+    report = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(report, dict) or report.get("run_id", manifest.get("run_id")) != manifest.get("run_id"):
+        raise ValueError("recording case report identity differs from manifest")
+    if report.get("source_stable_during_run") is False:
+        raise ValueError("recording source changed during its run")
+    return report
+
+
+def _verified_source_pins(folder: Path, manifest: Mapping[str, Any], report: Mapping[str, Any] | None) -> tuple[dict[str, dict[str, str]], dict[str, Any]]:
+    sources = manifest.get("sources")
+    if isinstance(sources, Mapping) and "source_stable_during_run" in sources:
+        declared_stable = sources["source_stable_during_run"]
+        if declared_stable is not True or report is None or report.get("source_stable_during_run") is not True:
+            raise ValueError("recording source stability binding is not verified true")
+    declared_raw = sources.get("config_and_producer_sha256") if isinstance(sources, Mapping) else None
+    declared = _validated_pin_map(declared_raw) if declared_raw is not None else None
+    frozen_manifest = folder / "frozen-source" / "manifest.json"
+    if frozen_manifest.is_file():
+        frozen, provenance = _frozen_source_pins(folder)
+        if declared is not None and declared != frozen:
+            raise ValueError("recording source pins differ from verified frozen source")
+        if isinstance(sources, Mapping):
+            frozen_binding = sources.get("frozen_source")
+            if frozen_binding is not None:
+                if (not isinstance(frozen_binding, Mapping)
+                        or frozen_binding.get("manifest_sha256") != provenance["manifest_sha256"]
+                        or frozen_binding.get("source_binding_sha256") != provenance["source_binding_sha256"]
+                        or frozen_binding.get("file_count") != provenance["file_count"]):
+                    raise ValueError("recording frozen source binding differs from verified files")
+        if declared is None and (report is None or report.get("source_stable_during_run") is not True):
+            raise ValueError("frozen-source fallback requires an explicitly stable bound case report")
+        return frozen, provenance
+    if declared is None:
+        raise ValueError("recording has neither declared source pins nor a frozen source inventory")
+    return declared, {"origin": "legacy_manifest", "source_binding_sha256": _canonical_sha(declared)}
 
 
 class RecordedOperations:
@@ -76,8 +212,12 @@ def load_recording(folder: Path, *, maximum_raw_bytes: int = 256 * 1024 * 1024,
     folder = folder.resolve(strict=True)
     manifest_path, stream_path = folder / "recording-manifest.json", folder / "snapshots.jsonl.gz"
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    if not isinstance(manifest, dict):
+        raise ValueError("recording manifest root must be an object")
     if manifest.get("case_status") in ("failed", "invalid"):
         raise ValueError("failed or source-invalid case requires diagnosis before portfolio rendering")
+    report = _case_report(folder, manifest)
+    source_pins, source_pin_provenance = _verified_source_pins(folder, manifest, report)
     digest, count, snapshots = hashlib.sha256(), 0, []
     with gzip.open(stream_path, "rb") as stream:
         for line in stream:
@@ -100,4 +240,7 @@ def load_recording(folder: Path, *, maximum_raw_bytes: int = 256 * 1024 * 1024,
         raise ValueError("recording manifest identity or frame count differs")
     return recording, {"manifest_sha256": sha(manifest_path), "gzip_sha256": stream_sha,
                        "uncompressed_sha256": digest.hexdigest(), "frames": len(snapshots),
-                       "raw_bytes": count, "manifest": manifest}
+                       "raw_bytes": count, "manifest": manifest,
+                       "verified_source_pins": source_pins,
+                       "source_pin_provenance": source_pin_provenance,
+                       "case_report_verified": report is not None}
