@@ -57,7 +57,8 @@
     "candidate_evidence": "campus16-326.json",
     "repair_pending": false,
     "repair_source_main_commit": "2a23e41da395a107cfaf5f17436c48a64a1886da",
-    "next_candidate_state": "prepared_not_started"
+    "next_candidate_state": "running",
+    "next_candidate_evidence": "campus16-327.json"
   },
   "scope": "Authored CPU operations only; actual campus path and reservation transactions are component-tested. Full48/48 and peak16 material concurrency still require a complete run; no native physics transport or measured factory throughput is claimed.",
   "atomic_handoff": {

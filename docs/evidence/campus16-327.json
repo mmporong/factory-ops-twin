@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "case": "campus16-pilot-327",
+  "run_id": "process-line-8aef7bfb-7dfa-4b93-b508-306e10814455",
+  "status": "running",
+  "execution_mode": "authored_CPU_operations",
+  "source_commit": "8f6b6987019b430c09ff33e477505b25be5c023c",
+  "component_implementation_commit": "a46bea170424c18f7ad174fdc99fc2a1aa0f49fe",
+  "objective": "Same48lots shipped and empty carriers returned; quiescent; all16robots repeat material transport; peak16 actual material tasks. Parking/charging/yield excluded.",
+  "workload": {
+    "lots": 48,
+    "policy": "fifo",
+    "release": "all at simulation start"
+  },
+  "limits": {
+    "horizon_s": 240000,
+    "wall_s": 10800,
+    "stall_timeout_s": 600,
+    "cycle_stall_timeout_s": 600,
+    "record_best_window_samples": 300
+  },
+  "comparison_scope": "Completion-condition run with extended time limits. Not a matched-duration throughput or speedup comparison against120000sim/5400wall baselines. Fleet, inventory, buffer, energy, motion and occupancy guards unchanged.",
+  "frozen_source": {
+    "file_count": 43,
+    "manifest_sha256": "ea7ca9f07c60bcab88ab37cb8854a7da701fa937a3040c32404bf75808e78572",
+    "files_checked_at_launch": true
+  },
+  "launch_processes": {
+    "session": 72724,
+    "shell_pid": 83120,
+    "wrapper_pid": 77424,
+    "python_pid": 74632,
+    "retention_reason": "Authorized bounded48-lot completion run, supervised from its isolated frozen worktree.",
+    "stop_method": "Ctrl+C to its owned execution session; runner catches KeyboardInterrupt and finalizes result/recording. Do not terminate unrelated Python/Kit/server processes."
+  },
+  "initial_observed_progress": {
+    "sim_time_s": 3419.999999997985,
+    "elapsed_wall_s": 83.6608163000783,
+    "shipments": 0,
+    "returns": 0,
+    "deliveries": 27,
+    "peak_material_tasks": 8
+  },
+  "verification_scope": "Only frozen input integrity and current progress verified. No closed final result or final media approval yet.",
+  "success_flags": {
+    "all48_48_complete_verified": false,
+    "peak16_material_tasks_verified": false,
+    "native_physics_transport_verified": false,
+    "final_render_eligible": false
+  }
+}
