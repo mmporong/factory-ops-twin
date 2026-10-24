@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+from collections import Counter
 from hashlib import sha256
 import json
 import math
@@ -162,11 +163,11 @@ def build_manifest(profile_path: Path, repo_root: Path, cache_root: Path) -> dic
     seeds = scene_seeds(profile["seed_namespace"], profile["scene_count"])
     scenes = []
     frames = []
-    crate_counts = CounterLike()
+    crate_counts: Counter[str] = Counter()
     for index, seed in enumerate(seeds):
         rng = random.Random(seed)
         crate_asset = "nvidia:crate_gray_a20" if index % 2 == 0 else "nvidia:crate_blue_a02"
-        crate_counts.add(crate_asset)
+        crate_counts[crate_asset] += 1
         counts = {
             "pallet": pallet_min + index % (pallet_max - pallet_min + 1),
             "small_load_carrier": crate_min + index % (crate_max - crate_min + 1),
@@ -252,7 +253,7 @@ def build_manifest(profile_path: Path, repo_root: Path, cache_root: Path) -> dic
         scenes.append(scene)
     if len(scenes) != 128 or len(frames) != 512 or len({row["frame_id"] for row in frames}) != 512:
         raise PilotManifestError("generated pilot cardinality differs")
-    if crate_counts.values != {"nvidia:crate_gray_a20": 64, "nvidia:crate_blue_a02": 64}:
+    if crate_counts != {"nvidia:crate_gray_a20": 64, "nvidia:crate_blue_a02": 64}:
         raise PilotManifestError("crate variants are not balanced across scenes")
     manifest = {
         "schema_version": 1,
@@ -297,14 +298,6 @@ def build_manifest(profile_path: Path, repo_root: Path, cache_root: Path) -> dic
     }
     manifest["recipe_sha256"] = canonical_digest({"scenes": scenes, "frames": frames, "assets": assets})
     return manifest
-
-
-class CounterLike:
-    def __init__(self) -> None:
-        self.values: dict[str, int] = {}
-
-    def add(self, key: str) -> None:
-        self.values[key] = self.values.get(key, 0) + 1
 
 
 def main() -> int:
