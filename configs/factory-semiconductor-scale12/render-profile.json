@@ -1,0 +1,129 @@
+{
+  "schema_version": 1,
+  "renderer": "RTX Real-Time 2.0",
+  "resolution": [
+    1280,
+    720
+  ],
+  "render_settings": {
+    "sdk_renderer": "RealTimePathTracing",
+    "dlss_exec_mode": 2,
+    "rt_subframes": 4
+  },
+  "roof_mode": "cutaway",
+  "cameras": [
+    {
+      "id": "portfolio_overview",
+      "eye_xyz_m": [
+        25.5,
+        -22.0,
+        40.0
+      ],
+      "target_xyz_m": [
+        25.5,
+        14.0,
+        0.7
+      ],
+      "focal_length_mm": 18,
+      "purpose": "production bay and separate fleet parking annex; authored camera, capture pending"
+    },
+    {
+      "id": "west_material_flow",
+      "eye_xyz_m": [
+        0.5,
+        4,
+        9
+      ],
+      "target_xyz_m": [
+        9,
+        14,
+        1
+      ],
+      "focal_length_mm": 30,
+      "purpose": "compact tote racks, source stations and modular benches"
+    },
+    {
+      "id": "cell_process",
+      "eye_xyz_m": [
+        26,
+        4,
+        13
+      ],
+      "target_xyz_m": [
+        19,
+        12.5,
+        1
+      ],
+      "focal_length_mm": 26,
+      "purpose": "test handler, ATE sidecar and tray transfer interfaces"
+    },
+    {
+      "id": "east_shipping",
+      "eye_xyz_m": [
+        35.5,
+        6,
+        8
+      ],
+      "target_xyz_m": [
+        28,
+        14,
+        0.9
+      ],
+      "focal_length_mm": 32,
+      "purpose": "cell handoff, east AMR spine and shipping staging"
+    },
+    {
+      "id": "carter1_follow",
+      "eye_xyz_m": [
+        -0.6,
+        -0.3,
+        2.4
+      ],
+      "target_xyz_m": [
+        0,
+        0,
+        0.35
+      ],
+      "focal_length_mm": 20,
+      "purpose": "short-boom follow camera inside the AMR clearance in carter1 chassis_link frame"
+    },
+    {
+      "id": "carter2_follow",
+      "eye_xyz_m": [
+        -0.6,
+        0.3,
+        2.4
+      ],
+      "target_xyz_m": [
+        0,
+        0,
+        0.35
+      ],
+      "focal_length_mm": 20,
+      "purpose": "short-boom follow camera inside the AMR clearance in carter2 chassis_link frame"
+    },
+    {
+      "id": "packing_conveyor",
+      "eye_xyz_m": [
+        28,
+        5,
+        6.8
+      ],
+      "target_xyz_m": [
+        32.6,
+        10.55,
+        1.1
+      ],
+      "focal_length_mm": 30,
+      "purpose": "attributed native-size packaging conveyor and inspection-gate geometry"
+    }
+  ],
+  "capture_contract": {
+    "rgb": "PNG, lossless, sRGB",
+    "depth": "32-bit float EXR or NPY with metre units",
+    "semantic": "uint32 NPY raw ID map plus ID-to-class mapping JSON; PNG is preview only",
+    "instance": "uint32 NPY raw ID map plus stable prim path mapping JSON; PNG is preview only",
+    "camera": "intrinsics, camera-to-world matrix, pose and simulation timestamp",
+    "trajectory": "physics frame and simulation timestamp joined without interpolation"
+  }
+}

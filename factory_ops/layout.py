@@ -19,7 +19,10 @@ V3_REVISION = "amr-focus-v3"
 V4_REVISION = "amr-production-bay-v4"
 FLEET4_REVISION = "amr-production-bay-fleet4-v1"
 DUAL_LANE_REVISION = "amr-semiconductor-dual-lane-v1"
-FLEET4_LAYOUT_REVISIONS = frozenset((FLEET4_REVISION, DUAL_LANE_REVISION))
+FLEET_SCALE12_REVISION = "amr-semiconductor-scale12-v1"
+FLEET_SCALE16_REVISION = "amr-semiconductor-scale16-v1"
+FLEET_SCALE_LAYOUT_REVISIONS = frozenset((FLEET_SCALE12_REVISION, FLEET_SCALE16_REVISION))
+FLEET4_LAYOUT_REVISIONS = frozenset((FLEET4_REVISION, DUAL_LANE_REVISION, *FLEET_SCALE_LAYOUT_REVISIONS))
 PRODUCTION_BAY_REVISIONS = frozenset((V4_REVISION, *FLEET4_LAYOUT_REVISIONS))
 V3_STATIONS = {
     "S1": (4.0, 4.0),
@@ -48,6 +51,17 @@ DUAL_LANE_STATIONS = {
 }
 DUAL_LANE_POCKETS = {"P1": (12.0, 1.5), "P2": (12.0, 26.0),
                      "P3": (17.0, 1.5), "P4": (17.0, 26.0)}
+FLEET_SCALE12_POCKETS = {
+    **DUAL_LANE_POCKETS,
+    **{f"P{index}": (x, y) for index, (x, y) in enumerate(
+        ((36.0, 1.5), (36.0, 26.0), (40.0, 1.5), (40.0, 26.0),
+         (44.0, 1.5), (44.0, 26.0), (48.0, 1.5), (48.0, 26.0)), 5)},
+}
+FLEET_SCALE16_POCKETS = {
+    **FLEET_SCALE12_POCKETS,
+    **{f"P{index}": (x, y) for index, (x, y) in enumerate(
+        ((52.0, 1.5), (52.0, 26.0), (56.0, 1.5), (56.0, 26.0)), 13)},
+}
 # Compatibility aliases preserve the established V1-V3 mission contracts.
 EXPECTED_STATIONS = V3_STATIONS
 EXPECTED_POCKETS = V3_POCKETS
@@ -172,7 +186,17 @@ class Layout:
         if self.data["units"] != "m" or self.data["frame"] != "map":
             raise LayoutError("layout must use metres in the map frame")
         revision = self.data.get("revision")
-        if revision == DUAL_LANE_REVISION:
+        if revision == FLEET_SCALE12_REVISION:
+            expected_bounds = (0.0, 0.0, 51.0, 28.0)
+            expected_stations = DUAL_LANE_STATIONS
+            expected_pockets = FLEET_SCALE12_POCKETS
+            barrier_y = (3.0, 6.0)
+        elif revision == FLEET_SCALE16_REVISION:
+            expected_bounds = (0.0, 0.0, 59.0, 28.0)
+            expected_stations = DUAL_LANE_STATIONS
+            expected_pockets = FLEET_SCALE16_POCKETS
+            barrier_y = (3.0, 6.0)
+        elif revision == DUAL_LANE_REVISION:
             expected_bounds = (0.0, 0.0, 36.0, 28.0)
             expected_stations = DUAL_LANE_STATIONS
             expected_pockets = DUAL_LANE_POCKETS

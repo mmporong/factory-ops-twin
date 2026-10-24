@@ -30,8 +30,8 @@ class RecordedOperations:
         self.run_id = snapshots[0]["run_id"]
         self.policy = snapshots[0]["dispatch_policy"]
         robots = {row["id"] for row in snapshots[0]["robots"]}
-        if len(robots) != 4:
-            raise ValueError("four distinct recorded robots required")
+        if not robots or any(not isinstance(robot, str) or not robot for robot in robots):
+            raise ValueError("nonempty distinct recorded robot identities required")
         for index, snapshot in enumerate(snapshots):
             if (not math.isfinite(self.times[index]) or self.times[index] < 0
                     or index and self.times[index] <= self.times[index - 1]
@@ -39,7 +39,7 @@ class RecordedOperations:
                     or snapshot.get("execution_mode") != "operations"
                     or snapshot["dispatch_policy"] != self.policy
                     or {row["id"] for row in snapshot["robots"]} != robots
-                    or len(snapshot["robots"]) != 4):
+                    or len(snapshot["robots"]) != len(robots)):
                 raise ValueError("recording identity, time, mode or fleet changed")
             for robot in snapshot["robots"]:
                 if any(type(robot["pose"].get(key)) not in (int, float)

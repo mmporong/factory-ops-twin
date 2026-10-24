@@ -1,0 +1,134 @@
+{
+  "schema_version": 1,
+  "scope": "12/16-AMR authored configurations and a 600-second CPU operations pilot; not completed fleet transport or physical/sensor execution",
+  "profiles": [
+    {
+      "count": 12,
+      "bounds_xy": [
+        0,
+        0,
+        51,
+        28
+      ],
+      "source_sha256": {
+        "fleet-profile.json": "3051fe50fca1902d747bdfefdbde7398bfe1259f21f63de7b4c7b434d7de5f43",
+        "g2.json": "1c134ea47eab5dca876c36a9afc408aeb2225bb2cdc419cc92b6f94c88ad3e76",
+        "g3-routing.json": "9e7170bce584482c93788a7e8c68ace03fdd0eb0dc7e36e1ce04a1e0967027ab",
+        "layout.json": "71c9efd2d6eb4d1201d9a218e14aa06a72ae1437984c1cf725afbb8ef7939935",
+        "operations-charging.json": "2bd77d2b1aaa195f73def8565a790c7c285efd7f9f11ac6338d2f2cc2ec14282",
+        "render-profile.json": "7914ff65b8c9741c114a40757edd100d95bea2676cd6288992fdc4d266eaeada",
+        "visual-assets.json": "09faf692b3aed32076d08327fe1c3b617ee90a8588b290b2bcd0d47f3bbe58d8"
+      },
+      "role": "Existing production bay plus off-main parking annex; no added production capacity"
+    },
+    {
+      "count": 16,
+      "bounds_xy": [
+        0,
+        0,
+        59,
+        28
+      ],
+      "source_sha256": {
+        "fleet-profile.json": "899f17944b1942cb7b7421e4ed7dd6c54e943fe51955f86b36aa8d861c267cd6",
+        "g2.json": "6fc271e0d87f9f2c026b2aac0fb5d006486ae1af5d86b1bdf50805ad54980096",
+        "g3-routing.json": "b5f6ad4d44fd0a6df2d04c1dcdc435558cae328bf0d4a3da98ba47ad17a8a167",
+        "layout.json": "875c12367dd291e64877c81deb6f39249ded1aa03cb8bcd116887d2374446544",
+        "operations-charging.json": "ee8340a2efdb8ba1b2d11c3ce13fd9e5fa9ed67e678700602e2b1d0a3fa34254",
+        "render-profile.json": "4da66c01f9cc322e380f099b3135f7916a939fb00277b83bd12a1ee65fc17a4a",
+        "visual-assets.json": "09faf692b3aed32076d08327fe1c3b617ee90a8588b290b2bcd0d47f3bbe58d8"
+      },
+      "role": "Existing production bay plus off-main parking annex; no added production capacity"
+    }
+  ],
+  "pilot": {
+    "source": "artifacts/operations/scale12-pilot-232/result.json",
+    "sha256": "f765fd8c07431744f48038f8ef843c21461d1d03ef08a94c3940619a902e5a60",
+    "run_id": "operations-normal-eta-4a46e0f2c340c019-a68c9da76e53",
+    "status": "incomplete",
+    "error": null,
+    "metrics": {
+      "released_orders": 12,
+      "demanded_orders": 12,
+      "unreleased_demand": 0,
+      "completed_cycles": 1,
+      "incomplete_orders": 11,
+      "released_incomplete_order_ids": [
+        "ORD-0002",
+        "ORD-0003",
+        "ORD-0004",
+        "ORD-0005",
+        "ORD-0006",
+        "ORD-0007",
+        "ORD-0008",
+        "ORD-0009",
+        "ORD-0010",
+        "ORD-0011",
+        "ORD-0012"
+      ],
+      "delivered_to_cell": 2,
+      "completed_outbound_deliveries": 1,
+      "empty_returns_completed": 1,
+      "empty_returns_pending": 1,
+      "material_cycles_completed": 1,
+      "due_offset_s": 240.0,
+      "missed_due_orders": 12,
+      "completed_tardiness_s": 118.0,
+      "incomplete_tardiness_lower_bound_s": 1980.0,
+      "total_tardiness_lower_bound_s": 2098.0,
+      "mean_wip": 0.365,
+      "peak_wip": 1,
+      "robot_participation_count": 4,
+      "robot_participants": [
+        "amr-1",
+        "amr-2",
+        "amr-4",
+        "amr-6"
+      ],
+      "traffic_wait_s": 5755.5,
+      "elapsed_wall_s": 36.453901,
+      "finished_all_demand": false,
+      "finished_all_material_cycles": false,
+      "business_finished": false,
+      "fleet_quiescent": false,
+      "fleet_quiescence_source": "traffic.quiescent",
+      "experiment_complete": false
+    },
+    "case_spec": {
+      "scenario": "normal",
+      "dispatch_policy": "eta",
+      "seed": 17,
+      "horizon_s": 600.0,
+      "dt_s": 1.0,
+      "sources": [
+        "S1",
+        "S3",
+        "S2",
+        "S1",
+        "S2",
+        "S3",
+        "S1",
+        "S3",
+        "S2",
+        "S1",
+        "S2",
+        "S3"
+      ],
+      "release_interval_s": 30.0,
+      "source_binding_sha256": "a4d61e8c7625d655da182a27776c2affb0e0056108f2317633952f44d3fc5e77"
+    },
+    "source_stability": null
+  },
+  "tests": {
+    "configured_fleet_and_replay": "5 passed",
+    "layout_generator_and_existing_experiment": "13 passed",
+    "note": "Targeted checks only; previous layout regression 9 passed by implementation lane"
+  },
+  "unverified": [
+    "12/16-AMR material-cycle completion",
+    "multiple process cells",
+    "current web browser integration",
+    "12/16-AMR contact physics and sensors",
+    "Brev bootstrap"
+  ]
+}

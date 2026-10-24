@@ -25,15 +25,18 @@ class DashboardModel:
         charging_profile: Mapping[str, Any] | None = None,
         initial_orders: int = 4,
         run_id: str | None = None,
-        robot_stations: tuple[str, str, str, str] = ("S1", "S2", "S3", "OUT"),
+        robot_stations: tuple[str, ...] = ("S1", "S2", "S3", "OUT"),
     ) -> None:
         if type(initial_orders) is not int or initial_orders < 0:
             raise ValueError("initial_orders must be a nonnegative integer")
         if run_id is not None and (not isinstance(run_id, str) or not run_id.strip()):
             raise ValueError("run_id must be a non-empty string or null")
         self.book = RouteBook.from_files(config / "layout.json", config / "g3-routing.json")
-        if len(robot_stations) != 4 or len(set(robot_stations)) != 4 or any(s not in self.book.nodes for s in robot_stations):
-            raise ValueError("four distinct authored robot stations are required")
+        if (not isinstance(robot_stations, tuple) or not robot_stations
+                or any(not isinstance(s, str) for s in robot_stations)
+                or len(set(robot_stations)) != len(robot_stations)
+                or any(s not in self.book.nodes for s in robot_stations)):
+            raise ValueError("nonempty distinct authored robot stations are required")
         self.ledger = Ledger(run_id.strip() if run_id is not None else f"web-local-model-{uuid4()}")
         tote_ids = [f"T{i:03}" for i in range(1, 17)]
         self.inventory = InventoryLedger({(s, "sensor-kit"): 20 for s in ("S1", "S2", "S3")},

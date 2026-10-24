@@ -16,6 +16,19 @@
 
 [현재 범위와 완료 조건](docs/completion-plan.md) · [설계와 제어 경계](docs/architecture.md) · [공정 모델](docs/semiconductor-cell.md)
 
+### 12대 기본·16대 확장 구성
+
+현재 공개 대표 시연은 위4대 기준선입니다. 확장용 코드는 차량 수를 설정에서 읽으며, 기존36×28m 생산 구역 동쪽에 주차·충전 대기 별동을 추가했습니다.12대는51×28m,16대는59×28m 배치이고 각 차량의 홈·예약 점유·전후방 LiDAR 식별자를 분리했습니다. 초기 배치·충전 설정·정지 점유와16대 기록 재생 검사를 통과했습니다.
+
+12대의600초 CPU 파일럿은 예외 없이 끝났지만 물류는 미완료입니다.12건 중1건 출하·1건 반납, 작업 참여4대를 기록했습니다. 복수 공정과 배차를 확장할 비교 자료이며,12대 물리 운송·센서 성공을 뜻하지 않습니다. [배치·파일럿 근거와 한계](docs/evidence/fleet-scale-232.json)
+
+```powershell
+cd "$HOME/factory-ops-twin"
+.venv/Scripts/python.exe -m factory_ops.operations_experiment --config configs/factory-semiconductor-scale12 --scenario normal --policy eta --horizon 600 --dt 1 --output artifacts/operations/my-scale12-pilot/result.json
+```
+
+출력 경로는 새 경로를 사용합니다. `scale16` 구성도 같은 명령의 `--config`로 선택할 수 있으며, 위 파일럿 수치는12대 실행에만 해당합니다.
+
 ## 반도체 후공정 장면
 
 | 36×28m 전체 구역 | 검사 셀 근접 장면 |

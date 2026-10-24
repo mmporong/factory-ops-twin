@@ -31,7 +31,7 @@ MAX_REPRESENTATIVE_SNAPSHOTS = 120
 MAX_EVENT_EXAMPLES = 24
 CONFIG_PIN_NAMES = (
     "layout.json", "g2.json", "g3-routing.json", "transport-profile.json",
-    "operations-charging.json",
+    "operations-charging.json", "fleet-profile.json",
 )
 PRODUCER_PIN_NAMES = (
     "charging.py", "dashboard_model.py", "drive_profile.py", "energy.py",

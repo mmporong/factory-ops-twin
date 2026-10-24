@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "fleet_count": 12,
+  "robot_stations": [
+    "P1",
+    "P2",
+    "P3",
+    "P4",
+    "P5",
+    "P6",
+    "P7",
+    "P8",
+    "P9",
+    "P10",
+    "P11",
+    "P12"
+  ],
+  "scope": "Authored operations fleet start contract; no physical multi-robot execution or throughput claim",
+  "provenance": {
+    "kind": "authored_scale_candidate",
+    "base": "factory-semiconductor-dual-lane four-AMR layout",
+    "station_assignment": "one unique off-main home per robot",
+    "pending": "operations integration, congestion experiment and Isaac Sim runtime evidence"
+  }
+}

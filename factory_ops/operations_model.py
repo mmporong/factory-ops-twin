@@ -1,4 +1,4 @@
-"""Four-AMR kinematic operations, distinct from preview and Isaac/ROS evidence.
+"""Configured-fleet kinematic operations, distinct from Isaac/ROS evidence.
 
 Bounded straight segments retain their occupied footprint at every stop. Station
 gates keep opposing handovers out of the same dead-end approach. Accepted work drains before a planned
@@ -35,14 +35,25 @@ class OperationsModel(DashboardModel):
         self.closed = False
         self.requested_closed = False
         self.dispatch_policy = policy
+        fleet_path = config / "fleet-profile.json"
+        stations = ("P1", "P2", "P3", "P4")
+        if fleet_path.is_file():
+            fleet = json.loads(fleet_path.read_text(encoding="utf-8"))
+            configured = fleet.get("robot_stations") if isinstance(fleet, dict) else None
+            if (not isinstance(fleet, dict) or type(fleet.get("schema_version")) is not int
+                    or fleet["schema_version"] != 1 or not isinstance(configured, list)
+                    or not configured or type(fleet.get("fleet_count")) is not int
+                    or fleet["fleet_count"] != len(configured)):
+                raise ValueError("fleet profile requires schema 1 and matching nonempty fleet_count/robot_stations")
+            stations = tuple(configured)
         super().__init__(config, initial_orders=initial_orders, run_id=run_id,
-                         robot_stations=("P1", "P2", "P3", "P4"))
+                         robot_stations=stations)
         drive = json.loads((config / "g2.json").read_text(encoding="utf-8"))
         self.geometry = DriveGeometry(**{k: v for k, v in drive["drive_geometry"].items() if k != "provenance"})
         self.limits = DriveLimits(**{k: v for k, v in drive["drive_profile"].items() if k != "provenance"})
         self.motions = {r: PathMotion(self.limits, self.geometry) for r in self.ledger.robots}
         self.corridors = OperationsCorridors(self.book.config)
-        self.homes = {r: f"P{i}" for i, r in enumerate(self.ledger.robots, 1)}
+        self.homes = dict(zip(self.ledger.robots, stations))
         self.radius = self.book.config["authored_allowances"].get("reservation_radius_including_tracking_m", self.book.planning_radius_m)
         self.collision_radius = self.book.config["collision_radius"]["value"]
         self.reservations = RouteReservationManager(self.ledger.run_id, tuple(self.ledger.robots), record_pose_events=False)

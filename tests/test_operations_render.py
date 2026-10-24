@@ -13,6 +13,23 @@ def frame(stamp, x, yaw, payload):
 
 
 class OperationsRenderTest(unittest.TestCase):
+    def test_sixteen_robot_recording_keeps_fleet_and_discrete_payload_identity(self):
+        frames = [frame(0, 0, 0, None), frame(1, .4, 0, "lot")]
+        for state in frames:
+            state["robots"] = [
+                {"id": f"amr-{i}", "pose": {"x_m": state["sim_time_s"], "y_m": i, "yaw_rad": 0.},
+                 "payload_id": None if state["sim_time_s"] == 0 else f"lot-{i}"}
+                for i in range(1, 17)
+            ]
+        replay = RecordedOperations(frames)
+        sampled, _ = replay.sample(.5)
+        self.assertEqual(len(sampled["robots"]), 16)
+        self.assertTrue(all(row["payload_id"] is None for row in sampled["robots"]))
+        self.assertEqual(replay.sample(1)[0]["robots"][-1]["payload_id"], "lot-16")
+        frames[1]["robots"][-1]["id"] = "amr-1"
+        with self.assertRaises(ValueError):
+            RecordedOperations(frames)
+
     def test_pose_interpolation_does_not_anticipate_material_handover(self):
         original = [frame(0, 0, math.radians(179), None), frame(1, .4, math.radians(-179), "lot")]
         before = deepcopy(original)
