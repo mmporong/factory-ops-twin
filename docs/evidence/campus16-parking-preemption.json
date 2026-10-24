@@ -65,5 +65,14 @@
     "Maximum13 material tasks is not a configured global cap; this is one observed admission restriction, not a proof of its only cause.",
     "319 and321 retain separate frozen sources and continue without this change.",
     "All48 shipments/returns, quiescence and same-run16 material concurrency remain pending."
-  ]
+  ],
+  "closed_followup_322": {
+    "status": "incomplete",
+    "evidence": "campus16-322.json",
+    "shipped_lots": 36,
+    "returned": 33,
+    "minimum_deliveries_each": 7,
+    "full_run_completed": false,
+    "policy_improvement_established": false
+  }
 }

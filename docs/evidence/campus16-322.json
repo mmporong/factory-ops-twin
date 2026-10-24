@@ -1,0 +1,148 @@
+{
+  "schema_version": 1,
+  "run_id": "process-line-882d28e8-24d1-45ef-89a9-abaf1d6252b5",
+  "status": "incomplete",
+  "stop_reason": "horizon_or_wall_limit",
+  "error": null,
+  "scope": "authored CPU process line and kinematic reservations; no physics, sensors or measured factory times",
+  "source_commit": "a6c459257bf9aaf3338c422c26032f86d6e147c3",
+  "source_stable_during_run": true,
+  "workload": {
+    "lots": 48,
+    "release": "all at simulation start",
+    "policy": "fifo"
+  },
+  "limits": {
+    "horizon_s": 120000.0,
+    "wall_s": 5400.0,
+    "snapshot_count": 80,
+    "stall_timeout_s": 600.0,
+    "cycle_stall_timeout_s": 600.0
+  },
+  "final_sim_time_s": 116731.00000230676,
+  "elapsed_wall_s": 5401.46519040002,
+  "business": {
+    "shipped_lots": 36,
+    "returned_carriers": 33,
+    "deliveries_total": 205,
+    "deliveries_by_robot": {
+      "amr-1": 11,
+      "amr-2": 15,
+      "amr-3": 13,
+      "amr-4": 16,
+      "amr-5": 14,
+      "amr-6": 7,
+      "amr-7": 7,
+      "amr-8": 13,
+      "amr-9": 18,
+      "amr-10": 14,
+      "amr-11": 14,
+      "amr-12": 10,
+      "amr-13": 16,
+      "amr-14": 15,
+      "amr-15": 13,
+      "amr-16": 9
+    },
+    "minimum_deliveries_each": 7,
+    "assignments_total": 212,
+    "minimum_assignments_each": 7,
+    "peak_material_tasks": 13,
+    "peak_material_moving": 7,
+    "active_by_robot": {
+      "amr-16": "LOT-0039:product_move:4",
+      "amr-9": "LOT-0042:product_move:2",
+      "amr-1": "LOT-0040:product_move:3",
+      "amr-15": "LOT-0031:empty_return:5",
+      "amr-8": "LOT-0045:product_move:3",
+      "amr-5": "LOT-0047:empty_return:5",
+      "amr-10": "LOT-0046:product_move:3"
+    },
+    "quiescent": false
+  },
+  "traffic": {
+    "yield_selected": 25,
+    "yield_completed": 25,
+    "bridge_wait_cycle": null,
+    "reservation_wait_cycle": null,
+    "observed_transient_cycle": [
+      "amr-13",
+      "amr-16",
+      "amr-3",
+      "amr-7"
+    ],
+    "transient_cycle_outcome": "Resolved during frozen execution; not a stationary-cycle timeout and not a newly diagnosed persistent defect."
+  },
+  "recording": {
+    "frames": 300,
+    "selection": {
+      "scope": "authored process-line snapshots; selection only, not case validity, physics, sensors, throughput, or completion proof",
+      "sample_hz": 1,
+      "configured_sample_count": 300,
+      "selected_sample_count": 300,
+      "first": {
+        "sim_time_s": 20081.99999998826,
+        "shipments_completed": 7,
+        "returns_completed": 4,
+        "transports_completed": 61
+      },
+      "last": {
+        "sim_time_s": 20380.99999998391,
+        "shipments_completed": 8,
+        "returns_completed": 5,
+        "transports_completed": 64
+      },
+      "score": {
+        "shipment_and_return_both_increased": true,
+        "minimum_shipment_return_delta": 1,
+        "completed_transport_delta": 3,
+        "logistics_pose_distance_m": 123.95661228567653,
+        "distinct_moving_logistics_robots": 3,
+        "priority_order": [
+          "shipment_and_return_both_increased",
+          "minimum_shipment_return_delta",
+          "completed_transport_delta",
+          "logistics_pose_distance_m",
+          "distinct_moving_logistics_robots"
+        ]
+      },
+      "movement_scope": {
+        "included_task_types": [
+          "empty_return",
+          "process_input",
+          "product_move"
+        ],
+        "excluded_task_types": [
+          "traffic_yield",
+          "parking",
+          "charging"
+        ],
+        "payload_required": false,
+        "task_id_change_edges": "excluded"
+      }
+    },
+    "final_render_eligible": false
+  },
+  "frozen_source": {
+    "relative_path": "frozen-source",
+    "manifest_relative_path": "frozen-source/manifest.json",
+    "manifest_sha256": "71fffbd46dde00ccd1fa85e812b847d069085a79e146df81a5e3f665eacd31bf",
+    "source_binding_sha256": "26116fd503bfeb4aadaeb73f622512e8751a68a3ea67b4b747f0d003bf349012",
+    "file_count": 43
+  },
+  "closure": {
+    "result_sha256": "be063c9ed7e52362f6c22e690b4bc35440822bdb87ae3385dc8f4478e998ff40",
+    "manifest_sha256": "eb64bf133b2cc207845bf5616468684e627a72c1abe9fd206ed708d023d0f9c9",
+    "gzip_sha256": "957b449f368bd0d5f1f5b7ce615af2219d3bab6f94de7e3eaccfeb8bca5f5712",
+    "closed_manifest_hashes_match": true,
+    "frozen_files_hashes_match": true,
+    "owned_python_processes": 0,
+    "owned_process_check": "Supervisor confirmed natural exit."
+  },
+  "comparison_limit": "Wall bound stopped this case at116731sim seconds;321 reached120000sim seconds. Do not attribute endpoint count differences to policy or parking preemption alone.",
+  "success_flags": {
+    "full48_48_completed": false,
+    "all16_repeated_material_transports": true,
+    "peak16_material_tasks_verified": false,
+    "native_physics_transport_verified": false
+  }
+}
