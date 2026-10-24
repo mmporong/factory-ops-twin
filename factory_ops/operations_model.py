@@ -871,7 +871,18 @@ class OperationsModel(DashboardModel):
         sequential, so the first acquired window becomes protected before the
         next vehicle is examined.
         """
-        return {peer: self._footprint(peer) for peer in self.ledger.robots}
+        observations = {peer: self._footprint(peer) for peer in self.ledger.robots}
+        charging = getattr(self, "operations_charging", None)
+        if charging is None:
+            return observations
+        for dock_id, owner in charging.docks.owners.items():
+            if owner == robot_id:
+                continue
+            anchor = charging.slots[dock_id]["anchor"]
+            observations[owner] = frozenset(observations[owner]) | self._tiles(
+                (self.book.nodes[anchor],)
+            )
+        return observations
 
     def _prospective_trip_blockers(
         self,
@@ -889,9 +900,10 @@ class OperationsModel(DashboardModel):
         window = self._next_route_window(
             first.points[0], first.points[1:], first.nodes[1:], allow_terminal=True,
         )
-        observations = {}
-        for peer in self.ledger.robots:
-            observations[peer] = self._footprint(peer)
+        observations = self._admission_observations(
+            robot_id,
+            {"kind": "dispatch_preview", "phase": "pickup", "goal": pickup},
+        )
         return self.bridges.blockers(
             robot_id,
             window["nodes"],
@@ -918,6 +930,26 @@ class OperationsModel(DashboardModel):
                 "window_nodes": (),
             }
         trip = {"kind": "charging", "phase": "charge_approach", "goal": goal}
+        observations = self._admission_observations(robot_id, trip)
+        home_occupant = next(
+            (
+                peer
+                for peer, home in self.homes.items()
+                if peer != robot_id
+                and home == goal
+                and peer not in self._chunks
+                and self.motions[peer].stopped
+                and anchor_at_pose(self.book.nodes, self._poses[peer]) == goal
+            ),
+            None,
+        )
+        if home_occupant is not None:
+            physical = self._footprint(home_occupant)
+            remaining = frozenset(observations[home_occupant]) - physical
+            if remaining:
+                observations[home_occupant] = remaining
+            else:
+                observations.pop(home_occupant)
         route_points, route_nodes, _ = self._route_via_safe_exit(
             route.points[0], trip, route.points[1:], route.nodes[1:],
         )
@@ -931,8 +963,29 @@ class OperationsModel(DashboardModel):
             robot_id,
             window["nodes"],
             route_tiles=window["tiles"],
-            observed_tiles=self._admission_observations(robot_id, trip),
+            observed_tiles=observations,
         ))
+        terminal_tiles = self._tiles((self.book.nodes[goal],))
+        blockers.update(self.bridges.blockers(
+            robot_id,
+            (),
+            route_tiles=terminal_tiles,
+            observed_tiles=observations,
+        ))
+        charging = getattr(self, "operations_charging", None)
+        if charging is not None:
+            relocating_from_dock = {
+                row["relocating_robot"]
+                for row in charging.home_swaps
+                if row["dock_home"] == goal
+                and charging.relocating.get(row["relocating_robot"])
+                == row["relocation_home"]
+            }
+            # Keep selection pinned to the pad being vacated. The charging
+            # adapter cannot reserve it while the peer remains on the pad; once
+            # departure starts, ordinary movement admission preserves that
+            # window and keeps the charging robot stopped until it clears.
+            blockers.difference_update(relocating_from_dock)
         distance_m = sum(
             math.dist(start_point, end_point)
             for start_point, end_point in zip((route.points[0], *route_points), route_points)

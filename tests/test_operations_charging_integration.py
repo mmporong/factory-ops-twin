@@ -13,6 +13,7 @@ from factory_ops.operations_model import OperationsModel
 
 
 CONFIG = Path(__file__).resolve().parents[1] / "configs" / "factory-semiconductor-dual-lane"
+CAMPUS = Path(__file__).resolve().parents[1] / "configs" / "factory-semiconductor-campus16-wide-bridges"
 
 
 class OperationsChargingIntegrationTests(unittest.TestCase):
@@ -34,6 +35,173 @@ class OperationsChargingIntegrationTests(unittest.TestCase):
             if predicate():
                 return
         self.fail(f"condition not reached at {model.sim_time:.1f}s: {model.operations_charging.snapshot()}")
+
+    @staticmethod
+    def route_window(model, robot, start, goal, *, kind, phase):
+        route = model.book.plan(start, goal)
+        trip = {"kind": kind, "phase": phase, "goal": goal}
+        points, nodes, _ = model._route_via_safe_exit(
+            route.points[0], trip, route.points[1:], route.nodes[1:],
+        )
+        return trip, model._window_for_trip(
+            route.points[0], points, nodes, trip, robot_id=robot,
+        )
+
+    def test_reserved_dock_anchor_blocks_nonowner_but_not_owner_and_releases(self):
+        model = OperationsModel(CAMPUS, initial_orders=0, run_id="reserved-dock-anchor-guard")
+        charging = model.operations_charging
+        assert charging is not None
+        owner, peer = "amr-4", "amr-9"
+        anchor_tiles = model._tiles((model.book.nodes["D_P1"],))
+        self.assertEqual(
+            "D_CH1",
+            charging.docks.reserve(owner, carrying_payload=False, preferred_dock="D_CH1"),
+        )
+        actual = {robot: frozenset() for robot in model.ledger.robots}
+        actual[owner] = model._tiles((model.book.nodes["D_SOURCE_WAIT"],))
+        with patch.object(model, "_footprint", side_effect=lambda robot: actual[robot]):
+            peer_view = model._admission_observations(
+                peer, {"kind": "empty_return", "phase": "drop", "goal": "D_P1"},
+            )
+            owner_view = model._admission_observations(
+                owner, {"kind": "charging", "phase": "charge_approach", "goal": "D_P1"},
+            )
+            self.assertEqual(
+                (owner,),
+                model.bridges.blockers(
+                    peer, (), route_tiles=anchor_tiles, observed_tiles=peer_view,
+                ),
+            )
+            self.assertEqual(
+                (owner,),
+                model._prospective_trip_blockers(
+                    peer,
+                    "D_P1",
+                    "D_S1",
+                    pickup_route=model.book.plan("D_LOW_E_P1", "D_P1"),
+                ),
+            )
+            self.assertTrue(anchor_tiles.isdisjoint(owner_view[owner]))
+
+            charging.docks.cancel_approach(owner)
+            released_view = model._admission_observations(
+                peer, {"kind": "empty_return", "phase": "drop", "goal": "D_P1"},
+            )
+            self.assertEqual(
+                (),
+                model.bridges.blockers(
+                    peer, (), route_tiles=anchor_tiles, observed_tiles=released_view,
+                ),
+            )
+
+    def test_dock_terminal_guard_preserves_existing_pose_window_and_home_swap(self):
+        model = OperationsModel(CAMPUS, initial_orders=0, run_id="dock-terminal-guard")
+        charging = model.operations_charging
+        assert charging is not None
+        robot, transient = "amr-4", "amr-9"
+        model._poses[robot].update(
+            x_m=model.book.nodes["D_SOURCE_WAIT"][0],
+            y_m=model.book.nodes["D_SOURCE_WAIT"][1],
+        )
+        model._locations[robot] = "D_SOURCE_WAIT"
+        model._poses[transient].update(
+            x_m=model.book.nodes["D_P1"][0], y_m=model.book.nodes["D_P1"][1],
+        )
+        pose_blocked = model._charging_approach_option(robot, "D_P1")
+        assert pose_blocked is not None
+        self.assertIn(transient, pose_blocked["blockers"])
+
+        model._poses[transient].update(
+            x_m=model.book.nodes["C_PACK_WAIT"][0],
+            y_m=model.book.nodes["C_PACK_WAIT"][1],
+        )
+        home_owner = next(peer for peer, home in model.homes.items() if home == "D_P1")
+        anchor_tiles = model._tiles((model.book.nodes["D_P1"],))
+        self.assertEqual((), model.bridges.admit(
+            home_owner, (), route_tiles=anchor_tiles, observed_tiles={},
+        ))
+        window_blocked = model._charging_approach_option(robot, "D_P1")
+        assert window_blocked is not None
+        self.assertIn(home_owner, window_blocked["blockers"])
+        model.bridges.release(home_owner, stopped=True)
+
+        home_allowed = model._charging_approach_option(robot, "D_P1")
+        assert home_allowed is not None
+        self.assertNotIn(home_owner, home_allowed["blockers"])
+        self.assertFalse(charging._prepare_home_swap(model, robot, "D_P1"))
+        self.assertEqual("D_P1", model.homes[robot])
+        self.assertIn(home_owner, charging.relocating)
+        vacating_allowed = model._charging_approach_option(robot, "D_P1")
+        assert vacating_allowed is not None
+        self.assertNotIn(home_owner, vacating_allowed["blockers"])
+        relocation_goal = charging.relocating[home_owner]
+        model._trip(
+            home_owner, {}, "D_P1", relocation_goal, "parking",
+            kind="parking", purpose="home",
+        )
+        relocation = model._trips[home_owner]
+        self.assertEqual((), model.bridges.admit(
+            home_owner,
+            relocation["admission_nodes"],
+            route_tiles=relocation["admission_tiles"],
+            observed_tiles={},
+        ))
+        relocation_allowed = model._charging_approach_option(robot, "D_P1")
+        assert relocation_allowed is not None
+        self.assertNotIn(home_owner, relocation_allowed["blockers"])
+        charge_trip, charge_window = self.route_window(
+            model, robot, "D_LOW_E_P1", "D_P1",
+            kind="charging", phase="charge_approach",
+        )
+        self.assertIn(
+            home_owner,
+            model.bridges.blockers(
+                robot,
+                charge_window["nodes"],
+                route_tiles=charge_window["tiles"],
+                observed_tiles=model._admission_observations(robot, charge_trip),
+            ),
+        )
+
+    def test_run331_dock_exit_cycle_reproduces_from_actual_nodes(self):
+        model = OperationsModel(CAMPUS, initial_orders=0, run_id="run331-dock-exit-cycle")
+        charging = model.operations_charging
+        assert charging is not None
+        external, owner, loaded = "amr-1", "amr-4", "amr-9"
+        self.assertEqual(
+            "D_CH1",
+            charging.docks.reserve(owner, carrying_payload=False, preferred_dock="D_CH1"),
+        )
+        actual = {robot: frozenset() for robot in model.ledger.robots}
+        actual[external] = model._tiles((model.book.nodes["D_SOURCE_WAIT"],))
+        actual[owner] = model._tiles((model.book.nodes["D_LOW_E_P1"],))
+        actual[loaded] = model._tiles((model.book.nodes["D_P1"],))
+        charge_trip, charge_window = self.route_window(
+            model, owner, "D_LOW_E_P1", "D_P1", kind="charging", phase="charge_approach",
+        )
+        loaded_trip, loaded_window = self.route_window(
+            model, loaded, "D_P1", "D_S1", kind="empty_return", phase="drop",
+        )
+        loaded_trip["task"] = SimpleNamespace(payload_id="T022")
+        with patch.object(model, "_footprint", side_effect=lambda robot: actual[robot]):
+            charge_blockers = model.bridges.blockers(
+                owner,
+                charge_window["nodes"],
+                route_tiles=charge_window["tiles"],
+                observed_tiles=model._admission_observations(owner, charge_trip),
+            )
+            loaded_blockers = model.bridges.blockers(
+                loaded,
+                loaded_window["nodes"],
+                route_tiles=loaded_window["tiles"],
+                observed_tiles=model._admission_observations(loaded, loaded_trip),
+            )
+
+        self.assertEqual((loaded,), charge_blockers)
+        self.assertEqual((owner,), loaded_blockers)
+        self.assertTrue(actual[external].isdisjoint(
+            charge_window["tiles"] | loaded_window["tiles"],
+        ))
 
     def test_own_pad_route_alignment_contact_charge_exit_release_and_snapshot(self):
         model = OperationsModel(
