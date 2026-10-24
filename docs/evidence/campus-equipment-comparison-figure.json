@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "status": "rendered_from_closed_comparison",
+  "scope": "Boundary/event plot of the existing authored CPU comparison; no new simulation, physical data, performance extrapolation or full workload completion.",
+  "inputs_and_output": {
+    "docs/evidence/campus-equipment-comparison.json": {
+      "bytes": 2906,
+      "sha256": "c97eb6aa78bac73d5a92961d8afab56c472440b0a966bf158034dfb3abae8c40"
+    },
+    "scripts/media/plot_equipment_comparison.py": {
+      "bytes": 4866,
+      "sha256": "b849d1f289cce5bda7a9f4c4d8accfb8e7101eb524a4ae3fefd27eb697739d3e"
+    },
+    "docs/evidence/campus-equipment-comparison.svg": {
+      "bytes": 84115,
+      "sha256": "36783c9f2eea7f9a32463ca4cbf1b1096ff27085f80b00888c68652038cd6bb3"
+    }
+  },
+  "plotter": {
+    "name": "Matplotlib",
+    "version": "3.10.8",
+    "backend": "Agg",
+    "new_package_installations": 0
+  },
+  "observations": {
+    "target_lot": "LOT-0004",
+    "cell_id": "L2.TEST",
+    "outage_sim_s": 300,
+    "target_completion_delay_sim_s": 299.9000000000592,
+    "fixed_horizon_sim_s": 9000,
+    "shipments_baseline": 2,
+    "shipments_fault": 2
+  },
+  "plot_semantics": "Lines connect recorded command boundaries and target completion events; intermediate service values are not continuous measurements.",
+  "raster_preview": "artifacts/campus-equipment-figure/preview.png",
+  "visual_check": "Raster preview inspected: series, labels and result table readable.",
+  "reproduce_with_existing_matplotlib_runtime": [
+    "python",
+    "scripts/media/plot_equipment_comparison.py",
+    "--input",
+    "docs/evidence/campus-equipment-comparison.json",
+    "--output",
+    "docs/evidence/campus-equipment-comparison.svg"
+  ]
+}

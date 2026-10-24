@@ -93,6 +93,20 @@ Brev의 기존 Nebius 2×L40S 환경을 재사용했지만 `UNHEALTHY` 상태여
 
 [조건·실행 ID·원본 수치](docs/evidence/operations-comparison-223.md) · [기계 판독 결과](docs/evidence/operations-comparison-223.json)
 
+### 캠퍼스 설비 고장·복구
+
+![TEST 고장 중 잔여 처리시간 보존과 정상 대비299.9초 완료 지연](docs/evidence/campus-equipment-comparison.svg)
+
+같은48lot 수요와9,000초 관측 구간에서 `L2.TEST`의 정상·고장을 비교했습니다. HTTP로300초 고장·복구를 적용하자 처리 중인 `LOT-0004`의 남은 시간은29.6초로 보존됐고, 복구1초 뒤28.6초로 줄었습니다.
+
+| 관측 항목 | 정상 | TEST 300초 고장 |
+|---|---:|---:|
+| 대상 lot의 TEST 완료 시각 | 224.7초 | 524.6초 |
+| 구간 종료 시 출하 | 2건 | 2건 |
+| 완료 운송 | 40건 | 39건 |
+
+대상 공정은299.9초 늦어졌지만 이 구간에서 전체 출하 차이는 나타나지 않았습니다. 동결314 모델·설정의 CPU 비교이며 물리 운송·브라우저 조작·48lot 완주 결과와 구분합니다. [도표 출처](docs/evidence/campus-equipment-comparison-figure.json) · [비교 근거와 원본 해시](docs/evidence/campus-equipment-comparison.json) · [선별한 상태10행](docs/data/campus-equipment-comparison/boundaries.csv) · [재현 방법](docs/operations-guide.md#설비-고장-비교-재현)
+
 ## 물리 주행 기준선
 
 ![무적재 Nova Carter의 참조·엔코더·GT 궤적과 속도·횡오차](docs/evidence/local45-path-baseline-226.svg)
@@ -223,16 +237,6 @@ npm run dev -- --port 13008
 ```
 
 캠퍼스 웹 주소는 `http://127.0.0.1:13008`입니다. API287의 읽기 전용 HTTP 관측을 보존하며, 후속 명령 연결은 HTTP 고장 적용, 설비 명령의 고장·복구·같은 실행의 receipt·재생 보존을 포함한9개 관련 검사를 통과했습니다. 화면의 설비 선택 변경은 TypeScript 검사를 통과했지만 브라우저 도구의 커널 초기화 오류로 새 클릭·반응형 확인은 남아 있습니다. 이 결과는48lot 완주를 뜻하지 않습니다. [읽기 전용 기준선287](docs/evidence/process-line-api-287.json) · [명령·화면 변경의 확인 범위](docs/evidence/campus-equipment-controls.json)
-
-같은48lot 수요와9,000초 관측 구간에서 `L2.TEST`의 정상·고장을 비교했습니다. HTTP로300초 고장·복구를 적용하자 처리 중인 `LOT-0004`의 남은 시간은29.6초로 보존됐고, 복구1초 뒤28.6초로 줄었습니다.
-
-| 관측 항목 | 정상 | TEST 300초 고장 |
-|---|---:|---:|
-| 대상 lot의 TEST 완료 시각 | 224.7초 | 524.6초 |
-| 구간 종료 시 출하 | 2건 | 2건 |
-| 완료 운송 | 40건 | 39건 |
-
-대상 공정은299.9초 늦어졌지만 이 구간에서 전체 출하 차이는 나타나지 않았습니다. 동결314 모델·설정의 CPU 비교이며 물리 운송·브라우저 조작·48lot 완주 결과와 구분합니다. [비교 근거와 원본 해시](docs/evidence/campus-equipment-comparison.json) · [선별한 상태10행](docs/data/campus-equipment-comparison/boundaries.csv) · [재현 방법](docs/operations-guide.md#설비-고장-비교-재현)
 
 6개 운영 조건 비교는 다음 명령으로 재현합니다.
 
