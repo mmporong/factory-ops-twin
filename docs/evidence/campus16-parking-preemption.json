@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "status": "implemented_targeted_tests_passed_run322_running",
+  "scope": "Authored CPU material dispatch and kinematic reservations; no native driving or throughput improvement claim yet.",
+  "source": {
+    "worktree_commit": "a6c4592",
+    "main_commit": "23620f5",
+    "unexecuted_draft": "7bfb0b1"
+  },
+  "observed_case": {
+    "case": "campus16-pilot-321",
+    "sim_time_s": 35520,
+    "active_material_tasks": 6,
+    "home_parking_waits": {
+      "amr-5": "A_AB_W_SAFE_EXIT",
+      "amr-11": "A_AC_N_SAFE_EXIT",
+      "amr-12": "A_SOURCE_WAIT"
+    },
+    "evidence_kind": "Agent current progress/pose observation; not a closed full-run verdict."
+  },
+  "change": {
+    "origin": "Safe stopped current pose anchor, used by both pickup route and charging energy admission.",
+    "guards": [
+      "home parking only",
+      "stopped",
+      "no active chunk",
+      "no bridge window",
+      "no held bridge",
+      "authored holdable anchor",
+      "not a bridge queue"
+    ],
+    "predicate_mutates_state": false,
+    "withdrawal": "Only after job selection; pending requests withdrawn, current pose occupancy retained and logical location set to that anchor.",
+    "unchanged": [
+      "station ownership",
+      "cell buffer/inventory conservation",
+      "battery capacity/reserve/power",
+      "full-window/footprint admission",
+      "material task counting"
+    ]
+  },
+  "validation": {
+    "targeted_tests_passed": 2,
+    "elapsed_wall_s": 1.479,
+    "covers": [
+      "unstarted and intermediate stopped parking selection",
+      "in-flight parking rejected",
+      "charging assignment route begins at current anchor"
+    ],
+    "syntax_and_diff_check": "Agent PASS",
+    "scope": "No independent review or full-suite claim."
+  },
+  "followup": {
+    "case": "campus16-pilot-322",
+    "source_commit": "a6c4592",
+    "lots": 48,
+    "horizon_sim_s": 120000,
+    "max_wall_s": 5400,
+    "stall_timeout_sim_s": 600,
+    "cycle_stall_timeout_sim_s": 600,
+    "recording": "--record-best-window",
+    "source_frozen": true
+  },
+  "limits": [
+    "Maximum13 material tasks is not a configured global cap; this is one observed admission restriction, not a proof of its only cause.",
+    "319 and321 retain separate frozen sources and continue without this change.",
+    "All48 shipments/returns, quiescence and same-run16 material concurrency remain pending."
+  ]
+}

@@ -1605,3 +1605,11 @@ sim20,341초 재현은 출하5·반납4·운송66과 amr13→amr6→amr9→amr13
 512장 exporter의 CPU 입력을 통합하면서 깊이 검사에 가시 객체 밖의 유한 음수가 허용되는 조건을 확인했다. 초기 검사는NaN/-inf와 가시 객체의0/+inf를 거절했지만 배경의-1.0은 통과했다. 실제 GPU 자료에서 관측된 실패가 아니라 검사 함수의 재현 가능한 입력 경계다.
 
 모든 픽셀의 음수와NaN을 거절하도록 고쳤다. 배경의0/+inf는 유지하고 객체 마스크 안은 유한 양수만 허용한다. 이 범위의3개 표적 검사에서 유효 깊이·배경0/+inf·잘못된shape·객체+inf·배경NaN/-inf/-1.0을 확인했다.512장 촬영과 학습 승인은 아직 남아 있다. [구현·확인 범위와 버전별 공식 참조](evidence/perception-pilot-512-preparation.json)
+
+## FOT-204 — 중간 귀가 대기점의 차량을 업무 후보에서 제외
+
+321의sim35,520초에 물류 임무6개가 진행 중인데 amr5/11/12는 각각 A_AB_W_SAFE_EXIT·A_AC_N_SAFE_EXIT·A_SOURCE_WAIT에서 귀가 대기 중이었다. 세 곳은 holdable·nonqueue지만 기존 선점 조건은 pose가 출발_locations와 같아야 해서 중간 안전정지 차량은 새 업무 후보에서 빠졌다.319에서도 같은 유형을 관측했다. 이를13개 동시성의 유일한 원인으로 단정하지 않는다.
+
+후보a6c4592는 정지·nochunk·nowindow·noheld·holdable·nonqueue의 현재 anchor를 반환하는 순수 술어를 쓴다. 실제 업무가 선택될 때 pending 요청을 철회하고 _locations를 현재 anchor로 바꾼다. 초기 초안7bfb0b1은 후보 경로와 충전 can_assign이 철회 전의 옛 _locations를 쓰는 경계가 있어 실행하지 않고 교체했다. 최종안은 pickup 경로와 에너지cache/계산이 같은 _dispatch_origin을 사용한다. 과거 소스와 실행 중319·321은 그대로 유지한다.
+
+중간hold 선점·기존 출발 전 선점·in-flight 거절·충전 에너지 경로의 현재 anchor를 포함한 관련2검사가1.479초에 통과했다.322는 이 수정의 별도 동결 소스로 같은48lot·120000sim초·5400벽시계초·정체600sim초·자동300표본으로 시작했다. 실제 운영 효과·48/48·16개 물류 동시성은 아직 확인 중이다. 재발 방지는 배차 전환 시 후보 평가와 실제 trip의 출발 anchor를 일치시키는 것이다. [수정·실행 범위](evidence/campus16-parking-preemption.json)

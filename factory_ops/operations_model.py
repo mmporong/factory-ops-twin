@@ -1038,7 +1038,7 @@ class OperationsModel(DashboardModel):
         return self._withdrawable_home_parking_anchor(robot_id) or self._locations[robot_id]
 
     def _withdraw_queued_parking(self, robot_id: str) -> bool:
-        """Make an unstarted home trip available for higher-priority work."""
+        """Release a home trip at a safe stopped anchor for higher-priority work."""
         anchor = self._withdrawable_home_parking_anchor(robot_id)
         if anchor is None:
             return False
