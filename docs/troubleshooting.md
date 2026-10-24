@@ -1511,3 +1511,23 @@ World가 없을 때 기존 `SimulationManager.setup_simulation`을 호출하고,
 313도 첫 충전 구간에서180sim초/53.19wall초·210/54.81로 느려져 sim14910초·벽시계437.56초·53운송·출하4·반납1에서 진단 중단했다. 동결 소스42개와 소유PID0을 확인했고 성공 판정은 하지 않았다. FOT-189의 probe는 dock callback만 반복했으며, `_dispatch_extra_jobs→can_assign→_assignment_required_wh`의 반복 후보 계산은 포함하지 않았다. 초기 약47배 속도 회복도 이 호출 지점의 해소 근거가 아니었다. [313 진단 근거](evidence/campus16-313.json)
 
 배차·충전 이탈이 공유하는 assignment requirement 함수에 pickup/destination·차량 location/pose/yaw·폐쇄 상태·작성/관측 대기 예산을 key로 재사용을 적용했다. SOC만 변하면 같은 필요 에너지를 사용하고 경로 입력이 바뀌면 다시 계산한다. 관련37검사가 통과했다. actual campus48·SOC40%·관측 대기20,000초의 실제 dispatch probe에서는 첫 tick 경로 계획1,920회 뒤 다음20tick 추가 계산0회를 확인했다. 단일 helper의 반복 시험을 전체 호출 경로의 성능 근거로 확대하지 않으며 다음 전체 실행은314로 구분한다. [dispatch 경계 probe](evidence/campus16-dispatch-cache-314.json)
+
+## FOT-191 — 비교 후처리에서 line과 cell의 복합 식별자를 잘못 비교함
+
+설비 비교의 첫 실행은 두 조건의 모델 실행 후 대상 lot의 공정 완료 사건을 찾지 못해377.37초에 실패했다. ProcessNetwork 사건은 `line_id=L2`, `cell_id=TEST`를 별도로 갖는데 후처리가 `cell_id=L2.TEST`와 비교했다. HTTP 명령 적용과 파생 지표 작성 실패를 구분하며 첫 결과를 통과로 바꾸지 않는다. 사건의 두 필드를 결합해 같은 설비를 찾도록 수정하고, 이후 실행은 파생 검사 전에 case 원본을 각각 마감한다. 후처리만 실패하면 저장한 원본을 다시 분석하며 모델 전체를 반복 실행하지 않는다.
+
+## FOT-192 — 아직 완료되지 않은 장기 교통 대기를 에너지 예산에서 누락함
+
+314는 sim31566초·벽시계1870.26초·운송73건·출하7·반납4에서 amr13 소진으로 실패했다. 마지막 빈 용기 반납 배정 시 완료 운송에서 관측한 대기는 약6405초였으나, 완료 이력이 없는 amr12의 진행 중 대기는 이미8385초였다. 완료 시점에만 envelope를 갱신해 이 상태를 놓쳤다. [314 원본·소스·종료 근거](evidence/campus16-314.json)
+
+진행 중인 wait interval도 즉시 반영한다. 매 tick 달라지는 대기 예산 때문에 경로 캐시를 무효화하지 않도록 route/motion base Wh와 idle wait Wh를 나눠, 정적 경로는 재사용하고 대기의 에너지만 O(1)로 더한다. 에너지·SOC·안전 설정은 유지한다. 이 변경과 아래 도크 회귀를 포함한 관련39검사가 통과했으며 다음 전체 실행은315다.
+
+## FOT-193 — 빈 충전 패드 예약 뒤 원래 홈 소유자가 귀가해 접근을 막음
+
+314의 amr13은 `C_CD_W_SAFE_EXIT`에서 C_CH2 접근을 기다렸다. blocker amr10은 임무·적재물 없이 도크 anchor C_P2에 정지한 상태였다. 예약 후 귀가한 차량이라 bridge wait graph는 amr13→amr10일 뿐 순환은 없었다. 약4791초의 접근 대기 끝에 소진됐으므로 대기 예산 누락만으로 설명하지 않는다. 기존 `_prepare_home_swap`는 예약할 때 패드에 있는 차량만 확인하고, 다른 곳에 있는 홈 소유자의 복귀는 조정하지 않았다.
+
+빈 패드라도 `model.homes`의 소유자를 예약 전에 교환한다. 이미 진행 중인 귀가는 정상 도착을 유지하고, 도착 뒤 새 홈으로 이동해 패드를 비우도록 기존 parking 경로를 사용한다. 순간 위치 이동이나 강제 점유 해제는 하지 않는다. `test_empty_reserved_pad_swaps_absent_home_owner_before_return`으로 이 경계를 재현했고39개 관련 검사에 포함했다.315의 실제 장시간 결과는 별도로 판정한다.
+
+## FOT-194 — 병행 CPU 비교와 본선 수정이 같은 소스 폴더를 공유함
+
+비교2 실행 중 본선314가 실패했고, 메인 담당의 core 수정이 비교의 on-disk 소스와 겹쳤다. root가 독립 프로세스만 분리하고 소스 폴더까지 격리하지 않은 조율 오류다. 전체 비교2는 source stability 통과로 표시하지 않는다. 마감된 baseline의25개 producer pin·8개 config가 동결314와 일치하고1340f8b 격리 환경의 초기 producer와 같음을 확인해 baseline만 재사용한다. 고장 조건은 별도 linked worktree에서 실행한다. 이후 병행 모델 실행은 실행 파일·설정까지 격리하며, 이미 유효하게 시작한 본선315를 이 이유로 중단하지 않는다.

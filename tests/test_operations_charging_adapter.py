@@ -142,7 +142,7 @@ class OperationsChargingAdapterTests(unittest.TestCase):
             adapter.traffic_wait_budget_s = 30.0
             waited = adapter._assignment_required_wh(model, "amr-4", "S1", "CI")
             self.assertGreater(waited, base)
-            self.assertGreater(plan.call_count, first_count)
+            self.assertEqual(first_count, plan.call_count)
             wait_count = plan.call_count
 
             model._locations["amr-4"] = "P3"
@@ -150,6 +150,16 @@ class OperationsChargingAdapterTests(unittest.TestCase):
             model._poses["amr-4"].update(x_m=x, y_m=y)
             adapter._assignment_required_wh(model, "amr-4", "S1", "CI")
             self.assertGreater(plan.call_count, wait_count)
+
+    def test_in_progress_transport_wait_funds_new_work_before_delivery_completes(self):
+        model = FakeOperationsModel()
+        adapter = OperationsCharging(model, self.profile())
+        model._wait_s["amr-1"] = 8385.1
+
+        adapter.prepare(model)
+
+        self.assertEqual(0, model._deliveries["amr-1"])
+        self.assertAlmostEqual(8385.1, adapter.traffic_wait_budget_s)
 
     def test_queued_parking_trip_is_not_replaced_by_charge_approach(self):
         model, adapter = self.low_third_robot()

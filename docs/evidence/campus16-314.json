@@ -1,0 +1,54 @@
+{
+  "schema_version": "factory-ops-campus16-evidence-v1",
+  "case_id": "campus16-pilot-314",
+  "status": "failed",
+  "stop_reason": "runtime_error",
+  "error": {
+    "type": "RuntimeError",
+    "message": "operations charging observation fault: amr-13"
+  },
+  "completion_claim": false,
+  "source_stable_during_run": true,
+  "metrics": {
+    "sim_time_s": 31565.999999821146,
+    "elapsed_wall_s": 1870.2633587999735,
+    "shipped": 7,
+    "returned": 4,
+    "completed_transport_deliveries": 73,
+    "min_assignments": 1,
+    "min_deliveries": 1,
+    "peak_transport_active": 13,
+    "peak_transport_moving": 7,
+    "traffic_yield_selected": 3,
+    "traffic_yield_completed": 3,
+    "observed_min_clearance_m": 1.7257818169114452
+  },
+  "charging_failure": {
+    "robot_id": "amr-13",
+    "soc_percent": 0.0009982978301460324,
+    "phase": "approach",
+    "dock": "C_CH2",
+    "pose_anchor": "C_CD_W_SAFE_EXIT",
+    "blockers": [
+      "amr-10"
+    ],
+    "dock_anchor_occupant": {
+      "robot_id": "amr-10",
+      "anchor": "C_P2",
+      "state": "idle"
+    },
+    "approach_started_no_later_than_s": 26775.4,
+    "fault_s": 31565.999999821146,
+    "observed_traffic_wait_budget_s": 12973.10000003423,
+    "finding": "completed-delivery-only wait sampling underfunded the task while an unfinished wait interval was already larger; later dock reassignment selected a peer home whose absent owner returned to the reserved pad"
+  },
+  "recording": {
+    "frame_count": 300
+  },
+  "hashes": {
+    "result_sha256": "68098d237b58bb40914698460563d3af5417bfbb374ea7bbcffd18d316cfc7d3",
+    "frozen_manifest_sha256": "087862946103c90da1caa5dbcee4d9249b7a12268bbf7c2129dfc5a4afc536fc",
+    "recording_manifest_sha256": "5f535202b3e7248916054bafda133554f153360c2ec29ad4bb0257547ba04bc6"
+  },
+  "owned_processes_gone": true
+}

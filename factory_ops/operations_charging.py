@@ -177,11 +177,10 @@ class OperationsCharging:
             pickup,
             destination,
             round(self.wait_budget_s, 9),
-            round(self.traffic_wait_budget_s, 9),
         )
         cached = self._assignment_requirement_cache.get(cache_key)
         if cached is not None:
-            return cached
+            return cached + self.energy.profile["idle_power_w"] * self.traffic_wait_budget_s / 3600.0
         first = self._plan(model, model._locations[robot], pickup)
         loaded = self._plan(model, pickup, destination)
         distance = first.distance_m + loaded.distance_m
@@ -203,15 +202,14 @@ class OperationsCharging:
             requirements.append(self.energy.assignment_required_wh(
                 outbound_m=distance,
                 charger_return_m=returning.distance_m,
-                expected_wait_s=(self.wait_budget_s + self.traffic_wait_budget_s
-                                 + max(0.0, travel_s - nominal_s)),
+                expected_wait_s=self.wait_budget_s + max(0.0, travel_s - nominal_s),
                 nominal_speed_m_s=model.limits.max_linear_m_s,
                 loaded=True,
                 expected_rotation_rad=rotation,
             ))
         required_wh = min(requirements)
         self._assignment_requirement_cache[cache_key] = required_wh
-        return required_wh
+        return required_wh + self.energy.profile["idle_power_w"] * self.traffic_wait_budget_s / 3600.0
 
     def can_assign(self, model: OperationsModelLike, robot: str, pickup: str, destination: str) -> bool:
         if not self.available(robot):
@@ -227,7 +225,7 @@ class OperationsCharging:
         return False
 
     def _update_traffic_wait_budget(self, model: OperationsModelLike) -> None:
-        """Retain the largest observed wait interval between completed transports."""
+        """Retain the largest completed or currently accumulating transport wait."""
 
         waits = getattr(model, "_wait_s", None)
         deliveries = getattr(model, "_deliveries", None)
@@ -238,9 +236,11 @@ class OperationsCharging:
             wait = float(waits.get(robot, 0.0))
             if count < prior_count or wait < prior_wait:
                 raise RuntimeError("operations traffic counters moved backward during charging observation")
+            ongoing = wait - prior_wait
             if count == prior_count:
+                self.traffic_wait_budget_s = max(self.traffic_wait_budget_s, ongoing)
                 continue
-            sample = (wait - prior_wait) / (count - prior_count)
+            sample = ongoing / (count - prior_count)
             self.traffic_wait_budget_s = max(self.traffic_wait_budget_s, sample)
             self._traffic_delivery_samples[robot] = (count, wait)
 
@@ -252,7 +252,12 @@ class OperationsCharging:
         return None
 
     def _prepare_home_swap(self, model: OperationsModelLike, robot: str, anchor: str) -> bool:
-        peer = self._pad_occupied_by_peer(model, robot, anchor)
+        occupied_peer = self._pad_occupied_by_peer(model, robot, anchor)
+        home_peer = next(
+            (peer for peer, home in model.homes.items() if peer != robot and home == anchor),
+            None,
+        )
+        peer = occupied_peer if occupied_peer is not None else home_peer
         if peer is None:
             return True
         if model.homes.get(peer) != anchor:
@@ -269,7 +274,7 @@ class OperationsCharging:
                                 "dock_home": anchor, "relocation_home": old_home})
         model._event("charge_home_swapped", f"{robot} 충전 진입을 위해 {peer} 주차 위치 교환", robot,
                      dock_anchor=anchor, relocating_robot=peer, relocation_home=old_home)
-        return False
+        return occupied_peer is None
 
     def _approach_candidates(
         self, model: OperationsModelLike, robot: str, docks: list[str],

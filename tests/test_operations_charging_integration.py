@@ -95,6 +95,40 @@ class OperationsChargingIntegrationTests(unittest.TestCase):
                 self.assertEqual(1, state["traffic"]["assignments"][robot])
                 self.assertIsNone(next(row for row in state["robots"] if row["id"] == robot)["charging_phase"])
 
+    def test_empty_reserved_pad_swaps_absent_home_owner_before_return(self):
+        model = OperationsModel(
+            CONFIG, initial_orders=0, run_id="operations-charge-absent-home-owner",
+            operations_charging_profile=self.base_profile,
+        )
+        charging = model.operations_charging
+        assert charging is not None
+        charging.queue.clear()
+        charging.aux.clear()
+        charging.relocating.clear()
+        model._trips.clear()
+
+        owner = "amr-1"
+        charging_robot = "amr-3"
+        model._locations[owner] = "S1"
+        x, y = model.book.nodes["S1"]
+        model._poses[owner].update(x_m=x, y_m=y)
+        model._trip(owner, {}, "S1", "P1", "parking", kind="parking", purpose="home")
+
+        self.assertTrue(charging._prepare_home_swap(model, charging_robot, "P1"))
+        self.assertEqual("P1", model.homes[charging_robot])
+        self.assertEqual("P3", model.homes[owner])
+        self.assertEqual("P3", charging.relocating[owner])
+
+        del model._trips[owner]
+        model._locations[owner] = "P1"
+        x, y = model.book.nodes["P1"]
+        model._poses[owner].update(x_m=x, y_m=y)
+        model._idle_since[owner] = -3.0
+        model._dispatch()
+
+        self.assertEqual("parking", model._trips[owner]["kind"])
+        self.assertEqual("P3", model._trips[owner]["goal"])
+
     def test_charge_queue_preempts_home_parking_only_at_safe_stop(self):
         model = OperationsModel(
             CONFIG, initial_orders=0, run_id="operations-charge-parking-preempt",
