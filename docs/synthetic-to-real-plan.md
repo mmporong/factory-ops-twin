@@ -119,3 +119,9 @@ Transfer2.5는 제안된 비교 후보이며 최신 모델이라는 주장은 �
 v4-v2 입력의 실제GPU325는12프레임·객체60개의 박스/마스크·깊이 검사를 통과한 뒤 frame13의 객체 identity0으로 중단됐다. 새 진단 저장 경로는 실패RGB·semantic·거리·bbox·카메라·recipe를 보존했다. 배경 staging-wall이 대상AABB의 투영 외곽을 덮고 중심 시선과 교차하며, 보존RGB에서도 벽이 앞을 막는 상태를 확인했다. v4의 가림 검사가 전용 occluder만 대상으로 삼고 불투명 배경 상자를 빠뜨린 경계다. 이 기하 근거를 모든 mesh와 semantic 처리 경로의 완전한 진단으로 일반화하지 않는다. [325 원본·부분 미디어·종료 근거](evidence/perception-pilot-325.json)
 
 v5는 같은 검사를 모든 불투명 절차형 컨텍스트 상자로 확장했다. 대상 객체와 카메라 recipe는 v4-v2와 같고, 컨텍스트86개의 위치만 고정 범위의 seed 기반 탐색으로 조정했다.128scene·512frame의 화면 밖 대상과 컨텍스트 대리 충돌은0건이며, 기존frame9·신규frame13·CRLF 거절의 표적3검사와 main 입력 pin 확인을 통과했다. 실제GPU 결과나 완성 데이터는 없다.16대 운영을 우선하며 추가 촬영·학습은 보류한다. [v5 입력과 확인 범위](evidence/perception-pilot-v5-preparation.json)
+
+### v5 단일 촬영328의 부분 결과
+
+본선327의 소스 동결 뒤 유휴 공용GPU lease로v5를 한 번 촬영했다. 유효101프레임의545개 객체(pallet198·small_load_carrier347)는 실제semantic 마스크외곽==raw tight bbox, inclusive COCO후보좌표, 객체영역 유한양수깊이 검사를 통과했다. frame102/scene25/aisle_low는5개 expected객체 중 bbox5개·semantic identity4개여서 거절됐다. bbox가 발행된 small_load_carrier-026-03의semantic ID가 없다는 관측까지 확인했으며, 가림·잘림·renderer ID처리 중 원인은 미확정이다.
+
+원본745파일·342,849,517바이트와실패진단을 보존하고 dataset.json은 작성하지 않았다. Job닫힘·owned0·lease반환·입력13개불변을 확인했다. 실패프레임은 유효자료/COCO에서 제외하고, 같은입력을 재시도하거나 GPU를 추가로 실행하지 않는다. 데이터는 export 계약 진단용 부분자료이며 클래스 매핑/학습 승인·512장 완성·실사mAP·Cosmos 결과로 사용하지 않는다. [328 마감·대표10장·원본 해시](evidence/perception-pilot-328.json)

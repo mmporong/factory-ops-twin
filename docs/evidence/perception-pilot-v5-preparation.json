@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "status": "CPU_prepared_GPU_paused",
+  "status": "CPU_proxy_passed_GPU328_failed_after101_valid_frames",
   "source_main_commit": "bcb863dfd02eaa680ce0874da3c0d601f4cf772b",
   "input": {
     "manifest_sha256": "9430580f16e55decdc15da4e82f3789e03574b3f3022eb670d15a679ad83d28b",
@@ -43,7 +43,7 @@
     "main_recipe_objects_and_camera_equality_with_v4_v2": "PASS"
   },
   "flags": {
-    "GPU_capture_performed": false,
+    "GPU_capture_performed": true,
     "complete_dataset_generated": false,
     "training_ready": false,
     "mapping_approved": false,
@@ -52,5 +52,13 @@
     "Cosmos_used": false
   },
   "predecessor_failed_case": "perception-pilot-325.json",
-  "next": "Primary16-AMR operations first; no further GPU capture launched."
+  "next": "GPU work paused; resolve missing semantic identity versus existing bbox before another capture. Primary16-AMR operations continue.",
+  "GPU_followup": {
+    "case": "perception-pilot-328",
+    "status": "failed_after_payload_capture",
+    "valid_frames": 101,
+    "object_frame_checks": 545,
+    "evidence": "perception-pilot-328.json",
+    "retry_performed": false
+  }
 }

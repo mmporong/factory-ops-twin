@@ -195,14 +195,14 @@ Isaac Sim Replicator로 12개 시각 구성, 30시점, 3카메라에서 RGB 1,08
 
 실제 LOCO 학습용 사진6장과 합성 후보를 비교해 적층·가림·원거리 소형 객체·현장 배경의 차이를 정리했습니다. 평가용 sub1은 열지 않았습니다. 기존 용기를 제한된 외형의 baseline으로 사용하되, 단일 청색 용기가 전체 소형 적재함 클래스를 대표한다고 해석하지 않습니다. [실사·합성 비교 이미지와 준비 범위](docs/synthetic-to-real-plan.md#실제-학습-사진과-합성-후보의-차이)
 
-512장 파일럿은 회색·청색 용기의 적층·가림·배경·크기·시점 변형을 고정하고 객체별 박스·마스크와 깊이를 검사합니다. 최신 촬영325는 앞12장의 객체60개가 이 검사를 통과했으나,13번째 프레임에서 배경 벽에 가려진 후보 객체의 semantic identity가 없어 중단됐습니다. 실패 RGB·라벨·깊이는 진단용으로 분리해 보존했습니다. 배경까지 가림 대리 검사를 확장한v5 입력은 CPU 확인을 마쳤고,16대 운영을 우선하며 추가 GPU 촬영은 보류했습니다. **512장 완성 데이터와 검출기 학습 성과는 아직 없습니다.** [325 부분 결과·실패 원본·종료 근거](docs/evidence/perception-pilot-325.json) · [v5 입력과 확인 경계](docs/evidence/perception-pilot-v5-preparation.json) · [촬영 구현](docs/evidence/perception-pilot-512-preparation.json)
+512장 파일럿은 회색·청색 용기의 적층·가림·배경·크기·시점 변형을 고정하고 객체별 박스·마스크와 깊이를 검사합니다. v5 입력의 촬영328은 **유효101장·객체545건의 박스/마스크·깊이 일치**를 확인했습니다.102번째 프레임은 박스가 발행된 객체의 semantic ID가 없어 거절했고 RGB·라벨·깊이를 진단용으로 보존했습니다. 원인은 아직 미확정이며 추가 촬영은 보류했습니다. **512장 완성 데이터와 검출기 학습 성과는 아직 없습니다.** [328 부분 결과·원본 해시·종료 근거](docs/evidence/perception-pilot-328.json) · [v5 입력과 확인 경계](docs/evidence/perception-pilot-v5-preparation.json) · [촬영 구현](docs/evidence/perception-pilot-512-preparation.json)
 
 <details>
-<summary>합성 파일럿325의 유효 부분12장</summary>
+<summary>합성 파일럿328의 유효101장 중 대표10장</summary>
 
-![회색·청색 용기와 팔레트를 세 장면·네 시점에서 촬영한 유효 부분12장](docs/images/perception-pilot-325/partial-contact-sheet.png)
+![회색·청색 용기와 팔레트의 여러 배치·시점에서 고른 유효 부분10장](docs/images/perception-pilot-328/partial-contact-sheet.png)
 
-첫 세 장면의 부분 RGB입니다. 실패한13번째 프레임은 포함하지 않습니다. 배경·가림 소품은 절차형 단순 형상이며 실제 창고 사진이 아닙니다. NVIDIA 원본 에셋·CC-BY-4.0·소비용 사본 변경 내역은 [에셋 출처](docs/asset-attribution.md)에 기록했습니다.
+유효101장 중 고른 실제 RGB10장입니다. 실패한102번째 프레임은 포함하지 않습니다. 배경·가림 소품은 절차형 단순 형상이며 실제 창고 사진이 아닙니다. NVIDIA 원본 에셋·CC-BY-4.0·소비용 사본 변경 내역은 [에셋 출처](docs/asset-attribution.md)에 기록했습니다.
 
 </details>
 

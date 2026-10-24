@@ -1657,3 +1657,9 @@ shipping product_move 완료 뒤 같은lot·carrier·origin의 준비된 empty_r
 후속2a23e41은 read-only can_retarget으로 새window의 기존보호부분집합/자원조건을 상태변경전에 확인한다. 실제활성window가있는 기존보호후속경로 성공과 캠퍼스A_OUT→A_S1의 non-subset fallback, 계수지연을 포함한 관련5검사가 통과했다. retarget 불변식은 유지한다. 이는 runtime_error 제거와 기존staging 복구이며, 캠퍼스 전체의 처리량 개선이나 더 넓은 새window의 인계 승인까지 입증한 것은 아니다.
 
 후속a46bea1은 subset 복귀만으로 실제캠퍼스 최적화를 완료했다고 보지 않고, 별도 replace_handover를 추가했다. 정지·기존handover보호·새window의현재차체포함을 요구하며 다른resourceowner·activewindow·모든peer실제pose를 다시 확인한다. 새승인이 거절되면 옛owners/window/waiters를 바꾸지 않는다. queue출구lookahead·용량·에너지검사도 유지한다. 실제A_OUT→D_S1 인계와 충돌/이동중/pose누락의거절·계수지연 등 표적7검사를 통과했다. rolling 첫window는AC_S_QUEUE까지이고 이후교량자원은 기존순서로획득한다. 전체운영성능은 아직미확인이다.
+
+## FOT-210 — bbox는 발행됐지만 semantic ID가 없는102번째 프레임
+
+단일GPU328은v5 입력으로 유효101프레임·객체545건의 박스/마스크·깊이 검사를 통과한 뒤 frame102/scene25/aisle_low에서 중단됐다. expected객체5개와 bbox객체5개가 있으나 semantic identity는4개이며 small_load_carrier-026-03이 빠졌다.323/325의같은예외문구만으로 동일한가림원인이라고 단정하지 않는다. RGB·semantic·거리·bbox·label map·카메라·recipe를보존했고 원인은미확정이다.
+
+유효자료101장과실패진단은구분했다. dataset.json은없고 training_ready/mapping_approved는false다. source13개불변·745파일해시·Job마감·소유PID0·lease반환을확인했다. v5 CPU AABB 대리 검사 통과를 실제화소/annotator일치로 확대하지 않으며, identity누락과bbox발행경계가 해소되기 전 같은v5 촬영을 반복하지 않는다. 추가GPU/대량생성/학습은보류한다. [실행·부분자료·진단이미지](evidence/perception-pilot-328.json)

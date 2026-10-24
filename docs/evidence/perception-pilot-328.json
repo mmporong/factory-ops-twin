@@ -1,0 +1,97 @@
+{
+  "schema_version": 1,
+  "run_id": "perception-pilot-328",
+  "status": "failed_after_payload_capture",
+  "success": false,
+  "single_gpu_attempt_completed": true,
+  "retry_performed": false,
+  "payload": {
+    "dataset_json_present": false,
+    "failure_json_present": true,
+    "valid_frame_count": 101,
+    "valid_object_frame_checks": 545,
+    "class_object_frame_counts": {
+      "pallet": 198,
+      "small_load_carrier": 347
+    },
+    "output_file_count": 745,
+    "output_bytes": 342849517,
+    "failure_frame_id": 102,
+    "failure_scene_index": 25,
+    "failure_view_id": "aisle_low",
+    "failure_error": "semantic identity count differs for object: small_load_carrier-026-03: 0",
+    "diagnostic_counts_as_valid_capture": false,
+    "diagnostic_counts_toward_coco": false
+  },
+  "source": {
+    "commit": "977edbb0e9601703bd63adb8fe1e8681890763c9",
+    "stable": true,
+    "changed_inputs": [],
+    "manifest_sha256": "9430580f16e55decdc15da4e82f3789e03574b3f3022eb670d15a679ad83d28b",
+    "recipe_sha256": "e47c42f4c213f724f2e9392c2861b1e0f8ce536562cc2676f9bfe471ee44904e"
+  },
+  "containment": {
+    "receipt_status": "passed",
+    "worker_exit_code": 0,
+    "payload_exit_zero_is_not_success": true,
+    "job_closed": true,
+    "remaining_owned_pids": [],
+    "observed_known_pids_alive": [],
+    "lease_id": "3fcc489b-2616-4b85-8196-488699ca75d7",
+    "lease_state": "available",
+    "lease_available": true,
+    "blocking_unmanaged_gpu_processes": []
+  },
+  "artifacts": {
+    "partial_payload_audit_sha256": "f2e53f988501241daab927927d5d74c1529c2004deee6228a00348a77db4278c",
+    "partial_file_index_sha256": "2eb452a285f206cfaec7456d440a11e7c650513bd7f0c8f1570a53d276dfaee2",
+    "partial_contact_sheet_sha256": "b05abf437c8d5f3f5c45fe561c68418c48487244e8b8d2eba56999d6cc23163e",
+    "failure_json_sha256": "f2f71dc6e9b944b6451c40af8b3cc9c232bc2775c3f496a5951d9910e9062884"
+  },
+  "scope": {
+    "counts_as_complete_dataset": false,
+    "training_ready": false,
+    "mapping_approved": false,
+    "model_training_performed": false,
+    "cosmos_used": false,
+    "heldout_loco_rgb_read": false,
+    "diagnostic_frame_in_valid_data": false
+  },
+  "requested_frames": 512,
+  "failure_boundary": {
+    "expected_objects": 5,
+    "bbox_objects": 5,
+    "semantic_objects": 4,
+    "missing_semantic_object_id": "small_load_carrier-026-03",
+    "bbox_identity_missing": false,
+    "cause_confirmed": false,
+    "interpretation": "BBox was issued for the target but semantic identity was absent. Current evidence does not decide occlusion, clipping or renderer semantic-ID behavior. No same-input retry or further GPU run is scheduled."
+  },
+  "evidence": {
+    "host_index_sha256": "3fb4f6e2395cfb4f97f0910f4729a6f146e92cd20f8008dec7f2e1646c0fea3d",
+    "host_result_sha256": "c8f63a0cb3ec95cf01fd14b9562bb77f3f7b334ea208b22219f18ab0f08909c0",
+    "partial_audit_sha256": "f2e53f988501241daab927927d5d74c1529c2004deee6228a00348a77db4278c",
+    "partial_file_index_sha256": "2eb452a285f206cfaec7456d440a11e7c650513bd7f0c8f1570a53d276dfaee2",
+    "host_index_entries_verified": 17,
+    "public_media": {
+      "invalid-frame-102.png": {
+        "path": "docs/images/perception-pilot-328/invalid-frame-102.png",
+        "bytes": 208337,
+        "sha256": "bc9061c63bb03f523aeddf6e90df757d561b91dd89946ab63c40efb0abd50045",
+        "scope": "diagnostic only; excluded from valid captures and COCO"
+      },
+      "partial-contact-sheet.png": {
+        "path": "docs/images/perception-pilot-328/partial-contact-sheet.png",
+        "bytes": 534917,
+        "sha256": "b05abf437c8d5f3f5c45fe561c68418c48487244e8b8d2eba56999d6cc23163e",
+        "scope": "10 representative frames selected from101 validated partial frames"
+      }
+    }
+  },
+  "data_retention": {
+    "raw_location": "E:/FactoryOpsData/perception-pilot-328",
+    "source_and_logs": "artifacts/perception-pilot-328-host",
+    "full_dataset_archive_created": false,
+    "scope": "Retain validated partial payload and latest failing diagnostic for resolving the contract; do not claim a finalized512-frame training dataset."
+  }
+}
