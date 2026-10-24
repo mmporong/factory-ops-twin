@@ -50,6 +50,8 @@ CPU 매핑 검사기는 배치254의 시각 인스턴스1,152개를 읽고, 팔�
 
 현재 소형 적재함 후보는 더 깊은 청색 천공 용기 `crate_blue_a02`다. 가시 외곽은 약0.612×0.412×0.240m이며 CC-BY-4.0 원본·재질·해시를 보존했다. 실행302에서4개 seed×4시점의16장과 bbox/semantic/provenance를 생성했고, 객체60개의 bbox가 같은 object ID의 semantic mask 외곽과 모두 일치했다. 데이터 매니페스트101개 파일의 크기·해시와 소유 프로세스 종료도 확인했다. [촬영 결과](evidence/perception-blue-probe-302.json) · [대표 이미지](images/perception-blue-probe-302/contact-sheet.png)
 
+후속 export의 `validate_capture`는 semantic의 `object_id`를 기준으로 객체별 visible mask와 tight bbox의 inclusive min/max를 대조한다. bbox와 segmentation의 숫자 ID가 같다고 가정하지 않는다. 경계에 닿은 객체는 허용하고, 기대한 객체가 완전히 가려지거나 화면 밖이라 visible pixel이 없으면 해당 probe export를 거부한다. 향후 가림이 많은 학습 파일럿에서는 이 실패를 재샘플링하거나 별도 visibility/ignore 정책으로 처리해야 하며, 이 probe 검사를 amodal bbox 정책으로 확대하지 않는다. 관련12검사와 기존302의16프레임·60개 객체 읽기 전용 재검증을 통과했다. [export 정합 근거](evidence/perception-object-mask-export.json)
+
 이 자료는 단순 바닥 위 후보 에셋의 export 확인이다. 청색 용기는 제한된 합성 시각 대리물 후보이며 LOCO 전체 용기 형상이나 KLT·ESD 규격을 대표하지 않는다. 가림·복잡한 배경·크기별 support와 촬영 그룹에 관한 실험 범위를 고정한 뒤512장으로 확대한다. `training_ready=false`, `mapping_approved=false`를 유지하며 검출기 학습·실사 성능은 아직 없다.16대 운영 로직 완성을 우선하며 같은 입력의 probe를 반복 수집하지 않는다.
 
 ### 실제 학습 사진과 합성 후보의 차이

@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "evidence_kind": "transcribed_console_receipt",
+  "status": "passed",
+  "validation_scope": "read-only validation of existing probe 302 semantic masks and raw tight bboxes",
+  "execution_script": {
+    "path": null,
+    "reason": "The one-time validator was supplied to python through PowerShell standard input and was not saved as a file.",
+    "rerun_performed_for_receipt": false,
+    "validator_commit": "f0effcc835ee7fdf4c96a5c0d86422329c5edf10",
+    "main_cherry_pick_commit": "7f6f976"
+  },
+  "source": {
+    "dataset_root": "artifacts/perception-blue-probe-302/dataset",
+    "dataset_manifest": {
+      "path": "artifacts/perception-blue-probe-302/dataset/dataset.json",
+      "bytes": 50001,
+      "sha256": "1eb8abf595636c26da28b0274ae21c9cade08a185efdabb690037dc0da7ab89b"
+    },
+    "existing_payload_audit": {
+      "path": "artifacts/perception-blue-probe-302/payload-audit.json",
+      "bytes": 37737,
+      "sha256": "91fcafd8e00f208d1d3c40bb0b1c5beaedfa9da761cb34af22e24d67a9d4f387"
+    }
+  },
+  "transcribed_console_result": {
+    "stdout": "{\"frames\": 16, \"objects\": 60, \"status\": \"passed\"}",
+    "frames_validated": 16,
+    "objects_validated": 60,
+    "comparison": "each bbox inclusive min/max exactly equaled the semantic mask extent carrying the same object_id"
+  },
+  "limits": [
+    "This receipt transcribes the already completed console validation; it is not a second execution log.",
+    "No GPU capture, data generation, model training, or artifact mutation was performed."
+  ],
+  "source_receipt_sha256": "eac6376d262c24b8db0e229927857773b546469c783a69982ec26b38952f0351",
+  "implementation_checks": {
+    "targeted_test_module": "tests.test_perception_dataset",
+    "passed_tests": 12,
+    "syntax_check": "passed",
+    "diff_check": "passed",
+    "gpu_launches": 0,
+    "scope": "Existing 302 inputs and changed export behavior only; no broad training readiness or model performance claim."
+  },
+  "validator_source_sha256": "1934070516c7f15a0a7531c87baf5accfb418cd6e24c8d921244c89eb6d610d2"
+}
