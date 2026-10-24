@@ -1663,3 +1663,5 @@ shipping product_move 완료 뒤 같은lot·carrier·origin의 준비된 empty_r
 단일GPU328은v5 입력으로 유효101프레임·객체545건의 박스/마스크·깊이 검사를 통과한 뒤 frame102/scene25/aisle_low에서 중단됐다. expected객체5개와 bbox객체5개가 있으나 semantic identity는4개이며 small_load_carrier-026-03이 빠졌다.323/325의같은예외문구만으로 동일한가림원인이라고 단정하지 않는다. RGB·semantic·거리·bbox·label map·카메라·recipe를보존했고 원인은미확정이다.
 
 유효자료101장과실패진단은구분했다. dataset.json은없고 training_ready/mapping_approved는false다. source13개불변·745파일해시·Job마감·소유PID0·lease반환을확인했다. v5 CPU AABB 대리 검사 통과를 실제화소/annotator일치로 확대하지 않으며, identity누락과bbox발행경계가 해소되기 전 같은v5 촬영을 반복하지 않는다. 추가GPU/대량생성/학습은보류한다. [실행·부분자료·진단이미지](evidence/perception-pilot-328.json)
+
+공식Replicator1.11.35 계약과 설치된annotators_default.py를 대조했다. tight bbox와semantic segmentation은 별도노드이며 동일객체집합/동일수치ID를 보장하는 계약은없다. 프로젝트는object_id 라벨로 교차확인하는 더엄격한 품질gate를 사용한다. frame102 누락대상의 raw bbox는x=0..0/y=388..389이며 프로젝트inclusive규칙으로1열×2행의좌측경계박스다. semantic mask픽셀은0이고 occlusionRatio0.0만으로 가시성을확정하지않는다. 다음재현이필요할때는고정frame102한장에loose bbox·instance segmentation을함께남겨경계/FOV/semantic경로를구분하며 전체512촬영을진단으로반복하지않는다. [같은버전공식annotator계약](https://docs.omniverse.nvidia.com/kit/docs/omni_replicator/1.11.35/source/extensions/omni.replicator.core/docs/API.html)

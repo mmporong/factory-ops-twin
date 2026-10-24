@@ -65,7 +65,21 @@
     "missing_semantic_object_id": "small_load_carrier-026-03",
     "bbox_identity_missing": false,
     "cause_confirmed": false,
-    "interpretation": "BBox was issued for the target but semantic identity was absent. Current evidence does not decide occlusion, clipping or renderer semantic-ID behavior. No same-input retry or further GPU run is scheduled."
+    "interpretation": "BBox was issued for the target but semantic identity was absent. Current evidence does not decide occlusion, clipping or renderer semantic-ID behavior. No same-input retry or further GPU run is scheduled.",
+    "raw_bbox": {
+      "x_min": 0,
+      "x_max": 0,
+      "y_min": 388,
+      "y_max": 389,
+      "occlusionRatio": 0.0
+    },
+    "project_inclusive_bbox_size_pixels": [
+      1,
+      2
+    ],
+    "semantic_mask_pixels": 0,
+    "same_object_set_guaranteed_by_vendor": false,
+    "scope": "A one-column/two-row viewport-border box under this project inclusive convention; not a positive semantic visibility proof. Numeric IDs are cross-mapped by object_id, not compared across annotators."
   },
   "evidence": {
     "host_index_sha256": "3fb4f6e2395cfb4f97f0910f4729a6f146e92cd20f8008dec7f2e1646c0fea3d",
@@ -93,5 +107,17 @@
     "source_and_logs": "artifacts/perception-pilot-328-host",
     "full_dataset_archive_created": false,
     "scope": "Retain validated partial payload and latest failing diagnostic for resolving the contract; do not claim a finalized512-frame training dataset."
-  }
+  },
+  "references": [
+    {
+      "url": "https://docs.omniverse.nvidia.com/kit/docs/omni_replicator/1.11.35/source/extensions/omni.replicator.core/docs/API.html",
+      "scope": "Tight bbox uses visible pixel extents and excludes fully occluded objects; semantic segmentation has a separate pixel/label map interface. No cross-annotator equal-object-set guarantee is stated."
+    },
+    {
+      "SDK": "Isaac Sim4.5 / omni.replicator.core1.11.35+106.5.0",
+      "path": "omni/replicator/core/scripts/annotators_default.py",
+      "scope": "Tight bbox uses SemanticBoundingBox2DExtentTightSDhostPtr/SemanticOcclusionSDhostPtr; semantic segmentation uses instance_segmentation_fast via a separate SemanticSegmentation node."
+    }
+  ],
+  "next_minimum_diagnostic": "When GPU diagnosis is resumed, use only the fixed frame102 with loose bbox and instance segmentation to distinguish camera-boundary/instance/semantic mapping cases. Do not restart the full512 capture as a diagnostic."
 }

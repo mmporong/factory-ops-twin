@@ -125,3 +125,5 @@ v5는 같은 검사를 모든 불투명 절차형 컨텍스트 상자로 확장�
 본선327의 소스 동결 뒤 유휴 공용GPU lease로v5를 한 번 촬영했다. 유효101프레임의545개 객체(pallet198·small_load_carrier347)는 실제semantic 마스크외곽==raw tight bbox, inclusive COCO후보좌표, 객체영역 유한양수깊이 검사를 통과했다. frame102/scene25/aisle_low는5개 expected객체 중 bbox5개·semantic identity4개여서 거절됐다. bbox가 발행된 small_load_carrier-026-03의semantic ID가 없다는 관측까지 확인했으며, 가림·잘림·renderer ID처리 중 원인은 미확정이다.
 
 원본745파일·342,849,517바이트와실패진단을 보존하고 dataset.json은 작성하지 않았다. Job닫힘·owned0·lease반환·입력13개불변을 확인했다. 실패프레임은 유효자료/COCO에서 제외하고, 같은입력을 재시도하거나 GPU를 추가로 실행하지 않는다. 데이터는 export 계약 진단용 부분자료이며 클래스 매핑/학습 승인·512장 완성·실사mAP·Cosmos 결과로 사용하지 않는다. [328 마감·대표10장·원본 해시](evidence/perception-pilot-328.json)
+
+객체별bbox/semantic 집합일치는 공식SDK가보장하는동등성이 아니라 프로젝트의추가품질gate다. frame102의누락대상은raw x=0..0/y=388..389, inclusive1×2픽셀의화면좌측경계사례다. numeric ID를같다고가정하지않고 object_id라벨로대조하며, occlusionRatio0.0을가시성보증으로사용하지않는다. 이후진단은고정1프레임의loose bbox·instance segmentation으로범위를좁히고, 결과를보기전전체촬영을반복하지않는다. [공식Replicator1.11.35 API](https://docs.omniverse.nvidia.com/kit/docs/omni_replicator/1.11.35/source/extensions/omni.replicator.core/docs/API.html)
