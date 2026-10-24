@@ -53,7 +53,7 @@ Ctrl+C는 `incomplete / diagnostic_interrupt`로 마감하고 가능한 최종 s
 
 마감된 기록의 최종 발췌는 `scripts/media/select_operations_excerpt.py --recording <종료된 기록 폴더> --output <새 JSON>`으로 고른다. 기본 계약은16대·48lot이며 전체 출하/반납·최종 정지·차량별2회 이상 운송·16개 물류 임무 동시성·소스 안정이 모두 충족돼야 한다. 종료 매니페스트가 없는 기록은 gzip을 열기 전에 거절한다. 통과한 기록도 원본·동결 소스·압축 전후 해시를 확인한 뒤, 기본30초·30fps·8배속의900프레임에 맞는 후보5개를 고른다. 배치와 같은 물류 점수를 사용하고 출하/반납이 함께 증가하는 후보인지 출력한다. 이 도구는 GPU 렌더를 시작하지 않는다. 현재16대 완주 입력은 확인 중이다.
 
-선택 차로 확장은 `--config configs/factory-semiconductor-campus16-wide-bridges --policy fifo`로 실행한다. AB/CD의 실제3m 차로와 방향별 예약을 사용하며 AC/BD·버퍼·재고·에너지·차체 반경은 유지한다. 지정 대기점 양보도 같은 모델에서 적용한다. 구성 요소 검사는 통과했지만330은 D 구역의 안전 출구 정의 오류로 실패해 해당 경계를 수정 중이다. 전체 완주는 아직 확인하지 못했다. [기하와 확인 범위](evidence/campus16-wide-bridges.json)
+선택 차로 확장은 `--config configs/factory-semiconductor-campus16-wide-bridges --policy fifo`로 실행한다. AB/CD의 실제3m 차로와 방향별 예약을 사용하며 AC/BD·버퍼·재고·에너지·차체 반경은 유지한다. 지정 대기점 양보도 같은 모델에서 적용한다. 구성 요소 검사는 통과했지만330에서 도로와 독점 예약 영역의 잘못된 확장을 확인해 경계를 수정했다. 실제 반납 경로 회귀는 통과했으며 전체 완주는331에서 확인 중이다. [기하와 확인 범위](evidence/campus16-wide-bridges.json)
 
 ## 16대 캠퍼스의 설비 고장·복구
 

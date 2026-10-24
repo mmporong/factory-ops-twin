@@ -177,5 +177,63 @@
     },
     "passed": false
   },
-  "next_action": "Reproduce the exact D-region route span that lacks an authored safe exit. Repair only the optional wide geometry and relevant rolling-window boundaries; retain original330 and all admission guards, with no identical full retry."
+  "next_action": "Freeze331 from the repaired source and unchanged safety/energy/load limits; judge same-run48/48, quiescence, every robot>=2 and peak16 only after closure.",
+  "diagnosis_and_repair": {
+    "receipt_sha256": "e4f3358c4497dba180d534bb40abe327f976ffb795f6e74e81a7ee3ce4b7e137",
+    "robot_id": "amr-9",
+    "task_id": "LOT-0010:empty_return:5",
+    "payload_id": "T010",
+    "full_OD": [
+      "A_OUT",
+      "D_S1"
+    ],
+    "failing_resume_nodes": [
+      "D_LOW_E_P1",
+      "D_LOW_E_C",
+      "D_LOW_W_C",
+      "D_LOW_W_P1",
+      "D_LOW_W_W",
+      "D_S1"
+    ],
+    "last_pose_xy": [
+      53.9916859183,
+      44.5
+    ],
+    "root_cause": "The new wide generator also expanded atomic policy overlays to cover the full6m allowed road envelope, incorrectly enclosing D_S1 and B_S1 as bottleneck interior. D_S1 then had no authored exterior release point.",
+    "implementation_worker_commit": "3144b5667aaee09b812b5aa13d77fa6daef8ac89",
+    "implementation_main_commit": "1af29dd5f52cba4cb9308141050aaab4ad44d351",
+    "repair": "Restore only H_AB/H_CD atomic reservation policy overlays to baseline rectangles. Keep actual3m lane coordinates, existing6m road, directional bridge resources, CD safe exit and AB approach expansion.",
+    "atomic_overlay_rectangles": {
+      "AB": [
+        32,
+        13,
+        47,
+        16.8
+      ],
+      "CD": [
+        32,
+        45,
+        47,
+        48.8
+      ]
+    },
+    "main_regression": {
+      "passed": true,
+      "tests": 1,
+      "elapsed_s": 6.11,
+      "actual_trip_kind": "process_line",
+      "actual_phase": "drop",
+      "scope": "Loaded empty_return rolling geometry, not native load dynamics."
+    },
+    "worker_affected_tests_passed": 4,
+    "bounded_OD_scan": {
+      "operational_nodes": 77,
+      "OD_pairs": 5929,
+      "specific_safe_exit_error_count_before": 13,
+      "specific_safe_exit_error_count_after": 0,
+      "scope": "Only the without-an-authored-safe-exit error class counted; not an all-error-category audit or a full operating run."
+    },
+    "original_result_reclassified": false,
+    "full_followup_success_verified": false
+  }
 }

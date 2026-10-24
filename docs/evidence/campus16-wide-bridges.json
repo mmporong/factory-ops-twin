@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
-  "status": "component_tests_passed_full330_failed_D_local_safe_exit_span",
+  "status": "D_local_overlay_boundary_repaired_targeted_passed_full_followup_pending",
   "execution_scope": "Authored CPU geometry, kinematic route windows and guards; no native physics/sensor or final-render claim.",
   "config": "configs/factory-semiconductor-campus16-wide-bridges",
-  "source_worker_commit": "e5d98867eebd4020beac7815f9c4e5ead064f05f",
-  "source_main_commit": "0b616c5e796d992891539c16d06c619cd3ab2e9f",
+  "source_worker_commit": "3144b5667aaee09b812b5aa13d77fa6daef8ac89",
+  "source_main_commit": "1af29dd5f52cba4cb9308141050aaab4ad44d351",
   "baseline_limitation": {
     "lane_center_separation_m": 1.5,
     "reservation_radius_m": 1.4371090915442775,
@@ -123,8 +123,8 @@
   "config_sha256": {
     "fleet-profile.json": "f49254f37ffb154f7c113e004a70e9c43f131d60eb2a7408434d30f36a16c9aa",
     "g2.json": "f1f0edd538ac61d21ab45dc2ae02d40f560f418025b938ea1a2d7c9362195bed",
-    "g3-routing.json": "39b396c4e96b7e8e3c7b37791240ce9c1ac6bc88bbc4f6fb99049bdafedab9e0",
-    "layout.json": "457a6643c5e9b746707d946cd1eb4a967ea893b07b6143203bbbc1f285df1cc6",
+    "g3-routing.json": "89c433cd39e38ae5116a0dd265f26062619094f4a96e658fcd0821784cd9c2a0",
+    "layout.json": "43c5510de10fd9c220f95ad563fb4ca99428f9fbb8b99d568c3163fdeb41454f",
     "operations-charging.json": "b1a7d2e0d24a70d5d6796e024de85086f6db5b65ab82ff67c11d84ac1f226e02",
     "process-network.json": "5a406e3880996c543afe7f49b104a7d94d4dd33319b782c891a26cb0996a3a8d",
     "render-profile.json": "1ed3a6b259062a399e2f39af5dbf2a5d9b8b133a55a0f04c6c1ff7c9c5ce9187",
@@ -178,7 +178,7 @@
     "native_physics_transport": false,
     "final_GPU_render": false
   },
-  "next_action": "Reproduce exact D local/mixed route-span boundary; repair the optional geometry and verify related rolling-window routes before any fresh full run.",
+  "next_action": "Use repaired geometry in frozen331. Whole-run completion,16 material concurrency and native/final-render qualification remain unverified.",
   "new_holdable_nodes_count": 45,
   "original_holdable_nodes_count": 44,
   "full_followup": {
@@ -189,5 +189,26 @@
     "last_successful_snapshot_shipments": 4,
     "last_successful_snapshot_returns": 1,
     "scope": "These are pre-exception observations; no whole-run completion or isolated capacity improvement."
+  },
+  "atomic_policy_overlay_repair": {
+    "baseline_rectangles_restored": {
+      "AB": [
+        32,
+        13,
+        47,
+        16.8
+      ],
+      "CD": [
+        32,
+        45,
+        47,
+        48.8
+      ]
+    },
+    "existing_physical_road_width_m": 6,
+    "actual_lanes_and_resources_unchanged": true,
+    "worker_affected_tests_passed": 4,
+    "main_exact_CD_resume_regression_passed": true,
+    "bounded_OD_scan_specific_safe_exit_errors": "13 to0 among5929 operational-node OD pairs; other error classes not audited"
   }
 }

@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "execution_mode": "authored_CPU_operations",
+  "objective": "Same48lots shipped and carriers returned; quiescent; all16robots repeat material transport; peak16 actual material tasks. Parking/charging/yield excluded.",
+  "workload": {
+    "lots": 48,
+    "policy": "fifo",
+    "config": "configs/factory-semiconductor-campus16-wide-bridges",
+    "dispatch_mode": "downstream_wip_drain_least_assigned",
+    "release": "all at simulation start"
+  },
+  "limits": {
+    "horizon_s": 240000,
+    "wall_s": 10800,
+    "stall_timeout_s": 600,
+    "cycle_stall_timeout_s": 600,
+    "record_best_window_samples": 300
+  },
+  "success_flags": {
+    "all48_shipped_and_returned_verified": false,
+    "quiescent_verified": false,
+    "peak16_material_tasks_verified": false,
+    "native_physics_transport_verified": false,
+    "final_render_eligible": false
+  },
+  "case": "campus16-pilot-331",
+  "run_id": "process-line-53b58e53-caad-4b89-946f-f1397c2fa524",
+  "status": "running",
+  "source_commit": "1af29dd5f52cba4cb9308141050aaab4ad44d351",
+  "components": {
+    "final_quiescence_fix": "0c42abb01d718b2f2bc97e28a64a71c9043e9e09",
+    "holdable_refuge_yield": "b102144442641da769661c69b4655abb03df0077",
+    "actual_wide_bridge_geometry": "0b616c5e796d992891539c16d06c619cd3ab2e9f",
+    "atomic_overlay_boundary_repair": "1af29dd5f52cba4cb9308141050aaab4ad44d351"
+  },
+  "comparison_scope": "Source-bound complete-run followup with repaired atomic overlay boundaries, wide actual AB/CD lanes, holdable refuge and original FIFO/least-assigned. Not an isolated policy or geometry speedup comparison.",
+  "frozen_source": {
+    "file_count": 43,
+    "manifest_sha256": "ddc164bf206e64b0b7ea8f4ee85b264f61b83bd9b789959c718865fd06472181",
+    "files_checked_at_launch": true
+  },
+  "launch_processes": {
+    "session": 74661,
+    "shell_pid": 50532,
+    "wrapper_pid": 110648,
+    "python_pid": 50320,
+    "retention_reason": "Authorized bounded48-lot completion run supervised from an isolated clean source worktree.",
+    "stop_method": "Ctrl+C to the owned execution session; runner finalizes result and recording. Do not terminate unrelated processes."
+  },
+  "initial_observed_progress": {
+    "sim_time_s": 4079.9999999973847,
+    "elapsed_wall_s": 90.99785869999323,
+    "shipments": 1,
+    "returns": 0,
+    "deliveries": 31,
+    "peak_material_tasks": 9
+  },
+  "verification_scope": "Only launch and43 frozen source/config hashes verified. Full completion, actual16 material concurrency and final media remain unverified."
+}
