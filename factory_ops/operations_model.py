@@ -1078,6 +1078,46 @@ class OperationsModel(DashboardModel):
         )
         return True
 
+    def _retarget_relocated_home_parking(self, robot_id: str, destination: str) -> bool:
+        """Redirect a stopped stale home trip after a charging home swap."""
+
+        trip = self._trips.get(robot_id)
+        if (trip is None or trip["kind"] != "parking" or trip.get("purpose", "home") != "home"
+                or trip["goal"] == destination or robot_id in self._chunks
+                or not self.motions[robot_id].stopped
+                or self.bridges.has_window(robot_id) or self.bridges.held(robot_id)):
+            return False
+        anchor = anchor_at_pose(self.book.nodes, self._poses[robot_id])
+        if (anchor is None
+                or (self.bridges.holdable_nodes is not None
+                    and anchor not in self.bridges.holdable_nodes)
+                or anchor in self.bridges.queue_nodes):
+            return False
+        prior_goal = trip["goal"]
+        self.reservations.withdraw_pending(
+            robot_id,
+            now_s=self.sim_time,
+            reason="charging_home_swap_parking_retargeted",
+        )
+        self.bridges.withdraw_waiter(robot_id)
+        self._waiting.pop(robot_id, None)
+        self._replans.pop(robot_id, None)
+        del self._trips[robot_id]
+        self._locations[robot_id] = anchor
+        self._trip(
+            robot_id, {}, anchor, destination, "parking",
+            kind="parking", purpose="home",
+        )
+        self._event(
+            "charge_home_relocation_retargeted",
+            f"{robot_id} 교환 전 주차 경로를 새 위치로 변경",
+            robot_id,
+            anchor=anchor,
+            prior_goal=prior_goal,
+            relocation_home=destination,
+        )
+        return True
+
     def _can_withdraw_pickup_for_charge(self, robot_id: str) -> bool:
         """Allow only one stopped, empty pickup to retain its work across charging."""
 

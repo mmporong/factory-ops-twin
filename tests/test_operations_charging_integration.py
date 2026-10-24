@@ -129,6 +129,47 @@ class OperationsChargingIntegrationTests(unittest.TestCase):
         self.assertEqual("parking", model._trips[owner]["kind"])
         self.assertEqual("P3", model._trips[owner]["goal"])
 
+    def test_home_swap_retargets_stopped_parking_trip_away_from_charging_pad(self):
+        model = OperationsModel(
+            CONFIG, initial_orders=0, run_id="operations-charge-active-home-retarget",
+            operations_charging_profile=self.base_profile,
+        )
+        charging = model.operations_charging
+        assert charging is not None
+        charging.queue.clear()
+        charging.aux.clear()
+        charging.relocating.clear()
+        model._trips.clear()
+
+        owner = "amr-1"
+        charging_robot = "amr-3"
+        model._locations[owner] = "P4"
+        x, y = model.book.nodes["P4"]
+        model._poses[owner].update(x_m=x, y_m=y)
+        model._trip(owner, {}, "P4", "P1", "parking", kind="parking", purpose="home")
+
+        self.assertTrue(charging._prepare_home_swap(model, charging_robot, "P1"))
+        self.assertEqual("P1", model._trips[owner]["goal"])
+
+        model._chunks[owner] = {"in_flight": True}
+        charging.prepare(model)
+        self.assertEqual("P1", model._trips[owner]["goal"])
+
+        del model._chunks[owner]
+        charging.prepare(model)
+
+        self.assertEqual("P3", model.homes[owner])
+        self.assertEqual("P3", model._trips[owner]["goal"])
+        self.assertEqual("P4", model._locations[owner])
+        self.assertEqual("home", model._trips[owner]["purpose"])
+        self.assertTrue(any(
+            event["type"] == "charge_home_relocation_retargeted"
+            and event["robot_id"] == owner
+            and event["prior_goal"] == "P1"
+            and event["relocation_home"] == "P3"
+            for event in model._events
+        ))
+
     def test_charge_queue_preempts_home_parking_only_at_safe_stop(self):
         model = OperationsModel(
             CONFIG, initial_orders=0, run_id="operations-charge-parking-preempt",

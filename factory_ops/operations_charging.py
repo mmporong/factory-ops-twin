@@ -372,6 +372,9 @@ class OperationsCharging:
     def prepare(self, model: OperationsModelLike) -> None:
         self._update_traffic_wait_budget(model)
         for robot, destination in list(self.relocating.items()):
+            retarget = getattr(model, "_retarget_relocated_home_parking", None)
+            if callable(retarget):
+                retarget(robot, destination)
             if robot not in model._trips and model._locations[robot] == destination:
                 del self.relocating[robot]
                 model._event("charge_home_relocated", f"{robot} 교환 주차 위치 도착", robot,
