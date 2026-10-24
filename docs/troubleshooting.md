@@ -1267,3 +1267,15 @@ WEST_LINK와 CENTER_LINK는 진입 구간부터 작성된 첫 출구 앵커까�
 ## FOT-154 — Windows 콘솔 인코딩이 원래 SSH 오류 출력을 가림
 
 233의 SSH 오류에 포함된 CLI spinner 문자를 cp949 표준 출력으로 보낼 때 UnicodeEncodeError가 추가로 발생했다. finally의 Stop 시도와 UTF-8 호스트 기록은 실행됐지만 마지막 콘솔 요약이 누락됐다. 원래 SSH/Stop 오류와 별개인 출력 오류다. 전체 CLI 로그는 UTF-8 파일로 보존하고, 오류 요약만 ASCII escape로 출력하도록 고쳤다. 원격 실패를 인코딩 오류로 대체하지 않는다.
+
+## FOT-155 — 클라우드 준비 실행기 종료와 Stop 사후 확인
+
+234의 호스트 기록은 `waiting_ready`에서 멈췄지만 해당 Python 프로세스는 사라졌고 실행 도구는 출력 없이 exit1을 반환했다. 종료 원인은 확인되지 않았다. 정상 Python 예외 처리의 finally만으로 호스트 강제 종료까지 정리가 보장된다고 주장하지 않는다. SDK 초기화와 공장 실행의 성공 근거는 없다.
+
+새 FactoryOps 환경의 이름·ID를 대조한 뒤 Stop을 복구했다. ID로 보낸 명령은 exit0, 뒤이어 이름으로 보낸 명령은 Internal Server Error였으나 목록에서 STOPPING과 이후 STOPPED를 관측했다. 어느 요청이 실제 상태 전환을 유발했는지는 단정하지 않는다. 실제 STOPPED를 확인해 삭제하지 않고 보존했으며 기존L40S는 중지 상태였다. 다른 프로젝트에는 중지·삭제·SSH 명령을 보내지 않았다. 다음 배치에서는 기존234 재사용과 실행기 밖의 중지 복구를 준비하며 같은 환경을 새로 만들지 않는다. [234 기록과 해시](evidence/brev-scale-bootstrap-234.json)
+
+Verda의 [Shutdown 전용 문서](https://docs.verda.com/cpu-and-gpu-instances/shutdown-hibernate-and-delete/)는 Shutdown 동안 계속 과금되며 Hibernate는 삭제·스토리지 보존으로 대체됐다고 설명한다. Brev의 [GPU 환경 문서](https://docs.nvidia.com/brev/concepts/gpu-instances)는 Stop 상태에서 계산 요금이 멈추고 저장소 요금이 남을 수 있다고 설명한다. 제공처의 일반 종료 버튼과 특정 Brev SKU의 Stop 지원을 구분하며, 다른 프로젝트 VM의 버튼을 눌러 확인하지 않는다.
+
+## FOT-156 — 복수 공정 인계점과 기존 교통 점유 충돌
+
+공정 통합에서 초기 AOI 후보점은 west shared corridor 내부 정지여서 atomic safe-exit이 허용하지 않았고, PACK 후보점은 P5 주차 차량의 예약 점유와 충돌했다. 회피 반경이나 정지 점유를 줄이지 않고 AOI 인계점을 S2 측면 bay에, PACK 인계점을 동쪽 spine의 기존 방향 차로에 배치했다. 기존 scale12/16 구성은 보존하고 line12/16만 별도로 생성한다. 작성한 인계점은 제조사 장비 실측 좌표가 아니다. 표적 검사2개와235의1lot 실제 CPU 주행에서5운송·출하·빈 캐리어 반납·최종 정지를 확인했다. [235 결과](evidence/process-line-235.json)

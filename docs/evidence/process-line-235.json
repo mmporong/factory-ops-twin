@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "scope": "authored CPU process line and kinematic reservations; no physics, sensors or measured factory times",
+  "run_id": "process-line-e4f39726-0db5-4f0c-bdca-9dab0ca2aea3",
+  "status": "complete",
+  "workload": {
+    "lots": 1,
+    "release": "all at simulation start",
+    "policy": "fifo"
+  },
+  "fleet_count": 12,
+  "metrics": {
+    "sim_time_s": 1209.999999999995,
+    "elapsed_wall_s": 22.467522299964912,
+    "completed_lots": 1,
+    "returned_carriers": 1,
+    "completed_transports": 5,
+    "assignments_by_participant": {
+      "amr-1": 2,
+      "amr-4": 3
+    },
+    "min_circular_clearance_m": 1.7257818169114452,
+    "quiescent": true,
+    "stock_units": 59,
+    "conservation_balanced": true,
+    "representative_snapshot_count": 64
+  },
+  "transport_flow": [
+    [
+      "S1",
+      "CI"
+    ],
+    [
+      "CO",
+      "AOI_IN"
+    ],
+    [
+      "AOI_OUT",
+      "PACK_IN"
+    ],
+    [
+      "PACK_OUT",
+      "OUT"
+    ],
+    [
+      "OUT",
+      "S1"
+    ]
+  ],
+  "source_stable_during_run": true,
+  "raw_result_sha256": "911c51ef7ea5e225826b067fcc371a1e614262ecca1232669004c20d559bc055",
+  "frozen_manifest_sha256": "d5996d7721a21d7ad802f6547a3fff0a097b4aab0d96bc8ae4069938cec15eaa",
+  "raw_relative_path": "artifacts/operations/process-line-235/result.json",
+  "backup": {
+    "path": "D:/FactoryOpsPortfolio/process-line-235.zip",
+    "bytes": 286547,
+    "sha256": "c9b91722d92d13850943bfccc602dba4d19b6a491725285b06c7bb85bb08d0f4",
+    "entries": 40,
+    "all_entries_hash_verified": true,
+    "offsite": false
+  },
+  "validation": {
+    "targeted_unit_tests": 2,
+    "targeted_unit_tests_passed": 2,
+    "fresh_cli_pilot": "complete with final validate_snapshot success"
+  },
+  "limitations": [
+    "One lot, two participating robots out of twelve configured; no twelve/sixteen-robot throughput success claim",
+    "Only authored kinematic and circular-clearance evidence; no measured physical or sensor success",
+    "No updated factory render or multi-cell browser verification",
+    "Exact frozen source bytes are preserved in the backup; Git line-ending normalization may change blob bytes"
+  ]
+}

@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "scope": "Authored CPU TEST/AOI/PACK ledger bound to authored route anchors; no equipment certification, robot physics, sensor or measured process-time claim",
+  "cells": [
+    {
+      "id": "TEST",
+      "input_station": "CI",
+      "output_station": "CO",
+      "processing_time_s": 30.0,
+      "input_capacity": 1,
+      "output_capacity": 1
+    },
+    {
+      "id": "AOI",
+      "input_station": "AOI_IN",
+      "output_station": "AOI_OUT",
+      "processing_time_s": 20.0,
+      "input_capacity": 1,
+      "output_capacity": 1
+    },
+    {
+      "id": "PACK",
+      "input_station": "PACK_IN",
+      "output_station": "PACK_OUT",
+      "processing_time_s": 15.0,
+      "input_capacity": 1,
+      "output_capacity": 1
+    }
+  ],
+  "transport_contract": [
+    "source->TEST_IN",
+    "TEST_OUT->AOI_IN",
+    "AOI_OUT->PACK_IN",
+    "PACK_OUT->OUT",
+    "OUT->original_source_empty_carrier_return"
+  ],
+  "provenance": {
+    "kind": "authored-not-calibrated",
+    "domain": "semiconductor final-test, optical inspection and packing demonstration",
+    "capacity_meaning": "finite logical input/output slots; not vendor equipment specifications",
+    "integration_boundary": "station coordinates, OperationsModel dispatch and robot navigation receipts are supplied by a later adapter",
+    "equipment_context": {
+      "TEST": "PROCESS_1 handler with CI/CO logical handoffs",
+      "AOI": "BENCH_A2 and BENCH_B2 inspection/marking context",
+      "PACK": "FG_LOW and FG_HIGH packaging/staging context"
+    }
+  }
+}

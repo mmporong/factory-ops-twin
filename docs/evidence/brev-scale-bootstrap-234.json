@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "scope": "Cloud provisioning and actual Stop confirmation only; no fleet or SDK success",
+  "provider": "nebius",
+  "instance_type": "gpu-l40s-d.2gpu-64vcpu-384gb",
+  "actual_stopped": true,
+  "deleted": false,
+  "confirmed_at": "2026-10-24T02:30:57.361059+00:00",
+  "preserved_l40s_stopped": true,
+  "observations": [
+    "Bootstrap host process was absent while host.json still said waiting_ready; interruption cause is unconfirmed",
+    "Stop by ID returned exit0; a later Stop by name returned Internal Server Error",
+    "Actual STOPPING and then STOPPED were observed; command exit code alone was not used as shutdown proof"
+  ],
+  "source_commit": "da3d1a36fe62f1859053b75765aa2f6fe0ff5283",
+  "receipts_sha256": {
+    "bootstrap.sh": "fd84dabce36d5adbcca64778e009ce834d5397bb180eb7d936b1122e3dadc1e8",
+    "create.log": "af3e8ebc006784b43607a652783b1376e0ae6f28b86acda495b678e7e869bc28",
+    "host.json": "6c2b36a6342ab84bc9f2bf6399a05bf4aa4410a33da6f3e31449141118b8e51b",
+    "recovery.json": "fff038406ad73ae59b3ae437af1bddf7a876e389809b80f42e74a15890be207a",
+    "stop-by-name.log": "926cc0d9727f4b01cdfa393a37d0d83cfc0052015b8596080af252a65eee4133",
+    "stop-recovery.log": "df15765ea9149af8a986dbcf44266f69bae6618eea2cd0fd3aa7aadb3962f7ba"
+  },
+  "limitations": [
+    "Exact host interruption cause is unconfirmed",
+    "No actual driver, SDK, render, sensor, fleet or settled billing verification",
+    "Other project instances were not used for Stop tests"
+  ],
+  "references": [
+    "https://docs.nvidia.com/brev/concepts/gpu-instances",
+    "https://docs.nvidia.com/brev/cli/instance-management",
+    "https://docs.verda.com/cpu-and-gpu-instances/shutdown-hibernate-and-delete/"
+  ]
+}

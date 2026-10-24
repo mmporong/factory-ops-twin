@@ -29,9 +29,16 @@ cd "$HOME/factory-ops-twin"
 
 출력 경로는 새 경로를 사용합니다. `scale16` 구성도 같은 명령의 `--config`로 선택할 수 있으며, 위 파일럿 수치는12대 실행에만 해당합니다.
 
-Brev 상위 환경의 생성·SDK 초기화·Stop 도구는 `scripts/brev/bootstrap_scale.py`입니다. 기본 실행은 사전 확인이며 `--execute`가 있을 때 선택한 환경1개를 생성합니다. AWS RTX PRO 6000 시도233은 SSH·Stop 서버 오류로 실패해 새 빈 VM을 삭제했습니다. Stop 가능한 Nebius L40S2장 구성을 `--profile nebius-l40s-pair`로 준비하며, 기존L40S는 보존합니다. 첫 작업 묶음은6시간·40달러 상한이고12·16대 센서/물리 실행의 성공 근거는 아직 없습니다.
+Brev 상위 개발 환경은 Nebius L40S 2장 구성으로 보존돼 있으며, 실제 `STOPPED` 상태를 확인했습니다. 기존 L40S 환경도 중지 상태로 보존합니다. 환경의 생성·SDK 초기화·Stop 도구는 `scripts/brev/bootstrap_scale.py`이고, 기본 실행은 사전 확인입니다. 이미 있는 환경은 이 도구로 다시 생성하지 않습니다. 첫 작업 묶음의 상한은 6시간·40달러이며, SDK와 12·16대 센서·물리 실행은 아직 확인하지 못했습니다. [환경 상태와 중지 근거](docs/evidence/brev-scale-bootstrap-234.json)
 
-확장 공정 원장은 TEST→AOI→PACK 처리, 유한 버퍼, 설비 고장·복구, 운송체 원출발지 반납과 재사용을 계산합니다. 핵심 검사5개를 통과했으며, 차량 동선·실제 장비 좌표와의 통합은 진행 중입니다. [작성한 공정 설정](configs/semiconductor-process-line.json)
+확장 공정 원장은 TEST→AOI→PACK 처리와 유한 버퍼, 설비 고장·복구, 캐리어 반납·재사용을 계산합니다. `LineOperationsModel`이 이를 기존 가감속·회전·교통 예약·가상 충전에 연결합니다. 12대 구성에서 1개 lot가 다섯 운송을 거쳐 출하되고, 빈 캐리어가 원래 저장소로 돌아오는 CPU 파일럿을 완료했습니다. 참여 차량은 2대이며, 12·16대 동시 처리량과 물리 주행은 후속 실행 대상입니다. [공정 통합 결과와 한계](docs/evidence/process-line-235.json)
+
+```powershell
+cd "$HOME/factory-ops-twin"
+.venv/Scripts/python.exe scripts/demo/run_process_line.py --config configs/factory-semiconductor-line12 --lots 1 --horizon 1500 --output-dir artifacts/operations/my-process-line-pilot
+```
+
+실행기는 새 출력 폴더에 선택한 소스·설정의 원본 바이트, 최종 상태와 최대 80개 대표 snapshot을 남깁니다. `--lots 12` 또는 `factory-semiconductor-line16`으로 부하 조건을 바꿀 수 있습니다. 위 완료 결과는 1개 lot 조건에 해당하며, 새 공정 배치의 렌더와 웹 표시 확인은 남아 있습니다.
 
 ## 반도체 후공정 장면
 
