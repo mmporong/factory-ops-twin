@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "status": "runtime326_failure_fixed_by_subset_preflight_actual_campus_optimization_pending",
+  "status": "atomic_stopped_handoff_implemented_targeted_tests_passed_full_run_pending",
   "source_main_commit": "f142e46101d7916164c5818cdecca61d296c32db",
   "source_worker_commit": "d94b059904668972e5391aacec1deaffd769f55e",
   "source_files_sha256": {
@@ -46,7 +46,7 @@
   },
   "execution": {
     "existing_321_322_324_changed": false,
-    "next_candidate": "campus16-pilot-326",
+    "next_candidate": "campus16-pilot-327",
     "candidate_started": true,
     "full_48_48_completed": false,
     "peak16_material_tasks_verified": false,
@@ -56,7 +56,53 @@
     "candidate_state": "failed_runtime_error",
     "candidate_evidence": "campus16-326.json",
     "repair_pending": false,
-    "repair_source_main_commit": "2a23e41da395a107cfaf5f17436c48a64a1886da"
+    "repair_source_main_commit": "2a23e41da395a107cfaf5f17436c48a64a1886da",
+    "next_candidate_state": "prepared_not_started"
   },
-  "scope": "Authored CPU operations only. Current repaired continuation is limited to already-protected successor windows; the actual campus shipping-to-source route may therefore fall back. No full-fleet improvement is claimed."
+  "scope": "Authored CPU operations only; actual campus path and reservation transactions are component-tested. Full48/48 and peak16 material concurrency still require a complete run; no native physics transport or measured factory throughput is claimed.",
+  "atomic_handoff": {
+    "source_main_commit": "a46bea170424c18f7ad174fdc99fc2a1aa0f49fe",
+    "source_worker_commit": "ddcac3131de6e92556bc8e79ab5d83e8d11ee945",
+    "guards": [
+      "kinematic stop",
+      "retained handover-protected active window",
+      "nonempty current pose footprint included in entire new window",
+      "no conflicting new bridge owner",
+      "no overlapping peer active window",
+      "no overlapping current peer pose, even when this robot already owns a window",
+      "existing queue-to-safe-exit lookahead",
+      "destination capacity and station ownership",
+      "charging energy feasibility"
+    ],
+    "transaction": "Check all guards before new admission; acquire successor resources before releasing old resources; rejection preserves old ownership/window/waiters and takes existing staging departure.",
+    "retarget_subset_invariant": "unchanged; broader successor uses distinct stopped-handover replacement API",
+    "actual_campus_regression": {
+      "shipping": "A_PACK_OUT to A_OUT",
+      "return": "A_OUT to D_S1",
+      "lot": "LOT0010 equivalent; real ProcessNetwork and carrier ownership",
+      "first_successor_stop": "AC_S_QUEUE",
+      "first_window_held_bridge_resources": [],
+      "full_route_bridge_resources": [
+        "AC",
+        "CD"
+      ],
+      "resource_scope": "Rolling first window does not pre-acquire all AC/CD resources. Existing per-span lookahead/admission applies to later ticks."
+    },
+    "validation": {
+      "targeted_tests": 7,
+      "elapsed_wall_s": 20.4,
+      "actual_active_window_campus_handoff": "PASS",
+      "new_resource_atomic_replacement": "PASS; generic BD to AB case",
+      "peer_pose_and_window_and_resource_conflict_preserve_old_state": "PASS",
+      "moving_and_missing_pose_rejected_without_state_mutation": "PASS",
+      "return_counters_wait_for_source_arrival": "PASS",
+      "py_compile": "PASS",
+      "diff_check": "PASS"
+    },
+    "source_files_sha256": {
+      "factory_ops/operations_bridge.py": "e8b9f5d5bcbd8de426f638eff894b5ce4e702761be7b93c938c8d04533561f45",
+      "factory_ops/line_operations_model.py": "d659486858ebada3bd45f3800da16c7552f7a5721c6447320a132f1dd316d5ae"
+    },
+    "full_run_improvement_verified": false
+  }
 }

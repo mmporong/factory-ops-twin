@@ -1655,3 +1655,5 @@ shipping product_move 완료 뒤 같은lot·carrier·origin의 준비된 empty_r
 326 결과의 final_snapshot은 실패한 전이 직전 마지막 정상snapshot이며 출하0/반납0/운송29를 담는다. 예외 후 모델을 다시 snapshot한 상태가 아니므로 오류 도중 inventory 원자성이나 최종출하 계수의 근거로 사용하지 않는다. 미완료300표본도 최종대표영상에 사용하지 않는다. [실패·해시·기록 경계](evidence/campus16-326.json)
 
 후속2a23e41은 read-only can_retarget으로 새window의 기존보호부분집합/자원조건을 상태변경전에 확인한다. 실제활성window가있는 기존보호후속경로 성공과 캠퍼스A_OUT→A_S1의 non-subset fallback, 계수지연을 포함한 관련5검사가 통과했다. retarget 불변식은 유지한다. 이는 runtime_error 제거와 기존staging 복구이며, 캠퍼스 전체의 처리량 개선이나 더 넓은 새window의 인계 승인까지 입증한 것은 아니다.
+
+후속a46bea1은 subset 복귀만으로 실제캠퍼스 최적화를 완료했다고 보지 않고, 별도 replace_handover를 추가했다. 정지·기존handover보호·새window의현재차체포함을 요구하며 다른resourceowner·activewindow·모든peer실제pose를 다시 확인한다. 새승인이 거절되면 옛owners/window/waiters를 바꾸지 않는다. queue출구lookahead·용량·에너지검사도 유지한다. 실제A_OUT→D_S1 인계와 충돌/이동중/pose누락의거절·계수지연 등 표적7검사를 통과했다. rolling 첫window는AC_S_QUEUE까지이고 이후교량자원은 기존순서로획득한다. 전체운영성능은 아직미확인이다.

@@ -21,6 +21,8 @@
 
 326은sim4938초 부근에 새 반납trip의window가 기존active window의부분집합이 아니어서 RuntimeError로 마감했다. 소스43개·마감기록 해시는 일치하며 같은 입력을 재실행하지 않는다. 별도 소스2a23e41에서 can_retarget 사전검사를 추가했고 실제 활성window의 인계/fallback 등 관련5검사를 통과했다. 기존예약밖 새경로는 상태변경전에 staging으로 복귀한다. 이 수정만으로 캠퍼스 반납 경로의 연속 인계 효과를 주장하지 않는다.321의 출발station owner는 실제차체 이탈 뒤 이미 해제되고 있어, owner 장기잔류 가설은 폐기했다. [326 실패와 기록 경계](evidence/campus16-326.json)
 
+a46bea1은 기존retarget을 유지하면서 정지한handover의 새window를 원자 승인/교체하는 경로를 추가했다. 현재차체 포함·다른자원owner/activewindow/모든peer실제pose·queue출구lookahead·용량·에너지를 확인한 뒤에만 새자원을 확보하고 옛자원을 해제한다. 실제326의A_OUT→D_S1 인계·충돌fallback·상태보존·계수지연 등 관련7검사를 통과했다. 첫rolling window는AC_S_QUEUE까지이며 전체경로AC/CD를 미리획득하는 의미가 아니다. 전체효과는 다음327에서 확인한다. [원자 인계 범위](evidence/campus16-station-handoff.json)
+
 4. 기존 Nebius 환경234의 재사용239는 `UNHEALTHY`로 SDK 시작 전 실패했고 실제 `STOPPED`로 보존했다. 로컬 RTX3060의307/312에서16대 무적재 바퀴·조인트·정지와32개 ROS/RTX 라이다 토픽을7초·420 physics step 동안 확인했다. 최대 GPU 메모리는6,536/12,288MiB이며 장시간 물류·Nav2·RTF 상한의 근거는 아니다. 이후 클라우드 실행이 필요하면 독립 Stop 복구·실제 GPU/SDK 초기화를 확인하고 기존 첫 묶음6시간·40달러 범위를 유지한다. 중지 후 디스크 비용과 공급자 Stop 실패 가능성은 남는다. [16대 수용 근거](evidence/campus-capacity-307-312.json)
 5. 같은 실행의 웹 장애 주입·운영 영향·복구와 공장 전체 물류 미디어를 만든다. 기본 읽기 전용을 유지하며 명시한 로컬 process-line 실행에서12개 설비 선택·고장/복구 명령·receipt·상태 재생을 연결했다. 관련 API9검사와 UI 타입 검사는 통과했다. 동결314의48lot·9,000초 정상/고장 비교는 HTTP로 L2.TEST를300초 정지·복구하고 잔여 처리시간 보존과 대상 lot의299.9초 완료 지연을 확인했다. 출하는 양쪽2건으로 전체 생산량 감소를 주장하지 않는다. 선택한 마감 baseline과 격리 fault의 모델·설정이 같으며, 공유 소스가 바뀐 세션은 제외했다. 브라우저 조작·48lot 정상 완주·대표16대 미디어는 남아 있다. 대표 README·실행법·한계·오류 기록과 선별 원본을 보존하고 원격 SHA·소유 프로세스 정리·Brev 실제 중지를 확인한다. [명령 확인 범위](evidence/campus-equipment-controls.json) · [설비 비교 결과](evidence/campus-equipment-comparison.json)
 

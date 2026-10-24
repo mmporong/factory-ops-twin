@@ -117,5 +117,10 @@
     "existing_retarget_subset_resource_invariants": "unchanged",
     "full_run_after_repair_performed": false,
     "scope": "Runtime-error prevention and original staging fallback restored, not measured campus throughput improvement."
+  },
+  "atomic_followup": {
+    "source_main_commit": "a46bea170424c18f7ad174fdc99fc2a1aa0f49fe",
+    "evidence": "campus16-station-handoff.json",
+    "status": "component_tests_passed_full_run_pending"
   }
 }
