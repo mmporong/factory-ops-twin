@@ -74,7 +74,9 @@
     "artifacts/operations/campus16-pilot-291",
     "artifacts/operations/campus16-pilot-295",
     "artifacts/campus-visual-292",
-    "artifacts/campus-render-294"
+    "artifacts/campus-render-294",
+    "artifacts/operations/campus16-pilot-296",
+    "artifacts/operations/campus16-charge-preflight-297"
   ],
   "public_media": "docs/images/operations-local45-228",
   "public_replay": "docs/data/operations-normal-223",
@@ -127,7 +129,15 @@
       "sha256": "944a2f99eeed3eea8623b38819bed5d692b5c60b8f75738ac83769b2a7cb8fd0",
       "verified_entries": 188,
       "all_entry_hashes_match": true,
-      "scope": "Closed CPU290/291/295 failures, frozen inputs, v2 USD292/diagram, camera293 adjudication and selected3-still294; excludes live296, SDK and source vendor asset copies."
+      "scope": "Closed CPU290/291/295 failures, frozen inputs, v2 USD292/diagram, camera293 adjudication and selected3-still294; excludes296 and later runs, SDK and source vendor asset copies."
+    },
+    {
+      "path": "D:\\FactoryOpsPortfolio\\campus296-charging-failure.zip",
+      "bytes": 3164064,
+      "sha256": "59c441e2c72f733806228aa67202e17f0b088768239af4e643aff14a41fea94e",
+      "verified_entries": 50,
+      "all_entry_hashes_match": true,
+      "scope": "Closed failed CPU296 and frozen sources; charging preflight transcribed receipt; no live297 data, SDK or vendor copies"
     }
   ]
 }
