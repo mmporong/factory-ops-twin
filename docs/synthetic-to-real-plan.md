@@ -113,3 +113,9 @@ Transfer2.5는 제안된 비교 후보이며 최신 모델이라는 주장은 �
 ### 후속v4 입력의 가시성 대리 검사
 
 323에서 보존하지 못한 실패 프레임 원본은 복구하지 않았다. 대신 원본 recipe의 카메라·대상AABB·소품을 CPU에서 투영했다. 대상 전체가 화면 밖이거나 앞쪽 소품의 투영 외곽/중심 시선에 완전히 막히는 후보를 확인했다. v4는 카메라 target offset·eye-target 거리와 소품 위치를 명시한 작성 범위 안에서 조정한다.128scene·512frame·회색/청색 균등 배치와 대상 객체 recipe는 유지하며, 양의 화면 교차·소품 가림 대리 검사를 통과했다. 부분 잘림은 허용하고 대상이나 소품을 조용히 삭제하지 않는다. 이는 mesh/raster 검사가 아니므로 실제 RGB·객체별 semantic·tight bbox·깊이는 GPU 결과에서 다시 확인해야 한다. 생성기 표적6검사·capture 계약1검사와 main의 실제 입력 pin 확인을 통과했다. 학습 승인·실사 성능은 아직 없다. [작성 경계·해시·확인 범위](evidence/perception-pilot-v4-preparation.json)
+
+### 최신 촬영325와v5의 경계
+
+v4-v2 입력의 실제GPU325는12프레임·객체60개의 박스/마스크·깊이 검사를 통과한 뒤 frame13의 객체 identity0으로 중단됐다. 새 진단 저장 경로는 실패RGB·semantic·거리·bbox·카메라·recipe를 보존했다. 배경 staging-wall이 대상AABB의 투영 외곽을 덮고 중심 시선과 교차하며, 보존RGB에서도 벽이 앞을 막는 상태를 확인했다. v4의 가림 검사가 전용 occluder만 대상으로 삼고 불투명 배경 상자를 빠뜨린 경계다. 이 기하 근거를 모든 mesh와 semantic 처리 경로의 완전한 진단으로 일반화하지 않는다. [325 원본·부분 미디어·종료 근거](evidence/perception-pilot-325.json)
+
+v5는 같은 검사를 모든 불투명 절차형 컨텍스트 상자로 확장했다. 대상 객체와 카메라 recipe는 v4-v2와 같고, 컨텍스트86개의 위치만 고정 범위의 seed 기반 탐색으로 조정했다.128scene·512frame의 화면 밖 대상과 컨텍스트 대리 충돌은0건이며, 기존frame9·신규frame13·CRLF 거절의 표적3검사와 main 입력 pin 확인을 통과했다. 실제GPU 결과나 완성 데이터는 없다.16대 운영을 우선하며 추가 촬영·학습은 보류한다. [v5 입력과 확인 범위](evidence/perception-pilot-v5-preparation.json)

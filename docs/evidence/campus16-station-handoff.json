@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "status": "implemented_targeted_tests_passed_full_run_pending",
+  "source_main_commit": "f142e46101d7916164c5818cdecca61d296c32db",
+  "source_worker_commit": "d94b059904668972e5391aacec1deaffd769f55e",
+  "source_files_sha256": {
+    "factory_ops/line_operations_model.py": "3954292250a58a2c9cc785c72bb998049cf26359e9fc872647f903b9a530c4c4",
+    "tests/test_line_operations_model.py": "f7558e4e22c817cf2cd27369a6d4e490a49278490d1898ecbacbe5d3e3b47a3d"
+  },
+  "observed_baseline": {
+    "case": "campus16-pilot-319",
+    "lot": "LOT0010",
+    "robot": "amr-15",
+    "station": "A_OUT",
+    "shipping_drop_sim_time_s": 6927.0,
+    "empty_return_assignment_sim_time_s": 7000.7,
+    "staging_and_reapproach_delay_s": 73.7,
+    "scope": "A single closed-run example, not an average speedup or full-run improvement."
+  },
+  "behavior": {
+    "scope": "product_move shipping handover to newly ready empty_return of same lot and carrier at same OUT",
+    "preserved_guards": [
+      "non-legacy dispatch mode",
+      "line destination capacity",
+      "station ownership",
+      "loaded atomic window versus actual pose and active windows",
+      "charging can_assign energy feasibility",
+      "existing handover protection retargeted by new trip"
+    ],
+    "fallback": "existing staging departure when any continuation check fails",
+    "counters": "shipping completion/delivery counted once; empty return/delivery counted only after actual source handover",
+    "events": {
+      "handoff": "same_station",
+      "avoided_staging_reapproach": true
+    }
+  },
+  "validation": {
+    "agent_targeted_tests": 5,
+    "elapsed_wall_s": 39.257,
+    "real_process_network_inventory_regression": "after shipping: completed=1,returned=0,deliveries=1; after source arrival: returned=1,deliveries=2",
+    "blocked_loaded_window_regression": "PASS; no line assignment, staging departure retained",
+    "py_compile": "PASS",
+    "diff_check": "PASS",
+    "integration": "Cherry-pick without conflicts; changed source/tests match reviewed commit."
+  },
+  "execution": {
+    "existing_321_322_324_changed": false,
+    "next_candidate": "campus16-pilot-326",
+    "candidate_started": false,
+    "full_48_48_completed": false,
+    "peak16_material_tasks_verified": false
+  },
+  "scope": "Authored CPU operations only; not native transport/contact physics or a measured full-fleet improvement."
+}

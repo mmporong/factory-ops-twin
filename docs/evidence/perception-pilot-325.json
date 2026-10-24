@@ -1,0 +1,80 @@
+{
+  "schema_version": 1,
+  "run_id": "perception-pilot-325",
+  "status": "failed_after_payload_validation",
+  "requested_frames": 512,
+  "valid_frames": 12,
+  "object_frame_bbox_semantic_depth_checks": 60,
+  "dataset_complete": false,
+  "failure": {
+    "cleanup_errors": [],
+    "completed_valid_frames": 12,
+    "diagnostics": {
+      "counts_as_valid_capture": false,
+      "counts_toward_coco": false,
+      "frame_id": 13,
+      "path": "diagnostics/frame-013",
+      "scene_index": 3,
+      "view_id": "overview",
+      "view_index": 0
+    },
+    "error": "semantic identity count differs for object: small_load_carrier-004-01: 0",
+    "error_type": "PerceptionDatasetError",
+    "frame_id": 13,
+    "mapping_approved": false,
+    "scene_index": 3,
+    "status": "failed",
+    "training_ready": false,
+    "view_id": "overview",
+    "view_index": 0
+  },
+  "scope": "Three partial synthetic scenes only; no512-frame release, training approval, Cosmos or real-image performance.",
+  "confirmed_boundary": "The v4 CPU guard moved dedicated occluders but did not screen solid background context cubes. staging-wall satisfies full projected-AABB cover and center sight intersection at failed frame13.",
+  "cause_inference_limit": "Preserved RGB and missing target ID/bbox are consistent with full occlusion. AABB ray geometry does not prove mesh-level visibility or exclude every semantic pipeline fault.",
+  "source_commit": "d34c5590a39591d5f571eec0aa4af8b017b5e4d6",
+  "manifest_sha256": "7194b0a263f952a2cdb7dc04a8af95cc607c51aa2e0f6de23ceaa7439bcb8b6a",
+  "recipe_sha256": "432fc14abe5c1bdefcb1f081223652304c618a63c13d30326be554196577ba9a",
+  "source_stable": true,
+  "host_process": {
+    "process_receipt_status": "passed",
+    "process_exit_code": 0,
+    "prelaunch_inputs_verified": true,
+    "job_closed": true,
+    "remaining_owned_pids": [],
+    "elapsed_wall_s": 41.79862520005554,
+    "lease_returned": true,
+    "blocking_unmanaged_gpu_processes": 0
+  },
+  "payload_bytes": 44885137,
+  "payload_file_count": 100,
+  "evidence": {
+    "host_result_sha256": "5900b85cad2bdd2b2310be491bcc3a236a4c316ce3c5656ef3bcdc6b8f8b2384",
+    "partial_audit_sha256": "c780d471c80d83c0799a1846fb12914f59056d8150f698727b76997f933f966d",
+    "failure_sha256": "ab4507ee970f57f318008c55c5961513a6fbb7be6bec1b7fd1ba0258a8555a4a",
+    "diagnostic_sha256": "8ac4059125e2b1237af3794a15e7fe2f3f1c7b72447ce6498f1407827eef75e5",
+    "media": {
+      "partial-contact-sheet.png": {
+        "path": "docs/images/perception-pilot-325/partial-contact-sheet.png",
+        "bytes": 533604,
+        "sha256": "bbc8865cd58ed8e0d61c0350518c7b8ee30531a44f391b9e01bd43d1c78ee5ab",
+        "scope": "12 validated partial frames; not a complete dataset"
+      },
+      "invalid-frame-013.png": {
+        "path": "docs/images/perception-pilot-325/invalid-frame-013.png",
+        "bytes": 191571,
+        "sha256": "d87062c8d4a5303d75fd6f29ec7a6825031086382749afd01e4989fde63d79e4",
+        "scope": "diagnostic only; excluded from valid captures and COCO"
+      }
+    }
+  },
+  "flags": {
+    "training_ready": false,
+    "mapping_approved": false,
+    "model_training_performed": false,
+    "heldout_LOCO_RGB_read": false,
+    "Cosmos_used": false,
+    "same_input_retried": false
+  },
+  "next": "CPU v5 all-opaque-context guard prepared and pinned; further GPU work paused while primary fleet operations continue.",
+  "followup": "perception-pilot-v5-preparation.json"
+}

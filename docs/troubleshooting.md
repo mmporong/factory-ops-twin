@@ -1629,3 +1629,19 @@ Job receipt는passed·workerexit0였지만 failure.json 존재와 완성 dataset
 v4의 실제 main pin 확인이 GPU 시작 전에 실패했다. 새 profile의 worktree 원본은CRLF395개·8805바이트·SHAf9ba0109...였지만 Git blob과 main은LF·8410바이트·SHAe99a0fbf...였다. FOT199의 SVG 줄바꿈 문제가 source profile hash에서도 재발한 사례다. recipe의 객체·카메라·소품 값은 바뀌지 않았다.
 
 프로필과 생성기 소스에CR이 있으면 manifest 생성을 거절하는 검사와 표적 회귀를 추가하고 manifest writer의newline을LF로 명시했다. 원본 prepared receipt/asset의 raw hash는 그대로 유지한다. 새v4-v2는 profile/generator의 working bytes·Git blob·manifest pin이 일치하며 main의 실제 recipe·asset pin 확인도 통과했다. 기존099c... 초안은 GPU 미실행으로 보존했고 새manifest는7194b0a...·recipe는같은432fc14a...다. 관련 생성기6검사·capture계약1검사가 통과했다. 실제 촬영 성공은 별도 결과로 판정한다. [입력·재발 방지 범위](evidence/perception-pilot-v4-preparation.json) · [Python newline](https://docs.python.org/3.14/library/pathlib.html#pathlib.Path.write_text) · [Git 줄바꿈 정규화](https://git-scm.com/docs/gitattributes#_end_of_line_conversion)
+
+## FOT-207 — 전용 가림 소품 검사에서 빠진 불투명 배경
+
+325는v4-v2 입력으로12프레임·객체60개의 박스/마스크·깊이 검사를 통과한 뒤 scene_index3/frame13/overview의 small_load_carrier-004-01 identity0으로 중단됐다. FOT-205 후속 진단 저장이 작동해 실패RGB·semantic·거리·bbox·카메라·expected object·recipe를 보존했다. 진단 프레임은 유효 데이터와COCO에서 제외했고 dataset.json은 작성하지 않았다. wrapper exit0과 payload 실패를 구분했으며 Job 마감·owned PID0·lease 반환을 확인했다.
+
+보존RGB의 foreground 벽과 CPU 투영을 대조했다. 대상은 화면과 교차하지만 staging-wall이 대상 투영AABB 전체를 덮고 중심 시선과 교차한다. v4는 이름이 전용 occluder인 상자만 조정해 불투명 배경 상자의 가림을 빠뜨렸다. 이 관측은 완전가림과 일치하지만 mesh 수준 가시성과 모든 semantic 처리 결함을 배제하는 증거는 아니다. [325 결과와 진단 이미지](evidence/perception-pilot-325.json)
+
+v5는 동일 검사를 모든 불투명 절차형 컨텍스트 상자로 확장하고, 대상·카메라를 유지한 채 seed와 작성 범위에 따라86개 상자 위치를 조정했다. 대상이나 가림 상자를 삭제하지 않았다. 기존frame9·신규frame13·CRLF 거절의 표적3검사, 입력 계약과main 실제 pin 확인은 통과했다. 이는 CPU 대리 검사이며 실제512장 생성 성공이나 학습 승인이 아니다. 같은 실패 입력을 재실행하지 않고 추가GPU는 보류했다. [v5 재발 방지·입력 해시](evidence/perception-pilot-v5-preparation.json)
+
+## FOT-208 — 출하 직후 같은OUT에 다시 접근하던 반납 작업
+
+닫힌319의 LOT0010에서 amr15가 sim6927.0초에 A_OUT 출하를 완료했으나, 기존 로직은 생성된 빈 용기 반납보다 staging 이탈을 먼저 시작했다. 같은 차량은73.7sim초 뒤 동일OUT의 같은lot 반납을 배정받아 다시 접근했다. 이 한 사례를 전체 실행의 평균 지연이나 개선율로 사용하지 않는다.
+
+shipping product_move 완료 뒤 같은lot·carrier·origin의 준비된 empty_return을 찾는 연속 인계를 추가했다. 목적지 용량·station owner·새 전체 적재window와 실제pose/활성window·충전can_assign을 통과한 경우에만 같은 차량이 기존 인계 보호를 새trip으로 전환한다. 하나라도 불가하면 기존staging 이탈이다. 반환source의 후속 투입까지 확대하지 않는다.
+
+실제ProcessNetwork와inventory를 쓰는 회귀에서 출하 직후 completed1/returned0/deliveries1, 반납source 도착 후 returned1/deliveries2를 확인했다. 차단된window의fallback을 포함한 표적5검사·구문·diff 확인이 통과했다. 배정만으로 반납/완료 운송을 올리지 않으며 이벤트에 handoff=same_station을 남긴다. 기존321/322/324는 변경하지 않았고 전체 효과는 새326에서 확인한다. [원인·구현·계수 보존과 미확인 범위](evidence/campus16-station-handoff.json)

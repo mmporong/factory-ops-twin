@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "status": "implemented_main_pin_preflight_passed_GPU_validation_pending",
+  "status": "implemented_CPU_proxy_passed_GPU325_failed_after12_valid_frames",
   "source_main_commits": [
     "8a88d7c",
     "99c2950"
@@ -70,7 +70,12 @@
     "main_recipe_asset_pin_preflight": "PASS",
     "working_Git_blob_pin_identity": "PASS for profile/generator LF bytes",
     "CRLF_rejection_regression": "PASS",
-    "GPU_capture": "pending"
+    "GPU_capture": {
+      "case": "perception-pilot-325",
+      "status": "failed_after_payload_validation",
+      "valid_frames": 12,
+      "evidence": "perception-pilot-325.json"
+    }
   },
   "legacy_manifest_status": {
     "value": "pilot_manifest_prepared_exporter_extension_required",
@@ -80,7 +85,7 @@
     "training_ready": false,
     "mapping_approved": false,
     "complete_dataset_generated": false,
-    "GPU_capture_performed": false,
+    "GPU_capture_performed": true,
     "Cosmos_used": false,
     "heldout_LOCO_RGB_read": false
   },

@@ -24,7 +24,7 @@
 
 위 이미지는 Isaac Sim4.5에서 촬영한 **정적 GPU 렌더**입니다. 물리 시간을 멈췄으며 차량을 스폰하지 않았습니다. 82×76m 안에 생산 설비76개, 출처가 있는 SimReady 배치88개, 차량 홈16개와 가상 충전 도크8개를 구성했습니다. 서비스 대기점12개·교량 진입 대기점8개·전용 출구8개를 배치했고, 출구 접근로와 겹친 소품12개를 이전 배치에서 제외했습니다. 생산 장비 본체는 절차형 모델이며 제조사 CAD가 아닙니다. 생산 충돌체77개를 유지합니다. [촬영·해시·종료 근거](docs/images/campus16-static-294/provenance.json) · [배치 조건](docs/evidence/campus16-layout-292.json) · [교통 경로 배치도](docs/images/campus16-layout-292/campus-layout.png)
 
-주차장만 늘린 이전 `scale12/16`과 달리 `factory-semiconductor-campus16`은 4개 TEST→AOI→PACK 라인을 베이 사이로 연결합니다. 유한 재고 240개와 캐리어 64개를 사용하고 출하 뒤 원래 저장소로 빈 용기를 돌려보냅니다. 입력·출력 버퍼와 설비 고장, 전역 배차, 가감속·회전, 구간 점유와 가상 충전을 같은 운영 모델에서 계산합니다. 공정 시간·배치는 작성 가정입니다.
+주차장만 늘린 이전 `scale12/16`과 달리 `factory-semiconductor-campus16`은 4개 TEST→AOI→PACK 라인을 베이 사이로 연결합니다. 유한 재고 240개와 캐리어 64개를 사용하고 출하 뒤 원래 저장소로 빈 용기를 돌려보냅니다. 입력·출력 버퍼와 설비 고장, 전역 배차, 가감속·회전, 구간 점유와 가상 충전을 같은 운영 모델에서 계산합니다. 공정 시간·배치는 작성 가정입니다. 출하 지점에서는 같은 운반구의 반납 작업을 이어받는 배차를 추가했습니다. 점유·용량·에너지 조건을 만족해야 하며 전체16대 실행의 효과는 확인 중입니다. [연속 인계의 확인 범위](docs/evidence/campus16-station-handoff.json)
 
 | 확인 범위 | 확보한 결과 | 남은 일 |
 |---|---|---|
@@ -194,14 +194,14 @@ Isaac Sim Replicator로 12개 시각 구성, 30시점, 3카메라에서 RGB 1,08
 
 실제 LOCO 학습용 사진6장과 합성 후보를 비교해 적층·가림·원거리 소형 객체·현장 배경의 차이를 정리했습니다. 평가용 sub1은 열지 않았습니다. 기존 용기를 제한된 외형의 baseline으로 사용하되, 단일 청색 용기가 전체 소형 적재함 클래스를 대표한다고 해석하지 않습니다. [실사·합성 비교 이미지와 준비 범위](docs/synthetic-to-real-plan.md#실제-학습-사진과-합성-후보의-차이)
 
-후속512장 파일럿의 입력과 촬영 코드를 준비했습니다. 회색·청색 용기의 적층·가림·배경·크기·시점 변형을 고정했고, 객체별 박스·마스크와 깊이를 검사합니다. 실제 촬영323은9번째 프레임에서 한 객체의 semantic identity가 없어 중단됐습니다. 유효한 앞8장의 객체32개는 박스·마스크·깊이 검사를 통과했지만,512장 완성 데이터와 학습 성과는 없습니다. [구현·확인 범위](docs/evidence/perception-pilot-512-preparation.json) · [323 부분 결과와 실패·종료 근거](docs/evidence/perception-pilot-323.json) 후속v4는 화면 밖 객체와 가림 후보를 CPU 투영으로 확인해 카메라·소품 위치를 조정했습니다. 이는 실제 화소의 가시성 검증과 구분하며 GPU 확인이 남아 있습니다. [v4 입력·확인 범위](docs/evidence/perception-pilot-v4-preparation.json)
+512장 파일럿은 회색·청색 용기의 적층·가림·배경·크기·시점 변형을 고정하고 객체별 박스·마스크와 깊이를 검사합니다. 최신 촬영325는 앞12장의 객체60개가 이 검사를 통과했으나,13번째 프레임에서 배경 벽에 가려진 후보 객체의 semantic identity가 없어 중단됐습니다. 실패 RGB·라벨·깊이는 진단용으로 분리해 보존했습니다. 배경까지 가림 대리 검사를 확장한v5 입력은 CPU 확인을 마쳤고,16대 운영을 우선하며 추가 GPU 촬영은 보류했습니다. **512장 완성 데이터와 검출기 학습 성과는 아직 없습니다.** [325 부분 결과·실패 원본·종료 근거](docs/evidence/perception-pilot-325.json) · [v5 입력과 확인 경계](docs/evidence/perception-pilot-v5-preparation.json) · [촬영 구현](docs/evidence/perception-pilot-512-preparation.json)
 
 <details>
-<summary>합성 파일럿323의 유효 부분8장</summary>
+<summary>합성 파일럿325의 유효 부분12장</summary>
 
-![회색·청색 용기와 팔레트를 두 장면·네 시점에서 촬영한 유효 부분8장](docs/images/perception-pilot-323/partial-contact-sheet.png)
+![회색·청색 용기와 팔레트를 세 장면·네 시점에서 촬영한 유효 부분12장](docs/images/perception-pilot-325/partial-contact-sheet.png)
 
-첫 두 장면의 부분 RGB입니다. 실패한9번째 프레임은 포함하지 않습니다. 배경·가림 소품은 절차형 단순 형상이며 실제 창고 사진이 아닙니다. NVIDIA 원본 에셋·CC-BY-4.0·소비용 사본 변경 내역은 [에셋 출처](docs/asset-attribution.md)에 기록했습니다.
+첫 세 장면의 부분 RGB입니다. 실패한13번째 프레임은 포함하지 않습니다. 배경·가림 소품은 절차형 단순 형상이며 실제 창고 사진이 아닙니다. NVIDIA 원본 에셋·CC-BY-4.0·소비용 사본 변경 내역은 [에셋 출처](docs/asset-attribution.md)에 기록했습니다.
 
 </details>
 

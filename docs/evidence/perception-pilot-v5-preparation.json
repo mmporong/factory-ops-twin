@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "status": "CPU_prepared_GPU_paused",
+  "source_main_commit": "bcb863dfd02eaa680ce0874da3c0d601f4cf772b",
+  "input": {
+    "manifest_sha256": "9430580f16e55decdc15da4e82f3789e03574b3f3022eb670d15a679ad83d28b",
+    "bytes": 634341,
+    "recipe_sha256": "e47c42f4c213f724f2e9392c2861b1e0f8ce536562cc2676f9bfe471ee44904e",
+    "scene_count": 128,
+    "frame_count": 512,
+    "gray_blue_scenes_each": 64,
+    "all_object_recipes_unchanged_from_v4_v2": true,
+    "all_camera_frame_recipes_unchanged_from_v4_v2": true
+  },
+  "profile": {
+    "path": "configs/perception/loco-pallet-rigid-crate-pilot-v5.json",
+    "sha256": "05baf14135b76c5509ebd4d8e54049dc6627a08e004081d1fb6ea71933f2c9c2"
+  },
+  "generator": {
+    "path": "scripts/perception/prepare_pilot_manifest.py",
+    "sha256": "8a92c3452ac38130a95fc0927b50f8ec55e8f0dbd7b896baa777de49c2332a92"
+  },
+  "CPU_proxy": {
+    "fully_offscreen_target_AABBs": 0,
+    "all_opaque_procedural_cube_proxy_conflicts": 0,
+    "context_cubes_adjusted": 86,
+    "context_attempts_total": 243,
+    "camera_frames_adjusted_relative_to_v3": 48,
+    "camera_attempts_relative_to_v3": 135,
+    "applies_to": "all opaque procedural background and occluder cubes; not only dedicated occluder IDs",
+    "scope": "Authored AABB/pinhole proxy; not actual raster/mesh visibility proof. Targets/cameras retained, context positions resampled within seeded profile bounds."
+  },
+  "validation": {
+    "agent_targeted_tests": 3,
+    "cases": [
+      "frame13 staging-wall conflict reproduction and v5 repair",
+      "frame9 dedicated occluder regression",
+      "CRLF source rejection"
+    ],
+    "capture_manifest_contract": "PASS",
+    "main_recipe_asset_pin_preflight": "PASS",
+    "working_Git_blob_pin_identity": "PASS for profile/generator LF bytes",
+    "main_recipe_objects_and_camera_equality_with_v4_v2": "PASS"
+  },
+  "flags": {
+    "GPU_capture_performed": false,
+    "complete_dataset_generated": false,
+    "training_ready": false,
+    "mapping_approved": false,
+    "model_training_performed": false,
+    "heldout_LOCO_RGB_read": false,
+    "Cosmos_used": false
+  },
+  "predecessor_failed_case": "perception-pilot-325.json",
+  "next": "Primary16-AMR operations first; no further GPU capture launched."
+}
