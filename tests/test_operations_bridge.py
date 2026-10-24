@@ -97,15 +97,29 @@ class BridgeAdmissionTest(unittest.TestCase):
     def test_queue_nodes_are_validated_and_excluded_from_bridge_resources(self):
         routing = {"nodes": dict.fromkeys(("Q", "G", "X")), "bridge_admission": {
             "policy": "atomic_route_leg_resources", "queue_nodes": ["Q"],
-            "resources": {"bridge": ["G", "X"]},
+            "holdable_nodes": ["Q", "X"],
+            "safe_exit_nodes": {"Q": "X"},
+            "resources": {"bridge": ["G"]},
         }}
         gate = BridgeAdmission(routing)
         self.assertEqual(frozenset({"Q"}), gate.queue_nodes)
+        self.assertEqual(frozenset({"Q", "X"}), gate.holdable_nodes)
+        self.assertEqual({"Q": "X"}, gate.safe_exit_nodes)
         self.assertEqual(["Q"], gate.snapshot()["queue_nodes"])
 
         routing["bridge_admission"]["resources"]["bridge"].append("Q")
         with self.assertRaisesRegex(ValueError, "outside bridge resources"):
             BridgeAdmission(routing)
+
+        routing["bridge_admission"]["resources"]["bridge"].remove("Q")
+        routing["bridge_admission"]["holdable_nodes"].remove("Q")
+        with self.assertRaisesRegex(ValueError, "queue_nodes must be holdable"):
+            BridgeAdmission(routing)
+
+        routing["bridge_admission"]["holdable_nodes"].append("Q")
+        routing["bridge_admission"]["safe_exit_nodes"] = {}
+        gate = BridgeAdmission(routing)
+        self.assertEqual({}, gate.safe_exit_nodes)
 
     def test_unowned_waiter_can_withdraw_but_route_owner_cannot(self):
         gate = BridgeAdmission(self.routing)
@@ -117,6 +131,27 @@ class BridgeAdmissionTest(unittest.TestCase):
         self.assertFalse(gate.withdraw_waiter("owner"))
         self.assertEqual({"BD": "owner"}, gate.owners)
         self.assertEqual({"owner": 1}, gate.snapshot()["protected_route_tile_counts"])
+
+    def test_snapshot_reports_pose_blocked_admission_cycle(self):
+        gate = BridgeAdmission(self.routing)
+        self.assertEqual(("amr-5",), gate.admit(
+            "amr-4", [], route_tiles={(4, 0)},
+            observed_tiles={"amr-5": {(4, 0)}},
+        ))
+        self.assertEqual(("amr-9",), gate.admit(
+            "amr-5", [], route_tiles={(5, 0)},
+            observed_tiles={"amr-9": {(5, 0)}},
+        ))
+        self.assertEqual(("amr-4", "amr-5"), gate.admit(
+            "amr-9", [], route_tiles={(9, 0), (9, 1)},
+            observed_tiles={"amr-4": {(9, 0)}, "amr-5": {(9, 1)}},
+        ))
+
+        self.assertEqual(("amr-4", "amr-5", "amr-9"), gate.wait_cycle())
+        self.assertEqual(["amr-4", "amr-5", "amr-9"], gate.snapshot()["wait_cycle"])
+
+        self.assertTrue(gate.withdraw_waiter("amr-5"))
+        self.assertIsNone(gate.snapshot()["wait_cycle"])
 
 
 if __name__ == "__main__":

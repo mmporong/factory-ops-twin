@@ -26,6 +26,10 @@ PACK_WAIT_POINTS = {
 }
 PACK_STAGING_SPUR_LOCAL = [25.4, 0.1, 28.6, 9.0]
 PACK_STAGING_SPUR_NORTH_LOCAL = [25.4, -3.2, 28.6, 9.0]
+LOCAL_STAGING_POINTS = {
+    "SOURCE_WAIT": [3.5, 19.5],
+    "CELL_WAIT": [24.5, 10.5],
+}
 SHARED_JUNCTION_REGIONS = {
     "CAMPUS_C_LOWER_JUNCTION": [28.4, 36.4, 33.1, 39.6],
     "CAMPUS_D_LOW_W_TRUNK": [56.9, 39.4, 67.6, 39.6],
@@ -33,13 +37,18 @@ SHARED_JUNCTION_REGIONS = {
     "CAMPUS_D_EAST_SPINE_TURN": [70.4, 36.4, 70.6, 39.6],
 }
 BRIDGE_QUEUES = {
+    "AB_E_QUEUE": [32.0, 1.5],
+    "AB_W_QUEUE": [60.0, 7.5],
+    "CD_E_QUEUE": [30.5, 33.5],
+    "CD_W_QUEUE": [60.0, 37.5],
     "AC_S_QUEUE": [33.5, 19.5],
     "AC_N_QUEUE": [31.5, 30.5],
     "BD_S_QUEUE": [75.5, 19.5],
     "BD_N_QUEUE": [73.5, 30.5],
 }
 BRIDGE_QUEUE_ACCESS_REGIONS = {
-    "CAMPUS_AC_N_QUEUE_ACCESS": [28.3, 28.8, 33.2, 35.2],
+    "CAMPUS_AB_E_QUEUE_ACCESS": [30.45, 0.0, 33.5, 4.5],
+    "CAMPUS_AC_N_QUEUE_ACCESS": [28.3, 28.8, 37.0, 37.0],
     "CAMPUS_BD_N_QUEUE_ACCESS": [70.3, 28.8, 75.2, 35.2],
 }
 
@@ -161,11 +170,20 @@ def build_campus_layout(base: Mapping[str, Any]) -> dict[str, Any]:
         }
         for bay, offset in BAY_OFFSETS.items()
     ]
+    result["operational_staging"].extend(
+        {
+            "id": f"{bay}_{name}",
+            "xy": _shift_point(point, offset),
+            "purpose": "shared local post-drop standby; degree-one route endpoint, not a fleet home",
+        }
+        for bay, offset in BAY_OFFSETS.items()
+        for name, point in LOCAL_STAGING_POINTS.items()
+    )
     result["bridge_queues"] = [
         {
             "id": queue_id,
             "xy": deepcopy(point),
-            "purpose": "mandatory off-route stop before vertical bridge admission; floor marker only",
+            "purpose": "mandatory off-route stop before inter-bay bridge admission; floor marker only",
         }
         for queue_id, point in BRIDGE_QUEUES.items()
     ]
@@ -268,9 +286,24 @@ def build_campus_routing(base: Mapping[str, Any]) -> dict[str, Any]:
         ])
         result["edges"].append([egress, wait])
 
-    result["staging_after_drop"] = {
-        f"{bay}_PACK_IN": f"{bay}_PACK_WAIT" for bay in BAY_OFFSETS
-    }
+        source_wait = f"{bay}_SOURCE_WAIT"
+        cell_wait = f"{bay}_CELL_WAIT"
+        result["nodes"][source_wait] = _shift_point(LOCAL_STAGING_POINTS["SOURCE_WAIT"], offset)
+        result["nodes"][cell_wait] = _shift_point(LOCAL_STAGING_POINTS["CELL_WAIT"], offset)
+        result["edges"].extend([
+            [f"{bay}_HIGH_E_W", source_wait],
+            [f"{bay}_CI", cell_wait],
+        ])
+
+    result["staging_after_drop"] = {}
+    for bay in BAY_OFFSETS:
+        result["staging_after_drop"].update({
+            **{f"{bay}_S{slot}": f"{bay}_SOURCE_WAIT" for slot in range(1, 4)},
+            f"{bay}_CI": f"{bay}_CELL_WAIT",
+            f"{bay}_AOI_IN": f"{bay}_CELL_WAIT",
+            f"{bay}_OUT": f"{bay}_CELL_WAIT",
+            f"{bay}_PACK_IN": f"{bay}_PACK_WAIT",
+        })
 
     bridge_regions = {
         "CAMPUS_H_AB_RESERVATION": [32.0, 5.0, 47.0, 8.8],
@@ -288,39 +321,68 @@ def build_campus_routing(base: Mapping[str, Any]) -> dict[str, Any]:
         })
 
     connector_nodes = {
+        "AB_E_ACCESS": [32.0, 4.5],
+        "AB_E_QUEUE": deepcopy(BRIDGE_QUEUES["AB_E_QUEUE"]),
         "AB_E_W_GATE": [31.0, 6.0], "AB_E_W_IN": [33.0, 6.0],
         "AB_E_E_IN": [46.0, 6.0], "AB_E_E_GATE": [48.0, 6.0],
         "AB_W_E_GATE": [48.0, 7.5], "AB_W_E_IN": [46.0, 7.5],
         "AB_W_W_IN": [33.0, 7.5], "AB_W_W_GATE": [31.0, 7.5],
+        "AB_W_QUEUE": deepcopy(BRIDGE_QUEUES["AB_W_QUEUE"]),
+        "AB_W_RETURN": [57.0, 7.5], "AB_W_P1": [54.0, 7.5], "AB_W_ENTRY": [51.0, 7.5],
+        "CD_E_QUEUE": deepcopy(BRIDGE_QUEUES["CD_E_QUEUE"]),
+        "CD_E_ACCESS": [27.0, 33.5],
+        "CD_E_ENTRY": [28.5, 36.5],
         "CD_E_W_GATE": [31.0, 38.0], "CD_E_W_IN": [33.0, 38.0],
         "CD_E_E_IN": [46.0, 38.0], "CD_E_E_GATE": [48.0, 38.0],
         "CD_W_E_GATE": [48.0, 39.5], "CD_W_E_IN": [46.0, 39.5],
         "CD_W_W_IN": [33.0, 39.5], "CD_W_W_GATE": [31.0, 39.5],
+        "CD_W_QUEUE": deepcopy(BRIDGE_QUEUES["CD_W_QUEUE"]),
+        "CD_W_RETURN": [57.0, 39.5], "CD_W_P1": [54.0, 39.5], "CD_W_ENTRY": [51.0, 39.5],
         "AC_S_GATE": [33.0, 23.5], "AC_S_IN": [34.5, 25.0],
         "AC_N_IN": [34.5, 35.0], "AC_N_GATE": [33.0, 36.5],
+        "AC_N_ACCESS": [35.5, 30.5],
         "BD_S_GATE": [75.0, 23.5], "BD_S_IN": [76.5, 25.0],
         "BD_N_IN": [76.5, 35.0], "BD_N_GATE": [75.0, 36.5],
-        **deepcopy(BRIDGE_QUEUES),
+        **{name: deepcopy(point) for name, point in BRIDGE_QUEUES.items() if name.startswith(("AC_", "BD_"))},
     }
     result["nodes"].update(connector_nodes)
     connector_paths = {
-        "AB_E": ["A_LOW_E_EN", "AB_E_W_GATE", "AB_E_W_IN", "AB_E_E_IN", "AB_E_E_GATE", "B_LOW_E_W"],
-        "AB_W": ["B_LOW_W_W", "AB_W_E_GATE", "AB_W_E_IN", "AB_W_W_IN", "AB_W_W_GATE", "A_LOW_W_EN"],
-        "CD_E": ["C_LOW_E_EN", "CD_E_W_GATE", "CD_E_W_IN", "CD_E_E_IN", "CD_E_E_GATE", "D_LOW_E_W"],
-        "CD_W": ["D_LOW_W_W", "CD_W_E_GATE", "CD_W_E_IN", "CD_W_W_IN", "CD_W_W_GATE", "C_LOW_W_EN"],
+        "AB_E": ["A_LOW_E_EN", "AB_E_ACCESS", "AB_E_QUEUE", "AB_E_W_GATE", "AB_E_W_IN", "AB_E_E_IN", "AB_E_E_GATE", "B_LOW_E_W"],
+        "AB_W": ["B_LOW_W_C", "AB_W_QUEUE", "AB_W_RETURN", "AB_W_P1", "AB_W_ENTRY", "AB_W_E_GATE", "AB_W_E_IN", "AB_W_W_IN", "AB_W_W_GATE", "A_LOW_W_EN"],
+        "CD_E": ["C_PACK_EGRESS", "CD_E_ACCESS", "CD_E_QUEUE", "CD_E_ENTRY", "CD_E_W_GATE", "CD_E_W_IN", "CD_E_E_IN", "CD_E_E_GATE", "D_LOW_E_W"],
+        "CD_W": ["D_LOW_W_C", "CD_W_QUEUE", "CD_W_RETURN", "CD_W_P1", "CD_W_ENTRY", "CD_W_E_GATE", "CD_W_E_IN", "CD_W_W_IN", "CD_W_W_GATE", "C_LOW_W_EN"],
         "AC_N": ["A_HIGH_E_EN", "AC_S_QUEUE", "AC_S_GATE", "AC_S_IN", "AC_N_IN", "AC_N_GATE", "C_LOW_E_EN"],
-        "AC_S": ["C_LOW_W_EN", "AC_N_QUEUE", "AC_N_GATE", "AC_N_IN", "AC_S_IN", "AC_S_GATE", "A_HIGH_W_EN"],
+        "AC_S": ["C_LOW_W_EN", "AC_N_QUEUE", "AC_N_ACCESS", "AC_N_GATE", "AC_N_IN", "AC_S_IN", "AC_S_GATE", "A_HIGH_W_EN"],
         "BD_N": ["B_HIGH_E_EN", "BD_S_QUEUE", "BD_S_GATE", "BD_S_IN", "BD_N_IN", "BD_N_GATE", "D_LOW_E_EN"],
         "BD_S": ["D_LOW_W_EN", "BD_N_QUEUE", "BD_N_GATE", "BD_N_IN", "BD_S_IN", "BD_S_GATE", "B_HIGH_W_EN"],
     }
     for path in connector_paths.values():
         result["directed_edges"].extend([list(edge) for edge in zip(path, path[1:])])
+    result["directed_edges"].append(["AC_N_GATE", "CD_E_ACCESS"])
+    holdable_nodes = [
+        *(f"{bay}_P{slot}" for bay in BAY_OFFSETS for slot in range(1, 5)),
+        *(f"{bay}_PACK_WAIT" for bay in BAY_OFFSETS),
+        *(f"{bay}_{name}" for bay in BAY_OFFSETS for name in LOCAL_STAGING_POINTS),
+        *BRIDGE_QUEUES,
+    ]
+    resource_exclusions = {*BRIDGE_QUEUES, "AB_E_ACCESS", "CD_E_ACCESS"}
     result["bridge_admission"] = {
         "policy": "atomic_route_leg_resources",
         "resources": {link: sorted(node for node in connector_nodes
-                                    if node.startswith(link + "_") and node not in BRIDGE_QUEUES)
+                                    if node.startswith(link + "_") and node not in resource_exclusions)
                       for link in ("AB", "CD", "AC", "BD")},
         "queue_nodes": list(BRIDGE_QUEUES),
+        "holdable_nodes": holdable_nodes,
+        "safe_exit_nodes": {
+            "AB_E_QUEUE": "B_PACK_WAIT",
+            "AB_W_QUEUE": "A_PACK_WAIT",
+            "CD_E_QUEUE": "D_SOURCE_WAIT",
+            "CD_W_QUEUE": "C_PACK_WAIT",
+            "AC_S_QUEUE": "C_CELL_WAIT",
+            "AC_N_QUEUE": "A_CELL_WAIT",
+            "BD_S_QUEUE": "D_CELL_WAIT",
+            "BD_N_QUEUE": "B_CELL_WAIT",
+        },
     }
     result["operations_bottleneck_policy"] = "merge_adjacent_route_spans"
     result["inter_bay_connections"] = {

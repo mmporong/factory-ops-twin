@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "scope": "Closed authored CPU rolling-window traffic attempt; preserved incomplete liveness evidence, not a throughput completion claim",
+  "run_id": "process-line-8774d265-f1ff-4d2c-9fa6-fd5c2dc6279d",
+  "status": "incomplete",
+  "error": null,
+  "stop_reason": "no_motion_or_process_progress",
+  "elapsed_wall_s": 33.345322300097905,
+  "sim_time_s": 1119.0000000000778,
+  "source_stable_during_run": true,
+  "owned_processes_gone": true,
+  "workload": {
+    "lots": 48,
+    "policy": "fifo"
+  },
+  "cumulative_shipped_lots": 0,
+  "cumulative_returned_lots": 0,
+  "actual_completed_transport_deliveries": 4,
+  "configured_robots": 16,
+  "participants": 12,
+  "repeat_participants": 0,
+  "minimum_assignments_per_robot": 0,
+  "minimum_completed_deliveries_per_robot": 0,
+  "peak_material_tasks": 8,
+  "peak_material_moving": 4,
+  "peak_all_moving": 8,
+  "observed_min_circular_clearance_m": 1.725781816911466,
+  "quiescent": false,
+  "goal_met": false,
+  "recorded_frames": 0,
+  "final_bridge_state": {
+    "owners": {},
+    "protected_route_tile_counts": {},
+    "wait_cycle": null,
+    "replan_attempt_count": 0,
+    "replan_applied_count": 0
+  },
+  "failure_boundary": "Every blocked admission dependency ended at an idle P1 home pose. The service-to-CELL_WAIT protected tails passed beside the corresponding stopped P1 footprint and overlapped it by two reservation tiles in each bay; this was a permanent DAG blocker rather than a wait cycle.",
+  "critical_actual_windows": [
+    {
+      "robot": "amr-2",
+      "window": "A_P2 to A_S2 pickup, A_CI drop and A_CELL_WAIT exit",
+      "protected_window_tiles": 258,
+      "blocked_by_pose": "A_P1",
+      "overlap_tiles": 2
+    },
+    {
+      "robot": "amr-4",
+      "window": "AB_E_QUEUE to B_AOI_IN drop and B_CELL_WAIT exit",
+      "protected_window_tiles": 172,
+      "blocked_by_pose": "B_P1",
+      "overlap_tiles": 2
+    }
+  ],
+  "result_sha256": "42415f856189880abda262c894fa8666b113ba290ce246a511e96d2e26e493ca",
+  "frozen_source_manifest_sha256": "dd98f6c0a5743007fc861e5e3d2e440affccb4949635485154395ea2d3e8a700",
+  "source_binding_sha256": "292c9a90d8d99b4f1cae73653fe727d12a7b4caa0c2532fa5185c3242e0e1e88",
+  "recording_manifest_sha256": "40f0f779933c7e1442a76a2f925ce1b12d831e3836c5c04f9d2c508695b7e7b4"
+}

@@ -296,7 +296,8 @@ class LineOperationsModel(OperationsModel):
         if not self.motions[robot_id].stopped:
             raise RuntimeError("line handover attempted before kinematic stop")
         task: _TripTask = trip["task"]
-        staging = self.staging_after_drop.get(task.drop_station) if trip["phase"] != "pickup" else None
+        staging = (self._service_exit_after_drop(robot_id, task.drop_station)
+                   if trip["phase"] != "pickup" else None)
         if trip["phase"] != "pickup" and staging is None:
             self.bridges.release(robot_id, stopped=True)
         self.line.advance(self.sim_time)
@@ -331,7 +332,8 @@ class LineOperationsModel(OperationsModel):
                 # bridge protection until its footprint clears the spur mouth.
                 self._trip(
                     robot_id, {}, task.drop_station, staging, "parking",
-                    kind="parking", purpose="staging",
+                    kind="parking", purpose=("staging" if task.drop_station in self.staging_after_drop
+                                               else "service_exit"),
                 )
         self._idle_since[robot_id] = self.sim_time
 

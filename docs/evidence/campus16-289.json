@@ -1,0 +1,81 @@
+{
+  "schema_version": 1,
+  "scope": "Closed authored CPU rolling-window traffic attempt; preserved incomplete liveness evidence, not a throughput completion claim",
+  "run_id": "process-line-0149b507-3540-4c93-a69e-651c9580588a",
+  "status": "incomplete",
+  "error": null,
+  "stop_reason": "no_motion_or_process_progress",
+  "elapsed_wall_s": 87.69258019991685,
+  "sim_time_s": 3409.999999997994,
+  "source_stable_during_run": true,
+  "owned_processes_gone": true,
+  "workload": {
+    "lots": 48,
+    "policy": "fifo"
+  },
+  "cumulative_shipped_lots": 0,
+  "cumulative_returned_lots": 0,
+  "actual_completed_transport_deliveries": 27,
+  "configured_robots": 16,
+  "participants": 14,
+  "repeat_participants": 6,
+  "minimum_assignments_per_robot": 0,
+  "minimum_completed_deliveries_per_robot": 0,
+  "peak_material_tasks": 9,
+  "peak_material_moving": 8,
+  "peak_all_moving": 8,
+  "observed_min_circular_clearance_m": 1.725781816911466,
+  "quiescent": false,
+  "goal_met": false,
+  "recorded_frames": 120,
+  "final_bridge_state": {
+    "owners": {},
+    "protected_route_tile_counts": {},
+    "wait_cycle": [
+      "amr-13",
+      "amr-15",
+      "amr-9"
+    ],
+    "replan_attempt_count": 2,
+    "replan_applied_count": 0,
+    "replan_unavailable_count": 1,
+    "pending_replans": [
+      "amr-9"
+    ]
+  },
+  "failure_boundary": "The bridge prefixes were disjoint from the opposite entry queue, but no post-bridge holdable exit existed. Each protected window therefore continued beyond the bridge to a distant holdable and formed a stopped-pose cycle. The selected amr-9 pickup-route detour remained pending because its loaded first-safe extension still intersected the same stopped poses.",
+  "critical_actual_windows": [
+    {
+      "robot": "amr-9",
+      "pose_node": "CD_E_QUEUE",
+      "protected_tail_end_node": "CD_W_QUEUE",
+      "protected_window_tiles": 293,
+      "blocked_by": {
+        "amr-13_at_CD_W_QUEUE": 12,
+        "amr-15_at_D_CELL_WAIT": 6
+      }
+    },
+    {
+      "robot": "amr-13",
+      "pose_node": "CD_W_QUEUE",
+      "protected_tail_end_node": "AC_N_QUEUE",
+      "protected_window_tiles": 148,
+      "blocked_by": {
+        "amr-9_at_CD_E_QUEUE": 9
+      }
+    },
+    {
+      "robot": "amr-15",
+      "pose_node": "D_CELL_WAIT",
+      "protected_tail_end_node": "D_P3",
+      "protected_window_tiles": 81,
+      "blocked_by": {
+        "amr-13_at_CD_W_QUEUE": 10
+      }
+    }
+  ],
+  "result_sha256": "e841a3ba6f23d7ffaad1e970bce552a7d79c3cf01c80d9351a66b6feff6ded5c",
+  "frozen_source_manifest_sha256": "5d89b99d977134045b6429e6a9f74c8c3e3041d43f6dd075e43d66ec2e03a396",
+  "source_binding_sha256": "1ba32d5f2444d79ded6a7e06b2df3a541d46ec6d58050aada002108a7f3c4f3b",
+  "recording_manifest_sha256": "1f191091f66cc17dfdcf7c23843c64ae2f9bb5eeb1e8720169002a2d9e6460f7"
+}

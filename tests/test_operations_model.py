@@ -91,6 +91,21 @@ class OperationsModelTest(unittest.TestCase):
             model._next_route_window(model.book.nodes["P2"], (model.book.nodes["P3"],), ("P3",))
         self.assertEqual((model.book.nodes["P3"],), after_queue.call_args.args[1])
 
+    def test_mandatory_safe_exit_splits_opposing_queue_windows(self):
+        campus = Path(__file__).resolve().parents[1] / "configs" / "factory-semiconductor-campus16"
+        model = OperationsModel(campus, initial_orders=0, run_id="mandatory-safe-exit")
+        route = model.book.plan("CD_E_QUEUE", "D_CO")
+        points, nodes, safe_exit = model._route_via_safe_exit(
+            route.points[0], {"goal": "D_CO"}, route.points[1:], route.nodes[1:],
+        )
+        window = model._next_route_window(route.points[0], points, nodes)
+
+        self.assertEqual("D_SOURCE_WAIT", safe_exit)
+        self.assertEqual("D_SOURCE_WAIT", window["nodes"][-1])
+        self.assertTrue(window["tiles"].isdisjoint(
+            model._tiles((model.book.nodes["CD_W_QUEUE"],))
+        ))
+
     def test_bridge_admission_observes_poses_without_unacquired_preview_cycles(self):
         model = OperationsModel(CONFIG, initial_orders=0, run_id="operations-admission-order")
         model._trip("amr-1", {}, "P1", "P3", "parking", kind="parking")
@@ -118,6 +133,45 @@ class OperationsModelTest(unittest.TestCase):
                 "amr-2", (), route_tiles=shared_preview, observed_tiles=second_view,
             ),
         )
+
+    def test_holdable_contract_extends_turning_window_and_rejects_missing_exit(self):
+        model = OperationsModel(CONFIG, initial_orders=0, run_id="holdable-window")
+        model.bridges.holdable_nodes = frozenset({"SAFE"})
+        model.bridges.queue_nodes = frozenset()
+        model._max_segment_m = 2.0
+        with patch.object(model.corridors, "atomic_span", return_value=None):
+            window = model._next_route_window(
+                (0.0, 0.0), ((1.0, 0.0), (1.0, 1.0), (2.0, 1.0)),
+                ("THROUGH_STATION", "TURN", "SAFE"),
+            )
+            self.assertEqual(("THROUGH_STATION", "TURN", "SAFE"), window["nodes"])
+            self.assertEqual("holdable-tail", window["corridor"])
+            self.assertFalse(window["terminal_service"])
+
+            with self.assertRaisesRegex(RuntimeError, "no holdable endpoint"):
+                model._next_route_window(
+                    (0.0, 0.0), ((1.0, 0.0),), ("THROUGH_STATION",),
+                )
+            terminal = model._next_route_window(
+                (0.0, 0.0), ((1.0, 0.0),), ("SERVICE_GOAL",),
+                allow_terminal=True,
+            )
+            self.assertTrue(terminal["terminal_service"])
+
+    def test_process_drop_keeps_protection_until_first_holdable_home_exit(self):
+        model = OperationsModel(CONFIG, initial_orders=0, run_id="holdable-service-exit")
+        model.bridges.holdable_nodes = frozenset({"P1", "P2", "P3", "P4"})
+        drop = model.book.plan("OUT", "S1")
+        window = model._window_for_trip(
+            drop.points[-2], drop.points[-1:], drop.nodes[-1:],
+            {"kind": "process_line", "phase": "drop", "goal": "S1"},
+            robot_id="amr-1",
+        )
+
+        self.assertTrue(window["retain_at_handover"])
+        self.assertEqual("S1", window["nodes"][0])
+        self.assertEqual("P1", window["nodes"][-1])
+        self.assertTrue(model._tiles(model.book.plan("S1", "P1").points).issubset(window["tiles"]))
 
     def test_four_robots_complete_material_cycle_with_retained_clearance(self):
         model = OperationsModel(CONFIG, initial_orders=4, run_id="operations-cycle-test")

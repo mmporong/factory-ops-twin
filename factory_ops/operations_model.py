@@ -84,6 +84,8 @@ class OperationsModel(DashboardModel):
         self.peak_moving_robots = 0
         self.wait_cycle: tuple[str, ...] | None = None
         self.wait_cycle_episodes = 0
+        self._bridge_cycle_candidate: tuple[str, ...] | None = None
+        self._bridge_cycle_since_s: float | None = None
         self._last_cycle_check_s = -1.0
         self._replans: dict[str, dict[str, Any]] = {}
         self._replan_examined: set[tuple[Any, ...]] = set()
@@ -368,19 +370,26 @@ class OperationsModel(DashboardModel):
             trip["nodes"].popleft()
             chunk["consumed"] += 1
 
-    def _next_route_window(self, start, route_points, route_nodes) -> dict[str, Any]:
+    def _next_route_window(
+        self, start, route_points, route_nodes, *, allow_terminal: bool = False,
+    ) -> dict[str, Any]:
         """Return the next stoppable route window and its exact node mapping."""
         route_points = tuple(route_points)
         route_nodes = tuple(route_nodes)
         if not route_points or len(route_points) != len(route_nodes):
             raise RuntimeError("route window requires one node for each remaining point")
-        queue_barrier = next(
+        holdable = self.bridges.holdable_nodes
+        barrier = next(
             ((index, node) for index, node in enumerate(route_nodes)
-             if node in self.bridges.queue_nodes),
+             if node in self.bridges.queue_nodes
+             or holdable is not None and node in holdable),
             None,
         )
-        if queue_barrier is not None:
-            barrier_index, _ = queue_barrier
+        queue_barrier = (
+            barrier if barrier is not None and barrier[1] in self.bridges.queue_nodes else None
+        )
+        if barrier is not None:
+            barrier_index, _ = barrier
             route_points = route_points[:barrier_index + 1]
             route_nodes = route_nodes[:barrier_index + 1]
         corridor = self.corridors.atomic_span(start, route_points)
@@ -402,6 +411,25 @@ class OperationsModel(DashboardModel):
             identity = "segment"
             corridor_id = None
         count = len(selected)
+        terminal_service = False
+        if holdable is not None and route_nodes[count - 1] not in holdable:
+            next_hold = next(
+                (index for index in range(count, len(route_nodes))
+                 if route_nodes[index] in holdable),
+                None,
+            )
+            if next_hold is None:
+                if not allow_terminal or queue_barrier is not None:
+                    raise RuntimeError(
+                        f"route window has no holdable endpoint after {route_nodes[count - 1]}"
+                    )
+                next_hold = len(route_nodes) - 1
+                terminal_service = True
+            count = next_hold + 1
+            selected = route_points[:count]
+            identity = f"{identity}-to-holdable"
+            if corridor_id is None and count > 1:
+                corridor_id = "holdable-tail"
         return {
             "points": selected,
             "nodes": route_nodes[:count],
@@ -409,12 +437,33 @@ class OperationsModel(DashboardModel):
             "identity": identity,
             "corridor": corridor_id,
             "queue_barrier": None if queue_barrier is None else queue_barrier[1],
+            "terminal_service": terminal_service,
             "retain_at_handover": False,
         }
 
-    def _window_for_trip(self, start, route_points, route_nodes, trip) -> dict[str, Any]:
+    def _service_exit_after_drop(self, robot_id: str | None, station: str) -> str | None:
+        explicit = self.staging_after_drop.get(station)
+        if explicit is not None or self.bridges.holdable_nodes is None:
+            return explicit
+        if robot_id is None:
+            raise RuntimeError(f"robot is required to select a holdable exit after {station}")
+        home = self.homes[robot_id]
+        route = self.book.plan(station, home, closed=self.closed)
+        exit_node = next(
+            (node for node in route.nodes[1:] if node in self.bridges.holdable_nodes),
+            None,
+        )
+        if exit_node is None:
+            raise RuntimeError(f"no holdable service exit from {station} toward {home}")
+        return exit_node
+
+    def _window_for_trip(
+        self, start, route_points, route_nodes, trip, *, robot_id: str | None = None,
+    ) -> dict[str, Any]:
         """Extend only a final handover window far enough to guarantee its exit."""
-        window = self._next_route_window(start, route_points, route_nodes)
+        window = self._next_route_window(
+            start, route_points, route_nodes, allow_terminal=True,
+        )
         if len(window["points"]) != len(tuple(route_points)):
             return window
         extension_points: tuple[tuple[float, float], ...] = ()
@@ -426,19 +475,24 @@ class OperationsModel(DashboardModel):
                 next_loaded = self._window_for_trip(
                     loaded.points[0], loaded.points[1:], loaded.nodes[1:],
                     {**trip, "phase": "drop", "goal": trip["task"].drop_station},
+                    robot_id=robot_id,
                 )
                 extension_points = next_loaded["points"]
                 extension_nodes = next_loaded["nodes"]
                 extension_tiles = next_loaded["tiles"]
         elif trip["kind"] == "process_line" and trip["phase"] == "drop":
-            staging = self.staging_after_drop.get(trip["goal"])
+            staging = self._service_exit_after_drop(robot_id, trip["goal"])
             if staging is not None:
                 egress = self.book.plan(trip["goal"], staging, closed=self.closed)
-                extension_points = egress.points[1:]
-                extension_nodes = egress.nodes[1:]
-                extension_tiles = self._tiles(egress.points)
+                next_egress = self._next_route_window(
+                    egress.points[0], egress.points[1:], egress.nodes[1:],
+                    allow_terminal=True,
+                )
+                extension_points = next_egress["points"]
+                extension_nodes = next_egress["nodes"]
+                extension_tiles = next_egress["tiles"]
         elif (trip["kind"] == "parking" and trip.get("purpose") == "staging"
-              and window["queue_barrier"] is None):
+              and window["queue_barrier"] is None and self.bridges.holdable_nodes is None):
             # The complete authored spur ends at an off-corridor wait pocket.
             window["points"] = tuple(route_points)
             window["nodes"] = tuple(route_nodes)
@@ -450,14 +504,38 @@ class OperationsModel(DashboardModel):
             window["retain_at_handover"] = True
         return window
 
+    def _route_via_safe_exit(self, start, trip, route_points, route_nodes):
+        """Route a stopped queue owner through its direction-specific safe exit."""
+        matches = [
+            queue for queue in self.bridges.safe_exit_nodes
+            if math.dist(start, self.book.nodes[queue]) <= 1e-8
+        ]
+        if not matches:
+            return tuple(route_points), tuple(route_nodes), None
+        if len(matches) != 1:
+            raise RuntimeError("bridge queue pose must identify one safe exit")
+        queue = matches[0]
+        safe_exit = self.bridges.safe_exit_nodes[queue]
+        first = self.book.plan(queue, safe_exit, closed=self.closed)
+        second = self.book.plan(safe_exit, trip["goal"], closed=self.closed)
+        points = first.points[1:] + second.points[1:]
+        nodes = first.nodes[1:] + second.nodes[1:]
+        if len(points) != len(nodes) or not points or safe_exit not in nodes:
+            raise RuntimeError("safe exit route must preserve node and point mapping")
+        return points, nodes, safe_exit
+
     def _refresh_admission_preview(self, robot_id: str, trip: dict[str, Any]) -> None:
         if not trip["points"]:
             trip["admission_nodes"] = ()
             trip["admission_tiles"] = frozenset()
             return
         pose = self._poses[robot_id]
+        route_points, route_nodes, _ = self._route_via_safe_exit(
+            (pose["x_m"], pose["y_m"]), trip, tuple(trip["points"]), tuple(trip["nodes"]),
+        )
         window = self._window_for_trip(
-            (pose["x_m"], pose["y_m"]), tuple(trip["points"]), tuple(trip["nodes"]), trip,
+            (pose["x_m"], pose["y_m"]), route_points, route_nodes, trip,
+            robot_id=robot_id,
         )
         trip["admission_nodes"] = window["nodes"]
         trip["admission_tiles"] = window["tiles"]
@@ -472,7 +550,17 @@ class OperationsModel(DashboardModel):
             replan = self._replans.get(robot_id)
             route_points = tuple(replan["points"] if replan is not None else trip["points"])
             route_nodes = tuple(replan["nodes"][1:] if replan is not None else trip["nodes"])
-            window = self._window_for_trip(start, route_points, route_nodes, trip)
+            route_points, route_nodes, safe_exit = self._route_via_safe_exit(
+                start, trip, route_points, route_nodes,
+            )
+            if safe_exit is not None:
+                self._replans.pop(robot_id, None)
+                replan = None
+                trip["points"] = deque(route_points)
+                trip["nodes"] = deque(route_nodes)
+            window = self._window_for_trip(
+                start, route_points, route_nodes, trip, robot_id=robot_id,
+            )
             blockers = self.bridges.admit(
                 robot_id,
                 window["nodes"],
@@ -565,7 +653,9 @@ class OperationsModel(DashboardModel):
         first = pickup_route or self.book.plan(self._locations[robot_id], pickup, closed=self.closed)
         if len(first.points) == 1:
             return ()
-        window = self._next_route_window(first.points[0], first.points[1:], first.nodes[1:])
+        window = self._next_route_window(
+            first.points[0], first.points[1:], first.nodes[1:], allow_terminal=True,
+        )
         observations = {}
         for peer in self.ledger.robots:
             observations[peer] = self._footprint(peer)
@@ -650,11 +740,25 @@ class OperationsModel(DashboardModel):
         self.peak_moving_robots = max(self.peak_moving_robots, moving)
         if self.sim_time - self._last_cycle_check_s >= 1.0:
             cycle = self.reservations.detect_wait_cycle(now_s=self.sim_time)
+            bridge_cycle = self.bridges.wait_cycle()
+            if bridge_cycle != self._bridge_cycle_candidate:
+                self._bridge_cycle_candidate = bridge_cycle
+                self._bridge_cycle_since_s = self.sim_time if bridge_cycle is not None else None
+            persistent_bridge_cycle = (
+                bridge_cycle
+                if bridge_cycle is not None
+                and self._bridge_cycle_since_s is not None
+                and self.sim_time - self._bridge_cycle_since_s
+                >= self.reservations.cycle_persistence_s
+                else None
+            )
             if cycle is not None and cycle != self.wait_cycle:
                 self.wait_cycle_episodes += 1
                 self._event("traffic_wait_cycle", f"지속 순환 대기: {', '.join(cycle)}", None)
             if cycle is not None:
                 self._schedule_cycle_replan(cycle)
+            elif persistent_bridge_cycle is not None:
+                self._schedule_cycle_replan(persistent_bridge_cycle)
             self.wait_cycle = cycle
             self._last_cycle_check_s = self.sim_time
         ids = list(self._poses)

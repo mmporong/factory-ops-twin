@@ -726,7 +726,7 @@ def _floor_graphics(layout: Layout, palette: Mapping[str, tuple[float, float, fl
             x0, y0, x1, y1 = rectangle
             add_box(_Box(f"Staging_{marker_id}_{suffix}", (x0, y0, .017, x1, y1, .022),
                          "SafetyYellow", "floor_marking", "post_drop_staging"))
-        label = marker_id.replace("_PACK_WAIT", " WAIT")
+        label = marker_id.replace("_PACK_WAIT", " WAIT").replace("_", " ")
         prim = f"StagingStencil_{_prim_name(marker_id)}"
         lines.extend(_floor_stencil_usda(label, (x - 1.0, y - .2), "post_drop_staging",
                                          indent=12, prim_name=prim, material="Dark"))

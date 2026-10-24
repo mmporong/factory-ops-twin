@@ -26,6 +26,32 @@ class BridgeAdmission:
                 or len(queue_nodes) != len(set(queue_nodes))):
             raise ValueError("bridge admission queue_nodes must uniquely name existing route nodes")
         self.queue_nodes = frozenset(queue_nodes)
+        holdable_nodes = raw.get("holdable_nodes")
+        if holdable_nodes is not None and (
+            not isinstance(holdable_nodes, list)
+            or not holdable_nodes
+            or any(not isinstance(node, str) or node not in routing["nodes"]
+                   for node in holdable_nodes)
+            or len(holdable_nodes) != len(set(holdable_nodes))
+        ):
+            raise ValueError("bridge admission holdable_nodes must uniquely name existing route nodes")
+        self.holdable_nodes = None if holdable_nodes is None else frozenset(holdable_nodes)
+        if self.holdable_nodes is not None and not self.queue_nodes.issubset(self.holdable_nodes):
+            raise ValueError("bridge admission queue_nodes must be holdable")
+        safe_exit_nodes = raw.get("safe_exit_nodes", {})
+        if (not isinstance(safe_exit_nodes, Mapping)
+                or any(not isinstance(queue, str) or queue not in self.queue_nodes
+                       or not isinstance(exit_node, str) or exit_node not in routing["nodes"]
+                       for queue, exit_node in safe_exit_nodes.items())
+                or safe_exit_nodes and set(safe_exit_nodes) != set(self.queue_nodes)
+                or self.holdable_nodes is None
+                and safe_exit_nodes
+                or self.holdable_nodes is not None
+                and any(node not in self.holdable_nodes for node in safe_exit_nodes.values())):
+            raise ValueError(
+                "bridge admission safe_exit_nodes must map every queue to a holdable route node"
+            )
+        self.safe_exit_nodes = dict(safe_exit_nodes)
         self.resources: dict[str, frozenset[str]] = {}
         for name, nodes in raw["resources"].items():
             if (not isinstance(name, str) or not name or not isinstance(nodes, list) or not nodes
@@ -33,6 +59,8 @@ class BridgeAdmission:
                 raise ValueError("bridge admission resource must name existing route nodes")
             if self.queue_nodes.intersection(nodes):
                 raise ValueError("bridge admission queue nodes must remain outside bridge resources")
+            if set(self.safe_exit_nodes.values()).intersection(nodes):
+                raise ValueError("bridge admission safe exit nodes must remain outside bridge resources")
             self.resources[name] = frozenset(nodes)
         self.owners: dict[str, str] = {}
         self.waiters: dict[str, tuple[str, ...]] = {}
@@ -159,11 +187,60 @@ class BridgeAdmission:
             return False
         return self.waiters.pop(robot, None) is not None
 
+    def wait_cycle(self) -> tuple[str, ...] | None:
+        """Return one canonical strongly connected wait component, if present."""
+        graph = {
+            robot: tuple(peer for peer in blockers if peer in self.waiters)
+            for robot, blockers in self.waiters.items()
+        }
+        index = 0
+        indices: dict[str, int] = {}
+        lowlinks: dict[str, int] = {}
+        stack: list[str] = []
+        on_stack: set[str] = set()
+        cycles: list[tuple[str, ...]] = []
+
+        def visit(robot: str) -> None:
+            nonlocal index
+            indices[robot] = index
+            lowlinks[robot] = index
+            index += 1
+            stack.append(robot)
+            on_stack.add(robot)
+            for peer in graph[robot]:
+                if peer not in indices:
+                    visit(peer)
+                    lowlinks[robot] = min(lowlinks[robot], lowlinks[peer])
+                elif peer in on_stack:
+                    lowlinks[robot] = min(lowlinks[robot], indices[peer])
+            if lowlinks[robot] != indices[robot]:
+                return
+            component: list[str] = []
+            while True:
+                peer = stack.pop()
+                on_stack.remove(peer)
+                component.append(peer)
+                if peer == robot:
+                    break
+            members = tuple(sorted(component))
+            if len(members) > 1 or robot in graph[robot]:
+                cycles.append(members)
+
+        for robot in sorted(graph):
+            if robot not in indices:
+                visit(robot)
+        return min(cycles) if cycles else None
+
     def snapshot(self) -> dict[str, Any]:
+        wait_cycle = self.wait_cycle()
         return {"policy": "atomic_route_leg_resources", "window_policy": "rolling_atomic_next_span",
                 "queue_nodes": sorted(self.queue_nodes),
+                "holdable_nodes": (None if self.holdable_nodes is None
+                                   else sorted(self.holdable_nodes)),
+                "safe_exit_nodes": dict(sorted(self.safe_exit_nodes.items())),
                 "owners": dict(sorted(self.owners.items())),
                 "waiters": {robot: list(peers) for robot, peers in sorted(self.waiters.items())},
+                "wait_cycle": list(wait_cycle) if wait_cycle else None,
                 "protected_route_tile_counts": {
                     robot: len(tiles) for robot, tiles in sorted(self._protected_tiles.items())
                 },

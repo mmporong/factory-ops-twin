@@ -53,18 +53,24 @@ class CampusLayoutTests(unittest.TestCase):
         self.assertEqual(76, len(layout["physical_obstacles"]))
         self.assertEqual(24, len(layout["stations"]))
         self.assertEqual(16, len(layout["pockets"]))
-        self.assertEqual(4, len(layout["operational_staging"]))
-        self.assertEqual(4, len(layout["bridge_queues"]))
+        self.assertEqual(12, len(layout["operational_staging"]))
+        self.assertEqual(8, len(layout["bridge_queues"]))
         self.assertEqual(16, len(profile["robot_stations"]))
         self.assertEqual(16, len(set(profile["robot_stations"])))
         self.assertEqual(profile["robot_stations"], list(generated["g3-routing.json"]["parking"].values()))
         self.assertEqual(16, len(generated["g2.json"]["robots"]))
         self.assertEqual(16, len(generated["operations-charging.json"]["initial_soc"]))
         self.assertEqual(8, len(generated["operations-charging.json"]["docks"]))
-        self.assertEqual(
-            {f"{bay}_PACK_IN": f"{bay}_PACK_WAIT" for bay in BAY_OFFSETS},
-            generated["g3-routing.json"]["staging_after_drop"],
-        )
+        expected_staging = {}
+        for bay in BAY_OFFSETS:
+            expected_staging.update({
+                **{f"{bay}_S{slot}": f"{bay}_SOURCE_WAIT" for slot in range(1, 4)},
+                f"{bay}_CI": f"{bay}_CELL_WAIT",
+                f"{bay}_AOI_IN": f"{bay}_CELL_WAIT",
+                f"{bay}_OUT": f"{bay}_CELL_WAIT",
+                f"{bay}_PACK_IN": f"{bay}_PACK_WAIT",
+            })
+        self.assertEqual(expected_staging, generated["g3-routing.json"]["staging_after_drop"])
 
     def test_each_bay_is_an_exact_prefixed_translation_of_source_geometry(self):
         base = json.loads((BASE / "layout.json").read_text(encoding="utf-8"))
@@ -168,7 +174,7 @@ class CampusLayoutTests(unittest.TestCase):
             edge for edge in book.config["directed_edges"]
             if any(name.startswith(("AB_", "CD_", "AC_", "BD_")) for name in edge)
         ]
-        self.assertEqual(44, len(connector_edges))
+        self.assertEqual(59, len(connector_edges))
         radius = book.planning_radius_m + book.layout.resolution_m / 2
         for left, right in connector_edges:
             start, end = book.nodes[left], book.nodes[right]
@@ -205,11 +211,93 @@ class CampusLayoutTests(unittest.TestCase):
                 blockers = [home for home, tiles in home_tiles.items() if bridge_tiles & tiles]
                 self.assertEqual([], blockers, (bridge, direction))
 
-    def test_vertical_bridge_queues_are_off_resource_and_clear_of_opposing_crossings(self):
+    def test_every_drop_station_has_a_local_degree_one_staging_exit(self):
+        bundle = build_campus_bundle(BASE)
+        layout = bundle["layout.json"]
+        routing = bundle["g3-routing.json"]
+        book = RouteBook.from_files(TARGET / "layout.json", TARGET / "g3-routing.json")
+        mapping = routing["staging_after_drop"]
+        self.assertEqual(28, len(mapping))
+        expected_services = {
+            *(f"{bay}_{name}" for bay in BAY_OFFSETS for name in ("S1", "S2", "S3", "CI", "AOI_IN", "OUT")),
+            *(f"{bay}_PACK_IN" for bay in BAY_OFFSETS),
+        }
+        self.assertEqual(expected_services, set(mapping))
+
+        staging_nodes = {item["id"] for item in layout["operational_staging"]}
+        self.assertEqual(12, len(staging_nodes))
+        self.assertTrue(set(mapping.values()).issubset(staging_nodes))
+        bridge_queues = set(routing["bridge_admission"]["queue_nodes"])
+        radius = routing["authored_allowances"]["reservation_radius_including_tracking_m"]
+        bounds = tuple(layout["bounds_xy"])
+        stopped_blockers = {
+            **layout["pockets"],
+            **{item["id"]: item["xy"] for item in layout["bridge_queues"]},
+            **{item["id"]: item["xy"] for item in layout["operational_staging"]},
+        }
+        stopped_tiles = {
+            name: swept_tiles([point], radius, tile_size_m=1.0, bounds_xy=bounds)
+            for name, point in stopped_blockers.items()
+        }
+        grouped_services = {}
+        maximum_distance = 0.0
+        for service, stage in mapping.items():
+            grouped_services.setdefault(stage, []).append(service)
+            plan = book.plan(service, stage)
+            maximum_distance = max(maximum_distance, plan.distance_m)
+            bay = service.split("_", 1)[0]
+            self.assertTrue(all(node.startswith(f"{bay}_") for node in plan.nodes), plan.nodes)
+            self.assertFalse(set(plan.nodes[1:-1]) & (staging_nodes | bridge_queues), plan.nodes)
+            tail_tiles = swept_tiles(
+                plan.points, radius, tile_size_m=1.0, bounds_xy=bounds,
+            )
+            self.assertEqual(
+                [], [name for name, tiles in stopped_tiles.items() if name != stage and tail_tiles & tiles],
+                (service, stage, plan.nodes),
+            )
+            service_tiles = swept_tiles(
+                [routing["nodes"][service]], radius, tile_size_m=1.0, bounds_xy=bounds,
+            )
+            stage_tiles = swept_tiles(
+                [routing["nodes"][stage]], radius, tile_size_m=1.0, bounds_xy=bounds,
+            )
+            self.assertFalse(service_tiles & stage_tiles, (service, stage))
+        self.assertLessEqual(maximum_distance, 44.5)
+
+        for stage, services in grouped_services.items():
+            stage_tiles = swept_tiles(
+                [routing["nodes"][stage]], radius, tile_size_m=1.0, bounds_xy=bounds,
+            )
+            service_tiles = {
+                service: swept_tiles(
+                    [routing["nodes"][service]], radius, tile_size_m=1.0, bounds_xy=bounds,
+                )
+                for service in services
+            }
+            self.assertTrue(all(not (stage_tiles & tiles) for tiles in service_tiles.values()), stage)
+            for index, first in enumerate(services):
+                for second in services[index + 1:]:
+                    self.assertFalse(service_tiles[first] & service_tiles[second], (first, second))
+
+        graph_neighbors = {name: set() for name in routing["nodes"]}
+        for left, right in routing["edges"]:
+            graph_neighbors[left].add(right)
+            graph_neighbors[right].add(left)
+        for left, right in routing["directed_edges"]:
+            graph_neighbors[left].add(right)
+        for bay in BAY_OFFSETS:
+            for name in (f"{bay}_SOURCE_WAIT", f"{bay}_CELL_WAIT", f"{bay}_PACK_WAIT"):
+                self.assertEqual(1, len(graph_neighbors[name]), name)
+
+    def test_bridge_queues_are_off_resource_and_clear_of_opposing_crossings(self):
         bundle = build_campus_bundle(BASE)
         layout = bundle["layout.json"]
         routing = bundle["g3-routing.json"]
         queues = {
+            "AB_E_QUEUE": [32.0, 1.5],
+            "AB_W_QUEUE": [60.0, 7.5],
+            "CD_E_QUEUE": [30.5, 33.5],
+            "CD_W_QUEUE": [60.0, 37.5],
             "AC_S_QUEUE": [33.5, 19.5],
             "AC_N_QUEUE": [31.5, 30.5],
             "BD_S_QUEUE": [75.5, 19.5],
@@ -222,9 +310,33 @@ class CampusLayoutTests(unittest.TestCase):
             node for nodes in routing["bridge_admission"]["resources"].values() for node in nodes
         }
         self.assertFalse(set(queues) & resources)
+        expected_holdable = [
+            *(f"{bay}_P{slot}" for bay in BAY_OFFSETS for slot in range(1, 5)),
+            *(f"{bay}_PACK_WAIT" for bay in BAY_OFFSETS),
+            *(f"{bay}_{name}" for bay in BAY_OFFSETS for name in ("SOURCE_WAIT", "CELL_WAIT")),
+            *queues,
+        ]
+        self.assertEqual(expected_holdable, routing["bridge_admission"]["holdable_nodes"])
+        self.assertEqual(36, len(routing["bridge_admission"]["holdable_nodes"]))
+        expected_safe_exits = {
+            "AB_E_QUEUE": "B_PACK_WAIT",
+            "AB_W_QUEUE": "A_PACK_WAIT",
+            "CD_E_QUEUE": "D_SOURCE_WAIT",
+            "CD_W_QUEUE": "C_PACK_WAIT",
+            "AC_S_QUEUE": "C_CELL_WAIT",
+            "AC_N_QUEUE": "A_CELL_WAIT",
+            "BD_S_QUEUE": "D_CELL_WAIT",
+            "BD_N_QUEUE": "B_CELL_WAIT",
+        }
+        self.assertEqual(expected_safe_exits, routing["bridge_admission"]["safe_exit_nodes"])
+        self.assertTrue(set(expected_safe_exits.values()).issubset(expected_holdable))
 
         links = {item["id"]: item for item in routing["inter_bay_connections"]["links"]}
         expected_queue = {
+            ("AB", "eastbound"): "AB_E_QUEUE",
+            ("AB", "westbound"): "AB_W_QUEUE",
+            ("CD", "eastbound"): "CD_E_QUEUE",
+            ("CD", "westbound"): "CD_W_QUEUE",
             ("AC", "northbound"): "AC_S_QUEUE",
             ("AC", "southbound"): "AC_N_QUEUE",
             ("BD", "northbound"): "BD_S_QUEUE",
@@ -251,33 +363,110 @@ class CampusLayoutTests(unittest.TestCase):
                 [other for other, other_tiles in queue_tiles.items() if other != name and tiles & other_tiles],
                 name,
             )
+            point = routing["nodes"][name]
+            for bottleneck in routing["operations_bottlenecks"]:
+                region_id = bottleneck["region_id"]
+                rect = routing["policy_region_overrides"].get(region_id)
+                self.assertIsNotNone(rect, region_id)
+                nearest = (
+                    max(rect[0], min(point[0], rect[2])),
+                    max(rect[1], min(point[1], rect[3])),
+                )
+                self.assertGreater(
+                    math.dist(point, nearest), radius,
+                    (name, bottleneck["id"], rect),
+                )
 
-        for bridge in ("AC", "BD"):
-            north_path = links[bridge]["northbound"]
-            south_path = links[bridge]["southbound"]
-            self.assertEqual(expected_queue[(bridge, "northbound")], north_path[1])
-            self.assertEqual(expected_queue[(bridge, "southbound")], south_path[1])
-            north_tiles = swept_tiles(
-                [routing["nodes"][name] for name in north_path[1:]],
-                radius,
-                tile_size_m=1.0,
-                bounds_xy=bounds,
+        for bridge, directions in {
+            "AB": ("eastbound", "westbound"),
+            "CD": ("eastbound", "westbound"),
+            "AC": ("northbound", "southbound"),
+            "BD": ("northbound", "southbound"),
+        }.items():
+            first_direction, second_direction = directions
+            first_path, second_path = links[bridge][first_direction], links[bridge][second_direction]
+            first_queue = expected_queue[(bridge, first_direction)]
+            second_queue = expected_queue[(bridge, second_direction)]
+            self.assertIn(first_queue, first_path)
+            self.assertIn(second_queue, second_path)
+            first_tail = first_path[first_path.index(first_queue) + 1:]
+            second_tail = second_path[second_path.index(second_queue) + 1:]
+            first_tiles = swept_tiles(
+                [routing["nodes"][name] for name in first_tail], radius,
+                tile_size_m=1.0, bounds_xy=bounds,
             )
-            south_tiles = swept_tiles(
-                [routing["nodes"][name] for name in south_path[1:]],
-                radius,
-                tile_size_m=1.0,
-                bounds_xy=bounds,
+            second_tiles = swept_tiles(
+                [routing["nodes"][name] for name in second_tail], radius,
+                tile_size_m=1.0, bounds_xy=bounds,
             )
-            self.assertFalse(queue_tiles[f"{bridge}_N_QUEUE"] & north_tiles, bridge)
-            self.assertFalse(queue_tiles[f"{bridge}_S_QUEUE"] & south_tiles, bridge)
+            self.assertFalse(queue_tiles[first_queue] & second_tiles, bridge)
+            self.assertFalse(queue_tiles[second_queue] & first_tiles, bridge)
+
+        # A holdable pose must remain clear of every unrelated bridge traversal,
+        # including the protected service-exit tail after a process drop.  Being
+        # outside a named policy region alone is not enough to make it safe.
+        protected_tails = {}
+        for key, queue in expected_queue.items():
+            bridge, direction = key
+            path = links[bridge][direction]
+            protected_tails[key] = path[path.index(queue) + 1:]
+        protected_tails[("AC", "northbound")].append("C_EN_CI")
+        protected_tails[("CD", "westbound")].extend(
+            ["C_PACK_IN", "C_PACK_EGRESS", "C_PACK_WAIT"]
+        )
+        protected_tails[("BD", "northbound")].extend(
+            ["D_PACK_IN", "D_PACK_EGRESS", "D_PACK_WAIT"]
+        )
+        intended_holdable = {
+            ("CD", "westbound"): "C_PACK_WAIT",
+            ("BD", "northbound"): "D_PACK_WAIT",
+        }
+        holdable_tiles = {
+            name: swept_tiles([routing["nodes"][name]], radius, tile_size_m=1.0, bounds_xy=bounds)
+            for name in expected_holdable
+        }
+        for key, tail in protected_tails.items():
+            through_tiles = swept_tiles(
+                [routing["nodes"][name] for name in tail], radius,
+                tile_size_m=1.0, bounds_xy=bounds,
+            )
+            exempt = {expected_queue[key], intended_holdable.get(key)}
+            blockers = [
+                name for name, tiles in holdable_tiles.items()
+                if name not in exempt and tiles & through_tiles
+            ]
+            self.assertEqual([], blockers, key)
 
         book = RouteBook.from_files(TARGET / "layout.json", TARGET / "g3-routing.json")
+        all_stopped_points = {
+            **layout["pockets"],
+            **{item["id"]: item["xy"] for item in layout["bridge_queues"]},
+            **{item["id"]: item["xy"] for item in layout["operational_staging"]},
+        }
+        all_stopped_tiles = {
+            name: swept_tiles([point], radius, tile_size_m=1.0, bounds_xy=bounds)
+            for name, point in all_stopped_points.items()
+        }
+        safe_exit_distances = {}
+        for queue, safe_exit in expected_safe_exits.items():
+            plan = book.plan(queue, safe_exit)
+            safe_exit_distances[queue] = plan.distance_m
+            path_tiles = swept_tiles(
+                plan.points, radius, tile_size_m=1.0, bounds_xy=bounds,
+            )
+            self.assertEqual(
+                [],
+                [name for name, tiles in all_stopped_tiles.items()
+                 if name not in {queue, safe_exit} and path_tiles & tiles],
+                (queue, safe_exit, plan.nodes),
+            )
+        self.assertLessEqual(max(safe_exit_distances.values()), 51.36)
+
         planning_radius = book.planning_radius_m + book.layout.resolution_m / 2
         queue_edges = [
             edge for edge in book.config["directed_edges"] if any(node in queues for node in edge)
         ]
-        self.assertEqual(8, len(queue_edges))
+        self.assertEqual(16, len(queue_edges))
         for left, right in queue_edges:
             start, end = book.nodes[left], book.nodes[right]
             sample_count = max(1, math.ceil(math.dist(start, end) / book.layout.resolution_m))
@@ -290,6 +479,23 @@ class CampusLayoutTests(unittest.TestCase):
                 self.assertFalse(_bad_touched_cells(book.layout, point, planning_radius), (left, right, point))
 
         corridors = OperationsCorridors(routing)
+        service_to_queue_routes = {
+            "AB_W_QUEUE": [
+                "B_S1", "B_LOW_E_W", "B_LOW_E_P1", "B_LOW_E_C", "B_LOW_W_C", "AB_W_QUEUE",
+            ],
+            "CD_W_QUEUE": [
+                "D_S1", "D_LOW_E_W", "D_LOW_E_P1", "D_LOW_E_C", "D_LOW_W_C", "CD_W_QUEUE",
+            ],
+        }
+        for queue, route in service_to_queue_routes.items():
+            for index in range(len(route) - 1):
+                span = corridors.atomic_span(
+                    routing["nodes"][route[index]],
+                    [routing["nodes"][name] for name in route[index + 1:]],
+                )
+                self.assertIsNotNone(span, (queue, route[index]))
+                self.assertEqual(tuple(routing["nodes"][queue]), span.points[-1])
+
         atomic_routes = {
             "AC_S_QUEUE": ["AC_S_GATE", "AC_S_IN", "AC_N_IN", "AC_N_GATE", "C_LOW_E_EN", "C_LOW_W_EN", "C_EN_CI"],
             "AC_N_QUEUE": ["AC_N_GATE", "AC_N_IN", "AC_S_IN", "AC_S_GATE", "A_HIGH_W_EN"],

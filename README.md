@@ -30,7 +30,7 @@
 
 CPU 실행279에서 **16개 물류 임무의 동시 진행**을 확인했습니다. 전16대가 각각2회 이상 임무를 배정받았고, 완료 운송은 총71건입니다. 실제 이동은 최대10대이며 공정·인계·교통 대기를 물류 임무와 구분합니다. 출하9건·빈 용기 반납5건 뒤 공유 구간의 정지 차량들이 서로 출구를 막아 종료했습니다. 안전하게 기다릴 수 있는 지점까지 예약을 유지하는 수정과48lot 완주가 남아 있습니다. [279 실행·상호 차단 근거](docs/evidence/campus16-279.json) · [전체 경로 보호 기준선255](docs/evidence/campus16-255.json)
 
-현재 진입 정책은 다음 구간을 보호하는 rolling window입니다. 교량과 맞닿은 교차로는 한 묶음으로 예약하고, 통로 밖 대기점에서 진입 권한을 기다립니다. 픽업·PACK 하차와 통로 이탈 사이에는 보호가 끊기지 않게 했습니다. 차량의 정지 점유·안전 반경·타일 크기는 유지했습니다. [교통 경계와 수정 전 실행](docs/evidence/campus16-rolling-274.json)
+현재 진입 정책은 다음 구간을 보호하는 rolling window입니다. 교량 진입 대기점8개와 베이별 SOURCE/CELL/PACK 대기점12개를 두고, 홈을 포함한36개 지점을 정지 가능한 곳으로 지정했습니다. 교량의8개 진입 방향은 건넌 뒤 도달할 안전 출구를 명시하며 픽업·하차·로컬 이탈 사이의 보호를 유지합니다. 전체 swept path를 다른 대기점·주차 점유와 비교하고, 차체 반경과 예약 타일 크기는 유지했습니다. 이 계약의48lot 완주는 확인 중입니다. 위 정적 렌더277은 변경 전4개 교량 대기점 배치입니다. [종료286](docs/evidence/campus16-286.json) · [전체 이탈 경로의 차단288](docs/evidence/campus16-288.json) · [교량 출구 차단289](docs/evidence/campus16-289.json)
 
 ![16대 차량의 상태와 공정 셀·재고를 표시한 재생 미리보기](docs/images/campus16-replay-285/preview.png)
 
@@ -179,6 +179,21 @@ npm run dev -- --port 3007
 ```
 
 웹 주소는 `http://127.0.0.1:3007`입니다. 기존 API가 다른 옵션으로 실행 중이라면 사용 중인 작업을 마친 뒤 해당 API만 종료하고 위 설정으로 다시 시작합니다. API 주소가 같으면 웹을 다시 시작할 필요가 없습니다.
+
+16대 캠퍼스의 실제 공정 모델을 관측하려면 별도 포트에서 `process-line` 모드를 사용합니다. 4개 라인·12개 셀·48lot을 계산하며, 현재는 읽기 전용이므로 웹의 운전 명령은 지원하지 않습니다. 기존 4대 API·웹을 유지하면서 다음 API와 웹을 각각 실행할 수 있습니다.
+
+```powershell
+cd "$HOME/factory-ops-twin"
+uv run python -m factory_ops.dashboard --config configs/factory-semiconductor-campus16 --execution-mode process-line --lots 48 --port 18766
+```
+
+```powershell
+cd "$HOME/factory-ops-twin/dashboard"
+$env:OPS_API_URL = "http://127.0.0.1:18766"
+npm run dev -- --port 13008
+```
+
+캠퍼스 웹 주소는 `http://127.0.0.1:13008`입니다. API287에서는 실제 HTTP로16대·4개 라인·12개 셀·48lot 조회, 시각 진행과 명령 거부를 확인했고 임시 서버를 종료했습니다. 이 결과는 전체 운영 완주나 브라우저 표시 확인을 뜻하지 않습니다. [API 실행 근거](docs/evidence/process-line-api-287.json)
 
 6개 운영 조건 비교는 다음 명령으로 재현합니다.
 

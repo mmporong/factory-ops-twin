@@ -767,6 +767,14 @@
       27.0,
       1.5
     ],
+    "A_SOURCE_WAIT": [
+      3.5,
+      19.5
+    ],
+    "A_CELL_WAIT": [
+      24.5,
+      10.5
+    ],
     "B_PACK_EGRESS": [
       69.0,
       4.5
@@ -774,6 +782,14 @@
     "B_PACK_WAIT": [
       69.0,
       1.5
+    ],
+    "B_SOURCE_WAIT": [
+      45.5,
+      19.5
+    ],
+    "B_CELL_WAIT": [
+      66.5,
+      10.5
     ],
     "C_PACK_EGRESS": [
       27.0,
@@ -783,6 +799,14 @@
       27.0,
       30.5
     ],
+    "C_SOURCE_WAIT": [
+      3.5,
+      51.5
+    ],
+    "C_CELL_WAIT": [
+      24.5,
+      42.5
+    ],
     "D_PACK_EGRESS": [
       69.0,
       36.5
@@ -790,6 +814,22 @@
     "D_PACK_WAIT": [
       69.0,
       30.5
+    ],
+    "D_SOURCE_WAIT": [
+      45.5,
+      51.5
+    ],
+    "D_CELL_WAIT": [
+      66.5,
+      42.5
+    ],
+    "AB_E_ACCESS": [
+      32.0,
+      4.5
+    ],
+    "AB_E_QUEUE": [
+      32.0,
+      1.5
     ],
     "AB_E_W_GATE": [
       31.0,
@@ -823,6 +863,34 @@
       31.0,
       7.5
     ],
+    "AB_W_QUEUE": [
+      60.0,
+      7.5
+    ],
+    "AB_W_RETURN": [
+      57.0,
+      7.5
+    ],
+    "AB_W_P1": [
+      54.0,
+      7.5
+    ],
+    "AB_W_ENTRY": [
+      51.0,
+      7.5
+    ],
+    "CD_E_QUEUE": [
+      30.5,
+      33.5
+    ],
+    "CD_E_ACCESS": [
+      27.0,
+      33.5
+    ],
+    "CD_E_ENTRY": [
+      28.5,
+      36.5
+    ],
     "CD_E_W_GATE": [
       31.0,
       38.0
@@ -855,6 +923,22 @@
       31.0,
       39.5
     ],
+    "CD_W_QUEUE": [
+      60.0,
+      37.5
+    ],
+    "CD_W_RETURN": [
+      57.0,
+      39.5
+    ],
+    "CD_W_P1": [
+      54.0,
+      39.5
+    ],
+    "CD_W_ENTRY": [
+      51.0,
+      39.5
+    ],
     "AC_S_GATE": [
       33.0,
       23.5
@@ -870,6 +954,10 @@
     "AC_N_GATE": [
       33.0,
       36.5
+    ],
+    "AC_N_ACCESS": [
+      35.5,
+      30.5
     ],
     "BD_S_GATE": [
       75.0,
@@ -1342,16 +1430,48 @@
       "A_PACK_WAIT"
     ],
     [
+      "A_HIGH_E_W",
+      "A_SOURCE_WAIT"
+    ],
+    [
+      "A_CI",
+      "A_CELL_WAIT"
+    ],
+    [
       "B_PACK_EGRESS",
       "B_PACK_WAIT"
+    ],
+    [
+      "B_HIGH_E_W",
+      "B_SOURCE_WAIT"
+    ],
+    [
+      "B_CI",
+      "B_CELL_WAIT"
     ],
     [
       "C_PACK_EGRESS",
       "C_PACK_WAIT"
     ],
     [
+      "C_HIGH_E_W",
+      "C_SOURCE_WAIT"
+    ],
+    [
+      "C_CI",
+      "C_CELL_WAIT"
+    ],
+    [
       "D_PACK_EGRESS",
       "D_PACK_WAIT"
+    ],
+    [
+      "D_HIGH_E_W",
+      "D_SOURCE_WAIT"
+    ],
+    [
+      "D_CI",
+      "D_CELL_WAIT"
     ]
   ],
   "directed_edges": [
@@ -1997,6 +2117,14 @@
     ],
     [
       "A_LOW_E_EN",
+      "AB_E_ACCESS"
+    ],
+    [
+      "AB_E_ACCESS",
+      "AB_E_QUEUE"
+    ],
+    [
+      "AB_E_QUEUE",
       "AB_E_W_GATE"
     ],
     [
@@ -2016,7 +2144,23 @@
       "B_LOW_E_W"
     ],
     [
-      "B_LOW_W_W",
+      "B_LOW_W_C",
+      "AB_W_QUEUE"
+    ],
+    [
+      "AB_W_QUEUE",
+      "AB_W_RETURN"
+    ],
+    [
+      "AB_W_RETURN",
+      "AB_W_P1"
+    ],
+    [
+      "AB_W_P1",
+      "AB_W_ENTRY"
+    ],
+    [
+      "AB_W_ENTRY",
       "AB_W_E_GATE"
     ],
     [
@@ -2036,7 +2180,19 @@
       "A_LOW_W_EN"
     ],
     [
-      "C_LOW_E_EN",
+      "C_PACK_EGRESS",
+      "CD_E_ACCESS"
+    ],
+    [
+      "CD_E_ACCESS",
+      "CD_E_QUEUE"
+    ],
+    [
+      "CD_E_QUEUE",
+      "CD_E_ENTRY"
+    ],
+    [
+      "CD_E_ENTRY",
       "CD_E_W_GATE"
     ],
     [
@@ -2056,7 +2212,23 @@
       "D_LOW_E_W"
     ],
     [
-      "D_LOW_W_W",
+      "D_LOW_W_C",
+      "CD_W_QUEUE"
+    ],
+    [
+      "CD_W_QUEUE",
+      "CD_W_RETURN"
+    ],
+    [
+      "CD_W_RETURN",
+      "CD_W_P1"
+    ],
+    [
+      "CD_W_P1",
+      "CD_W_ENTRY"
+    ],
+    [
+      "CD_W_ENTRY",
       "CD_W_E_GATE"
     ],
     [
@@ -2105,6 +2277,10 @@
     ],
     [
       "AC_N_QUEUE",
+      "AC_N_ACCESS"
+    ],
+    [
+      "AC_N_ACCESS",
       "AC_N_GATE"
     ],
     [
@@ -2170,6 +2346,10 @@
     [
       "BD_S_GATE",
       "B_HIGH_W_EN"
+    ],
+    [
+      "AC_N_GATE",
+      "CD_E_ACCESS"
     ]
   ],
   "policy_region_overrides": {
@@ -2529,9 +2709,33 @@
     }
   },
   "staging_after_drop": {
+    "A_S1": "A_SOURCE_WAIT",
+    "A_S2": "A_SOURCE_WAIT",
+    "A_S3": "A_SOURCE_WAIT",
+    "A_CI": "A_CELL_WAIT",
+    "A_AOI_IN": "A_CELL_WAIT",
+    "A_OUT": "A_CELL_WAIT",
     "A_PACK_IN": "A_PACK_WAIT",
+    "B_S1": "B_SOURCE_WAIT",
+    "B_S2": "B_SOURCE_WAIT",
+    "B_S3": "B_SOURCE_WAIT",
+    "B_CI": "B_CELL_WAIT",
+    "B_AOI_IN": "B_CELL_WAIT",
+    "B_OUT": "B_CELL_WAIT",
     "B_PACK_IN": "B_PACK_WAIT",
+    "C_S1": "C_SOURCE_WAIT",
+    "C_S2": "C_SOURCE_WAIT",
+    "C_S3": "C_SOURCE_WAIT",
+    "C_CI": "C_CELL_WAIT",
+    "C_AOI_IN": "C_CELL_WAIT",
+    "C_OUT": "C_CELL_WAIT",
     "C_PACK_IN": "C_PACK_WAIT",
+    "D_S1": "D_SOURCE_WAIT",
+    "D_S2": "D_SOURCE_WAIT",
+    "D_S3": "D_SOURCE_WAIT",
+    "D_CI": "D_CELL_WAIT",
+    "D_AOI_IN": "D_CELL_WAIT",
+    "D_OUT": "D_CELL_WAIT",
     "D_PACK_IN": "D_PACK_WAIT"
   },
   "bridge_admission": {
@@ -2542,22 +2746,30 @@
         "AB_E_E_IN",
         "AB_E_W_GATE",
         "AB_E_W_IN",
+        "AB_W_ENTRY",
         "AB_W_E_GATE",
         "AB_W_E_IN",
+        "AB_W_P1",
+        "AB_W_RETURN",
         "AB_W_W_GATE",
         "AB_W_W_IN"
       ],
       "CD": [
+        "CD_E_ENTRY",
         "CD_E_E_GATE",
         "CD_E_E_IN",
         "CD_E_W_GATE",
         "CD_E_W_IN",
+        "CD_W_ENTRY",
         "CD_W_E_GATE",
         "CD_W_E_IN",
+        "CD_W_P1",
+        "CD_W_RETURN",
         "CD_W_W_GATE",
         "CD_W_W_IN"
       ],
       "AC": [
+        "AC_N_ACCESS",
         "AC_N_GATE",
         "AC_N_IN",
         "AC_S_GATE",
@@ -2571,11 +2783,63 @@
       ]
     },
     "queue_nodes": [
+      "AB_E_QUEUE",
+      "AB_W_QUEUE",
+      "CD_E_QUEUE",
+      "CD_W_QUEUE",
       "AC_S_QUEUE",
       "AC_N_QUEUE",
       "BD_S_QUEUE",
       "BD_N_QUEUE"
-    ]
+    ],
+    "holdable_nodes": [
+      "A_P1",
+      "A_P2",
+      "A_P3",
+      "A_P4",
+      "B_P1",
+      "B_P2",
+      "B_P3",
+      "B_P4",
+      "C_P1",
+      "C_P2",
+      "C_P3",
+      "C_P4",
+      "D_P1",
+      "D_P2",
+      "D_P3",
+      "D_P4",
+      "A_PACK_WAIT",
+      "B_PACK_WAIT",
+      "C_PACK_WAIT",
+      "D_PACK_WAIT",
+      "A_SOURCE_WAIT",
+      "A_CELL_WAIT",
+      "B_SOURCE_WAIT",
+      "B_CELL_WAIT",
+      "C_SOURCE_WAIT",
+      "C_CELL_WAIT",
+      "D_SOURCE_WAIT",
+      "D_CELL_WAIT",
+      "AB_E_QUEUE",
+      "AB_W_QUEUE",
+      "CD_E_QUEUE",
+      "CD_W_QUEUE",
+      "AC_S_QUEUE",
+      "AC_N_QUEUE",
+      "BD_S_QUEUE",
+      "BD_N_QUEUE"
+    ],
+    "safe_exit_nodes": {
+      "AB_E_QUEUE": "B_PACK_WAIT",
+      "AB_W_QUEUE": "A_PACK_WAIT",
+      "CD_E_QUEUE": "D_SOURCE_WAIT",
+      "CD_W_QUEUE": "C_PACK_WAIT",
+      "AC_S_QUEUE": "C_CELL_WAIT",
+      "AC_N_QUEUE": "A_CELL_WAIT",
+      "BD_S_QUEUE": "D_CELL_WAIT",
+      "BD_N_QUEUE": "B_CELL_WAIT"
+    }
   },
   "operations_bottleneck_policy": "merge_adjacent_route_spans",
   "inter_bay_connections": {
@@ -2585,6 +2849,8 @@
         "id": "AB",
         "eastbound": [
           "A_LOW_E_EN",
+          "AB_E_ACCESS",
+          "AB_E_QUEUE",
           "AB_E_W_GATE",
           "AB_E_W_IN",
           "AB_E_E_IN",
@@ -2593,7 +2859,11 @@
           "B_LOW_E_P1"
         ],
         "westbound": [
-          "B_LOW_W_W",
+          "B_LOW_W_C",
+          "AB_W_QUEUE",
+          "AB_W_RETURN",
+          "AB_W_P1",
+          "AB_W_ENTRY",
           "AB_W_E_GATE",
           "AB_W_E_IN",
           "AB_W_W_IN",
@@ -2604,7 +2874,10 @@
       {
         "id": "CD",
         "eastbound": [
-          "C_LOW_E_EN",
+          "C_PACK_EGRESS",
+          "CD_E_ACCESS",
+          "CD_E_QUEUE",
+          "CD_E_ENTRY",
           "CD_E_W_GATE",
           "CD_E_W_IN",
           "CD_E_E_IN",
@@ -2613,7 +2886,11 @@
           "D_LOW_E_P1"
         ],
         "westbound": [
-          "D_LOW_W_W",
+          "D_LOW_W_C",
+          "CD_W_QUEUE",
+          "CD_W_RETURN",
+          "CD_W_P1",
+          "CD_W_ENTRY",
           "CD_W_E_GATE",
           "CD_W_E_IN",
           "CD_W_W_IN",
@@ -2636,6 +2913,7 @@
         "southbound": [
           "C_LOW_W_EN",
           "AC_N_QUEUE",
+          "AC_N_ACCESS",
           "AC_N_GATE",
           "AC_N_IN",
           "AC_S_IN",

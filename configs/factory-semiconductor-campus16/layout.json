@@ -910,12 +910,22 @@
       "purpose": "atomic shared-junction policy overlay"
     },
     {
+      "id": "CAMPUS_AB_E_QUEUE_ACCESS",
+      "rect": [
+        30.45,
+        0.0,
+        33.5,
+        4.5
+      ],
+      "purpose": "off-route vertical bridge queue access envelope"
+    },
+    {
       "id": "CAMPUS_AC_N_QUEUE_ACCESS",
       "rect": [
         28.3,
         28.8,
-        33.2,
-        35.2
+        37.0,
+        37.0
       ],
       "purpose": "off-route vertical bridge queue access envelope"
     },
@@ -2854,16 +2864,112 @@
         30.5
       ],
       "purpose": "post-drop egress wait outside PACK_IN; not a fleet home or process-capacity station"
+    },
+    {
+      "id": "A_SOURCE_WAIT",
+      "xy": [
+        3.5,
+        19.5
+      ],
+      "purpose": "shared local post-drop standby; degree-one route endpoint, not a fleet home"
+    },
+    {
+      "id": "A_CELL_WAIT",
+      "xy": [
+        24.5,
+        10.5
+      ],
+      "purpose": "shared local post-drop standby; degree-one route endpoint, not a fleet home"
+    },
+    {
+      "id": "B_SOURCE_WAIT",
+      "xy": [
+        45.5,
+        19.5
+      ],
+      "purpose": "shared local post-drop standby; degree-one route endpoint, not a fleet home"
+    },
+    {
+      "id": "B_CELL_WAIT",
+      "xy": [
+        66.5,
+        10.5
+      ],
+      "purpose": "shared local post-drop standby; degree-one route endpoint, not a fleet home"
+    },
+    {
+      "id": "C_SOURCE_WAIT",
+      "xy": [
+        3.5,
+        51.5
+      ],
+      "purpose": "shared local post-drop standby; degree-one route endpoint, not a fleet home"
+    },
+    {
+      "id": "C_CELL_WAIT",
+      "xy": [
+        24.5,
+        42.5
+      ],
+      "purpose": "shared local post-drop standby; degree-one route endpoint, not a fleet home"
+    },
+    {
+      "id": "D_SOURCE_WAIT",
+      "xy": [
+        45.5,
+        51.5
+      ],
+      "purpose": "shared local post-drop standby; degree-one route endpoint, not a fleet home"
+    },
+    {
+      "id": "D_CELL_WAIT",
+      "xy": [
+        66.5,
+        42.5
+      ],
+      "purpose": "shared local post-drop standby; degree-one route endpoint, not a fleet home"
     }
   ],
   "bridge_queues": [
+    {
+      "id": "AB_E_QUEUE",
+      "xy": [
+        32.0,
+        1.5
+      ],
+      "purpose": "mandatory off-route stop before inter-bay bridge admission; floor marker only"
+    },
+    {
+      "id": "AB_W_QUEUE",
+      "xy": [
+        60.0,
+        7.5
+      ],
+      "purpose": "mandatory off-route stop before inter-bay bridge admission; floor marker only"
+    },
+    {
+      "id": "CD_E_QUEUE",
+      "xy": [
+        30.5,
+        33.5
+      ],
+      "purpose": "mandatory off-route stop before inter-bay bridge admission; floor marker only"
+    },
+    {
+      "id": "CD_W_QUEUE",
+      "xy": [
+        60.0,
+        37.5
+      ],
+      "purpose": "mandatory off-route stop before inter-bay bridge admission; floor marker only"
+    },
     {
       "id": "AC_S_QUEUE",
       "xy": [
         33.5,
         19.5
       ],
-      "purpose": "mandatory off-route stop before vertical bridge admission; floor marker only"
+      "purpose": "mandatory off-route stop before inter-bay bridge admission; floor marker only"
     },
     {
       "id": "AC_N_QUEUE",
@@ -2871,7 +2977,7 @@
         31.5,
         30.5
       ],
-      "purpose": "mandatory off-route stop before vertical bridge admission; floor marker only"
+      "purpose": "mandatory off-route stop before inter-bay bridge admission; floor marker only"
     },
     {
       "id": "BD_S_QUEUE",
@@ -2879,7 +2985,7 @@
         75.5,
         19.5
       ],
-      "purpose": "mandatory off-route stop before vertical bridge admission; floor marker only"
+      "purpose": "mandatory off-route stop before inter-bay bridge admission; floor marker only"
     },
     {
       "id": "BD_N_QUEUE",
@@ -2887,7 +2993,7 @@
         73.5,
         30.5
       ],
-      "purpose": "mandatory off-route stop before vertical bridge admission; floor marker only"
+      "purpose": "mandatory off-route stop before inter-bay bridge admission; floor marker only"
     }
   ]
 }

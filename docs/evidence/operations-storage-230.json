@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "scope": "selected operations 223 / physical baseline 226 / render 228 / Kit 229 release preservation; unrelated historical runs unchanged",
+  "scope": "Selected operations223/physical226/render228/Kit229 release and supplemental campus/perception archives; unrelated historical runs unchanged",
   "backup": {
     "schema_version": 1,
     "path": "D:\\FactoryOpsPortfolio\\operations-release-230.zip",
@@ -62,14 +62,23 @@
     "E:/factory-ops-runs/path-baseline-226",
     "E:/factory-ops-runs/operations-render-228",
     "E:/factory-ops-runs/kit-229",
-    "E:/factory-ops-runs/docking-alignment-231"
+    "E:/factory-ops-runs/docking-alignment-231",
+    "artifacts/operations/campus16-pilot-279",
+    "artifacts/operations/campus16-pilot-286",
+    "artifacts/operations/campus16-pilot-288",
+    "artifacts/operations/campus16-pilot-289",
+    "artifacts/perception-probe-278",
+    "artifacts/campus-replay-284",
+    "artifacts/process-line-api-287"
   ],
   "public_media": "docs/images/operations-local45-228",
   "public_replay": "docs/data/operations-normal-223",
   "retention_limits": [
     "D archive is a second local drive copy, not an offsite backup.",
     "Raw render 228 RGB is retained only under E; selected state records, frozen source and final media are also archived on D.",
-    "Render 227 full RGB and pre-alignment delivery GIF candidates expired; historical receipts/hashes remain valid records but are not claims that every old file remains."
+    "Render 227 full RGB and pre-alignment delivery GIF candidates expired; historical receipts/hashes remain valid records but are not claims that every old file remains.",
+    "Campus286/288/289 preserve distinct closed traffic failures with frozen inputs; no live290 files were included in these archives.",
+    "Perception278 remains a16-image class/mask probe, not an approved training dataset; replay284 is a3-frame probe from incomplete279."
   ],
   "supplemental_backups": [
     {
@@ -82,6 +91,30 @@
       "source_commit": "17b4fd3541de5efe22ad065a5724437158a2dcd3",
       "created_at": "2026-10-23T20:21:33.994637+09:00",
       "scope": "Closed docking 231 raw observations, all 66 RGB, frozen source, host and GPU receipts, public media and evidence"
+    },
+    {
+      "path": "D:\\FactoryOpsPortfolio\\campus279-and-perception278.zip",
+      "bytes": 69902214,
+      "sha256": "5ef82e5c1fda3cf552f03156326e09ad84c7f95aa58a3f8a9e3701ed6215b79c",
+      "verified_entries": 587,
+      "all_entry_hashes_match": true,
+      "scope": "Closed CPU attempts256/261/264/269/274/275/279 and frozen producer inputs; static scene/render272/273/276/277; perception failures and successful278raw; pinned NVIDIA candidate source packages and license; no SDK copy"
+    },
+    {
+      "path": "D:\\FactoryOpsPortfolio\\campus-replay284-and-bounds283.zip",
+      "bytes": 3400324,
+      "sha256": "b7d00f4cd7f08e4f456718a5ab9cf630aab817351e6a053a62a87b20639de4dc",
+      "verified_entries": 53,
+      "all_entry_hashes_match": true,
+      "scope": "Closed failed280, native bounds281/283 and282 USD, successful3-frame284 and CPU285HUD preview; no SDK or vehicle asset copy"
+    },
+    {
+      "path": "D:\\FactoryOpsPortfolio\\campus286-289-traffic-contract.zip",
+      "bytes": 2254341,
+      "sha256": "feac03a528b7b61f137ce54affcffe401d40b5836cf38d984ce4581902ee1aaa",
+      "verified_entries": 147,
+      "all_entry_hashes_match": true,
+      "scope": "Closed CPU286/288/289 failures with frozen inputs and HTTP287; preserves traffic contract counterexamples. No live290 files, SDK or source asset copies."
     }
   ]
 }

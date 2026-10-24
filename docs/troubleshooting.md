@@ -1389,3 +1389,15 @@ RGB249의 첫 report는 runtime·클래스 수를 추가하며 같은 경로로 
 280은 장면 생성 뒤 B_BENCH_A1:ATE_Mainframe의 외곽 검사에서0프레임으로 중단했다.281의 native OpenUSD CPU 감사에서 source-bound1052개 중21개가 기존1e-6m 허용치를 넘었고 최대 초과는 약1.71e-6m였다. 모두 world 좌표를 point3f/float3 extent로 작성한 chamfer mesh였고 위치 transform이 없었다.
 
 해당 메시를 로컬 float 좌표로 작성하고 월드 중심은 double3 translate로 분리했다. 안전 반경·충돌 형상·선언 외곽·허용치는 유지했다.283의 동일 범위 감사에서 초과0개, 최대 수치 차이는 약3.24e-8m였으며 소유 Job 종료·잔여 PID0을 확인했다. 이전280/281은 덮어쓰지 않는다. [수정 전후 근거](evidence/campus-visual-bounds-283.json)
+
+## FOT-175 — 안전한 정지점까지의 경로 연장과 로컬 이탈의 구분
+
+286은 출하1·반납0에서 AC 양방향 대기로 종료했다. bridge owner가 없어도 각 진입 차량의 예정 window가 반대 queue의 실제 정지 점유와9개 타일씩 겹쳤다. 당시 로컬 이탈점은 PACK 하차4곳에만 있었고 나머지24개 하차점은 귀가 경로의 첫 holdable을 선택했다. 그 결과 pickup·적재 운송·하차 이탈을 합친 보호 경로가 반대편 교량 queue까지 길어졌다.576개 경로가 holdable에 도달한다는 검사는 이탈의 근접성이나 다중 차량의 진행 가능성을 보장하지 않았다. [286 종료 상태와 해시](evidence/campus16-286.json)
+
+각 베이에 SOURCE/CELL/PACK 대기 공간을 두고 실제 하차28곳에 로컬 이탈점을 명시했다. 경로 끝의 pose뿐 아니라 서비스 지점부터 이탈점까지의 전체 swept tiles를 홈·다른 stage·교량 queue와 비교한다.288에서는 안전한 endpoint만 확인하고 그곳까지의 이탈 경로가 주차 차량과 겹친 문제가 드러나 좌표와 연결을 수정했다.289에서는 교량 후 다음 holdable을 고르는 연장이 다시 반대 queue까지 이어졌다.8개 방향의 queue→safe exit를 명시하고, queue에서 전체 출구 경로를 확보한 뒤 출발해 exit에서 정지·해제하도록 바꿨다. 출구가 점유 중이면 진입 전에 기다린다. 이 수정의 완주 결과는 후속 실행으로 판정하며 기존 미완료를 성공으로 바꾸지 않는다. [288](evidence/campus16-288.json) · [289](evidence/campus16-289.json)
+
+## FOT-176 — 상위 교량 대기가 기존 재계획기로 전달되지 않은 회귀
+
+교량 진입을 거절할 때 하위 reservation pending을 회수한 변경 뒤, 기존 ETA 순환 우회 시험이 실패했다. 교량 waiters에는 차량1/3/4의 순환이 있었지만 재계획 조건은 하위 reservation cycle만 읽었다.6000초의 CPU 재현에서도 완료10/12와 누적 이동이 멈춰 있었으므로 오래된 시험의 기대값 문제로 처리하지 않았다.
+
+BridgeAdmission의 실제 wait-for graph에서 순환을 구하고 기존 cycle persistence 이후 같은 재계획기에 전달했다. 예약의 순환 판정을 우선하며 정지 anchor·점유·폐쇄 경로 조건을 유지했다. 기존 시험의 경로와 전진 조건을 바꾸지 않고 우회1회·실제 전진을 확인했고 관련 bridge 검사와 함께11개를 통과했다. 이 수정은 후보 경로가 없는 배치의 교착을 자동으로 해결한다는 보장은 아니다.

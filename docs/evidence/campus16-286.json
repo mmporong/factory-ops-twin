@@ -1,0 +1,120 @@
+{
+  "schema_version": 1,
+  "scope": "Closed authored CPU rolling-window traffic attempt; preserved incomplete liveness evidence, not a throughput completion claim",
+  "run_id": "process-line-5ed834e7-e153-4433-ac85-4a3a60851c62",
+  "status": "incomplete",
+  "error": null,
+  "stop_reason": "no_motion_or_process_progress",
+  "elapsed_wall_s": 78.71648830000777,
+  "sim_time_s": 2721.99999999862,
+  "source_stable_during_run": true,
+  "owned_processes_gone": true,
+  "workload": {
+    "lots": 48,
+    "release": "all at simulation start",
+    "policy": "fifo"
+  },
+  "limits": {
+    "horizon_s": 30000.0,
+    "wall_s": 1800.0,
+    "snapshot_count": 80,
+    "stall_timeout_s": 600.0
+  },
+  "cumulative_shipped_lots": 1,
+  "cumulative_returned_lots": 0,
+  "actual_completed_transport_deliveries": 15,
+  "configured_robots": 16,
+  "participants": 15,
+  "repeat_participants": 8,
+  "minimum_assignments_per_robot": 0,
+  "minimum_completed_deliveries_per_robot": 0,
+  "assignments": {
+    "amr-1": 2,
+    "amr-2": 2,
+    "amr-3": 2,
+    "amr-4": 1,
+    "amr-5": 3,
+    "amr-6": 3,
+    "amr-7": 1,
+    "amr-8": 3,
+    "amr-9": 2,
+    "amr-10": 2,
+    "amr-11": 1,
+    "amr-12": 1,
+    "amr-13": 1,
+    "amr-14": 1,
+    "amr-15": 0,
+    "amr-16": 1
+  },
+  "deliveries": {
+    "amr-1": 1,
+    "amr-2": 1,
+    "amr-3": 1,
+    "amr-4": 1,
+    "amr-5": 2,
+    "amr-6": 2,
+    "amr-7": 0,
+    "amr-8": 2,
+    "amr-9": 1,
+    "amr-10": 2,
+    "amr-11": 0,
+    "amr-12": 0,
+    "amr-13": 1,
+    "amr-14": 1,
+    "amr-15": 0,
+    "amr-16": 0
+  },
+  "peak_material_tasks": 11,
+  "peak_material_moving": 4,
+  "peak_all_moving": 7,
+  "observed_min_circular_clearance_m": 1.7257818169114456,
+  "quiescent": false,
+  "goal_met": false,
+  "recorded_frames": 0,
+  "final_bridge_state": {
+    "owners": {},
+    "protected_route_tile_counts": {},
+    "reservation_wait_cycle": null,
+    "critical_strongly_connected_component": [
+      "amr-11",
+      "amr-7"
+    ]
+  },
+  "critical_actual_windows": [
+    {
+      "robot": "amr-7",
+      "pose_node": "AC_S_QUEUE",
+      "pose_xy_m": [
+        33.5,
+        19.5
+      ],
+      "pickup_station": "C_S3",
+      "drop_station": "C_CI",
+      "protected_tail_end_node": "AC_N_QUEUE",
+      "protected_window_tiles": 366,
+      "blocked_by_pose": "amr-11",
+      "overlap_tiles": 9
+    },
+    {
+      "robot": "amr-11",
+      "pose_node": "AC_N_QUEUE",
+      "pose_xy_m": [
+        31.5,
+        30.5
+      ],
+      "pickup_station": "A_S3",
+      "drop_station": "A_CI",
+      "protected_tail_end_node": "AC_S_QUEUE",
+      "protected_window_tiles": 326,
+      "blocked_by_pose": "amr-7",
+      "overlap_tiles": 9
+    }
+  ],
+  "failure_boundary": "The holdable atlas has local staging only for four PACK_IN drops. For the other 24 process drop stations, the service-exit fallback selects the first holdable on the robot's home route. The two observed pickup handover windows therefore extended through their loaded drops to the opposite AC queue, where each prospective protected window overlapped the other stopped queue pose by nine tiles. No bridge owner or active protected window existed, so neither side could acquire first.",
+  "startup_audit_boundary": "The 576 checks cover 36 material legs across 16 robots and prove that each configured drop tail can terminate at a holdable node. They do not prove compound multi-vehicle liveness or that the selected holdable endpoint is local to the service station.",
+  "required_contract_repair": "Provide an authored, geometry-validated local off-lane exit or staging holdable for every process drop station instead of allowing a service handover tail to extend to a distant bridge queue.",
+  "result_sha256": "36d803871e1383b41df8db6a9f80651a42c70b6f53d4c1511f5484d95734a641",
+  "frozen_source_manifest_sha256": "a532f01452f7a18cded04c7955616a46b93fa78726a688ddec2613e19defa057",
+  "source_binding_sha256": "15c1862261940420f9772d07485808a6f5795265c101e3636678036e81d9dbe1",
+  "recording_manifest_sha256": "8a3100063da1ae71d8b9d3c88bf1276d377c049d656e20b8b273daa82b1cae96"
+}
