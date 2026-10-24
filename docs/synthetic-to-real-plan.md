@@ -22,7 +22,7 @@
 
 LOCO 라이선스는 [CC0-1.0](https://github.com/tum-fml/loco/blob/b460ab8c37f09162f0613c7546948c496e1b1628/LICENSE)이다. 클래스는 `pallet`, `small_load_carrier`, `stillage`, `pallet_truck`, `forklift`이고 AMR은 없다. `stillage`를 창고 랙으로 치환하지 않는다.
 
-우선 교집합 후보는 팔레트와 소형 적재함 두 종류다. 기존 반도체 트레이/캐리어와 실제 KLT 적재함의 형상이 같은지는 아직 확정하지 않았으므로 에셋·라벨 매핑을 먼저 확인한다. 나머지 세 클래스는 대응 에셋과 시험 표본이 확보될 때 별도 범위로 추가한다. 특히 test 후보 sub1의 forklift는 박스가 5개뿐이어서 지게차 일반 성능을 결론 내리기 어렵다.
+우선 교집합 후보는 팔레트와 소형 적재함 두 종류다. LOCO의 `small_load_carrier`는 검출 범주이며, 공개 정의에 KLT·ESD 규격이나 표준 치수는 없다. 반도체 트레이·매거진을 이 범주로 자동 매핑하지 않는다. 나머지 세 클래스는 대응 에셋과 시험 표본이 확보될 때 별도 범위로 추가한다. 특히 고정 평가 후보 sub1의 forklift는 박스가5개뿐이어서 지게차 일반 성능을 결론 내리기 어렵다. [원 논문](https://mediatum.ub.tum.de/doc/1578845/1578845.pdf) · [범주·분할 근거](evidence/loco-protocol-310.json)
 
 학습용 export에서는 bbox의 tight/amodal 기준, 가림·잘림·최소 크기와 ignore 정책을 맞춘다. compound root의 bbox/가림 정보와 leaf mesh 측정치를 같은 검사로 취급하지 않는다. 기존 G4의 일부 root 정보 미측정과 최종 승인 실패를 해결하지 않은 채 전체1,080장을 적합 데이터로 재사용하지 않는다.
 
@@ -34,9 +34,11 @@ LOCO 라이선스는 [CC0-1.0](https://github.com/tum-fml/loco/blob/b460ab8c37f0
 | 튜닝 | sub3·sub4, 2,075장 | 두 주 클래스의 support를 확보, test 결과로 설정을 바꾸지 않음 |
 | 고정 최종 평가 후보 | sub1, 1,075장 | 시퀀스·에셋 매핑 이후 최종 비교에 사용 |
 
+위 표는 이 실험의 보조 분할이다. [고정한 상류 배포물](https://api.github.com/repos/tum-fml/loco/git/trees/b460ab8c37f09162f0613c7546948c496e1b1628?recursive=1)은 sub2·3·5를 `train`, sub1·4를 `val`로 명명한다. 따라서 sub1은 원본 val 일부를 고정한 heldout 후보이며 공식 LOCO test가 아니다. 아래 test라는 표현은 이 프로젝트의 고정 평가 역할을 뜻한다.
+
 초기 메타데이터 후보의 튜닝 sub4에는 소형 적재함 박스가0개였다. 학습 점수를 보기 전에 클래스 support를 기준으로 sub3을 튜닝에 포함한 `loco-eval-v1`을 작성했다. 기존 감사의 후보 역할은 원본으로 보존하고 새 프로필을 선택한 실험만 역할을 바꾼다. 기존 이미지 index에서 새 교차 분할 해시/pHash 후보도0개로 확인했다. [프로필](../configs/perception/loco-eval-v1.json) · [역할별 클래스 수와 고정 입력 해시](evidence/loco-split-251.json) · [공개 이미지 식별자·해시 index](data/loco-eval-v1/README.md)
 
-파일명/시퀀스·촬영 환경 그룹 확인은 남아 있다. 유사 프레임은 그룹 단위로 묶고 장소가 다른 분할의 domain shift를 명시한다. 그룹 정보가 부족하면 장소 독립 검증이 완료됐다고 쓰지 않는다. 최종 test를 이용한 튜닝이나 학습 예산 추출은 금지한다.
+파일명/시퀀스·촬영 환경 그룹 확인은 남아 있다. 공식 자료에서 `recording_id`, `frame_index` 또는 timestamp, `environment_id`의 이미지별 대응은 확인하지 못했다. 파일 경로의 날짜·센서 문자열을 검증된 그룹 키로 사용하지 않는다. 현재 근거는 이미지 중복 검사까지이며, sequence-disjoint·environment-disjoint 성능을 주장하지 않는다. 추가 그룹 정보가 확보되면 유사 프레임을 같은 역할에 묶고 분할을 다시 고정한다. 최종 평가 집합을 이용한 튜닝이나 학습 예산 추출은 금지한다.
 
 ## 현재 에셋 대응과 소량 촬영 준비
 
@@ -46,7 +48,9 @@ CPU 매핑 검사기는 배치254의 시각 인스턴스1,152개를 읽고, 팔�
 
 실행270은 원본 의미 속성을 제거한 지각 전용 사본을 작성하고 비의미 USD 계약·형상·재질 보존을 확인했다. 원본과 범용 사본은 유지한다. 실행278은4개 scene seed×4시점의16장과 원시 bbox/label map·semantic uint32 map·카메라·객체 pose·입력 해시를 남겼다. 별도 사후 감사에서60개 객체의 raw tight bbox가 class/object_id별 semantic 마스크의 inclusive min/max와 모두 일치했다. 원래 dataset.json은 수정하지 않고 사후 근거를 분리했다. [사본 준비](evidence/perception-prepare-270.json) · [촬영·라벨·종료 근거](evidence/perception-probe-278.json)
 
-이 자료는 단순 바닥 위 후보 에셋의 export 확인이며 공장 운영 데이터가 아니다. 얕은 크레이트가 LOCO 적재함의 어떤 하위 유형을 대표하는지, 가림·복잡한 배경·크기별 support와 촬영 그룹 분리를 고정한 뒤512장으로 확대한다. `training_ready=false`, `mapping_approved=false`를 유지하며 검출기 학습·실사 성능은 아직 없다.
+현재 소형 적재함 후보는 더 깊은 청색 천공 용기 `crate_blue_a02`다. 가시 외곽은 약0.612×0.412×0.240m이며 CC-BY-4.0 원본·재질·해시를 보존했다. 실행302에서4개 seed×4시점의16장과 bbox/semantic/provenance를 생성했고, 객체60개의 bbox가 같은 object ID의 semantic mask 외곽과 모두 일치했다. 데이터 매니페스트101개 파일의 크기·해시와 소유 프로세스 종료도 확인했다. [촬영 결과](evidence/perception-blue-probe-302.json) · [대표 이미지](images/perception-blue-probe-302/contact-sheet.png)
+
+이 자료는 단순 바닥 위 후보 에셋의 export 확인이다. 청색 용기는 제한된 합성 시각 대리물 후보이며 LOCO 전체 용기 형상이나 KLT·ESD 규격을 대표하지 않는다. 가림·복잡한 배경·크기별 support와 촬영 그룹에 관한 실험 범위를 고정한 뒤512장으로 확대한다. `training_ready=false`, `mapping_approved=false`를 유지하며 검출기 학습·실사 성능은 아직 없다.16대 운영 로직 완성을 우선하며 같은 입력의 probe를 반복 수집하지 않는다.
 
 ## 순서와 확대 조건
 

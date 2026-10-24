@@ -90,10 +90,14 @@ class ChargingFleet:
         state.phase = "contact_pending"
 
     def observe(self, robot_id: str, *, run_id: str, dock_id: str, stamp_s: float,
-                contact: bool, linear_m_s: float, angular_rad_s: float, soc: float) -> dict[str, Any]:
+                contact: bool, linear_m_s: float, angular_rad_s: float, soc: float,
+                departure_soc: float | None = None,
+                departure_allowed: bool = True) -> dict[str, Any]:
         state = self.states[robot_id]
         stamp, fraction = _number(stamp_s, "stamp"), _number(soc, "SOC")
-        if fraction > 1 or type(contact) is not bool:
+        threshold = self.resume_soc if departure_soc is None else _number(departure_soc, "departure SOC")
+        if (fraction > 1 or threshold < self.resume_soc or threshold > 1
+                or type(contact) is not bool or type(departure_allowed) is not bool):
             raise ValueError("contact must be boolean and SOC must be a fraction")
         if any(type(v) not in (float, int) or not math.isfinite(v) for v in (linear_m_s, angular_rad_s)):
             raise ValueError("odometry velocities must be finite")
@@ -124,7 +128,7 @@ class ChargingFleet:
                 state.contact_since_s = stamp
             state.contact_confirmed = stamp - state.contact_since_s >= self.contact_dwell_s
             state.phase = "charging" if state.contact_confirmed else "contact_pending"
-            if state.contact_confirmed and fraction >= self.resume_soc:
+            if state.contact_confirmed and departure_allowed and fraction >= threshold:
                 state.phase, state.contact_confirmed = "undock_pending", False
         return asdict(state)
 

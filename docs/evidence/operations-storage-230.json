@@ -82,7 +82,14 @@
     "artifacts/operations/campus16-charge-preflight-299",
     "artifacts/perception-asset-suitability-298",
     "artifacts/perception-blue-crate-prepare-300",
-    "artifacts/perception-blue-probe-302"
+    "artifacts/perception-blue-probe-302",
+    "artifacts/operations/campus16-pilot-303",
+    "artifacts/campus-capacity-prepare-304",
+    "artifacts/campus-capacity-305",
+    "artifacts/campus-capacity-306",
+    "artifacts/campus-capacity-307",
+    "artifacts/campus-capacity-308",
+    "artifacts/campus-capacity-312"
   ],
   "public_media": "docs/images/operations-local45-228",
   "public_replay": "docs/data/operations-normal-223",
@@ -161,6 +168,16 @@
       "verified_entries": 183,
       "all_entry_hashes_match": true,
       "scope": "Closed16-image302 data, inputs298/300, selected301 failure/label records with one RGB, pinned NVIDIA blue source/license and two prepared USD; no live303 files"
+    },
+    {
+      "path": "D:\\FactoryOpsPortfolio\\campus303-and-native16-312.zip",
+      "bytes": 7440021,
+      "sha256": "dc2364c3a1b722e5e9f10a2c24ab6583a95608d382052755d6ba863307ecf2c8",
+      "verified_entries": 134,
+      "all_entry_hashes_match": true,
+      "receipt_path": "artifacts/backup-campus303-native312.json",
+      "receipt_sha256": "211f0a7f7ef05ae25daa84579e126fadef9e464bdaeded1ebca6a127213c1404",
+      "scope": "Closed CPU303 original and frozen source; prepare304; selected failed305/308 diagnostics and termination; passed306/307/312 native inputs, source snapshots, results and representative RGB. No SDK or vendor asset copies; public309/current CPU309 excluded."
     }
   ]
 }

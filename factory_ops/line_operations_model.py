@@ -218,6 +218,15 @@ class LineOperationsModel(OperationsModel):
             stage = {"PACK": 2, "AOI": 3, "TEST": 4}.get(suffix, 5)
         return stage, task.created_sim_time_s, task.task_id
 
+    def _charging_ready_jobs(self) -> list[tuple[str, str, str]]:
+        jobs = super()._charging_ready_jobs()
+        jobs.extend(
+            (task.task_id, task.origin, task.destination)
+            for task in self.line.ready_transports
+            if self._line_can_assign(task)
+        )
+        return jobs
+
     def _dispatch_extra_jobs(self, draining: bool) -> None:
         if draining:
             return

@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "scope": "Targeted local API regression and UI typecheck evidence index; not a production operation run or browser approval",
+  "api_sources_commit": "00ebe48",
+  "ui_sources_commit": "58a3dc8",
+  "source_files_sha256": {
+    "factory_ops/dashboard.py": "373b31ece25bdd1f252f931d23b7f7de2125c7822be7de52021f6543ab18f659",
+    "factory_ops/scenario_replay.py": "02f6d186e00ecd03fb8a7ebca4fb8620ef7b446cf29b1f2f3aad4f56c20af479",
+    "tests/test_process_line_dashboard.py": "7bf03de1705da1c20b879ff758ae03eaed6f17adeea9ff5d5d1e94e95fefa2c4",
+    "dashboard/components/ControlPanel.tsx": "841fead7041a5a204922e76d0585390ea53af9ca742444f73c97394a32aca561",
+    "dashboard/lib/types.ts": "7eee31010f81a78a2e02f0f4449ebdfdcfb0a93e04d1d1300dffc6625fa339d9"
+  },
+  "api_tests": {
+    "command": "python -m unittest tests.test_process_line_dashboard tests.test_operations_dashboard -v",
+    "python": "3.12",
+    "passed": 9,
+    "elapsed_s": 41.597,
+    "worktree_api_commit": "bd045d2",
+    "claims": [
+      "48-lot initial model projects16 robots and12 process cells; not48-lot completion",
+      "Named non-primary cell fault/recovery, same-run receipt, inventory/task preservation and read-only replay",
+      "Stale/wrong run/revision, missing/unknown cell and duplicate cell identities rejected",
+      "HTTP POST applies a named non-primary cell fault; server closes in finally",
+      "Existing4-AMR equipment and planned-closure API cases pass"
+    ],
+    "http_case_lots": 1,
+    "http_recovery_tested": false,
+    "service_recovery_tested": true
+  },
+  "ui_typecheck": {
+    "command": "node dashboard/node_modules/typescript/bin/tsc --noEmit --incremental false --project dashboard/tsconfig.json",
+    "passed": true,
+    "scope": "one changed TSX and Snapshot type; no browser interaction evidence"
+  },
+  "limits": [
+    "Default process-line observation remains read-only unless explicit local controls enabled",
+    "Opt-in permits named equipment fault/recovery only; no new vehicle, aisle or order commands",
+    "New browser click and responsive checks blocked by CUA kernel asset initialization error documented in FOT-151",
+    "No48-lot completion, operational comparison, physical fleet or real factory performance claim"
+  ]
+}

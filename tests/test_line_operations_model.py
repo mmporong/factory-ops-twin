@@ -13,6 +13,25 @@ CONFIGS = ROOT / "configs"
 
 
 class LineOperationsModelTests(unittest.TestCase):
+    def test_departure_funding_includes_ready_line_work_and_observed_traffic_wait(self):
+        model = LineOperationsModel(
+            CONFIGS / "factory-semiconductor-campus16", initial_lots=1,
+            run_id="line-charge-departure-funding",
+        )
+        charging = model.operations_charging
+        assert charging is not None
+        task = model.line.ready_transports[0]
+
+        base = model._charging_departure_requirement("amr-1")
+        self.assertIsNotNone(base)
+        self.assertEqual(task.task_id, base["task_id"])
+
+        charging.traffic_wait_budget_s = 9588.8
+        congested = model._charging_departure_requirement("amr-1")
+        expected_extra = charging.energy.profile["idle_power_w"] * 9588.8 / 3600.0
+        self.assertEqual(task.task_id, congested["task_id"])
+        self.assertAlmostEqual(base["required_wh"] + expected_extra, congested["required_wh"])
+
     def test_pack_drop_protects_egress_and_stages_before_home_parking(self):
         model = LineOperationsModel(
             CONFIGS / "factory-semiconductor-campus16", initial_lots=0, run_id="line-staging",

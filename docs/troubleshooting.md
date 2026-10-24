@@ -1475,3 +1475,25 @@ BridgeAdmission의 실제 wait-for graph에서 순환을 구하고 기존 cycle 
 303은 기존 순환을 재평가해 양보13회 완료·운송85건·출하10·반납6·전16대 최소3운송까지 진행했다. 이후 sim33450초에 amr4의 charging fault로 실패했다. amr4는 무적재 `LOT-0022:product_move:2`의 D_CO pickup을 기다렸고 `(74,73)`의 `D_CD_E_SAFE_EXIT`에서 amr3의 점유에 막혔다. 마지막 SOC0.000386%까지 내려가도 `charge_queued` 사건은 없었다. `prepare`가 일반 귀가 이외의 활성 trip을 모두 제외해, 실제 교통 대기가 배차 때 예상한 에너지 대기 예산을 넘었을 때 충전으로 전환할 경로가 없었다. 이전 충전량67.89Wh가 있어도 이번 활성 임무의 선점 누락은 해결되지 않았다. [303 종료·동결 근거](evidence/campus16-303.json)
 
 정지·무적재·pickup·queue 외 authored hold·active chunk 및 bridge window/resource 소유 없음 조건에서만 픽업을 충전으로 선점한다. 원래 task·`_jobs`·pickup/drop station claim을 보존하고 pending/wait/replan만 철회하며, 도크 반납 후 같은 pickup을 재개한다. 새 claim 보존·재개 회귀를 포함한 charging28·traffic5검사가 통과했다. 에너지·안전 조건은 바꾸지 않았으며 실제 전체 운영 결과는 새 동결 실행309에서 확인한다.303은 소유PID0·source stable의 실패 원본으로 보존한다.
+
+## FOT-186 — 센서 없는 물리 실행에서 World 초기화가 누락됨
+
+305의 physics-only1대 시험은 `physics_only_setup`에서 owned World가 없어0표본으로 종료됐다. 기존 센서 경로는 `setup_lidars` 안에서 simulation을 초기화했지만 새 physics-only 경로는 그 함수를 건너뛰었다. 초기화 전 articulation에 정지를 요청한 cleanup 오류도 뒤따랐다. Job 종료와 worker exit0만으로 성공 처리하지 않았으며 host 결과와 lease는 실패로 보존했다.
+
+World가 없을 때 기존 `SimulationManager.setup_simulation`을 호출하고, 초기화·명령 전에 실패했으면 stop 생략 이유를 기록하도록 수정했다. 센서가 만든 World는 재생성하지 않는다. 새306의1대에 이어307의16대 모두 실제 이동0.579882~0.585862m·조인트 변화·정지 속도0.001054~0.001465m/s를 통과했다. World는7초·420 physics step을 진행했고71개 시각 표본이 증가했다. cleanup 오류·잔존PID는0이며 공용 lease를 반환했다. 무적재 짧은 바퀴 시험으로, 물류 운송·Nav2·센서·충전 처리량의 근거는 아니다.
+
+## FOT-187 — 실행 ID의 하이픈이 ROS 노드명으로 전달됨
+
+308의16대 센서 시험은 `ros_lidar_setup`에서 `InvalidNodeNameException`으로 종료됐다. 실행 ID `campus-capacity-308`의 일부를 `local45_fleet_probe_campus-c` 노드명에 넣어 하이픈이 남았다. 센서 생성·World 초기화 전이므로 로봇 결과·토픽·RGB는0개다. 이 시점의 최고 GPU 메모리5,119/12,288MiB는 자원 고갈의 증거가 아니다. 초기화 전 articulation16개는 cleanup skip 사유로 남겼고 소유 프로세스·Job·lease 정리를 확인했다.
+
+설치 bridge와 같은 [ROS2 Humble 노드명 규칙](https://docs.ros.org/en/humble/p/rmw/generated/file_include_rmw_validate_node_name.h.html)은 영숫자·밑줄을 허용하며 숫자 시작을 금지한다. 고정된 영문 prefix는 유지하고 suffix 문자열만 정규화한다. 원래 run ID와 namespace/topic·입력 장면은 유지하며, 수정 소스의 센서 결과는 새 실행312로 구분한다. 실패308은 덮어쓰거나 성공으로 승격하지 않는다.
+
+수정 후312에서16/16차량의 이동·조인트·정지,32/32토픽의 유효 메시지14~15개·증가 시각·finite 거리,7초·420 physics step을 확인했다. 최대 GPU 메모리는6,536/12,288MiB였고 cleanup 오류·잔존PID0·lease 반환을 확인했다. 대표RGB는 일부 구역만 담은 종료 프레임이며16대 판정은 telemetry에서 온다. [307·308·312 구분 근거](evidence/campus-capacity-307-312.json)
+
+## FOT-188 — 장시간 혼잡 대기가 배차·충전 이탈 예산에 반영되지 않음
+
+309는303의 실패 시각을 넘겨 sim35984초까지 진행했지만 amr3의 충전 접근 중 소진으로 종료됐다. 운송89건·출하9·반납8·전16대 최소3운송·양보13회가 완료됐고 종료 시 bridge/reservation 순환은 없었다. amr3는 첫 충전 뒤 SOC32.86%에서 빈 용기 반납 임무를 배정받았고, 물류 교통 대기만 약10,043초를 겪었다. 충전 대기 등록 뒤에도 C_CH1 접근이 다른 차량에 막혀 최종 소진됐다. 이는303의 픽업 충전 선점 누락과 다른 사례다. [309 원본·해시](evidence/campus16-309.json)
+
+기존 작성 대기 예산4,366.93초로는 해당 임무와 충전소 귀환에 SOC28.378%가 필요하다고 계산했다. 같은 상태의 관측 혼잡 상한9,588.8초를 추가하면 약48.355%가 필요하다. 이 값은 현장 보정치가 아닌309의 관측 범위다. 후속 수정은 배차의 교통 대기 예산과 충전 이탈에 필요한 에너지를 연결하며,600Wh·600W·reserve15%·안전 점유를 완화하지 않는다. 실제 수정·회귀와 다음 전체 실행은 별도 근거로 남긴다.
+
+완료운송 사이의 관측 교통 대기 envelope를 다음 배차 요구량에 더하고, 준비된 다음 임무에 필요한 에너지를 확보할 때까지 충전 접촉을 유지하도록 수정했다. generic charger의 기본35%는 유지하며 operations가 명시한 departure threshold를 사용한다.100%로도 부족하면 `assignment_funding_exceeds_capacity`와 소유·접촉·task/payload claim을 보존한다. charging/energy/line의 관련36검사가 통과했고, 실제 설정의 CPU probe311에서는 amr1의 첫 `A_P1→A_S1→A_CI→charger` 경로가25.656%에서45.633%로 바뀌었다. 실패 차량의 장거리 경로와 시작점이 달라 절대값은 다르며, 두 계산에서 같은9,588.8초의 추가분은119.86Wh다. 다음48lot 실행311의 완주 판정은 별도다. [에너지 계약 probe](evidence/campus16-energy-funding-311.json)

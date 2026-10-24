@@ -1,0 +1,87 @@
+{
+  "schema_version": 1,
+  "run_id": "loco-protocol-sources-310",
+  "created_at": "2026-10-24",
+  "scope": {
+    "research_only": true,
+    "official_primary_sources_only": true,
+    "test_subset_1_images_or_labels_opened": false,
+    "model_training_or_gpu_started": false,
+    "mapping_approved": false,
+    "training_ready": false
+  },
+  "source_context": {
+    "upstream_repository": "tum-fml/loco",
+    "upstream_commit": "b460ab8c37f09162f0613c7546948c496e1b1628",
+    "upstream_commit_date": "2021-06-07T08:29:04Z",
+    "paper": "Mayershofer, Holm, Molter, Fottner, LOCO: Logistics Objects in Context, ICMLA 2020"
+  },
+  "confirmed_facts": [
+    {
+      "fact": "LOCO lists small_load_carrier as one of five annotated detection classes.",
+      "source_urls": [
+        "https://raw.githubusercontent.com/tum-fml/loco/b460ab8c37f09162f0613c7546948c496e1b1628/README.md",
+        "https://mediatum.ub.tum.de/doc/1578845/1578845.pdf"
+      ]
+    },
+    {
+      "fact": "The pinned annotations label sub1 and sub4 as val, and sub2, sub3, and sub5 as train.",
+      "source_urls": [
+        "https://api.github.com/repos/tum-fml/loco/git/trees/b460ab8c37f09162f0613c7546948c496e1b1628?recursive=1"
+      ]
+    },
+    {
+      "fact": "The official README states 5 logistics environments; the paper documents five subsets and a non-random subset-based benchmark split.",
+      "source_urls": [
+        "https://raw.githubusercontent.com/tum-fml/loco/b460ab8c37f09162f0613c7546948c496e1b1628/README.md",
+        "https://mediatum.ub.tum.de/doc/1578845/1578845.pdf"
+      ]
+    },
+    {
+      "fact": "LOCO says images were captured while walking through a logistics setting using low-cost cameras.",
+      "source_urls": [
+        "https://raw.githubusercontent.com/tum-fml/loco/b460ab8c37f09162f0613c7546948c496e1b1628/README.md"
+      ]
+    }
+  ],
+  "inferences": [
+    {
+      "claim": "crate_blue_a02 may serve as a narrow synthetic visual proxy for small_load_carrier because its measured deep, approximately 0.6 x 0.4 m crate silhouette is more plausible than the shallow baseline.",
+      "basis": "The official class is a broad detection category and the paper notes object variation inside classes; the USD measurement is project-local geometry evidence.",
+      "decision": "candidate_only"
+    },
+    {
+      "claim": "The proposed train=sub2/sub5, tuning=sub3/sub4, heldout=sub1 split is a support-aware auxiliary experiment split, not the full original LOCO benchmark.",
+      "basis": "The pinned source filenames use train for sub2/3/5 and val for sub1/4.",
+      "decision": "do_not_call_sub1_official_test"
+    },
+    {
+      "claim": "The existing same-file, pixel-SHA, and pHash<=6 zero findings support only the stated image-level duplicate checks.",
+      "basis": "docs/evidence/loco-rgb-249.json reports no cross-role candidates for those three checks.",
+      "decision": "image_dedup_audited_only"
+    }
+  ],
+  "unverified": [
+    "A formal LOCO definition tying small_load_carrier to KLT, Euro-container, ESD properties, a size range, color, material, or perforation pattern.",
+    "crate_blue_a02 equivalence to any real LOCO carrier or any KLT/ESD standard.",
+    "An official recording_id, frame order/timestamp, or sequence-level split contract.",
+    "An official subset-to-physical-environment map and proof that environments do not cross proposed roles."
+  ],
+  "minimum_metadata_required": [
+    "recording_id",
+    "frame_index_or_capture_timestamp",
+    "environment_id"
+  ],
+  "applicable_decisions": {
+    "asset_mapping": "Keep nvidia:crate_blue_a02 as candidate_pending_shape_and_domain_validation; preserve mapping_approved=false and training_ready=false.",
+    "naming": "Use synthetic small-load-carrier visual proxy candidate; do not claim KLT, Euro-container, ESD-safe, or LOCO physical equivalence.",
+    "split": "Call sub1 a fixed auxiliary heldout candidate drawn from an upstream val partition, not an official LOCO test set.",
+    "independence": "Report image duplicate checks only. Do not report sequence-disjoint or environment-disjoint evaluation until the three required metadata fields support a group-level audit."
+  },
+  "source_urls": [
+    "https://raw.githubusercontent.com/tum-fml/loco/b460ab8c37f09162f0613c7546948c496e1b1628/README.md",
+    "https://api.github.com/repos/tum-fml/loco/git/trees/b460ab8c37f09162f0613c7546948c496e1b1628?recursive=1",
+    "https://raw.githubusercontent.com/tum-fml/loco/b460ab8c37f09162f0613c7546948c496e1b1628/rgb/loco-sub2-v1-train.json",
+    "https://mediatum.ub.tum.de/doc/1578845/1578845.pdf"
+  ]
+}

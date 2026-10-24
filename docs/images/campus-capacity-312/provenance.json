@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "run_id": "campus-capacity-312",
+  "source_path": "artifacts/campus-capacity-312/runtime/runtime-overview.png",
+  "source_sha256": "a3c61def9e86d7726d8721389c25eda9104302ff4c7e7f0aaddb370b97f9f9ef",
+  "output_path": "docs/images/campus-capacity-312/overview.png",
+  "output_sha256": "a3c61def9e86d7726d8721389c25eda9104302ff4c7e7f0aaddb370b97f9f9ef",
+  "copy_mode": "byte-identical",
+  "actual_sim_time_s": 7.000000365078449,
+  "actual_physics_steps": 420,
+  "view": "partial fixed-camera representative end frame",
+  "evidence_boundary": "The 16-robot admission result comes from wheel, joint, World-time and ROS/RTX telemetry, not visual counting in this image.",
+  "scope": "Adapter debug overview for the bounded native sensor smoke; not process-operation or transport evidence.",
+  "limits": [
+    "Not a view of all sixteen robots.",
+    "Not a replacement for the operations hero media.",
+    "No cargo, transport, charging, Nav2, collision-avoidance or throughput claim."
+  ]
+}

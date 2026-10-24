@@ -31,6 +31,17 @@ npm run dev -- --port 3007
 
 주소는 `http://127.0.0.1:3007`, 기본 API는 `http://127.0.0.1:8765`다. 웹은 수신 표본 사이의 표시 좌표를 보간한다. 운영 모델의 계산과 화면 보간은 별개다. 가상 충전은 작성된 에너지 계수·충전대 예약·정렬·대기·SOC 증가·이탈을 사용하며 물리 접촉 센서나 전기 충전 결과가 아니다.
 
+## 16대 캠퍼스의 설비 고장·복구
+
+`process-line` API의 기본값은 읽기 전용이다. 다음처럼 명령을 켠 로컬 실행에서는 관제의 운영 패널에서12개 설비 중 대상을 선택해 고장·복구를 요청한다. 기존 API와 포트가 겹치지 않는지 확인한다.
+
+```powershell
+cd "$HOME/factory-ops-twin"
+uv run python -m factory_ops.dashboard --config configs/factory-semiconductor-campus16 --execution-mode process-line --lots 48 --port 18766 --process-line-controls --scenario-dir runs/campus-scenarios
+```
+
+웹은 `OPS_API_URL=http://127.0.0.1:18766`을 지정한 별도 포트에 연결한다. 명령은 현재 API가 계산하는 CPU 실행에만 적용되며 다른 운영 배치를 제어하지 않는다. API는 실행 ID·revision·`cell_id`를 확인하고 적용된 설비와 상태를 receipt의 `effect`로 반환한다. 기본 읽기 전용·외부 source·재생·Mock MES의 경계는 유지한다. 차량 조종·주문 추가·통로 변경은 지원하지 않는다. 고장·복구와12개 설비 상태는 저장한 관측에서 재현하며, 새 브라우저 클릭 확인은 도구 초기화 오류로 남아 있다.
+
 ## 운영 기록 저장·재생
 
 API에 `--scenario-dir`를 지정하면 웹에 기록 저장·재생 기능이 연결된다. CPU 모델의 예는 아래와 같다. 기존 API가 실행 중이면 새 프로세스를 중복으로 띄우지 않고 해당 실행의 설정에 옵션을 추가한다.

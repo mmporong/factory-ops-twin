@@ -85,18 +85,30 @@ class EnergyFleet:
         battery.last_sample = sample
         return self.snapshot(robot)
 
-    def can_assign(self, robot: str, *, outbound_m: float, charger_return_m: float,
-                   expected_wait_s: float, nominal_speed_m_s: float, loaded: bool,
-                   expected_rotation_rad: float = 0.0, observed_at_s: float) -> bool:
+    def assignment_required_wh(self, *, outbound_m: float, charger_return_m: float,
+                               expected_wait_s: float, nominal_speed_m_s: float,
+                               loaded: bool, expected_rotation_rad: float = 0.0) -> float:
         if type(loaded) is not bool:
             raise ValueError("load state must be a boolean")
         distance = number(outbound_m, "outbound distance") + number(charger_return_m, "charger return distance")
         speed = number(nominal_speed_m_s, "planning speed", positive=True)
         duration = distance / speed + number(expected_wait_s, "expected wait")
-        required = (self.profile["translation_wh_per_m"] * distance * (self.profile["loaded_factor"] if loaded else 1)
-                    + self.profile["idle_power_w"] * duration / 3600
-                    + self.profile["rotation_wh_per_rad"] * number(expected_rotation_rad, "route rotation")
-                    + self.profile["capacity_wh"] * self.profile["reserve_fraction"])
+        return (self.profile["translation_wh_per_m"] * distance * (self.profile["loaded_factor"] if loaded else 1)
+                + self.profile["idle_power_w"] * duration / 3600
+                + self.profile["rotation_wh_per_rad"] * number(expected_rotation_rad, "route rotation")
+                + self.profile["capacity_wh"] * self.profile["reserve_fraction"])
+
+    def can_assign(self, robot: str, *, outbound_m: float, charger_return_m: float,
+                   expected_wait_s: float, nominal_speed_m_s: float, loaded: bool,
+                   expected_rotation_rad: float = 0.0, observed_at_s: float) -> bool:
+        required = self.assignment_required_wh(
+            outbound_m=outbound_m,
+            charger_return_m=charger_return_m,
+            expected_wait_s=expected_wait_s,
+            nominal_speed_m_s=nominal_speed_m_s,
+            loaded=loaded,
+            expected_rotation_rad=expected_rotation_rad,
+        )
         battery = self.batteries[robot]
         stamp = number(observed_at_s, "decision stamp")
         if battery.last_sample is None or not 0 <= stamp - battery.last_sample[0] <= self.profile["max_observation_gap_s"]:

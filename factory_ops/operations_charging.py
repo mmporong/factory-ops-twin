@@ -40,6 +40,8 @@ class OperationsModelLike(Protocol):
 
     def _reassign_charging_approach(self, robot_id: str, goal: str) -> None: ...
 
+    def _charging_departure_requirement(self, robot_id: str) -> dict[str, Any] | None: ...
+
 
 def _angle(value: float) -> float:
     return math.atan2(math.sin(value), math.cos(value))
@@ -96,6 +98,14 @@ class OperationsCharging:
         self.home_swaps: list[dict[str, str]] = []
         self.parking_preempt_deferred: set[str] = set()
         self.approach_deferred: dict[str, dict[str, Any]] = {}
+        self.departure_deferred: dict[str, dict[str, Any]] = {}
+        self.traffic_wait_budget_s = 0.0
+        waits = getattr(model, "_wait_s", {})
+        deliveries = getattr(model, "_deliveries", {})
+        self._traffic_delivery_samples = {
+            robot: (int(deliveries.get(robot, 0)), float(waits.get(robot, 0.0)))
+            for robot in robots
+        }
         for robot in robots:
             self.energy.observe(robot, model.sim_time, 0.0, 0.0, loaded=False)
 
@@ -152,13 +162,14 @@ class OperationsCharging:
             yaw_rad = final_yaw_rad
         return total, yaw_rad
 
-    def can_assign(self, model: OperationsModelLike, robot: str, pickup: str, destination: str) -> bool:
-        if not self.available(robot):
-            return False
+    def _assignment_required_wh(
+        self, model: OperationsModelLike, robot: str, pickup: str, destination: str,
+    ) -> float:
         first = self._plan(model, model._locations[robot], pickup)
         loaded = self._plan(model, pickup, destination)
         distance = first.distance_m + loaded.distance_m
         initial_yaw = model._poses[robot]["yaw_rad"]
+        requirements = []
         for dock_id in sorted(self.slots):
             slot = self.slots[dock_id]
             returning = self._plan(model, destination, slot["anchor"])
@@ -172,19 +183,47 @@ class OperationsCharging:
                 + model.motions[robot].estimated_duration(returning.points, yaw_after_loaded, slot["yaw_rad"])
             )
             nominal_s = (distance + returning.distance_m) / model.limits.max_linear_m_s
-            if self.energy.can_assign(
-                robot,
+            requirements.append(self.energy.assignment_required_wh(
                 outbound_m=distance,
                 charger_return_m=returning.distance_m,
-                expected_wait_s=self.wait_budget_s + max(0.0, travel_s - nominal_s),
+                expected_wait_s=(self.wait_budget_s + self.traffic_wait_budget_s
+                                 + max(0.0, travel_s - nominal_s)),
                 nominal_speed_m_s=model.limits.max_linear_m_s,
                 loaded=True,
                 expected_rotation_rad=rotation,
-                observed_at_s=model.sim_time,
-            ):
-                return True
+            ))
+        return min(requirements)
+
+    def can_assign(self, model: OperationsModelLike, robot: str, pickup: str, destination: str) -> bool:
+        if not self.available(robot):
+            return False
+        required = self._assignment_required_wh(model, robot, pickup, destination)
+        energy = self.energy.snapshot(robot)
+        observed_at_s = energy["observed_sim_time_s"]
+        if (observed_at_s is not None
+                and 0 <= model.sim_time - observed_at_s <= self.profile["energy"]["max_observation_gap_s"]
+                and energy["energy_wh"] >= required):
+            return True
         self.denied.add(robot)
         return False
+
+    def _update_traffic_wait_budget(self, model: OperationsModelLike) -> None:
+        """Retain the largest observed wait interval between completed transports."""
+
+        waits = getattr(model, "_wait_s", None)
+        deliveries = getattr(model, "_deliveries", None)
+        if not isinstance(waits, Mapping) or not isinstance(deliveries, Mapping):
+            return
+        for robot, (prior_count, prior_wait) in self._traffic_delivery_samples.items():
+            count = int(deliveries.get(robot, 0))
+            wait = float(waits.get(robot, 0.0))
+            if count < prior_count or wait < prior_wait:
+                raise RuntimeError("operations traffic counters moved backward during charging observation")
+            if count == prior_count:
+                continue
+            sample = (wait - prior_wait) / (count - prior_count)
+            self.traffic_wait_budget_s = max(self.traffic_wait_budget_s, sample)
+            self._traffic_delivery_samples[robot] = (count, wait)
 
     def _pad_occupied_by_peer(self, model: OperationsModelLike, robot: str, anchor: str) -> str | None:
         x, y = model.book.nodes[anchor]
@@ -307,6 +346,7 @@ class OperationsCharging:
             )
 
     def prepare(self, model: OperationsModelLike) -> None:
+        self._update_traffic_wait_budget(model)
         for robot, destination in list(self.relocating.items()):
             if robot not in model._trips and model._locations[robot] == destination:
                 del self.relocating[robot]
@@ -467,6 +507,37 @@ class OperationsCharging:
 
         contact = self.pad_contact(model, robot, dock_id)
         soc = self.energy.snapshot(robot)["battery_pct"] / 100.0
+        departure_soc = self.profile["resume_soc"]
+        departure_allowed = True
+        requirement = None
+        requirement_hook = getattr(model, "_charging_departure_requirement", None)
+        if callable(requirement_hook):
+            requirement = requirement_hook(robot)
+        if requirement is not None:
+            required_wh = float(requirement["required_wh"])
+            capacity_wh = float(self.profile["energy"]["capacity_wh"])
+            departure_soc = max(departure_soc, min(1.0, required_wh / capacity_wh))
+            departure_allowed = required_wh <= capacity_wh
+            deferred = {
+                "reason": ("observed_traffic_funding" if departure_allowed
+                           else "assignment_funding_exceeds_capacity"),
+                "required_wh": required_wh,
+                "departure_soc": departure_soc,
+                "task_id": requirement["task_id"],
+                "traffic_wait_budget_s": self.traffic_wait_budget_s,
+            }
+            if (not departure_allowed or soc < departure_soc) and self.departure_deferred.get(robot) != deferred:
+                self.departure_deferred[robot] = deferred
+                model._event(
+                    "charge_departure_deferred",
+                    f"{robot} 충전 접촉 유지 · 다음 운송 에너지 확보 대기",
+                    robot,
+                    **deferred,
+                )
+            elif departure_allowed and soc >= departure_soc:
+                self.departure_deferred.pop(robot, None)
+        else:
+            self.departure_deferred.pop(robot, None)
         dock_state = self.docks.observe(
             robot,
             run_id=self.run_id,
@@ -476,6 +547,8 @@ class OperationsCharging:
             linear_m_s=motion.linear_m_s,
             angular_rad_s=motion.angular_rad_s,
             soc=soc,
+            departure_soc=departure_soc,
+            departure_allowed=departure_allowed,
         )
         if dock_state["phase"] in {"undock_pending", "ready_to_leave"}:
             if state["phase"] == "exit_dwell":
@@ -489,6 +562,7 @@ class OperationsCharging:
                 elif model.sim_time - state["stationary_since"] >= self.profile["exit_dwell_s"]:
                     self.docks.release(robot, run_id=self.run_id, observed_at_s=model.sim_time)
                     del self.aux[robot]
+                    self.departure_deferred.pop(robot, None)
                     self.denied.discard(robot)
                     model._event("charge_released", f"{robot} 충전 슬롯 반납·업무 복귀", robot,
                                  dock_id=dock_id)
@@ -558,5 +632,8 @@ class OperationsCharging:
             "home_swaps": deepcopy(self.home_swaps),
             "parking_preempt_deferred": sorted(self.parking_preempt_deferred),
             "approach_deferred": deepcopy(self.approach_deferred),
+            "departure_deferred": deepcopy(self.departure_deferred),
+            "authored_assignment_wait_budget_s": self.wait_budget_s,
+            "observed_traffic_wait_budget_s": self.traffic_wait_budget_s,
             "hardware_calibrated": False,
         }

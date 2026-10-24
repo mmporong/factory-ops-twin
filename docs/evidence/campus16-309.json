@@ -1,0 +1,86 @@
+{
+  "schema_version": 1,
+  "scope": "Closed authored CPU campus16-v2 operations attempt; preserved charging-energy failure evidence, no completed-throughput or physical-runtime claim",
+  "run_id": "process-line-cb66eaf5-2efa-42fe-be2c-617706c3a79d",
+  "status": "failed",
+  "error": {
+    "type": "RuntimeError",
+    "message": "operations charging observation fault: amr-3"
+  },
+  "stop_reason": "runtime_error",
+  "elapsed_wall_s": 1295.355332099949,
+  "sim_time_s": 35983.99999975686,
+  "source_stable_during_run": true,
+  "owned_processes_gone": true,
+  "workload": {
+    "lots": 48,
+    "release": "all at simulation start",
+    "policy": "fifo"
+  },
+  "limits": {
+    "horizon_s": 120000.0,
+    "wall_s": 5400.0,
+    "snapshot_count": 80,
+    "stall_timeout_s": 600.0,
+    "record_start_s": 17550.0,
+    "record_duration_s": 300.0
+  },
+  "cumulative_shipped_lots": 9,
+  "cumulative_returned_lots": 8,
+  "actual_completed_transport_deliveries": 89,
+  "configured_robots": 16,
+  "assignment_participants": 16,
+  "repeat_assignment_participants": 16,
+  "delivery_participants": 16,
+  "repeat_delivery_participants": 16,
+  "minimum_assignments_per_robot": 4,
+  "minimum_completed_deliveries_per_robot": 3,
+  "peak_material_tasks": 15,
+  "peak_material_moving": 7,
+  "peak_all_moving": 7,
+  "observed_min_circular_clearance_m": 1.7257818169114452,
+  "quiescent": false,
+  "goal_met": false,
+  "recorded_frames": 300,
+  "traffic_recovery": {
+    "traffic_yield_selected": 13,
+    "traffic_yield_completed": 13,
+    "replan_attempts": 98,
+    "generic_replans_applied": 2,
+    "replan_unavailable": 83,
+    "final_bridge_wait_cycle": null,
+    "final_reservation_wait_cycle": null
+  },
+  "charging_failure": {
+    "robot_id": "amr-3",
+    "final_phase": "approach",
+    "final_dock_id": "C_CH1",
+    "final_pose_m": [
+      41.0,
+      73.0
+    ],
+    "final_battery_pct": 0.0010696362383615333,
+    "final_energy_wh": 0.0064178174301692,
+    "final_blockers": [
+      "amr-4"
+    ],
+    "first_charge_release_sim_s": 21921.299999961495,
+    "first_charge_resume_soc": 0.35,
+    "next_assignment": "LOT-0002:empty_return:5",
+    "charge_queued_sim_s": 32827.399999802794,
+    "charge_reserved_sim_s": 33832.99999978816,
+    "observed_assignment_and_return_interval_s": 14062.700000204364,
+    "authored_assignment_wait_budget_s": 4366.930970976335,
+    "observed_fleet_wait_per_delivery_upper_envelope_s": 9588.8,
+    "base_assignment_required_wh": 170.26908513820865,
+    "base_assignment_required_soc_pct": 28.378180856368107,
+    "congestion_aware_required_wh": 290.12908513820867,
+    "congestion_aware_required_soc_pct": 48.35484752303478,
+    "root_cause": "Assignment funding included charger queueing and kinematic route time but no observed campus traffic-wait envelope. The 35 percent release target therefore admitted an empty-return cycle that consumed the remaining energy before the next blocked dock approach reached contact.",
+    "post_run_repair_boundary": "The later repair must feed an observed traffic-wait envelope into assignment funding and retain dock contact until a ready transport is fundable. It is not part of this frozen run."
+  },
+  "result_sha256": "8393d1abd6e3595fdbbc769e6170e142fbb244943df0b3102cdb0c81048ed362",
+  "frozen_source_manifest_sha256": "908ea42c465991f14f7d85d7f3789d62446ca813c4b160517ce3f4c54f3de102",
+  "source_binding_sha256": "accb443fe158d4a01e3247fc22b87c1e27a4cd8f986578790e1e6c5891521864",
+  "recording_manifest_sha256": "1bfa286b44811c56f930a00dabb9621762df632d6cda5fea8bd551538ea4bb70"
+}

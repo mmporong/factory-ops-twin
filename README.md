@@ -22,13 +22,15 @@
 |---|---|
 | ![82×76m 캠퍼스의 실제 정적 GPU 렌더](docs/images/campus16-static-294/portfolio_overview.png) | ![절차형 핸들러·테스터와 트레이 인계대의 실제 정적 GPU 렌더](docs/images/campus16-static-294/cell_process.png) |
 
-위 이미지는 Isaac Sim4.5에서 촬영한 **정적 GPU 렌더**입니다. 물리 시간을 멈췄으며 차량을 스폰하지 않았습니다. 82×76m 안에 생산 설비76개, 출처가 있는 SimReady 배치88개, 차량 홈16개와 가상 충전 도크8개를 구성했습니다. 서비스 대기점12개·교량 진입 대기점8개·전용 출구8개를 배치했고, 출구 접근로와 겹친 소품12개를 이전 배치에서 제외했습니다. 생산 장비 본체는 절차형 모델이며 제조사 CAD가 아닙니다. 생산 충돌체77개를 유지했고16대 물리·센서 운용은 남아 있습니다. [촬영·해시·종료 근거](docs/images/campus16-static-294/provenance.json) · [배치 조건](docs/evidence/campus16-layout-292.json) · [교통 경로 배치도](docs/images/campus16-layout-292/campus-layout.png)
+위 이미지는 Isaac Sim4.5에서 촬영한 **정적 GPU 렌더**입니다. 물리 시간을 멈췄으며 차량을 스폰하지 않았습니다. 82×76m 안에 생산 설비76개, 출처가 있는 SimReady 배치88개, 차량 홈16개와 가상 충전 도크8개를 구성했습니다. 서비스 대기점12개·교량 진입 대기점8개·전용 출구8개를 배치했고, 출구 접근로와 겹친 소품12개를 이전 배치에서 제외했습니다. 생산 장비 본체는 절차형 모델이며 제조사 CAD가 아닙니다. 생산 충돌체77개를 유지합니다. [촬영·해시·종료 근거](docs/images/campus16-static-294/provenance.json) · [배치 조건](docs/evidence/campus16-layout-292.json) · [교통 경로 배치도](docs/images/campus16-layout-292/campus-layout.png)
+
+**16대 물리·센서 수용 시험은 통과했습니다.** 로컬 RTX3060·Isaac Sim4.5에서 Carter16대가7초·420 physics step 동안 약0.58m 이동한 뒤 정지했고, 차량별 바퀴 조인트와32개 ROS/RTX 라이다 토픽을 확인했습니다. 토픽마다 유효 메시지14~15개와 증가하는 시각을 수신했으며 최대 GPU 메모리는6,536/12,288MiB였습니다. 짧은 무적재 시험으로, 장시간 물류·Nav2·충전·실시간 처리 성능까지 검증한 결과는 아닙니다. [307·312 실행 근거](docs/evidence/campus-capacity-307-312.json) · [시험 종료 시 일부 구역](docs/images/campus-capacity-312/overview.png)
 
 주차장만 늘린 이전 `scale12/16`과 달리 `factory-semiconductor-campus16`은 4개 TEST→AOI→PACK 라인을 베이 사이로 연결합니다. 유한 재고 240개와 캐리어 64개를 사용하고 출하 뒤 원래 저장소로 빈 용기를 돌려보냅니다. 입력·출력 버퍼와 설비 고장, 전역 배차, 가감속·회전, 구간 점유와 가상 충전을 같은 운영 모델에서 계산합니다. 공정 시간·배치는 작성 가정입니다.
 
 캠퍼스의 배차는 `downstream_wip_drain_least_assigned`입니다. 예약 가능한 후보 중 반납·출하·후단 WIP를 먼저 처리하고 운송 배정이 적은 차량을 우선합니다. snapshot의 `production_line.dispatch_mode`로 정책을 확인합니다. 기존 단일 라인의 FIFO/ETA 비교와 같은 정책으로 해석하지 않습니다.
 
-미완료 CPU 기준선279에서 **16개 물류 임무의 동시 진행**과 실제 이동 최대10대를 확인했습니다. 현재 v2의 실행303에서는 **16대 모두3회 이상 운송을 완료**했고, 총 운송85건·출하10lot·빈 용기 반납6lot을 기록했습니다. 같은 실행의 물류 임무는 최대15개, 이동은 최대7대였고 양보 복구13회가 완료됐습니다. 이후 픽업 대기 차량의 충전 전환 누락으로 종료됐습니다. 후속 구현은 안전하게 정지한 무적재 픽업을 충전 후 같은 임무로 재개하고, 실제 접근 가능한 도크를 거리순으로 선택·재배정합니다. 주변 점유가 바뀌면 막혔던 재계획도 다시 평가합니다.48lot 완주는 남아 있습니다. 양보·주차·충전 이동은 물류 동시성이나 완료 운송에 넣지 않습니다. [303 운영·실패 근거](docs/evidence/campus16-303.json) · [재계획 캐시299](docs/evidence/campus16-299.json) · [16개 동시 임무279](docs/evidence/campus16-279.json) · [전체 경로 보호 기준선255](docs/evidence/campus16-255.json)
+미완료 CPU 기준선279에서 **16개 물류 임무의 동시 진행**과 실제 이동 최대10대를 확인했습니다. 현재 v2의 실행309에서는 **16대 모두3회 이상 운송을 완료**했고, 총 운송89건·출하9lot·빈 용기 반납8lot을 기록했습니다. 같은 실행의 물류 임무는 최대15개, 이동은 최대7대였고 양보 복구13회가 완료됐습니다. 안전하게 정지한 무적재 픽업을 충전 후 같은 임무로 재개하며, 실제 접근 가능한 도크를 거리순으로 선택·재배정합니다. 주변 점유가 바뀌면 막혔던 재계획도 다시 평가합니다.309는 다른 차량의 충전 접근 대기 중 배터리가 소진돼 종료됐으며, 혼잡 대기의 에너지 예산을 보강하고 있습니다.48lot 완주는 남아 있습니다. 양보·주차·충전 이동은 물류 동시성이나 완료 운송에 넣지 않습니다. [309 운영·실패 근거](docs/evidence/campus16-309.json) · [픽업 충전 전환303](docs/evidence/campus16-303.json) · [16개 동시 임무279](docs/evidence/campus16-279.json) · [전체 경로 보호 기준선255](docs/evidence/campus16-255.json)
 
 현재 v2 배치는 **82×76m**입니다. 기존 설비의 상대 위치를 유지하면서 베이를 북쪽으로8m 옮겨 물류 포켓을 확보했습니다. 교량 진입 대기점8개, SOURCE/CELL/PACK 대기점12개와 전용 교량 출구8개를 두며, 홈16개를 포함해44곳에서 정지할 수 있습니다. 일반 대기 공간과 교량 출구를 분리했고 출구가 막히면 진입 대기점에 들어가기 전부터 기다립니다. 아직 일부 서비스 경로는 다른 stage·queue의 정지 점유와 겹치므로 실제 전체 window가 비어 있을 때만 출발합니다. 안전 반경과 예약 타일 크기는 유지했으며48lot 완주가 남아 있습니다. [현재 배치도](docs/images/campus16-layout-292/campus-layout.png) · [이탈 경로 차단288](docs/evidence/campus16-288.json) · [교량 출구 차단289](docs/evidence/campus16-289.json)
 
@@ -45,7 +47,7 @@ uv run python scripts/demo/run_process_line.py --config configs/factory-semicond
 
 새 출력 폴더에 소스·설정 원본, 해시, 최종 상태와 최대 80개 대표 snapshot을 남깁니다. 진전이 없는 실행은 `incomplete`로 중단합니다. `--record-start 900 --record-duration 120`으로 최대 300초의 1Hz 관측 창을 추가할 수 있습니다. 이 기록은 CPU 운영이며 접촉 물리·센서 검증을 대신하지 않습니다.
 
-Brev의 기존 Nebius 2×L40S 환경을 재사용했지만 `UNHEALTHY` 상태여서 SDK 실행 전 중단했습니다. 사후 조회에서 실제 `STOPPED`를 확인했고, 독립 Stop 타이머와 keepalive도 정리했습니다. 기존 L40S 환경은 중지 상태로 보존합니다. 재사용 도구는 `scripts/brev/reuse_scale.py`이며 기본값은 사전 확인입니다. 첫 묶음 상한은 6시간·$40이고 실제 정산 비용이나 16대 센서·물리 성공은 확인되지 않았습니다. [재사용 실패·중지 근거](docs/evidence/brev-scale-reuse-239.json)
+Brev의 기존 Nebius 2×L40S 환경을 재사용했지만 `UNHEALTHY` 상태여서 SDK 실행 전 중단했습니다. 사후 조회에서 실제 `STOPPED`를 확인했고, 독립 Stop 타이머와 keepalive도 정리했습니다. 기존 L40S 환경은 중지 상태로 보존합니다. 재사용 도구는 `scripts/brev/reuse_scale.py`이며 기본값은 사전 확인입니다. 첫 묶음 상한은6시간·$40이고 실제 정산 비용은 미확인입니다.16대 물리·센서의 짧은 수용 시험은 위 로컬3060 결과이며 이 클라우드의 실행 결과가 아닙니다. [재사용 실패·중지 근거](docs/evidence/brev-scale-reuse-239.json)
 
 ## 반도체 후공정 장면
 
@@ -139,7 +141,7 @@ Isaac Sim Replicator로 12개 시각 구성, 30시점, 3카메라에서 RGB 1,08
 
 기존 Replicator RGB 1,080장의 생성·검사 기록을 바탕으로, 실제 물류 사진에서 검출 성능과 실제 라벨 예산 곡선을 비교하는 보조 실험을 준비하고 있습니다. **검출기 학습과 실사 mAP 결과는 아직 없습니다.**
 
-공식 RGB ZIP을 받아 사진5,097장과 박스151,428개의 메타데이터를 대조했습니다. 모두 디코딩·해상도가 맞았고 분할 간 동일 파일/픽셀·pHash 거리6 이하 후보는0건이었습니다. 촬영 환경·시퀀스 감사는 남아 있습니다. LOCO에는 AMR 클래스가 없고, 소형 적재함이 없는 초기 튜닝 후보도 수정했습니다. [RGB 감사](docs/evidence/loco-rgb-249.json) · [분할·해시 index](docs/data/loco-eval-v1/README.md)
+공식 RGB ZIP을 받아 사진5,097장과 박스151,428개의 메타데이터를 대조했습니다. 모두 디코딩·해상도가 맞았고 분할 간 동일 파일/픽셀·pHash 거리6 이하 후보는0건이었습니다. 촬영 환경·시퀀스 감사는 남아 있습니다. LOCO에는 AMR 클래스가 없고, 소형 적재함이 없는 초기 튜닝 후보도 수정했습니다. 평가용 sub1은 원본 val 일부를 고정한 프로젝트 분할이며 공식 LOCO test가 아닙니다. [RGB 감사](docs/evidence/loco-rgb-249.json) · [분할·해시 index](docs/data/loco-eval-v1/README.md) · [범주·분할 출처](docs/evidence/loco-protocol-310.json)
 
 반도체 장면의 트레이·매거진을 팔레트·적재함으로 잘못 학습하지 않도록 에셋 허용 목록과 거절 검사를 구현했습니다. 실제 학습 후보 사진과 비교해 얕은 회색 트레이 대신 높이24cm의 NVIDIA 청색 적재함을 추가했습니다. 팔레트·청색 적재함의 소량 촬영302는4개 seed·16장 RGB를 생성했고, **60개 객체의 자동 박스가 각 객체 semantic 마스크 외곽과 일치**했습니다. 원본 에셋의 기본 라벨은 소비용 사본에서 분리했고 class/object_id·에셋 해시를 연결해 보존했습니다. LOCO 클래스 등가성과 학습 적합성은 미승인입니다. [302 촬영·라벨·출처 근거](docs/evidence/perception-blue-probe-302.json) · [이전 회색 후보278](docs/evidence/perception-probe-278.json)
 
@@ -180,12 +182,14 @@ npm run dev -- --port 3007
 
 웹 주소는 `http://127.0.0.1:3007`입니다. 기존 API가 다른 옵션으로 실행 중이라면 사용 중인 작업을 마친 뒤 해당 API만 종료하고 위 설정으로 다시 시작합니다. API 주소가 같으면 웹을 다시 시작할 필요가 없습니다.
 
-16대 캠퍼스의 실제 공정 모델을 관측하려면 별도 포트에서 `process-line` 모드를 사용합니다. 4개 라인·12개 셀·48lot을 계산하며, 현재는 읽기 전용이므로 웹의 운전 명령은 지원하지 않습니다. 기존 4대 API·웹을 유지하면서 다음 API와 웹을 각각 실행할 수 있습니다.
+16대 캠퍼스의 공정 모델은 별도 포트의 `process-line` 모드로 관측합니다.4개 라인·12개 셀·48lot을 계산하며 기본값은 읽기 전용입니다. `--process-line-controls`를 추가하면 운영 패널에서 대상 설비를 선택해 고장·복구를 적용할 수 있습니다. 명령은 해당 로컬 CPU 실행에만 적용되고, 실행 ID·revision·명시한 설비를 확인한 receipt를 반환합니다. 차량 조종·주문 추가·통로 변경은 이 옵션으로 열리지 않습니다. 기존4대 API·웹을 유지하면서 다음 API와 웹을 각각 실행할 수 있습니다.
 
 ```powershell
 cd "$HOME/factory-ops-twin"
 uv run python -m factory_ops.dashboard --config configs/factory-semiconductor-campus16 --execution-mode process-line --lots 48 --port 18766
 ```
+
+설비 고장·복구와 관측 저장을 사용할 실행에서는 위 API 명령에 `--process-line-controls --scenario-dir runs/campus-scenarios`를 추가합니다. 저장한 관측에는12개 설비의 상태가 남으며 재생은 읽기 전용입니다. 이 옵션은 별도 실행 중인 배치의 상태를 바꾸지 않습니다.
 
 ```powershell
 cd "$HOME/factory-ops-twin/dashboard"
@@ -193,7 +197,7 @@ $env:OPS_API_URL = "http://127.0.0.1:18766"
 npm run dev -- --port 13008
 ```
 
-캠퍼스 웹 주소는 `http://127.0.0.1:13008`입니다. API287에서는 실제 HTTP로16대·4개 라인·12개 셀·48lot 조회, 시각 진행과 명령 거부를 확인했고 임시 서버를 종료했습니다. 이 결과는 전체 운영 완주나 브라우저 표시 확인을 뜻하지 않습니다. [API 실행 근거](docs/evidence/process-line-api-287.json)
+캠퍼스 웹 주소는 `http://127.0.0.1:13008`입니다. API287의 읽기 전용 HTTP 관측을 보존하며, 후속 명령 연결은 HTTP 고장 적용, 설비 명령의 고장·복구·같은 실행의 receipt·재생 보존을 포함한9개 관련 검사를 통과했습니다. 화면의 설비 선택 변경은 TypeScript 검사를 통과했지만 브라우저 도구의 커널 초기화 오류로 새 클릭·반응형 확인은 남아 있습니다. 이 결과는48lot 완주를 뜻하지 않습니다. [읽기 전용 기준선287](docs/evidence/process-line-api-287.json) · [명령·화면 변경의 확인 범위](docs/evidence/campus-equipment-controls.json)
 
 6개 운영 조건 비교는 다음 명령으로 재현합니다.
 

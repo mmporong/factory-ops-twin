@@ -43,6 +43,9 @@ class FakeOperationsModel:
         }
         self.motions = {robot: PathMotion(self.limits, self.geometry) for robot in robots}
         self._trips: dict[str, dict] = {}
+        self._wait_s = {robot: 0.0 for robot in robots}
+        self._deliveries = {robot: 0 for robot in robots}
+        self.departure_requirement = None
         self.events: list[dict] = []
 
     def _trip(self, robot_id, task, start, goal, phase, *, kind="order"):
@@ -60,6 +63,9 @@ class FakeOperationsModel:
 
     def _event(self, kind, message, robot, **details):
         self.events.append({"type": kind, "message": message, "robot_id": robot, **details})
+
+    def _charging_departure_requirement(self, robot_id):
+        return self.departure_requirement
 
 
 class OperationsChargingAdapterTests(unittest.TestCase):
@@ -103,6 +109,22 @@ class OperationsChargingAdapterTests(unittest.TestCase):
             "amr-4", outbound_m=0.0, charger_return_m=0.0, expected_wait_s=0.0,
             nominal_speed_m_s=model.limits.max_linear_m_s, loaded=True, observed_at_s=0.0,
         ))
+
+    def test_completed_transport_wait_extends_the_next_assignment_budget(self):
+        model = FakeOperationsModel()
+        adapter = OperationsCharging(model, self.profile())
+        base = adapter._assignment_required_wh(model, "amr-4", "S1", "CI")
+        model._wait_s["amr-1"] = 9588.8
+        model._deliveries["amr-1"] = 1
+
+        adapter.prepare(model)
+
+        required = adapter._assignment_required_wh(model, "amr-4", "S1", "CI")
+        expected_extra = adapter.energy.profile["idle_power_w"] * 9588.8 / 3600.0
+        self.assertAlmostEqual(9588.8, adapter.traffic_wait_budget_s)
+        self.assertAlmostEqual(base + expected_extra, required)
+        adapter.energy.batteries["amr-4"].energy_wh = required - 0.01
+        self.assertFalse(adapter.can_assign(model, "amr-4", "S1", "CI"))
 
     def test_queued_parking_trip_is_not_replaced_by_charge_approach(self):
         model, adapter = self.low_third_robot()
@@ -157,16 +179,37 @@ class OperationsChargingAdapterTests(unittest.TestCase):
         else:
             self.fail("authored alignment and contact dwell did not complete")
 
+        # The observed traffic budget can keep confirmed contact beyond the
+        # authored 35 percent threshold without changing the profile.
+        model.departure_requirement = {"required_wh": 700.0, "task_id": "blocked-by-capacity"}
+        adapter.energy.batteries["amr-3"].energy_wh = 600.0
+        for _ in range(3):
+            model.sim_time += 0.1
+            adapter.record(model, 0.1)
+        self.assertNotEqual("exiting", adapter.aux["amr-3"]["phase"])
+        self.assertEqual(
+            "assignment_funding_exceeds_capacity",
+            adapter.snapshot()["departure_deferred"]["amr-3"]["reason"],
+        )
+
         # Bounded fixture override keeps the lifecycle test short; charging still
         # requires two confirmed stationary contact samples in EnergyFleet.
+        model.departure_requirement = {"required_wh": 300.0, "task_id": "next-transport"}
         adapter.energy.batteries["amr-3"].energy_wh = 600.0 * adapter.profile["resume_soc"] - 0.01
+        for _ in range(10):
+            model.sim_time += 0.1
+            adapter.record(model, 0.1)
+        self.assertNotEqual("exiting", adapter.aux["amr-3"]["phase"])
+        self.assertEqual("observed_traffic_funding", adapter.snapshot()["departure_deferred"]["amr-3"]["reason"])
+
+        adapter.energy.batteries["amr-3"].energy_wh = 300.0 - 0.01
         for _ in range(10):
             model.sim_time += 0.1
             adapter.record(model, 0.1)
             if adapter.aux["amr-3"]["phase"] == "exiting":
                 break
         else:
-            self.fail("confirmed virtual contact did not supply energy and start exit")
+            self.fail("funded virtual contact did not start exit")
         self.assertGreater(adapter.energy.snapshot("amr-3")["charged_wh"], 0.0)
         self.assertEqual("amr-3", adapter.docks.owners["CH1"])
 

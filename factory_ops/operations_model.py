@@ -923,6 +923,36 @@ class OperationsModel(DashboardModel):
             "window_nodes": tuple(window["nodes"]),
         }
 
+    def _charging_ready_jobs(self) -> list[tuple[str, str, str]]:
+        jobs = [
+            (task.task_id, task.pickup_station, task.drop_station)
+            for task in self.ledger.ready_tasks
+            if self.ledger.can_assign(task)
+        ]
+        jobs.extend(
+            (task["id"], task["source"], task["destination"])
+            for task in self._return_tasks.values()
+            if task["state"] == "ready"
+        )
+        return jobs
+
+    def _charging_departure_requirement(self, robot_id: str) -> dict[str, Any] | None:
+        """Return the least energy needed by one ready transport after dock exit."""
+
+        if self.operations_charging is None:
+            return None
+        candidates = [
+            (
+                self.operations_charging._assignment_required_wh(self, robot_id, pickup, destination),
+                task_id,
+            )
+            for task_id, pickup, destination in self._charging_ready_jobs()
+        ]
+        if not candidates:
+            return None
+        required_wh, task_id = min(candidates)
+        return {"required_wh": required_wh, "task_id": task_id}
+
     def _reassign_charging_approach(self, robot_id: str, goal: str) -> None:
         """Replace one stopped pre-contact approach without releasing pose occupancy."""
 

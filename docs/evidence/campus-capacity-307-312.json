@@ -1,0 +1,134 @@
+{
+  "schema_version": 1,
+  "status": "passed_with_preserved_failed_attempt",
+  "claim": "Isaac Sim 4.5 admitted 16 unloaded Carter AMRs for a bounded native wheel smoke and, after a ROS node-name repair, 32 namespaced ROS/RTX lidar topics.",
+  "physics_only_307": {
+    "status": "passed",
+    "robot_count": 16,
+    "all_robots_passed": true,
+    "displacement_m": {
+      "min": 0.5798818571074549,
+      "max": 0.5858617585869226
+    },
+    "tail_speed_m_s": {
+      "min": 0.0010538510589187323,
+      "max": 0.001464843673602449
+    },
+    "maximum_abs_joint_delta_rad": 4.828281402587891,
+    "actual_sim_time_s": 7.000000365078449,
+    "actual_physics_steps": 420,
+    "result_sha256": "43c6458d7251b7a3cca9d2f30f38ffc913b92230480415af3c2f798510595c52",
+    "runtime_result_sha256": "071a4a94b6019328fb1713eea617cbebab742602ccd14b89fea8c2e001199c6d"
+  },
+  "failed_sensor_attempt_308": {
+    "status": "failed",
+    "failed_stage": "ros_lidar_setup",
+    "error_type": "InvalidNodeNameException",
+    "cause": "The hyphenated run_id suffix produced an invalid ROS 2 node name; no sensor-capacity conclusion was drawn.",
+    "retry_performed_in_same_id": false,
+    "result_sha256": "1ef3def45704eaa8648dcd0554cc793d066ee83fef4ceddc419fb15c1eb6e693",
+    "runtime_result_sha256": "67c4952a53508d44dcb92345fe185c643f9ddbad49705ad8b3291b57182cc984"
+  },
+  "sensor_312": {
+    "status": "passed",
+    "robot_count": 16,
+    "all_robots_passed": true,
+    "ros_node_name": "local45_fleet_probe_campus_c",
+    "topic_count": 32,
+    "all_topics_passed": true,
+    "topic_message_count": {
+      "min": 14.0,
+      "max": 15.0
+    },
+    "stamp_s": {
+      "first": {
+        "min": 0.08333333700000001,
+        "max": 0.43336460600000004
+      },
+      "last": {
+        "min": 7.23336496,
+        "max": 7.933364996
+      }
+    },
+    "valid_fraction": {
+      "min": 0.4990625,
+      "max": 0.866875
+    },
+    "range_count": {
+      "min": 3200.0,
+      "max": 3200.0
+    },
+    "native_positive_finite_count": {
+      "min": 1592.0,
+      "max": 2792.0
+    },
+    "actual_sim_time_s": 7.000000365078449,
+    "actual_physics_steps": 420,
+    "representative_rgb": {
+      "path": "artifacts/campus-capacity-312/runtime/runtime-overview.png",
+      "size": [
+        960,
+        600
+      ],
+      "sha256": "a3c61def9e86d7726d8721389c25eda9104302ff4c7e7f0aaddb370b97f9f9ef",
+      "scope": "adapter debug overview; not final portfolio render"
+    },
+    "gpu": {
+      "sample_count": 142,
+      "valid_sample_count": 142,
+      "peak_memory_used_mib": 6536.0,
+      "memory_total_mib": 12288,
+      "peak_utilization_percent": 72.0,
+      "runtime_elapsed_wall_s": 285.0470000000205
+    },
+    "result_sha256": "15d1d107bbe0670f42870f6396b3c78761e40448d5e5f4a39c55b6fe36367875",
+    "runtime_result_sha256": "d118a7a878681c11413499d2df8b86be90852b726e4765101f0f436a6c88b077",
+    "host_receipt_sha256": "0e9901f695e308c7c429da17d53ace0af3b9165cfc0928f9d5ce94daabb59561"
+  },
+  "source_pins": {
+    "physics_only_307_runtime_sha256": "fa7e58750297e7356cb3e7ef11c4bcec10dd00b47869ca8b65bc047667a65483",
+    "sensor_312_runtime_sha256": "16a59d46d08c2e334adf06db4e0a8c6adde84cb1966a756a2c14d87355124e0e",
+    "sensor_config_sha256": "e5174556424dfecd5832ea8cdb11a648d5236549c620c07b125d95b1724ebb9c",
+    "scene_sha256": "7bee6ff54503b9d8ce2565fac3a55e2517b7654019e8dbe25fa5b9d4698b3bb0"
+  },
+  "containment": {
+    "307": {
+      "prelaunch_inputs_verified": true,
+      "job_closed": true,
+      "remaining_owned_pids": [],
+      "processes_all_absent": true,
+      "lease_available": true,
+      "lease_state": "available",
+      "lease_run_state": "completed",
+      "blocking_unmanaged_gpu_processes": []
+    },
+    "308": {
+      "prelaunch_inputs_verified": true,
+      "job_closed": true,
+      "remaining_owned_pids": [],
+      "processes_all_absent": true,
+      "lease_available": true,
+      "lease_state": "available",
+      "lease_run_state": "failed",
+      "lease_exit_code": 1,
+      "blocking_unmanaged_gpu_processes": []
+    },
+    "312": {
+      "prelaunch_inputs_verified": true,
+      "job_closed": true,
+      "remaining_owned_pids": [],
+      "processes_all_absent": true,
+      "lease_available": true,
+      "lease_state": "available",
+      "lease_run_state": "completed",
+      "lease_exit_code": 0,
+      "blocking_unmanaged_gpu_processes": []
+    }
+  },
+  "limits": [
+    "Short unloaded native wheel, joint, World-time and lidar smoke only.",
+    "No transport, cargo, charging, Nav2, collision-avoidance or industrial-throughput qualification.",
+    "Per-topic summaries retain counts, stamps and validity fractions; raw scans were not exported.",
+    "The representative RGB is adapter debug evidence, not a final portfolio render."
+  ]
+}

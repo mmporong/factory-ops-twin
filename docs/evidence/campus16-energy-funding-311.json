@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "scope": "CPU contract probe for observed traffic-wait assignment funding and explicit dock departure threshold; no throughput or physical-runtime claim",
+  "config": "configs/factory-semiconductor-campus16",
+  "robot_id": "amr-1",
+  "ready_task_id": "LOT-0001:process_input:1",
+  "authored_resume_soc": 0.35,
+  "reserve_fraction": 0.15,
+  "authored_assignment_wait_budget_s": 4366.930970976335,
+  "observed_traffic_wait_sample_s": 9588.8,
+  "observed_traffic_wait_budget_s": 9588.8,
+  "base_required_wh": 153.93638153939597,
+  "base_required_soc": 0.2565606358989933,
+  "congestion_required_wh": 273.79638153939595,
+  "congestion_departure_soc": 0.4563273025656599,
+  "authored_config_unchanged": true,
+  "power_and_reserve_unchanged": true,
+  "legacy_departure_threshold_preserved_when_no_ready_task": true,
+  "over_capacity_contract": "departure_allowed=false with assignment_funding_exceeds_capacity evidence; payload and task claims remain owned",
+  "checks": {
+    "ready_line_work_included": true,
+    "observed_wait_added_exactly": true,
+    "congestion_threshold_exceeds_authored_resume": true
+  }
+}
