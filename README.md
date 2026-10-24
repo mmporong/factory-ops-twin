@@ -141,9 +141,9 @@ Isaac Sim Replicator로 12개 시각 구성, 30시점, 3카메라에서 RGB 1,08
 
 공식 RGB ZIP을 받아 사진5,097장과 박스151,428개의 메타데이터를 대조했습니다. 모두 디코딩·해상도가 맞았고 분할 간 동일 파일/픽셀·pHash 거리6 이하 후보는0건이었습니다. 촬영 환경·시퀀스 감사는 남아 있습니다. LOCO에는 AMR 클래스가 없고, 소형 적재함이 없는 초기 튜닝 후보도 수정했습니다. [RGB 감사](docs/evidence/loco-rgb-249.json) · [분할·해시 index](docs/data/loco-eval-v1/README.md)
 
-반도체 장면의 트레이·매거진을 팔레트·적재함으로 잘못 학습하지 않도록 에셋 허용 목록과 거절 검사를 구현했습니다. 별도의 NVIDIA 팔레트·크레이트 후보를 사용한 소량 촬영은4개 seed·16장 RGB를 생성했고, **60개 객체의 자동 박스가 각 객체 semantic 마스크 외곽과 일치**했습니다. 원본 에셋의 기본 라벨은 소비용 사본에서 분리했고 class/object_id를 연결해 보존했습니다. 얕은 크레이트의 클래스 적합성은 미승인으로 남겨둡니다. [촬영·라벨 근거](docs/evidence/perception-probe-278.json) · [에셋 후보](docs/evidence/loco-asset-map-266.json)
+반도체 장면의 트레이·매거진을 팔레트·적재함으로 잘못 학습하지 않도록 에셋 허용 목록과 거절 검사를 구현했습니다. 실제 학습 후보 사진과 비교해 얕은 회색 트레이 대신 높이24cm의 NVIDIA 청색 적재함을 추가했습니다. 팔레트·청색 적재함의 소량 촬영302는4개 seed·16장 RGB를 생성했고, **60개 객체의 자동 박스가 각 객체 semantic 마스크 외곽과 일치**했습니다. 원본 에셋의 기본 라벨은 소비용 사본에서 분리했고 class/object_id·에셋 해시를 연결해 보존했습니다. LOCO 클래스 등가성과 학습 적합성은 미승인입니다. [302 촬영·라벨·출처 근거](docs/evidence/perception-blue-probe-302.json) · [이전 회색 후보278](docs/evidence/perception-probe-278.json)
 
-![native RGB와 객체별 자동 박스를 대조한 소량 지각 데이터](docs/images/perception-probe-278/label-probe.png)
+![팔레트와 깊은 청색 적재함의4개 seed·16장 실제 GPU 촬영](docs/images/perception-blue-probe-302/contact-sheet.png)
 
 위 자료는 단순 바닥 위 후보 에셋의 export 확인용입니다. 학습 준비가 완료된 공장 데이터로 보지 않습니다. 후속 학습 파일럿은512장, Cosmos는10클립부터 시작하며 변환본의 객체·라벨 정합을 확인하기 전에는 원본 라벨을 복사하지 않습니다. [비교 조건·GPU·비용과 확대 기준](docs/synthetic-to-real-plan.md)
 

@@ -37,7 +37,7 @@ VIEWS = (
 )
 RESOLUTION = (768, 512)
 RT_SUBFRAMES = 4
-ASSETS = {
+LEGACY_ASSETS = {
     "pallet": "nvidia:pallet_block_a01",
     "small_load_carrier": "nvidia:crate_gray_a20",
 }
@@ -73,7 +73,45 @@ def relative(path: Path, root: Path) -> str:
     return value
 
 
-def prepare_inputs(args: argparse.Namespace) -> tuple[Path, Path, Path, dict[str, Any]]:
+def class_asset_ids(prepared: Mapping[str, Any]) -> dict[str, str]:
+    status = prepared.get("status")
+    if status == "passed":
+        return dict(LEGACY_ASSETS)
+    if status != "passed_candidate_probe_input_prepared":
+        raise ProbeError("prepared result status is not an allowed probe input")
+    contract = prepared.get("probe_contract")
+    if not isinstance(contract, Mapping):
+        raise ProbeError("candidate probe input has no probe contract")
+    assets = contract.get("class_asset_ids")
+    if not isinstance(assets, Mapping) or set(assets) != set(PRIMARY_CLASSES):
+        raise ProbeError("probe contract must map exactly the primary classes")
+    result: dict[str, str] = {}
+    for class_name in PRIMARY_CLASSES:
+        asset_id = assets.get(class_name)
+        if not isinstance(asset_id, str) or re.fullmatch(r"nvidia:[A-Za-z0-9._-]+", asset_id) is None:
+            raise ProbeError(f"probe contract has an invalid asset ID for {class_name}")
+        result[class_name] = asset_id
+    if len(set(result.values())) != len(result):
+        raise ProbeError("probe contract must use one distinct asset per class")
+    if (contract.get("candidate_probe_only") is not True
+            or contract.get("maximum_capture_count") != 16
+            or contract.get("model_training_performed") is not False):
+        raise ProbeError("probe contract scope differs from the bounded candidate recipe")
+    return result
+
+
+def source_receipt_sha256(prepared: Mapping[str, Any]) -> str:
+    value = prepared.get("source_receipt_sha256")
+    if value is None:
+        inputs = prepared.get("inputs")
+        receipt = inputs.get("source_receipt") if isinstance(inputs, Mapping) else None
+        value = receipt.get("sha256") if isinstance(receipt, Mapping) else None
+    if not isinstance(value, str) or re.fullmatch(r"[0-9a-f]{64}", value) is None:
+        raise ProbeError("prepared result has no pinned source receipt SHA-256")
+    return value
+
+
+def prepare_inputs(args: argparse.Namespace) -> tuple[Path, Path, Path, dict[str, Any], dict[str, str]]:
     if not re.fullmatch(r"[0-9a-f]{40}", args.source_commit):
         raise ProbeError("--source-commit must be a lowercase 40-character Git SHA")
     if not re.fullmatch(r"[A-Za-z0-9._-]+", args.run_id):
@@ -89,9 +127,11 @@ def prepare_inputs(args: argparse.Namespace) -> tuple[Path, Path, Path, dict[str
     if output.exists():
         raise ProbeError("--output must be a new directory")
     prepared = json.loads(prepared_path.read_text(encoding="utf-8"))
-    if prepared.get("status") != "passed" or prepared.get("training_ready") is not False or prepared.get("mapping_approved") is not False:
+    if prepared.get("training_ready") is not False or prepared.get("mapping_approved") is not False:
         raise ProbeError("prepared result is not the candidate-only CPU preparation contract")
-    if set(prepared.get("assets", {})) != set(ASSETS.values()):
+    assets = class_asset_ids(prepared)
+    source_receipt_sha256(prepared)
+    if set(prepared.get("assets", {})) != set(assets.values()):
         raise ProbeError("prepared result does not contain exactly the two probe candidates")
     for definition in prepared["assets"].values():
         candidate = cache_root / definition["relative_path"]
@@ -99,10 +139,12 @@ def prepare_inputs(args: argparse.Namespace) -> tuple[Path, Path, Path, dict[str
             raise ProbeError(f"prepared asset is missing or changed: {candidate}")
         if definition.get("mesh_count") != 1 or definition.get("source_units_m") != 1.0 or definition.get("source_up_axis") != "Z":
             raise ProbeError("prepared asset geometry contract differs")
-        if definition.get("removed_physics_typed_prims") != [] or not definition.get("scope", "").startswith("render-only"):
+        if (definition.get("removed_physics_typed_prims") != []
+                or definition.get("semantic_state_remaining_count") != 0
+                or not definition.get("scope", "").startswith("render-only")):
             raise ProbeError("prepared asset is not the render-only CPU result")
     output.mkdir(parents=True)
-    return prepared_path, cache_root, output, prepared
+    return prepared_path, cache_root, output, prepared, assets
 
 
 def apply_semantic(prim: Any, semantic_type: str, value: str, Semantics: Any) -> None:
@@ -143,7 +185,7 @@ def camera_document(camera: Any, stage: Any, Usd: Any, UsdGeom: Any, raw: Any) -
     }
 
 
-def scene_plan(seed: int, scene_index: int) -> list[dict[str, Any]]:
+def scene_plan(seed: int, scene_index: int, assets: Mapping[str, str] = LEGACY_ASSETS) -> list[dict[str, Any]]:
     rng = random.Random(seed)
     counts = {"pallet": 1 + scene_index % 3, "small_load_carrier": 1 + (scene_index + 1) % 3}
     slots = {
@@ -156,7 +198,7 @@ def scene_plan(seed: int, scene_index: int) -> list[dict[str, Any]]:
             result.append({
                 "object_id": f"{class_name}-{scene_index + 1:02d}-{index:02d}",
                 "class": class_name,
-                "asset_id": ASSETS[class_name],
+                "asset_id": assets[class_name],
                 "translation_xyz_m": [x + rng.uniform(-0.10, 0.10), y + rng.uniform(-0.10, 0.10), 0.0],
                 "rotation_z_deg": rng.uniform(-12.0, 12.0),
             })
@@ -261,7 +303,7 @@ def main() -> int:
     parser.add_argument("--source-commit", required=True)
     parser.add_argument("--max-captures", type=int, default=16)
     args = parser.parse_args()
-    prepared_path, cache_root, output, prepared = prepare_inputs(args)
+    prepared_path, cache_root, output, prepared, assets = prepare_inputs(args)
     app = None
     cleanup_errors: list[str] = []
     dataset: dict[str, Any] = {}
@@ -293,7 +335,7 @@ def main() -> int:
             stage = omni.usd.get_context().get_stage()
             if stage is None:
                 raise ProbeError("Kit did not create a USD stage")
-            plan = scene_plan(seed, scene_index)
+            plan = scene_plan(seed, scene_index, assets)
             camera, expected = stage_scene(stage, plan, prepared, cache_root, Gf, Semantics, UsdGeom, UsdLux, scene_index)
             scene_root = output / f"scene-{scene_index + 1:02d}"
             scene_root.mkdir()
@@ -400,7 +442,7 @@ def main() -> int:
                 "source_commit": args.source_commit,
                 "capture_script_sha256": digest(Path(__file__).resolve()),
                 "prepared_result_path": str(prepared_path), "prepared_result_sha256": digest(prepared_path),
-                "source_receipt_sha256": prepared["source_receipt_sha256"],
+                "source_receipt_sha256": source_receipt_sha256(prepared),
                 "prepared_assets": {asset_id: value["sha256"] for asset_id, value in prepared["assets"].items()},
             },
             "validation": {

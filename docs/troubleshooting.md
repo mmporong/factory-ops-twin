@@ -1455,3 +1455,9 @@ BridgeAdmission의 실제 wait-for graph에서 순환을 구하고 기존 cycle 
 수정한 캠퍼스 정책은 free dock마다 첫 실제 보호 window와 safe-exit lookahead를 검사하고 출발 가능한 후보를 거리순으로 고른다. 접근 중 막혔을 때는 정지·active chunk 없음·bridge window 소유 없음 조건에서만 `cancel_approach`와 명시적 선호 도크 예약으로 재배정한다. `contact_pending` 이후 취소를 거부하며 기존2도크 조건의 순서는 보존한다.297의 예약 시점 표본에서 모든 후보 첫 window가 막힌 상태를 재현했고, 후속은 이때 소유를 미루고 다시 시도한다. 관련 충전27검사와 교통5검사가 통과했다. 이 변경의 전체 운영 결과는 동결 실행299에서 별도로 확인한다.
 
 별도 C베이 도크 선택 smoke는 초기SOC19%·시험용60,000W에서 C_CH1 접근·접촉·이탈을27.2초·3m로 확인했다. 경로와 lifecycle을 짧게 확인한 시험이며 실제600W 충전 성능 근거로 사용하지 않는다. 본선299는 기존600Wh·충전600W·idle45W·trigger20%·resume35% 설정을 유지하며 main과 frozen config의 SHA가 일치한다.
+
+## FOT-183 — 촬영 후 영수증 스키마 불일치와 exit0의 판정 경계
+
+청색 적재함 probe301은 RGB·semantic·bbox16개 세트를 촬영했지만 최종 `dataset.json` 작성에서 실패했다. 준비300의 영수증 해시는 `inputs.source_receipt.sha256`에 있었는데 촬영기는 legacy 최상위 `source_receipt_sha256`만 조회했다. CPU 사후 감사에서 객체60개의 bbox·자기 semantic mask와 class/asset/hash가 일치해도, 최종화가 끝나지 않은301의 전체 판정은 `failed_after_payload_capture`로 보존한다. worker exit0·Job closed는 원본 데이터셋 생성 성공을 입증하지 않는다.
+
+준비 입력의 영수증 스키마와 명시적 `probe_contract.class_asset_ids`를 GPU 시작 전 검증하도록 수정했다. 기존270의 gray 계약도 보존하며 모르는 ID·class·hash·원본 semantic 잔존을 거부한다. 표적8검사가 통과했다. 수정 소스의 새302는16개 RGB/semantic/provenance·`dataset.json` 최종화·객체60개 mask/bbox 정합과101개 매니페스트 파일을 통과했다. Job 종료·소유PID0·공용 GPU lease 반환을 확인했다.301은 덮어쓰지 않았고302도 후보 촬영 범위다. LOCO 매핑·학습 준비·실사 검출 성능을 완료로 승격하지 않는다. [302 근거](evidence/perception-blue-probe-302.json)

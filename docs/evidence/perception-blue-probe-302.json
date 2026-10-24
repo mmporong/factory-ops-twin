@@ -1,0 +1,102 @@
+{
+  "schema_version": 1,
+  "run_id": "perception-blue-probe-302",
+  "status": "passed",
+  "capture_count": 16,
+  "object_comparison_count": 60,
+  "bbox_equals_own_semantic_mask_extent_count": 60,
+  "dataset_manifest": {
+    "written": true,
+    "sha256": "1eb8abf595636c26da28b0274ae21c9cade08a185efdabb690037dc0da7ab89b",
+    "manifest_file_count": 101,
+    "all_file_hashes_verified": true
+  },
+  "execution": {
+    "single_gpu_attempt_for_run": true,
+    "retry_of_run_id": "perception-blue-probe-301",
+    "lease_id": "60db5c76-6b40-4813-81cd-cc8467af01cf",
+    "lease_state": "completed",
+    "lease_exit_code": 0,
+    "job_receipt_status": "passed",
+    "worker_exit_code": 0,
+    "elapsed_wall_s": 33.11408400000073,
+    "job_closed": true,
+    "remaining_owned_pids": [],
+    "lease_available_after": true,
+    "blocking_unmanaged_gpu_processes_after": [],
+    "matching_probe_processes_after": []
+  },
+  "pins": {
+    "prepared_result_sha256": "2afe199b77584110de536f666369a0b0127f047b7bfc1876a44dc693d22dd613",
+    "source_receipt_sha256": "4eb600ea409d946f7c72c466eb2bc0174563072b9d4c86da38868fedac8b1935",
+    "capture_script_sha256": "7d690f9689f17580c60dc8323696a831a61efa438fde336e654f776b4be6bb36",
+    "pallet_asset_sha256": "d3bda6d4716fcc5ab420eedfb229c1bbd5baf9aa170c6849cf0a05fe6b59500a",
+    "blue_crate_asset_sha256": "6483763852697133ad5e00448d702065c7720be297f52236f31e02bab0674a45"
+  },
+  "evidence": {
+    "payload_audit_sha256": "91fcafd8e00f208d1d3c40bb0b1c5beaedfa9da761cb34af22e24d67a9d4f387",
+    "manifest_audit_sha256": "537445542bc99cc8dd553c1dab04c16ca37716f35f82ab15b42e18fde3f16efd",
+    "contact_sheet_sha256": "b2dd48943327e94b3fc911bf5164e27a175d2064ad2a11f7f915454d42fb9097",
+    "host_receipt_sha256": "812bffd264b2850c0df44924f0eb486195f44d19d2f4eba916a7c660f1e5708b",
+    "gpu_release_status_sha256": "22816a684c5e7b4ea3acb43ee6b2f7151367e8cb3c158048c38497e5a759b16c",
+    "process_exit_check_sha256": "15c0d5512a1ce6f4c2c29a261935c5db979db39bb937d20ce53f694cb9fcea27"
+  },
+  "scope": {
+    "candidate_probe_only": true,
+    "mapping_approved": false,
+    "training_ready": false,
+    "model_training_performed": false,
+    "Cosmos_used": false
+  },
+  "result_sha256": "5124752f51dc8919fa32a7f8514bdf2af1d76eedb6b2a5f3c33e5634040c4e9a",
+  "asset_attribution": [
+    {
+      "asset_id": "nvidia:crate_blue_a02",
+      "author": "NVIDIA",
+      "license": "CC-BY-4.0",
+      "license_url": "https://huggingface.co/datasets/nvidia/simready-assets/blob/524747d9b5e1f21b5b18b56041788c01d745f1a1/crate_blue_a02/.metadata/LICENSE.txt",
+      "source_url": "https://huggingface.co/datasets/nvidia/simready-assets/tree/524747d9b5e1f21b5b18b56041788c01d745f1a1/crate_blue_a02",
+      "sha256": "6483763852697133ad5e00448d702065c7720be297f52236f31e02bab0674a45",
+      "bounds_xyz_m": [
+        -0.3058352768421173,
+        -0.20579081773757935,
+        0.0,
+        0.3058352768421173,
+        0.20579081773757935,
+        0.24034841294269427
+      ],
+      "dimensions_xyz_m": [
+        0.6116705536842346,
+        0.4115816354751587,
+        0.24034841294269427
+      ]
+    },
+    {
+      "asset_id": "nvidia:pallet_block_a01",
+      "author": "NVIDIA",
+      "license": "CC-BY-4.0",
+      "license_url": "https://huggingface.co/datasets/nvidia/simready-assets/blob/524747d9b5e1f21b5b18b56041788c01d745f1a1/pallet_block_a01/.metadata/LICENSE.txt",
+      "source_url": "https://huggingface.co/datasets/nvidia/simready-assets/tree/524747d9b5e1f21b5b18b56041788c01d745f1a1/pallet_block_a01",
+      "sha256": "d3bda6d4716fcc5ab420eedfb229c1bbd5baf9aa170c6849cf0a05fe6b59500a",
+      "bounds_xyz_m": [
+        -0.4999999999999999,
+        -0.6000029485651226,
+        0.0,
+        0.4999999999999999,
+        0.6000029485651226,
+        0.12020616966300184
+      ],
+      "dimensions_xyz_m": [
+        0.9999999999999998,
+        1.2000058971302452,
+        0.12020616966300184
+      ]
+    }
+  ],
+  "limitations": [
+    "Controlled candidate asset and label probe on a simple floor, not an operating factory dataset.",
+    "BBox comparison uses the visible inclusive pixel extent of the same object semantic mask.",
+    "LOCO class equivalence, KLT/ESD certification and real-image detection performance are unverified.",
+    "The earlier301 finalized incompletely and remains failed;302 is a new closed GPU execution with the corrected receipt schema."
+  ]
+}

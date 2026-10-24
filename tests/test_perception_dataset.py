@@ -3,7 +3,14 @@ import unittest
 import numpy as np
 
 from factory_ops.perception_dataset import PerceptionDatasetError, usd_safe_identifier, validate_capture
-from scripts.isaac.capture_perception_probe import PROBE_SEMANTIC_TYPES
+from scripts.isaac.capture_perception_probe import (
+    LEGACY_ASSETS,
+    PROBE_SEMANTIC_TYPES,
+    ProbeError,
+    class_asset_ids,
+    scene_plan,
+    source_receipt_sha256,
+)
 
 
 class PerceptionDatasetTests(unittest.TestCase):
@@ -49,6 +56,54 @@ class PerceptionDatasetTests(unittest.TestCase):
 
     def test_probe_requests_class_and_object_identity_from_every_label_annotator(self) -> None:
         self.assertEqual(PROBE_SEMANTIC_TYPES, ("class", "object_id"))
+
+    def test_probe_uses_pinned_class_asset_contract(self) -> None:
+        prepared = {
+            "status": "passed_candidate_probe_input_prepared",
+            "probe_contract": {
+                "class_asset_ids": {
+                    "pallet": "nvidia:pallet_block_a01",
+                    "small_load_carrier": "nvidia:crate_blue_a02",
+                },
+                "maximum_capture_count": 16,
+                "candidate_probe_only": True,
+                "model_training_performed": False,
+            },
+        }
+        assets = class_asset_ids(prepared)
+        self.assertEqual(assets["small_load_carrier"], "nvidia:crate_blue_a02")
+        self.assertEqual({item["asset_id"] for item in scene_plan(101, 0, assets)}, set(assets.values()))
+        self.assertEqual(class_asset_ids({"status": "passed"}), LEGACY_ASSETS)
+
+    def test_probe_rejects_unbounded_or_incomplete_asset_contract(self) -> None:
+        base = {
+            "status": "passed_candidate_probe_input_prepared",
+            "probe_contract": {
+                "class_asset_ids": {"pallet": "nvidia:pallet_block_a01"},
+                "maximum_capture_count": 16,
+                "candidate_probe_only": True,
+                "model_training_performed": False,
+            },
+        }
+        with self.assertRaisesRegex(ProbeError, "exactly the primary classes"):
+            class_asset_ids(base)
+        base["probe_contract"]["class_asset_ids"]["small_load_carrier"] = "external:anything"
+        with self.assertRaisesRegex(ProbeError, "invalid asset ID"):
+            class_asset_ids(base)
+        base["probe_contract"]["class_asset_ids"]["small_load_carrier"] = "nvidia:crate_blue_a02"
+        base["probe_contract"]["maximum_capture_count"] = 512
+        with self.assertRaisesRegex(ProbeError, "bounded candidate recipe"):
+            class_asset_ids(base)
+
+    def test_probe_accepts_only_pinned_source_receipt_hashes(self) -> None:
+        digest = "a" * 64
+        self.assertEqual(source_receipt_sha256({"source_receipt_sha256": digest}), digest)
+        self.assertEqual(
+            source_receipt_sha256({"inputs": {"source_receipt": {"sha256": digest}}}),
+            digest,
+        )
+        with self.assertRaisesRegex(ProbeError, "pinned source receipt"):
+            source_receipt_sha256({"inputs": {"source_receipt": {"sha256": "not-a-hash"}}})
 
     def test_missing_bbox_fails_closed(self) -> None:
         with self.assertRaisesRegex(PerceptionDatasetError, "coverage differs"):

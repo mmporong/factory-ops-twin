@@ -30,12 +30,13 @@ $env:FACTORY_OPS_ASSET_CACHE = $factoryAssetCache
 
 ## 합성 인식 실험용 후보
 
-다음 두 모델은 운용 공장의 배치와 별도로 확보한 지각 실험 후보다. 제작자는 NVIDIA, 고정 리비전은 `524747d9b5e1f21b5b18b56041788c01d745f1a1`, 라이선스는 각 패키지의 CC-BY-4.0이다. 원본은 변경하지 않고, 소비용 USD에서 미터·Z-up·바닥 기준 정렬과 물리 API 제거를 적용했다. 외곽은 USD 가시 형상의 계산값이며 실물 정격·KLT 규격 보증이 아니다. [파일 해시와 준비 근거](evidence/loco-asset-map-266.json)
+다음 세 모델은 운용 공장의 배치와 별도로 확보한 지각 실험 후보다. 제작자는 NVIDIA, 고정 리비전은 `524747d9b5e1f21b5b18b56041788c01d745f1a1`, 라이선스는 각 패키지의 CC-BY-4.0이다. 원본은 변경하지 않고, 소비용 USD에서 미터·Z-up·바닥 기준 정렬과 물리 API 제거를 적용했다. 지각용 사본은 기본 semantic 라벨도 분리하고 geometry·material·bounds를 유지한다. 외곽은 USD 가시 형상의 계산값이며 실물 정격·KLT 규격 보증이 아니다. [기존 후보 준비](evidence/loco-asset-map-266.json) · [청색 적재함 촬영·해시](evidence/perception-blue-probe-302.json)
 
 | 후보 | USD 외곽 | 출처·라이선스 |
 |---|---|---|
 | 목재 팔레트 `pallet_block_a01` | 약1.000×1.200×0.120m | [원본](https://huggingface.co/datasets/nvidia/simready-assets/tree/524747d9b5e1f21b5b18b56041788c01d745f1a1/pallet_block_a01) · [라이선스](https://huggingface.co/datasets/nvidia/simready-assets/blob/524747d9b5e1f21b5b18b56041788c01d745f1a1/pallet_block_a01/.metadata/LICENSE.txt) |
 | 얕은 회색 크레이트 `crate_gray_a20` | 약0.612×0.412×0.090m | [원본](https://huggingface.co/datasets/nvidia/simready-assets/tree/524747d9b5e1f21b5b18b56041788c01d745f1a1/crate_gray_a20) · [라이선스](https://huggingface.co/datasets/nvidia/simready-assets/blob/524747d9b5e1f21b5b18b56041788c01d745f1a1/crate_gray_a20/.metadata/LICENSE.txt) |
+| 청색 적재함 `crate_blue_a02` | 약0.612×0.412×0.240m | [원본](https://huggingface.co/datasets/nvidia/simready-assets/tree/524747d9b5e1f21b5b18b56041788c01d745f1a1/crate_blue_a02) · [라이선스](https://huggingface.co/datasets/nvidia/simready-assets/blob/524747d9b5e1f21b5b18b56041788c01d745f1a1/crate_blue_a02/.metadata/LICENSE.txt) |
 
 ## 출처와 이용 조건
 

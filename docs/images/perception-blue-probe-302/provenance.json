@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "run_id": "perception-blue-probe-302",
+  "scope": "Unmodified selected RGB and CPU contact sheet from a closed16-image native GPU candidate probe",
+  "evidence": "../../evidence/perception-blue-probe-302.json",
+  "result_sha256": "5124752f51dc8919fa32a7f8514bdf2af1d76eedb6b2a5f3c33e5634040c4e9a",
+  "dataset_sha256": "1eb8abf595636c26da28b0274ae21c9cade08a185efdabb690037dc0da7ab89b",
+  "files": [
+    {
+      "path": "contact-sheet.png",
+      "source_path": "artifacts/perception-blue-probe-302/contact-sheet.png",
+      "bytes": 743817,
+      "sha256": "b2dd48943327e94b3fc911bf5164e27a175d2064ad2a11f7f915454d42fb9097"
+    },
+    {
+      "path": "deep-blue-bins.png",
+      "source_path": "artifacts/perception-blue-probe-302/dataset/scene-02/view-02/rgb.png",
+      "bytes": 239298,
+      "sha256": "0a7ff8f75e03af3eb60a84e69b5715f76ef3046b6792d611a1a1ab6cf0f2883d"
+    },
+    {
+      "path": "pallet-and-bins.png",
+      "source_path": "artifacts/perception-blue-probe-302/dataset/scene-03/view-04/rgb.png",
+      "bytes": 189211,
+      "sha256": "dc3976c5190132daf8429afeffe61e411bef7bbc9c4f9936590ad730f7caf5c6"
+    }
+  ],
+  "mapping_approved": false,
+  "training_ready": false
+}
