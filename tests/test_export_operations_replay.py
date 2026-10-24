@@ -44,6 +44,22 @@ def _fixture(root: Path) -> tuple[Path, Path]:
 
 
 class ExportOperationsReplayTest(unittest.TestCase):
+    def test_activity_counts_separate_material_turns_waits_and_nonmaterial_motion(self) -> None:
+        record = {"robots": [
+            {"task_type": "product_move", "status": "moving", "speed_mps": 0,
+             "navigation_phase": "turn"},
+            {"task_type": "process_input", "status": "waiting"},
+            {"task_type": "empty_return", "status": "moving", "movement_purpose": "traffic_yield"},
+            {"task_type": "parking", "status": "moving"},
+            {"task_type": "charging", "status": "waiting"},
+            {"task_type": None, "status": "idle"},
+            None,
+        ]}
+        self.assertEqual({"material": 2, "moving": 1, "waiting": 1, "charging": 1},
+                         exporter.fleet_activity_counts(record))
+        self.assertEqual({"material": 0, "moving": 0, "waiting": 0, "charging": 0},
+                         exporter.fleet_activity_counts({"robots": None}))
+
     def test_process_line_summary_uses_recorded_cell_state_and_capacity(self) -> None:
         snapshot = {"production_line": {"cells": {
             "L1.TEST": {"available": True, "active_lot": "lot-1", "remaining_s": 8.0,

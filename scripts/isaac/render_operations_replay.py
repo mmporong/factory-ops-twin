@@ -356,7 +356,9 @@ def main() -> int:
                 robot_rows = []
                 for row in snapshot["robots"]:
                     selected = {key: row.get(key) for key in ("id", "pose", "speed_mps", "battery_pct", "task_type",
-                                                             "status", "payload_id", "destination", "waiting_reason")}
+                                                             "status", "payload_id", "destination", "waiting_reason",
+                                                             "movement_purpose", "angular_speed_rad_s",
+                                                             "navigation_phase", "charging_phase")}
                     local = camera_inverse.Transform(Gf.Vec3d(row["pose"]["x_m"], row["pose"]["y_m"], 1.15))
                     screen = ([args.width * (.5 + focal * local[0] / (-local[2] * horizontal)),
                                args.height * (.5 - focal * local[1] / (-local[2] * vertical))]

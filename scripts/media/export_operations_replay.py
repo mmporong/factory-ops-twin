@@ -22,6 +22,7 @@ SOURCE_WIDTHS = (1280, 1920, 2560, 3840)
 GIF_FPS = (20, 25, 30)
 TASK_COLORS = {
     "inbound": "#2563eb", "outbound": "#16a34a", "empty_return": "#f59e0b",
+    "process_input": "#2563eb",
     "material_move": "#0891b2", "product_move": "#0d9488",
     "charging": "#7c3aed", "undocking": "#8b5cf6", None: "#94a3b8",
 }
@@ -136,6 +137,21 @@ def badge_screen_xy(xy: Sequence[float], result: Mapping[str, Any]) -> tuple[flo
     return x, y
 
 
+def fleet_activity_counts(record: Mapping[str, Any]) -> dict[str, int]:
+    """Summarize recorded mission states; movement includes the turning state."""
+    rows = record.get("robots")
+    robots = [row for row in rows if isinstance(row, Mapping)] if isinstance(rows, list) else []
+    material_types = {"inbound", "outbound", "material_move", "process_input", "product_move", "empty_return"}
+    material = [row for row in robots if row.get("task_type") in material_types
+                and row.get("movement_purpose") != "traffic_yield"]
+    return {
+        "material": len(material),
+        "moving": sum(row.get("status") == "moving" for row in material),
+        "waiting": sum(row.get("status") == "waiting" for row in material),
+        "charging": sum(row.get("task_type") in {"charging", "undocking"} for row in robots),
+    }
+
+
 def compose_frame(image_path: Path, record: Mapping[str, Any], result: Mapping[str, Any]) -> Image.Image:
     if Image is None or ImageDraw is None:
         raise RuntimeError("Pillow is required for replay export")
@@ -152,6 +168,22 @@ def compose_frame(image_path: Path, record: Mapping[str, Any], result: Mapping[s
     draw = ImageDraw.Draw(canvas)
     regular, small, bold = _font(15), _font(13), _font(17, bold=True)
     robots = record.get("robots") if isinstance(record.get("robots"), list) else []
+    if len(robots) > 4:
+        activity = fleet_activity_counts(record)
+        draw.text((24, 8), "RECORDED FLEET ACTIVITY", font=small, fill="#475569")
+        for index, (label, key, color) in enumerate((
+            ("MATERIAL MISSIONS", "material", "#0d9488"),
+            ("MOVING / TURNING", "moving", "#2563eb"),
+            ("MATERIAL WAITING", "waiting", "#d97706"),
+            ("CHARGE / UNDOCK TASKS", "charging", "#7c3aed"),
+        )):
+            left = 24 + index * 308
+            draw.rounded_rectangle((left, 30, left + 296, 88), radius=9,
+                                   fill="#ffffff", outline="#d8e1ec", width=1)
+            draw.text((left + 12, 38), label, font=small, fill="#64748b")
+            draw.text((left + 12, 57), str(activity[key]), font=_font(22, bold=True), fill=color)
+        draw.text((24, 94), "Moving and waiting are material-mission subsets. Charge tasks include approach and queue.",
+                  font=_font(10), fill="#64748b")
     for robot in robots:
         if not isinstance(robot, Mapping):
             continue
