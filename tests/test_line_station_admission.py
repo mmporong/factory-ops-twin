@@ -147,6 +147,39 @@ class LineStationAdmissionTests(unittest.TestCase):
         ))
         self.assertNotIn(robot, model.inventory.robot_loads)
 
+    def test_new_remote_pickup_releases_previous_drop_gate_and_breaks_334_cycle(self):
+        model = LineOperationsModel(CANDIDATE, initial_lots=0, run_id="handoff-334-cycle")
+        owner, waiter = "amr-12", "amr-6"
+        model._station_owners["C_CI"] = owner
+        model._jobs[owner] = ("D_AOI_OUT", "C_PACK_IN")
+        model._trips[owner] = {
+            "kind": "process_line", "phase": "pickup", "goal": "D_AOI_OUT",
+        }
+        safe_exit = model.book.nodes["A_AC_N_SAFE_EXIT"]
+        model._poses[owner].update(x_m=safe_exit[0], y_m=safe_exit[1])
+        waiting_trip = {"kind": "process_line", "phase": "drop", "goal": "C_CI"}
+        waiting_window = {"nodes": ("C_CI",)}
+
+        self.assertEqual(
+            (owner,),
+            model._station_gate_window_blockers(waiter, waiting_trip, waiting_window),
+        )
+        model._release_station_gates()
+        self.assertNotIn("C_CI", model._station_owners)
+        self.assertEqual(
+            (), model._station_gate_window_blockers(waiter, waiting_trip, waiting_window),
+        )
+
+        legacy = LineOperationsModel(BASELINE, initial_lots=0, run_id="handoff-legacy-retain")
+        legacy._station_owners["C_CI"] = owner
+        legacy._jobs[owner] = ("D_AOI_OUT", "C_PACK_IN")
+        legacy._trips[owner] = {
+            "kind": "process_line", "phase": "pickup", "goal": "D_AOI_OUT",
+        }
+        legacy._poses[owner].update(x_m=safe_exit[0], y_m=safe_exit[1])
+        legacy._release_station_gates()
+        self.assertEqual(owner, legacy._station_owners["C_CI"])
+
     def test_gate_and_bridge_denials_preserve_trip_lease_and_material(self):
         model = LineOperationsModel(CANDIDATE, initial_lots=0, run_id="handoff-denials")
         robot, peer = "amr-1", "amr-2"

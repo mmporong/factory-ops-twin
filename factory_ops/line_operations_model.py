@@ -242,6 +242,20 @@ class LineOperationsModel(OperationsModel):
             and anchor not in self.bridges.safe_exit_nodes.values()
         )
 
+    def _retain_station_gate(
+        self,
+        station: str,
+        robot: str,
+        job: tuple[str, str] | None,
+        trip: Mapping[str, Any] | None,
+        interrupted: Mapping[str, Any] | None,
+    ) -> bool:
+        if self._station_gate_acquisition != "service_window":
+            return super()._retain_station_gate(station, robot, job, trip, interrupted)
+        active = trip if trip and trip.get("phase") in {"pickup", "drop"} else interrupted
+        return bool(active and active.get("phase") in {"pickup", "drop"}
+                    and active.get("goal") == station)
+
     def _service_window_station(
         self, trip: Mapping[str, Any], window: Mapping[str, Any],
     ) -> str | None:

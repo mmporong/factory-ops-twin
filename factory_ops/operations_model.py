@@ -158,13 +158,27 @@ class OperationsModel(DashboardModel):
             job = self._jobs.get(robot)
             trip = self._trips.get(robot)
             interrupted = self._charging_task_resume.get(robot)
-            if job and (station == job[1] or (trip and trip["phase"] == "pickup")
-                        or (interrupted and interrupted["phase"] == "pickup")):
+            if self._retain_station_gate(station, robot, job, trip, interrupted):
                 continue
             pose = self._poses[robot]
             # Keep a full pair of reservation envelopes between arrivals/departures.
             if math.dist((pose["x_m"], pose["y_m"]), self.book.nodes[station]) > 2 * self.radius + self.book.tile_size_m:
                 del self._station_owners[station]
+
+    def _retain_station_gate(
+        self,
+        station: str,
+        robot: str,
+        job: tuple[str, str] | None,
+        trip: Mapping[str, Any] | None,
+        interrupted: Mapping[str, Any] | None,
+    ) -> bool:
+        """Preserve legacy dispatch-time station ownership."""
+        return bool(job and (
+            station == job[1]
+            or trip and trip["phase"] == "pickup"
+            or interrupted and interrupted["phase"] == "pickup"
+        ))
 
     def _station_gate_window_blockers(
         self, robot_id: str, trip: Mapping[str, Any], window: Mapping[str, Any],
