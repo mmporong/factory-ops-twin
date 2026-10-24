@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "status": "verified",
+  "created_at_utc": "2026-10-24T23:17:16.786916+00:00",
+  "archive_path": "D:\\FactoryOpsPortfolio\\campus16-335-339.zip",
+  "archive_bytes": 780038869,
+  "archive_sha256": "dd3502c9ac7a6da28d8acbc6b94b1a61d85c88c8601e9e507b265f2be70ec0fb",
+  "payload_file_count": 984,
+  "payload_bytes": 816751484,
+  "every_member_size_and_sha256_verified": true,
+  "original_render": "E:/FactoryOpsData/campus16-final-339",
+  "original_operating_case": "C:\\Users\\LIMMM\\factory-ops-twin\\artifacts\\operations\\campus16-pilot-335",
+  "provider_assets_and_SDK": "existing E drive asset cache and SDK retained; not copied to this archive",
+  "scope": "Latest16-AMR final source, selected300-sample operations window,900 RGB frames,closure receipts,exporter/reproduction inputs and final media. Provider cache and SDK retained on E; no obsolete failures were duplicated."
+}

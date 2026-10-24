@@ -174,7 +174,9 @@
     "path": "artifacts/campus-final-render-preparation/campus16-335-excerpt.json",
     "sha256": "686dd10eaeb2a4d09e4977ffdf4069d892b8fd7572a4f8d0e082fb115827bdb9",
     "contract_passed": true,
-    "render_status": "running",
-    "render_case": "campus16-final-339"
+    "render_status": "passed",
+    "render_case": "campus16-final-339",
+    "render_evidence": "docs/evidence/campus16-final-339.json",
+    "media_provenance": "docs/images/campus16-final-339/provenance.json"
   }
 }

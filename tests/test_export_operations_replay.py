@@ -5,7 +5,9 @@ import hashlib
 import json
 from pathlib import Path
 import tempfile
+from types import SimpleNamespace
 import unittest
+from unittest.mock import patch
 
 from scripts.media import export_operations_replay as exporter
 from scripts.isaac.render_operations_replay import production_line_summary
@@ -44,6 +46,47 @@ def _fixture(root: Path) -> tuple[Path, Path]:
 
 
 class ExportOperationsReplayTest(unittest.TestCase):
+    def test_material_trails_stop_at_task_changes_yields_and_missing_identity(self) -> None:
+        def frame(time: float, task: str, x: float, *, yielding: bool = False) -> dict:
+            return {"presentation_source_time_s": time, "robots": [
+                {"id": "amr-1", "task_id": task, "task_type": "product_move", "screen_xy_px": [x, 5]},
+                {"id": "amr-2", "task_id": "charge", "task_type": "charging", "screen_xy_px": [x, 9]},
+                {"id": "amr-3", "task_id": "supply", "task_type": "process_input",
+                 "movement_purpose": "traffic_yield" if yielding else None, "screen_xy_px": [x, 12]},
+                {"id": "amr-4", "task_type": "empty_return", "screen_xy_px": [x, 15]},
+            ]}
+        history = [frame(-20, "new", 0), frame(0, "old", 10),
+                   frame(1, "new", 20, yielding=True), frame(2, "new", 30)]
+        self.assertEqual([{"robot_id": "amr-1", "task_id": "new", "task_type": "product_move",
+                           "points": [(20, 5), (30, 5)]}], exporter.material_trails(history))
+        bounded = exporter.material_trails([frame(-20, "new", 0), frame(1, "new", 20), frame(2, "new", 30)])
+        self.assertEqual(2, len(bounded))
+        self.assertTrue(all(trail["points"] == [(20, trail["points"][0][1]), (30, trail["points"][0][1])]
+                            for trail in bounded))
+        history[-1]["robots"][0]["screen_xy_px"] = [float("nan"), 5]
+        self.assertEqual([], exporter.material_trails(history))
+        self.assertEqual([], exporter.material_trails([]))
+
+    def test_trail_task_identity_requires_same_verified_recording_and_discrete_state(self) -> None:
+        pins = {key: key for key in ("manifest_sha256", "gzip_sha256", "uncompressed_sha256")}
+        robot = {"id": "amr-1", "task_type": "product_move", "payload_id": "T01", "destination": "AOI"}
+        source = SimpleNamespace(run_id="run-1", snapshots=[
+            {"sim_time_s": 10., "robots": [{**robot, "task_id": "lot-1:move-2"}]}])
+        records = [{"state_source_index": 0, "state_observed_time_s": 10., "robots": [robot]}]
+        result = {"source_run_id": "run-1", "source": pins}
+        with patch.object(exporter, "load_recording", return_value=(source, pins)):
+            bound, proof = exporter.bind_task_ids(records, result, Path("closed"))
+            self.assertEqual("lot-1:move-2", bound[0]["robots"][0]["task_id"])
+            self.assertNotIn("task_id", robot)
+            self.assertEqual(pins, proof)
+            with self.assertRaisesRegex(ValueError, "does not match"):
+                exporter.bind_task_ids(records, {**result, "source_run_id": "other"}, Path("closed"))
+            with self.assertRaisesRegex(ValueError, "observed time"):
+                exporter.bind_task_ids([{**records[0], "state_observed_time_s": 11.}], result, Path("closed"))
+            with self.assertRaisesRegex(ValueError, "mission differs"):
+                exporter.bind_task_ids([{**records[0], "robots": [{**robot, "payload_id": "wrong"}]}],
+                                       result, Path("closed"))
+
     def test_activity_counts_separate_material_turns_waits_and_nonmaterial_motion(self) -> None:
         record = {"robots": [
             {"task_type": "product_move", "status": "moving", "speed_mps": 0,

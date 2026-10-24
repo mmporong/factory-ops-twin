@@ -1,0 +1,213 @@
+{
+  "schema_version": 1,
+  "scope": "Authored CPU operations presentation; frozen PhysX timeline, not contact-physics transport or new motion measurements",
+  "source_run_id": "process-line-7212997c-f488-4c6a-9f91-9c9fc5d57272",
+  "render_run_id": "campus16-final-339",
+  "source_case": {
+    "case": "campus16-pilot-335",
+    "status": "complete",
+    "initial_WIP_before_release": 0,
+    "lots": 48,
+    "shipments": 48,
+    "empty_returns": 48,
+    "material_transports": 240,
+    "all16_min_deliveries": 9,
+    "all16_max_deliveries": 21,
+    "peak_material_missions": 16,
+    "peak_actual_material_moving": 6,
+    "quiescent": true,
+    "inventory": {
+      "initial": 240,
+      "replenished": 0,
+      "on_hand": 192,
+      "in_totes": 0,
+      "consumed": 48,
+      "balanced": true,
+      "carrier_count": 64,
+      "carrier_states": {
+        "available": 64
+      }
+    },
+    "result_sha256": "1916ba564b0639fde1ca5c350186d558cdb1fb968332815b28b63c041ded01d7",
+    "frozen_manifest_sha256": "d634a9409462cd3f73c7ff4a15a5787563e17c64f58499b16937ed1a6968a660",
+    "evidence": "../../evidence/campus16-335.json"
+  },
+  "source_recording": {
+    "manifest_sha256": "280370d930ad3247aa16870e0375a7d10f5948b26bb7a4a201c21218b2ae6755",
+    "gzip_sha256": "fc6a169a102639884afc858ae06188778e47353ec5c64f455fcf62fc5bb39fba",
+    "uncompressed_sha256": "25af51bc561fd4b8b6d067b987426b66a14b44cbdb7462bf9c0d9dd983c877d5",
+    "frames": 300,
+    "raw_bytes": 53199459
+  },
+  "excerpt": {
+    "source_start_s": 17592.0000000245,
+    "source_end_s": 17831.733333357835,
+    "playback_speed": 8.0,
+    "duration_s": 30,
+    "shipments_before_after": [
+      5,
+      6
+    ],
+    "returns_before_after": [
+      2,
+      3
+    ],
+    "stock_before_after": [
+      215,
+      215
+    ],
+    "transports_before_after": [
+      53,
+      57
+    ],
+    "peak_material_missions": 10,
+    "peak_material_moving": 4,
+    "frames_with_processing": 154,
+    "visible_moving_task_types": [
+      "product_move",
+      "empty_return"
+    ],
+    "scope": "Process transfer, shipment and carrier-return excerpt; full-case intake/completion counts are separate from this clip."
+  },
+  "render": {
+    "status": "passed",
+    "captured_frames": 900,
+    "raw_size_px": [
+      1920,
+      1080
+    ],
+    "fps": 30,
+    "subframes": 2,
+    "camera": "portfolio_overview",
+    "frozen_timeline_s": 0.0,
+    "cleanup_errors": [],
+    "result_sha256": "5b3e6a456db0360ee2776add125e09af4dda5975d2ec16911315f11ff98e2128",
+    "frames_jsonl_sha256": "48b4c09cc15706294f012e55de9f42a67bed47269521e014fa37024b2ddae08a",
+    "renderer_source_sha256": "675e23b0109972b2eceb3e6d8265413e30da9b91e0cb34ae28ad0d48f3f674d4",
+    "factory_input_sha256": {
+      "layout.json": "43c5510de10fd9c220f95ad563fb4ca99428f9fbb8b99d568c3163fdeb41454f",
+      "visual-assets.json": "beea6efd1e8d48c9565872ba193f5423aa8f7191666bfe58593ea5c2fd081e3f",
+      "render-profile.json": "1ed3a6b259062a399e2f39af5dbf2a5d9b8b133a55a0f04c6c1ff7c9c5ce9187"
+    },
+    "visual_revision": {
+      "recorded_visual_sha256": "f066f1d4d620a11521c82f9375c81b8423fa5ed4ab3a77ce0f4b81a5d622a230",
+      "render_visual_sha256": "beea6efd1e8d48c9565872ba193f5423aa8f7191666bfe58593ea5c2fd081e3f",
+      "unchanged_nonvisual_config_files": 7,
+      "layout_sha256": "43c5510de10fd9c220f95ad563fb4ca99428f9fbb8b99d568c3163fdeb41454f",
+      "original_recording_mutated": false
+    },
+    "elapsed_wall_s": 698.8129999999655
+  },
+  "host": {
+    "receipt_sha256": "6c8088fcf5784ecaaa395b8ef5c9f7a3ff335d1c0c8d3d4259dabdca271fa102",
+    "host_result_sha256": "458f63eafd15d060e19c1bd59ca37b17ac75f08f3875982ed1e50a978df6164f",
+    "spec_sha256": "4147497b1c2c2d9845d11a6b9eb642bc6d8288b994e01dd08963d716fa4bfb35",
+    "status": "passed",
+    "closed": true,
+    "remaining_owned_pids": [],
+    "lease_returned": true
+  },
+  "media": {
+    "mp4": {
+      "programs": [],
+      "stream_groups": [],
+      "streams": [
+        {
+          "codec_name": "h264",
+          "width": 1920,
+          "height": 1290,
+          "r_frame_rate": "30/1",
+          "avg_frame_rate": "30/1",
+          "duration": "30.000000",
+          "nb_read_frames": "900"
+        }
+      ],
+      "format": {
+        "duration": "30.000000",
+        "size": "7307787"
+      },
+      "sha256": "a8773bd1a603e41fcbbeff0c42f1aeaf690ad3ec4df8dda582302d1d59d33b65",
+      "bytes": 7307787
+    },
+    "gif": {
+      "programs": [],
+      "stream_groups": [],
+      "streams": [
+        {
+          "codec_name": "gif",
+          "width": 1280,
+          "height": 860,
+          "r_frame_rate": "25/1",
+          "avg_frame_rate": "25/1",
+          "duration": "30.000000",
+          "nb_read_frames": "750"
+        }
+      ],
+      "format": {
+        "duration": "30.000000",
+        "size": "17162070"
+      },
+      "sha256": "fb0bcd1623a0e7d907c46888a373d06589d063ca516c22561808062a5a738e3a",
+      "bytes": 17162070
+    }
+  },
+  "gif_loop": 0,
+  "gif_sample_frames": [
+    {
+      "frame": 0,
+      "duration_ms": 40,
+      "rgb_sha256": "b9ff112f36e1ce575524ff75e50654b643742ea893403892d0d5ac68966e0988"
+    },
+    {
+      "frame": 375,
+      "duration_ms": 40,
+      "rgb_sha256": "c77b4634d8e1ecb6bdced6aa043b588489f535cbe8e475ec90b9cae69d81ae23"
+    },
+    {
+      "frame": 749,
+      "duration_ms": 40,
+      "rgb_sha256": "8e863d06d01d6b9458a2664c63b0e8ea9b0640863cebb3cb9a7c897df08e4f23"
+    }
+  ],
+  "overview": {
+    "path": "overview.png",
+    "source_frame": 300,
+    "source_time_s": 17672.0000000245,
+    "size_px": [
+      1920,
+      1290
+    ],
+    "sha256": "79b8a6e554fde7267051773a820a4c4b7768b507761a2233c5b62f5cafc5cf85",
+    "task_identity_source": {
+      "manifest_sha256": "280370d930ad3247aa16870e0375a7d10f5948b26bb7a4a201c21218b2ae6755",
+      "gzip_sha256": "fc6a169a102639884afc858ae06188778e47353ec5c64f455fcf62fc5bb39fba",
+      "uncompressed_sha256": "25af51bc561fd4b8b6d067b987426b66a14b44cbdb7462bf9c0d9dd983c877d5"
+    }
+  },
+  "export_manifest_sha256": "e7172526a50ee52e2498f669cc57c91168d921c7a0668cfda5c3ece6b7572ec3",
+  "exporter_source_sha256": "9439e3b5d58bf35c2c2624b49c1c010d60814af29dc45221b5f8a09a6976b678",
+  "trails": {
+    "enabled": true,
+    "source_window_s": 12.0,
+    "task_identity_source": "verified recording state_source_index; renderer source hashes match",
+    "source_hashes": {
+      "manifest_sha256": "280370d930ad3247aa16870e0375a7d10f5948b26bb7a4a201c21218b2ae6755",
+      "gzip_sha256": "fc6a169a102639884afc858ae06188778e47353ec5c64f455fcf62fc5bb39fba",
+      "uncompressed_sha256": "25af51bc561fd4b8b6d067b987426b66a14b44cbdb7462bf9c0d9dd983c877d5"
+    },
+    "scope": "past replay screen positions of the same material task; not a planned route or new motion measurement",
+    "excluded": [
+      "parking",
+      "charging",
+      "traffic_yield",
+      "task transitions",
+      "missing task identities"
+    ]
+  },
+  "retention": {
+    "archive_sha256": "dd3502c9ac7a6da28d8acbc6b94b1a61d85c88c8601e9e507b265f2be70ec0fb",
+    "archive_payload_files": 984,
+    "every_member_sha256_verified": true,
+    "evidence": "../../evidence/campus16-final-storage-339.json"
+  }
+}

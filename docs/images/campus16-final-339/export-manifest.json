@@ -1,0 +1,82 @@
+{
+  "schema_version": 1,
+  "scope": "presentation export of verified operations replay RGB; HUD uses source metadata only",
+  "render_run_id": "campus16-final-339",
+  "source_run_id": "process-line-7212997c-f488-4c6a-9f91-9c9fc5d57272",
+  "frame_count": 900,
+  "source_fps": 30,
+  "gif_fps": 25.0,
+  "playback_speed": 8.0,
+  "excerpt": {
+    "start_frame": 0,
+    "count": 900
+  },
+  "inputs": {
+    "result_sha256": "5b3e6a456db0360ee2776add125e09af4dda5975d2ec16911315f11ff98e2128",
+    "frames_jsonl_sha256": "48b4c09cc15706294f012e55de9f42a67bed47269521e014fa37024b2ddae08a",
+    "host_receipt_sha256": "6c8088fcf5784ecaaa395b8ef5c9f7a3ff335d1c0c8d3d4259dabdca271fa102",
+    "selected_frame_records_sha256": "1969ab32d5c2ad65801d38a8837828da0fd59a0425b7cd3da571e3992a35eaf5"
+  },
+  "outputs": {
+    "mp4": {
+      "path": "operations-replay.mp4",
+      "sha256": "a8773bd1a603e41fcbbeff0c42f1aeaf690ad3ec4df8dda582302d1d59d33b65",
+      "bytes": 7307787
+    },
+    "gif": {
+      "path": "operations-replay.gif",
+      "sha256": "fb0bcd1623a0e7d907c46888a373d06589d063ca516c22561808062a5a738e3a",
+      "bytes": 17162070
+    }
+  },
+  "hud": {
+    "height_px": 210,
+    "source_metadata_only": true,
+    "output_size_px": [
+      1920,
+      1290
+    ],
+    "native_scene_pixels_preserved": true,
+    "vehicle_badges": "robots[].screen_xy_px, fitted to square-pixel raster using camera readback for legacy raw-aperture projections",
+    "presentation_interpolation": "owned by renderer metadata; exporter creates no measurements",
+    "material_trails": {
+      "enabled": true,
+      "source_window_s": 12.0,
+      "task_identity_source": "verified recording state_source_index; renderer source hashes match",
+      "source_hashes": {
+        "manifest_sha256": "280370d930ad3247aa16870e0375a7d10f5948b26bb7a4a201c21218b2ae6755",
+        "gzip_sha256": "fc6a169a102639884afc858ae06188778e47353ec5c64f455fcf62fc5bb39fba",
+        "uncompressed_sha256": "25af51bc561fd4b8b6d067b987426b66a14b44cbdb7462bf9c0d9dd983c877d5"
+      },
+      "scope": "past replay screen positions of the same material task; not a planned route or new motion measurement",
+      "excluded": [
+        "parking",
+        "charging",
+        "traffic_yield",
+        "task transitions",
+        "missing task identities"
+      ]
+    }
+  },
+  "frame_conversion": {
+    "mp4": "one encoded frame per selected source frame",
+    "gif": {
+      "requested_fps": 25,
+      "effective_fps": 25.0,
+      "width_px": 1280,
+      "input_mp4_sha256": "a8773bd1a603e41fcbbeff0c42f1aeaf690ad3ec4df8dda582302d1d59d33b65",
+      "filter_recipe": "fps=25,scale=1280:-2:flags=lanczos,hqdn3d=1.5:1.5:6:6,split[a][b];[a]palettegen=max_colors=64:stats_mode=diff[p];[b][p]paletteuse=dither=bayer:bayer_scale=5:diff_mode=rectangle",
+      "method": "sequential CPU post-process of the completed MP4; ffmpeg fps sampling by timestamps; no exporter interpolation",
+      "frame_sampling": {
+        "input_fps": 30,
+        "output_fps": 25.0,
+        "output_interval_s": 0.04
+      },
+      "source_frame_indices": [
+        0,
+        899
+      ]
+    }
+  },
+  "exporter_source_sha256": "9439e3b5d58bf35c2c2624b49c1c010d60814af29dc45221b5f8a09a6976b678"
+}

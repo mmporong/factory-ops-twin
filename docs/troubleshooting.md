@@ -1749,3 +1749,5 @@ GPU 시도1회·captured_frames0·RGB/RGBA없음이며 source/result/scene/spec�
 ## FOT-222 — 공개 CSV의 작업트리와 Git blob 줄바꿈 해시 불일치
 
 335의 차량별 운송 CSV를 기본 `csv.writer`로 작성해 작업트리에는 CRLF가 생겼지만 Git은 LF로 저장했다. 수치16행·합계240은 같아도 공개 근거의 작업트리 SHA가 원격 CSV와 달랐다. 파일을 LF로 맞추고 공개 SHA를 Git blob 바이트의 `d9cbc911…`로 정정했다. 원본 운영 기록이나 판정은 변경하지 않았다. 이후 공개 CSV는 `lineterminator="\n"`으로 작성하고 스테이징된 blob과 작업트리 바이트를 비교한 뒤 그 바이트의 해시를 기록한다. [수정한 공개 근거](evidence/campus16-335.json)
+
+339에서는 같은 대조가 commit 전에 생성된 export manifest의 CRLF→LF 변환을 잡았다. 해시로 묶은 생성 원본이므로 기존 원본 보존 정책에 따라 해당 파일의 `.gitattributes`에 `-text`를 지정해 원본·백업·공개 Git blob의 바이트를 유지했다. CSV뿐 아니라 해시로 결속한 공개 소스·매니페스트·provenance도 스테이징 바이트와 비교한다. 영상·GPU 촬영을 반복하지 않았다.

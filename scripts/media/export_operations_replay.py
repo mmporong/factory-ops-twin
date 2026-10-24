@@ -7,7 +7,14 @@ import json
 import math
 from pathlib import Path
 import subprocess
+import sys
 from typing import Any, Mapping, Sequence
+
+ROOT = Path(__file__).resolve().parents[2]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from factory_ops.operations_render import load_recording
 
 try:
     from PIL import Image, ImageDraw, ImageFont
@@ -26,6 +33,8 @@ TASK_COLORS = {
     "material_move": "#0891b2", "product_move": "#0d9488",
     "charging": "#7c3aed", "undocking": "#8b5cf6", None: "#94a3b8",
 }
+MATERIAL_TYPES = {"inbound", "outbound", "material_move", "process_input", "product_move", "empty_return"}
+TRAIL_SOURCE_SECONDS = 12.0
 
 
 def _sha(path: Path) -> str:
@@ -141,8 +150,7 @@ def fleet_activity_counts(record: Mapping[str, Any]) -> dict[str, int]:
     """Summarize recorded mission states; movement includes the turning state."""
     rows = record.get("robots")
     robots = [row for row in rows if isinstance(row, Mapping)] if isinstance(rows, list) else []
-    material_types = {"inbound", "outbound", "material_move", "process_input", "product_move", "empty_return"}
-    material = [row for row in robots if row.get("task_type") in material_types
+    material = [row for row in robots if row.get("task_type") in MATERIAL_TYPES
                 and row.get("movement_purpose") != "traffic_yield"]
     return {
         "material": len(material),
@@ -152,7 +160,70 @@ def fleet_activity_counts(record: Mapping[str, Any]) -> dict[str, int]:
     }
 
 
-def compose_frame(image_path: Path, record: Mapping[str, Any], result: Mapping[str, Any]) -> Image.Image:
+def bind_task_ids(records: Sequence[Mapping[str, Any]], result: Mapping[str, Any],
+                  recording_dir: Path) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    """Recover discrete task identities from the same verified, closed source."""
+    recording, source = load_recording(recording_dir)
+    keys = ("manifest_sha256", "gzip_sha256", "uncompressed_sha256")
+    if (recording.run_id != result.get("source_run_id")
+            or any(source[key] != result.get("source", {}).get(key) for key in keys)):
+        raise ValueError("trail recording does not match renderer source")
+    enriched = []
+    for record in records:
+        index = record.get("state_source_index")
+        if type(index) is not int or not 0 <= index < len(recording.snapshots):
+            raise ValueError("trail source index is invalid")
+        observed = recording.snapshots[index]
+        if abs(observed["sim_time_s"] - record.get("state_observed_time_s", -1)) > 1e-6:
+            raise ValueError("trail observed time differs from source")
+        robots = {row["id"]: row for row in observed["robots"]}
+        rows = []
+        for robot in record["robots"]:
+            original = robots.get(robot["id"])
+            if original is None or any(robot.get(key) != original.get(key)
+                                       for key in ("task_type", "payload_id", "destination")):
+                raise ValueError("trail robot mission differs from source")
+            rows.append({**robot, "task_id": original.get("task_id")})
+        enriched.append({**record, "robots": rows})
+    return enriched, {key: source[key] for key in keys}
+
+
+def material_trails(history: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
+    """Use only contiguous past presentation points of an identified material task."""
+    if not history:
+        return []
+    current = history[-1]
+    end = current["presentation_source_time_s"]
+    trails = []
+    for robot in current["robots"]:
+        task_id = robot.get("task_id")
+        if (not task_id or robot.get("task_type") not in MATERIAL_TYPES
+                or robot.get("movement_purpose") == "traffic_yield"):
+            continue
+        points = []
+        for record in reversed(history):
+            if end - record["presentation_source_time_s"] > TRAIL_SOURCE_SECONDS + 1e-6:
+                break
+            row = next((r for r in record["robots"] if r["id"] == robot["id"]), None)
+            if (row is None or row.get("task_id") != task_id
+                    or row.get("task_type") != robot.get("task_type")
+                    or row.get("movement_purpose") == "traffic_yield"):
+                break
+            xy = row.get("screen_xy_px")
+            if (not isinstance(xy, list) or len(xy) != 2
+                    or any(type(v) not in (int, float) or not math.isfinite(v) for v in xy)):
+                break
+            point = tuple(xy)
+            if not points or point != points[-1]:
+                points.append(point)
+        if len(points) >= 2:
+            trails.append({"robot_id": robot["id"], "task_id": task_id,
+                           "task_type": robot["task_type"], "points": list(reversed(points))})
+    return trails
+
+
+def compose_frame(image_path: Path, record: Mapping[str, Any], result: Mapping[str, Any], *,
+                  trail_history: Sequence[Mapping[str, Any]] = ()) -> Image.Image:
     if Image is None or ImageDraw is None:
         raise RuntimeError("Pillow is required for replay export")
     with Image.open(image_path) as source:
@@ -168,6 +239,11 @@ def compose_frame(image_path: Path, record: Mapping[str, Any], result: Mapping[s
     draw = ImageDraw.Draw(canvas)
     regular, small, bold = _font(15), _font(13), _font(17, bold=True)
     robots = record.get("robots") if isinstance(record.get("robots"), list) else []
+    for trail in material_trails(trail_history):
+        points = [tuple(v / scale for v in badge_screen_xy(xy, result)) for xy in trail["points"]]
+        color = TASK_COLORS.get(trail["task_type"], "#64748b")
+        draw.line(points, fill="white", width=6, joint="curve")
+        draw.line(points, fill=color, width=3, joint="curve")
     if len(robots) > 4:
         activity = fleet_activity_counts(record)
         draw.text((24, 8), "RECORDED FLEET ACTIVITY", font=small, fill="#475569")
@@ -184,6 +260,9 @@ def compose_frame(image_path: Path, record: Mapping[str, Any], result: Mapping[s
             draw.text((left + 12, 57), str(activity[key]), font=_font(22, bold=True), fill=color)
         draw.text((24, 94), "Moving and waiting are material-mission subsets. Charge tasks include approach and queue.",
                   font=_font(10), fill="#64748b")
+        if trail_history:
+            draw.text((24, 108), "COLORED TRAILS: recent 12 sim seconds of material replay motion; presentation only.",
+                      font=_font(10), fill="#475569")
     for robot in robots:
         if not isinstance(robot, Mapping):
             continue
@@ -286,7 +365,7 @@ def _gif_command(mp4_path: Path, gif_path: Path, fps: float, width: int = GIF_WI
 def export_replay(
     render_dir: Path, receipt_path: Path, output_dir: Path, *, gif: bool = False,
     gif_fps: int = 25, start_frame: int = 0, count: int | None = None,
-    gif_width: int = GIF_WIDTH,
+    gif_width: int = GIF_WIDTH, recording_dir: Path | None = None,
 ) -> dict[str, Path]:
     if gif_fps not in GIF_FPS:
         raise ValueError("gif_fps must be 20, 25 or 30")
@@ -299,13 +378,21 @@ def export_replay(
     if count is not None and (type(count) is not int or count <= 0):
         raise ValueError("count must be a positive integer")
     selected = records[start_frame:end]
+    trail_source = None
+    if recording_dir is not None:
+        selected, trail_source = bind_task_ids(selected, result, recording_dir)
+    speed = float(result.get("playback_speed", 1))
+    if not math.isfinite(speed) or speed <= 0:
+        raise ValueError("renderer playback speed is invalid")
+    history_size = math.ceil(TRAIL_SOURCE_SECONDS * float(result["fps"]) / speed) + 1
     output_dir = output_dir.resolve()
     if output_dir.exists():
         raise FileExistsError(f"output directory already exists: {output_dir}")
     source_fps = result.get("fps")
     if type(source_fps) not in (int, float) or source_fps <= 0:
         raise ValueError("renderer source fps is invalid")
-    first_frame = compose_frame(render_dir.resolve() / str(selected[0]["rgb"]), selected[0], result)
+    first_frame = compose_frame(render_dir.resolve() / str(selected[0]["rgb"]), selected[0], result,
+                                trail_history=selected[:1] if trail_source else ())
     output_dir.mkdir(parents=True)
     mp4_path, gif_path = output_dir / "operations-replay.mp4", output_dir / "operations-replay.gif"
     size = f"{first_frame.width}x{first_frame.height}"
@@ -319,7 +406,9 @@ def export_replay(
     try:
         for index, record in enumerate(selected):
             image_path = render_dir.resolve() / str(record["rgb"])
-            frame = first_frame if index == 0 else compose_frame(image_path, record, result)
+            frame = first_frame if index == 0 else compose_frame(
+                image_path, record, result,
+                trail_history=selected[max(0, index - history_size + 1):index + 1] if trail_source else ())
             raw = frame.tobytes()
             for process in processes:
                 assert process.stdin is not None
@@ -380,6 +469,14 @@ def export_replay(
             "native_scene_pixels_preserved": True,
             "vehicle_badges": "robots[].screen_xy_px, fitted to square-pixel raster using camera readback for legacy raw-aperture projections",
             "presentation_interpolation": "owned by renderer metadata; exporter creates no measurements",
+            "material_trails": {
+                "enabled": trail_source is not None,
+                "source_window_s": TRAIL_SOURCE_SECONDS,
+                "task_identity_source": "verified recording state_source_index; renderer source hashes match",
+                "source_hashes": trail_source,
+                "scope": "past replay screen positions of the same material task; not a planned route or new motion measurement",
+                "excluded": ["parking", "charging", "traffic_yield", "task transitions", "missing task identities"],
+            },
         },
         "frame_conversion": {
             "mp4": "one encoded frame per selected source frame",
@@ -416,6 +513,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--gif-width", type=int, choices=GIF_WIDTHS, default=GIF_WIDTH)
     parser.add_argument("--start-frame", type=int, default=0)
     parser.add_argument("--count", type=int)
+    parser.add_argument("--recording", type=Path,
+                        help="same closed source recording; enables bounded, task-bound material replay trails")
     return parser
 
 
@@ -424,6 +523,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     outputs = export_replay(
         args.render_dir, args.host_receipt, args.output, gif=args.gif, gif_fps=args.gif_fps,
         start_frame=args.start_frame, count=args.count, gif_width=args.gif_width,
+        recording_dir=args.recording,
     )
     print(json.dumps({key: str(path) for key, path in outputs.items()}, ensure_ascii=False))
     return 0

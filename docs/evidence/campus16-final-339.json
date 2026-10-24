@@ -1,0 +1,144 @@
+{
+  "schema_version": 1,
+  "case": "campus16-final-339",
+  "status": "passed",
+  "source_case": "campus16-pilot-335",
+  "source_run_id": "process-line-7212997c-f488-4c6a-9f91-9c9fc5d57272",
+  "render_run_id": "campus16-final-339",
+  "scope": "Authored CPU operations presentation; frozen PhysX timeline, not contact-physics transport or new motion measurements",
+  "same_closed_case_completion": {
+    "all48_shipped_and_returned_verified": true,
+    "quiescent_verified": true,
+    "all16_min2_deliveries_verified": true,
+    "peak16_material_tasks_live_observed": true,
+    "native_physics_transport_verified": false,
+    "final_render_eligible": true,
+    "all16_min2_deliveries_live_observed": true,
+    "peak16_material_tasks_verified": true
+  },
+  "render": {
+    "status": "passed",
+    "captured_frames": 900,
+    "raw_size_px": [
+      1920,
+      1080
+    ],
+    "fps": 30,
+    "subframes": 2,
+    "camera": "portfolio_overview",
+    "frozen_timeline_s": 0.0,
+    "cleanup_errors": [],
+    "result_sha256": "5b3e6a456db0360ee2776add125e09af4dda5975d2ec16911315f11ff98e2128",
+    "frames_jsonl_sha256": "48b4c09cc15706294f012e55de9f42a67bed47269521e014fa37024b2ddae08a",
+    "renderer_source_sha256": "675e23b0109972b2eceb3e6d8265413e30da9b91e0cb34ae28ad0d48f3f674d4",
+    "factory_input_sha256": {
+      "layout.json": "43c5510de10fd9c220f95ad563fb4ca99428f9fbb8b99d568c3163fdeb41454f",
+      "visual-assets.json": "beea6efd1e8d48c9565872ba193f5423aa8f7191666bfe58593ea5c2fd081e3f",
+      "render-profile.json": "1ed3a6b259062a399e2f39af5dbf2a5d9b8b133a55a0f04c6c1ff7c9c5ce9187"
+    },
+    "visual_revision": {
+      "recorded_visual_sha256": "f066f1d4d620a11521c82f9375c81b8423fa5ed4ab3a77ce0f4b81a5d622a230",
+      "render_visual_sha256": "beea6efd1e8d48c9565872ba193f5423aa8f7191666bfe58593ea5c2fd081e3f",
+      "unchanged_nonvisual_config_files": 7,
+      "layout_sha256": "43c5510de10fd9c220f95ad563fb4ca99428f9fbb8b99d568c3163fdeb41454f",
+      "original_recording_mutated": false
+    },
+    "elapsed_wall_s": 698.8129999999655
+  },
+  "host": {
+    "receipt_sha256": "6c8088fcf5784ecaaa395b8ef5c9f7a3ff335d1c0c8d3d4259dabdca271fa102",
+    "host_result_sha256": "458f63eafd15d060e19c1bd59ca37b17ac75f08f3875982ed1e50a978df6164f",
+    "spec_sha256": "4147497b1c2c2d9845d11a6b9eb642bc6d8288b994e01dd08963d716fa4bfb35",
+    "status": "passed",
+    "closed": true,
+    "remaining_owned_pids": [],
+    "lease_returned": true
+  },
+  "media": {
+    "mp4": {
+      "programs": [],
+      "stream_groups": [],
+      "streams": [
+        {
+          "codec_name": "h264",
+          "width": 1920,
+          "height": 1290,
+          "r_frame_rate": "30/1",
+          "avg_frame_rate": "30/1",
+          "duration": "30.000000",
+          "nb_read_frames": "900"
+        }
+      ],
+      "format": {
+        "duration": "30.000000",
+        "size": "7307787"
+      },
+      "sha256": "a8773bd1a603e41fcbbeff0c42f1aeaf690ad3ec4df8dda582302d1d59d33b65",
+      "bytes": 7307787
+    },
+    "gif": {
+      "programs": [],
+      "stream_groups": [],
+      "streams": [
+        {
+          "codec_name": "gif",
+          "width": 1280,
+          "height": 860,
+          "r_frame_rate": "25/1",
+          "avg_frame_rate": "25/1",
+          "duration": "30.000000",
+          "nb_read_frames": "750"
+        }
+      ],
+      "format": {
+        "duration": "30.000000",
+        "size": "17162070"
+      },
+      "sha256": "fb0bcd1623a0e7d907c46888a373d06589d063ca516c22561808062a5a738e3a",
+      "bytes": 17162070
+    }
+  },
+  "overview": {
+    "path": "overview.png",
+    "source_frame": 300,
+    "source_time_s": 17672.0000000245,
+    "size_px": [
+      1920,
+      1290
+    ],
+    "sha256": "79b8a6e554fde7267051773a820a4c4b7768b507761a2233c5b62f5cafc5cf85",
+    "task_identity_source": {
+      "manifest_sha256": "280370d930ad3247aa16870e0375a7d10f5948b26bb7a4a201c21218b2ae6755",
+      "gzip_sha256": "fc6a169a102639884afc858ae06188778e47353ec5c64f455fcf62fc5bb39fba",
+      "uncompressed_sha256": "25af51bc561fd4b8b6d067b987426b66a14b44cbdb7462bf9c0d9dd983c877d5"
+    }
+  },
+  "export_manifest_sha256": "e7172526a50ee52e2498f669cc57c91168d921c7a0668cfda5c3ece6b7572ec3",
+  "provenance_path": "docs/images/campus16-final-339/provenance.json",
+  "provenance_sha256": "3fc1dc8b5ec3efe13e3cb7ec88e55f6c999e82099d06edeff7c64fdef5bdbc37",
+  "trails": {
+    "enabled": true,
+    "source_window_s": 12.0,
+    "task_identity_source": "verified recording state_source_index; renderer source hashes match",
+    "source_hashes": {
+      "manifest_sha256": "280370d930ad3247aa16870e0375a7d10f5948b26bb7a4a201c21218b2ae6755",
+      "gzip_sha256": "fc6a169a102639884afc858ae06188778e47353ec5c64f455fcf62fc5bb39fba",
+      "uncompressed_sha256": "25af51bc561fd4b8b6d067b987426b66a14b44cbdb7462bf9c0d9dd983c877d5"
+    },
+    "scope": "past replay screen positions of the same material task; not a planned route or new motion measurement",
+    "excluded": [
+      "parking",
+      "charging",
+      "traffic_yield",
+      "task transitions",
+      "missing task identities"
+    ]
+  },
+  "targeted_tests": {
+    "unique_test_count": 3,
+    "passed": true,
+    "scope": "task-transition/yield/nonmaterial/time-window exclusion; same-source mission binding; existing fleet activity separation"
+  },
+  "gpu_attempts": 1,
+  "new_cloud_environment": false
+}

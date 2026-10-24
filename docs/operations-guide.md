@@ -51,7 +51,7 @@ Ctrl+C는 `incomplete / diagnostic_interrupt`로 마감하고 가능한 최종 s
 
 대표 미디어의 시점을 미리 정하기 어려우면 배치 명령에 `--record-best-window`를 추가한다.1Hz 관측의 최근300개와 최고 후보300개만 메모리에 보관하고 마감 때 선택한 창 하나를 저장한다. 출하·반납의 동시 증가, 두 증가량의 최솟값, 완료 운송, 같은 물류 task의 pose 이동 거리·참여 차량 순으로 고른다. 주차·충전과 `movement_purpose=traffic_yield`, task ID 전환 구간의 위치 차이는 이동 점수에서 제외한다. payload 없는 실제 집하 접근은 포함한다. 고정 `--record-duration`과 함께 사용할 수 없고 이 모드에서는 `--record-start`를 사용하지 않는다.300표본보다 일찍 끝나면 가용 표본만 저장하며 채워 넣지 않는다. 상태 파일·결과·기록 매니페스트의 `recording_selection`/`selection`에 시각·누계·선택 점수가 남는다. 선택 점수는 영상 편집용이며 전체 운영의 유효성이나 물리 이동 성공을 판정하지 않는다. 최종 렌더 입력은 별도로 완주·소스 안정·해시를 확인한다. [표적 검사·실제 소량 연결 범위](evidence/operations-clip-selection.json)
 
-마감된 기록의 최종 발췌는 `scripts/media/select_operations_excerpt.py --recording <종료된 기록 폴더> --output <새 JSON>`으로 고른다. 기본 계약은16대·48lot이며 전체 출하/반납·최종 정지·차량별2회 이상 운송·16개 물류 임무 동시성·소스 안정이 모두 충족돼야 한다. 종료 매니페스트가 없는 기록은 gzip을 열기 전에 거절한다. 통과한 기록도 원본·동결 소스·압축 전후 해시를 확인한 뒤, 기본30초·30fps·8배속의900프레임에 맞는 후보5개를 고른다. 배치와 같은 물류 점수를 사용하고 출하/반납이 함께 증가하는 후보인지 출력한다. 이 도구는 GPU 렌더를 시작하지 않는다. 현재16대 완주 입력은 확인 중이다.
+마감된 기록의 최종 발췌는 `scripts/media/select_operations_excerpt.py --recording <종료된 기록 폴더> --output <새 JSON>`으로 고른다. 기본 계약은16대·48lot이며 전체 출하/반납·최종 정지·차량별2회 이상 운송·16개 물류 임무 동시성·소스 안정이 모두 충족돼야 한다. 종료 매니페스트가 없는 기록은 gzip을 열기 전에 거절한다. 통과한 기록도 원본·동결 소스·압축 전후 해시를 확인한 뒤, 기본30초·30fps·8배속의900프레임에 맞는 후보5개를 고른다. 배치와 같은 물류 점수를 사용하고 출하/반납이 함께 증가하는 후보인지 출력한다. 이 도구는 GPU 렌더를 시작하지 않는다. 335가 같은 실행의48출하·48반납·최종 정지·16대 반복 운송·물류 임무 최고16개 조건을 충족해 최종 입력 검사를 통과했다. [335 완료 근거](evidence/campus16-335.json)
 
 시각 소품 배치만 고쳤을 때는 운영 기록을 수정하지 않고 renderer의 `--factory`에 새 시각 설정을 지정한다. 기록의 layout SHA는 같아야 하며 나머지 운영·카메라 설정7개도 원본과 바이트를 대조한다. visual-assets는 원본/렌더 hash를 따로 남긴다.338에서 이 경로와 실제 모델 외곽의 통로·장애물·소품 간 여유를 확인했다. 최종 실행기는 완주48/48·정지·차량별2회·동시물류16개 미달을 GPU 시작 전에 거절하며, peak12인333의 최종 실행 거절도 확인했다. [시각 수정·입력 핀·실제 이미지](evidence/campus-complete-preview-338.json)
 
@@ -65,7 +65,7 @@ $handoffLabel = Get-Date -Format "yyyyMMdd-HHmmss"
 uv run python scripts/demo/run_process_line.py --config configs/factory-semiconductor-campus16-wide-bridges-handoff-admission --policy fifo --lots 48 --horizon 240000 --max-wall-seconds 10800 --stall-timeout 600 --cycle-stall-timeout 600 --record-best-window --output-dir "artifacts/operations/handoff-$handoffLabel"
 ```
 
-lot·캐리어·목적지 버퍼 credit은 배차 때 확정한다. 안전 정지 위치의 차량은 첫 구간의 일시 충돌을 기다릴 수 있지만, 실제 bridge/tile 승인 전에는 이동하지 않는다. 서비스 goal을 포함한 마지막 정지 가능 window에서 다른 인계점 소유자를 확인하고, 통행 승인 후 이동 전에 gate를 확보한다. 적재/하역 확인과 차체 이탈 후 해제 조건은 유지한다. 새 행동8개·기존 영향8개 검사와 snapshot API 형태 확인을 통과했다.334는16개 동시 물류 배정을 기록했지만 이전 gate 잔류로 순환 대기 마감했다. 현재 목표 station을 구분하는 해제 수정과 실제 상태 표적1검사를 추가했으며, 수정본 전체 완주는335에서 판정한다. [확인 범위](evidence/campus16-service-window-admission.json)
+lot·캐리어·목적지 버퍼 credit은 배차 때 확정한다. 안전 정지 위치의 차량은 첫 구간의 일시 충돌을 기다릴 수 있지만, 실제 bridge/tile 승인 전에는 이동하지 않는다. 서비스 goal을 포함한 마지막 정지 가능 window에서 다른 인계점 소유자를 확인하고, 통행 승인 후 이동 전에 gate를 확보한다. 적재/하역 확인과 차체 이탈 후 해제 조건은 유지한다. 새 행동8개·기존 영향8개 검사와 snapshot API 형태 확인을 통과했다.334는16개 동시 물류 배정을 기록했지만 이전 gate 잔류로 순환 대기 마감했다. 현재 목표 station을 구분하는 해제 수정과 실제 상태 표적1검사를 추가했으며, 335는 수정본으로48출하·48반납·최종 정지·전16대최소9운송·물류 임무 최고16개를 같은 실행에서 완료했다. [335 마감](evidence/campus16-335.json) [확인 범위](evidence/campus16-service-window-admission.json)
 
 ## 16대 캠퍼스의 설비 고장·복구
 
@@ -183,7 +183,9 @@ python scripts/media/export_operations_replay.py `
 
 내보내기 도구는 renderer 결과·프레임 해시·run ID·Job 종료 receipt를 대조한다. HUD는 원본 metadata만 사용하고 새 측정값을 만들지 않는다. 완성 MP4를 입력으로960px·64색·25fps GIF를 순차 생성하며 전송용 GIF에만 노이즈 억제를 적용한다. GPU lease는 렌더 작업이 끝나면 반환하고 CPU 인코딩 동안 보유하지 않는다.
 
-고해상도 촬영은 renderer의 크기를1920×1080으로 지정한다. 내보내기는 원본 장면 픽셀을 유지하고 차량 번호·HUD만 크기에 맞춰 합성하며 결과 MP4는1920×1290이다.1280·1920·2560·3840px 폭의16:9 원본을 지원하고 매니페스트와 실제 크기가 다르면 거부한다.720p 원본을 고해상도 촬영으로 표시하지 않는다. `--gif-width 1280`으로 더 큰 GIF를 선택할 수 있고 기본960px는 유지한다. 현재 대표228은 기존720p 촬영 결과이며 새16대 대표 영상은 완주 기록에서 교체한다. [원본 크기 보존·인코딩 확인 범위](evidence/replay-native-resolution.json)
+`--recording <같은 종료 기록 폴더>`를 내보내기에 추가하면 최근12sim초의 물류 재생 궤적을 표시한다. renderer와 원본의 실행 ID·기록 매니페스트·압축/원본 해시를 대조한 뒤, 각 프레임의 `state_source_index`에서 작업 ID를 가져온다. 같은 작업의 과거 화면 좌표만 연결하며 임무 전환·주차·충전·양보와 작업 ID가 없는 차량은 제외한다. 이 선은 계획 경로나 새 물리 측정값이 아니며 원본 RGB·metadata를 수정하지 않는다. `export-manifest.json`에 원본 해시·표시 범위·exporter 해시를 남긴다.
+
+고해상도 촬영은 renderer의 크기를1920×1080으로 지정한다. 내보내기는 원본 장면 픽셀을 유지하고 차량 번호·HUD만 크기에 맞춰 합성하며 결과 MP4는1920×1290이다.1280·1920·2560·3840px 폭의16:9 원본을 지원하고 매니페스트와 실제 크기가 다르면 거부한다.720p 원본을 고해상도 촬영으로 표시하지 않는다. `--gif-width 1280`으로 더 큰 GIF를 선택할 수 있고 기본960px는 유지한다. 4대 기준선228은 기존720p 촬영 결과이고, 현재 대표16대 영상339는 완주335의1920×1080 RGB900프레임에서 내보냈다. [339 원본·미디어·해시](images/campus16-final-339/provenance.json) [원본 크기 보존·인코딩 확인 범위](evidence/replay-native-resolution.json)
 
 ## 실제 ROS 실행의 읽기 전용 관측
 
