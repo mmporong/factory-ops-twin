@@ -101,7 +101,7 @@ class OperationsCharging:
         self.departure_deferred: dict[str, dict[str, Any]] = {}
         self.traffic_wait_budget_s = 0.0
         self._assignment_requirement_cache: dict[tuple[Any, ...], float] = {}
-        waits = getattr(model, "_wait_s", {})
+        waits = getattr(model, "_transport_wait_s", {})
         deliveries = getattr(model, "_deliveries", {})
         self._traffic_delivery_samples = {
             robot: (int(deliveries.get(robot, 0)), float(waits.get(robot, 0.0)))
@@ -227,7 +227,7 @@ class OperationsCharging:
     def _update_traffic_wait_budget(self, model: OperationsModelLike) -> None:
         """Retain the largest completed or currently accumulating transport wait."""
 
-        waits = getattr(model, "_wait_s", None)
+        waits = getattr(model, "_transport_wait_s", None)
         deliveries = getattr(model, "_deliveries", None)
         if not isinstance(waits, Mapping) or not isinstance(deliveries, Mapping):
             return
@@ -389,7 +389,7 @@ class OperationsCharging:
                     or robot in self.faults or self._loaded(model, robot)):
                 continue
             soc = self.energy.snapshot(robot)["battery_pct"] / 100.0
-            needs_charge = soc <= self.profile["trigger_soc"] or (robot in self.denied and soc < self.profile["resume_soc"])
+            needs_charge = soc <= self.profile["trigger_soc"] or robot in self.denied
             if needs_charge and robot not in self.queue and self.docks.can_dispatch(robot):
                 self.queue.append(robot)
                 model._event("charge_queued", f"{robot} 운영 가상 충전 대기", robot)

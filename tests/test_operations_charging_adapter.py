@@ -45,6 +45,7 @@ class FakeOperationsModel:
         self.motions = {robot: PathMotion(self.limits, self.geometry) for robot in robots}
         self._trips: dict[str, dict] = {}
         self._wait_s = {robot: 0.0 for robot in robots}
+        self._transport_wait_s = {robot: 0.0 for robot in robots}
         self._deliveries = {robot: 0 for robot in robots}
         self.departure_requirement = None
         self.events: list[dict] = []
@@ -115,7 +116,7 @@ class OperationsChargingAdapterTests(unittest.TestCase):
         model = FakeOperationsModel()
         adapter = OperationsCharging(model, self.profile())
         base = adapter._assignment_required_wh(model, "amr-4", "S1", "CI")
-        model._wait_s["amr-1"] = 9588.8
+        model._transport_wait_s["amr-1"] = 9588.8
         model._deliveries["amr-1"] = 1
 
         adapter.prepare(model)
@@ -154,12 +155,37 @@ class OperationsChargingAdapterTests(unittest.TestCase):
     def test_in_progress_transport_wait_funds_new_work_before_delivery_completes(self):
         model = FakeOperationsModel()
         adapter = OperationsCharging(model, self.profile())
-        model._wait_s["amr-1"] = 8385.1
+        model._transport_wait_s["amr-1"] = 8385.1
 
         adapter.prepare(model)
 
         self.assertEqual(0, model._deliveries["amr-1"])
         self.assertAlmostEqual(8385.1, adapter.traffic_wait_budget_s)
+
+    def test_non_transport_wait_does_not_raise_assignment_energy_budget(self):
+        model = FakeOperationsModel()
+        adapter = OperationsCharging(model, self.profile())
+        model._wait_s["amr-1"] = 11947.8
+
+        adapter.prepare(model)
+
+        self.assertEqual(0.0, adapter.traffic_wait_budget_s)
+
+    def test_energy_denial_above_resume_soc_still_requests_charging(self):
+        model = FakeOperationsModel()
+        adapter = OperationsCharging(model, self.profile())
+        robot = "amr-4"
+        adapter.energy.batteries[robot].energy_wh = 600.0 * 0.5
+        model._transport_wait_s["amr-1"] = 20000.0
+        adapter.prepare(model)
+        self.assertFalse(adapter.can_assign(model, robot, "S1", "CI"))
+        self.assertIn(robot, adapter.denied)
+
+        with patch.object(adapter, "_approach_candidates", return_value=([], {})):
+            adapter.prepare(model)
+
+        self.assertIn(robot, adapter.queue)
+        self.assertEqual(0.5, adapter.energy.snapshot(robot)["battery_pct"] / 100.0)
 
     def test_queued_parking_trip_is_not_replaced_by_charge_approach(self):
         model, adapter = self.low_third_robot()

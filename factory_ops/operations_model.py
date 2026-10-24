@@ -71,6 +71,7 @@ class OperationsModel(DashboardModel):
         self._idle_since = {r: 0.0 for r in self.ledger.robots}
         self._travel_m = {r: 0.0 for r in self.ledger.robots}
         self._wait_s = {r: 0.0 for r in self.ledger.robots}
+        self._transport_wait_s = {r: 0.0 for r in self.ledger.robots}
         self._assignments = {r: 0 for r in self.ledger.robots}
         self._deliveries = {r: 0 for r in self.ledger.robots}
         self._station_owners: dict[str, str] = {}
@@ -1197,6 +1198,9 @@ class OperationsModel(DashboardModel):
             self._travel_m[robot] += math.dist(before[robot], (pose["x_m"], pose["y_m"]))
             if robot in self._waiting and self.motions[robot].stopped:
                 self._wait_s[robot] += dt
+                trip = self._trips.get(robot)
+                if trip is not None and trip["kind"] not in {"parking", "charging"}:
+                    self._transport_wait_s[robot] += dt
         moving = sum(not motion.stopped for motion in self.motions.values())
         self.peak_moving_robots = max(self.peak_moving_robots, moving)
         if self.sim_time - self._last_cycle_check_s >= 1.0:
@@ -1259,7 +1263,8 @@ class OperationsModel(DashboardModel):
             "reservation_policy": "bounded_segment_with_atomic_shared_corridors_and_station_gates",
             "closed": self.closed,
             "requested_closed": self.requested_closed, "closure_pending": self.closed != self.requested_closed,
-            "wait_s": dict(self._wait_s), "travel_m": dict(self._travel_m),
+            "wait_s": dict(self._wait_s), "transport_wait_s": dict(self._transport_wait_s),
+            "travel_m": dict(self._travel_m),
             "assignments": dict(self._assignments), "deliveries": dict(self._deliveries),
             "observed_min_clearance_m": self.min_clearance_m, "peak_moving_robots": self.peak_moving_robots,
             "reservation_radius_m": self.radius, "motion_model": "quintic_rest_to_rest",

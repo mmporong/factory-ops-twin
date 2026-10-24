@@ -395,6 +395,29 @@ class OperationsModelTest(unittest.TestCase):
         self.assertEqual(0, model._deliveries[robot])
         self.assertEqual(homes_before, model.homes)
 
+    def test_transport_wait_excludes_parking_and_charging_stops(self):
+        model = OperationsModel(CONFIG, initial_orders=0, run_id="transport-wait-boundary")
+        robot = "amr-1"
+        model._waiting[robot] = {"reason": "occupied", "blockers": ["amr-2"]}
+        model._trips[robot] = {"kind": "parking"}
+
+        with patch("factory_ops.operations_model.DashboardModel._advance_step"), patch.object(
+            model, "_observe_all",
+        ):
+            model._advance_step(0.1)
+            model._trips[robot] = {"kind": "charging"}
+            model._advance_step(0.1)
+            model._trips[robot] = {"kind": "process_line"}
+            model._advance_step(0.1)
+
+        self.assertAlmostEqual(0.3, model._wait_s[robot])
+        self.assertAlmostEqual(0.1, model._transport_wait_s[robot])
+        del model._trips[robot]
+        del model._waiting[robot]
+        self.assertAlmostEqual(
+            0.1, model.snapshot()["traffic"]["transport_wait_s"][robot],
+        )
+
     def test_bridge_admission_observes_poses_without_unacquired_preview_cycles(self):
         model = OperationsModel(CONFIG, initial_orders=0, run_id="operations-admission-order")
         model._trip("amr-1", {}, "P1", "P3", "parking", kind="parking")
