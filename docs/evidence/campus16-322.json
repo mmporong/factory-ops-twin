@@ -144,5 +144,20 @@
     "all16_repeated_material_transports": true,
     "peak16_material_tasks_verified": false,
     "native_physics_transport_verified": false
+  },
+  "inventory": {
+    "conservation": [
+      {
+        "sku": "packaged-ic-tray",
+        "initial": 240,
+        "replenished": 0,
+        "on_hand": 193,
+        "in_totes": 11,
+        "consumed": 36,
+        "balanced": true
+      }
+    ],
+    "carrier_count": 64,
+    "scope": "Authored finite inventory ledger; not physical payload sensing."
   }
 }

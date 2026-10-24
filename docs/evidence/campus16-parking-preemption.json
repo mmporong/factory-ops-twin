@@ -74,5 +74,15 @@
     "minimum_deliveries_each": 7,
     "full_run_completed": false,
     "policy_improvement_established": false
+  },
+  "closed_followup_324": {
+    "status": "incomplete",
+    "policy": "eta",
+    "evidence": "campus16-324.json",
+    "shipped_lots": 37,
+    "returned": 34,
+    "minimum_deliveries_each": 7,
+    "full_run_completed": false,
+    "policy_improvement_established": false
   }
 }

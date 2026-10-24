@@ -1,0 +1,156 @@
+{
+  "schema_version": 1,
+  "run_id": "process-line-eee3f480-4dc5-486d-b8cc-34b751336ceb",
+  "status": "incomplete",
+  "stop_reason": "horizon_or_wall_limit",
+  "error": null,
+  "scope": "authored CPU process line and kinematic reservations; no physics, sensors or measured factory times",
+  "source_commit": "a6c459257bf9aaf3338c422c26032f86d6e147c3",
+  "source_stable_during_run": true,
+  "workload": {
+    "lots": 48,
+    "release": "all at simulation start",
+    "policy": "eta"
+  },
+  "limits": {
+    "horizon_s": 120000.0,
+    "wall_s": 5400.0,
+    "snapshot_count": 80,
+    "stall_timeout_s": 600.0,
+    "cycle_stall_timeout_s": 600.0
+  },
+  "final_sim_time_s": 120000.0,
+  "elapsed_wall_s": 5312.695131500019,
+  "business": {
+    "shipped_lots": 37,
+    "returned_carriers": 34,
+    "deliveries_total": 209,
+    "deliveries_by_robot": {
+      "amr-1": 12,
+      "amr-2": 16,
+      "amr-3": 13,
+      "amr-4": 16,
+      "amr-5": 14,
+      "amr-6": 7,
+      "amr-7": 7,
+      "amr-8": 13,
+      "amr-9": 19,
+      "amr-10": 14,
+      "amr-11": 14,
+      "amr-12": 10,
+      "amr-13": 16,
+      "amr-14": 15,
+      "amr-15": 14,
+      "amr-16": 9
+    },
+    "minimum_deliveries_each": 7,
+    "assignments_total": 216,
+    "minimum_assignments_each": 7,
+    "peak_material_tasks": 13,
+    "peak_material_moving": 7,
+    "active_by_robot": {
+      "amr-16": "LOT-0039:product_move:4",
+      "amr-3": "LOT-0029:empty_return:5",
+      "amr-8": "LOT-0045:product_move:3",
+      "amr-2": "LOT-0032:empty_return:5",
+      "amr-1": "LOT-0043:product_move:4",
+      "amr-5": "LOT-0047:empty_return:5",
+      "amr-10": "LOT-0046:product_move:3"
+    },
+    "quiescent": false
+  },
+  "inventory": {
+    "conservation": [
+      {
+        "sku": "packaged-ic-tray",
+        "initial": 240,
+        "replenished": 0,
+        "on_hand": 193,
+        "in_totes": 10,
+        "consumed": 37,
+        "balanced": true
+      }
+    ],
+    "carrier_count": 64,
+    "scope": "Authored finite inventory ledger; not physical payload sensing."
+  },
+  "traffic": {
+    "yield_selected": 26,
+    "yield_completed": 26,
+    "bridge_wait_cycle": null,
+    "reservation_wait_cycle": null
+  },
+  "recording": {
+    "frames": 300,
+    "selection": {
+      "scope": "authored process-line snapshots; selection only, not case validity, physics, sensors, throughput, or completion proof",
+      "sample_hz": 1,
+      "configured_sample_count": 300,
+      "selected_sample_count": 300,
+      "first": {
+        "sim_time_s": 20081.99999998826,
+        "shipments_completed": 7,
+        "returns_completed": 4,
+        "transports_completed": 61
+      },
+      "last": {
+        "sim_time_s": 20380.99999998391,
+        "shipments_completed": 8,
+        "returns_completed": 5,
+        "transports_completed": 64
+      },
+      "score": {
+        "shipment_and_return_both_increased": true,
+        "minimum_shipment_return_delta": 1,
+        "completed_transport_delta": 3,
+        "logistics_pose_distance_m": 123.95661228567653,
+        "distinct_moving_logistics_robots": 3,
+        "priority_order": [
+          "shipment_and_return_both_increased",
+          "minimum_shipment_return_delta",
+          "completed_transport_delta",
+          "logistics_pose_distance_m",
+          "distinct_moving_logistics_robots"
+        ]
+      },
+      "movement_scope": {
+        "included_task_types": [
+          "empty_return",
+          "process_input",
+          "product_move"
+        ],
+        "excluded_task_types": [
+          "traffic_yield",
+          "parking",
+          "charging"
+        ],
+        "payload_required": false,
+        "task_id_change_edges": "excluded"
+      }
+    },
+    "final_render_eligible": false
+  },
+  "frozen_source": {
+    "relative_path": "frozen-source",
+    "manifest_relative_path": "frozen-source/manifest.json",
+    "manifest_sha256": "71fffbd46dde00ccd1fa85e812b847d069085a79e146df81a5e3f665eacd31bf",
+    "source_binding_sha256": "26116fd503bfeb4aadaeb73f622512e8751a68a3ea67b4b747f0d003bf349012",
+    "file_count": 43
+  },
+  "closure": {
+    "result_sha256": "b9a1e019d5f01ee952d48c362275645bb841e22d078c3193348eb0343456496b",
+    "manifest_sha256": "7aeae45ee8c4a02770896561dd19608eeed1f3a734726d6c47fad4669bba27f0",
+    "gzip_sha256": "ff7fdf9ef18588c8e3c01e41b5a0554beaad5abc72e766115ca165e2ed664f09",
+    "closed_manifest_hashes_match": true,
+    "frozen_files_hashes_match": true,
+    "owned_python_processes": 0,
+    "owned_process_check": "Supervisor confirmed natural exit."
+  },
+  "comparison_limit": "FIFO322 and ETA324 share source/config/demand but reached116731 and120000sim seconds under wall limits. Single-run endpoint differences are observations, not a general policy advantage.",
+  "success_flags": {
+    "full48_48_completed": false,
+    "all16_repeated_material_transports": true,
+    "peak16_material_tasks_verified": false,
+    "native_physics_transport_verified": false
+  }
+}

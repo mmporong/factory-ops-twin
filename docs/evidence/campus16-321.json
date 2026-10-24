@@ -192,13 +192,15 @@
       "case": "campus16-pilot-322",
       "change": "safe-anchor home-parking preemption",
       "policy": "fifo",
-      "state": "running"
+      "state": "closed_incomplete",
+      "evidence": "campus16-322.json"
     },
     {
       "case": "campus16-pilot-324",
       "change": "same source as322",
       "policy": "eta",
-      "state": "running"
+      "state": "closed_incomplete",
+      "evidence": "campus16-324.json"
     },
     {
       "case": "campus16-pilot-326",
@@ -207,5 +209,20 @@
       "state": "failed_runtime_error",
       "evidence": "campus16-326.json"
     }
-  ]
+  ],
+  "inventory": {
+    "conservation": [
+      {
+        "sku": "packaged-ic-tray",
+        "initial": 240,
+        "replenished": 0,
+        "on_hand": 192,
+        "in_totes": 9,
+        "consumed": 39,
+        "balanced": true
+      }
+    ],
+    "carrier_count": 64,
+    "scope": "Authored finite inventory ledger; not physical payload sensing."
+  }
 }
