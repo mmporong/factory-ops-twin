@@ -320,6 +320,7 @@ class OperationsModelTest(unittest.TestCase):
         self.assertEqual({"A_S1": robot, "A_CI": robot}, model._station_owners)
         self.assertEqual(0, model._assignments[robot])
         self.assertEqual(0, model._deliveries[robot])
+
         row = next(row for row in model.snapshot()["robots"] if row["id"] == robot)
         self.assertEqual(task.task_id, row["task_id"])
         self.assertEqual("traffic_yield", row["movement_purpose"])
@@ -340,6 +341,59 @@ class OperationsModelTest(unittest.TestCase):
         self.assertEqual(1, model.traffic_yield_completed_count)
         self.assertEqual(0, model._assignments[robot])
         self.assertEqual(0, model._deliveries[robot])
+
+    def test_empty_home_parking_yields_to_unreserved_home_then_resumes(self):
+        campus = Path(__file__).resolve().parents[1] / "configs" / "factory-semiconductor-campus16"
+        model = OperationsModel(campus, initial_orders=0, run_id="parking-cycle-traffic-yield")
+        robot = "amr-1"
+        homes_before = dict(model.homes)
+        model._trip(robot, {}, "A_P1", "A_P3", "parking", kind="parking", purpose="home")
+        resume = model._trips[robot]
+        refuge_route = model.book.plan("A_P1", "A_P4")
+        observations = model.reservations.observation_snapshot(now_s=model.sim_time)
+        self.assertEqual("A_CH2", model.operations_charging.docks.reserve(
+            "amr-2", carrying_payload=False, preferred_dock="A_CH2",
+        ))
+
+        called_goals = []
+        def alternative(*args, **kwargs):
+            called_goals.append(kwargs["goal"])
+            return refuge_route if kwargs["goal"] == "A_P4" else None
+
+        with patch(
+            "factory_ops.operations_model.find_alternative_route", side_effect=alternative,
+        ), patch.object(model.bridges, "blockers", return_value=()):
+            self.assertTrue(model._schedule_traffic_yield((robot,), observations))
+
+        self.assertNotIn("A_P2", called_goals)
+        yield_trip = model._trips[robot]
+        self.assertEqual("traffic_yield", yield_trip["purpose"])
+        self.assertIs(resume, yield_trip["traffic_yield_resume"])
+        self.assertEqual("A_P4", yield_trip["goal"])
+        self.assertEqual({"A_CH2": "amr-2"}, model.operations_charging.docks.owners)
+        model.operations_charging.docks.cancel_approach("amr-2")
+        self.assertEqual(0, model._assignments[robot])
+        self.assertEqual(0, model._deliveries[robot])
+        self.assertEqual(homes_before, model.homes)
+        row = next(row for row in model.snapshot()["robots"] if row["id"] == robot)
+        self.assertEqual("교통 양보 후 주차 재개", row["task_label"])
+
+        model._poses[robot].update(
+            x_m=model.book.nodes["A_P4"][0], y_m=model.book.nodes["A_P4"][1],
+        )
+        model._arrive_trip(robot, yield_trip)
+
+        resumed = model._trips[robot]
+        self.assertEqual("parking", resumed["kind"])
+        self.assertEqual("parking", resumed["phase"])
+        self.assertEqual("home", resumed["purpose"])
+        self.assertEqual("A_P3", resumed["goal"])
+        self.assertEqual("A_P4", model._locations[robot])
+        self.assertEqual(1, model.traffic_yield_count)
+        self.assertEqual(1, model.traffic_yield_completed_count)
+        self.assertEqual(0, model._assignments[robot])
+        self.assertEqual(0, model._deliveries[robot])
+        self.assertEqual(homes_before, model.homes)
 
     def test_bridge_admission_observes_poses_without_unacquired_preview_cycles(self):
         model = OperationsModel(CONFIG, initial_orders=0, run_id="operations-admission-order")

@@ -417,15 +417,27 @@ class OperationsModel(DashboardModel):
     def _schedule_traffic_yield(
         self, cycle: tuple[str, ...], observations: Mapping[str, Any],
     ) -> bool:
-        """Move one empty pickup vehicle to a clear same-bay parking refuge."""
+        """Move one empty pickup or home-parking vehicle to a clear same-bay refuge."""
 
         candidates = []
         safe_exits = frozenset(self.bridges.safe_exit_nodes.values())
         inventory_loads = getattr(self.inventory, "robot_loads", {})
+        reserved_dock_anchors = frozenset(
+            self.operations_charging.slots[dock_id]["anchor"]
+            for dock_id in self.operations_charging.docks.owners
+        ) if self.operations_charging is not None else frozenset()
         for robot in cycle:
             trip = self._trips.get(robot)
             state = self.ledger.robots[robot]
-            if (trip is None or trip["kind"] == "parking" or trip["phase"] != "pickup"
+            yieldable_trip = trip is not None and (
+                (trip["kind"] != "parking" and trip["phase"] == "pickup")
+                or (
+                    trip["kind"] == "parking"
+                    and trip.get("purpose", "home") == "home"
+                    and trip["phase"] == "parking"
+                )
+            )
+            if (not yieldable_trip
                     or robot in self._chunks or not self.motions[robot].stopped
                     or self.bridges.has_window(robot) or self.bridges.held(robot)
                     or state.payload_id is not None
@@ -443,7 +455,7 @@ class OperationsModel(DashboardModel):
                 for tile in observation["tiles"]
             )
             for refuge in sorted(set(self.homes.values())):
-                if not refuge.startswith(f"{bay}_"):
+                if not refuge.startswith(f"{bay}_") or refuge in reserved_dock_anchors:
                     continue
                 alternative = find_alternative_route(
                     self.book,
@@ -1122,8 +1134,10 @@ class OperationsModel(DashboardModel):
             self._park_hold(robot_id)
         elif trip["kind"] == "parking" and trip.get("purpose") == "traffic_yield":
             resume = trip.get("traffic_yield_resume")
-            if not isinstance(resume, dict) or resume.get("phase") != "pickup":
-                raise RuntimeError("traffic yield must resume one pickup trip")
+            if (not isinstance(resume, dict)
+                    or resume.get("phase") not in {"pickup", "parking"}
+                    or (resume["phase"] == "parking" and resume.get("kind") != "parking")):
+                raise RuntimeError("traffic yield must resume one pickup or home parking trip")
             refuge = trip["goal"]
             self._locations[robot_id] = refuge
             self._trip(
@@ -1133,14 +1147,18 @@ class OperationsModel(DashboardModel):
                 resume["goal"],
                 resume["phase"],
                 kind=resume["kind"],
+                purpose=resume.get("purpose") if resume["kind"] == "parking" else None,
             )
             self.traffic_yield_completed_count += 1
+            resume_label = "주차" if resume["phase"] == "parking" else "픽업"
             self._event(
                 "traffic_yield_completed",
-                f"{robot_id} 양보 지점 도착 · 원래 픽업 재개",
+                f"{robot_id} 양보 지점 도착 · 원래 {resume_label} 재개",
                 robot_id,
                 refuge=refuge,
-                pickup=resume["goal"],
+                pickup=resume["goal"] if resume["phase"] == "pickup" else None,
+                resume_goal=resume["goal"],
+                resume_phase=resume["phase"],
             )
         elif trip["kind"] == "parking":
             self._locations[robot_id] = trip["goal"]
@@ -1284,13 +1302,15 @@ class OperationsModel(DashboardModel):
             elif (trip is not None and trip["kind"] == "parking"
                   and trip.get("purpose") == "traffic_yield"):
                 resume_task = trip["traffic_yield_resume"]["task"]
+                resume_phase = trip["traffic_yield_resume"]["phase"]
                 resume_task_id = (
                     resume_task.get("id") if isinstance(resume_task, Mapping)
                     else resume_task.task_id
                 )
                 row.update(
                     task_id=resume_task_id,
-                    task_label="교통 양보 후 픽업 재개",
+                    task_label=("교통 양보 후 주차 재개" if resume_phase == "parking"
+                                else "교통 양보 후 픽업 재개"),
                     movement_purpose="traffic_yield",
                 )
             if self.operations_charging is not None:
