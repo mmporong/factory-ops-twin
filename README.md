@@ -24,9 +24,26 @@
 
 위 이미지는 Isaac Sim4.5에서 촬영한 **정적 GPU 렌더**입니다. 물리 시간을 멈췄으며 차량을 스폰하지 않았습니다. 82×76m 안에 생산 설비76개, 출처가 있는 SimReady 배치88개, 차량 홈16개와 가상 충전 도크8개를 구성했습니다. 서비스 대기점12개·교량 진입 대기점8개·전용 출구8개를 배치했고, 출구 접근로와 겹친 소품12개를 이전 배치에서 제외했습니다. 생산 장비 본체는 절차형 모델이며 제조사 CAD가 아닙니다. 생산 충돌체77개를 유지합니다. [촬영·해시·종료 근거](docs/images/campus16-static-294/provenance.json) · [배치 조건](docs/evidence/campus16-layout-292.json) · [교통 경로 배치도](docs/images/campus16-layout-292/campus-layout.png)
 
-**16대 물리·센서 수용 시험은 통과했습니다.** 로컬 RTX3060·Isaac Sim4.5에서 Carter16대가7초·420 physics step 동안 약0.58m 이동한 뒤 정지했고, 차량별 바퀴 조인트와32개 ROS/RTX 라이다 토픽을 확인했습니다. 토픽마다 유효 메시지14~15개와 증가하는 시각을 수신했으며 최대 GPU 메모리는6,536/12,288MiB였습니다. 짧은 무적재 시험으로, 장시간 물류·Nav2·충전·실시간 처리 성능까지 검증한 결과는 아닙니다. [307·312 실행 근거](docs/evidence/campus-capacity-307-312.json) · [시험 종료 시 일부 구역](docs/images/campus-capacity-312/overview.png)
-
 주차장만 늘린 이전 `scale12/16`과 달리 `factory-semiconductor-campus16`은 4개 TEST→AOI→PACK 라인을 베이 사이로 연결합니다. 유한 재고 240개와 캐리어 64개를 사용하고 출하 뒤 원래 저장소로 빈 용기를 돌려보냅니다. 입력·출력 버퍼와 설비 고장, 전역 배차, 가감속·회전, 구간 점유와 가상 충전을 같은 운영 모델에서 계산합니다. 공정 시간·배치는 작성 가정입니다.
+
+| 확인 범위 | 확보한 결과 | 남은 일 |
+|---|---|---|
+| v2 CPU 운영309 | 16대 모두3회 이상, 총89운송·출하9·반납8 | 같은 실행48lot 완주·16개 물류 임무 동시 진행 |
+| 무적재 물리·센서307/312 | 16대 주행·정지, 32개 ROS/RTX 라이다 토픽 | 장시간 물류·Nav2 통합 |
+| 대표16대 미디어 | 부분 운영의 GPU 재생 미리보기 | 완주 기록의 전체 물류 영상 |
+
+행마다 실행 조건이 다릅니다.16대의 완주·동시성 목표를 달성한 하나의 실행은 아직 없으며, 귀가 차량의 양보를 보완한318을 진행 중입니다.
+
+![16대 차량의 상태와 공정 셀·재고를 표시한 재생 미리보기](docs/images/campus16-replay-285/preview.png)
+
+GPU 재생에16대 모델과 적재 상태를 연결했고, 각 차량의 SOC·임무와12개 셀의 상태를 표시합니다. 위 이미지는 부분 운영279를3프레임으로 재생한284의 RGB에 같은 기록의 정보를 합성한 미리보기입니다. 물리 시간은 멈춰 있으며 최종16대 운영 영상은 완주 기록으로 만들 예정입니다. [재생 근거](docs/evidence/campus-replay-284.json) · [화면 출처](docs/images/campus16-replay-285/provenance.json)
+
+미디어 내보내기는720p부터4K까지16:9 원본 크기를 유지하며, 차량 번호와 상태 패널을 함께 합성합니다. GIF는960px 또는1280px 폭을 선택합니다.1920×1080 원본의 MP4·1280px GIF 인코딩을 확인했고, 현재 대표 영상은 기존 촬영본입니다. 새16대 영상은 완주 기록에서 제작합니다. [크기 보존·인코딩 확인 범위](docs/evidence/replay-native-resolution.json)
+
+<details>
+<summary>16대 운영 정책·교통·충전·진단과 실행 방법</summary>
+
+**16대 물리·센서 수용 시험은 통과했습니다.** 로컬 RTX3060·Isaac Sim4.5에서 Carter16대가7초·420 physics step 동안 약0.58m 이동한 뒤 정지했고, 차량별 바퀴 조인트와32개 ROS/RTX 라이다 토픽을 확인했습니다. 토픽마다 유효 메시지14~15개와 증가하는 시각을 수신했으며 최대 GPU 메모리는6,536/12,288MiB였습니다. 짧은 무적재 시험으로, 장시간 물류·Nav2·충전·실시간 처리 성능까지 검증한 결과는 아닙니다. [307·312 실행 근거](docs/evidence/campus-capacity-307-312.json) · [시험 종료 시 일부 구역](docs/images/campus-capacity-312/overview.png)
 
 캠퍼스의 배차는 `downstream_wip_drain_least_assigned`입니다. 예약 가능한 후보 중 반납·출하·후단 WIP를 먼저 처리하고 운송 배정이 적은 차량을 우선합니다. snapshot의 `production_line.dispatch_mode`로 정책을 확인합니다. 기존 단일 라인의 FIFO/ETA 비교와 같은 정책으로 해석하지 않습니다.
 
@@ -40,12 +57,6 @@
 
 현재 v2 배치는 **82×76m**입니다. 기존 설비의 상대 위치를 유지하면서 베이를 북쪽으로8m 옮겨 물류 포켓을 확보했습니다. 교량 진입 대기점8개, SOURCE/CELL/PACK 대기점12개와 전용 교량 출구8개를 두며, 홈16개를 포함해44곳에서 정지할 수 있습니다. 일반 대기 공간과 교량 출구를 분리했고 출구가 막히면 진입 대기점에 들어가기 전부터 기다립니다. 아직 일부 서비스 경로는 다른 stage·queue의 정지 점유와 겹치므로 실제 전체 window가 비어 있을 때만 출발합니다. 안전 반경과 예약 타일 크기는 유지했으며48lot 완주가 남아 있습니다. [현재 배치도](docs/images/campus16-layout-292/campus-layout.png) · [이탈 경로 차단288](docs/evidence/campus16-288.json) · [교량 출구 차단289](docs/evidence/campus16-289.json)
 
-![16대 차량의 상태와 공정 셀·재고를 표시한 재생 미리보기](docs/images/campus16-replay-285/preview.png)
-
-GPU 재생에16대 모델과 적재 상태를 연결했고, 각 차량의 SOC·임무와12개 셀의 상태를 표시합니다. 위 이미지는 부분 운영279를3프레임으로 재생한284의 RGB에 같은 기록의 정보를 합성한 미리보기입니다. 물리 시간은 멈춰 있으며 최종16대 운영 영상은 완주 기록으로 만들 예정입니다. [재생 근거](docs/evidence/campus-replay-284.json) · [화면 출처](docs/images/campus16-replay-285/provenance.json)
-
-미디어 내보내기는720p부터4K까지16:9 원본 크기를 유지하며, 차량 번호와 상태 패널을 함께 합성합니다. GIF는960px 또는1280px 폭을 선택합니다.1920×1080 원본의 MP4·1280px GIF 인코딩을 확인했고, 현재 대표 영상은 기존 촬영본입니다. 새16대 영상은 완주 기록에서 제작합니다. [크기 보존·인코딩 확인 범위](docs/evidence/replay-native-resolution.json)
-
 하차 후 PACK 대기점으로 통로를 비우는 동작과 아직 시작하지 않은 귀가 이동의 업무 우선 배정을 추가했습니다. 이전253의 PACK 귀가 정체는 수정 전 근거로 보존합니다. 주차·하차 후 이탈은 물류 동시성에서 제외하고, 누적 출하는 출하 인계 사건으로 집계합니다. [253 결과](docs/evidence/campus16-253.json) · [1lot 통합 기준선](docs/evidence/process-line-235.json)
 
 ```powershell
@@ -56,6 +67,8 @@ uv run python scripts/demo/run_process_line.py --config configs/factory-semicond
 새 출력 폴더에 소스·설정 원본, 해시, 최종 상태와 최대 80개 대표 snapshot을 남깁니다. 진전이 없는 실행은 `incomplete`로 중단합니다. `--record-start 900 --record-duration 120`으로 최대 300초의 1Hz 관측 창을 추가할 수 있습니다. 이 기록은 CPU 운영이며 접촉 물리·센서 검증을 대신하지 않습니다.
 
 Brev의 기존 Nebius 2×L40S 환경을 재사용했지만 `UNHEALTHY` 상태여서 SDK 실행 전 중단했습니다. 사후 조회에서 실제 `STOPPED`를 확인했고, 독립 Stop 타이머와 keepalive도 정리했습니다. 기존 L40S 환경은 중지 상태로 보존합니다. 재사용 도구는 `scripts/brev/reuse_scale.py`이며 기본값은 사전 확인입니다. 첫 묶음 상한은6시간·$40이고 실제 정산 비용은 미확인입니다.16대 물리·센서의 짧은 수용 시험은 위 로컬3060 결과이며 이 클라우드의 실행 결과가 아닙니다. [재사용 실패·중지 근거](docs/evidence/brev-scale-reuse-239.json)
+
+</details>
 
 ## 반도체 후공정 장면
 
