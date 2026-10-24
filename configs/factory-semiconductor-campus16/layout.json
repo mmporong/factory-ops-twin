@@ -200,6 +200,16 @@
       "purpose": "off-main north waiting/parking bay"
     },
     {
+      "id": "A_PACK_STAGING_SPUR",
+      "rect": [
+        25.4,
+        0.1,
+        28.6,
+        9.0
+      ],
+      "purpose": "post-drop PACK_IN egress and wait spur outside the main eastbound intersection"
+    },
+    {
       "id": "B_MAIN_LOW",
       "rect": [
         44.0,
@@ -368,6 +378,16 @@
         28.0
       ],
       "purpose": "off-main north waiting/parking bay"
+    },
+    {
+      "id": "B_PACK_STAGING_SPUR",
+      "rect": [
+        67.4,
+        0.1,
+        70.6,
+        9.0
+      ],
+      "purpose": "post-drop PACK_IN egress and wait spur outside the main eastbound intersection"
     },
     {
       "id": "C_MAIN_LOW",
@@ -540,6 +560,16 @@
       "purpose": "off-main north waiting/parking bay"
     },
     {
+      "id": "C_PACK_STAGING_SPUR",
+      "rect": [
+        25.4,
+        32.1,
+        28.6,
+        41.0
+      ],
+      "purpose": "post-drop PACK_IN egress and wait spur outside the main eastbound intersection"
+    },
+    {
       "id": "D_MAIN_LOW",
       "rect": [
         44.0,
@@ -708,6 +738,16 @@
         60.0
       ],
       "purpose": "off-main north waiting/parking bay"
+    },
+    {
+      "id": "D_PACK_STAGING_SPUR",
+      "rect": [
+        67.4,
+        32.1,
+        70.6,
+        41.0
+      ],
+      "purpose": "post-drop PACK_IN egress and wait spur outside the main eastbound intersection"
     },
     {
       "id": "CAMPUS_H_AB",
@@ -2720,6 +2760,40 @@
       ],
       "observed_by": "LiDAR/costmap; future removal time evaluator only",
       "id": "D_BLOCKED_AISLE"
+    }
+  ],
+  "operational_staging": [
+    {
+      "id": "A_PACK_WAIT",
+      "xy": [
+        27.0,
+        1.5
+      ],
+      "purpose": "post-drop egress wait outside PACK_IN; not a fleet home or process-capacity station"
+    },
+    {
+      "id": "B_PACK_WAIT",
+      "xy": [
+        69.0,
+        1.5
+      ],
+      "purpose": "post-drop egress wait outside PACK_IN; not a fleet home or process-capacity station"
+    },
+    {
+      "id": "C_PACK_WAIT",
+      "xy": [
+        27.0,
+        33.5
+      ],
+      "purpose": "post-drop egress wait outside PACK_IN; not a fleet home or process-capacity station"
+    },
+    {
+      "id": "D_PACK_WAIT",
+      "xy": [
+        69.0,
+        33.5
+      ],
+      "purpose": "post-drop egress wait outside PACK_IN; not a fleet home or process-capacity station"
     }
   ]
 }

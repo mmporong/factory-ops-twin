@@ -4,7 +4,7 @@ import unittest
 from unittest.mock import patch
 
 from factory_ops.dashboard import validate_snapshot
-from factory_ops.line_operations_model import LineOperationsModel
+from factory_ops.line_operations_model import LineOperationsModel, _TripTask
 from factory_ops.process_line_layout import build_line_bundle
 
 
@@ -13,6 +13,58 @@ CONFIGS = ROOT / "configs"
 
 
 class LineOperationsModelTests(unittest.TestCase):
+    def test_pack_drop_protects_egress_and_stages_before_home_parking(self):
+        model = LineOperationsModel(
+            CONFIGS / "factory-semiconductor-campus16", initial_lots=0, run_id="line-staging",
+        )
+        task = _TripTask(
+            "LOT-X:product_move:3", "LOT-X", "T001", "C_AOI_OUT", "C_PACK_IN", "product_move",
+        )
+        robot = "amr-16"
+        pickup = model.book.plan(model._locations[robot], task.pickup_station)
+        loaded = model.book.plan(task.pickup_station, task.drop_station)
+        egress = model.book.plan(task.drop_station, "C_PACK_WAIT")
+
+        model._trip(
+            robot, task, model._locations[robot], task.pickup_station,
+            "pickup", kind="process_line",
+        )
+        expected = model._tiles(tuple(pickup.points + loaded.points[1:] + egress.points[1:]))
+        self.assertEqual(expected, model._trips[robot]["admission_tiles"])
+
+        model._poses[robot].update(
+            x_m=model.book.nodes["C_PACK_IN"][0], y_m=model.book.nodes["C_PACK_IN"][1],
+        )
+        model._trips[robot].update(phase="drop", start="C_AOI_OUT", goal="C_PACK_IN")
+        model._station_owners["C_PACK_IN"] = robot
+        model._jobs[robot] = ("C_AOI_OUT", "C_PACK_IN")
+        with patch.object(model.line, "drop"), patch.object(model.inventory, "product_drop"):
+            model._arrive_trip(robot, model._trips[robot])
+
+        staged = model._trips[robot]
+        self.assertEqual(("parking", "staging", "C_PACK_WAIT"),
+                         (staged["kind"], staged["purpose"], staged["goal"]))
+        self.assertEqual(robot, model._station_owners["C_PACK_IN"])
+        row = next(row for row in model.snapshot()["robots"] if row["id"] == robot)
+        self.assertEqual(("staging", "post_drop_staging"),
+                         (row["task_type"], row["movement_purpose"]))
+
+    def test_only_unstarted_home_parking_is_preemptible_for_business_work(self):
+        model = LineOperationsModel(
+            CONFIGS / "factory-semiconductor-line16", initial_lots=0, run_id="line-park-preempt",
+        )
+        robot = "amr-16"
+        start = model._locations[robot]
+        model._trip(robot, {}, start, "P1", "parking", kind="parking", purpose="home")
+        self.assertTrue(model._can_withdraw_queued_parking(robot))
+        self.assertTrue(model._withdraw_queued_parking(robot))
+        self.assertNotIn(robot, model._trips)
+
+        model._trip(robot, {}, start, "P1", "parking", kind="parking", purpose="staging")
+        self.assertFalse(model._can_withdraw_queued_parking(robot))
+        model._trips[robot]["purpose"] = "home"
+        model._chunks[robot] = {"already_started": True}
+        self.assertFalse(model._can_withdraw_queued_parking(robot))
     def test_conflicting_full_trip_is_not_assigned_before_admission(self):
         model = LineOperationsModel(
             CONFIGS / "factory-semiconductor-line16", initial_lots=1, run_id="line-dispatch-gate",

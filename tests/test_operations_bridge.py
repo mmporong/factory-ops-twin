@@ -63,6 +63,17 @@ class BridgeAdmissionTest(unittest.TestCase):
         gate.release("crossing", stopped=True)
         self.assertEqual((), gate.admit("local", [], route_tiles={(3, 2), (4, 2)}))
 
+    def test_unowned_waiter_can_withdraw_but_route_owner_cannot(self):
+        gate = BridgeAdmission(self.routing)
+        gate.admit("owner", ["N"], route_tiles={(1, 1)})
+        self.assertEqual(("owner",), gate.admit("queued", ["S"]))
+
+        self.assertTrue(gate.withdraw_waiter("queued"))
+        self.assertNotIn("queued", gate.waiters)
+        self.assertFalse(gate.withdraw_waiter("owner"))
+        self.assertEqual({"BD": "owner"}, gate.owners)
+        self.assertEqual({"owner": 1}, gate.snapshot()["protected_route_tile_counts"])
+
 
 if __name__ == "__main__":
     unittest.main()

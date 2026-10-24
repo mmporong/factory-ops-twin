@@ -52,12 +52,17 @@ class CampusLayoutTests(unittest.TestCase):
         self.assertEqual(76, len(layout["physical_obstacles"]))
         self.assertEqual(24, len(layout["stations"]))
         self.assertEqual(16, len(layout["pockets"]))
+        self.assertEqual(4, len(layout["operational_staging"]))
         self.assertEqual(16, len(profile["robot_stations"]))
         self.assertEqual(16, len(set(profile["robot_stations"])))
         self.assertEqual(profile["robot_stations"], list(generated["g3-routing.json"]["parking"].values()))
         self.assertEqual(16, len(generated["g2.json"]["robots"]))
         self.assertEqual(16, len(generated["operations-charging.json"]["initial_soc"]))
         self.assertEqual(8, len(generated["operations-charging.json"]["docks"]))
+        self.assertEqual(
+            {f"{bay}_PACK_IN": f"{bay}_PACK_WAIT" for bay in BAY_OFFSETS},
+            generated["g3-routing.json"]["staging_after_drop"],
+        )
 
     def test_each_bay_is_an_exact_prefixed_translation_of_source_geometry(self):
         base = json.loads((BASE / "layout.json").read_text(encoding="utf-8"))
@@ -200,12 +205,78 @@ class CampusLayoutTests(unittest.TestCase):
                 blockers = [home for home, tiles in home_tiles.items() if bridge_tiles & tiles]
                 self.assertEqual([], blockers, (bridge, direction))
 
-    def test_visual_context_excludes_only_the_twelve_bridge_conflicts(self):
+    def test_pack_egress_paths_are_clear_and_do_not_reserve_homes_or_other_waits(self):
+        bundle = build_campus_bundle(BASE)
+        routing = bundle["g3-routing.json"]
+        layout = bundle["layout.json"]
+        radius = routing["authored_allowances"]["reservation_radius_including_tracking_m"]
+        bounds = tuple(layout["bounds_xy"])
+        homes = bundle["fleet-profile.json"]["robot_stations"]
+        home_tiles = {
+            home: swept_tiles([routing["nodes"][home]], radius, tile_size_m=1.0, bounds_xy=bounds)
+            for home in homes
+        }
+        wait_tiles = {
+            bay: swept_tiles([routing["nodes"][f"{bay}_PACK_WAIT"]], radius, tile_size_m=1.0, bounds_xy=bounds)
+            for bay in BAY_OFFSETS
+        }
+        book = RouteBook.from_files(TARGET / "layout.json", TARGET / "g3-routing.json")
+        planning_radius = book.planning_radius_m + book.layout.resolution_m / 2
+        directed = {tuple(edge) for edge in routing["directed_edges"]}
+        undirected = {frozenset(edge) for edge in routing["edges"]}
+
+        for bay in BAY_OFFSETS:
+            names = [f"{bay}_PACK_IN", f"{bay}_PACK_EGRESS", f"{bay}_PACK_WAIT"]
+            points = [routing["nodes"][name] for name in names]
+            east_lane_names = [f"{bay}_LOW_E_ES", f"{bay}_PACK_EGRESS", f"{bay}_LOW_E_EN"]
+            east_lane_tiles = swept_tiles(
+                [routing["nodes"][name] for name in east_lane_names],
+                radius,
+                tile_size_m=1.0,
+                bounds_xy=bounds,
+            )
+            path_tiles = swept_tiles(points, radius, tile_size_m=1.0, bounds_xy=bounds)
+            self.assertEqual([], [home for home, tiles in home_tiles.items() if path_tiles & tiles], bay)
+            self.assertFalse(wait_tiles[bay] & east_lane_tiles, bay)
+            self.assertEqual(
+                [],
+                [other for other, tiles in wait_tiles.items() if other != bay and path_tiles & tiles],
+                bay,
+            )
+            self.assertIn((names[0], names[1]), directed)
+            self.assertIn(frozenset(names[1:]), undirected)
+            self.assertNotIn((east_lane_names[0], east_lane_names[2]), directed)
+            self.assertTrue(all(edge in directed for edge in zip(east_lane_names, east_lane_names[1:])))
+            checked_edges = [*zip(names, names[1:]), *zip(east_lane_names, east_lane_names[1:])]
+            for left, right in checked_edges:
+                start, end = book.nodes[left], book.nodes[right]
+                sample_count = max(1, math.ceil(math.dist(start, end) / book.layout.resolution_m))
+                for index in range(sample_count + 1):
+                    fraction = index / sample_count
+                    point = (
+                        start[0] + fraction * (end[0] - start[0]),
+                        start[1] + fraction * (end[1] - start[1]),
+                    )
+                    self.assertFalse(_bad_touched_cells(book.layout, point, planning_radius), (left, right, point))
+
+        for bay, tiles in wait_tiles.items():
+            self.assertEqual([], [other for other, other_tiles in wait_tiles.items() if other != bay and tiles & other_tiles])
+
+    def test_visual_context_excludes_only_bridge_and_pack_spur_conflicts(self):
         bundle = build_campus_bundle(BASE)
         environment = bundle["visual-assets.json"]["environment"]
         excluded = environment["excluded_fixtures"]
-        self.assertEqual(12, len(excluded))
-        self.assertEqual(128, environment["fixture_count"])
+        self.assertEqual(36, len(excluded))
+        self.assertEqual(104, environment["fixture_count"])
+        pack_spur_local = {
+            "MAINT_TOOL_STORAGE_04", "MAINT_ROLLING_BENCH_04",
+            "MAINT_TOOL_STORAGE_05", "MAINT_ROLLING_BENCH_05",
+            "MAINT_PARTS_CART_04", "MAINT_PARTS_CART_05",
+        }
+        self.assertEqual(
+            {f"{bay}_{fixture}" for bay in BAY_OFFSETS for fixture in pack_spur_local},
+            {item["id"] for item in excluded if "PACK staging spur" in item["reason"]},
+        )
         self.assertEqual(environment["fixture_count"], len(environment["fixtures"]))
         self.assertEqual(76, len(bundle["layout.json"]["physical_obstacles"]))
         fixture_ids = {item["id"] for item in environment["fixtures"]}
@@ -219,7 +290,7 @@ class CampusLayoutTests(unittest.TestCase):
             bundle["visual-assets.json"]["environment"],
             cache_root=Path("E:/FactoryOpsAssets/simready-context"),
         )
-        self.assertEqual(128, len(context["instances"]))
+        self.assertEqual(104, len(context["instances"]))
 
 
 if __name__ == "__main__":

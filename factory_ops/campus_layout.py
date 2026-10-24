@@ -17,6 +17,9 @@ from .process_line_layout import add_process_line_routing
 CAMPUS_REVISION = "amr-semiconductor-campus16-v1"
 BAY_OFFSETS = {"A": (0.0, 0.0), "B": (42.0, 0.0), "C": (0.0, 32.0), "D": (42.0, 32.0)}
 CAMPUS_BOUNDS = [0, 0, 78, 60]
+PACK_EGRESS_LOCAL = [27.0, 4.5]
+PACK_WAIT_LOCAL = [27.0, 1.5]
+PACK_STAGING_SPUR_LOCAL = [25.4, 0.1, 28.6, 9.0]
 
 
 def _read(path: Path) -> dict[str, Any]:
@@ -59,6 +62,11 @@ def build_campus_layout(base: Mapping[str, Any]) -> dict[str, Any]:
             item["id"] = _prefix(item["id"], bay)
             item["rect"] = _shift_rect(item["rect"], offset)
             result["amr_allowed_regions"].append(item)
+        result["amr_allowed_regions"].append({
+            "id": f"{bay}_PACK_STAGING_SPUR",
+            "rect": _shift_rect(PACK_STAGING_SPUR_LOCAL, offset),
+            "purpose": "post-drop PACK_IN egress and wait spur outside the main eastbound intersection",
+        })
         for station in source["stations"]:
             item = deepcopy(station)
             item["id"] = _prefix(item["id"], bay)
@@ -111,6 +119,14 @@ def build_campus_layout(base: Mapping[str, Any]) -> dict[str, Any]:
         "each bay preserves all 19 source equipment footprints and the original AMR lane geometry",
         "collision, evaluation, localization and reservation radii are unchanged",
         "inter-bay links use gated main/east-spine continuations and do not cross a raw-material station centre",
+    ]
+    result["operational_staging"] = [
+        {
+            "id": f"{bay}_PACK_WAIT",
+            "xy": _shift_point(PACK_WAIT_LOCAL, offset),
+            "purpose": "post-drop egress wait outside PACK_IN; not a fleet home or process-capacity station",
+        }
+        for bay, offset in BAY_OFFSETS.items()
     ]
     result["unperformed_validation"] = [
         "16-AMR RouteBook and reservation runtime",
@@ -194,6 +210,26 @@ def build_campus_routing(base: Mapping[str, Any]) -> dict[str, Any]:
         result["operations_bottlenecks"].extend(routing["operations_bottlenecks"])
         result["closures"].append(routing["closure"])
         result["process_line_routing"][bay] = routing["process_line_routing"]
+
+    for bay, offset in BAY_OFFSETS.items():
+        east_start = f"{bay}_LOW_E_ES"
+        east_end = f"{bay}_LOW_E_EN"
+        pack_in = f"{bay}_PACK_IN"
+        egress = f"{bay}_PACK_EGRESS"
+        wait = f"{bay}_PACK_WAIT"
+        result["nodes"][egress] = _shift_point(PACK_EGRESS_LOCAL, offset)
+        result["nodes"][wait] = _shift_point(PACK_WAIT_LOCAL, offset)
+        result["directed_edges"].remove([east_start, east_end])
+        result["directed_edges"].extend([
+            [east_start, egress],
+            [egress, east_end],
+            [pack_in, egress],
+        ])
+        result["edges"].append([egress, wait])
+
+    result["staging_after_drop"] = {
+        f"{bay}_PACK_IN": f"{bay}_PACK_WAIT" for bay in BAY_OFFSETS
+    }
 
     bridge_regions = {
         "CAMPUS_H_AB_RESERVATION": [32.0, 5.0, 47.0, 8.8],
@@ -367,13 +403,22 @@ def build_visual_assets(base: Mapping[str, Any]) -> dict[str, Any]:
         "C": {"EAST_SERVICE_TOOLS_LOW", "EAST_SERVICE_CART_LOW"},
         "D": {"WEST_SERVICE_TOOLS_LOW", "WEST_SERVICE_CART_LOW", "EAST_SERVICE_TOOLS_LOW", "EAST_SERVICE_CART_LOW"},
     }
+    pack_spur_conflicts = {
+        "MAINT_TOOL_STORAGE_04", "MAINT_ROLLING_BENCH_04",
+        "MAINT_TOOL_STORAGE_05", "MAINT_ROLLING_BENCH_05",
+        "MAINT_PARTS_CART_04", "MAINT_PARTS_CART_05",
+    }
     excluded = []
     for bay, offset in BAY_OFFSETS.items():
         for fixture in source["environment"]["fixtures"]:
-            if fixture["id"] in excluded_local[bay]:
+            if fixture["id"] in excluded_local[bay] or fixture["id"] in pack_spur_conflicts:
                 excluded.append({
                     "id": _prefix(fixture["id"], bay),
-                    "reason": "translated native fixture bounds plus 0.1m clearance intersect an authored campus bridge",
+                    "reason": (
+                        "translated native fixture bounds plus 0.1m clearance intersect an authored campus bridge"
+                        if fixture["id"] in excluded_local[bay]
+                        else "translated native fixture bounds plus 0.1m clearance intersect the PACK staging spur"
+                    ),
                 })
                 continue
             item = deepcopy(fixture)

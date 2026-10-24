@@ -223,7 +223,8 @@ class LineOperationsModel(OperationsModel):
             return
         while True:
             available = [robot for robot, state in self.ledger.robots.items()
-                         if robot not in self._trips and state.available and state.task_id is None
+                         if (robot not in self._trips or self._can_withdraw_queued_parking(robot))
+                         and state.available and state.task_id is None
                          and state.payload_id is None and robot not in self.inventory.robot_loads
                          and (self.operations_charging is None or self.operations_charging.available(robot))]
             candidates = []
@@ -265,6 +266,8 @@ class LineOperationsModel(OperationsModel):
             if selected is None:
                 return
             _, robot, task = selected
+            if robot in self._trips and not self._withdraw_queued_parking(robot):
+                raise RuntimeError("selected queued parking trip is no longer preemptible")
             assigned = self.line.assign(task.task_id, robot)
             self._station_owners.update({assigned.origin: robot, assigned.destination: robot})
             self._jobs[robot] = (assigned.origin, assigned.destination)
@@ -292,11 +295,12 @@ class LineOperationsModel(OperationsModel):
             return
         if not self.motions[robot_id].stopped:
             raise RuntimeError("line handover attempted before kinematic stop")
-        if trip["phase"] != "pickup":
+        task: _TripTask = trip["task"]
+        staging = self.staging_after_drop.get(task.drop_station) if trip["phase"] != "pickup" else None
+        if trip["phase"] != "pickup" and staging is None:
             self.bridges.release(robot_id, stopped=True)
         self.line.advance(self.sim_time)
         self._sync_process_outputs()
-        task: _TripTask = trip["task"]
         if trip["phase"] == "pickup":
             self.line.pickup(self.ledger.run_id, task.task_id, robot_id,
                              self._observation_id("pickup", task.task_id), self.sim_time)
@@ -322,6 +326,13 @@ class LineOperationsModel(OperationsModel):
             del self._trips[robot_id]
             self._event("line_drop", f"{robot_id} {task.drop_station} 인계", robot_id,
                         task_id=task.task_id, station=task.drop_station)
+            if staging is not None:
+                # The business handover is complete, but the vehicle retains
+                # bridge protection until its footprint clears the spur mouth.
+                self._trip(
+                    robot_id, {}, task.drop_station, staging, "parking",
+                    kind="parking", purpose="staging",
+                )
         self._idle_since[robot_id] = self.sim_time
 
     def _advance_auxiliary(self, dt: float, before: Mapping[str, Mapping[str, float]]) -> None:

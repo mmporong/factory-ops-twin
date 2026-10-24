@@ -513,50 +513,6 @@
         "semantic_class": "workbench"
       },
       {
-        "id": "A_MAINT_TOOL_STORAGE_04",
-        "asset": "workbench",
-        "center_xy": [
-          25.6,
-          0.75
-        ],
-        "yaw_deg": 90,
-        "role": "closed maintenance tool storage; not product storage",
-        "semantic_class": "control_cabinet"
-      },
-      {
-        "id": "A_MAINT_ROLLING_BENCH_04",
-        "asset": "cabinet",
-        "center_xy": [
-          25.6,
-          2.45
-        ],
-        "yaw_deg": 90,
-        "role": "parked offline maintenance workstation",
-        "semantic_class": "workbench"
-      },
-      {
-        "id": "A_MAINT_TOOL_STORAGE_05",
-        "asset": "workbench",
-        "center_xy": [
-          27.6,
-          0.75
-        ],
-        "yaw_deg": 90,
-        "role": "closed maintenance tool storage; not product storage",
-        "semantic_class": "control_cabinet"
-      },
-      {
-        "id": "A_MAINT_ROLLING_BENCH_05",
-        "asset": "cabinet",
-        "center_xy": [
-          27.6,
-          2.45
-        ],
-        "yaw_deg": 90,
-        "role": "parked offline maintenance workstation",
-        "semantic_class": "workbench"
-      },
-      {
         "id": "A_MAINT_TOOL_STORAGE_06",
         "asset": "workbench",
         "center_xy": [
@@ -605,28 +561,6 @@
         "asset": "cart",
         "center_xy": [
           24.6,
-          1.75
-        ],
-        "yaw_deg": 0,
-        "role": "parked maintenance parts cart outside production material flow",
-        "semantic_class": "buffer_fixture"
-      },
-      {
-        "id": "A_MAINT_PARTS_CART_04",
-        "asset": "cart",
-        "center_xy": [
-          26.6,
-          1.75
-        ],
-        "yaw_deg": 0,
-        "role": "parked maintenance parts cart outside production material flow",
-        "semantic_class": "buffer_fixture"
-      },
-      {
-        "id": "A_MAINT_PARTS_CART_05",
-        "asset": "cart",
-        "center_xy": [
-          28.6,
           1.75
         ],
         "yaw_deg": 0,
@@ -866,50 +800,6 @@
         "semantic_class": "workbench"
       },
       {
-        "id": "B_MAINT_TOOL_STORAGE_04",
-        "asset": "workbench",
-        "center_xy": [
-          67.6,
-          0.75
-        ],
-        "yaw_deg": 90,
-        "role": "closed maintenance tool storage; not product storage",
-        "semantic_class": "control_cabinet"
-      },
-      {
-        "id": "B_MAINT_ROLLING_BENCH_04",
-        "asset": "cabinet",
-        "center_xy": [
-          67.6,
-          2.45
-        ],
-        "yaw_deg": 90,
-        "role": "parked offline maintenance workstation",
-        "semantic_class": "workbench"
-      },
-      {
-        "id": "B_MAINT_TOOL_STORAGE_05",
-        "asset": "workbench",
-        "center_xy": [
-          69.6,
-          0.75
-        ],
-        "yaw_deg": 90,
-        "role": "closed maintenance tool storage; not product storage",
-        "semantic_class": "control_cabinet"
-      },
-      {
-        "id": "B_MAINT_ROLLING_BENCH_05",
-        "asset": "cabinet",
-        "center_xy": [
-          69.6,
-          2.45
-        ],
-        "yaw_deg": 90,
-        "role": "parked offline maintenance workstation",
-        "semantic_class": "workbench"
-      },
-      {
         "id": "B_MAINT_TOOL_STORAGE_06",
         "asset": "workbench",
         "center_xy": [
@@ -958,28 +848,6 @@
         "asset": "cart",
         "center_xy": [
           66.6,
-          1.75
-        ],
-        "yaw_deg": 0,
-        "role": "parked maintenance parts cart outside production material flow",
-        "semantic_class": "buffer_fixture"
-      },
-      {
-        "id": "B_MAINT_PARTS_CART_04",
-        "asset": "cart",
-        "center_xy": [
-          68.6,
-          1.75
-        ],
-        "yaw_deg": 0,
-        "role": "parked maintenance parts cart outside production material flow",
-        "semantic_class": "buffer_fixture"
-      },
-      {
-        "id": "B_MAINT_PARTS_CART_05",
-        "asset": "cart",
-        "center_xy": [
-          70.6,
           1.75
         ],
         "yaw_deg": 0,
@@ -1219,50 +1087,6 @@
         "semantic_class": "workbench"
       },
       {
-        "id": "C_MAINT_TOOL_STORAGE_04",
-        "asset": "workbench",
-        "center_xy": [
-          25.6,
-          32.75
-        ],
-        "yaw_deg": 90,
-        "role": "closed maintenance tool storage; not product storage",
-        "semantic_class": "control_cabinet"
-      },
-      {
-        "id": "C_MAINT_ROLLING_BENCH_04",
-        "asset": "cabinet",
-        "center_xy": [
-          25.6,
-          34.45
-        ],
-        "yaw_deg": 90,
-        "role": "parked offline maintenance workstation",
-        "semantic_class": "workbench"
-      },
-      {
-        "id": "C_MAINT_TOOL_STORAGE_05",
-        "asset": "workbench",
-        "center_xy": [
-          27.6,
-          32.75
-        ],
-        "yaw_deg": 90,
-        "role": "closed maintenance tool storage; not product storage",
-        "semantic_class": "control_cabinet"
-      },
-      {
-        "id": "C_MAINT_ROLLING_BENCH_05",
-        "asset": "cabinet",
-        "center_xy": [
-          27.6,
-          34.45
-        ],
-        "yaw_deg": 90,
-        "role": "parked offline maintenance workstation",
-        "semantic_class": "workbench"
-      },
-      {
         "id": "C_MAINT_TOOL_STORAGE_06",
         "asset": "workbench",
         "center_xy": [
@@ -1311,28 +1135,6 @@
         "asset": "cart",
         "center_xy": [
           24.6,
-          33.75
-        ],
-        "yaw_deg": 0,
-        "role": "parked maintenance parts cart outside production material flow",
-        "semantic_class": "buffer_fixture"
-      },
-      {
-        "id": "C_MAINT_PARTS_CART_04",
-        "asset": "cart",
-        "center_xy": [
-          26.6,
-          33.75
-        ],
-        "yaw_deg": 0,
-        "role": "parked maintenance parts cart outside production material flow",
-        "semantic_class": "buffer_fixture"
-      },
-      {
-        "id": "C_MAINT_PARTS_CART_05",
-        "asset": "cart",
-        "center_xy": [
-          28.6,
           33.75
         ],
         "yaw_deg": 0,
@@ -1583,50 +1385,6 @@
         "semantic_class": "workbench"
       },
       {
-        "id": "D_MAINT_TOOL_STORAGE_04",
-        "asset": "workbench",
-        "center_xy": [
-          67.6,
-          32.75
-        ],
-        "yaw_deg": 90,
-        "role": "closed maintenance tool storage; not product storage",
-        "semantic_class": "control_cabinet"
-      },
-      {
-        "id": "D_MAINT_ROLLING_BENCH_04",
-        "asset": "cabinet",
-        "center_xy": [
-          67.6,
-          34.45
-        ],
-        "yaw_deg": 90,
-        "role": "parked offline maintenance workstation",
-        "semantic_class": "workbench"
-      },
-      {
-        "id": "D_MAINT_TOOL_STORAGE_05",
-        "asset": "workbench",
-        "center_xy": [
-          69.6,
-          32.75
-        ],
-        "yaw_deg": 90,
-        "role": "closed maintenance tool storage; not product storage",
-        "semantic_class": "control_cabinet"
-      },
-      {
-        "id": "D_MAINT_ROLLING_BENCH_05",
-        "asset": "cabinet",
-        "center_xy": [
-          69.6,
-          34.45
-        ],
-        "yaw_deg": 90,
-        "role": "parked offline maintenance workstation",
-        "semantic_class": "workbench"
-      },
-      {
         "id": "D_MAINT_TOOL_STORAGE_06",
         "asset": "workbench",
         "center_xy": [
@@ -1675,28 +1433,6 @@
         "asset": "cart",
         "center_xy": [
           66.6,
-          33.75
-        ],
-        "yaw_deg": 0,
-        "role": "parked maintenance parts cart outside production material flow",
-        "semantic_class": "buffer_fixture"
-      },
-      {
-        "id": "D_MAINT_PARTS_CART_04",
-        "asset": "cart",
-        "center_xy": [
-          68.6,
-          33.75
-        ],
-        "yaw_deg": 0,
-        "role": "parked maintenance parts cart outside production material flow",
-        "semantic_class": "buffer_fixture"
-      },
-      {
-        "id": "D_MAINT_PARTS_CART_05",
-        "asset": "cart",
-        "center_xy": [
-          70.6,
           33.75
         ],
         "yaw_deg": 0,
@@ -1861,6 +1597,30 @@
     ],
     "excluded_fixtures": [
       {
+        "id": "A_MAINT_TOOL_STORAGE_04",
+        "reason": "translated native fixture bounds plus 0.1m clearance intersect the PACK staging spur"
+      },
+      {
+        "id": "A_MAINT_ROLLING_BENCH_04",
+        "reason": "translated native fixture bounds plus 0.1m clearance intersect the PACK staging spur"
+      },
+      {
+        "id": "A_MAINT_TOOL_STORAGE_05",
+        "reason": "translated native fixture bounds plus 0.1m clearance intersect the PACK staging spur"
+      },
+      {
+        "id": "A_MAINT_ROLLING_BENCH_05",
+        "reason": "translated native fixture bounds plus 0.1m clearance intersect the PACK staging spur"
+      },
+      {
+        "id": "A_MAINT_PARTS_CART_04",
+        "reason": "translated native fixture bounds plus 0.1m clearance intersect the PACK staging spur"
+      },
+      {
+        "id": "A_MAINT_PARTS_CART_05",
+        "reason": "translated native fixture bounds plus 0.1m clearance intersect the PACK staging spur"
+      },
+      {
         "id": "A_EAST_SERVICE_TOOLS_LOW",
         "reason": "translated native fixture bounds plus 0.1m clearance intersect an authored campus bridge"
       },
@@ -1871,6 +1631,30 @@
       {
         "id": "A_EAST_SERVICE_TOOLS_HIGH",
         "reason": "translated native fixture bounds plus 0.1m clearance intersect an authored campus bridge"
+      },
+      {
+        "id": "B_MAINT_TOOL_STORAGE_04",
+        "reason": "translated native fixture bounds plus 0.1m clearance intersect the PACK staging spur"
+      },
+      {
+        "id": "B_MAINT_ROLLING_BENCH_04",
+        "reason": "translated native fixture bounds plus 0.1m clearance intersect the PACK staging spur"
+      },
+      {
+        "id": "B_MAINT_TOOL_STORAGE_05",
+        "reason": "translated native fixture bounds plus 0.1m clearance intersect the PACK staging spur"
+      },
+      {
+        "id": "B_MAINT_ROLLING_BENCH_05",
+        "reason": "translated native fixture bounds plus 0.1m clearance intersect the PACK staging spur"
+      },
+      {
+        "id": "B_MAINT_PARTS_CART_04",
+        "reason": "translated native fixture bounds plus 0.1m clearance intersect the PACK staging spur"
+      },
+      {
+        "id": "B_MAINT_PARTS_CART_05",
+        "reason": "translated native fixture bounds plus 0.1m clearance intersect the PACK staging spur"
       },
       {
         "id": "B_WEST_SERVICE_TOOLS_LOW",
@@ -1885,12 +1669,60 @@
         "reason": "translated native fixture bounds plus 0.1m clearance intersect an authored campus bridge"
       },
       {
+        "id": "C_MAINT_TOOL_STORAGE_04",
+        "reason": "translated native fixture bounds plus 0.1m clearance intersect the PACK staging spur"
+      },
+      {
+        "id": "C_MAINT_ROLLING_BENCH_04",
+        "reason": "translated native fixture bounds plus 0.1m clearance intersect the PACK staging spur"
+      },
+      {
+        "id": "C_MAINT_TOOL_STORAGE_05",
+        "reason": "translated native fixture bounds plus 0.1m clearance intersect the PACK staging spur"
+      },
+      {
+        "id": "C_MAINT_ROLLING_BENCH_05",
+        "reason": "translated native fixture bounds plus 0.1m clearance intersect the PACK staging spur"
+      },
+      {
+        "id": "C_MAINT_PARTS_CART_04",
+        "reason": "translated native fixture bounds plus 0.1m clearance intersect the PACK staging spur"
+      },
+      {
+        "id": "C_MAINT_PARTS_CART_05",
+        "reason": "translated native fixture bounds plus 0.1m clearance intersect the PACK staging spur"
+      },
+      {
         "id": "C_EAST_SERVICE_TOOLS_LOW",
         "reason": "translated native fixture bounds plus 0.1m clearance intersect an authored campus bridge"
       },
       {
         "id": "C_EAST_SERVICE_CART_LOW",
         "reason": "translated native fixture bounds plus 0.1m clearance intersect an authored campus bridge"
+      },
+      {
+        "id": "D_MAINT_TOOL_STORAGE_04",
+        "reason": "translated native fixture bounds plus 0.1m clearance intersect the PACK staging spur"
+      },
+      {
+        "id": "D_MAINT_ROLLING_BENCH_04",
+        "reason": "translated native fixture bounds plus 0.1m clearance intersect the PACK staging spur"
+      },
+      {
+        "id": "D_MAINT_TOOL_STORAGE_05",
+        "reason": "translated native fixture bounds plus 0.1m clearance intersect the PACK staging spur"
+      },
+      {
+        "id": "D_MAINT_ROLLING_BENCH_05",
+        "reason": "translated native fixture bounds plus 0.1m clearance intersect the PACK staging spur"
+      },
+      {
+        "id": "D_MAINT_PARTS_CART_04",
+        "reason": "translated native fixture bounds plus 0.1m clearance intersect the PACK staging spur"
+      },
+      {
+        "id": "D_MAINT_PARTS_CART_05",
+        "reason": "translated native fixture bounds plus 0.1m clearance intersect the PACK staging spur"
       },
       {
         "id": "D_WEST_SERVICE_TOOLS_LOW",
@@ -1909,7 +1741,7 @@
         "reason": "translated native fixture bounds plus 0.1m clearance intersect an authored campus bridge"
       }
     ],
-    "fixture_count": 128
+    "fixture_count": 104
   },
   "campus_transform": {
     "bay_offsets_xy_m": {

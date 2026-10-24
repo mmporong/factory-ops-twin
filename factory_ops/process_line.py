@@ -294,6 +294,12 @@ class ProcessLine:
             self._settle_cells()
 
     def snapshot(self) -> dict[str, Any]:
+        completed_lot_ids = {
+            task.lot_id
+            for task in self.tasks.values()
+            if (task.kind == "product_move" and task.destination == self.shipping_station
+                and task.state == "complete")
+        }
         return {
             "schema_version": 1,
             "run_id": self.run_id,
@@ -309,8 +315,7 @@ class ProcessLine:
             "active_carriers": dict(self.active_carriers),
             "active_carrier_count": len(self.active_carriers),
             "available_carriers": dict(self.available_carriers),
-            "completed_lots": sum(lot.state in {"product_delivered", "waiting_empty_return", "returned"}
-                                  for lot in self.lots.values()),
+            "completed_lots": len(completed_lot_ids),
             "returned": sum(lot.returned for lot in self.lots.values()),
             "events": deepcopy(self.events),
             "scope": self.scope,

@@ -55,6 +55,13 @@ class OperationsModel(DashboardModel):
         self.motions = {r: PathMotion(self.limits, self.geometry) for r in self.ledger.robots}
         self.corridors = OperationsCorridors(self.book.config)
         self.bridges = BridgeAdmission(self.book.config)
+        raw_staging = self.book.config.get("staging_after_drop", {})
+        if (not isinstance(raw_staging, Mapping)
+                or any(not isinstance(drop, str) or drop not in self.book.nodes
+                       or not isinstance(stage, str) or stage not in self.book.nodes
+                       for drop, stage in raw_staging.items())):
+            raise ValueError("staging_after_drop must map route nodes to route nodes")
+        self.staging_after_drop = dict(raw_staging)
         self.homes = dict(zip(self.ledger.robots, stations))
         self.radius = self.book.config["authored_allowances"].get("reservation_radius_including_tracking_m", self.book.planning_radius_m)
         self.collision_radius = self.book.config["collision_radius"]["value"]
@@ -211,27 +218,41 @@ class OperationsModel(DashboardModel):
                 continue
             # Vacate an idle handover without claiming a completed parking move.
             if draining or self.sim_time - self._idle_since[robot] >= 2.0:
-                self._trip(robot, {}, self._locations[robot], self.homes[robot], "parking", kind="parking")
+                self._trip(
+                    robot, {}, self._locations[robot], self.homes[robot], "parking",
+                    kind="parking", purpose="home",
+                )
                 self._waiting.pop(robot, None)
 
     def _dispatch_extra_jobs(self, draining: bool) -> None:
         """Admit specialized production jobs before sending idle vehicles home."""
 
-    def _trip(self, robot_id, task, start, goal, phase, *, kind="order") -> None:
+    def _trip(self, robot_id, task, start, goal, phase, *, kind="order", purpose=None) -> None:
         self._replans.pop(robot_id, None)
         super()._trip(robot_id, task, start, goal, phase, kind=kind)
         route = self.book.plan(start, goal, closed=self.closed)
         route_nodes = route.nodes
         admission_points = route.points
-        if kind == "process_line" and phase == "pickup":
-            # Acquire the loaded leg's bridges before occupying its pickup bay.
-            loaded = self.book.plan(goal, task.drop_station, closed=self.closed)
-            route_nodes += loaded.nodes
-            admission_points += loaded.points[1:]
+        if kind == "process_line":
+            destination = task.drop_station
+            if phase == "pickup":
+                # Acquire the loaded leg's bridges before occupying its pickup bay.
+                loaded = self.book.plan(goal, destination, closed=self.closed)
+                route_nodes += loaded.nodes
+                admission_points += loaded.points[1:]
+            staging = self.staging_after_drop.get(destination)
+            if staging is not None:
+                # The drop is not a safe release point. Protect its authored
+                # egress spur in the same admission transaction.
+                egress = self.book.plan(destination, staging, closed=self.closed)
+                route_nodes += egress.nodes
+                admission_points += egress.points[1:]
         self._admission_seq += 1
         self._trips[robot_id]["route_nodes"] = route_nodes
         self._trips[robot_id]["admission_tiles"] = self._tiles(tuple(admission_points))
         self._trips[robot_id]["admission_seq"] = self._admission_seq
+        if kind == "parking":
+            self._trips[robot_id]["purpose"] = purpose or "home"
         if hasattr(self, "operations_charging") and self.operations_charging is not None:
             self.operations_charging.denied.discard(robot_id)
         self._waiting.pop(robot_id, None)
@@ -463,7 +484,13 @@ class OperationsModel(DashboardModel):
         first = pickup_route or self.book.plan(self._locations[robot_id], pickup, closed=self.closed)
         loaded = loaded_route or self.book.plan(pickup, destination, closed=self.closed)
         nodes = first.nodes + loaded.nodes
-        tiles = self._tiles(tuple(first.points + loaded.points[1:]))
+        points = first.points + loaded.points[1:]
+        staging = self.staging_after_drop.get(destination)
+        if staging is not None:
+            egress = self.book.plan(destination, staging, closed=self.closed)
+            nodes += egress.nodes
+            points += egress.points[1:]
+        tiles = self._tiles(tuple(points))
         observations = {}
         for peer in self.ledger.robots:
             occupied = self._footprint(peer)
@@ -478,6 +505,32 @@ class OperationsModel(DashboardModel):
             observed_tiles=observations,
         )
 
+    def _can_withdraw_queued_parking(self, robot_id: str) -> bool:
+        trip = self._trips.get(robot_id)
+        if (trip is None or trip["kind"] != "parking" or trip.get("purpose", "home") != "home"
+                or robot_id in self._chunks or not self.motions[robot_id].stopped
+                or self.bridges.held(robot_id)):
+            return False
+        anchor = self.book.nodes[self._locations[robot_id]]
+        pose = self._poses[robot_id]
+        return math.dist(anchor, (pose["x_m"], pose["y_m"])) <= 1e-9
+
+    def _withdraw_queued_parking(self, robot_id: str) -> bool:
+        """Make an unstarted home trip available for higher-priority work."""
+        if not self._can_withdraw_queued_parking(robot_id):
+            return False
+        self.reservations.withdraw_pending(
+            robot_id,
+            now_s=self.sim_time,
+            reason="queued_home_parking_preempted",
+        )
+        self.bridges.withdraw_waiter(robot_id)
+        self._waiting.pop(robot_id, None)
+        self._replans.pop(robot_id, None)
+        del self._trips[robot_id]
+        self._event("parking_preempted", f"{robot_id} 업무 우선 배정을 위해 귀가 대기 철회", robot_id)
+        return True
+
     def _arrive_trip(self, robot_id, trip) -> None:
         if not self.motions[robot_id].stopped:
             raise RuntimeError("handover attempted before kinematic stop")
@@ -490,7 +543,10 @@ class OperationsModel(DashboardModel):
             del self._trips[robot_id]
             self._observe_all()
             self._park_hold(robot_id)
-            self._event("parked", f"{robot_id} 통로 밖 주차 완료", robot_id)
+            if trip.get("purpose", "home") == "staging":
+                self._event("staged", f"{robot_id} 하차 후 대기점 진입", robot_id)
+            else:
+                self._event("parked", f"{robot_id} 통로 밖 주차 완료", robot_id)
         else:
             if trip["phase"] == "drop":
                 self._deliveries[robot_id] += 1
@@ -594,6 +650,13 @@ class OperationsModel(DashboardModel):
                        angular_speed_rad_s=0.0 if self.paused else motion.angular_rad_s,
                        navigation_phase=motion.phase, pose_source="kinematic_operations",
                        reservation_generation=self._leases[robot]["generation"])
+            trip = self._trips.get(robot)
+            if (trip is not None and trip["kind"] == "parking"
+                    and trip.get("purpose") == "staging"):
+                row.update(
+                    task_id=f"stage:{robot}", task_type="staging",
+                    task_label="하차 후 통로 비움", movement_purpose="post_drop_staging",
+                )
             if self.operations_charging is not None:
                 row.update(self.operations_charging.robot_snapshot(robot))
                 phase = row["charging_phase"]

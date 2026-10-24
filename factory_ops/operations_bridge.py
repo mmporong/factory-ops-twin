@@ -98,6 +98,18 @@ class BridgeAdmission:
         self._protected_tiles.pop(robot, None)
         self.waiters.pop(robot, None)
 
+    def withdraw_waiter(self, robot: str) -> bool:
+        """Withdraw only an unowned admission wait.
+
+        A queued parking intent may be replaced by business work while the
+        vehicle is still stopped at its authored anchor.  An owner is already
+        committed to a protected route and cannot be withdrawn through this
+        narrow API.
+        """
+        if self.held(robot):
+            return False
+        return self.waiters.pop(robot, None) is not None
+
     def snapshot(self) -> dict[str, Any]:
         return {"policy": "atomic_route_leg_resources", "owners": dict(sorted(self.owners.items())),
                 "waiters": {robot: list(peers) for robot, peers in sorted(self.waiters.items())},

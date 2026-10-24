@@ -759,6 +759,38 @@
       69.0,
       51.5
     ],
+    "A_PACK_EGRESS": [
+      27.0,
+      4.5
+    ],
+    "A_PACK_WAIT": [
+      27.0,
+      1.5
+    ],
+    "B_PACK_EGRESS": [
+      69.0,
+      4.5
+    ],
+    "B_PACK_WAIT": [
+      69.0,
+      1.5
+    ],
+    "C_PACK_EGRESS": [
+      27.0,
+      36.5
+    ],
+    "C_PACK_WAIT": [
+      27.0,
+      33.5
+    ],
+    "D_PACK_EGRESS": [
+      69.0,
+      36.5
+    ],
+    "D_PACK_WAIT": [
+      69.0,
+      33.5
+    ],
     "AB_E_W_GATE": [
       31.0,
       6.0
@@ -1288,6 +1320,22 @@
     [
       "D_S2",
       "D_AOI_OUT"
+    ],
+    [
+      "A_PACK_EGRESS",
+      "A_PACK_WAIT"
+    ],
+    [
+      "B_PACK_EGRESS",
+      "B_PACK_WAIT"
+    ],
+    [
+      "C_PACK_EGRESS",
+      "C_PACK_WAIT"
+    ],
+    [
+      "D_PACK_EGRESS",
+      "D_PACK_WAIT"
     ]
   ],
   "directed_edges": [
@@ -1310,10 +1358,6 @@
     [
       "A_LOW_E_P3",
       "A_LOW_E_ES"
-    ],
-    [
-      "A_LOW_E_ES",
-      "A_LOW_E_EN"
     ],
     [
       "A_LOW_W_EN",
@@ -1464,10 +1508,6 @@
       "B_LOW_E_ES"
     ],
     [
-      "B_LOW_E_ES",
-      "B_LOW_E_EN"
-    ],
-    [
       "B_LOW_W_EN",
       "B_PACK_IN"
     ],
@@ -1614,10 +1654,6 @@
     [
       "C_LOW_E_P3",
       "C_LOW_E_ES"
-    ],
-    [
-      "C_LOW_E_ES",
-      "C_LOW_E_EN"
     ],
     [
       "C_LOW_W_EN",
@@ -1768,10 +1804,6 @@
       "D_LOW_E_ES"
     ],
     [
-      "D_LOW_E_ES",
-      "D_LOW_E_EN"
-    ],
-    [
       "D_LOW_W_EN",
       "D_PACK_IN"
     ],
@@ -1898,6 +1930,54 @@
     [
       "D_LOW_W_ES",
       "D_LOW_E_ES"
+    ],
+    [
+      "A_LOW_E_ES",
+      "A_PACK_EGRESS"
+    ],
+    [
+      "A_PACK_EGRESS",
+      "A_LOW_E_EN"
+    ],
+    [
+      "A_PACK_IN",
+      "A_PACK_EGRESS"
+    ],
+    [
+      "B_LOW_E_ES",
+      "B_PACK_EGRESS"
+    ],
+    [
+      "B_PACK_EGRESS",
+      "B_LOW_E_EN"
+    ],
+    [
+      "B_PACK_IN",
+      "B_PACK_EGRESS"
+    ],
+    [
+      "C_LOW_E_ES",
+      "C_PACK_EGRESS"
+    ],
+    [
+      "C_PACK_EGRESS",
+      "C_LOW_E_EN"
+    ],
+    [
+      "C_PACK_IN",
+      "C_PACK_EGRESS"
+    ],
+    [
+      "D_LOW_E_ES",
+      "D_PACK_EGRESS"
+    ],
+    [
+      "D_PACK_EGRESS",
+      "D_LOW_E_EN"
+    ],
+    [
+      "D_PACK_IN",
+      "D_PACK_EGRESS"
     ],
     [
       "A_LOW_E_EN",
@@ -2371,6 +2451,12 @@
       },
       "geometry_reason": "AOI stops use the S2 side bay outside the west shared-corridor boundary; PACK anchors split existing east-spine arcs and avoid the occupied parking annex without changing collision or reservation radii"
     }
+  },
+  "staging_after_drop": {
+    "A_PACK_IN": "A_PACK_WAIT",
+    "B_PACK_IN": "B_PACK_WAIT",
+    "C_PACK_IN": "C_PACK_WAIT",
+    "D_PACK_IN": "D_PACK_WAIT"
   },
   "bridge_admission": {
     "policy": "atomic_route_leg_resources",

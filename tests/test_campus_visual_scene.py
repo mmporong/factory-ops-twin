@@ -50,11 +50,11 @@ class CampusVisualSceneTests(unittest.TestCase):
         obstacle_ids = {str(item["id"]) for item in layout.data["physical_obstacles"]}
         fixtures = config["environment"]["fixtures"]
         self.assertEqual(76, len(obstacle_ids))
-        self.assertEqual(128, len(fixtures))
+        self.assertEqual(104, len(fixtures))
         self.assertEqual(len(fixtures), config["environment"]["fixture_count"])
-        self.assertEqual(12, len(config["environment"]["excluded_fixtures"]))
+        self.assertEqual(36, len(config["environment"]["excluded_fixtures"]))
         self.assertTrue(all(item["id"].split("_", 1)[0] in {"A", "B", "C", "D"} for item in fixtures))
-        self.assertEqual({"A": 32, "B": 32, "C": 33, "D": 31}, {
+        self.assertEqual({"A": 26, "B": 26, "C": 27, "D": 25}, {
             bay: sum(item["id"].startswith(f"{bay}_") for item in fixtures)
             for bay in ("A", "B", "C", "D")
         })
@@ -93,6 +93,8 @@ class CampusVisualSceneTests(unittest.TestCase):
                 self.assertIn(f'custom string stableId = "{station_id}"', visual)
             for label in ("A FINAL TEST", "B AOI", "C PACK", "D LOT OUT"):
                 self.assertIn(f'custom string stableId = "floor_stencil:{label}"', visual)
+            for bay in "ABCD":
+                self.assertIn(f'custom string stableId = "floor_stencil:{bay} WAIT"', visual)
 
 
 if __name__ == "__main__":

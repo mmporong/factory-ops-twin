@@ -708,6 +708,29 @@ def _floor_graphics(layout: Layout, palette: Mapping[str, tuple[float, float, fl
             offset = (chevron - 1) * 0.34
             lines.extend(_box_usda(_Box(f"Chevron_{chevron}", (x - 0.56 + offset, y - 0.035, 0.017, x - 0.34 + offset, y + 0.035, 0.022), "White"), 16))
         lines.append("            }")
+    staging = layout.data.get("operational_staging", [])
+    if not isinstance(staging, list):
+        raise LayoutError("operational_staging must be a list")
+    for item in staging:
+        if (not isinstance(item, dict) or not isinstance(item.get("id"), str)
+                or not isinstance(item.get("xy"), list) or len(item["xy"]) != 2
+                or not all(_is_finite_number(value) for value in item["xy"])):
+            raise LayoutError("operational_staging requires a stable id and finite xy")
+        marker_id, (x, y) = item["id"], item["xy"]
+        for suffix, rectangle in (
+            ("L", (x - 1.1, y - 1.0, x - 1.05, y + 1.0)),
+            ("R", (x + 1.05, y - 1.0, x + 1.1, y + 1.0)),
+            ("B", (x - 1.1, y - 1.0, x + 1.1, y - .95)),
+            ("T", (x - 1.1, y + .95, x + 1.1, y + 1.0)),
+        ):
+            x0, y0, x1, y1 = rectangle
+            add_box(_Box(f"Staging_{marker_id}_{suffix}", (x0, y0, .017, x1, y1, .022),
+                         "SafetyYellow", "floor_marking", "post_drop_staging"))
+        label = marker_id.replace("_PACK_WAIT", " WAIT")
+        prim = f"StagingStencil_{_prim_name(marker_id)}"
+        lines.extend(_floor_stencil_usda(label, (x - 1.0, y - .2), "post_drop_staging",
+                                         indent=12, prim_name=prim, material="Dark"))
+        semantic_roots[f"{root_path}/{prim}"] = "floor_marking"
     if revision in PRODUCTION_BAY_REVISIONS:
         stencil_specs = (
             ("S1", (3.75, 3.55), "station_identifier"),

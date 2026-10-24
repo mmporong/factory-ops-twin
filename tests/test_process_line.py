@@ -55,6 +55,32 @@ class ProcessLineTests(unittest.TestCase):
         self.assertEqual(["TEST_IN", "AOI_IN", "PACK_IN", "OUT", "S1"],
                          [event["destination"] for event in drops])
 
+    def test_completed_lot_count_stays_monotonic_during_empty_return_transport(self):
+        task = self.line.release_lot("LOT-1", "CARRIER-1", "S1")
+        self.move(task)
+        for cell_id in ("TEST", "AOI", "PACK"):
+            self.advance(self.line.cells[cell_id].spec.processing_time_s)
+            self.move(self.line.ready_transports[0].task_id)
+
+        return_task = self.line.ready_transports[0]
+        self.assertEqual((1, 0),
+                         (self.line.snapshot()["completed_lots"], self.line.snapshot()["returned"]))
+        self.line.assign(return_task.task_id, "amr-1")
+        self.observation += 1
+        self.line.pickup(
+            "run-1", return_task.task_id, "amr-1", f"obs-{self.observation}", self.clock,
+        )
+        in_return = self.line.snapshot()
+        self.assertEqual("in_transport", in_return["lots"][0]["state"])
+        self.assertEqual((1, 0), (in_return["completed_lots"], in_return["returned"]))
+
+        self.observation += 1
+        self.line.drop(
+            "run-1", return_task.task_id, "amr-1", f"obs-{self.observation}", self.clock,
+        )
+        returned = self.line.snapshot()
+        self.assertEqual((1, 1), (returned["completed_lots"], returned["returned"]))
+
     def test_input_slot_assignment_is_atomic_and_wrong_robot_cannot_commit(self):
         first = self.line.release_lot("LOT-1", "CARRIER-1", "S1")
         second = self.line.release_lot("LOT-2", "CARRIER-2", "S2")

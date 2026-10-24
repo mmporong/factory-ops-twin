@@ -1,0 +1,75 @@
+{
+  "schema_version": 1,
+  "scope": "Authored off-main PACK staging geometry and CPU visual USD export; no GPU or completed16fleet claim",
+  "production_footprints": 76,
+  "homes": 16,
+  "operational_staging": 4,
+  "bounds_xy_m": [
+    0,
+    0,
+    78,
+    60
+  ],
+  "fixture_count": 104,
+  "excluded_fixture_count": 36,
+  "additional_fixture_exclusions_for_staging": 24,
+  "staging_contract": "PACK_IN -> PACK_EGRESS -> PACK_WAIT; 6m drop vacating movement before optional home parking",
+  "routing_contract": "staging_after_drop contains four bay mappings; eastbound main link split at egress junction",
+  "geometry_checks": {
+    "planning_envelope_clear": true,
+    "full_egress_vs_all16_homes_disjoint": true,
+    "wait_vs_main_east_lane_tiles_disjoint": true,
+    "full_graph_reachable": true,
+    "native_asset_clearance_m": 0.1,
+    "safety_radii_and_tile_size_unchanged": true,
+    "targeted_campus_tests_passed": 9
+  },
+  "visual_export": {
+    "base": {
+      "path": "artifacts\\campus-visual-254\\factory-v3.usda",
+      "sha256": "919247cd704e98632b1780966513295cc5adc236a849473fa8563708718d8c3f",
+      "default_prim": "World",
+      "up_axis": "Z",
+      "meters_per_unit": 1,
+      "static_collider_count": 77,
+      "obstacle_collider_count": 76,
+      "floor_collision_geometry": "invisible static Z-axis Plane at z=0; infinite physics surface",
+      "floor_visual_geometry": "non-colliding 78x60x0.1 m Cube slab ending at z=0",
+      "bounded_operations_scope": "78x60 m authored occupancy map; the physics plane is intentionally infinite",
+      "non_colliding_marker_count": 40,
+      "robot_assets": 0,
+      "validation": "OpenUSD text authored; pxr/Isaac Sim parsing and collision behavior not validated"
+    },
+    "invariants": {
+      "source_obstacle_count": 76,
+      "source_static_collider_count": 77,
+      "source_marker_count": 40,
+      "visual_collision_api_count": 0,
+      "layout_bounds_xy_m": [
+        0.0,
+        0.0,
+        78.0,
+        60.0
+      ],
+      "visual_equipment_contained_by_source_xyz_envelopes": true,
+      "station_centres_free_of_visual_payload_geometry": true,
+      "source_xyz_invariant_scope": "all visual instances with a source_obstacle_id, including mounted external assets, remain inside source XYZ envelopes"
+    },
+    "fixtures": 104,
+    "visual_instances": 1152,
+    "manifest_sha256": "49d2f27611e26d73c442ee35e8bd621b0ebc1403405317c5ec8d1565158f44bb",
+    "gpu_render_done": false
+  },
+  "config_sha256": {
+    "fleet-profile.json": "5bdaa74cba0c8df54951b5e69cfa6de45c680b91e2d8f71f138f0afad32f18d5",
+    "g2.json": "b2e3385db604b33c94ce4f8dfbc41926a1e21b4f2e60a4340b114c1f124849ab",
+    "g3-routing.json": "33844bb7b94843d863fb4a7dec26f3f6b40bbd8e11a51133f75ac8c8e102dc74",
+    "layout.json": "41acdb9f470f5801f84fb23a6b82ff8f45eff5f8658d6a136aa749788dcc37aa",
+    "operations-charging.json": "113f7d1fffd0567d57e8ba9afb3e795e79c9246d03486334c8ef7046b9be5d43",
+    "process-network.json": "ef4d3dd35612426c5b284413a9cb180c91dcbdad929eb1bcabed170e8beed12b",
+    "render-profile.json": "1474dcb23b6c8a89b4cd4bf686b106d6083c6ef8d3326451d38cce436bc6d560",
+    "visual-assets.json": "677af5b4a86340b74215d3b5ca5718d3c392174fcec228f732c106e326d2b5d5"
+  },
+  "diagram": "docs/images/campus16-layout-254/provenance.json",
+  "runtime_status": "255 closed at900s wall limit: all16 repeat participants, cumulative shipments13/returns6, peak material tasks6; incomplete, see campus16-255.json.253 preserved separately"
+}

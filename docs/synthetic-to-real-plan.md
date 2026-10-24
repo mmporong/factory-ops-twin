@@ -26,6 +26,8 @@ LOCO 라이선스는 [CC0-1.0](https://github.com/tum-fml/loco/blob/b460ab8c37f0
 
 학습용 export에서는 bbox의 tight/amodal 기준, 가림·잘림·최소 크기와 ignore 정책을 맞춘다. compound root의 bbox/가림 정보와 leaf mesh 측정치를 같은 검사로 취급하지 않는다. 기존 G4의 일부 root 정보 미측정과 최종 승인 실패를 해결하지 않은 채 전체1,080장을 적합 데이터로 재사용하지 않는다.
 
+현재 반도체 설정의 `FG_LOW`/`FG_HIGH`는 semantic 이름이 `pallet`이지만 실제 recipe는 `esd_packing`/`esd_tray_loadport`다. 포장 설비·트레이 인계대 전체를 LOCO 팔레트로 학습시키지 않는다. `visual_scene.py`의 `finished_goods_pallet`과 `inventory_tote`/`finished_goods_tote`는 형상 비교 후보이고, `jedec_tray_stack`·`jedec_tray_magazine`·`covered_esd_carrier`는 소형 적재함으로 자동 매핑하지 않는다. 다음 합성 export는 class 문자열만 치환하지 않고 객체별 형상·root/leaf 경계와 bbox를 기준으로 허용 목록을 확정한다. 이 대응이 끝날 때까지 프로필의 `asset_mapping`은 pending으로 유지한다.
+
 | 용도 | 상류 파티션 | 사용 규칙 |
 |---|---|---|
 | 학습 | sub2·sub5, 1,947장 | 실제 라벨 예산 추출, 합성 데이터와 혼합 |
