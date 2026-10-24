@@ -3,6 +3,7 @@ import unittest
 import numpy as np
 
 from factory_ops.perception_dataset import PerceptionDatasetError, usd_safe_identifier, validate_capture
+from scripts.isaac.capture_perception_probe import PROBE_SEMANTIC_TYPES
 
 
 class PerceptionDatasetTests(unittest.TestCase):
@@ -45,6 +46,9 @@ class PerceptionDatasetTests(unittest.TestCase):
         self.assertEqual(usd_safe_identifier(object_id), "pallet_01_01")
         self.assertEqual(object_id, "pallet-01-01")
         self.assertEqual(usd_safe_identifier("7-small.load/carrier"), "_7_small_load_carrier")
+
+    def test_probe_requests_class_and_object_identity_from_every_label_annotator(self) -> None:
+        self.assertEqual(PROBE_SEMANTIC_TYPES, ("class", "object_id"))
 
     def test_missing_bbox_fails_closed(self) -> None:
         with self.assertRaisesRegex(PerceptionDatasetError, "coverage differs"):

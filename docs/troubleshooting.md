@@ -1360,4 +1360,6 @@ RGB249의 첫 report는 runtime·클래스 수를 추가하며 같은 경로로 
 
 지각 실험268은 첫 RGB 생성 전에 pallet 원본의 하위 mesh에 남은 wikidata 의미 속성을 감지해 중단했다. 생성0장, 소유 Job 종료·잔여 PID0이며 실패 자료를 학습 입력으로 사용하지 않는다. 원본과 범용267 사본은 수정하지 않았다.
 
-`scripts/assets/prepare_perception_assets.py`는 고정267 결과를 입력으로 새 `.perception/<script hash>/` 사본만 작성한다. 실행270에서 두 에셋의 의미 속성 각8개를 제거했고 의미·물리 상태 잔존0, 형상 외곽·mesh 수·재질 및 비의미 USD 계약의 해시 보존을 확인했다. CPU OpenUSD 작업이며 Kit 촬영이나 학습 성공을 뜻하지 않는다. 촬영 시 하위 의미 라벨 거부 검사는 유지하고 프로젝트 object root에만 새 라벨을 붙인다. 사본도 `mapping_approved=false`, `training_ready=false`다.
+`scripts/assets/prepare_perception_assets.py`는 고정267 결과를 입력으로 새 `.perception/<script hash>/` 사본만 작성한다. 실행270에서 pallet의 의미 속성10개와 crate의8개를 제거했고 의미·물리 상태 잔존0, 형상 외곽·mesh 수·재질 및 비의미 USD 계약의 해시 보존을 확인했다. CPU OpenUSD 작업이며 Kit 촬영이나 학습 성공을 뜻하지 않는다. 촬영 시 하위 의미 라벨 거부 검사는 유지하고 프로젝트 object root에만 새 라벨을 붙인다. 사본도 `mapping_approved=false`, `training_ready=false`다.
+
+후속271은 bbox 라벨의 object_id 누락으로0장에서 중단됐다. SDK4.5의 Replicator1.11.35 소스에서 semantic segmentation의 semanticTypes가 전역 instance-mapping 필터를 덮어쓰는 것을 확인했다. bbox만 class/object_id로 설정하고 segmentation을 class만 설정하면 bbox idToLabels에서도 object_id가 빠졌다. 두 annotator가 같은 `PROBE_SEMANTIC_TYPES`를 사용하도록 맞추고 객체 식별 거부 검사는 유지했다. SDK의 복수 semantic type bbox 검사도 참조했다. [공식 semanticTypes·idToLabels API](https://docs.omniverse.nvidia.com/kit/docs/omni_replicator/latest/source/extensions/omni.replicator.core/docs/API.html)

@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "run_id": "perception-prepare-270",
+  "status": "passed",
+  "scope": "CPU OpenUSD preparation of semantic-free render-only perception candidates; no Kit or GPU render",
+  "training_ready": false,
+  "mapping_approved": false,
+  "source_prepared_result_sha256": "12b3304dc9591506c523f8dad81e09b68e433ab96c5eb091d24f0c71e1ac3047",
+  "source_receipt_sha256": "6e37fa400745d4acf86c2140882aa1524ef9fcacdafb7c0f5095a516cd00ca94",
+  "preparer_sha256": "df1009eafb51a18ff53f82d56accfb28a353e3a1c501f4688409426ae5c1c73f",
+  "result_sha256": "2d1ef3c0e566794460779c1d9dd8076d151d6839609ca1896260f003e0ec0518",
+  "host_receipt_sha256": "f00169d3727c8c22bc077d02a93f30886c3094d06554a7b1e55c0cf0d3912144",
+  "host": {
+    "status": "passed",
+    "closed": true,
+    "remaining_owned_pids": []
+  },
+  "original_cache": "unchanged; .prepared assets and vendor source files preserved",
+  "assets": {
+    "nvidia:crate_gray_a20": {
+      "relative_path": ".perception/df1009eafb51a18f/crate_gray_a20.usda",
+      "sha256": "1184bf226c6e7522b43d0900892f38dae5ac16a8ba436fe0587f05f3d6a6977b",
+      "source_prepared_sha256": "ff70741b5bf84080f9bcf9f7cc4a830471b245c1ab22144abfff3369b61bd8d4",
+      "mesh_count": 1,
+      "bounds_xyz_m": [
+        -0.30583518743515015,
+        -0.20579081773757935,
+        0.0,
+        0.30583518743515015,
+        0.20579081773757935,
+        0.09034392349713016
+      ],
+      "removed_semantic_api_count": 0,
+      "removed_semantic_metadata_count": 0,
+      "removed_semantic_property_count": 8,
+      "semantic_state_remaining_count": 0,
+      "nonsemantic_contract": {
+        "prim_count": 25,
+        "property_count": 210,
+        "sha256": "26ed41fef988e257994f9f1d08feb5db62c1789f355729d9f857e429c32964b6"
+      }
+    },
+    "nvidia:pallet_block_a01": {
+      "relative_path": ".perception/df1009eafb51a18f/pallet_block_a01.usda",
+      "sha256": "d3bda6d4716fcc5ab420eedfb229c1bbd5baf9aa170c6849cf0a05fe6b59500a",
+      "source_prepared_sha256": "8041d15722b793714904bc05dbd5e4b8552866d50610b49b35844aa4ec0788d7",
+      "mesh_count": 1,
+      "bounds_xyz_m": [
+        -0.4999999999999999,
+        -0.6000029485651226,
+        0.0,
+        0.4999999999999999,
+        0.6000029485651226,
+        0.12020616966300184
+      ],
+      "removed_semantic_api_count": 0,
+      "removed_semantic_metadata_count": 0,
+      "removed_semantic_property_count": 10,
+      "semantic_state_remaining_count": 0,
+      "nonsemantic_contract": {
+        "prim_count": 34,
+        "property_count": 282,
+        "sha256": "a19fc5e8959792176712f594d447859e2fc6db522c30c9373ce02244402d1249"
+      }
+    }
+  },
+  "next_step": "bounded16capture probe; no detector training, Cosmos transformation or real-image evaluation performed"
+}

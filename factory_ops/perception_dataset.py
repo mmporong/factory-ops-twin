@@ -163,9 +163,9 @@ def validate_capture(
         x0, y0, x1, y1 = values
         if not (0 <= x0 <= x1 < width and 0 <= y0 <= y1 < height):
             raise PerceptionDatasetError(f"bbox extent is outside the RGB frame: {object_id}: {values}")
-        # The existing G4 mask/raw-bbox contract uses inclusive maxima. The
-        # repository's G4 contract checks them against mask min/max, so COCO
-        # width and height include both endpoint pixels.
+        # The repository's G4 capture contract compares raw bbox maxima with
+        # mask xs.max()/ys.max(), so this probe preserves that inclusive-endpoint
+        # normalization when exporting the candidate COCO document.
         box_width, box_height = x1 - x0 + 1, y1 - y0 + 1
         area = box_width * box_height
         if area <= 0:

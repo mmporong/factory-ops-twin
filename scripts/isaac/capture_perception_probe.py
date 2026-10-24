@@ -41,6 +41,7 @@ ASSETS = {
     "pallet": "nvidia:pallet_block_a01",
     "small_load_carrier": "nvidia:crate_gray_a20",
 }
+PROBE_SEMANTIC_TYPES = ("class", "object_id")
 
 
 class ProbeError(RuntimeError):
@@ -215,10 +216,10 @@ def attach_annotators(rep: Any, camera: Any) -> tuple[dict[str, Any], Any]:
         annotators = {
             "rgb": rep.AnnotatorRegistry.get_annotator("rgb"),
             "semantic": rep.AnnotatorRegistry.get_annotator(
-                "semantic_segmentation", init_params={"semanticTypes": ["class"], "colorize": False}
+                "semantic_segmentation", init_params={"semanticTypes": list(PROBE_SEMANTIC_TYPES), "colorize": False}
             ),
             "bbox": rep.AnnotatorRegistry.get_annotator(
-                "bounding_box_2d_tight", init_params={"semanticTypes": ["class", "object_id"]}
+                "bounding_box_2d_tight", init_params={"semanticTypes": list(PROBE_SEMANTIC_TYPES)}
             ),
             "camera": rep.AnnotatorRegistry.get_annotator("camera_params"),
         }
