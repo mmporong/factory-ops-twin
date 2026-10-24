@@ -1,0 +1,114 @@
+{
+  "schema_version": 1,
+  "profile_id": "loco-pallet-rigid-crate-pilot-v1",
+  "scope": "bounded synthetic pallet and rigid-crate baseline; not the full LOCO small-load-carrier appearance range",
+  "scene_count": 128,
+  "views_per_scene": 4,
+  "capture_count": 512,
+  "seed_namespace": "factory-ops-loco-pilot-v1",
+  "resolution": [768, 512],
+  "modalities": ["rgb", "semantic_segmentation", "bounding_box_2d_tight", "distance_to_camera"],
+  "semantic_types": ["class", "object_id"],
+  "classes": ["pallet", "small_load_carrier"],
+  "prepared_inputs": [
+    {
+      "id": "gray-input-270",
+      "path": "artifacts/perception-prepare-270/result.json",
+      "sha256": "2d1ef3c0e566794460779c1d9dd8076d151d6839609ca1896260f003e0ec0518",
+      "status": "passed",
+      "asset_ids": ["nvidia:pallet_block_a01", "nvidia:crate_gray_a20"]
+    },
+    {
+      "id": "blue-input-300",
+      "path": "artifacts/perception-blue-crate-prepare-300/result.json",
+      "sha256": "2afe199b77584110de536f666369a0b0127f047b7bfc1876a44dc693d22dd613",
+      "status": "passed_candidate_probe_input_prepared",
+      "asset_ids": ["nvidia:pallet_block_a01", "nvidia:crate_blue_a02"]
+    }
+  ],
+  "assets": {
+    "nvidia:pallet_block_a01": {
+      "class": "pallet",
+      "prepared_input": "gray-input-270",
+      "sha256": "d3bda6d4716fcc5ab420eedfb229c1bbd5baf9aa170c6849cf0a05fe6b59500a",
+      "license": "CC-BY-4.0",
+      "scale_range": [0.95, 1.05]
+    },
+    "nvidia:crate_gray_a20": {
+      "class": "small_load_carrier",
+      "prepared_input": "gray-input-270",
+      "sha256": "1184bf226c6e7522b43d0900892f38dae5ac16a8ba436fe0587f05f3d6a6977b",
+      "license": "CC-BY-4.0",
+      "scale_range": [0.9, 1.1]
+    },
+    "nvidia:crate_blue_a02": {
+      "class": "small_load_carrier",
+      "prepared_input": "blue-input-300",
+      "sha256": "6483763852697133ad5e00448d702065c7720be297f52236f31e02bab0674a45",
+      "license": "CC-BY-4.0",
+      "scale_range": [0.9, 1.1]
+    }
+  },
+  "scene_variation": {
+    "pallet_count_range": [1, 3],
+    "crate_count_range": [2, 5],
+    "layout_variants": ["open_staging", "rack_edge", "packing_cell", "mixed_pallet_staging"],
+    "background_variants": ["neutral_floor", "rack_proxy", "packing_proxy", "staged_pallet_proxy"],
+    "floor_rgb_range": [[0.16, 0.18, 0.2], [0.58, 0.62, 0.66]],
+    "dome_intensity_range": [350.0, 850.0],
+    "key_intensity_range": [1200.0, 2600.0],
+    "yaw_deg_range": [-35.0, 35.0],
+    "xy_jitter_m": 0.18,
+    "occlusion_targets": ["clear", "light", "moderate", "edge_crop"],
+    "stacking_modes": ["none", "crate_pair", "crate_on_pallet"],
+    "fully_hidden_objects_allowed": false
+  },
+  "procedural_context": {
+    "backgrounds": {
+      "neutral_floor": [],
+      "rack_proxy": [
+        {"id": "rack-back", "primitive": "cube", "center_xyz_m": [0.0, 3.1, 1.4], "size_xyz_m": [6.8, 0.25, 2.8], "rgb": [0.22, 0.27, 0.32]}
+      ],
+      "packing_proxy": [
+        {"id": "packing-bench", "primitive": "cube", "center_xyz_m": [-2.8, 2.5, 0.55], "size_xyz_m": [1.8, 0.8, 1.1], "rgb": [0.42, 0.45, 0.48]},
+        {"id": "packing-stack", "primitive": "cube", "center_xyz_m": [2.7, 2.6, 0.8], "size_xyz_m": [1.1, 1.1, 1.6], "rgb": [0.48, 0.36, 0.24]}
+      ],
+      "staged_pallet_proxy": [
+        {"id": "staging-wall", "primitive": "cube", "center_xyz_m": [3.4, 0.6, 1.2], "size_xyz_m": [0.3, 4.6, 2.4], "rgb": [0.3, 0.34, 0.38]},
+        {"id": "carton-stack", "primitive": "cube", "center_xyz_m": [-2.9, 2.4, 0.75], "size_xyz_m": [1.2, 1.2, 1.5], "rgb": [0.5, 0.38, 0.24]}
+      ]
+    },
+    "occluders": {
+      "clear": [],
+      "light": [
+        {"id": "light-occluder", "primitive": "cube", "center_xyz_m": [2.85, -0.6, 0.45], "size_xyz_m": [0.35, 1.0, 0.9], "rgb": [0.34, 0.38, 0.42]}
+      ],
+      "moderate": [
+        {"id": "moderate-occluder", "primitive": "cube", "center_xyz_m": [-1.4, -0.2, 0.65], "size_xyz_m": [0.5, 1.4, 1.3], "rgb": [0.38, 0.42, 0.46]}
+      ],
+      "edge_crop": []
+    },
+    "edge_crop_target_offset_xy_m": [1.4, 0.35],
+    "context_semantics": "unlabelled"
+  },
+  "views": [
+    {"id": "overview", "eye_xyz_m": [5.8, -7.2, 6.2], "target_xyz_m": [0.0, 0.0, 0.35], "focal_length_mm": 31.0},
+    {"id": "aisle_low", "eye_xyz_m": [0.0, -7.6, 3.0], "target_xyz_m": [0.0, 0.0, 0.28], "focal_length_mm": 36.0},
+    {"id": "side", "eye_xyz_m": [7.4, 0.0, 3.6], "target_xyz_m": [0.0, 0.0, 0.3], "focal_length_mm": 35.0},
+    {"id": "oblique", "eye_xyz_m": [-5.8, -5.6, 4.6], "target_xyz_m": [0.0, 0.0, 0.32], "focal_length_mm": 33.0}
+  ],
+  "camera_jitter": {"eye_m": 0.3, "target_m": 0.12, "focal_length_mm": 1.5},
+  "label_contract": {
+    "root_semantics_only": true,
+    "bbox_endpoint_convention": "inclusive_min_max",
+    "per_object_bbox_equals_same_object_id_semantic_tight_extent": true,
+    "reject_fully_hidden_objects": true,
+    "clipped_frame_edges_allowed": true
+  },
+  "scope_flags": {
+    "training_ready": false,
+    "mapping_approved": false,
+    "model_training_performed": false,
+    "Cosmos_used": false
+  }
+}
