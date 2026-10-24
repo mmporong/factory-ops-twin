@@ -131,5 +131,36 @@
     "300 samples at1Hz span approximately299s; short partial windows may be too short for final render.",
     "Source/config remain frozen in running319; this option is available for later runs.",
     "Automatic selection ran through an incomplete16,733s diagnostic case; a valid complete48-lot case and final media remain pending."
-  ]
+  ],
+  "final_excerpt_selection": {
+    "producer": "scripts/media/select_operations_excerpt.py",
+    "producer_sha256": "ef9f55d8d2589b1ac3771ccc93b13c0e3e7441e902fdd677f933975264db60f8",
+    "status": "implemented_targeted_tests_passed_complete_fleet_input_pending",
+    "contract": {
+      "fleet": 16,
+      "lots_shipped_and_returned": 48,
+      "minimum_deliveries_each": 2,
+      "peak_material_tasks": 16,
+      "quiescent": true,
+      "source_stable": true
+    },
+    "reuses": "OperationsClipSelector material scoring, load_recording source and byte verification",
+    "targeted_tests": {
+      "module": "tests.test_operations_excerpt",
+      "passed": 2,
+      "wall_s": 0.001,
+      "scope": "Goal counter rejection boundaries and bounded excerpt ranking with parking motion excluded; no full-suite claim."
+    },
+    "actual_incomplete_case_rejection": {
+      "case": "campus16-pilot-320",
+      "exit_code": 2,
+      "output_created": false,
+      "checked_before_reading_gzip": true
+    },
+    "GPU_render_launched": false,
+    "limits": [
+      "Positive fleet completion uses a unit fixture; no real complete16-fleet case is claimed.",
+      "Motion scores describe authored CPU poses and material tasks, not native physical transport."
+    ]
+  }
 }
