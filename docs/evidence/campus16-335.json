@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "case": "campus16-pilot-335",
+  "run_id": "process-line-7212997c-f488-4c6a-9f91-9c9fc5d57272",
+  "execution_mode": "authored_CPU_operations",
+  "status": "running",
+  "source_commit": "e53ba606047373ef56c74c2488f78911b45a9590",
+  "workload": {
+    "lots": 48,
+    "initial_WIP_before_release": 0,
+    "finite_stock": 240,
+    "carriers": 64,
+    "policy": "fifo",
+    "config": "configs/factory-semiconductor-campus16-wide-bridges-handoff-admission",
+    "station_gate_acquisition": "service_window",
+    "release": "all at simulation start"
+  },
+  "limits": {
+    "horizon_s": 240000,
+    "wall_s": 10800,
+    "stall_timeout_s": 600,
+    "cycle_stall_timeout_s": 600,
+    "record_best_window_samples": 300
+  },
+  "frozen_source": {
+    "file_count": 43,
+    "manifest_sha256": "d634a9409462cd3f73c7ff4a15a5787563e17c64f58499b16937ed1a6968a660",
+    "worker_verified_all_file_hashes": true
+  },
+  "launch_processes": {
+    "session": 54708,
+    "shell_pid": 30320,
+    "venv_python_pid": 72248,
+    "runtime_python_pid": 16672,
+    "retention_reason": "Authorized bounded followup after actual334 gate-release repair;333 source unchanged.",
+    "stop_method": "Ctrl+C to owned session54708; preserve runner closure and unrelated services."
+  },
+  "components": {
+    "service_window_assignment": "6d1ec423ac113a2a99ab7644ec78cea009b8d57b",
+    "previous_gate_release_repair": "e53ba606047373ef56c74c2488f78911b45a9590",
+    "generic_replan_window_repair": "f09a5e7084d467b44c7d5199ff0a09bb129852db"
+  },
+  "initial_observed_progress": {
+    "sim_time_s": 1709.9999999995403,
+    "elapsed_wall_s": 59.462567599955946,
+    "shipments": 0,
+    "returns": 0,
+    "deliveries": 15,
+    "peak_material_tasks": 16
+  },
+  "success_flags": {
+    "all48_shipped_and_returned_verified": false,
+    "quiescent_verified": false,
+    "all16_min2_deliveries_verified": false,
+    "peak16_material_tasks_live_observed": true,
+    "native_physics_transport_verified": false,
+    "final_render_eligible": false
+  },
+  "verification_scope": "Launch and frozen-source binding checked. Running CPU case; only progress.json monitored. Component regression is not full-run success, native physics, statistical throughput gain, or final media approval."
+}

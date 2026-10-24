@@ -63,7 +63,7 @@ $handoffLabel = Get-Date -Format "yyyyMMdd-HHmmss"
 uv run python scripts/demo/run_process_line.py --config configs/factory-semiconductor-campus16-wide-bridges-handoff-admission --policy fifo --lots 48 --horizon 240000 --max-wall-seconds 10800 --stall-timeout 600 --cycle-stall-timeout 600 --record-best-window --output-dir "artifacts/operations/handoff-$handoffLabel"
 ```
 
-lot·캐리어·목적지 버퍼 credit은 배차 때 확정한다. 안전 정지 위치의 차량은 첫 구간의 일시 충돌을 기다릴 수 있지만, 실제 bridge/tile 승인 전에는 이동하지 않는다. 서비스 goal을 포함한 마지막 정지 가능 window에서 다른 인계점 소유자를 확인하고, 통행 승인 후 이동 전에 gate를 확보한다. 적재/하역 확인과 차체 이탈 후 해제 조건은 유지한다. 새 행동8개·기존 영향8개 검사와 snapshot API 형태 확인을 통과했으며, 전체 완주·16동시성은334에서 별도로 판정한다. [확인 범위](evidence/campus16-service-window-admission.json)
+lot·캐리어·목적지 버퍼 credit은 배차 때 확정한다. 안전 정지 위치의 차량은 첫 구간의 일시 충돌을 기다릴 수 있지만, 실제 bridge/tile 승인 전에는 이동하지 않는다. 서비스 goal을 포함한 마지막 정지 가능 window에서 다른 인계점 소유자를 확인하고, 통행 승인 후 이동 전에 gate를 확보한다. 적재/하역 확인과 차체 이탈 후 해제 조건은 유지한다. 새 행동8개·기존 영향8개 검사와 snapshot API 형태 확인을 통과했다.334는16개 동시 물류 배정을 기록했지만 이전 gate 잔류로 순환 대기 마감했다. 현재 목표 station을 구분하는 해제 수정과 실제 상태 표적1검사를 추가했으며, 수정본 전체 완주는335에서 판정한다. [확인 범위](evidence/campus16-service-window-admission.json)
 
 ## 16대 캠퍼스의 설비 고장·복구
 

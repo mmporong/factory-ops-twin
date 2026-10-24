@@ -53,7 +53,9 @@ a46bea1은 기존retarget을 유지하면서 정지한handover의 새window를 �
 
 선택 정책 service-window admission을6d1ec42에 통합했다. unique lot/carrier와 destination input capacity2의 credit은 배차 때 예약하고, 실제 서비스 goal을 포함하는 마지막 정지 가능 window에서 gate를 확인해 bridge/tile 허가 뒤 이동 전에 소유를 확정한다. 안전 정지 idle/합법 귀가 선점에서는 일시적인 첫 window 충돌이 있어도 유효 업무를 배정하고 실제 admission에서 기다린다. 기존 handoff 관측·정지·차체 이탈 전 해제 금지·충전 도크·원자 window 전환은 유지한다. 신규 행동8개와 기존 영향8개 검사, constructor/snapshot 형태 확인이 통과했다. 기본 모드와 기존 설정·초기 WIP0·48lot·재고240·캐리어64·집계는 바꾸지 않으며 신규 policy의 전체 성공/동시성은334의 마감 뒤 판정한다. [구현·검사 범위](evidence/campus16-service-window-admission.json)
 
-334는6d1ec42의 새 clean worktree에서 service-window/fifo·같은48lot·240000sim/10800wall·정체/SCC600·자동300표본으로 시작했다. f09a5e7 재계획 수정도 포함하며43동결입력을 확인했다. live sim2700초에서 서로 다른16개 물류 task를 확인했으며 당시 물류 이동은1대이고 나머지는 대기 상태였다. 초기 배정 동시성과 전16대 반복 완료·48/48·최종 정지를 구분하며, 신규 정책의 전체 완주는 아직 확인 중이다.333은 기존 소스를 유지한다. [334 실행·관측 범위](evidence/campus16-334.json)
+334는6d1ec42의 service-window/fifo·같은48lot/상한으로 실행해 sim4239초·wall140.160초에 stationary_wait_cycle로 자연 마감했다. 물류 최고16·이동6이지만 출하0·반납0·총21운송·차량별최소0으로 미완료다. amr12는 새 D_AOI_OUT 집하 중 이전 C_CI gate를47.817m 밖에서도 보존했고, C_S1에서 적재한 amr6의 C_CI 접근을 막았다. amr12는 반대로 amr6의 safe-exit 점유를 기다렸다. e53ba60은 service_window에서만 현재 pickup/drop 목표와 station을 비교해 이전 gate를 기존 차체 이탈 조건으로 해제한다. 실제 두 차량 상태의 표적1검사가 통과했고 기본 dispatch는 보존한다. 소스43·300기록/원본해시·재고240=221+19+0·owned0을 확인하며 원본334를 수정하지 않는다.333은 기존 소스를 유지하고 수정본 전체 성공은335에서 판정한다. [334 마감·원인·수정 범위](evidence/campus16-334.json)
+
+335는 e53ba60의 새 clean worktree/43동결입력에서 같은 service-window/fifo/48lot·상한으로 시작했다. 초기 peak16 물류를 재관측했지만 반복 완료·전량 출하/반납·quiescent는 마감 후 판정한다. 원본334와 active333은 변경하지 않으며 GPU/새 클라우드는 사용하지 않았다. [335 입력·진행 범위](evidence/campus16-335.json)
 
 48lot 일괄 투입·빈 WIP에서 시작해 전량 출하/회수/정지하는 결과는 유한 배치의 완주다. 정상상태 평균 처리량이나 실공장 생산성으로 확장하지 않는다. 초기 WIP를 넣는 warm start는 운영 시점의 lot·설비·carrier 상태와 투입 계획을 정의하는 별도 실험이므로 현재16대 완료 조건을 대체하지 않는다. [종료형·정상상태 출력 분석(WSC2006)](https://informs-sim.org/wsc06papers/004.pdf) · [반도체 초기 운영상태 모델링(WSC2022)](https://informs-sim.org/wsc22papers/350.pdf)
 

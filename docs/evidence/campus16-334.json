@@ -2,7 +2,7 @@
   "schema_version": 1,
   "case": "campus16-pilot-334",
   "run_id": "process-line-dff1a325-bffa-40e2-b6a6-de08a822ba76",
-  "status": "running",
+  "status": "incomplete",
   "execution_mode": "authored_CPU_operations",
   "source_commit": "6d1ec423ac113a2a99ab7644ec78cea009b8d57b",
   "workload": {
@@ -26,7 +26,8 @@
     "file_count": 43,
     "manifest_sha256": "f5df035015f38355a91f2e03a440c313fa9ffe097d85ca07c24c7265f295b5bd",
     "worker_verified_all_file_hashes": true,
-    "includes_generic_replan_repair_f09a5e7": true
+    "includes_generic_replan_repair_f09a5e7": true,
+    "closed_file_hash_mismatches": []
   },
   "launch_processes": {
     "session": 91512,
@@ -34,7 +35,7 @@
     "venv_python_pid": 63172,
     "runtime_python_pid": 3596,
     "exec_host_excluded": 102308,
-    "retention_reason": "Authorized bounded CPU48-lot run; continue until natural close or diagnostic limit.",
+    "retention_reason": "Closed naturally; launch-owned processes gone.",
     "stop_method": "Ctrl+C to owned session91512; do not terminate unrelated services."
   },
   "observed_concurrency": {
@@ -75,8 +76,119 @@
     "all16_min2_deliveries_verified": false,
     "peak16_material_tasks_live_observed": true,
     "native_physics_transport_verified": false,
-    "final_render_eligible": false
+    "final_render_eligible": false,
+    "peak16_material_tasks_verified": true
   },
   "comparison_scope": "New producer includes both f09a5e7 replan repair and optional station admission policy. Not an isolated throughput-effect experiment. Same cold-start48-lot workload and physical/energy/buffer limits.333 frozen source unchanged.",
-  "verification_scope": "Launch and live16-material concurrency observed. Closed complete/error-free/stable result, final inventory conservation, per-robot repeated transport, hash closure and owned-process shutdown remain pending. No GPU/cloud job started."
+  "verification_scope": "Closed incomplete CPU run.300 samples and43 frozen files checked; finite inventory conserved; owned0.16 concurrent material assignments include waits, with maximum6 material-moving robots. No all-robot repeat/48-48/quiescence completion and no final media approval. Station-gate release boundary diagnosis remains separate.",
+  "error": null,
+  "stop_reason": "stationary_wait_cycle",
+  "final_sim_time_s": 4238.99999999789,
+  "elapsed_wall_s": 140.16035579994787,
+  "source_stable_during_run": true,
+  "final_observation": {
+    "shipments": 0,
+    "returns": 0,
+    "deliveries": 21,
+    "min_deliveries_per_robot": 0,
+    "peak_material_tasks": 16,
+    "peak_moving": 6,
+    "quiescent": false
+  },
+  "stationary_cycle": {
+    "members": [
+      "amr-12",
+      "amr-6"
+    ],
+    "unchanged_since_sim_s": 3638.999999997786,
+    "elapsed_sim_s": 600.0000000001041,
+    "robots": [
+      {
+        "id": "amr-6",
+        "task_id": "LOT-0019:process_input:1",
+        "task_type": "process_input",
+        "payload_id": "T019",
+        "destination": "C_CI",
+        "waiting_reason": "교통 예약 대기: handover_station_occupied",
+        "blockers": [
+          "amr-12"
+        ],
+        "pose": {
+          "x_m": 3.5,
+          "y_m": 44.5,
+          "yaw_rad": -2.642245931909663
+        }
+      },
+      {
+        "id": "amr-12",
+        "task_id": "LOT-0004:product_move:3",
+        "task_type": "product_move",
+        "payload_id": null,
+        "destination": "D_AOI_OUT",
+        "waiting_reason": "교통 예약 대기: safe_exit_lookahead_occupied",
+        "blockers": [
+          "amr-6"
+        ],
+        "pose": {
+          "x_m": 27.0,
+          "y_m": 3.0,
+          "yaw_rad": -0.39479111969976155
+        }
+      }
+    ]
+  },
+  "recording": {
+    "frame_count": 300,
+    "result_sha256": "ce9e35dc6c6a371f8527e54895df0a9040757c571ec584d85a4884ca40cc46be",
+    "manifest_sha256": "f7daa913cce840e975212816c59e238c91f5cd46857d6c144a8e32db5c4ef33c",
+    "gzip_sha256": "0c7a465be0af6811b2fff6c7112754eba0d1aa0ea19ee5ad9949571e11f607bc",
+    "raw_uncompressed_sha256": "34ed1e84c61240c8eac06b4b4c1a7554d6305976a95a02b01d21f5d26fc131d4",
+    "raw_uncompressed_bytes": 32625632
+  },
+  "inventory": {
+    "initial": 240,
+    "replenished": 0,
+    "on_hand": 221,
+    "in_totes": 19,
+    "consumed": 0,
+    "balanced": true,
+    "carrier_count": 64,
+    "carrier_states": {
+      "available": 16,
+      "filled": 48
+    }
+  },
+  "owned_processes": {
+    "launch_chain": [
+      2292,
+      63172,
+      3596
+    ],
+    "remaining": []
+  },
+  "closure_receipt": {
+    "path": "artifacts/operations/campus16-pilot-334-closure/receipt.json",
+    "sha256": "a61672b68067bf18e152a1424defccae9297dc082c279ebb2f97089c1b875a9f"
+  },
+  "repair": {
+    "source_main_commit": "e53ba606047373ef56c74c2488f78911b45a9590",
+    "source_worker_commit": "231570f9e848863842770f044129f1ddedcacb84",
+    "confirmed_cause": "Legacy pickup-phase retention preserved all old station gates regardless of station ID. In new service-window mode, amr12 retained previous C_CI gate while47.817m away on a new D_AOI_OUT pickup; this blocked loaded amr6, which blocked amr12 safe-exit lookahead.",
+    "behavior": "Only service_window retention uses current pickup/drop goal identity; other old gates release only after existing footprint-clear distance. Legacy dispatch behavior unchanged.",
+    "targeted_regression": {
+      "passed": 1,
+      "elapsed_wall_s": 12.4,
+      "assertions": [
+        "saved C_CI gate blocker",
+        "old gate release after departure",
+        "amr6 preflight unblocked",
+        "legacy behavior retained"
+      ]
+    },
+    "receipt_path": "artifacts/operations/campus16-service-window-334-diagnosis/receipt.json",
+    "receipt_sha256": "cff9204f89d00c1a33892caa2d9a8bb3aaf190ce85a8573a151dc7bf78cf6b06",
+    "next_case": "campus16-pilot-335",
+    "full_run_after_fix_completed": false,
+    "original334_result_unchanged": true
+  }
 }

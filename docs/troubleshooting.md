@@ -1719,3 +1719,11 @@ shipping product_move 완료 뒤 같은lot·carrier·origin의 준비된 empty_r
 실패300표본·43동결파일·압축/원본/결과 해시와 owned PID0을 확인했다. 선택된100102~100401초는 출하34→36·회수32→34·운송197→201을 보여도 최종 영상 원본으로 사용하지 않는다. 새 전체 실행으로 오류를 재현하지 않고 실제 전환의 표적 회귀를 사용했다. 마지막 기록에서 retained handover는 amr10/LOT-0042/C_OUT→B_S3의84tile 창이었다. 같은 노드에 CD/BD 대신 AC/AB 대안106tile을 주입하면 일반 `_move_trip`의 admit에서 동일 오류가 발생했다. 원본은 예외 직전 _replans를 저장하지 않아 production의 특정 대안 동일성은 미확정이다.
 
 수정 f09a5e7은 이미 보호된 handover의 재계획에 기존 can_retarget/retarget 또는 원자 replace_handover를 사용한다. peer pose/window/resource 충돌 시 기존 보호와 임무를 보존한다. ordinary acquired window에는 non-subset 대안을 계속 붙잡고 대기하지 않는다. 대안만 철회하고 사건을 남겨 다음 틱에 원래 승인 경로를 재시도하며 scheduler도 이 후보를 제외한다. 신규 handover 성공/충돌2회귀·ordinary 철회/원래claim1회귀와 관련 기존2검사를 통과했다. 영향 분기만2개 재검사했고 전수검사/전체재현/GPU는 실행하지 않았다. main과 worker 최종2파일 바이트 동일성을 확인했다. 전체 수정본 완주는 별도 실행에서 확인해야 한다. [332 마감·해시·진단 범위](evidence/campus16-332.json)
+
+## FOT-218 — 새 원거리 집하 중 이전 인계점 gate가 남아 생긴 순환 대기
+
+334의 service-window 선택 정책은16개 물류 임무 동시 배정을 기록했지만 sim4239초·wall140.160초에 amr12↔amr6의600sim초 고정 순환으로 자연 마감했다. 출하0·반납0·완료운송21·차량별최소0이므로16대 전체 운영 완료로 세지 않는다. 소스43개·닫힌300표본/해시·재고240=221잔여+19운반구+0소비·owned0을 확인했고 원본과 판정은 보존한다.
+
+확인된 원인은 `_release_station_gates`의 기존 pickup 조건이 station ID와 무관하게 그 차량의 모든 이전 gate를 보존하는 경계다. amr12는 C_CI 하차 후 새 D_AOI_OUT 집하를 받아 A_AC_N_SAFE_EXIT(27,3)까지 이동했는데47.817m 떨어진 C_CI owner가 남았다. T019를 실은 amr6는 C_S1에서 C_CI gate를 기다리고, amr12는 amr6 footprint가 걸린 safe-exit lookahead를 기다렸다. 과거321의 출발 gate 이탈 진단과 달리 이번에는 새 업무 뒤 이전 drop gate의 잔류를 확인했다.
+
+수정 e53ba60은 service_window에 한해 현재 pickup/drop 목표 또는 중단 집하 목표와 station이 일치할 때만 명시 보존한다. 다른 이전 gate도 기존 차체 이탈 거리 조건을 충족해야 해제하며, 기본 dispatch의 full-pair 보존·자재/버퍼/에너지·교량/타일/정지 가드는 그대로다. 실제 두 차량 상태에서 C_CI blocker 유지→해제→amr6 gate 접근 가능과 legacy 보존을 표적1검사(12.40초)로 확인했다. 통과한 다른 검사를 반복하거나 같은334를 재실행하지 않았으며 전체 수정본은 별도335에서 확인한다. [334 마감·수정·해시](evidence/campus16-334.json)

@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "execution_mode": "authored_CPU_operations",
-  "status": "implemented_targeted_tests_passed_full_run_pending",
+  "status": "service_gate_release_repaired_targeted_pass_full_run_pending",
   "source_main_commit": "6d1ec423ac113a2a99ab7644ec78cea009b8d57b",
   "source_worker_commits": [
     "4209ca229a5724ca3371158d622426b5b31ecf68",
@@ -70,8 +70,32 @@
     "policy": "fifo",
     "lots": 48,
     "full_completion_verified": false,
-    "peak16_material_tasks_verified": false,
-    "final_render_eligible": false
+    "peak16_material_tasks_verified": true,
+    "final_render_eligible": false,
+    "status": "incomplete",
+    "stop_reason": "stationary_wait_cycle",
+    "evidence": "campus16-334.json"
   },
-  "scope": "Component behavior only until new334 closes. No measured throughput gain, native physics transport, collision-free whole-run claim, or final media approval."
+  "scope": "Component behavior plus closed334 incomplete evidence. Revised producer e53ba60 still requires full335 completion. No measured throughput gain, native physics transport, or final media approval.",
+  "followup_334_gate_release": {
+    "source_main_commit": "e53ba606047373ef56c74c2488f78911b45a9590",
+    "source_worker_commit": "231570f9e848863842770f044129f1ddedcacb84",
+    "confirmed_cause": "Legacy pickup-phase retention preserved all old station gates regardless of station ID. In new service-window mode, amr12 retained previous C_CI gate while47.817m away on a new D_AOI_OUT pickup; this blocked loaded amr6, which blocked amr12 safe-exit lookahead.",
+    "behavior": "Only service_window retention uses current pickup/drop goal identity; other old gates release only after existing footprint-clear distance. Legacy dispatch behavior unchanged.",
+    "targeted_regression": {
+      "passed": 1,
+      "elapsed_wall_s": 12.4,
+      "assertions": [
+        "saved C_CI gate blocker",
+        "old gate release after departure",
+        "amr6 preflight unblocked",
+        "legacy behavior retained"
+      ]
+    },
+    "receipt_path": "artifacts/operations/campus16-service-window-334-diagnosis/receipt.json",
+    "receipt_sha256": "cff9204f89d00c1a33892caa2d9a8bb3aaf190ce85a8573a151dc7bf78cf6b06",
+    "next_case": "campus16-pilot-335",
+    "full_run_after_fix_completed": false,
+    "original334_result_unchanged": true
+  }
 }
