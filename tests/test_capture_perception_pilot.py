@@ -1,8 +1,15 @@
+import json
+from pathlib import Path
+import tempfile
 import unittest
+
+import numpy as np
 
 from scripts.isaac.capture_perception_pilot import (
     PilotCaptureError,
     canonical_digest,
+    failure_document,
+    preserve_failure_diagnostics,
     validate_manifest_recipe,
 )
 
@@ -124,6 +131,44 @@ class CapturePerceptionPilotTests(unittest.TestCase):
         })
         with self.assertRaisesRegex(PilotCaptureError, "scale differs"):
             validate_manifest_recipe(manifest)
+
+    def test_preserves_one_invalid_frame_without_admitting_it_as_capture(self):
+        with tempfile.TemporaryDirectory(prefix="factoryops-pilot-diagnostic-") as temporary:
+            output = Path(temporary)
+            result = preserve_failure_diagnostics(
+                output=output,
+                scene={"scene_index": 2, "seed": 17, "objects": []},
+                frame={"frame_id": 9, "view_index": 0, "view_id": "overview"},
+                expected_objects={"crate-003-02": "small_load_carrier"},
+                rgb=np.zeros((4, 5, 4), dtype=np.uint8),
+                semantic=np.zeros((4, 5), dtype=np.uint32),
+                semantic_info={"idToLabels": {"0": {"class": "BACKGROUND"}}},
+                bbox_rows=[],
+                bbox_info={"idToLabels": {}},
+                distance=np.ones((4, 5), dtype=np.float32),
+                camera={"width": 5, "height": 4, "raw_camera_params": {}},
+                source_pin={"source_commit": "a" * 40, "manifest_sha256": "b" * 64},
+                error=ValueError("missing object identity"),
+            )
+            root = output / "diagnostics" / "frame-009"
+            diagnostic = json.loads((root / "diagnostic.json").read_text(encoding="utf-8"))
+            self.assertEqual(result["path"], "diagnostics/frame-009")
+            self.assertFalse(result["counts_as_valid_capture"])
+            self.assertFalse(diagnostic["counts_toward_coco"])
+            self.assertEqual(diagnostic["source_pin"]["manifest_sha256"], "b" * 64)
+            self.assertEqual(np.load(root / "rgb.raw.npy", allow_pickle=False).shape, (4, 5, 4))
+            self.assertEqual(np.load(root / "semantic.raw.npy", allow_pickle=False).dtype, np.uint32)
+            self.assertEqual(np.load(root / "distance-to-camera.raw.npy", allow_pickle=False).dtype, np.float32)
+            self.assertEqual(
+                json.loads((root / "expected-objects.json").read_text(encoding="utf-8")),
+                {"crate-003-02": "small_load_carrier"},
+            )
+            failure = failure_document(ValueError("missing object identity"), [], result, 8)
+            self.assertEqual(failure["scene_index"], 2)
+            self.assertEqual(failure["frame_id"], 9)
+            self.assertEqual(failure["view_id"], "overview")
+            self.assertEqual(failure["completed_valid_frames"], 8)
+            self.assertFalse(failure["diagnostics"]["counts_as_valid_capture"])
 
 
 if __name__ == "__main__":

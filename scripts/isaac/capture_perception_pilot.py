@@ -412,6 +412,95 @@ def attach_annotators(rep: Any, camera: Any) -> tuple[dict[str, Any], Any]:
     return annotators, product
 
 
+def preserve_failure_diagnostics(
+    *,
+    output: Path,
+    scene: Mapping[str, Any],
+    frame: Mapping[str, Any],
+    expected_objects: Mapping[str, str],
+    rgb: Any,
+    semantic: Any,
+    semantic_info: Mapping[str, Any],
+    bbox_rows: Sequence[Mapping[str, Any]],
+    bbox_info: Mapping[str, Any],
+    distance: Any,
+    camera: Mapping[str, Any],
+    source_pin: Mapping[str, Any],
+    error: BaseException,
+) -> dict[str, Any]:
+    """Preserve one invalid frame for diagnosis without admitting it as a capture."""
+    import numpy as np
+    from PIL import Image
+
+    root = output / "diagnostics" / f"frame-{frame['frame_id']:03d}"
+    if root.exists():
+        raise PilotCaptureError(f"failure diagnostics path already exists: {root}")
+    root.mkdir(parents=True)
+    rgb_values = np.asarray(rgb)
+    semantic_values = np.asarray(semantic)
+    distance_values = np.asarray(distance)
+    np.save(root / "rgb.raw.npy", rgb_values, allow_pickle=False)
+    if rgb_values.ndim == 3 and rgb_values.shape[2] >= 3:
+        Image.fromarray(rgb_values[:, :, :3].astype(np.uint8)).save(root / "rgb.preview.png", format="PNG")
+    np.save(root / "semantic.raw.npy", semantic_values, allow_pickle=False)
+    np.save(root / "distance-to-camera.raw.npy", distance_values, allow_pickle=False)
+    atomic_json(root / "semantic-id-map.raw.json", semantic_info)
+    atomic_json(root / "bbox2d.raw.json", {"data": bbox_rows, "info": bbox_info})
+    atomic_json(root / "camera.raw.json", camera)
+    atomic_json(root / "expected-objects.json", expected_objects)
+    atomic_json(root / "scene-recipe.json", scene)
+    atomic_json(root / "frame-recipe.json", frame)
+    atomic_json(root / "diagnostic.json", {
+        "status": "invalid_frame_preserved_for_diagnosis",
+        "counts_as_valid_capture": False,
+        "counts_toward_coco": False,
+        "error_type": type(error).__name__,
+        "error": str(error),
+        "scene_index": scene["scene_index"],
+        "frame_id": frame["frame_id"],
+        "view_index": frame["view_index"],
+        "view_id": frame["view_id"],
+        "source_pin": source_pin,
+        "files": [
+            "rgb.raw.npy", "rgb.preview.png", "semantic.raw.npy", "distance-to-camera.raw.npy",
+            "semantic-id-map.raw.json", "bbox2d.raw.json", "camera.raw.json", "expected-objects.json",
+            "scene-recipe.json", "frame-recipe.json",
+        ],
+        "scope": "one failing raw frame; not a valid capture, COCO image, or training approval",
+    })
+    return {
+        "path": relative(root, output),
+        "scene_index": scene["scene_index"],
+        "frame_id": frame["frame_id"],
+        "view_index": frame["view_index"],
+        "view_id": frame["view_id"],
+        "counts_as_valid_capture": False,
+        "counts_toward_coco": False,
+    }
+
+
+def failure_document(
+    error: BaseException,
+    cleanup_errors: Sequence[str],
+    failure_context: Mapping[str, Any],
+    completed_valid_frames: int,
+) -> dict[str, Any]:
+    return {
+        "status": "failed",
+        "training_ready": False,
+        "mapping_approved": False,
+        "error_type": type(error).__name__,
+        "error": str(error),
+        "cleanup_errors": list(cleanup_errors),
+        "scene_index": failure_context.get("scene_index"),
+        "frame_id": failure_context.get("frame_id"),
+        "view_index": failure_context.get("view_index"),
+        "view_id": failure_context.get("view_id"),
+        "completed_valid_frames": completed_valid_frames,
+        "diagnostics": dict(failure_context) if failure_context else None,
+    }
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--manifest", type=Path, required=True)
@@ -429,6 +518,7 @@ def main() -> int:
     manifest_path, cache_root, output, manifest = prepare_inputs(args)
     app = None
     cleanup_errors: list[str] = []
+    failure_context: dict[str, Any] = {}
     try:
         from isaacsim import SimulationApp
         app = SimulationApp({
@@ -488,15 +578,44 @@ def main() -> int:
                         raise PilotCaptureError(f"RGB shape differs from contract: {rgb.shape}")
                     semantic_info = raw_info(semantic_raw, "semantic")
                     bbox_rows, bbox_info = raw_payload(bbox_raw, "bbox")
-                    normalized = validate_capture(
-                        width=RESOLUTION[0], height=RESOLUTION[1], semantic=semantic,
-                        semantic_info=semantic_info, bbox_rows=bbox_rows, bbox_info=bbox_info,
-                        expected_objects=expected,
-                    )
-                    depth_validation = validate_distance_to_camera(
-                        width=RESOLUTION[0], height=RESOLUTION[1], distance=distance,
-                        semantic=semantic, capture_validation=normalized,
-                    )
+                    camera_doc = camera_document(camera, stage, Usd, UsdGeom, camera_raw)
+                    try:
+                        normalized = validate_capture(
+                            width=RESOLUTION[0], height=RESOLUTION[1], semantic=semantic,
+                            semantic_info=semantic_info, bbox_rows=bbox_rows, bbox_info=bbox_info,
+                            expected_objects=expected,
+                        )
+                        depth_validation = validate_distance_to_camera(
+                            width=RESOLUTION[0], height=RESOLUTION[1], distance=distance,
+                            semantic=semantic, capture_validation=normalized,
+                        )
+                    except (PilotCaptureError, PerceptionDatasetError, OSError, ValueError) as error:
+                        try:
+                            failure_context = preserve_failure_diagnostics(
+                                output=output, scene=scene, frame=frame, expected_objects=expected,
+                                rgb=rgb, semantic=semantic, semantic_info=semantic_info,
+                                bbox_rows=bbox_rows, bbox_info=bbox_info, distance=distance,
+                                camera=camera_doc,
+                                source_pin={
+                                    "source_commit": args.source_commit,
+                                    "capture_script_sha256": digest(Path(__file__).resolve()),
+                                    "manifest_sha256": args.manifest_sha256,
+                                    "recipe_sha256": manifest["recipe_sha256"],
+                                },
+                                error=error,
+                            )
+                        except (PilotCaptureError, PerceptionDatasetError, OSError, ValueError) as diagnostic_error:
+                            failure_context = {
+                                "scene_index": scene["scene_index"],
+                                "frame_id": frame["frame_id"],
+                                "view_index": frame["view_index"],
+                                "view_id": frame["view_id"],
+                                "counts_as_valid_capture": False,
+                                "counts_toward_coco": False,
+                                "diagnostic_write_error_type": type(diagnostic_error).__name__,
+                                "diagnostic_write_error": str(diagnostic_error),
+                            }
+                        raise
                     frame_root = scene_root / f"view-{frame['view_index'] + 1:02d}"
                     frame_root.mkdir()
                     rgb_path = frame_root / "rgb.png"
@@ -511,7 +630,6 @@ def main() -> int:
                     np.save(distance_path, distance.astype(np.float32), allow_pickle=False)
                     atomic_json(semantic_info_path, semantic_info)
                     atomic_json(bbox_path, {"data": bbox_rows, "info": bbox_info})
-                    camera_doc = camera_document(camera, stage, Usd, UsdGeom, camera_raw)
                     atomic_json(camera_path, camera_doc)
                     atomic_json(provenance_path, {
                         "manifest_sha256": args.manifest_sha256,
@@ -608,10 +726,13 @@ def main() -> int:
         print(json.dumps({"status": dataset["status"], "output": str(output), "captures": len(captures)}))
         return 0
     except (PilotCaptureError, PerceptionDatasetError, OSError, ValueError) as error:
-        atomic_json(output / "failure.json", {
-            "status": "failed", "training_ready": False, "mapping_approved": False,
-            "error_type": type(error).__name__, "error": str(error), "cleanup_errors": cleanup_errors,
-        })
+        atomic_json(
+            output / "failure.json",
+            failure_document(
+                error, cleanup_errors, failure_context,
+                len(captures) if "captures" in locals() else 0,
+            ),
+        )
         raise
     finally:
         if app is not None:
