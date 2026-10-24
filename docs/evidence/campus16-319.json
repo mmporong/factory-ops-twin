@@ -1,0 +1,150 @@
+{
+  "schema_version": 1,
+  "run_id": "process-line-658be0e6-c8ca-46da-aa5c-a0bc7c88cb1d",
+  "status": "incomplete",
+  "stop_reason": "horizon_or_wall_limit",
+  "error": null,
+  "scope": "authored CPU process line and kinematic reservations; no physics, sensors or measured factory times",
+  "source_commit": "4eecf49",
+  "source_stable_during_run": true,
+  "frozen_source": {
+    "relative_path": "frozen-source",
+    "manifest_relative_path": "frozen-source/manifest.json",
+    "manifest_sha256": "01071207121076aeef4dce6e156a08974c61686948b26cf4448f99cb4cca7f26",
+    "source_binding_sha256": "7c10265cbb773dac2779bc5c4f8fb189646f04026b5e31ac24d2b2fd80d104ce",
+    "file_count": 42
+  },
+  "limits": {
+    "horizon_s": 120000.0,
+    "wall_s": 5400.0,
+    "snapshot_count": 80,
+    "stall_timeout_s": 600.0,
+    "cycle_stall_timeout_s": 600.0
+  },
+  "final_sim_time_s": 107112.00000174686,
+  "elapsed_wall_s": 5400.0449571000645,
+  "business": {
+    "shipped_lots": 30,
+    "returned_carriers": 8,
+    "deliveries_total": 142,
+    "deliveries_by_robot": {
+      "amr-1": 10,
+      "amr-2": 6,
+      "amr-3": 12,
+      "amr-4": 7,
+      "amr-5": 14,
+      "amr-6": 11,
+      "amr-7": 6,
+      "amr-8": 11,
+      "amr-9": 11,
+      "amr-10": 10,
+      "amr-11": 5,
+      "amr-12": 3,
+      "amr-13": 13,
+      "amr-14": 6,
+      "amr-15": 12,
+      "amr-16": 5
+    },
+    "minimum_deliveries_each": 3,
+    "peak_material_tasks": 13,
+    "peak_material_moving": 7,
+    "active_by_robot": {
+      "amr-2": "LOT-0042:product_move:3",
+      "amr-10": "LOT-0008:empty_return:5"
+    },
+    "quiescent": false
+  },
+  "traffic": {
+    "yield_selected": 15,
+    "yield_completed": 15,
+    "bridge_wait_cycle": null,
+    "reservation_wait_cycle": null
+  },
+  "charging": {
+    "queue": [
+      "amr-5",
+      "amr-3",
+      "amr-6"
+    ],
+    "relocating": {
+      "amr-6": "B_P3",
+      "amr-8": "D_P4",
+      "amr-12": "D_P3",
+      "amr-10": "D_P3",
+      "amr-13": "A_P4",
+      "amr-2": "B_P4",
+      "amr-7": "A_P3"
+    },
+    "faults": {},
+    "observed_traffic_wait_budget_s": 20464.599999702205,
+    "departure_deferred": {
+      "amr-1": {
+        "reason": "observed_traffic_funding",
+        "required_wh": 417.7661105358285,
+        "departure_soc": 0.6962768508930475,
+        "task_id": "LOT-0019:product_move:2",
+        "traffic_wait_budget_s": 20464.499999702206
+      },
+      "amr-9": {
+        "reason": "observed_traffic_funding",
+        "required_wh": 418.65391116270956,
+        "departure_soc": 0.6977565186045159,
+        "task_id": "LOT-0041:product_move:3",
+        "traffic_wait_budget_s": 20464.499999702206
+      },
+      "amr-11": {
+        "reason": "observed_traffic_funding",
+        "required_wh": 423.7213153992912,
+        "departure_soc": 0.706202192332152,
+        "task_id": "LOT-0041:product_move:3",
+        "traffic_wait_budget_s": 20464.499999702206
+      },
+      "amr-15": {
+        "reason": "observed_traffic_funding",
+        "required_wh": 422.34225095088783,
+        "departure_soc": 0.703903751584813,
+        "task_id": "LOT-0041:product_move:3",
+        "traffic_wait_budget_s": 20464.499999702206
+      },
+      "amr-14": {
+        "reason": "observed_traffic_funding",
+        "required_wh": 413.36695279464436,
+        "departure_soc": 0.6889449213244073,
+        "task_id": "LOT-0041:product_move:3",
+        "traffic_wait_budget_s": 20464.499999702206
+      }
+    }
+  },
+  "observed_stale_home_example": {
+    "robot": "amr-8",
+    "final_parking_goal": "D_P1",
+    "relocation_target": "D_P4",
+    "scope": "Final snapshot mismatch in the older source; retarget repair is already in321/322/324, not applied retrospectively."
+  },
+  "recording": {
+    "path": "snapshots.jsonl.gz",
+    "frames": 300,
+    "first_observed_sim_time_s": 17550.000000025106,
+    "last_observed_sim_time_s": 17849.000000020755,
+    "uncompressed_bytes": 52484723,
+    "gzip_bytes": 6025070,
+    "uncompressed_sha256": "274ba249183a65c49d17464a3a1fe3aed2c07947b4aa1d52cb370033aa50a4fa",
+    "gzip_sha256": "aa0db51566cffa88b134712bec5a1afab34bd2f0369eba994611aaac938bea06",
+    "frame_cap": 20000,
+    "uncompressed_byte_cap": 268435456
+  },
+  "integrity": {
+    "result_sha256": "cad396b800ea3c8e2b3499f5544012fcce63aadcdce6e10c236c4bc8004338e7",
+    "recording_manifest_sha256": "83ff12cd6877349c952154d4c00f0c94b34b379be06c03d24af24e8e7ff99647",
+    "gzip_sha256": "aa0db51566cffa88b134712bec5a1afab34bd2f0369eba994611aaac938bea06",
+    "closed_manifest_hashes_match": true,
+    "owned_python_processes_after": 0,
+    "cleanup_evidence": "Agent process completion and ownership check."
+  },
+  "render_eligible": false,
+  "interpretation_limits": [
+    "All16 repeated deliveries was observed, but this case did not complete48 lots or16 concurrent material tasks.",
+    "Vehicle movement and virtual charging continued while business deliveries stalled; motion alone is not material progress.",
+    "Different recording modes prevent interpreting raw wall time as an isolated charging-policy effect."
+  ]
+}

@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "status": "implemented_candidate320_incomplete_traffic_stall_baseline319_running",
+  "status": "implemented_candidate320_incomplete_baseline319_incomplete_followups_running",
   "scope": "Authored virtual charging policy; no native contact charging, calibrated pack behavior or measured productivity claim.",
   "source": {
     "worktree_commit": "27320a44ec3ac84368f8d525eaf924c3ee14f6db",
@@ -44,7 +44,7 @@
     "candidate_source_commit": "27320a44ec3ac84368f8d525eaf924c3ee14f6db",
     "candidate_recording": "--record-best-window",
     "different_observation_modes": "319 fixed media window;320 automatic bounded selection. Compare simulation operations metrics, not raw wall-clock speed.",
-    "final_results_pending": true,
+    "final_results_pending": false,
     "candidate_result": {
       "status": "incomplete",
       "stop_reason": "no_motion_or_process_progress",
@@ -58,12 +58,35 @@
       "source_commit": "3a7a8d2f5ce0b105f09fd77fc5feafcea1fcaf78",
       "status": "running",
       "additional_repair": "Retarget stopped stale home-parking trip after charging home swap; comparison is not an isolated charging-margin experiment."
-    }
+    },
+    "baseline_result": {
+      "status": "incomplete",
+      "stop_reason": "horizon_or_wall_limit",
+      "shipped": 30,
+      "returned": 8,
+      "result_sha256": "cad396b800ea3c8e2b3499f5544012fcce63aadcdce6e10c236c4bc8004338e7",
+      "diagnostic": "campus16-319.json"
+    },
+    "followup_cases": [
+      {
+        "case": "campus16-pilot-322",
+        "source": "a6c4592",
+        "policy": "fifo",
+        "status": "running"
+      },
+      {
+        "case": "campus16-pilot-324",
+        "source": "a6c4592",
+        "policy": "eta",
+        "status": "running"
+      }
+    ]
   },
   "interpretation_limits": [
     "Cumulative charged_wh is supplied energy, not a count of charging sessions.",
     "A larger departure margin is a policy candidate; no throughput or fleet concurrency improvement is claimed before final comparison.",
     "Running cases use separate frozen worktrees and do not change each other.",
-    "Candidate320 ended in a traffic stall; this result establishes neither hysteresis superiority nor full fleet completion."
+    "Candidate320 ended in a traffic stall; this result establishes neither hysteresis superiority nor full fleet completion.",
+    "319 and320 both closed incomplete at different simulation stopping times; their final counts are not a matched-horizon productivity comparison."
   ]
 }

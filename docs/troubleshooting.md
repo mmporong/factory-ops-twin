@@ -1621,3 +1621,5 @@ sim20,341초 재현은 출하5·반납4·운송66과 amr13→amr6→amr9→amr13
 Job receipt는passed·workerexit0였지만 failure.json 존재와 완성 dataset 부재로 payload 실패를 판정했다. SDK fast_shutdown/종료 경로가 비영 종료를 보존하지 못했을 가능성은 미확인 가설로 남긴다. 프로세스 종료코드만으로 생성 성공을 판단하지 않는다. 유효한 앞8프레임의32객체는 같은 object_id 박스/마스크 외곽과 유한 양수 깊이를 통과했다. 전체26,486,675바이트·원본 및13개 입력 해시·owned PID0·Job 마감·lease 반환을 확인했다.
 
 같은v3 입력을 재실행하지 않았다. 다음 소스는 검증 실패 시 RGB/semantic/depth·raw label map·camera·expected object·recipe 한 세트를 별도 진단 경로에 남겨 원인을 확인할 수 있게 한다. 진단 프레임은 유효 데이터나 COCO에 포함하지 않는다. 레시피를 고치거나 visibility 정책을 정하기 전 반복512 촬영·학습 승인을 하지 않는다. [실행·부분 미디어·원본 해시](evidence/perception-pilot-323.json)
+
+후속dfdd198은 실패 프레임의 RGB/semantic/depth·label map·camera·expected objects·recipe·입력 pin 한 세트를 진단 전용으로 보존하고 scene/frame/view·완료 유효 프레임 수를 failure.json에 기록한다. 표적1검사를 통과했고 GPU를 다시 실행하지 않았다.323의 원본 실패 프레임이 복구된 것은 아니다. 별도CPU 투영에서는 대상AABB의8모서리가 화면 안에 있고 moderate occluder가 대상 투영bbox 전체를 덮으며 중심 시선과 교차했다. 완전가림을 지지하는 기하 후보지만 실제 mesh/raster 증거와 구분한다.

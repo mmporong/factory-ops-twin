@@ -80,5 +80,24 @@
     "retry_performed": false
   },
   "asset_attribution": "../asset-attribution.md",
-  "next": "Preserve one failing frame as diagnostic-only media in a new exporter source; analyze geometry/visibility before a new recipe. No repeat of the identical full pilot."
+  "next": "Preserve one failing frame as diagnostic-only media in a new exporter source; analyze geometry/visibility before a new recipe. No repeat of the identical full pilot.",
+  "CPU_geometry_followup": {
+    "report_sha256": "603df6cc79562ebbda01c7f5af2f007fa5a1127d519ed97ab4f4422c2df60fa0",
+    "target_projected_center_px": [
+      244.74,
+      212.27
+    ],
+    "target_corners_in_frame": 8,
+    "moderate_occluder_covers_projected_target_AABB": true,
+    "target_center_sight_intersects_occluder_AABB": true,
+    "inference": "Full occlusion by the moderate context box is a strong geometric candidate; authored AABB/pinhole calculation cannot prove raster visibility or exclude a renderer-ID fault."
+  },
+  "diagnostic_repair": {
+    "worktree_commit": "5763ab2091ac6ba9967db05d47f4e7e1c9c9b8ea",
+    "main_commit": "dfdd198",
+    "script_sha256": "35d4980e795d877b4a3731e87878fa69c2f84ce9228700496c37a9ff8b128fd1",
+    "targeted_tests_passed": 1,
+    "GPU_rerun": false,
+    "scope": "Preserve one failure payload set plus scene/frame context; exclude it from valid captures and COCO."
+  }
 }
