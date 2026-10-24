@@ -1,4 +1,5 @@
 "use client";
+import { useState } from "react";
 import { readable, type Command, type Scene, type Snapshot } from "../lib/types";
 import {
   equipmentCommand,
@@ -39,10 +40,13 @@ export function pauseLabel(snapshot: Snapshot, liveControls: boolean) {
 
 export default function ControlPanel(p: Props) {
   const { snapshot } = p;
+  const [selectedCellId, setSelectedCellId] = useState("");
   const pauseAction = snapshot?.paused ? "resume" : "pause";
   const commandable = snapshot?.capabilities.some((a) =>
     ["pause", "resume", "create_order", equipmentCommand, trafficCommand].includes(a));
-  const equipment = snapshot?.equipment;
+  const cells = snapshot?.equipment_cells ?? (snapshot?.equipment ? [snapshot.equipment] : []);
+  const equipment = cells.find((cell) => cell.station_id === selectedCellId) ?? cells[0];
+  const cellParameters = snapshot?.equipment_cells && equipment ? { cell_id: equipment.station_id } : {};
   const equipmentControl = !!snapshot?.capabilities.includes(equipmentCommand);
   const equipmentState = equipment ? equipmentStatus(equipment) : null;
   const chips = snapshot ? operatingChips(snapshot) : [];
@@ -73,6 +77,19 @@ export default function ControlPanel(p: Props) {
       )}
       {snapshot && equipment && equipmentState && (
         <section className="drawer-block equipment-control" aria-labelledby="control-equipment">
+          {cells.length > 1 && (
+            <label>
+              대상 설비
+              <select value={equipment.station_id} disabled={p.sending}
+                onChange={(event) => setSelectedCellId(event.target.value)}>
+                {cells.map((cell) => (
+                  <option key={cell.station_id} value={cell.station_id}>
+                    {cell.station_id} · {cell.label}{cell.available ? "" : " · 중단"}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
           <div className="equipment-heading">
             <div>
               <h3 id="control-equipment">{equipment.label}</h3>
@@ -94,22 +111,22 @@ export default function ControlPanel(p: Props) {
           {!equipment.available && (
             <p className="equipment-reason"><span>중단 사유</span>{equipment.reason ?? "사유 미입력"}</p>
           )}
-          <div className="equipment-actions" aria-label="CELL1 설비 제어">
+          <div className="equipment-actions" aria-label={`${equipment.station_id} 설비 제어`}>
             <button
               type="button"
               className="secondary danger"
               disabled={!equipment.available || !p.can(equipmentCommand)}
-              onClick={() => p.send(equipmentCommand, { available: false, reason: "운영자 장애 시나리오" })}
+              onClick={() => p.send(equipmentCommand, { ...cellParameters, available: false, reason: "운영자 장애 시나리오" })}
             >
-              CELL1 고장 발생
+              {equipment.station_id} 고장 발생
             </button>
             <button
               type="button"
               className="primary"
               disabled={equipment.available || !p.can(equipmentCommand)}
-              onClick={() => p.send(equipmentCommand, { available: true })}
+              onClick={() => p.send(equipmentCommand, { ...cellParameters, available: true })}
             >
-              CELL1 복구
+              {equipment.station_id} 복구
             </button>
           </div>
           {!equipmentControl && (

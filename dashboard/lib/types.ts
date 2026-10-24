@@ -107,6 +107,7 @@ export type Snapshot = {
   tasks: Task[];
   inventory: { stock: Stock[]; totes: Tote[]; conservation: unknown[] };
   equipment?: EquipmentState;
+  equipment_cells?: EquipmentState[];
   traffic?: {
     reservation_policy: string;
     closed: boolean;
