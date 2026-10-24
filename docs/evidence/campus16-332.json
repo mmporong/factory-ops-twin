@@ -188,9 +188,59 @@
     "passed": false
   },
   "failure_diagnosis": {
-    "status": "targeted diagnosis in a separate source worktree; no full retry launched",
+    "status": "Boundary reproduced in targeted reconstruction and repaired; whole-run followup on repaired source is not yet executed.",
     "guard": "BridgeAdmission.admit rejects changes to an already acquired route window before a stopped release.",
-    "specific_callsite_robot_and_transition": "not yet confirmed",
-    "preserved_scope": "Keep current footprint, stopped release, atomic transfer and peer protection. Do not remove the guard or mutate the failed source."
+    "observed_last_state": {
+      "retained_handover_robot": "amr-10",
+      "task_id": "LOT-0042:empty_return:5",
+      "origin": "C_OUT",
+      "destination": "B_S3",
+      "protected_tiles": 84
+    },
+    "reconstruction": {
+      "same_nodes_and_task": true,
+      "original_path_bridges": [
+        "CD",
+        "BD"
+      ],
+      "injected_alternative_bridges": [
+        "AC",
+        "AB"
+      ],
+      "replacement_window_tiles": 106,
+      "same_runtime_error_reproduced": true,
+      "scope": "The pre-exception internal _replans object was not recorded; exact historical alternative selection is not established."
+    },
+    "repair": {
+      "commit": "f09a5e7084d467b44c7d5199ff0a09bb129852db",
+      "worker_commits": [
+        "1a1e448586daa8da8b0f64fd4ddbea195662481a",
+        "43e976707ab023dfe1a70061ba4cfe8aa1bc5376",
+        "62ef5906b08d7fa735ca8081ced4978e29786b26"
+      ],
+      "diagnosis_receipt_sha256": "68ac2cf609e02b27b435af52912d88533320a92cd48686e0c322dbb868bd712c",
+      "retained_handover": "Use existing subset retarget or atomic replace_handover for a clear successor; preserve the old window/task/replan on peer conflict.",
+      "ordinary_window": "Do not apply non-subset detours to an ordinary acquired window. Withdraw only the impossible detour, preserve current protection and original task, and retry the original route on the next tick; scheduler excludes this candidate.",
+      "new_regressions": {
+        "handover_success_and_conflict": {
+          "passed": 2,
+          "elapsed_wall_s": 15.987,
+          "impacted_recheck_passed": 2,
+          "impacted_recheck_wall_s": 15.782
+        },
+        "ordinary_window_fallback": {
+          "passed": 1,
+          "elapsed_wall_s": 8.211,
+          "scope": "Alternative withdrawn, no reselection, next tick reaches original-route claim."
+        }
+      },
+      "related_existing_checks": {
+        "passed": 2,
+        "elapsed_wall_s": 6.385
+      },
+      "main_worker_changed_files_byte_identical": true,
+      "whole_run_after_fix": false
+    },
+    "preserved_scope": "Current footprint, stopped release, atomic transfer, owner and peer protection remain enforced. Failed source332 and active333 are unchanged."
   }
 }

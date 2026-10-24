@@ -1716,4 +1716,6 @@ shipping product_move 완료 뒤 같은lot·carrier·origin의 준비된 empty_r
 
 확인된 사실은 이미 보유한 admission window와 다른 창을 정지 반환 없이 요청해 가드가 거절했다는 것이다. 정확한 로봇·임무·전환 호출 경로는 아직 미확정이며 닫힌 원본과 코드에서 좁게 재현한다. 기존326의 can_retarget/atomic replace_handover 수정과 같은 원인으로 단정하지 않는다. 가드 삭제·조기 반환·차체 축소로 통과시키지 않고 현재 차체와 기존 창·peer 점유·정지/원자 전환을 유지한다. 별도 worktree에서 수정하며 active333과 실패 원본은 바꾸지 않는다.
 
-실패300표본·43동결파일·압축/원본/결과 해시와 owned PID0을 확인했다. 선택된100102~100401초는 출하34→36·회수32→34·운송197→201을 보여도 최종 영상 원본으로 사용하지 않는다. 새 전체 실행으로 오류를 재현하지 않으며 실제 전환의 표적 회귀부터 확인한다. [332 마감·해시·진단 범위](evidence/campus16-332.json)
+실패300표본·43동결파일·압축/원본/결과 해시와 owned PID0을 확인했다. 선택된100102~100401초는 출하34→36·회수32→34·운송197→201을 보여도 최종 영상 원본으로 사용하지 않는다. 새 전체 실행으로 오류를 재현하지 않고 실제 전환의 표적 회귀를 사용했다. 마지막 기록에서 retained handover는 amr10/LOT-0042/C_OUT→B_S3의84tile 창이었다. 같은 노드에 CD/BD 대신 AC/AB 대안106tile을 주입하면 일반 `_move_trip`의 admit에서 동일 오류가 발생했다. 원본은 예외 직전 _replans를 저장하지 않아 production의 특정 대안 동일성은 미확정이다.
+
+수정 f09a5e7은 이미 보호된 handover의 재계획에 기존 can_retarget/retarget 또는 원자 replace_handover를 사용한다. peer pose/window/resource 충돌 시 기존 보호와 임무를 보존한다. ordinary acquired window에는 non-subset 대안을 계속 붙잡고 대기하지 않는다. 대안만 철회하고 사건을 남겨 다음 틱에 원래 승인 경로를 재시도하며 scheduler도 이 후보를 제외한다. 신규 handover 성공/충돌2회귀·ordinary 철회/원래claim1회귀와 관련 기존2검사를 통과했다. 영향 분기만2개 재검사했고 전수검사/전체재현/GPU는 실행하지 않았다. main과 worker 최종2파일 바이트 동일성을 확인했다. 전체 수정본 완주는 별도 실행에서 확인해야 한다. [332 마감·해시·진단 범위](evidence/campus16-332.json)
