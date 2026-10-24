@@ -25,7 +25,7 @@
   },
   "case": "campus16-pilot-332",
   "run_id": "process-line-96e16047-5db2-4bd8-bfa9-589ea60a3726",
-  "status": "running",
+  "status": "failed",
   "source_commit": "a872fe56f317a5fa92fc12d22c1c16a65d427885",
   "components": {
     "final_quiescence_fix": "0c42abb01d718b2f2bc97e28a64a71c9043e9e09",
@@ -45,7 +45,7 @@
     "shell_pid": 63072,
     "wrapper_pid": 104996,
     "python_pid": 50736,
-    "retention_reason": "Authorized bounded48-lot completion run supervised from an isolated clean source worktree.",
+    "retention_reason": "Closed on runtime error; launch-owned processes are gone.",
     "stop_method": "Ctrl+C to the owned execution session; runner finalizes result and recording. Do not terminate unrelated processes."
   },
   "initial_observed_progress": {
@@ -56,5 +56,141 @@
     "deliveries": 31,
     "peak_material_tasks": 9
   },
-  "verification_scope": "Only launch and43 frozen source/config hashes verified. Live monitoring uses progress.json. Whole-run completion, peak16 and final media are unverified."
+  "verification_scope": "Closed failed CPU diagnosis. Result,300 compressed/raw samples and43 frozen files verified. Recorded stock240=192 on hand+11 in carriers+37 consumed. All16>=6, but48/48/quiescence/peak16 not met; last snapshot is pre-error and no post-error atomicity is claimed.",
+  "stop_reason": "runtime_error",
+  "error": {
+    "type": "RuntimeError",
+    "message": "admission window cannot change before a stopped release"
+  },
+  "source_stable_during_run": true,
+  "final_recorded_sim_time_s": 102413.00000147334,
+  "elapsed_wall_s": 4203.413812199957,
+  "last_successful_snapshot": {
+    "shipments": 37,
+    "returns": 35,
+    "deliveries": 204,
+    "deliveries_by_robot": {
+      "amr-1": 15,
+      "amr-2": 13,
+      "amr-3": 8,
+      "amr-4": 7,
+      "amr-5": 16,
+      "amr-6": 12,
+      "amr-7": 13,
+      "amr-8": 11,
+      "amr-9": 17,
+      "amr-10": 12,
+      "amr-11": 17,
+      "amr-12": 11,
+      "amr-13": 20,
+      "amr-14": 13,
+      "amr-15": 13,
+      "amr-16": 6
+    },
+    "minimum_deliveries_each": 6,
+    "peak_material_tasks": 15,
+    "peak_material_moving": 7,
+    "quiescent": false,
+    "inventory_conservation": [
+      {
+        "sku": "packaged-ic-tray",
+        "initial": 240,
+        "replenished": 0,
+        "on_hand": 192,
+        "in_totes": 11,
+        "consumed": 37,
+        "balanced": true
+      }
+    ],
+    "interpretation": "Last successfully recorded observation before the exception; not a recovered post-error state or proof of exception atomicity."
+  },
+  "recording": {
+    "frames": 300,
+    "selection": {
+      "scope": "authored process-line snapshots; selection only, not case validity, physics, sensors, throughput, or completion proof",
+      "sample_hz": 1,
+      "configured_sample_count": 300,
+      "selected_sample_count": 300,
+      "first": {
+        "sim_time_s": 100102.00000133882,
+        "shipments_completed": 34,
+        "returns_completed": 32,
+        "transports_completed": 197
+      },
+      "last": {
+        "sim_time_s": 100401.00000135622,
+        "shipments_completed": 36,
+        "returns_completed": 34,
+        "transports_completed": 201
+      },
+      "score": {
+        "shipment_and_return_both_increased": true,
+        "minimum_shipment_return_delta": 2,
+        "completed_transport_delta": 4,
+        "logistics_pose_distance_m": 212.1335261258514,
+        "distinct_moving_logistics_robots": 6,
+        "priority_order": [
+          "shipment_and_return_both_increased",
+          "minimum_shipment_return_delta",
+          "completed_transport_delta",
+          "logistics_pose_distance_m",
+          "distinct_moving_logistics_robots"
+        ]
+      },
+      "movement_scope": {
+        "included_task_types": [
+          "empty_return",
+          "process_input",
+          "product_move"
+        ],
+        "excluded_task_types": [
+          "traffic_yield",
+          "parking",
+          "charging"
+        ],
+        "payload_required": false,
+        "task_id_change_edges": "excluded"
+      }
+    },
+    "final_render_eligible": false,
+    "verification_scope": "Manual closed result/manifest/gzip/raw/source hash checks for diagnosis; failed recording is not approved for portfolio rendering."
+  },
+  "closure": {
+    "result_sha256": "67543aa155ad701d6e6edb9d1cfd03592eb6fa64fbac0aeab2c6f6e21d5b0463",
+    "manifest_sha256": "b1994def14a19292b714d6e0434abe053be9b27982c04261910bc5824a612375",
+    "gzip_sha256": "dce525fd3ce306f6bca35dcf0c2dff56b9a7746a5ef19b70978842c4516f8c3e",
+    "raw_sha256": "b893a7219e912de60f2ee4e718f3b6d3ecde193d689f22d511b12491eacd74b6",
+    "raw_bytes": 102185115,
+    "frozen_source_manifest_sha256": "e8c93613d61f98fe3bb54abeb86f5136d98de2e469f6684edb82a97d7a687408",
+    "closed_manifest_raw_gzip_and_43_frozen_verified": true,
+    "owned_launch_pids_checked": [
+      63072,
+      104996,
+      50736
+    ],
+    "owned_processes_remaining": []
+  },
+  "media_completion_contract": {
+    "fleet": 16,
+    "lots": 48,
+    "minimum_deliveries_per_robot": 2,
+    "checks": {
+      "case_complete": false,
+      "source_stable": true,
+      "fleet_matches": true,
+      "workload_matches": true,
+      "all_lots_shipped": false,
+      "all_carriers_returned": false,
+      "quiescent": false,
+      "all_robots_repeated_material_deliveries": true,
+      "requested_material_concurrency": false
+    },
+    "passed": false
+  },
+  "failure_diagnosis": {
+    "status": "targeted diagnosis in a separate source worktree; no full retry launched",
+    "guard": "BridgeAdmission.admit rejects changes to an already acquired route window before a stopped release.",
+    "specific_callsite_robot_and_transition": "not yet confirmed",
+    "preserved_scope": "Keep current footprint, stopped release, atomic transfer and peer protection. Do not remove the guard or mutate the failed source."
+  }
 }

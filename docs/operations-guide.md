@@ -53,7 +53,7 @@ Ctrl+C는 `incomplete / diagnostic_interrupt`로 마감하고 가능한 최종 s
 
 마감된 기록의 최종 발췌는 `scripts/media/select_operations_excerpt.py --recording <종료된 기록 폴더> --output <새 JSON>`으로 고른다. 기본 계약은16대·48lot이며 전체 출하/반납·최종 정지·차량별2회 이상 운송·16개 물류 임무 동시성·소스 안정이 모두 충족돼야 한다. 종료 매니페스트가 없는 기록은 gzip을 열기 전에 거절한다. 통과한 기록도 원본·동결 소스·압축 전후 해시를 확인한 뒤, 기본30초·30fps·8배속의900프레임에 맞는 후보5개를 고른다. 배치와 같은 물류 점수를 사용하고 출하/반납이 함께 증가하는 후보인지 출력한다. 이 도구는 GPU 렌더를 시작하지 않는다. 현재16대 완주 입력은 확인 중이다.
 
-선택 차로 확장은 `--config configs/factory-semiconductor-campus16-wide-bridges --policy fifo`로 실행한다. AB/CD의 실제3m 차로와 방향별 예약을 사용하며 AC/BD·버퍼·재고·에너지·차체 반경은 유지한다. 지정 대기점 양보도 같은 모델에서 적용한다. 구성 요소 검사는 통과했지만330에서 도로와 독점 예약 영역의 잘못된 확장을 확인해 경계를 수정했다. 실제 반납 경로 회귀는 통과했다.331의 충전 도크와 적재 차량 순환 대기는 예약 도크의 경로 보호로 수정했으며 전체 완주는332에서 확인 중이다. [기하와 확인 범위](evidence/campus16-wide-bridges.json) 기존 coverage ETA를 같은 차로에 결합하려면 `--config configs/factory-semiconductor-campus16-wide-bridges-coverage-eta --policy eta`를 사용한다. 운송2회 미만 차량의 참여를 우선하고 이후 명목 ETA 순으로 고른다.332/333은 같은 물류 입력의 정책전체 비교이며 병렬 wall time은 처리속도 비교로 쓰지 않는다. [입력 동일성·진행 범위](evidence/campus16-333.json)
+선택 차로 확장은 `--config configs/factory-semiconductor-campus16-wide-bridges --policy fifo`로 실행한다. AB/CD의 실제3m 차로와 방향별 예약을 사용하며 AC/BD·버퍼·재고·에너지·차체 반경은 유지한다. 지정 대기점 양보도 같은 모델에서 적용한다. 구성 요소 검사는 통과했지만330에서 도로와 독점 예약 영역의 잘못된 확장을 확인해 경계를 수정했다. 실제 반납 경로 회귀는 통과했다.331의 충전 도크와 적재 차량 순환 대기는 예약 도크의 경로 보호로 수정했으며 후속332는 예약 창 전환 오류로 종료돼 완주는 남아 있다. [기하와 확인 범위](evidence/campus16-wide-bridges.json) 기존 coverage ETA를 같은 차로에 결합하려면 `--config configs/factory-semiconductor-campus16-wide-bridges-coverage-eta --policy eta`를 사용한다. 운송2회 미만 차량의 참여를 우선하고 이후 명목 ETA 순으로 고른다.332/333은 같은 물류 입력의 정책전체 비교이며 병렬 wall time은 처리속도 비교로 쓰지 않는다. [입력 동일성·진행 범위](evidence/campus16-333.json)
 
 ## 16대 캠퍼스의 설비 고장·복구
 
