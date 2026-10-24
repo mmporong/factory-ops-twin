@@ -46,9 +46,12 @@
   "execution": {
     "existing_321_322_324_changed": false,
     "next_candidate": "campus16-pilot-326",
-    "candidate_started": false,
+    "candidate_started": true,
     "full_48_48_completed": false,
-    "peak16_material_tasks_verified": false
+    "peak16_material_tasks_verified": false,
+    "candidate_run_id": "process-line-324b899f-0c43-4bef-9510-4c36bf056e0a",
+    "candidate_source_commit": "8cfc58f3c17343a17424db1039396cdea0969532",
+    "frozen_source_file_count": 43
   },
   "scope": "Authored CPU operations only; not native transport/contact physics or a measured full-fleet improvement."
 }

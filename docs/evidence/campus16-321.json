@@ -1,0 +1,210 @@
+{
+  "schema_version": 1,
+  "run_id": "process-line-55c5c197-1ad3-4c98-92d1-4ac23e7369f0",
+  "status": "incomplete",
+  "stop_reason": "horizon_or_wall_limit",
+  "error": null,
+  "scope": "authored CPU process line and kinematic reservations; no physics, sensors or measured factory times",
+  "source_commit": "3a7a8d2",
+  "source_stable_during_run": true,
+  "workload": {
+    "lots": 48,
+    "release": "all at simulation start",
+    "policy": "fifo"
+  },
+  "limits": {
+    "horizon_s": 120000.0,
+    "wall_s": 5400.0,
+    "snapshot_count": 80,
+    "stall_timeout_s": 600.0,
+    "cycle_stall_timeout_s": 600.0
+  },
+  "final_sim_time_s": 120000.0,
+  "elapsed_wall_s": 5231.27386289998,
+  "business": {
+    "shipped_lots": 39,
+    "returned_carriers": 35,
+    "deliveries_total": 206,
+    "deliveries_by_robot": {
+      "amr-1": 10,
+      "amr-2": 4,
+      "amr-3": 13,
+      "amr-4": 10,
+      "amr-5": 18,
+      "amr-6": 10,
+      "amr-7": 12,
+      "amr-8": 11,
+      "amr-9": 17,
+      "amr-10": 13,
+      "amr-11": 17,
+      "amr-12": 10,
+      "amr-13": 17,
+      "amr-14": 14,
+      "amr-15": 18,
+      "amr-16": 12
+    },
+    "minimum_deliveries_each": 4,
+    "assignments_total": 210,
+    "peak_material_tasks": 13,
+    "peak_material_moving": 7,
+    "active_by_robot": {
+      "amr-16": "LOT-0042:empty_return:5",
+      "amr-13": "LOT-0032:empty_return:5",
+      "amr-12": "LOT-0034:empty_return:5",
+      "amr-3": "LOT-0046:product_move:3"
+    },
+    "quiescent": false
+  },
+  "traffic": {
+    "yield_selected": 25,
+    "yield_completed": 25,
+    "bridge_wait_cycle": null,
+    "reservation_wait_cycle": null
+  },
+  "recording": {
+    "frames": 300,
+    "selection": {
+      "scope": "authored process-line snapshots; selection only, not case validity, physics, sensors, throughput, or completion proof",
+      "sample_hz": 1,
+      "configured_sample_count": 300,
+      "selected_sample_count": 300,
+      "first": {
+        "sim_time_s": 65402.99999932876,
+        "shipments_completed": 20,
+        "returns_completed": 17,
+        "transports_completed": 124
+      },
+      "last": {
+        "sim_time_s": 65701.99999933648,
+        "shipments_completed": 22,
+        "returns_completed": 18,
+        "transports_completed": 127
+      },
+      "score": {
+        "shipment_and_return_both_increased": true,
+        "minimum_shipment_return_delta": 1,
+        "completed_transport_delta": 3,
+        "logistics_pose_distance_m": 287.13518695115886,
+        "distinct_moving_logistics_robots": 5,
+        "priority_order": [
+          "shipment_and_return_both_increased",
+          "minimum_shipment_return_delta",
+          "completed_transport_delta",
+          "logistics_pose_distance_m",
+          "distinct_moving_logistics_robots"
+        ]
+      },
+      "movement_scope": {
+        "included_task_types": [
+          "empty_return",
+          "process_input",
+          "product_move"
+        ],
+        "excluded_task_types": [
+          "traffic_yield",
+          "parking",
+          "charging"
+        ],
+        "payload_required": false,
+        "task_id_change_edges": "excluded"
+      }
+    },
+    "final_render_eligible": false,
+    "reason": "Incomplete48-lot case and peak material concurrency13, not16."
+  },
+  "frozen_source": {
+    "relative_path": "frozen-source",
+    "manifest_relative_path": "frozen-source/manifest.json",
+    "manifest_sha256": "8d044ae75e016ca3da13e24abba0feb81353a8eb60e0ac5f0e3068c9dee66aff",
+    "source_binding_sha256": "9dc832d0d7349bc758e98f66c5115f1f81b31a445bc09e174770cf1896a48da8",
+    "file_count": 43
+  },
+  "sampled_concurrency_diagnosis": {
+    "sim_time_s": 10633.000000021151,
+    "actual_active_material_tasks": 13,
+    "nonmaterial_robots": [
+      {
+        "id": "amr-8",
+        "status": "idle",
+        "task_type": null,
+        "destination": null,
+        "waiting_reason": null,
+        "battery_pct": 41.55256138211985,
+        "blockers": null
+      },
+      {
+        "id": "amr-11",
+        "status": "waiting",
+        "task_type": "parking",
+        "destination": "C_P3",
+        "waiting_reason": "교통 예약 대기: safe_exit_lookahead_occupied",
+        "battery_pct": 44.63561204842278,
+        "blockers": [
+          "amr-5"
+        ]
+      },
+      {
+        "id": "amr-13",
+        "status": "idle",
+        "task_type": null,
+        "destination": null,
+        "waiting_reason": null,
+        "battery_pct": 53.10241631249939,
+        "blockers": null
+      }
+    ],
+    "ready_transport_count": 25,
+    "station_claimed_origin_or_destination_count": 16,
+    "remaining_ready_count": 9,
+    "remaining_destinations": [
+      "C_CI",
+      "D_CI"
+    ],
+    "remaining_destination_input_slots": {
+      "L3.TEST": {
+        "input_lots": 2,
+        "reserved_inputs": 0,
+        "capacity": 2
+      },
+      "L4.TEST": {
+        "input_lots": 2,
+        "reserved_inputs": 0,
+        "capacity": 2
+      }
+    },
+    "charging_queue": [],
+    "charging_faults": {},
+    "charging_relocating": {},
+    "departure_deferred": {},
+    "interpretation": "At this observed peak13 sample, every ready task is excluded by a claimed station or full input buffer. This is not evidence of a global cap13 or GPU exhaustion. Origin-owner lifetime is a follow-up candidate, not a proven full-run cause."
+  },
+  "closure": {
+    "result_sha256": "875424038df95360525d9b526f80b4ec729d9dc595260c1284210e36fbd6d5dd",
+    "manifest_sha256": "932418811d941d1817efb696bd4628d25e9ff41151ca9bd97c4b7c4a1cc70216",
+    "gzip_sha256": "195d43f7bd71b58137aeec13fe1b678dc66b7ac3af539d4e418bcab33c9546db",
+    "closed_manifest_hashes_match": true,
+    "frozen_files_hashes_match": true,
+    "owned_python_processes": 0,
+    "owned_process_check": "Supervisor confirmed natural exit; no forced termination."
+  },
+  "followups": [
+    {
+      "case": "campus16-pilot-322",
+      "change": "safe-anchor home-parking preemption",
+      "policy": "fifo",
+      "state": "running"
+    },
+    {
+      "case": "campus16-pilot-324",
+      "change": "same source as322",
+      "policy": "eta",
+      "state": "running"
+    },
+    {
+      "case": "campus16-pilot-326",
+      "change": "same-OUT shipping-to-empty-return handoff",
+      "policy": "fifo",
+      "state": "running"
+    }
+  ]
+}
