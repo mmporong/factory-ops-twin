@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "status": "passed",
+  "claim": "A 300 simulated-second L2.TEST outage held the active lot service remainder and delayed its process completion by 299.9000000000592 simulated seconds under the same 48-lot demand, 9000-second horizon, model source, and frozen campus configuration.",
+  "scope": "Authored CPU process-network comparison using DashboardService and loopback HTTP equipment commands; no physics, sensor, browser, measured throughput, or 48-lot completion claim.",
+  "source_selection": {
+    "baseline": "artifacts/campus-equipment-comparison-2/baseline.json",
+    "baseline_sha256": "a3f84e1fe6f7b4942c6068230df1084b7a8f427aaa862bdac44bb4ac9a30cd60",
+    "fault": "artifacts/campus-equipment-comparison-isolated-fault/fault.json",
+    "fault_sha256": "f3edb0ac15cf07ce4174bc3fca5b791c5e3408dc362712312266872971e28cbf",
+    "source_stability": "artifacts/campus-equipment-comparison-isolated-fault/source-stability.json",
+    "source_stability_sha256": "1c9fed49a0b70f6263e549dfe9caf6b88b80b53f00c9bb0091d9077c73052f9c",
+    "shared_run2_status": "invalid_source_mix",
+    "selection_note": "The shared run2 session changed operations_charging.py between cases and is excluded. Its sealed baseline matched all 25 selected model-source pins and all 8 config pins from frozen run314. The fault case was run alone in the 1340f8b worktree with the same frozen run314 config; 66 end-hash checks passed."
+  },
+  "command_receipts": {
+    "down": {
+      "sim_time_s": 194.9999999999932,
+      "revision": 1,
+      "cell_id": "L2.TEST",
+      "available": false,
+      "status": "applied"
+    },
+    "recover": {
+      "sim_time_s": 495.00000000004405,
+      "revision": 2,
+      "cell_id": "L2.TEST",
+      "available": true,
+      "status": "applied"
+    }
+  },
+  "observations": {
+    "target_lot": "LOT-0004",
+    "remaining_service_before_down_s": 29.600000000000023,
+    "remaining_service_after_hold_s": 29.600000000000023,
+    "remaining_service_after_one_second_recovery_s": 28.599999999999795,
+    "baseline_process_completion_s": 224.69999999999152,
+    "fault_process_completion_s": 524.6000000000507,
+    "completion_delay_s": 299.9000000000592,
+    "boundary_state_count": 10
+  },
+  "fixed_horizon_results": {
+    "baseline": {
+      "shipments_completed": 2,
+      "carrier_returns_completed": 0,
+      "transports_complete": 40,
+      "transports_pending": 37,
+      "unreturned_lots": 48,
+      "active_carriers": 48,
+      "cell_wip_lots": 24
+    },
+    "fault": {
+      "shipments_completed": 2,
+      "carrier_returns_completed": 0,
+      "transports_complete": 39,
+      "transports_pending": 39,
+      "unreturned_lots": 48,
+      "active_carriers": 48,
+      "cell_wip_lots": 22
+    }
+  },
+  "cleanup": {
+    "baseline_http_thread_alive": false,
+    "fault_http_thread_alive": false,
+    "fault_process_gone": true,
+    "fault_listener_count": 0
+  }
+}

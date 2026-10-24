@@ -1531,3 +1531,5 @@ World가 없을 때 기존 `SimulationManager.setup_simulation`을 호출하고,
 ## FOT-194 — 병행 CPU 비교와 본선 수정이 같은 소스 폴더를 공유함
 
 비교2 실행 중 본선314가 실패했고, 메인 담당의 core 수정이 비교의 on-disk 소스와 겹쳤다. root가 독립 프로세스만 분리하고 소스 폴더까지 격리하지 않은 조율 오류다. 전체 비교2는 source stability 통과로 표시하지 않는다. 마감된 baseline의25개 producer pin·8개 config가 동결314와 일치하고1340f8b 격리 환경의 초기 producer와 같음을 확인해 baseline만 재사용한다. 고장 조건은 별도 linked worktree에서 실행한다. 이후 병행 모델 실행은 실행 파일·설정까지 격리하며, 이미 유효하게 시작한 본선315를 이 이유로 중단하지 않는다.
+
+격리 fault는66개 종료 해시 확인을 통과했고 HTTP 서버·소유 PID·리스너가 모두 종료됐다. 선택한 정상/고장 비교에서 고장300초 동안29.6초의 잔여 처리시간을 유지하고 복구 뒤 처리를 재개했으며 대상 lot 완료는299.9초 지연됐다.9,000초 종료 출하는 양쪽2건으로 전체 출하 손실은 관측되지 않았다. 유효 원본과 실패 영수증을 선별한 ZIP25항목의 크기·SHA를 대조해 별도 D드라이브에 보존했다. [공개 비교·선택 근거](evidence/campus-equipment-comparison.json) · [보존 색인](evidence/operations-storage-230.json)

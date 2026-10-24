@@ -42,6 +42,20 @@ uv run python -m factory_ops.dashboard --config configs/factory-semiconductor-ca
 
 웹은 `OPS_API_URL=http://127.0.0.1:18766`을 지정한 별도 포트에 연결한다. 명령은 현재 API가 계산하는 CPU 실행에만 적용되며 다른 운영 배치를 제어하지 않는다. API는 실행 ID·revision·`cell_id`를 확인하고 적용된 설비와 상태를 receipt의 `effect`로 반환한다. 기본 읽기 전용·외부 source·재생·Mock MES의 경계는 유지한다. 차량 조종·주문 추가·통로 변경은 지원하지 않는다. 고장·복구와12개 설비 상태는 저장한 관측에서 재현하며, 새 브라우저 클릭 확인은 도구 초기화 오류로 남아 있다.
 
+### 설비 고장 비교 재현
+
+다음 실행은48lot·9,000초의 정상 조건과 `L2.TEST` 300초 고장을 비교한다. 처리 중인 lot을 관측한 뒤 임시 loopback HTTP 서버로 고장·복구를 요청한다. 명령 receipt·경계 상태·대상 사건·최종 지표만 남기며 RGB나 전체 snapshot을 수집하지 않는다. 서버와 소유 스레드는 종료 시 정리한다.
+
+```powershell
+cd "$HOME/factory-ops-twin"
+$comparisonLabel = Get-Date -Format "yyyyMMdd-HHmmss"
+uv run python -m scripts.demo.compare_campus_equipment --output "artifacts/campus-equipment-comparison-$comparisonLabel"
+```
+
+벽시계 상한은1,200초이며 출력 폴더는 새 경로여야 한다. 다른 모델 실행과 병행할 때는 커밋한 소스의 별도 linked worktree에서 실행하고 소스·설정을 유지한다. 이미 마감한 정상 조건은 `--baseline-from <baseline.json 전체 경로>`로 재사용할 수 있지만 모델·설정 해시가 일치해야 한다.
+
+[보존한 비교](evidence/campus-equipment-comparison.json)는 동결314 설정·모델과1340f8b 격리 실행을 사용했다. 첫 비교의 사건 ID 처리 오류와 두 번째 공유 실행의 소스 변경은 실패로 남기고, 소스가 일치한 마감 baseline과 격리 fault만 채택했다. 대상 `LOT-0004`의 TEST 완료가299.9초 지연됐고 고장 중 남은 시간이 보존됐다. 구간 종료 출하는 양쪽2건, 완료 운송은 정상40건·고장39건이다. 현재 main에서 새로 실행하면 후속 충전 수정이 포함되므로 이 수치의 동일 재현으로 취급하지 않는다.48lot 완주·전체 출하 감소·물리 운송 성능을 입증하는 비교는 아니다. [선별 경계 CSV](data/campus-equipment-comparison/boundaries.csv)
+
 ## 운영 기록 저장·재생
 
 API에 `--scenario-dir`를 지정하면 웹에 기록 저장·재생 기능이 연결된다. CPU 모델의 예는 아래와 같다. 기존 API가 실행 중이면 새 프로세스를 중복으로 띄우지 않고 해당 실행의 설정에 옵션을 추가한다.

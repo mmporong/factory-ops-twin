@@ -89,7 +89,10 @@
     "artifacts/campus-capacity-306",
     "artifacts/campus-capacity-307",
     "artifacts/campus-capacity-308",
-    "artifacts/campus-capacity-312"
+    "artifacts/campus-capacity-312",
+    "artifacts/campus-equipment-comparison",
+    "artifacts/campus-equipment-comparison-2",
+    "artifacts/campus-equipment-comparison-isolated-fault"
   ],
   "public_media": "docs/images/operations-local45-228",
   "public_replay": "docs/data/operations-normal-223",
@@ -178,6 +181,16 @@
       "receipt_path": "artifacts/backup-campus303-native312.json",
       "receipt_sha256": "211f0a7f7ef05ae25daa84579e126fadef9e464bdaeded1ebca6a127213c1404",
       "scope": "Closed CPU303 original and frozen source; prepare304; selected failed305/308 diagnostics and termination; passed306/307/312 native inputs, source snapshots, results and representative RGB. No SDK or vendor asset copies; public309/current CPU309 excluded."
+    },
+    {
+      "path": "D:\\FactoryOpsPortfolio\\campus-equipment-comparison.zip",
+      "bytes": 50458,
+      "sha256": "d3734545c34fc7260e3eb3ca7ad1ff707b87acbcb56a1b11ac2d13f9f3a1647b",
+      "verified_entries": 25,
+      "all_entry_hashes_match": true,
+      "receipt_path": "artifacts/backup-campus-equipment-comparison.json",
+      "receipt_sha256": "7ecfec18c1829c19c8f6dbc77fb3014e0e3bbc9cdfc94708ca0239c6a0a345c4",
+      "scope": "Valid sealed baseline plus isolated fault comparison, source stability, HTTP receipts,10 boundary states, event/source pins, executed/primary scripts and frozen config8; selected small failure/source-mix receipts only; no snapshots, RGB, database, SDK or duplicate invalid fault case."
     }
   ]
 }
