@@ -1,0 +1,84 @@
+{
+  "schema_version": 1,
+  "run_id": "perception-pilot-323",
+  "status": "failed_after_8_valid_frames",
+  "dataset_complete": false,
+  "requested_frames": 512,
+  "valid_partial_frames": 8,
+  "scope": "First two synthetic scenes only; no complete512-frame release, training approval, warehouse realism or real-image performance claim.",
+  "failure": {
+    "type": "PerceptionDatasetError",
+    "message": "semantic identity count differs for object: small_load_carrier-003-02: 0",
+    "scene_index": 2,
+    "frame_id": 9,
+    "view": "overview",
+    "object_id": "small_load_carrier-003-02",
+    "observed": "no semantic identity in rendered frame; fail-closed fully-hidden/object-coverage guard",
+    "recipe": {
+      "background": "packing_proxy",
+      "occlusion": "moderate",
+      "stacking": "crate_on_pallet"
+    }
+  },
+  "cause_boundary": "Confirmed missing object semantic identity. Full occlusion is a hypothesis because the failing RGB/label payload was not preserved; do not equate coverage failure with a proven renderer or geometry cause.",
+  "host_harness": {
+    "receipt_status": "passed",
+    "worker_exit_code": 0,
+    "payload_success": false,
+    "judgement": "dataset.json absent and failure.json present overrides wrapper exit 0",
+    "assignment_confirmed": true,
+    "prelaunch_inputs_verified": true,
+    "timed_out": false,
+    "abort_requested": false,
+    "closed": true,
+    "remaining_owned_pids": [],
+    "elapsed_wall_s": 36.3070595000172
+  },
+  "source": {
+    "commit": "6697475e3bfd6103e4e0313d0286e2fa72841049",
+    "manifest_sha256": "c969695b61af98328d51f1210c4986c92646a2b80a86e1815c3e8d289176fad9",
+    "recipe_sha256": "ad700978cc470c586b2446a9be5705ce06f01128a3858609aad06af24fa3ff4f",
+    "spec_sha256": "f98e92e5176ca12592a77ace0f6e52257a090e35e8f578bece48b172dc954b13",
+    "post_run_input_count": 13,
+    "source_stable": true
+  },
+  "partial_payload": {
+    "bytes": 26486675,
+    "file_count": 60,
+    "RGB": 8,
+    "semantic": 8,
+    "distance_to_camera": 8,
+    "bbox_same_object_mask_extent_checks": 32,
+    "finite_positive_object_depth_checks": 32,
+    "training_ready": false
+  },
+  "evidence": {
+    "host_result_sha256": "d4307a58ac3dcd2feb259fb40a53ab0c23c83ced83c3e2449976135af5bf0f44",
+    "host_index_sha256": "77847612c48d12c2520a57e2abf9254c99f4d921bb82ab891623047b888e945e",
+    "partial_audit_sha256": "212e1022ee4c625f0e0e363664c99f1951c9bddde831eb33b738d56ae69ebfb0",
+    "failure_sha256": "ca0b43878c6fe19328bf8797d1378432552b79da19e1cd95524b98cba60efa1c",
+    "public_contact_sheet": {
+      "path": "docs/images/perception-pilot-323/partial-contact-sheet.png",
+      "bytes": 299820,
+      "sha256": "9bcb575dc7aab323ec9b5cb6c9b34518cd4290ab63eed1a2114efc685808d74f"
+    }
+  },
+  "cleanup": {
+    "live_owned_pid_count": 0,
+    "live_owned_pids": [],
+    "gpu_lease_available": true,
+    "blocking_unmanaged_gpu_count": 0,
+    "nvidia_smi_error": null
+  },
+  "flags": {
+    "training_ready": false,
+    "mapping_approved": false,
+    "model_training_performed": false,
+    "cosmos_used": false,
+    "heldout_loco_rgb_read": false,
+    "partial_payload_only": true,
+    "retry_performed": false
+  },
+  "asset_attribution": "../asset-attribution.md",
+  "next": "Preserve one failing frame as diagnostic-only media in a new exporter source; analyze geometry/visibility before a new recipe. No repeat of the identical full pilot."
+}

@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "status": "implemented_cpu_preflight_passed_gpu_capture_pending",
-  "scope": "Limited synthetic pallet and gray/blue rigid-crate baseline; no generated512-frame dataset, detector training, Cosmos or real-image metrics yet.",
+  "status": "implemented_cpu_preflight_passed_GPU323_failed_after8_valid_frames",
+  "scope": "Limited synthetic pallet and gray/blue rigid-crate baseline;323 ended after8 valid frames. No complete512-frame dataset, detector training, Cosmos or real-image metrics.",
   "source": {
     "agent_commits": [
       "ab5630ef0a45aa231e1661e7c62d35235574f322",
@@ -49,7 +49,11 @@
     },
     "integrated_main_recipe_and_asset_pin_preflight": "PASS",
     "syntax_and_diff_check": "Agent PASS",
-    "GPU_validation": "pending",
+    "GPU_validation": {
+      "case": "perception-pilot-323",
+      "status": "failed_after_8_valid_frames",
+      "evidence": "perception-pilot-323.json"
+    },
     "post_integration_depth_boundary_tests": {
       "passed": 3,
       "wall_s": 0.001,
@@ -79,10 +83,11 @@
   "flags": {
     "training_ready": false,
     "mapping_approved": false,
-    "GPU_capture_performed": false,
+    "GPU_capture_performed": true,
     "detector_training_performed": false,
     "Cosmos_used": false,
-    "heldout_LOCO_RGB_read": false
+    "heldout_LOCO_RGB_read": false,
+    "complete_512_dataset_generated": false
   },
   "next": "Use the shared GPU lease and owned-process runner for the pinned pilot after the primary16-AMR operations task; check real RGB, depth and labels before training."
 }
