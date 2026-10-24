@@ -1,0 +1,78 @@
+{
+  "schema_version": 1,
+  "execution_mode": "authored_CPU_operations",
+  "objective": "Same48lots shipped and carriers returned; quiescent; all16robots repeat material transport; peak16 actual material tasks. Parking/charging/yield excluded.",
+  "limits": {
+    "horizon_s": 240000,
+    "wall_s": 10800,
+    "stall_timeout_s": 600,
+    "cycle_stall_timeout_s": 600,
+    "record_best_window_samples": 300
+  },
+  "success_flags": {
+    "all48_shipped_and_returned_verified": false,
+    "quiescent_verified": false,
+    "peak16_material_tasks_verified": false,
+    "native_physics_transport_verified": false,
+    "final_render_eligible": false
+  },
+  "components": {
+    "final_quiescence_fix": "0c42abb01d718b2f2bc97e28a64a71c9043e9e09",
+    "holdable_refuge_yield": "b102144442641da769661c69b4655abb03df0077",
+    "actual_wide_bridge_geometry": "0b616c5e796d992891539c16d06c619cd3ab2e9f",
+    "atomic_overlay_boundary_repair": "1af29dd5f52cba4cb9308141050aaab4ad44d351",
+    "reserved_dock_admission": "a872fe56f317a5fa92fc12d22c1c16a65d427885"
+  },
+  "case": "campus16-pilot-333",
+  "run_id": "process-line-fd4c24df-7f25-44de-977c-db2d0dded4b8",
+  "status": "running",
+  "source_commit": "fc25c93f82163e29a53eae0404e5af5fb6fcab2e",
+  "workload": {
+    "lots": 48,
+    "policy": "eta",
+    "config": "configs/factory-semiconductor-campus16-wide-bridges-coverage-eta",
+    "dispatch_mode": "downstream_wip_drain_eta_after_coverage",
+    "coverage_deliveries_per_robot": 2,
+    "release": "all at simulation start"
+  },
+  "comparison_scope": "Whole dispatch policy comparison against simultaneous332 FIFO/least-assigned, using the same producer, geometry, stock, cells, energy and safety. Coverage+ETA form one policy bundle, not isolated effects or a statistical superiority claim. Overlapping wall time is not a performance benchmark.",
+  "frozen_source": {
+    "file_count": 43,
+    "manifest_sha256": "3bb51f01e62ea351659451fe839ccd03dd6d35b254e22d5778a4d75ee9694353",
+    "files_checked_at_launch": true
+  },
+  "matched_controls_with332": {
+    "identical_frozen_files": 42,
+    "identical_producer_files": 35,
+    "identical_config_files": 7,
+    "only_changed_file": "config/process-network.json",
+    "changed_fields": {
+      "dispatch_mode": [
+        "downstream_wip_drain_least_assigned",
+        "downstream_wip_drain_eta_after_coverage"
+      ],
+      "coverage_deliveries_per_robot": [
+        null,
+        2
+      ]
+    },
+    "constructor_and_snapshot_contract_passed": true,
+    "no_new_code_or_dependencies": true
+  },
+  "launch_processes": {
+    "session": 22445,
+    "python_pid": 104320,
+    "observed_parent_pid": 91152,
+    "retention_reason": "Authorized bounded48-lot alternative dispatch run from an isolated clean source worktree;332 is preserved.",
+    "stop_method": "Ctrl+C to the owned execution session; runner finalizes result and recording. Do not terminate unrelated processes."
+  },
+  "initial_observed_progress": {
+    "sim_time_s": 5460.000000002332,
+    "elapsed_wall_s": 112.15196429996286,
+    "shipments": 3,
+    "returns": 0,
+    "deliveries": 36,
+    "peak_material_tasks": 10
+  },
+  "verification_scope": "Launch and43 frozen source/config hashes verified. Live monitoring uses progress.json. Full completion, actual16 material concurrency and final media remain unverified."
+}
