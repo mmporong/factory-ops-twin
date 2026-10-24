@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "scope": "CPU HUD preview from passed campus replay frame; no new simulation or measurement",
+  "render_run_id": "ceebe37358334190b52eab6f0e4e72f8",
+  "frame": 1,
+  "presentation_source_time_s": 3001.3333333333335,
+  "production_line_summary": {
+    "cell_count": 12,
+    "processing_count": 0,
+    "down_count": 0,
+    "blocked_count": 2
+  },
+  "robot_count": 16,
+  "verified_inputs": {
+    "renderer_result_sha256": "a34021482c417161d4971660c947eddf547978d0e70bb8367924493ef987b570",
+    "frames_jsonl_sha256": "b6c7c5dfedd49fd93d91e8b93e21e1cdd1bc51640feb0667f942131c82024d74",
+    "host_receipt_sha256": "a6cbe28434596fa36489fbc8c88053caf6b00e2b1c20d87d4865b56677e7877e",
+    "source_rgb_sha256": "bcc7dc44c3cb7504c5afb3cdf4a8726790c5e8ed7ab0f5a2190d410d518a68da"
+  },
+  "preview": {
+    "path": "preview.png",
+    "sha256": "9af4700b82e12af554dd983884660d3ee44719c6a02a54f3ec491466a8d93db1",
+    "bytes": 570141
+  },
+  "evidence": "../../evidence/campus-replay-284.json",
+  "limits": [
+    "GPU284 is a three-frame setup probe from incomplete CPU279",
+    "HUD is postprocessing using the same verified CPU snapshot; no new physics or measurement",
+    "This is a preview still, not the final16-AMR factory operations video"
+  ]
+}

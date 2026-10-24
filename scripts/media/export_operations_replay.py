@@ -20,6 +20,7 @@ GIF_WIDTH = 960
 GIF_FPS = (20, 25, 30)
 TASK_COLORS = {
     "inbound": "#2563eb", "outbound": "#16a34a", "empty_return": "#f59e0b",
+    "material_move": "#0891b2", "product_move": "#0d9488",
     "charging": "#7c3aed", "undocking": "#8b5cf6", None: "#94a3b8",
 }
 
@@ -102,6 +103,25 @@ def _text(value: Any, fallback: str = "—") -> str:
     return fallback if value is None or value == "" else str(value)
 
 
+def process_card(record: Mapping[str, Any]) -> tuple[str, str, bool]:
+    summary = record.get("production_line_summary")
+    required = ("cell_count", "processing_count", "down_count", "blocked_count")
+    if isinstance(summary, Mapping) and all(type(summary.get(key)) is int and summary[key] >= 0 for key in required):
+        return (f"CELLS {summary['cell_count']}",
+                f"{summary['processing_count']} RUN · {summary['down_count']} DN · {summary['blocked_count']} BLK", True)
+    equipment = record.get("equipment") if isinstance(record.get("equipment"), Mapping) else {}
+    equipment_status = equipment.get("status")
+    if equipment_status == "down":
+        label = "DOWN"
+    elif equipment.get("active_order_id") is not None:
+        remaining = equipment.get("remaining_service_s")
+        suffix = f" {float(remaining):.0f}s" if isinstance(remaining, (int, float)) and not isinstance(remaining, bool) else ""
+        label = f"ACTIVE{suffix}"
+    else:
+        label = "IDLE" if equipment_status == "available" else _text(equipment_status)
+    return "PROCESS", label, False
+
+
 def badge_screen_xy(xy: Sequence[float], result: Mapping[str, Any]) -> tuple[float, float]:
     """Fit legacy raw-aperture annotations to the captured square-pixel raster."""
     x, y = map(float, xy)
@@ -153,19 +173,10 @@ def compose_frame(image_path: Path, record: Mapping[str, Any], result: Mapping[s
     draw.text((24, 758), scope[:145], font=small, fill="#5b677a")
 
     kpis = record.get("kpis") if isinstance(record.get("kpis"), Mapping) else {}
-    equipment = record.get("equipment") if isinstance(record.get("equipment"), Mapping) else {}
     material = record.get("material_counts") if isinstance(record.get("material_counts"), Mapping) else {}
-    equipment_status = equipment.get("status")
-    if equipment_status == "down":
-        process_label = "DOWN"
-    elif equipment.get("active_order_id") is not None:
-        remaining = equipment.get("remaining_service_s")
-        suffix = f" {float(remaining):.0f}s" if isinstance(remaining, (int, float)) and not isinstance(remaining, bool) else ""
-        process_label = f"ACTIVE{suffix}"
-    else:
-        process_label = "IDLE" if equipment_status == "available" else equipment_status
+    process_name, process_label, process_summary = process_card(record)
     cards = (
-        ("PROCESS", process_label),
+        (process_name, process_label),
         ("SHIPPED", kpis.get("completed_orders")),
         ("STOCK", kpis.get("stock_units", material.get("stock"))),
         ("RETURNS", kpis.get("empty_returns_completed", material.get("empty_returns_completed"))),
@@ -174,21 +185,40 @@ def compose_frame(image_path: Path, record: Mapping[str, Any], result: Mapping[s
         x = 24 + index * 150
         draw.rounded_rectangle((x, 782, x + 135, 838), radius=8, fill="white", outline="#dce3ec")
         draw.text((x + 10, 790), label, font=small, fill="#64748b")
-        draw.text((x + 10, 810), _text(value), font=bold, fill="#172033")
+        draw.text((x + 10, 810), _text(value), font=small if index == 0 and process_summary else bold,
+                  fill="#172033")
 
-    for index in range(4):
-        robot = robots[index] if index < len(robots) and isinstance(robots[index], Mapping) else {}
-        x = 640 + (index % 2) * 310
-        y = 782 + (index // 2) * 30
-        task = robot.get("task_type")
-        color = TASK_COLORS.get(task, "#94a3b8")
-        draw.ellipse((x, y + 3, x + 12, y + 15), fill=color)
-        robot_id = _text(robot.get("id"), f"AMR {index + 1}")
-        soc = robot.get("battery_pct")
-        soc_text = f"{float(soc):.0f}%" if isinstance(soc, (int, float)) and not isinstance(soc, bool) else "—"
-        detail = robot.get("waiting_reason") or robot.get("destination") or robot.get("payload_id")
-        draw.text((x + 18, y), f"{robot_id}  {_text(task, 'idle')}  SOC {soc_text}  {_text(detail)}"[:45],
-                  font=regular, fill="#263246")
+    displayed = [robot for robot in robots if isinstance(robot, Mapping)]
+    if len(displayed) <= 4:
+        for index, robot in enumerate(displayed):
+            x = 640 + (index % 2) * 310
+            y = 782 + (index // 2) * 30
+            task = robot.get("task_type")
+            color = TASK_COLORS.get(task, "#94a3b8")
+            draw.ellipse((x, y + 3, x + 12, y + 15), fill=color)
+            robot_id = _text(robot.get("id"))
+            soc = robot.get("battery_pct")
+            soc_text = f"{float(soc):.0f}%" if isinstance(soc, (int, float)) and not isinstance(soc, bool) else "—"
+            detail = robot.get("waiting_reason") or robot.get("destination") or robot.get("payload_id")
+            draw.text((x + 18, y), f"{robot_id}  {_text(task, 'idle')}  SOC {soc_text}  {_text(detail)}"[:45],
+                      font=regular, fill="#263246")
+    else:
+        columns = min(4, math.ceil(math.sqrt(len(displayed))))
+        rows = math.ceil(len(displayed) / columns)
+        cell_width, row_height = 620 / columns, 58 / rows
+        fleet_font = _font(11)
+        for index, robot in enumerate(displayed):
+            x = 640 + (index % columns) * cell_width
+            y = 782 + (index // columns) * row_height
+            task, status = robot.get("task_type"), robot.get("status")
+            color = TASK_COLORS.get(task, "#94a3b8")
+            draw.ellipse((x, y + 2, x + 8, y + 10), fill=color)
+            robot_id = str(robot.get("id", "?")).removeprefix("amr-")
+            soc = robot.get("battery_pct")
+            soc_text = f"{float(soc):.0f}%" if isinstance(soc, (int, float)) and not isinstance(soc, bool) else "—"
+            mission = _text(task, _text(status, "idle")).replace("_", " ")
+            state = f"/{status}" if status and status != task else ""
+            draw.text((x + 12, y), f"{robot_id} {soc_text} {mission}{state}"[:24], font=fleet_font, fill="#263246")
     return canvas
 
 

@@ -8,6 +8,7 @@ import tempfile
 import unittest
 
 from scripts.media import export_operations_replay as exporter
+from scripts.isaac.render_operations_replay import production_line_summary
 
 
 def _fixture(root: Path) -> tuple[Path, Path]:
@@ -43,6 +44,36 @@ def _fixture(root: Path) -> tuple[Path, Path]:
 
 
 class ExportOperationsReplayTest(unittest.TestCase):
+    def test_process_line_summary_uses_recorded_cell_state_and_capacity(self) -> None:
+        snapshot = {"production_line": {"cells": {
+            "L1.TEST": {"available": True, "active_lot": "lot-1", "remaining_s": 8.0,
+                        "output_lots": [], "spec": {"output_capacity": 2}},
+            "L2.TEST": {"available": False, "active_lot": None, "remaining_s": None,
+                        "output_lots": [], "spec": {"output_capacity": 2}},
+            "L3.TEST": {"available": True, "active_lot": "lot-3", "remaining_s": 0,
+                        "output_lots": ["a", "b"], "spec": {"output_capacity": 2}},
+            "L4.TEST": {"available": True, "active_lot": None, "remaining_s": None,
+                        "output_lots": [], "spec": {"output_capacity": 2}},
+        }}}
+        self.assertEqual({"cell_count": 4, "processing_count": 1, "down_count": 1, "blocked_count": 1},
+                         production_line_summary(snapshot))
+        self.assertIsNone(production_line_summary({"production_line": {"cells": {}}}))
+
+    def test_process_card_prefers_multi_cell_summary_and_keeps_legacy_fallback(self) -> None:
+        self.assertEqual(("CELLS 12", "2 RUN · 1 DN · 3 BLK", True), exporter.process_card({
+            "production_line_summary": {"cell_count": 12, "processing_count": 2,
+                                        "down_count": 1, "blocked_count": 3},
+            "equipment": {"status": "available"},
+        }))
+        self.assertEqual(("PROCESS", "ACTIVE 8s", False), exporter.process_card({
+            "equipment": {"status": "available", "active_order_id": "lot", "remaining_service_s": 8.2},
+        }))
+
+    def test_material_and_product_moves_have_distinct_task_colors(self) -> None:
+        self.assertNotEqual(exporter.TASK_COLORS["material_move"], exporter.TASK_COLORS["product_move"])
+        self.assertNotEqual("#64748b", exporter.TASK_COLORS["material_move"])
+        self.assertNotEqual("#64748b", exporter.TASK_COLORS["product_move"])
+
     def test_gif_command_uses_bounded_postprocess_recipe(self) -> None:
         command, recipe = exporter._gif_command(Path("source.mp4"), Path("output.gif"), 25.0)
         self.assertIn("source.mp4", command)

@@ -76,6 +76,33 @@ def replay_slot_capacities(layout: Any, placement_fn: Callable[[Any, str, int], 
     return {name: replay_slot_placement(layout, name, 0, placement_fn)["capacity"] for name in locations}
 
 
+def production_line_summary(snapshot: Any) -> dict[str, int] | None:
+    """Summarize only cell states represented by the recorded process-line fields."""
+    if not isinstance(snapshot, dict):
+        return None
+    production = snapshot.get("production_line")
+    cells = production.get("cells") if isinstance(production, dict) else None
+    if not isinstance(cells, dict) or not cells:
+        return None
+    processing = down = blocked = 0
+    for cell in cells.values():
+        if not isinstance(cell, dict):
+            return None
+        available = cell.get("available")
+        active = cell.get("active_lot") is not None
+        outputs = cell.get("output_lots")
+        spec = cell.get("spec")
+        capacity = spec.get("output_capacity") if isinstance(spec, dict) else None
+        if type(available) is not bool or not isinstance(outputs, list) or type(capacity) is not int or capacity < 1:
+            return None
+        is_blocked = active and cell.get("remaining_s") == 0 and len(outputs) >= capacity
+        down += not available
+        blocked += available and is_blocked
+        processing += available and active and not is_blocked
+    return {"cell_count": len(cells), "processing_count": processing,
+            "down_count": down, "blocked_count": blocked}
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--recording", type=Path, required=True)
@@ -113,7 +140,11 @@ def main() -> int:
         parser.error("prepared asset index is absent; provide the existing --asset-cache before GPU launch")
     os.environ["FACTORY_OPS_ASSET_CACHE"] = str(cache_root)
     render_profile = json.loads((factory / "render-profile.json").read_text(encoding="utf-8"))
-    camera_config = next(row for row in render_profile["cameras"] if row["id"] == args.camera)
+    camera_config = dict(next(row for row in render_profile["cameras"] if row["id"] == args.camera))
+    layout_revision = json.loads((factory / "layout.json").read_text(encoding="utf-8")).get("revision")
+    if layout_revision == "amr-semiconductor-campus16-v1" and args.camera == "portfolio_overview":
+        camera_config["focal_length_mm"] = 18
+        camera_config["override_reason"] = "Retain full78x60m campus margins, matching the bounded static capture"
     if "follow" in args.camera:
         parser.error("this replay renderer currently accepts world cameras only")
     # Scene/layout bytes must match the recording's operations geometry.
@@ -297,6 +328,7 @@ def main() -> int:
                 for key, (group, _) in world_cargo.items():
                     group.GetVisibilityAttr().Set("inherited" if key in visible else "invisible")
                 equipment, kpis = snapshot["equipment"], dict(snapshot["kpis"])
+                line_summary = production_line_summary(snapshot)
                 kpis["empty_returns_completed"] = sum(task["type"] == "empty_return" and task["state"] == "complete"
                                                       for task in snapshot["tasks"])
                 if not campus_replay:
@@ -322,7 +354,7 @@ def main() -> int:
                 robot_rows = []
                 for row in snapshot["robots"]:
                     selected = {key: row.get(key) for key in ("id", "pose", "speed_mps", "battery_pct", "task_type",
-                                                             "payload_id", "destination", "waiting_reason")}
+                                                             "status", "payload_id", "destination", "waiting_reason")}
                     local = camera_inverse.Transform(Gf.Vec3d(row["pose"]["x_m"], row["pose"]["y_m"], 1.15))
                     screen = ([args.width * (.5 + focal * local[0] / (-local[2] * horizontal)),
                                args.height * (.5 - focal * local[1] / (-local[2] * vertical))]
@@ -337,6 +369,7 @@ def main() -> int:
                     report["screen_projection"] = "horizontal_fit_square_pixels"
                 journal.write(json.dumps({"frame": index, "rgb": filename, "sha256": sha(args.output / filename),
                     **metadata, "kpis": kpis, "equipment": equipment,
+                    **({"production_line_summary": line_summary} if line_summary is not None else {}),
                     "material_counts": material["counts"],
                     "robots": robot_rows},
                     ensure_ascii=False, allow_nan=False) + "\n")

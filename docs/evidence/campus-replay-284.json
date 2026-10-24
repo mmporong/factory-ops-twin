@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "render_run_id": "ceebe37358334190b52eab6f0e4e72f8",
+  "source_run_id": "process-line-bac4ec4a-d923-4d84-a836-dfd8ea1de4ed",
+  "status": "passed",
+  "scope": "recorded kinematic operations presentation; frozen physics; no sensor or physical motion evidence",
+  "source_case_status": "incomplete",
+  "captured_frames": 3,
+  "observed_robot_ids": [
+    "amr-1",
+    "amr-2",
+    "amr-3",
+    "amr-4",
+    "amr-5",
+    "amr-6",
+    "amr-7",
+    "amr-8",
+    "amr-9",
+    "amr-10",
+    "amr-11",
+    "amr-12",
+    "amr-13",
+    "amr-14",
+    "amr-15",
+    "amr-16"
+  ],
+  "first_source_time_s": 3001.0,
+  "last_source_time_s": 3001.6666666666665,
+  "frozen_timeline_s": 0.0,
+  "physical_loading_validated": false,
+  "material_counts_first_frame": {
+    "world_items": 58,
+    "hidden": 6,
+    "unsupported": 0,
+    "hidden_by_reason": {
+      "represented_by_robot_payload": 6
+    },
+    "unsupported_by_reason": {},
+    "outbound_complete_lots": 4
+  },
+  "kpis_first_frame": {
+    "active_robots": 16,
+    "completed_orders": 4,
+    "peak_moving_robots": 10,
+    "pending_tasks": 42,
+    "returned_carriers": 2,
+    "stock_units": 217,
+    "total_robots": 16,
+    "traffic_wait_s": 20181.09999999825,
+    "empty_returns_completed": 2
+  },
+  "source_pin_provenance": {
+    "origin": "verified_frozen_source",
+    "manifest_relative_path": "frozen-source/manifest.json",
+    "manifest_sha256": "d7facd4e63223605c782eafcecb0cc84b507a4bb37fe7c0cb2bdbdcf5d91f123",
+    "source_binding_sha256": "71fb39520c98cfa99cb65ba4cdb3dd8a7ce324798b7896864dce46a50b86c6c7",
+    "file_count": 42
+  },
+  "renderer_source_sha256": "1245f287c50dd918df208191db0e2e17b70ca604d63f9bb4f17b4f276c387819",
+  "result_sha256": "a34021482c417161d4971660c947eddf547978d0e70bb8367924493ef987b570",
+  "frames_sha256": "b6c7c5dfedd49fd93d91e8b93e21e1cdd1bc51640feb0667f942131c82024d74",
+  "host_receipt_sha256": "a6cbe28434596fa36489fbc8c88053caf6b00e2b1c20d87d4865b56677e7877e",
+  "host": {
+    "status": "passed",
+    "closed": true,
+    "remaining_owned_pids": []
+  },
+  "limits": [
+    "Three-frame setup probe from incomplete CPU279, not a completed factory video",
+    "16 vehicle references and replayed poses/payloads; no16-AMR physics, sensors or electrical charging validation",
+    "CPU HUD285 is a separate postprocess preview; original RGB and journal unchanged"
+  ]
+}
