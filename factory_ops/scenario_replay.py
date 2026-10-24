@@ -20,7 +20,7 @@ _SELECTED_KEYS = {
     "schema_version", "run_id", "revision", "mode", "connection", "observed_at",
     "sim_time_s", "paused", "robots", "tasks", "events", "inventory", "kpis",
     "commands", "capabilities", "charging", "model_scope", "equipment", "traffic",
-    "execution_mode", "dispatch_policy",
+    "execution_mode", "dispatch_policy", "equipment_cells",
 }
 
 

@@ -137,8 +137,12 @@ def validate_snapshot(value: Any) -> dict[str, Any]:
                 raise ValueError("robot charging dock does not match slot ownership")
     elif any(robot.get("charging_dock") is not None for robot in value["robots"]):
         raise ValueError("robot charging ownership requires a dock projection")
-    if "equipment" in value:
-        equipment = value["equipment"]
+    equipment_rows = [value["equipment"]] if "equipment" in value else []
+    if "equipment_cells" in value:
+        if not isinstance(value["equipment_cells"], list) or not value["equipment_cells"]:
+            raise ValueError("equipment cells must be a non-empty list")
+        equipment_rows.extend(value["equipment_cells"])
+    for equipment in equipment_rows:
         if not isinstance(equipment, dict):
             raise ValueError("equipment projection must be an object")
         required = {"station_id", "label", "available", "status", "reason", "active_order_id",
@@ -160,6 +164,12 @@ def validate_snapshot(value: Any) -> dict[str, Any]:
         if any(type(equipment[key]) is not int or equipment[key] < 0
                for key in ("input_waiting_orders", "output_waiting_orders", "wip_orders")):
             raise ValueError("equipment queue counts are invalid")
+    if "equipment_cells" in value:
+        ids = [row["station_id"] for row in value["equipment_cells"]]
+        if len(ids) != len(set(ids)):
+            raise ValueError("equipment cell identities must be unique")
+        if "equipment" in value and value["equipment"] not in value["equipment_cells"]:
+            raise ValueError("primary equipment differs from equipment cells")
     for key in ("tasks", "events", "commands", "capabilities"):
         if not isinstance(value.get(key), list):
             raise ValueError(f"snapshot {key} must be a list")
@@ -289,7 +299,8 @@ class DashboardService:
                  charging_profile: dict[str, Any] | None = None, charging_source: Path | None = None,
                  events_source: Path | None = None, live_anchor_controls: bool = False,
                  scenario_dir: Path | None = None, execution_mode: str = "preview",
-                 dispatch_policy: str = "fifo", lots: int = 12) -> None:
+                 dispatch_policy: str = "fifo", lots: int = 12,
+                 process_line_controls: bool = False) -> None:
         if execution_mode not in ("preview", "operations", "process-line"):
             raise ValueError("local execution mode must be preview, operations or process-line")
         if type(lots) is not int or not 1 <= lots <= 64:
@@ -298,10 +309,13 @@ class DashboardService:
             raise ValueError(f"{execution_mode} mode excludes source and preview charging profile")
         if execution_mode == "process-line" and outbox is not None:
             raise ValueError("process-line mode is read-only and excludes a command outbox")
+        if type(process_line_controls) is not bool or process_line_controls and execution_mode != "process-line":
+            raise ValueError("process-line controls require the local process-line mode")
         if live_anchor_controls and (source is None or outbox is None or charging_profile is not None):
             raise ValueError("live anchor controls require explicit source/outbox and no CPU profile")
         self.live_anchor_controls = live_anchor_controls
         self.execution_mode = execution_mode
+        self.process_line_controls = process_line_controls
         if source is not None and charging_profile is not None:
             raise ValueError("CPU charging profile cannot modify a live/replay source")
         if charging_source is not None and (source is None or outbox is not None and not live_anchor_controls or charging_profile is not None):
@@ -431,7 +445,7 @@ class DashboardService:
             if self.mock_mes is not None:
                 result["integrations"] = {"mock_mes": self.mock_mes.snapshot()}
             if self.execution_mode == "process-line":
-                result["capabilities"] = []
+                result["capabilities"] = ["set_equipment_availability"] if self.process_line_controls else []
             result["api_producer"] = {"scope": "selected API/model source bytes at service start",
                                       "selected_modules_sha256": dict(self.producer_sources)}
             if self.charging_source is not None:
@@ -481,7 +495,7 @@ class DashboardService:
                 return deepcopy(self._receipts[key])
             receipt = {"command_id": key, "run_id": state["run_id"],
                        "status": "rejected", "reason": None, "revision": state["revision"]}
-            if (self.live_anchor_controls or "expected_run_id" in value) and value.get("expected_run_id") != state["run_id"]:
+            if (self.live_anchor_controls or self.process_line_controls or "expected_run_id" in value) and value.get("expected_run_id") != state["run_id"]:
                 receipt["reason"] = "실행이 변경됐습니다. 최신 실행에서 다시 요청하세요"
             elif type(value.get("expected_revision")) is not int or value["expected_revision"] != state["revision"]:
                 receipt["reason"] = "상태가 변경됐습니다. 최신 상태에서 다시 요청하세요"
@@ -497,7 +511,12 @@ class DashboardService:
                     if action == "create_order":
                         self.model.create_order(value.get("parameters", {}))
                     elif action == "set_equipment_availability":
-                        self.model.set_equipment_availability(value.get("parameters", {}))
+                        parameters = value.get("parameters", {})
+                        if self.process_line_controls and not isinstance(parameters.get("cell_id"), str):
+                            raise ValueError("process-line equipment requires a named cell_id")
+                        effect = self.model.set_equipment_availability(parameters)
+                        if self.process_line_controls:
+                            receipt["effect"] = effect
                     elif action == "set_aisle_closed":
                         effect = self.model.set_aisle_closed(value.get("parameters", {}))
                         self._local_closure_requests[key] = effect["requested_closed"]
@@ -589,6 +608,8 @@ def main() -> None:
     parser.add_argument("--execution-mode", choices=("preview", "operations", "process-line"), default="preview")
     parser.add_argument("--dispatch-policy", choices=("fifo", "eta"), default="fifo")
     parser.add_argument("--lots", type=int, default=12, help="initial process-line lots, 1..64")
+    parser.add_argument("--process-line-controls", action="store_true",
+                        help="opt-in local process-line equipment fault/recovery commands only")
     parser.add_argument("--source", type=Path, help="atomically published live/replay JSON; never rosbag SQLite")
     parser.add_argument("--charging-source", type=Path,
                         help="optional same-run ROS virtual charger JSON; controls require explicit opt-in")
@@ -607,6 +628,8 @@ def main() -> None:
         parser.error(f"--execution-mode {args.execution_mode} excludes source and preview charging profile")
     if args.execution_mode == "process-line" and args.commands_dir is not None:
         parser.error("--execution-mode process-line is read-only and excludes --commands-dir")
+    if args.process_line_controls and args.execution_mode != "process-line":
+        parser.error("--process-line-controls requires --execution-mode process-line")
     if args.source is not None and args.web_charging_profile is not None:
         parser.error("--web-charging-profile is available only in the local CPU model")
     if args.charging_source is not None and (args.source is None or args.commands_dir is not None and not args.live_anchor_controls
@@ -621,7 +644,8 @@ def main() -> None:
                                charging_profile=charging_profile, charging_source=args.charging_source,
                                events_source=args.events_source, live_anchor_controls=args.live_anchor_controls,
                                scenario_dir=args.scenario_dir, execution_mode=args.execution_mode,
-                               dispatch_policy=args.dispatch_policy, lots=args.lots)
+                               dispatch_policy=args.dispatch_policy, lots=args.lots,
+                               process_line_controls=args.process_line_controls)
     server = make_server(service, args.port)
     stopping = threading.Event()
 
