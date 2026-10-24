@@ -270,10 +270,19 @@ class OperationsCharging:
             return False
         if old_home == anchor or old_home in (model.homes[r] for r in model.homes if r not in {robot, peer}):
             raise RuntimeError("charging home swap would duplicate or cross another robot home")
+        superseded_relocation = self.relocating.pop(robot, None)
         model.homes[robot], model.homes[peer] = anchor, old_home
         self.relocating[peer] = old_home
         self.home_swaps.append({"charging_robot": robot, "relocating_robot": peer,
                                 "dock_home": anchor, "relocation_home": old_home})
+        if superseded_relocation is not None:
+            model._event(
+                "charge_home_relocation_superseded",
+                f"{robot} 충전 진입으로 이전 교환 주차 목적지 해제",
+                robot,
+                prior_relocation_home=superseded_relocation,
+                charging_home=anchor,
+            )
         model._event("charge_home_swapped", f"{robot} 충전 진입을 위해 {peer} 주차 위치 교환", robot,
                      dock_anchor=anchor, relocating_robot=peer, relocation_home=old_home)
         return occupied_peer is None

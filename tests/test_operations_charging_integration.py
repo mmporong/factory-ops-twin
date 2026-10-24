@@ -170,6 +170,35 @@ class OperationsChargingIntegrationTests(unittest.TestCase):
             for event in model._events
         ))
 
+    def test_relocated_robot_that_later_charges_drops_superseded_relocation(self):
+        model = OperationsModel(
+            CONFIG, initial_orders=0, run_id="operations-charge-relocation-superseded",
+            operations_charging_profile=self.base_profile,
+        )
+        charging = model.operations_charging
+        assert charging is not None
+        charging.queue.clear()
+        charging.aux.clear()
+        charging.relocating.clear()
+        model._trips.clear()
+
+        self.assertFalse(charging._prepare_home_swap(model, "amr-3", "P1"))
+        self.assertEqual("P3", charging.relocating["amr-1"])
+
+        self.assertFalse(charging._prepare_home_swap(model, "amr-1", "P2"))
+
+        self.assertNotIn("amr-1", charging.relocating)
+        self.assertEqual("P2", model.homes["amr-1"])
+        self.assertEqual("P3", charging.relocating["amr-2"])
+        self.assertEqual(4, len(set(model.homes.values())))
+        self.assertTrue(any(
+            event["type"] == "charge_home_relocation_superseded"
+            and event["robot_id"] == "amr-1"
+            and event["prior_relocation_home"] == "P3"
+            and event["charging_home"] == "P2"
+            for event in model._events
+        ))
+
     def test_charge_queue_preempts_home_parking_only_at_safe_stop(self):
         model = OperationsModel(
             CONFIG, initial_orders=0, run_id="operations-charge-parking-preempt",
