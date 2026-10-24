@@ -5,6 +5,7 @@ from unittest.mock import PropertyMock, patch
 
 from factory_ops.dashboard import validate_snapshot
 from factory_ops.line_operations_model import LineOperationsModel, _TripTask
+from factory_ops.operations_replan import find_alternative_route
 from factory_ops.process_line import TransportRequest
 from factory_ops.process_line_layout import build_line_bundle
 
@@ -242,6 +243,235 @@ class LineOperationsModelTests(unittest.TestCase):
         self.assertTrue(staged["admission_tiles"].issubset(old_window))
         assign.assert_not_called()
         empty_pickup.assert_not_called()
+
+    def test_cycle_replan_atomically_replaces_retained_shipping_window(self):
+        model = LineOperationsModel(
+            CONFIGS / "factory-semiconductor-campus16-wide-bridges",
+            initial_lots=0,
+            run_id="line-replan-handover-replace",
+        )
+        robot = "amr-10"
+        task = _TripTask(
+            "LOT-0042:empty_return:5", "LOT-0042", "T042",
+            "C_OUT", "B_S3", "empty_return",
+        )
+        model._locations[robot] = "C_OUT"
+        model._poses[robot].update(
+            x_m=model.book.nodes["C_OUT"][0], y_m=model.book.nodes["C_OUT"][1],
+        )
+        model._trip(robot, task, "C_OUT", "B_S3", "drop", kind="process_line")
+        trip = model._trips[robot]
+        old_window = frozenset(trip["admission_tiles"])
+        model.bridges.admit(
+            robot,
+            trip["admission_nodes"],
+            route_tiles=old_window,
+            handover_protected=True,
+        )
+        alternative = find_alternative_route(
+            model.book,
+            start="C_OUT",
+            goal="B_S3",
+            closed=model.closed,
+            reservation_radius_m=model.radius,
+            peer_footprint_tiles=(),
+            existing_points=tuple(trip["points"]),
+        )
+        self.assertIsNotNone(alternative)
+        assert alternative is not None
+        model._replans[robot] = {
+            "points": alternative.points[1:],
+            "nodes": alternative.nodes,
+            "start": "C_OUT",
+            "reason": "persistent_reservation_wait_cycle",
+            "cycle": (robot, "amr-13", "amr-15", "amr-6"),
+            "attempt": 366,
+        }
+        successor = model._window_for_trip(
+            alternative.points[0], alternative.points[1:], alternative.nodes[1:], trip,
+            robot_id=robot,
+        )
+        self.assertEqual(84, len(old_window))
+        self.assertEqual(106, len(successor["tiles"]))
+        self.assertNotEqual(old_window, successor["tiles"])
+
+        class AdmissionReached(Exception):
+            pass
+
+        with (
+            patch.object(model, "_safe_exit_lookahead_blockers", return_value=()),
+            patch.object(
+                model, "_admission_observations",
+                return_value={robot: model._footprint(robot)},
+            ),
+            patch.object(model, "_claim", side_effect=AdmissionReached),
+            self.assertRaises(AdmissionReached),
+        ):
+            model._move_trip(robot, trip, 0.1)
+
+        self.assertEqual(successor["tiles"], model.bridges._protected_tiles[robot])
+        self.assertEqual(
+            model.bridges.required(successor["nodes"]), model.bridges.held(robot),
+        )
+        self.assertIn(robot, model._replans)
+
+    def test_blocked_cycle_replan_preserves_retained_shipping_window(self):
+        model = LineOperationsModel(
+            CONFIGS / "factory-semiconductor-campus16-wide-bridges",
+            initial_lots=0,
+            run_id="line-replan-handover-blocked",
+        )
+        robot, peer = "amr-10", "amr-2"
+        task = _TripTask(
+            "LOT-0042:empty_return:5", "LOT-0042", "T042",
+            "C_OUT", "B_S3", "empty_return",
+        )
+        model._locations[robot] = "C_OUT"
+        model._poses[robot].update(
+            x_m=model.book.nodes["C_OUT"][0], y_m=model.book.nodes["C_OUT"][1],
+        )
+        model._trip(robot, task, "C_OUT", "B_S3", "drop", kind="process_line")
+        trip = model._trips[robot]
+        old_window = frozenset(trip["admission_tiles"])
+        model.bridges.admit(
+            robot,
+            trip["admission_nodes"],
+            route_tiles=old_window,
+            handover_protected=True,
+        )
+        alternative = find_alternative_route(
+            model.book,
+            start="C_OUT",
+            goal="B_S3",
+            closed=model.closed,
+            reservation_radius_m=model.radius,
+            peer_footprint_tiles=(),
+            existing_points=tuple(trip["points"]),
+        )
+        self.assertIsNotNone(alternative)
+        assert alternative is not None
+        model._replans[robot] = {
+            "points": alternative.points[1:],
+            "nodes": alternative.nodes,
+            "start": "C_OUT",
+            "reason": "persistent_reservation_wait_cycle",
+            "cycle": (robot, "amr-13", "amr-15", "amr-6"),
+            "attempt": 366,
+        }
+        successor = model._window_for_trip(
+            alternative.points[0], alternative.points[1:], alternative.nodes[1:], trip,
+            robot_id=robot,
+        )
+        conflict_tile = next(iter(successor["tiles"] - old_window))
+        model.bridges.admit(peer, (), route_tiles={conflict_tile})
+        held_before = model.bridges.held(robot)
+        route_before = tuple(trip["points"])
+
+        with (
+            patch.object(model, "_safe_exit_lookahead_blockers", return_value=()),
+            patch.object(
+                model, "_admission_observations",
+                return_value={robot: model._footprint(robot)},
+            ),
+            patch.object(model, "_claim") as claim,
+        ):
+            model._move_trip(robot, trip, 0.1)
+
+        claim.assert_not_called()
+        self.assertEqual(old_window, model.bridges._protected_tiles[robot])
+        self.assertEqual(held_before, model.bridges.held(robot))
+        self.assertEqual((peer,), model.bridges.waiters[robot])
+        self.assertEqual(tuple(alternative.points[1:]), tuple(model._replans[robot]["points"]))
+        self.assertEqual(route_before, tuple(trip["points"]))
+        self.assertEqual(
+            {"reason": "bridge_admission_occupied", "blockers": [peer]},
+            model._waiting[robot],
+        )
+
+    def test_cycle_replan_withdraws_for_ordinary_active_window_then_resumes_original(self):
+        model = LineOperationsModel(
+            CONFIGS / "factory-semiconductor-campus16-wide-bridges",
+            initial_lots=0,
+            run_id="line-replan-ordinary-window",
+        )
+        robot = "amr-10"
+        task = _TripTask(
+            "LOT-0042:empty_return:5", "LOT-0042", "T042",
+            "C_OUT", "B_S3", "empty_return",
+        )
+        model._locations[robot] = "C_OUT"
+        model._poses[robot].update(
+            x_m=model.book.nodes["C_OUT"][0], y_m=model.book.nodes["C_OUT"][1],
+        )
+        model._trip(robot, task, "C_OUT", "B_S3", "drop", kind="process_line")
+        trip = model._trips[robot]
+        old_window = frozenset(trip["admission_tiles"])
+        model.bridges.admit(
+            robot,
+            trip["admission_nodes"],
+            route_tiles=old_window,
+            handover_protected=False,
+        )
+        alternative = find_alternative_route(
+            model.book,
+            start="C_OUT",
+            goal="B_S3",
+            closed=model.closed,
+            reservation_radius_m=model.radius,
+            peer_footprint_tiles=(),
+            existing_points=tuple(trip["points"]),
+        )
+        self.assertIsNotNone(alternative)
+        assert alternative is not None
+        model._replans[robot] = {
+            "points": alternative.points[1:],
+            "nodes": alternative.nodes,
+            "start": "C_OUT",
+            "reason": "persistent_reservation_wait_cycle",
+            "cycle": (robot, "amr-13", "amr-15", "amr-6"),
+            "attempt": 367,
+        }
+        route_before = tuple(trip["points"])
+        held_before = model.bridges.held(robot)
+
+        with (
+            patch.object(model, "_safe_exit_lookahead_blockers", return_value=()),
+            patch.object(
+                model, "_admission_observations",
+                return_value={robot: model._footprint(robot)},
+            ),
+            patch.object(model.bridges, "replace_handover") as replace_handover,
+            patch.object(model, "_claim") as claim,
+        ):
+            model._move_trip(robot, trip, 0.1)
+
+        replace_handover.assert_not_called()
+        claim.assert_not_called()
+        self.assertEqual(old_window, model.bridges._protected_tiles[robot])
+        self.assertEqual(held_before, model.bridges.held(robot))
+        self.assertEqual(route_before, tuple(trip["points"]))
+        self.assertNotIn(robot, model._replans)
+        self.assertNotIn(robot, model._waiting)
+        self.assertEqual(
+            ("traffic_replan_withdrawn", "ordinary_active_window"),
+            (model._events[-1]["type"], model._events[-1]["reason"]),
+        )
+
+        model._schedule_cycle_replan((robot,))
+        self.assertNotIn(robot, model._replans)
+
+        class OriginalRouteClaimReached(Exception):
+            pass
+
+        with (
+            patch.object(model, "_safe_exit_lookahead_blockers", return_value=()),
+            patch.object(model, "_claim", side_effect=OriginalRouteClaimReached) as claim,
+            self.assertRaises(OriginalRouteClaimReached),
+        ):
+            model._move_trip(robot, trip, 0.1)
+
+        claim.assert_called_once()
+        self.assertNotIn("replan-", claim.call_args.args[1])
 
     def test_home_parking_is_preemptible_at_unstarted_or_intermediate_safe_hold(self):
         model = LineOperationsModel(

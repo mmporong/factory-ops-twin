@@ -339,11 +339,14 @@ class OperationsModel(DashboardModel):
         self.replan_attempt_count += 1
         self.last_replan_reason = "persistent_reservation_wait_cycle"
         observations = self.reservations.observation_snapshot(now_s=self.sim_time)
+        handover_protected = frozenset(self.bridges.snapshot()["handover_protected"])
         candidates = []
         for robot in cycle:
             trip = self._trips.get(robot)
             if (trip is None or robot in self._chunks or not self.motions[robot].stopped
                     or not trip["points"]):
+                continue
+            if self.bridges.has_window(robot) and robot not in handover_protected:
                 continue
             start = anchor_at_pose(self.book.nodes, self._poses[robot])
             if start is None:
@@ -794,11 +797,62 @@ class OperationsModel(DashboardModel):
                     "blockers": list(exit_blockers),
                 }
                 return
+            observations = self._admission_observations(robot_id, trip)
+            if replan is not None and self.bridges.has_window(robot_id):
+                if self.bridges.can_retarget(
+                    robot_id,
+                    window["nodes"],
+                    route_tiles=window["tiles"],
+                ):
+                    self.bridges.retarget(
+                        robot_id,
+                        window["nodes"],
+                        route_tiles=window["tiles"],
+                        stopped=self.motions[robot_id].stopped,
+                    )
+                elif robot_id not in self.bridges.snapshot()["handover_protected"]:
+                    withdrawn = self._replans.pop(robot_id)
+                    self.reservations.withdraw_pending(
+                        robot_id,
+                        now_s=self.sim_time,
+                        reason="replan_withdrawn_for_active_window",
+                    )
+                    self._waiting.pop(robot_id, None)
+                    self._event(
+                        "traffic_replan_withdrawn",
+                        f"{robot_id} 활성 보호창 유지 · 우회 철회",
+                        robot_id,
+                        reason="ordinary_active_window",
+                        cycle=list(withdrawn["cycle"]),
+                        route_nodes=list(withdrawn["nodes"]),
+                    )
+                    return
+                else:
+                    replacement_blockers = self.bridges.replace_handover(
+                        robot_id,
+                        window["nodes"],
+                        route_tiles=window["tiles"],
+                        current_pose_tiles=self._footprint(robot_id),
+                        observed_tiles=observations,
+                        stopped=self.motions[robot_id].stopped,
+                    )
+                    if replacement_blockers:
+                        self.bridges.record_wait(robot_id, replacement_blockers)
+                        self.reservations.withdraw_pending(
+                            robot_id,
+                            now_s=self.sim_time,
+                            reason="replan_handover_replace_denied",
+                        )
+                        self._waiting[robot_id] = {
+                            "reason": "bridge_admission_occupied",
+                            "blockers": list(replacement_blockers),
+                        }
+                        return
             blockers = self.bridges.admit(
                 robot_id,
                 window["nodes"],
                 route_tiles=window["tiles"],
-                observed_tiles=self._admission_observations(robot_id, trip),
+                observed_tiles=observations,
                 handover_protected=window["retain_at_handover"],
             )
             if blockers:
