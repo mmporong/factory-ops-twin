@@ -222,6 +222,27 @@ class PerceptionDatasetTests(unittest.TestCase):
                 capture_validation=capture,
             )
 
+    def test_distance_rejects_invalid_background_ranges_and_accepts_zero_background(self) -> None:
+        capture = validate_capture(
+            width=5, height=4, semantic=self.semantic, semantic_info=self.semantic_info,
+            bbox_rows=self.rows, bbox_info=self.bbox_info, expected_objects=self.expected,
+        )
+        for invalid in (np.nan, -np.inf, -1.0):
+            with self.subTest(invalid=invalid):
+                distance = np.ones((4, 5), dtype=np.float32)
+                distance[0, 0] = invalid
+                with self.assertRaisesRegex(PerceptionDatasetError, "negative ranges"):
+                    validate_distance_to_camera(
+                        width=5, height=4, distance=distance, semantic=self.semantic,
+                        capture_validation=capture,
+                    )
+        distance[0, 0] = 0
+        result = validate_distance_to_camera(
+            width=5, height=4, distance=distance, semantic=self.semantic,
+            capture_validation=capture,
+        )
+        self.assertEqual(20, result["finite_pixel_count"])
+
 
 if __name__ == "__main__":
     unittest.main()

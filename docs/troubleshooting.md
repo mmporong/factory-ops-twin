@@ -1599,3 +1599,9 @@ sim20,341초 재현은 출하5·반납4·운송66과 amr13→amr6→amr9→amr13
 최종 bridge owners는 비어 있고 bridge/reservation cycle도 없다. 그러나 waiters는7→3→1→14→16→6→8,10→2→14,9→2,4/12→16,5→6,13→14의 비순환 chain을 보였다. terminal blocker는B_P2의idle amr8이었다. 충전 홈 교환은amr6의 새 홈/relocating을B_P4로 바꿨지만 진행 중이던 귀가 trip의 goal은B_P2에 남았다. amr6은B_BD_N_SAFE_EXIT에서 이미 점유된 옛 목적지를 기다렸다. 작은 재현에서 홈P3/P1 교환 뒤 goal이P1에 남는 것을 확인해 긴 warmup 없이 원인을 좁혔다.
 
 수정3a7a8d2는 relocating 차량의 옛 home-parking 경로를 새 홈으로 전환한다. 정지·안전 대기점·queue 외부·활성chunk 없음·교량window/점유 없음 조건을 모두 요구하고, 대기 요청을 철회한 뒤 현재 anchor의 새 trip을 만든다. 실제pose lease와 기존 footprint/window 검사는 유지한다. 관련3검사가2.944초에 통과했고320의B_BD_N_SAFE_EXIT에서도B_P2→B_P4 전환을 확인했다. 재발 방지는 충전 홈 소유권 교환 시 기존 귀가 목적지의 일치도 검사하는 것이다.321은 같은48lot 조건으로 후속 실행하며 전체 완주·16개 물류 동시성은 아직 확인 중이다. [320 마감 상태·원본 해시·수정](evidence/campus16-320.json)
+
+## FOT-203 — 깊이 검사의 음수 배경 허용 경계
+
+512장 exporter의 CPU 입력을 통합하면서 깊이 검사에 가시 객체 밖의 유한 음수가 허용되는 조건을 확인했다. 초기 검사는NaN/-inf와 가시 객체의0/+inf를 거절했지만 배경의-1.0은 통과했다. 실제 GPU 자료에서 관측된 실패가 아니라 검사 함수의 재현 가능한 입력 경계다.
+
+모든 픽셀의 음수와NaN을 거절하도록 고쳤다. 배경의0/+inf는 유지하고 객체 마스크 안은 유한 양수만 허용한다. 이 범위의3개 표적 검사에서 유효 깊이·배경0/+inf·잘못된shape·객체+inf·배경NaN/-inf/-1.0을 확인했다.512장 촬영과 학습 승인은 아직 남아 있다. [구현·확인 범위와 버전별 공식 참조](evidence/perception-pilot-512-preparation.json)

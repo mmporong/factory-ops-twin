@@ -62,6 +62,8 @@ LOCO 학습용 sub2·sub5의6장을 기존302 합성 장면과 비교했다. 고
 
 객체를 올바른 하위 유형으로 라벨링하는 것과 클래스 전체 외형을 학습 자료가 덮는 것은 구분한다. 기존 회색 얕은 용기와 청색 rigid crate를 제한된 baseline에 사용하는 것은 가능하며, 재현하지 않은 형상은 도메인 차이로 명시한다. 모든 실사 외형을 재현해야 파일럿을 시작할 수 있다는 조건은 추가하지 않는다.512장 촬영 전에는 이 제한 범위와 적층·가림·크기·배경 변형을 설정하고 객체별 bbox·semantic 정합을 유지한다. 아직512장 생성·검출기 학습은 시작하지 않았다. [선택 규칙·관찰·원본 해시](evidence/perception-class-readiness.json)
 
+512장 파일럿의 입력과 exporter는 구현했다.128개 고유 scene seed에4개 시점을 배정하고 회색·청색 용기를 장면별로 균등하게 사용한다. 적층 지지 관계·가림용 소품·배경·크기·조명·카메라 변형을 recipe에 고정했다. exporter는 RGB·객체별 tight bbox/semantic·카메라 거리·pose·해시와 COCO 후보를 작성하며, 알 수 없는 recipe 필드와 바뀐 입력을 거절한다. 표적19검사와 main 통합 후 실제 manifest·준비 에셋 pin 검사가 통과했다. 깊이 검사는 배경의0/+inf와 가시 객체의 유한 양수 범위를 구분하고, 음수·NaN 거절을 포함한 후속3검사를 통과했다. 설치된 Replicator1.11.35와 [같은 버전의 공식 annotator 문서](https://docs.omniverse.nvidia.com/kit/docs/omni_replicator/1.11.35/source/extensions/omni.replicator.core/docs/API.html#distance-to-camera)를 참조했다. GPU 촬영은 아직 수행하지 않았고, 원본 RGB 확인·대상별 라벨 검사를 마친 학습 데이터로 승인하지 않는다.16대 운영을 우선하며 같은 probe를 반복 수집하지 않는다. [입력·구현·확인 범위](evidence/perception-pilot-512-preparation.json)
+
 ## 순서와 확대 조건
 
 | 단계 | 실행 내용 | 위치·현재 상태 | 다음 단계 조건 |

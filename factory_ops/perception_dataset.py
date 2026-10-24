@@ -265,8 +265,8 @@ def validate_distance_to_camera(
         )
     if values.dtype != np.float32:
         raise PerceptionDatasetError(f"distance_to_camera dtype differs from SDK contract: {values.dtype}")
-    if np.isnan(values).any() or np.isneginf(values).any():
-        raise PerceptionDatasetError("distance_to_camera contains NaN or negative infinity")
+    if np.isnan(values).any() or np.any(values < 0):
+        raise PerceptionDatasetError("distance_to_camera contains NaN or negative ranges")
     finite = np.isfinite(values)
     if not np.any(finite & (values > 0)):
         raise PerceptionDatasetError("distance_to_camera contains no finite positive ranges")

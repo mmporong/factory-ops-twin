@@ -1,0 +1,88 @@
+{
+  "schema_version": 1,
+  "status": "implemented_cpu_preflight_passed_gpu_capture_pending",
+  "scope": "Limited synthetic pallet and gray/blue rigid-crate baseline; no generated512-frame dataset, detector training, Cosmos or real-image metrics yet.",
+  "source": {
+    "agent_commits": [
+      "ab5630ef0a45aa231e1661e7c62d35235574f322",
+      "1289e90",
+      "7f1b57081d28686effe6dc9c76860b8faa97afdb"
+    ],
+    "integrated_main_commit": "73f65ca",
+    "files": {
+      "configs/perception/loco-pallet-rigid-crate-pilot-v1.json": {
+        "sha256": "8470c6edb52efcdaaf76a74a92a500eccdeeb955a93650fcdb8f64a1ba591f09",
+        "bytes": 5032
+      },
+      "scripts/perception/prepare_pilot_manifest.py": {
+        "sha256": "443601ee31f46a6d51ecc39495b01234c618241e2f82ee74fe9ec9783f9c3df3",
+        "bytes": 17207
+      },
+      "scripts/isaac/capture_perception_pilot.py": {
+        "sha256": "4aef6f94db37a730924f35a4f11ec04bb14029c516623c548c662408dfab03a2",
+        "bytes": 34452
+      },
+      "factory_ops/perception_dataset.py": {
+        "sha256": "32c3676bb8350bd59778f182adf31e5baa2bcd6b16ea8c6ba877aa65be274b80",
+        "bytes": 13742
+      }
+    }
+  },
+  "input": {
+    "manifest_sha256": "c969695b61af98328d51f1210c4986c92646a2b80a86e1815c3e8d289176fad9",
+    "manifest_bytes": 656569,
+    "recipe_sha256": "ad700978cc470c586b2446a9be5705ce06f01128a3858609aad06af24fa3ff4f",
+    "scene_count": 128,
+    "frame_count": 512,
+    "views_per_scene": 4,
+    "unique_scene_seeds": 128,
+    "gray_and_blue_scenes_each": 64,
+    "stack_support_scenes": 85,
+    "context_scenes": 96
+  },
+  "validation": {
+    "agent_targeted_tests": {
+      "command": "python -m unittest tests.test_prepare_perception_pilot tests.test_capture_perception_pilot tests.test_perception_dataset",
+      "passed": 19,
+      "runtime": "Python3.14/numpy2.3.5 already installed",
+      "new_dependencies_installed": false
+    },
+    "integrated_main_recipe_and_asset_pin_preflight": "PASS",
+    "syntax_and_diff_check": "Agent PASS",
+    "GPU_validation": "pending",
+    "post_integration_depth_boundary_tests": {
+      "passed": 3,
+      "wall_s": 0.001,
+      "scope": "positive object range, zero/+infinity background, wrong shape, object infinity and NaN/negative background rejection"
+    }
+  },
+  "label_contract": {
+    "bbox_endpoint_convention": "inclusive_min_max",
+    "clipped_frame_edges_allowed": true,
+    "per_object_bbox_equals_same_object_id_semantic_tight_extent": true,
+    "reject_fully_hidden_objects": true,
+    "root_semantics_only": true
+  },
+  "depth_contract": {
+    "shape": "height x width",
+    "dtype": "float32",
+    "target_object_pixels": "finite and positive",
+    "background": "zero or positive infinity permitted outside labelled target masks; NaN and all negative ranges rejected",
+    "reference_scope": "Pinned Replicator1.11.35 documentation and installed Isaac Sim4.5 camera tests/KITTI writer; native output pending."
+  },
+  "references": [
+    {
+      "title": "Replicator1.11.35 annotator API",
+      "url": "https://docs.omniverse.nvidia.com/kit/docs/omni_replicator/1.11.35/source/extensions/omni.replicator.core/docs/API.html#distance-to-camera"
+    }
+  ],
+  "flags": {
+    "training_ready": false,
+    "mapping_approved": false,
+    "GPU_capture_performed": false,
+    "detector_training_performed": false,
+    "Cosmos_used": false,
+    "heldout_LOCO_RGB_read": false
+  },
+  "next": "Use the shared GPU lease and owned-process runner for the pinned pilot after the primary16-AMR operations task; check real RGB, depth and labels before training."
+}
