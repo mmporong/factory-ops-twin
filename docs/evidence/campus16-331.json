@@ -214,7 +214,31 @@
       }
     },
     "external_blocker": "amr-1 parking",
-    "guard_repair_status": "targeted reproduction and repair in progress; no new whole run launched",
-    "preserved_scope": "Actual poses, active windows, safe exits, radius, energy and material capacity remain enforced."
+    "guard_repair_status": "Implemented and targeted regressions passed; full-run followup332 is separate and not yet verified.",
+    "preserved_scope": "Actual poses, active windows, safe exits, radius, energy and material capacity remain enforced.",
+    "repair": {
+      "commit": "a872fe56f317a5fa92fc12d22c1c16a65d427885",
+      "worker_commit": "2c40f87e427f1f7a6173618457b9934ba7899c1f",
+      "files": [
+        "factory_ops/operations_model.py",
+        "tests/test_operations_charging_integration.py"
+      ],
+      "diagnosis_receipt_sha256": "f4abadc380a7f2dc49d207480a73035c517c80806c353cff068785bddb99fa19",
+      "final_code_targeted_tests": {
+        "passed": 4,
+        "elapsed_wall_s": 20.723,
+        "scope": [
+          "reserved anchor protects nonowner; owner access and release",
+          "terminal peer pose and active-window guard; authored home swap preserved",
+          "331 actual dock/exit geometry reproduces the charge-loaded cycle boundary",
+          "existing amr3/amr4 charge release and subsequent dispatch"
+        ]
+      },
+      "additional_related_checks_passed": 2,
+      "ordinary_admission": "Union of actual owner footprint and only its reserved dock footprint; no speculative route preview occupancy.",
+      "reservation_candidate": "Checks terminal dock against poses and active windows; excludes only the explicitly recorded same-dock relocating peer while normal movement admission preserves its departure.",
+      "new_dependencies": false,
+      "full_followup_complete": false
+    }
   }
 }
