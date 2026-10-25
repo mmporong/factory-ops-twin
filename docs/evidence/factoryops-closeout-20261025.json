@@ -1,0 +1,31 @@
+{
+  "owner": "FactoryOps",
+  "gpu_batch_complete": true,
+  "owned_processes_gone": true,
+  "released_at": "2026-10-25T07:04:43.8254404Z",
+  "next_gpu_work_pending": false,
+  "checked_at": "2026-10-25T07:48:36.8813082Z",
+  "last_lease_owner": "FactoryOps-detector-resnet-365-seed1703",
+  "last_lease_id": "c6aba4f3-1c16-49dc-84b4-b35a26be3bd2",
+  "last_lease_state": "completed",
+  "lease_available_at_check": true,
+  "owned_temporary_listeners": [],
+  "completed_gpu_runs": [
+    "detector-resnet-363-seed1701",
+    "detector-resnet-364-seed1702",
+    "detector-resnet-365-seed1703"
+  ],
+  "checked_receipts": [
+    "artifacts/detector-resnet-363-host/receipt.json",
+    "artifacts/detector-resnet-364-host/receipt.json",
+    "artifacts/detector-resnet-365-host/receipt.json",
+    "artifacts/campus16-web-media-374/cleanup-receipt.json"
+  ],
+  "preserved_user_service_ports": [
+    8765,
+    3007,
+    13010
+  ],
+  "publication_commit": "556c5ccb98d2e4e56b57050ecc987d1cc6fb61c1",
+  "note": "FactoryOps GPU batch and owned media servers are closed. Future GPU work must recheck the common lease."
+}

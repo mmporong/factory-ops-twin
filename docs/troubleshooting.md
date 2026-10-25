@@ -1804,6 +1804,10 @@ v4 호스트 준비 생성 중 `$Host`를 경로 변수로 사용해 PowerShell 
 
 368의 분리된 개발 브라우저에서 같은 React 진단이 Browser/Server 채널에 각각80회 기록됐다. 원문은 `Attempted to synchronously unmount a root while React was already rendering`이며 화면에는 `2 Issues`가 남았다.101/101 표본·WebGL canvas·16대·출하6·반납3·AMR01 선택은 실제 DOM과 PNG로 보존했다. 기능이 표시된 사실과 경고의 원인·해소 여부는 구분한다. 원인은 이 촬영에서 확정하지 않았다. 경고 배지를 숨기거나 이미지를 수정하지 않는다. [관측과 로그 해시](images/campus16-web-368/development-indicator.json)
 
-별도372는 Next16.4.2의 `next build --webpack`과 API/운영 웹 HTTP200까지 통과했다. 격리 Chrome1회가30초의 CDP 준비 확인 전에 종료돼 운영 PNG·DOM을 얻지 못했다. debug log가 없어 종료 원인은 미확정이다. 서버 로그에 진단이 없었던 사실만으로 브라우저 경고가 해결됐다고 판단하지 않는다. 같은 실행을 반복하지 않고 실패·정리 영수증을 남겼으며, 기존8765/3007과 다른 사용자의13010 서비스는 보존했다. 후속 촬영은 서버 응답뿐 아니라 브라우저 PID·CDP·DOM·canvas 준비를 단계별로 확인한다. [빌드·실패·종료 근거](evidence/campus16-web-production-372/build-metadata.json)
+별도372는 Next16.4.2의 `next build --webpack`과 API/운영 웹 HTTP200까지 통과했다. 격리 Chrome1회가30초의 CDP 준비 확인 전에 종료돼 운영 PNG·DOM을 얻지 못했다. debug log가 없어 종료 원인은 미확정이다. 서버 로그에 진단이 없었던 사실만으로 브라우저 경고가 해결됐다고 판단하지 않는다. 같은 실행을 반복하지 않고 실패·정리 영수증을 남겼으며, 기존8765/3007과 기존13010 서비스는 보존했다. 후속 촬영은 서버 응답뿐 아니라 브라우저 PID·CDP·DOM·canvas 준비를 단계별로 확인한다. [빌드·실패·종료 근거](evidence/campus16-web-production-372/build-metadata.json)
 
 후속374는 설치 React/DOM19.3.1·R3F9.8.2·Drei10.7.9의 실제 `Html.js`를 대조했다. 각 Html의 `ReactDOM.createRoot`와 layout-effect cleanup의 동기 `currentRoot.unmount()` 경로를 확인했다. `FactoryScene`의 라벨을 CanvasTexture sprite로 바꾸고 texture 해제를 명시해 중첩 DOM root를 없앴다. 타입 검사와 같은 개발 장면의 실제 웹 재생·AMR 선택을 확인했으며 새 원본 로그3행에서 ERROR와 해당 진단은0이었다. 이는 이 소스·촬영 장면의 관측이며 StrictMode를 유일 원인으로 단정하거나372의 운영 Chrome 종료가 해결됐다는 주장이 아니다. 과거368/372는 고치지 않았고 새 PNG·DOM·API·라이브러리 소스/로그 해시를 별도 보존했다. [수정 후 실제 화면·종료](images/campus16-web-374/provenance.json) · [설치 배포 소스와 진단 결속](images/campus16-web-374/diagnostic-binding.json)
+
+## FOT-232 — PowerShell 함수 호출 뒤 남은 native 종료 코드의 오판
+
+마감 확인에서 JSON을 정상 반환한 `Get-GpuLeaseStatus.ps1` 호출 뒤 `$LASTEXITCODE`를 검사해 lease 조회 실패로 잘못 판정했다. 이 helper는 PowerShell 결과 객체를 반환하며 native 종료 코드를 설정하는 계약이 없다. 이전 native 명령의 코드와 혼동하지 않도록 별도 `pwsh -NoProfile -File ... -AsJson`의 종료 코드를 즉시 저장하고, JSON의 `metadataError/nvidiaSmiError`와 필수 필드를 함께 확인했다. 이후 완료 lease·소유 임시listener0·닫힌3개GPU receipt를 확인해 마감 신호를 기록했다. GPU 재실행·새 자원 생성은 없었다. [실제 마감 상태](evidence/factoryops-closeout-20261025.json)
