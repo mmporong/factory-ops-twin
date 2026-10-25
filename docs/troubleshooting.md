@@ -1775,3 +1775,9 @@ v6는 CPU 투영 교집합의 최소 폭·높이4픽셀과 시점별3후보·전
 v1의 COCO_V1 초기 생성은 FrozenBatchNorm2d·학습 파라미터18,876,458개였으나, weights=None 재구성은 BatchNorm2d·18,959,754개였다. strict state_dict load는 통과했지만 normalization 동작과 학습 층 집합은 같지 않았다. v1 비교의 모든 조건이 같은 재구성 경로를 사용했으며 기존 결과를 수정하지 않는다. 이 차이가 낮은 실사 성능의 원인인지는 아직 확인하지 못했다.
 
 v2 선택 모드는 초기/재구성 모두 캐시된 COCO_V1 constructor로 만든 뒤 strict checkpoint를 덮어써 계약을 유지한다. 실제 CPU 검사에서 normalization 종류·학습 파라미터 이름·state key가 같고, v1 legacy 경로가 보존됨을 확인했다. 튜닝 전용 flag와 프로필을 함께 요구하고 최종test 메타데이터가 없는 fixture에서도 동작하는12개 표적 검사가 통과했다. 실제 효과는350~352의 같은 튜닝200장에서 확인한다.
+
+## FOT-227 — 네이티브 검사 실패 뒤 계속 실행된 PowerShell push
+
+포트폴리오 차트의 Matplotlib SVG는 CRLF 원본으로 만들어졌고, Git은 LF로 정규화했다. source/provenance의 SVG SHA와 스테이징 blob이 다르다는 검사가 올바르게 실패했으나, 같은 PowerShell 명령 묶음의 뒤쪽 commit/push가 계속 실행됐다. exit code를 검사하지 않은 실행 연결이 원인이며 검사 PASS 뒤 push한다는 절차를 충족하지 못했다.
+
+해시로 묶은 SVG의 원본 바이트는 보존하고 해당 경로의 `.gitattributes`에 `-text`를 적용한다. 모델 결과·차트 수치·PNG는 수정하지 않는다. 이후 검증 결과의 exit code를 상위 실행기에서 확인하고 성공한 경우에만 별도 commit/push를 호출한다. 차트 provenance의 SVG SHA와 작업트리·스테이징 blob의 일치를 확인한 뒤 교정 커밋을 반영한다.
