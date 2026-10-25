@@ -1,0 +1,103 @@
+{
+  "schema_version": 1,
+  "frozen_utc": "2026-10-25T06:40:28.8783716+00:00",
+  "selection_frozen_before_first_gpu": true,
+  "source_commit": "15c0e3bc754c497e2c204af2dc6b5b0cc7dcd84e",
+  "source_checkout": "C:\\Users\\LIMMM\\worktrees\\factory-ops-twin-detector-resnet-363",
+  "profile_id": "detector-pilot-resnet-v4",
+  "execution_mode": "tuning_validation_only_development",
+  "execution_order": [
+    1701,
+    1702,
+    1703
+  ],
+  "real_subset_seed": 5701,
+  "conditions_and_updates": {
+    "S": 1024,
+    "R50": 256,
+    "SR50": 256
+  },
+  "model_bundle": {
+    "architecture": "fasterrcnn_resnet50_fpn",
+    "weights_enum": "FasterRCNN_ResNet50_FPN_Weights.COCO_V1",
+    "trainable_backbone_layers": 3,
+    "batch_size": 2,
+    "batch1_fallback_allowed": false,
+    "comparison": "COCO weights, FPN, default RPN, and backbone model bundle"
+  },
+  "fixed_test_inference_allowed": false,
+  "fixed_test_metadata_read_allowed": false,
+  "selection": "execute all registered seeds without selection by AP",
+  "admission_cutoff_utc": "2026-10-25T07:40:00Z",
+  "batch_finish_deadline_utc": "2026-10-25T08:00:00Z",
+  "per_seed_limits": {
+    "runner_wall_seconds": 1200,
+    "job_wall_seconds": 1260,
+    "lease_wait_seconds": 1320
+  },
+  "configurations": [
+    {
+      "seed": 1701,
+      "path": "C:\\Users\\LIMMM\\factory-ops-twin\\artifacts\\detector-pilot-resnet-matrix-363\\seed-1701.json",
+      "sha256": "3d8e9a00b028085c6ea724d17e883922e6e50406e87a6fc83c12172ddcc99ffa"
+    },
+    {
+      "seed": 1702,
+      "path": "C:\\Users\\LIMMM\\factory-ops-twin\\artifacts\\detector-pilot-resnet-matrix-363\\seed-1702.json",
+      "sha256": "a6ecffd9973898376f97bb9e0b8946e01e9ca785970782f0f1d572652e06d70f"
+    },
+    {
+      "seed": 1703,
+      "path": "C:\\Users\\LIMMM\\factory-ops-twin\\artifacts\\detector-pilot-resnet-matrix-363\\seed-1703.json",
+      "sha256": "216179be62da7eea8bee293860ff84460bb5715fbe722dbba6c9a6faf6e07157"
+    }
+  ],
+  "input_pins": [
+    {
+      "role": "base_profile",
+      "path": "C:\\Users\\LIMMM\\worktrees\\factory-ops-twin-detector-resnet-363\\configs\\perception\\detector-pilot-resnet-v4.json",
+      "sha256": "7aea7e7081092aac73053181166cf64b74cc71994b33448379c0d4c70fed79e2"
+    },
+    {
+      "role": "runner",
+      "path": "C:\\Users\\LIMMM\\worktrees\\factory-ops-twin-detector-resnet-363\\scripts\\perception\\run_detector_pilot.py",
+      "sha256": "df42e6ed9e9b07071809dff373ad54f0c71f21d6807ac58a22eed6cb0a5695f4"
+    },
+    {
+      "role": "release",
+      "path": "E:\\FactoryOpsData\\perception-pilot-v6-340-release\\release-manifest.json",
+      "sha256": "69b1f2cc9efea586442dcc7dee996fc4c8ba79743d714b05d1b6c78fec0070e9"
+    },
+    {
+      "role": "loco_eval",
+      "path": "C:\\Users\\LIMMM\\worktrees\\factory-ops-twin-detector-resnet-363\\configs\\perception\\loco-eval-v1.json",
+      "sha256": "60f3d5046dc7600f760a055701338b72ba5a8da6c2782c58c5f9adbc9c7fd549"
+    },
+    {
+      "role": "real_inventory",
+      "path": "E:\\FactoryOpsData\\loco-detector-pilot-v1\\inventory.json",
+      "sha256": "ada8ae701d1ca53f626de74c2703eb227956e0d26f10a50dfc4718c472e47ab4"
+    },
+    {
+      "role": "pretrained_weights",
+      "path": "E:\\FactoryOpsData\\cache\\torch-detector\\hub\\checkpoints\\fasterrcnn_resnet50_fpn_coco-258fb6c6.pth",
+      "sha256": "258fb6c638b15964ddcdd1ae0748c5eef1be9e732750120cc857feed3faac384"
+    },
+    {
+      "role": "constructor_proof",
+      "path": "C:\\Users\\LIMMM\\factory-ops-twin\\artifacts\\detector-resnet-preparation-362\\constructor.json",
+      "sha256": "f4abf774b286e04ebded3fee8d31140360550115ff9c7e318b5d7c15f8341815"
+    },
+    {
+      "role": "weights_proof",
+      "path": "C:\\Users\\LIMMM\\factory-ops-twin\\artifacts\\detector-resnet-preparation-362\\weights.json",
+      "sha256": "a6acf932766372328ace65f8e3acfd76b3d4e71124648887364b560c2635d607"
+    }
+  ],
+  "claim_limits": {
+    "fresh_heldout_performance": false,
+    "pure_backbone_effect": false,
+    "deterministic_reproduction": false,
+    "purpose": "tuning-only whole-model-bundle development comparison"
+  }
+}

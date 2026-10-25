@@ -1789,3 +1789,13 @@ v2 선택 모드는 초기/재구성 모두 캐시된 COCO_V1 constructor로 만
 3개 seed의 CPU 비교에서 초기284개 tensor는 모두 같았고 데이터 subset·설정·runtime 결속도 일치했다. R50 최종70개 tensor는 각 대응에서 달랐다. 원인은 아직 확정하지 않았다. 현재 runner는 RNG seed를 설정하지만 완전 결정적 CUDA 실행을 요구하지 않는다. [PyTorch의 재현 안내](https://docs.pytorch.org/docs/stable/notes/randomness.html)와 [TorchVision ROIAlign의 결정론 분기](https://github.com/pytorch/vision/blob/v0.29.1/torchvision/ops/roi_align.py)는 seed만으로 비트 단위 재현을 보장할 수 없음을 뒷받침하지만, 이번 차이의 원인을 식별한 근거는 아니다.
 
 모자이크356~358은 재실행 없이 닫고 대조군 차이를 `complete_with_control_drift`로 표시했다. 원래 고정test를 다시 사용하지 않았고 모자이크의 성능 개선을 입증한 비교로 표현하지 않는다. 후속 v4는 실행 당시 deterministic flags·cuDNN flags·CUBLAS 환경·device 이름을 결과에 기록한다. [3seed 입력·초기/최종 tensor·실제 수치](evidence/detector-mosaic-v3-366/report.json)
+
+## FOT-229 — 간격 표본화에서 빠진 마지막 출하 프레임
+
+335 원본300개를 기존 stride3 규칙으로 줄이면 source index0..297의100개가 남았다. index297의 출하는5건이지만, index298/299는6건이었다. 재생본의 API 처음·끝에서 출하5→5가 되어 대표 구간의 마지막 출하를 보여주지 못했다. 원본과 모델 결과는 정상이며, 선별 표본의 끝점 누락이었다.
+
+전용 exporter는 원본 마지막 index299를 추가해101개를 보존한다. 실제 처음·끝 API seek에서 출하5→6·빈 용기 반납2→3·차량16대·같은 run/layout을 확인했다. 기존120개/16MiB 계약은 유지했고 생성 파일은16,100,172바이트다. 원본 값·시각은 수정하지 않았고 모든 표본의 원본 index·시각·해시를 매니페스트에 결속했다. 임시 API와 소유 프로세스를 닫고 기존 사용자 서버를 유지했다. [선별·출처·해시](data/campus16-335-replay/manifest.json)
+
+## FOT-230 — PowerShell 준비 스크립트의 예약 변수 이름 충돌
+
+v4 호스트 준비 생성 중 `$Host`를 경로 변수로 사용해 PowerShell 예약 변수와 충돌했다. GPU 입장 전에 `$hostRoot`로 고쳤으며, 이후 생성 스크립트·입장 검사와363~365의3개 실행은 통과했다. GPU 실행 실패나 재시도는 없었다. PowerShell 변수 이름은 대소문자를 구분하지 않으므로 내장·예약 변수 대신 작업별 이름을 사용한다. [완료된 호스트·입력·종료 근거](evidence/detector-model-v4-370/report.json)

@@ -1,0 +1,959 @@
+{
+  "schema_version": 1,
+  "status": "complete_tuning_only_model_bundle_comparison",
+  "comparison": "detector-pilot-backbone-v2 MobileNet bundle vs detector-pilot-resnet-v4 ResNet50 bundle",
+  "evaluation_role": "same train50 and tuning200; no final fixed-test metadata access, inference, or artifact",
+  "seeds": [
+    1701,
+    1702,
+    1703
+  ],
+  "allowed_config_differences": [
+    "profile_id",
+    "claim_limits",
+    "model.architecture",
+    "model.torchvision_weights_enum",
+    "model.trainable_backbone_layers"
+  ],
+  "paired_contract": {
+    "same_train50_registry": true,
+    "same_tuning200_registry": true,
+    "same_approved_synthetic_release": true,
+    "same_resize_640_960": true,
+    "same_SGD_hyperparameters": true,
+    "same_AMP": true,
+    "same_batch_size_2": true,
+    "same_updates": {
+      "S": 1024,
+      "R50": 256,
+      "SR50": 256
+    },
+    "v2_trainable_backbone_layers": "implicit torchvision default 3",
+    "v4_trainable_backbone_layers": 3
+  },
+  "model_bundle_scope": "COCO weights, FPN, default RPN, and backbone are compared as one model bundle",
+  "initialization_contract": {
+    "equal_tensor_values_required": false,
+    "reason": "architecture and pretrained COCO weights differ"
+  },
+  "condition_aggregate": {
+    "R50": {
+      "v2_mobilenet": {
+        "AP": {
+          "mean": 0.010743206935235025,
+          "std": 0.0012386146794903495,
+          "n": 3
+        },
+        "AP50": {
+          "mean": 0.03792973362770962,
+          "std": 0.0022989867334912463,
+          "n": 3
+        },
+        "pallet_AP": {
+          "mean": 0.016500463663135595,
+          "std": 0.0023565768178393934,
+          "n": 3
+        },
+        "small_load_carrier_AP": {
+          "mean": 0.004985950207334454,
+          "std": 0.004458065191153571,
+          "n": 3
+        },
+        "small_object_AP": {
+          "mean": 0.00033550387654240633,
+          "std": 0.00011720911758859681,
+          "n": 3
+        }
+      },
+      "v4_resnet50": {
+        "AP": {
+          "mean": 0.029725629978656548,
+          "std": 0.0033628202318987115,
+          "n": 3
+        },
+        "AP50": {
+          "mean": 0.10344099263673563,
+          "std": 0.003088491244461373,
+          "n": 3
+        },
+        "pallet_AP": {
+          "mean": 0.030001312836971415,
+          "std": 0.0020668441752574283,
+          "n": 3
+        },
+        "small_load_carrier_AP": {
+          "mean": 0.029449947120341675,
+          "std": 0.004658847972704798,
+          "n": 3
+        },
+        "small_object_AP": {
+          "mean": 0.009985334393587656,
+          "std": 0.0010830264418866197,
+          "n": 3
+        }
+      }
+    },
+    "S": {
+      "v2_mobilenet": {
+        "AP": {
+          "mean": 0.0005448111710614343,
+          "std": 0.000210432326804909,
+          "n": 3
+        },
+        "AP50": {
+          "mean": 0.0017190186270857066,
+          "std": 0.0007158323482960876,
+          "n": 3
+        },
+        "pallet_AP": {
+          "mean": 0.0010250163156835257,
+          "std": 0.0003978840638417969,
+          "n": 3
+        },
+        "small_load_carrier_AP": {
+          "mean": 6.46060264393431e-05,
+          "std": 2.299717709073979e-05,
+          "n": 3
+        },
+        "small_object_AP": {
+          "mean": 0.0,
+          "std": 0.0,
+          "n": 3
+        }
+      },
+      "v4_resnet50": {
+        "AP": {
+          "mean": 0.0029741056769741294,
+          "std": 0.002256416212902185,
+          "n": 3
+        },
+        "AP50": {
+          "mean": 0.0049879536373557696,
+          "std": 0.002681112377450347,
+          "n": 3
+        },
+        "pallet_AP": {
+          "mean": 0.005393823418119285,
+          "std": 0.003976185612245385,
+          "n": 3
+        },
+        "small_load_carrier_AP": {
+          "mean": 0.0005543879358289736,
+          "std": 0.0005694082158958899,
+          "n": 3
+        },
+        "small_object_AP": {
+          "mean": 7.5007500750075e-06,
+          "std": 1.2991680224789058e-05,
+          "n": 3
+        }
+      }
+    },
+    "SR50": {
+      "v2_mobilenet": {
+        "AP": {
+          "mean": 0.010044002084456926,
+          "std": 0.0017258482283364631,
+          "n": 3
+        },
+        "AP50": {
+          "mean": 0.03569103884117067,
+          "std": 0.007722268148345708,
+          "n": 3
+        },
+        "pallet_AP": {
+          "mean": 0.016286226780677596,
+          "std": 0.001104826271100353,
+          "n": 3
+        },
+        "small_load_carrier_AP": {
+          "mean": 0.003801777388236251,
+          "std": 0.0041520728784089226,
+          "n": 3
+        },
+        "small_object_AP": {
+          "mean": 0.0015661605369977668,
+          "std": 0.00149135928365297,
+          "n": 3
+        }
+      },
+      "v4_resnet50": {
+        "AP": {
+          "mean": 0.03531758980748308,
+          "std": 0.013427058619611265,
+          "n": 3
+        },
+        "AP50": {
+          "mean": 0.10979351668531966,
+          "std": 0.03607869697678319,
+          "n": 3
+        },
+        "pallet_AP": {
+          "mean": 0.03014083396184229,
+          "std": 0.009477105158695714,
+          "n": 3
+        },
+        "small_load_carrier_AP": {
+          "mean": 0.040494345653123855,
+          "std": 0.01813957624456408,
+          "n": 3
+        },
+        "small_object_AP": {
+          "mean": 0.011198695743592342,
+          "std": 0.003312975884800607,
+          "n": 3
+        }
+      }
+    }
+  },
+  "paired_v4_minus_v2": {
+    "R50": {
+      "AP": {
+        "mean": 0.018982423043421525,
+        "std": 0.002797909682188339,
+        "n": 3
+      },
+      "AP50": {
+        "mean": 0.065511259009026,
+        "std": 0.0010692408688939192,
+        "n": 3
+      },
+      "pallet_AP": {
+        "mean": 0.013500849173835823,
+        "std": 0.0044131341749722875,
+        "n": 3
+      },
+      "small_load_carrier_AP": {
+        "mean": 0.024463996913007224,
+        "std": 0.0024206502677632294,
+        "n": 3
+      },
+      "small_object_AP": {
+        "mean": 0.00964983051704525,
+        "std": 0.0009684635993072023,
+        "n": 3
+      }
+    },
+    "S": {
+      "AP": {
+        "mean": 0.0024292945059126952,
+        "std": 0.0020731333116895045,
+        "n": 3
+      },
+      "AP50": {
+        "mean": 0.0032689350102700627,
+        "std": 0.0021789185518878503,
+        "n": 3
+      },
+      "pallet_AP": {
+        "mean": 0.004368807102435759,
+        "std": 0.003621555051521885,
+        "n": 3
+      },
+      "small_load_carrier_AP": {
+        "mean": 0.0004897819093896306,
+        "std": 0.0005531692829892813,
+        "n": 3
+      },
+      "small_object_AP": {
+        "mean": 7.5007500750075e-06,
+        "std": 1.2991680224789058e-05,
+        "n": 3
+      }
+    },
+    "SR50": {
+      "AP": {
+        "mean": 0.025273587723026153,
+        "std": 0.013885827746356728,
+        "n": 3
+      },
+      "AP50": {
+        "mean": 0.07410247784414897,
+        "std": 0.04010741238139854,
+        "n": 3
+      },
+      "pallet_AP": {
+        "mean": 0.01385460718116469,
+        "std": 0.010483745482198272,
+        "n": 3
+      },
+      "small_load_carrier_AP": {
+        "mean": 0.03669256826488761,
+        "std": 0.019205373968072804,
+        "n": 3
+      },
+      "small_object_AP": {
+        "mean": 0.009632535206594574,
+        "std": 0.004367643184562089,
+        "n": 3
+      }
+    }
+  },
+  "actual_gpu_resources": {
+    "v2_mobilenet": {
+      "wall_seconds": {
+        "mean": 241.05733333334015,
+        "std": 16.614892907661158,
+        "n": 3
+      },
+      "peak_vram_gib": {
+        "mean": 0.6430412928263346,
+        "std": 0.00038396802039410946,
+        "n": 3
+      }
+    },
+    "v4_resnet50": {
+      "wall_seconds": {
+        "mean": 440.9583333333333,
+        "std": 3.8169650683796355,
+        "n": 3
+      },
+      "peak_vram_gib": {
+        "mean": 2.9502790768941245,
+        "std": 0.0018081346474160397,
+        "n": 3
+      }
+    }
+  },
+  "metric_units": {
+    "stored_AP_metrics": "ratio in [0, 1]",
+    "chart_AP": "AP points in [0, 100]",
+    "wall_seconds": "whole process elapsed wall time, not GPU kernel time",
+    "peak_vram_gib": "torch.cuda.max_memory_allocated / 1024^3; excludes driver and non-PyTorch allocations"
+  },
+  "rows": [
+    {
+      "seed": 1701,
+      "model": "v2_mobilenet",
+      "condition": "R50",
+      "AP": 0.012115340637771936,
+      "AP50": 0.0405757175353093,
+      "pallet_AP": 0.015218002973469926,
+      "small_load_carrier_AP": 0.009012678302073947,
+      "small_object_AP": 0.0003495410667621429
+    },
+    {
+      "seed": 1701,
+      "model": "v2_mobilenet",
+      "condition": "S",
+      "AP": 0.0006977788963826416,
+      "AP50": 0.002161376299514789,
+      "pallet_AP": 0.0013134842222170054,
+      "small_load_carrier_AP": 8.207357054827769e-05,
+      "small_object_AP": 0.0
+    },
+    {
+      "seed": 1701,
+      "model": "v2_mobilenet",
+      "condition": "SR50",
+      "AP": 0.012036839962854597,
+      "AP50": 0.044468421403962545,
+      "pallet_AP": 0.01559961953722236,
+      "small_load_carrier_AP": 0.00847406038848684,
+      "small_object_AP": 0.0032365257573858694
+    },
+    {
+      "seed": 1701,
+      "model": "v4_resnet50",
+      "condition": "R50",
+      "AP": 0.031093262231536096,
+      "AP50": 0.10694265273561812,
+      "pallet_AP": 0.0308287203819389,
+      "small_load_carrier_AP": 0.031357804081133284,
+      "small_object_AP": 0.010360930619918544
+    },
+    {
+      "seed": 1701,
+      "model": "v4_resnet50",
+      "condition": "S",
+      "AP": 0.005374276402867179,
+      "AP50": 0.007933320358918224,
+      "pallet_AP": 0.009538799942589719,
+      "small_load_carrier_AP": 0.0012097528631446377,
+      "small_object_AP": 0.0
+    },
+    {
+      "seed": 1701,
+      "model": "v4_resnet50",
+      "condition": "SR50",
+      "AP": 0.03212230144420779,
+      "AP50": 0.09817201108641488,
+      "pallet_AP": 0.03145201343637248,
+      "small_load_carrier_AP": 0.032792589452043094,
+      "small_object_AP": 0.009740108818343803
+    },
+    {
+      "seed": 1702,
+      "model": "v2_mobilenet",
+      "condition": "R50",
+      "AP": 0.009707707470976969,
+      "AP50": 0.03679225952025181,
+      "pallet_AP": 0.019220136990822357,
+      "small_load_carrier_AP": 0.00019527795113158204,
+      "small_object_AP": 0.00021190828878841152
+    },
+    {
+      "seed": 1702,
+      "model": "v2_mobilenet",
+      "condition": "S",
+      "AP": 0.00030482678723325223,
+      "AP50": 0.000893145059540195,
+      "pallet_AP": 0.0005711028047536962,
+      "small_load_carrier_AP": 3.855076971280842e-05,
+      "small_object_AP": 0.0
+    },
+    {
+      "seed": 1702,
+      "model": "v2_mobilenet",
+      "condition": "SR50",
+      "AP": 0.009047591494398651,
+      "AP50": 0.03266307966594128,
+      "pallet_AP": 0.017560695779360144,
+      "small_load_carrier_AP": 0.000534487209437154,
+      "small_object_AP": 0.0010936934294035556
+    },
+    {
+      "seed": 1702,
+      "model": "v4_resnet50",
+      "condition": "R50",
+      "AP": 0.025894474272868843,
+      "AP50": 0.10110487583617553,
+      "pallet_AP": 0.02764895169127968,
+      "small_load_carrier_AP": 0.02413999685445801,
+      "small_object_AP": 0.00876451068543432
+    },
+    {
+      "seed": 1702,
+      "model": "v4_resnet50",
+      "condition": "S",
+      "AP": 0.0008960684413304945,
+      "AP50": 0.0026894526592087104,
+      "pallet_AP": 0.0016112388920091496,
+      "small_load_carrier_AP": 0.0001808979906518399,
+      "small_object_AP": 2.25022502250225e-05
+    },
+    {
+      "seed": 1702,
+      "model": "v4_resnet50",
+      "condition": "SR50",
+      "AP": 0.023776417361238464,
+      "AP50": 0.08095780023820214,
+      "pallet_AP": 0.02007641175300268,
+      "small_load_carrier_AP": 0.02747642296947424,
+      "small_object_AP": 0.00886527760546298
+    },
+    {
+      "seed": 1703,
+      "model": "v2_mobilenet",
+      "condition": "R50",
+      "AP": 0.010406572696956166,
+      "AP50": 0.036421223827567746,
+      "pallet_AP": 0.0150632510251145,
+      "small_load_carrier_AP": 0.005749894368797831,
+      "small_object_AP": 0.00044506227407666444
+    },
+    {
+      "seed": 1703,
+      "model": "v2_mobilenet",
+      "condition": "S",
+      "AP": 0.0006318278295684091,
+      "AP50": 0.0021025345222021367,
+      "pallet_AP": 0.0011904619200798752,
+      "small_load_carrier_AP": 7.319373905694321e-05,
+      "small_object_AP": 0.0
+    },
+    {
+      "seed": 1703,
+      "model": "v2_mobilenet",
+      "condition": "SR50",
+      "AP": 0.009047574796117527,
+      "AP50": 0.029941615453608177,
+      "pallet_AP": 0.01569836502545029,
+      "small_load_carrier_AP": 0.0023967845667847588,
+      "small_object_AP": 0.0003682624242038756
+    },
+    {
+      "seed": 1703,
+      "model": "v4_resnet50",
+      "condition": "R50",
+      "AP": 0.032189153431564706,
+      "AP50": 0.10227544933841325,
+      "pallet_AP": 0.03152626643769567,
+      "small_load_carrier_AP": 0.032852040425433736,
+      "small_object_AP": 0.010830561875410104
+    },
+    {
+      "seed": 1703,
+      "model": "v4_resnet50",
+      "condition": "S",
+      "AP": 0.0026519721867247154,
+      "AP50": 0.004341087893940374,
+      "pallet_AP": 0.005031431419758987,
+      "small_load_carrier_AP": 0.0002725129536904433,
+      "small_object_AP": 0.0
+    },
+    {
+      "seed": 1703,
+      "model": "v4_resnet50",
+      "condition": "SR50",
+      "AP": 0.05005405061700298,
+      "AP50": 0.15025073873134193,
+      "pallet_AP": 0.038894076696151705,
+      "small_load_carrier_AP": 0.06121402453785423,
+      "small_object_AP": 0.014990700806970243
+    }
+  ],
+  "source_bindings": {
+    "v2_mobilenet": [
+      {
+        "seed": 1701,
+        "run_id": "detector-backbone-350-seed1701",
+        "source_commit": "10f60d0e87d718a505c84595f5cd2da850125356",
+        "run_root": "E:\\FactoryOpsData\\detector-backbone-350-seed1701",
+        "pretrained_weights": {
+          "architecture": "fasterrcnn_mobilenet_v3_large_fpn",
+          "weights_enum": "FasterRCNN_MobileNet_V3_Large_FPN_Weights.COCO_V1",
+          "weights_sha256": "fb6a3cc702b1df54c18a44b26708cd083614211062d0c36d2ca7bf9270df3533",
+          "weights_url": "https://download.pytorch.org/models/fasterrcnn_mobilenet_v3_large_fpn-fb6a3cc7.pth",
+          "weights_cache": {
+            "path": "E:\\FactoryOpsData\\cache\\torch-detector\\hub\\checkpoints\\fasterrcnn_mobilenet_v3_large_fpn-fb6a3cc7.pth",
+            "sha256": "fb6a3cc702b1df54c18a44b26708cd083614211062d0c36d2ca7bf9270df3533",
+            "bytes": 77844807
+          },
+          "constructor_contract_preserved": true,
+          "device": "cuda",
+          "runtime_versions": {
+            "torch": "2.14.1+cu130",
+            "torchvision": "0.29.1+cu130",
+            "Pillow": "12.3.0",
+            "pycocotools": "2.0.11"
+          }
+        },
+        "config": {
+          "path": "C:\\Users\\LIMMM\\factory-ops-twin\\artifacts\\detector-pilot-backbone-matrix-350\\seed-1701.json",
+          "sha256": "041fc6224d0c74a6db4d87b08c28146e3942ba343d2658db3cadb5ea25bb2d16",
+          "bytes": 3427
+        },
+        "preregistration": {
+          "path": "E:\\FactoryOpsData\\detector-backbone-350-seed1701\\preregistration.json",
+          "sha256": "0112be000ff1324511e560129a47b35146e48d3a67275e6db3fef36428807925",
+          "bytes": 17480
+        },
+        "result": {
+          "path": "E:\\FactoryOpsData\\detector-backbone-350-seed1701\\result.json",
+          "sha256": "f69042af053697e1c1cb74d490d44d207653757a464c9289c90b4e472059db05",
+          "bytes": 4753
+        },
+        "checkpoints": {
+          "initial": {
+            "path": "E:\\FactoryOpsData\\detector-backbone-350-seed1701\\checkpoints\\common-coco-head-init.pt",
+            "sha256": "4b3a93df47d36a150708239a7eeabac50e3dba124959de05c9ac9ae5d18e70fb"
+          },
+          "R50": {
+            "path": "E:\\FactoryOpsData\\detector-backbone-350-seed1701\\checkpoints\\R50-final.pt",
+            "sha256": "1d1cd820c2b43d8c3fb17867fe4f0d02a7f53fbaa1665c60f84a89f864c4f1fe"
+          },
+          "S": {
+            "path": "E:\\FactoryOpsData\\detector-backbone-350-seed1701\\checkpoints\\S-final.pt",
+            "sha256": "c58f90a7bf63bb516f9788951ebbfd21ec480b273d3c81b27622c6dd9c2e31ff"
+          },
+          "SR50": {
+            "path": "E:\\FactoryOpsData\\detector-backbone-350-seed1701\\checkpoints\\SR50-final.pt",
+            "sha256": "987fe6807162f27ac6bde09b5224eb11fd90c83d7746773fba9e9bf44ffb9310"
+          }
+        }
+      },
+      {
+        "seed": 1702,
+        "run_id": "detector-backbone-351-seed1702",
+        "source_commit": "10f60d0e87d718a505c84595f5cd2da850125356",
+        "run_root": "E:\\FactoryOpsData\\detector-backbone-351-seed1702",
+        "pretrained_weights": {
+          "architecture": "fasterrcnn_mobilenet_v3_large_fpn",
+          "weights_enum": "FasterRCNN_MobileNet_V3_Large_FPN_Weights.COCO_V1",
+          "weights_sha256": "fb6a3cc702b1df54c18a44b26708cd083614211062d0c36d2ca7bf9270df3533",
+          "weights_url": "https://download.pytorch.org/models/fasterrcnn_mobilenet_v3_large_fpn-fb6a3cc7.pth",
+          "weights_cache": {
+            "path": "E:\\FactoryOpsData\\cache\\torch-detector\\hub\\checkpoints\\fasterrcnn_mobilenet_v3_large_fpn-fb6a3cc7.pth",
+            "sha256": "fb6a3cc702b1df54c18a44b26708cd083614211062d0c36d2ca7bf9270df3533",
+            "bytes": 77844807
+          },
+          "constructor_contract_preserved": true,
+          "device": "cuda",
+          "runtime_versions": {
+            "torch": "2.14.1+cu130",
+            "torchvision": "0.29.1+cu130",
+            "Pillow": "12.3.0",
+            "pycocotools": "2.0.11"
+          }
+        },
+        "config": {
+          "path": "C:\\Users\\LIMMM\\factory-ops-twin\\artifacts\\detector-pilot-backbone-matrix-350\\seed-1702.json",
+          "sha256": "7b4241f20e6bd3bd343cf60b8c9d16718e40102f97832c3ec597b8a742c31b4f",
+          "bytes": 3427
+        },
+        "preregistration": {
+          "path": "E:\\FactoryOpsData\\detector-backbone-351-seed1702\\preregistration.json",
+          "sha256": "0d7ab6638447dd5430814cb6699fc7d273f780c36480a41936c6cd560bb1529a",
+          "bytes": 17480
+        },
+        "result": {
+          "path": "E:\\FactoryOpsData\\detector-backbone-351-seed1702\\result.json",
+          "sha256": "5456b12fa782fb4acc382a940531ec415c75ff3a40574088192976090e7847ed",
+          "bytes": 4760
+        },
+        "checkpoints": {
+          "initial": {
+            "path": "E:\\FactoryOpsData\\detector-backbone-351-seed1702\\checkpoints\\common-coco-head-init.pt",
+            "sha256": "e366e93e443af6be5a8f6f200cd8909ca742e03839f7e253eb91cba0458491eb"
+          },
+          "R50": {
+            "path": "E:\\FactoryOpsData\\detector-backbone-351-seed1702\\checkpoints\\R50-final.pt",
+            "sha256": "eab63b6842ac78273b680b1519547677c6e5846d8260694f306525e06c2e513f"
+          },
+          "S": {
+            "path": "E:\\FactoryOpsData\\detector-backbone-351-seed1702\\checkpoints\\S-final.pt",
+            "sha256": "f364bb2f4235e68ecbe5c0585754e8f5a6b4900418b427ab1615a99ab0da660d"
+          },
+          "SR50": {
+            "path": "E:\\FactoryOpsData\\detector-backbone-351-seed1702\\checkpoints\\SR50-final.pt",
+            "sha256": "86a5c5ca8c1291d2a44ebe06c309ecaa345b0a3c4ed5a0601e4914952adf4842"
+          }
+        }
+      },
+      {
+        "seed": 1703,
+        "run_id": "detector-backbone-352-seed1703",
+        "source_commit": "10f60d0e87d718a505c84595f5cd2da850125356",
+        "run_root": "E:\\FactoryOpsData\\detector-backbone-352-seed1703",
+        "pretrained_weights": {
+          "architecture": "fasterrcnn_mobilenet_v3_large_fpn",
+          "weights_enum": "FasterRCNN_MobileNet_V3_Large_FPN_Weights.COCO_V1",
+          "weights_sha256": "fb6a3cc702b1df54c18a44b26708cd083614211062d0c36d2ca7bf9270df3533",
+          "weights_url": "https://download.pytorch.org/models/fasterrcnn_mobilenet_v3_large_fpn-fb6a3cc7.pth",
+          "weights_cache": {
+            "path": "E:\\FactoryOpsData\\cache\\torch-detector\\hub\\checkpoints\\fasterrcnn_mobilenet_v3_large_fpn-fb6a3cc7.pth",
+            "sha256": "fb6a3cc702b1df54c18a44b26708cd083614211062d0c36d2ca7bf9270df3533",
+            "bytes": 77844807
+          },
+          "constructor_contract_preserved": true,
+          "device": "cuda",
+          "runtime_versions": {
+            "torch": "2.14.1+cu130",
+            "torchvision": "0.29.1+cu130",
+            "Pillow": "12.3.0",
+            "pycocotools": "2.0.11"
+          }
+        },
+        "config": {
+          "path": "C:\\Users\\LIMMM\\factory-ops-twin\\artifacts\\detector-pilot-backbone-matrix-350\\seed-1703.json",
+          "sha256": "958e483daa272cfa3a91da3c79e95d0f4e826c3443f587de96facb427579d9a6",
+          "bytes": 3427
+        },
+        "preregistration": {
+          "path": "E:\\FactoryOpsData\\detector-backbone-352-seed1703\\preregistration.json",
+          "sha256": "3ff4595f895966787e0eb994eec60ab75170c67ea07046bac9a601c974023a9e",
+          "bytes": 17480
+        },
+        "result": {
+          "path": "E:\\FactoryOpsData\\detector-backbone-352-seed1703\\result.json",
+          "sha256": "4d425a6160a54a5dba38e42c63888b974e2e07856840b12bfd2592dfe2ba35fc",
+          "bytes": 4770
+        },
+        "checkpoints": {
+          "initial": {
+            "path": "E:\\FactoryOpsData\\detector-backbone-352-seed1703\\checkpoints\\common-coco-head-init.pt",
+            "sha256": "8307e9fd98af7886b9d316cc3e4a95a1d2b7a535301aad58c33a91c3237a7cb4"
+          },
+          "R50": {
+            "path": "E:\\FactoryOpsData\\detector-backbone-352-seed1703\\checkpoints\\R50-final.pt",
+            "sha256": "2ae667a9448dacefcda39ad77ad790fb50e49348253dc0474dd12810e8e48b9d"
+          },
+          "S": {
+            "path": "E:\\FactoryOpsData\\detector-backbone-352-seed1703\\checkpoints\\S-final.pt",
+            "sha256": "cd6502906e9fc460041ef38656eba70534a6cc8aece84095d6271e387c196ae7"
+          },
+          "SR50": {
+            "path": "E:\\FactoryOpsData\\detector-backbone-352-seed1703\\checkpoints\\SR50-final.pt",
+            "sha256": "b116d3b78dbfa0a42194cbb852033286109621f4f4c3d8dfd3070023538cdb10"
+          }
+        }
+      }
+    ],
+    "v4_resnet50": [
+      {
+        "seed": 1701,
+        "run_id": "detector-resnet-363-seed1701",
+        "source_commit": "15c0e3bc754c497e2c204af2dc6b5b0cc7dcd84e",
+        "run_root": "E:\\FactoryOpsData\\detector-resnet-363-seed1701",
+        "pretrained_weights": {
+          "architecture": "fasterrcnn_resnet50_fpn",
+          "weights_enum": "FasterRCNN_ResNet50_FPN_Weights.COCO_V1",
+          "weights_sha256": "258fb6c638b15964ddcdd1ae0748c5eef1be9e732750120cc857feed3faac384",
+          "weights_url": "https://download.pytorch.org/models/fasterrcnn_resnet50_fpn_coco-258fb6c6.pth",
+          "weights_cache": {
+            "path": "E:\\FactoryOpsData\\cache\\torch-detector\\hub\\checkpoints\\fasterrcnn_resnet50_fpn_coco-258fb6c6.pth",
+            "sha256": "258fb6c638b15964ddcdd1ae0748c5eef1be9e732750120cc857feed3faac384",
+            "bytes": 167502836
+          },
+          "constructor_contract_preserved": true,
+          "device": "cuda",
+          "runtime_versions": {
+            "torch": "2.14.1+cu130",
+            "torchvision": "0.29.1+cu130",
+            "Pillow": "12.3.0",
+            "pycocotools": "2.0.11"
+          },
+          "constructor_normalization": {
+            "FrozenBatchNorm2d": 53,
+            "BatchNorm2d": 0
+          },
+          "parameter_count": 41304286,
+          "trainable_parameter_count": 41081886,
+          "trainable_parameter_name_count": 72,
+          "reproducibility": {
+            "seed": 1701,
+            "deterministic_algorithms_enabled": false,
+            "cudnn_benchmark": false,
+            "cudnn_deterministic": false,
+            "CUBLAS_WORKSPACE_CONFIG": null,
+            "device_name": "NVIDIA GeForce RTX 3060",
+            "contract": "seed-only observation; bitwise reproducibility and drift cause are not claimed"
+          },
+          "model_bundle_comparison": {
+            "interpretation": "COCO weights, FPN, default RPN, and backbone are compared as one model bundle",
+            "pure_backbone_effect_claimed": false,
+            "deterministic_drift_cause_identified": false
+          }
+        },
+        "config": {
+          "path": "C:\\Users\\LIMMM\\factory-ops-twin\\artifacts\\detector-pilot-resnet-matrix-363\\seed-1701.json",
+          "sha256": "3d8e9a00b028085c6ea724d17e883922e6e50406e87a6fc83c12172ddcc99ffa",
+          "bytes": 3658
+        },
+        "preregistration": {
+          "path": "E:\\FactoryOpsData\\detector-resnet-363-seed1701\\preregistration.json",
+          "sha256": "a14ce43b326ac949c10207708338a0b6e6861c15a3a370d09c9bf4b5d1eb3e82",
+          "bytes": 17603
+        },
+        "result": {
+          "path": "E:\\FactoryOpsData\\detector-resnet-363-seed1701\\result.json",
+          "sha256": "e318acc206e1d7f851a068086eb3a5a2b8274b14e652b6c912dcff45f3156610",
+          "bytes": 8991
+        },
+        "checkpoints": {
+          "initial": {
+            "path": "E:\\FactoryOpsData\\detector-resnet-363-seed1701\\checkpoints\\common-coco-head-init.pt",
+            "sha256": "084d68b50645e652d33539a245c7b8c04661093e4f93138c475c9cfe2af9c8a5"
+          },
+          "R50": {
+            "path": "E:\\FactoryOpsData\\detector-resnet-363-seed1701\\checkpoints\\R50-final.pt",
+            "sha256": "ac606a08ff052fc8f6134f00938d608dddd659a296ad09870b54e8db22d54e1d"
+          },
+          "S": {
+            "path": "E:\\FactoryOpsData\\detector-resnet-363-seed1701\\checkpoints\\S-final.pt",
+            "sha256": "0708818f8ee4ecd5a91ae9f5015463974914d5fd4639d7495ad0815a2631b25c"
+          },
+          "SR50": {
+            "path": "E:\\FactoryOpsData\\detector-resnet-363-seed1701\\checkpoints\\SR50-final.pt",
+            "sha256": "5321ce452b548582eb96ccd5d9a33487d04a839f0e66ec09f1f79dded397abdf"
+          }
+        }
+      },
+      {
+        "seed": 1702,
+        "run_id": "detector-resnet-364-seed1702",
+        "source_commit": "15c0e3bc754c497e2c204af2dc6b5b0cc7dcd84e",
+        "run_root": "E:\\FactoryOpsData\\detector-resnet-364-seed1702",
+        "pretrained_weights": {
+          "architecture": "fasterrcnn_resnet50_fpn",
+          "weights_enum": "FasterRCNN_ResNet50_FPN_Weights.COCO_V1",
+          "weights_sha256": "258fb6c638b15964ddcdd1ae0748c5eef1be9e732750120cc857feed3faac384",
+          "weights_url": "https://download.pytorch.org/models/fasterrcnn_resnet50_fpn_coco-258fb6c6.pth",
+          "weights_cache": {
+            "path": "E:\\FactoryOpsData\\cache\\torch-detector\\hub\\checkpoints\\fasterrcnn_resnet50_fpn_coco-258fb6c6.pth",
+            "sha256": "258fb6c638b15964ddcdd1ae0748c5eef1be9e732750120cc857feed3faac384",
+            "bytes": 167502836
+          },
+          "constructor_contract_preserved": true,
+          "device": "cuda",
+          "runtime_versions": {
+            "torch": "2.14.1+cu130",
+            "torchvision": "0.29.1+cu130",
+            "Pillow": "12.3.0",
+            "pycocotools": "2.0.11"
+          },
+          "constructor_normalization": {
+            "FrozenBatchNorm2d": 53,
+            "BatchNorm2d": 0
+          },
+          "parameter_count": 41304286,
+          "trainable_parameter_count": 41081886,
+          "trainable_parameter_name_count": 72,
+          "reproducibility": {
+            "seed": 1702,
+            "deterministic_algorithms_enabled": false,
+            "cudnn_benchmark": false,
+            "cudnn_deterministic": false,
+            "CUBLAS_WORKSPACE_CONFIG": null,
+            "device_name": "NVIDIA GeForce RTX 3060",
+            "contract": "seed-only observation; bitwise reproducibility and drift cause are not claimed"
+          },
+          "model_bundle_comparison": {
+            "interpretation": "COCO weights, FPN, default RPN, and backbone are compared as one model bundle",
+            "pure_backbone_effect_claimed": false,
+            "deterministic_drift_cause_identified": false
+          }
+        },
+        "config": {
+          "path": "C:\\Users\\LIMMM\\factory-ops-twin\\artifacts\\detector-pilot-resnet-matrix-363\\seed-1702.json",
+          "sha256": "a6ecffd9973898376f97bb9e0b8946e01e9ca785970782f0f1d572652e06d70f",
+          "bytes": 3658
+        },
+        "preregistration": {
+          "path": "E:\\FactoryOpsData\\detector-resnet-364-seed1702\\preregistration.json",
+          "sha256": "4bb2a9fa37d92f154da64a1183a3ae092cb7ae04efa18abc0c43bddd09c2b619",
+          "bytes": 17603
+        },
+        "result": {
+          "path": "E:\\FactoryOpsData\\detector-resnet-364-seed1702\\result.json",
+          "sha256": "7d1509d1629da7663de902534d28cc6d8d58bc0c4f9eb315024569b67eb50781",
+          "bytes": 8996
+        },
+        "checkpoints": {
+          "initial": {
+            "path": "E:\\FactoryOpsData\\detector-resnet-364-seed1702\\checkpoints\\common-coco-head-init.pt",
+            "sha256": "36255e550b9b1eee144b88e0a8a4193d018a18d16cba9bfadf03d270f4f67978"
+          },
+          "R50": {
+            "path": "E:\\FactoryOpsData\\detector-resnet-364-seed1702\\checkpoints\\R50-final.pt",
+            "sha256": "1aad2e2e093922c091ffdd2da6c7b4950692b7f1db6d97d487227e5e04f628d5"
+          },
+          "S": {
+            "path": "E:\\FactoryOpsData\\detector-resnet-364-seed1702\\checkpoints\\S-final.pt",
+            "sha256": "c4e7e48fbe155ea6d97035520c42e8a64d3cccbbc01aa8281812388923472798"
+          },
+          "SR50": {
+            "path": "E:\\FactoryOpsData\\detector-resnet-364-seed1702\\checkpoints\\SR50-final.pt",
+            "sha256": "95d69bc93c9145d1b31b0db5ec5214ca6c5b7e87800a8f1294255d4ae03ad1a9"
+          }
+        }
+      },
+      {
+        "seed": 1703,
+        "run_id": "detector-resnet-365-seed1703",
+        "source_commit": "15c0e3bc754c497e2c204af2dc6b5b0cc7dcd84e",
+        "run_root": "E:\\FactoryOpsData\\detector-resnet-365-seed1703",
+        "pretrained_weights": {
+          "architecture": "fasterrcnn_resnet50_fpn",
+          "weights_enum": "FasterRCNN_ResNet50_FPN_Weights.COCO_V1",
+          "weights_sha256": "258fb6c638b15964ddcdd1ae0748c5eef1be9e732750120cc857feed3faac384",
+          "weights_url": "https://download.pytorch.org/models/fasterrcnn_resnet50_fpn_coco-258fb6c6.pth",
+          "weights_cache": {
+            "path": "E:\\FactoryOpsData\\cache\\torch-detector\\hub\\checkpoints\\fasterrcnn_resnet50_fpn_coco-258fb6c6.pth",
+            "sha256": "258fb6c638b15964ddcdd1ae0748c5eef1be9e732750120cc857feed3faac384",
+            "bytes": 167502836
+          },
+          "constructor_contract_preserved": true,
+          "device": "cuda",
+          "runtime_versions": {
+            "torch": "2.14.1+cu130",
+            "torchvision": "0.29.1+cu130",
+            "Pillow": "12.3.0",
+            "pycocotools": "2.0.11"
+          },
+          "constructor_normalization": {
+            "FrozenBatchNorm2d": 53,
+            "BatchNorm2d": 0
+          },
+          "parameter_count": 41304286,
+          "trainable_parameter_count": 41081886,
+          "trainable_parameter_name_count": 72,
+          "reproducibility": {
+            "seed": 1703,
+            "deterministic_algorithms_enabled": false,
+            "cudnn_benchmark": false,
+            "cudnn_deterministic": false,
+            "CUBLAS_WORKSPACE_CONFIG": null,
+            "device_name": "NVIDIA GeForce RTX 3060",
+            "contract": "seed-only observation; bitwise reproducibility and drift cause are not claimed"
+          },
+          "model_bundle_comparison": {
+            "interpretation": "COCO weights, FPN, default RPN, and backbone are compared as one model bundle",
+            "pure_backbone_effect_claimed": false,
+            "deterministic_drift_cause_identified": false
+          }
+        },
+        "config": {
+          "path": "C:\\Users\\LIMMM\\factory-ops-twin\\artifacts\\detector-pilot-resnet-matrix-363\\seed-1703.json",
+          "sha256": "216179be62da7eea8bee293860ff84460bb5715fbe722dbba6c9a6faf6e07157",
+          "bytes": 3658
+        },
+        "preregistration": {
+          "path": "E:\\FactoryOpsData\\detector-resnet-365-seed1703\\preregistration.json",
+          "sha256": "598e1606fb7a23232680b65abbf5708c7313e71c93d5c0669cedb36dd7fad121",
+          "bytes": 17603
+        },
+        "result": {
+          "path": "E:\\FactoryOpsData\\detector-resnet-365-seed1703\\result.json",
+          "sha256": "7b6c0ebbf64cd82f1be25781fadc8825938815ce78c2ee92bf2144c9bedc6321",
+          "bytes": 8995
+        },
+        "checkpoints": {
+          "initial": {
+            "path": "E:\\FactoryOpsData\\detector-resnet-365-seed1703\\checkpoints\\common-coco-head-init.pt",
+            "sha256": "64fd2a8ebbeabef729b19a959766c1978d29cc5abeb1dfdd0507255709aa72a9"
+          },
+          "R50": {
+            "path": "E:\\FactoryOpsData\\detector-resnet-365-seed1703\\checkpoints\\R50-final.pt",
+            "sha256": "1250ffba84523f12ca1b19dd5527cc9bc303c397077e120e4ba9a2843660d30b"
+          },
+          "S": {
+            "path": "E:\\FactoryOpsData\\detector-resnet-365-seed1703\\checkpoints\\S-final.pt",
+            "sha256": "47758d92dbbdee92b492384f4df660a8e0bbfc09f428a261f12bc1f24dd0e551"
+          },
+          "SR50": {
+            "path": "E:\\FactoryOpsData\\detector-resnet-365-seed1703\\checkpoints\\SR50-final.pt",
+            "sha256": "b00bb489438c12e92095a916d0eed123159d8400f1ad3a3d4d01a7931057fa1f"
+          }
+        }
+      }
+    ]
+  },
+  "runtime": {
+    "python": "3.12.13 (main, Apr  7 2026, 20:53:22) [MSC v.1944 64 bit (AMD64)]",
+    "Pillow": "12.3.0"
+  },
+  "claim_limits": {
+    "pure_backbone_effect": false,
+    "stride_effect_identified": false,
+    "equal_compute": false,
+    "fresh_heldout_performance": false,
+    "label_cost_reduction": false,
+    "field_performance": false,
+    "deterministic_reproduction": false,
+    "development_observation_only": true
+  },
+  "exporter": {
+    "path": "C:\\Users\\LIMMM\\factory-ops-twin\\scripts\\perception\\compare_model_tuning.py",
+    "sha256": "3c7ff3a51518c420723f0e7b5511c33fc48e1c7fbd8e5c6442dc4f88d7a2181a",
+    "bytes": 33309
+  },
+  "outputs": {
+    "csv": {
+      "path": "C:\\Users\\LIMMM\\factory-ops-twin\\artifacts\\detector-model-summary-370\\comparison.csv",
+      "sha256": "4512401a92f14dd17f5fa96324adf1d7496438622de93bc35b5c5539556e10a2",
+      "bytes": 9937
+    },
+    "png": {
+      "path": "C:\\Users\\LIMMM\\factory-ops-twin\\artifacts\\detector-model-summary-370\\comparison.png",
+      "sha256": "28750b2af5ec09f649fb26f1ee388c600759d7adce894bb4357c2dfeb4fdccbf",
+      "bytes": 54383
+    },
+    "svg": {
+      "path": "C:\\Users\\LIMMM\\factory-ops-twin\\artifacts\\detector-model-summary-370\\comparison.svg",
+      "sha256": "1f72d5e5da9b6979675149646242e4fc7ca33c3fcfb182de299507519f2cc639",
+      "bytes": 5898
+    }
+  }
+}

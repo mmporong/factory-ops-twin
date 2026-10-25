@@ -1,0 +1,30 @@
+{
+  "archive": "D:\\FactoryOpsPortfolio\\detector-resnet-v4-363-365.zip",
+  "archive_bytes": 1989816845,
+  "archive_entry_count": 63,
+  "archive_sha256": "0567dc1f2a83fa54808ecbd1edc49a597bf1851506e2ccd24e8ec175a7036237",
+  "bound_model_count": 12,
+  "closed_zip_crc_all_entries_passed": true,
+  "closed_zip_stream_size_sha256_all_entries_passed": true,
+  "gpu_used": false,
+  "inventory": {
+    "path": "C:\\Users\\LIMMM\\factory-ops-twin\\artifacts\\detector-resnet-storage-371\\inventory.json",
+    "sha256": "01339e435601b530a2a281fc945765805d7760685f2bc8c1efa1497315e19f54"
+  },
+  "original_files_untouched": true,
+  "original_inputs_receipt": {
+    "path": "C:\\Users\\LIMMM\\factory-ops-twin\\artifacts\\detector-resnet-storage-371\\original-inputs-receipt.json",
+    "sha256": "ab67530f64417c561335925c16b2acd8826a3f725b2f613d5c5e43fcfd2706ea"
+  },
+  "payload_bytes": 1989783043,
+  "payload_file_count": 62,
+  "processes_stopped": false,
+  "resnet_runs_363_through_365_included": true,
+  "schema_version": 1,
+  "source_pins": {
+    "exporter_source_commit": "5c556c011fca3a37884c976479c29250811299cd",
+    "gpu_source_commit": "15c0e3bc754c497e2c204af2dc6b5b0cc7dcd84e"
+  },
+  "status": "passed",
+  "summary_status": "complete_tuning_only_model_bundle_comparison"
+}

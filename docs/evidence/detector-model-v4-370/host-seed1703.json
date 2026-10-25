@@ -1,0 +1,23 @@
+{
+  "status": "passed",
+  "run_id": "detector-resnet-365-seed1703",
+  "result": "E:\\FactoryOpsData\\detector-resnet-365-seed1703\\result.json",
+  "result_sha256": "7b6c0ebbf64cd82f1be25781fadc8825938815ce78c2ee92bf2144c9bedc6321",
+  "preregistration_sha256": "598e1606fb7a23232680b65abbf5708c7313e71c93d5c0669cedb36dd7fad121",
+  "initial_checkpoint_sha256": "64fd2a8ebbeabef729b19a959766c1978d29cc5abeb1dfdd0507255709aa72a9",
+  "spec_sha256": "ff77e9e32f5826b205a4568babbda7e41c1702d6baeb40fe3e56d4c525214b6d",
+  "host_receipt_sha256": "f357543d2a491533131ed22339d62811e84295c7d23605ea3694ea84d2053469",
+  "source_commit": "15c0e3bc754c497e2c204af2dc6b5b0cc7dcd84e",
+  "evaluation_keys": [
+    "tuning_validation"
+  ],
+  "final_fixed_test_accessed": false,
+  "fixed_test_artifact_absent": true,
+  "batch_size_selected": 2,
+  "weights_enum": "FasterRCNN_ResNet50_FPN_Weights.COCO_V1",
+  "pure_backbone_effect_claimed": false,
+  "deterministic_drift_cause_identified": false,
+  "post_run_input_mismatches": 0,
+  "owned_processes_gone": true,
+  "lease_released": true
+}

@@ -161,6 +161,8 @@ Isaac Sim 4.5에서 무적재 Nova Carter 한 대가 2m 직선과 반지름 2m�
 
 위 이미지는 실행070의 기존 관측 화면입니다. 차량을 고르면 작업·목적지·적재물·엔코더 속도·SOC 원천·대기 이유와 남은 경로를 확인합니다. 현재 코드에는 CPU 운영 명령, 명령 receipt, 최근 120개 관측의 저장·읽기 전용 재생이 연결돼 있습니다. 이 최신 조합의 새 브라우저 클릭 확인은 아직 수행하지 않았습니다. [이미지 출처](docs/images/web-console-070/provenance.json) · [운영 화면 사용법](docs/operations-guide.md)
 
+**완주335의16대 기록을 웹에서 재생할 수 있습니다.**82×76m 배치와 같은 run ID의101개 관측을 공개했고, 출하5→6·빈 용기 반납2→3이 되는 마지막 프레임을 포함했습니다. 차량 작업·SOC·경로·재고·설비 WIP를 남기고 재생 중 제어 권한은 비웁니다. 출하 KPI에는 원천의 빈 용기 반납 수도 함께 표시합니다. API의 처음·마지막 seek를 확인했으며, 새 UI 문구는 TypeScript 검사를 통과했습니다. [표본·출처·제외 필드·해시](docs/data/campus16-335-replay/manifest.json)
+
 선별한 정상 운영 기록 120개는 작은 공개 패키지로 제공합니다. 원본 JSON을 보간하지 않고 gzip으로 보존했으며, 복원 SHA와 전체 실행·발췌 구간의 차이를 함께 기록했습니다. [데이터 내려받기와 재생 방법](docs/data/operations-normal-223/README.md) · [공개 출처](docs/data/operations-normal-223/provenance.json)
 
 <details>
@@ -225,7 +227,19 @@ v3는 기존512장을3×3 모자이크로 묶어 객체 크기와 밀도를 바�
 
 </details>
 
-후속 모델 후보인 ResNet50 FPN의 COCO 가중치·정규화·특징맵을 CPU에서 확인했고, 같은 데이터와 학습 횟수로 튜닝 전용 비교를 진행합니다. Cosmos3의 단일 L40S 후보와121-frame 정지 입력 smoke도 CPU에서 준비했습니다. 변환 모델은 아직 실행하지 않았으며, NGC 모델 접근·실행 프로필·Stop 가능한 기존 환경을 확인한 뒤 소량 시험을 시작합니다. [실험·실행·보존 범위](docs/synthetic-to-real-plan.md) · [후속 모델 준비](docs/evidence/detector-resnet-preparation-362.json) · [변환 시험 준비](docs/evidence/cosmos-smoke-preparation-346.json)
+ResNet50 FPN 후보도 같은 데이터·학습 횟수로3개 seed의 튜닝 전용 비교를 마쳤습니다.
+
+![같은 튜닝200장에서 비교한 MobileNet과 ResNet 모델 묶음의 검출 성능·실행 자원](docs/evidence/detector-model-v4-370/comparison.png)
+
+| 조건 | MobileNet v2 튜닝 mAP | ResNet50 v4 튜닝 mAP |
+|---|---:|---:|
+| 합성만 S | 0.054 ± 0.021 | 0.297 ± 0.226 |
+| 실제50장 R50 | 1.074 ± 0.124 | 2.973 ± 0.336 |
+| 합성 후 실제50장 SR50 | 1.004 ± 0.173 | 3.532 ± 1.343 |
+
+값은0–100 단위의3seed 평균±표준편차입니다. ResNet의 절대 성능도 낮고, 합성 후 실제50장 조건은 한 seed에서 실제50장 조건보다 낮았습니다. COCO 가중치·FPN·기본 RPN·백본이 함께 바뀐 모델 묶음의 관측이며, 위1,075장 고정 test 결과와 비교할 수 없습니다. 이 실험은 운영 제어와 분리된 오프라인 검출 비교입니다. 실행당 평균441초·PyTorch 최대 할당 메모리 평균2.95GiB였고, 로컬 RTX3060에서 수행했습니다. 전체 프로세스 경과시간과 PyTorch 할당량이며 GPU kernel 시간·전체 장치 점유량은 아닙니다. [설정·seed·원본·측정 범위](docs/evidence/detector-model-v4-370/report.json) · [모델 보존](docs/evidence/detector-resnet-storage-371.json)
+
+Cosmos3의 단일 L40S 후보와121-frame 정지 입력 smoke는 CPU에서 준비했습니다. 변환 모델은 아직 실행하지 않았으며, NGC 모델 접근·실행 프로필·Stop 가능한 기존 환경을 확인한 뒤 소량 시험을 시작합니다. [실험·실행·보존 범위](docs/synthetic-to-real-plan.md) · [변환 시험 준비](docs/evidence/cosmos-smoke-preparation-346.json)
 
 ## 현재 진행 상태
 
@@ -235,8 +249,8 @@ v3는 기존512장을3×3 모자이크로 묶어 객체 크기와 밀도를 바�
 | 2. CPU 운영 | 캠퍼스16대 모두9~21회·총240회 운송, 물류 임무 최고16개·이동 최고6대 | 작성 조건의 유한 배치이며 장기 생산 실적은 미확인 |
 | 3. 물리 주행 기준선 | 경로 추종226, 적재135, 교차 양보142, 도킹 정렬231 | 전기 접촉 충전·실물 검증은 후속 확장 |
 | 4. 운영 비교·원인 추적 | 4대6조건, 캠퍼스 TEST 고장·복구 지연, 정상48lot 완주 | 캠퍼스 정책의 반복 통계·실공장 성능은 미확인 |
-| 5. 관제·재현·미디어 | 웹 관측·경로 표시, 캠퍼스 설비 HTTP 명령, 완주335의16대 영상339 | 최신 브라우저 클릭 확인은 도구 초기화 오류로 남음 |
-| 6. 포트폴리오·데이터 | 대표 GIF·MP4·별도 드라이브 백업, 합성512장과 실사3seed 파일럿·CI, 백본·모자이크 비교 | ResNet 후속 모델, Cosmos 소량 시험·라벨 보존 |
+| 5. 관제·재현·미디어 | 웹 관측·경로 표시, 설비 HTTP 명령,16대 영상339와335의101표본 API 재생 | 최신 브라우저 클릭 확인은 도구 초기화 오류로 남음 |
+| 6. 포트폴리오·데이터 | 대표 GIF·MP4·별도 드라이브 백업, 합성512장과 실사3seed 파일럿·CI, 백본·모자이크·ResNet 비교 | Cosmos 소량 시험·라벨 보존, 낮은 실사 성능 개선 |
 
 16대 반복 물류의 CPU 완주와 대표 미디어는 완료했습니다. 16대 물리·센서는7초 무적재 구성요소 시험이며 장시간 물류 접촉 시험과 구분합니다. 기존4대 운영 비교·단일 차량 물리 시험을 보존하고, 합성→실사 실험을 보조 트랙으로 진행합니다.
 
@@ -265,6 +279,13 @@ npm run dev -- --port 3007
 ```powershell
 cd "$HOME/factory-ops-twin"
 uv run python -m factory_ops.dashboard --config configs/factory-semiconductor-campus16 --execution-mode process-line --lots 48 --port 18766
+```
+
+완주335의 선별 기록은 다음 설정으로 열고, 웹의 관측 재생 목록에서 `Campus16 run 335 representative replay`를 고릅니다.101개 원본 시각의 읽기 전용 재생이며 새48lot 실행의 완주를 기다릴 필요가 없습니다. [데이터 매니페스트](docs/data/campus16-335-replay/manifest.json)
+
+```powershell
+cd "$HOME/factory-ops-twin"
+uv run python -m factory_ops.dashboard --config configs/factory-semiconductor-campus16-wide-bridges-handoff-admission --execution-mode process-line --lots 48 --scenario-dir docs/data/campus16-335-replay/scenarios --port 18766
 ```
 
 설비 고장·복구와 관측 저장을 사용할 실행에서는 위 API 명령에 `--process-line-controls --scenario-dir runs/campus-scenarios`를 추가합니다. 저장한 관측에는12개 설비의 상태가 남으며 재생은 읽기 전용입니다. 이 옵션은 별도 실행 중인 배치의 상태를 바꾸지 않습니다.

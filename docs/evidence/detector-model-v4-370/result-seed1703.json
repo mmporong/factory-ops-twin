@@ -1,0 +1,236 @@
+{
+  "schema_version": 1,
+  "status": "complete_tuning_only",
+  "completed_utc": "2026-10-25T07:04:42.655172Z",
+  "wall_seconds": 438.9529999999795,
+  "source_commit": "15c0e3bc754c497e2c204af2dc6b5b0cc7dcd84e",
+  "preregistration_sha256": "598e1606fb7a23232680b65abbf5708c7313e71c93d5c0669cedb36dd7fad121",
+  "runtime_versions": {
+    "torch": "2.14.1+cu130",
+    "torchvision": "0.29.1+cu130",
+    "Pillow": "12.3.0",
+    "pycocotools": "2.0.11"
+  },
+  "device": "cuda",
+  "batch_size_selected_before_training": 2,
+  "peak_vram_bytes": 3165796864,
+  "pretrained_weights": {
+    "weights_url": "https://download.pytorch.org/models/fasterrcnn_resnet50_fpn_coco-258fb6c6.pth",
+    "weights_enum": "FasterRCNN_ResNet50_FPN_Weights.COCO_V1",
+    "constructor_contract_preserved": true,
+    "architecture": "fasterrcnn_resnet50_fpn",
+    "constructor_normalization": {
+      "FrozenBatchNorm2d": 53,
+      "BatchNorm2d": 0
+    },
+    "parameter_count": 41304286,
+    "trainable_parameter_count": 41081886,
+    "trainable_parameter_names": [
+      "backbone.body.layer2.0.conv1.weight",
+      "backbone.body.layer2.0.conv2.weight",
+      "backbone.body.layer2.0.conv3.weight",
+      "backbone.body.layer2.0.downsample.0.weight",
+      "backbone.body.layer2.1.conv1.weight",
+      "backbone.body.layer2.1.conv2.weight",
+      "backbone.body.layer2.1.conv3.weight",
+      "backbone.body.layer2.2.conv1.weight",
+      "backbone.body.layer2.2.conv2.weight",
+      "backbone.body.layer2.2.conv3.weight",
+      "backbone.body.layer2.3.conv1.weight",
+      "backbone.body.layer2.3.conv2.weight",
+      "backbone.body.layer2.3.conv3.weight",
+      "backbone.body.layer3.0.conv1.weight",
+      "backbone.body.layer3.0.conv2.weight",
+      "backbone.body.layer3.0.conv3.weight",
+      "backbone.body.layer3.0.downsample.0.weight",
+      "backbone.body.layer3.1.conv1.weight",
+      "backbone.body.layer3.1.conv2.weight",
+      "backbone.body.layer3.1.conv3.weight",
+      "backbone.body.layer3.2.conv1.weight",
+      "backbone.body.layer3.2.conv2.weight",
+      "backbone.body.layer3.2.conv3.weight",
+      "backbone.body.layer3.3.conv1.weight",
+      "backbone.body.layer3.3.conv2.weight",
+      "backbone.body.layer3.3.conv3.weight",
+      "backbone.body.layer3.4.conv1.weight",
+      "backbone.body.layer3.4.conv2.weight",
+      "backbone.body.layer3.4.conv3.weight",
+      "backbone.body.layer3.5.conv1.weight",
+      "backbone.body.layer3.5.conv2.weight",
+      "backbone.body.layer3.5.conv3.weight",
+      "backbone.body.layer4.0.conv1.weight",
+      "backbone.body.layer4.0.conv2.weight",
+      "backbone.body.layer4.0.conv3.weight",
+      "backbone.body.layer4.0.downsample.0.weight",
+      "backbone.body.layer4.1.conv1.weight",
+      "backbone.body.layer4.1.conv2.weight",
+      "backbone.body.layer4.1.conv3.weight",
+      "backbone.body.layer4.2.conv1.weight",
+      "backbone.body.layer4.2.conv2.weight",
+      "backbone.body.layer4.2.conv3.weight",
+      "backbone.fpn.inner_blocks.0.0.weight",
+      "backbone.fpn.inner_blocks.0.0.bias",
+      "backbone.fpn.inner_blocks.1.0.weight",
+      "backbone.fpn.inner_blocks.1.0.bias",
+      "backbone.fpn.inner_blocks.2.0.weight",
+      "backbone.fpn.inner_blocks.2.0.bias",
+      "backbone.fpn.inner_blocks.3.0.weight",
+      "backbone.fpn.inner_blocks.3.0.bias",
+      "backbone.fpn.layer_blocks.0.0.weight",
+      "backbone.fpn.layer_blocks.0.0.bias",
+      "backbone.fpn.layer_blocks.1.0.weight",
+      "backbone.fpn.layer_blocks.1.0.bias",
+      "backbone.fpn.layer_blocks.2.0.weight",
+      "backbone.fpn.layer_blocks.2.0.bias",
+      "backbone.fpn.layer_blocks.3.0.weight",
+      "backbone.fpn.layer_blocks.3.0.bias",
+      "rpn.head.conv.0.0.weight",
+      "rpn.head.conv.0.0.bias",
+      "rpn.head.cls_logits.weight",
+      "rpn.head.cls_logits.bias",
+      "rpn.head.bbox_pred.weight",
+      "rpn.head.bbox_pred.bias",
+      "roi_heads.box_head.fc6.weight",
+      "roi_heads.box_head.fc6.bias",
+      "roi_heads.box_head.fc7.weight",
+      "roi_heads.box_head.fc7.bias",
+      "roi_heads.box_predictor.cls_score.weight",
+      "roi_heads.box_predictor.cls_score.bias",
+      "roi_heads.box_predictor.bbox_pred.weight",
+      "roi_heads.box_predictor.bbox_pred.bias"
+    ],
+    "full_sha256": "258fb6c638b15964ddcdd1ae0748c5eef1be9e732750120cc857feed3faac384",
+    "cache_path": "E:\\FactoryOpsData\\cache\\torch-detector\\hub\\checkpoints\\fasterrcnn_resnet50_fpn_coco-258fb6c6.pth"
+  },
+  "initial_checkpoint": {
+    "path": "common-coco-head-init.pt",
+    "sha256": "64fd2a8ebbeabef729b19a959766c1978d29cc5abeb1dfdd0507255709aa72a9"
+  },
+  "conditions": {
+    "S": {
+      "training": {
+        "updates": 1024,
+        "batch_size": 2,
+        "amp": true,
+        "last_loss": 0.11581882834434509,
+        "mean_loss": 0.15685603074598475,
+        "wall_seconds": 236.76500000001397
+      },
+      "starting_checkpoint": "common-coco-head-init.pt",
+      "checkpoint": "S-final.pt",
+      "checkpoint_sha256": "47758d92dbbdee92b492384f4df660a8e0bbfc09f428a261f12bc1f24dd0e551"
+    },
+    "R50": {
+      "training": {
+        "updates": 256,
+        "batch_size": 2,
+        "amp": true,
+        "last_loss": 0.4794657826423645,
+        "mean_loss": 0.9337706133082975,
+        "wall_seconds": 56.85999999998603
+      },
+      "starting_checkpoint": "common-coco-head-init.pt",
+      "checkpoint": "R50-final.pt",
+      "checkpoint_sha256": "1250ffba84523f12ca1b19dd5527cc9bc303c397077e120e4ba9a2843660d30b"
+    },
+    "SR50": {
+      "training": {
+        "updates": 256,
+        "batch_size": 2,
+        "amp": true,
+        "last_loss": 0.3914671838283539,
+        "mean_loss": 0.9117941686381528,
+        "wall_seconds": 56.18700000003446
+      },
+      "starting_checkpoint": "S-final.pt",
+      "checkpoint": "SR50-final.pt",
+      "checkpoint_sha256": "b00bb489438c12e92095a916d0eed123159d8400f1ad3a3d4d01a7931057fa1f"
+    }
+  },
+  "evaluation": {
+    "tuning_validation": {
+      "S": {
+        "AP": 0.0026519721867247154,
+        "AP50": 0.004341087893940374,
+        "small_object_AP": 0.0,
+        "class_AP": {
+          "pallet": 0.005031431419758987,
+          "small_load_carrier": 0.0002725129536904433
+        },
+        "sample_counts": {
+          "images": 200,
+          "annotations": 6036,
+          "pallet_annotations": 5741,
+          "small_load_carrier_annotations": 295
+        },
+        "prediction_count_after_threshold": 19591,
+        "score_threshold": 0.001,
+        "max_detections_per_image": 100
+      },
+      "R50": {
+        "AP": 0.032189153431564706,
+        "AP50": 0.10227544933841325,
+        "small_object_AP": 0.010830561875410104,
+        "class_AP": {
+          "pallet": 0.03152626643769567,
+          "small_load_carrier": 0.032852040425433736
+        },
+        "sample_counts": {
+          "images": 200,
+          "annotations": 6036,
+          "pallet_annotations": 5741,
+          "small_load_carrier_annotations": 295
+        },
+        "prediction_count_after_threshold": 20000,
+        "score_threshold": 0.001,
+        "max_detections_per_image": 100
+      },
+      "SR50": {
+        "AP": 0.05005405061700298,
+        "AP50": 0.15025073873134193,
+        "small_object_AP": 0.014990700806970243,
+        "class_AP": {
+          "pallet": 0.038894076696151705,
+          "small_load_carrier": 0.06121402453785423
+        },
+        "sample_counts": {
+          "images": 200,
+          "annotations": 6036,
+          "pallet_annotations": 5741,
+          "small_load_carrier_annotations": 295
+        },
+        "prediction_count_after_threshold": 19826,
+        "score_threshold": 0.001,
+        "max_detections_per_image": 100
+      }
+    }
+  },
+  "compute_comparison": {
+    "S_updates": 1024,
+    "R50_updates": 256,
+    "SR50_real_updates": 256,
+    "SR50_additional_synthetic_updates": 1024
+  },
+  "claim_limits": {
+    "sequence_disjointness": "not established for unknown capture groups",
+    "pure_pretraining_effect": "not claimed because synthetic pretraining adds compute",
+    "label_cost_reduction": "not measured or claimed by this pilot",
+    "fresh_heldout_performance": "not measured; this development profile evaluates tuning-validation only",
+    "pure_backbone_effect": "not claimed; COCO weights, FPN, default RPN, and backbone change as one model bundle",
+    "deterministic_reproduction": "not claimed; deterministic settings are recorded without changing the seed-only policy"
+  },
+  "reproducibility": {
+    "seed": 1703,
+    "deterministic_algorithms_enabled": false,
+    "cudnn_benchmark": false,
+    "cudnn_deterministic": false,
+    "CUBLAS_WORKSPACE_CONFIG": null,
+    "device_name": "NVIDIA GeForce RTX 3060",
+    "contract": "seed-only observation; bitwise reproducibility and drift cause are not claimed"
+  },
+  "model_bundle_comparison": {
+    "interpretation": "COCO weights, FPN, default RPN, and backbone are compared as one model bundle",
+    "pure_backbone_effect_claimed": false,
+    "deterministic_drift_cause_identified": false
+  }
+}

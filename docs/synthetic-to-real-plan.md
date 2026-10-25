@@ -37,6 +37,8 @@ v3 356~358의3seed를 완료했다. 같은 튜닝200장 mAP(0–100)는 S 0.017�
 
 v4는 같은 단일 합성 입력의 FasterRCNN ResNet50 FPN COCO_V1 후보다. 실제 CPU에서 초기·재구성 모두 FrozenBatchNorm2d53개/BatchNorm2d0개·같은 학습 층 이름·state key를 확인했다. 640×960 입력의 특징맵 stride는4/8/16/32/64이며 Mobile의32/32/64와 다르다. COCO 가중치와 FPN·기본 RPN 등 모델 묶음이 함께 바뀌므로 stride나 백본만의 효과로 해석하지 않는다. 같은 S1024/R50 256/SR50 256 update·batch2·3seed·train50/tune200을 사전등록하고 batch2 OOM 시 batch1로 바꾸지 않는다. 단일 실행 상한은1,200초이며17시 마감 안에 정리할 여유가 있을 때만 입장한다. 고정test와 Cosmos 출력은 사용하지 않는다. [실제 CPU 준비·전체 weight SHA](evidence/detector-resnet-preparation-362.json) · [공식 모델](https://docs.pytorch.org/vision/stable/models/generated/torchvision.models.detection.fasterrcnn_resnet50_fpn.html)
 
+v4 363~365는 모두 완료했다. 튜닝 mAP(0–100)는 S 0.297±0.226, R50 2.973±0.336, SR50 3.532±1.343이다. 실제50장 학습 뒤의 모델 묶음 차이는 관측됐으나, 절대 성능은 낮고 SR50은 seed1702에서 R50보다 낮았다. 합성 추가 효과·현장 배치·라벨 대체를 입증하지 않는다. 같은 RTX3060에서 평균 프로세스 경과441초·PyTorch peak allocation2.95GiB였고 GPU kernel 시간이나 전체 장치 메모리와 구분한다. 입력 불변·고정test 비접근·소유PID0·lease 반환을 확인했다. [3seed 실제 결과·측정 범위](evidence/detector-model-v4-370/report.json) · [모델12개·재현 근거 백업](evidence/detector-resnet-storage-371.json)
+
 ## 현재 확보한 자료
 
 - 기존 Replicator 파이프라인: 12개 시각 구성·30시점·3카메라, RGB 1,080장과 라벨 생성 기록이 있다. 데이터 검사에는 결정적 생성 검사와 일부 QA 통과가 있지만 최종 production/human release는 미승인이다. 학습 가중치·실사 mAP는 없다. 기존 전체 RGB의 현재 복원 가능성도 새 학습 전에 확인해야 한다. 대표 자료 36개라는 수를 전체 RGB의 고유 이미지 수로 해석하지 않는다.
