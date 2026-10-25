@@ -1759,3 +1759,19 @@ GPU 시도1회·captured_frames0·RGB/RGBA없음이며 source/result/scene/spec�
 v6는 CPU 투영 교집합의 최소 폭·높이4픽셀과 시점별3후보·전체 추가128 capture 상한을 둔다. 가시성 거절만 다음 동결 후보로 진행하고 wrong class·duplicate ID·depth·SDK/IO 오류는 즉시 실패한다. 340은512장·2,812객체가 모두 첫 후보에서 통과했으므로 재표본화가 실제 실행됐다고 주장하지 않는다. 기존328/336 실패·라벨과 원본 false 플래그는 보존한다. [340 근거](evidence/perception-pilot-340.json)
 
 준비 중 상대 경로 profile을 사용한 CPU 호출은 absolute-path gate에서 GPU 출력 생성 전에 거절됐다. 후속 prepare는 profile/repo/cache/output의 절대 경로를 명시해 통과했고 같은 GPU 배치를 반복하지 않았다.
+
+## FOT-224 — 보존 영수증의 수동 전사 SHA 불일치
+
+340 ZIP의 내부 인벤토리와 원본 matrix 파일 해시는 일치했으나, 외부 보존 영수증의 matrix pin 한 개를 잘못 전사했다. 원본·닫힌 ZIP 항목·내부 인벤토리를 계산해 실제 SHA `86bb108a373d23185bab62e07fd1f3d02f9723f555ffac7a6e5f8859d268bbcc`로 영수증만 정정했다. 나머지 source pin은 모두 일치했고 ZIP payload와 ZIP SHA는 변경하지 않았다. 이전 영수증은 별도 보존한다. 이후 보존 pin은 파일/ZIP 읽기의 계산 결과를 사용하고 기억한 digest를 입력하지 않는다. [보존 근거](evidence/perception-storage-340.json)
+
+## FOT-225 — COCOeval의 공유 GT 변경과 표시용 재구성 해시
+
+341 예측 이미지 exporter는 원본 메타데이터로 재구성한 GT 해시와 saved prediction의 GT 해시가 달라 출력 전에 거절됐다. 설치 pycocotools2.0.11의 COCOeval이 공유된 annotation에 `ignore`와 `_ignore`를 남기고, v1 writer는 마지막 large-area 평가 이후 상태를 해시한 것이 확인됐다. 원래 GT SHA는 `dbc6708b…`, 같은 bookkeeping을 적용한 SHA는 저장된 `540b24dd…`와 정확히 일치했다.
+
+표시용 exporter는 원본 메타데이터·prereg·prediction 파일 해시를 확인하고, 원본 GT와 확인된 후평가 GT의 두 해시를 보존한다. bbox·class·이미지 ID·모델 출력·평가 수치를 바꾸지 않았고 inference를 반복하지 않았다. 새 코드는 COCOeval에 별도 GT 사본을 주는 경계를 검토하되, 현재 동결된3seed의 runner는 변경하지 않는다.
+
+## FOT-226 — checkpoint 키가 같아도 달랐던 백본 훈련 구성
+
+v1의 COCO_V1 초기 생성은 FrozenBatchNorm2d·학습 파라미터18,876,458개였으나, weights=None 재구성은 BatchNorm2d·18,959,754개였다. strict state_dict load는 통과했지만 normalization 동작과 학습 층 집합은 같지 않았다. v1 비교의 모든 조건이 같은 재구성 경로를 사용했으며 기존 결과를 수정하지 않는다. 이 차이가 낮은 실사 성능의 원인인지는 아직 확인하지 못했다.
+
+v2 선택 모드는 초기/재구성 모두 캐시된 COCO_V1 constructor로 만든 뒤 strict checkpoint를 덮어써 계약을 유지한다. 실제 CPU 검사에서 normalization 종류·학습 파라미터 이름·state key가 같고, v1 legacy 경로가 보존됨을 확인했다. 튜닝 전용 flag와 프로필을 함께 요구하고 최종test 메타데이터가 없는 fixture에서도 동작하는12개 표적 검사가 통과했다. 실제 효과는350~352의 같은 튜닝200장에서 확인한다.

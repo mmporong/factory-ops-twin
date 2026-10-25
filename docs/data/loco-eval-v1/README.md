@@ -2,7 +2,7 @@
 
 [image-index.csv.gz](image-index.csv.gz)는 실제 RGB5,097장과 메타데이터를 연결한 index다. 사진 픽셀과 모델 가중치는 포함하지 않는다. 출처는 [LOCO](https://github.com/tum-fml/loco), 데이터 라이선스는 CC0-1.0이다.
 
-현재 프로필은 `candidate_mapping_pending`이다. 합성 장면의 클래스/에셋 대응, 촬영 환경·시퀀스 그룹을 확인해야 학습을 시작할 수 있다. 검출기 성능 결과가 아니다.
+전역 프로필은 `candidate_mapping_pending`을 유지한다. 반도체 트레이를 물류 적재함으로 자동 대응하지 않는다. 별도 팔레트·강체 용기 프록시512장의 제한 릴리스는 객체별 마스크·박스와 root/leaf 의미 경계 검사를 마쳤으며, 실제50장 기준선과 비교하는 파일럿에 사용한다. 촬영 환경·시퀀스 그룹의 이미지별 대응은 미확인이므로 이 결과를 sequence-disjoint 성능으로 해석하지 않는다. [제한 릴리스](../../evidence/perception-release-340.json) · [실험 계약](../../synthetic-to-real-plan.md)
 
 ![LOCO 학습 분할의 실제 물류 사진](train-sample.jpg)
 

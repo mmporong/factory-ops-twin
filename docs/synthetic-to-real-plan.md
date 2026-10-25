@@ -21,6 +21,14 @@
 - 실제 자료: 고정 subset seed5701, train50/tune200/test1,075장만 ZIP에서 선별하고 기존 RGB 감사의 바이트 해시와 대조했다. test 바이트를 준비했지만 모델 추론·시각 선정에는 사용하지 않았다. 모든 학습과 튜닝 평가 뒤 모델별 고정 test를1회 수행한다.
 - seed1701/1702/1703과 실행 순서는 첫 학습 전에 동결했다. 관측 AP와 무관하게 남은 실행 상한 안에서 다음 seed를 입장시킨다. 미완료 seed는 보존하고 완료 평균에서 제외한다. threshold0.001/maxDets100을 고정하고 최종 test 예측만 압축 보존한다. 촬영 그룹 독립성과 라벨 비용 절감은 주장하지 않는다.
 
+## 첫3seed 결과와 다음 개발 비교
+
+[고정 실사 평가 원본](evidence/detector-pilot-v1-347/report.json)에서 mAP(0–100)는 S: 0.024±0.010, R50 0.765±0.261, SR50 1.668±0.108이다. 500회 paired image bootstrap의 SR50−R50 차이는+0.903 AP point, 조건부95% 구간[+0.746,+1.037]이다. 이 구간은 같은 고정 모델과 이미지 재표본화에 조건부이며 미확인 촬영 그룹이나 학습 seed 모집단의 불확실성을 대체하지 않는다. 전체9개 모델의 실제 COCOeval AP와 cache identity AP가 일치했다. [bootstrap 원본](evidence/detector-pilot-v1-347/bootstrap.json)
+
+현재 합성만 학습한 실사 성능은 거의0에 가깝다. 실제50장 뒤의 개선도 절대 성능이 낮으므로 라벨 대체 비용이나 현장 배치 성능으로 확장하지 않는다. 같은 실제 사진의 예측과 GT, 입력 구성·소스·학습 계산을 결과와 함께 보존한다. [시각 비교](images/detector-pilot-341/fixed-test-examples.jpg) · [모델/예측 백업](evidence/detector-storage-349.json)
+
+350~352는 development 비교다. v1에서 초기 COCO constructor는 FrozenBatchNorm2d였으나 checkpoint 재구성은 BatchNorm2d와 다른 학습 가능 층 집합을 사용했다. strict state key 일치만으로 같은 훈련 구성을 보장하지 못했다. v2는 모든 constructor의 COCO normalization/freezing 계약을 유지하고 같은3seed·실제50장·튜닝200장·업데이트 상한으로 비교한다. 낮은 성능의 원인으로 단정하지 않으며, 고정test 메타데이터·이미지·추론은 사용하지 않는다. v1 결과와 백업은 변경하지 않는다.
+
 ## 현재 확보한 자료
 
 - 기존 Replicator 파이프라인: 12개 시각 구성·30시점·3카메라, RGB 1,080장과 라벨 생성 기록이 있다. 데이터 검사에는 결정적 생성 검사와 일부 QA 통과가 있지만 최종 production/human release는 미승인이다. 학습 가중치·실사 mAP는 없다. 기존 전체 RGB의 현재 복원 가능성도 새 학습 전에 확인해야 한다. 대표 자료 36개라는 수를 전체 RGB의 고유 이미지 수로 해석하지 않는다.
@@ -143,3 +151,26 @@ v5는 같은 검사를 모든 불투명 절차형 컨텍스트 상자로 확장�
 장면25·aisle_low의 recipe/camera/seed/5객체를 바꾸지 않고 한 프레임을 촬영했다. tight와 loose bbox는 모두 `[0,388,0,389]`를 재현했고 문제 객체의 semantic/instance mask는 모두0픽셀이었다. 다른4객체의 두 마스크 화소 수와 bbox는 서로 일치했고, 원본328의 카메라 문서와 bbox도 동일했다. semantic label-map만의 누락은 아니며 viewport 경계 clipping과 renderer/annotator 결함 중 원인은 확정하지 않는다.
 
 공용 lease/Windows Job으로76.552초·4.95MB의 진단만 남겼고 입력24개·출력15개 해시와 Kit/owned0·lease반환을 확인했다. scene.usda는 실제 카메라 자세 설정 후 저장한다. 학습/COCO/mapping 승인은 false이고 전체512촬영·Cosmos·검출기 학습은 재개하지 않았다. [다섯 객체 비교 도판](images/perception-frame102-336/diagnostic.png) · [실행·해시·관측 한계](evidence/perception-frame102-336.json)
+
+## 제한 파일럿의 실행과 보존
+
+실제 환경은 Python3.12.13·torch2.14.1+cu130·torchvision0.29.1+cu130·pycocotools2.0.11이다. 기존 로봇/Isaac 환경을 바꾸지 않고 `E:/FactoryOpsData/venvs/factoryops-detector-py312`에 분리했다. 공식 가중치 `fasterrcnn_mobilenet_v3_large_fpn-fb6a3cc7.pth`의 SHA는 `fb6a3cc702b1df54c18a44b26708cd083614211062d0c36d2ca7bf9270df3533`다. [TorchVision 모델 정의](https://docs.pytorch.org/vision/main/models/generated/torchvision.models.detection.fasterrcnn_mobilenet_v3_large_fpn.html) · [고정 버전 소스](https://github.com/pytorch/vision/blob/v0.29.1/torchvision/models/detection/faster_rcnn.py)
+
+아래 입력 확인은 CUDA를 시작하지 않는다. 실제 학습은 새 출력 경로를 사용하고 공용 GPU lease·Windows Job으로 감싼 host spec에서 실행한다. 세 seed 비교는 같은 소스 checkout을 유지하고 설정의 pilot seed만 바꾼다. 이번 host spec과 종료 영수증은 선별 백업에 보존한다.
+
+```powershell
+cd "$HOME/factory-ops-twin"
+$detectorPython = 'E:/FactoryOpsData/venvs/factoryops-detector-py312/Scripts/python.exe'
+& $detectorPython -X utf8 -c "from pathlib import Path; from scripts.perception.run_detector_pilot import validate_synthetic_release; print(validate_synthetic_release(Path('E:/FactoryOpsData/perception-pilot-v6-340-release/release-manifest.json')))"
+& $detectorPython -X utf8 scripts/perception/run_detector_pilot.py --help
+```
+
+원본 촬영·릴리스 근거·입력 matrix는 `D:/FactoryOpsPortfolio/perception-pilot-340.zip`에 보존했다. 512개 hardlink RGB는 capture에 한 번만 넣었고, 릴리스에는 이미지 재연결 방법을 남겼다. 실제 LOCO 사진·제공처 에셋·SDK·모델 가중치는 이 ZIP에 중복하지 않는다. [보존 SHA·검사·복구 범위](evidence/perception-storage-340.json)
+
+## Cosmos3 호환성 smoke의 CPU 준비
+
+공식 Transfer2.5 일반2B의65.4GB 요구량에 현재 단일 L40S48GB는 미달한다. 최신 Cosmos3 NIM에는 단일 L40S의 Nano FP8 layer-offload 후보가 있으며 Transfer floor는 GPU당38GiB·시스템 RAM36GiB다. 두 L40S의 VRAM을 하나로 합산하지 않는다. 후보 이미지는 `nvcr.io/nim/nvidia/cosmos3:2.1.0`, 실제 digest와 선택 profile은 기동 후 확인해야 한다. [지원표](https://docs.nvidia.com/nim/cosmos/latest/support-matrix.html) · [배포·접근 조건](https://docs.nvidia.com/nim/cosmos/latest/deployment.html)
+
+346은 검증된 원본 frame1을 종횡비 유지 crop/resize하여1280×720의121-frame/30fps 정지 반복 MP4와 채워진 `POST /v1/infer` 파생-edge request를 작성했다. 디코딩121프레임이 모두 같은 픽셀 해시이며 원본3개 객체가 남아 있다. 모션 학습 자료나 시간적 사실성의 성공 근거가 아니다. 원본 bbox를 변환 출력에 복사하지 않고 결과의 객체 소실·합침·형상/박스 drift·edge agreement·flicker를 별도 확인한다.
+
+현재 클라우드 조회에서 FactoryOps g0와234는 실제 STOPPED다. 새 VM·모델/컨테이너 다운로드·약관 수락·NGC 자격증명 조회·GPU 변환은 하지 않았다. 실제 실행에는 NGC entitlement/약관, 독립 Stop 복구, 컨테이너 digest/profile·메모리·health/schema 확인이 남아 있다. [입력·API·실행 gate](evidence/cosmos-smoke-preparation-346.json) · [공식 Transfer API](https://docs.nvidia.com/nim/cosmos/latest/transfer.html)

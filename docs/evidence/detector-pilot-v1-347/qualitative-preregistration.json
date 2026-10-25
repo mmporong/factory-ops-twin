@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "frozen_utc": "2026-10-25T05:17:10.658861+00:00",
+  "first_final_result_exists": false,
+  "fixed_test_ids": [
+    1,
+    270,
+    540,
+    810
+  ],
+  "display_score_threshold": 0.5,
+  "display_top_k": 20,
+  "evaluation_threshold_unchanged": 0.001,
+  "fixed_example_seed": 1701,
+  "model_selection_or_tuning_performed": false,
+  "exporter_sha256": "b489c376b21908e1424e57dbdacabe41c5008962a33d58d385ecb37cc99c2f1e"
+}

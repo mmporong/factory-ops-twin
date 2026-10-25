@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "point_summary_sha256": "ae894b5097cfbbc0ccf49044102080a8ac160b9eecf4aaceacea297de81bfe57",
+  "bootstrap_sha256": "ab73f48bd81de5412e4621b4e53f68d4d2f9e5dcf5967f78e829274df3c1af1a",
+  "scale": "all AP values multiplied by 100; axes start at zero",
+  "interval_scope": "conditional image bootstrap for three fixed models per condition; not a sequence-independent or training-seed population interval",
+  "inference_rerun": false,
+  "exporter_sha256": "0282dda86b1224a5a537eb0d0bc447438e5c6aae2c56a54b3c1c8226ac1b6613",
+  "files": [
+    {
+      "path": "comparison.png",
+      "sha256": "1d4aada80ab9ca2fe94fe2a5bd4ffdd35f0a49261ca85d305e1c3f6d8e60d5d1"
+    },
+    {
+      "path": "comparison.svg",
+      "sha256": "957fefa28049e30b113c357d3200812f1ac5f689e94a9ac036320596abb2da02"
+    }
+  ]
+}

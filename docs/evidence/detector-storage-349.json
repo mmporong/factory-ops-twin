@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "status": "passed",
+  "completed_utc": "2026-10-25T05:41:51.224262+00:00",
+  "archive": "D:\\FactoryOpsPortfolio\\detector-pilot-v1-341-343.zip",
+  "archive_bytes": 975611177,
+  "archive_sha256": "708506ac5a1e9e673601d0a5813eb22f01b508daf1881a8db8e13e77d2e95c09",
+  "inventory_sha256": "aa56c03dd3c99cf6d0f2d5c2ddcb62da57d40785bcaeec3c934fc311ae271a6b",
+  "entry_count": 90,
+  "payload_bytes": 976331841,
+  "source_commits": {
+    "current_main": "e425d7c6cfa912c8b1de613f22969cf38644671d",
+    "frozen_experiment": "b57100e988e9f5ea3c80be1a1b280de59a3522e4",
+    "run_source_commits": {
+      "1701": "b57100e988e9f5ea3c80be1a1b280de59a3522e4",
+      "1702": "b57100e988e9f5ea3c80be1a1b280de59a3522e4",
+      "1703": "b57100e988e9f5ea3c80be1a1b280de59a3522e4"
+    }
+  },
+  "closed_zip_validation": {
+    "status": "passed",
+    "validated_entry_count": 91,
+    "mismatches": []
+  },
+  "original_source_validation": {
+    "status": "passed",
+    "validated_file_count": 90,
+    "mismatches": []
+  },
+  "bootstrap_348_included": false,
+  "source_receipt_sha256": "bf3a1a957fe3ca2e591d6e76168a0c5a842f2a9eff12b2066fd3c707ceb006fd"
+}

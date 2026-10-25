@@ -1,0 +1,117 @@
+{
+  "schema_version": 1,
+  "run_id": "detector-pilot-341-seed1701",
+  "source_result_sha256": "6c92a6d3be2f34b9fc3606e1eed42f09c4c9763f4174221758639058b5299dc1",
+  "preregistration_sha256": "9566e95b8c73a7511f58b0ec1e23edabed774328c4cdbe0c3987e50f8ce7c72a",
+  "ground_truth_sha256": "dbc6708b302f03e1b401ca14be790a930815d7424f8405bea3dfa5257ca045d2",
+  "evaluated_ground_truth_sha256": "540b24dd446589b7903359ae3c7a0fc7e267900beba17363918f93176891e98e",
+  "v1_cocoeval_bookkeeping_reconstructed": true,
+  "qualitative_preregistration_sha256": "e516a2f121dcecccee46e7ce5496cd0031c68424f25aaa7fb8da2e654cf4ed46",
+  "exporter_sha256": "d01f2049f016e791fb32d633627e6ef31a7e9770ec19bd9b319a68f5c0dc4c14",
+  "prediction_artifacts": {
+    "S": {
+      "path": "evaluation/final_fixed_test/S-predictions.json.gz",
+      "sha256": "5f05d52ab34c7b29aa88f5b92ea43fdf8c9995bf07962dd40665f90d8173163b",
+      "rows": 41576,
+      "bytes": 3530487,
+      "image_count": 1075,
+      "ground_truth_sha256": "540b24dd446589b7903359ae3c7a0fc7e267900beba17363918f93176891e98e",
+      "config_sha256": "45f5b6c685ce9fc339868f81b41db1537f41cfff52c29fddf9fd00a1ca3bc129",
+      "preregistration_sha256": "9566e95b8c73a7511f58b0ec1e23edabed774328c4cdbe0c3987e50f8ce7c72a"
+    },
+    "R50": {
+      "path": "evaluation/final_fixed_test/R50-predictions.json.gz",
+      "sha256": "2dcdf038cac5bc2456b8e44985ae6d46db1c2d1a07aa8982a82a4d98c9c87383",
+      "rows": 103925,
+      "bytes": 8669759,
+      "image_count": 1075,
+      "ground_truth_sha256": "540b24dd446589b7903359ae3c7a0fc7e267900beba17363918f93176891e98e",
+      "config_sha256": "45f5b6c685ce9fc339868f81b41db1537f41cfff52c29fddf9fd00a1ca3bc129",
+      "preregistration_sha256": "9566e95b8c73a7511f58b0ec1e23edabed774328c4cdbe0c3987e50f8ce7c72a"
+    },
+    "SR50": {
+      "path": "evaluation/final_fixed_test/SR50-predictions.json.gz",
+      "sha256": "1951fc9ff71e68dac8723d577095071e0c1321c1d0ca168a3d4d2104fc1fdfbc",
+      "rows": 106896,
+      "bytes": 8979710,
+      "image_count": 1075,
+      "ground_truth_sha256": "540b24dd446589b7903359ae3c7a0fc7e267900beba17363918f93176891e98e",
+      "config_sha256": "45f5b6c685ce9fc339868f81b41db1537f41cfff52c29fddf9fd00a1ca3bc129",
+      "preregistration_sha256": "9566e95b8c73a7511f58b0ec1e23edabed774328c4cdbe0c3987e50f8ce7c72a"
+    }
+  },
+  "image_selection": "fixed IDs [1,270,540,810] before first model result",
+  "images": [
+    {
+      "fixed_test_image_id": 1,
+      "source": {
+        "part_index": 0,
+        "source_image_id": 9526,
+        "file_name": "1564562430367,07.jpg"
+      },
+      "file_name": "1564562430367,07.jpg",
+      "rgb_sha256": "541de2c6deea47f3e019565352f6b9734986a7bef14ef48254e7234f672a5fb8",
+      "displayed_box_counts": {
+        "GT": 10,
+        "S": 0,
+        "R50": 2,
+        "SR50": 3
+      }
+    },
+    {
+      "fixed_test_image_id": 270,
+      "source": {
+        "part_index": 0,
+        "source_image_id": 9808,
+        "file_name": "1564563814.9585428.jpg"
+      },
+      "file_name": "1564563814.9585428.jpg",
+      "rgb_sha256": "442fc107d8ca030a61d88357b5f0e161e532c0fc209ebfe2d737cbe64ae255f8",
+      "displayed_box_counts": {
+        "GT": 9,
+        "S": 2,
+        "R50": 1,
+        "SR50": 2
+      }
+    },
+    {
+      "fixed_test_image_id": 540,
+      "source": {
+        "part_index": 0,
+        "source_image_id": 10096,
+        "file_name": "1564562502.1292777.jpg"
+      },
+      "file_name": "1564562502.1292777.jpg",
+      "rgb_sha256": "e72a65a7fb825dd15e84214ccbbdb52ee89cfdd66597260433b6b8511d7ca28e",
+      "displayed_box_counts": {
+        "GT": 10,
+        "S": 0,
+        "R50": 0,
+        "SR50": 2
+      }
+    },
+    {
+      "fixed_test_image_id": 810,
+      "source": {
+        "part_index": 0,
+        "source_image_id": 10382,
+        "file_name": "1564563898.68612.jpg"
+      },
+      "file_name": "1564563898.68612.jpg",
+      "rgb_sha256": "6529f48f2d9e519f2e6545e8ad8f35e96c544b9999e1a5f19a6b4dee841b6fe5",
+      "displayed_box_counts": {
+        "GT": 13,
+        "S": 0,
+        "R50": 0,
+        "SR50": 5
+      }
+    }
+  ],
+  "display_score_threshold": 0.5,
+  "display_top_k": 20,
+  "evaluation_threshold_unchanged": 0.001,
+  "model_inference_rerun": false,
+  "purpose": "qualitative examples; does not replace the complete fixed-test metrics",
+  "dataset_credit": "LOCO, tum-fml/loco, CC0-1.0",
+  "image_sha256": "f638ade3ef08f02778093d98be4169dbf505d8dca0508ad1ca7281a0cd6aeeb9"
+}

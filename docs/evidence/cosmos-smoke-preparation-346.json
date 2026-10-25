@@ -1,0 +1,99 @@
+{
+  "schema_version": 1,
+  "status": "cpu_input_ready_gpu_not_started",
+  "bundle": {
+    "path": "E:\\FactoryOpsData\\cosmos-static-smoke-346\\bundle.json",
+    "sha256": "b158dd2dc005b189e00406a9cda8c28a7c15c7e293a124d3c6896fcd6862554f"
+  },
+  "video": {
+    "frames": 121,
+    "fps": 30,
+    "duration_seconds": 4.033333333333333,
+    "all_decoded_frames_identical": true,
+    "codec": "h264"
+  },
+  "derivation": {
+    "crop_xyxy": [
+      0,
+      40,
+      768,
+      472
+    ],
+    "output_resolution": [
+      1280,
+      720
+    ],
+    "rgb_resampling": "bicubic",
+    "semantic_resampling": "nearest",
+    "aspect_ratio_preserved": true,
+    "all_three_source_objects_retained": true
+  },
+  "source_frame_id": 1,
+  "purpose": "one static-frame compatibility and geometry-drift smoke; not a motion dataset",
+  "Cosmos_inference_performed": false,
+  "training_ready": false,
+  "model_output_labels_approved": false,
+  "deployment_contract": {
+    "image_tag": "nvcr.io/nim/nvidia/cosmos3:2.1.0",
+    "image_digest": null,
+    "selectors": {
+      "NIM_MODEL_TYPE": "generator",
+      "NIM_MODEL_VARIANT": "nano",
+      "NIM_PRECISION": "fp8",
+      "NIM_PERF_PROFILE": "latency",
+      "NIM_OFFLOAD_MODE": "layer"
+    },
+    "target": "one L40S 48GB only; never aggregate two GPU memory capacities",
+    "documented_transfer_floor": {
+      "free_vram_gib_per_device": 38,
+      "system_ram_gib": 36,
+      "devices": 1
+    },
+    "api": {
+      "method": "POST",
+      "path": "/v1/infer",
+      "request": "inference-request.json"
+    },
+    "inspect_before_inference": [
+      "/v1/version",
+      "/v1/metadata",
+      "/v1/manifest",
+      "/v1/license"
+    ],
+    "request_validation": "documented API fields only; server schema and profile not yet validated",
+    "runtime_gates": [
+      "NGC entitlement and terms",
+      "independent Stop recovery and bounded watchdog",
+      "actual container digest and selected profile",
+      "free per-device VRAM and host RAM",
+      "health and request schema",
+      "output disk and hash-bound retention"
+    ],
+    "terms_accepted_by_this_tool": false,
+    "credentials_read_by_this_tool": false,
+    "sources": [
+      "https://docs.nvidia.com/nim/cosmos/latest/deployment.html",
+      "https://docs.nvidia.com/nim/cosmos/latest/transfer.html",
+      "https://docs.nvidia.com/nim/cosmos/latest/configuration.html",
+      "https://docs.nvidia.com/nim/cosmos/latest/support-matrix.html"
+    ]
+  },
+  "deployment_contract_sha256": "defa1e4cb1f15a2001179eb7f5014229da0db7d780c0125f0cf0eb82a5131e6c",
+  "video_file": {
+    "path": "input-reference.mp4",
+    "bytes": 69656,
+    "sha256": "5d389c7270108cb9177b738f2f1b21a82fbbb9966653a9894d20589ff8a6dcc9"
+  },
+  "request_file": {
+    "path": "inference-request.json",
+    "bytes": 93691,
+    "sha256": "ff26813a7600768ac75facd4e53843e8f5aeb19aea950002ae4c40f7d491f566"
+  },
+  "cloud_readonly_observation": {
+    "observed_utc": "2026-10-25T05:31:06.554958+00:00",
+    "FactoryOps_scale_234": "STOPPED, 2 x L40S 48GB",
+    "FactoryOps_g0": "STOPPED, 1 x L40S 48GB",
+    "other_project_resources_used": false,
+    "cloud_start_stop_create_performed": false
+  }
+}

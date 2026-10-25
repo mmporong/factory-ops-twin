@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="620" viewBox="0 0 1080 620">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<text x="100" y="48" font-family="Arial,sans-serif" font-size="26" font-weight="700" fill="#0f172a">Detector pilot · fixed-test seed means</text>
+<text x="100" y="75" font-family="Arial,sans-serif" font-size="14" fill="#475569">Bars are point estimates; whiskers show seed standard deviation. No bootstrap CI.</text>
+<line x1="100" y1="500.0" x2="1000" y2="500.0" stroke="#e2e8f0"/>
+<text x="86" y="505.0" text-anchor="end" font-family="Arial,sans-serif" font-size="12" fill="#64748b">0.0</text>
+<line x1="100" y1="420.0" x2="1000" y2="420.0" stroke="#e2e8f0"/>
+<text x="86" y="425.0" text-anchor="end" font-family="Arial,sans-serif" font-size="12" fill="#64748b">0.2</text>
+<line x1="100" y1="340.0" x2="1000" y2="340.0" stroke="#e2e8f0"/>
+<text x="86" y="345.0" text-anchor="end" font-family="Arial,sans-serif" font-size="12" fill="#64748b">0.4</text>
+<line x1="100" y1="260.0" x2="1000" y2="260.0" stroke="#e2e8f0"/>
+<text x="86" y="265.0" text-anchor="end" font-family="Arial,sans-serif" font-size="12" fill="#64748b">0.6</text>
+<line x1="100" y1="180.0" x2="1000" y2="180.0" stroke="#e2e8f0"/>
+<text x="86" y="185.0" text-anchor="end" font-family="Arial,sans-serif" font-size="12" fill="#64748b">0.8</text>
+<line x1="100" y1="100.0" x2="1000" y2="100.0" stroke="#e2e8f0"/>
+<text x="86" y="105.0" text-anchor="end" font-family="Arial,sans-serif" font-size="12" fill="#64748b">1.0</text>
+<rect x="116.0" y="499.9" width="44" height="0.1" rx="4" fill="#60a5fa"/>
+<line x1="138.0" y1="499.9" x2="138.0" y2="499.9" stroke="#0f172a" stroke-width="2"/>
+<rect x="168.0" y="496.9" width="44" height="3.1" rx="4" fill="#94a3b8"/>
+<line x1="190.0" y1="495.9" x2="190.0" y2="498.0" stroke="#0f172a" stroke-width="2"/>
+<rect x="220.0" y="493.3" width="44" height="6.7" rx="4" fill="#22c55e"/>
+<line x1="242.0" y1="492.9" x2="242.0" y2="493.8" stroke="#0f172a" stroke-width="2"/>
+<text x="190.0" y="528" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#334155">AP</text>
+<rect x="296.0" y="499.6" width="44" height="0.4" rx="4" fill="#60a5fa"/>
+<line x1="318.0" y1="499.5" x2="318.0" y2="499.8" stroke="#0f172a" stroke-width="2"/>
+<rect x="348.0" y="489.6" width="44" height="10.4" rx="4" fill="#94a3b8"/>
+<line x1="370.0" y1="484.3" x2="370.0" y2="494.8" stroke="#0f172a" stroke-width="2"/>
+<rect x="400.0" y="478.7" width="44" height="21.3" rx="4" fill="#22c55e"/>
+<line x1="422.0" y1="476.4" x2="422.0" y2="481.0" stroke="#0f172a" stroke-width="2"/>
+<text x="370.0" y="528" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#334155">AP50</text>
+<rect x="476.0" y="499.9" width="44" height="0.1" rx="4" fill="#60a5fa"/>
+<line x1="498.0" y1="499.8" x2="498.0" y2="499.9" stroke="#0f172a" stroke-width="2"/>
+<rect x="528.0" y="494.9" width="44" height="5.1" rx="4" fill="#94a3b8"/>
+<line x1="550.0" y1="493.4" x2="550.0" y2="496.4" stroke="#0f172a" stroke-width="2"/>
+<rect x="580.0" y="491.7" width="44" height="8.3" rx="4" fill="#22c55e"/>
+<line x1="602.0" y1="490.7" x2="602.0" y2="492.6" stroke="#0f172a" stroke-width="2"/>
+<text x="550.0" y="528" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#334155">pallet_AP</text>
+<rect x="656.0" y="499.9" width="44" height="0.1" rx="4" fill="#60a5fa"/>
+<line x1="678.0" y1="499.8" x2="678.0" y2="500.0" stroke="#0f172a" stroke-width="2"/>
+<rect x="708.0" y="499.0" width="44" height="1.0" rx="4" fill="#94a3b8"/>
+<line x1="730.0" y1="498.4" x2="730.0" y2="499.6" stroke="#0f172a" stroke-width="2"/>
+<rect x="760.0" y="495.0" width="44" height="5.0" rx="4" fill="#22c55e"/>
+<line x1="782.0" y1="494.1" x2="782.0" y2="495.9" stroke="#0f172a" stroke-width="2"/>
+<text x="730.0" y="528" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#334155">small_load_carrier_AP</text>
+<rect x="836.0" y="499.9" width="44" height="0.1" rx="4" fill="#60a5fa"/>
+<line x1="858.0" y1="499.9" x2="858.0" y2="500.0" stroke="#0f172a" stroke-width="2"/>
+<rect x="888.0" y="499.9" width="44" height="0.1" rx="4" fill="#94a3b8"/>
+<line x1="910.0" y1="499.8" x2="910.0" y2="500.0" stroke="#0f172a" stroke-width="2"/>
+<rect x="940.0" y="499.2" width="44" height="0.8" rx="4" fill="#22c55e"/>
+<line x1="962.0" y1="498.7" x2="962.0" y2="499.7" stroke="#0f172a" stroke-width="2"/>
+<text x="910.0" y="528" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#334155">small_object_AP</text>
+<rect x="735" y="45" width="14" height="14" rx="3" fill="#60a5fa"/>
+<text x="755" y="57" font-family="Arial,sans-serif" font-size="13" fill="#334155">S</text>
+<rect x="825" y="45" width="14" height="14" rx="3" fill="#94a3b8"/>
+<text x="845" y="57" font-family="Arial,sans-serif" font-size="13" fill="#334155">R50</text>
+<rect x="915" y="45" width="14" height="14" rx="3" fill="#22c55e"/>
+<text x="935" y="57" font-family="Arial,sans-serif" font-size="13" fill="#334155">SR50</text>
+<text x="100" y="580" font-family="Arial,sans-serif" font-size="12" fill="#64748b">GT 540b24dd446589b7903359ae3c7a0fc7e267900beba17363918f93176891e98e · n=3</text>
+</svg>

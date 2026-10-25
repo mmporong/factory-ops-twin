@@ -183,43 +183,30 @@ Isaac Sim Replicator로 12개 시각 구성, 30시점, 3카메라에서 RGB 1,08
 
 ## 합성 데이터가 실제 사진에서도 통하는가
 
-기존 Replicator RGB 1,080장의 생성·검사 기록을 바탕으로, 실제 물류 사진에서 검출 성능과 실제 라벨 예산 곡선을 비교하는 보조 실험을 준비하고 있습니다. **검출기 학습과 실사 mAP 결과는 아직 없습니다.**
+팔레트·강체 적재함의 Isaac Sim 합성512장과 실제 LOCO 사진50장을 학습한 뒤, 고정한 실제 사진1,075장에서3개 seed를 비교했습니다. **합성 사전 학습 후 실제50장 조건은 모든 seed에서 개선됐지만, 절대 mAP는 낮습니다.** 현장 검출이나 실제 라벨 비용 절감을 입증한 결과로 보지 않습니다.
 
-공식 RGB ZIP을 받아 사진5,097장과 박스151,428개의 메타데이터를 대조했습니다. 모두 디코딩·해상도가 맞았고 분할 간 동일 파일/픽셀·pHash 거리6 이하 후보는0건이었습니다. 촬영 환경·시퀀스 감사는 남아 있습니다. LOCO에는 AMR 클래스가 없고, 소형 적재함이 없는 초기 튜닝 후보도 수정했습니다. 평가용 sub1은 원본 val 일부를 고정한 프로젝트 분할이며 공식 LOCO test가 아닙니다. [RGB 감사](docs/evidence/loco-rgb-249.json) · [분할·해시 index](docs/data/loco-eval-v1/README.md) · [범주·분할 출처](docs/evidence/loco-protocol-310.json)
+![합성만·실제50장·합성후실제50장의 고정 실사 평가와 조건부 신뢰구간](docs/images/detector-pilot-341/comparison.png)
 
-반도체 장면의 트레이·매거진을 팔레트·적재함으로 잘못 학습하지 않도록 에셋 허용 목록과 거절 검사를 구현했습니다. 실제 학습 후보 사진과 비교해 얕은 회색 트레이 대신 높이24cm의 NVIDIA 청색 적재함을 추가했습니다. 팔레트·청색 적재함의 소량 촬영302는4개 seed·16장 RGB를 생성했고, **60개 객체의 자동 박스가 각 객체 semantic 마스크 외곽과 일치**했습니다. 원본 에셋의 기본 라벨은 소비용 사본에서 분리했고 class/object_id·에셋 해시를 연결해 보존했습니다. LOCO 클래스 등가성과 학습 적합성은 미승인입니다. [302 촬영·라벨·출처 근거](docs/evidence/perception-blue-probe-302.json) · [이전 회색 후보278](docs/evidence/perception-probe-278.json)
+| 조건 | 합성 / 실제 학습 이미지 | mAP(0–100), 평균 ± seed 표준편차 | AP50(0–100) |
+|---|---:|---:|---:|
+| 합성만 S | 512 / 0 | 0.024 ± 0.010 | 0.093 |
+| 실제50장 R50 | 0 / 50 | 0.765 ± 0.261 | 2.610 |
+| 합성 후 실제50장 SR50 | 512 / 50 | 1.668 ± 0.108 | 5.319 |
 
-![팔레트와 깊은 청색 적재함의4개 seed·16장 실제 GPU 촬영](docs/images/perception-blue-probe-302/contact-sheet.png)
-
-새 export는 `object_id`로 각 객체의 semantic mask와 tight bbox 외곽을 대조합니다. 프레임 경계에 닿은 객체는 포함하고, 완전히 가려져 visible mask가 없는 객체는 거부합니다. 기존302 원본도 이 검사에서16프레임·60개 객체가 일치했으며 원본 데이터는 바꾸지 않았습니다. [검사 범위와 원본 해시](docs/evidence/perception-object-mask-export.json)
-
-위 자료는 단순 바닥 위 후보 에셋의 export 확인용입니다. [청색 적재함 원본 RGB](docs/images/perception-blue-probe-302/deep-blue-bins.png) · [팔레트 혼합 원본 RGB](docs/images/perception-blue-probe-302/pallet-and-bins.png). 학습 준비가 완료된 공장 데이터로 보지 않습니다. 후속 학습 파일럿은512장, Cosmos는10클립부터 시작하며 변환본의 객체·라벨 정합을 확인하기 전에는 원본 라벨을 복사하지 않습니다. [비교 조건·GPU·비용과 확대 기준](docs/synthetic-to-real-plan.md)
-
-실제 LOCO 학습용 사진6장과 합성 후보를 비교해 적층·가림·원거리 소형 객체·현장 배경의 차이를 정리했습니다. 평가용 sub1은 열지 않았습니다. 기존 용기를 제한된 외형의 baseline으로 사용하되, 단일 청색 용기가 전체 소형 적재함 클래스를 대표한다고 해석하지 않습니다. [실사·합성 비교 이미지와 준비 범위](docs/synthetic-to-real-plan.md#실제-학습-사진과-합성-후보의-차이)
-
-128개 장면·4시점의 새 파일럿340에서 **RGB 512장과 객체 라벨2,812개**를 완성했습니다. 객체 ID별 visible mask·tight bbox·깊이 검사와 전체 파일 해시 확인을 통과했습니다. 아래는 학습 전 고정한8개 이미지의 박스 표시입니다. 기존102번째 프레임의 화면 경계 불일치는 실패 원본으로 보존하고, 새 입력에는 최소 투영 크기와 제한된 시점 재표본화를 적용했습니다. 이번 고정 입력은 첫 시점 후보가 모두 통과했습니다. 촬영 원본은 후보 상태로 보존하고, 팔레트·강체 용기 프록시만 다루는 별도512장 학습 릴리스를 승인했습니다. [제한 범위와 승인 근거](docs/evidence/perception-release-340.json). [512장 촬영·라벨·종료 근거](docs/evidence/perception-pilot-340.json) · [선정 이미지 출처](docs/images/perception-pilot-340/provenance.json)
-
-![학습 전에 고정한 합성 이미지8장과 팔레트·적재함 객체별 박스](docs/images/perception-pilot-340/contact-sheet.png)
-
-실제 사진50장의 기준선과 합성512장 사전 학습의 첫 비교를 진행하고 있습니다. 같은 초기 가중치·실제 표본·학습 설정을 사용하며 고정 평가1,075장의 결과를 보고 모델이나 임계값을 고르지 않습니다. 검출기 학습·실사 mAP 결과는 아직 없습니다. [실험 설정](configs/perception/detector-pilot-v1.json)
+SR50과 R50의 차이는 **+0.903 AP point**이며, 고정된3개 모델에 대한500회 paired image bootstrap의 조건부95% 구간은 **[+0.746, +1.037]**입니다. 촬영 시퀀스별 대응이 없어 이미지 독립성을 입증하지 못했고, SR50은 합성1,024 update의 추가 계산을 사용했습니다. 순수 사전 학습 효과나 실제 라벨 몇 장을 대체하는지는 아직 측정하지 않았습니다. [원본 수치·seed·입력](docs/evidence/detector-pilot-v1-347/report.json) · [bootstrap 범위·해시](docs/evidence/detector-pilot-v1-347/bootstrap.json)
 
 <details>
-<summary>한 프레임으로 재현한 박스·마스크 경계 불일치</summary>
+<summary>같은 실제 사진에서 GT와 세 모델 예측 비교</summary>
 
-![같은 프레임의 RGB·인스턴스 마스크와 다섯 객체의 박스/화소 수 비교](docs/images/perception-frame102-336/diagnostic.png)
+![학습 결과를 보기 전에 고정한 실제 사진4장과 GT·S·R50·SR50 예측](docs/images/detector-pilot-341/fixed-test-examples.jpg)
 
-프레임102의 장면·카메라·객체를 고정해 한 번 촬영한 진단입니다. 실패 객체는 유효 학습 자료에 포함하지 않았습니다. [실행·해시·종료 근거](docs/evidence/perception-frame102-336.json) · [이미지 출처](docs/images/perception-frame102-336/provenance.json) · [에셋 라이선스](docs/asset-attribution.md)
+첫 seed1701의 저장된 예측으로 만들었으며 추론을 반복하지 않았습니다. 표시만 score0.5 이상·최대20개이고, 평가는 score0.001·maxDets100을 유지했습니다. [이미지·예측 출처](docs/images/detector-pilot-341/provenance.json)
 
 </details>
 
-<details>
-<summary>합성 파일럿328의 유효101장 중 대표10장</summary>
+합성 원본512장·객체 라벨2,812개는 객체별 visible mask·tight bbox·깊이와 파일 해시 검사를 마쳤습니다. 팔레트·강체 용기 프록시의 제한 릴리스이며, 반도체 트레이·매거진을 물류 적재함으로 자동 치환하지 않습니다. [합성 예시](docs/images/perception-pilot-340/contact-sheet.png) · [촬영 근거](docs/evidence/perception-pilot-340.json) · [제한 릴리스](docs/evidence/perception-release-340.json)
 
-![회색·청색 용기와 팔레트의 여러 배치·시점에서 고른 유효 부분10장](docs/images/perception-pilot-328/partial-contact-sheet.png)
-
-유효101장 중 고른 실제 RGB10장입니다. 실패한102번째 프레임은 포함하지 않습니다. 배경·가림 소품은 절차형 단순 형상이며 실제 창고 사진이 아닙니다. NVIDIA 원본 에셋·CC-BY-4.0·소비용 사본 변경 내역은 [에셋 출처](docs/asset-attribution.md)에 기록했습니다.
-
-</details>
+다음 개발 비교는 COCO 백본의 normalization/freezing 구성을 유지하고 튜닝200장만 평가합니다. 확정한 v1 고정 test를 다시 사용하지 않습니다. Cosmos3의 단일 L40S 후보와121-frame 정지 입력 smoke도 CPU에서 준비했으며, 변환 모델은 아직 실행하지 않았습니다. [실험·실행·보존 범위](docs/synthetic-to-real-plan.md) · [변환 시험 준비](docs/evidence/cosmos-smoke-preparation-346.json)
 
 ## 현재 진행 상태
 

@@ -1,0 +1,43 @@
+{
+  "archive": "D:\\FactoryOpsPortfolio\\perception-pilot-340.zip",
+  "filecount": 3751,
+  "gpuused": false,
+  "inventory": {
+    "entries": 3750,
+    "path": "archive-inventory.json",
+    "sha256": "c647babc785fed5b2676db5ee7128dbb6d7bf331dd02742f1f465273324c7ad7"
+  },
+  "originalfilesuntouched": true,
+  "payloadbytes": 1731651967,
+  "payloadfilecount": 3750,
+  "pin_correction": {
+    "field": "sourcepins.matrix_preregistration_sha256",
+    "correct_value": "86bb108a373d23185bab62e07fd1f3d02f9723f555ffac7a6e5f8859d268bbcc",
+    "zip_payload_unchanged": true,
+    "corrected_from_computed_original_zip_inventory_match": true
+  },
+  "processesstopped": false,
+  "restore": {
+    "external_dependencies": "Restore LOCO images, Isaac Sim/Python environments, model weights, and external assets from their pinned external sources; they are intentionally excluded.",
+    "releaseimages_fromcaptureinstructions": "For each release/image-inventory.json row, create release/images/<path> as a hardlink to capture/<path> on the same NTFS volume; otherwise copy the file. Verify row bytes and sha256 before use."
+  },
+  "schema_version": 1,
+  "sha256": "f4c3d2156ab754fa7674e8cffb2240c32add13d9ebfe4f796fcde547fb0c8ae3",
+  "skiphardlinkpolicy": "release/images is omitted because its 512 files are NTFS hardlinks to capture RGB files already stored once in capture/",
+  "sourcepins": {
+    "analysis_preregistration_sha256": "a38fe5c8d1720ec827b77b9df12f89ef61a6c8ed0db97088d3aea03b51873453",
+    "capture_coco_sha256": "2873031c6b34c5e6eefbe820f4982238165bd288256c5412ba11cf337143cf20",
+    "capture_dataset_sha256": "3ddb15ca76ca17687a971effa8fcbd0aec46a17b8bb865d9dd58d4b42497fba7",
+    "capture_manifest_sha256": "4290397f568f9a2259f245b027b9dc8d68bd53aee82730d3f65bec2c1997d72b",
+    "capture_source_commit": "1e05a408e42e033dd23911532ac4f9fea8e505f2",
+    "matrix_preregistration_sha256": "86bb108a373d23185bab62e07fd1f3d02f9723f555ffac7a6e5f8859d268bbcc",
+    "release_manifest_sha256": "69b1f2cc9efea586442dcc7dee996fc4c8ba79743d714b05d1b6c78fec0070e9"
+  },
+  "status": "passed",
+  "verifiedallentries": true,
+  "zipbytes": 702884803,
+  "source_receipt": {
+    "path": "C:\\Users\\LIMMM\\factory-ops-twin\\artifacts\\perception-pilot-340-storage\\result.json",
+    "sha256": "c64ebdb9a381f2dac34d095a8b2adb6b753cb049526c02eb45b0750492c2c39b"
+  }
+}

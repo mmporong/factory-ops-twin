@@ -1,0 +1,89 @@
+{
+  "schema_version": 1,
+  "status": "complete",
+  "completed_utc": "2026-10-25T05:42:19.371587Z",
+  "wall_seconds": 275.375,
+  "scope": "conditional image bootstrap for three fixed models per condition; not a sequence-independent or training-seed population interval",
+  "inference_rerun": false,
+  "analysis_preregistration": {
+    "path": "C:\\Users\\LIMMM\\factory-ops-twin\\artifacts\\detector-pilot-matrix-341\\analysis-preregistration.json",
+    "sha256": "a38fe5c8d1720ec827b77b9df12f89ef61a6c8ed0db97088d3aea03b51873453"
+  },
+  "point_summary": {
+    "path": "C:\\Users\\LIMMM\\factory-ops-twin\\artifacts\\detector-pilot-summary-347\\report.json",
+    "sha256": "ae894b5097cfbbc0ccf49044102080a8ac160b9eecf4aaceacea297de81bfe57"
+  },
+  "runtime": {
+    "python": "3.12.13 (main, Apr  7 2026, 20:53:22) [MSC v.1944 64 bit (AMD64)]",
+    "pycocotools": "2.0.11",
+    "numpy": "2.5.2"
+  },
+  "contract": {
+    "draws": 500,
+    "seed": 7301,
+    "quantiles": [
+      0.025,
+      0.975
+    ],
+    "shared_image_samples_across_all_models": true,
+    "sampling": "random.Random(seed).randrange(image_count), with replacement",
+    "area": "all",
+    "max_detections_per_image": 100,
+    "workers": 3
+  },
+  "equivalence_evidence": {
+    "identity_cached": 0.8514851485148515,
+    "identity_fresh": 0.8514851485148515,
+    "duplicate_cached": 1.0,
+    "duplicate_fresh": 1.0
+  },
+  "ground_truth": {
+    "original_sha256": [
+      "dbc6708b302f03e1b401ca14be790a930815d7424f8405bea3dfa5257ca045d2"
+    ],
+    "post_evaluation_bookkeeping_sha256": "540b24dd446589b7903359ae3c7a0fc7e267900beba17363918f93176891e98e",
+    "image_count": 1075
+  },
+  "identity_AP": {
+    "1701:S": 0.00013235089882390185,
+    "1701:R50": 0.009877133416688933,
+    "1701:SR50": 0.017407516955213618,
+    "1702:S": 0.0003236051185396061,
+    "1702:R50": 0.004774905216935504,
+    "1702:SR50": 0.015434058021511694,
+    "1703:S": 0.00027806139712010353,
+    "1703:R50": 0.008286747699837428,
+    "1703:SR50": 0.017184888297985573
+  },
+  "condition_mean_AP_intervals": {
+    "S": {
+      "point": 0.0002446724714945372,
+      "lower": 0.00019688631195972724,
+      "upper": 0.0003987386138822488,
+      "bootstrap_mean": 0.0002749354355280744
+    },
+    "R50": {
+      "point": 0.007646262111153955,
+      "lower": 0.007253984979978029,
+      "upper": 0.008664347835218567,
+      "bootstrap_mean": 0.007926315732583095
+    },
+    "SR50": {
+      "point": 0.016675487758236966,
+      "lower": 0.01530930616259727,
+      "upper": 0.018251980155413607,
+      "bootstrap_mean": 0.016808041471271084
+    }
+  },
+  "mean_SR50_minus_R50_AP_interval": {
+    "point": 0.009029225647083009,
+    "lower": 0.007455496847827629,
+    "upper": 0.010368498177186743,
+    "bootstrap_mean": 0.00888172573868799
+  },
+  "limits": {
+    "capture_sequence_groups_known": false,
+    "sequence_independence_claimed": false,
+    "training_seed_population_interval": false
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "frozen_utc": "2026-10-25T05:12:05.382437+00:00",
+  "frozen_before_first_training_result": true,
+  "primary_contrast": "SR50 minus R50",
+  "secondary_contrast": "S minus R50",
+  "registered_seeds": [
+    1701,
+    1702,
+    1703
+  ],
+  "point_summary": "per-seed COCO AP plus mean and sample standard deviation across complete seeds",
+  "optional_interval": {
+    "method": "paired image bootstrap conditional on fixed models; image groups unknown",
+    "draws": 500,
+    "seed": 7301,
+    "quantiles": [
+      0.025,
+      0.975
+    ],
+    "implementation_optional": true,
+    "no_interval_if_not_validated": true
+  },
+  "selection": "no hyperparameter or threshold changes using final fixed test",
+  "qualitative": "post-metric qualitative examples are descriptive and never model selection"
+}

@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "frozen_utc": "2026-10-25T05:01:03.027742+00:00",
+  "selection_frozen_before_first_model_training": true,
+  "primary_comparison": "SR50_vs_R50",
+  "secondary_comparison": "S_vs_R50",
+  "registered_seeds": [
+    1701,
+    1702,
+    1703
+  ],
+  "execution_order": [
+    1701,
+    1702,
+    1703
+  ],
+  "deadline_utc": "2026-10-25T07:40:00Z",
+  "user_deadline_kst": "2026-10-25T17:00:00+09:00",
+  "admission_policy": "next seed only when time budget permits; do not select seeds by observed AP",
+  "partial_seed_policy": "preserve partial but exclude incomplete seed from condition mean",
+  "fixed_threshold": 0.001,
+  "fixed_real_subset_seed": 5701,
+  "configurations": [
+    {
+      "seed": 1701,
+      "config_path": "C:\\Users\\LIMMM\\factory-ops-twin\\artifacts\\detector-pilot-matrix-341\\seed-1701.json",
+      "sha256": "45f5b6c685ce9fc339868f81b41db1537f41cfff52c29fddf9fd00a1ca3bc129"
+    },
+    {
+      "seed": 1702,
+      "config_path": "C:\\Users\\LIMMM\\factory-ops-twin\\artifacts\\detector-pilot-matrix-341\\seed-1702.json",
+      "sha256": "ba204d3d05e9cef38b105236e521eb02818caec5462afddfa6d983e43f7aa586"
+    },
+    {
+      "seed": 1703,
+      "config_path": "C:\\Users\\LIMMM\\factory-ops-twin\\artifacts\\detector-pilot-matrix-341\\seed-1703.json",
+      "sha256": "4d2b488acb841a96df200e39d102b21c86154685c08ca97cdeaa3bb7375baf5f"
+    }
+  ],
+  "input_pins": [
+    {
+      "path": "C:\\Users\\LIMMM\\factory-ops-twin\\scripts\\perception\\run_detector_pilot.py",
+      "sha256": "8c386598ca8372d9d6de2998b33e7a71ecbb7d3339c4389076b98f17e9b26ee9"
+    },
+    {
+      "path": "C:\\Users\\LIMMM\\factory-ops-twin\\configs\\perception\\loco-eval-v1.json",
+      "sha256": "60f3d5046dc7600f760a055701338b72ba5a8da6c2782c58c5f9adbc9c7fd549"
+    },
+    {
+      "path": "C:\\Users\\LIMMM\\factory-ops-twin\\artifacts\\detector-pilot-preparation\\fixed-real-registry.json",
+      "sha256": "08ffb3a6f1f41a8aed3463c8a48a99a1551154c62b38d8ed1a335b3ffcc3de26"
+    },
+    {
+      "path": "E:\\FactoryOpsData\\loco-detector-pilot-v1\\inventory.json",
+      "sha256": "ada8ae701d1ca53f626de74c2703eb227956e0d26f10a50dfc4718c472e47ab4"
+    }
+  ],
+  "synthetic_release": "must validate approved bounded 512-image release before runtime import",
+  "inference_repeated_for_selection": false,
+  "claims": {
+    "pure_pretraining_effect": false,
+    "sequence_disjoint": false,
+    "label_cost_reduction": false
+  }
+}

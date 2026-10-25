@@ -1,0 +1,223 @@
+{
+  "schema_version": 1,
+  "status": "complete",
+  "completed_utc": "2026-10-25T05:36:29.825700Z",
+  "wall_seconds": 455.81200000003446,
+  "source_commit": "b57100e988e9f5ea3c80be1a1b280de59a3522e4",
+  "preregistration_sha256": "39271d18276e8d57fe109db65c349b21809a4d7a201895963a5a7a8538a37ea7",
+  "runtime_versions": {
+    "torch": "2.14.1+cu130",
+    "torchvision": "0.29.1+cu130",
+    "Pillow": "12.3.0",
+    "pycocotools": "2.0.11"
+  },
+  "device": "cuda",
+  "batch_size_selected_before_training": 2,
+  "peak_vram_bytes": 1005791744,
+  "pretrained_weights": {
+    "weights_url": "https://download.pytorch.org/models/fasterrcnn_mobilenet_v3_large_fpn-fb6a3cc7.pth",
+    "weights_enum": "FasterRCNN_MobileNet_V3_Large_FPN_Weights.COCO_V1",
+    "full_sha256": "fb6a3cc702b1df54c18a44b26708cd083614211062d0c36d2ca7bf9270df3533",
+    "cache_path": "E:\\FactoryOpsData\\cache\\torch-detector\\hub\\checkpoints\\fasterrcnn_mobilenet_v3_large_fpn-fb6a3cc7.pth"
+  },
+  "initial_checkpoint": {
+    "path": "common-coco-head-init.pt",
+    "sha256": "2aa459749cf32078a3b1361327a7f0ddecdd10c12016fbc7dbc1047806128f93"
+  },
+  "conditions": {
+    "S": {
+      "training": {
+        "updates": 1024,
+        "batch_size": 2,
+        "amp": true,
+        "last_loss": 0.5361450910568237,
+        "mean_loss": 0.5292648604518035,
+        "wall_seconds": 106.5
+      },
+      "starting_checkpoint": "common-coco-head-init.pt",
+      "checkpoint": "S-final.pt",
+      "checkpoint_sha256": "9946952a448e39d33e91b695ffc15d783eb4a01b4d5249f9e5c63b05d3aebc31"
+    },
+    "R50": {
+      "training": {
+        "updates": 256,
+        "batch_size": 2,
+        "amp": true,
+        "last_loss": 0.699266254901886,
+        "mean_loss": 0.8109752957243472,
+        "wall_seconds": 33.21799999999348
+      },
+      "starting_checkpoint": "common-coco-head-init.pt",
+      "checkpoint": "R50-final.pt",
+      "checkpoint_sha256": "dda1c197b3fe4ed865b6181bb8c7b5d581660d1f029ee662fd0cc499b368cccc"
+    },
+    "SR50": {
+      "training": {
+        "updates": 256,
+        "batch_size": 2,
+        "amp": true,
+        "last_loss": 0.508262038230896,
+        "mean_loss": 0.7631074325472582,
+        "wall_seconds": 32.84399999992456
+      },
+      "starting_checkpoint": "S-final.pt",
+      "checkpoint": "SR50-final.pt",
+      "checkpoint_sha256": "b5adacc2f781ea13db37270bae9e95f04c9552e830f8ae7c7c3946609d8a0d60"
+    }
+  },
+  "evaluation": {
+    "tuning_validation": {
+      "S": {
+        "AP": 0.00018670748650691558,
+        "AP50": 0.000990691336384829,
+        "small_object_AP": 0.0,
+        "class_AP": {
+          "pallet": 0.0003643329160054247,
+          "small_load_carrier": 9.082057008406397e-06
+        },
+        "sample_counts": {
+          "images": 200,
+          "annotations": 6036,
+          "pallet_annotations": 5741,
+          "small_load_carrier_annotations": 295
+        },
+        "prediction_count_after_threshold": 18502,
+        "score_threshold": 0.001,
+        "max_detections_per_image": 100
+      },
+      "R50": {
+        "AP": 0.009081721899798894,
+        "AP50": 0.034254047283835534,
+        "small_object_AP": 0.00011451148328318737,
+        "class_AP": {
+          "pallet": 0.009766355694430283,
+          "small_load_carrier": 0.00839708810516751
+        },
+        "sample_counts": {
+          "images": 200,
+          "annotations": 6036,
+          "pallet_annotations": 5741,
+          "small_load_carrier_annotations": 295
+        },
+        "prediction_count_after_threshold": 19695,
+        "score_threshold": 0.001,
+        "max_detections_per_image": 100
+      },
+      "SR50": {
+        "AP": 0.005877210131163339,
+        "AP50": 0.021386399080655923,
+        "small_object_AP": 8.957906058965005e-05,
+        "class_AP": {
+          "pallet": 0.011134564830938526,
+          "small_load_carrier": 0.0006198554313881512
+        },
+        "sample_counts": {
+          "images": 200,
+          "annotations": 6036,
+          "pallet_annotations": 5741,
+          "small_load_carrier_annotations": 295
+        },
+        "prediction_count_after_threshold": 19943,
+        "score_threshold": 0.001,
+        "max_detections_per_image": 100
+      }
+    },
+    "final_fixed_test": {
+      "S": {
+        "AP": 0.00027806139712010353,
+        "AP50": 0.0009789414474668788,
+        "small_object_AP": 0.00014700667011794042,
+        "class_AP": {
+          "pallet": 0.0004909534221551028,
+          "small_load_carrier": 6.516937208510429e-05
+        },
+        "sample_counts": {
+          "images": 1075,
+          "annotations": 22186,
+          "pallet_annotations": 13275,
+          "small_load_carrier_annotations": 8911
+        },
+        "prediction_count_after_threshold": 79683,
+        "score_threshold": 0.001,
+        "max_detections_per_image": 100,
+        "prediction_artifact": {
+          "path": "evaluation/final_fixed_test/S-predictions.json.gz",
+          "sha256": "5d124b2b6db148df37fd79f8c45547f212ae74d235768e163e7884bd7666fafc",
+          "rows": 79683,
+          "bytes": 6770259,
+          "image_count": 1075,
+          "ground_truth_sha256": "540b24dd446589b7903359ae3c7a0fc7e267900beba17363918f93176891e98e",
+          "config_sha256": "4d2b488acb841a96df200e39d102b21c86154685c08ca97cdeaa3bb7375baf5f",
+          "preregistration_sha256": "39271d18276e8d57fe109db65c349b21809a4d7a201895963a5a7a8538a37ea7"
+        }
+      },
+      "R50": {
+        "AP": 0.008286747699837428,
+        "AP50": 0.031194335634551613,
+        "small_object_AP": 0.0002721704213799235,
+        "class_AP": {
+          "pallet": 0.013651421887457466,
+          "small_load_carrier": 0.00292207351221739
+        },
+        "sample_counts": {
+          "images": 1075,
+          "annotations": 22186,
+          "pallet_annotations": 13275,
+          "small_load_carrier_annotations": 8911
+        },
+        "prediction_count_after_threshold": 95019,
+        "score_threshold": 0.001,
+        "max_detections_per_image": 100,
+        "prediction_artifact": {
+          "path": "evaluation/final_fixed_test/R50-predictions.json.gz",
+          "sha256": "346a82369097a98fd5becf49a772781f640a885406942dd02ffb9dd7854dc260",
+          "rows": 95019,
+          "bytes": 8078638,
+          "image_count": 1075,
+          "ground_truth_sha256": "540b24dd446589b7903359ae3c7a0fc7e267900beba17363918f93176891e98e",
+          "config_sha256": "4d2b488acb841a96df200e39d102b21c86154685c08ca97cdeaa3bb7375baf5f",
+          "preregistration_sha256": "39271d18276e8d57fe109db65c349b21809a4d7a201895963a5a7a8538a37ea7"
+        }
+      },
+      "SR50": {
+        "AP": 0.017184888297985576,
+        "AP50": 0.053866587407433726,
+        "small_object_AP": 0.0018887101703914172,
+        "class_AP": {
+          "pallet": 0.023469234593953274,
+          "small_load_carrier": 0.010900542002017873
+        },
+        "sample_counts": {
+          "images": 1075,
+          "annotations": 22186,
+          "pallet_annotations": 13275,
+          "small_load_carrier_annotations": 8911
+        },
+        "prediction_count_after_threshold": 107141,
+        "score_threshold": 0.001,
+        "max_detections_per_image": 100,
+        "prediction_artifact": {
+          "path": "evaluation/final_fixed_test/SR50-predictions.json.gz",
+          "sha256": "5fda637732c6d02fbbf44c69ffb5906be765a9ca356ed30b9db1ba8c4012eaf7",
+          "rows": 107141,
+          "bytes": 9016799,
+          "image_count": 1075,
+          "ground_truth_sha256": "540b24dd446589b7903359ae3c7a0fc7e267900beba17363918f93176891e98e",
+          "config_sha256": "4d2b488acb841a96df200e39d102b21c86154685c08ca97cdeaa3bb7375baf5f",
+          "preregistration_sha256": "39271d18276e8d57fe109db65c349b21809a4d7a201895963a5a7a8538a37ea7"
+        }
+      }
+    }
+  },
+  "compute_comparison": {
+    "S_updates": 1024,
+    "R50_updates": 256,
+    "SR50_real_updates": 256,
+    "SR50_additional_synthetic_updates": 1024
+  },
+  "claim_limits": {
+    "sequence_disjointness": "not established for unknown capture groups",
+    "pure_pretraining_effect": "not claimed because synthetic pretraining adds compute",
+    "label_cost_reduction": "not measured or claimed by this pilot"
+  }
+}
