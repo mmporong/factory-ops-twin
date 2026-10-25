@@ -1833,3 +1833,9 @@ Stop 요청 후 실제STOPPED는19:31:29 KST에 확인했고 timer/service inact
 381은 g0가 `status=UNHEALTHY/build=COMPLETED/shell=READY`가 되자 terminal 실패로 판정했다. 설치된 CLI v0.6.335 소스에서 JSON `status`는 `getWorkspaceDisplayStatus`의 파생값이며 raw RUNNING과 health UNHEALTHY의 조합을 UNHEALTHY로 덮어쓰는 것을 확인했다. shell READY는 raw RUNNING과 build COMPLETED일 때 나온다. 이 조합에서 SSH 전에 Stop한 것은 실행기 오류이며 공급자 장애의 근거가 아니다. 모델·키 전송은 없었고19:58:59 KST에 실제STOPPED와 감시 종료를 확인했다. [설치 버전 소스](https://github.com/brevdev/brev-cli/blob/1733b3d5822b4fdec88682c7a2358a45fbd66e32/pkg/cmd/ls/ls.go#L599-L694) · [381 결과](evidence/cosmos-cloud-381.json)
 
 382는 displayed RUNNING 또는 UNHEALTHY와 COMPLETED/READY의 조합을 실제 SSH probe의 준비 후보로 허용한다. GPU·Docker·VRAM/RAM·모델 ready 검사는 유지한다. 표시 UNHEALTHY 후보와 실제 FAILED를 구분하는 CPU 회귀를 포함해5개 검사가 통과했다.381 원본은 바꾸지 않고 새 소스·실행 ID에 연결한다. [382 실행 계약](evidence/cosmos-execution-plan-382.json)
+
+## FOT-237 — WSL 중간 셸이 원격 HOME을 로컬 경로로 확장
+
+382는 기본 SSH 별칭으로 g0의 L40S·driver595.91.07·Docker29.9.0·사용 가능 RAM 약60GiB를 확인했다. 이어진 디스크 조회는 원격 HOME 대신 WSL의 로컬 홈 경로를 받아 실패했다. 같은 명령 문자열을 로컬 WSL에 전달해 기존 `wsl --`가 HOME을 확장하고 `wsl --exec`는 원문을 보존하는 것을 재현했다. 키·이미지·모델 전송 전에 발생했고20:09:28 KST에 실제STOPPED와 감시 정리를 마쳤다. [382 실제 결과와 전달 검사 해시](evidence/cosmos-cloud-382.json)
+
+383은 SSH·SCP·원격 실행·출력 수신을 수행하는 호출에 `wsl --exec`를 사용한다. HOME·따옴표·세미콜론·파이프를 포함한 인수6개와 실제 실행기 wrapper의 전달이 원문과 일치했다. Brev CLI·독립 Stop timer의 대상과 실행 기한은 유지하며 공유 helper는 수정하지 않는다. [383 실행 계약](evidence/cosmos-execution-plan-383.json)

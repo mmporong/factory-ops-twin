@@ -25,13 +25,15 @@ import reuse_scale as watchdog_runtime
 
 BREV = watchdog_runtime.BREV
 HARD_STOP_SECONDS = watchdog_runtime.HARD_STOP_SECONDS
-WSL = watchdog_runtime.WSL
+WSL = ["wsl", "-d", "Ubuntu", "--exec"]
 arm_watchdog = watchdog_runtime.arm_watchdog
 brev_call = watchdog_runtime.brev_call
 call_command = watchdog_runtime.call_command
 cleanup_watchdog = watchdog_runtime.cleanup_watchdog
 timestamp = watchdog_runtime.timestamp
-wsl_call = watchdog_runtime.wsl_call
+def wsl_call(arguments: list[str], **kwargs: object) -> tuple[int, str]:
+    """Preserve remote shell text until SSH delivers it to the target host."""
+    return call_command(WSL + arguments, **kwargs)
 
 
 NAME = "factory-ops-scale-234"
@@ -373,7 +375,7 @@ def _stop_and_confirm(record: dict[str, object], save: object) -> bool:
 
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--batch-id", type=int, choices=(379, 380, 381, 382), default=379)
+    parser.add_argument("--batch-id", type=int, choices=(379, 380, 381, 382, 383), default=379)
     parser.add_argument("--target-profile", choices=tuple(TARGETS), default="scale234")
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--remote-script", type=Path, required=True)

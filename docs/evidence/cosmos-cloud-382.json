@@ -1,0 +1,139 @@
+{
+  "status": "failed",
+  "started_at": "2026-10-25T11:00:34.187190+00:00",
+  "finished_at": "2026-10-25T11:09:28.366909+00:00",
+  "initial_target": {
+    "name": "factory-ops-twin-g0",
+    "id": "evica0x9l",
+    "status": "STOPPED",
+    "build_status": "COMPLETED",
+    "shell_status": "NOT READY",
+    "health_status": "UNHEALTHY",
+    "instance_type": "g6e.2xlarge",
+    "instance_kind": "gpu",
+    "gpu": "L40S"
+  },
+  "readiness_polls": [
+    {
+      "at": "2026-10-25T11:00:52.239280+00:00",
+      "status": "STARTING",
+      "build_status": "COMPLETED",
+      "shell_status": "NOT READY",
+      "health_status": "UNAVAILABLE"
+    },
+    {
+      "at": "2026-10-25T11:01:50.779172+00:00",
+      "status": "STARTING",
+      "build_status": "COMPLETED",
+      "shell_status": "NOT READY",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-25T11:02:24.616424+00:00",
+      "status": "UNHEALTHY",
+      "build_status": "COMPLETED",
+      "shell_status": "READY",
+      "health_status": "UNHEALTHY"
+    }
+  ],
+  "stop_polls": [
+    {
+      "at": "2026-10-25T11:02:46.854264+00:00",
+      "status": "STOPPING",
+      "health_status": "HEALTHY"
+    },
+    {
+      "at": "2026-10-25T11:03:20.207696+00:00",
+      "status": "RUNNING",
+      "health_status": "HEALTHY"
+    },
+    {
+      "at": "2026-10-25T11:03:53.507211+00:00",
+      "status": "STOPPING",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-25T11:04:26.747076+00:00",
+      "status": "STOPPING",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-25T11:05:00.571694+00:00",
+      "status": "STOPPING",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-25T11:05:33.892580+00:00",
+      "status": "STOPPING",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-25T11:06:07.610624+00:00",
+      "status": "STOPPING",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-25T11:06:41.029067+00:00",
+      "status": "STOPPING",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-25T11:07:14.422139+00:00",
+      "status": "STOPPING",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-25T11:07:47.718958+00:00",
+      "status": "STOPPING",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-25T11:08:20.910480+00:00",
+      "status": "STOPPING",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-25T11:08:54.468455+00:00",
+      "status": "STOPPING",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-25T11:09:28.017482+00:00",
+      "status": "STOPPED",
+      "health_status": "UNHEALTHY"
+    }
+  ],
+  "actual_stopped": true,
+  "watchdog_inactive_confirmed": true,
+  "owned_processes_gone": true,
+  "secret_transfer_attempted": false,
+  "schema_version": 1,
+  "batch_id": 382,
+  "record_source_sha256": "667f5cadeee5da317dfc6f7b0a847832e3ed8f2d91d17693ef67e396834e987a",
+  "gpu_model_started": false,
+  "image_or_model_downloaded": false,
+  "credential_transferred": false,
+  "error": "WSL default shell expanded remote HOME before SSH; df addressed the local WSL home on the remote host",
+  "actual_ssh_access": true,
+  "gpu_name": "NVIDIA L40S",
+  "gpu_total_mib": 46068,
+  "driver_version": "595.91.07",
+  "docker_server_version": "29.9.0",
+  "host_ram_total_bytes": 66507657216,
+  "host_ram_available_bytes": 64905392128,
+  "local_wsl_transport_regression_passed": true,
+  "transport_receipts": [
+    {
+      "path": "artifacts/cosmos-wsl-transport-383/actual-wrapper.json",
+      "sha256": "c8addd75e3c5345ac4db2083f58b74dd5bf1cd00bd25697278cc7a7389e950c7"
+    },
+    {
+      "path": "artifacts/cosmos-wsl-transport-383/comparison.json",
+      "sha256": "0be2235ad548c57488505dd3b6fe4f16b5d812bd055868235b23008df72df8a3"
+    },
+    {
+      "path": "artifacts/cosmos-wsl-transport-383/result.json",
+      "sha256": "0df5c68acfebd4300f9ee58c8e5a74771be0e597ab967a9a3da81de2950b66f6"
+    }
+  ]
+}

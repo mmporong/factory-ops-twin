@@ -202,3 +202,5 @@ profile preflight는 키 없이 수행하며 이를 통과하기 전 모델을 �
 380은 정상 기동 후 호스트 SSH 포트가 시간 초과되어 다운로드 전에 종료됐다. 실제STOPPED와 감시 종료를 확인했고 네트워크 원인은 미확정이다.381은 같은 입력·동의·고정 image digest를 유지하면서 기존 g0의 기본 SSH 별칭을 사용한다. 단일 L40S에 generator layer offload와 guardrail resident를 선택하고 실제 VRAM38GiB·RAM36GiB를 확인한다. 독립7200초 Stop timer의 대상도 g0로 결속하며 계산비는 카탈로그 기준 약$5.38의 추정이다. 중지 지연·저장비·실제 정산의 보장 상한은 아니다. 새 VM과 다른 프로젝트 환경은 사용하지 않는다. [380 실제 종료](evidence/cosmos-cloud-380.json) · [381 실행 계약](evidence/cosmos-execution-plan-381.json)
 
 381은 CLI 표시 UNHEALTHY를 raw lifecycle 실패로 해석해 SSH 전에 중단했다. 설치 v0.6.335의 upstream 소스로 raw RUNNING·health UNHEALTHY가 해당 표시로 바뀌는 것을 확인했으며 실제 중지와 감시 정리를 마쳤다.382는 같은 g0·프로필·원본·예산을 유지하고 이 조합을 실제 SSH/GPU probe의 준비 후보로 허용한다. 건강 상태의 경고를 모델 실행 성공으로 해석하지 않는다. [381 원인](evidence/cosmos-cloud-381.json) · [수정한382 계약](evidence/cosmos-execution-plan-382.json)
+
+382에서 실제 g0의 SSH·L40S·Docker 접근을 확인했다. WSL 중간 셸의 HOME 확장으로 디스크 조회가 실패해 다운로드 전에 중단했고 실제Stop을 확인했다.383은 로컬 재현을 통과한 `wsl --exec`로 원격 명령을 전달한다. source346·단일 입력·동의·image digest·g0 프로필·7200초 Stop timer를 유지한다. [382 실제 결과](evidence/cosmos-cloud-382.json) · [383 계약](evidence/cosmos-execution-plan-383.json)
