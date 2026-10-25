@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "batch_id": 386,
+  "kind": "actual Cosmos3 NIM output; not a fixture or Isaac Sim render",
+  "recorded_utc": "2026-10-25T12:43:42.646720+00:00",
+  "execution_contract": "../../evidence/cosmos-execution-plan-386.json",
+  "producer_commit": "0e46124ab0361a033348c904f150eaae73b97196",
+  "input_bundle_sha256": "b158dd2dc005b189e00406a9cda8c28a7c15c7e293a124d3c6896fcd6862554f",
+  "request_sha256": "ff26813a7600768ac75facd4e53843e8f5aeb19aea950002ae4c40f7d491f566",
+  "inference_wall_seconds": 483.44884595099984,
+  "media_contract": {
+    "expected": {
+      "width": 1280,
+      "height": 720,
+      "fps": 30,
+      "actual_frames": 121
+    },
+    "checks": {
+      "width_1280": true,
+      "height_720": true,
+      "fps_30": true,
+      "actual_frames_121": true,
+      "ffprobe_count_matches_decode": true
+    },
+    "passed": true
+  },
+  "visual_decision": "rejected_for_training_and_source_label_transfer",
+  "observed_issues": [
+    "Object positions, sizes and scene appearance differ substantially from the static source.",
+    "The first, middle and last output frames change despite a static source."
+  ],
+  "causal_claim": "Failure cause is not established by one sample.",
+  "training_ready": false,
+  "model_output_labels_approved": false,
+  "source_labels_transferred": false,
+  "files": [
+    {
+      "path": "comparison.png",
+      "bytes": 1027994,
+      "sha256": "5a1005103fb419cc35ae744fec8527dcf36b9edd6844a1b7b6e3edd5f71e5334"
+    },
+    {
+      "path": "output.mp4",
+      "bytes": 4159619,
+      "sha256": "4eecb580c5886c7b36a17d24f650c64699e7e30a80832499d3e557d3e277611e"
+    }
+  ]
+}

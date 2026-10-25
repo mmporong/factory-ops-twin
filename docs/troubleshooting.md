@@ -1862,4 +1862,11 @@ NGC의 amd64 압축 image 표시는8.76GB지만 model/cache·materialization·sc
 
 386은 프로젝트가 정한 입장32GiB·runtime 저용량24GiB를 구분해 제한된 실험을 수행한다. 감시자는1초마다 여유를 확인하고 최소·현재 여유의 요약을 남긴다. 저용량 또는 image pull1800초 한도에 도달하면 exact named container와 parent PID/starttime·GNU timeout leader·run script/batch/profile이 일치하는 그룹만 중단한다. 다른 그룹이나 재사용 PID에는 그룹 신호를 보내지 않는다. image pull의 중첩 timeout을 제거해 pull·pipe가 같은 소유 그룹에 남도록 했다.3개 소유권 fixture와 전체10CPU 회귀가 통과했다. 이 조건은 NVIDIA 공식 최소나 용량 보장이 아니며 실제 사용량·실패를 측정하는 보호 조건이다.
 
-모델 캐시는 실행별 폴더에서 image index digest별 공유 폴더로 옮겨 다음 실행의 중복 다운로드를 피하도록 구성했다. 기존 원본이나 가중치는 삭제하지 않았고 캐시는 결과 수집에 넣지 않는다. 최초 실제 pull·모델 기동·변환은 아직 미확인이다. [386 실행과 감시 범위](evidence/cosmos-execution-plan-386.json)
+모델 캐시는 실행별 폴더에서 image index digest별 공유 폴더로 옮겨 다음 실행의 중복 다운로드를 피하도록 구성했다. 기존 원본이나 가중치는 삭제하지 않았고 캐시는 결과 수집에 넣지 않는다. 이후386에서 실제 pull·모델 기동·1clip 변환을 완료했다. 실행 중 디스크 최소 여유는51.43GiB였고 저용량 중단은 발생하지 않았다.21:45:21 KST 실제Stop과 감시 종료를 확인했다. 이 관측은 같은 image/profile/input1회에 한정하며 다른 조건의 용량 보장이 아니다. [386 실행과 감시 범위](evidence/cosmos-execution-plan-386.json)
+
+
+## FOT-242 — Cosmos 변환 완료와 학습 데이터 적합성을 혼동할 위험
+
+386은 고정 Nano FP8 profile로 HTTP 추론과1280×720·30fps·121프레임 계약을 통과했다. 그러나 실제 비교 이미지의0·60·120프레임에서 원본의 팔레트·트레이 배치·크기가 크게 달라졌고 정지 입력에도 객체가 변했다. 전체121프레임의 인접 정규화 RGB 평균 절대 차이는0.01042로, 입력의0보다 컸다. 이 값은 픽셀 변화 진단이며 라벨 정확도나 검출 성능이 아니다. [실제 비교](images/cosmos-smoke-386/comparison.png) · [386 결과](evidence/cosmos-cloud-386.json)
+
+확인된 판정은 해당 결과의 학습용 사용·원본 bbox/semantic 전사 기각이다. edge 제어·원본의 작은 객체·프롬프트·모델 선택 중 어느 요인이 원인인지는1회로 분리하지 못했다. 원본346과 요청은 변경하지 않았고 추가GPU 추론은 실행하지 않았다. 재발 방지는 HTTP 성공/미디어 계약/구조 보존/학습 승인을 별도 필드로 유지하는 것이다. 후속 시험은 버전별 지원을 확인한 뒤 depth 또는 segmentation 제어 입력부터 소량 비교하며, 같은 조건의 대량 생성은 진행하지 않는다. 최신 [NIM4.0 Transfer 문서](https://docs.nvidia.com/nim/cosmos/4.0.0/transfer.html)는 후속 후보의 참고이며 실제2.1.0 동작 검증으로 사용하지 않는다.

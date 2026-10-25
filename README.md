@@ -75,7 +75,7 @@ uv run python scripts/demo/run_process_line.py --config configs/factory-semicond
 
 출력 폴더는 새 경로를 사용합니다. 위 값은 실행 상한이며 예상 소요 시간이 아닙니다. CPU 운영 기록으로 접촉 물리·센서를 검증하지 않습니다. [전체 실행 인자와 영상 발췌](docs/operations-guide.md#16대-cpu-배치와-진단-종료)
 
-**Brev:** 기존 Nebius2×L40S 환경은 재사용 당시 `UNHEALTHY`여서 SDK 실행 전에 중단했고, 이후 실제 `STOPPED`를 확인했습니다. 기존 클라우드는 중지 상태로 보존하며 현재16대 CPU 운영과 위 물리·센서 시험은 로컬 결과입니다. `scripts/brev/reuse_scale.py`의 기본 동작은 사전 확인이고, 첫 클라우드 묶음 상한은6시간·$40입니다. 실제 정산 비용은 미확인입니다. [재사용 실패·중지 근거](docs/evidence/brev-scale-reuse-239.json)
+**Brev:** 기존 Nebius2×L40S 환경에서 GPU 한 장으로 Cosmos3 변환 시험을 마쳤고, 실제 `STOPPED`를 확인했습니다. 모델 캐시는 VM 디스크에 보존했습니다. 현재16대 CPU 운영과 위 물리·센서 시험은 로컬 결과입니다. 이번 변환 시험의 카탈로그 경과 비용 추정은 약$3.62이며, 실제 정산·저장 비용은 미확인입니다. [변환·자원·종료 근거](docs/evidence/cosmos-cloud-386.json)
 
 </details>
 
@@ -243,7 +243,13 @@ ResNet50 FPN 후보도 같은 데이터·학습 횟수로3개 seed의 튜닝 전
 
 값은0–100 단위의3seed 평균±표준편차입니다. ResNet의 절대 성능도 낮고, 합성 후 실제50장 조건은 한 seed에서 실제50장 조건보다 낮았습니다. COCO 가중치·FPN·기본 RPN·백본이 함께 바뀐 모델 묶음의 관측이며, 위1,075장 고정 test 결과와 비교할 수 없습니다. 이 실험은 운영 제어와 분리된 오프라인 검출 비교입니다. 실행당 평균441초·PyTorch 최대 할당 메모리 평균2.95GiB였고, 로컬 RTX3060에서 수행했습니다. 전체 프로세스 경과시간과 PyTorch 할당량이며 GPU kernel 시간·전체 장치 점유량은 아닙니다. [설정·seed·원본·측정 범위](docs/evidence/detector-model-v4-370/report.json) · [모델 보존](docs/evidence/detector-resnet-storage-371.json)
 
-Cosmos3의121-frame 정지 입력과 단일 L40S 시험을 준비했습니다. NGC 인증·고정2.1.0 manifest 접근·라이선스 동의를 마쳤으며 기존 Brev 환경의 GPU·메모리·Docker 접근과 진단 회수를 확인했습니다. 실행 중 남은 디스크를 감시하고 같은 이미지의 모델 캐시를 재사용하도록 구성했습니다. 변환 결과와 라벨 보존은 아직 확인하지 않았습니다. 후처리 도구는 실제 프레임 수·해상도·인접 프레임 차이를 확인하고 입력과 출력의 대표 PNG를 남깁니다. 변환된 객체 라벨의 승인은 별도로 다룹니다. [실험·실행·보존 범위](docs/synthetic-to-real-plan.md) · [현재 실행 계약](docs/evidence/cosmos-execution-plan-386.json)
+### Cosmos 변환과 라벨 보존
+
+![정지 입력과 Cosmos3 출력의 첫·중간·마지막 프레임 비교. 출력에서 객체의 배치와 크기가 달라져 학습용으로 제외](docs/images/cosmos-smoke-386/comparison.png)
+
+Cosmos3 NIM2.1.0 Nano FP8을 단일 L40S에서 실행해 약4초 영상을 생성했습니다. 추론은 약8분3초였고, 실제 디코딩으로1280×720·30fps·121프레임을 확인했습니다. [변환 영상 MP4](docs/images/cosmos-smoke-386/output.mp4) · [입력·출력 출처](docs/images/cosmos-smoke-386/provenance.json)
+
+출력에서는 원본의 팔레트·트레이 배치와 크기가 크게 바뀌었고, 정지 입력에도 객체가 프레임마다 변했습니다. **이 결과는 학습용에서 제외했으며 원본 라벨을 옮기지 않았습니다.** 실행 호환성과 데이터 적합성을 구분해 기록했습니다. 후속 후보는 depth·segmentation 제어를 포함한 소량 비교이며, 이번1회 결과로 원인이나 개선 효과를 단정하지 않습니다. [실행·자원·한계](docs/evidence/cosmos-cloud-386.json) · [원본 백업](docs/evidence/cosmos-storage-386.json) · [실험 계획](docs/synthetic-to-real-plan.md)
 
 ## 현재 진행 상태
 
@@ -254,7 +260,7 @@ Cosmos3의121-frame 정지 입력과 단일 L40S 시험을 준비했습니다. N
 | 3. 물리 주행 기준선 | 경로 추종226, 적재135, 교차 양보142, 도킹 정렬231 | 전기 접촉 충전·실물 검증은 후속 확장 |
 | 4. 운영 비교·원인 추적 | 4대6조건, 캠퍼스 TEST 고장·복구 지연, 정상48lot 완주 | 캠퍼스 정책의 반복 통계·실공장 성능은 미확인 |
 | 5. 관제·재현·미디어 | 16대 영상339·101표본 웹 재생·차량 상세374, 라벨 root 수정 | 새 설비 명령 클릭·반응형·운영 브라우저 촬영은 남음 |
-| 6. 포트폴리오·데이터 | 대표 GIF·MP4·별도 드라이브 백업, 합성512장과 실사3seed 파일럿·CI, 백본·모자이크·ResNet 비교 | Cosmos 소량 시험·라벨 보존, 낮은 실사 성능 개선 |
+| 6. 포트폴리오·데이터 | 대표 GIF·MP4·별도 드라이브 백업, 합성512장과 실사3seed·모델 비교, Cosmos1회 변환·라벨 전사 기각 | 구조를 보존하는 변환 조건, 낮은 실사 성능 개선 |
 
 16대 반복 물류의 CPU 완주와 대표 미디어는 완료했습니다. 16대 물리·센서는7초 무적재 구성요소 시험이며 장시간 물류 접촉 시험과 구분합니다. 기존4대 운영 비교·단일 차량 물리 시험을 보존하고, 합성→실사 실험을 보조 트랙으로 진행합니다.
 

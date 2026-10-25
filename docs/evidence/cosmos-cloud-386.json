@@ -1,0 +1,165 @@
+{
+  "schema_version": 1,
+  "batch_id": 386,
+  "status": "inference_and_media_contract_passed_output_rejected_for_training",
+  "recorded_utc": "2026-10-25T12:46:41.049816+00:00",
+  "producer_commit": "0e46124ab0361a033348c904f150eaae73b97196",
+  "execution_contract": "cosmos-execution-plan-386.json",
+  "instance_name": "factory-ops-scale-234",
+  "instance_type": "gpu-l40s-d.2gpu-64vcpu-384gb",
+  "new_vm_created": false,
+  "single_gpu_index": 0,
+  "image": "nvcr.io/nim/nvidia/cosmos3@sha256:2add946b316a0baf72a15be4da85132d127c34da22d2fe4e9c4bd146ad8c4020",
+  "selector": "model_type=generator,model_variant=nano,precision=fp8,profile=latency,offload=layer,text_guard_offload=offloaded,video_guard_offload=offloaded,n_gpus=1",
+  "selected_model_profile_id": "7f0bac23a0816bf0fb6cfce7681d5c6437e363e821b05b82f74dcdb4fbd76bba",
+  "model_variant": "nano",
+  "nim_version": "2.1.0",
+  "result": {
+    "schema_version": 1,
+    "status": "inference_completed",
+    "completed_utc": "2026-10-25T12:39:19.644668+00:00",
+    "batch_id": 386,
+    "target_profile": "scale234",
+    "request_sha256": "ff26813a7600768ac75facd4e53843e8f5aeb19aea950002ae4c40f7d491f566",
+    "source_bundle_sha256": "b158dd2dc005b189e00406a9cda8c28a7c15c7e293a124d3c6896fcd6862554f",
+    "inference_wall_seconds": 483.44884595099984,
+    "output_bytes": 4159619,
+    "output_sha256": "4eecb580c5886c7b36a17d24f650c64699e7e30a80832499d3e557d3e277611e",
+    "requested_frames": 121,
+    "requested_fps": 30,
+    "seed": 2026,
+    "training_ready": false,
+    "model_output_labels_approved": false,
+    "claim_limits": [
+      "one static-input compatibility smoke",
+      "not motion validation, label approval or a detector performance result"
+    ]
+  },
+  "media_contract": {
+    "expected": {
+      "width": 1280,
+      "height": 720,
+      "fps": 30,
+      "actual_frames": 121
+    },
+    "checks": {
+      "width_1280": true,
+      "height_720": true,
+      "fps_30": true,
+      "actual_frames_121": true,
+      "ffprobe_count_matches_decode": true
+    },
+    "passed": true
+  },
+  "output_duration_seconds": 4.033333333333333,
+  "temporal_pixel_difference": {
+    "actual_frame_count": 121,
+    "adjacent_pair_count": 120,
+    "adjacent_mean_absolute_rgb_difference_normalized_mean": 0.010421686720357511,
+    "adjacent_mean_absolute_rgb_difference_normalized_max": 0.04787881972812273,
+    "static_by_registered_mean_threshold": false,
+    "registered_static_mean_threshold": 0.00392156862745098,
+    "ffmpeg_stderr": ""
+  },
+  "visual_inspection": {
+    "scope": "three decoded output frames (0,60,120) and source frame60; agent visual comparison, not dense geometric evaluation",
+    "decision": "rejected_for_training_and_source_label_transfer",
+    "observations": [
+      "Object positions and sizes, camera appearance and scene layout differ substantially from the static source.",
+      "Objects change between sampled output frames although the source is static."
+    ],
+    "cause": "not established by one sample",
+    "comparison": "../images/cosmos-smoke-386/comparison.png"
+  },
+  "gpu_resource_measurement": {
+    "sample_interval_seconds": 5,
+    "measurement_scope": "nvidia-smi whole-device samples; sampled peak, not a continuous maximum",
+    "devices": {
+      "0": {
+        "samples": 330,
+        "peak_memory_mib": 23526,
+        "peak_utilization_percent": 100
+      },
+      "1": {
+        "samples": 330,
+        "peak_memory_mib": 0,
+        "peak_utilization_percent": 0
+      }
+    }
+  },
+  "disk_guard": {
+    "schema_version": 1,
+    "status": "stopped_by_cleanup",
+    "initial_free_bytes": 100700184576,
+    "minimum_free_bytes": 55224463360,
+    "current_free_bytes": 55283224576,
+    "low_disk_threshold_bytes": 25769803776,
+    "sample_interval_seconds": 1,
+    "claim": "project-authored runtime guard; not an official NVIDIA minimum",
+    "identity_reason": "owned_timeout_group",
+    "phase": "completed",
+    "phase_elapsed_seconds": 6.004,
+    "image_pull_limit_seconds": 1800
+  },
+  "cleanup": {
+    "checked_utc": "2026-10-25T12:39:26.487431+00:00",
+    "script_exit_code": 0,
+    "owned_container_remaining": false,
+    "credential_file_remaining": false,
+    "disk_watcher_pid": 5064,
+    "disk_watcher_exit_code": 0,
+    "scope": "owned container and volatile credentials only; cloud lifecycle is supervised separately"
+  },
+  "lifecycle": {
+    "started_at": "2026-10-25T12:05:43.991457+00:00",
+    "first_ready_poll": {
+      "at": "2026-10-25T12:11:00.961347+00:00",
+      "status": "UNHEALTHY",
+      "build_status": "COMPLETED",
+      "shell_status": "READY",
+      "health_status": "UNHEALTHY"
+    },
+    "last_stop_poll": {
+      "at": "2026-10-25T12:45:21.551561+00:00",
+      "status": "STOPPED",
+      "health_status": "UNHEALTHY"
+    },
+    "finished_at": "2026-10-25T12:45:21.875318+00:00",
+    "actual_stopped": true,
+    "watchdog_inactive_confirmed": true,
+    "owned_processes_gone": true,
+    "reader_threads_gone": true
+  },
+  "cost": {
+    "catalog_hourly_usd": 5.48256,
+    "started_to_stopped_seconds": 2377.560104,
+    "catalog_elapsed_estimate_usd": 3.620866,
+    "closed_previous_attempts_estimate_usd": 5.7366,
+    "combined_attempts_estimate_usd": 9.357466,
+    "original_compute_budget_usd": 40,
+    "settled_billing": false,
+    "interpretation": "elapsed-time catalog estimate; not settled usage, a guarantee, or storage cost"
+  },
+  "training_ready": false,
+  "model_output_labels_approved": false,
+  "source_labels_transferred": false,
+  "status_record_sha256": "2e71d52ca38c52e6e27ccf20fbcb8bd3ced437d587a6727d544a2a841a1faa74",
+  "inspector_source_sha256": "43f678d0e59129d3fd75f29f858aff495ab81a86e3e79e3e2fbecd462809808d",
+  "postprocess_inspection_sha256": "f2559df0b5995929524272eb658b467b721ad2f07100144feb7b2ec2061f432f",
+  "claim_limits": [
+    "one static source clip and one seed",
+    "no Cosmos training data approved",
+    "no detector retraining or held-out test access",
+    "not a motion validation or real-world accuracy result"
+  ],
+  "references": [
+    {
+      "url": "https://docs.nvidia.com/nim/cosmos/4.0.0/transfer.html",
+      "role": "later-version control-reference only; does not establish 2.1.0 behavior"
+    },
+    {
+      "url": "https://catalog.ngc.nvidia.com/orgs/nim/nvidia/containers/cosmos3/2.1.0/governing-terms",
+      "role": "accepted image governing terms"
+    }
+  ]
+}
