@@ -140,6 +140,14 @@ def validate_source_plan(run: Mapping[str, Any]) -> dict[str, Any]:
     wall = result_input.get("S_training_wall_seconds")
     if type(wall) not in (int, float) or not math.isfinite(wall) or wall <= 0:
         raise ComparisonError("v3 S training wall time is absent")
+    annotations_by_image = {image_id: [] for image_id in ordered_ids}
+    for annotation in coco["annotations"]:
+        annotations_by_image[int(annotation["image_id"])].append(annotation)
+    resize_scale = min(640 / 1536, 960 / 2304)
+    presented_boxes = [annotation for row in rows for image_id in row
+                       for annotation in annotations_by_image[image_id]]
+    small_boxes = sum(float(a["bbox"][2]) * float(a["bbox"][3]) * resize_scale**2 < 32**2
+                      for a in presented_boxes)
     return {
         "sample_count": 512, "source_scenes_per_sample": 9,
         "source_image_id_rows_sha256": plan["source_image_id_rows_sha256"],
@@ -147,6 +155,16 @@ def validate_source_plan(run: Mapping[str, Any]) -> dict[str, Any]:
         "all_rows_have_nine_distinct_scene_groups": True,
         "actual_source_presentations": 18432, "baseline_source_presentations": 2048,
         "actual_additional_cpu_decodes": 16384, "S_training_wall_seconds": float(wall),
+        "registered_plan_geometry": {
+            "model_input_resolution": [960, 640],
+            "source_to_model_linear_scale": resize_scale,
+            "boxes_across_512_composites": len(presented_boxes),
+            "mean_target_objects_per_composite": len(presented_boxes) / len(rows),
+            "small_definition": "bbox area after model resize < 32^2 pixels",
+            "small_after_model_resize_ratio": small_boxes / len(presented_boxes),
+            "real_photos_or_test_metadata_read": False,
+            "occlusion_or_single_scene_realism_measured": False,
+        },
     }
 
 
@@ -262,8 +280,16 @@ def collect_source_binding(run: Mapping[str, Any]) -> dict[str, Any]:
     }
 
 
+def chart_upper(aggregates: Mapping[str, Any]) -> float:
+    highest = max(100 * (float(aggregates[c][v]["AP"]["mean"])
+                         + float(aggregates[c][v]["AP"]["std"]))
+                  for c in CONDITIONS for v in ("v2", "v3"))
+    return min(100.0, max(1.0, math.ceil(highest * 1.15 * 2) / 2))
+
+
 def svg_chart(aggregates: Mapping[str, Any], control_drift: bool = False) -> str:
     width, height = 1600, 900
+    upper = chart_upper(aggregates)
     left, top, plot_width, plot_height = 150, 130, 1320, 600
     colors = {"v2": "#94a3b8", "v3": "#2563eb"}
     labels = {"R50": "R50 real50 control anchor", "S": "S synthetic only", "SR50": "SR50 synthetic → real50"}
@@ -273,17 +299,18 @@ def svg_chart(aggregates: Mapping[str, Any], control_drift: bool = False) -> str
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}">',
         '<rect width="100%" height="100%" fill="#ffffff"/>',
         '<text x="150" y="52" font-family="Arial,sans-serif" font-size="30" font-weight="700" fill="#0f172a">Mosaic v3 vs backbone v2 · tuning200 AP</text>',
-        '<text x="150" y="88" font-family="Arial,sans-serif" font-size="17" fill="#475569">Points on a fixed 0–100 AP axis; whiskers are 3-seed sample standard deviation. No fixed-test inference.</text>',
+        '<text x="150" y="88" font-family="Arial,sans-serif" font-size="17" fill="#475569">AP points (0–100 score), shown from zero; whiskers: 3-seed sample standard deviation. No fixed-test inference.</text>',
     ]
     if control_drift:
         lines.extend([
             '<rect x="150" y="98" width="1320" height="28" rx="7" fill="#fef2f2" stroke="#dc2626"/>',
             '<text x="810" y="118" text-anchor="middle" font-family="Arial,sans-serif" font-size="16" font-weight="700" fill="#b91c1c">CONTROL DRIFT: R50 differs; these are development observations, not an isolated mosaic effect.</text>',
         ])
-    for tick in range(0, 101, 20):
-        y = top + plot_height * (1 - tick / 100)
+    for index in range(6):
+        tick = upper * index / 5
+        y = top + plot_height * (1 - tick / upper)
         lines.append(f'<line x1="{left}" y1="{y:.1f}" x2="{left + plot_width}" y2="{y:.1f}" stroke="#e2e8f0"/>')
-        lines.append(f'<text x="{left - 20}" y="{y + 6:.1f}" text-anchor="end" font-family="Arial,sans-serif" font-size="15" fill="#64748b">{tick}</text>')
+        lines.append(f'<text x="{left - 20}" y="{y + 6:.1f}" text-anchor="end" font-family="Arial,sans-serif" font-size="15" fill="#64748b">{tick:g}</text>')
     for condition_index, condition in enumerate(CONDITIONS):
         center = left + group_width * (condition_index + 0.5)
         for version_index, version in enumerate(("v2", "v3")):
@@ -291,11 +318,11 @@ def svg_chart(aggregates: Mapping[str, Any], control_drift: bool = False) -> str
             mean = float(summary["mean"]) * 100
             deviation = float(summary["std"]) * 100
             x = center + (version_index - 0.5) * (bar_width + 34) - bar_width / 2
-            y = top + plot_height * (1 - max(0, min(100, mean)) / 100)
+            y = top + plot_height * (1 - max(0, min(100, mean)) / upper)
             bar_height = top + plot_height - y
             lines.append(f'<rect x="{x:.1f}" y="{y:.1f}" width="{bar_width}" height="{bar_height:.1f}" rx="7" fill="{colors[version]}"/>')
-            high = top + plot_height * (1 - max(0, min(100, mean + deviation)) / 100)
-            low = top + plot_height * (1 - max(0, min(100, mean - deviation)) / 100)
+            high = top + plot_height * (1 - max(0, min(100, mean + deviation)) / upper)
+            low = top + plot_height * (1 - max(0, min(100, mean - deviation)) / upper)
             mid = x + bar_width / 2
             lines.append(f'<line x1="{mid:.1f}" y1="{high:.1f}" x2="{mid:.1f}" y2="{low:.1f}" stroke="#0f172a" stroke-width="3"/>')
             lines.append(f'<text x="{mid:.1f}" y="{max(top + 20, y - 12):.1f}" text-anchor="middle" font-family="Arial,sans-serif" font-size="17" font-weight="700" fill="#0f172a">{mean:.3f}</text>')
@@ -304,7 +331,7 @@ def svg_chart(aggregates: Mapping[str, Any], control_drift: bool = False) -> str
         x = 1180 + index * 130
         lines.append(f'<rect x="{x}" y="45" width="20" height="20" rx="4" fill="{colors[version]}"/>')
         lines.append(f'<text x="{x + 28}" y="62" font-family="Arial,sans-serif" font-size="17" fill="#334155">{version}</text>')
-    lines.append('<text x="150" y="840" font-family="Arial,sans-serif" font-size="15" fill="#64748b">R50 is the unchanged real50 control. SR50 shows synthetic training followed by the same real50 schedule.</text>')
+    lines.append('<text x="150" y="840" font-family="Arial,sans-serif" font-size="15" fill="#64748b">R50 uses the same real50 input and training schedule. SR50 shows synthetic training followed by the same real50 schedule.</text>')
     lines.append('</svg>')
     return "\n".join(lines) + "\n"
 
@@ -315,6 +342,7 @@ def png_chart(aggregates: Mapping[str, Any], control_drift: bool = False) -> byt
     except ImportError as exc:
         raise ComparisonError(f"Pillow is required for the PNG export: {exc}") from exc
     width, height = 1600, 900
+    upper = chart_upper(aggregates)
     left, top, plot_width, plot_height = 150, 130, 1320, 600
     image = Image.new("RGB", (width, height), "white")
     draw = ImageDraw.Draw(image)
@@ -325,16 +353,17 @@ def png_chart(aggregates: Mapping[str, Any], control_drift: bool = False) -> byt
     except OSError:
         title_font = body_font = small_font = ImageFont.load_default()
     draw.text((150, 25), "Mosaic v3 vs backbone v2 · tuning200 AP", fill="#0f172a", font=title_font)
-    draw.text((150, 72), "Fixed 0–100 AP axis · whiskers: 3-seed sample standard deviation · no fixed-test inference",
+    draw.text((150, 72), "AP points (0–100 score), zero baseline · whiskers: 3-seed sample standard deviation · no fixed-test inference",
               fill="#475569", font=body_font)
     if control_drift:
         draw.rounded_rectangle((150, 98, 1470, 126), radius=7, fill="#fef2f2", outline="#dc2626", width=2)
         draw.text((235, 103), "CONTROL DRIFT: R50 differs; development observations, not an isolated mosaic effect.",
                   fill="#b91c1c", font=body_font)
-    for tick in range(0, 101, 20):
-        y = top + plot_height * (1 - tick / 100)
+    for index in range(6):
+        tick = upper * index / 5
+        y = top + plot_height * (1 - tick / upper)
         draw.line((left, y, left + plot_width, y), fill="#e2e8f0", width=2)
-        draw.text((left - 58, y - 9), str(tick), fill="#64748b", font=small_font)
+        draw.text((left - 58, y - 9), f"{tick:g}", fill="#64748b", font=small_font)
     colors = {"v2": "#94a3b8", "v3": "#2563eb"}
     labels = {"R50": "R50 real50 control anchor", "S": "S synthetic only", "SR50": "SR50 synthetic -> real50"}
     group_width = plot_width / len(CONDITIONS)
@@ -345,10 +374,10 @@ def png_chart(aggregates: Mapping[str, Any], control_drift: bool = False) -> byt
             summary = aggregates[condition][version]["AP"]
             mean, deviation = float(summary["mean"]) * 100, float(summary["std"]) * 100
             x = center + (version_index - 0.5) * (bar_width + 34) - bar_width / 2
-            y = top + plot_height * (1 - max(0, min(100, mean)) / 100)
+            y = top + plot_height * (1 - max(0, min(100, mean)) / upper)
             draw.rounded_rectangle((x, y, x + bar_width, top + plot_height), radius=7, fill=colors[version])
-            high = top + plot_height * (1 - max(0, min(100, mean + deviation)) / 100)
-            low = top + plot_height * (1 - max(0, min(100, mean - deviation)) / 100)
+            high = top + plot_height * (1 - max(0, min(100, mean + deviation)) / upper)
+            low = top + plot_height * (1 - max(0, min(100, mean - deviation)) / upper)
             mid = x + bar_width / 2
             draw.line((mid, high, mid, low), fill="#0f172a", width=3)
             draw.text((mid - 30, max(top + 8, y - 26)), f"{mean:.3f}", fill="#0f172a", font=body_font)
@@ -357,7 +386,7 @@ def png_chart(aggregates: Mapping[str, Any], control_drift: bool = False) -> byt
         x = 1180 + index * 130
         draw.rounded_rectangle((x, 45, x + 20, 65), radius=4, fill=colors[version])
         draw.text((x + 28, 44), version, fill="#334155", font=body_font)
-    draw.text((150, 828), "R50 is the unchanged real50 control. SR50 uses the same real50 schedule after synthetic training.",
+    draw.text((150, 828), "R50 uses the same real50 input and training schedule. SR50 uses the same real50 schedule after synthetic training.",
               fill="#64748b", font=small_font)
     stream = io.BytesIO()
     image.save(stream, format="PNG", optimize=True)
@@ -543,7 +572,7 @@ def self_check() -> dict[str, Any]:
     }
     svg = svg_chart(synthetic, control_drift=True)
     png = png_chart(synthetic, control_drift=True)
-    if ('>0<' not in svg or '>100<' not in svg or "R50 real50 control anchor" not in svg
+    if ('>0<' not in svg or not 2.2 <= chart_upper(synthetic) <= 100 or "R50 real50 control anchor" not in svg
             or "CONTROL DRIFT" not in svg or not png.startswith(b"\x89PNG\r\n\x1a\n")):
         raise ComparisonError("chart self-check failed")
     base = {"profile_id": "detector-pilot-backbone-v2", "status": "candidate", "claim_limits": {"a": 1},
