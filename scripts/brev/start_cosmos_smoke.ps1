@@ -4,6 +4,7 @@ param(
     [Parameter(Mandatory = $true)][string]$OutputDirectory,
     [Parameter(Mandatory = $true)][string]$InputsDirectory,
     [string]$CredentialFile = (Join-Path $HOME '.config/factoryops/ngc-api-key.dpapi'),
+    [ValidateSet(379, 380)][int]$BatchId = 379,
     [switch]$Execute
 )
 
@@ -20,7 +21,7 @@ $workerInfo.FileName = $pythonPath
 $workerInfo.UseShellExecute = $false
 $workerInfo.WorkingDirectory = $repoRoot
 $workerInfo.RedirectStandardInput = $true
-foreach ($workerArgument in @('-X', 'utf8', $controllerPath,
+foreach ($workerArgument in @('-X', 'utf8', $controllerPath, '--batch-id', [string]$BatchId,
     '--output', [IO.Path]::GetFullPath($OutputDirectory),
     '--remote-script', $remoteScript,
     '--inputs-directory', [IO.Path]::GetFullPath($InputsDirectory))) {

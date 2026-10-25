@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "recorded_utc": "2026-10-25T10:33:01.641881+00:00",
+  "scope": "one static 121-frame Cosmos compatibility smoke only",
+  "user_license_consent": true,
+  "consent_source": "explicit same-conversation approval for Cosmos3 2.1.0 licenses and one existing-VM smoke",
+  "governing_terms": "https://catalog.ngc.nvidia.com/orgs/nim/nvidia/containers/cosmos3/2.1.0/governing-terms",
+  "new_vm_creation_allowed": false,
+  "target_name": "factory-ops-scale-234",
+  "target_id": "fy0i3jtz5",
+  "image": "nvcr.io/nim/nvidia/cosmos3@sha256:2add946b316a0baf72a15be4da85132d127c34da22d2fe4e9c4bd146ad8c4020",
+  "single_device_index": 0,
+  "selector": "model_type=generator,model_variant=nano,precision=fp8,profile=latency,offload=layer,text_guard_offload=offloaded,video_guard_offload=offloaded,n_gpus=1",
+  "hard_stop_seconds": 7200,
+  "catalog_hourly_usd": 5.48256,
+  "compute_envelope_estimate_usd": 10.96512,
+  "settled_billing_guaranteed": false,
+  "input_bundle_sha256": "b158dd2dc005b189e00406a9cda8c28a7c15c7e293a124d3c6896fcd6862554f",
+  "original_cpu_contract_346": "preserved as source intent; this execution selector explicitly offloads both guardrails",
+  "other_project_policy": "distinct existing VM; no operation on RBY1 or RL instances",
+  "models_downloaded": false,
+  "source_files": [
+    {
+      "path": "scripts/brev/run-cosmos-smoke.sh",
+      "sha256": "e65a84a119155783d48ca1796f666dd1da1467bda0186330e0fa7ff35a2a131b"
+    },
+    {
+      "path": "scripts/brev/run_cosmos_smoke.py",
+      "sha256": "0d956c507d5b17ff76e9f6e053b2d17caf63b3eca209fbcda66a4a1bbe376cbc"
+    },
+    {
+      "path": "scripts/brev/start_cosmos_smoke.ps1",
+      "sha256": "3417b719e4520528af94fbc119a0ca7ca5139789395e826e1d809f9c35aec8de"
+    },
+    {
+      "path": "scripts/perception/probe_ngc_access.ps1",
+      "sha256": "4dc14b5f494ea8a082682c5740734eb3b280d201ba219273b05db4223c544387"
+    }
+  ],
+  "batch_id": 380,
+  "supersedes_execution_plan_379_only": true,
+  "initial_state_gate": [
+    "unique owned STOPPED instance",
+    "build COMPLETED",
+    "exact instance id and type"
+  ],
+  "boot_admission": [
+    "RUNNING",
+    "build COMPLETED",
+    "shell READY",
+    "successful SSH nvidia-smi and Docker access",
+    "actual VRAM/RAM/disk checks",
+    "model-free NIM profile preflight",
+    "model readiness endpoint before inference"
+  ],
+  "health_status_role": "recorded telemetry; not a standalone boot failure or hardware admission proof",
+  "readiness_regression_cases_passed": 4
+}

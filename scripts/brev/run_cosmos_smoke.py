@@ -36,6 +36,8 @@ NAME = "factory-ops-scale-234"
 INSTANCE_ID = "fy0i3jtz5"
 INSTANCE_TYPE = "gpu-l40s-d.2gpu-64vcpu-384gb"
 HOST_ALIAS = NAME + "-host"
+BATCH_ID = 379
+REMOTE_DIR = "workspace/factoryops-cosmos-379"
 OUTPUT_BASENAME = "cosmos-brev-smoke-379"
 REMOTE_ROOT = "$HOME/workspace/factoryops-cosmos-379"
 REMOTE_KEY = "/dev/shm/factoryops-cosmos-379/ngc-key"
@@ -101,12 +103,11 @@ def _require_initial_state(target: dict[str, object]) -> None:
     required = {
         "status": "STOPPED",
         "build_status": "COMPLETED",
-        "health_status": "HEALTHY",
     }
     mismatches = [f"{key}={target.get(key)!r}" for key, value in required.items()
                   if target.get(key) != value]
     if mismatches:
-        raise ValueError("reviewed workspace is not STOPPED/COMPLETED/HEALTHY: "
+        raise ValueError("reviewed workspace is not STOPPED/COMPLETED: "
                          + ", ".join(mismatches))
 
 
@@ -157,7 +158,7 @@ def _ssh(command: str, *, timeout: float = 60, check: bool = True) -> tuple[int,
 def _scp(local_path: Path, remote_name: str) -> None:
     local = _linux_path(local_path)
     wsl_call(
-        ["scp", *SSH_OPTIONS, local, f"{HOST_ALIAS}:workspace/factoryops-cosmos-379/{remote_name}"],
+        ["scp", *SSH_OPTIONS, local, f"{HOST_ALIAS}:{REMOTE_DIR}/{remote_name}"],
         timeout=180,
     )
 
@@ -177,22 +178,21 @@ def _poll_ready(deadline: float, record: dict[str, object], save: object) -> Non
         }
         polls.append(row)
         save()
-        if target.get("health_status") == "UNHEALTHY":
-            raise RuntimeError("workspace became UNHEALTHY before remote execution")
+        if target.get("status") in {"UNHEALTHY", "FAILED", "ERROR", "DELETED", "DELETING"}:
+            raise RuntimeError("workspace entered a failed lifecycle state before remote execution")
         if all((
             target.get("status") == "RUNNING",
             target.get("build_status") == "COMPLETED",
             target.get("shell_status") == "READY",
-            target.get("health_status") == "HEALTHY",
         )):
             return
         if time.monotonic() >= end:
-            raise TimeoutError("workspace did not become RUNNING/COMPLETED/READY/HEALTHY")
+            raise TimeoutError("workspace did not become RUNNING/COMPLETED/READY")
         time.sleep(POLL_SECONDS)
 
 
 def _send_secret(secret: str) -> None:
-    command = f"umask 077; mkdir -p /dev/shm/factoryops-cosmos-379; cat > {REMOTE_KEY}"
+    command = f'umask 077; mkdir -p {REMOTE_KEY.rsplit("/", 1)[0]}; cat > {REMOTE_KEY}'
     completed = subprocess.run(
         WSL + ["ssh", *SSH_OPTIONS, HOST_ALIAS, command],
         input=secret.encode("utf-8"),
@@ -218,7 +218,7 @@ def _run_remote(
     argv = WSL + [
         "ssh", *SSH_OPTIONS, HOST_ALIAS,
         f'timeout --signal=TERM --kill-after=30s {remote_timeout}s '
-        '/bin/bash "$HOME/workspace/factoryops-cosmos-379/run.sh"',
+        f'/bin/bash "{REMOTE_ROOT}/run.sh" {BATCH_ID}',
     ]
     process = subprocess.Popen(
         argv, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE
@@ -283,8 +283,8 @@ def _run_remote(
 
 def _receive_output(output: Path) -> dict[str, object]:
     _, size_text = _ssh(
-        'test -d "$HOME/workspace/factoryops-cosmos-379/output" && '
-        'du -sb "$HOME/workspace/factoryops-cosmos-379/output" | cut -f1',
+        f'test -d "{REMOTE_ROOT}/output" && '
+        f'du -sb "{REMOTE_ROOT}/output" | cut -f1',
         timeout=60,
     )
     try:
@@ -294,7 +294,7 @@ def _receive_output(output: Path) -> dict[str, object]:
     if byte_count > MAX_REMOTE_OUTPUT_BYTES:
         raise ValueError("remote output exceeds the approved 250 MiB limit")
     _, forbidden = _ssh(
-        'find "$HOME/workspace/factoryops-cosmos-379/output" '
+        f'find "{REMOTE_ROOT}/output" '
         '\\( -name .cache -o -name keys -o -name ngc-key \\) -print -quit',
         timeout=60,
     )
@@ -304,7 +304,7 @@ def _receive_output(output: Path) -> dict[str, object]:
     destination.mkdir(exist_ok=False)
     wsl_call(
         ["scp", *SSH_OPTIONS, "-r",
-         f"{HOST_ALIAS}:workspace/factoryops-cosmos-379/output/.",
+         f"{HOST_ALIAS}:{REMOTE_DIR}/output/.",
          _linux_path(destination) + "/"],
         timeout=600,
     )
@@ -349,6 +349,7 @@ def _stop_and_confirm(record: dict[str, object], save: object) -> bool:
 
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--batch-id", type=int, choices=(379, 380), default=379)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--remote-script", type=Path, required=True)
     parser.add_argument("--inputs-directory", type=Path, default=EXPECTED_INPUT_ROOT)
@@ -358,12 +359,19 @@ def _parser() -> argparse.ArgumentParser:
 
 
 def main() -> int:
+    global BATCH_ID, REMOTE_DIR, REMOTE_ROOT, REMOTE_KEY, OUTPUT_BASENAME
     args = _parser().parse_args()
+    BATCH_ID = args.batch_id
+    REMOTE_DIR = f"workspace/factoryops-cosmos-{BATCH_ID}"
+    REMOTE_ROOT = "$HOME/" + REMOTE_DIR
+    REMOTE_KEY = f"/dev/shm/factoryops-cosmos-{BATCH_ID}/ngc-key"
+    OUTPUT_BASENAME = f"cosmos-brev-smoke-{BATCH_ID}"
     output, remote_script, input_files = _validate_inputs(args)
     preview = {
         "name": NAME,
         "instance_id": INSTANCE_ID,
         "instance_type": INSTANCE_TYPE,
+        "batch_id": BATCH_ID,
         "execute": args.execute,
         "hard_stop_seconds": HARD_STOP_SECONDS,
         "estimated_envelope_usd": ESTIMATED_ENVELOPE_USD,
@@ -382,7 +390,7 @@ def main() -> int:
     started = datetime.now(timezone.utc)
     deadline = time.monotonic() + HARD_STOP_SECONDS
     deadline_utc = (started + timedelta(seconds=HARD_STOP_SECONDS)).isoformat()
-    unit_base = "factoryops-cosmos-379-stop-" + uuid.uuid4().hex[:12]
+    unit_base = f"factoryops-cosmos-{BATCH_ID}-stop-" + uuid.uuid4().hex[:12]
     record: dict[str, object] = {
         "schema_version": 1,
         **preview,
@@ -424,6 +432,7 @@ def main() -> int:
         record["status"] = "waiting_ready"
         save()
         _poll_ready(deadline, record, save)
+        brev_call(["refresh"], timeout=60)
 
         record["status"] = "hardware_preflight"
         save()

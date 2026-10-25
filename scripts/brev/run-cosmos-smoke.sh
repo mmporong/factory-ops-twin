@@ -2,10 +2,12 @@
 set -euo pipefail
 umask 077
 
-work="$HOME/workspace/factoryops-cosmos-379"
+batch_id="${1:-379}"
+[[ "$batch_id" =~ ^(379|380)$ ]] || exit 2
+work="$HOME/workspace/factoryops-cosmos-$batch_id"
 out="$work/output"
-secrets=/dev/shm/factoryops-cosmos-379
-container=factoryops-cosmos-379
+secrets=/dev/shm/factoryops-cosmos-$batch_id
+container=factoryops-cosmos-$batch_id
 image='nvcr.io/nim/nvidia/cosmos3@sha256:2add946b316a0baf72a15be4da85132d127c34da22d2fe4e9c4bd146ad8c4020'
 selector='model_type=generator,model_variant=nano,precision=fp8,profile=latency,offload=layer,text_guard_offload=offloaded,video_guard_offload=offloaded,n_gpus=1'
 sampler_pid=''
@@ -37,14 +39,14 @@ cleanup() {
   # Delete only these owned volatile credential files, never a shared Docker config.
   rm -f "$secrets/ngc-key" "$secrets/ngc.env" "$secrets/docker/config.json"
   rmdir "$secrets/docker" "$secrets" 2>/dev/null
-  python3 - "$out" "$original_status" <<'PY'
+  python3 - "$out" "$original_status" "$container" "$secrets" <<'PY'
 import datetime,json,pathlib,subprocess,sys
 out=pathlib.Path(sys.argv[1])
-p=subprocess.run(['docker','ps','-aq','--filter','name=^factoryops-cosmos-379$'],capture_output=True,text=True)
+p=subprocess.run(['docker','ps','-aq','--filter','name=^'+sys.argv[3]+'$'],capture_output=True,text=True)
 remaining=bool(p.stdout.strip()) if p.returncode==0 else None
 record={'checked_utc':datetime.datetime.now(datetime.timezone.utc).isoformat(),
         'script_exit_code':int(sys.argv[2]),'owned_container_remaining':remaining,
-        'credential_file_remaining':pathlib.Path('/dev/shm/factoryops-cosmos-379/ngc-key').exists(),
+        'credential_file_remaining':(pathlib.Path(sys.argv[4])/'ngc-key').exists(),
         'scope':'owned container and volatile credentials only; cloud lifecycle is supervised separately'}
 (out/'cleanup.json').write_text(json.dumps(record,indent=2)+'\n')
 PY
@@ -97,14 +99,14 @@ docker run -d --name "$container" --gpus '"device=0"' --shm-size=32g \
   --env-file "$secrets/ngc.env" -e NIM_TAGS_SELECTOR="$selector" \
   -e NIM_TELEMETRY_MODE=0 -e NIM_LOG_LEVEL=INFO -e NIM_TRITON_REQUEST_TIMEOUT=3600000000 \
   -v "$work/cache:/opt/nim/.cache" "$image" > "$out/container-id.txt"
-python3 - "$out" "$work" <<'PY'
+python3 - "$out" "$work" "$container" <<'PY'
 import base64,datetime,hashlib,json,pathlib,subprocess,time,urllib.error,urllib.request,sys
-out,work=map(pathlib.Path,sys.argv[1:])
+out,work=map(pathlib.Path,sys.argv[1:3])
 base='http://127.0.0.1:18080'
 deadline=time.monotonic()+3000
 checks=[]
 while time.monotonic()<deadline:
-    state=subprocess.run(['docker','inspect','--format','{{.State.Running}}','factoryops-cosmos-379'],capture_output=True,text=True)
+    state=subprocess.run(['docker','inspect','--format','{{.State.Running}}',sys.argv[3]],capture_output=True,text=True)
     if state.returncode or state.stdout.strip()!='true':
         (out/'readiness.json').write_text(json.dumps(checks,indent=2)+'\n')
         raise RuntimeError('owned model container exited before readiness')

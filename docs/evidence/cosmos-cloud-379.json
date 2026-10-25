@@ -1,0 +1,118 @@
+{
+  "status": "failed",
+  "started_at": "2026-10-25T10:22:41.586599+00:00",
+  "finished_at": "2026-10-25T10:31:30.151938+00:00",
+  "initial_target": {
+    "name": "factory-ops-scale-234",
+    "id": "fy0i3jtz5",
+    "status": "STOPPED",
+    "build_status": "COMPLETED",
+    "shell_status": "NOT READY",
+    "health_status": "HEALTHY",
+    "instance_type": "gpu-l40s-d.2gpu-64vcpu-384gb",
+    "instance_kind": "gpu",
+    "gpu": "L40S"
+  },
+  "readiness_polls": [
+    {
+      "at": "2026-10-25T10:23:00.459722+00:00",
+      "status": "STOPPED",
+      "build_status": "COMPLETED",
+      "shell_status": "NOT READY",
+      "health_status": "UNAVAILABLE"
+    },
+    {
+      "at": "2026-10-25T10:23:33.919555+00:00",
+      "status": "STARTING",
+      "build_status": "COMPLETED",
+      "shell_status": "NOT READY",
+      "health_status": "UNHEALTHY"
+    }
+  ],
+  "stop_polls": [
+    {
+      "at": "2026-10-25T10:23:42.149898+00:00",
+      "status": "STARTING",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-25T10:24:15.512434+00:00",
+      "status": "STARTING",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-25T10:24:48.767855+00:00",
+      "status": "STOPPING",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-25T10:25:22.169269+00:00",
+      "status": "STOPPING",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-25T10:25:56.036040+00:00",
+      "status": "STOPPING",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-25T10:26:29.303331+00:00",
+      "status": "STOPPING",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-25T10:27:02.632274+00:00",
+      "status": "STOPPING",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-25T10:27:36.135667+00:00",
+      "status": "STOPPING",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-25T10:28:09.590678+00:00",
+      "status": "STOPPING",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-25T10:28:43.054499+00:00",
+      "status": "STOPPING",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-25T10:29:16.474484+00:00",
+      "status": "STOPPING",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-25T10:29:49.825843+00:00",
+      "status": "STOPPING",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-25T10:30:23.184778+00:00",
+      "status": "STOPPING",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-25T10:30:56.449741+00:00",
+      "status": "STOPPING",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-25T10:31:29.686392+00:00",
+      "status": "STOPPED",
+      "health_status": "UNHEALTHY"
+    }
+  ],
+  "actual_stopped": true,
+  "watchdog_inactive_confirmed": true,
+  "owned_processes_gone": true,
+  "error": "RuntimeError: workspace became UNHEALTHY before remote execution",
+  "schema_version": 1,
+  "gpu_model_started": false,
+  "image_or_model_downloaded": false,
+  "record_source_sha256": "d0615a5251beec52e6ca093f7ee06085bdd29a03d0b581b3353be6022c37d6a0",
+  "interpretation": "launcher aborted on boot-time health telemetry; provider failure was not established"
+}

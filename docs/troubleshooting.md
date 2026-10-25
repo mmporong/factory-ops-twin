@@ -1815,3 +1815,9 @@ v4 호스트 준비 생성 중 `$Host`를 경로 변수로 사용해 PowerShell 
 ## FOT-233 — DPAPI 암호문 파일 끝 줄바꿈의 변환 오류
 
 NGC 인증376은 저장 파일을 `Get-Content -Raw`로 읽어 `ConvertTo-SecureString`에 전달하다 FormatException으로 끝났다. 값은 출력하지 않고 형식만 확인한 결과 원문718자·Trim 뒤716자의 정상 hex/DPAPI payload였고, Set-Content의 끝 CRLF가 원인이었다. 파일을 고치거나 키를 다시 발급하지 않고 암호문에 Trim을 적용했다. 후속377은 복호화·NGC 인증HTTP200·Cosmos2.1.0 manifest HTTP200을 확인했다. 키/토큰/인증응답 본문은 기록하지 않았으며 image layer·모델·GPU 실행은 없었다. [인증과 실제 manifest index digest](evidence/cosmos-ngc-auth-377.json)
+
+## FOT-234 — STARTING의 건강 상태를 최종 실행 실패로 판정한 조기 중단
+
+379는 독립Stop timer를 확인한 뒤 기존234를 시작했다. 첫 관측 STOPPED/UNAVAILABLE에 이어33초 뒤 STARTING/NOT READY/UNHEALTHY를 보자 실행기가 즉시 실패로 판정했다. 모델·image layer·GPU 추론은 시작하지 않았다. 이 기록은 공급자 영구 장애의 근거가 아니다. 공식 Brev 문서는 해당 health JSON enum의 의미나 STARTING 중 전이를 정의하지 않는다. [공식 수명주기](https://docs.nvidia.com/brev/concepts/gpu-instances)
+
+Stop 요청 후 실제STOPPED는19:31:29 KST에 확인했고 timer/service inactive·keepalive 소멸을 확인했다.379 원본은 보존했다.380은 STOPPED의 과거 health를 시작 판정으로 쓰지 않고 부팅기한 내 RUNNING/COMPLETED/READY를 기다린다. 이후 실제SSH·nvidia-smi·VRAM/RAM/disk·모델 없는NIM profile preflight를 통과해야 모델을 시작하며, 추론은별도ready endpoint를 요구한다. health는보조관측으로남긴다. 부팅중변화·미준비timeout·terminal실패·health와실제연결의구분4개CPU 회귀검사를통과했다. [379의실제종료](evidence/cosmos-cloud-379.json) · [380실행계약](evidence/cosmos-execution-plan-380.json)

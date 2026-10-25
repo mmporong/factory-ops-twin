@@ -194,3 +194,5 @@ NGC API 키는 NGC Catalog의 모델·컨테이너 다운로드에 쓰는 인증
 378의 실제 제어 API는 Healthy였으며234는 STOPPED/HEALTHY, g0는 STOPPED/UNHEALTHY였다. 기존234의현재카탈로그는2×L40S·384GiB·Stop지원·$5.48256/시간이다. Cosmos에는 GPU0 한 장만 노출하고 text/video guardrail을 모두 offload하는 layer profile을 요청한다. 고정346 입력은 보존하며 실제379의 selector가 실행 계약이다. 독립Stop timer7200초를 시작 전에 검증하고 실행 뒤 실제STOPPED와timer/keepalive 종료를 확인한다.2시간 계산 비용은 약$10.97의카탈로그 추정이며 저장비·실제정산·중지지연을 보장하는 상한이 아니다. [현재 제어상태·가격·보호조건](evidence/cosmos-brev-preflight-378.json)
 
 profile preflight는 키 없이 수행하며 이를 통과하기 전 모델을 내려받지 않는다. 추론은 정지121frame1clip·seed2026으로 한정하고 원본 bbox를 변환 출력의 승인 라벨로 복사하지 않는다. 다른프로젝트 RBY1의실행은 분리된VM이므로 유지한다. 새 환경 생성·reset·다른환경 정지는 하지 않는다.
+
+379는부팅중STARTING/NOT READY/UNHEALTHY의health필드만으로조기중단했다. 모델이나image layer를내려받지않았으며실제STOPPED와감시종료를확인했다.380은부팅대기조건을수정한새소스로같은단일입력만시도한다. health는보조값으로기록하고실제SSH·GPU/메모리·NIM preflight와모델ready로실행을판정한다.379의입력·판정·원본은변경하지않는다. [실제379마감](evidence/cosmos-cloud-379.json) · [수정한실행계약](evidence/cosmos-execution-plan-380.json)
