@@ -83,6 +83,10 @@ def export_replay(*, recording: Path, config: Path, output: Path, name: str) -> 
     source_indices, selected = _select_raw_frames(
         operations.snapshots, first_time, last_time, maximum=120,
     )
+    final_source_index = len(operations.snapshots) - 1
+    if source_indices[-1] != final_source_index:
+        source_indices.append(final_source_index)
+        selected.append(operations.snapshots[final_source_index])
     if not 1 <= len(selected) <= 120:
         raise ValueError("bounded replay selection is outside the scenario contract")
 
@@ -152,7 +156,10 @@ def export_replay(*, recording: Path, config: Path, output: Path, name: str) -> 
             "source_frame_count": 300,
             "selected_frame_count": len(selected),
             "maximum_contract_frames": 120,
-            "sampling": "existing importer uniform source-index stride; raw observations only; no interpolation",
+            "sampling": (
+                "existing importer uniform source-index stride plus the raw final source endpoint; "
+                "raw observations only; no interpolation"
+            ),
             "source_index_stride": source_indices[1] - source_indices[0] if len(source_indices) > 1 else None,
             "first_source_index": source_indices[0],
             "last_source_index": source_indices[-1],

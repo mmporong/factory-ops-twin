@@ -27,14 +27,14 @@
   },
   "selection": {
     "source_frame_count": 300,
-    "selected_frame_count": 100,
+    "selected_frame_count": 101,
     "maximum_contract_frames": 120,
-    "sampling": "existing importer uniform source-index stride; raw observations only; no interpolation",
+    "sampling": "existing importer uniform source-index stride plus the raw final source endpoint; raw observations only; no interpolation",
     "source_index_stride": 3,
     "first_source_index": 0,
-    "last_source_index": 297,
+    "last_source_index": 299,
     "first_sim_time_s": 17533.000000025353,
-    "last_sim_time_s": 17830.00000002103,
+    "last_sim_time_s": 17832.000000021002,
     "source_to_replay_bindings": [
       {
         "scenario_frame_index": 0,
@@ -935,6 +935,15 @@
         "source_observed_at": "2026-10-24T21:20:34.238053+00:00",
         "source_snapshot_sha256": "b577c90f713f148d578bb56e80ba89def3b7a1682b0657aa489303c3999849d4",
         "replay_projection_sha256": "38ed3202463f4780eaf962fcab3785c56db6f1947eedb35a1eed9de5a21c26d5"
+      },
+      {
+        "scenario_frame_index": 100,
+        "source_frame_index": 299,
+        "source_revision": 0,
+        "source_sim_time_s": 17832.000000021002,
+        "source_observed_at": "2026-10-24T21:20:34.398708+00:00",
+        "source_snapshot_sha256": "9990f4134eb2b63c4d6423dfb9e8c02375cc953dcee2178905137cb675ff4fcc",
+        "replay_projection_sha256": "4cfe9292767e12306973daf58eaf167b05a5370279047b30d2d91c7a35166499"
       }
     ]
   },
@@ -992,10 +1001,10 @@
   },
   "scenario": {
     "directory": "scenarios",
-    "scenario_id": "campus16-run-335-representative-replay-2e5fb0f6d9a3",
-    "scenario_file": "scenarios/campus16-run-335-representative-replay-2e5fb0f6d9a3.json",
-    "scenario_file_sha256": "648cefd7eecfea0a7071c324dcfb6fa7ec0d9995965d5b80efee46090cd24b7a",
-    "frame_count": 100,
+    "scenario_id": "campus16-run-335-representative-replay-0bc84c4d5467",
+    "scenario_file": "scenarios/campus16-run-335-representative-replay-0bc84c4d5467.json",
+    "scenario_file_sha256": "6e1671f33c311b9eaed74c24c44810e43bb1d830b0586300b8e9c70fa27b25d3",
+    "frame_count": 101,
     "source_run_id": "process-line-7212997c-f488-4c6a-9f91-9c9fc5d57272",
     "read_only": true,
     "served_mode": "replay"
