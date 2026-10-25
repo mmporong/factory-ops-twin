@@ -1,0 +1,12 @@
+{
+  "status": "capture_failed",
+  "build_attempts": 1,
+  "browser_launch_attempts": 1,
+  "events": [
+    "requested web port 13010 was already occupied, so unused port 13011 was selected before build",
+    "production build completed successfully",
+    "API 18769 and production web 13011 returned HTTP 200",
+    "isolated Chrome exited before CDP 19224 became ready",
+    "no browser relaunch was attempted"
+  ]
+}

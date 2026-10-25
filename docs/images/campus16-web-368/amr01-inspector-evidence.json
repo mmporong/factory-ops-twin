@@ -1,0 +1,7 @@
+{
+  "url": "http://127.0.0.1:13009/",
+  "replay_banner": "기록 재생 중 · 101 / 101 표본 · 차량 조작 비활성",
+  "inspector_text": "AMR · 물류 차량\nAMR 01\n\namr-1\n\n이동 중\n하차 후 통로 비움\n가상 SOC 39.5%\n현재 작업\n하차 후 통로 비움\n적재물\n없음\n목적지\nB_CELL_WAIT\n속도\n0.00 m/s\n대기 이유\n없음\n위치\n63.5, 18.5 m\n배터리·경로 원천",
+  "body_has_shipments_6": true,
+  "body_has_returns_3": true
+}

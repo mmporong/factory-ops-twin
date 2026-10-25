@@ -1,0 +1,20 @@
+{
+  "status": "observed",
+  "screenshot_badge": "2 Issues",
+  "unique_diagnostic": "Attempted to synchronously unmount a root while React was already rendering. React cannot finish unmounting the root until the current render has completed, which may lead to a race condition.",
+  "channels": [
+    {
+      "source": "Browser",
+      "level": "ERROR",
+      "count": 80
+    },
+    {
+      "source": "Server",
+      "level": "ERROR",
+      "count": 80
+    }
+  ],
+  "interpretation": "The Next development indicator counts the same React root-unmount lifecycle diagnostic in Browser and Server channels. The cause was not diagnosed in this bounded media task.",
+  "capture_effect": "The dashboard remained responsive enough to load frame 100, render one WebGL canvas, select AMR 01, and capture both PNGs.",
+  "raw_next_log_sha256": "4c065f3b387f2a293c29d3b82849e19470090f00dd6b3d8e88d9cac3deda787e"
+}

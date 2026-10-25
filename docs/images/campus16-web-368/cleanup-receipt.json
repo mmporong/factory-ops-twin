@@ -1,0 +1,24 @@
+{
+  "status": "passed",
+  "checked_at_utc": "2026-10-25T07:18:50.874130+00:00",
+  "owned_ports_closed": [
+    18768,
+    13009,
+    19222
+  ],
+  "owned_processes_remaining": 0,
+  "isolated_browser_profile": ".tmp-chrome-media368",
+  "isolated_browser_profile_removed": true,
+  "preserved_user_services": [
+    {
+      "port": 8765,
+      "pid": 59592
+    },
+    {
+      "port": 3007,
+      "pid": 92320
+    }
+  ],
+  "temporary_next_cache_removed": true,
+  "temporary_node_modules_junction_removed": true
+}

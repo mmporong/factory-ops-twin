@@ -1,0 +1,28 @@
+{
+  "archive": "D:\\FactoryOpsPortfolio\\campus16-web-replay-335-368.zip",
+  "archive_bytes": 17417939,
+  "archive_entry_count": 27,
+  "archive_sha256": "3815427c82a751b7b1cbfe6411eb0997ae642a9eb47e0663ce2b2f0d44f20470",
+  "closed_zip_crc_all_entries_passed": true,
+  "closed_zip_stream_size_sha256_all_entries_passed": true,
+  "development_known_react_warning_preserved": true,
+  "gpu_used": false,
+  "inventory": {
+    "path": "C:\\Users\\LIMMM\\factory-ops-twin\\artifacts\\campus16-web-storage-373\\inventory.json",
+    "sha256": "6008e3a6e34fcb73a66e0c846dd7f33147c202e9726efd978a1178984eed9a0b"
+  },
+  "original_files_untouched": true,
+  "original_inputs_receipt": {
+    "path": "C:\\Users\\LIMMM\\factory-ops-twin\\artifacts\\campus16-web-storage-373\\original-inputs-receipt.json",
+    "sha256": "e0418311e8ed6279bdf40f8d2495a3eca165ea0dc16f5655786e5acfc6674219"
+  },
+  "payload_bytes": 17402175,
+  "payload_file_count": 26,
+  "processes_stopped": false,
+  "production_execution_status_preserved": "capture_failed",
+  "production_status_preserved": "build_passed_capture_failed",
+  "replay_frame_count": 101,
+  "schema_version": 1,
+  "source_commit": "7aae2f1e3753075f659e8afda4e4433164df2e3b",
+  "status": "passed"
+}

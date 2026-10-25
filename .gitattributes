@@ -11,3 +11,6 @@ docs/evidence/detector-input-gap-355/** -text whitespace=cr-at-eol
 docs/evidence/detector-input-gap-355/input-gap.svg -text -whitespace
 docs/evidence/detector-mosaic-v3-366/** -text whitespace=cr-at-eol
 docs/evidence/detector-model-v4-370/** -text whitespace=cr-at-eol
+
+docs/images/campus16-web-368/** -text whitespace=cr-at-eol
+docs/evidence/campus16-web-production-372/** -text whitespace=cr-at-eol

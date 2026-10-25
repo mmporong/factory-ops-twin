@@ -1799,3 +1799,9 @@ v2 선택 모드는 초기/재구성 모두 캐시된 COCO_V1 constructor로 만
 ## FOT-230 — PowerShell 준비 스크립트의 예약 변수 이름 충돌
 
 v4 호스트 준비 생성 중 `$Host`를 경로 변수로 사용해 PowerShell 예약 변수와 충돌했다. GPU 입장 전에 `$hostRoot`로 고쳤으며, 이후 생성 스크립트·입장 검사와363~365의3개 실행은 통과했다. GPU 실행 실패나 재시도는 없었다. PowerShell 변수 이름은 대소문자를 구분하지 않으므로 내장·예약 변수 대신 작업별 이름을 사용한다. [완료된 호스트·입력·종료 근거](evidence/detector-model-v4-370/report.json)
+
+## FOT-231 — 관제 개발 촬영의 React root-unmount 진단과 운영 촬영 실패
+
+368의 분리된 개발 브라우저에서 같은 React 진단이 Browser/Server 채널에 각각80회 기록됐다. 원문은 `Attempted to synchronously unmount a root while React was already rendering`이며 화면에는 `2 Issues`가 남았다.101/101 표본·WebGL canvas·16대·출하6·반납3·AMR01 선택은 실제 DOM과 PNG로 보존했다. 기능이 표시된 사실과 경고의 원인·해소 여부는 구분한다. 원인은 이 촬영에서 확정하지 않았다. 경고 배지를 숨기거나 이미지를 수정하지 않는다. [관측과 로그 해시](images/campus16-web-368/development-indicator.json)
+
+별도372는 Next16.4.2의 `next build --webpack`과 API/운영 웹 HTTP200까지 통과했다. 격리 Chrome1회가30초의 CDP 준비 확인 전에 종료돼 운영 PNG·DOM을 얻지 못했다. debug log가 없어 종료 원인은 미확정이다. 서버 로그에 진단이 없었던 사실만으로 브라우저 경고가 해결됐다고 판단하지 않는다. 같은 실행을 반복하지 않고 실패·정리 영수증을 남겼으며, 기존8765/3007과 다른 사용자의13010 서비스는 보존했다. 후속 촬영은 서버 응답뿐 아니라 브라우저 PID·CDP·DOM·canvas 준비를 단계별로 확인한다. [빌드·실패·종료 근거](evidence/campus16-web-production-372/build-metadata.json)

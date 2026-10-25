@@ -1,0 +1,95 @@
+{
+  "schema_version": 1,
+  "status": "build_passed_capture_failed",
+  "recorded_at_utc": "2026-10-25T07:26:32.003167+00:00",
+  "source_commit": "937d8c8380815739596c27935d2420add13eb156",
+  "build": {
+    "command": "npm run build -- --webpack",
+    "next_version": "16.4.2",
+    "result": "passed",
+    "build_id": "GNteYH3HldyOyQBrMMXK2",
+    "ops_api_url": "http://127.0.0.1:18769",
+    "files": {
+      "BUILD_ID": {
+        "sha256": "196cddab13cd1150f1a2f077b11cf14ef8c0bb3e055c44d1f1ba3093882a5a90",
+        "bytes": 21
+      },
+      "build-manifest.json": {
+        "sha256": "c49aadbff9b7e10c436b15cdaa726ff7fad3a1b8c6a12922a52b082bf9709d9d",
+        "bytes": 510
+      },
+      "routes-manifest.json": {
+        "sha256": "542f6e703e0c37591fbf20c8c5248d02e54a9c21ac3edfd7a1f56ff2f84e21bd",
+        "bytes": 2312
+      },
+      "required-server-files.json": {
+        "sha256": "1e1df9f8e50b5ab0ad26228e7987ac72106becae39d8396b0a42547572330a86",
+        "bytes": 10778
+      }
+    }
+  },
+  "source": {
+    "manifest_path": "docs/data/campus16-335-replay/manifest.json",
+    "manifest_sha256": "379a49456287d656795655720c376288d3741d698ad675f0c46e5d00f3cdf7d0",
+    "scenario_id": "campus16-run-335-representative-replay-0bc84c4d5467",
+    "frame_index": 100,
+    "frame_count": 101,
+    "robot_count": 16,
+    "completed_orders": 6,
+    "returned_carriers": 3
+  },
+  "production_server": {
+    "url": "http://127.0.0.1:13011",
+    "readiness_http_status": 200,
+    "warning_count_observed_before_cleanup": 0,
+    "error_count_observed_before_cleanup": 0
+  },
+  "browser": {
+    "launch_attempts": 1,
+    "result": "failed_before_cdp_ready",
+    "cdp_url": "http://127.0.0.1:19224",
+    "poll_limit_seconds": 30,
+    "observed_after_poll": {
+      "cdp_reachable": false,
+      "owned_browser_processes": 0
+    },
+    "debug_log_found": false,
+    "flags": [
+      "--headless=new",
+      "--disable-gpu",
+      "--use-angle=swiftshader",
+      "--use-gl=angle",
+      "--enable-unsafe-swiftshader",
+      "--window-size=1600,1000"
+    ]
+  },
+  "claim_limits": [
+    "The production build passed, but no production-browser screenshot was captured.",
+    "The development React unmount diagnostic was not fixed or retested in a browser.",
+    "The existing development captures remain the available run 335 web media."
+  ],
+  "cleanup": {
+    "status": "passed",
+    "checked_at_utc": "2026-10-25T07:27:25.475580+00:00",
+    "owned_ports_closed": [
+      18769,
+      13011,
+      19224
+    ],
+    "owned_processes_remaining": 0,
+    "temporary_next_cache_removed": true,
+    "temporary_node_modules_junction_removed": true,
+    "isolated_browser_profile_removed": true,
+    "temporary_runtime_env_removed": true,
+    "preserved_user_services": [
+      {
+        "port": 8765,
+        "pid": 59592
+      },
+      {
+        "port": 3007,
+        "pid": 92320
+      }
+    ]
+  }
+}

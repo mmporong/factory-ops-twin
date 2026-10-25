@@ -1,0 +1,62 @@
+{
+  "status": "complete",
+  "attempt_limit": 2,
+  "attempts": [
+    {
+      "attempt": 1,
+      "result": "browser launched; initial CDP readiness probe occurred before the port was ready"
+    },
+    {
+      "attempt": 2,
+      "result": "capture succeeded in the isolated browser session"
+    }
+  ],
+  "services": {
+    "api": {
+      "url": "http://127.0.0.1:18768",
+      "readiness_http_status": 200
+    },
+    "web": {
+      "url": "http://127.0.0.1:13009",
+      "readiness_http_status": 200,
+      "bundler": "webpack"
+    },
+    "browser_cdp": {
+      "url": "http://127.0.0.1:19222",
+      "browser": "Chrome/156.0.8078.47"
+    }
+  },
+  "verification": {
+    "actual_dom_saved": true,
+    "canvas_count": 1,
+    "last_frame": "101 / 101",
+    "robots": 16,
+    "completed_orders": 6,
+    "returned_carriers": 3,
+    "amr_01": {
+      "task": "하차 후 통로 비움",
+      "soc_percent": 39.5,
+      "destination": "B_CELL_WAIT"
+    }
+  },
+  "development_indicator": {
+    "status": "observed",
+    "screenshot_badge": "2 Issues",
+    "unique_diagnostic": "Attempted to synchronously unmount a root while React was already rendering. React cannot finish unmounting the root until the current render has completed, which may lead to a race condition.",
+    "channels": [
+      {
+        "source": "Browser",
+        "level": "ERROR",
+        "count": 80
+      },
+      {
+        "source": "Server",
+        "level": "ERROR",
+        "count": 80
+      }
+    ],
+    "interpretation": "The Next development indicator counts the same React root-unmount lifecycle diagnostic in Browser and Server channels. The cause was not diagnosed in this bounded media task.",
+    "capture_effect": "The dashboard remained responsive enough to load frame 100, render one WebGL canvas, select AMR 01, and capture both PNGs.",
+    "raw_next_log_sha256": "4c065f3b387f2a293c29d3b82849e19470090f00dd6b3d8e88d9cac3deda787e"
+  }
+}

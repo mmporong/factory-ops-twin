@@ -1,0 +1,117 @@
+{
+  "schema_version": 1,
+  "status": "complete",
+  "captured_at_utc": "2026-10-25T07:18:50.872806+00:00",
+  "source_commit": "937d8c8380815739596c27935d2420add13eb156",
+  "scope": "actual local Next.js/React Three Fiber dashboard rendering of a read-only run 335 replay projection",
+  "claim_limits": [
+    "This is a web R3F rendering of stored observations, not an Isaac RTX render.",
+    "This is not a physics rerun or live physical-robot control.",
+    "The 101 frames are representative raw observations selected from 300 source frames without interpolation."
+  ],
+  "source": {
+    "manifest_path": "docs/data/campus16-335-replay/manifest.json",
+    "manifest_sha256": "379a49456287d656795655720c376288d3741d698ad675f0c46e5d00f3cdf7d0",
+    "run_id": "process-line-7212997c-f488-4c6a-9f91-9c9fc5d57272",
+    "recording_manifest_sha256": "280370d930ad3247aa16870e0375a7d10f5948b26bb7a4a201c21218b2ae6755",
+    "snapshots_gzip_sha256": "fc6a169a102639884afc858ae06188778e47353ec5c64f455fcf62fc5bb39fba",
+    "snapshots_uncompressed_sha256": "25af51bc561fd4b8b6d067b987426b66a14b44cbdb7462bf9c0d9dd983c877d5",
+    "layout_file_sha256": "43c5510de10fd9c220f95ad563fb4ca99428f9fbb8b99d568c3163fdeb41454f",
+    "service_scene_sha256": "53eeff631c19c2e1659fbc6f026a019cd3400809d8bd49f6c07f0567ccb69666",
+    "scenario_file_sha256": "6e1671f33c311b9eaed74c24c44810e43bb1d830b0586300b8e9c70fa27b25d3",
+    "scenario_id": "campus16-run-335-representative-replay-0bc84c4d5467",
+    "source_frame_index": 299,
+    "scenario_frame_index": 100,
+    "source_sim_time_s": 17832.000000021002,
+    "raw_source_snapshot_sha256": "9990f4134eb2b63c4d6423dfb9e8c02375cc953dcee2178905137cb675ff4fcc",
+    "replay_projection_sha256": "4cfe9292767e12306973daf58eaf167b05a5370279047b30d2d91c7a35166499",
+    "frame_count": 101,
+    "robot_count": 16,
+    "scene_bounds_xy_m": [
+      0,
+      0,
+      82,
+      76
+    ],
+    "completed_orders": 6,
+    "returned_carriers": 3
+  },
+  "render": {
+    "dashboard_url": "http://127.0.0.1:13009/",
+    "api_url": "http://127.0.0.1:18768",
+    "chrome_version": "156.0.8078.47",
+    "viewport_px": [
+      1600,
+      1000
+    ],
+    "device_scale_factor": 1,
+    "render_path": "headless Chrome CPU software rendering",
+    "flags": [
+      "--headless=new",
+      "--disable-gpu",
+      "--use-angle=swiftshader",
+      "--use-gl=angle",
+      "--enable-unsafe-swiftshader",
+      "--window-size=1600,1000",
+      "--force-device-scale-factor=1"
+    ],
+    "webgl_canvas_count": 1,
+    "replay_ui_evidence": "101 / 101 표본"
+  },
+  "files": {
+    "campus16-run335-frame100.png": {
+      "path": "campus16-run335-frame100.png",
+      "bytes": 513740,
+      "sha256": "3b11b7555e935ad64946460f63c6d9a3533be6022b834d6a8bac02922d0530cb",
+      "dimensions_px": [
+        1600,
+        1000
+      ]
+    },
+    "campus16-run335-frame100-amr01.png": {
+      "path": "campus16-run335-frame100-amr01.png",
+      "bytes": 485922,
+      "sha256": "c9adf5ce10fe6106990d7496c1251d5836293f6a71f8133fcded3eae1e4370dc",
+      "dimensions_px": [
+        1584,
+        905
+      ]
+    },
+    "actual-dom.html": {
+      "path": "actual-dom.html",
+      "bytes": 71319,
+      "sha256": "6ed93364a1592ebe4d53bdc149e4a304ba585bb8dff92e4d172e11e2afa8c035"
+    },
+    "dom-evidence.json": {
+      "path": "dom-evidence.json",
+      "bytes": 4134,
+      "sha256": "8688d427840a287ebafa94f9d93c30816b9e04e4b856811acd470b14fc1106af"
+    },
+    "amr01-inspector-evidence.json": {
+      "path": "amr01-inspector-evidence.json",
+      "bytes": 480,
+      "sha256": "75b184aa1c3e5da59e6cfb31c5e82a02137b6392ee9962eeb4719f117bf69a56"
+    }
+  },
+  "cleanup": {
+    "owned_ports_closed": [
+      18768,
+      13009,
+      19222
+    ],
+    "owned_processes_remaining": 0,
+    "preserved_user_services": {
+      "8765": 59592,
+      "3007": 92320
+    },
+    "isolated_browser_profile_removed": true,
+    "temporary_next_cache_removed": true,
+    "temporary_node_modules_junction_removed": true
+  },
+  "known_issue": {
+    "visible_badge": "2 Issues",
+    "evidence_path": "development-indicator.json",
+    "diagnostic": "Attempted to synchronously unmount a root while React was already rendering. React cannot finish unmounting the root until the current render has completed, which may lead to a race condition.",
+    "cause_diagnosed": false
+  }
+}
