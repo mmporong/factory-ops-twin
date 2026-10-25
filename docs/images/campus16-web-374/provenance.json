@@ -1,0 +1,120 @@
+{
+  "schema_version": 1,
+  "status": "complete",
+  "captured_at_utc": "2026-10-25T07:41:22.682138+00:00",
+  "source_commit": "88dd0e0d7e3e5f608ffebcc070d53276bfd15747",
+  "scope": "actual Next/R3F development rendering of read-only run 335 replay after label-root fix",
+  "source": {
+    "manifest_path": "docs/data/campus16-335-replay/manifest.json",
+    "manifest_sha256": "379a49456287d656795655720c376288d3741d698ad675f0c46e5d00f3cdf7d0",
+    "run_id": "process-line-7212997c-f488-4c6a-9f91-9c9fc5d57272",
+    "scenario_id": "campus16-run-335-representative-replay-0bc84c4d5467",
+    "scenario_file_sha256": "6e1671f33c311b9eaed74c24c44810e43bb1d830b0586300b8e9c70fa27b25d3",
+    "layout_sha256": "43c5510de10fd9c220f95ad563fb4ca99428f9fbb8b99d568c3163fdeb41454f",
+    "source_frame_index": 299,
+    "scenario_frame_index": 100,
+    "raw_source_snapshot_sha256": "9990f4134eb2b63c4d6423dfb9e8c02375cc953dcee2178905137cb675ff4fcc",
+    "replay_projection_sha256": "4cfe9292767e12306973daf58eaf167b05a5370279047b30d2d91c7a35166499",
+    "robots": 16,
+    "completed_orders": 6,
+    "returned_carriers": 3
+  },
+  "render": {
+    "url": "http://127.0.0.1:13013/",
+    "api": "http://127.0.0.1:18771",
+    "browser": "Chrome/156.0.8078.47",
+    "viewport_px": [
+      1600,
+      1000
+    ],
+    "flags": [
+      "--headless=new",
+      "--disable-gpu",
+      "--use-angle=swiftshader",
+      "--use-gl=angle",
+      "--enable-unsafe-swiftshader"
+    ]
+  },
+  "diagnostic": {
+    "matching_root_unmount_count": 0,
+    "binding": "diagnostic-binding.json"
+  },
+  "claim_limits": [
+    "Web R3F rendering of stored observations; not Isaac RTX, a physics rerun, or physical-robot control.",
+    "Zero matching development diagnostics is scoped to this captured scene and source commit."
+  ],
+  "files": {
+    "campus16-run335-frame100.png": {
+      "sha256": "66614fa041e0f3d03d44f19454efd4673b141761a5f802501b8a3e940e3edf29",
+      "bytes": 535344,
+      "dimensions_px": [
+        1600,
+        1000
+      ]
+    },
+    "campus16-run335-frame100-amr01.png": {
+      "sha256": "988f7a2107569edf068df750322316d80b2373fb0982447cde7fc2b87aa77222",
+      "bytes": 448386,
+      "dimensions_px": [
+        1600,
+        1000
+      ]
+    },
+    "actual-dom-overview.html": {
+      "sha256": "0edc1835b81314e2c62b06bd1ef2b438464ed7860be2e1be673eb2714a1db6f9",
+      "bytes": 51965
+    },
+    "actual-dom-amr01.html": {
+      "sha256": "cd4572b478804bdb3789831fdc353043bec2ccc4b9d207b5a406cb99099ae001",
+      "bytes": 45339
+    },
+    "overview-evidence.json": {
+      "sha256": "61ea20d1fd08faf4b01aa361bc2141637e100a141b3ed240ddafe69367369a84",
+      "bytes": 2982
+    },
+    "amr01-evidence.json": {
+      "sha256": "a03828f72f50b0fcac65c69140f8703754cfe7c92a1eceb7311e33fedfb9078f",
+      "bytes": 2274
+    },
+    "api-frame100.json": {
+      "sha256": "298ccfa85418ecc4ca45cf559ee999b78a6890c8e8f4d0ecfaf99b4d42870a43",
+      "bytes": 1039
+    },
+    "next-development.log": {
+      "sha256": "ae45aa9050443d966ae5603dbb858f0e4c2aecb577de28f11bd10ca2a41888ca",
+      "bytes": 349
+    },
+    "diagnostic-binding.json": {
+      "sha256": "42fb700a4cd8858e415250057fcae85e3f0cac3e8642a8b449e893c365aedbe2",
+      "bytes": 1394
+    }
+  },
+  "cleanup": {
+    "status": "passed",
+    "checked_at_utc": "2026-10-25T07:42:13.784170+00:00",
+    "owned_ports_closed": [
+      18771,
+      13013,
+      19226
+    ],
+    "owned_processes_remaining": 0,
+    "browser_profile_removed": true,
+    "next_cache_removed": true,
+    "node_modules_junction_removed": true,
+    "runtime_env_removed": true,
+    "preserved_user_services": [
+      {
+        "port": 8765,
+        "pid": 59592
+      },
+      {
+        "port": 3007,
+        "pid": 92320
+      },
+      {
+        "port": 13010,
+        "pid": 6400
+      }
+    ]
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "status": "passed",
+  "checked_at_utc": "2026-10-25T07:42:13.784170+00:00",
+  "owned_ports_closed": [
+    18771,
+    13013,
+    19226
+  ],
+  "owned_processes_remaining": 0,
+  "browser_profile_removed": true,
+  "next_cache_removed": true,
+  "node_modules_junction_removed": true,
+  "runtime_env_removed": true,
+  "preserved_user_services": [
+    {
+      "port": 8765,
+      "pid": 59592
+    },
+    {
+      "port": 3007,
+      "pid": 92320
+    },
+    {
+      "port": 13010,
+      "pid": 6400
+    }
+  ]
+}

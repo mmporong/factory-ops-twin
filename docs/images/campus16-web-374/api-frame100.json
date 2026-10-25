@@ -1,0 +1,22 @@
+{
+  "url": "http://127.0.0.1:13013/api/scenarios?scenario_id=campus16-run-335-representative-replay-0bc84c4d5467&frame_index=100",
+  "mode": "replay",
+  "run_id": "process-line-7212997c-f488-4c6a-9f91-9c9fc5d57272",
+  "sim_time_s": 17832.000000021002,
+  "robot_count": 16,
+  "completed_orders": 6,
+  "returned_carriers": 3,
+  "replay": {
+    "scenario_id": "campus16-run-335-representative-replay-0bc84c4d5467",
+    "frame_index": 100,
+    "frame_count": 101,
+    "source_run_id": "process-line-7212997c-f488-4c6a-9f91-9c9fc5d57272",
+    "source_mode": "local_model",
+    "source_revision": 0,
+    "source_observed_at": "2026-10-24T21:20:34.398708+00:00",
+    "source_snapshot_sha256": "4cfe9292767e12306973daf58eaf167b05a5370279047b30d2d91c7a35166499",
+    "scenario_file_sha256": "6e1671f33c311b9eaed74c24c44810e43bb1d830b0586300b8e9c70fa27b25d3",
+    "scene_sha256": "53eeff631c19c2e1659fbc6f026a019cd3400809d8bd49f6c07f0567ccb69666",
+    "scope": "selected dashboard snapshots; no physics simulation rerun"
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "installed_versions": {
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "@react-three/fiber": "9.8.2",
+    "@react-three/drei": "10.7.9",
+    "three": "0.180.0"
+  },
+  "observed_dependency_path": "C:\\Users\\LIMMM\\worktrees\\factory-ops-twin-webmedia368\\dashboard\\node_modules\\@react-three\\drei\\web\\Html.js",
+  "observed_dependency_sha256": "d8e5391b932667c355a800d2720a580afeee954190f528373ea131349b50a232",
+  "observed_dependency_bytes": 14702,
+  "observed_call_path": "Html.js creates a ReactDOM root for each Html element and calls currentRoot.unmount() in layout-effect cleanup.",
+  "change_scope": "FactoryScene Tag no longer uses Drei Html; labels use CanvasTexture sprites.",
+  "claim_limit": "The same development scene recorded zero matching diagnostics after nested roots were removed; this does not establish StrictMode as the only possible cause.",
+  "current_log": {
+    "path": "next-development.log",
+    "sha256": "ae45aa9050443d966ae5603dbb858f0e4c2aecb577de28f11bd10ca2a41888ca",
+    "bytes": 349,
+    "json_rows": 3,
+    "error_count": 0,
+    "matching_root_unmount_count": 0
+  },
+  "prior_run_368_evidence": {
+    "path": "C:\\Users\\LIMMM\\factory-ops-twin\\artifacts\\campus16-web-media-368\\development-indicator.json",
+    "sha256": "d429760c491ca1bcd05738a7ca5c86b30a4a0b729e4d1c4d0e1824343089acd9",
+    "bytes": 900
+  }
+}

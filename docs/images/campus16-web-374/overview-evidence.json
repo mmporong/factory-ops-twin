@@ -1,0 +1,20 @@
+{
+  "url": "http://127.0.0.1:13013/",
+  "title": "FactoryOps · 검사·포장 구역 관제",
+  "body_text": "FactoryOps\n/\n검사·포장 구역\n82 × 76 m · AMR 16대\n기록 재생\n시뮬레이션 시각\n4:57:12\n운영 패널\n반도체 후공정 검사·포장 구역 AMR 운영 관제\n가동 AMR\n16 / 16\n작업 배정 차량\n출하 완료\n6\n빈 용기 반납 3건\n대기 작업\n47\n운영 원장 기준\n자재 재고\n215\n단위 수량\n기록 재생 중 · 101 / 101 표본 · 차량 조작 비활성\n재생 조작 열기\n반도체 후공정 · 최종검사·포장\n검사·포장 구역\n\n82 × 76 m · AMR 16대 · 설비 76개\n\n기록 재생\n작업 7건 진행 · 40건 대기\n자재 재고\n215 개\n가용 192개\n토트\n42 / 64\n사용 중 · 빈 토트 22개\n자재 보관\n보유 수량\nA_S1\n패키지 IC 트레이\n17\n가용 16\nA_S2\n패키지 IC 트레이\n18\n가용 16\nA_S3\n패키지 IC 트레이\n18\n가용 16\nB_S1\n패키지 IC 트레이\n18\n가용 16\nB_S2\n패키지 IC 트레이\n18\n가용 16\nB_S3\n패키지 IC 트레이\n18\n가용 16\nC_S1\n패키지 IC 트레이\n18\n가용 16\nC_S2\n패키지 IC 트레이\n18\n가용 16\nC_S3\n패키지 IC 트레이\n18\n가용 16\nD_S1\n패키지 IC 트레이\n18\n가용 16\nD_S2\n패키지 IC 트레이\n18\n가용 16\nD_S3\n패키지 IC 트레이\n18\n가용 16\nAMR 운행\n16 / 16대 작업\nAMR 01\n하차 후 통로 비움 · B_CELL_WAIT\n40%\n교통 재계획 기록\n작업 추적\nLOT-0028\n28 / 48\nprocess_input\n진행 중 ·\nB_S1 → B_CI\namr-13\nT028\nB_S1 → B_CI\nprocess_input · 배정\nAMR 13 보기\n차량 16/16\n작업 47\n충전대 4/8\n이벤트 80\nAMR 01\namr-1\n하차 후 통로 비움 → B_CELL_WAIT\n이동 중\n40%\nAMR 02\namr-2\n주차 이동 → A_P3\n이동 중\n62%\nAMR 03\namr-3\n충전 운영 → B_P2\n충전 중\n68%\nAMR 04\namr-4\n공정 간 운송 → C_PACK_OUT\n경로 대기\n75%\nAMR 05\namr-5\n하차 후 통로 비움 → A_CELL_WAIT\n이동 중\n42%\nAMR 06\namr-6\n공정 간 운송 → C_PACK_IN\n이동 중\n38%\nAMR 07\namr-7\n하차 후 통로 비움 → C_SOURCE_WAIT\n이동 중\n47%\nAMR 08\namr-8\n하차 후 통로 비움 → D_CELL_WAIT\n이동 중\n73%\nAMR 09\namr-9\n충전 운영 → C_LOW_E_P1\n충전 구역 이탈\n76%\nAMR 10\namr-10\n충전 운영 → D_P2\n충전 중\n62%\nAMR 11\namr-11\n충전 운영 → C_P3\n충전 대기\n31%\nAMR 12\namr-12\n충전 운영 → C_P2\n충전 중\n43%\nAMR 13\namr-13\n공정 간 운송 → B_S1\n경로 대기\n38%\nAMR 14\namr-14\n빈 캐리어 반납 → A_OUT\n경로 대기\n35%\nAMR 15\namr-15\n공정 간 운송 → D_CO\n경로 대기\n38%\nAMR 16\namr-16\n빈 캐리어 반납 → B_OUT\n경로 대기\n74%",
+  "canvas_count": 1,
+  "canvas": [
+    {
+      "width": 1600,
+      "height": 936,
+      "rect": [
+        1600,
+        936
+      ]
+    }
+  ],
+  "replay": {
+    "range": "101 / 101 표본",
+    "state": "기록 재생 · 조작 비활성"
+  }
+}

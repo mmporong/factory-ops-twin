@@ -159,13 +159,13 @@ Isaac Sim 4.5에서 무적재 Nova Carter 한 대가 2m 직선과 반지름 2m�
 
 | 16대 캠퍼스 관제 | 차량 선택과 작업 상세 |
 |---|---|
-| ![완주335의 선별 기록 마지막 관측을 표시한 16대 웹 관제 화면](docs/images/campus16-web-368/campus16-run335-frame100.png) | ![AMR01을 선택해 작업·가상 SOC·목적지를 확인한 관제 화면](docs/images/campus16-web-368/campus16-run335-frame100-amr01.png) |
+| ![완주335의 선별 기록 마지막 관측을 표시한 16대 웹 관제 화면](docs/images/campus16-web-374/campus16-run335-frame100.png) | ![AMR01을 선택해 작업·가상 SOC·목적지를 확인한 관제 화면](docs/images/campus16-web-374/campus16-run335-frame100-amr01.png) |
 
 완주335의16대 기록을 Next.js·React Three Fiber 관제 화면에서 재생합니다. 위 화면은 공개한101개 관측의 마지막 표본으로, 출하6건·빈 용기 반납3건을 표시합니다. AMR01을 고르면 하차 후 통로 비움 작업, 가상 SOC39.5%, 목적지와 속도를 확인할 수 있습니다. 이는 전체48lot 완주 기록에서 고른 구간이며, 마지막 표본의 출하6건을 전체 완주 수량으로 해석하지 않습니다.
 
-82×76m 배치와 같은 run ID의 원본 관측을 보간 없이 선별했습니다. 재생 중 제어 권한은 비우며 차량·경로·재고·설비 WIP를 함께 표시합니다. API 처음·끝 seek와 브라우저의 재생 선택·AMR 선택을 확인했습니다. 화면은 저장된 관측을 표시하는 웹 렌더이며 Isaac RTX 렌더나 물리 재실행은 아닙니다. [화면 원본·DOM·해시](docs/images/campus16-web-368/provenance.json) · [선별 백업](docs/evidence/campus16-web-storage-373.json) · [표본·출처·제외 필드](docs/data/campus16-335-replay/manifest.json) · [운영 화면 사용법](docs/operations-guide.md)
+82×76m 배치와 같은 run ID의 원본 관측을 보간 없이 선별했습니다. 재생 중 제어 권한은 비우며 차량·경로·재고·설비 WIP를 함께 표시합니다. API 처음·끝 seek와 브라우저의 재생 선택·AMR 선택을 확인했습니다. 화면은 저장된 관측을 표시하는 웹 렌더이며 Isaac RTX 렌더나 물리 재실행은 아닙니다. [화면 원본·DOM·해시](docs/images/campus16-web-374/provenance.json) · [재생 기록 백업](docs/evidence/campus16-web-storage-373.json) · [현재 화면·수정 소스 백업](docs/evidence/campus16-web-storage-375.json) · [표본·출처·제외 필드](docs/data/campus16-335-replay/manifest.json) · [운영 화면 사용법](docs/operations-guide.md)
 
-개발 모드 촬영에는 React root-unmount 진단과 `2 Issues` 표시가 남아 있습니다. 운영 빌드는 통과했지만 운영 모드 브라우저는 준비 전에 종료돼 경고 해소 여부를 확인하지 못했습니다. [관측한 진단](docs/images/campus16-web-368/development-indicator.json) · [운영 빌드와 촬영 실패 범위](docs/evidence/campus16-web-production-372/build-metadata.json) · [기존070 관측 화면](docs/images/web-console-070/dashboard-live-carter1.jpg)
+차량·설비 라벨은 WebGL sprite로 표시합니다. 중첩 React root를 제거한 뒤 같은 개발 장면에서 root-unmount 진단이 나오지 않았고, TypeScript 검사를 통과했습니다. 운영 모드 촬영372의 브라우저 조기 종료는 별도 미확인 문제로 보존합니다. [수정 후 관측·설치 버전·로그](docs/images/campus16-web-374/diagnostic-binding.json) · [수정 전368](docs/images/campus16-web-368/provenance.json) · [운영 촬영 실패 범위](docs/evidence/campus16-web-production-372/build-metadata.json)
 
 선별한 정상 운영 기록 120개는 작은 공개 패키지로 제공합니다. 원본 JSON을 보간하지 않고 gzip으로 보존했으며, 복원 SHA와 전체 실행·발췌 구간의 차이를 함께 기록했습니다. [데이터 내려받기와 재생 방법](docs/data/operations-normal-223/README.md) · [공개 출처](docs/data/operations-normal-223/provenance.json)
 
@@ -253,7 +253,7 @@ Cosmos3의 단일 L40S 후보와121-frame 정지 입력 smoke는 CPU에서 준�
 | 2. CPU 운영 | 캠퍼스16대 모두9~21회·총240회 운송, 물류 임무 최고16개·이동 최고6대 | 작성 조건의 유한 배치이며 장기 생산 실적은 미확인 |
 | 3. 물리 주행 기준선 | 경로 추종226, 적재135, 교차 양보142, 도킹 정렬231 | 전기 접촉 충전·실물 검증은 후속 확장 |
 | 4. 운영 비교·원인 추적 | 4대6조건, 캠퍼스 TEST 고장·복구 지연, 정상48lot 완주 | 캠퍼스 정책의 반복 통계·실공장 성능은 미확인 |
-| 5. 관제·재현·미디어 | 16대 영상339·101표본 웹 재생·차량 상세368, 설비 HTTP 명령 | 개발 React 진단 미해결, 새 설비 클릭·반응형 확인은 남음 |
+| 5. 관제·재현·미디어 | 16대 영상339·101표본 웹 재생·차량 상세374, 라벨 root 수정 | 새 설비 명령 클릭·반응형·운영 브라우저 촬영은 남음 |
 | 6. 포트폴리오·데이터 | 대표 GIF·MP4·별도 드라이브 백업, 합성512장과 실사3seed 파일럿·CI, 백본·모자이크·ResNet 비교 | Cosmos 소량 시험·라벨 보존, 낮은 실사 성능 개선 |
 
 16대 반복 물류의 CPU 완주와 대표 미디어는 완료했습니다. 16대 물리·센서는7초 무적재 구성요소 시험이며 장시간 물류 접촉 시험과 구분합니다. 기존4대 운영 비교·단일 차량 물리 시험을 보존하고, 합성→실사 실험을 보조 트랙으로 진행합니다.
@@ -300,7 +300,7 @@ $env:OPS_API_URL = "http://127.0.0.1:18766"
 npm run dev -- --port 13008
 ```
 
-캠퍼스 웹 주소는 `http://127.0.0.1:13008`입니다. API287의 읽기 전용 HTTP 관측을 보존하며, 후속 명령 연결은 HTTP 고장 적용, 설비 명령의 고장·복구·같은 실행의 receipt·재생 보존을 포함한9개 관련 검사를 통과했습니다. 화면의 설비 선택 변경은 TypeScript 검사를 통과했습니다.335 기록의 웹 재생·차량 선택368을 확인했으며, 설비 명령의 새 브라우저 클릭·반응형 확인은 남아 있습니다. 이 결과는48lot 완주를 뜻하지 않습니다. [읽기 전용 기준선287](docs/evidence/process-line-api-287.json) · [명령·화면 변경의 확인 범위](docs/evidence/campus-equipment-controls.json)
+캠퍼스 웹 주소는 `http://127.0.0.1:13008`입니다. API287의 읽기 전용 HTTP 관측을 보존하며, 후속 명령 연결은 HTTP 고장 적용, 설비 명령의 고장·복구·같은 실행의 receipt·재생 보존을 포함한9개 관련 검사를 통과했습니다. 화면의 설비 선택 변경은 TypeScript 검사를 통과했습니다.335 기록의 웹 재생·차량 선택374를 확인했으며, 설비 명령의 새 브라우저 클릭·반응형 확인은 남아 있습니다. 이 결과는48lot 완주를 뜻하지 않습니다. [읽기 전용 기준선287](docs/evidence/process-line-api-287.json) · [명령·화면 변경의 확인 범위](docs/evidence/campus-equipment-controls.json)
 
 6개 운영 조건 비교는 다음 명령으로 재현합니다.
 

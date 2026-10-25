@@ -1,0 +1,25 @@
+{
+  "archive": "D:\\FactoryOpsPortfolio\\campus16-web-media-374.zip",
+  "archive_bytes": 1153058,
+  "archive_entry_count": 14,
+  "archive_sha256": "20295f34a5db8f30e65beb8b1b6a612e3b8d38e67c15d2e3d4fb8a82fa4d0f6a",
+  "closed_zip_crc_all_entries_passed": true,
+  "closed_zip_stream_size_sha256_all_entries_passed": true,
+  "gpu_used": false,
+  "inventory": {
+    "path": "C:\\Users\\LIMMM\\factory-ops-twin\\artifacts\\campus16-web-storage-375\\inventory.json",
+    "sha256": "af743b693da89dd8a63afcbba03cf4b965cf90b7ce31835d18d8309b5bb2b39e"
+  },
+  "matching_root_unmount_count_observed": 0,
+  "original_files_untouched": true,
+  "original_inputs_receipt": {
+    "path": "C:\\Users\\LIMMM\\factory-ops-twin\\artifacts\\campus16-web-storage-375\\original-inputs-receipt.json",
+    "sha256": "e3187869bb913633db501de6d6af08595aad7848e01b3e467a9b0cfb39fd3989"
+  },
+  "payload_bytes": 1145859,
+  "payload_file_count": 13,
+  "schema_version": 1,
+  "source_commit": "88dd0e0d7e3e5f608ffebcc070d53276bfd15747",
+  "source_identical_at_current_commit": true,
+  "status": "passed"
+}
