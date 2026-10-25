@@ -1,6 +1,6 @@
 # Factory Ops Twin 완성 계약
 
-현재 후속 작업은 사용자 재개 요청과 Cosmos3 2.1.0 라이선스 동의에 따른 단일 정지입력 시험이다. NGC 인증·manifest 접근377은 통과했다. 기존234의380은 RUNNING/COMPLETED/READY/HEALTHY까지 기동했으나 호스트 SSH 연결이 시간 초과됐다. 모델 다운로드 전에 종료했으며 실제STOPPED와 감시 프로세스 정리를 확인했다.381은 기존 g0의 기본 접속 경로와 단일 L40S·guardrail resident 프로필로 준비했다. 모델 추론 결과는 아직 없다. 아래17시 마감은 이전 작업 묶음이며 현재 재개 작업을 중단하는 시각으로 적용하지 않는다. [현재 실행 계약](evidence/cosmos-execution-plan-381.json) · [380 종료](evidence/cosmos-cloud-380.json)
+현재 후속 작업은 사용자 재개 요청과 Cosmos3 2.1.0 라이선스 동의에 따른 단일 정지입력 시험이다. NGC 인증·manifest 접근377은 통과했다. 380은기존234의 호스트 SSH 시간 초과로 끝났고,381은 g0의 표시 상태 UNHEALTHY를 terminal로 오판해 SSH 전에 중단했다. 두 환경의 실제STOPPED와 감시 정리를 확인했다. 설치 CLI v0.6.335의 소스로 상태 파생 규칙을 확인한382는 g0의 기본 접속 경로와 단일 L40S 프로필을 유지하며 실제 SSH/GPU probe로 다음 실행을 판정한다. 모델 추론 결과는 아직 없다. 아래17시 마감은 이전 작업 묶음이며 현재 재개 작업을 중단하는 시각으로 적용하지 않는다. [현재 실행 계약](evidence/cosmos-execution-plan-382.json) · [381 종료와 원인](evidence/cosmos-cloud-381.json)
 
 2026-10-25 17:00 KST 마감 작업의 구현·실행·공개를 완료했다.16대48lot 운영335와 대표 미디어339,512장 합성 릴리스340, 첫 실사3seed 비교와 백본·모자이크·ResNet 튜닝 비교를 보존했다.335의101표본 웹 재생·AMR 상세 화면374와 라벨 root 수정도 README에 반영했다. 고정test는 후속 개발 비교에서 다시 열지 않았다. 추가GPU작업은 예정하지 않으며 다음 배치는 공용 lease를 새로 확인한다.
 

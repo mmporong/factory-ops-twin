@@ -200,10 +200,12 @@ def _poll_ready(deadline: float, record: dict[str, object], save: object) -> Non
         }
         polls.append(row)
         save()
-        if target.get("status") in {"UNHEALTHY", "FAILED", "ERROR", "DELETED", "DELETING"}:
+        if target.get("status") in {"FAILED", "ERROR", "DELETED", "DELETING"}:
             raise RuntimeError("workspace entered a failed lifecycle state before remote execution")
+        # CLI v0.6.335 maps raw RUNNING + unhealthy telemetry to display UNHEALTHY.
+        # READY is only a boot candidate; the real SSH/GPU probe is still required.
         if all((
-            target.get("status") == "RUNNING",
+            target.get("status") in {"RUNNING", "UNHEALTHY"},
             target.get("build_status") == "COMPLETED",
             target.get("shell_status") == "READY",
         )):
@@ -371,7 +373,7 @@ def _stop_and_confirm(record: dict[str, object], save: object) -> bool:
 
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--batch-id", type=int, choices=(379, 380, 381), default=379)
+    parser.add_argument("--batch-id", type=int, choices=(379, 380, 381, 382), default=379)
     parser.add_argument("--target-profile", choices=tuple(TARGETS), default="scale234")
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--remote-script", type=Path, required=True)

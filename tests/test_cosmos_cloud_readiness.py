@@ -63,10 +63,19 @@ class CosmosReadinessTests(unittest.TestCase):
         self.assertEqual(record["readiness_polls"][-1]["health_status"], "UNHEALTHY")
 
     def test_terminal_instance_status_still_fails_immediately(self) -> None:
-        with patch.object(supervisor, "_load_listing", return_value=({}, observation("UNHEALTHY", "READY", "UNHEALTHY"))), \
+        with patch.object(supervisor, "_load_listing", return_value=({}, observation("FAILED", "READY", "UNHEALTHY"))), \
              patch.object(supervisor.time, "sleep") as sleep:
             with self.assertRaises(RuntimeError):
                 supervisor._poll_ready(10**12, {}, lambda: None)
+        sleep.assert_not_called()
+
+    def test_displayed_unhealthy_ready_requires_hardware_probe_next(self) -> None:
+        record = {}
+        displayed = observation("UNHEALTHY", "READY", "UNHEALTHY")
+        with patch.object(supervisor, "_load_listing", return_value=({}, displayed)), \
+             patch.object(supervisor.time, "sleep") as sleep:
+            supervisor._poll_ready(10**12, record, lambda: None)
+        self.assertEqual(record["readiness_polls"][-1]["status"], "UNHEALTHY")
         sleep.assert_not_called()
 
 

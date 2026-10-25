@@ -243,7 +243,7 @@ ResNet50 FPN 후보도 같은 데이터·학습 횟수로3개 seed의 튜닝 전
 
 값은0–100 단위의3seed 평균±표준편차입니다. ResNet의 절대 성능도 낮고, 합성 후 실제50장 조건은 한 seed에서 실제50장 조건보다 낮았습니다. COCO 가중치·FPN·기본 RPN·백본이 함께 바뀐 모델 묶음의 관측이며, 위1,075장 고정 test 결과와 비교할 수 없습니다. 이 실험은 운영 제어와 분리된 오프라인 검출 비교입니다. 실행당 평균441초·PyTorch 최대 할당 메모리 평균2.95GiB였고, 로컬 RTX3060에서 수행했습니다. 전체 프로세스 경과시간과 PyTorch 할당량이며 GPU kernel 시간·전체 장치 점유량은 아닙니다. [설정·seed·원본·측정 범위](docs/evidence/detector-model-v4-370/report.json) · [모델 보존](docs/evidence/detector-resnet-storage-371.json)
 
-Cosmos3의 단일 L40S 후보와121-frame 정지 입력 smoke는 CPU에서 준비했습니다. NGC 인증과 고정2.1.0 manifest 접근을 확인했고 해당 라이선스 동의를 받았습니다. 기존234의 호스트 SSH 연결이 시간 초과되어 중지를 확인했으며, 기존 g0의 기본 접속 경로와 단일 GPU 프로필로 시험을 준비했습니다. 변환 결과와 라벨 보존은 아직 확인하지 않았습니다. 후처리 도구는 실제 프레임 수·해상도·인접 프레임 차이를 확인하고 입력과 출력의 대표 PNG를 남깁니다. 변환된 객체 라벨의 승인은 별도로 다룹니다. [실험·실행·보존 범위](docs/synthetic-to-real-plan.md) · [현재 실행 계약](docs/evidence/cosmos-execution-plan-381.json)
+Cosmos3의 단일 L40S 후보와121-frame 정지 입력 smoke는 CPU에서 준비했습니다. NGC 인증과 고정2.1.0 manifest 접근을 확인했고 해당 라이선스 동의를 받았습니다. 기존234의 호스트 SSH 연결은 시간 초과됐습니다. g0에서는 Brev의 표시 상태를 실행기가 잘못 해석해 중단했으며, 이 판정을 고친 단일 GPU 시험을 준비했습니다. 두 환경의 실제 중지는 확인했습니다. 변환 결과와 라벨 보존은 아직 확인하지 않았습니다. 후처리 도구는 실제 프레임 수·해상도·인접 프레임 차이를 확인하고 입력과 출력의 대표 PNG를 남깁니다. 변환된 객체 라벨의 승인은 별도로 다룹니다. [실험·실행·보존 범위](docs/synthetic-to-real-plan.md) · [현재 실행 계약](docs/evidence/cosmos-execution-plan-382.json)
 
 ## 현재 진행 상태
 

@@ -1827,3 +1827,9 @@ Stop 요청 후 실제STOPPED는19:31:29 KST에 확인했고 timer/service inact
 380은19:38:22 KST에 RUNNING/COMPLETED/READY/HEALTHY가 됐지만 `-host` 별칭의 SSH 포트 연결이 시간 초과됐다. 이 실패는 모델 다운로드·키 전송·GPU 추론 전에 발생했다. 제어면 준비와 실제 SSH 접근은 별개이며, 네트워크 차단이나 공급자 장애 중 어느 것이 원인인지는 확인되지 않았다. Stop 요청 뒤19:45:19 KST에 실제STOPPED를 확인했고 timer/service와 소유 keepalive를 정리했다. [380 종료 근거](evidence/cosmos-cloud-380.json)
 
 381은 기존 g0의 과거 실행에서 사용한 기본 SSH 별칭을 선택한다. SSH와 SCP에 `RequestTTY=no`를 명시하고, 선택한 환경 이름으로 독립 Stop timer를 결속한다. g0는 단일 L40S의 layer offload·guardrail resident 프로필을 사용해 실제 여유 VRAM38GiB·호스트 RAM36GiB를 요구한다. 시작·Stop이 실패했던 과거 AWS 기록도 남아 있으므로 부팅 기한을 유지하고 새 VM이나 반복 시작으로 우회하지 않는다. 키 전송을 시도하지 않은 실패에서는 불필요한 원격 키 삭제 접속을 생략한다. [381 실행 계약](evidence/cosmos-execution-plan-381.json) · [공식 지원 표](https://docs.nvidia.com/nim/cosmos/latest/support-matrix.html)
+
+## FOT-236 — Brev JSON의 표시 상태를 raw 수명주기로 오인
+
+381은 g0가 `status=UNHEALTHY/build=COMPLETED/shell=READY`가 되자 terminal 실패로 판정했다. 설치된 CLI v0.6.335 소스에서 JSON `status`는 `getWorkspaceDisplayStatus`의 파생값이며 raw RUNNING과 health UNHEALTHY의 조합을 UNHEALTHY로 덮어쓰는 것을 확인했다. shell READY는 raw RUNNING과 build COMPLETED일 때 나온다. 이 조합에서 SSH 전에 Stop한 것은 실행기 오류이며 공급자 장애의 근거가 아니다. 모델·키 전송은 없었고19:58:59 KST에 실제STOPPED와 감시 종료를 확인했다. [설치 버전 소스](https://github.com/brevdev/brev-cli/blob/1733b3d5822b4fdec88682c7a2358a45fbd66e32/pkg/cmd/ls/ls.go#L599-L694) · [381 결과](evidence/cosmos-cloud-381.json)
+
+382는 displayed RUNNING 또는 UNHEALTHY와 COMPLETED/READY의 조합을 실제 SSH probe의 준비 후보로 허용한다. GPU·Docker·VRAM/RAM·모델 ready 검사는 유지한다. 표시 UNHEALTHY 후보와 실제 FAILED를 구분하는 CPU 회귀를 포함해5개 검사가 통과했다.381 원본은 바꾸지 않고 새 소스·실행 ID에 연결한다. [382 실행 계약](evidence/cosmos-execution-plan-382.json)

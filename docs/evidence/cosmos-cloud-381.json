@@ -1,0 +1,115 @@
+{
+  "status": "failed",
+  "started_at": "2026-10-25T10:51:21.621881+00:00",
+  "finished_at": "2026-10-25T10:58:59.954964+00:00",
+  "initial_target": {
+    "name": "factory-ops-twin-g0",
+    "id": "evica0x9l",
+    "status": "STOPPED",
+    "build_status": "COMPLETED",
+    "shell_status": "NOT READY",
+    "health_status": "UNHEALTHY",
+    "instance_type": "g6e.2xlarge",
+    "instance_kind": "gpu",
+    "gpu": "L40S"
+  },
+  "readiness_polls": [
+    {
+      "at": "2026-10-25T10:51:38.879595+00:00",
+      "status": "STARTING",
+      "build_status": "COMPLETED",
+      "shell_status": "NOT READY",
+      "health_status": "UNAVAILABLE"
+    },
+    {
+      "at": "2026-10-25T10:52:12.207975+00:00",
+      "status": "UNHEALTHY",
+      "build_status": "COMPLETED",
+      "shell_status": "READY",
+      "health_status": "UNHEALTHY"
+    }
+  ],
+  "stop_polls": [
+    {
+      "at": "2026-10-25T10:52:19.915475+00:00",
+      "status": "STOPPING",
+      "health_status": "HEALTHY"
+    },
+    {
+      "at": "2026-10-25T10:52:53.239238+00:00",
+      "status": "STOPPING",
+      "health_status": "HEALTHY"
+    },
+    {
+      "at": "2026-10-25T10:53:26.545844+00:00",
+      "status": "STOPPING",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-25T10:53:59.914551+00:00",
+      "status": "STOPPING",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-25T10:54:33.285262+00:00",
+      "status": "STOPPING",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-25T10:55:06.506747+00:00",
+      "status": "STOPPING",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-25T10:55:39.687672+00:00",
+      "status": "STOPPING",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-25T10:56:12.958985+00:00",
+      "status": "STOPPING",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-25T10:56:46.355988+00:00",
+      "status": "STOPPING",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-25T10:57:19.556634+00:00",
+      "status": "STOPPING",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-25T10:57:52.924331+00:00",
+      "status": "STOPPING",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-25T10:58:26.282933+00:00",
+      "status": "STOPPING",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-25T10:58:59.649715+00:00",
+      "status": "STOPPED",
+      "health_status": "UNHEALTHY"
+    }
+  ],
+  "actual_stopped": true,
+  "watchdog_inactive_confirmed": true,
+  "owned_processes_gone": true,
+  "secret_transfer_attempted": false,
+  "schema_version": 1,
+  "batch_id": 381,
+  "record_source_sha256": "b5e7a6a0a1971325e283bfa76903103058f9635b1567ac009dce587ab90e680a",
+  "gpu_model_started": false,
+  "image_or_model_downloaded": false,
+  "credential_transferred": false,
+  "error": "launcher treated CLI display UNHEALTHY as terminal before SSH probe",
+  "interpretation": "CLI v0.6.335 derives UNHEALTHY display from raw RUNNING plus unhealthy telemetry; shell READY confirms raw RUNNING and build COMPLETED; SSH reachability was not tested",
+  "installed_cli_version": "v0.6.335",
+  "upstream_commit": "1733b3d5822b4fdec88682c7a2358a45fbd66e32",
+  "upstream_source": "https://github.com/brevdev/brev-cli/blob/1733b3d5822b4fdec88682c7a2358a45fbd66e32/pkg/cmd/ls/ls.go#L599-L694",
+  "reference_source_sha256": "5aa497739e172420c74845c0e6d33d26a116c1ea2dc1e08bf23b2efc2720dd7b"
+}
