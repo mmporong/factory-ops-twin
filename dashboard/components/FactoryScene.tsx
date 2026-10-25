@@ -5,7 +5,6 @@ import {
   Edges,
   Environment,
   Grid,
-  Html,
   Lightformer,
   Line,
   OrbitControls,
@@ -155,14 +154,53 @@ function Tag({
   selected?: boolean;
   small?: boolean;
 }) {
+  const texture = useMemo(() => {
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+    const titleSize = small ? 32 : 36;
+    const noteSize = small ? 25 : 28;
+    const padding = small ? 24 : 28;
+    const gap = note ? 10 : 0;
+    const height = padding * 2 + titleSize + (note ? gap + noteSize : 0);
+    if (!ctx) return new CanvasTexture(canvas);
+    ctx.font = `700 ${titleSize}px Arial, sans-serif`;
+    const titleWidth = ctx.measureText(title).width;
+    ctx.font = `600 ${noteSize}px Arial, sans-serif`;
+    const noteWidth = note ? ctx.measureText(note).width : 0;
+    canvas.width = Math.ceil(Math.max(titleWidth, noteWidth) + padding * 3.2);
+    canvas.height = height;
+    const draw = canvas.getContext("2d")!;
+    draw.fillStyle = "rgba(255, 255, 255, 0.96)";
+    draw.strokeStyle = selected ? palette.select : "rgba(203, 211, 229, 0.95)";
+    draw.lineWidth = selected ? 5 : 3;
+    draw.beginPath();
+    draw.roundRect(2, 2, canvas.width - 4, canvas.height - 4, height / 2);
+    draw.fill();
+    draw.stroke();
+    draw.fillStyle = toneColor[tone];
+    draw.beginPath();
+    draw.arc(padding, padding + titleSize / 2, small ? 7 : 8, 0, Math.PI * 2);
+    draw.fill();
+    draw.textBaseline = "top";
+    draw.fillStyle = "#25304a";
+    draw.font = `700 ${titleSize}px Arial, sans-serif`;
+    draw.fillText(title, padding * 1.65, padding);
+    if (note) {
+      draw.fillStyle = "#69738a";
+      draw.font = `600 ${noteSize}px Arial, sans-serif`;
+      draw.fillText(note, padding * 1.65, padding + titleSize + gap);
+    }
+    const next = new CanvasTexture(canvas);
+    next.colorSpace = SRGBColorSpace;
+    return next;
+  }, [note, selected, small, title, tone]);
+  useEffect(() => () => texture.dispose(), [texture]);
+  const height = note ? (small ? 0.019 : 0.024) : (small ? 0.014 : 0.018);
+  const aspect = texture.image.width / Math.max(texture.image.height, 1);
   return (
-    <Html position={position} center zIndexRange={[8, 0]} style={{ pointerEvents: "none" }}>
-      <div aria-hidden="true" className={`map-tag tone-${tone}${selected ? " is-selected" : ""}${small ? " is-small" : ""}`}>
-        <i />
-        <strong>{title}</strong>
-        {note && <span>{note}</span>}
-      </div>
-    </Html>
+    <sprite position={position} scale={[height * aspect, height, 1]} raycast={() => null}>
+      <spriteMaterial map={texture} transparent alphaTest={0.02} depthTest={false} depthWrite={false} toneMapped={false} sizeAttenuation={false} />
+    </sprite>
   );
 }
 
