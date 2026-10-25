@@ -1751,3 +1751,11 @@ GPU 시도1회·captured_frames0·RGB/RGBA없음이며 source/result/scene/spec�
 335의 차량별 운송 CSV를 기본 `csv.writer`로 작성해 작업트리에는 CRLF가 생겼지만 Git은 LF로 저장했다. 수치16행·합계240은 같아도 공개 근거의 작업트리 SHA가 원격 CSV와 달랐다. 파일을 LF로 맞추고 공개 SHA를 Git blob 바이트의 `d9cbc911…`로 정정했다. 원본 운영 기록이나 판정은 변경하지 않았다. 이후 공개 CSV는 `lineterminator="\n"`으로 작성하고 스테이징된 blob과 작업트리 바이트를 비교한 뒤 그 바이트의 해시를 기록한다. [수정한 공개 근거](evidence/campus16-335.json)
 
 339에서는 같은 대조가 commit 전에 생성된 export manifest의 CRLF→LF 변환을 잡았다. 해시로 묶은 생성 원본이므로 기존 원본 보존 정책에 따라 해당 파일의 `.gitattributes`에 `-text`를 지정해 원본·백업·공개 Git blob의 바이트를 유지했다. CSV뿐 아니라 해시로 결속한 공개 소스·매니페스트·provenance도 스테이징 바이트와 비교한다. 영상·GPU 촬영을 반복하지 않았다.
+
+## FOT-223 — 화면 경계의 bbox와 visible semantic pixel 불일치
+
+328은102번째 프레임에서 bbox가 발행된 객체에 visible semantic pixel이 없어 거절됐다. 336 단일 진단에서도 tight/loose가1×2픽셀인데 semantic/instance mask에는 해당 객체 픽셀이 없었다. viewport 경계의 출력 불일치까지 확인했으며 SDK 내부 원인은 확정하지 않는다. 설치된 Replicator1.11.35의 tight_fast는 가시 픽셀 기반이고 loose는 가림과 무관한 범위라는 계약을 대조했다. bbox를 마스크에 강제로 맞추는 방법은 사용하지 않았다.
+
+v6는 CPU 투영 교집합의 최소 폭·높이4픽셀과 시점별3후보·전체 추가128 capture 상한을 둔다. 가시성 거절만 다음 동결 후보로 진행하고 wrong class·duplicate ID·depth·SDK/IO 오류는 즉시 실패한다. 340은512장·2,812객체가 모두 첫 후보에서 통과했으므로 재표본화가 실제 실행됐다고 주장하지 않는다. 기존328/336 실패·라벨과 원본 false 플래그는 보존한다. [340 근거](evidence/perception-pilot-340.json)
+
+준비 중 상대 경로 profile을 사용한 CPU 호출은 absolute-path gate에서 GPU 출력 생성 전에 거절됐다. 후속 prepare는 profile/repo/cache/output의 절대 경로를 명시해 통과했고 같은 GPU 배치를 반복하지 않았다.

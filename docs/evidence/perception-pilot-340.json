@@ -1,0 +1,102 @@
+{
+  "schema_version": 1,
+  "status": "passed",
+  "run_id": "perception-pilot-v6-340",
+  "verified_at": "2026-10-25T04:57:10.473385+00:00",
+  "dataset": {
+    "path": "E:\\FactoryOpsData\\perception-pilot-v6-340\\capture\\dataset.json",
+    "sha256": "3ddb15ca76ca17687a971effa8fcbd0aec46a17b8bb865d9dd58d4b42497fba7",
+    "status": "candidate_pilot_512_passed",
+    "accepted_captures": 512,
+    "scenes": 128,
+    "resolution": [
+      768,
+      512
+    ],
+    "training_ready": false,
+    "mapping_approved": false,
+    "cleanup_errors": []
+  },
+  "coco": {
+    "path": "E:\\FactoryOpsData\\perception-pilot-v6-340\\capture\\coco-candidate.json",
+    "sha256": "2873031c6b34c5e6eefbe820f4982238165bd288256c5412ba11cf337143cf20",
+    "images": 512,
+    "annotations": 2812,
+    "categories": [
+      {
+        "id": 1,
+        "name": "pallet"
+      },
+      {
+        "id": 2,
+        "name": "small_load_carrier"
+      }
+    ],
+    "training_ready": false,
+    "mapping_approved": false
+  },
+  "resampling": {
+    "accepted_captures_only_in_dataset_counts": true,
+    "additional_capture_attempts": 0,
+    "enabled": true,
+    "full_rejection_diagnostics": 0,
+    "maximum_additional_capture_attempts": 128,
+    "rejected_attempt_count": 0,
+    "rejected_attempts": []
+  },
+  "integrity": {
+    "capture_ids_1_to_512": true,
+    "coco_image_ids_1_to_512": true,
+    "capture_rgb_equals_coco_file_name": true,
+    "capture_annotations_equal_coco_annotations": true,
+    "file_manifest_entries": 3713,
+    "file_hash_or_size_errors": 0,
+    "unmanifested_files_excluding_dataset": 0,
+    "manifest_missing_files": 0,
+    "failure_json_absent": true,
+    "diagnostics_absent": true
+  },
+  "source": {
+    "commit": "1e05a408e42e033dd23911532ac4f9fea8e505f2",
+    "manifest_sha256": "4290397f568f9a2259f245b027b9dc8d68bd53aee82730d3f65bec2c1997d72b",
+    "recipe_sha256": "de16811ab1b07ec4b8e43a7a03c3b3d94ac47ed37e74bc9dc0f5f8b0b8d75623",
+    "capture_script_sha256": "8af868bf3edddddebf2e5ff5df210e8ae78ac53c4f61aad6827e445f050c3c90",
+    "post_run_expected_input_mismatches": 0,
+    "dataset_audit_sha256": "9a0accaff639ddb37e0f82eb5bccdcdb7e464383acbaff58a79c6b3e5f6367e7"
+  },
+  "runtime": {
+    "job_status": "passed",
+    "job_closed": true,
+    "timed_out": false,
+    "worker_exit_code": 0,
+    "remaining_owned_pids": [],
+    "elapsed_wall_s": 338.7507035000017,
+    "lease_id": "637492ee-3729-49ff-ad2a-7332d3ec30eb",
+    "lease_state": "completed",
+    "lease_exit_code": 0,
+    "lease_available_after": true,
+    "blocking_unmanaged_after": 0
+  },
+  "output": {
+    "root": "E:\\FactoryOpsData\\perception-pilot-v6-340\\capture",
+    "bytes": 1723468132,
+    "limit_bytes": 4294967296
+  },
+  "gpu_samples": {
+    "device": "NVIDIA GeForce RTX 3060",
+    "observed_memory_used_mib_range": [
+      4687,
+      4731
+    ],
+    "device_memory_total_mib": 12288,
+    "per_process_vram": "not provided by WDDM; not estimated"
+  },
+  "next_stage_release": "GPU lease returned; training remains a separate explicitly leased batch",
+  "interpretation": {
+    "candidate_capture_complete": true,
+    "bounded_training_release": "separate approval derived from class geometry and root/leaf/mask evidence",
+    "real_world_detector_performance": "not measured yet",
+    "SDK_fault_root_cause": "viewport-edge mismatch observed; internal cause unconfirmed",
+    "resampling_exercised_in_this_run": false
+  }
+}

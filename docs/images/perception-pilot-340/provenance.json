@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "source_dataset_sha256": "3ddb15ca76ca17687a971effa8fcbd0aec46a17b8bb865d9dd58d4b42497fba7",
+  "source_coco_sha256": "2873031c6b34c5e6eefbe820f4982238165bd288256c5412ba11cf337143cf20",
+  "image_selection": "fixed IDs before detector training",
+  "images": [
+    {
+      "image_id": 1,
+      "file_name": "scene-001/view-01/rgb.png",
+      "rgb_sha256": "8ee22ad64e9a7ee3a69bafeeb2f07149f2638d8f9d13e89bfaede7dc2ef2f3ca",
+      "annotations": 3
+    },
+    {
+      "image_id": 64,
+      "file_name": "scene-016/view-04/rgb.png",
+      "rgb_sha256": "ceebb4d8afbae92d8a077e88683121cfc56e9b16cc3af7f2945617e6741b460f",
+      "annotations": 6
+    },
+    {
+      "image_id": 102,
+      "file_name": "scene-026/view-02/rgb.png",
+      "rgb_sha256": "7f89c2a627b937243acc0b935128f82c11e4c335c56fbd5608379aa31fea2bfc",
+      "annotations": 5
+    },
+    {
+      "image_id": 128,
+      "file_name": "scene-032/view-04/rgb.png",
+      "rgb_sha256": "6514e152fa81b9de22f21fd84e1f8f226b7915f8cbc9b07e4720ca71f6b1bf9f",
+      "annotations": 7
+    },
+    {
+      "image_id": 256,
+      "file_name": "scene-064/view-04/rgb.png",
+      "rgb_sha256": "93b1f929fc863732131dee1878af11dae0319afa4783df11840cd89510a68b28",
+      "annotations": 6
+    },
+    {
+      "image_id": 384,
+      "file_name": "scene-096/view-04/rgb.png",
+      "rgb_sha256": "0eb3d1801b15c1d210573ee07837bf30b92d4f4fcd9f1fd5613eec568a6e2619",
+      "annotations": 8
+    },
+    {
+      "image_id": 448,
+      "file_name": "scene-112/view-04/rgb.png",
+      "rgb_sha256": "9b484591d8eccafb89c8947ef0dbdcab4af7179b29bb8b9943fc5770cdf58844",
+      "annotations": 6
+    },
+    {
+      "image_id": 512,
+      "file_name": "scene-128/view-04/rgb.png",
+      "rgb_sha256": "09c81bc0911a24ef3a835b7ce1540f7501227794b65ea74158ff4e646671fae8",
+      "annotations": 7
+    }
+  ],
+  "display": "RGB resized 0.75 with validated COCO bbox overlay; original RGB unchanged",
+  "asset_license": "NVIDIA simready-assets CC-BY-4.0; pinned sources in docs/asset-attribution.md",
+  "rendered_artifact_sha256": "e30c223b4d9454c08c0b6cbd8b7462a81ae7057e168be12e0e9106cbb0a18878",
+  "human_review_claimed": false
+}
