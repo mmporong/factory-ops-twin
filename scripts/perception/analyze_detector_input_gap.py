@@ -402,7 +402,8 @@ def render_plot(path_png: Path, path_svg: Path, metrics: Mapping[str, Any], summ
         "• Coverage description only\n"
         "• Does not establish a performance cause\n"
         "• Does not measure generalization or field performance\n"
-        "• Three synthetic asset shapes cannot establish real shape equivalence or quantity variation"
+        "• Three synthetic asset shapes cannot establish\n"
+        "  real shape equivalence or quantity variation"
     )
     axes[1, 1].text(0.02, 0.98, text, va="top", ha="left", linespacing=1.55,
                     bbox={"boxstyle": "round,pad=0.8", "facecolor": "#F8FAFC", "edgecolor": "#CBD5E1"})
