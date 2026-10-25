@@ -1,0 +1,21 @@
+{
+  "status": "passed",
+  "run_id": "detector-mosaic-357-seed1702",
+  "result": "E:\\FactoryOpsData\\detector-mosaic-357-seed1702\\result.json",
+  "result_sha256": "2e5ad54b501f421fb4529cd760ec57bc2ab3547716ac0f3d0bbdb5989d2e47a1",
+  "preregistration_sha256": "ff54cb6f956304eb7cd1b89b5035c140acfb2e3543122406a488dfcb0b584ec2",
+  "initial_checkpoint_sha256": "ebf52bb58b4f22b243d3f3a16a639dd381609adc0087b8de8586275476dab9de",
+  "spec_sha256": "3060ac95bd6bfd29a40f7e5463b3c938887636981b94fab5ce293f3b115a1f33",
+  "host_receipt_sha256": "828a731f58db5d0f2db83b431c2276417670dddb509bf24e66404a2661524a45",
+  "source_commit": "1cb28ddc1311bb19e1344a4ea3bd0c45bdc2d355",
+  "evaluation_keys": [
+    "tuning_validation"
+  ],
+  "final_fixed_test_accessed": false,
+  "fixed_test_artifact_absent": true,
+  "mosaic_source_plan_sha256": "cf76cb8479dc6fbd231de3642de42b066829695fca35cccbef5aa0c13f071394",
+  "actual_source_presentations": 18432,
+  "post_run_input_mismatches": 0,
+  "owned_processes_gone": true,
+  "lease_released": true
+}

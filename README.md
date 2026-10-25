@@ -206,7 +206,7 @@ SR50과 R50의 차이는 **+0.903 AP point**이며, 고정된3개 모델에 대�
 
 합성 원본512장·객체 라벨2,812개는 객체별 visible mask·tight bbox·깊이와 파일 해시 검사를 마쳤습니다. 팔레트·강체 용기 프록시의 제한 릴리스이며, 반도체 트레이·매거진을 물류 적재함으로 자동 치환하지 않습니다. [합성 예시](docs/images/perception-pilot-340/contact-sheet.png) · [촬영 근거](docs/evidence/perception-pilot-340.json) · [제한 릴리스](docs/evidence/perception-release-340.json)
 
-COCO 백본의 normalization/freezing 구성을 유지한 후속 v2도 같은3개 seed로 완료했습니다. 같은 튜닝200장의 mAP는 실제50장 조건이 **0.726→1.074**, 합성 후 실제50장 조건이 **0.789→1.004**였습니다. v2에서는 실제50장 조건이 모든 seed에서 더 높아, 합성 데이터의 추가 이득은 이 개발 비교에서 재현되지 않았습니다. 이 수치는 위 고정 test 결과와 평가 집합이 다릅니다. [튜닝 비교·초기 가중치 근거](docs/evidence/detector-backbone-v2-353/report.json)
+COCO 백본의 normalization/freezing 구성을 유지한 후속 v2도 같은3개 seed로 완료했습니다. 같은 튜닝200장의 mAP는 실제50장 조건이 **0.726→1.074**, 합성 후 실제50장 조건이 **0.789→1.004**였습니다. v2에서는 실제50장 조건이 모든 seed에서 더 높아, 합성 데이터의 추가 이득은 이 개발 비교에서 재현되지 않았습니다. 이 수치는 위 고정 test 결과와 평가 집합이 다릅니다. [튜닝 비교·초기 가중치 근거](docs/evidence/detector-backbone-v2-353/report.json) · [백본 비교 모델 보존](docs/evidence/detector-development-storage-359.json)
 
 <details>
 <summary>입력 분포 차이와 다음 학습 증강</summary>
@@ -217,11 +217,15 @@ COCO 백본의 normalization/freezing 구성을 유지한 후속 v2도 같은3�
 
 ![서로 다른9개 장면을 결합한 합성 학습 입력의 CPU 미리보기](docs/images/detector-mosaic-356/mosaic-3x3-training-preview.png)
 
-v3는 기존512장을3×3 모자이크로 묶어 객체 크기와 밀도를 바꾸는 튜닝 전용 개발 비교입니다. 위 이미지는 서로 다른9개 장면의 학습 증강입니다. 한 공장의 렌더가 아닙니다. S 학습의 원본 이미지 제시는2,048회에서18,432회로 늘어나므로 같은 계산량·노출량의 비교로 해석하지 않습니다. 최종 고정 test는 다시 사용하지 않습니다. [미리보기 출처](docs/images/detector-mosaic-356/provenance.json)
+v3는 기존512장을3×3 모자이크로 묶어 객체 크기와 밀도를 바꿨습니다. 위 이미지는 서로 다른9개 장면의 학습 증강입니다. 한 공장의 렌더가 아닙니다. 작은 객체 비율은3개 seed에서51.4~51.9%, 이미지당 평균 객체 수는49.4~49.6개가 됐습니다. S 학습의 원본 이미지 제시는2,048회에서18,432회로 늘어나므로 같은 계산량·노출량의 비교로 해석하지 않습니다. [미리보기 출처](docs/images/detector-mosaic-356/provenance.json)
+
+![같은 튜닝 사진에서 비교한 모자이크 결과와 R50 대조군 결과 차이](docs/evidence/detector-mosaic-v3-366/comparison.png)
+
+3개 seed의 튜닝 mAP는 S **0.017**, R50 **0.982**, SR50 **1.081**이었습니다. 같은 초기284개 tensor와 실제 데이터·학습 설정을 사용했지만 R50 최종 tensor70개도 달랐습니다. 보고서는 이 대조군 차이를 `control drift`로 표시하며, 모자이크의 성능 개선을 입증한 결과로 사용하지 않습니다. 최종 고정 test는 다시 사용하지 않았습니다. [비교·입력·대조군 근거](docs/evidence/detector-mosaic-v3-366/report.json) · [모델 보존](docs/evidence/detector-mosaic-storage-367.json)
 
 </details>
 
-Cosmos3의 단일 L40S 후보와121-frame 정지 입력 smoke는 CPU에서 준비했습니다. 변환 모델은 아직 실행하지 않았으며, NGC 모델 접근·실행 프로필·Stop 가능한 기존 환경을 확인한 뒤 소량 시험을 시작합니다. [실험·실행·보존 범위](docs/synthetic-to-real-plan.md) · [변환 시험 준비](docs/evidence/cosmos-smoke-preparation-346.json)
+후속 모델 후보인 ResNet50 FPN의 COCO 가중치·정규화·특징맵을 CPU에서 확인했고, 같은 데이터와 학습 횟수로 튜닝 전용 비교를 진행합니다. Cosmos3의 단일 L40S 후보와121-frame 정지 입력 smoke도 CPU에서 준비했습니다. 변환 모델은 아직 실행하지 않았으며, NGC 모델 접근·실행 프로필·Stop 가능한 기존 환경을 확인한 뒤 소량 시험을 시작합니다. [실험·실행·보존 범위](docs/synthetic-to-real-plan.md) · [후속 모델 준비](docs/evidence/detector-resnet-preparation-362.json) · [변환 시험 준비](docs/evidence/cosmos-smoke-preparation-346.json)
 
 ## 현재 진행 상태
 
@@ -232,7 +236,7 @@ Cosmos3의 단일 L40S 후보와121-frame 정지 입력 smoke는 CPU에서 준�
 | 3. 물리 주행 기준선 | 경로 추종226, 적재135, 교차 양보142, 도킹 정렬231 | 전기 접촉 충전·실물 검증은 후속 확장 |
 | 4. 운영 비교·원인 추적 | 4대6조건, 캠퍼스 TEST 고장·복구 지연, 정상48lot 완주 | 캠퍼스 정책의 반복 통계·실공장 성능은 미확인 |
 | 5. 관제·재현·미디어 | 웹 관측·경로 표시, 캠퍼스 설비 HTTP 명령, 완주335의16대 영상339 | 최신 브라우저 클릭 확인은 도구 초기화 오류로 남음 |
-| 6. 포트폴리오·데이터 | 대표 GIF·MP4·별도 드라이브 백업, 합성512장과 실사3seed 파일럿·CI, 백본 비교 | 모자이크 개발 비교, Cosmos 소량 시험·라벨 보존 |
+| 6. 포트폴리오·데이터 | 대표 GIF·MP4·별도 드라이브 백업, 합성512장과 실사3seed 파일럿·CI, 백본·모자이크 비교 | ResNet 후속 모델, Cosmos 소량 시험·라벨 보존 |
 
 16대 반복 물류의 CPU 완주와 대표 미디어는 완료했습니다. 16대 물리·센서는7초 무적재 구성요소 시험이며 장시간 물류 접촉 시험과 구분합니다. 기존4대 운영 비교·단일 차량 물리 시험을 보존하고, 합성→실사 실험을 보조 트랙으로 진행합니다.
 

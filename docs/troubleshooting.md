@@ -1781,3 +1781,11 @@ v2 선택 모드는 초기/재구성 모두 캐시된 COCO_V1 constructor로 만
 포트폴리오 차트의 Matplotlib SVG는 CRLF 원본으로 만들어졌고, Git은 LF로 정규화했다. source/provenance의 SVG SHA와 스테이징 blob이 다르다는 검사가 올바르게 실패했으나, 같은 PowerShell 명령 묶음의 뒤쪽 commit/push가 계속 실행됐다. exit code를 검사하지 않은 실행 연결이 원인이며 검사 PASS 뒤 push한다는 절차를 충족하지 못했다.
 
 해시로 묶은 SVG의 원본 바이트는 보존하고 해당 경로의 `.gitattributes`에 `-text`를 적용한다. 이미 캐시된 blob은 해당 파일만 `git add --renormalize -- <path>`로 갱신해야 했으며, Matplotlib path 끝 공백은 그 SVG 경로의 `-whitespace` 속성으로 보존했다. 모델 결과·차트 수치·PNG는 수정하지 않았다. 이후 검증 결과의 exit code를 상위 실행기에서 확인하고 성공한 경우에만 별도 commit/push를 호출한다. 차트 provenance의 SVG SHA와 작업트리·스테이징 blob의 일치를 확인한 뒤429773c 교정 커밋을 push하고 원격 SHA를 대조했다.
+
+## FOT-228 — 같은 R50 대조 조건에서 관측된 개발 실행 차이
+
+모자이크356의 seed1701에서 R50 튜닝 AP는0.007934456이었고, 백본350의 같은 seed는0.0121153이었다. R50 자체에는 모자이크를 적용하지 않았고 두 실행 모두 batch2·AMP·256 update, 같은 Torch2.14.1/TorchVision0.29.1이었다. R50 loss100도1.595508과1.830927로 달랐다. 관측 결과를 덮어쓰거나 좋은 실행만 선택하지 않는다.
+
+3개 seed의 CPU 비교에서 초기284개 tensor는 모두 같았고 데이터 subset·설정·runtime 결속도 일치했다. R50 최종70개 tensor는 각 대응에서 달랐다. 원인은 아직 확정하지 않았다. 현재 runner는 RNG seed를 설정하지만 완전 결정적 CUDA 실행을 요구하지 않는다. [PyTorch의 재현 안내](https://docs.pytorch.org/docs/stable/notes/randomness.html)와 [TorchVision ROIAlign의 결정론 분기](https://github.com/pytorch/vision/blob/v0.29.1/torchvision/ops/roi_align.py)는 seed만으로 비트 단위 재현을 보장할 수 없음을 뒷받침하지만, 이번 차이의 원인을 식별한 근거는 아니다.
+
+모자이크356~358은 재실행 없이 닫고 대조군 차이를 `complete_with_control_drift`로 표시했다. 원래 고정test를 다시 사용하지 않았고 모자이크의 성능 개선을 입증한 비교로 표현하지 않는다. 후속 v4는 실행 당시 deterministic flags·cuDNN flags·CUBLAS 환경·device 이름을 결과에 기록한다. [3seed 입력·초기/최종 tensor·실제 수치](evidence/detector-mosaic-v3-366/report.json)

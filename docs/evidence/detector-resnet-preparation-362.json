@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "status": "passed",
+  "device": "cpu",
+  "weights": {
+    "schema_version": 1,
+    "status": "downloaded_verified",
+    "url": "https://download.pytorch.org/models/fasterrcnn_resnet50_fpn_coco-258fb6c6.pth",
+    "path": "E:\\FactoryOpsData\\cache\\torch-detector\\hub\\checkpoints\\fasterrcnn_resnet50_fpn_coco-258fb6c6.pth",
+    "bytes": 167502836,
+    "full_sha256": "258fb6c638b15964ddcdd1ae0748c5eef1be9e732750120cc857feed3faac384",
+    "official_filename_sha256_prefix": "258fb6c6",
+    "gpu_used": false,
+    "wall_seconds": 10.313000000081956
+  },
+  "source_commit": "15c0e3b",
+  "config_sha256": "7aea7e7081092aac73053181166cf64b74cc71994b33448379c0d4c70fed79e2",
+  "constructor_norms": {
+    "FrozenBatchNorm2d": 53,
+    "BatchNorm2d": 0
+  },
+  "reconstruction_norms": {
+    "FrozenBatchNorm2d": 53,
+    "BatchNorm2d": 0
+  },
+  "trainable_parameter_names_equal": true,
+  "trainable_parameter_count": 41081886,
+  "state_keys_equal": true,
+  "class_count": 3,
+  "features": {
+    "0": [
+      1,
+      256,
+      160,
+      240
+    ],
+    "1": [
+      1,
+      256,
+      80,
+      120
+    ],
+    "2": [
+      1,
+      256,
+      40,
+      60
+    ],
+    "3": [
+      1,
+      256,
+      20,
+      30
+    ],
+    "pool": [
+      1,
+      256,
+      10,
+      15
+    ]
+  },
+  "roi_pool_feature_names": [
+    "0",
+    "1",
+    "2",
+    "3"
+  ],
+  "gpu_execution_performed": false,
+  "script_sha256": "a53ca210518768defb6f2d775f1d9a24076a1ca0bc35972973635f753ea7a7f9"
+}

@@ -33,6 +33,10 @@
 
 후속 v3는 기존512장 중 서로 다른9개 scene의3×3 모자이크를 S 학습에만 적용한다. 출력 tensor2304×1536을 기존 min640/max960으로 리사이즈하며 라벨은 타일 XY 오프셋만 더한다. 실제 R50/SR50 입력과 v2 백본 계약은 유지한다. 전체512개 source-ID plan과3개 seed는 첫 GPU 전에 동결한다. 1,024 update·batch2에서 S 원본 제시는2,048→18,432회, 추가 CPU decode는16,384회이므로 동일 계산/노출 비교가 아니다. 튜닝 전용 dual gate와 고정test 접근 차단을 유지하며 새3D 공장·새 heldout 성과로 표현하지 않는다. [CPU 미리보기](images/detector-mosaic-356/mosaic-3x3-training-preview.png) · [입력 출처](images/detector-mosaic-356/provenance.json)
 
+v3 356~358의3seed를 완료했다. 같은 튜닝200장 mAP(0–100)는 S 0.017±0.003, R50 0.982±0.164, SR50 1.081±0.180이다. 초기284개 tensor는 모두 같았으나 R50 최종70개 tensor가 각 seed의 v2 대응과 달랐다. 데이터·설정·runtime 결속은 일치하고 원인은 미확정이다. 순수 모자이크 효과로 표현하지 않으며 `complete_with_control_drift` 상태로 보고한다. 등록된512개 모자이크의 작은 객체 비율은51.4~51.9%·평균 객체 수49.4~49.6개였다. 입력 크기·밀도를 바꾼 사실과 실제 검출 성능의 개선 입증을 구분한다. [실제 비교·노출·입력·대조군 차이](evidence/detector-mosaic-v3-366/report.json)
+
+v4는 같은 단일 합성 입력의 FasterRCNN ResNet50 FPN COCO_V1 후보다. 실제 CPU에서 초기·재구성 모두 FrozenBatchNorm2d53개/BatchNorm2d0개·같은 학습 층 이름·state key를 확인했다. 640×960 입력의 특징맵 stride는4/8/16/32/64이며 Mobile의32/32/64와 다르다. COCO 가중치와 FPN·기본 RPN 등 모델 묶음이 함께 바뀌므로 stride나 백본만의 효과로 해석하지 않는다. 같은 S1024/R50 256/SR50 256 update·batch2·3seed·train50/tune200을 사전등록하고 batch2 OOM 시 batch1로 바꾸지 않는다. 단일 실행 상한은1,200초이며17시 마감 안에 정리할 여유가 있을 때만 입장한다. 고정test와 Cosmos 출력은 사용하지 않는다. [실제 CPU 준비·전체 weight SHA](evidence/detector-resnet-preparation-362.json) · [공식 모델](https://docs.pytorch.org/vision/stable/models/generated/torchvision.models.detection.fasterrcnn_resnet50_fpn.html)
+
 ## 현재 확보한 자료
 
 - 기존 Replicator 파이프라인: 12개 시각 구성·30시점·3카메라, RGB 1,080장과 라벨 생성 기록이 있다. 데이터 검사에는 결정적 생성 검사와 일부 QA 통과가 있지만 최종 production/human release는 미승인이다. 학습 가중치·실사 mAP는 없다. 기존 전체 RGB의 현재 복원 가능성도 새 학습 전에 확인해야 한다. 대표 자료 36개라는 수를 전체 RGB의 고유 이미지 수로 해석하지 않는다.
@@ -178,3 +182,5 @@ $detectorPython = 'E:/FactoryOpsData/venvs/factoryops-detector-py312/Scripts/pyt
 346은 검증된 원본 frame1을 종횡비 유지 crop/resize하여1280×720의121-frame/30fps 정지 반복 MP4와 채워진 `POST /v1/infer` 파생-edge request를 작성했다. 디코딩121프레임이 모두 같은 픽셀 해시이며 원본3개 객체가 남아 있다. 모션 학습 자료나 시간적 사실성의 성공 근거가 아니다. 원본 bbox를 변환 출력에 복사하지 않고 결과의 객체 소실·합침·형상/박스 drift·edge agreement·flicker를 별도 확인한다.
 
 현재 클라우드 조회에서 FactoryOps g0와234는 실제 STOPPED다. 새 VM·모델/컨테이너 다운로드·약관 수락·NGC 자격증명 조회·GPU 변환은 하지 않았다. 실제 실행에는 NGC entitlement/약관, 독립 Stop 복구, 컨테이너 digest/profile·메모리·health/schema 확인이 남아 있다. [입력·API·실행 gate](evidence/cosmos-smoke-preparation-346.json) · [공식 Transfer API](https://docs.nvidia.com/nim/cosmos/latest/transfer.html)
+
+NGC API 키는 NGC Catalog의 모델·컨테이너 다운로드에 쓰는 인증 수단이며 Brev 계산 크레딧과 별개다. Windows의 process/user/machine 환경 변수에는 준비된 `NGC_API_KEY`가 없음을 값 출력 없이 확인했다. 다른 자격증명 저장소를 검색하지 않았다. 실행 준비 시 [NGC 계정의 API Keys](https://org.ngc.nvidia.com/account/api-keys)에서 개인 키를 만들고 필요한 `NGC Catalog` 권한을 선택한다. 실제 계정 권한·모델 접근 약관·NIM 이용 조건을 확인하며, 키는 저장소·로그·채팅에 기록하지 않는다. [공식 키 생성 안내](https://docs.nvidia.com/ngc/latest/ngc-user-guide.html#generating-ngc-api-keys)

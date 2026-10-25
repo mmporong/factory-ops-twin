@@ -1,0 +1,109 @@
+{
+  "schema_version": 1,
+  "frozen_utc": "2026-10-25T06:15:22.290692+00:00",
+  "selection_frozen_before_first_gpu": true,
+  "source_commit": "1cb28ddc1311bb19e1344a4ea3bd0c45bdc2d355",
+  "source_checkout": "C:\\Users\\LIMMM\\worktrees\\factory-ops-twin-detector-mosaic-356",
+  "profile_id": "detector-pilot-mosaic-v3",
+  "execution_mode": "tuning_validation_only_development",
+  "execution_order": [
+    1701,
+    1702,
+    1703
+  ],
+  "real_subset_seed": 5701,
+  "conditions_and_updates": {
+    "S": 1024,
+    "R50": 256,
+    "SR50": 256
+  },
+  "mosaic_contract": {
+    "type": "mosaic_3x3_training_only",
+    "applies_to": [
+      "S"
+    ],
+    "source_dataset_length": 512,
+    "grid": {
+      "rows": 3,
+      "columns": 3
+    },
+    "source_scene_count": 9,
+    "source_resolution": {
+      "width": 768,
+      "height": 512
+    },
+    "composite_resolution": {
+      "width": 2304,
+      "height": 1536
+    },
+    "anchor": "current_index",
+    "additional_selection": "seeded_without_replacement_from_distinct_scene_groups",
+    "single_3d_factory_scene_claimed": false,
+    "equal_compute_or_exposure_claimed": false,
+    "planned_source_presentations": {
+      "S_mosaic": 18432,
+      "S_baseline": 2048,
+      "additional_cpu_decodes": 16384
+    }
+  },
+  "fixed_test_inference_allowed": false,
+  "fixed_test_metadata_read_allowed": false,
+  "selection": "execute all registered seeds without selection by AP",
+  "admission_cutoff_utc": "2026-10-25T07:40:00Z",
+  "batch_finish_deadline_utc": "2026-10-25T08:00:00Z",
+  "per_seed_limits": {
+    "runner_wall_seconds": 1800,
+    "job_wall_seconds": 1860,
+    "lease_wait_seconds": 1920
+  },
+  "configurations": [
+    {
+      "seed": 1701,
+      "path": "C:\\Users\\LIMMM\\factory-ops-twin\\artifacts\\detector-pilot-mosaic-matrix-356\\seed-1701.json",
+      "sha256": "b8a3e88525de6b17b66f35fe964afc130aa563bacc6e64bceac8ff152eee01f7"
+    },
+    {
+      "seed": 1702,
+      "path": "C:\\Users\\LIMMM\\factory-ops-twin\\artifacts\\detector-pilot-mosaic-matrix-356\\seed-1702.json",
+      "sha256": "3a7b28127b47cd3b2783cd24169ee05d43e984c49652e9f0a4d4b8f228bef45b"
+    },
+    {
+      "seed": 1703,
+      "path": "C:\\Users\\LIMMM\\factory-ops-twin\\artifacts\\detector-pilot-mosaic-matrix-356\\seed-1703.json",
+      "sha256": "05be16cea13ac44a27e77596862a245a6de8053b97b5121913338890ff517c67"
+    }
+  ],
+  "input_pins": [
+    {
+      "role": "base_profile",
+      "path": "C:\\Users\\LIMMM\\worktrees\\factory-ops-twin-detector-mosaic-356\\configs\\perception\\detector-pilot-mosaic-v3.json",
+      "sha256": "0f051c7748f89a88d1290110151138a49002b449fed33a1fd7e2359aa7eeffa7"
+    },
+    {
+      "role": "runner",
+      "path": "C:\\Users\\LIMMM\\worktrees\\factory-ops-twin-detector-mosaic-356\\scripts\\perception\\run_detector_pilot.py",
+      "sha256": "e6183407d04301fe7482fe02507d50b01957fede36f214166dc57916cf08114f"
+    },
+    {
+      "role": "release",
+      "path": "E:\\FactoryOpsData\\perception-pilot-v6-340-release\\release-manifest.json",
+      "sha256": "69b1f2cc9efea586442dcc7dee996fc4c8ba79743d714b05d1b6c78fec0070e9"
+    },
+    {
+      "role": "loco_eval",
+      "path": "C:\\Users\\LIMMM\\worktrees\\factory-ops-twin-detector-mosaic-356\\configs\\perception\\loco-eval-v1.json",
+      "sha256": "60f3d5046dc7600f760a055701338b72ba5a8da6c2782c58c5f9adbc9c7fd549"
+    },
+    {
+      "role": "real_inventory",
+      "path": "E:\\FactoryOpsData\\loco-detector-pilot-v1\\inventory.json",
+      "sha256": "ada8ae701d1ca53f626de74c2703eb227956e0d26f10a50dfc4718c472e47ab4"
+    }
+  ],
+  "claim_limits": {
+    "fresh_heldout_performance": false,
+    "single_3d_factory_scene": false,
+    "equal_compute_or_exposure": false,
+    "purpose": "training-input coverage development comparison after completed v1 and v2 review"
+  }
+}

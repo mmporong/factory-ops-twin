@@ -1,0 +1,24 @@
+{
+  "archive": "D:\\FactoryOpsPortfolio\\detector-development-v2-350-355.zip",
+  "archive_bytes": 917604029,
+  "archive_entry_count": 73,
+  "archive_sha256": "f4071a3e9ce0df2ab403362a7ab1d4ddb636defc05fc0f445852e0aa85361dbf",
+  "closed_zip_crc_all_entries_passed": true,
+  "closed_zip_stream_size_sha256_all_entries_passed": true,
+  "gpu_used": false,
+  "in_progress_runs_included": false,
+  "inventory": {
+    "path": "C:\\Users\\LIMMM\\factory-ops-twin\\artifacts\\detector-development-storage-359\\inventory.json",
+    "sha256": "7dfc1d17cf31ea39751b85239bb647cd0e308557f476940cd798c928e3d6928a"
+  },
+  "original_files_untouched": true,
+  "original_inputs_receipt": {
+    "path": "C:\\Users\\LIMMM\\factory-ops-twin\\artifacts\\detector-development-storage-359\\original-inputs-receipt.json",
+    "sha256": "cfeb4f4d1b63b4bf32cdde6df83885a6a9e284bfb7873b7ff25feefa9ee37e1b"
+  },
+  "payload_bytes": 917565401,
+  "payload_file_count": 72,
+  "processes_stopped": false,
+  "schema_version": 1,
+  "status": "passed"
+}

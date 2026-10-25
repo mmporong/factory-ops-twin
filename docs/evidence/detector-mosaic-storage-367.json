@@ -1,0 +1,30 @@
+{
+  "archive": "D:\\FactoryOpsPortfolio\\detector-mosaic-v3-356-358.zip",
+  "archive_bytes": 914981137,
+  "archive_entry_count": 61,
+  "archive_sha256": "605d274cb35800a3b4cb9314d56ffc1bcaa24c53342581c8f4d97e1080e6f5e7",
+  "bound_model_count": 12,
+  "closed_zip_crc_all_entries_passed": true,
+  "closed_zip_stream_size_sha256_all_entries_passed": true,
+  "current_resnet_runs_included": false,
+  "gpu_used": false,
+  "inventory": {
+    "path": "C:\\Users\\LIMMM\\factory-ops-twin\\artifacts\\detector-mosaic-storage-367\\inventory.json",
+    "sha256": "ab602ae8c65fe1c76340b3f49704a8239a8fc0061ed3012fbe6b243c3a246953"
+  },
+  "original_files_untouched": true,
+  "original_inputs_receipt": {
+    "path": "C:\\Users\\LIMMM\\factory-ops-twin\\artifacts\\detector-mosaic-storage-367\\original-inputs-receipt.json",
+    "sha256": "6bb992fa9df8a4ece99599e838beac23107ae371edb6df45e38bb44daaf1cdd9"
+  },
+  "payload_bytes": 914948287,
+  "payload_file_count": 60,
+  "processes_stopped": false,
+  "schema_version": 1,
+  "source_pins": {
+    "exporter_source_commit": "0ac2a2461bcbb3c76ec50b7f8cd16c1ab166a432",
+    "gpu_source_commit": "1cb28ddc1311bb19e1344a4ea3bd0c45bdc2d355"
+  },
+  "status": "passed",
+  "summary_status": "complete_with_control_drift"
+}

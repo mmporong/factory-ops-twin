@@ -1,0 +1,155 @@
+{
+  "schema_version": 1,
+  "status": "complete_tuning_only",
+  "completed_utc": "2026-10-25T06:38:32.059921Z",
+  "wall_seconds": 439.0,
+  "source_commit": "1cb28ddc1311bb19e1344a4ea3bd0c45bdc2d355",
+  "preregistration_sha256": "c441e83d742a13e7c3cfcf77a1b8f05de41ab5768e5b990cf73d72f260efefb1",
+  "runtime_versions": {
+    "torch": "2.14.1+cu130",
+    "torchvision": "0.29.1+cu130",
+    "Pillow": "12.3.0",
+    "pycocotools": "2.0.11"
+  },
+  "device": "cuda",
+  "batch_size_selected_before_training": 2,
+  "peak_vram_bytes": 693442560,
+  "pretrained_weights": {
+    "weights_url": "https://download.pytorch.org/models/fasterrcnn_mobilenet_v3_large_fpn-fb6a3cc7.pth",
+    "weights_enum": "FasterRCNN_MobileNet_V3_Large_FPN_Weights.COCO_V1",
+    "constructor_contract_preserved": true,
+    "full_sha256": "fb6a3cc702b1df54c18a44b26708cd083614211062d0c36d2ca7bf9270df3533",
+    "cache_path": "E:\\FactoryOpsData\\cache\\torch-detector\\hub\\checkpoints\\fasterrcnn_mobilenet_v3_large_fpn-fb6a3cc7.pth"
+  },
+  "initial_checkpoint": {
+    "path": "common-coco-head-init.pt",
+    "sha256": "40ac757de92957e47cd9570b275c2ae6cc50dc209e1b5f8ed91ad07e79eeae6f"
+  },
+  "conditions": {
+    "S": {
+      "training": {
+        "updates": 1024,
+        "batch_size": 2,
+        "amp": true,
+        "last_loss": 0.471937894821167,
+        "mean_loss": 0.6632305046077818,
+        "wall_seconds": 282.39000000001397
+      },
+      "starting_checkpoint": "common-coco-head-init.pt",
+      "checkpoint": "S-final.pt",
+      "checkpoint_sha256": "9270d810e0cfed6b9000396646b9fff93efe8b52ce72efc71dba92dfadbf9937"
+    },
+    "R50": {
+      "training": {
+        "updates": 256,
+        "batch_size": 2,
+        "amp": true,
+        "last_loss": 0.7097852826118469,
+        "mean_loss": 0.778685350132946,
+        "wall_seconds": 38.0
+      },
+      "starting_checkpoint": "common-coco-head-init.pt",
+      "checkpoint": "R50-final.pt",
+      "checkpoint_sha256": "2e428e03b9732abd4f051acc0a33f901caacd405e2b10cf74cefab75efde42b2"
+    },
+    "SR50": {
+      "training": {
+        "updates": 256,
+        "batch_size": 2,
+        "amp": true,
+        "last_loss": 0.5465717315673828,
+        "mean_loss": 0.7163366315580788,
+        "wall_seconds": 34.125
+      },
+      "starting_checkpoint": "S-final.pt",
+      "checkpoint": "SR50-final.pt",
+      "checkpoint_sha256": "2a100ab23768b4f312657f404e8cd0143e02df20442bbd392b3d0674160b28b6"
+    }
+  },
+  "evaluation": {
+    "tuning_validation": {
+      "S": {
+        "AP": 0.00014322444869813183,
+        "AP50": 0.0006716649412943536,
+        "small_object_AP": 8.826464041753013e-05,
+        "class_AP": {
+          "pallet": 0.00027182371103462205,
+          "small_load_carrier": 1.4625186361641596e-05
+        },
+        "sample_counts": {
+          "images": 200,
+          "annotations": 6036,
+          "pallet_annotations": 5741,
+          "small_load_carrier_annotations": 295
+        },
+        "prediction_count_after_threshold": 19919,
+        "score_threshold": 0.001,
+        "max_detections_per_image": 100
+      },
+      "R50": {
+        "AP": 0.010577433197246373,
+        "AP50": 0.04152073553915612,
+        "small_object_AP": 0.000698193154822178,
+        "class_AP": {
+          "pallet": 0.015618955276664914,
+          "small_load_carrier": 0.005535911117827833
+        },
+        "sample_counts": {
+          "images": 200,
+          "annotations": 6036,
+          "pallet_annotations": 5741,
+          "small_load_carrier_annotations": 295
+        },
+        "prediction_count_after_threshold": 19735,
+        "score_threshold": 0.001,
+        "max_detections_per_image": 100
+      },
+      "SR50": {
+        "AP": 0.012880221554453359,
+        "AP50": 0.0486273084714622,
+        "small_object_AP": 0.00044788076003586487,
+        "class_AP": {
+          "pallet": 0.016835142618005526,
+          "small_load_carrier": 0.008925300490901195
+        },
+        "sample_counts": {
+          "images": 200,
+          "annotations": 6036,
+          "pallet_annotations": 5741,
+          "small_load_carrier_annotations": 295
+        },
+        "prediction_count_after_threshold": 19764,
+        "score_threshold": 0.001,
+        "max_detections_per_image": 100
+      }
+    }
+  },
+  "compute_comparison": {
+    "S_updates": 1024,
+    "R50_updates": 256,
+    "SR50_real_updates": 256,
+    "SR50_additional_synthetic_updates": 1024
+  },
+  "claim_limits": {
+    "sequence_disjointness": "not established for unknown capture groups",
+    "pure_pretraining_effect": "not claimed because synthetic pretraining adds compute",
+    "label_cost_reduction": "not measured or claimed by this pilot",
+    "fresh_heldout_performance": "not measured; this development profile evaluates tuning-validation only"
+  },
+  "synthetic_training_input": {
+    "augmentation": "mosaic_3x3_training_only",
+    "source_plan_sha256": "d33a9361eef9dab705e686f2a51451b356db0cac5e297a6a10a9a574813d85f0",
+    "planned_source_presentations": {
+      "S_mosaic": 18432,
+      "S_baseline": 2048,
+      "additional_cpu_decodes": 16384
+    },
+    "actual_source_presentations": 18432,
+    "actual_baseline_equivalent_presentations": 2048,
+    "actual_cpu_decodes": 18432,
+    "actual_additional_cpu_decodes": 16384,
+    "S_training_wall_seconds": 282.39000000001397,
+    "equal_compute_or_exposure_claimed": false,
+    "single_3d_factory_scene_claimed": false
+  }
+}

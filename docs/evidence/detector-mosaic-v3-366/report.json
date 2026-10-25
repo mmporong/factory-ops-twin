@@ -1,0 +1,1490 @@
+{
+  "schema_version": 1,
+  "status": "complete_with_control_drift",
+  "comparison": "detector-pilot-backbone-v2 vs detector-pilot-mosaic-v3",
+  "evaluation_role": "same tuning200; no fixed-test metadata access or inference",
+  "seeds": [
+    1701,
+    1702,
+    1703
+  ],
+  "allowed_config_differences": [
+    "claim_limits",
+    "profile_id",
+    "status",
+    "synthetic_training_augmentation"
+  ],
+  "observed_config_differences": [
+    "claim_limits",
+    "profile_id",
+    "synthetic_training_augmentation"
+  ],
+  "paired_input_contract": {
+    "same_train50_registry": true,
+    "same_tuning200_registry": true,
+    "same_approved_release": true,
+    "same_COCO_weights": true,
+    "same_model_contract": true,
+    "same_updates": true,
+    "same_batch_size_2": true,
+    "same_AMP": true,
+    "initial_284_tensor_values_equal": true
+  },
+  "v3_source_plans": {
+    "1701": {
+      "sample_count": 512,
+      "source_scenes_per_sample": 9,
+      "source_image_id_rows_sha256": "a3cc78cd018ff61a7fab251b615cd8cefa5b6c4da6b582bbbe729b7dd2b2673b",
+      "source_scene_group_rows_sha256": "ea7f74a43f06e0c1ee7f0f8aac999fe28feccfe9e1d9290a374be358b41558bd",
+      "all_rows_have_nine_distinct_scene_groups": true,
+      "actual_source_presentations": 18432,
+      "baseline_source_presentations": 2048,
+      "actual_additional_cpu_decodes": 16384,
+      "S_training_wall_seconds": 279.85999999998603,
+      "registered_plan_geometry": {
+        "model_input_resolution": [
+          960,
+          640
+        ],
+        "source_to_model_linear_scale": 0.4166666666666667,
+        "boxes_across_512_composites": 25378,
+        "mean_target_objects_per_composite": 49.56640625,
+        "small_definition": "bbox area after model resize < 32^2 pixels",
+        "small_after_model_resize_ratio": 0.518835211600599,
+        "real_photos_or_test_metadata_read": false,
+        "occlusion_or_single_scene_realism_measured": false
+      }
+    },
+    "1702": {
+      "sample_count": 512,
+      "source_scenes_per_sample": 9,
+      "source_image_id_rows_sha256": "cf76cb8479dc6fbd231de3642de42b066829695fca35cccbef5aa0c13f071394",
+      "source_scene_group_rows_sha256": "f5e12d3841f3aa0e6c27d709128aacd299883edf7c155e1187944e14d16220d2",
+      "all_rows_have_nine_distinct_scene_groups": true,
+      "actual_source_presentations": 18432,
+      "baseline_source_presentations": 2048,
+      "actual_additional_cpu_decodes": 16384,
+      "S_training_wall_seconds": 271.2029999999795,
+      "registered_plan_geometry": {
+        "model_input_resolution": [
+          960,
+          640
+        ],
+        "source_to_model_linear_scale": 0.4166666666666667,
+        "boxes_across_512_composites": 25370,
+        "mean_target_objects_per_composite": 49.55078125,
+        "small_definition": "bbox area after model resize < 32^2 pixels",
+        "small_after_model_resize_ratio": 0.5141505715411904,
+        "real_photos_or_test_metadata_read": false,
+        "occlusion_or_single_scene_realism_measured": false
+      }
+    },
+    "1703": {
+      "sample_count": 512,
+      "source_scenes_per_sample": 9,
+      "source_image_id_rows_sha256": "d33a9361eef9dab705e686f2a51451b356db0cac5e297a6a10a9a574813d85f0",
+      "source_scene_group_rows_sha256": "31687d7d34c3686ea03e179aad9a034b33af20c4bdb3ac0b3ddbfd894f158e4c",
+      "all_rows_have_nine_distinct_scene_groups": true,
+      "actual_source_presentations": 18432,
+      "baseline_source_presentations": 2048,
+      "actual_additional_cpu_decodes": 16384,
+      "S_training_wall_seconds": 282.39000000001397,
+      "registered_plan_geometry": {
+        "model_input_resolution": [
+          960,
+          640
+        ],
+        "source_to_model_linear_scale": 0.4166666666666667,
+        "boxes_across_512_composites": 25269,
+        "mean_target_objects_per_composite": 49.353515625,
+        "small_definition": "bbox area after model resize < 32^2 pixels",
+        "small_after_model_resize_ratio": 0.5142664925402667,
+        "real_photos_or_test_metadata_read": false,
+        "occlusion_or_single_scene_realism_measured": false
+      }
+    }
+  },
+  "R50_control_validation": {
+    "status": "control_drift_unresolved",
+    "same_real50_source_is_the_control": true,
+    "failure_is_not_attributed": true
+  },
+  "pair_evidence": [
+    {
+      "seed": 1701,
+      "allowed_config_differences": [
+        "claim_limits",
+        "profile_id",
+        "synthetic_training_augmentation"
+      ],
+      "initial_state": {
+        "left": {
+          "path": "E:\\FactoryOpsData\\detector-backbone-350-seed1701\\checkpoints\\common-coco-head-init.pt",
+          "sha256": "4b3a93df47d36a150708239a7eeabac50e3dba124959de05c9ac9ae5d18e70fb",
+          "bytes": 76043161
+        },
+        "right": {
+          "path": "E:\\FactoryOpsData\\detector-mosaic-356-seed1701\\checkpoints\\common-coco-head-init.pt",
+          "sha256": "a5c32eabad078ff2d8a555c56965f362880ac4ae280838f8e95fd61a6c303897",
+          "bytes": 76042871
+        },
+        "tensor_count": 284,
+        "keys_equal": true,
+        "all_tensor_dtype_shape_values_equal": true,
+        "mismatch_count": 0,
+        "mismatches_first_20": []
+      },
+      "R50_control": {
+        "state": {
+          "left": {
+            "path": "E:\\FactoryOpsData\\detector-backbone-350-seed1701\\checkpoints\\R50-final.pt",
+            "sha256": "1d1cd820c2b43d8c3fb17867fe4f0d02a7f53fbaa1665c60f84a89f864c4f1fe",
+            "bytes": 76043457
+          },
+          "right": {
+            "path": "E:\\FactoryOpsData\\detector-mosaic-356-seed1701\\checkpoints\\R50-final.pt",
+            "sha256": "6fbef4bfea907ceb02865636ce8cc14c796221e07bbad979815aefd7aa61ada3",
+            "bytes": 76043167
+          },
+          "tensor_count": 284,
+          "keys_equal": true,
+          "all_tensor_dtype_shape_values_equal": false,
+          "mismatch_count": 70,
+          "mismatches_first_20": [
+            {
+              "type": "tensor_value",
+              "key": "backbone.body.10.block.0.0.weight"
+            },
+            {
+              "type": "tensor_value",
+              "key": "backbone.body.10.block.1.0.weight"
+            },
+            {
+              "type": "tensor_value",
+              "key": "backbone.body.10.block.2.0.weight"
+            },
+            {
+              "type": "tensor_value",
+              "key": "backbone.body.11.block.0.0.weight"
+            },
+            {
+              "type": "tensor_value",
+              "key": "backbone.body.11.block.1.0.weight"
+            },
+            {
+              "type": "tensor_value",
+              "key": "backbone.body.11.block.2.fc1.bias"
+            },
+            {
+              "type": "tensor_value",
+              "key": "backbone.body.11.block.2.fc1.weight"
+            },
+            {
+              "type": "tensor_value",
+              "key": "backbone.body.11.block.2.fc2.bias"
+            },
+            {
+              "type": "tensor_value",
+              "key": "backbone.body.11.block.2.fc2.weight"
+            },
+            {
+              "type": "tensor_value",
+              "key": "backbone.body.11.block.3.0.weight"
+            },
+            {
+              "type": "tensor_value",
+              "key": "backbone.body.12.block.0.0.weight"
+            },
+            {
+              "type": "tensor_value",
+              "key": "backbone.body.12.block.1.0.weight"
+            },
+            {
+              "type": "tensor_value",
+              "key": "backbone.body.12.block.2.fc1.bias"
+            },
+            {
+              "type": "tensor_value",
+              "key": "backbone.body.12.block.2.fc1.weight"
+            },
+            {
+              "type": "tensor_value",
+              "key": "backbone.body.12.block.2.fc2.bias"
+            },
+            {
+              "type": "tensor_value",
+              "key": "backbone.body.12.block.2.fc2.weight"
+            },
+            {
+              "type": "tensor_value",
+              "key": "backbone.body.12.block.3.0.weight"
+            },
+            {
+              "type": "tensor_value",
+              "key": "backbone.body.13.block.0.0.weight"
+            },
+            {
+              "type": "tensor_value",
+              "key": "backbone.body.13.block.1.0.weight"
+            },
+            {
+              "type": "tensor_value",
+              "key": "backbone.body.13.block.2.fc1.bias"
+            }
+          ]
+        },
+        "metrics_equal": false,
+        "metric_delta_v3_minus_v2": {
+          "AP": -0.004180884567547744,
+          "AP50": -0.010021427498292736,
+          "pallet_AP": -0.0013001262489756391,
+          "small_load_carrier_AP": -0.007061642886119852,
+          "small_object_AP": 0.003148018131889077
+        },
+        "training_observation": {
+          "v2": {
+            "updates": 256,
+            "last_loss": 1.0230064392089844,
+            "mean_loss": 0.7875931004382437,
+            "wall_seconds": 30.875
+          },
+          "v3": {
+            "updates": 256,
+            "last_loss": 1.0323578119277954,
+            "mean_loss": 0.7888869938324206,
+            "wall_seconds": 33.0
+          },
+          "last_loss_delta_v3_minus_v2": 0.009351372718811035
+        },
+        "status": "control_drift_unresolved",
+        "cause": "unresolved; the comparison does not attribute the mismatch"
+      }
+    },
+    {
+      "seed": 1702,
+      "allowed_config_differences": [
+        "claim_limits",
+        "profile_id",
+        "synthetic_training_augmentation"
+      ],
+      "initial_state": {
+        "left": {
+          "path": "E:\\FactoryOpsData\\detector-backbone-351-seed1702\\checkpoints\\common-coco-head-init.pt",
+          "sha256": "e366e93e443af6be5a8f6f200cd8909ca742e03839f7e253eb91cba0458491eb",
+          "bytes": 76042871
+        },
+        "right": {
+          "path": "E:\\FactoryOpsData\\detector-mosaic-357-seed1702\\checkpoints\\common-coco-head-init.pt",
+          "sha256": "ebf52bb58b4f22b243d3f3a16a639dd381609adc0087b8de8586275476dab9de",
+          "bytes": 76042871
+        },
+        "tensor_count": 284,
+        "keys_equal": true,
+        "all_tensor_dtype_shape_values_equal": true,
+        "mismatch_count": 0,
+        "mismatches_first_20": []
+      },
+      "R50_control": {
+        "state": {
+          "left": {
+            "path": "E:\\FactoryOpsData\\detector-backbone-351-seed1702\\checkpoints\\R50-final.pt",
+            "sha256": "eab63b6842ac78273b680b1519547677c6e5846d8260694f306525e06c2e513f",
+            "bytes": 76043167
+          },
+          "right": {
+            "path": "E:\\FactoryOpsData\\detector-mosaic-357-seed1702\\checkpoints\\R50-final.pt",
+            "sha256": "4872e99739cf564fc8f8ea5d1a15e83b75be379c2b2285dcc7589dc4476e892a",
+            "bytes": 76043167
+          },
+          "tensor_count": 284,
+          "keys_equal": true,
+          "all_tensor_dtype_shape_values_equal": false,
+          "mismatch_count": 70,
+          "mismatches_first_20": [
+            {
+              "type": "tensor_value",
+              "key": "backbone.body.10.block.0.0.weight"
+            },
+            {
+              "type": "tensor_value",
+              "key": "backbone.body.10.block.1.0.weight"
+            },
+            {
+              "type": "tensor_value",
+              "key": "backbone.body.10.block.2.0.weight"
+            },
+            {
+              "type": "tensor_value",
+              "key": "backbone.body.11.block.0.0.weight"
+            },
+            {
+              "type": "tensor_value",
+              "key": "backbone.body.11.block.1.0.weight"
+            },
+            {
+              "type": "tensor_value",
+              "key": "backbone.body.11.block.2.fc1.bias"
+            },
+            {
+              "type": "tensor_value",
+              "key": "backbone.body.11.block.2.fc1.weight"
+            },
+            {
+              "type": "tensor_value",
+              "key": "backbone.body.11.block.2.fc2.bias"
+            },
+            {
+              "type": "tensor_value",
+              "key": "backbone.body.11.block.2.fc2.weight"
+            },
+            {
+              "type": "tensor_value",
+              "key": "backbone.body.11.block.3.0.weight"
+            },
+            {
+              "type": "tensor_value",
+              "key": "backbone.body.12.block.0.0.weight"
+            },
+            {
+              "type": "tensor_value",
+              "key": "backbone.body.12.block.1.0.weight"
+            },
+            {
+              "type": "tensor_value",
+              "key": "backbone.body.12.block.2.fc1.bias"
+            },
+            {
+              "type": "tensor_value",
+              "key": "backbone.body.12.block.2.fc1.weight"
+            },
+            {
+              "type": "tensor_value",
+              "key": "backbone.body.12.block.2.fc2.bias"
+            },
+            {
+              "type": "tensor_value",
+              "key": "backbone.body.12.block.2.fc2.weight"
+            },
+            {
+              "type": "tensor_value",
+              "key": "backbone.body.12.block.3.0.weight"
+            },
+            {
+              "type": "tensor_value",
+              "key": "backbone.body.13.block.0.0.weight"
+            },
+            {
+              "type": "tensor_value",
+              "key": "backbone.body.13.block.1.0.weight"
+            },
+            {
+              "type": "tensor_value",
+              "key": "backbone.body.13.block.2.fc1.bias"
+            }
+          ]
+        },
+        "metrics_equal": false,
+        "metric_delta_v3_minus_v2": {
+          "AP": 0.0012426244110112193,
+          "AP50": 0.004621535468708762,
+          "pallet_AP": 0.001069688619053863,
+          "small_load_carrier_AP": 0.0014155602029685735,
+          "small_object_AP": 5.4785223788781924e-05
+        },
+        "training_observation": {
+          "v2": {
+            "updates": 256,
+            "last_loss": 0.3480079770088196,
+            "mean_loss": 0.7707569046015124,
+            "wall_seconds": 31.57799999997951
+          },
+          "v3": {
+            "updates": 256,
+            "last_loss": 0.4470965266227722,
+            "mean_loss": 0.7792043232348078,
+            "wall_seconds": 32.53200000000652
+          },
+          "last_loss_delta_v3_minus_v2": 0.09908854961395264
+        },
+        "status": "control_drift_unresolved",
+        "cause": "unresolved; the comparison does not attribute the mismatch"
+      }
+    },
+    {
+      "seed": 1703,
+      "allowed_config_differences": [
+        "claim_limits",
+        "profile_id",
+        "synthetic_training_augmentation"
+      ],
+      "initial_state": {
+        "left": {
+          "path": "E:\\FactoryOpsData\\detector-backbone-352-seed1703\\checkpoints\\common-coco-head-init.pt",
+          "sha256": "8307e9fd98af7886b9d316cc3e4a95a1d2b7a535301aad58c33a91c3237a7cb4",
+          "bytes": 76043161
+        },
+        "right": {
+          "path": "E:\\FactoryOpsData\\detector-mosaic-358-seed1703\\checkpoints\\common-coco-head-init.pt",
+          "sha256": "40ac757de92957e47cd9570b275c2ae6cc50dc209e1b5f8ed91ad07e79eeae6f",
+          "bytes": 76042871
+        },
+        "tensor_count": 284,
+        "keys_equal": true,
+        "all_tensor_dtype_shape_values_equal": true,
+        "mismatch_count": 0,
+        "mismatches_first_20": []
+      },
+      "R50_control": {
+        "state": {
+          "left": {
+            "path": "E:\\FactoryOpsData\\detector-backbone-352-seed1703\\checkpoints\\R50-final.pt",
+            "sha256": "2ae667a9448dacefcda39ad77ad790fb50e49348253dc0474dd12810e8e48b9d",
+            "bytes": 76043457
+          },
+          "right": {
+            "path": "E:\\FactoryOpsData\\detector-mosaic-358-seed1703\\checkpoints\\R50-final.pt",
+            "sha256": "2e428e03b9732abd4f051acc0a33f901caacd405e2b10cf74cefab75efde42b2",
+            "bytes": 76043167
+          },
+          "tensor_count": 284,
+          "keys_equal": true,
+          "all_tensor_dtype_shape_values_equal": false,
+          "mismatch_count": 70,
+          "mismatches_first_20": [
+            {
+              "type": "tensor_value",
+              "key": "backbone.body.10.block.0.0.weight"
+            },
+            {
+              "type": "tensor_value",
+              "key": "backbone.body.10.block.1.0.weight"
+            },
+            {
+              "type": "tensor_value",
+              "key": "backbone.body.10.block.2.0.weight"
+            },
+            {
+              "type": "tensor_value",
+              "key": "backbone.body.11.block.0.0.weight"
+            },
+            {
+              "type": "tensor_value",
+              "key": "backbone.body.11.block.1.0.weight"
+            },
+            {
+              "type": "tensor_value",
+              "key": "backbone.body.11.block.2.fc1.bias"
+            },
+            {
+              "type": "tensor_value",
+              "key": "backbone.body.11.block.2.fc1.weight"
+            },
+            {
+              "type": "tensor_value",
+              "key": "backbone.body.11.block.2.fc2.bias"
+            },
+            {
+              "type": "tensor_value",
+              "key": "backbone.body.11.block.2.fc2.weight"
+            },
+            {
+              "type": "tensor_value",
+              "key": "backbone.body.11.block.3.0.weight"
+            },
+            {
+              "type": "tensor_value",
+              "key": "backbone.body.12.block.0.0.weight"
+            },
+            {
+              "type": "tensor_value",
+              "key": "backbone.body.12.block.1.0.weight"
+            },
+            {
+              "type": "tensor_value",
+              "key": "backbone.body.12.block.2.fc1.bias"
+            },
+            {
+              "type": "tensor_value",
+              "key": "backbone.body.12.block.2.fc1.weight"
+            },
+            {
+              "type": "tensor_value",
+              "key": "backbone.body.12.block.2.fc2.bias"
+            },
+            {
+              "type": "tensor_value",
+              "key": "backbone.body.12.block.2.fc2.weight"
+            },
+            {
+              "type": "tensor_value",
+              "key": "backbone.body.12.block.3.0.weight"
+            },
+            {
+              "type": "tensor_value",
+              "key": "backbone.body.13.block.0.0.weight"
+            },
+            {
+              "type": "tensor_value",
+              "key": "backbone.body.13.block.1.0.weight"
+            },
+            {
+              "type": "tensor_value",
+              "key": "backbone.body.13.block.2.fc1.bias"
+            }
+          ]
+        },
+        "metrics_equal": false,
+        "metric_delta_v3_minus_v2": {
+          "AP": 0.00017086050029020694,
+          "AP50": 0.005099511711588373,
+          "pallet_AP": 0.0005557042515504131,
+          "small_load_carrier_AP": -0.0002139832509699983,
+          "small_object_AP": 0.0002531308807455136
+        },
+        "training_observation": {
+          "v2": {
+            "updates": 256,
+            "last_loss": 0.6258977651596069,
+            "mean_loss": 0.7786631148410379,
+            "wall_seconds": 29.640999999945052
+          },
+          "v3": {
+            "updates": 256,
+            "last_loss": 0.7097852826118469,
+            "mean_loss": 0.778685350132946,
+            "wall_seconds": 38.0
+          },
+          "last_loss_delta_v3_minus_v2": 0.08388751745223999
+        },
+        "status": "control_drift_unresolved",
+        "cause": "unresolved; the comparison does not attribute the mismatch"
+      }
+    }
+  ],
+  "condition_aggregate": {
+    "R50": {
+      "v2": {
+        "AP": {
+          "mean": 0.010743206935235025,
+          "std": 0.0012386146794903495,
+          "n": 3
+        },
+        "AP50": {
+          "mean": 0.03792973362770962,
+          "std": 0.0022989867334912463,
+          "n": 3
+        },
+        "pallet_AP": {
+          "mean": 0.016500463663135595,
+          "std": 0.0023565768178393934,
+          "n": 3
+        },
+        "small_load_carrier_AP": {
+          "mean": 0.004985950207334454,
+          "std": 0.004458065191153571,
+          "n": 3
+        },
+        "small_object_AP": {
+          "mean": 0.00033550387654240633,
+          "std": 0.00011720911758859681,
+          "n": 3
+        }
+      },
+      "v3": {
+        "AP": {
+          "mean": 0.009820740383152919,
+          "std": 0.0016441760061414621,
+          "n": 3
+        },
+        "AP50": {
+          "mean": 0.03782960685504442,
+          "std": 0.00630083606931082,
+          "n": 3
+        },
+        "pallet_AP": {
+          "mean": 0.01660888587034514,
+          "std": 0.003299303727259447,
+          "n": 3
+        },
+        "small_load_carrier_AP": {
+          "mean": 0.0030325948959606945,
+          "std": 0.002174598267322174,
+          "n": 3
+        },
+        "small_object_AP": {
+          "mean": 0.001487481955350197,
+          "std": 0.0017540968839667515,
+          "n": 3
+        }
+      }
+    },
+    "S": {
+      "v2": {
+        "AP": {
+          "mean": 0.0005448111710614343,
+          "std": 0.000210432326804909,
+          "n": 3
+        },
+        "AP50": {
+          "mean": 0.0017190186270857066,
+          "std": 0.0007158323482960876,
+          "n": 3
+        },
+        "pallet_AP": {
+          "mean": 0.0010250163156835257,
+          "std": 0.0003978840638417969,
+          "n": 3
+        },
+        "small_load_carrier_AP": {
+          "mean": 6.46060264393431e-05,
+          "std": 2.299717709073979e-05,
+          "n": 3
+        },
+        "small_object_AP": {
+          "mean": 0.0,
+          "std": 0.0,
+          "n": 3
+        }
+      },
+      "v3": {
+        "AP": {
+          "mean": 0.00017466869914396595,
+          "std": 2.8370015268754923e-05,
+          "n": 3
+        },
+        "AP50": {
+          "mean": 0.0006180735106196951,
+          "std": 8.29046277820027e-05,
+          "n": 3
+        },
+        "pallet_AP": {
+          "mean": 0.0003307392629599201,
+          "std": 5.75786872319437e-05,
+          "n": 3
+        },
+        "small_load_carrier_AP": {
+          "mean": 1.8598135328011862e-05,
+          "std": 1.1307429892120393e-05,
+          "n": 3
+        },
+        "small_object_AP": {
+          "mean": 3.7960416156695986e-05,
+          "std": 4.394335414146914e-05,
+          "n": 3
+        }
+      }
+    },
+    "SR50": {
+      "v2": {
+        "AP": {
+          "mean": 0.010044002084456926,
+          "std": 0.0017258482283364631,
+          "n": 3
+        },
+        "AP50": {
+          "mean": 0.03569103884117067,
+          "std": 0.007722268148345708,
+          "n": 3
+        },
+        "pallet_AP": {
+          "mean": 0.016286226780677596,
+          "std": 0.001104826271100353,
+          "n": 3
+        },
+        "small_load_carrier_AP": {
+          "mean": 0.003801777388236251,
+          "std": 0.0041520728784089226,
+          "n": 3
+        },
+        "small_object_AP": {
+          "mean": 0.0015661605369977668,
+          "std": 0.00149135928365297,
+          "n": 3
+        }
+      },
+      "v3": {
+        "AP": {
+          "mean": 0.01080850345235207,
+          "std": 0.0018037946491110436,
+          "n": 3
+        },
+        "AP50": {
+          "mean": 0.041410609516526885,
+          "std": 0.0069308781057340115,
+          "n": 3
+        },
+        "pallet_AP": {
+          "mean": 0.01736154821593951,
+          "std": 0.0014122177594287218,
+          "n": 3
+        },
+        "small_load_carrier_AP": {
+          "mean": 0.004255458688764631,
+          "std": 0.004157564986116901,
+          "n": 3
+        },
+        "small_object_AP": {
+          "mean": 0.0005869140759816527,
+          "std": 0.0001640348598187494,
+          "n": 3
+        }
+      }
+    }
+  },
+  "paired_v3_minus_v2": {
+    "R50": {
+      "AP": {
+        "mean": -0.000922466552082106,
+        "std": 0.002872304900722462,
+        "n": 3
+      },
+      "AP50": {
+        "mean": -0.0001001267726652005,
+        "std": 0.008595421536401948,
+        "n": 3
+      },
+      "pallet_AP": {
+        "mean": 0.00010842220720954562,
+        "std": 0.0012466160385522604,
+        "n": 3
+      },
+      "small_load_carrier_AP": {
+        "mean": -0.0019533553113737587,
+        "std": 0.00449831128611588,
+        "n": 3
+      },
+      "small_object_AP": {
+        "mean": 0.001151978078807791,
+        "std": 0.0017314638806619552,
+        "n": 3
+      }
+    },
+    "S": {
+      "AP": {
+        "mean": -0.0003701424719174684,
+        "std": 0.00022872977984803042,
+        "n": 3
+      },
+      "AP50": {
+        "mean": -0.0011009451164660118,
+        "std": 0.0006335115729178972,
+        "n": 3
+      },
+      "pallet_AP": {
+        "mean": -0.0006942770527236055,
+        "std": 0.0004427838596869657,
+        "n": 3
+      },
+      "small_load_carrier_AP": {
+        "mean": -4.6007891111331245e-05,
+        "std": 1.5463219948933867e-05,
+        "n": 3
+      },
+      "small_object_AP": {
+        "mean": 3.7960416156695986e-05,
+        "std": 4.394335414146914e-05,
+        "n": 3
+      }
+    },
+    "SR50": {
+      "AP": {
+        "mean": 0.0007645013678951445,
+        "std": 0.0029617835590615483,
+        "n": 3
+      },
+      "AP50": {
+        "mean": 0.005719570675356213,
+        "std": 0.014327528301323781,
+        "n": 3
+      },
+      "pallet_AP": {
+        "mean": 0.0010753214352619122,
+        "std": 0.002317761357809145,
+        "n": 3
+      },
+      "small_load_carrier_AP": {
+        "mean": 0.0004536813005283807,
+        "std": 0.007212658149899669,
+        "n": 3
+      },
+      "small_object_AP": {
+        "mean": -0.000979246461016114,
+        "std": 0.0014966454872339765,
+        "n": 3
+      }
+    }
+  },
+  "metric_units": {
+    "stored_metrics": "COCO ratio in [0, 1]",
+    "chart_AP": "AP points in [0, 100]"
+  },
+  "rows": [
+    {
+      "seed": 1701,
+      "version": "v2",
+      "condition": "R50",
+      "AP": 0.012115340637771936,
+      "AP50": 0.0405757175353093,
+      "pallet_AP": 0.015218002973469926,
+      "small_load_carrier_AP": 0.009012678302073947,
+      "small_object_AP": 0.0003495410667621429
+    },
+    {
+      "seed": 1701,
+      "version": "v2",
+      "condition": "S",
+      "AP": 0.0006977788963826416,
+      "AP50": 0.002161376299514789,
+      "pallet_AP": 0.0013134842222170054,
+      "small_load_carrier_AP": 8.207357054827769e-05,
+      "small_object_AP": 0.0
+    },
+    {
+      "seed": 1701,
+      "version": "v2",
+      "condition": "SR50",
+      "AP": 0.012036839962854597,
+      "AP50": 0.044468421403962545,
+      "pallet_AP": 0.01559961953722236,
+      "small_load_carrier_AP": 0.00847406038848684,
+      "small_object_AP": 0.0032365257573858694
+    },
+    {
+      "seed": 1701,
+      "version": "v3",
+      "condition": "R50",
+      "AP": 0.007934456070224192,
+      "AP50": 0.030554290037016565,
+      "pallet_AP": 0.013917876724494287,
+      "small_load_carrier_AP": 0.001951035415954095,
+      "small_object_AP": 0.00349755919865122
+    },
+    {
+      "seed": 1701,
+      "version": "v3",
+      "condition": "S",
+      "AP": 0.00018243456257040276,
+      "AP50": 0.0006599738375726962,
+      "pallet_AP": 0.0003335132698979892,
+      "small_load_carrier_AP": 3.135585524281635e-05,
+      "small_object_AP": 7.052251616914268e-06
+    },
+    {
+      "seed": 1701,
+      "version": "v3",
+      "condition": "SR50",
+      "AP": 0.00995882499972942,
+      "AP50": 0.034806177019194834,
+      "pallet_AP": 0.018961363097709027,
+      "small_load_carrier_AP": 0.0009562869017498176,
+      "small_object_AP": 0.0005450317302399901
+    },
+    {
+      "seed": 1702,
+      "version": "v2",
+      "condition": "R50",
+      "AP": 0.009707707470976969,
+      "AP50": 0.03679225952025181,
+      "pallet_AP": 0.019220136990822357,
+      "small_load_carrier_AP": 0.00019527795113158204,
+      "small_object_AP": 0.00021190828878841152
+    },
+    {
+      "seed": 1702,
+      "version": "v2",
+      "condition": "S",
+      "AP": 0.00030482678723325223,
+      "AP50": 0.000893145059540195,
+      "pallet_AP": 0.0005711028047536962,
+      "small_load_carrier_AP": 3.855076971280842e-05,
+      "small_object_AP": 0.0
+    },
+    {
+      "seed": 1702,
+      "version": "v2",
+      "condition": "SR50",
+      "AP": 0.009047591494398651,
+      "AP50": 0.03266307966594128,
+      "pallet_AP": 0.017560695779360144,
+      "small_load_carrier_AP": 0.000534487209437154,
+      "small_object_AP": 0.0010936934294035556
+    },
+    {
+      "seed": 1702,
+      "version": "v3",
+      "condition": "R50",
+      "AP": 0.010950331881988188,
+      "AP50": 0.04141379498896057,
+      "pallet_AP": 0.02028982560987622,
+      "small_load_carrier_AP": 0.0016108381541001557,
+      "small_object_AP": 0.00026669351257719345
+    },
+    {
+      "seed": 1702,
+      "version": "v3",
+      "condition": "S",
+      "AP": 0.00019834708616336334,
+      "AP50": 0.0005225817529920354,
+      "pallet_AP": 0.000386880807947149,
+      "small_load_carrier_AP": 9.813364379577637e-06,
+      "small_object_AP": 1.8564356435643567e-05
+    },
+    {
+      "seed": 1702,
+      "version": "v3",
+      "condition": "SR50",
+      "AP": 0.009586463802873429,
+      "AP50": 0.04079834305892361,
+      "pallet_AP": 0.016288138932103978,
+      "small_load_carrier_AP": 0.002884788673642882,
+      "small_object_AP": 0.0007678297376691034
+    },
+    {
+      "seed": 1703,
+      "version": "v2",
+      "condition": "R50",
+      "AP": 0.010406572696956166,
+      "AP50": 0.036421223827567746,
+      "pallet_AP": 0.0150632510251145,
+      "small_load_carrier_AP": 0.005749894368797831,
+      "small_object_AP": 0.00044506227407666444
+    },
+    {
+      "seed": 1703,
+      "version": "v2",
+      "condition": "S",
+      "AP": 0.0006318278295684091,
+      "AP50": 0.0021025345222021367,
+      "pallet_AP": 0.0011904619200798752,
+      "small_load_carrier_AP": 7.319373905694321e-05,
+      "small_object_AP": 0.0
+    },
+    {
+      "seed": 1703,
+      "version": "v2",
+      "condition": "SR50",
+      "AP": 0.009047574796117527,
+      "AP50": 0.029941615453608177,
+      "pallet_AP": 0.01569836502545029,
+      "small_load_carrier_AP": 0.0023967845667847588,
+      "small_object_AP": 0.0003682624242038756
+    },
+    {
+      "seed": 1703,
+      "version": "v3",
+      "condition": "R50",
+      "AP": 0.010577433197246373,
+      "AP50": 0.04152073553915612,
+      "pallet_AP": 0.015618955276664914,
+      "small_load_carrier_AP": 0.005535911117827833,
+      "small_object_AP": 0.000698193154822178
+    },
+    {
+      "seed": 1703,
+      "version": "v3",
+      "condition": "S",
+      "AP": 0.00014322444869813183,
+      "AP50": 0.0006716649412943536,
+      "pallet_AP": 0.00027182371103462205,
+      "small_load_carrier_AP": 1.4625186361641596e-05,
+      "small_object_AP": 8.826464041753013e-05
+    },
+    {
+      "seed": 1703,
+      "version": "v3",
+      "condition": "SR50",
+      "AP": 0.012880221554453359,
+      "AP50": 0.0486273084714622,
+      "pallet_AP": 0.016835142618005526,
+      "small_load_carrier_AP": 0.008925300490901195,
+      "small_object_AP": 0.00044788076003586487
+    }
+  ],
+  "source_bindings": {
+    "v2": [
+      {
+        "seed": 1701,
+        "source_commit": "10f60d0e87d718a505c84595f5cd2da850125356",
+        "result": {
+          "path": "E:\\FactoryOpsData\\detector-backbone-350-seed1701\\result.json",
+          "sha256": "f69042af053697e1c1cb74d490d44d207653757a464c9289c90b4e472059db05",
+          "bytes": 4753
+        },
+        "preregistration": {
+          "path": "E:\\FactoryOpsData\\detector-backbone-350-seed1701\\preregistration.json",
+          "sha256": "0112be000ff1324511e560129a47b35146e48d3a67275e6db3fef36428807925",
+          "bytes": 17480
+        },
+        "config": {
+          "path": "C:\\Users\\LIMMM\\factory-ops-twin\\artifacts\\detector-pilot-backbone-matrix-350\\seed-1701.json",
+          "sha256": "041fc6224d0c74a6db4d87b08c28146e3942ba343d2658db3cadb5ea25bb2d16",
+          "bytes": 3427
+        },
+        "synthetic_release": {
+          "manifest_sha256": "69b1f2cc9efea586442dcc7dee996fc4c8ba79743d714b05d1b6c78fec0070e9",
+          "coco_sha256": "a0e2d79aab09dd5c1a62f617e7baa63f34530552a2b6e0b46d1ee9b85c5573f4",
+          "image_inventory_sha256": "9a1f872dd51207a987cc69ae2dcac6d6c4bc5cfdaae901fe079470962a2340a9",
+          "bounds_source_sha256": "4290397f568f9a2259f245b027b9dc8d68bd53aee82730d3f65bec2c1997d72b",
+          "producer_source_commit": "1e05a408e42e033dd23911532ac4f9fea8e505f2"
+        },
+        "real_registry": {
+          "train": [
+            {
+              "metadata_file": "loco-sub2-v1-train.json",
+              "metadata_sha256": "938f9b5915852df43d0c27c79dd059856ebb9e6cc27ea67378b6b9bb25c9b33d",
+              "image_ids_sha256": "d5bce11484d4425071ea2b905f7a225dcc03a433cd62352aaf59cdce2cad0431",
+              "image_count": 25
+            },
+            {
+              "metadata_file": "loco-sub5-v1-train.json",
+              "metadata_sha256": "88a374a39f4ed5ae125223fb6111522672ae70337a29b97570cdcb8c3b0daf23",
+              "image_ids_sha256": "ae21fdd333f57dc54f74f3a27cb6e87f944d9e3027a89bb52174c9a19457d624",
+              "image_count": 25
+            }
+          ],
+          "tuning_validation": [
+            {
+              "metadata_file": "loco-sub3-v1-train.json",
+              "metadata_sha256": "456db71791f356e929125ba636673769bda78fb4a8b77c0293bad4fceab8fa52",
+              "image_ids_sha256": "0a287ad6bbcdba65b980aa4625fd7724883a21b4e72ce00c3288092d02e0b5f3",
+              "image_count": 100
+            },
+            {
+              "metadata_file": "loco-sub4-v1-val.json",
+              "metadata_sha256": "e9e076f08cecba205c70cec9752e7415e73689aed04a64584c4f8428db5c73da",
+              "image_ids_sha256": "39bce2d4e80615ae014d5167cd6b800bc43f7cdb5820e556bf53343f41fc96f8",
+              "image_count": 100
+            }
+          ]
+        },
+        "weights": {
+          "weights_enum": "FasterRCNN_MobileNet_V3_Large_FPN_Weights.COCO_V1",
+          "weights_url": "https://download.pytorch.org/models/fasterrcnn_mobilenet_v3_large_fpn-fb6a3cc7.pth",
+          "full_sha256": "fb6a3cc702b1df54c18a44b26708cd083614211062d0c36d2ca7bf9270df3533",
+          "constructor_contract_preserved": true
+        },
+        "runtime_versions": {
+          "torch": "2.14.1+cu130",
+          "torchvision": "0.29.1+cu130",
+          "Pillow": "12.3.0",
+          "pycocotools": "2.0.11"
+        },
+        "batch_size": 2,
+        "amp": {
+          "S": true,
+          "R50": true,
+          "SR50": true
+        }
+      },
+      {
+        "seed": 1702,
+        "source_commit": "10f60d0e87d718a505c84595f5cd2da850125356",
+        "result": {
+          "path": "E:\\FactoryOpsData\\detector-backbone-351-seed1702\\result.json",
+          "sha256": "5456b12fa782fb4acc382a940531ec415c75ff3a40574088192976090e7847ed",
+          "bytes": 4760
+        },
+        "preregistration": {
+          "path": "E:\\FactoryOpsData\\detector-backbone-351-seed1702\\preregistration.json",
+          "sha256": "0d7ab6638447dd5430814cb6699fc7d273f780c36480a41936c6cd560bb1529a",
+          "bytes": 17480
+        },
+        "config": {
+          "path": "C:\\Users\\LIMMM\\factory-ops-twin\\artifacts\\detector-pilot-backbone-matrix-350\\seed-1702.json",
+          "sha256": "7b4241f20e6bd3bd343cf60b8c9d16718e40102f97832c3ec597b8a742c31b4f",
+          "bytes": 3427
+        },
+        "synthetic_release": {
+          "manifest_sha256": "69b1f2cc9efea586442dcc7dee996fc4c8ba79743d714b05d1b6c78fec0070e9",
+          "coco_sha256": "a0e2d79aab09dd5c1a62f617e7baa63f34530552a2b6e0b46d1ee9b85c5573f4",
+          "image_inventory_sha256": "9a1f872dd51207a987cc69ae2dcac6d6c4bc5cfdaae901fe079470962a2340a9",
+          "bounds_source_sha256": "4290397f568f9a2259f245b027b9dc8d68bd53aee82730d3f65bec2c1997d72b",
+          "producer_source_commit": "1e05a408e42e033dd23911532ac4f9fea8e505f2"
+        },
+        "real_registry": {
+          "train": [
+            {
+              "metadata_file": "loco-sub2-v1-train.json",
+              "metadata_sha256": "938f9b5915852df43d0c27c79dd059856ebb9e6cc27ea67378b6b9bb25c9b33d",
+              "image_ids_sha256": "d5bce11484d4425071ea2b905f7a225dcc03a433cd62352aaf59cdce2cad0431",
+              "image_count": 25
+            },
+            {
+              "metadata_file": "loco-sub5-v1-train.json",
+              "metadata_sha256": "88a374a39f4ed5ae125223fb6111522672ae70337a29b97570cdcb8c3b0daf23",
+              "image_ids_sha256": "ae21fdd333f57dc54f74f3a27cb6e87f944d9e3027a89bb52174c9a19457d624",
+              "image_count": 25
+            }
+          ],
+          "tuning_validation": [
+            {
+              "metadata_file": "loco-sub3-v1-train.json",
+              "metadata_sha256": "456db71791f356e929125ba636673769bda78fb4a8b77c0293bad4fceab8fa52",
+              "image_ids_sha256": "0a287ad6bbcdba65b980aa4625fd7724883a21b4e72ce00c3288092d02e0b5f3",
+              "image_count": 100
+            },
+            {
+              "metadata_file": "loco-sub4-v1-val.json",
+              "metadata_sha256": "e9e076f08cecba205c70cec9752e7415e73689aed04a64584c4f8428db5c73da",
+              "image_ids_sha256": "39bce2d4e80615ae014d5167cd6b800bc43f7cdb5820e556bf53343f41fc96f8",
+              "image_count": 100
+            }
+          ]
+        },
+        "weights": {
+          "weights_enum": "FasterRCNN_MobileNet_V3_Large_FPN_Weights.COCO_V1",
+          "weights_url": "https://download.pytorch.org/models/fasterrcnn_mobilenet_v3_large_fpn-fb6a3cc7.pth",
+          "full_sha256": "fb6a3cc702b1df54c18a44b26708cd083614211062d0c36d2ca7bf9270df3533",
+          "constructor_contract_preserved": true
+        },
+        "runtime_versions": {
+          "torch": "2.14.1+cu130",
+          "torchvision": "0.29.1+cu130",
+          "Pillow": "12.3.0",
+          "pycocotools": "2.0.11"
+        },
+        "batch_size": 2,
+        "amp": {
+          "S": true,
+          "R50": true,
+          "SR50": true
+        }
+      },
+      {
+        "seed": 1703,
+        "source_commit": "10f60d0e87d718a505c84595f5cd2da850125356",
+        "result": {
+          "path": "E:\\FactoryOpsData\\detector-backbone-352-seed1703\\result.json",
+          "sha256": "4d425a6160a54a5dba38e42c63888b974e2e07856840b12bfd2592dfe2ba35fc",
+          "bytes": 4770
+        },
+        "preregistration": {
+          "path": "E:\\FactoryOpsData\\detector-backbone-352-seed1703\\preregistration.json",
+          "sha256": "3ff4595f895966787e0eb994eec60ab75170c67ea07046bac9a601c974023a9e",
+          "bytes": 17480
+        },
+        "config": {
+          "path": "C:\\Users\\LIMMM\\factory-ops-twin\\artifacts\\detector-pilot-backbone-matrix-350\\seed-1703.json",
+          "sha256": "958e483daa272cfa3a91da3c79e95d0f4e826c3443f587de96facb427579d9a6",
+          "bytes": 3427
+        },
+        "synthetic_release": {
+          "manifest_sha256": "69b1f2cc9efea586442dcc7dee996fc4c8ba79743d714b05d1b6c78fec0070e9",
+          "coco_sha256": "a0e2d79aab09dd5c1a62f617e7baa63f34530552a2b6e0b46d1ee9b85c5573f4",
+          "image_inventory_sha256": "9a1f872dd51207a987cc69ae2dcac6d6c4bc5cfdaae901fe079470962a2340a9",
+          "bounds_source_sha256": "4290397f568f9a2259f245b027b9dc8d68bd53aee82730d3f65bec2c1997d72b",
+          "producer_source_commit": "1e05a408e42e033dd23911532ac4f9fea8e505f2"
+        },
+        "real_registry": {
+          "train": [
+            {
+              "metadata_file": "loco-sub2-v1-train.json",
+              "metadata_sha256": "938f9b5915852df43d0c27c79dd059856ebb9e6cc27ea67378b6b9bb25c9b33d",
+              "image_ids_sha256": "d5bce11484d4425071ea2b905f7a225dcc03a433cd62352aaf59cdce2cad0431",
+              "image_count": 25
+            },
+            {
+              "metadata_file": "loco-sub5-v1-train.json",
+              "metadata_sha256": "88a374a39f4ed5ae125223fb6111522672ae70337a29b97570cdcb8c3b0daf23",
+              "image_ids_sha256": "ae21fdd333f57dc54f74f3a27cb6e87f944d9e3027a89bb52174c9a19457d624",
+              "image_count": 25
+            }
+          ],
+          "tuning_validation": [
+            {
+              "metadata_file": "loco-sub3-v1-train.json",
+              "metadata_sha256": "456db71791f356e929125ba636673769bda78fb4a8b77c0293bad4fceab8fa52",
+              "image_ids_sha256": "0a287ad6bbcdba65b980aa4625fd7724883a21b4e72ce00c3288092d02e0b5f3",
+              "image_count": 100
+            },
+            {
+              "metadata_file": "loco-sub4-v1-val.json",
+              "metadata_sha256": "e9e076f08cecba205c70cec9752e7415e73689aed04a64584c4f8428db5c73da",
+              "image_ids_sha256": "39bce2d4e80615ae014d5167cd6b800bc43f7cdb5820e556bf53343f41fc96f8",
+              "image_count": 100
+            }
+          ]
+        },
+        "weights": {
+          "weights_enum": "FasterRCNN_MobileNet_V3_Large_FPN_Weights.COCO_V1",
+          "weights_url": "https://download.pytorch.org/models/fasterrcnn_mobilenet_v3_large_fpn-fb6a3cc7.pth",
+          "full_sha256": "fb6a3cc702b1df54c18a44b26708cd083614211062d0c36d2ca7bf9270df3533",
+          "constructor_contract_preserved": true
+        },
+        "runtime_versions": {
+          "torch": "2.14.1+cu130",
+          "torchvision": "0.29.1+cu130",
+          "Pillow": "12.3.0",
+          "pycocotools": "2.0.11"
+        },
+        "batch_size": 2,
+        "amp": {
+          "S": true,
+          "R50": true,
+          "SR50": true
+        }
+      }
+    ],
+    "v3": [
+      {
+        "seed": 1701,
+        "source_commit": "1cb28ddc1311bb19e1344a4ea3bd0c45bdc2d355",
+        "result": {
+          "path": "E:\\FactoryOpsData\\detector-mosaic-356-seed1701\\result.json",
+          "sha256": "e030d2fefa9bc8054a8d238772a3c6cc00cb0d7aa5ff15a0272deb31a0346b9b",
+          "bytes": 5400
+        },
+        "preregistration": {
+          "path": "E:\\FactoryOpsData\\detector-mosaic-356-seed1701\\preregistration.json",
+          "sha256": "78a8d48350e4548e92ce9ca052ed946201bbc0d4914408b80d047b297afbbe4d",
+          "bytes": 97118
+        },
+        "config": {
+          "path": "C:\\Users\\LIMMM\\factory-ops-twin\\artifacts\\detector-pilot-mosaic-matrix-356\\seed-1701.json",
+          "sha256": "b8a3e88525de6b17b66f35fe964afc130aa563bacc6e64bceac8ff152eee01f7",
+          "bytes": 4246
+        },
+        "synthetic_release": {
+          "manifest_sha256": "69b1f2cc9efea586442dcc7dee996fc4c8ba79743d714b05d1b6c78fec0070e9",
+          "coco_sha256": "a0e2d79aab09dd5c1a62f617e7baa63f34530552a2b6e0b46d1ee9b85c5573f4",
+          "image_inventory_sha256": "9a1f872dd51207a987cc69ae2dcac6d6c4bc5cfdaae901fe079470962a2340a9",
+          "bounds_source_sha256": "4290397f568f9a2259f245b027b9dc8d68bd53aee82730d3f65bec2c1997d72b",
+          "producer_source_commit": "1e05a408e42e033dd23911532ac4f9fea8e505f2"
+        },
+        "real_registry": {
+          "train": [
+            {
+              "metadata_file": "loco-sub2-v1-train.json",
+              "metadata_sha256": "938f9b5915852df43d0c27c79dd059856ebb9e6cc27ea67378b6b9bb25c9b33d",
+              "image_ids_sha256": "d5bce11484d4425071ea2b905f7a225dcc03a433cd62352aaf59cdce2cad0431",
+              "image_count": 25
+            },
+            {
+              "metadata_file": "loco-sub5-v1-train.json",
+              "metadata_sha256": "88a374a39f4ed5ae125223fb6111522672ae70337a29b97570cdcb8c3b0daf23",
+              "image_ids_sha256": "ae21fdd333f57dc54f74f3a27cb6e87f944d9e3027a89bb52174c9a19457d624",
+              "image_count": 25
+            }
+          ],
+          "tuning_validation": [
+            {
+              "metadata_file": "loco-sub3-v1-train.json",
+              "metadata_sha256": "456db71791f356e929125ba636673769bda78fb4a8b77c0293bad4fceab8fa52",
+              "image_ids_sha256": "0a287ad6bbcdba65b980aa4625fd7724883a21b4e72ce00c3288092d02e0b5f3",
+              "image_count": 100
+            },
+            {
+              "metadata_file": "loco-sub4-v1-val.json",
+              "metadata_sha256": "e9e076f08cecba205c70cec9752e7415e73689aed04a64584c4f8428db5c73da",
+              "image_ids_sha256": "39bce2d4e80615ae014d5167cd6b800bc43f7cdb5820e556bf53343f41fc96f8",
+              "image_count": 100
+            }
+          ]
+        },
+        "weights": {
+          "weights_enum": "FasterRCNN_MobileNet_V3_Large_FPN_Weights.COCO_V1",
+          "weights_url": "https://download.pytorch.org/models/fasterrcnn_mobilenet_v3_large_fpn-fb6a3cc7.pth",
+          "full_sha256": "fb6a3cc702b1df54c18a44b26708cd083614211062d0c36d2ca7bf9270df3533",
+          "constructor_contract_preserved": true
+        },
+        "runtime_versions": {
+          "torch": "2.14.1+cu130",
+          "torchvision": "0.29.1+cu130",
+          "Pillow": "12.3.0",
+          "pycocotools": "2.0.11"
+        },
+        "batch_size": 2,
+        "amp": {
+          "S": true,
+          "R50": true,
+          "SR50": true
+        }
+      },
+      {
+        "seed": 1702,
+        "source_commit": "1cb28ddc1311bb19e1344a4ea3bd0c45bdc2d355",
+        "result": {
+          "path": "E:\\FactoryOpsData\\detector-mosaic-357-seed1702\\result.json",
+          "sha256": "2e5ad54b501f421fb4529cd760ec57bc2ab3547716ac0f3d0bbdb5989d2e47a1",
+          "bytes": 5416
+        },
+        "preregistration": {
+          "path": "E:\\FactoryOpsData\\detector-mosaic-357-seed1702\\preregistration.json",
+          "sha256": "ff54cb6f956304eb7cd1b89b5035c140acfb2e3543122406a488dfcb0b584ec2",
+          "bytes": 97078
+        },
+        "config": {
+          "path": "C:\\Users\\LIMMM\\factory-ops-twin\\artifacts\\detector-pilot-mosaic-matrix-356\\seed-1702.json",
+          "sha256": "3a7b28127b47cd3b2783cd24169ee05d43e984c49652e9f0a4d4b8f228bef45b",
+          "bytes": 4246
+        },
+        "synthetic_release": {
+          "manifest_sha256": "69b1f2cc9efea586442dcc7dee996fc4c8ba79743d714b05d1b6c78fec0070e9",
+          "coco_sha256": "a0e2d79aab09dd5c1a62f617e7baa63f34530552a2b6e0b46d1ee9b85c5573f4",
+          "image_inventory_sha256": "9a1f872dd51207a987cc69ae2dcac6d6c4bc5cfdaae901fe079470962a2340a9",
+          "bounds_source_sha256": "4290397f568f9a2259f245b027b9dc8d68bd53aee82730d3f65bec2c1997d72b",
+          "producer_source_commit": "1e05a408e42e033dd23911532ac4f9fea8e505f2"
+        },
+        "real_registry": {
+          "train": [
+            {
+              "metadata_file": "loco-sub2-v1-train.json",
+              "metadata_sha256": "938f9b5915852df43d0c27c79dd059856ebb9e6cc27ea67378b6b9bb25c9b33d",
+              "image_ids_sha256": "d5bce11484d4425071ea2b905f7a225dcc03a433cd62352aaf59cdce2cad0431",
+              "image_count": 25
+            },
+            {
+              "metadata_file": "loco-sub5-v1-train.json",
+              "metadata_sha256": "88a374a39f4ed5ae125223fb6111522672ae70337a29b97570cdcb8c3b0daf23",
+              "image_ids_sha256": "ae21fdd333f57dc54f74f3a27cb6e87f944d9e3027a89bb52174c9a19457d624",
+              "image_count": 25
+            }
+          ],
+          "tuning_validation": [
+            {
+              "metadata_file": "loco-sub3-v1-train.json",
+              "metadata_sha256": "456db71791f356e929125ba636673769bda78fb4a8b77c0293bad4fceab8fa52",
+              "image_ids_sha256": "0a287ad6bbcdba65b980aa4625fd7724883a21b4e72ce00c3288092d02e0b5f3",
+              "image_count": 100
+            },
+            {
+              "metadata_file": "loco-sub4-v1-val.json",
+              "metadata_sha256": "e9e076f08cecba205c70cec9752e7415e73689aed04a64584c4f8428db5c73da",
+              "image_ids_sha256": "39bce2d4e80615ae014d5167cd6b800bc43f7cdb5820e556bf53343f41fc96f8",
+              "image_count": 100
+            }
+          ]
+        },
+        "weights": {
+          "weights_enum": "FasterRCNN_MobileNet_V3_Large_FPN_Weights.COCO_V1",
+          "weights_url": "https://download.pytorch.org/models/fasterrcnn_mobilenet_v3_large_fpn-fb6a3cc7.pth",
+          "full_sha256": "fb6a3cc702b1df54c18a44b26708cd083614211062d0c36d2ca7bf9270df3533",
+          "constructor_contract_preserved": true
+        },
+        "runtime_versions": {
+          "torch": "2.14.1+cu130",
+          "torchvision": "0.29.1+cu130",
+          "Pillow": "12.3.0",
+          "pycocotools": "2.0.11"
+        },
+        "batch_size": 2,
+        "amp": {
+          "S": true,
+          "R50": true,
+          "SR50": true
+        }
+      },
+      {
+        "seed": 1703,
+        "source_commit": "1cb28ddc1311bb19e1344a4ea3bd0c45bdc2d355",
+        "result": {
+          "path": "E:\\FactoryOpsData\\detector-mosaic-358-seed1703\\result.json",
+          "sha256": "944b00bb2154fc74b6d1a9ab935087f2b3100c84c7bc31e79966b6709ed9fb24",
+          "bytes": 5379
+        },
+        "preregistration": {
+          "path": "E:\\FactoryOpsData\\detector-mosaic-358-seed1703\\preregistration.json",
+          "sha256": "c441e83d742a13e7c3cfcf77a1b8f05de41ab5768e5b990cf73d72f260efefb1",
+          "bytes": 97132
+        },
+        "config": {
+          "path": "C:\\Users\\LIMMM\\factory-ops-twin\\artifacts\\detector-pilot-mosaic-matrix-356\\seed-1703.json",
+          "sha256": "05be16cea13ac44a27e77596862a245a6de8053b97b5121913338890ff517c67",
+          "bytes": 4246
+        },
+        "synthetic_release": {
+          "manifest_sha256": "69b1f2cc9efea586442dcc7dee996fc4c8ba79743d714b05d1b6c78fec0070e9",
+          "coco_sha256": "a0e2d79aab09dd5c1a62f617e7baa63f34530552a2b6e0b46d1ee9b85c5573f4",
+          "image_inventory_sha256": "9a1f872dd51207a987cc69ae2dcac6d6c4bc5cfdaae901fe079470962a2340a9",
+          "bounds_source_sha256": "4290397f568f9a2259f245b027b9dc8d68bd53aee82730d3f65bec2c1997d72b",
+          "producer_source_commit": "1e05a408e42e033dd23911532ac4f9fea8e505f2"
+        },
+        "real_registry": {
+          "train": [
+            {
+              "metadata_file": "loco-sub2-v1-train.json",
+              "metadata_sha256": "938f9b5915852df43d0c27c79dd059856ebb9e6cc27ea67378b6b9bb25c9b33d",
+              "image_ids_sha256": "d5bce11484d4425071ea2b905f7a225dcc03a433cd62352aaf59cdce2cad0431",
+              "image_count": 25
+            },
+            {
+              "metadata_file": "loco-sub5-v1-train.json",
+              "metadata_sha256": "88a374a39f4ed5ae125223fb6111522672ae70337a29b97570cdcb8c3b0daf23",
+              "image_ids_sha256": "ae21fdd333f57dc54f74f3a27cb6e87f944d9e3027a89bb52174c9a19457d624",
+              "image_count": 25
+            }
+          ],
+          "tuning_validation": [
+            {
+              "metadata_file": "loco-sub3-v1-train.json",
+              "metadata_sha256": "456db71791f356e929125ba636673769bda78fb4a8b77c0293bad4fceab8fa52",
+              "image_ids_sha256": "0a287ad6bbcdba65b980aa4625fd7724883a21b4e72ce00c3288092d02e0b5f3",
+              "image_count": 100
+            },
+            {
+              "metadata_file": "loco-sub4-v1-val.json",
+              "metadata_sha256": "e9e076f08cecba205c70cec9752e7415e73689aed04a64584c4f8428db5c73da",
+              "image_ids_sha256": "39bce2d4e80615ae014d5167cd6b800bc43f7cdb5820e556bf53343f41fc96f8",
+              "image_count": 100
+            }
+          ]
+        },
+        "weights": {
+          "weights_enum": "FasterRCNN_MobileNet_V3_Large_FPN_Weights.COCO_V1",
+          "weights_url": "https://download.pytorch.org/models/fasterrcnn_mobilenet_v3_large_fpn-fb6a3cc7.pth",
+          "full_sha256": "fb6a3cc702b1df54c18a44b26708cd083614211062d0c36d2ca7bf9270df3533",
+          "constructor_contract_preserved": true
+        },
+        "runtime_versions": {
+          "torch": "2.14.1+cu130",
+          "torchvision": "0.29.1+cu130",
+          "Pillow": "12.3.0",
+          "pycocotools": "2.0.11"
+        },
+        "batch_size": 2,
+        "amp": {
+          "S": true,
+          "R50": true,
+          "SR50": true
+        }
+      }
+    ]
+  },
+  "runtime": {
+    "python": "3.12.13 (main, Apr  7 2026, 20:53:22) [MSC v.1944 64 bit (AMD64)]",
+    "torch": "2.14.1+cu130",
+    "cpu_checkpoint_load": true
+  },
+  "claim_limits": {
+    "fresh_heldout_performance": false,
+    "label_cost_reduction": false,
+    "pure_exposure_effect": false,
+    "equal_compute_or_exposure": false,
+    "causal_attribution_of_metric_difference": false,
+    "mosaic_only_effect_claimed": false,
+    "interpretation": "development observations; not an isolated mosaic effect",
+    "R50_control_failure_cause_identified": false
+  },
+  "exporter": {
+    "path": "C:\\Users\\LIMMM\\factory-ops-twin\\scripts\\perception\\compare_mosaic_tuning.py",
+    "sha256": "d7d6c2fe051ebadb680d90bff61495756e9aaa49cc10aa629be7d17bae78ff08",
+    "bytes": 35660
+  },
+  "outputs": {
+    "csv": {
+      "path": "C:\\Users\\LIMMM\\factory-ops-twin\\artifacts\\detector-mosaic-summary-366\\comparison.csv",
+      "sha256": "d4785d433a76818a74ecc6e4203aef8e0e30c03fee6ef688f353e4807eccc407",
+      "bytes": 8673
+    },
+    "svg": {
+      "path": "C:\\Users\\LIMMM\\factory-ops-twin\\artifacts\\detector-mosaic-summary-366\\comparison.svg",
+      "sha256": "446c95d4885f923580e88658b4c2c11c4fc99bd9e61d9677130ecec44e85f3b1",
+      "bytes": 4648
+    },
+    "png": {
+      "path": "C:\\Users\\LIMMM\\factory-ops-twin\\artifacts\\detector-mosaic-summary-366\\comparison.png",
+      "sha256": "c413ca9c98983a170b7af9f50ffb0f8caa0e3086ee40bfab6887b18a48aac7d1",
+      "bytes": 43789
+    }
+  }
+}
