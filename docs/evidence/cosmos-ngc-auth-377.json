@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "checked_utc": "2026-10-25T10:06:05.5731707Z",
+  "image": "nvcr.io/nim/nvidia/cosmos3:2.1.0",
+  "scope": "Credential authentication and registry manifest metadata only; no image layers, models or GPU execution.",
+  "credential_decrypted": true,
+  "authentication_http_status": 200,
+  "manifest_http_status": 200,
+  "image_digest": "sha256:2add946b316a0baf72a15be4da85132d127c34da22d2fe4e9c4bd146ad8c4020",
+  "credentials_or_tokens_logged": false,
+  "status": "authenticated_manifest_accessible",
+  "manifest_bytes": 647,
+  "media_type": "application/vnd.oci.image.index.v1+json"
+}

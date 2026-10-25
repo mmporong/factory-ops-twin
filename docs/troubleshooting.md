@@ -1811,3 +1811,7 @@ v4 호스트 준비 생성 중 `$Host`를 경로 변수로 사용해 PowerShell 
 ## FOT-232 — PowerShell 함수 호출 뒤 남은 native 종료 코드의 오판
 
 마감 확인에서 JSON을 정상 반환한 `Get-GpuLeaseStatus.ps1` 호출 뒤 `$LASTEXITCODE`를 검사해 lease 조회 실패로 잘못 판정했다. 이 helper는 PowerShell 결과 객체를 반환하며 native 종료 코드를 설정하는 계약이 없다. 이전 native 명령의 코드와 혼동하지 않도록 별도 `pwsh -NoProfile -File ... -AsJson`의 종료 코드를 즉시 저장하고, JSON의 `metadataError/nvidiaSmiError`와 필수 필드를 함께 확인했다. 이후 완료 lease·소유 임시listener0·닫힌3개GPU receipt를 확인해 마감 신호를 기록했다. GPU 재실행·새 자원 생성은 없었다. [실제 마감 상태](evidence/factoryops-closeout-20261025.json)
+
+## FOT-233 — DPAPI 암호문 파일 끝 줄바꿈의 변환 오류
+
+NGC 인증376은 저장 파일을 `Get-Content -Raw`로 읽어 `ConvertTo-SecureString`에 전달하다 FormatException으로 끝났다. 값은 출력하지 않고 형식만 확인한 결과 원문718자·Trim 뒤716자의 정상 hex/DPAPI payload였고, Set-Content의 끝 CRLF가 원인이었다. 파일을 고치거나 키를 다시 발급하지 않고 암호문에 Trim을 적용했다. 후속377은 복호화·NGC 인증HTTP200·Cosmos2.1.0 manifest HTTP200을 확인했다. 키/토큰/인증응답 본문은 기록하지 않았으며 image layer·모델·GPU 실행은 없었다. [인증과 실제 manifest index digest](evidence/cosmos-ngc-auth-377.json)

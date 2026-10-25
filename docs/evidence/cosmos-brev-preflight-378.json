@@ -1,0 +1,107 @@
+{
+  "schema_version": 1,
+  "status": "passed_read_only",
+  "checked_at": "2026-10-25T10:12:05.663275+00:00",
+  "scope": "Brev catalog/control-plane preflight only; no VM lifecycle or SSH action",
+  "commands": [
+    "/home/llroad/.local/bin/brev search --stoppable --gpu-name L40S --json",
+    "/home/llroad/.local/bin/brev healthcheck",
+    "/home/llroad/.local/bin/brev ls --json"
+  ],
+  "observed": {
+    "brev_healthcheck": "Healthy!",
+    "targets": [
+      {
+        "name": "factory-ops-scale-234",
+        "id": "fy0i3jtz5",
+        "type": "gpu-l40s-d.2gpu-64vcpu-384gb",
+        "status": "STOPPED",
+        "build_status": "COMPLETED",
+        "shell_status": "NOT READY",
+        "health_status": "HEALTHY",
+        "provider": "nebius",
+        "gpu_count": 2,
+        "vram_per_gpu_gb": 48,
+        "ram_gb": 384,
+        "stoppable": true,
+        "rebootable": false,
+        "catalog_price_per_hour_usd": 5.48256,
+        "catalog_disk_price_per_gb_month_usd": 0.12264
+      },
+      {
+        "name": "factory-ops-twin-g0",
+        "id": "evica0x9l",
+        "type": "g6e.2xlarge",
+        "status": "STOPPED",
+        "build_status": "COMPLETED",
+        "shell_status": "NOT READY",
+        "health_status": "UNHEALTHY",
+        "provider": "aws",
+        "gpu_count": 1,
+        "vram_per_gpu_gb": 48,
+        "ram_gb": 64,
+        "stoppable": true,
+        "rebootable": true,
+        "catalog_price_per_hour_usd": 2.690496,
+        "catalog_disk_price_per_gb_month_usd": 0.11972000000000001
+      }
+    ],
+    "other_workspaces": [
+      {
+        "name": "rby1-assembly-20261025",
+        "id": "d1gwdve58",
+        "status": "RUNNING",
+        "health_status": "HEALTHY",
+        "instance_type": "l40s-48gb.1x"
+      },
+      {
+        "name": "rl-triage-e2e-20261024-c9f4",
+        "id": "3655a80oo",
+        "status": "STOPPED",
+        "health_status": "HEALTHY",
+        "instance_type": "l40s-48gb.1x"
+      }
+    ],
+    "prior_scale_recovery": {
+      "start_transition_observed": "UNHEALTHY / COMPLETED / READY",
+      "sdk_started": false,
+      "stop_initially_remained": "STOPPING",
+      "rate_limit_observed": true,
+      "actual_stopped_later": true,
+      "poll_interval_next_seconds": 30
+    },
+    "scope_mismatch": "The current ls response shows rby1-assembly-20261025 RUNNING, while the task premise said both other projects were stopped. No action was taken."
+  },
+  "inference": {
+    "recommended_existing_vm": "factory-ops-scale-234 / fy0i3jtz5",
+    "reason": "It is currently STOPPED/COMPLETED/NOT READY/HEALTHY and its catalog row is stoppable with ample host RAM. g0 is cheaper and single-GPU but currently UNHEALTHY. The scale VM must expose only one L40S to Cosmos.",
+    "not_a_start_approval": true,
+    "cost_interpretation": "Prices are current catalog observations for the instance types, not settled billing or a total-run estimate."
+  },
+  "next_start_conditions": [
+    "Reconcile the unexpected RUNNING rby1 workspace ownership/status before shared cloud batch admission.",
+    "Arm an independent WSL user-systemd Stop timer before start; do not combine systemd-run --on-active with --wait. Keep the owned WSL keepalive and record its PID/argv.",
+    "Freshly require one unique STOPPED/COMPLETED target and healthy control-plane state immediately before start.",
+    "After start, require RUNNING/COMPLETED/READY/HEALTHY before SDK, container pull, or inference. If it becomes UNHEALTHY as in run 239, skip SDK and begin bounded recovery.",
+    "Poll lifecycle no faster than every 30 seconds; command acceptance or STOPPING is not proof of shutdown. Retain the watchdog until actual STOPPED is observed, then verify timer/service inactive and keepalive gone.",
+    "Use nvcr.io/nim/nvidia/cosmos3:2.1.0 with generator/nano/fp8/latency/layer and expose exactly one L40S.",
+    "Before model download, verify NGC Catalog access and applicable license acceptance without logging credentials; run the NIM pre-download profile check and record the selected profile ID/image digest.",
+    "Verify actual free VRAM, host RAM, disk/cache space, Docker and NVIDIA Container Toolkit. The selected layer profile Transfer floor must be met on one device.",
+    "Limit the smoke to the frozen 121-frame single clip and retain source/output hashes, runtime, peak VRAM, profile metadata, and actual STOPPED evidence."
+  ],
+  "prohibited_actions_confirmed": [
+    "no start",
+    "no stop",
+    "no reset",
+    "no delete",
+    "no create",
+    "no ssh",
+    "no timer change",
+    "no other-project action",
+    "no credential read or output"
+  ],
+  "sources": {
+    "hash_manifest": "C:\\Users\\LIMMM\\factory-ops-twin\\artifacts\\cosmos-brev-preflight-378\\source-hashes.json",
+    "hash_manifest_sha256": "55f50a173d26446a42f55c98d34e927179be1c0e830a9592cc31db20a90cb6ed"
+  }
+}

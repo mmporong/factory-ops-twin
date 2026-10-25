@@ -186,3 +186,11 @@ $detectorPython = 'E:/FactoryOpsData/venvs/factoryops-detector-py312/Scripts/pyt
 현재 클라우드 조회에서 FactoryOps g0와234는 실제 STOPPED다. 새 VM·모델/컨테이너 다운로드·약관 수락·NGC 자격증명 조회·GPU 변환은 하지 않았다. 실제 실행에는 NGC entitlement/약관, 독립 Stop 복구, 컨테이너 digest/profile·메모리·health/schema 확인이 남아 있다. [입력·API·실행 gate](evidence/cosmos-smoke-preparation-346.json) · [공식 Transfer API](https://docs.nvidia.com/nim/cosmos/latest/transfer.html)
 
 NGC API 키는 NGC Catalog의 모델·컨테이너 다운로드에 쓰는 인증 수단이며 Brev 계산 크레딧과 별개다. Windows의 process/user/machine 환경 변수에는 준비된 `NGC_API_KEY`가 없음을 값 출력 없이 확인했다. 다른 자격증명 저장소를 검색하지 않았다. 실행 준비 시 [NGC 계정의 API Keys](https://org.ngc.nvidia.com/account/api-keys)에서 개인 키를 만들고 필요한 `NGC Catalog` 권한을 선택한다. 실제 계정 권한·모델 접근 약관·NIM 이용 조건을 확인하며, 키는 저장소·로그·채팅에 기록하지 않는다. [공식 키 생성 안내](https://docs.nvidia.com/ngc/latest/ngc-user-guide.html#generating-ngc-api-keys)
+
+## 키 인증 이후의 단일 클라우드 시험
+
+377에서 로컬DPAPI 파일을 사용한NGC 인증과 Cosmos3 2.1.0 manifest 접근이 모두HTTP200이었다. image index digest는 `sha256:2add946b316a0baf72a15be4da85132d127c34da22d2fe4e9c4bd146ad8c4020`이다. 키는 Windows 영구 환경변수·argv·저장소·로그에 넣지 않고 계정의 암호문에서 읽어 자식 stdin과 SSH stdin으로 보낸다. 원격 tmpfs의 임시 키·Docker 인증정보·컨테이너 환경은 같은 실행의 종료 처리에서 제거한다. 사용자는 이 버전의 NVIDIA Software License·AI Product Terms·OpenMDW-1.1과 기존VM의1개 정지입력 시험에 동의했다. [인증](evidence/cosmos-ngc-auth-377.json) · [승인 범위·동결 입력·실행 소스](evidence/cosmos-execution-plan-379.json)
+
+378의 실제 제어 API는 Healthy였으며234는 STOPPED/HEALTHY, g0는 STOPPED/UNHEALTHY였다. 기존234의현재카탈로그는2×L40S·384GiB·Stop지원·$5.48256/시간이다. Cosmos에는 GPU0 한 장만 노출하고 text/video guardrail을 모두 offload하는 layer profile을 요청한다. 고정346 입력은 보존하며 실제379의 selector가 실행 계약이다. 독립Stop timer7200초를 시작 전에 검증하고 실행 뒤 실제STOPPED와timer/keepalive 종료를 확인한다.2시간 계산 비용은 약$10.97의카탈로그 추정이며 저장비·실제정산·중지지연을 보장하는 상한이 아니다. [현재 제어상태·가격·보호조건](evidence/cosmos-brev-preflight-378.json)
+
+profile preflight는 키 없이 수행하며 이를 통과하기 전 모델을 내려받지 않는다. 추론은 정지121frame1clip·seed2026으로 한정하고 원본 bbox를 변환 출력의 승인 라벨로 복사하지 않는다. 다른프로젝트 RBY1의실행은 분리된VM이므로 유지한다. 새 환경 생성·reset·다른환경 정지는 하지 않는다.

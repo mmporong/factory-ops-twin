@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "recorded_utc": "2026-10-25T10:21:14.772323+00:00",
+  "scope": "one static 121-frame Cosmos compatibility smoke only",
+  "user_license_consent": true,
+  "consent_source": "explicit same-conversation approval for Cosmos3 2.1.0 licenses and one existing-VM smoke",
+  "governing_terms": "https://catalog.ngc.nvidia.com/orgs/nim/nvidia/containers/cosmos3/2.1.0/governing-terms",
+  "new_vm_creation_allowed": false,
+  "target_name": "factory-ops-scale-234",
+  "target_id": "fy0i3jtz5",
+  "image": "nvcr.io/nim/nvidia/cosmos3@sha256:2add946b316a0baf72a15be4da85132d127c34da22d2fe4e9c4bd146ad8c4020",
+  "single_device_index": 0,
+  "selector": "model_type=generator,model_variant=nano,precision=fp8,profile=latency,offload=layer,text_guard_offload=offloaded,video_guard_offload=offloaded,n_gpus=1",
+  "hard_stop_seconds": 7200,
+  "catalog_hourly_usd": 5.48256,
+  "compute_envelope_estimate_usd": 10.96512,
+  "settled_billing_guaranteed": false,
+  "input_bundle_sha256": "b158dd2dc005b189e00406a9cda8c28a7c15c7e293a124d3c6896fcd6862554f",
+  "original_cpu_contract_346": "preserved as source intent; this execution selector explicitly offloads both guardrails",
+  "other_project_policy": "distinct existing VM; no operation on RBY1 or RL instances",
+  "models_downloaded": false,
+  "source_files": [
+    {
+      "path": "scripts/brev/run-cosmos-smoke.sh",
+      "sha256": "7e10850b4a0daa5a11930177960adac8eecad0587b7f6c73f13d0bd2cd65efcc"
+    },
+    {
+      "path": "scripts/brev/run_cosmos_smoke.py",
+      "sha256": "b10d9865fe8db3681e9cd35806def0b53788e2f436953589e8ec37b1a9860248"
+    },
+    {
+      "path": "scripts/brev/start_cosmos_smoke.ps1",
+      "sha256": "7a0e22ad7697ea8cd69f54aa53c7d342eee32ab056074f246662d523655775f8"
+    },
+    {
+      "path": "scripts/perception/probe_ngc_access.ps1",
+      "sha256": "4dc14b5f494ea8a082682c5740734eb3b280d201ba219273b05db4223c544387"
+    }
+  ]
+}
