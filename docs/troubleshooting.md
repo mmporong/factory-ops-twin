@@ -1849,3 +1849,9 @@ Stop 요청 후 실제STOPPED는19:31:29 KST에 확인했고 timer/service inact
 383의 후속 수신은 `du` 숫자 stdout 뒤에 합쳐진 known-host stderr 경고를 파일 크기로 해석해 실패했다. 이 수신 오류를 최초 디스크 부족과 구분한다. 원격 hardware/cleanup JSON은 회수하지 못했고 모델 실행이나 라벨 승인 근거로 사용하지 않는다. 임시 키는 tmpfs에만 전달했으며 실제Stop으로 휘발 메모리가 종료된 것을 확인했다.
 
 384의 `_ssh`는 성공 stdout만 데이터로 반환하고 실패에는 stdout/stderr 진단을 보존한다. 성공 숫자와 경고가 함께 있는 경우·실패 stderr 보존의2회귀가 통과했다. WSL 중간 셸을 제거한 전달에 맞춰 원격 find 괄호를 단일 셸 escape로 바꿨다. 이 수정을 실제 클라우드 수신 성공으로 표현하지 않으며 다음 결과로 확인한다. [383 수신 실패](evidence/cosmos-cloud-383.json)
+
+## FOT-240 — 기존 2GPU 환경도 authored 디스크 여유에 못 미침
+
+384에서 기본 SSH 접근·GPU0 여유45,458MiB·호스트 사용 가능 RAM400,486,203,392바이트를 확인했다. 디스크 여유100,756,672,512바이트(93.84GiB)는 authored100GiB 기준보다 부족했다.384는 모델 다운로드 전에 종료됐고1076바이트의 hardware/profile/cleanup 진단을 회수했다. 이 수신에서 이전 SSH 경고 파싱 수정의 실제 동작을 확인했다. 원격 키·소유 컨테이너 부재와20:36:54 KST의 실제STOPPED·감시 종료를 확인했다. [384 근거](evidence/cosmos-cloud-384.json)
+
+NGC의 amd64 압축 image 표시는8.76GB지만 model/cache·materialization·scratch의 정확한 공개 byte 크기는 확인하지 못했다. 압축 image 크기만으로 최종 여유를 보장하지 않는다.385는100GiB 기준을 유지하고 필요할 때 표준 pip 캐시와 unused BuildKit 캐시만 정리한다. pip cache dir의 canonical 경로·HOME 내부·symlink 조건을 확인하며 검증이 거절되면 해당 정리를 생략한다. 표준 경로·다른 경로·외부 symlink의3개 CPU fixture가 통과했다. 진단이나 선택 정리의 실패는 exit/log로 기록하고 최종 입장은 실제 여유로 판정한다. 이미지·컨테이너·볼륨·설치 패키지·모델 가중치·실험 데이터는 정리 대상에 넣지 않는다. [385 계약](evidence/cosmos-execution-plan-385.json)

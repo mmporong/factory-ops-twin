@@ -4,7 +4,7 @@ umask 077
 
 batch_id="${1:-379}"
 target_profile="${2:-scale234}"
-[[ "$batch_id" =~ ^(379|380|381|382|383|384)$ ]] || exit 2
+[[ "$batch_id" =~ ^(379|380|381|382|383|384|385)$ ]] || exit 2
 [[ "$target_profile" =~ ^(scale234|g0)$ ]] || exit 2
 work="$HOME/workspace/factoryops-cosmos-$batch_id"
 out="$work/output"
@@ -97,8 +97,131 @@ record={'target_profile':profile,'visible_host_gpus':len(gpus),'expected_host_gp
 (out/'profile.json').write_text(json.dumps({'target_profile':profile,'selector':selector},indent=2)+'\n')
 assert record['selected_free_vram_mib']>=minimum_vram_gib*1024,'insufficient free per-device VRAM'
 assert mem['MemAvailable']>=minimum_ram_gib*1024**3,'insufficient available host RAM'
-assert free_disk>=100*1024**3,'insufficient authored disk reserve'
 PY
+
+minimum_disk_bytes=$((100 * 1024 * 1024 * 1024))
+free_before=$(df -B1 --output=avail "$work" | tail -n 1 | tr -d ' ')
+if (( free_before < minimum_disk_bytes )); then
+  phase storage_preparation
+  df -B1 -T > "$out/storage-filesystems-before.txt"
+  set +e
+  timeout --signal=TERM --kill-after=10s 120s docker system df > "$out/docker-system-df-before.txt" 2>&1
+  docker_system_df_before_exit=$?
+  timeout --signal=TERM --kill-after=10s 120s python3 -m pip cache info > "$out/pip-cache-info-before.txt" 2>&1
+  pip_cache_info_before_exit=$?
+  timeout --signal=TERM --kill-after=10s 120s python3 -m pip cache dir > "$out/pip-cache-dir.txt"
+  pip_cache_dir_exit=$?
+  set -e
+  set +e
+  pip_path_allowed=$(python3 - "$out" "$HOME" "$pip_cache_dir_exit" <<'PY'
+import json,pathlib,sys
+def validate_pip_cache_path(home_value,reported_value):
+    home=pathlib.Path(home_value).resolve()
+    reported=pathlib.Path(reported_value).expanduser()
+    standard=home/'.cache'/'pip'
+    record={'reported_path':str(reported),'standard_path':str(standard),
+            'reported_is_symlink':reported.is_symlink(),'allowed':False}
+    try:
+        reported_resolved=reported.resolve()
+        standard_resolved=standard.resolve()
+        reported_resolved.relative_to(home)
+        record['reported_resolved']=str(reported_resolved)
+        record['standard_resolved']=str(standard_resolved)
+        record['inside_home']=True
+        record['canonical_standard_match']=reported_resolved==standard_resolved
+        record['allowed']=(not reported.is_symlink() and reported_resolved==standard_resolved)
+    except (OSError,ValueError) as error:
+        record['validation_error']=type(error).__name__
+    return record
+out=pathlib.Path(sys.argv[1])
+cache_dir_exit=int(sys.argv[3])
+cache_dir_file=out/'pip-cache-dir.txt'
+if cache_dir_exit==0 and cache_dir_file.is_file() and cache_dir_file.read_text().strip():
+    record=validate_pip_cache_path(sys.argv[2],cache_dir_file.read_text().strip())
+else:
+    record={'reported_path':None,'standard_path':str(pathlib.Path(sys.argv[2]).resolve()/'.cache'/'pip'),
+            'reported_is_symlink':None,'allowed':False,
+            'validation_error':'pip_cache_dir_command_failed_or_empty'}
+record['cache_dir_command_exit']=cache_dir_exit
+(out/'pip-cache-verification.json').write_text(json.dumps(record,indent=2)+'\n')
+print('true' if record['allowed'] else 'false')
+PY
+  )
+  pip_pathguard_exit=$?
+  set -e
+  pip_purge_attempted=false
+  pip_purge_exit=-1
+  if [[ "$pip_pathguard_exit" -eq 0 && "$pip_path_allowed" == true ]]; then
+    pip_purge_attempted=true
+    set +e
+    timeout --signal=TERM --kill-after=10s 120s python3 -m pip cache purge > "$out/pip-cache-purge.log" 2>&1
+    pip_purge_exit=$?
+    set -e
+  fi
+  free_after_pip=$(df -B1 --output=avail "$work" | tail -n 1 | tr -d ' ')
+  builder_prune_attempted=false
+  builder_prune_exit=-1
+  if (( free_after_pip < minimum_disk_bytes )); then
+    builder_prune_attempted=true
+    set +e
+    timeout --signal=TERM --kill-after=10s 120s docker builder prune --force --all --keep-storage 0GB > "$out/docker-builder-prune.log" 2>&1
+    builder_prune_exit=$?
+    set -e
+  fi
+  free_after=$(df -B1 --output=avail "$work" | tail -n 1 | tr -d ' ')
+  disk_diagnostics_attempted=false
+  workspace_du_exit=-1
+  cache_du_exit=-1
+  if (( free_after < minimum_disk_bytes )); then
+    disk_diagnostics_attempted=true
+    set +e
+    timeout --signal=TERM --kill-after=10s 60s du -x -B1 -d2 "$HOME/workspace" > "$out/workspace-du-depth2.txt" 2>&1
+    workspace_du_exit=$?
+    timeout --signal=TERM --kill-after=10s 60s du -x -B1 -d2 "$HOME/.cache" > "$out/home-cache-du-depth2.txt" 2>&1
+    cache_du_exit=$?
+    set -e
+  fi
+  df -B1 -T > "$out/storage-filesystems-after.txt"
+  set +e
+  timeout --signal=TERM --kill-after=10s 120s docker system df > "$out/docker-system-df-after.txt" 2>&1
+  docker_system_df_after_exit=$?
+  timeout --signal=TERM --kill-after=10s 120s python3 -m pip cache info > "$out/pip-cache-info-after.txt" 2>&1
+  pip_cache_info_after_exit=$?
+  set -e
+  python3 - "$out" "$minimum_disk_bytes" "$free_before" "$free_after_pip" "$free_after" \
+    "$pip_purge_attempted" "$pip_purge_exit" "$builder_prune_attempted" "$builder_prune_exit" \
+    "$disk_diagnostics_attempted" "$workspace_du_exit" "$cache_du_exit" \
+    "$docker_system_df_before_exit" "$docker_system_df_after_exit" \
+    "$pip_cache_info_before_exit" "$pip_cache_info_after_exit" \
+    "$pip_cache_dir_exit" "$pip_pathguard_exit" "$pip_path_allowed" <<'PY'
+import datetime,json,pathlib,sys
+out=pathlib.Path(sys.argv[1])
+record={'schema_version':1,'recorded_utc':datetime.datetime.now(datetime.timezone.utc).isoformat(),
+        'minimum_free_bytes':int(sys.argv[2]),'before_free_bytes':int(sys.argv[3]),
+        'after_pip_free_bytes':int(sys.argv[4]),'after_free_bytes':int(sys.argv[5]),
+        'pip_cache_purge':{'attempted':sys.argv[6]=='true','exit_code':int(sys.argv[7]),
+                           'path_allowed':sys.argv[19]=='true','log':'pip-cache-purge.log'},
+        'docker_builder_prune':{'attempted':sys.argv[8]=='true','exit_code':int(sys.argv[9]),
+                                'keep_storage':'0GB','all_unused':True,'log':'docker-builder-prune.log'},
+        'insufficient_space_diagnostics':{'attempted':sys.argv[10]=='true',
+                'workspace_du_exit_code':int(sys.argv[11]),'cache_du_exit_code':int(sys.argv[12]),
+                'workspace_log':'workspace-du-depth2.txt','cache_log':'home-cache-du-depth2.txt',
+                'depth':2,'same_filesystem':True},
+        'diagnostics':{
+                'docker_system_df_before':{'exit_code':int(sys.argv[13]),'log':'docker-system-df-before.txt'},
+                'docker_system_df_after':{'exit_code':int(sys.argv[14]),'log':'docker-system-df-after.txt'},
+                'pip_cache_info_before':{'exit_code':int(sys.argv[15]),'log':'pip-cache-info-before.txt'},
+                'pip_cache_info_after':{'exit_code':int(sys.argv[16]),'log':'pip-cache-info-after.txt'},
+                'pip_cache_dir':{'exit_code':int(sys.argv[17]),'log':'pip-cache-dir.txt'},
+                'pip_pathguard':{'exit_code':int(sys.argv[18]),'log':'pip-cache-verification.json',
+                                 'path_allowed':sys.argv[19]=='true'}},
+        'prohibited_cleanup_not_run':['docker image prune','docker container prune','docker volume prune',
+                                      'dataset deletion','model weight deletion','installed package deletion']}
+record['passed']=record['after_free_bytes']>=record['minimum_free_bytes']
+(out/'storage-preparation.json').write_text(json.dumps(record,indent=2)+'\n')
+PY
+  test "$free_after" -ge "$minimum_disk_bytes"
+fi
 nvidia-smi --query-gpu=timestamp,index,memory.used,utilization.gpu --format=csv --loop=5 > "$out/gpu-samples.csv" &
 sampler_pid=$!
 

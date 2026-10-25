@@ -1,0 +1,256 @@
+{
+  "status": "failed",
+  "started_at": "2026-10-25T11:21:53.458686+00:00",
+  "finished_at": "2026-10-25T11:36:54.850986+00:00",
+  "initial_target": {
+    "name": "factory-ops-scale-234",
+    "id": "fy0i3jtz5",
+    "status": "STOPPED",
+    "build_status": "COMPLETED",
+    "shell_status": "NOT READY",
+    "health_status": "HEALTHY",
+    "instance_type": "gpu-l40s-d.2gpu-64vcpu-384gb",
+    "instance_kind": "gpu",
+    "gpu": "L40S"
+  },
+  "readiness_polls": [
+    {
+      "at": "2026-10-25T11:22:11.574657+00:00",
+      "status": "STOPPED",
+      "build_status": "COMPLETED",
+      "shell_status": "NOT READY",
+      "health_status": "UNAVAILABLE"
+    },
+    {
+      "at": "2026-10-25T11:22:44.911361+00:00",
+      "status": "STARTING",
+      "build_status": "COMPLETED",
+      "shell_status": "NOT READY",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-25T11:23:18.395285+00:00",
+      "status": "STARTING",
+      "build_status": "COMPLETED",
+      "shell_status": "NOT READY",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-25T11:23:51.827726+00:00",
+      "status": "STARTING",
+      "build_status": "COMPLETED",
+      "shell_status": "NOT READY",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-25T11:24:25.664193+00:00",
+      "status": "STARTING",
+      "build_status": "COMPLETED",
+      "shell_status": "NOT READY",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-25T11:24:59.135339+00:00",
+      "status": "STARTING",
+      "build_status": "COMPLETED",
+      "shell_status": "NOT READY",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-25T11:25:32.540744+00:00",
+      "status": "STARTING",
+      "build_status": "COMPLETED",
+      "shell_status": "NOT READY",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-25T11:26:05.966197+00:00",
+      "status": "STARTING",
+      "build_status": "COMPLETED",
+      "shell_status": "NOT READY",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-25T11:26:39.352053+00:00",
+      "status": "STARTING",
+      "build_status": "COMPLETED",
+      "shell_status": "NOT READY",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-25T11:27:12.787985+00:00",
+      "status": "STARTING",
+      "build_status": "COMPLETED",
+      "shell_status": "NOT READY",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-25T11:27:46.169785+00:00",
+      "status": "STARTING",
+      "build_status": "COMPLETED",
+      "shell_status": "NOT READY",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-25T11:28:19.587005+00:00",
+      "status": "STARTING",
+      "build_status": "COMPLETED",
+      "shell_status": "NOT READY",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-25T11:28:53.123629+00:00",
+      "status": "STARTING",
+      "build_status": "COMPLETED",
+      "shell_status": "NOT READY",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-25T11:29:26.466739+00:00",
+      "status": "STARTING",
+      "build_status": "COMPLETED",
+      "shell_status": "NOT READY",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-25T11:29:59.897307+00:00",
+      "status": "RUNNING",
+      "build_status": "COMPLETED",
+      "shell_status": "READY",
+      "health_status": "HEALTHY"
+    }
+  ],
+  "stop_polls": [
+    {
+      "at": "2026-10-25T11:31:19.912196+00:00",
+      "status": "RUNNING",
+      "health_status": "HEALTHY"
+    },
+    {
+      "at": "2026-10-25T11:31:53.252218+00:00",
+      "status": "STOPPING",
+      "health_status": "HEALTHY"
+    },
+    {
+      "at": "2026-10-25T11:32:26.855473+00:00",
+      "status": "STOPPING",
+      "health_status": "HEALTHY"
+    },
+    {
+      "at": "2026-10-25T11:33:00.267106+00:00",
+      "status": "STOPPING",
+      "health_status": "HEALTHY"
+    },
+    {
+      "at": "2026-10-25T11:33:33.618415+00:00",
+      "status": "STOPPING",
+      "health_status": "HEALTHY"
+    },
+    {
+      "at": "2026-10-25T11:34:06.972883+00:00",
+      "status": "STOPPING",
+      "health_status": "HEALTHY"
+    },
+    {
+      "at": "2026-10-25T11:34:40.394054+00:00",
+      "status": "STOPPING",
+      "health_status": "HEALTHY"
+    },
+    {
+      "at": "2026-10-25T11:35:13.767026+00:00",
+      "status": "STOPPING",
+      "health_status": "HEALTHY"
+    },
+    {
+      "at": "2026-10-25T11:35:47.280979+00:00",
+      "status": "STOPPING",
+      "health_status": "HEALTHY"
+    },
+    {
+      "at": "2026-10-25T11:36:20.905403+00:00",
+      "status": "STOPPING",
+      "health_status": "HEALTHY"
+    },
+    {
+      "at": "2026-10-25T11:36:54.513273+00:00",
+      "status": "STOPPED",
+      "health_status": "HEALTHY"
+    }
+  ],
+  "actual_stopped": true,
+  "watchdog_inactive_confirmed": true,
+  "owned_processes_gone": true,
+  "reader_threads_gone": true,
+  "schema_version": 1,
+  "batch_id": 384,
+  "record_source_sha256": "9fb7358f4e732a5cc530d382c417e1d46e1b1b6196373179e644f6a3f66725dd",
+  "gpu_model_started": false,
+  "image_or_model_downloaded": false,
+  "credential_transferred": true,
+  "default_ssh_access_confirmed": true,
+  "hardware": {
+    "target_profile": "scale234",
+    "visible_host_gpus": 2,
+    "expected_host_gpus": 2,
+    "selected_device": 0,
+    "selected_free_vram_mib": 45458,
+    "host_available_ram_bytes": 400486203392,
+    "free_disk_bytes": 100756672512,
+    "authored_minimum_free_disk_gib": 100,
+    "authored_minimum_free_vram_gib": 35,
+    "authored_minimum_host_ram_gib": 64,
+    "selector": "model_type=generator,model_variant=nano,precision=fp8,profile=latency,offload=layer,text_guard_offload=offloaded,video_guard_offload=offloaded,n_gpus=1"
+  },
+  "remote_cleanup": {
+    "checked_utc": "2026-10-25T11:30:50.822709+00:00",
+    "script_exit_code": 1,
+    "owned_container_remaining": false,
+    "credential_file_remaining": false,
+    "scope": "owned container and volatile credentials only; cloud lifecycle is supervised separately"
+  },
+  "received_output": {
+    "remote_reported_bytes": 1076,
+    "local_bytes": 1076,
+    "local_files": [
+      {
+        "path": "remote-output/cleanup.json",
+        "bytes": 259,
+        "sha256": "cac7d2b05adfde8097aa05886d7b5e099a17184b2565dc72cd7aa84a1ce6fe83"
+      },
+      {
+        "path": "remote-output/compute-before.csv",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "remote-output/docker-version.txt",
+        "bytes": 7,
+        "sha256": "3795a4b1e2c6937a65f1be5ac40e8c7998963c6077c5cb1d19874a2d2474db02"
+      },
+      {
+        "path": "remote-output/gpus-before.csv",
+        "bytes": 82,
+        "sha256": "e75408633cd9cafca63e6386e7c0b9585639c5a21f694b7f48eb98986443b688"
+      },
+      {
+        "path": "remote-output/hardware.json",
+        "bytes": 515,
+        "sha256": "4a74d45ac3950835d74546353d37c3f559b6baaf7041289a6ba98692ca8bb683"
+      },
+      {
+        "path": "remote-output/phase.txt",
+        "bytes": 9,
+        "sha256": "8057eba6d8678144bdbc7476f4fa1d444d9a8a8570a74cef9b3d9370c9b454c6"
+      },
+      {
+        "path": "remote-output/profile.json",
+        "bytes": 204,
+        "sha256": "d8ed8f87fb93b51bae931889b912a79ada9503e5de222dfffb08027344c030e9"
+      }
+    ]
+  },
+  "error": "available disk 93.83GiB is below the authored 100GiB floor; no model downloaded",
+  "catalog_compressed_image_gb": 8.76,
+  "model_cache_and_scratch_exact_bytes_verified": false,
+  "storage_reference_sha256": "00f435e44e74f9d5742892a72c5306a8f0f7c6a5915a04cc197f8b7aee319401"
+}
