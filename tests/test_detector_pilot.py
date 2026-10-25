@@ -1,3 +1,4 @@
+import gzip
 import json
 from hashlib import sha256
 from pathlib import Path
@@ -14,6 +15,8 @@ from scripts.perception.run_detector_pilot import (
     validate_condition_symmetry,
     validate_synthetic_release,
     verify_disjoint_sets,
+    require_finite_loss,
+    write_prediction_artifact,
 )
 
 
@@ -121,6 +124,25 @@ class DetectorPilotTests(unittest.TestCase):
         exhausted = Budget(10.0, 5.0, None, monotonic=lambda: 15.0)
         with self.assertRaises(DeadlineExceeded):
             exhausted.check("train")
+
+    def test_nonfinite_loss_is_rejected_before_completion(self):
+        for value in (float("nan"), float("inf"), float("-inf")):
+            with self.subTest(value=value), self.assertRaisesRegex(PilotError, "non-finite loss"):
+                require_finite_loss(value, "R50", 17)
+        require_finite_loss(1.25, "R50", 17)
+
+    def test_fixed_test_predictions_are_gzipped_and_bound(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "S-predictions.json.gz"
+            ground_truth = {"images": [{"id": 4}, {"id": 2}], "annotations": [], "categories": []}
+            artifact = write_prediction_artifact(path, ground_truth, [
+                {"image_id": 2, "category_id": 1, "bbox": [1, 2, 3, 4], "score": 0.5},
+            ], {"condition": "S", "config_sha256": "a" * 64, "preregistration_sha256": "b" * 64,
+                "score_threshold": 0.001, "max_detections_per_image": 100})
+            payload = json.loads(gzip.decompress(path.read_bytes()))
+            self.assertEqual([2, 4], payload["image_ids"])
+            self.assertEqual("b" * 64, payload["preregistration_sha256"])
+            self.assertEqual((1, path.stat().st_size), (artifact["rows"], artifact["bytes"]))
 
 
 if __name__ == "__main__":

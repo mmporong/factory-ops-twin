@@ -8,6 +8,7 @@ from collections import defaultdict
 from contextlib import nullcontext
 from dataclasses import dataclass
 from datetime import datetime, timezone
+import gzip
 from hashlib import sha256
 import importlib.metadata
 import json
@@ -50,6 +51,18 @@ def atomic_json(path: Path, value: Mapping[str, Any]) -> None:
     temporary = path.with_name(f".{path.name}.{os.getpid()}.tmp")
     temporary.write_text(json.dumps(value, ensure_ascii=False, indent=2) + "\n", encoding="utf-8", newline="\n")
     os.replace(temporary, path)
+
+
+def atomic_bytes(path: Path, value: bytes) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_name(f".{path.name}.{os.getpid()}.tmp")
+    temporary.write_bytes(value)
+    os.replace(temporary, path)
+
+
+def canonical_json_sha256(value: Any) -> str:
+    encoded = json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    return sha256(encoded).hexdigest()
 
 
 def utc_now() -> str:
@@ -317,6 +330,11 @@ def validate_condition_symmetry(config: Mapping[str, Any]) -> None:
         raise PilotError("real-data comparison budget differs from preregistration")
 
 
+def require_finite_loss(value: float, stage: str, update: int) -> None:
+    if not math.isfinite(value):
+        raise PilotError(f"non-finite loss at {stage} update {update}: {value}")
+
+
 def source_commit() -> str:
     status = subprocess.run(
         ["git", "status", "--porcelain", "--", "scripts/perception/run_detector_pilot.py"],
@@ -477,12 +495,14 @@ def train(runtime: Mapping[str, Any], model: Any, dataset: DetectionDataset, con
         with context:
             loss_map = model(images, targets)
             loss = sum(loss_map.values())
+        loss_value = float(loss.detach().cpu())
+        require_finite_loss(loss_value, stage, update)
         scaler.scale(loss).backward()
         scaler.unscale_(optimizer)
         torch.nn.utils.clip_grad_norm_(model.parameters(), float(optimization["gradient_clip_norm"]))
         scaler.step(optimizer)
         scaler.update()
-        losses.append(float(loss.detach().cpu()))
+        losses.append(loss_value)
         if update % int(optimization["loss_log_interval_updates"]) == 0 or update == updates:
             with loss_path.open("a", encoding="utf-8", newline="\n") as stream:
                 stream.write(json.dumps({"stage": stage, "update": update, "loss": losses[-1]}, separators=(",", ":")) + "\n")
@@ -512,8 +532,43 @@ def probe_batch(runtime: Mapping[str, Any], model: Any, dataset: DetectionDatase
         return fallback
 
 
+def write_prediction_artifact(path: Path, ground_truth: Mapping[str, Any], predictions: Sequence[Mapping[str, Any]],
+                              bindings: Mapping[str, Any]) -> dict[str, Any]:
+    required = {"condition", "config_sha256", "preregistration_sha256"}
+    if not required.issubset(bindings):
+        raise PilotError("fixed-test prediction bindings are incomplete")
+    image_ids = sorted(int(row["id"]) for row in ground_truth["images"])
+    payload = {
+        "schema_version": 1,
+        "artifact_type": "fixed_test_coco_detection_predictions",
+        "split": "final_fixed_test",
+        "condition": bindings["condition"],
+        "created_utc": utc_now(),
+        "ground_truth_sha256": canonical_json_sha256(ground_truth),
+        "config_sha256": bindings["config_sha256"],
+        "preregistration_sha256": bindings["preregistration_sha256"],
+        "image_ids": image_ids,
+        "score_threshold": bindings["score_threshold"],
+        "max_detections_per_image": bindings["max_detections_per_image"],
+        "rows": list(predictions),
+    }
+    raw = (json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":")) + "\n").encode("utf-8")
+    atomic_bytes(path, gzip.compress(raw, compresslevel=9, mtime=0))
+    return {
+        "path": path.as_posix(),
+        "sha256": sha256_file(path),
+        "rows": len(predictions),
+        "bytes": path.stat().st_size,
+        "image_count": len(image_ids),
+        "ground_truth_sha256": payload["ground_truth_sha256"],
+        "config_sha256": bindings["config_sha256"],
+        "preregistration_sha256": bindings["preregistration_sha256"],
+    }
+
+
 def evaluate(runtime: Mapping[str, Any], model: Any, dataset: DetectionDataset, ground_truth: Mapping[str, Any],
-             device: Any, budget: Budget, stage: str, score_threshold: float, max_detections: int) -> dict[str, Any]:
+             device: Any, budget: Budget, stage: str, score_threshold: float, max_detections: int,
+             prediction_path: Path | None = None, prediction_bindings: Mapping[str, Any] | None = None) -> dict[str, Any]:
     torch = runtime["torch"]
     COCO = runtime["COCO"]
     COCOeval = runtime["COCOeval"]
@@ -559,11 +614,18 @@ def evaluate(runtime: Mapping[str, Any], model: Any, dataset: DetectionDataset, 
     counts = defaultdict(int)
     for row in ground_truth["annotations"]:
         counts[int(row["category_id"])] += 1
-    return {"AP": float(stats[0]), "AP50": float(stats[1]), "small_object_AP": float(stats[3]),
+    result = {"AP": float(stats[0]), "AP50": float(stats[1]), "small_object_AP": float(stats[3]),
             "class_AP": class_ap, "sample_counts": {"images": len(ground_truth["images"]),
             "annotations": len(ground_truth["annotations"]), "pallet_annotations": counts[1],
             "small_load_carrier_annotations": counts[2]}, "prediction_count_after_threshold": len(predictions),
             "score_threshold": score_threshold, "max_detections_per_image": max_detections}
+    if prediction_path is not None:
+        if prediction_bindings is None:
+            raise PilotError("fixed-test prediction path requires provenance bindings")
+        result["prediction_artifact"] = write_prediction_artifact(
+            prediction_path, ground_truth, predictions, prediction_bindings,
+        )
+    return result
 
 
 def runtime_versions(runtime: Mapping[str, Any]) -> dict[str, str]:
@@ -694,9 +756,21 @@ def main() -> int:
         state.update({"stage": "tuning_evaluation_complete"}); atomic_json(partial_path, state)
         for condition in ("S", "R50", "SR50"):
             model, _ = create_model(runtime, config, pretrained=False); load_checkpoint(torch, model, final_paths[condition])
+            prediction_path = output / "evaluation" / "final_fixed_test" / f"{condition}-predictions.json.gz"
             evaluation["final_fixed_test"][condition] = evaluate(
                 runtime, model, test_dataset, test_gt, device, budget, f"test {condition}",
-                float(config["model"]["score_threshold"]), int(config["model"]["max_detections_per_image"]))
+                float(config["model"]["score_threshold"]), int(config["model"]["max_detections_per_image"]),
+                prediction_path=prediction_path,
+                prediction_bindings={
+                    "condition": condition,
+                    "config_sha256": sha256_file(config_path),
+                    "preregistration_sha256": prereg_sha,
+                    "score_threshold": float(config["model"]["score_threshold"]),
+                    "max_detections_per_image": int(config["model"]["max_detections_per_image"]),
+                })
+            evaluation["final_fixed_test"][condition]["prediction_artifact"]["path"] = (
+                prediction_path.relative_to(output).as_posix()
+            )
         result = {
             "schema_version": 1, "status": "complete", "completed_utc": utc_now(),
             "wall_seconds": time.monotonic() - started, "source_commit": commit,

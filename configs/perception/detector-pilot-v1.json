@@ -94,6 +94,7 @@
   "retention": {
     "checkpoints": ["common_coco_head_init", "S_final", "R50_final", "SR50_final"],
     "loss_log": "jsonl_every_100_updates",
-    "retain_full_prediction_dump": false
+    "retain_full_prediction_dump": false,
+    "retain_fixed_test_prediction_evidence": "one compressed COCO-row artifact per final model; tuning predictions are discarded"
   }
 }
