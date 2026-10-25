@@ -204,3 +204,5 @@ profile preflight는 키 없이 수행하며 이를 통과하기 전 모델을 �
 381은 CLI 표시 UNHEALTHY를 raw lifecycle 실패로 해석해 SSH 전에 중단했다. 설치 v0.6.335의 upstream 소스로 raw RUNNING·health UNHEALTHY가 해당 표시로 바뀌는 것을 확인했으며 실제 중지와 감시 정리를 마쳤다.382는 같은 g0·프로필·원본·예산을 유지하고 이 조합을 실제 SSH/GPU probe의 준비 후보로 허용한다. 건강 상태의 경고를 모델 실행 성공으로 해석하지 않는다. [381 원인](evidence/cosmos-cloud-381.json) · [수정한382 계약](evidence/cosmos-execution-plan-382.json)
 
 382에서 실제 g0의 SSH·L40S·Docker 접근을 확인했다. WSL 중간 셸의 HOME 확장으로 디스크 조회가 실패해 다운로드 전에 중단했고 실제Stop을 확인했다.383은 로컬 재현을 통과한 `wsl --exec`로 원격 명령을 전달한다. source346·단일 입력·동의·image digest·g0 프로필·7200초 Stop timer를 유지한다. [382 실제 결과](evidence/cosmos-cloud-382.json) · [383 계약](evidence/cosmos-execution-plan-383.json)
+
+383은 g0의 authored 디스크 여유 기준에 못 미쳐 다운로드 전에 끝났으며 실제Stop을 확인했다.384는 기존234의 default SSH를 사용하고 GPU0 한 장·layer/guardrail offload를 선택한다. 새 VM과 g0 데이터 삭제는 없으며 원본1clip·image digest·동의·7200초 감시를 유지한다. 종료한379~383의 카탈로그 경과 비용 추정은 약$3.02이며 이번2시간 추정$10.97을 더해 약$13.99다. 실제 정산·저장비·중지 지연을 보장하는 상한은 아니며 승인된$40 계산 예산을 늘리지 않는다. [383](evidence/cosmos-cloud-383.json) · [384 계약과 비용 범위](evidence/cosmos-execution-plan-384.json)

@@ -4,7 +4,7 @@ umask 077
 
 batch_id="${1:-379}"
 target_profile="${2:-scale234}"
-[[ "$batch_id" =~ ^(379|380|381|382|383)$ ]] || exit 2
+[[ "$batch_id" =~ ^(379|380|381|382|383|384)$ ]] || exit 2
 [[ "$target_profile" =~ ^(scale234|g0)$ ]] || exit 2
 work="$HOME/workspace/factoryops-cosmos-$batch_id"
 out="$work/output"

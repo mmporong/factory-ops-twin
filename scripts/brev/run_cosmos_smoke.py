@@ -65,7 +65,7 @@ TARGETS = {
         "name": "factory-ops-scale-234",
         "id": "fy0i3jtz5",
         "instance_type": "gpu-l40s-d.2gpu-64vcpu-384gb",
-        "host_alias_suffix": "-host",
+        "host_alias_suffix": "",
         "hourly_estimate_usd": 5.48256,
     },
     "g0": {
@@ -174,9 +174,16 @@ def _linux_path(path: Path) -> str:
 
 
 def _ssh(command: str, *, timeout: float = 60, check: bool = True) -> tuple[int, str]:
-    return wsl_call(
-        ["ssh", *SSH_OPTIONS, HOST_ALIAS, command], timeout=timeout, check=check
+    reply = subprocess.run(
+        WSL + ["ssh", *SSH_OPTIONS, HOST_ALIAS, command],
+        capture_output=True,
+        timeout=timeout,
     )
+    stdout = _redact(reply.stdout.decode("utf-8", errors="replace"), None)
+    stderr = _redact(reply.stderr.decode("utf-8", errors="replace"), None)
+    if check and reply.returncode:
+        raise RuntimeError(f"ssh exited {reply.returncode}: {(stdout + stderr)[-3000:]}")
+    return reply.returncode, stdout
 
 
 def _scp(local_path: Path, remote_name: str) -> None:
@@ -321,7 +328,7 @@ def _receive_output(output: Path) -> dict[str, object]:
         raise ValueError("remote output exceeds the approved 250 MiB limit")
     _, forbidden = _ssh(
         f'find "{REMOTE_ROOT}/output" '
-        '\\( -name .cache -o -name keys -o -name ngc-key \\) -print -quit',
+        r'\( -name .cache -o -name keys -o -name ngc-key \) -print -quit',
         timeout=60,
     )
     if forbidden.strip():
@@ -375,7 +382,7 @@ def _stop_and_confirm(record: dict[str, object], save: object) -> bool:
 
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--batch-id", type=int, choices=(379, 380, 381, 382, 383), default=379)
+    parser.add_argument("--batch-id", type=int, choices=(379, 380, 381, 382, 383, 384), default=379)
     parser.add_argument("--target-profile", choices=tuple(TARGETS), default="scale234")
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--remote-script", type=Path, required=True)

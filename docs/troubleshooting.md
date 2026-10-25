@@ -1839,3 +1839,13 @@ Stop 요청 후 실제STOPPED는19:31:29 KST에 확인했고 timer/service inact
 382는 기본 SSH 별칭으로 g0의 L40S·driver595.91.07·Docker29.9.0·사용 가능 RAM 약60GiB를 확인했다. 이어진 디스크 조회는 원격 HOME 대신 WSL의 로컬 홈 경로를 받아 실패했다. 같은 명령 문자열을 로컬 WSL에 전달해 기존 `wsl --`가 HOME을 확장하고 `wsl --exec`는 원문을 보존하는 것을 재현했다. 키·이미지·모델 전송 전에 발생했고20:09:28 KST에 실제STOPPED와 감시 정리를 마쳤다. [382 실제 결과와 전달 검사 해시](evidence/cosmos-cloud-382.json)
 
 383은 SSH·SCP·원격 실행·출력 수신을 수행하는 호출에 `wsl --exec`를 사용한다. HOME·따옴표·세미콜론·파이프를 포함한 인수6개와 실제 실행기 wrapper의 전달이 원문과 일치했다. Brev CLI·독립 Stop timer의 대상과 실행 기한은 유지하며 공유 helper는 수정하지 않는다. [383 실행 계약](evidence/cosmos-execution-plan-383.json)
+
+## FOT-238 — 기존 g0의 모델 다운로드용 디스크 여유 부족
+
+383은 GPU·메모리 조건을 통과했지만 파일시스템 여유28,488,183,808바이트가 authored100GiB 기준에 못 미쳤다.100GiB는 이번 실행의 여유 기준이며 모델의 실측 크기가 아니다. 이미지·모델 다운로드와 추론은 시작하지 않았다. g0의 기존 데이터는 삭제하지 않았고20:19:57 KST에 실제STOPPED와 감시 종료를 확인했다.384는 기존234의 default workspace SSH를 사용해 GPU·메모리·디스크를 다시 확인한 뒤 진행한다. 이전234 host endpoint timeout을 default 경로의 실패로 간주하지 않는다. [383 결과](evidence/cosmos-cloud-383.json) · [384 계약](evidence/cosmos-execution-plan-384.json)
+
+## FOT-239 — SSH stderr 경고가 출력 수신의 데이터 파싱에 섞임
+
+383의 후속 수신은 `du` 숫자 stdout 뒤에 합쳐진 known-host stderr 경고를 파일 크기로 해석해 실패했다. 이 수신 오류를 최초 디스크 부족과 구분한다. 원격 hardware/cleanup JSON은 회수하지 못했고 모델 실행이나 라벨 승인 근거로 사용하지 않는다. 임시 키는 tmpfs에만 전달했으며 실제Stop으로 휘발 메모리가 종료된 것을 확인했다.
+
+384의 `_ssh`는 성공 stdout만 데이터로 반환하고 실패에는 stdout/stderr 진단을 보존한다. 성공 숫자와 경고가 함께 있는 경우·실패 stderr 보존의2회귀가 통과했다. WSL 중간 셸을 제거한 전달에 맞춰 원격 find 괄호를 단일 셸 escape로 바꿨다. 이 수정을 실제 클라우드 수신 성공으로 표현하지 않으며 다음 결과로 확인한다. [383 수신 실패](evidence/cosmos-cloud-383.json)

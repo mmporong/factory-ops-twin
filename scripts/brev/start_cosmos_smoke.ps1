@@ -4,7 +4,7 @@ param(
     [Parameter(Mandatory = $true)][string]$OutputDirectory,
     [Parameter(Mandatory = $true)][string]$InputsDirectory,
     [string]$CredentialFile = (Join-Path $HOME '.config/factoryops/ngc-api-key.dpapi'),
-    [ValidateSet(379, 380, 381, 382, 383)][int]$BatchId = 379,
+    [ValidateSet(379, 380, 381, 382, 383, 384)][int]$BatchId = 379,
     [ValidateSet('scale234', 'g0')][string]$TargetProfile = 'scale234',
     [switch]$Execute
 )

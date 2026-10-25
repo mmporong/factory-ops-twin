@@ -1,0 +1,123 @@
+{
+  "status": "failed",
+  "started_at": "2026-10-25T11:10:56.087146+00:00",
+  "finished_at": "2026-10-25T11:19:57.715417+00:00",
+  "initial_target": {
+    "name": "factory-ops-twin-g0",
+    "id": "evica0x9l",
+    "status": "STOPPED",
+    "build_status": "COMPLETED",
+    "shell_status": "NOT READY",
+    "health_status": "UNHEALTHY",
+    "instance_type": "g6e.2xlarge",
+    "instance_kind": "gpu",
+    "gpu": "L40S"
+  },
+  "readiness_polls": [
+    {
+      "at": "2026-10-25T11:11:13.930070+00:00",
+      "status": "STARTING",
+      "build_status": "COMPLETED",
+      "shell_status": "NOT READY",
+      "health_status": "UNAVAILABLE"
+    },
+    {
+      "at": "2026-10-25T11:11:47.241651+00:00",
+      "status": "UNHEALTHY",
+      "build_status": "COMPLETED",
+      "shell_status": "READY",
+      "health_status": "UNHEALTHY"
+    }
+  ],
+  "stop_polls": [
+    {
+      "at": "2026-10-25T11:12:42.955298+00:00",
+      "status": "STOPPING",
+      "health_status": "HEALTHY"
+    },
+    {
+      "at": "2026-10-25T11:13:16.283359+00:00",
+      "status": "STOPPING",
+      "health_status": "HEALTHY"
+    },
+    {
+      "at": "2026-10-25T11:13:49.675637+00:00",
+      "status": "STOPPING",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-25T11:14:23.012364+00:00",
+      "status": "STOPPING",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-25T11:14:56.328153+00:00",
+      "status": "STOPPING",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-25T11:15:29.617226+00:00",
+      "status": "STOPPING",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-25T11:16:03.211993+00:00",
+      "status": "STOPPING",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-25T11:16:36.471366+00:00",
+      "status": "STOPPING",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-25T11:17:09.817098+00:00",
+      "status": "STOPPING",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-25T11:17:43.217514+00:00",
+      "status": "STOPPING",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-25T11:18:16.498649+00:00",
+      "status": "STOPPING",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-25T11:18:49.883274+00:00",
+      "status": "STOPPING",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-25T11:19:24.108506+00:00",
+      "status": "STOPPING",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-25T11:19:57.379994+00:00",
+      "status": "STOPPED",
+      "health_status": "UNHEALTHY"
+    }
+  ],
+  "actual_stopped": true,
+  "watchdog_inactive_confirmed": true,
+  "owned_processes_gone": true,
+  "secret_transfer_attempted": true,
+  "reader_threads_gone": true,
+  "schema_version": 1,
+  "batch_id": 383,
+  "record_source_sha256": "84656d14a5259fce06814737b77703ec9f7e282dd0baef7299aedd962be04e4a",
+  "gpu_model_started": false,
+  "image_or_model_downloaded": false,
+  "credential_transferred": true,
+  "volatile_credentials_cleared_by_actual_stop": true,
+  "remote_cleanup_receipt_retrieved": false,
+  "output_receive_error": "RuntimeError: remote output size was not a single byte count",
+  "observed_filesystem_available_bytes": 28488183808,
+  "authored_minimum_free_disk_gib": 100,
+  "hardware_log_sha256": "c8cf410e710ed977fb54eb926a662d17767b79d3e2c84d5da316cc89ebc73c5b",
+  "error": "available disk below authored reserve; no image/model download; output receiver also confused SSH stderr warning with size data",
+  "g0_data_deletion_performed": false
+}
