@@ -1,0 +1,126 @@
+{
+  "schema_version": 1,
+  "profile_id": "detector-pilot-mosaic-v3",
+  "status": "preregistered_development_candidate",
+  "execution_mode": "tuning_validation_only_development",
+  "source_contracts": {
+    "loco_eval": {
+      "path": "configs/perception/loco-eval-v1.json",
+      "sha256": "60f3d5046dc7600f760a055701338b72ba5a8da6c2782c58c5f9adbc9c7fd549"
+    }
+  },
+  "classes": [
+    "pallet",
+    "small_load_carrier"
+  ],
+  "category_aliases": {
+    "pallet": ["pallet"],
+    "small_load_carrier": ["small_load_carrier", "small load carrier", "small load carriers"]
+  },
+  "synthetic_release_contract": {
+    "release_type": "approved_detector_training_dataset",
+    "scope": "bounded_pallet_and_rigid_crate_detector_pilot",
+    "image_count": 512,
+    "require_training_ready": true,
+    "require_mapping_approved": true,
+    "require_coco_sha256": true,
+    "require_image_inventory_and_file_sha256": true,
+    "require_bounds_source_sha256": true
+  },
+  "model": {
+    "architecture": "fasterrcnn_mobilenet_v3_large_fpn",
+    "torchvision_weights_enum": "FasterRCNN_MobileNet_V3_Large_FPN_Weights.COCO_V1",
+    "preserve_coco_backbone_constructor_contract": true,
+    "num_classes_including_background": 3,
+    "min_size": 640,
+    "max_size": 960,
+    "score_threshold": 0.001,
+    "max_detections_per_image": 100
+  },
+  "synthetic_training_augmentation": {
+    "type": "mosaic_3x3_training_only",
+    "applies_to": ["S"],
+    "source_dataset_length": 512,
+    "grid": {"rows": 3, "columns": 3},
+    "source_scene_count": 9,
+    "source_resolution": {"width": 768, "height": 512},
+    "composite_resolution": {"width": 2304, "height": 1536},
+    "anchor": "current_index",
+    "additional_selection": "seeded_without_replacement_from_distinct_scene_groups",
+    "single_3d_factory_scene_claimed": false,
+    "equal_compute_or_exposure_claimed": false,
+    "planned_source_presentations": {
+      "S_mosaic": 18432,
+      "S_baseline": 2048,
+      "additional_cpu_decodes": 16384
+    }
+  },
+  "optimization": {
+    "batch_size": 2,
+    "oom_probe_fallback_batch_size": 1,
+    "learning_rate": 0.005,
+    "momentum": 0.9,
+    "weight_decay": 0.0005,
+    "gradient_clip_norm": 10.0,
+    "amp_when_cuda": true,
+    "loss_log_interval_updates": 100
+  },
+  "conditions": {
+    "S": {
+      "training_source": "synthetic",
+      "image_budget": 512,
+      "updates": 1024,
+      "initial_checkpoint": "common_coco_head_init"
+    },
+    "R50": {
+      "training_source": "real50",
+      "image_budget": 50,
+      "updates": 256,
+      "initial_checkpoint": "common_coco_head_init"
+    },
+    "SR50": {
+      "training_source": "real50",
+      "image_budget": 50,
+      "updates": 256,
+      "initial_checkpoint": "S_final"
+    }
+  },
+  "seeds": {
+    "pilot": 1701,
+    "registered_candidates": [1701, 1702, 1703],
+    "real_subset": 5701
+  },
+  "real_split": {
+    "train": {
+      "loco-sub2-v1-train.json": 25,
+      "loco-sub5-v1-train.json": 25
+    },
+    "tuning_validation": {
+      "loco-sub3-v1-train.json": 100,
+      "loco-sub4-v1-val.json": 100
+    },
+    "final_fixed_test": {
+      "loco-sub1-v1-val.json": 1075
+    },
+    "unknown_capture_group_policy": "sequence_disjointness_not_claimed"
+  },
+  "evaluation": {
+    "iou_type": "bbox",
+    "coco_ap_iou_range": [0.5, 0.95, 0.05],
+    "report": ["AP", "AP50", "class_AP", "small_object_AP", "sample_counts"],
+    "test_access_policy": "disabled_for_tuning_only_development_profile",
+    "selection_policy": "no_threshold_or_model_selection_from_tuning; no_fixed_test_access"
+  },
+  "retention": {
+    "checkpoints": ["common_coco_head_init", "S_final", "R50_final", "SR50_final"],
+    "loss_log": "jsonl_every_100_updates",
+    "retain_full_prediction_dump": false,
+    "retain_fixed_test_prediction_evidence": false
+  },
+  "claim_limits": {
+    "fresh_heldout_performance": false,
+    "single_3d_factory_scene": false,
+    "equal_compute_or_exposure": false,
+    "purpose": "training-input coverage development comparison after completed v1 and v2 review"
+  }
+}

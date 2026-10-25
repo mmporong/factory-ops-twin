@@ -9,12 +9,16 @@ import unittest
 from scripts.perception.run_detector_pilot import (
     Budget,
     DeadlineExceeded,
+    MosaicDetectionDataset,
     PilotError,
+    apply_synthetic_training_augmentation,
+    build_mosaic_plan,
     build_real_registry,
     category_mapping,
     create_model,
     _runtime_imports,
     real_registry_roles,
+    training_dataset_for_condition,
     validate_coco,
     validate_condition_symmetry,
     validate_execution_gate,
@@ -29,6 +33,9 @@ ROOT = Path(__file__).resolve().parents[1]
 CONFIG = json.loads((ROOT / "configs/perception/detector-pilot-v1.json").read_text(encoding="utf-8"))
 BACKBONE_CONFIG = json.loads(
     (ROOT / "configs/perception/detector-pilot-backbone-v2.json").read_text(encoding="utf-8")
+)
+MOSAIC_CONFIG = json.loads(
+    (ROOT / "configs/perception/detector-pilot-mosaic-v3.json").read_text(encoding="utf-8")
 )
 HAS_MODEL_RUNTIME = importlib.util.find_spec("torch") is not None and importlib.util.find_spec("torchvision") is not None
 
@@ -110,6 +117,7 @@ class DetectorPilotTests(unittest.TestCase):
     def test_tuning_only_requires_both_cli_and_profile_gates(self):
         validate_execution_gate(CONFIG, False)
         validate_execution_gate(BACKBONE_CONFIG, True)
+        validate_execution_gate(MOSAIC_CONFIG, True)
         self.assertEqual(("train", "tuning_validation"), real_registry_roles(BACKBONE_CONFIG))
         self.assertEqual(CONFIG["conditions"], BACKBONE_CONFIG["conditions"])
         self.assertEqual(CONFIG["seeds"], BACKBONE_CONFIG["seeds"])
@@ -117,10 +125,27 @@ class DetectorPilotTests(unittest.TestCase):
         comparable_model = dict(BACKBONE_CONFIG["model"])
         comparable_model.pop("preserve_coco_backbone_constructor_contract")
         self.assertEqual(CONFIG["model"], comparable_model)
+        for key in ("conditions", "seeds", "optimization", "model", "real_split"):
+            self.assertEqual(BACKBONE_CONFIG[key], MOSAIC_CONFIG[key])
         with self.assertRaisesRegex(PilotError, "v1 cannot"):
             validate_execution_gate(CONFIG, True)
         with self.assertRaisesRegex(PilotError, "requires its tuning-only"):
             validate_execution_gate(BACKBONE_CONFIG, False)
+        invalid_mosaic = json.loads(json.dumps(MOSAIC_CONFIG))
+        invalid_mosaic["synthetic_training_augmentation"]["source_resolution"]["width"] = 767
+        with self.assertRaisesRegex(PilotError, "augmentation contract differs"):
+            validate_execution_gate(invalid_mosaic, True)
+
+    def test_mosaic_plan_has_nine_distinct_sources_with_anchor_first(self):
+        scene_keys = [f"scene-{index // 4:03d}" for index in range(512)]
+        plan = build_mosaic_plan(512, MOSAIC_CONFIG["seeds"]["pilot"], scene_keys)
+        self.assertEqual(512, len(plan))
+        self.assertTrue(all(row[0] == index and len(row) == len(set(row)) == 9
+                            for index, row in enumerate(plan)))
+        self.assertTrue(all(len({scene_keys[position] for position in row}) == 9 for row in plan))
+        self.assertEqual(
+            plan, build_mosaic_plan(512, MOSAIC_CONFIG["seeds"]["pilot"], scene_keys),
+        )
 
     def test_tuning_only_registry_does_not_open_fixed_test_metadata(self):
         with tempfile.TemporaryDirectory() as folder:
@@ -156,6 +181,59 @@ class DetectorPilotTests(unittest.TestCase):
         legacy_reconstructed, legacy_metadata = create_model(runtime, CONFIG, pretrained=False)
         self.assertNotIn("constructor_contract_preserved", legacy_metadata)
         self.assertTrue(any(isinstance(module, torch.nn.BatchNorm2d) for module in legacy_reconstructed.modules()))
+
+    @unittest.skipUnless(HAS_MODEL_RUNTIME, "torch/torchvision runtime is not installed")
+    def test_mosaic_offsets_all_labels_and_does_not_apply_to_real_conditions(self):
+        runtime = _runtime_imports()
+        torch = runtime["torch"]
+
+        class FakeSynthetic:
+            def __init__(self):
+                self.torch = torch
+                self.images = [{"id": index + 1, "width": 768, "height": 512} for index in range(512)]
+                self.sources = [{"source_image_id": 1000 + index,
+                                 "file_name": f"scene-{index:03d}/view-01/rgb.png"}
+                                for index in range(512)]
+
+            def __len__(self):
+                return len(self.images)
+
+            def __getitem__(self, index):
+                image = torch.full((3, 512, 768), index / 512, dtype=torch.float32)
+                target = {
+                    "boxes": torch.tensor([[1, 2, 4, 6]], dtype=torch.float32),
+                    "labels": torch.tensor([1 + index % 2], dtype=torch.int64),
+                    "area": torch.tensor([12.0], dtype=torch.float32),
+                    "iscrowd": torch.tensor([index % 2], dtype=torch.int64),
+                    "image_id": torch.tensor([index + 1], dtype=torch.int64),
+                }
+                return image, target
+
+        base = FakeSynthetic()
+        scene_keys = [f"scene-{index:03d}" for index in range(512)]
+        plan = build_mosaic_plan(512, MOSAIC_CONFIG["seeds"]["pilot"], scene_keys)
+        mosaic = apply_synthetic_training_augmentation(base, MOSAIC_CONFIG, plan)
+        self.assertIsInstance(mosaic, MosaicDetectionDataset)
+        image, target = mosaic[0]
+        self.assertEqual((3, 1536, 2304), tuple(image.shape))
+        self.assertEqual(9, len(target["boxes"]))
+        expected_boxes = []
+        for tile in range(9):
+            row, column = divmod(tile, 3)
+            expected_boxes.append([1 + column * 768, 2 + row * 512,
+                                   4 + column * 768, 6 + row * 512])
+        self.assertEqual(expected_boxes, target["boxes"].tolist())
+        self.assertEqual([12.0] * 9, target["area"].tolist())
+        self.assertEqual([1 + position % 2 for position in plan[0]], target["labels"].tolist())
+        self.assertEqual([position % 2 for position in plan[0]], target["iscrowd"].tolist())
+        self.assertTrue(bool((target["boxes"][:, (0, 2)] <= 2304).all()))
+        self.assertTrue(bool((target["boxes"][:, (1, 3)] <= 1536).all()))
+        self.assertEqual(9, len(set(mosaic.provenance(0)["source_image_ids"])))
+        self.assertIs(base, apply_synthetic_training_augmentation(base, CONFIG, None))
+        self.assertIs(base, apply_synthetic_training_augmentation(base, BACKBONE_CONFIG, None))
+        real = object()
+        self.assertIs(real, training_dataset_for_condition("R50", mosaic, real))
+        self.assertIs(real, training_dataset_for_condition("SR50", mosaic, real))
 
     def test_coco_boxes_and_category_mapping_are_validated(self):
         payload = valid_coco("sample", 2)

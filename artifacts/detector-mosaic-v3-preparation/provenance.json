@@ -1,0 +1,104 @@
+{
+  "schema_version": 1,
+  "artifact_type": "detector_mosaic_v3_cpu_preparation_preview",
+  "created_utc": "2026-10-25T06:08:30.005901Z",
+  "title": "9 separate scenes / 3x3 synthetic training mosaic (not one 3D factory scene)",
+  "interpretation": "nine separate training frames combined as augmentation; not one 3D factory scene",
+  "training_only": true,
+  "config": {
+    "path": "configs/perception/detector-pilot-mosaic-v3.json",
+    "sha256": "0f051c7748f89a88d1290110151138a49002b449fed33a1fd7e2359aa7eeffa7"
+  },
+  "approved_release": {
+    "path": "E:\\FactoryOpsData\\perception-pilot-v6-340-release\\release-manifest.json",
+    "sha256": "69b1f2cc9efea586442dcc7dee996fc4c8ba79743d714b05d1b6c78fec0070e9",
+    "coco_sha256": "a0e2d79aab09dd5c1a62f617e7baa63f34530552a2b6e0b46d1ee9b85c5573f4",
+    "producer_source_commit": "1e05a408e42e033dd23911532ac4f9fea8e505f2"
+  },
+  "selection": {
+    "pilot_seed": 1701,
+    "sample_index": 0,
+    "source_positions": [
+      0,
+      290,
+      50,
+      275,
+      8,
+      308,
+      448,
+      85,
+      94
+    ],
+    "source_image_ids": [
+      1,
+      291,
+      51,
+      276,
+      9,
+      309,
+      449,
+      86,
+      95
+    ],
+    "source_scene_groups": [
+      "scene-001",
+      "scene-073",
+      "scene-013",
+      "scene-069",
+      "scene-003",
+      "scene-078",
+      "scene-113",
+      "scene-022",
+      "scene-024"
+    ],
+    "source_files": [
+      "scene-001/view-01/rgb.png",
+      "scene-073/view-03/rgb.png",
+      "scene-013/view-03/rgb.png",
+      "scene-069/view-04/rgb.png",
+      "scene-003/view-01/rgb.png",
+      "scene-078/view-01/rgb.png",
+      "scene-113/view-01/rgb.png",
+      "scene-022/view-02/rgb.png",
+      "scene-024/view-03/rgb.png"
+    ],
+    "nine_distinct_scene_groups": true,
+    "full_plan_positions_sha256": "f099cb236b17fff47aa561293d697c950cfa043920bbd37ece006f95bd1efd5b"
+  },
+  "geometry": {
+    "source_resolution": {
+      "width": 768,
+      "height": 512
+    },
+    "grid": {
+      "rows": 3,
+      "columns": 3
+    },
+    "mosaic_resolution": {
+      "width": 2304,
+      "height": 1536
+    },
+    "preview_resolution_including_title": {
+      "width": 2304,
+      "height": 1608
+    }
+  },
+  "annotations": {
+    "bbox_count": 43,
+    "class_counts": {
+      "pallet": 18,
+      "small_load_carrier": 25
+    },
+    "boxes_preserved_except_tile_xy_offset": true,
+    "hflip_policy": "existing per-source deterministic training hflip"
+  },
+  "preview": {
+    "path": "mosaic-3x3-training-preview.png",
+    "sha256": "48cff76b70e55aa74056875fa5dafe515caf03d0546c3dde6ca3ef80935a5128",
+    "bytes": 1455956
+  },
+  "claims": {
+    "single_3d_factory_scene": false,
+    "model_performance": "not evaluated by this CPU preview"
+  }
+}

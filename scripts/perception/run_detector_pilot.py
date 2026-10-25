@@ -114,7 +114,7 @@ def resolve_bound_path(raw: str, config_path: Path) -> Path:
 def verify_config(config_path: Path) -> tuple[dict[str, Any], dict[str, Any]]:
     config = load_json(config_path)
     if config.get("schema_version") != 1 or config.get("profile_id") not in {
-            "detector-pilot-v1", "detector-pilot-backbone-v2"}:
+            "detector-pilot-v1", "detector-pilot-backbone-v2", "detector-pilot-mosaic-v3"}:
         raise PilotError("unsupported detector pilot config")
     if config.get("classes") != ["pallet", "small_load_carrier"]:
         raise PilotError("the detector classes differ from the preregistration")
@@ -141,6 +141,31 @@ def tuning_only_mode(config: Mapping[str, Any]) -> bool:
     return config.get("execution_mode") == "tuning_validation_only_development"
 
 
+def mosaic_mode(config: Mapping[str, Any]) -> bool:
+    return config.get("profile_id") == "detector-pilot-mosaic-v3"
+
+
+def validate_mosaic_contract(config: Mapping[str, Any]) -> None:
+    contract = config.get("synthetic_training_augmentation")
+    expected = {
+        "type": "mosaic_3x3_training_only",
+        "applies_to": ["S"],
+        "source_dataset_length": 512,
+        "grid": {"rows": 3, "columns": 3},
+        "source_scene_count": 9,
+        "source_resolution": {"width": 768, "height": 512},
+        "composite_resolution": {"width": 2304, "height": 1536},
+        "anchor": "current_index",
+        "additional_selection": "seeded_without_replacement_from_distinct_scene_groups",
+        "single_3d_factory_scene_claimed": False,
+        "equal_compute_or_exposure_claimed": False,
+        "planned_source_presentations": {"S_mosaic": 18432, "S_baseline": 2048,
+                                         "additional_cpu_decodes": 16384},
+    }
+    if contract != expected:
+        raise PilotError("detector-pilot-mosaic-v3 augmentation contract differs")
+
+
 def validate_execution_gate(config: Mapping[str, Any], tuning_only_cli: bool) -> None:
     profile = config.get("profile_id")
     mode = tuning_only_mode(config)
@@ -148,16 +173,73 @@ def validate_execution_gate(config: Mapping[str, Any], tuning_only_cli: bool) ->
         if mode or tuning_only_cli:
             raise PilotError("detector-pilot-v1 cannot run through the tuning-only development gate")
         return
-    if profile != "detector-pilot-backbone-v2" or not mode or not tuning_only_cli:
-        raise PilotError("detector-pilot-backbone-v2 requires its tuning-only CLI and profile gates")
+    if profile not in {"detector-pilot-backbone-v2", "detector-pilot-mosaic-v3"} or not mode or not tuning_only_cli:
+        raise PilotError(f"{profile} requires its tuning-only CLI and profile gates")
     if config.get("model", {}).get("preserve_coco_backbone_constructor_contract") is not True:
         raise PilotError("detector-pilot-backbone-v2 requires the COCO backbone constructor contract")
     if config.get("evaluation", {}).get("test_access_policy") != "disabled_for_tuning_only_development_profile":
-        raise PilotError("detector-pilot-backbone-v2 must disable fixed-test access")
+        raise PilotError(f"{profile} must disable fixed-test access")
+    if mosaic_mode(config):
+        validate_mosaic_contract(config)
+    elif "synthetic_training_augmentation" in config:
+        raise PilotError("detector-pilot-backbone-v2 cannot enable mosaic augmentation")
 
 
 def real_registry_roles(config: Mapping[str, Any]) -> tuple[str, ...]:
     return ("train", "tuning_validation") if tuning_only_mode(config) else tuple(EXPECTED_SPLITS)
+
+
+def source_scene_key(file_name: str) -> str:
+    parts = file_name.replace("\\", "/").split("/")
+    if len(parts) < 2 or not parts[0]:
+        raise PilotError(f"mosaic source file has no scene group: {file_name}")
+    return parts[0].casefold()
+
+
+def build_mosaic_plan(source_count: int, seed: int,
+                      scene_keys: Sequence[str] | None = None) -> list[list[int]]:
+    if source_count != 512:
+        raise PilotError("mosaic source dataset must contain exactly 512 scenes")
+    keys = list(scene_keys) if scene_keys is not None else [f"source-{index}" for index in range(source_count)]
+    if len(keys) != source_count or len(set(keys)) < 9:
+        raise PilotError("mosaic source dataset must contain at least nine scene groups")
+    groups: dict[str, list[int]] = defaultdict(list)
+    for position, key in enumerate(keys):
+        if not isinstance(key, str) or not key:
+            raise PilotError("mosaic scene group is invalid")
+        groups[key].append(position)
+    plan = []
+    for index in range(source_count):
+        rng = random.Random(f"{seed}:mosaic:{index}")
+        candidate_groups = sorted(key for key in groups if key != keys[index])
+        rng.shuffle(candidate_groups)
+        selected = []
+        for key in candidate_groups[:8]:
+            candidates = list(groups[key])
+            rng.shuffle(candidates)
+            selected.append(candidates[0])
+        row = [index, *selected]
+        if len(row) != 9 or len(set(row)) != 9 or len({keys[position] for position in row}) != 9:
+            raise PilotError("mosaic plan must contain nine distinct source scenes")
+        plan.append(row)
+    return plan
+
+
+def mosaic_plan_binding(plan: Sequence[Sequence[int]], source_image_ids: Sequence[int],
+                        scene_keys: Sequence[str]) -> dict[str, Any]:
+    if len(plan) != len(source_image_ids) or len(scene_keys) != len(source_image_ids):
+        raise PilotError("mosaic plan and source image IDs differ in length")
+    source_rows = [[int(source_image_ids[position]) for position in row] for row in plan]
+    scene_rows = [[scene_keys[position] for position in row] for row in plan]
+    if any(len(set(row)) != 9 for row in scene_rows):
+        raise PilotError("mosaic plan binding contains repeated scene groups")
+    return {
+        "algorithm": "anchor current position plus eight seeded distinct scene groups without replacement",
+        "sample_count": len(plan), "source_scenes_per_sample": 9,
+        "source_image_id_rows_sha256": canonical_json_sha256(source_rows),
+        "source_scene_group_rows_sha256": canonical_json_sha256(scene_rows),
+        "source_image_id_rows": source_rows,
+    }
 
 
 def _require_sha(path: Path, expected: Any, label: str) -> None:
@@ -469,6 +551,117 @@ class DetectionDataset:
                         "image_id": torch.tensor([int(image_row["id"])], dtype=torch.int64)}
 
 
+class MosaicDetectionDataset:
+    """Join nine independent training frames without changing their labels or boxes."""
+
+    def __init__(self, base: DetectionDataset, plan: Sequence[Sequence[int]], contract: Mapping[str, Any]):
+        self.base = base
+        self.plan = [list(row) for row in plan]
+        self.contract = contract
+        self.torch = base.torch
+        source = contract["source_resolution"]
+        composite = contract["composite_resolution"]
+        self.source_width = int(source["width"])
+        self.source_height = int(source["height"])
+        self.rows = int(contract["grid"]["rows"])
+        self.columns = int(contract["grid"]["columns"])
+        self.scene_count = int(contract["source_scene_count"])
+        if (len(base) != 512 or len(self.plan) != len(base) or self.rows != 3 or self.columns != 3
+                or self.scene_count != 9 or self.rows * self.columns != self.scene_count
+                or composite != {"width": self.source_width * self.columns,
+                                 "height": self.source_height * self.rows}):
+            raise PilotError("mosaic grid, scene count, or composite resolution differs")
+        if len(base.sources) != len(base) or len(base.images) != len(base):
+            raise PilotError("mosaic source provenance differs from the dataset")
+        for image in base.images:
+            if int(image.get("width", -1)) != self.source_width or int(image.get("height", -1)) != self.source_height:
+                raise PilotError("mosaic source metadata resolution differs")
+        for anchor, row in enumerate(self.plan):
+            if (len(row) != self.scene_count or len(set(row)) != self.scene_count or row[0] != anchor
+                    or any(type(position) is not int or not 0 <= position < len(base) for position in row)):
+                raise PilotError("mosaic source plan is invalid")
+            scene_groups = {source_scene_key(str(base.sources[position]["file_name"])) for position in row}
+            if len(scene_groups) != self.scene_count:
+                raise PilotError("mosaic source plan repeats a scene group")
+
+    def __len__(self) -> int:
+        return len(self.base)
+
+    def source_image_ids(self, index: int) -> list[int]:
+        return [int(self.base.sources[position]["source_image_id"]) for position in self.plan[index]]
+
+    def provenance(self, index: int) -> dict[str, Any]:
+        return {"sample_index": index, "source_positions": list(self.plan[index]),
+                "source_image_ids": self.source_image_ids(index), "grid": {"rows": self.rows, "columns": self.columns},
+                "source_resolution": {"width": self.source_width, "height": self.source_height},
+                "composite_resolution": {"width": self.source_width * self.columns,
+                                         "height": self.source_height * self.rows},
+                "interpretation": "nine separate training frames combined as augmentation; not one 3D factory scene"}
+
+    def __getitem__(self, index: int) -> tuple[Any, dict[str, Any]]:
+        composite = self.torch.zeros(
+            (3, self.source_height * self.rows, self.source_width * self.columns), dtype=self.torch.float32,
+        )
+        boxes = []
+        labels = []
+        areas = []
+        crowds = []
+        anchor_image_id = None
+        for tile, source_position in enumerate(self.plan[index]):
+            image, target = self.base[source_position]
+            if tuple(image.shape) != (3, self.source_height, self.source_width):
+                raise PilotError("mosaic decoded source resolution differs")
+            row, column = divmod(tile, self.columns)
+            top, left = row * self.source_height, column * self.source_width
+            composite[:, top:top + self.source_height, left:left + self.source_width] = image
+            source_boxes = target["boxes"]
+            if source_boxes.ndim != 2 or source_boxes.shape[1] != 4:
+                raise PilotError("mosaic source boxes are invalid")
+            if len(source_boxes):
+                valid = ((source_boxes[:, 0] >= 0) & (source_boxes[:, 1] >= 0)
+                         & (source_boxes[:, 2] <= self.source_width) & (source_boxes[:, 3] <= self.source_height)
+                         & (source_boxes[:, 2] > source_boxes[:, 0]) & (source_boxes[:, 3] > source_boxes[:, 1]))
+                if not bool(valid.all()):
+                    raise PilotError("mosaic source boxes fall outside the valid source frame")
+                shifted = source_boxes.clone()
+                shifted[:, 0] += left
+                shifted[:, 2] += left
+                shifted[:, 1] += top
+                shifted[:, 3] += top
+                boxes.append(shifted)
+            labels.append(target["labels"])
+            areas.append(target["area"])
+            crowds.append(target["iscrowd"])
+            if not (len(source_boxes) == len(target["labels"]) == len(target["area"]) == len(target["iscrowd"])):
+                raise PilotError("mosaic source annotations differ in length")
+            if tile == 0:
+                anchor_image_id = target["image_id"]
+        result = {
+            "boxes": self.torch.cat(boxes, dim=0) if boxes else self.torch.empty((0, 4), dtype=self.torch.float32),
+            "labels": self.torch.cat(labels, dim=0), "area": self.torch.cat(areas, dim=0),
+            "iscrowd": self.torch.cat(crowds, dim=0), "image_id": anchor_image_id,
+        }
+        return composite, result
+
+
+def apply_synthetic_training_augmentation(dataset: DetectionDataset, config: Mapping[str, Any],
+                                          plan: Sequence[Sequence[int]] | None) -> Any:
+    if not mosaic_mode(config):
+        return dataset
+    if plan is None:
+        raise PilotError("mosaic training requires a frozen source plan")
+    return MosaicDetectionDataset(dataset, plan, config["synthetic_training_augmentation"])
+
+
+def training_dataset_for_condition(condition: str, synthetic_dataset: DetectionDataset,
+                                   real_dataset: DetectionDataset) -> Any:
+    if condition == "S":
+        return synthetic_dataset
+    if condition in ("R50", "SR50"):
+        return real_dataset
+    raise PilotError(f"unknown detector training condition: {condition}")
+
+
 def collate(batch: Sequence[Any]) -> tuple[list[Any], list[Any]]:
     images, targets = zip(*batch)
     return list(images), list(targets)
@@ -723,6 +916,23 @@ def main() -> int:
         real_registry, split_files = build_real_registry(
             args.real_metadata_root.resolve(), config, loco_profile, registry_roles,
         )
+        synthetic_coco = None
+        synthetic_map = None
+        synthetic_ids = None
+        mosaic_plan = None
+        mosaic_binding = None
+        if mosaic_mode(config):
+            synthetic_coco = load_json(Path(synthetic["coco_path"]))
+            synthetic_map = validate_coco(synthetic_coco, config["category_aliases"])
+            synthetic_ids = deterministic_ids(synthetic_coco, 512, int(config["seeds"]["pilot"]), "synthetic512")
+            selected = set(synthetic_ids)
+            ordered_source_ids = [int(row["id"]) for row in synthetic_coco["images"] if int(row["id"]) in selected]
+            ordered_scene_keys = [source_scene_key(str(row["file_name"])) for row in synthetic_coco["images"]
+                                  if int(row["id"]) in selected]
+            mosaic_plan = build_mosaic_plan(
+                len(ordered_source_ids), int(config["seeds"]["pilot"]), ordered_scene_keys,
+            )
+            mosaic_binding = mosaic_plan_binding(mosaic_plan, ordered_source_ids, ordered_scene_keys)
         commit = source_commit()
         claims = {"sequence_disjoint": False, "pure_pretraining_effect": False,
                   "label_cost_reduction": False, "extra_synthetic_compute_reported": True}
@@ -739,6 +949,10 @@ def main() -> int:
             preregistration["execution"] = {
                 "tuning_only": True, "real_registry_roles": list(registry_roles),
                 "final_fixed_test_accessed": False,
+            }
+        if mosaic_binding is not None:
+            preregistration["synthetic_training_augmentation"] = {
+                "contract": config["synthetic_training_augmentation"], "source_plan": mosaic_binding,
             }
         prereg_path = output / "preregistration.json"
         atomic_json(prereg_path, preregistration)
@@ -760,13 +974,15 @@ def main() -> int:
         weights["full_sha256"] = sha256_file(cache_checkpoint) if cache_checkpoint.is_file() else None
         weights["cache_path"] = str(cache_checkpoint) if cache_checkpoint.is_file() else None
 
-        synthetic_coco = load_json(Path(synthetic["coco_path"]))
-        synthetic_map = validate_coco(synthetic_coco, config["category_aliases"])
-        synthetic_ids = deterministic_ids(synthetic_coco, 512, int(config["seeds"]["pilot"]), "synthetic512")
+        if synthetic_coco is None:
+            synthetic_coco = load_json(Path(synthetic["coco_path"]))
+            synthetic_map = validate_coco(synthetic_coco, config["category_aliases"])
+            synthetic_ids = deterministic_ids(synthetic_coco, 512, int(config["seeds"]["pilot"]), "synthetic512")
         synthetic_entry = {"metadata_path": synthetic["coco_path"], "image_ids": synthetic_ids,
                            "category_mapping": synthetic_map}
         synthetic_dataset, _ = prepare_dataset(runtime, [synthetic_entry], Path(synthetic["image_root"]),
                                                 config["category_aliases"], True, int(config["seeds"]["pilot"]))
+        synthetic_dataset = apply_synthetic_training_augmentation(synthetic_dataset, config, mosaic_plan)
         train_dataset, _ = prepare_dataset(runtime, real_registry["train"], args.real_image_root.resolve(),
                                             config["category_aliases"], True, int(config["seeds"]["pilot"]))
         tune_dataset, tune_gt = prepare_dataset(runtime, real_registry["tuning_validation"], args.real_image_root.resolve(),
@@ -777,7 +993,8 @@ def main() -> int:
         loss_path = output / "loss.jsonl"
         condition_results = {}
         final_paths = {}
-        for condition, dataset in (("S", synthetic_dataset), ("R50", train_dataset), ("SR50", train_dataset)):
+        for condition in ("S", "R50", "SR50"):
+            dataset = training_dataset_for_condition(condition, synthetic_dataset, train_dataset)
             budget.check(f"{condition} setup")
             model, _ = create_model(runtime, config, pretrained=False)
             starting = final_paths["S"] if condition == "SR50" else init_checkpoint
@@ -844,6 +1061,22 @@ def main() -> int:
                                    "SR50_additional_synthetic_updates": 1024},
             "claim_limits": claim_limits,
         }
+        if mosaic_mode(config):
+            planned = config["synthetic_training_augmentation"]["planned_source_presentations"]
+            actual_baseline = int(config["conditions"]["S"]["updates"]) * batch_size
+            actual_mosaic = actual_baseline * int(config["synthetic_training_augmentation"]["source_scene_count"])
+            result["synthetic_training_input"] = {
+                "augmentation": "mosaic_3x3_training_only",
+                "source_plan_sha256": mosaic_binding["source_image_id_rows_sha256"],
+                "planned_source_presentations": planned,
+                "actual_source_presentations": actual_mosaic,
+                "actual_baseline_equivalent_presentations": actual_baseline,
+                "actual_cpu_decodes": actual_mosaic,
+                "actual_additional_cpu_decodes": actual_mosaic - actual_baseline,
+                "S_training_wall_seconds": condition_results["S"]["training"]["wall_seconds"],
+                "equal_compute_or_exposure_claimed": False,
+                "single_3d_factory_scene_claimed": False,
+            }
         atomic_json(result_path, result)
         state.update({"status": completion_status, "result_sha256": sha256_file(result_path),
                       "completed_utc": utc_now()})
