@@ -16,7 +16,7 @@
 2026-10-25 작업은 오늘17:00 KST까지 진행한다. 새 GPU 입장은16:40 KST까지로 제한하고, 남은 시간은 결과·대표 이미지·백업·소유 프로세스 정리에 사용한다. Cosmos 대량 변환은 이번 로컬 파일럿의 완료 조건으로 추가하지 않는다.
 
 - 촬영340: 128개 장면×4시점의512장·객체2,812개를768×512로 완성했다. 전체3,713개 파일의 크기·해시가 일치하고 Job/lease 마감·owned0을 확인했다. 원본 candidate의 `training_ready/mapping_approved=false`는 유지한다. [촬영 근거](evidence/perception-pilot-340.json)
-- 학습 릴리스: 팔레트1종·강체 용기2종의 제한된 프록시 대응, 준비 USD의 root/leaf 의미 경계와 실제512장의 객체별 mask/bbox 근거를 별도 계산한다. 원래 반도체 ESD 트레이 매핑이나 기존1,080장의 승인을 바꾸지 않는다.
+- 학습 릴리스: 팔레트1종·강체 용기2종의 제한된 프록시 대응, 준비 USD의 root/leaf 의미 경계와 실제512장의 객체별 mask/bbox 근거를 별도 계산해 학습 릴리스를 승인했다. [릴리스 근거](evidence/perception-release-340.json). 원래 반도체 ESD 트레이 매핑이나 기존1,080장의 승인을 바꾸지 않는다.
 - 비교: TorchVision Faster R-CNN MobileNetV3 Large FPN의 COCO_V1 가중치와3분류 head, min640/max960을 사용한다. 합성S 1,024 update, 실제R50 256 update, 합성 후 실제SR50 256 update다. SR50에는1,024 합성 update의 추가 계산이 있으므로 순수 사전 학습 효과로 해석하지 않는다.
 - 실제 자료: 고정 subset seed5701, train50/tune200/test1,075장만 ZIP에서 선별하고 기존 RGB 감사의 바이트 해시와 대조했다. test 바이트를 준비했지만 모델 추론·시각 선정에는 사용하지 않았다. 모든 학습과 튜닝 평가 뒤 모델별 고정 test를1회 수행한다.
 - seed1701/1702/1703과 실행 순서는 첫 학습 전에 동결했다. 관측 AP와 무관하게 남은 실행 상한 안에서 다음 seed를 입장시킨다. 미완료 seed는 보존하고 완료 평균에서 제외한다. threshold0.001/maxDets100을 고정하고 최종 test 예측만 압축 보존한다. 촬영 그룹 독립성과 라벨 비용 절감은 주장하지 않는다.

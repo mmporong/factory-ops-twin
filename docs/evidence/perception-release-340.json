@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "status": "bounded_training_release_approved",
+  "release_manifest": {
+    "path": "E:\\FactoryOpsData\\perception-pilot-v6-340-release\\release-manifest.json",
+    "sha256": "69b1f2cc9efea586442dcc7dee996fc4c8ba79743d714b05d1b6c78fec0070e9"
+  },
+  "capture_run": "perception-pilot-v6-340",
+  "image_count": 512,
+  "annotation_count": 2812,
+  "approval_gates": {
+    "all_512_provenance_bbox_visible_mask_checks": true,
+    "bounded_two_class_mapping": true,
+    "closure_audit_and_original_file_inventory": true,
+    "original_candidate_files_modified": false,
+    "prepared_asset_hash_license_bounds_and_semantics": true,
+    "source_manifest_and_candidate_scope": true
+  },
+  "scope": "bounded_pallet_and_rigid_crate_detector_pilot",
+  "category_mapping": {
+    "pallet": 1,
+    "small_load_carrier": 2
+  },
+  "producer_source_commit": "1e05a408e42e033dd23911532ac4f9fea8e505f2",
+  "coco": {
+    "path": "coco-release.json",
+    "sha256": "a0e2d79aab09dd5c1a62f617e7baa63f34530552a2b6e0b46d1ee9b85c5573f4"
+  },
+  "images": {
+    "inventory": {
+      "path": "image-inventory.json",
+      "sha256": "9a1f872dd51207a987cc69ae2dcac6d6c4bc5cfdaae901fe079470962a2340a9"
+    },
+    "root": "images"
+  },
+  "bounds_source": {
+    "path": "evidence/manifest.json",
+    "sha256": "4290397f568f9a2259f245b027b9dc8d68bd53aee82730d3f65bec2c1997d72b"
+  },
+  "claim_limits": {
+    "full_LOCO_appearance_coverage": false,
+    "label_cost_reduction_measured": false,
+    "real_image_performance_measured": false,
+    "small_load_carrier_scope": "gray and blue rigid-crate proxies only"
+  },
+  "original_candidate_flags": {
+    "training_ready": false,
+    "mapping_approved": false
+  },
+  "derived_release_flags": {
+    "training_ready": true,
+    "mapping_approved": true
+  },
+  "image_storage": "512 same-volume NTFS hardlinks; original bytes unchanged",
+  "generator": {
+    "path": "scripts/perception/release_pilot_dataset.py",
+    "sha256": "d9ed7e5544d2e0fcb6dae8e17101954ac7d9d9d13f20f16633c965b47c82d63b"
+  },
+  "validation": {
+    "capture_object_mask_bbox_provenance_coco": "all512images/2812annotations",
+    "prepared_assets_license_hash_bounds_semantic_boundary": "passed",
+    "detector_input_contract": "passed"
+  }
+}
