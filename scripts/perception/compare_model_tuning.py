@@ -311,7 +311,7 @@ def svg_chart(aggregates: Mapping[str, Any], resources: Mapping[str, Any]) -> st
 
     panel_x, panel_y = 1070, 160
     parts.append(f'<rect x="{panel_x}" y="{panel_y}" width="450" height="540" rx="16" fill="#f8fafc" stroke="#e2e8f0"/>')
-    parts.append(f'<text x="{panel_x + 28}" y="{panel_y + 44}" font-family="Arial,sans-serif" font-size="20" font-weight="700" fill="#0f172a">Actual GPU resources</text>')
+    parts.append(f'<text x="{panel_x + 28}" y="{panel_y + 44}" font-family="Arial,sans-serif" font-size="20" font-weight="700" fill="#0f172a">Run wall / peak allocation</text>')
     for index, model in enumerate(MODELS):
         y = panel_y + 105 + index * 205
         wall = resources[model]["wall_seconds"]
@@ -319,10 +319,10 @@ def svg_chart(aggregates: Mapping[str, Any], resources: Mapping[str, Any]) -> st
         wall_width = 290 * float(wall["mean"]) / wall_upper
         vram_width = 290 * float(vram["mean"]) / vram_upper
         parts.append(f'<text x="{panel_x + 28}" y="{y}" font-family="Arial,sans-serif" font-size="17" font-weight="700" fill="#334155">{labels[model]}</text>')
-        parts.append(f'<text x="{panel_x + 28}" y="{y + 34}" font-family="Arial,sans-serif" font-size="14" fill="#64748b">wall seconds</text>')
+        parts.append(f'<text x="{panel_x + 28}" y="{y + 34}" font-family="Arial,sans-serif" font-size="14" fill="#64748b">run wall s</text>')
         parts.append(f'<rect x="{panel_x + 120}" y="{y + 18}" width="{wall_width:.1f}" height="22" rx="5" fill="{colors[model]}"/>')
         parts.append(f'<text x="{panel_x + 420}" y="{y + 35}" text-anchor="end" font-family="Arial,sans-serif" font-size="14" fill="#334155">{float(wall["mean"]):.1f} ± {float(wall["std"]):.1f}</text>')
-        parts.append(f'<text x="{panel_x + 28}" y="{y + 72}" font-family="Arial,sans-serif" font-size="14" fill="#64748b">peak VRAM GiB</text>')
+        parts.append(f'<text x="{panel_x + 28}" y="{y + 72}" font-family="Arial,sans-serif" font-size="14" fill="#64748b">alloc. GiB</text>')
         parts.append(f'<rect x="{panel_x + 120}" y="{y + 56}" width="{vram_width:.1f}" height="22" rx="5" fill="{colors[model]}"/>')
         parts.append(f'<text x="{panel_x + 420}" y="{y + 73}" text-anchor="end" font-family="Arial,sans-serif" font-size="14" fill="#334155">{float(vram["mean"]):.2f} ± {float(vram["std"]):.2f}</text>')
     parts.extend([
@@ -375,7 +375,7 @@ def png_chart(aggregates: Mapping[str, Any], resources: Mapping[str, Any]) -> by
     draw.text((left, top - 28), "Tuning AP points (axis starts at 0)", fill="#334155", font=body)
     panel_x, panel_y = 1070, 160
     draw.rounded_rectangle((panel_x, panel_y, 1520, 700), radius=16, fill="#f8fafc", outline="#e2e8f0", width=2)
-    draw.text((panel_x + 28, panel_y + 22), "Actual GPU resources", fill="#0f172a", font=title)
+    draw.text((panel_x + 28, panel_y + 22), "Run wall / peak allocation", fill="#0f172a", font=title)
     wall_upper = max(1.0, max(float(resources[m]["wall_seconds"]["mean"]) for m in MODELS) * 1.2)
     vram_upper = max(1.0, max(float(resources[m]["peak_vram_gib"]["mean"]) for m in MODELS) * 1.2)
     labels = {"v2_mobilenet": "MobileNet v2", "v4_resnet50": "ResNet50 v4"}
@@ -383,10 +383,10 @@ def png_chart(aggregates: Mapping[str, Any], resources: Mapping[str, Any]) -> by
         y = panel_y + 105 + index * 205
         wall, vram = resources[model]["wall_seconds"], resources[model]["peak_vram_gib"]
         draw.text((panel_x + 28, y - 16), labels[model], fill="#334155", font=body)
-        draw.text((panel_x + 28, y + 22), "wall s", fill="#64748b", font=small)
+        draw.text((panel_x + 28, y + 22), "run wall s", fill="#64748b", font=small)
         draw.rounded_rectangle((panel_x + 120, y + 12, panel_x + 120 + 290 * float(wall["mean"]) / wall_upper, y + 34), radius=5, fill=colors[model])
         draw.text((panel_x + 330, y + 18), f'{float(wall["mean"]):.1f} ± {float(wall["std"]):.1f}', fill="#334155", font=small)
-        draw.text((panel_x + 28, y + 65), "VRAM GiB", fill="#64748b", font=small)
+        draw.text((panel_x + 28, y + 65), "alloc. GiB", fill="#64748b", font=small)
         draw.rounded_rectangle((panel_x + 120, y + 55, panel_x + 120 + 290 * float(vram["mean"]) / vram_upper, y + 77), radius=5, fill=colors[model])
         draw.text((panel_x + 330, y + 61), f'{float(vram["mean"]):.2f} ± {float(vram["std"]):.2f}', fill="#334155", font=small)
     draw.text((90, 838), "Complete detector bundles: COCO weights, FPN, default RPN, and backbone.", fill="#64748b", font=small)
@@ -506,7 +506,9 @@ def compare(v2_paths: Sequence[Path], v4_paths: Sequence[Path], output: Path) ->
         "condition_aggregate": aggregates,
         "paired_v4_minus_v2": paired,
         "actual_gpu_resources": resources,
-        "metric_units": {"stored_AP_metrics": "ratio in [0, 1]", "chart_AP": "AP points in [0, 100]"},
+        "metric_units": {"stored_AP_metrics": "ratio in [0, 1]", "chart_AP": "AP points in [0, 100]",
+                         "wall_seconds": "whole process elapsed wall time, not GPU kernel time",
+                         "peak_vram_gib": "torch.cuda.max_memory_allocated / 1024^3; excludes driver and non-PyTorch allocations"},
         "rows": rows,
         "source_bindings": {
             "v2_mobilenet": [source_binding(v2[seed]) for seed in sorted(SEEDS)],
@@ -560,7 +562,7 @@ def self_check() -> dict[str, Any]:
     png = png_chart(summaries, resources)
     sample = aggregate([0.1, 0.2, 0.3])
     if (not math.isclose(sample["mean"], 0.2) or not math.isclose(sample["std"], 0.1)
-            or "axis starts at 0" not in svg or "Actual GPU resources" not in svg
+            or "axis starts at 0" not in svg or "Run wall / peak allocation" not in svg
             or not png.startswith(b"\x89PNG\r\n\x1a\n")):
         raise ComparisonError("comparison self-check failed")
     return {"status": "passed", "aggregate": sample, "svg_bytes": len(svg.encode()), "png_bytes": len(png),
