@@ -4,13 +4,15 @@ umask 077
 
 batch_id="${1:-379}"
 target_profile="${2:-scale234}"
-[[ "$batch_id" =~ ^(379|380|381|382|383|384|385)$ ]] || exit 2
+[[ "$batch_id" =~ ^(379|380|381|382|383|384|385|386)$ ]] || exit 2
 [[ "$target_profile" =~ ^(scale234|g0)$ ]] || exit 2
 work="$HOME/workspace/factoryops-cosmos-$batch_id"
 out="$work/output"
 secrets=/dev/shm/factoryops-cosmos-$batch_id
 container=factoryops-cosmos-$batch_id
 image='nvcr.io/nim/nvidia/cosmos3@sha256:2add946b316a0baf72a15be4da85132d127c34da22d2fe4e9c4bd146ad8c4020'
+image_index_digest="${image##*@sha256:}"
+shared_model_cache="$HOME/workspace/factoryops-cosmos-cache/$image_index_digest"
 if [[ "$target_profile" == g0 ]]; then
   expected_host_gpus=1
   minimum_vram_gib=38
@@ -23,7 +25,9 @@ else
   selector='model_type=generator,model_variant=nano,precision=fp8,profile=latency,offload=layer,text_guard_offload=offloaded,video_guard_offload=offloaded,n_gpus=1'
 fi
 sampler_pid=''
-mkdir -p "$out" "$work/cache" "$secrets/docker"
+disk_watcher_pid=''
+disk_watcher_exit=''
+mkdir -p "$out" "$shared_model_cache" "$secrets/docker"
 test -s "$secrets/ngc-key"
 test -s "$work/inference-request.json"
 
@@ -48,10 +52,15 @@ cleanup() {
     kill "$sampler_pid" 2>/dev/null
     wait "$sampler_pid" 2>/dev/null
   fi
+  if [[ -n "$disk_watcher_pid" ]]; then
+    kill "$disk_watcher_pid" 2>/dev/null
+    wait "$disk_watcher_pid" 2>/dev/null
+    disk_watcher_exit=$?
+  fi
   # Delete only these owned volatile credential files, never a shared Docker config.
   rm -f "$secrets/ngc-key" "$secrets/ngc.env" "$secrets/docker/config.json"
   rmdir "$secrets/docker" "$secrets" 2>/dev/null
-  python3 - "$out" "$original_status" "$container" "$secrets" <<'PY'
+  python3 - "$out" "$original_status" "$container" "$secrets" "$disk_watcher_pid" "$disk_watcher_exit" <<'PY'
 import datetime,json,pathlib,subprocess,sys
 out=pathlib.Path(sys.argv[1])
 p=subprocess.run(['docker','ps','-aq','--filter','name=^'+sys.argv[3]+'$'],capture_output=True,text=True)
@@ -59,6 +68,8 @@ remaining=bool(p.stdout.strip()) if p.returncode==0 else None
 record={'checked_utc':datetime.datetime.now(datetime.timezone.utc).isoformat(),
         'script_exit_code':int(sys.argv[2]),'owned_container_remaining':remaining,
         'credential_file_remaining':(pathlib.Path(sys.argv[4])/'ngc-key').exists(),
+        'disk_watcher_pid':int(sys.argv[5]) if sys.argv[5] else None,
+        'disk_watcher_exit_code':int(sys.argv[6]) if sys.argv[6] else None,
         'scope':'owned container and volatile credentials only; cloud lifecycle is supervised separately'}
 (out/'cleanup.json').write_text(json.dumps(record,indent=2)+'\n')
 PY
@@ -91,7 +102,9 @@ free_disk=shutil.disk_usage(work).free
 record={'target_profile':profile,'visible_host_gpus':len(gpus),'expected_host_gpus':expected_host_gpus,
         'selected_device':0,'selected_free_vram_mib':int(gpus[0][3]),
         'host_available_ram_bytes':mem['MemAvailable'],'free_disk_bytes':free_disk,
-        'authored_minimum_free_disk_gib':100,'authored_minimum_free_vram_gib':minimum_vram_gib,
+        'authored_entry_minimum_free_disk_gib':32,'authored_runtime_low_disk_gib':24,
+        'disk_guard_claim':'project-authored bounded guard; not an official NVIDIA minimum',
+        'authored_minimum_free_vram_gib':minimum_vram_gib,
         'authored_minimum_host_ram_gib':minimum_ram_gib,'selector':selector}
 (out/'hardware.json').write_text(json.dumps(record,indent=2)+'\n')
 (out/'profile.json').write_text(json.dumps({'target_profile':profile,'selector':selector},indent=2)+'\n')
@@ -99,7 +112,7 @@ assert record['selected_free_vram_mib']>=minimum_vram_gib*1024,'insufficient fre
 assert mem['MemAvailable']>=minimum_ram_gib*1024**3,'insufficient available host RAM'
 PY
 
-minimum_disk_bytes=$((100 * 1024 * 1024 * 1024))
+minimum_disk_bytes=$((32 * 1024 * 1024 * 1024))
 free_before=$(df -B1 --output=avail "$work" | tail -n 1 | tr -d ' ')
 if (( free_before < minimum_disk_bytes )); then
   phase storage_preparation
@@ -222,12 +235,203 @@ record['passed']=record['after_free_bytes']>=record['minimum_free_bytes']
 PY
   test "$free_after" -ge "$minimum_disk_bytes"
 fi
+python3 - "$out" "$shared_model_cache" "$image" "$image_index_digest" "$target_profile" "$selector" <<'PY'
+import json,pathlib,re,sys
+out=pathlib.Path(sys.argv[1])
+cache=pathlib.Path(sys.argv[2])
+image=sys.argv[3]
+digest=sys.argv[4]
+profile=sys.argv[5]
+selector=sys.argv[6]
+expected=pathlib.Path.home()/'workspace'/'factoryops-cosmos-cache'/digest
+assert re.fullmatch(r'[0-9a-f]{64}',digest),'invalid image index digest'
+assert not cache.is_symlink(),'shared model cache path must not be a symlink'
+assert cache.resolve()==expected.resolve(),'shared model cache path changed'
+record={'schema_version':1,'cache_path':str(cache.resolve()),'image':image,
+        'image_index_digest':digest,'target_profile':profile,'selector':selector,
+        'reuse_scope':'owned content-addressed model cache shared across bounded Cosmos runs',
+        'collected_with_run_output':False,'automatic_deletion':False}
+(out/'model-cache-contract.json').write_text(json.dumps(record,indent=2)+'\n')
+PY
+
+script_full=$(readlink -f "$0")
+parent_pid=$$
+parent_starttime=$(python3 - "$parent_pid" <<'PY'
+import pathlib,sys
+text=(pathlib.Path('/proc')/sys.argv[1]/'stat').read_text()
+print(text.rsplit(')',1)[1].split()[19])
+PY
+)
+parent_pgid=$(ps -o pgid= -p "$parent_pid" | tr -d ' ')
+leader_starttime=$(python3 - "$parent_pgid" <<'PY'
+import pathlib,sys
+text=(pathlib.Path('/proc')/sys.argv[1]/'stat').read_text()
+print(text.rsplit(')',1)[1].split()[19])
+PY
+)
+cat > "$work/disk-watcher.py" <<'PY'
+import json
+import os
+import pathlib
+import shutil
+import signal
+import subprocess
+import sys
+import time
+
+
+def classify_parent_identity(expected, observed):
+    parent_same=(observed.get('parent_pid')==expected['parent_pid'] and
+                 observed.get('parent_starttime')==expected['parent_starttime'])
+    if not parent_same:
+        return False, False, 'parent_pid_or_starttime_changed'
+    if observed.get('pgid')!=expected['pgid']:
+        return False, True, 'process_group_changed'
+    if observed.get('leader_pid')!=expected['pgid']:
+        return False, True, 'group_leader_pid_mismatch'
+    if observed.get('leader_starttime')!=expected['leader_starttime']:
+        return False, True, 'group_leader_starttime_changed'
+    argv=observed.get('leader_argv') or []
+    if not argv or pathlib.Path(argv[0]).name!='timeout':
+        return False, True, 'group_leader_is_not_gnu_timeout'
+    signature=[expected['run_script'],expected['batch_id'],expected['target_profile']]
+    if not any(argv[index:index+3]==signature for index in range(len(argv)-2)):
+        return False, True, 'timeout_command_does_not_match_owned_run'
+    return True, True, 'owned_timeout_group'
+
+
+def proc_starttime(pid):
+    text=(pathlib.Path('/proc')/str(pid)/'stat').read_text()
+    return text.rsplit(')',1)[1].split()[19]
+
+
+def observe(expected):
+    parent=expected['parent_pid']
+    pgid=os.getpgid(parent)
+    leader=pgid
+    argv=(pathlib.Path('/proc')/str(leader)/'cmdline').read_bytes().split(b'\0')
+    return {'parent_pid':parent,'parent_starttime':proc_starttime(parent),'pgid':pgid,
+            'leader_pid':leader,'leader_starttime':proc_starttime(leader),
+            'leader_argv':[value.decode(errors='replace') for value in argv if value]}
+
+
+def atomic_json(path,record):
+    temporary=path.with_suffix(path.suffix+'.tmp')
+    temporary.write_text(json.dumps(record,indent=2)+'\n')
+    os.replace(temporary,path)
+
+
+def stop_owned_container(name):
+    inspect=subprocess.run(['docker','inspect','--format','{{.Name}}',name],capture_output=True,text=True,timeout=5)
+    result={'name':name,'inspect_exit_code':inspect.returncode,'verified_exact_name':False,
+            'kill_exit_code':None,'remove_exit_code':None}
+    if inspect.returncode==0 and inspect.stdout.strip()=='/'+name:
+        result['verified_exact_name']=True
+        result['kill_exit_code']=subprocess.run(['docker','kill',name],capture_output=True,timeout=5).returncode
+        result['remove_exit_code']=subprocess.run(['docker','rm','--force',name],capture_output=True,timeout=5).returncode
+    return result
+
+
+out=pathlib.Path(sys.argv[1])
+work=pathlib.Path(sys.argv[2])
+threshold=int(sys.argv[3])
+expected={'parent_pid':int(sys.argv[4]),'parent_starttime':sys.argv[5],
+          'pgid':int(sys.argv[6]),'leader_starttime':sys.argv[7],
+          'run_script':sys.argv[8],'batch_id':sys.argv[9],'target_profile':sys.argv[10]}
+container=sys.argv[11]
+summary_path=out/'disk-guard.json'
+trigger_path=out/'disk-guard-trigger.json'
+stopping=False
+def handle_stop(_signum,_frame):
+    global stopping
+    stopping=True
+signal.signal(signal.SIGTERM,handle_stop)
+signal.signal(signal.SIGINT,handle_stop)
+initial=shutil.disk_usage(work).free
+minimum=initial
+phase_name=None
+phase_started=time.monotonic()
+summary={'schema_version':1,'status':'starting','initial_free_bytes':initial,
+         'minimum_free_bytes':minimum,'current_free_bytes':initial,
+         'low_disk_threshold_bytes':threshold,'sample_interval_seconds':1,
+         'claim':'project-authored runtime guard; not an official NVIDIA minimum'}
+atomic_json(summary_path,summary)
+while True:
+    try:
+        observation=observe(expected)
+    except (FileNotFoundError,ProcessLookupError,PermissionError,OSError) as error:
+        summary.update(status='parent_gone_or_unreadable',identity_error=type(error).__name__)
+        atomic_json(summary_path,summary)
+        raise SystemExit(0)
+    owned,parent_same,reason=classify_parent_identity(expected,observation)
+    if not owned:
+        summary.update(status='parent_identity_rejected',identity_reason=reason,
+                       parent_identity_same=parent_same)
+        atomic_json(summary_path,summary)
+        raise SystemExit(0)
+    current=shutil.disk_usage(work).free
+    minimum=min(minimum,current)
+    try:
+        observed_phase=(out/'phase.txt').read_text().strip()
+    except OSError:
+        observed_phase='unknown'
+    if observed_phase!=phase_name:
+        phase_name=observed_phase
+        phase_started=time.monotonic()
+    phase_elapsed=time.monotonic()-phase_started
+    image_pull_expired=(phase_name=='image_pull' and phase_elapsed>=1800)
+    summary.update(status='monitoring',minimum_free_bytes=minimum,current_free_bytes=current,
+                   identity_reason=reason,phase=phase_name,
+                   phase_elapsed_seconds=round(phase_elapsed,3),image_pull_limit_seconds=1800)
+    atomic_json(summary_path,summary)
+    if current<threshold or image_pull_expired:
+        trigger_reason='low_disk' if current<threshold else 'image_pull_deadline'
+        trigger={'schema_version':1,'status':'triggered','trigger_reason':trigger_reason,'free_bytes':current,
+                 'threshold_bytes':threshold,'identity_reason':reason,
+                 'phase':phase_name,'phase_elapsed_seconds':phase_elapsed,
+                 'owned_container':container,'recorded_unix_seconds':time.time()}
+        atomic_json(trigger_path,trigger)
+        try:
+            trigger['container_stop']=stop_owned_container(container)
+        except (OSError,subprocess.TimeoutExpired) as error:
+            trigger['container_stop']={'error_type':type(error).__name__}
+        atomic_json(trigger_path,trigger)
+        try:
+            latest=observe(expected)
+            group_owned,parent_same,latest_reason=classify_parent_identity(expected,latest)
+        except (FileNotFoundError,ProcessLookupError,PermissionError,OSError) as error:
+            group_owned,parent_same,latest_reason=False,False,type(error).__name__
+        trigger.update(group_owned=group_owned,parent_identity_same=parent_same,
+                       final_identity_reason=latest_reason)
+        summary.update(status=trigger_reason+'_triggered',minimum_free_bytes=minimum,
+                       current_free_bytes=current,final_identity_reason=latest_reason)
+        atomic_json(trigger_path,trigger)
+        atomic_json(summary_path,summary)
+        if group_owned:
+            os.killpg(expected['pgid'],signal.SIGTERM)
+        elif parent_same:
+            os.kill(expected['parent_pid'],signal.SIGTERM)
+        raise SystemExit(2)
+    if stopping:
+        summary.update(status='stopped_by_cleanup',minimum_free_bytes=minimum,
+                       current_free_bytes=current)
+        atomic_json(summary_path,summary)
+        raise SystemExit(0)
+    time.sleep(1)
+PY
+runtime_disk_threshold=$((24 * 1024 * 1024 * 1024))
+python3 "$work/disk-watcher.py" "$out" "$work" "$runtime_disk_threshold" \
+  "$parent_pid" "$parent_starttime" "$parent_pgid" "$leader_starttime" \
+  "$script_full" "$batch_id" "$target_profile" "$container" > "$out/disk-watcher.log" 2>&1 &
+disk_watcher_pid=$!
+sleep 1
+kill -0 "$disk_watcher_pid"
 nvidia-smi --query-gpu=timestamp,index,memory.used,utilization.gpu --format=csv --loop=5 > "$out/gpu-samples.csv" &
 sampler_pid=$!
 
 phase image_pull
 cat "$secrets/ngc-key" | docker --config "$secrets/docker" login nvcr.io --username '$oauthtoken' --password-stdin 2>&1 | redact_log > "$out/registry-login.log"
-timeout --signal=TERM --kill-after=30s 1800s docker --config "$secrets/docker" pull "$image" 2>&1 | redact_log > "$out/image-pull.log"
+docker --config "$secrets/docker" pull "$image" 2>&1 | redact_log > "$out/image-pull.log"
 docker image inspect "$image" --format '{{json .RepoDigests}}' > "$out/image-digests.json"
 docker run --rm --entrypoint /bin/bash "$image" -lc 'for p in /opt/nim/LICENSE /opt/nim/MODEL_LICENSE /opt/nim/NOTICE; do test -f "$p"; printf "\nFILE %s\n" "$p"; cat "$p"; done' > "$out/image-license-notices.txt"
 
@@ -243,7 +447,7 @@ docker run -d --name "$container" --gpus '"device=0"' --shm-size=32g \
   --ulimit nofile=65536:65536 -p 127.0.0.1:18080:8000 \
   --env-file "$secrets/ngc.env" -e NIM_TAGS_SELECTOR="$selector" \
   -e NIM_TELEMETRY_MODE=0 -e NIM_LOG_LEVEL=INFO -e NIM_TRITON_REQUEST_TIMEOUT=3600000000 \
-  -v "$work/cache:/opt/nim/.cache" "$image" > "$out/container-id.txt"
+  -v "$shared_model_cache:/opt/nim/.cache" "$image" > "$out/container-id.txt"
 python3 - "$out" "$work" "$container" "$batch_id" "$target_profile" <<'PY'
 import base64,datetime,hashlib,json,pathlib,subprocess,time,urllib.error,urllib.request,sys
 out,work=map(pathlib.Path,sys.argv[1:3])

@@ -1,0 +1,363 @@
+{
+  "status": "failed",
+  "started_at": "2026-10-25T11:45:57.677362+00:00",
+  "finished_at": "2026-10-25T12:00:38.630617+00:00",
+  "initial_target": {
+    "name": "factory-ops-scale-234",
+    "id": "fy0i3jtz5",
+    "status": "STOPPED",
+    "build_status": "COMPLETED",
+    "shell_status": "NOT READY",
+    "health_status": "HEALTHY",
+    "instance_type": "gpu-l40s-d.2gpu-64vcpu-384gb",
+    "instance_kind": "gpu",
+    "gpu": "L40S"
+  },
+  "readiness_polls": [
+    {
+      "at": "2026-10-25T11:46:14.650605+00:00",
+      "status": "STOPPED",
+      "build_status": "COMPLETED",
+      "shell_status": "NOT READY",
+      "health_status": "UNAVAILABLE"
+    },
+    {
+      "at": "2026-10-25T11:46:48.256518+00:00",
+      "status": "STARTING",
+      "build_status": "COMPLETED",
+      "shell_status": "NOT READY",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-25T11:47:21.541574+00:00",
+      "status": "STARTING",
+      "build_status": "COMPLETED",
+      "shell_status": "NOT READY",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-25T11:47:54.841102+00:00",
+      "status": "STARTING",
+      "build_status": "COMPLETED",
+      "shell_status": "NOT READY",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-25T11:48:28.256644+00:00",
+      "status": "STARTING",
+      "build_status": "COMPLETED",
+      "shell_status": "NOT READY",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-25T11:49:01.611480+00:00",
+      "status": "STARTING",
+      "build_status": "COMPLETED",
+      "shell_status": "NOT READY",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-25T11:49:34.803715+00:00",
+      "status": "STARTING",
+      "build_status": "COMPLETED",
+      "shell_status": "NOT READY",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-25T11:50:08.098955+00:00",
+      "status": "STARTING",
+      "build_status": "COMPLETED",
+      "shell_status": "NOT READY",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-25T11:50:41.433853+00:00",
+      "status": "RUNNING",
+      "build_status": "COMPLETED",
+      "shell_status": "READY",
+      "health_status": "HEALTHY"
+    }
+  ],
+  "stop_polls": [
+    {
+      "at": "2026-10-25T11:52:17.283887+00:00",
+      "status": "RUNNING",
+      "health_status": "HEALTHY"
+    },
+    {
+      "at": "2026-10-25T11:52:50.611029+00:00",
+      "status": "STOPPING",
+      "health_status": "HEALTHY"
+    },
+    {
+      "at": "2026-10-25T11:53:23.958751+00:00",
+      "status": "STOPPING",
+      "health_status": "HEALTHY"
+    },
+    {
+      "at": "2026-10-25T11:53:57.920290+00:00",
+      "status": "STOPPING",
+      "health_status": "HEALTHY"
+    },
+    {
+      "at": "2026-10-25T11:54:31.299418+00:00",
+      "status": "STOPPING",
+      "health_status": "HEALTHY"
+    },
+    {
+      "at": "2026-10-25T11:55:04.815033+00:00",
+      "status": "STOPPING",
+      "health_status": "HEALTHY"
+    },
+    {
+      "at": "2026-10-25T11:55:38.039813+00:00",
+      "status": "STOPPING",
+      "health_status": "HEALTHY"
+    },
+    {
+      "at": "2026-10-25T11:56:11.329953+00:00",
+      "status": "STOPPING",
+      "health_status": "HEALTHY"
+    },
+    {
+      "at": "2026-10-25T11:56:44.636354+00:00",
+      "status": "STOPPING",
+      "health_status": "HEALTHY"
+    },
+    {
+      "at": "2026-10-25T11:57:17.917659+00:00",
+      "status": "STOPPING",
+      "health_status": "HEALTHY"
+    },
+    {
+      "at": "2026-10-25T11:57:51.228704+00:00",
+      "status": "STOPPING",
+      "health_status": "HEALTHY"
+    },
+    {
+      "at": "2026-10-25T11:58:24.600992+00:00",
+      "status": "STOPPING",
+      "health_status": "HEALTHY"
+    },
+    {
+      "at": "2026-10-25T11:58:58.084024+00:00",
+      "status": "STOPPING",
+      "health_status": "HEALTHY"
+    },
+    {
+      "at": "2026-10-25T11:59:31.270404+00:00",
+      "status": "STOPPING",
+      "health_status": "HEALTHY"
+    },
+    {
+      "at": "2026-10-25T12:00:04.614703+00:00",
+      "status": "STOPPING",
+      "health_status": "HEALTHY"
+    },
+    {
+      "at": "2026-10-25T12:00:38.308273+00:00",
+      "status": "STOPPED",
+      "health_status": "HEALTHY"
+    }
+  ],
+  "actual_stopped": true,
+  "watchdog_inactive_confirmed": true,
+  "owned_processes_gone": true,
+  "reader_threads_gone": true,
+  "schema_version": 1,
+  "batch_id": 385,
+  "record_source_sha256": "e36d635a1704bab2502510e1d843a298d221766bb6e051c558c282747281c473",
+  "gpu_model_started": false,
+  "image_or_model_downloaded": false,
+  "hardware": {
+    "target_profile": "scale234",
+    "visible_host_gpus": 2,
+    "expected_host_gpus": 2,
+    "selected_device": 0,
+    "selected_free_vram_mib": 45458,
+    "host_available_ram_bytes": 400433643520,
+    "free_disk_bytes": 100715089920,
+    "authored_minimum_free_disk_gib": 100,
+    "authored_minimum_free_vram_gib": 35,
+    "authored_minimum_host_ram_gib": 64,
+    "selector": "model_type=generator,model_variant=nano,precision=fp8,profile=latency,offload=layer,text_guard_offload=offloaded,video_guard_offload=offloaded,n_gpus=1"
+  },
+  "cleanup": {
+    "checked_utc": "2026-10-25T11:51:34.190598+00:00",
+    "script_exit_code": 1,
+    "owned_container_remaining": false,
+    "credential_file_remaining": false,
+    "scope": "owned container and volatile credentials only; cloud lifecycle is supervised separately"
+  },
+  "storage_preparation": {
+    "schema_version": 1,
+    "recorded_utc": "2026-10-25T11:51:34.102118+00:00",
+    "minimum_free_bytes": 107374182400,
+    "before_free_bytes": 100715081728,
+    "after_pip_free_bytes": 100715065344,
+    "after_free_bytes": 100715040768,
+    "pip_cache_purge": {
+      "attempted": false,
+      "exit_code": -1,
+      "path_allowed": false,
+      "log": "pip-cache-purge.log"
+    },
+    "docker_builder_prune": {
+      "attempted": true,
+      "exit_code": 0,
+      "keep_storage": "0GB",
+      "all_unused": true,
+      "log": "docker-builder-prune.log"
+    },
+    "insufficient_space_diagnostics": {
+      "attempted": true,
+      "workspace_du_exit_code": 0,
+      "cache_du_exit_code": 0,
+      "workspace_log": "workspace-du-depth2.txt",
+      "cache_log": "home-cache-du-depth2.txt",
+      "depth": 2,
+      "same_filesystem": true
+    },
+    "diagnostics": {
+      "docker_system_df_before": {
+        "exit_code": 0,
+        "log": "docker-system-df-before.txt"
+      },
+      "docker_system_df_after": {
+        "exit_code": 0,
+        "log": "docker-system-df-after.txt"
+      },
+      "pip_cache_info_before": {
+        "exit_code": 1,
+        "log": "pip-cache-info-before.txt"
+      },
+      "pip_cache_info_after": {
+        "exit_code": 1,
+        "log": "pip-cache-info-after.txt"
+      },
+      "pip_cache_dir": {
+        "exit_code": 1,
+        "log": "pip-cache-dir.txt"
+      },
+      "pip_pathguard": {
+        "exit_code": 0,
+        "log": "pip-cache-verification.json",
+        "path_allowed": false
+      }
+    },
+    "prohibited_cleanup_not_run": [
+      "docker image prune",
+      "docker container prune",
+      "docker volume prune",
+      "dataset deletion",
+      "model weight deletion",
+      "installed package deletion"
+    ],
+    "passed": false
+  },
+  "filesystem_root_total_bytes": 123690532864,
+  "docker_images_containers_volumes_buildcache_bytes": 0,
+  "unused_cache_bytes_reclaimed": 0,
+  "interpretation": "100GiB authored free-space gate is incompatible with this clean default root after OS usage; exact model footprint remains unmeasured",
+  "received_output": {
+    "remote_reported_bytes": 5421,
+    "local_bytes": 5421,
+    "local_files": [
+      {
+        "path": "remote-output/cleanup.json",
+        "bytes": 259,
+        "sha256": "1c3f2a9fc89a37e7227051fa753c8a9c22387b91fd4e14bc1e6edb37cdbe1d1b"
+      },
+      {
+        "path": "remote-output/compute-before.csv",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "remote-output/docker-builder-prune.log",
+        "bytes": 104,
+        "sha256": "32a20de9e75b0ddf467c5cf109b158691a6d67fe9c678c9a4d8f441dc0f5ee48"
+      },
+      {
+        "path": "remote-output/docker-system-df-after.txt",
+        "bytes": 254,
+        "sha256": "69c3254f00f5e76dead65cc5c930fc9a827de7fc473beec80a0eb8bcb04f2a68"
+      },
+      {
+        "path": "remote-output/docker-system-df-before.txt",
+        "bytes": 254,
+        "sha256": "69c3254f00f5e76dead65cc5c930fc9a827de7fc473beec80a0eb8bcb04f2a68"
+      },
+      {
+        "path": "remote-output/docker-version.txt",
+        "bytes": 7,
+        "sha256": "3795a4b1e2c6937a65f1be5ac40e8c7998963c6077c5cb1d19874a2d2474db02"
+      },
+      {
+        "path": "remote-output/gpus-before.csv",
+        "bytes": 82,
+        "sha256": "e75408633cd9cafca63e6386e7c0b9585639c5a21f694b7f48eb98986443b688"
+      },
+      {
+        "path": "remote-output/hardware.json",
+        "bytes": 515,
+        "sha256": "9dd86e7170d9fccb508b9a5d874cab9cf214f83d674d9bd1bd5edf1c6b56e497"
+      },
+      {
+        "path": "remote-output/home-cache-du-depth2.txt",
+        "bytes": 22,
+        "sha256": "296db2570a9581fcd7b31a6d63592489653246be6a6c458e14c7ae86838464e3"
+      },
+      {
+        "path": "remote-output/phase.txt",
+        "bytes": 20,
+        "sha256": "e2fb5ca1c8a494fbee70fa770d26e5dbd911a67bb5d1fa70f03e3d6cb52868d6"
+      },
+      {
+        "path": "remote-output/pip-cache-dir.txt",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "remote-output/pip-cache-info-after.txt",
+        "bytes": 38,
+        "sha256": "0339f19d4c7eccd84546abbfb984f130305880727e9aa38b1b58e7e55810cfe6"
+      },
+      {
+        "path": "remote-output/pip-cache-info-before.txt",
+        "bytes": 38,
+        "sha256": "0339f19d4c7eccd84546abbfb984f130305880727e9aa38b1b58e7e55810cfe6"
+      },
+      {
+        "path": "remote-output/pip-cache-verification.json",
+        "bytes": 219,
+        "sha256": "b302290a9ae48ba287cf06c80f4fef9d6b704b3d7f7cfca213521fe8b1d03c77"
+      },
+      {
+        "path": "remote-output/profile.json",
+        "bytes": 204,
+        "sha256": "d8ed8f87fb93b51bae931889b912a79ada9503e5de222dfffb08027344c030e9"
+      },
+      {
+        "path": "remote-output/storage-filesystems-after.txt",
+        "bytes": 691,
+        "sha256": "e0a3651bf86da5b54fda7d4402e1f7067d1ef4206e7292ea764e19b6cae78653"
+      },
+      {
+        "path": "remote-output/storage-filesystems-before.txt",
+        "bytes": 691,
+        "sha256": "1725d750f622b47f46900f87f0ac6b7887647639037954f9c32f81793157623c"
+      },
+      {
+        "path": "remote-output/storage-preparation.json",
+        "bytes": 1661,
+        "sha256": "2bc0e853965063d7c81fe204701b3f7fe806c65cd7095c3958cfdcb781a09e64"
+      },
+      {
+        "path": "remote-output/workspace-du-depth2.txt",
+        "bytes": 362,
+        "sha256": "227fae8f4ac8bf42b53b13e13fccd4002e72f76d645e37511d230dc52a4155bb"
+      }
+    ]
+  }
+}

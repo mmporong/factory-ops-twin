@@ -1,0 +1,96 @@
+{
+  "schema_version": 1,
+  "recorded_utc": "2026-10-25T12:04:09.339551+00:00",
+  "scope": "one static 121-frame Cosmos compatibility smoke only",
+  "user_license_consent": true,
+  "consent_source": "explicit same-conversation approval for Cosmos3 2.1.0 licenses and one existing-VM smoke",
+  "governing_terms": "https://catalog.ngc.nvidia.com/orgs/nim/nvidia/containers/cosmos3/2.1.0/governing-terms",
+  "new_vm_creation_allowed": false,
+  "target_name": "factory-ops-scale-234",
+  "target_id": "fy0i3jtz5",
+  "image": "nvcr.io/nim/nvidia/cosmos3@sha256:2add946b316a0baf72a15be4da85132d127c34da22d2fe4e9c4bd146ad8c4020",
+  "single_device_index": 0,
+  "selector": "model_type=generator,model_variant=nano,precision=fp8,profile=latency,offload=layer,text_guard_offload=offloaded,video_guard_offload=offloaded,n_gpus=1",
+  "hard_stop_seconds": 7200,
+  "catalog_hourly_usd": 5.48256,
+  "compute_envelope_estimate_usd": 10.96512,
+  "settled_billing_guaranteed": false,
+  "input_bundle_sha256": "b158dd2dc005b189e00406a9cda8c28a7c15c7e293a124d3c6896fcd6862554f",
+  "original_cpu_contract_346": "preserved; actual selector offloads generator layers and both guardrails",
+  "other_project_policy": "distinct existing VM; no operation on RBY1 or RL instances",
+  "models_downloaded": false,
+  "source_files": [
+    {
+      "path": "scripts/brev/run-cosmos-smoke.sh",
+      "sha256": "fc9967636aa33638be9b50bfee1967fc7e8d7bdd830e6100ef440364171fb666"
+    },
+    {
+      "path": "scripts/brev/run_cosmos_smoke.py",
+      "sha256": "1e8f33f95c496b4c0d523a4bfb467a2650a4d8c615f1df7dd964dc0c50f3404c"
+    },
+    {
+      "path": "scripts/brev/start_cosmos_smoke.ps1",
+      "sha256": "65a9c6457b43012638c9b36bc4afff44dafc6871d065ad5fd8702164f13fd47f"
+    },
+    {
+      "path": "scripts/perception/probe_ngc_access.ps1",
+      "sha256": "4dc14b5f494ea8a082682c5740734eb3b280d201ba219273b05db4223c544387"
+    }
+  ],
+  "batch_id": 386,
+  "supersedes_execution_plan_379_only": false,
+  "initial_state_gate": [
+    "unique owned STOPPED instance",
+    "build COMPLETED",
+    "exact instance id and type"
+  ],
+  "boot_admission": [
+    "CLI display RUNNING or UNHEALTHY with build COMPLETED and shell READY",
+    "successful default-alias SSH nvidia-smi and Docker access",
+    "actual VRAM/RAM/disk checks",
+    "model-free NIM profile preflight",
+    "model readiness endpoint before inference"
+  ],
+  "health_status_role": "CLI JSON status is display-derived; UNHEALTHY with shell READY is admitted to the actual SSH hardware probe, not to inference",
+  "readiness_regression_cases_passed": 5,
+  "target_type": "gpu-l40s-d.2gpu-64vcpu-384gb",
+  "target_profile": "scale234",
+  "ssh_surface": "existing DEFAULT workspace alias; host-only endpoint is not reused",
+  "minimum_available_host_ram_gib": 64,
+  "minimum_free_device_vram_gib": 35,
+  "replaces_failed_attempt": 385,
+  "watchdog_target": "factory-ops-scale-234",
+  "installed_cli_version": "v0.6.335",
+  "upstream_commit": "1733b3d5822b4fdec88682c7a2358a45fbd66e32",
+  "wsl_remote_transport": "wsl --exec ssh/scp; no intermediary WSL shell expansion",
+  "transport_regression_passed": true,
+  "authored_minimum_free_disk_gib": 32,
+  "previous_closed_attempts_catalog_elapsed_estimate_usd": 5.7366,
+  "original_compute_budget_usd": 40,
+  "prior_estimate_plus_this_envelope_usd": 16.7018,
+  "ssh_stdout_stderr_separation_regressions_passed": 2,
+  "storage_preparation": {
+    "only_if_free_below_gib": 32,
+    "standard_pip_cache_requires_canonical_home_path": true,
+    "pip_guard_fixture_cases_passed": 3,
+    "unused_buildkit_cache_only": true,
+    "buildkit_keep_storage": "0GB",
+    "buildkit_all_unused": true,
+    "images_containers_volumes_packages_weights_datasets_deleted": false,
+    "final_entry_floor_gib": 32,
+    "failed_optional_preparation_is_recorded_not_admission": true
+  },
+  "runtime_low_free_disk_gib": 24,
+  "runtime_disk_sample_interval_seconds": 1,
+  "disk_limits_are_official_nvidia_minimum": false,
+  "image_pull_limit_seconds": 1800,
+  "disk_guard_ownership_fixture_cases_passed": 3,
+  "model_cache": {
+    "path_template": "$HOME/workspace/factoryops-cosmos-cache/<image-index-digest>",
+    "content_addressed_reuse": true,
+    "collected_with_run_output": false,
+    "automatic_deletion": false
+  },
+  "runtime_guard_action": "record trigger, terminate only exact owned container and verified GNU timeout group, receive evidence and Stop",
+  "guard_scope_claim": "bounded monitored experiment; not a certified or guaranteed storage upper bound"
+}

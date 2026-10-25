@@ -1855,3 +1855,11 @@ Stop 요청 후 실제STOPPED는19:31:29 KST에 확인했고 timer/service inact
 384에서 기본 SSH 접근·GPU0 여유45,458MiB·호스트 사용 가능 RAM400,486,203,392바이트를 확인했다. 디스크 여유100,756,672,512바이트(93.84GiB)는 authored100GiB 기준보다 부족했다.384는 모델 다운로드 전에 종료됐고1076바이트의 hardware/profile/cleanup 진단을 회수했다. 이 수신에서 이전 SSH 경고 파싱 수정의 실제 동작을 확인했다. 원격 키·소유 컨테이너 부재와20:36:54 KST의 실제STOPPED·감시 종료를 확인했다. [384 근거](evidence/cosmos-cloud-384.json)
 
 NGC의 amd64 압축 image 표시는8.76GB지만 model/cache·materialization·scratch의 정확한 공개 byte 크기는 확인하지 못했다. 압축 image 크기만으로 최종 여유를 보장하지 않는다.385는100GiB 기준을 유지하고 필요할 때 표준 pip 캐시와 unused BuildKit 캐시만 정리한다. pip cache dir의 canonical 경로·HOME 내부·symlink 조건을 확인하며 검증이 거절되면 해당 정리를 생략한다. 표준 경로·다른 경로·외부 symlink의3개 CPU fixture가 통과했다. 진단이나 선택 정리의 실패는 exit/log로 기록하고 최종 입장은 실제 여유로 판정한다. 이미지·컨테이너·볼륨·설치 패키지·모델 가중치·실험 데이터는 정리 대상에 넣지 않는다. [385 계약](evidence/cosmos-execution-plan-385.json)
+
+## FOT-241 — 기본 디스크에 맞지 않는 고정 여유 조건
+
+385의 실제 rootfs는123,690,532,864바이트이며 OS 사용 뒤 여유는 약94GiB였다. pip 모듈·캐시는 없었고 Docker image/container/volume/build cache는 모두0B였다. 미사용 BuildKit 정리는0B를 반환했고 데이터 삭제는 없었다. 따라서 캐시 누적으로 인한 부족이라는 가정은 맞지 않았으며, authored100GiB 조건이 이 기본 디스크의 소량 실행을 막았다. 정확한 모델 저장량을 확인한 결과는 아니다.21:00:38 KST에 실제STOPPED와 키·컨테이너·감시 종료를 확인했다. [385 집계와 정리 결과](evidence/cosmos-cloud-385.json)
+
+386은 프로젝트가 정한 입장32GiB·runtime 저용량24GiB를 구분해 제한된 실험을 수행한다. 감시자는1초마다 여유를 확인하고 최소·현재 여유의 요약을 남긴다. 저용량 또는 image pull1800초 한도에 도달하면 exact named container와 parent PID/starttime·GNU timeout leader·run script/batch/profile이 일치하는 그룹만 중단한다. 다른 그룹이나 재사용 PID에는 그룹 신호를 보내지 않는다. image pull의 중첩 timeout을 제거해 pull·pipe가 같은 소유 그룹에 남도록 했다.3개 소유권 fixture와 전체10CPU 회귀가 통과했다. 이 조건은 NVIDIA 공식 최소나 용량 보장이 아니며 실제 사용량·실패를 측정하는 보호 조건이다.
+
+모델 캐시는 실행별 폴더에서 image index digest별 공유 폴더로 옮겨 다음 실행의 중복 다운로드를 피하도록 구성했다. 기존 원본이나 가중치는 삭제하지 않았고 캐시는 결과 수집에 넣지 않는다. 최초 실제 pull·모델 기동·변환은 아직 미확인이다. [386 실행과 감시 범위](evidence/cosmos-execution-plan-386.json)
