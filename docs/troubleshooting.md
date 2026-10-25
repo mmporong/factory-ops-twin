@@ -1821,3 +1821,9 @@ NGC 인증376은 저장 파일을 `Get-Content -Raw`로 읽어 `ConvertTo-Secure
 379는 독립Stop timer를 확인한 뒤 기존234를 시작했다. 첫 관측 STOPPED/UNAVAILABLE에 이어33초 뒤 STARTING/NOT READY/UNHEALTHY를 보자 실행기가 즉시 실패로 판정했다. 모델·image layer·GPU 추론은 시작하지 않았다. 이 기록은 공급자 영구 장애의 근거가 아니다. 공식 Brev 문서는 해당 health JSON enum의 의미나 STARTING 중 전이를 정의하지 않는다. [공식 수명주기](https://docs.nvidia.com/brev/concepts/gpu-instances)
 
 Stop 요청 후 실제STOPPED는19:31:29 KST에 확인했고 timer/service inactive·keepalive 소멸을 확인했다.379 원본은 보존했다.380은 STOPPED의 과거 health를 시작 판정으로 쓰지 않고 부팅기한 내 RUNNING/COMPLETED/READY를 기다린다. 이후 실제SSH·nvidia-smi·VRAM/RAM/disk·모델 없는NIM profile preflight를 통과해야 모델을 시작하며, 추론은별도ready endpoint를 요구한다. health는보조관측으로남긴다. 부팅중변화·미준비timeout·terminal실패·health와실제연결의구분4개CPU 회귀검사를통과했다. [379의실제종료](evidence/cosmos-cloud-379.json) · [380실행계약](evidence/cosmos-execution-plan-380.json)
+
+## FOT-235 — 정상 부팅 뒤 호스트 SSH 포트의 연결 시간 초과
+
+380은19:38:22 KST에 RUNNING/COMPLETED/READY/HEALTHY가 됐지만 `-host` 별칭의 SSH 포트 연결이 시간 초과됐다. 이 실패는 모델 다운로드·키 전송·GPU 추론 전에 발생했다. 제어면 준비와 실제 SSH 접근은 별개이며, 네트워크 차단이나 공급자 장애 중 어느 것이 원인인지는 확인되지 않았다. Stop 요청 뒤19:45:19 KST에 실제STOPPED를 확인했고 timer/service와 소유 keepalive를 정리했다. [380 종료 근거](evidence/cosmos-cloud-380.json)
+
+381은 기존 g0의 과거 실행에서 사용한 기본 SSH 별칭을 선택한다. SSH와 SCP에 `RequestTTY=no`를 명시하고, 선택한 환경 이름으로 독립 Stop timer를 결속한다. g0는 단일 L40S의 layer offload·guardrail resident 프로필을 사용해 실제 여유 VRAM38GiB·호스트 RAM36GiB를 요구한다. 시작·Stop이 실패했던 과거 AWS 기록도 남아 있으므로 부팅 기한을 유지하고 새 VM이나 반복 시작으로 우회하지 않는다. 키 전송을 시도하지 않은 실패에서는 불필요한 원격 키 삭제 접속을 생략한다. [381 실행 계약](evidence/cosmos-execution-plan-381.json) · [공식 지원 표](https://docs.nvidia.com/nim/cosmos/latest/support-matrix.html)

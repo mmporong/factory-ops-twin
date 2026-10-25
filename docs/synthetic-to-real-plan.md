@@ -198,3 +198,5 @@ profile preflight는 키 없이 수행하며 이를 통과하기 전 모델을 �
 379는부팅중STARTING/NOT READY/UNHEALTHY의health필드만으로조기중단했다. 모델이나image layer를내려받지않았으며실제STOPPED와감시종료를확인했다.380은부팅대기조건을수정한새소스로같은단일입력만시도한다. health는보조값으로기록하고실제SSH·GPU/메모리·NIM preflight와모델ready로실행을판정한다.379의입력·판정·원본은변경하지않는다. [실제379마감](evidence/cosmos-cloud-379.json) · [수정한실행계약](evidence/cosmos-execution-plan-380.json)
 
 `inspect_cosmos_smoke.py`는 ffprobe/ffmpeg의 CPU 디코딩을 사용해121frame·30fps·1280×720 계약과 실제프레임 수를 비교한다. 입력대표1장·출력first/middle/last3장·비교sheet1장·JSON만보존한다. 인접프레임평균절대RGB차이는0–1 정규화의정지영상흔들림진단이며 객체라벨의유효성을대체하지않는다. NumPy·Pillow·ffmpeg·ffprobe가필요하다. CPU fixture는기존입력영상을양쪽에넣어121frame·0차이를확인했고Cosmos결과로사용하지않는다. 실제변환후에도 training_ready/model_output_labels_approved=false와라벨미전사를유지한다.
+
+380은 정상 기동 후 호스트 SSH 포트가 시간 초과되어 다운로드 전에 종료됐다. 실제STOPPED와 감시 종료를 확인했고 네트워크 원인은 미확정이다.381은 같은 입력·동의·고정 image digest를 유지하면서 기존 g0의 기본 SSH 별칭을 사용한다. 단일 L40S에 generator layer offload와 guardrail resident를 선택하고 실제 VRAM38GiB·RAM36GiB를 확인한다. 독립7200초 Stop timer의 대상도 g0로 결속하며 계산비는 카탈로그 기준 약$5.38의 추정이다. 중지 지연·저장비·실제 정산의 보장 상한은 아니다. 새 VM과 다른 프로젝트 환경은 사용하지 않는다. [380 실제 종료](evidence/cosmos-cloud-380.json) · [381 실행 계약](evidence/cosmos-execution-plan-381.json)

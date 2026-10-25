@@ -1,0 +1,151 @@
+{
+  "status": "failed",
+  "started_at": "2026-10-25T10:33:36.556629+00:00",
+  "finished_at": "2026-10-25T10:45:19.615452+00:00",
+  "initial_target": {
+    "name": "factory-ops-scale-234",
+    "id": "fy0i3jtz5",
+    "status": "STOPPED",
+    "build_status": "COMPLETED",
+    "shell_status": "NOT READY",
+    "health_status": "UNHEALTHY",
+    "instance_type": "gpu-l40s-d.2gpu-64vcpu-384gb",
+    "instance_kind": "gpu",
+    "gpu": "L40S"
+  },
+  "readiness_polls": [
+    {
+      "at": "2026-10-25T10:33:54.946349+00:00",
+      "status": "STOPPED",
+      "build_status": "COMPLETED",
+      "shell_status": "NOT READY",
+      "health_status": "UNAVAILABLE"
+    },
+    {
+      "at": "2026-10-25T10:34:28.376267+00:00",
+      "status": "STARTING",
+      "build_status": "COMPLETED",
+      "shell_status": "NOT READY",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-25T10:35:02.147034+00:00",
+      "status": "STARTING",
+      "build_status": "COMPLETED",
+      "shell_status": "NOT READY",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-25T10:35:35.498696+00:00",
+      "status": "STARTING",
+      "build_status": "COMPLETED",
+      "shell_status": "NOT READY",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-25T10:36:09.039550+00:00",
+      "status": "STARTING",
+      "build_status": "COMPLETED",
+      "shell_status": "NOT READY",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-25T10:36:42.894939+00:00",
+      "status": "STARTING",
+      "build_status": "COMPLETED",
+      "shell_status": "NOT READY",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-25T10:37:16.164742+00:00",
+      "status": "STARTING",
+      "build_status": "COMPLETED",
+      "shell_status": "NOT READY",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-25T10:37:49.452043+00:00",
+      "status": "STARTING",
+      "build_status": "COMPLETED",
+      "shell_status": "NOT READY",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-25T10:38:22.628309+00:00",
+      "status": "RUNNING",
+      "build_status": "COMPLETED",
+      "shell_status": "READY",
+      "health_status": "HEALTHY"
+    }
+  ],
+  "stop_polls": [
+    {
+      "at": "2026-10-25T10:39:42.768156+00:00",
+      "status": "RUNNING",
+      "health_status": "HEALTHY"
+    },
+    {
+      "at": "2026-10-25T10:40:16.696258+00:00",
+      "status": "RUNNING",
+      "health_status": "HEALTHY"
+    },
+    {
+      "at": "2026-10-25T10:40:49.974631+00:00",
+      "status": "STOPPING",
+      "health_status": "HEALTHY"
+    },
+    {
+      "at": "2026-10-25T10:41:23.425283+00:00",
+      "status": "STOPPING",
+      "health_status": "HEALTHY"
+    },
+    {
+      "at": "2026-10-25T10:41:56.764634+00:00",
+      "status": "STOPPING",
+      "health_status": "HEALTHY"
+    },
+    {
+      "at": "2026-10-25T10:42:32.191797+00:00",
+      "status": "STOPPING",
+      "health_status": "HEALTHY"
+    },
+    {
+      "at": "2026-10-25T10:43:05.513880+00:00",
+      "status": "STOPPING",
+      "health_status": "HEALTHY"
+    },
+    {
+      "at": "2026-10-25T10:43:38.887042+00:00",
+      "status": "STOPPING",
+      "health_status": "HEALTHY"
+    },
+    {
+      "at": "2026-10-25T10:44:12.594631+00:00",
+      "status": "STOPPING",
+      "health_status": "HEALTHY"
+    },
+    {
+      "at": "2026-10-25T10:44:46.010786+00:00",
+      "status": "STOPPING",
+      "health_status": "HEALTHY"
+    },
+    {
+      "at": "2026-10-25T10:45:19.298649+00:00",
+      "status": "STOPPED",
+      "health_status": "HEALTHY"
+    }
+  ],
+  "actual_stopped": true,
+  "watchdog_inactive_confirmed": true,
+  "owned_processes_gone": true,
+  "schema_version": 1,
+  "batch_id": 380,
+  "record_source_sha256": "be71e532e4fa386338eb663c4fa3e5440d519e6e47287ce424c5a6838c3150dc",
+  "gpu_model_started": false,
+  "image_or_model_downloaded": false,
+  "credential_transferred": false,
+  "error": "SSH host endpoint timed out before hardware preflight; no remote upload or model execution",
+  "interpretation": "RUNNING/COMPLETED/READY/HEALTHY was observed; SSH reachability failed; underlying network cause remains unconfirmed",
+  "watchdog_retired": true,
+  "keepalive_gone": true
+}

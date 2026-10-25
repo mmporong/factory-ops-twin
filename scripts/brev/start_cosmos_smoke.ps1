@@ -4,7 +4,8 @@ param(
     [Parameter(Mandatory = $true)][string]$OutputDirectory,
     [Parameter(Mandatory = $true)][string]$InputsDirectory,
     [string]$CredentialFile = (Join-Path $HOME '.config/factoryops/ngc-api-key.dpapi'),
-    [ValidateSet(379, 380)][int]$BatchId = 379,
+    [ValidateSet(379, 380, 381)][int]$BatchId = 379,
+    [ValidateSet('scale234', 'g0')][string]$TargetProfile = 'scale234',
     [switch]$Execute
 )
 
@@ -22,6 +23,7 @@ $workerInfo.UseShellExecute = $false
 $workerInfo.WorkingDirectory = $repoRoot
 $workerInfo.RedirectStandardInput = $true
 foreach ($workerArgument in @('-X', 'utf8', $controllerPath, '--batch-id', [string]$BatchId,
+    '--target-profile', $TargetProfile,
     '--output', [IO.Path]::GetFullPath($OutputDirectory),
     '--remote-script', $remoteScript,
     '--inputs-directory', [IO.Path]::GetFullPath($InputsDirectory))) {

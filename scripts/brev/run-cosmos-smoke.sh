@@ -3,13 +3,25 @@ set -euo pipefail
 umask 077
 
 batch_id="${1:-379}"
-[[ "$batch_id" =~ ^(379|380)$ ]] || exit 2
+target_profile="${2:-scale234}"
+[[ "$batch_id" =~ ^(379|380|381)$ ]] || exit 2
+[[ "$target_profile" =~ ^(scale234|g0)$ ]] || exit 2
 work="$HOME/workspace/factoryops-cosmos-$batch_id"
 out="$work/output"
 secrets=/dev/shm/factoryops-cosmos-$batch_id
 container=factoryops-cosmos-$batch_id
 image='nvcr.io/nim/nvidia/cosmos3@sha256:2add946b316a0baf72a15be4da85132d127c34da22d2fe4e9c4bd146ad8c4020'
-selector='model_type=generator,model_variant=nano,precision=fp8,profile=latency,offload=layer,text_guard_offload=offloaded,video_guard_offload=offloaded,n_gpus=1'
+if [[ "$target_profile" == g0 ]]; then
+  expected_host_gpus=1
+  minimum_vram_gib=38
+  minimum_ram_gib=36
+  selector='model_type=generator,model_variant=nano,precision=fp8,profile=latency,offload=layer,text_guard_offload=resident,video_guard_offload=resident,n_gpus=1'
+else
+  expected_host_gpus=2
+  minimum_vram_gib=35
+  minimum_ram_gib=64
+  selector='model_type=generator,model_variant=nano,precision=fp8,profile=latency,offload=layer,text_guard_offload=offloaded,video_guard_offload=offloaded,n_gpus=1'
+fi
 sampler_pid=''
 mkdir -p "$out" "$work/cache" "$secrets/docker"
 test -s "$secrets/ngc-key"
@@ -61,20 +73,30 @@ nvidia-smi --query-gpu=index,name,memory.total,memory.free,driver_version --form
 nvidia-smi --query-compute-apps=pid,process_name --format=csv,noheader > "$out/compute-before.csv"
 test ! -s "$out/compute-before.csv"
 docker info --format '{{.ServerVersion}}' > "$out/docker-version.txt"
-python3 - "$work" "$out" <<'PY'
+python3 - "$work" "$out" "$target_profile" "$expected_host_gpus" "$minimum_vram_gib" "$minimum_ram_gib" "$selector" <<'PY'
 import csv,json,pathlib,shutil,sys
-work,out=map(pathlib.Path,sys.argv[1:])
+work,out=map(pathlib.Path,sys.argv[1:3])
+profile=sys.argv[3]
+expected_host_gpus=int(sys.argv[4])
+minimum_vram_gib=int(sys.argv[5])
+minimum_ram_gib=int(sys.argv[6])
+selector=sys.argv[7]
+selector_fields=selector.split(',')
+selector_keys=[field.split('=',1)[0] for field in selector_fields]
+assert len(selector_keys)==len(set(selector_keys)),'duplicate selector field'
 gpus=list(csv.reader((out/'gpus-before.csv').read_text().splitlines()))
-assert len(gpus)==2 and all('L40S' in row[1] for row in gpus),'unexpected GPU identity'
+assert len(gpus)==expected_host_gpus and all('L40S' in row[1] for row in gpus),'unexpected GPU identity or cardinality'
 mem={k:int(v.split()[0])*1024 for k,v in (line.split(':',1) for line in pathlib.Path('/proc/meminfo').read_text().splitlines())}
 free_disk=shutil.disk_usage(work).free
-record={'visible_host_gpus':len(gpus),'selected_device':0,'selected_free_vram_mib':int(gpus[0][3]),
+record={'target_profile':profile,'visible_host_gpus':len(gpus),'expected_host_gpus':expected_host_gpus,
+        'selected_device':0,'selected_free_vram_mib':int(gpus[0][3]),
         'host_available_ram_bytes':mem['MemAvailable'],'free_disk_bytes':free_disk,
-        'authored_minimum_free_disk_gib':100,'documented_guardrail_offloaded_transfer_vram_gib':35,
-        'documented_guardrail_offloaded_host_ram_gib':64}
+        'authored_minimum_free_disk_gib':100,'authored_minimum_free_vram_gib':minimum_vram_gib,
+        'authored_minimum_host_ram_gib':minimum_ram_gib,'selector':selector}
 (out/'hardware.json').write_text(json.dumps(record,indent=2)+'\n')
-assert record['selected_free_vram_mib']>=35*1024,'insufficient free per-device VRAM'
-assert mem['MemAvailable']>=64*1024**3,'insufficient available host RAM'
+(out/'profile.json').write_text(json.dumps({'target_profile':profile,'selector':selector},indent=2)+'\n')
+assert record['selected_free_vram_mib']>=minimum_vram_gib*1024,'insufficient free per-device VRAM'
+assert mem['MemAvailable']>=minimum_ram_gib*1024**3,'insufficient available host RAM'
 assert free_disk>=100*1024**3,'insufficient authored disk reserve'
 PY
 nvidia-smi --query-gpu=timestamp,index,memory.used,utilization.gpu --format=csv --loop=5 > "$out/gpu-samples.csv" &
@@ -99,7 +121,7 @@ docker run -d --name "$container" --gpus '"device=0"' --shm-size=32g \
   --env-file "$secrets/ngc.env" -e NIM_TAGS_SELECTOR="$selector" \
   -e NIM_TELEMETRY_MODE=0 -e NIM_LOG_LEVEL=INFO -e NIM_TRITON_REQUEST_TIMEOUT=3600000000 \
   -v "$work/cache:/opt/nim/.cache" "$image" > "$out/container-id.txt"
-python3 - "$out" "$work" "$container" <<'PY'
+python3 - "$out" "$work" "$container" "$batch_id" "$target_profile" <<'PY'
 import base64,datetime,hashlib,json,pathlib,subprocess,time,urllib.error,urllib.request,sys
 out,work=map(pathlib.Path,sys.argv[1:3])
 base='http://127.0.0.1:18080'
@@ -137,6 +159,7 @@ video=base64.b64decode(result['b64_video'],validate=True)
 assert 0<len(video)<=100*1024**2,'unexpected output size'
 (out/'output.mp4').write_bytes(video)
 record={'schema_version':1,'status':'inference_completed','completed_utc':datetime.datetime.now(datetime.timezone.utc).isoformat(),
+        'batch_id':int(sys.argv[4]),'target_profile':sys.argv[5],
         'request_sha256':hashlib.sha256(payload).hexdigest(),'source_bundle_sha256':hashlib.sha256((work/'bundle.json').read_bytes()).hexdigest(),
         'inference_wall_seconds':time.monotonic()-started,'output_bytes':len(video),'output_sha256':hashlib.sha256(video).hexdigest(),
         'requested_frames':121,'requested_fps':30,'seed':2026,'training_ready':False,'model_output_labels_approved':False,

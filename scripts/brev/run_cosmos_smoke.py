@@ -19,23 +19,26 @@ import threading
 import time
 import uuid
 
-from reuse_scale import (
-    BREV,
-    HARD_STOP_SECONDS,
-    WSL,
-    arm_watchdog,
-    brev_call,
-    call_command,
-    cleanup_watchdog,
-    timestamp,
-    wsl_call,
-)
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "scripts" / "brev"))
+import reuse_scale as watchdog_runtime
+
+
+BREV = watchdog_runtime.BREV
+HARD_STOP_SECONDS = watchdog_runtime.HARD_STOP_SECONDS
+WSL = watchdog_runtime.WSL
+arm_watchdog = watchdog_runtime.arm_watchdog
+brev_call = watchdog_runtime.brev_call
+call_command = watchdog_runtime.call_command
+cleanup_watchdog = watchdog_runtime.cleanup_watchdog
+timestamp = watchdog_runtime.timestamp
+wsl_call = watchdog_runtime.wsl_call
 
 
 NAME = "factory-ops-scale-234"
 INSTANCE_ID = "fy0i3jtz5"
 INSTANCE_TYPE = "gpu-l40s-d.2gpu-64vcpu-384gb"
 HOST_ALIAS = NAME + "-host"
+TARGET_PROFILE = "scale234"
 BATCH_ID = 379
 REMOTE_DIR = "workspace/factoryops-cosmos-379"
 OUTPUT_BASENAME = "cosmos-brev-smoke-379"
@@ -55,7 +58,26 @@ STOP_RESERVE_SECONDS = 600
 MAX_REMOTE_OUTPUT_BYTES = 250 * 1024 * 1024
 HOURLY_ESTIMATE_USD = 5.48256
 ESTIMATED_ENVELOPE_USD = 2 * HOURLY_ESTIMATE_USD
-SSH_OPTIONS = ("-o", "BatchMode=yes", "-o", "ConnectTimeout=30")
+TARGETS = {
+    "scale234": {
+        "name": "factory-ops-scale-234",
+        "id": "fy0i3jtz5",
+        "instance_type": "gpu-l40s-d.2gpu-64vcpu-384gb",
+        "host_alias_suffix": "-host",
+        "hourly_estimate_usd": 5.48256,
+    },
+    "g0": {
+        "name": "factory-ops-twin-g0",
+        "id": "evica0x9l",
+        "instance_type": "g6e.2xlarge",
+        "host_alias_suffix": "",
+        "hourly_estimate_usd": 2.690496,
+    },
+}
+SSH_OPTIONS = ("-o", "BatchMode=yes", "-o", "ConnectTimeout=30",
+               "-o", "RequestTTY=no", "-o", "ServerAliveInterval=10",
+               "-o", "ServerAliveCountMax=3", "-o", "ControlMaster=no",
+               "-o", "ControlPath=none")
 NVAPI_PATTERN = re.compile(r"(?i)nvapi(?:[-_:]|%2[dDfF])?[A-Za-z0-9._~-]{8,}")
 
 
@@ -218,7 +240,7 @@ def _run_remote(
     argv = WSL + [
         "ssh", *SSH_OPTIONS, HOST_ALIAS,
         f'timeout --signal=TERM --kill-after=30s {remote_timeout}s '
-        f'/bin/bash "{REMOTE_ROOT}/run.sh" {BATCH_ID}',
+        f'/bin/bash "{REMOTE_ROOT}/run.sh" {BATCH_ID} {TARGET_PROFILE}',
     ]
     process = subprocess.Popen(
         argv, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE
@@ -349,7 +371,8 @@ def _stop_and_confirm(record: dict[str, object], save: object) -> bool:
 
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--batch-id", type=int, choices=(379, 380), default=379)
+    parser.add_argument("--batch-id", type=int, choices=(379, 380, 381), default=379)
+    parser.add_argument("--target-profile", choices=tuple(TARGETS), default="scale234")
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--remote-script", type=Path, required=True)
     parser.add_argument("--inputs-directory", type=Path, default=EXPECTED_INPUT_ROOT)
@@ -359,8 +382,19 @@ def _parser() -> argparse.ArgumentParser:
 
 
 def main() -> int:
+    global NAME, INSTANCE_ID, INSTANCE_TYPE, HOST_ALIAS, TARGET_PROFILE
     global BATCH_ID, REMOTE_DIR, REMOTE_ROOT, REMOTE_KEY, OUTPUT_BASENAME
+    global HOURLY_ESTIMATE_USD, ESTIMATED_ENVELOPE_USD
     args = _parser().parse_args()
+    target_profile = TARGETS[args.target_profile]
+    TARGET_PROFILE = args.target_profile
+    NAME = str(target_profile["name"])
+    INSTANCE_ID = str(target_profile["id"])
+    INSTANCE_TYPE = str(target_profile["instance_type"])
+    HOST_ALIAS = NAME + str(target_profile["host_alias_suffix"])
+    HOURLY_ESTIMATE_USD = float(target_profile["hourly_estimate_usd"])
+    ESTIMATED_ENVELOPE_USD = 2 * HOURLY_ESTIMATE_USD
+    watchdog_runtime.NAME = NAME
     BATCH_ID = args.batch_id
     REMOTE_DIR = f"workspace/factoryops-cosmos-{BATCH_ID}"
     REMOTE_ROOT = "$HOME/" + REMOTE_DIR
@@ -371,6 +405,8 @@ def main() -> int:
         "name": NAME,
         "instance_id": INSTANCE_ID,
         "instance_type": INSTANCE_TYPE,
+        "target_profile": TARGET_PROFILE,
+        "ssh_host_alias": HOST_ALIAS,
         "batch_id": BATCH_ID,
         "execute": args.execute,
         "hard_stop_seconds": HARD_STOP_SECONDS,
@@ -408,6 +444,7 @@ def main() -> int:
         "watchdog_inactive_confirmed": False,
         "owned_processes_gone": False,
         "reader_threads_gone": False,
+        "secret_transfer_attempted": False,
     }
 
     def save() -> None:
@@ -439,7 +476,7 @@ def main() -> int:
         _, hardware = _ssh(
             "set -eu; nvidia-smi --query-gpu=name,memory.total,driver_version --format=csv,noheader; "
             "command -v docker; docker info --format '{{.ServerVersion}}'; free -b; "
-            "df -B1 \"$HOME/workspace\"",
+            "df -B1 \"$HOME\"",
             timeout=120,
         )
         (output / "hardware.log").write_text(_redact(hardware, secret), encoding="utf-8")
@@ -447,6 +484,8 @@ def main() -> int:
         _scp(remote_script, "run.sh")
         for name, path in input_files.items():
             _scp(path, name)
+        record["secret_transfer_attempted"] = True
+        save()
         _send_secret(secret)
 
         remaining = deadline - time.monotonic() - STOP_RESERVE_SECONDS
@@ -471,7 +510,7 @@ def main() -> int:
         record["status"] = "failed"
         record["error"] = _redact(f"{type(error).__name__}: {error}", secret)
     finally:
-        if record["start_attempted"]:
+        if record["secret_transfer_attempted"]:
             try:
                 _ssh(f"rm -f {REMOTE_KEY}", timeout=30, check=False)
                 record["remote_key_cleanup_attempted"] = True
@@ -479,6 +518,7 @@ def main() -> int:
                 record["remote_key_cleanup_error"] = _redact(
                     f"{type(error).__name__}: {error}", secret
                 )
+        if record["start_attempted"]:
             record["actual_stopped"] = _stop_and_confirm(record, save)
         else:
             record["actual_stopped"] = True
