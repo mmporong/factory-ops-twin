@@ -17,6 +17,8 @@ from scripts.perception.run_detector_pilot import (
     category_mapping,
     create_model,
     _runtime_imports,
+    probe_batch,
+    reproducibility_state,
     real_registry_roles,
     training_dataset_for_condition,
     validate_coco,
@@ -36,6 +38,9 @@ BACKBONE_CONFIG = json.loads(
 )
 MOSAIC_CONFIG = json.loads(
     (ROOT / "configs/perception/detector-pilot-mosaic-v3.json").read_text(encoding="utf-8")
+)
+RESNET_CONFIG = json.loads(
+    (ROOT / "configs/perception/detector-pilot-resnet-v4.json").read_text(encoding="utf-8")
 )
 HAS_MODEL_RUNTIME = importlib.util.find_spec("torch") is not None and importlib.util.find_spec("torchvision") is not None
 
@@ -118,6 +123,7 @@ class DetectorPilotTests(unittest.TestCase):
         validate_execution_gate(CONFIG, False)
         validate_execution_gate(BACKBONE_CONFIG, True)
         validate_execution_gate(MOSAIC_CONFIG, True)
+        validate_execution_gate(RESNET_CONFIG, True)
         self.assertEqual(("train", "tuning_validation"), real_registry_roles(BACKBONE_CONFIG))
         self.assertEqual(CONFIG["conditions"], BACKBONE_CONFIG["conditions"])
         self.assertEqual(CONFIG["seeds"], BACKBONE_CONFIG["seeds"])
@@ -127,10 +133,25 @@ class DetectorPilotTests(unittest.TestCase):
         self.assertEqual(CONFIG["model"], comparable_model)
         for key in ("conditions", "seeds", "optimization", "model", "real_split"):
             self.assertEqual(BACKBONE_CONFIG[key], MOSAIC_CONFIG[key])
+        for key in ("conditions", "seeds", "optimization", "real_split"):
+            self.assertEqual(BACKBONE_CONFIG[key], RESNET_CONFIG[key])
+        self.assertNotIn("synthetic_training_augmentation", RESNET_CONFIG)
         with self.assertRaisesRegex(PilotError, "v1 cannot"):
             validate_execution_gate(CONFIG, True)
         with self.assertRaisesRegex(PilotError, "requires its tuning-only"):
             validate_execution_gate(BACKBONE_CONFIG, False)
+        with self.assertRaisesRegex(PilotError, "requires its tuning-only"):
+            validate_execution_gate(RESNET_CONFIG, False)
+        invalid_resnet = json.loads(json.dumps(RESNET_CONFIG))
+        invalid_resnet["model"]["torchvision_weights_enum"] = (
+            "FasterRCNN_MobileNet_V3_Large_FPN_Weights.COCO_V1"
+        )
+        with self.assertRaisesRegex(PilotError, "model bundle contract differs"):
+            validate_execution_gate(invalid_resnet, True)
+        invalid_batch = json.loads(json.dumps(RESNET_CONFIG))
+        invalid_batch["optimization"]["batch_size"] = 1
+        with self.assertRaisesRegex(PilotError, "model bundle contract differs"):
+            validate_execution_gate(invalid_batch, True)
         invalid_mosaic = json.loads(json.dumps(MOSAIC_CONFIG))
         invalid_mosaic["synthetic_training_augmentation"]["source_resolution"]["width"] = 767
         with self.assertRaisesRegex(PilotError, "augmentation contract differs"):
@@ -181,6 +202,56 @@ class DetectorPilotTests(unittest.TestCase):
         legacy_reconstructed, legacy_metadata = create_model(runtime, CONFIG, pretrained=False)
         self.assertNotIn("constructor_contract_preserved", legacy_metadata)
         self.assertTrue(any(isinstance(module, torch.nn.BatchNorm2d) for module in legacy_reconstructed.modules()))
+
+    @unittest.skipUnless(HAS_MODEL_RUNTIME, "torch/torchvision runtime is not installed")
+    def test_resnet_v4_selects_exact_model_bundle_without_weight_download(self):
+        runtime = _runtime_imports()
+        self.assertIn("fasterrcnn_resnet50_fpn", runtime)
+        self.assertIn("FasterRCNN_ResNet50_FPN_Weights", runtime)
+        no_download = json.loads(json.dumps(RESNET_CONFIG))
+        no_download["model"]["preserve_coco_backbone_constructor_contract"] = False
+        model, metadata = create_model(runtime, no_download, pretrained=False)
+        self.assertEqual("fasterrcnn_resnet50_fpn", metadata["architecture"])
+        self.assertEqual("FasterRCNN_ResNet50_FPN_Weights.COCO_V1", metadata["weights_enum"])
+        self.assertEqual(3, model.roi_heads.box_predictor.cls_score.out_features)
+        self.assertGreater(metadata["constructor_normalization"]["BatchNorm2d"], 0)
+        self.assertGreater(metadata["trainable_parameter_count"], 0)
+        state = reproducibility_state(runtime["torch"], runtime["torch"].device("cpu"), 1701)
+        self.assertEqual((1701, "cpu"), (state["seed"], state["device_name"]))
+        self.assertIn("deterministic_algorithms_enabled", state)
+        self.assertIn("CUBLAS_WORKSPACE_CONFIG", state)
+
+    @unittest.skipUnless(HAS_MODEL_RUNTIME, "torch runtime is not installed")
+    def test_resnet_v4_rejects_batch_one_oom_fallback(self):
+        runtime = _runtime_imports()
+        torch = runtime["torch"]
+
+        class OomModel:
+            def to(self, _device):
+                return self
+
+            def train(self):
+                return self
+
+            def __call__(self, _images, _targets):
+                raise torch.cuda.OutOfMemoryError("expected test OOM")
+
+        class TinyDataset:
+            class Transferable:
+                def to(self, _device):
+                    return self
+
+            def __len__(self):
+                return 2
+
+            def __getitem__(self, index):
+                value = self.Transferable()
+                return value, {"boxes": value, "labels": value, "area": value,
+                               "iscrowd": value, "image_id": value}
+
+        device = type("CudaDevice", (), {"type": "cuda"})()
+        with self.assertRaisesRegex(PilotError, "batch-2 OOM"):
+            probe_batch(runtime, OomModel(), TinyDataset(), RESNET_CONFIG, device)
 
     @unittest.skipUnless(HAS_MODEL_RUNTIME, "torch/torchvision runtime is not installed")
     def test_mosaic_offsets_all_labels_and_does_not_apply_to_real_conditions(self):

@@ -114,7 +114,8 @@ def resolve_bound_path(raw: str, config_path: Path) -> Path:
 def verify_config(config_path: Path) -> tuple[dict[str, Any], dict[str, Any]]:
     config = load_json(config_path)
     if config.get("schema_version") != 1 or config.get("profile_id") not in {
-            "detector-pilot-v1", "detector-pilot-backbone-v2", "detector-pilot-mosaic-v3"}:
+            "detector-pilot-v1", "detector-pilot-backbone-v2", "detector-pilot-mosaic-v3",
+            "detector-pilot-resnet-v4"}:
         raise PilotError("unsupported detector pilot config")
     if config.get("classes") != ["pallet", "small_load_carrier"]:
         raise PilotError("the detector classes differ from the preregistration")
@@ -145,6 +146,10 @@ def mosaic_mode(config: Mapping[str, Any]) -> bool:
     return config.get("profile_id") == "detector-pilot-mosaic-v3"
 
 
+def resnet_bundle_mode(config: Mapping[str, Any]) -> bool:
+    return config.get("profile_id") == "detector-pilot-resnet-v4"
+
+
 def validate_mosaic_contract(config: Mapping[str, Any]) -> None:
     contract = config.get("synthetic_training_augmentation")
     expected = {
@@ -173,16 +178,29 @@ def validate_execution_gate(config: Mapping[str, Any], tuning_only_cli: bool) ->
         if mode or tuning_only_cli:
             raise PilotError("detector-pilot-v1 cannot run through the tuning-only development gate")
         return
-    if profile not in {"detector-pilot-backbone-v2", "detector-pilot-mosaic-v3"} or not mode or not tuning_only_cli:
+    development_profiles = {
+        "detector-pilot-backbone-v2", "detector-pilot-mosaic-v3", "detector-pilot-resnet-v4",
+    }
+    if profile not in development_profiles or not mode or not tuning_only_cli:
         raise PilotError(f"{profile} requires its tuning-only CLI and profile gates")
     if config.get("model", {}).get("preserve_coco_backbone_constructor_contract") is not True:
-        raise PilotError("detector-pilot-backbone-v2 requires the COCO backbone constructor contract")
+        raise PilotError(f"{profile} requires the COCO backbone constructor contract")
     if config.get("evaluation", {}).get("test_access_policy") != "disabled_for_tuning_only_development_profile":
         raise PilotError(f"{profile} must disable fixed-test access")
     if mosaic_mode(config):
         validate_mosaic_contract(config)
     elif "synthetic_training_augmentation" in config:
-        raise PilotError("detector-pilot-backbone-v2 cannot enable mosaic augmentation")
+        raise PilotError(f"{profile} cannot enable mosaic augmentation")
+    if resnet_bundle_mode(config):
+        model = config.get("model", {})
+        optimization = config.get("optimization", {})
+        if (model.get("architecture") != "fasterrcnn_resnet50_fpn"
+                or model.get("torchvision_weights_enum")
+                != "FasterRCNN_ResNet50_FPN_Weights.COCO_V1"
+                or model.get("trainable_backbone_layers") != 3
+                or optimization.get("batch_size") != 2
+                or optimization.get("oom_probe_fallback_batch_size") != 1):
+            raise PilotError("detector-pilot-resnet-v4 model bundle contract differs")
 
 
 def real_registry_roles(config: Mapping[str, Any]) -> tuple[str, ...]:
@@ -501,7 +519,9 @@ def _runtime_imports() -> dict[str, Any]:
         from pycocotools.cocoeval import COCOeval
         from torchvision.models.detection import (
             FasterRCNN_MobileNet_V3_Large_FPN_Weights,
+            FasterRCNN_ResNet50_FPN_Weights,
             fasterrcnn_mobilenet_v3_large_fpn,
+            fasterrcnn_resnet50_fpn,
         )
         from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
     except ImportError as exc:
@@ -668,20 +688,64 @@ def collate(batch: Sequence[Any]) -> tuple[list[Any], list[Any]]:
 
 
 def create_model(runtime: Mapping[str, Any], config: Mapping[str, Any], pretrained: bool) -> tuple[Any, dict[str, Any]]:
-    enum = runtime["FasterRCNN_MobileNet_V3_Large_FPN_Weights"].COCO_V1
-    builder = runtime["fasterrcnn_mobilenet_v3_large_fpn"]
+    architecture = config["model"].get("architecture", "fasterrcnn_mobilenet_v3_large_fpn")
+    specifications = {
+        "fasterrcnn_mobilenet_v3_large_fpn": (
+            "FasterRCNN_MobileNet_V3_Large_FPN_Weights",
+            "FasterRCNN_MobileNet_V3_Large_FPN_Weights.COCO_V1",
+            "fasterrcnn_mobilenet_v3_large_fpn",
+        ),
+        "fasterrcnn_resnet50_fpn": (
+            "FasterRCNN_ResNet50_FPN_Weights",
+            "FasterRCNN_ResNet50_FPN_Weights.COCO_V1",
+            "fasterrcnn_resnet50_fpn",
+        ),
+    }
+    if architecture not in specifications:
+        raise PilotError(f"unsupported detector architecture: {architecture}")
+    enum_key, enum_name, builder_key = specifications[architecture]
+    if config["model"].get("torchvision_weights_enum") != enum_name:
+        raise PilotError(f"weight enum does not match {architecture}")
+    enum = runtime[enum_key].COCO_V1
+    builder = runtime[builder_key]
     preserve_contract = config["model"].get("preserve_coco_backbone_constructor_contract") is True
     constructor_weights = enum if pretrained or preserve_contract else None
-    model = builder(weights=constructor_weights, weights_backbone=None,
-                    min_size=int(config["model"]["min_size"]), max_size=int(config["model"]["max_size"]))
+    constructor_arguments = {
+        "weights": constructor_weights,
+        "weights_backbone": None,
+        "min_size": int(config["model"]["min_size"]),
+        "max_size": int(config["model"]["max_size"]),
+    }
+    if resnet_bundle_mode(config):
+        constructor_arguments["trainable_backbone_layers"] = int(config["model"]["trainable_backbone_layers"])
+    model = builder(**constructor_arguments)
     features = model.roi_heads.box_predictor.cls_score.in_features
     model.roi_heads.box_predictor = runtime["FastRCNNPredictor"](features, 3)
     model.roi_heads.score_thresh = float(config["model"]["score_threshold"])
     model.roi_heads.detections_per_img = int(config["model"]["max_detections_per_image"])
-    metadata = {"weights_url": enum.url,
-                "weights_enum": "FasterRCNN_MobileNet_V3_Large_FPN_Weights.COCO_V1"}
+    metadata = {
+        "weights_url": enum.url,
+        "weights_enum": enum_name,
+    }
     if preserve_contract:
         metadata["constructor_contract_preserved"] = True
+    if resnet_bundle_mode(config):
+        torch = runtime["torch"]
+        frozen_type = runtime["torchvision"].ops.misc.FrozenBatchNorm2d
+        metadata.update({
+            "architecture": architecture,
+            "constructor_normalization": {
+                "FrozenBatchNorm2d": sum(isinstance(module, frozen_type) for module in model.modules()),
+                "BatchNorm2d": sum(isinstance(module, torch.nn.BatchNorm2d) for module in model.modules()),
+            },
+            "parameter_count": sum(parameter.numel() for parameter in model.parameters()),
+            "trainable_parameter_count": sum(
+                parameter.numel() for parameter in model.parameters() if parameter.requires_grad
+            ),
+            "trainable_parameter_names": [
+                name for name, parameter in model.named_parameters() if parameter.requires_grad
+            ],
+        })
     return model, metadata
 
 
@@ -754,6 +818,8 @@ def probe_batch(runtime: Mapping[str, Any], model: Any, dataset: DetectionDatase
         if device.type != "cuda" or fallback >= requested:
             raise
         torch.cuda.empty_cache()
+        if resnet_bundle_mode(config):
+            raise PilotError("detector-pilot-resnet-v4 batch-2 OOM; batch-1 fallback is forbidden")
         images, targets = collate([dataset[0]])
         with torch.no_grad():
             model([images[0].to(device)], [{key: value.to(device) for key, value in targets[0].items()}])
@@ -867,6 +933,18 @@ def runtime_versions(runtime: Mapping[str, Any]) -> dict[str, str]:
     return result
 
 
+def reproducibility_state(torch: Any, device: Any, seed: int) -> dict[str, Any]:
+    return {
+        "seed": seed,
+        "deterministic_algorithms_enabled": bool(torch.are_deterministic_algorithms_enabled()),
+        "cudnn_benchmark": bool(torch.backends.cudnn.benchmark),
+        "cudnn_deterministic": bool(torch.backends.cudnn.deterministic),
+        "CUBLAS_WORKSPACE_CONFIG": os.environ.get("CUBLAS_WORKSPACE_CONFIG"),
+        "device_name": torch.cuda.get_device_name(device) if device.type == "cuda" else str(device),
+        "contract": "seed-only observation; bitwise reproducibility and drift cause are not claimed",
+    }
+
+
 def prepare_dataset(runtime: Mapping[str, Any], entries: Sequence[Mapping[str, Any]], image_root: Path,
                     aliases: Mapping[str, Sequence[str]], augment: bool, seed: int) -> tuple[DetectionDataset, dict[str, Any]]:
     parts = []
@@ -936,6 +1014,9 @@ def main() -> int:
         commit = source_commit()
         claims = {"sequence_disjoint": False, "pure_pretraining_effect": False,
                   "label_cost_reduction": False, "extra_synthetic_compute_reported": True}
+        if resnet_bundle_mode(config):
+            claims.update({"pure_backbone_effect": False, "model_bundle_comparison": True,
+                           "deterministic_reproduction": False})
         preregistration = {
             "schema_version": 1, "status": "frozen_before_ml_runtime_import", "frozen_utc": utc_now(),
             "source_commit": commit, "config": {"path": str(config_path), "sha256": sha256_file(config_path)},
@@ -1048,6 +1129,15 @@ def main() -> int:
             claim_limits["fresh_heldout_performance"] = (
                 "not measured; this development profile evaluates tuning-validation only"
             )
+        if resnet_bundle_mode(config):
+            claim_limits.update({
+                "pure_backbone_effect": (
+                    "not claimed; COCO weights, FPN, default RPN, and backbone change as one model bundle"
+                ),
+                "deterministic_reproduction": (
+                    "not claimed; deterministic settings are recorded without changing the seed-only policy"
+                ),
+            })
         result = {
             "schema_version": 1, "status": completion_status, "completed_utc": utc_now(),
             "wall_seconds": time.monotonic() - started, "source_commit": commit,
@@ -1061,6 +1151,15 @@ def main() -> int:
                                    "SR50_additional_synthetic_updates": 1024},
             "claim_limits": claim_limits,
         }
+        if resnet_bundle_mode(config):
+            result["reproducibility"] = reproducibility_state(
+                torch, device, int(config["seeds"]["pilot"]),
+            )
+            result["model_bundle_comparison"] = {
+                "interpretation": "COCO weights, FPN, default RPN, and backbone are compared as one model bundle",
+                "pure_backbone_effect_claimed": False,
+                "deterministic_drift_cause_identified": False,
+            }
         if mosaic_mode(config):
             planned = config["synthetic_training_augmentation"]["planned_source_presentations"]
             actual_baseline = int(config["conditions"]["S"]["updates"]) * batch_size
