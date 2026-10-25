@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "status": "passed",
+  "created_utc": "2026-10-25T06:00:29.908068+00:00",
+  "seeds": [
+    {
+      "seed": 1701,
+      "v1_path": "E:\\FactoryOpsData\\detector-pilot-341-seed1701\\checkpoints\\common-coco-head-init.pt",
+      "v1_sha256": "4a20b1e981d313fb8ec39fb9103e1a3c6d0e7269ece6e5b0fd74fb93532dfeca",
+      "v2_path": "E:\\FactoryOpsData\\detector-backbone-350-seed1701\\checkpoints\\common-coco-head-init.pt",
+      "v2_sha256": "4b3a93df47d36a150708239a7eeabac50e3dba124959de05c9ac9ae5d18e70fb",
+      "file_sha256_equal": false,
+      "keys_equal": true,
+      "tensor_count": 284,
+      "all_tensor_dtype_shape_values_equal": true,
+      "mismatches": [],
+      "state_dict_metadata_equal": true
+    },
+    {
+      "seed": 1702,
+      "v1_path": "E:\\FactoryOpsData\\detector-pilot-342-seed1702\\checkpoints\\common-coco-head-init.pt",
+      "v1_sha256": "ffc424bb0b2090be842e7a457ac14f2fa72e53f86a66a76ccb4c72a561711dbc",
+      "v2_path": "E:\\FactoryOpsData\\detector-backbone-351-seed1702\\checkpoints\\common-coco-head-init.pt",
+      "v2_sha256": "e366e93e443af6be5a8f6f200cd8909ca742e03839f7e253eb91cba0458491eb",
+      "file_sha256_equal": false,
+      "keys_equal": true,
+      "tensor_count": 284,
+      "all_tensor_dtype_shape_values_equal": true,
+      "mismatches": [],
+      "state_dict_metadata_equal": true
+    },
+    {
+      "seed": 1703,
+      "v1_path": "E:\\FactoryOpsData\\detector-pilot-343-seed1703\\checkpoints\\common-coco-head-init.pt",
+      "v1_sha256": "2aa459749cf32078a3b1361327a7f0ddecdd10c12016fbc7dbc1047806128f93",
+      "v2_path": "E:\\FactoryOpsData\\detector-backbone-352-seed1703\\checkpoints\\common-coco-head-init.pt",
+      "v2_sha256": "8307e9fd98af7886b9d316cc3e4a95a1d2b7a535301aad58c33a91c3237a7cb4",
+      "file_sha256_equal": false,
+      "keys_equal": true,
+      "tensor_count": 284,
+      "all_tensor_dtype_shape_values_equal": true,
+      "mismatches": [],
+      "state_dict_metadata_equal": true
+    }
+  ],
+  "cpu_only": true,
+  "all_state_dict_metadata_equal": true,
+  "interpretation": "Checkpoint container hashes differ; paired state_dict keys, tensor dtype, shape, and values are equal.",
+  "serialization_byte_difference_cause": "not established"
+}

@@ -6,3 +6,6 @@ docs/images/g4-render-004/qa/ai-review-a-001.json whitespace=cr-at-eol
 tests/fixtures/campus16-v1-layout-290.json -text
 docs/images/campus16-final-339/export-manifest.json -text whitespace=cr-at-eol
 docs/images/detector-pilot-341/comparison.svg -text -whitespace
+docs/evidence/detector-backbone-v2-353/** -text whitespace=cr-at-eol
+docs/evidence/detector-input-gap-355/** -text whitespace=cr-at-eol
+docs/evidence/detector-input-gap-355/input-gap.svg -text -whitespace

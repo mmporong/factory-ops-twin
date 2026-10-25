@@ -1,0 +1,19 @@
+{
+  "status": "passed",
+  "run_id": "detector-backbone-350-seed1701",
+  "result": "E:\\FactoryOpsData\\detector-backbone-350-seed1701\\result.json",
+  "result_sha256": "f69042af053697e1c1cb74d490d44d207653757a464c9289c90b4e472059db05",
+  "preregistration_sha256": "0112be000ff1324511e560129a47b35146e48d3a67275e6db3fef36428807925",
+  "initial_checkpoint_sha256": "4b3a93df47d36a150708239a7eeabac50e3dba124959de05c9ac9ae5d18e70fb",
+  "spec_sha256": "1c86905a7995dff7b4e40965fc0f868eab022f36d20388ca2d5713e6fd057ee7",
+  "host_receipt_sha256": "299a0a81b06ed3c904e0cd33de893bdb3adb0f11602b5b4886ca6e0cbfbfb114",
+  "source_commit": "10f60d0e87d718a505c84595f5cd2da850125356",
+  "evaluation_keys": [
+    "tuning_validation"
+  ],
+  "final_fixed_test_accessed": false,
+  "fixed_test_artifact_absent": true,
+  "post_run_input_mismatches": 0,
+  "owned_processes_gone": true,
+  "lease_released": true
+}

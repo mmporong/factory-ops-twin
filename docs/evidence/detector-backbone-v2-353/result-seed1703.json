@@ -1,0 +1,139 @@
+{
+  "schema_version": 1,
+  "status": "complete_tuning_only",
+  "completed_utc": "2026-10-25T05:59:15.331148Z",
+  "wall_seconds": 229.68700000003446,
+  "source_commit": "10f60d0e87d718a505c84595f5cd2da850125356",
+  "preregistration_sha256": "3ff4595f895966787e0eb994eec60ab75170c67ea07046bac9a601c974023a9e",
+  "runtime_versions": {
+    "torch": "2.14.1+cu130",
+    "torchvision": "0.29.1+cu130",
+    "Pillow": "12.3.0",
+    "pycocotools": "2.0.11"
+  },
+  "device": "cuda",
+  "batch_size_selected_before_training": 2,
+  "peak_vram_bytes": 690808320,
+  "pretrained_weights": {
+    "weights_url": "https://download.pytorch.org/models/fasterrcnn_mobilenet_v3_large_fpn-fb6a3cc7.pth",
+    "weights_enum": "FasterRCNN_MobileNet_V3_Large_FPN_Weights.COCO_V1",
+    "constructor_contract_preserved": true,
+    "full_sha256": "fb6a3cc702b1df54c18a44b26708cd083614211062d0c36d2ca7bf9270df3533",
+    "cache_path": "E:\\FactoryOpsData\\cache\\torch-detector\\hub\\checkpoints\\fasterrcnn_mobilenet_v3_large_fpn-fb6a3cc7.pth"
+  },
+  "initial_checkpoint": {
+    "path": "common-coco-head-init.pt",
+    "sha256": "8307e9fd98af7886b9d316cc3e4a95a1d2b7a535301aad58c33a91c3237a7cb4"
+  },
+  "conditions": {
+    "S": {
+      "training": {
+        "updates": 1024,
+        "batch_size": 2,
+        "amp": true,
+        "last_loss": 0.43240538239479065,
+        "mean_loss": 0.47641258244402707,
+        "wall_seconds": 94.01599999994505
+      },
+      "starting_checkpoint": "common-coco-head-init.pt",
+      "checkpoint": "S-final.pt",
+      "checkpoint_sha256": "cd6502906e9fc460041ef38656eba70534a6cc8aece84095d6271e387c196ae7"
+    },
+    "R50": {
+      "training": {
+        "updates": 256,
+        "batch_size": 2,
+        "amp": true,
+        "last_loss": 0.6258977651596069,
+        "mean_loss": 0.7786631148410379,
+        "wall_seconds": 29.640999999945052
+      },
+      "starting_checkpoint": "common-coco-head-init.pt",
+      "checkpoint": "R50-final.pt",
+      "checkpoint_sha256": "2ae667a9448dacefcda39ad77ad790fb50e49348253dc0474dd12810e8e48b9d"
+    },
+    "SR50": {
+      "training": {
+        "updates": 256,
+        "batch_size": 2,
+        "amp": true,
+        "last_loss": 0.7349528670310974,
+        "mean_loss": 0.734080772366724,
+        "wall_seconds": 28.42200000002049
+      },
+      "starting_checkpoint": "S-final.pt",
+      "checkpoint": "SR50-final.pt",
+      "checkpoint_sha256": "b116d3b78dbfa0a42194cbb852033286109621f4f4c3d8dfd3070023538cdb10"
+    }
+  },
+  "evaluation": {
+    "tuning_validation": {
+      "S": {
+        "AP": 0.0006318278295684091,
+        "AP50": 0.0021025345222021367,
+        "small_object_AP": 0.0,
+        "class_AP": {
+          "pallet": 0.0011904619200798752,
+          "small_load_carrier": 7.319373905694321e-05
+        },
+        "sample_counts": {
+          "images": 200,
+          "annotations": 6036,
+          "pallet_annotations": 5741,
+          "small_load_carrier_annotations": 295
+        },
+        "prediction_count_after_threshold": 18384,
+        "score_threshold": 0.001,
+        "max_detections_per_image": 100
+      },
+      "R50": {
+        "AP": 0.010406572696956166,
+        "AP50": 0.036421223827567746,
+        "small_object_AP": 0.00044506227407666444,
+        "class_AP": {
+          "pallet": 0.0150632510251145,
+          "small_load_carrier": 0.005749894368797831
+        },
+        "sample_counts": {
+          "images": 200,
+          "annotations": 6036,
+          "pallet_annotations": 5741,
+          "small_load_carrier_annotations": 295
+        },
+        "prediction_count_after_threshold": 19763,
+        "score_threshold": 0.001,
+        "max_detections_per_image": 100
+      },
+      "SR50": {
+        "AP": 0.009047574796117527,
+        "AP50": 0.029941615453608177,
+        "small_object_AP": 0.0003682624242038756,
+        "class_AP": {
+          "pallet": 0.01569836502545029,
+          "small_load_carrier": 0.0023967845667847588
+        },
+        "sample_counts": {
+          "images": 200,
+          "annotations": 6036,
+          "pallet_annotations": 5741,
+          "small_load_carrier_annotations": 295
+        },
+        "prediction_count_after_threshold": 19653,
+        "score_threshold": 0.001,
+        "max_detections_per_image": 100
+      }
+    }
+  },
+  "compute_comparison": {
+    "S_updates": 1024,
+    "R50_updates": 256,
+    "SR50_real_updates": 256,
+    "SR50_additional_synthetic_updates": 1024
+  },
+  "claim_limits": {
+    "sequence_disjointness": "not established for unknown capture groups",
+    "pure_pretraining_effect": "not claimed because synthetic pretraining adds compute",
+    "label_cost_reduction": "not measured or claimed by this pilot",
+    "fresh_heldout_performance": "not measured; this development profile evaluates tuning-validation only"
+  }
+}

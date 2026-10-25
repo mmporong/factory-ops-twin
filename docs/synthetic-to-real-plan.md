@@ -27,7 +27,11 @@
 
 현재 합성만 학습한 실사 성능은 거의0에 가깝다. 실제50장 뒤의 개선도 절대 성능이 낮으므로 라벨 대체 비용이나 현장 배치 성능으로 확장하지 않는다. 같은 실제 사진의 예측과 GT, 입력 구성·소스·학습 계산을 결과와 함께 보존한다. [시각 비교](images/detector-pilot-341/fixed-test-examples.jpg) · [모델/예측 백업](evidence/detector-storage-349.json)
 
-350~352는 development 비교다. v1에서 초기 COCO constructor는 FrozenBatchNorm2d였으나 checkpoint 재구성은 BatchNorm2d와 다른 학습 가능 층 집합을 사용했다. strict state key 일치만으로 같은 훈련 구성을 보장하지 못했다. v2는 모든 constructor의 COCO normalization/freezing 계약을 유지하고 같은3seed·실제50장·튜닝200장·업데이트 상한으로 비교한다. 낮은 성능의 원인으로 단정하지 않으며, 고정test 메타데이터·이미지·추론은 사용하지 않는다. v1 결과와 백업은 변경하지 않는다.
+350~352의 v2 development 비교는 완료했다. v1에서 초기 COCO constructor는 FrozenBatchNorm2d였으나 checkpoint 재구성은 BatchNorm2d와 다른 학습 가능 층 집합을 사용했다. v2는 모든 constructor의 COCO normalization/freezing 계약을 유지했다. 같은3seed의 초기284개 tensor는 키·dtype·shape·값·metadata가 같았으며, 같은 실제50장·튜닝200장·업데이트 상한을 사용했다. 같은 튜닝 집합의 mAP(0–100)는 S 0.052→0.054, R50 0.726→1.074, SR50 0.789→1.004다. v2는 모든 seed에서 R50이 SR50보다 높았다. normalization/freezing을 분리한 효과나 낮은 성능의 유일 원인으로 단정하지 않는다. 고정test 메타데이터·이미지·추론을 사용하지 않았으며 v1 고정test 결과와 백업은 변경하지 않았다. [비교 원본](evidence/detector-backbone-v2-353/report.json) · [초기 상태 비교](evidence/detector-backbone-v2-353/initialization.json)
+
+입력 진단355는 합성512장과 실제 train50장 메타데이터만 읽었다. 모델 리사이즈 후32×32px 미만 객체 비율은1.24% 대73.28%, 이미지당 대상 객체 평균은5.49 대31.36이었다. 이는 coverage 진단이며 성능 원인·촬영 높이·형상 동등성을 증명하지 않는다. 실제 사진과 tuning/test 메타데이터는 읽지 않았다. [분포 도표](evidence/detector-input-gap-355/input-gap.png) · [진단 원본](evidence/detector-input-gap-355/report.json)
+
+후속 v3는 기존512장 중 서로 다른9개 scene의3×3 모자이크를 S 학습에만 적용한다. 출력 tensor2304×1536을 기존 min640/max960으로 리사이즈하며 라벨은 타일 XY 오프셋만 더한다. 실제 R50/SR50 입력과 v2 백본 계약은 유지한다. 전체512개 source-ID plan과3개 seed는 첫 GPU 전에 동결한다. 1,024 update·batch2에서 S 원본 제시는2,048→18,432회, 추가 CPU decode는16,384회이므로 동일 계산/노출 비교가 아니다. 튜닝 전용 dual gate와 고정test 접근 차단을 유지하며 새3D 공장·새 heldout 성과로 표현하지 않는다. [CPU 미리보기](images/detector-mosaic-356/mosaic-3x3-training-preview.png) · [입력 출처](images/detector-mosaic-356/provenance.json)
 
 ## 현재 확보한 자료
 

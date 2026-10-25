@@ -1,0 +1,365 @@
+{
+  "artifacts": {
+    "csv": {
+      "path": "distribution-summary.csv",
+      "sha256": "82155e1888998b151edca7ab97403fede9d9f7e483d4fe22c8bdfa803dad2107"
+    },
+    "png": {
+      "path": "input-gap.png",
+      "sha256": "02de23980483c9cb0292e015561938bab6580bb08467990d69e4545bf48a16bd"
+    },
+    "svg": {
+      "path": "input-gap.svg",
+      "sha256": "7f2ebd4988137595daa155b8296bfc26a405d08a5f7c92a6300d74781cae820c"
+    }
+  },
+  "interpretation_limits": [
+    "The observed input differences are coverage diagnostics, not evidence of a performance cause.",
+    "This analysis does not validate detector generalization or field performance.",
+    "Real camera height is unknown because real photos were not opened and metadata does not bind it.",
+    "Labels cannot establish equivalence between the three synthetic asset shapes and real object shapes.",
+    "Labels cannot establish real-world object quantity variation beyond the frozen 50-image sample.",
+    "Tuning-validation and final-test metadata and photos were not read."
+  ],
+  "provenance": {
+    "analysis_script": {
+      "path": "C:\\Users\\LIMMM\\factory-ops-twin\\scripts\\perception\\analyze_detector_input_gap.py",
+      "sha256": "0d9e4d383016559cd1804123bc0ace1417cb8609240086a75c8b9ef4aa33ced7",
+      "source_commit": null
+    },
+    "preregistration": {
+      "path": "E:\\FactoryOpsData\\detector-pilot-341-seed1701\\preregistration.json",
+      "sha256": "9566e95b8c73a7511f58b0ec1e23edabed774328c4cdbe0c3987e50f8ce7c72a"
+    },
+    "real_photos_opened": 0,
+    "real_roles_not_read": [
+      "tuning_validation",
+      "final_fixed_test"
+    ],
+    "real_roles_read": [
+      "train"
+    ],
+    "real_train_metadata": [
+      {
+        "category_mapping": {
+          "3": 2,
+          "7": 1
+        },
+        "path": "C:\\Users\\LIMMM\\factory-ops-twin\\artifacts\\data\\loco-metadata-242\\loco-sub2-v1-train.json",
+        "selected_image_ids": [
+          14276,
+          14305,
+          14382,
+          14392,
+          14409,
+          14530,
+          14537,
+          14609,
+          14623,
+          14646,
+          14735,
+          14741,
+          14847,
+          14848,
+          14884,
+          14893,
+          14924,
+          14930,
+          14990,
+          15003,
+          15008,
+          15012,
+          15023,
+          15025,
+          15183
+        ],
+        "sha256": "938f9b5915852df43d0c27c79dd059856ebb9e6cc27ea67378b6b9bb25c9b33d"
+      },
+      {
+        "category_mapping": {
+          "3": 2,
+          "7": 1
+        },
+        "path": "C:\\Users\\LIMMM\\factory-ops-twin\\artifacts\\data\\loco-metadata-242\\loco-sub5-v1-train.json",
+        "selected_image_ids": [
+          24247,
+          24397,
+          24398,
+          24422,
+          24434,
+          24477,
+          24495,
+          24531,
+          24547,
+          24611,
+          24623,
+          24643,
+          24680,
+          24744,
+          24778,
+          24800,
+          24813,
+          24846,
+          24882,
+          24933,
+          24940,
+          25070,
+          25092,
+          25137,
+          25150
+        ],
+        "sha256": "88a374a39f4ed5ae125223fb6111522672ae70337a29b97570cdcb8c3b0daf23"
+      }
+    ],
+    "synthetic_bounds_manifest": {
+      "path": "E:\\FactoryOpsData\\perception-pilot-v6-340-release\\evidence\\manifest.json",
+      "sha256": "4290397f568f9a2259f245b027b9dc8d68bd53aee82730d3f65bec2c1997d72b"
+    },
+    "synthetic_camera_files": {
+      "canonical_path_sha_inventory_sha256": "dc726b9eafa94cae445ff6b07c253f9e4454131a4ef8de47f5507c803347c361",
+      "count": 512,
+      "root": "E:\\FactoryOpsData\\perception-pilot-v6-340\\capture"
+    },
+    "synthetic_coco": {
+      "annotations": 2812,
+      "images": 512,
+      "path": "E:\\FactoryOpsData\\perception-pilot-v6-340-release\\coco-release.json",
+      "sha256": "a0e2d79aab09dd5c1a62f617e7baa63f34530552a2b6e0b46d1ee9b85c5573f4"
+    },
+    "synthetic_release": {
+      "path": "E:\\FactoryOpsData\\perception-pilot-v6-340-release\\release-manifest.json",
+      "sha256": "69b1f2cc9efea586442dcc7dee996fc4c8ba79743d714b05d1b6c78fec0070e9"
+    }
+  },
+  "schema_version": 1,
+  "scope": {
+    "model_resize": {
+      "max_size": 960,
+      "min_size": 640,
+      "small_definition_after_resize": "bbox area < 32^2 pixels"
+    },
+    "real": "frozen train role only: 50 images from LOCO subset-2/subset-5 metadata",
+    "synthetic": "approved 512-image bounded pallet/rigid-crate release",
+    "target_classes": [
+      "pallet",
+      "small_load_carrier"
+    ]
+  },
+  "status": "passed_descriptive_input_coverage_analysis",
+  "summary": {
+    "camera_height_m": {
+      "real_train50": "unknown",
+      "synthetic512": {
+        "max": 6.527656722635877,
+        "mean": 4.3918196255493225,
+        "median": 4.108046475246434,
+        "min": 2.700506661276895,
+        "n": 512,
+        "p10": 3.036711589910894,
+        "p90": 6.269145483166977
+      }
+    },
+    "real_train50": {
+      "all_target_boxes": {
+        "frame_edge_touch_ratio": 0.02040816326530612,
+        "object_count": 1568,
+        "small_after_model_resize_ratio": 0.732780612244898
+      },
+      "classes": {
+        "pallet": {
+          "bbox_aspect_ratio": {
+            "max": 11.25,
+            "mean": 3.287281125146781,
+            "median": 3.2413793103448274,
+            "min": 0.25,
+            "n": 1435,
+            "p10": 1.1317731773177317,
+            "p90": 5.555555555555555
+          },
+          "frame_edge_touch_ratio": 0.021602787456445994,
+          "normalized_bbox_area": {
+            "max": 0.30407552083333333,
+            "mean": 0.0033456507618926635,
+            "median": 0.0006532118055555555,
+            "min": 2.9296875e-05,
+            "n": 1435,
+            "p10": 0.00021182966820987656,
+            "p90": 0.007503797743055563
+          },
+          "normalized_bbox_height": {
+            "max": 0.6722222222222223,
+            "mean": 0.03576066266615047,
+            "median": 0.020833333333333332,
+            "min": 0.003703703703703704,
+            "n": 1435,
+            "p10": 0.009259259259259259,
+            "p90": 0.0763888888888889
+          },
+          "normalized_bbox_width": {
+            "max": 0.50390625,
+            "mean": 0.05121134581881533,
+            "median": 0.03671875,
+            "min": 0.00546875,
+            "n": 1435,
+            "p10": 0.0171875,
+            "p90": 0.10234375
+          },
+          "object_count": 1435,
+          "small_after_model_resize_ratio": 0.7358885017421603
+        },
+        "small_load_carrier": {
+          "bbox_aspect_ratio": {
+            "max": 4.266666666666667,
+            "mean": 1.7072315768517923,
+            "median": 1.6521739130434783,
+            "min": 0.25925925925925924,
+            "n": 133,
+            "p10": 0.47276688453159044,
+            "p90": 3.057179487179487
+          },
+          "frame_edge_touch_ratio": 0.007518796992481203,
+          "normalized_bbox_area": {
+            "max": 0.055031828703703704,
+            "mean": 0.003813372769307528,
+            "median": 0.000888671875,
+            "min": 0.00011393229166666667,
+            "n": 133,
+            "p10": 0.00026258680555555557,
+            "p90": 0.011499131944444444
+          },
+          "normalized_bbox_height": {
+            "max": 0.21388888888888888,
+            "mean": 0.05403091060985798,
+            "median": 0.041666666666666664,
+            "min": 0.012037037037037037,
+            "n": 133,
+            "p10": 0.01574074074074074,
+            "p90": 0.1375
+          },
+          "normalized_bbox_width": {
+            "max": 0.25729166666666664,
+            "mean": 0.0447329260651629,
+            "median": 0.03177083333333333,
+            "min": 0.00546875,
+            "n": 133,
+            "p10": 0.0109375,
+            "p90": 0.10062499999999995
+          },
+          "object_count": 133,
+          "small_after_model_resize_ratio": 0.6992481203007519
+        }
+      },
+      "image_count": 50,
+      "target_objects_per_image": {
+        "max": 287.0,
+        "mean": 31.36,
+        "median": 12.0,
+        "min": 0.0,
+        "n": 50,
+        "p10": 0.0,
+        "p90": 65.9
+      }
+    },
+    "synthetic512": {
+      "all_target_boxes": {
+        "frame_edge_touch_ratio": 0.1806543385490754,
+        "object_count": 2812,
+        "small_after_model_resize_ratio": 0.012446657183499289
+      },
+      "classes": {
+        "pallet": {
+          "bbox_aspect_ratio": {
+            "max": 16.4,
+            "mean": 1.8869422849878625,
+            "median": 1.8278556034482758,
+            "min": 0.20588235294117646,
+            "n": 1020,
+            "p10": 1.237618636755824,
+            "p90": 2.5454545454545454
+          },
+          "frame_edge_touch_ratio": 0.25392156862745097,
+          "normalized_bbox_area": {
+            "max": 0.118560791015625,
+            "mean": 0.0383048587375217,
+            "median": 0.0337066650390625,
+            "min": 0.0006052652994791666,
+            "n": 1020,
+            "p10": 0.019384002685546877,
+            "p90": 0.06734949747721354
+          },
+          "normalized_bbox_height": {
+            "max": 0.361328125,
+            "mean": 0.1746227787990196,
+            "median": 0.16796875,
+            "min": 0.01953125,
+            "n": 1020,
+            "p10": 0.12285156250000001,
+            "p90": 0.23828125
+          },
+          "normalized_bbox_width": {
+            "max": 0.4088541666666667,
+            "mean": 0.210656658496732,
+            "median": 0.20833333333333334,
+            "min": 0.009114583333333334,
+            "n": 1020,
+            "p10": 0.13919270833333333,
+            "p90": 0.29440104166666664
+          },
+          "object_count": 1020,
+          "small_after_model_resize_ratio": 0.0058823529411764705
+        },
+        "small_load_carrier": {
+          "bbox_aspect_ratio": {
+            "max": 4.65,
+            "mean": 1.4988439888436174,
+            "median": 1.439209164818921,
+            "min": 0.1,
+            "n": 1792,
+            "p10": 0.9818181818181818,
+            "p90": 2.139953488372093
+          },
+          "frame_edge_touch_ratio": 0.13895089285714285,
+          "normalized_bbox_area": {
+            "max": 0.043792724609375,
+            "mean": 0.011221269766489666,
+            "median": 0.009735107421875,
+            "min": 0.00010172526041666667,
+            "n": 1792,
+            "p10": 0.00494232177734375,
+            "p90": 0.01985778808593751
+          },
+          "normalized_bbox_height": {
+            "max": 0.263671875,
+            "mean": 0.10610634940011161,
+            "median": 0.1015625,
+            "min": 0.01171875,
+            "n": 1792,
+            "p10": 0.068359375,
+            "p90": 0.1484375
+          },
+          "normalized_bbox_width": {
+            "max": 0.19661458333333334,
+            "mean": 0.10061500186011905,
+            "median": 0.09765625,
+            "min": 0.0026041666666666665,
+            "n": 1792,
+            "p10": 0.06901041666666667,
+            "p90": 0.140625
+          },
+          "object_count": 1792,
+          "small_after_model_resize_ratio": 0.016183035714285716
+        }
+      },
+      "image_count": 512,
+      "target_objects_per_image": {
+        "max": 8.0,
+        "mean": 5.4921875,
+        "median": 5.5,
+        "min": 3.0,
+        "n": 512,
+        "p10": 4.0,
+        "p90": 7.0
+      }
+    }
+  }
+}
