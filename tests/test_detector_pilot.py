@@ -1,4 +1,5 @@
 import gzip
+import importlib.util
 import json
 from hashlib import sha256
 from pathlib import Path
@@ -11,8 +12,12 @@ from scripts.perception.run_detector_pilot import (
     PilotError,
     build_real_registry,
     category_mapping,
+    create_model,
+    _runtime_imports,
+    real_registry_roles,
     validate_coco,
     validate_condition_symmetry,
+    validate_execution_gate,
     validate_synthetic_release,
     verify_disjoint_sets,
     require_finite_loss,
@@ -22,6 +27,10 @@ from scripts.perception.run_detector_pilot import (
 
 ROOT = Path(__file__).resolve().parents[1]
 CONFIG = json.loads((ROOT / "configs/perception/detector-pilot-v1.json").read_text(encoding="utf-8"))
+BACKBONE_CONFIG = json.loads(
+    (ROOT / "configs/perception/detector-pilot-backbone-v2.json").read_text(encoding="utf-8")
+)
+HAS_MODEL_RUNTIME = importlib.util.find_spec("torch") is not None and importlib.util.find_spec("torchvision") is not None
 
 
 def coco(file_name: str, category_names=("pallet", "small load carrier"), image_count=1):
@@ -97,6 +106,56 @@ class DetectorPilotTests(unittest.TestCase):
         changed["conditions"]["SR50"]["updates"] = 255
         with self.assertRaisesRegex(PilotError, "differ in updates"):
             validate_condition_symmetry(changed)
+
+    def test_tuning_only_requires_both_cli_and_profile_gates(self):
+        validate_execution_gate(CONFIG, False)
+        validate_execution_gate(BACKBONE_CONFIG, True)
+        self.assertEqual(("train", "tuning_validation"), real_registry_roles(BACKBONE_CONFIG))
+        self.assertEqual(CONFIG["conditions"], BACKBONE_CONFIG["conditions"])
+        self.assertEqual(CONFIG["seeds"], BACKBONE_CONFIG["seeds"])
+        self.assertEqual(CONFIG["optimization"], BACKBONE_CONFIG["optimization"])
+        comparable_model = dict(BACKBONE_CONFIG["model"])
+        comparable_model.pop("preserve_coco_backbone_constructor_contract")
+        self.assertEqual(CONFIG["model"], comparable_model)
+        with self.assertRaisesRegex(PilotError, "v1 cannot"):
+            validate_execution_gate(CONFIG, True)
+        with self.assertRaisesRegex(PilotError, "requires its tuning-only"):
+            validate_execution_gate(BACKBONE_CONFIG, False)
+
+    def test_tuning_only_registry_does_not_open_fixed_test_metadata(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            for role in ("train", "tuning_validation"):
+                for filename, count in BACKBONE_CONFIG["real_split"][role].items():
+                    (root / filename).write_text(json.dumps(valid_coco(filename, count)), encoding="utf-8")
+            registry, selected = build_real_registry(
+                root, BACKBONE_CONFIG, roles=real_registry_roles(BACKBONE_CONFIG),
+            )
+            self.assertEqual({"train", "tuning_validation"}, set(registry))
+            self.assertEqual({"train", "tuning_validation"}, set(selected))
+            self.assertFalse((root / "loco-sub1-v1-val.json").exists())
+
+    @unittest.skipUnless(HAS_MODEL_RUNTIME, "torch/torchvision runtime is not installed")
+    def test_backbone_v2_preserves_constructor_contract_and_v1_legacy_mode(self):
+        runtime = _runtime_imports()
+        torch = runtime["torch"]
+        frozen_type = runtime["torchvision"].ops.misc.FrozenBatchNorm2d
+
+        pretrained, _ = create_model(runtime, BACKBONE_CONFIG, pretrained=True)
+        reconstructed, metadata = create_model(runtime, BACKBONE_CONFIG, pretrained=False)
+        self.assertTrue(metadata["constructor_contract_preserved"])
+        self.assertEqual(set(pretrained.state_dict()), set(reconstructed.state_dict()))
+        reconstructed.load_state_dict(pretrained.state_dict(), strict=True)
+        self.assertEqual(
+            {name for name, parameter in pretrained.named_parameters() if parameter.requires_grad},
+            {name for name, parameter in reconstructed.named_parameters() if parameter.requires_grad},
+        )
+        self.assertTrue(any(isinstance(module, frozen_type) for module in pretrained.modules()))
+        self.assertTrue(all(not isinstance(module, torch.nn.BatchNorm2d) for module in reconstructed.modules()))
+
+        legacy_reconstructed, legacy_metadata = create_model(runtime, CONFIG, pretrained=False)
+        self.assertNotIn("constructor_contract_preserved", legacy_metadata)
+        self.assertTrue(any(isinstance(module, torch.nn.BatchNorm2d) for module in legacy_reconstructed.modules()))
 
     def test_coco_boxes_and_category_mapping_are_validated(self):
         payload = valid_coco("sample", 2)

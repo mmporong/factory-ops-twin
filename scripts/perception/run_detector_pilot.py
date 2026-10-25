@@ -113,7 +113,8 @@ def resolve_bound_path(raw: str, config_path: Path) -> Path:
 
 def verify_config(config_path: Path) -> tuple[dict[str, Any], dict[str, Any]]:
     config = load_json(config_path)
-    if config.get("schema_version") != 1 or config.get("profile_id") != "detector-pilot-v1":
+    if config.get("schema_version") != 1 or config.get("profile_id") not in {
+            "detector-pilot-v1", "detector-pilot-backbone-v2"}:
         raise PilotError("unsupported detector pilot config")
     if config.get("classes") != ["pallet", "small_load_carrier"]:
         raise PilotError("the detector classes differ from the preregistration")
@@ -134,6 +135,29 @@ def verify_config(config_path: Path) -> tuple[dict[str, Any], dict[str, Any]]:
     if set(contracts) != {"loco_eval"}:
         raise PilotError("required bound sources are missing")
     return config, contracts
+
+
+def tuning_only_mode(config: Mapping[str, Any]) -> bool:
+    return config.get("execution_mode") == "tuning_validation_only_development"
+
+
+def validate_execution_gate(config: Mapping[str, Any], tuning_only_cli: bool) -> None:
+    profile = config.get("profile_id")
+    mode = tuning_only_mode(config)
+    if profile == "detector-pilot-v1":
+        if mode or tuning_only_cli:
+            raise PilotError("detector-pilot-v1 cannot run through the tuning-only development gate")
+        return
+    if profile != "detector-pilot-backbone-v2" or not mode or not tuning_only_cli:
+        raise PilotError("detector-pilot-backbone-v2 requires its tuning-only CLI and profile gates")
+    if config.get("model", {}).get("preserve_coco_backbone_constructor_contract") is not True:
+        raise PilotError("detector-pilot-backbone-v2 requires the COCO backbone constructor contract")
+    if config.get("evaluation", {}).get("test_access_policy") != "disabled_for_tuning_only_development_profile":
+        raise PilotError("detector-pilot-backbone-v2 must disable fixed-test access")
+
+
+def real_registry_roles(config: Mapping[str, Any]) -> tuple[str, ...]:
+    return ("train", "tuning_validation") if tuning_only_mode(config) else tuple(EXPECTED_SPLITS)
 
 
 def _require_sha(path: Path, expected: Any, label: str) -> None:
@@ -287,12 +311,17 @@ def verify_disjoint_sets(named_ids: Mapping[str, set[str]]) -> None:
 
 
 def build_real_registry(metadata_root: Path, config: Mapping[str, Any],
-                        loco_profile: Mapping[str, Any] | None = None) -> tuple[dict[str, Any], dict[str, Any]]:
+                        loco_profile: Mapping[str, Any] | None = None,
+                        roles: Sequence[str] | None = None) -> tuple[dict[str, Any], dict[str, Any]]:
     aliases = config["category_aliases"]
     subset_seed = int(config["seeds"]["real_subset"])
     registry: dict[str, Any] = {}
     file_keys: dict[str, set[str]] = {}
-    for role, partitions in EXPECTED_SPLITS.items():
+    selected_roles = tuple(EXPECTED_SPLITS) if roles is None else tuple(roles)
+    if not selected_roles or any(role not in EXPECTED_SPLITS for role in selected_roles):
+        raise PilotError("real registry roles are invalid")
+    for role in selected_roles:
+        partitions = EXPECTED_SPLITS[role]
         registry[role] = []
         file_keys[role] = set()
         for filename, budget in partitions.items():
@@ -448,13 +477,19 @@ def collate(batch: Sequence[Any]) -> tuple[list[Any], list[Any]]:
 def create_model(runtime: Mapping[str, Any], config: Mapping[str, Any], pretrained: bool) -> tuple[Any, dict[str, Any]]:
     enum = runtime["FasterRCNN_MobileNet_V3_Large_FPN_Weights"].COCO_V1
     builder = runtime["fasterrcnn_mobilenet_v3_large_fpn"]
-    model = builder(weights=enum if pretrained else None, weights_backbone=None,
+    preserve_contract = config["model"].get("preserve_coco_backbone_constructor_contract") is True
+    constructor_weights = enum if pretrained or preserve_contract else None
+    model = builder(weights=constructor_weights, weights_backbone=None,
                     min_size=int(config["model"]["min_size"]), max_size=int(config["model"]["max_size"]))
     features = model.roi_heads.box_predictor.cls_score.in_features
     model.roi_heads.box_predictor = runtime["FastRCNNPredictor"](features, 3)
     model.roi_heads.score_thresh = float(config["model"]["score_threshold"])
     model.roi_heads.detections_per_img = int(config["model"]["max_detections_per_image"])
-    return model, {"weights_url": enum.url, "weights_enum": "FasterRCNN_MobileNet_V3_Large_FPN_Weights.COCO_V1"}
+    metadata = {"weights_url": enum.url,
+                "weights_enum": "FasterRCNN_MobileNet_V3_Large_FPN_Weights.COCO_V1"}
+    if preserve_contract:
+        metadata["constructor_contract_preserved"] = True
+    return model, metadata
 
 
 def load_checkpoint(torch: Any, model: Any, path: Path) -> None:
@@ -661,6 +696,8 @@ def main() -> int:
     parser.add_argument("--deadline-utc")
     parser.add_argument("--max-wall-seconds", type=float)
     parser.add_argument("--device", choices=("cuda", "cpu"), default="cuda")
+    parser.add_argument("--tuning-only", action="store_true",
+                        help="require a tuning-only development profile and skip all fixed-test access")
     args = parser.parse_args()
     if args.output.exists():
         raise PilotError(f"output must be a new path: {args.output}")
@@ -678,20 +715,31 @@ def main() -> int:
         budget.check("input validation")
         config_path = args.config.resolve()
         config, contracts = verify_config(config_path)
+        validate_execution_gate(config, args.tuning_only)
         validate_condition_symmetry(config)
         synthetic = validate_synthetic_release(args.synthetic_release_manifest.resolve())
         loco_profile = load_json(Path(contracts["loco_eval"]["path"]))
-        real_registry, split_files = build_real_registry(args.real_metadata_root.resolve(), config, loco_profile)
+        registry_roles = real_registry_roles(config)
+        real_registry, split_files = build_real_registry(
+            args.real_metadata_root.resolve(), config, loco_profile, registry_roles,
+        )
         commit = source_commit()
+        claims = {"sequence_disjoint": False, "pure_pretraining_effect": False,
+                  "label_cost_reduction": False, "extra_synthetic_compute_reported": True}
         preregistration = {
             "schema_version": 1, "status": "frozen_before_ml_runtime_import", "frozen_utc": utc_now(),
             "source_commit": commit, "config": {"path": str(config_path), "sha256": sha256_file(config_path)},
             "source_contracts": contracts, "synthetic_release": synthetic, "real_registry": real_registry,
             "selected_real_files": split_files, "conditions": config["conditions"], "seeds": config["seeds"],
             "optimization": config["optimization"], "model": config["model"], "evaluation": config["evaluation"],
-            "claims": {"sequence_disjoint": False, "pure_pretraining_effect": False,
-                       "label_cost_reduction": False, "extra_synthetic_compute_reported": True},
+            "claims": claims,
         }
+        if args.tuning_only:
+            claims["fresh_heldout_performance"] = False
+            preregistration["execution"] = {
+                "tuning_only": True, "real_registry_roles": list(registry_roles),
+                "final_fixed_test_accessed": False,
+            }
         prereg_path = output / "preregistration.json"
         atomic_json(prereg_path, preregistration)
         prereg_sha = sha256_file(prereg_path)
@@ -723,8 +771,6 @@ def main() -> int:
                                             config["category_aliases"], True, int(config["seeds"]["pilot"]))
         tune_dataset, tune_gt = prepare_dataset(runtime, real_registry["tuning_validation"], args.real_image_root.resolve(),
                                                 config["category_aliases"], False, int(config["seeds"]["pilot"]))
-        test_dataset, test_gt = prepare_dataset(runtime, real_registry["final_fixed_test"], args.real_image_root.resolve(),
-                                                config["category_aliases"], False, int(config["seeds"]["pilot"]))
         batch_size = probe_batch(runtime, model, synthetic_dataset, config, device)
         state.update({"status": "running", "preregistration_sha256": prereg_sha, "batch_size": batch_size})
         atomic_json(partial_path, state)
@@ -747,32 +793,46 @@ def main() -> int:
                                              "checkpoint": final_path.name, "checkpoint_sha256": sha256_file(final_path)}
             state.update({"stage": f"{condition}_trained", "conditions_completed": list(condition_results)})
             atomic_json(partial_path, state)
-        evaluation = {"tuning_validation": {}, "final_fixed_test": {}}
+        evaluation = {"tuning_validation": {}}
         for condition in ("S", "R50", "SR50"):
             model, _ = create_model(runtime, config, pretrained=False); load_checkpoint(torch, model, final_paths[condition])
             evaluation["tuning_validation"][condition] = evaluate(
                 runtime, model, tune_dataset, tune_gt, device, budget, f"tune {condition}",
                 float(config["model"]["score_threshold"]), int(config["model"]["max_detections_per_image"]))
         state.update({"stage": "tuning_evaluation_complete"}); atomic_json(partial_path, state)
-        for condition in ("S", "R50", "SR50"):
-            model, _ = create_model(runtime, config, pretrained=False); load_checkpoint(torch, model, final_paths[condition])
-            prediction_path = output / "evaluation" / "final_fixed_test" / f"{condition}-predictions.json.gz"
-            evaluation["final_fixed_test"][condition] = evaluate(
-                runtime, model, test_dataset, test_gt, device, budget, f"test {condition}",
-                float(config["model"]["score_threshold"]), int(config["model"]["max_detections_per_image"]),
-                prediction_path=prediction_path,
-                prediction_bindings={
-                    "condition": condition,
-                    "config_sha256": sha256_file(config_path),
-                    "preregistration_sha256": prereg_sha,
-                    "score_threshold": float(config["model"]["score_threshold"]),
-                    "max_detections_per_image": int(config["model"]["max_detections_per_image"]),
-                })
-            evaluation["final_fixed_test"][condition]["prediction_artifact"]["path"] = (
-                prediction_path.relative_to(output).as_posix()
+        if not args.tuning_only:
+            test_dataset, test_gt = prepare_dataset(
+                runtime, real_registry["final_fixed_test"], args.real_image_root.resolve(),
+                config["category_aliases"], False, int(config["seeds"]["pilot"]),
+            )
+            evaluation["final_fixed_test"] = {}
+            for condition in ("S", "R50", "SR50"):
+                model, _ = create_model(runtime, config, pretrained=False); load_checkpoint(torch, model, final_paths[condition])
+                prediction_path = output / "evaluation" / "final_fixed_test" / f"{condition}-predictions.json.gz"
+                evaluation["final_fixed_test"][condition] = evaluate(
+                    runtime, model, test_dataset, test_gt, device, budget, f"test {condition}",
+                    float(config["model"]["score_threshold"]), int(config["model"]["max_detections_per_image"]),
+                    prediction_path=prediction_path,
+                    prediction_bindings={
+                        "condition": condition,
+                        "config_sha256": sha256_file(config_path),
+                        "preregistration_sha256": prereg_sha,
+                        "score_threshold": float(config["model"]["score_threshold"]),
+                        "max_detections_per_image": int(config["model"]["max_detections_per_image"]),
+                    })
+                evaluation["final_fixed_test"][condition]["prediction_artifact"]["path"] = (
+                    prediction_path.relative_to(output).as_posix()
+                )
+        completion_status = "complete_tuning_only" if args.tuning_only else "complete"
+        claim_limits = {"sequence_disjointness": "not established for unknown capture groups",
+                        "pure_pretraining_effect": "not claimed because synthetic pretraining adds compute",
+                        "label_cost_reduction": "not measured or claimed by this pilot"}
+        if args.tuning_only:
+            claim_limits["fresh_heldout_performance"] = (
+                "not measured; this development profile evaluates tuning-validation only"
             )
         result = {
-            "schema_version": 1, "status": "complete", "completed_utc": utc_now(),
+            "schema_version": 1, "status": completion_status, "completed_utc": utc_now(),
             "wall_seconds": time.monotonic() - started, "source_commit": commit,
             "preregistration_sha256": prereg_sha, "runtime_versions": runtime_versions(runtime),
             "device": str(device), "batch_size_selected_before_training": batch_size,
@@ -782,12 +842,11 @@ def main() -> int:
             "conditions": condition_results, "evaluation": evaluation,
             "compute_comparison": {"S_updates": 1024, "R50_updates": 256, "SR50_real_updates": 256,
                                    "SR50_additional_synthetic_updates": 1024},
-            "claim_limits": {"sequence_disjointness": "not established for unknown capture groups",
-                             "pure_pretraining_effect": "not claimed because synthetic pretraining adds compute",
-                             "label_cost_reduction": "not measured or claimed by this pilot"},
+            "claim_limits": claim_limits,
         }
         atomic_json(result_path, result)
-        state.update({"status": "complete", "result_sha256": sha256_file(result_path), "completed_utc": utc_now()})
+        state.update({"status": completion_status, "result_sha256": sha256_file(result_path),
+                      "completed_utc": utc_now()})
         atomic_json(partial_path, state)
         print(result_path)
         return 0
