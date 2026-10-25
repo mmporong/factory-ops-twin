@@ -9,9 +9,14 @@ from scripts.isaac.capture_perception_pilot import (
     PilotCaptureError,
     canonical_digest,
     failure_document,
+    frame_camera_candidates,
     preserve_failure_diagnostics,
+    rejection_record,
+    reserve_additional_capture_attempt,
+    retryable_visibility_error,
     validate_manifest_recipe,
 )
+from factory_ops.perception_dataset import PerceptionDatasetError
 
 
 class CapturePerceptionPilotTests(unittest.TestCase):
@@ -169,6 +174,67 @@ class CapturePerceptionPilotTests(unittest.TestCase):
             self.assertEqual(failure["view_id"], "overview")
             self.assertEqual(failure["completed_valid_frames"], 8)
             self.assertFalse(failure["diagnostics"]["counts_as_valid_capture"])
+
+    def test_v6_candidate_recipe_is_strict_and_deterministic(self):
+        manifest = self.make_manifest()
+        manifest["profile_id"] = "loco-pallet-rigid-crate-pilot-v6"
+        manifest["capture_contract"]["valid_view_resampling"] = {
+            "candidate_count_per_frame": 3,
+            "maximum_additional_capture_attempts": 128,
+            "candidate_derivation": "ordered_camera_guard_attempts_v6",
+            "retry_visibility_validation_only": True,
+            "preserve_full_diagnostics_for_first_rejections": 3,
+            "accepted_captures_only_in_dataset_counts": True,
+        }
+        for frame in manifest["frames"]:
+            candidates = []
+            for index in range(3):
+                candidate = {
+                    "candidate_index": index,
+                    "eye_xyz_m": [frame["eye_xyz_m"][0], frame["eye_xyz_m"][1] - index * 0.2,
+                                  frame["eye_xyz_m"][2] + index * 0.1],
+                    "target_xyz_m": list(frame["target_xyz_m"]),
+                    "focal_length_mm": frame["focal_length_mm"],
+                }
+                candidate["camera_recipe_sha256"] = canonical_digest(candidate)
+                candidates.append(candidate)
+            frame["camera_candidates"] = candidates
+        manifest["recipe_sha256"] = canonical_digest({
+            "scenes": manifest["scenes"], "frames": manifest["frames"], "assets": manifest["assets"]
+        })
+        validate_manifest_recipe(manifest)
+        self.assertEqual(frame_camera_candidates(manifest["frames"][0]), manifest["frames"][0]["camera_candidates"])
+
+        manifest["frames"][0]["camera_candidates"][1]["unexpected"] = True
+        manifest["recipe_sha256"] = canonical_digest({
+            "scenes": manifest["scenes"], "frames": manifest["frames"], "assets": manifest["assets"]
+        })
+        with self.assertRaisesRegex(PilotCaptureError, "camera candidate fields differ"):
+            validate_manifest_recipe(manifest)
+
+    def test_only_visibility_loss_is_retryable_and_rejections_never_count(self):
+        retryable = PerceptionDatasetError("semantic identity count differs for object: crate-003: 0")
+        duplicate = PerceptionDatasetError("semantic identity count differs for object: crate-003: 2")
+        wrong_class = PerceptionDatasetError(
+            "semantic class/object binding differs from provenance: crate-003 -> pallet"
+        )
+        depth = PerceptionDatasetError("distance_to_camera contains no finite positive ranges")
+        self.assertTrue(retryable_visibility_error(retryable))
+        self.assertFalse(retryable_visibility_error(duplicate))
+        self.assertFalse(retryable_visibility_error(wrong_class))
+        self.assertFalse(retryable_visibility_error(depth))
+        candidate = {
+            "candidate_index": 0, "camera_recipe_sha256": "a" * 64,
+            "eye_xyz_m": [0, 0, 1], "target_xyz_m": [0, 0, 0], "focal_length_mm": 35,
+        }
+        record = rejection_record({"frame_id": 9}, candidate, retryable)
+        self.assertFalse(record["counts_as_valid_capture"])
+        self.assertFalse(record["counts_toward_coco"])
+
+    def test_additional_attempt_limit_fails_closed_at_128(self):
+        self.assertEqual(128, reserve_additional_capture_attempt(127, 128))
+        with self.assertRaisesRegex(PilotCaptureError, "exceeded 128"):
+            reserve_additional_capture_attempt(128, 128)
 
 
 if __name__ == "__main__":

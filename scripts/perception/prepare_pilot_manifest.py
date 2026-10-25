@@ -136,6 +136,27 @@ def validate_profile(profile: Mapping[str, Any]) -> None:
                        for value in (decay, growth, maximum))
                 or decay > 1 or growth > 1 or not 1 < maximum <= 5):
             raise PilotManifestError("camera projection guard bounds differ")
+        minimum_width = camera_guard.get("minimum_image_intersection_width_px", 0)
+        minimum_height = camera_guard.get("minimum_image_intersection_height_px", 0)
+        if (type(minimum_width) not in (int, float) or type(minimum_height) not in (int, float)
+                or not math.isfinite(minimum_width) or not math.isfinite(minimum_height)
+                or minimum_width < 0 or minimum_height < 0):
+            raise PilotManifestError("camera projection guard minimum image intersection differs")
+    resampling = profile.get("valid_view_resampling")
+    if ((profile.get("profile_id") == "loco-pallet-rigid-crate-pilot-v6") != (resampling is not None)):
+        raise PilotManifestError("valid-view resampling must be bound only to the v6 profile")
+    if resampling is not None and (
+            not isinstance(resampling, Mapping)
+            or not isinstance(camera_guard, Mapping)
+            or resampling.get("candidate_count_per_frame") != 3
+            or resampling.get("maximum_additional_capture_attempts") != 128
+            or resampling.get("candidate_derivation") != "ordered_camera_guard_attempts_v6"
+            or resampling.get("retry_visibility_validation_only") is not True
+            or resampling.get("preserve_full_diagnostics_for_first_rejections") != 3
+            or resampling.get("accepted_captures_only_in_dataset_counts") is not True
+            or camera_guard.get("minimum_image_intersection_width_px") != 4
+            or camera_guard.get("minimum_image_intersection_height_px") != 4):
+        raise PilotManifestError("valid-view resampling contract differs")
 
 
 def load_assets(profile: Mapping[str, Any], repo_root: Path, cache_root: Path) -> tuple[dict[str, Any], list[dict[str, Any]]]:
@@ -325,10 +346,14 @@ def _guard_camera_frames(scene_index: int, objects: list[dict[str, Any]], frames
     edge_offset = profile["procedural_context"]["edge_crop_target_offset_xy_m"] if edge_crop else [0.0, 0.0]
     adjusted = attempts_used = 0
     result = []
+    candidate_count = int(profile.get("valid_view_resampling", {}).get("candidate_count_per_frame", 1))
+    minimum_width = float(guard.get("minimum_image_intersection_width_px", 0.0))
+    minimum_height = float(guard.get("minimum_image_intersection_height_px", 0.0))
     for frame, base_target in zip(frames, base_targets):
         original_eye = list(frame["eye_xyz_m"])
         original_target = list(frame["target_xyz_m"])
         view_vector = [original_eye[index] - original_target[index] for index in range(3)]
+        candidates = []
         for attempt in range(int(guard["maximum_resample_attempts"]) + 1):
             offset_scale = max(0.0, 1.0 - float(guard["edge_crop_offset_decay_per_attempt"]) * attempt)
             distance_scale = min(
@@ -345,16 +370,43 @@ def _guard_camera_frames(scene_index: int, objects: list[dict[str, Any]], frames
                 candidate["target_xyz_m"][index] + view_vector[index] * distance_scale
                 for index in range(3)
             ]
-            if all(_projected_bounds(
+            projections = [
+                _projected_bounds(
                     _object_aabb_corners(recipe, assets[recipe["asset_id"]]["bounds_xyz_m"]),
                     candidate, resolution, aperture,
-            )["intersects_image"] for recipe in objects):
-                result.append(candidate)
-                if attempt:
-                    adjusted += 1
-                    attempts_used += attempt
-                break
-        else:
+                )
+                for recipe in objects
+            ]
+            if all(
+                    projection["intersects_image"]
+                    and min(float(projection["max_u"]), resolution[0] - 1)
+                    - max(float(projection["min_u"]), 0.0) >= minimum_width
+                    and min(float(projection["max_v"]), resolution[1] - 1)
+                    - max(float(projection["min_v"]), 0.0) >= minimum_height
+                    for projection in projections):
+                camera_recipe = {
+                    "candidate_index": len(candidates),
+                    "eye_xyz_m": candidate["eye_xyz_m"],
+                    "target_xyz_m": candidate["target_xyz_m"],
+                    "focal_length_mm": candidate["focal_length_mm"],
+                }
+                camera_recipe["camera_recipe_sha256"] = canonical_digest(camera_recipe)
+                candidates.append(camera_recipe)
+                if len(candidates) == candidate_count:
+                    selected = dict(frame)
+                    selected.update({
+                        "eye_xyz_m": candidates[0]["eye_xyz_m"],
+                        "target_xyz_m": candidates[0]["target_xyz_m"],
+                        "focal_length_mm": candidates[0]["focal_length_mm"],
+                    })
+                    if candidate_count > 1:
+                        selected["camera_candidates"] = candidates
+                    result.append(selected)
+                    if attempt:
+                        adjusted += 1
+                        attempts_used += attempt
+                    break
+        if len(candidates) != candidate_count:
             raise PilotManifestError(
                 f"camera has no bounded target projection solution: scene {scene_index}, frame {frame['frame_id']}"
             )
@@ -563,6 +615,8 @@ def build_manifest(profile_path: Path, repo_root: Path, cache_root: Path) -> dic
             "modalities": profile["modalities"],
             "semantic_types": profile["semantic_types"],
             "label_contract": profile["label_contract"],
+            **({"valid_view_resampling": profile["valid_view_resampling"]}
+               if profile.get("valid_view_resampling") is not None else {}),
         },
         "scope": {
             **profile["scope_flags"],

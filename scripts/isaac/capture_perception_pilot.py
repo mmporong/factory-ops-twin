@@ -50,6 +50,7 @@ PROFILE_PATHS = {
     "loco-pallet-rigid-crate-pilot-v1": "configs/perception/loco-pallet-rigid-crate-pilot-v1.json",
     "loco-pallet-rigid-crate-pilot-v4": "configs/perception/loco-pallet-rigid-crate-pilot-v4.json",
     "loco-pallet-rigid-crate-pilot-v5": "configs/perception/loco-pallet-rigid-crate-pilot-v5.json",
+    "loco-pallet-rigid-crate-pilot-v6": "configs/perception/loco-pallet-rigid-crate-pilot-v6.json",
 }
 TOP_LEVEL_KEYS = {
     "schema_version", "status", "profile_id", "profile_sha256", "generator", "prepared_inputs",
@@ -66,6 +67,10 @@ OBJECT_KEYS = {
 }
 FRAME_KEYS = {
     "frame_id", "scene_index", "view_index", "view_id", "eye_xyz_m", "target_xyz_m", "focal_length_mm",
+}
+FRAME_KEYS_V6 = FRAME_KEYS | {"camera_candidates"}
+CAMERA_CANDIDATE_KEYS = {
+    "candidate_index", "eye_xyz_m", "target_xyz_m", "focal_length_mm", "camera_recipe_sha256",
 }
 CONTEXT_KEYS = {"id", "primitive", "center_xyz_m", "size_xyz_m", "rgb"}
 
@@ -98,6 +103,60 @@ def finite_vector(value: Any, size: int, label: str) -> list[float]:
     return result
 
 
+def frame_camera_candidates(frame: Mapping[str, Any]) -> list[dict[str, Any]]:
+    candidates = frame.get("camera_candidates")
+    if candidates is None:
+        return [{
+            "candidate_index": 0,
+            "eye_xyz_m": list(frame["eye_xyz_m"]),
+            "target_xyz_m": list(frame["target_xyz_m"]),
+            "focal_length_mm": frame["focal_length_mm"],
+            "camera_recipe_sha256": canonical_digest({
+                "candidate_index": 0,
+                "eye_xyz_m": frame["eye_xyz_m"],
+                "target_xyz_m": frame["target_xyz_m"],
+                "focal_length_mm": frame["focal_length_mm"],
+            }),
+        }]
+    return [dict(candidate) for candidate in candidates]
+
+
+def retryable_visibility_error(error: BaseException) -> bool:
+    if not isinstance(error, PerceptionDatasetError):
+        return False
+    message = str(error)
+    if message.startswith("semantic mask has no visible pixels for object:"):
+        return True
+    if message.startswith("semantic identity count differs for object:"):
+        return message.rsplit(":", 1)[-1].strip() == "0"
+    if message.startswith("semantic label map has no target class:"):
+        return True
+    if message.startswith("semantic map has no pixels for target class:"):
+        return True
+    if message.startswith("bbox/object coverage differs:"):
+        return "extra=[]" in message and "missing=[]" not in message
+    return False
+
+
+def rejection_record(frame: Mapping[str, Any], candidate: Mapping[str, Any], error: BaseException) -> dict[str, Any]:
+    return {
+        "frame_id": frame["frame_id"],
+        "candidate_index": candidate["candidate_index"],
+        "camera_recipe_sha256": candidate["camera_recipe_sha256"],
+        "error_type": type(error).__name__,
+        "reason": str(error),
+        "retryable_visibility_failure": retryable_visibility_error(error),
+        "counts_as_valid_capture": False,
+        "counts_toward_coco": False,
+    }
+
+
+def reserve_additional_capture_attempt(used: int, maximum: int) -> int:
+    if used >= maximum:
+        raise PilotCaptureError(f"valid-view resampling exceeded {maximum} additional attempts")
+    return used + 1
+
+
 def validate_manifest_recipe(manifest: Mapping[str, Any]) -> None:
     if set(manifest) != TOP_LEVEL_KEYS:
         raise PilotCaptureError(f"pilot manifest fields differ: {sorted(set(manifest) ^ TOP_LEVEL_KEYS)}")
@@ -124,6 +183,19 @@ def validate_manifest_recipe(manifest: Mapping[str, Any]) -> None:
                 "reject_fully_hidden_objects", "clipped_frame_edges_allowed",
             ))):
         raise PilotCaptureError("pilot capture and label contract differs")
+    resampling = capture.get("valid_view_resampling")
+    is_v6 = manifest.get("profile_id") == "loco-pallet-rigid-crate-pilot-v6"
+    if is_v6:
+        if (not isinstance(resampling, Mapping)
+                or resampling.get("candidate_count_per_frame") != 3
+                or resampling.get("maximum_additional_capture_attempts") != 128
+                or resampling.get("candidate_derivation") != "ordered_camera_guard_attempts_v6"
+                or resampling.get("retry_visibility_validation_only") is not True
+                or resampling.get("preserve_full_diagnostics_for_first_rejections") != 3
+                or resampling.get("accepted_captures_only_in_dataset_counts") is not True):
+            raise PilotCaptureError("valid-view resampling contract differs")
+    elif resampling is not None:
+        raise PilotCaptureError("valid-view resampling is only allowed for the v6 profile")
     boundary = manifest.get("exporter_boundary")
     if not isinstance(boundary, Mapping) or boundary.get("current_probe_supports_this_manifest") is not False:
         raise PilotCaptureError("pilot input must preserve its pre-exporter boundary")
@@ -154,7 +226,8 @@ def validate_manifest_recipe(manifest: Mapping[str, Any]) -> None:
         raise PilotCaptureError("pilot scene/frame/seed counts differ")
     frame_by_id: dict[int, Mapping[str, Any]] = {}
     for frame in frames:
-        if not isinstance(frame, Mapping) or set(frame) != FRAME_KEYS:
+        expected_frame_keys = FRAME_KEYS_V6 if is_v6 else FRAME_KEYS
+        if not isinstance(frame, Mapping) or set(frame) != expected_frame_keys:
             raise PilotCaptureError("frame recipe fields differ")
         frame_id = frame.get("frame_id")
         if type(frame_id) is not int or frame_id in frame_by_id:
@@ -170,6 +243,26 @@ def validate_manifest_recipe(manifest: Mapping[str, Any]) -> None:
         focal = frame.get("focal_length_mm")
         if type(focal) not in (int, float) or not math.isfinite(focal) or focal <= 0:
             raise PilotCaptureError(f"frame focal length differs: {frame_id}")
+        if is_v6:
+            candidates = frame.get("camera_candidates")
+            if not isinstance(candidates, list) or len(candidates) != 3:
+                raise PilotCaptureError(f"frame camera candidates differ: {frame_id}")
+            for index, candidate in enumerate(candidates):
+                if not isinstance(candidate, Mapping) or set(candidate) != CAMERA_CANDIDATE_KEYS:
+                    raise PilotCaptureError(f"camera candidate fields differ: {frame_id}.{index}")
+                if candidate.get("candidate_index") != index:
+                    raise PilotCaptureError(f"camera candidate index differs: {frame_id}.{index}")
+                finite_vector(candidate.get("eye_xyz_m"), 3, f"frame {frame_id} candidate eye")
+                finite_vector(candidate.get("target_xyz_m"), 3, f"frame {frame_id} candidate target")
+                candidate_focal = candidate.get("focal_length_mm")
+                if type(candidate_focal) not in (int, float) or not math.isfinite(candidate_focal) or candidate_focal <= 0:
+                    raise PilotCaptureError(f"camera candidate focal length differs: {frame_id}.{index}")
+                unsigned = {key: candidate[key] for key in CAMERA_CANDIDATE_KEYS if key != "camera_recipe_sha256"}
+                if candidate.get("camera_recipe_sha256") != canonical_digest(unsigned):
+                    raise PilotCaptureError(f"camera candidate hash differs: {frame_id}.{index}")
+            if any(frame[key] != candidates[0][key] for key in (
+                    "eye_xyz_m", "target_xyz_m", "focal_length_mm")):
+                raise PilotCaptureError(f"frame camera differs from candidate zero: {frame_id}")
         frame_by_id[frame_id] = frame
     if set(frame_by_id) != set(range(1, 513)):
         raise PilotCaptureError("frame IDs must be exactly 1..512")
@@ -435,12 +528,15 @@ def preserve_failure_diagnostics(
     camera: Mapping[str, Any],
     source_pin: Mapping[str, Any],
     error: BaseException,
+    candidate: Mapping[str, Any] | None = None,
+    attempt_number: int | None = None,
 ) -> dict[str, Any]:
     """Preserve one invalid frame for diagnosis without admitting it as a capture."""
     import numpy as np
     from PIL import Image
 
-    root = output / "diagnostics" / f"frame-{frame['frame_id']:03d}"
+    suffix = f"-attempt-{attempt_number:02d}" if attempt_number is not None else ""
+    root = output / "diagnostics" / f"frame-{frame['frame_id']:03d}{suffix}"
     if root.exists():
         raise PilotCaptureError(f"failure diagnostics path already exists: {root}")
     root.mkdir(parents=True)
@@ -469,6 +565,7 @@ def preserve_failure_diagnostics(
         "view_index": frame["view_index"],
         "view_id": frame["view_id"],
         "source_pin": source_pin,
+        "camera_candidate": dict(candidate) if candidate is not None else None,
         "files": [
             "rgb.raw.npy", "rgb.preview.png", "semantic.raw.npy", "distance-to-camera.raw.npy",
             "semantic-id-map.raw.json", "bbox2d.raw.json", "camera.raw.json", "expected-objects.json",
@@ -484,6 +581,8 @@ def preserve_failure_diagnostics(
         "view_id": frame["view_id"],
         "counts_as_valid_capture": False,
         "counts_toward_coco": False,
+        "candidate_index": candidate.get("candidate_index") if candidate is not None else None,
+        "camera_recipe_sha256": candidate.get("camera_recipe_sha256") if candidate is not None else None,
     }
 
 
@@ -548,6 +647,12 @@ def main() -> int:
         coco_images = []
         coco_annotations = []
         annotation_id = 1
+        additional_capture_attempts = 0
+        rejected_camera_attempts: list[dict[str, Any]] = []
+        full_rejection_diagnostics = 0
+        resampling_contract = manifest["capture_contract"].get("valid_view_resampling", {})
+        maximum_additional_attempts = int(resampling_contract.get("maximum_additional_capture_attempts", 0))
+        maximum_full_diagnostics = int(resampling_contract.get("preserve_full_diagnostics_for_first_rejections", 1))
         for scene in manifest["scenes"]:
             omni.usd.get_context().new_stage()
             stage = omni.usd.get_context().get_stage()
@@ -565,65 +670,144 @@ def main() -> int:
             try:
                 for frame_id in scene["frame_ids"]:
                     frame = frame_by_id[frame_id]
-                    set_camera(camera, Gf, UsdGeom, frame)
-                    for _ in range(3):
-                        app.update()
-                    if timeline.is_playing():
-                        raise PilotCaptureError("pilot timeline advanced before capture")
-                    rep.orchestrator.step(delta_time=0.0, rt_subframes=RT_SUBFRAMES)
-                    rep.orchestrator.wait_until_complete()
-                    if timeline.is_playing():
-                        raise PilotCaptureError("pilot timeline advanced during capture")
-                    rgb = np.asarray(annotators["rgb"].get_data())
-                    semantic_raw = annotators["semantic"].get_data()
-                    bbox_raw = annotators["bbox"].get_data()
-                    distance = np.asarray(annotators["distance"].get_data())
-                    camera_raw = annotators["camera"].get_data()
-                    if not isinstance(semantic_raw, Mapping) or not isinstance(bbox_raw, Mapping):
-                        raise PilotCaptureError("annotators did not return data/info payloads")
-                    semantic = np.asarray(semantic_raw["data"])
-                    if rgb.shape[:2] != (RESOLUTION[1], RESOLUTION[0]) or rgb.ndim != 3 or rgb.shape[2] < 3:
-                        raise PilotCaptureError(f"RGB shape differs from contract: {rgb.shape}")
-                    semantic_info = raw_info(semantic_raw, "semantic")
-                    bbox_rows, bbox_info = raw_payload(bbox_raw, "bbox")
-                    camera_doc = camera_document(camera, stage, Usd, UsdGeom, camera_raw)
-                    try:
-                        normalized = validate_capture(
-                            width=RESOLUTION[0], height=RESOLUTION[1], semantic=semantic,
-                            semantic_info=semantic_info, bbox_rows=bbox_rows, bbox_info=bbox_info,
-                            expected_objects=expected,
-                        )
-                        depth_validation = validate_distance_to_camera(
-                            width=RESOLUTION[0], height=RESOLUTION[1], distance=distance,
-                            semantic=semantic, capture_validation=normalized,
-                        )
-                    except (PilotCaptureError, PerceptionDatasetError, OSError, ValueError) as error:
+                    candidates = frame_camera_candidates(frame)
+                    frame_rejections: list[dict[str, Any]] = []
+                    for attempt_number, candidate in enumerate(candidates, start=1):
+                        diagnostic_candidate = candidate if resampling_contract else None
+                        diagnostic_attempt_number = attempt_number if resampling_contract else None
+                        if attempt_number > 1:
+                            try:
+                                additional_capture_attempts = reserve_additional_capture_attempt(
+                                    additional_capture_attempts, maximum_additional_attempts,
+                                )
+                            except PilotCaptureError:
+                                failure_context = {
+                                    "scene_index": scene["scene_index"],
+                                    "frame_id": frame["frame_id"],
+                                    "view_index": frame["view_index"],
+                                    "view_id": frame["view_id"],
+                                    "counts_as_valid_capture": False,
+                                    "counts_toward_coco": False,
+                                    "additional_capture_attempts": additional_capture_attempts,
+                                    "rejected_camera_attempts": frame_rejections,
+                                }
+                                raise
+                        set_camera(camera, Gf, UsdGeom, candidate)
+                        for _ in range(3):
+                            app.update()
+                        if timeline.is_playing():
+                            raise PilotCaptureError("pilot timeline advanced before capture")
+                        rep.orchestrator.step(delta_time=0.0, rt_subframes=RT_SUBFRAMES)
+                        rep.orchestrator.wait_until_complete()
+                        if timeline.is_playing():
+                            raise PilotCaptureError("pilot timeline advanced during capture")
+                        rgb = np.asarray(annotators["rgb"].get_data())
+                        semantic_raw = annotators["semantic"].get_data()
+                        bbox_raw = annotators["bbox"].get_data()
+                        distance = np.asarray(annotators["distance"].get_data())
+                        camera_raw = annotators["camera"].get_data()
+                        if not isinstance(semantic_raw, Mapping) or not isinstance(bbox_raw, Mapping):
+                            raise PilotCaptureError("annotators did not return data/info payloads")
+                        semantic = np.asarray(semantic_raw["data"])
+                        if rgb.shape[:2] != (RESOLUTION[1], RESOLUTION[0]) or rgb.ndim != 3 or rgb.shape[2] < 3:
+                            raise PilotCaptureError(f"RGB shape differs from contract: {rgb.shape}")
+                        semantic_info = raw_info(semantic_raw, "semantic")
+                        bbox_rows, bbox_info = raw_payload(bbox_raw, "bbox")
+                        camera_doc = camera_document(camera, stage, Usd, UsdGeom, camera_raw)
                         try:
-                            failure_context = preserve_failure_diagnostics(
-                                output=output, scene=scene, frame=frame, expected_objects=expected,
-                                rgb=rgb, semantic=semantic, semantic_info=semantic_info,
-                                bbox_rows=bbox_rows, bbox_info=bbox_info, distance=distance,
-                                camera=camera_doc,
-                                source_pin={
-                                    "source_commit": args.source_commit,
-                                    "capture_script_sha256": digest(Path(__file__).resolve()),
-                                    "manifest_sha256": args.manifest_sha256,
-                                    "recipe_sha256": manifest["recipe_sha256"],
-                                },
-                                error=error,
+                            normalized = validate_capture(
+                                width=RESOLUTION[0], height=RESOLUTION[1], semantic=semantic,
+                                semantic_info=semantic_info, bbox_rows=bbox_rows, bbox_info=bbox_info,
+                                expected_objects=expected,
                             )
-                        except (PilotCaptureError, PerceptionDatasetError, OSError, ValueError) as diagnostic_error:
-                            failure_context = {
+                        except PerceptionDatasetError as error:
+                            rejection = rejection_record(frame, candidate, error)
+                            frame_rejections.append(rejection)
+                            rejected_camera_attempts.append(rejection)
+                            diagnostic = None
+                            if full_rejection_diagnostics < maximum_full_diagnostics:
+                                full_rejection_diagnostics += 1
+                                try:
+                                    diagnostic = preserve_failure_diagnostics(
+                                        output=output, scene=scene, frame=frame, expected_objects=expected,
+                                        rgb=rgb, semantic=semantic, semantic_info=semantic_info,
+                                        bbox_rows=bbox_rows, bbox_info=bbox_info, distance=distance,
+                                        camera=camera_doc,
+                                        source_pin={
+                                            "source_commit": args.source_commit,
+                                            "capture_script_sha256": digest(Path(__file__).resolve()),
+                                            "manifest_sha256": args.manifest_sha256,
+                                            "recipe_sha256": manifest["recipe_sha256"],
+                                        },
+                                        error=error, candidate=diagnostic_candidate,
+                                        attempt_number=diagnostic_attempt_number,
+                                    )
+                                except (PilotCaptureError, PerceptionDatasetError, OSError, ValueError) as diagnostic_error:
+                                    rejection["diagnostic_write_error_type"] = type(diagnostic_error).__name__
+                                    rejection["diagnostic_write_error"] = str(diagnostic_error)
+                            can_retry = rejection["retryable_visibility_failure"] and attempt_number < len(candidates)
+                            if can_retry:
+                                continue
+                            failure_context = diagnostic or {
                                 "scene_index": scene["scene_index"],
                                 "frame_id": frame["frame_id"],
                                 "view_index": frame["view_index"],
                                 "view_id": frame["view_id"],
                                 "counts_as_valid_capture": False,
                                 "counts_toward_coco": False,
-                                "diagnostic_write_error_type": type(diagnostic_error).__name__,
-                                "diagnostic_write_error": str(diagnostic_error),
+                                "rejected_camera_attempts": frame_rejections,
                             }
-                        raise
+                            raise
+                        try:
+                            depth_validation = validate_distance_to_camera(
+                                width=RESOLUTION[0], height=RESOLUTION[1], distance=distance,
+                                semantic=semantic, capture_validation=normalized,
+                            )
+                        except PerceptionDatasetError as error:
+                            compact_failure = {
+                                "scene_index": scene["scene_index"],
+                                "frame_id": frame["frame_id"],
+                                "view_index": frame["view_index"],
+                                "view_id": frame["view_id"],
+                                "counts_as_valid_capture": False,
+                                "counts_toward_coco": False,
+                                "selected_camera_candidate": dict(candidate),
+                                "error_type": type(error).__name__,
+                                "error": str(error),
+                            }
+                            failure_context = compact_failure
+                            if full_rejection_diagnostics < maximum_full_diagnostics:
+                                full_rejection_diagnostics += 1
+                                try:
+                                    failure_context = preserve_failure_diagnostics(
+                                        output=output, scene=scene, frame=frame, expected_objects=expected,
+                                        rgb=rgb, semantic=semantic, semantic_info=semantic_info,
+                                        bbox_rows=bbox_rows, bbox_info=bbox_info, distance=distance,
+                                        camera=camera_doc,
+                                        source_pin={
+                                            "source_commit": args.source_commit,
+                                            "capture_script_sha256": digest(Path(__file__).resolve()),
+                                            "manifest_sha256": args.manifest_sha256,
+                                            "recipe_sha256": manifest["recipe_sha256"],
+                                        },
+                                        error=error, candidate=diagnostic_candidate,
+                                        attempt_number=diagnostic_attempt_number,
+                                    )
+                                except (PilotCaptureError, PerceptionDatasetError, OSError, ValueError) as diagnostic_error:
+                                    compact_failure["diagnostic_write_error_type"] = type(diagnostic_error).__name__
+                                    compact_failure["diagnostic_write_error"] = str(diagnostic_error)
+                            raise
+                        selected_candidate = dict(candidate)
+                        if resampling_contract:
+                            camera_doc = {
+                                **camera_doc,
+                                "selection": {
+                                    "selected_candidate": selected_candidate,
+                                    "rejected_candidates": frame_rejections,
+                                    "additional_capture_attempts_used": attempt_number - 1,
+                                },
+                            }
+                        break
                     frame_root = scene_root / f"view-{frame['view_index'] + 1:02d}"
                     frame_root.mkdir()
                     rgb_path = frame_root / "rgb.png"
@@ -645,6 +829,10 @@ def main() -> int:
                         "scene_recipe": scene,
                         "frame_recipe": frame,
                         "camera": camera_doc,
+                        **({
+                            "selected_camera_candidate": selected_candidate,
+                            "rejected_camera_attempts": frame_rejections,
+                        } if resampling_contract else {}),
                         "capture_validation": normalized,
                         "distance_validation": depth_validation,
                         "timeline": "stopped",
@@ -669,6 +857,10 @@ def main() -> int:
                         "provenance": relative(provenance_path, output),
                         "capture_validation": normalized,
                         "distance_validation": depth_validation,
+                        **({
+                            "selected_camera_candidate": selected_candidate,
+                            "rejected_camera_attempts": frame_rejections,
+                        } if resampling_contract else {}),
                     })
             finally:
                 cleanup_errors.extend(detach(annotators, product))
@@ -718,6 +910,15 @@ def main() -> int:
                 "all_recipe_fields_consumed": True,
                 "timeline": "stopped during all captures",
             },
+            **({"valid_view_resampling": {
+                "enabled": bool(resampling_contract),
+                "additional_capture_attempts": additional_capture_attempts,
+                "maximum_additional_capture_attempts": maximum_additional_attempts,
+                "rejected_attempt_count": len(rejected_camera_attempts),
+                "full_rejection_diagnostics": full_rejection_diagnostics,
+                "rejected_attempts": rejected_camera_attempts,
+                "accepted_captures_only_in_dataset_counts": True,
+            }} if resampling_contract else {}),
             "scope": {
                 "candidate_pilot_only": True,
                 "model_training_performed": False,

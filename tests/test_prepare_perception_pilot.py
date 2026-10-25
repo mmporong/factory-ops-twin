@@ -8,6 +8,8 @@ from scripts.perception.prepare_pilot_manifest import (
     PilotManifestError,
     _guard_camera_frames,
     _guard_context,
+    _object_aabb_corners,
+    _projected_bounds,
     build_manifest,
     occluder_conflicts,
     source_digest,
@@ -18,6 +20,7 @@ ROOT = Path(__file__).resolve().parents[1]
 PROFILE = ROOT / "configs/perception/loco-pallet-rigid-crate-pilot-v1.json"
 PROFILE_V4 = ROOT / "configs/perception/loco-pallet-rigid-crate-pilot-v4.json"
 PROFILE_V5 = ROOT / "configs/perception/loco-pallet-rigid-crate-pilot-v5.json"
+PROFILE_V6 = ROOT / "configs/perception/loco-pallet-rigid-crate-pilot-v6.json"
 
 
 class PreparePerceptionPilotTests(unittest.TestCase):
@@ -204,6 +207,38 @@ class PreparePerceptionPilotTests(unittest.TestCase):
         self.assertEqual(first, second)
         self.assertEqual(1, counts["resampled_occluders"])
         self.assertEqual([], occluder_conflicts([target], [frame], assets, first[0], [768, 512], 24.0))
+
+    def test_v6_freezes_three_deterministic_candidates_with_four_pixel_projection_margin(self):
+        profile = json.loads(PROFILE_V6.read_text(encoding="utf-8"))
+        for source in profile["prepared_inputs"]:
+            source["sha256"] = next(
+                row["sha256"] for row in self.profile["prepared_inputs"] if row["id"] == source["id"]
+            )
+        for asset_id in profile["assets"]:
+            profile["assets"][asset_id]["sha256"] = self.profile["assets"][asset_id]["sha256"]
+        profile_path = self.root / "profile-v6.json"
+        profile_path.write_text(json.dumps(profile), encoding="utf-8")
+
+        first = build_manifest(profile_path, self.root, self.cache)
+        second = build_manifest(profile_path, self.root, self.cache)
+        self.assertEqual(first["recipe_sha256"], second["recipe_sha256"])
+        self.assertEqual(first["frames"], second["frames"])
+        self.assertFalse(first["scope"]["training_ready"])
+        self.assertFalse(first["scope"]["mapping_approved"])
+        for frame in first["frames"]:
+            self.assertEqual([0, 1, 2], [row["candidate_index"] for row in frame["camera_candidates"]])
+            self.assertEqual(frame["eye_xyz_m"], frame["camera_candidates"][0]["eye_xyz_m"])
+            scene = first["scenes"][frame["scene_index"]]
+            for candidate in frame["camera_candidates"]:
+                for recipe in scene["objects"]:
+                    projection = _projected_bounds(
+                        _object_aabb_corners(recipe, first["assets"][recipe["asset_id"]]["bounds_xyz_m"]),
+                        candidate, [768, 512], 24.0,
+                    )
+                    visible_width = min(projection["max_u"], 767) - max(projection["min_u"], 0)
+                    visible_height = min(projection["max_v"], 511) - max(projection["min_v"], 0)
+                    self.assertGreaterEqual(visible_width, 4)
+                    self.assertGreaterEqual(visible_height, 4)
 
 
 if __name__ == "__main__":
