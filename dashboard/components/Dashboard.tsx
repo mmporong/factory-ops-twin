@@ -284,7 +284,9 @@ export default function Dashboard() {
       icon: "truck",
       label: "출하 완료",
       value: snapshot?.kpis.completed_orders ?? "—",
-      note: "현재 실행 누계",
+      note: typeof snapshot?.kpis.returned_carriers === "number"
+        ? `빈 용기 반납 ${snapshot.kpis.returned_carriers}건`
+        : "현재 실행 누계",
       delta: shippedSinceOpen > 0 ? `+${shippedSinceOpen}` : undefined,
     },
     { icon: "list", label: "대기 작업", value: snapshot?.kpis.pending_tasks ?? "—", note: "운영 원장 기준" },

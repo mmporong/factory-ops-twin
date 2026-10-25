@@ -135,6 +135,7 @@ export type Snapshot = {
     active_robots: number;
     total_robots: number;
     completed_orders: number;
+    returned_carriers?: number;
     pending_tasks: number;
     stock_units: number | null;
   };
