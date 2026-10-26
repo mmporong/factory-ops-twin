@@ -1,0 +1,32 @@
+{
+  "status": "verified",
+  "scope": "actual Stop and owned cleanup addendum; previous failure archive preserved",
+  "primary_archive": "E:\\FactoryOpsData\\cosmos-smoke-387-closeout.zip",
+  "backup_archive": "D:\\FactoryOpsPortfolio\\cosmos-smoke-387-closeout.zip",
+  "archive_bytes": 3500,
+  "archive_sha256": "4aacb19a5b503053ff677e98f00ba6e6a6bfa338a5065e44d2d7106570d8faaa",
+  "zip_crc_and_payload_sha256_passed": true,
+  "backup_sha256_matches": true,
+  "inventory": [
+    {
+      "path": "workspace-detail-after-start-failed.json",
+      "bytes": 224,
+      "sha256": "6c57552682ea865ee6bdb7ce05bfec2a8968def05e684e4370769b78fba593b3"
+    },
+    {
+      "path": "recovery-watch-before-manual-cleanup.json",
+      "bytes": 626,
+      "sha256": "c13e33323f0c29ce3adf026dfa4eb350c8ede2a3566e92e478e338e319f967b0"
+    },
+    {
+      "path": "recovery-closeout.json",
+      "bytes": 1384,
+      "sha256": "6b732c1bd8b9a17e3840d93815db9ca172fe1146092e8b60b5597a1219690bf5"
+    },
+    {
+      "path": "public-closeout.json",
+      "bytes": 2695,
+      "sha256": "af322428d25f7f0b585bbe157a19b1ff5054964e21c09bd71c25adfb2a6117d8"
+    }
+  ]
+}

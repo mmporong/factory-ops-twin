@@ -1887,3 +1887,10 @@ NGC의 amd64 압축 image 표시는8.76GB지만 model/cache·materialization·sc
 387 실행기는15:02:45 KST에 종료됐지만 실제STOPPED는 확인되지 않았다. 원래2시간 Stop 타이머와 keepalive를 유지하고,16:52 KST까지 같은 VM만 감시하는 복구 프로세스를 추가했다.15:11 KST의 systemd NEXT 표시는16:43:06 KST로 계약 시각16:42:11과 달랐으며 원인은 미확정이다. RUNNING 계열로 전환되면 Stop을 요청하고 실제STOPPED 뒤 소유 타이머·keepalive를 정리한다. 서버500이 계속되면 중지를 보장할 수 없으며 상태는 recovery-watch.json에 남는다. 보존 ZIP은 실패 실행기와 복구 시점의 스냅샷이며 클라우드 종료 증명이 아니다.
 
 387의 과거 owned_processes_gone=true는 retained keepalive를 제외하는 조건식 때문에 전체 정리로 읽으면 안 된다. 다음 소스는 keepalive가 살아 있으면false를 기록하고 이를 회귀로 확인했다. 후속388은 부팅 준비만1200초로 늘리고 전체7200초·Stop reserve600초·동일 입력·모델·예산을 유지한다.16개 관련CPU검사·셸구문 검사는 통과했지만 실제388은 미실행이며, 실제Stop과 서버 복구 전에는 시작하지 않는다. 실패 소스와 원본387 상태는 동결본으로 보존한다. [388 계약](evidence/cosmos-execution-plan-388.json)
+
+
+### FOT-243 종료 보정 — Start failed 뒤 실제 STOPPED 확인
+
+2026-10-26 사용자가 콘솔의 `start failed` 표시를 알렸다. 15:43 KST의 CLI와 GET workspace detail은 기존234를 `STOPPED/COMPLETED/NOT READY/UNHEALTHY`로 반환했고 `statusMessage`는 빈 문자열이었다. 실패 구간은 SSH 이전 VM 시작이며, 로컬600초 준비 timeout을 클라우드 실패의 원인으로 단정하지 않는다. GPU 재고·quota·디스크·호스트 내부 오류 중 어느 것인지는 현재 근거로 구별할 수 없다. 브라우저 도구는 reset 후에도 kernel assets 경로 오류로 열리지 않았다. 상세 원인은 [공식 문서의 Activity Logs 절차](https://docs.nvidia.com/brev/troubleshooting/instances-gpus/instance-stuck-in-waiting-state)로 확인해야 한다.
+
+실제 Stop 후에도 감시가 반복된 것은 이미 사라진 transient timer/service에 대한 `systemctl stop`의 nonzero를 복구 스크립트가 즉시 실패로 판정했기 때문이다. 해당 두 unit의 `LoadState=not-found/ActiveState=inactive`를 확인했고 PID·명령·생성 시각을 대조한 소유 감시와 keepalive만 종료했다. 15:45 KST에 PID50648/86900/109040 부재를 확인했다. 정리 명령의 PowerShell 생성 시각 비교는 `DateTimeOffset.UtcDateTime`으로 정규화했다. 이후에는 기존 `cleanup_watchdog`처럼 stop 종료 코드와 최종 unit 상태를 구분하며, `not-found/inactive`를 정리 성공으로 취급한다. 이번 임시 복구 스크립트를 후속 실행에 재사용하지 않는다. 원본387 상태·미중지 영수증·ZIP은 보존하고 [종료 영수증](evidence/cosmos-cloud-387-closeout.json)과 [추가 백업](evidence/cosmos-storage-387-closeout.json)으로 연결한다. 새 기동·reset·삭제는 실행하지 않았다.

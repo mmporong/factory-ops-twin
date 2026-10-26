@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "batch_id": 387,
+  "recorded_utc": "2026-10-26T06:47:45.335915+00:00",
+  "status": "start_failed_before_remote_execution_actual_stop_confirmed",
+  "user_reported_console_message": "start failed",
+  "failure_stage": "cloud VM start before SSH/model/input transfer",
+  "underlying_cause": "not exposed by the workspace detail API; console Activity Logs unavailable to the browser tool",
+  "capacity_or_quota_or_disk_cause_confirmed": false,
+  "local_readiness_timeout_is_provider_root_cause": false,
+  "actual_stopped": true,
+  "detail_observation": {
+    "at": "2026-10-26T15:43:27.404337+09:00",
+    "workspace_id": "fy0i3jtz5",
+    "method": "GET",
+    "http_status": 200,
+    "state": {
+      "status": "STOPPED",
+      "healthStatus": "UNHEALTHY",
+      "verbBuildStatus": "COMPLETED",
+      "statusMessage": ""
+    }
+  },
+  "watchdog_inactive_confirmed": true,
+  "watchdog_units": "Id=factoryops-cosmos-387-stop-3747f6dce919.timer\nLoadState=not-found\nActiveState=inactive\nSubState=dead\n\nId=factoryops-cosmos-387-stop-3747f6dce919.service\nLoadState=not-found\nActiveState=inactive\nSubState=dead",
+  "owned_recovery_processes_gone": true,
+  "previous_process_ids": [
+    50648,
+    86900,
+    109040
+  ],
+  "inference_performed": false,
+  "credentials_transferred": false,
+  "new_media_created": false,
+  "new_start_attempted": false,
+  "instance_deleted_or_reset": false,
+  "settled_billing_verified": false,
+  "cleanup_issue": {
+    "symptom": "watcher said watchdog cleanup failed after actual STOPPED",
+    "cause": "systemctl stop returned nonzero for already-collected transient units; watcher rejected it before inspecting inactive/not-found state",
+    "resolution": "confirmed both exact units not-found/inactive, ended only verified owned recovery processes"
+  },
+  "previous_open_receipt": {
+    "path": "cosmos-cloud-387.json",
+    "sha256": "fa7ec39996906a4e4eeb1fb0bfff075929199c3647b5bd6beea2467bcf27be38",
+    "preserved": true
+  },
+  "source_records": [
+    {
+      "path": "workspace-detail-after-start-failed.json",
+      "sha256": "6c57552682ea865ee6bdb7ce05bfec2a8968def05e684e4370769b78fba593b3"
+    },
+    {
+      "path": "recovery-watch-before-manual-cleanup.json",
+      "sha256": "c13e33323f0c29ce3adf026dfa4eb350c8ede2a3566e92e478e338e319f967b0"
+    },
+    {
+      "path": "recovery-closeout.json",
+      "sha256": "6b732c1bd8b9a17e3840d93815db9ca172fe1146092e8b60b5597a1219690bf5"
+    }
+  ],
+  "official_reference": "https://docs.nvidia.com/brev/troubleshooting/instances-gpus/instance-stuck-in-waiting-state",
+  "next_step": "read failed-start Activity Logs before repeating the same start; CPU candidate388 remains unexecuted"
+}

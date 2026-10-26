@@ -75,7 +75,7 @@ uv run python scripts/demo/run_process_line.py --config configs/factory-semicond
 
 출력 폴더는 새 경로를 사용합니다. 위 값은 실행 상한이며 예상 소요 시간이 아닙니다. CPU 운영 기록으로 접촉 물리·센서를 검증하지 않습니다. [전체 실행 인자와 영상 발췌](docs/operations-guide.md#16대-cpu-배치와-진단-종료)
 
-**Brev:** 기존 Nebius2×L40S의 GPU 한 장에서 Cosmos3 변환을 완료했고 모델 캐시를 보존했습니다. 후속 비교는 VM 부팅 지연과 Stop 서버 오류로 보류됐으며 현재 실제 중지는 확인되지 않았습니다. 상태가 바뀌면 중지를 재시도하는 감시와 기존 Stop 타이머를 유지하고 있습니다. 현재16대 CPU 운영과 물리·센서 시험은 로컬 결과입니다. [완료한 변환](docs/evidence/cosmos-cloud-386.json) · [현재 클라우드 오류·복구 상태](docs/evidence/cosmos-cloud-387.json)
+**Brev:** 기존 Nebius2×L40S의 GPU 한 장에서 Cosmos3 변환을 완료했고 모델 캐시를 보존했습니다. 후속 비교는 VM 시작 실패로 추론에 도달하지 못했습니다. 현재 환경은 `STOPPED`이며 남아 있던 중지 감시·타이머·keepalive도 정리했습니다. 상세 기동 원인은 아직 확인되지 않았습니다. 현재16대 CPU 운영과 물리·센서 시험은 로컬 결과입니다. [완료한 변환](docs/evidence/cosmos-cloud-386.json) · [시작 실패·중지 확인](docs/evidence/cosmos-cloud-387-closeout.json)
 
 </details>
 
