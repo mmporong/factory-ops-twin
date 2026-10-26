@@ -5,7 +5,7 @@ import importlib.util
 from pathlib import Path
 import sys
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 
 BREV_SCRIPTS = Path(__file__).resolve().parents[1] / "scripts" / "brev"
@@ -33,6 +33,10 @@ class Clock:
 
 
 class CosmosReadinessTests(unittest.TestCase):
+    def test_only_batch_388_gets_extended_ready_timeout(self) -> None:
+        self.assertEqual(supervisor._ready_timeout_seconds(387), 600)
+        self.assertEqual(supervisor._ready_timeout_seconds(388), 1200)
+
     def test_booting_health_does_not_admit_gpu_or_abort_before_full_readiness(self) -> None:
         states = [observation("STOPPED", "NOT READY", "UNAVAILABLE"),
                   observation("STARTING", "NOT READY", "UNHEALTHY"),
@@ -77,6 +81,17 @@ class CosmosReadinessTests(unittest.TestCase):
             supervisor._poll_ready(10**12, record, lambda: None)
         self.assertEqual(record["readiness_polls"][-1]["status"], "UNHEALTHY")
         sleep.assert_not_called()
+
+    def test_live_keepalive_prevents_owned_processes_gone_receipt(self) -> None:
+        keepalive = Mock()
+        keepalive.poll.return_value = None
+        self.assertFalse(supervisor._owned_processes_gone({}, keepalive))
+
+    def test_stopped_keepalive_and_remote_ssh_allow_gone_receipt(self) -> None:
+        keepalive = Mock()
+        keepalive.poll.return_value = 0
+        record = {"remote_ssh_pid": 42, "remote_ssh_gone": True}
+        self.assertTrue(supervisor._owned_processes_gone(record, keepalive))
 
 
 if __name__ == "__main__":

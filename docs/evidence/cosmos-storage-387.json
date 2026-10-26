@@ -1,0 +1,122 @@
+{
+  "schema_version": 1,
+  "batch_id": 387,
+  "status": "verified",
+  "primary_archive": "E:\\FactoryOpsData\\cosmos-smoke-387.zip",
+  "backup_archive": "D:\\FactoryOpsPortfolio\\cosmos-smoke-387.zip",
+  "archive_scope": "failed controller and recovery snapshot; cloud lifecycle not closed",
+  "cloud_stop_confirmed_at_snapshot": false,
+  "archive_bytes": 168833,
+  "archive_sha256": "bd77ddb2b80213ac0ad5e250a7f1f022a2af974825bb3a881281ab413bee4f75",
+  "payload_file_count": 21,
+  "zip_crc_and_all_payload_sha256_passed": true,
+  "backup_sha256_matches": true,
+  "credential_files_or_model_weights_included": false,
+  "inventory": [
+    {
+      "path": "controller/status.json",
+      "bytes": 10179,
+      "sha256": "d4a579c3ad44c9ba20deaa2916a8a871c31a787613a5b22efc0e58ce5d34b2cb"
+    },
+    {
+      "path": "controller/start.log",
+      "bytes": 138,
+      "sha256": "7f2720d206a3dbc749254392e880714ebc26976e813b67f59e63e9a0e12ac3e7"
+    },
+    {
+      "path": "controller/initial-ls.json",
+      "bytes": 1281,
+      "sha256": "568fc990951be1f0320000d9963fa3c807df24d3e1d80145902f010eb2b4e7e2"
+    },
+    {
+      "path": "controller/watchdog-arm.log",
+      "bytes": 145,
+      "sha256": "f053ca58c70994bcb63c6007be7d4bb085d70c1e784cb92e5cbee2cc5ac521ae"
+    },
+    {
+      "path": "source/execution-contract.json",
+      "bytes": 4229,
+      "sha256": "2cb6d17484caa9e76e4364d72ef04f02cbb8b53589374feb932eba3be228fe89"
+    },
+    {
+      "path": "source/scripts/brev/run-cosmos-smoke.sh",
+      "bytes": 25636,
+      "sha256": "eeff19954fea207d4f0e4e729b6fb5d883694c69775545ad2aed3d9ee66aff8a"
+    },
+    {
+      "path": "source/scripts/brev/run_cosmos_smoke.py",
+      "bytes": 23096,
+      "sha256": "da922f9f376da031c469c7918539effe63e78c98484467776bc91cffa4636cd8"
+    },
+    {
+      "path": "source/scripts/brev/start_cosmos_smoke.ps1",
+      "bytes": 2488,
+      "sha256": "1c494392e96ef2e44f12139316481a5f4dc8775b6da2951e5c07e2ba49d83d63"
+    },
+    {
+      "path": "source/scripts/perception/inspect_cosmos_smoke.py",
+      "bytes": 14773,
+      "sha256": "43f678d0e59129d3fd75f29f858aff495ab81a86e3e79e3e2fbecd462809808d"
+    },
+    {
+      "path": "source/scripts/perception/prepare_cosmos_anchor.py",
+      "bytes": 5518,
+      "sha256": "5455934ff1ff8d0acfedc06bbf2d9f2449b29d9d189d990e352ddd2f6ccbbcef"
+    },
+    {
+      "path": "input-387/bundle.json",
+      "bytes": 3748,
+      "sha256": "089b5099d81c4ad587df82500c4dc9e617a562933556668e1a5a0f5e5bb1abdb"
+    },
+    {
+      "path": "input-387/inference-request.json",
+      "bytes": 93691,
+      "sha256": "8b7abe69f27a535faa2e9452221cdd171a3cd544aed3ae825563ef1dc7cceb56"
+    },
+    {
+      "path": "input-387/input-reference.mp4",
+      "bytes": 69656,
+      "sha256": "5d389c7270108cb9177b738f2f1b21a82fbbb9966653a9894d20589ff8a6dcc9"
+    },
+    {
+      "path": "input-387/deployment-contract.json",
+      "bytes": 902,
+      "sha256": "284ef37a3f11c541b39bbad71a53ac6e1c6cac70c769d1013aae67c2491f0564"
+    },
+    {
+      "path": "result-receipt.json",
+      "bytes": 9960,
+      "sha256": "fa7ec39996906a4e4eeb1fb0bfff075929199c3647b5bd6beea2467bcf27be38"
+    },
+    {
+      "path": "recovery/stop-by-id-recovery.log",
+      "bytes": 181,
+      "sha256": "926cc0d9727f4b01cdfa393a37d0d83cfc0052015b8596080af252a65eee4133"
+    },
+    {
+      "path": "recovery/stop-by-id-recovery.json",
+      "bytes": 176,
+      "sha256": "2d36c43b526fb233165cbe5de5041d5464e5274bbf3e22cd35235bd904bac4c1"
+    },
+    {
+      "path": "recovery/workspace-detail-readonly.json",
+      "bytes": 225,
+      "sha256": "0b01ca670e05c158d5215bc0fb759c671f222a5a5ade67f3a71e0a7bbb02b12c"
+    },
+    {
+      "path": "recovery/recovery-watch-at-publication.json",
+      "bytes": 468,
+      "sha256": "beb9107300e3ccec75af9ab1486d4f81740c460f14b60ab2a8945e000317a1e1"
+    },
+    {
+      "path": "recovery/recover_stop.py",
+      "bytes": 4411,
+      "sha256": "e09df357c83ac1f20b334d3dc6235d0f4c826afc068b342298d24fcec04c739e"
+    },
+    {
+      "path": "recovery/read_workspace_status.py",
+      "bytes": 2091,
+      "sha256": "30a5196a1b5709ae202bf01067c700ce6ccc6fa5482cc1a377ee2ea00171edfc"
+    }
+  ]
+}

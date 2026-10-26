@@ -75,7 +75,7 @@ uv run python scripts/demo/run_process_line.py --config configs/factory-semicond
 
 출력 폴더는 새 경로를 사용합니다. 위 값은 실행 상한이며 예상 소요 시간이 아닙니다. CPU 운영 기록으로 접촉 물리·센서를 검증하지 않습니다. [전체 실행 인자와 영상 발췌](docs/operations-guide.md#16대-cpu-배치와-진단-종료)
 
-**Brev:** 기존 Nebius2×L40S 환경에서 GPU 한 장으로 Cosmos3 변환 시험을 마쳤고, 실제 `STOPPED`를 확인했습니다. 모델 캐시는 VM 디스크에 보존했습니다. 현재16대 CPU 운영과 위 물리·센서 시험은 로컬 결과입니다. 이번 변환 시험의 카탈로그 경과 비용 추정은 약$3.62이며, 실제 정산·저장 비용은 미확인입니다. 다음 단일클립 비교387은 CPU 입력 준비 단계이며 아직 실행하지 않았습니다. [변환·자원·종료 근거](docs/evidence/cosmos-cloud-386.json) · [다음 비교 계약](docs/evidence/cosmos-execution-plan-387.json)
+**Brev:** 기존 Nebius2×L40S의 GPU 한 장에서 Cosmos3 변환을 완료했고 모델 캐시를 보존했습니다. 후속 비교는 VM 부팅 지연과 Stop 서버 오류로 보류됐으며 현재 실제 중지는 확인되지 않았습니다. 상태가 바뀌면 중지를 재시도하는 감시와 기존 Stop 타이머를 유지하고 있습니다. 현재16대 CPU 운영과 물리·센서 시험은 로컬 결과입니다. [완료한 변환](docs/evidence/cosmos-cloud-386.json) · [현재 클라우드 오류·복구 상태](docs/evidence/cosmos-cloud-387.json)
 
 </details>
 
@@ -249,7 +249,7 @@ ResNet50 FPN 후보도 같은 데이터·학습 횟수로3개 seed의 튜닝 전
 
 Cosmos3 NIM2.1.0 Nano FP8을 단일 L40S에서 실행해 약4초 영상을 생성했습니다. 추론은 약8분3초였고, 실제 디코딩으로1280×720·30fps·121프레임을 확인했습니다. [변환 영상 MP4](docs/images/cosmos-smoke-386/output.mp4) · [입력·출력 출처](docs/images/cosmos-smoke-386/provenance.json)
 
-출력에서는 원본의 팔레트·트레이 배치와 크기가 크게 바뀌었고, 정지 입력에도 객체가 프레임마다 변했습니다. **이 결과는 학습용에서 제외했으며 원본 라벨을 옮기지 않았습니다.** 실행 호환성과 데이터 적합성을 구분해 기록했습니다. 다음 비교387은 같은 원본 RGB·seed2026·edge medium·control guidance1.5·모델·digest·profile·121프레임을 유지하고 `num_first_chunk_conditional_frames`만0에서1로 바꾸는 단일클립 시험입니다. 아직 CPU 준비 단계이며 개선 효과는 가설입니다. depth·segmentation은 metric과 palette가 확정되지 않아 이번 비교에 넣지 않습니다. [실행·자원·한계](docs/evidence/cosmos-cloud-386.json) · [원본 백업](docs/evidence/cosmos-storage-386.json) · [다음 비교 계약](docs/evidence/cosmos-execution-plan-387.json) · [실험 계획](docs/synthetic-to-real-plan.md)
+출력에서는 원본의 팔레트·트레이 배치와 크기가 크게 바뀌었고, 정지 입력에도 객체가 프레임마다 변했습니다. **이 결과는 학습용에서 제외했으며 원본 라벨을 옮기지 않았습니다.** 실행 호환성과 데이터 적합성을 구분해 기록했습니다. 원본 첫 프레임 조건만 추가하는 후속 입력과 비교 화면 생성기를 준비했습니다. 클라우드 재기동이 완료되지 않아 추가 변환 결과는 아직 없습니다. 같은 원본·seed·모델 조건에서 구조 보존이 개선되는지 확인할 예정이며, depth·segmentation의 깊이 표현과 색상표는 별도 확인이 필요합니다. [실행·자원·한계](docs/evidence/cosmos-cloud-386.json) · [원본 백업](docs/evidence/cosmos-storage-386.json) · [준비된 후속 비교](docs/evidence/cosmos-execution-plan-388.json) · [실험 계획](docs/synthetic-to-real-plan.md)
 
 ## 현재 진행 상태
 

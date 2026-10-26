@@ -1876,3 +1876,14 @@ NGC의 amd64 압축 image 표시는8.76GB지만 model/cache·materialization·sc
 위 마지막 문장의 문서 버전 해석은 바로잡는다. [4.0.0 릴리스 노트](https://docs.nvidia.com/nim/cosmos/4.0.0/release-notes.html)는 이미지가 `nvcr.io/nim/nvidia/cosmos3:2.1.0`이라고 명시하므로, 같은 버전의 [Transfer 문서](https://docs.nvidia.com/nim/cosmos/4.0.0/transfer.html)는386에서 고정한2.1.0 이미지와 무관한 다른 이미지용 문서가 아니다. 보존한386 영수증·ZIP·요청·판정은 수정하지 않는다.
 
 다음387은 원본346 RGB·seed2026·edge medium·control guidance1.5·모델/digest/profile·121프레임을 유지하고 `num_first_chunk_conditional_frames`만0에서1로 바꾼다. 공식 Transfer 문서상 이 값이0보다 크면 `input_reference`가 필요하므로 새 CPU bundle에서 함께 결속한다. 아직 실행 전이며 구조 보존 개선은 가설이다. depth·segmentation은 사전 계산 control의 metric과 palette가 확정되지 않아 이번 요청에서 제외한다. [387 실행 계약](evidence/cosmos-execution-plan-387.json)
+
+
+## FOT-243 — 부팅 지연과 Stop 서버 오류가 겹친 Cosmos387
+
+2026-10-26 14:42 KST 시작 요청은 수락됐지만 약6분 동안STOPPED, 이후STARTING/NOT READY였고600초 준비 한도에 도달했다. 원격 SSH·키/입력 전송·모델 실행은 시작하지 않았다. 일반 backend healthcheck는Healthy였으나 VM 준비 성공을 뜻하지 않았다. 이름·ID Stop 요청은 모두stop.go185의Internal Server Error를 반환했다. 공식 CLI 소스의 두 입력은 같은 workspace ID를 해석한 뒤 같은PUT stop endpoint를 사용하므로 이름 해석 문제로 분류하지 않는다. [Stop 구현](https://github.com/brevdev/brev-cli/blob/1733b3d5822b4fdec88682c7a2358a45fbd66e32/pkg/cmd/stop/stop.go#L159-L185) · [387 관측](evidence/cosmos-cloud-387.json)
+
+확인된 GET workspace detail은HTTP200·STARTING·빈statusMessage였다. 기존 CLI 인증으로 상태4필드만 읽었고 자격증명을 출력하지 않았다. 브라우저와node_repl은kernel assets 경로오류로 초기화하지 못했다. 이는 클라우드 오류의 원인으로 확정하지 않는다. Provider 내부 원인은 미확인이며, [공식 대기 상태 진단](https://docs.nvidia.com/brev/troubleshooting/instances-gpus/instance-stuck-in-waiting-state)에 따라 Console Activity Logs의 상세 원인이 다음 확인 대상이다. 기존 데이터·VM을 삭제하거나 초기화하지 않는다.
+
+387 실행기는15:02:45 KST에 종료됐지만 실제STOPPED는 확인되지 않았다. 원래16:42 KST Stop 타이머와 keepalive를 유지하고,16:52 KST까지 같은 VM만 감시하는 복구 프로세스를 추가했다. RUNNING 계열로 전환되면 Stop을 요청하고 실제STOPPED 뒤 소유 타이머·keepalive를 정리한다. 서버500이 계속되면 중지를 보장할 수 없으며 상태는 recovery-watch.json에 남는다. 보존 ZIP은 실패 실행기와 복구 시점의 스냅샷이며 클라우드 종료 증명이 아니다.
+
+387의 과거 owned_processes_gone=true는 retained keepalive를 제외하는 조건식 때문에 전체 정리로 읽으면 안 된다. 다음 소스는 keepalive가 살아 있으면false를 기록하고 이를 회귀로 확인했다. 후속388은 부팅 준비만1200초로 늘리고 전체7200초·Stop reserve600초·동일 입력·모델·예산을 유지한다.16개 관련CPU검사·셸구문 검사는 통과했지만 실제388은 미실행이며, 실제Stop과 서버 복구 전에는 시작하지 않는다. 실패 소스와 원본387 상태는 동결본으로 보존한다. [388 계약](evidence/cosmos-execution-plan-388.json)

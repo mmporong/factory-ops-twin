@@ -62,6 +62,11 @@ class CosmosInputRootTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "control.*batch 387"):
             self._validate(387, self.static)
 
+    def test_batch_388_reuses_only_control_input_root(self) -> None:
+        self._validate(388, self.control)
+        with self.assertRaisesRegex(ValueError, "control.*batch 388"):
+            self._validate(388, self.static)
+
 
 if __name__ == "__main__":
     unittest.main()

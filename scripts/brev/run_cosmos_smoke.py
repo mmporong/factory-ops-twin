@@ -145,7 +145,7 @@ def _validate_inputs(args: argparse.Namespace) -> tuple[Path, Path, dict[str, Pa
     remote_script = args.remote_script.resolve()
     if not remote_script.is_file():
         raise ValueError("--remote-script must name an existing file")
-    expected_inputs = CONTROL_INPUT_ROOT if args.batch_id == 387 else EXPECTED_INPUT_ROOT
+    expected_inputs = CONTROL_INPUT_ROOT if args.batch_id in (387, 388) else EXPECTED_INPUT_ROOT
     inputs = args.inputs_directory.resolve()
     if inputs != expected_inputs.resolve():
         raise ValueError(
@@ -198,8 +198,17 @@ def _scp(local_path: Path, remote_name: str) -> None:
     )
 
 
-def _poll_ready(deadline: float, record: dict[str, object], save: object) -> None:
-    end = min(deadline - STOP_RESERVE_SECONDS, time.monotonic() + READY_TIMEOUT_SECONDS)
+def _ready_timeout_seconds(batch_id: int) -> int:
+    return 1200 if batch_id == 388 else READY_TIMEOUT_SECONDS
+
+
+def _poll_ready(
+    deadline: float,
+    record: dict[str, object],
+    save: object,
+    ready_timeout_seconds: int = READY_TIMEOUT_SECONDS,
+) -> None:
+    end = min(deadline - STOP_RESERVE_SECONDS, time.monotonic() + ready_timeout_seconds)
     polls: list[dict[str, object]] = []
     record["readiness_polls"] = polls
     while True:
@@ -384,9 +393,18 @@ def _stop_and_confirm(record: dict[str, object], save: object) -> bool:
         time.sleep(POLL_SECONDS)
 
 
+def _owned_processes_gone(
+    record: dict[str, object], keepalive: subprocess.Popen[bytes] | None
+) -> bool:
+    remote_pid = record.get("remote_ssh_pid")
+    remote_gone = remote_pid is None or bool(record.get("remote_ssh_gone"))
+    keepalive_gone = keepalive is None or keepalive.poll() is not None
+    return remote_gone and keepalive_gone
+
+
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--batch-id", type=int, choices=(379, 380, 381, 382, 383, 384, 385, 386, 387), default=379)
+    parser.add_argument("--batch-id", type=int, choices=(379, 380, 381, 382, 383, 384, 385, 386, 387, 388), default=379)
     parser.add_argument("--target-profile", choices=tuple(TARGETS), default="scale234")
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--remote-script", type=Path, required=True)
@@ -411,6 +429,7 @@ def main() -> int:
     ESTIMATED_ENVELOPE_USD = 2 * HOURLY_ESTIMATE_USD
     watchdog_runtime.NAME = NAME
     BATCH_ID = args.batch_id
+    ready_timeout_seconds = _ready_timeout_seconds(BATCH_ID)
     REMOTE_DIR = f"workspace/factoryops-cosmos-{BATCH_ID}"
     REMOTE_ROOT = "$HOME/" + REMOTE_DIR
     REMOTE_KEY = f"/dev/shm/factoryops-cosmos-{BATCH_ID}/ngc-key"
@@ -425,6 +444,7 @@ def main() -> int:
         "batch_id": BATCH_ID,
         "execute": args.execute,
         "hard_stop_seconds": HARD_STOP_SECONDS,
+        "ready_timeout_seconds": ready_timeout_seconds,
         "estimated_envelope_usd": ESTIMATED_ENVELOPE_USD,
         "remote_script_sha256": _sha256(remote_script),
         "inputs": {name: {"sha256": _sha256(path), "bytes": path.stat().st_size}
@@ -483,7 +503,7 @@ def main() -> int:
         brev_call(["refresh"], timeout=60)
         record["status"] = "waiting_ready"
         save()
-        _poll_ready(deadline, record, save)
+        _poll_ready(deadline, record, save, ready_timeout_seconds)
         brev_call(["refresh"], timeout=60)
 
         record["status"] = "hardware_preflight"
@@ -553,10 +573,7 @@ def main() -> int:
                 ],
                 "keepalive_pid": keepalive.pid if keepalive else None,
             }
-        remote_pid = record.get("remote_ssh_pid")
-        record["owned_processes_gone"] = (
-            remote_pid is None or bool(record.get("remote_ssh_gone"))
-        ) and (not record["actual_stopped"] or keepalive is None or keepalive.poll() is not None)
+        record["owned_processes_gone"] = _owned_processes_gone(record, keepalive)
         record["finished_at"] = timestamp()
         save()
         secret = ""

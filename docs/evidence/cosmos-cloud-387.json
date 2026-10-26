@@ -1,0 +1,321 @@
+{
+  "schema_version": 1,
+  "batch_id": 387,
+  "recorded_utc": "2026-10-26T06:08:21.037070+00:00",
+  "status": "boot_readiness_timeout_stop_unconfirmed",
+  "producer_commit": "44d3ce36c24c0380cbecacb857b476b7eb1d8409",
+  "execution_contract": "cosmos-execution-plan-387.json",
+  "instance_name": "factory-ops-scale-234",
+  "instance_id": "fy0i3jtz5",
+  "new_vm_created": false,
+  "error": "TimeoutError: workspace did not become RUNNING/COMPLETED/READY",
+  "readiness_limit_seconds": 600,
+  "readiness_polls": [
+    {
+      "at": "2026-10-26T05:42:35.551223+00:00",
+      "status": "STOPPED",
+      "build_status": "COMPLETED",
+      "shell_status": "NOT READY",
+      "health_status": "UNAVAILABLE"
+    },
+    {
+      "at": "2026-10-26T05:43:08.949473+00:00",
+      "status": "STOPPED",
+      "build_status": "COMPLETED",
+      "shell_status": "NOT READY",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-26T05:43:42.333360+00:00",
+      "status": "STOPPED",
+      "build_status": "COMPLETED",
+      "shell_status": "NOT READY",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-26T05:44:16.218896+00:00",
+      "status": "STOPPED",
+      "build_status": "COMPLETED",
+      "shell_status": "NOT READY",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-26T05:44:49.534013+00:00",
+      "status": "STOPPED",
+      "build_status": "COMPLETED",
+      "shell_status": "NOT READY",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-26T05:45:22.850715+00:00",
+      "status": "STOPPED",
+      "build_status": "COMPLETED",
+      "shell_status": "NOT READY",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-26T05:45:56.232346+00:00",
+      "status": "STOPPED",
+      "build_status": "COMPLETED",
+      "shell_status": "NOT READY",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-26T05:46:29.563318+00:00",
+      "status": "STOPPED",
+      "build_status": "COMPLETED",
+      "shell_status": "NOT READY",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-26T05:47:02.842624+00:00",
+      "status": "STOPPED",
+      "build_status": "COMPLETED",
+      "shell_status": "NOT READY",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-26T05:47:36.099220+00:00",
+      "status": "STARTING",
+      "build_status": "COMPLETED",
+      "shell_status": "NOT READY",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-26T05:48:09.329429+00:00",
+      "status": "STARTING",
+      "build_status": "COMPLETED",
+      "shell_status": "NOT READY",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-26T05:48:42.739581+00:00",
+      "status": "STARTING",
+      "build_status": "COMPLETED",
+      "shell_status": "NOT READY",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-26T05:49:16.164166+00:00",
+      "status": "STARTING",
+      "build_status": "COMPLETED",
+      "shell_status": "NOT READY",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-26T05:49:49.640576+00:00",
+      "status": "STARTING",
+      "build_status": "COMPLETED",
+      "shell_status": "NOT READY",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-26T05:50:23.087163+00:00",
+      "status": "STARTING",
+      "build_status": "COMPLETED",
+      "shell_status": "NOT READY",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-26T05:50:56.361909+00:00",
+      "status": "STARTING",
+      "build_status": "COMPLETED",
+      "shell_status": "NOT READY",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-26T05:51:29.773709+00:00",
+      "status": "STARTING",
+      "build_status": "COMPLETED",
+      "shell_status": "NOT READY",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-26T05:52:03.405459+00:00",
+      "status": "STARTING",
+      "build_status": "COMPLETED",
+      "shell_status": "NOT READY",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-26T05:52:36.728151+00:00",
+      "status": "STARTING",
+      "build_status": "COMPLETED",
+      "shell_status": "NOT READY",
+      "health_status": "UNHEALTHY"
+    }
+  ],
+  "stop_polls": [
+    {
+      "at": "2026-10-26T05:52:44.144321+00:00",
+      "status": "STARTING",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-26T05:53:17.398516+00:00",
+      "status": "STARTING",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-26T05:53:50.741516+00:00",
+      "status": "STARTING",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-26T05:54:24.005961+00:00",
+      "status": "STARTING",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-26T05:54:57.326478+00:00",
+      "status": "STARTING",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-26T05:55:30.731397+00:00",
+      "status": "STARTING",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-26T05:56:04.082175+00:00",
+      "status": "STARTING",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-26T05:56:37.367626+00:00",
+      "status": "STARTING",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-26T05:57:10.766462+00:00",
+      "status": "STARTING",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-26T05:57:44.138048+00:00",
+      "status": "STARTING",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-26T05:58:17.353356+00:00",
+      "status": "STARTING",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-26T05:58:51.147695+00:00",
+      "status": "STARTING",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-26T05:59:24.568544+00:00",
+      "status": "STARTING",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-26T05:59:57.871907+00:00",
+      "status": "STARTING",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-26T06:00:31.289018+00:00",
+      "status": "STARTING",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-26T06:01:04.815539+00:00",
+      "status": "STARTING",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-26T06:01:39.072809+00:00",
+      "status": "STARTING",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-26T06:02:12.719031+00:00",
+      "status": "STARTING",
+      "health_status": "UNHEALTHY"
+    },
+    {
+      "at": "2026-10-26T06:02:45.920614+00:00",
+      "status": "STARTING",
+      "health_status": "UNHEALTHY"
+    }
+  ],
+  "lifecycle": {
+    "started_at": "2026-10-26T05:42:11.138333+00:00",
+    "controller_finished_at": "2026-10-26T06:02:45.920614+00:00",
+    "actual_stopped": false,
+    "watchdog_inactive_confirmed": false,
+    "legacy_controller_owned_processes_gone": true,
+    "legacy_field_correction": "old controller excluded retained keepalive from this true value; do not read it as all owned processes gone",
+    "retained_keepalive_pid": 109040,
+    "recovery_launcher_pid": 50648,
+    "recovery_worker_pid": 86900,
+    "recovery": {
+      "status": "watching_delayed_start",
+      "pid": 86900,
+      "instance_id": "fy0i3jtz5",
+      "started_at": "2026-10-26T06:07:05.624880+00:00",
+      "deadline": "2026-10-26T07:52:11.138333+00:00",
+      "actual_stopped": false,
+      "stop_requests": [],
+      "watchdog_retained": true,
+      "last_observation": {
+        "at": "2026-10-26T06:08:15.645453+00:00",
+        "status": "STARTING",
+        "build_status": "COMPLETED",
+        "shell_status": "NOT READY",
+        "health_status": "UNHEALTHY"
+      }
+    }
+  },
+  "stop_request_error": "RuntimeError: wsl exited 1: 1 error occurred:\n\t* [error] \ngithub.com/brevdev/brev-cli/pkg/cmd/stop.stopWorkspace\n/go/src/github.com/brevdev/brev-cli/pkg/cmd/stop/stop.go:185\n: Internal Server Error\n\n\n\n",
+  "stop_by_id_recovery": {
+    "at": "2026-10-26T05:57:53.9592877Z",
+    "instance_id": "fy0i3jtz5",
+    "action": "brev stop exact instance ID",
+    "exit_code": 1,
+    "actual_stop_not_implied": true
+  },
+  "remote_execution_started": false,
+  "credential_transferred": false,
+  "inference_performed": false,
+  "output_media_created": false,
+  "training_ready": false,
+  "source_labels_transferred": false,
+  "cause": "not established; start acknowledged but workspace did not reach SSH-ready within 600 seconds",
+  "backend_healthcheck": {
+    "result": "Healthy!",
+    "meaning": "general backend response, not evidence that this VM is ready"
+  },
+  "ui_diagnostic": {
+    "result": "unavailable",
+    "error": "failed to write kernel assets: os error 3",
+    "attempts": [
+      "cua getState",
+      "node_repl sky initialization"
+    ],
+    "relation_to_cloud_failure": "not established"
+  },
+  "cost": {
+    "catalog_hourly_usd": 5.48256,
+    "start_to_snapshot_seconds": 1569.891349,
+    "snapshot_at": "2026-10-26T06:08:21.029682+00:00",
+    "catalog_elapsed_estimate_asof_usd": 2.39084,
+    "closed_previous_attempts_estimate_usd": 9.357466,
+    "prior_plus_open_elapsed_estimate_asof_usd": 11.748306,
+    "original_compute_budget_usd": 40,
+    "billing_closed": false,
+    "settled_billing": false,
+    "storage_cost_included": false,
+    "meaning": "elapsed catalog proxy, not actual charge or final cost; Stop remains unconfirmed unless recovery says true"
+  },
+  "status_record_sha256": "d4a579c3ad44c9ba20deaa2916a8a871c31a787613a5b22efc0e58ce5d34b2cb",
+  "next_change": "CPU-only preparation for388 with1200-second boot allowance; GPU launch held until actual Stop and backend recovery",
+  "official_recovery_references": [
+    "https://github.com/brevdev/brev-cli/blob/1733b3d5822b4fdec88682c7a2358a45fbd66e32/pkg/cmd/stop/stop.go#L159-L185",
+    "https://github.com/brevdev/brev-cli/blob/1733b3d5822b4fdec88682c7a2358a45fbd66e32/pkg/store/workspace.go#L370-L379",
+    "https://docs.nvidia.com/brev/troubleshooting/instances-gpus/instance-stuck-in-waiting-state"
+  ]
+}
