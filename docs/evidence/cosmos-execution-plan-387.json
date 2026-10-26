@@ -1,0 +1,101 @@
+{
+  "schema_version": 1,
+  "batch_id": 387,
+  "recorded_utc": "2026-10-26T05:41:25.9745391Z",
+  "scope": "one frozen static 121-frame RGB-anchor comparison against run386",
+  "status": "cpu_prepared_gpu_not_started",
+  "user_license_consent": true,
+  "consent_source": "same-conversation Cosmos3 2.1.0 approval; continuation of existing bounded experiment",
+  "new_vm_creation_allowed": false,
+  "target_name": "factory-ops-scale-234",
+  "target_id": "fy0i3jtz5",
+  "target_profile": "scale234",
+  "target_type": "gpu-l40s-d.2gpu-64vcpu-384gb",
+  "single_device_index": 0,
+  "image": "nvcr.io/nim/nvidia/cosmos3@sha256:2add946b316a0baf72a15be4da85132d127c34da22d2fe4e9c4bd146ad8c4020",
+  "expected_profile_id": "7f0bac23a0816bf0fb6cfce7681d5c6437e363e821b05b82f74dcdb4fbd76bba",
+  "selector": "model_type=generator,model_variant=nano,precision=fp8,profile=latency,offload=layer,text_guard_offload=offloaded,video_guard_offload=offloaded,n_gpus=1",
+  "parent_input_bundle_sha256": "b158dd2dc005b189e00406a9cda8c28a7c15c7e293a124d3c6896fcd6862554f",
+  "input_bundle_sha256": "089b5099d81c4ad587df82500c4dc9e617a562933556668e1a5a0f5e5bb1abdb",
+  "request_sha256": "8b7abe69f27a535faa2e9452221cdd171a3cd544aed3ae825563ef1dc7cceb56",
+  "request_changes": [
+    {
+      "path": "transfer.num_first_chunk_conditional_frames",
+      "to": 1,
+      "from": 0
+    }
+  ],
+  "all_other_request_fields_identical": true,
+  "input_video_sha256": "5d389c7270108cb9177b738f2f1b21a82fbbb9966653a9894d20589ff8a6dcc9",
+  "hard_stop_seconds": 7200,
+  "stop_reserve_seconds": 600,
+  "independent_watchdog_required": true,
+  "actual_stopped_confirmation_required": true,
+  "catalog_hourly_usd": 5.48256,
+  "compute_envelope_estimate_usd": 10.96512,
+  "previous_closed_attempts_catalog_elapsed_estimate_usd": 9.357466,
+  "prior_estimate_plus_this_envelope_usd": 20.322586,
+  "original_compute_budget_usd": 40,
+  "settled_billing_guaranteed": false,
+  "storage_cost_included": false,
+  "authored_minimum_free_disk_gib": 32,
+  "runtime_low_free_disk_gib": 24,
+  "runtime_disk_sample_interval_seconds": 1,
+  "disk_limits_are_official_nvidia_minimum": false,
+  "model_cache": "reuse existing image-digest cache from386, do not archive weights",
+  "source_files": [
+    {
+      "path": "scripts/perception/prepare_cosmos_anchor.py",
+      "sha256": "5455934ff1ff8d0acfedc06bbf2d9f2449b29d9d189d990e352ddd2f6ccbbcef"
+    },
+    {
+      "path": "scripts/perception/inspect_cosmos_smoke.py",
+      "sha256": "43f678d0e59129d3fd75f29f858aff495ab81a86e3e79e3e2fbecd462809808d"
+    },
+    {
+      "path": "scripts/brev/run_cosmos_smoke.py",
+      "sha256": "da922f9f376da031c469c7918539effe63e78c98484467776bc91cffa4636cd8"
+    },
+    {
+      "path": "scripts/brev/run-cosmos-smoke.sh",
+      "sha256": "eeff19954fea207d4f0e4e729b6fb5d883694c69775545ad2aed3d9ee66aff8a"
+    },
+    {
+      "path": "scripts/brev/start_cosmos_smoke.ps1",
+      "sha256": "1c494392e96ef2e44f12139316481a5f4dc8775b6da2951e5c07e2ba49d83d63"
+    }
+  ],
+  "comparison": {
+    "source_labels_transferred": false,
+    "training_ready": false,
+    "frames": [
+      0,
+      60,
+      120
+    ],
+    "geometry_checks": [
+      "three source objects remain",
+      "position and footprint drift",
+      "depth and tray shape changes",
+      "temporal variation"
+    ],
+    "media_contract": "121 frames,1280x720,30fps",
+    "baseline_run": 386,
+    "first_frame_similarity_is_all_frame_label_validity": false,
+    "pixel_MAD_is_label_accuracy": false,
+    "quality_improvement_claimed": false,
+    "changed_variable_count": 1
+  },
+  "reference_correction": {
+    "supported_by": "https://docs.nvidia.com/nim/cosmos/4.0.0/release-notes.html",
+    "container_tag": "2.1.0",
+    "docs_release": "4.0.0",
+    "prior_386_archives_unchanged": true
+  },
+  "official_sources": [
+    "https://docs.nvidia.com/nim/cosmos/4.0.0/transfer.html",
+    "https://docs.nvidia.com/nim/cosmos/4.0.0/release-notes.html"
+  ],
+  "depth_seg_deferred_reason": "required depth scaling/polarity and semantic palette not established",
+  "other_project_policy": "no operation on RL or RBY1 environments; no local GPU"
+}

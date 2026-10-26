@@ -1870,3 +1870,9 @@ NGC의 amd64 압축 image 표시는8.76GB지만 model/cache·materialization·sc
 386은 고정 Nano FP8 profile로 HTTP 추론과1280×720·30fps·121프레임 계약을 통과했다. 그러나 실제 비교 이미지의0·60·120프레임에서 원본의 팔레트·트레이 배치·크기가 크게 달라졌고 정지 입력에도 객체가 변했다. 전체121프레임의 인접 정규화 RGB 평균 절대 차이는0.01042로, 입력의0보다 컸다. 이 값은 픽셀 변화 진단이며 라벨 정확도나 검출 성능이 아니다. [실제 비교](images/cosmos-smoke-386/comparison.png) · [386 결과](evidence/cosmos-cloud-386.json)
 
 확인된 판정은 해당 결과의 학습용 사용·원본 bbox/semantic 전사 기각이다. edge 제어·원본의 작은 객체·프롬프트·모델 선택 중 어느 요인이 원인인지는1회로 분리하지 못했다. 원본346과 요청은 변경하지 않았고 추가GPU 추론은 실행하지 않았다. 재발 방지는 HTTP 성공/미디어 계약/구조 보존/학습 승인을 별도 필드로 유지하는 것이다. 후속 시험은 버전별 지원을 확인한 뒤 depth 또는 segmentation 제어 입력부터 소량 비교하며, 같은 조건의 대량 생성은 진행하지 않는다. 최신 [NIM4.0 Transfer 문서](https://docs.nvidia.com/nim/cosmos/4.0.0/transfer.html)는 후속 후보의 참고이며 실제2.1.0 동작 검증으로 사용하지 않는다.
+
+### FOT-242 보정 — 문서 경로와 컨테이너 태그의 관계
+
+위 마지막 문장의 문서 버전 해석은 바로잡는다. [4.0.0 릴리스 노트](https://docs.nvidia.com/nim/cosmos/4.0.0/release-notes.html)는 이미지가 `nvcr.io/nim/nvidia/cosmos3:2.1.0`이라고 명시하므로, 같은 버전의 [Transfer 문서](https://docs.nvidia.com/nim/cosmos/4.0.0/transfer.html)는386에서 고정한2.1.0 이미지와 무관한 다른 이미지용 문서가 아니다. 보존한386 영수증·ZIP·요청·판정은 수정하지 않는다.
+
+다음387은 원본346 RGB·seed2026·edge medium·control guidance1.5·모델/digest/profile·121프레임을 유지하고 `num_first_chunk_conditional_frames`만0에서1로 바꾼다. 공식 Transfer 문서상 이 값이0보다 크면 `input_reference`가 필요하므로 새 CPU bundle에서 함께 결속한다. 아직 실행 전이며 구조 보존 개선은 가설이다. depth·segmentation은 사전 계산 control의 metric과 palette가 확정되지 않아 이번 요청에서 제외한다. [387 실행 계약](evidence/cosmos-execution-plan-387.json)

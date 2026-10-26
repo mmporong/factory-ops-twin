@@ -218,4 +218,6 @@ profile preflight는 키 없이 수행하며 이를 통과하기 전 모델을 �
 
 미디어 계약은 통과했지만 원본의 객체 배치·크기가 달라지고 정지 입력에도 프레임 변화가 있어 이 결과를 학습용에서 제외했다. training_ready/model_output_labels_approved/source_labels_transferred는 모두false다. 실제 첫·중간·마지막 프레임과MP4를 README에 반영했으며 학습·고정test 재평가는 하지 않았다. [실제 비교와 출처](images/cosmos-smoke-386/provenance.json)
 
-다음 GPU 후보는 원본 구조를 더 보존할 수 있는 depth 또는 segmentation 제어의 소량 비교다. 현재 edge-only1회의 원인은 미확정이며 더 비싼 GPU·큰 모델이 품질 문제를 해결한다고 가정하지 않는다. 사용 중인 이미지의 지원·입력 정렬·평가 조건을 먼저 고정하고, 이번 결과를 대량 변환이나 원본 라벨 복사의 근거로 사용하지 않는다.
+다음 비교387은 새 모델이나 다중 제어 시험이 아니다. 원본346 RGB·seed2026·edge medium·control guidance1.5·Cosmos3 NIM2.1.0 모델/digest/profile·121프레임을386과 같게 유지하고, Transfer의 `num_first_chunk_conditional_frames`만0에서1로 바꾼다. [공식 Transfer 문서](https://docs.nvidia.com/nim/cosmos/4.0.0/transfer.html)는 이 값이0보다 크면 `input_reference`가 필요하다고 명시하며, [4.0.0 문서의 릴리스 노트](https://docs.nvidia.com/nim/cosmos/4.0.0/release-notes.html)는 해당 릴리스 이미지를 `nvcr.io/nim/nvidia/cosmos3:2.1.0`으로 적고 있다. 따라서 문서 경로 숫자와 컨테이너 태그를 서로 다른 이미지로 해석하지 않는다.
+
+387은 CPU 입력·계약 준비 단계이며 GPU 결과가 없다. 첫 청크 조건 프레임이 구조 보존을 개선할지는 가설이고,386의 학습 제외 판정을 바꾸지 않는다. depth와 segmentation은 사전 계산 control의 metric·palette가 확정되지 않아 이번 요청에 넣지 않는다. 결과가 나오더라도 미디어 계약·구조 보존·학습 승인과 원본 라벨 전사를 따로 판정한다. [387 동결 비교 계약](evidence/cosmos-execution-plan-387.json)

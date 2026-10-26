@@ -53,6 +53,7 @@ REQUIRED_INPUTS = (
     "deployment-contract.json",
 )
 EXPECTED_INPUT_ROOT = Path("E:/FactoryOpsData/cosmos-static-smoke-346")
+CONTROL_INPUT_ROOT = Path("E:/FactoryOpsData/cosmos-control-smoke-387")
 READY_TIMEOUT_SECONDS = 600
 STOP_TIMEOUT_SECONDS = 600
 POLL_SECONDS = 30
@@ -144,9 +145,12 @@ def _validate_inputs(args: argparse.Namespace) -> tuple[Path, Path, dict[str, Pa
     remote_script = args.remote_script.resolve()
     if not remote_script.is_file():
         raise ValueError("--remote-script must name an existing file")
+    expected_inputs = CONTROL_INPUT_ROOT if args.batch_id == 387 else EXPECTED_INPUT_ROOT
     inputs = args.inputs_directory.resolve()
-    if inputs != EXPECTED_INPUT_ROOT.resolve():
-        raise ValueError(f"--inputs-directory must be {EXPECTED_INPUT_ROOT}")
+    if inputs != expected_inputs.resolve():
+        raise ValueError(
+            f"--inputs-directory must be {expected_inputs} for batch {args.batch_id}"
+        )
     if not inputs.is_dir():
         raise ValueError("--inputs-directory does not exist")
     files = {name: inputs / name for name in REQUIRED_INPUTS}
@@ -382,7 +386,7 @@ def _stop_and_confirm(record: dict[str, object], save: object) -> bool:
 
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--batch-id", type=int, choices=(379, 380, 381, 382, 383, 384, 385, 386), default=379)
+    parser.add_argument("--batch-id", type=int, choices=(379, 380, 381, 382, 383, 384, 385, 386, 387), default=379)
     parser.add_argument("--target-profile", choices=tuple(TARGETS), default="scale234")
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--remote-script", type=Path, required=True)
