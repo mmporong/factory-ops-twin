@@ -1884,6 +1884,6 @@ NGC의 amd64 압축 image 표시는8.76GB지만 model/cache·materialization·sc
 
 확인된 GET workspace detail은HTTP200·STARTING·빈statusMessage였다. 기존 CLI 인증으로 상태4필드만 읽었고 자격증명을 출력하지 않았다. 브라우저와node_repl은kernel assets 경로오류로 초기화하지 못했다. 이는 클라우드 오류의 원인으로 확정하지 않는다. Provider 내부 원인은 미확인이며, [공식 대기 상태 진단](https://docs.nvidia.com/brev/troubleshooting/instances-gpus/instance-stuck-in-waiting-state)에 따라 Console Activity Logs의 상세 원인이 다음 확인 대상이다. 기존 데이터·VM을 삭제하거나 초기화하지 않는다.
 
-387 실행기는15:02:45 KST에 종료됐지만 실제STOPPED는 확인되지 않았다. 원래16:42 KST Stop 타이머와 keepalive를 유지하고,16:52 KST까지 같은 VM만 감시하는 복구 프로세스를 추가했다. RUNNING 계열로 전환되면 Stop을 요청하고 실제STOPPED 뒤 소유 타이머·keepalive를 정리한다. 서버500이 계속되면 중지를 보장할 수 없으며 상태는 recovery-watch.json에 남는다. 보존 ZIP은 실패 실행기와 복구 시점의 스냅샷이며 클라우드 종료 증명이 아니다.
+387 실행기는15:02:45 KST에 종료됐지만 실제STOPPED는 확인되지 않았다. 원래2시간 Stop 타이머와 keepalive를 유지하고,16:52 KST까지 같은 VM만 감시하는 복구 프로세스를 추가했다.15:11 KST의 systemd NEXT 표시는16:43:06 KST로 계약 시각16:42:11과 달랐으며 원인은 미확정이다. RUNNING 계열로 전환되면 Stop을 요청하고 실제STOPPED 뒤 소유 타이머·keepalive를 정리한다. 서버500이 계속되면 중지를 보장할 수 없으며 상태는 recovery-watch.json에 남는다. 보존 ZIP은 실패 실행기와 복구 시점의 스냅샷이며 클라우드 종료 증명이 아니다.
 
 387의 과거 owned_processes_gone=true는 retained keepalive를 제외하는 조건식 때문에 전체 정리로 읽으면 안 된다. 다음 소스는 keepalive가 살아 있으면false를 기록하고 이를 회귀로 확인했다. 후속388은 부팅 준비만1200초로 늘리고 전체7200초·Stop reserve600초·동일 입력·모델·예산을 유지한다.16개 관련CPU검사·셸구문 검사는 통과했지만 실제388은 미실행이며, 실제Stop과 서버 복구 전에는 시작하지 않는다. 실패 소스와 원본387 상태는 동결본으로 보존한다. [388 계약](evidence/cosmos-execution-plan-388.json)
